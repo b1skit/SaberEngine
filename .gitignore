@@ -37,6 +37,8 @@
 # Project dependencies
 /Dependencies/*
 /SaberEngine/assimp*.dll
+/SaberEngine/glew32.dll
+
 
 # Personal
 /notes/*

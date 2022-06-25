@@ -95,13 +95,13 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\SDL2\include;$(ProjectDir)Dependencies\glew\include;$(ProjectDir)Dependencies\glm;$(ProjectDir)Dependencies\stb;$(IncludePath);%(AdditionalIncludeDirectories);$(ProjectDir)..\Dependencies\assimp\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\SDL2\include;$(ProjectDir)..\Dependencies\glew\include;$(ProjectDir)Dependencies\glm;$(ProjectDir)Dependencies\stb;$(IncludePath);%(AdditionalIncludeDirectories);$(ProjectDir)..\Dependencies\assimp\include;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\SDL2\lib\x64;$(ProjectDir)Dependencies\glew\lib\Release\x64;$(ProjectDir)Dependencies\glm;$(ProjectDir)..\Dependencies\assimp\lib\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\SDL2\lib\x64;$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(ProjectDir)Dependencies\glm;$(ProjectDir)..\Dependencies\assimp\lib\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;assimp-vc143-mtd.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <PerUserRedirection>true</PerUserRedirection>
@@ -113,10 +113,11 @@
       </Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>copy "$(ProjectDir)..\Dependencies\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(ProjectDir)"</Command>
+      <Command>copy "$(ProjectDir)..\Dependencies\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(ProjectDir)"
+copy "$(ProjectDir)..\Dependencies\glew\bin\Release\x64\glew32.dll" "$(ProjectDir)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copy the DEBUG version of the assimp-vc140-mt.dll file to the project</Message>
+      <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -142,14 +143,14 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\SDL2\include;$(ProjectDir)Dependencies\glew\include;$(ProjectDir)Dependencies\glm;$(ProjectDir)Dependencies\stb;$(IncludePath);%(AdditionalIncludeDirectories);$(ProjectDir)..\Dependencies\assimp\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\SDL2\include;$(ProjectDir)..\Dependencies\glew\include;$(ProjectDir)Dependencies\glm;$(ProjectDir)Dependencies\stb;$(IncludePath);%(AdditionalIncludeDirectories);$(ProjectDir)..\Dependencies\assimp\include;</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)\Dependencies\glew\lib\Release\x64;$(ProjectDir)\Dependencies\glm;$(ProjectDir)\Dependencies\SDL2\lib\x64;$(ProjectDir)..\Dependencies\assimp\lib\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(ProjectDir)\Dependencies\glm;$(ProjectDir)\Dependencies\SDL2\lib\x64;$(ProjectDir)..\Dependencies\assimp\lib\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;assimp-vc143-mt.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
     </Link>
@@ -160,8 +161,9 @@
       </Message>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>copy "$(ProjectDir)..\Dependencies\assimp\bin\Release\assimp-vc143-mt.dll" "$(ProjectDir)"</Command>
-      <Message>Copy the RELEASE version of the assimp-vc140-mt.dll file to the project</Message>
+      <Command>copy "$(ProjectDir)..\Dependencies\assimp\bin\Release\assimp-vc143-mt.dll" "$(ProjectDir)"
+copy "$(ProjectDir)..\Dependencies\glew\bin\Release\x64\glew32.dll" "$(ProjectDir)"</Command>
+      <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
