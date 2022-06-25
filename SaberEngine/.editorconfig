@@ -3,5 +3,5 @@
 # Editor Guidelines extension:
 # All files
 [*]
-guidelines = 80
+guidelines = 120
 guidelines_style = 1px dotted gray
