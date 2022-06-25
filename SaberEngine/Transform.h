@@ -127,7 +127,7 @@ namespace SaberEngine
 		mat4 combinedRotation		= mat4(1.0f);
 		mat4 combinedTranslation	= mat4(1.0f);
 
-		quat worldRotation;		// Rotation of this transform. Used to assemble rotation matrix
+		quat worldRotation = glm::quat(vec3(0,0,0));	// Rotation of this transform. Used to assemble rotation matrix
 
 		bool isDirty;			// Do our model or combinedModel matrices need to be recomputed?
 

@@ -2,22 +2,19 @@
 #include "CoreEngine.h"
 
 
-namespace
+int main(int argc, char** argv)
 {
-	int main(int argc, char** argv)
-	{
-		std::cout << "Welcome to the Saber Engine!\n\n";
+	std::cout << "Welcome to the Saber Engine!\n\n";
 
-		SaberEngine::CoreEngine coreEngine(argc, argv); // TODO: Implement config file (command line) path passing
+	SaberEngine::CoreEngine coreEngine(argc, argv); // TODO: Implement config file (command line) path passing
 
-		coreEngine.Startup();
+	coreEngine.Startup();
 
-		coreEngine.Run();
+	coreEngine.Run();
 
-		coreEngine.Shutdown();
+	coreEngine.Shutdown();
 
-		std::cout << "\nGoodbye!\n";
+	std::cout << "\nGoodbye!\n";
 
-		return 0;
-	}
+	return 0;
 }

@@ -12,6 +12,24 @@
     <Filter Include="Source Files\Shaders">
       <UniqueIdentifier>{fba4b42a-a194-41c3-858e-1acac86e27c9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\gr">
+      <UniqueIdentifier>{1d103d50-7372-4437-82c3-bd26e6a7b14f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\re">
+      <UniqueIdentifier>{1607ac05-1c63-4dbf-970e-de9c8cffa9b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\fr">
+      <UniqueIdentifier>{8eef13da-9b75-4b22-8a4e-48df6b6d29ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fr">
+      <UniqueIdentifier>{ce0e144c-69f8-4260-9c74-c7188ba0ef22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gr">
+      <UniqueIdentifier>{efb612e8-d20d-45e5-8a72-ed7dc275f839}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\re">
+      <UniqueIdentifier>{1333c46d-be8c-4d49-a48b-f0c19d742c37}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CoreEngine.cpp">
