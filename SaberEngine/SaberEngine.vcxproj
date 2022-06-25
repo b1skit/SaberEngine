@@ -95,7 +95,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\SDL2\include;$(ProjectDir)..\Dependencies\glew\include;$(ProjectDir)Dependencies\glm;$(ProjectDir)Dependencies\stb;$(IncludePath);%(AdditionalIncludeDirectories);$(ProjectDir)..\Dependencies\assimp\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\SDL2\include;$(ProjectDir)..\Dependencies\glew\include;$(ProjectDir)Dependencies\glm;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories);$(ProjectDir)..\Dependencies\assimp\include;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -143,7 +143,7 @@ copy "$(ProjectDir)..\Dependencies\glew\bin\Release\x64\glew32.dll" "$(ProjectDi
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\SDL2\include;$(ProjectDir)..\Dependencies\glew\include;$(ProjectDir)Dependencies\glm;$(ProjectDir)Dependencies\stb;$(IncludePath);%(AdditionalIncludeDirectories);$(ProjectDir)..\Dependencies\assimp\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Dependencies\SDL2\include;$(ProjectDir)..\Dependencies\glew\include;$(ProjectDir)Dependencies\glm;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories);$(ProjectDir)..\Dependencies\assimp\include;</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>

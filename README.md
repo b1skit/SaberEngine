@@ -41,6 +41,14 @@ Glew: https://github.com/nigels-com/glew/releases
 - Ensure the "Project properties -> Build Events -> Post-Build Event" copies glew\bin\Release\x64\glew32.dll to the <Project Root>\SaberEngine\ directory
 
 
+
+stb_image.h: https://github.com/nothings/stb/blob/master/stb_image.h
+--------------------------------------------------------------------
+- Current version: v2.27 
+- Add stb_image.h to <project root>\Dependencies\stb\
+
+
+
 -------------------------------------
 Recommended Visual Studio extensions:
 -------------------------------------
@@ -48,7 +56,3 @@ Recommended Visual Studio extensions:
 - Editor Guidelines
 - GLSL Language Integration: https://github.com/danielscherzer/GLSL
 - Beyond Compare
-
-
-
-copy "$(ProjectDir)..\Dependencies\" "$(ProjectDir)"
