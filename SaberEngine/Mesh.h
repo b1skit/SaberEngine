@@ -2,7 +2,7 @@
 
 #include "Transform.h"
 
-#include <glm.hpp>
+#include <glm/glm.hpp>
 #include <GL/glew.h>
 
 #include <string>

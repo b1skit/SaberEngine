@@ -2,10 +2,10 @@
 #include "Transform.h"
 #include <algorithm>
 
-#include "gtc/constants.hpp"
+#include <glm/gtc/constants.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL 
-#include "gtx/common.hpp"
+#include <glm/gtx/common.hpp>
 
 using glm::normalize;
 using glm::rotate;

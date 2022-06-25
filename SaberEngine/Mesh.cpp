@@ -2,8 +2,8 @@
 
 #include "BuildConfiguration.h"
 
-#include "glm.hpp"
-#include "gtc/constants.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
 using glm::pi;
 
 

@@ -18,12 +18,12 @@
 
 #include <string>
 
-#include "SDL.h"
-#include "GL/glew.h"
+#include <SDL.h>
+#include <GL/glew.h>
 #include <GL/GL.h> // MUST follow glew.h...
 
 #define GLM_FORCE_SWIZZLE
-#include "glm.hpp"
+#include <glm/glm.hpp>
 
 #undef main // Required to prevent SDL from redefining main...
 

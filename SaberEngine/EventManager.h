@@ -5,7 +5,7 @@
 
 #include <vector>
 
-#include "SDL.h"
+#include <SDL.h>
 
 using std::vector;
 

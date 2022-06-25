@@ -3,8 +3,8 @@
 #pragma once
 
 #define GLM_FORCE_SWIZZLE // Enable swizzle operators
-#include "glm.hpp"
-#include "gtc/quaternion.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include <vector>
 

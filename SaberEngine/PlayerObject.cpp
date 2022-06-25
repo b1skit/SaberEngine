@@ -4,7 +4,7 @@
 #include "CoreEngine.h"
 #include "Camera.h"
 
-#include "gtc/constants.hpp"
+#include <glm/gtc/constants.hpp>
 
 
 namespace SaberEngine

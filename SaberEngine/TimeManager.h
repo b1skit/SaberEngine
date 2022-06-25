@@ -5,8 +5,7 @@
 
 #include "EngineComponent.h"	// Base class
 
-#include "Dependencies/SDL2/include/SDL_timer.h"
-
+#include <SDL_timer.h>
 
 namespace SaberEngine
 {

@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "glm.hpp"
+#include <glm/glm.hpp>
 
 using glm::vec3;
 using std::string;

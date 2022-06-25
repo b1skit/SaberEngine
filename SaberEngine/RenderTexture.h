@@ -3,7 +3,7 @@
 #include "Texture.h"	// Base class
 
 #include <GL/glew.h>
-#include "glm.hpp"
+#include <glm/glm.hpp>
 
 
 #define DEFAULT_RENDERTEXTURE_NAME "UNNAMED_RenderTexture"

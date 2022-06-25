@@ -8,7 +8,7 @@
 #include "Material.h"
 #include "RenderTexture.h"
 
-#include "glm.hpp"
+#include <glm/glm.hpp>
 
 
 namespace SaberEngine

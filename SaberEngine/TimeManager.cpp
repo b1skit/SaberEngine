@@ -2,7 +2,7 @@
 #include "CoreEngine.h"
 #include "BuildConfiguration.h"
 
-#include "SDL.h"
+#include <SDL.h>
 
 namespace SaberEngine
 {

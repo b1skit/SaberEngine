@@ -3,7 +3,7 @@
 #include "SceneObject.h"	// Base class
 
 #define GLM_FORCE_SWIZZLE
-#include "glm.hpp"
+#include <glm/glm.hpp>
 
 
 namespace SaberEngine

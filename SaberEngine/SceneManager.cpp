@@ -19,18 +19,18 @@
 #include "Shader.h"
 
 
-#include "glm.hpp"
-#include "gtc/constants.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
 
 using glm::pi;
 
 
-#include "assimp/Importer.hpp"		// Importer interface
-#include "assimp/postprocess.h"		// Post processing flags
+#include <assimp/Importer.hpp>		// Importer interface
+#include <assimp/postprocess.h>		// Post processing flags
 
 
 #define STB_IMAGE_IMPLEMENTATION	// Only include this define ONCE in the project
-#include "stb_image.h"				// STB image loader
+#include <stb_image.h>				// STB image loader
 
 
 #include <algorithm>

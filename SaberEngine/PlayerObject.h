@@ -2,7 +2,7 @@
 
 #include "GameObject.h"	// Base class
 
-#include "glm.hpp"
+#include <glm/glm.hpp>
 
 using glm::vec3;
 

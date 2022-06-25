@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "SDL_keyboard.h"
-#include "SDL_keycode.h"
-#include "SDL_scancode.h"
+#include <SDL_keyboard.h>
+#include <SDL_keycode.h>
+#include <SDL_scancode.h>
 
 #include <unordered_map>
 #include <string>

@@ -6,7 +6,7 @@
 #include "BuildConfiguration.h"
 #include "EventListener.h"
 
-#include "SDL.h"
+#include <SDL.h>
 
 
 namespace SaberEngine

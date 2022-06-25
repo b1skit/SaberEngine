@@ -8,10 +8,10 @@
 
 #include <GL/glew.h>
 
-#include "SDL.h"
+#include <SDL.h>
 
 #define GLM_FORCE_SWIZZLE
-#include "glm.hpp"
+#include <glm/glm.hpp>
 
 using glm::vec4;
 

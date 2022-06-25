@@ -3,8 +3,8 @@
 #include <vector>
 #include <string>
 
-#include "glm.hpp"
-#include "GL/glew.h" 
+#include <glm/glm.hpp>
+#include <GL/glew.h>
 
 using glm::vec3;
 using glm::vec4;

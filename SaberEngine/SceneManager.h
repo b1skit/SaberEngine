@@ -3,9 +3,9 @@
 #include "EngineComponent.h"
 #include "EventListener.h"
 
-#include "assimp/scene.h"		// Output data structure
+#include <assimp/scene.h>		// Output data structure
 
-#include "glm.hpp"
+#include <glm/glm.hpp>
 
 #include <vector>
 #include <unordered_map>

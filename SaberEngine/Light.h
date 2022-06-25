@@ -5,7 +5,7 @@
 
 #include "SceneObject.h"	// Base class
 
-#include "glm.hpp"
+#include <glm/glm.hpp>
 
 #include <string>
 
