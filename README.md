@@ -1,5 +1,6 @@
 # Saber Engine
 
+--------------
 Project goals:
 --------------
 - Progressive gpu forward path tracer
@@ -10,10 +11,12 @@ Project goals:
 - Modern API: DX12/Vulkan
 
 
+-------------
 Dependencies:
 -------------
 
-Assimp:
+Assimp: https://github.com/assimp/assimp/releases
+-------------------------------------------------
 - Current version: assimp-5.2.4
 - Unzip files to the <project root>\Dependencies\assimp\ folder
 - Run "cmake CMakeLists.txt" from the assimp root folder to generate the visual studio solution
@@ -25,6 +28,7 @@ Assimp:
 
 
 
+-------------------------------------
 Recommended Visual Studio extensions:
 -------------------------------------
 - Smart Command Line Arguments
