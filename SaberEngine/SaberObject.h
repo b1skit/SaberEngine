@@ -9,7 +9,7 @@ using std::string;
 
 
 // Global variables: These should never be modified directly.
-namespace SaberEnginePrivate
+namespace
 {
 	static unsigned long objectIDs = 0;
 }
@@ -55,7 +55,7 @@ namespace SaberEngine
 		// Utilities:
 		unsigned long AssignObjectID()
 		{ 
-			m_hashString = name + std::to_string(SaberEnginePrivate::objectIDs++); // Append a number to give different hashes for the same name
+			m_hashString = name + std::to_string(objectIDs++); // Append a number to give different hashes for the same name
 			size_t hash = m_hashFunction(m_hashString);
 
 			return (unsigned long) hash;
