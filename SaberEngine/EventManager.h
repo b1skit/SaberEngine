@@ -114,7 +114,7 @@ namespace SaberEngine
 
 		// SDL2 event queue handling:
 		const static int MAX_EVENTS = 1; // Max number of events to look for
-		SDL_Event m_SDLEventBuffer[MAX_EVENTS];
+		//SDL_Event m_SDLEventBuffer[MAX_EVENTS];
 
 	};
 
