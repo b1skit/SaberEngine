@@ -5,7 +5,7 @@
 #include "ShadowMap.h"
 #include "Shader.h"
 #include "Material.h"
-#include "Mesh.h"
+#include "grMesh.h"
 
 
 namespace SaberEngine
@@ -47,9 +47,9 @@ namespace SaberEngine
 			);
 
 			// Attach a screen aligned quad:
-			this->deferredMesh = new Mesh
+			this->deferredMesh = new gr::Mesh
 			(
-				Mesh::CreateQuad	// Align along near plane
+				gr::meshfactory::CreateQuad	// Align along near plane
 				(
 					vec3(-1.0f, 1.0f,	-1.0f),	// TL
 					vec3(1.0f,	1.0f,	-1.0f),	// TR
@@ -73,9 +73,9 @@ namespace SaberEngine
 			);
 
 			// Attach a screen aligned quad:
-			this->deferredMesh = new Mesh
+			this->deferredMesh = new gr::Mesh
 			(
-				Mesh::CreateQuad	// Align along near plane
+				gr::meshfactory::CreateQuad	// Align along near plane
 				(
 					vec3(-1.0f,	1.0f,	-1.0f),	// TL
 					vec3(1.0f,	1.0f,	-1.0f),	// TR
@@ -95,9 +95,9 @@ namespace SaberEngine
 				true
 			);
 
-			this->deferredMesh = new Mesh
+			this->deferredMesh = new gr::Mesh
 			(
-				Mesh::CreateSphere
+				gr::meshfactory::CreateSphere
 				(
 					radius
 				)

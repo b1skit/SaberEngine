@@ -73,36 +73,36 @@ namespace SaberEngine
 	}
 
 
-	int Scene::AddMesh(Mesh* newMesh)
+	int Scene::AddMesh(gr::Mesh* newMesh)
 	{
 		// Update scene (world) bounds to contain the new mesh:
-		Bounds meshWorldBounds(newMesh->localBounds.GetTransformedBounds(newMesh->GetTransform().Model()));
+		gr::Bounds meshWorldBounds(newMesh->GetLocalBounds().GetTransformedBounds(newMesh->GetTransform().Model()));
 
-		if (meshWorldBounds.xMin < sceneWorldBounds.xMin)
+		if (meshWorldBounds.xMin() < sceneWorldBounds.xMin())
 		{
-			sceneWorldBounds.xMin = meshWorldBounds.xMin;
+			sceneWorldBounds.xMin() = meshWorldBounds.xMin();
 		}
-		if (meshWorldBounds.xMax > sceneWorldBounds.xMax)
+		if (meshWorldBounds.xMax() > sceneWorldBounds.xMax())
 		{
-			sceneWorldBounds.xMax = meshWorldBounds.xMax;
-		}
-
-		if (meshWorldBounds.yMin < sceneWorldBounds.yMin)
-		{
-			sceneWorldBounds.yMin = meshWorldBounds.yMin;
-		}
-		if (meshWorldBounds.yMax > sceneWorldBounds.yMax)
-		{
-			sceneWorldBounds.yMax = meshWorldBounds.yMax;
+			sceneWorldBounds.xMax() = meshWorldBounds.xMax();
 		}
 
-		if (meshWorldBounds.zMin < sceneWorldBounds.zMin)
+		if (meshWorldBounds.yMin() < sceneWorldBounds.yMin())
 		{
-			sceneWorldBounds.zMin = meshWorldBounds.zMin;
+			sceneWorldBounds.yMin() = meshWorldBounds.yMin();
 		}
-		if (meshWorldBounds.zMax > sceneWorldBounds.zMax)
+		if (meshWorldBounds.yMax() > sceneWorldBounds.yMax())
 		{
-			sceneWorldBounds.zMax = meshWorldBounds.zMax;
+			sceneWorldBounds.yMax() = meshWorldBounds.yMax();
+		}
+
+		if (meshWorldBounds.zMin() < sceneWorldBounds.zMin())
+		{
+			sceneWorldBounds.zMin() = meshWorldBounds.zMin();
+		}
+		if (meshWorldBounds.zMax() > sceneWorldBounds.zMax())
+		{
+			sceneWorldBounds.zMax() = meshWorldBounds.zMax();
 		}
 
 		// Add the mesh to our array:
@@ -128,7 +128,7 @@ namespace SaberEngine
 	}
 
 
-	Mesh* Scene::GetMesh(int meshIndex)
+	gr::Mesh* Scene::GetMesh(int meshIndex)
 	{
 		if (meshIndex >= (int)meshes.size())
 		{

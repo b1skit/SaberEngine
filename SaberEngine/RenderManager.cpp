@@ -2,7 +2,7 @@
 #include "CoreEngine.h"
 #include "SceneManager.h"
 #include "Shader.h"
-#include "Mesh.h"
+#include "grMesh.h"
 #include "Transform.h"
 #include "Material.h"
 #include "Texture.h"
@@ -269,9 +269,9 @@ namespace SaberEngine
 		// PostFX Manager:
 		postFXManager = new PostFXManager(); // Initialized when RenderManager.Initialize() is called
 
-		screenAlignedQuad = new Mesh
+		screenAlignedQuad = new gr::Mesh
 		(
-			Mesh::CreateQuad
+			gr::meshfactory::CreateQuad
 			(
 				vec3(-1.0f,	1.0f,	0.0f),	// TL
 				vec3(1.0f,	1.0f,	0.0f),	// TR
@@ -467,11 +467,11 @@ namespace SaberEngine
 		glClear(GL_DEPTH_BUFFER_BIT); // Clear the currently bound FBO	
 
 		// Loop through each mesh:			
-		vector<Mesh*> const* meshes = CoreEngine::GetSceneManager()->GetRenderMeshes(nullptr); // Get ALL meshes
+		vector<gr::Mesh*> const* meshes = CoreEngine::GetSceneManager()->GetRenderMeshes(nullptr); // Get ALL meshes
 		unsigned int numMeshes	= (unsigned int)meshes->size();
 		for (unsigned int j = 0; j < numMeshes; j++)
 		{
-			Mesh* currentMesh = meshes->at(j);
+			gr::Mesh* currentMesh = meshes->at(j);
 
 			currentMesh->Bind(true);
 
@@ -502,7 +502,10 @@ namespace SaberEngine
 			// TODO: ^^^^ Only upload these matrices if they've changed			
 
 			// Draw!
-			glDrawElements(GL_TRIANGLES, currentMesh->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+			glDrawElements(GL_TRIANGLES, 
+				(GLsizei)currentMesh->NumIndices(),
+				GL_UNSIGNED_INT, 
+				(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 						
 			// Cleanup current mesh:
 			currentMesh->Bind(false);
@@ -545,7 +548,7 @@ namespace SaberEngine
 			Material* currentMaterial	= currentElement.second;
 			Shader* currentShader		= renderCam->RenderMaterial()->GetShader();
 
-			vector<Mesh*> const* meshes;
+			vector<gr::Mesh*> const* meshes;
 
 			// Bind:
 			currentShader->Bind(true);
@@ -562,7 +565,7 @@ namespace SaberEngine
 			unsigned int numMeshes	= (unsigned int)meshes->size();
 			for (unsigned int j = 0; j < numMeshes; j++)
 			{
-				Mesh* currentMesh = meshes->at(j);
+				gr::Mesh* currentMesh = meshes->at(j);
 
 				currentMesh->Bind(true);
 
@@ -578,7 +581,10 @@ namespace SaberEngine
 				// TODO: Only upload these matrices if they've changed ^^^^
 
 				// Draw!
-				glDrawElements(GL_TRIANGLES, currentMesh->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+				glDrawElements(GL_TRIANGLES, 
+					(GLsizei)currentMesh->NumIndices(), 
+					GL_UNSIGNED_INT, 
+					(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 				// Cleanup current mesh: 
 				currentMesh->Bind(false);
@@ -645,7 +651,7 @@ namespace SaberEngine
 			currentShader->UploadUniform("texelSize",				&texelSize.x,									UNIFORM_Vec4fv);
 
 			// Get all meshes that use the current material
-			vector<Mesh*> const* meshes = CoreEngine::GetSceneManager()->GetRenderMeshes(currentMaterial);
+			vector<gr::Mesh*> const* meshes = CoreEngine::GetSceneManager()->GetRenderMeshes(currentMaterial);
 
 			// Upload common shader matrices:
 			currentShader->UploadUniform("in_view", &view[0][0], UNIFORM_Matrix4fv);
@@ -655,7 +661,7 @@ namespace SaberEngine
 			unsigned int numMeshes	= (unsigned int)meshes->size();
 			for (unsigned int j = 0; j < numMeshes; j++)
 			{
-				Mesh* currentMesh = meshes->at(j);
+				gr::Mesh* currentMesh = meshes->at(j);
 				currentMesh->Bind(true);
 
 				// Assemble model-specific matrices:
@@ -673,7 +679,10 @@ namespace SaberEngine
 				// TODO: Only upload these matrices if they've changed ^^^^
 
 				// Draw!
-				glDrawElements(GL_TRIANGLES, currentMesh->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+				glDrawElements(GL_TRIANGLES,
+					(GLsizei)currentMesh->NumIndices(), 
+					GL_UNSIGNED_INT, 
+					(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 				// Cleanup current mesh: 
 				currentMesh->Bind(false);
@@ -839,7 +848,10 @@ namespace SaberEngine
 		deferredLight->DeferredMesh()->Bind(true);
 
 		// Draw!
-		glDrawElements(GL_TRIANGLES, deferredLight->DeferredMesh()->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+		glDrawElements(GL_TRIANGLES,
+			(GLsizei)deferredLight->DeferredMesh()->NumIndices(),
+			GL_UNSIGNED_INT, 
+			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 
 		// Cleanup:
@@ -931,7 +943,7 @@ namespace SaberEngine
 		currentShader->UploadUniform("in_inverse_vp", &inverseViewProjection[0][0], UNIFORM_Matrix4fv);
 
 		// Draw!
-		glDrawElements(GL_TRIANGLES, skybox->GetSkyMesh()->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+		glDrawElements(GL_TRIANGLES, (GLsizei)skybox->GetSkyMesh()->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 		// Cleanup:
 		skybox->GetSkyMesh()->Bind(false);
@@ -954,7 +966,7 @@ namespace SaberEngine
 		outputMaterial->BindAllTextures(RENDER_TEXTURE_0, true);
 		screenAlignedQuad->Bind(true);
 
-		glDrawElements(GL_TRIANGLES, screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+		glDrawElements(GL_TRIANGLES, (GLsizei)screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 		// Cleanup:
 		outputMaterial->BindAllTextures(RENDER_TEXTURE_0, false);
@@ -973,7 +985,7 @@ namespace SaberEngine
 		srcMaterial->BindAllTextures(RENDER_TEXTURE_0, true); // NOTE: Assume we're binding to GBuffer_Albedo, for now...
 		screenAlignedQuad->Bind(true);
 
-		glDrawElements(GL_TRIANGLES, screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+		glDrawElements(GL_TRIANGLES, (GLsizei)screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 		// Cleanup:
 		srcMaterial->BindAllTextures(RENDER_TEXTURE_0, false);
@@ -1001,7 +1013,7 @@ namespace SaberEngine
 		// Bind the source texture into the slot specified in the blit shader:
 		srcMat->AccessTexture((TEXTURE_TYPE)srcTex)->Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, true); // Note: Blit shader reads from this texture unit (for now)
 		
-		glDrawElements(GL_TRIANGLES, screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+		glDrawElements(GL_TRIANGLES, (GLsizei)screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 		// Cleanup:
 		srcMat->AccessTexture((TEXTURE_TYPE)dstTex)->Bind(TEXTURE_ALBEDO, false);

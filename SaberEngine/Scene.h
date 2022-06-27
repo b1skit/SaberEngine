@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Mesh.h"
+#include "grMesh.h"
 
 #include <string>
 #include <vector>
@@ -53,10 +53,10 @@ namespace SaberEngine
 		// Allocate an empty mesh array. Clears any existing mesh array
 		void	InitMeshArray();
 
-		int		AddMesh(Mesh* newMesh);
+		int		AddMesh(gr::Mesh* newMesh);
 		void	DeleteMeshes();
-		Mesh*	GetMesh(int meshIndex);
-		inline vector<Mesh*> const& GetMeshes() { return meshes; }
+		gr::Mesh*	GetMesh(int meshIndex);
+		inline vector<gr::Mesh*> const& GetMeshes() { return meshes; }
 
 		// Cameras:
 		//---------
@@ -82,16 +82,16 @@ namespace SaberEngine
 		// Skybox object:
 		Skybox* skybox		= nullptr;
 
-		inline Bounds const& WorldSpaceSceneBounds() const	{ return sceneWorldBounds; }
+		inline gr::Bounds const& WorldSpaceSceneBounds() const	{ return sceneWorldBounds; }
 
 		string GetSceneName() const							{ return this->sceneName; }
 
 	private:
 		vector<vector<Camera*>> sceneCameras;
 
-		vector<Mesh*> meshes;				// Pointers to dynamically allocated Mesh objects
+		vector<gr::Mesh*> meshes;				// Pointers to dynamically allocated Mesh objects
 
-		Bounds sceneWorldBounds;
+		gr::Bounds sceneWorldBounds;
 
 		// Lights:
 		//--------

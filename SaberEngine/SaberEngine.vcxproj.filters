@@ -12,23 +12,26 @@
     <Filter Include="Source Files\Shaders">
       <UniqueIdentifier>{fba4b42a-a194-41c3-858e-1acac86e27c9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\fr">
+      <UniqueIdentifier>{8d683ba4-1aee-4552-9235-efdf36761b20}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Header Files\gr">
-      <UniqueIdentifier>{1d103d50-7372-4437-82c3-bd26e6a7b14f}</UniqueIdentifier>
+      <UniqueIdentifier>{b6fedb3b-db6f-44f4-bbc5-6061241361f4}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\re">
-      <UniqueIdentifier>{1607ac05-1c63-4dbf-970e-de9c8cffa9b6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\fr">
-      <UniqueIdentifier>{8eef13da-9b75-4b22-8a4e-48df6b6d29ab}</UniqueIdentifier>
+      <UniqueIdentifier>{1af28ce0-86e8-4838-b787-ea0215cad937}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\fr">
-      <UniqueIdentifier>{ce0e144c-69f8-4260-9c74-c7188ba0ef22}</UniqueIdentifier>
+      <UniqueIdentifier>{c39175b2-25dc-47b7-a5b5-d86d8cc9eb68}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\gr">
-      <UniqueIdentifier>{efb612e8-d20d-45e5-8a72-ed7dc275f839}</UniqueIdentifier>
+      <UniqueIdentifier>{23947377-6921-40d3-b919-4d5484db3147}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\re">
-      <UniqueIdentifier>{1333c46d-be8c-4d49-a48b-f0c19d742c37}</UniqueIdentifier>
+      <UniqueIdentifier>{1b25b4a1-92eb-482c-9ebb-92a8e5433254}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shaders\OpenGL">
+      <UniqueIdentifier>{02f62867-9e8f-497d-86ca-be1b7ddfa9bb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -57,9 +60,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Shader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Transform.cpp">
@@ -107,6 +107,9 @@
     <ClCompile Include="Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="grMesh.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EventManager.h">
@@ -140,9 +143,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Shader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Transform.h">
@@ -199,121 +199,124 @@
     <ClInclude Include="SaberObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="grMesh.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\errorShader.frag">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\errorShader.vert">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\lambertShader.frag">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\lambertShader.vert">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\phongShader.frag">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\phongShader.vert">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="depthShader.frag">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\depthShader.vert">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\gBufferFillShader.frag">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\gBufferFillShader.vert">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\deferredKeyLightShader.frag">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\deferredKeyLightShader.vert">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
     <None Include="Shaders\blitShader.frag">
-      <Filter>Source Files\Shaders</Filter>
+      <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
     <None Include="Shaders\blitShader.vert">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\deferredAmbientLightShader.frag">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\deferredAmbientLightShader.vert">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\deferredPointLightShader.frag">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\deferredPointLightShader.vert">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\gBufferFillShader.geom">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\geometryDemoShader.frag">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\geometryDemoShader.vert">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\geometryDemoShader.geom">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\cubeDepthShader.frag">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\cubeDepthShader.geom">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\cubeDepthShader.vert">
-      <Filter>Source Files\Shaders</Filter>
+      <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
     <None Include="Shaders\blurShader.frag">
-      <Filter>Source Files\Shaders</Filter>
+      <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
     <None Include="Shaders\blurShader.vert">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\toneMapShader.frag">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\toneMapShader.vert">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\skyboxShader.frag">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\skyboxShader.vert">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\equilinearToCubemapBlitShader.frag">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\equilinearToCubemapBlitShader.vert">
-      <Filter>Source Files\Shaders</Filter>
-    </None>
-    <None Include="Shaders\BRDFIntegrationMapShader.vert">
-      <Filter>Source Files\Shaders</Filter>
+      <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
     <None Include="Shaders\BRDFIntegrationMapShader.frag">
-      <Filter>Source Files\Shaders</Filter>
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\BRDFIntegrationMapShader.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\cubeDepthShader.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\cubeDepthShader.geom">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\cubeDepthShader.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\deferredAmbientLightShader.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\deferredAmbientLightShader.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\deferredKeyLightShader.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\deferredKeyLightShader.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\deferredPointLightShader.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\deferredPointLightShader.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="depthShader.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\depthShader.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\equilinearToCubemapBlitShader.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\equilinearToCubemapBlitShader.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\errorShader.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\errorShader.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\gBufferFillShader.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\gBufferFillShader.geom">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\gBufferFillShader.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\geometryDemoShader.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\geometryDemoShader.geom">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\geometryDemoShader.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\lambertShader.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\lambertShader.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\phongShader.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\phongShader.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
     <None Include="Shaders\SaberCommon.glsl">
-      <Filter>Source Files\Shaders</Filter>
+      <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
     <None Include="Shaders\SaberGlobals.glsl">
-      <Filter>Source Files\Shaders</Filter>
+      <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
     <None Include="Shaders\SaberLighting.glsl">
-      <Filter>Source Files\Shaders</Filter>
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\skyboxShader.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\skyboxShader.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\toneMapShader.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\toneMapShader.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
   </ItemGroup>
 </Project>

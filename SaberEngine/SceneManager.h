@@ -2,6 +2,7 @@
 
 #include "EngineComponent.h"
 #include "EventListener.h"
+#include "grMesh.h"
 
 #include <assimp/scene.h>		// Output data structure
 
@@ -65,7 +66,7 @@ namespace SaberEngine
 		unordered_map<string, Material*> const&	GetMaterials() const;
 		Material*								GetMaterial(string materialName);
 		
-		vector<Mesh*> const*					GetRenderMeshes(Material* targetMaterial);					// If targetMaterial is nullptr, returns ALL meshes
+		vector<gr::Mesh*> const* GetRenderMeshes(Material* targetMaterial);	// Returns ALL meshs if targetMaterial == nullptr
 		vector<Renderable*>*					GetRenderables();
 
 		Light* const&							GetAmbientLight();
@@ -106,7 +107,7 @@ namespace SaberEngine
 		void				AddMaterial(Material*& newMaterial);	// Add a material to the material array. Note: Material name MUST be unique
 
 		void				AssembleMaterialMeshLists();		// Helper function: Compiles vectors filled with meshes that use each material. Must be called once after all meshes have finished loading
-		unordered_map<string, vector<Mesh*>>materialMeshLists;	// Hash table: Maps material names, to a vector of Mesh* using the material
+		unordered_map<string, vector<gr::Mesh*>>materialMeshLists;	// Hash table: Maps material names, to a vector of Mesh* using the material
 
 
 		// Scene setup/construction:

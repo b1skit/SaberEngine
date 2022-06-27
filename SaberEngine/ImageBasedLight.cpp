@@ -2,7 +2,7 @@
 #include "CoreEngine.h"
 #include "Texture.h"
 #include "BuildConfiguration.h"
-#include "Mesh.h"
+#include "grMesh.h"
 #include "Shader.h"
 #include "Texture.h"
 #include "Material.h"
@@ -181,7 +181,7 @@ namespace SaberEngine
 		}
 
 		// Create a cube mesh for rendering:
-		Mesh cubeMesh = Mesh::CreateCube();
+		gr::Mesh cubeMesh = gr::meshfactory::CreateCube();
 		cubeMesh.Bind(true);
 
 
@@ -257,7 +257,10 @@ namespace SaberEngine
 					cubeFaces[i]->AttachToFramebuffer(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, currentMipLevel);
 
 					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-					glDrawElements(GL_TRIANGLES, cubeMesh.NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+					glDrawElements(GL_TRIANGLES,
+						(GLsizei)cubeMesh.NumIndices(),
+						GL_UNSIGNED_INT,
+						(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 				}
 			}
 		}
@@ -272,7 +275,10 @@ namespace SaberEngine
 				cubeFaces[i]->AttachToFramebuffer(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0);
 
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				glDrawElements(GL_TRIANGLES, cubeMesh.NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+				glDrawElements(GL_TRIANGLES, 
+					(GLsizei)cubeMesh.NumIndices(),
+					GL_UNSIGNED_INT,
+					(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 			}
 		}
 		
@@ -348,7 +354,7 @@ namespace SaberEngine
 		this->BRDF_integrationMap->Bind(GENERIC_TEXTURE_0, true);
 		
 		// Create a CCW screen-aligned quad to render with:
-		Mesh quad = Mesh::CreateQuad
+		gr::Mesh quad = gr::meshfactory::CreateQuad
 		(
 			vec3(-1.0f, 1.0f,	-1.0f),	// TL
 			vec3(1.0f,	1.0f,	-1.0f),	// TR
@@ -366,7 +372,10 @@ namespace SaberEngine
 		this->BRDF_integrationMap->CreateRenderbuffer();
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glDrawElements(GL_TRIANGLES, quad.NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+		glDrawElements(GL_TRIANGLES,
+			(GLsizei)quad.NumIndices(),
+			GL_UNSIGNED_INT, 
+			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 
 		// Cleanup:

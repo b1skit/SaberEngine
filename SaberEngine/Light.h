@@ -3,15 +3,16 @@
 
 #pragma once
 
-#include "SceneObject.h"	// Base class
-
-#include <glm/glm.hpp>
-
 #include <string>
 
+#include <glm/glm.hpp>
 using glm::vec3;
 using glm::vec4;
-using std::string;
+
+#include "SceneObject.h"	// Base class
+#include "grMesh.h"
+
+
 
 
 namespace SaberEngine
@@ -41,7 +42,7 @@ namespace SaberEngine
 	{
 	public:
 		Light() {}; // Default constructor
-		Light(string lightName, LIGHT_TYPE lightType, vec3 color, ShadowMap* shadowMap = nullptr, float radius = 1.0f);
+		Light(std::string lightName, LIGHT_TYPE lightType, vec3 color, ShadowMap* shadowMap = nullptr, float radius = 1.0f);
 
 		void Destroy();
 
@@ -63,8 +64,8 @@ namespace SaberEngine
 		
 		ShadowMap*&					ActiveShadowMap(ShadowMap* newShadowMap = nullptr);				// Get/set the current shadow map
 
-		inline Mesh*&				DeferredMesh()							{ return deferredMesh; }
-		inline Material*&			DeferredMaterial()						{ return deferredMaterial; }
+		inline gr::Mesh*&		DeferredMesh()		{ return deferredMesh; }
+		inline Material*&		DeferredMaterial()	{ return deferredMaterial; }
 
 
 	protected:
@@ -79,7 +80,7 @@ namespace SaberEngine
 		ShadowMap* shadowMap		= nullptr;							// Deallocated by calling Destroy() during SceneManager.Shutdown()
 
 		// Deferred light setup:
-		Mesh* deferredMesh			= nullptr;
+		gr::Mesh* deferredMesh		= nullptr;
 		Material* deferredMaterial	= nullptr;
 	};
 }

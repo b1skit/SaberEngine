@@ -1,5 +1,5 @@
 #include "Renderable.h"
-#include "Mesh.h"
+#include "grMesh.h"
 #include "Transform.h"
 
 
@@ -14,7 +14,7 @@ void SaberEngine::Renderable::SetTransform(Transform* transform)
 	}
 }
 
-void SaberEngine::Renderable::AddViewMeshAsChild(Mesh* mesh)
+void SaberEngine::Renderable::AddViewMeshAsChild(gr::Mesh* mesh)
 {
 	mesh->GetTransform().Parent(this->gameObjectTransform);
 

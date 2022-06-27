@@ -1,5 +1,6 @@
 #pragma once
 
+#include "grMesh.h"
 #include <string>
 
 using std::string;
@@ -13,17 +14,17 @@ namespace SaberEngine
 	class Skybox
 	{
 	public:
-		Skybox(Material* skyMaterial, Mesh* skyMesh);
+		Skybox(Material* skyMaterial, gr::Mesh* skyMesh);
 		Skybox(string sceneName);
 		~Skybox();
 
-		Material*	GetSkyMaterial()		{ return skyMaterial; }
-		Mesh*		GetSkyMesh()			{ return skyMesh; }
+		Material*	GetSkyMaterial()	{ return skyMaterial; }
+		gr::Mesh*		GetSkyMesh()	{ return skyMesh; }
 
 
 	private:
 		Material* skyMaterial	= nullptr;	// Deallocated in destructor
-		Mesh* skyMesh			= nullptr;	// Deallocated in destructor
+		gr::Mesh* skyMesh		= nullptr;	// Deallocated in destructor
 	};
 }
 

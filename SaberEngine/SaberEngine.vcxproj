@@ -180,7 +180,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="LogManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Material.cpp" />
-    <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="grMesh.cpp" />
     <ClCompile Include="PlayerObject.cpp" />
     <ClCompile Include="PostFXManager.cpp" />
     <ClCompile Include="Renderable.cpp" />
@@ -196,6 +196,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="grMesh.h" />
     <ClInclude Include="SaberObject.h" />
     <ClInclude Include="BuildConfiguration.h" />
     <ClInclude Include="Camera.h" />
@@ -211,7 +212,6 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="Light.h" />
     <ClInclude Include="LogManager.h" />
     <ClInclude Include="Material.h" />
-    <ClInclude Include="Mesh.h" />
     <ClInclude Include="PlayerObject.h" />
     <ClInclude Include="PostFXManager.h" />
     <ClInclude Include="Renderable.h" />

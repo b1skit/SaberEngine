@@ -3,7 +3,7 @@
 #include "PostFXManager.h"
 #include "BuildConfiguration.h"
 #include "CoreEngine.h"
-#include "Mesh.h"
+#include "grMesh.h"
 #include "RenderTexture.h"
 #include "Shader.h"
 #include "Camera.h"
@@ -127,9 +127,9 @@ namespace SaberEngine
 		blurShaders[BLUR_SHADER_VERTICAL]->UploadUniform("texelSize", &texelSize.x, UNIFORM_Vec4fv);
 
 
-		screenAlignedQuad = new Mesh	// TODO: Use the RenderManager's instead of duplicating it here?
+		screenAlignedQuad = new gr::Mesh	// TODO: Use the RenderManager's instead of duplicating it here?
 		(
-			Mesh::CreateQuad
+			gr::meshfactory::CreateQuad
 			(
 				vec3(-1.0f, 1.0f, 0.0f),	// TL
 				vec3(1.0f, 1.0f, 0.0f),		// TR
@@ -152,7 +152,11 @@ namespace SaberEngine
 		this->outputMaterial->AccessTexture(RENDER_TEXTURE_ALBEDO)->Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, true);
 
 		// Draw!
-		glDrawElements(GL_TRIANGLES, screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+		glDrawElements(
+			GL_TRIANGLES, // GLenum mode
+			(GLsizei)screenAlignedQuad->NumIndices(), //GLsizei count
+			GL_UNSIGNED_INT, // GLenum type
+			(void*)(0)); // const GLvoid* indices
 
 		// Cleanup:
 		this->blurShaders[BLUR_SHADER_LUMINANCE_THRESHOLD]->Bind(false);
@@ -171,7 +175,10 @@ namespace SaberEngine
 			this->pingPongTextures[i - 1].Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, true);
 
 			// Draw!
-			glDrawElements(GL_TRIANGLES, screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+			glDrawElements(GL_TRIANGLES,
+				(GLsizei)screenAlignedQuad->NumIndices(),
+				GL_UNSIGNED_INT,
+				(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 			// Cleanup:
 			this->pingPongTextures[i - 1].Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, false);
@@ -193,7 +200,10 @@ namespace SaberEngine
 			this->pingPongTextures[NUM_DOWN_SAMPLES - 1].Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, true);
 
 			// Draw!
-			glDrawElements(GL_TRIANGLES, screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0));
+			glDrawElements(GL_TRIANGLES, 
+				(GLsizei)screenAlignedQuad->NumIndices(), 
+				GL_UNSIGNED_INT,
+				(void*)(0));
 
 			// Cleanup:
 			this->pingPongTextures[NUM_DOWN_SAMPLES - 1].Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, false);
@@ -209,7 +219,10 @@ namespace SaberEngine
 			this->pingPongTextures[NUM_DOWN_SAMPLES].Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, true);
 
 			// Draw!
-			glDrawElements(GL_TRIANGLES, screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0));
+			glDrawElements(GL_TRIANGLES,
+				(GLsizei)screenAlignedQuad->NumIndices(),
+				GL_UNSIGNED_INT, 
+				(void*)(0));
 
 			// Cleanup:
 			this->pingPongTextures[NUM_DOWN_SAMPLES].Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, false);
@@ -229,7 +242,10 @@ namespace SaberEngine
 			this->pingPongTextures[i].Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, true);
 
 			// Draw!
-			glDrawElements(GL_TRIANGLES, screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0));
+			glDrawElements(GL_TRIANGLES, 
+				(GLsizei)screenAlignedQuad->NumIndices(),
+				GL_UNSIGNED_INT,
+				(void*)(0));
 
 			// Cleanup:
 			this->pingPongTextures[i].Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, false);
@@ -244,7 +260,10 @@ namespace SaberEngine
 		this->pingPongTextures[0].Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, true);
 		
 		glEnable(GL_BLEND);
-		glDrawElements(GL_TRIANGLES, screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+		glDrawElements(GL_TRIANGLES,
+			(GLsizei)screenAlignedQuad->NumIndices(),
+			GL_UNSIGNED_INT,
+			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 		glDisable(GL_BLEND);
 
 		// Set the final frame material and shader to apply tone mapping:

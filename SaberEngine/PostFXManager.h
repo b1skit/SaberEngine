@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "grMesh.h"
+
 
 namespace SaberEngine
 {
@@ -51,7 +53,7 @@ namespace SaberEngine
 		Shader* blurShaders[BLUR_SHADER_COUNT];		// Deallocated in destructor
 		
 		
-		Mesh* screenAlignedQuad			= nullptr;	// Deallocated in destructor
+		gr::Mesh* screenAlignedQuad			= nullptr;	// Deallocated in destructor
 	};
 }
 

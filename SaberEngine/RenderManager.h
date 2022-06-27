@@ -7,13 +7,13 @@
 #include <string>
 
 #include <GL/glew.h>
-
 #include <SDL.h>
 
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
-
 using glm::vec4;
+
+#include "grMesh.h"
 
 
 namespace SaberEngine
@@ -97,7 +97,7 @@ namespace SaberEngine
 		SDL_GLContext glContext		= 0;
 
 		Material* outputMaterial	= nullptr;	// Deallocated in Shutdown()
-		Mesh* screenAlignedQuad		= nullptr;	// Deallocated in Shutdown()
+		gr::Mesh* screenAlignedQuad		= nullptr;	// Deallocated in Shutdown()
 
 		// PostFX:
 		PostFXManager* postFXManager = nullptr;	// Deallocated in Shutdown()

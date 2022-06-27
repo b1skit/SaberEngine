@@ -1,6 +1,6 @@
 #include "Skybox.h"
 #include "Material.h"
-#include "Mesh.h"
+#include "grMesh.h"
 #include "CoreEngine.h"
 #include "BuildConfiguration.h"
 #include "ImageBasedLight.h"
@@ -10,7 +10,7 @@
 
 namespace SaberEngine
 {
-	Skybox::Skybox(Material* skyMaterial, Mesh* skyMesh)
+	Skybox::Skybox(Material* skyMaterial, gr::Mesh* skyMesh)
 	{
 		this->skyMaterial	= skyMaterial;
 		this->skyMesh		= skyMesh;
@@ -132,9 +132,9 @@ namespace SaberEngine
 		}
 
 		// Create a quad at furthest point in the depth buffer
-		this->skyMesh = new Mesh
+		this->skyMesh = new gr::Mesh
 		(
-			Mesh::CreateQuad
+			gr::meshfactory::CreateQuad
 			(
 				vec3(-1.0f, 1.0f,	1.0f), // z == 1.0f, since we're in clip space (and camera's negative Z has been reversed)
 				vec3(1.0f,	1.0f,	1.0f),

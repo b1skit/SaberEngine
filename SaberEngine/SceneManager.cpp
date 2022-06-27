@@ -3,7 +3,7 @@
 #include "EventManager.h"
 #include "CoreEngine.h"
 #include "Camera.h"
-#include "Mesh.h"
+#include "grMesh.h"
 #include "Texture.h"
 #include "Material.h"
 #include "SceneObject.h"
@@ -299,7 +299,7 @@ namespace SaberEngine
 	}
 
 
-	vector<Mesh*> const* SceneManager::GetRenderMeshes(Material* targetMaterial)
+	vector<gr::Mesh*> const* SceneManager::GetRenderMeshes(Material* targetMaterial)
 	{
 		// If materialIndex is out of bounds, return ALL meshes
 		if (targetMaterial == nullptr)
@@ -507,7 +507,7 @@ namespace SaberEngine
 		{
 			for (int j = 0; j < (int)currentScene->renderables.at(i)->ViewMeshes()->size(); j++)
 			{
-				Mesh* viewMesh = currentScene->renderables.at(i)->ViewMeshes()->at(j);
+				gr::Mesh* viewMesh = currentScene->renderables.at(i)->ViewMeshes()->at(j);
 
 				Material* meshMaterial = viewMesh->MeshMaterial();
 				if (meshMaterial == nullptr)
@@ -521,7 +521,7 @@ namespace SaberEngine
 					if (result == this->materialMeshLists.end())
 					{
 						// Create a new entry, containing a vector with our object
-						this->materialMeshLists[meshMaterial->Name()] = vector<Mesh*>{viewMesh};
+						this->materialMeshLists[meshMaterial->Name()] = vector<gr::Mesh*>{viewMesh};
 					}
 					else
 					{
@@ -1080,7 +1080,7 @@ namespace SaberEngine
 					LOG("\nMesh #" + to_string(currentMesh) + " \"" + meshName + "\": " + to_string(numVerts) + " verts, " + to_string(numFaces) + " faces, " + to_string(numUVChannels) + " UV channels, " + to_string(numUVs) + " UV components in channel 0, using material #" + to_string(materialIndex));
 				#endif
 
-				Vertex* vertices = new Vertex[numVerts];
+				std::vector<gr::Vertex> vertices(numVerts);
 
 				// Add each vertex to the vertices array:
 				for (int currentVert = 0; currentVert < numVerts; currentVert++)
@@ -1135,12 +1135,12 @@ namespace SaberEngine
 					}
 
 					// Assemble the vertex:
-					vertices[currentVert] = Vertex(position, normal, tangent, bitangent, color, uv);
+					vertices[currentVert] = gr::Vertex(position, normal, tangent, bitangent, color, uv);
 				}
 
 				// Fill the indices array:
 				int numIndices = scene->mMeshes[currentMesh]->mNumFaces * 3;
-				GLuint* indices = new GLuint[numIndices];
+				std::vector<GLuint> indices(numIndices);
 
 				#if defined(DEBUG_SCENEMANAGER_MESH_LOGGING)
 					LOG("Created arrays of " + to_string(numVerts) + " vertices, & " + to_string(numIndices) + " indices");
@@ -1158,7 +1158,7 @@ namespace SaberEngine
 					}
 				}
 
-				Mesh* newMesh				= new Mesh(meshName, vertices, numVerts, indices, numIndices, this->GetMaterial(materialName));
+				gr::Mesh* newMesh = new gr::Mesh(meshName, vertices, indices, this->GetMaterial(materialName));
 
 				GameObject* gameObject		= FindCreateGameObjectParents(scene, currentNode->mParent);
 
@@ -1428,18 +1428,18 @@ namespace SaberEngine
 
 					currentScene->AddLight(keyLight);
 
-					Bounds sceneWorldBounds		= currentScene->WorldSpaceSceneBounds();
-					Bounds transformedBounds	= sceneWorldBounds.GetTransformedBounds(glm::inverse(currentScene->keyLight->GetTransform().Model()));
+					gr::Bounds sceneWorldBounds		= currentScene->WorldSpaceSceneBounds();
+					gr::Bounds transformedBounds	= sceneWorldBounds.GetTransformedBounds(glm::inverse(currentScene->keyLight->GetTransform().Model()));
 
 					CameraConfig shadowCamConfig;
-					shadowCamConfig.near			= -transformedBounds.zMax;
-					shadowCamConfig.far				= -transformedBounds.zMin;
+					shadowCamConfig.near			= -transformedBounds.zMax();
+					shadowCamConfig.far				= -transformedBounds.zMin();
 
 					shadowCamConfig.isOrthographic	= true;
-					shadowCamConfig.orthoLeft		= transformedBounds.xMin;
-					shadowCamConfig.orthoRight		= transformedBounds.xMax;
-					shadowCamConfig.orthoBottom		= transformedBounds.yMin;
-					shadowCamConfig.orthoTop		= transformedBounds.yMax;
+					shadowCamConfig.orthoLeft		= transformedBounds.xMin();
+					shadowCamConfig.orthoRight		= transformedBounds.xMax();
+					shadowCamConfig.orthoBottom		= transformedBounds.yMin();
+					shadowCamConfig.orthoTop		= transformedBounds.yMax();
 
 					ShadowMap* keyLightShadowMap	= new ShadowMap // TEMP: We assume the key light will ALWAYS have a shadow
 					(
