@@ -41,9 +41,9 @@ namespace SaberEngine
 		int				m_inputKeyboardBindings[INPUT_NUM_BUTTONS];		// Stores mapping from KEYBOARD_BUTTON_STATE enums to SDL_SCANCODE_ values
 		static bool		m_keyboardButtonStates[INPUT_NUM_BUTTONS];		// Stores the state of keyboard keys
 
-		static bool		m_mouseButtonStates[INPUT_MOUSE_NUM_BUTTONS];		// Stores the state of mouse buttons
+		static bool		m_mouseButtonStates[INPUT_MOUSE_NUM_BUTTONS];	// Stores the state of mouse buttons
 
-		static float	m_mouseAxisStates[INPUT_NUM_INPUT_AXIS];			// Mouse axis deltas
+		static float	m_mouseAxisStates[INPUT_NUM_INPUT_AXIS];		// Mouse axis deltas
 
 		// Cache sensitivity params:
 		static float m_mousePitchSensitivity;

@@ -214,7 +214,7 @@ namespace gr
 		inline Mesh CreateCube(SaberEngine::Material* newMeshMaterial = nullptr)
 		{
 			// Note: SaberEngine uses a RHCS in all cases
-			glm::vec3 positions[8];
+			std::vector<vec3> positions(8);
 			positions[0] = glm::vec3(-1.0f, 1.0f, 1.0f); // "Front" side
 			positions[1] = glm::vec3(-1.0f, -1.0f, 1.0f);
 			positions[2] = glm::vec3(1.0f, -1.0f, 1.0f);
@@ -225,7 +225,7 @@ namespace gr
 			positions[6] = glm::vec3(1.0f, -1.0f, -1.0f);
 			positions[7] = glm::vec3(1.0f, 1.0f, -1.0f);
 
-			const glm::vec3 normals[6]
+			const std::vector<glm::vec3 > normals
 			{
 				glm::vec3(0.0f, 0.0f, 1.0f),		// Front = 0
 				glm::vec3(0.0f, 0.0f, -1.0f),	// Back = 1
@@ -235,7 +235,7 @@ namespace gr
 				glm::vec3(0.0f, -1.0f, 0.0f),	// Down = 5
 			};
 
-			const glm::vec4 colors[8]
+			const std::vector<glm::vec4> colors
 			{
 				glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
 				glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
@@ -247,7 +247,7 @@ namespace gr
 				glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
 			};
 
-			const glm::vec4 uvs[4]
+			const std::vector<glm::vec4> uvs
 			{
 				glm::vec4(0.0f, 0.0f, 0.0f, 0.0f),
 				glm::vec4(0.0f, 1.0f, 0.0f, 0.0f),
@@ -296,7 +296,6 @@ namespace gr
 				Vertex(positions[4], normals[1], glm::vec3(), glm::vec3(), colors[4], uvs[3]), //23
 			};
 
-			int numIndices = 36;
 			std::vector<GLuint> cubeIndices // 6 faces * 2 tris * 3 indices 
 			{
 				// Front face:
@@ -338,7 +337,7 @@ namespace gr
 			glm::vec3 quadNormal = normalize(cross(m_tangent, m_bitangent));
 			glm::vec4 redColor = vec4(1, 0, 0, 1); // Assign a bright red color by default...
 
-			glm::vec4 uvs[4]
+			std::vector<glm::vec4> uvs
 			{
 				glm::vec4(0, 1, 0, 0), // tl
 				glm::vec4(0, 0, 0, 0), // bl

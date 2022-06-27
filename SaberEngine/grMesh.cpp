@@ -15,47 +15,47 @@ namespace gr
 		Make3Dimensional();
 
 		Bounds result;
+												
+		std::vector<vec4>points(8);											// "front" == fwd == Z -
+		points[0] = vec4(m_xMin, m_yMax, m_zMin, 1.0f);		// Left		top		front 
+		points[1] = vec4(m_xMax, m_yMax, m_zMin, 1.0f);		// Right	top		front
+		points[2] = vec4(m_xMin, m_yMin, m_zMin, 1.0f);		// Left		bot		front
+		points[3] = vec4(m_xMax, m_yMin, m_zMin, 1.0f);		// Right	bot		front
 
-		vec4 m_points[8];																// "front" == fwd == Z -
-		m_points[0] = vec4(m_xMin, m_yMax, m_zMin, 1.0f);		// Left		top		front 
-		m_points[1] = vec4(m_xMax, m_yMax, m_zMin, 1.0f);		// Right	top		front
-		m_points[2] = vec4(m_xMin, m_yMin, m_zMin, 1.0f);		// Left		bot		front
-		m_points[3] = vec4(m_xMax, m_yMin, m_zMin, 1.0f);		// Right	bot		front
-
-		m_points[4] = vec4(m_xMin, m_yMax, m_zMax, 1.0f);		// Left		top		back
-		m_points[5] = vec4(m_xMax, m_yMax, m_zMax, 1.0f);		// Right	top		back
-		m_points[6] = vec4(m_xMin, m_yMin, m_zMax, 1.0f);		// Left		bot		back
-		m_points[7] = vec4(m_xMax, m_yMin, m_zMax, 1.0f);		// Right	bot		back
+		points[4] = vec4(m_xMin, m_yMax, m_zMax, 1.0f);		// Left		top		back
+		points[5] = vec4(m_xMax, m_yMax, m_zMax, 1.0f);		// Right	top		back
+		points[6] = vec4(m_xMin, m_yMin, m_zMax, 1.0f);		// Left		bot		back
+		points[7] = vec4(m_xMax, m_yMin, m_zMax, 1.0f);		// Right	bot		back
 
 		for (int i = 0; i < 8; i++)
 		{
-			m_points[i] = m_transform * m_points[i];
+			points[i] = m_transform * points[i];
 
-			if (m_points[i].x < result.m_xMin)
+			if (points[i].x < result.m_xMin)
 			{
-				result.m_xMin = m_points[i].x;
+				result.m_xMin = points[i].x;
 			}
-			if (m_points[i].x > result.m_xMax)
+			if (points[i].x > result.m_xMax)
 			{
-				result.m_xMax = m_points[i].x;
-			}
-
-			if (m_points[i].y < result.m_yMin)
-			{
-				result.m_yMin = m_points[i].y;
-			}
-			if (m_points[i].y > result.m_yMax)
-			{
-				result.m_yMax = m_points[i].y;
+				result.m_xMax = points[i].x;
 			}
 
-			if (m_points[i].z < result.m_zMin)
+			if (points[i].y < result.m_yMin)
 			{
-				result.m_zMin = m_points[i].z;
+				result.m_yMin = points[i].y;
 			}
-			if (m_points[i].z > result.m_zMax)
+			if (points[i].y > result.m_yMax)
 			{
-				result.m_zMax = m_points[i].z;
+				result.m_yMax = points[i].y;
+			}
+
+			if (points[i].z < result.m_zMin)
+			{
+				result.m_zMin = points[i].z;
+			}
+			if (points[i].z > result.m_zMax)
+			{
+				result.m_zMax = points[i].z;
 			}
 		}
 
