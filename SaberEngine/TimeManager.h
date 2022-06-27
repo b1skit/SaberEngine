@@ -29,7 +29,7 @@ namespace SaberEngine
 
 		//inline unsigned int GetCurrentTime()
 		//{
-		//	return currentTime;
+		//	return m_currentTime;
 		//}
 
 		//// Get the time elapsed since the last frame, in seconds
@@ -39,8 +39,8 @@ namespace SaberEngine
 		//}
 
 		// Get the time elapsed since the last frame, in ms
-		static inline unsigned int	DeltaTime()						{ return deltaTime; }
-		static unsigned int			GetTotalRunningTimeMs()			{ return currentTime - startTime; }
+		static inline unsigned int	DeltaTime()						{ return m_deltaTime; }
+		static unsigned int			GetTotalRunningTimeMs()			{ return m_currentTime - m_startTime; }
 		static double				GetTotalRunningTimeSeconds()	{ return (double)GetTotalRunningTimeMs() * 0.001; }
 
 		
@@ -48,10 +48,10 @@ namespace SaberEngine
 
 
 	private:
-		static unsigned int startTime;
-		static unsigned int prevTime;
-		static unsigned int currentTime;
-		static unsigned int	deltaTime;
+		static unsigned int m_startTime;
+		static unsigned int m_prevTime;
+		static unsigned int m_currentTime;
+		static unsigned int	m_deltaTime;
 
 		/*double timeScale;*/
 	};

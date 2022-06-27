@@ -22,9 +22,9 @@ namespace SaberEngine
 
 	Camera::Camera(string cameraName, CameraConfig camConfig, Transform* parent /*= nullptr*/) : SceneObject::SceneObject(cameraName)
 	{
-		this->cameraConfig = camConfig;
+		m_cameraConfig = camConfig;
 
-		this->transform.Parent(parent);
+		m_transform.Parent(parent);
 
 		Initialize();
 	}
@@ -32,49 +32,49 @@ namespace SaberEngine
 
 	void Camera::Initialize()
 	{
-		if (this->cameraConfig.isOrthographic)
+		if (m_cameraConfig.m_isOrthographic)
 		{
-			this->cameraConfig.fieldOfView = 0.0f;
+			m_cameraConfig.m_fieldOfView = 0.0f;
 
-			this->projection = glm::ortho
+			m_projection = glm::ortho
 			(
-				this->cameraConfig.orthoLeft, 
-				this->cameraConfig.orthoRight, 
-				this->cameraConfig.orthoBottom, 
-				this->cameraConfig.orthoTop, 
-				this->cameraConfig.near, 
-				this->cameraConfig.far
+				m_cameraConfig.m_orthoLeft, 
+				m_cameraConfig.m_orthoRight, 
+				m_cameraConfig.m_orthoBottom, 
+				m_cameraConfig.m_orthoTop, 
+				m_cameraConfig.m_near, 
+				m_cameraConfig.m_far
 			);
 		}
 		else
 		{
-			this->cameraConfig.orthoLeft	= 0.0f;
-			this->cameraConfig.orthoRight	= 0.0f;
-			this->cameraConfig.orthoBottom	= 0.0f;
-			this->cameraConfig.orthoTop		= 0.0f;
+			m_cameraConfig.m_orthoLeft	= 0.0f;
+			m_cameraConfig.m_orthoRight	= 0.0f;
+			m_cameraConfig.m_orthoBottom	= 0.0f;
+			m_cameraConfig.m_orthoTop		= 0.0f;
 
-			this->projection = glm::perspective
+			m_projection = glm::perspective
 			(
-				glm::radians(this->cameraConfig.fieldOfView), 
-				this->cameraConfig.aspectRatio, 
-				this->cameraConfig.near, 
-				this->cameraConfig.far
+				glm::radians(m_cameraConfig.m_fieldOfView), 
+				m_cameraConfig.m_aspectRatio, 
+				m_cameraConfig.m_near, 
+				m_cameraConfig.m_far
 			);
 		}
 
 		View();						// Internally initializes the view matrix
 
-		this->viewProjection = projection * view;
+		m_viewProjection = m_projection * m_view;
 	}
 
 
 	void Camera::Destroy()
 	{
-		if (this->renderMaterial != nullptr)
+		if (m_renderMaterial != nullptr)
 		{
 			for (int i = 0; i < TEXTURE_COUNT; i++)
 			{
-				Texture* currentTexture = renderMaterial->AccessTexture((TEXTURE_TYPE)i);
+				Texture* currentTexture = m_renderMaterial->AccessTexture((TEXTURE_TYPE)i);
 				if (currentTexture != nullptr)
 				{
 					currentTexture->Destroy();
@@ -83,72 +83,72 @@ namespace SaberEngine
 				}
 			}
 
-			delete renderMaterial;
-			renderMaterial = nullptr;
+			delete m_renderMaterial;
+			m_renderMaterial = nullptr;
 		}
 	}
 
 
 	mat4 const& Camera::View()
 	{
-		view = inverse(transform.Model());
-		return view;
+		m_view = inverse(m_transform.Model());
+		return m_view;
 	}
 
 	mat4 const* Camera::CubeView()
 	{
 		// If we've never allocated cubeView, do it now:
-		if (cubeView.size() == 0)
+		if (m_cubeView.size() == 0)
 		{
-			cubeView.reserve(6);
+			m_cubeView.reserve(6);
 
-			cubeView.emplace_back( glm::lookAt(this->transform.WorldPosition(), this->transform.WorldPosition() + Transform::WORLD_X, -Transform::WORLD_Y) );			
-			cubeView.emplace_back( glm::lookAt(this->transform.WorldPosition(), this->transform.WorldPosition() - Transform::WORLD_X, -Transform::WORLD_Y) );
+			m_cubeView.emplace_back( glm::lookAt(m_transform.WorldPosition(), m_transform.WorldPosition() + Transform::WORLD_X, -Transform::WORLD_Y) );			
+			m_cubeView.emplace_back( glm::lookAt(m_transform.WorldPosition(), m_transform.WorldPosition() - Transform::WORLD_X, -Transform::WORLD_Y) );
 
-			cubeView.emplace_back( glm::lookAt(this->transform.WorldPosition(), this->transform.WorldPosition() + Transform::WORLD_Y, Transform::WORLD_Z) );
-			cubeView.emplace_back( glm::lookAt(this->transform.WorldPosition(), this->transform.WorldPosition() - Transform::WORLD_Y, -Transform::WORLD_Z) );
+			m_cubeView.emplace_back( glm::lookAt(m_transform.WorldPosition(), m_transform.WorldPosition() + Transform::WORLD_Y, Transform::WORLD_Z) );
+			m_cubeView.emplace_back( glm::lookAt(m_transform.WorldPosition(), m_transform.WorldPosition() - Transform::WORLD_Y, -Transform::WORLD_Z) );
 
-			cubeView.emplace_back( glm::lookAt(this->transform.WorldPosition(), this->transform.WorldPosition() + Transform::WORLD_Z, -Transform::WORLD_Y) );
-			cubeView.emplace_back( glm::lookAt(this->transform.WorldPosition(), this->transform.WorldPosition() - Transform::WORLD_Z, -Transform::WORLD_Y) );
+			m_cubeView.emplace_back( glm::lookAt(m_transform.WorldPosition(), m_transform.WorldPosition() + Transform::WORLD_Z, -Transform::WORLD_Y) );
+			m_cubeView.emplace_back( glm::lookAt(m_transform.WorldPosition(), m_transform.WorldPosition() - Transform::WORLD_Z, -Transform::WORLD_Y) );
 		}
 
 		// TODO: Recalculate this if the camera has moved
 
-		return &cubeView[0];
+		return &m_cubeView[0];
 	}
 
 	mat4 const* Camera::CubeViewProjection()
 	{
 		// If we've never allocated cubeViewProjection, do it now:
-		if (cubeViewProjection.size() == 0)
+		if (m_cubeViewProjection.size() == 0)
 		{
-			cubeViewProjection.reserve(6);
+			m_cubeViewProjection.reserve(6);
 
-			mat4 const* ourCubeViews = this->CubeView(); // Call this to ensure cubeView has been initialized
+			mat4 const* ourCubeViews = CubeView(); // Call this to ensure cubeView has been initialized
 
-			cubeViewProjection.emplace_back(this->projection * ourCubeViews[0]);
-			cubeViewProjection.emplace_back(this->projection * ourCubeViews[1]);
-			cubeViewProjection.emplace_back(this->projection * ourCubeViews[2]);
-			cubeViewProjection.emplace_back(this->projection * ourCubeViews[3]);
-			cubeViewProjection.emplace_back(this->projection * ourCubeViews[4]);
-			cubeViewProjection.emplace_back(this->projection * ourCubeViews[5]);
+			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[0]);
+			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[1]);
+			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[2]);
+			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[3]);
+			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[4]);
+			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[5]);
 		}
 
-		return &cubeViewProjection[0];
+		return &m_cubeViewProjection[0];
 	}
 
 
 	void Camera::AttachGBuffer()
 	{
-		Material* gBufferMaterial	= new Material(this->GetName() + "_Material", CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("gBufferFillShaderName"), RENDER_TEXTURE_COUNT, true);
-		this->renderMaterial		= gBufferMaterial;
+		Material* gBufferMaterial	= new Material(GetName() + "_Material", CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("gBufferFillShaderName"), RENDER_TEXTURE_COUNT, true);
+		m_renderMaterial		= gBufferMaterial;
 
 		// We use the albedo texture as a basis for the others
 		RenderTexture* gBuffer_albedo = new RenderTexture
 		(
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes"),
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes"),
-			this->GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[RENDER_TEXTURE_ALBEDO]
+			GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[RENDER_TEXTURE_ALBEDO]
 		);
 		gBuffer_albedo->Format()			= GL_RGBA;		// Note: Using 4 channels for future flexibility
 		gBuffer_albedo->InternalFormat()	= GL_RGBA32F;		
@@ -181,7 +181,7 @@ namespace SaberEngine
 			}
 
 			RenderTexture* currentRT		= new RenderTexture(*gBuffer_albedo);	// We're creating the same type of textures, attached to the same framebuffer
-			currentRT->TexturePath()		= this->GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[(TEXTURE_TYPE)currentType];
+			currentRT->TexturePath()		= GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[(TEXTURE_TYPE)currentType];
 
 			currentRT->FBO()				= gBufferFBO;
 			currentRT->AttachmentPoint()	= gBuffer_albedo->AttachmentPoint() + attachmentIndexOffset;
@@ -207,13 +207,13 @@ namespace SaberEngine
 		(
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes"),
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes"),
-			this->GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[RENDER_TEXTURE_DEPTH]
+			GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[RENDER_TEXTURE_DEPTH]
 		);
 
 		// Add the new texture to our material:
 		gBufferMaterial->AccessTexture(RENDER_TEXTURE_DEPTH) = depth;
 
-		depth->TexturePath()	= this->GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[RENDER_TEXTURE_DEPTH];
+		depth->TexturePath()	= GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[RENDER_TEXTURE_DEPTH];
 		depth->FBO()			= gBufferFBO;
 
 		depth->Texture::Buffer(RENDER_TEXTURE_0 + RENDER_TEXTURE_DEPTH);
@@ -227,30 +227,30 @@ namespace SaberEngine
 	void Camera::DebugPrint()
 	{
 		#if defined(DEBUG_TRANSFORMS)
-			LOG("\n[CAMERA DEBUG: " + this->GetName() + "]");
-			LOG("Field of view: " + to_string(fieldOfView));
-			LOG("Near: " + to_string(near));
-			LOG("Far: " + to_string(far));
-			LOG("Aspect ratio: " + to_string(aspectRatio));
+			LOG("\n[CAMERA DEBUG: " + GetName() + "]");
+			LOG("Field of view: " + to_string(m_fieldOfView));
+			LOG("Near: " + to_string(m_near));
+			LOG("Far: " + to_string(m_far));
+			LOG("Aspect ratio: " + to_string(m_aspectRatio));
 
-			LOG("Position: " + to_string(transform.WorldPosition().x) + " " + to_string(transform.WorldPosition().y) + " " + to_string(transform.WorldPosition().z));
-			LOG("Euler Rotation: " + to_string(transform.GetEulerRotation().x) + " " + to_string(transform.GetEulerRotation().y) + " " + to_string(transform.GetEulerRotation().z));
+			LOG("Position: " + to_string(m_transform.WorldPosition().x) + " " + to_string(m_transform.WorldPosition().y) + " " + to_string(m_transform.WorldPosition().z));
+			LOG("Euler Rotation: " + to_string(m_transform.GetEulerRotation().x) + " " + to_string(m_transform.GetEulerRotation().y) + " " + to_string(m_transform.GetEulerRotation().z));
 			
 			// NOTE: OpenGL matrics are stored in column-major order
-			LOG("\nView Matrix:\n\t" + to_string(view[0][0]) + " " + to_string(view[1][0]) + " " + to_string(view[2][0]) + " " + to_string(view[3][0]) );
-			LOG("\t" + to_string(view[0][1]) + " " + to_string(view[1][1]) + " " + to_string(view[2][1]) + " " + to_string(view[3][1]));
-			LOG("\t" + to_string(view[0][2]) + " " + to_string(view[1][2]) + " " + to_string(view[2][2]) + " " + to_string(view[3][2]));
-			LOG("\t" + to_string(view[0][3]) + " " + to_string(view[1][3]) + " " + to_string(view[2][3]) + " " + to_string(view[3][3]));
+			LOG("\nView Matrix:\n\t" + to_string(m_view[0][0]) + " " + to_string(m_view[1][0]) + " " + to_string(m_view[2][0]) + " " + to_string(m_view[3][0]) );
+			LOG("\t" + to_string(m_view[0][1]) + " " + to_string(m_view[1][1]) + " " + to_string(m_view[2][1]) + " " + to_string(m_view[3][1]));
+			LOG("\t" + to_string(m_view[0][2]) + " " + to_string(m_view[1][2]) + " " + to_string(m_view[2][2]) + " " + to_string(m_view[3][2]));
+			LOG("\t" + to_string(m_view[0][3]) + " " + to_string(m_view[1][3]) + " " + to_string(m_view[2][3]) + " " + to_string(m_view[3][3]));
 
-			LOG("\nProjection Matrix:\n\t" + to_string(projection[0][0]) + " " + to_string(projection[1][0]) + " " + to_string(projection[2][0]) + " " + to_string(projection[3][0]));
-			LOG("\t" + to_string(projection[0][1]) + " " + to_string(projection[1][1]) + " " + to_string(projection[2][1]) + " " + to_string(projection[3][1]));
-			LOG("\t" + to_string(projection[0][2]) + " " + to_string(projection[1][2]) + " " + to_string(projection[2][2]) + " " + to_string(projection[3][2]));
-			LOG("\t" + to_string(projection[0][3]) + " " + to_string(projection[1][3]) + " " + to_string(projection[2][3]) + " " + to_string(projection[3][3]));
+			LOG("\nProjection Matrix:\n\t" + to_string(m_projection[0][0]) + " " + to_string(m_projection[1][0]) + " " + to_string(m_projection[2][0]) + " " + to_string(m_projection[3][0]));
+			LOG("\t" + to_string(m_projection[0][1]) + " " + to_string(m_projection[1][1]) + " " + to_string(m_projection[2][1]) + " " + to_string(m_projection[3][1]));
+			LOG("\t" + to_string(m_projection[0][2]) + " " + to_string(m_projection[1][2]) + " " + to_string(m_projection[2][2]) + " " + to_string(m_projection[3][2]));
+			LOG("\t" + to_string(m_projection[0][3]) + " " + to_string(m_projection[1][3]) + " " + to_string(m_projection[2][3]) + " " + to_string(m_projection[3][3]));
 
-			LOG("\nView Projection Matrix:\n\t" + to_string(viewProjection[0][0]) + " " + to_string(viewProjection[1][0]) + " " + to_string(viewProjection[2][0]) + " " + to_string(viewProjection[3][0]));
-			LOG("\t" + to_string(viewProjection[0][1]) + " " + to_string(viewProjection[1][1]) + " " + to_string(viewProjection[2][1]) + " " + to_string(viewProjection[3][1]));
-			LOG("\t" + to_string(viewProjection[0][2]) + " " + to_string(viewProjection[1][2]) + " " + to_string(viewProjection[2][2]) + " " + to_string(viewProjection[3][2]));
-			LOG("\t" + to_string(viewProjection[0][3]) + " " + to_string(viewProjection[1][3]) + " " + to_string(viewProjection[2][3]) + " " + to_string(viewProjection[3][3]));
+			LOG("\nView Projection Matrix:\n\t" + to_string(m_viewProjection[0][0]) + " " + to_string(m_viewProjection[1][0]) + " " + to_string(m_viewProjection[2][0]) + " " + to_string(m_viewProjection[3][0]));
+			LOG("\t" + to_string(m_viewProjection[0][1]) + " " + to_string(m_viewProjection[1][1]) + " " + to_string(m_viewProjection[2][1]) + " " + to_string(m_viewProjection[3][1]));
+			LOG("\t" + to_string(m_viewProjection[0][2]) + " " + to_string(m_viewProjection[1][2]) + " " + to_string(m_viewProjection[2][2]) + " " + to_string(m_viewProjection[3][2]));
+			LOG("\t" + to_string(m_viewProjection[0][3]) + " " + to_string(m_viewProjection[1][3]) + " " + to_string(m_viewProjection[2][3]) + " " + to_string(m_viewProjection[3][3]));
 		#else
 			return;
 		#endif

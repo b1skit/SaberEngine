@@ -18,13 +18,13 @@ namespace SaberEngine
 		Skybox(string sceneName);
 		~Skybox();
 
-		Material*	GetSkyMaterial()	{ return skyMaterial; }
-		gr::Mesh*		GetSkyMesh()	{ return skyMesh; }
+		Material*	GetSkyMaterial()	{ return m_skyMaterial; }
+		gr::Mesh*		GetSkyMesh()	{ return m_skyMesh; }
 
 
 	private:
-		Material* skyMaterial	= nullptr;	// Deallocated in destructor
-		gr::Mesh* skyMesh		= nullptr;	// Deallocated in destructor
+		Material* m_skyMaterial	= nullptr;	// Deallocated in destructor
+		gr::Mesh* m_skyMesh		= nullptr;	// Deallocated in destructor
 	};
 }
 

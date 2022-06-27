@@ -7,15 +7,15 @@
 namespace SaberEngine
 {
 	// Static values:
-	unsigned int TimeManager::startTime;
-	unsigned int TimeManager::prevTime;
-	unsigned int TimeManager::currentTime;
-	unsigned int TimeManager::deltaTime;
+	unsigned int TimeManager::m_startTime;
+	unsigned int TimeManager::m_prevTime;
+	unsigned int TimeManager::m_currentTime;
+	unsigned int TimeManager::m_deltaTime;
 
 
 	TimeManager::TimeManager() : EngineComponent("TimeManager")
 	{
-		startTime = prevTime = currentTime = SDL_GetTicks();
+		m_startTime = m_prevTime = m_currentTime = SDL_GetTicks();
 	}
 
 
@@ -40,9 +40,9 @@ namespace SaberEngine
 
 	void TimeManager::Update()
 	{
-		prevTime	= currentTime;
-		currentTime = SDL_GetTicks();
-		deltaTime	= (currentTime - prevTime);
+		m_prevTime	= m_currentTime;
+		m_currentTime = SDL_GetTicks();
+		m_deltaTime	= (m_currentTime - m_prevTime);
 	}
 }
 

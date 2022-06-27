@@ -13,16 +13,16 @@ namespace SaberEngine
 {
 	EventManager::EventManager() : EngineComponent("EventManager")
 	{
-		eventQueues.reserve(EVENT_NUM_EVENTS);
+		m_eventQueues.reserve(EVENT_NUM_EVENTS);
 		for (int i = 0; i < EVENT_NUM_EVENTS; i++)
 		{
-			eventQueues.push_back(vector<EventInfo const*>());
+			m_eventQueues.push_back(vector<EventInfo const*>());
 		}
 
-		eventListeners.reserve(EVENT_QUEUE_START_SIZE);
+		m_eventListeners.reserve(EVENT_QUEUE_START_SIZE);
 		for (int i = 0; i < EVENT_QUEUE_START_SIZE; i++)
 		{
-			eventListeners.push_back(vector<EventListener*>());
+			m_eventListeners.push_back(vector<EventListener*>());
 		}		
 	}
 
@@ -63,40 +63,40 @@ namespace SaberEngine
 		SDL_Event eventBuffer[NUM_EVENTS]; // 
 		if (SDL_PeepEvents(eventBuffer, NUM_EVENTS, SDL_GETEVENT, SDL_QUIT, SDL_QUIT) > 0)
 		{
-			this->Notify(new EventInfo{ EVENT_ENGINE_QUIT, this, new string("Received SDL_QUIT event") });
+			Notify(new EventInfo{ EVENT_ENGINE_QUIT, this, new string("Received SDL_QUIT event") });
 		}
 
 		// Loop through each type of event:
 		for (int currentEventType = 0; currentEventType < EVENT_NUM_EVENTS; currentEventType++)
 		{
 			// Loop through each event item in the current event queue:
-			size_t numCurrentEvents = eventQueues[currentEventType].size();
+			size_t numCurrentEvents = m_eventQueues[currentEventType].size();
 			for (int currentEvent = 0; currentEvent < numCurrentEvents; currentEvent++)
 			{
 				// Loop through each listener subscribed to the current event:
-				size_t numListeners = eventListeners[currentEventType].size();
+				size_t numListeners = m_eventListeners[currentEventType].size();
 				for (int currentListener = 0; currentListener < numListeners; currentListener++)
 				{
-					eventListeners[currentEventType][currentListener]->HandleEvent(eventQueues[currentEventType][currentEvent]);
+					m_eventListeners[currentEventType][currentListener]->HandleEvent(m_eventQueues[currentEventType][currentEvent]);
 				}
 				
 				// Deallocate the event:
-				if (eventQueues[currentEventType][currentEvent]->eventMessage != nullptr)
+				if (m_eventQueues[currentEventType][currentEvent]->m_eventMessage != nullptr)
 				{
-					delete eventQueues[currentEventType][currentEvent]->eventMessage;
+					delete m_eventQueues[currentEventType][currentEvent]->m_eventMessage;
 				}
-				delete eventQueues[currentEventType][currentEvent];
+				delete m_eventQueues[currentEventType][currentEvent];
 			}
 
 			// Clear the current event queue (of now invalid pointers):
-			eventQueues[currentEventType].clear();
+			m_eventQueues[currentEventType].clear();
 		}
 	}
 
 
 	void EventManager::Subscribe(EVENT_TYPE eventType, EventListener* listener)
 	{
-		eventListeners[eventType].push_back(listener);
+		m_eventListeners[eventType].push_back(listener);
 		return;
 	}
 
@@ -115,22 +115,22 @@ namespace SaberEngine
 		#if defined(DEBUG_PRINT_NOTIFICATIONS)
 			if (eventInfo)
 			{
-				if (eventInfo->generator)
+				if (eventInfo->m_generator)
 				{
-					if (eventInfo->eventMessage)
+					if (eventInfo->m_eventMessage)
 					{
-						LOG("NOTIFICATION: " + to_string((long long)eventInfo->generator) + " : " + *eventInfo->eventMessage);
+						LOG("NOTIFICATION: " + to_string((long long)eventInfo->m_generator) + " : " + *eventInfo->m_eventMessage);
 					}
 					else
 					{
-						LOG("NOTIFICATION: " + to_string((long long)eventInfo->generator) + " : nullptr");
+						LOG("NOTIFICATION: " + to_string((long long)eventInfo->m_generator) + " : nullptr");
 					}
 				}
 				else
 				{
-					if (eventInfo->eventMessage)
+					if (eventInfo->m_eventMessage)
 					{
-						LOG("NOTIFICATION: nullptr : " + *eventInfo->eventMessage);
+						LOG("NOTIFICATION: nullptr : " + *eventInfo->m_eventMessage);
 					}
 					else
 					{
@@ -148,12 +148,12 @@ namespace SaberEngine
 
 		if (pushToFront)
 		{
-			vector<EventInfo const*>::iterator iterator = eventQueues[(int)eventInfo->type].begin();
-			eventQueues[(int)eventInfo->type].insert(iterator, eventInfo);
+			vector<EventInfo const*>::iterator iterator = m_eventQueues[(int)eventInfo->m_type].begin();
+			m_eventQueues[(int)eventInfo->m_type].insert(iterator, eventInfo);
 		}
 		else
 		{
-			eventQueues[(int)eventInfo->type].push_back(eventInfo);
+			m_eventQueues[(int)eventInfo->m_type].push_back(eventInfo);
 		}
 		return;
 	}

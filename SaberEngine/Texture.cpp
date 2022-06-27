@@ -22,9 +22,9 @@ namespace SaberEngine
 {
 	Texture::Texture()
 	{
-		numTexels				= width * height;
-		texels					= new vec4[numTexels];	// Allocate the default size
-		resolutionHasChanged	= true;
+		m_numTexels				= m_width * m_height;
+		m_texels					= new vec4[m_numTexels];	// Allocate the default size
+		m_resolutionHasChanged	= true;
 		
 		Fill(TEXTURE_ERROR_COLOR_VEC4);
 	}
@@ -32,15 +32,15 @@ namespace SaberEngine
 	// Constructor:
 	Texture::Texture(int width, int height, string texturePath, bool doFill /* = true */, vec4 fillColor /* = (1.0, 0.0, 0.0, 1.0) */)
 	{
-		this->width				= width;
-		this->height			= height;
-		this->numTexels			= width * height;
+		m_width				= width;
+		m_height			= height;
+		m_numTexels			= width * height;
 
-		this->texturePath		= texturePath;
+		m_texturePath		= texturePath;
 
 		// Initialize the texture:
-		texels					= new vec4[numTexels];
-		resolutionHasChanged	= true;
+		m_texels					= new vec4[m_numTexels];
+		m_resolutionHasChanged	= true;
 		if (doFill)
 		{
 			Fill(fillColor);
@@ -52,67 +52,67 @@ namespace SaberEngine
 	Texture::Texture(Texture const& rhs)
 	{
 		// Cleanup:
-		if (this->texels != nullptr)
+		if (m_texels != nullptr)
 		{
-			delete[] texels;
-			this->texels				= nullptr;
-			this->numTexels				= 0;
-			this->resolutionHasChanged	= true;
+			delete[] m_texels;
+			m_texels				= nullptr;
+			m_numTexels				= 0;
+			m_resolutionHasChanged	= true;
 		}
 
 		// Copy properties:
-		this->textureID				= 0;	// NOTE: This could potentially result in some textures never being destroyed (ie. If this is called on a non-duplicated texture) TODO: Investigate this
+		m_textureID				= 0;	// NOTE: This could potentially result in some textures never being destroyed (ie. If this is called on a non-duplicated texture) TODO: Investigate this
 
-		this->texTarget				= rhs.texTarget;
-		this->format				= rhs.format;
-		this->internalFormat		= rhs.internalFormat;
-		this->type					= rhs.type;
+		m_texTarget				= rhs.m_texTarget;
+		m_format				= rhs.m_format;
+		m_internalFormat		= rhs.m_internalFormat;
+		type					= rhs.type;
 
-		this->textureWrapS			= rhs.textureWrapS;
-		this->textureWrapT			= rhs.textureWrapT;
-		this->textureWrapR			= rhs.textureWrapR;
+		m_textureWrapS			= rhs.m_textureWrapS;
+		m_textureWrapT			= rhs.m_textureWrapT;
+		m_textureWrapR			= rhs.m_textureWrapR;
 
-		this->textureMinFilter		= rhs.textureMinFilter;
-		this->textureMaxFilter		= rhs.textureMaxFilter;
+		m_textureMinFilter		= rhs.m_textureMinFilter;
+		m_textureMaxFilter		= rhs.m_textureMaxFilter;
 
-		this->samplerID				= rhs.samplerID;
+		m_samplerID				= rhs.m_samplerID;
 
-		this->width					= rhs.width;
-		this->height				= rhs.height;
+		m_width					= rhs.m_width;
+		m_height				= rhs.m_height;
 
-		this->numTexels				= rhs.numTexels;
+		m_numTexels				= rhs.m_numTexels;
 
-		if (rhs.texels != nullptr && this->numTexels > 0)
+		if (rhs.m_texels != nullptr && m_numTexels > 0)
 		{
-			this->texels				= new vec4[this->numTexels];
-			this->resolutionHasChanged	= true;
+			m_texels				= new vec4[m_numTexels];
+			m_resolutionHasChanged	= true;
 
-			for (unsigned int i = 0; i < this->numTexels; i++)
+			for (unsigned int i = 0; i < m_numTexels; i++)
 			{
-				this->texels[i] = rhs.texels[i];
+				m_texels[i] = rhs.m_texels[i];
 			}
 		}
 
-		this->texturePath = rhs.texturePath;
+		m_texturePath = rhs.m_texturePath;
 	}
 
 
 	void Texture::Destroy()
 	{
-		if (glIsTexture(textureID))
+		if (glIsTexture(m_textureID))
 		{
-			glDeleteTextures(1, &textureID);
+			glDeleteTextures(1, &m_textureID);
 		}
 
-		if (texels != nullptr)
+		if (m_texels != nullptr)
 		{
-			delete[] texels;
-			texels = nullptr;
-			numTexels = 0;
-			resolutionHasChanged = true;
+			delete[] m_texels;
+			m_texels = nullptr;
+			m_numTexels = 0;
+			m_resolutionHasChanged = true;
 		}
 
-		glDeleteSamplers(1, &this->samplerID);
+		glDeleteSamplers(1, &m_samplerID);
 	}
 
 
@@ -124,46 +124,46 @@ namespace SaberEngine
 		}
 
 		// Cleanup:
-		if (this->texels != nullptr)
+		if (m_texels != nullptr)
 		{
 			Destroy();
 		}
 
 
 		// Copy properties:
-		this->textureID			= 0;	// NOTE: Texture.Buffer() must be called before this texture can be used
+		m_textureID			= 0;	// NOTE: Texture.Buffer() must be called before this texture can be used
 
-		this->texTarget			= rhs.texTarget;
-		this->format			= rhs.format;
-		this->internalFormat	= rhs.internalFormat;
-		this->type				= rhs.type;
+		m_texTarget			= rhs.m_texTarget;
+		m_format			= rhs.m_format;
+		m_internalFormat	= rhs.m_internalFormat;
+		type				= rhs.type;
 
-		this->textureWrapS		= rhs.textureWrapS;
-		this->textureWrapT		= rhs.textureWrapT;
-		this->textureWrapR		= rhs.textureWrapR;
+		m_textureWrapS		= rhs.m_textureWrapS;
+		m_textureWrapT		= rhs.m_textureWrapT;
+		m_textureWrapR		= rhs.m_textureWrapR;
 
-		this->textureMinFilter	= rhs.textureMinFilter;
-		this->textureMaxFilter	= rhs.textureMaxFilter;
+		m_textureMinFilter	= rhs.m_textureMinFilter;
+		m_textureMaxFilter	= rhs.m_textureMaxFilter;
 
-		this->samplerID			= rhs.samplerID;
+		m_samplerID			= rhs.m_samplerID;
 
-		this->width				= rhs.width;
-		this->height			= rhs.height;
+		m_width				= rhs.m_width;
+		m_height			= rhs.m_height;
 
-		this->numTexels			= rhs.numTexels;
+		m_numTexels			= rhs.m_numTexels;
 
-		if (rhs.texels != nullptr && numTexels > 0)
+		if (rhs.m_texels != nullptr && m_numTexels > 0)
 		{
-			this->texels				= new vec4[this->numTexels];
-			this->resolutionHasChanged	= true;
+			m_texels				= new vec4[m_numTexels];
+			m_resolutionHasChanged	= true;
 
-			for (unsigned int i = 0; i < this->numTexels; i++)
+			for (unsigned int i = 0; i < m_numTexels; i++)
 			{
-				this->texels[i] = rhs.texels[i];
+				m_texels[i] = rhs.m_texels[i];
 			}
 		}
 
-		this->texturePath = rhs.texturePath;
+		m_texturePath = rhs.m_texturePath;
 
 		return *this;
 	}
@@ -171,23 +171,23 @@ namespace SaberEngine
 
 	vec4& SaberEngine::Texture::Texel(unsigned int u, unsigned int v)
 	{
-		if (u >= width || v >= height)
+		if (u >= m_width || v >= m_height)
 		{
-			LOG_ERROR("Invalid texture access! Cannot access texel (" + to_string(u) + ", " + to_string(v) + " in a texture of size " + to_string(width) + "x" + to_string(height));
+			LOG_ERROR("Invalid texture access! Cannot access texel (" + to_string(u) + ", " + to_string(v) + " in a texture of size " + to_string(m_width) + "x" + to_string(m_height));
 
 			// Try and return the safest option:
-			return texels[0];
+			return m_texels[0];
 		}
 
-		return texels[(v * this->width) + u]; // Number of elements in v rows, + uth element in next row
+		return m_texels[(v * m_width) + u]; // Number of elements in v rows, + uth element in next row
 	}
 
 
 	void SaberEngine::Texture::Fill(vec4 color)
 	{
-		for (unsigned int row = 0; row < this->height; row++)
+		for (unsigned int row = 0; row < m_height; row++)
 		{
-			for (unsigned int col = 0; col < this->width; col++)
+			for (unsigned int col = 0; col < m_width; col++)
 			{
 				Texel(row, col) = color;
 			}
@@ -197,15 +197,15 @@ namespace SaberEngine
 
 	void SaberEngine::Texture::Fill(vec4 tl, vec4 tr, vec4 bl, vec4 br)
 	{
-		for (unsigned int row = 0; row < height; row++)
+		for (unsigned int row = 0; row < m_height; row++)
 		{
-			float vertDelta = (float)((float)row / (float)height);
+			float vertDelta = (float)((float)row / (float)m_height);
 			vec4 startCol = (vertDelta * bl) + ((1.0f - vertDelta) * tl);
 			vec4 endCol = (vertDelta * br) + ((1.0f - vertDelta) * tr);
 
-			for (unsigned int col = 0; col < width; col++)
+			for (unsigned int col = 0; col < m_width; col++)
 			{
-				float horDelta = (float)((float)col / (float)width);
+				float horDelta = (float)((float)col / (float)m_width);
 
 				Texel(row, col) = (horDelta * endCol) + ((1.0f - horDelta) * startCol);
 			}
@@ -260,7 +260,7 @@ namespace SaberEngine
 			stbi_image_free(imageData);
 
 			#if defined(DEBUG_SCENEMANAGER_TEXTURE_LOGGING)
-				LOG("Completed loading texture: " + texturePath);
+				LOG("Completed loading texture: " + m_texturePath);
 			#endif
 
 			return texture;
@@ -327,33 +327,33 @@ namespace SaberEngine
 
 	bool Texture::Buffer(int textureUnit)
 	{
-		LOG("Buffering texture: \"" + this->TexturePath() + "\"");
+		LOG("Buffering texture: \"" + TexturePath() + "\"");
 
-		glBindTexture(this->texTarget, this->textureID);
+		glBindTexture(m_texTarget, m_textureID);
 
 		// If the texture hasn't been created, create a new name:
-		if (!glIsTexture(this->textureID))
+		if (!glIsTexture(m_textureID))
 		{
 			#if defined(DEBUG_SCENEMANAGER_TEXTURE_LOGGING)
 				LOG("Texture has never been bound before!");
 			#endif
 
-			glGenTextures(1, &this->textureID);
-			glBindTexture(this->texTarget, this->textureID);
-			if (glIsTexture(this->textureID) != GL_TRUE)
+			glGenTextures(1, &m_textureID);
+			glBindTexture(m_texTarget, m_textureID);
+			if (glIsTexture(m_textureID) != GL_TRUE)
 			{
 				LOG_ERROR("OpenGL failed to generate new texture name. Texture buffering failed");
-				glBindTexture(this->texTarget, 0);
+				glBindTexture(m_texTarget, 0);
 				return false;
 			}
 
 			// UV wrap mode:
-			glTexParameteri(this->texTarget, GL_TEXTURE_WRAP_S, this->textureWrapS);	// u
-			glTexParameteri(this->texTarget, GL_TEXTURE_WRAP_T, this->textureWrapT);	// v
+			glTexParameteri(m_texTarget, GL_TEXTURE_WRAP_S, m_textureWrapS);	// u
+			glTexParameteri(m_texTarget, GL_TEXTURE_WRAP_T, m_textureWrapT);	// v
 
 			// Mip map min/maximizing:
-			glTexParameteri(this->texTarget, GL_TEXTURE_MIN_FILTER, this->textureMinFilter);
-			glTexParameteri(this->texTarget, GL_TEXTURE_MAG_FILTER, this->textureMaxFilter);
+			glTexParameteri(m_texTarget, GL_TEXTURE_MIN_FILTER, m_textureMinFilter);
+			glTexParameteri(m_texTarget, GL_TEXTURE_MAG_FILTER, m_textureMaxFilter);
 		}
 		#if defined(DEBUG_SCENEMANAGER_TEXTURE_LOGGING)
 		else
@@ -364,59 +364,59 @@ namespace SaberEngine
 
 
 		// Upload to the GPU:
-		if (texels != nullptr) // I.e. Texture:
+		if (m_texels != nullptr) // I.e. Texture:
 		{
-			if (resolutionHasChanged)
+			if (m_resolutionHasChanged)
 			{
 				#if defined(DEBUG_SCENEMANAGER_TEXTURE_LOGGING)
 					LOG("Buffering texture values");
 				#endif
 
 				// Compute storage properties for our texture:
-				int largestDimension = glm::max(this->width, this->height);
+				int largestDimension = glm::max(m_width, m_height);
 				int numMipLevels = (int)glm::log2((float)largestDimension) + 1;
 
-				glTexStorage2D(this->texTarget, numMipLevels, this->internalFormat, this->width, this->height);
+				glTexStorage2D(m_texTarget, numMipLevels, m_internalFormat, m_width, m_height);
 
-				resolutionHasChanged = false;
+				m_resolutionHasChanged = false;
 			}
 
-			glTexSubImage2D(this->texTarget, 0, 0, 0, this->width, this->height, this->format, this->type, &this->Texel(0, 0).r);
-			//glTexImage2D(this->texTarget, 0, this->internalFormat, this->width, this->height, 0, this->format, this->type, &this->Texel(0, 0).r); // Won't work if glTexStorage2D has been called
+			glTexSubImage2D(m_texTarget, 0, 0, 0, m_width, m_height, m_format, type, &Texel(0, 0).r);
+			//glTexImage2D(texTarget, 0, internalFormat, width, height, 0, format, type, &Texel(0, 0).r); // Won't work if glTexStorage2D has been called
 
-			glGenerateMipmap(this->texTarget);
+			glGenerateMipmap(m_texTarget);
 
 			#if defined(DEBUG_SCENEMANAGER_TEXTURE_LOGGING)
 				LOG("Texture buffering complete!");
 			#endif
 
 			// Cleanup:
-			glBindTexture(this->texTarget, 0);
+			glBindTexture(m_texTarget, 0);
 		}
 		else // I.e. RenderTexture:
 		{			
-			if (resolutionHasChanged)	// We don't really care about the resolution of render textures changing, for now...
+			if (m_resolutionHasChanged)	// We don't really care about the resolution of render textures changing, for now...
 			{
-				resolutionHasChanged = false;
+				m_resolutionHasChanged = false;
 			}
-			glTexImage2D(this->texTarget, 0, this->internalFormat, this->width, this->height, 0, this->format, this->type, nullptr);
+			glTexImage2D(m_texTarget, 0, m_internalFormat, m_width, m_height, 0, m_format, type, nullptr);
 
 			// Note: We don't unbind the texture here so RenderTexture::Buffer() doesn't have to rebind it
 		}
 
 		// Configure the Texture sampler:
-		glBindSampler(textureUnit, this->samplerID);
-		if (!glIsSampler(this->samplerID))
+		glBindSampler(textureUnit, m_samplerID);
+		if (!glIsSampler(m_samplerID))
 		{
-			glGenSamplers(1, &this->samplerID);
-			glBindSampler(textureUnit, this->samplerID);
+			glGenSamplers(1, &m_samplerID);
+			glBindSampler(textureUnit, m_samplerID);
 		}
 
-		glSamplerParameteri(this->samplerID, GL_TEXTURE_WRAP_S, this->textureWrapS);
-		glSamplerParameteri(this->samplerID, GL_TEXTURE_WRAP_T, this->textureWrapT);				
+		glSamplerParameteri(m_samplerID, GL_TEXTURE_WRAP_S, m_textureWrapS);
+		glSamplerParameteri(m_samplerID, GL_TEXTURE_WRAP_T, m_textureWrapT);				
 
-		glSamplerParameteri(this->samplerID, GL_TEXTURE_MIN_FILTER, this->textureMinFilter);
-		glSamplerParameteri(this->samplerID, GL_TEXTURE_MAG_FILTER, this->textureMaxFilter);
+		glSamplerParameteri(m_samplerID, GL_TEXTURE_MIN_FILTER, m_textureMinFilter);
+		glSamplerParameteri(m_samplerID, GL_TEXTURE_MAG_FILTER, m_textureMaxFilter);
 
 		glBindSampler(textureUnit, 0);
 
@@ -431,36 +431,36 @@ namespace SaberEngine
 		LOG("Buffering cube map: \"" + cubeFaces[0]->TexturePath() + "\"");
 
 		// Bind Texture:
-		glBindTexture(cubeFaces[0]->texTarget, cubeFaces[0]->textureID);
-		if (!glIsTexture(cubeFaces[0]->textureID))
+		glBindTexture(cubeFaces[0]->m_texTarget, cubeFaces[0]->m_textureID);
+		if (!glIsTexture(cubeFaces[0]->m_textureID))
 		{
-			glGenTextures(1, &cubeFaces[0]->textureID);
-			glBindTexture(cubeFaces[0]->texTarget, cubeFaces[0]->textureID);
+			glGenTextures(1, &cubeFaces[0]->m_textureID);
+			glBindTexture(cubeFaces[0]->m_texTarget, cubeFaces[0]->m_textureID);
 
-			if (!glIsTexture(cubeFaces[0]->textureID))
+			if (!glIsTexture(cubeFaces[0]->m_textureID))
 			{
 				LOG_ERROR("OpenGL failed to generate new cube map texture name. Texture buffering failed");
-				glBindTexture(cubeFaces[0]->texTarget, 0);
+				glBindTexture(cubeFaces[0]->m_texTarget, 0);
 				return false;
 			}
 		}
 
 		// Set texture params:
-		glTexParameteri(cubeFaces[0]->texTarget, GL_TEXTURE_WRAP_S, cubeFaces[0]->textureWrapS);
-		glTexParameteri(cubeFaces[0]->texTarget, GL_TEXTURE_WRAP_T, cubeFaces[0]->textureWrapT);
-		glTexParameteri(cubeFaces[0]->texTarget, GL_TEXTURE_WRAP_R, cubeFaces[0]->textureWrapR);
+		glTexParameteri(cubeFaces[0]->m_texTarget, GL_TEXTURE_WRAP_S, cubeFaces[0]->m_textureWrapS);
+		glTexParameteri(cubeFaces[0]->m_texTarget, GL_TEXTURE_WRAP_T, cubeFaces[0]->m_textureWrapT);
+		glTexParameteri(cubeFaces[0]->m_texTarget, GL_TEXTURE_WRAP_R, cubeFaces[0]->m_textureWrapR);
 
-		glTexParameteri(cubeFaces[0]->texTarget, GL_TEXTURE_MAG_FILTER, cubeFaces[0]->textureMaxFilter);
-		glTexParameteri(cubeFaces[0]->texTarget, GL_TEXTURE_MIN_FILTER, cubeFaces[0]->textureMinFilter);
+		glTexParameteri(cubeFaces[0]->m_texTarget, GL_TEXTURE_MAG_FILTER, cubeFaces[0]->m_textureMaxFilter);
+		glTexParameteri(cubeFaces[0]->m_texTarget, GL_TEXTURE_MIN_FILTER, cubeFaces[0]->m_textureMinFilter);
 
 		// Bind sampler:
-		glBindSampler(textureUnit, cubeFaces[0]->samplerID);
-		if (!glIsSampler(cubeFaces[0]->samplerID))
+		glBindSampler(textureUnit, cubeFaces[0]->m_samplerID);
+		if (!glIsSampler(cubeFaces[0]->m_samplerID))
 		{
-			glGenSamplers(1, &cubeFaces[0]->samplerID);
-			glBindSampler(textureUnit, cubeFaces[0]->samplerID);
+			glGenSamplers(1, &cubeFaces[0]->m_samplerID);
+			glBindSampler(textureUnit, cubeFaces[0]->m_samplerID);
 
-			if (!glIsSampler(cubeFaces[0]->samplerID))
+			if (!glIsSampler(cubeFaces[0]->m_samplerID))
 			{
 				LOG_ERROR("Could not create cube map sampler");
 				return false;
@@ -468,34 +468,34 @@ namespace SaberEngine
 		}
 
 		// Set sampler params:
-		glSamplerParameteri(cubeFaces[0]->samplerID, GL_TEXTURE_WRAP_S, cubeFaces[0]->textureWrapS);
-		glSamplerParameteri(cubeFaces[0]->samplerID, GL_TEXTURE_WRAP_T, cubeFaces[0]->textureWrapT);
+		glSamplerParameteri(cubeFaces[0]->m_samplerID, GL_TEXTURE_WRAP_S, cubeFaces[0]->m_textureWrapS);
+		glSamplerParameteri(cubeFaces[0]->m_samplerID, GL_TEXTURE_WRAP_T, cubeFaces[0]->m_textureWrapT);
 
-		glSamplerParameteri(cubeFaces[0]->samplerID, GL_TEXTURE_MIN_FILTER, cubeFaces[0]->textureMinFilter);
-		glSamplerParameteri(cubeFaces[0]->samplerID, GL_TEXTURE_MAG_FILTER, cubeFaces[0]->textureMaxFilter);
+		glSamplerParameteri(cubeFaces[0]->m_samplerID, GL_TEXTURE_MIN_FILTER, cubeFaces[0]->m_textureMinFilter);
+		glSamplerParameteri(cubeFaces[0]->m_samplerID, GL_TEXTURE_MAG_FILTER, cubeFaces[0]->m_textureMaxFilter);
 
 		glBindSampler(textureUnit, 0);
 
 
 		// Texture cube map specific setup:
-		if (cubeFaces[0]->texels != nullptr)
+		if (cubeFaces[0]->m_texels != nullptr)
 		{
 			// Generate faces:
 			for (int i = 0; i < CUBE_MAP_NUM_FACES; i++)
 			{
-				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, cubeFaces[0]->internalFormat, cubeFaces[0]->width, cubeFaces[0]->height, 0, cubeFaces[0]->format, cubeFaces[0]->type, &cubeFaces[i]->Texel(0, 0).r);
+				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, cubeFaces[0]->m_internalFormat, cubeFaces[0]->m_width, cubeFaces[0]->m_height, 0, cubeFaces[0]->m_format, cubeFaces[0]->type, &cubeFaces[i]->Texel(0, 0).r);
 			}
 
 
 			// Ensure all of the textures have the correct information stored in them:
 			for (int i = 1; i < CUBE_MAP_NUM_FACES; i++)
 			{
-				cubeFaces[i]->textureID = cubeFaces[0]->textureID;
-				cubeFaces[i]->samplerID = cubeFaces[0]->samplerID;
+				cubeFaces[i]->m_textureID = cubeFaces[0]->m_textureID;
+				cubeFaces[i]->m_samplerID = cubeFaces[0]->m_samplerID;
 			}
 
 			// Cleanup:
-			glBindTexture(cubeFaces[0]->texTarget, 0); // Otherwise, we leave the texture bound for the remaining RenderTexture BufferCubeMap()
+			glBindTexture(cubeFaces[0]->m_texTarget, 0); // Otherwise, we leave the texture bound for the remaining RenderTexture BufferCubeMap()
 		}
 
 		return true;
@@ -509,14 +509,14 @@ namespace SaberEngine
 		// Handle unbinding:
 		if (doBind == false)
 		{
-			glBindTexture(this->texTarget, 0);
+			glBindTexture(m_texTarget, 0);
 			glBindSampler(textureUnit, 0); // Assign to index/unit 0
 
 		}
 		else // Handle binding:
 		{			
-			glBindTexture(this->texTarget, this->textureID);
-			glBindSampler(textureUnit, this->samplerID); // Assign our named sampler to the texture
+			glBindTexture(m_texTarget, m_textureID);
+			glBindSampler(textureUnit, m_samplerID); // Assign our named sampler to the texture
 		}
 	}
 
@@ -524,20 +524,20 @@ namespace SaberEngine
 	vec4 Texture::TexelSize()
 	{
 		// Check: Have the dimensions changed vs what we have cached?
-		if (this->texelSize.z != this->width || this->texelSize.w != this->height)
+		if (m_texelSize.z != m_width || m_texelSize.w != m_height)
 		{
-			this->texelSize = vec4(1.0f / this->width, 1.0f / this->height, this->width, this->height);
+			m_texelSize = vec4(1.0f / m_width, 1.0f / m_height, m_width, m_height);
 		}
 
-		return this->texelSize;
+		return m_texelSize;
 	}
 
 
 	void Texture::GenerateMipMaps()
 	{
-		glBindTexture(this->texTarget, this->textureID);
-		glGenerateMipmap(this->texTarget);
-		glBindTexture(this->texTarget, 0);
+		glBindTexture(m_texTarget, m_textureID);
+		glGenerateMipmap(m_texTarget);
+		glBindTexture(m_texTarget, 0);
 	}
 }
 

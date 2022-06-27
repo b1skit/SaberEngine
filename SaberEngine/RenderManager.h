@@ -83,24 +83,24 @@ namespace SaberEngine
 
 		// Configuration:
 		//---------------
-		int xRes					= -1;
-		int yRes					= -1;
-		string windowTitle			= "Default SaberEngine window title";
+		int m_xRes					= -1;
+		int m_yRes					= -1;
+		string m_windowTitle			= "Default SaberEngine window title";
 
-		bool useForwardRendering	= false;
+		bool m_useForwardRendering	= false;
 
-		vec4 windowClearColor		= vec4(0.0f, 0.0f, 0.0f, 0.0f);
-		float depthClearColor		= 1.0f;
+		vec4 m_windowClearColor		= vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		float m_depthClearColor		= 1.0f;
 		
 		// OpenGL components and settings:
-		SDL_Window* glWindow		= 0;
-		SDL_GLContext glContext		= 0;
+		SDL_Window* m_glWindow		= 0;
+		SDL_GLContext m_glContext		= 0;
 
-		Material* outputMaterial	= nullptr;	// Deallocated in Shutdown()
-		gr::Mesh* screenAlignedQuad		= nullptr;	// Deallocated in Shutdown()
+		Material* m_outputMaterial	= nullptr;	// Deallocated in Shutdown()
+		gr::Mesh* m_screenAlignedQuad		= nullptr;	// Deallocated in Shutdown()
 
 		// PostFX:
-		PostFXManager* postFXManager = nullptr;	// Deallocated in Shutdown()
+		PostFXManager* m_postFXManager = nullptr;	// Deallocated in Shutdown()
 
 		
 		// Private member functions:

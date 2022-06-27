@@ -10,7 +10,7 @@ namespace SaberEngine
 {
 	ShadowMap::ShadowMap()
 	{
-		this->shadowCam		= new Camera("Unnamed_ShadowMapCam");
+		m_shadowCam		= new Camera("Unnamed_ShadowMapCam");
 
 		RenderTexture* depthRenderTexture = new RenderTexture
 		(
@@ -24,22 +24,22 @@ namespace SaberEngine
 
 	ShadowMap::ShadowMap(string lightName, int xRes, int yRes, CameraConfig shadowCamConfig, Transform* shadowCamParent /*= nullptr*/, vec3 shadowCamPosition /* = vec3(0.0f, 0.0f, 0.0f)*/, bool useCubeMap /*= false*/)
 	{
-		this->shadowCam = new Camera(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent);
-		this->shadowCam->GetTransform()->SetWorldPosition(shadowCamPosition);
+		m_shadowCam = new Camera(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent);
+		m_shadowCam->GetTransform()->SetWorldPosition(shadowCamPosition);
 
 		// Omni-directional (Cube map) shadowmap setup:
 		if (useCubeMap)
 		{
-			this->shadowCam->RenderMaterial() = new Material(shadowCam->GetName() + "_Material", CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("cubeDepthShaderName"), CUBE_MAP_NUM_FACES, true);
+			m_shadowCam->RenderMaterial() = new Material(m_shadowCam->GetName() + "_Material", CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("cubeDepthShaderName"), CUBE_MAP_NUM_FACES, true);
 
 			RenderTexture** cubeFaces = RenderTexture::CreateCubeMap(xRes, yRes, lightName);
 
-			this->shadowCam->RenderMaterial()->AttachCubeMapTextures((Texture**)cubeFaces);
+			m_shadowCam->RenderMaterial()->AttachCubeMapTextures((Texture**)cubeFaces);
 
 			// Buffer the cube map:
 			RenderTexture::BufferCubeMap(cubeFaces, CUBE_MAP_0);
 
-			CoreEngine::GetSceneManager()->RegisterCamera(CAMERA_TYPE_SHADOW, this->shadowCam);
+			CoreEngine::GetSceneManager()->RegisterCamera(CAMERA_TYPE_SHADOW, m_shadowCam);
 		}
 		else // Single texture shadowmap setup:
 		{
@@ -60,10 +60,10 @@ namespace SaberEngine
 	// Helper function: Reduces some duplicate code for non-cube map depth textures
 	void ShadowMap::InitializeShadowCam(RenderTexture* renderTexture)
 	{
-		this->shadowCam->RenderMaterial() = new Material(shadowCam->GetName() + "_Material", CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("depthShaderName"), RENDER_TEXTURE_COUNT, true);
-		this->shadowCam->RenderMaterial()->AccessTexture(RENDER_TEXTURE_DEPTH) = renderTexture;
+		m_shadowCam->RenderMaterial() = new Material(m_shadowCam->GetName() + "_Material", CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("depthShaderName"), RENDER_TEXTURE_COUNT, true);
+		m_shadowCam->RenderMaterial()->AccessTexture(RENDER_TEXTURE_DEPTH) = renderTexture;
 
-		CoreEngine::GetSceneManager()->RegisterCamera(CAMERA_TYPE_SHADOW, this->shadowCam);
+		CoreEngine::GetSceneManager()->RegisterCamera(CAMERA_TYPE_SHADOW, m_shadowCam);
 	}
 }
 

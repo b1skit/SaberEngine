@@ -12,15 +12,15 @@ namespace SaberEngine
 {
 	Skybox::Skybox(Material* skyMaterial, gr::Mesh* skyMesh)
 	{
-		this->skyMaterial	= skyMaterial;
-		this->skyMesh		= skyMesh;
+		m_skyMaterial	= skyMaterial;
+		m_skyMesh		= skyMesh;
 	}
 
 
 	Skybox::Skybox(string sceneName)
 	{
 		// Create a cube map material
-		this->skyMaterial = new Material("SkyboxMaterial", nullptr, CUBE_MAP_NUM_FACES, false);
+		m_skyMaterial = new Material("SkyboxMaterial", nullptr, CUBE_MAP_NUM_FACES, false);
 
 		// Attempt to load a HDR image:
 		Texture** iblAsSkyboxCubemap = (Texture**)ImageBasedLight::ConvertEquirectangularToCubemap(CoreEngine::GetSceneManager()->GetCurrentSceneName(), CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath"), 1024, 1024); // TODO: Parameterize cubemap dimensions?
@@ -28,7 +28,7 @@ namespace SaberEngine
 		{
 			LOG("Successfully loaded IBL HDR texture for skybox");
 
-			skyMaterial->AttachCubeMapTextures(iblAsSkyboxCubemap);
+			m_skyMaterial->AttachCubeMapTextures(iblAsSkyboxCubemap);
 		}
 		else // Attempt to create Skybox from 6x skybox textures:
 		{
@@ -86,7 +86,7 @@ namespace SaberEngine
 
 					if (currentFaceTexture != nullptr)
 					{
-						skyMaterial->AccessTexture((TEXTURE_TYPE)i) = currentFaceTexture;
+						m_skyMaterial->AccessTexture((TEXTURE_TYPE)i) = currentFaceTexture;
 						cubemapTextures[i] = currentFaceTexture;	// Track the face
 
 						foundSkyboxFace = true;
@@ -113,10 +113,10 @@ namespace SaberEngine
 
 		// Create a skybox shader, now that we have some sort of image loaded:
 		Shader* skyboxShader = Shader::CreateShader(CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("skyboxShaderName"));
-		skyMaterial->GetShader() = skyboxShader;
+		m_skyMaterial->GetShader() = skyboxShader;
 
 		// Configure and buffer textures:
-		if (!Texture::BufferCubeMap(&skyMaterial->AccessTexture(TEXTURE_0), CUBE_MAP_0))
+		if (!Texture::BufferCubeMap(&m_skyMaterial->AccessTexture(TEXTURE_0), CUBE_MAP_0))
 		{
 			LOG_ERROR("Skybox cube map buffering failed");
 
@@ -124,15 +124,15 @@ namespace SaberEngine
 			delete skyboxShader;
 			skyboxShader = nullptr;
 
-			skyMaterial->Destroy();
-			delete skyMaterial;
-			skyMaterial = nullptr;
+			m_skyMaterial->Destroy();
+			delete m_skyMaterial;
+			m_skyMaterial = nullptr;
 
 			return;
 		}
 
 		// Create a quad at furthest point in the depth buffer
-		this->skyMesh = new gr::Mesh
+		m_skyMesh = new gr::Mesh
 		(
 			gr::meshfactory::CreateQuad
 			(
@@ -143,22 +143,22 @@ namespace SaberEngine
 			)
 		);
 
-		this->skyMesh->Name() = "SkyboxQuad";
+		m_skyMesh->Name() = "SkyboxQuad";
 	}
 
 
 	Skybox::~Skybox()
 	{
-		if (skyMaterial != nullptr)
+		if (m_skyMaterial != nullptr)
 		{
-			delete skyMaterial;
-			skyMaterial = nullptr;
+			delete m_skyMaterial;
+			m_skyMaterial = nullptr;
 		}
 
-		if (skyMesh != nullptr)
+		if (m_skyMesh != nullptr)
 		{
-			delete skyMesh;
-			skyMesh = nullptr;
+			delete m_skyMesh;
+			m_skyMesh = nullptr;
 		}
 	}
 }

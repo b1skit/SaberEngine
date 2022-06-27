@@ -163,7 +163,7 @@ namespace gr
 		inline std::vector<GLuint>&	Indices() { return m_indices; }
 		inline size_t NumIndices() { return m_indices.size(); }
 
-		inline SaberEngine::Material* MeshMaterial() { return this->m_meshMaterial; }
+		inline SaberEngine::Material* MeshMaterial() { return m_meshMaterial; }
 
 		inline Transform& GetTransform() { return m_transform; }
 

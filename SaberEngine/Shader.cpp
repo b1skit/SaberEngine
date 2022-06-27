@@ -25,22 +25,22 @@ namespace SaberEngine
 
 	Shader::Shader(const string shaderName, const GLuint shaderReference)
 	{
-		this->shaderName		= shaderName;
-		this->shaderReference	= shaderReference;
+		m_shaderName		= shaderName;
+		m_shaderReference	= shaderReference;
 	}
 
 
 	Shader::Shader(const Shader& existingShader)
 	{
-		this->shaderName		= existingShader.shaderName;
-		this->shaderReference	= existingShader.shaderReference;
+		m_shaderName		= existingShader.m_shaderName;
+		m_shaderReference	= existingShader.m_shaderReference;
 	}
 
 
 	void Shader::Destroy()
 	{
-		glDeleteProgram(this->shaderReference);
-		this->shaderReference = 0;
+		glDeleteProgram(m_shaderReference);
+		m_shaderReference = 0;
 	}
 
 
@@ -49,13 +49,13 @@ namespace SaberEngine
 		GLint currentProgram;
 		bool isBound = true;	// Track if the current shader is bound or not
 		glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
-		if (currentProgram != this->shaderReference)
+		if (currentProgram != m_shaderReference)
 		{
-			glUseProgram(this->shaderReference);
+			glUseProgram(m_shaderReference);
 			isBound = false;
 		}
 
-		GLuint uniformID = glGetUniformLocation(this->shaderReference, uniformName);
+		GLuint uniformID = glGetUniformLocation(m_shaderReference, uniformName);
 		if (uniformID >= 0)
 		{
 			switch (type)
@@ -99,7 +99,7 @@ namespace SaberEngine
 	{
 		if (doBind)
 		{
-			glUseProgram(this->shaderReference);
+			glUseProgram(m_shaderReference);
 		}
 		else
 		{

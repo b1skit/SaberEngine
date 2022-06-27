@@ -81,9 +81,9 @@ namespace SaberEngine
 
 	struct EventInfo
 	{
-		EVENT_TYPE type;
-		SaberObject* generator;
-		string* eventMessage = nullptr;
+		EVENT_TYPE m_type;
+		SaberObject* m_generator;
+		string* m_eventMessage = nullptr;
 	};
 
 
@@ -109,12 +109,12 @@ namespace SaberEngine
 		void Notify(EventInfo const* eventInfo, bool pushToFront = false); // Post an event
 
 	private:
-		vector< vector<EventInfo const* > > eventQueues;
-		vector< vector<EventListener*> > eventListeners;
+		vector< vector<EventInfo const* > > m_eventQueues;
+		vector< vector<EventListener*> > m_eventListeners;
 
 		// SDL2 event queue handling:
 		const static int MAX_EVENTS = 1; // Max number of events to look for
-		SDL_Event SDLEventBuffer[MAX_EVENTS];
+		SDL_Event m_SDLEventBuffer[MAX_EVENTS];
 
 	};
 

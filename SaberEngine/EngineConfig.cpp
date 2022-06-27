@@ -18,7 +18,7 @@ namespace SaberEngine
 	{
 		// Define the default values in unordered_map, to simplify (de)serialization.
 		// Note: String values must be explicitely defined as string objects
-		this->configValues =
+		m_configValues =
 		{
 			// Renderer config:
 			{"windowTitle",							string("Saber Engine")},
@@ -97,7 +97,7 @@ namespace SaberEngine
 
 		};
 
-		this->isDirty = true;
+		m_isDirty = true;
 	}
 
 
@@ -106,9 +106,9 @@ namespace SaberEngine
 	template<typename T>
 	T EngineConfig::GetValue(const string& valueName) const
 	{
-		auto result = configValues.find(valueName);
+		auto result = m_configValues.find(valueName);
 		T returnVal;
-		if (result != configValues.end())
+		if (result != m_configValues.end())
 		{
 			try
 			{
@@ -136,9 +136,9 @@ namespace SaberEngine
 
 	string EngineConfig::GetValueAsString(const string& valueName) const
 	{
-		auto result = configValues.find(valueName);
+		auto result = m_configValues.find(valueName);
 		string returnVal = "";
-		if (result != configValues.end())
+		if (result != m_configValues.end())
 		{
 			try
 			{
@@ -185,8 +185,8 @@ namespace SaberEngine
 	template<typename T>
 	void EngineConfig::SetValue(const string& valueName, T value) // Note: Strings must be explicitely defined as a string("value")
 	{
-		configValues[valueName] = value;
-		this->isDirty = true;
+		m_configValues[valueName] = value;
+		m_isDirty = true;
 	}
 	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
 	template void EngineConfig::SetValue<string>(const string& valueName, string value);
@@ -204,13 +204,13 @@ namespace SaberEngine
 		InitializeDefaultValues();
 
 		// Load config.cfg file
-		this->LoadConfig();
+		LoadConfig();
 	}
 
 
 	void EngineConfig::LoadConfig()
 	{
-		LOG("Loading " + this->CONFIG_FILENAME);
+		LOG("Loading " + CONFIG_FILENAME);
 
 		ifstream file;
 		file.open((CONFIG_DIR + CONFIG_FILENAME).c_str());
@@ -220,9 +220,9 @@ namespace SaberEngine
 		{
 			LOG_WARNING("No config.cfg file found! Attempting to create a default version");
 
-			this->isDirty = true;
+			m_isDirty = true;
 
-			this->SaveConfig();
+			SaveConfig();
 
 			return;
 		}
@@ -325,7 +325,7 @@ namespace SaberEngine
 				// Strings:
 				if (isString)
 				{
-					configValues[property] = string(value);
+					m_configValues[property] = string(value);
 				}
 				else
 				{
@@ -333,12 +333,12 @@ namespace SaberEngine
 					string boolString = ToLowerCase(value);
 					if (boolString == TRUE_STRING)
 					{
-						configValues[property] = true;
+						m_configValues[property] = true;
 						continue;
 					}
 					else if (boolString == FALSE_STRING)
 					{
-						configValues[property] = false;
+						m_configValues[property] = false;
 						continue;
 					}
 
@@ -349,12 +349,12 @@ namespace SaberEngine
 					// Ints:
 					if (position == value.length())
 					{
-						configValues[property] = intResult;
+						m_configValues[property] = intResult;
 					}
 					else // Floats:
 					{
 						float floatResult = std::stof(value);
-						configValues[property] = floatResult;
+						m_configValues[property] = floatResult;
 					}
 				}
 
@@ -363,11 +363,11 @@ namespace SaberEngine
 			{
 				if (isString)
 				{
-					configValues[property] = string(value);
+					m_configValues[property] = string(value);
 				}
 				else
 				{
-					configValues[property] = (char)value[0]; // Assume bound values are single chars, for now. Might need to rework this to bind more complex keys
+					m_configValues[property] = (char)value[0]; // Assume bound values are single chars, for now. Might need to rework this to bind more complex keys
 				}				
 			}
 			else
@@ -383,13 +383,13 @@ namespace SaberEngine
 			LOG_WARNING("Ignoring invalid command in config.cfg:\n" + line);
 		}
 
-		this->isDirty = false;
+		m_isDirty = false;
 	}
 
 
 	void EngineConfig::SaveConfig()
 	{
-		if (this->isDirty == false)
+		if (m_isDirty == false)
 		{
 			LOG("SaveConfig called, but config has not changed. Returning without modifying file on disk");
 			return;
@@ -410,7 +410,7 @@ namespace SaberEngine
 
 
 		// Output each value, by type:
-		for (std::pair<string, any> currentElement : configValues)
+		for (std::pair<string, any> currentElement : m_configValues)
 		{
 			if (currentElement.second.type() == typeid(string) && currentElement.first.find("INPUT") == string::npos)
 			{
@@ -443,7 +443,7 @@ namespace SaberEngine
 		}
 		
 
-		this->isDirty = false;
+		m_isDirty = false;
 	}
 
 

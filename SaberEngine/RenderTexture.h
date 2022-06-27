@@ -25,13 +25,13 @@ namespace SaberEngine
 		void AttachAdditionalRenderTexturesToFramebuffer(RenderTexture** additionalRTs, int numRTs, bool isDepth = false);
 
 		
-		GLuint& FBO()						{ return frameBufferObject; }
+		GLuint& FBO()						{ return m_frameBufferObject; }
 
-		GLuint& AttachmentPoint()			{ return attachmentPoint; }
-		GLuint& DrawBuffer()				{ return drawBuffer; }
-		GLuint& ReadBuffer()				{ return readBuffer; }
+		GLuint& AttachmentPoint()			{ return m_attachmentPoint; }
+		GLuint& DrawBuffer()				{ return m_drawBuffer; }
+		GLuint& ReadBuffer()				{ return m_readBuffer; }
 
-		vec4& ClearColor()					{ return clearColor; }
+		vec4& ClearColor()					{ return m_clearColor; }
 
 		void Destroy();
 
@@ -58,14 +58,14 @@ namespace SaberEngine
 
 
 	private:
-		GLuint frameBufferObject	= 0;
+		GLuint m_frameBufferObject	= 0;
 
-		GLuint attachmentPoint		= GL_DEPTH_ATTACHMENT;
+		GLuint m_attachmentPoint	= GL_DEPTH_ATTACHMENT;
 
-		GLuint drawBuffer			= GL_NONE;	// Which of the 4 color buffers should be drawn into for the DEFAULT framebuffer
-		GLuint readBuffer			= GL_NONE;	// Which color buffer to use for subsequent reads
+		GLuint m_drawBuffer			= GL_NONE;	// Which of the 4 color buffers should be drawn into for the DEFAULT framebuffer
+		GLuint m_readBuffer			= GL_NONE;	// Which color buffer to use for subsequent reads
 
-		vec4 clearColor				= vec4(0, 0, 0, 1);
+		vec4 m_clearColor			= vec4(0, 0, 0, 1);
 	};
 }
 

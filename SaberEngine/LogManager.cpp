@@ -68,20 +68,20 @@ namespace SaberEngine
 	void LogManager::HandleEvent(EventInfo const* eventInfo)
 	{
 		#if defined(DEBUG_LOGMANAGER_LOG_EVENTS)
-			string logMessage = EVENT_NAME[eventInfo->type] + ": Object #";
+			string logMessage = EVENT_NAME[eventInfo->m_type] + ": Object #";
 
-			if (eventInfo->generator)
+			if (eventInfo->m_generator)
 			{
-				logMessage += std::to_string(eventInfo->generator->GetObjectID()) + " (" + eventInfo->generator->GetName() + ")\t";
+				logMessage += std::to_string(eventInfo->m_generator->GetObjectID()) + " (" + eventInfo->m_generator->GetName() + ")\t";
 			}
 			else
 			{
 				logMessage += "anonymous (     ??    )\t";
 			}
 
-			if (eventInfo->eventMessage && eventInfo->eventMessage->length() > 0)
+			if (eventInfo->m_eventMessage && eventInfo->m_eventMessage->length() > 0)
 			{
-				logMessage += ": " + *eventInfo->eventMessage;
+				logMessage += ": " + *eventInfo->m_eventMessage;
 			}
 
 			LOG(logMessage);

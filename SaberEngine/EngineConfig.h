@@ -4,10 +4,23 @@
 #include <unordered_map>
 #include <any>
 
-using std::string;
 using std::to_string;
 using std::unordered_map;
 using std::any;
+
+namespace
+{
+	// Convert a string to lower case: Used to simplify comparisons
+	inline std::string ToLowerCase(std::string input)
+	{
+		std::string output;
+		for (auto currentChar : input)
+		{
+			output += std::tolower(currentChar);
+		}
+		return output;
+	}
+}
 
 
 namespace SaberEngine
@@ -16,20 +29,22 @@ namespace SaberEngine
 	{
 		EngineConfig();
 
-		// Initialize the configValues mapping with default values. MUST be called before the config can be accessed. Set all default values here.
+		// Initialize the configValues mapping with default values. MUST be called before the config can be accessed.
+		// Set all default values here.
 		void InitializeDefaultValues();
 
 		// Get a config value, by type
 		template<typename T>
-		T GetValue(const string& valueName) const;
-		string GetValueAsString(const string& valueName) const;
+		T GetValue(const std::string& valueName) const;
+		std::string GetValueAsString(const std::string& valueName) const;
 
-		// Set a config value
+		// Set a config value. Note: Strings must be explicitely defined as a string("value")
 		template<typename T>
-		void SetValue(const string& valueName, T value); // Note: Strings must be explicitely defined as a string("value")
+		void SetValue(const std::string& valueName, T value); 
 
 		// Compute the aspect ratio == width / height
-		float GetWindowAspectRatio() const { return (float)(GetValue<int>("windowXRes")) / (float)(GetValue<int>("windowYRes")); }
+		float GetWindowAspectRatio() const 
+			{ return (float)(GetValue<int>("windowXRes")) / (float)(GetValue<int>("windowYRes")); }
 
 		// Load the config.cfg from CONFIG_FILENAME
 		void LoadConfig();
@@ -37,37 +52,28 @@ namespace SaberEngine
 		// Save config.cfg to disk
 		void SaveConfig();
 
-		// Public properties:
-		string currentScene = "";			// The currently loaded scene (cached during command-line parsing, and accessed once SceneManager is loaded)
+		// Currently loaded scene (cached during command-line parsing, accessed once SceneManager is loaded)
+		std::string m_currentScene = ""; 
 
 	private:
-		unordered_map<string, any> configValues;	// The primary config parameter/value mapping
+		unordered_map<std::string, any> m_configValues;	// The primary config parameter/value mapping
 
 
-		const string CONFIG_DIR			= ".\\config\\";
-		const string CONFIG_FILENAME	= "config.cfg";
+		const std::string CONFIG_DIR		= ".\\config\\";
+		const std::string CONFIG_FILENAME	= "config.cfg";
 		
-		bool isDirty = false; // Marks whether we need to save the config file or not
+		bool m_isDirty = false; // Marks whether we need to save the config file or not
 
 
 		// Inline helper functions:
 		//------------------
-		inline string PropertyToConfigString(string property)	{ return " \"" + property + "\"\n"; }
-		inline string PropertyToConfigString(float property)	{ return " " + to_string(property) + "\n"; }
-		inline string PropertyToConfigString(int property)		{ return " " + to_string(property) + "\n"; }
-		inline string PropertyToConfigString(char property)		{ return string(" ") + property + string("\n");	}
-		string PropertyToConfigString(bool property);			// Note: Inlined in .cpp file, as it depends on macros defined in KeyConfiguration.h
+		inline std::string PropertyToConfigString(std::string property)	{ return " \"" + property + "\"\n"; }
+		inline std::string PropertyToConfigString(float property)	{ return " " + std::to_string(property) + "\n"; }
+		inline std::string PropertyToConfigString(int property)		{ return " " + std::to_string(property) + "\n"; }
+		inline std::string PropertyToConfigString(char property) {return std::string(" ") + property + std::string("\n");}
 
-		// Convert a string to lower case: Used to simplify comparisons
-		inline string ToLowerCase(string input)
-		{
-			string output;
-			for (auto currentChar : input)
-			{
-				output += std::tolower(currentChar);
-			}
-			return output;
-		}
+		// Note: Inlined in .cpp file, as it depends on macros defined in KeyConfiguration.h
+		std::string PropertyToConfigString(bool property);	
 	};
 }
 

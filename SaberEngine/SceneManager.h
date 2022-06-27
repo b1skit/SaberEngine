@@ -62,7 +62,7 @@ namespace SaberEngine
 		// sceneName == the root folder name within the ./Scenes/ directory. Must contain an .fbx file with the same name.
 		bool LoadScene(string sceneName);
 
-		inline unsigned int						NumMaterials()								{ return (int)this->materials.size(); }
+		inline unsigned int						NumMaterials()								{ return (int)m_materials.size(); }
 		unordered_map<string, Material*> const&	GetMaterials() const;
 		Material*								GetMaterial(string materialName);
 		
@@ -93,21 +93,21 @@ namespace SaberEngine
 	private:
 		// Scene management:
 		//------------------
-		Scene* currentScene = nullptr;
+		Scene* m_currentScene = nullptr;
 
 		// Add a game object and register it with the various tracking lists
 		void AddGameObject(GameObject* newGameObject);
 
 		// Material management:
 		//---------------------
-		unordered_map<string, Material*> materials;	// Hash table of scene Material pointers
+		unordered_map<string, Material*> m_materials;	// Hash table of scene Material pointers
 
-		unordered_map<string, Texture*> textures;	// Hash table of scene Texture pointers
+		unordered_map<string, Texture*> m_textures;	// Hash table of scene Texture pointers
 
 		void				AddMaterial(Material*& newMaterial);	// Add a material to the material array. Note: Material name MUST be unique
 
 		void				AssembleMaterialMeshLists();		// Helper function: Compiles vectors filled with meshes that use each material. Must be called once after all meshes have finished loading
-		unordered_map<string, vector<gr::Mesh*>>materialMeshLists;	// Hash table: Maps material names, to a vector of Mesh* using the material
+		unordered_map<string, vector<gr::Mesh*>>m_materialMeshLists;	// Hash table: Maps material names, to a vector of Mesh* using the material
 
 
 		// Scene setup/construction:

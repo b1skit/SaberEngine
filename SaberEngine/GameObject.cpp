@@ -4,8 +4,8 @@ namespace SaberEngine
 {
 	GameObject::GameObject(string name, Renderable renderable) : SceneObject::SceneObject(name)
 	{
-		this->renderable = renderable;
-		this->renderable.SetTransform(&this->transform);
+		m_renderable = renderable;
+		m_renderable.SetTransform(&m_transform);
 	}
 
 	//GameObject::~GameObject()

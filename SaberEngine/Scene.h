@@ -56,12 +56,12 @@ namespace SaberEngine
 		int		AddMesh(gr::Mesh* newMesh);
 		void	DeleteMeshes();
 		gr::Mesh*	GetMesh(int meshIndex);
-		inline vector<gr::Mesh*> const& GetMeshes() { return meshes; }
+		inline vector<gr::Mesh*> const& GetMeshes() { return m_meshes; }
 
 		// Cameras:
 		//---------
 		vector<Camera*> const&	GetCameras(CAMERA_TYPE cameraType);
-		Camera*					GetMainCamera()		{ return sceneCameras[CAMERA_TYPE_MAIN].at(0); }
+		Camera*					GetMainCamera()		{ return m_sceneCameras[CAMERA_TYPE_MAIN].at(0); }
 		void					RegisterCamera(CAMERA_TYPE cameraType, Camera* newCamera);
 		void					ClearCameras();	// Destroys the scene's cameras
 
@@ -69,35 +69,35 @@ namespace SaberEngine
 
 		// Scene object containers:
 		//-------------------------
-		vector<GameObject*> gameObjects;	// Pointers to dynamically allocated GameObjects
-		vector<Renderable*> renderables;	// Pointers to statically allocated renderables held by GameObjects
+		vector<GameObject*> m_gameObjects;	// Pointers to dynamically allocated GameObjects
+		vector<Renderable*> m_renderables;	// Pointers to statically allocated renderables held by GameObjects
 
 
 		// Duplicate pointers to lights contained in deferredLights
-		Light* ambientLight = nullptr;
-		Light* keyLight		= nullptr;
+		Light* m_ambientLight = nullptr;
+		Light* m_keyLight		= nullptr;
 
-		vector<Light*> const& GetDeferredLights() const		{ return deferredLights; }
+		vector<Light*> const& GetDeferredLights() const		{ return m_deferredLights; }
 
 		// Skybox object:
-		Skybox* skybox		= nullptr;
+		Skybox* m_skybox		= nullptr;
 
-		inline gr::Bounds const& WorldSpaceSceneBounds() const	{ return sceneWorldBounds; }
+		inline gr::Bounds const& WorldSpaceSceneBounds() const	{ return m_sceneWorldBounds; }
 
-		string GetSceneName() const							{ return this->sceneName; }
+		string GetSceneName() const							{ return m_sceneName; }
 
 	private:
-		vector<vector<Camera*>> sceneCameras;
+		vector<vector<Camera*>> m_sceneCameras;
 
-		vector<gr::Mesh*> meshes;				// Pointers to dynamically allocated Mesh objects
+		vector<gr::Mesh*> m_meshes;				// Pointers to dynamically allocated Mesh objects
 
-		gr::Bounds sceneWorldBounds;
+		gr::Bounds m_sceneWorldBounds;
 
 		// Lights:
 		//--------
-		vector<Light*> deferredLights;
+		vector<Light*> m_deferredLights;
 
-		string sceneName;
+		string m_sceneName;
 	};
 }
 

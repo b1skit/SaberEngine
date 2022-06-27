@@ -107,18 +107,18 @@ namespace SaberEngine
 		// TODO: Copy constructor, assignment operator
 
 		// Getters/Setters:
-		inline string const&	Name()									{ return name; }
-		inline Shader*&			GetShader()								{ return shader; }
-		inline vec4&			Property(MATERIAL_PROPERTY_INDEX index) { return properties[index]; }
+		inline string const&	Name()									{ return m_name; }
+		inline Shader*&			GetShader()								{ return m_shader; }
+		inline vec4&			Property(MATERIAL_PROPERTY_INDEX index) { return m_properties[index]; }
 
 		Texture*&				AccessTexture(TEXTURE_TYPE textureType);
-		inline int const&		NumTextureSlots()						{ return numTextures; }
+		inline int const&		NumTextureSlots()						{ return m_numTextures; }
 
-		vector<string> const&	ShaderKeywords() const					{ return shaderKeywords; }
+		vector<string> const&	ShaderKeywords() const					{ return m_shaderKeywords; }
 		void					AddShaderKeyword(string const& newKeyword);
 		
 
-		inline bool&			IsRenderMaterial()						{ return isRenderMaterial; }
+		inline bool&			IsRenderMaterial()						{ return m_isRenderMaterial; }
 
 
 		void BindAllTextures(int startingTextureUnit, bool doBind);
@@ -140,17 +140,17 @@ namespace SaberEngine
 		
 
 	private:
-		string		name;									// Must be unique: Identifies this material
+		string		m_name;									// Must be unique: Identifies this material
 
-		Shader*		shader		= nullptr;					// Deallocated up in SceneManager.Shutdown()
-		Texture**	textures	= nullptr;					// Deallocated when object is destroyed in SceneManager.Shutdown()
-		int			numTextures = 0;
+		Shader*		m_shader		= nullptr;					// Deallocated up in SceneManager.Shutdown()
+		Texture**	m_textures	= nullptr;					// Deallocated when object is destroyed in SceneManager.Shutdown()
+		int			m_numTextures = 0;
 		
-		vec4		properties[MATERIAL_PROPERTY_COUNT];	// Generic material properties
+		vec4		m_properties[MATERIAL_PROPERTY_COUNT];	// Generic material properties
 
-		vector<string> shaderKeywords;
+		vector<string> m_shaderKeywords;
 
-		bool isRenderMaterial	= false;
+		bool m_isRenderMaterial	= false;
 
 		// Private member functions:
 		//--------------------------

@@ -88,12 +88,12 @@ namespace gr
 
 	Mesh::Mesh(string name, std::vector<Vertex> vertices, std::vector<GLuint> indices, SaberEngine::Material* newMeshMaterial)
 	{
-		this->meshName		= name;
+		meshName		= name;
 
 		m_vertices = vertices;
 		m_indices = indices;
 
-		this->m_meshMaterial	= newMeshMaterial;
+		m_meshMaterial	= newMeshMaterial;
 
 		// Once we've stored our properties locally, we can compute the localBounds:
 		ComputeBounds();
@@ -161,9 +161,9 @@ namespace gr
 	{
 		if (doBind)
 		{
-			glBindVertexArray(this->VAO());
-			glBindBuffer(GL_ARRAY_BUFFER, this->VBO(BUFFER_VERTICES));
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->VBO(BUFFER_INDEXES));
+			glBindVertexArray(VAO());
+			glBindBuffer(GL_ARRAY_BUFFER, VBO(BUFFER_VERTICES));
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO(BUFFER_INDEXES));
 		}
 		else
 		{
@@ -189,10 +189,10 @@ namespace gr
 			m_indices.clear();
 		}
 
-		glDeleteVertexArrays(1, &this->m_meshVAO);
-		glDeleteBuffers(BUFFER_COUNT, this->m_meshVBOs);
+		glDeleteVertexArrays(1, &m_meshVAO);
+		glDeleteBuffers(BUFFER_COUNT, m_meshVBOs);
 
-		this->m_meshMaterial = nullptr;		// Note: Material MUST be cleaned up elsewhere!
+		m_meshMaterial = nullptr;		// Note: Material MUST be cleaned up elsewhere!
 	}
 
 	void Mesh::ComputeBounds()

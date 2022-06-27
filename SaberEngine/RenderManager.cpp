@@ -136,8 +136,8 @@ namespace SaberEngine
 	RenderManager::~RenderManager()
 	{
 		// Close our window in the destructor so we can still read any final OpenGL error messages before it is destroyed
-		SDL_GL_DeleteContext(glContext);
-		SDL_DestroyWindow(glWindow);
+		SDL_GL_DeleteContext(m_glContext);
+		SDL_DestroyWindow(m_glWindow);
 		SDL_Quit();
 	}
 
@@ -154,10 +154,10 @@ namespace SaberEngine
 		LOG("RenderManager starting...");
 
 		// Cache the relevant config data:
-		this->windowTitle			= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("windowTitle");
-		this->xRes					= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
-		this->yRes					= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
-		this->useForwardRendering	= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<bool>("useForwardRendering");
+		m_windowTitle			= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("windowTitle");
+		m_xRes					= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
+		m_yRes					= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
+		m_useForwardRendering	= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<bool>("useForwardRendering");
 
 		// Configure SDL before creating a window:
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
@@ -185,28 +185,28 @@ namespace SaberEngine
 		//SDL_GL_SetSwapInterval(1);
 
 		// Create a window:
-		glWindow = SDL_CreateWindow
+		m_glWindow = SDL_CreateWindow
 		(
-			this->windowTitle.c_str(),
+			m_windowTitle.c_str(),
 			SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
-			xRes, 
-			yRes, 
+			m_xRes, 
+			m_yRes, 
 			SDL_WINDOW_OPENGL
 		);
-		if (glWindow == NULL)
+		if (m_glWindow == NULL)
 		{
 			CoreEngine::GetEventManager()->Notify(new EventInfo{ EVENT_ENGINE_QUIT, this, new string("Could not create window") });
 			return;
 		}
 
 		// Create an OpenGL context and make it current:
-		glContext = SDL_GL_CreateContext(glWindow);
-		if (glContext == NULL)
+		m_glContext = SDL_GL_CreateContext(m_glWindow);
+		if (m_glContext == NULL)
 		{
 			CoreEngine::GetEventManager()->Notify(new EventInfo{ EVENT_ENGINE_QUIT, this, new string("Could not create OpenGL context") });
 			return;
 		}
-		if (SDL_GL_MakeCurrent(glWindow, glContext) < 0)
+		if (SDL_GL_MakeCurrent(m_glWindow, m_glContext) < 0)
 		{
 			CoreEngine::GetEventManager()->Notify(new EventInfo{ EVENT_ENGINE_QUIT, this, new string("Failed to make OpenGL context current") });
 			return;
@@ -237,17 +237,17 @@ namespace SaberEngine
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 		
 		// Set the default buffer clear values:
-		glClearColor(GLclampf(windowClearColor.r), GLclampf(windowClearColor.g), GLclampf(windowClearColor.b), GLclampf(windowClearColor.a));
-		glClearDepth((GLdouble)depthClearColor);
-		ClearWindow(windowClearColor);
+		glClearColor(GLclampf(m_windowClearColor.r), GLclampf(m_windowClearColor.g), GLclampf(m_windowClearColor.b), GLclampf(m_windowClearColor.a));
+		glClearDepth((GLdouble)m_depthClearColor);
+		ClearWindow(m_windowClearColor);
 
 		// Configure deferred output:
-		outputMaterial = new Material("RenderManager_OutputMaterial", CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShader"), (TEXTURE_TYPE)1, true);
+		m_outputMaterial = new Material("RenderManager_OutputMaterial", CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShader"), (TEXTURE_TYPE)1, true);
 
 		RenderTexture* outputTexture = new RenderTexture
 		(
-			this->xRes,
-			this->yRes,
+			m_xRes,
+			m_yRes,
 			"RenderManagerFrameOutput"
 		);
 		
@@ -264,12 +264,12 @@ namespace SaberEngine
 
 		outputTexture->Buffer(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO);
 
-		outputMaterial->AccessTexture(TEXTURE_ALBEDO) = outputTexture;
+		m_outputMaterial->AccessTexture(TEXTURE_ALBEDO) = outputTexture;
 
 		// PostFX Manager:
-		postFXManager = new PostFXManager(); // Initialized when RenderManager.Initialize() is called
+		m_postFXManager = new PostFXManager(); // Initialized when RenderManager.Initialize() is called
 
-		screenAlignedQuad = new gr::Mesh
+		m_screenAlignedQuad = new gr::Mesh
 		(
 			gr::meshfactory::CreateQuad
 			(
@@ -286,24 +286,24 @@ namespace SaberEngine
 	{
 		LOG("Render manager shutting down...");
 
-		if (outputMaterial != nullptr)
+		if (m_outputMaterial != nullptr)
 		{
-			outputMaterial->Destroy();
-			delete outputMaterial;
-			outputMaterial = nullptr;
+			m_outputMaterial->Destroy();
+			delete m_outputMaterial;
+			m_outputMaterial = nullptr;
 		}
 
-		if (screenAlignedQuad != nullptr)
+		if (m_screenAlignedQuad != nullptr)
 		{
-			screenAlignedQuad->Destroy();
-			delete screenAlignedQuad;
-			screenAlignedQuad = nullptr;
+			m_screenAlignedQuad->Destroy();
+			delete m_screenAlignedQuad;
+			m_screenAlignedQuad = nullptr;
 		}
 
-		if (postFXManager != nullptr)
+		if (m_postFXManager != nullptr)
 		{
-			delete postFXManager;
-			postFXManager = nullptr;
+			delete m_postFXManager;
+			m_postFXManager = nullptr;
 		}
 	}
 
@@ -334,7 +334,7 @@ namespace SaberEngine
 
 
 		// Forward rendering:
-		if (this->useForwardRendering) // TODO: Split forward rendering into another function, and access via a function pointer
+		if (m_useForwardRendering) // TODO: Split forward rendering into another function, and access via a function pointer
 		{
 			RenderForward(mainCam);
 		}
@@ -345,9 +345,9 @@ namespace SaberEngine
 			RenderToGBuffer(mainCam);
 
 			// Render deferred lights:
-			((RenderTexture*)this->outputMaterial->AccessTexture((TEXTURE_TYPE)0))->BindFramebuffer(true);
+			((RenderTexture*)m_outputMaterial->AccessTexture((TEXTURE_TYPE)0))->BindFramebuffer(true);
 			
-			glViewport(0, 0, this->xRes, this->yRes);
+			glViewport(0, 0, m_xRes, m_yRes);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the currently bound FBO
 
 			vector<Light*>const* deferredLights = &CoreEngine::GetSceneManager()->GetDeferredLights();
@@ -385,17 +385,17 @@ namespace SaberEngine
 			RenderSkybox(CoreEngine::GetSceneManager()->GetSkybox());
 
 			// Unbind the output framebuffer
-			((RenderTexture*)this->outputMaterial->AccessTexture((TEXTURE_TYPE)0))->BindFramebuffer(false);
+			((RenderTexture*)m_outputMaterial->AccessTexture((TEXTURE_TYPE)0))->BindFramebuffer(false);
 
 			// Additively blit the emissive GBuffer texture to screen:
 			glEnable(GL_BLEND);
-			Blit(mainCam->RenderMaterial(), TEXTURE_EMISSIVE, this->outputMaterial, TEXTURE_ALBEDO);
+			Blit(mainCam->RenderMaterial(), TEXTURE_EMISSIVE, m_outputMaterial, TEXTURE_ALBEDO);
 			glDisable(GL_BLEND);			
 
 			// Post process finished frame:
 			Material* finalFrameMaterial	= nullptr;	// References updated in ApplyPostFX...
 			Shader* finalFrameShader		= nullptr;
-			postFXManager->ApplyPostFX(finalFrameMaterial, finalFrameShader);
+			m_postFXManager->ApplyPostFX(finalFrameMaterial, finalFrameShader);
 
 			// Cleanup:
 			glEnable(GL_DEPTH_TEST);
@@ -407,7 +407,7 @@ namespace SaberEngine
 		}
 		
 		// Display the final frame:
-		SDL_GL_SwapWindow(glWindow);
+		SDL_GL_SwapWindow(m_glWindow);
 	}
 
 
@@ -538,7 +538,7 @@ namespace SaberEngine
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the currently bound FBO
 
 		// Assemble common (model independent) matrices:
-		mat4 view			= renderCam->View();
+		mat4 m_view			= renderCam->View();
 
 		// Loop by material (+shader), mesh:
 		std::unordered_map<string, Material*> const sceneMaterials = CoreEngine::GetSceneManager()->GetMaterials();
@@ -556,7 +556,7 @@ namespace SaberEngine
 
 			// Upload material properties:
 			currentShader->UploadUniform(Material::MATERIAL_PROPERTY_NAMES[MATERIAL_PROPERTY_0].c_str(), &currentMaterial->Property(MATERIAL_PROPERTY_0).x, UNIFORM_Vec4fv);
-			currentShader->UploadUniform("in_view", &view[0][0], UNIFORM_Matrix4fv);
+			currentShader->UploadUniform("in_view", &m_view[0][0], UNIFORM_Matrix4fv);
 
 			// Get all meshes that use the current material
 			meshes = CoreEngine::GetSceneManager()->GetRenderMeshes(currentMaterial);
@@ -602,12 +602,12 @@ namespace SaberEngine
 
 	void RenderManager::RenderForward(Camera* renderCam)
 	{
-		glViewport(0, 0, this->xRes, this->yRes);
+		glViewport(0, 0, m_xRes, m_yRes);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the currently bound FBO
 
 		// Assemble common (model independent) matrices:
-		mat4 view			= renderCam->View();
+		mat4 m_view			= renderCam->View();
 		mat4 shadowCam_vp = mat4(1.0f);
 		if (CoreEngine::GetSceneManager()->GetKeyLight() && CoreEngine::GetSceneManager()->GetKeyLight()->ActiveShadowMap() && CoreEngine::GetSceneManager()->GetKeyLight()->ActiveShadowMap()->ShadowCamera())
 		{
@@ -654,7 +654,7 @@ namespace SaberEngine
 			vector<gr::Mesh*> const* meshes = CoreEngine::GetSceneManager()->GetRenderMeshes(currentMaterial);
 
 			// Upload common shader matrices:
-			currentShader->UploadUniform("in_view", &view[0][0], UNIFORM_Matrix4fv);
+			currentShader->UploadUniform("in_view", &m_view[0][0], UNIFORM_Matrix4fv);
 			currentShader->UploadUniform("shadowCam_vp", &shadowCam_vp[0][0], UNIFORM_Matrix4fv);
 
 			// Loop through each mesh:			
@@ -667,7 +667,7 @@ namespace SaberEngine
 				// Assemble model-specific matrices:
 				mat4 model			= currentMesh->GetTransform().Model();
 				mat4 modelRotation	= currentMesh->GetTransform().Model(WORLD_ROTATION);
-				mat4 mv				= view * model;
+				mat4 mv				= m_view * model;
 				mat4 mvp			= renderCam->ViewProjection() * model;
 
 				// Upload mesh-specific matrices:
@@ -714,13 +714,13 @@ namespace SaberEngine
 		bool hasShadowMap = deferredLight->ActiveShadowMap() != nullptr;
 			
 		mat4 model			= deferredLight->GetTransform().Model();
-		mat4 view			= renderCam->View();
-		mat4 mv				= view * model;
+		mat4 m_view			= renderCam->View();
+		mat4 mv				= m_view * model;
 		mat4 mvp			= renderCam->ViewProjection() * deferredLight->GetTransform().Model();
 		vec3 cameraPosition = renderCam->GetTransform()->WorldPosition();
 
 		currentShader->UploadUniform("in_model",		&model[0][0],			UNIFORM_Matrix4fv);
-		currentShader->UploadUniform("in_view",			&view[0][0],			UNIFORM_Matrix4fv);
+		currentShader->UploadUniform("in_view",			&m_view[0][0],			UNIFORM_Matrix4fv);
 		currentShader->UploadUniform("in_mv",			&mv[0][0],				UNIFORM_Matrix4fv);
 		currentShader->UploadUniform("in_mvp",			&mvp[0][0],				UNIFORM_Matrix4fv);
 		currentShader->UploadUniform("cameraWorldPos",	&cameraPosition,		UNIFORM_Vec3fv);
@@ -735,7 +735,7 @@ namespace SaberEngine
 		case LIGHT_AMBIENT_IBL:
 		{
 			// Bind IBL cubemaps:
-			if (!this->useForwardRendering)
+			if (!m_useForwardRendering)
 			{
 				Texture* IEMCubemap = ((ImageBasedLight*)deferredLight)->GetIEMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
 				if (IEMCubemap != nullptr)
@@ -763,7 +763,7 @@ namespace SaberEngine
 		{
 			currentShader->UploadUniform("keylightWorldDir", &deferredLight->GetTransform().Forward().x, UNIFORM_Vec3fv);
 
-			vec3 keylightViewDir = glm::normalize(view * vec4(deferredLight->GetTransform().Forward(), 0.0f));
+			vec3 keylightViewDir = glm::normalize(m_view * vec4(deferredLight->GetTransform().Forward(), 0.0f));
 			currentShader->UploadUniform("keylightViewDir", &keylightViewDir.x, UNIFORM_Vec3fv);
 		}
 			break;
@@ -884,7 +884,7 @@ namespace SaberEngine
 			}
 		}
 
-		if (deferredLight->Type() == LIGHT_AMBIENT_IBL && !this->useForwardRendering)
+		if (deferredLight->Type() == LIGHT_AMBIENT_IBL && !m_useForwardRendering)
 		{
 			// Unbind IBL cubemaps:
 			Texture* IEMCubemap = ((ImageBasedLight*)deferredLight)->GetIEMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
@@ -958,39 +958,39 @@ namespace SaberEngine
 
 	void SaberEngine::RenderManager::BlitToScreen()
 	{
-		glViewport(0, 0, this->xRes, this->yRes);
+		glViewport(0, 0, m_xRes, m_yRes);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		outputMaterial->GetShader()->Bind(true);
-		outputMaterial->BindAllTextures(RENDER_TEXTURE_0, true);
-		screenAlignedQuad->Bind(true);
+		m_outputMaterial->GetShader()->Bind(true);
+		m_outputMaterial->BindAllTextures(RENDER_TEXTURE_0, true);
+		m_screenAlignedQuad->Bind(true);
 
-		glDrawElements(GL_TRIANGLES, (GLsizei)screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+		glDrawElements(GL_TRIANGLES, (GLsizei)m_screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 		// Cleanup:
-		outputMaterial->BindAllTextures(RENDER_TEXTURE_0, false);
-		outputMaterial->GetShader()->Bind(false);
-		screenAlignedQuad->Bind(false);
+		m_outputMaterial->BindAllTextures(RENDER_TEXTURE_0, false);
+		m_outputMaterial->GetShader()->Bind(false);
+		m_screenAlignedQuad->Bind(false);
 	}
 
 
 	void SaberEngine::RenderManager::BlitToScreen(Material* srcMaterial, Shader* blitShader)
 	{
-		glViewport(0, 0, this->xRes, this->yRes);
+		glViewport(0, 0, m_xRes, m_yRes);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		blitShader->Bind(true);
 		srcMaterial->BindAllTextures(RENDER_TEXTURE_0, true); // NOTE: Assume we're binding to GBuffer_Albedo, for now...
-		screenAlignedQuad->Bind(true);
+		m_screenAlignedQuad->Bind(true);
 
-		glDrawElements(GL_TRIANGLES, (GLsizei)screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+		glDrawElements(GL_TRIANGLES, (GLsizei)m_screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 		// Cleanup:
 		srcMaterial->BindAllTextures(RENDER_TEXTURE_0, false);
 		blitShader->Bind(false);
-		screenAlignedQuad->Bind(false);
+		m_screenAlignedQuad->Bind(false);
 	}
 
 
@@ -999,7 +999,7 @@ namespace SaberEngine
 		Shader* currentShader = shaderOverride;
 		if (currentShader == nullptr)
 		{
-			currentShader = outputMaterial->GetShader(); // Output material has the blit shader attached to it
+			currentShader = m_outputMaterial->GetShader(); // Output material has the blit shader attached to it
 		}
 
 		// Bind the output FBO: (Textures MUST already be attached...)
@@ -1008,16 +1008,16 @@ namespace SaberEngine
 
 		// Bind the blit shader and screen aligned quad:
 		currentShader->Bind(true);
-		screenAlignedQuad->Bind(true);
+		m_screenAlignedQuad->Bind(true);
 
 		// Bind the source texture into the slot specified in the blit shader:
 		srcMat->AccessTexture((TEXTURE_TYPE)srcTex)->Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, true); // Note: Blit shader reads from this texture unit (for now)
 		
-		glDrawElements(GL_TRIANGLES, (GLsizei)screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+		glDrawElements(GL_TRIANGLES, (GLsizei)m_screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 		// Cleanup:
 		srcMat->AccessTexture((TEXTURE_TYPE)dstTex)->Bind(TEXTURE_ALBEDO, false);
-		screenAlignedQuad->Bind(false);
+		m_screenAlignedQuad->Bind(false);
 		currentShader->Bind(false);
 		((RenderTexture*)dstMat->AccessTexture((TEXTURE_TYPE)dstTex))->BindFramebuffer(false);
 	}
@@ -1029,7 +1029,7 @@ namespace SaberEngine
 		glClearColor(GLclampf(clearColor.r), GLclampf(clearColor.g), GLclampf(clearColor.b), GLclampf(clearColor.a));
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		SDL_GL_SwapWindow(glWindow);
+		SDL_GL_SwapWindow(m_glWindow);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
@@ -1064,7 +1064,7 @@ namespace SaberEngine
 			LOG("Key Col: " + to_string(keyCol->r) + ", " + to_string(keyCol->g) + ", " + to_string(keyCol->b));
 		#endif
 
-		vec4 screenParams		= vec4(this->xRes, this->yRes, 1.0f / this->xRes, 1.0f / this->yRes);
+		vec4 screenParams		= vec4(m_xRes, m_yRes, 1.0f / m_xRes, 1.0f / m_yRes);
 		vec4 projectionParams	= vec4(1.0f, CoreEngine::GetSceneManager()->GetMainCamera()->Near(), CoreEngine::GetSceneManager()->GetMainCamera()->Far(), 1.0f / CoreEngine::GetSceneManager()->GetMainCamera()->Far());
 
 		// Add all Material Shaders to a list:
@@ -1107,7 +1107,7 @@ namespace SaberEngine
 		}		
 		
 		// Add RenderManager shaders:
-		shaders.push_back(outputMaterial->GetShader());
+		shaders.push_back(m_outputMaterial->GetShader());
 
 		// Configure all of the shaders:
 		for (unsigned int i = 0; i < (int)shaders.size(); i++)
@@ -1121,7 +1121,7 @@ namespace SaberEngine
 			}			
 
 			// NOTE: These values are overridden every frame for deferred light Shaders:
-			if (keyLight != nullptr && this->useForwardRendering == true)
+			if (keyLight != nullptr && m_useForwardRendering == true)
 			{
 				shaders.at(i)->UploadUniform("keylightWorldDir", &(keyDir->x), UNIFORM_Vec3fv);
 
@@ -1140,14 +1140,14 @@ namespace SaberEngine
 
 
 			// Upload matrices:
-			mat4 projection = sceneManager->GetMainCamera()->Projection();
-			shaders.at(i)->UploadUniform("in_projection", &projection[0][0], UNIFORM_Matrix4fv);
+			mat4 m_projection = sceneManager->GetMainCamera()->Projection();
+			shaders.at(i)->UploadUniform("in_projection", &m_projection[0][0], UNIFORM_Matrix4fv);
 
 			shaders.at(i)->Bind(false);
 		}
 
 		// Initialize PostFX:
-		postFXManager->Initialize(outputMaterial);
+		m_postFXManager->Initialize(m_outputMaterial);
 	}
 
 

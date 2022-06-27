@@ -11,23 +11,23 @@ namespace SaberEngine
 {
 	Scene::Scene(string sceneName)
 	{
-		this->sceneName = sceneName;
+		m_sceneName = sceneName;
 
-		gameObjects.reserve(GAMEOBJECTS_RESERVATION_AMT);
-		renderables.reserve(RENDERABLES_RESERVATION_AMT);
-		meshes.reserve(MESHES_RESERVATION_AMT);
+		m_gameObjects.reserve(GAMEOBJECTS_RESERVATION_AMT);
+		m_renderables.reserve(RENDERABLES_RESERVATION_AMT);
+		m_meshes.reserve(MESHES_RESERVATION_AMT);
 
-		sceneCameras.reserve(CAMERA_TYPE_COUNT);
+		m_sceneCameras.reserve(CAMERA_TYPE_COUNT);
 		for (int i = 0; i < CAMERA_TYPE_COUNT; i++)
 		{
-			sceneCameras.push_back(vector<Camera*>());
+			m_sceneCameras.push_back(vector<Camera*>());
 		}
-		sceneCameras.at(CAMERA_TYPE_SHADOW).reserve(CAMERA_TYPE_SHADOW_ARRAY_SIZE);
-		sceneCameras.at(CAMERA_TYPE_REFLECTION).reserve(CAMERA_TYPE_REFLECTION_ARRAY_SIZE);
+		m_sceneCameras.at(CAMERA_TYPE_SHADOW).reserve(CAMERA_TYPE_SHADOW_ARRAY_SIZE);
+		m_sceneCameras.at(CAMERA_TYPE_REFLECTION).reserve(CAMERA_TYPE_REFLECTION_ARRAY_SIZE);
 
-		sceneCameras.at(CAMERA_TYPE_MAIN).reserve(1); // Only 1 main camera
+		m_sceneCameras.at(CAMERA_TYPE_MAIN).reserve(1); // Only 1 main camera
 
-		deferredLights.reserve(DEFERRED_LIGHTS_RESERVATION_AMT);
+		m_deferredLights.reserve(DEFERRED_LIGHTS_RESERVATION_AMT);
 	}
 
 
@@ -35,33 +35,33 @@ namespace SaberEngine
 	{
 		DeleteMeshes();
 
-		for (int i = 0; i < (int)gameObjects.size(); i++)
+		for (int i = 0; i < (int)m_gameObjects.size(); i++)
 		{
-			if (gameObjects.at(i))
+			if (m_gameObjects.at(i))
 			{
-				delete gameObjects.at(i);
-				gameObjects.at(i) = nullptr;
+				delete m_gameObjects.at(i);
+				m_gameObjects.at(i) = nullptr;
 			}
 		}
 
 
-		for (int i = 0; i < (int)deferredLights.size(); i++)
+		for (int i = 0; i < (int)m_deferredLights.size(); i++)
 		{
-			if (deferredLights.at(i) != nullptr)
+			if (m_deferredLights.at(i) != nullptr)
 			{
-				deferredLights.at(i)->Destroy();
-				delete deferredLights.at(i);
-				deferredLights.at(i) = nullptr;
+				m_deferredLights.at(i)->Destroy();
+				delete m_deferredLights.at(i);
+				m_deferredLights.at(i) = nullptr;
 			}
 		}
-		deferredLights.clear();
+		m_deferredLights.clear();
 
 		ClearCameras();
 
-		if (skybox != nullptr)
+		if (m_skybox != nullptr)
 		{
-			delete skybox;
-			skybox = nullptr;
+			delete m_skybox;
+			m_skybox = nullptr;
 		}
 	}
 
@@ -69,7 +69,7 @@ namespace SaberEngine
 	void Scene::InitMeshArray()
 	{
 		DeleteMeshes();
-		meshes.reserve(MESHES_RESERVATION_AMT);
+		m_meshes.reserve(MESHES_RESERVATION_AMT);
 	}
 
 
@@ -78,36 +78,36 @@ namespace SaberEngine
 		// Update scene (world) bounds to contain the new mesh:
 		gr::Bounds meshWorldBounds(newMesh->GetLocalBounds().GetTransformedBounds(newMesh->GetTransform().Model()));
 
-		if (meshWorldBounds.xMin() < sceneWorldBounds.xMin())
+		if (meshWorldBounds.xMin() < m_sceneWorldBounds.xMin())
 		{
-			sceneWorldBounds.xMin() = meshWorldBounds.xMin();
+			m_sceneWorldBounds.xMin() = meshWorldBounds.xMin();
 		}
-		if (meshWorldBounds.xMax() > sceneWorldBounds.xMax())
+		if (meshWorldBounds.xMax() > m_sceneWorldBounds.xMax())
 		{
-			sceneWorldBounds.xMax() = meshWorldBounds.xMax();
-		}
-
-		if (meshWorldBounds.yMin() < sceneWorldBounds.yMin())
-		{
-			sceneWorldBounds.yMin() = meshWorldBounds.yMin();
-		}
-		if (meshWorldBounds.yMax() > sceneWorldBounds.yMax())
-		{
-			sceneWorldBounds.yMax() = meshWorldBounds.yMax();
+			m_sceneWorldBounds.xMax() = meshWorldBounds.xMax();
 		}
 
-		if (meshWorldBounds.zMin() < sceneWorldBounds.zMin())
+		if (meshWorldBounds.yMin() < m_sceneWorldBounds.yMin())
 		{
-			sceneWorldBounds.zMin() = meshWorldBounds.zMin();
+			m_sceneWorldBounds.yMin() = meshWorldBounds.yMin();
 		}
-		if (meshWorldBounds.zMax() > sceneWorldBounds.zMax())
+		if (meshWorldBounds.yMax() > m_sceneWorldBounds.yMax())
 		{
-			sceneWorldBounds.zMax() = meshWorldBounds.zMax();
+			m_sceneWorldBounds.yMax() = meshWorldBounds.yMax();
+		}
+
+		if (meshWorldBounds.zMin() < m_sceneWorldBounds.zMin())
+		{
+			m_sceneWorldBounds.zMin() = meshWorldBounds.zMin();
+		}
+		if (meshWorldBounds.zMax() > m_sceneWorldBounds.zMax())
+		{
+			m_sceneWorldBounds.zMax() = meshWorldBounds.zMax();
 		}
 
 		// Add the mesh to our array:
-		int meshIndex = (int)meshes.size();
-		meshes.push_back(newMesh);
+		int meshIndex = (int)m_meshes.size();
+		m_meshes.push_back(newMesh);
 		return meshIndex;
 
 	}
@@ -115,36 +115,36 @@ namespace SaberEngine
 
 	void Scene::DeleteMeshes()
 	{
-		for (int i = 0; i < (int)meshes.size(); i++)
+		for (int i = 0; i < (int)m_meshes.size(); i++)
 		{
-			if (meshes.at(i) != nullptr)
+			if (m_meshes.at(i) != nullptr)
 			{
-				delete meshes[i];
-				meshes.at(i) = nullptr;
+				delete m_meshes[i];
+				m_meshes.at(i) = nullptr;
 			}
 		}
 
-		meshes.clear();
+		m_meshes.clear();
 	}
 
 
 	gr::Mesh* Scene::GetMesh(int meshIndex)
 	{
-		if (meshIndex >= (int)meshes.size())
+		if (meshIndex >= (int)m_meshes.size())
 		{
-			LOG_ERROR("Invalid mesh index received: " + to_string(meshIndex) + " > " + to_string((int)meshes.size()) + ". Returning nullptr");
+			LOG_ERROR("Invalid mesh index received: " + to_string(meshIndex) + " > " + to_string((int)m_meshes.size()) + ". Returning nullptr");
 			return nullptr;
 		}
 
-		return meshes.at(meshIndex);
+		return m_meshes.at(meshIndex);
 	}
 
 
 	void Scene::RegisterCamera(CAMERA_TYPE cameraType, Camera* newCamera)
 	{
-		if (newCamera != nullptr && (int)cameraType < (int)sceneCameras.size())
+		if (newCamera != nullptr && (int)cameraType < (int)m_sceneCameras.size())
 		{
-			sceneCameras.at((int)cameraType).push_back(newCamera);
+			m_sceneCameras.at((int)cameraType).push_back(newCamera);
 
 			LOG("Registered new camera \"" + newCamera->GetName() + "\"");
 		}
@@ -157,26 +157,26 @@ namespace SaberEngine
 
 	vector<Camera*> const& Scene::GetCameras(CAMERA_TYPE cameraType)
 	{
-		return sceneCameras.at(cameraType);
+		return m_sceneCameras.at(cameraType);
 	}
 
 
 	void Scene::ClearCameras()
 	{
-		if (sceneCameras.empty())
+		if (m_sceneCameras.empty())
 		{
 			return;
 		}
 
-		for (int i = 0; i < (int)sceneCameras.size(); i++)
+		for (int i = 0; i < (int)m_sceneCameras.size(); i++)
 		{
-			for (int j = 0; j < (int)sceneCameras.at(i).size(); j++)
+			for (int j = 0; j < (int)m_sceneCameras.at(i).size(); j++)
 			{
-				if (sceneCameras.at(i).at(j) != nullptr)
+				if (m_sceneCameras.at(i).at(j) != nullptr)
 				{
-					sceneCameras.at(i).at(j)->Destroy();
-					delete sceneCameras.at(i).at(j);
-					sceneCameras.at(i).at(j) = nullptr;
+					m_sceneCameras.at(i).at(j)->Destroy();
+					delete m_sceneCameras.at(i).at(j);
+					m_sceneCameras.at(i).at(j) = nullptr;
 				}
 			}
 		}
@@ -192,9 +192,9 @@ namespace SaberEngine
 		case LIGHT_DIRECTIONAL:
 		{
 			bool foundExisting = false;
-			for (int currentLight = 0; currentLight < (int)deferredLights.size(); currentLight++)
+			for (int currentLight = 0; currentLight < (int)m_deferredLights.size(); currentLight++)
 			{
-				if (deferredLights.at(currentLight)->Type() == newLight->Type())
+				if (m_deferredLights.at(currentLight)->Type() == newLight->Type())
 				{
 					foundExisting = true;
 					LOG_ERROR("Found an existing light with type " + to_string((int)newLight->Type()) + ". New light will not be added");
@@ -203,15 +203,15 @@ namespace SaberEngine
 			}
 			if (!foundExisting)
 			{
-				deferredLights.push_back(newLight);
+				m_deferredLights.push_back(newLight);
 
 				if (newLight->Type() == LIGHT_DIRECTIONAL)
 				{
-					this->keyLight = newLight;
+					m_keyLight = newLight;
 				}
 				else
 				{
-					this->ambientLight = newLight;
+					m_ambientLight = newLight;
 				}
 			}
 
@@ -224,7 +224,7 @@ namespace SaberEngine
 		case LIGHT_AREA:
 		case LIGHT_TUBE:
 		default:
-			deferredLights.push_back(newLight);
+			m_deferredLights.push_back(newLight);
 			break;
 		}
 	}	

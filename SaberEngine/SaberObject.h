@@ -27,7 +27,7 @@ namespace SaberEngine
 		{
 			if (!name.length() == 0) // Default to "unnamed" if no valid name is received
 			{
-				this->name = name;
+				name = name;
 			}
 
 			objectID = AssignObjectID();
@@ -39,7 +39,7 @@ namespace SaberEngine
 		inline string GetName() const { return name; }
 
 		// Used to hash objects when inserting into an unordered_map
-		inline string GetHashString() { return hashString; }
+		inline string GetHashString() { return m_hashString; }
 
 		virtual void Update()	= 0;
 
@@ -47,16 +47,16 @@ namespace SaberEngine
 		unsigned long objectID; // Hashed value
 	private:
 		string name = "unnamed";
-		string hashString;
+		string m_hashString;
 
 
-		std::hash<string> hashFunction;
+		std::hash<string> m_hashFunction;
 
 		// Utilities:
 		unsigned long AssignObjectID()
 		{ 
-			hashString = name + std::to_string(SaberEnginePrivate::objectIDs++); // Append a number to give different hashes for the same name
-			size_t hash = hashFunction(hashString);
+			m_hashString = name + std::to_string(SaberEnginePrivate::objectIDs++); // Append a number to give different hashes for the same name
+			size_t hash = m_hashFunction(m_hashString);
 
 			return (unsigned long) hash;
 		}

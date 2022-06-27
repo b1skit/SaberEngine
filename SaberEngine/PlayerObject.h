@@ -19,7 +19,7 @@ namespace SaberEngine
 
 
 		// Getters/Setters:
-		inline Camera* GetCamera() { return playerCam; }
+		inline Camera* GetCamera() { return m_playerCam; }
 
 		// SaberObject interface:
 		void Update() override;
@@ -31,14 +31,14 @@ namespace SaberEngine
 
 
 	private:
-		Camera* playerCam;
+		Camera* m_playerCam;
 
 		// Control configuration:
-		float movementSpeed = 0.003f;
+		float m_movementSpeed = 0.003f;
 
 		// Saved positions
-		vec3 savedPosition		= vec3(0.0f, 0.0f, 0.0f);
-		vec3 savedEulerRotation = vec3(0.0f, 0.0f, 0.0f);
+		vec3 m_savedPosition		= vec3(0.0f, 0.0f, 0.0f);
+		vec3 m_savedEulerRotation = vec3(0.0f, 0.0f, 0.0f);
 	};
 
 }

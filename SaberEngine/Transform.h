@@ -38,7 +38,7 @@ namespace SaberEngine
 		mat4 Model(MODEL_MATRIX_COMPONENT component = WORLD_MODEL);
 		
 		// Hierarchy functions:
-		inline Transform*	Parent() const { return parent; }
+		inline Transform*	Parent() const { return m_parent; }
 		void				Parent(Transform* newParent);
 		
 		// Functionality:
@@ -73,13 +73,13 @@ namespace SaberEngine
 		//-----------------
 
 		// Transform's world-space forward (Z+) vector
-		inline vec3 const& Forward() const { return forward; }
+		inline vec3 const& Forward() const { return m_forward; }
 
 		// Transform's world-space right (X+) vector
-		inline vec3 const& Right()	const { return right; }
+		inline vec3 const& Right()	const { return m_right; }
 
 		// Transform's world-space up (Y+) vector
-		inline vec3 const& Up()		const { return up; }
+		inline vec3 const& Up()		const { return m_up; }
 
 
 		// World CS axis: SaberEngine always uses a RHCS
@@ -103,33 +103,33 @@ namespace SaberEngine
 
 
 	private:
-		Transform* parent = nullptr;
-		vector<Transform*> children;
+		Transform* m_parent = nullptr;
+		vector<Transform*> m_children;
 
 		// World-space orientation:
-		vec3 worldPosition		= vec3(0.0f, 0.0f, 0.0f);	// World position, relative to any parent transforms
-		vec3 eulerWorldRotation	= vec3(0.0f, 0.0f, 0.0f);	// Current world-space Euler angles (pitch, yaw, roll), in Radians
-		vec3 worldScale			= vec3(1.0f, 1.0f, 1.0f);
+		vec3 m_worldPosition		= vec3(0.0f, 0.0f, 0.0f);	// World position, relative to any parent transforms
+		vec3 m_eulerWorldRotation	= vec3(0.0f, 0.0f, 0.0f);	// Current world-space Euler angles (pitch, yaw, roll), in Radians
+		vec3 m_worldScale			= vec3(1.0f, 1.0f, 1.0f);
 		
 		// Local CS axis: SaberEngine always uses a RHCS
-		vec3 right		= WORLD_X;
-		vec3 up			= WORLD_Y;
-		vec3 forward	= WORLD_Z;
+		vec3 m_right		= WORLD_X;
+		vec3 m_up			= WORLD_Y;
+		vec3 m_forward	= WORLD_Z;
 
 		// model == T*R*S
-		mat4 model			= mat4(1.0f);
-		mat4 scale			= mat4(1.0f);
-		mat4 rotation		= mat4(1.0f);
-		mat4 translation	= mat4(1.0f);
+		mat4 m_model			= mat4(1.0f);
+		mat4 m_scale			= mat4(1.0f);
+		mat4 m_rotation		= mat4(1.0f);
+		mat4 m_translation	= mat4(1.0f);
 
-		mat4 combinedModel			= mat4(1.0f);
-		mat4 combinedScale			= mat4(1.0f);
-		mat4 combinedRotation		= mat4(1.0f);
-		mat4 combinedTranslation	= mat4(1.0f);
+		mat4 m_combinedModel			= mat4(1.0f);
+		mat4 m_combinedScale			= mat4(1.0f);
+		mat4 m_combinedRotation		= mat4(1.0f);
+		mat4 m_combinedTranslation	= mat4(1.0f);
 
-		quat worldRotation = glm::quat(vec3(0,0,0));	// Rotation of this transform. Used to assemble rotation matrix
+		quat m_worldRotation = glm::quat(vec3(0,0,0));	// Rotation of this transform. Used to assemble rotation matrix
 
-		bool isDirty;			// Do our model or combinedModel matrices need to be recomputed?
+		bool m_isDirty;			// Do our model or combinedModel matrices need to be recomputed?
 
 
 		// Private functions:

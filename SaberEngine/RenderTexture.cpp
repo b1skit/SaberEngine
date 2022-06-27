@@ -18,38 +18,38 @@ namespace SaberEngine
 
 	RenderTexture::RenderTexture(int width, int height, string name /*= DEFAULT_RENDERTEXTURE_NAME*/)
 	{
-		this->width					= width;
-		this->height				= height;
-		numTexels					= width * height;
+		m_width					= width;
+		m_height				= height;
+		m_numTexels					= width * height;
 
-		this->texturePath			= name;
+		m_texturePath			= name;
 
-		this->texels				= nullptr;
-		this->resolutionHasChanged	= true;
+		m_texels				= nullptr;
+		m_resolutionHasChanged	= true;
 
 		// Override default values:
 		//-------------------------
-		this->internalFormat		= GL_DEPTH_COMPONENT32F;
-		this->format				= GL_DEPTH_COMPONENT;
-		this->type					= GL_FLOAT; // Same as Texture...
+		m_internalFormat		= GL_DEPTH_COMPONENT32F;
+		m_format				= GL_DEPTH_COMPONENT;
+		type					= GL_FLOAT; // Same as Texture...
 		
-		this->textureWrapS			= GL_CLAMP_TO_EDGE; // NOTE: Mandatory for non-power-of-two textures
-		this->textureWrapT			= GL_CLAMP_TO_EDGE;
+		m_textureWrapS			= GL_CLAMP_TO_EDGE; // NOTE: Mandatory for non-power-of-two textures
+		m_textureWrapT			= GL_CLAMP_TO_EDGE;
 
 
-		this->textureMinFilter		= GL_LINEAR;
-		this->textureMaxFilter		= GL_LINEAR;
+		m_textureMinFilter		= GL_LINEAR;
+		m_textureMaxFilter		= GL_LINEAR;
 	}
 
 
 	RenderTexture::RenderTexture(RenderTexture const& rhs) : Texture(rhs)
 	{
-		this->frameBufferObject = 0;	// NOTE: We set the frame buffer to 0, since we don't want to stomp any existing ones
+		m_frameBufferObject = 0;	// NOTE: We set the frame buffer to 0, since we don't want to stomp any existing ones
 
-		this->attachmentPoint	= rhs.attachmentPoint;
+		m_attachmentPoint	= rhs.m_attachmentPoint;
 
-		this->drawBuffer		= rhs.drawBuffer;
-		this->readBuffer		= rhs.readBuffer;
+		m_drawBuffer		= rhs.m_drawBuffer;
+		m_readBuffer		= rhs.m_readBuffer;
 	}
 
 
@@ -62,13 +62,13 @@ namespace SaberEngine
 
 		Texture::operator=(rhs);
 
-		//this->frameBufferObject = 0;	// NOTE: We set the frame buffer to 0, since we don't want to stomp any existing ones
-		this->frameBufferObject	= rhs.frameBufferObject;
+		//frameBufferObject = 0;	// NOTE: We set the frame buffer to 0, since we don't want to stomp any existing ones
+		m_frameBufferObject	= rhs.m_frameBufferObject;
 
-		this->attachmentPoint	= rhs.attachmentPoint;
+		m_attachmentPoint	= rhs.m_attachmentPoint;
 
-		this->drawBuffer = rhs.drawBuffer;
-		this->readBuffer = rhs.readBuffer;
+		m_drawBuffer = rhs.m_drawBuffer;
+		m_readBuffer = rhs.m_readBuffer;
 
 		return *this;
 	}
@@ -85,7 +85,7 @@ namespace SaberEngine
 			return;
 		}
 
-		this->BindFramebuffer(true);
+		BindFramebuffer(true);
 
 		if (isDepth)
 		{
@@ -101,10 +101,10 @@ namespace SaberEngine
 			// Assemble a list of attachment points
 			int totalRTs		= numRTs + 1;
 			GLenum* drawBuffers = new GLenum[totalRTs];
-			drawBuffers[0]		= this->attachmentPoint;
+			drawBuffers[0]		= m_attachmentPoint;
 			for (int i = 1; i < totalRTs; i++)
 			{
-				drawBuffers[i] = additionalRTs[i - 1]->attachmentPoint;
+				drawBuffers[i] = additionalRTs[i - 1]->m_attachmentPoint;
 			}
 
 			glDrawBuffers(totalRTs, drawBuffers);
@@ -116,7 +116,7 @@ namespace SaberEngine
 		}
 
 		// Cleanup:
-		this->BindFramebuffer(false);
+		BindFramebuffer(false);
 	}
 
 
@@ -124,7 +124,7 @@ namespace SaberEngine
 	{
 		Texture::Destroy();
 
-		glDeleteFramebuffers(1, &frameBufferObject);
+		glDeleteFramebuffers(1, &m_frameBufferObject);
 	}
 
 
@@ -132,27 +132,27 @@ namespace SaberEngine
 	{
 		if (Texture::Buffer(textureUnit)) // Makes required calls to glTexParameteri, binds textureID etc 
 		{
-			this->BindFramebuffer(true);
+			BindFramebuffer(true);
 
-			if (!glIsFramebuffer(frameBufferObject))
+			if (!glIsFramebuffer(m_frameBufferObject))
 			{
-				glGenFramebuffers(1, &frameBufferObject);
-				this->BindFramebuffer(true);
-				if (!glIsFramebuffer(frameBufferObject))
+				glGenFramebuffers(1, &m_frameBufferObject);
+				BindFramebuffer(true);
+				if (!glIsFramebuffer(m_frameBufferObject))
 				{
 					LOG_ERROR("Failed to create framebuffer object");
 					return false;
 				}
 
-				glDrawBuffer(this->drawBuffer); // Sets the color buffer to draw too (eg. GL_NONE for a depth map)
-				glReadBuffer(this->readBuffer);
+				glDrawBuffer(m_drawBuffer); // Sets the color buffer to draw too (eg. GL_NONE for a depth map)
+				glReadBuffer(m_readBuffer);
 
 				// Configure framebuffer parameters:
-				glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_WIDTH, this->width);
-				glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_HEIGHT, this->height);
+				glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_WIDTH, m_width);
+				glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_HEIGHT, m_height);
 
 				// Attach our texture to the framebuffer as a render buffer:
-				this->AttachToFramebuffer(this->texTarget);
+				AttachToFramebuffer(m_texTarget);
 			}
 
 			#if defined(DEBUG_SCENEMANAGER_TEXTURE_LOGGING)
@@ -166,8 +166,8 @@ namespace SaberEngine
 			}
 
 			// Cleanup:
-			this->BindFramebuffer(false);
-			glBindTexture(this->texTarget, 0);
+			BindFramebuffer(false);
+			glBindTexture(m_texTarget, 0);
 
 			return result;
 		}
@@ -195,35 +195,35 @@ namespace SaberEngine
 		// Generate faces:
 		for (int i = 0; i < CUBE_MAP_NUM_FACES; i++)
 		{
-			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, cubeFaceRTs[0]->internalFormat, cubeFaceRTs[0]->width, cubeFaceRTs[0]->height, 0, cubeFaceRTs[0]->format, cubeFaceRTs[0]->type, NULL);
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, cubeFaceRTs[0]->m_internalFormat, cubeFaceRTs[0]->m_width, cubeFaceRTs[0]->m_height, 0, cubeFaceRTs[0]->m_format, cubeFaceRTs[0]->type, NULL);
 		}
 
 		// Ensure all of the other textures have the same ID, sampler, and FBO info:
 		for (int i = 1; i < CUBE_MAP_NUM_FACES; i++)
 		{
-			cubeFaceRTs[i]->textureID			= cubeFaceRTs[0]->textureID;
-			cubeFaceRTs[i]->samplerID			= cubeFaceRTs[0]->samplerID;
-			cubeFaceRTs[i]->frameBufferObject	= cubeFaceRTs[0]->frameBufferObject;
+			cubeFaceRTs[i]->m_textureID			= cubeFaceRTs[0]->m_textureID;
+			cubeFaceRTs[i]->m_samplerID			= cubeFaceRTs[0]->m_samplerID;
+			cubeFaceRTs[i]->m_frameBufferObject	= cubeFaceRTs[0]->m_frameBufferObject;
 		}
 
 		// Bind framebuffer:
 		bool result = true;
 		cubeFaceRTs[0]->BindFramebuffer(true);
-		if (!glIsFramebuffer(cubeFaceRTs[0]->frameBufferObject))
+		if (!glIsFramebuffer(cubeFaceRTs[0]->m_frameBufferObject))
 		{
-			glGenFramebuffers(1, &cubeFaceRTs[0]->frameBufferObject);
+			glGenFramebuffers(1, &cubeFaceRTs[0]->m_frameBufferObject);
 			cubeFaceRTs[0]->BindFramebuffer(true);
-			if (!glIsFramebuffer(cubeFaceRTs[0]->frameBufferObject))
+			if (!glIsFramebuffer(cubeFaceRTs[0]->m_frameBufferObject))
 			{
 				LOG_ERROR("Failed to create framebuffer object");
 				return false;
 			}
 
 			// Attach framebuffer as a cube map render buffer:
-			glFramebufferTexture(GL_FRAMEBUFFER, cubeFaceRTs[0]->attachmentPoint, cubeFaceRTs[0]->textureID, 0);		
+			glFramebufferTexture(GL_FRAMEBUFFER, cubeFaceRTs[0]->m_attachmentPoint, cubeFaceRTs[0]->m_textureID, 0);		
 
-			glDrawBuffer(cubeFaceRTs[0]->drawBuffer);
-			glReadBuffer(cubeFaceRTs[0]->readBuffer);
+			glDrawBuffer(cubeFaceRTs[0]->m_drawBuffer);
+			glReadBuffer(cubeFaceRTs[0]->m_readBuffer);
 
 			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 			{
@@ -233,7 +233,7 @@ namespace SaberEngine
 		}
 
 		// Cleanup:
-		glBindTexture(cubeFaceRTs[0]->texTarget, 0); // Was still bound from Texture::BufferCubeMap()
+		glBindTexture(cubeFaceRTs[0]->m_texTarget, 0); // Was still bound from Texture::BufferCubeMap()
 		cubeFaceRTs[0]->BindFramebuffer(false);
 
 		return result;
@@ -284,7 +284,7 @@ namespace SaberEngine
 	{
 		if (doBind)
 		{
-			glBindFramebuffer(GL_FRAMEBUFFER, this->frameBufferObject);
+			glBindFramebuffer(GL_FRAMEBUFFER, m_frameBufferObject);
 		}
 		else
 		{
@@ -295,7 +295,7 @@ namespace SaberEngine
 
 	void RenderTexture::AttachToFramebuffer(GLenum textureTarget, int mipLevel /*= 0*/)
 	{
-		glFramebufferTexture2D(GL_FRAMEBUFFER, this->attachmentPoint, textureTarget, this->textureID, mipLevel);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, m_attachmentPoint, textureTarget, m_textureID, mipLevel);
 	}
 
 
@@ -303,16 +303,16 @@ namespace SaberEngine
 	{
 		if (xRes <= 0 || yRes <= 0)
 		{
-			xRes = this->width;
-			yRes = this->height;
+			xRes = m_width;
+			yRes = m_height;
 		}
 
-		if (glIsRenderbuffer(this->frameBufferObject) == GL_FALSE)
+		if (glIsRenderbuffer(m_frameBufferObject) == GL_FALSE)
 		{
-			glGenRenderbuffers(1, &this->frameBufferObject);
+			glGenRenderbuffers(1, &m_frameBufferObject);
 		}
 
-		this->BindRenderbuffer(true);
+		BindRenderbuffer(true);
 
 		// Allocate storage: 
 		// NOTE: For now, we hard code internalFormat == GL_DEPTH_COMPONENT24, as it's all we ever use...
@@ -320,7 +320,7 @@ namespace SaberEngine
 
 		if (leaveBound == false)
 		{
-			this->BindRenderbuffer(false);
+			BindRenderbuffer(false);
 		}
 	}
 
@@ -329,7 +329,7 @@ namespace SaberEngine
 	{
 		if (doBind)
 		{
-			glBindRenderbuffer(GL_RENDERBUFFER, this->frameBufferObject);
+			glBindRenderbuffer(GL_RENDERBUFFER, m_frameBufferObject);
 		}
 		else
 		{
@@ -342,10 +342,10 @@ namespace SaberEngine
 	{
 		if (unbind == true)
 		{
-			this->BindRenderbuffer(false);
+			BindRenderbuffer(false);
 		}		
 
-		glDeleteRenderbuffers(1, &this->frameBufferObject);
+		glDeleteRenderbuffers(1, &m_frameBufferObject);
 	}
 }
 

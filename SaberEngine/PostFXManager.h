@@ -42,18 +42,18 @@ namespace SaberEngine
 
 	private:
 
-		Material* outputMaterial		= nullptr;	// Recieved from RenderManager
+		Material* m_outputMaterial		= nullptr;	// Recieved from RenderManager
 
-		RenderTexture* pingPongTextures = nullptr;	// Deallocated in destructor
+		RenderTexture* m_pingPongTextures = nullptr;	// Deallocated in destructor
 		const int NUM_DOWN_SAMPLES		= 2;		// Scaling factor: We half the frame size this many times
 		const int NUM_BLUR_PASSES		= 3;		// How many pairs of horizontal + vertical blur passes to perform
 
-		Shader* blitShader				= nullptr;	// Deallocated in destructor
-		Shader* toneMapShader			= nullptr;	// Deallocated in destructor
-		Shader* blurShaders[BLUR_SHADER_COUNT];		// Deallocated in destructor
+		Shader* m_blitShader			= nullptr;	// Deallocated in destructor
+		Shader* m_toneMapShader			= nullptr;	// Deallocated in destructor
+		Shader* m_blurShaders[BLUR_SHADER_COUNT];		// Deallocated in destructor
 		
 		
-		gr::Mesh* screenAlignedQuad			= nullptr;	// Deallocated in destructor
+		gr::Mesh* m_screenAlignedQuad	= nullptr;	// Deallocated in destructor
 	};
 }
 

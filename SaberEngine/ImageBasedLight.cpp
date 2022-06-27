@@ -16,38 +16,38 @@ namespace SaberEngine
 	ImageBasedLight::ImageBasedLight(string lightName, string relativeHDRPath) : Light(lightName, LIGHT_AMBIENT_IBL, vec3(0))
 	{
 		// IEM setup:
-		this->IEM_Material = new Material("IEM_Material", nullptr, CUBE_MAP_NUM_FACES, true);
+		m_IEM_Material = new Material("IEM_Material", nullptr, CUBE_MAP_NUM_FACES, true);
 
-		Texture** IEM_Textures = (Texture**)ConvertEquirectangularToCubemap(CoreEngine::GetSceneManager()->GetCurrentSceneName(), relativeHDRPath, this->xRes, this->yRes, IBL_IEM);
+		Texture** IEM_Textures = (Texture**)ConvertEquirectangularToCubemap(CoreEngine::GetSceneManager()->GetCurrentSceneName(), relativeHDRPath, m_xRes, m_yRes, IBL_IEM);
 
 		if (IEM_Textures != nullptr)
 		{
-			this->IEM_isValid = true;
+			m_IEM_isValid = true;
 
-			this->IEM_Material->AttachCubeMapTextures(IEM_Textures);
+			m_IEM_Material->AttachCubeMapTextures(IEM_Textures);
 		}
 
 		// PMREM setup:
-		this->PMREM_Material = new Material("PMREM_Material", nullptr, CUBE_MAP_NUM_FACES, true);
+		m_PMREM_Material = new Material("PMREM_Material", nullptr, CUBE_MAP_NUM_FACES, true);
 
-		Texture** PMREM_Textures = (Texture**)ConvertEquirectangularToCubemap(CoreEngine::GetSceneManager()->GetCurrentSceneName(), relativeHDRPath, this->xRes, this->yRes, IBL_PMREM);
+		Texture** PMREM_Textures = (Texture**)ConvertEquirectangularToCubemap(CoreEngine::GetSceneManager()->GetCurrentSceneName(), relativeHDRPath, m_xRes, m_yRes, IBL_PMREM);
 
 		if (PMREM_Textures != nullptr)
 		{
-			this->PMREM_isValid = true;
+			m_PMREM_isValid = true;
 
-			this->PMREM_Material->AttachCubeMapTextures(PMREM_Textures);
+			m_PMREM_Material->AttachCubeMapTextures(PMREM_Textures);
 
-			this->maxMipLevel = (int)glm::log2((float)this->xRes);	// Note: We assume the cubemap is always square and use xRes only during our calculations...
+			m_maxMipLevel = (int)glm::log2((float)m_xRes);	// Note: We assume the cubemap is always square and use xRes only during our calculations...
 		}
 
 		// Render BRDF Integration map:
 		GenerateBRDFIntegrationMap();
 
 		// Upload shader parameters:
-		if (this->DeferredMaterial() != nullptr && this->DeferredMaterial()->GetShader() != nullptr)
+		if (DeferredMaterial() != nullptr && DeferredMaterial()->GetShader() != nullptr)
 		{
-			this->DeferredMaterial()->GetShader()->UploadUniform("maxMipLevel", &this->maxMipLevel, UNIFORM_Int);
+			DeferredMaterial()->GetShader()->UploadUniform("maxMipLevel", &m_maxMipLevel, UNIFORM_Int);
 		}
 		else
 		{
@@ -58,27 +58,27 @@ namespace SaberEngine
 	
 	ImageBasedLight::~ImageBasedLight()
 	{
-		if (this->IEM_Material != nullptr)
+		if (m_IEM_Material != nullptr)
 		{
-			this->IEM_Material->Destroy();
-			delete this->IEM_Material;
-			this->IEM_Material	= nullptr;
-			this->IEM_isValid	= false;
+			m_IEM_Material->Destroy();
+			delete m_IEM_Material;
+			m_IEM_Material	= nullptr;
+			m_IEM_isValid	= false;
 		}
 
-		if (this->PMREM_Material != nullptr)
+		if (m_PMREM_Material != nullptr)
 		{
-			this->PMREM_Material->Destroy();
-			delete this->PMREM_Material;
-			this->PMREM_Material	= nullptr;
-			this->PMREM_isValid		= false;
+			m_PMREM_Material->Destroy();
+			delete m_PMREM_Material;
+			m_PMREM_Material	= nullptr;
+			m_PMREM_isValid		= false;
 		}
 
-		if (this->BRDF_integrationMap != nullptr)
+		if (m_BRDF_integrationMap != nullptr)
 		{
-			this->BRDF_integrationMap->Destroy();
-			delete this->BRDF_integrationMap;
-			this->BRDF_integrationMap = nullptr;
+			m_BRDF_integrationMap->Destroy();
+			delete m_BRDF_integrationMap;
+			m_BRDF_integrationMap = nullptr;
 		}
 	}
 
@@ -203,8 +203,8 @@ namespace SaberEngine
 		equirectangularToCubemapBlitShader->UploadUniform("texelSize", &texelSize.x, UNIFORM_Vec4fv);
 
 		// Create and upload projection matrix:
-		glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-		equirectangularToCubemapBlitShader->UploadUniform("in_projection", &projection[0][0], UNIFORM_Matrix4fv);
+		glm::mat4 m_projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+		equirectangularToCubemapBlitShader->UploadUniform("in_projection", &m_projection[0][0], UNIFORM_Matrix4fv);
 
 		// Create view matrices: Orient the camera towards each face of the cube
 		glm::mat4 captureViews[] =
@@ -307,11 +307,11 @@ namespace SaberEngine
 	void ImageBasedLight::GenerateBRDFIntegrationMap()
 	{
 		// Destroy any existing map
-		if (this->BRDF_integrationMap != nullptr)
+		if (m_BRDF_integrationMap != nullptr)
 		{
-			this->BRDF_integrationMap->Destroy();
-			delete this->BRDF_integrationMap;
-			this->BRDF_integrationMap = nullptr;
+			m_BRDF_integrationMap->Destroy();
+			delete m_BRDF_integrationMap;
+			m_BRDF_integrationMap = nullptr;
 		}
 
 		LOG("Rendering BRDF Integration map texture");
@@ -329,29 +329,29 @@ namespace SaberEngine
 
 		
 		// Create a render texture:
-		this->BRDF_integrationMap = new RenderTexture(this->xRes, this->yRes, "BRDFIntegrationMap");
+		m_BRDF_integrationMap = new RenderTexture(m_xRes, m_yRes, "BRDFIntegrationMap");
 
 		// Set texture params:
-		this->BRDF_integrationMap->TextureWrap_S()		= GL_CLAMP_TO_EDGE;
-		this->BRDF_integrationMap->TextureWrap_T()		= GL_CLAMP_TO_EDGE;
+		m_BRDF_integrationMap->TextureWrap_S()		= GL_CLAMP_TO_EDGE;
+		m_BRDF_integrationMap->TextureWrap_T()		= GL_CLAMP_TO_EDGE;
 
-		this->BRDF_integrationMap->TextureMinFilter()	= GL_LINEAR;
-		this->BRDF_integrationMap->TextureMaxFilter()	= GL_LINEAR;					// Default
+		m_BRDF_integrationMap->TextureMinFilter()	= GL_LINEAR;
+		m_BRDF_integrationMap->TextureMaxFilter()	= GL_LINEAR;					// Default
 
 		// 2 channel, 16-bit floating point precision, as recommended by Epic Games:
-		this->BRDF_integrationMap->InternalFormat()		= GL_RG16F;
-		this->BRDF_integrationMap->Format()				= GL_RG;
+		m_BRDF_integrationMap->InternalFormat()		= GL_RG16F;
+		m_BRDF_integrationMap->Format()				= GL_RG;
 
-		this->BRDF_integrationMap->AttachmentPoint()	= GL_COLOR_ATTACHMENT0 + 0;
-		this->BRDF_integrationMap->DrawBuffer()			= GL_COLOR_ATTACHMENT0 + 0;
+		m_BRDF_integrationMap->AttachmentPoint()	= GL_COLOR_ATTACHMENT0 + 0;
+		m_BRDF_integrationMap->DrawBuffer()			= GL_COLOR_ATTACHMENT0 + 0;
 
-		if (!this->BRDF_integrationMap->Buffer(GENERIC_TEXTURE_0))
+		if (!m_BRDF_integrationMap->Buffer(GENERIC_TEXTURE_0))
 		{
 			LOG_ERROR("Could not buffer BRDF Integration Map RenderTexture!");
 			return;
 		}
 
-		this->BRDF_integrationMap->Bind(GENERIC_TEXTURE_0, true);
+		m_BRDF_integrationMap->Bind(GENERIC_TEXTURE_0, true);
 		
 		// Create a CCW screen-aligned quad to render with:
 		gr::Mesh quad = gr::meshfactory::CreateQuad
@@ -365,11 +365,11 @@ namespace SaberEngine
 
 		// Render into the quad:
 		//--------------------------
-		glViewport(0, 0, this->xRes, this->yRes);	// Configure viewport to match the cubemap dimensions
+		glViewport(0, 0, m_xRes, m_yRes);	// Configure viewport to match the cubemap dimensions
 		glDepthFunc(GL_LEQUAL);						// Ensure we can render on the far plane
 
-		this->BRDF_integrationMap->BindFramebuffer(true);
-		this->BRDF_integrationMap->CreateRenderbuffer();
+		m_BRDF_integrationMap->BindFramebuffer(true);
+		m_BRDF_integrationMap->CreateRenderbuffer();
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDrawElements(GL_TRIANGLES,
@@ -381,9 +381,9 @@ namespace SaberEngine
 		// Cleanup:
 		quad.Bind(false);
 
-		this->BRDF_integrationMap->BindFramebuffer(false);
-		this->BRDF_integrationMap->DeleteRenderbuffer();
-		this->BRDF_integrationMap->Bind(GENERIC_TEXTURE_0, false);
+		m_BRDF_integrationMap->BindFramebuffer(false);
+		m_BRDF_integrationMap->DeleteRenderbuffer();
+		m_BRDF_integrationMap->Bind(GENERIC_TEXTURE_0, false);
 
 		BRDFIntegrationMapShader->Bind(false);
 		BRDFIntegrationMapShader->Destroy();

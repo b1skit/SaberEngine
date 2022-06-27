@@ -11,20 +11,20 @@ namespace SaberEngine
 {
 	PlayerObject::PlayerObject(Camera* playerCam) : GameObject::GameObject("Player Object")
 	{
-		this->playerCam = playerCam;
-		this->playerCam->GetTransform()->Parent(&this->transform);
+		m_playerCam = playerCam;
+		m_playerCam->GetTransform()->Parent(&m_transform);
 
 		// Move the yaw (ie. about Y) rotation from the camera to the PlayerObject's transform:
 
-		Transform* playerCamTransform = this->playerCam->GetTransform();
+		Transform* playerCamTransform = m_playerCam->GetTransform();
 		vec3 camRotation = playerCamTransform->GetEulerRotation();
 		vec3 camPosition = playerCamTransform->WorldPosition();
 
 		playerCamTransform->SetWorldRotation(vec3(camRotation.x, 0.0f, 0.0f));	// Set pitch
 		playerCamTransform->SetWorldPosition(vec3(0.0f, 0.0f, 0.0f));			// Relative to PlayerObject parent
 		
-		this->transform.SetWorldRotation(vec3(0.0f, camRotation.y, 0.0f));		// Set yaw
-		this->transform.SetWorldPosition(camPosition);
+		m_transform.SetWorldRotation(vec3(0.0f, camRotation.y, 0.0f));		// Set yaw
+		m_transform.SetWorldPosition(camPosition);
 	}
 
 
@@ -40,65 +40,65 @@ namespace SaberEngine
 		yaw.y	= (float)InputManager::GetMouseAxisInput(INPUT_MOUSE_X) * (float)TimeManager::DeltaTime();
 		pitch.x = (float)InputManager::GetMouseAxisInput(INPUT_MOUSE_Y) * (float)TimeManager::DeltaTime();
 
-		this->transform.Rotate(yaw);
-		this->playerCam->GetTransform()->Rotate(pitch);
+		m_transform.Rotate(yaw);
+		m_playerCam->GetTransform()->Rotate(pitch);
 
 		// Handle direction:
 		vec3 direction = vec3(0.0f, 0.0f, 0.0f);
 
 		if (InputManager::GetKeyboardInputState(INPUT_BUTTON_FORWARD))
 		{
-			vec3 forward = this->transform.Forward();
-			Transform::RotateVector(forward, this->playerCam->GetTransform()->GetEulerRotation().x, this->transform.Right());
+			vec3 forward = m_transform.Forward();
+			Transform::RotateVector(forward, m_playerCam->GetTransform()->GetEulerRotation().x, m_transform.Right());
 
 			direction -= forward;
 		}
 		if (InputManager::GetKeyboardInputState(INPUT_BUTTON_BACKWARD))
 		{
-			vec3 forward = this->transform.Forward();
-			Transform::RotateVector(forward, this->playerCam->GetTransform()->GetEulerRotation().x, this->transform.Right());
+			vec3 forward = m_transform.Forward();
+			Transform::RotateVector(forward, m_playerCam->GetTransform()->GetEulerRotation().x, m_transform.Right());
 
 			direction += forward;
 		}
 		if (InputManager::GetKeyboardInputState(INPUT_BUTTON_LEFT))
 		{
-			direction -= this->transform.Right();
+			direction -= m_transform.Right();
 		}
 		if (InputManager::GetKeyboardInputState(INPUT_BUTTON_RIGHT))
 		{
-			direction += this->transform.Right();
+			direction += m_transform.Right();
 		}
 		if (InputManager::GetKeyboardInputState(INPUT_BUTTON_UP))
 		{
-			direction += this->transform.Up();
+			direction += m_transform.Up();
 		}
 		if (InputManager::GetKeyboardInputState(INPUT_BUTTON_DOWN))
 		{
-			direction -= this->transform.Up();
+			direction -= m_transform.Up();
 		}
 
 		if (glm::length(direction) != 0.0f)
 		{
 			direction = glm::normalize(direction);
-			direction *= (float)(movementSpeed * TimeManager::DeltaTime());
+			direction *= (float)(m_movementSpeed * TimeManager::DeltaTime());
 
-			this->transform.Translate(direction);
+			m_transform.Translate(direction);
 		}
 
 
 		// Reset the cam back to the saved position
 		if (InputManager::GetMouseInputState(INPUT_MOUSE_LEFT))
 		{
-			this->transform.SetWorldPosition(savedPosition);
-			this->transform.SetWorldRotation(vec3(0, savedEulerRotation.y, 0));
-			this->playerCam->GetTransform()->SetWorldRotation(vec3(savedEulerRotation.x, 0, 0));
+			m_transform.SetWorldPosition(m_savedPosition);
+			m_transform.SetWorldRotation(vec3(0, m_savedEulerRotation.y, 0));
+			m_playerCam->GetTransform()->SetWorldRotation(vec3(m_savedEulerRotation.x, 0, 0));
 		}
 
 		// Save the current position/rotation:
 		if (InputManager::GetMouseInputState(INPUT_MOUSE_RIGHT))
 		{
-			this->savedPosition = transform.WorldPosition();
-			this->savedEulerRotation = vec3(this->playerCam->GetTransform()->GetEulerRotation().x, this->transform.GetEulerRotation().y, 0 );
+			m_savedPosition = m_transform.WorldPosition();
+			m_savedEulerRotation = vec3(m_playerCam->GetTransform()->GetEulerRotation().x, m_transform.GetEulerRotation().y, 0 );
 		}
 	}
 

@@ -58,10 +58,10 @@ namespace SaberEngine
 		
 
 		// Engine control:
-		bool isRunning = false;
+		bool m_isRunning = false;
 
 		// Engine configuration:
-		EngineConfig config;
+		EngineConfig m_config;
 
 		bool ProcessCommandLineArgs(int argc, char** argv);
 	};

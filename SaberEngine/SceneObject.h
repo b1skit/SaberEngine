@@ -18,18 +18,18 @@ namespace SaberEngine
 		// Copy constructor:
 		SceneObject(const SceneObject& sceneObject) : SaberObject(sceneObject.GetName())
 		{
-			this->transform = sceneObject.transform;
+			m_transform = sceneObject.m_transform;
 		}
 
 		// SaberObject interface:
 		/*void Update() { SaberObject::Update(); }*/
 
 		// Getters/Setters:
-		inline Transform* GetTransform() { return &transform; }
+		inline Transform* GetTransform() { return &m_transform; }
 
 
 	protected:
-		Transform transform;
+		Transform m_transform;
 		
 
 	private:

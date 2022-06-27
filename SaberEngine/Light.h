@@ -53,34 +53,34 @@ namespace SaberEngine
 		void HandleEvent(EventInfo const* eventInfo);
 
 		// Getters/Setters:
-		inline vec3 const&			Color() const							{ return color; }
-		inline void					SetColor(vec3 color)					{ this->color = color; }
+		inline vec3 const&			Color() const							{ return m_color; }
+		inline void					SetColor(vec3 color)					{ m_color = color; }
 
-		inline LIGHT_TYPE const&	Type() const							{ return type; }
+		inline LIGHT_TYPE const&	Type() const							{ return m_type; }
 
-		inline Transform&			GetTransform()							{ return transform; }	// Directional lights shine forward (Z+)
+		inline Transform&			GetTransform()							{ return m_transform; }	// Directional lights shine forward (Z+)
 
-		inline string const&		Name() const							{ return lightName; }
+		inline string const&		Name() const							{ return m_lightName; }
 		
 		ShadowMap*&					ActiveShadowMap(ShadowMap* newShadowMap = nullptr);				// Get/set the current shadow map
 
-		inline gr::Mesh*&		DeferredMesh()		{ return deferredMesh; }
-		inline Material*&		DeferredMaterial()	{ return deferredMaterial; }
+		inline gr::Mesh*&		DeferredMesh()		{ return m_deferredMesh; }
+		inline Material*&		DeferredMaterial()	{ return m_deferredMaterial; }
 
 
 	protected:
 
 
 	private:
-		vec3 color					= vec3(0.0f, 0.0f, 0.0f);	// Note: Intensity is factored into these values
-		LIGHT_TYPE type				= LIGHT_DIRECTIONAL;		// Default
+		vec3 m_color					= vec3(0.0f, 0.0f, 0.0f);	// Note: Intensity is factored into these values
+		LIGHT_TYPE m_type				= LIGHT_DIRECTIONAL;		// Default
 
-		string lightName			= "unnamed_directional_light";
+		string m_lightName			= "unnamed_directional_light";
 
-		ShadowMap* shadowMap		= nullptr;							// Deallocated by calling Destroy() during SceneManager.Shutdown()
+		ShadowMap* m_shadowMap		= nullptr;							// Deallocated by calling Destroy() during SceneManager.Shutdown()
 
 		// Deferred light setup:
-		gr::Mesh* deferredMesh		= nullptr;
-		Material* deferredMaterial	= nullptr;
+		gr::Mesh* m_deferredMesh		= nullptr;
+		Material* m_deferredMaterial	= nullptr;
 	};
 }

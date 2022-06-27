@@ -48,8 +48,8 @@ namespace SaberEngine
 		void Destroy();
 
 		// Getters/Setters:
-		inline string const& Name()						{ return shaderName; }
-		inline GLuint const& ShaderReference() const	{ return shaderReference; }
+		inline string const& Name()						{ return m_shaderName; }
+		inline GLuint const& ShaderReference() const	{ return m_shaderReference; }
 
 		void UploadUniform(GLchar const* uniformName, void const* value, UNIFORM_TYPE const& type, int count = 1);
 
@@ -67,8 +67,8 @@ namespace SaberEngine
 
 
 	private:
-		string shaderName		= "uninitializedShader"; // Extensionless filename of the shader. Will have ".vert" / ".frag" appended
-		GLuint shaderReference	= 0;
+		string m_shaderName		= "uninitializedShader"; // Extensionless filename of the shader. Will have ".vert" / ".frag" appended
+		GLuint m_shaderReference	= 0;
 
 
 		// Private static functions:

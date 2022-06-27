@@ -27,27 +27,27 @@ namespace SaberEngine
 		Texture& operator=(Texture const& rhs);
 
 		// Getters/Setters:
-		inline unsigned int const&	Width() const		{ return width; }
-		inline unsigned int const&	Height() const		{ return height; }
+		inline unsigned int const&	Width() const		{ return m_width; }
+		inline unsigned int const&	Height() const		{ return m_height; }
 
 		// OpenGL Property getters/setters:
-		inline GLuint const&		TextureID() const	{ return textureID; }
+		inline GLuint const&		TextureID() const	{ return m_textureID; }
 
-		inline GLenum&				TextureTarget()		{ return texTarget; }
-		inline GLenum&				Format()			{ return format; }
-		inline GLenum&				InternalFormat()	{ return internalFormat; }
+		inline GLenum&				TextureTarget()		{ return m_texTarget; }
+		inline GLenum&				Format()			{ return m_format; }
+		inline GLenum&				InternalFormat()	{ return m_internalFormat; }
 		inline GLenum&				Type()				{ return type; }
 
-		inline GLenum&				TextureWrap_S()		{ return textureWrapS; }
-		inline GLenum&				TextureWrap_T()		{ return textureWrapT; }
-		inline GLenum&				TextureWrap_R()		{ return textureWrapR; }
+		inline GLenum&				TextureWrap_S()		{ return m_textureWrapS; }
+		inline GLenum&				TextureWrap_T()		{ return m_textureWrapT; }
+		inline GLenum&				TextureWrap_R()		{ return m_textureWrapR; }
 
-		inline GLenum&				TextureMinFilter()	{ return textureMinFilter; }
-		inline GLenum&				TextureMaxFilter()	{ return textureMaxFilter; }
+		inline GLenum&				TextureMinFilter()	{ return m_textureMinFilter; }
+		inline GLenum&				TextureMaxFilter()	{ return m_textureMaxFilter; }
 
-		inline GLuint&				Sampler()			{ return samplerID; }
+		inline GLuint&				Sampler()			{ return m_samplerID; }
 
-		inline string&				TexturePath()		{ return texturePath; }
+		inline string&				TexturePath()		{ return m_texturePath; }
 
 		// Get/set a texel value:
 		// Returns texels[0] if u = [0, width - 1], v = [0, height - 1] are out of localBounds.
@@ -83,34 +83,34 @@ namespace SaberEngine
 
 
 	protected:
-		GLuint textureID			= 0;
+		GLuint m_textureID			= 0;
 		
-		GLenum texTarget			= GL_TEXTURE_2D;
-		GLenum format				= GL_RGBA;		// NOTE: Currently, SaberEngine assumes all textures contain 4-channel vec4's (except for depth). If format != GL_RGBA, buffer will be packed with the wrong stride
-		GLenum internalFormat		= GL_RGBA32F;
+		GLenum m_texTarget			= GL_TEXTURE_2D;
+		GLenum m_format				= GL_RGBA;		// NOTE: Currently, SaberEngine assumes all textures contain 4-channel vec4's (except for depth). If format != GL_RGBA, buffer will be packed with the wrong stride
+		GLenum m_internalFormat		= GL_RGBA32F;
 		GLenum type					= GL_FLOAT;
 
-		GLenum textureWrapS			= GL_REPEAT;
-		GLenum textureWrapT			= GL_REPEAT;
-		GLenum textureWrapR			= GL_REPEAT;
+		GLenum m_textureWrapS			= GL_REPEAT;
+		GLenum m_textureWrapT			= GL_REPEAT;
+		GLenum m_textureWrapR			= GL_REPEAT;
 
-		GLenum textureMinFilter		= GL_NEAREST_MIPMAP_LINEAR;
-		GLenum textureMaxFilter		= GL_LINEAR;
+		GLenum m_textureMinFilter		= GL_NEAREST_MIPMAP_LINEAR;
+		GLenum m_textureMaxFilter		= GL_LINEAR;
 
-		GLuint samplerID			= 0;		// Name of a sampler
+		GLuint m_samplerID			= 0;		// Name of a sampler
 
-		unsigned int	width		= 1;		// # Cols
-		unsigned int	height		= 1;		// # Rows
+		unsigned int	m_width		= 1;		// # Cols
+		unsigned int	m_height		= 1;		// # Rows
 
-		vec4*			texels		= nullptr;
-		unsigned int	numTexels	= 0;
+		vec4*			m_texels		= nullptr;
+		unsigned int	m_numTexels	= 0;
 
-		vec4 texelSize				= vec4(-1, -1, -1, -1);
+		vec4 m_texelSize				= vec4(-1, -1, -1, -1);
 
-		string texturePath			= "Uninitialized_Texture";
+		string m_texturePath			= "Uninitialized_Texture";
 
 
-		bool resolutionHasChanged	= false; // Does OpenGL need to be notified of new texture dimensions the next time Buffer() is called?
+		bool m_resolutionHasChanged	= false; // Does OpenGL need to be notified of new texture dimensions the next time Buffer() is called?
 
 	private:	
 

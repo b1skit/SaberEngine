@@ -25,15 +25,15 @@ namespace SaberEngine
 	// Constructor:
 	Transform::Transform()
 	{
-		children.reserve(10);
+		m_children.reserve(10);
 
-		isDirty	= true;
+		m_isDirty	= true;
 	}
 
 
 	mat4 Transform::Model(MODEL_MATRIX_COMPONENT component /*= WORLD_MODEL*/)
 	{
-		if (isDirty)
+		if (m_isDirty)
 		{
 			Recompute();
 		}	
@@ -42,20 +42,20 @@ namespace SaberEngine
 		switch (component)
 		{
 		case WORLD_TRANSLATION:
-			return this->combinedTranslation;
+			return m_combinedTranslation;
 			break;
 
 		case WORLD_SCALE:
-			return this->combinedScale;
+			return m_combinedScale;
 			break;
 
 		case WORLD_ROTATION:
-			return this->combinedRotation;
+			return m_combinedRotation;
 			break;
 
 		case WORLD_MODEL:
 		default:
-			return this->combinedModel;
+			return m_combinedModel;
 		}		
 	}
 
@@ -65,17 +65,17 @@ namespace SaberEngine
 		// Unparent:
 		if (newParent == nullptr)
 		{
-			if (this->parent != nullptr)
+			if (m_parent != nullptr)
 			{
-				this->parent->UnregisterChild(this);
-				this->parent = nullptr;
+				m_parent->UnregisterChild(this);
+				m_parent = nullptr;
 			}
 		}
 		// Parent:
 		else 
 		{
-			this->parent = newParent;
-			this->parent->RegisterChild(this);
+			m_parent = newParent;
+			m_parent->RegisterChild(this);
 		}
 		
 		MarkDirty();
@@ -84,10 +84,10 @@ namespace SaberEngine
 
 	void Transform::Translate(vec3 amount)
 	{
-		this->translation	= glm::translate(this->translation, amount);
+		m_translation	= glm::translate(m_translation, amount);
 		
-		vec4 result			= translation * vec4(0.0f, 0.0f, 0.0f, 1.0f); // TODO: Just extract the translation from the end column of the matrix???
-		this->worldPosition	= result.xyz();
+		vec4 result			= m_translation * vec4(0.0f, 0.0f, 0.0f, 1.0f); // TODO: Just extract the translation from the end column of the matrix???
+		m_worldPosition	= result.xyz();
 
 		MarkDirty();
 	}
@@ -95,8 +95,8 @@ namespace SaberEngine
 
 	void Transform::SetWorldPosition(vec3 position)
 	{
-		this->translation	= glm::translate(mat4(1.0f), position);
-		this->worldPosition = position;
+		m_translation	= glm::translate(mat4(1.0f), position);
+		m_worldPosition = position;
 
 		MarkDirty();
 	}
@@ -104,27 +104,27 @@ namespace SaberEngine
 
 	vec3 const& Transform::WorldPosition()
 	{
-		if (isDirty)
+		if (m_isDirty)
 		{
 			Recompute();
 		}
 
-		return worldPosition;
+		return m_worldPosition;
 	}
 
 
 	void Transform::Rotate(vec3 eulerXYZ) // Note: eulerXYZ is in RADIANS
 	{
 		// Concatenate rotations as quaternions:
-		this->worldRotation = this->worldRotation * glm::quat(eulerXYZ);
+		m_worldRotation = m_worldRotation * glm::quat(eulerXYZ);
 
-		this->rotation = glm::mat4_cast(this->worldRotation);
+		m_rotation = glm::mat4_cast(m_worldRotation);
 
 		// Update the world-space orientation of our local CS axis:
 		UpdateLocalAxis();
 
 		// Update the rotation value, and keep xyz bound in [0, 2pi]:
-		this->eulerWorldRotation += eulerXYZ;
+		m_eulerWorldRotation += eulerXYZ;
 		BoundEulerAngles();
 
 		MarkDirty();
@@ -133,25 +133,25 @@ namespace SaberEngine
 
 	vec3 const&	Transform::GetEulerRotation()
 	{ 
-		if (isDirty)
+		if (m_isDirty)
 		{
 			Recompute(); // TODO: Must actually compute the eulerRotation in here!!!
 		}
 
-		return eulerWorldRotation; // Currently, this will be incorrect if you call GetEulerRotation() before SetWorldRotation() or Rotate()!!!!
+		return m_eulerWorldRotation; // Currently, this will be incorrect if you call GetEulerRotation() before SetWorldRotation() or Rotate()!!!!
 	} 
 
 
 	void Transform::SetWorldRotation(vec3 eulerXYZ)
 	{
 		// Update Quaternion:
-		this->worldRotation = glm::quat(eulerXYZ);
+		m_worldRotation = glm::quat(eulerXYZ);
 
-		this->rotation = glm::mat4_cast(this->worldRotation);
+		m_rotation = glm::mat4_cast(m_worldRotation);
 
 		UpdateLocalAxis();
 
-		this->eulerWorldRotation = eulerXYZ;
+		m_eulerWorldRotation = eulerXYZ;
 		BoundEulerAngles();
 
 		MarkDirty();
@@ -160,14 +160,14 @@ namespace SaberEngine
 
 	void Transform::SetWorldRotation(quat newRotation)
 	{
-		this->worldRotation = newRotation;
+		m_worldRotation = newRotation;
 
-		this->rotation = glm::mat4_cast(newRotation);
+		m_rotation = glm::mat4_cast(newRotation);
 
 		UpdateLocalAxis();
 
 		// Update Euler angles:
-		this->eulerWorldRotation = glm::eulerAngles(newRotation);
+		m_eulerWorldRotation = glm::eulerAngles(newRotation);
 		BoundEulerAngles();
 
 		MarkDirty();
@@ -176,8 +176,8 @@ namespace SaberEngine
 
 	void Transform::SetWorldScale(vec3 scale)
 	{
-		this->worldScale = scale;
-		this->scale = glm::scale(mat4(1.0f), scale);
+		m_worldScale = scale;
+		m_scale = glm::scale(mat4(1.0f), scale);
 
 		MarkDirty();
 	}
@@ -185,11 +185,11 @@ namespace SaberEngine
 
 	void Transform::MarkDirty()
 	{
-		this->isDirty = true;
+		m_isDirty = true;
 
-		for (int i = 0; i < (int)children.size(); i++)
+		for (int i = 0; i < (int)m_children.size(); i++)
 		{
-			children.at(i)->MarkDirty();
+			m_children.at(i)->MarkDirty();
 		}
 	}
 
@@ -197,9 +197,9 @@ namespace SaberEngine
 	void Transform::DebugPrint()
 	{
 		#if defined(DEBUG_TRANSFORMS)
-			LOG("[TRANSFORM DEBUG]\n\tPostition = " + to_string(worldPosition.x) + ", " + to_string(worldPosition.y) + ", " + to_string(worldPosition.z));
-			LOG("Euler rotation = " + to_string(eulerWorldRotation.x) + ", " + to_string(eulerWorldRotation.y) + ", " + to_string(eulerWorldRotation.z) + " (radians)");
-			LOG("Scale = " + to_string(worldScale.x) + ", " + to_string(worldScale.y) + ", " + to_string(worldScale.z));
+			LOG("[TRANSFORM DEBUG]\n\tPostition = " + to_string(m_worldPosition.x) + ", " + to_string(m_worldPosition.y) + ", " + to_string(m_worldPosition.z));
+			LOG("Euler rotation = " + to_string(m_eulerWorldRotation.x) + ", " + to_string(m_eulerWorldRotation.y) + ", " + to_string(m_eulerWorldRotation.z) + " (radians)");
+			LOG("Scale = " + to_string(m_worldScale.x) + ", " + to_string(m_worldScale.y) + ", " + to_string(m_worldScale.z));
 		#else
 				return;
 		#endif
@@ -223,9 +223,9 @@ namespace SaberEngine
 
 	void Transform::RegisterChild(Transform* child)
 	{
-		if (find(children.begin(), children.end(), child) ==  children.end())
+		if (find(m_children.begin(), m_children.end(), child) ==  m_children.end())
 		{
-			children.push_back(child);
+			m_children.push_back(child);
 
 			MarkDirty();
 		}
@@ -234,11 +234,11 @@ namespace SaberEngine
 
 	void Transform::UnregisterChild(Transform const* child)
 	{
-		for (unsigned int i = 0; i < child->children.size(); i++)
+		for (unsigned int i = 0; i < child->m_children.size(); i++)
 		{
-			if (children.at(i) == child)
+			if (m_children.at(i) == child)
 			{
-				children.erase(children.begin() + i);
+				m_children.erase(m_children.begin() + i);
 				MarkDirty();
 				break;
 			}
@@ -248,56 +248,56 @@ namespace SaberEngine
 	
 	void Transform::Recompute()
 	{
-		if (!isDirty)
+		if (!m_isDirty)
 		{
 			return;
 		}			
 
-		this->model = this->translation * this->scale * this->rotation;
+		m_model = m_translation * m_scale * m_rotation;
 
-		this->combinedModel			= this->model;
-		this->combinedScale			= this->scale;
-		this->combinedRotation		= this->rotation;
-		this->combinedTranslation	= this->translation;
-		if (this->parent != nullptr)
+		m_combinedModel			= m_model;
+		m_combinedScale			= m_scale;
+		m_combinedRotation		= m_rotation;
+		m_combinedTranslation	= m_translation;
+		if (m_parent != nullptr)
 		{
-			this->combinedModel			= this->parent->Model(WORLD_MODEL) * combinedModel;
-			this->combinedScale			= this->parent->Model(WORLD_SCALE) * combinedScale;
-			this->combinedRotation		= this->parent->Model(WORLD_ROTATION) * combinedRotation;
-			this->combinedTranslation	= this->parent->Model(WORLD_TRANSLATION) * combinedTranslation;
+			m_combinedModel			= m_parent->Model(WORLD_MODEL) * m_combinedModel;
+			m_combinedScale			= m_parent->Model(WORLD_SCALE) * m_combinedScale;
+			m_combinedRotation		= m_parent->Model(WORLD_ROTATION) * m_combinedRotation;
+			m_combinedTranslation	= m_parent->Model(WORLD_TRANSLATION) * m_combinedTranslation;
 		}
 
-		this->worldPosition = combinedModel * vec4(0, 0, 0, 1);
+		m_worldPosition = m_combinedModel * vec4(0, 0, 0, 1);
 		
 		// TODO: Recompute eulerWorldRotation
-		//this->eulerWorldRotation = ???
+		//eulerWorldRotation = ???
 
-		this->worldScale = this->combinedScale * vec4(1, 1, 1, 1);
+		m_worldScale = m_combinedScale * vec4(1, 1, 1, 1);
 
-		for (int i = 0; i < (int)children.size(); i++)
+		for (int i = 0; i < (int)m_children.size(); i++)
 		{
-			children.at(i)->MarkDirty();
+			m_children.at(i)->MarkDirty();
 		}
 
-		isDirty = false;
+		m_isDirty = false;
 	}
 
 
 	void Transform::UpdateLocalAxis()
 	{
 		// Update the world-space orientation of our local CS axis:
-		this->right		= normalize((rotation * vec4(WORLD_X, 0)).xyz());
-		this->up		= normalize((rotation * vec4(WORLD_Y, 0)).xyz());
-		this->forward	= normalize((rotation * vec4(WORLD_Z, 0)).xyz());
+		m_right		= normalize((m_rotation * vec4(WORLD_X, 0)).xyz());
+		m_up		= normalize((m_rotation * vec4(WORLD_Y, 0)).xyz());
+		m_forward	= normalize((m_rotation * vec4(WORLD_Z, 0)).xyz());
 	}
 
 
 	void Transform::BoundEulerAngles()
 	{
 		// Keep (signed) Euler xyz angles in (-2pi, 2pi):
-		eulerWorldRotation.x = glm::fmod<float>(glm::abs(eulerWorldRotation.x), glm::two_pi<float>()) * glm::sign(eulerWorldRotation.x);
-		eulerWorldRotation.y = glm::fmod<float>(glm::abs(eulerWorldRotation.y), glm::two_pi<float>()) * glm::sign(eulerWorldRotation.y);
-		eulerWorldRotation.z = glm::fmod<float>(glm::abs(eulerWorldRotation.z), glm::two_pi<float>()) * glm::sign(eulerWorldRotation.z);
+		m_eulerWorldRotation.x = glm::fmod<float>(glm::abs(m_eulerWorldRotation.x), glm::two_pi<float>()) * glm::sign(m_eulerWorldRotation.x);
+		m_eulerWorldRotation.y = glm::fmod<float>(glm::abs(m_eulerWorldRotation.y), glm::two_pi<float>()) * glm::sign(m_eulerWorldRotation.y);
+		m_eulerWorldRotation.z = glm::fmod<float>(glm::abs(m_eulerWorldRotation.z), glm::two_pi<float>()) * glm::sign(m_eulerWorldRotation.z);
 	}
 }
 

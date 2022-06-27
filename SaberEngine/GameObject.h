@@ -16,13 +16,13 @@ namespace SaberEngine
 		// No-arg constructor (Don't use this!):
 		GameObject() : SceneObject::SceneObject("Unnamed GameObject")
 		{
-			this->renderable.SetTransform(&this->transform);
+			m_renderable.SetTransform(&m_transform);
 		}
 
 		// String constructor:
 		GameObject(string name) : SceneObject::SceneObject(name) 
 		{
-			this->renderable.SetTransform(&this->transform);
+			m_renderable.SetTransform(&m_transform);
 		}
 
 		// String and renderable constructor:
@@ -31,10 +31,10 @@ namespace SaberEngine
 		// Copy constructor:
 		GameObject(const GameObject& gameObject)
 		{
-			this->renderable = gameObject.renderable;
-			this->transform = gameObject.transform;
+			m_renderable = gameObject.m_renderable;
+			m_transform = gameObject.m_transform;
 
-			this->renderable.SetTransform(&this->transform);
+			m_renderable.SetTransform(&m_transform);
 		}
 
 		// SaberObject interface:
@@ -44,11 +44,11 @@ namespace SaberEngine
 		void HandleEvent(EventInfo const* eventInfo) {}
 
 		// Getters/Setters:
-		inline Renderable* GetRenderable() { return &renderable; }
+		inline Renderable* GetRenderable() { return &m_renderable; }
 		
 
 	protected:
-		Renderable renderable;
+		Renderable m_renderable;
 
 
 	private:

@@ -66,17 +66,17 @@ namespace SaberEngine
 	{
 		LOG("Scene manager shutting down...");
 
-		if (currentScene)
+		if (m_currentScene)
 		{
-			delete currentScene;
-			currentScene = nullptr;
+			delete m_currentScene;
+			m_currentScene = nullptr;
 		}
 		
 
 		// Scene manager cleanup:
-		if (materials.size() > 0)
+		if (m_materials.size() > 0)
 		{
-			for (std::pair<string, Material*> currentMaterialEntry : this->materials)
+			for (std::pair<string, Material*> currentMaterialEntry : m_materials)
 			{
 				if (currentMaterialEntry.second != nullptr)
 				{
@@ -85,11 +85,11 @@ namespace SaberEngine
 					currentMaterialEntry.second = nullptr;
 				}
 			}
-			this->materials.clear();
+			m_materials.clear();
 		}
 
 		// Texture cleanup:
-		for (std::pair<string, Texture*> currentTexture : textures)
+		for (std::pair<string, Texture*> currentTexture : m_textures)
 		{
 			if (currentTexture.second != nullptr)
 			{
@@ -98,15 +98,15 @@ namespace SaberEngine
 				currentTexture.second = nullptr;
 			}
 		}
-		textures.clear();
+		m_textures.clear();
 	}
 
 
 	void SceneManager::Update()
 	{
-		for (int i = 0; i < (int)currentScene->gameObjects.size(); i++)
+		for (int i = 0; i < (int)m_currentScene->m_gameObjects.size(); i++)
 		{
-			currentScene->gameObjects.at(i)->Update();
+			m_currentScene->m_gameObjects.at(i)->Update();
 		}
 	}
 
@@ -126,13 +126,13 @@ namespace SaberEngine
 			return false;
 		}
 
-		if (currentScene)
+		if (m_currentScene)
 		{
 			LOG("Unloading existing scene");
-			delete currentScene;
-			currentScene = nullptr;
+			delete m_currentScene;
+			m_currentScene = nullptr;
 		}
-		currentScene = new Scene(sceneName);
+		m_currentScene = new Scene(sceneName);
 
 		// Assemble paths:
 		string sceneRoot = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\";
@@ -270,8 +270,8 @@ namespace SaberEngine
 
 		// Create a PlayerObject:
 		//-----------------------
-		PlayerObject* player = new PlayerObject(currentScene->GetMainCamera());
-		currentScene->gameObjects.push_back(player);	
+		PlayerObject* player = new PlayerObject(m_currentScene->GetMainCamera());
+		m_currentScene->m_gameObjects.push_back(player);	
 		LOG("Created PlayerObject using mainCamera");
 
 		return true;
@@ -280,14 +280,14 @@ namespace SaberEngine
 
 	unordered_map<string, Material*> const& SaberEngine::SceneManager::GetMaterials() const
 	{
-		return this->materials;
+		return m_materials;
 	}
 
 
 	Material* SceneManager::GetMaterial(string materialName)
 	{
-		auto result = this->materials.find(materialName);
-		if (result != this->materials.end())
+		auto result = m_materials.find(materialName);
+		if (result != m_materials.end())
 		{
 			return result->second;
 		}
@@ -304,13 +304,13 @@ namespace SaberEngine
 		// If materialIndex is out of bounds, return ALL meshes
 		if (targetMaterial == nullptr)
 		{
-			return &currentScene->GetMeshes();
+			return &m_currentScene->GetMeshes();
 		}
 
-		auto result = this->materialMeshLists.find(targetMaterial->Name());
-		if (result == materialMeshLists.end())
+		auto result = m_materialMeshLists.find(targetMaterial->Name());
+		if (result == m_materialMeshLists.end())
 		{
-			return &currentScene->GetMeshes();
+			return &m_currentScene->GetMeshes();
 		}
 
 		return &result->second;
@@ -319,37 +319,37 @@ namespace SaberEngine
 
 	vector<Renderable*>* SceneManager::GetRenderables()
 	{ 
-		return &currentScene->renderables; 
+		return &m_currentScene->m_renderables; 
 	}
 
 
 	Light* const& SceneManager::GetAmbientLight()
 	{ 
-		return currentScene->ambientLight; 
+		return m_currentScene->m_ambientLight; 
 	}
 
 
 	Light* SceneManager::GetKeyLight()
 	{ 
-		return currentScene->keyLight; 
+		return m_currentScene->m_keyLight; 
 	}
 
 
 	vector<Camera*> const& SceneManager::GetCameras(CAMERA_TYPE cameraType)
 	{ 
-		return currentScene->GetCameras(cameraType); 
+		return m_currentScene->GetCameras(cameraType); 
 	}
 
 
 	Camera* SceneManager::GetMainCamera()
 	{ 
-		return currentScene->GetMainCamera(); 
+		return m_currentScene->GetMainCamera(); 
 	}
 
 
 	void SceneManager::RegisterCamera(CAMERA_TYPE cameraType, Camera* newCamera)
 	{ 
-		currentScene->RegisterCamera(cameraType, newCamera); 
+		m_currentScene->RegisterCamera(cameraType, newCamera); 
 	}
 
 
@@ -362,8 +362,8 @@ namespace SaberEngine
 		}
 
 		// Check if the texture already exists:
-		unordered_map<string, Texture*>::const_iterator texturePosition = textures.find(newTexture->TexturePath());
-		if (texturePosition != textures.end())
+		unordered_map<string, Texture*>::const_iterator texturePosition = m_textures.find(newTexture->TexturePath());
+		if (texturePosition != m_textures.end())
 		{
 			LOG_WARNING("Cannot add texture with an identical path. Deleting duplicate, and updating reference");
 
@@ -374,35 +374,35 @@ namespace SaberEngine
 		}
 		else // Insert the new texture:
 		{
-			textures[newTexture->TexturePath()] = newTexture;
+			m_textures[newTexture->TexturePath()] = newTexture;
 		}
 	}
 	
 	
 	vector<Light*> const& SceneManager::GetDeferredLights()
 	{
-		return currentScene->GetDeferredLights();
+		return m_currentScene->GetDeferredLights();
 	}
 
 
 	Skybox* SceneManager::GetSkybox()
 	{ 
-		return currentScene->skybox; 
+		return m_currentScene->m_skybox; 
 	}
 
 
 	string SceneManager::GetCurrentSceneName() const
 	{
-		return currentScene->GetSceneName();
+		return m_currentScene->GetSceneName();
 	}
 
 
 	void SceneManager::AddGameObject(GameObject* newGameObject)
 	{
-		currentScene->gameObjects.push_back(newGameObject);
+		m_currentScene->m_gameObjects.push_back(newGameObject);
 
 		// Store a pointer to the GameObject's Renderable and add it to the list for the RenderManager
-		currentScene->renderables.push_back(newGameObject->GetRenderable());
+		m_currentScene->m_renderables.push_back(newGameObject->GetRenderable());
 
 		#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
 			LOG("Added new GameObject to the scene: " + newGameObject->GetName());
@@ -470,12 +470,12 @@ namespace SaberEngine
 			return;
 		}
 
-		auto result = this->materials.find(newMaterial->Name());
+		auto result = m_materials.find(newMaterial->Name());
 
 		// Add new Material
-		if (result == this->materials.end())
+		if (result == m_materials.end())
 		{
-			this->materials[newMaterial->Name()] = newMaterial;
+			m_materials[newMaterial->Name()] = newMaterial;
 			LOG("Material \"" + newMaterial->Name() + "\" registered with SceneManager");
 		}
 		else // Material already exists: Destroy the duplicate and update the pointer
@@ -503,11 +503,11 @@ namespace SaberEngine
 		//}
 
 		unsigned int numMeshes = 0;
-		for (int i = 0; i < (int)currentScene->renderables.size(); i++)
+		for (int i = 0; i < (int)m_currentScene->m_renderables.size(); i++)
 		{
-			for (int j = 0; j < (int)currentScene->renderables.at(i)->ViewMeshes()->size(); j++)
+			for (int j = 0; j < (int)m_currentScene->m_renderables.at(i)->ViewMeshes()->size(); j++)
 			{
-				gr::Mesh* viewMesh = currentScene->renderables.at(i)->ViewMeshes()->at(j);
+				gr::Mesh* viewMesh = m_currentScene->m_renderables.at(i)->ViewMeshes()->at(j);
 
 				Material* meshMaterial = viewMesh->MeshMaterial();
 				if (meshMaterial == nullptr)
@@ -516,12 +516,12 @@ namespace SaberEngine
 				}
 				else
 				{
-					auto result = this->materialMeshLists.find(meshMaterial->Name());
+					auto result = m_materialMeshLists.find(meshMaterial->Name());
 
-					if (result == this->materialMeshLists.end())
+					if (result == m_materialMeshLists.end())
 					{
 						// Create a new entry, containing a vector with our object
-						this->materialMeshLists[meshMaterial->Name()] = vector<gr::Mesh*>{viewMesh};
+						m_materialMeshLists[meshMaterial->Name()] = vector<gr::Mesh*>{viewMesh};
 					}
 					else
 					{
@@ -532,7 +532,7 @@ namespace SaberEngine
 			}
 		}
 
-		LOG("\nAssembled material mesh list of " + to_string(numMeshes) + " meshes and " + to_string(materialMeshLists.size()) + " materials");
+		LOG("\nAssembled material mesh list of " + to_string(numMeshes) + " meshes and " + to_string(m_materialMeshLists.size()) + " materials");
 	}
 
 
@@ -540,8 +540,8 @@ namespace SaberEngine
 	{
 		// NOTE: Potential bug here: Since we store textureUnit per-texture, we can only share textures that live in the same slot. TODO: Move texture units into the Material?
 
-		unordered_map<string, Texture*>::const_iterator texturePosition = textures.find(texturePath);
-		if (texturePosition != textures.end())
+		unordered_map<string, Texture*>::const_iterator texturePosition = m_textures.find(texturePath);
+		if (texturePosition != m_textures.end())
 		{
 			LOG("Texture at path " + texturePath + " has already been loaded");
 			return texturePosition->second;
@@ -730,7 +730,7 @@ namespace SaberEngine
 						string shaderName = matName.substr(shaderNameIndex + 1, matName.length() - (shaderNameIndex + 1));
 
 						#if defined(DEBUG_SCENEMANAGER_MATERIAL_LOGGING)
-							LOG("Attempting to assign shader \"" + shaderName + "\" to material");
+							LOG("Attempting to assign shader \"" + m_shaderName + "\" to material");
 						#endif
 
 						Shader* newShader = Shader::CreateShader(shaderName, &newMaterial->ShaderKeywords());
@@ -790,13 +790,13 @@ namespace SaberEngine
 			}
 		}
 
-		LOG("\nLoaded a total of " + to_string(textures.size()) + " textures (including error textures)\n");
+		LOG("\nLoaded a total of " + to_string(m_textures.size()) + " textures (including error textures)\n");
 	}
 
 
 	void SaberEngine::SceneManager::ImportSky(string sceneName)
 	{
-		currentScene->skybox = new Skybox(sceneName);
+		m_currentScene->m_skybox = new Skybox(sceneName);
 	}
 
 
@@ -925,7 +925,7 @@ namespace SaberEngine
 					if (newTexture->Buffer(texUnit))
 					{
 						// Add the texture to our collection:
-						this->AddTexture(newTexture);
+						AddTexture(newTexture);
 					}				
 				}
 			}
@@ -947,7 +947,7 @@ namespace SaberEngine
 			string texturePath = sceneRoot + string(path.C_Str());
 
 			#if defined(DEBUG_SCENEMANAGER_TEXTURE_LOGGING)
-				LOG("Found texture path: " + texturePath);
+				LOG("Found texture path: " + m_texturePath);
 			#endif
 
 			// Find the texture if it has already been loaded, or load it otherwise:
@@ -1028,10 +1028,10 @@ namespace SaberEngine
 		LOG("Found " + to_string(numMeshes) + " scene meshes");
 
 		// Allocations:
-		currentScene->InitMeshArray();
+		m_currentScene->InitMeshArray();
 		
-		currentScene->gameObjects.clear();
-		currentScene->gameObjects.reserve(numMeshes); // Assuming that every GameObject will have at least 1 mesh...
+		m_currentScene->m_gameObjects.clear();
+		m_currentScene->m_gameObjects.reserve(numMeshes); // Assuming that every GameObject will have at least 1 mesh...
 
 		// Loop through each mesh in the scene graph:
 		for (int currentMesh = 0; currentMesh < numMeshes; currentMesh++)
@@ -1158,7 +1158,7 @@ namespace SaberEngine
 					}
 				}
 
-				gr::Mesh* newMesh = new gr::Mesh(meshName, vertices, indices, this->GetMaterial(materialName));
+				gr::Mesh* newMesh = new gr::Mesh(meshName, vertices, indices, GetMaterial(materialName));
 
 				GameObject* gameObject		= FindCreateGameObjectParents(scene, currentNode->mParent);
 
@@ -1194,7 +1194,7 @@ namespace SaberEngine
 
 				gameObject->GetRenderable()->AddViewMeshAsChild(newMesh);							// Creates transform heirarchy
 
-				currentScene->AddMesh(newMesh);														// Also calculates scene bounds
+				m_currentScene->AddMesh(newMesh);														// Also calculates scene bounds
 			}
 			else
 			{
@@ -1202,7 +1202,7 @@ namespace SaberEngine
 			}
 		}
 
-		int numGameObjects = (int)currentScene->gameObjects.size();
+		int numGameObjects = (int)m_currentScene->m_gameObjects.size();
 		LOG("\nCreated " + to_string(numGameObjects) + " game objects");
 	}
 
@@ -1230,15 +1230,15 @@ namespace SaberEngine
 		}
 
 		// Check if there is a GameObject that corresponds with the current parent node
-		for (int i = 0; i < (int)currentScene->gameObjects.size(); i++)
+		for (int i = 0; i < (int)m_currentScene->m_gameObjects.size(); i++)
 		{
-			if (currentScene->gameObjects.at(i)->GetName() == parentName)
+			if (m_currentScene->m_gameObjects.at(i)->GetName() == parentName)
 			{
 				#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
 					LOG("Found an existing GameObject parent: \"" + parentName + "\"");
 				#endif
 
-				return currentScene->gameObjects.at(i);
+				return m_currentScene->m_gameObjects.at(i);
 			}
 		}
 
@@ -1276,12 +1276,12 @@ namespace SaberEngine
 
 
 		#if defined(DEBUG_SCENEMANAGER_TRANSFORM_LOGGING)
-			LOG("Received parent \"" + string(parent->mName.C_Str()) + "\". Combining imported transformations from scene graph:");
+			LOG("Received parent \"" + string(m_parent->mName.C_Str()) + "\". Combining imported transformations from scene graph:");
 		#endif
 
 		#if defined(DEBUG_SCENEMANAGER_TRANSFORM_LOGGING)
 			LOG("Spewing transform hierarchy:");
-			aiNode* debug = parent;
+			aiNode* debug = m_parent;
 			while (debug != nullptr)
 			{
 				LOG("-> " + string(debug->mName.C_Str()));
@@ -1411,7 +1411,7 @@ namespace SaberEngine
 					string lightName = string(scene->mLights[i]->mName.C_Str());
 
 					#if defined(DEBUG_SCENEMANAGER_LIGHT_LOGGING)
-						LOG("\nFound a directional light \"" + lightName + "\"");
+						LOG("\nFound a directional light \"" + m_lightName + "\"");
 					#endif
 
 					vec3 lightColor(scene->mLights[i]->mColorDiffuse.r, scene->mLights[i]->mColorDiffuse.g, scene->mLights[i]->mColorDiffuse.b);
@@ -1426,20 +1426,20 @@ namespace SaberEngine
 
 					InitializeLightTransformValues(scene, lightName, &keyLight->GetTransform());
 
-					currentScene->AddLight(keyLight);
+					m_currentScene->AddLight(keyLight);
 
-					gr::Bounds sceneWorldBounds		= currentScene->WorldSpaceSceneBounds();
-					gr::Bounds transformedBounds	= sceneWorldBounds.GetTransformedBounds(glm::inverse(currentScene->keyLight->GetTransform().Model()));
+					gr::Bounds sceneWorldBounds		= m_currentScene->WorldSpaceSceneBounds();
+					gr::Bounds transformedBounds	= sceneWorldBounds.GetTransformedBounds(glm::inverse(m_currentScene->m_keyLight->GetTransform().Model()));
 
 					CameraConfig shadowCamConfig;
-					shadowCamConfig.near			= -transformedBounds.zMax();
-					shadowCamConfig.far				= -transformedBounds.zMin();
+					shadowCamConfig.m_near			= -transformedBounds.zMax();
+					shadowCamConfig.m_far				= -transformedBounds.zMin();
 
-					shadowCamConfig.isOrthographic	= true;
-					shadowCamConfig.orthoLeft		= transformedBounds.xMin();
-					shadowCamConfig.orthoRight		= transformedBounds.xMax();
-					shadowCamConfig.orthoBottom		= transformedBounds.yMin();
-					shadowCamConfig.orthoTop		= transformedBounds.yMax();
+					shadowCamConfig.m_isOrthographic	= true;
+					shadowCamConfig.m_orthoLeft		= transformedBounds.xMin();
+					shadowCamConfig.m_orthoRight		= transformedBounds.xMax();
+					shadowCamConfig.m_orthoBottom		= transformedBounds.yMin();
+					shadowCamConfig.m_orthoTop		= transformedBounds.yMax();
 
 					ShadowMap* keyLightShadowMap	= new ShadowMap // TEMP: We assume the key light will ALWAYS have a shadow
 					(
@@ -1447,10 +1447,10 @@ namespace SaberEngine
 						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("defaultShadowMapWidth"),
 						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("defaultShadowMapHeight"),
 						shadowCamConfig,
-						&currentScene->keyLight->GetTransform()
+						&m_currentScene->m_keyLight->GetTransform()
 					);
 
-					currentScene->keyLight->ActiveShadowMap(keyLightShadowMap);
+					m_currentScene->m_keyLight->ActiveShadowMap(keyLightShadowMap);
 
 					// Extract light metadata:
 					aiNode* lightNode = scene->mRootNode->FindNode(scene->mLights[i]->mName.C_Str());
@@ -1465,8 +1465,8 @@ namespace SaberEngine
 						keyLightShadowMap->MaxShadowBias() = maxShadowBias;					
 
 						#if defined(DEBUG_SCENEMANAGER_LIGHT_LOGGING)
-							LOG("\nSetting directional light minimum shadow bias value: " + to_string(minShadowBias));
-							LOG("\nSetting directional light maximum shadow bias value: " + to_string(maxShadowBias));
+							LOG("\nSetting directional light minimum shadow bias value: " + to_string(m_minShadowBias));
+							LOG("\nSetting directional light maximum shadow bias value: " + to_string(m_maxShadowBias));
 						#endif
 					}
 					else
@@ -1479,10 +1479,10 @@ namespace SaberEngine
 					// This is ok, since we use "forward" as "vector pointing towards the light" when uploading to our shaders...
 					#if defined(DEBUG_SCENEMANAGER_LIGHT_LOGGING)
 						LOG("Directional light color: " + to_string(lightColor.r) + ", " + to_string(lightColor.g) + ", " + to_string(lightColor.b));
-						LOG("Directional light position = " + to_string(currentScene->keyLight.GetTransform().WorldPosition().x) + ", " + to_string(currentScene->keyLight.GetTransform().WorldPosition().y) + ", " + to_string(currentScene->keyLight.GetTransform().WorldPosition().z));
-						LOG("Directional light rotation = " + to_string(currentScene->keyLight.GetTransform().GetEulerRotation().x) + ", " + to_string(currentScene->keyLight.GetTransform().GetEulerRotation().y) + ", " + to_string(currentScene->keyLight.GetTransform().GetEulerRotation().z) + " (radians)");
-						LOG("Directional light rotation = " + to_string(currentScene->keyLight.GetTransform().GetEulerRotation().x * (180.0f / A) ) + ", " + to_string(currentScene->keyLight.GetTransform().GetEulerRotation().y * (180.0f / glm::pi<float>())) + ", " + to_string(currentScene->keyLight.GetTransform().GetEulerRotation().z * (180.0f / glm::pi<float>())) + " (degrees)");
-						LOG("Directional light forward = " + to_string(currentScene->keyLight.GetTransform().Forward().x) + ", " + to_string(currentScene->keyLight.GetTransform().Forward().y) + ", " + to_string(currentScene->keyLight.GetTransform().Forward().z));
+						LOG("Directional light position = " + to_string(m_currentScene->m_keyLight.GetTransform().WorldPosition().x) + ", " + to_string(m_currentScene->m_keyLight.GetTransform().WorldPosition().y) + ", " + to_string(m_currentScene->m_keyLight.GetTransform().WorldPosition().z));
+						LOG("Directional light rotation = " + to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().x) + ", " + to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().y) + ", " + to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().z) + " (radians)");
+						LOG("Directional light rotation = " + to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().x * (180.0f / A) ) + ", " + to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().y * (180.0f / glm::pi<float>())) + ", " + to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().z * (180.0f / glm::pi<float>())) + " (degrees)");
+						LOG("Directional light forward = " + to_string(m_currentScene->m_keyLight.GetTransform().Forward().x) + ", " + to_string(m_currentScene->m_keyLight.GetTransform().Forward().y) + ", " + to_string(m_currentScene->m_keyLight.GetTransform().Forward().z));
 					#endif
 				}
 				else
@@ -1501,7 +1501,7 @@ namespace SaberEngine
 				if (!foundAmbient && lightName.find("ambient") != string::npos)	// NOTE: The word "ambient" must appear in the ambient light's name
 				{
 					#if defined(DEBUG_SCENEMANAGER_LIGHT_LOGGING)
-						LOG("Created ambient light from \"" + lightName +"\"");
+						LOG("Created ambient light from \"" + m_lightName +"\"");
 					#endif
 
 					foundAmbient = true;
@@ -1511,7 +1511,7 @@ namespace SaberEngine
 				else
 				{
 					#if defined(DEBUG_SCENEMANAGER_LIGHT_LOGGING)
-						LOG("\nFound a point light \"" + lightName + "\"");
+						LOG("\nFound a point light \"" + m_lightName + "\"");
 					#endif
 				}
 
@@ -1612,14 +1612,14 @@ namespace SaberEngine
 				{
 					// Create a cube shadow map:
 					CameraConfig shadowCamConfig;
-					shadowCamConfig.fieldOfView		= 90.0f;
+					shadowCamConfig.m_fieldOfView		= 90.0f;
 
-					shadowCamConfig.near			= shadowCamNear;
-					shadowCamConfig.far				= radius;
+					shadowCamConfig.m_near			= shadowCamNear;
+					shadowCamConfig.m_far				= radius;
 					
-					shadowCamConfig.aspectRatio		= 1.0f;
+					shadowCamConfig.m_aspectRatio		= 1.0f;
 
-					shadowCamConfig.isOrthographic	= false;
+					shadowCamConfig.m_isOrthographic	= false;
 
 
 					cubeShadowMap = new ShadowMap // TEMP: We assume point lights ALWAYS have a shadow. TODO: Control shadow maps via .FBX metadata
@@ -1637,8 +1637,8 @@ namespace SaberEngine
 					cubeShadowMap->MaxShadowBias() = maxShadowBias;		
 
 					#if defined(DEBUG_SCENEMANAGER_LIGHT_LOGGING)
-						LOG("\nSetting directional light minimum shadow bias value: " + to_string(minShadowBias));
-						LOG("\nSetting directional light maximum shadow bias value: " + to_string(maxShadowBias));
+						LOG("\nSetting directional light minimum shadow bias value: " + to_string(m_minShadowBias));
+						LOG("\nSetting directional light maximum shadow bias value: " + to_string(m_maxShadowBias));
 					#endif
 
 					pointLight->ActiveShadowMap(cubeShadowMap);
@@ -1657,7 +1657,7 @@ namespace SaberEngine
 						if (gameObject == nullptr)
 						{
 							#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
-								LOG_WARNING("Creating a GameObject for light \"" + lightName + "\" that did not belong to a group! GameObjects should belong to groups in the source .FBX!");
+								LOG_WARNING("Creating a GameObject for light \"" + m_lightName + "\" that did not belong to a group! GameObjects should belong to groups in the source .FBX!");
 							#endif
 					
 							gameObject = new GameObject(lightName);
@@ -1670,7 +1670,7 @@ namespace SaberEngine
 						else // We have a GameObject:
 						{
 							#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
-								LOG("Found existing parent GameObject \"" + gameObject->GetName() + "\" for light \"" + lightName + "\"");
+								LOG("Found existing parent GameObject \"" + gameObject->GetName() + "\" for light \"" + m_lightName + "\"");
 							#endif
 
 							targetTransform = &pointLight->GetTransform();	// We'll use the mesh in our transform heirarchy
@@ -1687,7 +1687,7 @@ namespace SaberEngine
 					
 				}
 
-				currentScene->AddLight(pointLight);
+				m_currentScene->AddLight(pointLight);
 			}				
 				break;
 
@@ -1708,7 +1708,7 @@ namespace SaberEngine
 			// Normalize the lighting if we're in forward mode
 			if (CoreEngine::GetCoreEngine()->GetConfig()->GetValue<bool>("useForwardRendering"))
 			{
-				vector<Light*>const* allLights = &currentScene->GetDeferredLights();
+				vector<Light*>const* allLights = &m_currentScene->GetDeferredLights();
 
 				for (int i = 0; i < (int)allLights->size(); i++)
 				{
@@ -1750,7 +1750,7 @@ namespace SaberEngine
 	{
 		if (clearCameras)
 		{
-			currentScene->ClearCameras();
+			m_currentScene->ClearCameras();
 		}
 
 		string cameraName;
@@ -1763,12 +1763,12 @@ namespace SaberEngine
 		{
 			LOG("\nCreating a default camera");
 
-			newCamConfig.aspectRatio	= CoreEngine::GetCoreEngine()->GetConfig()->GetWindowAspectRatio();
-			newCamConfig.fieldOfView	= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultFieldOfView");
-			newCamConfig.near			= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultNear");
-			newCamConfig.far			= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultFar");
+			newCamConfig.m_aspectRatio	= CoreEngine::GetCoreEngine()->GetConfig()->GetWindowAspectRatio();
+			newCamConfig.m_fieldOfView	= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultFieldOfView");
+			newCamConfig.m_near			= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultNear");
+			newCamConfig.m_far			= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultFar");
 
-			newCamConfig.exposure		= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultExposure");
+			newCamConfig.m_exposure		= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultExposure");
 
 			cameraName					= "defaultCamera";
 		}
@@ -1781,13 +1781,13 @@ namespace SaberEngine
 
 
 			// Camera configuration:
-			newCamConfig.aspectRatio		= CoreEngine::GetCoreEngine()->GetConfig()->GetWindowAspectRatio();
-			newCamConfig.fieldOfView		= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultFieldOfView"); //scene->mCameras[0]->mHorizontalFOV; // TODO: Implement this (Needs to be converted to a vertical FOV???)
-			newCamConfig.near				= scene->mCameras[0]->mClipPlaneNear;
-			newCamConfig.far				= scene->mCameras[0]->mClipPlaneFar;
-			newCamConfig.isOrthographic		= false;	// This is the default, but set it here anyway for clarity
+			newCamConfig.m_aspectRatio		= CoreEngine::GetCoreEngine()->GetConfig()->GetWindowAspectRatio();
+			newCamConfig.m_fieldOfView		= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultFieldOfView"); //scene->mCameras[0]->mHorizontalFOV; // TODO: Implement this (Needs to be converted to a vertical FOV???)
+			newCamConfig.m_near				= scene->mCameras[0]->mClipPlaneNear;
+			newCamConfig.m_far				= scene->mCameras[0]->mClipPlaneFar;
+			newCamConfig.m_isOrthographic		= false;	// This is the default, but set it here anyway for clarity
 
-			newCamConfig.exposure			= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultExposure");
+			newCamConfig.m_exposure			= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultExposure");
 
 			cameraName						= string(scene->mCameras[0]->mName.C_Str());
 
@@ -1797,10 +1797,10 @@ namespace SaberEngine
 			aiNode* camNode = scene->mRootNode->FindNode(scene->mCameras[0]->mName);
 			if (camNode != nullptr)
 			{
-				if (camNode->mMetaData->Get("exposure", newCamConfig.exposure))
+				if (camNode->mMetaData->Get("exposure", newCamConfig.m_exposure))
 				{
 					#if defined(DEBUG_SCENEMANAGER_CAMERA_LOGGING)
-						LOG("Importing camera exposure " + to_string(newCamConfig.exposure));
+						LOG("Importing camera exposure " + to_string(newCamConfig.m_exposure));
 					#endif
 				}
 			}
@@ -1819,7 +1819,7 @@ namespace SaberEngine
 		newCamera						= new Camera(cameraName, newCamConfig);
 		newCamera->AttachGBuffer();
 
-		currentScene->RegisterCamera(CAMERA_TYPE_MAIN, newCamera); // For now, assume that we're only importing the main camera. No other cameras are currently supported...
+		m_currentScene->RegisterCamera(CAMERA_TYPE_MAIN, newCamera); // For now, assume that we're only importing the main camera. No other cameras are currently supported...
 
 		// Copy transform values:
 		if (scene != nullptr)

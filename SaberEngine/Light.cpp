@@ -12,11 +12,11 @@ namespace SaberEngine
 {
 	SaberEngine::Light::Light(string lightName, LIGHT_TYPE lightType, vec3 color, ShadowMap* shadowMap /*= nullptr*/, float radius /*= 1.0f*/)
 	{
-		this->lightName		= lightName;
-		this->type			= lightType;
-		this->color			= color;
+		m_lightName		= lightName;
+		m_type			= lightType;
+		m_color			= color;
 
-		this->shadowMap		= shadowMap;
+		m_shadowMap		= shadowMap;
 
 		// Set up deferred light mesh:
 		string shaderName;
@@ -38,7 +38,7 @@ namespace SaberEngine
 			Shader* ambientLightShader = Shader::CreateShader(CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"), &shaderKeywords);
 
 			// Attach a deferred Material:
-			this->deferredMaterial = new Material
+			m_deferredMaterial = new Material
 			(
 				lightName + "_deferredMaterial",
 				ambientLightShader,
@@ -47,7 +47,7 @@ namespace SaberEngine
 			);
 
 			// Attach a screen aligned quad:
-			this->deferredMesh = new gr::Mesh
+			m_deferredMesh = new gr::Mesh
 			(
 				gr::meshfactory::CreateQuad	// Align along near plane
 				(
@@ -64,7 +64,7 @@ namespace SaberEngine
 		case LIGHT_DIRECTIONAL:
 		{
 			// Attach a deferred Material:
-			this->deferredMaterial = new Material
+			m_deferredMaterial = new Material
 			(
 				lightName + "_deferredMaterial",
 				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredKeylightShaderName"),
@@ -73,7 +73,7 @@ namespace SaberEngine
 			);
 
 			// Attach a screen aligned quad:
-			this->deferredMesh = new gr::Mesh
+			m_deferredMesh = new gr::Mesh
 			(
 				gr::meshfactory::CreateQuad	// Align along near plane
 				(
@@ -87,7 +87,7 @@ namespace SaberEngine
 		}
 
 		case LIGHT_POINT:
-			this->deferredMaterial = new Material
+			m_deferredMaterial = new Material
 			(
 				lightName + "_deferredMaterial",
 				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredPointLightShaderName"),
@@ -95,14 +95,14 @@ namespace SaberEngine
 				true
 			);
 
-			this->deferredMesh = new gr::Mesh
+			m_deferredMesh = new gr::Mesh
 			(
 				gr::meshfactory::CreateSphere
 				(
 					radius
 				)
 			);
-			this->deferredMesh->GetTransform().Parent(&this->transform);
+			m_deferredMesh->GetTransform().Parent(&m_transform);
 
 			break;
 
@@ -118,25 +118,25 @@ namespace SaberEngine
 
 	void Light::Destroy()
 	{
-		if (shadowMap != nullptr)
+		if (m_shadowMap != nullptr)
 		{
-			delete shadowMap;
-			shadowMap = nullptr;
+			delete m_shadowMap;
+			m_shadowMap = nullptr;
 		}
 
-		if (deferredMesh != nullptr)
+		if (m_deferredMesh != nullptr)
 		{
-			delete deferredMesh;
-			deferredMesh = nullptr;
+			delete m_deferredMesh;
+			m_deferredMesh = nullptr;
 		}
 
-		if (deferredMaterial != nullptr)
+		if (m_deferredMaterial != nullptr)
 		{
-			delete deferredMaterial;
-			deferredMaterial = nullptr;
+			delete m_deferredMaterial;
+			m_deferredMaterial = nullptr;
 		}
 
-		lightName += "_DELETED";
+		m_lightName += "_DELETED";
 	}
 
 
@@ -155,19 +155,19 @@ namespace SaberEngine
 		// No-arg: Gets the current shadow map
 		if (newShadowMap == nullptr)
 		{
-			return this->shadowMap;
+			return m_shadowMap;
 		}
 
-		if (shadowMap != nullptr)
+		if (m_shadowMap != nullptr)
 		{
 			LOG("Deleting an existing shadow map");
-			delete shadowMap;
-			shadowMap = nullptr;
+			delete m_shadowMap;
+			m_shadowMap = nullptr;
 		}
 
-		this->shadowMap = newShadowMap;
+		m_shadowMap = newShadowMap;
 
-		return this->shadowMap;
+		return m_shadowMap;
 	}
 }
 

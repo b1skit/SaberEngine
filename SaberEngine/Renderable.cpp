@@ -5,18 +5,18 @@
 
 void SaberEngine::Renderable::SetTransform(Transform* transform)
 {
-	this->gameObjectTransform = transform;
+	m_gameObjectTransform = transform;
 
 	// Update the parents of any view meshes
-	for (unsigned int i = 0; i < (unsigned int)viewMeshes.size(); i++)
+	for (unsigned int i = 0; i < (unsigned int)m_viewMeshes.size(); i++)
 	{
-		viewMeshes.at(i)->GetTransform().Parent(this->gameObjectTransform);
+		m_viewMeshes.at(i)->GetTransform().Parent(m_gameObjectTransform);
 	}
 }
 
 void SaberEngine::Renderable::AddViewMeshAsChild(gr::Mesh* mesh)
 {
-	mesh->GetTransform().Parent(this->gameObjectTransform);
+	mesh->GetTransform().Parent(m_gameObjectTransform);
 
-	viewMeshes.push_back(mesh);
+	m_viewMeshes.push_back(mesh);
 }
