@@ -33,6 +33,27 @@
     <Filter Include="Source Files\Shaders\OpenGL">
       <UniqueIdentifier>{02f62867-9e8f-497d-86ca-be1b7ddfa9bb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\en">
+      <UniqueIdentifier>{242d67af-2c7c-4691-9ff2-d501d832b66c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\en">
+      <UniqueIdentifier>{1a6a9e41-cdf7-4631-b2fb-5198e12def51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\re\platform">
+      <UniqueIdentifier>{03f7fb93-12a0-45e5-beec-39b6d6330ba4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\re\platform">
+      <UniqueIdentifier>{afdc443a-307c-4991-9e5b-f6b7cd08c30c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\re\platform\OpenGL">
+      <UniqueIdentifier>{c142e74e-c194-4df2-8137-395acd37f345}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\re\platform\OpenGL">
+      <UniqueIdentifier>{4baacfcf-aa1f-44c9-9e93-1dccfc227a1b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\en\platform">
+      <UniqueIdentifier>{1a74d6ca-0237-4c05-8e91-33beebed076a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CoreEngine.cpp">
@@ -109,6 +130,18 @@
     </ClCompile>
     <ClCompile Include="grMesh.cpp">
       <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="rePlatform.cpp">
+      <Filter>Source Files\re\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="reMesh_OpenGL.cpp">
+      <Filter>Source Files\re\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="enPlatform.cpp">
+      <Filter>Source Files\en\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="reMesh_Platform.cpp">
+      <Filter>Source Files\re\platform</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -201,6 +234,18 @@
     </ClInclude>
     <ClInclude Include="grMesh.h">
       <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="enPlatform.h">
+      <Filter>Header Files\en</Filter>
+    </ClInclude>
+    <ClInclude Include="rePlatform.h">
+      <Filter>Header Files\re\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="reMesh_OpenGL.h">
+      <Filter>Header Files\re\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="reMesh_Platform.h">
+      <Filter>Header Files\re\platform</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

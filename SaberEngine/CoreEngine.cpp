@@ -1,9 +1,9 @@
+#include <string>
+
 #include "CoreEngine.h"
 #include "BuildConfiguration.h"
-
-#include <SDL.h>
-
-#include <string>
+#include "enPlatform.h"
+#include "rePlatform.h"
 
 
 namespace SaberEngine
@@ -32,10 +32,19 @@ namespace SaberEngine
 	{
 		LOG("CoreEngine starting...");
 
-		// Initialize SDL:
-		if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
+		// Set non-rendering platform-specific bindings:
+		if (!en::platform::ConfigureEnginePlatform())
 		{
-			LOG_ERROR(SDL_GetError());
+			LOG_ERROR("Failed to configure engine platform!");
+			exit(-1);
+		}
+
+		LOG("Initializing rendering API...");
+
+		// Set our API-specific bindings:
+		if (!re::platform::RegisterPlatformFunctions())
+		{
+			LOG_ERROR("Failed to configure rendering API!");
 			exit(-1);
 		}
 

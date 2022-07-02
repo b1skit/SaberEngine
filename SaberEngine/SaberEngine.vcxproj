@@ -172,6 +172,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CoreEngine.cpp" />
     <ClCompile Include="EngineConfig.cpp" />
+    <ClCompile Include="enPlatform.cpp" />
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="ImageBasedLight.cpp" />
@@ -183,9 +184,12 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="grMesh.cpp" />
     <ClCompile Include="PlayerObject.cpp" />
     <ClCompile Include="PostFXManager.cpp" />
+    <ClCompile Include="reMesh_OpenGL.cpp" />
+    <ClCompile Include="reMesh_Platform.cpp" />
     <ClCompile Include="Renderable.cpp" />
     <ClCompile Include="RenderManager.cpp" />
     <ClCompile Include="RenderTexture.cpp" />
+    <ClCompile Include="rePlatform.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="Shader.cpp" />
@@ -196,7 +200,11 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="enPlatform.h" />
     <ClInclude Include="grMesh.h" />
+    <ClInclude Include="reMesh_OpenGL.h" />
+    <ClInclude Include="reMesh_Platform.h" />
+    <ClInclude Include="rePlatform.h" />
     <ClInclude Include="SaberObject.h" />
     <ClInclude Include="BuildConfiguration.h" />
     <ClInclude Include="Camera.h" />

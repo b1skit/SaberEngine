@@ -182,7 +182,7 @@ namespace SaberEngine
 
 		// Create a cube mesh for rendering:
 		gr::Mesh cubeMesh = gr::meshfactory::CreateCube();
-		cubeMesh.Bind(true);
+		gr::Mesh::Bind(cubeMesh, true);
 
 
 		// Set shader parameters:
@@ -291,7 +291,7 @@ namespace SaberEngine
 		// Cleanup:
 		hdrTexture->Bind(TEXTURE_0 + TEXTURE_ALBEDO, false); // Unbind: Texture will be destroyed/deleted by the SceneManager
 		
-		cubeMesh.Bind(false);
+		gr::Mesh::Bind(cubeMesh, false);
 		cubeMesh.Destroy();
 
 		equirectangularToCubemapBlitShader->Bind(false);
@@ -361,7 +361,7 @@ namespace SaberEngine
 			vec3(-1.0f, -1.0f,	-1.0f),	// BL
 			vec3(1.0f,	-1.0f,	-1.0f)	// BR
 		);
-		quad.Bind(true);
+		gr::Mesh::Bind(quad, true);
 
 		// Render into the quad:
 		//--------------------------
@@ -379,7 +379,7 @@ namespace SaberEngine
 
 
 		// Cleanup:
-		quad.Bind(false);
+		gr::Mesh::Bind(quad, false);
 
 		m_BRDF_integrationMap->BindFramebuffer(false);
 		m_BRDF_integrationMap->DeleteRenderbuffer();

@@ -3,10 +3,12 @@
 #include <string>
 #include <unordered_map>
 #include <any>
-
 using std::to_string;
 using std::unordered_map;
 using std::any;
+
+#include "rePlatform.h"
+
 
 namespace
 {
@@ -25,8 +27,9 @@ namespace
 
 namespace SaberEngine
 {
-	struct EngineConfig
+	class EngineConfig
 	{
+	public:
 		EngineConfig();
 
 		// Initialize the configValues mapping with default values. MUST be called before the config can be accessed.
@@ -52,8 +55,13 @@ namespace SaberEngine
 		// Save config.cfg to disk
 		void SaveConfig();
 
+		inline const re::platform::RenderingAPI& GetRenderingAPI() const { return m_renderingAPI; }
+
 		// Currently loaded scene (cached during command-line parsing, accessed once SceneManager is loaded)
-		std::string m_currentScene = ""; 
+		std::string m_currentScene = "";
+		// TODO: This should be a getter
+
+		
 
 	private:
 		unordered_map<std::string, any> m_configValues;	// The primary config parameter/value mapping
@@ -62,7 +70,11 @@ namespace SaberEngine
 		const std::string CONFIG_DIR		= ".\\config\\";
 		const std::string CONFIG_FILENAME	= "config.cfg";
 		
-		bool m_isDirty = false; // Marks whether we need to save the config file or not
+		bool m_isDirty; // Marks whether we need to save the config file or not
+
+		// Explicit members (for efficiency):
+		/***********************************/
+		re::platform::RenderingAPI m_renderingAPI;
 
 
 		// Inline helper functions:
@@ -71,9 +83,10 @@ namespace SaberEngine
 		inline std::string PropertyToConfigString(float property)	{ return " " + std::to_string(property) + "\n"; }
 		inline std::string PropertyToConfigString(int property)		{ return " " + std::to_string(property) + "\n"; }
 		inline std::string PropertyToConfigString(char property) {return std::string(" ") + property + std::string("\n");}
-
+		// TODO: MOVE THESE TO LOCAL NAMESPACE AS STATIC FUNCTIONS!!!
+		
 		// Note: Inlined in .cpp file, as it depends on macros defined in KeyConfiguration.h
-		std::string PropertyToConfigString(bool property);	
+		std::string PropertyToConfigString(bool property);
 	};
 }
 

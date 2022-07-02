@@ -62,6 +62,7 @@ namespace SaberEngine
 
 		// Engine configuration:
 		EngineConfig m_config;
+		// TODO: This should be static?
 
 		bool ProcessCommandLineArgs(int argc, char** argv);
 	};

@@ -143,7 +143,7 @@ namespace SaberEngine
 	void PostFXManager::ApplyPostFX(Material*& finalFrameMaterial, Shader*& finalFrameShader)
 	{
 		// Pass 1: Apply luminance threshold: Finished frame -> 1/2 res
-		m_screenAlignedQuad->Bind(true);
+		gr::Mesh::Bind(*m_screenAlignedQuad, true);
 		glViewport(0, 0, m_pingPongTextures[0].Width(), m_pingPongTextures[0].Height());
 
 		// Bind the target FBO, luminance threshold shader, and source texture:
@@ -275,7 +275,7 @@ namespace SaberEngine
 		m_pingPongTextures[0].Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, false);
 		((RenderTexture*)m_outputMaterial->AccessTexture(RENDER_TEXTURE_ALBEDO))->BindFramebuffer(false);
 
-		m_screenAlignedQuad->Bind(false);
+		gr::Mesh::Bind(*m_screenAlignedQuad, false);
 	}
 }
 

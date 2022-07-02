@@ -538,7 +538,8 @@ namespace SaberEngine
 
 	Texture* SaberEngine::SceneManager::FindLoadTextureByPath(string texturePath, bool loadIfNotFound /*= true*/)
 	{
-		// NOTE: Potential bug here: Since we store textureUnit per-texture, we can only share textures that live in the same slot. TODO: Move texture units into the Material?
+		// NOTE: Potential bug here: Since we store textureUnit per-texture, we can only share textures that live in the
+		// same slot. TODO: Move texture units into the Material?
 
 		unordered_map<string, Texture*>::const_iterator texturePosition = m_textures.find(texturePath);
 		if (texturePosition != m_textures.end())
@@ -1139,8 +1140,8 @@ namespace SaberEngine
 				}
 
 				// Fill the indices array:
-				int numIndices = scene->mMeshes[currentMesh]->mNumFaces * 3;
-				std::vector<GLuint> indices(numIndices);
+				uint32_t numIndices = scene->mMeshes[currentMesh]->mNumFaces * 3;
+				std::vector<uint32_t> indices(numIndices);
 
 				#if defined(DEBUG_SCENEMANAGER_MESH_LOGGING)
 					LOG("Created arrays of " + to_string(numVerts) + " vertices, & " + to_string(numIndices) + " indices");
@@ -1154,7 +1155,8 @@ namespace SaberEngine
 						{
 							LOG_ERROR("Found a face that doesn't have 3 indices during mesh import!")
 						}
-						indices[(currentFace * 3) + currentIndex] = scene->mMeshes[currentMesh]->mFaces[currentFace].mIndices[currentIndex];
+						indices[(currentFace * 3) + currentIndex] = 
+							scene->mMeshes[currentMesh]->mFaces[currentFace].mIndices[currentIndex];
 					}
 				}
 

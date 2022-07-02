@@ -21,6 +21,7 @@ namespace SaberEngine
 		m_configValues =
 		{
 			// Renderer config:
+			{"platform",							std::string("opengl")},
 			{"windowTitle",							string("Saber Engine")},
 			{"windowXRes",							1024},
 			{"windowYRes",							768},
@@ -198,13 +199,30 @@ namespace SaberEngine
 
 
 	// Constructor
-	EngineConfig::EngineConfig()
+	EngineConfig::EngineConfig() :
+		m_isDirty(true),
+		m_renderingAPI(re::platform::RenderingAPI::RenderingAPI_Count)
 	{
 		// Populate the config hash table with initial values
 		InitializeDefaultValues();
 
 		// Load config.cfg file
 		LoadConfig();
+
+		// Update specific efficiency functions:
+		std::string platform = GetValueAsString("platform");
+		if (platform == "opengl")
+		{
+			m_renderingAPI = re::platform::RenderingAPI::OpenGL;
+		}
+		else if (platform == "dx12")
+		{
+			m_renderingAPI = re::platform::RenderingAPI::DX12;
+		}
+		else
+		{
+			LOG_ERROR("Config failed to set valid rendering API!");
+		}
 	}
 
 
@@ -341,6 +359,8 @@ namespace SaberEngine
 						m_configValues[property] = false;
 						continue;
 					}
+
+					// TODO: Handle strings without "quotations" -> If it doesn't contain numbers, assume it's a string
 
 					// Numeric values: Try and cast as an int, and fallback to a float if it fails
 					size_t position = 0;

@@ -473,7 +473,7 @@ namespace SaberEngine
 		{
 			gr::Mesh* currentMesh = meshes->at(j);
 
-			currentMesh->Bind(true);
+			gr::Mesh::Bind(*currentMesh, true);
 
 			switch (currentLight->Type())
 			{
@@ -508,7 +508,7 @@ namespace SaberEngine
 				(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 						
 			// Cleanup current mesh:
-			currentMesh->Bind(false);
+			gr::Mesh::Bind(*currentMesh, false);
 		}
 
 		// Cleanup:
@@ -567,7 +567,7 @@ namespace SaberEngine
 			{
 				gr::Mesh* currentMesh = meshes->at(j);
 
-				currentMesh->Bind(true);
+				gr::Mesh::Bind(*currentMesh, true);
 
 				// Assemble model-specific matrices:
 				mat4 model			= currentMesh->GetTransform().Model();
@@ -587,7 +587,7 @@ namespace SaberEngine
 					(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 				// Cleanup current mesh: 
-				currentMesh->Bind(false);
+				gr::Mesh::Bind(*currentMesh, false);
 			}
 
 			// Cleanup:
@@ -662,7 +662,7 @@ namespace SaberEngine
 			for (unsigned int j = 0; j < numMeshes; j++)
 			{
 				gr::Mesh* currentMesh = meshes->at(j);
-				currentMesh->Bind(true);
+				gr::Mesh::Bind(*currentMesh, true);
 
 				// Assemble model-specific matrices:
 				mat4 model			= currentMesh->GetTransform().Model();
@@ -685,7 +685,7 @@ namespace SaberEngine
 					(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 				// Cleanup current mesh: 
-				currentMesh->Bind(false);
+				gr::Mesh::Bind(*currentMesh, false);
 			}
 
 			// Cleanup current material and shader:
@@ -845,7 +845,7 @@ namespace SaberEngine
 			}
 		}
 		
-		deferredLight->DeferredMesh()->Bind(true);
+		gr::Mesh::Bind(*deferredLight->DeferredMesh(), true);
 
 		// Draw!
 		glDrawElements(GL_TRIANGLES,
@@ -908,7 +908,7 @@ namespace SaberEngine
 		}
 		
 		currentShader->Bind(false);
-		deferredLight->DeferredMesh()->Bind(false);
+		gr::Mesh::Bind(*deferredLight->DeferredMesh(), false);
 	}
 
 
@@ -936,7 +936,7 @@ namespace SaberEngine
 			depthTexture->Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_DEPTH, true);
 		}
 
-		skybox->GetSkyMesh()->Bind(true);
+		gr::Mesh::Bind(*skybox->GetSkyMesh(), true);
 
 		// Assemble common (model independent) matrices:
 		mat4 inverseViewProjection = glm::inverse(renderCam->ViewProjection()); // TODO: Only compute this if something has changed
@@ -946,7 +946,7 @@ namespace SaberEngine
 		glDrawElements(GL_TRIANGLES, (GLsizei)skybox->GetSkyMesh()->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 		// Cleanup:
-		skybox->GetSkyMesh()->Bind(false);
+		gr::Mesh::Bind(*skybox->GetSkyMesh(), false);
 		if (depthTexture)
 		{
 			depthTexture->Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_DEPTH, false);
@@ -964,14 +964,14 @@ namespace SaberEngine
 
 		m_outputMaterial->GetShader()->Bind(true);
 		m_outputMaterial->BindAllTextures(RENDER_TEXTURE_0, true);
-		m_screenAlignedQuad->Bind(true);
+		gr::Mesh::Bind(*m_screenAlignedQuad, true);
 
 		glDrawElements(GL_TRIANGLES, (GLsizei)m_screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 		// Cleanup:
 		m_outputMaterial->BindAllTextures(RENDER_TEXTURE_0, false);
 		m_outputMaterial->GetShader()->Bind(false);
-		m_screenAlignedQuad->Bind(false);
+		gr::Mesh::Bind(*m_screenAlignedQuad, false);
 	}
 
 
@@ -983,14 +983,14 @@ namespace SaberEngine
 
 		blitShader->Bind(true);
 		srcMaterial->BindAllTextures(RENDER_TEXTURE_0, true); // NOTE: Assume we're binding to GBuffer_Albedo, for now...
-		m_screenAlignedQuad->Bind(true);
+		gr::Mesh::Bind(*m_screenAlignedQuad, true);
 
 		glDrawElements(GL_TRIANGLES, (GLsizei)m_screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 		// Cleanup:
 		srcMaterial->BindAllTextures(RENDER_TEXTURE_0, false);
 		blitShader->Bind(false);
-		m_screenAlignedQuad->Bind(false);
+		gr::Mesh::Bind(*m_screenAlignedQuad, false);
 	}
 
 
@@ -1008,7 +1008,7 @@ namespace SaberEngine
 
 		// Bind the blit shader and screen aligned quad:
 		currentShader->Bind(true);
-		m_screenAlignedQuad->Bind(true);
+		gr::Mesh::Bind(*m_screenAlignedQuad, true);
 
 		// Bind the source texture into the slot specified in the blit shader:
 		srcMat->AccessTexture((TEXTURE_TYPE)srcTex)->Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, true); // Note: Blit shader reads from this texture unit (for now)
@@ -1017,7 +1017,7 @@ namespace SaberEngine
 
 		// Cleanup:
 		srcMat->AccessTexture((TEXTURE_TYPE)dstTex)->Bind(TEXTURE_ALBEDO, false);
-		m_screenAlignedQuad->Bind(false);
+		gr::Mesh::Bind(*m_screenAlignedQuad, false);
 		currentShader->Bind(false);
 		((RenderTexture*)dstMat->AccessTexture((TEXTURE_TYPE)dstTex))->BindFramebuffer(false);
 	}
