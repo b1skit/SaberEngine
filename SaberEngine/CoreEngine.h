@@ -5,7 +5,7 @@
 #include "InputManager.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
-#include "EngineConfig.h"
+#include "enEngineConfig.h"
 
 
 namespace SaberEngine
@@ -31,7 +31,7 @@ namespace SaberEngine
 		void Shutdown();
 
 		// Member functions
-		EngineConfig const* GetConfig();
+		en::EngineConfig const* GetConfig();
 
 		// SaberObject interface:
 		void Update();
@@ -61,7 +61,7 @@ namespace SaberEngine
 		bool m_isRunning = false;
 
 		// Engine configuration:
-		EngineConfig m_config;
+		en::EngineConfig m_config;
 		// TODO: This should be static?
 
 		bool ProcessCommandLineArgs(int argc, char** argv);

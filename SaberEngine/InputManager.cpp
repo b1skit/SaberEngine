@@ -11,7 +11,7 @@ namespace SaberEngine
 	float InputManager::m_mouseAxisStates[INPUT_NUM_INPUT_AXIS];
 
 	float InputManager::m_mousePitchSensitivity	= -0.00005f;
-	float InputManager::m_mouseYawSensitivity		= -0.00005f;
+	float InputManager::m_mouseYawSensitivity	= -0.00005f;
 
 
 	// Constructor:
@@ -21,7 +21,7 @@ namespace SaberEngine
 		for (int i = 0; i < INPUT_NUM_BUTTONS; i++)
 		{
 			m_inputKeyboardBindings[i]		= SDL_SCANCODE_UNKNOWN; // == 0
-			m_keyboardButtonStates[i]			= false;
+			m_keyboardButtonStates[i]		= false;
 		}
 
 		// Initialize mouse axes:
@@ -73,9 +73,11 @@ namespace SaberEngine
 
 		LoadInputBindings();
 
-		// Cache sensitivity params:
-		InputManager::m_mousePitchSensitivity	= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("mousePitchSensitivity");
-		InputManager::m_mouseYawSensitivity	= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("mouseYawSensitivity");
+		// Cache sensitivity params. For whatever reason, we must multiply by -1 (we store positive values for sanity)
+		InputManager::m_mousePitchSensitivity =
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("mousePitchSensitivity") * -1.0f;
+		InputManager::m_mouseYawSensitivity	= 
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("mouseYawSensitivity") * -1.0f;
 	}
 
 
@@ -90,19 +92,28 @@ namespace SaberEngine
 		// Update keyboard states:
 		const Uint8* SDLKeyboardState = SDL_GetKeyboardState(NULL);
 
-		m_keyboardButtonStates[INPUT_BUTTON_FORWARD]	= (bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_FORWARD]];
-		m_keyboardButtonStates[INPUT_BUTTON_BACKWARD] = (bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_BACKWARD]];
-		m_keyboardButtonStates[INPUT_BUTTON_LEFT]		= (bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_LEFT]];
-		m_keyboardButtonStates[INPUT_BUTTON_RIGHT]	= (bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_RIGHT]];
-		m_keyboardButtonStates[INPUT_BUTTON_UP]		= (bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_UP]];
-		m_keyboardButtonStates[INPUT_BUTTON_DOWN]		= (bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_DOWN]];
+		m_keyboardButtonStates[INPUT_BUTTON_FORWARD] = 
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_FORWARD]];
+		m_keyboardButtonStates[INPUT_BUTTON_BACKWARD] = 
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_BACKWARD]];
+		m_keyboardButtonStates[INPUT_BUTTON_LEFT] = 
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_LEFT]];
+		m_keyboardButtonStates[INPUT_BUTTON_RIGHT] = 
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_RIGHT]];
+		m_keyboardButtonStates[INPUT_BUTTON_UP]	= 
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_UP]];
+		m_keyboardButtonStates[INPUT_BUTTON_DOWN] = 
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_DOWN]];
 
-		m_keyboardButtonStates[INPUT_BUTTON_QUIT]		= (bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_QUIT]];
+		m_keyboardButtonStates[INPUT_BUTTON_QUIT] = 
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_QUIT]];
 
 
 		// Update mouse button states:
-		m_mouseButtonStates[INPUT_MOUSE_LEFT]			= (bool)(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT));
-		m_mouseButtonStates[INPUT_MOUSE_RIGHT]		= (bool)(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_RIGHT));
+		m_mouseButtonStates[INPUT_MOUSE_LEFT] = 
+			(bool)(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT));
+		m_mouseButtonStates[INPUT_MOUSE_RIGHT] =
+			(bool)(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_RIGHT));
 
 
 		// Get the mouse deltas, once per frame:

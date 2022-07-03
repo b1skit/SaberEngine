@@ -122,9 +122,6 @@
     <ClCompile Include="ImageBasedLight.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EngineConfig.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -142,6 +139,9 @@
     </ClCompile>
     <ClCompile Include="reMesh_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="enEngineConfig.cpp">
+      <Filter>Source Files\en</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -220,9 +220,6 @@
     <ClInclude Include="ImageBasedLight.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EngineConfig.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="KeyConfiguration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -246,6 +243,9 @@
     </ClInclude>
     <ClInclude Include="reMesh_Platform.h">
       <Filter>Header Files\re\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="enEngineConfig.h">
+      <Filter>Header Files\en</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

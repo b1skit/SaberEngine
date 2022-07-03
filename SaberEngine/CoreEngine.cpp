@@ -44,7 +44,8 @@ namespace SaberEngine
 		// Set our API-specific bindings:
 		if (!re::platform::RegisterPlatformFunctions())
 		{
-			LOG_ERROR("Failed to configure rendering API!");
+			LOG_ERROR("Failed to configure rendering API! "
+				"Does the config.cfg file contain a 'set platform \"<API>\" command for a supported API?");
 			exit(-1);
 		}
 
@@ -61,7 +62,7 @@ namespace SaberEngine
 
 		// Must wait to start scene manager and load a scene until the renderer is called, since we need to initialize OpenGL in the RenderManager before creating shaders
 		SaberSceneManager->Startup();
-		bool loadedScene = SaberSceneManager->LoadScene(m_config.m_currentScene);
+		bool loadedScene = SaberSceneManager->LoadScene(m_config.SceneName());
 
 		// Now that the scene (and its materials/shaders) has been loaded, we can initialize the shaders
 		if (loadedScene)
@@ -154,7 +155,7 @@ namespace SaberEngine
 	}
 
 
-	EngineConfig const* CoreEngine::GetConfig()
+	en::EngineConfig const* CoreEngine::GetConfig()
 	{
 		return &m_config;
 	}
@@ -208,7 +209,7 @@ namespace SaberEngine
 				{
 					LOG("\tReceived scene command: \"" + currentArg + " " + parameter + "\"");
 
-					m_config.m_currentScene = parameter;
+					m_config.SceneName() = parameter;
 				}
 				
 				i++; // Eat the extra command parameter

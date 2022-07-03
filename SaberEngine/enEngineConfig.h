@@ -10,31 +10,20 @@ using std::any;
 #include "rePlatform.h"
 
 
-namespace
+namespace en
 {
-	// Convert a string to lower case: Used to simplify comparisons
-	inline std::string ToLowerCase(std::string input)
+	enum class SettingType
 	{
-		std::string output;
-		for (auto currentChar : input)
-		{
-			output += std::tolower(currentChar);
-		}
-		return output;
-	}
-}
+		Common,				// Platform-agnostic value
+		APISpecific,		// API-specific value: Not saved to disk (unless found in config at load time)
+		SettingType_Count
+	};
 
 
-namespace SaberEngine
-{
 	class EngineConfig
 	{
 	public:
-		EngineConfig();
-
-		// Initialize the configValues mapping with default values. MUST be called before the config can be accessed.
-		// Set all default values here.
-		void InitializeDefaultValues();
+		EngineConfig();		
 
 		// Get a config value, by type
 		template<typename T>
@@ -43,11 +32,7 @@ namespace SaberEngine
 
 		// Set a config value. Note: Strings must be explicitely defined as a string("value")
 		template<typename T>
-		void SetValue(const std::string& valueName, T value); 
-
-		// Compute the aspect ratio == width / height
-		float GetWindowAspectRatio() const 
-			{ return (float)(GetValue<int>("windowXRes")) / (float)(GetValue<int>("windowYRes")); }
+		void SetValue(const std::string& valueName, T value, SettingType settingType = SettingType::Common);
 
 		// Load the config.cfg from CONFIG_FILENAME
 		void LoadConfig();
@@ -55,35 +40,49 @@ namespace SaberEngine
 		// Save config.cfg to disk
 		void SaveConfig();
 
-		inline const re::platform::RenderingAPI& GetRenderingAPI() const { return m_renderingAPI; }
+
+		// Specific configuration retrieval:
+		/**********************************/
 
 		// Currently loaded scene (cached during command-line parsing, accessed once SceneManager is loaded)
-		std::string m_currentScene = "";
-		// TODO: This should be a getter
+		std::string& SceneName() { return m_currentScene; }
 
-		
+		// Compute the aspect ratio == width / height
+		inline float GetWindowAspectRatio() const
+		{
+			return (float)(GetValue<int>("windowXRes")) / (float)(GetValue<int>("windowYRes"));
+		}
+
+		inline const re::platform::RenderingAPI& GetRenderingAPI() const { return m_renderingAPI; }
+
 
 	private:
-		unordered_map<std::string, any> m_configValues;	// The primary config parameter/value mapping
+		// Initialize the configValues mapping with default values. MUST be called before the config can be accessed.
+		// Note: Default values should be set inside here.
+		void InitializeDefaultValues();
 
+		void SetAPIDefaults();
 
-		const std::string CONFIG_DIR		= ".\\config\\";
-		const std::string CONFIG_FILENAME	= "config.cfg";
-		
+		unordered_map<std::string, std::pair<any, SettingType>> m_configValues;	// The config parameter/value map
 		bool m_isDirty; // Marks whether we need to save the config file or not
+
 
 		// Explicit members (for efficiency):
 		/***********************************/
 		re::platform::RenderingAPI m_renderingAPI;
+		std::string m_currentScene;
+
+
+		const std::string CONFIG_DIR = "..\\config\\";
+		const std::string CONFIG_FILENAME = "config.cfg";
 
 
 		// Inline helper functions:
-		//------------------
+		//-------------------------
 		inline std::string PropertyToConfigString(std::string property)	{ return " \"" + property + "\"\n"; }
 		inline std::string PropertyToConfigString(float property)	{ return " " + std::to_string(property) + "\n"; }
 		inline std::string PropertyToConfigString(int property)		{ return " " + std::to_string(property) + "\n"; }
 		inline std::string PropertyToConfigString(char property) {return std::string(" ") + property + std::string("\n");}
-		// TODO: MOVE THESE TO LOCAL NAMESPACE AS STATIC FUNCTIONS!!!
 		
 		// Note: Inlined in .cpp file, as it depends on macros defined in KeyConfiguration.h
 		std::string PropertyToConfigString(bool property);
