@@ -137,7 +137,7 @@
     <ClCompile Include="Texture_Platform.cpp">
       <Filter>Source Files\platform</Filter>
     </ClCompile>
-    <ClCompile Include="reTexture_OpenGL.cpp">
+    <ClCompile Include="Texture_OpenGL.cpp">
       <Filter>Source Files\platform\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="grTexture.cpp">

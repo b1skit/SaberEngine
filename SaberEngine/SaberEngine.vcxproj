@@ -192,7 +192,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="Renderable.cpp" />
     <ClCompile Include="RenderManager.cpp" />
     <ClCompile Include="Platform.cpp" />
-    <ClCompile Include="reTexture_OpenGL.cpp" />
+    <ClCompile Include="Texture_OpenGL.cpp" />
     <ClCompile Include="TextureTarget_OpenGL.cpp" />
     <ClCompile Include="TextureTarget_Platform.cpp" />
     <ClCompile Include="Texture_Platform.cpp" />
