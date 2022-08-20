@@ -1,12 +1,11 @@
+#include <glm/glm.hpp>
+
 #include "BuildConfiguration.h"
 #include "Camera.h"
 #include "CoreEngine.h"
-#include "Texture.h"
-#include "RenderTexture.h"
+#include "grTexture.h"
 #include "Material.h"
-
-
-#include <glm/glm.hpp>
+#include "Shader.h"
 
 
 namespace SaberEngine
@@ -48,8 +47,8 @@ namespace SaberEngine
 		}
 		else
 		{
-			m_cameraConfig.m_orthoLeft	= 0.0f;
-			m_cameraConfig.m_orthoRight	= 0.0f;
+			m_cameraConfig.m_orthoLeft		= 0.0f;
+			m_cameraConfig.m_orthoRight		= 0.0f;
 			m_cameraConfig.m_orthoBottom	= 0.0f;
 			m_cameraConfig.m_orthoTop		= 0.0f;
 
@@ -72,17 +71,7 @@ namespace SaberEngine
 	{
 		if (m_renderMaterial != nullptr)
 		{
-			for (int i = 0; i < TEXTURE_COUNT; i++)
-			{
-				Texture* currentTexture = m_renderMaterial->AccessTexture((TEXTURE_TYPE)i);
-				if (currentTexture != nullptr)
-				{
-					currentTexture->Destroy();
-					delete currentTexture;
-					currentTexture = nullptr;
-				}
-			}
-
+			m_renderMaterial->Destroy();
 			delete m_renderMaterial;
 			m_renderMaterial = nullptr;
 		}
@@ -95,6 +84,7 @@ namespace SaberEngine
 		return m_view;
 	}
 
+
 	mat4 const* Camera::CubeView()
 	{
 		// If we've never allocated cubeView, do it now:
@@ -102,14 +92,32 @@ namespace SaberEngine
 		{
 			m_cubeView.reserve(6);
 
-			m_cubeView.emplace_back( glm::lookAt(m_transform.WorldPosition(), m_transform.WorldPosition() + Transform::WORLD_X, -Transform::WORLD_Y) );			
-			m_cubeView.emplace_back( glm::lookAt(m_transform.WorldPosition(), m_transform.WorldPosition() - Transform::WORLD_X, -Transform::WORLD_Y) );
+			m_cubeView.emplace_back( 
+				glm::lookAt(m_transform.WorldPosition(), 
+				m_transform.WorldPosition() + Transform::WORLD_X,
+				-Transform::WORLD_Y) );
+			m_cubeView.emplace_back( 
+				glm::lookAt(m_transform.WorldPosition(), 
+				m_transform.WorldPosition() - Transform::WORLD_X, 
+				-Transform::WORLD_Y) );
 
-			m_cubeView.emplace_back( glm::lookAt(m_transform.WorldPosition(), m_transform.WorldPosition() + Transform::WORLD_Y, Transform::WORLD_Z) );
-			m_cubeView.emplace_back( glm::lookAt(m_transform.WorldPosition(), m_transform.WorldPosition() - Transform::WORLD_Y, -Transform::WORLD_Z) );
+			m_cubeView.emplace_back( 
+				glm::lookAt(m_transform.WorldPosition(), 
+				m_transform.WorldPosition() + Transform::WORLD_Y, 
+					Transform::WORLD_Z) );
+			m_cubeView.emplace_back( 
+				glm::lookAt(m_transform.WorldPosition(), 
+				m_transform.WorldPosition() - Transform::WORLD_Y, 
+				-Transform::WORLD_Z) );
 
-			m_cubeView.emplace_back( glm::lookAt(m_transform.WorldPosition(), m_transform.WorldPosition() + Transform::WORLD_Z, -Transform::WORLD_Y) );
-			m_cubeView.emplace_back( glm::lookAt(m_transform.WorldPosition(), m_transform.WorldPosition() - Transform::WORLD_Z, -Transform::WORLD_Y) );
+			m_cubeView.emplace_back( 
+				glm::lookAt(m_transform.WorldPosition(), 
+				m_transform.WorldPosition() + Transform::WORLD_Z,
+				-Transform::WORLD_Y) );
+			m_cubeView.emplace_back( 
+				glm::lookAt(m_transform.WorldPosition(), 
+				m_transform.WorldPosition() - Transform::WORLD_Z, 
+				-Transform::WORLD_Y) );
 		}
 
 		// TODO: Recalculate this if the camera has moved
@@ -140,87 +148,59 @@ namespace SaberEngine
 
 	void Camera::AttachGBuffer()
 	{
-		Material* gBufferMaterial	= new Material(GetName() + "_Material", CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("gBufferFillShaderName"), RENDER_TEXTURE_COUNT, true);
-		m_renderMaterial		= gBufferMaterial;
+		m_renderMaterial = new Material(
+			GetName() + "_Material", 
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("gBufferFillShaderName"), 
+			RENDER_TEXTURE_COUNT, 
+			true);
+		// TODO: Remove this (currently using it for the shader, but shaders still use raw pointers)
 
-		// We use the albedo texture as a basis for the others
-		RenderTexture* gBuffer_albedo = new RenderTexture
-		(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes"),
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes"),
-			GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[RENDER_TEXTURE_ALBEDO]
-		);
-		gBuffer_albedo->Format()			= GL_RGBA;		// Note: Using 4 channels for future flexibility
-		gBuffer_albedo->InternalFormat()	= GL_RGBA32F;		
-		
-		gBuffer_albedo->TextureMinFilter()	= GL_LINEAR;	// Note: Output is black if this is GL_NEAREST_MIPMAP_LINEAR
-		gBuffer_albedo->TextureMaxFilter()	= GL_LINEAR;
+		// Create GBuffer color targets:
+		gr::Texture::TextureParams gBufferParams;
+		gBufferParams.m_width = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
+		gBufferParams.m_height = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
+		gBufferParams.m_faces = 1;
+		gBufferParams.m_texUse = gr::Texture::TextureUse::ColorTarget;
+		gBufferParams.m_texDimension = gr::Texture::TextureDimension::Texture2D;
+		gBufferParams.m_texFormat = gr::Texture::TextureFormat::RGBA32F; // Using 4 channels for future flexibility
+		gBufferParams.m_texColorSpace = gr::Texture::TextureColorSpace::sRGB;
+		gBufferParams.m_texSamplerMode = gr::Texture::TextureSamplerMode::Wrap;
+		gBufferParams.m_texMinMode = gr::Texture::TextureMinFilter::Linear; // Black output w/NearestMipMapLinear?
+		gBufferParams.m_texMaxMode = gr::Texture::TextureMaxFilter::Linear;
+		gBufferParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-		gBuffer_albedo->AttachmentPoint()	= GL_COLOR_ATTACHMENT0 + 0; // Need to increment by 1 each new texture we attach. Used when calling glFramebufferTexture2D()
-
-		gBuffer_albedo->ReadBuffer()		= GL_COLOR_ATTACHMENT0 + 0;
-		gBuffer_albedo->DrawBuffer()		= GL_COLOR_ATTACHMENT0 + 0;
-
-		gBuffer_albedo->Buffer(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO);
-
-		GLuint gBufferFBO = gBuffer_albedo->FBO(); // Cache off the FBO for the other GBuffer textures
-
-		gBufferMaterial->AccessTexture(RENDER_TEXTURE_ALBEDO) = gBuffer_albedo;
-
-		// Store references to our additonal RenderTextures:
-		int numAdditionalRTs			= (int)RENDER_TEXTURE_COUNT - 2; // -2 b/c we already have 1, and we'll add the depth texture last
-		vector<RenderTexture*> additionalRTs(numAdditionalRTs, nullptr);
-
-		int insertIndex				= 0;
-		int attachmentIndexOffset	= 1;
-		for (int currentType = 1; currentType < (int)RENDER_TEXTURE_COUNT; currentType++)
+		for (size_t i = 0; i < (size_t)RENDER_TEXTURE_COUNT; i++)
 		{
-			if ((TEXTURE_TYPE)currentType == RENDER_TEXTURE_DEPTH)
+			if ((TEXTURE_TYPE)i == RENDER_TEXTURE_DEPTH)
 			{
 				continue;
 			}
 
-			RenderTexture* currentRT		= new RenderTexture(*gBuffer_albedo);	// We're creating the same type of textures, attached to the same framebuffer
-			currentRT->TexturePath()		= GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[(TEXTURE_TYPE)currentType];
+			std::shared_ptr<gr::Texture> gBufferTex = std::shared_ptr<gr::Texture>(new gr::Texture(gBufferParams));
 
-			currentRT->FBO()				= gBufferFBO;
-			currentRT->AttachmentPoint()	= gBuffer_albedo->AttachmentPoint() + attachmentIndexOffset;
-			currentRT->ReadBuffer()			= gBuffer_albedo->AttachmentPoint() + attachmentIndexOffset;
-			currentRT->DrawBuffer()			= gBuffer_albedo->AttachmentPoint() + attachmentIndexOffset;
-			
-			currentRT->Texture::Buffer(RENDER_TEXTURE_0 + currentType);
+			gBufferTex->SetTexturePath(
+				GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[(TEXTURE_TYPE)i]);
 
-			currentRT->Bind(RENDER_TEXTURE_0 + currentType, false); // Cleanup: Texture was never unbound in Texture::Buffer, so we must unbind it here
-
-			gBufferMaterial->AccessTexture((TEXTURE_TYPE)currentType)	= currentRT;
-			additionalRTs[insertIndex]									= currentRT;
-
-			insertIndex++;
-			attachmentIndexOffset++;
+			m_camTargetSet.ColorTarget(i) = gBufferTex;
 		}
 
-		// Attach the textures to the existing FBO
-		gBuffer_albedo->AttachAdditionalRenderTexturesToFramebuffer(&additionalRTs[0], numAdditionalRTs);
+		// Create GBuffer depth target:
+		gr::Texture::TextureParams depthTexParams(gBufferParams);
+		depthTexParams.m_texUse = gr::Texture::TextureUse::DepthTarget;
+		depthTexParams.m_texFormat = gr::Texture::TextureFormat::Depth32F;
+		depthTexParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear;
+		depthTexParams.m_texSamplerMode = gr::Texture::TextureSamplerMode::Clamp;
 
-		// Configure the depth buffer:
-		RenderTexture* depth = new RenderTexture
-		(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes"),
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes"),
-			GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[RENDER_TEXTURE_DEPTH]
-		);
+		std::shared_ptr<gr::Texture> depthTex = std::make_shared<gr::Texture>(depthTexParams);
 
-		// Add the new texture to our material:
-		gBufferMaterial->AccessTexture(RENDER_TEXTURE_DEPTH) = depth;
+		depthTex->SetTexturePath(GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[RENDER_TEXTURE_DEPTH]);
 
-		depth->TexturePath()	= GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[RENDER_TEXTURE_DEPTH];
-		depth->FBO()			= gBufferFBO;
+		m_camTargetSet.DepthStencilTarget() = depthTex;
 
-		depth->Texture::Buffer(RENDER_TEXTURE_0 + RENDER_TEXTURE_DEPTH);
-
-		glBindTexture(depth->TextureTarget(), 0); // Cleanup: Texture was never unbound in Texture::Buffer, so we must unbind it here
-
-		gBuffer_albedo->AttachAdditionalRenderTexturesToFramebuffer(&depth, 1, true);
+		// Finally, initialize the target set:
+		m_camTargetSet.CreateColorDepthStencilTargets(
+			RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, 
+			RENDER_TEXTURE_0 + RENDER_TEXTURE_DEPTH);
 	}
 
 
@@ -255,7 +235,5 @@ namespace SaberEngine
 			return;
 		#endif
 	}
-
-
 }
 

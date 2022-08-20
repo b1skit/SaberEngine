@@ -12,7 +12,7 @@ namespace SaberEngine
 {
 
 
-	class InputManager : public EngineComponent, public EventListener
+	class InputManager : public virtual EngineComponent, public EventListener
 	{
 	public:
 		InputManager();

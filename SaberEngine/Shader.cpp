@@ -228,7 +228,7 @@ namespace SaberEngine
 			shaderSuccess	= false;
 		}
 
-		// Delete the shader objects now that they've been linked into the program object:
+		// Destroy the shader objects now that they've been linked into the program object:
 		for (unsigned int i = 0; i < numShaders; i++)
 		{
 			glDeleteShader(shaders[i]);
@@ -252,7 +252,7 @@ namespace SaberEngine
 					glUniform1i(samplerLocation, (TEXTURE_TYPE)currentTexture);
 				}
 			}
-			// RenderTexture sampler locations:
+			// Texture target sampler locations:
 			for (int currentTexture = 0; currentTexture < RENDER_TEXTURE_COUNT; currentTexture++)
 			{
 				GLint samplerLocation = glGetUniformLocation(newShader->ShaderReference(), Material::RENDER_TEXTURE_SAMPLER_NAMES[currentTexture].c_str());

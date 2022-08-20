@@ -4,6 +4,7 @@
 #pragma once
 
 #include <string>
+#include <memory>
 
 #include <glm/glm.hpp>
 using glm::vec3;
@@ -62,9 +63,9 @@ namespace SaberEngine
 
 		inline string const&		Name() const							{ return m_lightName; }
 		
-		ShadowMap*&					ActiveShadowMap(ShadowMap* newShadowMap = nullptr);				// Get/set the current shadow map
+		ShadowMap*&					ActiveShadowMap(ShadowMap* newShadowMap = nullptr);	// Get/set the current shadow map
 
-		inline gr::Mesh*&		DeferredMesh()		{ return m_deferredMesh; }
+		inline std::shared_ptr<gr::Mesh>&	DeferredMesh() { return m_deferredMesh; }
 		inline Material*&		DeferredMaterial()	{ return m_deferredMaterial; }
 
 
@@ -77,10 +78,12 @@ namespace SaberEngine
 
 		string m_lightName			= "unnamed_directional_light";
 
-		ShadowMap* m_shadowMap		= nullptr;							// Deallocated by calling Destroy() during SceneManager.Shutdown()
+		ShadowMap* m_shadowMap		= nullptr; // Deallocated by calling Destroy() during SceneManager.Shutdown()
 
 		// Deferred light setup:
-		gr::Mesh* m_deferredMesh		= nullptr;
+		std::shared_ptr<gr::Mesh> m_deferredMesh = nullptr;
 		Material* m_deferredMaterial	= nullptr;
+
+		// TODO: Move initialization to ctor initialization list
 	};
 }

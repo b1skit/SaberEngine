@@ -5,12 +5,12 @@
 #include "BuildConfiguration.h"
 #include "ImageBasedLight.h"
 #include "Shader.h"
-#include "Texture.h"
+#include "grTexture.h"
 
 
 namespace SaberEngine
 {
-	Skybox::Skybox(Material* skyMaterial, gr::Mesh* skyMesh)
+	Skybox::Skybox(Material* skyMaterial, std::shared_ptr<gr::Mesh> skyMesh)
 	{
 		m_skyMaterial	= skyMaterial;
 		m_skyMesh		= skyMesh;
@@ -23,7 +23,15 @@ namespace SaberEngine
 		m_skyMaterial = new Material("SkyboxMaterial", nullptr, CUBE_MAP_NUM_FACES, false);
 
 		// Attempt to load a HDR image:
-		Texture** iblAsSkyboxCubemap = (Texture**)ImageBasedLight::ConvertEquirectangularToCubemap(CoreEngine::GetSceneManager()->GetCurrentSceneName(), CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath"), 1024, 1024); // TODO: Parameterize cubemap dimensions?
+		std::shared_ptr<gr::Texture> iblAsSkyboxCubemap = 
+			(std::shared_ptr<gr::Texture>)ImageBasedLight::ConvertEquirectangularToCubemap(
+				CoreEngine::GetSceneManager()->GetCurrentSceneName(), 
+				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath"), 
+				1024, 
+				1024); // TODO: Parameterize cubemap dimensions?
+
+		// NOTE: ConvertEquirectangularToCubemap() buffers the texture
+
 		if (iblAsSkyboxCubemap != nullptr)
 		{
 			LOG("Successfully loaded IBL HDR texture for skybox");
@@ -32,82 +40,24 @@ namespace SaberEngine
 		}
 		else // Attempt to create Skybox from 6x skybox textures:
 		{
-			// Create/import cube map face textures:
-			string skyboxTextureNames[CUBE_MAP_NUM_FACES] =
-			{
-				"posx",
-				"negx",
-				"posy",
-				"negy",
-				"posz",
-				"negz",
-			};
-
-			const int NUM_FILE_EXTENSIONS = 4;
-			string fileExtensions[NUM_FILE_EXTENSIONS] =	// Add any desired skybox texture filetype extensions here
-			{
-				".jpg",
-				".jpeg",
-				".png",
-				".tga",
-			};
-
-			string skyboxTextureRoot = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\Skybox\\";
+			string skyboxTextureRoot =
+				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\Skybox\\";
 
 			// Track the textures as we load them:
-			Texture* cubemapTextures[CUBE_MAP_NUM_FACES];
-			for (int i = 0; i < CUBE_MAP_NUM_FACES; i++)
-			{
-				cubemapTextures[i] = nullptr;
-			}
+			std::shared_ptr<gr::Texture> cubemapTexture(nullptr);
 
-			bool foundSkyboxFace = false;
 
-			// Load each cube map face:
-			for (int i = 0; i < CUBE_MAP_NUM_FACES; i++)
-			{
-				// Search each possible file extension:
-				string currentSkyCubeFaceName = skyboxTextureRoot + skyboxTextureNames[i];
+			cubemapTexture = 
+				gr::Texture::LoadCubeMapTextureFilesFromPath(skyboxTextureRoot, gr::Texture::TextureColorSpace::sRGB);
 
-				foundSkyboxFace = false;
-				for (int j = 0; j < NUM_FILE_EXTENSIONS; j++)
-				{
-					string finalName = currentSkyCubeFaceName + fileExtensions[j];
+			gr::Texture::TextureParams cubemapParams = cubemapTexture->GetTextureParams();
+			cubemapParams.m_texSamplerMode = gr::Texture::TextureSamplerMode::Clamp;
+			cubemapParams.m_texMinMode = gr::Texture::TextureMinFilter::Linear;
+			cubemapParams.m_texMaxMode = gr::Texture::TextureMaxFilter::Linear;
+			cubemapParams.m_texFormat = gr::Texture::TextureFormat::RGBA8;
+			cubemapTexture->SetTextureParams(cubemapParams);
 
-					Texture* currentFaceTexture = Texture::LoadTextureFileFromPath(finalName, false, false);
-
-					// If we checked the last file extension without success, load an error texture:
-					if (currentFaceTexture == nullptr && j == NUM_FILE_EXTENSIONS - 1)
-					{
-						LOG("Could not find skybox cubemap face texture #" + to_string(i) + ": " + skyboxTextureNames[i] + " with any supported extension. Loading red error texture");
-
-						currentFaceTexture = Texture::LoadTextureFileFromPath(finalName, true, false);
-					}
-
-					if (currentFaceTexture != nullptr)
-					{
-						m_skyMaterial->AccessTexture((TEXTURE_TYPE)i) = currentFaceTexture;
-						cubemapTextures[i] = currentFaceTexture;	// Track the face
-
-						foundSkyboxFace = true;
-
-						// Configure the texture:
-						currentFaceTexture->TextureTarget()		= GL_TEXTURE_CUBE_MAP;
-
-						currentFaceTexture->TextureWrap_S()		= GL_CLAMP_TO_EDGE;
-						currentFaceTexture->TextureWrap_T()		= GL_CLAMP_TO_EDGE;
-						currentFaceTexture->TextureWrap_R()		= GL_CLAMP_TO_EDGE;
-
-						currentFaceTexture->TextureMinFilter()	= GL_LINEAR;
-						currentFaceTexture->TextureMaxFilter()	= GL_LINEAR;
-
-						currentFaceTexture->InternalFormat()	= GL_SRGB8_ALPHA8;				// Set the diffuse texture's internal format to be encoded in sRGB color space, so OpenGL will apply gamma correction: (ie. color = pow(color, 2.2) )
-						// TODO: Should we use this, or use universal shader functions???
-
-						break;
-					}
-				}
-			}
+			m_skyMaterial->AccessTexture((TEXTURE_TYPE)0) = cubemapTexture;
 		}
 
 
@@ -115,32 +65,14 @@ namespace SaberEngine
 		Shader* skyboxShader = Shader::CreateShader(CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("skyboxShaderName"));
 		m_skyMaterial->GetShader() = skyboxShader;
 
-		// Configure and buffer textures:
-		if (!Texture::BufferCubeMap(&m_skyMaterial->AccessTexture(TEXTURE_0), CUBE_MAP_0))
-		{
-			LOG_ERROR("Skybox cube map buffering failed");
-
-			skyboxShader->Destroy();
-			delete skyboxShader;
-			skyboxShader = nullptr;
-
-			m_skyMaterial->Destroy();
-			delete m_skyMaterial;
-			m_skyMaterial = nullptr;
-
-			return;
-		}
 
 		// Create a quad at furthest point in the depth buffer
-		m_skyMesh = new gr::Mesh
+		m_skyMesh =	gr::meshfactory::CreateQuad
 		(
-			gr::meshfactory::CreateQuad
-			(
-				vec3(-1.0f, 1.0f,	1.0f), // z == 1.0f, since we're in clip space (and camera's negative Z has been reversed)
-				vec3(1.0f,	1.0f,	1.0f),
-				vec3(-1.0f, -1.0f,	1.0f),
-				vec3(1.0f,	-1.0f,	1.0f)
-			)
+			vec3(-1.0f, 1.0f,	1.0f), // z == 1.0f, since we're in clip space (and camera's negative Z has been reversed)
+			vec3(1.0f,	1.0f,	1.0f),
+			vec3(-1.0f, -1.0f,	1.0f),
+			vec3(1.0f,	-1.0f,	1.0f)
 		);
 
 		m_skyMesh->Name() = "SkyboxQuad";
@@ -157,7 +89,6 @@ namespace SaberEngine
 
 		if (m_skyMesh != nullptr)
 		{
-			delete m_skyMesh;
 			m_skyMesh = nullptr;
 		}
 	}

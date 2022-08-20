@@ -1,9 +1,10 @@
 #pragma once
 
-#include "SceneObject.h"	// Base class
-
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
+
+#include "SceneObject.h"
+#include "grTextureTarget.h"
 
 
 namespace SaberEngine
@@ -66,12 +67,19 @@ namespace SaberEngine
 		mat4 const*			CubeViewProjection();
 
 		Material*&			RenderMaterial()		{ return m_renderMaterial; }
+		
+
+		gr::TextureTargetSet& GetTextureTargetSet() { return m_camTargetSet; }
+		gr::TextureTargetSet const & GetTextureTargetSet() const { return m_camTargetSet; }
+
 
 		float& Exposure()							{ return m_cameraConfig.m_exposure; }
 
 
 		// Configure this camera for deferred rendering
 		void				AttachGBuffer();
+		// TODO: Move this to a stage owned by a graphics system, with a target set etc
+		// Cameras should just do camera things.
 
 		void				DebugPrint();
 	protected:
@@ -91,6 +99,9 @@ namespace SaberEngine
 		vector<mat4> m_cubeViewProjection;
 		
 		Material* m_renderMaterial	= nullptr;	// Deallocated by Destroy()
+		gr::TextureTargetSet m_camTargetSet;
+
+		// TODO: Move initialization to ctor initialization list
 
 		/*bool isDirty = false;*/
 	};

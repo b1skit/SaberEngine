@@ -1,17 +1,18 @@
 #pragma once
 
-#include "Light.h"	// Base class
-
 #include <string>
-
 using std::string;
+
+#include "Light.h"	// Base class
+#include "grTextureTarget.h"
+
 
 
 namespace SaberEngine
 {
 	// Predeclarations:
 	class Material;
-	class RenderTexture;
+
 
 
 	enum IBL_TYPE
@@ -35,7 +36,7 @@ namespace SaberEngine
 		// Get the Irradiance Environment Map material:
 		Material*		GetIEMMaterial()		{ return m_IEM_Material; }
 		Material*		GetPMREMMaterial()		{ return m_PMREM_Material; }
-		RenderTexture*	GetBRDFIntegrationMap() { return m_BRDF_integrationMap; }
+		std::shared_ptr<gr::Texture>	GetBRDFIntegrationMap() { return m_BRDF_integrationMap; }
 
 		// Check if an IBL was successfully loaded
 		bool IsValid() const		{ return m_IEM_isValid && m_PMREM_isValid; }
@@ -48,26 +49,36 @@ namespace SaberEngine
 		// hdrPath is relative to the scene path, with no leading slash eg. "IBL\\ibl.hdr"
 		// iblType controls the filtering (IEM/PMREM/None) applied to the converted cubemap 
 		// Returns an array of 6 textures
-		static RenderTexture** ConvertEquirectangularToCubemap(string sceneName, string relativeHDRPath, int xRes, int yRes, IBL_TYPE iblType = RAW_HDR);
+		static std::shared_ptr<gr::Texture> ConvertEquirectangularToCubemap(
+			string sceneName, 
+			string relativeHDRPath, 
+			int xRes, 
+			int yRes, 
+			IBL_TYPE iblType = RAW_HDR);
 
 	private:
-		Material* m_IEM_Material				= nullptr;	// Irradiance Environment Map (IEM) Material: Deallocated in destructor
-		Material* m_PMREM_Material			= nullptr;	// Pre-filtered Mip-mapped Radiance Environment Map (PMREM) Material: Deallocated in destructor
 
-		int m_maxMipLevel						= -1;		// Highest valid mip level for the PMREM cube map
+		// TODO: MOVE INITIALIZATION TO CTOR INIT LIST
 
-		RenderTexture* m_BRDF_integrationMap	= nullptr;	// Generated BRDF integration map, required for PMREM calculations
+		Material* m_IEM_Material = nullptr;		// Irradiance Environment Map (IEM) Material
+		Material* m_PMREM_Material = nullptr;	// Pre-filtered Mip-mapped Radiance Environment Map (PMREM) Material
+
+		uint32_t m_maxMipLevel = -1;		// Highest valid mip level for the PMREM cube map
+
+		// Generated BRDF integration map, required for PMREM calculations
+		std::shared_ptr<gr::Texture> m_BRDF_integrationMap	= nullptr;
+		gr::TextureTargetSet m_BRDF_integrationMapStageTargetSet;
 
 		// Cubemap face/single texture resolution:
 		int m_xRes							= 512;
 		int m_yRes							= 512;
 
-		bool m_IEM_isValid					= false; // Is the IEM valid? (Ie. Were IBL textures successfully loaded?)
-		bool m_PMREM_isValid					= false; // Is the PMREM valid? (Ie. Were IBL textures successfully loaded?)
+		bool m_IEM_isValid		= false; // Is the IEM valid? (Ie. Were IBL textures successfully loaded?)
+		bool m_PMREM_isValid	= false; // Is the PMREM valid? (Ie. Were IBL textures successfully loaded?)
 
 		// Private helper functions:
 		//--------------------------
-		void GenerateBRDFIntegrationMap();
+		void GenerateBRDFIntegrationMap(); // Generate our pre-integrated BRDF response LUT
 	};
 }
 

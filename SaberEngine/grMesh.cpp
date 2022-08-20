@@ -6,7 +6,6 @@ using glm::pi;
 
 #include "BuildConfiguration.h"
 #include "grMesh.h"
-#include "reMesh_OpenGL.h"
 
 
 namespace gr
@@ -91,16 +90,10 @@ namespace gr
 
 	/******************************************************************************************************************/
 
-	// Mesh class static function pointer implementaions.
-	// These are set in rePlatform.cpp::RegisterPlatformFunctions()
-	void (*Mesh::Create)(gr::Mesh& mesh);
-	void (*Mesh::Delete)(gr::Mesh& mesh);
-	void (*Mesh::Bind)(gr::Mesh& mesh, bool doBind);
-
 
 	Mesh::Mesh(
 		string name, std::vector<Vertex> vertices, std::vector<uint32_t> indices, SaberEngine::Material* newMeshMaterial) :
-			m_params{ re::platform::MeshParams_Platform::Create() },
+			m_platformParams{ platform::Mesh::PlatformParams::CreatePlatformParams() },
 			meshName{ name },
 			m_vertices{ vertices },
 			m_indices{ indices },
@@ -110,7 +103,7 @@ namespace gr
 		ComputeBounds();
 
 		// Platform-specific setup:
-		Mesh::Create(*this);
+		platform::Mesh::Create(*this);
 	}
 
 
@@ -132,10 +125,17 @@ namespace gr
 		m_meshMaterial = nullptr;		// Note: Material MUST be cleaned up elsewhere!
 
 		// Platform-specific destruction:
-		Mesh::Delete(*this);
+		platform::Mesh::Destroy(*this);
 
-		m_params = nullptr;
+		m_platformParams = nullptr;
 	}
+
+
+	void Mesh::Bind(bool doBind)
+	{
+		platform::Mesh::Bind(*this, doBind);
+	}
+
 
 	void Mesh::ComputeBounds()
 	{
@@ -173,7 +173,7 @@ namespace gr
 
 	namespace meshfactory
 	{
-		inline Mesh CreateCube(SaberEngine::Material* newMeshMaterial /*= nullptr*/)
+		inline std::shared_ptr<Mesh> CreateCube(SaberEngine::Material* newMeshMaterial /*= nullptr*/)
 		{
 			// Note: SaberEngine uses a RHCS in all cases
 			std::vector<vec3> positions(8);
@@ -285,10 +285,10 @@ namespace gr
 				21, 22, 23,
 			};
 
-			return Mesh("cube", cubeVerts, cubeIndices, newMeshMaterial);
+			return std::make_shared<Mesh>("cube", cubeVerts, cubeIndices, newMeshMaterial);
 		}
 
-		inline Mesh CreateQuad(glm::vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,
+		inline std::shared_ptr<Mesh> CreateQuad(glm::vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,
 			glm::vec3 tr /*= vec3(0.5f, 0.5f, 0.0f)*/,
 			glm::vec3 bl /*= vec3(-0.5f, -0.5f, 0.0f)*/,
 			glm::vec3 br /*= vec3(0.5f, -0.5f, 0.0f)*/,
@@ -330,11 +330,11 @@ namespace gr
 				2, 1, 3
 			}; // Note: CCW winding
 
-			return Mesh("quad", quadVerts, quadIndices, newMeshMaterial);
+			return std::make_shared<Mesh>("quad", quadVerts, quadIndices, newMeshMaterial);
 		}
 
 
-		inline Mesh CreateSphere(float radius /*= 0.5f*/,
+		inline std::shared_ptr<Mesh> CreateSphere(float radius /*= 0.5f*/,
 			size_t numLatSlices /*= 16*/,
 			size_t numLongSlices /*= 16*/,
 			SaberEngine::Material* newMeshMaterial /*= nullptr*/)
@@ -489,7 +489,7 @@ namespace gr
 			}
 			indices[currentIndex - 1] = (uint32_t)(numVerts - numLatSlices - 1); // Wrap the last edge back to the start		
 
-			return Mesh("sphere", vertices, indices, newMeshMaterial);
+			return std::make_shared<Mesh>("sphere", vertices, indices, newMeshMaterial);
 		}
 	} // meshfactory
 } // gr

@@ -1,7 +1,7 @@
 #include "Material.h"
 #include "CoreEngine.h"
 #include "Shader.h"
-#include "Texture.h"
+#include "grTexture.h"
 #include "BuildConfiguration.h"
 #include "Shader.h"
 
@@ -68,9 +68,7 @@ namespace SaberEngine
 
 		m_shader			= Shader::CreateShader(shaderName, &m_shaderKeywords);
 
-		m_numTextures		= (int)textureCount;
-
-		m_isRenderMaterial	= isRenderMaterial;
+		m_textures = std::vector<std::shared_ptr<gr::Texture>>(textureCount, nullptr);
 
 		Init();	// Initialize textures and properties arrays
 	}
@@ -82,9 +80,7 @@ namespace SaberEngine
 
 		m_shader			= shader;
 
-		m_numTextures		= (int)textureCount;
-
-		m_isRenderMaterial	= isRenderMaterial;
+		m_textures = std::vector<std::shared_ptr<gr::Texture>>(textureCount, nullptr);
 
 		Init();	// Initialize textures and properties arrays
 	}
@@ -102,21 +98,12 @@ namespace SaberEngine
 
 	void Material::Init()
 	{
-		if (m_textures != nullptr)
+		for (size_t i = 0; i < m_textures.size(); i++)
 		{
-			for (int i = 0; i < m_numTextures; i++)
+			if (m_textures[i] != nullptr)
 			{
-				delete m_textures[i];
 				m_textures[i] = nullptr;
-			}
-			delete [] m_textures;
-			m_textures = nullptr;
-		}
-
-		m_textures = new Texture * [m_numTextures];
-		for (int i = 0; i < m_numTextures; i++)
-		{
-			m_textures[i] = nullptr;
+			}			
 		}
 
 		for (int i = 0; i < MATERIAL_PROPERTY_COUNT; i++)
@@ -126,7 +113,7 @@ namespace SaberEngine
 	}
 
 
-	Texture*& Material::AccessTexture(TEXTURE_TYPE textureType)
+	std::shared_ptr<gr::Texture>& Material::AccessTexture(TEXTURE_TYPE textureType)
 	{
 		return m_textures[textureType];
 	}
@@ -140,7 +127,7 @@ namespace SaberEngine
 
 	void Material::BindAllTextures(int startingTextureUnit, bool doBind)
 	{
-		for (int i = 0; i < m_numTextures; i++)
+		for (uint32_t i = 0; i < m_textures.size(); i++)
 		{
 			if (m_textures[i] != nullptr)
 			{
@@ -150,45 +137,20 @@ namespace SaberEngine
 	}
 
 
-	void Material::BufferAllTextures(int startingTextureUnit)
+	void Material::AttachCubeMapTextures(std::shared_ptr<gr::Texture> cubemapTexture)
 	{
-		for (int currentTextureIndex = 0; currentTextureIndex < m_numTextures; currentTextureIndex++)
+		assert("Cannot attach nullptr cubeMapFaces" && cubemapTexture != nullptr);
+
+		for (size_t i = 0; i < m_textures.size(); i++)
 		{
-			if (m_textures[currentTextureIndex] != nullptr)
+			if (m_textures[i] != nullptr)
 			{
-				m_textures[currentTextureIndex]->Buffer(startingTextureUnit + currentTextureIndex);
-			}
-		}
-	}
-
-
-	void Material::AttachCubeMapTextures(Texture** cubeMapFaces)
-	{
-		if (cubeMapFaces == nullptr)
-		{
-			return;
-		}
-
-		if (m_textures != nullptr)
-		{
-			for (int i = 0; i < m_numTextures; i++)
-			{
-				delete m_textures[i];
 				m_textures[i] = nullptr;
 			}
 		}
 
-		m_numTextures = CUBE_MAP_NUM_FACES;
-
-		if (m_textures == nullptr)
-		{
-			m_textures = new Texture*[CUBE_MAP_NUM_FACES];
-		}
-
-		for (int i = 0; i < CUBE_MAP_NUM_FACES; i++)
-		{
-			m_textures[i] = cubeMapFaces[i];
-		}
+		m_textures = std::vector<std::shared_ptr<gr::Texture>>(RENDER_TEXTURE_COUNT, nullptr);
+		m_textures[0] = cubemapTexture;
 	}
 }
 

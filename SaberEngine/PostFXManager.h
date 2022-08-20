@@ -1,19 +1,26 @@
 #pragma once
 
 #include <string>
+#include <memory>
 
 #include "grMesh.h"
+#include "grTextureTarget.h"
+
+
+// Pre-declarations:
+namespace gr
+{
+	class Mesh;
+}
+namespace SaberEngine
+{
+	class Shader;
+	class Material;
+}
 
 
 namespace SaberEngine
 {
-	// Pre-declarations:
-	class Mesh;
-	class Shader;
-	class Material;
-	class RenderTexture;
-
-
 	enum BLUR_PASS
 	{
 		BLUR_SHADER_LUMINANCE_THRESHOLD,
@@ -33,27 +40,29 @@ namespace SaberEngine
 		// Initialize PostFX. Must be called after the scene has been loaded and the RenderManager has finished initializing OpenGL
 		void Initialize(Material* outputMaterial);
 
-		// Apply post processing. Modifies finalFrameMaterial and finalFrameShader to contain the material & shader required to blit the final image to screen
-		void ApplyPostFX(Material*& finalFrameMaterial, Shader*& finalFrameShader);
-
-		// Getters/Setters:
+		// Apply post processing. Modifies finalFrameShader to contain the shader required to blit the final image to screen
+		void ApplyPostFX(Shader*& finalFrameShader);
 
 
 
 	private:
+		gr::TextureTargetSet m_outputTargetSet;
 
-		Material* m_outputMaterial		= nullptr;	// Recieved from RenderManager
+		const uint32_t NUM_DOWN_SAMPLES = 2;		// Scaling factor: We half the frame size this many times
+		const uint32_t NUM_BLUR_PASSES = 3;		// How many pairs of horizontal + vertical blur passes to perform
 
-		RenderTexture* m_pingPongTextures = nullptr;	// Deallocated in destructor
-		const int NUM_DOWN_SAMPLES		= 2;		// Scaling factor: We half the frame size this many times
-		const int NUM_BLUR_PASSES		= 3;		// How many pairs of horizontal + vertical blur passes to perform
+		// TODO: Move these into individual stages owned by a single graphics system
+		std::vector<std::shared_ptr<gr::Texture>> m_pingPongTextures;	// Deallocated in destructor
+		std::vector<gr::TextureTargetSet> m_pingPongStageTargetSets;
+
+		
 
 		Shader* m_blitShader			= nullptr;	// Deallocated in destructor
 		Shader* m_toneMapShader			= nullptr;	// Deallocated in destructor
-		Shader* m_blurShaders[BLUR_SHADER_COUNT];		// Deallocated in destructor
+		Shader* m_blurShaders[BLUR_SHADER_COUNT];	// Deallocated in destructor
 		
 		
-		gr::Mesh* m_screenAlignedQuad	= nullptr;	// Deallocated in destructor
+		std::shared_ptr<gr::Mesh> m_screenAlignedQuad	= nullptr;	// Deallocated in destructor
 	};
 }
 

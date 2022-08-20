@@ -4,7 +4,7 @@
 #include "CoreEngine.h"
 #include "Camera.h"
 #include "grMesh.h"
-#include "Texture.h"
+#include "grTexture.h"
 #include "Material.h"
 #include "SceneObject.h"
 #include "GameObject.h"
@@ -89,12 +89,10 @@ namespace SaberEngine
 		}
 
 		// Texture cleanup:
-		for (std::pair<string, Texture*> currentTexture : m_textures)
+		for (std::pair<string, std::shared_ptr<gr::Texture>> currentTexture : m_textures)
 		{
 			if (currentTexture.second != nullptr)
 			{
-				currentTexture.second->Destroy();
-				delete currentTexture.second;
 				currentTexture.second = nullptr;
 			}
 		}
@@ -248,7 +246,7 @@ namespace SaberEngine
 
 		//// DEBUG: Add a test light:
 		//vec3 lightColor(1.0f, 0.0f, 0.0f);
-		//Light* pointLight = new Light("pointLight", LIGHT_POINT, lightColor, nullptr); // TODO: Implement point light shadow maps
+		//Light* pointLight = new Light("pointLight", LIGHT_POINT, lightColor, nullptr);
 
 		//currentScene->AddLight(pointLight);
 		//// NOTE: Currently, the light has a hard-coded radius of 5
@@ -353,7 +351,7 @@ namespace SaberEngine
 	}
 
 
-	void SceneManager::AddTexture(Texture*& newTexture)
+	void SceneManager::AddTexture(std::shared_ptr<gr::Texture>& newTexture)
 	{
 		if (newTexture == nullptr)
 		{
@@ -362,19 +360,19 @@ namespace SaberEngine
 		}
 
 		// Check if the texture already exists:
-		unordered_map<string, Texture*>::const_iterator texturePosition = m_textures.find(newTexture->TexturePath());
+		unordered_map<string, std::shared_ptr<gr::Texture>>::const_iterator texturePosition =
+			m_textures.find(newTexture->GetTexturePath());
 		if (texturePosition != m_textures.end())
 		{
 			LOG_WARNING("Cannot add texture with an identical path. Deleting duplicate, and updating reference");
 
-			newTexture->Destroy();
-			delete newTexture;
+			newTexture = nullptr;
 
 			newTexture = texturePosition->second;
 		}
 		else // Insert the new texture:
 		{
-			m_textures[newTexture->TexturePath()] = newTexture;
+			m_textures[newTexture->GetTexturePath()] = newTexture;
 		}
 	}
 	
@@ -536,12 +534,15 @@ namespace SaberEngine
 	}
 
 
-	Texture* SaberEngine::SceneManager::FindLoadTextureByPath(string texturePath, bool loadIfNotFound /*= true*/)
+	std::shared_ptr<gr::Texture> SaberEngine::SceneManager::FindLoadTextureByPath(
+		string texturePath,
+		gr::Texture::TextureColorSpace colorSpace,
+		bool loadIfNotFound /*= true*/)
 	{
 		// NOTE: Potential bug here: Since we store textureUnit per-texture, we can only share textures that live in the
 		// same slot. TODO: Move texture units into the Material?
 
-		unordered_map<string, Texture*>::const_iterator texturePosition = m_textures.find(texturePath);
+		unordered_map<string, std::shared_ptr<gr::Texture>>::const_iterator texturePosition = m_textures.find(texturePath);
 		if (texturePosition != m_textures.end())
 		{
 			LOG("Texture at path " + texturePath + " has already been loaded");
@@ -551,8 +552,9 @@ namespace SaberEngine
 		// If we've made it this far, load the texture
 		if (loadIfNotFound)
 		{
-			Texture* result = Texture::LoadTextureFileFromPath(texturePath);
-			if (result != nullptr)
+			std::shared_ptr<gr::Texture> result(nullptr);
+			bool didLoad = gr::Texture::LoadTextureFileFromPath(result, texturePath, colorSpace, false);
+			if (didLoad)
 			{
 				AddTexture(result);
 			}
@@ -613,18 +615,19 @@ namespace SaberEngine
 
 				// Extract material's textures:
 				LOG("Importing albedo + transparency texture (RGB+A) from material's diffuse/color slot");
-				Texture* diffuseTexture = ExtractLoadTextureFromAiMaterial(aiTextureType_DIFFUSE, scene->mMaterials[currentMaterial], sceneName);
+
+				std::shared_ptr<gr::Texture> diffuseTexture = 
+					ExtractLoadTextureFromAiMaterial(aiTextureType_DIFFUSE, scene->mMaterials[currentMaterial], sceneName);
 				if (diffuseTexture)
 				{
+					gr::Texture::TextureParams diffuseParams = diffuseTexture->GetTextureParams();
+
+					diffuseParams.m_texColorSpace = gr::Texture::TextureColorSpace::sRGB;
+					diffuseParams.m_texFormat = gr::Texture::TextureFormat::RGBA8;
+					diffuseTexture->SetTextureParams(diffuseParams);
+
+
 					newMaterial->AccessTexture(TEXTURE_ALBEDO) = diffuseTexture;
-
-					// Set the diffuse texture's internal format to be encoded in sRGB color space, so OpenGL will apply gamma correction: (ie. color = pow(color, 2.2) )
-					if (CoreEngine::GetCoreEngine()->GetConfig()->GetValue<bool>("useForwardRendering") == false) // We don't do this in forward rendering, since we don't currently support tone mapping
-					{
-						diffuseTexture->InternalFormat() = GL_SRGB8_ALPHA8;
-					}
-
-					// DOES THIS WORK??? SHOULD I BE DOING THIS, OR JUST HANDLING IT IN THE SHADER?!?!?!!?!?!?!?
 				}
 				else
 				{
@@ -632,22 +635,39 @@ namespace SaberEngine
 				}
 
 				LOG("Importing normal map texture (RGB) from material's bump slot");
-				Texture* normalTexture = ExtractLoadTextureFromAiMaterial(aiTextureType_NORMALS, scene->mMaterials[currentMaterial], sceneName);
+				std::shared_ptr<gr::Texture> normalTexture =
+					ExtractLoadTextureFromAiMaterial(aiTextureType_NORMALS, scene->mMaterials[currentMaterial], sceneName);
+
 				if (normalTexture)
 				{
+					gr::Texture::TextureParams normalParams = normalTexture->GetTextureParams();
+					normalParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear;
+					normalParams.m_texFormat = gr::Texture::TextureFormat::RGBA32F;
+					normalTexture->SetTextureParams(normalParams);
+
 					newMaterial->AccessTexture(TEXTURE_NORMAL) = normalTexture;
 				}
 				else
 				{
-					// NOTE: This NEVER gets hit, since ExtractLoadTextureFromAiMaterial() will always assign a default 1x1 normal texture.... TODO: handle this more elegantly
+					// NOTE: This NEVER gets hit, since ExtractLoadTextureFromAiMaterial() will always assign a default 
+					// 1x1 normal texture.... 
+					// TODO: handle this more elegantly
 					newMaterial->AddShaderKeyword(Shader::SHADER_KEYWORDS[NO_NORMAL_TEXTURE]);
 				}
 				
 
 				LOG("Importing emissive map texture (RGB) from material's incandescence slot");
-				Texture* emissiveTexture = ExtractLoadTextureFromAiMaterial(aiTextureType_EMISSIVE, scene->mMaterials[currentMaterial], sceneName);
+
+				std::shared_ptr<gr::Texture>  emissiveTexture = 
+					ExtractLoadTextureFromAiMaterial(aiTextureType_EMISSIVE, scene->mMaterials[currentMaterial], sceneName);
 				if (emissiveTexture)
 				{
+					gr::Texture::TextureParams emissiveParams = emissiveTexture->GetTextureParams();
+					//emissiveParams.m_texColorSpace = gr::Texture::TextureColorSpace::sRGB; 
+					emissiveParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear; // TODO: Are emissive textures sRGB or Linear????
+					emissiveParams.m_texFormat = gr::Texture::TextureFormat::RGBA32F;
+					emissiveTexture->SetTextureParams(emissiveParams);
+
 					newMaterial->AccessTexture(TEXTURE_EMISSIVE) = emissiveTexture;
 				}
 				else
@@ -656,9 +676,16 @@ namespace SaberEngine
 				}
 
 				LOG("Importing roughness, metalic, & AO textures (R+G+B) from material's specular slot");
-				Texture* RMAO = ExtractLoadTextureFromAiMaterial(aiTextureType_SPECULAR, scene->mMaterials[currentMaterial], sceneName);
+
+				std::shared_ptr<gr::Texture> RMAO = 
+					ExtractLoadTextureFromAiMaterial(aiTextureType_SPECULAR, scene->mMaterials[currentMaterial], sceneName);
 				if (RMAO)
 				{
+					gr::Texture::TextureParams RMAOParams = RMAO->GetTextureParams();
+					RMAOParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear;
+					RMAOParams.m_texFormat = gr::Texture::TextureFormat::RGBA8;
+					RMAO->SetTextureParams(RMAOParams);
+
 					newMaterial->AccessTexture(TEXTURE_RMAO) = RMAO;
 				}
 				else
@@ -735,56 +762,54 @@ namespace SaberEngine
 						#endif
 
 						Shader* newShader = Shader::CreateShader(shaderName, &newMaterial->ShaderKeywords());
-						if (newShader->Name() != CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("errorShaderName"))
+
+						if (newShader->Name() != 
+							CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("errorShaderName"))
 						{
 							newMaterial->GetShader() = newShader;
 							loadedValidShader = true;
 						}
 					}
 
-					// If we didn't load a valid shader, delete any textures we might have loaded and replace them with error textures:
+					// If we didn't load a valid shader, delete any textures we might have loaded and replace them with
+					// error textures:
 					if (!loadedValidShader)
 					{
 						for (int currentTexture = 0; currentTexture < newMaterial->NumTextureSlots(); currentTexture++)
 						{
 							if (newMaterial->AccessTexture((TEXTURE_TYPE)currentTexture) != nullptr)
 							{
-								newMaterial->AccessTexture((TEXTURE_TYPE)currentTexture)->Destroy();
-								delete newMaterial->AccessTexture((TEXTURE_TYPE)currentTexture);
 								newMaterial->AccessTexture((TEXTURE_TYPE)currentTexture) = nullptr;
 							}
 						}
 
 						// Assign a pink error albedo texture:
 						string errorTextureName = "errorTexture"; // TODO: Store this in a config?
-						newMaterial->AccessTexture(TEXTURE_ALBEDO) = FindLoadTextureByPath(errorTextureName, false);
+						newMaterial->AccessTexture(TEXTURE_ALBEDO) = 
+							FindLoadTextureByPath(errorTextureName, gr::Texture::TextureColorSpace::sRGB, false);
 						if (newMaterial->AccessTexture(TEXTURE_ALBEDO) == nullptr)
 						{
-							newMaterial->AccessTexture(TEXTURE_ALBEDO) = new Texture(1, 1, errorTextureName, true, vec4(1.0f, 0.0f, 1.0f, 1.0f));
+							gr::Texture::TextureParams texParams;
+							texParams.m_width = 1;
+							texParams.m_height = 1;
+							texParams.m_texturePath = errorTextureName;
+							texParams.m_clearColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
+							texParams.m_texturePath = errorTextureName;
 
-							if (newMaterial->AccessTexture(TEXTURE_ALBEDO)->Buffer(TEXTURE_0 + TEXTURE_ALBEDO))
-							{
-								AddTexture(newMaterial->AccessTexture(TEXTURE_ALBEDO));
-							}
+							newMaterial->AccessTexture(TEXTURE_ALBEDO) = 
+								std::shared_ptr<gr::Texture>(new gr::Texture(texParams));
+
+							AddTexture(newMaterial->AccessTexture(TEXTURE_ALBEDO));
 						}
 					}
 
 					// Buffer uniforms:
-					newMaterial->GetShader()->UploadUniform(Material::MATERIAL_PROPERTY_NAMES[MATERIAL_PROPERTY_0].c_str(), &newMaterial->Property(MATERIAL_PROPERTY_0).x, UNIFORM_Vec4fv); // Upload matProperty0
+					newMaterial->GetShader()->UploadUniform(
+						Material::MATERIAL_PROPERTY_NAMES[MATERIAL_PROPERTY_0].c_str(),
+						&newMaterial->Property(MATERIAL_PROPERTY_0).x,
+						UNIFORM_Vec4fv); // Upload matProperty0
 				}
 				
-				// Buffer all of the textures:
-				newMaterial->BufferAllTextures(TEXTURE_0);
-
-				// Generate mip-maps:
-				for (int i = 0; i < newMaterial->NumTextureSlots(); i++)
-				{
-					Texture* currentTexture = newMaterial->AccessTexture((TEXTURE_TYPE)i);
-					if (currentTexture != nullptr)
-					{
-						currentTexture->GenerateMipMaps();
-					}
-				}
 
 				// Add the material to our material list:
 				AddMaterial(newMaterial);
@@ -801,9 +826,11 @@ namespace SaberEngine
 	}
 
 
-	Texture* SaberEngine::SceneManager::ExtractLoadTextureFromAiMaterial(aiTextureType textureType, aiMaterial* material, string sceneName)
+	std::shared_ptr<gr::Texture> SaberEngine::SceneManager::ExtractLoadTextureFromAiMaterial(aiTextureType textureType, aiMaterial* material, string sceneName)
 	{
-		Texture* newTexture = nullptr;
+		std::shared_ptr<gr::Texture> newTexture(nullptr);
+		gr::Texture::TextureColorSpace colorSpace = gr::Texture::TextureColorSpace::Unknown;
+		gr::Texture::TextureFormat format = gr::Texture::TextureFormat::Invalid;
 	
 		// Create 1x1 texture fallbacks:
 		int textureCount = material->GetTextureCount(textureType);
@@ -815,59 +842,91 @@ namespace SaberEngine
 
 			if (textureType == aiTextureType_DIFFUSE)
 			{
-				//newTexture = FindTextureByNameInAiMaterial("diffuse", material, sceneName); // Try and find any likely texture in the material
+				// Try and find any likely texture in the material
+				//newTexture = FindTextureByNameInAiMaterial("diffuse", material, sceneName); 
 				// TODO: Enable this if there is a reason...
 
 				aiColor4D color;
 				if (AI_SUCCESS == material->Get("$clr.diffuse", 0, 0, color))
 				{
-					newName = "Color_" + to_string(color.r) + "_" + to_string(color.g) + "_" + to_string(color.b) + "_" + to_string(color.a);
+					newName = "Color_" + to_string(color.r) + 
+						"_" + to_string(color.g) + 
+						"_" + to_string(color.b) + 
+						"_" + to_string(color.a);
 					newColor = vec4(color.r, color.g, color.b, color.a);
-					texUnit = TEXTURE_0 + TEXTURE_ALBEDO;
 
-					LOG_WARNING("Material has no diffuse texture. Creating a 1x1 texture using the diffuse color with a path " + newName);
+					texUnit = TEXTURE_0 + TEXTURE_ALBEDO;
+					colorSpace = gr::Texture::TextureColorSpace::sRGB;
+					format = gr::Texture::TextureFormat::RGBA8;
+
+					LOG_WARNING("Material has no diffuse texture. Creating a 1x1 texture using the diffuse color with"
+						" a path \"" + newName + "\"");
 				}
 			}
 			else if (textureType == aiTextureType_NORMALS)
 			{
-				newTexture = FindTextureByNameInAiMaterial("normal", material, sceneName); // Try and find any likely texture in the material
+				texUnit = TEXTURE_0 + TEXTURE_NORMAL;
+				colorSpace = gr::Texture::TextureColorSpace::Linear;
+				format = gr::Texture::TextureFormat::RGB32F;
+
+				// Try and find any likely texture in the material
+				newTexture = FindTextureByNameInAiMaterial("normal", material, sceneName);
 
 				if (newTexture == nullptr)
 				{
-					// TODO: Replace this with shader multi-compiles. If no normal texture is found, use vertex normals instead (for forward rendering)
+					// TODO: Replace this with shader multi-compiles. If no normal texture is found, use vertex normals
+					// instead (for forward rendering)
 
 					newName = "DefaultFlatNormal"; // Use a generic name, so this texture will be shared
 					newColor = vec4(0.5f, 0.5f, 1.0f, 0.0f);
-					texUnit = TEXTURE_0 + TEXTURE_NORMAL;
 
-					LOG_WARNING("Material has no normal texture. Creating a 1x1 texture for a [0,0,1] normal with a path " + newName);
-				}				
+					LOG_WARNING("Material has no normal texture. Creating a 1x1 texture for a [0,0,1] normal with a "
+						"path \"" + newName + "\"");
+				}
+				
 			}
 			else if (textureType == aiTextureType_EMISSIVE)
 			{
+				texUnit = TEXTURE_0 + TEXTURE_EMISSIVE;
+				colorSpace = gr::Texture::TextureColorSpace::Linear; // TODO: Is emissive linear, or sRGB?
+				format = gr::Texture::TextureFormat::RGBA32F; // Emissive must support values > 1
+
 				newTexture = FindTextureByNameInAiMaterial("emissive", material, sceneName);
 				if (newTexture == nullptr)
 				{
 					aiColor4D color;
 					if (AI_SUCCESS == material->Get("$clr.emissive", 0, 0, color))
 					{
-						newName = "Color_" + to_string(color.r) + "_" + to_string(color.g) + "_" + to_string(color.b) + "_" + to_string(color.a);
+						newName = "Color_" + to_string(color.r) +
+							"_" + to_string(color.g) + 
+							"_" + to_string(color.b) + 
+							"_" + to_string(color.a);
 						newColor = vec4(color.r, color.g, color.b, color.a);
-						texUnit = TEXTURE_0 + TEXTURE_EMISSIVE;
 
-						//newTexture = FindLoadTextureByPath(newName, false); // Currently, Texture objects contain their textureUnit, so we can't share them between slots
+						// Currently, Texture objects contain their textureUnit, so we can't share them between slots
+						//newTexture = FindLoadTextureByPath(newName, false); 
 
-						LOG_WARNING("Material has no emissive texture. Creating a 1x1 texture using the emissive (/incandesence) color with a path " + newName);		
+						LOG_WARNING("Material has no emissive texture. Creating a 1x1 texture using the emissive "
+							"(/incandesence) color property with a path \"" + newName + "\"");
 					}
 					else
 					{
-						newName = "Color_" + to_string(newColor.r) + "_" + to_string(newColor.g) + "_" + to_string(newColor.b) + "_" + to_string(newColor.a);
-						LOG_WARNING("Material has no emissive texture, and no emissive color property. Creating a 1x1 black texture with a path " + newName);				
+						newName = "Color_" + to_string(newColor.r) + 
+							"_" + to_string(newColor.g) + 
+							"_" + to_string(newColor.b) + 
+							"_" + to_string(newColor.a);
+
+						LOG_WARNING("Material has no emissive texture, and no emissive color property. Creating a 1x1 "
+							"black texture with a path \"" + newName + "\"");
 					}
 				}
 			}
 			else if (textureType == aiTextureType_SPECULAR) // RGB = RMAO
 			{
+				texUnit = TEXTURE_0 + TEXTURE_RMAO;
+				colorSpace = gr::Texture::TextureColorSpace::Linear;
+				format = gr::Texture::TextureFormat::RGBA8; // ??
+
 				const int NUM_NAMES = 3;
 				string possibleNames[NUM_NAMES] = 
 				{
@@ -890,21 +949,27 @@ namespace SaberEngine
 					aiColor4D color;
 					if (AI_SUCCESS == material->Get("$clr.specular", 0, 0, color))
 					{
-						newName = "Color_" + to_string(color.r) + "_" + to_string(color.g) + "_" + to_string(color.b) + "_" + to_string(color.a);
+						newName = "Color_" + to_string(color.r) + "_" + to_string(color.g) + "_" + to_string(color.b) + 
+							"_" + to_string(color.a);
+
 						newColor = vec4(color.r, color.g, color.b, color.a);
 
-						//newTexture = FindLoadTextureByPath(newName, false); // Currently, Texture objects contain their textureUnit, so we can't share them between slots
+						// Currently, Texture objects contain their textureUnit, so we can't share them between slots
+						//newTexture = FindLoadTextureByPath(newName, false); 
 
-						LOG_WARNING("Material has no RMAO texture in the specular slot. Creating a 1x1 texture using the specular color with a path " + newName);
+						LOG_WARNING(
+							"Material has no RMAO texture in the specular slot. Creating a 1x1 texture using the "
+							"specular color with a path " + newName);
 					}
 					else
 					{
-						newName = "Color_" + to_string(newColor.r) + "_" + to_string(newColor.g) + "_" + to_string(newColor.b) + "_" + to_string(newColor.a);	
-						LOG_WARNING("Material has no RMAO texture or specular color. Creating a 1x1 black texture with a path " + newName);
+						newName = "Color_" + to_string(newColor.r) + "_" + to_string(newColor.g) + "_" + 
+							to_string(newColor.b) + "_" + to_string(newColor.a);
+
+						LOG_WARNING("Material has no RMAO texture or specular color. Creating a 1x1 black texture with "
+							"a path " + newName);
 					}
 				}
-
-				texUnit = TEXTURE_0 + TEXTURE_RMAO;
 			}
 			else
 			{
@@ -916,18 +981,24 @@ namespace SaberEngine
 			if (newTexture == nullptr)
 			{
 				// Try and find an already loaded version of our fallback texture
-				newTexture = FindLoadTextureByPath(newName, false);
+				newTexture = FindLoadTextureByPath(newName, colorSpace, false);
 
 				// None exists, so create one:
 				if (newTexture == nullptr)
 				{
-					newTexture = new Texture(1, 1, newName, true, newColor); // NOTE: Since we're storing the texUnit per-texture, we need unique textures incase they're in different slots...
+					// NOTE: Since we're storing the texUnit per-texture, we need unique textures incase they're in
+					// different slots...
+					gr::Texture::TextureParams texParams;
+					texParams.m_width = 1;
+					texParams.m_height = 1;
+					texParams.m_texturePath = newName;
+					texParams.m_clearColor = newColor;
+					texParams.m_texColorSpace = colorSpace;
+					texParams.m_texFormat = format;
 
-					if (newTexture->Buffer(texUnit))
-					{
-						// Add the texture to our collection:
-						AddTexture(newTexture);
-					}				
+					newTexture = std::shared_ptr<gr::Texture>(new gr::Texture(texParams));
+
+					AddTexture(newTexture);	
 				}
 			}
 
@@ -936,7 +1007,8 @@ namespace SaberEngine
 
 		if (textureCount > 1)
 		{
-			LOG_WARNING("Received material has " + to_string(textureCount) + " of the requested texture type... Only the first will be extracted");
+			LOG_WARNING("Received material has " + to_string(textureCount) + " of the requested texture type... Only "
+				"the first will be extracted");
 		}
 
 		string sceneRoot = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\";
@@ -952,7 +1024,7 @@ namespace SaberEngine
 			#endif
 
 			// Find the texture if it has already been loaded, or load it otherwise:
-			newTexture = FindLoadTextureByPath(texturePath);
+			newTexture = FindLoadTextureByPath(texturePath, gr::Texture::TextureColorSpace::Unknown);
 		}
 		else
 		{
@@ -961,14 +1033,14 @@ namespace SaberEngine
 
 		if (newTexture == nullptr)
 		{
-			newTexture = FindLoadTextureByPath(INVALID_TEXTURE_PATH);
+			newTexture = FindLoadTextureByPath(INVALID_TEXTURE_PATH, gr::Texture::TextureColorSpace::Unknown);
 		}
 
 		return newTexture; // Note: Texture is currently unbuffered
 	}
 
 
-	Texture* SceneManager::FindTextureByNameInAiMaterial(string nameSubstring, aiMaterial* material, string sceneName)
+	std::shared_ptr<gr::Texture> SceneManager::FindTextureByNameInAiMaterial(string nameSubstring, aiMaterial* material, string sceneName)
 	{
 		std::transform(nameSubstring.begin(), nameSubstring.end(), nameSubstring.begin(), ::tolower);
 
@@ -983,12 +1055,15 @@ namespace SaberEngine
 
 				if (pathString.find(nameSubstring) != string::npos)
 				{
-					LOG_WARNING("Texture not found in expected slot. Assigning texture containing \"" + nameSubstring + "\" as a fallback");
+					LOG_WARNING("Texture not found in expected slot. Assigning texture containing "
+						"\"" + nameSubstring + "\" as a fallback");
 
-					string sceneRoot = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\";
+					string sceneRoot = 
+						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\";
+
 					string texturePath = sceneRoot + string(path.C_Str());
 					
-					return FindLoadTextureByPath(texturePath);					
+					return FindLoadTextureByPath(texturePath, gr::Texture::TextureColorSpace::Unknown);
 				}
 			}
 		}
@@ -997,18 +1072,25 @@ namespace SaberEngine
 	}
 
 
-	bool SaberEngine::SceneManager::ExtractPropertyFromAiMaterial(aiMaterial* material, vec4& targetProperty, char const* AI_MATKEY_TYPE, int unused0 /*= 0*/, int unused1 /*= 0*/) // NOTE: unused0/unused1 are required to match #defined macros
+	bool SaberEngine::SceneManager::ExtractPropertyFromAiMaterial(
+		aiMaterial* material, 
+		vec4& targetProperty,
+		char const* AI_MATKEY_TYPE,
+		int unused0 /*= 0*/,
+		int unused1 /*= 0*/) // NOTE: unused0/unused1 are required to match #defined macros
 	{
 		// Note: vec4 targetProperty's .a channel will always be set to 0 here.
 
-		aiColor3D color(0.f, 0.f, 0.f); // Note: Single element properties (eg. Phong Cosine Power "Shininess") are inserted into the .x channel
+		// Note: Single element properties (eg. Phong Cosine Power "Shininess") are inserted into the .x channel
+		aiColor3D color(0.f, 0.f, 0.f); 
 		if (AI_SUCCESS == material->Get(AI_MATKEY_TYPE, unused0, unused1, color))
 		{
 			#if defined(DEBUG_SCENEMANAGER_MATERIAL_LOGGING)
 				LOG("Successfully extracted material property from AI_MATKEY_SHININESS");
 			#endif
 
-			targetProperty = vec4(color.r, color.g, color.b, 0.0f);	// Note: We always initializing the last property as 0...
+			// Note: We always initializing the last property as 0...
+			targetProperty = vec4(color.r, color.g, color.b, 0.0f);	
 
 			return true;
 		}
@@ -1054,12 +1136,23 @@ namespace SaberEngine
 			else
 			{
 				LOG_WARNING("Mesh \"" + meshName + "\" is missing the following properties:");
-				if (!scene->mMeshes[currentMesh]->HasPositions())				LOG_WARNING("\t - positions");
-				if (!scene->mMeshes[currentMesh]->HasFaces())					LOG_WARNING("\t - faces");
-				if (!scene->mMeshes[currentMesh]->HasNormals())					LOG_WARNING("\t - normals");
-				if (!scene->mMeshes[currentMesh]->HasVertexColors(0))			LOG_WARNING("\t - vertex colors");
-				if (!scene->mMeshes[currentMesh]->HasTextureCoords(0))			LOG_ERROR("\t - texture coordinates: The object may not render correctly!");
-				if (!scene->mMeshes[currentMesh]->HasTangentsAndBitangents())	LOG_ERROR("\t - tangents & bitangents: The object may not render correctly!");
+				if (!scene->mMeshes[currentMesh]->HasPositions())
+					LOG_WARNING("\t - positions");
+
+				if (!scene->mMeshes[currentMesh]->HasFaces())					
+					LOG_WARNING("\t - faces");
+
+				if (!scene->mMeshes[currentMesh]->HasNormals())					
+					LOG_WARNING("\t - normals");
+
+				if (!scene->mMeshes[currentMesh]->HasVertexColors(0))			
+					LOG_WARNING("\t - vertex colors");
+
+				if (!scene->mMeshes[currentMesh]->HasTextureCoords(0))			
+					LOG_ERROR("\t - texture coordinates: The object may not render correctly!");
+				if (!scene->mMeshes[currentMesh]->HasTangentsAndBitangents())	
+
+					LOG_ERROR("\t - tangents & bitangents: The object may not render correctly!");
 			}
 
 			// Find the corresponding node in the scene graph:
@@ -1078,7 +1171,9 @@ namespace SaberEngine
 				string materialName = string(name.C_Str());
 
 				#if defined(DEBUG_SCENEMANAGER_MESH_LOGGING)
-					LOG("\nMesh #" + to_string(currentMesh) + " \"" + meshName + "\": " + to_string(numVerts) + " verts, " + to_string(numFaces) + " faces, " + to_string(numUVChannels) + " UV channels, " + to_string(numUVs) + " UV components in channel 0, using material #" + to_string(materialIndex));
+					LOG("\nMesh #" + to_string(currentMesh) + " \"" + meshName + "\": " + to_string(numVerts) + 
+						" verts, " + to_string(numFaces) + " faces, " + to_string(numUVChannels) + " UV channels, " + 
+						to_string(numUVs) + " UV components in channel 0, using material #" + to_string(materialIndex));
 				#endif
 
 				std::vector<gr::Vertex> vertices(numVerts);
@@ -1096,34 +1191,53 @@ namespace SaberEngine
 					// Position:
 					if (scene->mMeshes[currentMesh]->HasPositions())
 					{
-						position = vec3(scene->mMeshes[currentMesh]->mVertices[currentVert].x, scene->mMeshes[currentMesh]->mVertices[currentVert].y, scene->mMeshes[currentMesh]->mVertices[currentVert].z);
+						position = vec3(
+							scene->mMeshes[currentMesh]->mVertices[currentVert].x,
+							scene->mMeshes[currentMesh]->mVertices[currentVert].y, 
+							scene->mMeshes[currentMesh]->mVertices[currentVert].z);
 					}
 
 					// Normal:
 					if (scene->mMeshes[currentMesh]->HasNormals())
 					{
 						hasNormal = true;
-						normal = vec3(scene->mMeshes[currentMesh]->mNormals[currentVert].x, scene->mMeshes[currentMesh]->mNormals[currentVert].y, scene->mMeshes[currentMesh]->mNormals[currentVert].z);
+						normal = vec3(
+							scene->mMeshes[currentMesh]->mNormals[currentVert].x, 
+							scene->mMeshes[currentMesh]->mNormals[currentVert].y,
+							scene->mMeshes[currentMesh]->mNormals[currentVert].z);
 					}
 
 					// Vertex color:
 					if (scene->mMeshes[currentMesh]->HasVertexColors(0) && scene->mMeshes[currentMesh]->mColors[0])
 					{
-						color = vec4(scene->mMeshes[currentMesh]->mColors[0][currentVert].r, scene->mMeshes[currentMesh]->mColors[0][currentVert].g, scene->mMeshes[currentMesh]->mColors[0][currentVert].b, scene->mMeshes[currentMesh]->mColors[0][currentVert].a);
+						color = vec4(
+							scene->mMeshes[currentMesh]->mColors[0][currentVert].r, 
+							scene->mMeshes[currentMesh]->mColors[0][currentVert].g, 
+							scene->mMeshes[currentMesh]->mColors[0][currentVert].b,
+							scene->mMeshes[currentMesh]->mColors[0][currentVert].a);
 					}
 
 					// TexCoords:
 					if (scene->mMeshes[currentMesh]->HasTextureCoords(0))
 					{
-						uv = vec4(scene->mMeshes[currentMesh]->mTextureCoords[0][currentVert].x, scene->mMeshes[currentMesh]->mTextureCoords[0][currentVert].y, 0, 0);
+						uv = vec4(
+							scene->mMeshes[currentMesh]->mTextureCoords[0][currentVert].x, 
+							scene->mMeshes[currentMesh]->mTextureCoords[0][currentVert].y, 0, 0);
 					}
 
 					// Tangents/Bitangents:
 					if (scene->mMeshes[currentMesh]->HasTangentsAndBitangents())
 					{
 						hasTangentsAndBitangents = true;
-						tangent		= vec3(scene->mMeshes[currentMesh]->mTangents[currentVert].x, scene->mMeshes[currentMesh]->mTangents[currentVert].y, scene->mMeshes[currentMesh]->mTangents[currentVert].z);
-						bitangent	= vec3(scene->mMeshes[currentMesh]->mBitangents[currentVert].x, scene->mMeshes[currentMesh]->mBitangents[currentVert].y, scene->mMeshes[currentMesh]->mBitangents[currentVert].z);
+						tangent		= vec3(
+							scene->mMeshes[currentMesh]->mTangents[currentVert].x, 
+							scene->mMeshes[currentMesh]->mTangents[currentVert].y,
+							scene->mMeshes[currentMesh]->mTangents[currentVert].z);
+
+						bitangent	= vec3(
+							scene->mMeshes[currentMesh]->mBitangents[currentVert].x, 
+							scene->mMeshes[currentMesh]->mBitangents[currentVert].y, 
+							scene->mMeshes[currentMesh]->mBitangents[currentVert].z);
 					}
 
 					// Handle incorrect tangents/bitangents due to flipped UV's:
@@ -1170,13 +1284,15 @@ namespace SaberEngine
 				if (gameObject == nullptr)
 				{
 					#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
-						LOG_ERROR("Creating a GameObject for mesh \"" + meshName + "\" that did not belong to a group! GameObjects should belong to groups in the source .FBX!");
+						LOG_ERROR("Creating a GameObject for mesh \"" + meshName + "\" that did not belong to a group!"
+							" GameObjects should belong to groups in the source .FBX!");
 					#endif
 					
 					gameObject = new GameObject(meshName);
 					AddGameObject(gameObject);				// Add the new game object
 
-					newMesh->Name() = meshName + "_MESH";	// Add a postfix to remind us that we expect GameObjects to be grouped in our .FBX from Maya
+					// Add a postfix to remind us that we expect GameObjects to be grouped in our .FBX from Maya
+					newMesh->Name() = meshName + "_MESH";	
 
 					targetTransform = gameObject->GetTransform(); // We'll use the gameobject in our transform heirarchy
 				}
@@ -1189,14 +1305,17 @@ namespace SaberEngine
 					targetTransform = &newMesh->GetTransform();	// We'll use the mesh in our transform heirarchy
 				}
 
-				aiMatrix4x4 combinedTransform	= GetCombinedTransformFromHierarchy(scene, currentNode->mParent);	// Mesh doesn't belong to a group, so we'll give it's transform to the gameobject we've created
-				combinedTransform				= combinedTransform * currentNode->mTransformation;					// Combine the parent and child transforms	
+				// Mesh doesn't belong to a group, so we'll give it's transform to the gameobject we've created
+				aiMatrix4x4 combinedTransform	= GetCombinedTransformFromHierarchy(scene, currentNode->mParent);	
 				
-				InitializeTransformValues(combinedTransform, targetTransform);						// Copy to our Mesh transform
+				// Combine the parent and child transforms	
+				combinedTransform				= combinedTransform * currentNode->mTransformation;					
+				
+				InitializeTransformValues(combinedTransform, targetTransform);		// Copy to our Mesh transform
 
-				gameObject->GetRenderable()->AddViewMeshAsChild(newMesh);							// Creates transform heirarchy
+				gameObject->GetRenderable()->AddViewMeshAsChild(newMesh);			// Creates transform heirarchy
 
-				m_currentScene->AddMesh(newMesh);														// Also calculates scene bounds
+				m_currentScene->AddMesh(newMesh);									// Also calculates scene bounds
 			}
 			else
 			{
@@ -1289,10 +1408,17 @@ namespace SaberEngine
 				LOG("-> " + string(debug->mName.C_Str()));
 
 				// NOTE: Assimp matrices are stored in row major order
-				LOG("\t\t" + to_string(debug->mTransformation.a1) + " " + to_string(debug->mTransformation.a2) + " " + to_string(debug->mTransformation.a3) + " " + to_string(debug->mTransformation.a4));
-				LOG("\t\t" + to_string(debug->mTransformation.b1) + " " + to_string(debug->mTransformation.b2) + " " + to_string(debug->mTransformation.b3) + " " + to_string(debug->mTransformation.b4));
-				LOG("\t\t" + to_string(debug->mTransformation.c1) + " " + to_string(debug->mTransformation.c2) + " " + to_string(debug->mTransformation.c3) + " " + to_string(debug->mTransformation.c4));
-				LOG("\t\t" + to_string(debug->mTransformation.d1) + " " + to_string(debug->mTransformation.d2) + " " + to_string(debug->mTransformation.d3) + " " + to_string(debug->mTransformation.d4));
+				LOG("\t\t" + to_string(debug->mTransformation.a1) + " " + to_string(debug->mTransformation.a2) + " " + 
+					to_string(debug->mTransformation.a3) + " " + to_string(debug->mTransformation.a4));
+				
+				LOG("\t\t" + to_string(debug->mTransformation.b1) + " " + to_string(debug->mTransformation.b2) + " " + 
+					to_string(debug->mTransformation.b3) + " " + to_string(debug->mTransformation.b4));
+				
+				LOG("\t\t" + to_string(debug->mTransformation.c1) + " " + to_string(debug->mTransformation.c2) + " " +
+					to_string(debug->mTransformation.c3) + " " + to_string(debug->mTransformation.c4));
+				
+				LOG("\t\t" + to_string(debug->mTransformation.d1) + " " + to_string(debug->mTransformation.d2) + " " +
+					to_string(debug->mTransformation.d3) + " " + to_string(debug->mTransformation.d4));
 
 				debug = debug->mParent;
 			}
@@ -1305,7 +1431,9 @@ namespace SaberEngine
 		{
 			string currentName = string(current->mName.C_Str());
 
-			if (skipPostRotations && currentName.find("_Post") != string::npos) // HACK: Seems if we skip "_PostRotation" nodes, the directional light orientation will be correct. But, we need this for camera xforms...
+			// HACK: Seems if we skip "_PostRotation" nodes, the directional light orientation will be correct. 
+			// But, we need this for camera xforms...
+			if (skipPostRotations && currentName.find("_Post") != string::npos) 
 			{
 				#if defined(DEBUG_SCENEMANAGER_TRANSFORM_LOGGING)
 					LOG("\t\tSkipped node \"" + currentName + "\"");
@@ -1416,7 +1544,10 @@ namespace SaberEngine
 						LOG("\nFound a directional light \"" + m_lightName + "\"");
 					#endif
 
-					vec3 lightColor(scene->mLights[i]->mColorDiffuse.r, scene->mLights[i]->mColorDiffuse.g, scene->mLights[i]->mColorDiffuse.b);
+					vec3 lightColor(
+						scene->mLights[i]->mColorDiffuse.r, 
+						scene->mLights[i]->mColorDiffuse.g, 
+						scene->mLights[i]->mColorDiffuse.b);
 
 					Light* keyLight = new Light
 					(
@@ -1430,24 +1561,26 @@ namespace SaberEngine
 
 					m_currentScene->AddLight(keyLight);
 
-					gr::Bounds sceneWorldBounds		= m_currentScene->WorldSpaceSceneBounds();
-					gr::Bounds transformedBounds	= sceneWorldBounds.GetTransformedBounds(glm::inverse(m_currentScene->m_keyLight->GetTransform().Model()));
+					gr::Bounds sceneWorldBounds	= m_currentScene->WorldSpaceSceneBounds();
+					
+					gr::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
+						glm::inverse(m_currentScene->m_keyLight->GetTransform().Model()));
 
 					CameraConfig shadowCamConfig;
-					shadowCamConfig.m_near			= -transformedBounds.zMax();
+					shadowCamConfig.m_near				= -transformedBounds.zMax();
 					shadowCamConfig.m_far				= -transformedBounds.zMin();
 
 					shadowCamConfig.m_isOrthographic	= true;
-					shadowCamConfig.m_orthoLeft		= transformedBounds.xMin();
+					shadowCamConfig.m_orthoLeft			= transformedBounds.xMin();
 					shadowCamConfig.m_orthoRight		= transformedBounds.xMax();
 					shadowCamConfig.m_orthoBottom		= transformedBounds.yMin();
-					shadowCamConfig.m_orthoTop		= transformedBounds.yMax();
+					shadowCamConfig.m_orthoTop			= transformedBounds.yMax();
 
-					ShadowMap* keyLightShadowMap	= new ShadowMap // TEMP: We assume the key light will ALWAYS have a shadow
+					ShadowMap* keyLightShadowMap = new ShadowMap // TEMP: We assume the key light will ALWAYS have a shadow
 					(
 						lightName,
-						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("defaultShadowMapWidth"),
-						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("defaultShadowMapHeight"),
+						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowMapWidth"),
+						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowMapHeight"),
 						shadowCamConfig,
 						&m_currentScene->m_keyLight->GetTransform()
 					);
@@ -1480,11 +1613,28 @@ namespace SaberEngine
 					// Note: Assimp seems to import directional lights with their "forward" vector pointing in the opposite direction.
 					// This is ok, since we use "forward" as "vector pointing towards the light" when uploading to our shaders...
 					#if defined(DEBUG_SCENEMANAGER_LIGHT_LOGGING)
-						LOG("Directional light color: " + to_string(lightColor.r) + ", " + to_string(lightColor.g) + ", " + to_string(lightColor.b));
-						LOG("Directional light position = " + to_string(m_currentScene->m_keyLight.GetTransform().WorldPosition().x) + ", " + to_string(m_currentScene->m_keyLight.GetTransform().WorldPosition().y) + ", " + to_string(m_currentScene->m_keyLight.GetTransform().WorldPosition().z));
-						LOG("Directional light rotation = " + to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().x) + ", " + to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().y) + ", " + to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().z) + " (radians)");
-						LOG("Directional light rotation = " + to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().x * (180.0f / A) ) + ", " + to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().y * (180.0f / glm::pi<float>())) + ", " + to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().z * (180.0f / glm::pi<float>())) + " (degrees)");
-						LOG("Directional light forward = " + to_string(m_currentScene->m_keyLight.GetTransform().Forward().x) + ", " + to_string(m_currentScene->m_keyLight.GetTransform().Forward().y) + ", " + to_string(m_currentScene->m_keyLight.GetTransform().Forward().z));
+						LOG("Directional light color: " + to_string(lightColor.r) + ", " + to_string(lightColor.g) + 
+							", " + to_string(lightColor.b));
+						LOG("Directional light position = " + 
+							to_string(m_currentScene->m_keyLight.GetTransform().WorldPosition().x) + ", " +
+							to_string(m_currentScene->m_keyLight.GetTransform().WorldPosition().y) + ", " + 
+							to_string(m_currentScene->m_keyLight.GetTransform().WorldPosition().z));
+
+						LOG("Directional light rotation = " +
+							to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().x) + ", " +
+							to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().y) + ", " + 
+							to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().z) + " (radians)");
+
+						LOG("Directional light rotation = " + 
+							to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().x * (180.0f / A) ) +
+							", " + to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().y * (180.0f / glm::pi<float>())) +
+							", " + to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().z * (180.0f / glm::pi<float>())) + 
+							" (degrees)");
+
+						LOG("Directional light forward = " +
+							to_string(m_currentScene->m_keyLight.GetTransform().Forward().x) + ", " +
+							to_string(m_currentScene->m_keyLight.GetTransform().Forward().y) + ", " + 
+							to_string(m_currentScene->m_keyLight.GetTransform().Forward().z));
 					#endif
 				}
 				else
@@ -1500,7 +1650,8 @@ namespace SaberEngine
 
 				LIGHT_TYPE pointType = LIGHT_POINT;
 
-				if (!foundAmbient && lightName.find("ambient") != string::npos)	// NOTE: The word "ambient" must appear in the ambient light's name
+				// NOTE: The word "ambient" must appear in the ambient light's name
+				if (!foundAmbient && lightName.find("ambient") != string::npos)	
 				{
 					#if defined(DEBUG_SCENEMANAGER_LIGHT_LOGGING)
 						LOG("Created ambient light from \"" + m_lightName +"\"");
@@ -1517,14 +1668,27 @@ namespace SaberEngine
 					#endif
 				}
 
-				vec3 lightColor(scene->mLights[i]->mColorDiffuse.r, scene->mLights[i]->mColorDiffuse.g, scene->mLights[i]->mColorDiffuse.b); // == color * intensity. Both ambient and point types use the mColorDiffuse
+				// == color * intensity. Both ambient and point types use the mColorDiffuse
+				vec3 lightColor(
+					scene->mLights[i]->mColorDiffuse.r,
+					scene->mLights[i]->mColorDiffuse.g, 
+					scene->mLights[i]->mColorDiffuse.b); 
 
 				// Get ready for metadata extraction:
-				float minShadowBias		= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultMinShadowBias");
-				float maxShadowBias		= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultMaxShadowBias");
-				float shadowCamNear		= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultNear");
-				int shadowCubeWidth		= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("defaultShadowCubeMapthWidth");
-				int shadowCubeHeight	= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("defaultShadowCubeMapthHeight");
+				float minShadowBias	= 
+					CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultMinShadowBias");
+
+				float maxShadowBias	=
+					CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultMaxShadowBias");
+
+				float shadowCamNear	= 
+					CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultNear");
+
+				int shadowCubeWidth	= 
+					(int)CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowCubeMapWidth");
+				int shadowCubeHeight = 
+					(int)CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowCubeMapHeight");
+				// TODO: These should be the same size? assert?
 
 				// Get ready to compute point light radius, if required:
 				float radius				= 1.0f;
@@ -1534,7 +1698,8 @@ namespace SaberEngine
 				aiNode* lightNode = scene->mRootNode->FindNode(scene->mLights[i]->mName.C_Str());
 				if (pointType == LIGHT_POINT && lightNode)
 				{
-					float cutoff = 0.05f;	// How close to zero we are: Want to maximize this, with as little visual discontinuity as possible
+					// How close to zero we are: Want to maximize this, with as little visual discontinuity as possible
+					float cutoff = 0.05f;	
 					if (lightNode->mMetaData->Get("cutoff", cutoff))
 					{
 						#if defined(DEBUG_SCENEMANAGER_LIGHT_LOGGING)
@@ -1572,26 +1737,29 @@ namespace SaberEngine
 							shadowCubeWidth = minRes;
 							shadowCubeHeight = minRes;
 						}
-						LOG_WARNING("Imported mismatched shadow cube map resolutions. Assigning width = " + to_string(shadowCubeWidth) + ", height = " + to_string(shadowCubeHeight));
+						LOG_WARNING("Imported mismatched shadow cube map resolutions. Assigning width = " + 
+							to_string(shadowCubeWidth) + ", height = " + to_string(shadowCubeHeight));
 					}
 				}		
 
 				// Create the light:
 				Light* pointLight = nullptr;
-				if (pointType == LIGHT_POINT || CoreEngine::GetCoreEngine()->GetConfig()->GetValue<bool>("useForwardRendering") == true)
+				if (pointType == LIGHT_POINT || 
+					CoreEngine::GetCoreEngine()->GetConfig()->GetValue<bool>("useForwardRendering") == true)
 				{
-					pointLight = new Light
-						(
+					pointLight = new Light(
 							lightName,
 							pointType,
 							lightColor,
 							nullptr,
-							radius		// Only used if we're actually creating a point light
-						);
+							radius); // Only used if we're actually creating a point light
 				}
 				else
 				{
-					pointLight = new ImageBasedLight(lightName, CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath")); // TODO: Load the HDR path from FBX (Currently not supported in Assimp???)
+					pointLight = new ImageBasedLight(
+						lightName,
+						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath")); 
+						// TODO: Load the HDR path from FBX (Currently not supported in Assimp???)
 
 					// If we didn't load a valid IBL, fall back to using an ambient color light
 					if (!((ImageBasedLight*)pointLight)->IsValid())
@@ -1599,14 +1767,12 @@ namespace SaberEngine
 						pointLight->Destroy();
 						delete pointLight;
 
-						pointLight = new Light
-						(
+						pointLight = new Light(
 							lightName,
 							pointType,	// This will be AMBIENT_COLOR as set above
 							lightColor,
 							nullptr,
-							radius		// Only used if we're actually creating a point light
-						);
+							radius); // Only used if we're actually creating a point light
 					}
 				}
 
@@ -1624,16 +1790,15 @@ namespace SaberEngine
 					shadowCamConfig.m_isOrthographic	= false;
 
 
-					cubeShadowMap = new ShadowMap // TEMP: We assume point lights ALWAYS have a shadow. TODO: Control shadow maps via .FBX metadata
-					(
+					// TEMP: We assume point lights ALWAYS have a shadow. TODO: Control shadow maps via .FBX metadata
+					cubeShadowMap = new ShadowMap(
 						lightName,
 						shadowCubeWidth,
 						shadowCubeHeight,
 						shadowCamConfig,
 						&pointLight->GetTransform(),
 						vec3(0.0f, 0.0f, 0.0f),		// Default value
-						true
-					);
+						true);
 
 					cubeShadowMap->MinShadowBias() = minShadowBias; // Extracted from the .FBX metadata above
 					cubeShadowMap->MaxShadowBias() = maxShadowBias;		
@@ -1649,7 +1814,9 @@ namespace SaberEngine
 					if (lightNode)
 					{
 						aiMatrix4x4 combinedTransform	= GetCombinedTransformFromHierarchy(scene, lightNode->mParent);
-						combinedTransform				= combinedTransform * lightNode->mTransformation;					// Combine the parent and child transforms	
+						
+						// Combine the parent and child transforms	
+						combinedTransform				= combinedTransform * lightNode->mTransformation; 
 
 						GameObject* gameObject			= FindCreateGameObjectParents(scene, lightNode->mParent);
 
@@ -1659,23 +1826,27 @@ namespace SaberEngine
 						if (gameObject == nullptr)
 						{
 							#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
-								LOG_WARNING("Creating a GameObject for light \"" + m_lightName + "\" that did not belong to a group! GameObjects should belong to groups in the source .FBX!");
+								LOG_WARNING("Creating a GameObject for light \"" + m_lightName + "\" that did not "
+									"belong to a group! GameObjects should belong to groups in the source .FBX!");
 							#endif
 					
 							gameObject = new GameObject(lightName);
 							AddGameObject(gameObject);				// Add the new game object
 
-							targetTransform = gameObject->GetTransform(); // We'll use the gameobject in our transform heirarchy
+							// We'll use the gameobject in our transform heirarchy
+							targetTransform = gameObject->GetTransform(); 
 
 							InitializeLightTransformValues(scene, lightName, &pointLight->GetTransform());
 						}
 						else // We have a GameObject:
 						{
 							#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
-								LOG("Found existing parent GameObject \"" + gameObject->GetName() + "\" for light \"" + m_lightName + "\"");
+								LOG("Found existing parent GameObject \"" + gameObject->GetName() + "\" for light \"" + 
+									m_lightName + "\"");
 							#endif
 
-							targetTransform = &pointLight->GetTransform();	// We'll use the mesh in our transform heirarchy
+							// We'll use the mesh in our transform heirarchy
+							targetTransform = &pointLight->GetTransform();	
 
 							InitializeTransformValues(combinedTransform, targetTransform);
 						}
@@ -1731,13 +1902,29 @@ namespace SaberEngine
 				LOG("mAttenuationConstant = " + to_string(scene->mLights[i]->mAttenuationConstant));
 				LOG("mAttenuationLinear = " + to_string(scene->mLights[i]->mAttenuationLinear));
 				LOG("mAttenuationQuadratic = " + to_string(scene->mLights[i]->mAttenuationQuadratic));
-				LOG("mColorAmbient = " + to_string(scene->mLights[i]->mColorAmbient.r) + ", " + to_string(scene->mLights[i]->mColorAmbient.g) + ", " + to_string(scene->mLights[i]->mColorAmbient.b));
-				LOG("mColorDiffuse = " + to_string(scene->mLights[i]->mColorDiffuse.r) + ", " + to_string(scene->mLights[i]->mColorDiffuse.g) + ", " + to_string(scene->mLights[i]->mColorDiffuse.b));
-				LOG("mColorSpecular = " + to_string(scene->mLights[i]->mColorSpecular.r) + ", " + to_string(scene->mLights[i]->mColorSpecular.g) + ", " + to_string(scene->mLights[i]->mColorSpecular.b));
-				LOG("mDirection = " + to_string(scene->mLights[i]->mDirection.x) + ", " + to_string(scene->mLights[i]->mDirection.y) + ", " + to_string(scene->mLights[i]->mDirection.z));
-				LOG("mPosition = " + to_string(scene->mLights[i]->mPosition.x) + ", " + to_string(scene->mLights[i]->mPosition.y) + ", " + to_string(scene->mLights[i]->mPosition.z));
+				LOG("mColorAmbient = " + to_string(scene->mLights[i]->mColorAmbient.r) + ", " +
+					to_string(scene->mLights[i]->mColorAmbient.g) + ", " +
+					to_string(scene->mLights[i]->mColorAmbient.b));
+
+				LOG("mColorDiffuse = " + to_string(scene->mLights[i]->mColorDiffuse.r) + ", " +
+					to_string(scene->mLights[i]->mColorDiffuse.g) + ", " + 
+					to_string(scene->mLights[i]->mColorDiffuse.b));
+
+				LOG("mColorSpecular = " + to_string(scene->mLights[i]->mColorSpecular.r) + ", " +
+					to_string(scene->mLights[i]->mColorSpecular.g) + ", " + 
+					to_string(scene->mLights[i]->mColorSpecular.b));
+
+				LOG("mDirection = " + to_string(scene->mLights[i]->mDirection.x) + ", " + 
+					to_string(scene->mLights[i]->mDirection.y) + ", " +
+					to_string(scene->mLights[i]->mDirection.z));
+
+				LOG("mPosition = " + to_string(scene->mLights[i]->mPosition.x) + ", " + 
+					to_string(scene->mLights[i]->mPosition.y) + ", " +
+					to_string(scene->mLights[i]->mPosition.z));
+
 				LOG("mSize = " + to_string(scene->mLights[i]->mSize.x) + ", " + to_string(scene->mLights[i]->mSize.y));
-				LOG("mUp = " + to_string(scene->mLights[i]->mUp.x) + ", " + to_string(scene->mLights[i]->mUp.y) + ", " + to_string(scene->mLights[i]->mUp.z));
+				LOG("mUp = " + to_string(scene->mLights[i]->mUp.x) + ", " + to_string(scene->mLights[i]->mUp.y) + 
+					", " + to_string(scene->mLights[i]->mUp.z));
 			#endif
 		}
 
@@ -1748,7 +1935,9 @@ namespace SaberEngine
 	}
 
 
-	void SaberEngine::SceneManager::ImportCamerasFromScene(aiScene const* scene /*= nullptr*/, bool clearCameras /*= false*/) // If scene == nullptr, create a camera at the origin
+	void SaberEngine::SceneManager::ImportCamerasFromScene(
+		aiScene const* scene /*= nullptr*/,
+		bool clearCameras /*= false*/) // If scene == nullptr, create a camera at the origin
 	{
 		if (clearCameras)
 		{
@@ -1784,7 +1973,10 @@ namespace SaberEngine
 
 			// Camera configuration:
 			newCamConfig.m_aspectRatio		= CoreEngine::GetCoreEngine()->GetConfig()->GetWindowAspectRatio();
-			newCamConfig.m_fieldOfView		= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultFieldOfView"); //scene->mCameras[0]->mHorizontalFOV; // TODO: Implement this (Needs to be converted to a vertical FOV???)
+			
+			//scene->mCameras[0]->mHorizontalFOV; // TODO: Implement this (Needs to be converted to a vertical FOV???)
+			newCamConfig.m_fieldOfView		= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultFieldOfView"); 
+
 			newCamConfig.m_near				= scene->mCameras[0]->mClipPlaneNear;
 			newCamConfig.m_far				= scene->mCameras[0]->mClipPlaneFar;
 			newCamConfig.m_isOrthographic		= false;	// This is the default, but set it here anyway for clarity
@@ -1810,7 +2002,8 @@ namespace SaberEngine
 
 		if (numCameras > 1)
 		{
-			LOG_ERROR("\nFound " + to_string(numCameras) + " cameras in the scene. Currently, only 1 camera is supported. Setting the FIRST received camera as the main camera.");
+			LOG_ERROR("\nFound " + to_string(numCameras) + " cameras in the scene. Currently, only 1 camera is "
+				"supported. Setting the FIRST received camera as the main camera.");
 		}
 		else
 		{
@@ -1821,7 +2014,8 @@ namespace SaberEngine
 		newCamera						= new Camera(cameraName, newCamConfig);
 		newCamera->AttachGBuffer();
 
-		m_currentScene->RegisterCamera(CAMERA_TYPE_MAIN, newCamera); // For now, assume that we're only importing the main camera. No other cameras are currently supported...
+		// For now, assume that we're only importing the main camera. No other cameras are currently supported...
+		m_currentScene->RegisterCamera(CAMERA_TYPE_MAIN, newCamera);
 
 		// Copy transform values:
 		if (scene != nullptr)
@@ -1832,10 +2026,18 @@ namespace SaberEngine
 			{			
 				#if defined(DEBUG_SCENEMANAGER_CAMERA_LOGGING) || defined(DEBUG_TRANSFORMS)
 					LOG("-> " + cameraName + " (Camera's first transformation node)");
-					LOG(to_string(camNode->mTransformation.a1) + " " + to_string(camNode->mTransformation.a2) + " " + to_string(camNode->mTransformation.a3) + " " + to_string(camNode->mTransformation.a4));
-					LOG(to_string(camNode->mTransformation.b1) + " " + to_string(camNode->mTransformation.b2) + " " + to_string(camNode->mTransformation.b3) + " " + to_string(camNode->mTransformation.b4));
-					LOG(to_string(camNode->mTransformation.c1) + " " + to_string(camNode->mTransformation.c2) + " " + to_string(camNode->mTransformation.c3) + " " + to_string(camNode->mTransformation.c4));
-					LOG(to_string(camNode->mTransformation.d1) + " " + to_string(camNode->mTransformation.d2) + " " + to_string(camNode->mTransformation.d3) + " " + to_string(camNode->mTransformation.d4));
+					
+					LOG(to_string(camNode->mTransformation.a1) + " " + to_string(camNode->mTransformation.a2) + " " + 
+						to_string(camNode->mTransformation.a3) + " " + to_string(camNode->mTransformation.a4));
+					
+					LOG(to_string(camNode->mTransformation.b1) + " " + to_string(camNode->mTransformation.b2) + " " + 
+						to_string(camNode->mTransformation.b3) + " " + to_string(camNode->mTransformation.b4));
+					
+					LOG(to_string(camNode->mTransformation.c1) + " " + to_string(camNode->mTransformation.c2) + " " + 
+						to_string(camNode->mTransformation.c3) + " " + to_string(camNode->mTransformation.c4));
+					
+					LOG(to_string(camNode->mTransformation.d1) + " " + to_string(camNode->mTransformation.d2) + " " + 
+						to_string(camNode->mTransformation.d3) + " " + to_string(camNode->mTransformation.d4));
 				#endif
 
 				aiMatrix4x4 camTransform	= GetCombinedTransformFromHierarchy(scene, camNode->mParent, false);
@@ -1844,16 +2046,24 @@ namespace SaberEngine
 				InitializeTransformValues(camTransform, newCamera->GetTransform());
 			}
 
-			LOG_ERROR("Camera field of view is NOT currently loaded from the source file. A hard-coded default value is used for now");
+			LOG_ERROR("Camera field of view is NOT currently loaded from the source file. A hard-coded default value is"
+				" used for now");
 		}		
 
 		#if defined(DEBUG_SCENEMANAGER_CAMERA_LOGGING)
 			
 			vec3 camRotation = newCamera->GetTransform()->GetEulerRotation();
 
-			LOG("Camera is located at " + to_string(camPosition.x) + " " + to_string(camPosition.y) + " " + to_string(camPosition.z) + ". Near = " + to_string(scene->mCameras[0]->mClipPlaneNear) + ", " + "far = " + to_string(scene->mCameras[0]->mClipPlaneFar) );
-			LOG("Camera rotation is " + to_string(camRotation.x) + " " + to_string(camRotation.y) + " " + to_string(camRotation.z) + " (radians)");
-			LOG("Camera rotation is " + to_string(camRotation.x * (180.0f / glm::pi<float>())) + " " + to_string(camRotation.y * (180.0f / glm::pi<float>())) + " " + to_string(camRotation.z * (180.0f / glm::pi<float>())) + " (degrees)");
+			LOG("Camera is located at " + to_string(camPosition.x) + " " + to_string(camPosition.y) + " " +
+				to_string(camPosition.z) + ". Near = " + to_string(scene->mCameras[0]->mClipPlaneNear) + ", " + 
+				"far = " + to_string(scene->mCameras[0]->mClipPlaneFar) );
+			
+			LOG("Camera rotation is " + to_string(camRotation.x) + " " + to_string(camRotation.y) + " " + 
+				to_string(camRotation.z) + " (radians)");
+			
+			LOG("Camera rotation is " + to_string(camRotation.x * (180.0f / glm::pi<float>())) + " " + 
+				to_string(camRotation.y * (180.0f / glm::pi<float>())) + " " +
+				to_string(camRotation.z * (180.0f / glm::pi<float>())) + " (degrees)");
 		#endif		
 	}
 }

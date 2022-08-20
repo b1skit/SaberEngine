@@ -39,20 +39,20 @@
     <Filter Include="Source Files\en">
       <UniqueIdentifier>{1a6a9e41-cdf7-4631-b2fb-5198e12def51}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\re\platform">
-      <UniqueIdentifier>{03f7fb93-12a0-45e5-beec-39b6d6330ba4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\re\platform">
-      <UniqueIdentifier>{afdc443a-307c-4991-9e5b-f6b7cd08c30c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\re\platform\OpenGL">
-      <UniqueIdentifier>{c142e74e-c194-4df2-8137-395acd37f345}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\re\platform\OpenGL">
-      <UniqueIdentifier>{4baacfcf-aa1f-44c9-9e93-1dccfc227a1b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\en\platform">
       <UniqueIdentifier>{1a74d6ca-0237-4c05-8e91-33beebed076a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\platform">
+      <UniqueIdentifier>{03f7fb93-12a0-45e5-beec-39b6d6330ba4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\platform\OpenGL">
+      <UniqueIdentifier>{4baacfcf-aa1f-44c9-9e93-1dccfc227a1b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\platform">
+      <UniqueIdentifier>{afdc443a-307c-4991-9e5b-f6b7cd08c30c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\platform\OpenGL">
+      <UniqueIdentifier>{c142e74e-c194-4df2-8137-395acd37f345}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -104,13 +104,7 @@
     <ClCompile Include="Renderable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Texture.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ShadowMap.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderTexture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PostFXManager.cpp">
@@ -128,20 +122,44 @@
     <ClCompile Include="grMesh.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="rePlatform.cpp">
-      <Filter>Source Files\re\platform</Filter>
+    <ClCompile Include="Platform.cpp">
+      <Filter>Source Files\platform</Filter>
     </ClCompile>
-    <ClCompile Include="reMesh_OpenGL.cpp">
-      <Filter>Source Files\re\platform\OpenGL</Filter>
+    <ClCompile Include="Mesh_OpenGL.cpp">
+      <Filter>Source Files\platform\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="enPlatform.cpp">
-      <Filter>Source Files\en\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="reMesh_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
+    <ClCompile Include="Mesh_Platform.cpp">
+      <Filter>Source Files\platform</Filter>
     </ClCompile>
     <ClCompile Include="enEngineConfig.cpp">
       <Filter>Source Files\en</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture_Platform.cpp">
+      <Filter>Source Files\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="reTexture_OpenGL.cpp">
+      <Filter>Source Files\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="grTexture.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="grTextureTarget.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureTarget_Platform.cpp">
+      <Filter>Source Files\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureTarget_OpenGL.cpp">
+      <Filter>Source Files\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="Context_OpenGL.cpp">
+      <Filter>Source Files\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="reContext.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="Context_Platform.cpp">
+      <Filter>Source Files\platform</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -199,16 +217,10 @@
     <ClInclude Include="Light.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Texture.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="BuildConfiguration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ShadowMap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderTexture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PostFXManager.h">
@@ -232,135 +244,156 @@
     <ClInclude Include="grMesh.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
-    <ClInclude Include="enPlatform.h">
-      <Filter>Header Files\en</Filter>
+    <ClInclude Include="Platform.h">
+      <Filter>Header Files\platform</Filter>
     </ClInclude>
-    <ClInclude Include="rePlatform.h">
-      <Filter>Header Files\re\platform</Filter>
+    <ClInclude Include="Mesh_OpenGL.h">
+      <Filter>Header Files\platform\OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="reMesh_OpenGL.h">
-      <Filter>Header Files\re\platform\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="reMesh_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
+    <ClInclude Include="Mesh_Platform.h">
+      <Filter>Header Files\platform</Filter>
     </ClInclude>
     <ClInclude Include="enEngineConfig.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
+    <ClInclude Include="Texture_Platform.h">
+      <Filter>Header Files\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture_OpenGL.h">
+      <Filter>Header Files\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="grTexture.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="grTextureTarget.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureTarget_Platform.h">
+      <Filter>Header Files\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureTarget_OpenGL.h">
+      <Filter>Header Files\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="Context_OpenGL.h">
+      <Filter>Header Files\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="reContext.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="Context_Platform.h">
+      <Filter>Header Files\platform</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\blitShader.frag">
+    <None Include="Shaders\glsl\blitShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\blitShader.vert">
+    <None Include="Shaders\glsl\blitShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\blurShader.frag">
+    <None Include="Shaders\glsl\blurShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\blurShader.vert">
+    <None Include="Shaders\glsl\blurShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\BRDFIntegrationMapShader.frag">
+    <None Include="Shaders\glsl\BRDFIntegrationMapShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\BRDFIntegrationMapShader.vert">
+    <None Include="Shaders\glsl\BRDFIntegrationMapShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\cubeDepthShader.frag">
+    <None Include="Shaders\glsl\cubeDepthShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\cubeDepthShader.geom">
+    <None Include="Shaders\glsl\cubeDepthShader.geom">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\cubeDepthShader.vert">
+    <None Include="Shaders\glsl\cubeDepthShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\deferredAmbientLightShader.frag">
+    <None Include="Shaders\glsl\deferredAmbientLightShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\deferredAmbientLightShader.vert">
+    <None Include="Shaders\glsl\deferredAmbientLightShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\deferredKeyLightShader.frag">
+    <None Include="Shaders\glsl\deferredKeyLightShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\deferredKeyLightShader.vert">
+    <None Include="Shaders\glsl\deferredKeyLightShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\deferredPointLightShader.frag">
+    <None Include="Shaders\glsl\deferredPointLightShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\deferredPointLightShader.vert">
+    <None Include="Shaders\glsl\deferredPointLightShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="depthShader.frag">
+    <None Include="Shaders\glsl\depthShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\depthShader.vert">
+    <None Include="Shaders\glsl\depthShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\equilinearToCubemapBlitShader.frag">
+    <None Include="Shaders\glsl\equilinearToCubemapBlitShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\equilinearToCubemapBlitShader.vert">
+    <None Include="Shaders\glsl\equilinearToCubemapBlitShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\errorShader.frag">
+    <None Include="Shaders\glsl\errorShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\errorShader.vert">
+    <None Include="Shaders\glsl\errorShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\gBufferFillShader.frag">
+    <None Include="Shaders\glsl\gBufferFillShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\gBufferFillShader.geom">
+    <None Include="Shaders\glsl\gBufferFillShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\gBufferFillShader.vert">
+    <None Include="Shaders\glsl\geometryDemoShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\geometryDemoShader.frag">
+    <None Include="Shaders\glsl\geometryDemoShader.geom">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\geometryDemoShader.geom">
+    <None Include="Shaders\glsl\geometryDemoShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\geometryDemoShader.vert">
+    <None Include="Shaders\glsl\lambertShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\lambertShader.frag">
+    <None Include="Shaders\glsl\lambertShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\lambertShader.vert">
+    <None Include="Shaders\glsl\phongShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\phongShader.frag">
+    <None Include="Shaders\glsl\phongShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\phongShader.vert">
+    <None Include="Shaders\glsl\SaberCommon.glsl">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\SaberCommon.glsl">
+    <None Include="Shaders\glsl\SaberGlobals.glsl">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\SaberGlobals.glsl">
+    <None Include="Shaders\glsl\SaberLighting.glsl">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\SaberLighting.glsl">
+    <None Include="Shaders\glsl\skyboxShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\skyboxShader.frag">
+    <None Include="Shaders\glsl\skyboxShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\skyboxShader.vert">
+    <None Include="Shaders\glsl\toneMapShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\toneMapShader.frag">
-      <Filter>Source Files\Shaders\OpenGL</Filter>
-    </None>
-    <None Include="Shaders\toneMapShader.vert">
+    <None Include="Shaders\glsl\toneMapShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
   </ItemGroup>

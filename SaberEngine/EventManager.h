@@ -87,7 +87,7 @@ namespace SaberEngine
 	};
 
 
-	class EventManager : public EngineComponent
+	class EventManager : public virtual EngineComponent
 	{
 	public:
 		EventManager();

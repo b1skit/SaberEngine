@@ -1,10 +1,20 @@
 #include <iostream>
+
+#include "Platform.h"
 #include "CoreEngine.h"
+#include "BuildConfiguration.h"
 
 
 int main(int argc, char** argv)
 {
-	std::cout << "Welcome to the Saber Engine!\n\n";
+	// Register our API-specific bindings before anything attempts to call them:
+	if (!platform::RegisterPlatformFunctions())
+	{
+		SaberEngine::LOG_ERROR("Failed to configure API-specific platform bindings!\n");
+		exit(-1);
+	}
+
+	SaberEngine::LOG("\nWelcome to the Saber Engine!\n");
 
 	SaberEngine::CoreEngine coreEngine(argc, argv); // TODO: Implement config file (command line) path passing
 
@@ -14,7 +24,7 @@ int main(int argc, char** argv)
 
 	coreEngine.Shutdown();
 
-	std::cout << "\nGoodbye!\n";
+	SaberEngine::LOG("\nGoodbye!\n");
 
 	return 0;
 }

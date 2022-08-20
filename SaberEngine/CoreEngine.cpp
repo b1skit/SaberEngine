@@ -2,20 +2,19 @@
 
 #include "CoreEngine.h"
 #include "BuildConfiguration.h"
-#include "enPlatform.h"
-#include "rePlatform.h"
+#include "Platform.h"
 
 
 namespace SaberEngine
 {
 	// Static members:
-	CoreEngine*		CoreEngine::coreEngine; // Assigned in constructor
+	en::EngineConfig CoreEngine::m_config;
 
-	EventManager*	CoreEngine::SaberEventManager	= &EventManager::Instance();
-	InputManager*	CoreEngine::SaberInputManager	= &InputManager::Instance();
-	SceneManager*	CoreEngine::SaberSceneManager	= &SceneManager::Instance();
-	RenderManager*	CoreEngine::SaberRenderManager	= &RenderManager::Instance();
-
+	CoreEngine*		CoreEngine::coreEngine			= nullptr;
+	EventManager*	CoreEngine::SaberEventManager	= nullptr;
+	InputManager*	CoreEngine::SaberInputManager	= nullptr;
+	SceneManager*	CoreEngine::SaberSceneManager	= nullptr;
+	RenderManager*	CoreEngine::SaberRenderManager	= nullptr;
 
 	CoreEngine::CoreEngine(int argc, char** argv) : SaberObject("CoreEngine")
 	{
@@ -32,35 +31,27 @@ namespace SaberEngine
 	{
 		LOG("CoreEngine starting...");
 
-		// Set non-rendering platform-specific bindings:
-		if (!en::platform::ConfigureEnginePlatform())
-		{
-			LOG_ERROR("Failed to configure engine platform!");
-			exit(-1);
-		}
+		// Initialize manager singletons:
+		SaberEventManager = &EventManager::Instance();
+		SaberInputManager = &InputManager::Instance();
+		SaberSceneManager = &SceneManager::Instance();
+		SaberRenderManager = &RenderManager::Instance();
 
-		LOG("Initializing rendering API...");
-
-		// Set our API-specific bindings:
-		if (!re::platform::RegisterPlatformFunctions())
-		{
-			LOG_ERROR("Failed to configure rendering API! "
-				"Does the config.cfg file contain a 'set platform \"<API>\" command for a supported API?");
-			exit(-1);
-		}
-
-		// Initialize SaberEngine:
+		// Start managers:
 		SaberEventManager->Startup();	
 		SaberLogManager->Startup();
-		
+
 		SaberEventManager->Subscribe(EVENT_ENGINE_QUIT, this);
 
 		SaberTimeManager->Startup();
+
+		SaberRenderManager->Startup();	// Initializes SDL events and video subsystems
+
+		// For some reason, this needs to be called after the SDL video subsystem (!) has been initialized:
 		SaberInputManager->Startup();
 
-		SaberRenderManager->Startup();
-
-		// Must wait to start scene manager and load a scene until the renderer is called, since we need to initialize OpenGL in the RenderManager before creating shaders
+		// Must wait to start scene manager and load a scene until the renderer is called, since we need to initialize
+		// OpenGL in the RenderManager before creating shaders
 		SaberSceneManager->Startup();
 		bool loadedScene = SaberSceneManager->LoadScene(m_config.SceneName());
 
@@ -197,22 +188,30 @@ namespace SaberEngine
 			LOG_ERROR("No command line arguments received! Use \"-scene <scene name>\" to launch a scene from the .\\Scenes directory.\n\n\t\tEg. \tSaberEngine.exe -scene Sponza\n\nNote: The scene directory name and scene .FBX file must be the same");
 			return false;
 		}
-		LOG("Processing " + to_string(argc - 1) + " command line arguments:");
+		const int numTokens = argc - 1; // -1, as 1st arg is program name
+		LOG("Processing " + to_string(numTokens) + " command line tokens...");
 
-		for (int i = 1; i < argc; i++) // Start at index 1 to skip the executable path
+		for (int i = 1; i < argc; i++)
 		{			
 			string currentArg = string(argv[i]);			
 			if (currentArg.find("-scene") != string::npos)
 			{
-				string parameter = string(argv[i + 1]);
-				if (i < argc - 1)
+				if (i < argc - 1) // -1 as we need to peek ahead
 				{
+					const int nextArg = i + 1;
+					const string parameter = string(argv[nextArg]);
+
 					LOG("\tReceived scene command: \"" + currentArg + " " + parameter + "\"");
 
 					m_config.SceneName() = parameter;
 				}
+				else
+				{
+					LOG_ERROR("Received \"-scene\" token, but no matching scene name");
+					return false;
+				}
 				
-				i++; // Eat the extra command parameter
+				i++; // Eat the parameter
 			}
 			else
 			{

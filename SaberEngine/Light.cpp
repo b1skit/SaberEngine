@@ -47,15 +47,12 @@ namespace SaberEngine
 			);
 
 			// Attach a screen aligned quad:
-			m_deferredMesh = new gr::Mesh
+			m_deferredMesh = gr::meshfactory::CreateQuad	// Align along near plane
 			(
-				gr::meshfactory::CreateQuad	// Align along near plane
-				(
-					vec3(-1.0f, 1.0f,	-1.0f),	// TL
-					vec3(1.0f,	1.0f,	-1.0f),	// TR
-					vec3(-1.0f, -1.0f,	-1.0f),	// BL
-					vec3(1.0f,	-1.0f,	-1.0f)	// BR
-				)
+				vec3(-1.0f, 1.0f,	-1.0f),	// TL
+				vec3(1.0f,	1.0f,	-1.0f),	// TR
+				vec3(-1.0f, -1.0f,	-1.0f),	// BL
+				vec3(1.0f,	-1.0f,	-1.0f)	// BR
 			);
 
 			break;
@@ -73,15 +70,12 @@ namespace SaberEngine
 			);
 
 			// Attach a screen aligned quad:
-			m_deferredMesh = new gr::Mesh
+			m_deferredMesh = gr::meshfactory::CreateQuad	// Align along near plane
 			(
-				gr::meshfactory::CreateQuad	// Align along near plane
-				(
-					vec3(-1.0f,	1.0f,	-1.0f),	// TL
-					vec3(1.0f,	1.0f,	-1.0f),	// TR
-					vec3(-1.0f,	-1.0f,	-1.0f),	// BL
-					vec3(1.0f,	-1.0f,	-1.0f)	// BR
-				)
+				vec3(-1.0f,	1.0f,	-1.0f),	// TL
+				vec3(1.0f,	1.0f,	-1.0f),	// TR
+				vec3(-1.0f,	-1.0f,	-1.0f),	// BL
+				vec3(1.0f,	-1.0f,	-1.0f)	// BR
 			);
 			break;
 		}
@@ -95,12 +89,9 @@ namespace SaberEngine
 				true
 			);
 
-			m_deferredMesh = new gr::Mesh
+			m_deferredMesh = gr::meshfactory::CreateSphere
 			(
-				gr::meshfactory::CreateSphere
-				(
-					radius
-				)
+				radius
 			);
 			m_deferredMesh->GetTransform().Parent(&m_transform);
 
@@ -126,7 +117,6 @@ namespace SaberEngine
 
 		if (m_deferredMesh != nullptr)
 		{
-			delete m_deferredMesh;
 			m_deferredMesh = nullptr;
 		}
 

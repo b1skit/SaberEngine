@@ -110,7 +110,7 @@ layout(binding = 7) uniform sampler2D GBuffer_Emissive;
 layout(binding = 8) uniform sampler2D GBuffer_WorldPos;
 layout(binding = 9) uniform sampler2D GBuffer_MatProp0;
 
-layout(binding = 10) uniform sampler2D	GBuffer_Depth;
+layout(binding = 10) uniform sampler2D	GBuffer_Depth;	// RENDER_TEXTURE_0 + RENDER_TEXTURE_DEPTH
 
 layout(binding = 11) uniform sampler2D	shadowDepth;		// Currently bound 2D shadow depth map
 

@@ -1,15 +1,18 @@
 #pragma once
 
+#include <vector>
+#include <unordered_map>
+
+#include <assimp/scene.h>		// Output data structure
+#include <glm/glm.hpp>
+
 #include "EngineComponent.h"
 #include "EventListener.h"
 #include "grMesh.h"
+#include "grTexture.h"
 
-#include <assimp/scene.h>		// Output data structure
 
-#include <glm/glm.hpp>
 
-#include <vector>
-#include <unordered_map>
 
 using std::vector;
 using std::unordered_map;
@@ -17,27 +20,36 @@ using std::unordered_map;
 using glm::vec4;
 
 
+// Pre-declarations:
+namespace gr
+{
+	class Mesh;
+	class Texture;
+	struct TextureParams;
+	enum class TextureColorSpace;
+	
+}
 namespace SaberEngine
 {
-	// Pre-declarations:
 	class Camera;
 	class aiTexture;
 	class SceneObject;
 	class GameObject;
 	class Material;
-	class Texture;
 	class Renderable;
 	class Light;
 	class Transform;
-	class Mesh;
 	class Skybox;
 	struct Bounds;
 	struct Scene;
 	enum CAMERA_TYPE;
+}
 
 
+namespace SaberEngine
+{
 	// Scene Manager: Manages scenes
-	class SceneManager : public EngineComponent, public EventListener
+	class SceneManager : public virtual EngineComponent, public EventListener
 	{
 	public:
 		SceneManager(); // Reserve vector memory
@@ -59,7 +71,7 @@ namespace SaberEngine
 		// Member functions:
 		//------------------
 		// Load a scene.
-		// sceneName == the root folder name within the ./Scenes/ directory. Must contain an .fbx file with the same name.
+		// sceneName = the root folder name within the ./Scenes/ directory. Must contain an .fbx file with the same name
 		bool LoadScene(string sceneName);
 
 		inline unsigned int						NumMaterials()								{ return (int)m_materials.size(); }
@@ -76,8 +88,13 @@ namespace SaberEngine
 		Camera*									GetMainCamera();
 		void									RegisterCamera(CAMERA_TYPE cameraType, Camera* newCamera);;
 
-		void									AddTexture(Texture*& newTexture); // If duplicate texture exists, it will be deleted and the newTexture pointer updated to the correct address
-		Texture*								FindLoadTextureByPath(string texturePath, bool loadIfNotFound = true);	// Find if a texture if it exists, or try and load it if it doesn't. Returns nullptr if file isn't/can't be loaded
+		void AddTexture(std::shared_ptr<gr::Texture>& newTexture); // If duplicate texture exists, it will be deleted and the newTexture pointer updated to the correct address
+		
+		// Find if a texture if it exists, or try & load it if it doesn't. Returns nullptr if file isn't/can't be loaded
+		std::shared_ptr<gr::Texture> FindLoadTextureByPath(
+			string texturePath, 
+			gr::Texture::TextureColorSpace colorSpace, 
+			bool loadIfNotFound = true);	
 
 		vector<Light*> const&					GetDeferredLights();
 
@@ -102,7 +119,7 @@ namespace SaberEngine
 		//---------------------
 		unordered_map<string, Material*> m_materials;	// Hash table of scene Material pointers
 
-		unordered_map<string, Texture*> m_textures;	// Hash table of scene Texture pointers
+		unordered_map<string, std::shared_ptr<gr::Texture>> m_textures;	// Hash table of scene Texture pointers
 
 		void				AddMaterial(Material*& newMaterial);	// Add a material to the material array. Note: Material name MUST be unique
 
@@ -120,8 +137,8 @@ namespace SaberEngine
 		void			ImportSky(string sceneName);
 		
 		// Assimp scene texture import helper:
-		Texture*		ExtractLoadTextureFromAiMaterial(aiTextureType textureType, aiMaterial* material, string sceneName);
-		Texture*		FindTextureByNameInAiMaterial(string nameSubstring, aiMaterial* material, string sceneName);
+		std::shared_ptr<gr::Texture> ExtractLoadTextureFromAiMaterial(aiTextureType textureType, aiMaterial* material, string sceneName);
+		std::shared_ptr<gr::Texture> FindTextureByNameInAiMaterial(string nameSubstring, aiMaterial* material, string sceneName);
 
 		// Assimp scene material property helper:
 		bool			ExtractPropertyFromAiMaterial(aiMaterial* material, vec4& targetProperty, char const* AI_MATKEY_TYPE, int unused0 = 0, int unused1 = 0); // NOTE: unused0/unused1 are required to match #defined macros

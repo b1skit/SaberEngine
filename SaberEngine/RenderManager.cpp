@@ -1,3 +1,17 @@
+#include <string>
+using std::string;
+
+// TODO: Remove these!!!!!!!!!!!
+#include <GL/glew.h>
+#include <GL/GL.h> // Must follow glew.h...
+
+#define GLM_FORCE_SWIZZLE
+#include <glm/glm.hpp>
+using glm::vec3;
+using glm::vec4;
+using glm::mat3;
+using glm::mat4;
+
 #include "RenderManager.h"
 #include "CoreEngine.h"
 #include "SceneManager.h"
@@ -5,8 +19,7 @@
 #include "grMesh.h"
 #include "Transform.h"
 #include "Material.h"
-#include "Texture.h"
-#include "RenderTexture.h"
+#include "grTexture.h"
 #include "BuildConfiguration.h"
 #include "Skybox.h"
 #include "Camera.h"
@@ -16,129 +29,13 @@
 #include "Scene.h"
 #include "EventManager.h"
 
-#include <string>
-
-#include <SDL.h>
-#include <GL/glew.h>
-#include <GL/GL.h> // MUST follow glew.h...
-
-#define GLM_FORCE_SWIZZLE
-#include <glm/glm.hpp>
-
-#undef main // Required to prevent SDL from redefining main...
-
-using glm::vec3;
-using glm::vec4;
-using glm::mat3;
-using glm::mat4;
-using std::string;
-
 
 namespace SaberEngine
 {
-	// OpenGL error message helper function: (Enable/disable via BuildConfiguration.h)
-	#if defined(DEBUG_LOG_OPENGL)
-		void GLAPIENTRY GLMessageCallback
-		(
-				GLenum source,
-				GLenum type,
-				GLuint id,
-				GLenum severity,
-				GLsizei length,
-				const GLchar* message,
-				const void* userParam
-		)
-		{
-			string output = "\nOpenGL Error Callback:\nSource: ";
-
-			switch (source)
-			{
-			case GL_DEBUG_SOURCE_API:
-				output += "GL_DEBUG_SOURCE_API\n";
-				break;
-			case GL_DEBUG_SOURCE_APPLICATION: 
-				output += "GL_DEBUG_SOURCE_APPLICATION\n";
-					break;
-
-			case GL_DEBUG_SOURCE_THIRD_PARTY:
-				output += "GL_DEBUG_SOURCE_THIRD_PARTY\n";
-					break;
-			default:
-				output += "CURRENTLY UNRECOGNIZED ENUM VALUE: " + to_string(source) + " (Todo: Convert to hex!)\n"; // If we ever hit this, we should add the enum as a new string
-			}
-
-			output += "Type: ";
-
-			switch (type)
-			{
-			case GL_DEBUG_TYPE_ERROR:
-				output += "GL_DEBUG_TYPE_ERROR\n";
-				break;
-			case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-				output += "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR\n";
-				break;
-			case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-				output += "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR\n";
-				break;
-			case GL_DEBUG_TYPE_PORTABILITY:
-				output += "GL_DEBUG_TYPE_PORTABILITY\n";
-				break;
-			case GL_DEBUG_TYPE_PERFORMANCE:
-				output += "GL_DEBUG_TYPE_PERFORMANCE\n";
-				break;
-			case GL_DEBUG_TYPE_OTHER:
-				output += "GL_DEBUG_TYPE_OTHER\n";
-				break;
-			default:
-				output += "\n";
-			}
-
-			output += "id: " + to_string(id) + "\n";
-
-			output += "Severity: ";
-			switch (severity)
-			{
-			#if defined(DEBUG_LOG_OPENGL_NOTIFICATIONS)
-			case GL_DEBUG_SEVERITY_NOTIFICATION:
-				output += "NOTIFICATION\n";
-				break;
-			#else
-			case GL_DEBUG_SEVERITY_NOTIFICATION:
-				return; // DO NOTHING
-			#endif
-			case GL_DEBUG_SEVERITY_LOW :
-					output += "GL_DEBUG_SEVERITY_LOW\n";
-				break;
-			case GL_DEBUG_SEVERITY_MEDIUM:
-				output += "GL_DEBUG_SEVERITY_MEDIUM\n";
-				break;
-			case GL_DEBUG_SEVERITY_HIGH:
-				output += "GL_DEBUG_SEVERITY_HIGH\n";
-				break;
-			default:
-				output += "\n";
-			}
-		
-			output += "Message: " + string(message);
-
-			switch(severity)
-			{
-			case GL_DEBUG_SEVERITY_NOTIFICATION:
-				LOG(output);
-				break;
-			default:
-				LOG_ERROR(output);
-			}
-		}
-	#endif
-
-
 	RenderManager::~RenderManager()
 	{
-		// Close our window in the destructor so we can still read any final OpenGL error messages before it is destroyed
-		SDL_GL_DeleteContext(m_glContext);
-		SDL_DestroyWindow(m_glWindow);
-		SDL_Quit();
+		// Do this in the destructor so we can still read any final OpenGL error messages before it is destroyed
+		m_context.Destroy();
 	}
 
 
@@ -153,131 +50,53 @@ namespace SaberEngine
 	{
 		LOG("RenderManager starting...");
 
+		m_context.Create();
+
 		// Cache the relevant config data:
-		m_windowTitle			= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("windowTitle");
 		m_xRes					= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
 		m_yRes					= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
 		m_useForwardRendering	= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<bool>("useForwardRendering");
 
-		// Configure SDL before creating a window:
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+		// Output target:		
+		gr::Texture::TextureParams outputParams;
+		outputParams.m_width = m_xRes;
+		outputParams.m_height = m_yRes;
+		outputParams.m_faces = 1;
+		outputParams.m_texUse = gr::Texture::TextureUse::ColorTarget;
+		outputParams.m_texDimension = gr::Texture::TextureDimension::Texture2D;
+		outputParams.m_texFormat = gr::Texture::TextureFormat::RGBA32F;
+		outputParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear;
+		outputParams.m_texSamplerMode = gr::Texture::TextureSamplerMode::Wrap;
+		outputParams.m_texMinMode = gr::Texture::TextureMinFilter::Linear;
+		outputParams.m_texMaxMode = gr::Texture::TextureMaxFilter::Linear;
+		outputParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		outputParams.m_texturePath = "RenderManagerFrameOutput";
 
-		if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE) < 0)
-		{
-			CoreEngine::GetEventManager()->Notify(new EventInfo{ EVENT_ENGINE_QUIT, this, new string("Could not set context attribute") });
-			return;
-		}
+		std::shared_ptr<gr::Texture> outputTexture = std::make_shared<gr::Texture>(outputParams);
 
-		SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
-		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+		m_outputTargetSet = std::make_shared<gr::TextureTargetSet>();
+		m_outputTargetSet->ColorTarget(0) = outputTexture;
 
-		//SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 32); // Crashes if uncommented???
+		m_outputTargetSet->CreateColorTargets(TEXTURE_ALBEDO);
 
-		SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "1", SDL_HINT_OVERRIDE);
-		SDL_SetRelativeMouseMode(SDL_TRUE);	// Lock the mouse to the window
 
-		//// Make our buffer swap syncronized with the monitor's vertical refresh:
-		//SDL_GL_SetSwapInterval(1);
-
-		// Create a window:
-		m_glWindow = SDL_CreateWindow
-		(
-			m_windowTitle.c_str(),
-			SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
-			m_xRes, 
-			m_yRes, 
-			SDL_WINDOW_OPENGL
-		);
-		if (m_glWindow == NULL)
-		{
-			CoreEngine::GetEventManager()->Notify(new EventInfo{ EVENT_ENGINE_QUIT, this, new string("Could not create window") });
-			return;
-		}
-
-		// Create an OpenGL context and make it current:
-		m_glContext = SDL_GL_CreateContext(m_glWindow);
-		if (m_glContext == NULL)
-		{
-			CoreEngine::GetEventManager()->Notify(new EventInfo{ EVENT_ENGINE_QUIT, this, new string("Could not create OpenGL context") });
-			return;
-		}
-		if (SDL_GL_MakeCurrent(m_glWindow, m_glContext) < 0)
-		{
-			CoreEngine::GetEventManager()->Notify(new EventInfo{ EVENT_ENGINE_QUIT, this, new string("Failed to make OpenGL context current") });
-			return;
-		}
-
-		// Initialize glew:
-		glewExperimental	= GL_TRUE; // Expose OpenGL 3.x+ interfaces
-		GLenum glStatus		= glewInit();
-		if (glStatus != GLEW_OK)
-		{
-			CoreEngine::GetEventManager()->Notify(new EventInfo{ EVENT_ENGINE_QUIT, this, new string("Render manager start failed: glStatus not ok!") });
-			return;
-		}
-
-		// Configure OpenGL logging:
-		#if defined(DEBUG_LOG_OPENGL)		// Defined in BuildConfiguration.h
-			glEnable(GL_DEBUG_OUTPUT);
-			glDebugMessageCallback(GLMessageCallback, 0);
-		#endif
-
-		// Configure other OpenGL settings:
-		glFrontFace(GL_CCW);				// Counter-clockwise vertex winding (OpenGL default)
-		glEnable(GL_DEPTH_TEST);			// Enable Z depth testing
-		glDepthFunc(GL_LESS);				// How to sort Z
-		glEnable(GL_CULL_FACE);				// Enable face culling
-		glCullFace(GL_BACK);				// Cull back faces
-
-		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-		
-		// Set the default buffer clear values:
-		glClearColor(GLclampf(m_windowClearColor.r), GLclampf(m_windowClearColor.g), GLclampf(m_windowClearColor.b), GLclampf(m_windowClearColor.a));
-		glClearDepth((GLdouble)m_depthClearColor);
-		ClearWindow(m_windowClearColor);
-
-		// Configure deferred output:
-		m_outputMaterial = new Material("RenderManager_OutputMaterial", CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShader"), (TEXTURE_TYPE)1, true);
-
-		RenderTexture* outputTexture = new RenderTexture
-		(
-			m_xRes,
-			m_yRes,
-			"RenderManagerFrameOutput"
-		);
-		
-		outputTexture->Format()				= GL_RGBA;		// Note: Using 4 channels for future flexibility
-		outputTexture->InternalFormat()		= GL_RGBA32F;		
-
-		outputTexture->TextureMinFilter()	= GL_LINEAR;	// Note: Output is black if this is GL_NEAREST_MIPMAP_LINEAR
-		outputTexture->TextureMaxFilter()	= GL_LINEAR;
-
-		outputTexture->AttachmentPoint()	= GL_COLOR_ATTACHMENT0 + 0;
-
-		outputTexture->ReadBuffer()			= GL_COLOR_ATTACHMENT0 + 0;
-		outputTexture->DrawBuffer()			= GL_COLOR_ATTACHMENT0 + 0;
-
-		outputTexture->Buffer(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO);
-
+		// TODO: Get rid of this -> Currently using it to store a blit Shader*
+		m_outputMaterial = new Material("RenderManager_OutputMaterial",
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShader"),
+			(TEXTURE_TYPE)1,
+			true);
 		m_outputMaterial->AccessTexture(TEXTURE_ALBEDO) = outputTexture;
+
 
 		// PostFX Manager:
 		m_postFXManager = new PostFXManager(); // Initialized when RenderManager.Initialize() is called
 
-		m_screenAlignedQuad = new gr::Mesh
+		m_screenAlignedQuad = gr::meshfactory::CreateQuad
 		(
-			gr::meshfactory::CreateQuad
-			(
-				vec3(-1.0f,	1.0f,	0.0f),	// TL
-				vec3(1.0f,	1.0f,	0.0f),	// TR
-				vec3(-1.0f,	-1.0f,	0.0f),	// BL
-				vec3(1.0f,	-1.0f,	0.0f)	// BR
-			)
+			vec3(-1.0f, 1.0f, 0.0f),	// TL
+			vec3(1.0f, 1.0f, 0.0f),	// TR
+			vec3(-1.0f, -1.0f, 0.0f),	// BL
+			vec3(1.0f, -1.0f, 0.0f)	// BR
 		);
 	}
 
@@ -293,10 +112,11 @@ namespace SaberEngine
 			m_outputMaterial = nullptr;
 		}
 
+		m_outputTargetSet = nullptr;
+
 		if (m_screenAlignedQuad != nullptr)
 		{
 			m_screenAlignedQuad->Destroy();
-			delete m_screenAlignedQuad;
 			m_screenAlignedQuad = nullptr;
 		}
 
@@ -310,8 +130,6 @@ namespace SaberEngine
 
 	void RenderManager::Update()
 	{
-		// TODO: Merge ALL meshes using the same material into a single draw call
-
 		Camera* mainCam = CoreEngine::GetSceneManager()->GetCameras(CAMERA_TYPE_MAIN).at(0);
 
 		// Fill shadow maps:
@@ -329,25 +147,18 @@ namespace SaberEngine
 		}
 		glEnable(GL_CULL_FACE);
 
-
-		// TODO: Render reflection probes
-
-
 		// Forward rendering:
-		if (m_useForwardRendering) // TODO: Split forward rendering into another function, and access via a function pointer
+		if (m_useForwardRendering)
 		{
 			RenderForward(mainCam);
 		}
-		// Deferred rendering:
-		else 
+		else // Deferred rendering:
 		{
 			// Fill GBuffer:
 			RenderToGBuffer(mainCam);
 
-			// Render deferred lights:
-			((RenderTexture*)m_outputMaterial->AccessTexture((TEXTURE_TYPE)0))->BindFramebuffer(true);
+			m_outputTargetSet->AttachColorTargets(0, 0, true);
 			
-			glViewport(0, 0, m_xRes, m_yRes);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the currently bound FBO
 
 			vector<Light*>const* deferredLights = &CoreEngine::GetSceneManager()->GetDeferredLights();
@@ -366,13 +177,17 @@ namespace SaberEngine
 				for (int i = 1; i < deferredLights->size(); i++)
 				{
 					// Select face culling:
-					if (deferredLights->at(i)->Type() == LIGHT_AMBIENT_COLOR || deferredLights->at(i)->Type() == LIGHT_AMBIENT_IBL || deferredLights->at(i)->Type() == LIGHT_DIRECTIONAL)
+					if (deferredLights->at(i)->Type() == LIGHT_AMBIENT_COLOR || 
+						deferredLights->at(i)->Type() == LIGHT_AMBIENT_IBL || 
+						deferredLights->at(i)->Type() == LIGHT_DIRECTIONAL)
 					{
 						glCullFace(GL_BACK);
 					}
 					else
 					{
-						glCullFace(GL_FRONT);	// For 3D deferred light meshes, we render back faces so something is visible even while we're inside the mesh		
+						// For 3D deferred light meshes, we render back faces so something is visible even while we're 
+						// inside the mesh		
+						glCullFace(GL_FRONT);	
 					}
 
 					RenderDeferredLight(deferredLights->at(i));
@@ -384,18 +199,20 @@ namespace SaberEngine
 			glDisable(GL_BLEND);
 			RenderSkybox(CoreEngine::GetSceneManager()->GetSkybox());
 
-			// Unbind the output framebuffer
-			((RenderTexture*)m_outputMaterial->AccessTexture((TEXTURE_TYPE)0))->BindFramebuffer(false);
-
 			// Additively blit the emissive GBuffer texture to screen:
 			glEnable(GL_BLEND);
-			Blit(mainCam->RenderMaterial(), TEXTURE_EMISSIVE, m_outputMaterial, TEXTURE_ALBEDO);
+		
+			Blit(
+				mainCam->GetTextureTargetSet().ColorTarget(TEXTURE_EMISSIVE).GetTexture(),
+				*m_outputTargetSet.get(),
+				m_outputMaterial->GetShader());
+
+
 			glDisable(GL_BLEND);			
 
 			// Post process finished frame:
-			Material* finalFrameMaterial	= nullptr;	// References updated in ApplyPostFX...
-			Shader* finalFrameShader		= nullptr;
-			m_postFXManager->ApplyPostFX(finalFrameMaterial, finalFrameShader);
+			Shader* finalFrameShader		= nullptr; // Reference updated in ApplyPostFX...
+			m_postFXManager->ApplyPostFX(finalFrameShader);
 
 			// Cleanup:
 			glEnable(GL_DEPTH_TEST);
@@ -403,67 +220,37 @@ namespace SaberEngine
 			glCullFace(GL_BACK);
 
 			// Blit results to screen (Using the final post processing shader pass supplied by the PostProcessingManager):
-			BlitToScreen(finalFrameMaterial, finalFrameShader);
+			BlitToScreen(m_outputTargetSet->ColorTarget(0).GetTexture(), finalFrameShader);
 		}
 		
 		// Display the final frame:
-		SDL_GL_SwapWindow(m_glWindow);
+		m_context.SwapWindow();
 	}
 
 
-	void RenderManager::RenderLightShadowMap(Light* currentLight)
+	void RenderManager::RenderLightShadowMap(Light* light)
 	{
-		Camera* shadowCam = currentLight->ActiveShadowMap()->ShadowCamera();
+		Camera* shadowCam = light->ActiveShadowMap()->ShadowCamera();
 
-		// Bind:
-		Shader* lightShader = shadowCam->RenderMaterial()->GetShader();
+		// Light shader setup:
+		Shader* lightShader = shadowCam->RenderMaterial()->GetShader(); // TODO: Remove material, get shader directly
 		lightShader->Bind(true);
 		
-		// Configure the FrameBuffer:
-		RenderTexture* lightDepthTexture = nullptr;
-
-		switch (currentLight->Type())
+		if (light->Type() == LIGHT_POINT)
 		{
-		case LIGHT_DIRECTIONAL:
-		{
-			lightDepthTexture = (RenderTexture*)shadowCam->RenderMaterial()->AccessTexture(RENDER_TEXTURE_DEPTH);
-		}
-		break;
-
-		case LIGHT_POINT:
-		{
-			lightDepthTexture = (RenderTexture*)shadowCam->RenderMaterial()->AccessTexture(CUBE_MAP_RIGHT);
-
-			mat4 shadowCamProjection	= shadowCam->Projection();
-			vec3 lightWorldPos			= currentLight->GetTransform().WorldPosition();
+			mat4 shadowCamProjection = shadowCam->Projection();
+			vec3 lightWorldPos = light->GetTransform().WorldPosition();
 
 			mat4 const* cubeMap_vps = shadowCam->CubeViewProjection();
 
-			lightShader->UploadUniform("shadowCamCubeMap_vp",	&cubeMap_vps[0][0][0],	UNIFORM_Matrix4fv, 6);
-			lightShader->UploadUniform("lightWorldPos",			&lightWorldPos.x,		UNIFORM_Vec3fv);
-			lightShader->UploadUniform("shadowCam_near",		&shadowCam->Near(),		UNIFORM_Float);
-			lightShader->UploadUniform("shadowCam_far",			&shadowCam->Far(),		UNIFORM_Float);
-		}
-		break;
-
-		case LIGHT_AMBIENT_COLOR:
-		case LIGHT_AMBIENT_IBL:
-		case LIGHT_AREA:
-		case LIGHT_SPOT:
-		case LIGHT_TUBE:
-		default: // This should never happen...
-			lightShader->Bind(false);
-			return; 
+			lightShader->UploadUniform("shadowCamCubeMap_vp", &cubeMap_vps[0][0][0], UNIFORM_Matrix4fv, 6);
+			lightShader->UploadUniform("lightWorldPos", &lightWorldPos.x, UNIFORM_Vec3fv);
+			lightShader->UploadUniform("shadowCam_near", &shadowCam->Near(), UNIFORM_Float);
+			lightShader->UploadUniform("shadowCam_far", &shadowCam->Far(), UNIFORM_Float);
 		}
 
-		if (lightDepthTexture == nullptr)
-		{
-			lightShader->Bind(false);
-			return;
-		}
+		light->ActiveShadowMap()->GetTextureTargetSet().AttachDepthStencilTarget(true);
 
-		glViewport(0, 0, lightDepthTexture->Width(), lightDepthTexture->Height());
-		lightDepthTexture->BindFramebuffer(true);
 		glClear(GL_DEPTH_BUFFER_BIT); // Clear the currently bound FBO	
 
 		// Loop through each mesh:			
@@ -473,9 +260,9 @@ namespace SaberEngine
 		{
 			gr::Mesh* currentMesh = meshes->at(j);
 
-			gr::Mesh::Bind(*currentMesh, true);
+			currentMesh->Bind(true);
 
-			switch (currentLight->Type())
+			switch (light->Type())
 			{
 			case LIGHT_DIRECTIONAL:
 			{
@@ -506,34 +293,15 @@ namespace SaberEngine
 				(GLsizei)currentMesh->NumIndices(),
 				GL_UNSIGNED_INT, 
 				(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
-						
-			// Cleanup current mesh:
-			gr::Mesh::Bind(*currentMesh, false);
 		}
-
-		// Cleanup:
-		lightShader->Bind(false);
 	}
 
 
 	void SaberEngine::RenderManager::RenderToGBuffer(Camera* const renderCam)
 	{
-		// For now, we just find the first valid texture, and assume it's FBO is the one we want to bind:
-		RenderTexture* renderTexture	= (RenderTexture*)renderCam->RenderMaterial()->AccessTexture((TEXTURE_TYPE)0);
-		if (renderTexture == nullptr)
-		{
-			for (int i = 1; i < renderCam->RenderMaterial()->NumTextureSlots(); i++)
-			{
-				renderTexture = (RenderTexture*)renderCam->RenderMaterial()->AccessTexture((TEXTURE_TYPE)i);
-				if (renderTexture != nullptr)
-				{
-					break;
-				}
-			}
-		}
-
-		renderTexture->BindFramebuffer(true);
-		glViewport(0, 0, renderTexture->Width(), renderTexture->Height());
+		gr::TextureTargetSet const& renderTargetSet = renderCam->GetTextureTargetSet();
+		
+		renderTargetSet.AttachColorDepthStencilTargets(0, 0, true);		
 		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the currently bound FBO
 
@@ -565,9 +333,9 @@ namespace SaberEngine
 			unsigned int numMeshes	= (unsigned int)meshes->size();
 			for (unsigned int j = 0; j < numMeshes; j++)
 			{
-				gr::Mesh* currentMesh = meshes->at(j);
+				gr::Mesh* const currentMesh = meshes->at(j);
 
-				gr::Mesh::Bind(*currentMesh, true);
+				currentMesh->Bind(true);
 
 				// Assemble model-specific matrices:
 				mat4 model			= currentMesh->GetTransform().Model();
@@ -585,18 +353,8 @@ namespace SaberEngine
 					(GLsizei)currentMesh->NumIndices(), 
 					GL_UNSIGNED_INT, 
 					(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
-
-				// Cleanup current mesh: 
-				gr::Mesh::Bind(*currentMesh, false);
 			}
-
-			// Cleanup:
-			currentMaterial->BindAllTextures(TEXTURE_0, false);
-			currentShader->Bind(false);
-
 		} // End Material loop
-
-		renderTexture->BindFramebuffer(false);
 	}
 
 
@@ -631,7 +389,7 @@ namespace SaberEngine
 		{
 			// Setup the current material and shader:
 			Material* currentMaterial = currentElement.second;
-			Shader* currentShader		= currentMaterial->GetShader();		
+			Shader* currentShader = currentMaterial->GetShader();		
 
 			// Bind:
 			currentShader->Bind(true);
@@ -639,12 +397,15 @@ namespace SaberEngine
 
 			// Bind the key light depth buffer and related data:
 			vec4 texelSize(0, 0, 0, 0);
-			RenderTexture* depthTexture = (RenderTexture*)keyLight->ActiveShadowMap()->ShadowCamera()->RenderMaterial()->AccessTexture(RENDER_TEXTURE_DEPTH);
+
+			std::shared_ptr<gr::Texture> depthTexture = 
+				keyLight->ActiveShadowMap()->ShadowCamera()->RenderMaterial()->AccessTexture(RENDER_TEXTURE_DEPTH);
+
 			if (depthTexture)
 			{
 				depthTexture->Bind(DEPTH_TEXTURE_0 + DEPTH_TEXTURE_SHADOW, true);
 
-				texelSize = depthTexture->TexelSize();
+				texelSize = depthTexture->GetTexelDimenions();
 			}
 			currentShader->UploadUniform("maxShadowBias",			&keyLight->ActiveShadowMap()->MaxShadowBias(),	UNIFORM_Float);
 			currentShader->UploadUniform("minShadowBias",			&keyLight->ActiveShadowMap()->MinShadowBias(),	UNIFORM_Float);
@@ -662,7 +423,7 @@ namespace SaberEngine
 			for (unsigned int j = 0; j < numMeshes; j++)
 			{
 				gr::Mesh* currentMesh = meshes->at(j);
-				gr::Mesh::Bind(*currentMesh, true);
+				currentMesh->Bind(true);
 
 				// Assemble model-specific matrices:
 				mat4 model			= currentMesh->GetTransform().Model();
@@ -683,41 +444,39 @@ namespace SaberEngine
 					(GLsizei)currentMesh->NumIndices(), 
 					GL_UNSIGNED_INT, 
 					(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
-
-				// Cleanup current mesh: 
-				gr::Mesh::Bind(*currentMesh, false);
 			}
-
-			// Cleanup current material and shader:
-			currentMaterial->BindAllTextures(TEXTURE_0, false);
-			if (depthTexture)
-			{
-				depthTexture->Bind(DEPTH_TEXTURE_0 + DEPTH_TEXTURE_SHADOW, false);
-			}
-			currentShader->Bind(false);
-
 		} // End Material loop
 	}
 
 
 	void SaberEngine::RenderManager::RenderDeferredLight(Light* deferredLight)
 	{
-		Camera* renderCam = CoreEngine::GetSceneManager()->GetMainCamera();
+		Camera* gBufferCam = CoreEngine::GetSceneManager()->GetMainCamera();
 
 		// Bind:
 		Shader* currentShader	= deferredLight->DeferredMaterial()->GetShader();
 
 		currentShader->Bind(true);
-		renderCam->RenderMaterial()->BindAllTextures(RENDER_TEXTURE_0, true);	// Bind GBuffer textures
+
+		// Bind GBuffer textures
+		gr::TextureTargetSet& gbufferTextures = gBufferCam->GetTextureTargetSet();
+		for (size_t i = 0; i < gbufferTextures.ColorTargets().size(); i++)
+		{
+			std::shared_ptr<gr::Texture>& tex = gbufferTextures.ColorTarget(i).GetTexture();
+			if (tex != nullptr)
+			{
+				tex->Bind(RENDER_TEXTURE_0 + (uint32_t)i, true);
+			}
+		}
 		
 		// Assemble common (model independent) matrices:
-		bool hasShadowMap = deferredLight->ActiveShadowMap() != nullptr;
+		const bool hasShadowMap = deferredLight->ActiveShadowMap() != nullptr;
 			
 		mat4 model			= deferredLight->GetTransform().Model();
-		mat4 m_view			= renderCam->View();
+		mat4 m_view			= gBufferCam->View();
 		mat4 mv				= m_view * model;
-		mat4 mvp			= renderCam->ViewProjection() * deferredLight->GetTransform().Model();
-		vec3 cameraPosition = renderCam->GetTransform()->WorldPosition();
+		mat4 mvp			= gBufferCam->ViewProjection() * deferredLight->GetTransform().Model();
+		vec3 cameraPosition = gBufferCam->GetTransform()->WorldPosition();
 
 		currentShader->UploadUniform("in_model",		&model[0][0],			UNIFORM_Matrix4fv);
 		currentShader->UploadUniform("in_view",			&m_view[0][0],			UNIFORM_Matrix4fv);
@@ -737,20 +496,25 @@ namespace SaberEngine
 			// Bind IBL cubemaps:
 			if (!m_useForwardRendering)
 			{
-				Texture* IEMCubemap = ((ImageBasedLight*)deferredLight)->GetIEMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
+				std::shared_ptr<gr::Texture> IEMCubemap = 
+					((ImageBasedLight*)deferredLight)->GetIEMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
+
 				if (IEMCubemap != nullptr)
 				{
 					IEMCubemap->Bind(CUBE_MAP_0 + CUBE_MAP_RIGHT, true);
 				}
 
-				Texture* PMREM_Cubemap = ((ImageBasedLight*)deferredLight)->GetPMREMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
+				std::shared_ptr<gr::Texture> PMREM_Cubemap = 
+					((ImageBasedLight*)deferredLight)->GetPMREMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
+
 				if (PMREM_Cubemap != nullptr)
 				{
 					PMREM_Cubemap->Bind(CUBE_MAP_1 + CUBE_MAP_RIGHT, true);
 				}
 
 				// Bind BRDF Integration map:
-				RenderTexture* BRDFIntegrationMap = ((ImageBasedLight*)deferredLight)->GetBRDFIntegrationMap();
+				std::shared_ptr<gr::Texture> BRDFIntegrationMap = 
+					((ImageBasedLight*)deferredLight)->GetBRDFIntegrationMap();
 				if (BRDFIntegrationMap != nullptr)
 				{
 					BRDFIntegrationMap->Bind(GENERIC_TEXTURE_0, true);
@@ -803,12 +567,13 @@ namespace SaberEngine
 				currentShader->UploadUniform("shadowCam_far",	&shadowCam->Far(),					UNIFORM_Float);
 
 				// Bind shadow depth textures:
-				RenderTexture* depthTexture = nullptr;
+				std::shared_ptr<gr::Texture> depthTexture = 
+					activeShadowMap->GetTextureTargetSet().DepthStencilTarget().GetTexture();
+
 				switch (deferredLight->Type())
 				{
 				case LIGHT_DIRECTIONAL:
 				{
-					depthTexture = (RenderTexture*)activeShadowMap->ShadowCamera()->RenderMaterial()->AccessTexture(RENDER_TEXTURE_DEPTH);
 					if (depthTexture)
 					{
 						depthTexture->Bind(DEPTH_TEXTURE_0 + DEPTH_TEXTURE_SHADOW, true);
@@ -818,7 +583,6 @@ namespace SaberEngine
 
 				case LIGHT_POINT:
 				{
-					depthTexture = (RenderTexture*)activeShadowMap->ShadowCamera()->RenderMaterial()->AccessTexture(CUBE_MAP_RIGHT);
 					if (depthTexture)
 					{
 						depthTexture->Bind(CUBE_MAP_0 + CUBE_MAP_RIGHT, true);
@@ -839,76 +603,19 @@ namespace SaberEngine
 				vec4 texelSize(0, 0, 0, 0);
 				if (depthTexture != nullptr)
 				{
-					texelSize = depthTexture->TexelSize();
+					texelSize = depthTexture->GetTexelDimenions();
 				}
 				currentShader->UploadUniform("texelSize", &texelSize.x, UNIFORM_Vec4fv);
 			}
 		}
 		
-		gr::Mesh::Bind(*deferredLight->DeferredMesh(), true);
+		deferredLight->DeferredMesh()->Bind(true);
 
 		// Draw!
 		glDrawElements(GL_TRIANGLES,
 			(GLsizei)deferredLight->DeferredMesh()->NumIndices(),
 			GL_UNSIGNED_INT, 
 			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
-
-
-		// Cleanup:
-		renderCam->RenderMaterial()->BindAllTextures(RENDER_TEXTURE_0, false);
-
-		if (activeShadowMap != nullptr)
-		{
-			switch (deferredLight->Type())
-			{
-			case LIGHT_DIRECTIONAL:
-			{
-				activeShadowMap->ShadowCamera()->RenderMaterial()->AccessTexture(RENDER_TEXTURE_DEPTH)->Bind(DEPTH_TEXTURE_0 + DEPTH_TEXTURE_SHADOW, false);
-			}			
-			break;
-
-			case LIGHT_POINT:
-			{
-				activeShadowMap->ShadowCamera()->RenderMaterial()->AccessTexture(CUBE_MAP_RIGHT)->Bind(CUBE_MAP_0 + CUBE_MAP_RIGHT, false);
-			}
-			break;
-
-			// Other light types don't support shadows, yet:
-			case LIGHT_AMBIENT_COLOR:
-			case LIGHT_AMBIENT_IBL:
-			case LIGHT_AREA:
-			case LIGHT_SPOT:
-			case LIGHT_TUBE:
-			default:
-				break;
-			}
-		}
-
-		if (deferredLight->Type() == LIGHT_AMBIENT_IBL && !m_useForwardRendering)
-		{
-			// Unbind IBL cubemaps:
-			Texture* IEMCubemap = ((ImageBasedLight*)deferredLight)->GetIEMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
-			if (IEMCubemap != nullptr)
-			{
-				IEMCubemap->Bind(CUBE_MAP_0 + CUBE_MAP_RIGHT, false);
-			}
-
-			Texture* PMREM_Cubemap = ((ImageBasedLight*)deferredLight)->GetPMREMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
-			if (PMREM_Cubemap != nullptr)
-			{
-				PMREM_Cubemap->Bind(CUBE_MAP_1 + CUBE_MAP_RIGHT, false);
-			}
-
-			// Unbind BRDF Integration map:
-			RenderTexture* BRDFIntegrationMap = ((ImageBasedLight*)deferredLight)->GetBRDFIntegrationMap();
-			if (BRDFIntegrationMap != nullptr)
-			{
-				BRDFIntegrationMap->Bind(GENERIC_TEXTURE_0, false);
-			}
-		}
-		
-		currentShader->Bind(false);
-		gr::Mesh::Bind(*deferredLight->DeferredMesh(), false);
 	}
 
 
@@ -923,9 +630,10 @@ namespace SaberEngine
 
 		Shader* currentShader	= skybox->GetSkyMaterial()->GetShader();
 
-		Texture* skyboxCubeMap	= skybox->GetSkyMaterial()->AccessTexture(CUBE_MAP_RIGHT);
+		std::shared_ptr<gr::Texture> skyboxCubeMap = skybox->GetSkyMaterial()->AccessTexture(CUBE_MAP_RIGHT);
 
-		Texture* depthTexture	= (RenderTexture*)renderCam->RenderMaterial()->AccessTexture(RENDER_TEXTURE_DEPTH); // GBuffer depth
+		// GBuffer depth
+		std::shared_ptr<gr::Texture> depthTexture =renderCam->RenderMaterial()->AccessTexture(RENDER_TEXTURE_DEPTH); 
 
 		// Bind shader and texture:
 		currentShader->Bind(true);
@@ -936,23 +644,20 @@ namespace SaberEngine
 			depthTexture->Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_DEPTH, true);
 		}
 
-		gr::Mesh::Bind(*skybox->GetSkyMesh(), true);
+		skybox->GetSkyMesh()->Bind(true);
 
 		// Assemble common (model independent) matrices:
-		mat4 inverseViewProjection = glm::inverse(renderCam->ViewProjection()); // TODO: Only compute this if something has changed
+		mat4 inverseViewProjection = 
+			glm::inverse(renderCam->ViewProjection()); // TODO: Only compute this if something has changed
+
 		currentShader->UploadUniform("in_inverse_vp", &inverseViewProjection[0][0], UNIFORM_Matrix4fv);
 
 		// Draw!
-		glDrawElements(GL_TRIANGLES, (GLsizei)skybox->GetSkyMesh()->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
-
-		// Cleanup:
-		gr::Mesh::Bind(*skybox->GetSkyMesh(), false);
-		if (depthTexture)
-		{
-			depthTexture->Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_DEPTH, false);
-		}		
-		skyboxCubeMap->Bind(CUBE_MAP_0 + CUBE_MAP_RIGHT, false);
-		currentShader->Bind(false);		
+		glDrawElements(
+			GL_TRIANGLES,									// GLenum mode
+			(GLsizei)skybox->GetSkyMesh()->NumIndices(),	// GLsizei count
+			GL_UNSIGNED_INT,								// GLenum type
+			(void*)(0));									// const GLvoid* indices
 	}
 
 
@@ -964,74 +669,56 @@ namespace SaberEngine
 
 		m_outputMaterial->GetShader()->Bind(true);
 		m_outputMaterial->BindAllTextures(RENDER_TEXTURE_0, true);
-		gr::Mesh::Bind(*m_screenAlignedQuad, true);
+		m_screenAlignedQuad->Bind(true);
 
-		glDrawElements(GL_TRIANGLES, (GLsizei)m_screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
-
-		// Cleanup:
-		m_outputMaterial->BindAllTextures(RENDER_TEXTURE_0, false);
-		m_outputMaterial->GetShader()->Bind(false);
-		gr::Mesh::Bind(*m_screenAlignedQuad, false);
+		glDrawElements(
+			GL_TRIANGLES, 
+			(GLsizei)m_screenAlignedQuad->NumIndices(),
+			GL_UNSIGNED_INT, 
+			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 	}
 
 
-	void SaberEngine::RenderManager::BlitToScreen(Material* srcMaterial, Shader* blitShader)
+	void SaberEngine::RenderManager::BlitToScreen(std::shared_ptr<gr::Texture>& texture, Shader* blitShader)
 	{
 		glViewport(0, 0, m_xRes, m_yRes);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		blitShader->Bind(true);
-		srcMaterial->BindAllTextures(RENDER_TEXTURE_0, true); // NOTE: Assume we're binding to GBuffer_Albedo, for now...
-		gr::Mesh::Bind(*m_screenAlignedQuad, true);
 
-		glDrawElements(GL_TRIANGLES, (GLsizei)m_screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+		texture->Bind(RENDER_TEXTURE_0, true);
 
-		// Cleanup:
-		srcMaterial->BindAllTextures(RENDER_TEXTURE_0, false);
-		blitShader->Bind(false);
-		gr::Mesh::Bind(*m_screenAlignedQuad, false);
+		m_screenAlignedQuad->Bind(true);
+
+		glDrawElements(
+			GL_TRIANGLES,
+			(GLsizei)m_screenAlignedQuad->NumIndices(),
+			GL_UNSIGNED_INT,
+			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 	}
 
 
-	void SaberEngine::RenderManager::Blit(Material* srcMat, int srcTex, Material* dstMat, int dstTex, Shader* shaderOverride /*= nullptr*/)
+	void SaberEngine::RenderManager::Blit(
+		std::shared_ptr<gr::Texture> const& srcTex,
+		gr::TextureTargetSet const& dstTargetSet,
+		Shader* shader)
 	{
-		Shader* currentShader = shaderOverride;
-		if (currentShader == nullptr)
-		{
-			currentShader = m_outputMaterial->GetShader(); // Output material has the blit shader attached to it
-		}
-
-		// Bind the output FBO: (Textures MUST already be attached...)
-		((RenderTexture*)dstMat->AccessTexture((TEXTURE_TYPE)dstTex))->BindFramebuffer(true);
-		glViewport(0, 0, dstMat->AccessTexture((TEXTURE_TYPE)dstTex)->Width(), dstMat->AccessTexture((TEXTURE_TYPE)dstTex)->Height());
+		dstTargetSet.AttachColorTargets(0, 0, true);
 
 		// Bind the blit shader and screen aligned quad:
-		currentShader->Bind(true);
-		gr::Mesh::Bind(*m_screenAlignedQuad, true);
+		shader->Bind(true);
+		m_screenAlignedQuad->Bind(true);
 
 		// Bind the source texture into the slot specified in the blit shader:
-		srcMat->AccessTexture((TEXTURE_TYPE)srcTex)->Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, true); // Note: Blit shader reads from this texture unit (for now)
+		// Note: Blit shader reads from this texture unit (for now)
+		srcTex->Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, true);
 		
-		glDrawElements(GL_TRIANGLES, (GLsizei)m_screenAlignedQuad->NumIndices(), GL_UNSIGNED_INT, (void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
-
-		// Cleanup:
-		srcMat->AccessTexture((TEXTURE_TYPE)dstTex)->Bind(TEXTURE_ALBEDO, false);
-		gr::Mesh::Bind(*m_screenAlignedQuad, false);
-		currentShader->Bind(false);
-		((RenderTexture*)dstMat->AccessTexture((TEXTURE_TYPE)dstTex))->BindFramebuffer(false);
-	}
-
-	
-	void RenderManager::ClearWindow(vec4 clearColor)
-	{
-		// Set the initial color in both buffers:
-		glClearColor(GLclampf(clearColor.r), GLclampf(clearColor.g), GLclampf(clearColor.b), GLclampf(clearColor.a));
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		SDL_GL_SwapWindow(m_glWindow);
-
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glDrawElements(
+			GL_TRIANGLES,
+			(GLsizei)m_screenAlignedQuad->NumIndices(),
+			GL_UNSIGNED_INT, 
+			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 	}
 
 

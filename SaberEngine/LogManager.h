@@ -5,7 +5,7 @@
 
 namespace SaberEngine
 {
-	class LogManager : public EngineComponent, public EventListener
+	class LogManager : public virtual EngineComponent, public EventListener
 	{
 	public:
 		LogManager() : EngineComponent("LogManager") {}
@@ -26,6 +26,8 @@ namespace SaberEngine
 
 		// Static functions:
 		//------------------
+
+		// TODO: Support printf-style string value insertion eg. ("my message %d", 10)
 
 		static void Log(string const& message);
 		static void LogWarning(string const& message);

@@ -5,8 +5,9 @@
 
 #include "Transform.h"
 using SaberEngine::Transform;
+
 #include "Material.h"
-#include "reMesh_Platform.h"
+#include "Mesh_Platform.h"
 
 
 namespace gr
@@ -115,13 +116,15 @@ namespace gr
 			std::vector<uint32_t> indices, 
 			SaberEngine::Material* newMeshMaterial);
 
-		// Constructing a mesh modifies the GPU state; disallow all move semantics
+		// Constructing a mesh modifies the GPU state; disallow all move semantics for now
 		Mesh() = delete;
 		Mesh(Mesh const& rhs) = delete;
 		Mesh(Mesh&& rhs) noexcept = delete;
 		Mesh& operator=(Mesh const& rhs) = delete;
 		Mesh& operator=(Mesh&& rhs) = delete;
 
+		void Bind(bool doBind);
+		void Destroy();
 		
 		// Getters/Setters:
 		inline std::string& Name() { return meshName; }
@@ -138,17 +141,7 @@ namespace gr
 
 		inline Bounds& GetLocalBounds() { return m_localBounds; }
 
-		inline std::unique_ptr<re::platform::MeshParams_Platform>& GetParams() { return m_params; }
-
-		void Destroy();
-
-
-		// Static function pointer declarations (implementations are in grMesh.cpp):
-		static void (*Create)(gr::Mesh& mesh);
-		static void (*Delete)(gr::Mesh& mesh);
-		static void (*Bind)(gr::Mesh& mesh, bool doBind);
-
-	protected:
+		inline std::unique_ptr<platform::Mesh::PlatformParams>& GetPlatformParams() { return m_platformParams; }
 
 
 	private:
@@ -164,24 +157,24 @@ namespace gr
 		Transform m_transform;
 		std::string meshName = "UNNAMED_MESH";
 
-		
 		// API-specific mesh params:
-		std::unique_ptr<re::platform::MeshParams_Platform> m_params;
+		std::unique_ptr<platform::Mesh::PlatformParams> m_platformParams;
 	};
 
 	/******************************************************************************************************************/
 
 	namespace meshfactory
 	{
-		extern Mesh CreateCube(SaberEngine::Material* newMeshMaterial = nullptr);
+		extern std::shared_ptr<Mesh> CreateCube(SaberEngine::Material* newMeshMaterial = nullptr);
 
-		extern Mesh CreateQuad(glm::vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,
+		extern std::shared_ptr<Mesh> CreateQuad(
+			glm::vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,
 			glm::vec3 tr /*= vec3(0.5f, 0.5f, 0.0f)*/,
 			glm::vec3 bl /*= vec3(-0.5f, -0.5f, 0.0f)*/,
 			glm::vec3 br /*= vec3(0.5f, -0.5f, 0.0f)*/,
 			SaberEngine::Material* newMeshMaterial = nullptr);
 
-		extern Mesh CreateSphere(float radius = 0.5f,
+		extern std::shared_ptr<Mesh> CreateSphere(float radius = 0.5f,
 			size_t numLatSlices = 16,
 			size_t numLongSlices = 16,
 			SaberEngine::Material* newMeshMaterial = nullptr);

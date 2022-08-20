@@ -28,9 +28,10 @@ void main()
 	// TODO: Fix Ambient/Directional lights: Flip screen-aligned quad and render back faces (to be consistent with other deferred lights)
 
 
-	FragColor				= texture(GBuffer_Albedo, data.uv0.xy);		// Note: For PBR, we require all calculations to be performed in linear color
-	FragColor.rgb			= Degamma(FragColor.rgb);
-
+	// Note: All PBR calculations are performed in linear space
+	// However, we use sRGB-format textures, getting the sRGB->Linear transformation for free when writing our GBuffer
+	// for sRGB-format inputs (eg. albedo, ... and?) so no need to degamma albedo here
+	FragColor				= texture(GBuffer_Albedo, data.uv0.xy);
 
 	vec3 worldNormal		= texture(GBuffer_WorldNormal, data.uv0.xy).xyz;
 	vec4 RMAO				= texture(GBuffer_RMAO, data.uv0.xy);

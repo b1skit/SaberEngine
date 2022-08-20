@@ -7,7 +7,7 @@ using std::to_string;
 using std::unordered_map;
 using std::any;
 
-#include "rePlatform.h"
+#include "Platform.h"
 
 
 namespace en
@@ -53,7 +53,7 @@ namespace en
 			return (float)(GetValue<int>("windowXRes")) / (float)(GetValue<int>("windowYRes"));
 		}
 
-		inline const re::platform::RenderingAPI& GetRenderingAPI() const { return m_renderingAPI; }
+		inline const platform::RenderingAPI& GetRenderingAPI() const { return m_renderingAPI; }
 
 
 	private:
@@ -69,7 +69,7 @@ namespace en
 
 		// Explicit members (for efficiency):
 		/***********************************/
-		re::platform::RenderingAPI m_renderingAPI;
+		platform::RenderingAPI m_renderingAPI;
 		std::string m_currentScene;
 
 

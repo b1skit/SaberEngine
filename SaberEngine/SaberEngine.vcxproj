@@ -170,11 +170,12 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Context_Platform.cpp" />
     <ClCompile Include="CoreEngine.cpp" />
     <ClCompile Include="enEngineConfig.cpp" />
-    <ClCompile Include="enPlatform.cpp" />
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="grTextureTarget.cpp" />
     <ClCompile Include="ImageBasedLight.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="Light.cpp" />
@@ -182,29 +183,41 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="grMesh.cpp" />
+    <ClCompile Include="Context_OpenGL.cpp" />
     <ClCompile Include="PlayerObject.cpp" />
     <ClCompile Include="PostFXManager.cpp" />
-    <ClCompile Include="reMesh_OpenGL.cpp" />
-    <ClCompile Include="reMesh_Platform.cpp" />
+    <ClCompile Include="Mesh_OpenGL.cpp" />
+    <ClCompile Include="Mesh_Platform.cpp" />
+    <ClCompile Include="reContext.cpp" />
     <ClCompile Include="Renderable.cpp" />
     <ClCompile Include="RenderManager.cpp" />
-    <ClCompile Include="RenderTexture.cpp" />
-    <ClCompile Include="rePlatform.cpp" />
+    <ClCompile Include="Platform.cpp" />
+    <ClCompile Include="reTexture_OpenGL.cpp" />
+    <ClCompile Include="TextureTarget_OpenGL.cpp" />
+    <ClCompile Include="TextureTarget_Platform.cpp" />
+    <ClCompile Include="Texture_Platform.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
     <ClCompile Include="Skybox.cpp" />
-    <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="grTexture.cpp" />
     <ClCompile Include="TimeManager.cpp" />
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="enPlatform.h" />
+    <ClInclude Include="Context_Platform.h" />
     <ClInclude Include="grMesh.h" />
-    <ClInclude Include="reMesh_OpenGL.h" />
-    <ClInclude Include="reMesh_Platform.h" />
-    <ClInclude Include="rePlatform.h" />
+    <ClInclude Include="grTextureTarget.h" />
+    <ClInclude Include="Mesh_OpenGL.h" />
+    <ClInclude Include="Mesh_Platform.h" />
+    <ClInclude Include="Platform.h" />
+    <ClInclude Include="Context_OpenGL.h" />
+    <ClInclude Include="reContext.h" />
+    <ClInclude Include="TextureTarget_OpenGL.h" />
+    <ClInclude Include="TextureTarget_Platform.h" />
+    <ClInclude Include="Texture_OpenGL.h" />
+    <ClInclude Include="Texture_Platform.h" />
     <ClInclude Include="SaberObject.h" />
     <ClInclude Include="BuildConfiguration.h" />
     <ClInclude Include="Camera.h" />
@@ -224,63 +237,54 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="PostFXManager.h" />
     <ClInclude Include="Renderable.h" />
     <ClInclude Include="RenderManager.h" />
-    <ClInclude Include="RenderTexture.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="SceneObject.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="Skybox.h" />
-    <ClInclude Include="Texture.h" />
+    <ClInclude Include="grTexture.h" />
     <ClInclude Include="TimeManager.h" />
     <ClInclude Include="Transform.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="depthShader.frag">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      </ExcludedFromBuild>
-    </None>
-    <None Include="Shaders\SaberCommon.glsl" />
-    <None Include="Shaders\SaberLighting.glsl" />
-    <None Include="Shaders\blitShader.frag" />
-    <None Include="Shaders\blitShader.vert" />
-    <None Include="Shaders\blurShader.frag" />
-    <None Include="Shaders\blurShader.vert" />
-    <None Include="Shaders\BRDFIntegrationMapShader.frag" />
-    <None Include="Shaders\BRDFIntegrationMapShader.vert" />
-    <None Include="Shaders\cubeDepthShader.frag" />
-    <None Include="Shaders\cubeDepthShader.geom" />
-    <None Include="Shaders\cubeDepthShader.vert" />
-    <None Include="Shaders\deferredAmbientLightShader.frag" />
-    <None Include="Shaders\deferredAmbientLightShader.vert" />
-    <None Include="Shaders\deferredKeyLightShader.frag" />
-    <None Include="Shaders\deferredKeyLightShader.vert" />
-    <None Include="Shaders\deferredPointLightShader.frag" />
-    <None Include="Shaders\deferredPointLightShader.vert" />
-    <None Include="Shaders\depthShader.vert" />
-    <None Include="Shaders\equilinearToCubemapBlitShader.frag" />
-    <None Include="Shaders\equilinearToCubemapBlitShader.vert" />
-    <None Include="Shaders\gBufferFillShader.frag" />
-    <None Include="Shaders\gBufferFillShader.geom" />
-    <None Include="Shaders\gBufferFillShader.vert" />
-    <None Include="Shaders\geometryDemoShader.frag" />
-    <None Include="Shaders\geometryDemoShader.geom" />
-    <None Include="Shaders\geometryDemoShader.vert" />
-    <None Include="Shaders\lambertShader.frag" />
-    <None Include="Shaders\lambertShader.vert" />
-    <None Include="Shaders\errorShader.frag" />
-    <None Include="Shaders\errorShader.vert" />
-    <None Include="Shaders\phongShader.frag" />
-    <None Include="Shaders\phongShader.vert" />
-    <None Include="Shaders\skyboxShader.frag" />
-    <None Include="Shaders\skyboxShader.vert" />
-    <None Include="Shaders\toneMapShader.frag" />
-    <None Include="Shaders\toneMapShader.vert" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Shaders\SaberGlobals.glsl">
-      <FileType>Document</FileType>
-    </None>
+    <None Include="Shaders\glsl\blitShader.frag" />
+    <None Include="Shaders\glsl\blitShader.vert" />
+    <None Include="Shaders\glsl\blurShader.frag" />
+    <None Include="Shaders\glsl\blurShader.vert" />
+    <None Include="Shaders\glsl\BRDFIntegrationMapShader.frag" />
+    <None Include="Shaders\glsl\BRDFIntegrationMapShader.vert" />
+    <None Include="Shaders\glsl\cubeDepthShader.frag" />
+    <None Include="Shaders\glsl\cubeDepthShader.geom" />
+    <None Include="Shaders\glsl\cubeDepthShader.vert" />
+    <None Include="Shaders\glsl\deferredAmbientLightShader.frag" />
+    <None Include="Shaders\glsl\deferredAmbientLightShader.vert" />
+    <None Include="Shaders\glsl\deferredKeyLightShader.frag" />
+    <None Include="Shaders\glsl\deferredKeyLightShader.vert" />
+    <None Include="Shaders\glsl\deferredPointLightShader.frag" />
+    <None Include="Shaders\glsl\deferredPointLightShader.vert" />
+    <None Include="Shaders\glsl\depthShader.frag" />
+    <None Include="Shaders\glsl\depthShader.vert" />
+    <None Include="Shaders\glsl\equilinearToCubemapBlitShader.frag" />
+    <None Include="Shaders\glsl\equilinearToCubemapBlitShader.vert" />
+    <None Include="Shaders\glsl\errorShader.frag" />
+    <None Include="Shaders\glsl\errorShader.vert" />
+    <None Include="Shaders\glsl\gBufferFillShader.frag" />
+    <None Include="Shaders\glsl\gBufferFillShader.vert" />
+    <None Include="Shaders\glsl\geometryDemoShader.frag" />
+    <None Include="Shaders\glsl\geometryDemoShader.geom" />
+    <None Include="Shaders\glsl\geometryDemoShader.vert" />
+    <None Include="Shaders\glsl\lambertShader.frag" />
+    <None Include="Shaders\glsl\lambertShader.vert" />
+    <None Include="Shaders\glsl\phongShader.frag" />
+    <None Include="Shaders\glsl\phongShader.vert" />
+    <None Include="Shaders\glsl\SaberCommon.glsl" />
+    <None Include="Shaders\glsl\SaberGlobals.glsl" />
+    <None Include="Shaders\glsl\SaberLighting.glsl" />
+    <None Include="Shaders\glsl\skyboxShader.frag" />
+    <None Include="Shaders\glsl\skyboxShader.vert" />
+    <None Include="Shaders\glsl\toneMapShader.frag" />
+    <None Include="Shaders\glsl\toneMapShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

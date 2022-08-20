@@ -24,7 +24,7 @@ uniform float emissiveIntensity = 1.0;	// Overwritten during RenderManager.Initi
 
 void main()
 {
-	// Albedo:
+	// Albedo. Note: We use an sRGB-format texture, which converts this value from sRGB->linear space for free
 	gBuffer_out_albedo		= texture(albedo, data.uv0.xy);
 
 	// Normal:

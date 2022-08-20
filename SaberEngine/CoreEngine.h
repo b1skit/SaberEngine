@@ -31,7 +31,7 @@ namespace SaberEngine
 		void Shutdown();
 
 		// Member functions
-		en::EngineConfig const* GetConfig();
+		static en::EngineConfig const* GetConfig();
 
 		// SaberObject interface:
 		void Update();
@@ -49,6 +49,8 @@ namespace SaberEngine
 		LogManager* const	SaberLogManager		= &LogManager::Instance();
 		TimeManager* const	SaberTimeManager	= &TimeManager::Instance();
 
+		static en::EngineConfig m_config;
+
 		// Static Engine component singletons
 		static CoreEngine*		coreEngine;
 		static EventManager*	SaberEventManager;
@@ -60,9 +62,6 @@ namespace SaberEngine
 		// Engine control:
 		bool m_isRunning = false;
 
-		// Engine configuration:
-		en::EngineConfig m_config;
-		// TODO: This should be static?
 
 		bool ProcessCommandLineArgs(int argc, char** argv);
 	};

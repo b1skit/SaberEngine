@@ -55,8 +55,8 @@ vec2 DirectionToEquirectangularUV(vec3 view)
 	vec2 uv = vec2(atan(view.z, view.x), asin(view.y));
 //    uv *= invAtan;
 	uv *= vec2(0.1591, 0.3183);
-    uv += 0.5;
-    
+	uv += 0.5;
+	
 	return uv;
 }
 

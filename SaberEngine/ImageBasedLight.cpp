@@ -1,24 +1,28 @@
+#include <glm/glm.hpp>
+
 #include "ImageBasedLight.h"
 #include "CoreEngine.h"
-#include "Texture.h"
+#include "grTexture.h"
 #include "BuildConfiguration.h"
 #include "grMesh.h"
 #include "Shader.h"
-#include "Texture.h"
 #include "Material.h"
-#include "RenderTexture.h"
-
-#include <glm/glm.hpp>
 
 
 namespace SaberEngine
 {
-	ImageBasedLight::ImageBasedLight(string lightName, string relativeHDRPath) : Light(lightName, LIGHT_AMBIENT_IBL, vec3(0))
+	ImageBasedLight::ImageBasedLight(string lightName, string relativeHDRPath) 
+		: Light(lightName, LIGHT_AMBIENT_IBL, vec3(0))
 	{
-		// IEM setup:
+		// Irradiance Environment Map (IEM) setup:
 		m_IEM_Material = new Material("IEM_Material", nullptr, CUBE_MAP_NUM_FACES, true);
 
-		Texture** IEM_Textures = (Texture**)ConvertEquirectangularToCubemap(CoreEngine::GetSceneManager()->GetCurrentSceneName(), relativeHDRPath, m_xRes, m_yRes, IBL_IEM);
+		std::shared_ptr<gr::Texture> IEM_Textures = (std::shared_ptr<gr::Texture>)ConvertEquirectangularToCubemap(
+				CoreEngine::GetSceneManager()->GetCurrentSceneName(), 
+				relativeHDRPath, 
+				m_xRes,
+				m_yRes, 
+				IBL_IEM);
 
 		if (IEM_Textures != nullptr)
 		{
@@ -27,10 +31,15 @@ namespace SaberEngine
 			m_IEM_Material->AttachCubeMapTextures(IEM_Textures);
 		}
 
-		// PMREM setup:
+		// Pre-filtered Mipmaped Radiance Environment Map (PMREM) setup:
 		m_PMREM_Material = new Material("PMREM_Material", nullptr, CUBE_MAP_NUM_FACES, true);
 
-		Texture** PMREM_Textures = (Texture**)ConvertEquirectangularToCubemap(CoreEngine::GetSceneManager()->GetCurrentSceneName(), relativeHDRPath, m_xRes, m_yRes, IBL_PMREM);
+		std::shared_ptr<gr::Texture> PMREM_Textures = (std::shared_ptr<gr::Texture>)ConvertEquirectangularToCubemap(
+			CoreEngine::GetSceneManager()->GetCurrentSceneName(),
+			relativeHDRPath, 
+			m_xRes, 
+			m_yRes,
+			IBL_PMREM);
 
 		if (PMREM_Textures != nullptr)
 		{
@@ -38,7 +47,8 @@ namespace SaberEngine
 
 			m_PMREM_Material->AttachCubeMapTextures(PMREM_Textures);
 
-			m_maxMipLevel = (int)glm::log2((float)m_xRes);	// Note: We assume the cubemap is always square and use xRes only during our calculations...
+			// Note: We assume the cubemap is always square and use xRes only during our calculations...
+			m_maxMipLevel = (uint32_t)glm::log2((float)m_xRes);
 		}
 
 		// Render BRDF Integration map:
@@ -76,39 +86,44 @@ namespace SaberEngine
 
 		if (m_BRDF_integrationMap != nullptr)
 		{
-			m_BRDF_integrationMap->Destroy();
-			delete m_BRDF_integrationMap;
 			m_BRDF_integrationMap = nullptr;
 		}
 	}
 
 
-	RenderTexture** ImageBasedLight::ConvertEquirectangularToCubemap(string sceneName, string relativeHDRPath, int xRes, int yRes, IBL_TYPE iblType /*= RAW_HDR*/)
+	std::shared_ptr<gr::Texture> ImageBasedLight::ConvertEquirectangularToCubemap(
+		string sceneName, 
+		string relativeHDRPath,
+		int xRes,
+		int yRes, 
+		IBL_TYPE iblType /*= RAW_HDR*/)
 	{
 		string cubemapName;
 		vector<string> shaderKeywords;
-		int textureUnit = -1;	// For now, derrive the cube map texture unit based on the type of texture
+		uint32_t textureUnit = -1;	// For now, derrive the cube map texture unit based on the type of texture
 		if (iblType == IBL_IEM)
 		{
 			cubemapName = "IBL_IEM";
 			shaderKeywords.push_back("BLIT_IEM");
-			textureUnit = (int)CUBE_MAP_0;
+			textureUnit = (uint32_t)CUBE_MAP_0;
 		}
 		else if (iblType == IBL_PMREM)
 		{
 			cubemapName = "IBL_PMREM";
 			shaderKeywords.push_back("BLIT_PMREM");
-			textureUnit = (int)CUBE_MAP_1;
+			textureUnit = (uint32_t)CUBE_MAP_1;
 		}
 		else
 		{
 			cubemapName = "HDR_Image";
-			textureUnit = (int)CUBE_MAP_0;
+			textureUnit = (uint32_t)CUBE_MAP_0;
 			// No need to insert any shader keywords
 		}
 
 		// Create our conversion shader:
-		string shaderName							= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("equilinearToCubemapBlitShaderName");
+		string shaderName = 
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("equilinearToCubemapBlitShaderName");
+
 		Shader* equirectangularToCubemapBlitShader	= Shader::CreateShader(shaderName, &shaderKeywords);
 		if (equirectangularToCubemapBlitShader == nullptr)
 		{
@@ -117,9 +132,18 @@ namespace SaberEngine
 		}
 		equirectangularToCubemapBlitShader->Bind(true);
 
+
+		// Create a cube mesh for rendering:
+		std::shared_ptr<gr::Mesh> cubeMesh = gr::meshfactory::CreateCube();
+		cubeMesh->Bind(true);
+
+
 		// Load the HDR image:
-		string iblTexturePath	= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\" + relativeHDRPath;
-		Texture* hdrTexture		= CoreEngine::GetSceneManager()->FindLoadTextureByPath(iblTexturePath); // Deallocated by SceneManager
+		string iblTexturePath = 
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\" + relativeHDRPath;
+		
+		std::shared_ptr<gr::Texture> hdrTexture	= CoreEngine::GetSceneManager()->FindLoadTextureByPath(
+			iblTexturePath, gr::Texture::TextureColorSpace::Linear); // Deallocated by SceneManager
 
 		if (hdrTexture == nullptr)
 		{
@@ -131,63 +155,21 @@ namespace SaberEngine
 
 			return nullptr;
 		}
-
-		// Set texture params:
-		hdrTexture->TextureWrap_S()		= GL_CLAMP_TO_EDGE;
-		hdrTexture->TextureWrap_T()		= GL_CLAMP_TO_EDGE;
+		gr::Texture::TextureParams hdrParams = hdrTexture->GetTextureParams();
+		hdrParams.m_texSamplerMode = gr::Texture::TextureSamplerMode::Clamp;
+		hdrParams.m_texMinMode = gr::Texture::TextureMinFilter::LinearMipMapLinear;
+		hdrParams.m_texMaxMode = gr::Texture::TextureMaxFilter::Linear;
+		hdrTexture->SetTextureParams(hdrParams);
 		
-		hdrTexture->TextureMinFilter()	= GL_LINEAR;
-		hdrTexture->TextureMaxFilter()	= GL_LINEAR;					// Default
-
-		hdrTexture->Buffer(TEXTURE_0 + TEXTURE_ALBEDO);
-
 		hdrTexture->Bind(TEXTURE_0 + TEXTURE_ALBEDO, true);
 
-		// Create a cubemap to render the IBL into:
-		RenderTexture** cubeFaces		= RenderTexture::CreateCubeMap(xRes, yRes, cubemapName); // Note: RenderTexture constructor caches texture unit supplied here
-		
-		// Update the cubemap texture parameters:
-		for (int i = 0; i < CUBE_MAP_NUM_FACES; i++)
-		{
-			cubeFaces[i]->Format()			= GL_RGB;
-			cubeFaces[i]->InternalFormat()	= GL_RGB16F;
 
-			if (iblType == IBL_PMREM)
-			{
-				cubeFaces[i]->TextureMinFilter() = GL_LINEAR_MIPMAP_LINEAR;
-			}
-			else
-			{
-				cubeFaces[i]->TextureMinFilter() = GL_LINEAR;
-			}
-
-			cubeFaces[i]->TextureMaxFilter()	= GL_LINEAR;
-
-			cubeFaces[i]->AttachmentPoint()		= GL_COLOR_ATTACHMENT0 + 0;
-			cubeFaces[i]->DrawBuffer()			= GL_COLOR_ATTACHMENT0 + 0;
-			cubeFaces[i]->ReadBuffer()			= GL_COLOR_ATTACHMENT0 + 0;
-		}
-
-		// Generate mip-maps for PMREM IBL cubemap faces, to ensure they're allocated once we want to write into them:
-		if (iblType == IBL_PMREM)
-		{
-			RenderTexture::BufferCubeMap(cubeFaces, textureUnit);
-
-			cubeFaces[0]->GenerateMipMaps();
-		}
-		else
-		{
-			RenderTexture::BufferCubeMap(cubeFaces, textureUnit);
-		}
-
-		// Create a cube mesh for rendering:
-		gr::Mesh cubeMesh = gr::meshfactory::CreateCube();
-		gr::Mesh::Bind(cubeMesh, true);
+		// TODO: We should just sample spherical textures directly instead of rendering them into cubemaps...
 
 
 		// Set shader parameters:
 		//-----------------------
-		int numSamples;
+		int numSamples = 1;
 		if (iblType == IBL_IEM)
 		{
 			numSamples = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("numIEMSamples");
@@ -196,10 +178,11 @@ namespace SaberEngine
 		{
 			numSamples = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("numPMREMSamples");
 		}
-		equirectangularToCubemapBlitShader->UploadUniform("numSamples", &numSamples, UNIFORM_Int); // "numSamples" is defined directly in equilinearToCubemapBlitShader.frag
+		// "numSamples" is defined directly in equilinearToCubemapBlitShader.frag
+		equirectangularToCubemapBlitShader->UploadUniform("numSamples", &numSamples, UNIFORM_Int); 
 
 		// Upload the texel size for the hdr texture:
-		vec4 texelSize = hdrTexture->TexelSize();
+		vec4 texelSize = hdrTexture->GetTexelDimenions();
 		equirectangularToCubemapBlitShader->UploadUniform("texelSize", &texelSize.x, UNIFORM_Vec4fv);
 
 		// Create and upload projection matrix:
@@ -209,6 +192,7 @@ namespace SaberEngine
 		// Create view matrices: Orient the camera towards each face of the cube
 		glm::mat4 captureViews[] =
 		{
+			// TODO: Move this to a common factory somewhere
 			glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
 			glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f, 0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
 			glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
@@ -218,103 +202,122 @@ namespace SaberEngine
 		};
 
 
+		// Create a cubemap to render the IBL into:
+		gr::Texture::TextureParams cubeParams;
+		cubeParams.m_width = xRes;
+		cubeParams.m_height = yRes;
+		cubeParams.m_faces = SaberEngine::TEXTURE_TYPE::CUBE_MAP_NUM_FACES;
+		cubeParams.m_texUse = gr::Texture::TextureUse::ColorTarget;
+		cubeParams.m_texDimension = gr::Texture::TextureDimension::TextureCubeMap;
+		cubeParams.m_texFormat = gr::Texture::TextureFormat::RGB16F;
+		cubeParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear;
+		cubeParams.m_texSamplerMode = gr::Texture::TextureSamplerMode::Wrap;
+		cubeParams.m_texMinMode = iblType == IBL_PMREM ?
+			gr::Texture::TextureMinFilter::LinearMipMapLinear :
+			gr::Texture::TextureMinFilter::Linear;
+		cubeParams.m_texMaxMode = gr::Texture::TextureMaxFilter::Linear;
+		cubeParams.m_texturePath = cubemapName;
+
+		// Generate mip-maps for PMREM IBL cubemap faces, to ensure they're allocated once we want to write into them:
+		cubeParams.m_useMIPs = iblType == IBL_PMREM ? true : false;
+
+		std::shared_ptr<gr::Texture> cubemap(new gr::Texture(cubeParams));
+		
+		// Target set initialization:
+		gr::TextureTargetSet m_IBL_IEM_PMREM_StageTargetSet;
+		m_IBL_IEM_PMREM_StageTargetSet.ColorTarget(0) = cubemap;
+		m_IBL_IEM_PMREM_StageTargetSet.Viewport() = gr::Viewport(0, 0, xRes, yRes);
+		m_IBL_IEM_PMREM_StageTargetSet.CreateColorTargets(textureUnit);
+
+
 		// Render into the cube map:
 		//--------------------------
-		glViewport(0, 0, xRes, yRes);	// Configure viewport to match the cubemap dimensions
 		glDepthFunc(GL_LEQUAL);			// Ensure we can render on the far plane
 		glDisable(GL_CULL_FACE);		// Disable back-face culling, since we're rendering a cube from the inside
-
-		cubeFaces[0]->BindFramebuffer(true);
 		
+
 		// Handle per-mip-map rendering:
 		if (iblType == IBL_PMREM)
 		{
-			// Create a render buffer 
-			cubeFaces[0]->CreateRenderbuffer(true);
-
 			// Calculate the number of mip levels we need to render:
-			int numMipLevels = (int)glm::log2((float)xRes) + 1;	// Note: We assume the cubemap is always square and use xRes only during our calculations...
+			const uint32_t numMipLevels = cubemap->GetNumMips();
 
-
-			for (int currentMipLevel = 0; currentMipLevel < numMipLevels; currentMipLevel++)
+			for (uint32_t currentMipLevel = 0; currentMipLevel < numMipLevels; currentMipLevel++)
 			{
-				int mipSize = (int)(xRes / glm::pow(2.0f, currentMipLevel) ); // xRes, xRes/2, xRes/4, ...
-
-				cubeFaces[0]->CreateRenderbuffer(true, mipSize, mipSize);
-
-				glViewport(0, 0, mipSize, mipSize);
-
 				// Compute the roughness for the current mip level, and upload it to the shader:
 				float roughness = (float)currentMipLevel / (float)(numMipLevels - 1);
 				equirectangularToCubemapBlitShader->UploadUniform("roughness", &roughness, UNIFORM_Float);
 
 				// Render each cube face:
-				for (int i = 0; i < CUBE_MAP_NUM_FACES; ++i)
+				for (uint32_t face = 0; face < CUBE_MAP_NUM_FACES; ++face)
 				{
-					equirectangularToCubemapBlitShader->UploadUniform("in_view", &captureViews[i][0].x, UNIFORM_Matrix4fv);
+					equirectangularToCubemapBlitShader->UploadUniform(
+						"in_view", 
+						&captureViews[face][0].x, 
+						UNIFORM_Matrix4fv);
 
-					// Attach our cube map face texture as a framebuffer object:
-					cubeFaces[i]->AttachToFramebuffer(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, currentMipLevel);
+					m_IBL_IEM_PMREM_StageTargetSet.AttachColorTargets(face, currentMipLevel, true);
 
 					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-					glDrawElements(GL_TRIANGLES,
-						(GLsizei)cubeMesh.NumIndices(),
-						GL_UNSIGNED_INT,
-						(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+
+					glDrawElements(GL_TRIANGLES,				// GLenum mode
+						(GLsizei)cubeMesh->NumIndices(),		// GLsizei count
+						GL_UNSIGNED_INT,						// GLenum type
+						(void*)(0));							// const GLvoid* indices
 				}
 			}
 		}
-		else // Handle non-mip-mapped rendering:
+		else // IBL_IEM + RAW_HDR: Non-mip-mapped cube faces
 		{
 			// Render each cube face:
-			for (int i = 0; i < CUBE_MAP_NUM_FACES; ++i)
+			for (uint32_t face = 0; face < CUBE_MAP_NUM_FACES; face++)
 			{
-				equirectangularToCubemapBlitShader->UploadUniform("in_view", &captureViews[i][0].x, UNIFORM_Matrix4fv);
+				equirectangularToCubemapBlitShader->UploadUniform(
+					"in_view", 
+					&captureViews[face][0].x,
+					UNIFORM_Matrix4fv);
 
-				// Attach our cube map face texture as a framebuffer object:
-				cubeFaces[i]->AttachToFramebuffer(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0);
-
+				m_IBL_IEM_PMREM_StageTargetSet.AttachColorTargets(face, 0, true);
+												
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				glDrawElements(GL_TRIANGLES, 
-					(GLsizei)cubeMesh.NumIndices(),
-					GL_UNSIGNED_INT,
-					(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+
+				glDrawElements(GL_TRIANGLES,			// GLenum mode
+					(GLsizei)cubeMesh->NumIndices(),	// GLsizei count
+					GL_UNSIGNED_INT,					// GLenum type
+					(void*)(0));						// const GLvoid* indices
 			}
 		}
 		
-		cubeFaces[0]->BindFramebuffer(false);
+		// Cleanup:
+		m_IBL_IEM_PMREM_StageTargetSet.AttachColorTargets(0, 0, false);
 
 		// Restore defaults:
 		glDepthFunc(GL_LESS);
 		glEnable(GL_CULL_FACE);
-
-		// Cleanup:
-		hdrTexture->Bind(TEXTURE_0 + TEXTURE_ALBEDO, false); // Unbind: Texture will be destroyed/deleted by the SceneManager
 		
-		gr::Mesh::Bind(cubeMesh, false);
-		cubeMesh.Destroy();
+		// Unbind: Texture will be destroyed/deleted by the SceneManager
+		hdrTexture->Bind(TEXTURE_0 + TEXTURE_ALBEDO, false);
+
+		cubeMesh->Bind(false);
+		cubeMesh->Destroy();
 
 		equirectangularToCubemapBlitShader->Bind(false);
 		equirectangularToCubemapBlitShader->Destroy();
 		delete equirectangularToCubemapBlitShader;
 
-		cubeFaces[0]->DeleteRenderbuffer(true);
-
-		return cubeFaces;
+		return cubemap;
 	}
 
 
 	void ImageBasedLight::GenerateBRDFIntegrationMap()
 	{
+		LOG("Rendering BRDF Integration map texture");		
+		
 		// Destroy any existing map
 		if (m_BRDF_integrationMap != nullptr)
 		{
-			m_BRDF_integrationMap->Destroy();
-			delete m_BRDF_integrationMap;
 			m_BRDF_integrationMap = nullptr;
 		}
-
-		LOG("Rendering BRDF Integration map texture");
 		
 		// Create a shader:
 		string shaderName = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("BRDFIntegrationMapShaderName");
@@ -327,63 +330,65 @@ namespace SaberEngine
 		}
 		BRDFIntegrationMapShader->Bind(true);
 
-		
-		// Create a render texture:
-		m_BRDF_integrationMap = new RenderTexture(m_xRes, m_yRes, "BRDFIntegrationMap");
 
-		// Set texture params:
-		m_BRDF_integrationMap->TextureWrap_S()		= GL_CLAMP_TO_EDGE;
-		m_BRDF_integrationMap->TextureWrap_T()		= GL_CLAMP_TO_EDGE;
-
-		m_BRDF_integrationMap->TextureMinFilter()	= GL_LINEAR;
-		m_BRDF_integrationMap->TextureMaxFilter()	= GL_LINEAR;					// Default
-
-		// 2 channel, 16-bit floating point precision, as recommended by Epic Games:
-		m_BRDF_integrationMap->InternalFormat()		= GL_RG16F;
-		m_BRDF_integrationMap->Format()				= GL_RG;
-
-		m_BRDF_integrationMap->AttachmentPoint()	= GL_COLOR_ATTACHMENT0 + 0;
-		m_BRDF_integrationMap->DrawBuffer()			= GL_COLOR_ATTACHMENT0 + 0;
-
-		if (!m_BRDF_integrationMap->Buffer(GENERIC_TEXTURE_0))
-		{
-			LOG_ERROR("Could not buffer BRDF Integration Map RenderTexture!");
-			return;
-		}
-
-		m_BRDF_integrationMap->Bind(GENERIC_TEXTURE_0, true);
-		
 		// Create a CCW screen-aligned quad to render with:
-		gr::Mesh quad = gr::meshfactory::CreateQuad
+		std::shared_ptr<gr::Mesh> quad = gr::meshfactory::CreateQuad
 		(
-			vec3(-1.0f, 1.0f,	-1.0f),	// TL
-			vec3(1.0f,	1.0f,	-1.0f),	// TR
-			vec3(-1.0f, -1.0f,	-1.0f),	// BL
-			vec3(1.0f,	-1.0f,	-1.0f)	// BR
+			// TODO: SIMPLIFY THIS INTERFACE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			vec3(-1.0f, 1.0f, -1.0f),	// TL
+			vec3(1.0f, 1.0f, -1.0f),	// TR
+			vec3(-1.0f, -1.0f, -1.0f),	// BL
+			vec3(1.0f, -1.0f, -1.0f)	// BR
 		);
-		gr::Mesh::Bind(quad, true);
+		quad->Bind(true);
+
 
 		// Render into the quad:
-		//--------------------------
-		glViewport(0, 0, m_xRes, m_yRes);	// Configure viewport to match the cubemap dimensions
-		glDepthFunc(GL_LEQUAL);						// Ensure we can render on the far plane
+		//----------------------
 
-		m_BRDF_integrationMap->BindFramebuffer(true);
-		m_BRDF_integrationMap->CreateRenderbuffer();
+		// Create a render texture:
+		gr::Texture::TextureParams brdfParams;
+		brdfParams.m_width = m_xRes;
+		brdfParams.m_height = m_yRes;
+		brdfParams.m_faces = 1;
+		brdfParams.m_texUse = gr::Texture::TextureUse::ColorTarget;
+		brdfParams.m_texDimension = gr::Texture::TextureDimension::Texture2D;
+		brdfParams.m_texFormat = gr::Texture::TextureFormat::RG16F; // 2 channel, 16-bit floating point precision, as recommended by Epic Games:
+		brdfParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear;
+		brdfParams.m_texSamplerMode = gr::Texture::TextureSamplerMode::Clamp;
+		brdfParams.m_texMinMode = gr::Texture::TextureMinFilter::Linear;
+		brdfParams.m_texMaxMode = gr::Texture::TextureMaxFilter::Linear;
+		brdfParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		brdfParams.m_texturePath = "BRDFIntegrationMap";
 
+		m_BRDF_integrationMap = std::shared_ptr<gr::Texture>(new gr::Texture(brdfParams));
+	
+		// Configure a TextureTargetSet:
+		m_BRDF_integrationMapStageTargetSet.ColorTarget(0) = gr::TextureTarget(m_BRDF_integrationMap);
+		m_BRDF_integrationMapStageTargetSet.Viewport() = gr::Viewport(0, 0, m_xRes, m_yRes);
+
+
+		// TODO: Bind function should call CreateColorTargets internally
+		m_BRDF_integrationMapStageTargetSet.CreateColorTargets(GENERIC_TEXTURE_0);
+
+		// Note: Need to bind so the viewport gets set (even though everything still bound after CreateColorTargets())
+		m_BRDF_integrationMapStageTargetSet.AttachColorTargets(0, 0, true);
+
+
+		// TODO: Handle depth/clearing config via stage params: Stages should control how they interact with the targets
+		glDepthFunc(GL_LEQUAL);	// Ensure we can render on the far plane
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Draw:		
 		glDrawElements(GL_TRIANGLES,
-			(GLsizei)quad.NumIndices(),
+			(GLsizei)quad->NumIndices(),
 			GL_UNSIGNED_INT, 
 			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 
 		// Cleanup:
-		gr::Mesh::Bind(quad, false);
-
-		m_BRDF_integrationMap->BindFramebuffer(false);
-		m_BRDF_integrationMap->DeleteRenderbuffer();
-		m_BRDF_integrationMap->Bind(GENERIC_TEXTURE_0, false);
+		m_BRDF_integrationMapStageTargetSet.AttachColorTargets(0, 0, false);
+		quad->Bind(false);
 
 		BRDFIntegrationMapShader->Bind(false);
 		BRDFIntegrationMapShader->Destroy();

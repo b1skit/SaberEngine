@@ -83,15 +83,13 @@ namespace en
 			{
 				SetValue(key, value, SettingType::APISpecific);
 			}
-
-			return;
 		};
 
 
-		re::platform::RenderingAPI const& api = GetRenderingAPI();
+		platform::RenderingAPI const& api = GetRenderingAPI();
 		switch (api)
 		{
-		case re::platform::RenderingAPI::OpenGL:
+		case platform::RenderingAPI::OpenGL:
 		{
 			TryInsertDefault("useForwardRendering", false),
 
@@ -133,14 +131,14 @@ namespace en
 			TryInsertDefault("defaultMaxShadowBias",				0.05f);
 
 			// Texture dimensions:
-			TryInsertDefault("defaultShadowMapWidth",				2048);
-			TryInsertDefault("defaultShadowMapHeight",				2048);
-			TryInsertDefault("defaultShadowCubeMapthWidth",			512);
-			TryInsertDefault("defaultShadowCubeMapthHeight",		512);
+			TryInsertDefault("defaultShadowMapWidth",				(uint32_t)2048);
+			TryInsertDefault("defaultShadowMapHeight",				(uint32_t)2048);
+			TryInsertDefault("defaultShadowCubeMapWidth",			(uint32_t)512);
+			TryInsertDefault("defaultShadowCubeMapHeight",			(uint32_t)512);
 		}
 			break;
 
-		case re::platform::RenderingAPI::DX12:
+		case platform::RenderingAPI::DX12:
 		{
 			// TBC...
 		}
@@ -184,7 +182,8 @@ namespace en
 	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
 	template string EngineConfig::GetValue<string>(const string& valueName) const;
 	template float EngineConfig::GetValue<float>(const string& valueName) const;
-	template int EngineConfig::GetValue<int>(const string& valueName) const;
+	template int32_t EngineConfig::GetValue<int32_t>(const string& valueName) const;
+	template uint32_t EngineConfig::GetValue<uint32_t>(const string& valueName) const;
 	template bool EngineConfig::GetValue<bool>(const string& valueName) const;
 	template char EngineConfig::GetValue<char>(const string& valueName) const;
 
@@ -258,7 +257,7 @@ namespace en
 	EngineConfig::EngineConfig() :
 		m_currentScene{},
 		m_isDirty{ true },
-		m_renderingAPI{ re::platform::RenderingAPI::RenderingAPI_Count }
+		m_renderingAPI{ platform::RenderingAPI::RenderingAPI_Count }
 	{
 		// Populate the config hash table with initial values
 		InitializeDefaultValues();
@@ -270,17 +269,20 @@ namespace en
 		std::string platform = GetValueAsString("platform");
 		if (platform == "opengl")
 		{
-			m_renderingAPI = re::platform::RenderingAPI::OpenGL;
+			m_renderingAPI = platform::RenderingAPI::OpenGL;
 		}
 		else if (platform == "dx12")
 		{
-			m_renderingAPI = re::platform::RenderingAPI::DX12;
+			m_renderingAPI = platform::RenderingAPI::DX12;
 		}
 		else
 		{
 			SaberEngine::LOG_ERROR("Config failed to set valid rendering API! "
-				"Does the config contain a 'set platform \"<API>\" command? eg. opengl, dx12");
-			return;
+				"Does the config contain a 'set platform \"<API>\" command? e.g:\n"
+				"set platform \"opengl\"\n"
+				"set platform \"dx12\"\n"
+				"Defaulting to OpenGL...");
+			m_renderingAPI = platform::RenderingAPI::OpenGL;
 		}
 
 		// Set API-specific defaults:
@@ -290,7 +292,7 @@ namespace en
 
 	void EngineConfig::LoadConfig()
 	{
-		SaberEngine::LOG("Loading " + CONFIG_FILENAME);
+		SaberEngine::LOG("Loading " + CONFIG_FILENAME + "...");
 
 		ifstream file;
 		file.open((CONFIG_DIR + CONFIG_FILENAME).c_str());
@@ -468,6 +470,8 @@ namespace en
 		}
 
 		m_isDirty = false;
+
+		SaberEngine::LOG("Done!");
 	}
 
 

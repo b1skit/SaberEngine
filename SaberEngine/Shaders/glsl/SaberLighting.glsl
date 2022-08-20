@@ -95,13 +95,25 @@ vec3 HalfVector(vec3 light, vec3 view)
 
 
 // General PBR lighting: Called from specific deferred light shaders
-// FragColor = Non-linearized RGB
+// linearAlbedo = Non-linearized RGB
 // lightWorldDir must be normalized
 // lightColor must have attenuation factored in
-vec4 ComputePBRLighting(vec4 FragColor, vec3 worldNormal, vec4 RMAO, vec4 worldPosition, vec3 F0, float NoL, vec3 lightWorldDir, vec3 lightViewDir, vec3 lightColor, float shadowFactor, mat4 in_view)
+vec4 ComputePBRLighting(
+	vec4 linearAlbedo, 
+	vec3 worldNormal, 
+	vec4 RMAO, 
+	vec4 worldPosition, 
+	vec3 F0, 
+	float NoL,
+	vec3 lightWorldDir, 
+	vec3 lightViewDir, 
+	vec3 lightColor, 
+	float shadowFactor,
+	mat4 in_view)
 {
-	// Convert non-linear RGB to linear:
-	FragColor.rgb = Degamma(FragColor.rgb);
+	// Note: All PBR calculations are performed in linear space.
+	// However, we use sRGB-format textures, getting the sRGB->Linear transformation for free when writing our GBuffer
+	// for sRGB-format inputs (eg. albedo, ... and?) so no need to degamma albedo here
 
 	vec4 viewPosition	= in_view * worldPosition;							// View-space position
 	vec3 viewEyeDir		= normalize(-viewPosition.xyz);						// View-space eye/camera direction
@@ -115,7 +127,7 @@ vec4 ComputePBRLighting(vec4 FragColor, vec3 worldNormal, vec4 RMAO, vec4 worldP
 	float metalness = RMAO.y;
 
 	// Fresnel-Schlick approximation is only defined for non-metals, so we blend it here:
-	F0	= mix(F0, FragColor.rgb, metalness); // Linear interpolation: x, y, using t=[0,1]. Returns x when t=0 -> Blends towards albedo for metals
+	F0	= mix(F0, linearAlbedo.rgb, metalness); // Linear interpolation: x, y, using t=[0,1]. Returns x when t=0 -> Blends towards albedo for metals
 
 	vec3 fresnel = FresnelSchlick(NoV, F0);
 	
@@ -130,8 +142,8 @@ vec4 ComputePBRLighting(vec4 FragColor, vec3 worldNormal, vec4 RMAO, vec4 worldP
 	// Diffuse:
 	vec3 k_d = vec3(1.0) - fresnel;
 	k_d = k_d * (1.0 - metalness); // Metallics absorb refracted light
-//	vec3 diffuseContribution = k_d * FragColor.rgb; // Note: Omitted the "/ PI" factor here
-	vec3 diffuseContribution = k_d * FragColor.rgb / PI;
+//	vec3 diffuseContribution = k_d * linearAlbedo.rgb; // Note: Omitted the "/ PI" factor here
+	vec3 diffuseContribution = k_d * linearAlbedo.rgb / PI;
 
 
 	vec3 combinedContribution = diffuseContribution + specularContribution;
@@ -141,7 +153,7 @@ vec4 ComputePBRLighting(vec4 FragColor, vec3 worldNormal, vec4 RMAO, vec4 worldP
 	
 	combinedContribution *= shadowFactor;
 
-	return vec4(combinedContribution, FragColor.a);
+	return vec4(combinedContribution, linearAlbedo.a);
 }
 
 

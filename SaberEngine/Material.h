@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 #include <glm/glm.hpp>
 #include <GL/glew.h>
@@ -11,17 +12,27 @@ using glm::vec4;
 using std::vector;
 using std::string;
 
+// Predeclarations:
+namespace gr
+{
+	class Texture;
+}
+namespace SaberEngine
+{
+	
+	class Shader;
+}
+
 
 namespace SaberEngine
 {
-	// Predeclarations:
-	class Texture;
-	class Shader;
-
+	// TODO: Make all of these literal, instead of using offsets to match the shader layout
+	// -> Array indexes should be another mapping
+	// -> Write a helper function to translate, with an enum to select between shader layout and material indexes?
 
 	enum TEXTURE_TYPE
 	{
-		TEXTURE_0							= 0,	// RESERVED: Starting offset for *binding* Textures to a texture unit: TEXTURE_0 + TEXTURE_<texture type>
+		TEXTURE_0							= 0,	// RESERVED: Starting offset for *BINDING* Textures to a texture unit: TEXTURE_0 + TEXTURE_<texture type>
 
 		TEXTURE_ALBEDO						= 0,	// Contains transparency in the alpha channel
 		TEXTURE_NORMAL						= 1,
@@ -30,8 +41,8 @@ namespace SaberEngine
 
 		TEXTURE_COUNT						= 4,	// RESERVED: Number of Texture slots a material has
 
-		// GBuffer RenderTexture names:
-		RENDER_TEXTURE_0					= 4,	// RESERVED: Starting offset for *binding* RenderTextures to a texture unit: RENDER_TEXTURE_0 + RENDER_TEXTURE_<texture type>
+		// GBuffer Texture Target names:
+		RENDER_TEXTURE_0					= 4,	// RESERVED: Starting offset for *BINDING* RenderTextures to a texture unit: RENDER_TEXTURE_0 + RENDER_TEXTURE_<texture type>
 
 		RENDER_TEXTURE_ALBEDO				= 0,
 		RENDER_TEXTURE_WORLD_NORMAL			= 1,
@@ -41,14 +52,14 @@ namespace SaberEngine
 		RENDER_TEXTURE_MATERIAL_PROPERTY_0	= 5,	// MATERIAL_PROPERTY_0
 		RENDER_TEXTURE_DEPTH				= 6,	// Make this the last element
 
-		RENDER_TEXTURE_COUNT				= 7,	// RESERVED: Number of RenderTexture slots a material has
+		RENDER_TEXTURE_COUNT				= 7,	// RESERVED: Number of target slots a material has
 
 		// Depth map texture units:
-		DEPTH_TEXTURE_0						= 11,	// RESERVED: Starting offset for *binding* depth RenderTextures to a texture unit: DEPTH_TEXTURE_0 + DEPTH_TEXTURE_<texture tyep>. First unit must equal TEXTURE_COUNT + RENDER_TEXTURE_COUNT
+		DEPTH_TEXTURE_0						= 11,	// RESERVED: Starting offset for *BINDING* depth targets to a texture unit: DEPTH_TEXTURE_0 + DEPTH_TEXTURE_<texture tyep>. First unit must equal TEXTURE_COUNT + RENDER_TEXTURE_COUNT
 
 		DEPTH_TEXTURE_SHADOW				= 0,
 
-		DEPTH_TEXTURE_COUNT					= 1,	// RESERVED: Number of DEPTH RenderTexture slots a material has
+		DEPTH_TEXTURE_COUNT					= 1,	// RESERVED: Number of DEPTH target slots a material has
 
 		// Generic additional texture samplers:
 		GENERIC_TEXTURE_0					= 12,
@@ -63,8 +74,8 @@ namespace SaberEngine
 		GENERIC_TEXTURE_COUNT				= 8,	// RESERVED: Number of generic texture samplers
 
 		// Cube maps:
-		CUBE_MAP_0							= 20,	// RESERVED: Starting offset for *binding* cube RenderTextures to a texture unit: CUBE_MAP_0 + CUBE_MAP_TEXTURE_<texture tyep>. First unit must equal TEXTURE_COUNT + RENDER_TEXTURE_COUNT + DEPTH_TEXTURE_COUNT
-		CUBE_MAP_1							= 26,	// RESERVED: Starting offset for *binding* cube RenderTextures to a texture unit: CUBE_MAP_1 + CUBE_MAP_TEXTURE_<texture tyep>. First unit must equal TEXTURE_COUNT + RENDER_TEXTURE_COUNT + DEPTH_TEXTURE_COUNT + CUBE_MAP_0
+		CUBE_MAP_0							= 20,	// RESERVED: Starting offset for *BINDING* cube RenderTextures to a texture unit: CUBE_MAP_0 + CUBE_MAP_TEXTURE_<texture tyep>. First unit must equal TEXTURE_COUNT + RENDER_TEXTURE_COUNT + DEPTH_TEXTURE_COUNT
+		CUBE_MAP_1							= 26,	// RESERVED: Starting offset for *BINDING* cube RenderTextures to a texture unit: CUBE_MAP_1 + CUBE_MAP_TEXTURE_<texture tyep>. First unit must equal TEXTURE_COUNT + RENDER_TEXTURE_COUNT + DEPTH_TEXTURE_COUNT + CUBE_MAP_0
 
 		CUBE_MAP_COUNT						= 2,	// RESERVED: Total number of cube maps allocated
 
@@ -79,8 +90,10 @@ namespace SaberEngine
 		CUBE_MAP_NUM_FACES					= 6,	// RESERVED: Number of faces in a cube map
 
 	}; // Note: If new enums are added, don't forget to update Material::RENDER_TEXTURE_SAMPLER_NAMES[] as well!
+	// TODO: Make this an assert^^^^
 
 
+	// TODO: Materials should contain generic blocks of parameters (eg. within a struct?)
 	enum MATERIAL_PROPERTY_INDEX
 	{
 		MATERIAL_PROPERTY_0,		// Shader's matProperty0
@@ -111,24 +124,23 @@ namespace SaberEngine
 		inline Shader*&			GetShader()								{ return m_shader; }
 		inline vec4&			Property(MATERIAL_PROPERTY_INDEX index) { return m_properties[index]; }
 
-		Texture*&				AccessTexture(TEXTURE_TYPE textureType);
-		inline int const&		NumTextureSlots()						{ return m_numTextures; }
+		std::shared_ptr<gr::Texture>&	AccessTexture(TEXTURE_TYPE textureType);
+		inline size_t const		NumTextureSlots()						{ return m_textures.size(); }
 
 		vector<string> const&	ShaderKeywords() const					{ return m_shaderKeywords; }
 		void					AddShaderKeyword(string const& newKeyword);
 		
 
-		inline bool&			IsRenderMaterial()						{ return m_isRenderMaterial; }
-
-
+		// TODO: Materials should specify the texture unit; we shouldn't need to specify textureUnit
+		// -> Deleting all Texture constructors etc ensures textures are unique w.r.t the GPU
+		// Bind operation should probably go through the material???
 		void BindAllTextures(int startingTextureUnit, bool doBind);
-		void BufferAllTextures(int startingTextureUnit);
 
 		// Helper function: Attaches an array of 6 textures
-		void AttachCubeMapTextures(Texture** cubeMapFaces); // cubeMapFaces must be EXACTLY 6 elements
+		void AttachCubeMapTextures(std::shared_ptr<gr::Texture> cubemapTexture);
 
 
-		// RenderTexture sampler names:
+		// Texture target sampler names:
 		//-----------------------------
 		const static string TEXTURE_SAMPLER_NAMES[TEXTURE_COUNT];
 		const static string RENDER_TEXTURE_SAMPLER_NAMES[RENDER_TEXTURE_COUNT];
@@ -140,17 +152,15 @@ namespace SaberEngine
 		
 
 	private:
-		string		m_name;									// Must be unique: Identifies this material
+		string		m_name;							// Must be unique: Identifies this material
 
-		Shader*		m_shader		= nullptr;					// Deallocated up in SceneManager.Shutdown()
-		Texture**	m_textures	= nullptr;					// Deallocated when object is destroyed in SceneManager.Shutdown()
-		int			m_numTextures = 0;
+		Shader*		m_shader		= nullptr;		// Deallocated up in SceneManager.Shutdown()			
+
+		std::vector<std::shared_ptr<gr::Texture>> m_textures;
 		
 		vec4		m_properties[MATERIAL_PROPERTY_COUNT];	// Generic material properties
 
 		vector<string> m_shaderKeywords;
-
-		bool m_isRenderMaterial	= false;
 
 		// Private member functions:
 		//--------------------------
