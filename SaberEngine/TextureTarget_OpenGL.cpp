@@ -2,7 +2,7 @@
 
 #include "BuildConfiguration.h"
 
-#include "grTextureTarget.h"
+#include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"
 #include "Texture_OpenGL.h"
 #include "Texture_Platform.h"

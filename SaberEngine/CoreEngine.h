@@ -5,7 +5,7 @@
 #include "InputManager.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
-#include "enEngineConfig.h"
+#include "EngineConfig.h"
 
 
 namespace SaberEngine

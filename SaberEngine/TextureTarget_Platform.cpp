@@ -2,7 +2,7 @@
 
 #include "CoreEngine.h"
 #include "TextureTarget_Platform.h"
-#include "grTextureTarget.h"
+#include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"
 
 

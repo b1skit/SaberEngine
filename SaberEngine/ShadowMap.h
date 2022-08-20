@@ -8,8 +8,8 @@ using std::string;
 #include <glm/glm.hpp>
 using glm::vec3;
 
-#include "grTexture.h"
-#include "grTextureTarget.h"
+#include "Texture.h"
+#include "TextureTarget.h"
 
 #define DEFAULT_SHADOWMAP_TEXPATH	"ShadowMap"		// Shadow maps don't have a filepath...
 #define DEFAULT_SHADOWMAP_COLOR		vec4(1,1,1,1)	// Default to white (max far)

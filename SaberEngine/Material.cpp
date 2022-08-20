@@ -1,7 +1,7 @@
 #include "Material.h"
 #include "CoreEngine.h"
 #include "Shader.h"
-#include "grTexture.h"
+#include "Texture.h"
 #include "BuildConfiguration.h"
 #include "Shader.h"
 

@@ -3,7 +3,7 @@
 #include <GL/glew.h>
 
 #include "BuildConfiguration.h"
-#include "grTexture.h"
+#include "Texture.h"
 #include "Texture_Platform.h"
 #include "Texture_OpenGL.h"
 

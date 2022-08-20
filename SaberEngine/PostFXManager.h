@@ -3,8 +3,8 @@
 #include <string>
 #include <memory>
 
-#include "grMesh.h"
-#include "grTextureTarget.h"
+#include "Mesh.h"
+#include "TextureTarget.h"
 
 
 // Pre-declarations:

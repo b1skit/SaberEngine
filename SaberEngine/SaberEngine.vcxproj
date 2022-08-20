@@ -172,23 +172,24 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Context_Platform.cpp" />
     <ClCompile Include="CoreEngine.cpp" />
-    <ClCompile Include="enEngineConfig.cpp" />
+    <ClCompile Include="EngineConfig.cpp" />
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
-    <ClCompile Include="grTextureTarget.cpp" />
+    <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="TextureTarget.cpp" />
     <ClCompile Include="ImageBasedLight.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="LogManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Material.cpp" />
-    <ClCompile Include="grMesh.cpp" />
+    <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Context_OpenGL.cpp" />
     <ClCompile Include="PlayerObject.cpp" />
     <ClCompile Include="PostFXManager.cpp" />
     <ClCompile Include="Mesh_OpenGL.cpp" />
     <ClCompile Include="Mesh_Platform.cpp" />
-    <ClCompile Include="reContext.cpp" />
+    <ClCompile Include="Context.cpp" />
     <ClCompile Include="Renderable.cpp" />
     <ClCompile Include="RenderManager.cpp" />
     <ClCompile Include="Platform.cpp" />
@@ -201,19 +202,19 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
     <ClCompile Include="Skybox.cpp" />
-    <ClCompile Include="grTexture.cpp" />
     <ClCompile Include="TimeManager.cpp" />
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Context_Platform.h" />
-    <ClInclude Include="grMesh.h" />
-    <ClInclude Include="grTextureTarget.h" />
+    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Texture.h" />
+    <ClInclude Include="TextureTarget.h" />
     <ClInclude Include="Mesh_OpenGL.h" />
     <ClInclude Include="Mesh_Platform.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="Context_OpenGL.h" />
-    <ClInclude Include="reContext.h" />
+    <ClInclude Include="Context.h" />
     <ClInclude Include="TextureTarget_OpenGL.h" />
     <ClInclude Include="TextureTarget_Platform.h" />
     <ClInclude Include="Texture_OpenGL.h" />
@@ -223,7 +224,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CoreEngine.h" />
     <ClInclude Include="EngineComponent.h" />
-    <ClInclude Include="enEngineConfig.h" />
+    <ClInclude Include="EngineConfig.h" />
     <ClInclude Include="EventListener.h" />
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="GameObject.h" />
@@ -243,7 +244,6 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="Skybox.h" />
-    <ClInclude Include="grTexture.h" />
     <ClInclude Include="TimeManager.h" />
     <ClInclude Include="Transform.h" />
   </ItemGroup>

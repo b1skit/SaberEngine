@@ -8,8 +8,8 @@
 
 #include "EngineComponent.h"
 #include "EventListener.h"
-#include "grMesh.h"
-#include "grTexture.h"
+#include "Mesh.h"
+#include "Texture.h"
 
 
 

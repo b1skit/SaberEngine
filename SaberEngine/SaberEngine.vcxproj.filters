@@ -119,7 +119,7 @@
     <ClCompile Include="Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="grMesh.cpp">
+    <ClCompile Include="Mesh.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="Platform.cpp">
@@ -131,7 +131,7 @@
     <ClCompile Include="Mesh_Platform.cpp">
       <Filter>Source Files\platform</Filter>
     </ClCompile>
-    <ClCompile Include="enEngineConfig.cpp">
+    <ClCompile Include="EngineConfig.cpp">
       <Filter>Source Files\en</Filter>
     </ClCompile>
     <ClCompile Include="Texture_Platform.cpp">
@@ -140,10 +140,7 @@
     <ClCompile Include="Texture_OpenGL.cpp">
       <Filter>Source Files\platform\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="grTexture.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="grTextureTarget.cpp">
+    <ClCompile Include="TextureTarget.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="TextureTarget_Platform.cpp">
@@ -155,11 +152,14 @@
     <ClCompile Include="Context_OpenGL.cpp">
       <Filter>Source Files\platform\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="reContext.cpp">
+    <ClCompile Include="Context.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
     <ClCompile Include="Context_Platform.cpp">
       <Filter>Source Files\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Source Files\gr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -241,7 +241,7 @@
     <ClInclude Include="SaberObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="grMesh.h">
+    <ClInclude Include="Mesh.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="Platform.h">
@@ -253,7 +253,7 @@
     <ClInclude Include="Mesh_Platform.h">
       <Filter>Header Files\platform</Filter>
     </ClInclude>
-    <ClInclude Include="enEngineConfig.h">
+    <ClInclude Include="EngineConfig.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="Texture_Platform.h">
@@ -262,10 +262,7 @@
     <ClInclude Include="Texture_OpenGL.h">
       <Filter>Header Files\platform\OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="grTexture.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="grTextureTarget.h">
+    <ClInclude Include="TextureTarget.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="TextureTarget_Platform.h">
@@ -277,11 +274,14 @@
     <ClInclude Include="Context_OpenGL.h">
       <Filter>Header Files\platform\OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="reContext.h">
+    <ClInclude Include="Context.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
     <ClInclude Include="Context_Platform.h">
       <Filter>Header Files\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Header Files\gr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

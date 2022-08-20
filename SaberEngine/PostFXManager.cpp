@@ -4,7 +4,7 @@
 #include "PostFXManager.h"
 #include "BuildConfiguration.h"
 #include "CoreEngine.h"
-#include "grMesh.h"
+#include "Mesh.h"
 #include "Shader.h"
 #include "Camera.h"
 #include "Material.h"

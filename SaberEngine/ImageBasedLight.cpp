@@ -2,9 +2,9 @@
 
 #include "ImageBasedLight.h"
 #include "CoreEngine.h"
-#include "grTexture.h"
+#include "Texture.h"
 #include "BuildConfiguration.h"
-#include "grMesh.h"
+#include "Mesh.h"
 #include "Shader.h"
 #include "Material.h"
 

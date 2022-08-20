@@ -7,7 +7,7 @@
 #include <GL/GL.h> // Must follow glew.h
 
 #include "Context_OpenGL.h"
-#include "reContext.h"
+#include "Context.h"
 
 #include "CoreEngine.h"
 #include "BuildConfiguration.h"

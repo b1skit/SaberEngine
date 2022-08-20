@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 
 #include "SceneObject.h"
-#include "grTextureTarget.h"
+#include "TextureTarget.h"
 
 
 namespace SaberEngine

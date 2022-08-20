@@ -3,7 +3,7 @@
 #include <GL/glew.h>
 
 #include "Mesh_Platform.h"
-#include "grMesh.h"
+#include "Mesh.h"
 
 namespace gr
 {

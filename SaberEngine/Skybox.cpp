@@ -1,11 +1,11 @@
 #include "Skybox.h"
 #include "Material.h"
-#include "grMesh.h"
+#include "Mesh.h"
 #include "CoreEngine.h"
 #include "BuildConfiguration.h"
 #include "ImageBasedLight.h"
 #include "Shader.h"
-#include "grTexture.h"
+#include "Texture.h"
 
 
 namespace SaberEngine

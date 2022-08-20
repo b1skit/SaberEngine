@@ -5,7 +5,7 @@
 using glm::pi;
 
 #include "BuildConfiguration.h"
-#include "grMesh.h"
+#include "Mesh.h"
 
 
 namespace gr

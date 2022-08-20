@@ -1,6 +1,6 @@
 #include "Mesh_OpenGL.h"
 
-#include "grMesh.h"
+#include "Mesh.h"
 
 namespace opengl
 {

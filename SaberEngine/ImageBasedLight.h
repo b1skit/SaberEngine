@@ -4,7 +4,7 @@
 using std::string;
 
 #include "Light.h"	// Base class
-#include "grTextureTarget.h"
+#include "TextureTarget.h"
 
 
 

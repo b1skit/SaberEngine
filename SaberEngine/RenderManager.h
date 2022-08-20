@@ -11,9 +11,9 @@
 using glm::vec4;
 
 #include "EngineComponent.h"
-#include "grMesh.h"
-#include "grTextureTarget.h"
-#include "reContext.h"
+#include "Mesh.h"
+#include "TextureTarget.h"
+#include "Context.h"
 
 
 // Pre-declarations:

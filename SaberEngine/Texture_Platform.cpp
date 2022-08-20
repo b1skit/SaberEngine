@@ -1,5 +1,5 @@
 #include "CoreEngine.h"
-#include "grTexture.h"
+#include "Texture.h"
 #include "Texture_Platform.h"
 #include "Texture_OpenGL.h"
 

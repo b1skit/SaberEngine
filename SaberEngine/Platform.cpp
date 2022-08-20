@@ -4,15 +4,15 @@
 #include "CoreEngine.h"
 #include "BuildConfiguration.h"
 
-#include "reContext.h"
+#include "Context.h"
 #include "Context_Platform.h"
 #include "Context_OpenGL.h"
 
-#include "grMesh.h"
+#include "Mesh.h"
 #include "Mesh_Platform.h"
 #include "Mesh_OpenGL.h"
 
-#include "grTexture.h"
+#include "Texture.h"
 #include "Texture_Platform.h"
 #include "Texture_OpenGL.h"
 

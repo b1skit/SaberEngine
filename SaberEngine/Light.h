@@ -11,7 +11,7 @@ using glm::vec3;
 using glm::vec4;
 
 #include "SceneObject.h"	// Base class
-#include "grMesh.h"
+#include "Mesh.h"
 
 
 
