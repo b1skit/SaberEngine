@@ -42,17 +42,29 @@
     <Filter Include="Source Files\en\platform">
       <UniqueIdentifier>{1a74d6ca-0237-4c05-8e91-33beebed076a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\platform">
+    <Filter Include="Header Files\re\platform">
+      <UniqueIdentifier>{180b02b2-6e6a-486b-b7c0-501814587f64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\re\platform\OpenGL">
+      <UniqueIdentifier>{7bcdd248-abcf-4294-8d59-f6a63c54554b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gr\platform">
       <UniqueIdentifier>{03f7fb93-12a0-45e5-beec-39b6d6330ba4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\platform\OpenGL">
+    <Filter Include="Header Files\gr\platform\OpenGL">
       <UniqueIdentifier>{4baacfcf-aa1f-44c9-9e93-1dccfc227a1b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\platform">
+    <Filter Include="Source Files\gr\platform">
       <UniqueIdentifier>{afdc443a-307c-4991-9e5b-f6b7cd08c30c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\platform\OpenGL">
+    <Filter Include="Source Files\gr\platform\OpenGL">
       <UniqueIdentifier>{c142e74e-c194-4df2-8137-395acd37f345}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\re\platform">
+      <UniqueIdentifier>{2a550363-f17a-4d7c-95cf-8f4bbdb3aaed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\re\platform\OpenGL">
+      <UniqueIdentifier>{d850fa90-7f81-4355-895d-5e6dba3351c7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -123,43 +135,43 @@
       <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="Platform.cpp">
-      <Filter>Source Files\platform</Filter>
+      <Filter>Source Files\gr\platform</Filter>
     </ClCompile>
     <ClCompile Include="Mesh_OpenGL.cpp">
-      <Filter>Source Files\platform\OpenGL</Filter>
+      <Filter>Source Files\gr\platform\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="Mesh_Platform.cpp">
-      <Filter>Source Files\platform</Filter>
+      <Filter>Source Files\gr\platform</Filter>
     </ClCompile>
     <ClCompile Include="EngineConfig.cpp">
       <Filter>Source Files\en</Filter>
     </ClCompile>
     <ClCompile Include="Texture_Platform.cpp">
-      <Filter>Source Files\platform</Filter>
+      <Filter>Source Files\gr\platform</Filter>
     </ClCompile>
     <ClCompile Include="Texture_OpenGL.cpp">
-      <Filter>Source Files\platform\OpenGL</Filter>
+      <Filter>Source Files\gr\platform\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="TextureTarget.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="TextureTarget_Platform.cpp">
-      <Filter>Source Files\platform</Filter>
+      <Filter>Source Files\gr\platform</Filter>
     </ClCompile>
     <ClCompile Include="TextureTarget_OpenGL.cpp">
-      <Filter>Source Files\platform\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="Context_OpenGL.cpp">
-      <Filter>Source Files\platform\OpenGL</Filter>
+      <Filter>Source Files\gr\platform\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="Context.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
-    <ClCompile Include="Context_Platform.cpp">
-      <Filter>Source Files\platform</Filter>
-    </ClCompile>
     <ClCompile Include="Texture.cpp">
       <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="Context_OpenGL.cpp">
+      <Filter>Source Files\re\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="Context_Platform.cpp">
+      <Filter>Source Files\re\platform</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -245,43 +257,43 @@
       <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="Platform.h">
-      <Filter>Header Files\platform</Filter>
+      <Filter>Header Files\gr\platform</Filter>
     </ClInclude>
     <ClInclude Include="Mesh_OpenGL.h">
-      <Filter>Header Files\platform\OpenGL</Filter>
+      <Filter>Header Files\gr\platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="Mesh_Platform.h">
-      <Filter>Header Files\platform</Filter>
+      <Filter>Header Files\gr\platform</Filter>
     </ClInclude>
     <ClInclude Include="EngineConfig.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="Texture_Platform.h">
-      <Filter>Header Files\platform</Filter>
+      <Filter>Header Files\gr\platform</Filter>
     </ClInclude>
     <ClInclude Include="Texture_OpenGL.h">
-      <Filter>Header Files\platform\OpenGL</Filter>
+      <Filter>Header Files\gr\platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="TextureTarget.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="TextureTarget_Platform.h">
-      <Filter>Header Files\platform</Filter>
+      <Filter>Header Files\gr\platform</Filter>
     </ClInclude>
     <ClInclude Include="TextureTarget_OpenGL.h">
-      <Filter>Header Files\platform\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="Context_OpenGL.h">
-      <Filter>Header Files\platform\OpenGL</Filter>
+      <Filter>Header Files\gr\platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="Context.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
-    <ClInclude Include="Context_Platform.h">
-      <Filter>Header Files\platform</Filter>
-    </ClInclude>
     <ClInclude Include="Texture.h">
       <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="Context_OpenGL.h">
+      <Filter>Header Files\re\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="Context_Platform.h">
+      <Filter>Header Files\re\platform</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
