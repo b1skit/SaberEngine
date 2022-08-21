@@ -156,19 +156,19 @@ namespace SaberEngine
 					deferredLights[i]->Type() == LIGHT_AMBIENT_IBL ||
 					deferredLights[i]->Type() == LIGHT_DIRECTIONAL)
 				{
-					glCullFace(GL_BACK);
+					m_context.SetCullingMode(platform::Context::FaceCullingMode::Back);
 				}
 				else
 				{
 					// For 3D deferred light meshes, we render back faces so something is visible even while we're 
 					// inside the mesh		
-					glCullFace(GL_FRONT);
+					m_context.SetCullingMode(platform::Context::FaceCullingMode::Front);
 				}
 
 				RenderDeferredLight(deferredLights[i]);
 			}
 		}
-		glCullFace(GL_BACK);
+		m_context.SetCullingMode(platform::Context::FaceCullingMode::Back);
 
 		// Render the skybox on top of the frame:
 		glDisable(GL_BLEND);
@@ -192,7 +192,7 @@ namespace SaberEngine
 		// Cleanup:
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
-		glCullFace(GL_BACK);
+		m_context.SetCullingMode(platform::Context::FaceCullingMode::Back);
 
 		// Blit results to screen (Using the final post processing shader pass supplied by the PostProcessingManager):
 		BlitToScreen(m_outputTargetSet->ColorTarget(0).GetTexture(), finalFrameShader);

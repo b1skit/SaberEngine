@@ -32,5 +32,7 @@ namespace opengl
 		static void Destroy(re::Context& context);
 
 		static void SwapWindow(re::Context& context);
+
+		static void SetCullingMode(platform::Context::FaceCullingMode const& mode);
 	};
 }

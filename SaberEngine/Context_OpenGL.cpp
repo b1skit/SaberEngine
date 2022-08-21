@@ -120,7 +120,7 @@ namespace opengl
 	void Context::Create(re::Context& context)
 	{
 		opengl::Context::PlatformParams* const platformParams =
-			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams().get());
+			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
 
 		// Video automatically inits events, but included here as a reminder
 		if (SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO) != 0) 
@@ -222,7 +222,7 @@ namespace opengl
 	void Context::Destroy(re::Context& context)
 	{
 		opengl::Context::PlatformParams* const platformParams =
-			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams().get());
+			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
 		
 		SDL_GL_DeleteContext(platformParams->m_glContext);
 		SDL_DestroyWindow(platformParams->m_glWindow);
@@ -233,8 +233,33 @@ namespace opengl
 	void Context::SwapWindow(re::Context& context)
 	{
 		opengl::Context::PlatformParams* const platformParams =
-			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams().get());
+			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
 
 		SDL_GL_SwapWindow(platformParams->m_glWindow);
+	}
+
+
+	void Context::SetCullingMode(platform::Context::FaceCullingMode const& mode)
+	{
+		switch (mode)
+		{
+		case platform::Context::FaceCullingMode::Front:
+		{
+			glCullFace(GL_FRONT);
+		}
+		break;
+		case platform::Context::FaceCullingMode::Back:
+		{
+			glCullFace(GL_BACK);
+		}
+		break;
+		case platform::Context::FaceCullingMode::FrontAndBack:
+		{
+			glCullFace(GL_FRONT_AND_BACK);
+		}
+		break;
+		default:
+			assert("Invalid face culling mode" && false);
+		}
 	}
 }

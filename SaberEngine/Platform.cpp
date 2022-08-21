@@ -36,9 +36,10 @@ namespace platform
 		case RenderingAPI::OpenGL:
 		{
 			// API-specific:
-			platform::Context::Create		= &opengl::Context::Create;
-			platform::Context::Destroy		= &opengl::Context::Destroy;
-			platform::Context::SwapWindow	= &opengl::Context::SwapWindow;
+			platform::Context::Create			= &opengl::Context::Create;
+			platform::Context::Destroy			= &opengl::Context::Destroy;
+			platform::Context::SwapWindow		= &opengl::Context::SwapWindow;
+			platform::Context::SetCullingMode	= &opengl::Context::SetCullingMode;
 
 			// Mesh:
 			platform::Mesh::Create	= &opengl::Mesh::Create;
@@ -47,10 +48,10 @@ namespace platform
 
 			// Texture:
 			platform::Texture::Create			= &opengl::Texture::Create;
-			platform::Texture::Destroy					= &opengl::Texture::Destroy;
+			platform::Texture::Destroy			= &opengl::Texture::Destroy;
 			platform::Texture::Bind				= &opengl::Texture::Bind;
 			platform::Texture::GenerateMipMaps	= &opengl::Texture::GenerateMipMaps;
-			platform::Texture::GetUVOrigin				= &opengl::Texture::GetUVOrigin;
+			platform::Texture::GetUVOrigin		= &opengl::Texture::GetUVOrigin;
 
 			// Texture target:
 			

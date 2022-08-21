@@ -16,8 +16,7 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			context.m_platformParams =
-				std::make_unique<opengl::Context::PlatformParams>();
+			context.m_platformParams = std::make_unique<opengl::Context::PlatformParams>();
 		}
 		break;
 		case RenderingAPI::DX12:
@@ -38,4 +37,5 @@ namespace platform
 	void (*platform::Context::Create)(re::Context& context);
 	void (*platform::Context::Destroy)(re::Context& context);
 	void (*platform::Context::SwapWindow)(re::Context& context);
+	void (*platform::Context::SetCullingMode)(platform::Context::FaceCullingMode const& mode);
 }

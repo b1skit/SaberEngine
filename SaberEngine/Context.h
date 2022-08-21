@@ -10,18 +10,20 @@ namespace re
 	class Context
 	{
 	public:
-
+		
 
 
 	public:
 		Context();
 
-		std::unique_ptr<platform::Context::PlatformParams>& GetPlatformParams() { return m_platformParams; }
+		platform::Context::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
 
 		// Platform wrappers:
 		void Create();
 		void Destroy();
 		void SwapWindow();
+
+		void SetCullingMode(platform::Context::FaceCullingMode const& mode);
 
 
 	private:

@@ -131,9 +131,6 @@
     <ClCompile Include="Mesh.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="Platform.cpp">
-      <Filter>Source Files\gr\platform</Filter>
-    </ClCompile>
     <ClCompile Include="Mesh_OpenGL.cpp">
       <Filter>Source Files\gr\platform\OpenGL</Filter>
     </ClCompile>
@@ -172,6 +169,9 @@
     </ClCompile>
     <ClCompile Include="LogManager.cpp">
       <Filter>Source Files\fr</Filter>
+    </ClCompile>
+    <ClCompile Include="Platform.cpp">
+      <Filter>Source Files\en</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -253,9 +253,6 @@
     <ClInclude Include="Mesh.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
-    <ClInclude Include="Platform.h">
-      <Filter>Header Files\gr\platform</Filter>
-    </ClInclude>
     <ClInclude Include="Mesh_OpenGL.h">
       <Filter>Header Files\gr\platform\OpenGL</Filter>
     </ClInclude>
@@ -294,6 +291,9 @@
     </ClInclude>
     <ClInclude Include="LogManager.h">
       <Filter>Header Files\fr</Filter>
+    </ClInclude>
+    <ClInclude Include="Platform.h">
+      <Filter>Header Files\en</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

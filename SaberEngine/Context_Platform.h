@@ -3,16 +3,28 @@
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 
-
 namespace re
 {
 	class Context;
 }
 
+
 namespace platform
 {
+
+
 	class Context
 	{
+	public:
+		enum class FaceCullingMode
+		{
+			Front,
+			Back,
+			FrontAndBack,
+
+			FaceCullingMode_Count
+		};
+
 	public:
 		struct PlatformParams
 		{
@@ -36,6 +48,7 @@ namespace platform
 		static void (*Create)(re::Context& context);
 		static void (*Destroy)(re::Context& context);
 		static void (*SwapWindow)(re::Context& context);
+		static void (*SetCullingMode)(FaceCullingMode const& mode);
 
 	private:
 
