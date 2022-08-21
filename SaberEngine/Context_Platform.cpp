@@ -40,4 +40,5 @@ namespace platform
 	void (*platform::Context::SetCullingMode)(platform::Context::FaceCullingMode const& mode);
 	void (*platform::Context::ClearTargets)(platform::Context::ClearTarget const& clearTarget);
 	void (*platform::Context::SetBlendMode)(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst);
+	void (*platform::Context::SetDepthMode)(DepthMode const& mode);
 }

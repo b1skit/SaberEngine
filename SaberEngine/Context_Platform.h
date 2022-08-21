@@ -50,6 +50,20 @@ namespace platform
 			BlendMode_Count
 		};
 
+		enum class DepthMode
+		{
+			Default,	// Less
+			Never,
+			Less,		// <
+			Equal,		// ==
+			LEqual,		// <=
+			Greater,	// >
+			NotEqual,	// !=
+			GEqual,		// >=
+			Always,
+			DepthMode_Count
+		};
+
 	public:
 		struct PlatformParams
 		{
@@ -76,6 +90,7 @@ namespace platform
 		static void (*SetCullingMode)(FaceCullingMode const& mode);
 		static void (*ClearTargets)(ClearTarget const& clearTarget);
 		static void (*SetBlendMode)(BlendMode const& src, BlendMode const& dst);
+		static void(*SetDepthMode)(DepthMode const& mode);
 
 	private:
 

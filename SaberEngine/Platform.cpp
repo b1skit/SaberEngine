@@ -42,6 +42,7 @@ namespace platform
 			platform::Context::SetCullingMode	= &opengl::Context::SetCullingMode;
 			platform::Context::ClearTargets		= &opengl::Context::ClearTargets;
 			platform::Context::SetBlendMode		= &opengl::Context::SetBlendMode;
+			platform::Context::SetDepthMode		= &opengl::Context::SetDepthMode;
 
 			// Mesh:
 			platform::Mesh::Create	= &opengl::Mesh::Create;

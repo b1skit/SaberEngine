@@ -220,8 +220,9 @@ namespace SaberEngine
 
 		// Render into the cube map:
 		//--------------------------
-		glDepthFunc(GL_LEQUAL);			// Ensure we can render on the far plane
-		
+		// Ensure we can render on the far plane
+		CoreEngine::GetRenderManager()->GetContext().SetDepthMode(platform::Context::DepthMode::LEqual);
+
 		// Disable back-face culling, since we're rendering a cube from the inside		
 		CoreEngine::GetRenderManager()->GetContext().SetCullingMode(platform::Context::FaceCullingMode::Disabled);
 
@@ -281,7 +282,7 @@ namespace SaberEngine
 		m_IBL_IEM_PMREM_StageTargetSet.AttachColorTargets(0, 0, false);
 
 		// Restore defaults:
-		glDepthFunc(GL_LESS);
+		CoreEngine::GetRenderManager()->GetContext().SetDepthMode(platform::Context::DepthMode::Default);
 		CoreEngine::GetRenderManager()->GetContext().SetCullingMode(platform::Context::FaceCullingMode::Back);
 		
 		// Unbind: Texture will be destroyed/deleted by the SceneManager
@@ -364,7 +365,8 @@ namespace SaberEngine
 
 
 		// TODO: Handle depth/clearing config via stage params: Stages should control how they interact with the targets
-		glDepthFunc(GL_LEQUAL);	// Ensure we can render on the far plane
+		// Ensure we can render on the far plane
+		CoreEngine::GetRenderManager()->GetContext().SetDepthMode(platform::Context::DepthMode::LEqual);
 		CoreEngine::GetRenderManager()->GetContext().ClearTargets(platform::Context::ClearTarget::ColorDepth);
 
 		// Draw:		

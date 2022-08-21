@@ -38,4 +38,9 @@ namespace re
 	{
 		platform::Context::SetBlendMode(src, dst);
 	}
+
+	void Context::SetDepthMode(platform::Context::DepthMode const& mode) const
+	{
+		platform::Context::SetDepthMode(mode);
+	}
 }

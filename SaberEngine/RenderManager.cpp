@@ -153,7 +153,7 @@ namespace SaberEngine
 			// Set the blend mode: Light contributions are additive
 			m_context.SetBlendMode(platform::Context::BlendMode::One, platform::Context::BlendMode::One);
 
-			glDepthFunc(GL_GEQUAL);
+			m_context.SetDepthMode(platform::Context::DepthMode::GEqual);
 
 			for (int i = 1; i < deferredLights.size(); i++)
 			{
@@ -196,8 +196,7 @@ namespace SaberEngine
 		m_postFXManager->ApplyPostFX(finalFrameShader);
 
 		// Cleanup:
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LESS);
+		m_context.SetDepthMode(platform::Context::DepthMode::Less);
 		m_context.SetCullingMode(platform::Context::FaceCullingMode::Back);
 
 		// Blit results to screen (Using the final post processing shader pass supplied by the PostProcessingManager):

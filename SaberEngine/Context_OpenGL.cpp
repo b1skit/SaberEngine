@@ -197,10 +197,10 @@ namespace opengl
 
 		// Configure other OpenGL settings:
 		glFrontFace(GL_CCW);				// Counter-clockwise vertex winding (OpenGL default)
-		glEnable(GL_DEPTH_TEST);			// Enable Z depth testing
-		glDepthFunc(GL_LESS);				// How to sort Z
-		glEnable(GL_CULL_FACE);				// Enable face culling
-		glCullFace(GL_BACK);				// Cull back faces
+		glEnable(GL_DEPTH_TEST);			// Start with Z depth testing enabled
+		glDepthFunc(GL_LESS);				// Default is less
+		glEnable(GL_CULL_FACE);				// Start with face culling enabled
+		glCullFace(GL_BACK);				// Default is backface culling
 
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
@@ -298,6 +298,7 @@ namespace opengl
 		}
 	}
 	
+
 	void Context::SetBlendMode(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst)
 	{
 		if (src == platform::Context::BlendMode::Disabled)
@@ -385,5 +386,59 @@ namespace opengl
 		}
 
 		glBlendFunc(sFactor, dFactor);
+	}
+
+
+	void Context::SetDepthMode(platform::Context::DepthMode const& mode)
+	{
+		if (mode == platform::Context::DepthMode::Always)
+		{
+			glDisable(GL_DEPTH_TEST);
+			return;
+		}
+
+		glEnable(GL_DEPTH_TEST);
+		
+		GLenum depthMode = GL_LESS;
+		switch (mode)
+		{
+		case platform::Context::DepthMode::Default:
+		case platform::Context::DepthMode::Less:
+		{
+			depthMode = GL_LESS;
+		}
+		break;
+		case platform::Context::DepthMode::Equal:
+		{
+			depthMode = GL_EQUAL;
+		}
+		break;
+		case platform::Context::DepthMode::LEqual:
+		{
+			depthMode = GL_LEQUAL;
+		}
+		break;
+		case platform::Context::DepthMode::Greater:
+		{
+			depthMode = GL_GREATER;
+		}
+		break;
+		case platform::Context::DepthMode::NotEqual:
+		{
+			depthMode = GL_NOTEQUAL;
+		}
+		break;
+		case platform::Context::DepthMode::GEqual:
+		{
+			depthMode = GL_GEQUAL;
+		}
+		break;
+		default:
+		{
+			assert("Invalid depth mode" && false);
+		}
+		}
+
+		glDepthFunc(depthMode);
 	}
 }

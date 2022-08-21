@@ -27,7 +27,7 @@ namespace re
 		void SetCullingMode(platform::Context::FaceCullingMode const& mode) const;
 		void ClearTargets(platform::Context::ClearTarget const& clearTarget) const;
 		void SetBlendMode(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst) const;
-
+		void SetDepthMode(platform::Context::DepthMode const& mode) const;
 
 	private:
 		std::unique_ptr<platform::Context::PlatformParams> m_platformParams;
