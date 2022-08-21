@@ -10,7 +10,12 @@
 
 namespace SaberEngine
 {
-	SaberEngine::Light::Light(string const& lightName, LIGHT_TYPE lightType, vec3 color, std::shared_ptr<ShadowMap> shadowMap /*= nullptr*/, float radius /*= 1.0f*/)
+	SaberEngine::Light::Light(
+		std::string const& lightName, 
+		LIGHT_TYPE lightType, 
+		vec3 color, 
+		std::shared_ptr<ShadowMap> shadowMap /*= nullptr*/, 
+		float radius /*= 1.0f*/)
 	{
 		m_lightName		= lightName;
 		m_type			= lightType;
@@ -126,26 +131,6 @@ namespace SaberEngine
 
 	void Light::HandleEvent(std::shared_ptr<EventInfo const> eventInfo)
 	{
-	}
-
-
-	std::shared_ptr<ShadowMap>& Light::ActiveShadowMap(std::shared_ptr<ShadowMap> newShadowMap /*= nullptr*/)
-	{
-		// No-arg: Gets the current shadow map
-		if (newShadowMap == nullptr)
-		{
-			return m_shadowMap;
-		}
-
-		if (m_shadowMap != nullptr)
-		{
-			LOG("Deleting an existing shadow map");
-			m_shadowMap = nullptr;
-		}
-
-		m_shadowMap = newShadowMap;
-
-		return m_shadowMap;
 	}
 }
 

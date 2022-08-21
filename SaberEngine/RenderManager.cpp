@@ -122,7 +122,7 @@ namespace SaberEngine
 		{
 			for (size_t i = 0; i < (int)deferredLights.size(); i++)
 			{
-				if (deferredLights.at(i)->ActiveShadowMap() != nullptr)
+				if (deferredLights.at(i)->GetShadowMap() != nullptr)
 				{
 					RenderLightShadowMap(deferredLights.at(i));
 				}
@@ -204,7 +204,7 @@ namespace SaberEngine
 
 	void RenderManager::RenderLightShadowMap(std::shared_ptr<Light> light)
 	{
-		std::shared_ptr<Camera> shadowCam = light->ActiveShadowMap()->ShadowCamera();
+		std::shared_ptr<Camera> shadowCam = light->GetShadowMap()->ShadowCamera();
 
 		// Light shader setup:
 		std::shared_ptr<Shader> lightShader = shadowCam->RenderMaterial()->GetShader(); // TODO: Remove material, get shader directly
@@ -223,7 +223,7 @@ namespace SaberEngine
 			lightShader->UploadUniform("shadowCam_far", &shadowCam->Far(), UNIFORM_Float);
 		}
 
-		light->ActiveShadowMap()->GetTextureTargetSet().AttachDepthStencilTarget(true);
+		light->GetShadowMap()->GetTextureTargetSet().AttachDepthStencilTarget(true);
 
 		glClear(GL_DEPTH_BUFFER_BIT); // Clear the currently bound FBO	
 
@@ -353,7 +353,7 @@ namespace SaberEngine
 		}
 		
 		// Assemble common (model independent) matrices:
-		const bool hasShadowMap = deferredLight->ActiveShadowMap() != nullptr;
+		const bool hasShadowMap = deferredLight->GetShadowMap() != nullptr;
 			
 		mat4 model			= deferredLight->GetTransform().Model();
 		mat4 m_view			= gBufferCam->View();
@@ -428,7 +428,7 @@ namespace SaberEngine
 		}
 
 		// Shadow properties:
-		std::shared_ptr<ShadowMap> activeShadowMap = deferredLight->ActiveShadowMap();
+		std::shared_ptr<ShadowMap> activeShadowMap = deferredLight->GetShadowMap();
 
 		mat4 shadowCam_vp(1.0);
 		if (activeShadowMap != nullptr)

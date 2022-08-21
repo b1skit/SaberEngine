@@ -1460,7 +1460,7 @@ namespace SaberEngine
 						&m_currentScene->m_keyLight->GetTransform()
 					);
 
-					m_currentScene->m_keyLight->ActiveShadowMap(keyLightShadowMap);
+					m_currentScene->m_keyLight->GetShadowMap() = keyLightShadowMap;
 
 					// Extract light metadata:
 					aiNode* lightNode = scene->mRootNode->FindNode(scene->mLights[i]->mName.C_Str());
@@ -1679,7 +1679,7 @@ namespace SaberEngine
 						LOG("\nSetting directional light maximum shadow bias value: " + to_string(m_maxShadowBias));
 					#endif
 
-					pointLight->ActiveShadowMap(cubeShadowMap);
+					pointLight->GetShadowMap() = cubeShadowMap;
 
 					// Setup the transformation hierarchy:
 					if (lightNode)

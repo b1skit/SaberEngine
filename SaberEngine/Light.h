@@ -42,7 +42,7 @@ namespace SaberEngine
 	class Light : public SceneObject
 	{
 	public:
-		Light() {}; // Default constructor
+		Light() = delete;
 		Light(std::string const& lightName, 
 			LIGHT_TYPE lightType, 
 			vec3 color, 
@@ -67,10 +67,10 @@ namespace SaberEngine
 														 
 		inline Transform& GetTransform() { return m_transform; }	// Directional lights shine forward (Z+)
 														 
-		inline string const& Name() const { return m_lightName; }
-		
-		// TODO: This interface is awful, rewrite it
-		std::shared_ptr<ShadowMap>&	ActiveShadowMap(std::shared_ptr<ShadowMap> newShadowMap = nullptr);	// Get/set the current shadow map
+		inline std::string const& Name() const { return m_lightName; }
+
+		std::shared_ptr<ShadowMap>& GetShadowMap() { return m_shadowMap; }
+		std::shared_ptr<ShadowMap> const& GetShadowMap() const { return m_shadowMap; }
 
 		inline std::shared_ptr<gr::Mesh>& DeferredMesh() { return m_deferredMesh; }
 		inline std::shared_ptr<Material>& DeferredMaterial() { return m_deferredMaterial; }
@@ -83,7 +83,7 @@ namespace SaberEngine
 		vec3 m_color = vec3(0.0f, 0.0f, 0.0f); // Note: Intensity is factored into these values
 		LIGHT_TYPE m_type = LIGHT_DIRECTIONAL; // Default
 
-		string m_lightName = "unnamed_directional_light";
+		std::string m_lightName = "unnamed_directional_light";
 
 		std::shared_ptr<ShadowMap> m_shadowMap = nullptr;
 
