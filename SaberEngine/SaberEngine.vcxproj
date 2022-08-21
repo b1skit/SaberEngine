@@ -99,7 +99,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <PreprocessorDefinitions>/D_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Debug\;$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\assimp\lib\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -154,7 +154,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Debug\SDL2.dll" "$(ProjectDi
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\;$(ProjectDir)..\Dependencies\assimp\lib\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;assimp-vc143-mt.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
     </Link>
     <PreBuildEvent>
       <Command>

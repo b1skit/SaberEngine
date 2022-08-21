@@ -253,8 +253,8 @@ namespace opengl
 		bool result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 		if (!result)
 		{
-			SaberEngine::LOG_ERROR("Framebuffer is not complete: " +
-				to_string(glCheckFramebufferStatus(GL_FRAMEBUFFER)));
+			LOG_ERROR("Framebuffer is not complete: " +
+				std::to_string(glCheckFramebufferStatus(GL_FRAMEBUFFER)));
 
 			assert("Framebuffer is not complete" && result);
 		}
@@ -372,8 +372,8 @@ namespace opengl
 		bool result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 		if (!result)
 		{
-			SaberEngine::LOG_ERROR("Framebuffer is not complete: " +
-				to_string(glCheckFramebufferStatus(GL_FRAMEBUFFER)));
+			LOG_ERROR("Framebuffer is not complete: " +
+				std::to_string(glCheckFramebufferStatus(GL_FRAMEBUFFER)));
 
 			assert("Framebuffer is not complete" && result);
 		}

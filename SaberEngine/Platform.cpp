@@ -25,7 +25,7 @@ namespace platform
 	// Bind API-specific strategy implementations:
 	bool RegisterPlatformFunctions()
 	{
-		SaberEngine::LOG("Configuring API-specific platform bindings...");
+		LOG("Configuring API-specific platform bindings...");
 
 		const platform::RenderingAPI& api = 
 			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
@@ -82,7 +82,7 @@ namespace platform
 		}
 		}
 
-		SaberEngine::LOG("Done!");
+		LOG("Done!");
 
 		return result;
 	}

@@ -132,7 +132,7 @@ namespace SaberEngine
 	{
 		if (meshIndex >= (int)m_meshes.size())
 		{
-			LOG_ERROR("Invalid mesh index received: " + to_string(meshIndex) + " > " + to_string((int)m_meshes.size()) + ". Returning nullptr");
+			LOG_ERROR("Invalid mesh index received: " + std::to_string(meshIndex) + " > " + std::to_string((int)m_meshes.size()) + ". Returning nullptr");
 			return nullptr;
 		}
 
@@ -197,7 +197,7 @@ namespace SaberEngine
 				if (m_deferredLights.at(currentLight)->Type() == newLight->Type())
 				{
 					foundExisting = true;
-					LOG_ERROR("Found an existing light with type " + to_string((int)newLight->Type()) + ". New light will not be added");
+					LOG_ERROR("Found an existing light with type " + std::to_string((int)newLight->Type()) + ". New light will not be added");
 					break;
 				}
 			}

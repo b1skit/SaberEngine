@@ -103,10 +103,10 @@ namespace opengl
 		switch(severity)
 		{
 		case GL_DEBUG_SEVERITY_NOTIFICATION:
-			SaberEngine::LOG(output);
+			LOG(output);
 			break;
 		default:
-			SaberEngine::LOG_ERROR(output);
+			LOG_ERROR(output);
 		}
 
 		if (severity == GL_DEBUG_SEVERITY_HIGH)
@@ -125,7 +125,7 @@ namespace opengl
 		// Video automatically inits events, but included here as a reminder
 		if (SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO) != 0) 
 		{
-			SaberEngine::LOG_ERROR(SDL_GetError());
+			LOG_ERROR(SDL_GetError());
 			assert("SDL Initialization failed" && false);			
 			return;
 		}

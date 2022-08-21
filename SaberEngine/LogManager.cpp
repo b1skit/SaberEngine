@@ -1,18 +1,17 @@
+#include <string>
+using std::to_string;
+
+#include <iostream>
+using std::cout;
+
 #include "LogManager.h"
 #include "EventManager.h"
 #include "CoreEngine.h"
 #include "BuildConfiguration.h"
 
-#include <iostream>
-using std::cout;
 
-namespace SaberEngine
+namespace fr
 {
-	//LogManager::~LogManager()
-	//{
-	//
-	//}
-
 	LogManager& LogManager::Instance()
 	{
 		static LogManager* instance = new LogManager();
@@ -54,18 +53,19 @@ namespace SaberEngine
 		#endif
 	}
 
+
 	void LogManager::Shutdown()
 	{
 		LOG("Log manager shutting down...");
 	}
 
+
 	void LogManager::Update()
 	{
-		
 	}
 
 
-	void LogManager::HandleEvent(EventInfo const* eventInfo)
+	void LogManager::HandleEvent(SaberEngine::EventInfo const* eventInfo)
 	{
 		#if defined(DEBUG_LOGMANAGER_LOG_EVENTS)
 			string logMessage = EVENT_NAME[eventInfo->m_type] + ": Object #";
@@ -89,63 +89,4 @@ namespace SaberEngine
 		
 		return;
 	}
-
-
-
-	// Static functions:
-	//------------------
-
-	void SaberEngine::LogManager::Log(string const& message)
-	{
-		if (message[0] == '\n')
-		{
-			cout << "\nLog:\t" << message.substr(1, string::npos) << "\n";
-		}
-		else if (message[0] == '\t')
-		{
-			cout << "\t" << message.substr(1, string::npos) << "\n";
-		}
-		else
-		{
-			cout << "Log:\t" << message << "\n";
-		}
-		
-
-		// TODO: Implement writing to file
-	}
-
-
-	void SaberEngine::LogManager::LogWarning(string const& message)
-	{
-		if (message[0] == '\n')
-		{
-			cout << "\nWarn:\t" << message.substr(1, string::npos) << "\n";
-		}
-		else
-		{
-			cout << "Warn:\t" << message << "\n";
-		}
-
-
-		// TODO: Implement writing to file
-	}
-
-
-	void SaberEngine::LogManager::LogError(string const& message)
-	{
-		if (message[0] == '\n')
-		{
-			cout << "\nError:\t" << message.substr(1, string::npos) << "\n";
-		}
-		else
-		{
-			cout << "Error:\t" << message << "\n";
-		}
-
-
-		// TODO: Implement writing to file
-	}
-
-
-
 }

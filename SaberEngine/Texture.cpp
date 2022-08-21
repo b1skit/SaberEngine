@@ -212,7 +212,7 @@ namespace gr
 		uint32_t totalFaces /*= 1*/,
 		size_t faceIndex /*= 0*/)
 	{
-		SaberEngine::LOG("Attempting to load texture \"" + texturePath + "\"");
+		LOG("Attempting to load texture \"" + texturePath + "\"");
 
 		// Flip the y-axis on loading (so pixel (0,0) is in the bottom-left of the image if using OpenGL
 		platform::RenderingAPI const& api =
@@ -234,7 +234,7 @@ namespace gr
 		else if (stbi_is_16_bit(texturePath.c_str()))
 		{
 			// TODO: Support loading 16 bit images
-			SaberEngine::LOG_WARNING("Loading 16 bit image as 8 bit");
+			LOG_WARNING("Loading 16 bit image as 8 bit");
 			imageData = stbi_load(texturePath.c_str(), &width, &height, &numChannels, 0);
 			//imageData = stbi_load_16(texturePath.c_str(), &width, &height, &numChannels, 0);
 			bitDepth = 16;
@@ -270,7 +270,7 @@ namespace gr
 
 		if (imageData)
 		{
-			SaberEngine::LOG("Found " + to_string(width) + "x" + to_string(height) + ", " + std::to_string(bitDepth) +
+			LOG("Found " + to_string(width) + "x" + to_string(height) + ", " + std::to_string(bitDepth) +
 				"-bit texture with " + to_string(numChannels) + " channels");
 
 			if (texture == nullptr)
@@ -283,7 +283,7 @@ namespace gr
 
 				if ((width == 1 || height == 1) && (width != height))
 				{
-					SaberEngine::LOG_WARNING("Found 1D texture, but 1D textures are currently not supported. Treating "
+					LOG_WARNING("Found 1D texture, but 1D textures are currently not supported. Treating "
 						"this texture as 2D");
 					texParams.m_texDimension = gr::Texture::TextureDimension::Texture2D; // TODO: Replace this
 					/*texParams.m_texDimension = gr::Texture::TextureDimension::Texture1D;*/
@@ -342,12 +342,12 @@ namespace gr
 
 		if (!returnErrorTexIfNotFound)
 		{
-			SaberEngine::LOG_ERROR("Could not load texture at \"" + texturePath + "\", error: \"" + string(failResult) + 
+			LOG_ERROR("Could not load texture at \"" + texturePath + "\", error: \"" + string(failResult) + 
 				".\" Received \"existingTexture\" returned!");
 		}
 		else
 		{
-			SaberEngine::LOG_ERROR("Could not load texture at \"" + texturePath + "\", error: \"" + string(failResult) +
+			LOG_ERROR("Could not load texture at \"" + texturePath + "\", error: \"" + string(failResult) +
 				".\" Returning solid error texture!");
 
 			if (texture == nullptr)
@@ -423,7 +423,7 @@ namespace gr
 				}
 				else if (j == NUM_FILE_EXTENSIONS - 1)
 				{
-					SaberEngine::LOG("Could not find cubemap face texture #" + to_string(i) + ": " +
+					LOG("Could not find cubemap face texture #" + to_string(i) + ": " +
 						cubeTextureNames[i] + " with any supported extension. Loading error texture");
 
 					// If we checked the last file extension without success, load an error texture:

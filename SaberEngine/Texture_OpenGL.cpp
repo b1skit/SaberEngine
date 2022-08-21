@@ -224,14 +224,14 @@ namespace opengl
 	{
 		if (glIsTexture(m_textureID))
 		{
-			SaberEngine::LOG_WARNING("DELETING TEXTUREID FROM PLATFORM PARAMS!!!!!!!!!!!");
+			LOG_WARNING("DELETING TEXTUREID FROM PLATFORM PARAMS!!!!!!!!!!!");
 
 			glDeleteTextures(1, &m_textureID);
 		}
 
 		if (glIsSampler(m_samplerID))
 		{
-			SaberEngine::LOG_WARNING("DELETING SAMPLERID FROM PLATFORM PARAMS!!!!!!!!!!!");
+			LOG_WARNING("DELETING SAMPLERID FROM PLATFORM PARAMS!!!!!!!!!!!");
 
 			glDeleteSamplers(1, &m_samplerID);
 		}
@@ -286,7 +286,7 @@ namespace opengl
 
 	void opengl::Texture::Create(gr::Texture& texture, uint32_t textureUnit)
 	{
-		SaberEngine::LOG("Creating & buffering texture: \"" + texture.GetTexturePath() + "\"");
+		LOG("Creating & buffering texture: \"" + texture.GetTexturePath() + "\"");
 
 		// Create the platform-specific parameters object:
 		platform::Texture::PlatformParams::CreatePlatformParams(texture);
@@ -304,7 +304,7 @@ namespace opengl
 
 			if (glIsTexture(params->m_textureID) != GL_TRUE)
 			{
-				SaberEngine::LOG_ERROR("OpenGL failed to generate new texture name. Texture buffering failed");
+				LOG_ERROR("OpenGL failed to generate new texture name. Texture buffering failed");
 				assert("OpenGL failed to generate new texture name. Texture buffering failed" && false);
 
 				glBindTexture(params->m_texTarget, 0);

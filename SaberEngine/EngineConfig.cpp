@@ -145,7 +145,7 @@ namespace en
 		break;
 
 		default:
-			SaberEngine::LOG_ERROR("Config failed to set API Defaults! "
+			LOG_ERROR("Config failed to set API Defaults! "
 				"Does the config.cfg file contain a 'set platform \"<API>\" command for a supported API?");
 
 			throw std::runtime_error("Invalid Rendering API set, cannot set API defaults");
@@ -168,7 +168,7 @@ namespace en
 			}
 			catch (const std::bad_any_cast& e)
 			{
-				SaberEngine::LOG_ERROR(
+				LOG_ERROR(
 					"bad_any_cast exception thrown: Invalid type requested from EngineConfig\n" + string(e.what()));
 			}
 		}
@@ -223,13 +223,13 @@ namespace en
 			}
 			catch (const std::bad_any_cast& e)
 			{
-				SaberEngine::LOG_ERROR(
+				LOG_ERROR(
 					"bad_any_cast exception thrown: Invalid type requested from EngineConfig\n" + string(e.what()));
 			}
 		}
 		else
 		{
-			SaberEngine::LOG_ERROR("Config key \"" + valueName + "\" does not exist\n");
+			LOG_ERROR("Config key \"" + valueName + "\" does not exist\n");
 		}
 
 		return returnVal;
@@ -277,7 +277,7 @@ namespace en
 		}
 		else
 		{
-			SaberEngine::LOG_ERROR("Config failed to set valid rendering API! "
+			LOG_ERROR("Config failed to set valid rendering API! "
 				"Does the config contain a 'set platform \"<API>\" command? e.g:\n"
 				"set platform \"opengl\"\n"
 				"set platform \"dx12\"\n"
@@ -292,7 +292,7 @@ namespace en
 
 	void EngineConfig::LoadConfig()
 	{
-		SaberEngine::LOG("Loading " + CONFIG_FILENAME + "...");
+		LOG("Loading " + CONFIG_FILENAME + "...");
 
 		ifstream file;
 		file.open((CONFIG_DIR + CONFIG_FILENAME).c_str());
@@ -300,7 +300,7 @@ namespace en
 		// If no config is found, create one:
 		if (!file.is_open())
 		{
-			SaberEngine::LOG_WARNING("No config.cfg file found! Attempting to create a default version");
+			LOG_WARNING("No config.cfg file found! Attempting to create a default version");
 
 			m_isDirty = true;
 
@@ -317,7 +317,7 @@ namespace en
 			// Handle malformed strings from previous iteration:
 			if (foundInvalidString == true)
 			{
-				SaberEngine::LOG_WARNING("Ignoring invalid command in config.cfg:\n" + line);
+				LOG_WARNING("Ignoring invalid command in config.cfg:\n" + line);
 				foundInvalidString = false;
 			}
 
@@ -466,12 +466,12 @@ namespace en
 		// Handle final malformed string:
 		if (foundInvalidString == true)
 		{
-			SaberEngine::LOG_WARNING("Ignoring invalid command in config.cfg:\n" + line);
+			LOG_WARNING("Ignoring invalid command in config.cfg:\n" + line);
 		}
 
 		m_isDirty = false;
 
-		SaberEngine::LOG("Done!");
+		LOG("Done!");
 	}
 
 
@@ -479,7 +479,7 @@ namespace en
 	{
 		if (m_isDirty == false)
 		{
-			SaberEngine::LOG("SaveConfig called, but config has not changed. Returning without modifying file on disk");
+			LOG("SaveConfig called, but config has not changed. Returning without modifying file on disk");
 			return;
 		}
 
@@ -487,7 +487,7 @@ namespace en
 		std::filesystem::path configPath = CONFIG_DIR;
 		if (!std::filesystem::exists(configPath))
 		{
-			SaberEngine::LOG("Creating .\\config\\ directory");
+			LOG("Creating .\\config\\ directory");
 
 			std::filesystem::create_directory(configPath);
 		}
@@ -531,7 +531,7 @@ namespace en
 			}
 			else
 			{
-				SaberEngine::LOG_ERROR("Cannot write unsupported type to config");
+				LOG_ERROR("Cannot write unsupported type to config");
 			}
 		}
 		

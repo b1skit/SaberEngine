@@ -46,7 +46,7 @@ namespace SaberEngine
 		//const double MAX_TIMESTEP = 0.5;	// Max amount of time before giving up
 
 		// Private engine component singletons:	
-		LogManager* const	SaberLogManager		= &LogManager::Instance();
+		fr::LogManager* const	SaberLogManager		= &fr::LogManager::Instance();
 		TimeManager* const	SaberTimeManager	= &TimeManager::Instance();
 
 		static en::EngineConfig m_config;

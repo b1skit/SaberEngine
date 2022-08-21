@@ -10,11 +10,11 @@ int main(int argc, char** argv)
 	// Register our API-specific bindings before anything attempts to call them:
 	if (!platform::RegisterPlatformFunctions())
 	{
-		SaberEngine::LOG_ERROR("Failed to configure API-specific platform bindings!\n");
+		LOG_ERROR("Failed to configure API-specific platform bindings!\n");
 		exit(-1);
 	}
 
-	SaberEngine::LOG("\nWelcome to the Saber Engine!\n");
+	LOG("\nWelcome to the Saber Engine!\n");
 
 	SaberEngine::CoreEngine coreEngine(argc, argv); // TODO: Implement config file (command line) path passing
 
@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 
 	coreEngine.Shutdown();
 
-	SaberEngine::LOG("\nGoodbye!\n");
+	LOG("\nGoodbye!\n");
 
 	return 0;
 }
