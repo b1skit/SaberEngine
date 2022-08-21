@@ -81,7 +81,7 @@ namespace SaberEngine
 
 
 		// TODO: Get rid of this -> Currently using it to store a blit shader
-		m_outputMaterial = new Material("RenderManager_OutputMaterial",
+		m_outputMaterial = std::make_shared<Material>("RenderManager_OutputMaterial",
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShader"),
 			(TEXTURE_TYPE)1,
 			true);
@@ -105,12 +105,7 @@ namespace SaberEngine
 	{
 		LOG("Render manager shutting down...");
 
-		if (m_outputMaterial != nullptr)
-		{
-			m_outputMaterial->Destroy();
-			delete m_outputMaterial;
-			m_outputMaterial = nullptr;
-		}
+		m_outputMaterial = nullptr;
 
 		m_outputTargetSet = nullptr;
 
@@ -309,11 +304,11 @@ namespace SaberEngine
 		mat4 m_view			= renderCam->View();
 
 		// Loop by material (+shader), mesh:
-		std::unordered_map<string, Material*> const sceneMaterials = CoreEngine::GetSceneManager()->GetMaterials();
-		for (std::pair<string, Material*> currentElement : sceneMaterials)
+		std::unordered_map<string, std::shared_ptr<Material>> const sceneMaterials = CoreEngine::GetSceneManager()->GetMaterials();
+		for (std::pair<string, std::shared_ptr<Material>> currentElement : sceneMaterials)
 		{
 			// Setup the current material and shader:
-			Material* currentMaterial	= currentElement.second;
+			std::shared_ptr<Material> currentMaterial = currentElement.second;
 			std::shared_ptr<Shader> currentShader = renderCam->RenderMaterial()->GetShader();
 
 			vector<gr::Mesh*> const* meshes;
@@ -384,11 +379,11 @@ namespace SaberEngine
 		}
 
 		// Loop by material (+shader), mesh:
-		std::unordered_map<string, Material*> const sceneMaterials = CoreEngine::GetSceneManager()->GetMaterials();
-		for (std::pair<string, Material*> currentElement : sceneMaterials)
+		std::unordered_map<string, std::shared_ptr<Material>> const sceneMaterials = CoreEngine::GetSceneManager()->GetMaterials();
+		for (std::pair<string, std::shared_ptr<Material>> currentElement : sceneMaterials)
 		{
 			// Setup the current material and shader:
-			Material* currentMaterial = currentElement.second;
+			std::shared_ptr<Material> currentMaterial = currentElement.second;
 			std::shared_ptr<Shader> currentShader = currentMaterial->GetShader();
 
 			// Bind:
@@ -756,10 +751,10 @@ namespace SaberEngine
 
 		// Add all Material Shaders to a list:
 		vector<std::shared_ptr<Shader>> shaders;
-		std::unordered_map<string, Material*> const sceneMaterials = CoreEngine::GetSceneManager()->GetMaterials();
-		for (std::pair<string, Material*> currentElement : sceneMaterials)
+		std::unordered_map<string, std::shared_ptr<Material>> const sceneMaterials = CoreEngine::GetSceneManager()->GetMaterials();
+		for (std::pair<string, std::shared_ptr<Material>> currentElement : sceneMaterials)
 		{
-			Material* currentMaterial = currentElement.second;
+			std::shared_ptr<Material> currentMaterial = currentElement.second;
 			if (currentMaterial->GetShader() != nullptr)
 			{
 				shaders.push_back(currentMaterial->GetShader());

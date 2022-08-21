@@ -34,8 +34,8 @@ namespace SaberEngine
 		~ImageBasedLight();
 
 		// Get the Irradiance Environment Map material:
-		Material*		GetIEMMaterial()		{ return m_IEM_Material; }
-		Material*		GetPMREMMaterial()		{ return m_PMREM_Material; }
+		std::shared_ptr<Material> GetIEMMaterial() { return m_IEM_Material; }
+		std::shared_ptr<Material> GetPMREMMaterial() { return m_PMREM_Material; }
 		std::shared_ptr<gr::Texture>	GetBRDFIntegrationMap() { return m_BRDF_integrationMap; }
 
 		// Check if an IBL was successfully loaded
@@ -60,8 +60,8 @@ namespace SaberEngine
 
 		// TODO: MOVE INITIALIZATION TO CTOR INIT LIST
 
-		Material* m_IEM_Material = nullptr;		// Irradiance Environment Map (IEM) Material
-		Material* m_PMREM_Material = nullptr;	// Pre-filtered Mip-mapped Radiance Environment Map (PMREM) Material
+		std::shared_ptr<Material> m_IEM_Material = nullptr;		// Irradiance Environment Map (IEM) Material
+		std::shared_ptr<Material> m_PMREM_Material = nullptr;	// Pre-filtered Mip-mapped Radiance Environment Map (PMREM) Material
 
 		uint32_t m_maxMipLevel = -1;		// Highest valid mip level for the PMREM cube map
 

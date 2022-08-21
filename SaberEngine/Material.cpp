@@ -86,7 +86,10 @@ namespace SaberEngine
 
 	void Material::Destroy()
 	{
+		m_name += "_DESTROYED";
 		m_shader = nullptr;
+		m_textures.clear();
+		m_shaderKeywords.clear();
 	}
 
 

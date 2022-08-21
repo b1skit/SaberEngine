@@ -37,7 +37,7 @@ namespace SaberEngine
 		}		
 	}
 
-	void PostFXManager::Initialize(Material* outputMaterial)
+	void PostFXManager::Initialize(std::shared_ptr<Material> outputMaterial)
 	{				
 		m_outputTargetSet.ColorTarget(0) = outputMaterial->AccessTexture(RENDER_TEXTURE_ALBEDO);
 

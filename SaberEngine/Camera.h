@@ -56,32 +56,30 @@ namespace SaberEngine
 		inline float const& Near() const			{ return m_cameraConfig.m_near; }
 		inline float const& Far() const				{ return m_cameraConfig.m_far; }
 
-		mat4 const&			View();
-		mat4 const*			CubeView(); // TODO: Recompute this if the camera has moved
+		mat4 const&	View();
+		mat4 const*	CubeView(); // TODO: Recompute this if the camera has moved
 
 		inline mat4 const&	Projection() const		{ return m_projection; }
 		
 		// TODO: Only compute this if something has changed
 		inline mat4 const&	ViewProjection()		{ return m_viewProjection = m_projection * View(); } 
 
-		mat4 const*			CubeViewProjection();
+		mat4 const*	CubeViewProjection();
 
-		Material*&			RenderMaterial()		{ return m_renderMaterial; }
+		std::shared_ptr<Material>& RenderMaterial()	{ return m_renderMaterial; }
+		std::shared_ptr<Material> const& RenderMaterial() const { return m_renderMaterial; }
 		
-
 		gr::TextureTargetSet& GetTextureTargetSet() { return m_camTargetSet; }
 		gr::TextureTargetSet const & GetTextureTargetSet() const { return m_camTargetSet; }
 
-
-		float& Exposure()							{ return m_cameraConfig.m_exposure; }
-
+		float& Exposure() { return m_cameraConfig.m_exposure; }
 
 		// Configure this camera for deferred rendering
-		void				AttachGBuffer();
+		void AttachGBuffer();
 		// TODO: Move this to a stage owned by a graphics system, with a target set etc
 		// Cameras should just do camera things.
 
-		void				DebugPrint();
+		void DebugPrint();
 	protected:
 
 
@@ -98,7 +96,7 @@ namespace SaberEngine
 		vector<mat4> m_cubeView;
 		vector<mat4> m_cubeViewProjection;
 		
-		Material* m_renderMaterial	= nullptr;	// Deallocated by Destroy()
+		std::shared_ptr<Material> m_renderMaterial	= nullptr;
 		gr::TextureTargetSet m_camTargetSet;
 
 		// TODO: Move initialization to ctor initialization list

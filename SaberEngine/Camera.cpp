@@ -69,12 +69,7 @@ namespace SaberEngine
 
 	void Camera::Destroy()
 	{
-		if (m_renderMaterial != nullptr)
-		{
-			m_renderMaterial->Destroy();
-			delete m_renderMaterial;
-			m_renderMaterial = nullptr;
-		}
+		m_renderMaterial = nullptr;
 	}
 
 
@@ -148,7 +143,7 @@ namespace SaberEngine
 
 	void Camera::AttachGBuffer()
 	{
-		m_renderMaterial = new Material(
+		m_renderMaterial = std::make_shared<Material>(
 			GetName() + "_Material", 
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("gBufferFillShaderName"), 
 			RENDER_TEXTURE_COUNT, 

@@ -95,7 +95,7 @@ namespace SaberEngine
 
 		bool m_useForwardRendering	= false; // TODO: Remove this functionality
 
-		Material* m_outputMaterial	= nullptr;	// Deallocated in Shutdown()
+		std::shared_ptr<Material> m_outputMaterial	= nullptr;	// Deallocated in Shutdown()
 		std::shared_ptr<gr::TextureTargetSet> m_outputTargetSet;
 
 		std::shared_ptr<gr::Mesh> m_screenAlignedQuad		= nullptr;	// Deallocated in Shutdown()

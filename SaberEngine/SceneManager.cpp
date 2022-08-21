@@ -76,14 +76,9 @@ namespace SaberEngine
 		// Scene manager cleanup:
 		if (m_materials.size() > 0)
 		{
-			for (std::pair<string, Material*> currentMaterialEntry : m_materials)
+			for (std::pair<string, std::shared_ptr<Material>> currentMaterialEntry : m_materials)
 			{
-				if (currentMaterialEntry.second != nullptr)
-				{
-					currentMaterialEntry.second->Destroy();
-					delete currentMaterialEntry.second;
-					currentMaterialEntry.second = nullptr;
-				}
+				currentMaterialEntry.second = nullptr;
 			}
 			m_materials.clear();
 		}
@@ -213,14 +208,14 @@ namespace SaberEngine
 		//currentScene->AddMesh(sphere);
 
 
-		//Material* sphereMaterial = GetMaterial("brick_phongShader");
+		//std::shared_ptr<Material> sphereMaterial = GetMaterial("brick_phongShader");
 		////^^ Need a GetLoadMaterial() function?
 		//int materialIndex = AddMaterial(sphereMaterial);
 
 		//materialMeshLists.at(materialIndex).emplace_back(sphere);
 
 
-		////Material* sphereMaterial = new Material("sphereMat", "lambertShader");
+		////std::shared_ptr<Material> sphereMaterial = new Material("sphereMat", "lambertShader");
 		//////^^ Need a GetLoadMaterial() function?
 		////int materialIndex = AddMaterial(sphereMaterial);
 		////
@@ -276,13 +271,13 @@ namespace SaberEngine
 	}
 
 
-	unordered_map<string, Material*> const& SaberEngine::SceneManager::GetMaterials() const
+	unordered_map<string, std::shared_ptr<Material>> const& SaberEngine::SceneManager::GetMaterials() const
 	{
 		return m_materials;
 	}
 
 
-	Material* SceneManager::GetMaterial(string materialName)
+	std::shared_ptr<Material> SceneManager::GetMaterial(string materialName)
 	{
 		auto result = m_materials.find(materialName);
 		if (result != m_materials.end())
@@ -297,7 +292,7 @@ namespace SaberEngine
 	}
 
 
-	vector<gr::Mesh*> const* SceneManager::GetRenderMeshes(Material* targetMaterial)
+	vector<gr::Mesh*> const* SceneManager::GetRenderMeshes(std::shared_ptr<Material> targetMaterial)
 	{
 		// If materialIndex is out of bounds, return ALL meshes
 		if (targetMaterial == nullptr)
@@ -460,7 +455,7 @@ namespace SaberEngine
 	}
 
 
-	void SceneManager::AddMaterial(Material*& newMaterial)
+	void SceneManager::AddMaterial(std::shared_ptr<Material>& newMaterial)
 	{
 		if (newMaterial == nullptr)
 		{
@@ -478,10 +473,9 @@ namespace SaberEngine
 		}
 		else // Material already exists: Destroy the duplicate and update the pointer
 		{
-			LOG_WARNING("The material \"" + newMaterial->Name() + "\" already exists! Destroying duplicate, and updating reference to point to original material");
+			LOG_WARNING("The material \"" + newMaterial->Name() + "\" already exists! Destroying duplicate, and "
+				"updating reference to point to original material");
 
-			newMaterial->Destroy();
-			delete newMaterial;
 			newMaterial = result->second;
 		}
 	}
@@ -489,16 +483,8 @@ namespace SaberEngine
 
 	void SceneManager::AssembleMaterialMeshLists()
 	{
-		const unsigned int ESTIMATED_MESHES_PER_MATERIAL = 25;	// TODO: Tune this value based on the actual number of meshes loaded?
-
-		//// Pre-allocate our vector of vectors:
-		//materialMeshLists.clear();
-		//materialMeshLists.reserve(currentMaterialCount);
-		//for (unsigned int i = 0; i < currentMaterialCount; i++)
-		//{
-		//	materialMeshLists.emplace_back(vector<Mesh*>());
-		//	materialMeshLists.at(i).reserve(ESTIMATED_MESHES_PER_MATERIAL);
-		//}
+		// TODO: Tune this value based on the actual number of meshes loaded?
+		const unsigned int ESTIMATED_MESHES_PER_MATERIAL = 25;	
 
 		unsigned int numMeshes = 0;
 		for (int i = 0; i < (int)m_currentScene->m_renderables.size(); i++)
@@ -507,7 +493,7 @@ namespace SaberEngine
 			{
 				gr::Mesh* viewMesh = m_currentScene->m_renderables.at(i)->ViewMeshes()->at(j);
 
-				Material* meshMaterial = viewMesh->MeshMaterial();
+				std::shared_ptr<Material> meshMaterial = viewMesh->MeshMaterial();
 				if (meshMaterial == nullptr)
 				{
 					LOG_ERROR("AssembleMaterialMeshLists() is skipping a mesh with NULL material pointer!");
@@ -592,7 +578,7 @@ namespace SaberEngine
 				#endif
 
 				// Create a material using the error shader, for now:
-				Material* newMaterial = new Material(matName, std::shared_ptr<Shader>(nullptr));
+				std::shared_ptr<Material> newMaterial = std::make_shared<Material>(matName, std::shared_ptr<Shader>(nullptr));
 				
 				// Extract textures, and add them to the material:
 

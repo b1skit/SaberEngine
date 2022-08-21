@@ -66,7 +66,7 @@ namespace SaberEngine
 			shaderName = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("depthShaderName");
 		}
 
-		m_shadowCam->RenderMaterial() = new Material(
+		m_shadowCam->RenderMaterial() = std::make_shared<Material>(
 			m_shadowCam->GetName() + "_Material",
 			shaderName,
 			RENDER_TEXTURE_COUNT,

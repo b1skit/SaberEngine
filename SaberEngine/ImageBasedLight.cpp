@@ -15,7 +15,8 @@ namespace SaberEngine
 		: Light(lightName, LIGHT_AMBIENT_IBL, vec3(0))
 	{
 		// Irradiance Environment Map (IEM) setup:
-		m_IEM_Material = new Material("IEM_Material", std::shared_ptr<Shader>(nullptr), CUBE_MAP_NUM_FACES, true);
+		m_IEM_Material = 
+			std::make_shared<Material>("IEM_Material", std::shared_ptr<Shader>(nullptr), CUBE_MAP_NUM_FACES, true);
 
 		std::shared_ptr<gr::Texture> IEM_Textures = (std::shared_ptr<gr::Texture>)ConvertEquirectangularToCubemap(
 				CoreEngine::GetSceneManager()->GetCurrentSceneName(), 
@@ -32,7 +33,8 @@ namespace SaberEngine
 		}
 
 		// Pre-filtered Mipmaped Radiance Environment Map (PMREM) setup:
-		m_PMREM_Material = new Material("PMREM_Material", std::shared_ptr<Shader>(nullptr), CUBE_MAP_NUM_FACES, true);
+		m_PMREM_Material = 
+			std::make_shared<Material>("PMREM_Material", std::shared_ptr<Shader>(nullptr), CUBE_MAP_NUM_FACES, true);
 
 		std::shared_ptr<gr::Texture> PMREM_Textures = (std::shared_ptr<gr::Texture>)ConvertEquirectangularToCubemap(
 			CoreEngine::GetSceneManager()->GetCurrentSceneName(),
@@ -68,26 +70,13 @@ namespace SaberEngine
 	
 	ImageBasedLight::~ImageBasedLight()
 	{
-		if (m_IEM_Material != nullptr)
-		{
-			m_IEM_Material->Destroy();
-			delete m_IEM_Material;
-			m_IEM_Material	= nullptr;
-			m_IEM_isValid	= false;
-		}
+		m_IEM_Material = nullptr;
+		m_IEM_isValid = false;
 
-		if (m_PMREM_Material != nullptr)
-		{
-			m_PMREM_Material->Destroy();
-			delete m_PMREM_Material;
-			m_PMREM_Material	= nullptr;
-			m_PMREM_isValid		= false;
-		}
+		m_PMREM_Material = nullptr;
+		m_PMREM_isValid = false;
 
-		if (m_BRDF_integrationMap != nullptr)
-		{
-			m_BRDF_integrationMap = nullptr;
-		}
+		m_BRDF_integrationMap = nullptr;
 	}
 
 

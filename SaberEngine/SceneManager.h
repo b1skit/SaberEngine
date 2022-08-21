@@ -75,10 +75,10 @@ namespace SaberEngine
 		bool LoadScene(string sceneName);
 
 		inline unsigned int						NumMaterials()								{ return (int)m_materials.size(); }
-		unordered_map<string, Material*> const&	GetMaterials() const;
-		Material*								GetMaterial(string materialName);
+		unordered_map<string, std::shared_ptr<Material>> const&	GetMaterials() const;
+		std::shared_ptr<Material> GetMaterial(string materialName);
 		
-		vector<gr::Mesh*> const* GetRenderMeshes(Material* targetMaterial);	// Returns ALL meshs if targetMaterial == nullptr
+		vector<gr::Mesh*> const* GetRenderMeshes(std::shared_ptr<Material> targetMaterial);	// Returns ALL meshs if targetMaterial == nullptr
 		vector<Renderable*>*					GetRenderables();
 
 		Light* const&							GetAmbientLight();
@@ -117,11 +117,11 @@ namespace SaberEngine
 
 		// Material management:
 		//---------------------
-		unordered_map<string, Material*> m_materials;	// Hash table of scene Material pointers
+		unordered_map<string, std::shared_ptr<Material>> m_materials;	// Hash table of scene Material pointers
 
 		unordered_map<string, std::shared_ptr<gr::Texture>> m_textures;	// Hash table of scene Texture pointers
 
-		void				AddMaterial(Material*& newMaterial);	// Add a material to the material array. Note: Material name MUST be unique
+		void				AddMaterial(std::shared_ptr<Material>& newMaterial);	// Add a material to the material array. Note: Material name MUST be unique
 
 		void				AssembleMaterialMeshLists();		// Helper function: Compiles vectors filled with meshes that use each material. Must be called once after all meshes have finished loading
 		unordered_map<string, vector<gr::Mesh*>>m_materialMeshLists;	// Hash table: Maps material names, to a vector of Mesh* using the material

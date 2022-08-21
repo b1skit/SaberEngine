@@ -114,6 +114,8 @@ namespace SaberEngine
 		Material(string materialName, string shaderName, TEXTURE_TYPE textureCount = TEXTURE_COUNT, bool isRenderMaterial = false);
 		Material(string materialName, std::shared_ptr<Shader> shader, TEXTURE_TYPE textureCount = TEXTURE_COUNT, bool isRenderMaterial = false);
 
+		~Material() { Destroy(); }
+
 		void Destroy();
 
 		// TODO: Copy constructor, assignment operator

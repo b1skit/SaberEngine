@@ -65,8 +65,8 @@ namespace SaberEngine
 		
 		ShadowMap*&					ActiveShadowMap(ShadowMap* newShadowMap = nullptr);	// Get/set the current shadow map
 
-		inline std::shared_ptr<gr::Mesh>&	DeferredMesh() { return m_deferredMesh; }
-		inline Material*&		DeferredMaterial()	{ return m_deferredMaterial; }
+		inline std::shared_ptr<gr::Mesh>& DeferredMesh() { return m_deferredMesh; }
+		inline std::shared_ptr<Material>& DeferredMaterial() { return m_deferredMaterial; }
 
 
 	protected:
@@ -82,7 +82,7 @@ namespace SaberEngine
 
 		// Deferred light setup:
 		std::shared_ptr<gr::Mesh> m_deferredMesh = nullptr;
-		Material* m_deferredMaterial	= nullptr;
+		std::shared_ptr<Material> m_deferredMaterial	= nullptr;
 
 		// TODO: Move initialization to ctor initialization list
 	};

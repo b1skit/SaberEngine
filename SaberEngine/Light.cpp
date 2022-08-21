@@ -40,7 +40,7 @@ namespace SaberEngine
 				&shaderKeywords);
 
 			// Attach a deferred Material:
-			m_deferredMaterial = new Material
+			m_deferredMaterial = std::make_shared<Material>
 			(
 				lightName + "_deferredMaterial",
 				ambientLightShader,
@@ -63,7 +63,7 @@ namespace SaberEngine
 		case LIGHT_DIRECTIONAL:
 		{
 			// Attach a deferred Material:
-			m_deferredMaterial = new Material
+			m_deferredMaterial = std::make_shared<Material>
 			(
 				lightName + "_deferredMaterial",
 				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredKeylightShaderName"),
@@ -83,7 +83,7 @@ namespace SaberEngine
 		}
 
 		case LIGHT_POINT:
-			m_deferredMaterial = new Material
+			m_deferredMaterial = std::make_shared<Material>
 			(
 				lightName + "_deferredMaterial",
 				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredPointLightShaderName"),
@@ -124,7 +124,6 @@ namespace SaberEngine
 
 		if (m_deferredMaterial != nullptr)
 		{
-			delete m_deferredMaterial;
 			m_deferredMaterial = nullptr;
 		}
 

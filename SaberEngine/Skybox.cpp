@@ -10,7 +10,7 @@
 
 namespace SaberEngine
 {
-	Skybox::Skybox(Material* skyMaterial, std::shared_ptr<gr::Mesh> skyMesh)
+	Skybox::Skybox(std::shared_ptr<Material> skyMaterial, std::shared_ptr<gr::Mesh> skyMesh)
 	{
 		m_skyMaterial	= skyMaterial;
 		m_skyMesh		= skyMesh;
@@ -20,7 +20,7 @@ namespace SaberEngine
 	Skybox::Skybox(string sceneName)
 	{
 		// Create a cube map material
-		m_skyMaterial = new Material("SkyboxMaterial", std::shared_ptr<Shader>(nullptr), CUBE_MAP_NUM_FACES, false);
+		m_skyMaterial = std::make_shared<Material>("SkyboxMaterial", std::shared_ptr<Shader>(nullptr), CUBE_MAP_NUM_FACES, false);
 
 		// Attempt to load a HDR image:
 		std::shared_ptr<gr::Texture> iblAsSkyboxCubemap = 
@@ -84,7 +84,6 @@ namespace SaberEngine
 	{
 		if (m_skyMaterial != nullptr)
 		{
-			delete m_skyMaterial;
 			m_skyMaterial = nullptr;
 		}
 
