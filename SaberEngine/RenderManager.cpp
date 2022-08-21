@@ -114,7 +114,7 @@ namespace SaberEngine
 
 	void RenderManager::Update()
 	{
-		Camera* mainCam = CoreEngine::GetSceneManager()->GetCameras(CAMERA_TYPE_MAIN).at(0);
+		std::shared_ptr<Camera> mainCam = CoreEngine::GetSceneManager()->GetCameras(CAMERA_TYPE_MAIN).at(0);
 
 		// Fill shadow maps:
 		glDisable(GL_CULL_FACE);
@@ -214,7 +214,7 @@ namespace SaberEngine
 
 	void RenderManager::RenderLightShadowMap(std::shared_ptr<Light> light)
 	{
-		Camera* shadowCam = light->ActiveShadowMap()->ShadowCamera();
+		std::shared_ptr<Camera> shadowCam = light->ActiveShadowMap()->ShadowCamera();
 
 		// Light shader setup:
 		std::shared_ptr<Shader> lightShader = shadowCam->RenderMaterial()->GetShader(); // TODO: Remove material, get shader directly
@@ -281,7 +281,7 @@ namespace SaberEngine
 	}
 
 
-	void SaberEngine::RenderManager::RenderToGBuffer(Camera* const renderCam)
+	void SaberEngine::RenderManager::RenderToGBuffer(std::shared_ptr<Camera> const renderCam)
 	{
 		gr::TextureTargetSet const& renderTargetSet = renderCam->GetTextureTargetSet();
 		
@@ -342,7 +342,7 @@ namespace SaberEngine
 	}
 
 
-	void RenderManager::RenderForward(Camera* renderCam)
+	void RenderManager::RenderForward(std::shared_ptr<Camera> renderCam)
 	{
 		glViewport(0, 0, m_xRes, m_yRes);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -435,7 +435,7 @@ namespace SaberEngine
 
 	void SaberEngine::RenderManager::RenderDeferredLight(std::shared_ptr<Light> deferredLight)
 	{
-		Camera* gBufferCam = CoreEngine::GetSceneManager()->GetMainCamera();
+		std::shared_ptr<Camera> gBufferCam = CoreEngine::GetSceneManager()->GetMainCamera();
 
 		// Bind:
 		std::shared_ptr<Shader> currentShader	= deferredLight->DeferredMaterial()->GetShader();
@@ -537,7 +537,7 @@ namespace SaberEngine
 		mat4 shadowCam_vp(1.0);
 		if (activeShadowMap != nullptr)
 		{
-			Camera* shadowCam = activeShadowMap->ShadowCamera();
+			std::shared_ptr<Camera> shadowCam = activeShadowMap->ShadowCamera();
 
 			if (shadowCam != nullptr)
 			{
@@ -610,7 +610,7 @@ namespace SaberEngine
 			return;
 		}
 
-		Camera* renderCam = CoreEngine::GetSceneManager()->GetMainCamera();
+		std::shared_ptr<Camera> renderCam = CoreEngine::GetSceneManager()->GetMainCamera();
 
 		std::shared_ptr<Shader> currentShader = skybox->GetSkyMaterial()->GetShader();
 
@@ -753,7 +753,7 @@ namespace SaberEngine
 		// Add all Camera Shaders:	
 		for (int i = 0; i < CAMERA_TYPE_COUNT; i++)
 		{
-			vector<Camera*> cameras = CoreEngine::GetSceneManager()->GetCameras((CAMERA_TYPE)i);
+			vector<std::shared_ptr<Camera>> cameras = CoreEngine::GetSceneManager()->GetCameras((CAMERA_TYPE)i);
 			for (int currentCam = 0; currentCam < cameras.size(); currentCam++)
 			{
 				if (cameras.at(currentCam)->RenderMaterial() && cameras.at(currentCam)->RenderMaterial()->GetShader())

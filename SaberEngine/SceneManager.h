@@ -84,9 +84,9 @@ namespace SaberEngine
 		std::shared_ptr<Light> const& GetAmbientLight();
 		std::shared_ptr<Light> GetKeyLight();
 		
-		vector<Camera*> const& GetCameras(CAMERA_TYPE cameraType);
-		Camera*	GetMainCamera();
-		void RegisterCamera(CAMERA_TYPE cameraType, Camera* newCamera);;
+		vector<std::shared_ptr<Camera>> const& GetCameras(CAMERA_TYPE cameraType);
+		std::shared_ptr<Camera>	GetMainCamera();
+		void RegisterCamera(CAMERA_TYPE cameraType, std::shared_ptr<Camera> newCamera);;
 
 		void AddTexture(std::shared_ptr<gr::Texture>& newTexture); // If duplicate texture exists, it will be deleted and the newTexture pointer updated to the correct address
 		

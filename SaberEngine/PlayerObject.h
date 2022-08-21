@@ -15,11 +15,11 @@ namespace SaberEngine
 	class PlayerObject : public GameObject
 	{
 	public:
-		PlayerObject(Camera* playerCam);
+		PlayerObject(std::shared_ptr<Camera> playerCam);
 
 
 		// Getters/Setters:
-		inline Camera* GetCamera() { return m_playerCam; }
+		inline std::shared_ptr<Camera> GetCamera() { return m_playerCam; }
 
 		// SaberObject interface:
 		void Update() override;
@@ -31,7 +31,7 @@ namespace SaberEngine
 
 
 	private:
-		Camera* m_playerCam;
+		std::shared_ptr<Camera> m_playerCam;
 
 		// Control configuration:
 		float m_movementSpeed = 0.003f;

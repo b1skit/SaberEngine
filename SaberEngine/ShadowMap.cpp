@@ -18,7 +18,7 @@ namespace SaberEngine
 		vec3 shadowCamPosition /* = vec3(0.0f, 0.0f, 0.0f)*/, 
 		bool useCubeMap /*= false*/)
 	{
-		m_shadowCam = new Camera(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent);
+		m_shadowCam = std::make_shared<Camera>(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent);
 		m_shadowCam->GetTransform()->SetWorldPosition(shadowCamPosition);
 
 		// Texture params are mostly the same between a single shadow map, or a cube map

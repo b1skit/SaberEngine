@@ -60,9 +60,9 @@ namespace SaberEngine
 
 		// Cameras:
 		//---------
-		vector<Camera*> const&	GetCameras(CAMERA_TYPE cameraType);
-		Camera*					GetMainCamera()		{ return m_sceneCameras[CAMERA_TYPE_MAIN].at(0); }
-		void					RegisterCamera(CAMERA_TYPE cameraType, Camera* newCamera);
+		vector<std::shared_ptr<Camera>> const&	GetCameras(CAMERA_TYPE cameraType);
+		std::shared_ptr<Camera>					GetMainCamera()		{ return m_sceneCameras[CAMERA_TYPE_MAIN].at(0); }
+		void					RegisterCamera(CAMERA_TYPE cameraType, std::shared_ptr<Camera> newCamera);
 		void					ClearCameras();	// Destroys the scene's cameras
 
 		void					AddLight(std::shared_ptr<Light> newLight);
@@ -87,7 +87,7 @@ namespace SaberEngine
 		string const& GetSceneName() const { return m_sceneName; }
 
 	private:
-		vector<vector<Camera*>> m_sceneCameras;
+		vector<vector<std::shared_ptr<Camera>>> m_sceneCameras;
 
 		vector<std::shared_ptr<gr::Mesh>> m_meshes;				// Pointers to dynamically allocated Mesh objects
 

@@ -36,7 +36,7 @@ namespace SaberEngine
 			bool useCubeMap = false);
 
 		// Get the current shadow camera
-		inline Camera* ShadowCamera()		{ return m_shadowCam; }
+		inline std::shared_ptr<Camera> ShadowCamera()		{ return m_shadowCam; }
 
 		inline float& MaxShadowBias()		{ return m_maxShadowBias; }
 		inline float& MinShadowBias()		{ return m_minShadowBias; }
@@ -49,7 +49,7 @@ namespace SaberEngine
 
 	private:
 		// Registed in the SceneManager's currentScene, & deallocated when currentScene calls ClearCameras()
-		Camera*	m_shadowCam = nullptr; 
+		std::shared_ptr<Camera>	m_shadowCam = nullptr; 
 		gr::TextureTargetSet m_shadowTargetSet;
 
 		// TODO: Move these defaults to engine/scene config, and load bias directly from the scene light???

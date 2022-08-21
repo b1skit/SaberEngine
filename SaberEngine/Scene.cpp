@@ -20,7 +20,7 @@ namespace SaberEngine
 		m_sceneCameras.reserve(CAMERA_TYPE_COUNT);
 		for (int i = 0; i < CAMERA_TYPE_COUNT; i++)
 		{
-			m_sceneCameras.push_back(vector<Camera*>());
+			m_sceneCameras.push_back(vector<std::shared_ptr<Camera>>());
 		}
 		m_sceneCameras.at(CAMERA_TYPE_SHADOW).reserve(CAMERA_TYPE_SHADOW_ARRAY_SIZE);
 		m_sceneCameras.at(CAMERA_TYPE_REFLECTION).reserve(CAMERA_TYPE_REFLECTION_ARRAY_SIZE);
@@ -126,7 +126,7 @@ namespace SaberEngine
 	}
 
 
-	void Scene::RegisterCamera(CAMERA_TYPE cameraType, Camera* newCamera)
+	void Scene::RegisterCamera(CAMERA_TYPE cameraType, std::shared_ptr<Camera> newCamera)
 	{
 		if (newCamera != nullptr && (int)cameraType < (int)m_sceneCameras.size())
 		{
@@ -141,7 +141,7 @@ namespace SaberEngine
 	}
 
 
-	vector<Camera*> const& Scene::GetCameras(CAMERA_TYPE cameraType)
+	vector<std::shared_ptr<Camera>> const& Scene::GetCameras(CAMERA_TYPE cameraType)
 	{
 		return m_sceneCameras.at(cameraType);
 	}
@@ -158,12 +158,7 @@ namespace SaberEngine
 		{
 			for (int j = 0; j < (int)m_sceneCameras.at(i).size(); j++)
 			{
-				if (m_sceneCameras.at(i).at(j) != nullptr)
-				{
-					m_sceneCameras.at(i).at(j)->Destroy();
-					delete m_sceneCameras.at(i).at(j);
-					m_sceneCameras.at(i).at(j) = nullptr;
-				}
+				m_sceneCameras.at(i).at(j) = nullptr;
 			}
 		}
 	}

@@ -10,7 +10,7 @@
 
 namespace SaberEngine
 {
-	SaberEngine::Light::Light(string lightName, LIGHT_TYPE lightType, vec3 color, std::shared_ptr<ShadowMap> shadowMap /*= nullptr*/, float radius /*= 1.0f*/)
+	SaberEngine::Light::Light(string const& lightName, LIGHT_TYPE lightType, vec3 color, std::shared_ptr<ShadowMap> shadowMap /*= nullptr*/, float radius /*= 1.0f*/)
 	{
 		m_lightName		= lightName;
 		m_type			= lightType;

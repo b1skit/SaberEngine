@@ -43,6 +43,8 @@ namespace SaberEngine
 		// Config constructor
 		Camera(string cameraName, CameraConfig camConfig, Transform* parent = nullptr);
 
+		~Camera() { Destroy(); }
+
 		void Destroy();
 
 		// SaberObject interface:

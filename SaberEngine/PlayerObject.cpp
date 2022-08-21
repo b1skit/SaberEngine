@@ -9,7 +9,7 @@
 
 namespace SaberEngine
 {
-	PlayerObject::PlayerObject(Camera* playerCam) : GameObject::GameObject("Player Object")
+	PlayerObject::PlayerObject(std::shared_ptr<Camera> playerCam) : GameObject::GameObject("Player Object")
 	{
 		m_playerCam = playerCam;
 		m_playerCam->GetTransform()->Parent(&m_transform);

@@ -321,19 +321,19 @@ namespace SaberEngine
 	}
 
 
-	vector<Camera*> const& SceneManager::GetCameras(CAMERA_TYPE cameraType)
+	vector<std::shared_ptr<Camera>> const& SceneManager::GetCameras(CAMERA_TYPE cameraType)
 	{ 
 		return m_currentScene->GetCameras(cameraType); 
 	}
 
 
-	Camera* SceneManager::GetMainCamera()
+	std::shared_ptr<Camera> SceneManager::GetMainCamera()
 	{ 
 		return m_currentScene->GetMainCamera(); 
 	}
 
 
-	void SceneManager::RegisterCamera(CAMERA_TYPE cameraType, Camera* newCamera)
+	void SceneManager::RegisterCamera(CAMERA_TYPE cameraType, std::shared_ptr<Camera> newCamera)
 	{ 
 		m_currentScene->RegisterCamera(cameraType, newCamera); 
 	}
@@ -1925,7 +1925,7 @@ namespace SaberEngine
 
 		string cameraName;
 		CameraConfig newCamConfig;
-		Camera* newCamera = nullptr;
+		std::shared_ptr<Camera> newCamera = nullptr;
 		int numCameras = 0;
 
 
@@ -1990,7 +1990,7 @@ namespace SaberEngine
 		}
 
 		// Create a new camera, attach a GBuffer, and register:
-		newCamera						= new Camera(cameraName, newCamConfig);
+		newCamera						= std::make_shared<Camera>(cameraName, newCamConfig);
 		newCamera->AttachGBuffer();
 
 		// For now, assume that we're only importing the main camera. No other cameras are currently supported...

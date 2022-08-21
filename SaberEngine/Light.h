@@ -43,7 +43,12 @@ namespace SaberEngine
 	{
 	public:
 		Light() {}; // Default constructor
-		Light(std::string lightName, LIGHT_TYPE lightType, vec3 color, std::shared_ptr<ShadowMap> shadowMap = nullptr, float radius = 1.0f);
+		Light(std::string const& lightName, 
+			LIGHT_TYPE lightType, 
+			vec3 color, 
+			std::shared_ptr<ShadowMap> shadowMap = nullptr, 
+			float radius = 1.0f);
+
 		~Light() { Destroy(); }
 
 		void Destroy();
@@ -75,12 +80,12 @@ namespace SaberEngine
 
 
 	private:
-		vec3 m_color					= vec3(0.0f, 0.0f, 0.0f);	// Note: Intensity is factored into these values
-		LIGHT_TYPE m_type				= LIGHT_DIRECTIONAL;		// Default
+		vec3 m_color = vec3(0.0f, 0.0f, 0.0f); // Note: Intensity is factored into these values
+		LIGHT_TYPE m_type = LIGHT_DIRECTIONAL; // Default
 
-		string m_lightName			= "unnamed_directional_light";
+		string m_lightName = "unnamed_directional_light";
 
-		std::shared_ptr<ShadowMap> m_shadowMap		= nullptr; // Deallocated by calling Destroy() during SceneManager.Shutdown()
+		std::shared_ptr<ShadowMap> m_shadowMap = nullptr;
 
 		// Deferred light setup:
 		std::shared_ptr<gr::Mesh> m_deferredMesh = nullptr;
