@@ -230,10 +230,10 @@ namespace opengl
 	}
 
 
-	void Context::SwapWindow(re::Context& context)
+	void Context::SwapWindow(re::Context const& context)
 	{
-		opengl::Context::PlatformParams* const platformParams =
-			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
+		opengl::Context::PlatformParams const* const platformParams =
+			dynamic_cast<opengl::Context::PlatformParams const*>(context.GetPlatformParams());
 
 		SDL_GL_SwapWindow(platformParams->m_glWindow);
 	}
@@ -253,7 +253,7 @@ namespace opengl
 			glCullFace(GL_BACK);
 		}
 		break;
-		case platform::Context::FaceCullingMode::FrontAndBack:
+		case platform::Context::FaceCullingMode::FrontBack:
 		{
 			glCullFace(GL_FRONT_AND_BACK);
 		}
@@ -262,4 +262,30 @@ namespace opengl
 			assert("Invalid face culling mode" && false);
 		}
 	}
+
+
+	void Context::ClearTargets(platform::Context::ClearTarget const& clearTarget)
+	{
+		switch (clearTarget)
+		{
+		case platform::Context::ClearTarget::Color:
+		{
+			glClear(GL_COLOR_BUFFER_BIT);
+		}
+		break;
+		case platform::Context::ClearTarget::Depth:
+		{
+			glClear(GL_DEPTH_BUFFER_BIT);
+		}
+		break;
+		case platform::Context::ClearTarget::ColorDepth:
+		{
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		}
+		break;
+		default:
+			assert("Invalid face clear target" && false);
+		}
+	}
+	
 }

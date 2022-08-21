@@ -17,13 +17,15 @@ namespace re
 		Context();
 
 		platform::Context::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
+		platform::Context::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
 
 		// Platform wrappers:
 		void Create();
 		void Destroy();
-		void SwapWindow();
 
-		void SetCullingMode(platform::Context::FaceCullingMode const& mode);
+		void SwapWindow() const;
+		void SetCullingMode(platform::Context::FaceCullingMode const& mode) const;
+		void ClearTargets(platform::Context::ClearTarget const& clearTarget) const;
 
 
 	private:

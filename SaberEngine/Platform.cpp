@@ -40,6 +40,7 @@ namespace platform
 			platform::Context::Destroy			= &opengl::Context::Destroy;
 			platform::Context::SwapWindow		= &opengl::Context::SwapWindow;
 			platform::Context::SetCullingMode	= &opengl::Context::SetCullingMode;
+			platform::Context::ClearTargets		= &opengl::Context::ClearTargets;
 
 			// Mesh:
 			platform::Mesh::Create	= &opengl::Mesh::Create;

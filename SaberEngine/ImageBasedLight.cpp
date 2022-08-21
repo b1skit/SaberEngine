@@ -246,7 +246,7 @@ namespace SaberEngine
 
 					m_IBL_IEM_PMREM_StageTargetSet.AttachColorTargets(face, currentMipLevel, true);
 
-					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+					CoreEngine::GetRenderManager()->GetContext().ClearTargets(platform::Context::ClearTarget::ColorDepth);
 
 					glDrawElements(GL_TRIANGLES,				// GLenum mode
 						(GLsizei)cubeMesh->NumIndices(),		// GLsizei count
@@ -267,7 +267,7 @@ namespace SaberEngine
 
 				m_IBL_IEM_PMREM_StageTargetSet.AttachColorTargets(face, 0, true);
 												
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				CoreEngine::GetRenderManager()->GetContext().ClearTargets(platform::Context::ClearTarget::ColorDepth);
 
 				glDrawElements(GL_TRIANGLES,			// GLenum mode
 					(GLsizei)cubeMesh->NumIndices(),	// GLsizei count
@@ -364,7 +364,7 @@ namespace SaberEngine
 
 		// TODO: Handle depth/clearing config via stage params: Stages should control how they interact with the targets
 		glDepthFunc(GL_LEQUAL);	// Ensure we can render on the far plane
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		CoreEngine::GetRenderManager()->GetContext().ClearTargets(platform::Context::ClearTarget::ColorDepth);
 
 		// Draw:		
 		glDrawElements(GL_TRIANGLES,

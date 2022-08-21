@@ -224,15 +224,11 @@ namespace opengl
 	{
 		if (glIsTexture(m_textureID))
 		{
-			LOG_WARNING("DELETING TEXTUREID FROM PLATFORM PARAMS!!!!!!!!!!!");
-
 			glDeleteTextures(1, &m_textureID);
 		}
 
 		if (glIsSampler(m_samplerID))
 		{
-			LOG_WARNING("DELETING SAMPLERID FROM PLATFORM PARAMS!!!!!!!!!!!");
-
 			glDeleteSamplers(1, &m_samplerID);
 		}
 	}

@@ -19,13 +19,18 @@ namespace re
 		platform::Context::Destroy(*this);
 	}
 
-	void Context::SwapWindow()
+	void Context::SwapWindow() const
 	{
 		platform::Context::SwapWindow(*this);
 	}
 
-	void Context::SetCullingMode(platform::Context::FaceCullingMode const& mode)
+	void Context::SetCullingMode(platform::Context::FaceCullingMode const& mode) const
 	{
 		platform::Context::SetCullingMode(mode);
+	}
+
+	void Context::ClearTargets(platform::Context::ClearTarget const& clearTarget) const
+	{
+		platform::Context::ClearTargets(clearTarget);
 	}
 }

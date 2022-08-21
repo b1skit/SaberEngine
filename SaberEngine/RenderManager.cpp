@@ -136,7 +136,8 @@ namespace SaberEngine
 
 		m_outputTargetSet->AttachColorTargets(0, 0, true);
 
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the currently bound FBO
+		// Clear the currently bound targets
+		m_context.ClearTargets(platform::Context::ClearTarget::ColorDepth);
 
 		// Render additive contributions:
 		glEnable(GL_BLEND);
@@ -225,7 +226,8 @@ namespace SaberEngine
 
 		light->GetShadowMap()->GetTextureTargetSet().AttachDepthStencilTarget(true);
 
-		glClear(GL_DEPTH_BUFFER_BIT); // Clear the currently bound FBO	
+		// Clear the currently bound FBO	
+		m_context.ClearTargets(platform::Context::ClearTarget::Depth);
 
 		// Loop through each mesh:			
 		vector<std::shared_ptr<gr::Mesh>> const* meshes = CoreEngine::GetSceneManager()->GetRenderMeshes(nullptr); // Get ALL meshes
@@ -277,7 +279,8 @@ namespace SaberEngine
 		
 		renderTargetSet.AttachColorDepthStencilTargets(0, 0, true);		
 		
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the currently bound FBO
+		// Clear the currently bound target
+		m_context.ClearTargets(platform::Context::ClearTarget::ColorDepth);
 
 		// Assemble common (model independent) matrices:
 		mat4 m_view			= renderCam->View();
@@ -545,7 +548,7 @@ namespace SaberEngine
 	{
 		glViewport(0, 0, m_xRes, m_yRes);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		m_context.ClearTargets(platform::Context::ClearTarget::ColorDepth);
 
 		m_outputMaterial->GetShader()->Bind(true);
 		m_outputMaterial->BindAllTextures(RENDER_TEXTURE_0, true);
@@ -563,7 +566,7 @@ namespace SaberEngine
 	{
 		glViewport(0, 0, m_xRes, m_yRes);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		m_context.ClearTargets(platform::Context::ClearTarget::ColorDepth);
 
 		blitShader->Bind(true);
 

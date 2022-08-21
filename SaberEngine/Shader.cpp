@@ -118,7 +118,7 @@ namespace SaberEngine
 
 	std::shared_ptr<Shader> Shader::CreateShader(string shaderFileName, vector<string> const*  shaderKeywords /*= nullptr*/)
 	{
-		LOG("\nCreating shader \"" + shaderFileName + "\"");
+		LOG("Creating shader \"" + shaderFileName + "\"");
 
 		// Create an empty shader program object, and get its reference:
 		GLuint shaderReference = glCreateProgram();

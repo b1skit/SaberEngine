@@ -15,6 +15,7 @@ using glm::vec4;
 #include "TextureTarget.h"
 #include "Context.h"
 #include "PostFXManager.h"
+#include "Context_Platform.h"
 
 
 // Pre-declarations:
@@ -67,6 +68,7 @@ namespace SaberEngine
 		// Perform post scene load initialization (eg. Upload static properties to shaders, initialize PostFX):
 		void Initialize();
 
+		re::Context const& GetContext() { return m_context; }
 
 	private:
 		void RenderLightShadowMap(std::shared_ptr<Light> currentLight);

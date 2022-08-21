@@ -20,9 +20,16 @@ namespace platform
 		{
 			Front,
 			Back,
-			FrontAndBack,
-
+			FrontBack,
 			FaceCullingMode_Count
+		};
+
+		enum class ClearTarget
+		{
+			Color,
+			Depth,
+			ColorDepth,
+			ClearTarget_Count
 		};
 
 	public:
@@ -47,8 +54,9 @@ namespace platform
 		// Static function pointers:
 		static void (*Create)(re::Context& context);
 		static void (*Destroy)(re::Context& context);
-		static void (*SwapWindow)(re::Context& context);
+		static void (*SwapWindow)(re::Context const& context);
 		static void (*SetCullingMode)(FaceCullingMode const& mode);
+		static void (*ClearTargets)(ClearTarget const& clearTarget);
 
 	private:
 
