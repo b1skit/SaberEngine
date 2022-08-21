@@ -377,7 +377,7 @@ namespace SaberEngine
 	}
 
 
-	string SceneManager::GetCurrentSceneName() const
+	string const& SceneManager::GetCurrentSceneName() const
 	{
 		return m_currentScene->GetSceneName();
 	}

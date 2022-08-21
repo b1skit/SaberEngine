@@ -100,7 +100,7 @@ namespace SaberEngine
 
 		std::shared_ptr<Skybox>	GetSkybox();
 
-		string									GetCurrentSceneName() const;
+		string const& GetCurrentSceneName() const;
 
 		
 

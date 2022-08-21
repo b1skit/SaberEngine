@@ -84,7 +84,7 @@ namespace SaberEngine
 
 		inline gr::Bounds const& WorldSpaceSceneBounds() const	{ return m_sceneWorldBounds; }
 
-		string GetSceneName() const							{ return m_sceneName; }
+		string const& GetSceneName() const { return m_sceneName; }
 
 	private:
 		vector<vector<Camera*>> m_sceneCameras;
