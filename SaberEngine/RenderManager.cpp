@@ -115,8 +115,11 @@ namespace SaberEngine
 	{
 		std::shared_ptr<Camera> mainCam = CoreEngine::GetSceneManager()->GetCameras(CAMERA_TYPE_MAIN).at(0);
 
+		
+		// Disable culling to minimize peter-panning
+		m_context.SetCullingMode(platform::Context::FaceCullingMode::Disabled);
+
 		// Fill shadow maps:
-		glDisable(GL_CULL_FACE);
 		vector<std::shared_ptr<Light>> const& deferredLights = CoreEngine::GetSceneManager()->GetDeferredLights();
 		if (!deferredLights.empty())
 		{
@@ -128,7 +131,7 @@ namespace SaberEngine
 				}
 			}
 		}
-		glEnable(GL_CULL_FACE);
+		m_context.SetCullingMode(platform::Context::FaceCullingMode::Back);
 
 
 		// Fill GBuffer:

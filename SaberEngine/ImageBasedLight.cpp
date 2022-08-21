@@ -221,8 +221,9 @@ namespace SaberEngine
 		// Render into the cube map:
 		//--------------------------
 		glDepthFunc(GL_LEQUAL);			// Ensure we can render on the far plane
-		glDisable(GL_CULL_FACE);		// Disable back-face culling, since we're rendering a cube from the inside
 		
+		// Disable back-face culling, since we're rendering a cube from the inside		
+		CoreEngine::GetRenderManager()->GetContext().SetCullingMode(platform::Context::FaceCullingMode::Disabled);
 
 		// Handle per-mip-map rendering:
 		if (iblType == IBL_PMREM)
@@ -281,7 +282,7 @@ namespace SaberEngine
 
 		// Restore defaults:
 		glDepthFunc(GL_LESS);
-		glEnable(GL_CULL_FACE);
+		CoreEngine::GetRenderManager()->GetContext().SetCullingMode(platform::Context::FaceCullingMode::Back);
 		
 		// Unbind: Texture will be destroyed/deleted by the SceneManager
 		hdrTexture->Bind(TEXTURE_0 + TEXTURE_ALBEDO, false);

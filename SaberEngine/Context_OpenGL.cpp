@@ -241,8 +241,18 @@ namespace opengl
 
 	void Context::SetCullingMode(platform::Context::FaceCullingMode const& mode)
 	{
+		if (mode != platform::Context::FaceCullingMode::Disabled)
+		{
+			glEnable(GL_CULL_FACE);
+		}
+
 		switch (mode)
 		{
+		case platform::Context::FaceCullingMode::Disabled:
+		{
+			glDisable(GL_CULL_FACE);
+		}
+		break;
 		case platform::Context::FaceCullingMode::Front:
 		{
 			glCullFace(GL_FRONT);

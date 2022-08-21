@@ -18,6 +18,7 @@ namespace platform
 	public:
 		enum class FaceCullingMode
 		{
+			Disabled,
 			Front,
 			Back,
 			FrontBack,
