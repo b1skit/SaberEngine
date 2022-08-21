@@ -78,7 +78,7 @@ namespace SaberEngine
 		unordered_map<string, std::shared_ptr<Material>> const&	GetMaterials() const;
 		std::shared_ptr<Material> GetMaterial(string materialName);
 		
-		vector<gr::Mesh*> const* GetRenderMeshes(std::shared_ptr<Material> targetMaterial);	// Returns ALL meshs if targetMaterial == nullptr
+		vector<std::shared_ptr<gr::Mesh>> const* GetRenderMeshes(std::shared_ptr<Material> targetMaterial);	// Returns ALL meshs if targetMaterial == nullptr
 		vector<Renderable*>* GetRenderables();
 
 		Light* const& GetAmbientLight();
@@ -124,7 +124,7 @@ namespace SaberEngine
 		void				AddMaterial(std::shared_ptr<Material>& newMaterial);	// Add a material to the material array. Note: Material name MUST be unique
 
 		void				AssembleMaterialMeshLists();		// Helper function: Compiles vectors filled with meshes that use each material. Must be called once after all meshes have finished loading
-		unordered_map<string, vector<gr::Mesh*>>m_materialMeshLists;	// Hash table: Maps material names, to a vector of Mesh* using the material
+		unordered_map<string, vector<std::shared_ptr<gr::Mesh>>>m_materialMeshLists;	// Hash table: Maps material names, to a vector of std::shared_ptr<Mesh> using the material
 
 
 		// Scene setup/construction:

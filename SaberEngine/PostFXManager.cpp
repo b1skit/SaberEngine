@@ -30,11 +30,7 @@ namespace SaberEngine
 			}
 		}
 
-		if (m_screenAlignedQuad != nullptr)
-		{
-			m_screenAlignedQuad->Destroy();
-			m_screenAlignedQuad = nullptr;
-		}		
+		m_screenAlignedQuad = nullptr;
 	}
 
 	void PostFXManager::Initialize(std::shared_ptr<Material> outputMaterial)

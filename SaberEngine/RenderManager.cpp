@@ -109,11 +109,7 @@ namespace SaberEngine
 
 		m_outputTargetSet = nullptr;
 
-		if (m_screenAlignedQuad != nullptr)
-		{
-			m_screenAlignedQuad->Destroy();
-			m_screenAlignedQuad = nullptr;
-		}
+		m_screenAlignedQuad = nullptr;
 
 		if (m_postFXManager != nullptr)
 		{
@@ -249,11 +245,11 @@ namespace SaberEngine
 		glClear(GL_DEPTH_BUFFER_BIT); // Clear the currently bound FBO	
 
 		// Loop through each mesh:			
-		vector<gr::Mesh*> const* meshes = CoreEngine::GetSceneManager()->GetRenderMeshes(nullptr); // Get ALL meshes
+		vector<std::shared_ptr<gr::Mesh>> const* meshes = CoreEngine::GetSceneManager()->GetRenderMeshes(nullptr); // Get ALL meshes
 		unsigned int numMeshes	= (unsigned int)meshes->size();
 		for (unsigned int j = 0; j < numMeshes; j++)
 		{
-			gr::Mesh* currentMesh = meshes->at(j);
+			std::shared_ptr<gr::Mesh> currentMesh = meshes->at(j);
 
 			currentMesh->Bind(true);
 
@@ -311,7 +307,7 @@ namespace SaberEngine
 			std::shared_ptr<Material> currentMaterial = currentElement.second;
 			std::shared_ptr<Shader> currentShader = renderCam->RenderMaterial()->GetShader();
 
-			vector<gr::Mesh*> const* meshes;
+			vector<std::shared_ptr<gr::Mesh>> const* meshes;
 
 			// Bind:
 			currentShader->Bind(true);
@@ -328,7 +324,7 @@ namespace SaberEngine
 			unsigned int numMeshes	= (unsigned int)meshes->size();
 			for (unsigned int j = 0; j < numMeshes; j++)
 			{
-				gr::Mesh* const currentMesh = meshes->at(j);
+				std::shared_ptr<gr::Mesh> const currentMesh = meshes->at(j);
 
 				currentMesh->Bind(true);
 
@@ -407,7 +403,7 @@ namespace SaberEngine
 			currentShader->UploadUniform("texelSize",				&texelSize.x,									UNIFORM_Vec4fv);
 
 			// Get all meshes that use the current material
-			vector<gr::Mesh*> const* meshes = CoreEngine::GetSceneManager()->GetRenderMeshes(currentMaterial);
+			vector<std::shared_ptr<gr::Mesh>> const* meshes = CoreEngine::GetSceneManager()->GetRenderMeshes(currentMaterial);
 
 			// Upload common shader matrices:
 			currentShader->UploadUniform("in_view", &m_view[0][0], UNIFORM_Matrix4fv);
@@ -417,7 +413,7 @@ namespace SaberEngine
 			unsigned int numMeshes	= (unsigned int)meshes->size();
 			for (unsigned int j = 0; j < numMeshes; j++)
 			{
-				gr::Mesh* currentMesh = meshes->at(j);
+				std::shared_ptr<gr::Mesh> currentMesh = meshes->at(j);
 				currentMesh->Bind(true);
 
 				// Assemble model-specific matrices:

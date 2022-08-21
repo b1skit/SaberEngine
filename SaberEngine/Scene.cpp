@@ -69,7 +69,7 @@ namespace SaberEngine
 	}
 
 
-	int Scene::AddMesh(gr::Mesh* newMesh)
+	int Scene::AddMesh(std::shared_ptr<gr::Mesh> newMesh)
 	{
 		// Update scene (world) bounds to contain the new mesh:
 		gr::Bounds meshWorldBounds(newMesh->GetLocalBounds().GetTransformedBounds(newMesh->GetTransform().Model()));
@@ -113,18 +113,13 @@ namespace SaberEngine
 	{
 		for (int i = 0; i < (int)m_meshes.size(); i++)
 		{
-			if (m_meshes.at(i) != nullptr)
-			{
-				delete m_meshes[i];
-				m_meshes.at(i) = nullptr;
-			}
+			m_meshes.at(i) = nullptr;
 		}
-
 		m_meshes.clear();
 	}
 
 
-	gr::Mesh* Scene::GetMesh(int meshIndex)
+	std::shared_ptr<gr::Mesh> Scene::GetMesh(int meshIndex)
 	{
 		if (meshIndex >= (int)m_meshes.size())
 		{

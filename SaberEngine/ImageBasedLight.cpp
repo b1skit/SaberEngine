@@ -287,7 +287,7 @@ namespace SaberEngine
 		hdrTexture->Bind(TEXTURE_0 + TEXTURE_ALBEDO, false);
 
 		cubeMesh->Bind(false);
-		cubeMesh->Destroy();
+		cubeMesh = nullptr;
 
 		equirectangularToCubemapBlitShader->Bind(false);
 		equirectangularToCubemapBlitShader = nullptr;

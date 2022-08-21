@@ -53,10 +53,10 @@ namespace SaberEngine
 		// Allocate an empty mesh array. Clears any existing mesh array
 		void	InitMeshArray();
 
-		int		AddMesh(gr::Mesh* newMesh);
+		int		AddMesh(std::shared_ptr<gr::Mesh> newMesh);
 		void	DeleteMeshes();
-		gr::Mesh*	GetMesh(int meshIndex);
-		inline vector<gr::Mesh*> const& GetMeshes() { return m_meshes; }
+		std::shared_ptr<gr::Mesh>	GetMesh(int meshIndex);
+		inline vector<std::shared_ptr<gr::Mesh>> const& GetMeshes() { return m_meshes; }
 
 		// Cameras:
 		//---------
@@ -89,7 +89,7 @@ namespace SaberEngine
 	private:
 		vector<vector<Camera*>> m_sceneCameras;
 
-		vector<gr::Mesh*> m_meshes;				// Pointers to dynamically allocated Mesh objects
+		vector<std::shared_ptr<gr::Mesh>> m_meshes;				// Pointers to dynamically allocated Mesh objects
 
 		gr::Bounds m_sceneWorldBounds;
 

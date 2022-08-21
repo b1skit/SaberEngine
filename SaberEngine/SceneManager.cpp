@@ -193,7 +193,7 @@ namespace SaberEngine
 
 
 		//// DEBUG: Add a test mesh:
-		//Mesh* sphere = new Mesh(Mesh::CreateSphere(5.0));
+		//std::shared_ptr<Mesh> sphere = std::make_shared<Mesh>(Mesh::CreateSphere(5.0));
 		//GameObject* sphereGameObject = new GameObject("sphereTest");
 
 		//AddGameObject(sphereGameObject);
@@ -212,7 +212,7 @@ namespace SaberEngine
 		//////^^ Need a GetLoadMaterial() function?
 		////int materialIndex = AddMaterial(sphereMaterial);
 		////
-		////materialMeshLists.emplace_back(vector<Mesh*>());
+		////materialMeshLists.emplace_back(vector<std::shared_ptr<Mesh>>());
 		////materialMeshLists.at(materialIndex).emplace_back(sphere);
 
 
@@ -285,7 +285,7 @@ namespace SaberEngine
 	}
 
 
-	vector<gr::Mesh*> const* SceneManager::GetRenderMeshes(std::shared_ptr<Material> targetMaterial)
+	vector<std::shared_ptr<gr::Mesh>> const* SceneManager::GetRenderMeshes(std::shared_ptr<Material> targetMaterial)
 	{
 		// If materialIndex is out of bounds, return ALL meshes
 		if (targetMaterial == nullptr)
@@ -484,7 +484,7 @@ namespace SaberEngine
 		{
 			for (int j = 0; j < (int)m_currentScene->m_renderables.at(i)->ViewMeshes()->size(); j++)
 			{
-				gr::Mesh* viewMesh = m_currentScene->m_renderables.at(i)->ViewMeshes()->at(j);
+				std::shared_ptr<gr::Mesh> viewMesh = m_currentScene->m_renderables.at(i)->ViewMeshes()->at(j);
 
 				std::shared_ptr<Material> meshMaterial = viewMesh->MeshMaterial();
 				if (meshMaterial == nullptr)
@@ -498,7 +498,7 @@ namespace SaberEngine
 					if (result == m_materialMeshLists.end())
 					{
 						// Create a new entry, containing a vector with our object
-						m_materialMeshLists[meshMaterial->Name()] = vector<gr::Mesh*>{viewMesh};
+						m_materialMeshLists[meshMaterial->Name()] = vector<std::shared_ptr<gr::Mesh>>{viewMesh};
 					}
 					else
 					{
@@ -1255,7 +1255,7 @@ namespace SaberEngine
 					}
 				}
 
-				gr::Mesh* newMesh = new gr::Mesh(meshName, vertices, indices, GetMaterial(materialName));
+				std::shared_ptr<gr::Mesh> newMesh = std::make_shared<gr::Mesh>(meshName, vertices, indices, GetMaterial(materialName));
 
 				GameObject* gameObject		= FindCreateGameObjectParents(scene, currentNode->mParent);
 

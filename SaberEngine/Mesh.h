@@ -123,6 +123,8 @@ namespace gr
 		Mesh& operator=(Mesh const& rhs) = delete;
 		Mesh& operator=(Mesh&& rhs) = delete;
 
+		~Mesh(){ Destroy(); }
+
 		void Bind(bool doBind);
 		void Destroy();
 		

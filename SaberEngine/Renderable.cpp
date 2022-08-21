@@ -14,7 +14,7 @@ void SaberEngine::Renderable::SetTransform(Transform* transform)
 	}
 }
 
-void SaberEngine::Renderable::AddViewMeshAsChild(gr::Mesh* mesh)
+void SaberEngine::Renderable::AddViewMeshAsChild(std::shared_ptr<gr::Mesh> mesh)
 {
 	mesh->GetTransform().Parent(m_gameObjectTransform);
 

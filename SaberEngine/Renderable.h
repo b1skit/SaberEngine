@@ -19,7 +19,7 @@ namespace SaberEngine
 	public:
 		Renderable() {}
 		
-		Renderable(vector<gr::Mesh*> viewMeshes)
+		Renderable(vector<std::shared_ptr<gr::Mesh>> viewMeshes)
 		{
 			m_viewMeshes = viewMeshes;
 		}
@@ -30,22 +30,22 @@ namespace SaberEngine
 		}
 
 		// Getters/Setters:
-		inline vector<gr::Mesh*> const* ViewMeshes() const { return &m_viewMeshes; }
+		inline vector<std::shared_ptr<gr::Mesh>> const* ViewMeshes() const { return &m_viewMeshes; }
 
 		inline Transform* GetTransform() const { return m_gameObjectTransform; }
 		void SetTransform(Transform* transform);
 
-		void AddViewMeshAsChild(gr::Mesh* mesh);
+		void AddViewMeshAsChild(std::shared_ptr<gr::Mesh> mesh);
 
 
 	protected:
 
 
 	private:
-		vector<gr::Mesh*> m_viewMeshes;					// Pointers to statically allocated Mesh objects held by the scene manager
+		vector<std::shared_ptr<gr::Mesh>> m_viewMeshes;					// Pointers to statically allocated Mesh objects held by the scene manager
 		Transform* m_gameObjectTransform = nullptr;	// The SceneObject that owns this Renderable must set the transform
 
-		/*Mesh* boundsMesh;*/
+		/*std::shared_ptr<Mesh> boundsMesh;*/
 
 		/*bool isStatic;*/
 	};
