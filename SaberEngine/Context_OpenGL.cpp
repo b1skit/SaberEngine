@@ -298,4 +298,92 @@ namespace opengl
 		}
 	}
 	
+	void Context::SetBlendMode(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst)
+	{
+		if (src == platform::Context::BlendMode::Disabled)
+		{
+			assert("Must disable blending for both source and destination" && src == dst);
+
+			glDisable(GL_BLEND);
+			return;
+		}
+
+		glEnable(GL_BLEND);
+
+		GLenum sFactor = GL_ONE;
+		GLenum dFactor = GL_ZERO;
+
+		auto SetGLBlendFactor = [](
+			platform::Context::BlendMode const& platformBlendMode, 
+			GLenum& blendFactor,
+			bool isSrc
+			)
+		{
+			switch (platformBlendMode)
+			{
+			case platform::Context::BlendMode::Zero:
+			{
+				blendFactor = GL_ZERO;
+			}
+			break;
+			case platform::Context::BlendMode::One:
+			{
+				blendFactor = GL_ONE;
+			}
+			break;
+			case platform::Context::BlendMode::SrcColor:
+			{
+				blendFactor = GL_SRC_COLOR;
+			}
+			break;
+			case platform::Context::BlendMode::OneMinusSrcColor:
+			{
+				blendFactor = GL_ONE_MINUS_SRC_COLOR;
+			}
+			break;
+			case platform::Context::BlendMode::DstColor:
+			{
+				blendFactor = GL_DST_COLOR;
+			}
+			break;
+			case platform::Context::BlendMode::OneMinusDstColor:
+			{
+				blendFactor = GL_ONE_MINUS_DST_COLOR;
+			}
+			case platform::Context::BlendMode::SrcAlpha:
+			{
+				blendFactor = GL_SRC_ALPHA;
+			}
+			case platform::Context::BlendMode::OneMinusSrcAlpha:
+			{
+				blendFactor = GL_ONE_MINUS_SRC_ALPHA;
+			}
+			case platform::Context::BlendMode::DstAlpha:
+			{
+				blendFactor = GL_DST_ALPHA;
+			}
+			case platform::Context::BlendMode::OneMinusDstAlpha:
+			{
+				blendFactor = GL_ONE_MINUS_DST_ALPHA;
+			}
+			break;
+			default:
+			{
+				assert("Invalid blend mode" && false);
+			}
+			}
+		};
+
+		if (src != platform::Context::BlendMode::Default)
+		{
+			SetGLBlendFactor(src, sFactor, true);
+		}
+
+		if (dst != platform::Context::BlendMode::Default)
+		{
+			SetGLBlendFactor(dst, dFactor, false);
+		}
+
+		glBlendFunc(sFactor, dFactor);
+	}
 }

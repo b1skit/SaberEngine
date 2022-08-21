@@ -143,14 +143,16 @@ namespace SaberEngine
 		m_context.ClearTargets(platform::Context::ClearTarget::ColorDepth);
 
 		// Render additive contributions:
-		glEnable(GL_BLEND);
+		m_context.SetBlendMode(platform::Context::BlendMode::One,platform::Context::BlendMode::One);
 
 		if (!deferredLights.empty())
 		{
 			// Render the first light
 			RenderDeferredLight(deferredLights[0]);
 
-			glBlendFunc(GL_ONE, GL_ONE); // TODO: Can we just set this once somewhere, instead of calling each frame?
+			// Set the blend mode: Light contributions are additive
+			m_context.SetBlendMode(platform::Context::BlendMode::One, platform::Context::BlendMode::One);
+
 			glDepthFunc(GL_GEQUAL);
 
 			for (int i = 1; i < deferredLights.size(); i++)
@@ -175,19 +177,19 @@ namespace SaberEngine
 		m_context.SetCullingMode(platform::Context::FaceCullingMode::Back);
 
 		// Render the skybox on top of the frame:
-		glDisable(GL_BLEND);
+		m_context.SetBlendMode(platform::Context::BlendMode::Disabled, platform::Context::BlendMode::Disabled);
+
 		RenderSkybox(CoreEngine::GetSceneManager()->GetSkybox());
 
 		// Additively blit the emissive GBuffer texture to screen:
-		glEnable(GL_BLEND);
+		m_context.SetBlendMode(platform::Context::BlendMode::One, platform::Context::BlendMode::One);
 
 		Blit(
 			mainCam->GetTextureTargetSet().ColorTarget(TEXTURE_EMISSIVE).GetTexture(),
 			*m_outputTargetSet.get(),
 			m_outputMaterial->GetShader());
 
-
-		glDisable(GL_BLEND);
+		m_context.SetBlendMode(platform::Context::BlendMode::Disabled, platform::Context::BlendMode::Disabled);
 
 		// Post process finished frame:
 		std::shared_ptr<Shader> finalFrameShader = nullptr; // Reference updated in ApplyPostFX...

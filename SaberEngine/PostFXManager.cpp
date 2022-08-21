@@ -226,13 +226,18 @@ namespace SaberEngine
 			RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO,
 			true);
 
-		
-		glEnable(GL_BLEND);
+		CoreEngine::GetRenderManager()->GetContext().SetBlendMode(
+			platform::Context::BlendMode::One,
+			platform::Context::BlendMode::One);
+
 		glDrawElements(GL_TRIANGLES,
 			(GLsizei)m_screenAlignedQuad->NumIndices(),
 			GL_UNSIGNED_INT,
 			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
-		glDisable(GL_BLEND);
+
+		CoreEngine::GetRenderManager()->GetContext().SetBlendMode(
+			platform::Context::BlendMode::Disabled,
+			platform::Context::BlendMode::Disabled);
 
 		// Set the final frame material and shader to apply tone mapping:
 		finalFrameShader	= m_toneMapShader;

@@ -26,6 +26,7 @@ namespace re
 		void SwapWindow() const;
 		void SetCullingMode(platform::Context::FaceCullingMode const& mode) const;
 		void ClearTargets(platform::Context::ClearTarget const& clearTarget) const;
+		void SetBlendMode(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst) const;
 
 
 	private:

@@ -41,6 +41,7 @@ namespace platform
 			platform::Context::SwapWindow		= &opengl::Context::SwapWindow;
 			platform::Context::SetCullingMode	= &opengl::Context::SetCullingMode;
 			platform::Context::ClearTargets		= &opengl::Context::ClearTargets;
+			platform::Context::SetBlendMode		= &opengl::Context::SetBlendMode;
 
 			// Mesh:
 			platform::Mesh::Create	= &opengl::Mesh::Create;

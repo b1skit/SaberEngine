@@ -33,4 +33,9 @@ namespace re
 	{
 		platform::Context::ClearTargets(clearTarget);
 	}
+
+	void Context::SetBlendMode(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst) const
+	{
+		platform::Context::SetBlendMode(src, dst);
+	}
 }

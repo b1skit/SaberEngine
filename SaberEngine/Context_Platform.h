@@ -33,6 +33,23 @@ namespace platform
 			ClearTarget_Count
 		};
 
+		enum class BlendMode
+		{
+			Disabled,
+			Default, // Src one, Dst zero
+			Zero,
+			One,
+			SrcColor,
+			OneMinusSrcColor,
+			DstColor,
+			OneMinusDstColor,
+			SrcAlpha,
+			OneMinusSrcAlpha,
+			DstAlpha,
+			OneMinusDstAlpha,
+			BlendMode_Count
+		};
+
 	public:
 		struct PlatformParams
 		{
@@ -58,6 +75,7 @@ namespace platform
 		static void (*SwapWindow)(re::Context const& context);
 		static void (*SetCullingMode)(FaceCullingMode const& mode);
 		static void (*ClearTargets)(ClearTarget const& clearTarget);
+		static void (*SetBlendMode)(BlendMode const& src, BlendMode const& dst);
 
 	private:
 
