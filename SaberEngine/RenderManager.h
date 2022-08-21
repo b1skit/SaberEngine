@@ -14,6 +14,7 @@ using glm::vec4;
 #include "Mesh.h"
 #include "TextureTarget.h"
 #include "Context.h"
+#include "PostFXManager.h"
 
 
 // Pre-declarations:
@@ -28,7 +29,6 @@ namespace SaberEngine
 	class Shader;
 	class Light;
 	class Skybox;
-	class PostFXManager;
 }
 
 
@@ -95,13 +95,12 @@ namespace SaberEngine
 
 		bool m_useForwardRendering	= false; // TODO: Remove this functionality
 
-		std::shared_ptr<Material> m_outputMaterial	= nullptr;	// Deallocated in Shutdown()
+		std::shared_ptr<Material> m_outputMaterial	= nullptr;
 		std::shared_ptr<gr::TextureTargetSet> m_outputTargetSet;
 
-		std::shared_ptr<gr::Mesh> m_screenAlignedQuad		= nullptr;	// Deallocated in Shutdown()
+		std::shared_ptr<gr::Mesh> m_screenAlignedQuad = nullptr;
 
-		// PostFX:
-		PostFXManager* m_postFXManager = nullptr;	// Deallocated in Shutdown()
+		std::unique_ptr<PostFXManager> m_postFXManager = nullptr;
 	};
 }
 

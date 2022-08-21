@@ -89,7 +89,7 @@ namespace SaberEngine
 
 
 		// PostFX Manager:
-		m_postFXManager = new PostFXManager(); // Initialized when RenderManager.Initialize() is called
+		m_postFXManager = std::make_unique<PostFXManager>(); // Initialized when RenderManager.Initialize() is called
 
 		m_screenAlignedQuad = gr::meshfactory::CreateQuad
 		(
@@ -106,16 +106,9 @@ namespace SaberEngine
 		LOG("Render manager shutting down...");
 
 		m_outputMaterial = nullptr;
-
 		m_outputTargetSet = nullptr;
-
 		m_screenAlignedQuad = nullptr;
-
-		if (m_postFXManager != nullptr)
-		{
-			delete m_postFXManager;
-			m_postFXManager = nullptr;
-		}
+		m_postFXManager = nullptr;
 	}
 
 
