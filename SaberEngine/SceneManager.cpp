@@ -727,80 +727,7 @@ namespace SaberEngine
 					#if defined(DEBUG_SCENEMANAGER_SHADER_LOGGING)
 						LOG_WARNING("Could not find material \"Cosine Power\" slot");
 					#endif
-				}
-
-				// No need to load material shaders in deferred mode:
-				if (CoreEngine::GetCoreEngine()->GetConfig()->GetValue<bool>("useForwardRendering") == true)
-				{
-					// Create a shader, using the keywords we've built
-					bool loadedValidShader = false;
-					std::size_t shaderNameIndex = matName.find_last_of("_");
-					if (shaderNameIndex == string::npos)
-					{
-						LOG_ERROR("Could not find a shader name prefixed with an underscore in the material name. Destroying loaded textures and assigning error shader - GBuffer data will be garbage!!!");
-
-						std::shared_ptr<Shader> newShader = Shader::CreateShader(
-							CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("errorShaderName"));
-
-						newMaterial->GetShader() = newShader;
-					}
-					else
-					{
-						string shaderName = matName.substr(shaderNameIndex + 1, matName.length() - (shaderNameIndex + 1));
-
-						#if defined(DEBUG_SCENEMANAGER_MATERIAL_LOGGING)
-							LOG("Attempting to assign shader \"" + m_shaderName + "\" to material");
-						#endif
-
-						std::shared_ptr<Shader> newShader = Shader::CreateShader(shaderName, &newMaterial->ShaderKeywords());
-
-						if (newShader->Name() != 
-							CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("errorShaderName"))
-						{
-							newMaterial->GetShader() = newShader;
-							loadedValidShader = true;
-						}
-					}
-
-					// If we didn't load a valid shader, delete any textures we might have loaded and replace them with
-					// error textures:
-					if (!loadedValidShader)
-					{
-						for (int currentTexture = 0; currentTexture < newMaterial->NumTextureSlots(); currentTexture++)
-						{
-							if (newMaterial->AccessTexture((TEXTURE_TYPE)currentTexture) != nullptr)
-							{
-								newMaterial->AccessTexture((TEXTURE_TYPE)currentTexture) = nullptr;
-							}
-						}
-
-						// Assign a pink error albedo texture:
-						string errorTextureName = "errorTexture"; // TODO: Store this in a config?
-						newMaterial->AccessTexture(TEXTURE_ALBEDO) = 
-							FindLoadTextureByPath(errorTextureName, gr::Texture::TextureColorSpace::sRGB, false);
-						if (newMaterial->AccessTexture(TEXTURE_ALBEDO) == nullptr)
-						{
-							gr::Texture::TextureParams texParams;
-							texParams.m_width = 1;
-							texParams.m_height = 1;
-							texParams.m_texturePath = errorTextureName;
-							texParams.m_clearColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
-							texParams.m_texturePath = errorTextureName;
-
-							newMaterial->AccessTexture(TEXTURE_ALBEDO) = 
-								std::shared_ptr<gr::Texture>(new gr::Texture(texParams));
-
-							AddTexture(newMaterial->AccessTexture(TEXTURE_ALBEDO));
-						}
-					}
-
-					// Buffer uniforms:
-					newMaterial->GetShader()->UploadUniform(
-						Material::MATERIAL_PROPERTY_NAMES[MATERIAL_PROPERTY_0].c_str(),
-						&newMaterial->Property(MATERIAL_PROPERTY_0).x,
-						UNIFORM_Vec4fv); // Upload matProperty0
-				}
-				
+				}		
 
 				// Add the material to our material list:
 				AddMaterial(newMaterial);
@@ -865,9 +792,6 @@ namespace SaberEngine
 
 				if (newTexture == nullptr)
 				{
-					// TODO: Replace this with shader multi-compiles. If no normal texture is found, use vertex normals
-					// instead (for forward rendering)
-
 					newName = "DefaultFlatNormal"; // Use a generic name, so this texture will be shared
 					newColor = vec4(0.5f, 0.5f, 1.0f, 0.0f);
 
@@ -1602,7 +1526,7 @@ namespace SaberEngine
 					}
 
 
-					// Note: Assimp seems to import directional lights with their "forward" vector pointing in the opposite direction.
+					// Note: Assimp imports directional lights with their forward vector pointing in the opposite direction.
 					// This is ok, since we use "forward" as "vector pointing towards the light" when uploading to our shaders...
 					#if defined(DEBUG_SCENEMANAGER_LIGHT_LOGGING)
 						LOG("Directional light color: " + to_string(lightColor.r) + ", " + to_string(lightColor.g) + 
@@ -1735,34 +1659,20 @@ namespace SaberEngine
 				}		
 
 				// Create the light:
-				std::shared_ptr<Light> pointLight = nullptr;
-				if (pointType == LIGHT_POINT || 
-					CoreEngine::GetCoreEngine()->GetConfig()->GetValue<bool>("useForwardRendering") == true)
+				std::shared_ptr<Light> pointLight = std::make_shared<ImageBasedLight>(
+					lightName,
+					CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath"));
+				// TODO: Load the HDR path from FBX (Currently not supported in Assimp???)
+
+				// If we didn't load a valid IBL, fall back to using an ambient color light
+				if (!dynamic_cast<ImageBasedLight*>(pointLight.get())->IsValid())
 				{
 					pointLight = std::make_shared<Light>(
-							lightName,
-							pointType,
-							lightColor,
-							nullptr,
-							radius); // Only used if we're actually creating a point light
-				}
-				else
-				{
-					pointLight = std::make_shared<ImageBasedLight>(
 						lightName,
-						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath")); 
-						// TODO: Load the HDR path from FBX (Currently not supported in Assimp???)
-
-					// If we didn't load a valid IBL, fall back to using an ambient color light
-					if (!dynamic_cast<ImageBasedLight*>(pointLight.get())->IsValid())
-					{
-						pointLight = std::make_shared<Light>(
-							lightName,
-							pointType,	// This will be AMBIENT_COLOR as set above
-							lightColor,
-							nullptr,
-							radius); // Only used if we're actually creating a point light
-					}
+						pointType,	// This will be AMBIENT_COLOR as set above
+						lightColor,
+						nullptr,
+						radius); // Only used if we're actually creating a point light
 				}
 
 				if (pointType == LIGHT_POINT)
@@ -1865,24 +1775,6 @@ namespace SaberEngine
 				LOG_ERROR("Found an unhandled light type");
 				break;
 
-			}
-
-			// Normalize the lighting if we're in forward mode
-			if (CoreEngine::GetCoreEngine()->GetConfig()->GetValue<bool>("useForwardRendering"))
-			{
-				vector<std::shared_ptr<Light>>const* allLights = &m_currentScene->GetDeferredLights();
-
-				for (int i = 0; i < (int)allLights->size(); i++)
-				{
-					vec3 lightColor = allLights->at(i)->Color();
-					float maxChannel = glm::max(glm::max(lightColor.x, lightColor.y), lightColor.z);
-
-					if (maxChannel > 1.0f)
-					{
-						lightColor /= maxChannel;
-						allLights->at(i)->SetColor(lightColor);
-					}
-				}
 			}
 
 			#if defined(DEBUG_SCENEMANAGER_LIGHT_LOGGING)

@@ -91,8 +91,6 @@ namespace en
 		{
 		case platform::RenderingAPI::OpenGL:
 		{
-			TryInsertDefault("useForwardRendering", false),
-
 			// Shader:
 			TryInsertDefault("shaderDirectory",						std::string(".\\Shaders\\glsl\\"));
 			TryInsertDefault("errorShaderName",						std::string("errorShader"));

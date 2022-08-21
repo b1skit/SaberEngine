@@ -73,8 +73,6 @@ namespace SaberEngine
 
 		void RenderToGBuffer(std::shared_ptr<Camera> const renderCam);	// Note: renderCam MUST have an attached GBuffer
 
-		void RenderForward(std::shared_ptr<Camera> renderCam);
-
 		void RenderDeferredLight(std::shared_ptr<Light> deferredLight); // Note: FBO, viewport
 
 		void RenderSkybox(std::shared_ptr<Skybox> skybox);
@@ -92,8 +90,6 @@ namespace SaberEngine
 		// TODO: Make sure these don't get out of sync with our Context...
 		
 		re::Context m_context;
-
-		bool m_useForwardRendering	= false; // TODO: Remove this functionality
 
 		std::shared_ptr<Material> m_outputMaterial	= nullptr;
 		std::shared_ptr<gr::TextureTargetSet> m_outputTargetSet;

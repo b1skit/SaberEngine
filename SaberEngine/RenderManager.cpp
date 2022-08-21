@@ -55,7 +55,6 @@ namespace SaberEngine
 		// Cache the relevant config data:
 		m_xRes					= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
 		m_yRes					= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
-		m_useForwardRendering	= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<bool>("useForwardRendering");
 
 		// Output target:		
 		gr::Texture::TextureParams outputParams;
@@ -118,94 +117,85 @@ namespace SaberEngine
 
 		// Fill shadow maps:
 		glDisable(GL_CULL_FACE);
-		vector<std::shared_ptr<Light>>const* deferredLights = &CoreEngine::GetSceneManager()->GetDeferredLights();
-		if (deferredLights)
+		vector<std::shared_ptr<Light>> const& deferredLights = CoreEngine::GetSceneManager()->GetDeferredLights();
+		if (!deferredLights.empty())
 		{
-			for (int i = 0; i < (int)deferredLights->size(); i++)
+			for (size_t i = 0; i < (int)deferredLights.size(); i++)
 			{
-				if (deferredLights->at(i)->ActiveShadowMap() != nullptr)
+				if (deferredLights.at(i)->ActiveShadowMap() != nullptr)
 				{
-					RenderLightShadowMap(deferredLights->at(i));
+					RenderLightShadowMap(deferredLights.at(i));
 				}
 			}
 		}
 		glEnable(GL_CULL_FACE);
 
-		// Forward rendering:
-		if (m_useForwardRendering)
+
+		// Fill GBuffer:
+		RenderToGBuffer(mainCam);
+
+		m_outputTargetSet->AttachColorTargets(0, 0, true);
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the currently bound FBO
+
+		// Render additive contributions:
+		glEnable(GL_BLEND);
+
+		if (!deferredLights.empty())
 		{
-			RenderForward(mainCam);
-		}
-		else // Deferred rendering:
-		{
-			// Fill GBuffer:
-			RenderToGBuffer(mainCam);
+			// Render the first light
+			RenderDeferredLight(deferredLights[0]);
 
-			m_outputTargetSet->AttachColorTargets(0, 0, true);
-			
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the currently bound FBO
+			glBlendFunc(GL_ONE, GL_ONE); // TODO: Can we just set this once somewhere, instead of calling each frame?
+			glDepthFunc(GL_GEQUAL);
 
-			vector<std::shared_ptr<Light>>const* deferredLights = &CoreEngine::GetSceneManager()->GetDeferredLights();
-
-			// Render additive contributions:
-			glEnable(GL_BLEND);
-
-			if (deferredLights->size() > 0)
+			for (int i = 1; i < deferredLights.size(); i++)
 			{
-				// Render the first light
-				RenderDeferredLight(deferredLights->at(0));
-				
-				glBlendFunc(GL_ONE, GL_ONE); // TODO: Can we just set this once somewhere, instead of calling each frame?
-				glDepthFunc(GL_GEQUAL);
-
-				for (int i = 1; i < deferredLights->size(); i++)
+				// Select face culling:
+				if (deferredLights[i]->Type() == LIGHT_AMBIENT_COLOR ||
+					deferredLights[i]->Type() == LIGHT_AMBIENT_IBL ||
+					deferredLights[i]->Type() == LIGHT_DIRECTIONAL)
 				{
-					// Select face culling:
-					if (deferredLights->at(i)->Type() == LIGHT_AMBIENT_COLOR || 
-						deferredLights->at(i)->Type() == LIGHT_AMBIENT_IBL || 
-						deferredLights->at(i)->Type() == LIGHT_DIRECTIONAL)
-					{
-						glCullFace(GL_BACK);
-					}
-					else
-					{
-						// For 3D deferred light meshes, we render back faces so something is visible even while we're 
-						// inside the mesh		
-						glCullFace(GL_FRONT);	
-					}
-
-					RenderDeferredLight(deferredLights->at(i));
+					glCullFace(GL_BACK);
 				}
+				else
+				{
+					// For 3D deferred light meshes, we render back faces so something is visible even while we're 
+					// inside the mesh		
+					glCullFace(GL_FRONT);
+				}
+
+				RenderDeferredLight(deferredLights[i]);
 			}
-			glCullFace(GL_BACK);
-
-			// Render the skybox on top of the frame:
-			glDisable(GL_BLEND);
-			RenderSkybox(CoreEngine::GetSceneManager()->GetSkybox());
-
-			// Additively blit the emissive GBuffer texture to screen:
-			glEnable(GL_BLEND);
-		
-			Blit(
-				mainCam->GetTextureTargetSet().ColorTarget(TEXTURE_EMISSIVE).GetTexture(),
-				*m_outputTargetSet.get(),
-				m_outputMaterial->GetShader());
-
-
-			glDisable(GL_BLEND);			
-
-			// Post process finished frame:
-			std::shared_ptr<Shader> finalFrameShader		= nullptr; // Reference updated in ApplyPostFX...
-			m_postFXManager->ApplyPostFX(finalFrameShader);
-
-			// Cleanup:
-			glEnable(GL_DEPTH_TEST);
-			glDepthFunc(GL_LESS);
-			glCullFace(GL_BACK);
-
-			// Blit results to screen (Using the final post processing shader pass supplied by the PostProcessingManager):
-			BlitToScreen(m_outputTargetSet->ColorTarget(0).GetTexture(), finalFrameShader);
 		}
+		glCullFace(GL_BACK);
+
+		// Render the skybox on top of the frame:
+		glDisable(GL_BLEND);
+		RenderSkybox(CoreEngine::GetSceneManager()->GetSkybox());
+
+		// Additively blit the emissive GBuffer texture to screen:
+		glEnable(GL_BLEND);
+
+		Blit(
+			mainCam->GetTextureTargetSet().ColorTarget(TEXTURE_EMISSIVE).GetTexture(),
+			*m_outputTargetSet.get(),
+			m_outputMaterial->GetShader());
+
+
+		glDisable(GL_BLEND);
+
+		// Post process finished frame:
+		std::shared_ptr<Shader> finalFrameShader = nullptr; // Reference updated in ApplyPostFX...
+		m_postFXManager->ApplyPostFX(finalFrameShader);
+
+		// Cleanup:
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS);
+		glCullFace(GL_BACK);
+
+		// Blit results to screen (Using the final post processing shader pass supplied by the PostProcessingManager):
+		BlitToScreen(m_outputTargetSet->ColorTarget(0).GetTexture(), finalFrameShader);
 		
 		// Display the final frame:
 		m_context.SwapWindow();
@@ -342,102 +332,6 @@ namespace SaberEngine
 	}
 
 
-	void RenderManager::RenderForward(std::shared_ptr<Camera> renderCam)
-	{
-		glViewport(0, 0, m_xRes, m_yRes);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the currently bound FBO
-
-		// Assemble common (model independent) matrices:
-		mat4 m_view			= renderCam->View();
-		mat4 shadowCam_vp = mat4(1.0f);
-		if (CoreEngine::GetSceneManager()->GetKeyLight() && CoreEngine::GetSceneManager()->GetKeyLight()->ActiveShadowMap() && CoreEngine::GetSceneManager()->GetKeyLight()->ActiveShadowMap()->ShadowCamera())
-		{
-			shadowCam_vp = CoreEngine::GetSceneManager()->GetKeyLight()->ActiveShadowMap()->ShadowCamera()->ViewProjection();
-		}
-
-		// Cache required values once outside of the loop:
-		std::shared_ptr<Light> keyLight						= CoreEngine::GetSceneManager()->GetKeyLight();
-
-		
-		
-		// Temp fix: If we don't have a keylight, abort. TODO: Implement forward rendering of all light types
-		if (keyLight == nullptr)
-		{
-			LOG_ERROR("\nNo keylight detected. A keylight is currently required for forward rendering mode");
-			assert("No keylight detected. A keylight is currently required for forward rendering mode" && 
-				keyLight != nullptr);
-			CoreEngine::GetEventManager()->Notify(
-				std::make_shared<EventInfo const>(EventInfo{ EVENT_ENGINE_QUIT, this, "Missing keylight error"}));
-			return;
-		}
-
-		// Loop by material (+shader), mesh:
-		std::unordered_map<string, std::shared_ptr<Material>> const sceneMaterials = CoreEngine::GetSceneManager()->GetMaterials();
-		for (std::pair<string, std::shared_ptr<Material>> currentElement : sceneMaterials)
-		{
-			// Setup the current material and shader:
-			std::shared_ptr<Material> currentMaterial = currentElement.second;
-			std::shared_ptr<Shader> currentShader = currentMaterial->GetShader();
-
-			// Bind:
-			currentShader->Bind(true);
-			currentMaterial->BindAllTextures(TEXTURE_0, true);
-
-			// Bind the key light depth buffer and related data:
-			vec4 texelSize(0, 0, 0, 0);
-
-			std::shared_ptr<gr::Texture> depthTexture = 
-				keyLight->ActiveShadowMap()->ShadowCamera()->RenderMaterial()->AccessTexture(RENDER_TEXTURE_DEPTH);
-
-			if (depthTexture)
-			{
-				depthTexture->Bind(DEPTH_TEXTURE_0 + DEPTH_TEXTURE_SHADOW, true);
-
-				texelSize = depthTexture->GetTexelDimenions();
-			}
-			currentShader->UploadUniform("maxShadowBias",			&keyLight->ActiveShadowMap()->MaxShadowBias(),	UNIFORM_Float);
-			currentShader->UploadUniform("minShadowBias",			&keyLight->ActiveShadowMap()->MinShadowBias(),	UNIFORM_Float);
-			currentShader->UploadUniform("texelSize",				&texelSize.x,									UNIFORM_Vec4fv);
-
-			// Get all meshes that use the current material
-			vector<std::shared_ptr<gr::Mesh>> const* meshes = CoreEngine::GetSceneManager()->GetRenderMeshes(currentMaterial);
-
-			// Upload common shader matrices:
-			currentShader->UploadUniform("in_view", &m_view[0][0], UNIFORM_Matrix4fv);
-			currentShader->UploadUniform("shadowCam_vp", &shadowCam_vp[0][0], UNIFORM_Matrix4fv);
-
-			// Loop through each mesh:			
-			unsigned int numMeshes	= (unsigned int)meshes->size();
-			for (unsigned int j = 0; j < numMeshes; j++)
-			{
-				std::shared_ptr<gr::Mesh> currentMesh = meshes->at(j);
-				currentMesh->Bind(true);
-
-				// Assemble model-specific matrices:
-				mat4 model			= currentMesh->GetTransform().Model();
-				mat4 modelRotation	= currentMesh->GetTransform().Model(WORLD_ROTATION);
-				mat4 mv				= m_view * model;
-				mat4 mvp			= renderCam->ViewProjection() * model;
-
-				// Upload mesh-specific matrices:
-				currentShader->UploadUniform("in_model",			&model[0][0],			UNIFORM_Matrix4fv);
-				currentShader->UploadUniform("in_modelRotation",	&modelRotation[0][0],	UNIFORM_Matrix4fv);
-				currentShader->UploadUniform("in_mv",				&mv[0][0],				UNIFORM_Matrix4fv);
-				currentShader->UploadUniform("in_mvp",				&mvp[0][0],				UNIFORM_Matrix4fv);
-
-				// TODO: Only upload these matrices if they've changed ^^^^
-
-				// Draw!
-				glDrawElements(GL_TRIANGLES,
-					(GLsizei)currentMesh->NumIndices(), 
-					GL_UNSIGNED_INT, 
-					(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
-			}
-		} // End Material loop
-	}
-
-
 	void SaberEngine::RenderManager::RenderDeferredLight(std::shared_ptr<Light> deferredLight)
 	{
 		std::shared_ptr<Camera> gBufferCam = CoreEngine::GetSceneManager()->GetMainCamera();
@@ -483,31 +377,28 @@ namespace SaberEngine
 		case LIGHT_AMBIENT_IBL:
 		{
 			// Bind IBL cubemaps:
-			if (!m_useForwardRendering)
+			std::shared_ptr<gr::Texture> IEMCubemap =
+				dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetIEMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
+
+			if (IEMCubemap != nullptr)
 			{
-				std::shared_ptr<gr::Texture> IEMCubemap = 
-					dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetIEMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
-				
-				if (IEMCubemap != nullptr)
-				{
-					IEMCubemap->Bind(CUBE_MAP_0 + CUBE_MAP_RIGHT, true);
-				}
+				IEMCubemap->Bind(CUBE_MAP_0 + CUBE_MAP_RIGHT, true);
+			}
 
-				std::shared_ptr<gr::Texture> PMREM_Cubemap = 
-					dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetPMREMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
+			std::shared_ptr<gr::Texture> PMREM_Cubemap =
+				dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetPMREMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
 
-				if (PMREM_Cubemap != nullptr)
-				{
-					PMREM_Cubemap->Bind(CUBE_MAP_1 + CUBE_MAP_RIGHT, true);
-				}
+			if (PMREM_Cubemap != nullptr)
+			{
+				PMREM_Cubemap->Bind(CUBE_MAP_1 + CUBE_MAP_RIGHT, true);
+			}
 
-				// Bind BRDF Integration map:
-				std::shared_ptr<gr::Texture> BRDFIntegrationMap = 
-					dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetBRDFIntegrationMap();
-				if (BRDFIntegrationMap != nullptr)
-				{
-					BRDFIntegrationMap->Bind(GENERIC_TEXTURE_0, true);
-				}
+			// Bind BRDF Integration map:
+			std::shared_ptr<gr::Texture> BRDFIntegrationMap =
+				dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetBRDFIntegrationMap();
+			if (BRDFIntegrationMap != nullptr)
+			{
+				BRDFIntegrationMap->Bind(GENERIC_TEXTURE_0, true);
 			}
 		}
 			break;
@@ -794,14 +685,6 @@ namespace SaberEngine
 			if (ambientLight != nullptr)
 			{
 				shaders.at(i)->UploadUniform("ambientColor", &(ambientColor->r), UNIFORM_Vec3fv);
-			}			
-
-			// NOTE: These values are overridden every frame for deferred light Shaders:
-			if (keyLight != nullptr && m_useForwardRendering == true)
-			{
-				shaders.at(i)->UploadUniform("keylightWorldDir", &(keyDir->x), UNIFORM_Vec3fv);
-
-				shaders.at(i)->UploadUniform("lightColor", &(keyCol->r), UNIFORM_Vec3fv);
 			}
 
 			// TODO: Shift more value uploads into the shader creation flow
