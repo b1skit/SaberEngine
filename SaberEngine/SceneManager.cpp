@@ -234,7 +234,7 @@ namespace SaberEngine
 
 		//// DEBUG: Add a test light:
 		//vec3 lightColor(1.0f, 0.0f, 0.0f);
-		//Light* pointLight = new Light("pointLight", LIGHT_POINT, lightColor, nullptr);
+		//std::shared_ptr<Light> pointLight = std::make_shared<Light>("pointLight", LIGHT_POINT, lightColor, nullptr);
 
 		//currentScene->AddLight(pointLight);
 		//// NOTE: Currently, the light has a hard-coded radius of 5
@@ -309,13 +309,13 @@ namespace SaberEngine
 	}
 
 
-	Light* const& SceneManager::GetAmbientLight()
+	std::shared_ptr<Light> const& SceneManager::GetAmbientLight()
 	{ 
 		return m_currentScene->m_ambientLight; 
 	}
 
 
-	Light* SceneManager::GetKeyLight()
+	std::shared_ptr<Light> SceneManager::GetKeyLight()
 	{ 
 		return m_currentScene->m_keyLight; 
 	}
@@ -365,7 +365,7 @@ namespace SaberEngine
 	}
 	
 	
-	vector<Light*> const& SceneManager::GetDeferredLights()
+	vector<std::shared_ptr<Light>> const& SceneManager::GetDeferredLights()
 	{
 		return m_currentScene->GetDeferredLights();
 	}
@@ -1530,7 +1530,7 @@ namespace SaberEngine
 						scene->mLights[i]->mColorDiffuse.g, 
 						scene->mLights[i]->mColorDiffuse.b);
 
-					Light* keyLight = new Light
+					std::shared_ptr<Light> keyLight = std::make_shared<Light>
 					(
 						lightName, 
 						LIGHT_DIRECTIONAL, 
@@ -1724,11 +1724,11 @@ namespace SaberEngine
 				}		
 
 				// Create the light:
-				Light* pointLight = nullptr;
+				std::shared_ptr<Light> pointLight = nullptr;
 				if (pointType == LIGHT_POINT || 
 					CoreEngine::GetCoreEngine()->GetConfig()->GetValue<bool>("useForwardRendering") == true)
 				{
-					pointLight = new Light(
+					pointLight = std::make_shared<Light>(
 							lightName,
 							pointType,
 							lightColor,
@@ -1737,18 +1737,15 @@ namespace SaberEngine
 				}
 				else
 				{
-					pointLight = new ImageBasedLight(
+					pointLight = std::make_shared<ImageBasedLight>(
 						lightName,
 						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath")); 
 						// TODO: Load the HDR path from FBX (Currently not supported in Assimp???)
 
 					// If we didn't load a valid IBL, fall back to using an ambient color light
-					if (!((ImageBasedLight*)pointLight)->IsValid())
+					if (!dynamic_cast<ImageBasedLight*>(pointLight.get())->IsValid())
 					{
-						pointLight->Destroy();
-						delete pointLight;
-
-						pointLight = new Light(
+						pointLight = std::make_shared<Light>(
 							lightName,
 							pointType,	// This will be AMBIENT_COLOR as set above
 							lightColor,
@@ -1862,7 +1859,7 @@ namespace SaberEngine
 			// Normalize the lighting if we're in forward mode
 			if (CoreEngine::GetCoreEngine()->GetConfig()->GetValue<bool>("useForwardRendering"))
 			{
-				vector<Light*>const* allLights = &m_currentScene->GetDeferredLights();
+				vector<std::shared_ptr<Light>>const* allLights = &m_currentScene->GetDeferredLights();
 
 				for (int i = 0; i < (int)allLights->size(); i++)
 				{

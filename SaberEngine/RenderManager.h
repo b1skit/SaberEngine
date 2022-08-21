@@ -69,13 +69,13 @@ namespace SaberEngine
 
 
 	private:
-		void RenderLightShadowMap(Light* currentLight);
+		void RenderLightShadowMap(std::shared_ptr<Light> currentLight);
 
 		void RenderToGBuffer(Camera* const renderCam);	// Note: renderCam MUST have an attached GBuffer
 
 		void RenderForward(Camera* renderCam);
 
-		void RenderDeferredLight(Light* deferredLight); // Note: FBO, viewport
+		void RenderDeferredLight(std::shared_ptr<Light> deferredLight); // Note: FBO, viewport
 
 		void RenderSkybox(std::shared_ptr<Skybox> skybox);
 

@@ -118,7 +118,7 @@ namespace SaberEngine
 
 		// Fill shadow maps:
 		glDisable(GL_CULL_FACE);
-		vector<Light*>const* deferredLights = &CoreEngine::GetSceneManager()->GetDeferredLights();
+		vector<std::shared_ptr<Light>>const* deferredLights = &CoreEngine::GetSceneManager()->GetDeferredLights();
 		if (deferredLights)
 		{
 			for (int i = 0; i < (int)deferredLights->size(); i++)
@@ -145,7 +145,7 @@ namespace SaberEngine
 			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the currently bound FBO
 
-			vector<Light*>const* deferredLights = &CoreEngine::GetSceneManager()->GetDeferredLights();
+			vector<std::shared_ptr<Light>>const* deferredLights = &CoreEngine::GetSceneManager()->GetDeferredLights();
 
 			// Render additive contributions:
 			glEnable(GL_BLEND);
@@ -212,7 +212,7 @@ namespace SaberEngine
 	}
 
 
-	void RenderManager::RenderLightShadowMap(Light* light)
+	void RenderManager::RenderLightShadowMap(std::shared_ptr<Light> light)
 	{
 		Camera* shadowCam = light->ActiveShadowMap()->ShadowCamera();
 
@@ -357,7 +357,7 @@ namespace SaberEngine
 		}
 
 		// Cache required values once outside of the loop:
-		Light* keyLight						= CoreEngine::GetSceneManager()->GetKeyLight();
+		std::shared_ptr<Light> keyLight						= CoreEngine::GetSceneManager()->GetKeyLight();
 
 		// Temp fix: If we don't have a keylight, abort. TODO: Implement forward rendering of all light types
 		if (keyLight == nullptr)
@@ -433,7 +433,7 @@ namespace SaberEngine
 	}
 
 
-	void SaberEngine::RenderManager::RenderDeferredLight(Light* deferredLight)
+	void SaberEngine::RenderManager::RenderDeferredLight(std::shared_ptr<Light> deferredLight)
 	{
 		Camera* gBufferCam = CoreEngine::GetSceneManager()->GetMainCamera();
 
@@ -481,15 +481,15 @@ namespace SaberEngine
 			if (!m_useForwardRendering)
 			{
 				std::shared_ptr<gr::Texture> IEMCubemap = 
-					((ImageBasedLight*)deferredLight)->GetIEMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
-
+					dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetIEMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
+				
 				if (IEMCubemap != nullptr)
 				{
 					IEMCubemap->Bind(CUBE_MAP_0 + CUBE_MAP_RIGHT, true);
 				}
 
 				std::shared_ptr<gr::Texture> PMREM_Cubemap = 
-					((ImageBasedLight*)deferredLight)->GetPMREMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
+					dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetPMREMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
 
 				if (PMREM_Cubemap != nullptr)
 				{
@@ -498,7 +498,7 @@ namespace SaberEngine
 
 				// Bind BRDF Integration map:
 				std::shared_ptr<gr::Texture> BRDFIntegrationMap = 
-					((ImageBasedLight*)deferredLight)->GetBRDFIntegrationMap();
+					dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetBRDFIntegrationMap();
 				if (BRDFIntegrationMap != nullptr)
 				{
 					BRDFIntegrationMap->Bind(GENERIC_TEXTURE_0, true);
@@ -712,7 +712,7 @@ namespace SaberEngine
 		unsigned int numMaterials	= sceneManager->NumMaterials();
 
 		// Legacy forward rendering params:
-		Light const* ambientLight	= nullptr;
+		std::shared_ptr<Light const> ambientLight	= nullptr;
 		vec3 const* ambientColor	= nullptr;
 		if ((ambientLight = CoreEngine::GetSceneManager()->GetAmbientLight()) != nullptr)
 		{
@@ -721,7 +721,7 @@ namespace SaberEngine
 
 		vec3 const* keyDir			= nullptr;
 		vec3 const* keyCol			= nullptr;
-		Light const* keyLight		= nullptr;
+		std::shared_ptr<Light const> keyLight = nullptr;
 		if ((keyLight = CoreEngine::GetSceneManager()->GetKeyLight()) != nullptr)
 		{
 			keyDir = &CoreEngine::GetSceneManager()->GetKeyLight()->GetTransform().Forward();
@@ -764,7 +764,7 @@ namespace SaberEngine
 		}
 			
 		// Add deferred light Shaders
-		vector<Light*> const* deferredLights = &CoreEngine::GetSceneManager()->GetDeferredLights();
+		vector<std::shared_ptr<Light>> const* deferredLights = &CoreEngine::GetSceneManager()->GetDeferredLights();
 		for (int currentLight = 0; currentLight < (int)deferredLights->size(); currentLight++)
 		{
 			shaders.push_back(deferredLights->at(currentLight)->DeferredMaterial()->GetShader());

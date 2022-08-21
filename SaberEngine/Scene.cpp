@@ -47,12 +47,7 @@ namespace SaberEngine
 
 		for (int i = 0; i < (int)m_deferredLights.size(); i++)
 		{
-			if (m_deferredLights.at(i) != nullptr)
-			{
-				m_deferredLights.at(i)->Destroy();
-				delete m_deferredLights.at(i);
-				m_deferredLights.at(i) = nullptr;
-			}
+			m_deferredLights.at(i) = nullptr;
 		}
 		m_deferredLights.clear();
 
@@ -173,7 +168,7 @@ namespace SaberEngine
 		}
 	}
 
-	void Scene::AddLight(Light* newLight)
+	void Scene::AddLight(std::shared_ptr<Light> newLight)
 	{
 		switch (newLight->Type())
 		{

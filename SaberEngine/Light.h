@@ -44,6 +44,7 @@ namespace SaberEngine
 	public:
 		Light() {}; // Default constructor
 		Light(std::string lightName, LIGHT_TYPE lightType, vec3 color, ShadowMap* shadowMap = nullptr, float radius = 1.0f);
+		~Light() { Destroy(); }
 
 		void Destroy();
 
@@ -54,16 +55,16 @@ namespace SaberEngine
 		void HandleEvent(EventInfo const* eventInfo);
 
 		// Getters/Setters:
-		inline vec3 const&			Color() const							{ return m_color; }
-		inline void					SetColor(vec3 color)					{ m_color = color; }
-
-		inline LIGHT_TYPE const&	Type() const							{ return m_type; }
-
-		inline Transform&			GetTransform()							{ return m_transform; }	// Directional lights shine forward (Z+)
-
-		inline string const&		Name() const							{ return m_lightName; }
+		inline vec3 const& Color() const { return m_color; }
+		inline void SetColor(vec3 color) { m_color = color; }
+														 
+		inline LIGHT_TYPE const& Type() const { return m_type; }
+														 
+		inline Transform& GetTransform() { return m_transform; }	// Directional lights shine forward (Z+)
+														 
+		inline string const& Name() const { return m_lightName; }
 		
-		ShadowMap*&					ActiveShadowMap(ShadowMap* newShadowMap = nullptr);	// Get/set the current shadow map
+		ShadowMap*&	ActiveShadowMap(ShadowMap* newShadowMap = nullptr);	// Get/set the current shadow map
 
 		inline std::shared_ptr<gr::Mesh>& DeferredMesh() { return m_deferredMesh; }
 		inline std::shared_ptr<Material>& DeferredMaterial() { return m_deferredMaterial; }

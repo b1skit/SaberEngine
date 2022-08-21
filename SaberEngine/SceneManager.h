@@ -81,8 +81,8 @@ namespace SaberEngine
 		vector<std::shared_ptr<gr::Mesh>> const* GetRenderMeshes(std::shared_ptr<Material> targetMaterial);	// Returns ALL meshs if targetMaterial == nullptr
 		vector<Renderable*>* GetRenderables();
 
-		Light* const& GetAmbientLight();
-		Light* GetKeyLight();
+		std::shared_ptr<Light> const& GetAmbientLight();
+		std::shared_ptr<Light> GetKeyLight();
 		
 		vector<Camera*> const& GetCameras(CAMERA_TYPE cameraType);
 		Camera*	GetMainCamera();
@@ -96,7 +96,7 @@ namespace SaberEngine
 			gr::Texture::TextureColorSpace colorSpace, 
 			bool loadIfNotFound = true);	
 
-		vector<Light*> const& GetDeferredLights();
+		vector<std::shared_ptr<Light>> const& GetDeferredLights();
 
 		std::shared_ptr<Skybox>	GetSkybox();
 

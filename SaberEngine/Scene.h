@@ -65,7 +65,7 @@ namespace SaberEngine
 		void					RegisterCamera(CAMERA_TYPE cameraType, Camera* newCamera);
 		void					ClearCameras();	// Destroys the scene's cameras
 
-		void					AddLight(Light* newLight);
+		void					AddLight(std::shared_ptr<Light> newLight);
 
 		// Scene object containers:
 		//-------------------------
@@ -74,10 +74,10 @@ namespace SaberEngine
 
 
 		// Duplicate pointers to lights contained in deferredLights
-		Light* m_ambientLight = nullptr;
-		Light* m_keyLight		= nullptr;
+		std::shared_ptr<Light> m_ambientLight = nullptr;
+		std::shared_ptr<Light> m_keyLight		= nullptr;
 
-		vector<Light*> const& GetDeferredLights() const		{ return m_deferredLights; }
+		vector<std::shared_ptr<Light>> const& GetDeferredLights() const		{ return m_deferredLights; }
 
 		// Skybox object:
 		std::shared_ptr<Skybox> m_skybox		= nullptr;
@@ -95,7 +95,7 @@ namespace SaberEngine
 
 		// Lights:
 		//--------
-		vector<Light*> m_deferredLights;
+		vector<std::shared_ptr<Light>> m_deferredLights;
 
 		string m_sceneName;
 	};
