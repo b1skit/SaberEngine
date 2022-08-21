@@ -110,7 +110,7 @@ namespace SaberEngine
 	private:
 		// Scene management:
 		//------------------
-		Scene* m_currentScene = nullptr;
+		std::shared_ptr<Scene> m_currentScene = nullptr;
 
 		// Add a game object and register it with the various tracking lists
 		void AddGameObject(GameObject* newGameObject);

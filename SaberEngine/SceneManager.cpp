@@ -66,11 +66,7 @@ namespace SaberEngine
 	{
 		LOG("Scene manager shutting down...");
 
-		if (m_currentScene)
-		{
-			delete m_currentScene;
-			m_currentScene = nullptr;
-		}
+		m_currentScene = nullptr;
 		
 
 		// Scene manager cleanup:
@@ -119,13 +115,10 @@ namespace SaberEngine
 			return false;
 		}
 
-		if (m_currentScene)
-		{
-			LOG("Unloading existing scene");
-			delete m_currentScene;
-			m_currentScene = nullptr;
-		}
-		m_currentScene = new Scene(sceneName);
+		LOG("Unloading existing scene");
+		m_currentScene = nullptr;
+
+		m_currentScene = std::make_shared<Scene>(sceneName);
 
 		// Assemble paths:
 		string sceneRoot = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\";
