@@ -2,10 +2,10 @@
 
 namespace SaberEngine
 {
-	GameObject::GameObject(string name, Renderable renderable) : SceneObject::SceneObject(name)
+	GameObject::GameObject(string name, std::shared_ptr<Renderable> const& renderable) : SceneObject::SceneObject(name)
 	{
 		m_renderable = renderable;
-		m_renderable.SetTransform(&m_transform);
+		m_renderable->SetTransform(&m_transform);
 	}
 
 	//GameObject::~GameObject()

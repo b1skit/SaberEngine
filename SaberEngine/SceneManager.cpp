@@ -303,7 +303,7 @@ namespace SaberEngine
 	}
 
 
-	vector<Renderable*>* SceneManager::GetRenderables()
+	vector<std::shared_ptr<Renderable>>* SceneManager::GetRenderables()
 	{ 
 		return &m_currentScene->m_renderables; 
 	}

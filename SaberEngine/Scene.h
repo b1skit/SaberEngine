@@ -69,8 +69,8 @@ namespace SaberEngine
 
 		// Scene object containers:
 		//-------------------------
-		vector<std::shared_ptr<GameObject>> m_gameObjects;	// Pointers to dynamically allocated GameObjects
-		vector<Renderable*> m_renderables;	// Pointers to statically allocated renderables held by GameObjects
+		vector<std::shared_ptr<GameObject>> m_gameObjects;
+		vector<std::shared_ptr<Renderable>> m_renderables;	// Pointers to Renderables held by GameObjects
 
 
 		// Duplicate pointers to lights contained in deferredLights

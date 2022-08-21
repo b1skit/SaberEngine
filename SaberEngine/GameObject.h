@@ -13,20 +13,17 @@ namespace SaberEngine
 	class GameObject : public SceneObject
 	{
 	public:
-		// No-arg constructor (Don't use this!):
-		GameObject() : SceneObject::SceneObject("Unnamed GameObject")
-		{
-			m_renderable.SetTransform(&m_transform);
-		}
+		GameObject() = delete;
 
 		// String constructor:
-		GameObject(string name) : SceneObject::SceneObject(name) 
+		GameObject(string name) : SceneObject::SceneObject(name)
 		{
-			m_renderable.SetTransform(&m_transform);
+			m_renderable = std::make_shared<Renderable>();
+			m_renderable->SetTransform(&m_transform);
 		}
 
 		// String and renderable constructor:
-		GameObject(string name, Renderable renderable);
+		GameObject(string name, std::shared_ptr<Renderable> const& renderable);
 
 		// Copy constructor:
 		GameObject(const GameObject& gameObject)
@@ -34,7 +31,7 @@ namespace SaberEngine
 			m_renderable = gameObject.m_renderable;
 			m_transform = gameObject.m_transform;
 
-			m_renderable.SetTransform(&m_transform);
+			m_renderable->SetTransform(&m_transform);
 		}
 
 		// SaberObject interface:
@@ -44,11 +41,12 @@ namespace SaberEngine
 		void HandleEvent(EventInfo const* eventInfo) {}
 
 		// Getters/Setters:
-		inline Renderable* GetRenderable() { return &m_renderable; }
+		inline std::shared_ptr<Renderable> GetRenderable() { return m_renderable; }
+
 		
 
 	protected:
-		Renderable m_renderable;
+		std::shared_ptr<Renderable> m_renderable;
 
 
 	private:

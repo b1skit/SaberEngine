@@ -79,7 +79,7 @@ namespace SaberEngine
 		std::shared_ptr<Material> GetMaterial(string materialName);
 		
 		vector<std::shared_ptr<gr::Mesh>> const* GetRenderMeshes(std::shared_ptr<Material> targetMaterial);	// Returns ALL meshs if targetMaterial == nullptr
-		vector<Renderable*>* GetRenderables();
+		vector<std::shared_ptr<Renderable>>* GetRenderables();
 
 		std::shared_ptr<Light> const& GetAmbientLight();
 		std::shared_ptr<Light> GetKeyLight();
