@@ -69,7 +69,7 @@ namespace SaberEngine
 
 		// Scene object containers:
 		//-------------------------
-		vector<GameObject*> m_gameObjects;	// Pointers to dynamically allocated GameObjects
+		vector<std::shared_ptr<GameObject>> m_gameObjects;	// Pointers to dynamically allocated GameObjects
 		vector<Renderable*> m_renderables;	// Pointers to statically allocated renderables held by GameObjects
 
 

@@ -113,7 +113,7 @@ namespace SaberEngine
 		std::shared_ptr<Scene> m_currentScene = nullptr;
 
 		// Add a game object and register it with the various tracking lists
-		void AddGameObject(GameObject* newGameObject);
+		void AddGameObject(std::shared_ptr<GameObject> newGameObject);
 
 		// Material management:
 		//---------------------
@@ -149,7 +149,7 @@ namespace SaberEngine
 
 		// Scene geometry import helper: Create a GameObject transform hierarchy and return the GameObject parent. 
 		// Note: Adds the GameObject to the currentScene's gameObjects
-		GameObject*		FindCreateGameObjectParents(aiScene const* scene, aiNode* parent);
+		std::shared_ptr<GameObject>		FindCreateGameObjectParents(aiScene const* scene, aiNode* parent);
 
 		// Scene geometry import helper : Combines seperated transform nodes found throughout the scene graph.
 		// Finds and combines the FIRST instance of Translation, Scaling, Rotation matrices in the parenting hierarchy

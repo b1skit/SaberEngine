@@ -37,11 +37,7 @@ namespace SaberEngine
 
 		for (int i = 0; i < (int)m_gameObjects.size(); i++)
 		{
-			if (m_gameObjects.at(i))
-			{
-				delete m_gameObjects.at(i);
-				m_gameObjects.at(i) = nullptr;
-			}
+			m_gameObjects.at(i) = nullptr;
 		}
 
 

@@ -194,7 +194,7 @@ namespace SaberEngine
 
 		//// DEBUG: Add a test mesh:
 		//std::shared_ptr<Mesh> sphere = std::make_shared<Mesh>(Mesh::CreateSphere(5.0));
-		//GameObject* sphereGameObject = new GameObject("sphereTest");
+		//std::shared_ptr<GameObject> sphereGameObject = std::make_shared<GameObject>("sphereTest");
 
 		//AddGameObject(sphereGameObject);
 		//sphereGameObject->GetRenderable()->AddViewMeshAsChild(sphere);
@@ -256,7 +256,7 @@ namespace SaberEngine
 
 		// Create a PlayerObject:
 		//-----------------------
-		PlayerObject* player = new PlayerObject(m_currentScene->GetMainCamera());
+		std::shared_ptr<PlayerObject> player = std::make_shared<PlayerObject>(m_currentScene->GetMainCamera());
 		m_currentScene->m_gameObjects.push_back(player);	
 		LOG("Created PlayerObject using mainCamera");
 
@@ -383,7 +383,7 @@ namespace SaberEngine
 	}
 
 
-	void SceneManager::AddGameObject(GameObject* newGameObject)
+	void SceneManager::AddGameObject(std::shared_ptr<GameObject> newGameObject)
 	{
 		m_currentScene->m_gameObjects.push_back(newGameObject);
 
@@ -391,7 +391,7 @@ namespace SaberEngine
 		m_currentScene->m_renderables.push_back(newGameObject->GetRenderable());
 
 		#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
-			LOG("Added new GameObject to the scene: " + newGameObject->GetName());
+			LOG("Added std::make_shared<GameObject> to the scene: " + newGameObject->GetName());
 		#endif	
 	}
 
@@ -1257,7 +1257,7 @@ namespace SaberEngine
 
 				std::shared_ptr<gr::Mesh> newMesh = std::make_shared<gr::Mesh>(meshName, vertices, indices, GetMaterial(materialName));
 
-				GameObject* gameObject		= FindCreateGameObjectParents(scene, currentNode->mParent);
+				std::shared_ptr<GameObject> gameObject		= FindCreateGameObjectParents(scene, currentNode->mParent);
 
 				Transform* targetTransform	= nullptr;
 
@@ -1269,7 +1269,7 @@ namespace SaberEngine
 							" GameObjects should belong to groups in the source .FBX!");
 					#endif
 					
-					gameObject = new GameObject(meshName);
+					gameObject = std::make_shared<GameObject>(meshName);
 					AddGameObject(gameObject);				// Add the new game object
 
 					// Add a postfix to remind us that we expect GameObjects to be grouped in our .FBX from Maya
@@ -1309,7 +1309,7 @@ namespace SaberEngine
 	}
 
 
-	GameObject* SaberEngine::SceneManager::FindCreateGameObjectParents(aiScene const* scene, aiNode* parent)
+	std::shared_ptr<GameObject> SaberEngine::SceneManager::FindCreateGameObjectParents(aiScene const* scene, aiNode* parent)
 	{
 		if (parent == nullptr || parent == scene->mRootNode)
 		{
@@ -1345,12 +1345,12 @@ namespace SaberEngine
 		}
 
 		// Otherwise, create the heirarchy
-		GameObject* newGameObject = new GameObject(parentName);
+		std::shared_ptr<GameObject> newGameObject = std::make_shared<GameObject>(parentName);
 		InitializeTransformValues(parent->mTransformation, newGameObject->GetTransform());
 
 		AddGameObject(newGameObject);
 
-		GameObject* nextParent = FindCreateGameObjectParents(scene, parent->mParent);
+		std::shared_ptr<GameObject> nextParent = FindCreateGameObjectParents(scene, parent->mParent);
 		if (nextParent)
 		{
 			#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
@@ -1797,7 +1797,7 @@ namespace SaberEngine
 						// Combine the parent and child transforms	
 						combinedTransform				= combinedTransform * lightNode->mTransformation; 
 
-						GameObject* gameObject			= FindCreateGameObjectParents(scene, lightNode->mParent);
+						std::shared_ptr<GameObject> gameObject			= FindCreateGameObjectParents(scene, lightNode->mParent);
 
 						Transform* targetTransform		= nullptr;
 
@@ -1809,7 +1809,7 @@ namespace SaberEngine
 									"belong to a group! GameObjects should belong to groups in the source .FBX!");
 							#endif
 					
-							gameObject = new GameObject(lightName);
+							gameObject = std::make_shared<GameObject>(lightName);
 							AddGameObject(gameObject);				// Add the new game object
 
 							// We'll use the gameobject in our transform heirarchy

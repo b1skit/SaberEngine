@@ -17,6 +17,7 @@ namespace SaberEngine
 	public:
 		PlayerObject(std::shared_ptr<Camera> playerCam);
 
+		~PlayerObject() = default;
 
 		// Getters/Setters:
 		inline std::shared_ptr<Camera> GetCamera() { return m_playerCam; }
