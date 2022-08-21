@@ -209,7 +209,7 @@ namespace SaberEngine
 		// Generate mip-maps for PMREM IBL cubemap faces, to ensure they're allocated once we want to write into them:
 		cubeParams.m_useMIPs = iblType == IBL_PMREM ? true : false;
 
-		std::shared_ptr<gr::Texture> cubemap(new gr::Texture(cubeParams));
+		std::shared_ptr<gr::Texture> cubemap = std::make_shared<gr::Texture>(cubeParams);
 		
 		// Target set initialization:
 		gr::TextureTargetSet m_IBL_IEM_PMREM_StageTargetSet;
@@ -348,7 +348,7 @@ namespace SaberEngine
 		brdfParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		brdfParams.m_texturePath = "BRDFIntegrationMap";
 
-		m_BRDF_integrationMap = std::shared_ptr<gr::Texture>(new gr::Texture(brdfParams));
+		m_BRDF_integrationMap = std::make_shared<gr::Texture>(brdfParams);
 	
 		// Configure a TextureTargetSet:
 		m_BRDF_integrationMapStageTargetSet.ColorTarget(0) = gr::TextureTarget(m_BRDF_integrationMap);

@@ -66,7 +66,7 @@ namespace SaberEngine
 			pingPongParams.m_texturePath = 
 				"PostFX_PingPongTexture_" + to_string(currentXRes) + "x" + to_string(currentYRes);
 
-			m_pingPongStageTargetSets[i].ColorTarget(0) = std::shared_ptr<gr::Texture>(new gr::Texture(pingPongParams));
+			m_pingPongStageTargetSets[i].ColorTarget(0) = std::make_shared<gr::Texture>(pingPongParams);
 			
 			m_pingPongStageTargetSets[i].Viewport().xMin() = 0;
 			m_pingPongStageTargetSets[i].Viewport().yMin() = 0;

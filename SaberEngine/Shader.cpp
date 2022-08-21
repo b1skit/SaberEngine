@@ -153,7 +153,7 @@ namespace SaberEngine
 				LOG("No geometry shader found")
 			#endif
 		}
-		GLuint* shaders	= new GLuint[numShaders];
+		std::vector<GLuint> shaders(numShaders);
 
 		// Insert #defines:
 		if (shaderKeywords != nullptr)
@@ -238,8 +238,8 @@ namespace SaberEngine
 		{
 			glDeleteShader(shaders[i]);
 		}
-		delete[] shaders;
-		shaders = nullptr;
+
+		shaders.clear();
 
 		if (shaderSuccess)
 		{

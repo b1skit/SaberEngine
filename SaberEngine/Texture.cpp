@@ -305,7 +305,7 @@ namespace gr
 
 				texParams.m_texturePath = texturePath;
 
-				texture = std::shared_ptr<gr::Texture>(new Texture(texParams));
+				texture = std::make_shared<gr::Texture>(texParams);
 			}		
 
 			const size_t firstTexelIndex = faceIndex * width * height;
@@ -352,7 +352,7 @@ namespace gr
 
 			if (texture == nullptr)
 			{
-				texture = std::shared_ptr<gr::Texture>(new Texture(texParams));
+				texture = std::make_shared<gr::Texture>(texParams);
 			}
 			else
 			{

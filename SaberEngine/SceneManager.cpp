@@ -201,35 +201,6 @@ namespace SaberEngine
 		// -----------------------------
 		AssembleMaterialMeshLists();
 
-
-		//// DEBUG: Add a test mesh:
-		//std::shared_ptr<Mesh> sphere = std::make_shared<Mesh>(Mesh::CreateSphere(5.0));
-		//std::shared_ptr<GameObject> sphereGameObject = std::make_shared<GameObject>("sphereTest");
-
-		//AddGameObject(sphereGameObject);
-		//sphereGameObject->GetRenderable()->AddViewMeshAsChild(sphere);
-		//currentScene->AddMesh(sphere);
-
-
-		//std::shared_ptr<Material> sphereMaterial = GetMaterial("brick_phongShader");
-		////^^ Need a GetLoadMaterial() function?
-		//int materialIndex = AddMaterial(sphereMaterial);
-
-		//materialMeshLists.at(materialIndex).emplace_back(sphere);
-
-
-		////std::shared_ptr<Material> sphereMaterial = new Material("sphereMat", "lambertShader");
-		//////^^ Need a GetLoadMaterial() function?
-		////int materialIndex = AddMaterial(sphereMaterial);
-		////
-		////materialMeshLists.emplace_back(vector<std::shared_ptr<Mesh>>());
-		////materialMeshLists.at(materialIndex).emplace_back(sphere);
-
-
-		//// TODO: Revise GameObject/Mesh creation... Simplify!!!!
-
-
-
 		// Extract lights:
 		//----------------
 		if (scene->HasLights())
@@ -240,16 +211,6 @@ namespace SaberEngine
 		{
 			LOG_ERROR("Scene has no lights");
 		}
-
-
-		//// DEBUG: Add a test light:
-		//vec3 lightColor(1.0f, 0.0f, 0.0f);
-		//std::shared_ptr<Light> pointLight = std::make_shared<Light>("pointLight", LIGHT_POINT, lightColor, nullptr);
-
-		//currentScene->AddLight(pointLight);
-		//// NOTE: Currently, the light has a hard-coded radius of 5
-
-
 
 		// Extract cameras:
 		//-----------------
@@ -363,8 +324,6 @@ namespace SaberEngine
 		if (texturePosition != m_textures.end())
 		{
 			LOG_WARNING("Cannot add texture with an identical path. Deleting duplicate, and updating reference");
-
-			newTexture = nullptr;
 
 			newTexture = texturePosition->second;
 		}

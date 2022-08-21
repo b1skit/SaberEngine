@@ -91,8 +91,10 @@ namespace gr
 	/******************************************************************************************************************/
 
 
-	Mesh::Mesh(
-		string name, std::vector<Vertex> vertices, std::vector<uint32_t> indices, std::shared_ptr<SaberEngine::Material> newMeshMaterial) :
+	Mesh::Mesh(std::string name, 
+		std::vector<Vertex> vertices, 
+		std::vector<uint32_t> indices, 
+		std::shared_ptr<SaberEngine::Material> newMeshMaterial) :
 			m_platformParams{ platform::Mesh::PlatformParams::CreatePlatformParams() },
 			meshName{ name },
 			m_vertices{ vertices },
@@ -349,8 +351,8 @@ namespace gr
 
 			size_t numVerts = numLatSlices * numLongSlices + 2; // + 2 for end caps
 			std::vector<Vertex> vertices(numVerts);
-			glm::vec3* normals = new glm::vec3[numVerts];
-			glm::vec4* uvs = new glm::vec4[numVerts];
+			std::vector<vec3>normals(numVerts);
+			std::vector<vec4>uvs(numVerts);
 
 			glm::vec4 vertColor(1.0f, 1.0f, 1.0f, 1.0f);
 

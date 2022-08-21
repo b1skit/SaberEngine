@@ -17,8 +17,7 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			texTarget.m_platformParams = std::shared_ptr<opengl::TextureTarget::PlatformParams>(
-				new opengl::TextureTarget::PlatformParams());
+			texTarget.m_platformParams = std::make_shared<opengl::TextureTarget::PlatformParams>();
 		}
 		break;
 		case RenderingAPI::DX12:
@@ -45,8 +44,7 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			texTarget.m_platformParams = std::shared_ptr<opengl::TextureTargetSet::PlatformParams>(
-				new opengl::TextureTargetSet::PlatformParams());
+			texTarget.m_platformParams = std::make_shared<opengl::TextureTargetSet::PlatformParams>();
 		}
 		break;
 		case RenderingAPI::DX12:
