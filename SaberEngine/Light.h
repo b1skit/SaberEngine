@@ -57,7 +57,7 @@ namespace SaberEngine
 		void Update();
 
 		// EventListener interface:
-		void HandleEvent(EventInfo const* eventInfo);
+		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo);
 
 		// Getters/Setters:
 		inline vec3 const& Color() const { return m_color; }

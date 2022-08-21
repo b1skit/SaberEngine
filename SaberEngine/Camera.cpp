@@ -171,7 +171,7 @@ namespace SaberEngine
 				continue;
 			}
 
-			std::shared_ptr<gr::Texture> gBufferTex = std::shared_ptr<gr::Texture>(new gr::Texture(gBufferParams));
+			std::shared_ptr<gr::Texture> gBufferTex = std::make_shared<gr::Texture>(gBufferParams);
 
 			gBufferTex->SetTexturePath(
 				GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[(TEXTURE_TYPE)i]);

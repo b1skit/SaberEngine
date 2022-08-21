@@ -16,7 +16,7 @@ namespace SaberEngine
 		m_eventQueues.reserve(EVENT_NUM_EVENTS);
 		for (int i = 0; i < EVENT_NUM_EVENTS; i++)
 		{
-			m_eventQueues.push_back(vector<EventInfo const*>());
+			m_eventQueues.push_back(vector<std::shared_ptr<EventInfo const>>());
 		}
 
 		m_eventListeners.reserve(EVENT_QUEUE_START_SIZE);
@@ -63,7 +63,11 @@ namespace SaberEngine
 		SDL_Event eventBuffer[NUM_EVENTS]; // 
 		if (SDL_PeepEvents(eventBuffer, NUM_EVENTS, SDL_GETEVENT, SDL_QUIT, SDL_QUIT) > 0)
 		{
-			Notify(new EventInfo{ EVENT_ENGINE_QUIT, this, new string("Received SDL_QUIT event") });
+			Notify(std::make_shared<EventInfo const>(
+				EventInfo({ 
+					EVENT_ENGINE_QUIT, 
+					this, 
+					"Received SDL_QUIT event" })));
 		}
 
 		// Loop through each type of event:
@@ -81,11 +85,7 @@ namespace SaberEngine
 				}
 				
 				// Deallocate the event:
-				if (m_eventQueues[currentEventType][currentEvent]->m_eventMessage != nullptr)
-				{
-					delete m_eventQueues[currentEventType][currentEvent]->m_eventMessage;
-				}
-				delete m_eventQueues[currentEventType][currentEvent];
+				m_eventQueues[currentEventType][currentEvent] = nullptr;
 			}
 
 			// Clear the current event queue (of now invalid pointers):
@@ -110,8 +110,11 @@ namespace SaberEngine
 	//}
 
 
-	void EventManager::Notify(EventInfo const* eventInfo, bool pushToFront /*= false*/)
+	void EventManager::Notify(std::shared_ptr<EventInfo const> eventInfo)
 	{
+		assert(eventInfo->m_generator != nullptr);
+		assert(!eventInfo->m_eventMessage.empty());
+
 		#if defined(DEBUG_PRINT_NOTIFICATIONS)
 			if (eventInfo)
 			{
@@ -144,17 +147,7 @@ namespace SaberEngine
 			}			
 		#endif
 
-		// Select what to notify based on type?
+		m_eventQueues[(int)eventInfo->m_type].push_back(eventInfo);
 
-		if (pushToFront)
-		{
-			vector<EventInfo const*>::iterator iterator = m_eventQueues[(int)eventInfo->m_type].begin();
-			m_eventQueues[(int)eventInfo->m_type].insert(iterator, eventInfo);
-		}
-		else
-		{
-			m_eventQueues[(int)eventInfo->m_type].push_back(eventInfo);
-		}
-		return;
 	}
 }

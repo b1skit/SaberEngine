@@ -157,12 +157,15 @@ namespace SaberEngine
 		// Generate a quit event if the quit button is pressed:
 		if (SaberInputManager->GetKeyboardInputState(INPUT_BUTTON_QUIT) == true)
 		{
-			SaberEventManager->Notify(new EventInfo{ EVENT_ENGINE_QUIT, this });
+			SaberEventManager->Notify(std::make_shared<EventInfo const>(EventInfo{ 
+				EVENT_ENGINE_QUIT, 
+				this,
+				"Core Engine Quit"}));
 		}
 	}
 
 
-	void CoreEngine::HandleEvent(EventInfo const* eventInfo)
+	void CoreEngine::HandleEvent(std::shared_ptr<EventInfo const> eventInfo)
 	{
 		switch (eventInfo->m_type)
 		{

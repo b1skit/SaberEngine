@@ -26,7 +26,7 @@ namespace SaberEngine
 		void Update() override;
 
 		//// EventListener interface:
-		//void HandleEvent(EventInfo const* eventInfo) override;
+		//void HandleEvent(std::shared_ptr<EventInfo const> eventInfo) override;
 
 	protected:
 

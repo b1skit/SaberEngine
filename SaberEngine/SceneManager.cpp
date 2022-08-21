@@ -100,7 +100,7 @@ namespace SaberEngine
 	}
 
 
-	void SceneManager::HandleEvent(EventInfo const * eventInfo)
+	void SceneManager::HandleEvent(std::shared_ptr<EventInfo const> eventInfo)
 	{
 		return;
 	}
@@ -110,8 +110,11 @@ namespace SaberEngine
 	{
 		if (sceneName == "")
 		{
-			LOG_ERROR("Quitting! No scene name received. Did you forget to use the \"-scene theSceneName\" command line argument?");
-			CoreEngine::GetEventManager()->Notify(new EventInfo{ EVENT_ENGINE_QUIT, this, nullptr });
+			LOG_ERROR("Quitting! No scene name received. Did you forget to use the \"-scene theSceneName\" command "
+				"line argument?");
+			assert("No scene name received" && false);
+			CoreEngine::GetEventManager()->Notify(
+				std::make_shared<EventInfo const>( EventInfo{ EVENT_ENGINE_QUIT, this, "No scene name received"}));
 			return false;
 		}
 
@@ -138,7 +141,14 @@ namespace SaberEngine
 
 		if (!scene)
 		{
-			CoreEngine::GetEventManager()->Notify(new EventInfo{ EVENT_ENGINE_QUIT, nullptr, new string("Failed to load scene file: " + fbxPath + ": " + importer.GetErrorString() ) });
+			CoreEngine::GetEventManager()->Notify(
+				std::make_shared<EventInfo const>(
+					EventInfo{ 
+						EVENT_ENGINE_QUIT, 
+						nullptr, 
+						"Failed to load scene file: " + fbxPath + ": " + importer.GetErrorString() }
+					)
+			);
 			return false;
 		}
 		else

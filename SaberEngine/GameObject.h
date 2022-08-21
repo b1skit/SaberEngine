@@ -15,14 +15,12 @@ namespace SaberEngine
 	public:
 		GameObject() = delete;
 
-		// String constructor:
-		GameObject(string name) : SceneObject::SceneObject(name)
+		GameObject(string name) : SceneObject::SceneObject(name),
+			m_renderable{ std::make_shared<Renderable>() }
 		{
-			m_renderable = std::make_shared<Renderable>();
 			m_renderable->SetTransform(&m_transform);
 		}
 
-		// String and renderable constructor:
 		GameObject(string name, std::shared_ptr<Renderable> const& renderable);
 
 		// Copy constructor:
@@ -38,21 +36,14 @@ namespace SaberEngine
 		void Update() override { }
 
 		// EventListener interface:
-		void HandleEvent(EventInfo const* eventInfo) {}
+		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo) {}
 
 		// Getters/Setters:
 		inline std::shared_ptr<Renderable> GetRenderable() { return m_renderable; }
 
-		
-
-	protected:
-		std::shared_ptr<Renderable> m_renderable;
-
 
 	private:
-		
-
-		
+		std::shared_ptr<Renderable> m_renderable;
 	};
 }
 

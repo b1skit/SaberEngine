@@ -65,7 +65,7 @@ namespace fr
 	}
 
 
-	void LogManager::HandleEvent(SaberEngine::EventInfo const* eventInfo)
+	void LogManager::HandleEvent(std::shared_ptr<SaberEngine::EventInfo const> eventInfo)
 	{
 		#if defined(DEBUG_LOGMANAGER_LOG_EVENTS)
 			string logMessage = EVENT_NAME[eventInfo->m_type] + ": Object #";

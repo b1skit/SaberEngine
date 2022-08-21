@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 
 namespace SaberEngine
 {
@@ -9,7 +10,7 @@ namespace SaberEngine
 	class EventListener
 	{
 	public:
-		virtual void HandleEvent(EventInfo const* eventInfo) = 0;
+		virtual void HandleEvent(std::shared_ptr<EventInfo const> eventInfo) = 0;
 
 	private:
 

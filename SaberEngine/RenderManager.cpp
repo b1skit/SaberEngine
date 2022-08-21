@@ -359,11 +359,16 @@ namespace SaberEngine
 		// Cache required values once outside of the loop:
 		std::shared_ptr<Light> keyLight						= CoreEngine::GetSceneManager()->GetKeyLight();
 
+		
+		
 		// Temp fix: If we don't have a keylight, abort. TODO: Implement forward rendering of all light types
 		if (keyLight == nullptr)
 		{
-			LOG_ERROR("\nNo keylight detected.A keylight is currently required for forward rendering mode. Quitting!\n");
-			CoreEngine::GetEventManager()->Notify(new EventInfo{ EVENT_ENGINE_QUIT, this });
+			LOG_ERROR("\nNo keylight detected. A keylight is currently required for forward rendering mode");
+			assert("No keylight detected. A keylight is currently required for forward rendering mode" && 
+				keyLight != nullptr);
+			CoreEngine::GetEventManager()->Notify(
+				std::make_shared<EventInfo const>(EventInfo{ EVENT_ENGINE_QUIT, this, "Missing keylight error"}));
 			return;
 		}
 

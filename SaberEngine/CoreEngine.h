@@ -37,7 +37,7 @@ namespace SaberEngine
 		void Update();
 
 		// EventListener interface:
-		void HandleEvent(EventInfo const* eventInfo);
+		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo);
 
 		
 	private:	

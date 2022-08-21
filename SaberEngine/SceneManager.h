@@ -66,7 +66,7 @@ namespace SaberEngine
 		void Destroy() {}	// Do nothing, for now...
 
 		// EventListener interface:
-		void HandleEvent(EventInfo const* eventInfo);
+		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo);
 
 		// Member functions:
 		//------------------

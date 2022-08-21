@@ -51,7 +51,7 @@ namespace SaberEngine
 		void Update() {} // Do nothing
 
 		// EventListener interface:
-		void HandleEvent(EventInfo const* eventInfo) {} // Do nothing
+		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo) {} // Do nothing
 
 		// Getters/Setters:
 		inline float const& FieldOfView() const		{ return m_cameraConfig.m_fieldOfView; }

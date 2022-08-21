@@ -103,7 +103,7 @@ namespace SaberEngine
 	}
 
 	//// EventListener interface:
-	//void PlayerObject::HandleEvent(EventInfo const* eventInfo) 
+	//void PlayerObject::HandleEvent(std::shared_ptr<EventInfo const> eventInfo) 
 	//{
 	//	switch (eventInfo)
 	//	{

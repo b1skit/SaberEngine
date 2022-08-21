@@ -2,9 +2,9 @@
 
 namespace SaberEngine
 {
-	GameObject::GameObject(string name, std::shared_ptr<Renderable> const& renderable) : SceneObject::SceneObject(name)
+	GameObject::GameObject(string name, std::shared_ptr<Renderable> const& renderable) : SceneObject::SceneObject(name),
+		m_renderable{ renderable }
 	{
-		m_renderable = renderable;
 		m_renderable->SetTransform(&m_transform);
 	}
 
@@ -17,7 +17,7 @@ namespace SaberEngine
 
 	//}
 
-	//void SaberEngine::GameObject::HandleEvent(EventInfo const * eventInfo)
+	//void SaberEngine::GameObject::HandleEvent(std::shared_ptr<EventInfo const> eventInfo)
 	//{
 
 	//}

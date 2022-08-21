@@ -124,7 +124,7 @@ namespace SaberEngine
 	}
 
 
-	void Light::HandleEvent(EventInfo const * eventInfo)
+	void Light::HandleEvent(std::shared_ptr<EventInfo const> eventInfo)
 	{
 	}
 

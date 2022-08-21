@@ -124,7 +124,7 @@ namespace SaberEngine
 	}
 
 
-	void InputManager::HandleEvent(EventInfo const * eventInfo)
+	void InputManager::HandleEvent(std::shared_ptr<EventInfo const> eventInfo)
 	{
 		
 	}

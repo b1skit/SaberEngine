@@ -4,6 +4,7 @@
 #include "EngineComponent.h"	// Base class
 
 #include <vector>
+#include <memory>
 
 #include <SDL.h>
 
@@ -83,7 +84,7 @@ namespace SaberEngine
 	{
 		EVENT_TYPE m_type;
 		SaberObject* m_generator;
-		string* m_eventMessage = nullptr;
+		std::string m_eventMessage;
 	};
 
 
@@ -106,11 +107,11 @@ namespace SaberEngine
 		// Member functions:
 		void Subscribe(EVENT_TYPE eventType, EventListener* listener); // Subscribe to an event
 		/*void Unsubscribe(EventListener* listener);*/
-		void Notify(EventInfo const* eventInfo, bool pushToFront = false); // Post an event
+		void Notify(std::shared_ptr<EventInfo const> eventInfo); // Post an event
 
 	private:
-		vector< vector<EventInfo const* > > m_eventQueues;
-		vector< vector<EventListener*> > m_eventListeners;
+		vector< vector<std::shared_ptr<EventInfo const>>> m_eventQueues;
+		vector< vector<EventListener*>> m_eventListeners;
 	};
 
 
