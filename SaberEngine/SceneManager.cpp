@@ -592,7 +592,7 @@ namespace SaberEngine
 				#endif
 
 				// Create a material using the error shader, for now:
-				Material* newMaterial = new Material(matName, nullptr);
+				Material* newMaterial = new Material(matName, std::shared_ptr<Shader>(nullptr));
 				
 				// Extract textures, and add them to the material:
 
@@ -750,7 +750,9 @@ namespace SaberEngine
 					{
 						LOG_ERROR("Could not find a shader name prefixed with an underscore in the material name. Destroying loaded textures and assigning error shader - GBuffer data will be garbage!!!");
 
-						Shader* newShader = Shader::CreateShader(CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("errorShaderName"));
+						std::shared_ptr<Shader> newShader = Shader::CreateShader(
+							CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("errorShaderName"));
+
 						newMaterial->GetShader() = newShader;
 					}
 					else
@@ -761,7 +763,7 @@ namespace SaberEngine
 							LOG("Attempting to assign shader \"" + m_shaderName + "\" to material");
 						#endif
 
-						Shader* newShader = Shader::CreateShader(shaderName, &newMaterial->ShaderKeywords());
+						std::shared_ptr<Shader> newShader = Shader::CreateShader(shaderName, &newMaterial->ShaderKeywords());
 
 						if (newShader->Name() != 
 							CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("errorShaderName"))

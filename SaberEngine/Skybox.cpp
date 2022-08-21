@@ -20,7 +20,7 @@ namespace SaberEngine
 	Skybox::Skybox(string sceneName)
 	{
 		// Create a cube map material
-		m_skyMaterial = new Material("SkyboxMaterial", nullptr, CUBE_MAP_NUM_FACES, false);
+		m_skyMaterial = new Material("SkyboxMaterial", std::shared_ptr<Shader>(nullptr), CUBE_MAP_NUM_FACES, false);
 
 		// Attempt to load a HDR image:
 		std::shared_ptr<gr::Texture> iblAsSkyboxCubemap = 
@@ -62,9 +62,10 @@ namespace SaberEngine
 
 
 		// Create a skybox shader, now that we have some sort of image loaded:
-		Shader* skyboxShader = Shader::CreateShader(CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("skyboxShaderName"));
-		m_skyMaterial->GetShader() = skyboxShader;
+		std::shared_ptr<Shader> skyboxShader = Shader::CreateShader(
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("skyboxShaderName"));
 
+		m_skyMaterial->GetShader() = skyboxShader;
 
 		// Create a quad at furthest point in the depth buffer
 		m_skyMesh =	gr::meshfactory::CreateQuad

@@ -15,7 +15,7 @@ namespace SaberEngine
 		: Light(lightName, LIGHT_AMBIENT_IBL, vec3(0))
 	{
 		// Irradiance Environment Map (IEM) setup:
-		m_IEM_Material = new Material("IEM_Material", nullptr, CUBE_MAP_NUM_FACES, true);
+		m_IEM_Material = new Material("IEM_Material", std::shared_ptr<Shader>(nullptr), CUBE_MAP_NUM_FACES, true);
 
 		std::shared_ptr<gr::Texture> IEM_Textures = (std::shared_ptr<gr::Texture>)ConvertEquirectangularToCubemap(
 				CoreEngine::GetSceneManager()->GetCurrentSceneName(), 
@@ -32,7 +32,7 @@ namespace SaberEngine
 		}
 
 		// Pre-filtered Mipmaped Radiance Environment Map (PMREM) setup:
-		m_PMREM_Material = new Material("PMREM_Material", nullptr, CUBE_MAP_NUM_FACES, true);
+		m_PMREM_Material = new Material("PMREM_Material", std::shared_ptr<Shader>(nullptr), CUBE_MAP_NUM_FACES, true);
 
 		std::shared_ptr<gr::Texture> PMREM_Textures = (std::shared_ptr<gr::Texture>)ConvertEquirectangularToCubemap(
 			CoreEngine::GetSceneManager()->GetCurrentSceneName(),
@@ -124,7 +124,7 @@ namespace SaberEngine
 		string shaderName = 
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("equilinearToCubemapBlitShaderName");
 
-		Shader* equirectangularToCubemapBlitShader	= Shader::CreateShader(shaderName, &shaderKeywords);
+		std::shared_ptr<Shader> equirectangularToCubemapBlitShader	= Shader::CreateShader(shaderName, &shaderKeywords);
 		if (equirectangularToCubemapBlitShader == nullptr)
 		{
 			LOG_ERROR("Failed to load equilinearToCubemapBlitShader, cannot convert HDR image to cubemap");
@@ -150,8 +150,7 @@ namespace SaberEngine
 			LOG_ERROR("Failed to load HDR texture \"" + iblTexturePath + "\" for image-based lighting");
 
 			// Cleanup:
-			equirectangularToCubemapBlitShader->Destroy();
-			delete equirectangularToCubemapBlitShader;
+			equirectangularToCubemapBlitShader = nullptr;
 
 			return nullptr;
 		}
@@ -302,8 +301,7 @@ namespace SaberEngine
 		cubeMesh->Destroy();
 
 		equirectangularToCubemapBlitShader->Bind(false);
-		equirectangularToCubemapBlitShader->Destroy();
-		delete equirectangularToCubemapBlitShader;
+		equirectangularToCubemapBlitShader = nullptr;
 
 		return cubemap;
 	}
@@ -321,7 +319,7 @@ namespace SaberEngine
 		
 		// Create a shader:
 		string shaderName = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("BRDFIntegrationMapShaderName");
-		Shader* BRDFIntegrationMapShader = Shader::CreateShader(shaderName);
+		std::shared_ptr<Shader> BRDFIntegrationMapShader = Shader::CreateShader(shaderName);
 
 		if (BRDFIntegrationMapShader == nullptr)
 		{
@@ -391,7 +389,6 @@ namespace SaberEngine
 		quad->Bind(false);
 
 		BRDFIntegrationMapShader->Bind(false);
-		BRDFIntegrationMapShader->Destroy();
-		delete BRDFIntegrationMapShader;		
+		BRDFIntegrationMapShader = nullptr;
 	}
 }

@@ -36,6 +36,11 @@ namespace SaberEngine
 		m_shaderReference	= existingShader.m_shaderReference;
 	}
 
+	Shader::~Shader()
+	{
+		Destroy();
+	}
+
 
 	void Shader::Destroy()
 	{
@@ -44,7 +49,7 @@ namespace SaberEngine
 	}
 
 
-		void Shader::UploadUniform(GLchar const* uniformName, void const* value, UNIFORM_TYPE const& type, int count /*= 1*/)
+	void Shader::UploadUniform(GLchar const* uniformName, void const* value, UNIFORM_TYPE const& type, int count /*= 1*/)
 	{
 		GLint currentProgram;
 		bool isBound = true;	// Track if the current shader is bound or not
@@ -111,7 +116,7 @@ namespace SaberEngine
 	// Static functions:
 	//*******************
 
-	Shader* Shader::CreateShader(string shaderFileName, vector<string> const*  shaderKeywords /*= nullptr*/)
+	std::shared_ptr<Shader> Shader::CreateShader(string shaderFileName, vector<string> const*  shaderKeywords /*= nullptr*/)
 	{
 		LOG("\nCreating shader \"" + shaderFileName + "\"");
 
@@ -148,7 +153,7 @@ namespace SaberEngine
 				LOG("No geometry shader found")
 			#endif
 		}
-		GLuint* shaders			= new GLuint[numShaders];
+		GLuint* shaders	= new GLuint[numShaders];
 
 		// Insert #defines:
 		if (shaderKeywords != nullptr)
@@ -193,21 +198,21 @@ namespace SaberEngine
 
 
 		// Create shader objects and attach them to the program objects:
-		shaders[vertexShaderIndex]			= CreateGLShaderObject(vertexShader, GL_VERTEX_SHADER);
+		shaders[vertexShaderIndex] = CreateGLShaderObject(vertexShader, GL_VERTEX_SHADER);
 
 		if (hasGeometryShader)
 		{
-			shaders[geometryShaderIndex]	= CreateGLShaderObject(geometryShader, GL_GEOMETRY_SHADER);
+			shaders[geometryShaderIndex] = CreateGLShaderObject(geometryShader, GL_GEOMETRY_SHADER);
 		}
 
-		shaders[fragmentShaderIndex]		= CreateGLShaderObject(fragmentShader, GL_FRAGMENT_SHADER);
+		shaders[fragmentShaderIndex] = CreateGLShaderObject(fragmentShader, GL_FRAGMENT_SHADER);
 
 		for (unsigned int i = 0; i < numShaders; i++)
 		{
 			glAttachShader(shaderReference, shaders[i]); // Attach our shaders to the shader program
 		}
 
-		Shader* newShader	= nullptr;
+		std::shared_ptr<Shader> newShader(nullptr);
 		bool shaderSuccess	= true;
 
 		// Link our program object:
@@ -238,7 +243,7 @@ namespace SaberEngine
 
 		if (shaderSuccess)
 		{
-			newShader = new Shader(shaderFileName, shaderReference);
+			newShader = std::make_shared<Shader>(shaderFileName, shaderReference);
 
 			// Initialize sampler locations:
 			newShader->Bind(true);
@@ -246,7 +251,10 @@ namespace SaberEngine
 			// Texture sampler locations. Note: These must align with the locations defined in Material.h
 			for (int currentTexture = 0; currentTexture < TEXTURE_COUNT; currentTexture++)
 			{
-				GLint samplerLocation = glGetUniformLocation(newShader->ShaderReference(), Material::TEXTURE_SAMPLER_NAMES[currentTexture].c_str());
+				GLint samplerLocation = glGetUniformLocation(
+					newShader->ShaderReference(), 
+					Material::TEXTURE_SAMPLER_NAMES[currentTexture].c_str());
+
 				if (samplerLocation >= 0)
 				{
 					glUniform1i(samplerLocation, (TEXTURE_TYPE)currentTexture);
@@ -255,7 +263,10 @@ namespace SaberEngine
 			// Texture target sampler locations:
 			for (int currentTexture = 0; currentTexture < RENDER_TEXTURE_COUNT; currentTexture++)
 			{
-				GLint samplerLocation = glGetUniformLocation(newShader->ShaderReference(), Material::RENDER_TEXTURE_SAMPLER_NAMES[currentTexture].c_str());
+				GLint samplerLocation = glGetUniformLocation(
+					newShader->ShaderReference(), 
+					Material::RENDER_TEXTURE_SAMPLER_NAMES[currentTexture].c_str());
+
 				if (samplerLocation >= 0)
 				{
 					glUniform1i(samplerLocation, (int)(RENDER_TEXTURE_0 + (TEXTURE_TYPE)currentTexture));
@@ -265,7 +276,10 @@ namespace SaberEngine
 			// 2D shadow map textures sampler locations:
 			for (int currentTexture = 0; currentTexture < DEPTH_TEXTURE_COUNT; currentTexture++)
 			{
-				GLint samplerLocation = glGetUniformLocation(newShader->ShaderReference(), Material::DEPTH_TEXTURE_SAMPLER_NAMES[currentTexture].c_str());
+				GLint samplerLocation = glGetUniformLocation(
+					newShader->ShaderReference(), 
+					Material::DEPTH_TEXTURE_SAMPLER_NAMES[currentTexture].c_str());
+
 				if (samplerLocation >= 0)
 				{
 					glUniform1i(samplerLocation, DEPTH_TEXTURE_0 + (TEXTURE_TYPE)currentTexture);
@@ -275,7 +289,10 @@ namespace SaberEngine
 			// Cube map depth texture sampler locations
 			for (int currentCubeMap = 0; currentCubeMap < CUBE_MAP_COUNT; currentCubeMap++)
 			{
-				GLint samplerLocation = glGetUniformLocation(newShader->ShaderReference(), Material::CUBE_MAP_TEXTURE_SAMPLER_NAMES[currentCubeMap].c_str());
+				GLint samplerLocation = glGetUniformLocation(
+					newShader->ShaderReference(), 
+					Material::CUBE_MAP_TEXTURE_SAMPLER_NAMES[currentCubeMap].c_str());
+
 				if (samplerLocation >= 0)
 				{
 					glUniform1i(samplerLocation, (TEXTURE_TYPE)(CUBE_MAP_0 + (currentCubeMap * CUBE_MAP_NUM_FACES)));
@@ -293,16 +310,18 @@ namespace SaberEngine
 		return newShader;
 	}
 
-	Shader* SaberEngine::Shader::ReturnErrorShader(string shaderName)
+	std::shared_ptr<Shader> SaberEngine::Shader::ReturnErrorShader(string shaderName)
 	{
 		if (shaderName != CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("errorShaderName"))
 		{
 			LOG_ERROR("Creating shader \"" + shaderName + "\" failed while loading shader files. Returning error shader");
+			assert("Creating shader failed while loading shader files. Returning error shader" && false);
 			return CreateShader(CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("errorShaderName"));
 		}
 		else
 		{
 			LOG_ERROR("Creating shader failed while loading shader files. Returning nullptr");
+			assert("Creating shader failed while loading shader files. Returning nullptr" && false);
 			return nullptr; // Worst case: We can't find the error shader. This will likely cause a crash if it ever occurs.
 		}
 	}

@@ -1,12 +1,12 @@
 #pragma once
 
-#include <GL/glew.h>
-
 #include <string>
-#include <vector>
-
 using std::string;
+#include <vector>
 using std::vector;
+#include <memory>
+
+#include <GL/glew.h>
 
 
 namespace SaberEngine
@@ -43,7 +43,7 @@ namespace SaberEngine
 		Shader(const string shaderName, const GLuint shaderReference);
 		Shader(const Shader& existingShader);
 
-		/*~Shader() {}*/
+		~Shader();
 
 		void Destroy();
 
@@ -57,7 +57,7 @@ namespace SaberEngine
 
 		// Static functions:
 		//------------------
-		static Shader* CreateShader(string shaderFileName, vector<string> const*  shaderKeywords = nullptr);
+		static std::shared_ptr<Shader> CreateShader(string shaderFileName, vector<string> const*  shaderKeywords = nullptr);
 
 
 		// Static members:
@@ -75,7 +75,7 @@ namespace SaberEngine
 		//--------------------------
 		
 		// Helper function: Attempts to load and return the error shader. Returns nullptr if the error shader can't be loaded
-		static Shader*	ReturnErrorShader(string shaderName);
+		static std::shared_ptr<Shader> ReturnErrorShader(string shaderName);
 
 		// Helper function: Loads the contents of a file named "filepath" within the shaders directory
 		static string	LoadShaderFile(const string& filepath);

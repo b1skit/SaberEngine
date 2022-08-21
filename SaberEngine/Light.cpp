@@ -35,7 +35,9 @@ namespace SaberEngine
 				shaderKeywords.push_back("AMBIENT_IBL");
 			}
 
-			Shader* ambientLightShader = Shader::CreateShader(CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"), &shaderKeywords);
+			std::shared_ptr<Shader> ambientLightShader = Shader::CreateShader(
+				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"), 
+				&shaderKeywords);
 
 			// Attach a deferred Material:
 			m_deferredMaterial = new Material

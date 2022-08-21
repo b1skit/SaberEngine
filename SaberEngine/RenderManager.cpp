@@ -80,7 +80,7 @@ namespace SaberEngine
 		m_outputTargetSet->CreateColorTargets(TEXTURE_ALBEDO);
 
 
-		// TODO: Get rid of this -> Currently using it to store a blit Shader*
+		// TODO: Get rid of this -> Currently using it to store a blit shader
 		m_outputMaterial = new Material("RenderManager_OutputMaterial",
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShader"),
 			(TEXTURE_TYPE)1,
@@ -211,7 +211,7 @@ namespace SaberEngine
 			glDisable(GL_BLEND);			
 
 			// Post process finished frame:
-			Shader* finalFrameShader		= nullptr; // Reference updated in ApplyPostFX...
+			std::shared_ptr<Shader> finalFrameShader		= nullptr; // Reference updated in ApplyPostFX...
 			m_postFXManager->ApplyPostFX(finalFrameShader);
 
 			// Cleanup:
@@ -233,7 +233,7 @@ namespace SaberEngine
 		Camera* shadowCam = light->ActiveShadowMap()->ShadowCamera();
 
 		// Light shader setup:
-		Shader* lightShader = shadowCam->RenderMaterial()->GetShader(); // TODO: Remove material, get shader directly
+		std::shared_ptr<Shader> lightShader = shadowCam->RenderMaterial()->GetShader(); // TODO: Remove material, get shader directly
 		lightShader->Bind(true);
 		
 		if (light->Type() == LIGHT_POINT)
@@ -314,7 +314,7 @@ namespace SaberEngine
 		{
 			// Setup the current material and shader:
 			Material* currentMaterial	= currentElement.second;
-			Shader* currentShader		= renderCam->RenderMaterial()->GetShader();
+			std::shared_ptr<Shader> currentShader = renderCam->RenderMaterial()->GetShader();
 
 			vector<gr::Mesh*> const* meshes;
 
@@ -389,7 +389,7 @@ namespace SaberEngine
 		{
 			// Setup the current material and shader:
 			Material* currentMaterial = currentElement.second;
-			Shader* currentShader = currentMaterial->GetShader();		
+			std::shared_ptr<Shader> currentShader = currentMaterial->GetShader();
 
 			// Bind:
 			currentShader->Bind(true);
@@ -454,7 +454,7 @@ namespace SaberEngine
 		Camera* gBufferCam = CoreEngine::GetSceneManager()->GetMainCamera();
 
 		// Bind:
-		Shader* currentShader	= deferredLight->DeferredMaterial()->GetShader();
+		std::shared_ptr<Shader> currentShader	= deferredLight->DeferredMaterial()->GetShader();
 
 		currentShader->Bind(true);
 
@@ -628,7 +628,7 @@ namespace SaberEngine
 
 		Camera* renderCam = CoreEngine::GetSceneManager()->GetMainCamera();
 
-		Shader* currentShader	= skybox->GetSkyMaterial()->GetShader();
+		std::shared_ptr<Shader> currentShader = skybox->GetSkyMaterial()->GetShader();
 
 		std::shared_ptr<gr::Texture> skyboxCubeMap = skybox->GetSkyMaterial()->AccessTexture(CUBE_MAP_RIGHT);
 
@@ -679,7 +679,7 @@ namespace SaberEngine
 	}
 
 
-	void SaberEngine::RenderManager::BlitToScreen(std::shared_ptr<gr::Texture>& texture, Shader* blitShader)
+	void SaberEngine::RenderManager::BlitToScreen(std::shared_ptr<gr::Texture>& texture, std::shared_ptr<Shader> blitShader)
 	{
 		glViewport(0, 0, m_xRes, m_yRes);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -702,7 +702,7 @@ namespace SaberEngine
 	void SaberEngine::RenderManager::Blit(
 		std::shared_ptr<gr::Texture> const& srcTex,
 		gr::TextureTargetSet const& dstTargetSet,
-		Shader* shader)
+		std::shared_ptr<Shader> shader)
 	{
 		dstTargetSet.AttachColorTargets(0, 0, true);
 
@@ -755,7 +755,7 @@ namespace SaberEngine
 		vec4 projectionParams	= vec4(1.0f, CoreEngine::GetSceneManager()->GetMainCamera()->Near(), CoreEngine::GetSceneManager()->GetMainCamera()->Far(), 1.0f / CoreEngine::GetSceneManager()->GetMainCamera()->Far());
 
 		// Add all Material Shaders to a list:
-		vector<Shader*> shaders;
+		vector<std::shared_ptr<Shader>> shaders;
 		std::unordered_map<string, Material*> const sceneMaterials = CoreEngine::GetSceneManager()->GetMaterials();
 		for (std::pair<string, Material*> currentElement : sceneMaterials)
 		{

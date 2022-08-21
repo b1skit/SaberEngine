@@ -80,9 +80,9 @@ namespace SaberEngine
 		void RenderSkybox(Skybox* skybox);
 
 		void BlitToScreen();
-		void BlitToScreen(std::shared_ptr<gr::Texture>& texture, Shader* blitShader);
+		void BlitToScreen(std::shared_ptr<gr::Texture>& texture, std::shared_ptr<Shader> blitShader);
 
-		void Blit(std::shared_ptr<gr::Texture> const& srcTex, gr::TextureTargetSet const& dstTargetSet, Shader* shader);
+		void Blit(std::shared_ptr<gr::Texture> const& srcTex, gr::TextureTargetSet const& dstTargetSet, std::shared_ptr<Shader> shader);
 
 
 		// Configuration:

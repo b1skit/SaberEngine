@@ -19,7 +19,6 @@ namespace gr
 }
 namespace SaberEngine
 {
-	
 	class Shader;
 }
 
@@ -113,22 +112,22 @@ namespace SaberEngine
 	{
 	public:
 		Material(string materialName, string shaderName, TEXTURE_TYPE textureCount = TEXTURE_COUNT, bool isRenderMaterial = false);
-		Material(string materialName, Shader* shader, TEXTURE_TYPE textureCount = TEXTURE_COUNT, bool isRenderMaterial = false);
+		Material(string materialName, std::shared_ptr<Shader> shader, TEXTURE_TYPE textureCount = TEXTURE_COUNT, bool isRenderMaterial = false);
 
 		void Destroy();
 
 		// TODO: Copy constructor, assignment operator
 
 		// Getters/Setters:
-		inline string const&	Name()									{ return m_name; }
-		inline Shader*&			GetShader()								{ return m_shader; }
-		inline vec4&			Property(MATERIAL_PROPERTY_INDEX index) { return m_properties[index]; }
+		inline string const& Name() { return m_name; }
+		inline std::shared_ptr<Shader>&	GetShader()	{ return m_shader; }
+		inline vec4& Property(MATERIAL_PROPERTY_INDEX index) { return m_properties[index]; }
 
-		std::shared_ptr<gr::Texture>&	AccessTexture(TEXTURE_TYPE textureType);
-		inline size_t const		NumTextureSlots()						{ return m_textures.size(); }
+		std::shared_ptr<gr::Texture>& AccessTexture(TEXTURE_TYPE textureType);
+		inline size_t const	NumTextureSlots() { return m_textures.size(); }
 
-		vector<string> const&	ShaderKeywords() const					{ return m_shaderKeywords; }
-		void					AddShaderKeyword(string const& newKeyword);
+		vector<string> const& ShaderKeywords() const { return m_shaderKeywords; }
+		void AddShaderKeyword(string const& newKeyword);
 		
 
 		// TODO: Materials should specify the texture unit; we shouldn't need to specify textureUnit
@@ -152,13 +151,13 @@ namespace SaberEngine
 		
 
 	private:
-		string		m_name;							// Must be unique: Identifies this material
+		string m_name;	// Must be unique: Identifies this material
 
-		Shader*		m_shader		= nullptr;		// Deallocated up in SceneManager.Shutdown()			
+		std::shared_ptr<Shader>	m_shader = nullptr;
 
 		std::vector<std::shared_ptr<gr::Texture>> m_textures;
 		
-		vec4		m_properties[MATERIAL_PROPERTY_COUNT];	// Generic material properties
+		vec4 m_properties[MATERIAL_PROPERTY_COUNT];	// Generic material properties
 
 		vector<string> m_shaderKeywords;
 

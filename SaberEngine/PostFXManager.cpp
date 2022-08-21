@@ -19,30 +19,14 @@ namespace SaberEngine
 			m_pingPongTextures[i] = nullptr;
 		}
 
-		if (m_blitShader != nullptr)
-		{
-			m_blitShader->Destroy();
-			delete m_blitShader;
-			m_blitShader = nullptr;
-		}
-
-		if (m_toneMapShader != nullptr)
-		{
-			m_toneMapShader->Destroy();
-			delete m_toneMapShader;
-			m_toneMapShader = nullptr;
-		}
+		m_blitShader = nullptr;
+		m_toneMapShader = nullptr;
 
 		if (m_blurShaders != nullptr)
 		{
 			for (int i = 0; i < BLUR_SHADER_COUNT; i++)
 			{
-				if (m_blurShaders[i] != nullptr)
-				{
-					m_blurShaders[i]->Destroy();
-					delete m_blurShaders[i];
-					m_blurShaders[i] = nullptr;
-				}				
+				m_blurShaders[i] = nullptr;
 			}
 		}
 
@@ -149,7 +133,7 @@ namespace SaberEngine
 	}
 
 
-	void PostFXManager::ApplyPostFX(Shader*& finalFrameShader)
+	void PostFXManager::ApplyPostFX(std::shared_ptr<Shader>& finalFrameShader)
 	{
 		// Pass 1: Apply luminance threshold: Finished frame -> 1/2 res
 

@@ -74,12 +74,10 @@ namespace SaberEngine
 	}
 
 
-	Material::Material(string materialName, Shader* shader, TEXTURE_TYPE textureCount /*= TEXTURE_COUNT*/, bool isRenderMaterial /*= false*/)
+	Material::Material(string materialName, std::shared_ptr<Shader> shader, TEXTURE_TYPE textureCount /*= TEXTURE_COUNT*/, bool isRenderMaterial /*= false*/)
 	{
-		m_name				= materialName;
-
-		m_shader			= shader;
-
+		m_name = materialName;
+		m_shader = shader;
 		m_textures = std::vector<std::shared_ptr<gr::Texture>>(textureCount, nullptr);
 
 		Init();	// Initialize textures and properties arrays
@@ -88,11 +86,7 @@ namespace SaberEngine
 
 	void Material::Destroy()
 	{
-		if (m_shader != nullptr)
-		{
-			m_shader->Destroy();
-			delete m_shader;
-		}
+		m_shader = nullptr;
 	}
 
 
