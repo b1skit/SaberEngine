@@ -58,11 +58,7 @@ namespace SaberEngine
 
 		ClearCameras();
 
-		if (m_skybox != nullptr)
-		{
-			delete m_skybox;
-			m_skybox = nullptr;
-		}
+		m_skybox = nullptr;
 	}
 
 

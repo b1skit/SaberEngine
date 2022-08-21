@@ -74,19 +74,19 @@ namespace SaberEngine
 		// sceneName = the root folder name within the ./Scenes/ directory. Must contain an .fbx file with the same name
 		bool LoadScene(string sceneName);
 
-		inline unsigned int						NumMaterials()								{ return (int)m_materials.size(); }
+		inline unsigned int	NumMaterials() { return (int)m_materials.size(); }
 		unordered_map<string, std::shared_ptr<Material>> const&	GetMaterials() const;
 		std::shared_ptr<Material> GetMaterial(string materialName);
 		
 		vector<gr::Mesh*> const* GetRenderMeshes(std::shared_ptr<Material> targetMaterial);	// Returns ALL meshs if targetMaterial == nullptr
-		vector<Renderable*>*					GetRenderables();
+		vector<Renderable*>* GetRenderables();
 
-		Light* const&							GetAmbientLight();
-		Light*									GetKeyLight();
+		Light* const& GetAmbientLight();
+		Light* GetKeyLight();
 		
-		vector<Camera*> const&					GetCameras(CAMERA_TYPE cameraType);
-		Camera*									GetMainCamera();
-		void									RegisterCamera(CAMERA_TYPE cameraType, Camera* newCamera);;
+		vector<Camera*> const& GetCameras(CAMERA_TYPE cameraType);
+		Camera*	GetMainCamera();
+		void RegisterCamera(CAMERA_TYPE cameraType, Camera* newCamera);;
 
 		void AddTexture(std::shared_ptr<gr::Texture>& newTexture); // If duplicate texture exists, it will be deleted and the newTexture pointer updated to the correct address
 		
@@ -96,9 +96,9 @@ namespace SaberEngine
 			gr::Texture::TextureColorSpace colorSpace, 
 			bool loadIfNotFound = true);	
 
-		vector<Light*> const&					GetDeferredLights();
+		vector<Light*> const& GetDeferredLights();
 
-		Skybox*									GetSkybox();
+		std::shared_ptr<Skybox>	GetSkybox();
 
 		string									GetCurrentSceneName() const;
 

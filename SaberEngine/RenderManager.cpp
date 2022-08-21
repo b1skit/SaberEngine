@@ -614,7 +614,7 @@ namespace SaberEngine
 	}
 
 
-	void SaberEngine::RenderManager::RenderSkybox(Skybox* skybox)
+	void SaberEngine::RenderManager::RenderSkybox(std::shared_ptr<Skybox> skybox)
 	{
 		if (skybox == nullptr)
 		{
@@ -782,7 +782,7 @@ namespace SaberEngine
 		}
 
 		// Add skybox shader:
-		Skybox* skybox = CoreEngine::GetSceneManager()->GetSkybox();
+		std::shared_ptr<Skybox> skybox = CoreEngine::GetSceneManager()->GetSkybox();
 		if (skybox && skybox->GetSkyMaterial() && skybox->GetSkyMaterial()->GetShader())
 		{
 			shaders.push_back(skybox->GetSkyMaterial()->GetShader());

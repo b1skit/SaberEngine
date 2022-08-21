@@ -77,7 +77,7 @@ namespace SaberEngine
 
 		void RenderDeferredLight(Light* deferredLight); // Note: FBO, viewport
 
-		void RenderSkybox(Skybox* skybox);
+		void RenderSkybox(std::shared_ptr<Skybox> skybox);
 
 		void BlitToScreen();
 		void BlitToScreen(std::shared_ptr<gr::Texture>& texture, std::shared_ptr<Shader> blitShader);

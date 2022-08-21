@@ -80,7 +80,7 @@ namespace SaberEngine
 		vector<Light*> const& GetDeferredLights() const		{ return m_deferredLights; }
 
 		// Skybox object:
-		Skybox* m_skybox		= nullptr;
+		std::shared_ptr<Skybox> m_skybox		= nullptr;
 
 		inline gr::Bounds const& WorldSpaceSceneBounds() const	{ return m_sceneWorldBounds; }
 

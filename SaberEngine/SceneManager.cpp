@@ -371,7 +371,7 @@ namespace SaberEngine
 	}
 
 
-	Skybox* SceneManager::GetSkybox()
+	std::shared_ptr<Skybox> SceneManager::GetSkybox()
 	{ 
 		return m_currentScene->m_skybox; 
 	}
@@ -803,7 +803,7 @@ namespace SaberEngine
 
 	void SaberEngine::SceneManager::ImportSky(string sceneName)
 	{
-		m_currentScene->m_skybox = new Skybox(sceneName);
+		m_currentScene->m_skybox = std::make_shared<Skybox>(sceneName);
 	}
 
 
