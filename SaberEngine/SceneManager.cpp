@@ -1557,7 +1557,8 @@ namespace SaberEngine
 					shadowCamConfig.m_orthoBottom		= transformedBounds.yMin();
 					shadowCamConfig.m_orthoTop			= transformedBounds.yMax();
 
-					ShadowMap* keyLightShadowMap = new ShadowMap // TEMP: We assume the key light will ALWAYS have a shadow
+					// TEMP: We assume the key light will ALWAYS have a shadow
+					std::shared_ptr<ShadowMap> keyLightShadowMap = std::make_shared<ShadowMap> 
 					(
 						lightName,
 						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowMapWidth"),
@@ -1673,7 +1674,7 @@ namespace SaberEngine
 
 				// Get ready to compute point light radius, if required:
 				float radius				= 1.0f;
-				ShadowMap* cubeShadowMap	= nullptr;
+				std::shared_ptr<ShadowMap> cubeShadowMap	= nullptr;
 
 				// Extract metadata:
 				aiNode* lightNode = scene->mRootNode->FindNode(scene->mLights[i]->mName.C_Str());
@@ -1769,7 +1770,7 @@ namespace SaberEngine
 
 
 					// TEMP: We assume point lights ALWAYS have a shadow. TODO: Control shadow maps via .FBX metadata
-					cubeShadowMap = new ShadowMap(
+					cubeShadowMap = std::make_shared<ShadowMap>(
 						lightName,
 						shadowCubeWidth,
 						shadowCubeHeight,

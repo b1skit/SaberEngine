@@ -43,7 +43,7 @@ namespace SaberEngine
 	{
 	public:
 		Light() {}; // Default constructor
-		Light(std::string lightName, LIGHT_TYPE lightType, vec3 color, ShadowMap* shadowMap = nullptr, float radius = 1.0f);
+		Light(std::string lightName, LIGHT_TYPE lightType, vec3 color, std::shared_ptr<ShadowMap> shadowMap = nullptr, float radius = 1.0f);
 		~Light() { Destroy(); }
 
 		void Destroy();
@@ -64,7 +64,8 @@ namespace SaberEngine
 														 
 		inline string const& Name() const { return m_lightName; }
 		
-		ShadowMap*&	ActiveShadowMap(ShadowMap* newShadowMap = nullptr);	// Get/set the current shadow map
+		// TODO: This interface is awful, rewrite it
+		std::shared_ptr<ShadowMap>&	ActiveShadowMap(std::shared_ptr<ShadowMap> newShadowMap = nullptr);	// Get/set the current shadow map
 
 		inline std::shared_ptr<gr::Mesh>& DeferredMesh() { return m_deferredMesh; }
 		inline std::shared_ptr<Material>& DeferredMaterial() { return m_deferredMaterial; }
@@ -79,7 +80,7 @@ namespace SaberEngine
 
 		string m_lightName			= "unnamed_directional_light";
 
-		ShadowMap* m_shadowMap		= nullptr; // Deallocated by calling Destroy() during SceneManager.Shutdown()
+		std::shared_ptr<ShadowMap> m_shadowMap		= nullptr; // Deallocated by calling Destroy() during SceneManager.Shutdown()
 
 		// Deferred light setup:
 		std::shared_ptr<gr::Mesh> m_deferredMesh = nullptr;

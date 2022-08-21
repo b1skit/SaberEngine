@@ -532,7 +532,7 @@ namespace SaberEngine
 		}
 
 		// Shadow properties:
-		ShadowMap* activeShadowMap = deferredLight->ActiveShadowMap();
+		std::shared_ptr<ShadowMap> activeShadowMap = deferredLight->ActiveShadowMap();
 
 		mat4 shadowCam_vp(1.0);
 		if (activeShadowMap != nullptr)

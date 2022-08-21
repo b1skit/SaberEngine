@@ -10,7 +10,7 @@
 
 namespace SaberEngine
 {
-	SaberEngine::Light::Light(string lightName, LIGHT_TYPE lightType, vec3 color, ShadowMap* shadowMap /*= nullptr*/, float radius /*= 1.0f*/)
+	SaberEngine::Light::Light(string lightName, LIGHT_TYPE lightType, vec3 color, std::shared_ptr<ShadowMap> shadowMap /*= nullptr*/, float radius /*= 1.0f*/)
 	{
 		m_lightName		= lightName;
 		m_type			= lightType;
@@ -111,21 +111,9 @@ namespace SaberEngine
 
 	void Light::Destroy()
 	{
-		if (m_shadowMap != nullptr)
-		{
-			delete m_shadowMap;
-			m_shadowMap = nullptr;
-		}
-
-		if (m_deferredMesh != nullptr)
-		{
-			m_deferredMesh = nullptr;
-		}
-
-		if (m_deferredMaterial != nullptr)
-		{
-			m_deferredMaterial = nullptr;
-		}
+		m_shadowMap = nullptr;
+		m_deferredMesh = nullptr;
+		m_deferredMaterial = nullptr;
 
 		m_lightName += "_DELETED";
 	}
@@ -141,7 +129,7 @@ namespace SaberEngine
 	}
 
 
-	ShadowMap*& Light::ActiveShadowMap(ShadowMap* newShadowMap /*= nullptr*/)
+	std::shared_ptr<ShadowMap>& Light::ActiveShadowMap(std::shared_ptr<ShadowMap> newShadowMap /*= nullptr*/)
 	{
 		// No-arg: Gets the current shadow map
 		if (newShadowMap == nullptr)
@@ -152,7 +140,6 @@ namespace SaberEngine
 		if (m_shadowMap != nullptr)
 		{
 			LOG("Deleting an existing shadow map");
-			delete m_shadowMap;
 			m_shadowMap = nullptr;
 		}
 
