@@ -10,17 +10,15 @@
 using glm::vec3;
 using glm::vec4;
 
-#include "SceneObject.h"	// Base class
+#include "SceneObject.h"
 #include "Mesh.h"
-
-
+#include "Shader.h"
 
 
 namespace SaberEngine
 {
 	// Pre-declarations:
 	class Camera;
-	class Material;
 	class Mesh;
 	class ShadowMap;
 
@@ -73,10 +71,10 @@ namespace SaberEngine
 		std::shared_ptr<ShadowMap> const& GetShadowMap() const { return m_shadowMap; }
 
 		inline std::shared_ptr<gr::Mesh>& DeferredMesh() { return m_deferredMesh; }
-		inline std::shared_ptr<Material>& DeferredMaterial() { return m_deferredMaterial; }
+		inline std::shared_ptr<gr::Mesh> const& DeferredMesh() const { return m_deferredMesh; }		
 
-
-	protected:
+		inline std::shared_ptr<Shader>& GetDeferredLightShader() { return m_deferredLightShader; }
+		inline std::shared_ptr<Shader>const& GetDeferredLightShader() const { return m_deferredLightShader; }
 
 
 	private:
@@ -89,7 +87,7 @@ namespace SaberEngine
 
 		// Deferred light setup:
 		std::shared_ptr<gr::Mesh> m_deferredMesh = nullptr;
-		std::shared_ptr<Material> m_deferredMaterial	= nullptr;
+		std::shared_ptr<Shader> m_deferredLightShader = nullptr;
 
 		// TODO: Move initialization to ctor initialization list
 	};

@@ -7,7 +7,6 @@ using std::to_string;
 #include "Texture.h"
 #include "CoreEngine.h"
 #include "BuildConfiguration.h"
-#include "Material.h"
 
 #define ERROR_TEXTURE_NAME "ErrorTexture"
 #define ERROR_TEXTURE_COLOR_VEC4 vec4(1.0f, 0.0f, 1.0f, 1.0f)

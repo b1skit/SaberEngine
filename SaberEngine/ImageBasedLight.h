@@ -10,11 +10,6 @@ using std::string;
 
 namespace SaberEngine
 {
-	// Predeclarations:
-	class Material;
-
-
-
 	enum IBL_TYPE
 	{
 		IBL_IEM,		// Irradience Environment Map
@@ -33,13 +28,12 @@ namespace SaberEngine
 
 		~ImageBasedLight();
 
-		// Get the Irradiance Environment Map material:
-		std::shared_ptr<Material> GetIEMMaterial() { return m_IEM_Material; }
-		std::shared_ptr<Material> GetPMREMMaterial() { return m_PMREM_Material; }
-		std::shared_ptr<gr::Texture>	GetBRDFIntegrationMap() { return m_BRDF_integrationMap; }
+		std::shared_ptr<gr::Texture> GetIEMTexture() { return m_IEM_Tex; }
+		std::shared_ptr<gr::Texture> GetPMREMTexture() { return m_PMREM_Tex; }		
+		std::shared_ptr<gr::Texture> GetBRDFIntegrationMap() { return m_BRDF_integrationMap; }
 
 		// Check if an IBL was successfully loaded
-		bool IsValid() const		{ return m_IEM_isValid && m_PMREM_isValid; }
+		bool IsValid() const { return m_IEM_isValid && m_PMREM_isValid; }
 
 
 		// Public static functions:
@@ -60,8 +54,8 @@ namespace SaberEngine
 
 		// TODO: MOVE INITIALIZATION TO CTOR INIT LIST
 
-		std::shared_ptr<Material> m_IEM_Material = nullptr;		// Irradiance Environment Map (IEM) Material
-		std::shared_ptr<Material> m_PMREM_Material = nullptr;	// Pre-filtered Mip-mapped Radiance Environment Map (PMREM) Material
+		std::shared_ptr<gr::Texture> m_IEM_Tex = nullptr;	// Irradiance Environment Map (IEM)
+		std::shared_ptr<gr::Texture> m_PMREM_Tex = nullptr; // Pre-filtered Mip-mapped Radiance Environment Map (PMREM)
 
 		uint32_t m_maxMipLevel = -1;		// Highest valid mip level for the PMREM cube map
 
@@ -75,6 +69,7 @@ namespace SaberEngine
 
 		bool m_IEM_isValid		= false; // Is the IEM valid? (Ie. Were IBL textures successfully loaded?)
 		bool m_PMREM_isValid	= false; // Is the PMREM valid? (Ie. Were IBL textures successfully loaded?)
+
 
 		// Private helper functions:
 		//--------------------------

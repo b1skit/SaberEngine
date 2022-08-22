@@ -7,7 +7,6 @@
 #include "Mesh.h"
 #include "Shader.h"
 #include "Camera.h"
-#include "Material.h"
 
 
 namespace SaberEngine
@@ -33,9 +32,9 @@ namespace SaberEngine
 		m_screenAlignedQuad = nullptr;
 	}
 
-	void PostFXManager::Initialize(std::shared_ptr<Material> outputMaterial)
+	void PostFXManager::Initialize(gr::TextureTarget const& fxTarget)
 	{				
-		m_outputTargetSet.ColorTarget(0) = outputMaterial->AccessTexture(RENDER_TEXTURE_ALBEDO);
+		m_outputTargetSet.ColorTarget(0) = fxTarget;
 
 		m_outputTargetSet.CreateColorTargets(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO);
 
@@ -219,7 +218,7 @@ namespace SaberEngine
 				(void*)(0));
 		}
 
-		// Additively blit final blurred result (ie. half res) to the original, full-sized image: [0] -> output material
+		// Additively blit final blurred result (ie. half res) to the original, full-sized image: [0] -> output
 		m_outputTargetSet.AttachColorTargets(0, 0, true);
 		
 		m_pingPongStageTargetSets[0].ColorTarget(0).GetTexture()->Bind(
@@ -239,8 +238,8 @@ namespace SaberEngine
 			platform::Context::BlendMode::Disabled,
 			platform::Context::BlendMode::Disabled);
 
-		// Set the final frame material and shader to apply tone mapping:
-		finalFrameShader	= m_toneMapShader;
+		// Set the final frame shader to apply tone mapping:
+		finalFrameShader = m_toneMapShader;
 	}
 }
 

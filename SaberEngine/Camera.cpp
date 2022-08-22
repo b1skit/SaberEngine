@@ -69,7 +69,7 @@ namespace SaberEngine
 
 	void Camera::Destroy()
 	{
-		m_renderMaterial = nullptr;
+		m_cameraShader = nullptr;
 	}
 
 
@@ -143,12 +143,7 @@ namespace SaberEngine
 
 	void Camera::AttachGBuffer()
 	{
-		m_renderMaterial = std::make_shared<Material>(
-			GetName() + "_Material", 
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("gBufferFillShaderName"), 
-			RENDER_TEXTURE_COUNT, 
-			true);
-		// TODO: Remove this (currently using it for the shader, but shaders still use raw pointers)
+		m_cameraShader = Shader::CreateShader(CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("gBufferFillShaderName"));
 
 		// Create GBuffer color targets:
 		gr::Texture::TextureParams gBufferParams;

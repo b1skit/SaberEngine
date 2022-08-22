@@ -25,7 +25,6 @@ namespace gr
 }
 namespace SaberEngine
 {
-	class Material;
 	class Camera;
 	class Shader;
 	class Light;
@@ -93,15 +92,17 @@ namespace SaberEngine
 		
 		re::Context m_context;
 
-		std::shared_ptr<Material> m_blitMaterial	= nullptr;
+		std::shared_ptr<Shader> m_blitShader = nullptr;
 
 		// Note: We store these as shared_ptr so we can instantiate them once the context has been created
-		std::shared_ptr<gr::TextureTargetSet> m_outputTargetSet; // TODO: Pick a better name for this...
-		std::shared_ptr<gr::TextureTargetSet> m_defaultTargetSet;
+		std::shared_ptr<gr::TextureTargetSet> m_outputTargetSet = nullptr; // TODO: Pick a better name for this...
+		std::shared_ptr<gr::TextureTargetSet> m_defaultTargetSet = nullptr;
 
 		std::shared_ptr<gr::Mesh> m_screenAlignedQuad = nullptr;
 
 		std::unique_ptr<PostFXManager> m_postFXManager = nullptr;
+		
+		// TODO: Move initialization to ctor init list
 	};
 }
 

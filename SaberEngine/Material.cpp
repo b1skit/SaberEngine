@@ -62,7 +62,7 @@ namespace SaberEngine
 	};
 
 
-	Material::Material(string materialName, string shaderName, TEXTURE_TYPE textureCount /*= TEXTURE_COUNT*/, bool isRenderMaterial /*= false*/)
+	Material::Material(string materialName, string shaderName, TEXTURE_TYPE textureCount /*= TEXTURE_COUNT*/)
 	{
 		m_name				= materialName;
 
@@ -74,7 +74,7 @@ namespace SaberEngine
 	}
 
 
-	Material::Material(string materialName, std::shared_ptr<Shader> shader, TEXTURE_TYPE textureCount /*= TEXTURE_COUNT*/, bool isRenderMaterial /*= false*/)
+	Material::Material(string materialName, std::shared_ptr<Shader> shader, TEXTURE_TYPE textureCount /*= TEXTURE_COUNT*/)
 	{
 		m_name = materialName;
 		m_shader = shader;

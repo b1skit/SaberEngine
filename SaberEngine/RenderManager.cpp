@@ -82,15 +82,8 @@ namespace SaberEngine
 		m_outputTargetSet->ColorTarget(0) = outputTexture;
 
 		m_outputTargetSet->CreateColorTargets(TEXTURE_ALBEDO);
-
-
-		// TODO: Get rid of this -> Currently using it to store a blit shader
-		m_blitMaterial = std::make_shared<Material>("RenderManager_OutputMaterial",
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShader"),
-			(TEXTURE_TYPE)1,
-			true);
-		m_blitMaterial->AccessTexture(TEXTURE_ALBEDO) = outputTexture;
-		// ^^ still need to store this here, as the material is (currently) passed to the PostFX manager which caches this texture
+		
+		m_blitShader = Shader::CreateShader(CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShader"));
 
 		// PostFX Manager:
 		m_postFXManager = std::make_unique<PostFXManager>(); // Initialized when RenderManager.Initialize() is called
@@ -109,7 +102,7 @@ namespace SaberEngine
 	{
 		LOG("Render manager shutting down...");
 
-		m_blitMaterial = nullptr;
+		m_blitShader = nullptr;
 		m_outputTargetSet = nullptr;
 		m_screenAlignedQuad = nullptr;
 		m_postFXManager = nullptr;
@@ -192,7 +185,7 @@ namespace SaberEngine
 		Blit(
 			mainCam->GetTextureTargetSet().ColorTarget(TEXTURE_EMISSIVE).GetTexture(),
 			*m_outputTargetSet.get(),
-			m_blitMaterial->GetShader());
+			m_blitShader);
 
 		m_context.SetBlendMode(platform::Context::BlendMode::Disabled, platform::Context::BlendMode::Disabled);
 
@@ -217,7 +210,7 @@ namespace SaberEngine
 		std::shared_ptr<Camera> shadowCam = light->GetShadowMap()->ShadowCamera();
 
 		// Light shader setup:
-		std::shared_ptr<Shader> lightShader = shadowCam->RenderMaterial()->GetShader(); // TODO: Remove material, get shader directly
+		std::shared_ptr<Shader> lightShader = shadowCam->GetRenderShader();
 		lightShader->Bind(true);
 		
 		if (light->Type() == LIGHT_POINT)
@@ -300,7 +293,7 @@ namespace SaberEngine
 		{
 			// Setup the current material and shader:
 			std::shared_ptr<Material> currentMaterial = currentElement.second;
-			std::shared_ptr<Shader> currentShader = renderCam->RenderMaterial()->GetShader();
+			std::shared_ptr<Shader> currentShader = renderCam->GetRenderShader();
 
 			vector<std::shared_ptr<gr::Mesh>> const* meshes;
 
@@ -349,7 +342,7 @@ namespace SaberEngine
 		std::shared_ptr<Camera> gBufferCam = CoreEngine::GetSceneManager()->GetMainCamera();
 
 		// Bind:
-		std::shared_ptr<Shader> currentShader	= deferredLight->DeferredMaterial()->GetShader();
+		std::shared_ptr<Shader> currentShader = deferredLight->GetDeferredLightShader();
 
 		currentShader->Bind(true);
 
@@ -390,7 +383,7 @@ namespace SaberEngine
 		{
 			// Bind IBL cubemaps:
 			std::shared_ptr<gr::Texture> IEMCubemap =
-				dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetIEMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
+				dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetIEMTexture();
 
 			if (IEMCubemap != nullptr)
 			{
@@ -398,7 +391,7 @@ namespace SaberEngine
 			}
 
 			std::shared_ptr<gr::Texture> PMREM_Cubemap =
-				dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetPMREMMaterial()->AccessTexture(CUBE_MAP_RIGHT);
+				dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetPMREMTexture();
 
 			if (PMREM_Cubemap != nullptr)
 			{
@@ -520,12 +513,12 @@ namespace SaberEngine
 
 		std::shared_ptr<Camera> renderCam = CoreEngine::GetSceneManager()->GetMainCamera();
 
-		std::shared_ptr<Shader> currentShader = skybox->GetSkyMaterial()->GetShader();
+		std::shared_ptr<Shader> currentShader = skybox->GetSkyShader();
 
-		std::shared_ptr<gr::Texture> skyboxCubeMap = skybox->GetSkyMaterial()->AccessTexture(CUBE_MAP_RIGHT);
+		std::shared_ptr<gr::Texture> skyboxCubeMap = skybox->GetSkyTexture();
 
 		// GBuffer depth
-		std::shared_ptr<gr::Texture> depthTexture =renderCam->RenderMaterial()->AccessTexture(RENDER_TEXTURE_DEPTH); 
+		std::shared_ptr<gr::Texture> depthTexture = renderCam->GetTextureTargetSet().DepthStencilTarget().GetTexture();		
 
 		// Bind shader and texture:
 		currentShader->Bind(true);
@@ -558,8 +551,7 @@ namespace SaberEngine
 		m_defaultTargetSet->AttachColorDepthStencilTargets(0, 0, true);
 		m_context.ClearTargets(platform::Context::ClearTarget::ColorDepth);
 
-		m_blitMaterial->GetShader()->Bind(true);
-		m_blitMaterial->BindAllTextures(RENDER_TEXTURE_0, true);
+		m_blitShader->Bind(true);
 		m_screenAlignedQuad->Bind(true);
 
 		glDrawElements(
@@ -662,29 +654,29 @@ namespace SaberEngine
 			vector<std::shared_ptr<Camera>> cameras = CoreEngine::GetSceneManager()->GetCameras((CAMERA_TYPE)i);
 			for (int currentCam = 0; currentCam < cameras.size(); currentCam++)
 			{
-				if (cameras.at(currentCam)->RenderMaterial() && cameras.at(currentCam)->RenderMaterial()->GetShader())
+				if (cameras.at(currentCam)->GetRenderShader())
 				{
-					shaders.push_back(cameras.at(currentCam)->RenderMaterial()->GetShader());
+					shaders.push_back(cameras.at(currentCam)->GetRenderShader());
 				}
 			}
 		}
 			
 		// Add deferred light Shaders
 		vector<std::shared_ptr<Light>> const* deferredLights = &CoreEngine::GetSceneManager()->GetDeferredLights();
-		for (int currentLight = 0; currentLight < (int)deferredLights->size(); currentLight++)
+		for (size_t currentLight = 0; currentLight < deferredLights->size(); currentLight++)
 		{
-			shaders.push_back(deferredLights->at(currentLight)->DeferredMaterial()->GetShader());
+			shaders.push_back(deferredLights->at(currentLight)->GetDeferredLightShader());
 		}
 
 		// Add skybox shader:
 		std::shared_ptr<Skybox> skybox = CoreEngine::GetSceneManager()->GetSkybox();
-		if (skybox && skybox->GetSkyMaterial() && skybox->GetSkyMaterial()->GetShader())
+		if (skybox && skybox->GetSkyShader())
 		{
-			shaders.push_back(skybox->GetSkyMaterial()->GetShader());
+			shaders.push_back(skybox->GetSkyShader());
 		}		
 		
 		// Add RenderManager shaders:
-		shaders.push_back(m_blitMaterial->GetShader());
+		shaders.push_back(m_blitShader);
 
 		// Configure all of the shaders:
 		for (unsigned int i = 0; i < (int)shaders.size(); i++)
@@ -716,7 +708,7 @@ namespace SaberEngine
 		}
 
 		// Initialize PostFX:
-		m_postFXManager->Initialize(m_blitMaterial);
+		m_postFXManager->Initialize(m_outputTargetSet->ColorTarget(0));
 	}
 
 

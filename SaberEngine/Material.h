@@ -111,8 +111,8 @@ namespace SaberEngine
 	class Material
 	{
 	public:
-		Material(string materialName, string shaderName, TEXTURE_TYPE textureCount = TEXTURE_COUNT, bool isRenderMaterial = false);
-		Material(string materialName, std::shared_ptr<Shader> shader, TEXTURE_TYPE textureCount = TEXTURE_COUNT, bool isRenderMaterial = false);
+		Material(string materialName, string shaderName, TEXTURE_TYPE textureCount = TEXTURE_COUNT);
+		Material(string materialName, std::shared_ptr<Shader> shader, TEXTURE_TYPE textureCount = TEXTURE_COUNT);
 
 		~Material() { Destroy(); }
 

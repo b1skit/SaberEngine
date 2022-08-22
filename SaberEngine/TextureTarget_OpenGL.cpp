@@ -99,8 +99,7 @@ namespace opengl
 					);
 				}
 
-				// We bind the texture to trigger its create/buffer flow
-				texture->Bind(firstTextureUnit + attachmentPointOffset, true);
+				texture->Create(firstTextureUnit + attachmentPointOffset);
 				 
 				// Configure the target parameters:
 				opengl::TextureTarget::PlatformParams* const targetParams =
@@ -293,8 +292,7 @@ namespace opengl
 			}
 			// TODO: This is duplicated with color targets: Break it out into a helper function?
 
-			// We bind the texture to trigger its create/buffer flow
-			depthStencilTex->Bind(textureUnit, true);
+			depthStencilTex->Create(textureUnit);
 
 			// Configure the target parameters:
 			opengl::TextureTarget::PlatformParams* const depthTargetParams =

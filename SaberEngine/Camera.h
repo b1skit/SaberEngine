@@ -5,13 +5,11 @@
 
 #include "SceneObject.h"
 #include "TextureTarget.h"
+#include "Shader.h"
 
 
 namespace SaberEngine
 {
-	// Pre-declarations:
-	class Material;
-
 	// Contains configuration specific to a cameras rendering
 	struct CameraConfig
 	{
@@ -68,8 +66,8 @@ namespace SaberEngine
 
 		mat4 const*	CubeViewProjection();
 
-		std::shared_ptr<Material>& RenderMaterial()	{ return m_renderMaterial; }
-		std::shared_ptr<Material> const& RenderMaterial() const { return m_renderMaterial; }
+		std::shared_ptr<Shader>& GetRenderShader() { return m_cameraShader; }
+		std::shared_ptr<Shader> const& GetRenderShader() const { return m_cameraShader; }
 		
 		gr::TextureTargetSet& GetTextureTargetSet() { return m_camTargetSet; }
 		gr::TextureTargetSet const & GetTextureTargetSet() const { return m_camTargetSet; }
@@ -98,7 +96,8 @@ namespace SaberEngine
 		vector<mat4> m_cubeView;
 		vector<mat4> m_cubeViewProjection;
 		
-		std::shared_ptr<Material> m_renderMaterial	= nullptr;
+		std::shared_ptr<Shader> m_cameraShader = nullptr;
+
 		gr::TextureTargetSet m_camTargetSet;
 
 		// TODO: Move initialization to ctor initialization list

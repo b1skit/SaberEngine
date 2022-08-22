@@ -4,7 +4,6 @@
 #include "BuildConfiguration.h"
 #include "ShadowMap.h"
 #include "Shader.h"
-#include "Material.h"
 #include "Mesh.h"
 
 
@@ -40,18 +39,9 @@ namespace SaberEngine
 				shaderKeywords.push_back("AMBIENT_IBL");
 			}
 
-			std::shared_ptr<Shader> ambientLightShader = Shader::CreateShader(
+			m_deferredLightShader = Shader::CreateShader(
 				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"), 
 				&shaderKeywords);
-
-			// Attach a deferred Material:
-			m_deferredMaterial = std::make_shared<Material>
-			(
-				lightName + "_deferredMaterial",
-				ambientLightShader,
-				(TEXTURE_TYPE)0, // No textures
-				true
-			);
 
 			// Attach a screen aligned quad:
 			m_deferredMesh = gr::meshfactory::CreateQuad	// Align along near plane
@@ -67,14 +57,8 @@ namespace SaberEngine
 
 		case LIGHT_DIRECTIONAL:
 		{
-			// Attach a deferred Material:
-			m_deferredMaterial = std::make_shared<Material>
-			(
-				lightName + "_deferredMaterial",
-				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredKeylightShaderName"),
-				(TEXTURE_TYPE)0, // No textures
-				true
-			);
+			m_deferredLightShader = Shader::CreateShader(
+				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredKeylightShaderName"));
 
 			// Attach a screen aligned quad:
 			m_deferredMesh = gr::meshfactory::CreateQuad	// Align along near plane
@@ -88,18 +72,10 @@ namespace SaberEngine
 		}
 
 		case LIGHT_POINT:
-			m_deferredMaterial = std::make_shared<Material>
-			(
-				lightName + "_deferredMaterial",
-				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredPointLightShaderName"),
-				(TEXTURE_TYPE)0, // No textures
-				true
-			);
-
-			m_deferredMesh = gr::meshfactory::CreateSphere
-			(
-				radius
-			);
+			m_deferredLightShader = Shader::CreateShader(
+				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredPointLightShaderName"));
+			
+			m_deferredMesh = gr::meshfactory::CreateSphere(radius);
 			m_deferredMesh->GetTransform().Parent(&m_transform);
 
 			break;
@@ -118,7 +94,7 @@ namespace SaberEngine
 	{
 		m_shadowMap = nullptr;
 		m_deferredMesh = nullptr;
-		m_deferredMaterial = nullptr;
+		m_deferredLightShader = nullptr;
 
 		m_lightName += "_DELETED";
 	}

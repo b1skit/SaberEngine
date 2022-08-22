@@ -3,7 +3,6 @@
 #include "ShadowMap.h"
 #include "CoreEngine.h"
 #include "Camera.h"
-#include "Material.h"
 #include "Scene.h"
 
 
@@ -66,11 +65,7 @@ namespace SaberEngine
 			shaderName = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("depthShaderName");
 		}
 
-		m_shadowCam->RenderMaterial() = std::make_shared<Material>(
-			m_shadowCam->GetName() + "_Material",
-			shaderName,
-			RENDER_TEXTURE_COUNT,
-			true);
+		m_shadowCam->GetRenderShader() = Shader::CreateShader(shaderName);
 
 		m_shadowTargetSet.DepthStencilTarget() = depthTexture;
 		m_shadowTargetSet.Viewport() = gr::Viewport(0, 0, depthTexture->Width(), depthTexture->Height());

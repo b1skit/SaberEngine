@@ -6,7 +6,6 @@
 #include "BuildConfiguration.h"
 #include "Mesh.h"
 #include "Shader.h"
-#include "Material.h"
 
 
 namespace SaberEngine
@@ -15,39 +14,31 @@ namespace SaberEngine
 		: Light(lightName, LIGHT_AMBIENT_IBL, vec3(0))
 	{
 		// Irradiance Environment Map (IEM) setup:
-		m_IEM_Material = 
-			std::make_shared<Material>("IEM_Material", std::shared_ptr<Shader>(nullptr), CUBE_MAP_NUM_FACES, true);
 
-		std::shared_ptr<gr::Texture> IEM_Textures = (std::shared_ptr<gr::Texture>)ConvertEquirectangularToCubemap(
+		m_IEM_Tex = ConvertEquirectangularToCubemap(
 				CoreEngine::GetSceneManager()->GetCurrentSceneName(), 
 				relativeHDRPath, 
 				m_xRes,
 				m_yRes, 
 				IBL_IEM);
 
-		if (IEM_Textures != nullptr)
+		if (m_IEM_Tex != nullptr)
 		{
 			m_IEM_isValid = true;
-
-			m_IEM_Material->AttachCubeMapTextures(IEM_Textures);
 		}
 
 		// Pre-filtered Mipmaped Radiance Environment Map (PMREM) setup:
-		m_PMREM_Material = 
-			std::make_shared<Material>("PMREM_Material", std::shared_ptr<Shader>(nullptr), CUBE_MAP_NUM_FACES, true);
 
-		std::shared_ptr<gr::Texture> PMREM_Textures = (std::shared_ptr<gr::Texture>)ConvertEquirectangularToCubemap(
+		m_PMREM_Tex = ConvertEquirectangularToCubemap(
 			CoreEngine::GetSceneManager()->GetCurrentSceneName(),
 			relativeHDRPath, 
 			m_xRes, 
 			m_yRes,
 			IBL_PMREM);
 
-		if (PMREM_Textures != nullptr)
+		if (m_PMREM_Tex != nullptr)
 		{
 			m_PMREM_isValid = true;
-
-			m_PMREM_Material->AttachCubeMapTextures(PMREM_Textures);
 
 			// Note: We assume the cubemap is always square and use xRes only during our calculations...
 			m_maxMipLevel = (uint32_t)glm::log2((float)m_xRes);
@@ -57,9 +48,9 @@ namespace SaberEngine
 		GenerateBRDFIntegrationMap();
 
 		// Upload shader parameters:
-		if (DeferredMaterial() != nullptr && DeferredMaterial()->GetShader() != nullptr)
+		if (GetDeferredLightShader() != nullptr)
 		{
-			DeferredMaterial()->GetShader()->UploadUniform("maxMipLevel", &m_maxMipLevel, UNIFORM_Int);
+			GetDeferredLightShader()->UploadUniform("maxMipLevel", &m_maxMipLevel, UNIFORM_Int);
 		}
 		else
 		{
@@ -70,10 +61,10 @@ namespace SaberEngine
 	
 	ImageBasedLight::~ImageBasedLight()
 	{
-		m_IEM_Material = nullptr;
+		m_IEM_Tex = nullptr;
 		m_IEM_isValid = false;
 
-		m_PMREM_Material = nullptr;
+		m_PMREM_Tex = nullptr;
 		m_PMREM_isValid = false;
 
 		m_BRDF_integrationMap = nullptr;
@@ -303,22 +294,19 @@ namespace SaberEngine
 		LOG("Rendering BRDF Integration map texture");		
 		
 		// Destroy any existing map
-		if (m_BRDF_integrationMap != nullptr)
-		{
-			m_BRDF_integrationMap = nullptr;
-		}
+		m_BRDF_integrationMap = nullptr;
 		
 		// Create a shader:
-		string shaderName = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("BRDFIntegrationMapShaderName");
-		std::shared_ptr<Shader> BRDFIntegrationMapShader = Shader::CreateShader(shaderName);
+		const std::string shaderName = 
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("BRDFIntegrationMapShaderName");
 
+		std::shared_ptr<Shader> BRDFIntegrationMapShader = Shader::CreateShader(shaderName);
 		if (BRDFIntegrationMapShader == nullptr)
 		{
 			LOG_ERROR("Failed to load \"" + shaderName + "\", BRDF Integration map generation failed.");
 			return;
 		}
 		BRDFIntegrationMapShader->Bind(true);
-
 
 		// Create a CCW screen-aligned quad to render with:
 		std::shared_ptr<gr::Mesh> quad = gr::meshfactory::CreateQuad
@@ -355,26 +343,19 @@ namespace SaberEngine
 		// Configure a TextureTargetSet:
 		m_BRDF_integrationMapStageTargetSet.ColorTarget(0) = gr::TextureTarget(m_BRDF_integrationMap);
 		m_BRDF_integrationMapStageTargetSet.Viewport() = gr::Viewport(0, 0, m_xRes, m_yRes);
-
-
-		// TODO: Bind function should call CreateColorTargets internally
 		m_BRDF_integrationMapStageTargetSet.CreateColorTargets(GENERIC_TEXTURE_0);
-
-		// Note: Need to bind so the viewport gets set (even though everything still bound after CreateColorTargets())
 		m_BRDF_integrationMapStageTargetSet.AttachColorTargets(0, 0, true);
 
-
-		// TODO: Handle depth/clearing config via stage params: Stages should control how they interact with the targets
 		// Ensure we can render on the far plane
 		CoreEngine::GetRenderManager()->GetContext().SetDepthMode(platform::Context::DepthMode::LEqual);
 		CoreEngine::GetRenderManager()->GetContext().ClearTargets(platform::Context::ClearTarget::ColorDepth);
+		// TODO: Handle depth/clearing config via stage params: Stages should control how they interact with the targets
 
 		// Draw:		
 		glDrawElements(GL_TRIANGLES,
 			(GLsizei)quad->NumIndices(),
 			GL_UNSIGNED_INT, 
 			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
-
 
 		// Cleanup:
 		m_BRDF_integrationMapStageTargetSet.AttachColorTargets(0, 0, false);

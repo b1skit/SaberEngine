@@ -1,30 +1,36 @@
 #pragma once
 
-#include "Mesh.h"
+#include <memory>
 #include <string>
 
-using std::string;
 
+namespace gr
+{
+	class Texture;
+	class Mesh;
+}
 
 namespace SaberEngine
 {
-	class Material;
-	class Mesh;
+	class Shader;
 
 	class Skybox
 	{
 	public:
-		Skybox(std::shared_ptr<Material> skyMaterial, std::shared_ptr<gr::Mesh> skyMesh);
-		Skybox(string sceneName);
+		Skybox(std::string const& sceneName);
+		Skybox() = delete;
+
 		~Skybox();
 
-		std::shared_ptr<Material>	GetSkyMaterial()	{ return m_skyMaterial; }
+		std::shared_ptr<gr::Texture> GetSkyTexture() { return m_skyTexture; }
+		std::shared_ptr<Shader> GetSkyShader() { return m_skyShader; }
 		std::shared_ptr<gr::Mesh> GetSkyMesh()	{ return m_skyMesh; }
 
 
 	private:
-		std::shared_ptr<Material> m_skyMaterial	= nullptr;
-		std::shared_ptr<gr::Mesh> m_skyMesh		= nullptr;
+		std::shared_ptr<gr::Texture> m_skyTexture = nullptr;
+		std::shared_ptr<Shader> m_skyShader = nullptr;
+		std::shared_ptr<gr::Mesh> m_skyMesh	= nullptr;
 	};
 }
 

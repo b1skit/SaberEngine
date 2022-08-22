@@ -15,7 +15,6 @@ namespace gr
 namespace SaberEngine
 {
 	class Shader;
-	class Material;
 }
 
 
@@ -38,7 +37,7 @@ namespace SaberEngine
 		~PostFXManager();
 
 		// Initialize PostFX. Must be called after the scene has been loaded and the RenderManager has finished initializing OpenGL
-		void Initialize(std::shared_ptr<Material> outputMaterial);
+		void Initialize(gr::TextureTarget const& fxTarget);
 
 		// Apply post processing. Modifies finalFrameShader to contain the shader required to blit the final image to screen
 		void ApplyPostFX(std::shared_ptr<Shader>& finalFrameShader);
