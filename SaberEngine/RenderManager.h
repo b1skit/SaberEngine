@@ -93,8 +93,11 @@ namespace SaberEngine
 		
 		re::Context m_context;
 
-		std::shared_ptr<Material> m_outputMaterial	= nullptr;
-		std::shared_ptr<gr::TextureTargetSet> m_outputTargetSet;
+		std::shared_ptr<Material> m_blitMaterial	= nullptr;
+
+		// Note: We store these as shared_ptr so we can instantiate them once the context has been created
+		std::shared_ptr<gr::TextureTargetSet> m_outputTargetSet; // TODO: Pick a better name for this...
+		std::shared_ptr<gr::TextureTargetSet> m_defaultTargetSet;
 
 		std::shared_ptr<gr::Mesh> m_screenAlignedQuad = nullptr;
 

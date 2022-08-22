@@ -78,13 +78,15 @@ namespace gr
 		TextureTargetSet();
 		~TextureTargetSet();
 
-		std::vector<gr::TextureTarget>& ColorTargets() { return m_colorTargets; }
+		std::vector<gr::TextureTarget>& ColorTargets() { m_targetStateDirty = true; return m_colorTargets; }
 		std::vector<gr::TextureTarget> const& ColorTargets() const { return m_colorTargets; }
 
-		gr::TextureTarget& ColorTarget(size_t i) { assert(i < m_colorTargets.size()); return m_colorTargets[i]; }
-		gr::TextureTarget const& ColorTarget(size_t i) const { assert(i < m_colorTargets.size()); return m_colorTargets[i]; }
+		gr::TextureTarget& ColorTarget(size_t i)
+			{ assert(i < m_colorTargets.size()); m_targetStateDirty = true; return m_colorTargets[i]; }
+		gr::TextureTarget const& ColorTarget(size_t i) const 
+			{ assert(i < m_colorTargets.size()); return m_colorTargets[i]; }
 
-		gr::TextureTarget& DepthStencilTarget() { return m_depthStencilTarget; }
+		gr::TextureTarget& DepthStencilTarget() { m_targetStateDirty = true; return m_depthStencilTarget; }
 		gr::TextureTarget const& DepthStencilTarget() const { return m_depthStencilTarget; }
 
 		gr::Viewport& Viewport() { return m_viewport; }
@@ -92,7 +94,8 @@ namespace gr
 
 		platform::TextureTargetSet::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
 		platform::TextureTargetSet::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
-
+		
+		bool HasTargets();
 
 		// Platform wrappers:
 		void CreateColorTargets(uint32_t firstTextureUnit);
@@ -107,6 +110,8 @@ namespace gr
 	private:
 		std::vector<gr::TextureTarget> m_colorTargets;
 		gr::TextureTarget m_depthStencilTarget;
+		bool m_targetStateDirty;
+		bool m_hasTargets;
 
 		gr::Viewport m_viewport;
 

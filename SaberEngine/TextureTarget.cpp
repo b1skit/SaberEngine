@@ -61,7 +61,9 @@ namespace gr
 	/******************/
 	// TextureTargetSet
 	/******************/
-	TextureTargetSet::TextureTargetSet()
+	TextureTargetSet::TextureTargetSet() :
+		m_targetStateDirty{true},
+		m_hasTargets{false}
 	{
 		platform::TextureTargetSet::PlatformParams::CreatePlatformParams(*this);
 	
@@ -77,6 +79,9 @@ namespace gr
 		}
 		m_depthStencilTarget = nullptr;
 		m_platformParams = nullptr;
+
+		m_targetStateDirty = true;
+		m_hasTargets = false;
 	}
 
 
@@ -115,5 +120,28 @@ namespace gr
 	{
 		AttachColorTargets(colorFace, colorMipLevel, doBind);
 		AttachDepthStencilTarget(doBind);
+	}
+
+	bool TextureTargetSet::HasTargets()
+	{
+		if (!m_targetStateDirty)
+		{
+			return m_hasTargets;
+		}
+
+		m_hasTargets = DepthStencilTarget().GetTexture() != nullptr;
+
+		for (size_t i = 0; i < m_colorTargets.size(); i++)
+		{
+			if (m_colorTargets[i].GetTexture() != nullptr)
+			{
+				m_hasTargets = true;
+				break;
+			}
+		}
+
+		m_targetStateDirty = false;
+
+		return m_hasTargets;
 	}
 }

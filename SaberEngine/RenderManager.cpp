@@ -56,6 +56,11 @@ namespace SaberEngine
 		m_xRes					= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
 		m_yRes					= CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
 
+		// Default target set:
+		m_defaultTargetSet = std::make_shared<gr::TextureTargetSet>();
+		m_defaultTargetSet->Viewport() = { 0, 0, (uint32_t)m_xRes, (uint32_t)m_yRes };
+		m_defaultTargetSet->CreateColorTargets(TEXTURE_ALBEDO); // Default framebuffer has no targets
+
 		// Output target:		
 		gr::Texture::TextureParams outputParams;
 		outputParams.m_width = m_xRes;
@@ -80,12 +85,12 @@ namespace SaberEngine
 
 
 		// TODO: Get rid of this -> Currently using it to store a blit shader
-		m_outputMaterial = std::make_shared<Material>("RenderManager_OutputMaterial",
+		m_blitMaterial = std::make_shared<Material>("RenderManager_OutputMaterial",
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShader"),
 			(TEXTURE_TYPE)1,
 			true);
-		m_outputMaterial->AccessTexture(TEXTURE_ALBEDO) = outputTexture;
-
+		m_blitMaterial->AccessTexture(TEXTURE_ALBEDO) = outputTexture;
+		// ^^ still need to store this here, as the material is (currently) passed to the PostFX manager which caches this texture
 
 		// PostFX Manager:
 		m_postFXManager = std::make_unique<PostFXManager>(); // Initialized when RenderManager.Initialize() is called
@@ -104,7 +109,7 @@ namespace SaberEngine
 	{
 		LOG("Render manager shutting down...");
 
-		m_outputMaterial = nullptr;
+		m_blitMaterial = nullptr;
 		m_outputTargetSet = nullptr;
 		m_screenAlignedQuad = nullptr;
 		m_postFXManager = nullptr;
@@ -187,7 +192,7 @@ namespace SaberEngine
 		Blit(
 			mainCam->GetTextureTargetSet().ColorTarget(TEXTURE_EMISSIVE).GetTexture(),
 			*m_outputTargetSet.get(),
-			m_outputMaterial->GetShader());
+			m_blitMaterial->GetShader());
 
 		m_context.SetBlendMode(platform::Context::BlendMode::Disabled, platform::Context::BlendMode::Disabled);
 
@@ -550,12 +555,11 @@ namespace SaberEngine
 
 	void SaberEngine::RenderManager::BlitToScreen()
 	{
-		glViewport(0, 0, m_xRes, m_yRes);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		m_defaultTargetSet->AttachColorDepthStencilTargets(0, 0, true);
 		m_context.ClearTargets(platform::Context::ClearTarget::ColorDepth);
 
-		m_outputMaterial->GetShader()->Bind(true);
-		m_outputMaterial->BindAllTextures(RENDER_TEXTURE_0, true);
+		m_blitMaterial->GetShader()->Bind(true);
+		m_blitMaterial->BindAllTextures(RENDER_TEXTURE_0, true);
 		m_screenAlignedQuad->Bind(true);
 
 		glDrawElements(
@@ -568,8 +572,7 @@ namespace SaberEngine
 
 	void SaberEngine::RenderManager::BlitToScreen(std::shared_ptr<gr::Texture>& texture, std::shared_ptr<Shader> blitShader)
 	{
-		glViewport(0, 0, m_xRes, m_yRes);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		m_defaultTargetSet->AttachColorDepthStencilTargets(0, 0, true);
 		m_context.ClearTargets(platform::Context::ClearTarget::ColorDepth);
 
 		blitShader->Bind(true);
@@ -681,7 +684,7 @@ namespace SaberEngine
 		}		
 		
 		// Add RenderManager shaders:
-		shaders.push_back(m_outputMaterial->GetShader());
+		shaders.push_back(m_blitMaterial->GetShader());
 
 		// Configure all of the shaders:
 		for (unsigned int i = 0; i < (int)shaders.size(); i++)
@@ -713,7 +716,7 @@ namespace SaberEngine
 		}
 
 		// Initialize PostFX:
-		m_postFXManager->Initialize(m_outputMaterial);
+		m_postFXManager->Initialize(m_blitMaterial);
 	}
 
 
