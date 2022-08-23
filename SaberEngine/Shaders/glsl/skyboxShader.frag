@@ -23,7 +23,7 @@ void main()
 	vec2 uvs		= vec2(gl_FragCoord.x / screenParams.x, gl_FragCoord.y / screenParams.y); // [0, xRes/yRes] -> [0,1]
 
 	// Cull based on depth:
-	if (texture( GBuffer_Depth, uvs).r < gl_FragCoord.z)	// Is the GBuffer depth < the screen aligned quad sitting on the far plane?
+	if (texture( GBufferDepth, uvs).r < gl_FragCoord.z)	// Is the GBuffer depth < the screen aligned quad sitting on the far plane?
 	{
 		discard;
 	}
@@ -41,5 +41,5 @@ void main()
 	vec4 worldPos	= in_inverse_vp * clipPos;
 //	worldPos.z *= -1; // Correct our Z?
 
-	FragColor = texture(CubeMap_0, worldPos.xyz);
+	FragColor = texture(CubeMap0, worldPos.xyz);
 } 

@@ -16,7 +16,8 @@
 #include "Skybox.h"
 #include "Scene.h"
 #include "Shader.h"
-
+using gr::Material;
+using gr::Texture;
 
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
@@ -483,7 +484,7 @@ namespace SaberEngine
 
 	std::shared_ptr<gr::Texture> SaberEngine::SceneManager::FindLoadTextureByPath(
 		string texturePath,
-		gr::Texture::TextureColorSpace colorSpace,
+		Texture::TextureColorSpace colorSpace,
 		bool loadIfNotFound /*= true*/)
 	{
 		// NOTE: Potential bug here: Since we store textureUnit per-texture, we can only share textures that live in the
@@ -500,7 +501,7 @@ namespace SaberEngine
 		if (loadIfNotFound)
 		{
 			std::shared_ptr<gr::Texture> result(nullptr);
-			bool didLoad = gr::Texture::LoadTextureFileFromPath(result, texturePath, colorSpace, false);
+			bool didLoad = Texture::LoadTextureFileFromPath(result, texturePath, colorSpace, false);
 			if (didLoad)
 			{
 				AddTexture(result);
@@ -567,14 +568,14 @@ namespace SaberEngine
 					ExtractLoadTextureFromAiMaterial(aiTextureType_DIFFUSE, scene->mMaterials[currentMaterial], sceneName);
 				if (diffuseTexture)
 				{
-					gr::Texture::TextureParams diffuseParams = diffuseTexture->GetTextureParams();
+					Texture::TextureParams diffuseParams = diffuseTexture->GetTextureParams();
 
-					diffuseParams.m_texColorSpace = gr::Texture::TextureColorSpace::sRGB;
-					diffuseParams.m_texFormat = gr::Texture::TextureFormat::RGBA8;
+					diffuseParams.m_texColorSpace = Texture::TextureColorSpace::sRGB;
+					diffuseParams.m_texFormat = Texture::TextureFormat::RGBA8;
 					diffuseTexture->SetTextureParams(diffuseParams);
 
 
-					newMaterial->AccessTexture(TEXTURE_ALBEDO) = diffuseTexture;
+					newMaterial->GetTexture(Material::MatAlbedo) = diffuseTexture;
 				}
 				else
 				{
@@ -587,12 +588,12 @@ namespace SaberEngine
 
 				if (normalTexture)
 				{
-					gr::Texture::TextureParams normalParams = normalTexture->GetTextureParams();
-					normalParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear;
-					normalParams.m_texFormat = gr::Texture::TextureFormat::RGBA32F;
+					Texture::TextureParams normalParams = normalTexture->GetTextureParams();
+					normalParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+					normalParams.m_texFormat = Texture::TextureFormat::RGBA32F;
 					normalTexture->SetTextureParams(normalParams);
 
-					newMaterial->AccessTexture(TEXTURE_NORMAL) = normalTexture;
+					newMaterial->GetTexture(Material::MatNormal) = normalTexture;
 				}
 				else
 				{
@@ -609,13 +610,13 @@ namespace SaberEngine
 					ExtractLoadTextureFromAiMaterial(aiTextureType_EMISSIVE, scene->mMaterials[currentMaterial], sceneName);
 				if (emissiveTexture)
 				{
-					gr::Texture::TextureParams emissiveParams = emissiveTexture->GetTextureParams();
-					//emissiveParams.m_texColorSpace = gr::Texture::TextureColorSpace::sRGB; 
-					emissiveParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear; // TODO: Are emissive textures sRGB or Linear????
-					emissiveParams.m_texFormat = gr::Texture::TextureFormat::RGBA32F;
+					Texture::TextureParams emissiveParams = emissiveTexture->GetTextureParams();
+					//emissiveParams.m_texColorSpace = Texture::TextureColorSpace::sRGB; 
+					emissiveParams.m_texColorSpace = Texture::TextureColorSpace::Linear; // TODO: Are emissive textures sRGB or Linear????
+					emissiveParams.m_texFormat = Texture::TextureFormat::RGBA32F;
 					emissiveTexture->SetTextureParams(emissiveParams);
 
-					newMaterial->AccessTexture(TEXTURE_EMISSIVE) = emissiveTexture;
+					newMaterial->GetTexture(Material::MatEmissive) = emissiveTexture;
 				}
 				else
 				{
@@ -628,12 +629,12 @@ namespace SaberEngine
 					ExtractLoadTextureFromAiMaterial(aiTextureType_SPECULAR, scene->mMaterials[currentMaterial], sceneName);
 				if (RMAO)
 				{
-					gr::Texture::TextureParams RMAOParams = RMAO->GetTextureParams();
-					RMAOParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear;
-					RMAOParams.m_texFormat = gr::Texture::TextureFormat::RGBA8;
+					Texture::TextureParams RMAOParams = RMAO->GetTextureParams();
+					RMAOParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+					RMAOParams.m_texFormat = Texture::TextureFormat::RGBA8;
 					RMAO->SetTextureParams(RMAOParams);
 
-					newMaterial->AccessTexture(TEXTURE_RMAO) = RMAO;
+					newMaterial->GetTexture(Material::MatRMAO) = RMAO;
 				}
 				else
 				{
@@ -644,17 +645,23 @@ namespace SaberEngine
 				// Pack material properties:
 				// Extract F0 reflectivity from "Reflected Color":
 				LOG("Importing F0 value from material's \"Reflected Color\" slot");
-				if (ExtractPropertyFromAiMaterial(scene->mMaterials[currentMaterial], newMaterial->Property(MATERIAL_PROPERTY_0), AI_MATKEY_COLOR_REFLECTIVE))
+				if (ExtractPropertyFromAiMaterial(
+					scene->mMaterials[currentMaterial], 
+					newMaterial->Property(Material::MatProperty0), 
+					AI_MATKEY_COLOR_REFLECTIVE))
 				{
-					if (newMaterial->Property(MATERIAL_PROPERTY_0) == vec4(0))
+					if (newMaterial->Property(Material::MatProperty0) == vec4(0))
 					{
 						LOG_WARNING("Found F0 value of (0,0,0). Overriding with default of (0.04, 0.04, 0.04, 0.0)");
 
-						newMaterial->Property(MATERIAL_PROPERTY_0) = vec4(0.04f, 0.04f, 0.04f, 0.0f);
+						newMaterial->Property(Material::MatProperty0) = vec4(0.04f, 0.04f, 0.04f, 0.0f);
 					}
 					else
 					{
-						LOG("Inserted F0 into matProperty0 uniform: " + to_string(newMaterial->Property(MATERIAL_PROPERTY_0).x) + ", " + to_string(newMaterial->Property(MATERIAL_PROPERTY_0).y) + ", " + to_string(newMaterial->Property(MATERIAL_PROPERTY_0).z));
+						LOG("Inserted F0 into MatProperty0 uniform: " + 
+							to_string(newMaterial->Property(Material::MatProperty0).x) + ", " + 
+							to_string(newMaterial->Property(Material::MatProperty0).y) + ", " +
+							to_string(newMaterial->Property(Material::MatProperty0).z));
 					}
 				}
 				else
@@ -663,7 +670,7 @@ namespace SaberEngine
 						LOG_WARNING("Could not find \"Reflected Color\" slot to extract F0 property from. Setting default of (0.04, 0.04, 0.04, 0.0)");
 					#endif
 
-					newMaterial->Property(MATERIAL_PROPERTY_0) = vec4(0.04f, 0.04f, 0.04f, 0.0f);
+					newMaterial->Property(Material::MatProperty0) = vec4(0.04f, 0.04f, 0.04f, 0.0f);
 				}
 
 				// Extract Phong exponent from "Cosine Power":
@@ -672,10 +679,10 @@ namespace SaberEngine
 				if (ExtractPropertyFromAiMaterial(scene->mMaterials[currentMaterial], extractedProperty, AI_MATKEY_SHININESS))
 				{
 					// Need to copy the property (single channel properties are stored in .x):
-					newMaterial->Property(MATERIAL_PROPERTY_0).w = extractedProperty.x;
+					newMaterial->Property(Material::MatProperty0).w = extractedProperty.x;
 
 					#if defined(DEBUG_SCENEMANAGER_SHADER_LOGGING)
-						LOG("Added \"Cosine Power\" to uniform matProperty0.w: " + to_string(newMaterial->Property(MATERIAL_PROPERTY_0).x) + ", " + to_string(newMaterial->Property(MATERIAL_PROPERTY_0).y) + ", " + to_string(newMaterial->Property(MATERIAL_PROPERTY_0).z) + ", " + to_string(newMaterial->Property(MATERIAL_PROPERTY_0).w) );
+						LOG("Added \"Cosine Power\" to uniform MatProperty0.w: " + to_string(newMaterial->Property(MatProperty0).x) + ", " + to_string(newMaterial->Property(MatProperty0).y) + ", " + to_string(newMaterial->Property(MatProperty0).z) + ", " + to_string(newMaterial->Property(MatProperty0).w) );
 					#endif
 				}
 				else
@@ -705,8 +712,8 @@ namespace SaberEngine
 	std::shared_ptr<gr::Texture> SaberEngine::SceneManager::ExtractLoadTextureFromAiMaterial(aiTextureType textureType, aiMaterial* material, string sceneName)
 	{
 		std::shared_ptr<gr::Texture> newTexture(nullptr);
-		gr::Texture::TextureColorSpace colorSpace = gr::Texture::TextureColorSpace::Unknown;
-		gr::Texture::TextureFormat format = gr::Texture::TextureFormat::Invalid;
+		Texture::TextureColorSpace colorSpace = Texture::TextureColorSpace::Unknown;
+		Texture::TextureFormat format = Texture::TextureFormat::Invalid;
 	
 		// Create 1x1 texture fallbacks:
 		int textureCount = material->GetTextureCount(textureType);
@@ -731,9 +738,9 @@ namespace SaberEngine
 						"_" + to_string(color.a);
 					newColor = vec4(color.r, color.g, color.b, color.a);
 
-					texUnit = TEXTURE_0 + TEXTURE_ALBEDO;
-					colorSpace = gr::Texture::TextureColorSpace::sRGB;
-					format = gr::Texture::TextureFormat::RGBA8;
+					texUnit = Material::MatAlbedo;
+					colorSpace = Texture::TextureColorSpace::sRGB;
+					format = Texture::TextureFormat::RGBA8;
 
 					LOG_WARNING("Material has no diffuse texture. Creating a 1x1 texture using the diffuse color with"
 						" a path \"" + newName + "\"");
@@ -741,9 +748,9 @@ namespace SaberEngine
 			}
 			else if (textureType == aiTextureType_NORMALS)
 			{
-				texUnit = TEXTURE_0 + TEXTURE_NORMAL;
-				colorSpace = gr::Texture::TextureColorSpace::Linear;
-				format = gr::Texture::TextureFormat::RGB32F;
+				texUnit = Material::MatNormal;
+				colorSpace = Texture::TextureColorSpace::Linear;
+				format = Texture::TextureFormat::RGB32F;
 
 				// Try and find any likely texture in the material
 				newTexture = FindTextureByNameInAiMaterial("normal", material, sceneName);
@@ -760,9 +767,9 @@ namespace SaberEngine
 			}
 			else if (textureType == aiTextureType_EMISSIVE)
 			{
-				texUnit = TEXTURE_0 + TEXTURE_EMISSIVE;
-				colorSpace = gr::Texture::TextureColorSpace::Linear; // TODO: Is emissive linear, or sRGB?
-				format = gr::Texture::TextureFormat::RGBA32F; // Emissive must support values > 1
+				texUnit = Material::MatEmissive;
+				colorSpace = Texture::TextureColorSpace::Linear; // TODO: Is emissive linear, or sRGB?
+				format = Texture::TextureFormat::RGBA32F; // Emissive must support values > 1
 
 				newTexture = FindTextureByNameInAiMaterial("emissive", material, sceneName);
 				if (newTexture == nullptr)
@@ -796,9 +803,9 @@ namespace SaberEngine
 			}
 			else if (textureType == aiTextureType_SPECULAR) // RGB = RMAO
 			{
-				texUnit = TEXTURE_0 + TEXTURE_RMAO;
-				colorSpace = gr::Texture::TextureColorSpace::Linear;
-				format = gr::Texture::TextureFormat::RGBA8; // ??
+				texUnit = Material::MatRMAO;
+				colorSpace = Texture::TextureColorSpace::Linear;
+				format = Texture::TextureFormat::RGBA8; // ??
 
 				const int NUM_NAMES = 3;
 				string possibleNames[NUM_NAMES] = 
@@ -861,7 +868,7 @@ namespace SaberEngine
 				{
 					// NOTE: Since we're storing the texUnit per-texture, we need unique textures incase they're in
 					// different slots...
-					gr::Texture::TextureParams texParams;
+					Texture::TextureParams texParams;
 					texParams.m_width = 1;
 					texParams.m_height = 1;
 					texParams.m_texturePath = newName;
@@ -897,7 +904,7 @@ namespace SaberEngine
 			#endif
 
 			// Find the texture if it has already been loaded, or load it otherwise:
-			newTexture = FindLoadTextureByPath(texturePath, gr::Texture::TextureColorSpace::Unknown);
+			newTexture = FindLoadTextureByPath(texturePath, Texture::TextureColorSpace::Unknown);
 		}
 		else
 		{
@@ -906,7 +913,7 @@ namespace SaberEngine
 
 		if (newTexture == nullptr)
 		{
-			newTexture = FindLoadTextureByPath(INVALID_TEXTURE_PATH, gr::Texture::TextureColorSpace::Unknown);
+			newTexture = FindLoadTextureByPath(INVALID_TEXTURE_PATH, Texture::TextureColorSpace::Unknown);
 		}
 
 		return newTexture; // Note: Texture is currently unbuffered
@@ -936,7 +943,7 @@ namespace SaberEngine
 
 					string texturePath = sceneRoot + string(path.C_Str());
 					
-					return FindLoadTextureByPath(texturePath, gr::Texture::TextureColorSpace::Unknown);
+					return FindLoadTextureByPath(texturePath, Texture::TextureColorSpace::Unknown);
 				}
 			}
 		}

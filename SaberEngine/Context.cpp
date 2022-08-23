@@ -43,4 +43,9 @@ namespace re
 	{
 		platform::Context::SetDepthMode(mode);
 	}
+
+	uint32_t Context::GetMaxTextureInputs()
+	{
+		return platform::Context::GetMaxTextureInputs();
+	}
 }

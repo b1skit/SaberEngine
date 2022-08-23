@@ -21,6 +21,8 @@ namespace gr
 	class Texture
 	{
 	public:
+		static const uint32_t k_numCubeFaces = 6;
+
 		enum class TextureUse
 		{
 			Color,

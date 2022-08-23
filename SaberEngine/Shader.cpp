@@ -4,7 +4,9 @@
 #include "CoreEngine.h"
 #include "BuildConfiguration.h"
 #include "Material.h"
-
+#include "Texture.h"
+using gr::Material;
+using gr::Texture;
 
 #include <fstream>
 using std::ifstream;
@@ -248,54 +250,70 @@ namespace SaberEngine
 			// Initialize sampler locations:
 			newShader->Bind(true);
 
-			// Texture sampler locations. Note: These must align with the locations defined in Material.h
-			for (int currentTexture = 0; currentTexture < TEXTURE_COUNT; currentTexture++)
+
+
+			// GBuffer input texture sampler locations:
+			for (int slotIndex = 0; slotIndex < Material::Mat_Count; slotIndex++)
 			{
 				GLint samplerLocation = glGetUniformLocation(
 					newShader->ShaderReference(), 
-					Material::TEXTURE_SAMPLER_NAMES[currentTexture].c_str());
+					Material::k_MatTexNames[slotIndex].c_str());
 
 				if (samplerLocation >= 0)
 				{
-					glUniform1i(samplerLocation, (TEXTURE_TYPE)currentTexture);
+					glUniform1i(samplerLocation, slotIndex);
 				}
 			}
-			// Texture target sampler locations:
-			for (int currentTexture = 0; currentTexture < RENDER_TEXTURE_COUNT; currentTexture++)
+
+			// Lighting GBuffer texture sampler locations:
+			for (int slotIndex = 0; slotIndex < Material::GBuffer_Count; slotIndex++)
 			{
 				GLint samplerLocation = glGetUniformLocation(
 					newShader->ShaderReference(), 
-					Material::RENDER_TEXTURE_SAMPLER_NAMES[currentTexture].c_str());
+					Material::k_GBufferTexNames[slotIndex].c_str());
 
 				if (samplerLocation >= 0)
 				{
-					glUniform1i(samplerLocation, (int)(RENDER_TEXTURE_0 + (TEXTURE_TYPE)currentTexture));
+					glUniform1i(samplerLocation, slotIndex);
+				}
+			}
+
+			// Generic texture sampler locations:
+			for (int slotIndex = 0; slotIndex < Material::Tex_Count; slotIndex++)
+			{
+				GLint samplerLocation = glGetUniformLocation(
+					newShader->ShaderReference(),
+					Material::k_GenericTexNames[slotIndex].c_str());
+
+				if (samplerLocation >= 0)
+				{
+					glUniform1i(samplerLocation, slotIndex);
 				}
 			}
 
 			// 2D shadow map textures sampler locations:
-			for (int currentTexture = 0; currentTexture < DEPTH_TEXTURE_COUNT; currentTexture++)
+			for (int slotIndex = 0; slotIndex < Material::Depth_Count; slotIndex++)
 			{
 				GLint samplerLocation = glGetUniformLocation(
 					newShader->ShaderReference(), 
-					Material::DEPTH_TEXTURE_SAMPLER_NAMES[currentTexture].c_str());
+					Material::k_DepthTexNames[slotIndex].c_str());
 
 				if (samplerLocation >= 0)
 				{
-					glUniform1i(samplerLocation, DEPTH_TEXTURE_0 + (TEXTURE_TYPE)currentTexture);
+					glUniform1i(samplerLocation, Material::Depth0 + slotIndex);
 				}
 			}
 
 			// Cube map depth texture sampler locations
-			for (int currentCubeMap = 0; currentCubeMap < CUBE_MAP_COUNT; currentCubeMap++)
+			for (int slotIndex = 0; slotIndex < Material::CubeMap_Count; slotIndex++)
 			{
 				GLint samplerLocation = glGetUniformLocation(
 					newShader->ShaderReference(), 
-					Material::CUBE_MAP_TEXTURE_SAMPLER_NAMES[currentCubeMap].c_str());
+					Material::k_CubeMapTexNames[slotIndex].c_str());
 
 				if (samplerLocation >= 0)
 				{
-					glUniform1i(samplerLocation, (TEXTURE_TYPE)(CUBE_MAP_0 + (currentCubeMap * CUBE_MAP_NUM_FACES)));
+					glUniform1i(samplerLocation, (int)(Material::CubeMap0 + (slotIndex * Texture::k_numCubeFaces)));
 				}
 			}
 

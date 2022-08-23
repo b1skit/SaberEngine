@@ -91,6 +91,7 @@ namespace platform
 		static void (*ClearTargets)(ClearTarget const& clearTarget);
 		static void (*SetBlendMode)(BlendMode const& src, BlendMode const& dst);
 		static void(*SetDepthMode)(DepthMode const& mode);
+		static uint32_t(*GetMaxTextureInputs)();
 
 	private:
 

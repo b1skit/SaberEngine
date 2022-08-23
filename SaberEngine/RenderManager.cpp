@@ -28,6 +28,8 @@ using glm::mat4;
 #include "ShadowMap.h"
 #include "Scene.h"
 #include "EventManager.h"
+using gr::Material;
+using gr::Texture;
 
 
 namespace SaberEngine
@@ -59,20 +61,20 @@ namespace SaberEngine
 		// Default target set:
 		m_defaultTargetSet = std::make_shared<gr::TextureTargetSet>();
 		m_defaultTargetSet->Viewport() = { 0, 0, (uint32_t)m_xRes, (uint32_t)m_yRes };
-		m_defaultTargetSet->CreateColorTargets(TEXTURE_ALBEDO); // Default framebuffer has no targets
+		m_defaultTargetSet->CreateColorTargets(Material::MatAlbedo); // Default framebuffer has no targets
 
 		// Output target:		
-		gr::Texture::TextureParams outputParams;
+		Texture::TextureParams outputParams;
 		outputParams.m_width = m_xRes;
 		outputParams.m_height = m_yRes;
 		outputParams.m_faces = 1;
-		outputParams.m_texUse = gr::Texture::TextureUse::ColorTarget;
-		outputParams.m_texDimension = gr::Texture::TextureDimension::Texture2D;
-		outputParams.m_texFormat = gr::Texture::TextureFormat::RGBA32F;
-		outputParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear;
-		outputParams.m_texSamplerMode = gr::Texture::TextureSamplerMode::Wrap;
-		outputParams.m_texMinMode = gr::Texture::TextureMinFilter::Linear;
-		outputParams.m_texMaxMode = gr::Texture::TextureMaxFilter::Linear;
+		outputParams.m_texUse = Texture::TextureUse::ColorTarget;
+		outputParams.m_texDimension = Texture::TextureDimension::Texture2D;
+		outputParams.m_texFormat = Texture::TextureFormat::RGBA32F;
+		outputParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+		outputParams.m_texSamplerMode = Texture::TextureSamplerMode::Wrap;
+		outputParams.m_texMinMode = Texture::TextureMinFilter::Linear;
+		outputParams.m_texMaxMode = Texture::TextureMaxFilter::Linear;
 		outputParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		outputParams.m_texturePath = "RenderManagerFrameOutput";
 
@@ -81,7 +83,7 @@ namespace SaberEngine
 		m_outputTargetSet = std::make_shared<gr::TextureTargetSet>();
 		m_outputTargetSet->ColorTarget(0) = outputTexture;
 
-		m_outputTargetSet->CreateColorTargets(TEXTURE_ALBEDO);
+		m_outputTargetSet->CreateColorTargets(Material::MatAlbedo);
 		
 		m_blitShader = Shader::CreateShader(CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShader"));
 
@@ -183,7 +185,7 @@ namespace SaberEngine
 		m_context.SetBlendMode(platform::Context::BlendMode::One, platform::Context::BlendMode::One);
 
 		Blit(
-			mainCam->GetTextureTargetSet().ColorTarget(TEXTURE_EMISSIVE).GetTexture(),
+			mainCam->GetTextureTargetSet().ColorTarget(Material::MatEmissive).GetTexture(),
 			*m_outputTargetSet.get(),
 			m_blitShader);
 
@@ -288,7 +290,9 @@ namespace SaberEngine
 		mat4 m_view			= renderCam->View();
 
 		// Loop by material (+shader), mesh:
-		std::unordered_map<string, std::shared_ptr<Material>> const sceneMaterials = CoreEngine::GetSceneManager()->GetMaterials();
+		std::unordered_map<string, std::shared_ptr<Material>> const sceneMaterials = 
+			CoreEngine::GetSceneManager()->GetMaterials();
+
 		for (std::pair<string, std::shared_ptr<Material>> currentElement : sceneMaterials)
 		{
 			// Setup the current material and shader:
@@ -299,10 +303,13 @@ namespace SaberEngine
 
 			// Bind:
 			currentShader->Bind(true);
-			currentMaterial->BindAllTextures(TEXTURE_0, true);
+			currentMaterial->BindAllTextures(Material::MatAlbedo, true);
 
 			// Upload material properties:
-			currentShader->UploadUniform(Material::MATERIAL_PROPERTY_NAMES[MATERIAL_PROPERTY_0].c_str(), &currentMaterial->Property(MATERIAL_PROPERTY_0).x, UNIFORM_Vec4fv);
+			currentShader->UploadUniform(
+				Material::k_MatPropNames[Material::MatProperty0].c_str(), 
+				&currentMaterial->Property(Material::MatProperty0).x, 
+				UNIFORM_Vec4fv);
 			currentShader->UploadUniform("in_view", &m_view[0][0], UNIFORM_Matrix4fv);
 
 			// Get all meshes that use the current material
@@ -348,12 +355,12 @@ namespace SaberEngine
 
 		// Bind GBuffer textures
 		gr::TextureTargetSet& gbufferTextures = gBufferCam->GetTextureTargetSet();
-		for (size_t i = 0; i < gbufferTextures.ColorTargets().size(); i++)
+		for (size_t gBufferTexSlot = 0; gBufferTexSlot < gbufferTextures.ColorTargets().size(); gBufferTexSlot++)
 		{
-			std::shared_ptr<gr::Texture>& tex = gbufferTextures.ColorTarget(i).GetTexture();
+			std::shared_ptr<gr::Texture>& tex = gbufferTextures.ColorTarget(gBufferTexSlot).GetTexture();
 			if (tex != nullptr)
 			{
-				tex->Bind(RENDER_TEXTURE_0 + (uint32_t)i, true);
+				tex->Bind((uint32_t)gBufferTexSlot, true);
 			}
 		}
 		
@@ -370,7 +377,7 @@ namespace SaberEngine
 		currentShader->UploadUniform("in_view",			&m_view[0][0],			UNIFORM_Matrix4fv);
 		currentShader->UploadUniform("in_mv",			&mv[0][0],				UNIFORM_Matrix4fv);
 		currentShader->UploadUniform("in_mvp",			&mvp[0][0],				UNIFORM_Matrix4fv);
-		currentShader->UploadUniform("cameraWorldPos",	&cameraPosition,		UNIFORM_Vec3fv);
+		currentShader->UploadUniform("cameraWPos",	&cameraPosition,		UNIFORM_Vec3fv);
 		// TODO: Only upload these matrices if they've changed ^^^^
 		// TODO: Break this out into a function: ALL of our render functions have a similar setup		
 
@@ -387,7 +394,7 @@ namespace SaberEngine
 
 			if (IEMCubemap != nullptr)
 			{
-				IEMCubemap->Bind(CUBE_MAP_0 + CUBE_MAP_RIGHT, true);
+				IEMCubemap->Bind(Material::CubeMap0, true);
 			}
 
 			std::shared_ptr<gr::Texture> PMREM_Cubemap =
@@ -395,7 +402,7 @@ namespace SaberEngine
 
 			if (PMREM_Cubemap != nullptr)
 			{
-				PMREM_Cubemap->Bind(CUBE_MAP_1 + CUBE_MAP_RIGHT, true);
+				PMREM_Cubemap->Bind(Material::CubeMap1, true);
 			}
 
 			// Bind BRDF Integration map:
@@ -403,7 +410,7 @@ namespace SaberEngine
 				dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetBRDFIntegrationMap();
 			if (BRDFIntegrationMap != nullptr)
 			{
-				BRDFIntegrationMap->Bind(GENERIC_TEXTURE_0, true);
+				BRDFIntegrationMap->Bind(Material::Tex7, true);
 			}
 		}
 			break;
@@ -461,7 +468,7 @@ namespace SaberEngine
 				{
 					if (depthTexture)
 					{
-						depthTexture->Bind(DEPTH_TEXTURE_0 + DEPTH_TEXTURE_SHADOW, true);
+						depthTexture->Bind(Material::Depth0, true);
 					}
 				}
 				break;
@@ -470,7 +477,7 @@ namespace SaberEngine
 				{
 					if (depthTexture)
 					{
-						depthTexture->Bind(CUBE_MAP_0 + CUBE_MAP_RIGHT, true);
+						depthTexture->Bind(Material::CubeMap0, true);
 					}
 				}
 				break;
@@ -522,11 +529,11 @@ namespace SaberEngine
 
 		// Bind shader and texture:
 		currentShader->Bind(true);
-		skyboxCubeMap->Bind(CUBE_MAP_0 + CUBE_MAP_RIGHT, true);
+		skyboxCubeMap->Bind(Material::CubeMap0, true);
 
 		if (depthTexture)
 		{
-			depthTexture->Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_DEPTH, true);
+			depthTexture->Bind(Material::GBufferDepth, true);
 		}
 
 		skybox->GetSkyMesh()->Bind(true);
@@ -569,7 +576,7 @@ namespace SaberEngine
 
 		blitShader->Bind(true);
 
-		texture->Bind(RENDER_TEXTURE_0, true);
+		texture->Bind(Material::GBufferAlbedo, true); // TODO: Define a better texture slot name for this
 
 		m_screenAlignedQuad->Bind(true);
 
@@ -594,7 +601,7 @@ namespace SaberEngine
 
 		// Bind the source texture into the slot specified in the blit shader:
 		// Note: Blit shader reads from this texture unit (for now)
-		srcTex->Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, true);
+		srcTex->Bind(Material::GBufferAlbedo, true);
 		
 		glDrawElements(
 			GL_TRIANGLES,
@@ -633,12 +640,18 @@ namespace SaberEngine
 			LOG("Key Col: " + to_string(keyCol->r) + ", " + to_string(keyCol->g) + ", " + to_string(keyCol->b));
 		#endif
 
-		vec4 screenParams		= vec4(m_xRes, m_yRes, 1.0f / m_xRes, 1.0f / m_yRes);
-		vec4 projectionParams	= vec4(1.0f, CoreEngine::GetSceneManager()->GetMainCamera()->Near(), CoreEngine::GetSceneManager()->GetMainCamera()->Far(), 1.0f / CoreEngine::GetSceneManager()->GetMainCamera()->Far());
+		vec4 screenParams = vec4(m_xRes, m_yRes, 1.0f / m_xRes, 1.0f / m_yRes);
+		vec4 projectionParams = vec4(
+			1.0f, 
+			CoreEngine::GetSceneManager()->GetMainCamera()->Near(), 
+			CoreEngine::GetSceneManager()->GetMainCamera()->Far(), 
+			1.0f / CoreEngine::GetSceneManager()->GetMainCamera()->Far());
 
 		// Add all Material Shaders to a list:
 		vector<std::shared_ptr<Shader>> shaders;
-		std::unordered_map<string, std::shared_ptr<Material>> const sceneMaterials = CoreEngine::GetSceneManager()->GetMaterials();
+		std::unordered_map<string, std::shared_ptr<Material>> const sceneMaterials = 
+			CoreEngine::GetSceneManager()->GetMaterials();
+
 		for (std::pair<string, std::shared_ptr<Material>> currentElement : sceneMaterials)
 		{
 			std::shared_ptr<Material> currentMaterial = currentElement.second;

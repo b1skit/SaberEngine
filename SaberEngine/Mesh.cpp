@@ -94,7 +94,7 @@ namespace gr
 	Mesh::Mesh(std::string name, 
 		std::vector<Vertex> vertices, 
 		std::vector<uint32_t> indices, 
-		std::shared_ptr<SaberEngine::Material> newMeshMaterial) :
+		std::shared_ptr<gr::Material> newMeshMaterial) :
 			m_platformParams{ platform::Mesh::PlatformParams::CreatePlatformParams() },
 			meshName{ name },
 			m_vertices{ vertices },
@@ -175,7 +175,7 @@ namespace gr
 
 	namespace meshfactory
 	{
-		inline std::shared_ptr<Mesh> CreateCube(std::shared_ptr<SaberEngine::Material> newMeshMaterial /*= nullptr*/)
+		inline std::shared_ptr<Mesh> CreateCube(std::shared_ptr<gr::Material> newMeshMaterial /*= nullptr*/)
 		{
 			// Note: SaberEngine uses a RHCS in all cases
 			std::vector<vec3> positions(8);
@@ -294,7 +294,7 @@ namespace gr
 			glm::vec3 tr /*= vec3(0.5f, 0.5f, 0.0f)*/,
 			glm::vec3 bl /*= vec3(-0.5f, -0.5f, 0.0f)*/,
 			glm::vec3 br /*= vec3(0.5f, -0.5f, 0.0f)*/,
-			std::shared_ptr<SaberEngine::Material> newMeshMaterial /*= nullptr*/)
+			std::shared_ptr<gr::Material> newMeshMaterial /*= nullptr*/)
 		{
 			glm::vec3 m_tangent = normalize(vec3(br - bl));
 			glm::vec3 m_bitangent = normalize(vec3(tl - bl));
@@ -339,7 +339,7 @@ namespace gr
 		inline std::shared_ptr<Mesh> CreateSphere(float radius /*= 0.5f*/,
 			size_t numLatSlices /*= 16*/,
 			size_t numLongSlices /*= 16*/,
-			std::shared_ptr<SaberEngine::Material> newMeshMaterial /*= nullptr*/)
+			std::shared_ptr<gr::Material> newMeshMaterial /*= nullptr*/)
 		{
 			// NOTE: Currently, this function does not generate valid tangents for any verts. Some UV's are distorted,
 			// as we're using merged vertices. TODO: Fix this

@@ -25,22 +25,22 @@ uniform float emissiveIntensity = 1.0;	// Overwritten during RenderManager.Initi
 void main()
 {
 	// Albedo. Note: We use an sRGB-format texture, which converts this value from sRGB->linear space for free
-	gBuffer_out_albedo		= texture(albedo, data.uv0.xy);
+	gBuffer_out_albedo		= texture(MatAlbedo, data.uv0.xy);
 
 	// Normal:
-	gBuffer_out_worldNormal = vec4( WorldNormalFromTexture(normal, data.uv0.xy, data.TBN), 0);
+	gBuffer_out_worldNormal = vec4( WorldNormalFromTexture(MatNormal, data.uv0.xy, data.TBN), 0);
 
-	// RMAO:
-	gBuffer_out_RMAO		= texture(RMAO, data.uv0.xy);
+	// MatRMAO:
+	gBuffer_out_RMAO		= texture(MatRMAO, data.uv0.xy);
 
 	// Emissive:
-	gBuffer_out_emissive	= texture(emissive, data.uv0.xy) * emissiveIntensity;
+	gBuffer_out_emissive	= texture(MatEmissive, data.uv0.xy) * emissiveIntensity;
 
 	// Position:
 	gBuffer_out_position	= vec4(data.worldPos.xyz, 1);
 
 	// Material properties:
-	gBuffer_out_matProp0	= matProperty0;
+	gBuffer_out_matProp0	= MatProperty0;
 
 	// Depth:
 	gBuffer_out_depth		= vec4(gl_FragCoord.z, gl_FragCoord.z, gl_FragCoord.z, 1.0);	// Doesn't actually do anything...

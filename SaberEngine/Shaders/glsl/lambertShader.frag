@@ -15,8 +15,8 @@
 
 void main()
 {	
-	FragColor					= texture(albedo, data.uv0.xy);
-	vec3 worldNormal			= WorldNormalFromTexture(normal, data.uv0.xy, data.TBN);
+	FragColor					= texture(MatAlbedo, data.uv0.xy);
+	vec3 worldNormal			= WorldNormalFromTexture(MatNormal, data.uv0.xy, data.TBN);
 
 	// Ambient:
 	vec4 ambientContribution	= FragColor * vec4(ambientColor, 1);
@@ -28,7 +28,7 @@ void main()
 
 	// Shadow:
 	float NoL					= max(0.0, dot(data.vertexWorldNormal, keylightWorldDir));
-	float shadowFactor			= GetShadowFactor(data.shadowPos, shadowDepth, NoL);
+	float shadowFactor			= GetShadowFactor(data.shadowPos, Depth0, NoL);
 
 	// Final result:
 	FragColor = ambientContribution + (diffuseContribution * shadowFactor);

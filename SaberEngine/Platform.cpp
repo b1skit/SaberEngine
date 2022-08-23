@@ -36,13 +36,14 @@ namespace platform
 		case RenderingAPI::OpenGL:
 		{
 			// API-specific:
-			platform::Context::Create			= &opengl::Context::Create;
-			platform::Context::Destroy			= &opengl::Context::Destroy;
-			platform::Context::SwapWindow		= &opengl::Context::SwapWindow;
-			platform::Context::SetCullingMode	= &opengl::Context::SetCullingMode;
-			platform::Context::ClearTargets		= &opengl::Context::ClearTargets;
-			platform::Context::SetBlendMode		= &opengl::Context::SetBlendMode;
-			platform::Context::SetDepthMode		= &opengl::Context::SetDepthMode;
+			platform::Context::Create				= &opengl::Context::Create;
+			platform::Context::Destroy				= &opengl::Context::Destroy;
+			platform::Context::SwapWindow			= &opengl::Context::SwapWindow;
+			platform::Context::SetCullingMode		= &opengl::Context::SetCullingMode;
+			platform::Context::ClearTargets			= &opengl::Context::ClearTargets;
+			platform::Context::SetBlendMode			= &opengl::Context::SetBlendMode;
+			platform::Context::SetDepthMode			= &opengl::Context::SetDepthMode;
+			platform::Context::GetMaxTextureInputs	= &opengl::Context::GetMaxTextureInputs;
 
 			// Mesh:
 			platform::Mesh::Create	= &opengl::Mesh::Create;

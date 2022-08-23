@@ -13,11 +13,11 @@
 //--------------
 
 // Trowbridge-Reitz GGX Normal Distribution Function: Approximate area of surface microfacets aligned with the halfway vector between the light and view dirs
-float NDF(vec3 normal, vec3 halfVector, float roughness)
+float NDF(vec3 MatNormal, vec3 halfVector, float roughness)
 {
 	float roughness2	= pow(roughness, 4.0);
 
-	float nDotH			= max(0.0, dot(normal, halfVector));
+	float nDotH			= max(0.0, dot(MatNormal, halfVector));
 	float nDotH2		= nDotH * nDotH;
 
 	float denominator	= max((nDotH2 * (roughness2 - 1.0)) + 1.0, 0.0001);
@@ -101,7 +101,7 @@ vec3 HalfVector(vec3 light, vec3 view)
 vec4 ComputePBRLighting(
 	vec4 linearAlbedo, 
 	vec3 worldNormal, 
-	vec4 RMAO, 
+	vec4 MatRMAO, 
 	vec4 worldPosition, 
 	vec3 F0, 
 	float NoL,
@@ -113,21 +113,21 @@ vec4 ComputePBRLighting(
 {
 	// Note: All PBR calculations are performed in linear space.
 	// However, we use sRGB-format textures, getting the sRGB->Linear transformation for free when writing our GBuffer
-	// for sRGB-format inputs (eg. albedo, ... and?) so no need to degamma albedo here
+	// for sRGB-format inputs (eg. MatAlbedo, ... and?) so no need to degamma MatAlbedo here
 
 	vec4 viewPosition	= in_view * worldPosition;							// View-space position
 	vec3 viewEyeDir		= normalize(-viewPosition.xyz);						// View-space eye/camera direction
-	vec3 viewNormal		= normalize(in_view * vec4(worldNormal, 0)).xyz;	// View-space surface normal
+	vec3 viewNormal		= normalize(in_view * vec4(worldNormal, 0)).xyz;	// View-space surface MatNormal
 
 	vec3 halfVectorView	= HalfVector(lightViewDir, viewEyeDir);				// View-space half direction
 
 	float NoV		= max(0.0, dot(viewNormal, viewEyeDir) );
 
-	float roughness = RMAO.x;
-	float metalness = RMAO.y;
+	float roughness = MatRMAO.x;
+	float metalness = MatRMAO.y;
 
 	// Fresnel-Schlick approximation is only defined for non-metals, so we blend it here:
-	F0	= mix(F0, linearAlbedo.rgb, metalness); // Linear interpolation: x, y, using t=[0,1]. Returns x when t=0 -> Blends towards albedo for metals
+	F0	= mix(F0, linearAlbedo.rgb, metalness); // Linear interpolation: x, y, using t=[0,1]. Returns x when t=0 -> Blends towards MatAlbedo for metals
 
 	vec3 fresnel = FresnelSchlick(NoV, F0);
 	

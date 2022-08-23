@@ -8,7 +8,7 @@
 #include "SaberLighting.glsl"
 
 // Generate a BRDF Integration map lookup texture:
-// Returns the BRDF Fresnel response, given the dot product of surface normal and incoming light direction, and the surface roughness
+// Returns the BRDF Fresnel response, given the dot product of surface MatNormal and incoming light direction, and the surface roughness
 // UVs.x == NoV, UVs.y == roughness
 // Return.r == BRDF Fresnel response scale
 // Return.g == BRDF Fresnel response bias

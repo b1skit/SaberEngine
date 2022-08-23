@@ -441,4 +441,13 @@ namespace opengl
 
 		glDepthFunc(depthMode);
 	}
+
+
+	uint32_t opengl::Context::GetMaxTextureInputs()
+	{
+		int maxTexInputs;
+		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTexInputs);
+		assert("GL_MAX_TEXTURE_IMAGE_UNITS query failed" && maxTexInputs > 0);
+		return (uint32_t)maxTexInputs;
+	}
 }

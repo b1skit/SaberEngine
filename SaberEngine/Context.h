@@ -10,10 +10,6 @@ namespace re
 	class Context
 	{
 	public:
-		
-
-
-	public:
 		Context();
 
 		platform::Context::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
@@ -28,6 +24,9 @@ namespace re
 		void ClearTargets(platform::Context::ClearTarget const& clearTarget) const;
 		void SetBlendMode(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst) const;
 		void SetDepthMode(platform::Context::DepthMode const& mode) const;
+
+		// Static platform wrappers:
+		static uint32_t GetMaxTextureInputs();
 
 	private:
 		std::unique_ptr<platform::Context::PlatformParams> m_platformParams;

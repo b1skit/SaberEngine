@@ -93,73 +93,63 @@ uniform mat4 in_inverse_vp;		// [Projection * View]^-1
 
 // Texture samplers:
 // NOTE: Binding locations must match the definitions in Material.h
-												// TEXTURE:								FBX MATERIAL SOURCE SLOT:
-												//---------								-------------------------
-layout(binding = 0) uniform sampler2D albedo;	// Albedo (RGB) + transparency (A)		Diffuse/color
-layout(binding = 1) uniform sampler2D normal;	// Tangent-space normals (RGB)			Bump
-layout(binding = 2) uniform sampler2D RMAO;		// Roughness, Metalic, albedo			Specular
-layout(binding = 3) uniform sampler2D emissive;	// Emissive (RGB)						Incandescence
 
 
+									// TEXTURE:								FBX MATERIAL SOURCE SLOT:
+// GBuffer stage input textures:	//---------								-------------------------
+uniform sampler2D MatAlbedo;		// Albedo (RGB) + transparency (A)		Diffuse/color
+uniform sampler2D MatNormal;		// Tangent-space normals (RGB)			Bump
+uniform sampler2D MatRMAO;			// Roughness, Metalic, MatAlbedo		Specular
+uniform sampler2D MatEmissive;		// Emissive (RGB)						Incandescence
 
-// GBuffer samplers: (For reading FROM GBuffer textures)
-layout(binding = 4) uniform sampler2D GBuffer_Albedo;
-layout(binding = 5) uniform sampler2D GBuffer_WorldNormal;
-layout(binding = 6) uniform sampler2D GBuffer_RMAO;
-layout(binding = 7) uniform sampler2D GBuffer_Emissive;
-layout(binding = 8) uniform sampler2D GBuffer_WorldPos;
-layout(binding = 9) uniform sampler2D GBuffer_MatProp0;
+// Lighting stage GBuffer textures:
+uniform sampler2D GBufferAlbedo;
+uniform sampler2D GBufferWNormal;
+uniform sampler2D GBufferRMAO;
+uniform sampler2D GBufferEmissive;
+uniform sampler2D GBufferWPos;
+uniform sampler2D GBufferMatProp0;
+uniform sampler2D GBufferDepth;
 
-layout(binding = 10) uniform sampler2D	GBuffer_Depth;	// RENDER_TEXTURE_0 + RENDER_TEXTURE_DEPTH
-
-layout(binding = 11) uniform sampler2D	shadowDepth;		// Currently bound 2D shadow depth map
+// Deferred light shadowmaps:
+uniform sampler2D	Depth0;
 
 // Generic texture samplers:
-layout(binding = 12) uniform sampler2D	texture0;
-layout(binding = 13) uniform sampler2D	texture1;
-layout(binding = 14) uniform sampler2D	texture2;
-layout(binding = 15) uniform sampler2D	texture3;
-layout(binding = 16) uniform sampler2D	texture4;
-layout(binding = 17) uniform sampler2D	texture5;
-layout(binding = 18) uniform sampler2D	texture6;
-layout(binding = 19) uniform sampler2D	texture7;
+uniform sampler2D	Tex0;
+uniform sampler2D	Tex1;
+uniform sampler2D	Tex2;
+uniform sampler2D	Tex3;
+uniform sampler2D	Tex4;
+uniform sampler2D	Tex5;
+uniform sampler2D	Tex6;
+uniform sampler2D	Tex7;
+uniform sampler2D	Tex8;
 
 // Cube map samplers:
-layout(binding = 20) uniform samplerCube CubeMap_0;			
-layout(binding = 26) uniform samplerCube CubeMap_1;
-
-uniform vec4		texelSize;				// Depth map/GBuffer texel size: .xyzw = (1/width, 1/height, width, height)
-
-// Shadow map parameters:
-uniform mat4		shadowCam_vp;			// Shadow map: [Projection * View]
-
-uniform float		maxShadowBias;			// Offsets for preventing shadow acne
-uniform float		minShadowBias;
-
-uniform float		shadowCam_near;			// Near/Far planes of current shadow camera
-uniform float		shadowCam_far;
-
-uniform vec4		projectionParams;		// Main camera: .x = 1.0 (unused), y = near, z = far, w = 1/far
-
+uniform samplerCube CubeMap0;			
+uniform samplerCube CubeMap1;
 
 // Generic material properties:
-uniform vec4		matProperty0;			// .rgb = F0 (Surface response at 0 degrees), .a = Phong exponent
-//uniform vec4		matProperty1;
-//uniform vec4		matProperty2;
-//uniform vec4		matProperty3;
-//uniform vec4		matProperty4;
-//uniform vec4		matProperty5;
-//uniform vec4		matProperty6;
-//uniform vec4		matProperty7;
+uniform vec4		MatProperty0;	// .rgb = F0 (Surface response at 0 degrees), .a = Phong exponent
 
+
+uniform vec4		texelSize;		// Depth map/GBuffer texel size: .xyzw = (1/width, 1/height, width, height)
+
+// Shadow map parameters:
+uniform mat4		shadowCam_vp;	// Shadow map: [Projection * View]
+
+uniform float		maxShadowBias;	// Offsets for preventing shadow acne
+uniform float		minShadowBias;
+
+uniform float		shadowCam_near;	// Near/Far planes of current shadow camera
+uniform float		shadowCam_far;
+
+uniform vec4		projectionParams; // Main camera: .x = 1.0 (unused), y = near, z = far, w = 1/far
 
 // System variables:
-uniform vec4 screenParams;		// .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
-//uniform vec4 zBufferParams;
+uniform vec4 screenParams;			// .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
 
-uniform vec3 cameraWorldPos;	// World-space camera position
-
-
+uniform vec3 cameraWPos;	// World-space camera position
 
 
 #endif

@@ -12,7 +12,7 @@ void main()
 
 	data.vertexColor = in_color * vec4(ambientColor, 1);
 
-	data.vertexWorldNormal = (in_model * vec4(in_normal, 0.0f)).xyz;	// Object -> World vertex normal
+	data.vertexWorldNormal = (in_model * vec4(in_normal, 0.0f)).xyz;	// Object -> World vertex MatNormal
 
 	data.uv0		= in_uv0;
 	data.viewPos	= -(in_mv * vec4(in_position.xyz, 1.0f)).xyz;	// Negate, because camera is looking down Z-

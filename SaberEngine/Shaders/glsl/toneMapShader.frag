@@ -11,7 +11,7 @@ uniform float exposure = 1.0;	// Uploaded in PostFXManager.Initialize()
 
 void main()
 {	
-	vec4 color = texture(GBuffer_Albedo, data.uv0.xy);
+	vec4 color = texture(GBufferAlbedo, data.uv0.xy);
 
 	vec3 toneMappedColor = vec3(1.0, 1.0, 1.0) - exp(-color.rgb * exposure);
 

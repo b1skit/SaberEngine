@@ -14,5 +14,5 @@
 
 void main()
 {	
-	FragColor = texture(GBuffer_Albedo, data.uv0.xy);
+	FragColor = texture(GBufferAlbedo, data.uv0.xy);
 } 

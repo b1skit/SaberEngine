@@ -23,6 +23,7 @@ using glm::vec4;
 // Pre-declarations:
 namespace gr
 {
+	class Material;
 	class Mesh;
 	class Texture;
 	struct TextureParams;
@@ -35,7 +36,6 @@ namespace SaberEngine
 	class aiTexture;
 	class SceneObject;
 	class GameObject;
-	class Material;
 	class Renderable;
 	class Light;
 	class Transform;
@@ -75,10 +75,10 @@ namespace SaberEngine
 		bool LoadScene(string sceneName);
 
 		inline unsigned int	NumMaterials() { return (int)m_materials.size(); }
-		unordered_map<string, std::shared_ptr<Material>> const&	GetMaterials() const;
-		std::shared_ptr<Material> GetMaterial(string materialName);
+		unordered_map<string, std::shared_ptr<gr::Material>> const&	GetMaterials() const;
+		std::shared_ptr<gr::Material> GetMaterial(string materialName);
 		
-		vector<std::shared_ptr<gr::Mesh>> const* GetRenderMeshes(std::shared_ptr<Material> targetMaterial);	// Returns ALL meshs if targetMaterial == nullptr
+		vector<std::shared_ptr<gr::Mesh>> const* GetRenderMeshes(std::shared_ptr<gr::Material> targetMaterial);	// Returns ALL meshs if targetMaterial == nullptr
 		vector<std::shared_ptr<Renderable>>* GetRenderables();
 
 		std::shared_ptr<Light> const& GetAmbientLight();
@@ -117,11 +117,11 @@ namespace SaberEngine
 
 		// Material management:
 		//---------------------
-		unordered_map<string, std::shared_ptr<Material>> m_materials;	// Hash table of scene Material pointers
+		unordered_map<string, std::shared_ptr<gr::Material>> m_materials;	// Hash table of scene Material pointers
 
 		unordered_map<string, std::shared_ptr<gr::Texture>> m_textures;	// Hash table of scene Texture pointers
 
-		void				AddMaterial(std::shared_ptr<Material>& newMaterial);	// Add a material to the material array. Note: Material name MUST be unique
+		void				AddMaterial(std::shared_ptr<gr::Material>& newMaterial);	// Add a material to the material array. Note: Material name MUST be unique
 
 		void				AssembleMaterialMeshLists();		// Helper function: Compiles vectors filled with meshes that use each material. Must be called once after all meshes have finished loading
 		unordered_map<string, vector<std::shared_ptr<gr::Mesh>>>m_materialMeshLists;	// Hash table: Maps material names, to a vector of std::shared_ptr<Mesh> using the material

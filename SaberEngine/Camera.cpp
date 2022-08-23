@@ -6,7 +6,7 @@
 #include "Texture.h"
 #include "Material.h"
 #include "Shader.h"
-
+using gr::Material;
 
 namespace SaberEngine
 {
@@ -159,9 +159,9 @@ namespace SaberEngine
 		gBufferParams.m_texMaxMode = gr::Texture::TextureMaxFilter::Linear;
 		gBufferParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-		for (size_t i = 0; i < (size_t)RENDER_TEXTURE_COUNT; i++)
+		for (size_t i = 0; i < (size_t)Material::GBuffer_Count; i++)
 		{
-			if ((TEXTURE_TYPE)i == RENDER_TEXTURE_DEPTH)
+			if ((Material::TextureSlot)i == Material::GBufferDepth)
 			{
 				continue;
 			}
@@ -169,7 +169,7 @@ namespace SaberEngine
 			std::shared_ptr<gr::Texture> gBufferTex = std::make_shared<gr::Texture>(gBufferParams);
 
 			gBufferTex->SetTexturePath(
-				GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[(TEXTURE_TYPE)i]);
+				GetName() + "_" + Material::k_GBufferTexNames[(Material::TextureSlot)i]);
 
 			m_camTargetSet.ColorTarget(i) = gBufferTex;
 		}
@@ -183,14 +183,12 @@ namespace SaberEngine
 
 		std::shared_ptr<gr::Texture> depthTex = std::make_shared<gr::Texture>(depthTexParams);
 
-		depthTex->SetTexturePath(GetName() + "_" + Material::RENDER_TEXTURE_SAMPLER_NAMES[RENDER_TEXTURE_DEPTH]);
+		depthTex->SetTexturePath(GetName() + "_" + Material::k_GBufferTexNames[Material::GBufferDepth]);
 
 		m_camTargetSet.DepthStencilTarget() = depthTex;
 
 		// Finally, initialize the target set:
-		m_camTargetSet.CreateColorDepthStencilTargets(
-			RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, 
-			RENDER_TEXTURE_0 + RENDER_TEXTURE_DEPTH);
+		m_camTargetSet.CreateColorDepthStencilTargets(Material::GBufferAlbedo, Material::GBufferDepth);
 	}
 
 

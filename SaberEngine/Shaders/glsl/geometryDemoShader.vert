@@ -12,7 +12,7 @@ void main()
 
 	data.vertexColor		= in_color * vec4(ambientColor, 1);
 
-	data.vertexWorldNormal	= (in_model * vec4(in_normal, 0.0f)).xyz;	// Normal -> World normal
+	data.vertexWorldNormal	= (in_model * vec4(in_normal, 0.0f)).xyz;	// Normal -> World MatNormal
 	
 	data.worldPos			= (in_model * vec4(in_position.xyz, 1.0f)).xyz;
 	data.shadowPos			= (shadowCam_vp * vec4(data.worldPos, 1)).xyz;

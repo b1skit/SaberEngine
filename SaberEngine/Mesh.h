@@ -111,10 +111,10 @@ namespace gr
 	class Mesh
 	{
 	public:
-		Mesh(string name, 
+		Mesh(std::string name, 
 			std::vector<gr::Vertex> vertices, 
 			std::vector<uint32_t> indices, 
-			std::shared_ptr<SaberEngine::Material> newMeshMaterial);
+			std::shared_ptr<gr::Material> newMeshMaterial);
 
 		// Constructing a mesh modifies the GPU state; disallow all move semantics for now
 		Mesh() = delete;
@@ -137,7 +137,7 @@ namespace gr
 		inline std::vector<uint32_t>&	Indices() { return m_indices; }
 		inline size_t NumIndices() const { return m_indices.size(); }
 
-		inline std::shared_ptr<SaberEngine::Material> MeshMaterial() { return m_meshMaterial; }
+		inline std::shared_ptr<gr::Material> MeshMaterial() { return m_meshMaterial; }
 
 		inline Transform& GetTransform() { return m_transform; }
 
@@ -154,7 +154,7 @@ namespace gr
 		std::vector<Vertex> m_vertices;
 		std::vector<uint32_t> m_indices;
 
-		std::shared_ptr<SaberEngine::Material> m_meshMaterial = nullptr;
+		std::shared_ptr<gr::Material> m_meshMaterial = nullptr;
 
 		Transform m_transform;
 		std::string meshName = "UNNAMED_MESH";
@@ -167,19 +167,19 @@ namespace gr
 
 	namespace meshfactory
 	{
-		extern std::shared_ptr<Mesh> CreateCube(std::shared_ptr<SaberEngine::Material> newMeshMaterial = nullptr);
+		extern std::shared_ptr<Mesh> CreateCube(std::shared_ptr<gr::Material> newMeshMaterial = nullptr);
 
 		extern std::shared_ptr<Mesh> CreateQuad(
 			glm::vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,
 			glm::vec3 tr /*= vec3(0.5f, 0.5f, 0.0f)*/,
 			glm::vec3 bl /*= vec3(-0.5f, -0.5f, 0.0f)*/,
 			glm::vec3 br /*= vec3(0.5f, -0.5f, 0.0f)*/,
-			std::shared_ptr<SaberEngine::Material> newMeshMaterial = nullptr);
+			std::shared_ptr<gr::Material> newMeshMaterial = nullptr);
 
 		extern std::shared_ptr<Mesh> CreateSphere(float radius = 0.5f,
 			size_t numLatSlices = 16,
 			size_t numLongSlices = 16,
-			std::shared_ptr<SaberEngine::Material> newMeshMaterial = nullptr);
+			std::shared_ptr<gr::Material> newMeshMaterial = nullptr);
 	}
 }
 

@@ -7,6 +7,8 @@ using std::to_string;
 #include "Texture.h"
 #include "CoreEngine.h"
 #include "BuildConfiguration.h"
+#include "Material.h"
+using gr::Material;
 
 #define ERROR_TEXTURE_NAME "ErrorTexture"
 #define ERROR_TEXTURE_COLOR_VEC4 vec4(1.0f, 0.0f, 1.0f, 1.0f)
@@ -378,7 +380,7 @@ namespace gr
 		TextureColorSpace const& colorSpace)
 	{
 		// Create/import cube map face textures:
-		const std::string cubeTextureNames[SaberEngine::TEXTURE_TYPE::CUBE_MAP_NUM_FACES] =
+		const std::string cubeTextureNames[Texture::k_numCubeFaces] =
 		{
 			"posx",
 			"negx",
@@ -399,7 +401,7 @@ namespace gr
 
 		std::shared_ptr<gr::Texture> cubeMapTexture(nullptr);
 
-		for (size_t i = 0; i < SaberEngine::TEXTURE_TYPE::CUBE_MAP_NUM_FACES; i++)
+		for (size_t i = 0; i < Texture::k_numCubeFaces; i++)
 		{
 			// Search each possible file extension:
 			const std::string currentCubeFaceName = textureRootPath + cubeTextureNames[i];
@@ -413,7 +415,7 @@ namespace gr
 					finalName, 
 					gr::Texture::TextureColorSpace::sRGB, 
 					false,
-					SaberEngine::TEXTURE_TYPE::CUBE_MAP_NUM_FACES,
+					Texture::k_numCubeFaces,
 					i);
 
 				if (didLoad) // Stop searching
@@ -432,7 +434,7 @@ namespace gr
 						finalName,
 						gr::Texture::TextureColorSpace::sRGB,
 						true,
-						SaberEngine::TEXTURE_TYPE::CUBE_MAP_NUM_FACES, 
+						Texture::k_numCubeFaces,
 						i);
 				}
 			}

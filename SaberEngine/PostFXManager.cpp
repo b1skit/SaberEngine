@@ -7,6 +7,8 @@
 #include "Mesh.h"
 #include "Shader.h"
 #include "Camera.h"
+using gr::Material;
+using gr::Texture;
 
 
 namespace SaberEngine
@@ -36,7 +38,7 @@ namespace SaberEngine
 	{				
 		m_outputTargetSet.ColorTarget(0) = fxTarget;
 
-		m_outputTargetSet.CreateColorTargets(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO);
+		m_outputTargetSet.CreateColorTargets(Material::GBufferAlbedo);
 
 		// Configure texture targets. 
 		const uint32_t numStages = NUM_DOWN_SAMPLES + 1; // +1 so we can ping-pong between at the lowest res
@@ -45,17 +47,17 @@ namespace SaberEngine
 		int currentXRes = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes") / 2;
 		int currentYRes = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes") / 2;
 
-		gr::Texture::TextureParams pingPongParams;
+		Texture::TextureParams pingPongParams;
 		pingPongParams.m_width = currentXRes;
 		pingPongParams.m_height = currentYRes;
 		pingPongParams.m_faces = 1;
-		pingPongParams.m_texUse = gr::Texture::TextureUse::ColorTarget;
-		pingPongParams.m_texDimension = gr::Texture::TextureDimension::Texture2D;
-		pingPongParams.m_texFormat = gr::Texture::TextureFormat::RGBA32F;
-		pingPongParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear;
-		pingPongParams.m_texSamplerMode = gr::Texture::TextureSamplerMode::Clamp; // Wrap produces artifacts at image borders
-		pingPongParams.m_texMinMode = gr::Texture::TextureMinFilter::Linear;
-		pingPongParams.m_texMaxMode = gr::Texture::TextureMaxFilter::Linear;
+		pingPongParams.m_texUse = Texture::TextureUse::ColorTarget;
+		pingPongParams.m_texDimension = Texture::TextureDimension::Texture2D;
+		pingPongParams.m_texFormat = Texture::TextureFormat::RGBA32F;
+		pingPongParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+		pingPongParams.m_texSamplerMode = Texture::TextureSamplerMode::Clamp; // Wrap produces artifacts at image borders
+		pingPongParams.m_texMinMode = Texture::TextureMinFilter::Linear;
+		pingPongParams.m_texMaxMode = Texture::TextureMaxFilter::Linear;
 		pingPongParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		for (uint32_t i = 0; i < numStages; i++)
@@ -73,7 +75,7 @@ namespace SaberEngine
 			m_pingPongStageTargetSets[i].Viewport().Height() = currentYRes;
 
 			// TODO: Bind function should call CreateColorTargets internally
-			m_pingPongStageTargetSets[i].CreateColorTargets(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO);		
+			m_pingPongStageTargetSets[i].CreateColorTargets(Material::GBufferAlbedo);
 
 			// Don't halve the resolution for the last 2 iterations:
 			if (i < NUM_DOWN_SAMPLES - 1)
@@ -134,7 +136,7 @@ namespace SaberEngine
 
 		m_pingPongStageTargetSets[0].AttachColorTargets(0, 0, true);
 
-		m_outputTargetSet.ColorTarget(0).GetTexture()->Bind(RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, true);
+		m_outputTargetSet.ColorTarget(0).GetTexture()->Bind(Material::GBufferAlbedo, true);
 
 		m_screenAlignedQuad->Bind(true);
 		m_blurShaders[BLUR_SHADER_LUMINANCE_THRESHOLD]->Bind(true);
@@ -155,7 +157,7 @@ namespace SaberEngine
 			m_pingPongStageTargetSets[i].AttachColorTargets(0, 0, true);
 
 			m_pingPongStageTargetSets[i - 1].ColorTarget(0).GetTexture()->Bind(
-				RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO, 
+				Material::GBufferAlbedo,
 				true);
 			
 
@@ -173,7 +175,7 @@ namespace SaberEngine
 			m_pingPongStageTargetSets[NUM_DOWN_SAMPLES].AttachColorTargets(0, 0, true);
 
 			m_pingPongStageTargetSets[NUM_DOWN_SAMPLES - 1].ColorTarget(0).GetTexture()->Bind(
-				RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO,
+				Material::GBufferAlbedo,
 				true);
 
 			m_blurShaders[BLUR_SHADER_HORIZONTAL]->Bind(true);
@@ -189,7 +191,7 @@ namespace SaberEngine
 			m_pingPongStageTargetSets[NUM_DOWN_SAMPLES - 1].AttachColorTargets(0, 0, true);
 
 			m_pingPongStageTargetSets[NUM_DOWN_SAMPLES].ColorTarget(0).GetTexture()->Bind(
-				RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO,
+				Material::GBufferAlbedo,
 				true);
 
 			m_blurShaders[BLUR_SHADER_VERTICAL]->Bind(true);
@@ -208,7 +210,7 @@ namespace SaberEngine
 			m_pingPongStageTargetSets[i - 1].AttachColorTargets(0, 0, true);
 
 			m_pingPongStageTargetSets[i].ColorTarget(0).GetTexture()->Bind(
-				RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO,
+				Material::GBufferAlbedo,
 				true);
 
 			// Draw!
@@ -222,7 +224,7 @@ namespace SaberEngine
 		m_outputTargetSet.AttachColorTargets(0, 0, true);
 		
 		m_pingPongStageTargetSets[0].ColorTarget(0).GetTexture()->Bind(
-			RENDER_TEXTURE_0 + RENDER_TEXTURE_ALBEDO,
+			Material::GBufferAlbedo,
 			true);
 
 		CoreEngine::GetRenderManager()->GetContext().SetBlendMode(

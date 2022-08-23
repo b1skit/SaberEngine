@@ -33,7 +33,7 @@ namespace SaberEngine
 		NO_COSINE_POWER,
 
 		SHADER_KEYWORD_COUNT	// RESERVED: How many shader keywords we have
-	}; // Note: If new enums are added, don't forget to update Shader::TEXTURE_SAMPLER_NAMES[] as well!
+	}; // Note: If new enums are added, don't forget to update Shader::k_MatTexNames[] as well!
 
 
 	class Shader

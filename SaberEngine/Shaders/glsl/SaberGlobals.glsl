@@ -26,7 +26,7 @@ mat3 AssembleTBN(vec3 localTangent, vec3 localBitangent, mat4 worldRotation)
 }
 
 
-// Convert a normal sampled from a texture to an object-space normal
+// Convert a MatNormal sampled from a texture to an object-space MatNormal
 vec3 ObjectNormalFromTexture(mat3 TBN, vec3 textureNormal)
 {
 	textureNormal	= normalize((textureNormal * 2.0) - 1.0);	// Transform [0,1] -> [-1,1]
@@ -37,9 +37,9 @@ vec3 ObjectNormalFromTexture(mat3 TBN, vec3 textureNormal)
 }
 
 
-vec3 WorldNormalFromTexture(sampler2D normal, vec2 uv, mat3 TBN)
+vec3 WorldNormalFromTexture(sampler2D MatNormal, vec2 uv, mat3 TBN)
 {
-	vec3 textureNormal	= texture(normal, uv).xyz;
+	vec3 textureNormal	= texture(MatNormal, uv).xyz;
 	
 	textureNormal		= normalize((textureNormal * 2.0) - 1.0);	// Transform [0,1] -> [-1,1]
 

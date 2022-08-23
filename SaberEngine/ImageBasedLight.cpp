@@ -6,6 +6,9 @@
 #include "BuildConfiguration.h"
 #include "Mesh.h"
 #include "Shader.h"
+#include "Material.h"
+using gr::Material;
+using gr::Texture;
 
 
 namespace SaberEngine
@@ -85,18 +88,18 @@ namespace SaberEngine
 		{
 			cubemapName = "IBL_IEM";
 			shaderKeywords.push_back("BLIT_IEM");
-			textureUnit = (uint32_t)CUBE_MAP_0;
+			textureUnit = (uint32_t)Material::CubeMap0;
 		}
 		else if (iblType == IBL_PMREM)
 		{
 			cubemapName = "IBL_PMREM";
 			shaderKeywords.push_back("BLIT_PMREM");
-			textureUnit = (uint32_t)CUBE_MAP_1;
+			textureUnit = (uint32_t)Material::CubeMap1;
 		}
 		else
 		{
 			cubemapName = "HDR_Image";
-			textureUnit = (uint32_t)CUBE_MAP_0;
+			textureUnit = (uint32_t)Material::CubeMap0;
 			// No need to insert any shader keywords
 		}
 
@@ -123,7 +126,7 @@ namespace SaberEngine
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\" + relativeHDRPath;
 		
 		std::shared_ptr<gr::Texture> hdrTexture	= CoreEngine::GetSceneManager()->FindLoadTextureByPath(
-			iblTexturePath, gr::Texture::TextureColorSpace::Linear); // Deallocated by SceneManager
+			iblTexturePath, Texture::TextureColorSpace::Linear); // Deallocated by SceneManager
 
 		if (hdrTexture == nullptr)
 		{
@@ -134,13 +137,13 @@ namespace SaberEngine
 
 			return nullptr;
 		}
-		gr::Texture::TextureParams hdrParams = hdrTexture->GetTextureParams();
-		hdrParams.m_texSamplerMode = gr::Texture::TextureSamplerMode::Clamp;
-		hdrParams.m_texMinMode = gr::Texture::TextureMinFilter::LinearMipMapLinear;
-		hdrParams.m_texMaxMode = gr::Texture::TextureMaxFilter::Linear;
+		Texture::TextureParams hdrParams = hdrTexture->GetTextureParams();
+		hdrParams.m_texSamplerMode = Texture::TextureSamplerMode::Clamp;
+		hdrParams.m_texMinMode = Texture::TextureMinFilter::LinearMipMapLinear;
+		hdrParams.m_texMaxMode = Texture::TextureMaxFilter::Linear;
 		hdrTexture->SetTextureParams(hdrParams);
 		
-		hdrTexture->Bind(TEXTURE_0 + TEXTURE_ALBEDO, true);
+		hdrTexture->Bind(Material::MatAlbedo, true);
 
 
 		// TODO: We should just sample spherical textures directly instead of rendering them into cubemaps...
@@ -182,19 +185,19 @@ namespace SaberEngine
 
 
 		// Create a cubemap to render the IBL into:
-		gr::Texture::TextureParams cubeParams;
+		Texture::TextureParams cubeParams;
 		cubeParams.m_width = xRes;
 		cubeParams.m_height = yRes;
-		cubeParams.m_faces = SaberEngine::TEXTURE_TYPE::CUBE_MAP_NUM_FACES;
-		cubeParams.m_texUse = gr::Texture::TextureUse::ColorTarget;
-		cubeParams.m_texDimension = gr::Texture::TextureDimension::TextureCubeMap;
-		cubeParams.m_texFormat = gr::Texture::TextureFormat::RGB16F;
-		cubeParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear;
-		cubeParams.m_texSamplerMode = gr::Texture::TextureSamplerMode::Wrap;
+		cubeParams.m_faces = Texture::k_numCubeFaces;
+		cubeParams.m_texUse = Texture::TextureUse::ColorTarget;
+		cubeParams.m_texDimension = Texture::TextureDimension::TextureCubeMap;
+		cubeParams.m_texFormat = Texture::TextureFormat::RGB16F;
+		cubeParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+		cubeParams.m_texSamplerMode = Texture::TextureSamplerMode::Wrap;
 		cubeParams.m_texMinMode = iblType == IBL_PMREM ?
-			gr::Texture::TextureMinFilter::LinearMipMapLinear :
-			gr::Texture::TextureMinFilter::Linear;
-		cubeParams.m_texMaxMode = gr::Texture::TextureMaxFilter::Linear;
+			Texture::TextureMinFilter::LinearMipMapLinear :
+			Texture::TextureMinFilter::Linear;
+		cubeParams.m_texMaxMode = Texture::TextureMaxFilter::Linear;
 		cubeParams.m_texturePath = cubemapName;
 
 		// Generate mip-maps for PMREM IBL cubemap faces, to ensure they're allocated once we want to write into them:
@@ -230,7 +233,7 @@ namespace SaberEngine
 				equirectangularToCubemapBlitShader->UploadUniform("roughness", &roughness, UNIFORM_Float);
 
 				// Render each cube face:
-				for (uint32_t face = 0; face < CUBE_MAP_NUM_FACES; ++face)
+				for (uint32_t face = 0; face < Texture::k_numCubeFaces; ++face)
 				{
 					equirectangularToCubemapBlitShader->UploadUniform(
 						"in_view", 
@@ -251,7 +254,7 @@ namespace SaberEngine
 		else // IBL_IEM + RAW_HDR: Non-mip-mapped cube faces
 		{
 			// Render each cube face:
-			for (uint32_t face = 0; face < CUBE_MAP_NUM_FACES; face++)
+			for (uint32_t face = 0; face < Texture::k_numCubeFaces; face++)
 			{
 				equirectangularToCubemapBlitShader->UploadUniform(
 					"in_view", 
@@ -276,8 +279,7 @@ namespace SaberEngine
 		CoreEngine::GetRenderManager()->GetContext().SetDepthMode(platform::Context::DepthMode::Default);
 		CoreEngine::GetRenderManager()->GetContext().SetCullingMode(platform::Context::FaceCullingMode::Back);
 		
-		// Unbind: Texture will be destroyed/deleted by the SceneManager
-		hdrTexture->Bind(TEXTURE_0 + TEXTURE_ALBEDO, false);
+		hdrTexture->Bind(Material::MatAlbedo, false);
 
 		cubeMesh->Bind(false);
 		cubeMesh = nullptr;
@@ -324,26 +326,26 @@ namespace SaberEngine
 		//----------------------
 
 		// Create a render texture:
-		gr::Texture::TextureParams brdfParams;
+		Texture::TextureParams brdfParams;
 		brdfParams.m_width = m_xRes;
 		brdfParams.m_height = m_yRes;
 		brdfParams.m_faces = 1;
-		brdfParams.m_texUse = gr::Texture::TextureUse::ColorTarget;
-		brdfParams.m_texDimension = gr::Texture::TextureDimension::Texture2D;
-		brdfParams.m_texFormat = gr::Texture::TextureFormat::RG16F; // 2 channel, 16-bit floating point precision, as recommended by Epic Games:
-		brdfParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear;
-		brdfParams.m_texSamplerMode = gr::Texture::TextureSamplerMode::Clamp;
-		brdfParams.m_texMinMode = gr::Texture::TextureMinFilter::Linear;
-		brdfParams.m_texMaxMode = gr::Texture::TextureMaxFilter::Linear;
+		brdfParams.m_texUse = Texture::TextureUse::ColorTarget;
+		brdfParams.m_texDimension = Texture::TextureDimension::Texture2D;
+		brdfParams.m_texFormat = Texture::TextureFormat::RG16F; // 2 channel, 16-bit floating point precision, as recommended by Epic Games:
+		brdfParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+		brdfParams.m_texSamplerMode = Texture::TextureSamplerMode::Clamp;
+		brdfParams.m_texMinMode = Texture::TextureMinFilter::Linear;
+		brdfParams.m_texMaxMode = Texture::TextureMaxFilter::Linear;
 		brdfParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		brdfParams.m_texturePath = "BRDFIntegrationMap";
 
 		m_BRDF_integrationMap = std::make_shared<gr::Texture>(brdfParams);
 	
 		// Configure a TextureTargetSet:
-		m_BRDF_integrationMapStageTargetSet.ColorTarget(0) = gr::TextureTarget(m_BRDF_integrationMap);
+		m_BRDF_integrationMapStageTargetSet.ColorTarget(0) = m_BRDF_integrationMap;
 		m_BRDF_integrationMapStageTargetSet.Viewport() = gr::Viewport(0, 0, m_xRes, m_yRes);
-		m_BRDF_integrationMapStageTargetSet.CreateColorTargets(GENERIC_TEXTURE_0);
+		m_BRDF_integrationMapStageTargetSet.CreateColorTargets(Material::Tex7);
 		m_BRDF_integrationMapStageTargetSet.AttachColorTargets(0, 0, true);
 
 		// Ensure we can render on the far plane

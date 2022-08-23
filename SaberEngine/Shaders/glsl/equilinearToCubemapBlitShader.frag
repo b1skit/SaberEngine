@@ -18,10 +18,10 @@ void main()
 	// Direction from the center of the cube map towards the current pixel, in "world" space:
 	vec3 worldDir   = normalize(data.localPos);
 
-    // Create an orthonormal basis, with worldDir as our "normal"/up:
-    vec3 tangent    = normalize(vec3(worldDir.y + 1.0, worldDir.z, worldDir.x)); // Arbitrary: Ensure we don't end up with cross(worldDir, worldDir)
-    vec3 bitangent  = normalize(cross(tangent, worldDir));
-    tangent         = normalize(cross(worldDir, bitangent));
+	// Create an orthonormal basis, with worldDir as our "MatNormal"/up:
+	vec3 tangent    = normalize(vec3(worldDir.y + 1.0, worldDir.z, worldDir.x)); // Arbitrary: Ensure we don't end up with cross(worldDir, worldDir)
+	vec3 bitangent  = normalize(cross(tangent, worldDir));
+	tangent         = normalize(cross(worldDir, bitangent));
 
 	vec3 irradiance = vec3(0.0);
 	
@@ -37,7 +37,7 @@ void main()
 
 		// Sample the environment:
 		vec2 equirectangularUVs	= DirectionToEquirectangularUV(hemSample);
-		irradiance				+= texture(albedo, equirectangularUVs).rgb;
+		irradiance				+= texture(MatAlbedo, equirectangularUVs).rgb;
 	}
 
 	// Simple Monte Carlo approximation of the integral:
@@ -72,7 +72,7 @@ void main()
 		{
 			vec2 equirectangularUVs	= DirectionToEquirectangularUV( L );
 
-			sampledColor += texture(albedo, equirectangularUVs).rgb;
+			sampledColor += texture(MatAlbedo, equirectangularUVs).rgb;
 
 			totalWeight += NdotL;
 		}
@@ -93,7 +93,7 @@ void main()
 
 	vec2 equirectangularUVs	= DirectionToEquirectangularUV(worldDir);
 	
-	FragColor = vec4(texture(albedo, equirectangularUVs).rgb, 1.0);
+	FragColor = vec4(texture(MatAlbedo, equirectangularUVs).rgb, 1.0);
 }
 
 #endif
