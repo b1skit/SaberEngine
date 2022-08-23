@@ -9,6 +9,9 @@
 #include "Material.h"
 using gr::Material;
 using gr::Texture;
+using gr::Shader;
+using std::shared_ptr;
+using std::make_shared;
 
 
 namespace SaberEngine
@@ -53,7 +56,7 @@ namespace SaberEngine
 		// Upload shader parameters:
 		if (GetDeferredLightShader() != nullptr)
 		{
-			GetDeferredLightShader()->UploadUniform("maxMipLevel", &m_maxMipLevel, UNIFORM_Int);
+			GetDeferredLightShader()->SetUniform("maxMipLevel", &m_maxMipLevel, platform::Shader::UNIFORM_TYPE::Int);
 		}
 		else
 		{
@@ -74,7 +77,7 @@ namespace SaberEngine
 	}
 
 
-	std::shared_ptr<gr::Texture> ImageBasedLight::ConvertEquirectangularToCubemap(
+	shared_ptr<gr::Texture> ImageBasedLight::ConvertEquirectangularToCubemap(
 		string sceneName, 
 		string relativeHDRPath,
 		int xRes,
@@ -107,17 +110,12 @@ namespace SaberEngine
 		string shaderName = 
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("equilinearToCubemapBlitShaderName");
 
-		std::shared_ptr<Shader> equirectangularToCubemapBlitShader	= Shader::CreateShader(shaderName, &shaderKeywords);
-		if (equirectangularToCubemapBlitShader == nullptr)
-		{
-			LOG_ERROR("Failed to load equilinearToCubemapBlitShader, cannot convert HDR image to cubemap");
-			return nullptr;
-		}
+		shared_ptr<Shader> equirectangularToCubemapBlitShader = make_shared<gr::Shader>(shaderName);
+		equirectangularToCubemapBlitShader->Create(&shaderKeywords);
 		equirectangularToCubemapBlitShader->Bind(true);
 
-
 		// Create a cube mesh for rendering:
-		std::shared_ptr<gr::Mesh> cubeMesh = gr::meshfactory::CreateCube();
+		shared_ptr<gr::Mesh> cubeMesh = gr::meshfactory::CreateCube();
 		cubeMesh->Bind(true);
 
 
@@ -125,7 +123,7 @@ namespace SaberEngine
 		string iblTexturePath = 
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\" + relativeHDRPath;
 		
-		std::shared_ptr<gr::Texture> hdrTexture	= CoreEngine::GetSceneManager()->FindLoadTextureByPath(
+		shared_ptr<gr::Texture> hdrTexture	= CoreEngine::GetSceneManager()->FindLoadTextureByPath(
 			iblTexturePath, Texture::TextureColorSpace::Linear); // Deallocated by SceneManager
 
 		if (hdrTexture == nullptr)
@@ -161,15 +159,15 @@ namespace SaberEngine
 			numSamples = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("numPMREMSamples");
 		}
 		// "numSamples" is defined directly in equilinearToCubemapBlitShader.frag
-		equirectangularToCubemapBlitShader->UploadUniform("numSamples", &numSamples, UNIFORM_Int); 
+		equirectangularToCubemapBlitShader->SetUniform("numSamples", &numSamples, platform::Shader::UNIFORM_TYPE::Int);
 
 		// Upload the texel size for the hdr texture:
 		vec4 texelSize = hdrTexture->GetTexelDimenions();
-		equirectangularToCubemapBlitShader->UploadUniform("texelSize", &texelSize.x, UNIFORM_Vec4fv);
+		equirectangularToCubemapBlitShader->SetUniform("texelSize", &texelSize.x, platform::Shader::UNIFORM_TYPE::Vec4f);
 
 		// Create and upload projection matrix:
 		glm::mat4 m_projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-		equirectangularToCubemapBlitShader->UploadUniform("in_projection", &m_projection[0][0], UNIFORM_Matrix4fv);
+		equirectangularToCubemapBlitShader->SetUniform("in_projection", &m_projection[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 
 		// Create view matrices: Orient the camera towards each face of the cube
 		glm::mat4 captureViews[] =
@@ -203,7 +201,7 @@ namespace SaberEngine
 		// Generate mip-maps for PMREM IBL cubemap faces, to ensure they're allocated once we want to write into them:
 		cubeParams.m_useMIPs = iblType == IBL_PMREM ? true : false;
 
-		std::shared_ptr<gr::Texture> cubemap = std::make_shared<gr::Texture>(cubeParams);
+		shared_ptr<gr::Texture> cubemap = std::make_shared<gr::Texture>(cubeParams);
 		
 		// Target set initialization:
 		gr::TextureTargetSet m_IBL_IEM_PMREM_StageTargetSet;
@@ -230,15 +228,15 @@ namespace SaberEngine
 			{
 				// Compute the roughness for the current mip level, and upload it to the shader:
 				float roughness = (float)currentMipLevel / (float)(numMipLevels - 1);
-				equirectangularToCubemapBlitShader->UploadUniform("roughness", &roughness, UNIFORM_Float);
+				equirectangularToCubemapBlitShader->SetUniform("roughness", &roughness, platform::Shader::UNIFORM_TYPE::Float);
 
 				// Render each cube face:
 				for (uint32_t face = 0; face < Texture::k_numCubeFaces; ++face)
 				{
-					equirectangularToCubemapBlitShader->UploadUniform(
+					equirectangularToCubemapBlitShader->SetUniform(
 						"in_view", 
 						&captureViews[face][0].x, 
-						UNIFORM_Matrix4fv);
+						platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 
 					m_IBL_IEM_PMREM_StageTargetSet.AttachColorTargets(face, currentMipLevel, true);
 
@@ -256,10 +254,10 @@ namespace SaberEngine
 			// Render each cube face:
 			for (uint32_t face = 0; face < Texture::k_numCubeFaces; face++)
 			{
-				equirectangularToCubemapBlitShader->UploadUniform(
+				equirectangularToCubemapBlitShader->SetUniform(
 					"in_view", 
 					&captureViews[face][0].x,
-					UNIFORM_Matrix4fv);
+					platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 
 				m_IBL_IEM_PMREM_StageTargetSet.AttachColorTargets(face, 0, true);
 												
@@ -302,16 +300,12 @@ namespace SaberEngine
 		const std::string shaderName = 
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("BRDFIntegrationMapShaderName");
 
-		std::shared_ptr<Shader> BRDFIntegrationMapShader = Shader::CreateShader(shaderName);
-		if (BRDFIntegrationMapShader == nullptr)
-		{
-			LOG_ERROR("Failed to load \"" + shaderName + "\", BRDF Integration map generation failed.");
-			return;
-		}
+		shared_ptr<Shader> BRDFIntegrationMapShader = make_shared<Shader>(shaderName);
+		BRDFIntegrationMapShader->Create();
 		BRDFIntegrationMapShader->Bind(true);
 
 		// Create a CCW screen-aligned quad to render with:
-		std::shared_ptr<gr::Mesh> quad = gr::meshfactory::CreateQuad
+		shared_ptr<gr::Mesh> quad = gr::meshfactory::CreateQuad
 		(
 			// TODO: SIMPLIFY THIS INTERFACE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			vec3(-1.0f, 1.0f, -1.0f),	// TL

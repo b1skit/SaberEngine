@@ -12,9 +12,6 @@
 namespace gr
 {
 	class Texture;
-}
-namespace SaberEngine
-{
 	class Shader;
 }
 
@@ -87,8 +84,7 @@ namespace gr
 
 
 	public:
-		Material(std::string const& materialName, std::string const& shaderName, TextureSlot const& textureCount = Mat_Count);
-		Material(std::string const& materialName, std::shared_ptr<SaberEngine::Shader> const& shader, TextureSlot const& textureCount = Mat_Count);
+		Material(std::string const& materialName, std::shared_ptr<gr::Shader> const& shader, TextureSlot const& textureCount = Mat_Count);
 		Material() = delete;
 
 		Material(Material const&) = default;
@@ -103,8 +99,8 @@ namespace gr
 		// Getters/Setters:
 		inline std::string const& Name() { return m_name; }
 		
-		inline std::shared_ptr<SaberEngine::Shader>& GetShader()	{ return m_shader; }
-		inline std::shared_ptr<SaberEngine::Shader> const& GetShader() const { return m_shader; }
+		inline std::shared_ptr<gr::Shader>& GetShader()	{ return m_shader; }
+		inline std::shared_ptr<gr::Shader> const& GetShader() const { return m_shader; }
 
 		inline glm::vec4& Property(MATERIAL_PROPERTY_INDEX index) { return m_properties[index]; }
 		inline glm::vec4 const& Property(MATERIAL_PROPERTY_INDEX index) const { return m_properties[index]; }
@@ -126,7 +122,7 @@ namespace gr
 
 	private:
 		std::string m_name;	// Must be unique: Identifies this material
-		std::shared_ptr<SaberEngine::Shader> m_shader;
+		std::shared_ptr<gr::Shader> m_shader;
 		std::vector<std::shared_ptr<gr::Texture>> m_textures;		
 		std::vector<glm::vec4> m_properties; // Generic material properties
 		std::vector<std::string> m_shaderKeywords;

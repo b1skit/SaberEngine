@@ -30,6 +30,9 @@ using glm::mat4;
 #include "EventManager.h"
 using gr::Material;
 using gr::Texture;
+using gr::Shader;
+using std::shared_ptr;
+using std::make_shared;
 
 
 namespace SaberEngine
@@ -85,7 +88,9 @@ namespace SaberEngine
 
 		m_outputTargetSet->CreateColorTargets(Material::MatAlbedo);
 		
-		m_blitShader = Shader::CreateShader(CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShader"));
+		m_blitShader = make_shared<Shader>(
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShader"));
+		m_blitShader->Create();
 
 		// PostFX Manager:
 		m_postFXManager = std::make_unique<PostFXManager>(); // Initialized when RenderManager.Initialize() is called
@@ -222,10 +227,10 @@ namespace SaberEngine
 
 			mat4 const* cubeMap_vps = shadowCam->CubeViewProjection();
 
-			lightShader->UploadUniform("shadowCamCubeMap_vp", &cubeMap_vps[0][0][0], UNIFORM_Matrix4fv, 6);
-			lightShader->UploadUniform("lightWorldPos", &lightWorldPos.x, UNIFORM_Vec3fv);
-			lightShader->UploadUniform("shadowCam_near", &shadowCam->Near(), UNIFORM_Float);
-			lightShader->UploadUniform("shadowCam_far", &shadowCam->Far(), UNIFORM_Float);
+			lightShader->SetUniform("shadowCamCubeMap_vp", &cubeMap_vps[0][0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f, 6);
+			lightShader->SetUniform("lightWorldPos", &lightWorldPos.x, platform::Shader::UNIFORM_TYPE::Vec3f);
+			lightShader->SetUniform("shadowCam_near", &shadowCam->Near(), platform::Shader::UNIFORM_TYPE::Float);
+			lightShader->SetUniform("shadowCam_far", &shadowCam->Far(), platform::Shader::UNIFORM_TYPE::Float);
 		}
 
 		light->GetShadowMap()->GetTextureTargetSet().AttachDepthStencilTarget(true);
@@ -247,14 +252,14 @@ namespace SaberEngine
 			case LIGHT_DIRECTIONAL:
 			{
 				mat4 mvp			= shadowCam->ViewProjection() * currentMesh->GetTransform().Model();
-				lightShader->UploadUniform("in_mvp",	&mvp[0][0],		UNIFORM_Matrix4fv);
+				lightShader->SetUniform("in_mvp",	&mvp[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 			}
 			break;
 
 			case LIGHT_POINT:
 			{
 				mat4 model = currentMesh->GetTransform().Model();
-				lightShader->UploadUniform("in_model",	&model[0][0],	UNIFORM_Matrix4fv);
+				lightShader->SetUniform("in_model",	&model[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 			}
 			break;
 
@@ -306,11 +311,11 @@ namespace SaberEngine
 			currentMaterial->BindAllTextures(Material::MatAlbedo, true);
 
 			// Upload material properties:
-			currentShader->UploadUniform(
+			currentShader->SetUniform(
 				Material::k_MatPropNames[Material::MatProperty0].c_str(), 
 				&currentMaterial->Property(Material::MatProperty0).x, 
-				UNIFORM_Vec4fv);
-			currentShader->UploadUniform("in_view", &m_view[0][0], UNIFORM_Matrix4fv);
+				platform::Shader::UNIFORM_TYPE::Vec4f);
+			currentShader->SetUniform("in_view", &m_view[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 
 			// Get all meshes that use the current material
 			meshes = CoreEngine::GetSceneManager()->GetRenderMeshes(currentMaterial);
@@ -329,9 +334,9 @@ namespace SaberEngine
 				mat4 mvp			= renderCam->ViewProjection() * model;
 
 				// Upload mesh-specific matrices:
-				currentShader->UploadUniform("in_model",			&model[0][0],			UNIFORM_Matrix4fv);
-				currentShader->UploadUniform("in_modelRotation",	&modelRotation[0][0],	UNIFORM_Matrix4fv);
-				currentShader->UploadUniform("in_mvp",				&mvp[0][0],				UNIFORM_Matrix4fv);
+				currentShader->SetUniform("in_model", &model[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
+				currentShader->SetUniform("in_modelRotation", &modelRotation[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
+				currentShader->SetUniform("in_mvp", &mvp[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 				// TODO: Only upload these matrices if they've changed ^^^^
 
 				// Draw!
@@ -373,16 +378,16 @@ namespace SaberEngine
 		mat4 mvp			= gBufferCam->ViewProjection() * deferredLight->GetTransform().Model();
 		vec3 cameraPosition = gBufferCam->GetTransform()->WorldPosition();
 
-		currentShader->UploadUniform("in_model",		&model[0][0],			UNIFORM_Matrix4fv);
-		currentShader->UploadUniform("in_view",			&m_view[0][0],			UNIFORM_Matrix4fv);
-		currentShader->UploadUniform("in_mv",			&mv[0][0],				UNIFORM_Matrix4fv);
-		currentShader->UploadUniform("in_mvp",			&mvp[0][0],				UNIFORM_Matrix4fv);
-		currentShader->UploadUniform("cameraWPos",	&cameraPosition,		UNIFORM_Vec3fv);
+		currentShader->SetUniform("in_model", &model[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
+		currentShader->SetUniform("in_view", &m_view[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
+		currentShader->SetUniform("in_mv", &mv[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
+		currentShader->SetUniform("in_mvp", &mvp[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
+		currentShader->SetUniform("cameraWPos", &cameraPosition, platform::Shader::UNIFORM_TYPE::Vec3f);
 		// TODO: Only upload these matrices if they've changed ^^^^
 		// TODO: Break this out into a function: ALL of our render functions have a similar setup		
 
 		// Light properties:
-		currentShader->UploadUniform("lightColor", &deferredLight->Color().r, UNIFORM_Vec3fv);
+		currentShader->SetUniform("lightColor", &deferredLight->Color().r, platform::Shader::UNIFORM_TYPE::Vec3f);
 
 		switch (deferredLight->Type())
 		{
@@ -417,10 +422,13 @@ namespace SaberEngine
 
 		case LIGHT_DIRECTIONAL:
 		{
-			currentShader->UploadUniform("keylightWorldDir", &deferredLight->GetTransform().Forward().x, UNIFORM_Vec3fv);
+			currentShader->SetUniform(
+				"keylightWorldDir", 
+				&deferredLight->GetTransform().Forward().x, 
+				platform::Shader::UNIFORM_TYPE::Vec3f);
 
 			vec3 keylightViewDir = glm::normalize(m_view * vec4(deferredLight->GetTransform().Forward(), 0.0f));
-			currentShader->UploadUniform("keylightViewDir", &keylightViewDir.x, UNIFORM_Vec3fv);
+			currentShader->SetUniform("keylightViewDir", &keylightViewDir.x, platform::Shader::UNIFORM_TYPE::Vec3f);
 		}
 			break;
 
@@ -430,9 +438,13 @@ namespace SaberEngine
 		case LIGHT_AREA:
 		case LIGHT_TUBE:
 		{
-			currentShader->UploadUniform("lightWorldPos", &deferredLight->GetTransform().WorldPosition().x, UNIFORM_Vec3fv);
+			currentShader->SetUniform(
+				"lightWorldPos", 
+				&deferredLight->GetTransform().WorldPosition().x, 
+				platform::Shader::UNIFORM_TYPE::Vec3f);
 
-			// TODO: Can we just upload this once when the light is created (and its shader is created)?  (And also update it if the light is ever moved)
+			// TODO: Can we just upload this once when the light is created (and its shader is created)? 
+			// (And also update it if the light is ever moved)
 		}
 			break;
 		default:
@@ -450,13 +462,13 @@ namespace SaberEngine
 			if (shadowCam != nullptr)
 			{
 				// Upload common shadow properties:
-				currentShader->UploadUniform("shadowCam_vp",	&shadowCam->ViewProjection()[0][0],	UNIFORM_Matrix4fv);
+				currentShader->SetUniform("shadowCam_vp", &shadowCam->ViewProjection()[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 				
-				currentShader->UploadUniform("maxShadowBias",	&activeShadowMap->MaxShadowBias(),	UNIFORM_Float);
-				currentShader->UploadUniform("minShadowBias",	&activeShadowMap->MinShadowBias(),	UNIFORM_Float);
+				currentShader->SetUniform("maxShadowBias", &activeShadowMap->MaxShadowBias(), platform::Shader::UNIFORM_TYPE::Float);
+				currentShader->SetUniform("minShadowBias", &activeShadowMap->MinShadowBias(), platform::Shader::UNIFORM_TYPE::Float);
 
-				currentShader->UploadUniform("shadowCam_near",	&shadowCam->Near(),					UNIFORM_Float);
-				currentShader->UploadUniform("shadowCam_far",	&shadowCam->Far(),					UNIFORM_Float);
+				currentShader->SetUniform("shadowCam_near", &shadowCam->Near(),	platform::Shader::UNIFORM_TYPE::Float);
+				currentShader->SetUniform("shadowCam_far", &shadowCam->Far(), platform::Shader::UNIFORM_TYPE::Float);
 
 				// Bind shadow depth textures:
 				std::shared_ptr<gr::Texture> depthTexture = 
@@ -497,7 +509,7 @@ namespace SaberEngine
 				{
 					texelSize = depthTexture->GetTexelDimenions();
 				}
-				currentShader->UploadUniform("texelSize", &texelSize.x, UNIFORM_Vec4fv);
+				currentShader->SetUniform("texelSize", &texelSize.x, platform::Shader::UNIFORM_TYPE::Vec4f);
 			}
 		}
 		
@@ -542,7 +554,7 @@ namespace SaberEngine
 		mat4 inverseViewProjection = 
 			glm::inverse(renderCam->ViewProjection()); // TODO: Only compute this if something has changed
 
-		currentShader->UploadUniform("in_inverse_vp", &inverseViewProjection[0][0], UNIFORM_Matrix4fv);
+		currentShader->SetUniform("in_inverse_vp", &inverseViewProjection[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 
 		// Draw!
 		glDrawElements(
@@ -699,23 +711,23 @@ namespace SaberEngine
 			// Upload light direction (world space) and color, and ambient light color:
 			if (ambientLight != nullptr)
 			{
-				shaders.at(i)->UploadUniform("ambientColor", &(ambientColor->r), UNIFORM_Vec3fv);
+				shaders.at(i)->SetUniform("ambientColor", &(ambientColor->r), platform::Shader::UNIFORM_TYPE::Vec3f);
 			}
 
 			// TODO: Shift more value uploads into the shader creation flow
 			
 			// Other params:
-			shaders.at(i)->UploadUniform("screenParams", &(screenParams.x), UNIFORM_Vec4fv);
-			shaders.at(i)->UploadUniform("projectionParams", &(projectionParams.x), UNIFORM_Vec4fv);
+			shaders.at(i)->SetUniform("screenParams", &(screenParams.x), platform::Shader::UNIFORM_TYPE::Vec4f);
+			shaders.at(i)->SetUniform("projectionParams", &(projectionParams.x), platform::Shader::UNIFORM_TYPE::Vec4f);
 
 			float emissiveIntensity = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultSceneEmissiveIntensity");
-			shaders.at(i)->UploadUniform("emissiveIntensity", &emissiveIntensity, UNIFORM_Float);
+			shaders.at(i)->SetUniform("emissiveIntensity", &emissiveIntensity, platform::Shader::UNIFORM_TYPE::Float);
 			// TODO: Load this from .FBX file, and set the cached value here
 
 
 			// Upload matrices:
 			mat4 m_projection = sceneManager->GetMainCamera()->Projection();
-			shaders.at(i)->UploadUniform("in_projection", &m_projection[0][0], UNIFORM_Matrix4fv);
+			shaders.at(i)->SetUniform("in_projection", &m_projection[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 
 			shaders.at(i)->Bind(false);
 		}

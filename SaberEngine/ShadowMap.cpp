@@ -8,6 +8,9 @@
 #include "Material.h"
 using gr::Material;
 using gr::Texture;
+using gr::Shader;
+using std::shared_ptr;
+using std::make_shared;
 
 
 namespace SaberEngine
@@ -69,7 +72,8 @@ namespace SaberEngine
 			shaderName = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("depthShaderName");
 		}
 
-		m_shadowCam->GetRenderShader() = Shader::CreateShader(shaderName);
+		m_shadowCam->GetRenderShader() = make_shared<Shader>(shaderName);
+		m_shadowCam->GetRenderShader()->Create();
 
 		m_shadowTargetSet.DepthStencilTarget() = depthTexture;
 		m_shadowTargetSet.Viewport() = gr::Viewport(0, 0, depthTexture->Width(), depthTexture->Height());

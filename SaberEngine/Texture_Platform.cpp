@@ -3,6 +3,7 @@
 #include "Texture_Platform.h"
 #include "Texture_OpenGL.h"
 
+
 namespace platform
 {
 	// Parameter struct object factory:

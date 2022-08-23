@@ -11,9 +11,6 @@
 namespace gr
 {
 	class Mesh;
-}
-namespace SaberEngine
-{
 	class Shader;
 }
 
@@ -40,7 +37,7 @@ namespace SaberEngine
 		void Initialize(gr::TextureTarget const& fxTarget);
 
 		// Apply post processing. Modifies finalFrameShader to contain the shader required to blit the final image to screen
-		void ApplyPostFX(std::shared_ptr<Shader>& finalFrameShader);
+		void ApplyPostFX(std::shared_ptr<gr::Shader>& finalFrameShader);
 
 
 
@@ -54,9 +51,9 @@ namespace SaberEngine
 		std::vector<std::shared_ptr<gr::Texture>> m_pingPongTextures;	// Deallocated in destructor
 		std::vector<gr::TextureTargetSet> m_pingPongStageTargetSets;
 
-		std::shared_ptr<Shader> m_blitShader = nullptr;
-		std::shared_ptr<Shader> m_toneMapShader	= nullptr;
-		std::shared_ptr<Shader> m_blurShaders[BLUR_SHADER_COUNT];
+		std::shared_ptr<gr::Shader> m_blitShader = nullptr;
+		std::shared_ptr<gr::Shader> m_toneMapShader	= nullptr;
+		std::shared_ptr<gr::Shader> m_blurShaders[BLUR_SHADER_COUNT];
 		
 		std::shared_ptr<gr::Mesh> m_screenAlignedQuad	= nullptr;	// Deallocated in destructor
 	};

@@ -5,6 +5,9 @@
 #include "ShadowMap.h"
 #include "Shader.h"
 #include "Mesh.h"
+using gr::Shader;
+using std::shared_ptr;
+using std::make_shared;
 
 
 namespace SaberEngine
@@ -39,9 +42,9 @@ namespace SaberEngine
 				shaderKeywords.push_back("AMBIENT_IBL");
 			}
 
-			m_deferredLightShader = Shader::CreateShader(
-				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"), 
-				&shaderKeywords);
+			m_deferredLightShader = make_shared<Shader>(
+				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"));
+			m_deferredLightShader->Create(&shaderKeywords);
 
 			// Attach a screen aligned quad:
 			m_deferredMesh = gr::meshfactory::CreateQuad	// Align along near plane
@@ -57,8 +60,9 @@ namespace SaberEngine
 
 		case LIGHT_DIRECTIONAL:
 		{
-			m_deferredLightShader = Shader::CreateShader(
+			m_deferredLightShader =make_shared<Shader>(
 				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredKeylightShaderName"));
+			m_deferredLightShader->Create();
 
 			// Attach a screen aligned quad:
 			m_deferredMesh = gr::meshfactory::CreateQuad	// Align along near plane
@@ -72,8 +76,9 @@ namespace SaberEngine
 		}
 
 		case LIGHT_POINT:
-			m_deferredLightShader = Shader::CreateShader(
+			m_deferredLightShader = make_shared<Shader>(
 				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredPointLightShaderName"));
+			m_deferredLightShader->Create();
 			
 			m_deferredMesh = gr::meshfactory::CreateSphere(radius);
 			m_deferredMesh->GetTransform().Parent(&m_transform);

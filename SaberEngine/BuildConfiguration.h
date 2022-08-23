@@ -43,7 +43,7 @@
 	//#define DEBUG_LOG_SHADERS
 	#if defined(DEBUG_LOG_SHADERS)
 		#define DEBUG_SHADER_SETUP_LOGGING				// Enable logging of shader loading within the Shader class
-		//#define DEBUG_SHADER_PRINT_FINAL_SHADER			// Should the final, processed shader be printed? This spews a lot of text!
+		//#define DEBUG_SHADER_PRINT_FINAL_SHADER // Should the final, processed shader be printed? Spews a lot of text!
 	#endif
 
 	//#define DEBUG_TRANSFORMS							// Enable transform debugging functions

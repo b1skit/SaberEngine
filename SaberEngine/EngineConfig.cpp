@@ -93,7 +93,6 @@ namespace en
 		{
 			// Shader:
 			TryInsertDefault("shaderDirectory",						std::string(".\\Shaders\\glsl\\"));
-			TryInsertDefault("errorShaderName",						std::string("errorShader"));
 			TryInsertDefault("defaultShaderName",					std::string("lambertShader"));
 
 			// Depth map rendering:

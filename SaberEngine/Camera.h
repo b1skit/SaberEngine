@@ -66,8 +66,8 @@ namespace SaberEngine
 
 		mat4 const*	CubeViewProjection();
 
-		std::shared_ptr<Shader>& GetRenderShader() { return m_cameraShader; }
-		std::shared_ptr<Shader> const& GetRenderShader() const { return m_cameraShader; }
+		std::shared_ptr<gr::Shader>& GetRenderShader() { return m_cameraShader; }
+		std::shared_ptr<gr::Shader> const& GetRenderShader() const { return m_cameraShader; }
 		
 		gr::TextureTargetSet& GetTextureTargetSet() { return m_camTargetSet; }
 		gr::TextureTargetSet const & GetTextureTargetSet() const { return m_camTargetSet; }
@@ -96,7 +96,7 @@ namespace SaberEngine
 		vector<mat4> m_cubeView;
 		vector<mat4> m_cubeViewProjection;
 		
-		std::shared_ptr<Shader> m_cameraShader = nullptr;
+		std::shared_ptr<gr::Shader> m_cameraShader = nullptr;
 
 		gr::TextureTargetSet m_camTargetSet;
 

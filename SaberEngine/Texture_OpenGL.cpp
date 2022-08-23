@@ -289,7 +289,7 @@ namespace opengl
 
 		// Get our platform params now that the texture has been created:
 		PlatformParams* const params =
-			dynamic_cast<opengl::Texture::PlatformParams*>(texture.GetPlatformParams());
+			dynamic_cast<opengl::Texture::PlatformParams* const>(texture.GetPlatformParams());
 
 		// If the texture hasn't been created, create a new name:
 		if (!glIsTexture(params->m_textureID))
@@ -364,8 +364,14 @@ namespace opengl
 			if (texParams.m_texDimension == gr::Texture::TextureDimension::TextureCubeMap)
 			{
 				target = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-				// TODO: WHY DO WE USE THIS, BUT SET GL_TEXTURE_CUBE_MAP FOR m_texTarget ELSEWHERE?!?!!?!?!?!?!?!?!?
-				// -> Fails if we use GL_TEXTURE_CUBE_MAP...
+				// TODO: Switch to a generic specification/buffering functionality, using GL_TEXTURE_CUBE_MAP for 
+				// m_texTarget instead of GL_TEXTURE_CUBE_MAP_POSITIVE_X
+				// // -> Doing a similar thing in TextureTargetSet
+				// -> Currently fails if we use GL_TEXTURE_CUBE_MAP...
+				//
+				// https://www.reddit.com/r/opengl/comments/556zac/how_to_create_cubemap_with_direct_state_access/
+				// Specify storage with glTextureStorage2D: https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
+				// Buffer each face with glTextureSubImage3D
 			}
 			else
 			{

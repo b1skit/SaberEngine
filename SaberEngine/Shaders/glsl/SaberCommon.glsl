@@ -115,15 +115,15 @@ uniform sampler2D GBufferDepth;
 uniform sampler2D	Depth0;
 
 // Generic texture samplers:
-uniform sampler2D	Tex0;
-uniform sampler2D	Tex1;
-uniform sampler2D	Tex2;
-uniform sampler2D	Tex3;
-uniform sampler2D	Tex4;
-uniform sampler2D	Tex5;
-uniform sampler2D	Tex6;
-uniform sampler2D	Tex7;
-uniform sampler2D	Tex8;
+uniform sampler2D Tex0;
+uniform sampler2D Tex1;
+uniform sampler2D Tex2;
+uniform sampler2D Tex3;
+uniform sampler2D Tex4;
+uniform sampler2D Tex5;
+uniform sampler2D Tex6;
+uniform sampler2D Tex7;
+uniform sampler2D Tex8;
 
 // Cube map samplers:
 uniform samplerCube CubeMap0;			

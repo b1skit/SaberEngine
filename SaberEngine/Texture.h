@@ -3,12 +3,13 @@
 #include <string>
 #include <vector>
 #include <memory>
-using std::string;
 
 #include <glm/glm.hpp>
-using glm::vec4;
 
 #include "Texture_Platform.h"
+
+using std::string;
+using glm::vec4;
 
 
 namespace platform

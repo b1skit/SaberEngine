@@ -1,3 +1,16 @@
+#include <algorithm>
+#include <string>
+#include <stdio.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
+
+#include <assimp/Importer.hpp>		// Importer interface
+#include <assimp/postprocess.h>		// Post processing flags
+
+#define STB_IMAGE_IMPLEMENTATION	// Only include this define ONCE in the project
+#include <stb_image.h>				// STB image loader
+
 #include "BuildConfiguration.h"
 #include "SceneManager.h"
 #include "EventManager.h"
@@ -18,24 +31,10 @@
 #include "Shader.h"
 using gr::Material;
 using gr::Texture;
-
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
-
+using gr::Shader;
+using std::shared_ptr;
 using glm::pi;
 
-
-#include <assimp/Importer.hpp>		// Importer interface
-#include <assimp/postprocess.h>		// Post processing flags
-
-
-#define STB_IMAGE_IMPLEMENTATION	// Only include this define ONCE in the project
-#include <stb_image.h>				// STB image loader
-
-
-#include <algorithm>
-#include <string>
-#include <stdio.h>
 
 #define INVALID_TEXTURE_PATH "InvalidTexturePath"
 
@@ -72,7 +71,7 @@ namespace SaberEngine
 		// Scene manager cleanup:
 		if (m_materials.size() > 0)
 		{
-			for (std::pair<string, std::shared_ptr<Material>> currentMaterialEntry : m_materials)
+			for (std::pair<string, shared_ptr<Material>> currentMaterialEntry : m_materials)
 			{
 				currentMaterialEntry.second = nullptr;
 			}
@@ -80,7 +79,7 @@ namespace SaberEngine
 		}
 
 		// Texture cleanup:
-		for (std::pair<string, std::shared_ptr<gr::Texture>> currentTexture : m_textures)
+		for (std::pair<string, shared_ptr<gr::Texture>> currentTexture : m_textures)
 		{
 			if (currentTexture.second != nullptr)
 			{
@@ -100,7 +99,7 @@ namespace SaberEngine
 	}
 
 
-	void SceneManager::HandleEvent(std::shared_ptr<EventInfo const> eventInfo)
+	void SceneManager::HandleEvent(shared_ptr<EventInfo const> eventInfo)
 	{
 		return;
 	}
@@ -227,7 +226,7 @@ namespace SaberEngine
 
 		// Create a PlayerObject:
 		//-----------------------
-		std::shared_ptr<PlayerObject> player = std::make_shared<PlayerObject>(m_currentScene->GetMainCamera());
+		shared_ptr<PlayerObject> player = std::make_shared<PlayerObject>(m_currentScene->GetMainCamera());
 		m_currentScene->m_gameObjects.push_back(player);	
 		LOG("Created PlayerObject using mainCamera");
 
@@ -235,13 +234,13 @@ namespace SaberEngine
 	}
 
 
-	unordered_map<string, std::shared_ptr<Material>> const& SaberEngine::SceneManager::GetMaterials() const
+	unordered_map<string, shared_ptr<Material>> const& SaberEngine::SceneManager::GetMaterials() const
 	{
 		return m_materials;
 	}
 
 
-	std::shared_ptr<Material> SceneManager::GetMaterial(string materialName)
+	shared_ptr<Material> SceneManager::GetMaterial(string materialName)
 	{
 		auto result = m_materials.find(materialName);
 		if (result != m_materials.end())
@@ -256,7 +255,7 @@ namespace SaberEngine
 	}
 
 
-	vector<std::shared_ptr<gr::Mesh>> const* SceneManager::GetRenderMeshes(std::shared_ptr<Material> targetMaterial)
+	vector<shared_ptr<gr::Mesh>> const* SceneManager::GetRenderMeshes(shared_ptr<Material> targetMaterial)
 	{
 		// If materialIndex is out of bounds, return ALL meshes
 		if (targetMaterial == nullptr)
@@ -274,43 +273,43 @@ namespace SaberEngine
 	}
 
 
-	vector<std::shared_ptr<Renderable>>* SceneManager::GetRenderables()
+	vector<shared_ptr<Renderable>>* SceneManager::GetRenderables()
 	{ 
 		return &m_currentScene->m_renderables; 
 	}
 
 
-	std::shared_ptr<Light> const& SceneManager::GetAmbientLight()
+	shared_ptr<Light> const& SceneManager::GetAmbientLight()
 	{ 
 		return m_currentScene->m_ambientLight; 
 	}
 
 
-	std::shared_ptr<Light> SceneManager::GetKeyLight()
+	shared_ptr<Light> SceneManager::GetKeyLight()
 	{ 
 		return m_currentScene->m_keyLight; 
 	}
 
 
-	vector<std::shared_ptr<Camera>> const& SceneManager::GetCameras(CAMERA_TYPE cameraType)
+	vector<shared_ptr<Camera>> const& SceneManager::GetCameras(CAMERA_TYPE cameraType)
 	{ 
 		return m_currentScene->GetCameras(cameraType); 
 	}
 
 
-	std::shared_ptr<Camera> SceneManager::GetMainCamera()
+	shared_ptr<Camera> SceneManager::GetMainCamera()
 	{ 
 		return m_currentScene->GetMainCamera(); 
 	}
 
 
-	void SceneManager::RegisterCamera(CAMERA_TYPE cameraType, std::shared_ptr<Camera> newCamera)
+	void SceneManager::RegisterCamera(CAMERA_TYPE cameraType, shared_ptr<Camera> newCamera)
 	{ 
 		m_currentScene->RegisterCamera(cameraType, newCamera); 
 	}
 
 
-	void SceneManager::AddTexture(std::shared_ptr<gr::Texture>& newTexture)
+	void SceneManager::AddTexture(shared_ptr<gr::Texture>& newTexture)
 	{
 		if (newTexture == nullptr)
 		{
@@ -319,7 +318,7 @@ namespace SaberEngine
 		}
 
 		// Check if the texture already exists:
-		unordered_map<string, std::shared_ptr<gr::Texture>>::const_iterator texturePosition =
+		unordered_map<string, shared_ptr<gr::Texture>>::const_iterator texturePosition =
 			m_textures.find(newTexture->GetTexturePath());
 		if (texturePosition != m_textures.end())
 		{
@@ -334,13 +333,13 @@ namespace SaberEngine
 	}
 	
 	
-	vector<std::shared_ptr<Light>> const& SceneManager::GetDeferredLights()
+	vector<shared_ptr<Light>> const& SceneManager::GetDeferredLights()
 	{
 		return m_currentScene->GetDeferredLights();
 	}
 
 
-	std::shared_ptr<Skybox> SceneManager::GetSkybox()
+	shared_ptr<Skybox> SceneManager::GetSkybox()
 	{ 
 		return m_currentScene->m_skybox; 
 	}
@@ -352,7 +351,7 @@ namespace SaberEngine
 	}
 
 
-	void SceneManager::AddGameObject(std::shared_ptr<GameObject> newGameObject)
+	void SceneManager::AddGameObject(shared_ptr<GameObject> newGameObject)
 	{
 		m_currentScene->m_gameObjects.push_back(newGameObject);
 
@@ -417,7 +416,7 @@ namespace SaberEngine
 	}
 
 
-	void SceneManager::AddMaterial(std::shared_ptr<Material>& newMaterial)
+	void SceneManager::AddMaterial(shared_ptr<Material>& newMaterial)
 	{
 		if (newMaterial == nullptr)
 		{
@@ -453,9 +452,9 @@ namespace SaberEngine
 		{
 			for (int j = 0; j < (int)m_currentScene->m_renderables.at(i)->ViewMeshes()->size(); j++)
 			{
-				std::shared_ptr<gr::Mesh> viewMesh = m_currentScene->m_renderables.at(i)->ViewMeshes()->at(j);
+				shared_ptr<gr::Mesh> viewMesh = m_currentScene->m_renderables.at(i)->ViewMeshes()->at(j);
 
-				std::shared_ptr<Material> meshMaterial = viewMesh->MeshMaterial();
+				shared_ptr<Material> meshMaterial = viewMesh->MeshMaterial();
 				if (meshMaterial == nullptr)
 				{
 					LOG_ERROR("AssembleMaterialMeshLists() is skipping a mesh with NULL material pointer!");
@@ -467,7 +466,7 @@ namespace SaberEngine
 					if (result == m_materialMeshLists.end())
 					{
 						// Create a new entry, containing a vector with our object
-						m_materialMeshLists[meshMaterial->Name()] = vector<std::shared_ptr<gr::Mesh>>{viewMesh};
+						m_materialMeshLists[meshMaterial->Name()] = vector<shared_ptr<gr::Mesh>>{viewMesh};
 					}
 					else
 					{
@@ -482,7 +481,7 @@ namespace SaberEngine
 	}
 
 
-	std::shared_ptr<gr::Texture> SaberEngine::SceneManager::FindLoadTextureByPath(
+	shared_ptr<gr::Texture> SaberEngine::SceneManager::FindLoadTextureByPath(
 		string texturePath,
 		Texture::TextureColorSpace colorSpace,
 		bool loadIfNotFound /*= true*/)
@@ -490,7 +489,7 @@ namespace SaberEngine
 		// NOTE: Potential bug here: Since we store textureUnit per-texture, we can only share textures that live in the
 		// same slot. TODO: Move texture units into the Material?
 
-		unordered_map<string, std::shared_ptr<gr::Texture>>::const_iterator texturePosition = m_textures.find(texturePath);
+		unordered_map<string, shared_ptr<gr::Texture>>::const_iterator texturePosition = m_textures.find(texturePath);
 		if (texturePosition != m_textures.end())
 		{
 			LOG("Texture at path " + texturePath + " has already been loaded");
@@ -500,7 +499,7 @@ namespace SaberEngine
 		// If we've made it this far, load the texture
 		if (loadIfNotFound)
 		{
-			std::shared_ptr<gr::Texture> result(nullptr);
+			shared_ptr<gr::Texture> result(nullptr);
 			bool didLoad = Texture::LoadTextureFileFromPath(result, texturePath, colorSpace, false);
 			if (didLoad)
 			{
@@ -540,7 +539,7 @@ namespace SaberEngine
 				#endif
 
 				// Create a material using the error shader, for now:
-				std::shared_ptr<Material> newMaterial = std::make_shared<Material>(matName, std::shared_ptr<Shader>(nullptr));
+				shared_ptr<Material> newMaterial = std::make_shared<Material>(matName, shared_ptr<Shader>(nullptr));
 				
 				// Extract textures, and add them to the material:
 
@@ -564,7 +563,7 @@ namespace SaberEngine
 				// Extract material's textures:
 				LOG("Importing albedo + transparency texture (RGB+A) from material's diffuse/color slot");
 
-				std::shared_ptr<gr::Texture> diffuseTexture = 
+				shared_ptr<gr::Texture> diffuseTexture = 
 					ExtractLoadTextureFromAiMaterial(aiTextureType_DIFFUSE, scene->mMaterials[currentMaterial], sceneName);
 				if (diffuseTexture)
 				{
@@ -579,11 +578,11 @@ namespace SaberEngine
 				}
 				else
 				{
-					newMaterial->AddShaderKeyword(Shader::SHADER_KEYWORDS[NO_ALBEDO_TEXTURE]);
+					newMaterial->AddShaderKeyword(Shader::k_ShaderKeywords[Shader::ShaderKeywordIndex::NoAlbedoTex]);
 				}
 
 				LOG("Importing normal map texture (RGB) from material's bump slot");
-				std::shared_ptr<gr::Texture> normalTexture =
+				shared_ptr<gr::Texture> normalTexture =
 					ExtractLoadTextureFromAiMaterial(aiTextureType_NORMALS, scene->mMaterials[currentMaterial], sceneName);
 
 				if (normalTexture)
@@ -600,13 +599,13 @@ namespace SaberEngine
 					// NOTE: This NEVER gets hit, since ExtractLoadTextureFromAiMaterial() will always assign a default 
 					// 1x1 normal texture.... 
 					// TODO: handle this more elegantly
-					newMaterial->AddShaderKeyword(Shader::SHADER_KEYWORDS[NO_NORMAL_TEXTURE]);
+					newMaterial->AddShaderKeyword(Shader::k_ShaderKeywords[Shader::ShaderKeywordIndex::NoNormalTex]);
 				}
 				
 
 				LOG("Importing emissive map texture (RGB) from material's incandescence slot");
 
-				std::shared_ptr<gr::Texture>  emissiveTexture = 
+				shared_ptr<gr::Texture>  emissiveTexture = 
 					ExtractLoadTextureFromAiMaterial(aiTextureType_EMISSIVE, scene->mMaterials[currentMaterial], sceneName);
 				if (emissiveTexture)
 				{
@@ -620,12 +619,12 @@ namespace SaberEngine
 				}
 				else
 				{
-					newMaterial->AddShaderKeyword(Shader::SHADER_KEYWORDS[NO_EMISSIVE_TEXTURE]);
+					newMaterial->AddShaderKeyword(Shader::k_ShaderKeywords[Shader::ShaderKeywordIndex::NoEmissiveTex]);
 				}
 
 				LOG("Importing roughness, metalic, & AO textures (R+G+B) from material's specular slot");
 
-				std::shared_ptr<gr::Texture> RMAO = 
+				shared_ptr<gr::Texture> RMAO = 
 					ExtractLoadTextureFromAiMaterial(aiTextureType_SPECULAR, scene->mMaterials[currentMaterial], sceneName);
 				if (RMAO)
 				{
@@ -638,7 +637,7 @@ namespace SaberEngine
 				}
 				else
 				{
-					newMaterial->AddShaderKeyword(Shader::SHADER_KEYWORDS[NO_RMAO_TEXTURE]);
+					newMaterial->AddShaderKeyword(Shader::k_ShaderKeywords[Shader::ShaderKeywordIndex::NoRMAOTex]);
 				}
 
 
@@ -687,7 +686,7 @@ namespace SaberEngine
 				}
 				else
 				{
-					newMaterial->AddShaderKeyword(Shader::SHADER_KEYWORDS[NO_COSINE_POWER]);
+					newMaterial->AddShaderKeyword(Shader::k_ShaderKeywords[Shader::ShaderKeywordIndex::NoCosinePower]);
 
 					#if defined(DEBUG_SCENEMANAGER_SHADER_LOGGING)
 						LOG_WARNING("Could not find material \"Cosine Power\" slot");
@@ -709,9 +708,9 @@ namespace SaberEngine
 	}
 
 
-	std::shared_ptr<gr::Texture> SaberEngine::SceneManager::ExtractLoadTextureFromAiMaterial(aiTextureType textureType, aiMaterial* material, string sceneName)
+	shared_ptr<gr::Texture> SaberEngine::SceneManager::ExtractLoadTextureFromAiMaterial(aiTextureType textureType, aiMaterial* material, string sceneName)
 	{
-		std::shared_ptr<gr::Texture> newTexture(nullptr);
+		shared_ptr<gr::Texture> newTexture(nullptr);
 		Texture::TextureColorSpace colorSpace = Texture::TextureColorSpace::Unknown;
 		Texture::TextureFormat format = Texture::TextureFormat::Invalid;
 	
@@ -876,7 +875,7 @@ namespace SaberEngine
 					texParams.m_texColorSpace = colorSpace;
 					texParams.m_texFormat = format;
 
-					newTexture = std::shared_ptr<gr::Texture>(new gr::Texture(texParams));
+					newTexture = shared_ptr<gr::Texture>(new gr::Texture(texParams));
 
 					AddTexture(newTexture);	
 				}
@@ -920,7 +919,7 @@ namespace SaberEngine
 	}
 
 
-	std::shared_ptr<gr::Texture> SceneManager::FindTextureByNameInAiMaterial(string nameSubstring, aiMaterial* material, string sceneName)
+	shared_ptr<gr::Texture> SceneManager::FindTextureByNameInAiMaterial(string nameSubstring, aiMaterial* material, string sceneName)
 	{
 		std::transform(nameSubstring.begin(), nameSubstring.end(), nameSubstring.begin(), ::tolower);
 
@@ -1154,9 +1153,9 @@ namespace SaberEngine
 					}
 				}
 
-				std::shared_ptr<gr::Mesh> newMesh = std::make_shared<gr::Mesh>(meshName, vertices, indices, GetMaterial(materialName));
+				shared_ptr<gr::Mesh> newMesh = std::make_shared<gr::Mesh>(meshName, vertices, indices, GetMaterial(materialName));
 
-				std::shared_ptr<GameObject> gameObject		= FindCreateGameObjectParents(scene, currentNode->mParent);
+				shared_ptr<GameObject> gameObject		= FindCreateGameObjectParents(scene, currentNode->mParent);
 
 				Transform* targetTransform	= nullptr;
 
@@ -1208,7 +1207,7 @@ namespace SaberEngine
 	}
 
 
-	std::shared_ptr<GameObject> SaberEngine::SceneManager::FindCreateGameObjectParents(aiScene const* scene, aiNode* parent)
+	shared_ptr<GameObject> SaberEngine::SceneManager::FindCreateGameObjectParents(aiScene const* scene, aiNode* parent)
 	{
 		if (parent == nullptr || parent == scene->mRootNode)
 		{
@@ -1244,12 +1243,12 @@ namespace SaberEngine
 		}
 
 		// Otherwise, create the heirarchy
-		std::shared_ptr<GameObject> newGameObject = std::make_shared<GameObject>(parentName);
+		shared_ptr<GameObject> newGameObject = std::make_shared<GameObject>(parentName);
 		InitializeTransformValues(parent->mTransformation, newGameObject->GetTransform());
 
 		AddGameObject(newGameObject);
 
-		std::shared_ptr<GameObject> nextParent = FindCreateGameObjectParents(scene, parent->mParent);
+		shared_ptr<GameObject> nextParent = FindCreateGameObjectParents(scene, parent->mParent);
 		if (nextParent)
 		{
 			#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
@@ -1429,7 +1428,7 @@ namespace SaberEngine
 						scene->mLights[i]->mColorDiffuse.g, 
 						scene->mLights[i]->mColorDiffuse.b);
 
-					std::shared_ptr<Light> keyLight = std::make_shared<Light>
+					shared_ptr<Light> keyLight = std::make_shared<Light>
 					(
 						lightName, 
 						LIGHT_DIRECTIONAL, 
@@ -1457,7 +1456,7 @@ namespace SaberEngine
 					shadowCamConfig.m_orthoTop			= transformedBounds.yMax();
 
 					// TEMP: We assume the key light will ALWAYS have a shadow
-					std::shared_ptr<ShadowMap> keyLightShadowMap = std::make_shared<ShadowMap> 
+					shared_ptr<ShadowMap> keyLightShadowMap = std::make_shared<ShadowMap> 
 					(
 						lightName,
 						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowMapWidth"),
@@ -1573,7 +1572,7 @@ namespace SaberEngine
 
 				// Get ready to compute point light radius, if required:
 				float radius				= 1.0f;
-				std::shared_ptr<ShadowMap> cubeShadowMap	= nullptr;
+				shared_ptr<ShadowMap> cubeShadowMap	= nullptr;
 
 				// Extract metadata:
 				aiNode* lightNode = scene->mRootNode->FindNode(scene->mLights[i]->mName.C_Str());
@@ -1624,7 +1623,7 @@ namespace SaberEngine
 				}		
 
 				// Create the light:
-				std::shared_ptr<Light> pointLight = nullptr;
+				shared_ptr<Light> pointLight = nullptr;
 				if (pointType == LIGHT_POINT)
 				{
 					pointLight = std::make_shared<Light>(
@@ -1695,7 +1694,7 @@ namespace SaberEngine
 						// Combine the parent and child transforms	
 						combinedTransform				= combinedTransform * lightNode->mTransformation; 
 
-						std::shared_ptr<GameObject> gameObject			= FindCreateGameObjectParents(scene, lightNode->mParent);
+						shared_ptr<GameObject> gameObject			= FindCreateGameObjectParents(scene, lightNode->mParent);
 
 						Transform* targetTransform		= nullptr;
 
@@ -1805,7 +1804,7 @@ namespace SaberEngine
 
 		string cameraName;
 		CameraConfig newCamConfig;
-		std::shared_ptr<Camera> newCamera = nullptr;
+		shared_ptr<Camera> newCamera = nullptr;
 		int numCameras = 0;
 
 

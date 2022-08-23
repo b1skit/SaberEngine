@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-using std::string;
 
 #include "Light.h"	// Base class
 #include "TextureTarget.h"
@@ -24,7 +23,7 @@ namespace SaberEngine
 	class ImageBasedLight : public Light
 	{
 	public:
-		ImageBasedLight(string lightName, string relativeHDRPath);
+		ImageBasedLight(std::string lightName, std::string relativeHDRPath);
 
 		~ImageBasedLight();
 
@@ -44,8 +43,8 @@ namespace SaberEngine
 		// iblType controls the filtering (IEM/PMREM/None) applied to the converted cubemap 
 		// Returns an array of 6 textures
 		static std::shared_ptr<gr::Texture> ConvertEquirectangularToCubemap(
-			string sceneName, 
-			string relativeHDRPath, 
+			std::string sceneName, 
+			std::string relativeHDRPath, 
 			int xRes, 
 			int yRes, 
 			IBL_TYPE iblType = RAW_HDR);

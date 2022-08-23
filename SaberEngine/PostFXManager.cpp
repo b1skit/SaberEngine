@@ -9,6 +9,9 @@
 #include "Camera.h"
 using gr::Material;
 using gr::Texture;
+using gr::Shader;
+using std::shared_ptr;
+using std::make_shared;
 
 
 namespace SaberEngine
@@ -90,25 +93,30 @@ namespace SaberEngine
 		vector<string> horizontalBlurKeywords(1,		"BLUR_SHADER_HORIZONTAL");
 		vector<string> verticalBlurKeywords(1,			"BLUR_SHADER_VERTICAL");
 		
-		m_blurShaders[BLUR_SHADER_LUMINANCE_THRESHOLD] = Shader::CreateShader(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShader"), &luminanceThresholdKeywords);
+		m_blurShaders[BLUR_SHADER_LUMINANCE_THRESHOLD] = make_shared<Shader>(
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShader"));
+		m_blurShaders[BLUR_SHADER_LUMINANCE_THRESHOLD]->Create(&luminanceThresholdKeywords);
 
-		m_blurShaders[BLUR_SHADER_HORIZONTAL] = Shader::CreateShader(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShader"), &horizontalBlurKeywords);
+		m_blurShaders[BLUR_SHADER_HORIZONTAL] = make_shared<Shader>(
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShader"));
+		m_blurShaders[BLUR_SHADER_HORIZONTAL]->Create(&horizontalBlurKeywords);
 
-		m_blurShaders[BLUR_SHADER_VERTICAL]	= Shader::CreateShader(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShader"), &verticalBlurKeywords);
+		m_blurShaders[BLUR_SHADER_VERTICAL]	= make_shared<Shader>(
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShader"));
+		m_blurShaders[BLUR_SHADER_VERTICAL]->Create(&verticalBlurKeywords);
 
-		m_blitShader = Shader::CreateShader(
+		m_blitShader = make_shared<Shader>(
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShader"));
+		m_blitShader->Create();
 
-		m_toneMapShader	= Shader::CreateShader(
+		m_toneMapShader	= make_shared<Shader>(
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("toneMapShader"));
+		m_toneMapShader->Create();
 
 
 		// Upload Shader parameters:
-		m_toneMapShader->UploadUniform(
-			"exposure", &CoreEngine::GetSceneManager()->GetMainCamera()->Exposure(), UNIFORM_Float);
+		m_toneMapShader->SetUniform(
+			"exposure", &CoreEngine::GetSceneManager()->GetMainCamera()->Exposure(), platform::Shader::UNIFORM_TYPE::Float);
 
 		// Upload the texel size for the SMALLEST pingpong textures:
 		
@@ -116,8 +124,13 @@ namespace SaberEngine
 		const vec4 smallestTexelSize = 
 			m_pingPongStageTargetSets[NUM_DOWN_SAMPLES].ColorTarget(0).GetTexture()->GetTexelDimenions();
 
-		m_blurShaders[BLUR_SHADER_HORIZONTAL]->UploadUniform("texelSize", &smallestTexelSize.x, UNIFORM_Vec4fv);
-		m_blurShaders[BLUR_SHADER_VERTICAL]->UploadUniform("texelSize", &smallestTexelSize.x, UNIFORM_Vec4fv);
+		m_blurShaders[BLUR_SHADER_HORIZONTAL]->SetUniform("texelSize", 
+			&smallestTexelSize.x, 
+			platform::Shader::UNIFORM_TYPE::Vec4f);
+
+		m_blurShaders[BLUR_SHADER_VERTICAL]->SetUniform("texelSize", 
+			&smallestTexelSize.x, 
+			platform::Shader::UNIFORM_TYPE::Vec4f);
 
 		// TODO: Use the RenderManager's instead of duplicating it here?
 		m_screenAlignedQuad = gr::meshfactory::CreateQuad

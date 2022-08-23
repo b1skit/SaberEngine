@@ -176,6 +176,8 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="EngineConfig.cpp" />
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="Shader_OpenGL.cpp" />
+    <ClCompile Include="Shader_Platform.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureTarget.cpp" />
     <ClCompile Include="ImageBasedLight.cpp" />
@@ -209,6 +211,8 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
   <ItemGroup>
     <ClInclude Include="Context_Platform.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Shader_OpenGL.h" />
+    <ClInclude Include="Shader_Platform.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureTarget.h" />
     <ClInclude Include="Mesh_OpenGL.h" />
@@ -268,8 +272,6 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <None Include="Shaders\glsl\depthShader.vert" />
     <None Include="Shaders\glsl\equilinearToCubemapBlitShader.frag" />
     <None Include="Shaders\glsl\equilinearToCubemapBlitShader.vert" />
-    <None Include="Shaders\glsl\errorShader.frag" />
-    <None Include="Shaders\glsl\errorShader.vert" />
     <None Include="Shaders\glsl\gBufferFillShader.frag" />
     <None Include="Shaders\glsl\gBufferFillShader.vert" />
     <None Include="Shaders\glsl\geometryDemoShader.frag" />

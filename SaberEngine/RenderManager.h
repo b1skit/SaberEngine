@@ -22,11 +22,11 @@ using glm::vec4;
 namespace gr
 {
 	class Mesh;
+	class Shader;
 }
 namespace SaberEngine
 {
 	class Camera;
-	class Shader;
 	class Light;
 	class Skybox;
 }
@@ -79,9 +79,9 @@ namespace SaberEngine
 		void RenderSkybox(std::shared_ptr<Skybox> skybox);
 
 		void BlitToScreen();
-		void BlitToScreen(std::shared_ptr<gr::Texture>& texture, std::shared_ptr<Shader> blitShader);
+		void BlitToScreen(std::shared_ptr<gr::Texture>& texture, std::shared_ptr<gr::Shader> blitShader);
 
-		void Blit(std::shared_ptr<gr::Texture> const& srcTex, gr::TextureTargetSet const& dstTargetSet, std::shared_ptr<Shader> shader);
+		void Blit(std::shared_ptr<gr::Texture> const& srcTex, gr::TextureTargetSet const& dstTargetSet, std::shared_ptr<gr::Shader> shader);
 
 
 		// Configuration:
@@ -92,7 +92,7 @@ namespace SaberEngine
 		
 		re::Context m_context;
 
-		std::shared_ptr<Shader> m_blitShader = nullptr;
+		std::shared_ptr<gr::Shader> m_blitShader = nullptr;
 
 		// Note: We store these as shared_ptr so we can instantiate them once the context has been created
 		std::shared_ptr<gr::TextureTargetSet> m_outputTargetSet = nullptr; // TODO: Pick a better name for this...

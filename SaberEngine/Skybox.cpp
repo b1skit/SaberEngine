@@ -5,6 +5,10 @@
 #include "ImageBasedLight.h"
 #include "Shader.h"
 #include "Texture.h"
+using gr::Texture;
+using gr::Shader;
+using std::shared_ptr;
+using std::make_shared;
 
 
 namespace SaberEngine
@@ -47,8 +51,9 @@ namespace SaberEngine
 
 
 		// Create a skybox shader, now that we have some sort of image loaded:
-		m_skyShader = Shader::CreateShader(
+		m_skyShader = make_shared<Shader>(
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("skyboxShaderName"));
+		m_skyShader->Create();
 
 		// Create a quad at furthest point in the depth buffer
 		m_skyMesh =	gr::meshfactory::CreateQuad

@@ -9,7 +9,7 @@
 using std::string;
 using std::shared_ptr;
 using std::vector;
-using SaberEngine::Shader;
+using gr::Shader;
 using gr::Texture;
 using SaberEngine::CoreEngine;
 
@@ -65,10 +65,6 @@ namespace gr
 	{
 		"MatProperty0",
 	};
-
-
-	Material::Material(string const& materialName, string const& shaderName, TextureSlot const& textureCount /*= Mat_Count*/) :
-		Material(materialName, Shader::CreateShader(shaderName, &m_shaderKeywords),	textureCount) {}
 
 
 	Material::Material(string const& materialName, shared_ptr<Shader> const& shader, TextureSlot const& textureCount /*= Mat_Count*/) :

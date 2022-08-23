@@ -19,6 +19,10 @@
 #include "TextureTarget_Platform.h"
 #include "TextureTarget_OpenGL.h"
 
+#include "Shader.h"
+#include "Shader_Platform.h"
+#include "Shader_OpenGL.h"
+
 
 namespace platform
 {
@@ -59,15 +63,18 @@ namespace platform
 
 			// Texture target:
 			
-
 			// Texture target set:
-			platform::TextureTargetSet::CreateColorTargets	= &opengl::TextureTargetSet::CreateColorTargets;
-			platform::TextureTargetSet::AttachColorTargets	= &opengl::TextureTargetSet::AttachColorTargets;
+			platform::TextureTargetSet::CreateColorTargets			= &opengl::TextureTargetSet::CreateColorTargets;
+			platform::TextureTargetSet::AttachColorTargets			= &opengl::TextureTargetSet::AttachColorTargets;
+			platform::TextureTargetSet::CreateDepthStencilTarget	= &opengl::TextureTargetSet::CreateDepthStencilTarget;
+			platform::TextureTargetSet::AttachDepthStencilTarget	= &opengl::TextureTargetSet::AttachDepthStencilTarget;
+			platform::TextureTargetSet::MaxColorTargets				= &opengl::TextureTargetSet::MaxColorTargets;
 
-			platform::TextureTargetSet::CreateDepthStencilTarget = &opengl::TextureTargetSet::CreateDepthStencilTarget;
-			platform::TextureTargetSet::AttachDepthStencilTarget = &opengl::TextureTargetSet::AttachDepthStencilTarget;
-
-			platform::TextureTargetSet::MaxColorTargets		= &opengl::TextureTargetSet::MaxColorTargets;
+			// Shader:
+			platform::Shader::Create		= &opengl::Shader::Create;
+			platform::Shader::Bind			= &opengl::Shader::Bind;
+			platform::Shader::SetUniform	= &opengl::Shader::SetUniform;
+			platform::Shader::Destroy		= &opengl::Shader::Destroy;
 
 			result = true;
 		}

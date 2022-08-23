@@ -7,6 +7,10 @@
 #include "Material.h"
 #include "Shader.h"
 using gr::Material;
+using gr::Texture;
+using gr::Shader;
+using std::shared_ptr;
+
 
 namespace SaberEngine
 {
@@ -143,7 +147,9 @@ namespace SaberEngine
 
 	void Camera::AttachGBuffer()
 	{
-		m_cameraShader = Shader::CreateShader(CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("gBufferFillShaderName"));
+		m_cameraShader = std::make_shared<gr::Shader>(
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("gBufferFillShaderName"));
+		m_cameraShader->Create();
 
 		// Create GBuffer color targets:
 		gr::Texture::TextureParams gBufferParams;

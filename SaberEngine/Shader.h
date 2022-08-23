@@ -1,94 +1,77 @@
 #pragma once
 
 #include <string>
-using std::string;
 #include <vector>
-using std::vector;
 #include <memory>
 
-#include <GL/glew.h>
+#include "Shader_Platform.h"
 
 
-namespace SaberEngine
+namespace platform
 {
-	// Used for uploading shader uniforms
-	enum UNIFORM_TYPE
-	{
-		UNIFORM_Matrix4fv,		// glUniformMatrix4fv
-		UNIFORM_Matrix3fv,		// glUniformMatrix3fv
-		UNIFORM_Vec3fv,			// glUniform3fv
-		UNIFORM_Vec4fv,			// glUniform4fv
-		UNIFORM_Float,			// glUniform1f
-		UNIFORM_Int,			// glUniform1i
-	};
+	bool RegisterPlatformFunctions();
+}
 
-
-	// Shader #define keywords
-	enum SHADER_KEYWORDS
-	{
-		NO_ALBEDO_TEXTURE,
-		NO_NORMAL_TEXTURE,
-		NO_EMISSIVE_TEXTURE,
-		NO_RMAO_TEXTURE, 
-		NO_COSINE_POWER,
-
-		SHADER_KEYWORD_COUNT	// RESERVED: How many shader keywords we have
-	}; // Note: If new enums are added, don't forget to update Shader::k_MatTexNames[] as well!
-
-
+namespace gr
+{
 	class Shader
 	{
 	public:
-		Shader() {} // Do nothing
-		Shader(const string shaderName, const GLuint shaderReference);
-		Shader(const Shader& existingShader);
+		// Shader #define keywords
+		enum ShaderKeywordIndex
+		{
+			NoAlbedoTex,
+			NoNormalTex,
+			NoEmissiveTex,
+			NoRMAOTex,
+			NoCosinePower,
 
-		~Shader();
+			ShaderKeyword_Count
+		}; // Note: If new enums are added, don't forget to update Shader::k_MatTexNames as well
+		
+		const static std::vector<std::string> k_ShaderKeywords;
+
+
+	public:
+		Shader(std::string const& shaderName);
+		~Shader() { Destroy(); }
+
+		Shader() = delete;
+		Shader(Shader const&) = delete;
+		Shader(Shader&&) = delete;
+		Shader& operator=(Shader&) = delete;
+
+		void Create(std::vector<std::string> const* shaderKeywords);
+		void Create();
+		void Bind(bool doBind);
 
 		void Destroy();
 
 		// Getters/Setters:
-		inline string const& Name()						{ return m_shaderName; }
-		inline GLuint const& ShaderReference() const	{ return m_shaderReference; }
+		inline std::string const& Name() { return m_shaderName; }
 
-		void UploadUniform(GLchar const* uniformName, void const* value, UNIFORM_TYPE const& type, int count = 1);
+		// todo: remove default value
+		void SetUniform(
+			char const* uniformName,
+			void const* value,
+			platform::Shader::UNIFORM_TYPE const& type, 
+			int count = 1);
 
-		void Bind(bool doBind);
-
-		// Static functions:
-		//------------------
-		static std::shared_ptr<Shader> CreateShader(string shaderFileName, vector<string> const*  shaderKeywords = nullptr);
-
-
-		// Static members:
-		const static string SHADER_KEYWORDS[SHADER_KEYWORD_COUNT];
-
-	protected:
+		platform::Shader::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
+		platform::Shader::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
 
 
 	private:
-		string m_shaderName		= "uninitializedShader"; // Extensionless filename of the shader. Will have ".vert" / ".frag" appended
-		GLuint m_shaderReference	= 0;
+		// Extensionless shader filename. Will have .vert/.geom.frag appended (thus all shader text must have the
+		// same extensionless name)
+		std::string m_shaderName;
+
+		std::unique_ptr<platform::Shader::PlatformParams> m_platformParams;
 
 
-		// Private static functions:
-		//--------------------------
-		
-		// Helper function: Attempts to load and return the error shader. Returns nullptr if the error shader can't be loaded
-		static std::shared_ptr<Shader> ReturnErrorShader(string shaderName);
-
-		// Helper function: Loads the contents of a file named "filepath" within the shaders directory
-		static string	LoadShaderFile(const string& filepath);
-
-		// Helper function: Processes #include directives, loading included files from within the shaders directory
-		static void		LoadIncludes(string& shaderText);
-
-		// Helper function: Inserts #define statements into shader text
-		static void		InsertDefines(string& shaderText, vector<string> const* shaderKeywords);
-
-		static GLuint	CreateGLShaderObject(const string& text, GLenum shaderType);
-		static bool		CheckShaderError(GLuint shader, GLuint flag, bool isProgram);
-
+		// Friends:
+		friend bool platform::RegisterPlatformFunctions();
+		friend void platform::Shader::PlatformParams::CreatePlatformParams(gr::Shader&);
 	};
 }
 
