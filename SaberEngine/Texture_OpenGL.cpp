@@ -309,43 +309,39 @@ namespace opengl
 			}
 
 			// UV wrap mode:
-			glTexParameteri(params->m_texTarget, GL_TEXTURE_WRAP_S, params->m_textureWrapS); // u
-			glTexParameteri(params->m_texTarget, GL_TEXTURE_WRAP_T, params->m_textureWrapT); // v
-			glTexParameteri(params->m_texTarget, GL_TEXTURE_WRAP_R, params->m_textureWrapR);
+			glTextureParameteri(params->m_textureID, GL_TEXTURE_WRAP_S, params->m_textureWrapS); // u
+			glTextureParameteri(params->m_textureID, GL_TEXTURE_WRAP_T, params->m_textureWrapT); // v
+			glTextureParameteri(params->m_textureID, GL_TEXTURE_WRAP_R, params->m_textureWrapR);
 
 			// Mip map min/maximizing:
-			glTexParameteri(params->m_texTarget, GL_TEXTURE_MIN_FILTER, params->m_textureMinFilter);
-			glTexParameteri(params->m_texTarget, GL_TEXTURE_MAG_FILTER, params->m_textureMaxFilter);
+			glTextureParameteri(params->m_textureID, GL_TEXTURE_MIN_FILTER, params->m_textureMinFilter);
+			glTextureParameteri(params->m_textureID, GL_TEXTURE_MAG_FILTER, params->m_textureMaxFilter);
 		}
 		else
 		{
 			glBindTexture(params->m_texTarget, params->m_textureID);
 		}
 
+		// Configure the Texture sampler:
+		glBindSampler(textureUnit, params->m_samplerID);
+		if (!glIsSampler(params->m_samplerID))
+		{
+			glGenSamplers(1, &params->m_samplerID);
+			glBindSampler(textureUnit, params->m_samplerID);
+
+			assert("Texture sampler creation failed" && glIsSampler(params->m_samplerID));
+		}
+
+		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_S, params->m_textureWrapS);
+		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_T, params->m_textureWrapT);
+
+		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MIN_FILTER, params->m_textureMinFilter);
+		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MAG_FILTER, params->m_textureMaxFilter);
+
 		gr::Texture::TextureParams const& texParams = texture.GetTextureParams();
 		// Ensure our texture is correctly configured:
 		assert(texParams.m_faces == 1 ||
 			(texParams.m_faces == 6 && texParams.m_texDimension == gr::Texture::TextureDimension::TextureCubeMap));
-
-		if (texParams.m_texUse == gr::Texture::TextureUse::Color)
-		{
-			// Configure the Texture sampler:
-			glBindSampler(textureUnit, params->m_samplerID);
-			if (!glIsSampler(params->m_samplerID))
-			{
-				glGenSamplers(1, &params->m_samplerID);
-				glBindSampler(textureUnit, params->m_samplerID);
-
-				assert("Texture sampler creation failed" && glIsSampler(params->m_samplerID));
-			}
-
-			glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_S, params->m_textureWrapS);
-			glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_T, params->m_textureWrapT);
-
-			glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MIN_FILTER, params->m_textureMinFilter);
-			glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MAG_FILTER, params->m_textureMaxFilter);
-
-		}
 
 		// Buffer the texture data:
 		const uint32_t width = texture.Width();
