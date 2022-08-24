@@ -262,18 +262,14 @@ namespace opengl
 		opengl::Texture::PlatformParams const* const params =
 			dynamic_cast<opengl::Texture::PlatformParams const*>(texture.GetPlatformParams());
 
-		// Activate the specified texture unit. Subsequent bind calls will affect this unit
-		// TODO: Can this be handled externally to the texture????????
-		glActiveTexture(GL_TEXTURE0 + textureUnit);
-
 		if (doBind)
 		{
-			glBindTexture(params->m_texTarget, params->m_textureID);
+			glBindTextures(textureUnit, 1, &params->m_textureID);
 			glBindSampler(textureUnit, params->m_samplerID);
 		}
 		else
 		{
-			glBindTexture(params->m_texTarget, 0);
+			glBindTextures(textureUnit, 1, 0);
 			glBindSampler(textureUnit, 0);
 		}
 	}
@@ -294,52 +290,24 @@ namespace opengl
 		// If the texture hasn't been created, create a new name:
 		if (!glIsTexture(params->m_textureID))
 		{
+			// Generate textureID names. Note: We must call glBindTexture immediately after to associate the name with 
+			// a texture. It will not have the correct dimensionality until this is done
 			glGenTextures(1, &params->m_textureID);
-
 			glBindTexture(params->m_texTarget, params->m_textureID);
 
 			if (glIsTexture(params->m_textureID) != GL_TRUE)
 			{
 				LOG_ERROR("OpenGL failed to generate new texture name. Texture buffering failed");
 				assert("OpenGL failed to generate new texture name. Texture buffering failed" && false);
-
-				glBindTexture(params->m_texTarget, 0);
-
-				return;
 			}
-
-			// UV wrap mode:
-			glTextureParameteri(params->m_textureID, GL_TEXTURE_WRAP_S, params->m_textureWrapS); // u
-			glTextureParameteri(params->m_textureID, GL_TEXTURE_WRAP_T, params->m_textureWrapT); // v
-			glTextureParameteri(params->m_textureID, GL_TEXTURE_WRAP_R, params->m_textureWrapR);
-
-			// Mip map min/maximizing:
-			glTextureParameteri(params->m_textureID, GL_TEXTURE_MIN_FILTER, params->m_textureMinFilter);
-			glTextureParameteri(params->m_textureID, GL_TEXTURE_MAG_FILTER, params->m_textureMaxFilter);
 		}
 		else
 		{
-			glBindTexture(params->m_texTarget, params->m_textureID);
+			glBindTextures(textureUnit, 1, &params->m_textureID);
 		}
 
-		// Configure the Texture sampler:
-		glBindSampler(textureUnit, params->m_samplerID);
-		if (!glIsSampler(params->m_samplerID))
-		{
-			glGenSamplers(1, &params->m_samplerID);
-			glBindSampler(textureUnit, params->m_samplerID);
-
-			assert("Texture sampler creation failed" && glIsSampler(params->m_samplerID));
-		}
-
-		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_S, params->m_textureWrapS);
-		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_T, params->m_textureWrapT);
-
-		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MIN_FILTER, params->m_textureMinFilter);
-		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MAG_FILTER, params->m_textureMaxFilter);
-
-		gr::Texture::TextureParams const& texParams = texture.GetTextureParams();
 		// Ensure our texture is correctly configured:
+		gr::Texture::TextureParams const& texParams = texture.GetTextureParams();
 		assert(texParams.m_faces == 1 ||
 			(texParams.m_faces == 6 && texParams.m_texDimension == gr::Texture::TextureDimension::TextureCubeMap));
 
@@ -392,6 +360,31 @@ namespace opengl
 
 		// Create mips:
 		opengl::Texture::GenerateMipMaps(texture);
+
+
+
+		// Configure the Texture sampler:
+		if (!glIsSampler(params->m_samplerID))
+		{
+			glGenSamplers(1, &params->m_samplerID);
+			glBindSampler(textureUnit, params->m_samplerID);
+
+			LOG_ERROR("Texture sampler creation failed");
+			assert("Texture sampler creation failed" && glIsSampler(params->m_samplerID));
+		}
+		else
+		{
+			glBindSampler(textureUnit, params->m_samplerID);
+		}
+
+		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_S, params->m_textureWrapS);
+		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_T, params->m_textureWrapT);
+		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_R, params->m_textureWrapR);
+
+		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MIN_FILTER, params->m_textureMinFilter);
+		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MAG_FILTER, params->m_textureMaxFilter);
+
+
 
 		// Note: We leave the texture and samplers bound
 	}
