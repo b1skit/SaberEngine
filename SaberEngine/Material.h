@@ -3,9 +3,12 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <unordered_map>
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
+
+#include "Sampler.h"
 
 
 // Predeclarations:
@@ -15,11 +18,39 @@ namespace gr
 	class Shader;
 }
 
-
 namespace gr
 {
 	class Material
 	{
+	public:
+		// Material definitions:
+		struct TextureSlotDesc
+		{
+			std::shared_ptr<gr::Texture> m_texture = nullptr;
+			std::shared_ptr<gr::Sampler const> m_samplerObject = nullptr; // eg. Sampler object from the sampler library
+			std::string m_shaderSamplerName;
+		};
+
+		struct PropertyDesc
+		{
+			std::string m_propertyName;
+			glm::vec4 m_property;
+		};
+
+		struct MaterialDefinition
+		{
+			std::string m_definitionName = "uninitializeddMaterialDefinition";
+			std::vector<TextureSlotDesc> m_textureSlots; // Slot index == shader binding index
+			std::vector<PropertyDesc> m_propertySlots;
+			std::shared_ptr<gr::Shader> m_shader = nullptr;
+			
+		};
+
+		static std::shared_ptr<MaterialDefinition const> GetMaterialDefinition(std::string const& matName);
+
+	private:
+		static std::unique_ptr<std::unordered_map<std::string, std::shared_ptr<Material::MaterialDefinition>>> m_materialLibrary;
+
 	public:
 		enum TextureSlot
 		{
@@ -40,7 +71,7 @@ namespace gr
 			GBufferDepth	= 6,	// Make this the last element
 			GBuffer_Count = 7,
 
-			// Additional generic texture samplers:
+			// Generic texture samplers:
 			Tex0 = 0,
 			Tex1 = 1,
 			Tex2 = 2,
@@ -53,12 +84,12 @@ namespace gr
 			Tex_Count = 9,
 
 			// Depth map texture samplers:
-			Depth0 = 11,
+			Depth0 = 10,
 			Depth_Count = 1,
 
 			// Cube map samplers:
-			CubeMap0 = 20,
-			CubeMap1 = 26,
+			CubeMap0 = 11,
+			CubeMap1 = 12,
 			CubeMap_Count = 2,
 
 		}; // Note: If new enums are added, don't forget to update Material::k_GBufferTexNames as well
@@ -74,26 +105,16 @@ namespace gr
 
 
 	public:
-		// Shader texture target sampler names:
-		const static std::vector<std::string> k_MatTexNames;
-		const static std::vector<std::string> k_GBufferTexNames;
-		const static std::vector<std::string> k_GenericTexNames;
-		const static std::vector<std::string> k_DepthTexNames;
-		const static std::vector<std::string> k_CubeMapTexNames;
-		const static std::vector<std::string> k_MatPropNames;
-
-
-	public:
-		Material(std::string const& materialName, std::shared_ptr<gr::Shader> const& shader, TextureSlot const& textureCount = Mat_Count);
-		Material() = delete;
-
-		Material(Material const&) = default;
-		Material(Material&&) = default;
-
-		Material& operator=(Material const&) = default;
-
+		Material(std::string const& name, std::shared_ptr<MaterialDefinition const> matDefinition);
 		~Material() { Destroy(); }
+		
 		void Destroy();
+
+		Material()							= delete;
+
+		Material(Material const&)			= default;
+		Material(Material&&)				= default;
+		Material& operator=(Material const&) = default;
 
 
 		// Getters/Setters:
@@ -102,30 +123,27 @@ namespace gr
 		inline std::shared_ptr<gr::Shader>& GetShader()	{ return m_shader; }
 		inline std::shared_ptr<gr::Shader> const& GetShader() const { return m_shader; }
 
-		inline glm::vec4& Property(MATERIAL_PROPERTY_INDEX index) { return m_properties[index]; }
-		inline glm::vec4 const& Property(MATERIAL_PROPERTY_INDEX index) const { return m_properties[index]; }
+		inline glm::vec4& Property(MATERIAL_PROPERTY_INDEX index) { return m_properties[index].m_property; }
+		inline glm::vec4 const& Property(MATERIAL_PROPERTY_INDEX index) const { return m_properties[index].m_property; }
 
-		std::shared_ptr<gr::Texture>& GetTexture(TextureSlot textureType) { return m_textures[textureType]; }
-		std::shared_ptr<gr::Texture>const& GetTexture(TextureSlot textureType) const { return m_textures[textureType]; }
+		std::shared_ptr<gr::Texture>& GetTexture(uint32_t slotIndex) { return m_texSlots[slotIndex].m_texture; }
+		std::shared_ptr<gr::Texture>const& GetTexture(uint32_t slotIndex) const { return m_texSlots[slotIndex].m_texture; }
 
-		inline size_t const& NumTextureSlots() { return m_textures.size(); }
+		std::shared_ptr<gr::Texture>& GetTexture(std::string const& samplerName);
+		std::shared_ptr<gr::Texture>const& GetTexture(std::string const& samplerName) const;
 
-		std::vector<std::string> const& ShaderKeywords() const { return m_shaderKeywords; }
-		void AddShaderKeyword(std::string const& newKeyword);
-		
+		inline size_t const& NumTextureSlots() { return m_texSlots.size(); }
 
-		// TODO: Materials should specify the texture unit; we shouldn't need to specify textureUnit
-		// -> Deleting all Texture constructors etc ensures textures are unique w.r.t the GPU
-		// Bind operation should probably go through the material???
-		void BindAllTextures(int startingTextureUnit, bool doBind);
+		void BindToShader(std::shared_ptr<gr::Shader> shaderOverride);
 
 
 	private:
 		std::string m_name;	// Must be unique: Identifies this material
+		std::vector<TextureSlotDesc> m_texSlots;
+		std::unordered_map<std::string, uint32_t> m_namesToSlotIndex;
+		std::vector<PropertyDesc> m_properties; // Generic material properties
 		std::shared_ptr<gr::Shader> m_shader;
-		std::vector<std::shared_ptr<gr::Texture>> m_textures;		
-		std::vector<glm::vec4> m_properties; // Generic material properties
-		std::vector<std::string> m_shaderKeywords;
+		
 	};
 }
 

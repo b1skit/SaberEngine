@@ -12,6 +12,8 @@
 #include "CoreEngine.h"
 #include "BuildConfiguration.h"
 
+using std::string;
+using std::to_string;
 
 namespace opengl
 {
@@ -131,14 +133,17 @@ namespace opengl
 		}
 		
 		// Configure SDL before creating a window:
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+		const int glMajorVersion = 4;
+		const int glMinorVersion = 6;
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, glMajorVersion);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, glMinorVersion);
 
 		if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE) < 0)
 		{
+			const string error = string(SDL_GetError());
+			LOG_ERROR("Could not set context attribute: " + error);
 			assert("Could not set context attribute" && false);
-			/*std::string error = std::string(SDL_GetError());
-			assert(error.c_str() && false);*/
+			
 			return;
 		}
 
@@ -158,7 +163,7 @@ namespace opengl
 		//SDL_GL_SetSwapInterval(1);
 
 		// Create a window:
-		const std::string windowTitle = 
+		const string windowTitle = 
 			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("windowTitle");
 		const int xRes = SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
 		const int yRes = SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
@@ -175,18 +180,25 @@ namespace opengl
 		// Create an OpenGL context and make it current:
 		platformParams->m_glContext = SDL_GL_CreateContext(platformParams->m_glWindow);
 		assert("Could not create OpenGL context" && platformParams->m_glContext != NULL);
-		
+
 		if (SDL_GL_MakeCurrent(platformParams->m_glWindow, platformParams->m_glContext) < 0)
 		{
 			assert("Failed to make OpenGL context current" && false);
 			return;
 		}
+		
+		// Verify the context version:
+		int glMajorVersionCheck = 0;
+		int glMinorVersionCheck = 0;
+		glGetIntegerv(GL_MAJOR_VERSION, &glMajorVersionCheck);
+		glGetIntegerv(GL_MINOR_VERSION, &glMinorVersionCheck);
+		assert(glMajorVersion == glMajorVersionCheck && glMinorVersion == glMinorVersionCheck);
+		LOG("Using OpenGL version " + to_string(glMajorVersionCheck) + "." + to_string(glMinorVersionCheck));
 
 		// Initialize glew:
 		glewExperimental = GL_TRUE; // Expose OpenGL 3.x+ interfaces
 		GLenum glStatus = glewInit();
-		assert("glStatus not ok!" && glStatus == GLEW_OK);
-		
+		assert("glStatus not ok!" && glStatus == GLEW_OK);		
 
 		// Configure OpenGL logging:
 #if defined(DEBUG_LOG_OPENGL)		// Defined in BuildConfiguration.h
@@ -195,7 +207,7 @@ namespace opengl
 		glDebugMessageCallback(GLMessageCallback, 0);
 #endif
 
-		// Configure other OpenGL settings:
+		// Initialize other OpenGL settings:
 		glFrontFace(GL_CCW);				// Counter-clockwise vertex winding (OpenGL default)
 		glEnable(GL_DEPTH_TEST);			// Start with Z depth testing enabled
 		glDepthFunc(GL_LESS);				// Default is less
@@ -204,7 +216,7 @@ namespace opengl
 
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-		// Set the default buffer clear values:
+		// Set inital buffer clear values:
 		glClearColor(
 			GLclampf(platformParams->m_windowClearColor.r),
 			GLclampf(platformParams->m_windowClearColor.g),

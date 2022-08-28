@@ -11,11 +11,14 @@
 using std::vector;
 using std::shared_ptr;
 using std::string;
+using std::to_string;
+using gr::Texture;
+using gr::Sampler;
 
 
 namespace opengl
 {
-	void Shader::Create(gr::Shader& shader, std::vector<std::string> const* shaderKeywords)
+	void Shader::Create(gr::Shader& shader)
 	{
 		string const& shaderFileName = shader.Name();
 
@@ -104,7 +107,7 @@ namespace opengl
 		for (size_t i = 0; i < shaderFiles.size(); i++)
 		{
 			// Pre-process the shader text:
-			platform::Shader::InsertDefines(shaderFiles[i], shaderKeywords);
+			platform::Shader::InsertDefines(shaderFiles[i], &shader.ShaderKeywords());
 			platform::Shader::InsertIncludedFiles(shaderFiles[i]);
 
 			// Create and attach the shader object:
@@ -147,75 +150,87 @@ namespace opengl
 			dynamic_cast<opengl::Shader::PlatformParams* const>(shader.GetPlatformParams());
 		params->m_shaderReference = shaderReference;
 
+		// Populate the uniform locations
+		// Get the number of active uniforms found in the shader:
+		int numUniforms = 0;
+		glGetProgramiv(params->m_shaderReference, GL_ACTIVE_UNIFORMS, &numUniforms);
 
-		// Initialize sampler locations:
-		/*******************************/
-		shader.Bind(true);
+		// Get the max length of the active uniform names found in the shader:
+		int maxUniformNameLength = 0;
+		glGetProgramiv(params->m_shaderReference, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
 
-		// GBuffer input texture sampler locations:
-		for (int slotIndex = 0; slotIndex < gr::Material::Mat_Count; slotIndex++)
+		// Store sampler uniform locations. Later, we map these locations to map samplers to texture units (ie. w/glUniform1i)
+		int size = 0; // Size of the uniform variable; currently we just ignore this
+		GLenum type; // Data type of the uniform
+		GLchar* name = new GLchar[maxUniformNameLength]; // Uniform name, as described in the shader text
+		for (size_t i = 0; i < numUniforms; i++)
 		{
-			GLint samplerLocation = glGetUniformLocation(
-				shaderReference,
-				gr::Material::k_MatTexNames[slotIndex].c_str());
+			glGetActiveUniform(
+				params->m_shaderReference,	// program
+				(GLuint)i,					// index
+				maxUniformNameLength,		// buffer size
+				nullptr,					// length
+				&size,						// size
+				&type,						// type
+				&name[0]);					// name
 
-			if (samplerLocation >= 0)
+			if (type == GL_SAMPLER_1D ||
+				type == GL_SAMPLER_2D ||
+				type == GL_SAMPLER_3D ||
+				type == GL_SAMPLER_CUBE ||
+				type == GL_SAMPLER_1D_SHADOW ||
+				type == GL_SAMPLER_2D_SHADOW ||
+				type == GL_SAMPLER_1D_ARRAY ||
+				type == GL_SAMPLER_2D_ARRAY ||
+				type == GL_SAMPLER_1D_ARRAY_SHADOW ||
+				type == GL_SAMPLER_2D_ARRAY_SHADOW ||
+				type == GL_SAMPLER_2D_MULTISAMPLE ||
+				type == GL_SAMPLER_2D_MULTISAMPLE_ARRAY ||
+				type == GL_SAMPLER_CUBE_SHADOW ||
+				type == GL_SAMPLER_BUFFER ||
+				type == GL_SAMPLER_2D_RECT ||
+				type == GL_SAMPLER_2D_RECT_SHADOW ||
+				type == GL_INT_SAMPLER_1D ||
+				type == GL_INT_SAMPLER_2D ||
+				type == GL_INT_SAMPLER_3D ||
+				type == GL_INT_SAMPLER_CUBE ||
+				type == GL_INT_SAMPLER_1D_ARRAY ||
+				type == GL_INT_SAMPLER_2D_ARRAY ||
+				type == GL_INT_SAMPLER_2D_MULTISAMPLE ||
+				type == GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
+				type == GL_INT_SAMPLER_BUFFER ||
+				type == GL_INT_SAMPLER_2D_RECT ||
+				type == GL_UNSIGNED_INT_SAMPLER_1D ||
+				type == GL_UNSIGNED_INT_SAMPLER_2D ||
+				type == GL_UNSIGNED_INT_SAMPLER_3D ||
+				type == GL_UNSIGNED_INT_SAMPLER_CUBE ||
+				type == GL_UNSIGNED_INT_SAMPLER_1D_ARRAY ||
+				type == GL_UNSIGNED_INT_SAMPLER_2D_ARRAY ||
+				type == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE ||
+				type == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
+				type == GL_UNSIGNED_INT_SAMPLER_BUFFER ||
+				type == GL_UNSIGNED_INT_SAMPLER_2D_RECT ||
+				type == GL_IMAGE_2D_MULTISAMPLE ||
+				type == GL_IMAGE_2D_MULTISAMPLE_ARRAY ||
+				type == GL_INT_IMAGE_2D_MULTISAMPLE ||
+				type == GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY ||
+				type == GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE ||
+				type == GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY
+				)
 			{
-				glUniform1i(samplerLocation, slotIndex);
-			}
+				// Get the texture unit binding value:
+				GLint val;
+				glGetUniformiv(params->m_shaderReference, (GLuint)i, &val);
+
+				// Populate the shader sampler unit map with unique entries:
+				const string nameStr(name);
+				assert("Sampler unit already found! Does the shader have a unique binding layout qualifier?" && 
+					params->m_samplerUnits.find(nameStr) == params->m_samplerUnits.end());
+
+				params->m_samplerUnits.emplace(string(name), (int32_t)val);
+			}			
 		}
-
-		// Lighting GBuffer texture sampler locations:
-		for (int slotIndex = 0; slotIndex < gr::Material::GBuffer_Count; slotIndex++)
-		{
-			GLint samplerLocation = glGetUniformLocation(
-				shaderReference,
-				gr::Material::k_GBufferTexNames[slotIndex].c_str());
-
-			if (samplerLocation >= 0)
-			{
-				glUniform1i(samplerLocation, slotIndex);
-			}
-		}
-
-		// Generic texture sampler locations:
-		for (int slotIndex = 0; slotIndex < gr::Material::Tex_Count; slotIndex++)
-		{
-			GLint samplerLocation = glGetUniformLocation(
-				shaderReference,
-				gr::Material::k_GenericTexNames[slotIndex].c_str());
-
-			if (samplerLocation >= 0)
-			{
-				glUniform1i(samplerLocation, slotIndex);
-			}
-		}
-
-		// 2D shadow map textures sampler locations:
-		for (int slotIndex = 0; slotIndex < gr::Material::Depth_Count; slotIndex++)
-		{
-			GLint samplerLocation = glGetUniformLocation(
-				shaderReference,
-				gr::Material::k_DepthTexNames[slotIndex].c_str());
-
-			if (samplerLocation >= 0)
-			{
-				glUniform1i(samplerLocation, gr::Material::Depth0 + slotIndex);
-			}
-		}
-
-		// Cube map depth texture sampler locations
-		for (int slotIndex = 0; slotIndex < gr::Material::CubeMap_Count; slotIndex++)
-		{
-			GLint samplerLocation = glGetUniformLocation(
-				shaderReference,
-				gr::Material::k_CubeMapTexNames[slotIndex].c_str());
-
-			if (samplerLocation >= 0)
-			{
-				glUniform1i(samplerLocation, (int)(gr::Material::CubeMap0 + (slotIndex * gr::Texture::k_numCubeFaces)));
-			}
-		}
+		delete[] name;
 
 	#if defined (DEBUG_SCENEMANAGER_SHADER_LOGGING)
 		LOG("Finished creating shader \"" + shaderFileName + "\"");
@@ -239,7 +254,12 @@ namespace opengl
 	}
 
 
-	void Shader::SetUniform(gr::Shader const& shader, char const* uniformName, void const* value, platform::Shader::UNIFORM_TYPE const& type, int count)
+	void Shader::SetUniform(
+		gr::Shader const& shader,
+		char const* uniformName, 
+		void const* value, 
+		platform::Shader::UNIFORM_TYPE const& type, 
+		int count)
 	{
 		PlatformParams const* const params =
 			dynamic_cast<opengl::Shader::PlatformParams const* const>(shader.GetPlatformParams());
@@ -309,5 +329,21 @@ namespace opengl
 
 		glDeleteProgram(params->m_shaderReference);
 		params->m_shaderReference = 0;
+	}
+
+
+	void Shader::SetTexture(gr::Shader const& shader, string const& shaderName,shared_ptr<Texture> texture, shared_ptr<Sampler const> sampler)
+	{
+		// Note: We assume the texture has already been bound before this call is made
+
+		PlatformParams const* const params =
+			dynamic_cast<opengl::Shader::PlatformParams const* const>(shader.GetPlatformParams());
+
+		auto bindingUnit = params->m_samplerUnits.find(shaderName);
+
+		assert("Invalid sampler name" && bindingUnit != params->m_samplerUnits.end());
+
+		texture->Bind(bindingUnit->second, true);
+		sampler->Bind(bindingUnit->second, true);
 	}
 }

@@ -1,6 +1,6 @@
 // Saber Engine GBuffer Shader. Fills GBuffer textures
 
-#version 430 core
+#version 460 core
 
 #define SABER_VERTEX_SHADER
 

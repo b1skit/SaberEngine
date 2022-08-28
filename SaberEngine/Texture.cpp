@@ -93,11 +93,6 @@ namespace gr
 	{
 	}
 
-	Texture::~Texture()
-	{
-		Destroy();
-	}
-
 
 	void gr::Texture::Create(uint32_t textureUnit)
 	{
@@ -297,13 +292,7 @@ namespace gr
 				texParams.m_texFormat = gr::Texture::TextureFormat::RGBA32F;
 
 				texParams.m_texColorSpace = colorSpace;
-
-				// Set these to reasonable defaults for now
-				texParams.m_texSamplerMode = gr::Texture::TextureSamplerMode::Wrap;
-				texParams.m_texMinMode = gr::Texture::TextureMinFilter::LinearMipMapLinear;
-				texParams.m_texMaxMode = gr::Texture::TextureMaxFilter::Linear;
 				texParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
-
 				texParams.m_texturePath = texturePath;
 
 				texture = std::make_shared<gr::Texture>(texParams);

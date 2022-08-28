@@ -40,9 +40,6 @@ namespace SaberEngine
 				gr::Texture::LoadCubeMapTextureFilesFromPath(skyboxTextureRoot, gr::Texture::TextureColorSpace::sRGB);
 
 			gr::Texture::TextureParams cubemapParams = cubemapTexture->GetTextureParams();
-			cubemapParams.m_texSamplerMode = gr::Texture::TextureSamplerMode::Clamp;
-			cubemapParams.m_texMinMode = gr::Texture::TextureMinFilter::Linear;
-			cubemapParams.m_texMaxMode = gr::Texture::TextureMaxFilter::Linear;
 			cubemapParams.m_texFormat = gr::Texture::TextureFormat::RGBA8;
 			cubemapTexture->SetTextureParams(cubemapParams);
 

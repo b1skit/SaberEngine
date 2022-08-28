@@ -28,8 +28,6 @@ namespace gr
 
 			ShaderKeyword_Count
 		}; // Note: If new enums are added, don't forget to update Shader::k_MatTexNames as well
-		
-		const static std::vector<std::string> k_ShaderKeywords;
 
 
 	public:
@@ -41,7 +39,6 @@ namespace gr
 		Shader(Shader&&) = delete;
 		Shader& operator=(Shader&) = delete;
 
-		void Create(std::vector<std::string> const* shaderKeywords);
 		void Create();
 		void Bind(bool doBind);
 
@@ -57,9 +54,17 @@ namespace gr
 			platform::Shader::UNIFORM_TYPE const& type, 
 			int count = 1);
 
+		void SetTexture(
+			std::string const& shaderName, 
+			std::shared_ptr<gr::Texture> texture, 
+			std::shared_ptr<gr::Sampler const> sampler) const;
+
 		platform::Shader::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
 		platform::Shader::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
 
+
+		std::vector<std::string>& ShaderKeywords() { return m_shaderKeywords; }
+		std::vector<std::string> const& ShaderKeywords() const { return m_shaderKeywords; }
 
 	private:
 		// Extensionless shader filename. Will have .vert/.geom.frag appended (thus all shader text must have the
@@ -68,6 +73,7 @@ namespace gr
 
 		std::unique_ptr<platform::Shader::PlatformParams> m_platformParams;
 
+		std::vector<std::string> m_shaderKeywords;
 
 		// Friends:
 		friend bool platform::RegisterPlatformFunctions();

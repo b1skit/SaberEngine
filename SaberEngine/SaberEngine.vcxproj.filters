@@ -179,6 +179,15 @@
     <ClCompile Include="Shader_OpenGL.cpp">
       <Filter>Source Files\gr\platform\OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="Sampler.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="Sampler_Platform.cpp">
+      <Filter>Source Files\gr\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="Sampler_OpenGL.cpp">
+      <Filter>Source Files\gr\platform\OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EventManager.h">
@@ -307,6 +316,15 @@
     <ClInclude Include="Shader_OpenGL.h">
       <Filter>Header Files\gr\platform\OpenGL</Filter>
     </ClInclude>
+    <ClInclude Include="Sampler.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="Sampler_Platform.h">
+      <Filter>Header Files\gr\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="Sampler_OpenGL.h">
+      <Filter>Header Files\gr\platform\OpenGL</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\glsl\blitShader.frag">
@@ -352,9 +370,6 @@
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
     <None Include="Shaders\glsl\deferredPointLightShader.vert">
-      <Filter>Source Files\Shaders\OpenGL</Filter>
-    </None>
-    <None Include="Shaders\glsl\depthShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
     <None Include="Shaders\glsl\depthShader.vert">

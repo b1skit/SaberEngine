@@ -21,7 +21,6 @@ namespace opengl
 		{
 			PlatformParams(gr::Texture::TextureParams const& texParams);
 
-			// TODO: This should actually delete/deallocate platform-specific bindings
 			~PlatformParams() override;
 
 			// OpenGL-specific parameters:
@@ -35,15 +34,6 @@ namespace opengl
 
 			GLenum m_internalFormat;
 			GLenum m_type;
-
-			GLenum m_textureWrapS;
-			GLenum m_textureWrapT;
-			GLenum m_textureWrapR;
-
-			GLenum m_textureMinFilter;
-			GLenum m_textureMaxFilter;
-
-			GLuint m_samplerID;		// Name of a sampler
 
 			glm::vec4 m_clearColor;
 		};

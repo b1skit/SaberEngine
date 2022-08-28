@@ -87,52 +87,49 @@ uniform mat4 in_projection;		// View -> Projection
 uniform mat4 in_mv;				// [View * Model]
 uniform mat4 in_mvp;			// [Projection * View * Model]
 uniform mat4 in_inverse_vp;		// [Projection * View]^-1
-// TODO: Assign locations for these uniforms, and bind them to each shader in the RenderManager
-// Probably need to be offset (b/c of size of VtoF struct?)???
 
 
 // Texture samplers:
-// NOTE: Binding locations must match the definitions in Material.h
-
-
-									// TEXTURE:								FBX MATERIAL SOURCE SLOT:
-// GBuffer stage input textures:	//---------								-------------------------
-uniform sampler2D MatAlbedo;		// Albedo (RGB) + transparency (A)		Diffuse/color
-uniform sampler2D MatNormal;		// Tangent-space normals (RGB)			Bump
-uniform sampler2D MatRMAO;			// Roughness, Metalic, MatAlbedo		Specular
-uniform sampler2D MatEmissive;		// Emissive (RGB)						Incandescence
+// Note: The layout bindings must correspond with the Material's TextureSlotDesc index
+													// TEXTURE:								FBX MATERIAL SOURCE SLOT:
+// GBuffer stage input textures:					//---------								-------------------------
+layout(binding=0) uniform sampler2D MatAlbedo;		// Albedo (RGB) + transparency (A)		Diffuse/color
+layout(binding=1) uniform sampler2D MatNormal;		// Tangent-space normals (RGB)			Bump
+layout(binding=2) uniform sampler2D MatRMAO;		// Roughness, Metalic, MatAlbedo		Specular
+layout(binding=3) uniform sampler2D MatEmissive;	// Emissive (RGB)						Incandescence
 
 // Lighting stage GBuffer textures:
-uniform sampler2D GBufferAlbedo;
-uniform sampler2D GBufferWNormal;
-uniform sampler2D GBufferRMAO;
-uniform sampler2D GBufferEmissive;
-uniform sampler2D GBufferWPos;
-uniform sampler2D GBufferMatProp0;
-uniform sampler2D GBufferDepth;
+layout(binding=0) uniform sampler2D GBufferAlbedo;
+layout(binding=1) uniform sampler2D GBufferWNormal;
+layout(binding=2) uniform sampler2D GBufferRMAO;
+layout(binding=3) uniform sampler2D GBufferEmissive;
+layout(binding=4) uniform sampler2D GBufferWPos;
+layout(binding=5) uniform sampler2D GBufferMatProp0;
+layout(binding=6) uniform sampler2D GBufferDepth;
 
 // Deferred light shadowmaps:
-uniform sampler2D	Depth0;
+layout(binding=10) uniform sampler2D	Depth0;
 
 // Generic texture samplers:
-uniform sampler2D Tex0;
-uniform sampler2D Tex1;
-uniform sampler2D Tex2;
-uniform sampler2D Tex3;
-uniform sampler2D Tex4;
-uniform sampler2D Tex5;
-uniform sampler2D Tex6;
-uniform sampler2D Tex7;
-uniform sampler2D Tex8;
+layout(binding=0) uniform sampler2D Tex0;
+layout(binding=1) uniform sampler2D Tex1;
+layout(binding=2) uniform sampler2D Tex2;
+layout(binding=3) uniform sampler2D Tex3;
+layout(binding=4) uniform sampler2D Tex4;
+layout(binding=5) uniform sampler2D Tex5;
+layout(binding=6) uniform sampler2D Tex6;
+layout(binding=7) uniform sampler2D Tex7;
+layout(binding=8) uniform sampler2D Tex8;
 
 // Cube map samplers:
-uniform samplerCube CubeMap0;			
-uniform samplerCube CubeMap1;
+layout(binding=11) uniform samplerCube CubeMap0;			
+layout(binding=12) uniform samplerCube CubeMap1;
 
 // Generic material properties:
 uniform vec4		MatProperty0;	// .rgb = F0 (Surface response at 0 degrees), .a = Phong exponent
 
 
+// TODO: Pack common parameters into structured buffers
 uniform vec4		texelSize;		// Depth map/GBuffer texel size: .xyzw = (1/width, 1/height, width, height)
 
 // Shadow map parameters:

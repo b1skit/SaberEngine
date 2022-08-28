@@ -8,9 +8,6 @@
 
 #include "Texture_Platform.h"
 
-using std::string;
-using glm::vec4;
-
 
 namespace platform
 {
@@ -81,36 +78,6 @@ namespace gr
 			TextureSpace_Count = Invalid
 		};
 
-		enum class TextureSamplerMode
-		{
-			Wrap,
-			Mirrored,
-			Clamp,
-
-			Invalid,
-			TextureSamplerMode_Count = Invalid
-		};
-
-		enum class TextureMinFilter
-		{
-			Nearest,
-			NearestMipMapLinear,
-			Linear,
-			LinearMipMapLinear,
-
-			Invalid,
-			TextureMinificationMode_Count = Invalid
-		};
-
-		enum class TextureMaxFilter
-		{
-			Nearest,
-			Linear,
-
-			Invalid,
-			TextureMaxificationMode_Count = Invalid
-		};
-
 
 		struct TextureParams
 		{
@@ -123,32 +90,20 @@ namespace gr
 			TextureFormat m_texFormat = TextureFormat::RGBA32F;
 			TextureColorSpace m_texColorSpace = TextureColorSpace::sRGB;
 
-			// Sampler configuration:
-			TextureSamplerMode m_texSamplerMode = TextureSamplerMode::Wrap;
-			TextureMinFilter m_texMinMode = TextureMinFilter::LinearMipMapLinear;
-			TextureMaxFilter m_texMaxMode = TextureMaxFilter::Linear;
-
 			glm::vec4 m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 			std::string m_texturePath = "UnnamedTexture";
 			bool m_useMIPs = true; // Should MIPs be created for this texture?
 		};
 
+
 	public:
 		Texture(TextureParams params);
-		~Texture();
+		~Texture() { Destroy();	}
 
 		Texture() = delete;
 		Texture(Texture const& rhs) = delete;
 		Texture(Texture const&& rhs) = delete;
 		Texture& operator=(Texture const& rhs) = delete;
-
-		
-
-		// TODO: Decouple textures and samplers
-		// +
-		// TODO: Materials should specify the texture unit; a texture shouldn't need to specify textureUnit, which
-		// restricts the texture to a single slot/use
-		// -> Perhaps the re layer should handle this by examining a material and binding its textures?
 
 
 		void Create(uint32_t textureUnit);
@@ -158,25 +113,24 @@ namespace gr
 		void Destroy();
 
 		
-
 		inline uint32_t const& Width() const { return m_texParams.m_width; }
 		inline uint32_t const& Height() const { return m_texParams.m_height; }
 
 		std::vector<glm::vec4>& GetTexels() { m_isDirty = true; return m_texels; }
 		std::vector<glm::vec4> const& GetTexels() const {return m_texels; }
 
-		vec4 const& GetTexel(uint32_t u, uint32_t v, uint32_t faceIdx = 0) const; // u == x == col, v == y == row
+		glm::vec4 const& GetTexel(uint32_t u, uint32_t v, uint32_t faceIdx = 0) const; // u == x == col, v == y == row
 		glm::vec4 const& GetTexel(uint32_t index) const;
 
 		void SetTexel(uint32_t u, uint32_t v, glm::vec4 value); // u == x == col, v == y == row
 
-		void Fill(vec4 solidColor);	// Fill texture with a solid color
-		void Fill(vec4 tl, vec4 bl, vec4 tr, vec4 br); // Fill texture with a color gradient
+		void Fill(glm::vec4 solidColor);	// Fill texture with a solid color
+		void Fill(glm::vec4 tl, glm::vec4 bl, glm::vec4 tr, glm::vec4 br); // Fill texture with a color gradient
 
 		std::vector<glm::vec4> const& Texels() const { return m_texels; }
 		std::vector<glm::vec4>& Texels() { m_isDirty = true; return m_texels; }
 		
-		vec4 GetTexelDimenions() const;	// .xyzw = 1/width, 1/height, width, height
+		glm::vec4 GetTexelDimenions() const;	// .xyzw = 1/width, 1/height, width, height
 
 		uint32_t GetNumMips() const;
 		uint32_t GetMipDimension(uint32_t mipLevel) const;
@@ -188,7 +142,7 @@ namespace gr
 		TextureParams const& GetTextureParams() const { return m_texParams; }
 
 		inline void SetTexturePath(std::string path) { m_texParams.m_texturePath = path; m_isDirty = true; }
-		inline string const& GetTexturePath() const { return m_texParams.m_texturePath; }
+		inline std::string const& GetTexturePath() const { return m_texParams.m_texturePath; }
 
 
 
@@ -200,15 +154,17 @@ namespace gr
 		// duplicate textures can be shared
 		static bool LoadTextureFileFromPath(
 			std::shared_ptr<gr::Texture>& texture,
-			string texturePath,
+			std::string texturePath,
 			TextureColorSpace colorSpace,
 			bool returnErrorTexIfNotFound = false,			
 			uint32_t totalFaces = 1,
 			size_t faceIndex = 0);
+		// TODO: Perhaps this should be moved to a private namespace in Scene.cpp?
 
 		static std::shared_ptr<gr::Texture> LoadCubeMapTextureFilesFromPath(
 			std::string const& textureRootPath, // folder containing posx/negx/posy/negy/posz/negz.jpg/jpeg/png/tga
 			TextureColorSpace const& colorSpace);
+		// TODO: Perhaps this should be moved to a private namespace in Scene.cpp?
 
 
 	private:

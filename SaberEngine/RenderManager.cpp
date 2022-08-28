@@ -7,10 +7,6 @@ using std::string;
 
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
-using glm::vec3;
-using glm::vec4;
-using glm::mat3;
-using glm::mat4;
 
 #include "RenderManager.h"
 #include "CoreEngine.h"
@@ -28,11 +24,18 @@ using glm::mat4;
 #include "ShadowMap.h"
 #include "Scene.h"
 #include "EventManager.h"
+#include "Sampler.h"
+
 using gr::Material;
 using gr::Texture;
 using gr::Shader;
+using gr::Sampler;
 using std::shared_ptr;
 using std::make_shared;
+using glm::vec3;
+using glm::vec4;
+using glm::mat3;
+using glm::mat4;
 
 
 namespace SaberEngine
@@ -75,9 +78,6 @@ namespace SaberEngine
 		outputParams.m_texDimension = Texture::TextureDimension::Texture2D;
 		outputParams.m_texFormat = Texture::TextureFormat::RGBA32F;
 		outputParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
-		outputParams.m_texSamplerMode = Texture::TextureSamplerMode::Wrap;
-		outputParams.m_texMinMode = Texture::TextureMinFilter::Linear;
-		outputParams.m_texMaxMode = Texture::TextureMaxFilter::Linear;
 		outputParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		outputParams.m_texturePath = "RenderManagerFrameOutput";
 
@@ -251,8 +251,8 @@ namespace SaberEngine
 			{
 			case LIGHT_DIRECTIONAL:
 			{
-				mat4 mvp			= shadowCam->ViewProjection() * currentMesh->GetTransform().Model();
-				lightShader->SetUniform("in_mvp",	&mvp[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
+				mat4 mvp = shadowCam->ViewProjection() * currentMesh->GetTransform().Model();
+				lightShader->SetUniform("in_mvp", &mvp[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 			}
 			break;
 
@@ -308,13 +308,8 @@ namespace SaberEngine
 
 			// Bind:
 			currentShader->Bind(true);
-			currentMaterial->BindAllTextures(Material::MatAlbedo, true);
+			currentMaterial->BindToShader(currentShader);
 
-			// Upload material properties:
-			currentShader->SetUniform(
-				Material::k_MatPropNames[Material::MatProperty0].c_str(), 
-				&currentMaterial->Property(Material::MatProperty0).x, 
-				platform::Shader::UNIFORM_TYPE::Vec4f);
 			currentShader->SetUniform("in_view", &m_view[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 
 			// Get all meshes that use the current material
@@ -360,14 +355,18 @@ namespace SaberEngine
 
 		// Bind GBuffer textures
 		gr::TextureTargetSet& gbufferTextures = gBufferCam->GetTextureTargetSet();
-		for (size_t gBufferTexSlot = 0; gBufferTexSlot < gbufferTextures.ColorTargets().size(); gBufferTexSlot++)
+		for (uint32_t gBufferTexSlot = 0; gBufferTexSlot < gbufferTextures.ColorTargets().size(); gBufferTexSlot++)
 		{
 			std::shared_ptr<gr::Texture>& tex = gbufferTextures.ColorTarget(gBufferTexSlot).GetTexture();
 			if (tex != nullptr)
 			{
 				tex->Bind((uint32_t)gBufferTexSlot, true);
+				Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear)->Bind(gBufferTexSlot, true);
 			}
 		}
+
+		gbufferTextures.DepthStencilTarget().GetTexture()->Bind(Material::GBufferDepth, true);
+		Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear)->Bind(Material::GBufferDepth, true);
 		
 		// Assemble common (model independent) matrices:
 		const bool hasShadowMap = deferredLight->GetShadowMap() != nullptr;
@@ -397,26 +396,29 @@ namespace SaberEngine
 			std::shared_ptr<gr::Texture> IEMCubemap =
 				dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetIEMTexture();
 
-			if (IEMCubemap != nullptr)
-			{
-				IEMCubemap->Bind(Material::CubeMap0, true);
-			}
+			assert("IEM cubemap texture pointer is null" && IEMCubemap != nullptr);			
+			IEMCubemap->Bind(Material::CubeMap0, true);
+
+			// IEM doesn't have MIPs
+			Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear)->Bind(Material::CubeMap0, true);
 
 			std::shared_ptr<gr::Texture> PMREM_Cubemap =
 				dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetPMREMTexture();
 
-			if (PMREM_Cubemap != nullptr)
-			{
-				PMREM_Cubemap->Bind(Material::CubeMap1, true);
-			}
+			assert("PMREM cubemap texture pointer is null" && PMREM_Cubemap != nullptr);
+			PMREM_Cubemap->Bind(Material::CubeMap1, true);
+
+			Sampler::GetSampler(Sampler::SamplerType::WrapLinearMipMapLinearLinear)->Bind(Material::CubeMap1, true);
 
 			// Bind BRDF Integration map:
 			std::shared_ptr<gr::Texture> BRDFIntegrationMap =
 				dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetBRDFIntegrationMap();
-			if (BRDFIntegrationMap != nullptr)
-			{
-				BRDFIntegrationMap->Bind(Material::Tex7, true);
-			}
+			
+			assert("BRDF integration map texture pointer is null" && BRDFIntegrationMap != nullptr);
+			BRDFIntegrationMap->Bind(Material::Tex7, true);
+
+			// BRDF integration map doesn't have mips
+			Sampler::GetSampler(Sampler::SamplerType::ClampNearestNearest)->Bind(Material::Tex7, true);
 		}
 			break;
 
@@ -481,6 +483,8 @@ namespace SaberEngine
 					if (depthTexture)
 					{
 						depthTexture->Bind(Material::Depth0, true);
+
+						Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear)->Bind(Material::Depth0, true);
 					}
 				}
 				break;
@@ -490,6 +494,8 @@ namespace SaberEngine
 					if (depthTexture)
 					{
 						depthTexture->Bind(Material::CubeMap0, true);
+
+						Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear)->Bind(Material::CubeMap0, true);
 					}
 				}
 				break;
@@ -543,10 +549,12 @@ namespace SaberEngine
 		currentShader->Bind(true);
 		skyboxCubeMap->Bind(Material::CubeMap0, true);
 
-		if (depthTexture)
-		{
-			depthTexture->Bind(Material::GBufferDepth, true);
-		}
+		Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear)->Bind(Material::CubeMap0, true);
+
+
+		assert("Depth texture is null" && depthTexture != nullptr);
+		depthTexture->Bind(Material::GBufferDepth, true);
+		Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear)->Bind(Material::GBufferDepth, true);
 
 		skybox->GetSkyMesh()->Bind(true);
 
@@ -590,6 +598,8 @@ namespace SaberEngine
 
 		texture->Bind(Material::GBufferAlbedo, true); // TODO: Define a better texture slot name for this
 
+		Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear)->Bind(Material::GBufferAlbedo, true);
+
 		m_screenAlignedQuad->Bind(true);
 
 		glDrawElements(
@@ -614,6 +624,8 @@ namespace SaberEngine
 		// Bind the source texture into the slot specified in the blit shader:
 		// Note: Blit shader reads from this texture unit (for now)
 		srcTex->Bind(Material::GBufferAlbedo, true);
+
+		Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear)->Bind(Material::GBufferAlbedo, true);
 		
 		glDrawElements(
 			GL_TRIANGLES,
@@ -720,7 +732,8 @@ namespace SaberEngine
 			shaders.at(i)->SetUniform("screenParams", &(screenParams.x), platform::Shader::UNIFORM_TYPE::Vec4f);
 			shaders.at(i)->SetUniform("projectionParams", &(projectionParams.x), platform::Shader::UNIFORM_TYPE::Vec4f);
 
-			float emissiveIntensity = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultSceneEmissiveIntensity");
+			float emissiveIntensity = 
+				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultSceneEmissiveIntensity");
 			shaders.at(i)->SetUniform("emissiveIntensity", &emissiveIntensity, platform::Shader::UNIFORM_TYPE::Float);
 			// TODO: Load this from .FBX file, and set the cached value here
 

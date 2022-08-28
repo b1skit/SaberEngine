@@ -4,22 +4,21 @@
 #include "CoreEngine.h"
 #include "BuildConfiguration.h"
 
-#include "Context.h"
 #include "Context_Platform.h"
 #include "Context_OpenGL.h"
 
-#include "Mesh.h"
 #include "Mesh_Platform.h"
 #include "Mesh_OpenGL.h"
 
-#include "Texture.h"
 #include "Texture_Platform.h"
 #include "Texture_OpenGL.h"
+
+#include "Sampler_Platform.h"
+#include "Sampler_OpenGL.h"
 
 #include "TextureTarget_Platform.h"
 #include "TextureTarget_OpenGL.h"
 
-#include "Shader.h"
 #include "Shader_Platform.h"
 #include "Shader_OpenGL.h"
 
@@ -61,6 +60,12 @@ namespace platform
 			platform::Texture::GenerateMipMaps	= &opengl::Texture::GenerateMipMaps;
 			platform::Texture::GetUVOrigin		= &opengl::Texture::GetUVOrigin;
 
+			// Texture Samplers:
+			platform::Sampler::Create	= &opengl::Sampler::Create;
+			platform::Sampler::Destroy	= &opengl::Sampler::Destroy;
+			platform::Sampler::Bind		= &opengl::Sampler::Bind;
+
+
 			// Texture target:
 			
 			// Texture target set:
@@ -75,6 +80,8 @@ namespace platform
 			platform::Shader::Bind			= &opengl::Shader::Bind;
 			platform::Shader::SetUniform	= &opengl::Shader::SetUniform;
 			platform::Shader::Destroy		= &opengl::Shader::Destroy;
+			platform::Shader::SetTexture	= &opengl::Shader::SetTexture;
+
 
 			result = true;
 		}

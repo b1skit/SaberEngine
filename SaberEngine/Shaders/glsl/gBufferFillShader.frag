@@ -1,4 +1,4 @@
-#version 430 core
+#version 460 core
 
 #define SABER_FRAGMENT_SHADER
 
@@ -15,7 +15,7 @@ layout (location = 0) out vec4 gBuffer_out_albedo;
 layout (location = 1) out vec4 gBuffer_out_worldNormal;
 layout (location = 2) out vec4 gBuffer_out_RMAO;
 layout (location = 3) out vec4 gBuffer_out_emissive;
-layout (location = 4) out vec4 gBuffer_out_position; // TODO: Rename this as gBuffer_out_worldPosition
+layout (location = 4) out vec4 gBuffer_out_wPos;
 layout (location = 5) out vec4 gBuffer_out_matProp0;
 layout (location = 6) out vec4 gBuffer_out_depth;
 
@@ -37,7 +37,7 @@ void main()
 	gBuffer_out_emissive	= texture(MatEmissive, data.uv0.xy) * emissiveIntensity;
 
 	// Position:
-	gBuffer_out_position	= vec4(data.worldPos.xyz, 1);
+	gBuffer_out_wPos	= vec4(data.worldPos.xyz, 1);
 
 	// Material properties:
 	gBuffer_out_matProp0	= MatProperty0;

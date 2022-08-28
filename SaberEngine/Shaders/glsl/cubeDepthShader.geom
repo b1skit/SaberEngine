@@ -1,6 +1,6 @@
 // Saber Engine Cube Map Depth Shader
 
-#version 430 core
+#version 460 core
 
 layout (triangles) in;
 layout (triangle_strip, max_vertices = 18) out;

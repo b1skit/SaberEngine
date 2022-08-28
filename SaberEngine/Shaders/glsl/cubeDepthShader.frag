@@ -1,6 +1,6 @@
 // Saber Engine Depth Shader
 
-#version 430 core
+#version 460 core
 
 uniform vec3 lightWorldPos;	
 

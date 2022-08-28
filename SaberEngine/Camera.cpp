@@ -147,6 +147,19 @@ namespace SaberEngine
 
 	void Camera::AttachGBuffer()
 	{
+		GetName() = "GBufferCam";
+
+		const vector<string> gBufferTexNames
+		{
+			"GBufferAlbedo",	// 0
+			"GBufferWNormal",	// 1
+			"GBufferRMAO",		// 2
+			"GBufferEmissive",	// 3
+			"GBufferWPos",		// 4
+			"GBufferMatProp0",	// 5
+			"GBufferDepth",		// 6
+		};
+
 		m_cameraShader = std::make_shared<gr::Shader>(
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("gBufferFillShaderName"));
 		m_cameraShader->Create();
@@ -160,22 +173,22 @@ namespace SaberEngine
 		gBufferParams.m_texDimension = gr::Texture::TextureDimension::Texture2D;
 		gBufferParams.m_texFormat = gr::Texture::TextureFormat::RGBA32F; // Using 4 channels for future flexibility
 		gBufferParams.m_texColorSpace = gr::Texture::TextureColorSpace::sRGB;
-		gBufferParams.m_texSamplerMode = gr::Texture::TextureSamplerMode::Wrap;
-		gBufferParams.m_texMinMode = gr::Texture::TextureMinFilter::Linear; // Black output w/NearestMipMapLinear?
-		gBufferParams.m_texMaxMode = gr::Texture::TextureMaxFilter::Linear;
 		gBufferParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-		for (size_t i = 0; i < (size_t)Material::GBuffer_Count; i++)
-		{
-			if ((Material::TextureSlot)i == Material::GBufferDepth)
-			{
-				continue;
-			}
 
+		gBufferParams.m_useMIPs = false;
+		// TODO: Currently, our GBuffer doesn't use mipmapping, but it should.
+		// We need to compute the appropriate mip level in the shader, by writing UV derivatives during the GBuffer
+		// pass, and using a stencil mask to ensure we're sampling the correct material at boundaries
+		// https://www.reedbeta.com/blog/deferred-texturing/
+		// -> We'll also need to trigger mip generation after laying down the GBuffer
+
+
+		for (size_t i = 0; i <= 5; i++)
+		{
 			std::shared_ptr<gr::Texture> gBufferTex = std::make_shared<gr::Texture>(gBufferParams);
 
-			gBufferTex->SetTexturePath(
-				GetName() + "_" + Material::k_GBufferTexNames[(Material::TextureSlot)i]);
+			gBufferTex->SetTexturePath(GetName() + "_" + gBufferTexNames[i]);
 
 			m_camTargetSet.ColorTarget(i) = gBufferTex;
 		}
@@ -185,11 +198,10 @@ namespace SaberEngine
 		depthTexParams.m_texUse = gr::Texture::TextureUse::DepthTarget;
 		depthTexParams.m_texFormat = gr::Texture::TextureFormat::Depth32F;
 		depthTexParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear;
-		depthTexParams.m_texSamplerMode = gr::Texture::TextureSamplerMode::Clamp;
 
 		std::shared_ptr<gr::Texture> depthTex = std::make_shared<gr::Texture>(depthTexParams);
 
-		depthTex->SetTexturePath(GetName() + "_" + Material::k_GBufferTexNames[Material::GBufferDepth]);
+		depthTex->SetTexturePath(GetName() + "_" + gBufferTexNames[Material::GBufferDepth]);
 
 		m_camTargetSet.DepthStencilTarget() = depthTex;
 

@@ -32,19 +32,19 @@ namespace SaberEngine
 		case LIGHT_AMBIENT_COLOR:
 		case LIGHT_AMBIENT_IBL:
 		{
-			vector<string> shaderKeywords;
+			m_deferredLightShader = make_shared<Shader>(
+				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"));
+			
 			if (lightType == LIGHT_AMBIENT_COLOR)
 			{
-				shaderKeywords.push_back("AMBIENT_COLOR");
+				m_deferredLightShader->ShaderKeywords().emplace_back("AMBIENT_COLOR");
 			}
 			else // LIGHT_AMBIENT_IBL
 			{
-				shaderKeywords.push_back("AMBIENT_IBL");
+				m_deferredLightShader->ShaderKeywords().emplace_back("AMBIENT_IBL");
 			}
 
-			m_deferredLightShader = make_shared<Shader>(
-				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"));
-			m_deferredLightShader->Create(&shaderKeywords);
+			m_deferredLightShader->Create();
 
 			// Attach a screen aligned quad:
 			m_deferredMesh = gr::meshfactory::CreateQuad	// Align along near plane
@@ -60,7 +60,7 @@ namespace SaberEngine
 
 		case LIGHT_DIRECTIONAL:
 		{
-			m_deferredLightShader =make_shared<Shader>(
+			m_deferredLightShader = make_shared<Shader>(
 				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredKeylightShaderName"));
 			m_deferredLightShader->Create();
 

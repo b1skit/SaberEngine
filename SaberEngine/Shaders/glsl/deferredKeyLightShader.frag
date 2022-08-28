@@ -1,4 +1,4 @@
-#version 430 core
+#version 460 core
 
 #define SABER_FRAGMENT_SHADER
 #define SABER_VEC4_OUTPUT
@@ -18,7 +18,7 @@ void main()
 	// Sample textures once inside the main shader flow, and pass the values as required:
 	FragColor				= texture(GBufferAlbedo, data.uv0.xy); // Note: For PBR, we require all calculations to be performed in linear color
 	vec3 worldNormal		= texture(GBufferWNormal, data.uv0.xy).xyz;
-	vec4 MatRMAO				= texture(GBufferRMAO, data.uv0.xy);
+	vec4 MatRMAO			= texture(GBufferRMAO, data.uv0.xy);
 	vec4 worldPosition		= texture(GBufferWPos, data.uv0.xy);
 	vec4 matProp0			= texture(GBufferMatProp0, data.uv0.xy);	// .rgb = F0 (Surface response at 0 degrees), .a = Phong exponent
 
@@ -28,5 +28,16 @@ void main()
 	float shadowFactor		= GetShadowFactor(shadowPos, Depth0, NoL);
 
 	// Note: Keylight lightColor doesn't need any attenuation to be factored in
-	FragColor = ComputePBRLighting(FragColor, worldNormal, MatRMAO, worldPosition, matProp0.rgb, NoL, keylightWorldDir, keylightViewDir, lightColor, shadowFactor, in_view);
+	FragColor = ComputePBRLighting(
+		FragColor, 
+		worldNormal, 
+		MatRMAO, 
+		worldPosition, 
+		matProp0.rgb, 
+		NoL, 
+		keylightWorldDir, 
+		keylightViewDir, 
+		lightColor, 
+		shadowFactor, 
+		in_view);
 } 

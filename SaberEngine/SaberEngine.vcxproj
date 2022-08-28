@@ -176,6 +176,9 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="EngineConfig.cpp" />
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="Sampler.cpp" />
+    <ClCompile Include="Sampler_OpenGL.cpp" />
+    <ClCompile Include="Sampler_Platform.cpp" />
     <ClCompile Include="Shader_OpenGL.cpp" />
     <ClCompile Include="Shader_Platform.cpp" />
     <ClCompile Include="Texture.cpp" />
@@ -211,6 +214,9 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
   <ItemGroup>
     <ClInclude Include="Context_Platform.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Sampler.h" />
+    <ClInclude Include="Sampler_OpenGL.h" />
+    <ClInclude Include="Sampler_Platform.h" />
     <ClInclude Include="Shader_OpenGL.h" />
     <ClInclude Include="Shader_Platform.h" />
     <ClInclude Include="Texture.h" />
@@ -268,7 +274,6 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <None Include="Shaders\glsl\deferredKeyLightShader.vert" />
     <None Include="Shaders\glsl\deferredPointLightShader.frag" />
     <None Include="Shaders\glsl\deferredPointLightShader.vert" />
-    <None Include="Shaders\glsl\depthShader.frag" />
     <None Include="Shaders\glsl\depthShader.vert" />
     <None Include="Shaders\glsl\equilinearToCubemapBlitShader.frag" />
     <None Include="Shaders\glsl\equilinearToCubemapBlitShader.vert" />

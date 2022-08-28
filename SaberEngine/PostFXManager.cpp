@@ -7,9 +7,11 @@
 #include "Mesh.h"
 #include "Shader.h"
 #include "Camera.h"
+#include "Sampler.h"
 using gr::Material;
 using gr::Texture;
 using gr::Shader;
+using gr::Sampler;
 using std::shared_ptr;
 using std::make_shared;
 
@@ -58,10 +60,8 @@ namespace SaberEngine
 		pingPongParams.m_texDimension = Texture::TextureDimension::Texture2D;
 		pingPongParams.m_texFormat = Texture::TextureFormat::RGBA32F;
 		pingPongParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
-		pingPongParams.m_texSamplerMode = Texture::TextureSamplerMode::Clamp; // Wrap produces artifacts at image borders
-		pingPongParams.m_texMinMode = Texture::TextureMinFilter::Linear;
-		pingPongParams.m_texMaxMode = Texture::TextureMaxFilter::Linear;
 		pingPongParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		pingPongParams.m_useMIPs = false;
 
 		for (uint32_t i = 0; i < numStages; i++)
 		{
@@ -89,21 +89,20 @@ namespace SaberEngine
 		}
 
 		// Configure shaders:
-		vector<string> luminanceThresholdKeywords(1,	"BLUR_SHADER_LUMINANCE_THRESHOLD");
-		vector<string> horizontalBlurKeywords(1,		"BLUR_SHADER_HORIZONTAL");
-		vector<string> verticalBlurKeywords(1,			"BLUR_SHADER_VERTICAL");
-		
 		m_blurShaders[BLUR_SHADER_LUMINANCE_THRESHOLD] = make_shared<Shader>(
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShader"));
-		m_blurShaders[BLUR_SHADER_LUMINANCE_THRESHOLD]->Create(&luminanceThresholdKeywords);
+		m_blurShaders[BLUR_SHADER_LUMINANCE_THRESHOLD]->ShaderKeywords().emplace_back("BLUR_SHADER_LUMINANCE_THRESHOLD");
+		m_blurShaders[BLUR_SHADER_LUMINANCE_THRESHOLD]->Create();
 
 		m_blurShaders[BLUR_SHADER_HORIZONTAL] = make_shared<Shader>(
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShader"));
-		m_blurShaders[BLUR_SHADER_HORIZONTAL]->Create(&horizontalBlurKeywords);
+		m_blurShaders[BLUR_SHADER_HORIZONTAL]->ShaderKeywords().emplace_back("BLUR_SHADER_HORIZONTAL");
+		m_blurShaders[BLUR_SHADER_HORIZONTAL]->Create();
 
 		m_blurShaders[BLUR_SHADER_VERTICAL]	= make_shared<Shader>(
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShader"));
-		m_blurShaders[BLUR_SHADER_VERTICAL]->Create(&verticalBlurKeywords);
+		m_blurShaders[BLUR_SHADER_VERTICAL]->ShaderKeywords().emplace_back("BLUR_SHADER_VERTICAL");
+		m_blurShaders[BLUR_SHADER_VERTICAL]->Create();
 
 		m_blitShader = make_shared<Shader>(
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShader"));
@@ -150,6 +149,7 @@ namespace SaberEngine
 		m_pingPongStageTargetSets[0].AttachColorTargets(0, 0, true);
 
 		m_outputTargetSet.ColorTarget(0).GetTexture()->Bind(Material::GBufferAlbedo, true);
+		Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear)->Bind(Material::GBufferAlbedo, true);
 
 		m_screenAlignedQuad->Bind(true);
 		m_blurShaders[BLUR_SHADER_LUMINANCE_THRESHOLD]->Bind(true);
@@ -173,6 +173,7 @@ namespace SaberEngine
 				Material::GBufferAlbedo,
 				true);
 			
+			Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear)->Bind(Material::GBufferAlbedo, true);
 
 			// Draw!
 			glDrawElements(GL_TRIANGLES,
@@ -191,6 +192,8 @@ namespace SaberEngine
 				Material::GBufferAlbedo,
 				true);
 
+			Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear)->Bind(Material::GBufferAlbedo, true);
+
 			m_blurShaders[BLUR_SHADER_HORIZONTAL]->Bind(true);
 
 			// Draw!
@@ -206,6 +209,8 @@ namespace SaberEngine
 			m_pingPongStageTargetSets[NUM_DOWN_SAMPLES].ColorTarget(0).GetTexture()->Bind(
 				Material::GBufferAlbedo,
 				true);
+
+			Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear)->Bind(Material::GBufferAlbedo, true);
 
 			m_blurShaders[BLUR_SHADER_VERTICAL]->Bind(true);
 
@@ -225,6 +230,8 @@ namespace SaberEngine
 			m_pingPongStageTargetSets[i].ColorTarget(0).GetTexture()->Bind(
 				Material::GBufferAlbedo,
 				true);
+
+			Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear)->Bind(Material::GBufferAlbedo, true);
 
 			// Draw!
 			glDrawElements(GL_TRIANGLES, 

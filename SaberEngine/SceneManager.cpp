@@ -109,8 +109,8 @@ namespace SaberEngine
 	{
 		if (sceneName == "")
 		{
-			LOG_ERROR("Quitting! No scene name received. Did you forget to use the \"-scene theSceneName\" command "
-				"line argument?");
+			LOG_ERROR("No scene name received. Did you forget to use the \"-scene theSceneName\" command line "
+				"argument?");
 			assert("No scene name received" && false);
 			CoreEngine::GetEventManager()->Notify(
 				std::make_shared<EventInfo const>( EventInfo{ EVENT_ENGINE_QUIT, this, "No scene name received"}));
@@ -243,15 +243,14 @@ namespace SaberEngine
 	shared_ptr<Material> SceneManager::GetMaterial(string materialName)
 	{
 		auto result = m_materials.find(materialName);
-		if (result != m_materials.end())
-		{
-			return result->second;
-		}
-		else
+
+		if (result == m_materials.end())
 		{
 			LOG_ERROR("Could not find material \"" + materialName + "\"");
-			return nullptr;
+			assert("Could not find material");
 		}
+
+		return result->second;
 	}
 
 
@@ -418,10 +417,13 @@ namespace SaberEngine
 
 	void SceneManager::AddMaterial(shared_ptr<Material>& newMaterial)
 	{
+		// We differentiate materials based on their names in the incoming FBX, regardless of the MaterialDefinition
+		// they might use
+
 		if (newMaterial == nullptr)
 		{
 			LOG_ERROR("Cannot add null material to scene manager material list");
-			return;
+			assert("Cannot add null material to scene manager material list" && false);
 		}
 
 		auto result = m_materials.find(newMaterial->Name());
@@ -457,7 +459,8 @@ namespace SaberEngine
 				shared_ptr<Material> meshMaterial = viewMesh->MeshMaterial();
 				if (meshMaterial == nullptr)
 				{
-					LOG_ERROR("AssembleMaterialMeshLists() is skipping a mesh with NULL material pointer!");
+					LOG_ERROR("AssembleMaterialMeshLists() found a mesh with NULL material pointer!");
+					assert("AssembleMaterialMeshLists() found a mesh with NULL material pointer!" && false);
 				}
 				else
 				{
@@ -477,7 +480,8 @@ namespace SaberEngine
 			}
 		}
 
-		LOG("\nAssembled material mesh list of " + to_string(numMeshes) + " meshes and " + to_string(m_materialMeshLists.size()) + " materials");
+		LOG("\nAssembled material mesh list of " + to_string(numMeshes) + " meshes and " + 
+			to_string(m_materialMeshLists.size()) + " materials");
 	}
 
 
@@ -538,13 +542,12 @@ namespace SaberEngine
 					}
 				#endif
 
-				// Create a material using the error shader, for now:
-				shared_ptr<Material> newMaterial = std::make_shared<Material>(matName, shared_ptr<Shader>(nullptr));
-				
 				// Extract textures, and add them to the material:
+				shared_ptr<Material> newMaterial = std::make_shared<Material>(
+					matName, Material::GetMaterialDefinition("PBRMaterial"));
 
-				/* NOTE: For simplicity, SaberEngine interprets Phong shaders (only) loaded from FBX files:
-					Shader name:	Attempt to use whatever follows the last _underscore as a shader name (Eg. myMaterial_phong)
+				/* NOTE: For simplicity, SaberEngine (currently) interprets Phong shaders (only) loaded from FBX files:
+					Shader name:	Attempt to use whatever follows the last _underscore as a shader name (Eg. myMat_phong)
 					Albedo:			Phong's color (rgb)
 					Transparency:	Phong's color (a)
 					Normal:			Phong's bump (rgb)
@@ -559,6 +562,7 @@ namespace SaberEngine
 					Phong Exponent: Phong's "Cosine Power" slot
 					F0 Property:	Phong's "Reflected Color" slot
 				*/
+				// TODO: Move to glTF, and deprecate FBX support
 
 				// Extract material's textures:
 				LOG("Importing albedo + transparency texture (RGB+A) from material's diffuse/color slot");
@@ -572,13 +576,9 @@ namespace SaberEngine
 					diffuseParams.m_texColorSpace = Texture::TextureColorSpace::sRGB;
 					diffuseParams.m_texFormat = Texture::TextureFormat::RGBA8;
 					diffuseTexture->SetTextureParams(diffuseParams);
+					diffuseTexture->Create(0);
 
-
-					newMaterial->GetTexture(Material::MatAlbedo) = diffuseTexture;
-				}
-				else
-				{
-					newMaterial->AddShaderKeyword(Shader::k_ShaderKeywords[Shader::ShaderKeywordIndex::NoAlbedoTex]);
+					newMaterial->GetTexture("MatAlbedo") = diffuseTexture;
 				}
 
 				LOG("Importing normal map texture (RGB) from material's bump slot");
@@ -591,15 +591,9 @@ namespace SaberEngine
 					normalParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
 					normalParams.m_texFormat = Texture::TextureFormat::RGBA32F;
 					normalTexture->SetTextureParams(normalParams);
+					normalTexture->Create(0);
 
-					newMaterial->GetTexture(Material::MatNormal) = normalTexture;
-				}
-				else
-				{
-					// NOTE: This NEVER gets hit, since ExtractLoadTextureFromAiMaterial() will always assign a default 
-					// 1x1 normal texture.... 
-					// TODO: handle this more elegantly
-					newMaterial->AddShaderKeyword(Shader::k_ShaderKeywords[Shader::ShaderKeywordIndex::NoNormalTex]);
+					newMaterial->GetTexture("MatNormal") = normalTexture;
 				}
 				
 
@@ -614,12 +608,9 @@ namespace SaberEngine
 					emissiveParams.m_texColorSpace = Texture::TextureColorSpace::Linear; // TODO: Are emissive textures sRGB or Linear????
 					emissiveParams.m_texFormat = Texture::TextureFormat::RGBA32F;
 					emissiveTexture->SetTextureParams(emissiveParams);
+					emissiveTexture->Create(0);
 
-					newMaterial->GetTexture(Material::MatEmissive) = emissiveTexture;
-				}
-				else
-				{
-					newMaterial->AddShaderKeyword(Shader::k_ShaderKeywords[Shader::ShaderKeywordIndex::NoEmissiveTex]);
+					newMaterial->GetTexture("MatEmissive") = emissiveTexture;
 				}
 
 				LOG("Importing roughness, metalic, & AO textures (R+G+B) from material's specular slot");
@@ -632,12 +623,9 @@ namespace SaberEngine
 					RMAOParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
 					RMAOParams.m_texFormat = Texture::TextureFormat::RGBA8;
 					RMAO->SetTextureParams(RMAOParams);
+					RMAO->Create(0);
 
 					newMaterial->GetTexture(Material::MatRMAO) = RMAO;
-				}
-				else
-				{
-					newMaterial->AddShaderKeyword(Shader::k_ShaderKeywords[Shader::ShaderKeywordIndex::NoRMAOTex]);
 				}
 
 
@@ -686,8 +674,6 @@ namespace SaberEngine
 				}
 				else
 				{
-					newMaterial->AddShaderKeyword(Shader::k_ShaderKeywords[Shader::ShaderKeywordIndex::NoCosinePower]);
-
 					#if defined(DEBUG_SCENEMANAGER_SHADER_LOGGING)
 						LOG_WARNING("Could not find material \"Cosine Power\" slot");
 					#endif
@@ -708,28 +694,26 @@ namespace SaberEngine
 	}
 
 
-	shared_ptr<gr::Texture> SaberEngine::SceneManager::ExtractLoadTextureFromAiMaterial(aiTextureType textureType, aiMaterial* material, string sceneName)
+	shared_ptr<gr::Texture> SaberEngine::SceneManager::ExtractLoadTextureFromAiMaterial(
+		aiTextureType textureType, 
+		aiMaterial* assimpMaterial, 
+		string sceneName)
 	{
 		shared_ptr<gr::Texture> newTexture(nullptr);
 		Texture::TextureColorSpace colorSpace = Texture::TextureColorSpace::Unknown;
 		Texture::TextureFormat format = Texture::TextureFormat::Invalid;
 	
 		// Create 1x1 texture fallbacks:
-		int textureCount = material->GetTextureCount(textureType);
+		int textureCount = assimpMaterial->GetTextureCount(textureType);
 		if (textureCount <= 0)
 		{
 			string newName = "NO_NAME_FOUND";
 			vec4 newColor(0, 0, 0, 0);
-			int texUnit = -1;
 
 			if (textureType == aiTextureType_DIFFUSE)
 			{
-				// Try and find any likely texture in the material
-				//newTexture = FindTextureByNameInAiMaterial("diffuse", material, sceneName); 
-				// TODO: Enable this if there is a reason...
-
 				aiColor4D color;
-				if (AI_SUCCESS == material->Get("$clr.diffuse", 0, 0, color))
+				if (AI_SUCCESS == assimpMaterial->Get("$clr.diffuse", 0, 0, color))
 				{
 					newName = "Color_" + to_string(color.r) + 
 						"_" + to_string(color.g) + 
@@ -737,7 +721,6 @@ namespace SaberEngine
 						"_" + to_string(color.a);
 					newColor = vec4(color.r, color.g, color.b, color.a);
 
-					texUnit = Material::MatAlbedo;
 					colorSpace = Texture::TextureColorSpace::sRGB;
 					format = Texture::TextureFormat::RGBA8;
 
@@ -747,12 +730,11 @@ namespace SaberEngine
 			}
 			else if (textureType == aiTextureType_NORMALS)
 			{
-				texUnit = Material::MatNormal;
 				colorSpace = Texture::TextureColorSpace::Linear;
 				format = Texture::TextureFormat::RGB32F;
 
 				// Try and find any likely texture in the material
-				newTexture = FindTextureByNameInAiMaterial("normal", material, sceneName);
+				newTexture = FindTextureByNameInAiMaterial("normal", assimpMaterial, sceneName);
 
 				if (newTexture == nullptr)
 				{
@@ -766,15 +748,14 @@ namespace SaberEngine
 			}
 			else if (textureType == aiTextureType_EMISSIVE)
 			{
-				texUnit = Material::MatEmissive;
 				colorSpace = Texture::TextureColorSpace::Linear; // TODO: Is emissive linear, or sRGB?
 				format = Texture::TextureFormat::RGBA32F; // Emissive must support values > 1
 
-				newTexture = FindTextureByNameInAiMaterial("emissive", material, sceneName);
+				newTexture = FindTextureByNameInAiMaterial("emissive", assimpMaterial, sceneName);
 				if (newTexture == nullptr)
 				{
 					aiColor4D color;
-					if (AI_SUCCESS == material->Get("$clr.emissive", 0, 0, color))
+					if (AI_SUCCESS == assimpMaterial->Get("$clr.emissive", 0, 0, color))
 					{
 						newName = "Color_" + to_string(color.r) +
 							"_" + to_string(color.g) + 
@@ -802,7 +783,6 @@ namespace SaberEngine
 			}
 			else if (textureType == aiTextureType_SPECULAR) // RGB = RMAO
 			{
-				texUnit = Material::MatRMAO;
 				colorSpace = Texture::TextureColorSpace::Linear;
 				format = Texture::TextureFormat::RGBA8; // ??
 
@@ -817,7 +797,7 @@ namespace SaberEngine
 				int currentName = 0;
 				while (currentName < NUM_NAMES && newTexture == nullptr)
 				{
-					newTexture = FindTextureByNameInAiMaterial(possibleNames[currentName], material, sceneName);
+					newTexture = FindTextureByNameInAiMaterial(possibleNames[currentName], assimpMaterial, sceneName);
 
 					currentName++;
 				}
@@ -826,7 +806,7 @@ namespace SaberEngine
 				{
 					// Try and use the specular color channel instead:
 					aiColor4D color;
-					if (AI_SUCCESS == material->Get("$clr.specular", 0, 0, color))
+					if (AI_SUCCESS == assimpMaterial->Get("$clr.specular", 0, 0, color))
 					{
 						newName = "Color_" + to_string(color.r) + "_" + to_string(color.g) + "_" + to_string(color.b) + 
 							"_" + to_string(color.a);
@@ -852,8 +832,8 @@ namespace SaberEngine
 			}
 			else
 			{
-				LOG_WARNING("Received material does not have the requested texture. Returning nullptr!");
-				return nullptr;
+				LOG_ERROR("Invalid texture type");
+				assert("Invalid texture type" && false);
 			}
 
 			// Create the dummy texture:
@@ -893,7 +873,7 @@ namespace SaberEngine
 		string sceneRoot = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\";
 
 		aiString path;
-		material->GetTexture(textureType, 0, &path); // We only get the texture at index 0 (any others are ignored...)
+		assimpMaterial->GetTexture(textureType, 0, &path); // We only get the texture at index 0 (any others are ignored...)
 		if (path.length > 0)
 		{
 			string texturePath = sceneRoot + string(path.C_Str());
@@ -903,11 +883,11 @@ namespace SaberEngine
 			#endif
 
 			// Find the texture if it has already been loaded, or load it otherwise:
-			newTexture = FindLoadTextureByPath(texturePath, Texture::TextureColorSpace::Unknown);
+			newTexture = FindLoadTextureByPath(texturePath, Texture::TextureColorSpace::Unknown, true);
 		}
 		else
 		{
-			LOG_ERROR("Material does not contain a diffuse texture path. Assigning an error texture");
+			LOG_WARNING("Material does not contain a diffuse texture path. Assigning an error texture");
 		}
 
 		if (newTexture == nullptr)
@@ -919,7 +899,10 @@ namespace SaberEngine
 	}
 
 
-	shared_ptr<gr::Texture> SceneManager::FindTextureByNameInAiMaterial(string nameSubstring, aiMaterial* material, string sceneName)
+	shared_ptr<gr::Texture> SceneManager::FindTextureByNameInAiMaterial(
+		string nameSubstring, 
+		aiMaterial* material, 
+		string sceneName)
 	{
 		std::transform(nameSubstring.begin(), nameSubstring.end(), nameSubstring.begin(), ::tolower);
 
@@ -937,6 +920,8 @@ namespace SaberEngine
 					LOG_WARNING("Texture not found in expected slot. Assigning texture containing "
 						"\"" + nameSubstring + "\" as a fallback");
 
+					// TODO: Store the scene name as soon as we have it, so we can retrieve it rather than pass it
+					// through the scene creation flow
 					string sceneRoot = 
 						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\";
 
@@ -978,7 +963,6 @@ namespace SaberEngine
 			#if defined(DEBUG_SCENEMANAGER_MATERIAL_LOGGING)
 				LOG_ERROR("Material property extraction failed");
 			#endif
-
 			return false;
 		}
 	}
@@ -1146,7 +1130,8 @@ namespace SaberEngine
 					{
 						if (scene->mMeshes[currentMesh]->mFaces[currentFace].mNumIndices != 3)
 						{
-							LOG_ERROR("Found a face that doesn't have 3 indices during mesh import!")
+							LOG_ERROR("Found a face that doesn't have 3 indices during mesh import!");
+							assert("Found a face that doesn't have 3 indices during mesh import!" && false);
 						}
 						indices[(currentFace * 3) + currentIndex] = 
 							scene->mMeshes[currentMesh]->mFaces[currentFace].mIndices[currentIndex];
@@ -1199,6 +1184,7 @@ namespace SaberEngine
 			else
 			{
 				LOG_ERROR("Could not find \"" + meshName + "\" in the scene graph");
+				assert("Could not find mesh node in the scene graph" && false);
 			}
 		}
 
@@ -1271,7 +1257,7 @@ namespace SaberEngine
 		if (scene == nullptr || parent == nullptr)
 		{
 			LOG_ERROR("SceneManager.GetCombinedTransformFromHierarchy() received a null pointer!");
-			return aiMatrix4x4();
+			assert("SceneManager.GetCombinedTransformFromHierarchy() received a null pointer!" && false);
 		}
 
 
@@ -1487,6 +1473,7 @@ namespace SaberEngine
 					else
 					{
 						LOG_ERROR("Could not find light node in scene hierarchy");
+						assert("Could not find light node in scene hierarchy" && false);
 					}
 
 

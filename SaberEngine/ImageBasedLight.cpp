@@ -84,19 +84,24 @@ namespace SaberEngine
 		int yRes, 
 		IBL_TYPE iblType /*= RAW_HDR*/)
 	{
+		// Create our conversion shader:
+		string shaderName =
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("equilinearToCubemapBlitShaderName");
+
+		shared_ptr<Shader> equirectangularToCubemapBlitShader = make_shared<gr::Shader>(shaderName);
+
 		string cubemapName;
-		vector<string> shaderKeywords;
 		uint32_t textureUnit = -1;	// For now, derrive the cube map texture unit based on the type of texture
 		if (iblType == IBL_IEM)
 		{
 			cubemapName = "IBL_IEM";
-			shaderKeywords.push_back("BLIT_IEM");
+			equirectangularToCubemapBlitShader->ShaderKeywords().emplace_back("BLIT_IEM");
 			textureUnit = (uint32_t)Material::CubeMap0;
 		}
 		else if (iblType == IBL_PMREM)
 		{
 			cubemapName = "IBL_PMREM";
-			shaderKeywords.push_back("BLIT_PMREM");
+			equirectangularToCubemapBlitShader->ShaderKeywords().emplace_back("BLIT_PMREM");
 			textureUnit = (uint32_t)Material::CubeMap1;
 		}
 		else
@@ -106,12 +111,7 @@ namespace SaberEngine
 			// No need to insert any shader keywords
 		}
 
-		// Create our conversion shader:
-		string shaderName = 
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("equilinearToCubemapBlitShaderName");
-
-		shared_ptr<Shader> equirectangularToCubemapBlitShader = make_shared<gr::Shader>(shaderName);
-		equirectangularToCubemapBlitShader->Create(&shaderKeywords);
+		equirectangularToCubemapBlitShader->Create();
 		equirectangularToCubemapBlitShader->Bind(true);
 
 		// Create a cube mesh for rendering:
@@ -120,7 +120,7 @@ namespace SaberEngine
 
 
 		// Load the HDR image:
-		string iblTexturePath = 
+		const string iblTexturePath = 
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\" + relativeHDRPath;
 		
 		shared_ptr<gr::Texture> hdrTexture	= CoreEngine::GetSceneManager()->FindLoadTextureByPath(
@@ -130,18 +130,12 @@ namespace SaberEngine
 		{
 			LOG_ERROR("Failed to load HDR texture \"" + iblTexturePath + "\" for image-based lighting");
 
-			// Cleanup:
-			equirectangularToCubemapBlitShader = nullptr;
-
 			return nullptr;
 		}
-		Texture::TextureParams hdrParams = hdrTexture->GetTextureParams();
-		hdrParams.m_texSamplerMode = Texture::TextureSamplerMode::Clamp;
-		hdrParams.m_texMinMode = Texture::TextureMinFilter::LinearMipMapLinear;
-		hdrParams.m_texMaxMode = Texture::TextureMaxFilter::Linear;
-		hdrTexture->SetTextureParams(hdrParams);
 		
-		hdrTexture->Bind(Material::MatAlbedo, true);
+		equirectangularToCubemapBlitShader->SetTexture(
+			"MatAlbedo", hdrTexture, gr::Sampler::GetSampler(gr::Sampler::SamplerType::ClampLinearMipMapLinearLinear));
+
 
 
 		// TODO: We should just sample spherical textures directly instead of rendering them into cubemaps...
@@ -191,14 +185,9 @@ namespace SaberEngine
 		cubeParams.m_texDimension = Texture::TextureDimension::TextureCubeMap;
 		cubeParams.m_texFormat = Texture::TextureFormat::RGB16F;
 		cubeParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
-		cubeParams.m_texSamplerMode = Texture::TextureSamplerMode::Wrap;
-		cubeParams.m_texMinMode = iblType == IBL_PMREM ?
-			Texture::TextureMinFilter::LinearMipMapLinear :
-			Texture::TextureMinFilter::Linear;
-		cubeParams.m_texMaxMode = Texture::TextureMaxFilter::Linear;
 		cubeParams.m_texturePath = cubemapName;
 
-		// Generate mip-maps for PMREM IBL cubemap faces, to ensure they're allocated once we want to write into them:
+		// Generate mip-maps for PMREM IBL cubemap faces
 		cubeParams.m_useMIPs = iblType == IBL_PMREM ? true : false;
 
 		shared_ptr<gr::Texture> cubemap = std::make_shared<gr::Texture>(cubeParams);
@@ -269,21 +258,10 @@ namespace SaberEngine
 					(void*)(0));						// const GLvoid* indices
 			}
 		}
-		
-		// Cleanup:
-		m_IBL_IEM_PMREM_StageTargetSet.AttachColorTargets(0, 0, false);
 
 		// Restore defaults:
 		CoreEngine::GetRenderManager()->GetContext().SetDepthMode(platform::Context::DepthMode::Default);
 		CoreEngine::GetRenderManager()->GetContext().SetCullingMode(platform::Context::FaceCullingMode::Back);
-		
-		hdrTexture->Bind(Material::MatAlbedo, false);
-
-		cubeMesh->Bind(false);
-		cubeMesh = nullptr;
-
-		equirectangularToCubemapBlitShader->Bind(false);
-		equirectangularToCubemapBlitShader = nullptr;
 
 		return cubemap;
 	}
@@ -328,11 +306,10 @@ namespace SaberEngine
 		brdfParams.m_texDimension = Texture::TextureDimension::Texture2D;
 		brdfParams.m_texFormat = Texture::TextureFormat::RG16F; // 2 channel, 16-bit floating point precision, as recommended by Epic Games:
 		brdfParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
-		brdfParams.m_texSamplerMode = Texture::TextureSamplerMode::Clamp;
-		brdfParams.m_texMinMode = Texture::TextureMinFilter::Linear;
-		brdfParams.m_texMaxMode = Texture::TextureMaxFilter::Linear;
 		brdfParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		brdfParams.m_texturePath = "BRDFIntegrationMap";
+
+		brdfParams.m_useMIPs = false;
 
 		m_BRDF_integrationMap = std::make_shared<gr::Texture>(brdfParams);
 	

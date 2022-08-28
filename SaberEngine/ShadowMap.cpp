@@ -34,9 +34,6 @@ namespace SaberEngine
 		shadowParams.m_texUse = Texture::TextureUse::DepthTarget;
 		shadowParams.m_texFormat = Texture::TextureFormat::Depth32F;
 		shadowParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
-		shadowParams.m_texSamplerMode = Texture::TextureSamplerMode::Clamp;
-		shadowParams.m_texMinMode = Texture::TextureMinFilter::Linear;
-		shadowParams.m_texMaxMode = Texture::TextureMaxFilter::Linear;
 		shadowParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		shadowParams.m_useMIPs = false;
 

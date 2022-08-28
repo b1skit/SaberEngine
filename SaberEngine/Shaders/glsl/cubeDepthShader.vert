@@ -1,6 +1,6 @@
 // Saber Engine Cube Map Depth Shader
 
-#version 430 core
+#version 460 core
 
 // Set the location of the position input variable
 layout (location = 0) in vec3 in_position;

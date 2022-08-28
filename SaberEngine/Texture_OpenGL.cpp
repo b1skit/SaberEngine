@@ -18,12 +18,6 @@ namespace opengl
 		m_format(GL_RGBA),
 		m_internalFormat(GL_RGBA32F),
 		m_type(GL_FLOAT),
-		m_textureWrapS(GL_REPEAT),
-		m_textureWrapT(GL_REPEAT),
-		m_textureWrapR(GL_REPEAT),
-		m_textureMinFilter(GL_NEAREST_MIPMAP_LINEAR),
-		m_textureMaxFilter(GL_LINEAR),
-		m_samplerID(0),
 		m_clearColor(0, 0, 0, 1)
 	{
 		// Dimension:
@@ -140,97 +134,13 @@ namespace opengl
 		default:
 			assert("Invalid/unsupported texture format" && false);
 		}
-
-		// Minification filter:
-		/*********************/
-		switch (texParams.m_texMinMode)
-		{
-		case gr::Texture::TextureMinFilter::Nearest:
-		{
-			m_textureMinFilter = GL_NEAREST;
-		}
-		break;
-		case gr::Texture::TextureMinFilter::NearestMipMapLinear:
-		{
-			m_textureMinFilter = GL_NEAREST_MIPMAP_LINEAR;
-		}
-		break;
-		case gr::Texture::TextureMinFilter::Linear:
-		{
-			m_textureMinFilter = GL_LINEAR;
-		}
-		break;
-		case gr::Texture::TextureMinFilter::LinearMipMapLinear:
-		{
-			m_textureMinFilter = GL_LINEAR_MIPMAP_LINEAR;
-		}
-		break;
-		default:
-			assert("Invalid/unsupported texture min mode" && false);
-		}
-
-		// Maxification filter:
-		/*********************/
-		switch (texParams.m_texMaxMode)
-		{
-		case gr::Texture::TextureMaxFilter::Nearest:
-		{
-			m_textureMaxFilter = GL_NEAREST;
-		}
-		break;
-		case gr::Texture::TextureMaxFilter::Linear:
-		{
-			m_textureMaxFilter = GL_LINEAR;
-		}
-
-		break;
-		default:
-			assert("Invalid/unsupported texture max mode" && false);
-		}
-
-		// Sampler mode:
-		/***************/
-		switch (texParams.m_texSamplerMode)
-		{
-		case gr::Texture::TextureSamplerMode::Wrap:
-		{
-			m_textureWrapS = GL_REPEAT;
-			m_textureWrapT = GL_REPEAT;
-			m_textureWrapR = GL_REPEAT;
-		}
-		break;
-		case gr::Texture::TextureSamplerMode::Mirrored:
-		{
-			m_textureWrapS = GL_MIRRORED_REPEAT;
-			m_textureWrapT = GL_MIRRORED_REPEAT;
-			m_textureWrapR = GL_MIRRORED_REPEAT;			
-		}
-		break;
-		case gr::Texture::TextureSamplerMode::Clamp:
-		{
-			m_textureWrapS = GL_CLAMP_TO_EDGE;
-			m_textureWrapT = GL_CLAMP_TO_EDGE;
-			m_textureWrapR = GL_CLAMP_TO_EDGE;
-		}
-		break;
-		default:
-			assert("Invalid/unsupported texture max mode" && false);
-		}
 	}
 
 
 
 	Texture::PlatformParams::~PlatformParams()
 	{
-		if (glIsTexture(m_textureID))
-		{
-			glDeleteTextures(1, &m_textureID);
-		}
-
-		if (glIsSampler(m_samplerID))
-		{
-			glDeleteSamplers(1, &m_samplerID);
-		}
+		glDeleteTextures(1, &m_textureID);
 	}
 
 
@@ -239,7 +149,6 @@ namespace opengl
 		PlatformParams const* const params =
 			dynamic_cast<opengl::Texture::PlatformParams*>(texture.GetPlatformParams());
 
-		// Nothing to delete if the texture wasn't created
 		if (!params)
 		{
 			return;
@@ -249,8 +158,6 @@ namespace opengl
 		{
 			glDeleteTextures(1, &params->m_textureID);
 		}
-
-		glDeleteSamplers(1, &params->m_samplerID);
 	}
 
 
@@ -265,15 +172,12 @@ namespace opengl
 		if (doBind)
 		{
 			glBindTextures(textureUnit, 1, &params->m_textureID);
-			glBindSampler(textureUnit, params->m_samplerID);
 		}
 		else
 		{
 			glBindTextures(textureUnit, 1, 0);
-			glBindSampler(textureUnit, 0);
 		}
 	}
-
 
 
 	void opengl::Texture::Create(gr::Texture& texture, uint32_t textureUnit)
@@ -287,23 +191,17 @@ namespace opengl
 		PlatformParams* const params =
 			dynamic_cast<opengl::Texture::PlatformParams* const>(texture.GetPlatformParams());
 
-		// If the texture hasn't been created, create a new name:
-		if (!glIsTexture(params->m_textureID))
-		{
-			// Generate textureID names. Note: We must call glBindTexture immediately after to associate the name with 
-			// a texture. It will not have the correct dimensionality until this is done
-			glGenTextures(1, &params->m_textureID);
-			glBindTexture(params->m_texTarget, params->m_textureID);
+		assert("Attempting to create a texture that already exists" && !glIsTexture(params->m_textureID));
 
-			if (glIsTexture(params->m_textureID) != GL_TRUE)
-			{
-				LOG_ERROR("OpenGL failed to generate new texture name. Texture buffering failed");
-				assert("OpenGL failed to generate new texture name. Texture buffering failed" && false);
-			}
-		}
-		else
+		// Generate textureID names. Note: We must call glBindTexture immediately after to associate the name with 
+		// a texture. It will not have the correct dimensionality until this is done
+		glGenTextures(1, &params->m_textureID);
+		glBindTexture(params->m_texTarget, params->m_textureID);
+
+		if (glIsTexture(params->m_textureID) != GL_TRUE)
 		{
-			glBindTextures(textureUnit, 1, &params->m_textureID);
+			LOG_ERROR("OpenGL failed to generate new texture name. Texture buffering failed");
+			assert("OpenGL failed to generate new texture name. Texture buffering failed" && false);
 		}
 
 		// Ensure our texture is correctly configured:
@@ -361,44 +259,21 @@ namespace opengl
 		// Create mips:
 		opengl::Texture::GenerateMipMaps(texture);
 
-
-
-		// Configure the Texture sampler:
-		if (!glIsSampler(params->m_samplerID))
-		{
-			glGenSamplers(1, &params->m_samplerID);
-			glBindSampler(textureUnit, params->m_samplerID);
-
-			LOG_ERROR("Texture sampler creation failed");
-			assert("Texture sampler creation failed" && glIsSampler(params->m_samplerID));
-		}
-		else
-		{
-			glBindSampler(textureUnit, params->m_samplerID);
-		}
-
-		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_S, params->m_textureWrapS);
-		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_T, params->m_textureWrapT);
-		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_R, params->m_textureWrapR);
-
-		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MIN_FILTER, params->m_textureMinFilter);
-		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MAG_FILTER, params->m_textureMaxFilter);
-
-
-
 		// Note: We leave the texture and samplers bound
 	}
 
 
 	void opengl::Texture::GenerateMipMaps(gr::Texture& texture)
 	{
-		if (texture.GetTextureParams().m_useMIPs == false)
-		{
-			return;
-		}
-
 		opengl::Texture::PlatformParams const* const params =
 			dynamic_cast<opengl::Texture::PlatformParams*>(texture.GetPlatformParams());
+
+		if (texture.GetTextureParams().m_useMIPs == false)
+		{
+			const GLint maxLevel = GL_TEXTURE_MAX_LEVEL;
+			glTextureParameteriv(params->m_textureID, GL_TEXTURE_MAX_LEVEL, &maxLevel);
+			return;
+		}
 
 		glGenerateTextureMipmap(params->m_textureID);
 	}

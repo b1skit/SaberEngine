@@ -35,7 +35,7 @@ namespace SaberEngine
 	class Camera : public SceneObject
 	{
 	public:
-		// Default constructor
+		Camera() = delete;
 		Camera(string cameraName);
 
 		// Config constructor

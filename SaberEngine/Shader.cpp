@@ -1,34 +1,18 @@
-#include <fstream>
-
-#include <GL/glew.h> // TODO: DELETE THIS!!!!!!!!!!!!!!!!!!
-#include "Shader_OpenGL.h" // TEMP HAX!!!!!!!!!!!!!!!!!
-
 #include "Shader.h"
 #include "Shader_Platform.h"
 #include "CoreEngine.h"
 #include "BuildConfiguration.h"
-#include "Material.h"
-#include "Texture.h"
 
-using std::ifstream;
 using std::string;
 using std::vector;
 using std::shared_ptr;
 using gr::Material;
-using gr::Texture;
 
 
 namespace gr
 {
-	// Static members:
-	const vector<string> Shader::k_ShaderKeywords
-	{
-		"NO_ALBEDO_TEXTURE",
-		"NO_NORMAL_TEXTURE",
-		"NO_EMISSIVE_TEXTURE",
-		"NO_RMAO_TEXTURE",
-		"NO_COSINE_POWER",
-	};
+	class Sampler;
+	class Texture;
 
 
 	Shader::Shader(string const& shaderName) :
@@ -50,20 +34,22 @@ namespace gr
 	}
 
 
-	void Shader::Create(vector<string> const* shaderKeywords)
-	{
-		platform::Shader::Create(*this, shaderKeywords);
-	}
-
-
 	void Shader::Create()
 	{
-		platform::Shader::Create(*this, nullptr);
+		platform::Shader::Create(*this);
 	}
 
 
 	void Shader::Bind(bool doBind)
 	{
 		platform::Shader::Bind(*this, doBind);
+	}
+
+	void Shader::SetTexture(
+		string const& shaderName,
+		shared_ptr<gr::Texture> texture,
+		shared_ptr<gr::Sampler const> sampler) const
+	{
+		platform::Shader::SetTexture(*this, shaderName, texture, sampler);
 	}
 }

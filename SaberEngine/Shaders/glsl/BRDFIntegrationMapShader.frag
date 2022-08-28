@@ -1,4 +1,4 @@
-#version 430 core
+#version 460 core
 
 #define SABER_FRAGMENT_SHADER
 #define SABER_VEC2_OUTPUT
@@ -57,7 +57,5 @@ vec2 UVsToIntegratedBRDF(vec2 UVs)
 
 void main() 
 {
-    vec2 BRDFValue  = UVsToIntegratedBRDF(data.uv0.xy);
-
-    FragColor       = vec2(BRDFValue.x, BRDFValue.y);
+    FragColor       = UVsToIntegratedBRDF(data.uv0.xy);
 }

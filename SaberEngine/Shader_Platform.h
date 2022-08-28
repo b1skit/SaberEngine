@@ -3,6 +3,8 @@
 namespace gr
 {
 	class Shader;
+	class Texture;
+	class Sampler;
 }
 
 namespace platform
@@ -43,10 +45,15 @@ namespace platform
 		
 
 		// Static pointers:
-		static void (*Create)(gr::Shader& shader, std::vector<std::string> const* shaderKeywords);
+		static void (*Create)(gr::Shader& shader);
 		static void (*Bind)(gr::Shader const&, bool doBind);
 		static void (*SetUniform)(gr::Shader const&, char const* uniformName, void const* value, UNIFORM_TYPE const& type, int count);
 		static void (*Destroy)(gr::Shader&);
+		static void (*SetTexture)(
+			gr::Shader const& shader, 
+			std::string const& shaderName, 
+			std::shared_ptr<gr::Texture> texture,
+			std::shared_ptr<gr::Sampler const> sampler);
 	};
 
 
