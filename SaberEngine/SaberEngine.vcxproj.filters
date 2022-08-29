@@ -229,9 +229,6 @@
     <ClInclude Include="PlayerObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DebugConfiguration.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PostFXManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -324,6 +321,9 @@
     </ClInclude>
     <ClInclude Include="ShadowMap.h">
       <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugConfiguration.h">
+      <Filter>Header Files\en</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
