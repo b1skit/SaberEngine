@@ -12,7 +12,7 @@ namespace SaberEngine
 {
 
 	// CORE ENGINE:
-	class CoreEngine : public SaberObject, public EventListener
+	class CoreEngine : public virtual SaberObject, public virtual EventListener
 	{
 	public:
 		CoreEngine(int argc, char** argv);

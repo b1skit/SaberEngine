@@ -36,7 +36,7 @@ namespace SaberEngine
 	};
 
 
-	class Light : public SceneObject
+	class Light : public virtual SceneObject
 	{
 	public:
 		Light() = delete;
@@ -51,10 +51,10 @@ namespace SaberEngine
 		void Destroy();
 
 		// SaberObject interface:
-		void Update();
+		void Update() override;
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo);
+		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo) override;
 
 		// Getters/Setters:
 		inline glm::vec3 const& Color() const { return m_color; }

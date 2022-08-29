@@ -15,8 +15,7 @@ using std::shared_ptr;
 
 namespace gr
 {
-	Camera::Camera(string cameraName, CameraConfig camConfig, Transform* parent) :
-		SceneObject::SceneObject(cameraName), 
+	Camera::Camera(string cameraName, CameraConfig camConfig, Transform* parent) : SceneObject::SceneObject(cameraName), 
 		m_cameraConfig(camConfig),
 		m_cameraShader(nullptr)
 	{

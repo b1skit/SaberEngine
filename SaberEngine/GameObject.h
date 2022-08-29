@@ -10,7 +10,7 @@
 
 namespace SaberEngine
 {
-	class GameObject : public SceneObject
+	class GameObject : public virtual SceneObject
 	{
 	public:
 		GameObject() = delete;

@@ -14,7 +14,7 @@ namespace gr
 
 namespace SaberEngine
 {
-	class PlayerObject : public GameObject
+	class PlayerObject : public virtual GameObject
 	{
 	public:
 		PlayerObject(std::shared_ptr<gr::Camera> playerCam);
