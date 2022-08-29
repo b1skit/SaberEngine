@@ -19,12 +19,15 @@ using std::vector;
 #define CAMERA_TYPE_SHADOW_ARRAY_SIZE			10
 #define CAMERA_TYPE_REFLECTION_ARRAY_SIZE		10
 
+namespace gr
+{
+	class Camera;
+}
 
 namespace SaberEngine
 {
 	// Predeclarations:
 	class Light;
-	class Camera;
 	class Skybox;
 	class GameObject;
 	class Renderable;
@@ -56,48 +59,48 @@ namespace SaberEngine
 		int	AddMesh(std::shared_ptr<gr::Mesh> newMesh);
 		void DeleteMeshes();
 		std::shared_ptr<gr::Mesh> GetMesh(int meshIndex);
-		inline vector<std::shared_ptr<gr::Mesh>> const& GetMeshes() { return m_meshes; }
+		inline std::vector<std::shared_ptr<gr::Mesh>> const& GetMeshes() { return m_meshes; }
 
 		// Cameras:
 		//---------
-		vector<std::shared_ptr<Camera>> const& GetCameras(CAMERA_TYPE cameraType);
-		std::shared_ptr<Camera> GetMainCamera()	{ return m_sceneCameras[CAMERA_TYPE_MAIN].at(0); }
-		void RegisterCamera(CAMERA_TYPE cameraType, std::shared_ptr<Camera> newCamera);
+		std::vector<std::shared_ptr<gr::Camera>> const& GetCameras(CAMERA_TYPE cameraType);
+		std::shared_ptr<gr::Camera> GetMainCamera()	{ return m_sceneCameras[CAMERA_TYPE_MAIN].at(0); }
+		void RegisterCamera(CAMERA_TYPE cameraType, std::shared_ptr<gr::Camera> newCamera);
 		void ClearCameras();
 
 		void AddLight(std::shared_ptr<Light> newLight);
 
 		// Scene object containers:
 		//-------------------------
-		vector<std::shared_ptr<GameObject>> m_gameObjects;
-		vector<std::shared_ptr<Renderable>> m_renderables;	// Pointers to Renderables held by GameObjects
+		std::vector<std::shared_ptr<GameObject>> m_gameObjects;
+		std::vector<std::shared_ptr<Renderable>> m_renderables;	// Pointers to Renderables held by GameObjects
 
 
 		// Pointers to lights contained in deferredLights
 		std::shared_ptr<Light> m_ambientLight = nullptr;
 		std::shared_ptr<Light> m_keyLight = nullptr;
 
-		vector<std::shared_ptr<Light>> const& GetDeferredLights() const	{ return m_deferredLights; }
+		std::vector<std::shared_ptr<Light>> const& GetDeferredLights() const	{ return m_deferredLights; }
 
 		// Skybox object:
 		std::shared_ptr<Skybox> m_skybox = nullptr;
 
 		inline gr::Bounds const& WorldSpaceSceneBounds() const { return m_sceneWorldBounds; }
 
-		string const& GetSceneName() const { return m_sceneName; }
+		std::string const& GetSceneName() const { return m_sceneName; }
 
 	private:
-		vector<vector<std::shared_ptr<Camera>>> m_sceneCameras;
+		std::vector<std::vector<std::shared_ptr<gr::Camera>>> m_sceneCameras;
 
-		vector<std::shared_ptr<gr::Mesh>> m_meshes;	// Pointers to dynamically allocated Mesh objects
+		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;	// Pointers to dynamically allocated Mesh objects
 
 		gr::Bounds m_sceneWorldBounds;
 
 		// Lights:
 		//--------
-		vector<std::shared_ptr<Light>> m_deferredLights;
+		std::vector<std::shared_ptr<Light>> m_deferredLights;
 
-		string m_sceneName;
+		std::string m_sceneName;
 	};
 }
 

@@ -9,6 +9,7 @@
 using gr::Material;
 using gr::Texture;
 using gr::Shader;
+using gr::Camera;
 using std::shared_ptr;
 using std::make_shared;
 
@@ -19,12 +20,12 @@ namespace SaberEngine
 		string lightName, 
 		uint32_t xRes,
 		uint32_t yRes,
-		CameraConfig shadowCamConfig, 
+		gr::Camera::CameraConfig shadowCamConfig, 
 		Transform* shadowCamParent /*= nullptr*/, 
 		vec3 shadowCamPosition /* = vec3(0.0f, 0.0f, 0.0f)*/, 
 		bool useCubeMap /*= false*/)
 	{
-		m_shadowCam = std::make_shared<Camera>(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent);
+		m_shadowCam = std::make_shared<gr::Camera>(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent);
 		m_shadowCam->GetTransform()->SetWorldPosition(shadowCamPosition);
 
 		// Texture params are mostly the same between a single shadow map, or a cube map

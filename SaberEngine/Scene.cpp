@@ -6,6 +6,8 @@
 #include "Renderable.h"
 #include "DebugConfiguration.h"
 
+using gr::Camera;
+
 
 namespace SaberEngine
 {
@@ -122,7 +124,7 @@ namespace SaberEngine
 	}
 
 
-	void Scene::RegisterCamera(CAMERA_TYPE cameraType, std::shared_ptr<Camera> newCamera)
+	void Scene::RegisterCamera(CAMERA_TYPE cameraType, std::shared_ptr<gr::Camera> newCamera)
 	{
 		if (newCamera != nullptr && (int)cameraType < (int)m_sceneCameras.size())
 		{

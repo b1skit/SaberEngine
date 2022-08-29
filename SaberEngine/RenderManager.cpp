@@ -222,12 +222,12 @@ namespace SaberEngine
 		
 		if (light->Type() == LIGHT_POINT)
 		{
-			mat4 shadowCamProjection = shadowCam->Projection();
+			mat4 shadowCamProjection = shadowCam->GetProjectionMatrix();
 			vec3 lightWorldPos = light->GetTransform().WorldPosition();
 
-			mat4 const* cubeMap_vps = shadowCam->CubeViewProjection();
+			mat4 const& cubeMap_vps = shadowCam->GetCubeViewProjectionMatrix();
 
-			lightShader->SetUniform("shadowCamCubeMap_vp", &cubeMap_vps[0][0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f, 6);
+			lightShader->SetUniform("shadowCamCubeMap_vp", &cubeMap_vps[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f, 6);
 			lightShader->SetUniform("lightWorldPos", &lightWorldPos.x, platform::Shader::UNIFORM_TYPE::Vec3f);
 			lightShader->SetUniform("shadowCam_near", &shadowCam->Near(), platform::Shader::UNIFORM_TYPE::Float);
 			lightShader->SetUniform("shadowCam_far", &shadowCam->Far(), platform::Shader::UNIFORM_TYPE::Float);
@@ -251,7 +251,7 @@ namespace SaberEngine
 			{
 			case LIGHT_DIRECTIONAL:
 			{
-				mat4 mvp = shadowCam->ViewProjection() * currentMesh->GetTransform().Model();
+				mat4 mvp = shadowCam->GetViewProjectionMatrix() * currentMesh->GetTransform().Model();
 				lightShader->SetUniform("in_mvp", &mvp[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 			}
 			break;
@@ -292,7 +292,7 @@ namespace SaberEngine
 		m_context.ClearTargets(platform::Context::ClearTarget::ColorDepth);
 
 		// Assemble common (model independent) matrices:
-		mat4 m_view			= renderCam->View();
+		mat4 m_view			= renderCam->GetViewMatrix();
 
 		// Loop by material (+shader), mesh:
 		std::unordered_map<string, std::shared_ptr<Material>> const sceneMaterials = 
@@ -326,7 +326,7 @@ namespace SaberEngine
 				// Assemble model-specific matrices:
 				mat4 model			= currentMesh->GetTransform().Model();
 				mat4 modelRotation	= currentMesh->GetTransform().Model(WORLD_ROTATION);
-				mat4 mvp			= renderCam->ViewProjection() * model;
+				mat4 mvp			= renderCam->GetViewProjectionMatrix() * model;
 
 				// Upload mesh-specific matrices:
 				currentShader->SetUniform("in_model", &model[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
@@ -372,9 +372,9 @@ namespace SaberEngine
 		const bool hasShadowMap = deferredLight->GetShadowMap() != nullptr;
 			
 		mat4 model			= deferredLight->GetTransform().Model();
-		mat4 m_view			= gBufferCam->View();
+		mat4 m_view			= gBufferCam->GetViewMatrix();
 		mat4 mv				= m_view * model;
-		mat4 mvp			= gBufferCam->ViewProjection() * deferredLight->GetTransform().Model();
+		mat4 mvp			= gBufferCam->GetViewProjectionMatrix() * deferredLight->GetTransform().Model();
 		vec3 cameraPosition = gBufferCam->GetTransform()->WorldPosition();
 
 		currentShader->SetUniform("in_model", &model[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
@@ -464,7 +464,7 @@ namespace SaberEngine
 			if (shadowCam != nullptr)
 			{
 				// Upload common shadow properties:
-				currentShader->SetUniform("shadowCam_vp", &shadowCam->ViewProjection()[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
+				currentShader->SetUniform("shadowCam_vp", &shadowCam->GetViewProjectionMatrix()[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 				
 				currentShader->SetUniform("maxShadowBias", &activeShadowMap->MaxShadowBias(), platform::Shader::UNIFORM_TYPE::Float);
 				currentShader->SetUniform("minShadowBias", &activeShadowMap->MinShadowBias(), platform::Shader::UNIFORM_TYPE::Float);
@@ -560,7 +560,7 @@ namespace SaberEngine
 
 		// Assemble common (model independent) matrices:
 		mat4 inverseViewProjection = 
-			glm::inverse(renderCam->ViewProjection()); // TODO: Only compute this if something has changed
+			glm::inverse(renderCam->GetViewProjectionMatrix()); // TODO: Only compute this if something has changed
 
 		currentShader->SetUniform("in_inverse_vp", &inverseViewProjection[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 
@@ -739,7 +739,7 @@ namespace SaberEngine
 
 
 			// Upload matrices:
-			mat4 m_projection = sceneManager->GetMainCamera()->Projection();
+			mat4 m_projection = sceneManager->GetMainCamera()->GetProjectionMatrix();
 			shaders.at(i)->SetUniform("in_projection", &m_projection[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 
 			shaders.at(i)->Bind(false);

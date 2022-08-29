@@ -32,6 +32,7 @@
 using gr::Material;
 using gr::Texture;
 using gr::Shader;
+using gr::Camera;
 using std::shared_ptr;
 using glm::pi;
 
@@ -288,7 +289,7 @@ namespace SaberEngine
 	}
 
 
-	vector<shared_ptr<Camera>> const& SceneManager::GetCameras(CAMERA_TYPE cameraType)
+	vector<shared_ptr<gr::Camera>> const& SceneManager::GetCameras(CAMERA_TYPE cameraType)
 	{ 
 		return m_currentScene->GetCameras(cameraType); 
 	}
@@ -1406,7 +1407,7 @@ namespace SaberEngine
 					gr::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
 						glm::inverse(m_currentScene->m_keyLight->GetTransform().Model()));
 
-					CameraConfig shadowCamConfig;
+					gr::Camera::CameraConfig shadowCamConfig;
 					shadowCamConfig.m_near				= -transformedBounds.zMax();
 					shadowCamConfig.m_far				= -transformedBounds.zMin();
 
@@ -1610,7 +1611,7 @@ namespace SaberEngine
 				if (pointType == LIGHT_POINT)
 				{
 					// Create a cube shadow map:
-					CameraConfig shadowCamConfig;
+					gr::Camera::CameraConfig shadowCamConfig;
 					shadowCamConfig.m_fieldOfView		= 90.0f;
 
 					shadowCamConfig.m_near			= shadowCamNear;
@@ -1758,7 +1759,7 @@ namespace SaberEngine
 		}
 
 		string cameraName;
-		CameraConfig newCamConfig;
+		gr::Camera::CameraConfig newCamConfig;
 		shared_ptr<Camera> newCamera = nullptr;
 		int numCameras = 0;
 
@@ -1824,7 +1825,7 @@ namespace SaberEngine
 		}
 
 		// Create a new camera, attach a GBuffer, and register:
-		newCamera						= std::make_shared<Camera>(cameraName, newCamConfig);
+		newCamera = std::make_shared<gr::Camera>(cameraName, newCamConfig, nullptr);
 		newCamera->AttachGBuffer();
 
 		// For now, assume that we're only importing the main camera. No other cameras are currently supported...

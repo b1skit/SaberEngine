@@ -115,7 +115,7 @@ namespace SaberEngine
 
 		// Upload Shader parameters:
 		m_toneMapShader->SetUniform(
-			"exposure", &CoreEngine::GetSceneManager()->GetMainCamera()->Exposure(), platform::Shader::UNIFORM_TYPE::Float);
+			"exposure", &CoreEngine::GetSceneManager()->GetMainCamera()->GetExposure(), platform::Shader::UNIFORM_TYPE::Float);
 
 		// Upload the texel size for the SMALLEST pingpong textures:
 		

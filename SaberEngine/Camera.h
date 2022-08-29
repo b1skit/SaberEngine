@@ -8,63 +8,56 @@
 #include "Shader.h"
 
 
-namespace SaberEngine
+namespace gr
 {
-	// Contains configuration specific to a cameras rendering
-	struct CameraConfig
-	{
-		// These default values are all overwritten during camera setup
-
-		float m_fieldOfView		= 90.0f;			// == 0 if orthographic	
-		float m_near			= 1.0f;
-		float m_far				= 100.0f;
-		float m_aspectRatio		= 1.0f;				// == width / height
-
-		// Orthographic rendering properties:
-		bool m_isOrthographic	= false;
-		float m_orthoLeft		= -5;
-		float m_orthoRight		= 5;
-		float m_orthoBottom		= -5;
-		float m_orthoTop		= 5;
-
-		// Render properties:
-		float m_exposure		= 1.0f;
-	};
-
-
-	class Camera : public SceneObject
+	class Camera : public virtual SaberEngine::SceneObject
 	{
 	public:
-		Camera() = delete;
-		Camera(string cameraName);
+		struct CameraConfig
+		{
+			float m_fieldOfView = 90.0f; // == 0 if orthographic	
+			float m_near = 1.0f;
+			float m_far = 100.0f;
+			float m_aspectRatio = 1.0f; // == width / height
 
-		// Config constructor
-		Camera(string cameraName, CameraConfig camConfig, Transform* parent = nullptr);
+			// Orthographic properties:
+			bool m_isOrthographic = false;
+			float m_orthoLeft = -5;
+			float m_orthoRight = 5;
+			float m_orthoBottom = -5;
+			float m_orthoTop = 5;
 
+			// Image properties:
+			float m_exposure = 1.0f;
+		};
+
+
+	public:
+		Camera(std::string cameraName, CameraConfig camConfig, SaberEngine::Transform* parent);
 		~Camera() { Destroy(); }
 
 		void Destroy();
 
+		Camera() = delete;
+		Camera(Camera&&) = default;
+		Camera& operator=(Camera const&) = default;
+
 		// SaberObject interface:
-		void Update() {} // Do nothing
+		void Update() override { /*Do nothing*/ }
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo) {} // Do nothing
+		void HandleEvent(std::shared_ptr<SaberEngine::EventInfo const> eventInfo) override { /*Do nothing*/ }
 
-		// Getters/Setters:
 		inline float const& FieldOfView() const		{ return m_cameraConfig.m_fieldOfView; }
 		inline float const& Near() const			{ return m_cameraConfig.m_near; }
 		inline float const& Far() const				{ return m_cameraConfig.m_far; }
 
-		mat4 const&	View();
-		mat4 const*	CubeView(); // TODO: Recompute this if the camera has moved
-
-		inline mat4 const&	Projection() const		{ return m_projection; }
+		glm::mat4 const& GetViewMatrix();
+		inline glm::mat4 const&	GetProjectionMatrix() const { return m_projection; }
+		inline glm::mat4 const&	GetViewProjectionMatrix() { return m_viewProjection = m_projection * GetViewMatrix(); } // TODO: Only compute this if something has changed
 		
-		// TODO: Only compute this if something has changed
-		inline mat4 const&	ViewProjection()		{ return m_viewProjection = m_projection * View(); } 
-
-		mat4 const*	CubeViewProjection();
+		glm::mat4 const& GetCubeViewMatrix(); // TODO: Recompute this if the camera has moved
+		glm::mat4 const& GetCubeViewProjectionMatrix();
 
 		std::shared_ptr<gr::Shader>& GetRenderShader() { return m_cameraShader; }
 		std::shared_ptr<gr::Shader> const& GetRenderShader() const { return m_cameraShader; }
@@ -72,15 +65,13 @@ namespace SaberEngine
 		gr::TextureTargetSet& GetTextureTargetSet() { return m_camTargetSet; }
 		gr::TextureTargetSet const & GetTextureTargetSet() const { return m_camTargetSet; }
 
-		float& Exposure() { return m_cameraConfig.m_exposure; }
+		float& GetExposure() { return m_cameraConfig.m_exposure; }
+		float const& GetExposure() const { return m_cameraConfig.m_exposure; }
 
 		// Configure this camera for deferred rendering
 		void AttachGBuffer();
 		// TODO: Move this to a stage owned by a graphics system, with a target set etc
 		// Cameras should just do camera things.
-
-		void DebugPrint();
-	protected:
 
 
 	private:
@@ -89,20 +80,16 @@ namespace SaberEngine
 
 		CameraConfig m_cameraConfig;
 
-		mat4 m_view					= mat4();
-		mat4 m_projection				= mat4();
-		mat4 m_viewProjection			= mat4();
+		glm::mat4 m_view;
+		glm::mat4 m_projection;
+		glm::mat4 m_viewProjection;
 
-		vector<mat4> m_cubeView;
-		vector<mat4> m_cubeViewProjection;
+		std::vector<glm::mat4> m_cubeView;
+		std::vector<glm::mat4> m_cubeViewProjection;
 		
-		std::shared_ptr<gr::Shader> m_cameraShader = nullptr;
+		std::shared_ptr<gr::Shader> m_cameraShader;
 
 		gr::TextureTargetSet m_camTargetSet;
-
-		// TODO: Move initialization to ctor initialization list
-
-		/*bool isDirty = false;*/
 	};
 
 

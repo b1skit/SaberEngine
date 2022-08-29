@@ -7,20 +7,22 @@
 using glm::vec3;
 
 
+namespace gr
+{
+	class Camera;
+}
+
 namespace SaberEngine
 {
-	// Pre-declarations:
-	class Camera;
-
 	class PlayerObject : public GameObject
 	{
 	public:
-		PlayerObject(std::shared_ptr<Camera> playerCam);
+		PlayerObject(std::shared_ptr<gr::Camera> playerCam);
 
 		~PlayerObject() = default;
 
 		// Getters/Setters:
-		inline std::shared_ptr<Camera> GetCamera() { return m_playerCam; }
+		inline std::shared_ptr<gr::Camera> GetCamera() { return m_playerCam; }
 
 		// SaberObject interface:
 		void Update() override;
@@ -32,7 +34,7 @@ namespace SaberEngine
 
 
 	private:
-		std::shared_ptr<Camera> m_playerCam;
+		std::shared_ptr<gr::Camera> m_playerCam;
 
 		// Control configuration:
 		float m_movementSpeed = 0.003f;

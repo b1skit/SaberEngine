@@ -10,10 +10,14 @@
 #include "Shader.h"
 
 
+namespace gr
+{
+	class Camera;
+}
+
 namespace SaberEngine
 {
 	// Pre-declarations:
-	class Camera;
 	class Mesh;
 	class ShadowMap;
 

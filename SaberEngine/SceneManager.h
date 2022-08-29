@@ -12,15 +12,6 @@
 #include "Texture.h"
 
 
-
-
-using std::vector;
-using std::unordered_map;
-
-using glm::vec4;
-
-
-// Pre-declarations:
 namespace gr
 {
 	class Material;
@@ -28,11 +19,11 @@ namespace gr
 	class Texture;
 	struct TextureParams;
 	enum class TextureColorSpace;
-	
+	class Camera;
 }
+
 namespace SaberEngine
 {
-	class Camera;
 	class aiTexture;
 	class SceneObject;
 	class GameObject;
@@ -44,6 +35,11 @@ namespace SaberEngine
 	struct Scene;
 	enum CAMERA_TYPE;
 }
+
+using std::vector;
+using std::unordered_map;
+using glm::vec4;
+using gr::Camera;
 
 
 namespace SaberEngine
@@ -84,9 +80,9 @@ namespace SaberEngine
 		std::shared_ptr<Light> const& GetAmbientLight();
 		std::shared_ptr<Light> GetKeyLight();
 		
-		vector<std::shared_ptr<Camera>> const& GetCameras(CAMERA_TYPE cameraType);
-		std::shared_ptr<Camera>	GetMainCamera();
-		void RegisterCamera(CAMERA_TYPE cameraType, std::shared_ptr<Camera> newCamera);;
+		std::vector<std::shared_ptr<gr::Camera>> const& GetCameras(CAMERA_TYPE cameraType);
+		std::shared_ptr<gr::Camera>	GetMainCamera();
+		void RegisterCamera(CAMERA_TYPE cameraType, std::shared_ptr<gr::Camera> newCamera);;
 
 		void AddTexture(std::shared_ptr<gr::Texture>& newTexture); // If duplicate texture exists, it will be deleted and the newTexture pointer updated to the correct address
 		

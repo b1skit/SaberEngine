@@ -18,15 +18,16 @@ using glm::vec4;
 #include "Context_Platform.h"
 
 
-// Pre-declarations:
 namespace gr
 {
 	class Mesh;
 	class Shader;
+	class Camera;
 }
+
 namespace SaberEngine
 {
-	class Camera;
+
 	class Light;
 	class Skybox;
 }
@@ -72,7 +73,7 @@ namespace SaberEngine
 	private:
 		void RenderLightShadowMap(std::shared_ptr<Light> currentLight);
 
-		void RenderToGBuffer(std::shared_ptr<Camera> const renderCam);	// Note: renderCam MUST have an attached GBuffer
+		void RenderToGBuffer(std::shared_ptr<gr::Camera> const renderCam);	// Note: renderCam MUST have an attached GBuffer
 
 		void RenderDeferredLight(std::shared_ptr<Light> deferredLight); // Note: FBO, viewport
 
