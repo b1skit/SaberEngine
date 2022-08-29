@@ -1,6 +1,6 @@
 #include <memory>
 
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "CoreEngine.h"
 #include "TextureTarget_Platform.h"
 #include "TextureTarget.h"

@@ -1,6 +1,6 @@
 #include <fstream>
 
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "CoreEngine.h"
 #include "Shader.h"
 #include "Shader_Platform.h"

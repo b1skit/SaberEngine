@@ -3,7 +3,7 @@
 #include "ImageBasedLight.h"
 #include "CoreEngine.h"
 #include "Texture.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "Mesh.h"
 #include "Shader.h"
 #include "Material.h"

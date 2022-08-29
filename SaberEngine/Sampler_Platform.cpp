@@ -4,7 +4,7 @@
 #include "Sampler.h"
 #include "Sampler_Platform.h"
 #include "Sampler_OpenGL.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 
 
 namespace platform

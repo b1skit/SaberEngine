@@ -1,4 +1,4 @@
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "CoreEngine.h"
 #include "Context.h"
 #include "Context_OpenGL.h"

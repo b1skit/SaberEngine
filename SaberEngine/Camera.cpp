@@ -1,6 +1,6 @@
 #include <glm/glm.hpp>
 
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "Camera.h"
 #include "CoreEngine.h"
 #include "Texture.h"

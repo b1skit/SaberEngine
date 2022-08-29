@@ -1,4 +1,4 @@
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "CoreEngine.h"
 #include "Mesh_Platform.h"
 #include "Mesh_OpenGL.h"

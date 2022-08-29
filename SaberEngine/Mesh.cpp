@@ -4,7 +4,7 @@
 #include <glm/gtc/constants.hpp>
 using glm::pi;
 
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "Mesh.h"
 
 

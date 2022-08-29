@@ -1,6 +1,6 @@
 #include <GL/glew.h>
 
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 
 #include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"

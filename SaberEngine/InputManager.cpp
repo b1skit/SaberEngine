@@ -1,6 +1,6 @@
 #include "InputManager.h"
 #include "CoreEngine.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 
 
 namespace SaberEngine

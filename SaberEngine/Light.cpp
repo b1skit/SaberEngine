@@ -1,7 +1,7 @@
 #include "Light.h"
 #include "CoreEngine.h"
 #include "Camera.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "ShadowMap.h"
 #include "Shader.h"
 #include "Mesh.h"

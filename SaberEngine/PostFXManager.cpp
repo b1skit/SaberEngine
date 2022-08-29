@@ -2,7 +2,7 @@
 #include <memory>
 
 #include "PostFXManager.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "CoreEngine.h"
 #include "Mesh.h"
 #include "Shader.h"

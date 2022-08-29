@@ -4,7 +4,7 @@
 #include "Skybox.h"
 #include "GameObject.h"
 #include "Renderable.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 
 
 namespace SaberEngine

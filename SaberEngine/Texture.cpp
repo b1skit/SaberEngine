@@ -6,7 +6,7 @@ using std::to_string;
 
 #include "Texture.h"
 #include "CoreEngine.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "Material.h"
 using gr::Material;
 

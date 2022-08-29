@@ -16,7 +16,7 @@ using std::string;
 #include "Transform.h"
 #include "Material.h"
 #include "Texture.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "Skybox.h"
 #include "Camera.h"
 #include "ImageBasedLight.h"

@@ -2,7 +2,7 @@
 
 #include "Platform.h"
 #include "CoreEngine.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 
 #include "Context_Platform.h"
 #include "Context_OpenGL.h"

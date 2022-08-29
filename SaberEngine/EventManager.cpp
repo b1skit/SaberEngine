@@ -3,7 +3,7 @@
 #include "EventManager.h"
 #include "SaberObject.h"
 #include "CoreEngine.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "EventListener.h"
 
 #include <SDL.h>

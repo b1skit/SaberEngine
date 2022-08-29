@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <GL/glew.h> 
 
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "Shader.h"
 #include "Shader_Platform.h"
 #include "Shader_OpenGL.h"

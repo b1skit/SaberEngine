@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "Sampler_OpenGL.h"
 #include "Sampler_Platform.h"
 

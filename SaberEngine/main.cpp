@@ -2,7 +2,7 @@
 
 #include "Platform.h"
 #include "CoreEngine.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 
 
 int main(int argc, char** argv)

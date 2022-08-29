@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "Texture.h"
 #include "TextureTarget_Platform.h"
 

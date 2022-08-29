@@ -11,7 +11,7 @@
 #define STB_IMAGE_IMPLEMENTATION	// Only include this define ONCE in the project
 #include <stb_image.h>				// STB image loader
 
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "SceneManager.h"
 #include "EventManager.h"
 #include "CoreEngine.h"

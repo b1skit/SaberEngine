@@ -1,5 +1,5 @@
 #include "EngineConfig.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "KeyConfiguration.h"
 
 #include <fstream>

@@ -231,7 +231,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="Texture_OpenGL.h" />
     <ClInclude Include="Texture_Platform.h" />
     <ClInclude Include="SaberObject.h" />
-    <ClInclude Include="BuildConfiguration.h" />
+    <ClInclude Include="DebugConfiguration.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CoreEngine.h" />
     <ClInclude Include="EngineComponent.h" />

@@ -1,7 +1,7 @@
 #include <string>
 
 #include "CoreEngine.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "Platform.h"
 
 

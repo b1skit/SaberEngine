@@ -2,7 +2,7 @@
 #include "CoreEngine.h"
 #include "Shader.h"
 #include "Texture.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "Shader.h"
 #include "CoreEngine.h"
 

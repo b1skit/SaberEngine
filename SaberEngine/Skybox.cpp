@@ -1,7 +1,7 @@
 #include "Skybox.h"
 #include "Mesh.h"
 #include "CoreEngine.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "ImageBasedLight.h"
 #include "Shader.h"
 #include "Texture.h"

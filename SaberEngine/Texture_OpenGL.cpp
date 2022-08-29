@@ -2,7 +2,7 @@
 
 #include <GL/glew.h>
 
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "Texture.h"
 #include "Texture_Platform.h"
 #include "Texture_OpenGL.h"

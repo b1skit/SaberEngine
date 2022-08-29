@@ -1,4 +1,4 @@
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 #include "CoreEngine.h"
 #include "Texture.h"
 #include "Texture_Platform.h"

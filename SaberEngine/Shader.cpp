@@ -1,7 +1,7 @@
 #include "Shader.h"
 #include "Shader_Platform.h"
 #include "CoreEngine.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 
 using std::string;
 using std::vector;

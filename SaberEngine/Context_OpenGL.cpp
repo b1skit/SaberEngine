@@ -9,7 +9,7 @@
 #include "Context.h"
 
 #include "CoreEngine.h"
-#include "BuildConfiguration.h"
+#include "DebugConfiguration.h"
 
 using std::string;
 using std::to_string;

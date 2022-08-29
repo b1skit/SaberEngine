@@ -235,7 +235,7 @@
     <ClInclude Include="Light.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BuildConfiguration.h">
+    <ClInclude Include="DebugConfiguration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ShadowMap.h">
