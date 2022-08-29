@@ -33,6 +33,7 @@ using gr::Material;
 using gr::Texture;
 using gr::Shader;
 using gr::Camera;
+using gr::Light;
 using std::shared_ptr;
 using glm::pi;
 
@@ -1393,7 +1394,7 @@ namespace SaberEngine
 					shared_ptr<Light> keyLight = std::make_shared<Light>
 					(
 						lightName, 
-						LIGHT_DIRECTIONAL, 
+						Light::Directional, 
 						lightColor,
 						nullptr
 					);
@@ -1484,7 +1485,7 @@ namespace SaberEngine
 			{
 				string lightName = string(scene->mLights[i]->mName.C_Str());
 
-				LIGHT_TYPE pointType = LIGHT_POINT;
+				Light::LightType pointType = Light::Point;
 
 				// NOTE: The word "ambient" must appear in the ambient light's name
 				if (!foundAmbient && lightName.find("ambient") != string::npos)	
@@ -1495,7 +1496,7 @@ namespace SaberEngine
 
 					foundAmbient = true;
 
-					pointType = LIGHT_AMBIENT_COLOR; // Assume it's a colored ambient for now
+					pointType = Light::AmbientColor; // Assume it's a colored ambient for now
 				}
 				else
 				{
@@ -1532,7 +1533,7 @@ namespace SaberEngine
 
 				// Extract metadata:
 				aiNode* lightNode = scene->mRootNode->FindNode(scene->mLights[i]->mName.C_Str());
-				if (pointType == LIGHT_POINT && lightNode)
+				if (pointType == Light::Point && lightNode)
 				{
 					// How close to zero we are: Want to maximize this, with as little visual discontinuity as possible
 					float cutoff = 0.05f;	
@@ -1580,7 +1581,7 @@ namespace SaberEngine
 
 				// Create the light:
 				shared_ptr<Light> pointLight = nullptr;
-				if (pointType == LIGHT_POINT)
+				if (pointType == Light::Point)
 				{
 					pointLight = std::make_shared<Light>(
 						lightName,
@@ -1608,7 +1609,7 @@ namespace SaberEngine
 					}
 				}
 
-				if (pointType == LIGHT_POINT)
+				if (pointType == Light::Point)
 				{
 					// Create a cube shadow map:
 					gr::Camera::CameraConfig shadowCamConfig;

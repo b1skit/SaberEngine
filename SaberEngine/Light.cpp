@@ -8,38 +8,39 @@
 using gr::Shader;
 using std::shared_ptr;
 using std::make_shared;
+using glm::vec3;
 
 
-namespace SaberEngine
+namespace gr
 {
-	SaberEngine::Light::Light(
+	Light::Light(
 		std::string const& lightName, 
-		LIGHT_TYPE lightType, 
+		LightType lightType, 
 		vec3 color, 
-		std::shared_ptr<ShadowMap> shadowMap /*= nullptr*/, 
-		float radius /*= 1.0f*/)
+		std::shared_ptr<SaberEngine::ShadowMap> shadowMap /*= nullptr*/,
+		float radius /*= 1.0f*/) :
+			m_color(color),
+			m_type(lightType),
+			m_lightName(lightName),
+			m_shadowMap(shadowMap),
+			m_deferredMesh(nullptr),
+			m_deferredLightShader(nullptr)
 	{
-		m_lightName		= lightName;
-		m_type			= lightType;
-		m_color			= color;
-
-		m_shadowMap		= shadowMap;
-
 		// Set up deferred light mesh:
 		string shaderName;
 		switch (lightType)
 		{
-		case LIGHT_AMBIENT_COLOR:
-		case LIGHT_AMBIENT_IBL:
+		case AmbientColor:
+		case AmbientIBL:
 		{
 			m_deferredLightShader = make_shared<Shader>(
-				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"));
+				SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"));
 			
-			if (lightType == LIGHT_AMBIENT_COLOR)
+			if (lightType == AmbientColor)
 			{
 				m_deferredLightShader->ShaderKeywords().emplace_back("AMBIENT_COLOR");
 			}
-			else // LIGHT_AMBIENT_IBL
+			else // AmbientIBL
 			{
 				m_deferredLightShader->ShaderKeywords().emplace_back("AMBIENT_IBL");
 			}
@@ -54,14 +55,12 @@ namespace SaberEngine
 				vec3(-1.0f, -1.0f,	-1.0f),	// BL
 				vec3(1.0f,	-1.0f,	-1.0f)	// BR
 			);
-
-			break;
-		}			
-
-		case LIGHT_DIRECTIONAL:
+		}
+		break;
+		case Directional:
 		{
 			m_deferredLightShader = make_shared<Shader>(
-				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredKeylightShaderName"));
+				SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredKeylightShaderName"));
 			m_deferredLightShader->Create();
 
 			// Attach a screen aligned quad:
@@ -72,22 +71,21 @@ namespace SaberEngine
 				vec3(-1.0f,	-1.0f,	-1.0f),	// BL
 				vec3(1.0f,	-1.0f,	-1.0f)	// BR
 			);
-			break;
 		}
-
-		case LIGHT_POINT:
+		break;
+		case Point:
+		{
 			m_deferredLightShader = make_shared<Shader>(
-				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredPointLightShaderName"));
+				SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredPointLightShaderName"));
 			m_deferredLightShader->Create();
-			
+
 			m_deferredMesh = gr::meshfactory::CreateSphere(radius);
 			m_deferredMesh->GetTransform().Parent(&m_transform);
-
-			break;
-
-		case LIGHT_SPOT:
-		case LIGHT_AREA:
-		case LIGHT_TUBE:
+		}
+		break;
+		case Spot:
+		case Area:
+		case Tube:
 		default:
 			// TODO: Implement light meshes for additional light types
 			break;
@@ -102,16 +100,6 @@ namespace SaberEngine
 		m_deferredLightShader = nullptr;
 
 		m_lightName += "_DELETED";
-	}
-
-
-	void Light::Update()
-	{
-	}
-
-
-	void Light::HandleEvent(std::shared_ptr<EventInfo const> eventInfo)
-	{
 	}
 }
 

@@ -20,6 +20,7 @@ namespace gr
 	struct TextureParams;
 	enum class TextureColorSpace;
 	class Camera;
+	class Light;
 }
 
 namespace SaberEngine
@@ -28,7 +29,6 @@ namespace SaberEngine
 	class SceneObject;
 	class GameObject;
 	class Renderable;
-	class Light;
 	class Transform;
 	class Skybox;
 	struct Bounds;
@@ -77,8 +77,8 @@ namespace SaberEngine
 		vector<std::shared_ptr<gr::Mesh>> const* GetRenderMeshes(std::shared_ptr<gr::Material> targetMaterial);	// Returns ALL meshs if targetMaterial == nullptr
 		vector<std::shared_ptr<Renderable>>* GetRenderables();
 
-		std::shared_ptr<Light> const& GetAmbientLight();
-		std::shared_ptr<Light> GetKeyLight();
+		std::shared_ptr<gr::Light> const& GetAmbientLight();
+		std::shared_ptr<gr::Light> GetKeyLight();
 		
 		std::vector<std::shared_ptr<gr::Camera>> const& GetCameras(CAMERA_TYPE cameraType);
 		std::shared_ptr<gr::Camera>	GetMainCamera();
@@ -92,7 +92,7 @@ namespace SaberEngine
 			gr::Texture::TextureColorSpace colorSpace, 
 			bool loadIfNotFound = true);	
 
-		vector<std::shared_ptr<Light>> const& GetDeferredLights();
+		vector<std::shared_ptr<gr::Light>> const& GetDeferredLights();
 
 		std::shared_ptr<Skybox>	GetSkybox();
 

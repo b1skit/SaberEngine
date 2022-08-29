@@ -20,7 +20,7 @@ namespace SaberEngine
 	};
 
 
-	class ImageBasedLight : public virtual Light
+	class ImageBasedLight : public virtual gr::Light
 	{
 	public:
 		ImageBasedLight(std::string lightName, std::string relativeHDRPath);

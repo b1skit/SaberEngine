@@ -22,12 +22,11 @@ using std::vector;
 namespace gr
 {
 	class Camera;
+	class Light;
 }
 
 namespace SaberEngine
 {
-	// Predeclarations:
-	class Light;
 	class Skybox;
 	class GameObject;
 	class Renderable;
@@ -68,7 +67,7 @@ namespace SaberEngine
 		void RegisterCamera(CAMERA_TYPE cameraType, std::shared_ptr<gr::Camera> newCamera);
 		void ClearCameras();
 
-		void AddLight(std::shared_ptr<Light> newLight);
+		void AddLight(std::shared_ptr<gr::Light> newLight);
 
 		// Scene object containers:
 		//-------------------------
@@ -77,10 +76,10 @@ namespace SaberEngine
 
 
 		// Pointers to lights contained in deferredLights
-		std::shared_ptr<Light> m_ambientLight = nullptr;
-		std::shared_ptr<Light> m_keyLight = nullptr;
+		std::shared_ptr<gr::Light> m_ambientLight = nullptr;
+		std::shared_ptr<gr::Light> m_keyLight = nullptr;
 
-		std::vector<std::shared_ptr<Light>> const& GetDeferredLights() const	{ return m_deferredLights; }
+		std::vector<std::shared_ptr<gr::Light>> const& GetDeferredLights() const	{ return m_deferredLights; }
 
 		// Skybox object:
 		std::shared_ptr<Skybox> m_skybox = nullptr;
@@ -98,7 +97,7 @@ namespace SaberEngine
 
 		// Lights:
 		//--------
-		std::vector<std::shared_ptr<Light>> m_deferredLights;
+		std::vector<std::shared_ptr<gr::Light>> m_deferredLights;
 
 		std::string m_sceneName;
 	};

@@ -17,7 +17,7 @@ using std::make_shared;
 namespace SaberEngine
 {
 	ImageBasedLight::ImageBasedLight(string lightName, string relativeHDRPath) 
-		: Light(lightName, LIGHT_AMBIENT_IBL, vec3(0))
+		: Light(lightName, AmbientIBL, vec3(0))
 	{
 		// Irradiance Environment Map (IEM) setup:
 

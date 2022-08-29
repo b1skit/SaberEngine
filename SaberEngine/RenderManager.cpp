@@ -30,6 +30,7 @@ using gr::Material;
 using gr::Texture;
 using gr::Shader;
 using gr::Sampler;
+using gr::Light;
 using std::shared_ptr;
 using std::make_shared;
 using glm::vec3;
@@ -163,9 +164,9 @@ namespace SaberEngine
 			for (int i = 1; i < deferredLights.size(); i++)
 			{
 				// Select face culling:
-				if (deferredLights[i]->Type() == LIGHT_AMBIENT_COLOR ||
-					deferredLights[i]->Type() == LIGHT_AMBIENT_IBL ||
-					deferredLights[i]->Type() == LIGHT_DIRECTIONAL)
+				if (deferredLights[i]->Type() == Light::AmbientColor ||
+					deferredLights[i]->Type() == Light::AmbientIBL ||
+					deferredLights[i]->Type() == Light::Directional)
 				{
 					m_context.SetCullingMode(platform::Context::FaceCullingMode::Back);
 				}
@@ -220,7 +221,7 @@ namespace SaberEngine
 		std::shared_ptr<Shader> lightShader = shadowCam->GetRenderShader();
 		lightShader->Bind(true);
 		
-		if (light->Type() == LIGHT_POINT)
+		if (light->Type() == Light::Point)
 		{
 			mat4 shadowCamProjection = shadowCam->GetProjectionMatrix();
 			vec3 lightWorldPos = light->GetTransform().WorldPosition();
@@ -249,25 +250,25 @@ namespace SaberEngine
 
 			switch (light->Type())
 			{
-			case LIGHT_DIRECTIONAL:
+			case Light::Directional:
 			{
 				mat4 mvp = shadowCam->GetViewProjectionMatrix() * currentMesh->GetTransform().Model();
 				lightShader->SetUniform("in_mvp", &mvp[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 			}
 			break;
 
-			case LIGHT_POINT:
+			case Light::Point:
 			{
 				mat4 model = currentMesh->GetTransform().Model();
 				lightShader->SetUniform("in_model",	&model[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 			}
 			break;
 
-			case LIGHT_AMBIENT_COLOR:
-			case LIGHT_AMBIENT_IBL:
-			case LIGHT_AREA:
-			case LIGHT_SPOT:
-			case LIGHT_TUBE:
+			case Light::AmbientColor:
+			case Light::AmbientIBL:
+			case Light::Area:
+			case Light::Spot:
+			case Light::Tube:
 			default:
 				return; // This should never happen...
 			}
@@ -386,11 +387,11 @@ namespace SaberEngine
 		// TODO: Break this out into a function: ALL of our render functions have a similar setup		
 
 		// Light properties:
-		currentShader->SetUniform("lightColor", &deferredLight->Color().r, platform::Shader::UNIFORM_TYPE::Vec3f);
+		currentShader->SetUniform("lightColor", &deferredLight->GetColor().r, platform::Shader::UNIFORM_TYPE::Vec3f);
 
 		switch (deferredLight->Type())
 		{
-		case LIGHT_AMBIENT_IBL:
+		case Light::AmbientIBL:
 		{
 			// Bind IBL cubemaps:
 			std::shared_ptr<gr::Texture> IEMCubemap =
@@ -422,7 +423,7 @@ namespace SaberEngine
 		}
 			break;
 
-		case LIGHT_DIRECTIONAL:
+		case Light::Directional:
 		{
 			currentShader->SetUniform(
 				"keylightWorldDir", 
@@ -434,11 +435,11 @@ namespace SaberEngine
 		}
 			break;
 
-		case LIGHT_AMBIENT_COLOR:
-		case LIGHT_POINT:
-		case LIGHT_SPOT:
-		case LIGHT_AREA:
-		case LIGHT_TUBE:
+		case Light::AmbientColor:
+		case Light::Point:
+		case Light::Spot:
+		case Light::Area:
+		case Light::Tube:
 		{
 			currentShader->SetUniform(
 				"lightWorldPos", 
@@ -478,7 +479,7 @@ namespace SaberEngine
 
 				switch (deferredLight->Type())
 				{
-				case LIGHT_DIRECTIONAL:
+				case Light::Directional:
 				{
 					if (depthTexture)
 					{
@@ -489,7 +490,7 @@ namespace SaberEngine
 				}
 				break;
 
-				case LIGHT_POINT:
+				case Light::Point:
 				{
 					if (depthTexture)
 					{
@@ -501,11 +502,11 @@ namespace SaberEngine
 				break;
 
 				// Other light types don't support shadows, yet:
-				case LIGHT_AMBIENT_COLOR:
-				case LIGHT_AMBIENT_IBL:
-				case LIGHT_AREA:
-				case LIGHT_SPOT:
-				case LIGHT_TUBE:
+				case Light::AmbientColor:
+				case Light::AmbientIBL:
+				case Light::Area:
+				case Light::Spot:
+				case Light::Tube:
 				default:
 					break;
 				}
@@ -645,7 +646,7 @@ namespace SaberEngine
 		vec3 const* ambientColor	= nullptr;
 		if ((ambientLight = CoreEngine::GetSceneManager()->GetAmbientLight()) != nullptr)
 		{
-			ambientColor = &CoreEngine::GetSceneManager()->GetAmbientLight()->Color();
+			ambientColor = &CoreEngine::GetSceneManager()->GetAmbientLight()->GetColor();
 		}
 
 		vec3 const* keyDir			= nullptr;
@@ -654,7 +655,7 @@ namespace SaberEngine
 		if ((keyLight = CoreEngine::GetSceneManager()->GetKeyLight()) != nullptr)
 		{
 			keyDir = &CoreEngine::GetSceneManager()->GetKeyLight()->GetTransform().Forward();
-			keyCol = &CoreEngine::GetSceneManager()->GetKeyLight()->Color();
+			keyCol = &CoreEngine::GetSceneManager()->GetKeyLight()->GetColor();
 		}
 
 		LOG("Uploading light and matrix data to shaders");

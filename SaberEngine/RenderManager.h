@@ -23,12 +23,11 @@ namespace gr
 	class Mesh;
 	class Shader;
 	class Camera;
+	class Light;
 }
 
 namespace SaberEngine
 {
-
-	class Light;
 	class Skybox;
 }
 
@@ -71,11 +70,11 @@ namespace SaberEngine
 		re::Context const& GetContext() { return m_context; }
 
 	private:
-		void RenderLightShadowMap(std::shared_ptr<Light> currentLight);
+		void RenderLightShadowMap(std::shared_ptr<gr::Light> currentLight);
 
 		void RenderToGBuffer(std::shared_ptr<gr::Camera> const renderCam);	// Note: renderCam MUST have an attached GBuffer
 
-		void RenderDeferredLight(std::shared_ptr<Light> deferredLight); // Note: FBO, viewport
+		void RenderDeferredLight(std::shared_ptr<gr::Light> deferredLight); // Note: FBO, viewport
 
 		void RenderSkybox(std::shared_ptr<Skybox> skybox);
 

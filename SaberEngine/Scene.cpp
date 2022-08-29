@@ -7,6 +7,7 @@
 #include "DebugConfiguration.h"
 
 using gr::Camera;
+using gr::Light;
 
 
 namespace SaberEngine
@@ -166,9 +167,9 @@ namespace SaberEngine
 		switch (newLight->Type())
 		{
 			// Check if we've got any existing ambient or directional lights:
-		case LIGHT_AMBIENT_COLOR:
-		case LIGHT_AMBIENT_IBL:
-		case LIGHT_DIRECTIONAL:
+		case Light::AmbientColor:
+		case Light::AmbientIBL:
+		case Light::Directional:
 		{
 			bool foundExisting = false;
 			for (int currentLight = 0; currentLight < (int)m_deferredLights.size(); currentLight++)
@@ -184,7 +185,7 @@ namespace SaberEngine
 			{
 				m_deferredLights.push_back(newLight);
 
-				if (newLight->Type() == LIGHT_DIRECTIONAL)
+				if (newLight->Type() == Light::Directional)
 				{
 					m_keyLight = newLight;
 				}
@@ -198,10 +199,10 @@ namespace SaberEngine
 		}
 
 		// Don't need to do anything special with other light types
-		case LIGHT_POINT:
-		case LIGHT_SPOT:
-		case LIGHT_AREA:
-		case LIGHT_TUBE:
+		case Light::Point:
+		case Light::Spot:
+		case Light::Area:
+		case Light::Tube:
 		default:
 			m_deferredLights.push_back(newLight);
 			break;
