@@ -1,8 +1,8 @@
+#include "BuildConfiguration.h"
 #include "CoreEngine.h"
 #include "Context.h"
 #include "Context_OpenGL.h"
 #include "Context_Platform.h"
-
 
 
 namespace platform
@@ -21,12 +21,12 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			assert("DX12 is not yet supported" && false);
+			SEAssert("DX12 is not yet supported", false);
 		}
 		break;
 		default:
 		{
-			assert("Invalid rendering API argument received" && false);
+			SEAssert("Invalid rendering API argument received", false);
 		}
 		}
 

@@ -4,6 +4,7 @@
 #include "Sampler.h"
 #include "Sampler_Platform.h"
 #include "Sampler_OpenGL.h"
+#include "BuildConfiguration.h"
 
 
 namespace platform
@@ -23,12 +24,12 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			assert("DX12 is not yet supported" && false);
+			SEAssert("DX12 is not yet supported", false);
 		}
 		break;
 		default:
 		{
-			assert("Invalid rendering API argument received" && false);
+			SEAssert("Invalid rendering API argument received", false);
 		}
 		}
 

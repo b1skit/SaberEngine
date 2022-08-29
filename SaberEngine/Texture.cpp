@@ -139,7 +139,7 @@ namespace gr
 
 	vec4 const& gr::Texture::GetTexel(uint32_t u, uint32_t v, uint32_t faceIdx/*= 0*/) const
 	{
-		assert("OOB texel coordinates" && 
+		SEAssert("OOB texel coordinates",
 			u >= 0 && 
 			u < m_texParams.m_width && 
 			v >= 0 && 
@@ -152,13 +152,13 @@ namespace gr
 
 	glm::vec4 const& gr::Texture::GetTexel(uint32_t index) const
 	{
-		assert("OOB texel coordinates" && index < (m_texParams.m_faces * m_texParams.m_width * m_texParams.m_height));
+		SEAssert("OOB texel coordinates", index < (m_texParams.m_faces * m_texParams.m_width * m_texParams.m_height));
 		return m_texels[index];
 	}
 
 	void gr::Texture::SetTexel(uint32_t u, uint32_t v, glm::vec4 value)
 	{
-		assert("OOB texel coordinates" && u >= 0 && u < m_texParams.m_width&& v >= 0 && v < m_texParams.m_height);
+		SEAssert("OOB texel coordinates", u >= 0 && u < m_texParams.m_width&& v >= 0 && v < m_texParams.m_height);
 
 		m_texels[(v * m_texParams.m_width) + u] = value;
 		m_isDirty = true;
@@ -313,7 +313,7 @@ namespace gr
 			}
 			else
 			{
-				assert("Invalid bit depth" && false);
+				SEAssert("Invalid bit depth", false);
 			}
 
 			// Cleanup:
@@ -458,7 +458,7 @@ namespace gr
 	uint32_t Texture::GetMipDimension(uint32_t mipLevel) const
 	{
 		// No reason we can't support non-square textures, but until we need to just assert
-		assert("Dimensions mismatch but (currently) assuming square texture" && Width() == Height());
+		SEAssert("Dimensions mismatch but (currently) assuming square texture", Width() == Height());
 		return (uint32_t)(Width() / glm::pow(2.0f, mipLevel));
 	}
 }

@@ -35,7 +35,7 @@ namespace opengl
 		}
 		break;
 		default:
-			assert("Invalid/unsupported texture dimension" && false);
+			SEAssert("Invalid/unsupported texture dimension", false);
 		}
 
 
@@ -116,12 +116,12 @@ namespace opengl
 		break;
 		case gr::Texture::TextureFormat::RG8:
 		{
-			assert("Invalid/unsupported texture format" && false);
+			SEAssert("Invalid/unsupported texture format", false);
 		}
 		break;
 		case gr::Texture::TextureFormat::R8:
 		{
-			assert("Invalid/unsupported texture format" && false);
+			SEAssert("Invalid/unsupported texture format", false);
 		}
 		break;
 		case gr::Texture::TextureFormat::Depth32F:
@@ -132,7 +132,7 @@ namespace opengl
 		}
 		break;
 		default:
-			assert("Invalid/unsupported texture format" && false);
+			SEAssert("Invalid/unsupported texture format", false);
 		}
 	}
 
@@ -191,22 +191,19 @@ namespace opengl
 		PlatformParams* const params =
 			dynamic_cast<opengl::Texture::PlatformParams* const>(texture.GetPlatformParams());
 
-		assert("Attempting to create a texture that already exists" && !glIsTexture(params->m_textureID));
+		SEAssert("Attempting to create a texture that already exists", !glIsTexture(params->m_textureID));
 
 		// Generate textureID names. Note: We must call glBindTexture immediately after to associate the name with 
 		// a texture. It will not have the correct dimensionality until this is done
 		glGenTextures(1, &params->m_textureID);
 		glBindTexture(params->m_texTarget, params->m_textureID);
 
-		if (glIsTexture(params->m_textureID) != GL_TRUE)
-		{
-			LOG_ERROR("OpenGL failed to generate new texture name. Texture buffering failed");
-			assert("OpenGL failed to generate new texture name. Texture buffering failed" && false);
-		}
+		SEAssert("OpenGL failed to generate new texture name. Texture buffering failed", 
+			glIsTexture(params->m_textureID) == GL_TRUE);
 
 		// Ensure our texture is correctly configured:
 		gr::Texture::TextureParams const& texParams = texture.GetTextureParams();
-		assert(texParams.m_faces == 1 ||
+		SEAssert("Texture has a bad configuration", texParams.m_faces == 1 ||
 			(texParams.m_faces == 6 && texParams.m_texDimension == gr::Texture::TextureDimension::TextureCubeMap));
 
 		// Buffer the texture data:
@@ -220,7 +217,7 @@ namespace opengl
 			void* data = nullptr;
 			if (texParams.m_texUse == gr::Texture::TextureUse::Color)
 			{
-				assert("Color target must have data to buffer" &&
+				SEAssert("Color target must have data to buffer", 
 					texture.Texels().size() == (texParams.m_faces * texParams.m_width * texParams.m_height));
 
 				data = (void*)&texture.GetTexel(0, 0, i).r;

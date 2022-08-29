@@ -37,7 +37,7 @@ namespace SaberEngine
 		shadowParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		shadowParams.m_useMIPs = false;
 
-		// TODO: Enable Anisotropic filtering for shadows
+		// TODO: Enable mipmaps + anisotropic filtering for shadows
 		// http://www.joshbarczak.com/blog/?p=396
 		// https://www.khronos.org/opengl/wiki/Sampler_Object#Anisotropic_filtering
 

@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "BuildConfiguration.h"
 #include "Texture.h"
 #include "TextureTarget_Platform.h"
 
@@ -82,9 +83,9 @@ namespace gr
 		std::vector<gr::TextureTarget> const& ColorTargets() const { return m_colorTargets; }
 
 		gr::TextureTarget& ColorTarget(size_t i)
-			{ assert(i < m_colorTargets.size()); m_targetStateDirty = true; return m_colorTargets[i]; }
+			{ SEAssert("OOB index", i < m_colorTargets.size()); m_targetStateDirty = true; return m_colorTargets[i]; }
 		gr::TextureTarget const& ColorTarget(size_t i) const 
-			{ assert(i < m_colorTargets.size()); return m_colorTargets[i]; }
+			{ SEAssert("OOB index", i < m_colorTargets.size()); return m_colorTargets[i]; }
 
 		gr::TextureTarget& DepthStencilTarget() { m_targetStateDirty = true; return m_depthStencilTarget; }
 		gr::TextureTarget const& DepthStencilTarget() const { return m_depthStencilTarget; }

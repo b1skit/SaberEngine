@@ -55,7 +55,7 @@ namespace gr
 
 		auto result = Material::m_materialLibrary->find(matName);
 
-		assert("Invalid Material name" && result != Material::m_materialLibrary->end());
+		SEAssert("Invalid Material name", result != Material::m_materialLibrary->end());
 
 		return result->second;
 	}
@@ -119,7 +119,7 @@ namespace gr
 	{
 		auto index = m_namesToSlotIndex.find(samplerName);
 
-		assert("Invalid sampler name" && 
+		SEAssert("Invalid sampler name",
 			index != m_namesToSlotIndex.end() && 
 			(uint32_t)index->second < (uint32_t)m_texSlots.size());
 

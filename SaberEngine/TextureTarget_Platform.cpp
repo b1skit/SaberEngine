@@ -1,5 +1,6 @@
 #include <memory>
 
+#include "BuildConfiguration.h"
 #include "CoreEngine.h"
 #include "TextureTarget_Platform.h"
 #include "TextureTarget.h"
@@ -22,12 +23,12 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			assert("DX12 is not yet supported" && false);
+			SEAssert("DX12 is not yet supported", false);
 		}
 		break;
 		default:
 		{
-			assert("Invalid rendering API argument received" && false);
+			SEAssert("Invalid rendering API argument received", false);
 		}
 		}
 
@@ -49,12 +50,12 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			assert("DX12 is not yet supported" && false);
+			SEAssert("DX12 is not yet supported", false);
 		}
 		break;
 		default:
 		{
-			assert("Invalid rendering API argument received" && false);
+			SEAssert("Invalid rendering API argument received", false);
 		}
 		}
 

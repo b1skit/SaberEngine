@@ -1,6 +1,27 @@
 #pragma once
+
 #include "LogManager.h"
 
+
+// Custom assert:
+#if defined(_DEBUG)
+
+#include <iostream>
+#include <string>
+
+#define SEAssert(errorMsg, condition) \
+	if(!(condition)) \
+	{ \
+		LOG_ERROR(errorMsg); \
+		std::string errorStr((errorMsg)); \
+		std::cerr << "Assertion failed: " << #condition << " == " << (condition ? "true" : "false") << std::endl; \
+		std::cerr << "Occurred at: " << __FILE__ << ":" << __LINE__ << "::" << __FUNCTION__ << std::endl; \
+		abort(); \
+	}
+#else
+#define SEAssert(errorMsg, condition)	\
+	do {errorMsg; const bool supressCompilerWarningByUsingCondition = condition;} while(0)
+#endif
 
 #if defined(_DEBUG)
 	// Event logging:

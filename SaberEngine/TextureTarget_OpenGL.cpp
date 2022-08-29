@@ -81,7 +81,7 @@ namespace opengl
 				std::shared_ptr<gr::Texture>& texture = targetSet.ColorTarget(i).GetTexture();
 
 				gr::Texture::TextureParams const& textureParams = texture->GetTextureParams();
-				assert("Attempting to bind a color target with a different texture use parameter" &&
+				SEAssert("Attempting to bind a color target with a different texture use parameter",
 					textureParams.m_texUse == gr::Texture::TextureUse::ColorTarget);
 
 				// Validate the texture:
@@ -93,7 +93,7 @@ namespace opengl
 				}
 				else
 				{
-					assert("All framebuffer textures must have the same dimension" &&
+					SEAssert("All framebuffer textures must have the same dimension",
 						width == texture->Width() &&
 						height == texture->Height()
 					);
@@ -128,7 +128,7 @@ namespace opengl
 
 				glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
 
-				assert("Failed to create framebuffer object during texture creation" &&
+				SEAssert("Failed to create framebuffer object during texture creation",
 					glIsFramebuffer(targetSetParams->m_frameBufferObject));
 
 				/*if (textureParams.m_texDimension != gr::Texture::TextureDimension::TextureCubeMap)
@@ -142,7 +142,7 @@ namespace opengl
 			glDrawBuffers((uint32_t)insertIdx, &drawBuffers[0]);
 
 			// For now, ensure the viewport dimensions match the texture target dimensions
-			assert("Color textures are different dimension to the viewport" &&
+			SEAssert("Color textures are different dimension to the viewport",
 				width == targetSet.Viewport().Width() &&
 				height == targetSet.Viewport().Height());
 		}
@@ -153,8 +153,7 @@ namespace opengl
 		}
 		else
 		{
-			LOG_ERROR("Attempting to bind color targets on a target set that only contains a depth target");
-			assert("Attempting to bind color targets on a target set that only contains a depth target" && false);			
+			SEAssert("Attempting to bind color targets on a target set that only contains a depth target", false);
 		}
 	}
 
@@ -176,7 +175,7 @@ namespace opengl
 		opengl::TextureTargetSet::PlatformParams const* const targetSetParams =
 			dynamic_cast<opengl::TextureTargetSet::PlatformParams const*>(targetSet.GetPlatformParams());
 
-		assert("Cannot bind nonexistant framebuffer " &&
+		SEAssert("Cannot bind nonexistant framebuffer",
 			(glIsFramebuffer(targetSetParams->m_frameBufferObject) || targetSetParams->m_frameBufferObject == 0));
 
 		glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
@@ -195,13 +194,13 @@ namespace opengl
 				opengl::TextureTarget::PlatformParams const* const targetParams =
 					dynamic_cast<opengl::TextureTarget::PlatformParams const*>(targetSet.ColorTarget(i).GetPlatformParams());
 
-				assert("Attempting to bind a color target with a different texture use parameter" &&
+				SEAssert("Attempting to bind a color target with a different texture use parameter", 
 					textureParams.m_texUse == gr::Texture::TextureUse::ColorTarget);
 
 				GLenum texTarget = texPlatformParams->m_texTarget;
 				if (textureParams.m_texDimension == gr::Texture::TextureDimension::TextureCubeMap)
 				{
-					assert("Invalid cubemap face index" && (face <= 5));
+					SEAssert("Invalid cubemap face index", (face <= 5));
 					texTarget = GL_TEXTURE_CUBE_MAP_POSITIVE_X + face;
 				}
 
@@ -219,7 +218,7 @@ namespace opengl
 				}
 				else
 				{
-					assert("All framebuffer textures must have the same dimension" &&
+					SEAssert("All framebuffer textures must have the same dimension",
 					texture->Width() == firstTarget->Width() &&
 					texture->Height() == firstTarget->Height());
 				}
@@ -251,10 +250,9 @@ namespace opengl
 		bool result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 		if (!result)
 		{
-			LOG_ERROR("Framebuffer is not complete: " +
-				std::to_string(glCheckFramebufferStatus(GL_FRAMEBUFFER)));
-
-			assert("Framebuffer is not complete" && result);
+			const string errorMsg = 
+				"Framebuffer is not complete: " + std::to_string(glCheckFramebufferStatus(GL_FRAMEBUFFER));
+			SEAssert(errorMsg, false);
 		}
 	}
 
@@ -270,7 +268,7 @@ namespace opengl
 		{
 			// Create framebuffer:
 			gr::Texture::TextureParams const& depthTextureParams = depthStencilTex->GetTextureParams();
-			assert("Attempting to bind a depth target with a different texture use parameter" &&
+			SEAssert("Attempting to bind a depth target with a different texture use parameter",
 				depthTextureParams.m_texUse == gr::Texture::TextureUse::DepthTarget);
 
 			if (!glIsFramebuffer(targetSetParams->m_frameBufferObject))
@@ -279,7 +277,7 @@ namespace opengl
 
 				glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
 
-				assert("Failed to create framebuffer object during texture creation" &&
+				SEAssert("Failed to create framebuffer object during texture creation",
 					glIsFramebuffer(targetSetParams->m_frameBufferObject));
 
 				//// Specifies the assumed with for a framebuffer object with no attachments
@@ -303,7 +301,7 @@ namespace opengl
 			//depthTargetParams->m_readBuffer		 = GL_NONE; // Not needed...
 
 			// For now, ensure the viewport dimensions match the texture target dimensions
-			assert("Depth texture is a different dimension to the viewport" &&
+			SEAssert("Depth texture is a different dimension to the viewport", 
 				depthStencilTex->Width() == targetSet.Viewport().Width() &&
 				depthStencilTex->Height() == targetSet.Viewport().Height());
 		}
@@ -315,7 +313,7 @@ namespace opengl
 		else
 		{
 			LOG_ERROR("Attempting to bind depth target on a target set that only contains a color targets");
-			assert("Attempting to bind depth target on a target set that only contains a color targets" && false);
+			SEAssert("Attempting to bind depth target on a target set that only contains a color targets", false);
 		}
 	}
 
@@ -340,7 +338,7 @@ namespace opengl
 		if (depthStencilTex != nullptr)
 		{
 			gr::Texture::TextureParams const& textureParams = depthStencilTex->GetTextureParams();
-			assert("Attempting to bind a depth target with a different texture use parameter" &&
+			SEAssert("Attempting to bind a depth target with a different texture use parameter",
 				textureParams.m_texUse == gr::Texture::TextureUse::DepthTarget);
 
 			opengl::Texture::PlatformParams* const depthPlatformParams =
@@ -374,10 +372,7 @@ namespace opengl
 			bool result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 			if (!result)
 			{
-				LOG_ERROR("Framebuffer is not complete: " +
-					std::to_string(glCheckFramebufferStatus(GL_FRAMEBUFFER)));
-
-				assert("Framebuffer is not complete" && result);
+				SEAssert("Framebuffer is not complete: " + std::to_string(glCheckFramebufferStatus(GL_FRAMEBUFFER)), false);
 			}
 		}
 		// Note: We don't error if there's no depth texture, but we probably should...

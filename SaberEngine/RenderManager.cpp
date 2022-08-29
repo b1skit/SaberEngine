@@ -396,7 +396,7 @@ namespace SaberEngine
 			std::shared_ptr<gr::Texture> IEMCubemap =
 				dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetIEMTexture();
 
-			assert("IEM cubemap texture pointer is null" && IEMCubemap != nullptr);			
+			SEAssert("IEM cubemap texture pointer is null", IEMCubemap != nullptr);
 			IEMCubemap->Bind(Material::CubeMap0, true);
 
 			// IEM doesn't have MIPs
@@ -405,7 +405,7 @@ namespace SaberEngine
 			std::shared_ptr<gr::Texture> PMREM_Cubemap =
 				dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetPMREMTexture();
 
-			assert("PMREM cubemap texture pointer is null" && PMREM_Cubemap != nullptr);
+			SEAssert("PMREM cubemap texture pointer is null", PMREM_Cubemap != nullptr);
 			PMREM_Cubemap->Bind(Material::CubeMap1, true);
 
 			Sampler::GetSampler(Sampler::SamplerType::WrapLinearMipMapLinearLinear)->Bind(Material::CubeMap1, true);
@@ -414,7 +414,7 @@ namespace SaberEngine
 			std::shared_ptr<gr::Texture> BRDFIntegrationMap =
 				dynamic_cast<ImageBasedLight*>(deferredLight.get())->GetBRDFIntegrationMap();
 			
-			assert("BRDF integration map texture pointer is null" && BRDFIntegrationMap != nullptr);
+			SEAssert("BRDF integration map texture pointer is null", BRDFIntegrationMap != nullptr);
 			BRDFIntegrationMap->Bind(Material::Tex7, true);
 
 			// BRDF integration map doesn't have mips
@@ -551,8 +551,8 @@ namespace SaberEngine
 
 		Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear)->Bind(Material::CubeMap0, true);
 
+		SEAssert("Depth texture is null", depthTexture != nullptr);
 
-		assert("Depth texture is null" && depthTexture != nullptr);
 		depthTexture->Bind(Material::GBufferDepth, true);
 		Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear)->Bind(Material::GBufferDepth, true);
 

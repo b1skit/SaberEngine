@@ -1,7 +1,6 @@
 #pragma once
 
-#include <assert.h>
-
+#include "BuildConfiguration.h"
 #include "Sampler.h"
 #include "Sampler_Platform.h"
 
@@ -32,7 +31,7 @@ namespace gr
 	{
 		if (Sampler::m_samplerLibrary == nullptr)
 		{
-			assert("Size of sampler type enum and sampler type library names mismatch" && 
+			SEAssert("Size of sampler type enum and sampler type library names mismatch",
 				SamplerTypeLibraryNames.size() == (size_t)Sampler::SamplerType::SamplerType_Count);
 
 			Sampler::m_samplerLibrary = make_unique<unordered_map<Sampler::SamplerType, shared_ptr<Sampler>>>();
@@ -100,7 +99,7 @@ namespace gr
 
 		auto result = Sampler::m_samplerLibrary->find(type);
 
-		assert("Invalid sampler name" && result != Sampler::m_samplerLibrary->end());
+		SEAssert("Invalid sampler name", result != Sampler::m_samplerLibrary->end());
 
 		return result->second;
 	}

@@ -1,3 +1,4 @@
+#include "BuildConfiguration.h"
 #include "CoreEngine.h"
 #include "Mesh_Platform.h"
 #include "Mesh_OpenGL.h"
@@ -19,13 +20,13 @@ namespace platform
 
 		case RenderingAPI::DX12:
 		{
-			assert("DX12 is not yet supported" && false);
+			SEAssert("DX12 is not yet supported", false);
 			return nullptr;
 		}
 
 		default:
 		{
-			assert("Invalid rendering API argument received" && false);
+			SEAssert("Invalid rendering API argument received", false);
 			return nullptr;
 		}
 		}

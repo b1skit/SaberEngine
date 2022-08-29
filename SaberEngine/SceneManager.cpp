@@ -107,11 +107,13 @@ namespace SaberEngine
 
 	bool SceneManager::LoadScene(string sceneName)
 	{
+
+
 		if (sceneName == "")
 		{
-			LOG_ERROR("No scene name received. Did you forget to use the \"-scene theSceneName\" command line "
-				"argument?");
-			assert("No scene name received" && false);
+			SEAssert("No scene name received. Did you forget to use the \"-scene theSceneName\" command line "
+				"argument?", sceneName != "");
+			
 			CoreEngine::GetEventManager()->Notify(
 				std::make_shared<EventInfo const>( EventInfo{ EVENT_ENGINE_QUIT, this, "No scene name received"}));
 			return false;
@@ -244,11 +246,7 @@ namespace SaberEngine
 	{
 		auto result = m_materials.find(materialName);
 
-		if (result == m_materials.end())
-		{
-			LOG_ERROR("Could not find material \"" + materialName + "\"");
-			assert("Could not find material");
-		}
+		SEAssert("Could not find material", result != m_materials.end());
 
 		return result->second;
 	}
@@ -420,11 +418,7 @@ namespace SaberEngine
 		// We differentiate materials based on their names in the incoming FBX, regardless of the MaterialDefinition
 		// they might use
 
-		if (newMaterial == nullptr)
-		{
-			LOG_ERROR("Cannot add null material to scene manager material list");
-			assert("Cannot add null material to scene manager material list" && false);
-		}
+		SEAssert("Cannot add null material to scene manager material list", newMaterial != nullptr);
 
 		auto result = m_materials.find(newMaterial->Name());
 
@@ -457,25 +451,19 @@ namespace SaberEngine
 				shared_ptr<gr::Mesh> viewMesh = m_currentScene->m_renderables.at(i)->ViewMeshes()->at(j);
 
 				shared_ptr<Material> meshMaterial = viewMesh->MeshMaterial();
-				if (meshMaterial == nullptr)
+
+				SEAssert("Mesh has a null material pointer!", meshMaterial != nullptr);
+
+				auto result = m_materialMeshLists.find(meshMaterial->Name());
+				if (result == m_materialMeshLists.end())
 				{
-					LOG_ERROR("AssembleMaterialMeshLists() found a mesh with NULL material pointer!");
-					assert("AssembleMaterialMeshLists() found a mesh with NULL material pointer!" && false);
+					// Create a new entry, containing a vector with our object
+					m_materialMeshLists[meshMaterial->Name()] = vector<shared_ptr<gr::Mesh>>{ viewMesh };
 				}
 				else
 				{
-					auto result = m_materialMeshLists.find(meshMaterial->Name());
-
-					if (result == m_materialMeshLists.end())
-					{
-						// Create a new entry, containing a vector with our object
-						m_materialMeshLists[meshMaterial->Name()] = vector<shared_ptr<gr::Mesh>>{viewMesh};
-					}
-					else
-					{
-						result->second.emplace_back(viewMesh);
-						numMeshes++;
-					}					
+					result->second.emplace_back(viewMesh);
+					numMeshes++;
 				}
 			}
 		}
@@ -832,8 +820,7 @@ namespace SaberEngine
 			}
 			else
 			{
-				LOG_ERROR("Invalid texture type");
-				assert("Invalid texture type" && false);
+				SEAssert("Invalid texture type", false);
 			}
 
 			// Create the dummy texture:
@@ -1020,172 +1007,164 @@ namespace SaberEngine
 
 			// Find the corresponding node in the scene graph:
 			aiNode* currentNode = scene->mRootNode->FindNode(scene->mMeshes[currentMesh]->mName);
-			if (currentNode)
-			{
-				// We've found a corresponding node in the scene graph. Create a mesh:
-				int numVerts		= scene->mMeshes[currentMesh]->mNumVertices;
-				int numFaces		= scene->mMeshes[currentMesh]->mNumFaces;
-				int numUVs			= scene->mMeshes[currentMesh]->mNumUVComponents[0]; // Just look at the first UV channel for now...
-				int numUVChannels	= scene->mMeshes[currentMesh]->GetNumUVChannels();
-				int materialIndex	= scene->mMeshes[currentMesh]->mMaterialIndex;
-				
-				aiString name;
-				scene->mMaterials[materialIndex]->Get(AI_MATKEY_NAME, name);
-				string materialName = string(name.C_Str());
+			SEAssert("Could not find mesh node in the scene graph", currentNode != nullptr);
 
-				#if defined(DEBUG_SCENEMANAGER_MESH_LOGGING)
-					LOG("\nMesh #" + to_string(currentMesh) + " \"" + meshName + "\": " + to_string(numVerts) + 
-						" verts, " + to_string(numFaces) + " faces, " + to_string(numUVChannels) + " UV channels, " + 
-						to_string(numUVs) + " UV components in channel 0, using material #" + to_string(materialIndex));
+			// We've found a corresponding node in the scene graph. Create a mesh:
+			int numVerts		= scene->mMeshes[currentMesh]->mNumVertices;
+			int numFaces		= scene->mMeshes[currentMesh]->mNumFaces;
+			int numUVs			= scene->mMeshes[currentMesh]->mNumUVComponents[0]; // Just look at the first UV channel for now...
+			int numUVChannels	= scene->mMeshes[currentMesh]->GetNumUVChannels();
+			int materialIndex	= scene->mMeshes[currentMesh]->mMaterialIndex;
+				
+			aiString name;
+			scene->mMaterials[materialIndex]->Get(AI_MATKEY_NAME, name);
+			string materialName = string(name.C_Str());
+
+			#if defined(DEBUG_SCENEMANAGER_MESH_LOGGING)
+				LOG("\nMesh #" + to_string(currentMesh) + " \"" + meshName + "\": " + to_string(numVerts) + 
+					" verts, " + to_string(numFaces) + " faces, " + to_string(numUVChannels) + " UV channels, " + 
+					to_string(numUVs) + " UV components in channel 0, using material #" + to_string(materialIndex));
+			#endif
+
+			std::vector<gr::Vertex> vertices(numVerts);
+
+			// Add each vertex to the vertices array:
+			for (int currentVert = 0; currentVert < numVerts; currentVert++)
+			{
+				// Default vertex values:
+				vec3 position = vec3(0,0,0), normal = vec3(0, 0, 0), tangent = vec3(0, 0, 0), bitangent = vec3(0, 0, 0);
+				vec4 color(0, 0, 0, 1);
+				vec4 uv(0, 0, 0, 0);
+
+				bool hasTangentsAndBitangents = false, hasNormal = false;
+
+				// Position:
+				if (scene->mMeshes[currentMesh]->HasPositions())
+				{
+					position = vec3(
+						scene->mMeshes[currentMesh]->mVertices[currentVert].x,
+						scene->mMeshes[currentMesh]->mVertices[currentVert].y, 
+						scene->mMeshes[currentMesh]->mVertices[currentVert].z);
+				}
+
+				// Normal:
+				if (scene->mMeshes[currentMesh]->HasNormals())
+				{
+					hasNormal = true;
+					normal = vec3(
+						scene->mMeshes[currentMesh]->mNormals[currentVert].x, 
+						scene->mMeshes[currentMesh]->mNormals[currentVert].y,
+						scene->mMeshes[currentMesh]->mNormals[currentVert].z);
+				}
+
+				// Vertex color:
+				if (scene->mMeshes[currentMesh]->HasVertexColors(0) && scene->mMeshes[currentMesh]->mColors[0])
+				{
+					color = vec4(
+						scene->mMeshes[currentMesh]->mColors[0][currentVert].r, 
+						scene->mMeshes[currentMesh]->mColors[0][currentVert].g, 
+						scene->mMeshes[currentMesh]->mColors[0][currentVert].b,
+						scene->mMeshes[currentMesh]->mColors[0][currentVert].a);
+				}
+
+				// TexCoords:
+				if (scene->mMeshes[currentMesh]->HasTextureCoords(0))
+				{
+					uv = vec4(
+						scene->mMeshes[currentMesh]->mTextureCoords[0][currentVert].x, 
+						scene->mMeshes[currentMesh]->mTextureCoords[0][currentVert].y, 0, 0);
+				}
+
+				// Tangents/Bitangents:
+				if (scene->mMeshes[currentMesh]->HasTangentsAndBitangents())
+				{
+					hasTangentsAndBitangents = true;
+					tangent		= vec3(
+						scene->mMeshes[currentMesh]->mTangents[currentVert].x, 
+						scene->mMeshes[currentMesh]->mTangents[currentVert].y,
+						scene->mMeshes[currentMesh]->mTangents[currentVert].z);
+
+					bitangent	= vec3(
+						scene->mMeshes[currentMesh]->mBitangents[currentVert].x, 
+						scene->mMeshes[currentMesh]->mBitangents[currentVert].y, 
+						scene->mMeshes[currentMesh]->mBitangents[currentVert].z);
+				}
+
+				// Handle incorrect tangents/bitangents due to flipped UV's:
+				if (hasNormal && hasTangentsAndBitangents)
+				{
+					if (glm::dot(glm::cross(tangent, bitangent), normal) < 0)
+					{
+						tangent *= -1.0f;
+					}
+				}
+
+				// Assemble the vertex:
+				vertices[currentVert] = gr::Vertex(position, normal, tangent, bitangent, color, uv);
+			}
+
+			// Fill the indices array:
+			uint32_t numIndices = scene->mMeshes[currentMesh]->mNumFaces * 3;
+			std::vector<uint32_t> indices(numIndices);
+
+			#if defined(DEBUG_SCENEMANAGER_MESH_LOGGING)
+				LOG("Created arrays of " + to_string(numVerts) + " vertices, & " + to_string(numIndices) + " indices");
+			#endif					
+
+			for (int currentFace = 0; currentFace < numFaces; currentFace++)
+			{
+				for (int currentIndex = 0; currentIndex < 3; currentIndex++)
+				{
+					SEAssert("Found a face that doesn't have 3 indices during mesh import!", 
+						scene->mMeshes[currentMesh]->mFaces[currentFace].mNumIndices == 3);
+
+					indices[(currentFace * 3) + currentIndex] = 
+						scene->mMeshes[currentMesh]->mFaces[currentFace].mIndices[currentIndex];
+				}
+			}
+
+			shared_ptr<gr::Mesh> newMesh = std::make_shared<gr::Mesh>(meshName, vertices, indices, GetMaterial(materialName));
+
+			shared_ptr<GameObject> gameObject		= FindCreateGameObjectParents(scene, currentNode->mParent);
+
+			Transform* targetTransform	= nullptr;
+
+			// If the mesh doesn't belong to a group, create a GameObject to contain it:
+			if (gameObject == nullptr)
+			{
+				#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
+					LOG_ERROR("Creating a GameObject for mesh \"" + meshName + "\" that did not belong to a group!"
+						" GameObjects should belong to groups in the source .FBX!");
+				#endif
+					
+				gameObject = std::make_shared<GameObject>(meshName);
+				AddGameObject(gameObject);				// Add the new game object
+
+				// Add a postfix to remind us that we expect GameObjects to be grouped in our .FBX from Maya
+				newMesh->Name() = meshName + "_MESH";	
+
+				targetTransform = gameObject->GetTransform(); // We'll use the gameobject in our transform heirarchy
+			}
+			else // We have a GameObject:
+			{
+				#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
+					LOG("Found existing parent GameObject \"" + gameObject->GetName() + "\" for mesh \"" + meshName + "\"");
 				#endif
 
-				std::vector<gr::Vertex> vertices(numVerts);
-
-				// Add each vertex to the vertices array:
-				for (int currentVert = 0; currentVert < numVerts; currentVert++)
-				{
-					// Default vertex values:
-					vec3 position = vec3(0,0,0), normal = vec3(0, 0, 0), tangent = vec3(0, 0, 0), bitangent = vec3(0, 0, 0);
-					vec4 color(0, 0, 0, 1);
-					vec4 uv(0, 0, 0, 0);
-
-					bool hasTangentsAndBitangents = false, hasNormal = false;
-
-					// Position:
-					if (scene->mMeshes[currentMesh]->HasPositions())
-					{
-						position = vec3(
-							scene->mMeshes[currentMesh]->mVertices[currentVert].x,
-							scene->mMeshes[currentMesh]->mVertices[currentVert].y, 
-							scene->mMeshes[currentMesh]->mVertices[currentVert].z);
-					}
-
-					// Normal:
-					if (scene->mMeshes[currentMesh]->HasNormals())
-					{
-						hasNormal = true;
-						normal = vec3(
-							scene->mMeshes[currentMesh]->mNormals[currentVert].x, 
-							scene->mMeshes[currentMesh]->mNormals[currentVert].y,
-							scene->mMeshes[currentMesh]->mNormals[currentVert].z);
-					}
-
-					// Vertex color:
-					if (scene->mMeshes[currentMesh]->HasVertexColors(0) && scene->mMeshes[currentMesh]->mColors[0])
-					{
-						color = vec4(
-							scene->mMeshes[currentMesh]->mColors[0][currentVert].r, 
-							scene->mMeshes[currentMesh]->mColors[0][currentVert].g, 
-							scene->mMeshes[currentMesh]->mColors[0][currentVert].b,
-							scene->mMeshes[currentMesh]->mColors[0][currentVert].a);
-					}
-
-					// TexCoords:
-					if (scene->mMeshes[currentMesh]->HasTextureCoords(0))
-					{
-						uv = vec4(
-							scene->mMeshes[currentMesh]->mTextureCoords[0][currentVert].x, 
-							scene->mMeshes[currentMesh]->mTextureCoords[0][currentVert].y, 0, 0);
-					}
-
-					// Tangents/Bitangents:
-					if (scene->mMeshes[currentMesh]->HasTangentsAndBitangents())
-					{
-						hasTangentsAndBitangents = true;
-						tangent		= vec3(
-							scene->mMeshes[currentMesh]->mTangents[currentVert].x, 
-							scene->mMeshes[currentMesh]->mTangents[currentVert].y,
-							scene->mMeshes[currentMesh]->mTangents[currentVert].z);
-
-						bitangent	= vec3(
-							scene->mMeshes[currentMesh]->mBitangents[currentVert].x, 
-							scene->mMeshes[currentMesh]->mBitangents[currentVert].y, 
-							scene->mMeshes[currentMesh]->mBitangents[currentVert].z);
-					}
-
-					// Handle incorrect tangents/bitangents due to flipped UV's:
-					if (hasNormal && hasTangentsAndBitangents)
-					{
-						if (glm::dot(glm::cross(tangent, bitangent), normal) < 0)
-						{
-							tangent *= -1.0f;
-						}
-					}
-
-					// Assemble the vertex:
-					vertices[currentVert] = gr::Vertex(position, normal, tangent, bitangent, color, uv);
-				}
-
-				// Fill the indices array:
-				uint32_t numIndices = scene->mMeshes[currentMesh]->mNumFaces * 3;
-				std::vector<uint32_t> indices(numIndices);
-
-				#if defined(DEBUG_SCENEMANAGER_MESH_LOGGING)
-					LOG("Created arrays of " + to_string(numVerts) + " vertices, & " + to_string(numIndices) + " indices");
-				#endif					
-
-				for (int currentFace = 0; currentFace < numFaces; currentFace++)
-				{
-					for (int currentIndex = 0; currentIndex < 3; currentIndex++)
-					{
-						if (scene->mMeshes[currentMesh]->mFaces[currentFace].mNumIndices != 3)
-						{
-							LOG_ERROR("Found a face that doesn't have 3 indices during mesh import!");
-							assert("Found a face that doesn't have 3 indices during mesh import!" && false);
-						}
-						indices[(currentFace * 3) + currentIndex] = 
-							scene->mMeshes[currentMesh]->mFaces[currentFace].mIndices[currentIndex];
-					}
-				}
-
-				shared_ptr<gr::Mesh> newMesh = std::make_shared<gr::Mesh>(meshName, vertices, indices, GetMaterial(materialName));
-
-				shared_ptr<GameObject> gameObject		= FindCreateGameObjectParents(scene, currentNode->mParent);
-
-				Transform* targetTransform	= nullptr;
-
-				// If the mesh doesn't belong to a group, create a GameObject to contain it:
-				if (gameObject == nullptr)
-				{
-					#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
-						LOG_ERROR("Creating a GameObject for mesh \"" + meshName + "\" that did not belong to a group!"
-							" GameObjects should belong to groups in the source .FBX!");
-					#endif
-					
-					gameObject = std::make_shared<GameObject>(meshName);
-					AddGameObject(gameObject);				// Add the new game object
-
-					// Add a postfix to remind us that we expect GameObjects to be grouped in our .FBX from Maya
-					newMesh->Name() = meshName + "_MESH";	
-
-					targetTransform = gameObject->GetTransform(); // We'll use the gameobject in our transform heirarchy
-				}
-				else // We have a GameObject:
-				{
-					#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
-						LOG("Found existing parent GameObject \"" + gameObject->GetName() + "\" for mesh \"" + meshName + "\"");
-					#endif
-
-					targetTransform = &newMesh->GetTransform();	// We'll use the mesh in our transform heirarchy
-				}
-
-				// Mesh doesn't belong to a group, so we'll give it's transform to the gameobject we've created
-				aiMatrix4x4 combinedTransform	= GetCombinedTransformFromHierarchy(scene, currentNode->mParent);	
-				
-				// Combine the parent and child transforms	
-				combinedTransform				= combinedTransform * currentNode->mTransformation;					
-				
-				InitializeTransformValues(combinedTransform, targetTransform);		// Copy to our Mesh transform
-
-				gameObject->GetRenderable()->AddViewMeshAsChild(newMesh);			// Creates transform heirarchy
-
-				m_currentScene->AddMesh(newMesh);									// Also calculates scene bounds
+				targetTransform = &newMesh->GetTransform();	// We'll use the mesh in our transform heirarchy
 			}
-			else
-			{
-				LOG_ERROR("Could not find \"" + meshName + "\" in the scene graph");
-				assert("Could not find mesh node in the scene graph" && false);
-			}
+
+			// Mesh doesn't belong to a group, so we'll give it's transform to the gameobject we've created
+			aiMatrix4x4 combinedTransform	= GetCombinedTransformFromHierarchy(scene, currentNode->mParent);	
+				
+			// Combine the parent and child transforms	
+			combinedTransform				= combinedTransform * currentNode->mTransformation;					
+				
+			InitializeTransformValues(combinedTransform, targetTransform);		// Copy to our Mesh transform
+
+			gameObject->GetRenderable()->AddViewMeshAsChild(newMesh);			// Creates transform heirarchy
+
+			m_currentScene->AddMesh(newMesh);									// Also calculates scene bounds
 		}
 
 		int numGameObjects = (int)m_currentScene->m_gameObjects.size();
@@ -1254,12 +1233,8 @@ namespace SaberEngine
 
 	aiMatrix4x4 SaberEngine::SceneManager::GetCombinedTransformFromHierarchy(aiScene const* scene, aiNode* parent, bool skipPostRotations /*= true*/)
 	{
-		if (scene == nullptr || parent == nullptr)
-		{
-			LOG_ERROR("SceneManager.GetCombinedTransformFromHierarchy() received a null pointer!");
-			assert("SceneManager.GetCombinedTransformFromHierarchy() received a null pointer!" && false);
-		}
-
+		SEAssert("SceneManager.GetCombinedTransformFromHierarchy() received a null pointer!", 
+			scene != nullptr && parent != nullptr);
 
 		#if defined(DEBUG_SCENEMANAGER_TRANSFORM_LOGGING)
 			LOG("Received parent \"" + string(m_parent->mName.C_Str()) + "\". Combining imported transformations from scene graph:");
@@ -1455,27 +1430,20 @@ namespace SaberEngine
 
 					// Extract light metadata:
 					aiNode* lightNode = scene->mRootNode->FindNode(scene->mLights[i]->mName.C_Str());
-					if (lightNode)
-					{
-						float minShadowBias = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultMinShadowBias");
-						lightNode->mMetaData->Get("minShadowBias", minShadowBias);
-						keyLightShadowMap->MinShadowBias() = minShadowBias;
+					SEAssert("Could not find light node in scene hierarchy", lightNode != nullptr);
 
-						float maxShadowBias = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultMaxShadowBias");
-						lightNode->mMetaData->Get("maxShadowBias", maxShadowBias);
-						keyLightShadowMap->MaxShadowBias() = maxShadowBias;					
+					float minShadowBias = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultMinShadowBias");
+					lightNode->mMetaData->Get("minShadowBias", minShadowBias);
+					keyLightShadowMap->MinShadowBias() = minShadowBias;
 
-						#if defined(DEBUG_SCENEMANAGER_LIGHT_LOGGING)
-							LOG("\nSetting directional light minimum shadow bias value: " + to_string(m_minShadowBias));
-							LOG("\nSetting directional light maximum shadow bias value: " + to_string(m_maxShadowBias));
-						#endif
-					}
-					else
-					{
-						LOG_ERROR("Could not find light node in scene hierarchy");
-						assert("Could not find light node in scene hierarchy" && false);
-					}
+					float maxShadowBias = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultMaxShadowBias");
+					lightNode->mMetaData->Get("maxShadowBias", maxShadowBias);
+					keyLightShadowMap->MaxShadowBias() = maxShadowBias;					
 
+					#if defined(DEBUG_SCENEMANAGER_LIGHT_LOGGING)
+						LOG("\nSetting directional light minimum shadow bias value: " + to_string(m_minShadowBias));
+						LOG("\nSetting directional light maximum shadow bias value: " + to_string(m_maxShadowBias));
+					#endif
 
 					// Note: Assimp imports directional lights with their forward vector pointing in the opposite direction.
 					// This is ok, since we use "forward" as "vector pointing towards the light" when uploading to our shaders...

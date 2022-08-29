@@ -43,7 +43,7 @@ namespace opengl
 		auto AssertShaderIsValid = [](uint32_t const& shaderRef, uint32_t const& flag, bool const& isProgram)
 		{
 			GLint success = 0;
-			GLchar error[1024] = { 0 }; // Error buffer
+			GLchar errorMsg[1024] = { 0 }; // Error buffer
 
 			if (isProgram)
 			{
@@ -58,17 +58,14 @@ namespace opengl
 			{
 				if (isProgram)
 				{
-					glGetProgramInfoLog(shaderRef, sizeof(error), nullptr, error);
+					glGetProgramInfoLog(shaderRef, sizeof(errorMsg), nullptr, errorMsg);
 				}
 				else
 				{
-					glGetShaderInfoLog(shaderRef, sizeof(error), nullptr, error);
+					glGetShaderInfoLog(shaderRef, sizeof(errorMsg), nullptr, errorMsg);
 				}
 
-				const string errorAsString(error);
-
-				LOG_ERROR("Shader AssertValid() failed: " + errorAsString);
-				assert("Shader AssertValid() failed" && false);
+				SEAssert(errorMsg, false);
 			}
 		};
 
@@ -93,11 +90,7 @@ namespace opengl
 			}
 
 			// We tried loading the vertex shader first, so if we hit this it means we failed to find the vertex shader
-			if (shaderFiles.size() <= 0)
-			{
-				LOG_ERROR("No vertex shader found");
-				assert("No vertex shader found" && false);
-			}
+			SEAssert("No vertex shader found", shaderFiles.size() > 0);
 		}
 
 		// Create an empty shader program object:
@@ -112,12 +105,7 @@ namespace opengl
 
 			// Create and attach the shader object:
 			GLuint shaderObject = glCreateShader(foundShaderTypeFlags[i]);
-
-			if (shaderObject == 0)
-			{
-				assert("glCreateShader failed!" && false);
-				LOG_ERROR("glCreateShader failed!");
-			}
+			SEAssert("glCreateShader failed!", shaderObject > 0);
 
 			vector<GLchar const*>shaderSourceStrings(1);
 			vector<GLint> shaderSourceStringLengths(1);
@@ -224,7 +212,7 @@ namespace opengl
 
 				// Populate the shader sampler unit map with unique entries:
 				const string nameStr(name);
-				assert("Sampler unit already found! Does the shader have a unique binding layout qualifier?" && 
+				SEAssert("Sampler unit already found! Does the shader have a unique binding layout qualifier?",
 					params->m_samplerUnits.find(nameStr) == params->m_samplerUnits.end());
 
 				params->m_samplerUnits.emplace(string(name), (int32_t)val);
@@ -275,43 +263,35 @@ namespace opengl
 		}
 
 		GLuint uniformID = glGetUniformLocation(params->m_shaderReference, uniformName);
-		if (uniformID >= 0)
+
+		switch (type)
 		{
-			switch (type)
-			{
-			case platform::Shader::UNIFORM_TYPE::Matrix4x4f:
-				glUniformMatrix4fv(uniformID, count, GL_FALSE, (GLfloat const*)value);
-				break;
+		case platform::Shader::UNIFORM_TYPE::Matrix4x4f:
+			glUniformMatrix4fv(uniformID, count, GL_FALSE, (GLfloat const*)value);
+			break;
 
-			case platform::Shader::UNIFORM_TYPE::Matrix3x3f:
-				glUniformMatrix3fv(uniformID, count, GL_FALSE, (GLfloat const*)value);
-				break;
+		case platform::Shader::UNIFORM_TYPE::Matrix3x3f:
+			glUniformMatrix3fv(uniformID, count, GL_FALSE, (GLfloat const*)value);
+			break;
 
-			case platform::Shader::UNIFORM_TYPE::Vec3f:
-				glUniform3fv(uniformID, count, (GLfloat const*)value);
-				break;
+		case platform::Shader::UNIFORM_TYPE::Vec3f:
+			glUniform3fv(uniformID, count, (GLfloat const*)value);
+			break;
 
-			case platform::Shader::UNIFORM_TYPE::Vec4f:
-				glUniform4fv(uniformID, count, (GLfloat const*)value);
-				break;
+		case platform::Shader::UNIFORM_TYPE::Vec4f:
+			glUniform4fv(uniformID, count, (GLfloat const*)value);
+			break;
 
-			case platform::Shader::UNIFORM_TYPE::Float:
-				glUniform1f(uniformID, *(GLfloat const*)value);
-				break;
+		case platform::Shader::UNIFORM_TYPE::Float:
+			glUniform1f(uniformID, *(GLfloat const*)value);
+			break;
 
-			case platform::Shader::UNIFORM_TYPE::Int:
-				glUniform1i(uniformID, *(GLint const*)value);
-				break;
+		case platform::Shader::UNIFORM_TYPE::Int:
+			glUniform1i(uniformID, *(GLint const*)value);
+			break;
 
-			default:
-				LOG_ERROR("Shader uniform upload failed: Recieved unimplemented uniform type");
-				assert("Shader uniform upload failed: Recieved unimplemented uniform type" && false);
-			}
-		}
-		else
-		{
-			LOG_ERROR("Invalid uniform name received when setting shader uniform value");
-			assert("Invalid uniform name received when setting shader uniform value");
+		default:
+			SEAssert("Shader uniform upload failed: Recieved unimplemented uniform type", false);
 		}
 
 		// Restore the state:
@@ -341,7 +321,7 @@ namespace opengl
 
 		auto bindingUnit = params->m_samplerUnits.find(shaderName);
 
-		assert("Invalid sampler name" && bindingUnit != params->m_samplerUnits.end());
+		SEAssert("Invalid sampler name", bindingUnit != params->m_samplerUnits.end());
 
 		texture->Bind(bindingUnit->second, true);
 		sampler->Bind(bindingUnit->second, true);

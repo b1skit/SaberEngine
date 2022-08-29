@@ -36,7 +36,7 @@ namespace opengl
 		}
 		break;
 		default:
-			assert("Invalid/unsupported texture min mode" && false);
+			SEAssert("Invalid/unsupported texture min mode", false);
 		}
 
 		// Magnification filter:
@@ -55,7 +55,7 @@ namespace opengl
 
 		break;
 		default:
-			assert("Invalid/unsupported texture max mode" && false);
+			SEAssert("Invalid/unsupported texture max mode", false);
 		}
 
 		// Sampler mode:
@@ -84,7 +84,7 @@ namespace opengl
 		}
 		break;
 		default:
-			assert("Invalid/unsupported texture max mode" && false);
+			SEAssert("Invalid/unsupported texture max mode", false);
 		}
 	}
 
@@ -102,7 +102,7 @@ namespace opengl
 		PlatformParams* const params =
 			dynamic_cast<opengl::Sampler::PlatformParams* const>(sampler.GetPlatformParams());
 
-		assert("Attempting to create a sampler that already has been created" && !glIsSampler(params->m_samplerID));
+		SEAssert("Attempting to create a sampler that already has been created", !glIsSampler(params->m_samplerID));
 
 		glGenSamplers(1, &params->m_samplerID);
 		glBindSampler(textureUnit, params->m_samplerID);
@@ -110,7 +110,7 @@ namespace opengl
 		if (!glIsSampler(params->m_samplerID))
 		{
 			LOG_ERROR("Texture sampler creation failed");
-			assert("Texture sampler creation failed" && glIsSampler(params->m_samplerID));
+			SEAssert("Texture sampler creation failed", glIsSampler(params->m_samplerID));
 		}
 
 		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_S, params->m_textureWrapS);

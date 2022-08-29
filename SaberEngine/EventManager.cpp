@@ -112,8 +112,8 @@ namespace SaberEngine
 
 	void EventManager::Notify(std::shared_ptr<EventInfo const> eventInfo)
 	{
-		assert(eventInfo->m_generator != nullptr);
-		assert(!eventInfo->m_eventMessage.empty());
+		SEAssert("Event generator is null", eventInfo->m_generator != nullptr);
+		SEAssert("Event message is empty", !eventInfo->m_eventMessage.empty());
 
 		#if defined(DEBUG_PRINT_NOTIFICATIONS)
 			if (eventInfo)

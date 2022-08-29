@@ -1,5 +1,4 @@
 #include <memory>
-#include <assert.h>
 #include <string>
 
 #include <SDL.h>
@@ -111,10 +110,7 @@ namespace opengl
 			LOG_ERROR(output);
 		}
 
-		if (severity == GL_DEBUG_SEVERITY_HIGH)
-		{
-			assert("High severity GL error!" && false);
-		}
+		SEAssert("High severity GL error!", severity == GL_DEBUG_SEVERITY_HIGH);
 	}
 #endif
 
@@ -125,12 +121,10 @@ namespace opengl
 			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
 
 		// Video automatically inits events, but included here as a reminder
-		if (SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO) != 0) 
-		{
-			LOG_ERROR(SDL_GetError());
-			assert("SDL Initialization failed" && false);			
-			return;
-		}
+		SEAssert(
+			SDL_GetError(), 
+			SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO) == 0);
+
 		
 		// Configure SDL before creating a window:
 		const int glMajorVersion = 4;
@@ -138,14 +132,9 @@ namespace opengl
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, glMajorVersion);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, glMinorVersion);
 
-		if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE) < 0)
-		{
-			const string error = string(SDL_GetError());
-			LOG_ERROR("Could not set context attribute: " + error);
-			assert("Could not set context attribute" && false);
-			
-			return;
-		}
+		SEAssert(
+			SDL_GetError(), 
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE) >= 0);		
 
 		SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
@@ -175,30 +164,31 @@ namespace opengl
 			yRes,
 			SDL_WINDOW_OPENGL
 		);
-		assert("Could not create window" && platformParams->m_glWindow != NULL);
+		SEAssert("Could not create window", platformParams->m_glWindow != NULL);
 
 		// Create an OpenGL context and make it current:
 		platformParams->m_glContext = SDL_GL_CreateContext(platformParams->m_glWindow);
-		assert("Could not create OpenGL context" && platformParams->m_glContext != NULL);
+		SEAssert("Could not create OpenGL context", platformParams->m_glContext != NULL);
 
-		if (SDL_GL_MakeCurrent(platformParams->m_glWindow, platformParams->m_glContext) < 0)
-		{
-			assert("Failed to make OpenGL context current" && false);
-			return;
-		}
+		SEAssert(
+			"Failed to make OpenGL context current", 
+			SDL_GL_MakeCurrent(platformParams->m_glWindow, platformParams->m_glContext) >= 0);
 		
 		// Verify the context version:
 		int glMajorVersionCheck = 0;
 		int glMinorVersionCheck = 0;
 		glGetIntegerv(GL_MAJOR_VERSION, &glMajorVersionCheck);
 		glGetIntegerv(GL_MINOR_VERSION, &glMinorVersionCheck);
-		assert(glMajorVersion == glMajorVersionCheck && glMinorVersion == glMinorVersionCheck);
+		
+		SEAssert("Reported OpenGL version does not match the version set", 
+			glMajorVersion == glMajorVersionCheck && glMinorVersion == glMinorVersionCheck);
+
 		LOG("Using OpenGL version " + to_string(glMajorVersionCheck) + "." + to_string(glMinorVersionCheck));
 
 		// Initialize glew:
 		glewExperimental = GL_TRUE; // Expose OpenGL 3.x+ interfaces
 		GLenum glStatus = glewInit();
-		assert("glStatus not ok!" && glStatus == GLEW_OK);		
+		SEAssert("glStatus not ok!", glStatus == GLEW_OK);
 
 		// Configure OpenGL logging:
 #if defined(DEBUG_LOG_OPENGL)		// Defined in BuildConfiguration.h
@@ -281,7 +271,7 @@ namespace opengl
 		}
 		break;
 		default:
-			assert("Invalid face culling mode" && false);
+			SEAssert("Invalid face culling mode", false);
 		}
 	}
 
@@ -306,7 +296,7 @@ namespace opengl
 		}
 		break;
 		default:
-			assert("Invalid face clear target" && false);
+			SEAssert("Invalid face clear target",false);
 		}
 	}
 	
@@ -315,7 +305,7 @@ namespace opengl
 	{
 		if (src == platform::Context::BlendMode::Disabled)
 		{
-			assert("Must disable blending for both source and destination" && src == dst);
+			SEAssert("Must disable blending for both source and destination", src == dst);
 
 			glDisable(GL_BLEND);
 			return;
@@ -382,7 +372,7 @@ namespace opengl
 			break;
 			default:
 			{
-				assert("Invalid blend mode" && false);
+				SEAssert("Invalid blend mode", false);
 			}
 			}
 		};
@@ -447,7 +437,7 @@ namespace opengl
 		break;
 		default:
 		{
-			assert("Invalid depth mode" && false);
+			SEAssert("Invalid depth mode", false);
 		}
 		}
 
@@ -459,7 +449,7 @@ namespace opengl
 	{
 		int maxTexInputs;
 		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTexInputs);
-		assert("GL_MAX_TEXTURE_IMAGE_UNITS query failed" && maxTexInputs > 0);
+		SEAssert("GL_MAX_TEXTURE_IMAGE_UNITS query failed", maxTexInputs > 0);
 		return (uint32_t)maxTexInputs;
 	}
 }

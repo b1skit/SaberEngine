@@ -89,14 +89,14 @@ namespace platform
 
 		case RenderingAPI::DX12:
 		{
-			assert("Unsupported rendering API" && false);
+			SEAssert("Unsupported rendering API", false);
 			result = false;
 		}
 		break;
 
 		default:
 		{
-			assert("Unsupported rendering API" && false);
+			SEAssert("Unsupported rendering API", false);
 			result = false;
 		}
 		}
