@@ -34,6 +34,7 @@ using gr::Texture;
 using gr::Shader;
 using gr::Camera;
 using gr::Light;
+using gr::ShadowMap;
 using std::shared_ptr;
 using glm::pi;
 

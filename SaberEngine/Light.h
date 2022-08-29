@@ -13,10 +13,6 @@ namespace gr
 	class Camera;
 	class Mesh;
 	class Shader;
-}
-
-namespace SaberEngine
-{
 	class ShadowMap;
 }
 
@@ -42,7 +38,7 @@ namespace gr
 		Light(std::string const& lightName, 
 			LightType lightType, 
 			glm::vec3 color, 
-			std::shared_ptr<SaberEngine::ShadowMap> shadowMap = nullptr,
+			std::shared_ptr<gr::ShadowMap> shadowMap = nullptr,
 			float radius = 1.0f);
 
 		~Light() { Destroy(); }
@@ -72,8 +68,8 @@ namespace gr
 														 
 		inline std::string const& Name() const { return m_lightName; }
 
-		inline std::shared_ptr<SaberEngine::ShadowMap>& GetShadowMap() { return m_shadowMap; }
-		inline std::shared_ptr<SaberEngine::ShadowMap> const& GetShadowMap() const { return m_shadowMap; }
+		inline std::shared_ptr<gr::ShadowMap>& GetShadowMap() { return m_shadowMap; }
+		inline std::shared_ptr<gr::ShadowMap> const& GetShadowMap() const { return m_shadowMap; }
 
 		inline std::shared_ptr<gr::Mesh>& DeferredMesh() { return m_deferredMesh; }
 		inline std::shared_ptr<gr::Mesh> const& DeferredMesh() const { return m_deferredMesh; }		
@@ -88,7 +84,7 @@ namespace gr
 
 		std::string m_lightName;
 
-		std::shared_ptr<SaberEngine::ShadowMap> m_shadowMap;
+		std::shared_ptr<gr::ShadowMap> m_shadowMap;
 
 		// Deferred light setup:
 		std::shared_ptr<gr::Mesh> m_deferredMesh;

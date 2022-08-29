@@ -31,6 +31,7 @@ using gr::Texture;
 using gr::Shader;
 using gr::Sampler;
 using gr::Light;
+using gr::ShadowMap;
 using std::shared_ptr;
 using std::make_shared;
 using glm::vec3;

@@ -9,53 +9,53 @@
 #include "TextureTarget.h"
 #include "Camera.h"
 
-using gr::Camera;
-using std::string;
-using glm::vec3;
-
-#define DEFAULT_SHADOWMAP_TEXPATH	"ShadowMap"		// Shadow maps don't have a filepath...
-#define DEFAULT_SHADOWMAP_COLOR		vec4(1,1,1,1)	// Default to white (max far)
-
 
 namespace SaberEngine
 {
 	class Transform;
+}
 
-
+namespace gr
+{
 	class ShadowMap
 	{
 	public:
-
-		ShadowMap() = delete;
-
-		ShadowMap(string lightName,
+		ShadowMap(std::string lightName,
 			uint32_t xRes,
 			uint32_t yRes,
 			gr::Camera::CameraConfig shadowCamConfig,
-			Transform* shadowCamParent = nullptr,
-			vec3 shadowCamPosition = vec3(0.0f, 0.0f, 0.0f), 
+			SaberEngine::Transform* shadowCamParent = nullptr,
+			glm::vec3 shadowCamPosition = vec3(0.0f, 0.0f, 0.0f), 
 			bool useCubeMap = false);
+
+		~ShadowMap() = default;
+		ShadowMap(ShadowMap const&) = default;
+		ShadowMap(ShadowMap&&) = default;
+		ShadowMap& operator=(ShadowMap const&) = default;
+
+		ShadowMap() = delete;
 
 		// Get the current shadow camera
 		inline std::shared_ptr<gr::Camera> ShadowCamera() { return m_shadowCam; }
+		inline std::shared_ptr<gr::Camera const> ShadowCamera() const { return m_shadowCam; }
 
 		inline float& MaxShadowBias() { return m_maxShadowBias; }
+		inline float const& MaxShadowBias() const { return m_maxShadowBias; }
+		
 		inline float& MinShadowBias() { return m_minShadowBias; }
+		inline float const& MinShadowBias() const { return m_minShadowBias; }
 
-		gr::TextureTargetSet& GetTextureTargetSet() { return m_shadowTargetSet; }
-		gr::TextureTargetSet const& GetTextureTargetSet() const { return m_shadowTargetSet; }
-
-	protected:
+		inline gr::TextureTargetSet& GetTextureTargetSet() { return m_shadowTargetSet; }
+		inline gr::TextureTargetSet const& GetTextureTargetSet() const { return m_shadowTargetSet; }
 
 
 	private:
-		// Registed in the SceneManager's currentScene, & deallocated when currentScene calls ClearCameras()
+		// Registed in the SceneManager's currentScene
 		std::shared_ptr<gr::Camera>	m_shadowCam = nullptr; 
 		gr::TextureTargetSet m_shadowTargetSet;
 
-		// TODO: Move these defaults to engine/scene config, and load bias directly from the scene light???
-		float m_maxShadowBias				= 0.005f;	// Small offset for when we're making shadow comparisons
-		float m_minShadowBias				= 0.0005f;
+		float m_maxShadowBias = 0.005f;	// Small offsets for shadow comparisons
+		float m_minShadowBias = 0.0005f;
 	};
 }
 

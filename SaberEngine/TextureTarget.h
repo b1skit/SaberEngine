@@ -16,10 +16,12 @@ namespace gr
 		TextureTarget();
 		TextureTarget(std::shared_ptr<gr::Texture> texture);
 		
+		~TextureTarget();
+
+		TextureTarget(TextureTarget&&) = default;
+
 		TextureTarget& operator=(TextureTarget const&) = default;
 		TextureTarget& operator=(std::shared_ptr<gr::Texture> texture);
-
-		~TextureTarget();
 
 		std::shared_ptr<gr::Texture>& GetTexture() { return m_texture; }
 		std::shared_ptr<gr::Texture> const& GetTexture() const { return m_texture; }
@@ -78,6 +80,10 @@ namespace gr
 	public:
 		TextureTargetSet();
 		~TextureTargetSet();
+
+		TextureTargetSet(TextureTargetSet const&) = default;
+		TextureTargetSet(TextureTargetSet&&) = default;
+		TextureTargetSet& operator=(TextureTargetSet const&) = default;
 
 		std::vector<gr::TextureTarget>& ColorTargets() { m_targetStateDirty = true; return m_colorTargets; }
 		std::vector<gr::TextureTarget> const& ColorTargets() const { return m_colorTargets; }

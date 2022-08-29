@@ -5,6 +5,7 @@
 #include "ShadowMap.h"
 #include "Shader.h"
 #include "Mesh.h"
+
 using gr::Shader;
 using std::shared_ptr;
 using std::make_shared;
@@ -17,7 +18,7 @@ namespace gr
 		std::string const& lightName, 
 		LightType lightType, 
 		vec3 color, 
-		std::shared_ptr<SaberEngine::ShadowMap> shadowMap /*= nullptr*/,
+		std::shared_ptr<gr::ShadowMap> shadowMap /*= nullptr*/,
 		float radius /*= 1.0f*/) :
 			m_color(color),
 			m_type(lightType),
