@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "GBufferGraphicsSystem.h"
+#include "GraphicsSystem_GBuffer.h"
 #include "CoreEngine.h"
 #include "Shader.h"
 #include "Texture.h"

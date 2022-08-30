@@ -25,7 +25,7 @@
 #include "Scene.h"
 #include "EventManager.h"
 #include "Sampler.h"
-#include "GBufferGraphicsSystem.h"
+#include "GraphicsSystem_GBuffer.h"
 
 using gr::Material;
 using gr::Texture;
