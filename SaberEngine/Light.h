@@ -63,8 +63,8 @@ namespace gr
 														 
 		inline LightType const& Type() const { return m_type; }
 														 
-		inline SaberEngine::Transform& GetTransform() { return m_transform; }	// Directional lights shine forward (Z+)
-		inline SaberEngine::Transform const& GetTransform() const { return m_transform; }
+		inline gr::Transform& GetTransform() { return m_transform; }	// Directional lights shine forward (Z+)
+		inline gr::Transform const& GetTransform() const { return m_transform; }
 														 
 		inline std::string const& Name() const { return m_lightName; }
 

@@ -6,10 +6,12 @@
 #include "Scene.h"
 #include "Texture.h"
 #include "Material.h"
+
 using gr::Material;
 using gr::Texture;
 using gr::Shader;
 using gr::Camera;
+using gr::Transform;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;

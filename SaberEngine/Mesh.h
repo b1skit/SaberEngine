@@ -4,8 +4,6 @@
 #include <memory>
 
 #include "Transform.h"
-using SaberEngine::Transform;
-
 #include "Material.h"
 #include "Mesh_Platform.h"
 
@@ -37,7 +35,7 @@ namespace gr
 		inline float& zMax() { return m_zMax; }
 
 		// Returns a Bounds, transformed from local space using transform
-		Bounds GetTransformedBounds(mat4 const& m_transform);
+		Bounds GetTransformedBounds(glm::mat4 const& m_transform);
 
 		void Make3Dimensional();
 
@@ -73,7 +71,7 @@ namespace gr
 			glm::vec3 const tangent,
 			glm::vec3 const bitangent,
 			glm::vec4 const& color,
-			const vec4& uv0) :
+			const glm::vec4& uv0) :
 			m_position(position),
 			m_normal(normal),
 			m_tangent(tangent),
@@ -139,7 +137,7 @@ namespace gr
 
 		inline std::shared_ptr<gr::Material> MeshMaterial() { return m_meshMaterial; }
 
-		inline Transform& GetTransform() { return m_transform; }
+		inline gr::Transform& GetTransform() { return m_transform; }
 
 		inline Bounds& GetLocalBounds() { return m_localBounds; }
 
@@ -156,7 +154,7 @@ namespace gr
 
 		std::shared_ptr<gr::Material> m_meshMaterial = nullptr;
 
-		Transform m_transform;
+		gr::Transform m_transform;
 		std::string meshName = "UNNAMED_MESH";
 
 		// API-specific mesh params:

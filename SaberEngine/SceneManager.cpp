@@ -29,12 +29,14 @@
 #include "Skybox.h"
 #include "Scene.h"
 #include "Shader.h"
+
 using gr::Material;
 using gr::Texture;
 using gr::Shader;
 using gr::Camera;
 using gr::Light;
 using gr::ShadowMap;
+using gr::Transform;
 using std::shared_ptr;
 using glm::pi;
 
@@ -1223,7 +1225,7 @@ namespace SaberEngine
 				LOG("Parented \"" + newGameObject->GetName() + "\" -> \"" + nextParent->GetName() + "\"");
 			#endif
 
-			newGameObject->GetTransform()->Parent(nextParent->GetTransform());
+			newGameObject->GetTransform()->SetParent(nextParent->GetTransform());
 		}
 		
 		#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
@@ -1454,9 +1456,9 @@ namespace SaberEngine
 						LOG("Directional light color: " + to_string(lightColor.r) + ", " + to_string(lightColor.g) + 
 							", " + to_string(lightColor.b));
 						LOG("Directional light position = " + 
-							to_string(m_currentScene->m_keyLight.GetTransform().WorldPosition().x) + ", " +
-							to_string(m_currentScene->m_keyLight.GetTransform().WorldPosition().y) + ", " + 
-							to_string(m_currentScene->m_keyLight.GetTransform().WorldPosition().z));
+							to_string(m_currentScene->m_keyLight.GetTransform().GetWorldPosition().x) + ", " +
+							to_string(m_currentScene->m_keyLight.GetTransform().GetWorldPosition().y) + ", " + 
+							to_string(m_currentScene->m_keyLight.GetTransform().GetWorldPosition().z));
 
 						LOG("Directional light rotation = " +
 							to_string(m_currentScene->m_keyLight.GetTransform().GetEulerRotation().x) + ", " +
@@ -1685,7 +1687,7 @@ namespace SaberEngine
 							InitializeTransformValues(combinedTransform, targetTransform);
 						}
 
-						pointLight->GetTransform().Parent(gameObject->GetTransform());					
+						pointLight->GetTransform().SetParent(gameObject->GetTransform());					
 					
 						#if defined(DEBUG_SCENEMANAGER_LIGHT_LOGGING)
 							LOG("Calculated point light radius of " + to_string(radius));
@@ -1826,9 +1828,8 @@ namespace SaberEngine
 			LOG("Found " + to_string(numCameras) + " scene camera(s): Adding camera \"" + cameraName + "\"");
 		}
 
-		// Create a new camera, attach a GBuffer, and register:
+		// Create and register a new camera:
 		newCamera = std::make_shared<gr::Camera>(cameraName, newCamConfig, nullptr);
-		newCamera->AttachGBuffer();
 
 		// For now, assume that we're only importing the main camera. No other cameras are currently supported...
 		m_currentScene->RegisterCamera(CAMERA_TYPE_MAIN, newCamera);

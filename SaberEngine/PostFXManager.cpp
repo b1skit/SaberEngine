@@ -14,6 +14,7 @@ using gr::Shader;
 using gr::Sampler;
 using std::shared_ptr;
 using std::make_shared;
+using glm::vec3;
 
 
 namespace SaberEngine
@@ -118,8 +119,6 @@ namespace SaberEngine
 			"exposure", &CoreEngine::GetSceneManager()->GetMainCamera()->GetExposure(), platform::Shader::UNIFORM_TYPE::Float);
 
 		// Upload the texel size for the SMALLEST pingpong textures:
-		
-		/*const vec4 texelSize = m_pingPongTextures[NUM_DOWN_SAMPLES]->GetTexelDimenions();*/
 		const vec4 smallestTexelSize = 
 			m_pingPongStageTargetSets[NUM_DOWN_SAMPLES].ColorTarget(0).GetTexture()->GetTexelDimenions();
 

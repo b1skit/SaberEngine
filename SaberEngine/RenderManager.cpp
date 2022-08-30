@@ -1,5 +1,5 @@
 #include <string>
-using std::string;
+#include <unordered_map>
 
 // TODO: Remove these!!!!!!!!!!!
 #include <GL/glew.h>
@@ -25,6 +25,7 @@ using std::string;
 #include "Scene.h"
 #include "EventManager.h"
 #include "Sampler.h"
+#include "GBufferGraphicsSystem.h"
 
 using gr::Material;
 using gr::Texture;
@@ -32,8 +33,12 @@ using gr::Shader;
 using gr::Sampler;
 using gr::Light;
 using gr::ShadowMap;
+using gr::Transform;
+using gr::GBufferGraphicsSystem;
 using std::shared_ptr;
+using std::make_unique;
 using std::make_shared;
+using std::string;
 using glm::vec3;
 using glm::vec4;
 using glm::mat3;
@@ -191,10 +196,16 @@ namespace SaberEngine
 		// Additively blit the emissive GBuffer texture to screen:
 		m_context.SetBlendMode(platform::Context::BlendMode::One, platform::Context::BlendMode::One);
 
+
+
+		
 		Blit(
-			mainCam->GetTextureTargetSet().ColorTarget(Material::MatEmissive).GetTexture(),
+			m_pipeline.GetPipeline()[0][0]->GetStageTargetSet().ColorTarget(Material::MatEmissive).GetTexture(), // HAX!!!!!!!!!!!!!
 			*m_outputTargetSet.get(),
 			m_blitShader);
+
+
+
 
 		m_context.SetBlendMode(platform::Context::BlendMode::Disabled, platform::Context::BlendMode::Disabled);
 
@@ -225,11 +236,11 @@ namespace SaberEngine
 		if (light->Type() == Light::Point)
 		{
 			mat4 shadowCamProjection = shadowCam->GetProjectionMatrix();
-			vec3 lightWorldPos = light->GetTransform().WorldPosition();
+			vec3 lightWorldPos = light->GetTransform().GetWorldPosition();
 
-			mat4 const& cubeMap_vps = shadowCam->GetCubeViewProjectionMatrix();
+			std::vector<glm::mat4> const& cubeMap_vps = shadowCam->GetCubeViewProjectionMatrix();
 
-			lightShader->SetUniform("shadowCamCubeMap_vp", &cubeMap_vps[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f, 6);
+			lightShader->SetUniform("shadowCamCubeMap_vp", &cubeMap_vps[0], platform::Shader::UNIFORM_TYPE::Matrix4x4f, 6);
 			lightShader->SetUniform("lightWorldPos", &lightWorldPos.x, platform::Shader::UNIFORM_TYPE::Vec3f);
 			lightShader->SetUniform("shadowCam_near", &shadowCam->Near(), platform::Shader::UNIFORM_TYPE::Float);
 			lightShader->SetUniform("shadowCam_far", &shadowCam->Far(), platform::Shader::UNIFORM_TYPE::Float);
@@ -284,17 +295,25 @@ namespace SaberEngine
 	}
 
 
-	void SaberEngine::RenderManager::RenderToGBuffer(std::shared_ptr<Camera> const renderCam)
+	void SaberEngine::RenderManager::RenderToGBuffer(std::shared_ptr<Camera> const renderCam) // <---- TODO: REMOVE THIS CAM ARG!!!!!!!!!!!!!!!
 	{
-		gr::TextureTargetSet const& renderTargetSet = renderCam->GetTextureTargetSet();
-		
+		gr::TextureTargetSet const& renderTargetSet = m_pipeline.GetPipeline()[0][0]->GetStageTargetSet(); // HAX!!!!!!!!!!!!!!!!!!!!!!
+
+
+
 		renderTargetSet.AttachColorDepthStencilTargets(0, 0, true);		
 		
 		// Clear the currently bound target
 		m_context.ClearTargets(platform::Context::ClearTarget::ColorDepth);
 
+		
+		
+		std::shared_ptr<Camera const> stageCam = m_pipeline.GetPipeline()[0][0]->GetStageCamera(); // HAX!!!!!!!!!!!!!!!!!!!!!!
+
+
+
 		// Assemble common (model independent) matrices:
-		mat4 m_view			= renderCam->GetViewMatrix();
+		mat4 m_view = stageCam->GetViewMatrix();
 
 		// Loop by material (+shader), mesh:
 		std::unordered_map<string, std::shared_ptr<Material>> const sceneMaterials = 
@@ -304,7 +323,12 @@ namespace SaberEngine
 		{
 			// Setup the current material and shader:
 			std::shared_ptr<Material> currentMaterial = currentElement.second;
-			std::shared_ptr<Shader> currentShader = renderCam->GetRenderShader();
+			
+			
+			
+			std::shared_ptr<Shader const> currentShader = m_pipeline.GetPipeline()[0][0]->GetStageShader(); // HAX!!!!!!!!!!!!!!!!!!!!!!
+
+
 
 			vector<std::shared_ptr<gr::Mesh>> const* meshes;
 
@@ -327,7 +351,7 @@ namespace SaberEngine
 
 				// Assemble model-specific matrices:
 				mat4 model			= currentMesh->GetTransform().Model();
-				mat4 modelRotation	= currentMesh->GetTransform().Model(WORLD_ROTATION);
+				mat4 modelRotation	= currentMesh->GetTransform().Model(Transform::WorldRotation);
 				mat4 mvp			= renderCam->GetViewProjectionMatrix() * model;
 
 				// Upload mesh-specific matrices:
@@ -348,18 +372,20 @@ namespace SaberEngine
 
 	void SaberEngine::RenderManager::RenderDeferredLight(std::shared_ptr<Light> deferredLight)
 	{
-		std::shared_ptr<Camera> gBufferCam = CoreEngine::GetSceneManager()->GetMainCamera();
-
 		// Bind:
 		std::shared_ptr<Shader> currentShader = deferredLight->GetDeferredLightShader();
-
 		currentShader->Bind(true);
 
+
+
 		// Bind GBuffer textures
-		gr::TextureTargetSet& gbufferTextures = gBufferCam->GetTextureTargetSet();
+		gr::TextureTargetSet const& gbufferTextures = m_pipeline.GetPipeline()[0][0]->GetStageTargetSet(); // HAX!!!!!!!!!!!!!!!!!!!!!!
+
+
+
 		for (uint32_t gBufferTexSlot = 0; gBufferTexSlot < gbufferTextures.ColorTargets().size(); gBufferTexSlot++)
 		{
-			std::shared_ptr<gr::Texture>& tex = gbufferTextures.ColorTarget(gBufferTexSlot).GetTexture();
+			std::shared_ptr<gr::Texture> const& tex = gbufferTextures.ColorTarget(gBufferTexSlot).GetTexture();
 			if (tex != nullptr)
 			{
 				tex->Bind((uint32_t)gBufferTexSlot, true);
@@ -369,6 +395,8 @@ namespace SaberEngine
 
 		gbufferTextures.DepthStencilTarget().GetTexture()->Bind(Material::GBufferDepth, true);
 		Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear)->Bind(Material::GBufferDepth, true);
+
+		std::shared_ptr<gr::Camera const> const gBufferCam = m_pipeline.GetPipeline()[0][0]->GetStageCamera(); // HAX!!!!!!!!!!!!!!!!!!!!!!
 		
 		// Assemble common (model independent) matrices:
 		const bool hasShadowMap = deferredLight->GetShadowMap() != nullptr;
@@ -377,7 +405,7 @@ namespace SaberEngine
 		mat4 m_view			= gBufferCam->GetViewMatrix();
 		mat4 mv				= m_view * model;
 		mat4 mvp			= gBufferCam->GetViewProjectionMatrix() * deferredLight->GetTransform().Model();
-		vec3 cameraPosition = gBufferCam->GetTransform()->WorldPosition();
+		vec3 cameraPosition = gBufferCam->GetTransform()->GetWorldPosition();
 
 		currentShader->SetUniform("in_model", &model[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
 		currentShader->SetUniform("in_view", &m_view[0][0], platform::Shader::UNIFORM_TYPE::Matrix4x4f);
@@ -444,7 +472,7 @@ namespace SaberEngine
 		{
 			currentShader->SetUniform(
 				"lightWorldPos", 
-				&deferredLight->GetTransform().WorldPosition().x, 
+				&deferredLight->GetTransform().GetWorldPosition().x, 
 				platform::Shader::UNIFORM_TYPE::Vec3f);
 
 			// TODO: Can we just upload this once when the light is created (and its shader is created)? 
@@ -544,8 +572,11 @@ namespace SaberEngine
 
 		std::shared_ptr<gr::Texture> skyboxCubeMap = skybox->GetSkyTexture();
 
+
 		// GBuffer depth
-		std::shared_ptr<gr::Texture> depthTexture = renderCam->GetTextureTargetSet().DepthStencilTarget().GetTexture();		
+		std::shared_ptr<gr::Texture> depthTexture = m_pipeline.GetPipeline()[0][0]->GetStageTargetSet().DepthStencilTarget().GetTexture(); // HAX!!!!!!!!!!!!!!!!!!!!!!
+
+
 
 		// Bind shader and texture:
 		currentShader->Bind(true);
@@ -717,6 +748,8 @@ namespace SaberEngine
 		// Add RenderManager shaders:
 		shaders.push_back(m_blitShader);
 
+		// TODO: Individual stages/materials/etc should be configuring shader values, not the render manager!
+		
 		// Configure all of the shaders:
 		for (unsigned int i = 0; i < (int)shaders.size(); i++)
 		{
@@ -734,11 +767,6 @@ namespace SaberEngine
 			shaders.at(i)->SetUniform("screenParams", &(screenParams.x), platform::Shader::UNIFORM_TYPE::Vec4f);
 			shaders.at(i)->SetUniform("projectionParams", &(projectionParams.x), platform::Shader::UNIFORM_TYPE::Vec4f);
 
-			float emissiveIntensity = 
-				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultSceneEmissiveIntensity");
-			shaders.at(i)->SetUniform("emissiveIntensity", &emissiveIntensity, platform::Shader::UNIFORM_TYPE::Float);
-			// TODO: Load this from .FBX file, and set the cached value here
-
 
 			// Upload matrices:
 			mat4 m_projection = sceneManager->GetMainCamera()->GetProjectionMatrix();
@@ -749,6 +777,16 @@ namespace SaberEngine
 
 		// Initialize PostFX:
 		m_postFXManager->Initialize(m_outputTargetSet->ColorTarget(0));
+
+
+		// Add graphics systems in order:
+		m_graphicsSystems.emplace_back(make_unique<GBufferGraphicsSystem>("GBufferGraphicsSystem"));
+
+		// Create each graphics system:
+		for (size_t i = 0; i < m_graphicsSystems.size(); i++)
+		{
+			m_graphicsSystems[i]->Create(m_pipeline);
+		}
 	}
 
 

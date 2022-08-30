@@ -33,7 +33,7 @@ namespace gr
 
 
 	public:
-		Camera(std::string cameraName, CameraConfig camConfig, SaberEngine::Transform* parent);
+		Camera(std::string cameraName, CameraConfig camConfig, gr::Transform* parent);
 		~Camera() { Destroy(); }
 
 		void Destroy();
@@ -48,30 +48,23 @@ namespace gr
 		// EventListener interface:
 		void HandleEvent(std::shared_ptr<SaberEngine::EventInfo const> eventInfo) override { /*Do nothing*/ }
 
-		inline float const& FieldOfView() const		{ return m_cameraConfig.m_fieldOfView; }
-		inline float const& Near() const			{ return m_cameraConfig.m_near; }
-		inline float const& Far() const				{ return m_cameraConfig.m_far; }
+		inline float const& FieldOfView() const	{ return m_cameraConfig.m_fieldOfView; }
+		inline float const& Near() const		{ return m_cameraConfig.m_near; }
+		inline float const& Far() const			{ return m_cameraConfig.m_far; }
 
-		glm::mat4 const& GetViewMatrix();
+		glm::mat4 GetViewMatrix() const;
 		inline glm::mat4 const&	GetProjectionMatrix() const { return m_projection; }
-		inline glm::mat4 const&	GetViewProjectionMatrix() { return m_viewProjection = m_projection * GetViewMatrix(); } // TODO: Only compute this if something has changed
+
+		inline glm::mat4 GetViewProjectionMatrix() const { return m_projection * GetViewMatrix(); }
 		
-		glm::mat4 const& GetCubeViewMatrix(); // TODO: Recompute this if the camera has moved
-		glm::mat4 const& GetCubeViewProjectionMatrix();
+		std::vector<glm::mat4> const& GetCubeViewMatrix(); // TODO: Recompute this if the camera has moved
+		std::vector<glm::mat4> const& GetCubeViewProjectionMatrix();
 
 		std::shared_ptr<gr::Shader>& GetRenderShader() { return m_cameraShader; }
 		std::shared_ptr<gr::Shader> const& GetRenderShader() const { return m_cameraShader; }
 		
-		gr::TextureTargetSet& GetTextureTargetSet() { return m_camTargetSet; }
-		gr::TextureTargetSet const & GetTextureTargetSet() const { return m_camTargetSet; }
-
 		float& GetExposure() { return m_cameraConfig.m_exposure; }
 		float const& GetExposure() const { return m_cameraConfig.m_exposure; }
-
-		// Configure this camera for deferred rendering
-		void AttachGBuffer();
-		// TODO: Move this to a stage owned by a graphics system, with a target set etc
-		// Cameras should just do camera things.
 
 
 	private:
@@ -82,14 +75,11 @@ namespace gr
 
 		glm::mat4 m_view;
 		glm::mat4 m_projection;
-		glm::mat4 m_viewProjection;
 
 		std::vector<glm::mat4> m_cubeView;
 		std::vector<glm::mat4> m_cubeViewProjection;
 		
 		std::shared_ptr<gr::Shader> m_cameraShader;
-
-		gr::TextureTargetSet m_camTargetSet;
 	};
 
 

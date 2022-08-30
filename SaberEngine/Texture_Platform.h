@@ -49,7 +49,7 @@ namespace platform
 	};
 
 
-	// We need to provide a destructor implementation since it's pure virutal
+	// We need to provide a destructor implementation since it's pure virtual
 	inline platform::Texture::PlatformParams::~PlatformParams() {};
 }
 

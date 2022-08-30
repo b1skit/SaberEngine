@@ -109,8 +109,11 @@ namespace opengl
 		default:
 			LOG_ERROR(output);
 		}
-
-		SEAssert("High severity GL error!", severity == GL_DEBUG_SEVERITY_HIGH);
+		
+		if (severity == GL_DEBUG_SEVERITY_HIGH)
+		{
+			SEAssert("High severity GL error!: " + output, false);
+		}		
 	}
 #endif
 

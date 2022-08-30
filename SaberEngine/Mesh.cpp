@@ -2,10 +2,15 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
-using glm::pi;
 
 #include "DebugConfiguration.h"
 #include "Mesh.h"
+
+using gr::Transform;
+using glm::pi;
+using glm::mat4;
+using glm::vec3;
+using glm::vec4;
 
 
 namespace gr

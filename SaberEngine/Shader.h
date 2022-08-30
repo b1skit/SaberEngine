@@ -40,7 +40,7 @@ namespace gr
 		Shader& operator=(Shader&) = delete;
 
 		void Create();
-		void Bind(bool doBind);
+		void Bind(bool doBind) const;
 
 		void Destroy();
 
@@ -52,7 +52,7 @@ namespace gr
 			char const* uniformName,
 			void const* value,
 			platform::Shader::UNIFORM_TYPE const& type, 
-			int count = 1);
+			int count = 1) const;
 
 		void SetTexture(
 			std::string const& shaderName, 

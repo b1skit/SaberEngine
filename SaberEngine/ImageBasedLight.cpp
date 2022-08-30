@@ -7,11 +7,13 @@
 #include "Mesh.h"
 #include "Shader.h"
 #include "Material.h"
+
 using gr::Material;
 using gr::Texture;
 using gr::Shader;
 using std::shared_ptr;
 using std::make_shared;
+using glm::vec3;
 
 
 namespace SaberEngine

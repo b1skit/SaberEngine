@@ -21,6 +21,7 @@ namespace gr
 	enum class TextureColorSpace;
 	class Camera;
 	class Light;
+	class Transform;
 }
 
 namespace SaberEngine
@@ -29,7 +30,6 @@ namespace SaberEngine
 	class SceneObject;
 	class GameObject;
 	class Renderable;
-	class Transform;
 	class Skybox;
 	struct Bounds;
 	struct Scene;
@@ -150,10 +150,10 @@ namespace SaberEngine
 		// Scene geometry import helper : Combines seperated transform nodes found throughout the scene graph.
 		// Finds and combines the FIRST instance of Translation, Scaling, Rotation matrices in the parenting hierarchy
 		aiMatrix4x4		GetCombinedTransformFromHierarchy(aiScene const* scene, aiNode* parent, bool skipPostRotations = true);
-		void			InitializeTransformValues(aiMatrix4x4 const& source, Transform* dest);	// Helper function: Copy transformation values from Assimp scene to SaberEngine transform
+		void			InitializeTransformValues(aiMatrix4x4 const& source, gr::Transform* dest);	// Helper function: Copy transformation values from Assimp scene to SaberEngine transform
 
 		// Light import helper: Initializes a SaberEngine Light's transform from an assimp scene. Calls InitializeTransformValues()
-		void			InitializeLightTransformValues(aiScene const* scene, string lightName, Transform* targetLightTransform);
+		void			InitializeLightTransformValues(aiScene const* scene, string lightName, gr::Transform* targetLightTransform);
 		
 		// Find a node with a name matching or containing name
 		aiNode*			FindNodeContainingName(aiScene const* scene, string name);

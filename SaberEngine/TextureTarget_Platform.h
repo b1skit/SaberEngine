@@ -2,9 +2,6 @@
 
 #include <memory>
 
-#include <cstdint> // Needed for uint32_t
-// TODO: WHY IS THIS NEEDED HERE????????????????????????????????????
-
 
 namespace gr
 {
@@ -59,7 +56,7 @@ namespace platform
 	};
 
 
-	// We need to provide a destructor implementation since it's pure virutal
+	// We need to provide a destructor implementation since it's pure virtual
 	inline platform::TextureTarget::PlatformParams::~PlatformParams() {};
 	inline platform::TextureTargetSet::PlatformParams::~PlatformParams() {};
 }

@@ -2,6 +2,8 @@
 #include "Mesh.h"
 #include "Transform.h"
 
+using gr::Transform;
+
 
 void SaberEngine::Renderable::SetTransform(Transform* transform)
 {
@@ -10,13 +12,13 @@ void SaberEngine::Renderable::SetTransform(Transform* transform)
 	// Update the parents of any view meshes
 	for (unsigned int i = 0; i < (unsigned int)m_viewMeshes.size(); i++)
 	{
-		m_viewMeshes.at(i)->GetTransform().Parent(m_gameObjectTransform);
+		m_viewMeshes.at(i)->GetTransform().SetParent(m_gameObjectTransform);
 	}
 }
 
 void SaberEngine::Renderable::AddViewMeshAsChild(std::shared_ptr<gr::Mesh> mesh)
 {
-	mesh->GetTransform().Parent(m_gameObjectTransform);
+	mesh->GetTransform().SetParent(m_gameObjectTransform);
 
 	m_viewMeshes.push_back(mesh);
 }

@@ -10,13 +10,10 @@
 #include "Camera.h"
 
 
-namespace SaberEngine
-{
-	class Transform;
-}
-
 namespace gr
 {
+	class Transform;
+
 	class ShadowMap
 	{
 	public:
@@ -24,8 +21,8 @@ namespace gr
 			uint32_t xRes,
 			uint32_t yRes,
 			gr::Camera::CameraConfig shadowCamConfig,
-			SaberEngine::Transform* shadowCamParent = nullptr,
-			glm::vec3 shadowCamPosition = vec3(0.0f, 0.0f, 0.0f), 
+			gr::Transform* shadowCamParent = nullptr,
+			glm::vec3 shadowCamPosition = glm::vec3(0.0f, 0.0f, 0.0f), 
 			bool useCubeMap = false);
 
 		~ShadowMap() = default;

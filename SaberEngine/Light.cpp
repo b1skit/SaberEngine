@@ -81,7 +81,7 @@ namespace gr
 			m_deferredLightShader->Create();
 
 			m_deferredMesh = gr::meshfactory::CreateSphere(radius);
-			m_deferredMesh->GetTransform().Parent(&m_transform);
+			m_deferredMesh->GetTransform().SetParent(&m_transform);
 		}
 		break;
 		case Spot:

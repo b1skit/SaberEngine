@@ -6,19 +6,21 @@
 
 #include <glm/gtc/constants.hpp>
 
+using gr::Transform;
+
 
 namespace SaberEngine
 {
 	PlayerObject::PlayerObject(std::shared_ptr<Camera> playerCam) : GameObject::GameObject("Player Object")
 	{
 		m_playerCam = playerCam;
-		m_playerCam->GetTransform()->Parent(&m_transform);
+		m_playerCam->GetTransform()->SetParent(&m_transform);
 
 		// Move the yaw (ie. about Y) rotation from the camera to the PlayerObject's transform:
 
 		Transform* playerCamTransform = m_playerCam->GetTransform();
 		vec3 camRotation = playerCamTransform->GetEulerRotation();
-		vec3 camPosition = playerCamTransform->WorldPosition();
+		vec3 camPosition = playerCamTransform->GetWorldPosition();
 
 		playerCamTransform->SetWorldRotation(vec3(camRotation.x, 0.0f, 0.0f));	// Set pitch
 		playerCamTransform->SetWorldPosition(vec3(0.0f, 0.0f, 0.0f));			// Relative to PlayerObject parent
@@ -97,7 +99,7 @@ namespace SaberEngine
 		// Save the current position/rotation:
 		if (InputManager::GetMouseInputState(INPUT_MOUSE_RIGHT))
 		{
-			m_savedPosition = m_transform.WorldPosition();
+			m_savedPosition = m_transform.GetWorldPosition();
 			m_savedEulerRotation = vec3(m_playerCam->GetTransform()->GetEulerRotation().x, m_transform.GetEulerRotation().y, 0 );
 		}
 	}

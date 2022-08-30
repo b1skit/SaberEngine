@@ -2,6 +2,7 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 
 #include <GL/glew.h>
 #include <SDL.h>
@@ -16,6 +17,8 @@ using glm::vec4;
 #include "Context.h"
 #include "PostFXManager.h"
 #include "Context_Platform.h"
+#include "RenderPipeline.h"
+#include "GraphicsSystem.h"
 
 
 namespace gr
@@ -24,6 +27,7 @@ namespace gr
 	class Shader;
 	class Camera;
 	class Light;
+	class GraphicsSystem;
 }
 
 namespace SaberEngine
@@ -103,6 +107,9 @@ namespace SaberEngine
 		std::unique_ptr<PostFXManager> m_postFXManager = nullptr;
 		
 		// TODO: Move initialization to ctor init list
+
+		std::vector<std::unique_ptr<gr::GraphicsSystem>> m_graphicsSystems;
+		gr::RenderPipeline m_pipeline;
 	};
 }
 

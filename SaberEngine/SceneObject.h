@@ -26,17 +26,18 @@ namespace SaberEngine
 		void Update() override = 0;
 
 		// Getters/Setters:
-		inline Transform* GetTransform() { return &m_transform; }
+		inline gr::Transform* GetTransform() { return &m_transform; }
+		inline gr::Transform const* GetTransform() const { return &m_transform; }
 
 
 	protected:
-		Transform m_transform;
+		gr::Transform m_transform;
 		
 	private:
 		
 	};
 
 
-	// We need to provide a destructor implementation since it's pure virutal
+	// We need to provide a destructor implementation since it's pure virtual
 	inline SceneObject::~SceneObject() {}
 }

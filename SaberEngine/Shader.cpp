@@ -28,7 +28,7 @@ namespace gr
 	}
 
 
-	void Shader::SetUniform(char const* uniformName, void const* value, platform::Shader::UNIFORM_TYPE const& type, int count /*= 1*/)
+	void Shader::SetUniform(char const* uniformName, void const* value, platform::Shader::UNIFORM_TYPE const& type, int count /*= 1*/) const
 	{
 		platform::Shader::SetUniform(*this, uniformName, value, type, count);
 	}
@@ -40,7 +40,7 @@ namespace gr
 	}
 
 
-	void Shader::Bind(bool doBind)
+	void Shader::Bind(bool doBind) const
 	{
 		platform::Shader::Bind(*this, doBind);
 	}

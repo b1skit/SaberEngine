@@ -10,8 +10,9 @@
 using gr::Material;
 using gr::Texture;
 using gr::Shader;
+using gr::Transform;
 using std::shared_ptr;
-
+using glm::mat4;
 
 namespace gr
 {
@@ -19,7 +20,7 @@ namespace gr
 		m_cameraConfig(camConfig),
 		m_cameraShader(nullptr)
 	{
-		m_transform.Parent(parent);
+		m_transform.SetParent(parent);
 
 		Initialize();
 	}
@@ -56,8 +57,6 @@ namespace gr
 				m_cameraConfig.m_far
 			);
 		}		
-
-		m_viewProjection = m_projection * GetViewMatrix(); // Internally initializes the view matrix
 	}
 
 
@@ -67,14 +66,13 @@ namespace gr
 	}
 
 
-	mat4 const& Camera::GetViewMatrix()
+	mat4 Camera::GetViewMatrix() const
 	{
-		m_view = inverse(m_transform.Model());
-		return m_view;
+		return inverse(m_transform.Model());
 	}
 
 
-	mat4 const& Camera::GetCubeViewMatrix()
+	std::vector<glm::mat4> const& Camera::GetCubeViewMatrix()
 	{
 		// If we've never allocated cubeView, do it now:
 		if (m_cubeView.size() == 0)
@@ -82,121 +80,57 @@ namespace gr
 			m_cubeView.reserve(6);
 
 			m_cubeView.emplace_back( 
-				glm::lookAt(m_transform.WorldPosition(), 
-				m_transform.WorldPosition() + Transform::WORLD_X,
+				glm::lookAt(m_transform.GetWorldPosition(), 
+				m_transform.GetWorldPosition() + Transform::WORLD_X,
 				-Transform::WORLD_Y) );
 			m_cubeView.emplace_back( 
-				glm::lookAt(m_transform.WorldPosition(), 
-				m_transform.WorldPosition() - Transform::WORLD_X, 
+				glm::lookAt(m_transform.GetWorldPosition(), 
+				m_transform.GetWorldPosition() - Transform::WORLD_X, 
 				-Transform::WORLD_Y) );
 
 			m_cubeView.emplace_back( 
-				glm::lookAt(m_transform.WorldPosition(), 
-				m_transform.WorldPosition() + Transform::WORLD_Y, 
+				glm::lookAt(m_transform.GetWorldPosition(), 
+				m_transform.GetWorldPosition() + Transform::WORLD_Y, 
 					Transform::WORLD_Z) );
 			m_cubeView.emplace_back( 
-				glm::lookAt(m_transform.WorldPosition(), 
-				m_transform.WorldPosition() - Transform::WORLD_Y, 
+				glm::lookAt(m_transform.GetWorldPosition(), 
+				m_transform.GetWorldPosition() - Transform::WORLD_Y, 
 				-Transform::WORLD_Z) );
 
 			m_cubeView.emplace_back( 
-				glm::lookAt(m_transform.WorldPosition(), 
-				m_transform.WorldPosition() + Transform::WORLD_Z,
+				glm::lookAt(m_transform.GetWorldPosition(), 
+				m_transform.GetWorldPosition() + Transform::WORLD_Z,
 				-Transform::WORLD_Y) );
 			m_cubeView.emplace_back( 
-				glm::lookAt(m_transform.WorldPosition(), 
-				m_transform.WorldPosition() - Transform::WORLD_Z, 
+				glm::lookAt(m_transform.GetWorldPosition(), 
+				m_transform.GetWorldPosition() - Transform::WORLD_Z, 
 				-Transform::WORLD_Y) );
 		}
 
 		// TODO: Recalculate this if the camera has moved
 
-		return m_cubeView[0];
+		return m_cubeView;
 	}
 
-	mat4 const& Camera::GetCubeViewProjectionMatrix()
+	std::vector<glm::mat4> const& Camera::GetCubeViewProjectionMatrix()
 	{
 		// If we've never allocated cubeViewProjection, do it now:
 		if (m_cubeViewProjection.size() == 0)
 		{
 			m_cubeViewProjection.reserve(6);
 
-			mat4 const& ourCubeViews = GetCubeViewMatrix(); // Call this to ensure cubeView has been initialized
+			// Call this to ensure cubeView has been initialized
+			std::vector<glm::mat4> const& ourCubeViews = GetCubeViewMatrix(); 
 
-			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews);
-			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews);
-			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews);
-			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews);
-			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews);
-			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews);
+			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[0]);
+			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[1]);
+			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[2]);
+			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[3]);
+			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[4]);
+			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[5]);
 		}
 
-		return m_cubeViewProjection[0];
-	}
-
-
-	void Camera::AttachGBuffer()
-	{
-		GetName() = "GBufferCam";
-
-		const vector<string> gBufferTexNames
-		{
-			"GBufferAlbedo",	// 0
-			"GBufferWNormal",	// 1
-			"GBufferRMAO",		// 2
-			"GBufferEmissive",	// 3
-			"GBufferWPos",		// 4
-			"GBufferMatProp0",	// 5
-			"GBufferDepth",		// 6
-		};
-
-		m_cameraShader = std::make_shared<gr::Shader>(
-			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("gBufferFillShaderName"));
-		m_cameraShader->Create();
-
-		// Create GBuffer color targets:
-		gr::Texture::TextureParams gBufferParams;
-		gBufferParams.m_width = SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
-		gBufferParams.m_height = SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
-		gBufferParams.m_faces = 1;
-		gBufferParams.m_texUse = gr::Texture::TextureUse::ColorTarget;
-		gBufferParams.m_texDimension = gr::Texture::TextureDimension::Texture2D;
-		gBufferParams.m_texFormat = gr::Texture::TextureFormat::RGBA32F; // Using 4 channels for future flexibility
-		gBufferParams.m_texColorSpace = gr::Texture::TextureColorSpace::sRGB;
-		gBufferParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-
-
-		gBufferParams.m_useMIPs = false;
-		// TODO: Currently, our GBuffer doesn't use mipmapping, but it should.
-		// We need to compute the appropriate mip level in the shader, by writing UV derivatives during the GBuffer
-		// pass, and using a stencil mask to ensure we're sampling the correct material at boundaries
-		// https://www.reedbeta.com/blog/deferred-texturing/
-		// -> We'll also need to trigger mip generation after laying down the GBuffer
-
-
-		for (size_t i = 0; i <= 5; i++)
-		{
-			std::shared_ptr<gr::Texture> gBufferTex = std::make_shared<gr::Texture>(gBufferParams);
-
-			gBufferTex->SetTexturePath(GetName() + "_" + gBufferTexNames[i]);
-
-			m_camTargetSet.ColorTarget(i) = gBufferTex;
-		}
-
-		// Create GBuffer depth target:
-		gr::Texture::TextureParams depthTexParams(gBufferParams);
-		depthTexParams.m_texUse = gr::Texture::TextureUse::DepthTarget;
-		depthTexParams.m_texFormat = gr::Texture::TextureFormat::Depth32F;
-		depthTexParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear;
-
-		std::shared_ptr<gr::Texture> depthTex = std::make_shared<gr::Texture>(depthTexParams);
-
-		depthTex->SetTexturePath(GetName() + "_" + gBufferTexNames[Material::GBufferDepth]);
-
-		m_camTargetSet.DepthStencilTarget() = depthTex;
-
-		// Finally, initialize the target set:
-		m_camTargetSet.CreateColorDepthStencilTargets(Material::GBufferAlbedo, Material::GBufferDepth);
+		return m_cubeViewProjection;
 	}
 }
 
