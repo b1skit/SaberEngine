@@ -24,6 +24,20 @@ namespace opengl
 		// Bind
 		opengl::Mesh::Bind(mesh, true);
 
+		// RenderDoc object names;
+		glObjectLabel(GL_VERTEX_ARRAY, mp->m_meshVAO, -1, (mesh.Name()).c_str());
+		glObjectLabel(
+			GL_BUFFER, 
+			mp->m_meshVBOs[opengl::Mesh::VERTEX_BUFFER_OBJECT::BUFFER_INDEXES], 
+			-1, 
+			(mesh.Name() + " index buffer").c_str());
+
+		glObjectLabel(
+			GL_BUFFER, 
+			mp->m_meshVBOs[opengl::Mesh::VERTEX_BUFFER_OBJECT::BUFFER_VERTICES], 
+			-1, 
+			(mesh.Name() + " vertex attribute").c_str()); // TODO: Figure out how to label each vertex attribute
+
 		// Configure:
 
 		// Position:
