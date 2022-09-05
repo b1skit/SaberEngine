@@ -18,6 +18,7 @@ namespace gr
 {
 	RenderStage::RenderStage(std::string name) :
 		m_name(name),
+		m_textureTargetSet(name + " target"),
 		m_stageGeometryBatches(nullptr)
 		//m_stageInstancedGeometryBatches(nullptr)
 	{

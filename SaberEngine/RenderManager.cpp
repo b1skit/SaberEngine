@@ -76,7 +76,7 @@ namespace SaberEngine
 		m_yRes = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
 
 		// Default target set:
-		m_defaultTargetSet = std::make_shared<gr::TextureTargetSet>();
+		m_defaultTargetSet = std::make_shared<gr::TextureTargetSet>("Default target");
 		m_defaultTargetSet->Viewport() = { 0, 0, (uint32_t)m_xRes, (uint32_t)m_yRes };
 		m_defaultTargetSet->CreateColorTargets(); // Default framebuffer has no texture targets
 
@@ -94,7 +94,7 @@ namespace SaberEngine
 
 		std::shared_ptr<gr::Texture> outputTexture = std::make_shared<gr::Texture>(mainTargetParams);
 
-		m_mainTargetSet = std::make_shared<gr::TextureTargetSet>();
+		m_mainTargetSet = std::make_shared<gr::TextureTargetSet>("Main target");
 		m_mainTargetSet->ColorTarget(0) = outputTexture;
 
 		m_mainTargetSet->CreateColorTargets();

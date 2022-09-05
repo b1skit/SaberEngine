@@ -54,7 +54,7 @@ namespace gr
 
 		std::shared_ptr<Texture> outputTexture = make_shared<Texture>(lightTargetParams);
 
-		TextureTargetSet deferredLightingTargetSet;
+		TextureTargetSet deferredLightingTargetSet("Deferred lighting target");
 		deferredLightingTargetSet.ColorTarget(0) = outputTexture;
 		deferredLightingTargetSet.CreateColorTargets();
 

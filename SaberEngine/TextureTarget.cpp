@@ -61,7 +61,8 @@ namespace gr
 	/******************/
 	// TextureTargetSet
 	/******************/
-	TextureTargetSet::TextureTargetSet() :
+	TextureTargetSet::TextureTargetSet(string name) :
+		m_name(name),
 		m_targetStateDirty(true),
 		m_hasTargets(false),
 		m_colorIsCreated(false),
@@ -127,6 +128,7 @@ namespace gr
 		AttachColorTargets(colorFace, colorMipLevel, doBind);
 		AttachDepthStencilTarget(doBind);
 	}
+
 
 	bool TextureTargetSet::HasTargets()
 	{

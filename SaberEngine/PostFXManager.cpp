@@ -48,7 +48,9 @@ namespace SaberEngine
 
 		// Configure texture targets. 
 		const uint32_t numStages = NUM_DOWN_SAMPLES + 1; // +1 so we can ping-pong between at the lowest res
-		m_pingPongStageTargetSets = std::vector<gr::TextureTargetSet>(numStages);
+		/*m_pingPongStageTargetSets = std::vector<gr::TextureTargetSet>(numStages);*/
+		m_pingPongStageTargetSets.clear();
+		m_pingPongStageTargetSets.reserve(numStages);
 
 		int currentXRes = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes") / 2;
 		int currentYRes = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes") / 2;
@@ -71,6 +73,7 @@ namespace SaberEngine
 			pingPongParams.m_texturePath = 
 				"PostFX_PingPongTexture_" + to_string(currentXRes) + "x" + to_string(currentYRes);
 
+			m_pingPongStageTargetSets.emplace_back("PostFX Ping-pong target " + to_string(i+1) + " / " + to_string(numStages));
 			m_pingPongStageTargetSets[i].ColorTarget(0) = std::make_shared<gr::Texture>(pingPongParams);
 			
 			m_pingPongStageTargetSets[i].Viewport().xMin() = 0;

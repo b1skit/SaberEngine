@@ -19,7 +19,8 @@ using glm::vec3;
 namespace SaberEngine
 {
 	ImageBasedLight::ImageBasedLight(string lightName, string relativeHDRPath) 
-		: Light(lightName, AmbientIBL, vec3(0))
+		: Light(lightName, AmbientIBL, vec3(0)),
+		m_BRDF_integrationMapStageTargetSet(lightName + " target")
 	{
 		// Irradiance Environment Map (IEM) setup:
 
@@ -193,7 +194,7 @@ namespace SaberEngine
 		shared_ptr<gr::Texture> cubemap = std::make_shared<gr::Texture>(cubeParams);
 		
 		// Target set initialization:
-		gr::TextureTargetSet m_IBL_IEM_PMREM_StageTargetSet;
+		gr::TextureTargetSet m_IBL_IEM_PMREM_StageTargetSet("IBL PMREM target");
 		m_IBL_IEM_PMREM_StageTargetSet.ColorTarget(0) = cubemap;
 		m_IBL_IEM_PMREM_StageTargetSet.Viewport() = gr::Viewport(0, 0, xRes, yRes);
 		m_IBL_IEM_PMREM_StageTargetSet.CreateColorTargets();

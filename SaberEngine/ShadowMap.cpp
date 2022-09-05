@@ -27,7 +27,8 @@ namespace gr
 		gr::Camera::CameraConfig shadowCamConfig, 
 		Transform* shadowCamParent /*= nullptr*/, 
 		vec3 shadowCamPosition /* = vec3(0.0f, 0.0f, 0.0f)*/, 
-		bool useCubeMap /*= false*/)
+		bool useCubeMap /*= false*/) :
+			m_shadowTargetSet(lightName + " target")
 	{
 		m_shadowCam = std::make_shared<gr::Camera>(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent);
 		m_shadowCam->GetTransform()->SetWorldPosition(shadowCamPosition);

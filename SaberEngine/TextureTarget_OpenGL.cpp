@@ -121,6 +121,9 @@ namespace opengl
 
 				glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
 
+				// RenderDoc object name:
+				glObjectLabel(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject, -1, targetSet.GetName().c_str());
+
 				SEAssert("Failed to create framebuffer object during texture creation",
 					glIsFramebuffer(targetSetParams->m_frameBufferObject));
 
@@ -269,6 +272,9 @@ namespace opengl
 				glGenFramebuffers(1, &targetSetParams->m_frameBufferObject);
 
 				glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
+
+				// RenderDoc object name:
+				glObjectLabel(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject, -1, targetSet.GetName().c_str());
 
 				SEAssert("Failed to create framebuffer object during texture creation",
 					glIsFramebuffer(targetSetParams->m_frameBufferObject));

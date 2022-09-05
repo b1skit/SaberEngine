@@ -29,7 +29,7 @@ namespace SaberEngine
 	class PostFXManager
 	{
 	public:
-		PostFXManager() {} // Must call Initialize() before this object can be used
+		PostFXManager() : m_mainTargetSet("Main PostFX target") {} // Must call Initialize() before this object can be used
 
 		~PostFXManager();
 
