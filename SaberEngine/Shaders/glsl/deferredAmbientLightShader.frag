@@ -19,7 +19,8 @@ uniform int maxMipLevel;	// Largest mip level in the PMREM cube map texture (Cub
 
 void main()
 {	
-	// Cull based on depth: Don't bother lighting unless the fragment is in front of the far plane (prevents ambient lighting of the far plane...)
+	// Cull based on depth: Don't bother lighting unless the fragment is in front of the far plane. Prevents ambient 
+	// lighting being applied to the far plane
 	if (texture( GBufferDepth, data.uv0.xy).r == 1.0)
 	{
 		discard;
@@ -33,10 +34,10 @@ void main()
 	// Note: All PBR calculations are performed in linear space
 	// However, we use sRGB-format textures, getting the sRGB->Linear transformation for free when writing our GBuffer
 	// for sRGB-format inputs (eg. MatAlbedo, ... and?) so no need to degamma MatAlbedo here
-	FragColor				= texture(GBufferAlbedo, data.uv0.xy);
+	vec4 linearAlbedo		= texture(GBufferAlbedo, data.uv0.xy);
 
 	vec3 worldNormal		= texture(GBufferWNormal, data.uv0.xy).xyz;
-	vec4 MatRMAO				= texture(GBufferRMAO, data.uv0.xy);
+	vec4 MatRMAO			= texture(GBufferRMAO, data.uv0.xy);
 	vec4 worldPosition		= texture(GBufferWPos, data.uv0.xy);
 	vec4 matProp0			= texture(GBufferMatProp0, data.uv0.xy);	// .rgb = F0 (Surface response at 0 degrees), .a = Phong exponent
 
@@ -50,7 +51,8 @@ void main()
 	float NoV				= max(0.0, dot(viewNormal, viewEyeDir) );
 
 	vec3 F0					= matProp0.rgb; // .rgb = F0 (Surface response at 0 degrees), .a = Phong exponent
-	F0						= mix(F0, FragColor.rgb, metalness); // Linear interpolation: x, y, using t=[0,1]. Returns x when t=0 -> Blends towards MatAlbedo for metals
+	F0						= mix(F0, linearAlbedo.rgb, metalness); 
+	// Linear interpolation: x, y, using t=[0,1]. Returns x when t=0 -> Blends towards MatAlbedo for metals
 
 //	vec3 fresnel_kS			= FresnelSchlick(NoV, F0); // Doesn't quite look right: Use FresnelSchlick_Roughness() instead
 	vec3 fresnel_kS			= FresnelSchlick_Roughness(NoV, F0, MatRMAO.x);
@@ -64,11 +66,11 @@ void main()
 	vec3 worldView			= normalize(cameraWPos - worldPosition.xyz);	// Direction = Point -> Eye
 	vec3 worldReflection	= normalize(reflect(-worldView, worldNormal));
 
-	vec2 BRDF				= texture(Tex7, vec2(max(NoV, 0.0), MatRMAO.x) ).rg;	// Sample our generated BRDF Integration map
+	vec2 BRDF				= texture(Tex7, vec2(max(NoV, 0.0), MatRMAO.x) ).rg; // Sample our generated BRDF Integration map
 	vec3 specular			= textureLod(CubeMap1, worldReflection, MatRMAO.x * maxMipLevel).xyz * ((fresnel_kS * BRDF.x) + BRDF.y);
 
 
-	FragColor				= vec4((FragColor.rgb * irradiance * k_d + specular), 1.0); // Note: Omitted the "/ PI" factor here
+	FragColor				= vec4((linearAlbedo.rgb * irradiance * k_d + specular), 1.0); // Note: Omitted the "/ PI" factor here
 //	FragColor				= vec4((FragColor.rgb * irradiance * k_d + specular) * AO / PI, 1.0); // Note: Omitted the "/ PI" factor here
 }
 

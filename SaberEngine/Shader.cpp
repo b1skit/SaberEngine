@@ -28,7 +28,7 @@ namespace gr
 	}
 
 
-	void Shader::SetUniform(char const* uniformName, void const* value, platform::Shader::UNIFORM_TYPE const& type, int count /*= 1*/) const
+	void Shader::SetUniform(string const& uniformName, void const* value, platform::Shader::UniformType const type, int count) const
 	{
 		platform::Shader::SetUniform(*this, uniformName, value, type, count);
 	}
@@ -44,12 +44,14 @@ namespace gr
 	{
 		platform::Shader::Bind(*this, doBind);
 	}
+	
 
-	void Shader::SetTexture(
-		string const& shaderName,
+	void Shader::SetTextureSamplerUniform(
+		string const& uniformName,
 		shared_ptr<gr::Texture> texture,
 		shared_ptr<gr::Sampler const> sampler) const
 	{
-		platform::Shader::SetTexture(*this, shaderName, texture, sampler);
+		SetUniform(uniformName, texture.get(), platform::Shader::UniformType::Texture, 1);
+		SetUniform(uniformName, sampler.get(), platform::Shader::UniformType::Sampler, 1);
 	}
 }

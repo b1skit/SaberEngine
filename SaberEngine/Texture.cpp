@@ -94,14 +94,15 @@ namespace gr
 	}
 
 
-	void gr::Texture::Create(uint32_t textureUnit)
+	void gr::Texture::Create()
 	{
-		if (!m_isDirty)
+		// Note: Textures are shared, so duplicate Create() calls can/do happen. Simplest solution is to just abort here
+		if (m_isCreated)
 		{
 			return;
 		}
 
-		platform::Texture::Create(*this, textureUnit);
+		platform::Texture::Create(*this);
 		m_isDirty = false;
 		m_isCreated = true;
 
@@ -109,21 +110,14 @@ namespace gr
 	}
 
 
-	void gr::Texture::Bind(uint32_t textureUnit, bool doBind) 
+	void gr::Texture::Bind(uint32_t textureUnit, bool doBind) const
 	{
-		Create(textureUnit);
-
 		platform::Texture::Bind(*this, textureUnit, doBind);
 	}
 
 
 	void Texture::Destroy()
 	{
-		if (!m_isCreated)
-		{
-			return;
-		}
-
 		if (m_texels.size() > 0)
 		{
 			m_texels.clear();
@@ -150,11 +144,13 @@ namespace gr
 		return m_texels[(faceIdx * m_texParams.m_width * m_texParams.m_height) + (v * m_texParams.m_width) + u];
 	}
 
+
 	glm::vec4 const& gr::Texture::GetTexel(uint32_t index) const
 	{
 		SEAssert("OOB texel coordinates", index < (m_texParams.m_faces * m_texParams.m_width * m_texParams.m_height));
 		return m_texels[index];
 	}
+
 
 	void gr::Texture::SetTexel(uint32_t u, uint32_t v, glm::vec4 value)
 	{

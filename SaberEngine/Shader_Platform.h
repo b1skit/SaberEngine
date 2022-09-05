@@ -12,14 +12,16 @@ namespace platform
 	class Shader
 	{
 	public:
-		enum UNIFORM_TYPE
+		enum UniformType
 		{
-			Matrix4x4f,		// glUniformMatrix4fv
-			Matrix3x3f,		// glUniformMatrix3fv
-			Vec3f,			// glUniform3fv
-			Vec4f,			// glUniform4fv
-			Float,			// glUniform1f
-			Int,			// glUniform1i
+			Matrix4x4f,
+			Matrix3x3f,
+			Vec3f,
+			Vec4f,
+			Float,
+			Int,
+			Texture,
+			Sampler
 		};
 
 	public:
@@ -47,13 +49,13 @@ namespace platform
 		// Static pointers:
 		static void (*Create)(gr::Shader& shader);
 		static void (*Bind)(gr::Shader const&, bool doBind);
-		static void (*SetUniform)(gr::Shader const&, char const* uniformName, void const* value, UNIFORM_TYPE const& type, int count);
-		static void (*Destroy)(gr::Shader&);
-		static void (*SetTexture)(
+		static void (*SetUniform)(
 			gr::Shader const& shader, 
-			std::string const& shaderName, 
-			std::shared_ptr<gr::Texture> texture,
-			std::shared_ptr<gr::Sampler const> sampler);
+			std::string const& uniformName, 
+			void const* value, 
+			UniformType const type,
+			int const count);
+		static void (*Destroy)(gr::Shader&);
 	};
 
 

@@ -92,9 +92,10 @@ namespace gr
 		{
 			if (m_texSlots[i].m_texture != nullptr)
 			{
-				shader->SetTexture(
-					m_texSlots[i].m_shaderSamplerName, m_texSlots[i].m_texture, m_texSlots[i].m_samplerObject);
-				
+				shader->SetTextureSamplerUniform(
+					m_texSlots[i].m_shaderSamplerName, 
+					m_texSlots[i].m_texture,
+					m_texSlots[i].m_samplerObject);
 			}
 		}
 
@@ -103,7 +104,7 @@ namespace gr
 			shader->SetUniform(
 				m_properties[i].m_propertyName.c_str(), 
 				&m_properties[i].m_property, 
-				platform::Shader::UNIFORM_TYPE::Vec4f, 
+				platform::Shader::UniformType::Vec4f, 
 				1);
 		}
 	}

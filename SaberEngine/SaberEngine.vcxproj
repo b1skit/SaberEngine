@@ -176,6 +176,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="EngineConfig.cpp" />
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="GraphicsSystem_DeferredLighting.cpp" />
     <ClCompile Include="GraphicsSystem_GBuffer.cpp" />
     <ClCompile Include="GraphicsSystem.cpp" />
     <ClCompile Include="RenderPipeline.cpp" />
@@ -217,6 +218,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Context_Platform.h" />
+    <ClInclude Include="GraphicsSystem_DeferredLighting.h" />
     <ClInclude Include="GraphicsSystem_GBuffer.h" />
     <ClInclude Include="GraphicsSystem.h" />
     <ClInclude Include="Mesh.h" />

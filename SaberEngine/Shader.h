@@ -47,15 +47,15 @@ namespace gr
 		// Getters/Setters:
 		inline std::string const& Name() { return m_shaderName; }
 
-		// todo: remove default value
 		void SetUniform(
-			char const* uniformName,
+			std::string const&,
 			void const* value,
-			platform::Shader::UNIFORM_TYPE const& type, 
-			int count = 1) const;
-
-		void SetTexture(
-			std::string const& shaderName, 
+			platform::Shader::UniformType const type, 
+			int count) const;
+			
+		// Helper: Simultaneously calls SetUniform for the texture and sampler
+		void SetTextureSamplerUniform(
+			std::string const& uniformName,
 			std::shared_ptr<gr::Texture> texture, 
 			std::shared_ptr<gr::Sampler const> sampler) const;
 

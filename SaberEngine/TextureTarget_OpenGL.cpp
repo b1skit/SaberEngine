@@ -14,7 +14,7 @@ namespace opengl
 	// TextureTarget Platform Params
 	/*******************************/
 	TextureTarget::PlatformParams::PlatformParams() :
-		m_attachmentPoint(GL_DEPTH_ATTACHMENT), // TODO: This should default to GL_NONE?
+		m_attachmentPoint(GL_NONE),
 		m_drawBuffer(GL_NONE),
 		m_readBuffer(GL_NONE),
 		m_renderBufferObject(0)
@@ -54,15 +54,8 @@ namespace opengl
 	// Target Set
 	/************/
 
-	// Binds color targets to sequential texture units, starting with firstTextureUnit
-	void TextureTargetSet::CreateColorTargets(
-		gr::TextureTargetSet& targetSet, 
-		uint32_t firstTextureUnit) // TODO: Assert this is valid (should be within whatever ranges I set) AND/OR set this per target!?!?!?!?!?!?!?!
+	void TextureTargetSet::CreateColorTargets(gr::TextureTargetSet& targetSet)
 	{
-		// TODO: Don't think we need firstTextureUnit at all!!!!!! Just need to write a "hidden" create function for
-		// textures and call it here, so the texture is valid and can be attached to the framebuffer!!!!!!!!!!!!!!!!!!!
-		// -> It's used for sampler?
-
 		opengl::TextureTargetSet::PlatformParams* const targetSetParams =
 			dynamic_cast<opengl::TextureTargetSet::PlatformParams*>(targetSet.GetPlatformParams());
 
@@ -99,7 +92,7 @@ namespace opengl
 					);
 				}
 
-				texture->Create(firstTextureUnit + attachmentPointOffset);
+				texture->Create();
 				 
 				// Configure the target parameters:
 				opengl::TextureTarget::PlatformParams* const targetParams =
@@ -257,7 +250,7 @@ namespace opengl
 	}
 
 
-	void TextureTargetSet::CreateDepthStencilTarget(gr::TextureTargetSet& targetSet, uint32_t textureUnit)
+	void TextureTargetSet::CreateDepthStencilTarget(gr::TextureTargetSet& targetSet)
 	{
 		std::shared_ptr<gr::Texture>& depthStencilTex = targetSet.DepthStencilTarget().GetTexture();
 
@@ -290,7 +283,7 @@ namespace opengl
 			}
 			// TODO: This is duplicated with color targets: Break it out into a helper function?
 
-			depthStencilTex->Create(textureUnit);
+			depthStencilTex->Create();
 
 			// Configure the target parameters:
 			opengl::TextureTarget::PlatformParams* const depthTargetParams =

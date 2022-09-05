@@ -9,18 +9,21 @@ namespace gr
 	class GBufferGraphicsSystem : public virtual GraphicsSystem
 	{
 	public:
+		static const std::vector<std::string> GBufferTexNames;
+
+	public:
 		GBufferGraphicsSystem(std::string name);
 
 		GBufferGraphicsSystem() = delete;
 
 		~GBufferGraphicsSystem() override {}
 
-		void Create(gr::RenderPipeline& pipeline) override;
+		void Create(re::StagePipeline& pipeline) override;
 
 		void PreRender() override;
 
-		gr::TextureTargetSet& GetTextureTargetSet() override { return m_gBufferStage.GetStageTargetSet(); }
-		gr::TextureTargetSet const& GetTextureTargetSet() const override { return m_gBufferStage.GetStageTargetSet(); }
+		gr::TextureTargetSet& GetFinalTextureTargetSet() override { return m_gBufferStage.GetTextureTargetSet(); }
+		gr::TextureTargetSet const& GetFinalTextureTargetSet() const override { return m_gBufferStage.GetTextureTargetSet(); }
 
 	private:
 		gr::RenderStage m_gBufferStage;

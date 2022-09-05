@@ -80,8 +80,19 @@ namespace gr
 				SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredPointLightShaderName"));
 			m_deferredLightShader->Create();
 
-			m_deferredMesh = gr::meshfactory::CreateSphere(radius);
+			// Create the sphere with a radius of 1, and scale it to allow us to instance deferred lights with a single
+			// mesh and multiple MVP matrices
+			m_deferredMesh = gr::meshfactory::CreateSphere(1.0f);
+
 			m_deferredMesh->GetTransform().SetParent(&m_transform);
+			
+			// TODO: BUG HERE! If we call m_transform.SetWorldScale(vec3(radius, radius, radius)); here, the scale
+			// values get stomped later during the call to SceneManager::InitializeTransformValues()
+			// -> For now, set the scale on the deferred mesh, which is technically what we expect anyway...
+			// -> But eventually, we should set the scale on the Light m_transform, which will scale the child deferred
+			// mesh
+			m_deferredMesh->GetTransform().SetWorldScale(vec3(radius, radius, radius));
+
 		}
 		break;
 		case Spot:

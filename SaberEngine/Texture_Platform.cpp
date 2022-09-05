@@ -38,7 +38,7 @@ namespace platform
 
 	// platform::Texture static members:
 	/***********************************/
-	void (*platform::Texture::Create)(gr::Texture&, uint32_t textureUnit);
+	void (*platform::Texture::Create)(gr::Texture&);
 	void (*platform::Texture::Bind)(gr::Texture const&, uint32_t textureUnit, bool doBind);
 	void (*platform::Texture::Destroy)(gr::Texture&);
 	void (*platform::Texture::GenerateMipMaps)(gr::Texture&);

@@ -62,8 +62,10 @@ namespace gr
 	// TextureTargetSet
 	/******************/
 	TextureTargetSet::TextureTargetSet() :
-		m_targetStateDirty{true},
-		m_hasTargets{false}
+		m_targetStateDirty(true),
+		m_hasTargets(false),
+		m_colorIsCreated(false),
+		m_depthIsCreated(false)
 	{
 		platform::TextureTargetSet::PlatformParams::CreatePlatformParams(*this);
 	
@@ -85,9 +87,11 @@ namespace gr
 	}
 
 
-	void TextureTargetSet::CreateColorTargets(uint32_t firstTextureUnit)
+	void TextureTargetSet::CreateColorTargets()
 	{
-		platform::TextureTargetSet::CreateColorTargets(*this, firstTextureUnit);
+		SEAssert("Texture Target Set already created!", m_colorIsCreated == false);
+		m_colorIsCreated = true;
+		platform::TextureTargetSet::CreateColorTargets(*this);
 	}
 
 
@@ -97,9 +101,11 @@ namespace gr
 	}
 
 
-	void TextureTargetSet::CreateDepthStencilTarget(uint32_t textureUnit)
+	void TextureTargetSet::CreateDepthStencilTarget()
 	{
-		platform::TextureTargetSet::CreateDepthStencilTarget(*this, textureUnit);
+		SEAssert("Texture Target Set already created!", m_depthIsCreated == false);
+		m_depthIsCreated = true;
+		platform::TextureTargetSet::CreateDepthStencilTarget(*this);
 	}
 
 
@@ -109,10 +115,10 @@ namespace gr
 	}
 
 
-	void TextureTargetSet::CreateColorDepthStencilTargets(uint32_t firstColorTexUnit, uint32_t depthTexUnit)
+	void TextureTargetSet::CreateColorDepthStencilTargets()
 	{
-		CreateColorTargets(firstColorTexUnit);
-		CreateDepthStencilTarget(depthTexUnit);
+		CreateColorTargets();
+		CreateDepthStencilTarget();
 	}
 
 

@@ -257,21 +257,17 @@ namespace SaberEngine
 	}
 
 
-	vector<shared_ptr<gr::Mesh>> const* SceneManager::GetRenderMeshes(shared_ptr<Material> targetMaterial)
+	vector<shared_ptr<gr::Mesh>> const& SceneManager::GetRenderMeshesWithMaterial(shared_ptr<Material> targetMaterial)
 	{
-		// If materialIndex is out of bounds, return ALL meshes
-		if (targetMaterial == nullptr)
-		{
-			return &m_currentScene->GetMeshes();
-		}
-
+		SEAssert("Target material is null", targetMaterial != nullptr);
+		
 		auto result = m_materialMeshLists.find(targetMaterial->Name());
 		if (result == m_materialMeshLists.end())
 		{
-			return &m_currentScene->GetMeshes();
+			SEAssert("No material exists with the specified name", false);
 		}
 
-		return &result->second;
+		return result->second;
 	}
 
 
@@ -335,6 +331,7 @@ namespace SaberEngine
 	}
 	
 	
+	// TODO: Lights should be stored in individual vectors by type, instead of grouped together
 	vector<shared_ptr<Light>> const& SceneManager::GetDeferredLights()
 	{
 		return m_currentScene->GetDeferredLights();
@@ -385,6 +382,9 @@ namespace SaberEngine
 		dest->SetWorldPosition(vec3(sourcePosition.x, sourcePosition.y, sourcePosition.z));
 		dest->SetWorldRotation(sourceRotationAsGLMQuat);
 		dest->SetWorldScale(vec3(sourceScale.x, sourceScale.y, sourceScale.z));
+		// TODO: Bug here! If the transform already has been configured (eg. setting transform scale during Light 
+		// constructor), this function stomps the values!!!!
+		// -> Fix this during conversion to GLTF
 	}
 
 
@@ -569,7 +569,7 @@ namespace SaberEngine
 					diffuseParams.m_texColorSpace = Texture::TextureColorSpace::sRGB;
 					diffuseParams.m_texFormat = Texture::TextureFormat::RGBA8;
 					diffuseTexture->SetTextureParams(diffuseParams);
-					diffuseTexture->Create(0);
+					diffuseTexture->Create();
 
 					newMaterial->GetTexture("MatAlbedo") = diffuseTexture;
 				}
@@ -584,7 +584,7 @@ namespace SaberEngine
 					normalParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
 					normalParams.m_texFormat = Texture::TextureFormat::RGBA32F;
 					normalTexture->SetTextureParams(normalParams);
-					normalTexture->Create(0);
+					normalTexture->Create();
 
 					newMaterial->GetTexture("MatNormal") = normalTexture;
 				}
@@ -601,7 +601,7 @@ namespace SaberEngine
 					emissiveParams.m_texColorSpace = Texture::TextureColorSpace::Linear; // TODO: Are emissive textures sRGB or Linear????
 					emissiveParams.m_texFormat = Texture::TextureFormat::RGBA32F;
 					emissiveTexture->SetTextureParams(emissiveParams);
-					emissiveTexture->Create(0);
+					emissiveTexture->Create();
 
 					newMaterial->GetTexture("MatEmissive") = emissiveTexture;
 				}
@@ -616,7 +616,7 @@ namespace SaberEngine
 					RMAOParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
 					RMAOParams.m_texFormat = Texture::TextureFormat::RGBA8;
 					RMAO->SetTextureParams(RMAOParams);
-					RMAO->Create(0);
+					RMAO->Create();
 
 					newMaterial->GetTexture(Material::MatRMAO) = RMAO;
 				}
@@ -1863,8 +1863,8 @@ namespace SaberEngine
 				InitializeTransformValues(camTransform, newCamera->GetTransform());
 			}
 
-			LOG_ERROR("Camera field of view is NOT currently loaded from the source file. A hard-coded default value is"
-				" used for now");
+			LOG_WARNING("Camera field of view is NOT currently loaded from the source file. A hard-coded default value"
+				" is used for now");
 		}		
 
 		#if defined(DEBUG_SCENEMANAGER_CAMERA_LOGGING)

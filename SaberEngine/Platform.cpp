@@ -80,7 +80,6 @@ namespace platform
 			platform::Shader::Bind			= &opengl::Shader::Bind;
 			platform::Shader::SetUniform	= &opengl::Shader::SetUniform;
 			platform::Shader::Destroy		= &opengl::Shader::Destroy;
-			platform::Shader::SetTexture	= &opengl::Shader::SetTexture;
 
 
 			result = true;

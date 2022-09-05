@@ -18,6 +18,7 @@ namespace gr
 		
 		~TextureTarget();
 
+		TextureTarget(TextureTarget const&) = default;
 		TextureTarget(TextureTarget&&) = default;
 
 		TextureTarget& operator=(TextureTarget const&) = default;
@@ -105,13 +106,13 @@ namespace gr
 		bool HasTargets();
 
 		// Platform wrappers:
-		void CreateColorTargets(uint32_t firstTextureUnit);
+		void CreateColorTargets();
 		void AttachColorTargets(uint32_t face, uint32_t mipLevel, bool doBind) const;
 
-		void CreateDepthStencilTarget(uint32_t textureUnit);
+		void CreateDepthStencilTarget();
 		void AttachDepthStencilTarget(bool doBind) const;
 
-		void CreateColorDepthStencilTargets(uint32_t firstColorTexUnit, uint32_t depthTexUnit);
+		void CreateColorDepthStencilTargets();
 		void AttachColorDepthStencilTargets(uint32_t colorFace, uint32_t colorMipLevel, bool doBind) const;
 		
 	private:
@@ -123,6 +124,9 @@ namespace gr
 		gr::Viewport m_viewport;
 
 		std::shared_ptr<platform::TextureTargetSet::PlatformParams> m_platformParams;
+
+		bool m_colorIsCreated;
+		bool m_depthIsCreated;
 
 		// Friends:
 		friend bool platform::RegisterPlatformFunctions();

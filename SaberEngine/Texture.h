@@ -106,9 +106,8 @@ namespace gr
 		Texture& operator=(Texture const& rhs) = delete;
 
 
-		void Create(uint32_t textureUnit);
-		void Bind(uint32_t textureUnit, bool doBind); // Can't be const, as we (currently) might call Create() inside...
-		// TODO: Write an explicit unbind
+		void Create();
+		void Bind(uint32_t textureUnit, bool doBind) const; // TODO: Write an explicit unbind
 
 		void Destroy();
 

@@ -40,7 +40,7 @@ namespace platform
 
 		// Static members:
 		/*****************/
-		static void (*Create)(gr::Texture&, uint32_t textureUnit); // Create a texture + sampler (leaving it bound)
+		static void (*Create)(gr::Texture&);
 		static void (*Bind)(gr::Texture const&, uint32_t textureUnit, bool doBind);
 		static void (*Destroy)(gr::Texture&);
 

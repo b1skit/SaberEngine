@@ -48,23 +48,22 @@ namespace gr
 		// EventListener interface:
 		void HandleEvent(std::shared_ptr<SaberEngine::EventInfo const> eventInfo) override { /*Do nothing*/ }
 
-		inline float const& FieldOfView() const	{ return m_cameraConfig.m_fieldOfView; }
-		inline float const& Near() const		{ return m_cameraConfig.m_near; }
-		inline float const& Far() const			{ return m_cameraConfig.m_far; }
+		inline float const FieldOfView() const { return m_cameraConfig.m_fieldOfView; }
+		inline float const Near() const { return m_cameraConfig.m_near; }
+		inline float const Far() const { return m_cameraConfig.m_far; }
 
 		glm::mat4 GetViewMatrix() const;
 		inline glm::mat4 const&	GetProjectionMatrix() const { return m_projection; }
-
 		inline glm::mat4 GetViewProjectionMatrix() const { return m_projection * GetViewMatrix(); }
 		
 		std::vector<glm::mat4> const& GetCubeViewMatrix(); // TODO: Recompute this if the camera has moved
 		std::vector<glm::mat4> const& GetCubeViewProjectionMatrix();
 
 		std::shared_ptr<gr::Shader>& GetRenderShader() { return m_cameraShader; }
-		std::shared_ptr<gr::Shader> const& GetRenderShader() const { return m_cameraShader; }
+		std::shared_ptr<gr::Shader> const GetRenderShader() const { return m_cameraShader; }
 		
 		float& GetExposure() { return m_cameraConfig.m_exposure; }
-		float const& GetExposure() const { return m_cameraConfig.m_exposure; }
+		float const GetExposure() const { return m_cameraConfig.m_exposure; }
 
 
 	private:

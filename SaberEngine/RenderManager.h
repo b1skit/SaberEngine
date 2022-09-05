@@ -38,13 +38,6 @@ namespace SaberEngine
 
 namespace SaberEngine
 {
-	enum SHADER // Guaranteed shaders
-	{
-		SHADER_ERROR = 0,		// Displays hot pink
-		SHADER_DEFAULT = 1,		// Lambert shader
-	};
-
-
 	class RenderManager : public virtual EngineComponent
 	{
 	public:
@@ -73,12 +66,12 @@ namespace SaberEngine
 
 		re::Context const& GetContext() { return m_context; }
 
+		template <typename T>
+		std::shared_ptr<gr::GraphicsSystem> GetGraphicsSystem();
+
 	private:
+		void Render();
 		void RenderLightShadowMap(std::shared_ptr<gr::Light> currentLight);
-
-		void RenderToGBuffer(std::shared_ptr<gr::Camera> const renderCam);	// Note: renderCam MUST have an attached GBuffer
-
-		void RenderDeferredLight(std::shared_ptr<gr::Light> deferredLight); // Note: FBO, viewport
 
 		void RenderSkybox(std::shared_ptr<Skybox> skybox);
 
@@ -99,8 +92,9 @@ namespace SaberEngine
 		std::shared_ptr<gr::Shader> m_blitShader = nullptr;
 
 		// Note: We store these as shared_ptr so we can instantiate them once the context has been created
-		std::shared_ptr<gr::TextureTargetSet> m_outputTargetSet = nullptr; // TODO: Pick a better name for this...
-		std::shared_ptr<gr::TextureTargetSet> m_defaultTargetSet = nullptr;
+		std::shared_ptr<gr::TextureTargetSet> m_mainTargetSet = nullptr; // Main offscreen buffer
+		
+		std::shared_ptr<gr::TextureTargetSet> m_defaultTargetSet = nullptr; // Default backbuffer
 
 		std::shared_ptr<gr::Mesh> m_screenAlignedQuad = nullptr;
 
@@ -108,8 +102,8 @@ namespace SaberEngine
 		
 		// TODO: Move initialization to ctor init list
 
-		std::vector<std::unique_ptr<gr::GraphicsSystem>> m_graphicsSystems;
-		gr::RenderPipeline m_pipeline;
+		std::vector<std::shared_ptr<gr::GraphicsSystem>> m_graphicsSystems;
+		re::RenderPipeline m_pipeline;
 	};
 }
 

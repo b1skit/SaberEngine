@@ -42,7 +42,7 @@ namespace SaberEngine
 
 
 	private:
-		gr::TextureTargetSet m_outputTargetSet;
+		gr::TextureTargetSet m_mainTargetSet;
 
 		const uint32_t NUM_DOWN_SAMPLES = 2;		// Scaling factor: We half the frame size this many times
 		const uint32_t NUM_BLUR_PASSES = 3;		// How many pairs of horizontal + vertical blur passes to perform

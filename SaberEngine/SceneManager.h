@@ -10,6 +10,7 @@
 #include "EventListener.h"
 #include "Mesh.h"
 #include "Texture.h"
+#include "Scene.h"
 
 
 namespace gr
@@ -32,7 +33,6 @@ namespace SaberEngine
 	class Renderable;
 	class Skybox;
 	struct Bounds;
-	struct Scene;
 	enum CAMERA_TYPE;
 }
 
@@ -74,11 +74,13 @@ namespace SaberEngine
 		unordered_map<string, std::shared_ptr<gr::Material>> const&	GetMaterials() const;
 		std::shared_ptr<gr::Material> GetMaterial(string materialName);
 		
-		vector<std::shared_ptr<gr::Mesh>> const* GetRenderMeshes(std::shared_ptr<gr::Material> targetMaterial);	// Returns ALL meshs if targetMaterial == nullptr
+		inline vector<std::shared_ptr<gr::Mesh>> const& GetRenderMeshes() { return m_currentScene->GetMeshes(); }
+		vector<std::shared_ptr<gr::Mesh>> const& GetRenderMeshesWithMaterial(std::shared_ptr<gr::Material> targetMaterial);	// Returns ALL meshs if targetMaterial == nullptr
 		vector<std::shared_ptr<Renderable>>* GetRenderables();
 
 		std::shared_ptr<gr::Light> const& GetAmbientLight();
 		std::shared_ptr<gr::Light> GetKeyLight();
+		inline std::vector<std::shared_ptr<gr::Light>>& GetPointLights() { return m_currentScene->m_pointLights; }
 		
 		std::vector<std::shared_ptr<gr::Camera>> const& GetCameras(CAMERA_TYPE cameraType);
 		std::shared_ptr<gr::Camera>	GetMainCamera();

@@ -51,7 +51,6 @@ namespace gr
 
 	struct Vertex
 	{
-	public:
 		Vertex() :
 			m_position(0.0f, 0.0f, 0.0f),
 			m_tangent(1.0f, 0.0f, 0.0f),
@@ -82,7 +81,6 @@ namespace gr
 			m_uv2(0.0f, 0.0f, 0.0f, 0.0f),
 			m_uv3(0.0f, 0.0f, 0.0f, 0.0f)
 		{
-
 		}
 
 		glm::vec3 m_position;
@@ -96,13 +94,6 @@ namespace gr
 		glm::vec4 m_uv1;
 		glm::vec4 m_uv2;
 		glm::vec4 m_uv3;
-
-	protected:
-
-
-	private:
-
-
 	};
 
 

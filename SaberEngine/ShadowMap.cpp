@@ -48,7 +48,6 @@ namespace gr
 
 		std::shared_ptr<gr::Texture> depthTexture;
 		std::string shaderName;
-		uint32_t textureUnit = 0;
 
 		// Omni-directional (Cube map) shadowmap setup:
 		if (useCubeMap)
@@ -59,7 +58,6 @@ namespace gr
 
 			depthTexture = std::make_shared<gr::Texture>(shadowParams);
 
-			textureUnit = Material::CubeMap0;
 			shaderName = SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("cubeDepthShaderName");
 		}
 		else // Single texture shadowmap setup:
@@ -70,7 +68,6 @@ namespace gr
 			
 			depthTexture = std::make_shared<gr::Texture>(shadowParams);
 
-			textureUnit = Material::Depth0;
 			shaderName = SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("depthShaderName");
 		}
 
@@ -79,7 +76,7 @@ namespace gr
 
 		m_shadowTargetSet.DepthStencilTarget() = depthTexture;
 		m_shadowTargetSet.Viewport() = gr::Viewport(0, 0, depthTexture->Width(), depthTexture->Height());
-		m_shadowTargetSet.CreateDepthStencilTarget(textureUnit);
+		m_shadowTargetSet.CreateDepthStencilTarget();
 
 		SaberEngine::CoreEngine::GetSceneManager()->RegisterCamera(SaberEngine::CAMERA_TYPE_SHADOW, m_shadowCam);
 	}

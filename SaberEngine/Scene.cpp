@@ -162,50 +162,41 @@ namespace SaberEngine
 		}
 	}
 
+
+	// TODO: Lights should be stored in individual vectors by type, instead of grouped together
 	void Scene::AddLight(std::shared_ptr<Light> newLight)
 	{
+		// TODO: Seems arbitrary that we cannot duplicate directional (and even ambient?) lights... Why even bother 
+		// enforcing this? Just treat all lights the same
+
 		switch (newLight->Type())
 		{
-			// Check if we've got any existing ambient or directional lights:
+		// Check if we've got any existing ambient or directional lights:
 		case Light::AmbientColor:
 		case Light::AmbientIBL:
+		{
+			SEAssert("Ambient light already exists, cannot have 2 ambient lights", m_ambientLight == nullptr);
+			m_ambientLight = newLight;
+		}
+		break;
 		case Light::Directional:
 		{
-			bool foundExisting = false;
-			for (int currentLight = 0; currentLight < (int)m_deferredLights.size(); currentLight++)
-			{
-				if (m_deferredLights.at(currentLight)->Type() == newLight->Type())
-				{
-					foundExisting = true;
-					LOG_ERROR("Found an existing light with type " + std::to_string((int)newLight->Type()) + ". New light will not be added");
-					break;
-				}
-			}
-			if (!foundExisting)
-			{
-				m_deferredLights.push_back(newLight);
-
-				if (newLight->Type() == Light::Directional)
-				{
-					m_keyLight = newLight;
-				}
-				else
-				{
-					m_ambientLight = newLight;
-				}
-			}
-
-			break;
+			SEAssert("Direction light already exists, cannot have 2 directional lights", m_keyLight == nullptr);
+			m_keyLight = newLight;
 		}
-
-		// Don't need to do anything special with other light types
+		break;
 		case Light::Point:
+		{
+			m_pointLights.emplace_back(newLight);
+		}
+		break;
 		case Light::Spot:
 		case Light::Area:
 		case Light::Tube:
 		default:
-			m_deferredLights.push_back(newLight);
-			break;
+		break;
 		}
+
+		m_deferredLights.emplace_back(newLight);
 	}	
 }

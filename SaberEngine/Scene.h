@@ -75,9 +75,10 @@ namespace SaberEngine
 		std::vector<std::shared_ptr<Renderable>> m_renderables;	// Pointers to Renderables held by GameObjects
 
 
-		// Pointers to lights contained in deferredLights
+		// Pointers to point lights also contained in m_deferredLights
 		std::shared_ptr<gr::Light> m_ambientLight = nullptr;
 		std::shared_ptr<gr::Light> m_keyLight = nullptr;
+		std::vector<std::shared_ptr<gr::Light>> m_pointLights; 
 
 		std::vector<std::shared_ptr<gr::Light>> const& GetDeferredLights() const	{ return m_deferredLights; }
 
@@ -95,11 +96,11 @@ namespace SaberEngine
 
 		gr::Bounds m_sceneWorldBounds;
 
-		// Lights:
-		//--------
-		std::vector<std::shared_ptr<gr::Light>> m_deferredLights;
-
+		std::vector<std::shared_ptr<gr::Light>> m_deferredLights; // Pointers to all lights of all types
+		
 		std::string m_sceneName;
+
+		// TODO: Move initialization to ctor init list
 	};
 }
 

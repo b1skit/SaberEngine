@@ -30,6 +30,7 @@ namespace platform
 			Color,
 			Depth,
 			ColorDepth,
+			None,
 			ClearTarget_Count
 		};
 

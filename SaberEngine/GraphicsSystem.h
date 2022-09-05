@@ -20,11 +20,11 @@ namespace gr
 
 		// Virtual members:
 		virtual ~GraphicsSystem() = 0;
-		virtual void Create(gr::RenderPipeline& pipeline) = 0; // Initial Graphics System setup
+		virtual void Create(re::StagePipeline& pipeline) = 0; // Initial Graphics System setup
 		virtual void PreRender() = 0; // Called every frame
 
-		virtual gr::TextureTargetSet& GetTextureTargetSet() = 0;
-		virtual gr::TextureTargetSet const& GetTextureTargetSet() const = 0;
+		virtual gr::TextureTargetSet& GetFinalTextureTargetSet() = 0;
+		virtual gr::TextureTargetSet const& GetFinalTextureTargetSet() const = 0;
 
 		// Getters/setters:
 		inline std::string const& GetName() { return m_name; }

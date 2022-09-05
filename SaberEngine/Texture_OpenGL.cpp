@@ -180,7 +180,7 @@ namespace opengl
 	}
 
 
-	void opengl::Texture::Create(gr::Texture& texture, uint32_t textureUnit)
+	void opengl::Texture::Create(gr::Texture& texture)
 	{
 		LOG("Creating & buffering texture: \"" + texture.GetTexturePath() + "\"");
 

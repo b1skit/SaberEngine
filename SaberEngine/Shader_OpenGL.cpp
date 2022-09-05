@@ -242,12 +242,22 @@ namespace opengl
 	}
 
 
+	void Shader::Destroy(gr::Shader& shader)
+	{
+		PlatformParams* const params =
+			dynamic_cast<opengl::Shader::PlatformParams* const>(shader.GetPlatformParams());
+
+		glDeleteProgram(params->m_shaderReference);
+		params->m_shaderReference = 0;
+	}
+
+
 	void Shader::SetUniform(
 		gr::Shader const& shader,
-		char const* uniformName, 
+		string const& uniformName,
 		void const* value, 
-		platform::Shader::UNIFORM_TYPE const& type, 
-		int count)
+		platform::Shader::UniformType const type, 
+		int const count)
 	{
 		PlatformParams const* const params =
 			dynamic_cast<opengl::Shader::PlatformParams const* const>(shader.GetPlatformParams());
@@ -262,34 +272,64 @@ namespace opengl
 			isBound = false;
 		}
 
-		GLuint uniformID = glGetUniformLocation(params->m_shaderReference, uniformName);
+		GLuint uniformID = glGetUniformLocation(params->m_shaderReference, uniformName.c_str());
 
 		switch (type)
 		{
-		case platform::Shader::UNIFORM_TYPE::Matrix4x4f:
+		case platform::Shader::UniformType::Matrix4x4f:
+		{
 			glUniformMatrix4fv(uniformID, count, GL_FALSE, (GLfloat const*)value);
-			break;
+		}
+		break;
 
-		case platform::Shader::UNIFORM_TYPE::Matrix3x3f:
+		case platform::Shader::UniformType::Matrix3x3f:
+		{
 			glUniformMatrix3fv(uniformID, count, GL_FALSE, (GLfloat const*)value);
-			break;
+		}
+		break;
 
-		case platform::Shader::UNIFORM_TYPE::Vec3f:
+		case platform::Shader::UniformType::Vec3f:
+		{
 			glUniform3fv(uniformID, count, (GLfloat const*)value);
-			break;
+		}
+		break;
 
-		case platform::Shader::UNIFORM_TYPE::Vec4f:
+		case platform::Shader::UniformType::Vec4f:
+		{
 			glUniform4fv(uniformID, count, (GLfloat const*)value);
-			break;
+		}
+		break;
 
-		case platform::Shader::UNIFORM_TYPE::Float:
+		case platform::Shader::UniformType::Float:
+		{
 			glUniform1f(uniformID, *(GLfloat const*)value);
-			break;
+		}
+		break;
 
-		case platform::Shader::UNIFORM_TYPE::Int:
+		case platform::Shader::UniformType::Int:
+		{
 			glUniform1i(uniformID, *(GLint const*)value);
-			break;
+		}
+		break;
+		
+		case platform::Shader::UniformType::Texture:
+		{
+			auto bindingUnit = params->m_samplerUnits.find(uniformName);
 
+			SEAssert("Invalid texture name", bindingUnit != params->m_samplerUnits.end());
+
+			static_cast<gr::Texture const*>(value)->Bind(bindingUnit->second, true);
+		}
+		break;
+		case platform::Shader::UniformType::Sampler:
+		{
+			auto bindingUnit = params->m_samplerUnits.find(uniformName);
+
+			SEAssert("Invalid sampler name", bindingUnit != params->m_samplerUnits.end());
+
+			static_cast<gr::Sampler const*>(value)->Bind(bindingUnit->second, true);
+		}
+		break;
 		default:
 			SEAssert("Shader uniform upload failed: Recieved unimplemented uniform type", false);
 		}
@@ -299,31 +339,5 @@ namespace opengl
 		{
 			glUseProgram(currentProgram);
 		}
-	}
-
-
-	void Shader::Destroy(gr::Shader& shader)
-	{
-		PlatformParams* const params =
-			dynamic_cast<opengl::Shader::PlatformParams* const>(shader.GetPlatformParams());
-
-		glDeleteProgram(params->m_shaderReference);
-		params->m_shaderReference = 0;
-	}
-
-
-	void Shader::SetTexture(gr::Shader const& shader, string const& shaderName,shared_ptr<Texture> texture, shared_ptr<Sampler const> sampler)
-	{
-		// Note: We assume the texture has already been bound before this call is made
-
-		PlatformParams const* const params =
-			dynamic_cast<opengl::Shader::PlatformParams const* const>(shader.GetPlatformParams());
-
-		auto bindingUnit = params->m_samplerUnits.find(shaderName);
-
-		SEAssert("Invalid sampler name", bindingUnit != params->m_samplerUnits.end());
-
-		texture->Bind(bindingUnit->second, true);
-		sampler->Bind(bindingUnit->second, true);
 	}
 }

@@ -184,44 +184,44 @@ namespace gr
 		{
 			// Note: SaberEngine uses a RHCS in all cases
 			std::vector<vec3> positions(8);
-			positions[0] = glm::vec3(-1.0f, 1.0f, 1.0f); // "Front" side
-			positions[1] = glm::vec3(-1.0f, -1.0f, 1.0f);
-			positions[2] = glm::vec3(1.0f, -1.0f, 1.0f);
-			positions[3] = glm::vec3(1.0f, 1.0f, 1.0f);
+			positions[0] = vec3(-1.0f, 1.0f, 1.0f); // "Front" side
+			positions[1] = vec3(-1.0f, -1.0f, 1.0f);
+			positions[2] = vec3(1.0f, -1.0f, 1.0f);
+			positions[3] = vec3(1.0f, 1.0f, 1.0f);
 
-			positions[4] = glm::vec3(-1.0f, 1.0f, -1.0f); // "Back" side
-			positions[5] = glm::vec3(-1.0f, -1.0f, -1.0f);
-			positions[6] = glm::vec3(1.0f, -1.0f, -1.0f);
-			positions[7] = glm::vec3(1.0f, 1.0f, -1.0f);
+			positions[4] = vec3(-1.0f, 1.0f, -1.0f); // "Back" side
+			positions[5] = vec3(-1.0f, -1.0f, -1.0f);
+			positions[6] = vec3(1.0f, -1.0f, -1.0f);
+			positions[7] = vec3(1.0f, 1.0f, -1.0f);
 
-			const std::vector<glm::vec3 > normals
+			const std::vector<vec3 > normals
 			{
-				glm::vec3(0.0f, 0.0f, 1.0f),	// Front = 0
-				glm::vec3(0.0f, 0.0f, -1.0f),	// Back = 1
-				glm::vec3(-1.0f, 0.0f, 0.0f),	// Left = 2
-				glm::vec3(1.0f, 0.0f, 0.0f),	// Right = 3
-				glm::vec3(0.0f, 1.0f, 0.0f),	// Up = 4
-				glm::vec3(0.0f, -1.0f, 0.0f),	// Down = 5
+				vec3(0.0f, 0.0f, 1.0f),	// Front = 0
+				vec3(0.0f, 0.0f, -1.0f),	// Back = 1
+				vec3(-1.0f, 0.0f, 0.0f),	// Left = 2
+				vec3(1.0f, 0.0f, 0.0f),	// Right = 3
+				vec3(0.0f, 1.0f, 0.0f),	// Up = 4
+				vec3(0.0f, -1.0f, 0.0f),	// Down = 5
 			};
 
-			const std::vector<glm::vec4> colors
+			const std::vector<vec4> colors
 			{
-				glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
-				glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
-				glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
-				glm::vec4(0.0f, 1.0f, 1.0f, 1.0f),
-				glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
-				glm::vec4(1.0f, 0.0f, 1.0f, 1.0f),
-				glm::vec4(1.0f, 1.0f, 0.0f, 1.0f),
-				glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
+				vec4(0.0f, 0.0f, 0.0f, 1.0f),
+				vec4(0.0f, 0.0f, 1.0f, 1.0f),
+				vec4(0.0f, 1.0f, 0.0f, 1.0f),
+				vec4(0.0f, 1.0f, 1.0f, 1.0f),
+				vec4(1.0f, 0.0f, 0.0f, 1.0f),
+				vec4(1.0f, 0.0f, 1.0f, 1.0f),
+				vec4(1.0f, 1.0f, 0.0f, 1.0f),
+				vec4(1.0f, 1.0f, 1.0f, 1.0f),
 			};
 
-			const std::vector<glm::vec4> uvs
+			const std::vector<vec4> uvs
 			{
-				glm::vec4(0.0f, 0.0f, 0.0f, 0.0f),
-				glm::vec4(0.0f, 1.0f, 0.0f, 0.0f),
-				glm::vec4(1.0f, 0.0f, 0.0f, 0.0f),
-				glm::vec4(1.0f, 1.0f, 0.0f, 0.0f),
+				vec4(0.0f, 0.0f, 0.0f, 0.0f),
+				vec4(0.0f, 1.0f, 0.0f, 0.0f),
+				vec4(1.0f, 0.0f, 0.0f, 0.0f),
+				vec4(1.0f, 1.0f, 0.0f, 0.0f),
 			};
 
 			std::vector<gr::Vertex> cubeVerts
@@ -229,40 +229,40 @@ namespace gr
 				// TODO: Implement hard-coded tangent & bitangents instead of empty vec3's...
 
 				// Front face:
-				Vertex(positions[0], normals[0], glm::vec3(), glm::vec3(), colors[0], uvs[1]), // HINT: position index should = color index
-				Vertex(positions[1], normals[0], glm::vec3(), glm::vec3(), colors[1], uvs[0]), // All UV's should be used once per face
-				Vertex(positions[2], normals[0], glm::vec3(), glm::vec3(), colors[2], uvs[2]), //2
-				Vertex(positions[3], normals[0], glm::vec3(), glm::vec3(), colors[3], uvs[3]), //3
+				Vertex(positions[0], normals[0], vec3(), vec3(), colors[0], uvs[1]), // HINT: position index should = color index
+				Vertex(positions[1], normals[0], vec3(), vec3(), colors[1], uvs[0]), // All UV's should be used once per face
+				Vertex(positions[2], normals[0], vec3(), vec3(), colors[2], uvs[2]), //2
+				Vertex(positions[3], normals[0], vec3(), vec3(), colors[3], uvs[3]), //3
 
 				// Left face:
-				Vertex(positions[4], normals[2], glm::vec3(), glm::vec3(), colors[4], uvs[1]), //4
-				Vertex(positions[5], normals[2], glm::vec3(), glm::vec3(), colors[5], uvs[0]),
-				Vertex(positions[1], normals[2], glm::vec3(), glm::vec3(), colors[1], uvs[2]),
-				Vertex(positions[0], normals[2], glm::vec3(), glm::vec3(), colors[0], uvs[3]), //7
+				Vertex(positions[4], normals[2], vec3(), vec3(), colors[4], uvs[1]), //4
+				Vertex(positions[5], normals[2], vec3(), vec3(), colors[5], uvs[0]),
+				Vertex(positions[1], normals[2], vec3(), vec3(), colors[1], uvs[2]),
+				Vertex(positions[0], normals[2], vec3(), vec3(), colors[0], uvs[3]), //7
 
 				// Right face:
-				Vertex(positions[3], normals[3], glm::vec3(), glm::vec3(), colors[3], uvs[1]), //8
-				Vertex(positions[2], normals[3], glm::vec3(), glm::vec3(), colors[2], uvs[0]),
-				Vertex(positions[6], normals[3], glm::vec3(), glm::vec3(), colors[6], uvs[2]),
-				Vertex(positions[7], normals[3], glm::vec3(), glm::vec3(), colors[7], uvs[3]), //11
+				Vertex(positions[3], normals[3], vec3(), vec3(), colors[3], uvs[1]), //8
+				Vertex(positions[2], normals[3], vec3(), vec3(), colors[2], uvs[0]),
+				Vertex(positions[6], normals[3], vec3(), vec3(), colors[6], uvs[2]),
+				Vertex(positions[7], normals[3], vec3(), vec3(), colors[7], uvs[3]), //11
 
 				// Top face:
-				Vertex(positions[4], normals[4], glm::vec3(), glm::vec3(), colors[4], uvs[1]), //12
-				Vertex(positions[0], normals[4], glm::vec3(), glm::vec3(), colors[0], uvs[0]),
-				Vertex(positions[3], normals[4], glm::vec3(), glm::vec3(), colors[3], uvs[2]),
-				Vertex(positions[7], normals[4], glm::vec3(), glm::vec3(), colors[7], uvs[3]), //15
+				Vertex(positions[4], normals[4], vec3(), vec3(), colors[4], uvs[1]), //12
+				Vertex(positions[0], normals[4], vec3(), vec3(), colors[0], uvs[0]),
+				Vertex(positions[3], normals[4], vec3(), vec3(), colors[3], uvs[2]),
+				Vertex(positions[7], normals[4], vec3(), vec3(), colors[7], uvs[3]), //15
 
 				// Bottom face:
-				Vertex(positions[1], normals[5], glm::vec3(), glm::vec3(), colors[1], uvs[1]), //16
-				Vertex(positions[5], normals[5], glm::vec3(), glm::vec3(), colors[5], uvs[0]),
-				Vertex(positions[6], normals[5], glm::vec3(), glm::vec3(), colors[6], uvs[2]),
-				Vertex(positions[2], normals[5], glm::vec3(), glm::vec3(), colors[2], uvs[3]), //19
+				Vertex(positions[1], normals[5], vec3(), vec3(), colors[1], uvs[1]), //16
+				Vertex(positions[5], normals[5], vec3(), vec3(), colors[5], uvs[0]),
+				Vertex(positions[6], normals[5], vec3(), vec3(), colors[6], uvs[2]),
+				Vertex(positions[2], normals[5], vec3(), vec3(), colors[2], uvs[3]), //19
 
 				// Back face:
-				Vertex(positions[7], normals[1], glm::vec3(), glm::vec3(), colors[7], uvs[1]), //20
-				Vertex(positions[6], normals[1], glm::vec3(), glm::vec3(), colors[6], uvs[0]),
-				Vertex(positions[5], normals[1], glm::vec3(), glm::vec3(), colors[5], uvs[2]),
-				Vertex(positions[4], normals[1], glm::vec3(), glm::vec3(), colors[4], uvs[3]), //23
+				Vertex(positions[7], normals[1], vec3(), vec3(), colors[7], uvs[1]), //20
+				Vertex(positions[6], normals[1], vec3(), vec3(), colors[6], uvs[0]),
+				Vertex(positions[5], normals[1], vec3(), vec3(), colors[5], uvs[2]),
+				Vertex(positions[4], normals[1], vec3(), vec3(), colors[4], uvs[3]), //23
 			};
 
 			std::vector<uint32_t> cubeIndices // 6 faces * 2 tris * 3 indices 
@@ -295,23 +295,23 @@ namespace gr
 			return std::make_shared<Mesh>("cube", cubeVerts, cubeIndices, newMeshMaterial);
 		}
 
-		inline std::shared_ptr<Mesh> CreateQuad(glm::vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,
-			glm::vec3 tr /*= vec3(0.5f, 0.5f, 0.0f)*/,
-			glm::vec3 bl /*= vec3(-0.5f, -0.5f, 0.0f)*/,
-			glm::vec3 br /*= vec3(0.5f, -0.5f, 0.0f)*/,
+		inline std::shared_ptr<Mesh> CreateQuad(vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,
+			vec3 tr /*= vec3(0.5f, 0.5f, 0.0f)*/,
+			vec3 bl /*= vec3(-0.5f, -0.5f, 0.0f)*/,
+			vec3 br /*= vec3(0.5f, -0.5f, 0.0f)*/,
 			std::shared_ptr<gr::Material> newMeshMaterial /*= nullptr*/)
 		{
-			glm::vec3 m_tangent = normalize(vec3(br - bl));
-			glm::vec3 m_bitangent = normalize(vec3(tl - bl));
-			glm::vec3 quadNormal = normalize(cross(m_tangent, m_bitangent));
-			glm::vec4 redColor = vec4(1, 0, 0, 1); // Assign a bright red color by default...
+			vec3 m_tangent = normalize(vec3(br - bl));
+			vec3 m_bitangent = normalize(vec3(tl - bl));
+			vec3 quadNormal = normalize(cross(m_tangent, m_bitangent));
+			vec4 redColor = vec4(1, 0, 0, 1); // Assign a bright red color by default...
 
-			std::vector<glm::vec4> uvs
+			std::vector<vec4> uvs
 			{
-				glm::vec4(0, 1, 0, 0), // tl
-				glm::vec4(0, 0, 0, 0), // bl
-				glm::vec4(1, 1, 0, 0), // tr
-				glm::vec4(1, 0, 0, 0)  // br
+				vec4(0, 1, 0, 0), // tl
+				vec4(0, 0, 0, 0), // bl
+				vec4(1, 1, 0, 0), // tr
+				vec4(1, 0, 0, 0)  // br
 			};
 
 			std::vector<Vertex> quadVerts
@@ -341,7 +341,8 @@ namespace gr
 		}
 
 
-		inline std::shared_ptr<Mesh> CreateSphere(float radius /*= 0.5f*/,
+		inline std::shared_ptr<Mesh> CreateSphere(
+			float radius /*= 0.5f*/,
 			size_t numLatSlices /*= 16*/,
 			size_t numLongSlices /*= 16*/,
 			std::shared_ptr<gr::Material> newMeshMaterial /*= nullptr*/)
@@ -359,17 +360,17 @@ namespace gr
 			std::vector<vec3>normals(numVerts);
 			std::vector<vec4>uvs(numVerts);
 
-			glm::vec4 vertColor(1.0f, 1.0f, 1.0f, 1.0f);
+			vec4 vertColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 			size_t numIndices = 3 * numLatSlices * numLongSlices * 2;
 			std::vector<uint32_t> indices(numIndices);
 
 			// Generate a sphere about the Y axis:
-			glm::vec3 firstPosition = glm::vec3(0.0f, radius, 0.0f);
-			glm::vec3 firstNormal = glm::vec3(0, 1.0f, 0);
-			glm::vec3 firstTangent = glm::vec3(0, 0, 0); //
-			glm::vec3 firstBitangent = glm::vec3(0, 0, 0); //
-			glm::vec4 firstUv0 = glm::vec4(0.5f, 1.0f, 0, 0);
+			vec3 firstPosition = vec3(0.0f, radius, 0.0f);
+			vec3 firstNormal = vec3(0, 1.0f, 0);
+			vec3 firstTangent = vec3(0, 0, 0); //
+			vec3 firstBitangent = vec3(0, 0, 0); //
+			vec4 firstUv0 = vec4(0.5f, 1.0f, 0, 0);
 
 			size_t currentIndex = 0;
 			vertices[currentIndex++] =
@@ -377,13 +378,13 @@ namespace gr
 
 			// Rotate about Z: Arc down the side profile of our sphere
 			// cos theta = adj/hyp -> hyp * cos theta = adj -> radius * cos theta = Y
-			float zRadianStep = glm::pi<float>() / (float)(numLongSlices + 1); // +1 to get the number of rows
+			float zRadianStep = pi<float>() / (float)(numLongSlices + 1); // +1 to get the number of rows
 			float zRadians = zRadianStep; // Already added cap vertex, so start on the next step
 
 			// Rotate about Y: Horizontal edges
 			// sin theta = opp/hyp -> hyp * sin theta = opp -> radius * sin theta = X
 			// cos theta = adj/hyp -> hyp * cos theta = adj -> radius * cos theta = Z
-			float yRadianStep = (2.0f * glm::pi<float>()) / (float)numLatSlices; //
+			float yRadianStep = (2.0f * pi<float>()) / (float)numLatSlices; //
 			float yRadians = 0.0f;
 
 			// Build UV's, from top left (0,1) to bottom right (1.0, 0)
@@ -404,12 +405,12 @@ namespace gr
 					float z = radius * cos(yRadians) * sin(zRadians);
 					yRadians += yRadianStep;
 
-					glm::vec3 m_position = glm::vec3(x, y, z);
-					glm::vec3 m_normal = normalize(m_position);
+					vec3 m_position = vec3(x, y, z);
+					vec3 m_normal = normalize(m_position);
 
-					glm::vec3 m_tangent = glm::vec3(1, 0, 0); // TODO
-					glm::vec3 m_bitangent = glm::vec3(0, 1, 0); // TODO
-					glm::vec4 m_uv0 = glm::vec4(uvX, uvY, 0, 0);
+					vec3 m_tangent = vec3(1, 0, 0); // TODO
+					vec3 m_bitangent = vec3(0, 1, 0); // TODO
+					vec4 m_uv0 = vec4(uvX, uvY, 0, 0);
 
 					vertices[currentIndex++] = Vertex(m_position, m_normal, m_tangent, m_bitangent, vertColor, m_uv0);
 
@@ -423,12 +424,12 @@ namespace gr
 			}
 
 			// Final endcap:
-			glm::vec3 finalPosition = glm::vec3(0.0f, -radius, 0.0f);
-			glm::vec3 finalNormal = glm::vec3(0, -1, 0);
+			vec3 finalPosition = vec3(0.0f, -radius, 0.0f);
+			vec3 finalNormal = vec3(0, -1, 0);
 
-			glm::vec3 finalTangent = glm::vec3(0, 0, 0);
-			glm::vec3 finalBitangent = glm::vec3(0, 0, 0);
-			glm::vec4 finalUv0 = glm::vec4(0.5f, 0.0f, 0, 0);
+			vec3 finalTangent = vec3(0, 0, 0);
+			vec3 finalBitangent = vec3(0, 0, 0);
+			vec4 finalUv0 = vec4(0.5f, 0.0f, 0, 0);
 
 			vertices[currentIndex] =
 				Vertex(finalPosition, finalNormal, finalTangent, finalBitangent, vertColor, finalUv0);

@@ -37,10 +37,10 @@ namespace gr
 		inline std::shared_ptr<gr::Camera const> ShadowCamera() const { return m_shadowCam; }
 
 		inline float& MaxShadowBias() { return m_maxShadowBias; }
-		inline float const& MaxShadowBias() const { return m_maxShadowBias; }
+		inline float const MaxShadowBias() const { return m_maxShadowBias; }
 		
 		inline float& MinShadowBias() { return m_minShadowBias; }
-		inline float const& MinShadowBias() const { return m_minShadowBias; }
+		inline float const MinShadowBias() const { return m_minShadowBias; }
 
 		inline gr::TextureTargetSet& GetTextureTargetSet() { return m_shadowTargetSet; }
 		inline gr::TextureTargetSet const& GetTextureTargetSet() const { return m_shadowTargetSet; }

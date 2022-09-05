@@ -42,9 +42,9 @@ namespace SaberEngine
 
 	void PostFXManager::Initialize(gr::TextureTarget const& fxTarget)
 	{				
-		m_outputTargetSet.ColorTarget(0) = fxTarget;
+		m_mainTargetSet.ColorTarget(0) = fxTarget;
 
-		m_outputTargetSet.CreateColorTargets(Material::GBufferAlbedo);
+		m_mainTargetSet.CreateColorTargets();
 
 		// Configure texture targets. 
 		const uint32_t numStages = NUM_DOWN_SAMPLES + 1; // +1 so we can ping-pong between at the lowest res
@@ -79,7 +79,7 @@ namespace SaberEngine
 			m_pingPongStageTargetSets[i].Viewport().Height() = currentYRes;
 
 			// TODO: Bind function should call CreateColorTargets internally
-			m_pingPongStageTargetSets[i].CreateColorTargets(Material::GBufferAlbedo);
+			m_pingPongStageTargetSets[i].CreateColorTargets();
 
 			// Don't halve the resolution for the last 2 iterations:
 			if (i < NUM_DOWN_SAMPLES - 1)
@@ -116,7 +116,10 @@ namespace SaberEngine
 
 		// Upload Shader parameters:
 		m_toneMapShader->SetUniform(
-			"exposure", &CoreEngine::GetSceneManager()->GetMainCamera()->GetExposure(), platform::Shader::UNIFORM_TYPE::Float);
+			"exposure",
+			&CoreEngine::GetSceneManager()->GetMainCamera()->GetExposure(),
+			platform::Shader::UniformType::Float,
+			1);
 
 		// Upload the texel size for the SMALLEST pingpong textures:
 		const vec4 smallestTexelSize = 
@@ -124,11 +127,13 @@ namespace SaberEngine
 
 		m_blurShaders[BLUR_SHADER_HORIZONTAL]->SetUniform("texelSize", 
 			&smallestTexelSize.x, 
-			platform::Shader::UNIFORM_TYPE::Vec4f);
+			platform::Shader::UniformType::Vec4f,
+			1);
 
 		m_blurShaders[BLUR_SHADER_VERTICAL]->SetUniform("texelSize", 
 			&smallestTexelSize.x, 
-			platform::Shader::UNIFORM_TYPE::Vec4f);
+			platform::Shader::UniformType::Vec4f,
+			1);
 
 		// TODO: Use the RenderManager's instead of duplicating it here?
 		m_screenAlignedQuad = gr::meshfactory::CreateQuad
@@ -147,7 +152,7 @@ namespace SaberEngine
 
 		m_pingPongStageTargetSets[0].AttachColorTargets(0, 0, true);
 
-		m_outputTargetSet.ColorTarget(0).GetTexture()->Bind(Material::GBufferAlbedo, true);
+		m_mainTargetSet.ColorTarget(0).GetTexture()->Bind(Material::GBufferAlbedo, true);
 		Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear)->Bind(Material::GBufferAlbedo, true);
 
 		m_screenAlignedQuad->Bind(true);
@@ -240,7 +245,7 @@ namespace SaberEngine
 		}
 
 		// Additively blit final blurred result (ie. half res) to the original, full-sized image: [0] -> output
-		m_outputTargetSet.AttachColorTargets(0, 0, true);
+		m_mainTargetSet.AttachColorTargets(0, 0, true);
 		
 		m_pingPongStageTargetSets[0].ColorTarget(0).GetTexture()->Bind(
 			Material::GBufferAlbedo,

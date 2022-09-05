@@ -204,12 +204,12 @@ namespace platform
 	/**********************************/
 	void (*platform::Shader::Create)(gr::Shader& shader);
 	void (*platform::Shader::Bind)(gr::Shader const&, bool doBind);
-	void (*platform::Shader::SetUniform)(gr::Shader const&, char const* uniformName, void const* value, platform::Shader::UNIFORM_TYPE const& type, int count);
+	void (*platform::Shader::SetUniform)(
+		gr::Shader const& shader, 
+		string const& uniformName, 
+		void const* value, 
+		platform::Shader::UniformType const type, 
+		int const count);
 	void (*platform::Shader::Destroy)(gr::Shader&);
-	void (*platform::Shader::SetTexture)(
-		gr::Shader const& shader,
-		std::string const& shaderName,
-		std::shared_ptr<gr::Texture> texture,
-		std::shared_ptr<gr::Sampler const> sampler);
 
 }

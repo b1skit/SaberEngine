@@ -46,10 +46,10 @@ namespace platform
 
 
 
-		static void (*CreateColorTargets)(gr::TextureTargetSet& targetSet, uint32_t firstTextureUnit);
+		static void (*CreateColorTargets)(gr::TextureTargetSet& targetSet);
 		static void (*AttachColorTargets)(gr::TextureTargetSet const& targetSet, uint32_t face, uint32_t mipLevel, bool doBind);
 
-		static void (*CreateDepthStencilTarget)(gr::TextureTargetSet& targetSet, uint32_t textureUnit);
+		static void (*CreateDepthStencilTarget)(gr::TextureTargetSet& targetSet);
 		static void (*AttachDepthStencilTarget)(gr::TextureTargetSet const& targetSet, bool doBind);
 
 		static uint32_t(*MaxColorTargets)();

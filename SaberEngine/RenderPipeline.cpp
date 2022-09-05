@@ -5,14 +5,26 @@
 using gr::RenderStage;
 using std::vector;
 
-namespace gr
+namespace re
 {
-	vector<RenderStage const*>& RenderPipeline::AppendRenderStage(RenderStage const& renderStage)
+	std::vector<gr::RenderStage const*>::iterator StagePipeline::AppendRenderStage(RenderStage const& renderStage)
 	{
-		// Append the render stage as a parent to a new vector of sequential render stages
-		m_pipeline.emplace_back(vector<RenderStage const*>(1, { &renderStage }));
+		SEAssert("renderStage not fully configured",
+			renderStage.GetName() != "" &&
+			renderStage.GetStageShader() != nullptr &&
+			renderStage.GetStageCamera() != nullptr
+			// TODO: Add more conditions
+		);
+		m_stagePipeline.emplace_back(&renderStage);
 
-		// Return the new sequence of render stages, so child stages can be appended
+		// Return an iterator
+		return m_stagePipeline.end();
+	}
+
+
+	StagePipeline& RenderPipeline::AddNewStagePipeline(std::string stagePipelineName)
+	{ 
+		m_pipeline.emplace_back(stagePipelineName); 
 		return m_pipeline.back();
 	}
 }

@@ -30,13 +30,11 @@ namespace opengl
 		static void Create(gr::Shader& shader);
 		static void Bind(gr::Shader const& shader, bool doBind);
 		static void SetUniform(
-			gr::Shader const& shader, char const* uniformName, void const* value, platform::Shader::UNIFORM_TYPE const& type, int count);
+			gr::Shader const& shader, 
+			std::string const& uniformName, 
+			void const* value, 
+			platform::Shader::UniformType const type, 
+			int const count);
 		static void Destroy(gr::Shader& shader);
-
-		static void SetTexture(
-			gr::Shader const& shader,
-			std::string const& shaderName,
-			std::shared_ptr<gr::Texture> texture,
-			std::shared_ptr<gr::Sampler const> sampler);
 	};
 }
