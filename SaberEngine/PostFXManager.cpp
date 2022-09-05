@@ -148,6 +148,8 @@ namespace SaberEngine
 
 	void PostFXManager::ApplyPostFX(std::shared_ptr<Shader>& finalFrameShader)
 	{
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Apply postFX stage");
+
 		// Pass 1: Apply luminance threshold: Finished frame -> 1/2 res
 
 		m_pingPongStageTargetSets[0].AttachColorTargets(0, 0, true);
@@ -266,6 +268,8 @@ namespace SaberEngine
 
 		// Set the final frame shader to apply tone mapping:
 		finalFrameShader = m_toneMapShader;
+
+		glPopDebugGroup();
 	}
 }
 

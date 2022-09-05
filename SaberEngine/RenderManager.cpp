@@ -196,6 +196,8 @@ namespace SaberEngine
 
 	void RenderManager::RenderLightShadowMap(std::shared_ptr<Light> light)
 	{
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Shadow stage");
+
 		// Disable culling to minimize peter-panning
 		m_context.SetCullingMode(platform::Context::FaceCullingMode::Disabled);
 		m_context.SetDepthMode(platform::Context::DepthMode::Less);
@@ -266,6 +268,8 @@ namespace SaberEngine
 				GL_UNSIGNED_INT, 
 				(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 		}
+
+		glPopDebugGroup();
 	}
 
 
@@ -286,10 +290,16 @@ namespace SaberEngine
 		const size_t numGS = m_pipeline.GetNumberGraphicsSystems();
 		for (size_t gsIdx = 0; gsIdx < numGS; gsIdx++)
 		{
+			// RenderDoc markers: Graphics system group name
+			glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, m_pipeline.GetPipeline()[gsIdx].GetName().c_str());
+
 			const size_t numStages = m_pipeline.GetNumberOfGraphicsSystemStages(gsIdx);
 			for (size_t stage = 0; stage < numStages; stage++)
 			{
 				RenderStage const* renderStage = m_pipeline.GetPipeline()[gsIdx][stage];
+
+				// RenderDoc makers: Render stage name
+				glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderStage->GetName().c_str());
 
 				RenderStage::RenderStageParams const& renderStageParams = renderStage->GetStageParams();
 
@@ -386,14 +396,21 @@ namespace SaberEngine
 						(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 
 					meshIdx++;
-				}
+				} // meshes
+
+				glPopDebugGroup();
 			}
+
+			glPopDebugGroup();
 		}
 	}
 
 
 	void SaberEngine::RenderManager::RenderSkybox(std::shared_ptr<Skybox> skybox)
 	{
+		// RenderDoc markers: Graphics system group name
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Skybox stage");
+		
 		if (skybox == nullptr)
 		{
 			return;
@@ -436,11 +453,15 @@ namespace SaberEngine
 			(GLsizei)skybox->GetSkyMesh()->NumIndices(),	// GLsizei count
 			GL_UNSIGNED_INT,								// GLenum type
 			(void*)(0));									// const GLvoid* indices
+
+		glPopDebugGroup();
 	}
 
 
 	void SaberEngine::RenderManager::BlitToScreen()
 	{
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Blit to screen stage");
+
 		m_defaultTargetSet->AttachColorDepthStencilTargets(0, 0, true);
 		m_context.ClearTargets(platform::Context::ClearTarget::ColorDepth);
 
@@ -452,11 +473,15 @@ namespace SaberEngine
 			(GLsizei)m_screenAlignedQuad->NumIndices(),
 			GL_UNSIGNED_INT, 
 			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+
+		glPopDebugGroup();
 	}
 
 
 	void SaberEngine::RenderManager::BlitToScreen(std::shared_ptr<gr::Texture>& texture, std::shared_ptr<Shader> blitShader)
 	{
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Blit to screen with texture and shader stage");
+
 		m_defaultTargetSet->AttachColorDepthStencilTargets(0, 0, true);
 		m_context.ClearTargets(platform::Context::ClearTarget::ColorDepth);
 
@@ -473,6 +498,8 @@ namespace SaberEngine
 			(GLsizei)m_screenAlignedQuad->NumIndices(),
 			GL_UNSIGNED_INT,
 			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+
+		glPopDebugGroup();
 	}
 
 
@@ -481,6 +508,8 @@ namespace SaberEngine
 		gr::TextureTargetSet const& dstTargetSet,
 		std::shared_ptr<Shader> shader)
 	{
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Blit to screen from texture to target set with shader stage");
+
 		dstTargetSet.AttachColorTargets(0, 0, true);
 
 		// Bind the blit shader and screen aligned quad:
@@ -498,6 +527,8 @@ namespace SaberEngine
 			(GLsizei)m_screenAlignedQuad->NumIndices(),
 			GL_UNSIGNED_INT, 
 			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+
+		glPopDebugGroup();
 	}
 
 
