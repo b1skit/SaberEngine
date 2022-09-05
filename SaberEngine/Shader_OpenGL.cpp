@@ -72,6 +72,8 @@ namespace opengl
 		// Load the shaders, and assemble params we'll need soon:
 		vector<string> shaderFiles;
 		shaderFiles.reserve(numShaderTypes);
+		vector<string> shaderFileNames;	// For RenderDoc markers
+		shaderFiles.reserve(numShaderTypes);
 
 		vector<uint32_t> foundShaderTypeFlags;
 		foundShaderTypeFlags.reserve(numShaderTypes);
@@ -79,7 +81,7 @@ namespace opengl
 		for (size_t i = 0; i < numShaderTypes; i++)
 		{
 			shaderFiles.emplace_back(platform::Shader::LoadShaderText(shaderFileName + shaderFileExtensions[i]));
-
+			
 			if (shaderFiles.back().empty())
 			{
 				shaderFiles.pop_back();
@@ -87,6 +89,7 @@ namespace opengl
 			else
 			{
 				foundShaderTypeFlags.emplace_back(shaderTypeFlags[i]);
+				shaderFileNames.emplace_back(shaderFileName + shaderFileExtensions[i]);
 			}
 
 			// We tried loading the vertex shader first, so if we hit this it means we failed to find the vertex shader
@@ -106,6 +109,9 @@ namespace opengl
 			// Create and attach the shader object:
 			GLuint shaderObject = glCreateShader(foundShaderTypeFlags[i]);
 			SEAssert("glCreateShader failed!", shaderObject > 0);
+
+			// RenderDoc object name:
+			glObjectLabel(GL_SHADER, shaderObject, -1, shaderFileNames[i].c_str());
 
 			vector<GLchar const*>shaderSourceStrings(1);
 			vector<GLint> shaderSourceStringLengths(1);
@@ -131,7 +137,6 @@ namespace opengl
 		// Validate our program objects can execute with our current OpenGL state:
 		glValidateProgram(shaderReference);
 		AssertShaderIsValid(shaderReference, GL_VALIDATE_STATUS, true);
-
 
 		// Update our shader's platform params:
 		opengl::Shader::PlatformParams* const params =
