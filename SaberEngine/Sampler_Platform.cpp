@@ -36,7 +36,7 @@ namespace platform
 		return;
 	}
 
-	void (*Sampler::Create)(gr::Sampler&, uint32_t textureUnit);
+	void (*Sampler::Create)(gr::Sampler&);
 	void (*Sampler::Bind)(gr::Sampler const&, uint32_t textureUnit, bool doBind);
 	void (*Sampler::Destroy)(gr::Sampler&);
 

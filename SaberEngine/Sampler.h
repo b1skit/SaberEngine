@@ -87,7 +87,7 @@ namespace gr
 		
 
 		// Platform wrappers:
-		void Create(uint32_t textureUnit);
+		void Create();
 		void Bind(uint32_t textureUnit, bool doBind) const;
 		void Destroy();
 

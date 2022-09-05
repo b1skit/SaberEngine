@@ -33,7 +33,7 @@ namespace opengl
 		};
 
 	public:
-		static void Create(gr::Sampler& sampler, uint32_t textureUnit);
+		static void Create(gr::Sampler& sampler);
 		static void Bind(gr::Sampler const& sampler, uint32_t textureUnit, bool doBind);
 		static void Destroy(gr::Sampler& sampler);
 

@@ -74,7 +74,7 @@ namespace gr
 		{
 			std::shared_ptr<gr::Texture> gBufferTex = std::make_shared<gr::Texture>(gBufferParams);
 
-			gBufferTex->SetTexturePath(GetName() + "_" + GBufferTexNames[i]);
+			gBufferTex->SetTexturePath(GBufferTexNames[i]);
 
 			gBufferTargets.ColorTarget(i) = gBufferTex;
 		}
@@ -87,7 +87,7 @@ namespace gr
 
 		std::shared_ptr<gr::Texture> depthTex = std::make_shared<gr::Texture>(depthTexParams);
 
-		depthTex->SetTexturePath(GetName() + "_" + GBufferTexNames[Material::GBufferDepth]); //TODO: Better indexing system
+		depthTex->SetTexturePath(GBufferTexNames[Material::GBufferDepth]); //TODO: Better indexing system
 
 		gBufferTargets.DepthStencilTarget() = depthTex;
 

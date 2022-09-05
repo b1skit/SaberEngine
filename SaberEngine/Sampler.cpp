@@ -45,7 +45,7 @@ namespace gr
 			shared_ptr<gr::Sampler> WrapLinearLinear = make_shared<gr::Sampler>(
 				SamplerTypeLibraryNames[(size_t)Sampler::SamplerType::WrapLinearLinear], 
 				WrapLinearLinearParams);
-			WrapLinearLinear->Create(0);
+			WrapLinearLinear->Create();
 			Sampler::m_samplerLibrary->insert({Sampler::SamplerType::WrapLinearLinear, WrapLinearLinear});
 
 			// ClampLinearLinear: Depth maps
@@ -57,7 +57,7 @@ namespace gr
 			shared_ptr<gr::Sampler> ClampLinearLinear = make_shared<gr::Sampler>(
 				SamplerTypeLibraryNames[(size_t)Sampler::SamplerType::ClampLinearLinear],
 				ClampLinearLinearParams);
-			ClampLinearLinear->Create(0);
+			ClampLinearLinear->Create();
 			Sampler::m_samplerLibrary->insert({ Sampler::SamplerType::ClampLinearLinear, ClampLinearLinear });
 
 			// ClampNearestNearest: BRDF pre-integration map
@@ -69,7 +69,7 @@ namespace gr
 			shared_ptr<gr::Sampler> ClampNearestNearest = make_shared<gr::Sampler>(
 				SamplerTypeLibraryNames[(size_t)Sampler::SamplerType::ClampNearestNearest],
 				ClampNearestNearestParams);
-			ClampNearestNearest->Create(0);
+			ClampNearestNearest->Create();
 			Sampler::m_samplerLibrary->insert({ Sampler::SamplerType::ClampNearestNearest, ClampNearestNearest });
 
 			// Clamp, LinearMipMapLinear, Linear: HDR input images for IBL
@@ -81,7 +81,7 @@ namespace gr
 			shared_ptr<gr::Sampler> ClampLinearMipMapLinearLinear = make_shared<gr::Sampler>(
 				SamplerTypeLibraryNames[(size_t)Sampler::SamplerType::ClampLinearMipMapLinearLinear],
 				ClampLinearMipMapLinearLinearParams);
-			ClampLinearMipMapLinearLinear->Create(0);
+			ClampLinearMipMapLinearLinear->Create();
 			Sampler::m_samplerLibrary->insert({ Sampler::SamplerType::ClampLinearMipMapLinearLinear, ClampLinearMipMapLinearLinear });
 
 			// Wrap, LinearMipMapLinear, Linear: Skybox/IBL cubemaps
@@ -93,7 +93,7 @@ namespace gr
 			shared_ptr<gr::Sampler> WrapLinearMipMapLinearLinear = make_shared<gr::Sampler>(
 				SamplerTypeLibraryNames[(size_t)Sampler::SamplerType::WrapLinearMipMapLinearLinear],
 				WrapLinearMipMapLinearLinearParams);
-			WrapLinearMipMapLinearLinear->Create(0);
+			WrapLinearMipMapLinearLinear->Create();
 			Sampler::m_samplerLibrary->insert({ Sampler::SamplerType::WrapLinearMipMapLinearLinear, ClampLinearMipMapLinearLinear });
 		}
 
@@ -112,9 +112,9 @@ namespace gr
 	}
 
 
-	void Sampler::Create(uint32_t textureUnit)
+	void Sampler::Create()
 	{
-		platform::Sampler::Create(*this, textureUnit);
+		platform::Sampler::Create(*this);
 	}
 
 

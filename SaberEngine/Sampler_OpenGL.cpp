@@ -95,7 +95,7 @@ namespace opengl
 	}
 
 
-	void Sampler::Create(gr::Sampler& sampler, uint32_t textureUnit)
+	void Sampler::Create(gr::Sampler& sampler)
 	{
 		LOG("Creating sampler: \"" + sampler.GetName() + "\"");
 
@@ -105,7 +105,10 @@ namespace opengl
 		SEAssert("Attempting to create a sampler that already has been created", !glIsSampler(params->m_samplerID));
 
 		glGenSamplers(1, &params->m_samplerID);
-		glBindSampler(textureUnit, params->m_samplerID);
+		glBindSampler(0, params->m_samplerID);
+
+		// RenderDoc object name:
+		glObjectLabel(GL_SAMPLER, params->m_samplerID, -1, (sampler.GetName() + " sampler").c_str());
 
 		if (!glIsSampler(params->m_samplerID))
 		{
