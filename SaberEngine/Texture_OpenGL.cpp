@@ -198,6 +198,9 @@ namespace opengl
 		glGenTextures(1, &params->m_textureID);
 		glBindTexture(params->m_texTarget, params->m_textureID);
 
+		// RenderDoc object name:
+		glObjectLabel(GL_TEXTURE, params->m_textureID, -1, texture.GetTexturePath().c_str());
+
 		SEAssert("OpenGL failed to generate new texture name. Texture buffering failed", 
 			glIsTexture(params->m_textureID) == GL_TRUE);
 
