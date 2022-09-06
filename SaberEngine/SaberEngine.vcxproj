@@ -179,6 +179,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="GraphicsSystem_DeferredLighting.cpp" />
     <ClCompile Include="GraphicsSystem_GBuffer.cpp" />
     <ClCompile Include="GraphicsSystem.cpp" />
+    <ClCompile Include="GraphicsSystem_Shadows.cpp" />
     <ClCompile Include="RenderPipeline.cpp" />
     <ClCompile Include="RenderStage.cpp" />
     <ClCompile Include="Sampler.cpp" />
@@ -221,6 +222,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="GraphicsSystem_DeferredLighting.h" />
     <ClInclude Include="GraphicsSystem_GBuffer.h" />
     <ClInclude Include="GraphicsSystem.h" />
+    <ClInclude Include="GraphicsSystem_Shadows.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="RenderPipeline.h" />
     <ClInclude Include="RenderStage.h" />

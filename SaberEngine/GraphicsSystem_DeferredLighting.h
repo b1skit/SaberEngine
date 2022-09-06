@@ -18,8 +18,8 @@ namespace gr
 		void PreRender() override;
 
 		// Note: All light stages write to the same target
-		gr::TextureTargetSet& GetFinalTextureTargetSet() override { return m_keylightStage.GetTextureTargetSet(); }
-		gr::TextureTargetSet const& GetFinalTextureTargetSet() const override { return m_keylightStage.GetTextureTargetSet(); }
+		gr::TextureTargetSet& GetFinalTextureTargetSet() override { return m_ambientStage.GetTextureTargetSet(); }
+		gr::TextureTargetSet const& GetFinalTextureTargetSet() const override { return m_ambientStage.GetTextureTargetSet(); }
 
 	private:
 		gr::RenderStage m_ambientStage;;

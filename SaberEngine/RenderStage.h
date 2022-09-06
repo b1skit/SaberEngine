@@ -19,9 +19,18 @@ namespace gr
 		struct StageShaderUniform
 		{
 			std::string m_uniformName;
-			void const* value;
+			void const* m_value;
 			platform::Shader::UniformType const m_type;
 			int m_count;
+		};
+
+		enum class RenderStageType
+		{
+			ColorOnly,
+			DepthOnly,
+			ColorAndDepth,
+
+			RenderStageType_Count
 		};
 
 		struct RenderStageParams // Platform/context configuration:
@@ -31,11 +40,13 @@ namespace gr
 			platform::Context::BlendMode		m_srcBlendMode		= platform::Context::BlendMode::One;
 			platform::Context::BlendMode		m_dstBlendMode		= platform::Context::BlendMode::One;
 			platform::Context::DepthMode		m_depthMode			= platform::Context::DepthMode::GEqual;
+
+			RenderStageType						m_stageType			= RenderStageType::ColorAndDepth;
 		};
 
 
 	public:
-		RenderStage(std::string name);
+		RenderStage(std::string const& name);
 		~RenderStage() = default;
 		
 		RenderStage() = delete;

@@ -74,6 +74,7 @@ namespace gr
 		ambientStageParams.m_srcBlendMode = platform::Context::BlendMode::One; // All deferred lighting is additive
 		ambientStageParams.m_dstBlendMode = platform::Context::BlendMode::One;
 		ambientStageParams.m_depthMode = platform::Context::DepthMode::GEqual; // All deferred lighting uses GEqual
+		ambientStageParams.m_stageType = RenderStage::RenderStageType::ColorOnly;
 
 		// Ambient light:
 		shared_ptr<SaberEngine::ImageBasedLight> ambientLight = std::dynamic_pointer_cast<SaberEngine::ImageBasedLight>(

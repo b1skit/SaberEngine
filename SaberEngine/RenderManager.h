@@ -71,7 +71,6 @@ namespace SaberEngine
 
 	private:
 		void Render();
-		void RenderLightShadowMap(std::shared_ptr<gr::Light> currentLight);
 
 		void RenderSkybox(std::shared_ptr<Skybox> skybox);
 

@@ -8,6 +8,7 @@ using gr::Texture;
 using std::string;
 using std::shared_ptr;
 using std::make_shared;
+using std::vector;
 using glm::mat4;
 using glm::mat3;
 using glm::vec3;
@@ -16,11 +17,10 @@ using glm::vec4;
 
 namespace gr
 {
-	RenderStage::RenderStage(std::string name) :
+	RenderStage::RenderStage(std::string const& name) :
 		m_name(name),
 		m_textureTargetSet(name + " target"),
 		m_stageGeometryBatches(nullptr)
-		//m_stageInstancedGeometryBatches(nullptr)
 	{
 	}
 
@@ -58,15 +58,31 @@ namespace gr
 	{
 		// Dynamically allocate a copy of value so we have a pointer to it when we need for the current frame
 		m_perFrameShaderUniformValues.emplace_back(std::make_shared<T>(value));
+
+		void const* valuePtr;
+		if (count > 1)
+		{
+			// Assume if count > 1, we've recieved multiple values packed into a std::vector. 
+			// Thus, we must store the address of the first element of the vector (NOT the address of the vector object!)
+			valuePtr = &(reinterpret_cast<vector<T> const*>(m_perFrameShaderUniformValues.back().get())->at(0));
+		}
+		else
+		{
+			valuePtr = m_perFrameShaderUniformValues.back().get();
+		}
+
 		SetPerFrameShaderUniformByPtr(
-			uniformName, 
-			m_perFrameShaderUniformValues.back().get(),
+			uniformName,
+			valuePtr,
 			type,
 			count);
+
 	}
 	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
 	template void RenderStage::SetPerFrameShaderUniformByValue<mat4>(
 		string const& uniformName, mat4 const& value, platform::Shader::UniformType const& type, int const count);
+	template void RenderStage::SetPerFrameShaderUniformByValue<vector<mat4>>(
+		string const& uniformName, vector<mat4> const& value, platform::Shader::UniformType const& type, int const count);
 	template void RenderStage::SetPerFrameShaderUniformByValue<mat3>(
 		string const& uniformName, mat3 const& value, platform::Shader::UniformType const& type, int const count);
 	template void RenderStage::SetPerFrameShaderUniformByValue<vec3>(

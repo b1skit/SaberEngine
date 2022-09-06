@@ -172,7 +172,8 @@ namespace opengl
 			dynamic_cast<opengl::TextureTargetSet::PlatformParams const*>(targetSet.GetPlatformParams());
 
 		SEAssert("Cannot bind nonexistant framebuffer",
-			(glIsFramebuffer(targetSetParams->m_frameBufferObject) || targetSetParams->m_frameBufferObject == 0));
+			(glIsFramebuffer(targetSetParams->m_frameBufferObject) || 
+				targetSetParams->m_frameBufferObject == 0));
 
 		glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
 
@@ -224,7 +225,8 @@ namespace opengl
 			}
 		}
 
-		if (firstTarget != nullptr && firstTarget->GetNumMips() > 1 && mipLevel > 0)
+		const bool hasTarget = firstTarget != nullptr;
+		if (hasTarget && firstTarget->GetNumMips() > 1 && mipLevel > 0)
 		{
 			uint32_t mipSize = firstTarget->GetMipDimension(mipLevel);
 			glViewport(
@@ -242,9 +244,9 @@ namespace opengl
 				targetSet.Viewport().Height());
 		}
 
-		// Verify the framebuffer:
+		// Verify the framebuffer (if we actually had any color textures to attach)		
 		bool result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
-		if (!result)
+		if (!result && hasTarget)
 		{
 			const string errorMsg = 
 				"Framebuffer is not complete: " + std::to_string(glCheckFramebufferStatus(GL_FRAMEBUFFER));

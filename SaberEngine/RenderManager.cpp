@@ -27,6 +27,7 @@
 #include "Sampler.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_DeferredLighting.h"
+#include "GraphicsSystem_Shadows.h"
 
 using gr::Material;
 using gr::Texture;
@@ -37,6 +38,7 @@ using gr::ShadowMap;
 using gr::Transform;
 using gr::GBufferGraphicsSystem;
 using gr::DeferredLightingGraphicsSystem;
+using gr::ShadowsGraphicsSystem;
 using gr::RenderStage;
 using gr::TextureTargetSet;
 using std::shared_ptr;
@@ -129,26 +131,10 @@ namespace SaberEngine
 
 	void RenderManager::Update()
 	{
-		// Fill shadow maps:
-		vector<std::shared_ptr<Light>> const& deferredLights = CoreEngine::GetSceneManager()->GetDeferredLights();
-		if (!deferredLights.empty())
-		{
-			for (size_t i = 0; i < (int)deferredLights.size(); i++)
-			{
-				if (deferredLights.at(i)->GetShadowMap() != nullptr)
-				{
-					RenderLightShadowMap(deferredLights.at(i));
-				}
-			}
-		}
-
-
-		// TEMP HAX: Ensure shadow maps are already rendered...
 		Render();
 
 		// TEMP HAX: Ensure the culling mode is reset after Render()...
 		m_context.SetCullingMode(platform::Context::FaceCullingMode::Back);
-
 
 
 		gr::TextureTargetSet& deferredLightTextureTargetSet = 
@@ -192,86 +178,6 @@ namespace SaberEngine
 		// Display the final frame:
 		m_context.SwapWindow();
 	}
-
-
-	void RenderManager::RenderLightShadowMap(std::shared_ptr<Light> light)
-	{
-		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Shadow stage");
-
-		// Disable culling to minimize peter-panning
-		m_context.SetCullingMode(platform::Context::FaceCullingMode::Disabled);
-		m_context.SetDepthMode(platform::Context::DepthMode::Less);
-
-		std::shared_ptr<Camera> shadowCam = light->GetShadowMap()->ShadowCamera();
-
-		// Light shader setup:
-		std::shared_ptr<Shader> lightShader = shadowCam->GetRenderShader();
-		lightShader->Bind(true);
-		
-		if (light->Type() == Light::Point)
-		{
-			mat4 shadowCamProjection = shadowCam->GetProjectionMatrix();
-			vec3 lightWorldPos = light->GetTransform().GetWorldPosition();
-
-			std::vector<glm::mat4> const& cubeMap_vps = shadowCam->GetCubeViewProjectionMatrix();
-			const float shadowCamNear = shadowCam->Near();
-			const float shadowCamFar = shadowCam->Far();
-			lightShader->SetUniform("shadowCamCubeMap_vp", &cubeMap_vps[0], platform::Shader::UniformType::Matrix4x4f, 6);
-			lightShader->SetUniform("lightWorldPos", &lightWorldPos.x, platform::Shader::UniformType::Vec3f, 1);
-			lightShader->SetUniform("shadowCam_near", &shadowCamNear, platform::Shader::UniformType::Float, 1);
-			lightShader->SetUniform("shadowCam_far", &shadowCamFar, platform::Shader::UniformType::Float, 1);
-		}
-
-		light->GetShadowMap()->GetTextureTargetSet().AttachDepthStencilTarget(true);
-
-		// Clear the currently bound FBO	
-		m_context.ClearTargets(platform::Context::ClearTarget::Depth);
-
-		// Loop through each mesh:			
-		vector<std::shared_ptr<gr::Mesh>> const& meshes = CoreEngine::GetSceneManager()->GetRenderMeshes();
-		unsigned int numMeshes	= (unsigned int)meshes.size();
-		for (unsigned int j = 0; j < numMeshes; j++)
-		{
-			std::shared_ptr<gr::Mesh> currentMesh = meshes.at(j);
-
-			currentMesh->Bind(true);
-
-			switch (light->Type())
-			{
-			case Light::Directional:
-			{
-				mat4 mvp = shadowCam->GetViewProjectionMatrix() * currentMesh->GetTransform().Model();
-				lightShader->SetUniform("in_mvp", &mvp[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
-			}
-			break;
-
-			case Light::Point:
-			{
-				mat4 model = currentMesh->GetTransform().Model();
-				lightShader->SetUniform("in_model",	&model[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
-			}
-			break;
-
-			case Light::AmbientColor:
-			case Light::AmbientIBL:
-			case Light::Area:
-			case Light::Spot:
-			case Light::Tube:
-			default:
-				return; // This should never happen...
-			}
-			// TODO: ^^^^ Only upload these matrices if they've changed			
-
-			// Draw!
-			glDrawElements(GL_TRIANGLES, 
-				(GLsizei)currentMesh->NumIndices(),
-				GL_UNSIGNED_INT, 
-				(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
-		}
-
-		glPopDebugGroup();
-	}
-
 
 
 	void RenderManager::Render()
@@ -319,7 +225,7 @@ namespace SaberEngine
 				for (RenderStage::StageShaderUniform curUniform : stagePerFrameShaderUniforms)
 				{
 					stageShader->SetUniform(
-						curUniform.m_uniformName, curUniform.value, curUniform.m_type, curUniform.m_count);
+						curUniform.m_uniformName, curUniform.m_value, curUniform.m_type, curUniform.m_count);
 				}
 
 				// Set camera params:
@@ -351,7 +257,8 @@ namespace SaberEngine
 					mesh->Bind(true);
 
 					shared_ptr<gr::Material> meshMaterial = mesh->MeshMaterial();
-					if (meshMaterial != nullptr)
+					if (meshMaterial != nullptr && 
+						renderStageParams.m_stageType != RenderStage::RenderStageType::DepthOnly)
 					{
 						// TODO: Is there a more elegant way to handle this?
 						meshMaterial->BindToShader(stageShader);
@@ -367,7 +274,7 @@ namespace SaberEngine
 						{
 							stageShader->SetUniform(
 								perMeshUniforms[meshIdx][curUniform].m_uniformName,
-								perMeshUniforms[meshIdx][curUniform].value,
+								perMeshUniforms[meshIdx][curUniform].m_value,
 								perMeshUniforms[meshIdx][curUniform].m_type,
 								perMeshUniforms[meshIdx][curUniform].m_count);
 						}
@@ -411,6 +318,8 @@ namespace SaberEngine
 		// RenderDoc markers: Graphics system group name
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Skybox stage");
 		
+		
+
 		if (skybox == nullptr)
 		{
 			return;
@@ -424,7 +333,8 @@ namespace SaberEngine
 
 
 		// GBuffer depth
-		std::shared_ptr<gr::Texture> depthTexture = m_pipeline.GetPipeline()[0][0]->GetTextureTargetSet().DepthStencilTarget().GetTexture(); // HAX!!!!!!!!!!!!!!!!!!!!!!
+		std::shared_ptr<gr::Texture> depthTexture = 
+			m_pipeline.GetPipeline()[0][0]->GetTextureTargetSet().DepthStencilTarget().GetTexture(); // HAX!!!!!!!!!!!!!!!!!!!!!!
 
 
 
@@ -641,7 +551,8 @@ namespace SaberEngine
 
 		// Add graphics systems, in order:
 		m_graphicsSystems.emplace_back(make_shared<GBufferGraphicsSystem>("GBufferGraphicsSystem"));
-		m_graphicsSystems.emplace_back(make_shared<DeferredLightingGraphicsSystem>("DeferredLightingGraphicsSystem"));
+		m_graphicsSystems.emplace_back(make_shared<ShadowsGraphicsSystem>("ShadowsGraphicsSystem"));
+		m_graphicsSystems.emplace_back(make_shared<DeferredLightingGraphicsSystem>("DeferredLightingGraphicsSystem"));		
 		// NOTE: Adding a new graphics system? Don't forget to add a new template instantiation below GetGraphicsSystem()
 		
 		// Create each graphics system in turn:
@@ -676,6 +587,7 @@ namespace SaberEngine
 	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
 	template std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem<GBufferGraphicsSystem>();
 	template std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem<DeferredLightingGraphicsSystem>();
+	template std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem<ShadowsGraphicsSystem>();
 }
 
 

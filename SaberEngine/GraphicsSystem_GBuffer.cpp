@@ -102,10 +102,11 @@ namespace gr
 		RenderStage::RenderStageParams gBufferStageParams;
 		gBufferStageParams.m_targetClearMode = platform::Context::ClearTarget::ColorDepth;
 
-		gBufferStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Back;
-		gBufferStageParams.m_srcBlendMode = platform::Context::BlendMode::Disabled;
-		gBufferStageParams.m_dstBlendMode = platform::Context::BlendMode::Disabled;
-		gBufferStageParams.m_depthMode = platform::Context::DepthMode::Less;
+		gBufferStageParams.m_faceCullingMode	= platform::Context::FaceCullingMode::Back;
+		gBufferStageParams.m_srcBlendMode		= platform::Context::BlendMode::Disabled;
+		gBufferStageParams.m_dstBlendMode		= platform::Context::BlendMode::Disabled;
+		gBufferStageParams.m_depthMode			= platform::Context::DepthMode::Less;
+		gBufferStageParams.m_stageType			= RenderStage::RenderStageType::ColorAndDepth;
 
 		m_gBufferStage.SetStageParams(gBufferStageParams);
 

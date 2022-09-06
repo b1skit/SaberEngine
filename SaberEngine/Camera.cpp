@@ -16,9 +16,10 @@ using glm::mat4;
 
 namespace gr
 {
-	Camera::Camera(string cameraName, CameraConfig camConfig, Transform* parent) : SceneObject::SceneObject(cameraName), 
-		m_cameraConfig(camConfig),
-		m_cameraShader(nullptr)
+	Camera::Camera(string cameraName, CameraConfig camConfig, Transform* parent) : 
+		SceneObject::SceneObject(cameraName), 
+			m_cameraConfig(camConfig),
+			m_cameraShader(nullptr)
 	{
 		m_transform.SetParent(parent);
 
