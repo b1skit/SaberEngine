@@ -27,7 +27,6 @@ namespace gr
 
 namespace SaberEngine
 {
-	class Skybox;
 	class GameObject;
 	class Renderable;
 	
@@ -81,9 +80,6 @@ namespace SaberEngine
 		std::vector<std::shared_ptr<gr::Light>> m_pointLights; 
 
 		std::vector<std::shared_ptr<gr::Light>> const& GetDeferredLights() const	{ return m_deferredLights; }
-
-		// Skybox object:
-		std::shared_ptr<Skybox> m_skybox = nullptr;
 
 		inline gr::Bounds const& WorldSpaceSceneBounds() const { return m_sceneWorldBounds; }
 

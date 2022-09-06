@@ -17,7 +17,6 @@
 #include "Material.h"
 #include "Texture.h"
 #include "DebugConfiguration.h"
-#include "Skybox.h"
 #include "Camera.h"
 #include "ImageBasedLight.h"
 #include "PostFXManager.h"
@@ -28,6 +27,7 @@
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_Shadows.h"
+#include "GraphicsSystem_Skybox.h"
 
 using gr::Material;
 using gr::Texture;
@@ -38,7 +38,9 @@ using gr::ShadowMap;
 using gr::Transform;
 using gr::GBufferGraphicsSystem;
 using gr::DeferredLightingGraphicsSystem;
+using gr::GraphicsSystem;
 using gr::ShadowsGraphicsSystem;
+using gr::SkyboxGraphicsSystem;
 using gr::RenderStage;
 using gr::TextureTargetSet;
 using std::shared_ptr;
@@ -133,23 +135,19 @@ namespace SaberEngine
 	{
 		Render();
 
+
 		// TEMP HAX: Ensure the culling mode is reset after Render()...
 		m_context.SetCullingMode(platform::Context::FaceCullingMode::Back);
-
 
 		gr::TextureTargetSet& deferredLightTextureTargetSet = 
 			GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
 		deferredLightTextureTargetSet.AttachColorTargets(0, 0, true);
 
 
-		// Render the skybox on top of the frame:
-		m_context.SetBlendMode(platform::Context::BlendMode::Disabled, platform::Context::BlendMode::Disabled);
 
-		RenderSkybox(CoreEngine::GetSceneManager()->GetSkybox());
 
 		// Additively blit the emissive GBuffer texture to screen:
 		m_context.SetBlendMode(platform::Context::BlendMode::One, platform::Context::BlendMode::One);
-
 
 		Blit(
 			GetGraphicsSystem<gr::GBufferGraphicsSystem>()->GetFinalTextureTargetSet().ColorTarget(Material::MatEmissive).GetTexture(),
@@ -185,6 +183,9 @@ namespace SaberEngine
 		// TODO: This should be an API-agnostic function bound at runtime, to handle different submission techniques
 		// between APIs
 		// -> Just handle OpenGL for now...
+
+		// TODO: Add an assert somewhere that checks if any possible shader uniform isn't set
+		// -> Catch bugs where we forget to upload a common param
 
 		// Update the graphics systems:
 		for (std::shared_ptr<gr::GraphicsSystem> curGS : m_graphicsSystems)
@@ -310,61 +311,6 @@ namespace SaberEngine
 
 			glPopDebugGroup();
 		}
-	}
-
-
-	void SaberEngine::RenderManager::RenderSkybox(std::shared_ptr<Skybox> skybox)
-	{
-		// RenderDoc markers: Graphics system group name
-		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Skybox stage");
-		
-		
-
-		if (skybox == nullptr)
-		{
-			return;
-		}
-
-		std::shared_ptr<Camera> renderCam = CoreEngine::GetSceneManager()->GetMainCamera();
-
-		std::shared_ptr<Shader> currentShader = skybox->GetSkyShader();
-
-		std::shared_ptr<gr::Texture> skyboxCubeMap = skybox->GetSkyTexture();
-
-
-		// GBuffer depth
-		std::shared_ptr<gr::Texture> depthTexture = 
-			m_pipeline.GetPipeline()[0][0]->GetTextureTargetSet().DepthStencilTarget().GetTexture(); // HAX!!!!!!!!!!!!!!!!!!!!!!
-
-
-
-		// Bind shader and texture:
-		currentShader->Bind(true);
-		skyboxCubeMap->Bind(Material::CubeMap0, true);
-
-		Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear)->Bind(Material::CubeMap0, true);
-
-		SEAssert("Depth texture is null", depthTexture != nullptr);
-
-		depthTexture->Bind(Material::GBufferDepth, true);
-		Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear)->Bind(Material::GBufferDepth, true);
-
-		skybox->GetSkyMesh()->Bind(true);
-
-		// Assemble common (model independent) matrices:
-		mat4 inverseViewProjection = 
-			glm::inverse(renderCam->GetViewProjectionMatrix()); // TODO: Only compute this if something has changed
-
-		currentShader->SetUniform("in_inverse_vp", &inverseViewProjection[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
-
-		// Draw!
-		glDrawElements(
-			GL_TRIANGLES,									// GLenum mode
-			(GLsizei)skybox->GetSkyMesh()->NumIndices(),	// GLsizei count
-			GL_UNSIGNED_INT,								// GLenum type
-			(void*)(0));									// const GLvoid* indices
-
-		glPopDebugGroup();
 	}
 
 
@@ -504,20 +450,6 @@ namespace SaberEngine
 				}
 			}
 		}
-			
-		// Add deferred light Shaders
-		vector<std::shared_ptr<Light>> const* deferredLights = &CoreEngine::GetSceneManager()->GetDeferredLights();
-		for (size_t currentLight = 0; currentLight < deferredLights->size(); currentLight++)
-		{
-			shaders.push_back(deferredLights->at(currentLight)->GetDeferredLightShader());
-		}
-
-		// Add skybox shader:
-		std::shared_ptr<Skybox> skybox = CoreEngine::GetSceneManager()->GetSkybox();
-		if (skybox && skybox->GetSkyShader())
-		{
-			shaders.push_back(skybox->GetSkyShader());
-		}		
 		
 		// Add RenderManager shaders:
 		shaders.push_back(m_blitShader);
@@ -540,7 +472,7 @@ namespace SaberEngine
 			// Other params:
 			shaders.at(i)->SetUniform("screenParams", &(screenParams.x), platform::Shader::UniformType::Vec4f, 1);
 			shaders.at(i)->SetUniform("projectionParams", &(projectionParams.x), platform::Shader::UniformType::Vec4f, 1);
-
+			// TODO: Add these directly to the render stage shaders during GraphicsSystem::Create
 
 			// Upload matrices:
 			mat4 m_projection = sceneManager->GetMainCamera()->GetProjectionMatrix();
@@ -550,22 +482,32 @@ namespace SaberEngine
 		}
 
 		// Add graphics systems, in order:
-		m_graphicsSystems.emplace_back(make_shared<GBufferGraphicsSystem>("GBufferGraphicsSystem"));
-		m_graphicsSystems.emplace_back(make_shared<ShadowsGraphicsSystem>("ShadowsGraphicsSystem"));
-		m_graphicsSystems.emplace_back(make_shared<DeferredLightingGraphicsSystem>("DeferredLightingGraphicsSystem"));		
+		m_graphicsSystems.emplace_back(make_shared<GBufferGraphicsSystem>("GBuffer Graphics System"));
+		m_graphicsSystems.emplace_back(make_shared<ShadowsGraphicsSystem>("Shadows Graphics System"));
+		m_graphicsSystems.emplace_back(make_shared<DeferredLightingGraphicsSystem>("Deferred Lighting Graphics System"));		
+		m_graphicsSystems.emplace_back(make_shared<SkyboxGraphicsSystem>("Skybox Graphics System"));
 		// NOTE: Adding a new graphics system? Don't forget to add a new template instantiation below GetGraphicsSystem()
 		
 		// Create each graphics system in turn:
-		for (size_t i = 0; i < m_graphicsSystems.size(); i++)
+		vector<shared_ptr<GraphicsSystem>>::iterator gsIt;
+		for(gsIt = m_graphicsSystems.begin(); gsIt != m_graphicsSystems.end(); gsIt++)
 		{
-			m_graphicsSystems[i]->Create(m_pipeline.AddNewStagePipeline(m_graphicsSystems[i]->GetName()));
-		}
+			(*gsIt)->Create(m_pipeline.AddNewStagePipeline((*gsIt)->GetName()));
 
+			// If the GS didn't attach any render stages, remove it
+			if (m_pipeline.GetPipeline().back().GetNumberOfStages() == 0)
+			{
+				m_pipeline.GetPipeline().pop_back();
+				vector<shared_ptr<GraphicsSystem>>::iterator deleteIt = gsIt;
+				gsIt--;
+				m_graphicsSystems.erase(deleteIt);
+			}
+		}
 
 
 		// TEMP HAX: Initialize PostFX with the most up-to-date texture target set from the new system
 		m_postFXManager->Initialize(
-			GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet().ColorTarget(0));
+			GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet().ColorTarget(0));
 	}
 
 
@@ -588,6 +530,7 @@ namespace SaberEngine
 	template std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem<GBufferGraphicsSystem>();
 	template std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem<DeferredLightingGraphicsSystem>();
 	template std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem<ShadowsGraphicsSystem>();
+	template std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem<SkyboxGraphicsSystem>();
 }
 
 

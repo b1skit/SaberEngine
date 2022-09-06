@@ -31,7 +31,6 @@ namespace SaberEngine
 	class SceneObject;
 	class GameObject;
 	class Renderable;
-	class Skybox;
 	struct Bounds;
 	enum CAMERA_TYPE;
 }
@@ -96,8 +95,6 @@ namespace SaberEngine
 
 		vector<std::shared_ptr<gr::Light>> const& GetDeferredLights();
 
-		std::shared_ptr<Skybox>	GetSkybox();
-
 		string const& GetCurrentSceneName() const;
 
 		
@@ -130,9 +127,6 @@ namespace SaberEngine
 
 		// Assimp scene material and texture import helper:
 		void			ImportMaterialsAndTexturesFromScene(aiScene const* scene, string sceneName);
-
-		// Import and configure scene skybox:
-		void			ImportSky(string sceneName);
 		
 		// Assimp scene texture import helper:
 		std::shared_ptr<gr::Texture> ExtractLoadTextureFromAiMaterial(aiTextureType textureType, aiMaterial* material, string sceneName);

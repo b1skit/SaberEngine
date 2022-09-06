@@ -1,5 +1,3 @@
-#pragma once
-
 #include "GraphicsSystem.h"
 #include "LogManager.h"
 

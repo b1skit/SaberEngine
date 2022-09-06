@@ -391,6 +391,9 @@ namespace gr
 			// Search each possible file extension:
 			const std::string currentCubeFaceName = textureRootPath + cubeTextureNames[i];
 
+			// TODO: This function is horrible. If it fails for the first face (and loads the error texture), it still
+			// continues to look for all other faces
+
 			for (size_t j = 0; j < NUM_FILE_EXTENSIONS; j++)
 			{
 				const std::string finalName = currentCubeFaceName + fileExtensions[j];
@@ -410,22 +413,16 @@ namespace gr
 				else if (j == NUM_FILE_EXTENSIONS - 1)
 				{
 					LOG("Could not find cubemap face texture #" + to_string(i) + ": " +
-						cubeTextureNames[i] + " with any supported extension. Loading error texture");
+						cubeTextureNames[i] + " with any supported extension. Returning null");
 
-					// If we checked the last file extension without success, load an error texture:
 
-					gr::Texture::LoadTextureFileFromPath(
-						cubeMapTexture, 
-						finalName,
-						gr::Texture::TextureColorSpace::sRGB,
-						true,
-						Texture::k_numCubeFaces,
-						i);
+
+					return nullptr;
 				}
 			}
 		}
 
-		return cubeMapTexture;
+		return cubeMapTexture; // Note: This still needs to be Create()'d
 	}
 
 

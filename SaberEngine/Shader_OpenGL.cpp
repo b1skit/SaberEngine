@@ -254,6 +254,7 @@ namespace opengl
 
 		glDeleteProgram(params->m_shaderReference);
 		params->m_shaderReference = 0;
+		glUseProgram(0); // Unbind, as glGetIntegerv(GL_CURRENT_PROGRAM, shaderRef) still returns the shader ref otherwise
 	}
 
 
@@ -268,7 +269,7 @@ namespace opengl
 			dynamic_cast<opengl::Shader::PlatformParams const* const>(shader.GetPlatformParams());
 
 		// Track if the current shader is bound or not, so we can set values without breaking the current state
-		GLint currentProgram;
+		GLint currentProgram = 0;
 		bool isBound = true;	
 		glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
 		if (currentProgram != params->m_shaderReference)

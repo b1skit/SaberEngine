@@ -1,5 +1,3 @@
-#pragma once
-
 //#define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 
@@ -19,6 +17,7 @@ using gr::RenderStage;
 using gr::Texture;
 using gr::TextureTargetSet;
 using gr::ShadowMap;
+using SaberEngine::CoreEngine;
 using std::string;
 using std::shared_ptr;
 using std::make_shared;
@@ -66,7 +65,7 @@ namespace gr
 		m_ambientStage.GetTextureTargetSet() = deferredLightingTargetSet;
 		m_keylightStage.GetTextureTargetSet() = deferredLightingTargetSet;
 		m_pointlightStage.GetTextureTargetSet() = deferredLightingTargetSet;
-
+	
 		
 		RenderStage::RenderStageParams ambientStageParams;
 		ambientStageParams.m_targetClearMode = platform::Context::ClearTarget::ColorDepth;
@@ -82,7 +81,6 @@ namespace gr
 		if (ambientLight)
 		{
 			m_ambientStage.GetStageShader() = ambientLight->GetDeferredLightShader();
-
 			m_ambientStage.GetStageCamera() = deferredLightingCam;
 
 			m_ambientStage.SetStageParams(ambientStageParams);
@@ -95,15 +93,21 @@ namespace gr
 		
 		// Key light:
 		shared_ptr<Light> keyLight = SaberEngine::CoreEngine::GetSceneManager()->GetKeyLight();
+		
 		RenderStage::RenderStageParams keylightStageParams(ambientStageParams);
-		keylightStageParams.m_targetClearMode = platform::Context::ClearTarget::None; // Don't clear after 1st light
 		if (keyLight)
 		{
 			m_keylightStage.GetStageShader() = keyLight->GetDeferredLightShader();
 			m_keylightStage.GetStageCamera() = deferredLightingCam;
-
-			RenderStage::RenderStageParams keylightStageParams(ambientStageParams);
-			keylightStageParams.m_targetClearMode = platform::Context::ClearTarget::None; // Don't clear after 1st light
+			
+			if (!ambientLight) // Don't clear after 1st light
+			{
+				keylightStageParams.m_targetClearMode = platform::Context::ClearTarget::ColorDepth;
+			}
+			else
+			{
+				keylightStageParams.m_targetClearMode = platform::Context::ClearTarget::None;
+			}
 			m_keylightStage.SetStageParams(keylightStageParams);
 
 			m_keylightMesh.emplace_back(keyLight->DeferredMesh());
@@ -118,6 +122,16 @@ namespace gr
 			m_pointlightStage.GetStageCamera() = deferredLightingCam;
 
 			RenderStage::RenderStageParams pointlightStageParams(keylightStageParams);
+
+			if (!ambientLight && !keyLight) // Don't clear after 1st light
+			{
+				pointlightStageParams.m_targetClearMode = platform::Context::ClearTarget::ColorDepth;
+			}
+			else
+			{
+				pointlightStageParams.m_targetClearMode = platform::Context::ClearTarget::None;
+			}
+
 			pointlightStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Front; // Pointlights cull front faces
 			m_pointlightStage.SetStageParams(pointlightStageParams);
 
@@ -129,7 +143,18 @@ namespace gr
 				// Note: need to use the DeferredMesh here for now, so we get its transform
 			}
 
-			m_pointlightStage.GetStageShader() = pointLights[0]->GetDeferredLightShader(); // All point lights use the same shader
+			// All point lights use the same shader
+			m_pointlightStage.GetStageShader() = pointLights[0]->GetDeferredLightShader(); 
+
+			// Compute unchanging shader uniforms:
+			const int xRes = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
+			const int yRes = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
+			const vec4 screenParams = vec4(xRes, yRes, 1.0f / xRes, 1.0f / yRes);
+			m_pointlightStage.GetStageShader()->SetUniform(
+				"screenParams",
+				&screenParams.x,
+				platform::Shader::UniformType::Vec4f,
+				1);
 
 			pipeline.AppendRenderStage(m_pointlightStage);
 		}

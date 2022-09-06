@@ -1,7 +1,6 @@
 #include "Scene.h"
 #include "Light.h"
 #include "Camera.h"
-#include "Skybox.h"
 #include "GameObject.h"
 #include "Renderable.h"
 #include "DebugConfiguration.h"
@@ -51,8 +50,6 @@ namespace SaberEngine
 		m_deferredLights.clear();
 
 		ClearCameras();
-
-		m_skybox = nullptr;
 	}
 
 

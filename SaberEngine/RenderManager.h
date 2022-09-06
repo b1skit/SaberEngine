@@ -32,12 +32,6 @@ namespace gr
 
 namespace SaberEngine
 {
-	class Skybox;
-}
-
-
-namespace SaberEngine
-{
 	class RenderManager : public virtual EngineComponent
 	{
 	public:
@@ -71,8 +65,6 @@ namespace SaberEngine
 
 	private:
 		void Render();
-
-		void RenderSkybox(std::shared_ptr<Skybox> skybox);
 
 		void BlitToScreen();
 		void BlitToScreen(std::shared_ptr<gr::Texture>& texture, std::shared_ptr<gr::Shader> blitShader);

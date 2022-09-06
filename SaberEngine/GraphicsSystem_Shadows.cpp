@@ -26,8 +26,6 @@ namespace gr
 
 	void ShadowsGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		
-
 		RenderStage::RenderStageParams shadowStageParams;
 		shadowStageParams.m_targetClearMode = platform::Context::ClearTarget::Depth;
 		shadowStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Disabled; // Minimize peter-panning

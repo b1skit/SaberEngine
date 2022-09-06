@@ -48,7 +48,7 @@ namespace SaberEngine
 
 		// Configure texture targets. 
 		const uint32_t numStages = NUM_DOWN_SAMPLES + 1; // +1 so we can ping-pong between at the lowest res
-		/*m_pingPongStageTargetSets = std::vector<gr::TextureTargetSet>(numStages);*/
+
 		m_pingPongStageTargetSets.clear();
 		m_pingPongStageTargetSets.reserve(numStages);
 

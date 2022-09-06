@@ -26,7 +26,6 @@
 #include "Material.h"
 #include "Renderable.h"
 #include "Light.h"
-#include "Skybox.h"
 #include "Scene.h"
 #include "Shader.h"
 
@@ -112,8 +111,6 @@ namespace SaberEngine
 
 	bool SceneManager::LoadScene(string sceneName)
 	{
-
-
 		if (sceneName == "")
 		{
 			SEAssert("No scene name received. Did you forget to use the \"-scene theSceneName\" command line "
@@ -197,11 +194,6 @@ namespace SaberEngine
 		{
 			LOG_ERROR("Scene has no meshes");
 		}
-
-
-		// Setup skybox:
-		//--------------
-		ImportSky(sceneName);
 
 		// Assemble material mesh lists:
 		// -----------------------------
@@ -335,12 +327,6 @@ namespace SaberEngine
 	vector<shared_ptr<Light>> const& SceneManager::GetDeferredLights()
 	{
 		return m_currentScene->GetDeferredLights();
-	}
-
-
-	shared_ptr<Skybox> SceneManager::GetSkybox()
-	{ 
-		return m_currentScene->m_skybox; 
 	}
 
 
@@ -678,12 +664,6 @@ namespace SaberEngine
 		}
 
 		LOG("\nLoaded a total of " + to_string(m_textures.size()) + " textures (including error textures)\n");
-	}
-
-
-	void SaberEngine::SceneManager::ImportSky(string sceneName)
-	{
-		m_currentScene->m_skybox = std::make_shared<Skybox>(sceneName);
 	}
 
 
