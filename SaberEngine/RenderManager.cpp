@@ -28,6 +28,7 @@
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_Bloom.h"
+#include "GraphicsSystem_Tonemapping.h"
 
 using gr::Material;
 using gr::Texture;
@@ -42,6 +43,7 @@ using gr::GraphicsSystem;
 using gr::ShadowsGraphicsSystem;
 using gr::SkyboxGraphicsSystem;
 using gr::BloomGraphicsSystem;
+using gr::TonemappingGraphicsSystem;
 using gr::RenderStage;
 using gr::TextureTargetSet;
 using std::shared_ptr;
@@ -76,87 +78,30 @@ namespace SaberEngine
 
 		m_context.Create();
 
-		// Cache the relevant config data:
-		m_xRes = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
-		m_yRes = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
+		
 
 		// Default target set:
 		m_defaultTargetSet = std::make_shared<gr::TextureTargetSet>("Default target");
-		m_defaultTargetSet->Viewport() = { 0, 0, (uint32_t)m_xRes, (uint32_t)m_yRes };
+		m_defaultTargetSet->Viewport() = 
+		{ 
+			0, 
+			0, 
+			(uint32_t)CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes"),
+			(uint32_t)CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes")
+		};
 		m_defaultTargetSet->CreateColorTargets(); // Default framebuffer has no texture targets
-
-		// Output target:		
-		Texture::TextureParams mainTargetParams;
-		mainTargetParams.m_width = m_xRes;
-		mainTargetParams.m_height = m_yRes;
-		mainTargetParams.m_faces = 1;
-		mainTargetParams.m_texUse = Texture::TextureUse::ColorTarget;
-		mainTargetParams.m_texDimension = Texture::TextureDimension::Texture2D;
-		mainTargetParams.m_texFormat = Texture::TextureFormat::RGBA32F;
-		mainTargetParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
-		mainTargetParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-		mainTargetParams.m_texturePath = "RenderManagerFrameOutput";
-
-		std::shared_ptr<gr::Texture> outputTexture = std::make_shared<gr::Texture>(mainTargetParams);
-
-		m_mainTargetSet = std::make_shared<gr::TextureTargetSet>("Main target");
-		m_mainTargetSet->ColorTarget(0) = outputTexture;
-
-		m_mainTargetSet->CreateColorTargets();
-		
-
-	
-
-		m_screenAlignedQuad = gr::meshfactory::CreateQuad
-		(
-			vec3(-1.0f, 1.0f, 0.0f),	// TL
-			vec3(1.0f, 1.0f, 0.0f),	// TR
-			vec3(-1.0f, -1.0f, 0.0f),	// BL
-			vec3(1.0f, -1.0f, 0.0f)	// BR
-		);
 	}
 
 
 	void RenderManager::Shutdown()
 	{
 		LOG("Render manager shutting down...");
-
-		m_mainTargetSet = nullptr;
-		m_screenAlignedQuad = nullptr;
 	}
 
 
 	void RenderManager::Update()
 	{
 		Render();
-
-
-
-
-
-		gr::TextureTargetSet& deferredLightTextureTargetSet =
-			GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
-
-
-
-
-		//m_context.SetBlendMode(platform::Context::BlendMode::Disabled, platform::Context::BlendMode::Disabled);
-
-		//// Post process finished frame:
-		//m_postFXManager->ApplyPostFX();
-
-		// Cleanup:
-		m_context.SetDepthMode(platform::Context::DepthMode::Less);
-		m_context.SetCullingMode(platform::Context::FaceCullingMode::Back);
-
-
-		// Blit results to screen (Using the final post processing shader pass supplied by the PostProcessingManager):
-		BlitToScreen(deferredLightTextureTargetSet.ColorTarget(0).GetTexture(), m_toneMapShader);
-		// finalFrameShader == PostFXManager::m_toneMapShader
-
-
-		// Display the final frame:
-		m_context.SwapWindow();
 	}
 
 
@@ -293,159 +238,21 @@ namespace SaberEngine
 
 			glPopDebugGroup();
 		}
-	}
 
-
-	void SaberEngine::RenderManager::BlitToScreen(std::shared_ptr<gr::Texture>& texture, std::shared_ptr<Shader> blitShader)
-	{
-		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Blit to screen with texture and shader stage");
-
-		m_defaultTargetSet->AttachColorDepthStencilTargets(0, 0, true);
-		m_context.ClearTargets(platform::Context::ClearTarget::ColorDepth);
-
-		blitShader->Bind(true);
-
-		texture->Bind(Material::GBufferAlbedo, true); // TODO: Define a better texture slot name for this
-
-		Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear)->Bind(Material::GBufferAlbedo, true);
-
-		m_screenAlignedQuad->Bind(true);
-
-		glDrawElements(
-			GL_TRIANGLES,
-			(GLsizei)m_screenAlignedQuad->NumIndices(),
-			GL_UNSIGNED_INT,
-			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
-
-		glPopDebugGroup();
-	}
-
-
-	void SaberEngine::RenderManager::Blit(
-		std::shared_ptr<gr::Texture> const& srcTex,
-		gr::TextureTargetSet const& dstTargetSet,
-		std::shared_ptr<Shader> shader)
-	{
-		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Blit to screen from texture to target set with shader stage");
-
-		dstTargetSet.AttachColorTargets(0, 0, true);
-
-		// Bind the blit shader and screen aligned quad:
-		shader->Bind(true);
-		m_screenAlignedQuad->Bind(true);
-
-		// Bind the source texture into the slot specified in the blit shader:
-		// Note: Blit shader reads from this texture unit (for now)
-		srcTex->Bind(Material::GBufferAlbedo, true);
-
-		Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear)->Bind(Material::GBufferAlbedo, true);
-		
-		glDrawElements(
-			GL_TRIANGLES,
-			(GLsizei)m_screenAlignedQuad->NumIndices(),
-			GL_UNSIGNED_INT, 
-			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
-
-		glPopDebugGroup();
+		// Display the final frame:
+		m_context.SwapWindow();
 	}
 
 
 	void SaberEngine::RenderManager::Initialize()
 	{
-		SceneManager* sceneManager	= CoreEngine::GetSceneManager();
-		unsigned int numMaterials	= sceneManager->NumMaterials();
-
-		// Legacy forward rendering params:
-		std::shared_ptr<Light const> ambientLight	= nullptr;
-		vec3 const* ambientColor	= nullptr;
-		if ((ambientLight = CoreEngine::GetSceneManager()->GetAmbientLight()) != nullptr)
-		{
-			ambientColor = &CoreEngine::GetSceneManager()->GetAmbientLight()->GetColor();
-		}
-
-		vec3 const* keyDir			= nullptr;
-		vec3 const* keyCol			= nullptr;
-		std::shared_ptr<Light const> keyLight = nullptr;
-		if ((keyLight = CoreEngine::GetSceneManager()->GetKeyLight()) != nullptr)
-		{
-			keyDir = &CoreEngine::GetSceneManager()->GetKeyLight()->GetTransform().Forward();
-			keyCol = &CoreEngine::GetSceneManager()->GetKeyLight()->GetColor();
-		}
-
-		LOG("Uploading light and matrix data to shaders");
-		#if defined(DEBUG_RENDERMANAGER_SHADER_LOGGING)
-			LOG("Ambient: " + to_string(ambientColor->r) + ", " + to_string(ambientColor->g) + ", " + to_string(ambientColor->b));
-			LOG("Key Dir: " + to_string(keyDir->x) + ", " + to_string(keyDir->y) + ", " + to_string(keyDir->z));
-			LOG("Key Col: " + to_string(keyCol->r) + ", " + to_string(keyCol->g) + ", " + to_string(keyCol->b));
-		#endif
-
-		vec4 screenParams = vec4(m_xRes, m_yRes, 1.0f / m_xRes, 1.0f / m_yRes);
-		vec4 projectionParams = vec4(
-			1.0f, 
-			CoreEngine::GetSceneManager()->GetMainCamera()->Near(), 
-			CoreEngine::GetSceneManager()->GetMainCamera()->Far(), 
-			1.0f / CoreEngine::GetSceneManager()->GetMainCamera()->Far());
-
-		// Add all Material Shaders to a list:
-		vector<std::shared_ptr<Shader>> shaders;
-		std::unordered_map<string, std::shared_ptr<Material>> const sceneMaterials = 
-			CoreEngine::GetSceneManager()->GetMaterials();
-
-		for (std::pair<string, std::shared_ptr<Material>> currentElement : sceneMaterials)
-		{
-			std::shared_ptr<Material> currentMaterial = currentElement.second;
-			if (currentMaterial->GetShader() != nullptr)
-			{
-				shaders.push_back(currentMaterial->GetShader());
-			}			
-		}
-
-		// Add all Camera Shaders:	
-		for (int i = 0; i < CAMERA_TYPE_COUNT; i++)
-		{
-			vector<std::shared_ptr<Camera>> cameras = CoreEngine::GetSceneManager()->GetCameras((CAMERA_TYPE)i);
-			for (int currentCam = 0; currentCam < cameras.size(); currentCam++)
-			{
-				if (cameras.at(currentCam)->GetRenderShader())
-				{
-					shaders.push_back(cameras.at(currentCam)->GetRenderShader());
-				}
-			}
-		}
-
-		// TODO: Individual stages/materials/etc should be configuring shader values, not the render manager!
-		
-		// Configure all of the shaders:
-		for (unsigned int i = 0; i < (int)shaders.size(); i++)
-		{
-			shaders.at(i)->Bind(true);
-
-			// Upload light direction (world space) and color, and ambient light color:
-			if (ambientLight != nullptr)
-			{
-				shaders.at(i)->SetUniform("ambientColor", &(ambientColor->r), platform::Shader::UniformType::Vec3f, 1);
-			}
-
-			// TODO: Shift more value uploads into the shader creation flow
-			
-			// Other params:
-			shaders.at(i)->SetUniform("screenParams", &(screenParams.x), platform::Shader::UniformType::Vec4f, 1);
-			shaders.at(i)->SetUniform("projectionParams", &(projectionParams.x), platform::Shader::UniformType::Vec4f, 1);
-			// TODO: Add these directly to the render stage shaders during GraphicsSystem::Create
-
-			// Upload matrices:
-			mat4 m_projection = sceneManager->GetMainCamera()->GetProjectionMatrix();
-			shaders.at(i)->SetUniform("in_projection", &m_projection[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
-
-			shaders.at(i)->Bind(false);
-		}
-
 		// Add graphics systems, in order:
 		m_graphicsSystems.emplace_back(make_shared<GBufferGraphicsSystem>("GBuffer Graphics System"));
 		m_graphicsSystems.emplace_back(make_shared<ShadowsGraphicsSystem>("Shadows Graphics System"));
 		m_graphicsSystems.emplace_back(make_shared<DeferredLightingGraphicsSystem>("Deferred Lighting Graphics System"));		
 		m_graphicsSystems.emplace_back(make_shared<SkyboxGraphicsSystem>("Skybox Graphics System"));
 		m_graphicsSystems.emplace_back(make_shared<BloomGraphicsSystem>("Bloom Graphics System"));
+		m_graphicsSystems.emplace_back(make_shared<TonemappingGraphicsSystem>("Tonemapping Graphics System"));
 		// NOTE: Adding a new graphics system? Don't forget to add a new template instantiation below GetGraphicsSystem()
 		
 		// Create each graphics system in turn:
@@ -463,17 +270,6 @@ namespace SaberEngine
 				m_graphicsSystems.erase(deleteIt);
 			}
 		}
-
-
-
-		m_toneMapShader = make_shared<Shader>(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("toneMapShader"));
-		m_toneMapShader->Create();
-		m_toneMapShader->SetUniform(
-			"exposure",
-			&CoreEngine::GetSceneManager()->GetMainCamera()->GetExposure(),
-			platform::Shader::UniformType::Float,
-			1);
 	}
 
 
@@ -498,6 +294,7 @@ namespace SaberEngine
 	template std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem<ShadowsGraphicsSystem>();
 	template std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem<SkyboxGraphicsSystem>();
 	template std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem<BloomGraphicsSystem>();
+	template std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem<TonemappingGraphicsSystem>();
 }
 
 

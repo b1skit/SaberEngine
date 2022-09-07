@@ -206,6 +206,9 @@
     <ClCompile Include="GraphicsSystem_Bloom.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicsSystem_Tonemapping.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EventManager.h">
@@ -361,6 +364,9 @@
     <ClInclude Include="GraphicsSystem_Bloom.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
+    <ClInclude Include="GraphicsSystem_Tonemapping.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\glsl\blitShader.frag">
@@ -421,27 +427,6 @@
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
     <None Include="Shaders\glsl\gBufferFillShader.vert">
-      <Filter>Source Files\Shaders\OpenGL</Filter>
-    </None>
-    <None Include="Shaders\glsl\geometryDemoShader.frag">
-      <Filter>Source Files\Shaders\OpenGL</Filter>
-    </None>
-    <None Include="Shaders\glsl\geometryDemoShader.geom">
-      <Filter>Source Files\Shaders\OpenGL</Filter>
-    </None>
-    <None Include="Shaders\glsl\geometryDemoShader.vert">
-      <Filter>Source Files\Shaders\OpenGL</Filter>
-    </None>
-    <None Include="Shaders\glsl\lambertShader.frag">
-      <Filter>Source Files\Shaders\OpenGL</Filter>
-    </None>
-    <None Include="Shaders\glsl\lambertShader.vert">
-      <Filter>Source Files\Shaders\OpenGL</Filter>
-    </None>
-    <None Include="Shaders\glsl\phongShader.frag">
-      <Filter>Source Files\Shaders\OpenGL</Filter>
-    </None>
-    <None Include="Shaders\glsl\phongShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
     <None Include="Shaders\glsl\SaberCommon.glsl">
