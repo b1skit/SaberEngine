@@ -51,7 +51,7 @@ namespace gr
 		
 		RenderStage() = delete;
 		RenderStage(RenderStage const&) = delete;
-		RenderStage(RenderStage&&) = delete;
+		RenderStage(RenderStage&&) = default;
 		RenderStage& operator=(RenderStage const&) = delete;
 		
 		inline std::string const& GetName() const { return m_name; }

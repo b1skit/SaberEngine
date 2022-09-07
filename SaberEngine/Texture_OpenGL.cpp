@@ -190,7 +190,6 @@ namespace opengl
 		// Get our platform params now that the texture has been created:
 		PlatformParams* const params =
 			dynamic_cast<opengl::Texture::PlatformParams* const>(texture.GetPlatformParams());
-
 		SEAssert("Attempting to create a texture that already exists", !glIsTexture(params->m_textureID));
 
 		// Generate textureID names. Note: We must call glBindTexture immediately after to associate the name with 

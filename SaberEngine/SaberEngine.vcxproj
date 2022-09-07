@@ -176,6 +176,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="EngineConfig.cpp" />
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="GraphicsSystem_Bloom.cpp" />
     <ClCompile Include="GraphicsSystem_DeferredLighting.cpp" />
     <ClCompile Include="GraphicsSystem_GBuffer.cpp" />
     <ClCompile Include="GraphicsSystem.cpp" />
@@ -199,7 +200,6 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Context_OpenGL.cpp" />
     <ClCompile Include="PlayerObject.cpp" />
-    <ClCompile Include="PostFXManager.cpp" />
     <ClCompile Include="Mesh_OpenGL.cpp" />
     <ClCompile Include="Mesh_Platform.cpp" />
     <ClCompile Include="Context.cpp" />
@@ -219,6 +219,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Context_Platform.h" />
+    <ClInclude Include="GraphicsSystem_Bloom.h" />
     <ClInclude Include="GraphicsSystem_DeferredLighting.h" />
     <ClInclude Include="GraphicsSystem_GBuffer.h" />
     <ClInclude Include="GraphicsSystem.h" />
@@ -259,7 +260,6 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="LogManager.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="PlayerObject.h" />
-    <ClInclude Include="PostFXManager.h" />
     <ClInclude Include="Renderable.h" />
     <ClInclude Include="RenderManager.h" />
     <ClInclude Include="Scene.h" />

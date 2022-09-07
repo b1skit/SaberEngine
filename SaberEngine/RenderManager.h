@@ -9,13 +9,11 @@
 
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
-using glm::vec4;
 
 #include "EngineComponent.h"
 #include "Mesh.h"
 #include "TextureTarget.h"
 #include "Context.h"
-#include "PostFXManager.h"
 #include "Context_Platform.h"
 #include "RenderPipeline.h"
 #include "GraphicsSystem.h"
@@ -66,7 +64,6 @@ namespace SaberEngine
 	private:
 		void Render();
 
-		void BlitToScreen();
 		void BlitToScreen(std::shared_ptr<gr::Texture>& texture, std::shared_ptr<gr::Shader> blitShader);
 
 		void Blit(std::shared_ptr<gr::Texture> const& srcTex, gr::TextureTargetSet const& dstTargetSet, std::shared_ptr<gr::Shader> shader);
@@ -80,7 +77,7 @@ namespace SaberEngine
 		
 		re::Context m_context;
 
-		std::shared_ptr<gr::Shader> m_blitShader = nullptr;
+		std::shared_ptr<gr::Shader> m_toneMapShader = nullptr;
 
 		// Note: We store these as shared_ptr so we can instantiate them once the context has been created
 		std::shared_ptr<gr::TextureTargetSet> m_mainTargetSet = nullptr; // Main offscreen buffer
@@ -88,8 +85,6 @@ namespace SaberEngine
 		std::shared_ptr<gr::TextureTargetSet> m_defaultTargetSet = nullptr; // Default backbuffer
 
 		std::shared_ptr<gr::Mesh> m_screenAlignedQuad = nullptr;
-
-		std::unique_ptr<PostFXManager> m_postFXManager = nullptr;
 		
 		// TODO: Move initialization to ctor init list
 

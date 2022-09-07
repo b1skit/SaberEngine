@@ -54,14 +54,14 @@ namespace platform
 		enum class DepthMode
 		{
 			Default,	// Less
-			Never,
+			Never,		// Never pass
 			Less,		// <
 			Equal,		// ==
 			LEqual,		// <=
 			Greater,	// >
 			NotEqual,	// !=
 			GEqual,		// >=
-			Always,
+			Always,		// Always pass: Disables depth testing
 			DepthMode_Count
 		};
 

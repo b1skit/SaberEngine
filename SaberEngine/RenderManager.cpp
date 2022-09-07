@@ -19,7 +19,6 @@
 #include "DebugConfiguration.h"
 #include "Camera.h"
 #include "ImageBasedLight.h"
-#include "PostFXManager.h"
 #include "ShadowMap.h"
 #include "Scene.h"
 #include "EventManager.h"
@@ -28,6 +27,7 @@
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystem_Skybox.h"
+#include "GraphicsSystem_Bloom.h"
 
 using gr::Material;
 using gr::Texture;
@@ -41,6 +41,7 @@ using gr::DeferredLightingGraphicsSystem;
 using gr::GraphicsSystem;
 using gr::ShadowsGraphicsSystem;
 using gr::SkyboxGraphicsSystem;
+using gr::BloomGraphicsSystem;
 using gr::RenderStage;
 using gr::TextureTargetSet;
 using std::shared_ptr;
@@ -103,12 +104,8 @@ namespace SaberEngine
 
 		m_mainTargetSet->CreateColorTargets();
 		
-		m_blitShader = make_shared<Shader>(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShader"));
-		m_blitShader->Create();
 
-		// PostFX Manager:
-		m_postFXManager = std::make_unique<PostFXManager>(); // Initialized when RenderManager.Initialize() is called
+	
 
 		m_screenAlignedQuad = gr::meshfactory::CreateQuad
 		(
@@ -124,10 +121,8 @@ namespace SaberEngine
 	{
 		LOG("Render manager shutting down...");
 
-		m_blitShader = nullptr;
 		m_mainTargetSet = nullptr;
 		m_screenAlignedQuad = nullptr;
-		m_postFXManager = nullptr;
 	}
 
 
@@ -136,32 +131,19 @@ namespace SaberEngine
 		Render();
 
 
-		// TEMP HAX: Ensure the culling mode is reset after Render()...
-		m_context.SetCullingMode(platform::Context::FaceCullingMode::Back);
 
-		gr::TextureTargetSet& deferredLightTextureTargetSet = 
+
+
+		gr::TextureTargetSet& deferredLightTextureTargetSet =
 			GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
-		deferredLightTextureTargetSet.AttachColorTargets(0, 0, true);
 
 
 
 
-		// Additively blit the emissive GBuffer texture to screen:
-		m_context.SetBlendMode(platform::Context::BlendMode::One, platform::Context::BlendMode::One);
+		//m_context.SetBlendMode(platform::Context::BlendMode::Disabled, platform::Context::BlendMode::Disabled);
 
-		Blit(
-			GetGraphicsSystem<gr::GBufferGraphicsSystem>()->GetFinalTextureTargetSet().ColorTarget(Material::MatEmissive).GetTexture(),
-			deferredLightTextureTargetSet,
-			m_blitShader);
-
-
-
-
-		m_context.SetBlendMode(platform::Context::BlendMode::Disabled, platform::Context::BlendMode::Disabled);
-
-		// Post process finished frame:
-		std::shared_ptr<Shader> finalFrameShader = nullptr; // Reference updated in ApplyPostFX...
-		m_postFXManager->ApplyPostFX(finalFrameShader);
+		//// Post process finished frame:
+		//m_postFXManager->ApplyPostFX();
 
 		// Cleanup:
 		m_context.SetDepthMode(platform::Context::DepthMode::Less);
@@ -169,8 +151,8 @@ namespace SaberEngine
 
 
 		// Blit results to screen (Using the final post processing shader pass supplied by the PostProcessingManager):
-		BlitToScreen(deferredLightTextureTargetSet.ColorTarget(0).GetTexture(), finalFrameShader);
-
+		BlitToScreen(deferredLightTextureTargetSet.ColorTarget(0).GetTexture(), m_toneMapShader);
+		// finalFrameShader == PostFXManager::m_toneMapShader
 
 
 		// Display the final frame:
@@ -314,26 +296,6 @@ namespace SaberEngine
 	}
 
 
-	void SaberEngine::RenderManager::BlitToScreen()
-	{
-		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Blit to screen stage");
-
-		m_defaultTargetSet->AttachColorDepthStencilTargets(0, 0, true);
-		m_context.ClearTargets(platform::Context::ClearTarget::ColorDepth);
-
-		m_blitShader->Bind(true);
-		m_screenAlignedQuad->Bind(true);
-
-		glDrawElements(
-			GL_TRIANGLES, 
-			(GLsizei)m_screenAlignedQuad->NumIndices(),
-			GL_UNSIGNED_INT, 
-			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
-
-		glPopDebugGroup();
-	}
-
-
 	void SaberEngine::RenderManager::BlitToScreen(std::shared_ptr<gr::Texture>& texture, std::shared_ptr<Shader> blitShader)
 	{
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Blit to screen with texture and shader stage");
@@ -450,9 +412,6 @@ namespace SaberEngine
 				}
 			}
 		}
-		
-		// Add RenderManager shaders:
-		shaders.push_back(m_blitShader);
 
 		// TODO: Individual stages/materials/etc should be configuring shader values, not the render manager!
 		
@@ -486,6 +445,7 @@ namespace SaberEngine
 		m_graphicsSystems.emplace_back(make_shared<ShadowsGraphicsSystem>("Shadows Graphics System"));
 		m_graphicsSystems.emplace_back(make_shared<DeferredLightingGraphicsSystem>("Deferred Lighting Graphics System"));		
 		m_graphicsSystems.emplace_back(make_shared<SkyboxGraphicsSystem>("Skybox Graphics System"));
+		m_graphicsSystems.emplace_back(make_shared<BloomGraphicsSystem>("Bloom Graphics System"));
 		// NOTE: Adding a new graphics system? Don't forget to add a new template instantiation below GetGraphicsSystem()
 		
 		// Create each graphics system in turn:
@@ -505,9 +465,15 @@ namespace SaberEngine
 		}
 
 
-		// TEMP HAX: Initialize PostFX with the most up-to-date texture target set from the new system
-		m_postFXManager->Initialize(
-			GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet().ColorTarget(0));
+
+		m_toneMapShader = make_shared<Shader>(
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("toneMapShader"));
+		m_toneMapShader->Create();
+		m_toneMapShader->SetUniform(
+			"exposure",
+			&CoreEngine::GetSceneManager()->GetMainCamera()->GetExposure(),
+			platform::Shader::UniformType::Float,
+			1);
 	}
 
 
@@ -531,6 +497,7 @@ namespace SaberEngine
 	template std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem<DeferredLightingGraphicsSystem>();
 	template std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem<ShadowsGraphicsSystem>();
 	template std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem<SkyboxGraphicsSystem>();
+	template std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem<BloomGraphicsSystem>();
 }
 
 

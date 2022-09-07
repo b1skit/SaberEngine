@@ -98,9 +98,6 @@
     <ClCompile Include="Renderable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PostFXManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ImageBasedLight.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -206,6 +203,9 @@
     <ClCompile Include="GraphicsSystem_Skybox.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicsSystem_Bloom.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EventManager.h">
@@ -242,9 +242,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PlayerObject.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PostFXManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ImageBasedLight.h">
@@ -359,6 +356,9 @@
       <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsSystem_Skybox.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsSystem_Bloom.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
   </ItemGroup>

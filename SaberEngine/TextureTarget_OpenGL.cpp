@@ -92,7 +92,7 @@ namespace opengl
 					);
 				}
 
-				texture->Create();
+				texture->Create(); // Internally, we ensure we don't double-create textures/platform params
 				 
 				// Configure the target parameters:
 				opengl::TextureTarget::PlatformParams* const targetParams =

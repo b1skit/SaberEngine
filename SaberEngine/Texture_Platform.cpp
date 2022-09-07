@@ -10,6 +10,9 @@ namespace platform
 	// Parameter struct object factory:
 	void platform::Texture::PlatformParams::CreatePlatformParams(gr::Texture& texture)
 	{
+		SEAssert("Attempting to create platform params for a texture that already exists", 
+			texture.m_platformParams == nullptr);
+
 		const platform::RenderingAPI& api =
 			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
 
