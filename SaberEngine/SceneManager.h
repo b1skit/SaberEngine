@@ -39,7 +39,7 @@ namespace SaberEngine
 namespace SaberEngine
 {
 	// Scene Manager: Manages scenes
-	class SceneManager : public virtual EngineComponent, public virtual EventListener
+	class SceneManager : public virtual en::EngineComponent, public virtual EventListener
 	{
 	public:
 		SceneManager(); // Reserve vector memory

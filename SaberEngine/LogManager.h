@@ -11,7 +11,7 @@ using std::cout;
 
 namespace fr
 {
-	class LogManager : public virtual SaberEngine::EngineComponent, public virtual SaberEngine::EventListener
+	class LogManager : public virtual en::EngineComponent, public virtual SaberEngine::EventListener
 	{
 	public:
 		LogManager() : EngineComponent("LogManager") {}

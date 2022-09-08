@@ -23,7 +23,7 @@ namespace gr
 
 namespace re
 {
-	class RenderManager : public virtual SaberEngine::EngineComponent
+	class RenderManager : public virtual en::EngineComponent
 	{
 	public:
 		RenderManager();

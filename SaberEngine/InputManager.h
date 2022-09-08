@@ -7,7 +7,7 @@
 
 namespace fr
 {
-	class InputManager : public virtual SaberEngine::EngineComponent, public virtual SaberEngine::EventListener
+	class InputManager : public virtual en::EngineComponent, public virtual SaberEngine::EventListener
 	{
 	public:
 		InputManager();

@@ -9,7 +9,7 @@
 
 namespace SaberEngine
 {
-	class TimeManager : EngineComponent
+	class TimeManager : public virtual en::EngineComponent
 	{
 	public:
 		TimeManager();
@@ -44,8 +44,6 @@ namespace SaberEngine
 		static unsigned int			GetTotalRunningTimeMs()			{ return m_currentTime - m_startTime; }
 		static double				GetTotalRunningTimeSeconds()	{ return (double)GetTotalRunningTimeMs() * 0.001; }
 
-		
-	protected:
 
 
 	private:

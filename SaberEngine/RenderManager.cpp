@@ -29,7 +29,7 @@ using std::string;
 
 namespace re
 {
-	RenderManager::RenderManager() : SaberEngine::EngineComponent("RenderManager"),
+	RenderManager::RenderManager() : en::EngineComponent("RenderManager"),
 		m_defaultTargetSet(nullptr)
 	{
 	}

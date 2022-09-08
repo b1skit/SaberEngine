@@ -3,13 +3,13 @@
 #include "SaberObject.h"
 
 
-namespace SaberEngine
+namespace en
 {
 	// EngineComponent Interface: Functionality common to components in main game loop
-	class EngineComponent : public SaberObject
+	class EngineComponent : public SaberEngine::SaberObject
 	{
 	public:
-		EngineComponent(std::string const& name) : SaberObject(name) {}
+		EngineComponent(std::string const& name) : SaberEngine::SaberObject(name) {}
 
 		virtual ~EngineComponent() = 0;
 
