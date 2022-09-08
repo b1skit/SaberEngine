@@ -37,8 +37,10 @@ using gr::Light;
 using gr::ShadowMap;
 using gr::Transform;
 using en::CoreEngine;
+using fr::PlayerObject;
 using std::shared_ptr;
 using glm::pi;
+using glm::vec3;
 using glm::vec4;
 
 

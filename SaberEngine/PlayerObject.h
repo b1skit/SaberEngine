@@ -1,10 +1,8 @@
 #pragma once
 
-#include "GameObject.h"	// Base class
+#include "GameObject.h"
 
 #include <glm/glm.hpp>
-
-using glm::vec3;
 
 
 namespace gr
@@ -12,36 +10,35 @@ namespace gr
 	class Camera;
 }
 
-namespace SaberEngine
+namespace fr
 {
-	class PlayerObject : public virtual GameObject
+	class PlayerObject : public virtual SaberEngine::GameObject
 	{
 	public:
 		PlayerObject(std::shared_ptr<gr::Camera> playerCam);
-
 		~PlayerObject() = default;
 
-		// Getters/Setters:
-		inline std::shared_ptr<gr::Camera> GetCamera() { return m_playerCam; }
+		PlayerObject() = delete;
+		PlayerObject(PlayerObject const&) = delete;
+		PlayerObject(PlayerObject&&) = delete;
+		PlayerObject& operator=(PlayerObject const&) = delete;
 
 		// SaberObject interface:
 		void Update() override;
 
-		//// EventListener interface:
-		//void HandleEvent(std::shared_ptr<EventInfo const> eventInfo) override;
-
-	protected:
+		// Getters/Setters:
+		inline std::shared_ptr<gr::Camera> GetCamera() { return m_playerCam; }
 
 
 	private:
 		std::shared_ptr<gr::Camera> m_playerCam;
 
 		// Control configuration:
-		float m_movementSpeed = 0.003f;
+		float m_movementSpeed;
 
-		// Saved positions
-		vec3 m_savedPosition		= vec3(0.0f, 0.0f, 0.0f);
-		vec3 m_savedEulerRotation = vec3(0.0f, 0.0f, 0.0f);
+		// Saved location:
+		glm::vec3 m_savedPosition;
+		glm::vec3 m_savedEulerRotation;
 	};
 
 }

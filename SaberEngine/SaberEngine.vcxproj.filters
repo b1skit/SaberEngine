@@ -86,9 +86,6 @@
     <ClCompile Include="GameObject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PlayerObject.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Renderable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -215,6 +212,9 @@
     <ClCompile Include="RenderManager_OpenGL.cpp">
       <Filter>Source Files\re\platform\OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="PlayerObject.cpp">
+      <Filter>Source Files\fr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EventManager.h">
@@ -242,9 +242,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Renderable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PlayerObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ImageBasedLight.h">
@@ -378,6 +375,9 @@
     </ClInclude>
     <ClInclude Include="RenderManager_OpenGL.h">
       <Filter>Header Files\re\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerObject.h">
+      <Filter>Header Files\fr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
