@@ -3,7 +3,7 @@
 #include "ShadowMap.h"
 #include "CoreEngine.h"
 
-using SaberEngine::CoreEngine;
+using en::CoreEngine;
 using gr::Light;
 using gr::RenderStage;
 using gr::ShadowMap;

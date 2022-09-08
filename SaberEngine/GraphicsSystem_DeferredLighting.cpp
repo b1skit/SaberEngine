@@ -17,7 +17,7 @@ using gr::RenderStage;
 using gr::Texture;
 using gr::TextureTargetSet;
 using gr::ShadowMap;
-using SaberEngine::CoreEngine;
+using en::CoreEngine;
 using std::string;
 using std::shared_ptr;
 using std::make_shared;
@@ -41,8 +41,8 @@ namespace gr
 		
 		// Create a shared lighting stage texture target:
 		Texture::TextureParams lightTargetParams;
-		lightTargetParams.m_width = SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
-		lightTargetParams.m_height = SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
+		lightTargetParams.m_width = en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
+		lightTargetParams.m_height = en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
 		lightTargetParams.m_faces = 1;
 		lightTargetParams.m_texUse = Texture::TextureUse::ColorTarget;
 		lightTargetParams.m_texDimension = Texture::TextureDimension::Texture2D;
@@ -58,7 +58,7 @@ namespace gr
 		deferredLightingTargetSet.CreateColorTargets();
 
 		shared_ptr<Camera> deferredLightingCam = 
-			SaberEngine::CoreEngine::GetSceneManager()->GetCameras(SaberEngine::CAMERA_TYPE_MAIN).at(0);
+			en::CoreEngine::GetSceneManager()->GetCameras(SaberEngine::CAMERA_TYPE_MAIN).at(0);
 
 		
 		// Set the target sets, even if the stages aren't actually used (to ensure they're still valid)
@@ -77,7 +77,7 @@ namespace gr
 
 		// Ambient light:
 		shared_ptr<SaberEngine::ImageBasedLight> ambientLight = std::dynamic_pointer_cast<SaberEngine::ImageBasedLight>(
-			SaberEngine::CoreEngine::GetSceneManager()->GetAmbientLight());
+			en::CoreEngine::GetSceneManager()->GetAmbientLight());
 		if (ambientLight)
 		{
 			m_ambientStage.GetStageShader() = ambientLight->GetDeferredLightShader();
@@ -92,7 +92,7 @@ namespace gr
 		
 		
 		// Key light:
-		shared_ptr<Light> keyLight = SaberEngine::CoreEngine::GetSceneManager()->GetKeyLight();
+		shared_ptr<Light> keyLight = en::CoreEngine::GetSceneManager()->GetKeyLight();
 		
 		RenderStage::RenderStageParams keylightStageParams(ambientStageParams);
 		if (keyLight)
@@ -116,7 +116,7 @@ namespace gr
 		}
 
 		// Point lights:
-		vector<shared_ptr<Light>>& pointLights = SaberEngine::CoreEngine::GetSceneManager()->GetPointLights();
+		vector<shared_ptr<Light>>& pointLights = en::CoreEngine::GetSceneManager()->GetPointLights();
 		if (pointLights.size() > 0)
 		{
 			m_pointlightStage.GetStageCamera() = deferredLightingCam;
@@ -177,9 +177,9 @@ namespace gr
 		// Light pointers:
 		shared_ptr<SaberEngine::ImageBasedLight> const ambientLight = 
 			std::dynamic_pointer_cast<SaberEngine::ImageBasedLight>(
-				SaberEngine::CoreEngine::GetSceneManager()->GetAmbientLight());
-		shared_ptr<Light> const keyLight = SaberEngine::CoreEngine::GetSceneManager()->GetKeyLight();
-		vector<shared_ptr<Light>> const& pointLights = SaberEngine::CoreEngine::GetSceneManager()->GetPointLights();
+				en::CoreEngine::GetSceneManager()->GetAmbientLight());
+		shared_ptr<Light> const keyLight = en::CoreEngine::GetSceneManager()->GetKeyLight();
+		vector<shared_ptr<Light>> const& pointLights = en::CoreEngine::GetSceneManager()->GetPointLights();
 
 		// Re-set geometry for each stage:
 		m_ambientStage.SetGeometryBatches(&m_ambientMesh);
@@ -190,7 +190,7 @@ namespace gr
 
 		// Add GBuffer textures as stage inputs:		
 		shared_ptr<GBufferGraphicsSystem> gBufferGS = std::dynamic_pointer_cast<GBufferGraphicsSystem>(
-			SaberEngine::CoreEngine::GetRenderManager()->GetGraphicsSystem<GBufferGraphicsSystem>());
+			en::CoreEngine::GetRenderManager()->GetGraphicsSystem<GBufferGraphicsSystem>());
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
 
 		for (size_t i = 0; i < (GBufferGraphicsSystem::GBufferTexNames.size() - 1); i++) // -1, since we handle depth @end

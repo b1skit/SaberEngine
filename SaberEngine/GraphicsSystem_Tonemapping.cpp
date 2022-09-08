@@ -5,7 +5,7 @@
 #include "Shader.h"
 #include "CoreEngine.h"
 
-using SaberEngine::CoreEngine;
+using en::CoreEngine;
 using gr::Shader;
 using gr::DeferredLightingGraphicsSystem;
 using gr::TextureTargetSet;

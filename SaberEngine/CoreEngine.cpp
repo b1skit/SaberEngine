@@ -4,21 +4,29 @@
 #include "DebugConfiguration.h"
 #include "Platform.h"
 
+using std::shared_ptr;
+using std::make_shared;
 
-namespace SaberEngine
+
+namespace en
 {
 	// Static members:
-	en::EngineConfig CoreEngine::m_config;
+	en::EngineConfig							CoreEngine::m_config;
 
-	CoreEngine*		CoreEngine::coreEngine			= nullptr;
-	EventManager*	CoreEngine::SaberEventManager	= nullptr;
-	InputManager*	CoreEngine::SaberInputManager	= nullptr;
-	SceneManager*	CoreEngine::SaberSceneManager	= nullptr;
-	RenderManager*	CoreEngine::SaberRenderManager	= nullptr;
+	CoreEngine*									CoreEngine::m_coreEngine	= nullptr;
+	std::shared_ptr<SaberEngine::EventManager>	CoreEngine::m_eventManager	= nullptr;
+	std::shared_ptr<SaberEngine::InputManager>	CoreEngine::m_inputManager	= nullptr;
+	std::shared_ptr<SaberEngine::SceneManager>	CoreEngine::m_sceneManager	= nullptr;
+	std::shared_ptr<SaberEngine::RenderManager>	CoreEngine::m_renderManager	= nullptr;
 
-	CoreEngine::CoreEngine(int argc, char** argv) : SaberObject("CoreEngine")
+
+	CoreEngine::CoreEngine(int argc, char** argv) : SaberEngine::SaberObject("CoreEngine"),
+		m_FixedTimeStep(1000.0 / 120.0),
+		m_isRunning(false),
+		m_logManager(make_shared<fr::LogManager>()),
+		m_timeManager(make_shared<SaberEngine::TimeManager>())
 	{
-		coreEngine = this;
+		m_coreEngine = this;
 
 		if (!ProcessCommandLineArgs(argc, argv))
 		{
@@ -32,33 +40,33 @@ namespace SaberEngine
 		LOG("CoreEngine starting...");
 
 		// Initialize manager singletons:
-		SaberEventManager = &EventManager::Instance();
-		SaberInputManager = &InputManager::Instance();
-		SaberSceneManager = &SceneManager::Instance();
-		SaberRenderManager = &RenderManager::Instance();
+		m_eventManager	= std::make_shared<SaberEngine::EventManager>();
+		m_inputManager	= std::make_shared <SaberEngine::InputManager>();
+		m_sceneManager	= std::make_shared<SaberEngine::SceneManager>();
+		m_renderManager	= std::make_shared<SaberEngine::RenderManager>();
 
 		// Start managers:
-		SaberEventManager->Startup();	
-		SaberLogManager->Startup();
+		m_eventManager->Startup();
+		m_logManager->Startup();
 
-		SaberEventManager->Subscribe(EVENT_ENGINE_QUIT, this);
+		m_eventManager->Subscribe(SaberEngine::EVENT_ENGINE_QUIT, this);
 
-		SaberTimeManager->Startup();
+		m_timeManager->Startup();
 
-		SaberRenderManager->Startup();	// Initializes SDL events and video subsystems
+		m_renderManager->Startup();	// Initializes SDL events and video subsystems
 
 		// For some reason, this needs to be called after the SDL video subsystem (!) has been initialized:
-		SaberInputManager->Startup();
+		m_inputManager->Startup();
 
 		// Must wait to start scene manager and load a scene until the renderer is called, since we need to initialize
 		// OpenGL in the RenderManager before creating shaders
-		SaberSceneManager->Startup();
-		bool loadedScene = SaberSceneManager->LoadScene(m_config.SceneName());
+		m_sceneManager->Startup();
+		bool loadedScene = m_sceneManager->LoadScene(m_config.SceneName());
 
 		// Now that the scene (and its materials/shaders) has been loaded, we can initialize the shaders
 		if (loadedScene)
 		{
-			SaberRenderManager->Initialize();
+			m_renderManager->Initialize();
 		}		
 
 		m_isRunning = true;
@@ -73,36 +81,36 @@ namespace SaberEngine
 		LOG("CoreEngine beginning main game loop!");
 
 		// Process any events that might have occurred during startup:
-		SaberEventManager->Update();
-		SaberLogManager->Update();
+		m_eventManager->Update();
+		m_logManager->Update();
 
 		// Initialize game loop timing:
-		SaberTimeManager->Update();
+		m_timeManager->Update();
 		double elapsed = 0.0;
 
 		while (m_isRunning)
 		{
-			SaberInputManager->Update();
+			m_inputManager->Update();
 
 			// Process events
-			SaberEventManager->Update(); // Clears SDL event queue: Must occur after any other component that listens to SDL events
-			SaberLogManager->Update();
+			m_eventManager->Update(); // Clears SDL event queue: Must occur after any other component that listens to SDL events
+			m_logManager->Update();
 
-			SaberTimeManager->Update();	// We only need to call this once per loop. DeltaTime() effectively == #ms between calls to TimeManager.Update()
-			elapsed += SaberTimeManager->DeltaTime();
+			m_timeManager->Update();	// We only need to call this once per loop. DeltaTime() effectively == #ms between calls to TimeManager.Update()
+			elapsed += m_timeManager->DeltaTime();
 
-			while (elapsed >= FIXED_TIMESTEP)
+			while (elapsed >= m_FixedTimeStep)
 			{
 				// Update components:
-				SaberEventManager->Update(); // Clears SDL event queue: Must occur after any other component that listens to SDL events
-				SaberLogManager->Update();
+				m_eventManager->Update(); // Clears SDL event queue: Must occur after any other component that listens to SDL events
+				m_logManager->Update();
 
-				SaberSceneManager->Update(); // Updates all of the scene objects
+				m_sceneManager->Update(); // Updates all of the scene objects
 
-				elapsed -= FIXED_TIMESTEP;
+				elapsed -= m_FixedTimeStep;
 			}
 			
-			SaberRenderManager->Update();
+			m_renderManager->Update();
 
 			Update();
 		}
@@ -122,23 +130,17 @@ namespace SaberEngine
 		m_config.SaveConfig();
 		
 		// Note: Shutdown order matters!
-		SaberTimeManager->Shutdown();		
-		SaberInputManager->Shutdown();
-		
-		SaberRenderManager->Shutdown();
-		
-		SaberSceneManager->Shutdown();
-		
-		SaberEventManager->Shutdown();
+		m_timeManager->Shutdown();		
+		m_inputManager->Shutdown();
+		m_renderManager->Shutdown();		
+		m_sceneManager->Shutdown();		
+		m_eventManager->Shutdown();
+		m_logManager->Shutdown();
 
-		SaberLogManager->Shutdown();
-
-		delete SaberTimeManager;
-		delete SaberInputManager;
-		delete SaberRenderManager;
-		delete SaberSceneManager;
-		delete SaberEventManager;
-		delete SaberLogManager;		
+		m_inputManager = nullptr;
+		m_renderManager = nullptr;
+		m_sceneManager = nullptr;
+		m_eventManager = nullptr;
 
 		SDL_Quit();
 
@@ -155,21 +157,21 @@ namespace SaberEngine
 	void CoreEngine::Update()
 	{
 		// Generate a quit event if the quit button is pressed:
-		if (SaberInputManager->GetKeyboardInputState(INPUT_BUTTON_QUIT) == true)
+		if (m_inputManager->GetKeyboardInputState(SaberEngine::INPUT_BUTTON_QUIT) == true)
 		{
-			SaberEventManager->Notify(std::make_shared<EventInfo const>(EventInfo{ 
-				EVENT_ENGINE_QUIT, 
+			m_eventManager->Notify(std::make_shared<SaberEngine::EventInfo const>(SaberEngine::EventInfo{
+				SaberEngine::EVENT_ENGINE_QUIT,
 				this,
 				"Core Engine Quit"}));
 		}
 	}
 
 
-	void CoreEngine::HandleEvent(std::shared_ptr<EventInfo const> eventInfo)
+	void CoreEngine::HandleEvent(std::shared_ptr<SaberEngine::EventInfo const> eventInfo)
 	{
 		switch (eventInfo->m_type)
 		{
-		case EVENT_ENGINE_QUIT:
+		case SaberEngine::EVENT_ENGINE_QUIT:
 		{
 			Stop();
 		}			

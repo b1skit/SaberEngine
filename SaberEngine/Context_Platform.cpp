@@ -10,7 +10,7 @@ namespace platform
 	void Context::PlatformParams::CreatePlatformParams(re::Context& context)
 	{
 		const platform::RenderingAPI& api =
-			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
 
 		switch (api)
 		{

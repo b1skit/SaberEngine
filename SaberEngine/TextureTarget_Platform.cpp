@@ -12,7 +12,7 @@ namespace platform
 	void TextureTarget::PlatformParams::CreatePlatformParams(gr::TextureTarget& texTarget)
 	{
 		const platform::RenderingAPI& api =
-			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
 
 		switch (api)
 		{
@@ -39,7 +39,7 @@ namespace platform
 	void TextureTargetSet::PlatformParams::CreatePlatformParams(gr::TextureTargetSet& texTarget)
 	{
 		const platform::RenderingAPI& api =
-			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
 
 		switch (api)
 		{

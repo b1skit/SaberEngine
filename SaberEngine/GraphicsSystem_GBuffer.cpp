@@ -36,12 +36,12 @@ namespace gr
 	{
 		// Shader:
 		std::shared_ptr<Shader> gBufferShader = std::make_shared<Shader>(
-			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("gBufferFillShaderName"));
+			en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("gBufferFillShaderName"));
 		gBufferShader->Create();
 
 		// Shader constants: Only set once here
 		const float emissiveIntensity =
-			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultSceneEmissiveIntensity");
+			en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultSceneEmissiveIntensity");
 		gBufferShader->SetUniform("emissiveIntensity", &emissiveIntensity, platform::Shader::UniformType::Float, 1);
 
 		// Set the shader:
@@ -49,8 +49,8 @@ namespace gr
 
 		// Create GBuffer color targets:
 		Texture::TextureParams gBufferParams;
-		gBufferParams.m_width = SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
-		gBufferParams.m_height = SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
+		gBufferParams.m_width = en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
+		gBufferParams.m_height = en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
 		gBufferParams.m_faces = 1;
 		gBufferParams.m_texUse = gr::Texture::TextureUse::ColorTarget;
 		gBufferParams.m_texDimension = gr::Texture::TextureDimension::Texture2D;
@@ -94,7 +94,7 @@ namespace gr
 
 		// Camera:
 		m_gBufferStage.GetStageCamera() =
-			SaberEngine::CoreEngine::GetSceneManager()->GetCameras(SaberEngine::CAMERA_TYPE_MAIN).at(0);
+			en::CoreEngine::GetSceneManager()->GetCameras(SaberEngine::CAMERA_TYPE_MAIN).at(0);
 
 		// Set the stage params:
 		RenderStage::RenderStageParams gBufferStageParams;
@@ -115,7 +115,7 @@ namespace gr
 
 	void GBufferGraphicsSystem::PreRender()
 	{
-		m_gBufferStage.SetGeometryBatches(&SaberEngine::CoreEngine::GetSceneManager()->GetRenderMeshes());
+		m_gBufferStage.SetGeometryBatches(&en::CoreEngine::GetSceneManager()->GetRenderMeshes());
 
 		// TODO: Support transparency
 		// -> Split meshes with transparent materials out from opaque during load

@@ -18,8 +18,8 @@ namespace SaberEngine
 		InputManager();
 
 		// Singleton functionality:
-		static InputManager& Instance();
-		InputManager(InputManager const&)	= delete; // Disallow copying of our Singleton
+		InputManager(InputManager const&) = delete; // Disallow copying of our Singleton
+		InputManager(InputManager&&) = delete;
 		void operator=(InputManager const&) = delete;
 
 		// Static member functions:

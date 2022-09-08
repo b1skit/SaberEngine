@@ -36,9 +36,8 @@ namespace SaberEngine
 		RenderManager() : EngineComponent("RenderManager") {};
 		~RenderManager();
 
-		// Singleton functionality:
-		static RenderManager& Instance();
 		RenderManager(RenderManager const&) = delete; // Disallow copying of our Singleton
+		RenderManager(RenderManager&&) = delete;
 		void operator=(RenderManager const&) = delete;
 
 		// EngineComponent interface:

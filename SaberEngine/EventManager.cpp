@@ -27,19 +27,6 @@ namespace SaberEngine
 	}
 
 
-	//EventManager::~EventManager()
-	//{
-	//
-	//}
-
-
-	EventManager& EventManager::Instance()
-	{
-		static EventManager* instance = new EventManager();
-		return *instance;
-	}
-
-
 	void EventManager::Startup()
 	{
 		LOG("Event manager started!");

@@ -1,4 +1,7 @@
 #pragma once
+
+#include <memory>
+
 #include "EventManager.h"
 #include "LogManager.h"
 #include "TimeManager.h"
@@ -8,22 +11,25 @@
 #include "EngineConfig.h"
 
 
-namespace SaberEngine
+namespace en
 {
-	class CoreEngine : public virtual SaberObject, public virtual EventListener
+	class CoreEngine : public virtual SaberEngine::SaberObject, public virtual SaberEngine::EventListener
 	{
 	public:
 		CoreEngine(int argc, char** argv);
+		~CoreEngine() = default;
+		
 		CoreEngine() = delete;
-
-
+		CoreEngine(CoreEngine const&) = delete;
+		CoreEngine(CoreEngine&&) = delete;
+		CoreEngine& operator=(CoreEngine const&) = delete;
 
 		// Static Engine component singletons getters:		
-		static inline CoreEngine*		GetCoreEngine()		{ return coreEngine; }
-		static inline EventManager*		GetEventManager()	{ return SaberEventManager; }
-		static inline InputManager*		GetInputManager()	{ return SaberInputManager; }
-		static inline SceneManager*		GetSceneManager()	{ return SaberSceneManager; }
-		static inline RenderManager*	GetRenderManager()	{ return SaberRenderManager; }
+		static inline CoreEngine*					GetCoreEngine()		{ return m_coreEngine; }
+		static inline SaberEngine::EventManager*	GetEventManager()	{ return m_eventManager.get(); }
+		static inline SaberEngine::InputManager*	GetInputManager()	{ return m_inputManager.get(); }
+		static inline SaberEngine::SceneManager*	GetSceneManager()	{ return m_sceneManager.get(); }
+		static inline SaberEngine::RenderManager*	GetRenderManager()	{ return m_renderManager.get(); }
 		
 		// Lifetime flow:
 		void Startup();
@@ -38,30 +44,28 @@ namespace SaberEngine
 		void Update() override;
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo) override;
+		void HandleEvent(std::shared_ptr<SaberEngine::EventInfo const> eventInfo) override;
 
 		
 	private:	
 		// Constants:
-		const double FIXED_TIMESTEP = 1000.0 / 120.0; // Regular step size, in ms
+		const double m_FixedTimeStep; // Regular step size, in ms
 		//const double MAX_TIMESTEP = 0.5;	// Max amount of time before giving up
 
-		// Private engine component singletons:	
-		fr::LogManager* const	SaberLogManager		= &fr::LogManager::Instance();
-		TimeManager* const	SaberTimeManager	= &TimeManager::Instance();
+		bool m_isRunning;
 
 		static en::EngineConfig m_config;
 
-		// Static Engine component singletons
-		static CoreEngine*		coreEngine;
-		static EventManager*	SaberEventManager;
-		static InputManager*	SaberInputManager;
-		static SceneManager*	SaberSceneManager;
-		static RenderManager*	SaberRenderManager;
-		
+		// Private engine component singletons:	
+		std::shared_ptr<fr::LogManager> const	m_logManager;
+		std::shared_ptr<SaberEngine::TimeManager> const		m_timeManager;
 
-		// Engine control:
-		bool m_isRunning = false;
+		// Static Engine component singletons
+		static CoreEngine*									m_coreEngine;
+		static std::shared_ptr<SaberEngine::EventManager>	m_eventManager;
+		static std::shared_ptr<SaberEngine::InputManager>	m_inputManager;
+		static std::shared_ptr<SaberEngine::SceneManager>	m_sceneManager;
+		static std::shared_ptr<SaberEngine::RenderManager>	m_renderManager;
 
 
 		bool ProcessCommandLineArgs(int argc, char** argv);

@@ -36,6 +36,7 @@ using gr::Camera;
 using gr::Light;
 using gr::ShadowMap;
 using gr::Transform;
+using en::CoreEngine;
 using std::shared_ptr;
 using glm::pi;
 using glm::vec4;
@@ -49,13 +50,6 @@ namespace SaberEngine
 	SceneManager::SceneManager() : EngineComponent("SceneManager")
 	{
 		
-	}
-
-
-	SceneManager& SceneManager::Instance()
-	{
-		static SceneManager* instance = new SceneManager();
-		return *instance;
 	}
 
 

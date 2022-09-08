@@ -14,7 +14,7 @@ namespace platform
 			texture.m_platformParams == nullptr);
 
 		const platform::RenderingAPI& api =
-			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
 
 		switch (api)
 		{

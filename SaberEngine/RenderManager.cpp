@@ -47,6 +47,7 @@ using gr::BloomGraphicsSystem;
 using gr::TonemappingGraphicsSystem;
 using gr::RenderStage;
 using gr::TextureTargetSet;
+using en::CoreEngine;
 using std::shared_ptr;
 using std::make_unique;
 using std::make_shared;
@@ -63,13 +64,6 @@ namespace SaberEngine
 	{
 		// Do this in the destructor so we can still read any final OpenGL error messages before it is destroyed
 		m_context.Destroy();
-	}
-
-
-	RenderManager& RenderManager::Instance()
-	{
-		static RenderManager* instance = new RenderManager();
-		return *instance;
 	}
 
 

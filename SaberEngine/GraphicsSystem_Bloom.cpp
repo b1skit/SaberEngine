@@ -8,7 +8,7 @@
 #include "CoreEngine.h"
 
 using gr::DeferredLightingGraphicsSystem;
-using SaberEngine::CoreEngine;
+using en::CoreEngine;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;

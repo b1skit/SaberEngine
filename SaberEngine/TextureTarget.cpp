@@ -42,8 +42,8 @@ namespace gr
 	Viewport::Viewport() :
 		m_xMin(0),
 		m_yMin(0),
-		m_width(SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes")),
-		m_height(SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes"))
+		m_width(en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes")),
+		m_height(en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes"))
 	{
 
 	}

@@ -16,13 +16,13 @@ int main(int argc, char** argv)
 
 	LOG("\nWelcome to the Saber Engine!\n");
 
-	SaberEngine::CoreEngine coreEngine(argc, argv); // TODO: Implement config file (command line) path passing
+	en::CoreEngine m_coreEngine(argc, argv); // TODO: Implement config file (command line) path passing
 
-	coreEngine.Startup();
+	m_coreEngine.Startup();
 
-	coreEngine.Run();
+	m_coreEngine.Run();
 
-	coreEngine.Shutdown();
+	m_coreEngine.Shutdown();
 
 	LOG("\nGoodbye!\n");
 

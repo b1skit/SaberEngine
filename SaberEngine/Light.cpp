@@ -36,7 +36,7 @@ namespace gr
 		case AmbientIBL:
 		{
 			m_deferredLightShader = make_shared<Shader>(
-				SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"));
+				en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"));
 			
 			if (lightType == AmbientColor)
 			{
@@ -62,7 +62,7 @@ namespace gr
 		case Directional:
 		{
 			m_deferredLightShader = make_shared<Shader>(
-				SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredKeylightShaderName"));
+				en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredKeylightShaderName"));
 			m_deferredLightShader->Create();
 
 			// Attach a screen aligned quad:
@@ -78,7 +78,7 @@ namespace gr
 		case Point:
 		{
 			m_deferredLightShader = make_shared<Shader>(
-				SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredPointLightShaderName"));
+				en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredPointLightShaderName"));
 			m_deferredLightShader->Create();
 
 			// Create the sphere with a radius of 1, and scale it to allow us to instance deferred lights with a single

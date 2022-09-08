@@ -13,7 +13,7 @@ namespace platform
 	void Sampler::PlatformParams::CreatePlatformParams(gr::Sampler& sampler)
 	{
 		const platform::RenderingAPI& api =
-			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
 
 		switch (api)
 		{

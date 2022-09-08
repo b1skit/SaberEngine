@@ -9,7 +9,7 @@ namespace platform
 	std::unique_ptr<Mesh::PlatformParams> platform::Mesh::PlatformParams::CreatePlatformParams()
 	{
 		const platform::RenderingAPI& api =
-			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
 
 		switch (api)
 		{

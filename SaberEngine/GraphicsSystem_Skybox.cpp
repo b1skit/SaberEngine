@@ -14,7 +14,7 @@ using gr::Texture;
 using gr::DeferredLightingGraphicsSystem;
 using gr::GBufferGraphicsSystem;
 using SaberEngine::ImageBasedLight;
-using SaberEngine::CoreEngine;
+using en::CoreEngine;
 using std::shared_ptr;
 using std::string;
 using glm::vec3;

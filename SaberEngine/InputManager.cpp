@@ -2,6 +2,8 @@
 #include "CoreEngine.h"
 #include "DebugConfiguration.h"
 
+using en::CoreEngine;
+
 
 namespace SaberEngine
 {
@@ -29,13 +31,6 @@ namespace SaberEngine
 		{
 			m_mouseAxisStates[i]	= 0.0f;
 		}
-	}
-
-
-	InputManager& InputManager::Instance()
-	{
-		static InputManager* instance = new InputManager();
-		return *instance;
 	}
 
 

@@ -45,8 +45,8 @@ namespace SaberEngine
 		SceneManager(); // Reserve vector memory
 
 		// Singleton functionality:
-		static SceneManager& Instance();
-		SceneManager(SceneManager const&)	= delete; // Disallow copying of our Singleton
+		SceneManager(SceneManager const&) = delete; // Disallow copying of our Singleton
+		SceneManager(SceneManager&&) = delete;
 		void operator=(SceneManager const&) = delete;
 
 		// EngineComponent interface:

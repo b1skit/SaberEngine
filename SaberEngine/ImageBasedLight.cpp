@@ -11,6 +11,7 @@
 using gr::Material;
 using gr::Texture;
 using gr::Shader;
+using en::CoreEngine;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;

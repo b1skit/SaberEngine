@@ -31,7 +31,7 @@ namespace platform
 		LOG("Configuring API-specific platform bindings...");
 
 		const platform::RenderingAPI& api = 
-			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
 
 		bool result = false;
 		switch (api)

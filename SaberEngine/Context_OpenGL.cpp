@@ -156,9 +156,9 @@ namespace opengl
 
 		// Create a window:
 		const string windowTitle = 
-			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("windowTitle");
-		const int xRes = SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
-		const int yRes = SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
+			en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("windowTitle");
+		const int xRes = en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
+		const int yRes = en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
 		platformParams->m_glWindow = SDL_CreateWindow
 		(
 			windowTitle.c_str(),

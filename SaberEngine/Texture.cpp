@@ -210,7 +210,7 @@ namespace gr
 
 		// Flip the y-axis on loading (so pixel (0,0) is in the bottom-left of the image if using OpenGL
 		platform::RenderingAPI const& api =
-			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
 		const bool flipY = api == platform::RenderingAPI::OpenGL ? true : false;
 
 		stbi_set_flip_vertically_on_load(flipY);	

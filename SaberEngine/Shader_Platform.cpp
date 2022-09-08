@@ -15,7 +15,7 @@ namespace platform
 	void platform::Shader::PlatformParams::CreatePlatformParams(gr::Shader& shader)
 	{
 		const platform::RenderingAPI& api =
-			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
 
 		switch (api)
 		{
@@ -43,7 +43,7 @@ namespace platform
 	{
 		// Assemble the full shader file path:
 		string filepath = 
-			SaberEngine::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("shaderDirectory") + filename;
+			en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("shaderDirectory") + filename;
 
 		ifstream file;
 		file.open(filepath.c_str());
