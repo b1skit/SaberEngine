@@ -26,12 +26,12 @@ namespace fr
 		void operator=(LogManager const&) = delete;
 
 		// EngineComponent interface:
-		void Startup();
-		void Shutdown();
-		void Update();
+		void Startup() override;
+		void Shutdown() override;
+		void Update() override;
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<SaberEngine::EventInfo const> eventInfo);
+		void HandleEvent(std::shared_ptr<SaberEngine::EventInfo const> eventInfo) override;
 
 	private:
 
@@ -47,11 +47,11 @@ namespace fr
 
 			if (stream.str()[0] == '\n')
 			{
-				cout << "\nLog:\t" << stream.str().substr(1, string::npos) << "\n";
+				cout << "\nLog:\t" << stream.str().substr(1, std::string::npos) << "\n";
 			}
 			else if (stream.str()[0] == '\t')
 			{
-				cout << "\t" << stream.str().substr(1, string::npos) << "\n";
+				cout << "\t" << stream.str().substr(1, std::string::npos) << "\n";
 			}
 			else
 			{
@@ -68,11 +68,11 @@ namespace fr
 
 			if (stream.str()[0] == '\n')
 			{
-				cout << "\nWarn:\t" << stream.str().substr(1, string::npos) << "\n";
+				cout << "\nWarn:\t" << stream.str().substr(1, std::string::npos) << "\n";
 			}
 			else if (stream.str()[0] == '\t')
 			{
-				cout << "\t" << stream.str().substr(1, string::npos) << "\n";
+				cout << "\t" << stream.str().substr(1, std::string::npos) << "\n";
 			}
 			else
 			{
@@ -89,11 +89,11 @@ namespace fr
 
 			if (stream.str()[0] == '\n')
 			{
-				cout << "\nError:\t" << stream.str().substr(1, string::npos) << "\n";
+				cout << "\nError:\t" << stream.str().substr(1, std::string::npos) << "\n";
 			}
 			else if (stream.str()[0] == '\t')
 			{
-				cout << "\t" << stream.str().substr(1, string::npos) << "\n";
+				cout << "\t" << stream.str().substr(1, std::string::npos) << "\n";
 			}
 			else
 			{

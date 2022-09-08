@@ -14,6 +14,7 @@ using std::make_shared;
 using std::string;
 using std::to_string;
 using glm::vec3;
+using glm::vec4;
 
 
 namespace gr

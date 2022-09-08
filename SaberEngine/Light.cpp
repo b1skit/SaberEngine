@@ -19,13 +19,14 @@ namespace gr
 		LightType lightType, 
 		vec3 color, 
 		std::shared_ptr<gr::ShadowMap> shadowMap /*= nullptr*/,
-		float radius /*= 1.0f*/) :
-			m_color(color),
-			m_type(lightType),
-			m_lightName(lightName),
-			m_shadowMap(shadowMap),
-			m_deferredMesh(nullptr),
-			m_deferredLightShader(nullptr)
+		float radius /*= 1.0f*/) : 
+			SceneObject(lightName),
+				m_color(color),
+				m_type(lightType),
+				m_lightName(lightName),
+				m_shadowMap(shadowMap),
+				m_deferredMesh(nullptr),
+				m_deferredLightShader(nullptr)
 	{
 		// Set up deferred light mesh:
 		string shaderName;

@@ -38,6 +38,7 @@ using gr::ShadowMap;
 using gr::Transform;
 using std::shared_ptr;
 using glm::pi;
+using glm::vec4;
 
 
 #define INVALID_TEXTURE_PATH "InvalidTexturePath"
@@ -109,7 +110,7 @@ namespace SaberEngine
 	}
 
 
-	bool SceneManager::LoadScene(string sceneName)
+	bool SceneManager::LoadScene(string const& sceneName)
 	{
 		if (sceneName == "")
 		{
@@ -239,7 +240,7 @@ namespace SaberEngine
 	}
 
 
-	shared_ptr<Material> SceneManager::GetMaterial(string materialName)
+	shared_ptr<Material> SceneManager::GetMaterial(string const& materialName)
 	{
 		auto result = m_materials.find(materialName);
 
@@ -374,7 +375,7 @@ namespace SaberEngine
 	}
 
 
-	void SaberEngine::SceneManager::InitializeLightTransformValues(aiScene const* scene, string lightName, Transform* targetLightTransform)
+	void SaberEngine::SceneManager::InitializeLightTransformValues(aiScene const* scene, string const& lightName, Transform* targetLightTransform)
 	{
 		aiMatrix4x4 lightTransform;
 		aiNode* current = nullptr;
@@ -497,7 +498,7 @@ namespace SaberEngine
 	}
 
 
-	void SceneManager::ImportMaterialsAndTexturesFromScene(aiScene const* scene, string sceneName)
+	void SceneManager::ImportMaterialsAndTexturesFromScene(aiScene const* scene, string const& sceneName)
 	{
 		int numMaterials = scene->mNumMaterials;
 		LOG("\nFound " + to_string(numMaterials) + " scene materials:");
@@ -670,7 +671,7 @@ namespace SaberEngine
 	shared_ptr<gr::Texture> SaberEngine::SceneManager::ExtractLoadTextureFromAiMaterial(
 		aiTextureType textureType, 
 		aiMaterial* assimpMaterial, 
-		string sceneName)
+		string const& sceneName)
 	{
 		shared_ptr<gr::Texture> newTexture(nullptr);
 		Texture::TextureColorSpace colorSpace = Texture::TextureColorSpace::Unknown;
@@ -874,7 +875,7 @@ namespace SaberEngine
 	shared_ptr<gr::Texture> SceneManager::FindTextureByNameInAiMaterial(
 		string nameSubstring, 
 		aiMaterial* material, 
-		string sceneName)
+		string const& sceneName)
 	{
 		std::transform(nameSubstring.begin(), nameSubstring.end(), nameSubstring.begin(), ::tolower);
 
@@ -1309,7 +1310,7 @@ namespace SaberEngine
 	}
 
 
-	aiNode* SaberEngine::SceneManager::FindNodeRecursiveHelper(aiNode* rootNode, string name)
+	aiNode* SaberEngine::SceneManager::FindNodeRecursiveHelper(aiNode* rootNode, string const& name)
 	{
 		if (rootNode == nullptr)
 		{

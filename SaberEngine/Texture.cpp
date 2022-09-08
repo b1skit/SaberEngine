@@ -1,5 +1,4 @@
 #include <string>
-using std::to_string;
 
 #define STBI_FAILURE_USERMSG
 #include <stb_image.h>	// STB image loader. No need to #define STB_IMAGE_IMPLEMENTATION, as it was already defined in SceneManager
@@ -8,7 +7,10 @@ using std::to_string;
 #include "CoreEngine.h"
 #include "DebugConfiguration.h"
 #include "Material.h"
+
 using gr::Material;
+using std::to_string;
+using glm::vec4;
 
 #define ERROR_TEXTURE_NAME "ErrorTexture"
 #define ERROR_TEXTURE_COLOR_VEC4 vec4(1.0f, 0.0f, 1.0f, 1.0f)

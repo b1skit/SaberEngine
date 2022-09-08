@@ -1,35 +1,19 @@
-// An interface for all Saber Engine objects.
-// Contains common fields and methods (Eg. identifiers) useful for all Saber Engine objects
-
 #pragma once
 
 #include <string>
 
-using std::string;
-
-
-// Global variables: These should never be modified directly.
-namespace
-{
-	static unsigned long objectIDs = 0;
-}
-
 
 namespace SaberEngine
 {
-	// Predeclarations:
-	class CoreEngine;
-
 	class SaberObject
 	{
 	public:
-		SaberObject(string name)
+		SaberObject(std::string const& name)
 		{
 			if (!name.length() == 0) // Default to "unnamed" if no valid name is received
 			{
 				m_name = name;
 			}
-
 			objectID = AssignObjectID();
 		}
 
@@ -41,27 +25,28 @@ namespace SaberEngine
 		// Getters/Setters:
 		inline unsigned long GetObjectID() { return objectID; }
 
-		inline string GetName() const { return m_name; }
+		inline std::string GetName() const { return m_name; }
 
 		// Used to hash objects when inserting into an unordered_map
-		inline string GetHashString() { return m_hashString; }
+		inline std::string GetHashString() { return m_hashString; }
 		
 
 	protected:
 		unsigned long objectID; // Hashed value
 
 	private:
-		string m_name = "unnamed";
-		string m_hashString;
+		std::string m_name = "unnamed";
+		std::string m_hashString;
 
-		std::hash<string> m_hashFunction;
+		std::hash<std::string> m_hashFunction;
 
 		// Utilities:
 		unsigned long AssignObjectID()
-		{ 
+		{
+			static unsigned long objectIDs{ 0 }; // Initializes to 0 the 1st time this function is called
+
 			m_hashString = m_name + std::to_string(objectIDs++); // Append a number to get different hashes for same name
 			size_t hash = m_hashFunction(m_hashString);
-
 			return (unsigned long) hash;
 		}
 	};

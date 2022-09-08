@@ -16,7 +16,7 @@ using glm::mat4;
 
 namespace gr
 {
-	Camera::Camera(string cameraName, CameraConfig camConfig, Transform* parent) : 
+	Camera::Camera(string const& cameraName, CameraConfig camConfig, Transform* parent) : 
 		SceneObject::SceneObject(cameraName), 
 			m_cameraConfig(camConfig),
 			m_cameraShader(nullptr)

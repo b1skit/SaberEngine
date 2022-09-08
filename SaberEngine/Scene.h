@@ -46,7 +46,7 @@ namespace SaberEngine
 	// Container for all scene data:
 	struct Scene
 	{
-		Scene(string sceneName);
+		Scene(std::string sceneName);
 		~Scene();
 
 		// Meshes:

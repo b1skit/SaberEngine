@@ -12,8 +12,9 @@ namespace SaberEngine
 	class SceneObject : public SaberObject, public virtual EventListener
 	{
 	public:
-		SceneObject() : SaberObject::SaberObject("Unnamed SceneObject") {}
-		SceneObject(string newName) : SaberObject::SaberObject(newName) {}
+		SceneObject(std::string const& newName) : SaberObject::SaberObject(newName) {}
+
+		SceneObject() = delete;
 
 		SceneObject(SceneObject&&) = default;
 		SceneObject(const SceneObject& sceneObject) : SaberObject(sceneObject.GetName())

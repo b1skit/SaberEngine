@@ -52,7 +52,7 @@ namespace SaberEngine
 	};
 	
 	// Matched event string names:
-	const static string EVENT_NAME[EVENT_NUM_EVENTS] = 
+	const static std::string EVENT_NAME[EVENT_NUM_EVENTS] =
 	{
 		// System:
 		"EVENT_ENGINE_QUIT", 
@@ -92,7 +92,7 @@ namespace SaberEngine
 	{
 	public:
 		EventManager();
-		//~EventManager();
+		~EventManager() = default;
 		
 		// Singleton functionality:
 		static EventManager& Instance();
@@ -100,9 +100,9 @@ namespace SaberEngine
 		void operator=(EventManager const&) = delete;
 		
 		// EngineComponent interface:
-		void Startup();
-		void Shutdown();
-		void Update();
+		void Startup() override;
+		void Shutdown() override;
+		void Update() override;
 
 		// Member functions:
 		void Subscribe(EVENT_TYPE eventType, EventListener* listener); // Subscribe to an event

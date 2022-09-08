@@ -37,6 +37,7 @@ using gr::Sampler;
 using gr::Light;
 using gr::ShadowMap;
 using gr::Transform;
+using gr::Camera;
 using gr::GBufferGraphicsSystem;
 using gr::DeferredLightingGraphicsSystem;
 using gr::GraphicsSystem;
@@ -77,8 +78,6 @@ namespace SaberEngine
 		LOG("RenderManager starting...");
 
 		m_context.Create();
-
-		
 
 		// Default target set:
 		m_defaultTargetSet = std::make_shared<gr::TextureTargetSet>("Default target");

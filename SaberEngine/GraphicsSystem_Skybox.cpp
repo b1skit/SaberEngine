@@ -18,6 +18,7 @@ using SaberEngine::CoreEngine;
 using std::shared_ptr;
 using std::string;
 using glm::vec3;
+using glm::vec4;
 using glm::mat4;
 
 

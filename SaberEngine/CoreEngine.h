@@ -10,12 +10,13 @@
 
 namespace SaberEngine
 {
-
-	// CORE ENGINE:
 	class CoreEngine : public virtual SaberObject, public virtual EventListener
 	{
 	public:
 		CoreEngine(int argc, char** argv);
+		CoreEngine() = delete;
+
+
 
 		// Static Engine component singletons getters:		
 		static inline CoreEngine*		GetCoreEngine()		{ return coreEngine; }
@@ -34,10 +35,10 @@ namespace SaberEngine
 		static en::EngineConfig const* GetConfig();
 
 		// SaberObject interface:
-		void Update();
+		void Update() override;
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo);
+		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo) override;
 
 		
 	private:	

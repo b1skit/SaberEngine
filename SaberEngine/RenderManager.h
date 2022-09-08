@@ -48,8 +48,6 @@ namespace SaberEngine
 
 		
 		// Member functions:
-
-		// Perform post scene load initialization (eg. Upload static properties to shaders, initialize PostFX):
 		void Initialize();
 
 		re::Context const& GetContext() { return m_context; }
@@ -58,7 +56,6 @@ namespace SaberEngine
 
 		template <typename T>
 		std::shared_ptr<gr::GraphicsSystem> GetGraphicsSystem();
-
 		
 
 	private:

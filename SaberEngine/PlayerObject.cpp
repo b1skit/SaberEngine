@@ -7,11 +7,14 @@
 #include <glm/gtc/constants.hpp>
 
 using gr::Transform;
+using gr::Camera;
 
 
 namespace SaberEngine
 {
-	PlayerObject::PlayerObject(std::shared_ptr<Camera> playerCam) : GameObject::GameObject("Player Object")
+	PlayerObject::PlayerObject(std::shared_ptr<Camera> playerCam) : 
+		GameObject::GameObject("Player Object"), 
+		SceneObject("Player Object") // TODO: SHOULDN'T DUPLICATE NAMES!!!
 	{
 		m_playerCam = playerCam;
 		m_playerCam->GetTransform()->SetParent(&m_transform);

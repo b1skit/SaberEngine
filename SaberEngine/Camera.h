@@ -33,7 +33,7 @@ namespace gr
 
 
 	public:
-		Camera(std::string cameraName, CameraConfig camConfig, gr::Transform* parent);
+		Camera(std::string const& cameraName, CameraConfig camConfig, gr::Transform* parent);
 		~Camera() { Destroy(); }
 
 		void Destroy();

@@ -20,9 +20,10 @@ namespace SaberEngine
 		void operator=(TimeManager const&) = delete;
 		
 		// EngineComponent interface:
-		void Startup();
-		void Shutdown();
-		void Update();
+		void Startup() override;
+		void Shutdown() override;
+		void Update() override;
+
 		void Destroy() {}	// Do nothing, for now...
 
 		// Member functions:

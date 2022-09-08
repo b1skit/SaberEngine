@@ -1,7 +1,3 @@
-// Game object interface
-// Game object interface.
-// All in-scene/game objects should inherit from this interface
-
 #pragma once
 
 #include "SceneObject.h"	// Base class
@@ -13,30 +9,28 @@ namespace SaberEngine
 	class GameObject : public virtual SceneObject
 	{
 	public:
-		GameObject() = delete;
+		GameObject(std::string const& name) : SceneObject::SceneObject(name),
+			m_renderable( std::make_shared<Renderable>() ) {m_renderable->SetTransform(&m_transform); }
 
-		GameObject(string name) : SceneObject::SceneObject(name),
-			m_renderable{ std::make_shared<Renderable>() }
-		{
-			m_renderable->SetTransform(&m_transform);
-		}
+		GameObject(std::string const& name, std::shared_ptr<Renderable> const& renderable);
 
-		GameObject(string name, std::shared_ptr<Renderable> const& renderable);
-
-		// Copy constructor:
-		GameObject(const GameObject& gameObject)
+		GameObject(GameObject const& gameObject) : SceneObject(gameObject.GetName())
 		{
 			m_renderable = gameObject.m_renderable;
 			m_transform = gameObject.m_transform;
-
 			m_renderable->SetTransform(&m_transform);
 		}
 
+		GameObject(GameObject&&) = default;
+		~GameObject() = default;
+
+		GameObject() = delete;		
+
 		// SaberObject interface:
-		void Update() override { }
+		void Update() override {}
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo) {}
+		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo) override {}
 
 		// Getters/Setters:
 		inline std::shared_ptr<Renderable> GetRenderable() { return m_renderable; }

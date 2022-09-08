@@ -28,12 +28,12 @@ namespace SaberEngine
 		static float		GetMouseAxisInput(INPUT_AXIS axis);
 
 		// EngineComponent interface:
-		void Startup();
-		void Shutdown();
-		void Update();
+		void Startup() override;
+		void Shutdown() override;
+		void Update() override;
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo);
+		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo) override;
 
 		void LoadInputBindings();
 

@@ -13,13 +13,15 @@ using gr::Texture;
 using gr::Shader;
 using std::shared_ptr;
 using std::make_shared;
+using std::string;
 using glm::vec3;
+using glm::vec4;
 
 
 namespace SaberEngine
 {
-	ImageBasedLight::ImageBasedLight(string lightName, string relativeHDRPath) 
-		: Light(lightName, AmbientIBL, vec3(0)),
+	ImageBasedLight::ImageBasedLight(string const& lightName, string const& relativeHDRPath)
+		: Light(lightName, AmbientIBL, vec3(0)), SceneObject(lightName),
 		m_BRDF_integrationMapStageTargetSet(lightName + " target")
 	{
 		// Irradiance Environment Map (IEM) setup:
