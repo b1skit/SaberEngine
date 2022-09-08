@@ -3,14 +3,16 @@
 #include "DebugConfiguration.h"
 
 using en::CoreEngine;
+using SaberEngine::EventManager;
+using SaberEngine::EventInfo;
 
 
-namespace SaberEngine
+namespace fr
 {
 	// Static members:
-	bool InputManager::m_keyboardButtonStates[INPUT_NUM_BUTTONS];
-	bool InputManager::m_mouseButtonStates[INPUT_MOUSE_NUM_BUTTONS];
-	float InputManager::m_mouseAxisStates[INPUT_NUM_INPUT_AXIS];
+	bool InputManager::m_keyboardButtonStates[SaberEngine::INPUT_NUM_BUTTONS];
+	bool InputManager::m_mouseButtonStates[SaberEngine::INPUT_MOUSE_NUM_BUTTONS];
+	float InputManager::m_mouseAxisStates[SaberEngine::INPUT_NUM_INPUT_AXIS];
 
 	float InputManager::m_mousePitchSensitivity	= -0.00005f;
 	float InputManager::m_mouseYawSensitivity	= -0.00005f;
@@ -20,36 +22,36 @@ namespace SaberEngine
 	InputManager::InputManager() : EngineComponent("InputManager")
 	{
 		// Initialize keyboard keys:
-		for (int i = 0; i < INPUT_NUM_BUTTONS; i++)
+		for (int i = 0; i < SaberEngine::INPUT_NUM_BUTTONS; i++)
 		{
 			m_inputKeyboardBindings[i]		= SDL_SCANCODE_UNKNOWN; // == 0
 			m_keyboardButtonStates[i]		= false;
 		}
 
 		// Initialize mouse axes:
-		for (int i = 0; i < INPUT_NUM_INPUT_AXIS; i++)
+		for (int i = 0; i < SaberEngine::INPUT_NUM_INPUT_AXIS; i++)
 		{
 			m_mouseAxisStates[i]	= 0.0f;
 		}
 	}
 
 
-	bool const& InputManager::GetKeyboardInputState(KEYBOARD_BUTTON_STATE key)
+	bool const& InputManager::GetKeyboardInputState(SaberEngine::KEYBOARD_BUTTON_STATE key)
 	{
 		return InputManager::m_keyboardButtonStates[key];
 	}
 
 
-	bool const& InputManager::GetMouseInputState(MOUSE_BUTTON_STATE button)
+	bool const& InputManager::GetMouseInputState(SaberEngine::MOUSE_BUTTON_STATE button)
 	{
 		return InputManager::m_mouseButtonStates[button];
 	}
 
 
-	float InputManager::GetMouseAxisInput(INPUT_AXIS axis)
+	float InputManager::GetMouseAxisInput(SaberEngine::INPUT_AXIS axis)
 	{
 		float sensitivity;
-		if (axis == INPUT_MOUSE_X)
+		if (axis == SaberEngine::INPUT_MOUSE_X)
 		{
 			sensitivity = m_mousePitchSensitivity;
 		}
@@ -87,35 +89,35 @@ namespace SaberEngine
 		// Update keyboard states:
 		const Uint8* SDLKeyboardState = SDL_GetKeyboardState(NULL);
 
-		m_keyboardButtonStates[INPUT_BUTTON_FORWARD] = 
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_FORWARD]];
-		m_keyboardButtonStates[INPUT_BUTTON_BACKWARD] = 
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_BACKWARD]];
-		m_keyboardButtonStates[INPUT_BUTTON_LEFT] = 
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_LEFT]];
-		m_keyboardButtonStates[INPUT_BUTTON_RIGHT] = 
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_RIGHT]];
-		m_keyboardButtonStates[INPUT_BUTTON_UP]	= 
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_UP]];
-		m_keyboardButtonStates[INPUT_BUTTON_DOWN] = 
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_DOWN]];
+		m_keyboardButtonStates[SaberEngine::INPUT_BUTTON_FORWARD] =
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[SaberEngine::INPUT_BUTTON_FORWARD]];
+		m_keyboardButtonStates[SaberEngine::INPUT_BUTTON_BACKWARD] =
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[SaberEngine::INPUT_BUTTON_BACKWARD]];
+		m_keyboardButtonStates[SaberEngine::INPUT_BUTTON_LEFT] =
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[SaberEngine::INPUT_BUTTON_LEFT]];
+		m_keyboardButtonStates[SaberEngine::INPUT_BUTTON_RIGHT] =
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[SaberEngine::INPUT_BUTTON_RIGHT]];
+		m_keyboardButtonStates[SaberEngine::INPUT_BUTTON_UP]	=
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[SaberEngine::INPUT_BUTTON_UP]];
+		m_keyboardButtonStates[SaberEngine::INPUT_BUTTON_DOWN] =
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[SaberEngine::INPUT_BUTTON_DOWN]];
 
-		m_keyboardButtonStates[INPUT_BUTTON_QUIT] = 
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[INPUT_BUTTON_QUIT]];
+		m_keyboardButtonStates[SaberEngine::INPUT_BUTTON_QUIT] =
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[SaberEngine::INPUT_BUTTON_QUIT]];
 
 
 		// Update mouse button states:
-		m_mouseButtonStates[INPUT_MOUSE_LEFT] = 
+		m_mouseButtonStates[SaberEngine::INPUT_MOUSE_LEFT] =
 			(bool)(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT));
-		m_mouseButtonStates[INPUT_MOUSE_RIGHT] =
+		m_mouseButtonStates[SaberEngine::INPUT_MOUSE_RIGHT] =
 			(bool)(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_RIGHT));
 
 
 		// Get the mouse deltas, once per frame:
 		int xRel, yRel = 0;
 		SDL_GetRelativeMouseState(&xRel, &yRel);
-		m_mouseAxisStates[INPUT_MOUSE_X] = (float)xRel;
-		m_mouseAxisStates[INPUT_MOUSE_Y] = (float)yRel;
+		m_mouseAxisStates[SaberEngine::INPUT_MOUSE_X] = (float)xRel;
+		m_mouseAxisStates[SaberEngine::INPUT_MOUSE_Y] = (float)yRel;
 	}
 
 
@@ -127,11 +129,11 @@ namespace SaberEngine
 
 	void InputManager::LoadInputBindings()
 	{
-		for (int i = 0; i < INPUT_NUM_BUTTONS; i++)
+		for (int i = 0; i < SaberEngine::INPUT_NUM_BUTTONS; i++)
 		{
 			SDL_Scancode theScancode;
 
-			string buttonString = CoreEngine::GetCoreEngine()->GetConfig()->GetValueAsString(KEY_NAMES[i]);
+			string buttonString = CoreEngine::GetCoreEngine()->GetConfig()->GetValueAsString(SaberEngine::KEY_NAMES[i]);
 
 			// Handle chars:
 			if (buttonString.length() == 1)
@@ -141,8 +143,8 @@ namespace SaberEngine
 			// Handle strings:
 			else
 			{
-				auto result = SCANCODE_MAPPINGS.find(buttonString);
-				if (result != SCANCODE_MAPPINGS.end())
+				auto result = SaberEngine::SCANCODE_MAPPINGS.find(buttonString);
+				if (result != SaberEngine::SCANCODE_MAPPINGS.end())
 				{
 					theScancode = result->second;
 				}

@@ -9,7 +9,7 @@
 using gr::Transform;
 using gr::Camera;
 using glm::vec3;
-using SaberEngine::InputManager;
+using fr::InputManager;
 using SaberEngine::TimeManager;
 
 

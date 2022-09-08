@@ -15,7 +15,7 @@ namespace en
 
 	CoreEngine*									CoreEngine::m_coreEngine	= nullptr;
 	std::shared_ptr<SaberEngine::EventManager>	CoreEngine::m_eventManager	= nullptr;
-	std::shared_ptr<SaberEngine::InputManager>	CoreEngine::m_inputManager	= nullptr;
+	std::shared_ptr<fr::InputManager>	CoreEngine::m_inputManager	= nullptr;
 	std::shared_ptr<SaberEngine::SceneManager>	CoreEngine::m_sceneManager	= nullptr;
 	std::shared_ptr<re::RenderManager>			CoreEngine::m_renderManager	= nullptr;
 
@@ -41,7 +41,7 @@ namespace en
 
 		// Initialize manager singletons:
 		m_eventManager	= std::make_shared<SaberEngine::EventManager>();
-		m_inputManager	= std::make_shared <SaberEngine::InputManager>();
+		m_inputManager	= std::make_shared <fr::InputManager>();
 		m_sceneManager	= std::make_shared<SaberEngine::SceneManager>();
 		m_renderManager	= std::make_shared<re::RenderManager>();
 

@@ -27,7 +27,7 @@ namespace en
 		// Static Engine component singletons getters:		
 		static inline CoreEngine*					GetCoreEngine()		{ return m_coreEngine; }
 		static inline SaberEngine::EventManager*	GetEventManager()	{ return m_eventManager.get(); }
-		static inline SaberEngine::InputManager*	GetInputManager()	{ return m_inputManager.get(); }
+		static inline fr::InputManager*				GetInputManager()	{ return m_inputManager.get(); }
 		static inline SaberEngine::SceneManager*	GetSceneManager()	{ return m_sceneManager.get(); }
 		static inline re::RenderManager*			GetRenderManager()	{ return m_renderManager.get(); }
 		
@@ -63,7 +63,7 @@ namespace en
 		// Static Engine component singletons
 		static CoreEngine*									m_coreEngine;
 		static std::shared_ptr<SaberEngine::EventManager>	m_eventManager;
-		static std::shared_ptr<SaberEngine::InputManager>	m_inputManager;
+		static std::shared_ptr<fr::InputManager>			m_inputManager;
 		static std::shared_ptr<SaberEngine::SceneManager>	m_sceneManager;
 		static std::shared_ptr<re::RenderManager>			m_renderManager;
 
