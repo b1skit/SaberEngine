@@ -21,10 +21,11 @@ namespace re
 
 		std::vector<gr::RenderStage const*>::iterator AppendRenderStage(gr::RenderStage const& renderStage);
 
-		inline std::string const& GetName() { return m_name; }
+		inline std::string const& GetName() const { return m_name; }
 		size_t GetNumberOfStages() const { return m_stagePipeline.size(); }
 
-		gr::RenderStage const* operator[](size_t index) { return m_stagePipeline[index]; }
+		gr::RenderStage const* operator[](size_t index) const { return m_stagePipeline[index]; }
+
 
 	private:
 		std::string m_name;

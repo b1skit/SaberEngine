@@ -7,6 +7,9 @@
 #include "Context_Platform.h"
 #include "Context_OpenGL.h"
 
+#include "RenderManager_Platform.h"
+#include "RenderManager_OpenGL.h"
+
 #include "Mesh_Platform.h"
 #include "Mesh_OpenGL.h"
 
@@ -48,6 +51,10 @@ namespace platform
 			platform::Context::SetDepthMode			= &opengl::Context::SetDepthMode;
 			platform::Context::GetMaxTextureInputs	= &opengl::Context::GetMaxTextureInputs;
 
+			// Render manager:
+			platform::RenderManager::Initialize		= &opengl::RenderManager::Initialize;
+			platform::RenderManager::Render			= &opengl::RenderManager::Render;
+			
 			// Mesh:
 			platform::Mesh::Create	= &opengl::Mesh::Create;
 			platform::Mesh::Destroy	= &opengl::Mesh::Destroy;

@@ -183,6 +183,8 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="GraphicsSystem_Shadows.cpp" />
     <ClCompile Include="GraphicsSystem_Skybox.cpp" />
     <ClCompile Include="GraphicsSystem_Tonemapping.cpp" />
+    <ClCompile Include="RenderManager_OpenGL.cpp" />
+    <ClCompile Include="RenderManager_Platform.cpp" />
     <ClCompile Include="RenderPipeline.cpp" />
     <ClCompile Include="RenderStage.cpp" />
     <ClCompile Include="Sampler.cpp" />
@@ -228,6 +230,8 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="GraphicsSystem_Skybox.h" />
     <ClInclude Include="GraphicsSystem_Tonemapping.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="RenderManager_OpenGL.h" />
+    <ClInclude Include="RenderManager_Platform.h" />
     <ClInclude Include="RenderPipeline.h" />
     <ClInclude Include="RenderStage.h" />
     <ClInclude Include="Sampler.h" />

@@ -80,9 +80,6 @@
     <ClCompile Include="InputManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RenderManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SceneManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -209,6 +206,15 @@
     <ClCompile Include="CoreEngine.cpp">
       <Filter>Source Files\en</Filter>
     </ClCompile>
+    <ClCompile Include="RenderManager.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderManager_Platform.cpp">
+      <Filter>Source Files\re\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderManager_OpenGL.cpp">
+      <Filter>Source Files\re\platform\OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EventManager.h">
@@ -224,9 +230,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="InputManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GameObject.h">
@@ -366,6 +369,15 @@
     </ClInclude>
     <ClInclude Include="CoreEngine.h">
       <Filter>Header Files\en</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderManager.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderManager_Platform.h">
+      <Filter>Header Files\re\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderManager_OpenGL.h">
+      <Filter>Header Files\re\platform\OpenGL</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

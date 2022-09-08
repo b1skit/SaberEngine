@@ -29,7 +29,7 @@ namespace en
 		static inline SaberEngine::EventManager*	GetEventManager()	{ return m_eventManager.get(); }
 		static inline SaberEngine::InputManager*	GetInputManager()	{ return m_inputManager.get(); }
 		static inline SaberEngine::SceneManager*	GetSceneManager()	{ return m_sceneManager.get(); }
-		static inline SaberEngine::RenderManager*	GetRenderManager()	{ return m_renderManager.get(); }
+		static inline re::RenderManager*			GetRenderManager()	{ return m_renderManager.get(); }
 		
 		// Lifetime flow:
 		void Startup();
@@ -65,7 +65,7 @@ namespace en
 		static std::shared_ptr<SaberEngine::EventManager>	m_eventManager;
 		static std::shared_ptr<SaberEngine::InputManager>	m_inputManager;
 		static std::shared_ptr<SaberEngine::SceneManager>	m_sceneManager;
-		static std::shared_ptr<SaberEngine::RenderManager>	m_renderManager;
+		static std::shared_ptr<re::RenderManager>			m_renderManager;
 
 
 		bool ProcessCommandLineArgs(int argc, char** argv);

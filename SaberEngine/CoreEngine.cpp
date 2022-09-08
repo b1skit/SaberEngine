@@ -17,7 +17,7 @@ namespace en
 	std::shared_ptr<SaberEngine::EventManager>	CoreEngine::m_eventManager	= nullptr;
 	std::shared_ptr<SaberEngine::InputManager>	CoreEngine::m_inputManager	= nullptr;
 	std::shared_ptr<SaberEngine::SceneManager>	CoreEngine::m_sceneManager	= nullptr;
-	std::shared_ptr<SaberEngine::RenderManager>	CoreEngine::m_renderManager	= nullptr;
+	std::shared_ptr<re::RenderManager>			CoreEngine::m_renderManager	= nullptr;
 
 
 	CoreEngine::CoreEngine(int argc, char** argv) : SaberEngine::SaberObject("CoreEngine"),
@@ -43,7 +43,7 @@ namespace en
 		m_eventManager	= std::make_shared<SaberEngine::EventManager>();
 		m_inputManager	= std::make_shared <SaberEngine::InputManager>();
 		m_sceneManager	= std::make_shared<SaberEngine::SceneManager>();
-		m_renderManager	= std::make_shared<SaberEngine::RenderManager>();
+		m_renderManager	= std::make_shared<re::RenderManager>();
 
 		// Start managers:
 		m_eventManager->Startup();
