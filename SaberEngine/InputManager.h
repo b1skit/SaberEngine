@@ -31,9 +31,9 @@ namespace fr
 		// EventListener interface:
 		void HandleEvent(std::shared_ptr<SaberEngine::EventInfo const> eventInfo) override;
 
+	private:
 		void LoadInputBindings();
 
-	private:
 		int	 m_inputKeyboardBindings[SaberEngine::INPUT_NUM_BUTTONS]; // Maps from KEYBOARD_BUTTON_STATE enums to SDL_SCANCODE_ values
 		static bool m_keyboardButtonStates[SaberEngine::INPUT_NUM_BUTTONS]; // Stores the state of keyboard keys
 
