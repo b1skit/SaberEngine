@@ -8,6 +8,8 @@
 
 using gr::Shader;
 using gr::Texture;
+using std::string;
+
 
 namespace gr
 {
@@ -94,7 +96,7 @@ namespace gr
 
 		// Camera:
 		m_gBufferStage.GetStageCamera() =
-			en::CoreEngine::GetSceneManager()->GetCameras(SaberEngine::CAMERA_TYPE_MAIN).at(0);
+			en::CoreEngine::GetSceneManager()->GetMainCamera();
 
 		// Set the stage params:
 		RenderStage::RenderStageParams gBufferStageParams;

@@ -24,7 +24,7 @@
 #include "ImageBasedLight.h"
 #include "ShadowMap.h"
 #include "Material.h"
-#include "Renderable.h"
+#include "RenderMesh.h"
 #include "Light.h"
 #include "Scene.h"
 #include "Shader.h"
@@ -36,11 +36,14 @@ using gr::Camera;
 using gr::Light;
 using gr::ShadowMap;
 using gr::Transform;
+using gr::RenderMesh;
 using en::CoreEngine;
 using en::EventManager;
 using fr::PlayerObject;
 using fr::GameObject;
 using std::shared_ptr;
+using std::string;
+using std::vector;
 using glm::pi;
 using glm::vec3;
 using glm::vec4;
@@ -234,12 +237,6 @@ namespace SaberEngine
 	}
 
 
-	unordered_map<string, shared_ptr<Material>> const& SaberEngine::SceneManager::GetMaterials() const
-	{
-		return m_materials;
-	}
-
-
 	shared_ptr<Material> SceneManager::GetMaterial(string const& materialName)
 	{
 		auto result = m_materials.find(materialName);
@@ -247,26 +244,6 @@ namespace SaberEngine
 		SEAssert("Could not find material", result != m_materials.end());
 
 		return result->second;
-	}
-
-
-	vector<shared_ptr<gr::Mesh>> const& SceneManager::GetRenderMeshesWithMaterial(shared_ptr<Material> targetMaterial)
-	{
-		SEAssert("Target material is null", targetMaterial != nullptr);
-		
-		auto result = m_materialMeshLists.find(targetMaterial->Name());
-		if (result == m_materialMeshLists.end())
-		{
-			SEAssert("No material exists with the specified name", false);
-		}
-
-		return result->second;
-	}
-
-
-	vector<shared_ptr<Renderable>>* SceneManager::GetRenderables()
-	{ 
-		return &m_currentScene->m_renderables; 
 	}
 
 
@@ -279,12 +256,6 @@ namespace SaberEngine
 	shared_ptr<Light> SceneManager::GetKeyLight()
 	{ 
 		return m_currentScene->m_keyLight; 
-	}
-
-
-	vector<shared_ptr<gr::Camera>> const& SceneManager::GetCameras(CAMERA_TYPE cameraType)
-	{ 
-		return m_currentScene->GetCameras(cameraType); 
 	}
 
 
@@ -341,8 +312,8 @@ namespace SaberEngine
 	{
 		m_currentScene->m_gameObjects.push_back(newGameObject);
 
-		// Store a pointer to the GameObject's Renderable and add it to the list for the RenderManager
-		m_currentScene->m_renderables.push_back(newGameObject->GetRenderable());
+		// Store a pointer to the GameObject's RenderMesh and add it to the list for the RenderManager
+		m_currentScene->m_renderMeshes.push_back(newGameObject->GetRenderMesh());
 
 		#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
 			LOG("Added std::make_shared<GameObject> to the scene: " + newGameObject->GetName());
@@ -436,11 +407,11 @@ namespace SaberEngine
 		const unsigned int ESTIMATED_MESHES_PER_MATERIAL = 25;	
 
 		unsigned int numMeshes = 0;
-		for (int i = 0; i < (int)m_currentScene->m_renderables.size(); i++)
+		for (int i = 0; i < (int)m_currentScene->m_renderMeshes.size(); i++)
 		{
-			for (int j = 0; j < (int)m_currentScene->m_renderables.at(i)->ViewMeshes()->size(); j++)
+			for (int j = 0; j < (int)m_currentScene->m_renderMeshes.at(i)->ViewMeshes()->size(); j++)
 			{
-				shared_ptr<gr::Mesh> viewMesh = m_currentScene->m_renderables.at(i)->ViewMeshes()->at(j);
+				shared_ptr<gr::Mesh> viewMesh = m_currentScene->m_renderMeshes.at(i)->ViewMeshes()->at(j);
 
 				shared_ptr<Material> meshMaterial = viewMesh->MeshMaterial();
 
@@ -1109,7 +1080,8 @@ namespace SaberEngine
 				}
 			}
 
-			shared_ptr<gr::Mesh> newMesh = std::make_shared<gr::Mesh>(meshName, vertices, indices, GetMaterial(materialName));
+			shared_ptr<gr::Mesh> newMesh = 
+				std::make_shared<gr::Mesh>(meshName, vertices, indices, GetMaterial(materialName));
 
 			shared_ptr<GameObject> gameObject = FindCreateGameObjectParents(scene, currentNode->mParent);
 
@@ -1146,11 +1118,11 @@ namespace SaberEngine
 			// Combine the parent and child transforms	
 			combinedTransform				= combinedTransform * currentNode->mTransformation;					
 				
-			InitializeTransformValues(combinedTransform, targetTransform);		// Copy to our Mesh transform
+			InitializeTransformValues(combinedTransform, targetTransform);	// Copy to our Mesh transform
 
-			gameObject->GetRenderable()->AddViewMeshAsChild(newMesh);			// Creates transform heirarchy
+			gameObject->GetRenderMesh()->AddChildMeshPrimitive(newMesh);		// Creates transform heirarchy
 
-			m_currentScene->AddMesh(newMesh);									// Also calculates scene bounds
+			m_currentScene->AddMesh(newMesh);								// Also calculates scene bounds
 		}
 
 		int numGameObjects = (int)m_currentScene->m_gameObjects.size();

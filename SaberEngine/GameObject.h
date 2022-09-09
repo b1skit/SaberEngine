@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SceneObject.h"
-#include "Renderable.h"
+#include "RenderMesh.h"
 
 
 namespace fr
@@ -10,7 +10,7 @@ namespace fr
 	{
 	public:
 		GameObject(std::string const& name);
-		GameObject(std::string const& name, std::shared_ptr<SaberEngine::Renderable> const& renderable);
+		GameObject(std::string const& name, std::shared_ptr<gr::RenderMesh> const& rendermesh);
 		GameObject(GameObject const& gameObject);
 
 		GameObject(GameObject&&) = default;
@@ -25,11 +25,11 @@ namespace fr
 		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override {}
 
 		// Getters/Setters:
-		inline std::shared_ptr<SaberEngine::Renderable> GetRenderable() { return m_renderable; }
+		inline std::shared_ptr<gr::RenderMesh> GetRenderMesh() { return m_renderMesh; }
 
 
 	private:
-		std::shared_ptr<SaberEngine::Renderable> m_renderable;
+		std::shared_ptr<gr::RenderMesh> m_renderMesh;
 	};
 }
 

@@ -6,6 +6,8 @@
 
 #include <SDL.h>
 
+using std::vector;
+
 
 namespace en
 {

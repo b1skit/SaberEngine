@@ -5,13 +5,10 @@
 #include <string>
 #include <vector>
 
-using std::string;
-using std::vector;
-
 
 // Initial allocation amounts
 #define GAMEOBJECTS_RESERVATION_AMT				100		// TODO: Set these with more carefully selected values...
-#define RENDERABLES_RESERVATION_AMT				100
+#define RENDERMESH_RESERVATION_AMT				100
 #define MESHES_RESERVATION_AMT					100
 
 #define DEFERRED_LIGHTS_RESERVATION_AMT			25
@@ -23,6 +20,7 @@ namespace gr
 {
 	class Camera;
 	class Light;
+	class RenderMesh;
 }
 
 namespace fr
@@ -32,10 +30,6 @@ namespace fr
 
 namespace SaberEngine
 {
-
-	class Renderable;
-	
-
 	// Indexes for scene cameras used for different rendering roles
 	// Note: Cameras are rendered in the order defined here
 	enum CAMERA_TYPE 
@@ -66,7 +60,6 @@ namespace SaberEngine
 
 		// Cameras:
 		//---------
-		std::vector<std::shared_ptr<gr::Camera>> const& GetCameras(CAMERA_TYPE cameraType);
 		std::shared_ptr<gr::Camera> GetMainCamera()	{ return m_sceneCameras[CAMERA_TYPE_MAIN].at(0); }
 		void RegisterCamera(CAMERA_TYPE cameraType, std::shared_ptr<gr::Camera> newCamera);
 		void ClearCameras();
@@ -76,7 +69,7 @@ namespace SaberEngine
 		// Scene object containers:
 		//-------------------------
 		std::vector<std::shared_ptr<fr::GameObject>> m_gameObjects;
-		std::vector<std::shared_ptr<Renderable>> m_renderables;	// Pointers to Renderables held by GameObjects
+		std::vector<std::shared_ptr<gr::RenderMesh>> m_renderMeshes; // Pointers to render mehse held by GameObjects
 
 
 		// Pointers to point lights also contained in m_deferredLights

@@ -9,6 +9,7 @@
 using gr::Shader;
 using std::shared_ptr;
 using std::make_shared;
+using std::string;
 using glm::vec3;
 
 

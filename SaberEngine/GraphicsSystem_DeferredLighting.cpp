@@ -21,6 +21,7 @@ using en::CoreEngine;
 using std::string;
 using std::shared_ptr;
 using std::make_shared;
+using std::vector;
 using glm::vec3;
 using glm::vec4;
 
@@ -58,7 +59,7 @@ namespace gr
 		deferredLightingTargetSet.CreateColorTargets();
 
 		shared_ptr<Camera> deferredLightingCam = 
-			en::CoreEngine::GetSceneManager()->GetCameras(SaberEngine::CAMERA_TYPE_MAIN).at(0);
+			en::CoreEngine::GetSceneManager()->GetMainCamera();
 
 		
 		// Set the target sets, even if the stages aren't actually used (to ensure they're still valid)

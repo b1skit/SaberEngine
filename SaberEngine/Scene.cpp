@@ -2,12 +2,13 @@
 #include "Light.h"
 #include "Camera.h"
 #include "GameObject.h"
-#include "Renderable.h"
+#include "RenderMesh.h"
 #include "DebugConfiguration.h"
 
 using gr::Camera;
 using gr::Light;
-
+using std::string;
+using std::vector;
 
 namespace SaberEngine
 {
@@ -16,7 +17,7 @@ namespace SaberEngine
 		m_sceneName = sceneName;
 
 		m_gameObjects.reserve(GAMEOBJECTS_RESERVATION_AMT);
-		m_renderables.reserve(RENDERABLES_RESERVATION_AMT);
+		m_renderMeshes.reserve(RENDERMESH_RESERVATION_AMT);
 		m_meshes.reserve(MESHES_RESERVATION_AMT);
 
 		m_sceneCameras.reserve(CAMERA_TYPE_COUNT);
@@ -134,12 +135,6 @@ namespace SaberEngine
 		{
 			LOG_ERROR("Failed to register new camera!");
 		}
-	}
-
-
-	vector<std::shared_ptr<Camera>> const& Scene::GetCameras(CAMERA_TYPE cameraType)
-	{
-		return m_sceneCameras.at(cameraType);
 	}
 
 

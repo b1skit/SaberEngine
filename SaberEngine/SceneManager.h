@@ -34,7 +34,7 @@ namespace SaberEngine
 {
 	class aiTexture;
 	class SceneObject;
-	class Renderable;
+	class RenderMesh;
 	struct Bounds;
 	enum CAMERA_TYPE;
 }
@@ -68,19 +68,15 @@ namespace SaberEngine
 		// sceneName = the root folder name within the ./Scenes/ directory. Must contain an .fbx file with the same name
 		bool LoadScene(std::string const& sceneName);
 
-		inline unsigned int	NumMaterials() { return (int)m_materials.size(); }
-		std::unordered_map<std::string, std::shared_ptr<gr::Material>> const& GetMaterials() const;
 		std::shared_ptr<gr::Material> GetMaterial(std::string const& materialName);
 		
 		inline std::vector<std::shared_ptr<gr::Mesh>> const& GetRenderMeshes() { return m_currentScene->GetMeshes(); }
-		std::vector<std::shared_ptr<gr::Mesh>> const& GetRenderMeshesWithMaterial(std::shared_ptr<gr::Material> targetMaterial);	// Returns ALL meshs if targetMaterial == nullptr
-		std::vector<std::shared_ptr<Renderable>>* GetRenderables();
 
+		std::vector<std::shared_ptr<gr::Light>> const& GetDeferredLights();
 		std::shared_ptr<gr::Light> const& GetAmbientLight();
 		std::shared_ptr<gr::Light> GetKeyLight();
 		inline std::vector<std::shared_ptr<gr::Light>>& GetPointLights() { return m_currentScene->m_pointLights; }
 		
-		std::vector<std::shared_ptr<gr::Camera>> const& GetCameras(CAMERA_TYPE cameraType);
 		std::shared_ptr<gr::Camera>	GetMainCamera();
 		void RegisterCamera(CAMERA_TYPE cameraType, std::shared_ptr<gr::Camera> newCamera);;
 
@@ -92,13 +88,7 @@ namespace SaberEngine
 			gr::Texture::TextureColorSpace colorSpace, 
 			bool loadIfNotFound = true);	
 
-		std::vector<std::shared_ptr<gr::Light>> const& GetDeferredLights();
-
 		std::string const& GetCurrentSceneName() const;
-
-		
-
-	protected:
 
 
 	private:
@@ -118,7 +108,7 @@ namespace SaberEngine
 		void AddMaterial(std::shared_ptr<gr::Material>& newMaterial);	// Add a material to the material array. Note: Material name MUST be unique
 
 		void AssembleMaterialMeshLists(); // Helper function: Compiles vectors filled with meshes that use each material. Must be called once after all meshes have finished loading
-		std::unordered_map<std::string, vector<std::shared_ptr<gr::Mesh>>>m_materialMeshLists;	// Hash table: Maps material names, to a vector of std::shared_ptr<Mesh> using the material
+		std::unordered_map<std::string, std::vector<std::shared_ptr<gr::Mesh>>>m_materialMeshLists;	// Hash table: Maps material names, to a vector of std::shared_ptr<Mesh> using the material
 
 
 		// Scene setup/construction:
@@ -150,11 +140,11 @@ namespace SaberEngine
 		void InitializeTransformValues(aiMatrix4x4 const& source, gr::Transform* dest);	// Helper function: Copy transformation values from Assimp scene to SaberEngine transform
 
 		// Light import helper: Initializes a SaberEngine Light's transform from an assimp scene. Calls InitializeTransformValues()
-		void InitializeLightTransformValues(aiScene const* scene, string const& lightName, gr::Transform* targetLightTransform);
+		void InitializeLightTransformValues(aiScene const* scene, std::string const& lightName, gr::Transform* targetLightTransform);
 		
 		// Find a node with a name matching or containing name
-		aiNode*	FindNodeContainingName(aiScene const* scene, string name);
-		aiNode*	FindNodeRecursiveHelper(aiNode* rootNode, string const& name);	// Recursive helper function: Finds nodes containing name as a substring
+		aiNode*	FindNodeContainingName(aiScene const* scene, std::string name);
+		aiNode*	FindNodeRecursiveHelper(aiNode* rootNode, std::string const& name);	// Recursive helper function: Finds nodes containing name as a substring
 
 
 		// Import light data from loaded scene

@@ -10,6 +10,7 @@
 
 using gr::Material;
 using std::to_string;
+using std::string;
 using glm::vec4;
 
 #define ERROR_TEXTURE_NAME "ErrorTexture"

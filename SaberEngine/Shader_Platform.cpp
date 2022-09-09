@@ -7,6 +7,8 @@
 #include "Shader_OpenGL.h"
 
 using std::ifstream;
+using std::string;
+using std::vector;
 
 
 namespace platform

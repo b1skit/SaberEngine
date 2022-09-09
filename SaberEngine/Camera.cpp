@@ -12,6 +12,7 @@ using gr::Texture;
 using gr::Shader;
 using gr::Transform;
 using std::shared_ptr;
+using std::string;
 using glm::mat4;
 
 namespace gr

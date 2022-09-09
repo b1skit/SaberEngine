@@ -1,6 +1,8 @@
 #include "TextureTarget.h"
 #include "CoreEngine.h"
 
+using std::string;
+
 
 namespace gr
 {

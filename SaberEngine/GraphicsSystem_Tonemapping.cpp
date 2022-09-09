@@ -11,6 +11,7 @@ using gr::DeferredLightingGraphicsSystem;
 using gr::TextureTargetSet;
 using std::shared_ptr;
 using std::make_shared;
+using std::string;
 using glm::vec3;
 
 

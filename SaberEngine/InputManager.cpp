@@ -7,6 +7,7 @@
 
 using en::CoreEngine;
 using en::EventManager;
+using std::string;
 
 
 namespace en
@@ -133,26 +134,22 @@ namespace en
 	{
 		for (int i = 0; i < en::KeyboardButtonState_Count; i++)
 		{
-			SDL_Scancode theScancode;
-
 			string buttonString = CoreEngine::GetCoreEngine()->GetConfig()->GetValueAsString(en::KEY_NAMES[i]);
 
 			// Handle chars:
 			if (buttonString.length() == 1)
 			{
-				theScancode = SDL_GetScancodeFromKey((SDL_Keycode)buttonString.c_str()[0]);
+				m_inputKeyboardBindings[i] = SDL_GetScancodeFromKey((SDL_Keycode)buttonString.c_str()[0]);
 			}
 			// Handle strings:
 			else
 			{
 				auto result = en::ScancodeMappings.find(buttonString);
-				if (result != en::ScancodeMappings.end())
-				{
-					theScancode = result->second;
-				}
-			}
 
-			m_inputKeyboardBindings[i] = theScancode;
+				SEAssert("Invalid button string", result != en::ScancodeMappings.end());
+				
+				m_inputKeyboardBindings[i] = result->second;
+			}
 		}
 	}
 }

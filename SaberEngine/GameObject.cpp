@@ -7,26 +7,24 @@ namespace fr
 {
 	GameObject::GameObject(string const& name) : 
 		fr::SceneObject::SceneObject(name),
-		m_renderable(std::make_shared<SaberEngine::Renderable>()) 
+		m_renderMesh(std::make_shared<gr::RenderMesh>(&m_transform))
 	{
-		m_renderable->SetTransform(&m_transform);
 	}
 
 
-	GameObject::GameObject(string const& name, std::shared_ptr<SaberEngine::Renderable> const& renderable) :
+	GameObject::GameObject(string const& name, std::shared_ptr<gr::RenderMesh> const& rendermesh) :
 		SceneObject::SceneObject(name),
-			m_renderable(renderable)
+			m_renderMesh(rendermesh)
 	{
-		m_renderable->SetTransform(&m_transform);
+		m_renderMesh->SetTransform(&m_transform);
 	}
 
 
 	GameObject::GameObject(GameObject const& gameObject) : 
 		fr::SceneObject(gameObject.GetName()),
-		m_renderable(gameObject.m_renderable)
+		m_renderMesh(gameObject.m_renderMesh)
 	{
 		m_transform = gameObject.m_transform;
-		m_renderable->SetTransform(&m_transform);
 	}
 
 }
