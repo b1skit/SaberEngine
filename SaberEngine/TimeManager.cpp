@@ -1,10 +1,11 @@
+#include <SDL.h>
+
 #include "TimeManager.h"
 #include "CoreEngine.h"
 #include "DebugConfiguration.h"
 
-#include <SDL.h>
 
-namespace SaberEngine
+namespace en
 {
 	// Static values:
 	unsigned int TimeManager::m_startTime;
@@ -17,14 +18,6 @@ namespace SaberEngine
 	{
 		m_startTime = m_prevTime = m_currentTime = SDL_GetTicks();
 	}
-
-
-	TimeManager& TimeManager::Instance()
-	{
-		static TimeManager* instance = new TimeManager();
-		return *instance;
-	}
-
 
 	void TimeManager::Startup()
 	{

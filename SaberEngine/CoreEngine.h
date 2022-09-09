@@ -58,7 +58,7 @@ namespace en
 
 		// Private engine component singletons:	
 		std::shared_ptr<en::LogManager> const	m_logManager;
-		std::shared_ptr<SaberEngine::TimeManager> const		m_timeManager;
+		std::shared_ptr<en::TimeManager> const		m_timeManager;
 
 		// Static Engine component singletons
 		static CoreEngine*									m_coreEngine;

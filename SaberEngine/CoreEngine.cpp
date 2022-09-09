@@ -24,7 +24,7 @@ namespace en
 		m_FixedTimeStep(1000.0 / 120.0),
 		m_isRunning(false),
 		m_logManager(make_shared<en::LogManager>()),
-		m_timeManager(make_shared<SaberEngine::TimeManager>())
+		m_timeManager(make_shared<en::TimeManager>())
 	{
 		m_coreEngine = this;
 
