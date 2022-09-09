@@ -13,7 +13,7 @@
 
 namespace en
 {
-	class CoreEngine : public virtual SaberEngine::SaberObject, public virtual SaberEngine::EventListener
+	class CoreEngine : public virtual SaberEngine::SaberObject, public virtual en::EventListener
 	{
 	public:
 		CoreEngine(int argc, char** argv);
@@ -26,8 +26,8 @@ namespace en
 
 		// Static Engine component singletons getters:		
 		static inline CoreEngine*					GetCoreEngine()		{ return m_coreEngine; }
-		static inline SaberEngine::EventManager*	GetEventManager()	{ return m_eventManager.get(); }
-		static inline fr::InputManager*				GetInputManager()	{ return m_inputManager.get(); }
+		static inline en::EventManager*	GetEventManager()	{ return m_eventManager.get(); }
+		static inline en::InputManager*				GetInputManager()	{ return m_inputManager.get(); }
 		static inline SaberEngine::SceneManager*	GetSceneManager()	{ return m_sceneManager.get(); }
 		static inline re::RenderManager*			GetRenderManager()	{ return m_renderManager.get(); }
 		
@@ -44,7 +44,7 @@ namespace en
 		void Update() override;
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<SaberEngine::EventInfo const> eventInfo) override;
+		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override;
 
 		
 	private:	
@@ -57,13 +57,13 @@ namespace en
 		static en::EngineConfig m_config;
 
 		// Private engine component singletons:	
-		std::shared_ptr<fr::LogManager> const	m_logManager;
+		std::shared_ptr<en::LogManager> const	m_logManager;
 		std::shared_ptr<SaberEngine::TimeManager> const		m_timeManager;
 
 		// Static Engine component singletons
 		static CoreEngine*									m_coreEngine;
-		static std::shared_ptr<SaberEngine::EventManager>	m_eventManager;
-		static std::shared_ptr<fr::InputManager>			m_inputManager;
+		static std::shared_ptr<en::EventManager>	m_eventManager;
+		static std::shared_ptr<en::InputManager>			m_inputManager;
 		static std::shared_ptr<SaberEngine::SceneManager>	m_sceneManager;
 		static std::shared_ptr<re::RenderManager>			m_renderManager;
 

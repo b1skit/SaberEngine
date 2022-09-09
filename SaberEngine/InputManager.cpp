@@ -1,13 +1,15 @@
+#include <SDL.h>
+
 #include "InputManager.h"
 #include "CoreEngine.h"
 #include "DebugConfiguration.h"
+#include "EventManager.h"
 
 using en::CoreEngine;
-using SaberEngine::EventManager;
-using SaberEngine::EventInfo;
+using en::EventManager;
 
 
-namespace fr
+namespace en
 {
 	// Static members:
 	bool InputManager::m_keyboardButtonStates[SaberEngine::INPUT_NUM_BUTTONS];
@@ -121,7 +123,7 @@ namespace fr
 	}
 
 
-	void InputManager::HandleEvent(std::shared_ptr<EventInfo const> eventInfo)
+	void InputManager::HandleEvent(std::shared_ptr<EventManager::EventInfo const> eventInfo)
 	{
 		
 	}

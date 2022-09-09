@@ -14,8 +14,8 @@ namespace en
 	en::EngineConfig							CoreEngine::m_config;
 
 	CoreEngine*									CoreEngine::m_coreEngine	= nullptr;
-	std::shared_ptr<SaberEngine::EventManager>	CoreEngine::m_eventManager	= nullptr;
-	std::shared_ptr<fr::InputManager>	CoreEngine::m_inputManager	= nullptr;
+	std::shared_ptr<en::EventManager>	CoreEngine::m_eventManager	= nullptr;
+	std::shared_ptr<en::InputManager>	CoreEngine::m_inputManager	= nullptr;
 	std::shared_ptr<SaberEngine::SceneManager>	CoreEngine::m_sceneManager	= nullptr;
 	std::shared_ptr<re::RenderManager>			CoreEngine::m_renderManager	= nullptr;
 
@@ -23,7 +23,7 @@ namespace en
 	CoreEngine::CoreEngine(int argc, char** argv) : SaberEngine::SaberObject("CoreEngine"),
 		m_FixedTimeStep(1000.0 / 120.0),
 		m_isRunning(false),
-		m_logManager(make_shared<fr::LogManager>()),
+		m_logManager(make_shared<en::LogManager>()),
 		m_timeManager(make_shared<SaberEngine::TimeManager>())
 	{
 		m_coreEngine = this;
@@ -40,8 +40,8 @@ namespace en
 		LOG("CoreEngine starting...");
 
 		// Initialize manager singletons:
-		m_eventManager	= std::make_shared<SaberEngine::EventManager>();
-		m_inputManager	= std::make_shared <fr::InputManager>();
+		m_eventManager	= std::make_shared<en::EventManager>();
+		m_inputManager	= std::make_shared <en::InputManager>();
 		m_sceneManager	= std::make_shared<SaberEngine::SceneManager>();
 		m_renderManager	= std::make_shared<re::RenderManager>();
 
@@ -49,7 +49,7 @@ namespace en
 		m_eventManager->Startup();
 		m_logManager->Startup();
 
-		m_eventManager->Subscribe(SaberEngine::EVENT_ENGINE_QUIT, this);
+		m_eventManager->Subscribe(en::EventManager::EngineQuit, this);
 
 		m_timeManager->Startup();
 
@@ -142,8 +142,6 @@ namespace en
 		m_sceneManager = nullptr;
 		m_eventManager = nullptr;
 
-		SDL_Quit();
-
 		return;
 	}
 
@@ -159,19 +157,22 @@ namespace en
 		// Generate a quit event if the quit button is pressed:
 		if (m_inputManager->GetKeyboardInputState(SaberEngine::INPUT_BUTTON_QUIT) == true)
 		{
-			m_eventManager->Notify(std::make_shared<SaberEngine::EventInfo const>(SaberEngine::EventInfo{
-				SaberEngine::EVENT_ENGINE_QUIT,
-				this,
-				"Core Engine Quit"}));
+			m_eventManager->Notify(
+				std::make_shared<en::EventManager::EventInfo const>(en::EventManager::EventInfo
+				{
+					en::EventManager::EngineQuit,
+					this,
+					"Core Engine Quit"
+				}));
 		}
 	}
 
 
-	void CoreEngine::HandleEvent(std::shared_ptr<SaberEngine::EventInfo const> eventInfo)
+	void CoreEngine::HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo)
 	{
 		switch (eventInfo->m_type)
 		{
-		case SaberEngine::EVENT_ENGINE_QUIT:
+		case en::EventManager::EngineQuit:
 		{
 			Stop();
 		}			

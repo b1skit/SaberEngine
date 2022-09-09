@@ -1,5 +1,3 @@
-// Handles logging for the engine and 
-
 #include "EventManager.h"
 #include "SaberObject.h"
 #include "CoreEngine.h"
@@ -9,15 +7,46 @@
 #include <SDL.h>
 
 
-namespace SaberEngine
+namespace en
 {
+	// Matched event string names:
+	const std::string EventManager::EventName[EventType_Count] =
+	{
+		// System:
+		"EngineQuit",
+
+		// Button inputs:
+		"InputButtonDown_Forward",
+		"InputButtonUp_Forward",
+		"InputButtonDown_Backward",
+		"InputButtonUp_Backward",
+		"InputButtonDown_Left",
+		"InputButtonUp_Left",
+		"InputButtonDown_Right",
+		"InputButtonUp_Right",
+		"InputButtonDown_Up",
+		"InputButtonUp_Up",
+		"InputButtonDown_Down",
+		"InputButtonUp_Down",
+
+		// Mouse inputs:
+		"InputMouseClick_Left",
+		"InputMouseRelease_Left",
+		"InputMouseClick_Right",
+		"InputMouseRelease_Right",
+
+	}; // NOTE: String order must match the order of EventType enum
+
+
 	EventManager::EventManager() : EngineComponent("EventManager")
 	{
-		m_eventQueues.reserve(EVENT_NUM_EVENTS);
-		for (int i = 0; i < EVENT_NUM_EVENTS; i++)
+		m_eventQueues.reserve(EventType_Count);
+		for (int i = 0; i < EventType_Count; i++)
 		{
 			m_eventQueues.push_back(vector<std::shared_ptr<EventInfo const>>());
 		}
+
+		const size_t EVENT_QUEUE_START_SIZE = 100; // The starting size of the event queue to reserve
 
 		m_eventListeners.reserve(EVENT_QUEUE_START_SIZE);
 		for (int i = 0; i < EVENT_QUEUE_START_SIZE; i++)
@@ -43,22 +72,19 @@ namespace SaberEngine
 
 	void EventManager::Update()
 	{
-		// Check for SDL quit events (only). We do this instead of parsing the entire queue with SDL_PollEvent(), which removed input events we needed
+		// Check for SDL quit events (only). 
+		// We do this instead of parsing the entire queue with SDL_PollEvent(), which removed input events we needed
 		SDL_PumpEvents();
 		
 		#define NUM_EVENTS 1
 		SDL_Event eventBuffer[NUM_EVENTS]; // 
 		if (SDL_PeepEvents(eventBuffer, NUM_EVENTS, SDL_GETEVENT, SDL_QUIT, SDL_QUIT) > 0)
 		{
-			Notify(std::make_shared<EventInfo const>(
-				EventInfo({ 
-					EVENT_ENGINE_QUIT, 
-					this, 
-					"Received SDL_QUIT event" })));
+			Notify(std::make_shared<EventInfo const>(EventInfo({EngineQuit, this, "Received SDL_QUIT event"})));
 		}
 
 		// Loop through each type of event:
-		for (int currentEventType = 0; currentEventType < EVENT_NUM_EVENTS; currentEventType++)
+		for (int currentEventType = 0; currentEventType < EventType_Count; currentEventType++)
 		{
 			// Loop through each event item in the current event queue:
 			size_t numCurrentEvents = m_eventQueues[currentEventType].size();
@@ -81,20 +107,11 @@ namespace SaberEngine
 	}
 
 
-	void EventManager::Subscribe(EVENT_TYPE eventType, EventListener* listener)
+	void EventManager::Subscribe(EventType eventType, EventListener* listener)
 	{
 		m_eventListeners[eventType].push_back(listener);
 		return;
 	}
-
-
-	//void EventManager::Unsubscribe(EventListener * listener)
-	//{
-	//	// DEBUG:
-	//	Notify(EventInfo{ EVENT_ERROR, this, "EventManager.Unsubscribe() was called, but is NOT implemented!"});
-
-	//	return;
-	//}
 
 
 	void EventManager::Notify(std::shared_ptr<EventInfo const> eventInfo)

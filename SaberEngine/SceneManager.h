@@ -39,7 +39,7 @@ namespace SaberEngine
 namespace SaberEngine
 {
 	// Scene Manager: Manages scenes
-	class SceneManager : public virtual en::EngineComponent, public virtual EventListener
+	class SceneManager : public virtual en::EngineComponent, public virtual en::EventListener
 	{
 	public:
 		SceneManager(); // Reserve vector memory
@@ -57,7 +57,7 @@ namespace SaberEngine
 		void Destroy() {}	// Do nothing, for now...
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo) override;
+		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override;
 
 		// Member functions:
 		//------------------

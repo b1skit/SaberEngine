@@ -5,9 +5,9 @@
 #include "KeyConfiguration.h"
 
 
-namespace fr
+namespace en
 {
-	class InputManager : public virtual en::EngineComponent, public virtual SaberEngine::EventListener
+	class InputManager : public virtual en::EngineComponent, public virtual en::EventListener
 	{
 	public:
 		InputManager();
@@ -29,7 +29,7 @@ namespace fr
 		void Update() override;
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<SaberEngine::EventInfo const> eventInfo) override;
+		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override;
 
 	private:
 		void LoadInputBindings();

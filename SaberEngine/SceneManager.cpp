@@ -37,6 +37,7 @@ using gr::Light;
 using gr::ShadowMap;
 using gr::Transform;
 using en::CoreEngine;
+using en::EventManager;
 using fr::PlayerObject;
 using std::shared_ptr;
 using glm::pi;
@@ -50,15 +51,13 @@ using glm::vec4;
 namespace SaberEngine
 {
 	SceneManager::SceneManager() : EngineComponent("SceneManager")
-	{
-		
+	{	
 	}
 
 
 	void SceneManager::Startup()
 	{
 		LOG("SceneManager starting...");
-
 	}
 
 
@@ -67,7 +66,6 @@ namespace SaberEngine
 		LOG("Scene manager shutting down...");
 
 		m_currentScene = nullptr;
-		
 
 		// Scene manager cleanup:
 		if (m_materials.size() > 0)
@@ -100,7 +98,7 @@ namespace SaberEngine
 	}
 
 
-	void SceneManager::HandleEvent(shared_ptr<EventInfo const> eventInfo)
+	void SceneManager::HandleEvent(shared_ptr<EventManager::EventInfo const> eventInfo)
 	{
 		return;
 	}
@@ -114,7 +112,12 @@ namespace SaberEngine
 				"argument?", sceneName != "");
 			
 			CoreEngine::GetEventManager()->Notify(
-				std::make_shared<EventInfo const>( EventInfo{ EVENT_ENGINE_QUIT, this, "No scene name received"}));
+				std::make_shared<EventManager::EventInfo const>( EventManager::EventInfo
+				{ 
+					EventManager::EngineQuit,
+					this, 
+					"No scene name received"
+				}));
 			return false;
 		}
 
@@ -142,9 +145,9 @@ namespace SaberEngine
 		if (!scene)
 		{
 			CoreEngine::GetEventManager()->Notify(
-				std::make_shared<EventInfo const>(
-					EventInfo{ 
-						EVENT_ENGINE_QUIT, 
+				std::make_shared<EventManager::EventInfo const>(EventManager::EventInfo
+					{
+						EventManager::EngineQuit,
 						nullptr, 
 						"Failed to load scene file: " + fbxPath + ": " + importer.GetErrorString() }
 					)

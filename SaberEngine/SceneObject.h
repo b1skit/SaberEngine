@@ -9,7 +9,7 @@
 
 namespace SaberEngine
 {
-	class SceneObject : public SaberObject, public virtual EventListener
+	class SceneObject : public SaberObject, public virtual en::EventListener
 	{
 	public:
 		SceneObject(std::string const& newName) : SaberObject::SaberObject(newName) {}

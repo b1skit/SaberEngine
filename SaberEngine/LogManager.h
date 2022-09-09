@@ -9,9 +9,9 @@ using std::cout;
 #include "EngineComponent.h"
 
 
-namespace fr
+namespace en
 {
-	class LogManager : public virtual en::EngineComponent, public virtual SaberEngine::EventListener
+	class LogManager : public virtual en::EngineComponent, public virtual en::EventListener
 	{
 	public:
 		LogManager() : EngineComponent("LogManager") {}
@@ -31,7 +31,7 @@ namespace fr
 		void Update() override;
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<SaberEngine::EventInfo const> eventInfo) override;
+		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override;
 
 	private:
 
@@ -109,9 +109,9 @@ namespace fr
 
 #if defined (_DEBUG)
 	#include "LogManager.h"
-	#define LOG(...)			fr::LogManager::Log(__VA_ARGS__);
-	#define LOG_WARNING(...)	fr::LogManager::LogWarning(__VA_ARGS__);
-	#define LOG_ERROR(...)		fr::LogManager::LogError(__VA_ARGS__);
+	#define LOG(...)			en::LogManager::Log(__VA_ARGS__);
+	#define LOG_WARNING(...)	en::LogManager::LogWarning(__VA_ARGS__);
+	#define LOG_ERROR(...)		en::LogManager::LogError(__VA_ARGS__);
 #else
 	// Disable compiler warning C4834: discarding return value of function with 'nodiscard' attribute
 	#pragma warning(disable : 4834) 

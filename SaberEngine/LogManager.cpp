@@ -10,7 +10,7 @@ using std::cout;
 #include "DebugConfiguration.h"
 
 
-namespace fr
+namespace en
 {
 	LogManager& LogManager::Instance()
 	{
@@ -23,32 +23,32 @@ namespace fr
 		LOG("Log manager starting...");
 
 		#if defined(DEBUG_LOGMANAGER_KEY_INPUT_LOGGING)
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_BUTTON_DOWN_FORWARD, this);
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_BUTTON_UP_FORWARD, this);
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_BUTTON_DOWN_BACKWARD, this);
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_BUTTON_UP_BACKWARD, this);
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_BUTTON_DOWN_LEFT, this);
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_BUTTON_UP_LEFT, this);
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_BUTTON_DOWN_RIGHT, this);
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_BUTTON_UP_RIGHT, this);
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_BUTTON_DOWN_UP, this);
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_BUTTON_UP_UP, this);
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_BUTTON_DOWN_DOWN, this);
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_BUTTON_UP_DOWN, this);
+			CoreEngine::GetEventManager()->Subscribe(InputButtonDown_Forward, this);
+			CoreEngine::GetEventManager()->Subscribe(InputButtonUp_Forward, this);
+			CoreEngine::GetEventManager()->Subscribe(InputButtonDown_Backward, this);
+			CoreEngine::GetEventManager()->Subscribe(InputButtonUp_Backward, this);
+			CoreEngine::GetEventManager()->Subscribe(InputButtonDown_Left, this);
+			CoreEngine::GetEventManager()->Subscribe(InputButtonUp_Left, this);
+			CoreEngine::GetEventManager()->Subscribe(InputButtonDown_Right, this);
+			CoreEngine::GetEventManager()->Subscribe(InputButtonUp_Right, this);
+			CoreEngine::GetEventManager()->Subscribe(InputButtonDown_Up, this);
+			CoreEngine::GetEventManager()->Subscribe(InputButtonUp_Up, this);
+			CoreEngine::GetEventManager()->Subscribe(InputButtonDown_Down, this);
+			CoreEngine::GetEventManager()->Subscribe(InputButtonUp_Down, this);
 			LOG("\tKey input logging enabled");
 		#endif
 
 		#if defined(DEBUG_LOGMANAGER_MOUSE_INPUT_LOGGING)
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_MOUSE_CLICK_LEFT, this);
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_MOUSE_RELEASE_LEFT, this);
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_MOUSE_CLICK_RIGHT, this);
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_MOUSE_RELEASE_RIGHT, this);
+			CoreEngine::GetEventManager()->Subscribe(InputMouseClick_Left, this);
+			CoreEngine::GetEventManager()->Subscribe(InputMouseRelease_Left, this);
+			CoreEngine::GetEventManager()->Subscribe(InputMouseClick_Right, this);
+			CoreEngine::GetEventManager()->Subscribe(InputMouseRelease_Right, this);
 			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_MOUSE_MOVED, this);
 			LOG("\tMouse input logging enabled");
 		#endif
 
 		#if defined(DEBUG_LOGMANAGER_QUIT_LOGGING)
-			CoreEngine::GetEventManager()->Subscribe(EVENT_ENGINE_QUIT, this);
+			CoreEngine::GetEventManager()->Subscribe(EngineQuit, this);
 			LOG("\tQuit event logging enabled");
 		#endif
 	}
@@ -65,10 +65,10 @@ namespace fr
 	}
 
 
-	void LogManager::HandleEvent(std::shared_ptr<SaberEngine::EventInfo const> eventInfo)
+	void LogManager::HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo)
 	{
 		#if defined(DEBUG_LOGMANAGER_LOG_EVENTS)
-			string logMessage = EVENT_NAME[eventInfo->m_type] + ": Object #";
+			string logMessage = EventName[eventInfo->m_type] + ": Object #";
 
 			if (eventInfo->m_generator)
 			{

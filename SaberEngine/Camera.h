@@ -46,7 +46,7 @@ namespace gr
 		void Update() override { /*Do nothing*/ }
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<SaberEngine::EventInfo const> eventInfo) override { /*Do nothing*/ }
+		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override { /*Do nothing*/ }
 
 		inline float const FieldOfView() const { return m_cameraConfig.m_fieldOfView; }
 		inline float const Near() const { return m_cameraConfig.m_near; }

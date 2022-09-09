@@ -1,100 +1,67 @@
-// Saber Engine Event Generator
-
 #pragma once
-#include "EngineComponent.h"	// Base class
 
 #include <vector>
 #include <memory>
 
-#include <SDL.h>
-
-using std::vector;
+#include "EngineComponent.h"
 
 
-namespace SaberEngine
+namespace en
 {
-	// Predeclarations:
-	class EventListener;
-
-
-	const static int EVENT_QUEUE_START_SIZE = 100; // The starting size of the event queue to reserve
-
-	enum EVENT_TYPE
-	{
-		// System:
-		EVENT_ENGINE_QUIT,
-		
-		// Button inputs:
-		EVENT_INPUT_BUTTON_DOWN_FORWARD,
-		EVENT_INPUT_BUTTON_UP_FORWARD,
-		EVENT_INPUT_BUTTON_DOWN_BACKWARD,
-		EVENT_INPUT_BUTTON_UP_BACKWARD,
-		EVENT_INPUT_BUTTON_DOWN_LEFT,
-		EVENT_INPUT_BUTTON_UP_LEFT,
-		EVENT_INPUT_BUTTON_DOWN_RIGHT,
-		EVENT_INPUT_BUTTON_UP_RIGHT,
-		EVENT_INPUT_BUTTON_DOWN_UP,
-		EVENT_INPUT_BUTTON_UP_UP,
-		EVENT_INPUT_BUTTON_DOWN_DOWN,
-		EVENT_INPUT_BUTTON_UP_DOWN,
-		
-		// Mouse inputs:
-		EVENT_INPUT_MOUSE_CLICK_LEFT,
-		EVENT_INPUT_MOUSE_RELEASE_LEFT,
-		EVENT_INPUT_MOUSE_CLICK_RIGHT,
-		EVENT_INPUT_MOUSE_RELEASE_RIGHT,
-
-		// EVENT_TICK ??
-		// EVENT_UPDATE ??
-		// ...
-
-		EVENT_NUM_EVENTS // RESERVED: A count of the number of EVENT_TYPE's
-	};
-	
-	// Matched event string names:
-	const static std::string EVENT_NAME[EVENT_NUM_EVENTS] =
-	{
-		// System:
-		"EVENT_ENGINE_QUIT", 
-
-		// Button inputs:
-		"EVENT_INPUT_BUTTON_DOWN_FORWARD",
-		"EVENT_INPUT_BUTTON_UP_FORWARD",
-		"EVENT_INPUT_BUTTON_DOWN_BACKWARD",
-		"EVENT_INPUT_BUTTON_UP_BACKWARD",
-		"EVENT_INPUT_BUTTON_DOWN_LEFT",
-		"EVENT_INPUT_BUTTON_UP_LEFT",
-		"EVENT_INPUT_BUTTON_DOWN_RIGHT",
-		"EVENT_INPUT_BUTTON_UP_RIGHT",
-		"EVENT_INPUT_BUTTON_DOWN_UP",
-		"EVENT_INPUT_BUTTON_UP_UP",
-		"EVENT_INPUT_BUTTON_DOWN_DOWN",
-		"EVENT_INPUT_BUTTON_UP_DOWN",
-
-		// Mouse inputs:
-		"EVENT_INPUT_MOUSE_CLICK_LEFT",
-		"EVENT_INPUT_MOUSE_RELEASE_LEFT",
-		"EVENT_INPUT_MOUSE_CLICK_RIGHT",
-		"EVENT_INPUT_MOUSE_RELEASE_RIGHT",
-
-	}; // NOTE: String order must match the order of EVENT_TYPE enum
-
-
-	struct EventInfo
-	{
-		EVENT_TYPE m_type;
-		SaberObject* m_generator;
-		std::string m_eventMessage;
-	};
+	class EventListener;	
 
 
 	class EventManager : public virtual en::EngineComponent
 	{
 	public:
+		enum EventType
+		{
+			// System:
+			EngineQuit,
+
+			// Button inputs:
+			InputButtonDown_Forward,
+			InputButtonUp_Forward,
+			InputButtonDown_Backward,
+			InputButtonUp_Backward,
+			InputButtonDown_Left,
+			InputButtonUp_Left,
+			InputButtonDown_Right,
+			InputButtonUp_Right,
+			InputButtonDown_Up,
+			InputButtonUp_Up,
+			InputButtonDown_Down,
+			InputButtonUp_Down,
+
+			// Mouse inputs:
+			InputMouseClick_Left,
+			InputMouseRelease_Left,
+			InputMouseClick_Right,
+			InputMouseRelease_Right,
+
+			// EventTick ??
+			// EventUpdate ??
+			// ...
+
+			EventType_Count // RESERVED: A count of the number of EventType's
+		};
+
+		// Matched event string names:
+		const static std::string EventName[EventType_Count];
+
+		struct EventInfo
+		{
+			EventType m_type;
+			SaberObject* m_generator;
+			std::string m_eventMessage;
+		};
+
+
+	public:
 		EventManager();
 		~EventManager() = default;
 		
-		EventManager(EventManager const&) = delete; // Disallow copying of our Singleton
+		EventManager(EventManager const&) = delete;
 		EventManager(EventManager&&) = delete;
 		void operator=(EventManager const&) = delete;
 		
@@ -104,13 +71,12 @@ namespace SaberEngine
 		void Update() override;
 
 		// Member functions:
-		void Subscribe(EVENT_TYPE eventType, EventListener* listener); // Subscribe to an event
-		/*void Unsubscribe(EventListener* listener);*/
+		void Subscribe(EventType eventType, EventListener* listener); // Subscribe to an event
 		void Notify(std::shared_ptr<EventInfo const> eventInfo); // Post an event
 
 	private:
-		vector< vector<std::shared_ptr<EventInfo const>>> m_eventQueues;
-		vector< vector<EventListener*>> m_eventListeners;
+		std::vector<std::vector<std::shared_ptr<EventInfo const>>> m_eventQueues;
+		std::vector<std::vector<EventListener*>> m_eventListeners;
 	};
 
 

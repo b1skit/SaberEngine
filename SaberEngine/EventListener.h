@@ -2,18 +2,15 @@
 
 #include <memory>
 
-namespace SaberEngine
-{
-	// Predeclaration:
-	struct EventInfo;
+#include "EventManager.h"
 
+
+namespace en
+{
 	class EventListener
 	{
 	public:
-		virtual void HandleEvent(std::shared_ptr<EventInfo const> eventInfo) = 0;
-
-	private:
-
+		virtual void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) = 0;
 	};
 
 }

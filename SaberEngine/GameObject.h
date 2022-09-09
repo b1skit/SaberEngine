@@ -30,7 +30,7 @@ namespace SaberEngine
 		void Update() override {}
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<EventInfo const> eventInfo) override {}
+		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override {}
 
 		// Getters/Setters:
 		inline std::shared_ptr<Renderable> GetRenderable() { return m_renderable; }
