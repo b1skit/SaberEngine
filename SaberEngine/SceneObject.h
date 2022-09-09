@@ -1,27 +1,29 @@
-// Scene object interface
-
 #pragma once
 
-#include "SaberObject.h"	// Base class
-#include "EventListener.h"	// Base class
+#include "SaberObject.h"
+#include "EventListener.h"
 #include "Transform.h"
 
 
-namespace SaberEngine
+namespace fr
 {
-	class SceneObject : public SaberObject, public virtual en::EventListener
+	class SceneObject : public en::SaberObject, public virtual en::EventListener
 	{
 	public:
-		SceneObject(std::string const& newName) : SaberObject::SaberObject(newName) {}
+		SceneObject(std::string const& newName) : en::SaberObject::SaberObject(newName) {}
 
-		SceneObject() = delete;
-
-		SceneObject(SceneObject&&) = default;
-		SceneObject(const SceneObject& sceneObject) : SaberObject(sceneObject.GetName())
+		SceneObject(const SceneObject& sceneObject) : en::SaberObject(sceneObject.GetName())
 		{
 			m_transform = sceneObject.m_transform;
 		}
+
+		SceneObject(SceneObject&&) = default;
+		SceneObject& operator=(SceneObject const&) = default;
+
+		SceneObject() = delete;
+
 		virtual ~SceneObject() = 0;
+
 
 		// SaberObject interface:
 		void Update() override = 0;
@@ -35,7 +37,6 @@ namespace SaberEngine
 		gr::Transform m_transform;
 		
 	private:
-		
 	};
 
 

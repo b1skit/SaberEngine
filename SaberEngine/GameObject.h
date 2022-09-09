@@ -6,15 +6,15 @@
 
 namespace SaberEngine
 {
-	class GameObject : public virtual SceneObject
+	class GameObject : public virtual fr::SceneObject
 	{
 	public:
-		GameObject(std::string const& name) : SceneObject::SceneObject(name),
+		GameObject(std::string const& name) : fr::SceneObject::SceneObject(name),
 			m_renderable( std::make_shared<Renderable>() ) {m_renderable->SetTransform(&m_transform); }
 
 		GameObject(std::string const& name, std::shared_ptr<Renderable> const& renderable);
 
-		GameObject(GameObject const& gameObject) : SceneObject(gameObject.GetName())
+		GameObject(GameObject const& gameObject) : fr::SceneObject(gameObject.GetName())
 		{
 			m_renderable = gameObject.m_renderable;
 			m_transform = gameObject.m_transform;

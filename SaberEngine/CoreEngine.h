@@ -13,7 +13,7 @@
 
 namespace en
 {
-	class CoreEngine : public virtual SaberEngine::SaberObject, public virtual en::EventListener
+	class CoreEngine : public virtual en::SaberObject, public virtual en::EventListener
 	{
 	public:
 		CoreEngine(int argc, char** argv);

@@ -21,7 +21,7 @@ namespace en
 	std::shared_ptr<re::RenderManager>			CoreEngine::m_renderManager	= nullptr;
 
 
-	CoreEngine::CoreEngine(int argc, char** argv) : SaberEngine::SaberObject("CoreEngine"),
+	CoreEngine::CoreEngine(int argc, char** argv) : en::SaberObject("CoreEngine"),
 		m_FixedTimeStep(1000.0 / 120.0),
 		m_isRunning(false),
 		m_logManager(make_shared<en::LogManager>()),

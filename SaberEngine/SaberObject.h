@@ -3,7 +3,7 @@
 #include <string>
 
 
-namespace SaberEngine
+namespace en
 {
 	class SaberObject
 	{
@@ -23,12 +23,12 @@ namespace SaberEngine
 		virtual void Update() = 0;
 
 		// Getters/Setters:
-		inline unsigned long GetObjectID() { return objectID; }
+		inline unsigned long GetObjectID() const { return objectID; }
 
-		inline std::string GetName() const { return m_name; }
+		inline std::string const& GetName() const { return m_name; }
 
 		// Used to hash objects when inserting into an unordered_map
-		inline std::string GetHashString() { return m_hashString; }
+		inline std::string const& GetHashString() const { return m_hashString; }
 		
 
 	protected:

@@ -18,7 +18,7 @@ namespace gr
 
 namespace gr
 {
-	class Light : public virtual SaberEngine::SceneObject
+	class Light : public virtual fr::SceneObject
 	{
 	public:
 		enum LightType

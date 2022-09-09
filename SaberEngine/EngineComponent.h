@@ -6,10 +6,10 @@
 namespace en
 {
 	// EngineComponent Interface: Functionality common to components in main game loop
-	class EngineComponent : public SaberEngine::SaberObject
+	class EngineComponent : public en::SaberObject
 	{
 	public:
-		EngineComponent(std::string const& name) : SaberEngine::SaberObject(name) {}
+		EngineComponent(std::string const& name) : en::SaberObject(name) {}
 
 		virtual ~EngineComponent() = 0;
 

@@ -10,7 +10,7 @@
 
 namespace gr
 {
-	class Camera : public virtual SaberEngine::SceneObject
+	class Camera : public virtual fr::SceneObject
 	{
 	public:
 		struct CameraConfig
