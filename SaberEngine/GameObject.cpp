@@ -3,23 +3,31 @@
 using std::string;
 
 
-namespace SaberEngine
+namespace fr
 {
-	GameObject::GameObject(string const& name, std::shared_ptr<Renderable> const& renderable) : 
-		SceneObject::SceneObject(name),
-			m_renderable{ renderable }
+	GameObject::GameObject(string const& name) : 
+		fr::SceneObject::SceneObject(name),
+		m_renderable(std::make_shared<SaberEngine::Renderable>()) 
 	{
 		m_renderable->SetTransform(&m_transform);
 	}
 
-	//void SaberEngine::GameObject::Update()
-	//{
 
-	//}
+	GameObject::GameObject(string const& name, std::shared_ptr<SaberEngine::Renderable> const& renderable) :
+		SceneObject::SceneObject(name),
+			m_renderable(renderable)
+	{
+		m_renderable->SetTransform(&m_transform);
+	}
 
-	//void SaberEngine::GameObject::HandleEvent(std::shared_ptr<EventInfo const> eventInfo)
-	//{
 
-	//}
+	GameObject::GameObject(GameObject const& gameObject) : 
+		fr::SceneObject(gameObject.GetName()),
+		m_renderable(gameObject.m_renderable)
+	{
+		m_transform = gameObject.m_transform;
+		m_renderable->SetTransform(&m_transform);
+	}
+
 }
 

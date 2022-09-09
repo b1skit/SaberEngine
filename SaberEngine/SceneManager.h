@@ -25,16 +25,19 @@ namespace gr
 	class Transform;
 }
 
+namespace fr
+{
+	class GameObject;
+}
+
 namespace SaberEngine
 {
 	class aiTexture;
 	class SceneObject;
-	class GameObject;
 	class Renderable;
 	struct Bounds;
 	enum CAMERA_TYPE;
 }
-
 
 namespace SaberEngine
 {
@@ -101,10 +104,10 @@ namespace SaberEngine
 	private:
 		// Scene management:
 		//------------------
-		std::shared_ptr<Scene> m_currentScene = nullptr;
+		std::shared_ptr<SaberEngine::Scene> m_currentScene = nullptr;
 
 		// Add a game object and register it with the various tracking lists
-		void AddGameObject(std::shared_ptr<GameObject> newGameObject);
+		void AddGameObject(std::shared_ptr<fr::GameObject> newGameObject);
 
 		// Material management:
 		//---------------------
@@ -139,7 +142,7 @@ namespace SaberEngine
 
 		// Scene geometry import helper: Create a GameObject transform hierarchy and return the GameObject parent. 
 		// Note: Adds the GameObject to the currentScene's gameObjects
-		std::shared_ptr<GameObject>	FindCreateGameObjectParents(aiScene const* scene, aiNode* parent);
+		std::shared_ptr<fr::GameObject>	FindCreateGameObjectParents(aiScene const* scene, aiNode* parent);
 
 		// Scene geometry import helper : Combines seperated transform nodes found throughout the scene graph.
 		// Finds and combines the FIRST instance of Translation, Scaling, Rotation matrices in the parenting hierarchy

@@ -39,6 +39,7 @@ using gr::Transform;
 using en::CoreEngine;
 using en::EventManager;
 using fr::PlayerObject;
+using fr::GameObject;
 using std::shared_ptr;
 using glm::pi;
 using glm::vec3;
@@ -1110,7 +1111,7 @@ namespace SaberEngine
 
 			shared_ptr<gr::Mesh> newMesh = std::make_shared<gr::Mesh>(meshName, vertices, indices, GetMaterial(materialName));
 
-			shared_ptr<GameObject> gameObject		= FindCreateGameObjectParents(scene, currentNode->mParent);
+			shared_ptr<GameObject> gameObject = FindCreateGameObjectParents(scene, currentNode->mParent);
 
 			Transform* targetTransform	= nullptr;
 

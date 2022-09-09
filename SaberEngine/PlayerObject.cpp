@@ -16,7 +16,7 @@ using en::TimeManager;
 namespace fr
 {
 	PlayerObject::PlayerObject(std::shared_ptr<Camera> playerCam) : 
-		SaberEngine::GameObject::GameObject("Player Object"), SceneObject("Player Object"),
+		fr::GameObject("Player Object"), SceneObject("Player Object"),
 		m_playerCam(playerCam),
 		m_movementSpeed(0.003f),
 		m_savedPosition(vec3(0.0f, 0.0f, 0.0f)),

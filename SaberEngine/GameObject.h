@@ -1,25 +1,17 @@
 #pragma once
 
-#include "SceneObject.h"	// Base class
+#include "SceneObject.h"
 #include "Renderable.h"
 
 
-namespace SaberEngine
+namespace fr
 {
 	class GameObject : public virtual fr::SceneObject
 	{
 	public:
-		GameObject(std::string const& name) : fr::SceneObject::SceneObject(name),
-			m_renderable( std::make_shared<Renderable>() ) {m_renderable->SetTransform(&m_transform); }
-
-		GameObject(std::string const& name, std::shared_ptr<Renderable> const& renderable);
-
-		GameObject(GameObject const& gameObject) : fr::SceneObject(gameObject.GetName())
-		{
-			m_renderable = gameObject.m_renderable;
-			m_transform = gameObject.m_transform;
-			m_renderable->SetTransform(&m_transform);
-		}
+		GameObject(std::string const& name);
+		GameObject(std::string const& name, std::shared_ptr<SaberEngine::Renderable> const& renderable);
+		GameObject(GameObject const& gameObject);
 
 		GameObject(GameObject&&) = default;
 		~GameObject() = default;
@@ -33,11 +25,11 @@ namespace SaberEngine
 		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override {}
 
 		// Getters/Setters:
-		inline std::shared_ptr<Renderable> GetRenderable() { return m_renderable; }
+		inline std::shared_ptr<SaberEngine::Renderable> GetRenderable() { return m_renderable; }
 
 
 	private:
-		std::shared_ptr<Renderable> m_renderable;
+		std::shared_ptr<SaberEngine::Renderable> m_renderable;
 	};
 }
 

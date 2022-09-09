@@ -25,9 +25,14 @@ namespace gr
 	class Light;
 }
 
-namespace SaberEngine
+namespace fr
 {
 	class GameObject;
+}
+
+namespace SaberEngine
+{
+
 	class Renderable;
 	
 
@@ -70,7 +75,7 @@ namespace SaberEngine
 
 		// Scene object containers:
 		//-------------------------
-		std::vector<std::shared_ptr<GameObject>> m_gameObjects;
+		std::vector<std::shared_ptr<fr::GameObject>> m_gameObjects;
 		std::vector<std::shared_ptr<Renderable>> m_renderables;	// Pointers to Renderables held by GameObjects
 
 
