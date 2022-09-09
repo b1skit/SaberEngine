@@ -10,6 +10,8 @@
 
 using std::ifstream;
 using std::any_cast;
+using std::string;
+
 
 namespace
 {
@@ -51,18 +53,18 @@ namespace en
 			{"sceneRoot",							{string("..\\Scenes\\"), SettingType::Common}},	
 
 			// Key bindings:
-			{MACRO_TO_STR(INPUT_BUTTON_FORWARD),	{'w', SettingType::Common}},
-			{MACRO_TO_STR(INPUT_BUTTON_BACKWARD),	{'s', SettingType::Common}},
-			{MACRO_TO_STR(INPUT_BUTTON_LEFT),		{'a', SettingType::Common}},
-			{MACRO_TO_STR(INPUT_BUTTON_RIGHT),		{'d', SettingType::Common}},
-			{MACRO_TO_STR(INPUT_BUTTON_UP),			{string(SPACE), SettingType::Common}},
-			{MACRO_TO_STR(INPUT_BUTTON_DOWN),		{string(L_SHIFT), SettingType::Common}},
+			{MACRO_TO_STR(InputButton_Forward),	{'w', SettingType::Common}},
+			{MACRO_TO_STR(InputButton_Backward),	{'s', SettingType::Common}},
+			{MACRO_TO_STR(InputButton_Left),		{'a', SettingType::Common}},
+			{MACRO_TO_STR(InputButton_Right),		{'d', SettingType::Common}},
+			{MACRO_TO_STR(InputButton_Up),			{string(SPACE), SettingType::Common}},
+			{MACRO_TO_STR(InputButton_Down),		{string(L_SHIFT), SettingType::Common}},
 
-			{MACRO_TO_STR(INPUT_BUTTON_QUIT),		{string(ESC), SettingType::Common}},
+			{MACRO_TO_STR(InputButton_Quit),		{string(ESC), SettingType::Common}},
 
 			// Mouse bindings:
-			{MACRO_TO_STR(INPUT_MOUSE_LEFT),		{string(MACRO_TO_STR(INPUT_MOUSE_LEFT)), SettingType::Common}},
-			{MACRO_TO_STR(INPUT_MOUSE_RIGHT),		{string(MACRO_TO_STR(INPUT_MOUSE_RIGHT)), SettingType::Common}},
+			{MACRO_TO_STR(InputMouse_Left),		{string(MACRO_TO_STR(InputMouse_Left)), SettingType::Common}},
+			{MACRO_TO_STR(InputMouse_Right),		{string(MACRO_TO_STR(InputMouse_Right)), SettingType::Common}},
 
 		};
 

@@ -7,6 +7,8 @@
 
 namespace en
 {
+	
+
 	class InputManager : public virtual en::EngineComponent, public virtual en::EventListener
 	{
 	public:
@@ -19,9 +21,9 @@ namespace en
 		void operator=(InputManager const&) = delete;
 
 		// Static member functions:
-		static bool const& GetKeyboardInputState(SaberEngine::KEYBOARD_BUTTON_STATE key);
-		static bool const& GetMouseInputState(SaberEngine::MOUSE_BUTTON_STATE button);
-		static float GetMouseAxisInput(SaberEngine::INPUT_AXIS axis);
+		static bool const& GetKeyboardInputState(en::KeyboardButtonState key);
+		static bool const& GetMouseInputState(en::MouseButtonState button);
+		static float GetMouseAxisInput(en::InputAxis axis);
 
 		// EngineComponent interface:
 		void Startup() override;
@@ -34,12 +36,12 @@ namespace en
 	private:
 		void LoadInputBindings();
 
-		int	 m_inputKeyboardBindings[SaberEngine::INPUT_NUM_BUTTONS]; // Maps from KEYBOARD_BUTTON_STATE enums to SDL_SCANCODE_ values
-		static bool m_keyboardButtonStates[SaberEngine::INPUT_NUM_BUTTONS]; // Stores the state of keyboard keys
+		int	 m_inputKeyboardBindings[en::KeyboardButtonState_Count]; // Maps from KeyboardButtonState enums to SDL_SCANCODE_ values
+		static bool m_keyboardButtonStates[en::KeyboardButtonState_Count]; // Stores the state of keyboard keys
 
-		static bool	m_mouseButtonStates[SaberEngine::INPUT_MOUSE_NUM_BUTTONS]; // Stores the state of mouse buttons
+		static bool	m_mouseButtonStates[en::MouseButtonState_Count]; // Stores the state of mouse buttons
 
-		static float m_mouseAxisStates[SaberEngine::INPUT_NUM_INPUT_AXIS]; // Mouse axis deltas
+		static float m_mouseAxisStates[en::InputAxis_Count]; // Mouse axis deltas
 
 		// Cache sensitivity params:
 		static float m_mousePitchSensitivity;

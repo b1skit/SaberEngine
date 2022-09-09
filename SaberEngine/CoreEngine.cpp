@@ -6,6 +6,7 @@
 
 using std::shared_ptr;
 using std::make_shared;
+using std::string;
 
 
 namespace en
@@ -155,7 +156,7 @@ namespace en
 	void CoreEngine::Update()
 	{
 		// Generate a quit event if the quit button is pressed:
-		if (m_inputManager->GetKeyboardInputState(SaberEngine::INPUT_BUTTON_QUIT) == true)
+		if (m_inputManager->GetKeyboardInputState(en::InputButton_Quit) == true)
 		{
 			m_eventManager->Notify(
 				std::make_shared<en::EventManager::EventInfo const>(en::EventManager::EventInfo

@@ -47,8 +47,8 @@ namespace fr
 		vec3 pitch(0.0f, 0.0f, 0.0f);
 
 		// Compute rotation amounts, in radians:
-		yaw.y	= (float)InputManager::GetMouseAxisInput(SaberEngine::INPUT_MOUSE_X) * (float)TimeManager::DeltaTime();
-		pitch.x = (float)InputManager::GetMouseAxisInput(SaberEngine::INPUT_MOUSE_Y) * (float)TimeManager::DeltaTime();
+		yaw.y	= (float)InputManager::GetMouseAxisInput(en::Input_MouseX) * (float)TimeManager::DeltaTime();
+		pitch.x = (float)InputManager::GetMouseAxisInput(en::Input_MouseY) * (float)TimeManager::DeltaTime();
 
 		m_transform.Rotate(yaw);
 		m_playerCam->GetTransform()->Rotate(pitch);
@@ -56,33 +56,33 @@ namespace fr
 		// Handle direction:
 		vec3 direction = vec3(0.0f, 0.0f, 0.0f);
 
-		if (InputManager::GetKeyboardInputState(SaberEngine::INPUT_BUTTON_FORWARD))
+		if (InputManager::GetKeyboardInputState(en::InputButton_Forward))
 		{
 			vec3 forward = m_transform.Forward();
 			Transform::RotateVector(forward, m_playerCam->GetTransform()->GetEulerRotation().x, m_transform.Right());
 
 			direction -= forward;
 		}
-		if (InputManager::GetKeyboardInputState(SaberEngine::INPUT_BUTTON_BACKWARD))
+		if (InputManager::GetKeyboardInputState(en::InputButton_Backward))
 		{
 			vec3 forward = m_transform.Forward();
 			Transform::RotateVector(forward, m_playerCam->GetTransform()->GetEulerRotation().x, m_transform.Right());
 
 			direction += forward;
 		}
-		if (InputManager::GetKeyboardInputState(SaberEngine::INPUT_BUTTON_LEFT))
+		if (InputManager::GetKeyboardInputState(en::InputButton_Left))
 		{
 			direction -= m_transform.Right();
 		}
-		if (InputManager::GetKeyboardInputState(SaberEngine::INPUT_BUTTON_RIGHT))
+		if (InputManager::GetKeyboardInputState(en::InputButton_Right))
 		{
 			direction += m_transform.Right();
 		}
-		if (InputManager::GetKeyboardInputState(SaberEngine::INPUT_BUTTON_UP))
+		if (InputManager::GetKeyboardInputState(en::InputButton_Up))
 		{
 			direction += m_transform.Up();
 		}
-		if (InputManager::GetKeyboardInputState(SaberEngine::INPUT_BUTTON_DOWN))
+		if (InputManager::GetKeyboardInputState(en::InputButton_Down))
 		{
 			direction -= m_transform.Up();
 		}
@@ -96,7 +96,7 @@ namespace fr
 		}
 
 		// Reset the cam back to the saved position
-		if (InputManager::GetMouseInputState(SaberEngine::INPUT_MOUSE_LEFT))
+		if (InputManager::GetMouseInputState(en::InputMouse_Left))
 		{
 			m_transform.SetWorldPosition(m_savedPosition);
 			m_transform.SetWorldRotation(vec3(0, m_savedEulerRotation.y, 0));
@@ -104,7 +104,7 @@ namespace fr
 		}
 
 		// Save the current position/rotation:
-		if (InputManager::GetMouseInputState(SaberEngine::INPUT_MOUSE_RIGHT))
+		if (InputManager::GetMouseInputState(en::InputMouse_Right))
 		{
 			m_savedPosition = m_transform.GetWorldPosition();
 			m_savedEulerRotation = vec3(m_playerCam->GetTransform()->GetEulerRotation().x, m_transform.GetEulerRotation().y, 0 );

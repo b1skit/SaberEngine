@@ -9,104 +9,99 @@
 #include <unordered_map>
 #include <string>
 
-using std::string;
-using std::unordered_map;
-
-
-// Macros:
-#define MACRO_TO_STR(x) #x
-
-// Default true/false strings (Must be lowercase)
-#define TRUE_STRING				"true"		
-#define FALSE_STRING			"false"
-
-// Command strings: End with a space to maintain formatting
-#define SET_CMD					"set "		// Set a value
-#define BIND_CMD				"bind "		// Bind a key
-
-
-// Input binding names: Used as hash keys in EngineConfig <key, value> mappings
-// NOTE: Input bindings MUST start with INPUT_
-#define INPUT_BUTTON_FORWARD	btn_forward
-#define INPUT_BUTTON_BACKWARD	btn_backward
-#define INPUT_BUTTON_LEFT		btn_strafeLeft
-#define INPUT_BUTTON_RIGHT		btn_strafeRight
-#define INPUT_BUTTON_UP			btn_up
-#define INPUT_BUTTON_DOWN		btn_down
-
-#define INPUT_BUTTON_QUIT		btn_quit
-
-#define INPUT_MOUSE_LEFT		mouse_left
-#define INPUT_MOUSE_RIGHT		mouse_right
-
-
-// Key binding names: Used as hash key names in InputManager to map keys to SDL ScanCodes
-#define L_SHIFT					"lshift"
-#define SPACE					"space"
-#define ESC						"esc"
-
-
-namespace SaberEngine
+namespace en
 {
-	const unordered_map<string, SDL_Scancode> SCANCODE_MAPPINGS =
+	// Macros:
+	#define MACRO_TO_STR(x) #x
+
+	// Default true/false strings (Must be lowercase)
+	#define TRUE_STRING		"true"		
+	#define FALSE_STRING	"false"
+
+	// Command strings: End with a space to maintain formatting
+	#define SET_CMD		"set "		// Set a value
+	#define BIND_CMD	"bind "		// Bind a key
+
+
+	// Input binding names: Used as hash keys in EngineConfig <key, value> mappings
+	#define InputButton_Forward		btn_forward
+	#define InputButton_Backward	btn_backward
+	#define InputButton_Left		btn_strafeLeft
+	#define InputButton_Right		btn_strafeRight
+	#define InputButton_Up			btn_up
+	#define InputButton_Down		btn_down
+
+	#define InputButton_Quit		btn_quit
+
+	#define InputMouse_Left			mouse_left
+	#define InputMouse_Right		mouse_right
+
+
+	// Key binding names: Used as hash key names in InputManager to map keys to SDL ScanCodes
+	#define L_SHIFT		"lshift"
+	#define SPACE		"space"
+	#define ESC			"esc"
+
+
+	const std::unordered_map<std::string, SDL_Scancode> ScancodeMappings =
 	{
-		{L_SHIFT,				SDL_SCANCODE_LSHIFT},
-		{SPACE,					SDL_SCANCODE_SPACE},
-		{ESC,					SDL_SCANCODE_ESCAPE},
+		{L_SHIFT,	SDL_SCANCODE_LSHIFT},
+		{SPACE,		SDL_SCANCODE_SPACE},
+		{ESC,		SDL_SCANCODE_ESCAPE},
 	};
 
 
 	// Binary controls: Enums index keyboardButtonStates array elements
-	enum KEYBOARD_BUTTON_STATE
+	enum KeyboardButtonState
 	{
-		INPUT_BUTTON_FORWARD,
-		INPUT_BUTTON_BACKWARD,
-		INPUT_BUTTON_LEFT,
-		INPUT_BUTTON_RIGHT,
-		INPUT_BUTTON_UP,
-		INPUT_BUTTON_DOWN,
+		InputButton_Forward,
+		InputButton_Backward,
+		InputButton_Left,
+		InputButton_Right,
+		InputButton_Up,
+		InputButton_Down,
 
-		INPUT_BUTTON_QUIT, // Temporary: Hard code a quit button
+		InputButton_Quit, // Temporary. TODO: Hard code a quit button
 
-		INPUT_NUM_BUTTONS // RESERVED: A count of the number of INPUT_STATEs
+		KeyboardButtonState_Count
 	};
 
 	// Array of key name strings: Used to iterate through all possible buttons
-	// Note: These MUST be in the same order as the KEYBOARD_BUTTON_STATE enum
-	const string KEY_NAMES[INPUT_NUM_BUTTONS] =
+	// Note: These MUST be in the same order as the KeyboardButtonState enum
+	const std::string KEY_NAMES[KeyboardButtonState_Count] =
 	{
-		MACRO_TO_STR(INPUT_BUTTON_FORWARD),
-		MACRO_TO_STR(INPUT_BUTTON_BACKWARD),
-		MACRO_TO_STR(INPUT_BUTTON_LEFT),
-		MACRO_TO_STR(INPUT_BUTTON_RIGHT),
-		MACRO_TO_STR(INPUT_BUTTON_UP),
-		MACRO_TO_STR(INPUT_BUTTON_DOWN),
+		MACRO_TO_STR(InputButton_Forward),
+		MACRO_TO_STR(InputButton_Backward),
+		MACRO_TO_STR(InputButton_Left),
+		MACRO_TO_STR(InputButton_Right),
+		MACRO_TO_STR(InputButton_Up),
+		MACRO_TO_STR(InputButton_Down),
 
-		MACRO_TO_STR(INPUT_BUTTON_QUIT),
+		MACRO_TO_STR(InputButton_Quit),
 	};
 
-	enum MOUSE_BUTTON_STATE
+	enum MouseButtonState
 	{
-		INPUT_MOUSE_LEFT,
-		INPUT_MOUSE_RIGHT,
+		InputMouse_Left,
+		InputMouse_Right,
 
-		INPUT_MOUSE_NUM_BUTTONS // RESERVED: A count of the number of MOUSE_BUTTON_STATEs
+		MouseButtonState_Count
 	};
 
 	// Array of mouse button name strings: Used to iterate through all possible buttons
-	// Note: These MUST be in the same order as the MOUSE_BUTTON_STATE enum
-	const string MOUSE_BUTTON_NAMES[INPUT_MOUSE_NUM_BUTTONS] =
+	// Note: These MUST be in the same order as the MouseButtonState enum
+	const std::string MouseButtonNames[MouseButtonState_Count] =
 	{
-		MACRO_TO_STR(INPUT_MOUSE_LEFT),
-		MACRO_TO_STR(INPUT_MOUSE_RIGHT),
+		MACRO_TO_STR(InputMouse_Left),
+		MACRO_TO_STR(InputMouse_Right),
 	};
 
 	// Analogue controls (eg. mouse movement): Enums index mouseAxisStates array elements
-	enum INPUT_AXIS
+	enum InputAxis
 	{
-		INPUT_MOUSE_X,
-		INPUT_MOUSE_Y,
+		Input_MouseX,
+		Input_MouseY,
 
-		INPUT_NUM_INPUT_AXIS	// RESERVED: A count of the number of INPUT_AXIS's
-	};	
+		InputAxis_Count
+	};
 }
