@@ -61,7 +61,7 @@
 
 		mat3 TBN;				// Normal map change-of-basis matrix
 #if defined(SABER_VERTEX_SHADER) || defined(SABER_FRAGMENT_SHADER)
-	} data;
+	} data; // TODO: Rename this as vOut
 #elif defined(SABER_GEOMETRY_SHADER)
 	};
 #endif
@@ -80,13 +80,13 @@ uniform vec3 lightWorldPos;		// Light position in world space
 
 
 // Matrices:
-uniform mat4 in_model;			// Local -> World
-uniform mat4 in_modelRotation;	// Local -> World, rotations ONLY (i.e. For transforming normals) TODO: Make this a mat3
-uniform mat4 in_view;			// World -> View
-uniform mat4 in_projection;		// View -> Projection
-uniform mat4 in_mv;				// [View * Model]
-uniform mat4 in_mvp;			// [Projection * View * Model]
-uniform mat4 in_inverse_vp;		// [Projection * View]^-1
+uniform mat4 in_model;				// Local -> World
+uniform mat4 in_modelRotation;		// Local -> World, rotations ONLY (i.e. For transforming normals) TODO: Make this a mat3
+uniform mat4 in_view;				// World -> View
+uniform mat4 in_projection;			// View -> Projection
+uniform mat4 in_mv;					// [View * Model]
+uniform mat4 in_mvp;				// [Projection * View * Model]
+uniform mat4 in_inverse_vp;			// [Projection * View]^-1
 
 
 // Texture samplers:
@@ -140,8 +140,6 @@ uniform float		minShadowBias;
 
 uniform float		shadowCam_near;	// Near/Far planes of current shadow camera
 uniform float		shadowCam_far;
-
-uniform vec4		projectionParams; // Main camera: .x = 1.0 (unused), y = near, z = far, w = 1/far
 
 // System variables:
 uniform vec4 screenParams;			// .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes

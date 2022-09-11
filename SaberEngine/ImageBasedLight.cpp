@@ -19,42 +19,36 @@ using glm::vec3;
 using glm::vec4;
 
 
-namespace SaberEngine
+namespace gr
 {
 	ImageBasedLight::ImageBasedLight(string const& lightName, string const& relativeHDRPath)
 		: Light(lightName, AmbientIBL, vec3(0)), SceneObject(lightName),
-		m_BRDF_integrationMapStageTargetSet(lightName + " target")
+		m_IEM_Tex(nullptr),
+		m_PMREM_Tex(nullptr),
+		m_maxMipLevel(-1),
+		m_BRDF_integrationMap(nullptr),
+		m_BRDF_integrationMapStageTargetSet(lightName + " target"),
+		m_xRes(512),
+		m_yRes(512)
 	{
 		// Irradiance Environment Map (IEM) setup:
-
 		m_IEM_Tex = ConvertEquirectangularToCubemap(
 				CoreEngine::GetSceneManager()->GetCurrentSceneName(), 
 				relativeHDRPath, 
 				m_xRes,
 				m_yRes, 
-				IBL_IEM);
-
-		if (m_IEM_Tex != nullptr)
-		{
-			m_IEM_isValid = true;
-		}
+				IEM);
 
 		// Pre-filtered Mipmaped Radiance Environment Map (PMREM) setup:
-
 		m_PMREM_Tex = ConvertEquirectangularToCubemap(
 			CoreEngine::GetSceneManager()->GetCurrentSceneName(),
 			relativeHDRPath, 
 			m_xRes, 
 			m_yRes,
-			IBL_PMREM);
+			PMREM);
 
-		if (m_PMREM_Tex != nullptr)
-		{
-			m_PMREM_isValid = true;
-
-			// Note: We assume the cubemap is always square and use xRes only during our calculations...
-			m_maxMipLevel = (uint32_t)glm::log2((float)m_xRes);
-		}
+		m_maxMipLevel = (uint32_t)glm::log2((float)m_xRes); // Assume cubemap is square, use xRes to compute mip level
+		
 
 		// Render BRDF Integration map:
 		GenerateBRDFIntegrationMap();
@@ -74,10 +68,8 @@ namespace SaberEngine
 	ImageBasedLight::~ImageBasedLight()
 	{
 		m_IEM_Tex = nullptr;
-		m_IEM_isValid = false;
 
 		m_PMREM_Tex = nullptr;
-		m_PMREM_isValid = false;
 
 		m_BRDF_integrationMap = nullptr;
 	}
@@ -88,7 +80,7 @@ namespace SaberEngine
 		string relativeHDRPath,
 		int xRes,
 		int yRes, 
-		IBL_TYPE iblType /*= RAW_HDR*/)
+		IBLType iblType /*= RawHDR*/)
 	{
 		// Create our conversion shader:
 		string shaderName =
@@ -97,12 +89,12 @@ namespace SaberEngine
 		shared_ptr<Shader> equirectangularToCubemapBlitShader = make_shared<gr::Shader>(shaderName);
 
 		string cubemapName;
-		if (iblType == IBL_IEM)
+		if (iblType == IEM)
 		{
 			cubemapName = "IBL_IEM";
 			equirectangularToCubemapBlitShader->ShaderKeywords().emplace_back("BLIT_IEM");
 		}
-		else if (iblType == IBL_PMREM)
+		else if (iblType == PMREM)
 		{
 			cubemapName = "IBL_PMREM";
 			equirectangularToCubemapBlitShader->ShaderKeywords().emplace_back("BLIT_PMREM");
@@ -148,11 +140,11 @@ namespace SaberEngine
 		// Set shader parameters:
 		//-----------------------
 		int numSamples = 1;
-		if (iblType == IBL_IEM)
+		if (iblType == IEM)
 		{
 			numSamples = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("numIEMSamples");
 		}
-		else if (iblType == IBL_PMREM)
+		else if (iblType == PMREM)
 		{
 			numSamples = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("numPMREMSamples");
 		}
@@ -192,7 +184,7 @@ namespace SaberEngine
 		cubeParams.m_texturePath = cubemapName;
 
 		// Generate mip-maps for PMREM IBL cubemap faces
-		cubeParams.m_useMIPs = iblType == IBL_PMREM ? true : false;
+		cubeParams.m_useMIPs = iblType == PMREM ? true : false;
 
 		shared_ptr<gr::Texture> cubemap = std::make_shared<gr::Texture>(cubeParams);
 		
@@ -206,13 +198,13 @@ namespace SaberEngine
 		// Render into the cube map:
 		//--------------------------
 		// Ensure we can render on the far plane
-		CoreEngine::GetRenderManager()->GetContext().SetDepthMode(platform::Context::DepthMode::LEqual);
+		CoreEngine::GetRenderManager()->GetContext().SetDepthTestMode(platform::Context::DepthTestMode::LEqual);
 
 		// Disable back-face culling, since we're rendering a cube from the inside		
 		CoreEngine::GetRenderManager()->GetContext().SetCullingMode(platform::Context::FaceCullingMode::Disabled);
 
 		// Handle per-mip-map rendering:
-		if (iblType == IBL_PMREM)
+		if (iblType == PMREM)
 		{
 			// Calculate the number of mip levels we need to render:
 			const uint32_t numMipLevels = cubemap->GetNumMips();
@@ -244,7 +236,7 @@ namespace SaberEngine
 				}
 			}
 		}
-		else // IBL_IEM + RAW_HDR: Non-mip-mapped cube faces
+		else // IEM + RawHDR: Non-mip-mapped cube faces
 		{
 			// Render each cube face:
 			for (uint32_t face = 0; face < Texture::k_numCubeFaces; face++)
@@ -267,7 +259,7 @@ namespace SaberEngine
 		}
 
 		// Restore defaults:
-		CoreEngine::GetRenderManager()->GetContext().SetDepthMode(platform::Context::DepthMode::Default);
+		CoreEngine::GetRenderManager()->GetContext().SetDepthTestMode(platform::Context::DepthTestMode::Default);
 		CoreEngine::GetRenderManager()->GetContext().SetCullingMode(platform::Context::FaceCullingMode::Back);
 
 		return cubemap;
@@ -327,7 +319,7 @@ namespace SaberEngine
 		m_BRDF_integrationMapStageTargetSet.AttachColorTargets(0, 0, true);
 
 		// Ensure we can render on the far plane
-		CoreEngine::GetRenderManager()->GetContext().SetDepthMode(platform::Context::DepthMode::LEqual);
+		CoreEngine::GetRenderManager()->GetContext().SetDepthTestMode(platform::Context::DepthTestMode::LEqual);
 		CoreEngine::GetRenderManager()->GetContext().ClearTargets(platform::Context::ClearTarget::ColorDepth);
 		// TODO: Handle depth/clearing config via stage params: Stages should control how they interact with the targets
 

@@ -34,7 +34,8 @@ namespace opengl
 		static void SetCullingMode(platform::Context::FaceCullingMode const& mode);
 		static void ClearTargets(platform::Context::ClearTarget const& clearTarget);
 		static void SetBlendMode(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst);
-		static void SetDepthMode(platform::Context::DepthMode const& mode);
+		static void SetDepthTestMode(platform::Context::DepthTestMode const& mode);
+		static void SetDepthWriteMode(platform::Context::DepthWriteMode const& mode);
 		static uint32_t GetMaxTextureInputs();
 	};
 }

@@ -38,7 +38,9 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		// TODO: Append a parent stage with 0 meshes/batches
+		shared_ptr<GBufferGraphicsSystem> gBufferGS = std::dynamic_pointer_cast<GBufferGraphicsSystem>(
+			en::CoreEngine::GetRenderManager()->GetGraphicsSystem<GBufferGraphicsSystem>());
+		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
 		
 		// Create a shared lighting stage texture target:
 		Texture::TextureParams lightTargetParams;
@@ -56,7 +58,8 @@ namespace gr
 
 		TextureTargetSet deferredLightingTargetSet("Deferred lighting target");
 		deferredLightingTargetSet.ColorTarget(0) = outputTexture;
-		deferredLightingTargetSet.CreateColorTargets();
+		deferredLightingTargetSet.DepthStencilTarget() = gBufferGS->GetFinalTextureTargetSet().DepthStencilTarget();
+		deferredLightingTargetSet.CreateColorDepthStencilTargets();
 
 		shared_ptr<Camera> deferredLightingCam = 
 			en::CoreEngine::GetSceneManager()->GetMainCamera();
@@ -69,15 +72,16 @@ namespace gr
 	
 		
 		RenderStage::RenderStageParams ambientStageParams;
-		ambientStageParams.m_targetClearMode = platform::Context::ClearTarget::ColorDepth;
-		ambientStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Back; // Ambient and directional lights (currently) use back face culling
-		ambientStageParams.m_srcBlendMode = platform::Context::BlendMode::One; // All deferred lighting is additive
-		ambientStageParams.m_dstBlendMode = platform::Context::BlendMode::One;
-		ambientStageParams.m_depthMode = platform::Context::DepthMode::GEqual; // All deferred lighting uses GEqual
-		ambientStageParams.m_stageType = RenderStage::RenderStageType::ColorOnly;
+		ambientStageParams.m_targetClearMode	= platform::Context::ClearTarget::Color;
+		ambientStageParams.m_faceCullingMode	= platform::Context::FaceCullingMode::Back; // Ambient and directional lights (currently) use back face culling
+		ambientStageParams.m_srcBlendMode		= platform::Context::BlendMode::One; // All deferred lighting is additive
+		ambientStageParams.m_dstBlendMode		= platform::Context::BlendMode::One;
+		ambientStageParams.m_depthTestMode		= platform::Context::DepthTestMode::LEqual; // Ambient & directional
+		ambientStageParams.m_depthWriteMode		= platform::Context::DepthWriteMode::Disabled;
+		ambientStageParams.m_stageType			= RenderStage::RenderStageType::ColorOnly;
 
 		// Ambient light:
-		shared_ptr<SaberEngine::ImageBasedLight> ambientLight = std::dynamic_pointer_cast<SaberEngine::ImageBasedLight>(
+		shared_ptr<gr::ImageBasedLight> ambientLight = std::dynamic_pointer_cast<gr::ImageBasedLight>(
 			en::CoreEngine::GetSceneManager()->GetAmbientLight());
 		if (ambientLight)
 		{
@@ -103,7 +107,7 @@ namespace gr
 			
 			if (!ambientLight) // Don't clear after 1st light
 			{
-				keylightStageParams.m_targetClearMode = platform::Context::ClearTarget::ColorDepth;
+				keylightStageParams.m_targetClearMode = platform::Context::ClearTarget::Color;
 			}
 			else
 			{
@@ -124,9 +128,12 @@ namespace gr
 
 			RenderStage::RenderStageParams pointlightStageParams(keylightStageParams);
 
+			// Pointlights only illuminate something if the sphere volume is behind it
+			pointlightStageParams.m_depthTestMode = platform::Context::DepthTestMode::GEqual;
+
 			if (!ambientLight && !keyLight) // Don't clear after 1st light
 			{
-				pointlightStageParams.m_targetClearMode = platform::Context::ClearTarget::ColorDepth;
+				pointlightStageParams.m_targetClearMode = platform::Context::ClearTarget::Color;
 			}
 			else
 			{
@@ -176,8 +183,8 @@ namespace gr
 		// TODO: Is there some way to automate these calls so we don't need to remember them in every stage?
 
 		// Light pointers:
-		shared_ptr<SaberEngine::ImageBasedLight> const ambientLight = 
-			std::dynamic_pointer_cast<SaberEngine::ImageBasedLight>(
+		shared_ptr<gr::ImageBasedLight> const ambientLight = 
+			std::dynamic_pointer_cast<gr::ImageBasedLight>(
 				en::CoreEngine::GetSceneManager()->GetAmbientLight());
 		shared_ptr<Light> const keyLight = en::CoreEngine::GetSceneManager()->GetKeyLight();
 		vector<shared_ptr<Light>> const& pointLights = en::CoreEngine::GetSceneManager()->GetPointLights();
@@ -231,10 +238,10 @@ namespace gr
 
 		if (ambientLight)
 		{
-			m_ambientStage.SetTextureInput(
-				GBufferGraphicsSystem::GBufferTexNames[Material::GBufferDepth], // TODO: Better indexing solution...
-				gBufferGS->GetFinalTextureTargetSet().DepthStencilTarget().GetTexture(),
-				Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear));
+			//m_ambientStage.SetTextureInput(
+			//	GBufferGraphicsSystem::GBufferTexNames[Material::GBufferDepth], // TODO: Better indexing solution...
+			//	gBufferGS->GetFinalTextureTargetSet().DepthStencilTarget().GetTexture(),
+			//	Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear));
 
 			// Add IBL texture inputs for ambient stage:
 			m_ambientStage.SetTextureInput(
@@ -302,10 +309,10 @@ namespace gr
 
 		if (pointLights.size() > 0)
 		{
-			m_pointlightStage.SetTextureInput(
-				GBufferGraphicsSystem::GBufferTexNames[Material::GBufferDepth], // TODO: Better indexing solution...
-				gBufferGS->GetFinalTextureTargetSet().DepthStencilTarget().GetTexture(),
-				Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear));
+			//m_pointlightStage.SetTextureInput(
+			//	GBufferGraphicsSystem::GBufferTexNames[Material::GBufferDepth], // TODO: Better indexing solution...
+			//	gBufferGS->GetFinalTextureTargetSet().DepthStencilTarget().GetTexture(),
+			//	Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear));
 
 			// TODO: Support instancing. For now, just pack a vector with vectors of per-mesh parameters
 			for (size_t lightIdx = 0; lightIdx < pointLights.size(); lightIdx++)

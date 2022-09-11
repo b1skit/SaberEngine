@@ -90,6 +90,38 @@ namespace gr
 	}
 
 
+	TextureTargetSet::TextureTargetSet(TextureTargetSet const& rhs, std::string const& newName) :
+		m_name(newName),
+		m_colorTargets(rhs.m_colorTargets),
+		m_depthStencilTarget(rhs.m_depthStencilTarget),
+		m_targetStateDirty(true),
+		m_hasTargets(rhs.m_hasTargets),
+		m_viewport(rhs.m_viewport),
+		m_platformParams(nullptr), // Targets are copied, but the target set must be created
+		m_colorIsCreated(false),
+		m_depthIsCreated(false)
+	{
+		platform::TextureTargetSet::PlatformParams::CreatePlatformParams(*this);
+	}
+
+	//TextureTargetSet& TextureTargetSet::operator=(TextureTargetSet const& rhs)
+	//{
+	//	m_name = rhs.m_name + "_copy";
+	//	m_colorTargets = rhs.m_colorTargets;
+	//	m_depthStencilTarget = rhs.m_depthStencilTarget;
+	//	m_targetStateDirty = true;
+	//	m_hasTargets = rhs.m_hasTargets;
+	//	m_viewport = rhs.m_viewport;
+	//	m_platformParams = nullptr; // Targets are copied, but the target set must be created
+	//	m_colorIsCreated = false;
+	//	m_depthIsCreated = false;
+
+	//	platform::TextureTargetSet::PlatformParams::CreatePlatformParams(*this);
+
+	//	return *this;
+	//}
+
+
 	void TextureTargetSet::CreateColorTargets()
 	{
 		SEAssert("Texture Target Set already created!", m_colorIsCreated == false);

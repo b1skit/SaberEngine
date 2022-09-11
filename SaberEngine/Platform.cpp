@@ -48,7 +48,8 @@ namespace platform
 			platform::Context::SetCullingMode		= &opengl::Context::SetCullingMode;
 			platform::Context::ClearTargets			= &opengl::Context::ClearTargets;
 			platform::Context::SetBlendMode			= &opengl::Context::SetBlendMode;
-			platform::Context::SetDepthMode			= &opengl::Context::SetDepthMode;
+			platform::Context::SetDepthTestMode		= &opengl::Context::SetDepthTestMode;
+			platform::Context::SetDepthWriteMode	= &opengl::Context::SetDepthWriteMode;
 			platform::Context::GetMaxTextureInputs	= &opengl::Context::GetMaxTextureInputs;
 
 			// Render manager:

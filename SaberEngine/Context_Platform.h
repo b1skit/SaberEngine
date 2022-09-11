@@ -51,7 +51,7 @@ namespace platform
 			BlendMode_Count
 		};
 
-		enum class DepthMode
+		enum class DepthTestMode
 		{
 			Default,	// Less
 			Never,		// Never pass
@@ -63,6 +63,12 @@ namespace platform
 			GEqual,		// >=
 			Always,		// Always pass: Disables depth testing
 			DepthMode_Count
+		};
+
+		enum class DepthWriteMode
+		{
+			Enabled,
+			Disabled
 		};
 
 	public:
@@ -91,7 +97,8 @@ namespace platform
 		static void (*SetCullingMode)(FaceCullingMode const& mode);
 		static void (*ClearTargets)(ClearTarget const& clearTarget);
 		static void (*SetBlendMode)(BlendMode const& src, BlendMode const& dst);
-		static void(*SetDepthMode)(DepthMode const& mode);
+		static void (*SetDepthTestMode)(DepthTestMode const& mode);
+		static void (*SetDepthWriteMode)(DepthWriteMode const& mode);
 		static uint32_t(*GetMaxTextureInputs)();
 
 	private:

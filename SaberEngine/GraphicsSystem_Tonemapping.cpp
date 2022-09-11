@@ -39,7 +39,7 @@ namespace gr
 		tonemappingStageParam.m_faceCullingMode	= platform::Context::FaceCullingMode::Back;
 		tonemappingStageParam.m_srcBlendMode	= platform::Context::BlendMode::Disabled;
 		tonemappingStageParam.m_dstBlendMode	= platform::Context::BlendMode::Disabled;
-		tonemappingStageParam.m_depthMode		= platform::Context::DepthMode::Always;
+		tonemappingStageParam.m_depthTestMode		= platform::Context::DepthTestMode::Always;
 		tonemappingStageParam.m_stageType		= RenderStage::RenderStageType::ColorOnly;
 
 		m_tonemappingStage.SetStageParams(tonemappingStageParam);

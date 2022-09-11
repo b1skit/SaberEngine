@@ -22,7 +22,7 @@ float NDF(vec3 MatNormal, vec3 halfVector, float roughness)
 
 	float denominator	= max((nDotH2 * (roughness2 - 1.0)) + 1.0, 0.0001);
 	
-	return roughness2 / (PI * denominator * denominator);
+	return roughness2 / (M_PI * denominator * denominator);
 }
 
 
@@ -142,8 +142,8 @@ vec4 ComputePBRLighting(
 	// Diffuse:
 	vec3 k_d = vec3(1.0) - fresnel;
 	k_d = k_d * (1.0 - metalness); // Metallics absorb refracted light
-//	vec3 diffuseContribution = k_d * linearAlbedo.rgb; // Note: Omitted the "/ PI" factor here
-	vec3 diffuseContribution = k_d * linearAlbedo.rgb / PI;
+//	vec3 diffuseContribution = k_d * linearAlbedo.rgb; // Note: Omitted the "/ M_PI" factor here
+	vec3 diffuseContribution = k_d * linearAlbedo.rgb / M_PI;
 
 
 	vec3 combinedContribution = diffuseContribution + specularContribution;
@@ -298,7 +298,7 @@ vec2 Hammersley2D(uint i, uint N)
 // Based on:  http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 vec3 HemisphereSample_uniformDist(float u, float v)
 {
-	float phi		= v * 2.0 * PI;
+	float phi		= v * 2.0 * M_PI;
 	float cosTheta	= 1.0 - u;
 	float sinTheta	= sqrt(1.0 - cosTheta * cosTheta);
 
@@ -310,7 +310,7 @@ vec3 HemisphereSample_uniformDist(float u, float v)
 // Based on:  http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 vec3 HemisphereSample_cosineDist(float u, float v)
 {
-	float phi		= v * 2.0 * PI;
+	float phi		= v * 2.0 * M_PI;
 	float cosTheta	= sqrt(1.0 - u);
 	float sinTheta	= sqrt(1.0 - cosTheta * cosTheta);
 
@@ -323,7 +323,7 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
 {
 	float a = roughness * roughness;
 
-	float phi = 2.0 * PI * Xi.x;
+	float phi = 2.0 * M_PI * Xi.x;
 	float cosTheta = sqrt((1.0 - Xi.y) / (1.0 + (a * a - 1.0) * Xi.y));
 	float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
 

@@ -39,9 +39,14 @@ namespace re
 		platform::Context::SetBlendMode(src, dst);
 	}
 
-	void Context::SetDepthMode(platform::Context::DepthMode const& mode) const
+	void Context::SetDepthTestMode(platform::Context::DepthTestMode const& mode) const
 	{
-		platform::Context::SetDepthMode(mode);
+		platform::Context::SetDepthTestMode(mode);
+	}
+
+	void Context::SetDepthWriteMode(platform::Context::DepthWriteMode const& mode) const
+	{
+		platform::Context::SetDepthWriteMode(mode);
 	}
 
 	uint32_t Context::GetMaxTextureInputs()

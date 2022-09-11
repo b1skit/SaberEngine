@@ -26,6 +26,7 @@ namespace gr
 	private:
 		gr::RenderStage m_skyboxStage;
 		std::shared_ptr<gr::Texture> m_skyTexture;
+		std::string m_skyTextureShaderName;
 		std::vector<std::shared_ptr<gr::Mesh>> m_skyMesh;
 	};
 }

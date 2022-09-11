@@ -105,7 +105,7 @@ namespace gr
 		gBufferStageParams.m_faceCullingMode	= platform::Context::FaceCullingMode::Back;
 		gBufferStageParams.m_srcBlendMode		= platform::Context::BlendMode::Disabled;
 		gBufferStageParams.m_dstBlendMode		= platform::Context::BlendMode::Disabled;
-		gBufferStageParams.m_depthMode			= platform::Context::DepthMode::Less;
+		gBufferStageParams.m_depthTestMode			= platform::Context::DepthTestMode::Less;
 		gBufferStageParams.m_stageType			= RenderStage::RenderStageType::ColorAndDepth;
 
 		m_gBufferStage.SetStageParams(gBufferStageParams);

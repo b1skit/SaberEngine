@@ -144,7 +144,8 @@ namespace opengl
 				renderManager.m_context.ClearTargets(renderStageParams.m_targetClearMode);
 				renderManager.m_context.SetCullingMode(renderStageParams.m_faceCullingMode);
 				renderManager.m_context.SetBlendMode(renderStageParams.m_srcBlendMode, renderStageParams.m_dstBlendMode);
-				renderManager.m_context.SetDepthMode(renderStageParams.m_depthMode);
+				renderManager.m_context.SetDepthTestMode(renderStageParams.m_depthTestMode);
+				renderManager.m_context.SetDepthWriteMode(renderStageParams.m_depthWriteMode);
 
 				// Render stage geometry:
 				std::vector<std::shared_ptr<gr::Mesh>> const* meshes = renderStage->GetGeometryBatches();

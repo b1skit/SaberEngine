@@ -33,15 +33,18 @@ void main()
 		vec3 hemSample = HemisphereSample_cosineDist(samplePoints.x, samplePoints.y); // TODO: MAKE ARG TAKE A VEC2!!!!
 
 		// Project: Tangent space (Z-up) -> World space:
-		hemSample = normalize(vec3(dot(hemSample, vec3(tangent.x, bitangent.x, worldDir.x)), dot(hemSample, vec3(tangent.y, bitangent.y, worldDir.y)), dot(hemSample, vec3(tangent.z, bitangent.z, worldDir.z))));
+		hemSample = vec3(
+			dot(hemSample, vec3(tangent.x, bitangent.x, worldDir.x)), 
+			dot(hemSample, vec3(tangent.y, bitangent.y, worldDir.y)), 
+			dot(hemSample, vec3(tangent.z, bitangent.z, worldDir.z)));
 
 		// Sample the environment:
-		vec2 equirectangularUVs	= DirectionToEquirectangularUV(hemSample);
+		vec2 equirectangularUVs	= WorldDirToSphericalUV(hemSample);
 		irradiance				+= texture(MatAlbedo, equirectangularUVs).rgb;
 	}
 
 	// Simple Monte Carlo approximation of the integral:
-	irradiance = irradiance / float(numSamples); // TODO: Should this be  PI * irradiance / float(numSamples); ??
+	irradiance = irradiance / float(numSamples); // TODO: Should this be  M_PI * irradiance / float(numSamples); ??
 
 	FragColor = vec4(irradiance, 1.0);
 }
@@ -70,7 +73,7 @@ void main()
 		float NdotL = max(dot(N, L), 0.0);
 		if(NdotL > 0.0)
 		{
-			vec2 equirectangularUVs	= DirectionToEquirectangularUV( L );
+			vec2 equirectangularUVs	= WorldDirToSphericalUV(L);
 
 			sampledColor += texture(MatAlbedo, equirectangularUVs).rgb;
 
@@ -89,9 +92,7 @@ void main()
 // Remap from equirectangular to cubemap, with no processing/filtering (ie. for using HDR images as a skybox texture)
 void main()
 {	
-	vec3 worldDir   = normalize(data.localPos);
-
-	vec2 equirectangularUVs	= DirectionToEquirectangularUV(worldDir);
+	vec2 WorldDirToSphericalUV	= DirectionToEquirectangularUV(data.localPos);
 	
 	FragColor = vec4(texture(MatAlbedo, equirectangularUVs).rgb, 1.0);
 }

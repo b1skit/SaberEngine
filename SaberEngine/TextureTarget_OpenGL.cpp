@@ -135,6 +135,10 @@ namespace opengl
 					glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_HEIGHT, height);
 				}	*/
 			}
+			else
+			{
+				glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
+			}
 			
 			// Attach the textures now that we know the framebuffer is created:
 			glDrawBuffers((uint32_t)insertIdx, &drawBuffers[0]);
@@ -291,6 +295,10 @@ namespace opengl
 				//}
 
 			}
+			else
+			{
+				glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
+			}
 			// TODO: This is duplicated with color targets: Break it out into a helper function?
 
 			depthStencilTex->Create();
@@ -315,7 +323,6 @@ namespace opengl
 		}
 		else
 		{
-			LOG_ERROR("Attempting to bind depth target on a target set that only contains a color targets");
 			SEAssert("Attempting to bind depth target on a target set that only contains a color targets", false);
 		}
 	}

@@ -18,16 +18,10 @@ void main()
 {	
 	vec2 uvs		= vec2(gl_FragCoord.x / screenParams.x, gl_FragCoord.y / screenParams.y); // [0, xRes/yRes] -> [0,1]
 
-	// Cull based on depth:
-	if (gl_FragCoord.z < texture( GBufferDepth, uvs).r)
-	{
-		discard;
-	}
-	
 	// Sample textures once inside the main shader flow, and pass the values as required:
-	FragColor				= texture(GBufferAlbedo, uvs);
+	vec4 linearAlbedo		= texture(GBufferAlbedo, uvs);
 	vec3 worldNormal		= texture(GBufferWNormal, uvs).xyz;
-	vec4 MatRMAO				= texture(GBufferRMAO, uvs);
+	vec4 MatRMAO			= texture(GBufferRMAO, uvs);
 	vec4 worldPosition		= texture(GBufferWPos, uvs);
 	vec4 matProp0			= texture(GBufferMatProp0, uvs); // .rgb = F0 (Surface response at 0 degrees), .a = Phong exponent
 
@@ -43,5 +37,16 @@ void main()
 	float lightAtten		= LightAttenuation(worldPosition.xyz, lightWorldPos);
 	vec3 fragLight			= lightColor * lightAtten;
 
-	FragColor = ComputePBRLighting(FragColor, worldNormal, MatRMAO, worldPosition, matProp0.rgb, NoL, lightWorldDir, lightViewDir, fragLight, shadowFactor, in_view);
+	FragColor = ComputePBRLighting(
+		linearAlbedo, 
+		worldNormal, 
+		MatRMAO, 
+		worldPosition, 
+		matProp0.rgb, 
+		NoL, 
+		lightWorldDir, 
+		lightViewDir, 
+		fragLight, 
+		shadowFactor, 
+		in_view);
 } 

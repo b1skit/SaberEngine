@@ -23,7 +23,8 @@ namespace re
 		void SetCullingMode(platform::Context::FaceCullingMode const& mode) const;
 		void ClearTargets(platform::Context::ClearTarget const& clearTarget) const;
 		void SetBlendMode(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst) const;
-		void SetDepthMode(platform::Context::DepthMode const& mode) const;
+		void SetDepthTestMode(platform::Context::DepthTestMode const& mode) const;
+		void SetDepthWriteMode(platform::Context::DepthWriteMode const& mode) const;
 
 		// Static platform wrappers:
 		static uint32_t GetMaxTextureInputs();

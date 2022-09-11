@@ -19,18 +19,6 @@ uniform int maxMipLevel;	// Largest mip level in the PMREM cube map texture (Cub
 
 void main()
 {	
-	// Cull based on depth: Don't bother lighting unless the fragment is in front of the far plane. Prevents ambient 
-	// lighting being applied to the far plane
-	if (texture( GBufferDepth, data.uv0.xy).r == 1.0)
-	{
-		discard;
-	}
-	// TEMP HACK!!!
-	// TODO: Fix Ambient/Directional lights: Flip screen-aligned quad and render back faces (to be consistent with other deferred lights)
-
-	// TODO: WTF^^^^^^^^^^^^^^^^^^^
-
-
 	// Note: All PBR calculations are performed in linear space
 	// However, we use sRGB-format textures, getting the sRGB->Linear transformation for free when writing our GBuffer
 	// for sRGB-format inputs (eg. MatAlbedo, ... and?) so no need to degamma MatAlbedo here
@@ -71,7 +59,7 @@ void main()
 
 
 	FragColor				= vec4((linearAlbedo.rgb * irradiance * k_d + specular), 1.0); // Note: Omitted the "/ PI" factor here
-//	FragColor				= vec4((FragColor.rgb * irradiance * k_d + specular) * AO / PI, 1.0); // Note: Omitted the "/ PI" factor here
+//	FragColor				= vec4((FragColor.rgb * irradiance * k_d + specular) * AO / M_PI, 1.0); // Note: Omitted the "/ PI" factor here
 }
 
 

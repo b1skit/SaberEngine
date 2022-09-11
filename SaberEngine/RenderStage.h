@@ -39,7 +39,8 @@ namespace gr
 			platform::Context::FaceCullingMode	m_faceCullingMode	= platform::Context::FaceCullingMode::Back;
 			platform::Context::BlendMode		m_srcBlendMode		= platform::Context::BlendMode::One;
 			platform::Context::BlendMode		m_dstBlendMode		= platform::Context::BlendMode::One;
-			platform::Context::DepthMode		m_depthMode			= platform::Context::DepthMode::GEqual;
+			platform::Context::DepthTestMode	m_depthTestMode		= platform::Context::DepthTestMode::GEqual;
+			platform::Context::DepthWriteMode	m_depthWriteMode	= platform::Context::DepthWriteMode::Enabled;
 
 			RenderStageType						m_stageType			= RenderStageType::ColorAndDepth;
 		};

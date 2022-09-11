@@ -6,9 +6,8 @@
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"
 
-// Built-in input variables:
+// Note: This shader uses the following built-in GLSL shader variables:
 //in vec4 gl_FragCoord; //  Location of the fragment in window space. (x,y,z,w) = window-relative (x,y,z,1/w)
-
 //struct gl_DepthRangeParameters
 //{
 //    float near;
@@ -20,26 +19,26 @@
 
 void main()
 {	
-	vec2 uvs		= vec2(gl_FragCoord.x / screenParams.x, gl_FragCoord.y / screenParams.y); // [0, xRes/yRes] -> [0,1]
-
-	// Cull based on depth:
-	if (texture( GBufferDepth, uvs).r < gl_FragCoord.z)	// Is the GBuffer depth < the screen aligned quad sitting on the far plane?
-	{
-		discard;
-	}
-
 	// If we've made it this far, sample the cube map:
 	vec4 ndcPosition;
 	ndcPosition.xy	= ((2.0 * gl_FragCoord.xy) / screenParams.xy) - 1.0;
-	
-	ndcPosition.z	= ((2.0 * gl_FragCoord.z) - gl_DepthRange.near - gl_DepthRange.far) / (gl_DepthRange.diff);
-	
+	ndcPosition.z	= ((2.0 * gl_FragCoord.z) - gl_DepthRange.near - gl_DepthRange.far) / (gl_DepthRange.diff);	
 	ndcPosition.w	= 1.0;
 
-	vec4 clipPos	= ndcPosition / gl_FragCoord.w;
+	const vec4 clipPos	= ndcPosition / gl_FragCoord.w;
 	
-	vec4 worldPos	= in_inverse_vp * clipPos;
-//	worldPos.z *= -1; // Correct our Z?
+	const vec4 worldPos	= in_inverse_vp * clipPos;
 
+
+#if defined(CUBEMAP_SKY)
 	FragColor = texture(CubeMap0, worldPos.xyz);
-} 
+
+#else
+	// Equirectangular skybox image:
+	const vec3 sampleDir = worldPos.xyz;
+
+	vec2 sphericalUVs = WorldDirToSphericalUV(sampleDir);
+
+	FragColor = texture(Tex0, sphericalUVs);
+#endif	
+}

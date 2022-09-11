@@ -37,6 +37,7 @@ using gr::Light;
 using gr::ShadowMap;
 using gr::Transform;
 using gr::RenderMesh;
+using gr::ImageBasedLight;
 using en::CoreEngine;
 using en::EventManager;
 using fr::PlayerObject;
@@ -269,6 +270,8 @@ namespace SaberEngine
 	{ 
 		m_currentScene->RegisterCamera(cameraType, newCamera); 
 	}
+	// TODO: No need to register anything except the main (ie. player) camera
+	// -> Currently registering shadow and player cams...
 
 
 	void SceneManager::AddTexture(shared_ptr<gr::Texture>& newTexture)
@@ -1484,7 +1487,7 @@ namespace SaberEngine
 				// TODO: These should be the same size? assert?
 
 				// Get ready to compute point light radius, if required:
-				float radius				= 1.0f;
+				float radius = 1.0f;
 				shared_ptr<ShadowMap> cubeShadowMap	= nullptr;
 
 				// Extract metadata:
@@ -1548,6 +1551,8 @@ namespace SaberEngine
 				}
 				else
 				{
+					// TODO: Decouple point and image-based lights
+
 					pointLight = std::make_shared<ImageBasedLight>(
 						lightName,
 						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath"));
@@ -1558,9 +1563,9 @@ namespace SaberEngine
 					{
 						pointLight = std::make_shared<Light>(
 							lightName,
-							pointType,	// This will be AMBIENT_COLOR as set above
+							Light::AmbientColor,
 							lightColor,
-							nullptr,
+							nullptr, // shadowmap
 							radius); // Only used if we're actually creating a point light
 					}
 				}

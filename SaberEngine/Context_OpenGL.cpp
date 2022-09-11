@@ -399,9 +399,9 @@ namespace opengl
 	}
 
 
-	void Context::SetDepthMode(platform::Context::DepthMode const& mode)
+	void Context::SetDepthTestMode(platform::Context::DepthTestMode const& mode)
 	{
-		if (mode == platform::Context::DepthMode::Always)
+		if (mode == platform::Context::DepthTestMode::Always)
 		{
 			glDisable(GL_DEPTH_TEST);
 			return;
@@ -412,44 +412,66 @@ namespace opengl
 		GLenum depthMode = GL_LESS;
 		switch (mode)
 		{
-		case platform::Context::DepthMode::Default:
-		case platform::Context::DepthMode::Less:
+		case platform::Context::DepthTestMode::Default:
+		case platform::Context::DepthTestMode::Less:
 		{
 			depthMode = GL_LESS;
 		}
 		break;
-		case platform::Context::DepthMode::Equal:
+		case platform::Context::DepthTestMode::Equal:
 		{
 			depthMode = GL_EQUAL;
 		}
 		break;
-		case platform::Context::DepthMode::LEqual:
+		case platform::Context::DepthTestMode::LEqual:
 		{
 			depthMode = GL_LEQUAL;
 		}
 		break;
-		case platform::Context::DepthMode::Greater:
+		case platform::Context::DepthTestMode::Greater:
 		{
 			depthMode = GL_GREATER;
 		}
 		break;
-		case platform::Context::DepthMode::NotEqual:
+		case platform::Context::DepthTestMode::NotEqual:
 		{
 			depthMode = GL_NOTEQUAL;
 		}
 		break;
-		case platform::Context::DepthMode::GEqual:
+		case platform::Context::DepthTestMode::GEqual:
 		{
 			depthMode = GL_GEQUAL;
 		}
 		break;
 		default:
 		{
-			SEAssert("Invalid depth mode", false);
+			SEAssert("Invalid depth test mode", false);
 		}
 		}
 
 		glDepthFunc(depthMode);
+	}
+
+
+	void opengl::Context::SetDepthWriteMode(platform::Context::DepthWriteMode const& mode)
+	{
+		switch (mode)
+		{
+		case platform::Context::DepthWriteMode::Enabled:
+		{
+			glDepthMask(GL_TRUE);
+		}
+		break;
+		case platform::Context::DepthWriteMode::Disabled:
+		{
+			glDepthMask(GL_FALSE);
+		}
+		break;
+		default:
+		{
+			SEAssert("Invalid depth write mode", false);
+		}
+		}
 	}
 
 
