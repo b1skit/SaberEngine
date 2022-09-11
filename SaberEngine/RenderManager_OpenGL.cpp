@@ -33,6 +33,7 @@ using gr::DeferredLightingGraphicsSystem;
 using gr::SkyboxGraphicsSystem;
 using gr::BloomGraphicsSystem;
 using gr::TonemappingGraphicsSystem;
+using re::StagePipeline;
 using std::shared_ptr;
 using std::make_unique;
 using std::make_shared;
@@ -75,7 +76,7 @@ namespace opengl
 	}
 
 
-	void RenderManager::Render(re::RenderManager const& renderManager)
+	void RenderManager::Render(re::RenderManager& renderManager)
 	{
 		// TODO: Add an assert somewhere that checks if any possible shader uniform isn't set
 		// -> Catch bugs where we forget to upload a common param
@@ -87,21 +88,18 @@ namespace opengl
 		}
 
 		// Render each stage:
-		const size_t numGS = renderManager.m_pipeline.GetNumberGraphicsSystems();
-		for (size_t gsIdx = 0; gsIdx < numGS; gsIdx++)
+		for (StagePipeline const& stagePipeline : renderManager.m_pipeline.GetPipeline())
 		{
 			// RenderDoc markers: Graphics system group name
 			glPushDebugGroup(
 				GL_DEBUG_SOURCE_APPLICATION, 
 				0, 
 				-1, 
-				renderManager.m_pipeline.GetPipeline()[gsIdx].GetName().c_str());
+				stagePipeline.GetName().c_str());
 
-			const size_t numStages = renderManager.m_pipeline.GetNumberOfGraphicsSystemStages(gsIdx);
-			for (size_t stage = 0; stage < numStages; stage++)
+			// Generic lambda: Process stages from various pipelines
+			auto ProcessRenderStage = [&](RenderStage const* renderStage)
 			{
-				RenderStage const* renderStage = renderManager.m_pipeline.GetPipeline()[gsIdx][stage];
-
 				// RenderDoc makers: Render stage name
 				glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderStage->GetName().c_str());
 
@@ -207,6 +205,21 @@ namespace opengl
 				} // meshes
 
 				glPopDebugGroup();
+			};
+
+
+			// Single frame render stages:
+			vector<RenderStage const*> const& singleFrameRenderStages = stagePipeline.GetSingleFrameRenderStages();
+			for (RenderStage const* renderStage : singleFrameRenderStages)
+			{
+				ProcessRenderStage(renderStage);
+			}
+
+			// Render stages:
+			vector<RenderStage const*> const& renderStages = stagePipeline.GetRenderStages();
+			for (RenderStage const* renderStage : renderStages)
+			{			
+				ProcessRenderStage(renderStage);
 			}
 
 			glPopDebugGroup();
@@ -214,5 +227,11 @@ namespace opengl
 
 		// Display the final frame:
 		renderManager.m_context.SwapWindow();
-	}
+
+		// Cleanup:
+		for (StagePipeline& stagePipeline : renderManager.m_pipeline.GetPipeline())
+		{
+			stagePipeline.EndOfFrame();
+		}
+	}		
 }

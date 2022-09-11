@@ -64,10 +64,10 @@ namespace gr
 
 		// Bloom stages:
 		RenderStage::RenderStageParams bloomStageParams;
-		bloomStageParams.m_targetClearMode	= platform::Context::ClearTarget::Color;
+		bloomStageParams.m_targetClearMode	= platform::Context::ClearTarget::None;
 		bloomStageParams.m_faceCullingMode	= platform::Context::FaceCullingMode::Back;
-		bloomStageParams.m_srcBlendMode		= platform::Context::BlendMode::Disabled;
-		bloomStageParams.m_dstBlendMode		= platform::Context::BlendMode::Disabled;
+		bloomStageParams.m_srcBlendMode		= platform::Context::BlendMode::One;
+		bloomStageParams.m_dstBlendMode		= platform::Context::BlendMode::Zero;
 		bloomStageParams.m_depthTestMode	= platform::Context::DepthTestMode::Always;
 		
 		const uint32_t numScalingStages = m_numDownSamplePasses;

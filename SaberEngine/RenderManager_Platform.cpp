@@ -4,5 +4,5 @@
 namespace platform
 {
 	void (*RenderManager::Initialize)(re::RenderManager&);
-	void (*RenderManager::Render)(re::RenderManager const&);	
+	void (*RenderManager::Render)(re::RenderManager&);	
 }

@@ -12,6 +12,6 @@ namespace platform
 	{
 	public:
 		static void (*Initialize)(re::RenderManager&);
-		static void (*Render)(re::RenderManager const&);
+		static void (*Render)(re::RenderManager&);
 	};
 }
