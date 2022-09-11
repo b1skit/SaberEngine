@@ -31,8 +31,14 @@ namespace gr
 		shadowStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Disabled; // Minimize peter-panning
 		shadowStageParams.m_srcBlendMode	= platform::Context::BlendMode::Disabled;
 		shadowStageParams.m_dstBlendMode	= platform::Context::BlendMode::Disabled;
-		shadowStageParams.m_depthTestMode		= platform::Context::DepthTestMode::Less;
-		shadowStageParams.m_stageType		= RenderStage::RenderStageType::DepthOnly;
+		shadowStageParams.m_depthTestMode	= platform::Context::DepthTestMode::Less;
+		shadowStageParams.m_colorWriteMode	= 
+		{ 
+			platform::Context::ColorWriteMode::ChannelMode::Disabled,
+			platform::Context::ColorWriteMode::ChannelMode::Disabled,
+			platform::Context::ColorWriteMode::ChannelMode::Disabled,
+			platform::Context::ColorWriteMode::ChannelMode::Disabled
+		};
 
 		// Directional light shadow:		
 		shared_ptr<Light> directionalLight = CoreEngine::GetSceneManager()->GetKeyLight();

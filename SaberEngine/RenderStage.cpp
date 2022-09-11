@@ -20,7 +20,8 @@ namespace gr
 	RenderStage::RenderStage(std::string const& name) :
 		m_name(name),
 		m_textureTargetSet(name + " target"),
-		m_stageGeometryBatches(nullptr)
+		m_stageGeometryBatches(nullptr),
+		m_writesColor(true) // Reasonable assumption; Updated when we set the param block
 	{
 	}
 
@@ -101,6 +102,18 @@ namespace gr
 		m_perFrameShaderUniforms.clear();
 		m_perFrameShaderUniformValues.clear();
 		m_perMeshShaderUniforms.clear();
+	}
+
+
+	void RenderStage::SetStageParams(RenderStageParams const& params)
+	{
+		m_stageParams = params;
+
+		m_writesColor =
+			m_stageParams.m_colorWriteMode.R == platform::Context::ColorWriteMode::ChannelMode::Enabled ||
+			m_stageParams.m_colorWriteMode.G == platform::Context::ColorWriteMode::ChannelMode::Enabled ||
+			m_stageParams.m_colorWriteMode.B == platform::Context::ColorWriteMode::ChannelMode::Enabled ||
+			m_stageParams.m_colorWriteMode.A == platform::Context::ColorWriteMode::ChannelMode::Enabled ? true : false;
 	}
 
 

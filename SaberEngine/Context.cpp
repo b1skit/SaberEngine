@@ -49,6 +49,11 @@ namespace re
 		platform::Context::SetDepthWriteMode(mode);
 	}
 
+	void Context::SetColorWriteMode(platform::Context::ColorWriteMode const& channelModes) const
+	{
+		platform::Context::SetColorWriteMode(channelModes);
+	}
+
 	uint32_t Context::GetMaxTextureInputs()
 	{
 		return platform::Context::GetMaxTextureInputs();

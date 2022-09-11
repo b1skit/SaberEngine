@@ -50,6 +50,7 @@ namespace platform
 			platform::Context::SetBlendMode			= &opengl::Context::SetBlendMode;
 			platform::Context::SetDepthTestMode		= &opengl::Context::SetDepthTestMode;
 			platform::Context::SetDepthWriteMode	= &opengl::Context::SetDepthWriteMode;
+			platform::Context::SetColorWriteMode	= &opengl::Context::SetColorWriteMode;
 			platform::Context::GetMaxTextureInputs	= &opengl::Context::GetMaxTextureInputs;
 
 			// Render manager:

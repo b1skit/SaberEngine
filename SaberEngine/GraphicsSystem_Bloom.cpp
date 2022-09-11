@@ -52,7 +52,6 @@ namespace gr
 		emissiveStageParams.m_srcBlendMode		= platform::Context::BlendMode::One;
 		emissiveStageParams.m_dstBlendMode		= platform::Context::BlendMode::One;
 		emissiveStageParams.m_depthTestMode		= platform::Context::DepthTestMode::Always;
-		emissiveStageParams.m_stageType			= RenderStage::RenderStageType::ColorOnly;
 
 		m_emissiveBlitStage.SetStageParams(emissiveStageParams);
 		m_emissiveBlitStage.GetStageShader() = blitShader;
@@ -70,7 +69,6 @@ namespace gr
 		bloomStageParams.m_srcBlendMode		= platform::Context::BlendMode::Disabled;
 		bloomStageParams.m_dstBlendMode		= platform::Context::BlendMode::Disabled;
 		bloomStageParams.m_depthTestMode	= platform::Context::DepthTestMode::Always;
-		bloomStageParams.m_stageType		= RenderStage::RenderStageType::ColorOnly;
 		
 		const uint32_t numScalingStages = m_numDownSamplePasses;
 		m_downResStages.reserve(numScalingStages); // MUST reserve so our pointers won't change

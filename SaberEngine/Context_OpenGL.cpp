@@ -44,7 +44,8 @@ namespace opengl
 			output += "GL_DEBUG_SOURCE_THIRD_PARTY\n";
 				break;
 		default:
-			output += "CURRENTLY UNRECOGNIZED ENUM VALUE: " + to_string(source) + " (Todo: Convert to hex!)\n"; // If we ever hit this, we should add the enum as a new string
+			output += "CURRENTLY UNRECOGNIZED ENUM VALUE: " + to_string(source) + " (Todo: Convert to hex!)\n"; 
+			// If we ever hit this, we should add the enum as a new string
 		}
 
 		output += "Type: ";
@@ -472,6 +473,17 @@ namespace opengl
 			SEAssert("Invalid depth write mode", false);
 		}
 		}
+	}
+
+
+	void opengl::Context::SetColorWriteMode(platform::Context::ColorWriteMode const& channelModes)
+	{
+		GLboolean r = channelModes.R == platform::Context::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
+		GLboolean g = channelModes.G == platform::Context::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
+		GLboolean b = channelModes.B == platform::Context::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
+		GLboolean a = channelModes.A == platform::Context::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
+
+		glColorMask(r, g, b, a);
 	}
 
 

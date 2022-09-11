@@ -109,7 +109,6 @@ namespace gr
 		skyboxStageParams.m_dstBlendMode	= platform::Context::BlendMode::Disabled;
 		skyboxStageParams.m_depthTestMode	= platform::Context::DepthTestMode::LEqual;
 		skyboxStageParams.m_depthWriteMode	= platform::Context::DepthWriteMode::Disabled;
-		skyboxStageParams.m_stageType		= RenderStage::RenderStageType::ColorOnly;
 
 		m_skyboxStage.SetStageParams(skyboxStageParams);
 

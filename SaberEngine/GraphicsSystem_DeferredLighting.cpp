@@ -78,7 +78,6 @@ namespace gr
 		ambientStageParams.m_dstBlendMode		= platform::Context::BlendMode::One;
 		ambientStageParams.m_depthTestMode		= platform::Context::DepthTestMode::LEqual; // Ambient & directional
 		ambientStageParams.m_depthWriteMode		= platform::Context::DepthWriteMode::Disabled;
-		ambientStageParams.m_stageType			= RenderStage::RenderStageType::ColorOnly;
 
 		// Ambient light:
 		shared_ptr<gr::ImageBasedLight> ambientLight = std::dynamic_pointer_cast<gr::ImageBasedLight>(

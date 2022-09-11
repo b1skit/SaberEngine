@@ -25,6 +25,7 @@ namespace re
 		void SetBlendMode(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst) const;
 		void SetDepthTestMode(platform::Context::DepthTestMode const& mode) const;
 		void SetDepthWriteMode(platform::Context::DepthWriteMode const& mode) const;
+		void SetColorWriteMode(platform::Context::ColorWriteMode const& channelModes) const;
 
 		// Static platform wrappers:
 		static uint32_t GetMaxTextureInputs();

@@ -35,14 +35,11 @@ namespace re
 
 	class RenderPipeline
 	{
-	public:
-		/*RenderPipeline() = default;*/
-		
+	public:	
 		RenderPipeline(std::string const& name) : m_name(name) {}
 		~RenderPipeline() = default;
 
 		RenderPipeline() = delete;
-
 		RenderPipeline(RenderPipeline const&) = delete;
 		RenderPipeline(RenderPipeline&&) = delete;
 		RenderPipeline& operator=(RenderPipeline const&) = delete;

@@ -36,6 +36,7 @@ namespace opengl
 		static void SetBlendMode(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst);
 		static void SetDepthTestMode(platform::Context::DepthTestMode const& mode);
 		static void SetDepthWriteMode(platform::Context::DepthWriteMode const& mode);
+		static void SetColorWriteMode(platform::Context::ColorWriteMode const& channelModes);
 		static uint32_t GetMaxTextureInputs();
 	};
 }

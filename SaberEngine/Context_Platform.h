@@ -62,13 +62,29 @@ namespace platform
 			NotEqual,	// !=
 			GEqual,		// >=
 			Always,		// Always pass: Disables depth testing
-			DepthMode_Count
+			DepthTestMode_Count
 		};
 
 		enum class DepthWriteMode
 		{
 			Enabled,
-			Disabled
+			Disabled,
+			DepthWriteMode_Count
+		};
+
+		
+		struct ColorWriteMode
+		{
+			enum class ChannelMode
+			{
+				Enabled,
+				Disabled,
+				ChannelMode_Count
+			};
+			ChannelMode R = ChannelMode::Enabled;
+			ChannelMode G = ChannelMode::Enabled;
+			ChannelMode B = ChannelMode::Enabled;
+			ChannelMode A = ChannelMode::Enabled;
 		};
 
 	public:
@@ -99,6 +115,7 @@ namespace platform
 		static void (*SetBlendMode)(BlendMode const& src, BlendMode const& dst);
 		static void (*SetDepthTestMode)(DepthTestMode const& mode);
 		static void (*SetDepthWriteMode)(DepthWriteMode const& mode);
+		static void (*SetColorWriteMode)(ColorWriteMode const& channelModes);
 		static uint32_t(*GetMaxTextureInputs)();
 
 	private:

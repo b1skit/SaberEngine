@@ -41,8 +41,13 @@ namespace gr
 			platform::Context::BlendMode		m_dstBlendMode		= platform::Context::BlendMode::One;
 			platform::Context::DepthTestMode	m_depthTestMode		= platform::Context::DepthTestMode::GEqual;
 			platform::Context::DepthWriteMode	m_depthWriteMode	= platform::Context::DepthWriteMode::Enabled;
-
-			RenderStageType						m_stageType			= RenderStageType::ColorAndDepth;
+			platform::Context::ColorWriteMode	m_colorWriteMode =
+			{ 
+				platform::Context::ColorWriteMode::ChannelMode::Enabled, // R
+				platform::Context::ColorWriteMode::ChannelMode::Enabled, // G
+				platform::Context::ColorWriteMode::ChannelMode::Enabled, // B
+				platform::Context::ColorWriteMode::ChannelMode::Enabled  // A
+			};
 		};
 
 
@@ -59,7 +64,9 @@ namespace gr
 
 		void InitializeForNewFrame(); // Clears per-frame data
 
-		inline void SetStageParams(RenderStageParams const& params) { m_stageParams = params; }
+		bool WritesColor() const { return m_writesColor; }; // Are any of the params.m_colorWriteMode channels enabled?
+
+		void SetStageParams(RenderStageParams const& params);
 		inline RenderStageParams const& GetStageParams() const { return m_stageParams; }
 
 		inline std::shared_ptr<gr::Shader>& GetStageShader() { return m_stageShader; }
@@ -111,6 +118,7 @@ namespace gr
 		std::shared_ptr<gr::Camera> m_stageCam;
 		
 		RenderStageParams m_stageParams;
+		bool m_writesColor;
 
 		// Per-frame members are cleared every frame
 		std::vector<StageShaderUniform> m_perFrameShaderUniforms; // TODO: Handle selection of face, miplevel when binding color/depth targets?

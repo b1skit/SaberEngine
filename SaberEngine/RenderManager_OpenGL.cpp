@@ -141,11 +141,13 @@ namespace opengl
 				// TODO: These should be set via a general camera param block, shared between stages that need it
 
 				// Configure the context:
-				renderManager.m_context.ClearTargets(renderStageParams.m_targetClearMode);
 				renderManager.m_context.SetCullingMode(renderStageParams.m_faceCullingMode);
 				renderManager.m_context.SetBlendMode(renderStageParams.m_srcBlendMode, renderStageParams.m_dstBlendMode);
 				renderManager.m_context.SetDepthTestMode(renderStageParams.m_depthTestMode);
 				renderManager.m_context.SetDepthWriteMode(renderStageParams.m_depthWriteMode);
+				renderManager.m_context.SetColorWriteMode(renderStageParams.m_colorWriteMode);
+				renderManager.m_context.ClearTargets(renderStageParams.m_targetClearMode); // Clear AFTER setting color/depth modes
+				// TODO: Move this to a helper within Context?
 
 				// Render stage geometry:
 				std::vector<std::shared_ptr<gr::Mesh>> const* meshes = renderStage->GetGeometryBatches();
@@ -157,7 +159,7 @@ namespace opengl
 
 					shared_ptr<gr::Material> meshMaterial = mesh->MeshMaterial();
 					if (meshMaterial != nullptr &&
-						renderStageParams.m_stageType != RenderStage::RenderStageType::DepthOnly)
+						renderStage->WritesColor())
 					{
 						// TODO: Is there a more elegant way to handle this?
 						meshMaterial->BindToShader(stageShader);
