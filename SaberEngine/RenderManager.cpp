@@ -30,7 +30,8 @@ using std::string;
 namespace re
 {
 	RenderManager::RenderManager() : en::EngineComponent("RenderManager"),
-		m_defaultTargetSet(nullptr)
+		m_defaultTargetSet(nullptr),
+		m_pipeline("Main pipeline")
 	{
 	}
 

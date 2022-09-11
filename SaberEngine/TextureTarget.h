@@ -90,7 +90,7 @@ namespace gr
 		TextureTargetSet(TextureTargetSet&&) = default;
 		TextureTargetSet& operator=(TextureTargetSet const&) = default;
 
-		inline std::string const& GetName() { return m_name; }
+		inline std::string const& GetName() const { return m_name; }
 
 		std::vector<gr::TextureTarget>& ColorTargets() { m_targetStateDirty = true; return m_colorTargets; }
 		std::vector<gr::TextureTarget> const& ColorTargets() const { return m_colorTargets; }
@@ -122,7 +122,7 @@ namespace gr
 		void AttachColorDepthStencilTargets(uint32_t colorFace, uint32_t colorMipLevel, bool doBind) const;
 		
 	private:
-		std::string m_name;
+		std::string m_name; // Can't be const, as we allow operator=
 		std::vector<gr::TextureTarget> m_colorTargets;
 		gr::TextureTarget m_depthStencilTarget;
 		bool m_targetStateDirty;

@@ -8,12 +8,10 @@ namespace en
 	class SaberObject
 	{
 	public:
-		SaberObject(std::string const& name)
+		SaberObject(std::string const& name) :
+			m_name(name)
 		{
-			if (!name.length() == 0) // Default to "unnamed" if no valid name is received
-			{
-				m_name = name;
-			}
+
 			objectID = AssignObjectID();
 		}
 
@@ -35,7 +33,7 @@ namespace en
 		unsigned long objectID; // Hashed value
 
 	private:
-		std::string m_name = "unnamed";
+		std::string const m_name;
 		std::string m_hashString;
 
 		std::hash<std::string> m_hashFunction;

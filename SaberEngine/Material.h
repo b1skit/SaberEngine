@@ -138,7 +138,7 @@ namespace gr
 
 
 	private:
-		std::string m_name;	// Must be unique: Identifies this material
+		std::string const m_name;	// Must be unique: Identifies this material
 		std::vector<TextureSlotDesc> m_texSlots;
 		std::unordered_map<std::string, uint32_t> m_namesToSlotIndex;
 		std::vector<PropertyDesc> m_properties; // Generic material properties

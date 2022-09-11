@@ -100,7 +100,7 @@ namespace gr
 		Sampler& operator=(Sampler const& rhs) = delete;
 
 	private:
-		std::string m_name;
+		std::string const m_name;
 		SamplerParams m_samplerParams;
 		std::unique_ptr<platform::Sampler::PlatformParams> m_platformParams;
 

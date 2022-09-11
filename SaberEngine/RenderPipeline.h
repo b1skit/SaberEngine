@@ -28,7 +28,7 @@ namespace re
 
 
 	private:
-		std::string m_name;
+		std::string const m_name;
 		std::vector<gr::RenderStage const*> m_stagePipeline;
 	};
 
@@ -36,8 +36,12 @@ namespace re
 	class RenderPipeline
 	{
 	public:
-		RenderPipeline() = default;
+		/*RenderPipeline() = default;*/
+		
+		RenderPipeline(std::string const& name) : m_name(name) {}
 		~RenderPipeline() = default;
+
+		RenderPipeline() = delete;
 
 		RenderPipeline(RenderPipeline const&) = delete;
 		RenderPipeline(RenderPipeline&&) = delete;
@@ -49,7 +53,8 @@ namespace re
 		std::vector<StagePipeline> const& GetPipeline() const { return m_pipeline; }
 
 		inline size_t GetNumberGraphicsSystems() const { return m_pipeline.size(); }
-		inline size_t GetNumberOfGraphicsSystemStages(size_t gsIndex) const { return m_pipeline[gsIndex].GetNumberOfStages(); }
+		inline size_t GetNumberOfGraphicsSystemStages(size_t gsIndex) const 
+			{ return m_pipeline[gsIndex].GetNumberOfStages(); }
 
 
 	private:
@@ -62,5 +67,7 @@ namespace re
 		//   |
 		//   *
 		std::vector<StagePipeline> m_pipeline;
+
+		std::string const m_name;
 	};
 }

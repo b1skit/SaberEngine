@@ -104,7 +104,7 @@ namespace gr
 
 
 	private:
-		std::string m_name;
+		std::string const m_name;
 
 		std::shared_ptr<gr::Shader> m_stageShader;
 		gr::TextureTargetSet m_textureTargetSet;

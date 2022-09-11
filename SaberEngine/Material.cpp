@@ -77,7 +77,6 @@ namespace gr
 
 	void Material::Destroy()
 	{
-		m_name += "_DESTROYED";
 		m_shader = nullptr;
 		m_texSlots.clear();
 		m_properties.clear();

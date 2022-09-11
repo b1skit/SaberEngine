@@ -126,7 +126,6 @@ namespace gr
 
 	void Sampler::Destroy()
 	{
-		m_name += "_DESTROYED";
 		m_platformParams = nullptr;
 		m_samplerParams = {};
 	}
