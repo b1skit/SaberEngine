@@ -4,6 +4,8 @@
 #include "CoreEngine.h"
 #include "DebugConfiguration.h"
 
+#include <SDL.h> // Need to include this here so SDL can find our main function
+
 
 int main(int argc, char** argv)
 {

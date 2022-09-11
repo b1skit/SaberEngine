@@ -264,7 +264,8 @@ namespace gr
 			SEAssert("Key light shadow map is null", keyLightShadowMap != nullptr);
 
 			// Set the key light shadow map:
-			shared_ptr<Texture> keylightDepthTex = keyLightShadowMap->GetTextureTargetSet().DepthStencilTarget().GetTexture();
+			shared_ptr<Texture> keylightDepthTex = 
+				keyLightShadowMap->GetTextureTargetSet().DepthStencilTarget().GetTexture();
 			m_keylightStage.SetTextureInput(
 				"Depth0",
 				keylightDepthTex,

@@ -1,9 +1,5 @@
 #pragma once
 
-#include <SDL.h>
-#include <GL/glew.h>
-#include <GL/GL.h> // Must follow glew.h...
-
 #include "Context_Platform.h"
 
 
