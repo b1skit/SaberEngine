@@ -84,13 +84,11 @@ namespace gr
 
 		TextureTargetSet() = delete;
 
-		/*TextureTargetSet(TextureTargetSet const&) = default;*/
 		TextureTargetSet(TextureTargetSet const& rhs, std::string const& newName);
 		TextureTargetSet(TextureTargetSet const&) = delete;
 
 		TextureTargetSet(TextureTargetSet&&) = default;
 		TextureTargetSet& operator=(TextureTargetSet const&) = default;
-		//TextureTargetSet& operator=(TextureTargetSet const&);
 
 		inline std::string const& GetName() { return m_name; }
 

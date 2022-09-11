@@ -238,11 +238,6 @@ namespace gr
 
 		if (ambientLight)
 		{
-			//m_ambientStage.SetTextureInput(
-			//	GBufferGraphicsSystem::GBufferTexNames[Material::GBufferDepth], // TODO: Better indexing solution...
-			//	gBufferGS->GetFinalTextureTargetSet().DepthStencilTarget().GetTexture(),
-			//	Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear));
-
 			// Add IBL texture inputs for ambient stage:
 			m_ambientStage.SetTextureInput(
 				"CubeMap0",
@@ -309,11 +304,6 @@ namespace gr
 
 		if (pointLights.size() > 0)
 		{
-			//m_pointlightStage.SetTextureInput(
-			//	GBufferGraphicsSystem::GBufferTexNames[Material::GBufferDepth], // TODO: Better indexing solution...
-			//	gBufferGS->GetFinalTextureTargetSet().DepthStencilTarget().GetTexture(),
-			//	Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear));
-
 			// TODO: Support instancing. For now, just pack a vector with vectors of per-mesh parameters
 			for (size_t lightIdx = 0; lightIdx < pointLights.size(); lightIdx++)
 			{

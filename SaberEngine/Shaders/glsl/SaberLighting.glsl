@@ -298,7 +298,7 @@ vec2 Hammersley2D(uint i, uint N)
 // Based on:  http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 vec3 HemisphereSample_uniformDist(float u, float v)
 {
-	float phi		= v * 2.0 * M_PI;
+	float phi	= v * 2.0 * M_PI;
 	float cosTheta	= 1.0 - u;
 	float sinTheta	= sqrt(1.0 - cosTheta * cosTheta);
 
@@ -310,7 +310,7 @@ vec3 HemisphereSample_uniformDist(float u, float v)
 // Based on:  http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 vec3 HemisphereSample_cosineDist(float u, float v)
 {
-	float phi		= v * 2.0 * M_PI;
+	float phi	= v * 2.0 * M_PI;
 	float cosTheta	= sqrt(1.0 - u);
 	float sinTheta	= sqrt(1.0 - cosTheta * cosTheta);
 
