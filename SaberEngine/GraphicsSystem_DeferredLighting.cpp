@@ -166,6 +166,52 @@ namespace gr
 
 			pipeline.AppendRenderStage(m_pointlightStage);
 		}
+
+
+		// First frame: Generate the pre-integrated BRDF LUT via a single-frame render stage:
+		RenderStage brdfStage("BRDF pre-integration stage");
+
+		brdfStage.GetStageShader() = make_shared<Shader>(
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("BRDFIntegrationMapShaderName"));
+		brdfStage.GetStageShader()->Create();
+
+		brdfStage.GetStageCamera() = en::CoreEngine::GetSceneManager()->GetMainCamera(); // Not really needed...
+
+		// Reuse the ambient mesh; it's a full-screen quad rendered on the near plane
+		brdfStage.SetGeometryBatches(&m_ambientMesh);
+
+		// Create a render target texture:
+		const uint32_t brdfTexRes = 512; // TODO: Make this user-controllable somehow?
+		Texture::TextureParams brdfParams;
+		brdfParams.m_width = brdfTexRes;
+		brdfParams.m_height = brdfTexRes;
+		brdfParams.m_faces = 1;
+		brdfParams.m_texUse = Texture::TextureUse::ColorTarget;
+		brdfParams.m_texDimension = Texture::TextureDimension::Texture2D;
+		brdfParams.m_texFormat = Texture::TextureFormat::RG16F; // Epic recommends 2 channel, 16-bit floating point
+		brdfParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+		brdfParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		brdfParams.m_texturePath = "BRDFIntegrationMap";
+		brdfParams.m_useMIPs = false;
+
+		m_BRDF_integrationMap = std::make_shared<gr::Texture>(brdfParams);
+
+		brdfStage.GetTextureTargetSet().ColorTarget(0) = m_BRDF_integrationMap;
+		brdfStage.GetTextureTargetSet().Viewport() = gr::Viewport(0, 0, brdfTexRes, brdfTexRes);
+		brdfStage.GetTextureTargetSet().CreateColorTargets();
+
+		// Stage params:
+		RenderStage::RenderStageParams brdfStageParams;
+		brdfStageParams.m_targetClearMode = platform::Context::ClearTarget::None;
+		brdfStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Disabled;
+		brdfStageParams.m_srcBlendMode = platform::Context::BlendMode::One;
+		brdfStageParams.m_dstBlendMode = platform::Context::BlendMode::Zero;
+		brdfStageParams.m_depthTestMode = platform::Context::DepthTestMode::Always;
+		brdfStageParams.m_depthWriteMode = platform::Context::DepthWriteMode::Disabled;
+
+		brdfStage.SetStageParams(brdfStageParams);
+
+		pipeline.AppendSingleFrameRenderStage(brdfStage);
 	}
 
 
@@ -175,56 +221,6 @@ namespace gr
 
 		// TODO: Move some of these uniforms back to the Create() function, held in something that doesn't get cleared
 		// every frame
-
-		// First frame: Render the pre-integrated BRDF LUT:
-		if (m_BRDF_integrationMap == nullptr)
-		{
-			LOG("Appending BRDF pre-integration map render stage...");
-
-			RenderStage brdfStage("BRDF pre-integration stage");
-
-			brdfStage.GetStageShader() = make_shared<Shader>(
-				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("BRDFIntegrationMapShaderName"));
-			brdfStage.GetStageShader()->Create();
-
-			brdfStage.GetStageCamera() = en::CoreEngine::GetSceneManager()->GetMainCamera(); // Not really needed...
-
-			// Reuse the ambient mesh; it's a full-screen quad rendered on the near plane
-			brdfStage.SetGeometryBatches(&m_ambientMesh);
-
-			// Create a render target texture:
-			const uint32_t brdfTexRes = 512; // TODO: Make this user-controllable somehow?
-			Texture::TextureParams brdfParams;
-			brdfParams.m_width = brdfTexRes;
-			brdfParams.m_height = brdfTexRes;
-			brdfParams.m_faces = 1;
-			brdfParams.m_texUse = Texture::TextureUse::ColorTarget;
-			brdfParams.m_texDimension = Texture::TextureDimension::Texture2D;
-			brdfParams.m_texFormat = Texture::TextureFormat::RG16F; // 2 channel, 16-bit floating point precision, as recommended by Epic Games:
-			brdfParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
-			brdfParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-			brdfParams.m_texturePath = "BRDFIntegrationMap";
-			brdfParams.m_useMIPs = false;
-
-			m_BRDF_integrationMap = std::make_shared<gr::Texture>(brdfParams);
-
-			brdfStage.GetTextureTargetSet().ColorTarget(0) = m_BRDF_integrationMap;
-			brdfStage.GetTextureTargetSet().Viewport() = gr::Viewport(0, 0, brdfTexRes, brdfTexRes);
-			brdfStage.GetTextureTargetSet().CreateColorTargets();
-			
-			// Stage params:
-			RenderStage::RenderStageParams brdfStageParams;
-			brdfStageParams.m_targetClearMode	= platform::Context::ClearTarget::None;
-			brdfStageParams.m_faceCullingMode	= platform::Context::FaceCullingMode::Disabled;
-			brdfStageParams.m_srcBlendMode		= platform::Context::BlendMode::One;
-			brdfStageParams.m_dstBlendMode		= platform::Context::BlendMode::Zero;
-			brdfStageParams.m_depthTestMode		= platform::Context::DepthTestMode::Always;
-			brdfStageParams.m_depthWriteMode	= platform::Context::DepthWriteMode::Disabled;
-
-			brdfStage.SetStageParams(brdfStageParams);
-
-			pipeline.AppendSingleFrameRenderStage(brdfStage);
-		}
 
 		// Clear all stages for the new frame:
 		m_ambientStage.InitializeForNewFrame();
