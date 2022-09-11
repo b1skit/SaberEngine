@@ -18,7 +18,7 @@ namespace gr
 
 		void Create(re::StagePipeline& pipeline) override;
 
-		void PreRender() override;
+		void PreRender(re::StagePipeline& pipeline) override;
 
 		gr::TextureTargetSet& GetFinalTextureTargetSet() override
 			{ return m_directionalShadowStage.GetTextureTargetSet(); }

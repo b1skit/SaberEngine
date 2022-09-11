@@ -35,7 +35,6 @@ namespace gr
 
 		std::shared_ptr<gr::Texture> GetIEMTexture() { return m_IEM_Tex; }
 		std::shared_ptr<gr::Texture> GetPMREMTexture() { return m_PMREM_Tex; }		
-		std::shared_ptr<gr::Texture> GetBRDFIntegrationMap() { return m_BRDF_integrationMap; }
 
 		// Check if an IBL was successfully loaded
 		bool IsValid() const { return m_IEM_Tex != nullptr && m_PMREM_Tex != nullptr; }
@@ -60,18 +59,9 @@ namespace gr
 		std::shared_ptr<gr::Texture> m_PMREM_Tex; // Pre-filtered Mip-mapped Radiance Environment Map (PMREM)
 		uint32_t m_maxMipLevel; // Highest valid mip level for the PMREM cube map
 
-		// Generated BRDF integration map, required for PMREM calculations
-		std::shared_ptr<gr::Texture> m_BRDF_integrationMap;
-		gr::TextureTargetSet m_BRDF_integrationMapStageTargetSet;
-
 		// Cubemap face/single texture resolution:
 		int m_xRes;
 		int m_yRes;
-
-
-		// Private helper functions:
-		//--------------------------
-		void GenerateBRDFIntegrationMap(); // Generate our pre-integrated BRDF response LUT
 
 		// TODO: Refactor BRDF pre-integration to a single-frame GS that runs once at the beginning of DeferredLighting GS
 

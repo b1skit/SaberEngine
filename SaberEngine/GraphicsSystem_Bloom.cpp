@@ -225,7 +225,7 @@ namespace gr
 	}
 
 
-	void BloomGraphicsSystem::PreRender()
+	void BloomGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
 		m_emissiveBlitStage.InitializeForNewFrame();
 		m_emissiveBlitStage.SetGeometryBatches(&m_screenAlignedQuad);

@@ -26,6 +26,23 @@ namespace gr
 	}
 
 
+	RenderStage::RenderStage(RenderStage const& rhs) : RenderStage(rhs.GetName())
+	{
+		m_stageShader = rhs.m_stageShader;
+		m_textureTargetSet = rhs.m_textureTargetSet;
+		m_stageCam = rhs.m_stageCam;
+		m_stageParams = rhs.m_stageParams;
+		m_writesColor = rhs.m_writesColor;
+
+		m_perFrameShaderUniforms = vector<StageShaderUniform>(rhs.m_perFrameShaderUniforms);
+
+		m_perFrameShaderUniformValues = rhs.m_perFrameShaderUniformValues;
+		m_stageGeometryBatches = rhs.m_stageGeometryBatches;
+
+		m_perMeshShaderUniforms = vector<vector<StageShaderUniform>>(rhs.m_perMeshShaderUniforms);
+	}
+
+
 	void RenderStage::SetTextureInput(
 		string const& shaderName, shared_ptr<Texture const> tex, shared_ptr<Sampler const> sampler)
 	{

@@ -64,7 +64,7 @@ namespace opengl
 		{
 			(*gsIt)->Create(renderManager.m_pipeline.AddNewStagePipeline((*gsIt)->GetName()));
 
-			// If the GS didn't attach any render stages, remove it
+			// Remove GS if it didn't attach any render stages (Ensuring indexes of m_pipeline & m_graphicsSystems match)
 			if (renderManager.m_pipeline.GetPipeline().back().GetNumberOfStages() == 0)
 			{
 				renderManager.m_pipeline.GetPipeline().pop_back();
@@ -82,9 +82,9 @@ namespace opengl
 		// -> Catch bugs where we forget to upload a common param
 
 		// Update the graphics systems:
-		for (std::shared_ptr<gr::GraphicsSystem> curGS : renderManager.m_graphicsSystems)
+		for (size_t gs = 0; gs < renderManager.m_graphicsSystems.size(); gs++)
 		{
-			curGS->PreRender();
+			renderManager.m_graphicsSystems[gs]->PreRender(renderManager.m_pipeline.GetPipeline()[gs]);
 		}
 
 		// Render each stage:
@@ -209,10 +209,10 @@ namespace opengl
 
 
 			// Single frame render stages:
-			vector<RenderStage const*> const& singleFrameRenderStages = stagePipeline.GetSingleFrameRenderStages();
-			for (RenderStage const* renderStage : singleFrameRenderStages)
+			vector<RenderStage> const& singleFrameRenderStages = stagePipeline.GetSingleFrameRenderStages();
+			for (RenderStage const& renderStage : singleFrameRenderStages)
 			{
-				ProcessRenderStage(renderStage);
+				ProcessRenderStage(&renderStage);
 			}
 
 			// Render stages:

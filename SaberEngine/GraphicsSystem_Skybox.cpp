@@ -133,7 +133,7 @@ namespace gr
 	}
 
 
-	void SkyboxGraphicsSystem::PreRender()
+	void SkyboxGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
 		m_skyboxStage.InitializeForNewFrame();
 		m_skyboxStage.SetGeometryBatches(&m_skyMesh);

@@ -114,7 +114,7 @@ namespace gr
 	}
 
 
-	void GBufferGraphicsSystem::PreRender()
+	void GBufferGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
 		m_gBufferStage.SetGeometryBatches(&en::CoreEngine::GetSceneManager()->GetRenderMeshes());
 

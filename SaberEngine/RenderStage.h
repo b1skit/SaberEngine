@@ -54,10 +54,11 @@ namespace gr
 	public:
 		RenderStage(std::string const& name);
 		~RenderStage() = default;
-		
-		RenderStage() = delete;
-		RenderStage(RenderStage const&) = delete;
+				
+		RenderStage(RenderStage const&);
 		RenderStage(RenderStage&&) = default;
+
+		RenderStage() = delete;
 		RenderStage& operator=(RenderStage const&) = delete;
 		
 		inline std::string const& GetName() const { return m_name; }

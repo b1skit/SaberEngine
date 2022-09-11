@@ -84,7 +84,7 @@ namespace gr
 	}
 
 
-	void ShadowsGraphicsSystem::PreRender()
+	void ShadowsGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
 		m_directionalShadowStage.InitializeForNewFrame();
 		m_directionalShadowStage.SetGeometryBatches(&CoreEngine::GetSceneManager()->GetRenderMeshes());

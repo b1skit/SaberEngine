@@ -15,7 +15,7 @@ namespace gr
 
 		void Create(re::StagePipeline& pipeline) override;
 
-		void PreRender() override;
+		void PreRender(re::StagePipeline& pipeline) override;
 
 		gr::TextureTargetSet& GetFinalTextureTargetSet() override { return m_emissiveBlitStage.GetTextureTargetSet(); }
 		gr::TextureTargetSet const& GetFinalTextureTargetSet() const override { return m_emissiveBlitStage.GetTextureTargetSet(); }

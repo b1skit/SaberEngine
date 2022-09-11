@@ -11,19 +11,6 @@ namespace re
 
 	std::vector<gr::RenderStage const*>::iterator StagePipeline::AppendRenderStage(RenderStage const& renderStage)
 	{
-		return AddRenderStageInternal(renderStage, m_stagePipeline);
-	}
-
-
-	std::vector<gr::RenderStage const*>::iterator StagePipeline::AppendSingleFrameRenderStage(RenderStage const& renderStage)
-	{
-		return AddRenderStageInternal(renderStage, m_singleFrameStagePipeline);
-	}
-
-
-	std::vector<gr::RenderStage const*>::iterator StagePipeline::AddRenderStageInternal(
-		RenderStage const& renderStage, vector<RenderStage const*>& pipeline)
-	{
 		SEAssert("renderStage not fully configured",
 			renderStage.GetName() != "" &&
 			renderStage.GetStageShader() != nullptr &&
@@ -31,8 +18,22 @@ namespace re
 			// TODO: Add more conditions
 		);
 
-		pipeline.emplace_back(&renderStage);
-		return pipeline.end();
+		m_stagePipeline.emplace_back(&renderStage);
+		return m_stagePipeline.end();
+	}
+
+
+	std::vector<gr::RenderStage>::iterator StagePipeline::AppendSingleFrameRenderStage(RenderStage const& renderStage)
+	{
+		SEAssert("renderStage not fully configured",
+			renderStage.GetName() != "" &&
+			renderStage.GetStageShader() != nullptr &&
+			renderStage.GetStageCamera() != nullptr
+			// TODO: Add more conditions
+		);
+		
+		m_singleFrameStagePipeline.emplace_back(renderStage);
+		return m_singleFrameStagePipeline.end();
 	}
 
 

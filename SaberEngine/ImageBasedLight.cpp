@@ -26,8 +26,6 @@ namespace gr
 		m_IEM_Tex(nullptr),
 		m_PMREM_Tex(nullptr),
 		m_maxMipLevel(-1),
-		m_BRDF_integrationMap(nullptr),
-		m_BRDF_integrationMapStageTargetSet(lightName + " target"),
 		m_xRes(512),
 		m_yRes(512)
 	{
@@ -48,10 +46,6 @@ namespace gr
 			PMREM);
 
 		m_maxMipLevel = (uint32_t)glm::log2((float)m_xRes); // Assume cubemap is square, use xRes to compute mip level
-		
-
-		// Render BRDF Integration map:
-		GenerateBRDFIntegrationMap();
 
 		// Upload shader parameters:
 		if (GetDeferredLightShader() != nullptr)
@@ -70,8 +64,6 @@ namespace gr
 		m_IEM_Tex = nullptr;
 
 		m_PMREM_Tex = nullptr;
-
-		m_BRDF_integrationMap = nullptr;
 	}
 
 
@@ -263,77 +255,5 @@ namespace gr
 		CoreEngine::GetRenderManager()->GetContext().SetCullingMode(platform::Context::FaceCullingMode::Back);
 
 		return cubemap;
-	}
-
-
-	void ImageBasedLight::GenerateBRDFIntegrationMap()
-	{
-		LOG("Rendering BRDF Integration map texture");		
-		
-		// Destroy any existing map
-		m_BRDF_integrationMap = nullptr;
-		
-		// Create a shader:
-		const std::string shaderName = 
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("BRDFIntegrationMapShaderName");
-
-		shared_ptr<Shader> BRDFIntegrationMapShader = make_shared<Shader>(shaderName);
-		BRDFIntegrationMapShader->Create();
-		BRDFIntegrationMapShader->Bind(true);
-
-		// Create a CCW screen-aligned quad to render with:
-		shared_ptr<gr::Mesh> quad = gr::meshfactory::CreateQuad
-		(
-			// TODO: SIMPLIFY THIS INTERFACE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			vec3(-1.0f, 1.0f, -1.0f),	// TL
-			vec3(1.0f, 1.0f, -1.0f),	// TR
-			vec3(-1.0f, -1.0f, -1.0f),	// BL
-			vec3(1.0f, -1.0f, -1.0f)	// BR
-		);
-		quad->Bind(true);
-
-
-		// Render into the quad:
-		//----------------------
-
-		// Create a render texture:
-		Texture::TextureParams brdfParams;
-		brdfParams.m_width = m_xRes;
-		brdfParams.m_height = m_yRes;
-		brdfParams.m_faces = 1;
-		brdfParams.m_texUse = Texture::TextureUse::ColorTarget;
-		brdfParams.m_texDimension = Texture::TextureDimension::Texture2D;
-		brdfParams.m_texFormat = Texture::TextureFormat::RG16F; // 2 channel, 16-bit floating point precision, as recommended by Epic Games:
-		brdfParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
-		brdfParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-		brdfParams.m_texturePath = "BRDFIntegrationMap";
-
-		brdfParams.m_useMIPs = false;
-
-		m_BRDF_integrationMap = std::make_shared<gr::Texture>(brdfParams);
-	
-		// Configure a TextureTargetSet:
-		m_BRDF_integrationMapStageTargetSet.ColorTarget(0) = m_BRDF_integrationMap;
-		m_BRDF_integrationMapStageTargetSet.Viewport() = gr::Viewport(0, 0, m_xRes, m_yRes);
-		m_BRDF_integrationMapStageTargetSet.CreateColorTargets();
-		m_BRDF_integrationMapStageTargetSet.AttachColorTargets(0, 0, true);
-
-		// Ensure we can render on the far plane
-		CoreEngine::GetRenderManager()->GetContext().SetDepthTestMode(platform::Context::DepthTestMode::LEqual);
-		CoreEngine::GetRenderManager()->GetContext().ClearTargets(platform::Context::ClearTarget::ColorDepth);
-		// TODO: Handle depth/clearing config via stage params: Stages should control how they interact with the targets
-
-		// Draw:		
-		glDrawElements(GL_TRIANGLES,
-			(GLsizei)quad->NumIndices(),
-			GL_UNSIGNED_INT, 
-			(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
-
-		// Cleanup:
-		m_BRDF_integrationMapStageTargetSet.AttachColorTargets(0, 0, false);
-		quad->Bind(false);
-
-		BRDFIntegrationMapShader->Bind(false);
-		BRDFIntegrationMapShader = nullptr;
 	}
 }

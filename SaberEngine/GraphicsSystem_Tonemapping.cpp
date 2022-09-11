@@ -61,7 +61,7 @@ namespace gr
 	}
 
 
-	void TonemappingGraphicsSystem::PreRender()
+	void TonemappingGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
 		m_tonemappingStage.InitializeForNewFrame();
 		m_tonemappingStage.SetGeometryBatches(&m_screenAlignedQuad);

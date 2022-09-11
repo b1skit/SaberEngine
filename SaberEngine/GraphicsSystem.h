@@ -21,7 +21,7 @@ namespace gr
 		// Virtual members:
 		virtual ~GraphicsSystem() = 0;
 		virtual void Create(re::StagePipeline& pipeline) = 0; // Initial Graphics System setup
-		virtual void PreRender() = 0; // Called every frame
+		virtual void PreRender(re::StagePipeline& pipeline) = 0; // Called every frame
 
 		virtual gr::TextureTargetSet& GetFinalTextureTargetSet() = 0;
 		virtual gr::TextureTargetSet const& GetFinalTextureTargetSet() const = 0;

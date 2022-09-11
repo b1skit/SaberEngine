@@ -15,7 +15,7 @@ namespace gr
 
 		void Create(re::StagePipeline& pipeline) override;
 
-		void PreRender() override;
+		void PreRender(re::StagePipeline& pipeline) override;
 
 		// Note: All light stages write to the same target
 		gr::TextureTargetSet& GetFinalTextureTargetSet() override { return m_ambientStage.GetTextureTargetSet(); }
@@ -24,6 +24,7 @@ namespace gr
 	private:
 		gr::RenderStage m_ambientStage;;
 		std::vector<std::shared_ptr<gr::Mesh>> m_ambientMesh;
+		std::shared_ptr<gr::Texture> m_BRDF_integrationMap;
 
 		gr::RenderStage m_keylightStage;
 		std::vector<std::shared_ptr<gr::Mesh>> m_keylightMesh;
