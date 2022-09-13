@@ -220,9 +220,6 @@
     <ClInclude Include="Scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SaberObject.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Mesh.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
@@ -372,6 +369,9 @@
     </ClInclude>
     <ClInclude Include="RenderMesh.h">
       <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="SaberObject.h">
+      <Filter>Header Files\en</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
