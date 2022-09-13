@@ -21,7 +21,6 @@
 #include "SceneObject.h"
 #include "GameObject.h"
 #include "PlayerObject.h"
-#include "ImageBasedLight.h"
 #include "ShadowMap.h"
 #include "Material.h"
 #include "RenderMesh.h"
@@ -37,7 +36,6 @@ using gr::Light;
 using gr::ShadowMap;
 using gr::Transform;
 using gr::RenderMesh;
-using gr::ImageBasedLight;
 using en::CoreEngine;
 using en::EventManager;
 using fr::PlayerObject;
@@ -1446,6 +1444,8 @@ namespace SaberEngine
 
 				Light::LightType pointType = Light::Point;
 
+				// TODO: Just auto-insert an IBL ambient light...
+
 				// NOTE: The word "ambient" must appear in the ambient light's name
 				if (!foundAmbient && lightName.find("ambient") != string::npos)	
 				{
@@ -1455,7 +1455,7 @@ namespace SaberEngine
 
 					foundAmbient = true;
 
-					pointType = Light::AmbientColor; // Assume it's a colored ambient for now
+					pointType = Light::AmbientIBL;
 				}
 				else
 				{
@@ -1551,21 +1551,8 @@ namespace SaberEngine
 				}
 				else
 				{
-					// TODO: Decouple point and image-based lights
-
-					pointLight = std::make_shared<ImageBasedLight>(lightName);
-
-					// TODO: Fallback to ambient color if IBL loading fails
-					//// If we didn't load a valid IBL, fall back to using an ambient color light
-					//if (!dynamic_cast<ImageBasedLight*>(pointLight.get())->IsValid())
-					//{
-					//	pointLight = std::make_shared<Light>(
-					//		lightName,
-					//		Light::AmbientColor,
-					//		lightColor,
-					//		nullptr, // shadowmap
-					//		radius); // Only used if we're actually creating a point light
-					//}
+					pointLight = 
+						std::make_shared<Light>(lightName, Light::LightType::AmbientIBL, lightColor, nullptr, 1.0f);
 				}
 
 				if (pointType == Light::Point)

@@ -23,7 +23,6 @@ namespace gr
 	public:
 		enum LightType
 		{
-			AmbientColor,
 			AmbientIBL,
 			Directional,
 			Point,

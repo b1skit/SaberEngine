@@ -194,7 +194,6 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="Shader_Platform.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureTarget.cpp" />
-    <ClCompile Include="ImageBasedLight.cpp" />
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="LogManager.cpp" />
@@ -259,7 +258,6 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="EventListener.h" />
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="GameObject.h" />
-    <ClInclude Include="ImageBasedLight.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="KeyConfiguration.h" />
     <ClInclude Include="Light.h" />

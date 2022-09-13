@@ -33,20 +33,12 @@ namespace gr
 		string shaderName;
 		switch (lightType)
 		{
-		case AmbientColor:
 		case AmbientIBL:
 		{
 			m_deferredLightShader = make_shared<Shader>(
 				en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"));
 			
-			if (lightType == AmbientColor)
-			{
-				m_deferredLightShader->ShaderKeywords().emplace_back("AMBIENT_COLOR");
-			}
-			else // AmbientIBL
-			{
-				m_deferredLightShader->ShaderKeywords().emplace_back("AMBIENT_IBL");
-			}
+			m_deferredLightShader->ShaderKeywords().emplace_back("AMBIENT_IBL");
 
 			m_deferredLightShader->Create();
 

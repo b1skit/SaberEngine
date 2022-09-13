@@ -164,7 +164,6 @@ namespace SaberEngine
 		switch (newLight->Type())
 		{
 		// Check if we've got any existing ambient or directional lights:
-		case Light::AmbientColor:
 		case Light::AmbientIBL:
 		{
 			SEAssert("Ambient light already exists, cannot have 2 ambient lights", m_ambientLight == nullptr);
