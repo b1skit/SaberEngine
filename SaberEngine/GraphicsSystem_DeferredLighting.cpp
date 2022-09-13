@@ -24,6 +24,7 @@ using std::make_shared;
 using std::vector;
 using glm::vec3;
 using glm::vec4;
+using glm::mat4;
 
 
 namespace gr
@@ -81,11 +82,21 @@ namespace gr
 		ambientStageParams.m_depthWriteMode		= platform::Context::DepthWriteMode::Disabled;
 
 		// Ambient light:
+		const uint32_t generatedTexRes = 512; // TODO: Make this user-controllable somehow?
 		shared_ptr<gr::ImageBasedLight> ambientLight = std::dynamic_pointer_cast<gr::ImageBasedLight>(
 			en::CoreEngine::GetSceneManager()->GetAmbientLight());
 		if (ambientLight)
 		{
 			m_ambientStage.GetStageShader() = ambientLight->GetDeferredLightShader();
+
+			// Set shader constants:
+			const int maxMipLevel = (int)glm::log2((float)generatedTexRes);
+			m_ambientStage.GetStageShader()->SetUniform(
+				"maxMipLevel", 
+				&maxMipLevel,
+				platform::Shader::UniformType::Int, 
+				1);
+
 			m_ambientStage.GetStageCamera() = deferredLightingCam;
 
 			m_ambientStage.SetStageParams(ambientStageParams);
@@ -168,50 +179,204 @@ namespace gr
 		}
 
 
-		// First frame: Generate the pre-integrated BRDF LUT via a single-frame render stage:
-		RenderStage brdfStage("BRDF pre-integration stage");
+		// 1st frame: Generate the pre-integrated BRDF LUT via a single-frame render stage:
+		{
+			RenderStage brdfStage("BRDF pre-integration stage");
 
-		brdfStage.GetStageShader() = make_shared<Shader>(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("BRDFIntegrationMapShaderName"));
-		brdfStage.GetStageShader()->Create();
+			brdfStage.GetStageShader() = make_shared<Shader>(
+				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("BRDFIntegrationMapShaderName"));
+			brdfStage.GetStageShader()->Create();
 
-		brdfStage.GetStageCamera() = en::CoreEngine::GetSceneManager()->GetMainCamera(); // Not really needed...
+			// Reuse the ambient mesh; it's a full-screen quad rendered on the near plane
+			brdfStage.SetGeometryBatches(&m_ambientMesh);
 
-		// Reuse the ambient mesh; it's a full-screen quad rendered on the near plane
-		brdfStage.SetGeometryBatches(&m_ambientMesh);
+			// Create a render target texture:			
+			Texture::TextureParams brdfParams;
+			brdfParams.m_width = generatedTexRes;
+			brdfParams.m_height = generatedTexRes;
+			brdfParams.m_faces = 1;
+			brdfParams.m_texUse = Texture::TextureUse::ColorTarget;
+			brdfParams.m_texDimension = Texture::TextureDimension::Texture2D;
+			brdfParams.m_texFormat = Texture::TextureFormat::RG16F; // Epic recommends 2 channel, 16-bit floating point
+			brdfParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+			brdfParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+			brdfParams.m_texturePath = "BRDFIntegrationMap";
+			brdfParams.m_useMIPs = false;
 
-		// Create a render target texture:
-		const uint32_t brdfTexRes = 512; // TODO: Make this user-controllable somehow?
-		Texture::TextureParams brdfParams;
-		brdfParams.m_width = brdfTexRes;
-		brdfParams.m_height = brdfTexRes;
-		brdfParams.m_faces = 1;
-		brdfParams.m_texUse = Texture::TextureUse::ColorTarget;
-		brdfParams.m_texDimension = Texture::TextureDimension::Texture2D;
-		brdfParams.m_texFormat = Texture::TextureFormat::RG16F; // Epic recommends 2 channel, 16-bit floating point
-		brdfParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
-		brdfParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-		brdfParams.m_texturePath = "BRDFIntegrationMap";
-		brdfParams.m_useMIPs = false;
+			m_BRDF_integrationMap = std::make_shared<gr::Texture>(brdfParams);
 
-		m_BRDF_integrationMap = std::make_shared<gr::Texture>(brdfParams);
+			brdfStage.GetTextureTargetSet().ColorTarget(0) = m_BRDF_integrationMap;
+			brdfStage.GetTextureTargetSet().Viewport() = gr::Viewport(0, 0, generatedTexRes, generatedTexRes);
+			brdfStage.GetTextureTargetSet().CreateColorTargets();
 
-		brdfStage.GetTextureTargetSet().ColorTarget(0) = m_BRDF_integrationMap;
-		brdfStage.GetTextureTargetSet().Viewport() = gr::Viewport(0, 0, brdfTexRes, brdfTexRes);
-		brdfStage.GetTextureTargetSet().CreateColorTargets();
+			// Stage params:
+			RenderStage::RenderStageParams brdfStageParams;
+			brdfStageParams.m_targetClearMode	= platform::Context::ClearTarget::None;
+			brdfStageParams.m_faceCullingMode	= platform::Context::FaceCullingMode::Disabled;
+			brdfStageParams.m_srcBlendMode		= platform::Context::BlendMode::One;
+			brdfStageParams.m_dstBlendMode		= platform::Context::BlendMode::Zero;
+			brdfStageParams.m_depthTestMode		= platform::Context::DepthTestMode::Always;
+			brdfStageParams.m_depthWriteMode	= platform::Context::DepthWriteMode::Disabled;
 
-		// Stage params:
-		RenderStage::RenderStageParams brdfStageParams;
-		brdfStageParams.m_targetClearMode = platform::Context::ClearTarget::None;
-		brdfStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Disabled;
-		brdfStageParams.m_srcBlendMode = platform::Context::BlendMode::One;
-		brdfStageParams.m_dstBlendMode = platform::Context::BlendMode::Zero;
-		brdfStageParams.m_depthTestMode = platform::Context::DepthTestMode::Always;
-		brdfStageParams.m_depthWriteMode = platform::Context::DepthWriteMode::Disabled;
+			brdfStage.SetStageParams(brdfStageParams);
 
-		brdfStage.SetStageParams(brdfStageParams);
+			pipeline.AppendSingleFrameRenderStage(brdfStage);
+		}
 
-		pipeline.AppendSingleFrameRenderStage(brdfStage);
+		// TODO: We should use equirectangular images, instead of bothering to convert to cubemaps for IEM/PMREM
+
+		const string equilinearToCubemapShaderName =
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("equilinearToCubemapBlitShaderName");
+		
+		m_cubeMesh.emplace_back(gr::meshfactory::CreateCube());
+
+		const string iblTexturePath =
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") +
+			CoreEngine::GetSceneManager()->GetCurrentSceneName() + "\\" +
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath");
+
+		shared_ptr<gr::Texture> iblTexture = CoreEngine::GetSceneManager()->FindLoadTextureByPath(
+			iblTexturePath, Texture::TextureColorSpace::Linear);
+
+		if (iblTexture == nullptr)
+		{
+			LOG_ERROR("Failed to load HDR texture \"" + iblTexturePath + "\" for image-based lighting");
+			return;
+		}
+		else
+		{
+			iblTexture->Create();
+		}
+
+		// Common IBL cubemap params:
+		Texture::TextureParams cubeParams;
+		cubeParams.m_width			= generatedTexRes;
+		cubeParams.m_height			= generatedTexRes;
+		cubeParams.m_faces			= 6;
+		cubeParams.m_texUse			= Texture::TextureUse::ColorTarget;
+		cubeParams.m_texDimension	= Texture::TextureDimension::TextureCubeMap;
+		cubeParams.m_texFormat		= Texture::TextureFormat::RGB16F;
+		cubeParams.m_texColorSpace	= Texture::TextureColorSpace::Linear;
+
+		// Common IBL texture generation stage params:
+		RenderStage::RenderStageParams iblStageParams;
+		iblStageParams.m_targetClearMode	= platform::Context::ClearTarget::None;
+		iblStageParams.m_faceCullingMode	= platform::Context::FaceCullingMode::Disabled;
+		iblStageParams.m_srcBlendMode		= platform::Context::BlendMode::One;
+		iblStageParams.m_dstBlendMode		= platform::Context::BlendMode::Zero;
+		iblStageParams.m_depthTestMode		= platform::Context::DepthTestMode::Always;
+		iblStageParams.m_depthWriteMode		= platform::Context::DepthWriteMode::Disabled;
+		
+		
+		const vec4 texelSize = iblTexture->GetTexelDimenions();		
+		const mat4 cubeProjectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+		const mat4 captureViews[] =
+		{
+			// TODO: Move this to a common factory somewhere
+			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(1.0f,  0.0f,  0.0f), vec3(0.0f, -1.0f,  0.0f)),
+			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(-1.0f, 0.0f,  0.0f), vec3(0.0f, -1.0f,  0.0f)),
+			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f,  1.0f,  0.0f), vec3(0.0f,  0.0f,  1.0f)),
+			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, -1.0f,  0.0f), vec3(0.0f,  0.0f, -1.0f)),
+			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f,  0.0f,  1.0f), vec3(0.0f, -1.0f,  0.0f)),
+			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f,  0.0f, -1.0f), vec3(0.0f, -1.0f,  0.0f))
+		};
+
+		// 1st frame: Generate an IEM (Irradiance Environment Map) cubemap texture for diffuse irradiance
+		{
+			shared_ptr<Shader> iemShader = make_shared<gr::Shader>(equilinearToCubemapShaderName);
+			iemShader->ShaderKeywords().emplace_back("BLIT_IEM");
+			iemShader->Create();
+
+			// IEM-specific texture params:
+			cubeParams.m_texturePath = "IEMTexture";
+			cubeParams.m_useMIPs = false;
+			m_IEMTex = make_shared<Texture>(cubeParams);
+
+			for (uint32_t face = 0; face < 6; face++)
+			{
+				RenderStage iemStage("IEM generation: Face " + to_string(face + 1) + "/6");
+
+				iemStage.GetStageShader() = iemShader;
+				iemStage.SetGeometryBatches(&m_cubeMesh);
+				iemStage.SetTextureInput(
+					"MatAlbedo",
+					iblTexture,
+					gr::Sampler::GetSampler(gr::Sampler::SamplerType::ClampLinearMipMapLinearLinear));
+
+				const int numSamples = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("numIEMSamples");
+				iemStage.SetPerFrameShaderUniformByValue(
+					"numSamples", numSamples, platform::Shader::UniformType::Int, 1);
+				iemStage.SetPerFrameShaderUniformByValue(
+					"in_projection", cubeProjectionMatrix, platform::Shader::UniformType::Matrix4x4f, 1);
+				iemStage.SetPerFrameShaderUniformByValue(
+					"in_view", captureViews[face], platform::Shader::UniformType::Matrix4x4f, 1);
+
+				iemStage.GetTextureTargetSet().ColorTarget(0) = m_IEMTex;
+				iemStage.GetTextureTargetSet().Viewport() = gr::Viewport(0, 0, generatedTexRes, generatedTexRes);
+				iemStage.GetTextureTargetSet().CreateColorTargets();
+
+				iblStageParams.m_textureTargetSetConfig.m_targetFace = face;
+				iblStageParams.m_textureTargetSetConfig.m_targetMip = 0;
+				iemStage.SetStageParams(iblStageParams);
+
+				pipeline.AppendSingleFrameRenderStage(iemStage);
+			}
+		}
+
+		// 1st frame: Generate PMREM (Pre-filtered Mip-mapped Radiance Environment Map) cubemap for specular reflections
+		{
+			shared_ptr<Shader> pmremShader = make_shared<gr::Shader>(equilinearToCubemapShaderName);
+			pmremShader->ShaderKeywords().emplace_back("BLIT_PMREM");
+			pmremShader->Create();
+
+			// PMREM-specific texture params:
+			cubeParams.m_texturePath = "PMREMTexture";
+			cubeParams.m_useMIPs = true;
+			m_PMREMTex = make_shared<Texture>(cubeParams);
+
+			TextureTargetSet pmremTargetSet("PMREM texture targets");
+			pmremTargetSet.ColorTarget(0) = m_PMREMTex;
+			pmremTargetSet.Viewport() = gr::Viewport(0, 0, generatedTexRes, generatedTexRes);
+			pmremTargetSet.CreateColorTargets();
+
+			const uint32_t numMipLevels = m_PMREMTex->GetNumMips(); // # of mips we need to render
+
+			for (uint32_t currentMipLevel = 0; currentMipLevel < numMipLevels; currentMipLevel++)
+			{
+				for (uint32_t face = 0; face < 6; face++)
+				{
+					RenderStage pmremStage(
+						"PMREM generation: Face " + to_string(face + 1) + "/6, MIP " + 
+						to_string(currentMipLevel + 1) + "/" + to_string(numMipLevels));
+
+					pmremStage.GetStageShader() = pmremShader;
+					pmremStage.SetGeometryBatches(&m_cubeMesh);
+					pmremStage.SetTextureInput(
+						"MatAlbedo",
+						iblTexture,
+						gr::Sampler::GetSampler(gr::Sampler::SamplerType::ClampLinearMipMapLinearLinear));
+
+					const int numSamples = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("numPMREMSamples");
+					pmremStage.SetPerFrameShaderUniformByValue(
+						"numSamples", numSamples, platform::Shader::UniformType::Int, 1);
+					pmremStage.SetPerFrameShaderUniformByValue(
+						"in_projection", cubeProjectionMatrix, platform::Shader::UniformType::Matrix4x4f, 1);
+					pmremStage.SetPerFrameShaderUniformByValue(
+						"in_view", captureViews[face], platform::Shader::UniformType::Matrix4x4f, 1);
+					const float roughness = (float)currentMipLevel / (float)(numMipLevels - 1);
+					pmremStage.SetPerFrameShaderUniformByValue(
+						"roughness", roughness, platform::Shader::UniformType::Float, 1);
+
+					pmremStage.GetTextureTargetSet() = pmremTargetSet;
+
+					iblStageParams.m_textureTargetSetConfig.m_targetFace = face;
+					iblStageParams.m_textureTargetSetConfig.m_targetMip = currentMipLevel;
+					pmremStage.SetStageParams(iblStageParams);
+
+					pipeline.AppendSingleFrameRenderStage(pmremStage);
+				}
+			}
+		}
 	}
 
 
@@ -251,7 +416,7 @@ namespace gr
 		{
 			if (GBufferGraphicsSystem::GBufferTexNames[i] == "GBufferEmissive")
 			{
-				// TEMP HAX!!!! Skip the emissive texture since we don't use it in the lighting shaders
+				// Skip the emissive texture since we don't use it in the lighting shaders
 				// -> Currently, we assert when trying to bind textures by name to a shader, if the name is not found...
 				// TODO: Handle this more elegantly
 				continue;
@@ -264,7 +429,6 @@ namespace gr
 					gBufferGS->GetFinalTextureTargetSet().ColorTarget(i).GetTexture(),
 					Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear));
 			}
-
 			if (keyLight)
 			{
 				m_keylightStage.SetTextureInput(
@@ -272,7 +436,6 @@ namespace gr
 					gBufferGS->GetFinalTextureTargetSet().ColorTarget(i).GetTexture(),
 					Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear));
 			}
-
 			if (pointLights.size() > 0)
 			{
 				m_pointlightStage.SetTextureInput(
@@ -287,13 +450,13 @@ namespace gr
 			// Add IBL texture inputs for ambient stage:
 			m_ambientStage.SetTextureInput(
 				"CubeMap0",
-				ambientLight->GetIEMTexture(),
+				m_IEMTex,
 				Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear)
 			);
 
 			m_ambientStage.SetTextureInput(
 				"CubeMap1",
-				ambientLight->GetPMREMTexture(),
+				m_PMREMTex,
 				Sampler::GetSampler(Sampler::SamplerType::WrapLinearMipMapLinearLinear)
 			);
 

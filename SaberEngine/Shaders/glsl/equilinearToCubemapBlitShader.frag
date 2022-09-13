@@ -88,13 +88,9 @@ void main()
 
 #else
 
-
-// Remap from equirectangular to cubemap, with no processing/filtering (ie. for using HDR images as a skybox texture)
-void main()
+void main() // Deprecated: Just show an error color to be safe
 {	
-	vec2 WorldDirToSphericalUV	= DirectionToEquirectangularUV(data.localPos);
-	
-	FragColor = vec4(texture(MatAlbedo, equirectangularUVs).rgb, 1.0);
+	FragColor = vec4(1.0, 0, 0, 1.0);
 }
 
 #endif

@@ -67,9 +67,6 @@
 #endif
 
 
-// Forward Lighting:
-uniform vec3 ambientColor;		// Deprecated: Use deferred lightColor instead
-
 // Deferred key light:
 uniform vec3 keylightWorldDir;	// Normalized, world-space, points towards keylight (ie. parallel)
 uniform vec3 keylightViewDir;	// Normalized, view-space, points towards keylight (ie. parallel). Note: Currently only uploaded for deferred lights

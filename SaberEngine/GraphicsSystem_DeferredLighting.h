@@ -25,6 +25,9 @@ namespace gr
 		gr::RenderStage m_ambientStage;;
 		std::vector<std::shared_ptr<gr::Mesh>> m_ambientMesh;
 		std::shared_ptr<gr::Texture> m_BRDF_integrationMap;
+		std::shared_ptr<gr::Texture> m_IEMTex;
+		std::shared_ptr<gr::Texture> m_PMREMTex;
+		std::vector<std::shared_ptr<gr::Mesh>> m_cubeMesh; // For rendering into a cube map
 
 		gr::RenderStage m_keylightStage;
 		std::vector<std::shared_ptr<gr::Mesh>> m_keylightMesh;

@@ -42,7 +42,7 @@ namespace gr
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath");
 
 		m_skyTexture = CoreEngine::GetSceneManager()->FindLoadTextureByPath(
-			iblTexturePath, Texture::TextureColorSpace::Linear); // Deallocated by SceneManager
+			iblTexturePath, Texture::TextureColorSpace::Linear);
 
 		if (m_skyTexture == nullptr)
 		{

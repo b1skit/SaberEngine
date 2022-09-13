@@ -5,19 +5,27 @@
 using gr::RenderStage;
 using std::vector;
 
+namespace
+{
+	inline void SanityCheckRenderStage(RenderStage const& renderStage)
+	{
+		SEAssert("renderStage not fully configured",
+			renderStage.GetName() != "" &&
+			renderStage.GetStageShader() != nullptr
+			// TODO: Add more conditions
+		);
+		// Note: Null stage geometry, camera allowed
+	}
+}
+
 namespace re
 {
 	/******************************************** StagePipeline********************************************/
 
 	std::vector<gr::RenderStage const*>::iterator StagePipeline::AppendRenderStage(RenderStage const& renderStage)
 	{
-		SEAssert("renderStage not fully configured",
-			renderStage.GetName() != "" &&
-			renderStage.GetStageShader() != nullptr &&
-			renderStage.GetStageCamera() != nullptr
-			// TODO: Add more conditions
-		);
-
+		SanityCheckRenderStage(renderStage);
+		
 		m_stagePipeline.emplace_back(&renderStage);
 		return m_stagePipeline.end();
 	}
@@ -25,12 +33,7 @@ namespace re
 
 	std::vector<gr::RenderStage>::iterator StagePipeline::AppendSingleFrameRenderStage(RenderStage const& renderStage)
 	{
-		SEAssert("renderStage not fully configured",
-			renderStage.GetName() != "" &&
-			renderStage.GetStageShader() != nullptr &&
-			renderStage.GetStageCamera() != nullptr
-			// TODO: Add more conditions
-		);
+		SanityCheckRenderStage(renderStage);
 		
 		m_singleFrameStagePipeline.emplace_back(renderStage);
 		return m_singleFrameStagePipeline.end();

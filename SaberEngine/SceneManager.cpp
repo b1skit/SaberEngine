@@ -1553,21 +1553,19 @@ namespace SaberEngine
 				{
 					// TODO: Decouple point and image-based lights
 
-					pointLight = std::make_shared<ImageBasedLight>(
-						lightName,
-						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath"));
-					// TODO: Load the HDR path from FBX (Currently not supported in Assimp???)
+					pointLight = std::make_shared<ImageBasedLight>(lightName);
 
-					// If we didn't load a valid IBL, fall back to using an ambient color light
-					if (!dynamic_cast<ImageBasedLight*>(pointLight.get())->IsValid())
-					{
-						pointLight = std::make_shared<Light>(
-							lightName,
-							Light::AmbientColor,
-							lightColor,
-							nullptr, // shadowmap
-							radius); // Only used if we're actually creating a point light
-					}
+					// TODO: Fallback to ambient color if IBL loading fails
+					//// If we didn't load a valid IBL, fall back to using an ambient color light
+					//if (!dynamic_cast<ImageBasedLight*>(pointLight.get())->IsValid())
+					//{
+					//	pointLight = std::make_shared<Light>(
+					//		lightName,
+					//		Light::AmbientColor,
+					//		lightColor,
+					//		nullptr, // shadowmap
+					//		radius); // Only used if we're actually creating a point light
+					//}
 				}
 
 				if (pointType == Light::Point)

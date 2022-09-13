@@ -107,13 +107,15 @@ namespace opengl
 
 				// Attach the stage targets:
 				TextureTargetSet const& stageTargets = renderStage->GetTextureTargetSet();
-				stageTargets.AttachColorDepthStencilTargets(0, 0, true);
-				// TODO: Handle selection of face, miplevel -> Via stage params?
+				stageTargets.AttachColorDepthStencilTargets(
+					renderStageParams.m_textureTargetSetConfig.m_targetFace, 
+					renderStageParams.m_textureTargetSetConfig.m_targetMip, 
+					true);
 
 				// Configure the shader:
 				std::shared_ptr<Shader const> stageShader = renderStage->GetStageShader();
 				stageShader->Bind(true);
-				// TODO: Use shaders from materials in some cases?
+				// TODO: Use shaders from materials in some cases? Set shaders/materials per batch, don't decide here
 
 				// Set per-frame stage shader uniforms:
 				vector<RenderStage::StageShaderUniform> const& stagePerFrameShaderUniforms =
@@ -126,17 +128,20 @@ namespace opengl
 
 				// Set camera params:
 				std::shared_ptr<Camera const> stageCam = renderStage->GetStageCamera();
-				stageShader->SetUniform(
-					"in_view",
-					&stageCam->GetViewMatrix()[0][0],
-					platform::Shader::UniformType::Matrix4x4f,
-					1);
-				stageShader->SetUniform(
-					"cameraWPos",
-					&stageCam->GetTransform()->GetWorldPosition(),
-					platform::Shader::UniformType::Vec3f,
-					1);
-				// TODO: These should be set via a general camera param block, shared between stages that need it
+				if (stageCam)
+				{
+					stageShader->SetUniform(
+						"in_view",
+						&stageCam->GetViewMatrix()[0][0],
+						platform::Shader::UniformType::Matrix4x4f,
+						1);
+					stageShader->SetUniform(
+						"cameraWPos",
+						&stageCam->GetTransform()->GetWorldPosition(),
+						platform::Shader::UniformType::Vec3f,
+						1);
+					// TODO: These should be set via a general camera param block, shared between stages that need it
+				}
 
 				// Configure the context:
 				renderManager.m_context.SetCullingMode(renderStageParams.m_faceCullingMode);
@@ -145,7 +150,7 @@ namespace opengl
 				renderManager.m_context.SetDepthWriteMode(renderStageParams.m_depthWriteMode);
 				renderManager.m_context.SetColorWriteMode(renderStageParams.m_colorWriteMode);
 				renderManager.m_context.ClearTargets(renderStageParams.m_targetClearMode); // Clear AFTER setting color/depth modes
-				// TODO: Move this to a helper within Context?
+				// TODO: Move this to a "set pipeline state" helper within Context?
 
 				// Render stage geometry:
 				std::vector<std::shared_ptr<gr::Mesh>> const* meshes = renderStage->GetGeometryBatches();
@@ -183,16 +188,19 @@ namespace opengl
 					// Assemble and upload mesh-specific matrices:
 					const mat4 model = mesh->GetTransform().Model();
 					const mat4 modelRotation = mesh->GetTransform().Model(Transform::WorldRotation);
-					const mat4 mv = stageCam->GetViewMatrix() * model;
-					const mat4 mvp = stageCam->GetViewProjectionMatrix() * model;
-
 					stageShader->SetUniform("in_model", &model[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
 					stageShader->SetUniform(
 						"in_modelRotation", &modelRotation[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
 					// ^^ TODO: in_modelRotation isn't always used...
-					stageShader->SetUniform("in_mv", &mv[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
-					stageShader->SetUniform("in_mvp", &mvp[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
-					// TODO: Figure out a more generic solution for this?
+
+					if (stageCam)
+					{
+						const mat4 mv = stageCam->GetViewMatrix() * model;
+						const mat4 mvp = stageCam->GetViewProjectionMatrix() * model;
+						stageShader->SetUniform("in_mv", &mv[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
+						stageShader->SetUniform("in_mvp", &mvp[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
+					}				
+					// TODO: Figure out a more general solution for this?
 
 					// Draw!
 					glDrawElements(
@@ -200,6 +208,7 @@ namespace opengl
 						(GLsizei)mesh->NumIndices(),
 						GL_UNSIGNED_INT,
 						(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+					// TODO: Configure this based on the Mesh/vertex parameters, instead of assuming a fixed configuration
 
 					meshIdx++;
 				} // meshes

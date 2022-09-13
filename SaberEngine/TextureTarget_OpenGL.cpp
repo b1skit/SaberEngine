@@ -128,12 +128,6 @@ namespace opengl
 
 				SEAssert("Failed to create framebuffer object during texture creation",
 					glIsFramebuffer(targetSetParams->m_frameBufferObject));
-
-				/*if (textureParams.m_texDimension != gr::Texture::TextureDimension::TextureCubeMap)
-				{
-					glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_WIDTH, width);
-					glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_HEIGHT, height);
-				}	*/
 			}
 			else
 			{
@@ -286,14 +280,6 @@ namespace opengl
 
 				SEAssert("Failed to create framebuffer object during texture creation",
 					glIsFramebuffer(targetSetParams->m_frameBufferObject));
-
-				//// Specifies the assumed with for a framebuffer object with no attachments
-				//if (depthTextureParams.m_texDimension != gr::Texture::TextureDimension::TextureCubeMap)
-				//{
-				//	glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_WIDTH, depthStencilTex->Width());
-				//	glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_HEIGHT, depthStencilTex->Height());
-				//}
-
 			}
 			else
 			{
@@ -384,14 +370,18 @@ namespace opengl
 			{
 				SEAssert("Framebuffer is not complete: " + std::to_string(glCheckFramebufferStatus(GL_FRAMEBUFFER)), false);
 			}
-		}
-		// Note: We don't error if there's no depth texture, but we probably should...
 
-		glViewport(
-			targetSet.Viewport().xMin(),
-			targetSet.Viewport().yMin(),
-			targetSet.Viewport().Width(),
-			targetSet.Viewport().Height());
+			SEAssert("TODO: Implement support for correctly setting the viewport dimensions for depth textures with "
+				"mip maps. See the color target attach function for an example", 
+				targetSet.DepthStencilTarget().GetTexture()->GetNumMips() == 1);
+			// TODO: We currently just assume the depth buffer is full resolution, but it doesn't have to be. Leaving
+			// this assert to save debugging time at a later date...
+			glViewport(
+				targetSet.Viewport().xMin(),
+				targetSet.Viewport().yMin(),
+				targetSet.Viewport().Width(),
+				targetSet.Viewport().Height());
+		}
 	}
 
 

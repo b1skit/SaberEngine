@@ -33,6 +33,7 @@ namespace gr
 			RenderStageType_Count
 		};
 
+
 		struct RenderStageParams // Platform/context configuration:
 		{			
 			platform::Context::ClearTarget		m_targetClearMode	= platform::Context::ClearTarget::None;
@@ -48,6 +49,12 @@ namespace gr
 				platform::Context::ColorWriteMode::ChannelMode::Enabled, // B
 				platform::Context::ColorWriteMode::ChannelMode::Enabled  // A
 			};
+
+			struct
+			{
+				uint32_t m_targetFace = 0;
+				uint32_t m_targetMip = 0;
+			} m_textureTargetSetConfig;
 		};
 
 

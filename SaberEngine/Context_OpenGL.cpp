@@ -124,7 +124,7 @@ namespace opengl
 		opengl::Context::PlatformParams* const platformParams =
 			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
 
-		// Video automatically inits events, but included here as a reminder
+		// SDL_INIT_VIDEO automatically inits events, but SDL_INIT_EVENTS included here as a reminder
 		SEAssert(
 			SDL_GetError(), 
 			SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO) == 0);
@@ -201,27 +201,8 @@ namespace opengl
 		glDebugMessageCallback(GLMessageCallback, 0);
 #endif
 
-		// Initialize other OpenGL settings:
-		glFrontFace(GL_CCW);				// Counter-clockwise vertex winding (OpenGL default)
-		glEnable(GL_DEPTH_TEST);			// Start with Z depth testing enabled
-		glDepthFunc(GL_LESS);				// Default is less
-		glEnable(GL_CULL_FACE);				// Start with face culling enabled
-		glCullFace(GL_BACK);				// Default is backface culling
-
+		// Global OpenGL settings:
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
-		// Set inital buffer clear values:
-		glClearColor(
-			GLclampf(platformParams->m_windowClearColor.r),
-			GLclampf(platformParams->m_windowClearColor.g),
-			GLclampf(platformParams->m_windowClearColor.b),
-			GLclampf(platformParams->m_windowClearColor.a));
-		glClearDepth((GLdouble)platformParams->m_depthClearColor);
-		
-		// Clear both buffers:
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		SDL_GL_SwapWindow(platformParams->m_glWindow);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 
 
