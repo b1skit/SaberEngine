@@ -1,20 +1,12 @@
 #pragma once
 
-#include "Mesh.h"
-
 #include <string>
 #include <vector>
+#include <unordered_map>
+
+#include "Mesh.h"
 
 
-// Initial allocation amounts
-#define GAMEOBJECTS_RESERVATION_AMT				100		// TODO: Set these with more carefully selected values...
-#define RENDERMESH_RESERVATION_AMT				100
-#define MESHES_RESERVATION_AMT					100
-
-#define DEFERRED_LIGHTS_RESERVATION_AMT			25
-
-#define CAMERA_TYPE_SHADOW_ARRAY_SIZE			10
-#define CAMERA_TYPE_REFLECTION_ARRAY_SIZE		10
 
 namespace gr
 {
@@ -26,75 +18,86 @@ namespace gr
 namespace fr
 {
 	class GameObject;
-}
 
-namespace SaberEngine
-{
-	// Indexes for scene cameras used for different rendering roles
-	// Note: Cameras are rendered in the order defined here
-	enum CAMERA_TYPE 
+	class SceneData
 	{
-		CAMERA_TYPE_SHADOW,
-		CAMERA_TYPE_REFLECTION,
-		CAMERA_TYPE_MAIN,			// The primary scene camera
+	public:
+		SceneData(std::string const& sceneName);
+		~SceneData() { Destroy(); }
 
-		CAMERA_TYPE_COUNT			// Reserved: The number of camera types
-	};
+		SceneData() = delete;
+		SceneData(SceneData const&) = delete;
+		SceneData(SceneData&&) = delete;
+		SceneData& operator=(SceneData const&) = delete;
 
+		void Destroy();
 
-	// Container for all scene data:
-	struct Scene
-	{
-		Scene(std::string sceneName);
-		~Scene();
-
-		// Meshes:
-		//--------
-		// Allocate an empty mesh array. Clears any existing mesh array
-		void InitMeshArray();
-
-		int	AddMesh(std::shared_ptr<gr::Mesh> newMesh);
-		void DeleteMeshes();
-		std::shared_ptr<gr::Mesh> GetMesh(int meshIndex);
-		inline std::vector<std::shared_ptr<gr::Mesh>> const& GetMeshes() { return m_meshes; }
+		// SceneData metadata:
+		inline std::string const& GetName() const { return m_name; }
 
 		// Cameras:
-		//---------
-		std::shared_ptr<gr::Camera> GetMainCamera()	{ return m_sceneCameras[CAMERA_TYPE_MAIN].at(0); }
-		void RegisterCamera(CAMERA_TYPE cameraType, std::shared_ptr<gr::Camera> newCamera);
-		void ClearCameras();
-
+		inline std::shared_ptr<gr::Camera> GetMainCamera()	const { return m_cameras.at(0); } // First camera imported
+		inline std::vector<std::shared_ptr<gr::Camera>>& GetCameras() { return m_cameras; }
+		inline std::vector<std::shared_ptr<gr::Camera>> const& GetCameras() const { return m_cameras; }
+		
+		// Lights:
 		void AddLight(std::shared_ptr<gr::Light> newLight);
+		inline std::shared_ptr<gr::Light> const GetAmbientLight() const { return m_ambientLight; }
+		inline std::shared_ptr<gr::Light> GetKeyLight() const { return m_keyLight; }
+		inline std::vector<std::shared_ptr<gr::Light>> const& GetPointLights() const { return m_pointLights; }
 
-		// Scene object containers:
-		//-------------------------
-		std::vector<std::shared_ptr<fr::GameObject>> m_gameObjects;
-		std::vector<std::shared_ptr<gr::RenderMesh>> m_renderMeshes; // Pointers to render mehse held by GameObjects
+		// GameObjects:
+		void AddGameObject(std::shared_ptr<fr::GameObject> newGameObject);
+		inline std::vector<std::shared_ptr<fr::GameObject>>& GetGameObjects() { return m_gameObjects; }
+		inline std::vector<std::shared_ptr<fr::GameObject>> const& GetGameObjects() const { return m_gameObjects; }
+
+		// RenderMeshes: (Currently internally populated when GameObjects are added)
+		inline std::vector<std::shared_ptr<gr::RenderMesh>>& GetRenderMeshes() { return m_renderMeshes; }
+		inline std::vector<std::shared_ptr<gr::RenderMesh>> const& GetRenderMeshes() const { return m_renderMeshes; }
+		// TODO: RenderMeshes are not currently directly used. Ideally, we should add GameObjects, which should update
+		// the rendermeshes list, which should update the meshes list.
+		// RenderMeshes and meshes should never need to be directly accessed beyond the SceneData; Their accessors
+		// should be made private, and be used for convenience when generating render batches
+
+		// Meshes: (Currently directly populated during load)
+		size_t AddMeshAndUpdateSceneBounds(std::shared_ptr<gr::Mesh> newMesh);
+		inline std::vector<std::shared_ptr<gr::Mesh>> const& GetMeshes() const { return m_meshes; }
+
+		// Textures:
+		void AddUniqueTexture(std::shared_ptr<gr::Texture>& newTexture); // Updates texture pointer
+		inline std::unordered_map<std::string, std::shared_ptr<gr::Texture>> const& GetTextures() const { return m_textures; }
+
+		// Gets already-loaded textures, or loads if it's unseen. Returns nullptr if texture file doesn't exist
+		std::shared_ptr<gr::Texture> GetLoadTextureByPath(std::vector<std::string> texturePaths);
+
+		// Materials:
+		void AddUniqueMaterial(std::shared_ptr<gr::Material>& newMaterial);
+		inline std::unordered_map<std::string, std::shared_ptr<gr::Material>> const& GetMaterials() const { return m_materials; }
+		std::shared_ptr<gr::Material> const GetMaterial(std::string const& materialName) const;
+
+		// SceneData bounds:
+		inline gr::Bounds const& GetWorldSpaceSceneBounds() const { return m_sceneWorldSpaceBounds; }
 
 
-		// Pointers to point lights also contained in m_deferredLights
-		std::shared_ptr<gr::Light> m_ambientLight = nullptr;
-		std::shared_ptr<gr::Light> m_keyLight = nullptr;
-		std::vector<std::shared_ptr<gr::Light>> m_pointLights; 
-
-		std::vector<std::shared_ptr<gr::Light>> const& GetDeferredLights() const	{ return m_deferredLights; }
-
-		inline gr::Bounds const& WorldSpaceSceneBounds() const { return m_sceneWorldBounds; }
-
-		std::string const& GetSceneName() const { return m_sceneName; }
+		// TODO: Objects should be identified via hashed names, instead of strings
 
 	private:
-		std::vector<std::vector<std::shared_ptr<gr::Camera>>> m_sceneCameras;
+		const std::string m_name;
 
-		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;	// Pointers to dynamically allocated Mesh objects
+		std::vector<std::shared_ptr<fr::GameObject>> m_gameObjects;
+		std::vector<std::shared_ptr<gr::RenderMesh>> m_renderMeshes;
+		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;
 
-		gr::Bounds m_sceneWorldBounds;
+		std::unordered_map<std::string, std::shared_ptr<gr::Texture>> m_textures;
+		std::unordered_map<std::string, std::shared_ptr<gr::Material>> m_materials;
 
-		std::vector<std::shared_ptr<gr::Light>> m_deferredLights; // Pointers to all lights of all types
-		
-		std::string m_sceneName;
+		std::shared_ptr<gr::Light> m_ambientLight;
+		std::shared_ptr<gr::Light> m_keyLight;
+		std::vector<std::shared_ptr<gr::Light>> m_pointLights; 
 
-		// TODO: Move initialization to ctor init list
+		std::vector<std::shared_ptr<gr::Camera>> m_cameras;
+
+		gr::Bounds m_sceneWorldSpaceBounds;
 	};
 }
 

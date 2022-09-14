@@ -30,18 +30,9 @@ namespace gr
 		void AddChildMeshPrimitive(std::shared_ptr<gr::Mesh> mesh);
 
 
-	protected:
-
-
 	private:
-		// Pointers to Mesh objects held by the scene manager
-		std::vector<std::shared_ptr<gr::Mesh>> m_meshPrimitives; 
+		std::vector<std::shared_ptr<gr::Mesh>> m_meshPrimitives;  // Pointers to Mesh objects held by the scene manager
 
-		// The SceneObject that owns this RenderMesh must set the transform
 		gr::Transform* m_gameObjectTransform;
-
-		/*std::shared_ptr<Mesh> boundsMesh;*/
-
-		/*bool isStatic;*/
 	};
 }

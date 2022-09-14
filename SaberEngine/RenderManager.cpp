@@ -46,10 +46,10 @@ namespace re
 	void RenderManager::Startup()
 	{
 		LOG("RenderManager starting...");
-
 		m_context.Create();
 
 		// Default target set:
+		LOG("Creating default texure target set");
 		m_defaultTargetSet = make_shared<TextureTargetSet>("Default target");
 		m_defaultTargetSet->Viewport() = 
 		{ 

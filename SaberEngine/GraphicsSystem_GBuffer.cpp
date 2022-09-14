@@ -96,7 +96,7 @@ namespace gr
 
 		// Camera:
 		m_gBufferStage.GetStageCamera() =
-			en::CoreEngine::GetSceneManager()->GetMainCamera();
+			en::CoreEngine::GetSceneManager()->GetScene()->GetMainCamera();
 
 		// Set the stage params:
 		RenderStage::RenderStageParams gBufferStageParams;
@@ -116,7 +116,7 @@ namespace gr
 
 	void GBufferGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
-		m_gBufferStage.SetGeometryBatches(&en::CoreEngine::GetSceneManager()->GetRenderMeshes());
+		m_gBufferStage.SetGeometryBatches(&en::CoreEngine::GetSceneManager()->GetScene()->GetMeshes());
 
 		// TODO: Support transparency
 		// -> Split meshes with transparent materials out from opaque during load

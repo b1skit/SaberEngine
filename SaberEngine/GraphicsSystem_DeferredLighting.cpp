@@ -63,7 +63,7 @@ namespace gr
 		deferredLightingTargetSet.CreateColorDepthStencilTargets();
 
 		shared_ptr<Camera> deferredLightingCam = 
-			en::CoreEngine::GetSceneManager()->GetMainCamera();
+			en::CoreEngine::GetSceneManager()->GetScene()->GetMainCamera();
 
 		
 		// Set the target sets, even if the stages aren't actually used (to ensure they're still valid)
@@ -81,7 +81,7 @@ namespace gr
 		ambientStageParams.m_depthWriteMode		= platform::Context::DepthWriteMode::Disabled;
 
 		// Ambient light:
-		shared_ptr<Light> ambientLight = CoreEngine::GetSceneManager()->GetAmbientLight();
+		shared_ptr<Light> ambientLight = CoreEngine::GetSceneManager()->GetScene()->GetAmbientLight();
 		if (ambientLight)
 		{
 			const uint32_t generatedTexRes = 512; // TODO: Make this user-controllable somehow?
@@ -103,14 +103,17 @@ namespace gr
 			// Load the source IBL image:
 			const string iblTexturePath =
 				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") +
-				CoreEngine::GetSceneManager()->GetCurrentSceneName() + "\\" +
+				CoreEngine::GetSceneManager()->GetScene()->GetName() + "\\" +
 				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath");
 
-			shared_ptr<gr::Texture> iblTexture = CoreEngine::GetSceneManager()->FindLoadTextureByPath(
-				iblTexturePath, Texture::TextureColorSpace::Linear);
+			shared_ptr<Texture> iblTexture = 
+				CoreEngine::GetSceneManager()->GetScene()->GetLoadTextureByPath({ iblTexturePath });
 
 			if (iblTexture)
 			{
+				Texture::TextureParams iblParams = iblTexture->GetTextureParams();
+				iblParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+				iblTexture->SetTextureParams(iblParams);
 				iblTexture->Create();
 
 				// 1st frame: Generate the pre-integrated BRDF LUT via a single-frame render stage:
@@ -297,14 +300,14 @@ namespace gr
 			}
 			else
 			{
-				LOG_ERROR("Failed to load HDR texture \"" + iblTexturePath + "\" for image-based lighting");
+				LOG_WARNING("Image-based lighting is disabled");
 			}
 		}
 		// TODO: We should use equirectangular images, instead of bothering to convert to cubemaps for IEM/PMREM
 
 
 		// Key light:
-		shared_ptr<Light> keyLight = en::CoreEngine::GetSceneManager()->GetKeyLight();
+		shared_ptr<Light> keyLight = en::CoreEngine::GetSceneManager()->GetScene()->GetKeyLight();
 
 		RenderStage::RenderStageParams keylightStageParams(ambientStageParams);
 		if (keyLight)
@@ -329,7 +332,7 @@ namespace gr
 
 
 		// Point lights: Draw multiple light volume meshes within a single stage
-		vector<shared_ptr<Light>>& pointLights = en::CoreEngine::GetSceneManager()->GetPointLights();
+		vector<shared_ptr<Light>> const& pointLights = en::CoreEngine::GetSceneManager()->GetScene()->GetPointLights();
 		if (pointLights.size() > 0)
 		{
 			m_pointlightStage.GetStageCamera() = deferredLightingCam;
@@ -395,9 +398,9 @@ namespace gr
 		// TODO: Is there some way to automate these calls so we don't need to remember them in every stage?
 
 		// Light pointers:
-		shared_ptr<Light> const ambientLight = CoreEngine::GetSceneManager()->GetAmbientLight();
-		shared_ptr<Light> const keyLight = en::CoreEngine::GetSceneManager()->GetKeyLight();
-		vector<shared_ptr<Light>> const& pointLights = en::CoreEngine::GetSceneManager()->GetPointLights();
+		shared_ptr<Light> const ambientLight = CoreEngine::GetSceneManager()->GetScene()->GetAmbientLight();
+		shared_ptr<Light> const keyLight = CoreEngine::GetSceneManager()->GetScene()->GetKeyLight();
+		vector<shared_ptr<Light>> const& pointLights = CoreEngine::GetSceneManager()->GetScene()->GetPointLights();
 
 		// Re-set geometry for each stage:
 		m_ambientStage.SetGeometryBatches(&m_ambientMesh);

@@ -39,10 +39,10 @@
 	//-----------------------------------------------
 	#define DEBUG_LOG_OPENGL						// Enable/disable OpenGL logging
 	#if defined(DEBUG_LOG_OPENGL)
-		//#define DEBUG_LOG_OPENGL_NOTIFICATIONS	// Enable non-essential logging (e.g. OpenGL notifications)
+		//#define DEBUG_LOG_OPENGL_NOTIFICATIONS	// Enable non-essential OpenGL notification logging
 	#endif
 	
-	// Scene setup and creation logging:
+	// SceneData setup and creation logging:
 	//----------------------------------
 	//#define DEBUG_LOG_SCENEMANAGER_SCENE_SETUP			// Enable/disable scene import logging
 	#if defined(DEBUG_LOG_SCENEMANAGER_SCENE_SETUP)
@@ -54,11 +54,6 @@
 		//#define DEBUG_SCENEMANAGER_MATERIAL_LOGGING		// Enable logging of material creation/setup
 		//#define DEBUG_SCENEMANAGER_SHADER_LOGGING		// Enable logging of shader creation/setup
 		//#define DEBUG_SCENEMANAGER_TEXTURE_LOGGING		// Enable logging of texture creation/setup
-	#endif
-
-	//#define DEBUG_LOG_RENDERMANAGER
-	#if defined(DEBUG_LOG_RENDERMANAGER)
-		#define DEBUG_RENDERMANAGER_SHADER_LOGGING		// Enable logging of shader setup
 	#endif
 
 	//#define DEBUG_LOG_SHADERS

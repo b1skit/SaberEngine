@@ -40,7 +40,9 @@ using en::CoreEngine;
 using en::EventManager;
 using fr::PlayerObject;
 using fr::GameObject;
+using fr::SceneData;
 using std::shared_ptr;
+using std::make_shared;
 using std::string;
 using std::vector;
 using glm::pi;
@@ -51,7 +53,7 @@ using glm::vec4;
 #define INVALID_TEXTURE_PATH "InvalidTexturePath"
 
 
-namespace SaberEngine
+namespace en
 {
 	SceneManager::SceneManager() : EngineComponent("SceneManager")
 	{	
@@ -69,34 +71,14 @@ namespace SaberEngine
 		LOG("Scene manager shutting down...");
 
 		m_currentScene = nullptr;
-
-		// Scene manager cleanup:
-		if (m_materials.size() > 0)
-		{
-			for (std::pair<string, shared_ptr<Material>> currentMaterialEntry : m_materials)
-			{
-				currentMaterialEntry.second = nullptr;
-			}
-			m_materials.clear();
-		}
-
-		// Texture cleanup:
-		for (std::pair<string, shared_ptr<gr::Texture>> currentTexture : m_textures)
-		{
-			if (currentTexture.second != nullptr)
-			{
-				currentTexture.second = nullptr;
-			}
-		}
-		m_textures.clear();
 	}
 
 
 	void SceneManager::Update()
 	{
-		for (int i = 0; i < (int)m_currentScene->m_gameObjects.size(); i++)
+		for (int i = 0; i < (int)m_currentScene->GetGameObjects().size(); i++)
 		{
-			m_currentScene->m_gameObjects.at(i)->Update();
+			m_currentScene->GetGameObjects().at(i)->Update();
 		}
 	}
 
@@ -124,10 +106,13 @@ namespace SaberEngine
 			return false;
 		}
 
-		LOG("Unloading existing scene");
-		m_currentScene = nullptr;
+		if (m_currentScene != nullptr)
+		{
+			LOG("Unloading existing scene");
+			m_currentScene = nullptr;
+		}		
 
-		m_currentScene = std::make_shared<Scene>(sceneName);
+		m_currentScene = std::make_shared<SceneData>(sceneName);
 
 		// Assemble paths:
 		string sceneRoot = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\";
@@ -198,9 +183,6 @@ namespace SaberEngine
 			LOG_ERROR("Scene has no meshes");
 		}
 
-		// Assemble material mesh lists:
-		// -----------------------------
-		AssembleMaterialMeshLists();
 
 		// Extract lights:
 		//----------------
@@ -229,96 +211,10 @@ namespace SaberEngine
 		// Create a PlayerObject:
 		//-----------------------
 		shared_ptr<PlayerObject> player = std::make_shared<PlayerObject>(m_currentScene->GetMainCamera());
-		m_currentScene->m_gameObjects.push_back(player);	
+		m_currentScene->GetGameObjects().push_back(player);
 		LOG("Created PlayerObject using mainCamera");
 
 		return true;
-	}
-
-
-	shared_ptr<Material> SceneManager::GetMaterial(string const& materialName)
-	{
-		auto result = m_materials.find(materialName);
-
-		SEAssert("Could not find material", result != m_materials.end());
-
-		return result->second;
-	}
-
-
-	shared_ptr<Light> const& SceneManager::GetAmbientLight()
-	{ 
-		return m_currentScene->m_ambientLight; 
-	}
-
-
-	shared_ptr<Light> SceneManager::GetKeyLight()
-	{ 
-		return m_currentScene->m_keyLight; 
-	}
-
-
-	shared_ptr<Camera> SceneManager::GetMainCamera()
-	{ 
-		return m_currentScene->GetMainCamera(); 
-	}
-
-
-	void SceneManager::RegisterCamera(CAMERA_TYPE cameraType, shared_ptr<Camera> newCamera)
-	{ 
-		m_currentScene->RegisterCamera(cameraType, newCamera); 
-	}
-	// TODO: No need to register anything except the main (ie. player) camera
-	// -> Currently registering shadow and player cams...
-
-
-	void SceneManager::AddTexture(shared_ptr<gr::Texture>& newTexture)
-	{
-		if (newTexture == nullptr)
-		{
-			LOG_ERROR("Cannot add null texture to textures table");
-			return;
-		}
-
-		// Check if the texture already exists:
-		unordered_map<string, shared_ptr<gr::Texture>>::const_iterator texturePosition =
-			m_textures.find(newTexture->GetTexturePath());
-		if (texturePosition != m_textures.end())
-		{
-			LOG_WARNING("Cannot add texture with an identical path. Deleting duplicate, and updating reference");
-
-			newTexture = texturePosition->second;
-		}
-		else // Insert the new texture:
-		{
-			m_textures[newTexture->GetTexturePath()] = newTexture;
-		}
-	}
-	
-	
-	// TODO: Lights should be stored in individual vectors by type, instead of grouped together
-	vector<shared_ptr<Light>> const& SceneManager::GetDeferredLights()
-	{
-		return m_currentScene->GetDeferredLights();
-	}
-
-
-	string const& SceneManager::GetCurrentSceneName() const
-	{
-		return m_currentScene->GetSceneName();
-	}
-
-
-	void SceneManager::AddGameObject(shared_ptr<GameObject> newGameObject)
-	{
-		m_currentScene->m_gameObjects.push_back(newGameObject);
-
-		// Store a pointer to the GameObject's RenderMesh and add it to the list for the RenderManager
-		m_currentScene->m_renderMeshes.push_back(newGameObject->GetRenderMesh());
-
-		#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
-			LOG("Added std::make_shared<GameObject> to the scene: " + newGameObject->GetName());
-		#endif	
 	}
 
 
@@ -347,7 +243,7 @@ namespace SaberEngine
 	}
 
 
-	void SaberEngine::SceneManager::InitializeLightTransformValues(aiScene const* scene, string const& lightName, Transform* targetLightTransform)
+	void en::SceneManager::InitializeLightTransformValues(aiScene const* scene, string const& lightName, Transform* targetLightTransform)
 	{
 		aiMatrix4x4 lightTransform;
 		aiNode* current = nullptr;
@@ -377,97 +273,8 @@ namespace SaberEngine
 	}
 
 
-	void SceneManager::AddMaterial(shared_ptr<Material>& newMaterial)
-	{
-		// We differentiate materials based on their names in the incoming FBX, regardless of the MaterialDefinition
-		// they might use
-
-		SEAssert("Cannot add null material to scene manager material list", newMaterial != nullptr);
-
-		auto result = m_materials.find(newMaterial->Name());
-
-		// Add new Material
-		if (result == m_materials.end())
-		{
-			m_materials[newMaterial->Name()] = newMaterial;
-			LOG("Material \"" + newMaterial->Name() + "\" registered with SceneManager");
-		}
-		else // Material already exists: Destroy the duplicate and update the pointer
-		{
-			LOG_WARNING("The material \"" + newMaterial->Name() + "\" already exists! Destroying duplicate, and "
-				"updating reference to point to original material");
-
-			newMaterial = result->second;
-		}
-	}
 
 
-	void SceneManager::AssembleMaterialMeshLists()
-	{
-		// TODO: Tune this value based on the actual number of meshes loaded?
-		const unsigned int ESTIMATED_MESHES_PER_MATERIAL = 25;	
-
-		unsigned int numMeshes = 0;
-		for (int i = 0; i < (int)m_currentScene->m_renderMeshes.size(); i++)
-		{
-			for (int j = 0; j < (int)m_currentScene->m_renderMeshes.at(i)->ViewMeshes()->size(); j++)
-			{
-				shared_ptr<gr::Mesh> viewMesh = m_currentScene->m_renderMeshes.at(i)->ViewMeshes()->at(j);
-
-				shared_ptr<Material> meshMaterial = viewMesh->MeshMaterial();
-
-				SEAssert("Mesh has a null material pointer!", meshMaterial != nullptr);
-
-				auto result = m_materialMeshLists.find(meshMaterial->Name());
-				if (result == m_materialMeshLists.end())
-				{
-					// Create a new entry, containing a vector with our object
-					m_materialMeshLists[meshMaterial->Name()] = vector<shared_ptr<gr::Mesh>>{ viewMesh };
-				}
-				else
-				{
-					result->second.emplace_back(viewMesh);
-					numMeshes++;
-				}
-			}
-		}
-
-		LOG("\nAssembled material mesh list of " + to_string(numMeshes) + " meshes and " + 
-			to_string(m_materialMeshLists.size()) + " materials");
-	}
-
-
-	shared_ptr<gr::Texture> SaberEngine::SceneManager::FindLoadTextureByPath(
-		string texturePath,
-		Texture::TextureColorSpace colorSpace,
-		bool loadIfNotFound /*= true*/)
-	{
-		// NOTE: Potential bug here: Since we store textureUnit per-texture, we can only share textures that live in the
-		// same slot. TODO: Move texture units into the Material?
-
-		unordered_map<string, shared_ptr<gr::Texture>>::const_iterator texturePosition = m_textures.find(texturePath);
-		if (texturePosition != m_textures.end())
-		{
-			LOG("Texture at path " + texturePath + " has already been loaded");
-			return texturePosition->second;
-		}
-
-		// If we've made it this far, load the texture
-		if (loadIfNotFound)
-		{
-			shared_ptr<gr::Texture> result(nullptr);
-			bool didLoad = Texture::LoadTextureFileFromPath(result, texturePath, colorSpace, false);
-			if (didLoad)
-			{
-				AddTexture(result);
-			}
-			return result;
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
 
 
 	void SceneManager::ImportMaterialsAndTexturesFromScene(aiScene const* scene, string const& sceneName)
@@ -632,15 +439,15 @@ namespace SaberEngine
 				}		
 
 				// Add the material to our material list:
-				AddMaterial(newMaterial);
+				m_currentScene->AddUniqueMaterial(newMaterial);
 			}
 		}
 
-		LOG("\nLoaded a total of " + to_string(m_textures.size()) + " textures (including error textures)\n");
+		LOG("\nLoaded " + to_string(m_currentScene->GetTextures().size()) + " textures (including error textures)\n");
 	}
 
 
-	shared_ptr<gr::Texture> SaberEngine::SceneManager::ExtractLoadTextureFromAiMaterial(
+	shared_ptr<gr::Texture> en::SceneManager::ExtractLoadTextureFromAiMaterial(
 		aiTextureType textureType, 
 		aiMaterial* assimpMaterial, 
 		string const& sceneName)
@@ -653,7 +460,7 @@ namespace SaberEngine
 		int textureCount = assimpMaterial->GetTextureCount(textureType);
 		if (textureCount <= 0)
 		{
-			string newName = "NO_NAME_FOUND";
+			string newName = "NAMED_TEXTURE_NOT_FOUND";
 			vec4 newColor(0, 0, 0, 0);
 
 			if (textureType == aiTextureType_DIFFUSE)
@@ -670,7 +477,7 @@ namespace SaberEngine
 					colorSpace = Texture::TextureColorSpace::sRGB;
 					format = Texture::TextureFormat::RGBA8;
 
-					LOG_WARNING("Material has no diffuse texture. Creating a 1x1 texture using the diffuse color with"
+					LOG_WARNING("Material has no diffuse texture. Created a 1x1 texture using the diffuse color with"
 						" a path \"" + newName + "\"");
 				}
 			}
@@ -687,7 +494,7 @@ namespace SaberEngine
 					newName = "DefaultFlatNormal"; // Use a generic name, so this texture will be shared
 					newColor = vec4(0.5f, 0.5f, 1.0f, 0.0f);
 
-					LOG_WARNING("Material has no normal texture. Creating a 1x1 texture for a [0,0,1] normal with a "
+					LOG_WARNING("Material has no normal texture. Created a 1x1 texture for a [0,0,1] normal with a "
 						"path \"" + newName + "\"");
 				}
 				
@@ -709,10 +516,10 @@ namespace SaberEngine
 							"_" + to_string(color.a);
 						newColor = vec4(color.r, color.g, color.b, color.a);
 
-						// Currently, Texture objects contain their textureUnit, so we can't share them between slots
-						//newTexture = FindLoadTextureByPath(newName, false); 
+						// TODO: does it make sense to return a color texture from here?????????????????????
+						//newTexture = GetLoadTextureByPath(newName, false); 
 
-						LOG_WARNING("Material has no emissive texture. Creating a 1x1 texture using the emissive "
+						LOG_WARNING("Material has no emissive texture. Created a 1x1 texture using the emissive "
 							"(/incandesence) color property with a path \"" + newName + "\"");
 					}
 					else
@@ -722,7 +529,7 @@ namespace SaberEngine
 							"_" + to_string(newColor.b) + 
 							"_" + to_string(newColor.a);
 
-						LOG_WARNING("Material has no emissive texture, and no emissive color property. Creating a 1x1 "
+						LOG_WARNING("Material has no emissive texture, and no emissive color property. Created a 1x1 "
 							"black texture with a path \"" + newName + "\"");
 					}
 				}
@@ -759,11 +566,11 @@ namespace SaberEngine
 
 						newColor = vec4(color.r, color.g, color.b, color.a);
 
-						// Currently, Texture objects contain their textureUnit, so we can't share them between slots
-						//newTexture = FindLoadTextureByPath(newName, false); 
+						// TODO: does it make sense to return a color texture from here?????????????????????
+						//newTexture = GetLoadTextureByPath(newName, false); 
 
 						LOG_WARNING(
-							"Material has no RMAO texture in the specular slot. Creating a 1x1 texture using the "
+							"Material has no RMAO texture in the specular slot. Created a 1x1 texture using the "
 							"specular color with a path " + newName);
 					}
 					else
@@ -771,7 +578,7 @@ namespace SaberEngine
 						newName = "Color_" + to_string(newColor.r) + "_" + to_string(newColor.g) + "_" + 
 							to_string(newColor.b) + "_" + to_string(newColor.a);
 
-						LOG_WARNING("Material has no RMAO texture or specular color. Creating a 1x1 black texture with "
+						LOG_WARNING("Material has no RMAO texture or specular color. Created a 1x1 black texture with "
 							"a path " + newName);
 					}
 				}
@@ -781,28 +588,26 @@ namespace SaberEngine
 				SEAssert("Invalid texture type", false);
 			}
 
-			// Create the dummy texture:
+			// No texture found: Create one using color as a fallback:
 			if (newTexture == nullptr)
 			{
 				// Try and find an already loaded version of our fallback texture
-				newTexture = FindLoadTextureByPath(newName, colorSpace, false);
+				newTexture = m_currentScene->GetLoadTextureByPath({ newName });
 
-				// None exists, so create one:
+				// If it doesn't exist, create it:
 				if (newTexture == nullptr)
 				{
-					// NOTE: Since we're storing the texUnit per-texture, we need unique textures incase they're in
-					// different slots...
 					Texture::TextureParams texParams;
-					texParams.m_width = 1;
-					texParams.m_height = 1;
+					texParams.m_width = 2;
+					texParams.m_height = 2;
 					texParams.m_texturePath = newName;
-					texParams.m_clearColor = newColor;
+					texParams.m_clearColor = newColor; // Textures are filled with clear color by default
 					texParams.m_texColorSpace = colorSpace;
 					texParams.m_texFormat = format;
 
-					newTexture = shared_ptr<gr::Texture>(new gr::Texture(texParams));
+					newTexture = make_shared<Texture>(texParams);
 
-					AddTexture(newTexture);	
+					m_currentScene->AddUniqueTexture(newTexture);	
 				}
 			}
 
@@ -828,7 +633,7 @@ namespace SaberEngine
 			#endif
 
 			// Find the texture if it has already been loaded, or load it otherwise:
-			newTexture = FindLoadTextureByPath(texturePath, Texture::TextureColorSpace::Unknown, true);
+			newTexture = m_currentScene->GetLoadTextureByPath({ texturePath }); // TextureColorSpace::Unknown
 		}
 		else
 		{
@@ -837,7 +642,7 @@ namespace SaberEngine
 
 		if (newTexture == nullptr)
 		{
-			newTexture = FindLoadTextureByPath(INVALID_TEXTURE_PATH, Texture::TextureColorSpace::Unknown);
+			newTexture = m_currentScene->GetLoadTextureByPath({ INVALID_TEXTURE_PATH }); // TextureColorSpace::Unknown
 		}
 
 		return newTexture; // Note: Texture is currently unbuffered
@@ -872,7 +677,7 @@ namespace SaberEngine
 
 					string texturePath = sceneRoot + string(path.C_Str());
 					
-					return FindLoadTextureByPath(texturePath, Texture::TextureColorSpace::Unknown);
+					return m_currentScene->GetLoadTextureByPath({ texturePath }); // Texture::TextureColorSpace::Unknown
 				}
 			}
 		}
@@ -881,7 +686,7 @@ namespace SaberEngine
 	}
 
 
-	bool SaberEngine::SceneManager::ExtractPropertyFromAiMaterial(
+	bool en::SceneManager::ExtractPropertyFromAiMaterial(
 		aiMaterial* material, 
 		vec4& targetProperty,
 		char const* AI_MATKEY_TYPE,
@@ -919,10 +724,10 @@ namespace SaberEngine
 		LOG("Found " + to_string(numMeshes) + " scene meshes");
 
 		// Allocations:
-		m_currentScene->InitMeshArray();
+		/*m_currentScene->GetRenderMeshes().clear();*/
 		
-		m_currentScene->m_gameObjects.clear();
-		m_currentScene->m_gameObjects.reserve(numMeshes); // Assuming that every GameObject will have at least 1 mesh...
+		m_currentScene->GetGameObjects().clear();
+		m_currentScene->GetGameObjects().reserve(numMeshes); // Assuming that every GameObject will have at least 1 mesh...
 
 		// Loop through each mesh in the scene graph:
 		for (int currentMesh = 0; currentMesh < numMeshes; currentMesh++)
@@ -1082,7 +887,7 @@ namespace SaberEngine
 			}
 
 			shared_ptr<gr::Mesh> newMesh = 
-				std::make_shared<gr::Mesh>(meshName, vertices, indices, GetMaterial(materialName));
+				std::make_shared<gr::Mesh>(meshName, vertices, indices, m_currentScene->GetMaterial(materialName));
 
 			shared_ptr<GameObject> gameObject = FindCreateGameObjectParents(scene, currentNode->mParent);
 
@@ -1097,7 +902,7 @@ namespace SaberEngine
 				#endif
 					
 				gameObject = std::make_shared<GameObject>(meshName);
-				AddGameObject(gameObject);				// Add the new game object
+				m_currentScene->AddGameObject(gameObject);
 
 				// Add a postfix to remind us that we expect GameObjects to be grouped in our .FBX from Maya
 				newMesh->Name() = meshName + "_MESH";	
@@ -1114,24 +919,24 @@ namespace SaberEngine
 			}
 
 			// Mesh doesn't belong to a group, so we'll give it's transform to the gameobject we've created
-			aiMatrix4x4 combinedTransform	= GetCombinedTransformFromHierarchy(scene, currentNode->mParent);	
+			aiMatrix4x4 combinedTransform = GetCombinedTransformFromHierarchy(scene, currentNode->mParent);	
 				
 			// Combine the parent and child transforms	
-			combinedTransform				= combinedTransform * currentNode->mTransformation;					
+			combinedTransform = combinedTransform * currentNode->mTransformation;					
 				
 			InitializeTransformValues(combinedTransform, targetTransform);	// Copy to our Mesh transform
 
-			gameObject->GetRenderMesh()->AddChildMeshPrimitive(newMesh);		// Creates transform heirarchy
+			gameObject->GetRenderMesh()->AddChildMeshPrimitive(newMesh); // Creates transform heirarchy
 
-			m_currentScene->AddMesh(newMesh);								// Also calculates scene bounds
+			m_currentScene->AddMeshAndUpdateSceneBounds(newMesh);
 		}
 
-		int numGameObjects = (int)m_currentScene->m_gameObjects.size();
+		int numGameObjects = (int)m_currentScene->GetGameObjects().size();
 		LOG("\nCreated " + to_string(numGameObjects) + " game objects");
 	}
 
 
-	shared_ptr<GameObject> SaberEngine::SceneManager::FindCreateGameObjectParents(aiScene const* scene, aiNode* parent)
+	shared_ptr<GameObject> en::SceneManager::FindCreateGameObjectParents(aiScene const* scene, aiNode* parent)
 	{
 		if (parent == nullptr || parent == scene->mRootNode)
 		{
@@ -1154,15 +959,15 @@ namespace SaberEngine
 		}
 
 		// Check if there is a GameObject that corresponds with the current parent node
-		for (int i = 0; i < (int)m_currentScene->m_gameObjects.size(); i++)
+		for (int i = 0; i < (int)m_currentScene->GetGameObjects().size(); i++)
 		{
-			if (m_currentScene->m_gameObjects.at(i)->GetName() == parentName)
+			if (m_currentScene->GetGameObjects().at(i)->GetName() == parentName)
 			{
 				#if defined(DEBUG_SCENEMANAGER_GAMEOBJECT_LOGGING)
 					LOG("Found an existing GameObject parent: \"" + parentName + "\"");
 				#endif
 
-				return m_currentScene->m_gameObjects.at(i);
+				return m_currentScene->GetGameObjects().at(i);
 			}
 		}
 
@@ -1170,7 +975,7 @@ namespace SaberEngine
 		shared_ptr<GameObject> newGameObject = std::make_shared<GameObject>(parentName);
 		InitializeTransformValues(parent->mTransformation, newGameObject->GetTransform());
 
-		AddGameObject(newGameObject);
+		m_currentScene->AddGameObject(newGameObject);
 
 		shared_ptr<GameObject> nextParent = FindCreateGameObjectParents(scene, parent->mParent);
 		if (nextParent)
@@ -1190,7 +995,7 @@ namespace SaberEngine
 	}
 
 
-	aiMatrix4x4 SaberEngine::SceneManager::GetCombinedTransformFromHierarchy(aiScene const* scene, aiNode* parent, bool skipPostRotations /*= true*/)
+	aiMatrix4x4 en::SceneManager::GetCombinedTransformFromHierarchy(aiScene const* scene, aiNode* parent, bool skipPostRotations /*= true*/)
 	{
 		SEAssert("SceneManager.GetCombinedTransformFromHierarchy() received a null pointer!", 
 			scene != nullptr && parent != nullptr);
@@ -1264,7 +1069,7 @@ namespace SaberEngine
 	}
 
 
-	aiNode* SaberEngine::SceneManager::FindNodeContainingName(aiScene const* scene, string name)
+	aiNode* en::SceneManager::FindNodeContainingName(aiScene const* scene, string name)
 	{
 		aiNode* result = nullptr;
 		if (result = scene->mRootNode->FindNode(name.c_str()))
@@ -1283,7 +1088,7 @@ namespace SaberEngine
 	}
 
 
-	aiNode* SaberEngine::SceneManager::FindNodeRecursiveHelper(aiNode* rootNode, string const& name)
+	aiNode* en::SceneManager::FindNodeRecursiveHelper(aiNode* rootNode, string const& name)
 	{
 		if (rootNode == nullptr)
 		{
@@ -1312,7 +1117,7 @@ namespace SaberEngine
 	}
 
 
-	void SaberEngine::SceneManager::ImportLightsFromScene(aiScene const* scene)
+	void en::SceneManager::ImportLightsFromScene(aiScene const* scene)
 	{
 		int numLights = scene->mNumLights;
 		if (numLights <= 0)
@@ -1360,10 +1165,10 @@ namespace SaberEngine
 
 					m_currentScene->AddLight(keyLight);
 
-					gr::Bounds sceneWorldBounds	= m_currentScene->WorldSpaceSceneBounds();
+					gr::Bounds sceneWorldBounds	= m_currentScene->GetWorldSpaceSceneBounds();
 					
 					gr::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
-						glm::inverse(m_currentScene->m_keyLight->GetTransform().Model()));
+						glm::inverse(m_currentScene->GetKeyLight()->GetTransform().Model()));
 
 					gr::Camera::CameraConfig shadowCamConfig;
 					shadowCamConfig.m_near				= -transformedBounds.zMax();
@@ -1382,10 +1187,10 @@ namespace SaberEngine
 						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowMapWidth"),
 						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowMapHeight"),
 						shadowCamConfig,
-						&m_currentScene->m_keyLight->GetTransform()
+						&m_currentScene->GetKeyLight()->GetTransform()
 					);
 
-					m_currentScene->m_keyLight->GetShadowMap() = keyLightShadowMap;
+					m_currentScene->GetKeyLight()->GetShadowMap() = keyLightShadowMap;
 
 					// Extract light metadata:
 					aiNode* lightNode = scene->mRootNode->FindNode(scene->mLights[i]->mName.C_Str());
@@ -1610,7 +1415,7 @@ namespace SaberEngine
 							#endif
 					
 							gameObject = std::make_shared<GameObject>(lightName);
-							AddGameObject(gameObject);				// Add the new game object
+							m_currentScene->AddGameObject(gameObject);				// Add the new game object
 
 							// We'll use the gameobject in our transform heirarchy
 							targetTransform = gameObject->GetTransform(); 
@@ -1696,13 +1501,13 @@ namespace SaberEngine
 	}
 
 
-	void SaberEngine::SceneManager::ImportCamerasFromScene(
+	void en::SceneManager::ImportCamerasFromScene(
 		aiScene const* scene /*= nullptr*/,
 		bool clearCameras /*= false*/) // If scene == nullptr, create a camera at the origin
 	{
 		if (clearCameras)
 		{
-			m_currentScene->ClearCameras();
+			m_currentScene->GetCameras().clear();
 		}
 
 		string cameraName;
@@ -1774,13 +1579,11 @@ namespace SaberEngine
 		// Create and register a new camera:
 		newCamera = std::make_shared<gr::Camera>(cameraName, newCamConfig, nullptr);
 
-		// For now, assume that we're only importing the main camera. No other cameras are currently supported...
-		m_currentScene->RegisterCamera(CAMERA_TYPE_MAIN, newCamera);
+		m_currentScene->GetCameras().emplace_back(newCamera);
 
 		// Copy transform values:
 		if (scene != nullptr)
 		{
-			
 			aiNode* camNode = scene->mRootNode->FindNode(scene->mCameras[0]->mName);
 			if (camNode)
 			{			

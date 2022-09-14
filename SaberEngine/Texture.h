@@ -19,8 +19,6 @@ namespace gr
 	class Texture
 	{
 	public:
-		static const uint32_t k_numCubeFaces = 6;
-
 		enum class TextureUse
 		{
 			Color,
@@ -142,28 +140,6 @@ namespace gr
 
 		inline void SetTexturePath(std::string path) { m_texParams.m_texturePath = path; m_isDirty = true; }
 		inline std::string const& GetTexturePath() const { return m_texParams.m_texturePath; }
-
-
-
-		// Public static functions:
-		//-------------------------
-
-		// Loads a texture object from a (relative) path. 
-		// NOTE: Use SceneManager::FindLoadTextureByPath() instead of accessing this function directly, to ensure
-		// duplicate textures can be shared
-		static bool LoadTextureFileFromPath(
-			std::shared_ptr<gr::Texture>& texture,
-			std::string texturePath,
-			TextureColorSpace colorSpace,
-			bool returnErrorTexIfNotFound = false,			
-			uint32_t totalFaces = 1,
-			size_t faceIndex = 0);
-		// TODO: Perhaps this should be moved to a private namespace in Scene.cpp?
-
-		static std::shared_ptr<gr::Texture> LoadCubeMapTextureFilesFromPath(
-			std::string const& textureRootPath, // folder containing posx/negx/posy/negy/posz/negz.jpg/jpeg/png/tga
-			TextureColorSpace const& colorSpace);
-		// TODO: Perhaps this should be moved to a private namespace in Scene.cpp?
 
 
 	private:

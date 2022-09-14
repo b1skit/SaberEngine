@@ -41,7 +41,7 @@ namespace gr
 		};
 
 		// Directional light shadow:		
-		shared_ptr<Light> directionalLight = CoreEngine::GetSceneManager()->GetKeyLight();
+		shared_ptr<Light> directionalLight = CoreEngine::GetSceneManager()->GetScene()->GetKeyLight();
 		if (directionalLight)
 		{
 			shared_ptr<ShadowMap> directionalShadow = directionalLight->GetShadowMap();
@@ -61,7 +61,7 @@ namespace gr
 		}
 		
 		// Point light shadows:
-		vector<shared_ptr<Light>> const& deferredLights = CoreEngine::GetSceneManager()->GetPointLights();
+		vector<shared_ptr<Light>> const& deferredLights = CoreEngine::GetSceneManager()->GetScene()->GetPointLights();
 		for (shared_ptr<Light> curLight : deferredLights)
 		{
 			m_pointLightShadowStages.emplace_back(make_shared<RenderStage>(curLight->Name() + " shadow"));
@@ -87,13 +87,13 @@ namespace gr
 	void ShadowsGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
 		m_directionalShadowStage.InitializeForNewFrame();
-		m_directionalShadowStage.SetGeometryBatches(&CoreEngine::GetSceneManager()->GetRenderMeshes());
+		m_directionalShadowStage.SetGeometryBatches(&CoreEngine::GetSceneManager()->GetScene()->GetMeshes());
 
 
 		for (shared_ptr<RenderStage> pointShadowStage : m_pointLightShadowStages)
 		{
 			pointShadowStage->InitializeForNewFrame();
-			pointShadowStage->SetGeometryBatches(&CoreEngine::GetSceneManager()->GetRenderMeshes());
+			pointShadowStage->SetGeometryBatches(&CoreEngine::GetSceneManager()->GetScene()->GetMeshes());
 
 			shared_ptr<Camera> pointShadowCam = pointShadowStage->GetStageCamera();
 

@@ -25,11 +25,11 @@ namespace en
 		CoreEngine& operator=(CoreEngine const&) = delete;
 
 		// Static Engine component singletons getters:		
-		static inline CoreEngine*					GetCoreEngine()		{ return m_coreEngine; }
+		static inline CoreEngine*		GetCoreEngine()		{ return m_coreEngine; }
 		static inline en::EventManager*	GetEventManager()	{ return m_eventManager.get(); }
-		static inline en::InputManager*				GetInputManager()	{ return m_inputManager.get(); }
-		static inline SaberEngine::SceneManager*	GetSceneManager()	{ return m_sceneManager.get(); }
-		static inline re::RenderManager*			GetRenderManager()	{ return m_renderManager.get(); }
+		static inline en::InputManager*	GetInputManager()	{ return m_inputManager.get(); }
+		static inline en::SceneManager*	GetSceneManager()	{ return m_sceneManager.get(); }
+		static inline re::RenderManager* GetRenderManager()	{ return m_renderManager.get(); }
 		
 		// Lifetime flow:
 		void Startup();
@@ -61,11 +61,11 @@ namespace en
 		std::shared_ptr<en::TimeManager> const		m_timeManager;
 
 		// Static Engine component singletons
-		static CoreEngine*									m_coreEngine;
+		static CoreEngine*							m_coreEngine;
 		static std::shared_ptr<en::EventManager>	m_eventManager;
-		static std::shared_ptr<en::InputManager>			m_inputManager;
-		static std::shared_ptr<SaberEngine::SceneManager>	m_sceneManager;
-		static std::shared_ptr<re::RenderManager>			m_renderManager;
+		static std::shared_ptr<en::InputManager>	m_inputManager;
+		static std::shared_ptr<en::SceneManager>	m_sceneManager;
+		static std::shared_ptr<re::RenderManager>	m_renderManager;
 
 
 		bool ProcessCommandLineArgs(int argc, char** argv);

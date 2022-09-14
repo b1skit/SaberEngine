@@ -12,13 +12,13 @@ using std::string;
 namespace en
 {
 	// Static members:
-	en::EngineConfig							CoreEngine::m_config;
+	en::EngineConfig					CoreEngine::m_config;
 
-	CoreEngine*									CoreEngine::m_coreEngine	= nullptr;
+	CoreEngine*							CoreEngine::m_coreEngine	= nullptr;
 	std::shared_ptr<en::EventManager>	CoreEngine::m_eventManager	= nullptr;
 	std::shared_ptr<en::InputManager>	CoreEngine::m_inputManager	= nullptr;
-	std::shared_ptr<SaberEngine::SceneManager>	CoreEngine::m_sceneManager	= nullptr;
-	std::shared_ptr<re::RenderManager>			CoreEngine::m_renderManager	= nullptr;
+	std::shared_ptr<en::SceneManager>	CoreEngine::m_sceneManager	= nullptr;
+	std::shared_ptr<re::RenderManager>	CoreEngine::m_renderManager	= nullptr;
 
 
 	CoreEngine::CoreEngine(int argc, char** argv) : en::SaberObject("CoreEngine"),
@@ -42,8 +42,8 @@ namespace en
 
 		// Initialize manager singletons:
 		m_eventManager	= std::make_shared<en::EventManager>();
-		m_inputManager	= std::make_shared <en::InputManager>();
-		m_sceneManager	= std::make_shared<SaberEngine::SceneManager>();
+		m_inputManager	= std::make_shared<en::InputManager>();
+		m_sceneManager	= std::make_shared<en::SceneManager>();
 		m_renderManager	= std::make_shared<re::RenderManager>();
 
 		// Start managers:

@@ -1,4 +1,5 @@
 #include <memory>
+#include <filesystem>
 
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
@@ -15,6 +16,8 @@ using gr::GBufferGraphicsSystem;
 using en::CoreEngine;
 using std::shared_ptr;
 using std::string;
+using std::vector;
+using std::filesystem::exists;
 using glm::vec3;
 using glm::vec4;
 using glm::mat4;
@@ -38,35 +41,81 @@ namespace gr
 		// Load the HDR image:
 		const string iblTexturePath =
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + 
-			CoreEngine::GetSceneManager()->GetCurrentSceneName() + "\\" + 
+			CoreEngine::GetSceneManager()->GetScene()->GetName() + "\\" + 
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath");
 
-		m_skyTexture = CoreEngine::GetSceneManager()->FindLoadTextureByPath(
-			iblTexturePath, Texture::TextureColorSpace::Linear);
+		m_skyTexture = CoreEngine::GetSceneManager()->GetScene()->GetLoadTextureByPath({ iblTexturePath });
 
 		if (m_skyTexture == nullptr)
 		{
-			const string& sceneName = CoreEngine::GetSceneManager()->GetCurrentSceneName();
+			const string& sceneName = CoreEngine::GetSceneManager()->GetScene()->GetName();
 			const string skyboxTextureRoot =
 				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\Skybox\\";
 			// TODO: This skybox path should be user-configurable
 
-			m_skyTexture = Texture::LoadCubeMapTextureFilesFromPath(
-				skyboxTextureRoot, 
-				Texture::TextureColorSpace::sRGB);
+
+
+			// Assemble a list of filepaths to load:
+			// TODO: WE SHOULD NOT BE EXAMINING THE FILESYSTEM FROM WITHIN A GS!!!!!!!!!!
+			vector<string> cubemapTexPaths;
+			const vector<string> cubemapFaceTextureNames =
+			{
+				"posx",
+				"negx",
+				"posy",
+				"negy",
+				"posz",
+				"negz",
+			};
+			// Add any desired skybox texture filetype extensions here
+			const vector<string> cubemapFileExtensions =
+			{
+				".jpg",
+				".jpeg",
+				".png",
+				".tga",
+			};
+
+			for (size_t face = 0; face < 6; face++)
+			{
+				// Build a list of filenames:
+				const string currentCubeFaceName = skyboxTextureRoot + cubemapFaceTextureNames[face];
+
+				for (size_t ext = 0; ext < cubemapFileExtensions.size(); ext++)
+				{
+					const string finalName = currentCubeFaceName + cubemapFileExtensions[ext];
+					if (exists(finalName))
+					{
+						cubemapTexPaths.emplace_back(finalName);
+					}
+				}
+			}
+
+			if (cubemapTexPaths.size() == 6)
+			{
+				m_skyTexture = CoreEngine::GetSceneManager()->GetScene()->GetLoadTextureByPath(cubemapTexPaths);
+			}
+			else
+			{
+				LOG_ERROR("Could not find a full set of skybox cubemap textures");
+			}
 
 			if (m_skyTexture)
 			{
 				Texture::TextureParams cubemapParams = m_skyTexture->GetTextureParams();
 				cubemapParams.m_texFormat = Texture::TextureFormat::RGBA8;
+				cubemapParams.m_texColorSpace = Texture::TextureColorSpace::sRGB;
 				m_skyTexture->SetTextureParams(cubemapParams);
-			}
 
-			m_skyboxStage.GetStageShader()->ShaderKeywords().emplace_back("CUBEMAP_SKY");
-			m_skyTextureShaderName = "CubeMap0";
+				m_skyboxStage.GetStageShader()->ShaderKeywords().emplace_back("CUBEMAP_SKY");
+				m_skyTextureShaderName = "CubeMap0";
+			}			
 		}
 		else
 		{
+			Texture::TextureParams iblParams = m_skyTexture->GetTextureParams();
+			iblParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+			m_skyTexture->SetTextureParams(iblParams);
 			m_skyTextureShaderName = "Tex0";
 		}
 
@@ -112,7 +161,7 @@ namespace gr
 
 		m_skyboxStage.SetStageParams(skyboxStageParams);
 
-		m_skyboxStage.GetStageCamera() = CoreEngine::GetSceneManager()->GetMainCamera();
+		m_skyboxStage.GetStageCamera() = CoreEngine::GetSceneManager()->GetScene()->GetMainCamera();
 
 		shared_ptr<DeferredLightingGraphicsSystem> deferredLightGS = dynamic_pointer_cast<DeferredLightingGraphicsSystem>(
 			CoreEngine::GetRenderManager()->GetGraphicsSystem<DeferredLightingGraphicsSystem>());

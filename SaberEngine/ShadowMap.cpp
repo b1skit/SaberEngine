@@ -55,7 +55,7 @@ namespace gr
 		{
 			shadowParams.m_texDimension = Texture::TextureDimension::TextureCubeMap;
 			shadowParams.m_texturePath = lightName + "_CubeShadowMap";
-			shadowParams.m_faces = Texture::k_numCubeFaces;
+			shadowParams.m_faces = 6;
 
 			depthTexture = std::make_shared<gr::Texture>(shadowParams);
 
@@ -79,7 +79,7 @@ namespace gr
 		m_shadowTargetSet.Viewport() = gr::Viewport(0, 0, depthTexture->Width(), depthTexture->Height());
 		m_shadowTargetSet.CreateDepthStencilTarget();
 
-		en::CoreEngine::GetSceneManager()->RegisterCamera(SaberEngine::CAMERA_TYPE_SHADOW, m_shadowCam);
+		//en::CoreEngine::GetSceneManager()->RegisterCamera(fr::CAMERA_TYPE_SHADOW, m_shadowCam);
 	}
 }
 

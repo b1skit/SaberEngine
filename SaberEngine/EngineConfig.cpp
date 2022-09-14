@@ -49,7 +49,7 @@ namespace en
 			{"mousePitchSensitivity",				{0.00005f, SettingType::Common}},
 			{"mouseYawSensitivity",					{0.00005f, SettingType::Common}},
 
-			// Scene config root path: All assets stored here
+			// SceneData config root path: All assets stored here
 			{"sceneRoot",							{string("..\\Scenes\\"), SettingType::Common}},	
 
 			// Key bindings:
