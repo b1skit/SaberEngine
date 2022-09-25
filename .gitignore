@@ -39,6 +39,8 @@
 /SaberEngine/assimp*.dll
 /SaberEngine/glew32.dll
 
+# Scene data
+/Scenes/*
 
 # Personal
 /notes/*

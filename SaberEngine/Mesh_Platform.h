@@ -21,7 +21,7 @@ namespace platform
 		{
 			virtual ~PlatformParams() = 0;
 
-			static std::unique_ptr<PlatformParams> CreatePlatformParams();
+			static void CreatePlatformParams(gr::Mesh& mesh);
 		};
 
 

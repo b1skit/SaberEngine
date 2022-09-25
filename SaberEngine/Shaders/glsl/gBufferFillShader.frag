@@ -4,6 +4,7 @@
 
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"
+#include "SaberLighting.glsl"
 
 // Built-in input variables:
 // in vec4 gl_FragCoord; //  location of the fragment in window space. 
@@ -26,18 +27,22 @@ void main()
 {
 	// Albedo. Note: We use an sRGB-format texture, which converts this value from sRGB->linear space for free
 	gBuffer_out_albedo		= texture(MatAlbedo, data.uv0.xy);
-
-	// Normal:
 	gBuffer_out_worldNormal = vec4( WorldNormalFromTexture(MatNormal, data.uv0.xy, data.TBN), 0);
+	
+	// Pack RMAO:
+	gBuffer_out_RMAO = vec4(
+						texture(MatMetallicRoughness, data.uv0.xy).gb, // G = roughness, B = metallness
+						texture(MatOcclusion, data.uv0.xy).r,
+						1.0f);
 
-	// MatRMAO:
-	gBuffer_out_RMAO		= texture(MatRMAO, data.uv0.xy);
+	const float ev100 = GetEV100FromExposureSettings(CAM_APERTURE, CAM_SHUTTERSPEED, CAM_SENSITIVITY);
+	const float exposure = Exposure(ev100);
 
-	// Emissive:
-	gBuffer_out_emissive	= texture(MatEmissive, data.uv0.xy) * emissiveIntensity;
+	const float EC = 4.0; // EC == Exposure compensation. TODO: Make this user-controllable
+	const vec4 emissive = texture(MatEmissive, data.uv0.xy);
+	gBuffer_out_emissive = vec4(emissive.rgb * pow(2.0, ev100 + EC - 3.0) * exposure, emissive.a);
 
-	// Position:
-	gBuffer_out_wPos	= vec4(data.worldPos.xyz, 1);
+	gBuffer_out_wPos		= vec4(data.worldPos.xyz, 1);
 
 	// Material properties:
 	gBuffer_out_matProp0	= MatProperty0;

@@ -322,8 +322,11 @@ namespace opengl
 		{
 			auto bindingUnit = params->m_samplerUnits.find(uniformName);
 
+#if defined(STRICT_SHADER_TEXTURE_BINDING)
 			SEAssert("Invalid texture name", bindingUnit != params->m_samplerUnits.end());
-
+#else
+			if (bindingUnit == params->m_samplerUnits.end()) return;
+#endif
 			static_cast<gr::Texture const*>(value)->Bind(bindingUnit->second, true);
 		}
 		break;
@@ -331,7 +334,11 @@ namespace opengl
 		{
 			auto bindingUnit = params->m_samplerUnits.find(uniformName);
 
+#if defined(STRICT_SHADER_TEXTURE_BINDING)
 			SEAssert("Invalid sampler name", bindingUnit != params->m_samplerUnits.end());
+#else
+			if (bindingUnit == params->m_samplerUnits.end()) return;
+#endif
 
 			static_cast<gr::Sampler const*>(value)->Bind(bindingUnit->second, true);
 		}

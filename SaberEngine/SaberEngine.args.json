@@ -3,20 +3,36 @@
   "Id": "80c62e80-7437-4bb9-b7e0-693fa4c402a1",
   "Items": [
     {
-      "Id": "8de33137-7cbf-483c-b1bd-4055d088b853",
-      "Command": "-scene holodeck"
+      "Id": "e8c82d8a-e5e3-4a47-90a1-45390d632948",
+      "Command": "-scene LightsPunctualLamp"
     },
     {
-      "Id": "fde1e1fd-107e-4d24-9692-823dd1d9b945",
-      "Command": "-scene testScene"
+      "Id": "9382fbc7-26a4-4ccf-aadc-544a1a934d4a",
+      "Command": "-scene Cameras"
     },
     {
-      "Id": "d744714d-2f7a-47c8-9089-80766a25a3d7",
+      "Id": "24ef9bef-0471-465c-9aaa-2b758fec797d",
+      "Command": "-scene WaterBottle"
+    },
+    {
+      "Id": "bb9ed7d8-2d99-4d7d-8b97-a572c67eca65",
+      "Command": "-scene OrientationTest"
+    },
+    {
+      "Id": "2940251e-a995-4b02-b726-a82d74ce9c04",
       "Command": "-scene Sponza"
     },
     {
-      "Id": "5d4c1892-5043-4b55-9ab1-8b9782ffa5ad",
-      "Command": "-scene stanfordObjects"
+      "Id": "3f7808ce-703c-48b0-b666-4655b96bc979",
+      "Command": "-scene AntiqueCamera"
+    },
+    {
+      "Id": "41091ec8-c372-4107-bd51-ffb672bcbe78",
+      "Command": "-scene BoomBoxWithAxes"
+    },
+    {
+      "Id": "241aa5df-00ed-4aef-b8a7-04d0f9ab5100",
+      "Command": "-scene box"
     }
   ]
 }

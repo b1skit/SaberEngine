@@ -64,7 +64,7 @@ namespace gr
 		vector<shared_ptr<Light>> const& deferredLights = CoreEngine::GetSceneManager()->GetScene()->GetPointLights();
 		for (shared_ptr<Light> curLight : deferredLights)
 		{
-			m_pointLightShadowStages.emplace_back(make_shared<RenderStage>(curLight->Name() + " shadow"));
+			m_pointLightShadowStages.emplace_back(make_shared<RenderStage>(curLight->GetName() + " shadow"));
 
 			RenderStage* shadowStage = m_pointLightShadowStages.back().get();
 			

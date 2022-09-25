@@ -70,7 +70,7 @@ namespace gr
 
 	mat4 Camera::GetViewMatrix() const
 	{
-		return inverse(m_transform.Model());
+		return inverse(m_transform.GetWorldMatrix());
 	}
 
 

@@ -39,8 +39,8 @@
 // Pass 0: Blur luminance threshold:
 #if defined(BLUR_SHADER_LUMINANCE_THRESHOLD)
 
-	#define RAMP_POWER 2.0
-	#define SPEED 0.05
+	#define RAMP_POWER 20.0
+	#define SPEED 1.0
 
 	void main()
 	{	
@@ -50,9 +50,13 @@
 		
 		float maxChannel = max(fragRGB.x, max(fragRGB.y, fragRGB.z));
 		float scale		= pow(SPEED * maxChannel, RAMP_POWER);
-		scale			= scale / (scale + 1.0);
+
+		scale = isinf(scale) ? 10000.0 : scale; // Prevent NaNs from blowouts
+		scale = scale / (scale + 1.0);
 
 		FragColor = vec4(fragRGB * scale, 1.0);
+
+
 	}
 
 
@@ -72,7 +76,7 @@
 			uvs.x += texelSize.x; // Move the sample right by 1 pixel
 		}
 
-		FragColor = vec4(total, 1);
+		FragColor = vec4(total, 1.0);
 	} 
 
 

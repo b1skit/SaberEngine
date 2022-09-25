@@ -19,6 +19,7 @@ using en::CoreEngine;
 using std::make_unique;
 using std::make_shared;
 using std::vector;
+using glm::vec4;
 
 
 namespace gr
@@ -31,26 +32,29 @@ namespace gr
 	{
 		if (Material::m_materialLibrary == nullptr)
 		{
+			// TODO: Materials should be described externally; for now, we hard code them
 			m_materialLibrary = make_unique<unordered_map<string, shared_ptr<Material::MaterialDefinition>>>();
 
-			// TODO: Materials should be described externally; for now, we hard code them
-
-			// PBR materials, written to the gBuffer
-			shared_ptr<MaterialDefinition> pbrMat = make_shared<MaterialDefinition>();
-			pbrMat->m_definitionName = "PBRMaterial";
-			pbrMat->m_textureSlots = 
+			// GLTF Metallic-Roughness PBR Material:
+			// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
+			//--------------------------------------
+			shared_ptr<MaterialDefinition> gltfPBRMat = make_shared<MaterialDefinition>();
+			gltfPBRMat->m_definitionName = "pbrMetallicRoughness";
+			gltfPBRMat->m_textureSlots =
 			{
 				{nullptr, Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear), "MatAlbedo" },
+				{nullptr, Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear), "MatMetallicRoughness" }, // G = roughness, B = metalness. R & A are unused.
 				{nullptr, Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear), "MatNormal" },
-				{nullptr, Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear), "MatRMAO" },
+				{nullptr, Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear), "MatOcclusion" },
 				{nullptr, Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear), "MatEmissive" },
 			};
-			pbrMat->m_propertySlots =
+			gltfPBRMat->m_propertySlots =
 			{
-				{"MatProperty0", glm::vec4(0,0,0,0)}
+				{"MatProperty0", vec4(0.04f, 0.04f, 0.04f, 0.0f)} // .rgb = F0 (Surface response at 0 degrees). A is unused.
+				// TODO: Give this a more meaningful name
 			};
-			pbrMat->m_shader = nullptr; // Don't need a shader; PBR materials are written directly to the GBuffer
-			m_materialLibrary->insert({ pbrMat->m_definitionName, pbrMat });
+			gltfPBRMat->m_shader = nullptr; // Don't need a shader; PBR materials are written directly to the GBuffer
+			m_materialLibrary->insert({ gltfPBRMat->m_definitionName, gltfPBRMat });
 		}
 
 		auto result = Material::m_materialLibrary->find(matName);
@@ -115,7 +119,7 @@ namespace gr
 	}
 
 
-	std::shared_ptr<gr::Texture>const& Material::GetTexture(std::string const& samplerName) const
+	std::shared_ptr<gr::Texture> const& Material::GetTexture(std::string const& samplerName) const
 	{
 		auto index = m_namesToSlotIndex.find(samplerName);
 

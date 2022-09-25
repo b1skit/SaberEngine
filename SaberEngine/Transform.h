@@ -13,15 +13,38 @@ namespace gr
 {
 	class Transform
 	{
-	public:
-		enum ModelMatrixComponent
-		{
-			WorldTranslation,
-			WorldScale,
-			WorldRotation,
+		/***************************************************************************************************************
+		* Notes:
+		* Model space = local -> world transformations, without consideration of the parent transformations/hierarchy
+		* World space = Final world transformations, after considering the parent transformations/hierarchy
+		* 
+		* GLTF specifies X- as right, Z+ as forward:
+		* https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#coordinate-system-and-units
+		* But cameras are defined with X+ as right, Z- as forward
+		* https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#cameras
+		*	-> Transforms use GLTF's Camera convention
+		* 
+		* GLM stores matrices in memory in column-major order.
+		*	OpenGL: Vectors are column vectors
+		*	D3D: Vectors are row vectors
+		*	-> Expect matrices to be transposes of each other between APIs
+		***************************************************************************************************************/
 
-			WorldModel
+	public:
+		enum TransformComponent
+		{
+			Translation,
+			Scale,
+			Rotation,
+			WorldModel, // Composition of Translation, Rotation, and Scale
+
+			TransformComponent_Count
 		};
+
+		// Static world-space CS axis (SaberEngine currently uses a RHCS)
+		static const glm::vec3 WORLD_X;	// +X
+		static const glm::vec3 WORLD_Y;	// +Y
+		static const glm::vec3 WORLD_Z;	// +Z
 
 	public:
 		Transform();
@@ -31,100 +54,95 @@ namespace gr
 		Transform(Transform&&) = default;
 		Transform& operator=(Transform const&) = default;
 		
-
-		// Get the model matrix, used to transform from local->world space
-		glm::mat4 Model(ModelMatrixComponent component = WorldModel) const;
-		
-		// Hierarchy functions:
+		// Transform functionality:
 		inline Transform* GetParent() const { return m_parent; }
 		void SetParent(Transform* newParent);
+
+		glm::mat4 const& GetWorldMatrix(TransformComponent component = WorldModel) const;
 		
-		// Functionality:
-		//---------------
-
-		void Translate(glm::vec3 amount); // Translate, in (relative) world space
+		void TranslateModel(glm::vec3 amount); // Apply additional translation to the current position, in model space
 		
-		void SetWorldPosition(glm::vec3 position); // Set the world space position
-		glm::vec3 const& GetWorldPosition() const; // Get the world space position
+		void SetModelPosition(glm::vec3 position); // Set the total translation of this Transform, in model space
+		inline glm::vec3 const& GetModelPosition() const { return m_modelPosition; }
+		inline glm::vec3 const& GetWorldPosition() const { return m_worldPosition; } // Get the final world-space position
 
-		// Rotate about the world X, Y, Z axis, in that order
-		// eulerXYZ = Rotation angles about each axis, in RADIANS
-		void Rotate(glm::vec3 eulerXYZ);
+		// Apply additional rotation:
+		void RotateModel(glm::vec3 eulerXYZRadians); // Rotation is applied in XYZ order
+		void RotateModel(float angleRads, glm::vec3 axis); // Apply an axis-angle rotation to the current transform state
 
-		glm::vec3 const& GetEulerRotation() const;
-		void SetWorldRotation(glm::vec3 eulerXYZ);
-		void SetWorldRotation(glm::quat newRotation);
+		void SetModelRotation(glm::vec3 eulerXYZ);
+		void SetModelRotation(glm::quat newRotation);
+
+		inline glm::vec3 const& GetModelEulerXYZRotationRadians() const { return m_modelRotationEulerRadians; }
+		inline glm::vec3 const& GetWorldEulerXYZRotationRadians() const { return m_worldRotationEulerRadians; }
+
+		void SetModelScale(glm::vec3 scale);
+
+		inline glm::vec3 const& ForwardWorld() const { return m_worldForward; } // Transform's world-space forward (Z+) vector
+		inline glm::vec3 const& RightWorld() const { return m_worldRight; } // Transform's world-space right (X+) vector
+		inline glm::vec3 const& UpWorld() const { return m_worldUp; } // Transform's world-space up (Y+) vector
+		// TODO: Add ForwardModel, RightModel, UpModel
 		
-		// Scaling:
-		void SetWorldScale(glm::vec3 scale);
-
-		inline glm::vec3 const& Forward() const { return m_forward; } // Transform's world-space forward (Z+) vector
-		inline glm::vec3 const& Right() const { return m_right; } // Transform's world-space right (X+) vector
-		inline glm::vec3 const& Up() const { return m_up; } // Transform's world-space up (Y+) vector
-
-		// Recomute the components of the model matrix. Sets isDirty to false
-		void Recompute();
 
 	public: // Static helper functions:
 		
 		// Rotate a targetVector about an axis by radians
-		static glm::vec3& RotateVector(glm::vec3& targetVector, float const & radians, glm::vec3 const & axis);
-
-		// Static world CS axis: SaberEngine always uses a RHCS
-		static const glm::vec3 WORLD_X;	// +X
-		static const glm::vec3 WORLD_Y;	// +Y
-		static const glm::vec3 WORLD_Z;	// +Z
-
+		static glm::vec3& RotateVector(glm::vec3& targetVector, const float radians, glm::vec3 const& axis);
+		// TODO: Does this need to be a static member? Why not just compute this inline when it's needed? (Eg. PlayerObject)
+		
 
 	private:
 		Transform* m_parent;
 		std::vector<Transform*> m_children;
 
-		// Note: GLM stores matrices in memory in column-major order.
-		// OpenGL: Vectors are column vectors
-		// D3D: Vectors are row vectors
-		// -> Expect matrices to be transposes of each other between APIs
-
-		// World-space orientation:
-		glm::vec3 m_worldPosition;	// World position, relative to parent transforms
-		glm::vec3 m_eulerWorldRotation;	// World-space Euler angles (pitch, yaw, roll), in Radians
-		glm::vec3 m_worldScale;
+		// Transform's world-space orientation components, *before* any parent transforms are applied:
+		glm::vec3 m_modelPosition;
+		glm::vec3 m_modelRotationEulerRadians; // Rotation as Euler angles (pitch, yaw, roll), in Radians
+		glm::quat m_modelRotationQuat;	// Rotation as a quaternion
+		glm::vec3 m_modelScale;
 		
-		// Local CS axis: SaberEngine always uses a RHCS
-		glm::vec3 m_right;
-		glm::vec3 m_up;
-		glm::vec3 m_forward;
+		// Transform's world-space oreientation component matrices, *before* any parent transforms are applied
+		glm::mat4 m_modelMat; // == T*R*S
+		glm::mat4 m_modelScaleMat;
+		glm::mat4 m_modelRotationMat;
+		glm::mat4 m_modelTranslationMat;
 
-		// model == T*R*S
-		glm::mat4 m_model;
-		glm::mat4 m_scale;
-		glm::mat4 m_rotation;
-		glm::mat4 m_translation;
+		// Combined world-space transformation, with respect to the entire transformation hierarchy
+		glm::mat4 m_worldMat;
+		glm::mat4 m_worldScaleMat;
+		glm::mat4 m_worldRotationMat;
+		glm::mat4 m_worldTranslationMat;
 
-		// Combined transformation heirarchy (parents etc)
-		glm::mat4 m_combinedModel;
-		glm::mat4 m_combinedScale;
-		glm::mat4 m_combinedRotation;
-		glm::mat4 m_combinedTranslation;
+		// Transform's world-space orientation components, *after* any parent transforms are applied:
+		glm::vec3 m_worldPosition;
+		glm::vec3 m_worldRotationEulerRadians;
+		glm::quat m_worldRotationQuat;
+		glm::vec3 m_worldScale;
 
-		glm::quat m_worldRotation; // Rotation of this transform. For assembling rotation matrix
+		// Transform's final world-space CS axis, *after* parent transformations are applied
+		// Note: SaberEngine currently uses a RHCS
+		glm::vec3 m_worldRight;
+		glm::vec3 m_worldUp;
+		glm::vec3 m_worldForward;
 
-		bool m_isDirty;			// Do our model or combinedModel matrices need to be recomputed?
+		bool m_isDirty;	// Do our model or combinedModel matrices need to be recomputed?
 
 
 	private:
-		// Mark this transform as dirty, requiring a recomputation of it's local matrices
-		void MarkDirty();
+		// TODO: MarkDirty() should be used trigger RecomputeWorldTransforms() on an as-needed basis; currently we
+		// pair these instructions since we have some const dependencies that need to be untangled...
+
+		void MarkDirty(); // Mark this transform as dirty, requiring a recomputation of it's local matrices
+		void RecomputeWorldTransforms(); // Recomute the components of the model matrix. Sets isDirty to false
 
 		// Helper functions for SetParent()/Unparent():
 		void RegisterChild(Transform* child);
 		void UnregisterChild(Transform const* child);
 
-		// Recomputes world orientation of the right/up/forward local CS axis vectors according to the current rotation mat4
-		void UpdateLocalAxis();
+		// RecomputeWorldTransforms (normalized) world-space Right/Up/Forward CS axis vectors by applying m_worldRotationMat
+		void UpdateWorldSpaceAxis();
 
-		// Helper function: Clamps Euler angles to be in (-2pi, 2pi)
-		void BoundEulerAngles();
+		void RecomputeEulerXYZRadians(); // Helper: Updates m_modelRotationEulerRadians from m_modelRotationQuat
 	};
 }
 

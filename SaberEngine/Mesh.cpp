@@ -3,20 +3,24 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
-#include "DebugConfiguration.h"
 #include "Mesh.h"
 
 using gr::Transform;
 using glm::pi;
 using glm::mat4;
+using glm::vec2;
 using glm::vec3;
 using glm::vec4;
+using std::move;
+using std::vector;
+using std::string;
+using std::shared_ptr;
 
 
 namespace gr
 {
 	// Returns a Bounds, transformed from local space using transform
-	Bounds Bounds::GetTransformedBounds(mat4 const& m_transform)
+	Bounds Bounds::GetTransformedBounds(mat4 const& transform)
 	{
 		// Temp: Ensure the bounds are 3D here, before we do any calculations
 		Make3Dimensional();
@@ -36,7 +40,7 @@ namespace gr
 
 		for (size_t i = 0; i < 8; i++)
 		{
-			points[i] = m_transform * points[i];
+			points[i] = transform * points[i];
 
 			if (points[i].x < result.m_xMin)
 			{
@@ -95,45 +99,46 @@ namespace gr
 
 	/******************************************************************************************************************/
 
-
-	Mesh::Mesh(std::string name, 
-		std::vector<Vertex> vertices, 
-		std::vector<uint32_t> indices, 
-		std::shared_ptr<gr::Material> newMeshMaterial) :
-			m_platformParams{ platform::Mesh::PlatformParams::CreatePlatformParams() },
-			meshName{ name },
-			m_vertices{ vertices },
-			m_indices{ indices },
-			m_meshMaterial{ newMeshMaterial }
+	Mesh::Mesh(
+		string const& name,
+		vector<float>& positions,
+		vector<float>& normals,
+		vector<float>& colors,
+		vector<float>& uv0,
+		vector<float>& tangents,
+		vector<uint32_t>& indices,
+		shared_ptr<gr::Material> material,
+		MeshParams const& meshParams) :
+			m_platformParams(nullptr),
+			m_name(name),
+			m_meshMaterial(material),
+			m_params(meshParams)
 	{
-		// Compute the localBounds:
-		ComputeBounds();
+		m_positions		= move(positions);
+		m_normals		= move(normals);
+		m_colors		= move(colors);
+		m_uv0			= move(uv0);
+		m_tangents		= move(tangents);
+		m_indices		= move(indices);
 
-		// Platform-specific setup:
-		platform::Mesh::Create(*this);
+		ComputeBounds(); // Compute m_localBounds
+
+		platform::Mesh::Create(*this); // Platform-specific setup
 	}
 
 
 	void Mesh::Destroy()
 	{
-		#if defined(DEBUG_LOG_OUTPUT)
-			meshName = meshName + "_DESTROYED"; // Safety...
-		#endif
+		m_positions.clear();
+		m_normals.clear();
+		m_colors.clear();
+		m_uv0.clear();
+		m_tangents.clear();
+		m_indices.clear();
 
-		if (m_vertices.size() > 0)
-		{
-			m_vertices.clear();
-		}
-		if (m_indices.size() > 0)
-		{
-			m_indices.clear();
-		}
+		m_meshMaterial = nullptr;
 
-		m_meshMaterial = nullptr;		// Note: Material MUST be cleaned up elsewhere!
-
-		// Platform-specific destruction:
-		platform::Mesh::Destroy(*this);
-
+		platform::Mesh::Destroy(*this); // Platform-specific destruction
 		m_platformParams = nullptr;
 	}
 
@@ -146,33 +151,35 @@ namespace gr
 
 	void Mesh::ComputeBounds()
 	{
-		for (size_t i = 0; i < m_vertices.size(); i++)
+		for (size_t i = 0; i < m_positions.size(); i+=3) // Stride of 3
 		{
-			if (m_vertices[i].m_position.x < m_localBounds.xMin())
+			// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
+			vec3 const& posVector = reinterpret_cast<vec3 const&>(m_positions[i]);
+			if (posVector.x < m_localBounds.xMin())
 			{
-				m_localBounds.xMin() = m_vertices[i].m_position.x;
+				m_localBounds.xMin() = posVector.x;
 			}
-			if (m_vertices[i].m_position.x > m_localBounds.xMax())
+			if (posVector.x > m_localBounds.xMax())
 			{
-				m_localBounds.xMax() = m_vertices[i].m_position.x;
-			}
-
-			if (m_vertices[i].m_position.y < m_localBounds.yMin())
-			{
-				m_localBounds.yMin() = m_vertices[i].m_position.y;
-			}
-			if (m_vertices[i].m_position.y > m_localBounds.yMax())
-			{
-				m_localBounds.yMax() = m_vertices[i].m_position.y;
+				m_localBounds.xMax() = posVector.x;
 			}
 
-			if (m_vertices[i].m_position.z < m_localBounds.zMin())
+			if (posVector.y < m_localBounds.yMin())
 			{
-				m_localBounds.zMin() = m_vertices[i].m_position.z;
+				m_localBounds.yMin() = posVector.y;
 			}
-			if (m_vertices[i].m_position.z > m_localBounds.zMax())
+			if (posVector.y > m_localBounds.yMax())
 			{
-				m_localBounds.zMax() = m_vertices[i].m_position.z;
+				m_localBounds.yMax() = posVector.y;
+			}
+
+			if (posVector.z < m_localBounds.zMin())
+			{
+				m_localBounds.zMin() = posVector.z;
+			}
+			if (posVector.z > m_localBounds.zMax())
+			{
+				m_localBounds.zMax() = posVector.z;
 			}
 		}
 	}
@@ -182,29 +189,30 @@ namespace gr
 	{
 		inline std::shared_ptr<Mesh> CreateCube(std::shared_ptr<gr::Material> newMeshMaterial /*= nullptr*/)
 		{
-			// Note: SaberEngine uses a RHCS in all cases
-			std::vector<vec3> positions(8);
-			positions[0] = vec3(-1.0f, 1.0f, 1.0f); // "Front" side
-			positions[1] = vec3(-1.0f, -1.0f, 1.0f);
-			positions[2] = vec3(1.0f, -1.0f, 1.0f);
-			positions[3] = vec3(1.0f, 1.0f, 1.0f);
-
-			positions[4] = vec3(-1.0f, 1.0f, -1.0f); // "Back" side
-			positions[5] = vec3(-1.0f, -1.0f, -1.0f);
-			positions[6] = vec3(1.0f, -1.0f, -1.0f);
-			positions[7] = vec3(1.0f, 1.0f, -1.0f);
-
-			const std::vector<vec3 > normals
+			// Note: Using a RHCS
+			const vector<vec3> positions
 			{
-				vec3(0.0f, 0.0f, 1.0f),	// Front = 0
+				vec3(-1.0f, 1.0f, 1.0f),
+				vec3(-1.0f, -1.0f, 1.0f),
+				vec3(1.0f, -1.0f, 1.0f),
+				vec3(1.0f, 1.0f, 1.0f),
+				vec3(-1.0f, 1.0f, -1.0f),
+				vec3(-1.0f, -1.0f, -1.0f),
+				vec3(1.0f, -1.0f, -1.0f),
+				vec3(1.0f, 1.0f, -1.0f)
+			};
+
+			const vector<vec3 > normals
+			{
+				vec3(0.0f, 0.0f, 1.0f),		// Front = 0
 				vec3(0.0f, 0.0f, -1.0f),	// Back = 1
 				vec3(-1.0f, 0.0f, 0.0f),	// Left = 2
-				vec3(1.0f, 0.0f, 0.0f),	// Right = 3
-				vec3(0.0f, 1.0f, 0.0f),	// Up = 4
+				vec3(1.0f, 0.0f, 0.0f),		// Right = 3
+				vec3(0.0f, 1.0f, 0.0f),		// Up = 4
 				vec3(0.0f, -1.0f, 0.0f),	// Down = 5
 			};
 
-			const std::vector<vec4> colors
+			const vector<vec4> colors
 			{
 				vec4(0.0f, 0.0f, 0.0f, 1.0f),
 				vec4(0.0f, 0.0f, 1.0f, 1.0f),
@@ -216,84 +224,138 @@ namespace gr
 				vec4(1.0f, 1.0f, 1.0f, 1.0f),
 			};
 
-			const std::vector<vec4> uvs
+			const vector<vec2> uvs
 			{
-				vec4(0.0f, 0.0f, 0.0f, 0.0f),
-				vec4(0.0f, 1.0f, 0.0f, 0.0f),
-				vec4(1.0f, 0.0f, 0.0f, 0.0f),
-				vec4(1.0f, 1.0f, 0.0f, 0.0f),
+				vec2(0.0f, 0.0f),
+				vec2(0.0f, 1.0f),
+				vec2(1.0f, 0.0f),
+				vec2(1.0f, 1.0f),
 			};
 
-			std::vector<gr::Vertex> cubeVerts
+			// Assemble the vertex data into streams.
+			// Debugging hint: position index should = color index. All UV's should be used once per face.		
+			vector<vec3> assembledPositions
 			{
-				// TODO: Implement hard-coded tangent & bitangents instead of empty vec3's...
+				// Front face
+				positions[0], positions[1], positions[2], positions[3],
+				
+				// Left face
+				positions[4], positions[5],	positions[1], positions[0],
 
-				// Front face:
-				Vertex(positions[0], normals[0], vec3(), vec3(), colors[0], uvs[1]), // HINT: position index should = color index
-				Vertex(positions[1], normals[0], vec3(), vec3(), colors[1], uvs[0]), // All UV's should be used once per face
-				Vertex(positions[2], normals[0], vec3(), vec3(), colors[2], uvs[2]), //2
-				Vertex(positions[3], normals[0], vec3(), vec3(), colors[3], uvs[3]), //3
+				// Right face
+				positions[3], positions[2], positions[6], positions[7],
 
-				// Left face:
-				Vertex(positions[4], normals[2], vec3(), vec3(), colors[4], uvs[1]), //4
-				Vertex(positions[5], normals[2], vec3(), vec3(), colors[5], uvs[0]),
-				Vertex(positions[1], normals[2], vec3(), vec3(), colors[1], uvs[2]),
-				Vertex(positions[0], normals[2], vec3(), vec3(), colors[0], uvs[3]), //7
+				// Top face
+				positions[4], positions[0], positions[3], positions[7],
 
-				// Right face:
-				Vertex(positions[3], normals[3], vec3(), vec3(), colors[3], uvs[1]), //8
-				Vertex(positions[2], normals[3], vec3(), vec3(), colors[2], uvs[0]),
-				Vertex(positions[6], normals[3], vec3(), vec3(), colors[6], uvs[2]),
-				Vertex(positions[7], normals[3], vec3(), vec3(), colors[7], uvs[3]), //11
+				// Bottom face
+				positions[1], positions[5],	positions[6], positions[2],
 
-				// Top face:
-				Vertex(positions[4], normals[4], vec3(), vec3(), colors[4], uvs[1]), //12
-				Vertex(positions[0], normals[4], vec3(), vec3(), colors[0], uvs[0]),
-				Vertex(positions[3], normals[4], vec3(), vec3(), colors[3], uvs[2]),
-				Vertex(positions[7], normals[4], vec3(), vec3(), colors[7], uvs[3]), //15
-
-				// Bottom face:
-				Vertex(positions[1], normals[5], vec3(), vec3(), colors[1], uvs[1]), //16
-				Vertex(positions[5], normals[5], vec3(), vec3(), colors[5], uvs[0]),
-				Vertex(positions[6], normals[5], vec3(), vec3(), colors[6], uvs[2]),
-				Vertex(positions[2], normals[5], vec3(), vec3(), colors[2], uvs[3]), //19
-
-				// Back face:
-				Vertex(positions[7], normals[1], vec3(), vec3(), colors[7], uvs[1]), //20
-				Vertex(positions[6], normals[1], vec3(), vec3(), colors[6], uvs[0]),
-				Vertex(positions[5], normals[1], vec3(), vec3(), colors[5], uvs[2]),
-				Vertex(positions[4], normals[1], vec3(), vec3(), colors[4], uvs[3]), //23
+				// Back face
+				positions[7], positions[6], positions[5], positions[4]
 			};
+
+			vector<vec3> assembledNormals
+			{
+				// Front face
+				normals[0], normals[0], normals[0],	normals[0],
+
+				// Left face
+				normals[2], normals[2],	normals[2],	normals[2],
+
+				// Right face
+				normals[3], normals[3],	normals[3],	normals[3],
+
+				// Top face
+				normals[4], normals[4], normals[4],	normals[4],
+
+				// Bottom face
+				normals[5], normals[5],	normals[5],	normals[5],
+
+				// Back face
+				normals[1], normals[1],	normals[1],	normals[1]
+			};
+
+			vector<vec4> assembledColors
+			{
+				// Front face
+				colors[0], colors[1], colors[2], colors[3],
+
+				// Left face
+				colors[4], colors[5], colors[1], colors[0],
+
+				// Right face
+				colors[3], colors[2], colors[6], colors[7],
+
+				// Top face
+				colors[4], colors[0], colors[3], colors[7],
+
+				// Bottom face
+				colors[1], colors[5], colors[6], colors[2],
+
+				// Back face
+				colors[7], colors[6], colors[5], colors[4]
+			};
+
+			vector<vec2> assembledUVs
+			{
+				// Front face
+				uvs[1], uvs[0], uvs[2],	uvs[3],
+					  
+				// Left face
+				uvs[1], uvs[0],	uvs[2],	uvs[3],
+					  
+				// Right face
+				uvs[1], uvs[0],	uvs[2],	uvs[3],
+					  
+				// Top face
+				uvs[1], uvs[0],	uvs[2],	uvs[3],
+					  
+				// Bottom face
+				uvs[1], uvs[0],	uvs[2],	uvs[3],
+					  
+				// Back face
+				uvs[1], uvs[0],	uvs[2],	uvs[3]
+			};
+
+			// TODO: Populate these with meaningful data
+			vector<vec3> assembledTangents(positions.size());
 
 			std::vector<uint32_t> cubeIndices // 6 faces * 2 tris * 3 indices 
-			{
-				// Front face:
-				0, 1, 3,
+			{				
+				0, 1, 3, // Front face
 				1, 2, 3,
-
-				// Left face:
-				4, 5, 7,
+				
+				4, 5, 7, // Left face
 				7, 5, 6,
-
-				// Right face:
-				8, 9, 11,
+				
+				8, 9, 11, // Right face
 				9, 10, 11,
-
-				// Top face:
-				12, 13, 15,
+				
+				12, 13, 15, // Top face
 				13, 14, 15,
-
-				// Bottom face:
-				16, 17, 19,
+				
+				16, 17, 19, // Bottom face
 				17, 18, 19,
 
-				// Back face:
-				20, 21, 23,
+				20, 21, 23, // Back face:
 				21, 22, 23,
 			};
 
-			return std::make_shared<Mesh>("cube", cubeVerts, cubeIndices, newMeshMaterial);
+			
+			// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
+			return std::make_shared<Mesh>(
+				"cube", 
+				*reinterpret_cast<vector<float>*>(&assembledPositions),	// Cast our vector<vec3> to vector<float>
+				*reinterpret_cast<vector<float>*>(&assembledNormals),
+				*reinterpret_cast<vector<float>*>(&assembledColors),
+				*reinterpret_cast<vector<float>*>(&assembledUVs),
+				*reinterpret_cast<vector<float>*>(&assembledTangents),
+				cubeIndices, 
+				newMeshMaterial,
+				Mesh::MeshParams());
 		}
+
 
 		inline std::shared_ptr<Mesh> CreateQuad(vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,
 			vec3 tr /*= vec3(0.5f, 0.5f, 0.0f)*/,
@@ -301,32 +363,17 @@ namespace gr
 			vec3 br /*= vec3(0.5f, -0.5f, 0.0f)*/,
 			std::shared_ptr<gr::Material> newMeshMaterial /*= nullptr*/)
 		{
-			vec3 m_tangent = normalize(vec3(br - bl));
-			vec3 m_bitangent = normalize(vec3(tl - bl));
-			vec3 quadNormal = normalize(cross(m_tangent, m_bitangent));
+			vec3 tangent = normalize(vec3(br - bl));
+			vec3 bitangent = normalize(vec3(tl - bl));
+			vec3 quadNormal = normalize(cross(tangent, bitangent));
 			vec4 redColor = vec4(1, 0, 0, 1); // Assign a bright red color by default...
 
-			std::vector<vec4> uvs
+			std::vector<vec2> uvs
 			{
-				vec4(0, 1, 0, 0), // tl
-				vec4(0, 0, 0, 0), // bl
-				vec4(1, 1, 0, 0), // tr
-				vec4(1, 0, 0, 0)  // br
-			};
-
-			std::vector<Vertex> quadVerts
-			{
-				// tl
-				Vertex(tl, quadNormal, m_tangent, m_bitangent, redColor, uvs[0]),
-
-				// bl
-				Vertex(bl, quadNormal, m_tangent, m_bitangent, redColor, uvs[1]),
-
-				// tr
-				Vertex(tr, quadNormal, m_tangent, m_bitangent, redColor, uvs[2]),
-
-				// br
-				Vertex(br, quadNormal, m_tangent, m_bitangent, redColor, uvs[3])
+				vec2(0, 1), // tl
+				vec2(0, 0), // bl
+				vec2(1, 1), // tr
+				vec2(1, 0)  // br
 			};
 
 			std::vector<uint32_t> quadIndices
@@ -337,7 +384,25 @@ namespace gr
 				2, 1, 3
 			}; // Note: CCW winding
 
-			return std::make_shared<Mesh>("quad", quadVerts, quadIndices, newMeshMaterial);
+			// Assemble the vertex data streams:
+			std::vector<vec3> positions = {tl, bl, tr, br};
+			std::vector<vec3> normals(4, quadNormal);
+			std::vector<vec4> colors(4, redColor);
+			std::vector<vec3> tangents(positions.size()); // TODO: Populate this
+
+			// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
+			return std::make_shared<Mesh>(
+				"quad", 
+				*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
+				*reinterpret_cast<vector<float>*>(&normals),
+				*reinterpret_cast<vector<float>*>(&colors),
+				*reinterpret_cast<vector<float>*>(&uvs),
+				*reinterpret_cast<vector<float>*>(&tangents),
+				quadIndices, 
+				newMeshMaterial,
+				Mesh::MeshParams());
+
+			return nullptr;
 		}
 
 
@@ -355,26 +420,35 @@ namespace gr
 			//		numLatSlices = horizontal segments
 			//		numLongSlices = vertical segments
 
-			size_t numVerts = numLatSlices * numLongSlices + 2; // + 2 for end caps
-			std::vector<Vertex> vertices(numVerts);
-			std::vector<vec3>normals(numVerts);
-			std::vector<vec4>uvs(numVerts);
+			const size_t numVerts = numLatSlices * numLongSlices + 2; // + 2 for end caps
 
-			vec4 vertColor(1.0f, 1.0f, 1.0f, 1.0f);
+			vector<vec3> positions(numVerts);
+			vector<vec3> normals(numVerts);
+			vector<vec4> colors(numVerts);
+			vector<vec2> uvs(numVerts);
+			vector<vec3> tangents(numVerts);
 
-			size_t numIndices = 3 * numLatSlices * numLongSlices * 2;
-			std::vector<uint32_t> indices(numIndices);
+			// TODO: Actually compute these. For now, just use dummy values
+			const vec4 vertColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+
+			const size_t numIndices = 3 * numLatSlices * numLongSlices * 2;
+			vector<uint32_t> indices(numIndices);
 
 			// Generate a sphere about the Y axis:
 			vec3 firstPosition = vec3(0.0f, radius, 0.0f);
 			vec3 firstNormal = vec3(0, 1.0f, 0);
-			vec3 firstTangent = vec3(0, 0, 0); //
-			vec3 firstBitangent = vec3(0, 0, 0); //
-			vec4 firstUv0 = vec4(0.5f, 1.0f, 0, 0);
+			vec3 firstTangent = vec3(0, 0, 0);
+			vec2 firstUv0 = vec2(0.5f, 1.0f);
 
 			size_t currentIndex = 0;
-			vertices[currentIndex++] =
-				Vertex(firstPosition, firstNormal, firstTangent, firstBitangent, vertColor, firstUv0);
+
+			positions[currentIndex] = firstPosition;
+			normals[currentIndex] = firstNormal;
+			colors[currentIndex] = vertColor;
+			uvs[currentIndex] = firstUv0;
+			tangents[currentIndex] = firstTangent;
+			currentIndex++;
 
 			// Rotate about Z: Arc down the side profile of our sphere
 			// cos theta = adj/hyp -> hyp * cos theta = adj -> radius * cos theta = Y
@@ -405,14 +479,18 @@ namespace gr
 					float z = radius * cos(yRadians) * sin(zRadians);
 					yRadians += yRadianStep;
 
-					vec3 m_position = vec3(x, y, z);
-					vec3 m_normal = normalize(m_position);
+					vec3 position = vec3(x, y, z);
+					vec3 normal = normalize(position);
 
-					vec3 m_tangent = vec3(1, 0, 0); // TODO
-					vec3 m_bitangent = vec3(0, 1, 0); // TODO
-					vec4 m_uv0 = vec4(uvX, uvY, 0, 0);
+					vec3 tangent = vec3(1, 0, 0); // TODO: Compute this
+					vec2 uv0 = vec2(uvX, uvY);
 
-					vertices[currentIndex++] = Vertex(m_position, m_normal, m_tangent, m_bitangent, vertColor, m_uv0);
+					positions[currentIndex] = position;
+					normals[currentIndex] = normal;
+					colors[currentIndex] = vertColor;
+					uvs[currentIndex] = uv0;
+					tangents[currentIndex] = tangent;
+					currentIndex++;
 
 					uvX += uvXStep;
 				}
@@ -429,10 +507,13 @@ namespace gr
 
 			vec3 finalTangent = vec3(0, 0, 0);
 			vec3 finalBitangent = vec3(0, 0, 0);
-			vec4 finalUv0 = vec4(0.5f, 0.0f, 0, 0);
+			vec2 finalUv0 = vec2(0.5f, 0.0f);
 
-			vertices[currentIndex] =
-				Vertex(finalPosition, finalNormal, finalTangent, finalBitangent, vertColor, finalUv0);
+			positions[currentIndex]		= finalPosition;
+			normals[currentIndex]		= finalNormal;
+			colors[currentIndex]		= vertColor;
+			uvs[currentIndex]			= finalUv0;
+			tangents[currentIndex]		= finalTangent;
 
 			// Indices: (Note: We use counter-clockwise vertex winding)
 			currentIndex = 0;
@@ -497,7 +578,18 @@ namespace gr
 			}
 			indices[currentIndex - 1] = (uint32_t)(numVerts - numLatSlices - 1); // Wrap the last edge back to the start		
 
-			return std::make_shared<Mesh>("sphere", vertices, indices, newMeshMaterial);
+			// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
+			return make_shared<Mesh>(
+				"sphere", 
+				*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
+				*reinterpret_cast<vector<float>*>(&normals),
+				*reinterpret_cast<vector<float>*>(&colors),
+				*reinterpret_cast<vector<float>*>(&uvs),
+				*reinterpret_cast<vector<float>*>(&tangents),
+				indices, newMeshMaterial,
+				Mesh::MeshParams());
+
+			return nullptr;
 		}
 	} // meshfactory
 } // gr

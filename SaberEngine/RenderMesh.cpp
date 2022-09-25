@@ -9,34 +9,23 @@ using std::vector;
 
 namespace gr
 {
-	RenderMesh::RenderMesh(Transform* gameObjectTransform)
+	RenderMesh::RenderMesh(Transform* gameObjectParent, shared_ptr<Mesh> meshPrimitive)
 	{
-		SetTransform(gameObjectTransform);
+		m_transform.SetParent(gameObjectParent);
+		AddChildMeshPrimitive(meshPrimitive);
 	}
 
 
 	RenderMesh::RenderMesh(RenderMesh const& rhs)
 	{
 		m_meshPrimitives = rhs.m_meshPrimitives;
-		SetTransform(rhs.m_gameObjectTransform);
-	}
-
-
-	void RenderMesh::SetTransform(Transform* transform)
-	{
-		m_gameObjectTransform = transform;
-
-		// Update the parents of any view meshes
-		for (size_t i = 0; i < m_meshPrimitives.size(); i++)
-		{
-			m_meshPrimitives.at(i)->GetTransform().SetParent(m_gameObjectTransform);
-		}
+		m_transform = rhs.m_transform;
 	}
 
 
 	void RenderMesh::AddChildMeshPrimitive(shared_ptr<gr::Mesh> mesh)
 	{
-		mesh->GetTransform().SetParent(m_gameObjectTransform);
+		mesh->GetTransform().SetParent(&m_transform);
 		m_meshPrimitives.push_back(mesh);
 	}
 }

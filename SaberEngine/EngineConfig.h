@@ -46,6 +46,7 @@ namespace en
 
 		// Currently loaded scene (cached during command-line parsing, accessed once SceneManager is loaded)
 		std::string& SceneName() { return m_currentScene; }
+		std::string const& SceneName() const { return m_currentScene; }
 
 		// Compute the aspect ratio == width / height
 		inline float GetWindowAspectRatio() const

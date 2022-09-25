@@ -62,13 +62,9 @@ namespace en
 		// Must wait to start scene manager and load a scene until the renderer is called, since we need to initialize
 		// OpenGL in the RenderManager before creating shaders
 		m_sceneManager->Startup();
-		bool loadedScene = m_sceneManager->LoadScene(m_config.SceneName());
 
 		// Now that the scene (and its materials/shaders) has been loaded, we can initialize the shaders
-		if (loadedScene)
-		{
-			m_renderManager->Initialize();
-		}		
+		m_renderManager->Initialize();
 
 		m_isRunning = true;
 
@@ -218,7 +214,7 @@ namespace en
 					return false;
 				}
 				
-				i++; // Eat the parameter
+				i++; // Eat the token
 			}
 			else
 			{

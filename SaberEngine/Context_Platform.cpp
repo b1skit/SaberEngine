@@ -7,7 +7,7 @@
 
 namespace platform
 {
-	void Context::PlatformParams::CreatePlatformParams(re::Context& context)
+	void Context::PlatformParams::CreatePlatformParams(re::Context& m_context)
 	{
 		const platform::RenderingAPI& api =
 			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
@@ -16,7 +16,7 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			context.m_platformParams = std::make_unique<opengl::Context::PlatformParams>();
+			m_context.m_platformParams = std::make_unique<opengl::Context::PlatformParams>();
 		}
 		break;
 		case RenderingAPI::DX12:
@@ -34,9 +34,9 @@ namespace platform
 	}
 
 	
-	void (*platform::Context::Create)(re::Context& context);
-	void (*platform::Context::Destroy)(re::Context& context);
-	void (*platform::Context::SwapWindow)(re::Context const& context);
+	void (*platform::Context::Create)(re::Context& m_context);
+	void (*platform::Context::Destroy)(re::Context& m_context);
+	void (*platform::Context::SwapWindow)(re::Context const& m_context);
 	void (*platform::Context::SetCullingMode)(platform::Context::FaceCullingMode const& mode);
 	void (*platform::Context::ClearTargets)(platform::Context::ClearTarget const& clearTarget);
 	void (*platform::Context::SetBlendMode)(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst);

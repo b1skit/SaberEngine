@@ -15,7 +15,11 @@ namespace gr
 	public:
 		struct CameraConfig
 		{
-			float m_fieldOfView = 90.0f; // == 0 if orthographic	
+			
+			float m_fieldOfView = 90.0f; // == 0 if orthographic. 
+			// TODO: Store this in Radians (currently in degrees)
+			// TODO: Convert this to vertical FOV, as per GLTF convention (currently horizontal)
+
 			float m_near = 1.0f;
 			float m_far = 100.0f;
 			float m_aspectRatio = 1.0f; // == width / height
@@ -28,7 +32,7 @@ namespace gr
 			float m_orthoTop = 5;
 
 			// Image properties:
-			float m_exposure = 1.0f;
+			float m_exposure = 1.0f; // TODO: Should this be stored here?
 		};
 
 

@@ -1,31 +1,28 @@
 #include "GameObject.h"
 
+using gr::Mesh;
 using std::string;
+using std::shared_ptr;
+using std::make_shared;
 
 
 namespace fr
 {
 	GameObject::GameObject(string const& name) : 
-		fr::SceneObject::SceneObject(name),
-		m_renderMesh(std::make_shared<gr::RenderMesh>(&m_transform))
+		fr::SceneObject::SceneObject(name)
 	{
 	}
 
 
-	GameObject::GameObject(string const& name, std::shared_ptr<gr::RenderMesh> const& rendermesh) :
-		SceneObject::SceneObject(name),
-			m_renderMesh(rendermesh)
-	{
-		m_renderMesh->SetTransform(&m_transform);
-	}
-
-
-	GameObject::GameObject(GameObject const& gameObject) : 
-		fr::SceneObject(gameObject.GetName()),
-		m_renderMesh(gameObject.m_renderMesh)
+	GameObject::GameObject(GameObject const& gameObject) : fr::SceneObject(gameObject.GetName())
 	{
 		m_transform = gameObject.m_transform;
 	}
 
+
+	void GameObject::AddMeshPrimitive(shared_ptr<Mesh> meshPrimitive)
+	{
+		m_renderMeshes.emplace_back(make_shared<gr::RenderMesh>(&m_transform, meshPrimitive));
+	}
 }
 

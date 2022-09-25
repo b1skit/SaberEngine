@@ -17,17 +17,19 @@ namespace gr
 {
 	Light::Light(
 		std::string const& lightName, 
+		gr::Transform* ownerTransform,
 		LightType lightType, 
-		vec3 color, 
+		vec3 colorIntensity,
 		std::shared_ptr<gr::ShadowMap> shadowMap /*= nullptr*/,
 		float radius /*= 1.0f*/) : 
-			SceneObject(lightName),
-				m_color(color),
-				m_type(lightType),
-				m_lightName(lightName),
-				m_shadowMap(shadowMap),
-				m_deferredMesh(nullptr),
-				m_deferredLightShader(nullptr)
+			m_name(lightName),
+			m_ownerTransform(ownerTransform),
+			m_colorIntensity(colorIntensity),
+			m_type(lightType),
+			m_shadowMap(shadowMap),
+			m_deferredMesh(nullptr),
+			m_deferredLightShader(nullptr),
+			m_radius(1.0f)
 	{
 		// Set up deferred light mesh:
 		string shaderName;
@@ -70,6 +72,11 @@ namespace gr
 		break;
 		case Point:
 		{
+			// Compute the radius: 
+			const float cutoff = 0.05f; // Want the sphere mesh radius where light intensity will be close to zero
+			const float maxColor = glm::max(glm::max(m_colorIntensity.r, m_colorIntensity.g), m_colorIntensity.b);
+			m_radius = glm::sqrt((maxColor / cutoff) - 1.0f);
+
 			m_deferredLightShader = make_shared<Shader>(
 				en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredPointLightShaderName"));
 			m_deferredLightShader->Create();
@@ -78,14 +85,11 @@ namespace gr
 			// mesh and multiple MVP matrices
 			m_deferredMesh = gr::meshfactory::CreateSphere(1.0f);
 
-			m_deferredMesh->GetTransform().SetParent(&m_transform);
+			m_deferredMesh->GetTransform().SetParent(m_ownerTransform);
 			
-			// TODO: BUG HERE! If we call m_transform.SetWorldScale(vec3(radius, radius, radius)); here, the scale
-			// values get stomped later during the call to SceneManager::InitializeTransformValues()
-			// -> For now, set the scale on the deferred mesh, which is technically what we expect anyway...
-			// -> But eventually, we should set the scale on the Light m_transform, which will scale the child deferred
-			// mesh
-			m_deferredMesh->GetTransform().SetWorldScale(vec3(radius, radius, radius));
+			// Currently, we scale the deferred mesh directly. Ideally, a Mesh object wouldn't have a transform (it
+			// should be owned by a RenderMesh object and implicitely use its transform)
+			m_deferredMesh->GetTransform().SetModelScale(vec3(m_radius, m_radius, m_radius));
 
 		}
 		break;
@@ -104,8 +108,6 @@ namespace gr
 		m_shadowMap = nullptr;
 		m_deferredMesh = nullptr;
 		m_deferredLightShader = nullptr;
-
-		m_lightName += "_DELETED";
 	}
 }
 

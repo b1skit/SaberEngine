@@ -4,7 +4,7 @@
 #include "CoreEngine.h"
 #include "Shader.h"
 #include "Texture.h"
-#include "Scene.h"
+#include "SceneData.h"
 
 using gr::Shader;
 using gr::Texture;

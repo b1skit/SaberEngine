@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include <glm/gtc/constants.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL 
 #include <glm/gtx/common.hpp>
@@ -33,7 +34,7 @@ namespace gr
 	// Static helper functions:
 	//-------------------------
 
-	vec3& Transform::RotateVector(vec3& targetVector, float const& radians, vec3 const& axis)
+	vec3& Transform::RotateVector(vec3& targetVector, const float radians, vec3 const& axis)
 	{
 		mat4 rotation = glm::rotate(mat4(1.0f), radians, axis);
 
@@ -46,55 +47,65 @@ namespace gr
 	
 	Transform::Transform() :
 		m_parent(nullptr),
+		
+		m_modelPosition(0.0f, 0.0f, 0.0f),
+		m_modelRotationEulerRadians(0.0f, 0.0f, 0.0f),
+		m_modelRotationQuat(glm::vec3(0, 0, 0)),
+		m_modelScale(1.0f, 1.0f, 1.0f),
+		
+		m_modelMat(1.0f),
+		m_modelScaleMat(1.0f),
+		m_modelRotationMat(1.0f),
+		m_modelTranslationMat(1.0f),
+				
+		m_worldMat(1.0f),
+		m_worldScaleMat(1.0f),
+		m_worldRotationMat(1.0f),
+		m_worldTranslationMat(1.0f),
+
 		m_worldPosition(0.0f, 0.0f, 0.0f),
-		m_eulerWorldRotation(0.0f, 0.0f, 0.0f),
+		m_worldRotationEulerRadians(0.0f, 0.0f, 0.0f),
+		m_worldRotationQuat(glm::vec3(0, 0, 0)),
 		m_worldScale(1.0f, 1.0f, 1.0f),
-		m_right(WORLD_X),
-		m_up(WORLD_Y),
-		m_forward(WORLD_Z),
-		m_model(1.0f),
-		m_scale(1.0f),
-		m_rotation(1.0f),
-		m_translation(1.0f),
-		m_combinedModel(1.0f),
-		m_combinedScale(1.0f),
-		m_combinedRotation(1.0f),
-		m_combinedTranslation(1.0f),
-		m_worldRotation(glm::vec3(0,0,0)),
+
+		m_worldRight(WORLD_X),
+		m_worldUp(WORLD_Y),
+		m_worldForward(WORLD_Z),
+
 		m_isDirty(true)
 	{
 		m_children.reserve(10);
 	}
 
 
-	mat4 Transform::Model(ModelMatrixComponent component /*= WorldModel*/) const
+	mat4 const& Transform::GetWorldMatrix(TransformComponent component /*= WorldModel*/) const
 	{
-		// Return the *combined* world transformations of the entire hierarchy
 		switch (component)
 		{
-		case WorldTranslation:
-			return m_combinedTranslation;
+		case Translation:
+			return m_worldTranslationMat;
 			break;
 
-		case WorldScale:
-			return m_combinedScale;
+		case Scale:
+			return m_worldScaleMat;
 			break;
 
-		case WorldRotation:
-			return m_combinedRotation;
+		case Rotation:
+			return m_worldRotationMat;
 			break;
 
 		case WorldModel:
 		default:
-			return m_combinedModel;
+			return m_worldMat;
 		}		
 	}
 
 
 	void Transform::SetParent(Transform* newParent)
 	{
-		// Unparent:
-		if (newParent == nullptr)
+		SEAssert("Cannot parent a Transform to itself", newParent != this);
+
+		if (newParent == nullptr) // Unparent:
 		{
 			if (m_parent != nullptr)
 			{
@@ -102,113 +113,96 @@ namespace gr
 				m_parent = nullptr;
 			}
 		}
-		// Parent:
-		else 
+		else // Parent:
 		{
 			m_parent = newParent;
 			m_parent->RegisterChild(this);
 		}
 		
 		MarkDirty();
-		Recompute();
+		RecomputeWorldTransforms();
 	}
 
 
-	void Transform::Translate(vec3 amount)
+	void Transform::TranslateModel(vec3 amount)
 	{
-		m_translation	= glm::translate(m_translation, amount);
+		m_modelTranslationMat = glm::translate(m_modelTranslationMat, amount);
 		
 		// Extract the translation from the last column of the matrix:
-		m_worldPosition = m_translation[3].xyz; // == (m_translation * vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz;
+		m_modelPosition = m_modelTranslationMat[3].xyz; // == (m_modelTranslationMat * vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz;
 
 		MarkDirty();
-		Recompute();
+		RecomputeWorldTransforms();
 	}
 
 
-	void Transform::SetWorldPosition(vec3 position)
+	void Transform::SetModelPosition(vec3 position)
 	{
-		m_translation	= glm::translate(mat4(1.0f), position);
-		m_worldPosition = position;
+		m_modelTranslationMat = glm::translate(mat4(1.0f), position);
+		m_modelPosition = position;
 
 		MarkDirty();
-		Recompute();
+		RecomputeWorldTransforms();
 	}
 
 
-	vec3 const& Transform::GetWorldPosition() const
+	void Transform::RotateModel(vec3 eulerXYZRadians)
 	{
-		return m_worldPosition;
+		// Compute rotations via quaternions:
+		m_modelRotationQuat = m_modelRotationQuat * glm::quat(eulerXYZRadians);
+		m_modelRotationMat = glm::mat4_cast(m_modelRotationQuat);
+
+		RecomputeEulerXYZRadians();
+
+		MarkDirty();
+		RecomputeWorldTransforms();
 	}
 
 
-	void Transform::Rotate(vec3 eulerXYZ) // Note: eulerXYZ is in RADIANS
+	void Transform::RotateModel(float angleRads, vec3 axis)
 	{
-		// Concatenate rotations as quaternions:
-		m_worldRotation = m_worldRotation * glm::quat(eulerXYZ);
+		m_modelRotationQuat = glm::rotate(m_modelRotationQuat, angleRads, axis);
+		m_modelRotationMat = glm::mat4_cast(m_modelRotationQuat);
 
-		m_rotation = glm::mat4_cast(m_worldRotation);
-
-		// Update the world-space orientation of our local CS axis:
-		UpdateLocalAxis();
-
-		// Update the rotation value, and keep xyz bound in [0, 2pi]:
-		m_eulerWorldRotation += eulerXYZ;
-		BoundEulerAngles();
+		RecomputeEulerXYZRadians();
 
 		MarkDirty();
-		Recompute();
+		RecomputeWorldTransforms();
 	}
 
 
-	vec3 const&	Transform::GetEulerRotation() const
-	{ 
-		// TODO: Currently, this will be incorrect if you call GetEulerRotation() before SetWorldRotation() or Rotate()!!!!
-		return m_eulerWorldRotation; 
-	} 
-
-
-	void Transform::SetWorldRotation(vec3 eulerXYZ)
+	void Transform::SetModelRotation(vec3 eulerXYZ)
 	{
-		// Update Quaternion:
-		m_worldRotation = glm::quat(eulerXYZ);
+		// Compute rotations via quaternions:
+		m_modelRotationQuat = glm::quat(eulerXYZ);
+		m_modelRotationMat = glm::mat4_cast(m_modelRotationQuat);
 
-		m_rotation = glm::mat4_cast(m_worldRotation);
-
-		UpdateLocalAxis();
-
-		m_eulerWorldRotation = eulerXYZ;
-		BoundEulerAngles();
+		RecomputeEulerXYZRadians();
 
 		MarkDirty();
-		Recompute();
+		RecomputeWorldTransforms();
 	}
 
 
-	void Transform::SetWorldRotation(quat newRotation)
+	void Transform::SetModelRotation(quat newRotation)
 	{
-		m_worldRotation = newRotation;
+		m_modelRotationQuat = newRotation;
+		m_modelRotationMat = glm::mat4_cast(newRotation);
 
-		m_rotation = glm::mat4_cast(newRotation);
-
-		UpdateLocalAxis();
-
-		// Update Euler angles:
-		m_eulerWorldRotation = glm::eulerAngles(newRotation);
-		BoundEulerAngles();
+		RecomputeEulerXYZRadians();
 
 		MarkDirty();
-		Recompute();
+		RecomputeWorldTransforms();
 	}
 
 
-	void Transform::SetWorldScale(vec3 scale)
+	void Transform::SetModelScale(vec3 scale)
 	{
-		m_worldScale = scale;
-		m_scale = glm::scale(mat4(1.0f), scale);
+		m_modelScale = scale;
+		m_modelScaleMat = glm::scale(mat4(1.0f), scale);
 
 		MarkDirty();
-		Recompute();
+		RecomputeWorldTransforms();
 	}
 
 
@@ -229,28 +223,26 @@ namespace gr
 		{
 			m_children.push_back(child);
 
-			MarkDirty();
-			Recompute();
+			child->MarkDirty();
+			child->RecomputeWorldTransforms();
 		}
 	}
 
 
 	void Transform::UnregisterChild(Transform const* child)
 	{
-		for (unsigned int i = 0; i < child->m_children.size(); i++)
+		for (size_t i = 0; i < child->m_children.size(); i++)
 		{
 			if (m_children.at(i) == child)
 			{
-				m_children.erase(m_children.begin() + i);
-				MarkDirty();
-				Recompute();
+				m_children.erase(m_children.begin() + i); // Erase the ith element
 				break;
 			}
 		}
 	}
 
 	
-	void Transform::Recompute()
+	void Transform::RecomputeWorldTransforms()
 	{
 		if (!m_isDirty)
 		{
@@ -258,55 +250,64 @@ namespace gr
 		}
 		m_isDirty = false; // Must immediately remove our dirty flag due to recursive calls
 
-		m_model = m_translation * m_scale * m_rotation;
+		m_modelMat = m_modelTranslationMat * m_modelScaleMat * m_modelRotationMat;
 
-		// Update the combined transformations, if we have a parent
+		// Update the combined world-space transformations with respect to the parent hierarchy:
 		if (m_parent != nullptr)
 		{
-			m_combinedModel			= m_parent->Model(WorldModel) * m_model;
-			m_combinedScale			= m_parent->Model(WorldScale) * m_scale;
-			m_combinedRotation		= m_parent->Model(WorldRotation) * m_rotation;
-			m_combinedTranslation	= m_parent->Model(WorldTranslation) * m_translation;
+			m_worldMat				= m_parent->GetWorldMatrix(WorldModel) * m_modelMat;
+			m_worldScaleMat			= m_parent->GetWorldMatrix(Scale) * m_modelScaleMat;
+			m_worldRotationMat		= m_parent->GetWorldMatrix(Rotation) * m_modelRotationMat;
+			m_worldTranslationMat	= m_parent->GetWorldMatrix(Translation) * m_modelTranslationMat;
 		}
 		else
 		{
-			m_combinedModel			= m_model;
-			m_combinedScale			= m_scale;
-			m_combinedRotation		= m_rotation;
-			m_combinedTranslation	= m_translation;
+			m_worldMat				= m_modelMat;
+			m_worldScaleMat			= m_modelScaleMat;
+			m_worldRotationMat		= m_modelRotationMat;
+			m_worldTranslationMat	= m_modelTranslationMat;
 		}
 
-		// Extract the translation from the last column of the matrix:
-		m_worldPosition = m_combinedModel[3].xyz; // == (m_combinedModel * vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz;
-		
-		// TODO: Recompute eulerWorldRotation
-		//eulerWorldRotation = ???
+		// Decompose our world matrix & update the individual components:
+		vec3 skew;
+		vec4 perspective;
+		decompose(m_worldMat, m_worldScale, m_worldRotationQuat, m_worldPosition, skew, perspective);
+		m_worldRotationEulerRadians = glm::eulerAngles(m_worldRotationQuat);
 
-		m_worldScale = (m_combinedScale * vec4(1, 1, 1, 1)).xyz;
+		// RecomputeWorldTransforms (normalized) world-space Right/Up/Forward CS axis vectors by applying m_worldRotationMat
+		UpdateWorldSpaceAxis();
 
 		for (int i = 0; i < (int)m_children.size(); i++)
 		{
-			m_children.at(i)->MarkDirty();
-			m_children.at(i)->Recompute();
+			m_children.at(i)->MarkDirty(); // Propagates down the entire hierarchy
+			m_children.at(i)->RecomputeWorldTransforms();
 		}
 	}
 
 
-	void Transform::UpdateLocalAxis()
+	void Transform::UpdateWorldSpaceAxis()
 	{
+		// TODO: Optimize: Only need a 3x3 here?!?!?!
+
 		// Update the world-space orientation of our local CS axis:
-		m_right		= normalize((m_rotation * vec4(WORLD_X, 0)).xyz());
-		m_up		= normalize((m_rotation * vec4(WORLD_Y, 0)).xyz());
-		m_forward	= normalize((m_rotation * vec4(WORLD_Z, 0)).xyz());
+		m_worldRight	= normalize((m_worldRotationMat * vec4(WORLD_X, 0)).xyz());
+		m_worldUp		= normalize((m_worldRotationMat * vec4(WORLD_Y, 0)).xyz());
+		m_worldForward	= normalize((m_worldRotationMat * vec4(WORLD_Z, 0)).xyz());
 	}
 
 
-	void Transform::BoundEulerAngles()
+	void Transform::RecomputeEulerXYZRadians() // Should be anytime rotation has been modified
 	{
-		// Keep (signed) Euler xyz angles in (-2pi, 2pi):
-		m_eulerWorldRotation.x = fmod<float>(abs(m_eulerWorldRotation.x), two_pi<float>()) * sign(m_eulerWorldRotation.x);
-		m_eulerWorldRotation.y = fmod<float>(abs(m_eulerWorldRotation.y), two_pi<float>()) * sign(m_eulerWorldRotation.y);
-		m_eulerWorldRotation.z = fmod<float>(abs(m_eulerWorldRotation.z), two_pi<float>()) * sign(m_eulerWorldRotation.z);
+		// Update our Euler rotation tracker:
+		m_modelRotationEulerRadians = glm::eulerAngles(m_modelRotationQuat);
+
+		// Bound the Euler radians to (-2pi, 2pi):
+		m_modelRotationEulerRadians.x = 
+			fmod<float>(abs(m_modelRotationEulerRadians.x), two_pi<float>()) * sign(m_modelRotationEulerRadians.x);
+		m_modelRotationEulerRadians.y = 
+			fmod<float>(abs(m_modelRotationEulerRadians.y), two_pi<float>()) * sign(m_modelRotationEulerRadians.y);
+		m_modelRotationEulerRadians.z = 
+			fmod<float>(abs(m_modelRotationEulerRadians.z), two_pi<float>()) * sign(m_modelRotationEulerRadians.z);
 	}
 }
 

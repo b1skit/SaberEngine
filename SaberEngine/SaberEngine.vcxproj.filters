@@ -66,15 +66,15 @@
     <Filter Include="Source Files\en\platform">
       <UniqueIdentifier>{a8efc633-e9ef-46eb-990a-2763ba4b6e89}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\util">
+      <UniqueIdentifier>{630f943a-981c-4e35-8b33-cc82cced1776}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\util">
+      <UniqueIdentifier>{d9d7149e-7017-4446-8ea2-4a29d5e8b8a8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SceneManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
@@ -212,14 +212,17 @@
     <ClCompile Include="Platform.cpp">
       <Filter>Source Files\en\platform</Filter>
     </ClCompile>
+    <ClCompile Include="TangentBuilder.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneManager.cpp">
+      <Filter>Source Files\en</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneData.cpp">
+      <Filter>Source Files\fr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SceneManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Scene.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Mesh.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
@@ -372,6 +375,15 @@
     </ClInclude>
     <ClInclude Include="SaberObject.h">
       <Filter>Header Files\en</Filter>
+    </ClInclude>
+    <ClInclude Include="TangentBuilder.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneManager.h">
+      <Filter>Header Files\en</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneData.h">
+      <Filter>Header Files\fr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

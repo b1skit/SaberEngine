@@ -10,9 +10,13 @@ Project goals:
 	-> Supports animation, GPU instancing
 - Modern API: DX12/Vulkan
 
+
 --------
 Details:
 --------
+- Supported graphics APIs:
+	- OpenGL 4.6
+- Renders GLTF 2.0 scenes/assets
 - Implemented with C++ 20
 
 
@@ -20,15 +24,19 @@ Details:
 Dependencies:
 -------------
 
-Assimp: https://github.com/assimp/assimp/releases
--------------------------------------------------
-- Current version: assimp-5.2.4
-- Unzip files to the <project root>\Dependencies\assimp\ folder
-- Run "cmake CMakeLists.txt" from the assimp root folder to generate the visual studio solution
-- Add "$(ProjectDir)..\Dependencies\assimp\include" to "Project properties -> C/C++ -> Additional Include Directories" for all configurations
-- Add "$(ProjectDir)..\Dependencies\assimp\lib\<CONFIG TYPE>\" to "project properties -> Linker -> General -> Additional Library Directories" for each build configuration (eg. Debug/Release etc)
-- Add "assimp-vc***-mt*.lib" to "Project properties -> Linker -> Input -> Additional Dependences" for each build configuration (eg. Debug/Release etc)
-- Ensure the "Project properties -> Build Events -> Post-Build Event" copies the relevant Debug/Release configuration of the assimp-vc***-mt.dll to the <Project Root>\SaberEngine\ directory
+CGLTF: https://github.com/jkuhlmann/cgltf
+-----------------------------------------
+- Current version: cgltf-1.13
+- Unzip to <project root>\Dependencies\cgltf\
+- Add "$(ProjectDir)..\Dependencies\cgltf\" to "Project properties -> C/C++ -> Additional Include Directories"
+- Sample assets: https://github.com/KhronosGroup/glTF-Sample-Models
+
+
+MikkTSpace: https://github.com/mmikk/MikkTSpace
+-----------------------------------------------
+- Current version: "Github last modified Mar 25, 2020""
+- Unzip to <project root>\Dependencies\MikkTSpace
+- Add "$(ProjectDir)..\Dependencies\MikkTSpace\" to "Project properties -> C/C++ -> Additional Include Directories"
 
 
 Glew: https://github.com/nigels-com/glew/releases
@@ -37,7 +45,6 @@ Glew: https://github.com/nigels-com/glew/releases
 - Unzip to <project root>\Dependencies\glew\
 - Add "$(ProjectDir)..\Dependencies\glew\include" to "Project properties -> C/C++ -> Additional Include Directories" for all configurations
 - Add "$(ProjectDir)..\Dependencies\glew\lib\x64\" to "project properties -> Linker -> General -> Additional Library Directories" for all build configurations
-
 - Ensure the "Project properties -> Build Events -> Post-Build Event" copies glew\bin\Release\x64\glew32.dll to the <Project Root>\SaberEngine\ directory
 
 

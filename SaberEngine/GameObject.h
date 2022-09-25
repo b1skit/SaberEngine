@@ -9,8 +9,8 @@ namespace fr
 	class GameObject : public virtual fr::SceneObject
 	{
 	public:
+		// TODO: GameObject ctors should all take a parent Transform*
 		GameObject(std::string const& name);
-		GameObject(std::string const& name, std::shared_ptr<gr::RenderMesh> const& rendermesh);
 		GameObject(GameObject const& gameObject);
 
 		GameObject(GameObject&&) = default;
@@ -25,11 +25,12 @@ namespace fr
 		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override {}
 
 		// Getters/Setters:
-		inline std::shared_ptr<gr::RenderMesh> GetRenderMesh() { return m_renderMesh; }
+		void AddMeshPrimitive(std::shared_ptr<gr::Mesh> meshPrimitive);
+		inline std::vector<std::shared_ptr<gr::RenderMesh>> const& GetRenderMeshes() const { return m_renderMeshes; }
 
 
 	private:
-		std::shared_ptr<gr::RenderMesh> m_renderMesh;
+		std::vector<std::shared_ptr<gr::RenderMesh>> m_renderMeshes;
 	};
 }
 

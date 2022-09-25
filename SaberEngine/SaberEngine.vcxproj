@@ -95,15 +95,15 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\Dependencies\SDL2\include\;$(ProjectDir)..\Dependencies\glew\include;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories);$(ProjectDir)..\Dependencies\assimp\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\SDL2\include\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Debug\;$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\assimp\lib\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;assimp-vc143-mtd.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Debug\;$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(ProjectDir)..\Dependencies\glm\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <PerUserRedirection>true</PerUserRedirection>
     </Link>
@@ -114,8 +114,7 @@
       </Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>copy "$(ProjectDir)..\Dependencies\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(ProjectDir)"
-copy "$(ProjectDir)..\Dependencies\glew\bin\Release\x64\glew32.dll" "$(ProjectDir)"
+      <Command>copy "$(ProjectDir)..\Dependencies\glew\bin\Release\x64\glew32.dll" "$(ProjectDir)"
 copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Debug\SDL2.dll" "$(ProjectDir)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
@@ -145,15 +144,15 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Debug\SDL2.dll" "$(ProjectDi
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\Dependencies\SDL2\include\;$(ProjectDir)..\Dependencies\glew\include;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories);$(ProjectDir)..\Dependencies\assimp\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\SDL2\include\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\;$(ProjectDir)..\Dependencies\assimp\lib\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;assimp-vc143-mt.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
     </Link>
     <PreBuildEvent>
@@ -163,14 +162,14 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Debug\SDL2.dll" "$(ProjectDi
       </Message>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>copy "$(ProjectDir)..\Dependencies\assimp\bin\Release\assimp-vc143-mt.dll" "$(ProjectDir)"
-copy "$(ProjectDir)..\Dependencies\glew\bin\Release\x64\glew32.dll" "$(ProjectDir)"
+      <Command>copy "$(ProjectDir)..\Dependencies\glew\bin\Release\x64\glew32.dll" "$(ProjectDir)"
 copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(ProjectDir)"</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="TangentBuilder.cpp" />
     <ClCompile Include="Context_Platform.cpp" />
     <ClCompile Include="CoreEngine.cpp" />
     <ClCompile Include="EngineConfig.cpp" />
@@ -212,7 +211,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="TextureTarget_OpenGL.cpp" />
     <ClCompile Include="TextureTarget_Platform.cpp" />
     <ClCompile Include="Texture_Platform.cpp" />
-    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="SceneData.cpp" />
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
@@ -220,6 +219,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="TangentBuilder.h" />
     <ClInclude Include="Context_Platform.h" />
     <ClInclude Include="GraphicsSystem_Bloom.h" />
     <ClInclude Include="GraphicsSystem_DeferredLighting.h" />
@@ -266,7 +266,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="PlayerObject.h" />
     <ClInclude Include="RenderMesh.h" />
     <ClInclude Include="RenderManager.h" />
-    <ClInclude Include="Scene.h" />
+    <ClInclude Include="SceneData.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="SceneObject.h" />
     <ClInclude Include="Shader.h" />

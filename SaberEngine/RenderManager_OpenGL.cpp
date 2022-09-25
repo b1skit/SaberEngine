@@ -20,6 +20,7 @@
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
+#include "Mesh_OpenGL.h"
 
 using gr::RenderStage;
 using gr::TextureTargetSet;
@@ -186,8 +187,8 @@ namespace opengl
 
 
 					// Assemble and upload mesh-specific matrices:
-					const mat4 model = mesh->GetTransform().Model();
-					const mat4 modelRotation = mesh->GetTransform().Model(Transform::WorldRotation);
+					const mat4 model = mesh->GetTransform().GetWorldMatrix();
+					const mat4 modelRotation = mesh->GetTransform().GetWorldMatrix(Transform::Rotation);
 					stageShader->SetUniform("in_model", &model[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
 					stageShader->SetUniform(
 						"in_modelRotation", &modelRotation[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
@@ -202,13 +203,15 @@ namespace opengl
 					}				
 					// TODO: Figure out a more general solution for this?
 
+					opengl::Mesh::PlatformParams const* const meshPlatParams=
+						dynamic_cast<opengl::Mesh::PlatformParams const* const>(mesh->GetPlatformParams().get());
+
 					// Draw!
 					glDrawElements(
-						GL_TRIANGLES,
+						meshPlatParams->m_drawMode,
 						(GLsizei)mesh->NumIndices(),
-						GL_UNSIGNED_INT,
-						(void*)(0)); // (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
-					// TODO: Configure this based on the Mesh/vertex parameters, instead of assuming a fixed configuration
+						GL_UNSIGNED_INT, // TODO: Configure based on the Mesh/verts parameters, instead of assuming uints
+						0); // (GLenum mode, GLsizei count, GLenum type, byte offset (to bound index buffer));
 
 					meshIdx++;
 				} // meshes

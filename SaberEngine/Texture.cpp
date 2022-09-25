@@ -7,7 +7,7 @@ using glm::vec4;
 
 namespace gr
 {
-	Texture::Texture(TextureParams params) :
+	Texture::Texture(TextureParams const& params) :
 		m_texParams{ params },
 		m_texels(params.m_faces * params.m_width * params.m_height, params.m_clearColor),
 		m_isCreated{ false },

@@ -18,7 +18,7 @@ namespace gr
 
 namespace gr
 {
-	class Light : public virtual fr::SceneObject
+	class Light
 	{
 	public:
 		enum LightType
@@ -34,11 +34,13 @@ namespace gr
 		};
 
 	public:
-		Light(std::string const& lightName, 
+		Light(std::string const& lightName,
+			gr::Transform* ownerTransform,
 			LightType lightType, 
-			glm::vec3 color, 
+			glm::vec3 colorIntensity, 
 			std::shared_ptr<gr::ShadowMap> shadowMap = nullptr,
-			float radius = 1.0f);
+			float radius = 1.0f
+		);
 
 		~Light() { Destroy(); }
 
@@ -50,22 +52,18 @@ namespace gr
 
 		void Destroy();
 
-		// SaberObject interface:
-		void Update() override { /* Do nothing */ };
-
-		// EventListener interface:
-		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override { /* Do nothing */ };
-
 		// Getters/Setters:
-		inline glm::vec3& GetColor() { return m_color; }
-		inline glm::vec3 const& GetColor() const { return m_color; }
+		inline std::string const& GetName() const { return m_name; }
+
+		inline glm::vec3& GetColor() { return m_colorIntensity; }
+		inline glm::vec3 const& GetColor() const { return m_colorIntensity; }
+
+		inline float GetRadius() const { return m_radius; }
 														 
 		inline LightType const& Type() const { return m_type; }
 														 
-		inline gr::Transform& GetTransform() { return m_transform; }	// Directional lights shine forward (Z+)
-		inline gr::Transform const& GetTransform() const { return m_transform; }
-														 
-		inline std::string const& Name() const { return m_lightName; }
+		inline gr::Transform* GetTransform() { return m_ownerTransform; }	// Directional lights shine forward (Z+)
+		inline gr::Transform const* const GetTransform() const { return m_ownerTransform; }
 
 		inline std::shared_ptr<gr::ShadowMap>& GetShadowMap() { return m_shadowMap; }
 		inline std::shared_ptr<gr::ShadowMap> const& GetShadowMap() const { return m_shadowMap; }
@@ -73,20 +71,23 @@ namespace gr
 		inline std::shared_ptr<gr::Mesh>& DeferredMesh() { return m_deferredMesh; }
 		inline std::shared_ptr<gr::Mesh> const& DeferredMesh() const { return m_deferredMesh; }		
 
+		// TODO: Delete these accessors, and load/assign these shaders within the deferred lighting GS
 		inline std::shared_ptr<gr::Shader>& GetDeferredLightShader() { return m_deferredLightShader; }
 		inline std::shared_ptr<gr::Shader>const& GetDeferredLightShader() const { return m_deferredLightShader; }
 
 
 	private:
-		glm::vec3 m_color; // Note: Intensity is factored into this value
-		LightType m_type;
+		std::string const m_name;
+		gr::Transform* m_ownerTransform;
 
-		std::string m_lightName;
+		glm::vec3 m_colorIntensity;
+		LightType m_type;
+		float m_radius; // For point lights
 
 		std::shared_ptr<gr::ShadowMap> m_shadowMap;
 
 		// Deferred light setup:
-		std::shared_ptr<gr::Mesh> m_deferredMesh;
+		std::shared_ptr<gr::Mesh> m_deferredMesh; // TODO: This should be a RenderMesh
 		std::shared_ptr<gr::Shader> m_deferredLightShader;
 	};
 }

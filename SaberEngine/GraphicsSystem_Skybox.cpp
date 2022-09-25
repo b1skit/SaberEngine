@@ -44,7 +44,7 @@ namespace gr
 			CoreEngine::GetSceneManager()->GetScene()->GetName() + "\\" + 
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath");
 
-		m_skyTexture = CoreEngine::GetSceneManager()->GetScene()->GetLoadTextureByPath({ iblTexturePath });
+		m_skyTexture = CoreEngine::GetSceneManager()->GetScene()->GetLoadTextureByPath({ iblTexturePath }, true);
 
 		if (m_skyTexture == nullptr)
 		{
@@ -149,7 +149,6 @@ namespace gr
 			vec3(-1.0f, -1.0f, 1.0f),
 			vec3(1.0f, -1.0f, 1.0f)
 		)); // TODO: Simplify this interface
-		m_skyMesh.back()->Name() = "SkyboxQuad";
 
 		RenderStage::RenderStageParams skyboxStageParams;
 		skyboxStageParams.m_targetClearMode = platform::Context::ClearTarget::None;

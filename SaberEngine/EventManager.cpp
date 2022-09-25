@@ -118,7 +118,6 @@ namespace en
 
 	void EventManager::Notify(std::shared_ptr<EventInfo const> eventInfo)
 	{
-		SEAssert("Event generator is null", eventInfo->m_generator != nullptr);
 		SEAssert("Event message is empty", !eventInfo->m_eventMessage.empty());
 
 		#if defined(DEBUG_PRINT_NOTIFICATIONS)

@@ -4,9 +4,10 @@
 #include "Mesh_OpenGL.h"
 
 
+
 namespace platform
 {
-	std::unique_ptr<Mesh::PlatformParams> platform::Mesh::PlatformParams::CreatePlatformParams()
+	void platform::Mesh::PlatformParams::CreatePlatformParams(gr::Mesh& mesh)
 	{
 		const platform::RenderingAPI& api =
 			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
@@ -15,23 +16,21 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			return std::make_unique<opengl::Mesh::PlatformParams>();
+			mesh.GetPlatformParams() = std::make_unique<opengl::Mesh::PlatformParams>(mesh);
 		}
-
+		break;
 		case RenderingAPI::DX12:
 		{
 			SEAssert("DX12 is not yet supported", false);
-			return nullptr;
+			return;
 		}
-
+		break;
 		default:
 		{
 			SEAssert("Invalid rendering API argument received", false);
-			return nullptr;
+			return;
 		}
 		}
-
-		return nullptr;
 	}
 
 	// platform::Mesh static members:

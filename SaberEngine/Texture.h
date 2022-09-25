@@ -79,8 +79,8 @@ namespace gr
 
 		struct TextureParams
 		{
-			uint32_t m_width = 1;
-			uint32_t m_height = 1;
+			uint32_t m_width = 2;
+			uint32_t m_height = 2;
 			uint32_t m_faces = 1;
 
 			TextureUse m_texUse = TextureUse::Color;
@@ -88,14 +88,14 @@ namespace gr
 			TextureFormat m_texFormat = TextureFormat::RGBA32F;
 			TextureColorSpace m_texColorSpace = TextureColorSpace::sRGB;
 
-			glm::vec4 m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-			std::string m_texturePath = "UnnamedTexture";
+			glm::vec4 m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f); // Also used as initial fill color
+			std::string m_texturePath = "UnnamedTexture"; // TODO: Path should be a member of Texture, not TextureParams
 			bool m_useMIPs = true; // Should MIPs be created for this texture?
 		};
 
 
 	public:
-		Texture(TextureParams params);
+		Texture(TextureParams const& params);
 		~Texture() { Destroy();	}
 
 		Texture() = delete;

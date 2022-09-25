@@ -94,6 +94,25 @@ vec3 HalfVector(vec3 light, vec3 view)
 }
 
 
+// Computes the camera's EV100 from exposure settings
+// aperture in f-stops
+// shutterSpeed in seconds
+// sensitivity in ISO
+// From Google Filament: https://google.github.io/filament/Filament.md.html#listing_fragmentexposure
+float GetEV100FromExposureSettings(float aperture, float shutterSpeed, float sensitivity)
+{
+	return log2((aperture * aperture) / shutterSpeed * 100.0 / sensitivity);
+}
+
+// Computes the exposure normalization factor from the camera's EV100
+// ev100 computed by calling GetEV100FromExposureSettings
+// Based on Google Filament: https://google.github.io/filament/Filament.md.html#listing_fragmentexposure
+float Exposure(float ev100)
+{
+	return 1.0 / (pow(2.0, ev100) * 1.2);
+}
+
+
 // General PBR lighting: Called from specific deferred light shaders
 // linearAlbedo = Non-linearized RGB
 // lightWorldDir must be normalized
@@ -153,38 +172,13 @@ vec4 ComputePBRLighting(
 	
 	combinedContribution *= shadowFactor;
 
-	return vec4(combinedContribution, linearAlbedo.a);
-}
+//	return vec4(combinedContribution, linearAlbedo.a);
 
+	const float ev100 = GetEV100FromExposureSettings(CAM_APERTURE, CAM_SHUTTERSPEED, CAM_SENSITIVITY);
+	const float exposure = Exposure(ev100);
 
-// Phong Lighting
-//---------------
-
-// Compute the diffuse contribution:
-vec3 LambertianDiffuse(vec3 fragColor, vec3 worldNormal, vec3 lightColor, vec3 lightWorldDir)
-{
-	float nDotL					= max(0.0, dot(worldNormal, lightWorldDir));
-	vec3 diffuseContribution	= fragColor * nDotL * lightColor;
-
-	return diffuseContribution;
-}
-
-
-vec3 PhongSpecular(vec3 worldPosition, vec3 worldNormal, vec3 lightWorldDir, vec3 lightColor, mat4 view, float specMask, float phongExponent)
-{
-	// NOTE: The spec value returned by this function is tinted by the light color only. The surface color is not considered.
-
-	vec3 reflectDir				= normalize(reflect(-lightWorldDir, worldNormal));		// World-space reflection dir
-	reflectDir					= normalize((view * vec4(reflectDir, 0))).xyz;		// World -> view space
-
-	vec4 viewPosition			= view * vec4(worldPosition, 1);
-	vec3 viewDir				= normalize(-viewPosition.xyz);
-
-	float positiveOffset		= 0.0001; // Avoid 0^0 errors when computing specContribution	
-
-	float vDotR					= dot(viewDir, reflectDir);
-
-	return lightColor * pow(max(positiveOffset, vDotR), phongExponent) * specMask;
+	return vec4(combinedContribution * exposure, linearAlbedo.a);
+	
 }
 
 
@@ -343,4 +337,5 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
 	return normalize(sampleVec);
 }
 
-#endif
+
+#endif // SABER_LIGHTING

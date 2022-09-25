@@ -119,10 +119,10 @@ namespace opengl
 #endif
 
 
-	void Context::Create(re::Context& context)
+	void Context::Create(re::Context& m_context)
 	{
 		opengl::Context::PlatformParams* const platformParams =
-			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
+			dynamic_cast<opengl::Context::PlatformParams*>(m_context.GetPlatformParams());
 
 		// SDL_INIT_VIDEO automatically inits events, but SDL_INIT_EVENTS included here as a reminder
 		SEAssert(
@@ -206,10 +206,10 @@ namespace opengl
 	}
 
 
-	void Context::Destroy(re::Context& context)
+	void Context::Destroy(re::Context& m_context)
 	{
 		opengl::Context::PlatformParams* const platformParams =
-			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
+			dynamic_cast<opengl::Context::PlatformParams*>(m_context.GetPlatformParams());
 		
 		SDL_GL_DeleteContext(platformParams->m_glContext);
 		SDL_DestroyWindow(platformParams->m_glWindow);
@@ -217,10 +217,10 @@ namespace opengl
 	}
 
 
-	void Context::SwapWindow(re::Context const& context)
+	void Context::SwapWindow(re::Context const& m_context)
 	{
 		opengl::Context::PlatformParams const* const platformParams =
-			dynamic_cast<opengl::Context::PlatformParams const*>(context.GetPlatformParams());
+			dynamic_cast<opengl::Context::PlatformParams const*>(m_context.GetPlatformParams());
 
 		SDL_GL_SwapWindow(platformParams->m_glWindow);
 	}

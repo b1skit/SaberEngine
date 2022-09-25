@@ -11,7 +11,6 @@ namespace en
 		SaberObject(std::string const& name) :
 			m_name(name)
 		{
-
 			objectID = AssignObjectID();
 		}
 
@@ -31,11 +30,12 @@ namespace en
 
 	protected:
 		unsigned long objectID; // Hashed value
+		
 
 	private:
 		std::string const m_name;
-		std::string m_hashString;
 
+		std::string m_hashString;
 		std::hash<std::string> m_hashFunction;
 
 		// Utilities:

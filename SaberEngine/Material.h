@@ -127,10 +127,10 @@ namespace gr
 		inline glm::vec4 const& Property(MATERIAL_PROPERTY_INDEX index) const { return m_properties[index].m_property; }
 
 		std::shared_ptr<gr::Texture>& GetTexture(uint32_t slotIndex) { return m_texSlots[slotIndex].m_texture; }
-		std::shared_ptr<gr::Texture>const& GetTexture(uint32_t slotIndex) const { return m_texSlots[slotIndex].m_texture; }
+		std::shared_ptr<gr::Texture> const GetTexture(uint32_t slotIndex) const { return m_texSlots[slotIndex].m_texture; }
 
 		std::shared_ptr<gr::Texture>& GetTexture(std::string const& samplerName);
-		std::shared_ptr<gr::Texture>const& GetTexture(std::string const& samplerName) const;
+		std::shared_ptr<gr::Texture> const& GetTexture(std::string const& samplerName) const;
 
 		inline size_t const& NumTextureSlots() { return m_texSlots.size(); }
 

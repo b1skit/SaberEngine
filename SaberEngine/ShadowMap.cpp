@@ -3,7 +3,7 @@
 #include "ShadowMap.h"
 #include "CoreEngine.h"
 #include "Camera.h"
-#include "Scene.h"
+#include "SceneData.h"
 #include "Texture.h"
 #include "Material.h"
 
@@ -31,7 +31,7 @@ namespace gr
 			m_shadowTargetSet(lightName + " target")
 	{
 		m_shadowCam = std::make_shared<gr::Camera>(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent);
-		m_shadowCam->GetTransform()->SetWorldPosition(shadowCamPosition);
+		m_shadowCam->GetTransform()->SetModelPosition(shadowCamPosition);
 
 		// Texture params are mostly the same between a single shadow map, or a cube map
 		Texture::TextureParams shadowParams;

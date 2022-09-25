@@ -22,7 +22,7 @@ namespace gr
 			uint32_t yRes,
 			gr::Camera::CameraConfig shadowCamConfig,
 			gr::Transform* shadowCamParent = nullptr,
-			glm::vec3 shadowCamPosition = glm::vec3(0.0f, 0.0f, 0.0f), 
+			glm::vec3 shadowCamPosition = glm::vec3(0.0f, 0.0f, 0.0f), // TODO: Remove default values
 			bool useCubeMap = false);
 
 		~ShadowMap() = default;

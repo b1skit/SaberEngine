@@ -34,6 +34,6 @@ namespace re
 		std::unique_ptr<platform::Context::PlatformParams> m_platformParams;
 
 		// Friends:
-		friend void platform::Context::PlatformParams::CreatePlatformParams(re::Context& context);
+		friend void platform::Context::PlatformParams::CreatePlatformParams(re::Context& m_context);
 	};
 }

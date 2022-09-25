@@ -99,7 +99,7 @@ namespace platform
 
 
 			// API-specific function pointers:
-			static void CreatePlatformParams(re::Context& context);
+			static void CreatePlatformParams(re::Context& m_context);
 		};
 
 
@@ -107,9 +107,9 @@ namespace platform
 
 
 		// Static function pointers:
-		static void (*Create)(re::Context& context);
-		static void (*Destroy)(re::Context& context);
-		static void (*SwapWindow)(re::Context const& context);
+		static void (*Create)(re::Context& m_context);
+		static void (*Destroy)(re::Context& m_context);
+		static void (*SwapWindow)(re::Context const& m_context);
 		static void (*SetCullingMode)(FaceCullingMode const& mode);
 		static void (*ClearTargets)(ClearTarget const& clearTarget);
 		static void (*SetBlendMode)(BlendMode const& src, BlendMode const& dst);
