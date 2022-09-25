@@ -1,5 +1,7 @@
 # Saber Engine
 
+"Ideally, a Jedi took many months to construct a single perfect weapon that he or she would keep and use for a lifetime. Once you build it, the lightsaber will become your constant companion, your tool, and a ready means of defense." - Luky Skywalker
+
 --------------
 Project goals:
 --------------
