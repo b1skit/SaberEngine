@@ -192,7 +192,7 @@ namespace en
 			return false;
 		}
 		const int numTokens = argc - 1; // -1, as 1st arg is program name
-		LOG("Processing " + to_string(numTokens) + " command line tokens...");
+		LOG("Processing %d command line tokens...", numTokens);
 
 		for (int i = 1; i < argc; i++)
 		{			
@@ -204,7 +204,7 @@ namespace en
 					const int nextArg = i + 1;
 					const string parameter = string(argv[nextArg]);
 
-					LOG("\tReceived scene command: \"" + currentArg + " " + parameter + "\"");
+					LOG("\tReceived scene command: \"%s %s\"", currentArg.c_str(), parameter.c_str());
 
 					m_config.SceneName() = parameter;
 				}
@@ -218,7 +218,7 @@ namespace en
 			}
 			else
 			{
-				LOG_ERROR("\"" + currentArg + "\" is not a recognized command!");
+				LOG_ERROR("\"%s\" is not a recognized command!", currentArg.c_str());
 			}
 
 		}

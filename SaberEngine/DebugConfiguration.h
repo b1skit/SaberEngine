@@ -18,8 +18,8 @@
 #define SEAssert(errorMsg, condition) \
 	if(!(condition)) \
 	{ \
-		LOG_ERROR(errorMsg); \
 		std::string errorStr((errorMsg)); \
+		LOG_ERROR(errorStr.c_str()); \
 		std::cerr << "Assertion failed: " << #condition << " == " << (condition ? "true" : "false") << std::endl; \
 		std::cerr << "Occurred at: " << __FILE__ << ":" << __LINE__ << "::" << __FUNCTION__ << std::endl; \
 		abort(); \

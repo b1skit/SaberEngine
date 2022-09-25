@@ -3,7 +3,12 @@
 #include <string>
 #include <sstream>
 #include <iostream>
-using std::cout;
+
+#include <cstdio>
+#include <stdio.h> // sprintf_s 
+
+// TODO: REMOVE DEPRECATED ONES!!!!
+
 
 #include "EventListener.h"
 #include "EngineComponent.h"
@@ -33,73 +38,90 @@ namespace en
 		// EventListener interface:
 		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override;
 
-	private:
-
 
 	public:
-		// Templated static functions:
-		//----------------------------
-		template<typename... Args>
-		static void Log(Args&& ... args)
+		/* Templated static functions:
+		----------------------------*/
+		template<typename...Args>
+		inline static void Log(char const* msg, Args... args)
 		{
-			std::ostringstream stream;
-			(stream << ... << std::forward<Args>(args));
+			const size_t msgLen = strlen(msg);
 
-			if (stream.str()[0] == '\n')
+			std::unique_ptr<char[]> prefixedMsg;
+			if (msg[0] == '\n')
 			{
-				cout << "\nLog:\t" << stream.str().substr(1, std::string::npos) << "\n";
+				const size_t totalLen = msgLen + 6 + 1 + 1; // + prefix chars + newline char + null char 
+				prefixedMsg = std::make_unique<char[]>(totalLen);
+				snprintf(prefixedMsg.get(), totalLen, "\nLog:\t%s%s", &msg[1], "\n");
+				printf(prefixedMsg.get(), args...);
 			}
-			else if (stream.str()[0] == '\t')
+			else if (msg[0] == '\t')
 			{
-				cout << "\t" << stream.str().substr(1, std::string::npos) << "\n";
+				printf(msg, args...);
+				printf("\n");
 			}
 			else
 			{
-				cout << "Log:\t" << stream.str() << "\n";
+				const size_t totalLen = msgLen + 5 + 1 + 1; // + prefix chars + newline char + null char 
+				prefixedMsg = std::make_unique<char[]>(totalLen);
+				snprintf(prefixedMsg.get(), totalLen, "Log:\t%s%s", msg, "\n");
+				printf(prefixedMsg.get(), args...);
 			}
 		}
 
 
 		template<typename... Args>
-		static void LogWarning(Args&& ... args)
+		inline static void LogWarning(char const* msg, Args&& ... args)
 		{
-			std::ostringstream stream;
-			(stream << ... << std::forward<Args>(args));
-
-			if (stream.str()[0] == '\n')
+			const size_t msgLen = strlen(msg);
+			std::unique_ptr<char[]> prefixedMsg;
+			if (msg[0] == '\n')
 			{
-				cout << "\nWarn:\t" << stream.str().substr(1, std::string::npos) << "\n";
+				const size_t totalLen = msgLen + 7 + 1 + 1; // + prefix chars + newline char + null char 
+				prefixedMsg = std::make_unique<char[]>(totalLen);
+				snprintf(prefixedMsg.get(), totalLen, "\nWarn:\t%s%s", &msg[1], "\n");
+				printf(prefixedMsg.get(), args...);
 			}
-			else if (stream.str()[0] == '\t')
+			else if (msg[0] == '\t')
 			{
-				cout << "\t" << stream.str().substr(1, std::string::npos) << "\n";
+				printf(msg, args...);
+				printf("\n");
 			}
 			else
 			{
-				cout << "Warn:\t" << stream.str() << "\n";
+				const size_t totalLen = msgLen + 6 + 1 + 1; // + prefix chars + newline char + null char 
+				prefixedMsg = std::make_unique<char[]>(totalLen);
+				snprintf(prefixedMsg.get(), totalLen, "Warn:\t%s%s", msg, "\n");
+				printf(prefixedMsg.get(), args...);
 			}
 		}
 
 
 		template<typename... Args>
-		static void LogError(Args&& ... args)
+		inline static void LogError(char const* msg, Args&& ... args)
 		{
-			std::ostringstream stream;
-			(stream << ... << std::forward<Args>(args));
-
-			if (stream.str()[0] == '\n')
+			const size_t msgLen = strlen(msg);
+			std::unique_ptr<char[]> prefixedMsg;
+			if (msg[0] == '\n')
 			{
-				cout << "\nError:\t" << stream.str().substr(1, std::string::npos) << "\n";
+				const size_t totalLen = msgLen + 8 + 1 + 1; // + prefix chars + newline char + null char 
+				prefixedMsg = std::make_unique<char[]>(totalLen);
+				snprintf(prefixedMsg.get(), totalLen, "\nError:\t%s%s", &msg[1], "\n");
+				printf(prefixedMsg.get(), args...);
 			}
-			else if (stream.str()[0] == '\t')
+			else if (msg[0] == '\t')
 			{
-				cout << "\t" << stream.str().substr(1, std::string::npos) << "\n";
+				printf(msg, args...);
+				printf("\n");
 			}
 			else
 			{
-				cout << "Error:\t" << stream.str() << "\n";
+				const size_t totalLen = msgLen + 7 + 1 + 1; // + prefix chars + newline char + null char 
+				prefixedMsg = std::make_unique<char[]>(totalLen);
+				snprintf(prefixedMsg.get(), totalLen, "Error:\t%s%s", msg, "\n");
+				printf(prefixedMsg.get(), args...);
 			}
-		}		
+		}
 	};
 }
 
@@ -109,14 +131,14 @@ namespace en
 
 #if defined (_DEBUG)
 	#include "LogManager.h"
-	#define LOG(...)			en::LogManager::Log(__VA_ARGS__);
-	#define LOG_WARNING(...)	en::LogManager::LogWarning(__VA_ARGS__);
-	#define LOG_ERROR(...)		en::LogManager::LogError(__VA_ARGS__);
+	#define LOG(msg, ...)			en::LogManager::Log(msg, __VA_ARGS__);
+	#define LOG_WARNING(msg, ...)	en::LogManager::LogWarning(msg, __VA_ARGS__);
+	#define LOG_ERROR(msg, ...)		en::LogManager::LogError(msg, __VA_ARGS__);
 #else
 	// Disable compiler warning C4834: discarding return value of function with 'nodiscard' attribute
 	#pragma warning(disable : 4834) 
 	#define LOG(...)			do {__VA_ARGS__;} while(false);
 	#define LOG_WARNING(...)	do {__VA_ARGS__;} while(false);
 	#define LOG_ERROR(...)		do {__VA_ARGS__;} while(false);
-	// __VA_ARGS__; marks our arguments as "used" to the compiler, to avoid warning C4101: unreferenced local variable 
+	// "__VA_ARGS__;" marks our arguments as "used" to the compiler; Avoids "warning C4101: unreferenced local variable"
 #endif

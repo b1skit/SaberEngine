@@ -22,7 +22,7 @@ namespace opengl
 	{
 		string const& shaderFileName = shader.Name();
 
-		LOG("Creating shader \"" + shaderFileName + "\"");
+		LOG("Creating shader \"%s\"", shaderFileName.c_str());
 
 		// Helper mappings:
 		const uint32_t numShaderTypes = 3;
@@ -224,10 +224,6 @@ namespace opengl
 			}			
 		}
 		delete[] name;
-
-	#if defined (DEBUG_SCENEMANAGER_SHADER_LOGGING)
-		LOG("Finished creating shader \"" + shaderFileName + "\"");
-	#endif
 	}
 
 

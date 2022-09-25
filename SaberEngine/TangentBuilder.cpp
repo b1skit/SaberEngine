@@ -44,15 +44,14 @@ namespace util
 			meshData->m_meshParams != nullptr
 			)
 		{
-			LOG("Computing tangents for mesh " + string(meshData->m_name));
+			LOG("Computing tangents for mesh %s", meshData->m_name.c_str());
 
 			tbool result = genTangSpaceDefault(&this->m_context);
 			SEAssert("Failed to generate tangents", result);
 		}
 		else
 		{
-			LOG_WARNING(
-				"Could not generate tangents for mesh " + string(meshData->m_name) + ", required mesh data incomplete");
+			LOG_WARNING("Could not generate tangents for mesh %s, required mesh data incomplete", meshData->m_name);
 		}
 	}
 

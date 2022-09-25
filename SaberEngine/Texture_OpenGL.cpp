@@ -182,7 +182,7 @@ namespace opengl
 
 	void opengl::Texture::Create(gr::Texture& texture)
 	{
-		LOG("Creating & buffering texture: \"" + texture.GetTexturePath() + "\"");
+		LOG("Creating & buffering texture: \"%s\"", texture.GetTexturePath().c_str());
 
 		// Create the platform-specific parameters object:
 		platform::Texture::PlatformParams::CreatePlatformParams(texture);

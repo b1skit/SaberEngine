@@ -132,7 +132,7 @@ namespace
 		SEAssert("Can load single faces or cubemaps only", texturePaths.size() == 1 || texturePaths.size() == 6);
 		SEAssert("Invalid number of texture paths", texturePaths.size() == 1 || texturePaths.size() == 6);
 
-		LOG("Attempting to load " + to_string(texturePaths.size()) + " textures: \"" + texturePaths[0] + "\"...");
+		LOG("Attempting to load %d textures: \"%s\"...", texturePaths.size(), texturePaths[0].c_str());
 
 		// Flip the y-axis on loading (so pixel (0,0) is in the bottom-left of the image if using OpenGL
 		platform::RenderingAPI const& api =
@@ -190,8 +190,7 @@ namespace
 
 			if (imageData)
 			{
-				LOG("Found " + to_string(width) + "x" + to_string(height) + ", " + std::to_string(bitDepth) +
-					"-bit texture with " + to_string(numChannels) + " channels");
+				LOG("Found %dx%d, %d-bit texture with %d channels", width, height, bitDepth, numChannels);
 
 				if (texture == nullptr)
 				{
@@ -254,7 +253,7 @@ namespace
 			else
 			{
 				char const* failResult = stbi_failure_reason();
-				LOG_WARNING("Failed to load image \"" + texturePaths[0] + "\": " + string(failResult));
+				LOG_WARNING("Failed to load image \"%s\": %s", texturePaths[0].c_str(), failResult);
 				return nullptr;
 			}
 		}
@@ -451,7 +450,7 @@ namespace
 		SEAssert("Must supply a parent and camera pointer", parent != nullptr && camera != nullptr);
 
 		const string camName = camera->name ? string(camera->name) : "Unnamed camera";
-		LOG("Loading camera \"" + camName + "\"");
+		LOG("Loading camera \"%s\"", camName.c_str());
 
 		gr::Camera::CameraConfig camConfig;
 		camConfig.m_isOrthographic = camera->type == cgltf_camera_type_orthographic;
@@ -492,7 +491,7 @@ namespace
 	{
 		const string lightName = (light->name ? string(light->name) : "Unnamed light");
 
-		LOG("Found light \"" + lightName + "\"");
+		LOG("Found light \"%s\"", lightName.c_str());
 
 		Light::LightType lightType = Light::LightType::Directional;
 		switch (light->type)
@@ -925,7 +924,7 @@ namespace
 	// Note: data must already be populated by calling cgltf_load_buffers
 	void LoadSceneHierarchy(std::string const& rootPath, fr::SceneData& scene, cgltf_data* data)
 	{
-		LOG("Scene has " + to_string(data->nodes_count) + " object nodes");
+		LOG("Scene has %d object nodes", data->nodes_count);
 
 		SEAssert("Loading > 1 scene is currently unsupported", data->scenes_count == 1);
 
@@ -1128,7 +1127,7 @@ namespace fr
 		else  // Add new
 		{
 			m_textures[newTexture->GetTexturePath()] = newTexture;
-			LOG("Texture \"" + newTexture->GetTexturePath() + "\" registered with scene");
+			LOG("Texture \"%s\" registered with scene", newTexture->GetTexturePath().c_str());
 		}
 	}
 
@@ -1141,7 +1140,7 @@ namespace fr
 			m_textures.find(texturePaths[0]);
 		if (texturePosition != m_textures.end())
 		{
-			LOG("Texture(s) at \"" + texturePaths[0] + "\" has already been loaded");
+			LOG("Texture(s) at \"%s\" has already been loaded", texturePaths[0].c_str());
 			return texturePosition->second;
 		}
 
@@ -1168,7 +1167,7 @@ namespace fr
 		else // Add new
 		{
 			m_materials[newMaterial->Name()] = newMaterial;
-			LOG("Material \"" + newMaterial->Name() + "\" registered with scene");
+			LOG("Material \"%s\" registered with scene", newMaterial->Name().c_str());
 		}
 	}
 

@@ -167,8 +167,7 @@ namespace en
 			}
 			catch (const std::bad_any_cast& e)
 			{
-				LOG_ERROR(
-					"bad_any_cast exception thrown: Invalid type requested from EngineConfig\n" + string(e.what()));
+				LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from EngineConfig\n%s", e.what());
 			}
 		}
 		else
@@ -222,13 +221,12 @@ namespace en
 			}
 			catch (const std::bad_any_cast& e)
 			{
-				LOG_ERROR(
-					"bad_any_cast exception thrown: Invalid type requested from EngineConfig\n" + string(e.what()));
+				LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from EngineConfig\n%s", e.what());
 			}
 		}
 		else
 		{
-			LOG_ERROR("Config key \"" + valueName + "\" does not exist\n");
+			LOG_ERROR("Config key \"%s\" does not exist\n", valueName);
 		}
 
 		return returnVal;
@@ -291,7 +289,7 @@ namespace en
 
 	void EngineConfig::LoadConfig()
 	{
-		LOG("Loading " + CONFIG_FILENAME + "...");
+		LOG("Loading %s...", CONFIG_FILENAME.c_str());
 
 		ifstream file;
 		file.open((CONFIG_DIR + CONFIG_FILENAME).c_str());
@@ -316,7 +314,7 @@ namespace en
 			// Handle malformed strings from previous iteration:
 			if (foundInvalidString == true)
 			{
-				LOG_WARNING("Ignoring invalid command in config.cfg:\n" + line);
+				LOG_WARNING("Ignoring invalid command in config.cfg:\n%s", line);
 				foundInvalidString = false;
 			}
 
@@ -465,7 +463,7 @@ namespace en
 		// Handle final malformed string:
 		if (foundInvalidString == true)
 		{
-			LOG_WARNING("Ignoring invalid command in config.cfg:\n" + line);
+			LOG_WARNING("Ignoring invalid command in config.cfg:\n%s", line);
 		}
 
 		m_isDirty = false;

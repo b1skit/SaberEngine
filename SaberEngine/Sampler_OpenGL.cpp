@@ -97,7 +97,7 @@ namespace opengl
 
 	void Sampler::Create(gr::Sampler& sampler)
 	{
-		LOG("Creating sampler: \"" + sampler.GetName() + "\"");
+		LOG("Creating sampler: \"%s\"", sampler.GetName().c_str());
 
 		PlatformParams* const params =
 			dynamic_cast<opengl::Sampler::PlatformParams* const>(sampler.GetPlatformParams());

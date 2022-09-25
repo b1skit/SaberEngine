@@ -29,91 +29,89 @@ namespace opengl
 			const void* userParam
 	)
 	{
-		string output = "\nOpenGL Error Callback:\nSource: ";
-
+		
+		
+		string srcMsg;
 		switch (source)
 		{
 		case GL_DEBUG_SOURCE_API:
-			output += "GL_DEBUG_SOURCE_API\n";
+			srcMsg = "GL_DEBUG_SOURCE_API";
 			break;
 		case GL_DEBUG_SOURCE_APPLICATION: 
-			output += "GL_DEBUG_SOURCE_APPLICATION\n";
+			srcMsg = "GL_DEBUG_SOURCE_APPLICATION";
 				break;
 
 		case GL_DEBUG_SOURCE_THIRD_PARTY:
-			output += "GL_DEBUG_SOURCE_THIRD_PARTY\n";
+			srcMsg = "GL_DEBUG_SOURCE_THIRD_PARTY";
 				break;
 		default:
-			output += "CURRENTLY UNRECOGNIZED ENUM VALUE: " + to_string(source) + " (Todo: Convert to hex!)\n"; 
+			srcMsg = "CURRENTLY UNRECOGNIZED ENUM VALUE: " + to_string(source) + " (Todo: Convert to hex!)";
 			// If we ever hit this, we should add the enum as a new string
 		}
-
-		output += "Type: ";
-
+		
+		string typeMsg;
 		switch (type)
 		{
 		case GL_DEBUG_TYPE_ERROR:
-			output += "GL_DEBUG_TYPE_ERROR\n";
+			typeMsg = "GL_DEBUG_TYPE_ERROR";
 			break;
 		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-			output += "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR\n";
+			typeMsg = "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR";
 			break;
 		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-			output += "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR\n";
+			typeMsg = "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR";
 			break;
 		case GL_DEBUG_TYPE_PORTABILITY:
-			output += "GL_DEBUG_TYPE_PORTABILITY\n";
+			typeMsg = "GL_DEBUG_TYPE_PORTABILITY";
 			break;
 		case GL_DEBUG_TYPE_PERFORMANCE:
-			output += "GL_DEBUG_TYPE_PERFORMANCE\n";
+			typeMsg = "GL_DEBUG_TYPE_PERFORMANCE";
 			break;
 		case GL_DEBUG_TYPE_OTHER:
-			output += "GL_DEBUG_TYPE_OTHER\n";
+			typeMsg = "GL_DEBUG_TYPE_OTHER";
 			break;
 		default:
-			output += "\n";
+			typeMsg = "UNKNOWN";
 		}
 
-		output += "id: " + to_string(id) + "\n";
-
-		output += "Severity: ";
+		string severityMsg;
 		switch (severity)
 		{
 		#if defined(DEBUG_LOG_OPENGL_NOTIFICATIONS)
 		case GL_DEBUG_SEVERITY_NOTIFICATION:
-			output += "NOTIFICATION\n";
+			severityMsg = "NOTIFICATION";
 			break;
 		#else
 		case GL_DEBUG_SEVERITY_NOTIFICATION:
 			return; // DO NOTHING
 		#endif
 		case GL_DEBUG_SEVERITY_LOW :
-				output += "GL_DEBUG_SEVERITY_LOW\n";
+			severityMsg = "GL_DEBUG_SEVERITY_LOW";
 			break;
 		case GL_DEBUG_SEVERITY_MEDIUM:
-			output += "GL_DEBUG_SEVERITY_MEDIUM\n";
+			severityMsg = "GL_DEBUG_SEVERITY_MEDIUM";
 			break;
 		case GL_DEBUG_SEVERITY_HIGH:
-			output += "GL_DEBUG_SEVERITY_HIGH\n";
+			severityMsg = "GL_DEBUG_SEVERITY_HIGH";
 			break;
 		default:
-			output += "\n";
+			severityMsg = "UNKNOWN";
 		}
 		
-		output += "Message: " + string(message);
-
 		switch(severity)
 		{
 		case GL_DEBUG_SEVERITY_NOTIFICATION:
-			LOG(output);
+			LOG("\nOpenGL Error Callback:\nSource: %s\nType: %s\nid: %d\nSeverity: %s\nMessage: %s\n",
+				srcMsg.c_str(), typeMsg.c_str(), id, severityMsg.c_str(), message);
 			break;
 		default:
-			LOG_ERROR(output);
+			LOG_ERROR("\nOpenGL Error Callback:\nSource: %s\nType: %s\nid: %d\nSeverity: %s\nMessage: %s\n",
+				srcMsg.c_str(), typeMsg.c_str(), id, severityMsg.c_str(), message);
 		}
-		
+
 		if (severity == GL_DEBUG_SEVERITY_HIGH)
 		{
-			SEAssert("High severity GL error!: " + output, false);
+			SEAssert("High severity GL error!", false);
 		}		
 	}
 #endif
@@ -187,7 +185,7 @@ namespace opengl
 		SEAssert("Reported OpenGL version does not match the version set", 
 			glMajorVersion == glMajorVersionCheck && glMinorVersion == glMinorVersionCheck);
 
-		LOG("Using OpenGL version " + to_string(glMajorVersionCheck) + "." + to_string(glMinorVersionCheck));
+		LOG("Using OpenGL version %d.%d", glMajorVersionCheck, glMinorVersionCheck);
 
 		// Initialize glew:
 		glewExperimental = GL_TRUE; // Expose OpenGL 3.x+ interfaces

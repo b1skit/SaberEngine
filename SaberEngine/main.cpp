@@ -18,6 +18,7 @@ int main(int argc, char** argv)
 
 	LOG("\nWelcome to the Saber Engine!\n");
 
+
 	en::CoreEngine m_coreEngine(argc, argv); // TODO: Implement config file (command line) path passing
 
 	m_coreEngine.Startup();
@@ -30,3 +31,4 @@ int main(int argc, char** argv)
 
 	return 0;
 }
+

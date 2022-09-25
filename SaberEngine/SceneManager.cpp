@@ -30,7 +30,7 @@ namespace en
 		// Add a player object to the scene:
 		shared_ptr<fr::PlayerObject> player = std::make_shared<fr::PlayerObject>(m_currentScene->GetMainCamera());
 		m_currentScene->AddGameObject(player);
-		LOG("Created PlayerObject using \"" + m_currentScene->GetMainCamera()->GetName() + "\"");
+		LOG("Created PlayerObject using \"%s\"", m_currentScene->GetMainCamera()->GetName().c_str());
 	}
 
 
