@@ -95,7 +95,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\SDL2\include\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\Dependencies\Welder\;$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\SDL2\include\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -144,7 +144,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Debug\SDL2.dll" "$(ProjectDi
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\SDL2\include\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\Dependencies\Welder\;$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\SDL2\include\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>

@@ -840,8 +840,6 @@ namespace
 					}
 				} // End attribute unpacking
 
-//#define COMPUTE_TANGENTS_AND_NORMALS
-#if defined(COMPUTE_TANGENTS_AND_NORMALS)
 				const bool foundNormals = !normals.empty();
 				if (!foundNormals)
 				{
@@ -859,22 +857,21 @@ namespace
 					// TODO: Test this with a non-indexed mesh (currently crashes if I delete the tangent entry 
 					// from a GLTF file)
 					SEAssert("Every position should have a matching normal", positions.size() == normals.size());
-					tangents.resize(positions.size());
+					//tangents.resize(positions.size());
 					util::TangentBuilder::MeshData meshData
 					{ 
 						nodeName, 
 						&meshParams,
 						&indices,
-						reinterpret_cast<vector<vec3>const* const>(&positions),
-						reinterpret_cast<vector<vec3>const* const>(&normals),
-						reinterpret_cast<vector<vec2>const* const>(&uv0),
-						reinterpret_cast<vector<vec4>*const>(&tangents)
+						reinterpret_cast<vector<vec3>*>(&positions),
+						reinterpret_cast<vector<vec3>*>(&normals),
+						reinterpret_cast<vector<vec2>*>(&uv0),
+						reinterpret_cast<vector<vec4>*>(&tangents)
 					};
 
 					util::TangentBuilder tangentBuilder;
 					tangentBuilder.ConstructMeshTangents(&meshData);
 				}
-#endif
 
 				shared_ptr<Material> material = 
 					LoadAddMaterial(scene, rootPath, current->mesh->primitives[primitive].material);

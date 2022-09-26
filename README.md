@@ -41,6 +41,13 @@ MikkTSpace: https://github.com/mmikk/MikkTSpace
 - Add "$(ProjectDir)..\Dependencies\MikkTSpace\" to "Project properties -> C/C++ -> Additional Include Directories"
 
 
+MikkTSpace Welder: https://github.com/mmikk/Welder
+--------------------------------------------------
+- Current version: "Github last modified Mar 25, 2020""
+- Unzip to <project root>\Dependencies\Welder
+- Add "$(ProjectDir)..\Dependencies\Welder\" to "Project properties -> C/C++ -> Additional Include Directories"
+
+
 Glew: https://github.com/nigels-com/glew/releases
 -------------------------------------------------
 - Current version: glew-2.2.0-win32 (pre-compiled)

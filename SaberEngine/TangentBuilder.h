@@ -31,7 +31,9 @@ class TangentBuilder
 		void ConstructMeshTangents(MeshData* meshData);
 
 	private:
+		void BuildSimpleTriangleUVs(MeshData* meshData);
 		void RemoveTriangleIndexing(MeshData* meshData);
+		void WeldUnindexedTriangles(MeshData* meshData);
 
 		static int GetVertexIndex(const SMikkTSpaceContext* m_context, int faceIdx, int vertIdx);
 		static int GetNumFaces(const SMikkTSpaceContext* m_context);
