@@ -6,7 +6,7 @@
 
 #include <glm/glm.hpp>
 
-#include "TangentBuilder.h"
+#include "VertexAttributeBuilder.h"
 #include "DebugConfiguration.h"
 #include "CoreEngine.h"
 

@@ -169,7 +169,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="TangentBuilder.cpp" />
+    <ClCompile Include="VertexAttributeBuilder.cpp" />
     <ClCompile Include="Context_Platform.cpp" />
     <ClCompile Include="CoreEngine.cpp" />
     <ClCompile Include="EngineConfig.cpp" />
@@ -219,7 +219,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="TangentBuilder.h" />
+    <ClInclude Include="VertexAttributeBuilder.h" />
     <ClInclude Include="Context_Platform.h" />
     <ClInclude Include="GraphicsSystem_Bloom.h" />
     <ClInclude Include="GraphicsSystem_DeferredLighting.h" />

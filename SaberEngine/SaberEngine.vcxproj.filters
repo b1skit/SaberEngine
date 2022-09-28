@@ -212,7 +212,7 @@
     <ClCompile Include="Platform.cpp">
       <Filter>Source Files\en\platform</Filter>
     </ClCompile>
-    <ClCompile Include="TangentBuilder.cpp">
+    <ClCompile Include="VertexAttributeBuilder.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="SceneManager.cpp">
@@ -376,7 +376,7 @@
     <ClInclude Include="SaberObject.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
-    <ClInclude Include="TangentBuilder.h">
+    <ClInclude Include="VertexAttributeBuilder.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="SceneManager.h">

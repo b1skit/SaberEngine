@@ -15,7 +15,7 @@
 
 
 #include "SceneData.h"
-#include "TangentBuilder.h"
+#include "VertexAttributeBuilder.h"
 #include "Light.h"
 #include "Camera.h"
 #include "GameObject.h"
