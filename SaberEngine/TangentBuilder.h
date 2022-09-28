@@ -12,7 +12,7 @@
 namespace util
 {
 
-class TangentBuilder
+class VertexAttributeBuilder
 {
 	public:
 		struct MeshData
@@ -27,14 +27,17 @@ class TangentBuilder
 		};
 
 	public:
-		TangentBuilder();
-		void ConstructMeshTangents(MeshData* meshData);
+		VertexAttributeBuilder();
+		void ConstructMissingVertexAttributes(MeshData* meshData);
 
 	private:
+		void RemoveDegenerateTriangles(MeshData* meshData);
 		void BuildSimpleTriangleUVs(MeshData* meshData);
+		void BuildFlatNormals(MeshData* meshData);
 		void RemoveTriangleIndexing(MeshData* meshData);
 		void WeldUnindexedTriangles(MeshData* meshData);
 
+		// Helpers for MikkTSpace:
 		static int GetVertexIndex(const SMikkTSpaceContext* m_context, int faceIdx, int vertIdx);
 		static int GetNumFaces(const SMikkTSpaceContext* m_context);
 		static int GetNumFaceVerts(const SMikkTSpaceContext* m_context, int faceIdx);

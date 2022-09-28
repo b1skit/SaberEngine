@@ -840,39 +840,21 @@ namespace
 					}
 				} // End attribute unpacking
 
-				const bool foundNormals = !normals.empty();
-				if (!foundNormals)
+				// Construct any missing vertex attributes for the mesh:
+				util::VertexAttributeBuilder::MeshData meshData
 				{
-					// Compute missing data, as required by the GLTF specifications
-					// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#meshes-overview
-					if (!tangents.empty())
-					{
-						tangents.clear();
-					}
-					SEAssert("Missing normals. TODO: Calculate flat normals here!", false);
-				}
+					nodeName,
+					&meshParams,
+					&indices,
+					reinterpret_cast<vector<vec3>*>(&positions),
+					reinterpret_cast<vector<vec3>*>(&normals),
+					reinterpret_cast<vector<vec2>*>(&uv0),
+					reinterpret_cast<vector<vec4>*>(&tangents)
+				};
+				util::VertexAttributeBuilder tangentBuilder;
+				tangentBuilder.ConstructMissingVertexAttributes(&meshData);
 
-				if (tangents.empty())
-				{
-					// TODO: Test this with a non-indexed mesh (currently crashes if I delete the tangent entry 
-					// from a GLTF file)
-					SEAssert("Every position should have a matching normal", positions.size() == normals.size());
-					//tangents.resize(positions.size());
-					util::TangentBuilder::MeshData meshData
-					{ 
-						nodeName, 
-						&meshParams,
-						&indices,
-						reinterpret_cast<vector<vec3>*>(&positions),
-						reinterpret_cast<vector<vec3>*>(&normals),
-						reinterpret_cast<vector<vec2>*>(&uv0),
-						reinterpret_cast<vector<vec4>*>(&tangents)
-					};
-
-					util::TangentBuilder tangentBuilder;
-					tangentBuilder.ConstructMeshTangents(&meshData);
-				}
-
+				// Material:
 				shared_ptr<Material> material = 
 					LoadAddMaterial(scene, rootPath, current->mesh->primitives[primitive].material);
 

@@ -22,70 +22,96 @@ using glm::vec4;
 
 namespace util
 {
-	TangentBuilder::TangentBuilder()
+	VertexAttributeBuilder::VertexAttributeBuilder()
 	{
 		m_interface.m_getNumFaces			= GetNumFaces;
 		m_interface.m_getNumVerticesOfFace  = GetNumFaceVerts;
 		m_interface.m_getNormal				= GetNormal;
 		m_interface.m_getPosition			= GetPosition;
 		m_interface.m_getTexCoord			= GetTexCoords;
-
 		m_interface.m_setTSpaceBasic		= SetTangentSpaceBasic;
 
 		m_context.m_pInterface = &m_interface;
 	}
 
 
-	void TangentBuilder::ConstructMeshTangents(MeshData* meshData)
+	void VertexAttributeBuilder::ConstructMissingVertexAttributes(MeshData* meshData)
 	{
-		LOG("Building tangents for mesh \"%s\" from %d vertices", meshData->m_name.c_str(), meshData->m_positions->size());
+		LOG("Processing mesh \"%s\" with %d vertices...", meshData->m_name.c_str(), meshData->m_positions->size());
 
-		SEAssert("Cannot pass null data", 
+		SEAssert("Cannot pass null data. If an attribute does not exist, a vector of size 0 is expected.", 
 			meshData->m_meshParams && meshData->m_indices && meshData->m_positions && 
 			meshData->m_normals && meshData->m_UV0 && meshData->m_tangents);
 
-		// Allocate space for our tangents. We'll re-weld at the end, so allocate to match the number of indices
-		SEAssert("Expected an empty tangents vector", meshData->m_tangents->size() == 0);
-		meshData->m_tangents->resize(meshData->m_indices->size(), vec4(0, 0, 0, 0)); // Zeros for now...
+		const bool isIndexed = meshData->m_indices->size() > meshData->m_positions->size();
+		const bool hasUVs = !meshData->m_UV0->empty();
+		const bool hasNormals = !meshData->m_normals->empty();
+		bool hasTangents = !meshData->m_tangents->empty();
 
-		// Build UVs if none exist:
-		if (meshData->m_UV0->size() == 0)
+		if (hasUVs && hasNormals && hasTangents)
 		{
-			LOG("Mesh \"%s\" is missing UVs, adding a simple default set", meshData->m_name.c_str());
-			BuildSimpleTriangleUVs(meshData);
+			LOG("Mesh \"%s\" has all required attributes", meshData->m_name.c_str());
+			return; // Note: We skip degenerate triangle removal this way, but low risk as the asset came with all attribs
+		}
+
+		// Allocate space for any missing attributes:
+		const size_t numVerts = meshData->m_indices->size(); // Assume triangle lists: 3 index entries per triangle
+		if (!hasUVs)
+		{
+			meshData->m_UV0->resize(numVerts, vec2(0, 0));
+		}
+		if (!hasNormals)
+		{
+			meshData->m_normals->resize(numVerts, vec3(0, 0, 0));
+
+			if (hasTangents)
+			{
+				// GLTF 2.0 specs: When normals are not specified, client implementations MUST calculate flat normals 
+				// and the provided tangents(if present) MUST be ignored.
+				// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#meshes-overview
+				meshData->m_tangents->clear();
+				meshData->m_tangents->resize(meshData->m_indices->size(), vec4(0, 0, 0, 0));
+				hasTangents = false;
+			}
+		}
+		if (!hasTangents)
+		{
+			meshData->m_tangents->resize(numVerts, vec4(0, 0, 0, 0));
 		}
 
 		// Convert indexed triangle lists to non-indexed:
-		bool removedIndexing = false;
-		if (meshData->m_indices->size() > meshData->m_positions->size())
+		if (isIndexed)
 		{
 			LOG("Mesh \"%s\" uses triangle indexing, de-indexing...", meshData->m_name.c_str());
 			RemoveTriangleIndexing(meshData);
-			removedIndexing = true;
 		}
 
-		m_context.m_pUserData = meshData;
+		// Find and remove any degenerate triangles:
+		RemoveDegenerateTriangles(meshData);
 
-		if (meshData->m_positions->size() > 0 &&
-			meshData->m_normals->size() > 0 &&
-			meshData->m_UV0->size() > 0 &&
-			meshData->m_tangents->size() > 0 &&
-			meshData->m_indices->size() > 0 &&
-			meshData->m_meshParams != nullptr
-			)
+		// Build any missing attributes:
+		if (!hasUVs)
 		{
-			LOG("Computing tangents for mesh \"%s\"", meshData->m_name.c_str());
+			LOG("Mesh \"%s\" is missing UVs, generating a simple set...", meshData->m_name.c_str());
+			BuildSimpleTriangleUVs(meshData);
+		}
+		if (!hasNormals)
+		{
+			LOG("Mesh \"%s\" is missing normals, flat normals will be generated...", meshData->m_name.c_str());
 
+			BuildFlatNormals(meshData);
+		}
+		if (!hasTangents)
+		{
+			LOG("Mesh \"%s\" is missing tangents, they will be generated...", meshData->m_name.c_str());
+
+			m_context.m_pUserData = meshData;
 			tbool result = genTangSpaceDefault(&this->m_context);
 			SEAssert("Failed to generate tangents", result);
 		}
-		else
-		{
-			SEAssert("Required mesh data is incomplete or missing elements. Cannot generate tangents", false);
-		}
 
 		// Re-index the result, if required:
-		if (removedIndexing)
+		if (isIndexed)
 		{
 			LOG("Re-welding vertices to build unique vertex index list for mesh \"%s\"", meshData->m_name.c_str());
 			WeldUnindexedTriangles(meshData);
@@ -95,8 +121,124 @@ namespace util
 	}
 
 
-	void TangentBuilder::BuildSimpleTriangleUVs(MeshData* meshData)
+	void VertexAttributeBuilder::RemoveDegenerateTriangles(MeshData* meshData)
 	{
+		SEAssert("Expected an un-indexed triangle list", 
+			meshData->m_indices->size() % 3 == 0 &&
+			meshData->m_positions->size() == meshData->m_indices->size() &&
+			meshData->m_normals->size() == meshData->m_indices->size() &&
+			meshData->m_UV0->size() == meshData->m_indices->size()&&
+			meshData->m_tangents->size() == meshData->m_indices->size()
+		);
+
+		vector<uint32_t> newIndices;
+		vector<vec3> newPositions;
+		vector<vec3> newNormals;
+		vector<vec2> newUVs;
+		vector<vec4> newTangents;
+
+		// We might remove verts, so reserve rather than resize...
+		const size_t maxNumVerts = meshData->m_indices->size(); // Assume triangle lists: 3 index entries per triangle
+		newIndices.reserve(maxNumVerts);
+		newPositions.reserve(maxNumVerts);
+		newNormals.reserve(maxNumVerts);
+		newUVs.reserve(maxNumVerts);
+		newTangents.reserve(maxNumVerts);
+
+		size_t numDegeneratesFound = 0;
+		uint32_t insertIdx = 0;
+		for (size_t i = 0; i < meshData->m_indices->size(); i += 3)
+		{
+			const vec3& p0 = meshData->m_positions->at(meshData->m_indices->at(i));
+			const vec3& p1 = meshData->m_positions->at(meshData->m_indices->at(i + 1));
+			const vec3& p2 = meshData->m_positions->at(meshData->m_indices->at(i + 2));
+
+			const vec3 v0 = p0 - p2;
+			const vec3 v1 = p1 - p2;
+			const vec3 v2 = p0 - p1;
+
+			const float v0Length = glm::length(v0);
+			const float v1Length = glm::length(v1);
+			const float v2Length = glm::length(v2);
+
+			const bool isValid =
+				v0Length + v1Length > v2Length &&
+				v0Length + v2Length > v1Length &&
+				v1Length + v2Length > v0Length;
+
+			if (isValid)
+			{
+				SEAssert("Insertions are out of sync", insertIdx == newPositions.size());
+
+				newIndices.emplace_back(insertIdx);
+				newIndices.emplace_back(insertIdx + 1);
+				newIndices.emplace_back(insertIdx + 2);
+
+				newPositions.emplace_back(meshData->m_positions->at(meshData->m_indices->at(i)));
+				newPositions.emplace_back(meshData->m_positions->at(meshData->m_indices->at(i + 1)));
+				newPositions.emplace_back(meshData->m_positions->at(meshData->m_indices->at(i + 2)));
+
+				newNormals.emplace_back(meshData->m_normals->at(meshData->m_indices->at(i)));
+				newNormals.emplace_back(meshData->m_normals->at(meshData->m_indices->at(i + 1)));
+				newNormals.emplace_back(meshData->m_normals->at(meshData->m_indices->at(i + 2)));
+				
+				newUVs.emplace_back(meshData->m_UV0->at(meshData->m_indices->at(i)));
+				newUVs.emplace_back(meshData->m_UV0->at(meshData->m_indices->at(i + 1)));
+				newUVs.emplace_back(meshData->m_UV0->at(meshData->m_indices->at(i + 2)));
+
+				newTangents.emplace_back(meshData->m_tangents->at(meshData->m_indices->at(i)));
+				newTangents.emplace_back(meshData->m_tangents->at(meshData->m_indices->at(i + 1)));
+				newTangents.emplace_back(meshData->m_tangents->at(meshData->m_indices->at(i + 2)));
+
+				insertIdx += 3;
+			}
+			else
+			{
+				numDegeneratesFound++;
+			}
+		}
+
+		*meshData->m_indices = move(newIndices);
+		*meshData->m_positions = move(newPositions);
+		*meshData->m_normals = move(newNormals);
+		*meshData->m_UV0 = move(newUVs);
+		*meshData->m_tangents = move(newTangents);
+
+		if (numDegeneratesFound > 0)
+		{
+			LOG_WARNING("Removed %d degenerate triangles from mesh \"%s\"", numDegeneratesFound, meshData->m_name.c_str());
+		}
+	}
+
+
+	void VertexAttributeBuilder::BuildFlatNormals(MeshData* meshData)
+	{
+		SEAssert("Expected a triangle list and pre-allocated normals vector", 
+			meshData->m_indices->size() % 3 == 0 && meshData->m_normals->size() == meshData->m_indices->size());
+
+		for (size_t i = 0; i < meshData->m_indices->size(); i += 3)
+		{
+			const vec3& p0 = meshData->m_positions->at(meshData->m_indices->at(i));
+			const vec3& p1 = meshData->m_positions->at(meshData->m_indices->at(i + 1));
+			const vec3& p2 = meshData->m_positions->at(meshData->m_indices->at(i + 2));
+
+			const vec3 v0 = p0 - p2;
+			const vec3 v1 = p1 - p2;
+
+			const vec3 faceNormal = glm::normalize(glm::cross(v0, v1));
+			
+			meshData->m_normals->at(meshData->m_indices->at(i)) = faceNormal;
+			meshData->m_normals->at(meshData->m_indices->at(i + 1)) = faceNormal;
+			meshData->m_normals->at(meshData->m_indices->at(i + 2)) = faceNormal;
+		}
+	}
+
+
+	void VertexAttributeBuilder::BuildSimpleTriangleUVs(MeshData* meshData)
+	{
+		SEAssert("Expected a triangle list and pre-allocated UV0 vector",
+			meshData->m_indices->size() % 3 == 0 && meshData->m_UV0->size() == meshData->m_indices->size());
+
 		platform::RenderingAPI const& api =
 			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
 		const bool botLeftZeroZero = api == platform::RenderingAPI::OpenGL ? true : false;
@@ -117,8 +259,6 @@ namespace util
 			BR = vec2(1, 1);
 		}
 
-		SEAssert("Invalid index array length", meshData->m_indices->size() % 3 == 0);
-
 		// Allocate our vector to ensure it's the correct size:
 		meshData->m_UV0->resize(meshData->m_positions->size(), vec2(0, 0));
 
@@ -131,32 +271,34 @@ namespace util
 	}
 
 
-	void TangentBuilder::RemoveTriangleIndexing(MeshData* meshData)
+	void VertexAttributeBuilder::RemoveTriangleIndexing(MeshData* meshData)
 	{
-		SEAssert("Expected tangents have already been allocated", 
-			meshData->m_tangents->size() == meshData->m_indices->size());
+		const size_t numVerts = meshData->m_indices->size(); // Assume triangle lists: 3 index entries per triangle
+		vector<uint32_t> newIndices(numVerts);
+		vector<vec3> newPositions(numVerts);
+		vector<vec3> newNormals(numVerts);
+		vector<vec2> newUVs(numVerts);
+		vector<vec4> newTangents(numVerts);
 
 		// Use our indices to unpack duplicated vertex attributes:
-		vector<uint32_t> newIndices(meshData->m_indices->size(), 0);
-		vector<vec3> newPositions(meshData->m_indices->size(), vec3(0, 0, 0));
-		vector<vec3> newNormals(meshData->m_indices->size(), vec3(0, 0, 0));
-		vector<vec2> newUVs(meshData->m_indices->size(), vec2(0, 0));
-		for (size_t i = 0; i < meshData->m_indices->size(); i++)
+		for (size_t i = 0; i < numVerts; i++)
 		{
 			newIndices[i] = (uint32_t)i;
 			newPositions[i] = meshData->m_positions->at(meshData->m_indices->at(i));
 			newNormals[i] = meshData->m_normals->at(meshData->m_indices->at(i));
 			newUVs[i] = meshData->m_UV0->at(meshData->m_indices->at(i));
+			newTangents[i] = meshData->m_tangents->at(meshData->m_indices->at(i));
 		}
 
 		*meshData->m_indices = move(newIndices);
 		*meshData->m_positions = move(newPositions);
 		*meshData->m_normals = move(newNormals);
 		*meshData->m_UV0 = move(newUVs);
+		*meshData->m_tangents = move(newTangents);
 	}
 
 
-	void TangentBuilder::WeldUnindexedTriangles(MeshData* meshData)
+	void VertexAttributeBuilder::WeldUnindexedTriangles(MeshData* meshData)
 	{
 		SEAssert("Mikktspace operates on system's int, SaberEngine operates on explicit 32-bit uints", 
 			sizeof(int) == sizeof(uint32_t));
@@ -264,7 +406,7 @@ namespace util
 	}
 
 
-	int TangentBuilder::GetNumFaces(const SMikkTSpaceContext* m_context)
+	int VertexAttributeBuilder::GetNumFaces(const SMikkTSpaceContext* m_context)
 	{
 		MeshData* meshData = static_cast<MeshData*> (m_context->m_pUserData);
 		
@@ -273,7 +415,7 @@ namespace util
 		return (int)meshData->m_indices->size() / 3;
 	}
 
-	int TangentBuilder::GetNumFaceVerts(const SMikkTSpaceContext* m_context, const int faceIdx)
+	int VertexAttributeBuilder::GetNumFaceVerts(const SMikkTSpaceContext* m_context, const int faceIdx)
 	{
 		MeshData* meshData = static_cast<MeshData*> (m_context->m_pUserData);
 
@@ -283,7 +425,7 @@ namespace util
 		return 3;
 	}
 
-	void TangentBuilder::GetPosition(
+	void VertexAttributeBuilder::GetPosition(
 		const SMikkTSpaceContext* m_context, float* outpos, const int faceIdx, const int vertIdx)
 	{
 		MeshData* meshData = static_cast<MeshData*>(m_context->m_pUserData);
@@ -297,7 +439,7 @@ namespace util
 	}
 
 
-	void TangentBuilder::GetNormal(
+	void VertexAttributeBuilder::GetNormal(
 		const SMikkTSpaceContext* m_context, float* outnormal, const int faceIdx, const int vertIdx)
 	{
 		MeshData* meshData = static_cast<MeshData*>(m_context->m_pUserData);
@@ -311,7 +453,7 @@ namespace util
 	}
 
 
-	void TangentBuilder::GetTexCoords(
+	void VertexAttributeBuilder::GetTexCoords(
 		const SMikkTSpaceContext* m_context, float* outuv, const int faceIdx, const int vertIdx)
 	{
 		MeshData* meshData = static_cast<MeshData*>(m_context->m_pUserData);
@@ -324,7 +466,7 @@ namespace util
 	}
 
 
-	void TangentBuilder::SetTangentSpaceBasic(
+	void VertexAttributeBuilder::SetTangentSpaceBasic(
 		const SMikkTSpaceContext* m_context, const float* tangentu, const float fSign, const int faceIdx, const int vertIdx)
 	{
 		MeshData* meshData = static_cast<MeshData*>(m_context->m_pUserData);
@@ -339,7 +481,7 @@ namespace util
 	}
 
 
-	int TangentBuilder::GetVertexIndex(const SMikkTSpaceContext* m_context, int faceIdx, int vertIdx)
+	int VertexAttributeBuilder::GetVertexIndex(const SMikkTSpaceContext* m_context, int faceIdx, int vertIdx)
 	{
 		MeshData* meshData = static_cast<MeshData*>(m_context->m_pUserData);
 
