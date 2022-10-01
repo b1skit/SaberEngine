@@ -5,6 +5,7 @@
 #include "DebugConfiguration.h"
 #include "Shader.h"
 #include "CoreEngine.h"
+#include "ParameterBlock.h"
 
 using std::string;
 using std::shared_ptr;
@@ -14,12 +15,14 @@ using std::unordered_map;
 using gr::Shader;
 using gr::Texture;
 using gr::Sampler;
+using re::PermanentParameterBlock;
 using en::CoreEngine;
 
 using std::make_unique;
 using std::make_shared;
 using std::vector;
 using glm::vec4;
+using glm::vec3;
 
 
 namespace gr
@@ -48,11 +51,6 @@ namespace gr
 				{nullptr, Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear), "MatOcclusion" },
 				{nullptr, Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear), "MatEmissive" },
 			};
-			gltfPBRMat->m_propertySlots =
-			{
-				{"MatProperty0", vec4(0.04f, 0.04f, 0.04f, 0.0f)} // .rgb = F0 (Surface response at 0 degrees). A is unused.
-				// TODO: Give this a more meaningful name
-			};
 			gltfPBRMat->m_shader = nullptr; // Don't need a shader; PBR materials are written directly to the GBuffer
 			m_materialLibrary->insert({ gltfPBRMat->m_definitionName, gltfPBRMat });
 		}
@@ -69,13 +67,13 @@ namespace gr
 		m_name(name),
 		m_texSlots(matDefinition->m_textureSlots),
 		m_shader(matDefinition->m_shader),
-		m_properties(matDefinition->m_propertySlots)
+		m_matParams(nullptr)
 	{
 		// Build a map from shader sampler name, to texture slot index:
 		for (size_t i = 0; i < m_texSlots.size(); i++)
 		{
 			m_namesToSlotIndex.insert({ m_texSlots[i].m_shaderSamplerName, (uint32_t)i});
-		}		
+		}
 	}
 
 
@@ -83,7 +81,6 @@ namespace gr
 	{
 		m_shader = nullptr;
 		m_texSlots.clear();
-		m_properties.clear();
 	}
 
 
@@ -102,14 +99,7 @@ namespace gr
 			}
 		}
 
-		for (size_t i = 0; i < m_properties.size(); i++)
-		{
-			shader->SetUniform(
-				m_properties[i].m_propertyName.c_str(), 
-				&m_properties[i].m_property, 
-				platform::Shader::UniformType::Vec4f, 
-				1);
-		}
+		shader->SetParameterBlock(*m_matParams.get());
 	}
 
 

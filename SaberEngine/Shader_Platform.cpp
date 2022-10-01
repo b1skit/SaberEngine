@@ -204,14 +204,15 @@ namespace platform
 
 	// platform::Shader static members:
 	/**********************************/
-	void (*platform::Shader::Create)(gr::Shader& shader);
-	void (*platform::Shader::Bind)(gr::Shader const&, bool doBind);
+	void (*platform::Shader::Create)(gr::Shader& shader) = nullptr;
+	void (*platform::Shader::Bind)(gr::Shader const&, bool doBind) = nullptr;
 	void (*platform::Shader::SetUniform)(
 		gr::Shader const& shader, 
 		string const& uniformName, 
 		void const* value, 
 		platform::Shader::UniformType const type, 
-		int const count);
-	void (*platform::Shader::Destroy)(gr::Shader&);
+		int const count) = nullptr;
+	void (*platform::Shader::SetParameterBlock)(gr::Shader const&, re::PermanentParameterBlock const&) = nullptr;
+	void (*platform::Shader::Destroy)(gr::Shader&) = nullptr;
 
 }

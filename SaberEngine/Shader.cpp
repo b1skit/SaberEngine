@@ -54,4 +54,10 @@ namespace gr
 		SetUniform(uniformName, texture.get(), platform::Shader::UniformType::Texture, 1);
 		SetUniform(uniformName, sampler.get(), platform::Shader::UniformType::Sampler, 1);
 	}
+
+
+	void Shader::SetParameterBlock(re::PermanentParameterBlock const& paramBlock) const
+	{
+		platform::Shader::SetParameterBlock(*this, paramBlock);
+	}
 }

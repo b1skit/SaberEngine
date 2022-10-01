@@ -9,9 +9,14 @@
 #include <glm/glm.hpp>
 
 #include "Sampler.h"
+#include "ParameterBlock.h"
 
 
-// Predeclarations:
+namespace re
+{
+	class PermanentParameterBlock;
+}
+
 namespace gr
 {
 	class Texture;
@@ -31,78 +36,40 @@ namespace gr
 			std::string m_shaderSamplerName;
 		};
 
-		struct PropertyDesc
-		{
-			std::string m_propertyName;
-			glm::vec4 m_property;
-		};
-
 		struct MaterialDefinition
 		{
 			std::string m_definitionName = "uninitializeddMaterialDefinition";
-			std::vector<TextureSlotDesc> m_textureSlots; // Slot index == shader binding index
-			std::vector<PropertyDesc> m_propertySlots;
+			std::vector<TextureSlotDesc> m_textureSlots; // Vector index == shader binding index
 			std::shared_ptr<gr::Shader> m_shader = nullptr;
 			
 		};
-
 		static std::shared_ptr<MaterialDefinition const> GetMaterialDefinition(std::string const& matName);
+
+		struct PBRMetallicRoughnessParams
+		{
+			// Currently, these are hard-coded to match the GLTF material params
+			// TODO: Support generic material params
+
+			glm::vec4 g_baseColorFactor;
+
+			float g_metallicFactor;
+			float g_roughnessFactor;
+			float g_normalScale;
+			float g_occlusionStrength;
+
+			glm::vec3 g_emissiveFactor;
+			float padding0;
+
+			// Non-GLTF properties:
+			glm::vec3 g_f0; // For non-metals only
+			float padding1;
+
+			//float g_isDoubleSided;
+		};
+		// NOTE: OpenGL std430 rules requires padding on N/2N/4N float strides when buffering UBOs/SSBOs
 
 	private:
 		static std::unique_ptr<std::unordered_map<std::string, std::shared_ptr<Material::MaterialDefinition>>> m_materialLibrary;
-
-	public:
-		enum TextureSlot
-		{
-			// GBuffer stage sampler inputs:
-			MatAlbedo	= 0,	// Contains transparency in the alpha channel
-			MatNormal	= 1,
-			MatRMAO		= 2,	// Packed Roughness, Metalic, AmbientOcclusion (RGB) + unused A
-			MatEmissive = 3,
-			Mat_Count = 4,
-
-			// Deferred lighting GBuffer sampler inputs:
-			GBufferAlbedo	= 0,
-			GBufferWNormal	= 1,
-			GBufferRMAO		= 2,
-			GBufferEmissive = 3,
-			GBufferWPos		= 4,
-			GBufferMatProp0 = 5,	// MatProperty0
-			GBufferDepth	= 6,	// Make this the last element
-			GBuffer_Count = 7,
-
-			// Generic texture samplers:
-			Tex0 = 0,
-			Tex1 = 1,
-			Tex2 = 2,
-			Tex3 = 3,
-			Tex4 = 4,
-			Tex5 = 5,
-			Tex6 = 6,
-			Tex7 = 7, // E.g. BRDF pre-integration map
-			Tex8 = 8,
-			Tex_Count = 9,
-
-			// Depth map texture samplers:
-			Depth0 = 10,
-			Depth_Count = 1,
-
-			// Cube map samplers:
-			CubeMap0 = 11,
-			CubeMap1 = 12,
-			CubeMap_Count = 2,
-
-		}; // Note: If new enums are added, don't forget to update Material::k_GBufferTexNames as well
-		// TODO: Make this an assert^^^^
-
-
-		// TODO: Materials should contain generic blocks of parameters (eg. within a struct?)
-		enum MATERIAL_PROPERTY_INDEX
-		{
-			MatProperty0 = 0,
-			MatProperty_Count = 1
-		}; // Note: If new enums are added, don't forget to update Material::k_MatPropNames as well
-
 
 	public:
 		Material(std::string const& name, std::shared_ptr<MaterialDefinition const> matDefinition);
@@ -110,10 +77,10 @@ namespace gr
 		
 		void Destroy();
 
-		Material()							= delete;
+		Material() = delete;
 
-		Material(Material const&)			= default;
-		Material(Material&&)				= default;
+		Material(Material const&) = default;
+		Material(Material&&) = default;
 		Material& operator=(Material const&) = default;
 
 
@@ -123,11 +90,11 @@ namespace gr
 		inline std::shared_ptr<gr::Shader>& GetShader()	{ return m_shader; }
 		inline std::shared_ptr<gr::Shader> const& GetShader() const { return m_shader; }
 
-		inline glm::vec4& Property(MATERIAL_PROPERTY_INDEX index) { return m_properties[index].m_property; }
-		inline glm::vec4 const& Property(MATERIAL_PROPERTY_INDEX index) const { return m_properties[index].m_property; }
+		inline std::shared_ptr<re::PermanentParameterBlock>& GetMatParams() { return m_matParams; }
+		inline std::shared_ptr<re::PermanentParameterBlock const> const GetMatParams() const { return m_matParams; }
 
-		std::shared_ptr<gr::Texture>& GetTexture(uint32_t slotIndex) { return m_texSlots[slotIndex].m_texture; }
-		std::shared_ptr<gr::Texture> const GetTexture(uint32_t slotIndex) const { return m_texSlots[slotIndex].m_texture; }
+		inline std::shared_ptr<gr::Texture>& GetTexture(uint32_t slotIndex) { return m_texSlots[slotIndex].m_texture; }
+		inline std::shared_ptr<gr::Texture> const GetTexture(uint32_t slotIndex) const { return m_texSlots[slotIndex].m_texture; }
 
 		std::shared_ptr<gr::Texture>& GetTexture(std::string const& samplerName);
 		std::shared_ptr<gr::Texture> const& GetTexture(std::string const& samplerName) const;
@@ -136,14 +103,12 @@ namespace gr
 
 		void BindToShader(std::shared_ptr<gr::Shader const> shaderOverride);
 
-
 	private:
 		std::string const m_name;	// Must be unique: Identifies this material
 		std::vector<TextureSlotDesc> m_texSlots;
 		std::unordered_map<std::string, uint32_t> m_namesToSlotIndex;
-		std::vector<PropertyDesc> m_properties; // Generic material properties
 		std::shared_ptr<gr::Shader> m_shader;
-		
+		std::shared_ptr<re::PermanentParameterBlock> m_matParams;
 	};
 }
 

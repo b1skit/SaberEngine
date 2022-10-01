@@ -3,6 +3,14 @@
   "Id": "80c62e80-7437-4bb9-b7e0-693fa4c402a1",
   "Items": [
     {
+      "Id": "fed39c3e-c597-47ba-aabb-eab3e2c2348d",
+      "Command": "-scene NormalTangentMirrorTest"
+    },
+    {
+      "Id": "05b3455c-11e5-4f24-9357-810a270059db",
+      "Command": "-scene NormalTangentTest"
+    },
+    {
       "Id": "e8c82d8a-e5e3-4a47-90a1-45390d632948",
       "Command": "-scene LightsPunctualLamp"
     },

@@ -112,26 +112,35 @@ layout(binding=8) uniform sampler2D Tex8;
 layout(binding=11) uniform samplerCube CubeMap0;			
 layout(binding=12) uniform samplerCube CubeMap1;
 
-// Generic material properties:
-uniform vec4		MatProperty0;	// .rgb = F0 (Surface response at 0 degrees), .a = Phong exponent
-
 
 // TODO: Pack common parameters into structured buffers
-uniform vec4		texelSize;		// Depth map/GBuffer texel size: .xyzw = (1/width, 1/height, width, height)
+uniform vec4 texelSize;		// Depth map/GBuffer texel size: .xyzw = (1/width, 1/height, width, height)
 
 // Shadow map parameters:
-uniform mat4		shadowCam_vp;	// Shadow map: [Projection * View]
+uniform mat4 shadowCam_vp; // Shadow map: [Projection * View]
 
-uniform float		maxShadowBias;	// Offsets for preventing shadow acne
-uniform float		minShadowBias;
+uniform float maxShadowBias; // Offsets for preventing shadow acne
+uniform float minShadowBias;
 
-uniform float		shadowCam_near;	// Near/Far planes of current shadow camera
-uniform float		shadowCam_far;
+uniform float shadowCam_near; // Near/Far planes of current shadow camera
+uniform float shadowCam_far;
 
 // System variables:
-uniform vec4 screenParams;			// .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
+uniform vec4 screenParams; // .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
 
-uniform vec3 cameraWPos;	// World-space camera position
+uniform vec3 cameraWPos; // World-space camera position
 
+
+// Note: Must match the PBRMetallicRoughnessParams struct defined in Material.h, without any padding
+layout(std430, binding=0) readonly buffer PBRMetallicRoughnessParams
+{
+	vec4 g_baseColorFactor;
+	float g_metallicFactor;
+	float g_roughnessFactor;
+	float g_normalScale;
+	float g_occlusionStrength;
+	vec3 g_emissiveFactor;
+	vec3 g_f0; // For non-metals only
+};
 
 #endif

@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "Shader_Platform.h"
+#include "ParameterBlock.h"
 
 
 namespace platform
@@ -45,13 +46,15 @@ namespace gr
 		void Destroy();
 
 		// Getters/Setters:
-		inline std::string const& Name() { return m_shaderName; }
+		inline std::string const& Name() const { return m_shaderName; }
 
 		void SetUniform(
 			std::string const&,
 			void const* value,
 			platform::Shader::UniformType const type, 
 			int count) const;
+
+		void SetParameterBlock(re::PermanentParameterBlock const& parambBlock) const;
 			
 		// Helper: Simultaneously calls SetUniform for the texture and sampler
 		void SetTextureSamplerUniform(
@@ -59,12 +62,12 @@ namespace gr
 			std::shared_ptr<gr::Texture> texture, 
 			std::shared_ptr<gr::Sampler const> sampler) const;
 
-		platform::Shader::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
-		platform::Shader::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
+		inline platform::Shader::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
+		inline platform::Shader::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
 
 
-		std::vector<std::string>& ShaderKeywords() { return m_shaderKeywords; }
-		std::vector<std::string> const& ShaderKeywords() const { return m_shaderKeywords; }
+		inline std::vector<std::string>& ShaderKeywords() { return m_shaderKeywords; }
+		inline std::vector<std::string> const& ShaderKeywords() const { return m_shaderKeywords; }
 
 	private:
 		// Extensionless shader filename. Will have .vert/.geom.frag appended (thus all shader text must have the

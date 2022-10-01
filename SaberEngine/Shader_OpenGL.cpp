@@ -7,6 +7,7 @@
 #include "Shader_OpenGL.h"
 #include "Material.h"
 #include "Texture.h"
+#include "ParameterBlock_OpenGL.h"
 
 using std::vector;
 using std::shared_ptr;
@@ -342,6 +343,56 @@ namespace opengl
 		default:
 			SEAssert("Shader uniform upload failed: Recieved unimplemented uniform type", false);
 		}
+
+		// Restore the state:
+		if (!isBound)
+		{
+			glUseProgram(currentProgram);
+		}
+	}
+
+
+	void Shader::SetParameterBlock(gr::Shader const& shader, re::PermanentParameterBlock const& paramBlock)
+	{
+		// TODO: Handle non-permanent parameter blocks. For now, just bind without considering if the data has changed
+
+		opengl::Shader::PlatformParams const* const shaderPlatformParams =
+			dynamic_cast<opengl::Shader::PlatformParams const* const>(shader.GetPlatformParams());
+
+		opengl::PermanentParameterBlock::PlatformParams const* const paramBlockPlatformParams = 
+			dynamic_cast<opengl::PermanentParameterBlock::PlatformParams const* const>(paramBlock.GetPlatformParams());
+
+		// Track if the current shader is bound or not, so we can set values without breaking the current state
+		GLint currentProgram = 0;
+		bool isBound = true;
+		glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
+		if (currentProgram != shaderPlatformParams->m_shaderReference)
+		{
+			glUseProgram(shaderPlatformParams->m_shaderReference);
+			isBound = false;
+		}
+		
+		// Find the buffer binding index via introspection
+		const GLint resourceIdx = glGetProgramResourceIndex(
+			shaderPlatformParams->m_shaderReference, 
+			GL_SHADER_STORAGE_BLOCK, 
+			paramBlock.Name().c_str());
+
+		SEAssert("Failed to get resource index", resourceIdx != GL_INVALID_ENUM);
+
+		GLint bindIndex;
+		GLenum props[1] = { GL_BUFFER_BINDING };
+		glGetProgramResourceiv(
+			shaderPlatformParams->m_shaderReference, 
+			GL_SHADER_STORAGE_BLOCK, 
+			resourceIdx,
+			1,
+			props,
+			1,
+			NULL,
+			&bindIndex);
+
+		opengl::PermanentParameterBlock::Bind(paramBlock, bindIndex);
 
 		// Restore the state:
 		if (!isBound)

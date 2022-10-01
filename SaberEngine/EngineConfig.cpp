@@ -110,8 +110,8 @@ namespace en
 			TryInsertDefault("skyboxShaderName",					std::string("skyboxShader"));
 			TryInsertDefault("equilinearToCubemapBlitShaderName",	std::string("equilinearToCubemapBlitShader"));
 			TryInsertDefault("BRDFIntegrationMapShaderName",		std::string("BRDFIntegrationMapShader"));
-			TryInsertDefault("blitShader",							std::string("blitShader"));
-			TryInsertDefault("blurShader",							std::string("blurShader"));
+			TryInsertDefault("blitShaderName",						std::string("blitShader"));
+			TryInsertDefault("blurShaderName",						std::string("blurShader"));
 			TryInsertDefault("toneMapShader",						std::string("toneMapShader"));
 
 			// Multiplier used to scale [0,1] emissive values when writing to GBuffer, so they'll bloom

@@ -25,6 +25,9 @@
 #include "Shader_Platform.h"
 #include "Shader_OpenGL.h"
 
+#include "ParameterBlock.h"
+#include "ParameterBlock_OpenGL.h"
+
 
 namespace platform
 {
@@ -85,10 +88,15 @@ namespace platform
 			platform::TextureTargetSet::MaxColorTargets				= &opengl::TextureTargetSet::MaxColorTargets;
 
 			// Shader:
-			platform::Shader::Create		= &opengl::Shader::Create;
-			platform::Shader::Bind			= &opengl::Shader::Bind;
-			platform::Shader::SetUniform	= &opengl::Shader::SetUniform;
-			platform::Shader::Destroy		= &opengl::Shader::Destroy;
+			platform::Shader::Create			= &opengl::Shader::Create;
+			platform::Shader::Bind				= &opengl::Shader::Bind;
+			platform::Shader::SetUniform		= &opengl::Shader::SetUniform;
+			platform::Shader::SetParameterBlock = &opengl::Shader::SetParameterBlock;
+			platform::Shader::Destroy			= &opengl::Shader::Destroy;
+
+			// Parameter blocks:
+			platform::PermanentParameterBlock::Create	= &opengl::PermanentParameterBlock::Create;
+			platform::PermanentParameterBlock::Destroy	= &opengl::PermanentParameterBlock::Destroy;
 
 
 			result = true;

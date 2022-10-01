@@ -42,7 +42,7 @@ namespace gr
 		shared_ptr<Camera> sceneCam = CoreEngine::GetSceneManager()->GetScene()->GetMainCamera();
 
 		shared_ptr<Shader> blitShader = make_shared<Shader>(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShader"));
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShaderName"));
 		blitShader->Create();
 
 		// Emissive blit stage:
@@ -88,7 +88,7 @@ namespace gr
 		resScaleParams.m_useMIPs = false;
 
 		shared_ptr<Shader> luminanceThresholdShader = make_shared<Shader>(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShader"));
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShaderName"));
 		luminanceThresholdShader->ShaderKeywords().emplace_back("BLUR_SHADER_LUMINANCE_THRESHOLD");
 		luminanceThresholdShader->Create();
 
@@ -131,12 +131,12 @@ namespace gr
 
 		// Blur stages:
 		shared_ptr<Shader> horizontalBlurShader = make_shared<Shader>(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShader"));
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShaderName"));
 		horizontalBlurShader->ShaderKeywords().emplace_back("BLUR_SHADER_HORIZONTAL");
 		horizontalBlurShader->Create();
 
 		shared_ptr<Shader> verticalBlurShader = make_shared<Shader>(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShader"));
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShaderName"));
 		verticalBlurShader->ShaderKeywords().emplace_back("BLUR_SHADER_VERTICAL");
 		verticalBlurShader->Create();
 
@@ -239,9 +239,12 @@ namespace gr
 
 		shared_ptr<Sampler const> const bloomStageSampler = Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear);
 
+		// This index corresponds with the GBuffer texture layout bindings in SaberCommon.glsl
+		// TODO: Have a less brittle way of handling this.
+		const size_t gBufferEmissiveTextureIndex = 3; 
 		m_emissiveBlitStage.SetTextureInput(
 			"GBufferAlbedo",
-			gbufferGS->GetFinalTextureTargetSet().ColorTarget(Material::MatEmissive).GetTexture(),
+			gbufferGS->GetFinalTextureTargetSet().ColorTarget(gBufferEmissiveTextureIndex).GetTexture(),
 			bloomStageSampler);
 
 		for (size_t i = 0; i < m_downResStages.size(); i++)

@@ -12,6 +12,11 @@ namespace gr
 	class Shader;
 }
 
+namespace re
+{
+	class PermanentParameterBlock;
+}
+
 namespace opengl
 {
 	class Shader
@@ -35,6 +40,7 @@ namespace opengl
 			void const* value, 
 			platform::Shader::UniformType const type, 
 			int const count);
+		static void SetParameterBlock(gr::Shader const&, re::PermanentParameterBlock const&);
 		static void Destroy(gr::Shader& shader);
 	};
 }

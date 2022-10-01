@@ -27,6 +27,7 @@
 #include "CoreEngine.h"
 #include "DebugConfiguration.h"
 #include "ShadowMap.h"
+#include "ParameterBlock.h"
 
 using gr::Camera;
 using gr::Light;
@@ -37,6 +38,7 @@ using gr::Bounds;
 using gr::Transform;
 using gr::Light;
 using gr::ShadowMap;
+using re::PermanentParameterBlock;
 using fr::GameObject;
 using en::CoreEngine;
 using std::string;
@@ -333,9 +335,7 @@ namespace
 			make_shared<Material>(matName, Material::GetMaterialDefinition("pbrMetallicRoughness"));
 
 		newMat->GetShader() = nullptr; // Not required; just for clarity
-	
-		newMat->Property(Material::MATERIAL_PROPERTY_INDEX::MatProperty0) = vec4(0.04f, 0.04f, 0.04f, 1.0f);
-		
+			
 		auto LoadTextureOrColor = [&](
 			cgltf_texture* texture, 
 			vec4 const& colorFallback, 
@@ -389,10 +389,7 @@ namespace
 		// MatMetallicRoughness
 		newMat->GetTexture(1) = LoadTextureOrColor(
 			material->pbr_metallic_roughness.metallic_roughness_texture.texture,
-			vec4(1.0f,
-				material->pbr_metallic_roughness.roughness_factor,
-				material->pbr_metallic_roughness.metallic_factor,
-				1.0f),
+			missingTextureColor,
 			Texture::TextureFormat::RGBA8,
 			Texture::TextureColorSpace::Linear);
 
@@ -413,12 +410,22 @@ namespace
 		// MatEmissive
 		newMat->GetTexture(4) = LoadTextureOrColor(
 			material->emissive_texture.texture,
-			vec4(material->emissive_factor[0], material->emissive_factor[1], material->emissive_factor[2], 1.0f),
+			missingTextureColor,
 			Texture::TextureFormat::RGBA32F,
 			Texture::TextureColorSpace::sRGB); // GLTF convention: Must be converted to linear before use
 
-		// TODO: Support scaling factors (baseColorFactor, occlusion strength, emissive_factor/emissive_strength etc)
-		// -> Multiply in with the missingTextureColor?
+		// Construct a permanent parameter block for the material params:
+		shared_ptr<Material::PBRMetallicRoughnessParams> matParams = make_shared<Material::PBRMetallicRoughnessParams>();
+		matParams->g_baseColorFactor = glm::make_vec4(material->pbr_metallic_roughness.base_color_factor);
+		matParams->g_metallicFactor = material->pbr_metallic_roughness.metallic_factor;
+		matParams->g_roughnessFactor = material->pbr_metallic_roughness.roughness_factor;
+		matParams->g_normalScale = material->normal_texture.texture ? material->normal_texture.scale : 1.0f;
+		matParams->g_occlusionStrength = material->occlusion_texture.texture ? material->occlusion_texture.scale : 1.0f;
+		matParams->g_emissiveFactor = glm::make_vec3(material->emissive_factor);
+		matParams->g_f0 = vec3(0.04f, 0.04f, 0.04f);
+
+		newMat->GetMatParams() =
+			PermanentParameterBlock::Create<Material::PBRMetallicRoughnessParams>("PBRMetallicRoughnessParams", matParams);
 
 		scene.AddUniqueMaterial(newMat);
 		return newMat;

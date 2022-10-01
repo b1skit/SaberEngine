@@ -64,15 +64,10 @@ vec3 ObjectNormalFromTexture(mat3 TBN, vec3 textureNormal)
 }
 
 
-vec3 WorldNormalFromTexture(sampler2D MatNormal, vec2 uv, mat3 TBN)
+vec3 WorldNormalFromTextureNormal(vec3 texNormal, mat3 TBN)
 {
-	vec3 textureNormal	= texture(MatNormal, uv).xyz;
-	
-	textureNormal		= normalize((textureNormal * 2.0) - 1.0);	// Transform [0,1] -> [-1,1]
-
-	vec3 result			= normalize(TBN * textureNormal);
-
-	return result;
+	texNormal = normalize((texNormal * 2.0) - 1.0); // Transform [0,1] -> [-1,1]
+	return normalize(TBN * texNormal);
 }
 
 

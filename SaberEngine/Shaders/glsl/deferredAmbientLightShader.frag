@@ -38,7 +38,7 @@ void main()
 
 	float NoV = max(0.0, dot(viewNormal, viewEyeDir) );
 
-	vec3 F0	= matProp0.rgb; // .rgb = F0 (Surface response at 0 degrees), .a = Phong exponent
+	vec3 F0	= matProp0.rgb; // .rgb = F0 (Surface response at 0 degrees)
 	F0 = mix(F0, linearAlbedo.rgb, metalness); 
 	// Linear interpolation: x, y, using t=[0,1]. Returns x when t=0 -> Blends towards MatAlbedo for metals
 

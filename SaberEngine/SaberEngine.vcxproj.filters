@@ -221,6 +221,15 @@
     <ClCompile Include="SceneData.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
+    <ClCompile Include="ParameterBlock.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="ParameterBlock_Platform.cpp">
+      <Filter>Source Files\re\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="ParameterBlock_OpenGL.cpp">
+      <Filter>Source Files\re\platform\OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Mesh.h">
@@ -384,6 +393,15 @@
     </ClInclude>
     <ClInclude Include="SceneData.h">
       <Filter>Header Files\fr</Filter>
+    </ClInclude>
+    <ClInclude Include="ParameterBlock.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="ParameterBlock_Platform.h">
+      <Filter>Header Files\re\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="ParameterBlock_OpenGL.h">
+      <Filter>Header Files\re\platform\OpenGL</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

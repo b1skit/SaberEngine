@@ -7,6 +7,11 @@ namespace gr
 	class Sampler;
 }
 
+namespace re
+{
+	class PermanentParameterBlock;
+}
+
 namespace platform
 {
 	class Shader
@@ -55,6 +60,7 @@ namespace platform
 			void const* value, 
 			UniformType const type,
 			int const count);
+		static void (*SetParameterBlock)(gr::Shader const& shader, re::PermanentParameterBlock const& paramBlock);
 		static void (*Destroy)(gr::Shader&);
 	};
 
