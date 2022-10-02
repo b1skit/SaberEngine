@@ -29,9 +29,6 @@ namespace en
 		inline std::shared_ptr<fr::SceneData> GetScene() { return m_currentScene; }
 		inline std::shared_ptr<fr::SceneData const> const GetScene() const { return m_currentScene; }
 
-		// sceneName = the root folder name within the ./Scenes/ directory. Must contain an .gltf file with the same name
-		void LoadScene(std::string const& sceneName);
-
 	private:
 		std::shared_ptr<fr::SceneData> m_currentScene = nullptr;
 	};

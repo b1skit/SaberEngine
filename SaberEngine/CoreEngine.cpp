@@ -194,19 +194,46 @@ namespace en
 		const int numTokens = argc - 1; // -1, as 1st arg is program name
 		LOG("Processing %d command line tokens...", numTokens);
 
+		bool foundSceneArg = false;
+
 		for (int i = 1; i < argc; i++)
 		{			
-			string currentArg = string(argv[i]);			
+			const string currentArg(argv[i]);
 			if (currentArg.find("-scene") != string::npos)
 			{
+				SEAssert("\"-scene\" argument specified more than once!", foundSceneArg == false);
+				foundSceneArg = true;
+
 				if (i < argc - 1) // -1 as we need to peek ahead
 				{
 					const int nextArg = i + 1;
-					const string parameter = string(argv[nextArg]);
+					const string param = string(argv[nextArg]);
 
-					LOG("\tReceived scene command: \"%s %s\"", currentArg.c_str(), parameter.c_str());
+					LOG("\tReceived scene command: \"%s %s\"", currentArg.c_str(), param.c_str());
 
-					m_config.SceneName() = parameter;
+					const string scenesRoot =
+						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("scenesRoot"); // "..\Scenes\"
+
+					// From param of the form "Scene\Folder\Names\sceneFile.extension", we extract:
+
+					// sceneFilePath == "..\Scenes\Scene\Folder\Names\sceneFile.extension":
+					const string sceneFilePath = scenesRoot + param; 
+					m_config.SetValue("sceneFilePath", sceneFilePath, SettingType::Runtime);
+
+					// sceneRootPath == "..\Scenes\Scene\Folder\Names\":
+					const size_t lastSlash = sceneFilePath.find_last_of("\\");
+					const string sceneRootPath = sceneFilePath.substr(0, lastSlash) + "\\"; 
+					m_config.SetValue("sceneRootPath", sceneRootPath, SettingType::Runtime);
+
+					// sceneName == "sceneFile"
+					const string filenameAndExt = sceneFilePath.substr(lastSlash + 1, sceneFilePath.size() - lastSlash);
+					const size_t extensionPeriod = filenameAndExt.find_last_of(".");
+					const string sceneName = filenameAndExt.substr(0, extensionPeriod);
+					m_config.SetValue("sceneName", sceneName, SettingType::Runtime);
+
+					// sceneIBLPath == "..\Scenes\SceneFolderName\IBL\ibl.hdr"
+					const string sceneIBLPath = sceneRootPath + "IBL\\ibl.hdr";
+					m_config.SetValue("sceneIBLPath", sceneIBLPath, SettingType::Runtime);
 				}
 				else
 				{
@@ -214,7 +241,7 @@ namespace en
 					return false;
 				}
 				
-				i++; // Eat the token
+				i++; // Consume the token
 			}
 			else
 			{

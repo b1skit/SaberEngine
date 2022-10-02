@@ -22,6 +22,28 @@ Details:
 - Implemented with C++ 20
 
 
+-----------------------
+Command line arguments:
+-----------------------
+Scene loading: -scene Folder\Name\filename.extension
+	- Path is relative to the "<project root>\Scenes\" directory
+	- Supports GLTF 2.0 files
+
+
+--------------
+Configuration:
+--------------
+Loaded from the "<project root>\config\config.cfg"
+	- Commands for system configuration ("set"), input ("bind"), etc
+
+
+---------------------
+Image-based Lighting:
+---------------------
+A per-scene IBL is loaded from ""<project root>\Scenes\SceneFolderName\IBL\ibl.hdr", if it exists
+	- A default IBL ("<project root>\Assets\DefaultIBL\ibl.hdr") is used as a fallback if no scene IBL is found
+
+
 -------------
 Dependencies:
 -------------

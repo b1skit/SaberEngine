@@ -309,7 +309,7 @@ namespace
 
 
 	shared_ptr<Material> LoadAddMaterial(
-		fr::SceneData& scene, std::string const& rootPath, cgltf_material const* material)
+		fr::SceneData& scene, std::string const& sceneRootPath, cgltf_material const* material)
 	{
 		if (material == nullptr)
 		{
@@ -348,7 +348,7 @@ namespace
 			if (texture && texture->image && texture->image->uri)
 			{
 				tex = scene.GetLoadTextureByPath(
-					{ rootPath + texture->image->uri });
+					{ sceneRootPath + texture->image->uri });
 
 				Texture::TextureParams texParams = tex->GetTextureParams();
 				texParams.m_texColorSpace = colorSpace;
@@ -605,7 +605,7 @@ namespace
 
 	// Depth-first traversal
 	void LoadObjectHierarchyRecursiveHelper(
-		std::string const& rootPath, fr::SceneData& scene, cgltf_data* data, cgltf_node* current, shared_ptr<GameObject> parent)
+		std::string const& sceneRootPath, fr::SceneData& scene, cgltf_data* data, cgltf_node* current, shared_ptr<GameObject> parent)
 	{
 		if (current == nullptr)
 		{
@@ -863,7 +863,7 @@ namespace
 
 				// Material:
 				shared_ptr<Material> material = 
-					LoadAddMaterial(scene, rootPath, current->mesh->primitives[primitive].material);
+					LoadAddMaterial(scene, sceneRootPath, current->mesh->primitives[primitive].material);
 
 				// Attach the primitive:
 				parent->AddMeshPrimitive(make_shared<Mesh>(
@@ -902,13 +902,13 @@ namespace
 				shared_ptr<GameObject> childNode = make_shared<GameObject>(childName);
 				childNode->GetTransform()->SetParent(parent->GetTransform()); // TODO: GameObject ctors should all take a parent Transform*
 
-				LoadObjectHierarchyRecursiveHelper(rootPath, scene, data, current->children[i], childNode);
+				LoadObjectHierarchyRecursiveHelper(sceneRootPath, scene, data, current->children[i], childNode);
 			}
 		}
 	}
 
 	// Note: data must already be populated by calling cgltf_load_buffers
-	void LoadSceneHierarchy(std::string const& rootPath, fr::SceneData& scene, cgltf_data* data)
+	void LoadSceneHierarchy(std::string const& sceneRootPath, fr::SceneData& scene, cgltf_data* data)
 	{
 		LOG("Scene has %d object nodes", data->nodes_count);
 
@@ -923,7 +923,7 @@ namespace
 				data->scenes->nodes[node]->name ? string(data->scenes->nodes[node]->name) : 
 				"Unnamed_node_" + to_string(node));
 
-			LoadObjectHierarchyRecursiveHelper(rootPath, scene, data, data->scenes->nodes[node], currentNode);
+			LoadObjectHierarchyRecursiveHelper(sceneRootPath, scene, data, data->scenes->nodes[node], currentNode);
 		}
 	}
 } // namespace
@@ -936,26 +936,40 @@ namespace
 
 namespace fr
 {
-	void SceneData::Load()
+	bool SceneData::Load(string const& sceneFilePath)
 	{
-		// TODO: Switch scene loading command line arguments to provide full relative paths/filenames
-		// -> This will allow loading of arbitrary scenes, without folder/filename restriction
-		const string rootpath = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + m_name + "\\";
-		const string filepath =	rootpath + m_name + ".gltf";
+		if (sceneFilePath.empty())
+		{
+			SEAssert("No scene name received. Did you forget to use the \"-scene theSceneName\" command line "
+				"argument?", !sceneFilePath.empty());
 
+			return false;
+		}
 
 		// Parse the GLTF file data:
 		cgltf_options options = { (cgltf_file_type)0 };
 		cgltf_data* data = NULL;
-		cgltf_result parseResult = cgltf_parse_file(&options, filepath.c_str(), &data);
-		SEAssert("Failed to parse scene file \"" + filepath + "\"", parseResult == cgltf_result_success);
-
-		cgltf_result bufferLoadResult = cgltf_load_buffers(&options, data, filepath.c_str());
-		SEAssert("Failed to load scene data \"" + filepath + "\"", bufferLoadResult == cgltf_result_success);
+		cgltf_result parseResult = cgltf_parse_file(&options, sceneFilePath.c_str(), &data);
+		if (parseResult != cgltf_result::cgltf_result_success)
+		{
+			SEAssert("Failed to parse scene file \"" + sceneFilePath + "\"", parseResult == cgltf_result_success);
+			return false;
+		}
+		
+		cgltf_result bufferLoadResult = cgltf_load_buffers(&options, data, sceneFilePath.c_str());
+		if (bufferLoadResult != cgltf_result::cgltf_result_success)
+		{
+			SEAssert("Failed to load scene data \"" + sceneFilePath + "\"", bufferLoadResult == cgltf_result_success);
+			return false;
+		}		
 
 		// TODO: Add a cmd line flag to validated GLTF files, for efficiency?
 		cgltf_result validationResult = cgltf_validate(data);
-		SEAssert("GLTF file failed validation!", validationResult == cgltf_result_success);
+		if (validationResult != cgltf_result::cgltf_result_success)
+		{
+			SEAssert("GLTF file failed validation!", validationResult == cgltf_result_success);
+			return false;
+		}
 		
 		// Pre-reserve our vectors:
 		m_gameObjects.reserve(max((int)data->nodes_count, 10));
@@ -966,13 +980,16 @@ namespace fr
 		m_pointLights.reserve(max((int)data->lights_count, 10)); // Probably an over-estimation
 		m_cameras.reserve(max((int)data->cameras_count, 5));
 		
-		LoadSceneHierarchy(rootpath, *this, data);
+		const string sceneRootPath = en::CoreEngine::GetConfig()->GetValue<string>("sceneRootPath");
+		LoadSceneHierarchy(sceneRootPath, *this, data);
 		LoadAddCamera(*this, nullptr, nullptr); // Adds a default camera if none were found during LoadSceneHierarchy()
 		
 		AttachShadowMaps(*this); // TODO: Move this functionality into the Light ctor
 
 		// Cleanup:
 		cgltf_free(data);
+
+		return true;
 	}
 
 

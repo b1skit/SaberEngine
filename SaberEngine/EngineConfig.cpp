@@ -50,10 +50,11 @@ namespace en
 			{"mouseYawSensitivity",					{0.00005f, SettingType::Common}},
 
 			// SceneData config root path: All assets stored here
-			{"sceneRoot",							{string("..\\Scenes\\"), SettingType::Common}},	
+			{"scenesRoot",							{string("..\\Scenes\\"), SettingType::Common}},	
+			{"defaultIBLPath",						{string("..\\Assets\\DefaultIBL\\ibl.hdr"), SettingType::Common}},
 
 			// Key bindings:
-			{MACRO_TO_STR(InputButton_Forward),	{'w', SettingType::Common}},
+			{MACRO_TO_STR(InputButton_Forward),		{'w', SettingType::Common}},
 			{MACRO_TO_STR(InputButton_Backward),	{'s', SettingType::Common}},
 			{MACRO_TO_STR(InputButton_Left),		{'a', SettingType::Common}},
 			{MACRO_TO_STR(InputButton_Right),		{'d', SettingType::Common}},
@@ -64,7 +65,7 @@ namespace en
 
 			// Mouse bindings:
 			{MACRO_TO_STR(InputMouse_Left),		{string(MACRO_TO_STR(InputMouse_Left)), SettingType::Common}},
-			{MACRO_TO_STR(InputMouse_Right),		{string(MACRO_TO_STR(InputMouse_Right)), SettingType::Common}},
+			{MACRO_TO_STR(InputMouse_Right),	{string(MACRO_TO_STR(InputMouse_Right)), SettingType::Common}},
 
 		};
 
@@ -252,7 +253,6 @@ namespace en
 
 	// Constructor
 	EngineConfig::EngineConfig() :
-		m_currentScene{},
 		m_isDirty{ true },
 		m_renderingAPI{ platform::RenderingAPI::RenderingAPI_Count }
 	{
@@ -497,7 +497,7 @@ namespace en
 		// Output each value, by type:
 		for (std::pair<string, std::pair<any, SettingType>> currentElement : m_configValues)
 		{
-			if (currentElement.second.second == SettingType::APISpecific)
+			if (currentElement.second.second == SettingType::APISpecific || currentElement.second.second == SettingType::Runtime)
 			{
 				continue;	// Skip API-specific settings
 			}

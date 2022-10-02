@@ -19,6 +19,7 @@ namespace fr
 {
 	class GameObject;
 
+
 	class SceneData
 	{
 	public:
@@ -32,7 +33,7 @@ namespace fr
 
 		void Destroy();
 
-		void Load();
+		bool Load(std::string const& relativeFilePath); // File name and path, relative to the ..\Scenes\ dir
 
 		// SceneData metadata:
 		inline std::string const& GetName() const { return m_name; }

@@ -39,18 +39,19 @@ namespace gr
 			make_shared<Shader>(CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("skyboxShaderName"));
 
 		// Load the HDR image:
-		const string iblTexturePath =
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + 
-			CoreEngine::GetSceneManager()->GetScene()->GetName() + "\\" + 
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath");
-
-		m_skyTexture = CoreEngine::GetSceneManager()->GetScene()->GetLoadTextureByPath({ iblTexturePath }, true);
+		const string iblTexturePath = en::CoreEngine::GetConfig()->GetValue<string>("sceneIBLPath");
+		m_skyTexture = CoreEngine::GetSceneManager()->GetScene()->GetLoadTextureByPath({ iblTexturePath }, false);
+		if (!m_skyTexture)
+		{
+			const string defaultIBLPath = en::CoreEngine::GetConfig()->GetValue<string>("defaultIBLPath");
+			m_skyTexture = CoreEngine::GetSceneManager()->GetScene()->GetLoadTextureByPath({ defaultIBLPath }, true);
+		}
 
 		if (m_skyTexture == nullptr)
 		{
 			const string& sceneName = CoreEngine::GetSceneManager()->GetScene()->GetName();
 			const string skyboxTextureRoot =
-				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") + sceneName + "\\Skybox\\";
+				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("scenesRoot") + sceneName + "\\Skybox\\";
 			// TODO: This skybox path should be user-configurable
 
 

@@ -14,8 +14,9 @@ namespace en
 {
 	enum class SettingType
 	{
-		Common,				// Platform-agnostic value
+		Common,				// Platform-agnostic value. Saved to disk.
 		APISpecific,		// API-specific value: Not saved to disk (unless found in config at load time)
+		Runtime,			// Platform-agnostic value populated at runtime. Not saved to disk.
 		SettingType_Count
 	};
 
@@ -44,10 +45,6 @@ namespace en
 		// Specific configuration retrieval:
 		/**********************************/
 
-		// Currently loaded scene (cached during command-line parsing, accessed once SceneManager is loaded)
-		std::string& SceneName() { return m_currentScene; }
-		std::string const& SceneName() const { return m_currentScene; }
-
 		// Compute the aspect ratio == width / height
 		inline float GetWindowAspectRatio() const
 		{
@@ -71,18 +68,17 @@ namespace en
 		// Explicit members (for efficiency):
 		/***********************************/
 		platform::RenderingAPI m_renderingAPI;
-		std::string m_currentScene;
 
 
 		const std::string CONFIG_DIR = "..\\config\\";
 		const std::string CONFIG_FILENAME = "config.cfg";
 
 
-		// Inline helper functions:
-		//-------------------------
+		// Helper functions:
+		//------------------
 		inline std::string PropertyToConfigString(std::string property)	{ return " \"" + property + "\"\n"; }
-		inline std::string PropertyToConfigString(float property)	{ return " " + std::to_string(property) + "\n"; }
-		inline std::string PropertyToConfigString(int property)		{ return " " + std::to_string(property) + "\n"; }
+		inline std::string PropertyToConfigString(float property) { return " " + std::to_string(property) + "\n"; }
+		inline std::string PropertyToConfigString(int property) { return " " + std::to_string(property) + "\n"; }
 		inline std::string PropertyToConfigString(char property) {return std::string(" ") + property + std::string("\n");}
 		
 		// Note: Inlined in .cpp file, as it depends on macros defined in KeyConfiguration.h

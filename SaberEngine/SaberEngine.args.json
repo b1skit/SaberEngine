@@ -3,44 +3,48 @@
   "Id": "80c62e80-7437-4bb9-b7e0-693fa4c402a1",
   "Items": [
     {
+      "Id": "7c9082e9-1698-490b-b049-d34c6350685f",
+      "Command": "-scene EmissiveStrengthTest\\glTF\\EmissiveStrengthTest.gltf"
+    },
+    {
       "Id": "fed39c3e-c597-47ba-aabb-eab3e2c2348d",
-      "Command": "-scene NormalTangentMirrorTest"
+      "Command": "-scene NormalTangentMirrorTest\\NormalTangentMirrorTest.gltf"
     },
     {
       "Id": "05b3455c-11e5-4f24-9357-810a270059db",
-      "Command": "-scene NormalTangentTest"
+      "Command": "-scene NormalTangentTest\\NormalTangentTest.gltf"
     },
     {
       "Id": "e8c82d8a-e5e3-4a47-90a1-45390d632948",
-      "Command": "-scene LightsPunctualLamp"
+      "Command": "-scene LightsPunctualLamp\\LightsPunctualLamp.gltf"
     },
     {
       "Id": "9382fbc7-26a4-4ccf-aadc-544a1a934d4a",
-      "Command": "-scene Cameras"
+      "Command": "-scene Cameras\\Cameras.gltf"
     },
     {
       "Id": "24ef9bef-0471-465c-9aaa-2b758fec797d",
-      "Command": "-scene WaterBottle"
+      "Command": "-scene WaterBottle\\WaterBottle.gltf"
     },
     {
       "Id": "bb9ed7d8-2d99-4d7d-8b97-a572c67eca65",
-      "Command": "-scene OrientationTest"
+      "Command": "-scene OrientationTest\\OrientationTest.gltf"
     },
     {
       "Id": "2940251e-a995-4b02-b726-a82d74ce9c04",
-      "Command": "-scene Sponza"
+      "Command": "-scene Sponza\\Sponza.gltf"
     },
     {
       "Id": "3f7808ce-703c-48b0-b666-4655b96bc979",
-      "Command": "-scene AntiqueCamera"
+      "Command": "-scene AntiqueCamera\\AntiqueCamera.gltf"
     },
     {
       "Id": "41091ec8-c372-4107-bd51-ffb672bcbe78",
-      "Command": "-scene BoomBoxWithAxes"
+      "Command": "-scene BoomBoxWithAxes\\BoomBoxWithAxes.gltf"
     },
     {
       "Id": "241aa5df-00ed-4aef-b8a7-04d0f9ab5100",
-      "Command": "-scene box"
+      "Command": "-scene box\\Box.gltf"
     }
   ]
 }

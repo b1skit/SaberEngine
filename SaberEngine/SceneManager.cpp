@@ -25,7 +25,17 @@ namespace en
 	{
 		LOG("SceneManager starting...");
 		
-		LoadScene(en::CoreEngine::GetConfig()->SceneName());
+		// Load the scene:
+		const string sceneName = en::CoreEngine::GetConfig()->GetValue<string>("sceneName");
+		m_currentScene = std::make_shared<SceneData>(sceneName);
+
+		const string sceneFilePath = en::CoreEngine::GetConfig()->GetValue<string>("sceneFilePath");
+		const bool loadResult = m_currentScene->Load(sceneFilePath);
+		if (!loadResult)
+		{
+			CoreEngine::GetEventManager()->Notify(std::make_shared<EventManager::EventInfo const>(
+				EventManager::EventInfo{ EventManager::EngineQuit, this, "Failed to load scene" }));
+		}
 
 		// Add a player object to the scene:
 		shared_ptr<fr::PlayerObject> player = std::make_shared<fr::PlayerObject>(m_currentScene->GetMainCamera());
@@ -53,37 +63,6 @@ namespace en
 
 	void SceneManager::HandleEvent(shared_ptr<EventManager::EventInfo const> eventInfo)
 	{
-		return;
-	}
-
-
-	void SceneManager::LoadScene(string const& sceneName)
-	{
-		if (sceneName.empty())
-		{
-			SEAssert("No scene name received. Did you forget to use the \"-scene theSceneName\" command line "
-				"argument?", !sceneName.empty());
-			
-			CoreEngine::GetEventManager()->Notify(
-				std::make_shared<EventManager::EventInfo const>( EventManager::EventInfo
-				{ 
-					EventManager::EngineQuit,
-					this, 
-					"No scene name received"
-				}));
-			return;
-		}
-
-		if (m_currentScene != nullptr)
-		{
-			LOG("Unloading existing scene");
-			m_currentScene = nullptr;
-		}		
-
-		m_currentScene = std::make_shared<SceneData>(sceneName);
-
-		m_currentScene->Load();
-
 		return;
 	}
 }

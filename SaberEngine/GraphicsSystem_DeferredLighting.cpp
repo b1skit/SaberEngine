@@ -84,13 +84,15 @@ namespace gr
 		// Ambient lights are not supported by GLTF 2.0; Instead, we just check for a \IBL\ibl.hdr file
 
 		// Attempt to load the source IBL image (gets a pink error image if it fails)
-		const string iblTexturePath =
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("sceneRoot") +
-			CoreEngine::GetSceneManager()->GetScene()->GetName() + "\\" +
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("defaultIBLPath");
-
+		const string sceneIBLPath = en::CoreEngine::GetConfig()->GetValue<string>("sceneIBLPath");
 		shared_ptr<Texture> iblTexture =
-			CoreEngine::GetSceneManager()->GetScene()->GetLoadTextureByPath({ iblTexturePath }, true);
+			CoreEngine::GetSceneManager()->GetScene()->GetLoadTextureByPath({ sceneIBLPath }, false);
+		if (!iblTexture)
+		{
+			const string defaultIBLPath = en::CoreEngine::GetConfig()->GetValue<string>("defaultIBLPath");
+			iblTexture = CoreEngine::GetSceneManager()->GetScene()->GetLoadTextureByPath({ defaultIBLPath }, true);
+		}
+
 
 		// Ambient light:
 		const uint32_t generatedTexRes = 512; // TODO: Make this user-controllable?
