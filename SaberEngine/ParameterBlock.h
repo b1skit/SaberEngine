@@ -37,7 +37,7 @@ namespace re
 		inline platform::PermanentParameterBlock::PlatformParams* const GetPlatformParams() const { return m_platformParams.get(); }
 
 	private:		
-		std::string m_paramBlockName; // Shader name
+		std::string m_paramBlockName; // PB's shader name
 
 		std::shared_ptr<void> m_data;
 		size_t m_dataSizeInBytes;
@@ -52,7 +52,7 @@ namespace re
 	public:
 		template <typename T>
 		PermanentParameterBlock(
-			PermanentParameterBlock::Accessor, std::string paramBlockName, std::shared_ptr<T> data,size_t dataSizeInBytes) :
+			PermanentParameterBlock::Accessor, std::string paramBlockName, std::shared_ptr<T> data, size_t dataSizeInBytes) :
 			m_paramBlockName(paramBlockName),
 			m_data(data),
 			m_dataSizeInBytes(dataSizeInBytes)
@@ -64,8 +64,5 @@ namespace re
 	private:
 		// Friends:
 		friend void platform::PermanentParameterBlock::PlatformParams::CreatePlatformParams(re::PermanentParameterBlock&);
-
-		template<typename T>
-		friend std::shared_ptr<re::PermanentParameterBlock> PermanentParameterBlock::Create(std::string, std::shared_ptr<T>);
 	};
 }

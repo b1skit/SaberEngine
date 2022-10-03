@@ -5,8 +5,9 @@
 
 // Optional checks in debug mode:
 #if defined(_DEBUG)
-	// Assert if textures aren't found when attempting to bind them. Helpful, but can be annoying
-	#define STRICT_SHADER_TEXTURE_BINDING
+	// Assert if textures/PBs aren't found when attempting to bind them. Helpful, but can be annoying
+	#define STRICT_SHADER_BINDING
+	
 #endif
 
 // Custom assert:

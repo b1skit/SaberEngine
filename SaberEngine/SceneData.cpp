@@ -311,25 +311,33 @@ namespace
 	shared_ptr<Material> LoadAddMaterial(
 		fr::SceneData& scene, std::string const& sceneRootPath, cgltf_material const* material)
 	{
-		if (material == nullptr)
-		{
-			LOG_ERROR("Mesh does not have a material. Loading an error material");
-			shared_ptr<Material> newMat =
-				make_shared<Material>("Missing material", Material::GetMaterialDefinition("pbrMetallicRoughness"));
-		
-			for (size_t i = 0; i < 5; i++)
-			{
-				newMat->GetTexture((uint32_t)i) = scene.GetLoadTextureByPath({ ERROR_TEXTURE_NAME }, true);
-			}
-			return newMat;
-		}
-		SEAssert("Unsupported material model", material->has_pbr_metallic_roughness == 1);
-
-		const string matName = GenerateMaterialName(*material);
+		const string matName = material == nullptr ? "MissingMaterial" : GenerateMaterialName(*material);
 		if (scene.MaterialExists(matName))
 		{
 			return scene.GetMaterial(matName);
 		}
+
+		if (material == nullptr)
+		{
+			LOG_ERROR("Mesh does not have a material. Creating an error material");
+			shared_ptr<Material> newMat =
+				make_shared<Material>(matName, Material::GetMaterialDefinition("pbrMetallicRoughness"));
+
+			for (size_t i = 0; i < 5; i++)
+			{
+				// TODO: Currently, this inserts the error color as the normal texture, which is invalid
+				newMat->GetTexture((uint32_t)i) = scene.GetLoadTextureByPath({ ERROR_TEXTURE_NAME }, true);
+				newMat->GetTexture((uint32_t)i)->Create();
+			}
+
+			newMat->GetMatParams() = PermanentParameterBlock::Create(
+				"PBRMetallicRoughnessParams", make_shared<Material::PBRMetallicRoughnessParams>());
+
+			scene.AddUniqueMaterial(newMat);
+			return newMat;
+		}
+
+		SEAssert("Unsupported material model", material->has_pbr_metallic_roughness == 1);	
 
 		shared_ptr<Material> newMat =
 			make_shared<Material>(matName, Material::GetMaterialDefinition("pbrMetallicRoughness"));
@@ -424,8 +432,10 @@ namespace
 		matParams->g_emissiveFactor = glm::make_vec3(material->emissive_factor);
 		matParams->g_f0 = vec3(0.04f, 0.04f, 0.04f);
 
-		newMat->GetMatParams() =
-			PermanentParameterBlock::Create<Material::PBRMetallicRoughnessParams>("PBRMetallicRoughnessParams", matParams);
+		newMat->GetMatParams() = PermanentParameterBlock::Create("PBRMetallicRoughnessParams", matParams);
+
+		/*newMat->AddParamBlock(PermanentParameterBlock::Create(
+			"PBRMetallicRoughnessParams", matParams, sizeof(Material::PBRMetallicRoughnessParams)));*/
 
 		scene.AddUniqueMaterial(newMat);
 		return newMat;
@@ -881,7 +891,7 @@ namespace
 			}
 		} // End RenderMesh population
 
-		// Load other attachments now the GameObject transformations have been populated:
+		// Add other attachments now the GameObject transformations have been populated:
 		if (current->light)
 		{
 			LoadAddLight(scene, parent, current->light);

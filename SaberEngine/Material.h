@@ -41,27 +41,25 @@ namespace gr
 			std::string m_definitionName = "uninitializeddMaterialDefinition";
 			std::vector<TextureSlotDesc> m_textureSlots; // Vector index == shader binding index
 			std::shared_ptr<gr::Shader> m_shader = nullptr;
-			
 		};
 		static std::shared_ptr<MaterialDefinition const> GetMaterialDefinition(std::string const& matName);
 
+
 		struct PBRMetallicRoughnessParams
 		{
-			// Currently, these are hard-coded to match the GLTF material params
-			// TODO: Support generic material params
+			// GLTF PBR material			
+			glm::vec4 g_baseColorFactor { 1.f, 1.f, 1.f, 1.f };
 
-			glm::vec4 g_baseColorFactor;
+			float g_metallicFactor = 1.f;
+			float g_roughnessFactor = 1.f;
+			float g_normalScale = 1.f;
+			float g_occlusionStrength = 1.f;
 
-			float g_metallicFactor;
-			float g_roughnessFactor;
-			float g_normalScale;
-			float g_occlusionStrength;
-
-			glm::vec3 g_emissiveFactor;
+			glm::vec3 g_emissiveFactor{ 0.f, 0.f, 0.f};
 			float padding0;
 
 			// Non-GLTF properties:
-			glm::vec3 g_f0; // For non-metals only
+			glm::vec3 g_f0{ 0.f, 0.f, 0.f }; // For non-metals only
 			float padding1;
 
 			//float g_isDoubleSided;

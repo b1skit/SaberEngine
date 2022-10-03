@@ -319,7 +319,7 @@ namespace opengl
 		{
 			auto bindingUnit = params->m_samplerUnits.find(uniformName);
 
-#if defined(STRICT_SHADER_TEXTURE_BINDING)
+#if defined(STRICT_SHADER_BINDING)
 			SEAssert("Invalid texture name", bindingUnit != params->m_samplerUnits.end());
 #else
 			if (bindingUnit == params->m_samplerUnits.end()) return;
@@ -331,7 +331,7 @@ namespace opengl
 		{
 			auto bindingUnit = params->m_samplerUnits.find(uniformName);
 
-#if defined(STRICT_SHADER_TEXTURE_BINDING)
+#if defined(STRICT_SHADER_BINDING)
 			SEAssert("Invalid sampler name", bindingUnit != params->m_samplerUnits.end());
 #else
 			if (bindingUnit == params->m_samplerUnits.end()) return;
@@ -374,25 +374,33 @@ namespace opengl
 		
 		// Find the buffer binding index via introspection
 		const GLint resourceIdx = glGetProgramResourceIndex(
-			shaderPlatformParams->m_shaderReference, 
-			GL_SHADER_STORAGE_BLOCK, 
-			paramBlock.Name().c_str());
+			shaderPlatformParams->m_shaderReference,	// program
+			GL_SHADER_STORAGE_BLOCK,					// programInterface
+			paramBlock.Name().c_str());					// name
 
 		SEAssert("Failed to get resource index", resourceIdx != GL_INVALID_ENUM);
 
-		GLint bindIndex;
-		GLenum props[1] = { GL_BUFFER_BINDING };
-		glGetProgramResourceiv(
-			shaderPlatformParams->m_shaderReference, 
-			GL_SHADER_STORAGE_BLOCK, 
-			resourceIdx,
-			1,
-			props,
-			1,
-			NULL,
-			&bindIndex);
+#if defined(STRICT_SHADER_BINDING)
+		// GL_INVALID_INDEX is returned if name is not the name of a resource within the shader program
+		SEAssert("Failed to find the resource in the shader. This is is not an error, but a useful debugging helper", 
+			resourceIdx != GL_INVALID_INDEX);
+#endif
+		if (resourceIdx != GL_INVALID_INDEX)
+		{
+			GLint bindIndex;
+			GLenum properties[1] = { GL_BUFFER_BINDING };
+			glGetProgramResourceiv(
+				shaderPlatformParams->m_shaderReference,
+				GL_SHADER_STORAGE_BLOCK,
+				resourceIdx,
+				1,
+				properties,
+				1,
+				NULL,
+				&bindIndex);
 
-		opengl::PermanentParameterBlock::Bind(paramBlock, bindIndex);
+			opengl::PermanentParameterBlock::Bind(paramBlock, bindIndex);
+		}
 
 		// Restore the state:
 		if (!isBound)

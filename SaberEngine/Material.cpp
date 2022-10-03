@@ -7,17 +7,17 @@
 #include "CoreEngine.h"
 #include "ParameterBlock.h"
 
-using std::string;
-using std::shared_ptr;
-using std::unique_ptr;
-using std::vector;
-using std::unordered_map;
 using gr::Shader;
 using gr::Texture;
 using gr::Sampler;
 using re::PermanentParameterBlock;
 using en::CoreEngine;
 
+using std::string;
+using std::shared_ptr;
+using std::unique_ptr;
+using std::vector;
+using std::unordered_map;
 using std::make_unique;
 using std::make_shared;
 using std::vector;
@@ -63,7 +63,7 @@ namespace gr
 	}
 
 
-	Material::Material(std::string const& name, std::shared_ptr<MaterialDefinition const> matDefinition) :
+	Material::Material(string const& name, shared_ptr<MaterialDefinition const> matDefinition) :
 		m_name(name),
 		m_texSlots(matDefinition->m_textureSlots),
 		m_shader(matDefinition->m_shader),
@@ -99,7 +99,10 @@ namespace gr
 			}
 		}
 
-		shader->SetParameterBlock(*m_matParams.get());
+		if (m_matParams)
+		{
+			shader->SetParameterBlock(*m_matParams.get());
+		}
 	}
 
 
