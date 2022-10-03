@@ -30,6 +30,7 @@ namespace en
 	#define InputButton_Right		btn_strafeRight
 	#define InputButton_Up			btn_up
 	#define InputButton_Down		btn_down
+	#define InputButton_Sprint		btn_sprint
 
 	#define InputButton_Quit		btn_quit
 
@@ -41,6 +42,7 @@ namespace en
 	#define L_SHIFT		"lshift"
 	#define SPACE		"space"
 	#define ESC			"esc"
+	#define L_CTRL		"lctrl"
 
 
 	const std::unordered_map<std::string, SDL_Scancode> ScancodeMappings =
@@ -48,6 +50,7 @@ namespace en
 		{L_SHIFT,	SDL_SCANCODE_LSHIFT},
 		{SPACE,		SDL_SCANCODE_SPACE},
 		{ESC,		SDL_SCANCODE_ESCAPE},
+		{L_CTRL,	SDL_SCANCODE_LCTRL},
 	};
 
 
@@ -60,6 +63,7 @@ namespace en
 		InputButton_Right,
 		InputButton_Up,
 		InputButton_Down,
+		InputButton_Sprint,
 
 		InputButton_Quit, // Temporary. TODO: Hard code a quit button
 
@@ -76,6 +80,7 @@ namespace en
 		MACRO_TO_STR(InputButton_Right),
 		MACRO_TO_STR(InputButton_Up),
 		MACRO_TO_STR(InputButton_Down),
+		MACRO_TO_STR(InputButton_Sprint),
 
 		MACRO_TO_STR(InputButton_Quit),
 	};

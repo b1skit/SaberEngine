@@ -27,14 +27,14 @@ namespace en
 		// Initialize keyboard keys:
 		for (int i = 0; i < en::KeyboardButtonState_Count; i++)
 		{
-			m_inputKeyboardBindings[i]		= SDL_SCANCODE_UNKNOWN; // == 0
-			m_keyboardButtonStates[i]		= false;
+			m_inputKeyboardBindings[i]	= SDL_SCANCODE_UNKNOWN; // == 0
+			m_keyboardButtonStates[i]	= false;
 		}
 
 		// Initialize mouse axes:
 		for (int i = 0; i < en::InputAxis_Count; i++)
 		{
-			m_mouseAxisStates[i]	= 0.0f;
+			m_mouseAxisStates[i] = 0.0f;
 		}
 	}
 
@@ -104,6 +104,8 @@ namespace en
 			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Up]];
 		m_keyboardButtonStates[en::InputButton_Down] =
 			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Down]];
+		m_keyboardButtonStates[en::InputButton_Sprint] =
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Sprint]];
 
 		m_keyboardButtonStates[en::InputButton_Quit] =
 			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Quit]];
@@ -134,15 +136,13 @@ namespace en
 	{
 		for (int i = 0; i < en::KeyboardButtonState_Count; i++)
 		{
-			string buttonString = CoreEngine::GetCoreEngine()->GetConfig()->GetValueAsString(en::KEY_NAMES[i]);
+			const string buttonString = CoreEngine::GetCoreEngine()->GetConfig()->GetValueAsString(en::KEY_NAMES[i]);
 
-			// Handle chars:
-			if (buttonString.length() == 1)
+			if (buttonString.length() == 1) // Handle chars:
 			{
 				m_inputKeyboardBindings[i] = SDL_GetScancodeFromKey((SDL_Keycode)buttonString.c_str()[0]);
 			}
-			// Handle strings:
-			else
+			else // Handle strings:
 			{
 				auto result = en::ScancodeMappings.find(buttonString);
 

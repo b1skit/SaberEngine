@@ -46,8 +46,9 @@ namespace en
 			{"defaultExposure",						{1.0f,	SettingType::Common}},
 
 			// Input parameters:
-			{"mousePitchSensitivity",				{0.00005f, SettingType::Common}},
-			{"mouseYawSensitivity",					{0.00005f, SettingType::Common}},
+			{"mousePitchSensitivity",				{0.00005f,	SettingType::Common}},
+			{"mouseYawSensitivity",					{0.00005f,	SettingType::Common}},
+			{"sprintSpeedModifier",					{2.0f,		SettingType::Common}},
 
 			// SceneData config root path: All assets stored here
 			{"scenesRoot",							{string("..\\Scenes\\"), SettingType::Common}},	
@@ -60,6 +61,7 @@ namespace en
 			{MACRO_TO_STR(InputButton_Right),		{'d', SettingType::Common}},
 			{MACRO_TO_STR(InputButton_Up),			{string(SPACE), SettingType::Common}},
 			{MACRO_TO_STR(InputButton_Down),		{string(L_SHIFT), SettingType::Common}},
+			{MACRO_TO_STR(InputButton_Sprint),		{string(L_CTRL), SettingType::Common}},
 
 			{MACRO_TO_STR(InputButton_Quit),		{string(ESC), SettingType::Common}},
 

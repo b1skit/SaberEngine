@@ -23,6 +23,7 @@ namespace fr
 		m_savedEulerRotation(vec3(0.0f, 0.0f, 0.0f))
 	{
 		m_playerCam->GetTransform()->SetParent(&m_transform);
+		m_sprintSpeedModifier = en::CoreEngine::GetConfig()->GetValue<float>("sprintSpeedModifier");
 	}
 
 
@@ -69,10 +70,16 @@ namespace fr
 			direction -= m_transform.UpWorld(); // PlayerCam is tilted; use the parent transform instead
 		}
 
+		float sprintModifier = 1.0f;
+		if (InputManager::GetKeyboardInputState(en::InputButton_Sprint))
+		{
+			sprintModifier = m_sprintSpeedModifier;
+		}
+
 		if (glm::length(direction) != 0.0f)
 		{
 			direction = glm::normalize(direction);
-			direction *= (float)(m_movementSpeed * TimeManager::DeltaTime());
+			direction *= (float)(m_movementSpeed * sprintModifier * TimeManager::DeltaTime());
 
 			m_transform.TranslateModel(direction);
 		}

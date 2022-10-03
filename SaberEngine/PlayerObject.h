@@ -35,6 +35,7 @@ namespace fr
 
 		// Control configuration:
 		float m_movementSpeed;
+		float m_sprintSpeedModifier;
 
 		// Saved location:
 		glm::vec3 m_savedPosition;
