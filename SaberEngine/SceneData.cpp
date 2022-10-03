@@ -534,80 +534,11 @@ namespace
 		}
 
 		const vec3 colorIntensity = glm::make_vec3(light->color) * light->intensity;
-
+		const bool attachShadow = true;
 		shared_ptr<Light> newLight = 
-			make_shared<Light>(lightName, parent->GetTransform(), lightType, colorIntensity, nullptr);
+			make_shared<Light>(lightName, parent->GetTransform(), lightType, colorIntensity, attachShadow);
 
 		scene.AddLight(newLight);
-	}
-
-
-	// Attach shadowmaps once the scene has been loaded so the scene Bounds are accurate
-	void AttachShadowMaps(fr::SceneData& scene)
-	{
-		// TODO: Shadow setup should be handled in the Light constructor
-		// Light should have an optional "hasShadow" flag
-		// -> Keylight/Deferred light GS should check the bounds each frame instead of specifying shadow params once after scene load
-
-		shared_ptr<Light> keylight = scene.GetKeyLight();
-		if (keylight)
-		{
-			gr::Bounds sceneWorldBounds = scene.GetWorldSpaceSceneBounds();
-
-			const gr::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
-				glm::inverse(keylight->GetTransform()->GetWorldMatrix()));
-
-			gr::Camera::CameraConfig shadowCamConfig;
-			shadowCamConfig.m_near = -transformedBounds.zMax();
-			shadowCamConfig.m_far = -transformedBounds.zMin();
-
-			shadowCamConfig.m_isOrthographic = true;
-			shadowCamConfig.m_orthoLeft = transformedBounds.xMin();
-			shadowCamConfig.m_orthoRight = transformedBounds.xMax();
-			shadowCamConfig.m_orthoBottom = transformedBounds.yMin();
-			shadowCamConfig.m_orthoTop = transformedBounds.yMax();
-
-			shared_ptr<ShadowMap> keyLightShadowMap = make_shared<ShadowMap>
-			(
-				keylight->GetName(),
-				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowMapWidth"),
-				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowMapHeight"),
-				shadowCamConfig,
-				keylight->GetTransform()
-			);
-
-			keylight->GetShadowMap() = keyLightShadowMap;
-		}
-
-		if (scene.GetPointLights().size() > 0)
-		{
-			gr::Camera::CameraConfig shadowCamConfig;
-			shadowCamConfig.m_fieldOfView = 90.0f;
-			shadowCamConfig.m_near = 1.0f;
-			shadowCamConfig.m_aspectRatio = 1.0f;
-			shadowCamConfig.m_isOrthographic = false;
-			
-			for (shared_ptr<Light> point : scene.GetPointLights())
-			{
-				shadowCamConfig.m_far = point->GetRadius();
-
-				shared_ptr<ShadowMap> pointLightShadowMap = make_shared<ShadowMap>(
-					point->GetName(),
-					CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowCubeMapWidth"),
-					CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowCubeMapHeight"), 
-					shadowCamConfig,
-					point->GetTransform(),
-					vec3(0.0f, 0.0f, 0.0f),	// No offset
-					true);
-				
-				pointLightShadowMap->MinShadowBias() =
-					CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultMinShadowBias");
-				pointLightShadowMap->MaxShadowBias() = 
-					CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultMaxShadowBias");
-				
-				point->GetShadowMap() = pointLightShadowMap;
-			}
-		}
 	}
 
 
@@ -991,8 +922,6 @@ namespace fr
 		const string sceneRootPath = en::CoreEngine::GetConfig()->GetValue<string>("sceneRootPath");
 		LoadSceneHierarchy(sceneRootPath, *this, data);
 		LoadAddCamera(*this, nullptr, nullptr); // Adds a default camera if none were found during LoadSceneHierarchy()
-		
-		AttachShadowMaps(*this); // TODO: Move this functionality into the Light ctor
 
 		// Cleanup:
 		cgltf_free(data);

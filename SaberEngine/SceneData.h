@@ -45,8 +45,11 @@ namespace fr
 		
 		// Lights:
 		void AddLight(std::shared_ptr<gr::Light> newLight);
+		inline std::shared_ptr<gr::Light> GetAmbientLight() { return m_ambientLight; }
 		inline std::shared_ptr<gr::Light> const GetAmbientLight() const { return m_ambientLight; }
+		inline std::shared_ptr<gr::Light> GetKeyLight() { return m_keyLight; }
 		inline std::shared_ptr<gr::Light> GetKeyLight() const { return m_keyLight; }
+		inline std::vector<std::shared_ptr<gr::Light>>& GetPointLights() { return m_pointLights; }
 		inline std::vector<std::shared_ptr<gr::Light>> const& GetPointLights() const { return m_pointLights; }
 
 		// GameObjects:

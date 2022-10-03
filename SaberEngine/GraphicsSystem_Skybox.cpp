@@ -40,16 +40,16 @@ namespace gr
 
 		// Load the HDR image:
 		const string iblTexturePath = en::CoreEngine::GetConfig()->GetValue<string>("sceneIBLPath");
-		m_skyTexture = CoreEngine::GetSceneManager()->GetScene()->GetLoadTextureByPath({ iblTexturePath }, false);
+		m_skyTexture = CoreEngine::GetSceneManager()->GetSceneData()->GetLoadTextureByPath({ iblTexturePath }, false);
 		if (!m_skyTexture)
 		{
 			const string defaultIBLPath = en::CoreEngine::GetConfig()->GetValue<string>("defaultIBLPath");
-			m_skyTexture = CoreEngine::GetSceneManager()->GetScene()->GetLoadTextureByPath({ defaultIBLPath }, true);
+			m_skyTexture = CoreEngine::GetSceneManager()->GetSceneData()->GetLoadTextureByPath({ defaultIBLPath }, true);
 		}
 
 		if (m_skyTexture == nullptr)
 		{
-			const string& sceneName = CoreEngine::GetSceneManager()->GetScene()->GetName();
+			const string& sceneName = CoreEngine::GetSceneManager()->GetSceneData()->GetName();
 			const string skyboxTextureRoot =
 				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("scenesRoot") + sceneName + "\\Skybox\\";
 			// TODO: This skybox path should be user-configurable
@@ -94,7 +94,7 @@ namespace gr
 
 			if (cubemapTexPaths.size() == 6)
 			{
-				m_skyTexture = CoreEngine::GetSceneManager()->GetScene()->GetLoadTextureByPath(cubemapTexPaths);
+				m_skyTexture = CoreEngine::GetSceneManager()->GetSceneData()->GetLoadTextureByPath(cubemapTexPaths);
 			}
 			else
 			{
@@ -161,7 +161,7 @@ namespace gr
 
 		m_skyboxStage.SetStageParams(skyboxStageParams);
 
-		m_skyboxStage.GetStageCamera() = CoreEngine::GetSceneManager()->GetScene()->GetMainCamera();
+		m_skyboxStage.GetStageCamera() = CoreEngine::GetSceneManager()->GetSceneData()->GetMainCamera();
 
 		shared_ptr<DeferredLightingGraphicsSystem> deferredLightGS = dynamic_pointer_cast<DeferredLightingGraphicsSystem>(
 			CoreEngine::GetRenderManager()->GetGraphicsSystem<DeferredLightingGraphicsSystem>());

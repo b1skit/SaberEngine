@@ -50,11 +50,11 @@ namespace gr
 		// Set shader constants:
 		m_tonemappingStage.GetStageShader()->SetUniform(
 			"exposure",
-			&CoreEngine::GetSceneManager()->GetScene()->GetMainCamera()->GetExposure(),
+			&CoreEngine::GetSceneManager()->GetSceneData()->GetMainCamera()->GetExposure(),
 			platform::Shader::UniformType::Float,
 			1);
 
-		m_tonemappingStage.GetStageCamera() = CoreEngine::GetSceneManager()->GetScene()->GetMainCamera();
+		m_tonemappingStage.GetStageCamera() = CoreEngine::GetSceneManager()->GetSceneData()->GetMainCamera();
 		m_tonemappingStage.GetTextureTargetSet() = *CoreEngine::GetRenderManager()->GetDefaultTextureTargetSet();
 
 		pipeline.AppendRenderStage(m_tonemappingStage);

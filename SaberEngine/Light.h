@@ -37,9 +37,8 @@ namespace gr
 		Light(std::string const& lightName,
 			gr::Transform* ownerTransform,
 			LightType lightType, 
-			glm::vec3 colorIntensity, 
-			std::shared_ptr<gr::ShadowMap> shadowMap = nullptr,
-			float radius = 1.0f
+			glm::vec3 colorIntensity,
+			bool hasShadow
 		);
 
 		~Light() { Destroy(); }
@@ -51,6 +50,8 @@ namespace gr
 		Light() = delete;
 
 		void Destroy();
+
+		void Update();
 
 		// Getters/Setters:
 		inline std::string const& GetName() const { return m_name; }

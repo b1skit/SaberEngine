@@ -78,8 +78,6 @@ namespace gr
 		m_shadowTargetSet.DepthStencilTarget() = depthTexture;
 		m_shadowTargetSet.Viewport() = gr::Viewport(0, 0, depthTexture->Width(), depthTexture->Height());
 		m_shadowTargetSet.CreateDepthStencilTarget();
-
-		//en::CoreEngine::GetSceneManager()->RegisterCamera(fr::CAMERA_TYPE_SHADOW, m_shadowCam);
 	}
 }
 

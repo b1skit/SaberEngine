@@ -125,16 +125,15 @@ namespace en
 			TryInsertDefault("defaultIBLPath",	std::string("IBL\\ibl.hdr"));
 
 			// Shadow map defaults:
-			TryInsertDefault("defaultOrthoHalfWidth",		5.0f);		// TODO: Choose appropriate values??
-			TryInsertDefault("defaultOrthoHalfHeight",		5.0f);		// -> Function of resolution and scene width
-			TryInsertDefault("defaultMinShadowBias",		0.01f);
-			TryInsertDefault("defaultMaxShadowBias",		0.05f);
+			TryInsertDefault("defaultOrthoHalfWidth",	5.0f);		// TODO: Choose appropriate values??
+			TryInsertDefault("defaultOrthoHalfHeight",	5.0f);		// -> Function of resolution and scene width
+			TryInsertDefault("defaultMinShadowBias",	0.01f);
+			TryInsertDefault("defaultMaxShadowBias",	0.05f);
 
 			// Texture dimensions:
-			TryInsertDefault("defaultShadowMapWidth",		(uint32_t)2048);
-			TryInsertDefault("defaultShadowMapHeight",		(uint32_t)2048);
-			TryInsertDefault("defaultShadowCubeMapWidth",	(uint32_t)512); // TODO: Only need 1 dimension for cubemaps
-			TryInsertDefault("defaultShadowCubeMapHeight",	(uint32_t)512);
+			TryInsertDefault("defaultShadowMapRes",		(uint32_t)2048);
+			TryInsertDefault("defaultShadowCubeMapRes",	(uint32_t)512);
+
 		}
 			break;
 

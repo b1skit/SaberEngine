@@ -37,7 +37,7 @@ namespace gr
 
 
 	public:
-		Camera(std::string const& cameraName, CameraConfig camConfig, gr::Transform* parent);
+		Camera(std::string const& cameraName, CameraConfig const& camConfig, gr::Transform* parent);
 		~Camera() { Destroy(); }
 
 		void Destroy();
@@ -69,6 +69,7 @@ namespace gr
 		float& GetExposure() { return m_cameraConfig.m_exposure; }
 		float const GetExposure() const { return m_cameraConfig.m_exposure; }
 
+		void SetCameraConfig(CameraConfig const& newConfig);
 
 	private:
 		// Helper function: Configures the camera based on the cameraConfig. MUST be called at least once during setup

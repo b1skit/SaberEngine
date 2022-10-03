@@ -5,8 +5,10 @@
 #include "CoreEngine.h"
 #include "Camera.h"
 #include "PlayerObject.h"
+#include "Light.h"
 
 using gr::Camera;
+using gr::Light;
 using fr::SceneData;
 using std::shared_ptr;
 using std::make_shared;
@@ -16,7 +18,7 @@ using std::string;
 namespace en
 {
 	SceneManager::SceneManager() : EngineComponent("SceneManager"),
-		m_currentScene(nullptr)
+		m_sceneData(nullptr)
 	{	
 	}
 
@@ -27,10 +29,10 @@ namespace en
 		
 		// Load the scene:
 		const string sceneName = en::CoreEngine::GetConfig()->GetValue<string>("sceneName");
-		m_currentScene = std::make_shared<SceneData>(sceneName);
+		m_sceneData = std::make_shared<SceneData>(sceneName);
 
 		const string sceneFilePath = en::CoreEngine::GetConfig()->GetValue<string>("sceneFilePath");
-		const bool loadResult = m_currentScene->Load(sceneFilePath);
+		const bool loadResult = m_sceneData->Load(sceneFilePath);
 		if (!loadResult)
 		{
 			CoreEngine::GetEventManager()->Notify(std::make_shared<EventManager::EventInfo const>(
@@ -38,9 +40,9 @@ namespace en
 		}
 
 		// Add a player object to the scene:
-		shared_ptr<fr::PlayerObject> player = std::make_shared<fr::PlayerObject>(m_currentScene->GetMainCamera());
-		m_currentScene->AddGameObject(player);
-		LOG("Created PlayerObject using \"%s\"", m_currentScene->GetMainCamera()->GetName().c_str());
+		shared_ptr<fr::PlayerObject> player = std::make_shared<fr::PlayerObject>(m_sceneData->GetMainCamera());
+		m_sceneData->AddGameObject(player);
+		LOG("Created PlayerObject using \"%s\"", m_sceneData->GetMainCamera()->GetName().c_str());
 	}
 
 
@@ -48,15 +50,32 @@ namespace en
 	{
 		LOG("Scene manager shutting down...");
 
-		m_currentScene = nullptr;
+		m_sceneData = nullptr;
 	}
 
 
 	void SceneManager::Update()
 	{
-		for (int i = 0; i < (int)m_currentScene->GetGameObjects().size(); i++)
+		// Update GameObjects:
+		for (int i = 0; i < (int)m_sceneData->GetGameObjects().size(); i++)
 		{
-			m_currentScene->GetGameObjects().at(i)->Update();
+			m_sceneData->GetGameObjects().at(i)->Update();
+		}
+
+		// Update lights:
+		shared_ptr<Light> ambientLight = m_sceneData->GetAmbientLight();
+		if (ambientLight)
+		{
+			ambientLight->Update();
+		}
+		shared_ptr<Light> keyLight = m_sceneData->GetKeyLight();
+		if (keyLight)
+		{
+			keyLight->Update();
+		}		
+		for (shared_ptr<Light> pointLight : m_sceneData->GetPointLights())
+		{
+			pointLight->Update();
 		}
 	}
 

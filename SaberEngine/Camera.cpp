@@ -17,7 +17,7 @@ using glm::mat4;
 
 namespace gr
 {
-	Camera::Camera(string const& cameraName, CameraConfig camConfig, Transform* parent) : 
+	Camera::Camera(string const& cameraName, CameraConfig const& camConfig, Transform* parent) :
 		SceneObject::SceneObject(cameraName), 
 			m_cameraConfig(camConfig),
 			m_cameraShader(nullptr)
@@ -133,6 +133,13 @@ namespace gr
 		}
 
 		return m_cubeViewProjection;
+	}
+
+
+	void Camera::SetCameraConfig(CameraConfig const& newConfig)
+	{
+		m_cameraConfig = newConfig;
+		Initialize();
 	}
 }
 

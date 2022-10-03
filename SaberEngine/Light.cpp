@@ -20,17 +20,16 @@ namespace gr
 		gr::Transform* ownerTransform,
 		LightType lightType, 
 		vec3 colorIntensity,
-		std::shared_ptr<gr::ShadowMap> shadowMap /*= nullptr*/,
-		float radius /*= 1.0f*/) : 
+		bool hasShadow) : 
 			m_name(lightName),
 			m_ownerTransform(ownerTransform),
 			m_colorIntensity(colorIntensity),
 			m_type(lightType),
-			m_shadowMap(shadowMap),
+			m_shadowMap(nullptr),
 			m_deferredMesh(nullptr),
 			m_deferredLightShader(nullptr),
 			m_radius(1.0f)
-	{
+	{		
 		// Set up deferred light mesh:
 		string shaderName;
 		switch (lightType)
@@ -68,6 +67,33 @@ namespace gr
 				vec3(-1.0f,	-1.0f,	-1.0f),	// BL
 				vec3(1.0f,	-1.0f,	-1.0f)	// BR
 			);
+
+			if (hasShadow)
+			{
+				gr::Bounds sceneWorldBounds =
+					en::CoreEngine::GetSceneManager()->GetSceneData()->GetWorldSpaceSceneBounds();
+
+				const gr::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
+					glm::inverse(m_ownerTransform->GetWorldMatrix()));
+
+				gr::Camera::CameraConfig shadowCamConfig;
+				shadowCamConfig.m_near = -transformedBounds.zMax();
+				shadowCamConfig.m_far = -transformedBounds.zMin();
+				shadowCamConfig.m_isOrthographic = true;
+				shadowCamConfig.m_orthoLeft = transformedBounds.xMin();
+				shadowCamConfig.m_orthoRight = transformedBounds.xMax();
+				shadowCamConfig.m_orthoBottom = transformedBounds.yMin();
+				shadowCamConfig.m_orthoTop = transformedBounds.yMax();
+
+				const uint32_t shadowMapRes = 
+					en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowMapRes");
+				m_shadowMap = make_shared<ShadowMap>(
+					m_name,
+					shadowMapRes,
+					shadowMapRes,
+					shadowCamConfig,
+					m_ownerTransform);
+			}
 		}
 		break;
 		case Point:
@@ -91,6 +117,31 @@ namespace gr
 			// should be owned by a RenderMesh object and implicitely use its transform)
 			m_deferredMesh->GetTransform().SetModelScale(vec3(m_radius, m_radius, m_radius));
 
+			if (hasShadow)
+			{
+				gr::Camera::CameraConfig shadowCamConfig;
+				shadowCamConfig.m_fieldOfView		= 90.0f;
+				shadowCamConfig.m_near				= 1.0f;
+				shadowCamConfig.m_aspectRatio		= 1.0f;
+				shadowCamConfig.m_isOrthographic	= false;
+				shadowCamConfig.m_far				= m_radius;
+			
+				const uint32_t cubeMapRes = 
+					en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowCubeMapRes");
+				m_shadowMap = make_shared<ShadowMap>(
+					m_name,
+					cubeMapRes,
+					cubeMapRes,
+					shadowCamConfig,
+					m_ownerTransform,
+					vec3(0.0f, 0.0f, 0.0f),	// No offset
+					true); // useCubeMap
+
+				m_shadowMap->MinShadowBias() =
+					en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultMinShadowBias");
+				m_shadowMap->MaxShadowBias() =
+					en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultMaxShadowBias");
+			}
 		}
 		break;
 		case Spot:
@@ -108,6 +159,30 @@ namespace gr
 		m_shadowMap = nullptr;
 		m_deferredMesh = nullptr;
 		m_deferredLightShader = nullptr;
+	}
+
+
+	void Light::Update()
+	{
+		if (m_type == LightType::Directional) // Update shadow cam bounds
+		{
+			gr::Bounds sceneWorldBounds =
+				en::CoreEngine::GetSceneManager()->GetSceneData()->GetWorldSpaceSceneBounds();
+
+			const gr::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
+				glm::inverse(m_ownerTransform->GetWorldMatrix()));
+
+			gr::Camera::CameraConfig shadowCamConfig;
+			shadowCamConfig.m_near				= -transformedBounds.zMax();
+			shadowCamConfig.m_far				= -transformedBounds.zMin();
+			shadowCamConfig.m_isOrthographic	= true;
+			shadowCamConfig.m_orthoLeft			= transformedBounds.xMin();
+			shadowCamConfig.m_orthoRight		= transformedBounds.xMax();
+			shadowCamConfig.m_orthoBottom		= transformedBounds.yMin();
+			shadowCamConfig.m_orthoTop			= transformedBounds.yMax();
+
+			m_shadowMap->ShadowCamera()->SetCameraConfig(shadowCamConfig);
+		}
 	}
 }
 

@@ -63,7 +63,7 @@ namespace gr
 		deferredLightingTargetSet.CreateColorDepthStencilTargets();
 
 		shared_ptr<Camera> deferredLightingCam = 
-			en::CoreEngine::GetSceneManager()->GetScene()->GetMainCamera();
+			en::CoreEngine::GetSceneManager()->GetSceneData()->GetMainCamera();
 
 		
 		// Set the target sets, even if the stages aren't actually used (to ensure they're still valid)
@@ -86,11 +86,11 @@ namespace gr
 		// Attempt to load the source IBL image (gets a pink error image if it fails)
 		const string sceneIBLPath = en::CoreEngine::GetConfig()->GetValue<string>("sceneIBLPath");
 		shared_ptr<Texture> iblTexture =
-			CoreEngine::GetSceneManager()->GetScene()->GetLoadTextureByPath({ sceneIBLPath }, false);
+			CoreEngine::GetSceneManager()->GetSceneData()->GetLoadTextureByPath({ sceneIBLPath }, false);
 		if (!iblTexture)
 		{
 			const string defaultIBLPath = en::CoreEngine::GetConfig()->GetValue<string>("defaultIBLPath");
-			iblTexture = CoreEngine::GetSceneManager()->GetScene()->GetLoadTextureByPath({ defaultIBLPath }, true);
+			iblTexture = CoreEngine::GetSceneManager()->GetSceneData()->GetLoadTextureByPath({ defaultIBLPath }, true);
 		}
 
 
@@ -315,7 +315,7 @@ namespace gr
 
 
 		// Key light:
-		shared_ptr<Light> keyLight = en::CoreEngine::GetSceneManager()->GetScene()->GetKeyLight();
+		shared_ptr<Light> keyLight = en::CoreEngine::GetSceneManager()->GetSceneData()->GetKeyLight();
 
 		RenderStage::RenderStageParams keylightStageParams(ambientStageParams);
 		if (keyLight)
@@ -340,7 +340,7 @@ namespace gr
 
 
 		// Point lights: Draw multiple light volume meshes within a single stage
-		vector<shared_ptr<Light>> const& pointLights = en::CoreEngine::GetSceneManager()->GetScene()->GetPointLights();
+		vector<shared_ptr<Light>> const& pointLights = en::CoreEngine::GetSceneManager()->GetSceneData()->GetPointLights();
 		if (pointLights.size() > 0)
 		{
 			m_pointlightStage.GetStageCamera() = deferredLightingCam;
@@ -407,8 +407,8 @@ namespace gr
 		// TODO: Is there some way to automate these calls so we don't need to remember them in every stage?
 
 		// Light pointers:
-		shared_ptr<Light> const keyLight = CoreEngine::GetSceneManager()->GetScene()->GetKeyLight();
-		vector<shared_ptr<Light>> const& pointLights = CoreEngine::GetSceneManager()->GetScene()->GetPointLights();
+		shared_ptr<Light> const keyLight = CoreEngine::GetSceneManager()->GetSceneData()->GetKeyLight();
+		vector<shared_ptr<Light>> const& pointLights = CoreEngine::GetSceneManager()->GetSceneData()->GetPointLights();
 
 		// Re-set geometry for each stage:
 		m_ambientStage.SetGeometryBatches(&m_ambientMesh);
