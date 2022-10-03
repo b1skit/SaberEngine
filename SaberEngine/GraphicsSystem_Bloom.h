@@ -8,7 +8,7 @@ namespace gr
 	class BloomGraphicsSystem : public virtual GraphicsSystem
 	{
 	public:
-		BloomGraphicsSystem(std::string name);
+		explicit BloomGraphicsSystem(std::string name);
 
 		BloomGraphicsSystem() = delete;
 		~BloomGraphicsSystem() override {}

@@ -12,7 +12,7 @@ namespace gr
 		static const std::vector<std::string> GBufferTexNames;
 
 	public:
-		GBufferGraphicsSystem(std::string name);
+		explicit GBufferGraphicsSystem(std::string name);
 
 		GBufferGraphicsSystem() = delete;
 

@@ -10,7 +10,7 @@ namespace gr
 	class SkyboxGraphicsSystem : public virtual GraphicsSystem
 	{
 	public:
-		SkyboxGraphicsSystem(std::string name);
+		explicit SkyboxGraphicsSystem(std::string name);
 
 		SkyboxGraphicsSystem() = delete;
 		~SkyboxGraphicsSystem() override {}

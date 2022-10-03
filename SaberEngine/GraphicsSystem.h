@@ -12,7 +12,7 @@ namespace gr
 	class GraphicsSystem
 	{
 	public:
-		GraphicsSystem(std::string name);
+		explicit GraphicsSystem(std::string name);
 
 		GraphicsSystem() = delete;
 		GraphicsSystem(GraphicsSystem const&) = delete;

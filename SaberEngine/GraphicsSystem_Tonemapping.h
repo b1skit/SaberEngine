@@ -8,7 +8,7 @@ namespace gr
 	class TonemappingGraphicsSystem : public virtual GraphicsSystem
 	{
 	public:
-		TonemappingGraphicsSystem(std::string name);
+		explicit TonemappingGraphicsSystem(std::string name);
 
 		TonemappingGraphicsSystem() = delete;
 		~TonemappingGraphicsSystem() override {}

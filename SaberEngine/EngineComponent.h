@@ -9,7 +9,7 @@ namespace en
 	class EngineComponent : public en::SaberObject
 	{
 	public:
-		EngineComponent(std::string const& name) : en::SaberObject(name) {}
+		explicit EngineComponent(std::string const& name) : en::SaberObject(name) {}
 
 		virtual ~EngineComponent() = 0;
 

@@ -8,7 +8,7 @@ namespace en
 	class SaberObject
 	{
 	public:
-		SaberObject(std::string const& name) :
+		explicit SaberObject(std::string const& name) :
 			m_name(name)
 		{
 			objectID = AssignObjectID();

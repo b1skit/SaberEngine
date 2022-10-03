@@ -16,7 +16,7 @@ namespace en
 	class CoreEngine : public virtual en::SaberObject, public virtual en::EventListener
 	{
 	public:
-		CoreEngine(int argc, char** argv);
+		explicit CoreEngine(int argc, char** argv);
 		~CoreEngine() = default;
 		
 		CoreEngine() = delete;

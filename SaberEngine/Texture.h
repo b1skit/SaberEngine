@@ -95,7 +95,7 @@ namespace gr
 
 
 	public:
-		Texture(TextureParams const& params);
+		explicit Texture(TextureParams const& params);
 		~Texture() { Destroy();	}
 
 		Texture() = delete;

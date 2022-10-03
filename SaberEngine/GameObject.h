@@ -10,7 +10,7 @@ namespace fr
 	{
 	public:
 		// TODO: GameObject ctors should all take a parent Transform*
-		GameObject(std::string const& name);
+		explicit GameObject(std::string const& name);
 		GameObject(GameObject const& gameObject);
 
 		GameObject(GameObject&&) = default;

@@ -10,7 +10,7 @@ namespace fr
 	class SceneObject : public en::SaberObject, public virtual en::EventListener
 	{
 	public:
-		SceneObject(std::string const& newName) : en::SaberObject::SaberObject(newName) {}
+		explicit SceneObject(std::string const& newName) : en::SaberObject::SaberObject(newName) {}
 
 		SceneObject(const SceneObject& sceneObject) : en::SaberObject(sceneObject.GetName())
 		{

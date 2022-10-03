@@ -14,7 +14,7 @@ namespace gr
 	{
 	public:
 		TextureTarget();
-		TextureTarget(std::shared_ptr<gr::Texture> texture);
+		explicit TextureTarget(std::shared_ptr<gr::Texture> texture);
 		
 		~TextureTarget();
 
@@ -44,7 +44,7 @@ namespace gr
 	{
 	public:
 		Viewport();
-		Viewport(uint32_t xMin, uint32_t yMin, uint32_t width, uint32_t height);
+		explicit Viewport(uint32_t xMin, uint32_t yMin, uint32_t width, uint32_t height);
 
 		Viewport(Viewport const&) = default;
 		Viewport(Viewport&&) = default;
@@ -79,7 +79,7 @@ namespace gr
 	class TextureTargetSet
 	{
 	public:
-		TextureTargetSet(std::string name);
+		explicit TextureTargetSet(std::string name);
 		~TextureTargetSet();
 
 		TextureTargetSet() = delete;

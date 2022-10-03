@@ -59,7 +59,7 @@ namespace gr
 
 
 	public:
-		RenderStage(std::string const& name);
+		explicit RenderStage(std::string const& name);
 		~RenderStage() = default;
 				
 		RenderStage(RenderStage const&);

@@ -11,7 +11,7 @@ namespace gr
 	class ShadowsGraphicsSystem : public virtual GraphicsSystem
 	{
 	public:
-		ShadowsGraphicsSystem(std::string name);
+		explicit ShadowsGraphicsSystem(std::string name);
 
 		ShadowsGraphicsSystem() = delete;
 		~ShadowsGraphicsSystem() override {}

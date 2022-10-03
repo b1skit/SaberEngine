@@ -23,7 +23,7 @@ namespace fr
 	class SceneData
 	{
 	public:
-		SceneData(std::string const& sceneName);
+		explicit SceneData(std::string const& sceneName);
 		~SceneData() { Destroy(); }
 
 		SceneData() = delete;

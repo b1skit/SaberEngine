@@ -15,7 +15,7 @@ namespace fr
 	class PlayerObject : public virtual fr::GameObject
 	{
 	public:
-		PlayerObject(std::shared_ptr<gr::Camera> playerCam);
+		explicit PlayerObject(std::shared_ptr<gr::Camera> playerCam);
 		~PlayerObject() = default;
 
 		PlayerObject() = delete;

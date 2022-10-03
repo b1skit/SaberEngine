@@ -32,7 +32,7 @@ namespace gr
 
 
 	public:
-		Shader(std::string const& shaderName);
+		explicit Shader(std::string const& shaderName);
 		~Shader() { Destroy(); }
 
 		Shader() = delete;

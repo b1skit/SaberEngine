@@ -8,7 +8,7 @@ namespace gr
 	class DeferredLightingGraphicsSystem : public virtual GraphicsSystem
 	{
 	public:
-		DeferredLightingGraphicsSystem(std::string name);
+		explicit DeferredLightingGraphicsSystem(std::string name);
 
 		DeferredLightingGraphicsSystem() = delete;
 		~DeferredLightingGraphicsSystem() override {}

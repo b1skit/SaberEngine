@@ -75,7 +75,7 @@ namespace gr
 
 
 	public:
-		Sampler(std::string const& name, SamplerParams params);
+		explicit Sampler(std::string const& name, SamplerParams params);
 		~Sampler() { Destroy(); }
 
 		SamplerParams const& GetSamplerParams() const { return m_samplerParams; }

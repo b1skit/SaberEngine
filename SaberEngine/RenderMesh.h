@@ -14,7 +14,7 @@ namespace gr
 	class RenderMesh
 	{
 	public:
-		RenderMesh(gr::Transform* gameObjectParent, std::shared_ptr<gr::Mesh> meshPrimitive);
+		explicit RenderMesh(gr::Transform* gameObjectParent, std::shared_ptr<gr::Mesh> meshPrimitive);
 
 		RenderMesh(RenderMesh const&);
 		RenderMesh(RenderMesh&&) = default;
