@@ -3,6 +3,18 @@
   "Id": "80c62e80-7437-4bb9-b7e0-693fa4c402a1",
   "Items": [
     {
+      "Id": "78b72e43-f264-490c-be44-81c5face5020",
+      "Command": "-scene Duck\\glTF\\Duck.gltf"
+    },
+    {
+      "Id": "fb976e8d-28b2-45a6-8a57-b740be8156b6",
+      "Command": "-scene Duck\\glTF-Embedded\\Duck.gltf"
+    },
+    {
+      "Id": "fedc2bde-0b47-426d-958b-b2f73e676030",
+      "Command": "-scene Duck\\glTF-Binary\\Duck.glb"
+    },
+    {
       "Id": "7c9082e9-1698-490b-b049-d34c6350685f",
       "Command": "-scene EmissiveStrengthTest\\glTF\\EmissiveStrengthTest.gltf"
     },

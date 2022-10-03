@@ -139,6 +139,7 @@ layout(std430, binding=0) readonly buffer PBRMetallicRoughnessParams
 	float g_roughnessFactor;
 	float g_normalScale;
 	float g_occlusionStrength;
+	float g_emissiveStrength;
 	vec3 g_emissiveFactor;
 	vec3 g_f0; // For non-metals only
 };

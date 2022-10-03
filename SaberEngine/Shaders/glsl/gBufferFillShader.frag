@@ -53,8 +53,8 @@ void main()
 	const float exposure = Exposure(ev100);
 
 	// Product of (emissiveTexture * emissiveFactor) is in cd/(m^2) (Candela per square meter)
-	const vec3 emissive = texture(MatEmissive, data.uv0.xy).rgb * g_emissiveFactor;
-	const float EC = 4.0; // EC == Exposure compensation. TODO: Make this user-controllable
+	const vec3 emissive = texture(MatEmissive, data.uv0.xy).rgb * g_emissiveFactor * g_emissiveStrength;
+	const float EC = 3.0; // EC == Exposure compensation. TODO: Make this user-controllable
 
 	gBuffer_out_emissive = vec4(emissive * pow(2.0, ev100 + EC - 3.0) * exposure, 1.0f);
 
