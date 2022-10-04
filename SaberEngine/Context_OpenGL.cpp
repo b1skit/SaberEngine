@@ -117,10 +117,10 @@ namespace opengl
 #endif
 
 
-	void Context::Create(re::Context& m_context)
+	void Context::Create(re::Context& context)
 	{
 		opengl::Context::PlatformParams* const platformParams =
-			dynamic_cast<opengl::Context::PlatformParams*>(m_context.GetPlatformParams());
+			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
 
 		// SDL_INIT_VIDEO automatically inits events, but SDL_INIT_EVENTS included here as a reminder
 		SEAssert(
@@ -147,7 +147,9 @@ namespace opengl
 
 		//SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 32); // Crashes if uncommented???
 
-		SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "1", SDL_HINT_OVERRIDE);
+		// Specify relative mouse mode
+		// https://wiki.libsdl.org/SDL_HINT_MOUSE_RELATIVE_MODE_WARP
+		SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0", SDL_HINT_OVERRIDE);
 		SDL_SetRelativeMouseMode(SDL_TRUE);	// Lock the mouse to the window
 
 		//// Make our buffer swap syncronized with the monitor's vertical refresh:
@@ -204,10 +206,10 @@ namespace opengl
 	}
 
 
-	void Context::Destroy(re::Context& m_context)
+	void Context::Destroy(re::Context& context)
 	{
 		opengl::Context::PlatformParams* const platformParams =
-			dynamic_cast<opengl::Context::PlatformParams*>(m_context.GetPlatformParams());
+			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
 		
 		SDL_GL_DeleteContext(platformParams->m_glContext);
 		SDL_DestroyWindow(platformParams->m_glWindow);
@@ -215,10 +217,10 @@ namespace opengl
 	}
 
 
-	void Context::SwapWindow(re::Context const& m_context)
+	void Context::SwapWindow(re::Context const& context)
 	{
 		opengl::Context::PlatformParams const* const platformParams =
-			dynamic_cast<opengl::Context::PlatformParams const*>(m_context.GetPlatformParams());
+			dynamic_cast<opengl::Context::PlatformParams const*>(context.GetPlatformParams());
 
 		SDL_GL_SwapWindow(platformParams->m_glWindow);
 	}

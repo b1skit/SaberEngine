@@ -3,6 +3,7 @@
 #include "EngineComponent.h"
 #include "EventListener.h"
 #include "KeyConfiguration.h"
+#include "Context.h"
 
 
 namespace en
@@ -46,6 +47,8 @@ namespace en
 		// Cache sensitivity params:
 		static float m_mousePitchSensitivity;
 		static float m_mouseYawSensitivity;
+
+		re::Context const* m_context;
 	};
 }
 

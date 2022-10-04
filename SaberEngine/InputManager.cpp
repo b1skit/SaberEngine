@@ -71,6 +71,9 @@ namespace en
 	{
 		LOG("InputManager starting...");
 
+		// Cache the context (created earlier by the render manager):
+		m_context = &en::CoreEngine::GetRenderManager()->GetContext();
+
 		LoadInputBindings();
 
 		// Cache sensitivity params. For whatever reason, we must multiply by -1 (we store positive values for sanity)
@@ -89,33 +92,35 @@ namespace en
 
 	void InputManager::Update()
 	{
+		const bool windowFocus = m_context->WindowHasFocus();
+
 		// Update keyboard states:
 		const Uint8* SDLKeyboardState = SDL_GetKeyboardState(NULL);
 
 		m_keyboardButtonStates[en::InputButton_Forward] =
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Forward]];
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Forward]] && windowFocus;
 		m_keyboardButtonStates[en::InputButton_Backward] =
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Backward]];
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Backward]] && windowFocus;
 		m_keyboardButtonStates[en::InputButton_Left] =
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Left]];
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Left]] && windowFocus;
 		m_keyboardButtonStates[en::InputButton_Right] =
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Right]];
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Right]] && windowFocus;
 		m_keyboardButtonStates[en::InputButton_Up]	=
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Up]];
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Up]] && windowFocus;
 		m_keyboardButtonStates[en::InputButton_Down] =
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Down]];
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Down]] && windowFocus;
 		m_keyboardButtonStates[en::InputButton_Sprint] =
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Sprint]];
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Sprint]] && windowFocus;
 
 		m_keyboardButtonStates[en::InputButton_Quit] =
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Quit]];
+			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Quit]] && windowFocus;
 
 
 		// Update mouse button states:
 		m_mouseButtonStates[en::InputMouse_Left] =
-			(bool)(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT));
+			(bool)(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT)) && windowFocus;
 		m_mouseButtonStates[en::InputMouse_Right] =
-			(bool)(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_RIGHT));
+			(bool)(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_RIGHT)) && windowFocus;
 
 
 		// Get the mouse deltas, once per frame:

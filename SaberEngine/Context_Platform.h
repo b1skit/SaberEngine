@@ -1,7 +1,10 @@
 #pragma once
 
+#include <SDL.h>
+
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
+
 
 namespace re
 {
@@ -97,6 +100,8 @@ namespace platform
 			const glm::vec4 m_windowClearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 			const float m_depthClearColor = 1.0f;
 
+			// SDL-specific, api-agnostic params:
+			SDL_Window* m_glWindow = 0;
 
 			// API-specific function pointers:
 			static void CreatePlatformParams(re::Context& m_context);
@@ -104,12 +109,14 @@ namespace platform
 
 
 	public:
+		// platform implementations:
+		static bool WindowHasFocus(re::Context const& context);
 
 
 		// Static function pointers:
-		static void (*Create)(re::Context& m_context);
-		static void (*Destroy)(re::Context& m_context);
-		static void (*SwapWindow)(re::Context const& m_context);
+		static void (*Create)(re::Context& context);
+		static void (*Destroy)(re::Context& context);
+		static void (*SwapWindow)(re::Context const& context);
 		static void (*SetCullingMode)(FaceCullingMode const& mode);
 		static void (*ClearTargets)(ClearTarget const& clearTarget);
 		static void (*SetBlendMode)(BlendMode const& src, BlendMode const& dst);
@@ -118,6 +125,7 @@ namespace platform
 		static void (*SetColorWriteMode)(ColorWriteMode const& channelModes);
 		static uint32_t(*GetMaxTextureInputs)();
 
+		
 	private:
 
 	};

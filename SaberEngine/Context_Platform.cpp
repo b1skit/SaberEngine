@@ -33,10 +33,17 @@ namespace platform
 		return;
 	}
 
+	bool Context::WindowHasFocus(re::Context const& context)
+	{
+		platform::Context::PlatformParams const* const contextPlatformParams = context.GetPlatformParams();
+		const uint32_t windowFlags = SDL_GetWindowFlags(contextPlatformParams->m_glWindow);
+
+		return (windowFlags & (SDL_WINDOW_INPUT_FOCUS));
+	}
 	
-	void (*platform::Context::Create)(re::Context& m_context);
-	void (*platform::Context::Destroy)(re::Context& m_context);
-	void (*platform::Context::SwapWindow)(re::Context const& m_context);
+	void (*platform::Context::Create)(re::Context& context);
+	void (*platform::Context::Destroy)(re::Context& context);
+	void (*platform::Context::SwapWindow)(re::Context const& context);
 	void (*platform::Context::SetCullingMode)(platform::Context::FaceCullingMode const& mode);
 	void (*platform::Context::ClearTargets)(platform::Context::ClearTarget const& clearTarget);
 	void (*platform::Context::SetBlendMode)(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst);
@@ -44,4 +51,6 @@ namespace platform
 	void (*platform::Context::SetDepthWriteMode)(DepthWriteMode const& mode);
 	void (*platform::Context::SetColorWriteMode)(ColorWriteMode const& channelModes);
 	uint32_t(*platform::Context::GetMaxTextureInputs)();
+
+	
 }

@@ -19,14 +19,13 @@ namespace opengl
 			PlatformParams() = default;
 			~PlatformParams() override = default;
 
-			SDL_Window* m_glWindow = 0;
 			SDL_GLContext m_glContext = 0;
 		};
 
 	public:
-		static void Create(re::Context& m_context);
-		static void Destroy(re::Context& m_context);
-		static void SwapWindow(re::Context const& m_context);
+		static void Create(re::Context& context);
+		static void Destroy(re::Context& context);
+		static void SwapWindow(re::Context const& context);
 		static void SetCullingMode(platform::Context::FaceCullingMode const& mode);
 		static void ClearTargets(platform::Context::ClearTarget const& clearTarget);
 		static void SetBlendMode(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst);

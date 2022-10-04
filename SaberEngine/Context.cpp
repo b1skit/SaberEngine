@@ -58,4 +58,10 @@ namespace re
 	{
 		return platform::Context::GetMaxTextureInputs();
 	}
+
+
+	bool Context::WindowHasFocus() const
+	{
+		return platform::Context::WindowHasFocus(*this);
+	}
 }

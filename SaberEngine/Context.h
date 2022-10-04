@@ -27,6 +27,8 @@ namespace re
 		void SetDepthWriteMode(platform::Context::DepthWriteMode const& mode) const;
 		void SetColorWriteMode(platform::Context::ColorWriteMode const& channelModes) const;
 
+		bool WindowHasFocus() const;
+
 		// Static platform wrappers:
 		static uint32_t GetMaxTextureInputs();
 
