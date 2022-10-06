@@ -10,6 +10,7 @@
 
 #include "Sampler.h"
 #include "ParameterBlock.h"
+#include "NamedObject.h"
 
 
 namespace re
@@ -25,7 +26,7 @@ namespace gr
 
 namespace gr
 {
-	class Material
+	class Material : public virtual en::NamedObject
 	{
 	public:
 		// Material definitions:
@@ -84,10 +85,7 @@ namespace gr
 		Material(Material&&) = default;
 		Material& operator=(Material const&) = default;
 
-
-		// Getters/Setters:
-		inline std::string const& Name() { return m_name; }
-		
+		// Getters/Setters:	
 		inline std::shared_ptr<gr::Shader>& GetShader()	{ return m_shader; }
 		inline std::shared_ptr<gr::Shader> const& GetShader() const { return m_shader; }
 
@@ -105,7 +103,6 @@ namespace gr
 		void BindToShader(std::shared_ptr<gr::Shader const> shaderOverride);
 
 	private:
-		std::string const m_name;	// Must be unique: Identifies this material
 		std::vector<TextureSlotDesc> m_texSlots;
 		std::unordered_map<std::string, uint32_t> m_namesToSlotIndex;
 		std::shared_ptr<gr::Shader> m_shader;

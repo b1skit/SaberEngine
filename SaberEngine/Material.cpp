@@ -64,7 +64,7 @@ namespace gr
 
 
 	Material::Material(string const& name, shared_ptr<MaterialDefinition const> matDefinition) :
-		m_name(name),
+			NamedObject(name),
 		m_texSlots(matDefinition->m_textureSlots),
 		m_shader(matDefinition->m_shader),
 		m_matParams(nullptr)

@@ -62,13 +62,14 @@ namespace fr
 
 		// Textures:
 		void AddUniqueTexture(std::shared_ptr<gr::Texture>& newTexture); // Note: newTexture may be modified
+
 		// Gets already-loaded textures, or loads if it's unseen. Returns nullptr if texture file doesn't exist
 		std::shared_ptr<gr::Texture> GetLoadTextureByPath(std::vector<std::string> texturePaths, bool returnErrorTex = false);
 
 		// Materials:
 		void AddUniqueMaterial(std::shared_ptr<gr::Material>& newMaterial);
 		std::shared_ptr<gr::Material> const GetMaterial(std::string const& materialName) const;
-		inline bool MaterialExists(std::string const& matName) const { return m_materials.find(matName) != m_materials.end(); }
+		inline bool MaterialExists(std::string const& matName) const;
 
 		// SceneData bounds:
 		inline gr::Bounds const& GetWorldSpaceSceneBounds() const { return m_sceneWorldSpaceBounds; }
@@ -82,9 +83,8 @@ namespace fr
 		std::vector<std::shared_ptr<gr::RenderMesh>> m_renderMeshes;
 		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;
 
-		// TODO: Objects should be identified via integers, instead of strings
-		std::unordered_map<std::string, std::shared_ptr<gr::Texture>> m_textures;
-		std::unordered_map<std::string, std::shared_ptr<gr::Material>> m_materials;
+		std::unordered_map<size_t, std::shared_ptr<gr::Texture>> m_textures;
+		std::unordered_map<size_t, std::shared_ptr<gr::Material>> m_materials;
 
 		std::shared_ptr<gr::Light> m_ambientLight;
 		std::shared_ptr<gr::Light> m_keyLight;

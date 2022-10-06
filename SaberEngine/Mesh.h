@@ -6,6 +6,7 @@
 #include "Transform.h"
 #include "Material.h"
 #include "Mesh_Platform.h"
+#include "NamedObject.h"
 
 
 namespace gr
@@ -60,7 +61,7 @@ namespace gr
 	};
 
 
-	class Mesh
+	class Mesh : public virtual en::NamedObject
 	{
 	public:
 		enum class DrawMode
@@ -107,8 +108,6 @@ namespace gr
 		void Destroy();
 		
 		// Getters/Setters:
-		inline std::string const& Name() { return m_name; }
-
 		inline MeshParams& GetMeshParams() { return m_params; }
 		inline MeshParams const& GetMeshParams() const { return m_params; }
 
@@ -133,9 +132,7 @@ namespace gr
 		inline std::unique_ptr<platform::Mesh::PlatformParams>& GetPlatformParams() { return m_platformParams; }
 		inline std::unique_ptr<platform::Mesh::PlatformParams> const& GetPlatformParams() const { return m_platformParams; }
 
-	private:
-		const std::string m_name;
-		
+	private:		
 		MeshParams m_params;
 
 		std::shared_ptr<gr::Material> m_meshMaterial;

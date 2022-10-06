@@ -97,7 +97,7 @@ namespace opengl
 			GL_BUFFER,
 			mp->m_meshVBOs[opengl::Mesh::VertexAttribute::Position],
 			-1,
-			(mesh.Name() + " position").c_str());
+			(mesh.GetName() + " position").c_str());
 
 		// Color:
 		if (mesh.GetColors().size() > 0)
@@ -120,7 +120,7 @@ namespace opengl
 				GL_BUFFER,
 				mp->m_meshVBOs[opengl::Mesh::VertexAttribute::Color],
 				-1,
-				(mesh.Name() + " color").c_str());
+				(mesh.GetName() + " color").c_str());
 		}
 
 		// Normals:
@@ -144,7 +144,7 @@ namespace opengl
 				GL_BUFFER,
 				mp->m_meshVBOs[opengl::Mesh::VertexAttribute::Normal],
 				-1,
-				(mesh.Name() + " normal").c_str());
+				(mesh.GetName() + " normal").c_str());
 		}
 
 		// Tangents:
@@ -171,7 +171,7 @@ namespace opengl
 				GL_BUFFER,
 				mp->m_meshVBOs[opengl::Mesh::VertexAttribute::Tangent],
 				-1,
-				(mesh.Name() + " tangent").c_str());
+				(mesh.GetName() + " tangent").c_str());
 		}
 
 		// UV0:
@@ -195,7 +195,7 @@ namespace opengl
 				GL_BUFFER,
 				mp->m_meshVBOs[opengl::Mesh::VertexAttribute::UV0],
 				-1,
-				(mesh.Name() + " UV0").c_str());
+				(mesh.GetName() + " UV0").c_str());
 		}
 
 		// Indexes:	
@@ -210,10 +210,10 @@ namespace opengl
 			GL_BUFFER,
 			mp->m_meshVBOs[opengl::Mesh::VertexAttribute::Indexes],
 			-1,
-			(mesh.Name() + " index").c_str());
+			(mesh.GetName() + " index").c_str());
 
 		// Renderdoc name for the VAO now that everything is bound
-		glObjectLabel(GL_VERTEX_ARRAY, mp->m_meshVAO, -1, (mesh.Name() + " VAO").c_str());
+		glObjectLabel(GL_VERTEX_ARRAY, mp->m_meshVAO, -1, (mesh.GetName() + " VAO").c_str());
 	}
 
 

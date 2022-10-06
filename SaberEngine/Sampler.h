@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "Sampler_Platform.h"
+#include "NamedObject.h"
 
 
 namespace platform
@@ -14,7 +15,7 @@ namespace platform
 
 namespace gr
 {
-	class Sampler
+	class Sampler : public virtual en::NamedObject
 	{
 	public:
 		static const std::vector<std::string> SamplerTypeLibraryNames;
@@ -82,8 +83,6 @@ namespace gr
 
 		platform::Sampler::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
 		platform::Sampler::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
-
-		std::string const& GetName() { return m_name; }
 		
 
 		// Platform wrappers:
@@ -100,12 +99,8 @@ namespace gr
 		Sampler& operator=(Sampler const& rhs) = delete;
 
 	private:
-		std::string const m_name;
 		SamplerParams m_samplerParams;
 		std::unique_ptr<platform::Sampler::PlatformParams> m_platformParams;
-
-
-		
 
 
 		// Friends:

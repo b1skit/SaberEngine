@@ -104,9 +104,8 @@ namespace gr
 		return result->second;
 	}
 
-	Sampler::Sampler(string const& name, SamplerParams params) :
-		m_samplerParams{params},
-		m_name{name}
+	Sampler::Sampler(string const& name, SamplerParams params) : en::NamedObject(name),
+		m_samplerParams{params}
 	{
 		platform::Sampler::PlatformParams::CreatePlatformParams(*this);
 	}

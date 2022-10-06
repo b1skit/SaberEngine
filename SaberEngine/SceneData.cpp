@@ -41,6 +41,7 @@ using gr::ShadowMap;
 using re::PermanentParameterBlock;
 using fr::SceneObject;
 using en::CoreEngine;
+using en::NamedObject;
 using std::string;
 using std::vector;
 using std::shared_ptr;
@@ -1067,15 +1068,16 @@ namespace fr
 	{
 		SEAssert("Cannot add null texture to textures table", newTexture != nullptr);
 
-		unordered_map<string, shared_ptr<gr::Texture>>::const_iterator texturePosition =
-			m_textures.find(newTexture->GetTexturePath());
+		const size_t nameID = NamedObject::ComputeIDFromName(newTexture->GetTexturePath());
+
+		unordered_map<size_t, shared_ptr<gr::Texture>>::const_iterator texturePosition = m_textures.find(nameID);
 		if (texturePosition != m_textures.end()) // Found existing
 		{
 			newTexture = texturePosition->second;
 		}
 		else  // Add new
 		{
-			m_textures[newTexture->GetTexturePath()] = newTexture;
+			m_textures[nameID] = newTexture;
 			LOG("Texture \"%s\" registered with scene", newTexture->GetTexturePath().c_str());
 		}
 	}
@@ -1085,8 +1087,9 @@ namespace fr
 	{
 		SEAssert("Expected either 1 or 6 texture paths", texturePaths.size() == 1 || texturePaths.size() == 6);
 
-		unordered_map<string, shared_ptr<gr::Texture>>::const_iterator texturePosition =
-			m_textures.find(texturePaths[0]);
+		const size_t nameID = NamedObject::ComputeIDFromName(texturePaths[0]);
+
+		unordered_map<size_t, shared_ptr<gr::Texture>>::const_iterator texturePosition = m_textures.find(nameID);
 		if (texturePosition != m_textures.end())
 		{
 			LOG("Texture(s) at \"%s\" has already been loaded", texturePaths[0].c_str());
@@ -1107,25 +1110,33 @@ namespace fr
 		SEAssert("Cannot add null material to material table", newMaterial != nullptr);
 
 		// Note: Materials are uniquely identified by name, regardless of the MaterialDefinition they might use
-		unordered_map<string, shared_ptr<gr::Material>>::const_iterator matPosition = 
-			m_materials.find(newMaterial->Name());		
+		unordered_map<size_t, shared_ptr<gr::Material>>::const_iterator matPosition = 
+			m_materials.find(newMaterial->GetNameID());
 		if (matPosition != m_materials.end()) // Found existing
 		{
 			newMaterial = matPosition->second;
 		}
 		else // Add new
 		{
-			m_materials[newMaterial->Name()] = newMaterial;
-			LOG("Material \"%s\" registered with scene", newMaterial->Name().c_str());
+			m_materials[newMaterial->GetNameID()] = newMaterial;
+			LOG("Material \"%s\" registered with scene", newMaterial->GetName().c_str());
 		}
 	}
 
 
 	std::shared_ptr<gr::Material> const SceneData::GetMaterial(std::string const& materialName) const
 	{
-		unordered_map<string, shared_ptr<gr::Material>>::const_iterator matPos = m_materials.find(materialName);
+		const size_t nameID = NamedObject::ComputeIDFromName(materialName);
+		unordered_map<size_t, shared_ptr<gr::Material>>::const_iterator matPos = m_materials.find(nameID);
 		SEAssert("Could not find material", matPos != m_materials.end());
 
 		return matPos->second;
+	}
+
+
+	bool SceneData::MaterialExists(std::string const& matName) const
+	{ 
+		const size_t nameID = NamedObject::ComputeIDFromName(matName);
+		return m_materials.find(nameID) != m_materials.end();
 	}
 }

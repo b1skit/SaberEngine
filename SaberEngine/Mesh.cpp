@@ -108,9 +108,8 @@ namespace gr
 		vector<float>& tangents,
 		vector<uint32_t>& indices,
 		shared_ptr<gr::Material> material,
-		MeshParams const& meshParams) :
+		MeshParams const& meshParams) : NamedObject(name),
 			m_platformParams(nullptr),
-			m_name(name),
 			m_meshMaterial(material),
 			m_params(meshParams)
 	{
