@@ -19,7 +19,7 @@ namespace en
 	class LogManager : public virtual en::EngineComponent, public virtual en::EventListener
 	{
 	public:
-		LogManager() : EngineComponent("LogManager") {}
+		LogManager() = default;
 		~LogManager() = default;
 
 		// Singleton functionality:

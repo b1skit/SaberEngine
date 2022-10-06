@@ -228,7 +228,7 @@ namespace en
 		}
 		else
 		{
-			LOG_ERROR("Config key \"%s\" does not exist\n", valueName);
+			LOG_ERROR("Config key \"%s\" does not exist\n", valueName.c_str());
 		}
 
 		return returnVal;

@@ -22,7 +22,7 @@ namespace en
 
 
 	// Constructor:
-	InputManager::InputManager() : EngineComponent("InputManager")
+	InputManager::InputManager()
 	{
 		// Initialize keyboard keys:
 		for (int i = 0; i < en::KeyboardButtonState_Count; i++)

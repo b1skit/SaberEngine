@@ -29,7 +29,7 @@ using std::string;
 
 namespace re
 {
-	RenderManager::RenderManager() : en::EngineComponent("RenderManager"),
+	RenderManager::RenderManager() :
 		m_defaultTargetSet(nullptr),
 		m_pipeline("Main pipeline")
 	{

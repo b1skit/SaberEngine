@@ -3,14 +3,15 @@
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 
-#include "SceneObject.h"
+#include "NamedObject.h"
+#include "Transformable.h"
 #include "TextureTarget.h"
 #include "Shader.h"
 
 
 namespace gr
 {
-	class Camera : public virtual fr::SceneObject
+	class Camera : public virtual en::NamedObject, public virtual fr::Transformable
 	{
 	public:
 		struct CameraConfig
@@ -46,11 +47,11 @@ namespace gr
 		Camera(Camera&&) = default;
 		Camera& operator=(Camera const&) = default;
 
-		// SaberObject interface:
-		void Update() override { /*Do nothing*/ }
+		//// NamedObject interface:
+		//void Update() override { /*Do nothing*/ }
 
-		// EventListener interface:
-		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override { /*Do nothing*/ }
+		//// EventListener interface:
+		//void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override { /*Do nothing*/ }
 
 		inline float const FieldOfView() const { return m_cameraConfig.m_fieldOfView; }
 		inline float const Near() const { return m_cameraConfig.m_near; }
@@ -83,7 +84,7 @@ namespace gr
 		std::vector<glm::mat4> m_cubeView;
 		std::vector<glm::mat4> m_cubeViewProjection;
 		
-		std::shared_ptr<gr::Shader> m_cameraShader;
+		std::shared_ptr<gr::Shader> m_cameraShader; // TODO: Cameras shouldn't need a shader
 	};
 
 

@@ -9,11 +9,12 @@
 #include "TextureTarget.h"
 #include "Context_Platform.h"
 #include "Mesh.h"
+#include "NamedObject.h"
 
 
 namespace gr
 {
-	class RenderStage
+	class RenderStage : public virtual en::NamedObject
 	{
 	public:
 		struct StageShaderUniform
@@ -67,8 +68,6 @@ namespace gr
 
 		RenderStage() = delete;
 		RenderStage& operator=(RenderStage const&) = delete;
-		
-		inline std::string const& GetName() const { return m_name; }
 
 		void InitializeForNewFrame(); // Clears per-frame data
 
@@ -119,8 +118,6 @@ namespace gr
 
 
 	private:
-		std::string const m_name;
-
 		std::shared_ptr<gr::Shader> m_stageShader;
 		gr::TextureTargetSet m_textureTargetSet;
 		std::shared_ptr<gr::Camera> m_stageCam;

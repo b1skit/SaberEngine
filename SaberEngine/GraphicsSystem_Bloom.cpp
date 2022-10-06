@@ -19,7 +19,7 @@ using glm::vec4;
 
 namespace gr
 {
-	BloomGraphicsSystem::BloomGraphicsSystem(std::string name) : GraphicsSystem(name),
+	BloomGraphicsSystem::BloomGraphicsSystem(std::string name) : GraphicsSystem(name), NamedObject(name),
 		m_emissiveBlitStage("Emissive blit stage")
 	{
 	}

@@ -18,7 +18,7 @@ using glm::vec4;
 namespace gr
 {
 	RenderStage::RenderStage(std::string const& name) :
-		m_name(name),
+			NamedObject(name),
 		m_textureTargetSet(name + " target"),
 		m_stageGeometryBatches(nullptr),
 		m_writesColor(true) // Reasonable assumption; Updated when we set the param block

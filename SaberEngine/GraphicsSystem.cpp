@@ -3,8 +3,7 @@
 
 namespace gr
 {
-	GraphicsSystem::GraphicsSystem(std::string name) :
-		m_name(name)
+	GraphicsSystem::GraphicsSystem(std::string const& name) : NamedObject(name)
 	{
 		LOG("Creating %s", name.c_str());
 	}

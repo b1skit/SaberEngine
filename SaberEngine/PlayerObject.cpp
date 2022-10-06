@@ -15,8 +15,7 @@ using en::TimeManager;
 
 namespace fr
 {
-	PlayerObject::PlayerObject(std::shared_ptr<Camera> playerCam) : 
-		fr::GameObject("Player Object"), SceneObject("Player Object"),
+	PlayerObject::PlayerObject(std::shared_ptr<Camera> playerCam) : en::NamedObject("Player Object"),
 		m_playerCam(playerCam),
 		m_movementSpeed(0.003f),
 		m_savedPosition(vec3(0.0f, 0.0f, 0.0f)),
@@ -29,8 +28,6 @@ namespace fr
 
 	void PlayerObject::Update()
 	{
-		GameObject::Update();
-
 		// Handle first person view orientation: (pitch + yaw)
 		vec3 yaw(0.0f, 0.0f, 0.0f);
 		vec3 pitch(0.0f, 0.0f, 0.0f);

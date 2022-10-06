@@ -3,14 +3,15 @@
 #include <vector>
 
 #include "RenderStage.h"
+#include "NamedObject.h"
 
 
 namespace re
 {
-	class StagePipeline
+	class StagePipeline : public virtual en::NamedObject
 	{
 	public:
-		StagePipeline(std::string name) : m_name(name) {};
+		StagePipeline(std::string name) : NamedObject(name) {};
 		
 		~StagePipeline() = default;
 		StagePipeline(StagePipeline&&) = default;
@@ -18,8 +19,6 @@ namespace re
 		StagePipeline() = delete;
 		StagePipeline(StagePipeline const&) = delete;
 		StagePipeline& operator=(StagePipeline const&) = delete;
-
-		inline std::string const& GetName() const { return m_name; }
 
 		std::vector<gr::RenderStage const*>::iterator AppendRenderStage(gr::RenderStage const& renderStage);
 		std::vector<gr::RenderStage>::iterator AppendSingleFrameRenderStage(gr::RenderStage const& renderStage);
@@ -35,16 +34,15 @@ namespace re
 		void EndOfFrame(); // Clear m_singleFrameStagePipeline etc
 
 	private:
-		std::string const m_name;
 		std::vector<gr::RenderStage const*> m_stagePipeline;
 		std::vector<gr::RenderStage> m_singleFrameStagePipeline;
 	};
 
 
-	class RenderPipeline
+	class RenderPipeline : public virtual en::NamedObject
 	{
 	public:	
-		RenderPipeline(std::string const& name) : m_name(name) {}
+		RenderPipeline(std::string const& name) : NamedObject(name) {}
 		~RenderPipeline() = default;
 
 		RenderPipeline() = delete;
@@ -72,7 +70,5 @@ namespace re
 		//   |
 		//   *
 		std::vector<StagePipeline> m_pipeline;
-
-		std::string const m_name;
 	};
 }

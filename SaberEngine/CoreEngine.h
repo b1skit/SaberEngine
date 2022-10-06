@@ -9,11 +9,12 @@
 #include "RenderManager.h"
 #include "SceneManager.h"
 #include "EngineConfig.h"
+#include "EngineComponent.h"
 
 
 namespace en
 {
-	class CoreEngine : public virtual en::SaberObject, public virtual en::EventListener
+	class CoreEngine : public virtual en::EngineComponent, public virtual en::EventListener
 	{
 	public:
 		explicit CoreEngine(int argc, char** argv);
@@ -40,7 +41,7 @@ namespace en
 		// Member functions
 		static en::EngineConfig const* GetConfig();
 
-		// SaberObject interface:
+		// NamedObject interface:
 		void Update() override;
 
 		// EventListener interface:

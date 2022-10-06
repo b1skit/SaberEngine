@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 
 #include "EngineComponent.h"
 
@@ -52,7 +53,7 @@ namespace en
 		struct EventInfo
 		{
 			EventType m_type;
-			SaberObject* m_generator;
+			en::EngineComponent* m_generator;
 			std::string m_eventMessage;
 		};
 

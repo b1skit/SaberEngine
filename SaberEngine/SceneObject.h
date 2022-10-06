@@ -1,45 +1,35 @@
 #pragma once
 
-#include "SaberObject.h"
-#include "EventListener.h"
-#include "Transform.h"
+#include "Transformable.h"
+#include "RenderMesh.h"
+#include "NamedObject.h"
+#include "Updateable.h"
 
 
 namespace fr
 {
-	class SceneObject : public en::SaberObject, public virtual en::EventListener
+	class SceneObject : public virtual en::NamedObject, public virtual fr::Transformable, public virtual en::Updateable
 	{
 	public:
-		explicit SceneObject(std::string const& newName) : en::SaberObject::SaberObject(newName) {}
-
-		SceneObject(const SceneObject& sceneObject) : en::SaberObject(sceneObject.GetName())
-		{
-			m_transform = sceneObject.m_transform;
-		}
+		SceneObject(std::string const& name, gr::Transform* parent);
+		SceneObject(SceneObject const& sceneObject);
 
 		SceneObject(SceneObject&&) = default;
-		SceneObject& operator=(SceneObject const&) = default;
+		~SceneObject() = default;
 
-		SceneObject() = delete;
+		SceneObject() = delete;		
 
-		virtual ~SceneObject() = 0;
-
-
-		// SaberObject interface:
-		void Update() override = 0;
+		// NamedObject interface:
+		void Update() override {}
 
 		// Getters/Setters:
-		inline gr::Transform* GetTransform() { return &m_transform; }
-		inline gr::Transform const* GetTransform() const { return &m_transform; }
+		void AddMeshPrimitive(std::shared_ptr<gr::Mesh> meshPrimitive);
+		inline std::vector<std::shared_ptr<gr::RenderMesh>> const& GetRenderMeshes() const { return m_renderMeshes; }
 
 
-	protected:
-		gr::Transform m_transform;
-		
 	private:
+		std::vector<std::shared_ptr<gr::RenderMesh>> m_renderMeshes;
 	};
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline SceneObject::~SceneObject() {}
 }
+
+

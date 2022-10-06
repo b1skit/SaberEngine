@@ -18,7 +18,7 @@
 #include "VertexAttributeBuilder.h"
 #include "Light.h"
 #include "Camera.h"
-#include "GameObject.h"
+#include "SceneObject.h"
 #include "RenderMesh.h"
 #include "Mesh.h"
 #include "Transform.h"
@@ -39,7 +39,7 @@ using gr::Transform;
 using gr::Light;
 using gr::ShadowMap;
 using re::PermanentParameterBlock;
-using fr::GameObject;
+using fr::SceneObject;
 using en::CoreEngine;
 using std::string;
 using std::vector;
@@ -441,7 +441,7 @@ namespace
 
 
 	// Creates a default camera if camera == nullptr, and no cameras exist in scene
-	void LoadAddCamera(fr::SceneData& scene, shared_ptr<GameObject> parent, cgltf_camera* camera)
+	void LoadAddCamera(fr::SceneData& scene, shared_ptr<SceneObject> parent, cgltf_camera* camera)
 	{
 		if (camera == nullptr && parent == nullptr)
 		{
@@ -502,7 +502,7 @@ namespace
 	}
 
 
-	void LoadAddLight(fr::SceneData& scene, shared_ptr<GameObject> parent, cgltf_light* light)
+	void LoadAddLight(fr::SceneData& scene, shared_ptr<SceneObject> parent, cgltf_light* light)
 	{
 		const string lightName = (light->name ? string(light->name) : "Unnamed light");
 
@@ -544,7 +544,7 @@ namespace
 
 	// Depth-first traversal
 	void LoadObjectHierarchyRecursiveHelper(
-		std::string const& sceneRootPath, fr::SceneData& scene, cgltf_data* data, cgltf_node* current, shared_ptr<GameObject> parent)
+		std::string const& sceneRootPath, fr::SceneData& scene, cgltf_data* data, cgltf_node* current, shared_ptr<SceneObject> parent)
 	{
 		if (current == nullptr)
 		{
@@ -598,14 +598,14 @@ namespace
 		SEAssert("TODO: Handle nodes with multiple things that depend on a transform", 
 			current->light == nullptr || current->mesh == nullptr);
 
-		// Set the GameObject transform:
+		// Set the SceneObject transform:
 		if (current->mesh == nullptr)
 		{
 			SetTransformValues(current, parent->GetTransform());
 		}
 		else // Node has a mesh: Create a mesh primitive and attach it to a RenderMesh
 		{
-			// Add each Mesh primitive as a child of the GameObject's RenderMesh:
+			// Add each Mesh primitive as a child of the SceneObject's RenderMesh:
 			for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
 			{
 				SEAssert(
@@ -820,7 +820,7 @@ namespace
 			}
 		} // End RenderMesh population
 
-		// Add other attachments now the GameObject transformations have been populated:
+		// Add other attachments now the SceneObject transformations have been populated:
 		if (current->light)
 		{
 			LoadAddLight(scene, parent, current->light);
@@ -831,15 +831,14 @@ namespace
 			LoadAddCamera(scene, parent, current->camera);
 		}
 
-		scene.AddGameObject(parent);
+		scene.AddSceneObject(parent);
 		
 		if (current->children_count > 0)
 		{
 			for (size_t i = 0; i < current->children_count; i++)
 			{
 				const string childName = current->children[i]->name ? current->children[i]->name : "Unnamed node";
-				shared_ptr<GameObject> childNode = make_shared<GameObject>(childName);
-				childNode->GetTransform()->SetParent(parent->GetTransform()); // TODO: GameObject ctors should all take a parent Transform*
+				shared_ptr<SceneObject> childNode = make_shared<SceneObject>(childName, parent->GetTransform());
 
 				LoadObjectHierarchyRecursiveHelper(sceneRootPath, scene, data, current->children[i], childNode);
 			}
@@ -858,9 +857,10 @@ namespace
 		{
 			SEAssert("Error: Node is not a root", data->scenes->nodes[node]->parent == nullptr);
 
-			shared_ptr<GameObject> currentNode = make_shared<GameObject>(
+			shared_ptr<SceneObject> currentNode = make_shared<SceneObject>(
 				data->scenes->nodes[node]->name ? string(data->scenes->nodes[node]->name) : 
-				"Unnamed_node_" + to_string(node));
+				"Unnamed_node_" + to_string(node),
+				nullptr); // Root node has no parent
 
 			LoadObjectHierarchyRecursiveHelper(sceneRootPath, scene, data, data->scenes->nodes[node], currentNode);
 		}
@@ -911,7 +911,7 @@ namespace fr
 		}
 		
 		// Pre-reserve our vectors:
-		m_gameObjects.reserve(max((int)data->nodes_count, 10));
+		m_updateables.reserve(max((int)data->nodes_count, 10));
 		m_renderMeshes.reserve(max((int)data->meshes_count, 10));
 		m_meshes.reserve(max((int)data->meshes_count, 10));
 		m_textures.reserve(max((int)data->textures_count, 10));
@@ -931,7 +931,7 @@ namespace fr
 
 
 	SceneData::SceneData(string const& sceneName) :
-		m_name(sceneName),
+			NamedObject(sceneName),
 		m_ambientLight(nullptr),
 		m_keyLight(nullptr)
 	{
@@ -940,7 +940,7 @@ namespace fr
 
 	void SceneData::Destroy()
 	{
-		m_gameObjects.clear();
+		m_updateables.clear();
 		m_renderMeshes.clear();
 		m_meshes.clear();
 		m_textures.clear();
@@ -991,23 +991,26 @@ namespace fr
 			LOG_ERROR("Ignorring unsupported light type");
 		break;
 		}
+
+		// Updateables get pumped every frame:
+		m_updateables.emplace_back(newLight);
 	}
 
 	
-	void SceneData::AddGameObject(std::shared_ptr<fr::GameObject> newGameObject)
+	void SceneData::AddSceneObject(std::shared_ptr<fr::SceneObject> sceneObject)
 	{
-		m_gameObjects.emplace_back(newGameObject);
+		m_updateables.emplace_back(sceneObject);
 
-		for (size_t i = 0; i < newGameObject->GetRenderMeshes().size(); i++)
+		for (size_t i = 0; i < sceneObject->GetRenderMeshes().size(); i++)
 		{
-			AddRenderMesh(newGameObject->GetRenderMeshes()[i]);
+			AddRenderMesh(sceneObject->GetRenderMeshes()[i]);
 		}
 	}
 
 
 	void SceneData::AddRenderMesh(std::shared_ptr<gr::RenderMesh> newRenderMesh)
 	{
-		m_renderMeshes.emplace_back(); // Add the rendermesh to our tracking list
+		m_renderMeshes.emplace_back(newRenderMesh); // Add the rendermesh to our tracking list
 		
 		for (shared_ptr<Mesh> mesh : newRenderMesh->GetChildMeshPrimitives())
 		{
@@ -1017,6 +1020,12 @@ namespace fr
 			UpdateSceneBounds(mesh);
 			// TODO: Bounds management should belong to a RenderMesh object (not the mesh primitives)
 		}
+	}
+
+
+	void SceneData::AddUpdateable(std::shared_ptr<en::Updateable> updateable)
+	{
+		m_updateables.emplace_back(updateable);
 	}
 
 

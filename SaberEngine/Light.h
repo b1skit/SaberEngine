@@ -5,7 +5,9 @@
 
 #include <glm/glm.hpp>
 
-#include "SceneObject.h"
+#include "NamedObject.h"
+#include "Updateable.h"
+#include "Transform.h"
 
 
 namespace gr
@@ -18,7 +20,7 @@ namespace gr
 
 namespace gr
 {
-	class Light
+	class Light : public virtual en::NamedObject, public virtual en::Updateable
 	{
 	public:
 		enum LightType
@@ -34,7 +36,7 @@ namespace gr
 		};
 
 	public:
-		Light(std::string const& lightName,
+		Light(std::string const& name,
 			gr::Transform* ownerTransform,
 			LightType lightType, 
 			glm::vec3 colorIntensity,
@@ -51,11 +53,9 @@ namespace gr
 
 		void Destroy();
 
-		void Update();
+		void Update() override;
 
 		// Getters/Setters:
-		inline std::string const& GetName() const { return m_name; }
-
 		inline glm::vec3& GetColor() { return m_colorIntensity; }
 		inline glm::vec3 const& GetColor() const { return m_colorIntensity; }
 
@@ -78,7 +78,6 @@ namespace gr
 
 
 	private:
-		std::string const m_name;
 		gr::Transform* m_ownerTransform;
 
 		glm::vec3 m_colorIntensity;

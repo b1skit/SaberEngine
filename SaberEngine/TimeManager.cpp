@@ -14,7 +14,7 @@ namespace en
 	unsigned int TimeManager::m_deltaTime;
 
 
-	TimeManager::TimeManager() : EngineComponent("TimeManager")
+	TimeManager::TimeManager()
 	{
 		m_startTime = m_prevTime = m_currentTime = SDL_GetTicks();
 	}

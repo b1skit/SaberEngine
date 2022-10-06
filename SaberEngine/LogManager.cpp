@@ -72,7 +72,7 @@ namespace en
 
 			if (eventInfo->m_generator)
 			{
-				logMessage += std::to_string(eventInfo->m_generator->GetObjectID()) + " (" + eventInfo->m_generator->GetName() + ")\t";
+				logMessage += std::to_string(eventInfo->m_generator->GetUniqueID()) + " (" + eventInfo->m_generator->GetName() + ")\t";
 			}
 			else
 			{

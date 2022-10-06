@@ -64,7 +64,7 @@ namespace gr
 	// TextureTargetSet
 	/******************/
 	TextureTargetSet::TextureTargetSet(string name) :
-		m_name(name),
+			NamedObject(name),
 		m_targetStateDirty(true),
 		m_hasTargets(false),
 		m_colorIsCreated(false),
@@ -90,8 +90,8 @@ namespace gr
 	}
 
 
-	TextureTargetSet::TextureTargetSet(TextureTargetSet const& rhs, std::string const& newName) :
-		m_name(newName),
+	TextureTargetSet::TextureTargetSet(TextureTargetSet const& rhs, std::string const& newName) : 
+			NamedObject(newName),
 		m_colorTargets(rhs.m_colorTargets),
 		m_depthStencilTarget(rhs.m_depthStencilTarget),
 		m_targetStateDirty(true),
@@ -102,6 +102,28 @@ namespace gr
 		m_depthIsCreated(false)
 	{
 		platform::TextureTargetSet::PlatformParams::CreatePlatformParams(*this);
+	}
+
+
+	TextureTargetSet& TextureTargetSet::operator=(TextureTargetSet const& rhs)
+	{
+		if (this == &rhs)
+		{
+			return *this;
+		}
+
+		*const_cast<std::string*>(&m_name) = rhs.GetName();
+
+		m_colorTargets = rhs.m_colorTargets;
+		m_depthStencilTarget = rhs.m_depthStencilTarget;
+		m_targetStateDirty = rhs.m_targetStateDirty;
+		m_hasTargets = rhs.m_hasTargets;
+		m_viewport = rhs.m_viewport;
+		m_platformParams = rhs.m_platformParams;
+		m_colorIsCreated = rhs.m_colorIsCreated;
+		m_depthIsCreated = rhs.m_depthIsCreated;
+
+		return *this;
 	}
 
 

@@ -1,5 +1,5 @@
 #include "EventManager.h"
-#include "SaberObject.h"
+#include "NamedObject.h"
 #include "CoreEngine.h"
 #include "DebugConfiguration.h"
 #include "EventListener.h"
@@ -40,7 +40,7 @@ namespace en
 	}; // NOTE: String order must match the order of EventType enum
 
 
-	EventManager::EventManager() : EngineComponent("EventManager")
+	EventManager::EventManager()
 	{
 		m_eventQueues.reserve(EventType_Count);
 		for (int i = 0; i < EventType_Count; i++)

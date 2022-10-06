@@ -29,7 +29,7 @@ namespace gr
 
 
 	GBufferGraphicsSystem::GBufferGraphicsSystem(std::string name) : GraphicsSystem(name), 
-		m_gBufferStage("GBuffer Stage")
+		m_gBufferStage("GBuffer Stage"), NamedObject(name)
 	{
 	}
 

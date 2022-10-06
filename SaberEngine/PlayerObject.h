@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GameObject.h"
+#include "SceneObject.h"
 
 #include <glm/glm.hpp>
 
@@ -12,7 +12,7 @@ namespace gr
 
 namespace fr
 {
-	class PlayerObject : public virtual fr::GameObject
+	class PlayerObject : public virtual en::NamedObject, public virtual en::Updateable, public virtual fr::Transformable
 	{
 	public:
 		explicit PlayerObject(std::shared_ptr<gr::Camera> playerCam);
@@ -23,7 +23,7 @@ namespace fr
 		PlayerObject(PlayerObject&&) = delete;
 		PlayerObject& operator=(PlayerObject const&) = delete;
 
-		// SaberObject interface:
+		// NamedObject interface:
 		void Update() override;
 
 		// Getters/Setters:

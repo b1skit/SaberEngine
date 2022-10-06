@@ -25,7 +25,7 @@ using glm::mat4;
 
 namespace gr
 {
-	SkyboxGraphicsSystem::SkyboxGraphicsSystem(std::string name) : GraphicsSystem(name),
+	SkyboxGraphicsSystem::SkyboxGraphicsSystem(std::string name) : GraphicsSystem(name), NamedObject(name),
 		m_skyboxStage("Skybox stage"),
 		m_skyTexture(nullptr)
 	{

@@ -177,7 +177,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="CoreEngine.cpp" />
     <ClCompile Include="EngineConfig.cpp" />
     <ClCompile Include="EventManager.cpp" />
-    <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="SceneObject.cpp" />
     <ClCompile Include="GraphicsSystem_Bloom.cpp" />
     <ClCompile Include="GraphicsSystem_DeferredLighting.cpp" />
     <ClCompile Include="GraphicsSystem_GBuffer.cpp" />
@@ -225,6 +225,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="ParameterBlock.h" />
     <ClInclude Include="ParameterBlock_OpenGL.h" />
     <ClInclude Include="ParameterBlock_Platform.h" />
+    <ClInclude Include="Updateable.h" />
     <ClInclude Include="VertexAttributeBuilder.h" />
     <ClInclude Include="Context_Platform.h" />
     <ClInclude Include="GraphicsSystem_Bloom.h" />
@@ -255,7 +256,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="TextureTarget_Platform.h" />
     <ClInclude Include="Texture_OpenGL.h" />
     <ClInclude Include="Texture_Platform.h" />
-    <ClInclude Include="SaberObject.h" />
+    <ClInclude Include="NamedObject.h" />
     <ClInclude Include="DebugConfiguration.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CoreEngine.h" />
@@ -263,7 +264,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="EngineConfig.h" />
     <ClInclude Include="EventListener.h" />
     <ClInclude Include="EventManager.h" />
-    <ClInclude Include="GameObject.h" />
+    <ClInclude Include="SceneObject.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="KeyConfiguration.h" />
     <ClInclude Include="Light.h" />
@@ -274,7 +275,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="RenderManager.h" />
     <ClInclude Include="SceneData.h" />
     <ClInclude Include="SceneManager.h" />
-    <ClInclude Include="SceneObject.h" />
+    <ClInclude Include="Transformable.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="TimeManager.h" />

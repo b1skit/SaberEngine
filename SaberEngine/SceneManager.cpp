@@ -17,10 +17,7 @@ using std::string;
 
 namespace en
 {
-	SceneManager::SceneManager() : EngineComponent("SceneManager"),
-		m_sceneData(nullptr)
-	{	
-	}
+	SceneManager::SceneManager() : m_sceneData(nullptr) {}
 
 
 	void SceneManager::Startup()
@@ -41,7 +38,7 @@ namespace en
 
 		// Add a player object to the scene:
 		shared_ptr<fr::PlayerObject> player = std::make_shared<fr::PlayerObject>(m_sceneData->GetMainCamera());
-		m_sceneData->AddGameObject(player);
+		m_sceneData->AddUpdateable(player);
 		LOG("Created PlayerObject using \"%s\"", m_sceneData->GetMainCamera()->GetName().c_str());
 	}
 
@@ -56,26 +53,10 @@ namespace en
 
 	void SceneManager::Update()
 	{
-		// Update GameObjects:
-		for (int i = 0; i < (int)m_sceneData->GetGameObjects().size(); i++)
+		// Tick Updateables:
+		for (int i = 0; i < (int)m_sceneData->GetUpdateables().size(); i++)
 		{
-			m_sceneData->GetGameObjects().at(i)->Update();
-		}
-
-		// Update lights:
-		shared_ptr<Light> ambientLight = m_sceneData->GetAmbientLight();
-		if (ambientLight)
-		{
-			ambientLight->Update();
-		}
-		shared_ptr<Light> keyLight = m_sceneData->GetKeyLight();
-		if (keyLight)
-		{
-			keyLight->Update();
-		}		
-		for (shared_ptr<Light> pointLight : m_sceneData->GetPointLights())
-		{
-			pointLight->Update();
+			m_sceneData->GetUpdateables().at(i)->Update();
 		}
 	}
 

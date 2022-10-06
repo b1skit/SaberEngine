@@ -28,7 +28,7 @@ using glm::mat4;
 
 namespace gr
 {
-	DeferredLightingGraphicsSystem::DeferredLightingGraphicsSystem(string name) : GraphicsSystem(name),
+	DeferredLightingGraphicsSystem::DeferredLightingGraphicsSystem(string name) : GraphicsSystem(name), NamedObject(name),
 		m_ambientStage("Ambient light stage"),
 		m_keylightStage("Keylight stage"),
 		m_pointlightStage("Pointlight stage"),

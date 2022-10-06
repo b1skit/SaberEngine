@@ -18,7 +18,7 @@ using glm::vec3;
 
 namespace gr
 {
-	ShadowsGraphicsSystem::ShadowsGraphicsSystem(std::string name) : GraphicsSystem(name),
+	ShadowsGraphicsSystem::ShadowsGraphicsSystem(std::string name) : GraphicsSystem(name), NamedObject(name),
 		m_directionalShadowStage("Keylight shadow")
 	{
 	}

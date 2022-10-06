@@ -7,6 +7,7 @@
 #include "Mesh.h"
 
 using gr::Shader;
+using gr::Transform;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
@@ -15,13 +16,8 @@ using glm::vec3;
 
 namespace gr
 {
-	Light::Light(
-		std::string const& lightName, 
-		gr::Transform* ownerTransform,
-		LightType lightType, 
-		vec3 colorIntensity,
-		bool hasShadow) : 
-			m_name(lightName),
+	Light::Light(string const& name, Transform* ownerTransform, LightType lightType, vec3 colorIntensity, bool hasShadow) :
+		en::NamedObject(name),
 			m_ownerTransform(ownerTransform),
 			m_colorIntensity(colorIntensity),
 			m_type(lightType),

@@ -9,9 +9,9 @@ using std::vector;
 
 namespace gr
 {
-	RenderMesh::RenderMesh(Transform* gameObjectParent, shared_ptr<Mesh> meshPrimitive)
+	RenderMesh::RenderMesh(Transform* parent, shared_ptr<Mesh> meshPrimitive)
 	{
-		m_transform.SetParent(gameObjectParent);
+		m_transform.SetParent(parent);
 		AddChildMeshPrimitive(meshPrimitive);
 	}
 
