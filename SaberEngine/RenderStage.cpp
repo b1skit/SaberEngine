@@ -50,25 +50,15 @@ namespace gr
 		SEAssert("Invalid shader sampler name", !shaderName.empty());
 		SEAssert("Invalid texture", tex != nullptr);
 		SEAssert("Invalid sampler", sampler != nullptr);
-		
-		SetPerFrameShaderUniformByPtr(
-			shaderName,
-			tex.get(),
-			platform::Shader::UniformType::Texture,
-			1);
-		SetPerFrameShaderUniformByPtr(
-			shaderName,
-			sampler.get(),
-			platform::Shader::UniformType::Sampler,
-			1);
-	}
 
-	void RenderStage::SetPerFrameShaderUniformByPtr(
-		string const& uniformName, void const* value, platform::Shader::UniformType const& type, int const count)
-	{
-		m_perFrameShaderUniforms.emplace_back(uniformName, value, type, count);
-	}
+		// Hold a copy of our shared pointers to ensure they don't go out of scope until we're done with them:
+		m_perFrameShaderUniformValues.emplace_back(std::static_pointer_cast<const void>(tex));
+		m_perFrameShaderUniformValues.emplace_back(std::static_pointer_cast<const void>(sampler));
 
+		// Add our raw pointers to the list of StageShaderUniforms:
+		m_perFrameShaderUniforms.emplace_back(shaderName, tex.get(), platform::Shader::UniformType::Texture, 1);
+		m_perFrameShaderUniforms.emplace_back(shaderName, sampler.get(), platform::Shader::UniformType::Sampler, 1);
+	}
 
 	template <typename T>
 	void RenderStage::SetPerFrameShaderUniformByValue(
@@ -89,12 +79,7 @@ namespace gr
 			valuePtr = m_perFrameShaderUniformValues.back().get();
 		}
 
-		SetPerFrameShaderUniformByPtr(
-			uniformName,
-			valuePtr,
-			type,
-			count);
-
+		m_perFrameShaderUniforms.emplace_back(uniformName, valuePtr, type, count);
 	}
 	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
 	template void RenderStage::SetPerFrameShaderUniformByValue<mat4>(

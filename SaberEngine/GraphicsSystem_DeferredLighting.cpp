@@ -509,12 +509,12 @@ namespace gr
 				"shadowCam_far", keyLightShadowCam->Far(), platform::Shader::UniformType::Float, 1);
 
 			// Keylight properties:
-			m_keylightStage.SetPerFrameShaderUniformByPtr( // GetColor() returns by reference
-				"lightColor", &keyLight->GetColor().r, platform::Shader::UniformType::Vec3f, 1);
+			m_keylightStage.SetPerFrameShaderUniformByValue(
+				"lightColor", keyLight->GetColor(), platform::Shader::UniformType::Vec3f, 1);
 
 			// TODO: Rename this as keylightDirWorldSpace
-			m_keylightStage.SetPerFrameShaderUniformByPtr( // Returns by reference
-				"keylightWorldDir", &keyLight->GetTransform()->ForwardWorld().x, platform::Shader::UniformType::Vec3f, 1);
+			m_keylightStage.SetPerFrameShaderUniformByValue(
+				"keylightWorldDir", keyLight->GetTransform()->ForwardWorld(), platform::Shader::UniformType::Vec3f, 1);
 
 			// TODO: Rename this as keylightDirViewSpace
 			m_keylightStage.SetPerFrameShaderUniformByValue(

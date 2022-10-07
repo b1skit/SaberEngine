@@ -90,10 +90,6 @@ namespace gr
 			std::string const& shaderName, std::shared_ptr<gr::Texture const> tex, std::shared_ptr<gr::Sampler const> sampler);
 
 		// Per-frame uniforms are set every frame
-		void SetPerFrameShaderUniformByPtr(
-			std::string const& uniformName, void const* value, platform::Shader::UniformType const& type, int const count);
-		// TODO: Maybe all uniforms should be set by value? Too easy to mistakenly set a pointer to a local variable...
-
 		inline std::vector<StageShaderUniform> const& GetPerFrameShaderUniforms() const { return m_perFrameShaderUniforms; }
 
 		template <typename T>
@@ -127,7 +123,7 @@ namespace gr
 
 		// Per-frame members are cleared every frame
 		std::vector<StageShaderUniform> m_perFrameShaderUniforms; // TODO: Handle selection of face, miplevel when binding color/depth targets?
-		std::vector<std::shared_ptr<void>> m_perFrameShaderUniformValues; // Generic, per-frame data storage buffer
+		std::vector<std::shared_ptr<const void>> m_perFrameShaderUniformValues; // Generic, per-frame data storage buffer
 		
 		// TODO: Implement a "m_stageConstantShaderUniforms" -> Things like textures, samplers, etc that don't change
 		// between frames
