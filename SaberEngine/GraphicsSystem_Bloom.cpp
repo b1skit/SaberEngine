@@ -102,9 +102,10 @@ namespace gr
 
 			resScaleParams.m_width = currentXRes;
 			resScaleParams.m_height = currentYRes;
-			resScaleParams.m_texturePath ="ScaledResolution_" + to_string(currentXRes) + "x" + to_string(currentYRes);
+			const string texPath = "ScaledResolution_" + to_string(currentXRes) + "x" + to_string(currentYRes);
 
-			m_downResStages.back().GetTextureTargetSet().ColorTarget(0) = std::make_shared<gr::Texture>(resScaleParams);
+			m_downResStages.back().GetTextureTargetSet().ColorTarget(0) = 
+				std::make_shared<gr::Texture>(texPath, resScaleParams);
 			m_downResStages.back().GetTextureTargetSet().CreateColorTargets();
 
 			m_downResStages.back().SetStageParams(bloomStageParams);
@@ -143,9 +144,9 @@ namespace gr
 		Texture::TextureParams blurParams(resScaleParams);
 		blurParams.m_width = currentXRes;
 		blurParams.m_height = currentYRes;
-		blurParams.m_texturePath = "BlurPingPong_" + to_string(currentXRes) + "x" + to_string(currentYRes);
+		const string texName = "BlurPingPong_" + to_string(currentXRes) + "x" + to_string(currentYRes);
 		
-		shared_ptr<Texture> blurPingPongTexture = make_shared<gr::Texture>(blurParams);
+		shared_ptr<Texture> blurPingPongTexture = make_shared<gr::Texture>(texName, blurParams);
 
 		uint32_t totalBlurPasses = m_numBlurPasses * 2; // x2 for horizontal + blur separation
 		m_blurStages.reserve(totalBlurPasses);  // MUST reserve so our pointers won't change

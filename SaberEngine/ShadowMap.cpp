@@ -54,20 +54,20 @@ namespace gr
 		if (useCubeMap)
 		{
 			shadowParams.m_texDimension = Texture::TextureDimension::TextureCubeMap;
-			shadowParams.m_texturePath = lightName + "_CubeShadowMap";
 			shadowParams.m_faces = 6;
+			const string texName = lightName + "_CubeShadowMap";
 
-			depthTexture = std::make_shared<gr::Texture>(shadowParams);
+			depthTexture = std::make_shared<gr::Texture>(texName, shadowParams);
 
 			shaderName = en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("cubeDepthShaderName");
 		}
 		else // Single texture shadowmap setup:
 		{
 			shadowParams.m_texDimension = Texture::TextureDimension::Texture2D;
-			shadowParams.m_texturePath = lightName + "_SingleShadowMap";
 			shadowParams.m_faces = 1;
+			const string texName = lightName + "_SingleShadowMap";
 			
-			depthTexture = std::make_shared<gr::Texture>(shadowParams);
+			depthTexture = std::make_shared<gr::Texture>(texName, shadowParams);
 
 			shaderName = en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("depthShaderName");
 		}

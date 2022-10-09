@@ -53,9 +53,8 @@ namespace gr
 		lightTargetParams.m_texFormat = Texture::TextureFormat::RGBA32F;
 		lightTargetParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
 		lightTargetParams.m_clearColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);
-		lightTargetParams.m_texturePath = "DeferredLightTarget";
 
-		std::shared_ptr<Texture> outputTexture = make_shared<Texture>(lightTargetParams);
+		std::shared_ptr<Texture> outputTexture = make_shared<Texture>("DeferredLightTarget", lightTargetParams);
 
 		TextureTargetSet deferredLightingTargetSet("Deferred lighting target");
 		deferredLightingTargetSet.ColorTarget(0) = outputTexture;
@@ -151,10 +150,9 @@ namespace gr
 			brdfParams.m_texFormat = Texture::TextureFormat::RG16F; // Epic recommends 2 channel, 16-bit floats
 			brdfParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
 			brdfParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-			brdfParams.m_texturePath = "BRDFIntegrationMap";
 			brdfParams.m_useMIPs = false;
 
-			m_BRDF_integrationMap = std::make_shared<gr::Texture>(brdfParams);
+			m_BRDF_integrationMap = std::make_shared<gr::Texture>("BRDFIntegrationMap", brdfParams);
 
 			brdfStage.GetTextureTargetSet().ColorTarget(0) = m_BRDF_integrationMap;
 			brdfStage.GetTextureTargetSet().Viewport() = gr::Viewport(0, 0, generatedTexRes, generatedTexRes);
@@ -219,9 +217,8 @@ namespace gr
 			iemShader->Create();
 
 			// IEM-specific texture params:
-			cubeParams.m_texturePath = "IEMTexture";
 			cubeParams.m_useMIPs = false;
-			m_IEMTex = make_shared<Texture>(cubeParams);
+			m_IEMTex = make_shared<Texture>("IEMTexture", cubeParams);
 
 			for (uint32_t face = 0; face < 6; face++)
 			{
@@ -261,9 +258,8 @@ namespace gr
 			pmremShader->Create();
 
 			// PMREM-specific texture params:
-			cubeParams.m_texturePath = "PMREMTexture";
 			cubeParams.m_useMIPs = true;
-			m_PMREMTex = make_shared<Texture>(cubeParams);
+			m_PMREMTex = make_shared<Texture>("PMREMTexture", cubeParams);
 
 			TextureTargetSet pmremTargetSet("PMREM texture targets");
 			pmremTargetSet.ColorTarget(0) = m_PMREMTex;

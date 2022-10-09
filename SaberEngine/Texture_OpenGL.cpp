@@ -75,28 +75,28 @@ namespace opengl
 		{
 			m_format = GL_RGBA;
 			m_internalFormat = GL_RGBA16F;
-			m_type = GL_FLOAT;
+			m_type = GL_HALF_FLOAT;
 		}
 		break;
 		case gr::Texture::TextureFormat::RGB16F:
 		{
 			m_format = GL_RGB;
 			m_internalFormat = GL_RGB16F;
-			m_type = GL_FLOAT;
+			m_type = GL_HALF_FLOAT;
 		}
 		break;
 		case gr::Texture::TextureFormat::RG16F:
 		{
 			m_format = GL_RG;
 			m_internalFormat = GL_RG16F;
-			m_type = GL_FLOAT;
+			m_type = GL_HALF_FLOAT;
 		}
 		break;
 		case gr::Texture::TextureFormat::R16F:
 		{
 			m_format = GL_R;
 			m_internalFormat = GL_R16F;
-			m_type = GL_FLOAT;
+			m_type = GL_HALF_FLOAT;
 		}
 		break;
 		case gr::Texture::TextureFormat::RGBA8:
@@ -104,14 +104,16 @@ namespace opengl
 			m_format = GL_RGBA;
 			m_internalFormat = 
 				texParams.m_texColorSpace == gr::Texture::TextureColorSpace::sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
-			m_type = GL_FLOAT;
+			// Note: Alpha in GL_SRGB8_ALPHA8 is stored in linear color space, RGB are in sRGB color space
+			m_type = GL_UNSIGNED_BYTE;
 		}
 		break;
 		case gr::Texture::TextureFormat::RGB8:
 		{
 			m_format = GL_RGB;
-			m_internalFormat = GL_SRGB8;
-			m_type = GL_FLOAT;
+			m_internalFormat = 
+				texParams.m_texColorSpace == gr::Texture::TextureColorSpace::sRGB ? GL_SRGB8 : GL_RGB8;		
+			m_type = GL_UNSIGNED_BYTE;
 		}
 		break;
 		case gr::Texture::TextureFormat::RG8:
@@ -182,7 +184,7 @@ namespace opengl
 
 	void opengl::Texture::Create(gr::Texture& texture)
 	{
-		LOG("Creating & buffering texture: \"%s\"", texture.GetTexturePath().c_str());
+		LOG("Creating & buffering texture: \"%s\"", texture.GetName().c_str());
 
 		// Create the platform-specific parameters object:
 		platform::Texture::PlatformParams::CreatePlatformParams(texture);
@@ -198,7 +200,7 @@ namespace opengl
 		glBindTexture(params->m_texTarget, params->m_textureID);
 
 		// RenderDoc object name:
-		glObjectLabel(GL_TEXTURE, params->m_textureID, -1, texture.GetTexturePath().c_str());
+		glObjectLabel(GL_TEXTURE, params->m_textureID, -1, texture.GetName().c_str());
 
 		SEAssert("OpenGL failed to generate new texture name. Texture buffering failed", 
 			glIsTexture(params->m_textureID) == GL_TRUE);
@@ -220,9 +222,10 @@ namespace opengl
 			if (texParams.m_texUse == gr::Texture::TextureUse::Color)
 			{
 				SEAssert("Color target must have data to buffer", 
-					texture.Texels().size() == (texParams.m_faces * texParams.m_width * texParams.m_height));
+					texture.Texels().size() == 
+					(texParams.m_faces * texParams.m_width * texParams.m_height * gr::Texture::GetNumBytesPerTexel(texParams.m_texFormat)));
 
-				data = (void*)&texture.GetTexel(0, 0, i).r;
+				data = (void*)texture.GetTexel(0, 0, i);
 			}
 
 			GLenum target;
@@ -233,7 +236,7 @@ namespace opengl
 				// m_texTarget instead of GL_TEXTURE_CUBE_MAP_POSITIVE_X
 				// // -> Doing a similar thing in TextureTargetSet
 				// -> Currently fails if we use GL_TEXTURE_CUBE_MAP...
-				//
+
 				// https://www.reddit.com/r/opengl/comments/556zac/how_to_create_cubemap_with_direct_state_access/
 				// Specify storage with glTextureStorage2D: https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
 				// Buffer each face with glTextureSubImage3D
@@ -243,6 +246,20 @@ namespace opengl
 				target = params->m_texTarget;
 			}
 
+			// Compute the byte alignment for w.r.t to the image dimensions. Allows RGB8 textures (3x 1-byte channels)
+			// to be correctly buffered. Default alignment is 4.
+			GLint byteAlignment = 8;
+			while (texture.Width() % byteAlignment != 0)
+			{
+				byteAlignment /= 2; // 8, 4, 2, 1
+			}
+			SEAssert("Invalid byte alignment",
+				byteAlignment == 8 || byteAlignment == 4 || byteAlignment == 2 || byteAlignment == 1);
+
+			// Set the byte alignment for the start of each image row in memory:
+			glPixelStorei(GL_UNPACK_ALIGNMENT, byteAlignment);
+
+			// Specify the texture:
 			glTexImage2D(					// Specifies a 2D texture
 				target + (GLenum)i,			// target: GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP_POSITIVE_X, etc
 				0,							// mip level

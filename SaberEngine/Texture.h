@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 
 #include "Texture_Platform.h"
+#include "NamedObject.h"
 
 
 namespace platform
@@ -16,7 +17,7 @@ namespace platform
 
 namespace gr
 {
-	class Texture
+	class Texture : public virtual en::NamedObject
 	{
 	public:
 		enum class TextureUse
@@ -89,13 +90,12 @@ namespace gr
 			TextureColorSpace m_texColorSpace = TextureColorSpace::sRGB;
 
 			glm::vec4 m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f); // Also used as initial fill color
-			std::string m_texturePath = "UnnamedTexture"; // TODO: Path should be a member of Texture, not TextureParams
 			bool m_useMIPs = true; // Should MIPs be created for this texture?
 		};
 
 
 	public:
-		explicit Texture(TextureParams const& params);
+		explicit Texture(std::string const& name, TextureParams const& params);
 		~Texture() { Destroy();	}
 
 		Texture() = delete;
@@ -103,29 +103,19 @@ namespace gr
 		Texture(Texture const&& rhs) = delete;
 		Texture& operator=(Texture const& rhs) = delete;
 
-
 		void Create();
 		void Bind(uint32_t textureUnit, bool doBind) const; // TODO: Write an explicit unbind
 
 		void Destroy();
 
-		
 		inline uint32_t const& Width() const { return m_texParams.m_width; }
 		inline uint32_t const& Height() const { return m_texParams.m_height; }
 
-		std::vector<glm::vec4>& GetTexels() { m_isDirty = true; return m_texels; }
-		std::vector<glm::vec4> const& GetTexels() const {return m_texels; }
+		uint8_t const* GetTexel(uint32_t u, uint32_t v, uint32_t faceIdx) const; // u == x == col, v == y == row
+		uint8_t const* GetTexel(uint32_t index) const;
 
-		glm::vec4 const& GetTexel(uint32_t u, uint32_t v, uint32_t faceIdx = 0) const; // u == x == col, v == y == row
-		glm::vec4 const& GetTexel(uint32_t index) const;
-
-		void SetTexel(uint32_t u, uint32_t v, glm::vec4 value); // u == x == col, v == y == row
-
-		void Fill(glm::vec4 solidColor);	// Fill texture with a solid color
-		void Fill(glm::vec4 tl, glm::vec4 bl, glm::vec4 tr, glm::vec4 br); // Fill texture with a color gradient
-
-		std::vector<glm::vec4> const& Texels() const { return m_texels; }
-		std::vector<glm::vec4>& Texels() { m_isDirty = true; return m_texels; }
+		std::vector<uint8_t> const& Texels() const { return m_texels; }
+		std::vector<uint8_t>& Texels() { m_isDirty = true; return m_texels; }
 		
 		glm::vec4 GetTexelDimenions() const;	// .xyzw = 1/width, 1/height, width, height
 
@@ -138,15 +128,22 @@ namespace gr
 		void SetTextureParams(gr::Texture::TextureParams const& params) { m_texParams = params; m_isDirty = true; }
 		TextureParams const& GetTextureParams() const { return m_texParams; }
 
-		inline void SetTexturePath(std::string path) { m_texParams.m_texturePath = path; m_isDirty = true; }
-		inline std::string const& GetTexturePath() const { return m_texParams.m_texturePath; }
+	public:
+		// Static helpers:
+		static uint8_t GetNumberOfChannels(const TextureFormat texFormat);
+		static uint8_t GetNumBytesPerTexel(const TextureFormat texFormat);
 
+	private:
+		void Fill(glm::vec4 solidColor);	// Fill texture with a solid color
+		void Fill(glm::vec4 tl, glm::vec4 bl, glm::vec4 tr, glm::vec4 br); // Fill texture with a color gradient
+
+		void SetTexel(uint32_t u, uint32_t v, glm::vec4 value); // u == x == col, v == y == row
 
 	private:
 		TextureParams m_texParams;
 		std::unique_ptr<platform::Texture::PlatformParams> m_platformParams;
 
-		std::vector<glm::vec4> m_texels;
+		std::vector<uint8_t> m_texels;
 
 		bool m_isCreated;
 		bool m_isDirty;

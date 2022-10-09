@@ -66,67 +66,26 @@ namespace
 	#define DEFAULT_ALPHA_VALUE 1.0f // Default alpha value when loading texture data, if no alpha exists
 
 
-	// Helper functions for loading Low/High Dynamic Range image formats in LoadTextureFileFromPath()
-	// Note: targetTexture and imageData must be valid
-	void LoadLDRHelper(
-		std::vector<glm::vec4>& texels,
+	void CopyImageData(
+		std::vector<uint8_t>& texels,
 		const uint8_t* imageData,
 		size_t width,
 		size_t height,
-		size_t numChannels,
-		size_t firstTexelIndex = 0)
-	{
-		// Read texel values:
-		const uint8_t* currentElement = imageData;
-		for (size_t row = 0; row < height; row++)
-		{
-			for (size_t col = 0; col < width; col++)
-			{
-				vec4 currentPixel(0.0f, 0.0f, 0.0f, DEFAULT_ALPHA_VALUE);
+		uint8_t numChannels,
+		uint8_t bitDepth,
+		size_t firstTexelIndex) // firstTexelIndex is in units of # of pixels (NOT bytes)
+	{	
+		SEAssert("Invalid bit depth", bitDepth == 8 || bitDepth == 16 || bitDepth == 32);
+		SEAssert("Invalid number of channels", numChannels >= 1 && numChannels <= 4);
 
-				for (size_t channel = 0; channel < numChannels; channel++)
-				{
-					// LDR values are stored as normalized floats
-					currentPixel[(uint32_t)channel] = (float)((float)((unsigned int)*currentElement) / 255.0f);
-					currentElement++;
-				}
+		const uint8_t bytesPerPixel = (bitDepth * numChannels) / 8;
+		const size_t numBytes = width * height * bytesPerPixel;
 
-				texels.at(firstTexelIndex + (row * width) + col) = currentPixel;
-			}
-		}
-	}
+		SEAssert("Texels is not correctly allocated", numBytes == texels.size());
 
+		const size_t firstTexelIdx = firstTexelIndex * bytesPerPixel;
 
-	void LoadHDRHelper(
-		std::vector<glm::vec4>& texels,
-		float const* imageData,
-		size_t width, size_t height,
-		size_t numChannels,
-		size_t firstTexelIndex = 0)
-	{
-		// Typically most HDRs will be RGB, with 32-bits per channel (https://www.hdrsoft.com/resources/dri.html)
-
-		// Read texel values:
-		const float* currentElement = imageData;
-		for (size_t row = 0; row < height; row++)
-		{
-			for (size_t col = 0; col < width; col++)
-			{
-				// Start with an "empty" pixel, and fill values as we encounter them
-				vec4 currentPixel(0.0f, 0.0f, 0.0f, DEFAULT_ALPHA_VALUE);
-
-				// TODO: Support RBG formats for HDR images: We can copy the image data directly into our m_texels array
-
-				for (size_t channel = 0; channel < numChannels; channel++)
-				{
-					currentPixel[(uint32_t)channel] = *currentElement;
-
-					currentElement++;
-				}
-
-				texels.at(firstTexelIndex + (row * width) + col) = currentPixel;
-			}
-		}
+		memcpy(&texels.at(firstTexelIdx), imageData, numBytes);
 	}
 
 
@@ -146,7 +105,7 @@ namespace
 
 		const uint32_t totalFaces = (uint32_t)texturePaths.size();
 
-		// Start with parameters suitable for an error texture:
+		// Start with parameters suitable for a generic error texture:
 		Texture::TextureParams texParams;
 		texParams.m_width = 2;
 		texParams.m_height = 2;
@@ -159,7 +118,6 @@ namespace
 		texParams.m_texColorSpace = Texture::TextureColorSpace::Unknown;
 
 		texParams.m_clearColor = ERROR_TEXTURE_COLOR_VEC4;
-		texParams.m_texturePath = ERROR_TEXTURE_NAME;
 		texParams.m_useMIPs = true;
 
 		// Load the texture, face-by-face:
@@ -167,23 +125,20 @@ namespace
 		for (size_t face = 0; face < totalFaces; face++)
 		{
 			// Get the image data:
-			int width, height, numChannels;
-			void* imageData = nullptr;
-			size_t bitDepth = 0;
+			int width, height;
+			int numChannels;
+			uint8_t bitDepth = 0;
+			void* imageData = nullptr;			
 
-			if (stbi_is_hdr(texturePaths[face].c_str()))	// HDR
+			if (stbi_is_hdr(texturePaths[face].c_str())) // HDR
 			{
 				imageData = stbi_loadf(texturePaths[face].c_str(), &width, &height, &numChannels, 0);
 				bitDepth = 32;
 			}
 			else if (stbi_is_16_bit(texturePaths[face].c_str()))
 			{
-				// TODO: Support loading 16 bit images
-				LOG_WARNING("Loading 16 bit image as 8 bit");
-				imageData = stbi_load(texturePaths[face].c_str(), &width, &height, &numChannels, 0);
-				bitDepth = 8;
-				//imageData = stbi_load_16(texturePaths[face].c_str(), &width, &height, &numChannels, 0);
-				//bitDepth = 16;
+				imageData = stbi_load_16(texturePaths[face].c_str(), &width, &height, &numChannels, 0);
+				bitDepth = 16;
 			}
 			else // Non-HDR
 			{
@@ -195,12 +150,11 @@ namespace
 			{
 				LOG("Found %dx%d, %d-bit texture with %d channels", width, height, bitDepth, numChannels);
 
-				if (texture == nullptr)
+				if (texture == nullptr) // 1st face
 				{
 					// Update the texture parameters:
 					texParams.m_width = width;
 					texParams.m_height = height;
-					texParams.m_faces = (uint32_t)totalFaces;
 
 					if ((width == 1 || height == 1) && (width != height))
 					{
@@ -210,36 +164,60 @@ namespace
 						/*texParams.m_texDimension = gr::Texture::TextureDimension::Texture1D;*/
 					}
 
-					// Currently, we force-pack everything into a 4-channel, 32-bit RGBA texture (in our LDR/HDR helpers).
-					// TODO: Support arbitrary texture layouts
-					texParams.m_texFormat = gr::Texture::TextureFormat::RGBA32F;
-
+					switch (numChannels)
+					{
+					case 1:
+					{
+						if (bitDepth == 8) texParams.m_texFormat = gr::Texture::TextureFormat::R8;
+						else if (bitDepth == 16) texParams.m_texFormat = gr::Texture::TextureFormat::R16F;
+						else texParams.m_texFormat = gr::Texture::TextureFormat::R32F;
+					}
+					break;
+					case 2:
+					{
+						if (bitDepth == 8) texParams.m_texFormat = gr::Texture::TextureFormat::RG8;
+						else if (bitDepth == 16) texParams.m_texFormat = gr::Texture::TextureFormat::RG16F;
+						else texParams.m_texFormat = gr::Texture::TextureFormat::RG32F;
+					}
+					break;
+					case 3:
+					{
+						if (bitDepth == 8) texParams.m_texFormat = gr::Texture::TextureFormat::RGB8;
+						else if (bitDepth == 16) texParams.m_texFormat = gr::Texture::TextureFormat::RGB16F;
+						else texParams.m_texFormat = gr::Texture::TextureFormat::RGB32F;
+					}
+					break;
+					case 4:
+					{
+						if (bitDepth == 8) texParams.m_texFormat = gr::Texture::TextureFormat::RGBA8;
+						else if (bitDepth == 16) texParams.m_texFormat = gr::Texture::TextureFormat::RGBA16F;
+						else texParams.m_texFormat = gr::Texture::TextureFormat::RGBA32F;
+					}
+					break;
+					default:
+						SEAssert("Invalid number of channels", false);
+					}
+					
 					texParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
-					texParams.m_texturePath = texturePaths[0]; // Note: Texture lookup also uses the path of the first face
 
-					texture = std::make_shared<gr::Texture>(texParams);
+					// Create the texture now the params are configured:
+					texture = std::make_shared<gr::Texture>(texturePaths[0], texParams);
 				}
-				else
+				else // texture already exists: Ensure the face has the same dimensions
 				{
 					SEAssert("Parameter mismatch", texParams.m_width == width && texParams.m_height == height);
 				}
 
+				// Copy the data to our texture's texel vector:
 				const size_t firstTexelIndex = face * width * height;
-				if (bitDepth == 32)
-				{
-					float const* castImageData = static_cast<float const*>(imageData);
-
-					LoadHDRHelper(texture->Texels(), castImageData, width, height, numChannels, firstTexelIndex);
-				}
-				else if (bitDepth == 8 || bitDepth == 16)
-				{
-					uint8_t const* castImageData = static_cast<uint8_t const*>(imageData);
-					LoadLDRHelper(texture->Texels(), castImageData, width, height, numChannels, firstTexelIndex);
-				}
-				else
-				{
-					SEAssert("Invalid bit depth", false);
-				}
+				CopyImageData(
+					texture->Texels(), 
+					static_cast<uint8_t const*>(imageData), 
+					width, 
+					height, 
+					(int8_t)numChannels,
+					bitDepth, 
+					firstTexelIndex);
 
 				// Cleanup:
 				stbi_image_free(imageData);
@@ -248,10 +226,20 @@ namespace
 			{
 				if (texture != nullptr)
 				{
-					// TODO...
-					SEAssert("TODO: Cleanup existing texture, reset texParams to be suitable for an error texture", false);
+					texture = nullptr;
+
+					// Reset texParams to be suitable for an error texture
+					texParams.m_width = 2;
+					texParams.m_height = 2;
+					texParams.m_texDimension = totalFaces == 1 ?
+						gr::Texture::TextureDimension::Texture2D : gr::Texture::TextureDimension::TextureCubeMap;
+					texParams.m_texFormat = gr::Texture::TextureFormat::RGBA8;
+					texParams.m_texColorSpace = Texture::TextureColorSpace::Unknown;
+
+					texParams.m_clearColor = ERROR_TEXTURE_COLOR_VEC4;
+					texParams.m_useMIPs = true;
 				}
-				texture = std::make_shared<gr::Texture>(texParams);
+				texture = std::make_shared<gr::Texture>(ERROR_TEXTURE_NAME, texParams);
 			}
 			else
 			{
@@ -348,10 +336,11 @@ namespace
 		auto LoadTextureOrColor = [&](
 			cgltf_texture* texture, 
 			vec4 const& colorFallback, 
-			Texture::TextureFormat format, 
+			Texture::TextureFormat formatFallback,
 			Texture::TextureColorSpace colorSpace)
 		{
-			// TODO: Support arbitary channel formats beyond 4-channel RGBA
+			SEAssert("Invalid fallback format", 
+				formatFallback != Texture::TextureFormat::Depth32F && formatFallback != Texture::TextureFormat::Invalid);
 
 			shared_ptr<Texture> tex;
 			if (texture && texture->image && texture->image->uri)
@@ -361,22 +350,33 @@ namespace
 
 				Texture::TextureParams texParams = tex->GetTextureParams();
 				texParams.m_texColorSpace = colorSpace;
-				texParams.m_texFormat = format;
 				tex->SetTextureParams(texParams);
 			}
 			else
 			{
 				Texture::TextureParams colorTexParams;
 				colorTexParams.m_clearColor = colorFallback; // Clear color = initial fill color
-				colorTexParams.m_texturePath = "Color_" +
-					to_string(colorTexParams.m_clearColor.x) + "_" +
-					to_string(colorTexParams.m_clearColor.y) + "_" +
-					to_string(colorTexParams.m_clearColor.z) + "_" +
-					to_string(colorTexParams.m_clearColor.w) + "_" +
-					(colorSpace == Texture::TextureColorSpace::sRGB ? "sRGB" : "Linear");
-				colorTexParams.m_texColorSpace = colorSpace;
-				colorTexParams.m_texFormat = format;
-				tex = make_shared<Texture>(colorTexParams);
+				colorTexParams.m_texFormat = formatFallback;
+				colorTexParams.m_texColorSpace = colorSpace;				
+
+				// Construct a name:
+				const size_t numChannels = Texture::GetNumberOfChannels(formatFallback);
+				string texName = "Color_" + to_string(colorTexParams.m_clearColor.x) + "_";
+				if (numChannels >= 2)
+				{
+					texName += to_string(colorTexParams.m_clearColor.y) + "_";
+					if (numChannels >= 3)
+					{
+						texName += to_string(colorTexParams.m_clearColor.z) + "_";
+						if (numChannels >= 4)
+						{
+							texName += to_string(colorTexParams.m_clearColor.w) + "_";
+						}
+					}
+				}				
+				texName += (colorSpace == Texture::TextureColorSpace::sRGB ? "sRGB" : "Linear");
+
+				tex = make_shared<Texture>(texName, colorTexParams);
 			}
 
 			scene.AddUniqueTexture(tex);
@@ -392,35 +392,35 @@ namespace
 		newMat->GetTexture(0) = LoadTextureOrColor(
 			material->pbr_metallic_roughness.base_color_texture.texture,
 			missingTextureColor,
-			Texture::TextureFormat::RGBA8,
+			Texture::TextureFormat::RGB8,
 			Texture::TextureColorSpace::sRGB);
 
 		// MatMetallicRoughness
 		newMat->GetTexture(1) = LoadTextureOrColor(
 			material->pbr_metallic_roughness.metallic_roughness_texture.texture,
 			missingTextureColor,
-			Texture::TextureFormat::RGBA8,
+			Texture::TextureFormat::RGB8,
 			Texture::TextureColorSpace::Linear);
 
 		// MatNormal
 		newMat->GetTexture(2) = LoadTextureOrColor(
 			material->normal_texture.texture,
 			vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
-			Texture::TextureFormat::RGBA32F,
+			Texture::TextureFormat::RGB8,
 			Texture::TextureColorSpace::Linear);
 
 		// MatOcclusion
 		newMat->GetTexture(3) = LoadTextureOrColor(
 			material->occlusion_texture.texture,
 			missingTextureColor,	// Completely unoccluded
-			Texture::TextureFormat::RGBA32F,
+			Texture::TextureFormat::RGB8,
 			Texture::TextureColorSpace::Linear);
 
 		// MatEmissive
 		newMat->GetTexture(4) = LoadTextureOrColor(
 			material->emissive_texture.texture,
 			missingTextureColor,
-			Texture::TextureFormat::RGBA32F,
+			Texture::TextureFormat::RGB8,
 			Texture::TextureColorSpace::sRGB); // GLTF convention: Must be converted to linear before use
 
 		// Construct a permanent parameter block for the material params:
@@ -1068,17 +1068,16 @@ namespace fr
 	{
 		SEAssert("Cannot add null texture to textures table", newTexture != nullptr);
 
-		const size_t nameID = NamedObject::ComputeIDFromName(newTexture->GetTexturePath());
-
-		unordered_map<size_t, shared_ptr<gr::Texture>>::const_iterator texturePosition = m_textures.find(nameID);
+		unordered_map<size_t, shared_ptr<gr::Texture>>::const_iterator texturePosition = 
+			m_textures.find(newTexture->GetNameID());
 		if (texturePosition != m_textures.end()) // Found existing
 		{
 			newTexture = texturePosition->second;
 		}
 		else  // Add new
 		{
-			m_textures[nameID] = newTexture;
-			LOG("Texture \"%s\" registered with scene", newTexture->GetTexturePath().c_str());
+			m_textures[newTexture->GetNameID()] = newTexture;
+			LOG("Texture \"%s\" registered with scene", newTexture->GetName().c_str());
 		}
 	}
 
