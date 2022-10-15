@@ -23,8 +23,7 @@ namespace gr
 			m_type(lightType),
 			m_shadowMap(nullptr),
 			m_deferredMesh(nullptr),
-			m_deferredLightShader(nullptr),
-			m_radius(1.0f)
+			m_deferredLightShader(nullptr)
 	{		
 		// Set up deferred light mesh:
 		string shaderName;
@@ -73,13 +72,13 @@ namespace gr
 					glm::inverse(m_ownerTransform->GetWorldMatrix()));
 
 				gr::Camera::CameraConfig shadowCamConfig;
-				shadowCamConfig.m_near = -transformedBounds.zMax();
-				shadowCamConfig.m_far = -transformedBounds.zMin();
-				shadowCamConfig.m_isOrthographic = true;
-				shadowCamConfig.m_orthoLeft = transformedBounds.xMin();
-				shadowCamConfig.m_orthoRight = transformedBounds.xMax();
-				shadowCamConfig.m_orthoBottom = transformedBounds.yMin();
-				shadowCamConfig.m_orthoTop = transformedBounds.yMax();
+				shadowCamConfig.m_near				= -transformedBounds.zMax();
+				shadowCamConfig.m_far				= -transformedBounds.zMin();
+				shadowCamConfig.m_isOrthographic	= true;
+				shadowCamConfig.m_orthoLeft			= transformedBounds.xMin();
+				shadowCamConfig.m_orthoRight		= transformedBounds.xMax();
+				shadowCamConfig.m_orthoBottom		= transformedBounds.yMin();
+				shadowCamConfig.m_orthoTop			= transformedBounds.yMax();
 
 				const uint32_t shadowMapRes = 
 					en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowMapRes");
@@ -97,7 +96,7 @@ namespace gr
 			// Compute the radius: 
 			const float cutoff = 0.05f; // Want the sphere mesh radius where light intensity will be close to zero
 			const float maxColor = glm::max(glm::max(m_colorIntensity.r, m_colorIntensity.g), m_colorIntensity.b);
-			m_radius = glm::sqrt((maxColor / cutoff) - 1.0f);
+			const float radius = glm::sqrt((maxColor / cutoff) - 1.0f);
 
 			m_deferredLightShader = make_shared<Shader>(
 				en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredPointLightShaderName"));
@@ -111,7 +110,7 @@ namespace gr
 			
 			// Currently, we scale the deferred mesh directly. Ideally, a Mesh object wouldn't have a transform (it
 			// should be owned by a RenderMesh object and implicitely use its transform)
-			m_deferredMesh->GetTransform().SetModelScale(vec3(m_radius, m_radius, m_radius));
+			m_deferredMesh->GetTransform().SetModelScale(vec3(radius, radius, radius));
 
 			if (hasShadow)
 			{
@@ -120,7 +119,7 @@ namespace gr
 				shadowCamConfig.m_near				= 1.0f;
 				shadowCamConfig.m_aspectRatio		= 1.0f;
 				shadowCamConfig.m_isOrthographic	= false;
-				shadowCamConfig.m_far				= m_radius;
+				shadowCamConfig.m_far				= radius;
 			
 				const uint32_t cubeMapRes = 
 					en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowCubeMapRes");

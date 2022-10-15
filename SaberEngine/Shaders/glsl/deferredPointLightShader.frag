@@ -45,7 +45,6 @@ void main()
 		matProp0.rgb, 
 		NoL, 
 		lightWorldDir, 
-		lightViewDir, 
 		fragLight, 
 		shadowFactor, 
 		g_view);

@@ -94,12 +94,11 @@ layout(binding=12) uniform samplerCube CubeMap1;
 
 
 // Deferred key light:
-uniform vec3 keylightWorldDir;	// Normalized, world-space, points towards keylight (ie. parallel)
-uniform vec3 keylightViewDir;	// Normalized, view-space, points towards keylight (ie. parallel). Note: Currently only uploaded for deferred lights
+uniform vec3 keylightWorldDir; // Normalized, world-space, points towards keylight source (ie. parallel)
 
 // Deferred lights:
 uniform vec3 lightColor;
-uniform vec3 lightWorldPos;		// Light position in world space
+uniform vec3 lightWorldPos;	// Light position in world space
 
 
 // Mesh params:
@@ -117,6 +116,7 @@ uniform float maxShadowBias; // Offsets for preventing shadow acne
 uniform float minShadowBias;
 uniform float shadowCam_near; // Near/Far planes of current shadow camera
 uniform float shadowCam_far;
+
 uniform vec4 texelSize;		// Depth map/GBuffer texel size: .xyzw = (1/width, 1/height, width, height)
 
 // Target params:

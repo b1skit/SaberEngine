@@ -118,59 +118,53 @@ float Exposure(float ev100)
 // lightWorldDir must be normalized
 // lightColor must have attenuation factored in
 vec4 ComputePBRLighting(
-	vec4 linearAlbedo, 
-	vec3 worldNormal, 
-	vec4 MatRMAO, 
-	vec4 worldPosition, 
+	const vec4 linearAlbedo, 
+	const vec3 worldNormal, 
+	const vec4 MatRMAO, 
+	const vec4 worldPosition, 
 	vec3 F0, 
-	float NoL,
-	vec3 lightWorldDir, 
-	vec3 lightViewDir, 
-	vec3 lightColor, 
+	const float NoL,
+	const vec3 lightWorldDir,
+	const vec3 lightColor, 
 	float shadowFactor,
-	mat4 view)
+	const mat4 view)
 {
-	// Note: All PBR calculations are performed in linear space.
+	// Note: All PBR calculations are performed in linear color space.
 	// However, we use sRGB-format textures, getting the sRGB->Linear transformation for free when writing our GBuffer
-	// for sRGB-format inputs (eg. MatAlbedo, ... and?) so no need to degamma MatAlbedo here
+	// for sRGB-format inputs (ie. MatAlbedo, MatEmissive) so no need to degamma albedo here
 
-	vec4 viewPosition	= view * worldPosition;							// View-space position
-	vec3 viewEyeDir		= normalize(-viewPosition.xyz);						// View-space eye/camera direction
-	vec3 viewNormal		= normalize(view * vec4(worldNormal, 0)).xyz;	// View-space surface MatNormal
+	const vec4 viewPosition = view * worldPosition;	// View-space position
+	const vec3 viewEyeDir	= normalize(-viewPosition.xyz);	// View-space: Shaded point -> eye/camera direction
+	const vec3 viewNormal	= normalize(view * vec4(worldNormal, 0)).xyz; // View-space surface normal
 
-	vec3 halfVectorView	= HalfVector(lightViewDir, viewEyeDir);				// View-space half direction
+	const vec3 lightViewDir = (view * vec4(lightWorldDir, 0)).xyz;
+	const vec3 halfVectorView	= HalfVector(lightViewDir, viewEyeDir);	// View-space half direction
 
-	float NoV		= max(0.0, dot(viewNormal, viewEyeDir) );
+	const float NoV	= max(0.0, dot(viewNormal, viewEyeDir) );
 
-	float roughness = MatRMAO.x;
-	float metalness = MatRMAO.y;
+	const float roughness = MatRMAO.x;
+	const float metalness = MatRMAO.y;
 
 	// Fresnel-Schlick approximation is only defined for non-metals, so we blend it here:
-	F0	= mix(F0, linearAlbedo.rgb, metalness); // Linear interpolation: x, y, using t=[0,1]. Returns x when t=0 -> Blends towards MatAlbedo for metals
+	F0	= mix(F0, linearAlbedo.rgb, metalness); // Lerp: Blends towards albedo for metals
 
-	vec3 fresnel = FresnelSchlick(NoV, F0);
+	const vec3 fresnel = FresnelSchlick(NoV, F0);
 	
-	float NDF = NDF(viewNormal, halfVectorView, roughness);
+	const float NDF = NDF(viewNormal, halfVectorView, roughness);
 
-	float remappedRoughness = RemapRoughnessDirect(roughness);
-	float geometry			= GeometrySmith(NoV, NoL, remappedRoughness);
+	const float remappedRoughness = RemapRoughnessDirect(roughness);
+	const float geometry = GeometrySmith(NoV, NoL, remappedRoughness);
 
 	// Specular:
-	vec3 specularContribution = (NDF * fresnel * geometry) / max((4.0 * NoV * NoL), 0.0001);
+	const vec3 specularContribution = (NDF * fresnel * geometry) / max((4.0 * NoV * NoL), 0.0001);
 	
 	// Diffuse:
 	vec3 k_d = vec3(1.0) - fresnel;
 	k_d = k_d * (1.0 - metalness); // Metallics absorb refracted light
-//	vec3 diffuseContribution = k_d * linearAlbedo.rgb; // Note: Omitted the "/ M_PI" factor here
-	vec3 diffuseContribution = k_d * linearAlbedo.rgb / M_PI;
+//	const vec3 diffuseContribution = k_d * linearAlbedo.rgb; // Note: Omitted the "/ M_PI" factor here
+	const vec3 diffuseContribution = k_d * linearAlbedo.rgb / M_PI;
 
-
-	vec3 combinedContribution = diffuseContribution + specularContribution;
-
-	combinedContribution *= lightColor;
-	combinedContribution *= NoL;
-	
-	combinedContribution *= shadowFactor;
+	const vec3 combinedContribution = (diffuseContribution + specularContribution) * lightColor * NoL * shadowFactor;
 
 //	return vec4(combinedContribution, linearAlbedo.a);
 
@@ -178,7 +172,6 @@ vec4 ComputePBRLighting(
 	const float exposure = Exposure(ev100);
 
 	return vec4(combinedContribution * exposure, linearAlbedo.a);
-	
 }
 
 

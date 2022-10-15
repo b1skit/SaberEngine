@@ -535,13 +535,6 @@ namespace gr
 			// TODO: Rename this as keylightDirWorldSpace
 			m_keylightStage.SetPerFrameShaderUniformByValue(
 				"keylightWorldDir", keyLight->GetTransform()->ForwardWorld(), platform::Shader::UniformType::Vec3f, 1);
-
-			// TODO: Rename this as keylightDirViewSpace
-			m_keylightStage.SetPerFrameShaderUniformByValue(
-				"keylightViewDir",
-				glm::normalize(m_keylightStage.GetStageCamera()->GetViewMatrix() * vec4(keyLight->GetTransform()->ForwardWorld(), 0.0f)),
-				platform::Shader::UniformType::Vec3f,
-				1);
 		}
 
 		if (pointLights.size() > 0)

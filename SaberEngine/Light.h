@@ -59,7 +59,7 @@ namespace gr
 		inline glm::vec3& GetColor() { return m_colorIntensity; }
 		inline glm::vec3 const& GetColor() const { return m_colorIntensity; }
 
-		inline float GetRadius() const { return m_radius; }
+
 														 
 		inline LightType const& Type() const { return m_type; }
 														 
@@ -82,7 +82,6 @@ namespace gr
 
 		glm::vec3 m_colorIntensity;
 		LightType m_type;
-		float m_radius; // For point lights
 
 		std::shared_ptr<gr::ShadowMap> m_shadowMap;
 

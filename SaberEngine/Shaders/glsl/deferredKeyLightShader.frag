@@ -16,16 +16,16 @@
 void main()
 {
 	// Sample textures once inside the main shader flow, and pass the values as required:
-	vec4 linearAlbedo	= texture(GBufferAlbedo, data.uv0.xy); // PBR calculations are performed in linear space
-	vec3 worldNormal	= texture(GBufferWNormal, data.uv0.xy).xyz;
-	vec4 MatRMAO		= texture(GBufferRMAO, data.uv0.xy);
-	vec4 worldPosition	= texture(GBufferWPos, data.uv0.xy);
-	vec4 matProp0		= texture(GBufferMatProp0, data.uv0.xy); // .rgb = F0 (Surface response at 0 degrees)
+	vec4 linearAlbedo = texture(GBufferAlbedo, data.uv0.xy); // PBR calculations are performed in linear space
+	vec3 worldNormal = texture(GBufferWNormal, data.uv0.xy).xyz;
+	vec4 MatRMAO = texture(GBufferRMAO, data.uv0.xy);
+	vec4 worldPosition = texture(GBufferWPos, data.uv0.xy);
+	vec4 matProp0 = texture(GBufferMatProp0, data.uv0.xy); // .rgb = F0 (Surface response at 0 degrees)
 
 	// Read from 2D shadow map:
-	float NoL				= max(0.0, dot(worldNormal, keylightWorldDir));
-	vec3 shadowPos			= (shadowCam_vp * worldPosition).xyz;
-	float shadowFactor		= GetShadowFactor(shadowPos, Depth0, NoL);
+	float NoL = max(0.0, dot(worldNormal, keylightWorldDir));
+	vec3 shadowPos = (shadowCam_vp * worldPosition).xyz;
+	float shadowFactor = GetShadowFactor(shadowPos, Depth0, NoL);
 
 	// Note: Keylight lightColor doesn't need any attenuation to be factored in
 	FragColor = ComputePBRLighting(
@@ -36,7 +36,6 @@ void main()
 		matProp0.rgb, 
 		NoL, 
 		keylightWorldDir, 
-		keylightViewDir, 
 		lightColor, 
 		shadowFactor, 
 		g_view);
