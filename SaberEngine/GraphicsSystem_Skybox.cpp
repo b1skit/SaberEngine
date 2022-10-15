@@ -195,11 +195,5 @@ namespace gr
 
 		shared_ptr<GBufferGraphicsSystem> gBufferGS = dynamic_pointer_cast<GBufferGraphicsSystem>(
 			CoreEngine::GetRenderManager()->GetGraphicsSystem<GBufferGraphicsSystem>());
-
-		m_skyboxStage.SetPerFrameShaderUniformByValue(
-			"in_inverse_vp",
-			glm::inverse(m_skyboxStage.GetStageCamera()->GetViewProjectionMatrix()),
-			platform::Shader::UniformType::Matrix4x4f,
-			1);
 	}
 }

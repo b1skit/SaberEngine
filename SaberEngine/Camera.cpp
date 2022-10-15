@@ -13,18 +13,59 @@ using gr::Shader;
 using gr::Transform;
 using std::shared_ptr;
 using std::string;
+using std::make_shared;
 using glm::mat4;
+
 
 namespace gr
 {
 	Camera::Camera(string const& cameraName, CameraConfig const& camConfig, Transform* parent) :
 		NamedObject(cameraName),
 			m_cameraConfig(camConfig),
-			m_cameraShader(nullptr)
+			m_cameraShader(nullptr),
+			m_cameraPBData(make_shared<CameraParams>())
 	{
 		m_transform.SetParent(parent);
 
+		m_cameraParamBlock = re::ParameterBlock::Create(
+				"CameraParams", 
+				m_cameraPBData, 
+				re::ParameterBlock::UpdateType::Mutable, 
+				re::ParameterBlock::Lifetime::Permanent);
+
 		Initialize();
+	}
+
+
+	void Camera::Update()
+	{
+		UpdateCameraParamBlock();
+	}
+
+
+	void Camera::UpdateCameraParamBlock()
+	{
+		m_cameraPBData->g_view = GetViewMatrix();
+		m_cameraPBData->g_invView = GetInverseViewMatrix();
+
+		m_cameraPBData->g_projection = GetProjectionMatrix();
+		m_cameraPBData->g_invProjection = GetInverseProjectionMatrix();
+
+		m_cameraPBData->g_viewProjection = GetViewProjectionMatrix();
+		m_cameraPBData->g_invViewProjection = GetInverseViewProjectionMatrix();
+
+		// .x = 1 (unused), .y = near, .z = far, .w = 1/far
+		m_cameraPBData->g_projectionParams = 
+			glm::vec4(1.f, m_cameraConfig.m_near, m_cameraConfig.m_far, 1.0f / m_cameraConfig.m_far);
+
+		m_cameraPBData->g_cameraWPos = GetTransform()->GetWorldPosition();
+
+		m_cameraParamBlock->SetData(m_cameraPBData);
+
+		// TODO: It's possible to update the camera params multiple times in a frame if SetCameraConfig is called by
+		// another object in the Updateable list.
+		// eg. Light::Update -> SetCameraConfig
+		// -> Need to switch to a scene graph representation so the update order each frame is determinate
 	}
 
 
@@ -58,19 +99,15 @@ namespace gr
 				m_cameraConfig.m_near, 
 				m_cameraConfig.m_far
 			);
-		}		
+		}
+
+		UpdateCameraParamBlock();
 	}
 
 
 	void Camera::Destroy()
 	{
 		m_cameraShader = nullptr;
-	}
-
-
-	mat4 Camera::GetViewMatrix() const
-	{
-		return inverse(m_transform.GetWorldMatrix());
 	}
 
 

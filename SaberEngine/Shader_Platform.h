@@ -9,7 +9,7 @@ namespace gr
 
 namespace re
 {
-	class PermanentParameterBlock;
+	class ParameterBlock;
 }
 
 namespace platform
@@ -60,7 +60,7 @@ namespace platform
 			void const* value, 
 			UniformType const type,
 			int const count);
-		static void (*SetParameterBlock)(gr::Shader const& shader, re::PermanentParameterBlock const& paramBlock);
+		static void (*SetParameterBlock)(gr::Shader const& shader, re::ParameterBlock const& paramBlock);
 		static void (*Destroy)(gr::Shader&);
 	};
 

@@ -82,12 +82,6 @@ namespace opengl
 		// TODO: Add an assert somewhere that checks if any possible shader uniform isn't set
 		// -> Catch bugs where we forget to upload a common param
 
-		// Update the graphics systems:
-		for (size_t gs = 0; gs < renderManager.m_graphicsSystems.size(); gs++)
-		{
-			renderManager.m_graphicsSystems[gs]->PreRender(renderManager.m_pipeline.GetPipeline()[gs]);
-		}
-
 		// Render each stage:
 		for (StagePipeline const& stagePipeline : renderManager.m_pipeline.GetPipeline())
 		{
@@ -118,6 +112,12 @@ namespace opengl
 				stageShader->Bind(true);
 				// TODO: Use shaders from materials in some cases? Set shaders/materials per batch, don't decide here
 
+				// Set stage param blocks:
+				for (std::shared_ptr<re::ParameterBlock const> pb : renderStage->GetStageParameterBlocks())
+				{
+					stageShader->SetParameterBlock(*pb.get());
+				}
+
 				// Set per-frame stage shader uniforms:
 				vector<RenderStage::StageShaderUniform> const& stagePerFrameShaderUniforms =
 					renderStage->GetPerFrameShaderUniforms();
@@ -131,17 +131,7 @@ namespace opengl
 				std::shared_ptr<Camera const> stageCam = renderStage->GetStageCamera();
 				if (stageCam)
 				{
-					stageShader->SetUniform(
-						"in_view",
-						&stageCam->GetViewMatrix()[0][0],
-						platform::Shader::UniformType::Matrix4x4f,
-						1);
-					stageShader->SetUniform(
-						"cameraWPos",
-						&stageCam->GetTransform()->GetWorldPosition(),
-						platform::Shader::UniformType::Vec3f,
-						1);
-					// TODO: These should be set via a general camera param block, shared between stages that need it
+					stageShader->SetParameterBlock(*stageCam->GetCameraParams().get());
 				}
 
 				// Configure the context:

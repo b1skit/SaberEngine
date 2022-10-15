@@ -39,5 +39,5 @@ void main()
 		keylightViewDir, 
 		lightColor, 
 		shadowFactor, 
-		in_view);
+		g_view);
 } 

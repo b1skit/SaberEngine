@@ -128,15 +128,15 @@ vec4 ComputePBRLighting(
 	vec3 lightViewDir, 
 	vec3 lightColor, 
 	float shadowFactor,
-	mat4 in_view)
+	mat4 view)
 {
 	// Note: All PBR calculations are performed in linear space.
 	// However, we use sRGB-format textures, getting the sRGB->Linear transformation for free when writing our GBuffer
 	// for sRGB-format inputs (eg. MatAlbedo, ... and?) so no need to degamma MatAlbedo here
 
-	vec4 viewPosition	= in_view * worldPosition;							// View-space position
+	vec4 viewPosition	= view * worldPosition;							// View-space position
 	vec3 viewEyeDir		= normalize(-viewPosition.xyz);						// View-space eye/camera direction
-	vec3 viewNormal		= normalize(in_view * vec4(worldNormal, 0)).xyz;	// View-space surface MatNormal
+	vec3 viewNormal		= normalize(view * vec4(worldNormal, 0)).xyz;	// View-space surface MatNormal
 
 	vec3 halfVectorView	= HalfVector(lightViewDir, viewEyeDir);				// View-space half direction
 

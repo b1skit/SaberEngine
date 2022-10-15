@@ -230,6 +230,9 @@
     <ClCompile Include="ParameterBlock_OpenGL.cpp">
       <Filter>Source Files\re\platform\OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="ParameterBlockManager.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Mesh.h">
@@ -405,6 +408,9 @@
     </ClInclude>
     <ClInclude Include="Updateable.h">
       <Filter>Header Files\en</Filter>
+    </ClInclude>
+    <ClInclude Include="ParameterBlockManager.h">
+      <Filter>Header Files\re</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

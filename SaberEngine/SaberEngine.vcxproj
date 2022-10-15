@@ -170,6 +170,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ParameterBlock.cpp" />
+    <ClCompile Include="ParameterBlockManager.cpp" />
     <ClCompile Include="ParameterBlock_OpenGL.cpp" />
     <ClCompile Include="ParameterBlock_Platform.cpp" />
     <ClCompile Include="VertexAttributeBuilder.cpp" />
@@ -223,6 +224,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ParameterBlock.h" />
+    <ClInclude Include="ParameterBlockManager.h" />
     <ClInclude Include="ParameterBlock_OpenGL.h" />
     <ClInclude Include="ParameterBlock_Platform.h" />
     <ClInclude Include="Updateable.h" />

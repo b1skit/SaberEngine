@@ -70,7 +70,20 @@ namespace re
 
 	void RenderManager::Update()
 	{
+		// Update the graphics systems:
+		for (size_t gs = 0; gs < m_graphicsSystems.size(); gs++)
+		{
+			m_graphicsSystems[gs]->PreRender(m_pipeline.GetPipeline()[gs]);
+		}
+
+		// Update/buffer param blocks:
+		m_paramBlockManager.UpdateParamBlocks();
+
+		// API-specific rendering:
 		platform::RenderManager::Render(*this);
+
+		// End of frame:
+		m_paramBlockManager.EndOfFrame();
 	}
 
 

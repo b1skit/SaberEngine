@@ -9,6 +9,7 @@
 #include "Context_Platform.h"
 #include "RenderPipeline.h"
 #include "GraphicsSystem.h"
+#include "ParameterBlockManager.h"
 
 
 namespace opengl
@@ -49,6 +50,8 @@ namespace re
 		template <typename T>
 		std::shared_ptr<gr::GraphicsSystem> GetGraphicsSystem();
 		
+		inline re::ParameterBlockManager& GetParameterBlockManager() { return m_paramBlockManager; }
+		inline re::ParameterBlockManager const& GetParameterBlockManager() const { return m_paramBlockManager; }
 
 	private:	
 		re::Context m_context;
@@ -58,6 +61,7 @@ namespace re
 		// Note: We store this as a shared_ptr so we can instantiate it once the context has been created
 		std::shared_ptr<gr::TextureTargetSet> m_defaultTargetSet; // Default backbuffer
 
+		re::ParameterBlockManager m_paramBlockManager;
 
 		// Friends
 		friend class opengl::RenderManager;

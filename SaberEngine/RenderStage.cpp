@@ -35,8 +35,10 @@ namespace gr
 		m_writesColor = rhs.m_writesColor;
 
 		m_perFrameShaderUniforms = vector<StageShaderUniform>(rhs.m_perFrameShaderUniforms);
-
 		m_perFrameShaderUniformValues = rhs.m_perFrameShaderUniformValues;
+
+		m_stageParamBlocks = rhs.m_stageParamBlocks;
+
 		m_stageGeometryBatches = rhs.m_stageGeometryBatches;
 
 		m_perMeshShaderUniforms = vector<vector<StageShaderUniform>>(rhs.m_perMeshShaderUniforms);

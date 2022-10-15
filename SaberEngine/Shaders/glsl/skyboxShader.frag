@@ -27,7 +27,7 @@ void main()
 
 	const vec4 clipPos	= ndcPosition / gl_FragCoord.w;
 	
-	const vec4 worldPos	= in_inverse_vp * clipPos;
+	const vec4 worldPos	= g_invViewProjection * clipPos;
 
 
 #if defined(CUBEMAP_SKY)

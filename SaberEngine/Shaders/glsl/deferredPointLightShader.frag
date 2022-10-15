@@ -19,14 +19,14 @@ void main()
 	vec2 uvs		= vec2(gl_FragCoord.x / screenParams.x, gl_FragCoord.y / screenParams.y); // [0, xRes/yRes] -> [0,1]
 
 	// Sample textures once inside the main shader flow, and pass the values as required:
-	vec4 linearAlbedo		= texture(GBufferAlbedo, uvs);
-	vec3 worldNormal		= texture(GBufferWNormal, uvs).xyz;
-	vec4 MatRMAO			= texture(GBufferRMAO, uvs);
-	vec4 worldPosition		= texture(GBufferWPos, uvs);
-	vec4 matProp0			= texture(GBufferMatProp0, uvs); // .rgb = F0 (Surface response at 0 degrees), .a = Phong exponent
+	vec4 linearAlbedo = texture(GBufferAlbedo, uvs);
+	vec3 worldNormal = texture(GBufferWNormal, uvs).xyz;
+	vec4 MatRMAO = texture(GBufferRMAO, uvs);
+	vec4 worldPosition = texture(GBufferWPos, uvs);
+	vec4 matProp0 = texture(GBufferMatProp0, uvs); // .rgb = F0 (Surface response at 0 degrees), .a = Phong exponent
 
-	vec3 lightWorldDir		= normalize(lightWorldPos - worldPosition.xyz);
-	vec3 lightViewDir		= normalize((in_view * vec4(lightWorldDir, 0.0)).xyz);
+	vec3 lightWorldDir = normalize(lightWorldPos - worldPosition.xyz);
+	vec3 lightViewDir = normalize((g_view * vec4(lightWorldDir, 0.0)).xyz);
 
 	// Cube-map shadows:
 	float NoL				= max(0.0, dot(worldNormal, lightWorldDir));
@@ -48,5 +48,5 @@ void main()
 		lightViewDir, 
 		fragLight, 
 		shadowFactor, 
-		in_view);
+		g_view);
 } 

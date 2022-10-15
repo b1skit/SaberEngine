@@ -10,6 +10,7 @@
 #include "Context_Platform.h"
 #include "Mesh.h"
 #include "NamedObject.h"
+#include "ParameterBlock.h"
 
 
 namespace gr
@@ -61,13 +62,11 @@ namespace gr
 
 	public:
 		explicit RenderStage(std::string const& name);
-		~RenderStage() = default;
 				
 		RenderStage(RenderStage const&);
-		RenderStage(RenderStage&&) = default;
 
-		RenderStage() = delete;
-		RenderStage& operator=(RenderStage const&) = delete;
+		~RenderStage() = default;
+		RenderStage(RenderStage&&) = default;
 
 		void InitializeForNewFrame(); // Clears per-frame data
 
@@ -95,6 +94,9 @@ namespace gr
 		template <typename T>
 		void SetPerFrameShaderUniformByValue(
 			std::string const& uniformName, T const& value, platform::Shader::UniformType const& type, int const count);
+
+		inline void AddStageParameterBlock(std::shared_ptr<re::ParameterBlock> pb) { m_stageParamBlocks.emplace_back(pb); }
+		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetStageParameterBlocks() const { return m_stageParamBlocks; }
 
 		inline std::vector<std::shared_ptr<gr::Mesh>> const* GetGeometryBatches() const { return m_stageGeometryBatches; }
 		inline void SetGeometryBatches(std::vector<std::shared_ptr<gr::Mesh>> const* batches) { m_stageGeometryBatches = batches; }
@@ -125,6 +127,8 @@ namespace gr
 		std::vector<StageShaderUniform> m_perFrameShaderUniforms; // TODO: Handle selection of face, miplevel when binding color/depth targets?
 		std::vector<std::shared_ptr<const void>> m_perFrameShaderUniformValues; // Generic, per-frame data storage buffer
 		
+		std::vector<std::shared_ptr<re::ParameterBlock>> m_stageParamBlocks;
+
 		// TODO: Implement a "m_stageConstantShaderUniforms" -> Things like textures, samplers, etc that don't change
 		// between frames
 
@@ -135,6 +139,9 @@ namespace gr
 		// TEMP HAX: Shader uniforms for point lights, until I write an instancing solution
 		std::vector<std::vector<StageShaderUniform>> m_perMeshShaderUniforms;
 		
+	private:
+		RenderStage() = delete;
+		RenderStage& operator=(RenderStage const&) = delete;
 	};
 
 }

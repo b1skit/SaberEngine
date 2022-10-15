@@ -56,7 +56,7 @@ namespace gr
 	}
 
 
-	void Shader::SetParameterBlock(re::PermanentParameterBlock const& paramBlock) const
+	void Shader::SetParameterBlock(re::ParameterBlock const& paramBlock) const
 	{
 		platform::Shader::SetParameterBlock(*this, paramBlock);
 	}

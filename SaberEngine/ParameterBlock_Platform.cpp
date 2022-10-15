@@ -7,8 +7,7 @@
 
 namespace platform
 {
-	// Parameter struct object factory:
-	void platform::PermanentParameterBlock::PlatformParams::CreatePlatformParams(re::PermanentParameterBlock& paramBlock)
+	void platform::ParameterBlock::PlatformParams::CreatePlatformParams(re::ParameterBlock& paramBlock)
 	{
 		SEAssert("Attempting to create platform params for a texture that already exists",
 			paramBlock.m_platformParams == nullptr);
@@ -20,7 +19,7 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			paramBlock.m_platformParams = std::make_unique<opengl::PermanentParameterBlock::PlatformParams>();
+			paramBlock.m_platformParams = std::make_unique<opengl::ParameterBlock::PlatformParams>();
 		}
 		break;
 		case RenderingAPI::DX12:
@@ -38,6 +37,7 @@ namespace platform
 	}
 
 	// Function handles:
-	void (*platform::PermanentParameterBlock::Create)(re::PermanentParameterBlock&) = nullptr;
-	void (*platform::PermanentParameterBlock::Destroy)(re::PermanentParameterBlock&) = nullptr;
+	void (*platform::ParameterBlock::Create)(re::ParameterBlock&) = nullptr;
+	void (*platform::ParameterBlock::Update)(re::ParameterBlock&) = nullptr;
+	void (*platform::ParameterBlock::Destroy)(re::ParameterBlock&) = nullptr;
 }

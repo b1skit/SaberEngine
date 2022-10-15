@@ -3,13 +3,13 @@
 
 namespace re
 {
-	class PermanentParameterBlock;
+	class ParameterBlock;
 }
 
 
 namespace platform
 {
-	class PermanentParameterBlock
+	class ParameterBlock
 	{
 	public:
 		struct PlatformParams
@@ -24,17 +24,18 @@ namespace platform
 			// API-specific GPU bindings should be destroyed here
 			virtual ~PlatformParams() = 0;
 
-			static void CreatePlatformParams(re::PermanentParameterBlock& paramBlock);
+			static void CreatePlatformParams(re::ParameterBlock& paramBlock);
 		};
 
 	public:
-		static void (*Create)(re::PermanentParameterBlock&);
-		static void (*Destroy)(re::PermanentParameterBlock&);
+		static void (*Create)(re::ParameterBlock&);
+		static void (*Update)(re::ParameterBlock&);
+		static void (*Destroy)(re::ParameterBlock&);
 
 	private:
 
 	};
 
 	// We need to provide a destructor implementation since it's pure virtual
-	inline platform::PermanentParameterBlock::PlatformParams::~PlatformParams() {};
+	inline platform::ParameterBlock::PlatformParams::~PlatformParams() {};
 }

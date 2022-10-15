@@ -38,7 +38,7 @@ using gr::Bounds;
 using gr::Transform;
 using gr::Light;
 using gr::ShadowMap;
-using re::PermanentParameterBlock;
+using re::ParameterBlock;
 using fr::SceneObject;
 using en::CoreEngine;
 using en::NamedObject;
@@ -319,8 +319,11 @@ namespace
 				newMat->GetTexture((uint32_t)i)->Create();
 			}
 
-			newMat->GetMatParams() = PermanentParameterBlock::Create(
-				"PBRMetallicRoughnessParams", make_shared<Material::PBRMetallicRoughnessParams>());
+			newMat->GetMatParams() = ParameterBlock::Create(
+				"PBRMetallicRoughnessParams", 
+				make_shared<Material::PBRMetallicRoughnessParams>(), 
+				re::ParameterBlock::UpdateType::Immutable,
+				re::ParameterBlock::Lifetime::Permanent);
 
 			scene.AddUniqueMaterial(newMat);
 			return newMat;
@@ -434,7 +437,12 @@ namespace
 		matParams->g_emissiveFactor = glm::make_vec3(material->emissive_factor);
 		matParams->g_f0 = vec3(0.04f, 0.04f, 0.04f);
 
-		newMat->GetMatParams() = PermanentParameterBlock::Create("PBRMetallicRoughnessParams", matParams);
+		// TODO: Material MatParams should be passed as a ctor argument
+		newMat->GetMatParams() = ParameterBlock::Create(
+			"PBRMetallicRoughnessParams", 
+			matParams, 
+			ParameterBlock::UpdateType::Immutable, 
+			ParameterBlock::Lifetime::Permanent);
 
 		scene.AddUniqueMaterial(newMat);
 		return newMat;
@@ -497,8 +505,7 @@ namespace
 			camConfig.m_orthoTop	= 0;
 		}
 
-		shared_ptr<Camera> newCam = make_shared<Camera>(camName, camConfig, nullptr);
-		newCam->GetTransform()->SetParent(parent->GetTransform());
+		shared_ptr<Camera> newCam = make_shared<Camera>(camName, camConfig, parent->GetTransform());
 		scene.AddCamera(newCam);
 	}
 
@@ -958,6 +965,7 @@ namespace fr
 	{
 		SEAssert("Cannot add a null camera", newCamera != nullptr);
 		m_cameras.emplace_back(newCamera);
+		m_updateables.emplace_back(newCamera);
 	}
 
 

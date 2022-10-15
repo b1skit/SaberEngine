@@ -27,14 +27,14 @@ void main()
 	const vec3 worldNormal = texture(GBufferWNormal, data.uv0).xyz;
 	const vec4 MatRMAO = texture(GBufferRMAO, data.uv0.xy);
 	const vec4 worldPosition = texture(GBufferWPos, data.uv0.xy);
-	const vec4 matProp0	= texture(GBufferMatProp0, data.uv0.xy); // .rgb = F0 (Surface response at 0 degrees)
+	const vec4 matProp0 = texture(GBufferMatProp0, data.uv0.xy); // .rgb = F0 (Surface response at 0 degrees)
 
 	const float AO = MatRMAO.b;
 	float metalness	= MatRMAO.y;
 
-	vec4 viewPosition = in_view * worldPosition;					// View-space position
-	vec3 viewEyeDir	= normalize(-viewPosition.xyz);					// View-space eye/camera direction
-	vec3 viewNormal	= normalize(in_view * vec4(worldNormal, 0)).xyz;// View-space surface MatNormal
+	vec4 viewPosition = g_view * worldPosition; // View-space position
+	vec3 viewEyeDir	= normalize(-viewPosition.xyz);	// View-space eye/camera direction
+	vec3 viewNormal	= normalize(g_view * vec4(worldNormal, 0)).xyz;// View-space surface MatNormal
 
 	float NoV = max(0.0, dot(viewNormal, viewEyeDir) );
 
@@ -51,7 +51,7 @@ void main()
 
 
 	// Get the specular reflectance term:
-	vec3 worldView = normalize(cameraWPos - worldPosition.xyz);	// Direction = Point -> Eye
+	vec3 worldView = normalize(g_cameraWPos - worldPosition.xyz); // Direction = Point -> Eye
 	vec3 worldReflection = normalize(reflect(-worldView, worldNormal));
 
 	vec2 BRDF = texture(Tex7, vec2(max(NoV, 0.0), MatRMAO.x) ).rg; // Sample our generated BRDF Integration map

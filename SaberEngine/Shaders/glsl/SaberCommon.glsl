@@ -54,26 +54,6 @@
 	};
 #endif
 
-
-// Deferred key light:
-uniform vec3 keylightWorldDir;	// Normalized, world-space, points towards keylight (ie. parallel)
-uniform vec3 keylightViewDir;	// Normalized, view-space, points towards keylight (ie. parallel). Note: Currently only uploaded for deferred lights
-
-// Deferred lights:
-uniform vec3 lightColor;
-uniform vec3 lightWorldPos;		// Light position in world space
-
-
-// Matrices:
-uniform mat4 in_model;			// Local -> World
-uniform mat4 in_modelRotation;	// Local -> World, rotations ONLY (i.e. For transforming normals) TODO: Make this a mat3
-uniform mat4 in_view;			// World -> View
-uniform mat4 in_projection;		// View -> Projection
-uniform mat4 in_mv;				// [View * Model]
-uniform mat4 in_mvp;			// [Projection * View * Model]
-uniform mat4 in_inverse_vp;		// [Projection * View]^-1
-
-
 // Texture samplers:
 // Note: The layout bindings must correspond with the Material's TextureSlotDesc index
 
@@ -113,22 +93,34 @@ layout(binding=11) uniform samplerCube CubeMap0;
 layout(binding=12) uniform samplerCube CubeMap1;
 
 
-// TODO: Pack common parameters into structured buffers
-uniform vec4 texelSize;		// Depth map/GBuffer texel size: .xyzw = (1/width, 1/height, width, height)
+// Deferred key light:
+uniform vec3 keylightWorldDir;	// Normalized, world-space, points towards keylight (ie. parallel)
+uniform vec3 keylightViewDir;	// Normalized, view-space, points towards keylight (ie. parallel). Note: Currently only uploaded for deferred lights
 
-// Shadow map parameters:
+// Deferred lights:
+uniform vec3 lightColor;
+uniform vec3 lightWorldPos;		// Light position in world space
+
+
+// Mesh params:
+uniform mat4 in_model;			// Local -> World
+uniform mat4 in_modelRotation;	// Local -> World, rotations ONLY (i.e. For transforming normals) TODO: Make this a mat3
+
+uniform mat4 in_mv;				// [View * Model]
+uniform mat4 in_mvp;			// [Projection * View * Model]
+// Maybe we should compute these on the GPU?
+
+
+// Shadow params:
 uniform mat4 shadowCam_vp; // Shadow map: [Projection * View]
-
 uniform float maxShadowBias; // Offsets for preventing shadow acne
 uniform float minShadowBias;
-
 uniform float shadowCam_near; // Near/Far planes of current shadow camera
 uniform float shadowCam_far;
+uniform vec4 texelSize;		// Depth map/GBuffer texel size: .xyzw = (1/width, 1/height, width, height)
 
-// System variables:
+// Target params:
 uniform vec4 screenParams; // .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
-
-uniform vec3 cameraWPos; // World-space camera position
 
 
 // Note: Must match the PBRMetallicRoughnessParams struct defined in Material.h, without any padding
@@ -142,6 +134,21 @@ layout(std430, binding=0) readonly buffer PBRMetallicRoughnessParams
 	float g_emissiveStrength;
 	vec3 g_emissiveFactor;
 	vec3 g_f0; // For non-metals only
+};
+
+// Camera.h::CameraParams
+layout(std430, binding=1) readonly buffer CameraParams
+{
+	mat4 g_view;				// World -> View
+	mat4 g_invView;				// View -> World
+	mat4 g_projection;			// View -> Projection
+	mat4 g_invProjection;		// Projection -> view
+	mat4 g_viewProjection;		// Projection x View: World -> Projection
+	mat4 g_invViewProjection;	// [Projection * View]^-1
+
+	vec4 g_projectionParams;	// .x = 1 (unused), .y = near, .z = far, .w = 1/far
+	
+	vec3 g_cameraWPos;
 };
 
 #endif

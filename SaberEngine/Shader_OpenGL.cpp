@@ -352,15 +352,15 @@ namespace opengl
 	}
 
 
-	void Shader::SetParameterBlock(gr::Shader const& shader, re::PermanentParameterBlock const& paramBlock)
+	void Shader::SetParameterBlock(gr::Shader const& shader, re::ParameterBlock const& paramBlock)
 	{
 		// TODO: Handle non-permanent parameter blocks. For now, just bind without considering if the data has changed
 
 		opengl::Shader::PlatformParams const* const shaderPlatformParams =
 			dynamic_cast<opengl::Shader::PlatformParams const* const>(shader.GetPlatformParams());
 
-		opengl::PermanentParameterBlock::PlatformParams const* const paramBlockPlatformParams = 
-			dynamic_cast<opengl::PermanentParameterBlock::PlatformParams const* const>(paramBlock.GetPlatformParams());
+		opengl::ParameterBlock::PlatformParams const* const paramBlockPlatformParams = 
+			dynamic_cast<opengl::ParameterBlock::PlatformParams const* const>(paramBlock.GetPlatformParams());
 
 		// Track if the current shader is bound or not, so we can set values without breaking the current state
 		GLint currentProgram = 0;
@@ -376,15 +376,17 @@ namespace opengl
 		const GLint resourceIdx = glGetProgramResourceIndex(
 			shaderPlatformParams->m_shaderReference,	// program
 			GL_SHADER_STORAGE_BLOCK,					// programInterface
-			paramBlock.Name().c_str());					// name
+			paramBlock.GetName().c_str());				// name
 
 		SEAssert("Failed to get resource index", resourceIdx != GL_INVALID_ENUM);
 
-#if defined(STRICT_SHADER_BINDING)
+//#define ASSERT_ON_MISSING_RESOURCE_NAME
+#if defined(ASSERT_ON_MISSING_RESOURCE_NAME)
 		// GL_INVALID_INDEX is returned if name is not the name of a resource within the shader program
 		SEAssert("Failed to find the resource in the shader. This is is not an error, but a useful debugging helper", 
 			resourceIdx != GL_INVALID_INDEX);
 #endif
+
 		if (resourceIdx != GL_INVALID_INDEX)
 		{
 			GLint bindIndex;
@@ -399,7 +401,7 @@ namespace opengl
 				NULL,
 				&bindIndex);
 
-			opengl::PermanentParameterBlock::Bind(paramBlock, bindIndex);
+			opengl::ParameterBlock::Bind(paramBlock, bindIndex);
 		}
 
 		// Restore the state:

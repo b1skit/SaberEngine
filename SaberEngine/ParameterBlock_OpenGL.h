@@ -7,10 +7,10 @@
 
 namespace opengl
 {
-	class PermanentParameterBlock
+	class ParameterBlock
 	{
 	public:
-		struct PlatformParams : public virtual platform::PermanentParameterBlock::PlatformParams
+		struct PlatformParams : public virtual platform::ParameterBlock::PlatformParams
 		{
 			PlatformParams() = default;
 			~PlatformParams() override = default;
@@ -19,12 +19,13 @@ namespace opengl
 			GLuint m_ssbo = 0; // Shader Storage Buffer Object (SSBO) handle
 		};
 	public:
-		// PermanentParameterBlock platform handles:
-		static void Create(re::PermanentParameterBlock& paramBlock);
-		static void Destroy(re::PermanentParameterBlock& paramBlock);
+		// ParameterBlock platform handles:
+		static void Create(re::ParameterBlock& paramBlock);
+		static void Update(re::ParameterBlock& paramBlock);
+		static void Destroy(re::ParameterBlock& paramBlock);
 
 		// OpenGL-specific functionality:
-		static void Bind(re::PermanentParameterBlock const& paramBlock, GLuint uniformBlockIdx);
+		static void Bind(re::ParameterBlock const& paramBlock, GLuint uniformBlockIdx);
 
 	private:
 

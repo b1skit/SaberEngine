@@ -95,8 +95,9 @@ namespace platform
 			platform::Shader::Destroy			= &opengl::Shader::Destroy;
 
 			// Parameter blocks:
-			platform::PermanentParameterBlock::Create	= &opengl::PermanentParameterBlock::Create;
-			platform::PermanentParameterBlock::Destroy	= &opengl::PermanentParameterBlock::Destroy;
+			platform::ParameterBlock::Create	= &opengl::ParameterBlock::Create;
+			platform::ParameterBlock::Update	= &opengl::ParameterBlock::Update;
+			platform::ParameterBlock::Destroy	= &opengl::ParameterBlock::Destroy;
 
 
 			result = true;
