@@ -33,12 +33,13 @@ namespace re
 		template<typename T>
 		static std::shared_ptr<re::ParameterBlock> Create(
 			std::string paramBlockName, 
-			std::shared_ptr<T> data, 
+			T const& data, 
 			UpdateType updateType,
 			Lifetime lifetime)
 		{
+			std::shared_ptr<T> dataCopy = std::make_shared<T>(data);
 			std::shared_ptr<re::ParameterBlock> newPB = make_shared<re::ParameterBlock>(
-				Accessor(), paramBlockName, data, sizeof(T), updateType, lifetime);
+				Accessor(), paramBlockName, dataCopy, sizeof(T), updateType, lifetime);
 			Register(newPB);
 			return newPB;
 		}
@@ -51,12 +52,12 @@ namespace re
 		ParameterBlock(
 			ParameterBlock::Accessor,
 			std::string pbShaderName,
-			std::shared_ptr<T> data,
+			std::shared_ptr<T> dataCopy,
 			size_t dataSizeInBytes,
 			UpdateType updateType,
 			Lifetime lifetime) :
 				NamedObject(pbShaderName),
-			m_data(data),
+			m_dataCopy(dataCopy),
 			m_dataSizeInBytes(dataSizeInBytes),
 			m_typeIDHashCode(typeid(T).hash_code()),
 			m_updateType(updateType),
@@ -70,18 +71,18 @@ namespace re
 		~ParameterBlock() { Destroy(); };
 
 		template <typename T>
-		void SetData(std::shared_ptr<T> data)
+		void SetData(T const& data)
 		{
 			SEAssert("Invalid type detected. Can only set data of the original type", 
 				typeid(T).hash_code() == m_typeIDHashCode);
 			SEAssert("Cannot set data of an immutable param block", m_updateType != UpdateType::Immutable);
 
-			m_data = data;
+			m_dataCopy = make_shared<T>(data);
 			m_isDirty = true;
 		}
 	
 	public:
-		inline void const* const GetData() const { return m_data.get(); }
+		inline void const* const GetData() const { return m_dataCopy.get(); }
 		size_t GetDataSize() const { return m_dataSizeInBytes; }
 
 		inline UpdateType GetUpdateType() const { return m_updateType; }
@@ -93,7 +94,7 @@ namespace re
 		inline platform::ParameterBlock::PlatformParams* const GetPlatformParams() const { return m_platformParams.get(); }
 
 	private:		
-		std::shared_ptr<void> m_data;
+		std::shared_ptr<void> m_dataCopy;
 		const size_t m_dataSizeInBytes;
 		size_t m_typeIDHashCode; // Hash of the typeid(T) at Create: Used to verify data type doesn't change
 

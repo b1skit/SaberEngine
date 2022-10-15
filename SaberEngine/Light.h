@@ -58,9 +58,7 @@ namespace gr
 		// Getters/Setters:
 		inline glm::vec3& GetColor() { return m_colorIntensity; }
 		inline glm::vec3 const& GetColor() const { return m_colorIntensity; }
-
-
-														 
+	 
 		inline LightType const& Type() const { return m_type; }
 														 
 		inline gr::Transform* GetTransform() { return m_ownerTransform; }	// Directional lights shine forward (Z+)
@@ -75,7 +73,6 @@ namespace gr
 		// TODO: Delete these accessors, and load/assign these shaders within the deferred lighting GS
 		inline std::shared_ptr<gr::Shader>& GetDeferredLightShader() { return m_deferredLightShader; }
 		inline std::shared_ptr<gr::Shader>const& GetDeferredLightShader() const { return m_deferredLightShader; }
-
 
 	private:
 		gr::Transform* m_ownerTransform;

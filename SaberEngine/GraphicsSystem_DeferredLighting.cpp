@@ -237,12 +237,12 @@ namespace gr
 				
 				// Construct a camera param block to draw into our cubemap rendering targets:
 				// TODO: Construct a camera and handle this implicitely
-				shared_ptr<Camera::CameraParams> camParams = make_shared<Camera::CameraParams>();
-				camParams->g_view = captureViews[face];
-				camParams->g_projection = cubeProjectionMatrix;
-				camParams->g_viewProjection = glm::mat4(1.f); // Identity; unused
-				camParams->g_invViewProjection = glm::mat4(1.f); // Identity; unused
-				camParams->g_cameraWPos = vec3(0.f, 0.f, 0.f); // Unused
+				Camera::CameraParams camParams;
+				camParams.g_view = captureViews[face];
+				camParams.g_projection = cubeProjectionMatrix;
+				camParams.g_viewProjection = glm::mat4(1.f); // Identity; unused
+				camParams.g_invViewProjection = glm::mat4(1.f); // Identity; unused
+				camParams.g_cameraWPos = vec3(0.f, 0.f, 0.f); // Unused
 				
 				shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
 					"CameraParams",
@@ -301,12 +301,12 @@ namespace gr
 					
 					// Construct a camera param block to draw into our cubemap rendering targets:
 					// TODO: Construct a camera and handle this implicitely
-					shared_ptr<Camera::CameraParams> camParams = make_shared<Camera::CameraParams>();
-					camParams->g_view = captureViews[face];
-					camParams->g_projection = cubeProjectionMatrix;
-					camParams->g_viewProjection = glm::mat4(1.f); // Identity; unused
-					camParams->g_invViewProjection = glm::mat4(1.f); // Identity; unused
-					camParams->g_cameraWPos = vec3(0.f, 0.f, 0.f); // Unused
+					Camera::CameraParams camParams;
+					camParams.g_view = captureViews[face];
+					camParams.g_projection = cubeProjectionMatrix;
+					camParams.g_viewProjection = glm::mat4(1.f); // Identity; unused
+					camParams.g_invViewProjection = glm::mat4(1.f); // Identity; unused
+					camParams.g_cameraWPos = vec3(0.f, 0.f, 0.f); // Unused
 					shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
 						"CameraParams",
 						camParams,

@@ -319,9 +319,9 @@ namespace
 				newMat->GetTexture((uint32_t)i)->Create();
 			}
 
-			newMat->GetMatParams() = ParameterBlock::Create(
+			newMat->GetParameterBlock() = ParameterBlock::Create(
 				"PBRMetallicRoughnessParams", 
-				make_shared<Material::PBRMetallicRoughnessParams>(), 
+				Material::PBRMetallicRoughnessParams(), 
 				re::ParameterBlock::UpdateType::Immutable,
 				re::ParameterBlock::Lifetime::Permanent);
 
@@ -427,18 +427,18 @@ namespace
 			Texture::TextureColorSpace::sRGB); // GLTF convention: Must be converted to linear before use
 
 		// Construct a permanent parameter block for the material params:
-		shared_ptr<Material::PBRMetallicRoughnessParams> matParams = make_shared<Material::PBRMetallicRoughnessParams>();
-		matParams->g_baseColorFactor = glm::make_vec4(material->pbr_metallic_roughness.base_color_factor);
-		matParams->g_metallicFactor = material->pbr_metallic_roughness.metallic_factor;
-		matParams->g_roughnessFactor = material->pbr_metallic_roughness.roughness_factor;
-		matParams->g_normalScale = material->normal_texture.texture ? material->normal_texture.scale : 1.0f;
-		matParams->g_occlusionStrength = material->occlusion_texture.texture ? material->occlusion_texture.scale : 1.0f;
-		matParams->g_emissiveStrength = material->has_emissive_strength ? material->emissive_strength.emissive_strength : 1.0f;
-		matParams->g_emissiveFactor = glm::make_vec3(material->emissive_factor);
-		matParams->g_f0 = vec3(0.04f, 0.04f, 0.04f);
+		Material::PBRMetallicRoughnessParams matParams;
+		matParams.g_baseColorFactor = glm::make_vec4(material->pbr_metallic_roughness.base_color_factor);
+		matParams.g_metallicFactor = material->pbr_metallic_roughness.metallic_factor;
+		matParams.g_roughnessFactor = material->pbr_metallic_roughness.roughness_factor;
+		matParams.g_normalScale = material->normal_texture.texture ? material->normal_texture.scale : 1.0f;
+		matParams.g_occlusionStrength = material->occlusion_texture.texture ? material->occlusion_texture.scale : 1.0f;
+		matParams.g_emissiveStrength = material->has_emissive_strength ? material->emissive_strength.emissive_strength : 1.0f;
+		matParams.g_emissiveFactor = glm::make_vec3(material->emissive_factor);
+		matParams.g_f0 = vec3(0.04f, 0.04f, 0.04f);
 
 		// TODO: Material MatParams should be passed as a ctor argument
-		newMat->GetMatParams() = ParameterBlock::Create(
+		newMat->GetParameterBlock() = ParameterBlock::Create(
 			"PBRMetallicRoughnessParams", 
 			matParams, 
 			ParameterBlock::UpdateType::Immutable, 

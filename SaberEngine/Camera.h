@@ -18,7 +18,6 @@ namespace gr
 	public:
 		struct CameraConfig
 		{
-			
 			float m_fieldOfView = 90.0f; // == 0 if orthographic. 
 			// TODO: Store this in Radians (currently in degrees)
 			// TODO: Convert this to vertical FOV, as per GLTF convention (currently horizontal)
@@ -56,6 +55,9 @@ namespace gr
 			glm::vec3 g_cameraWPos;
 			float padding0;
 
+			// TODO: Implement exposure here
+			// -> Currently using an exposure defined in the config to do tonemapping, and another exposure value when 
+			// blooming...
 			/*float g_exposure;*/
 		};
 
@@ -98,7 +100,7 @@ namespace gr
 	private:
 		// Helper function: Configures the camera based on the cameraConfig. MUST be called at least once during setup
 		void Initialize();
-		void UpdateCameraParamBlock();
+		void UpdateCameraParamBlockData();
 
 		std::vector<glm::mat4> const& GetCubeViewMatrix(); // TODO: Recompute this if the camera has moved
 
@@ -114,7 +116,7 @@ namespace gr
 		std::shared_ptr<gr::Shader> m_cameraShader; // TODO: Cameras shouldn't need a shader
 
 		std::shared_ptr<re::ParameterBlock> m_cameraParamBlock;
-		std::shared_ptr<CameraParams> m_cameraPBData;
+		CameraParams m_cameraPBData;
 
 	private:
 		Camera() = delete;

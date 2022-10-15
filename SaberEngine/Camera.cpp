@@ -22,43 +22,44 @@ namespace gr
 	Camera::Camera(string const& cameraName, CameraConfig const& camConfig, Transform* parent) :
 		NamedObject(cameraName),
 			m_cameraConfig(camConfig),
-			m_cameraShader(nullptr),
-			m_cameraPBData(make_shared<CameraParams>())
+			m_cameraShader(nullptr)
 	{
 		m_transform.SetParent(parent);
 
+		// Initialize the param block pointer first:
 		m_cameraParamBlock = re::ParameterBlock::Create(
-				"CameraParams", 
-				m_cameraPBData, 
-				re::ParameterBlock::UpdateType::Mutable, 
-				re::ParameterBlock::Lifetime::Permanent);
+			"CameraParams",
+			m_cameraPBData, // Initialize with a default struct: Updated in UpdateCameraParamBlockData()
+			re::ParameterBlock::UpdateType::Mutable,
+			re::ParameterBlock::Lifetime::Permanent);
 
 		Initialize();
+		UpdateCameraParamBlockData();
 	}
 
 
 	void Camera::Update()
 	{
-		UpdateCameraParamBlock();
+		UpdateCameraParamBlockData();
 	}
 
 
-	void Camera::UpdateCameraParamBlock()
+	void Camera::UpdateCameraParamBlockData()
 	{
-		m_cameraPBData->g_view = GetViewMatrix();
-		m_cameraPBData->g_invView = GetInverseViewMatrix();
+		m_cameraPBData.g_view = GetViewMatrix();
+		m_cameraPBData.g_invView = GetInverseViewMatrix();
 
-		m_cameraPBData->g_projection = GetProjectionMatrix();
-		m_cameraPBData->g_invProjection = GetInverseProjectionMatrix();
+		m_cameraPBData.g_projection = GetProjectionMatrix();
+		m_cameraPBData.g_invProjection = GetInverseProjectionMatrix();
 
-		m_cameraPBData->g_viewProjection = GetViewProjectionMatrix();
-		m_cameraPBData->g_invViewProjection = GetInverseViewProjectionMatrix();
+		m_cameraPBData.g_viewProjection = GetViewProjectionMatrix();
+		m_cameraPBData.g_invViewProjection = GetInverseViewProjectionMatrix();
 
 		// .x = 1 (unused), .y = near, .z = far, .w = 1/far
-		m_cameraPBData->g_projectionParams = 
+		m_cameraPBData.g_projectionParams = 
 			glm::vec4(1.f, m_cameraConfig.m_near, m_cameraConfig.m_far, 1.0f / m_cameraConfig.m_far);
 
-		m_cameraPBData->g_cameraWPos = GetTransform()->GetWorldPosition();
+		m_cameraPBData.g_cameraWPos = GetTransform()->GetWorldPosition();
 
 		m_cameraParamBlock->SetData(m_cameraPBData);
 
@@ -101,7 +102,7 @@ namespace gr
 			);
 		}
 
-		UpdateCameraParamBlock();
+		UpdateCameraParamBlockData();
 	}
 
 
