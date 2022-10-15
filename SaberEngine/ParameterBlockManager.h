@@ -17,7 +17,7 @@ namespace re
 		void UpdateParamBlocks();
 		void EndOfFrame();
 		// TODO: Should ParameterBlockManager be an updateable?
-		// -> Updateable could have an opt-in EndOfFrame() member...?
+		// -> Updateable could have an opt-in EndOfFrame() member?
 
 		size_t RegisterParameterBlock(std::shared_ptr<re::ParameterBlock> pb);
 
