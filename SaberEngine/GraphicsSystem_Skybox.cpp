@@ -159,7 +159,7 @@ namespace gr
 		skyboxStageParams.m_depthTestMode	= platform::Context::DepthTestMode::LEqual;
 		skyboxStageParams.m_depthWriteMode	= platform::Context::DepthWriteMode::Disabled;
 
-		m_skyboxStage.SetStageParams(skyboxStageParams);
+		m_skyboxStage.SetRenderStageParams(skyboxStageParams);
 
 		m_skyboxStage.GetStageCamera() = CoreEngine::GetSceneManager()->GetSceneData()->GetMainCamera();
 

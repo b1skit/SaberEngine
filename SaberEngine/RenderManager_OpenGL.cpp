@@ -98,7 +98,7 @@ namespace opengl
 				// RenderDoc makers: Render stage name
 				glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderStage->GetName().c_str());
 
-				RenderStage::RenderStageParams const& renderStageParams = renderStage->GetStageParams();
+				RenderStage::RenderStageParams const& renderStageParams = renderStage->GetRenderStageParams();
 
 				// Attach the stage targets:
 				TextureTargetSet const& stageTargets = renderStage->GetTextureTargetSet();
@@ -113,7 +113,7 @@ namespace opengl
 				// TODO: Use shaders from materials in some cases? Set shaders/materials per batch, don't decide here
 
 				// Set stage param blocks:
-				for (std::shared_ptr<re::ParameterBlock const> pb : renderStage->GetStageParameterBlocks())
+				for (std::shared_ptr<re::ParameterBlock const> pb : renderStage->GetPermanentParameterBlocks())
 				{
 					stageShader->SetParameterBlock(*pb.get());
 				}
@@ -177,21 +177,8 @@ namespace opengl
 
 
 					// Assemble and upload mesh-specific matrices:
-					const mat4 model = mesh->GetTransform().GetWorldMatrix();
-					const mat4 modelRotation = mesh->GetTransform().GetWorldMatrix(Transform::Rotation);
+					const mat4 model = mesh->GetTransform().GetWorldMatrix(Transform::WorldModel);
 					stageShader->SetUniform("in_model", &model[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
-					stageShader->SetUniform(
-						"in_modelRotation", &modelRotation[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
-					// ^^ TODO: in_modelRotation isn't always used...
-
-					if (stageCam)
-					{
-						const mat4 mv = stageCam->GetViewMatrix() * model;
-						const mat4 mvp = stageCam->GetViewProjectionMatrix() * model;
-						stageShader->SetUniform("in_mv", &mv[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
-						stageShader->SetUniform("in_mvp", &mvp[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
-					}				
-					// TODO: Figure out a more general solution for this?
 
 					opengl::Mesh::PlatformParams const* const meshPlatParams=
 						dynamic_cast<opengl::Mesh::PlatformParams const* const>(mesh->GetPlatformParams().get());

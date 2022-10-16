@@ -106,7 +106,7 @@ namespace gr
 		gBufferStageParams.m_dstBlendMode		= platform::Context::BlendMode::Disabled;
 		gBufferStageParams.m_depthTestMode		= platform::Context::DepthTestMode::Less;
 
-		m_gBufferStage.SetStageParams(gBufferStageParams);
+		m_gBufferStage.SetRenderStageParams(gBufferStageParams);
 
 		// Finally, append the render stage to the pipeline:
 		pipeline.AppendRenderStage(m_gBufferStage);

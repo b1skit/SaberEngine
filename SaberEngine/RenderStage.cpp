@@ -109,7 +109,7 @@ namespace gr
 	}
 
 
-	void RenderStage::SetStageParams(RenderStageParams const& params)
+	void RenderStage::SetRenderStageParams(RenderStageParams const& params)
 	{
 		m_stageParams = params;
 
@@ -121,9 +121,25 @@ namespace gr
 	}
 
 
-	void RenderStage::SetPerMeshPerFrameShaderUniformByPtr(
-		size_t meshIdx, std::string const& uniformName, void const* value, platform::Shader::UniformType const& type, 
-		int const count)
+	//void RenderStage::SetPerMeshPerFrameTextureOrSamplerByPtr(
+	//	size_t meshIdx, std::string const& uniformName, void const* value, platform::Shader::UniformType const& type, 
+	//	int const count)
+	//{
+	//	SEAssert("meshIdx is OOB", meshIdx <= m_perMeshShaderUniforms.size());
+
+	//	if (meshIdx == m_perMeshShaderUniforms.size())
+	//	{
+	//		m_perMeshShaderUniforms.emplace_back();
+	//	}
+
+	//	m_perMeshShaderUniforms[meshIdx].emplace_back(uniformName, value, type, count);
+	//}
+
+	void RenderStage::SetPerMeshPerFrameTextureInput(
+		size_t meshIdx, 
+		std::string const& shaderName, 
+		std::shared_ptr<gr::Texture const> tex, 
+		std::shared_ptr<gr::Sampler const> sampler)
 	{
 		SEAssert("meshIdx is OOB", meshIdx <= m_perMeshShaderUniforms.size());
 
@@ -132,7 +148,8 @@ namespace gr
 			m_perMeshShaderUniforms.emplace_back();
 		}
 
-		m_perMeshShaderUniforms[meshIdx].emplace_back(uniformName, value, type, count);
+		m_perMeshShaderUniforms[meshIdx].emplace_back(shaderName, tex.get(), platform::Shader::UniformType::Texture, 1);
+		m_perMeshShaderUniforms[meshIdx].emplace_back(shaderName, sampler.get(), platform::Shader::UniformType::Sampler, 1);
 	}
 
 
@@ -143,12 +160,16 @@ namespace gr
 		// Dynamically allocate a copy of value so we have a pointer to it when we need for the current frame
 		m_perFrameShaderUniformValues.emplace_back(std::make_shared<T>(value));
 
-		SetPerMeshPerFrameShaderUniformByPtr(
-			meshIdx,
-			uniformName,
-			m_perFrameShaderUniformValues.back().get(),
-			type,
-			count);
+		SEAssert("meshIdx is OOB", meshIdx <= m_perMeshShaderUniforms.size());
+
+		if (meshIdx == m_perMeshShaderUniforms.size())
+		{
+			m_perMeshShaderUniforms.emplace_back(); // Add a new vector
+		}
+
+		m_perMeshShaderUniforms[meshIdx].emplace_back(
+			uniformName, m_perFrameShaderUniformValues.back().get(), type, count);
+
 	}
 	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
 	template void RenderStage::SetPerMeshPerFrameShaderUniformByValue<mat4>(

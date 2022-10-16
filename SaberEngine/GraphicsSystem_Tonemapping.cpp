@@ -41,7 +41,7 @@ namespace gr
 		tonemappingStageParam.m_dstBlendMode	= platform::Context::BlendMode::Zero;
 		tonemappingStageParam.m_depthTestMode	= platform::Context::DepthTestMode::Always;
 
-		m_tonemappingStage.SetStageParams(tonemappingStageParam);
+		m_tonemappingStage.SetRenderStageParams(tonemappingStageParam);
 
 		m_tonemappingStage.GetStageShader() = make_shared<Shader>(
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("toneMapShader"));

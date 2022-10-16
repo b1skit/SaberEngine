@@ -110,7 +110,7 @@ namespace gr
 			1);
 
 		m_ambientStage.GetStageCamera() = deferredLightingCam;
-		m_ambientStage.SetStageParams(ambientStageParams);
+		m_ambientStage.SetRenderStageParams(ambientStageParams);
 
 		m_ambientMesh =
 		{
@@ -167,7 +167,7 @@ namespace gr
 			brdfStageParams.m_depthTestMode = platform::Context::DepthTestMode::Always;
 			brdfStageParams.m_depthWriteMode = platform::Context::DepthWriteMode::Disabled;
 
-			brdfStage.SetStageParams(brdfStageParams);
+			brdfStage.SetRenderStageParams(brdfStageParams);
 
 			pipeline.AppendSingleFrameRenderStage(brdfStage);
 		}
@@ -249,7 +249,7 @@ namespace gr
 					camParams,
 					re::ParameterBlock::UpdateType::Immutable,
 					re::ParameterBlock::Lifetime::SingleFrame);
-				iemStage.AddStageParameterBlock(pb);
+				iemStage.AddPermanentParameterBlock(pb);
 
 				iemStage.GetTextureTargetSet().ColorTarget(0) = m_IEMTex;
 				iemStage.GetTextureTargetSet().Viewport() = gr::Viewport(0, 0, generatedTexRes, generatedTexRes);
@@ -257,7 +257,7 @@ namespace gr
 
 				iblStageParams.m_textureTargetSetConfig.m_targetFace = face;
 				iblStageParams.m_textureTargetSetConfig.m_targetMip = 0;
-				iemStage.SetStageParams(iblStageParams);
+				iemStage.SetRenderStageParams(iblStageParams);
 
 				pipeline.AppendSingleFrameRenderStage(iemStage);
 			}
@@ -312,7 +312,7 @@ namespace gr
 						camParams,
 						re::ParameterBlock::UpdateType::Immutable,
 						re::ParameterBlock::Lifetime::SingleFrame);
-					pmremStage.AddStageParameterBlock(pb);
+					pmremStage.AddPermanentParameterBlock(pb);
 
 					const float roughness = (float)currentMipLevel / (float)(numMipLevels - 1);
 					pmremStage.SetPerFrameShaderUniformByValue(
@@ -322,7 +322,7 @@ namespace gr
 
 					iblStageParams.m_textureTargetSetConfig.m_targetFace = face;
 					iblStageParams.m_textureTargetSetConfig.m_targetMip = currentMipLevel;
-					pmremStage.SetStageParams(iblStageParams);
+					pmremStage.SetRenderStageParams(iblStageParams);
 
 					pipeline.AppendSingleFrameRenderStage(pmremStage);
 				}
@@ -348,7 +348,10 @@ namespace gr
 			{
 				keylightStageParams.m_targetClearMode = platform::Context::ClearTarget::None;
 			}
-			m_keylightStage.SetStageParams(keylightStageParams);
+			m_keylightStage.SetRenderStageParams(keylightStageParams);
+
+			// TODO: We set this once, but eventually we should update & re-set this each frame to allow light animation
+			m_keylightStage.AddPermanentParameterBlock(keyLight->GetParameterBlock());
 
 			m_keylightStage.GetStageShader() = keyLight->GetDeferredLightShader();
 			m_keylightStage.GetStageCamera() = deferredLightingCam;
@@ -375,7 +378,6 @@ namespace gr
 			// Pointlights only illuminate something if the sphere volume is behind it
 			pointlightStageParams.m_depthTestMode = platform::Context::DepthTestMode::GEqual;
 
-			//if (!ambientLight && !keyLight) // Don't clear after 1st light
 			if (!iblTexture && !keyLight) // Don't clear after 1st light
 			{
 				pointlightStageParams.m_targetClearMode = platform::Context::ClearTarget::Color;
@@ -386,7 +388,7 @@ namespace gr
 			}
 
 			pointlightStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Front; // Cull front faces of light volumes
-			m_pointlightStage.SetStageParams(pointlightStageParams);
+			m_pointlightStage.SetRenderStageParams(pointlightStageParams);
 
 			// TEMP HAX: Store all pointlight meshes, so we can match them against entries in m_perMeshShaderUniforms
 			for (shared_ptr<Light> const pointlight : pointLights)
@@ -527,14 +529,6 @@ namespace gr
 				"shadowCam_near", keyLightShadowCam->Near(), platform::Shader::UniformType::Float, 1);
 			m_keylightStage.SetPerFrameShaderUniformByValue(
 				"shadowCam_far", keyLightShadowCam->Far(), platform::Shader::UniformType::Float, 1);
-
-			// Keylight properties:
-			m_keylightStage.SetPerFrameShaderUniformByValue(
-				"lightColor", keyLight->GetColor(), platform::Shader::UniformType::Vec3f, 1);
-
-			// TODO: Rename this as keylightDirWorldSpace
-			m_keylightStage.SetPerFrameShaderUniformByValue(
-				"keylightWorldDir", keyLight->GetTransform()->ForwardWorld(), platform::Shader::UniformType::Vec3f, 1);
 		}
 
 		if (pointLights.size() > 0)
@@ -542,17 +536,17 @@ namespace gr
 			// TODO: Support instancing. For now, just pack a vector with vectors of per-mesh parameters
 			for (size_t lightIdx = 0; lightIdx < pointLights.size(); lightIdx++)
 			{
-				m_pointlightStage.SetPerMeshPerFrameShaderUniformByPtr(
+				m_pointlightStage.SetPerMeshPerFrameShaderUniformByValue(
 					lightIdx,
 					"lightColor",
-					&pointLights[lightIdx]->GetColor().r, // Returns reference
+					pointLights[lightIdx]->GetColor(),
 					platform::Shader::UniformType::Vec3f,
 					1);
 
-				m_pointlightStage.SetPerMeshPerFrameShaderUniformByPtr(
+				m_pointlightStage.SetPerMeshPerFrameShaderUniformByValue(
 					lightIdx,
 					"lightWorldPos",
-					&pointLights[lightIdx]->GetTransform()->GetWorldPosition().x, // Returns reference
+					pointLights[lightIdx]->GetTransform()->GetWorldPosition(),
 					platform::Shader::UniformType::Vec3f,
 					1);
 
@@ -600,18 +594,12 @@ namespace gr
 						// Manually set depth textures and samplers...
 						std::shared_ptr<gr::Texture> depthTexture =
 							activeShadowMap->GetTextureTargetSet().DepthStencilTarget().GetTexture();
-						m_pointlightStage.SetPerMeshPerFrameShaderUniformByPtr(
+
+						m_pointlightStage.SetPerMeshPerFrameTextureInput(
 							lightIdx,
 							"CubeMap0",
-							depthTexture.get(),
-							platform::Shader::UniformType::Texture,
-							1);
-						m_pointlightStage.SetPerMeshPerFrameShaderUniformByPtr(
-							lightIdx,
-							"CubeMap0",
-							Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear).get(),
-							platform::Shader::UniformType::Sampler,
-							1);
+							depthTexture,
+							Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear));
 
 						m_pointlightStage.SetPerMeshPerFrameShaderUniformByValue(
 							lightIdx,

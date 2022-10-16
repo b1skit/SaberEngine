@@ -9,10 +9,13 @@
 
 #if defined(SABER_VERTEX_SHADER)
 	layout(location = 0) in vec3 in_position;
-	layout(location = 1) in vec4 in_color;
-	layout(location = 2) in vec3 in_normal;
-	layout(location = 3) in vec4 in_tangent;
-	layout(location = 4) in vec2 in_uv0;	
+
+	#if !defined(SABER_DEPTH)
+		layout(location = 1) in vec4 in_color;
+		layout(location = 2) in vec3 in_normal;
+		layout(location = 3) in vec4 in_tangent;
+		layout(location = 4) in vec2 in_uv0;	
+	#endif
 #endif
 
 
@@ -43,7 +46,6 @@
 		vec3 vertexWorldNormal;
 		vec2 uv0;
 		vec3 localPos;	// Received in_position: Local-space position
-		vec3 viewPos;	// Camera/eye-space position
 		vec3 worldPos;	// World-space position
 		vec3 shadowPos;	// Shadowmap projection-space position
 
@@ -93,22 +95,8 @@ layout(binding=11) uniform samplerCube CubeMap0;
 layout(binding=12) uniform samplerCube CubeMap1;
 
 
-// Deferred key light:
-uniform vec3 keylightWorldDir; // Normalized, world-space, points towards keylight source (ie. parallel)
-
-// Deferred lights:
-uniform vec3 lightColor;
-uniform vec3 lightWorldPos;	// Light position in world space
-
-
 // Mesh params:
-uniform mat4 in_model;			// Local -> World
-uniform mat4 in_modelRotation;	// Local -> World, rotations ONLY (i.e. For transforming normals) TODO: Make this a mat3
-
-uniform mat4 in_mv;				// [View * Model]
-uniform mat4 in_mvp;			// [Projection * View * Model]
-// Maybe we should compute these on the GPU?
-
+uniform mat4 in_model; // Local -> World
 
 // Shadow params:
 uniform mat4 shadowCam_vp; // Shadow map: [Projection * View]
@@ -149,6 +137,21 @@ layout(std430, binding=1) readonly buffer CameraParams
 	vec4 g_projectionParams;	// .x = 1 (unused), .y = near, .z = far, .w = 1/far
 	
 	vec3 g_cameraWPos;
+};
+
+
+// Deferred point lights:
+uniform vec3 lightColor;
+uniform vec3 lightWorldPos;	// Light position in world space
+
+// TODO: Point lights are currently drawn as individual meshes in a single stage. Need to implement a batch system, so
+// we can draw them as an instanced batch with an array of indexed transforms & param values
+
+layout(std430, binding=2) readonly buffer LightParams
+{
+	vec3 g_colorIntensity;
+
+	vec3 g_worldPos; // Directional lights: Normalized, world-space dir pointing towards source (ie. parallel)
 };
 
 #endif

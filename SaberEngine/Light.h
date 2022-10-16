@@ -8,6 +8,7 @@
 #include "NamedObject.h"
 #include "Updateable.h"
 #include "Transform.h"
+#include "ParameterBlock.h"
 
 
 namespace gr
@@ -36,6 +37,17 @@ namespace gr
 		};
 
 	public:
+		struct LightParams
+		{
+			glm::vec3 g_colorIntensity = glm::vec3(0.f, 0.f, 0.f);
+			const float padding0 = 0.f;
+
+			// Directional lights: Normalized, world-space dir pointing towards source (ie. parallel)
+			glm::vec3 g_worldPos = glm::vec3(0.f, 0.f, 0.f); 
+			const float padding1 = 0.f;
+		};
+
+	public:
 		Light(std::string const& name,
 			gr::Transform* ownerTransform,
 			LightType lightType, 
@@ -56,8 +68,8 @@ namespace gr
 		void Update() override;
 
 		// Getters/Setters:
-		inline glm::vec3& GetColor() { return m_colorIntensity; }
-		inline glm::vec3 const& GetColor() const { return m_colorIntensity; }
+		inline glm::vec3& GetColor() { return m_lightParams.g_colorIntensity; }
+		inline glm::vec3 const& GetColor() const { return m_lightParams.g_colorIntensity; }
 	 
 		inline LightType const& Type() const { return m_type; }
 														 
@@ -74,10 +86,15 @@ namespace gr
 		inline std::shared_ptr<gr::Shader>& GetDeferredLightShader() { return m_deferredLightShader; }
 		inline std::shared_ptr<gr::Shader>const& GetDeferredLightShader() const { return m_deferredLightShader; }
 
+		inline std::shared_ptr<re::ParameterBlock const>& GetParameterBlock() { return m_lightParameterBlock; }
+		inline std::shared_ptr<re::ParameterBlock const> const GetParameterBlock() const { return m_lightParameterBlock; }
+
 	private:
 		gr::Transform* m_ownerTransform;
 
-		glm::vec3 m_colorIntensity;
+		LightParams m_lightParams;
+		std::shared_ptr<re::ParameterBlock const> m_lightParameterBlock;
+
 		LightType m_type;
 
 		std::shared_ptr<gr::ShadowMap> m_shadowMap;

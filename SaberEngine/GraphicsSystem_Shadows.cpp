@@ -54,7 +54,7 @@ namespace gr
 				// TODO: Target set should be a member of the stage, instead of the shadow map?
 
 
-				m_directionalShadowStage.SetStageParams(shadowStageParams);
+				m_directionalShadowStage.SetRenderStageParams(shadowStageParams);
 
 				pipeline.AppendRenderStage(m_directionalShadowStage);
 			}
@@ -76,7 +76,7 @@ namespace gr
 				shadowStage->GetStageShader() = shadowCam->GetRenderShader();
 				shadowStage->GetTextureTargetSet() = curLight->GetShadowMap()->GetTextureTargetSet();
 
-				shadowStage->SetStageParams(shadowStageParams);
+				shadowStage->SetRenderStageParams(shadowStageParams);
 
 				pipeline.AppendRenderStage(*shadowStage);
 			}

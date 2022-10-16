@@ -12,6 +12,7 @@ using std::shared_ptr;
 using std::make_shared;
 using std::string;
 using glm::vec3;
+using re::ParameterBlock;
 
 
 namespace gr
@@ -19,12 +20,13 @@ namespace gr
 	Light::Light(string const& name, Transform* ownerTransform, LightType lightType, vec3 colorIntensity, bool hasShadow) :
 		en::NamedObject(name),
 			m_ownerTransform(ownerTransform),
-			m_colorIntensity(colorIntensity),
 			m_type(lightType),
 			m_shadowMap(nullptr),
 			m_deferredMesh(nullptr),
 			m_deferredLightShader(nullptr)
 	{		
+		m_lightParams.g_colorIntensity = colorIntensity;
+
 		// Set up deferred light mesh:
 		string shaderName;
 		switch (lightType)
@@ -50,6 +52,8 @@ namespace gr
 		break;
 		case Directional:
 		{
+			m_lightParams.g_worldPos = GetTransform()->ForwardWorld();
+
 			m_deferredLightShader = make_shared<Shader>(
 				en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredKeylightShaderName"));
 			m_deferredLightShader->Create();
@@ -93,9 +97,13 @@ namespace gr
 		break;
 		case Point:
 		{
+			m_lightParams.g_worldPos = GetTransform()->GetWorldPosition();
+
 			// Compute the radius: 
 			const float cutoff = 0.05f; // Want the sphere mesh radius where light intensity will be close to zero
-			const float maxColor = glm::max(glm::max(m_colorIntensity.r, m_colorIntensity.g), m_colorIntensity.b);
+			const float maxColor = glm::max(
+				glm::max(m_lightParams.g_colorIntensity.r, m_lightParams.g_colorIntensity.g), 
+				m_lightParams.g_colorIntensity.b);
 			const float radius = glm::sqrt((maxColor / cutoff) - 1.0f);
 
 			m_deferredLightShader = make_shared<Shader>(
@@ -146,6 +154,12 @@ namespace gr
 			// TODO: Implement light meshes for additional light types
 			break;
 		}
+
+		m_lightParameterBlock = ParameterBlock::Create(
+			"LightParams",
+			m_lightParams,
+			ParameterBlock::UpdateType::Immutable,
+			ParameterBlock::Lifetime::Permanent);
 	}
 
 

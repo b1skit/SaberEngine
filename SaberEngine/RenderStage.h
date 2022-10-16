@@ -72,8 +72,8 @@ namespace gr
 
 		bool WritesColor() const { return m_writesColor; }; // Are any of the params.m_colorWriteMode channels enabled?
 
-		void SetStageParams(RenderStageParams const& params);
-		inline RenderStageParams const& GetStageParams() const { return m_stageParams; }
+		void SetRenderStageParams(RenderStageParams const& params);
+		inline RenderStageParams const& GetRenderStageParams() const { return m_stageParams; }
 
 		inline std::shared_ptr<gr::Shader>& GetStageShader() { return m_stageShader; }
 		inline std::shared_ptr<gr::Shader const> GetStageShader() const { return m_stageShader; }
@@ -95,19 +95,19 @@ namespace gr
 		void SetPerFrameShaderUniformByValue(
 			std::string const& uniformName, T const& value, platform::Shader::UniformType const& type, int const count);
 
-		inline void AddStageParameterBlock(std::shared_ptr<re::ParameterBlock> pb) { m_stageParamBlocks.emplace_back(pb); }
-		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetStageParameterBlocks() const { return m_stageParamBlocks; }
+		// TODO: Support per-frame uniform blocks, to allow PB data to change between frames
+		inline void AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock const> pb) { m_stageParamBlocks.emplace_back(pb); }
+		inline std::vector<std::shared_ptr<re::ParameterBlock const>> const& GetPermanentParameterBlocks() const { return m_stageParamBlocks; }
 
 		inline std::vector<std::shared_ptr<gr::Mesh>> const* GetGeometryBatches() const { return m_stageGeometryBatches; }
 		inline void SetGeometryBatches(std::vector<std::shared_ptr<gr::Mesh>> const* batches) { m_stageGeometryBatches = batches; }
 
 
 
-		// TODO: Support instancing. For now, just use a vector of per-mesh uniforms with indexes to correspond to the
-		// entreis in m_stageGeometryBatches
-		void SetPerMeshPerFrameShaderUniformByPtr(
-			size_t meshIdx, std::string const& uniformName, void const* value, platform::Shader::UniformType const& type, int const count);
-
+		// TODO: Support instancing. For now, just use vectors of per-mesh uniforms with indexes to correspond to the
+		// entires in m_stageGeometryBatches
+		void SetPerMeshPerFrameTextureInput(
+			size_t meshIdx, std::string const& shaderName, std::shared_ptr<gr::Texture const> tex, std::shared_ptr<gr::Sampler const> sampler);	
 		template <typename T>
 		void SetPerMeshPerFrameShaderUniformByValue(
 			size_t meshIdx, std::string const& uniformName, T const& value, platform::Shader::UniformType const& type, int const count);
@@ -127,7 +127,7 @@ namespace gr
 		std::vector<StageShaderUniform> m_perFrameShaderUniforms; // TODO: Handle selection of face, miplevel when binding color/depth targets?
 		std::vector<std::shared_ptr<const void>> m_perFrameShaderUniformValues; // Generic, per-frame data storage buffer
 		
-		std::vector<std::shared_ptr<re::ParameterBlock>> m_stageParamBlocks;
+		std::vector<std::shared_ptr<re::ParameterBlock const>> m_stageParamBlocks;
 
 		// TODO: Implement a "m_stageConstantShaderUniforms" -> Things like textures, samplers, etc that don't change
 		// between frames

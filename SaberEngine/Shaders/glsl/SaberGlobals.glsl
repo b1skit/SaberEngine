@@ -39,15 +39,20 @@
 #define CAM_SENSITIVITY 100.0 // ISO
 
 
-mat3 AssembleTBN(vec3 faceNormal, vec4 localTangent, mat4 worldRotation)
+mat3 AssembleTBN(const vec3 faceNormal, const vec4 localTangent, const mat4 model)
 {
-	const vec3 worldTangent	= (worldRotation * vec4(localTangent.xyz, 0)).xyz;
+	// To transpose normal vectors, we must the transpose of the inverse of the model matrix, incase we have a
+	// non-uniform scaling factor
+	// https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/transforming-normals
+	const mat4 transposeInverseModel = transpose(inverse(model));
+
+	const vec3 worldTangent	= (transposeInverseModel * vec4(localTangent.xyz, 0)).xyz;
 
 	// localTangent.w == 1.0 or -1.0
 	const vec3 localBitangent = cross(faceNormal.xyz, localTangent.xyz) * localTangent.w;
-	const vec3 worldBitangent = (worldRotation * vec4(localBitangent, 0)).xyz;
+	const vec3 worldBitangent = (transposeInverseModel * vec4(localBitangent, 0)).xyz;
 
-	const vec3 worldFaceNormal = (worldRotation * vec4(faceNormal, 0)).xyz;
+	const vec3 worldFaceNormal = (transposeInverseModel * vec4(faceNormal, 0)).xyz;
 	
 	return mat3(worldTangent, worldBitangent, worldFaceNormal);
 }

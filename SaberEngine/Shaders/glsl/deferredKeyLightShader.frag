@@ -22,6 +22,9 @@ void main()
 	vec4 worldPosition = texture(GBufferWPos, data.uv0.xy);
 	vec4 matProp0 = texture(GBufferMatProp0, data.uv0.xy); // .rgb = F0 (Surface response at 0 degrees)
 
+	// Directional light direction is packed into the light position
+	const vec3 keylightWorldDir = g_worldPos;
+
 	// Read from 2D shadow map:
 	float NoL = max(0.0, dot(worldNormal, keylightWorldDir));
 	vec3 shadowPos = (shadowCam_vp * worldPosition).xyz;
@@ -36,7 +39,7 @@ void main()
 		matProp0.rgb, 
 		NoL, 
 		keylightWorldDir, 
-		lightColor, 
+		g_colorIntensity, 
 		shadowFactor, 
 		g_view);
 } 

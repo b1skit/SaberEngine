@@ -58,6 +58,7 @@ namespace gr
 		inline Transform* GetParent() const { return m_parent; }
 		void SetParent(Transform* newParent);
 
+		// TODO: Remove default arg
 		glm::mat4 const& GetWorldMatrix(TransformComponent component = WorldModel) const;
 		
 		void TranslateModel(glm::vec3 amount); // Apply additional translation to the current position, in model space
