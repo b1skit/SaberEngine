@@ -23,12 +23,12 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			SEAssert("DX12 is not yet supported", false);
+			SEAssertF("DX12 is not yet supported");
 		}
 		break;
 		default:
 		{
-			SEAssert("Invalid rendering API argument received", false);
+			SEAssertF("Invalid rendering API argument received");
 		}
 		}
 
@@ -50,12 +50,12 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			SEAssert("DX12 is not yet supported", false);
+			SEAssertF("DX12 is not yet supported");
 		}
 		break;
 		default:
 		{
-			SEAssert("Invalid rendering API argument received", false);
+			SEAssertF("Invalid rendering API argument received");
 		}
 		}
 

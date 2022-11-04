@@ -53,7 +53,7 @@ namespace opengl
 			break;
 			case gr::Mesh::DrawMode::DrawMode_Count:
 			default:
-				SEAssert("Unsupported draw mode", false);
+				SEAssertF("Unsupported draw mode");
 		}
 	}
 

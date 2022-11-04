@@ -19,12 +19,18 @@
 #define SEAssert(errorMsg, condition) \
 	if(!(condition)) \
 	{ \
-		std::string errorStr((errorMsg)); \
+		const std::string errorStr((errorMsg)); \
 		LOG_ERROR(errorStr.c_str()); \
 		std::cerr << "Assertion failed: " << #condition << " == " << (condition ? "true" : "false") << std::endl; \
 		std::cerr << "Occurred at: " << __FILE__ << ":" << __LINE__ << "::" << __FUNCTION__ << std::endl; \
 		abort(); \
 	}
+
+#define SEAssertF(errorMsg) \
+		const std::string errorStr((errorMsg)); \
+		LOG_ERROR(errorStr.c_str()); \
+		std::cerr << "Occurred at: " << __FILE__ << ":" << __LINE__ << "::" << __FUNCTION__ << std::endl; \
+		abort();
 #else
 #define SEAssert(errorMsg, condition)	\
 	do {errorMsg; const bool supressCompilerWarningByUsingCondition = condition;} while(0)

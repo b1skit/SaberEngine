@@ -205,7 +205,7 @@ namespace gr
 		case gr::Texture::TextureFormat::Invalid:
 		default:
 		{
-			SEAssert("Invalid texture format to set a texel", false);
+			SEAssertF("Invalid texture format to set a texel");
 		}
 		}
 
@@ -328,7 +328,7 @@ namespace gr
 		case gr::Texture::TextureFormat::Invalid:
 		default:
 		{
-			SEAssert("Invalid texture format for stride computation", false);
+			SEAssertF("Invalid texture format for stride computation");
 		}
 		}
 
@@ -370,7 +370,7 @@ namespace gr
 		case gr::Texture::TextureFormat::Invalid:
 		default:
 		{
-			SEAssert("Invalid texture format for stride computation", false);
+			SEAssertF("Invalid texture format for stride computation");
 			return 1;
 		}
 		}

@@ -35,7 +35,7 @@ namespace opengl
 		}
 		break;
 		default:
-			SEAssert("Invalid/unsupported texture dimension", false);
+			SEAssertF("Invalid/unsupported texture dimension");
 		}
 
 
@@ -118,12 +118,12 @@ namespace opengl
 		break;
 		case gr::Texture::TextureFormat::RG8:
 		{
-			SEAssert("Invalid/unsupported texture format", false);
+			SEAssertF("Invalid/unsupported texture format");
 		}
 		break;
 		case gr::Texture::TextureFormat::R8:
 		{
-			SEAssert("Invalid/unsupported texture format", false);
+			SEAssertF("Invalid/unsupported texture format");
 		}
 		break;
 		case gr::Texture::TextureFormat::Depth32F:
@@ -134,7 +134,7 @@ namespace opengl
 		}
 		break;
 		default:
-			SEAssert("Invalid/unsupported texture format", false);
+			SEAssertF("Invalid/unsupported texture format");
 		}
 	}
 

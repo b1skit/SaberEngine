@@ -156,7 +156,7 @@ namespace gr
 			}
 		}
 
-		SEAssert("Could not find a parameter block with the given shader name", false);
+		SEAssertF("Could not find a parameter block with the given shader name");
 		return nullptr;
 	}
 }

@@ -66,7 +66,7 @@ namespace opengl
 					glGetShaderInfoLog(shaderRef, sizeof(errorMsg), nullptr, errorMsg);
 				}
 
-				SEAssert(errorMsg, false);
+				SEAssertF(errorMsg);
 			}
 		};
 
@@ -341,7 +341,7 @@ namespace opengl
 		}
 		break;
 		default:
-			SEAssert("Shader uniform upload failed: Recieved unimplemented uniform type", false);
+			SEAssertF("Shader uniform upload failed: Recieved unimplemented uniform type");
 		}
 
 		// Restore the state:

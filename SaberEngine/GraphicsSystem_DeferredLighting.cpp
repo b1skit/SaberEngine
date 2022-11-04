@@ -87,7 +87,7 @@ namespace
 		}
 		break;
 		default:
-			SEAssert("Light type does not use this param block", false);
+			SEAssertF("Light type does not use this param block");
 		}
 		
 		shared_ptr<gr::ShadowMap const> const shadowMap = light->GetShadowMap();
@@ -115,7 +115,7 @@ namespace
 			}
 			break;
 			default:
-				SEAssert("Light shadow type does not use this param block", false);
+				SEAssertF("Light shadow type does not use this param block");
 			}
 		}
 		return lightParams;

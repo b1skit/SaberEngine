@@ -36,7 +36,7 @@ namespace opengl
 		}
 		break;
 		default:
-			SEAssert("Invalid/unsupported texture min mode", false);
+			SEAssertF("Invalid/unsupported texture min mode");
 		}
 
 		// Magnification filter:
@@ -55,7 +55,7 @@ namespace opengl
 
 		break;
 		default:
-			SEAssert("Invalid/unsupported texture max mode", false);
+			SEAssertF("Invalid/unsupported texture max mode");
 		}
 
 		// Sampler mode:
@@ -84,7 +84,7 @@ namespace opengl
 		}
 		break;
 		default:
-			SEAssert("Invalid/unsupported texture max mode", false);
+			SEAssertF("Invalid/unsupported texture max mode");
 		}
 	}
 

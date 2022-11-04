@@ -197,7 +197,7 @@ namespace re
 			}
 		}
 
-		SEAssert("Graphics system not found", false);
+		SEAssertF("Graphics system not found");
 		return nullptr;
 	}
 	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:

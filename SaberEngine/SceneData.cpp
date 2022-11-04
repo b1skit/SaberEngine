@@ -195,7 +195,7 @@ namespace
 					}
 					break;
 					default:
-						SEAssert("Invalid number of channels", false);
+						SEAssertF("Invalid number of channels");
 					}
 					
 					texParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
@@ -538,7 +538,7 @@ namespace
 		case cgltf_light_type::cgltf_light_type_invalid:
 		case cgltf_light_type::cgltf_light_type_max_enum:
 		default:
-			SEAssert("Invalid light type", false);
+			SEAssertF("Invalid light type");
 		}
 
 		const vec3 colorIntensity = glm::make_vec3(light->color) * light->intensity;
@@ -661,7 +661,7 @@ namespace
 					break;
 					case cgltf_primitive_type::cgltf_primitive_type_max_enum:
 					default:
-						SEAssert("Unsupported primitive type/draw mode", false);
+						SEAssertF("Unsupported primitive type/draw mode");
 				}
 
 				SEAssert("Mesh is missing indices", current->mesh->primitives[primitive].indices != nullptr);
@@ -717,7 +717,7 @@ namespace
 						{
 							// GLTF mesh vertex attributes are stored as vecN's only:
 							// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#meshes-overview
-							SEAssert("Invalid vertex attribute data type", false);
+							SEAssertF("Invalid vertex attribute data type");
 						}
 					}	
 					const size_t numComponents = current->mesh->primitives[primitive].attributes[attrib].data->count;
@@ -764,7 +764,7 @@ namespace
 					case cgltf_attribute_type::cgltf_attribute_type_max_enum:
 					case cgltf_attribute_type::cgltf_attribute_type_invalid:
 					default:
-						SEAssert("Invalid attribute type", false);
+						SEAssertF("Invalid attribute type");
 					}
 
 					cgltf_accessor* const accessor = current->mesh->primitives[primitive].attributes[attrib].data;

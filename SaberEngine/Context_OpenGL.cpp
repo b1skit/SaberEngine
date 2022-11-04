@@ -111,7 +111,7 @@ namespace opengl
 
 		if (severity == GL_DEBUG_SEVERITY_HIGH)
 		{
-			SEAssert("High severity GL error!", false);
+			SEAssertF("High severity GL error!");
 		}		
 	}
 #endif
@@ -256,7 +256,7 @@ namespace opengl
 		}
 		break;
 		default:
-			SEAssert("Invalid face culling mode", false);
+			SEAssertF("Invalid face culling mode");
 		}
 	}
 
@@ -286,7 +286,7 @@ namespace opengl
 		}
 		break;
 		default:
-			SEAssert("Invalid face clear target",false);
+			SEAssertF("Invalid face clear target");
 		}
 	}
 	
@@ -362,7 +362,7 @@ namespace opengl
 			break;
 			default:
 			{
-				SEAssert("Invalid blend mode", false);
+				SEAssertF("Invalid blend mode");
 			}
 			}
 		};
@@ -427,7 +427,7 @@ namespace opengl
 		break;
 		default:
 		{
-			SEAssert("Invalid depth test mode", false);
+			SEAssertF("Invalid depth test mode");
 		}
 		}
 
@@ -451,7 +451,7 @@ namespace opengl
 		break;
 		default:
 		{
-			SEAssert("Invalid depth write mode", false);
+			SEAssertF("Invalid depth write mode");
 		}
 		}
 	}

@@ -33,7 +33,7 @@ namespace re
 			break;
 			default:
 			{
-				SEAssert("Invalid update type", false);
+				SEAssertF("Invalid update type");
 			}
 			}
 		}
@@ -62,7 +62,7 @@ namespace re
 			return singleFrameResult->second;
 		}
 
-		SEAssert("Failed to find param block", false);
+		SEAssertF("Failed to find param block");
 		return nullptr;
 	}
 

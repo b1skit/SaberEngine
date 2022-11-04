@@ -149,7 +149,7 @@ namespace opengl
 		}
 		else
 		{
-			SEAssert("Attempting to bind color targets on a target set that only contains a depth target", false);
+			SEAssertF("Attempting to bind color targets on a target set that only contains a depth target");
 		}
 	}
 
@@ -250,7 +250,7 @@ namespace opengl
 		{
 			const string errorMsg = 
 				"Framebuffer is not complete: " + std::to_string(glCheckFramebufferStatus(GL_FRAMEBUFFER));
-			SEAssert(errorMsg, false);
+			SEAssertF(errorMsg);
 		}
 	}
 
@@ -309,7 +309,7 @@ namespace opengl
 		}
 		else
 		{
-			SEAssert("Attempting to bind depth target on a target set that only contains a color targets", false);
+			SEAssertF("Attempting to bind depth target on a target set that only contains a color targets");
 		}
 	}
 
@@ -368,7 +368,7 @@ namespace opengl
 			bool result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 			if (!result)
 			{
-				SEAssert("Framebuffer is not complete: " + std::to_string(glCheckFramebufferStatus(GL_FRAMEBUFFER)), false);
+				SEAssertF("Framebuffer is not complete: " + std::to_string(glCheckFramebufferStatus(GL_FRAMEBUFFER)));
 			}
 
 			SEAssert("TODO: Implement support for correctly setting the viewport dimensions for depth textures with "
