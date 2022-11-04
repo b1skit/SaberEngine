@@ -19,27 +19,8 @@ namespace gr
 	class Shader : public virtual en::NamedObject
 	{
 	public:
-		// Shader #define keywords
-		enum ShaderKeywordIndex
-		{
-			NoAlbedoTex,
-			NoNormalTex,
-			NoEmissiveTex,
-			NoRMAOTex,
-			NoCosinePower,
-
-			ShaderKeyword_Count
-		}; // Note: If new enums are added, don't forget to update Shader::k_MatTexNames as well
-
-
-	public:
 		explicit Shader(std::string const& extensionlessShaderFilename);
 		~Shader() { Destroy(); }
-
-		Shader() = delete;
-		Shader(Shader const&) = delete;
-		Shader(Shader&&) = delete;
-		Shader& operator=(Shader&) = delete;
 
 		void Create();
 		void Bind(bool doBind) const;
@@ -63,7 +44,6 @@ namespace gr
 		inline platform::Shader::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
 		inline platform::Shader::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
 
-
 		inline std::vector<std::string>& ShaderKeywords() { return m_shaderKeywords; }
 		inline std::vector<std::string> const& ShaderKeywords() const { return m_shaderKeywords; }
 
@@ -75,6 +55,12 @@ namespace gr
 		// Friends:
 		friend bool platform::RegisterPlatformFunctions();
 		friend void platform::Shader::PlatformParams::CreatePlatformParams(gr::Shader&);
+
+	private:
+		Shader() = delete;
+		Shader(Shader const&) = delete;
+		Shader(Shader&&) = delete;
+		Shader& operator=(Shader&) = delete;
 	};
 }
 
