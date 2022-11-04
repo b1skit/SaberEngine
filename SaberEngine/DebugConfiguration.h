@@ -34,6 +34,9 @@
 #else
 #define SEAssert(errorMsg, condition)	\
 	do {errorMsg; const bool supressCompilerWarningByUsingCondition = condition;} while(0)
+
+#define SEAssertF(errorMsg)	\
+	do {errorMsg;} while(0)
 #endif
 
 
