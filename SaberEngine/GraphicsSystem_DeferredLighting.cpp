@@ -280,6 +280,13 @@ namespace gr
 			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f,  0.0f, -1.0f), vec3(0.0f, -1.0f,  0.0f))
 		};
 
+		// Common cubemap camera rendering params; Just need to update g_view for each face/stage
+		Camera::CameraParams cubemapCamParams;
+		cubemapCamParams.g_projection = cubeProjectionMatrix;
+		cubemapCamParams.g_viewProjection = glm::mat4(1.f); // Identity; unused
+		cubemapCamParams.g_invViewProjection = glm::mat4(1.f); // Identity; unused
+		cubemapCamParams.g_cameraWPos = vec3(0.f, 0.f, 0.f); // Unused
+
 		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
 		Batch cubeMeshBatch = Batch(m_cubeMesh.get(), nullptr, nullptr);
 
@@ -287,6 +294,7 @@ namespace gr
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("equilinearToCubemapBlitShaderName");
 
 		// TODO: We should use equirectangular images, instead of bothering to convert to cubemaps for IEM/PMREM
+
 
 		// 1st frame: Generate an IEM (Irradiance Environment Map) cubemap texture for diffuse irradiance
 		{
@@ -313,16 +321,10 @@ namespace gr
 					"numSamples", numSamples, platform::Shader::UniformType::Int, 1);
 				
 				// Construct a camera param block to draw into our cubemap rendering targets:
-				Camera::CameraParams camParams;
-				camParams.g_view = captureViews[face];
-				camParams.g_projection = cubeProjectionMatrix;
-				camParams.g_viewProjection = glm::mat4(1.f); // Identity; unused
-				camParams.g_invViewProjection = glm::mat4(1.f); // Identity; unused
-				camParams.g_cameraWPos = vec3(0.f, 0.f, 0.f); // Unused
-				
+				cubemapCamParams.g_view = captureViews[face];
 				shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
 					"CameraParams",
-					camParams,
+					cubemapCamParams,
 					re::ParameterBlock::UpdateType::Immutable,
 					re::ParameterBlock::Lifetime::SingleFrame);
 				iemStage.AddPermanentParameterBlock(pb);
@@ -378,16 +380,10 @@ namespace gr
 						"numSamples", numSamples, platform::Shader::UniformType::Int, 1);
 					
 					// Construct a camera param block to draw into our cubemap rendering targets:
-					// TODO: Construct a camera and handle this implicitely
-					Camera::CameraParams camParams;
-					camParams.g_view = captureViews[face];
-					camParams.g_projection = cubeProjectionMatrix;
-					camParams.g_viewProjection = glm::mat4(1.f); // Identity; unused
-					camParams.g_invViewProjection = glm::mat4(1.f); // Identity; unused
-					camParams.g_cameraWPos = vec3(0.f, 0.f, 0.f); // Unused
+					cubemapCamParams.g_view = captureViews[face];
 					shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
 						"CameraParams",
-						camParams,
+						cubemapCamParams,
 						re::ParameterBlock::UpdateType::Immutable,
 						re::ParameterBlock::Lifetime::SingleFrame);
 					pmremStage.AddPermanentParameterBlock(pb);
