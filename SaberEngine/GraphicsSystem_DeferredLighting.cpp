@@ -313,7 +313,6 @@ namespace gr
 					"numSamples", numSamples, platform::Shader::UniformType::Int, 1);
 				
 				// Construct a camera param block to draw into our cubemap rendering targets:
-				// TODO: Construct a camera and handle this implicitely
 				Camera::CameraParams camParams;
 				camParams.g_view = captureViews[face];
 				camParams.g_projection = cubeProjectionMatrix;
