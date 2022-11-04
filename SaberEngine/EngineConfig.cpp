@@ -35,6 +35,8 @@ namespace en
 		// Note: String values must be explicitely defined as string objects
 		m_configValues =
 		{
+			{"platform",							{string("opengl"), SettingType::Common}},
+
 			{"windowTitle",							{string("Saber Engine"), SettingType::Common}},
 			{"windowXRes",							{1920, SettingType::Common}},
 			{"windowYRes",							{1080, SettingType::Common}},
