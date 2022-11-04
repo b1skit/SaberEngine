@@ -8,6 +8,7 @@
 #include "CoreEngine.h"
 
 using gr::DeferredLightingGraphicsSystem;
+using re::Batch;
 using en::CoreEngine;
 using std::shared_ptr;
 using std::make_shared;
@@ -22,19 +23,18 @@ namespace gr
 	BloomGraphicsSystem::BloomGraphicsSystem(std::string name) : GraphicsSystem(name), NamedObject(name),
 		m_emissiveBlitStage("Emissive blit stage")
 	{
-	}
-
-
-	void BloomGraphicsSystem::Create(re::StagePipeline& pipeline)
-	{
-		m_screenAlignedQuad.reserve(1);  // MUST reserve so our pointers won't change
-		m_screenAlignedQuad.emplace_back(gr::meshfactory::CreateQuad
+		m_screenAlignedQuad = gr::meshfactory::CreateQuad
 		(
 			vec3(-1.0f, 1.0f, 0.0f),	// TL
 			vec3(1.0f, 1.0f, 0.0f),		// TR
 			vec3(-1.0f, -1.0f, 0.0f),	// BL
 			vec3(1.0f, -1.0f, 0.0f)		// BR
-		));
+		);
+	}
+
+
+	void BloomGraphicsSystem::Create(re::StagePipeline& pipeline)
+	{
 
 		shared_ptr<DeferredLightingGraphicsSystem> deferredLightGS = dynamic_pointer_cast<DeferredLightingGraphicsSystem>(
 			CoreEngine::GetRenderManager()->GetGraphicsSystem<DeferredLightingGraphicsSystem>());
@@ -229,7 +229,22 @@ namespace gr
 	void BloomGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
 		m_emissiveBlitStage.InitializeForNewFrame();
-		m_emissiveBlitStage.SetGeometryBatches(&m_screenAlignedQuad);
+
+		for (size_t i = 0; i < m_downResStages.size(); i++)
+		{
+			m_downResStages[i].InitializeForNewFrame();
+		}
+		for (size_t i = 0; i < m_blurStages.size(); i++)
+		{
+			m_blurStages[i].InitializeForNewFrame();
+		}
+		for (size_t i = 0; i < m_upResStages.size(); i++)
+		{
+			m_upResStages[i].InitializeForNewFrame();
+		}
+
+		CreateBatches();
+
 
 		shared_ptr<GBufferGraphicsSystem> gbufferGS = dynamic_pointer_cast<GBufferGraphicsSystem>(
 			CoreEngine::GetRenderManager()->GetGraphicsSystem<GBufferGraphicsSystem>());
@@ -250,9 +265,6 @@ namespace gr
 
 		for (size_t i = 0; i < m_downResStages.size(); i++)
 		{
-			m_downResStages[i].InitializeForNewFrame();
-			m_downResStages[i].SetGeometryBatches(&m_screenAlignedQuad);
-
 			if (i == 0)
 			{
 				m_downResStages[i].SetTextureInput(
@@ -271,9 +283,6 @@ namespace gr
 
 		for (size_t i = 0; i < m_blurStages.size(); i++)
 		{
-			m_blurStages[i].InitializeForNewFrame();
-			m_blurStages[i].SetGeometryBatches(&m_screenAlignedQuad);
-
 			if (i == 0)
 			{
 				m_blurStages[i].SetTextureInput(
@@ -288,23 +297,10 @@ namespace gr
 					m_blurStages[i-1].GetTextureTargetSet().ColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
-
-			// Upload the texel size for the SMALLEST pingpong textures:
-			const vec4 smallestTexelSize =
-				m_downResStages.back().GetTextureTargetSet().ColorTarget(0).GetTexture()->GetTexelDimenions();
-
-			m_blurStages[i].SetPerFrameShaderUniformByValue(
-				"texelSize",
-				smallestTexelSize,
-				platform::Shader::UniformType::Vec4f,
-				1);
 		}
 
 		for (size_t i = 0; i < m_upResStages.size(); i++)
 		{
-			m_upResStages[i].InitializeForNewFrame();
-			m_upResStages[i].SetGeometryBatches(&m_screenAlignedQuad);
-
 			if (i == 0)
 			{
 				m_upResStages[i].SetTextureInput(
@@ -319,6 +315,27 @@ namespace gr
 					m_upResStages[i-1].GetTextureTargetSet().ColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
+		}
+	}
+
+
+	void BloomGraphicsSystem::CreateBatches()
+	{
+		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
+
+		m_emissiveBlitStage.AddBatch(fullscreenQuadBatch);
+
+		for (size_t i = 0; i < m_downResStages.size(); i++)
+		{
+			m_downResStages[i].AddBatch(fullscreenQuadBatch);
+		}
+		for (size_t i = 0; i < m_blurStages.size(); i++)
+		{
+			m_blurStages[i].AddBatch(fullscreenQuadBatch);
+		}
+		for (size_t i = 0; i < m_upResStages.size(); i++)
+		{
+			m_upResStages[i].AddBatch(fullscreenQuadBatch);
 		}
 	}
 }

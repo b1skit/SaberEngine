@@ -27,6 +27,8 @@ namespace re
 		inline std::unordered_map<size_t, std::shared_ptr<re::ParameterBlock>> const& GetMutableParamBlocks() const 
 			{ return m_mutablePBs; }
 
+		std::shared_ptr<re::ParameterBlock const> const GetParameterBlock(size_t pbID) const;
+
 	private:
 		// TODO: Is it optimal to maintain PBs in separate unordered_maps, or should they be combined together?
 		std::unordered_map<size_t, std::shared_ptr<re::ParameterBlock const>> m_immutablePBs;

@@ -26,7 +26,7 @@ namespace platform
 
 
 		static void (*Create)(gr::Mesh& mesh);
-		static void (*Bind)(gr::Mesh& mesh, bool doBind);
+		static void (*Bind)(platform::Mesh::PlatformParams const* params, bool doBind);
 		static void (*Destroy)(gr::Mesh& mesh);
 	};
 

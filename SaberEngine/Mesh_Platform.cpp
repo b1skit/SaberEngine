@@ -36,6 +36,6 @@ namespace platform
 	// platform::Mesh static members:
 	/********************************/
 	void (*Mesh::Create)(gr::Mesh& mesh);
-	void (*Mesh::Bind)(gr::Mesh& mesh, bool doBind);
+	void (*Mesh::Bind)(platform::Mesh::PlatformParams const* params, bool doBind);
 	void (*Mesh::Destroy)(gr::Mesh& mesh);
 }

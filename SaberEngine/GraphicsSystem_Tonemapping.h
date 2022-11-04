@@ -20,10 +20,11 @@ namespace gr
 		gr::TextureTargetSet& GetFinalTextureTargetSet() override { return m_tonemappingStage.GetTextureTargetSet(); }
 		gr::TextureTargetSet const& GetFinalTextureTargetSet() const override { return m_tonemappingStage.GetTextureTargetSet(); }
 
+	private:
+		void CreateBatches() override;
 
 	private:
-		std::vector<std::shared_ptr<gr::Mesh>> m_screenAlignedQuad;
-
-		gr::RenderStage m_tonemappingStage;
+		std::shared_ptr<gr::Mesh> m_screenAlignedQuad;
+		gr::RenderStage m_tonemappingStage;		
 	};
 }

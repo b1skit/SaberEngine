@@ -42,6 +42,9 @@ namespace gr
 		inline float& MinShadowBias() { return m_minShadowBias; }
 		inline float const MinShadowBias() const { return m_minShadowBias; }
 
+		inline glm::vec2 MinMaxShadowBias() const { return glm::vec2(m_minShadowBias, m_maxShadowBias); }
+		// TODO: Store min, max shadow bias as a vec2
+
 		inline gr::TextureTargetSet& GetTextureTargetSet() { return m_shadowTargetSet; }
 		inline gr::TextureTargetSet const& GetTextureTargetSet() const { return m_shadowTargetSet; }
 

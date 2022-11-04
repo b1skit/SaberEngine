@@ -122,11 +122,11 @@ vec4 ComputePBRLighting(
 	const vec3 worldNormal, 
 	const vec4 MatRMAO, 
 	const vec4 worldPosition, 
-	vec3 F0, 
+	const vec3 F0, 
 	const float NoL,
 	const vec3 lightWorldDir,
 	const vec3 lightColor, 
-	float shadowFactor,
+	const float shadowFactor,
 	const mat4 view)
 {
 	// Note: All PBR calculations are performed in linear color space.
@@ -146,9 +146,9 @@ vec4 ComputePBRLighting(
 	const float metalness = MatRMAO.y;
 
 	// Fresnel-Schlick approximation is only defined for non-metals, so we blend it here:
-	F0	= mix(F0, linearAlbedo.rgb, metalness); // Lerp: Blends towards albedo for metals
+	const vec3 blendedF0 = mix(F0, linearAlbedo.rgb, metalness); // Lerp: Blends towards albedo for metals
 
-	const vec3 fresnel = FresnelSchlick(NoV, F0);
+	const vec3 fresnel = FresnelSchlick(NoV, blendedF0);
 	
 	const float NDF = NDF(viewNormal, halfVectorView, roughness);
 
@@ -192,7 +192,7 @@ float LightAttenuation(vec3 fragWorldPosition, vec3 lightWorldPosition)
 // Compute a depth map bias value based on surface orientation
 float GetSlopeScaleBias(float NoL)
 {
-	return max( maxShadowBias * (1.0 - NoL), minShadowBias);
+	return max(g_shadowBiasMinMax.x, g_shadowBiasMinMax.y * (1.0 - NoL));
 }
 
 
@@ -202,15 +202,15 @@ float GetShadowFactor(vec3 shadowPos, sampler2D shadowMap, float NoL)
 	vec3 shadowScreen = (shadowPos.xyz + 1.0) / 2.0; // Projection -> Screen/UV [0,1] space
 
 	// Compute a slope-scaled bias depth:
-	float biasedDepth	= shadowScreen.z - GetSlopeScaleBias(NoL);
+	float biasedDepth = shadowScreen.z - GetSlopeScaleBias(NoL);
 
 	// Compute a block of samples around our fragment, starting at the top-left:
 	const int gridSize = 4; // MUST be a power of two TODO: Compute this on C++ side and allow for uploading of arbitrary samples (eg. odd, even)
 
 	const float offsetMultiplier = (float(gridSize) / 2.0) - 0.5;
 
-	shadowScreen.x -= offsetMultiplier * texelSize.x;
-	shadowScreen.y += offsetMultiplier * texelSize.y;
+	shadowScreen.x -= offsetMultiplier * g_shadowMapTexelSize.z;
+	shadowScreen.y += offsetMultiplier * g_shadowMapTexelSize.w;
 
 	float depthSum = 0;
 	for (int row = 0; row < gridSize; row++)
@@ -219,11 +219,11 @@ float GetShadowFactor(vec3 shadowPos, sampler2D shadowMap, float NoL)
 		{
 			depthSum += (biasedDepth < texture(shadowMap, shadowScreen.xy).r ? 1.0 : 0.0);
 			
-			shadowScreen.x += texelSize.x;
+			shadowScreen.x += g_shadowMapTexelSize.z;
 		}
 
-		shadowScreen.x -= gridSize * texelSize.x;
-		shadowScreen.y -= texelSize.y;
+		shadowScreen.x -= gridSize * g_shadowMapTexelSize.z;
+		shadowScreen.y -= g_shadowMapTexelSize.w;
 	}
 
 	depthSum /= (gridSize * gridSize);
@@ -236,7 +236,7 @@ float GetShadowFactor(vec3 shadowPos, sampler2D shadowMap, float NoL)
 float GetShadowFactor(vec3 lightToFrag, samplerCube shadowMap, float NoL)
 {
 	float cubemapShadowDepth = texture(shadowMap, lightToFrag).r;
-	cubemapShadowDepth *= shadowCam_far;	// [0,1] -> [0, far]
+	cubemapShadowDepth *= g_shadowCamNearFar.y;	// [0,1] -> [0, far]
 
 	float fragDepth = length(lightToFrag); // We're using linear depth, for now...
 

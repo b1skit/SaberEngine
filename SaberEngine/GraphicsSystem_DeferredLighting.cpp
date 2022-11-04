@@ -1,4 +1,3 @@
-//#define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 
 #include "GraphicsSystem_DeferredLighting.h"
@@ -9,13 +8,16 @@
 #include "RenderStage.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "Mesh.h"
-
+#include "Batch.h"
+#include "ParameterBlock.h"
 
 using gr::Light;
 using gr::RenderStage;
 using gr::Texture;
 using gr::TextureTargetSet;
 using gr::ShadowMap;
+using re::ParameterBlock;
+using re::Batch;
 using en::CoreEngine;
 using std::string;
 using std::shared_ptr;
@@ -26,6 +28,101 @@ using glm::vec4;
 using glm::mat4;
 
 
+namespace
+{
+	constexpr uint32_t k_generatedAmbientIBLTexRes = 512; // TODO: Make this user-controllable via the config
+
+
+	struct AmbientLightParams
+	{
+		uint32_t g_maxPMREMMip;
+	};
+
+
+	AmbientLightParams GetAmbientLightParamData()
+	{
+		AmbientLightParams ambientLightParams;
+		ambientLightParams.g_maxPMREMMip = (uint32_t)glm::log2((float)k_generatedAmbientIBLTexRes);
+
+		return ambientLightParams;
+	}
+
+	
+	struct LightParams
+	{
+		glm::vec3 g_lightColorIntensity;
+		const float padding0 = 0.f;
+
+		// Directional lights: Normalized, world-space dir pointing towards source (ie. parallel)
+		glm::vec3 g_lightWorldPos;
+		const float padding1 = 0.f;
+
+		glm::vec4 g_shadowMapTexelSize;	// .xyzw = width, height, 1/width, 1/height
+
+		glm::vec2 g_shadowCamNearFar;
+		glm::vec2 g_shadowBiasMinMax; // .xy = min, max shadow bias
+
+		glm::mat4 g_shadowCam_VP;
+	};
+
+
+	LightParams GetLightParamData(shared_ptr<Light const> const light)
+	{
+		LightParams lightParams;
+		memset(&lightParams, 0, sizeof(LightParams)); // Ensure unused elements are zeroed
+
+		lightParams.g_lightColorIntensity = light->GetColor();
+
+		// Type-specific params:
+		switch (light->Type())
+		{
+		case gr::Light::LightType::Directional:
+		{
+			lightParams.g_lightWorldPos = light->GetTransform()->ForwardWorld(); // WorldPos == Light dir
+		}
+		break;
+		case gr::Light::LightType::Point:
+		{
+			lightParams.g_lightWorldPos = light->GetTransform()->GetWorldPosition();
+		}
+		break;
+		default:
+			SEAssert("Light type does not use this param block", false);
+		}
+		
+		shared_ptr<gr::ShadowMap const> const shadowMap = light->GetShadowMap();
+		if (shadowMap)
+		{
+			lightParams.g_shadowMapTexelSize =
+				shadowMap->GetTextureTargetSet().DepthStencilTarget().GetTexture()->GetTextureDimenions();
+
+			lightParams.g_shadowBiasMinMax = shadowMap->MinMaxShadowBias();
+
+			shared_ptr<gr::Camera const> const shadowCam = shadowMap->ShadowCamera();
+			lightParams.g_shadowCamNearFar = shadowCam->NearFar();
+
+			// Type-specific shadow params:
+			switch (light->Type())
+			{
+			case gr::Light::LightType::Directional:
+			{
+				lightParams.g_shadowCam_VP = shadowCam->GetViewProjectionMatrix();
+			}
+			break;
+			case gr::Light::LightType::Point:
+			{
+				lightParams.g_shadowCam_VP = glm::mat4(0.0f); // Unused by point light cube shadow maps
+			}
+			break;
+			default:
+				SEAssert("Light shadow type does not use this param block", false);
+			}
+		}
+		return lightParams;
+	}
+}
+
+
 namespace gr
 {
 	DeferredLightingGraphicsSystem::DeferredLightingGraphicsSystem(string name) : GraphicsSystem(name), NamedObject(name),
@@ -34,6 +131,17 @@ namespace gr
 		m_pointlightStage("Pointlight stage"),
 		m_BRDF_integrationMap(nullptr)
 	{
+		// Create a fullscreen quad, for reuse when building batches:
+		m_screenAlignedQuad = gr::meshfactory::CreateQuad	// Align along near plane
+		(
+			vec3(-1.0f, 1.0f, -1.0f),	// TL
+			vec3(1.0f, 1.0f, -1.0f),	// TR
+			vec3(-1.0f, -1.0f, -1.0f),	// BL
+			vec3(1.0f, -1.0f, -1.0f)	// BR
+		);
+
+		// Cube mesh, for rendering of IBL cubemaps
+		m_cubeMesh = gr::meshfactory::CreateCube();
 	}
 
 
@@ -80,8 +188,7 @@ namespace gr
 		ambientStageParams.m_depthWriteMode		= platform::Context::DepthWriteMode::Disabled;
 
 
-		// Ambient lights are not supported by GLTF 2.0; Instead, we just check for a \IBL\ibl.hdr file
-
+		// Ambient lights are not supported by GLTF 2.0; Instead, we just check for a \IBL\ibl.hdr file.
 		// Attempt to load the source IBL image (gets a pink error image if it fails)
 		const string sceneIBLPath = en::CoreEngine::GetConfig()->GetValue<string>("sceneIBLPath");
 		shared_ptr<Texture> iblTexture =
@@ -91,43 +198,11 @@ namespace gr
 			const string defaultIBLPath = en::CoreEngine::GetConfig()->GetValue<string>("defaultIBLPath");
 			iblTexture = CoreEngine::GetSceneManager()->GetSceneData()->GetLoadTextureByPath({ defaultIBLPath }, true);
 		}
-
-
-		// Ambient light:
-		const uint32_t generatedTexRes = 512; // TODO: Make this user-controllable?
-
-		m_ambientStage.GetStageShader() = make_shared<Shader>(
-			en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"));
-		m_ambientStage.GetStageShader()->ShaderKeywords().emplace_back("AMBIENT_IBL");
-		m_ambientStage.GetStageShader()->Create();
-
-		// Set shader constants:
-		const int maxMipLevel = (int)glm::log2((float)generatedTexRes);
-		m_ambientStage.GetStageShader()->SetUniform(
-			"maxMipLevel",
-			&maxMipLevel,
-			platform::Shader::UniformType::Int,
-			1);
-
-		m_ambientStage.GetStageCamera() = deferredLightingCam;
-		m_ambientStage.SetRenderStageParams(ambientStageParams);
-
-		m_ambientMesh =
-		{
-			gr::meshfactory::CreateQuad	// Align along near plane
-			(
-				vec3(-1.0f, 1.0f, -1.0f),	// TL
-				vec3(1.0f, 1.0f, -1.0f),	// TR
-				vec3(-1.0f, -1.0f, -1.0f),	// BL
-				vec3(1.0f, -1.0f, -1.0f)	// BR
-			)
-		};
-
-
 		Texture::TextureParams iblParams = iblTexture->GetTextureParams();
 		iblParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
 		iblTexture->SetTextureParams(iblParams);
 		iblTexture->Create();
+
 
 		// 1st frame: Generate the pre-integrated BRDF LUT via a single-frame render stage:
 		{
@@ -137,13 +212,10 @@ namespace gr
 				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("BRDFIntegrationMapShaderName"));
 			brdfStage.GetStageShader()->Create();
 
-			// Reuse the ambient mesh; it's a full-screen quad rendered on the near plane
-			brdfStage.SetGeometryBatches(&m_ambientMesh);
-
 			// Create a render target texture:			
 			Texture::TextureParams brdfParams;
-			brdfParams.m_width = generatedTexRes;
-			brdfParams.m_height = generatedTexRes;
+			brdfParams.m_width = k_generatedAmbientIBLTexRes;
+			brdfParams.m_height = k_generatedAmbientIBLTexRes;
 			brdfParams.m_faces = 1;
 			brdfParams.m_texUse = Texture::TextureUse::ColorTarget;
 			brdfParams.m_texDimension = Texture::TextureDimension::Texture2D;
@@ -155,7 +227,8 @@ namespace gr
 			m_BRDF_integrationMap = std::make_shared<gr::Texture>("BRDFIntegrationMap", brdfParams);
 
 			brdfStage.GetTextureTargetSet().ColorTarget(0) = m_BRDF_integrationMap;
-			brdfStage.GetTextureTargetSet().Viewport() = gr::Viewport(0, 0, generatedTexRes, generatedTexRes);
+			brdfStage.GetTextureTargetSet().Viewport() = 
+				gr::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
 			brdfStage.GetTextureTargetSet().CreateColorTargets();
 
 			// Stage params:
@@ -169,18 +242,17 @@ namespace gr
 
 			brdfStage.SetRenderStageParams(brdfStageParams);
 
+			Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
+			brdfStage.AddBatch(fullscreenQuadBatch);
+
 			pipeline.AppendSingleFrameRenderStage(brdfStage);
 		}
 
-		const string equilinearToCubemapShaderName =
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("equilinearToCubemapBlitShaderName");
-
-		m_cubeMesh.emplace_back(gr::meshfactory::CreateCube());
 
 		// Common IBL cubemap params:
 		Texture::TextureParams cubeParams;
-		cubeParams.m_width = generatedTexRes;
-		cubeParams.m_height = generatedTexRes;
+		cubeParams.m_width = k_generatedAmbientIBLTexRes;
+		cubeParams.m_height = k_generatedAmbientIBLTexRes;
 		cubeParams.m_faces = 6;
 		cubeParams.m_texUse = Texture::TextureUse::ColorTarget;
 		cubeParams.m_texDimension = Texture::TextureDimension::TextureCubeMap;
@@ -196,8 +268,6 @@ namespace gr
 		iblStageParams.m_depthTestMode = platform::Context::DepthTestMode::Always;
 		iblStageParams.m_depthWriteMode = platform::Context::DepthWriteMode::Disabled;
 
-
-		const vec4 texelSize = iblTexture->GetTexelDimenions();
 		const mat4 cubeProjectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 		const mat4 captureViews[] =
 		{
@@ -209,6 +279,14 @@ namespace gr
 			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f,  0.0f,  1.0f), vec3(0.0f, -1.0f,  0.0f)),
 			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f,  0.0f, -1.0f), vec3(0.0f, -1.0f,  0.0f))
 		};
+
+		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
+		Batch cubeMeshBatch = Batch(m_cubeMesh.get(), nullptr, nullptr);
+
+		const string equilinearToCubemapShaderName =
+			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("equilinearToCubemapBlitShaderName");
+
+		// TODO: We should use equirectangular images, instead of bothering to convert to cubemaps for IEM/PMREM
 
 		// 1st frame: Generate an IEM (Irradiance Environment Map) cubemap texture for diffuse irradiance
 		{
@@ -225,14 +303,13 @@ namespace gr
 				RenderStage iemStage("IEM generation: Face " + to_string(face + 1) + "/6");
 
 				iemStage.GetStageShader() = iemShader;
-				iemStage.SetGeometryBatches(&m_cubeMesh);
 				iemStage.SetTextureInput(
 					"MatAlbedo",
 					iblTexture,
 					gr::Sampler::GetSampler(gr::Sampler::SamplerType::ClampLinearMipMapLinearLinear));
 
 				const int numSamples = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("numIEMSamples");
-				iemStage.SetPerFrameShaderUniformByValue(
+				iemStage.SetPerFrameShaderUniform(
 					"numSamples", numSamples, platform::Shader::UniformType::Int, 1);
 				
 				// Construct a camera param block to draw into our cubemap rendering targets:
@@ -252,12 +329,15 @@ namespace gr
 				iemStage.AddPermanentParameterBlock(pb);
 
 				iemStage.GetTextureTargetSet().ColorTarget(0) = m_IEMTex;
-				iemStage.GetTextureTargetSet().Viewport() = gr::Viewport(0, 0, generatedTexRes, generatedTexRes);
+				iemStage.GetTextureTargetSet().Viewport() = 
+					gr::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
 				iemStage.GetTextureTargetSet().CreateColorTargets();
 
 				iblStageParams.m_textureTargetSetConfig.m_targetFace = face;
 				iblStageParams.m_textureTargetSetConfig.m_targetMip = 0;
 				iemStage.SetRenderStageParams(iblStageParams);
+
+				iemStage.AddBatch(cubeMeshBatch);
 
 				pipeline.AppendSingleFrameRenderStage(iemStage);
 			}
@@ -275,7 +355,7 @@ namespace gr
 
 			TextureTargetSet pmremTargetSet("PMREM texture targets");
 			pmremTargetSet.ColorTarget(0) = m_PMREMTex;
-			pmremTargetSet.Viewport() = gr::Viewport(0, 0, generatedTexRes, generatedTexRes);
+			pmremTargetSet.Viewport() = gr::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
 			pmremTargetSet.CreateColorTargets();
 
 			const uint32_t numMipLevels = m_PMREMTex->GetNumMips(); // # of mips we need to render
@@ -289,14 +369,13 @@ namespace gr
 						to_string(currentMipLevel + 1) + "/" + to_string(numMipLevels));
 
 					pmremStage.GetStageShader() = pmremShader;
-					pmremStage.SetGeometryBatches(&m_cubeMesh);
 					pmremStage.SetTextureInput(
 						"MatAlbedo",
 						iblTexture,
 						gr::Sampler::GetSampler(gr::Sampler::SamplerType::ClampLinearMipMapLinearLinear));
 
 					const int numSamples = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("numPMREMSamples");
-					pmremStage.SetPerFrameShaderUniformByValue(
+					pmremStage.SetPerFrameShaderUniform(
 						"numSamples", numSamples, platform::Shader::UniformType::Int, 1);
 					
 					// Construct a camera param block to draw into our cubemap rendering targets:
@@ -315,7 +394,7 @@ namespace gr
 					pmremStage.AddPermanentParameterBlock(pb);
 
 					const float roughness = (float)currentMipLevel / (float)(numMipLevels - 1);
-					pmremStage.SetPerFrameShaderUniformByValue(
+					pmremStage.SetPerFrameShaderUniform(
 						"roughness", roughness, platform::Shader::UniformType::Float, 1);
 
 					pmremStage.GetTextureTargetSet() = pmremTargetSet;
@@ -324,17 +403,38 @@ namespace gr
 					iblStageParams.m_textureTargetSetConfig.m_targetMip = currentMipLevel;
 					pmremStage.SetRenderStageParams(iblStageParams);
 
+					pmremStage.AddBatch(cubeMeshBatch);
+
 					pipeline.AppendSingleFrameRenderStage(pmremStage);
 				}
 			}
 		}
 
+		
+		// Ambient light stage:
+		m_ambientStage.GetStageShader() = make_shared<Shader>(
+			en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"));
+		m_ambientStage.GetStageShader()->ShaderKeywords().emplace_back("AMBIENT_IBL");
+		m_ambientStage.GetStageShader()->Create();
+
+		m_ambientStage.GetStageCamera() = deferredLightingCam;
+		m_ambientStage.SetRenderStageParams(ambientStageParams);
+
+		// Ambient parameters:		
+		AmbientLightParams ambientLightParams = GetAmbientLightParamData();
+		std::shared_ptr<re::ParameterBlock> ambientLightPB = re::ParameterBlock::Create(
+			"AmbientLightParams",
+			ambientLightParams,
+			re::ParameterBlock::UpdateType::Immutable,
+			re::ParameterBlock::Lifetime::Permanent);
+
+		m_ambientStage.AddPermanentParameterBlock(ambientLightPB);
+
 		// If we made it this far, append the ambient stage:
 		pipeline.AppendRenderStage(m_ambientStage);
-		// TODO: We should use equirectangular images, instead of bothering to convert to cubemaps for IEM/PMREM
+		
 
-
-		// Key light:
+		// Key light stage:
 		shared_ptr<Light> keyLight = en::CoreEngine::GetSceneManager()->GetSceneData()->GetKeyLight();
 
 		RenderStage::RenderStageParams keylightStageParams(ambientStageParams);
@@ -350,20 +450,19 @@ namespace gr
 			}
 			m_keylightStage.SetRenderStageParams(keylightStageParams);
 
-			// TODO: We set this once, but eventually we should update & re-set this each frame to allow light animation
-			m_keylightStage.AddPermanentParameterBlock(keyLight->GetParameterBlock());
+			m_keylightStage.GetStageShader() = make_shared<Shader>(
+				en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredKeylightShaderName"));
+			m_keylightStage.GetStageShader()->Create();
 
-			m_keylightStage.GetStageShader() = keyLight->GetDeferredLightShader();
 			m_keylightStage.GetStageCamera() = deferredLightingCam;
-
-			m_keylightMesh.emplace_back(keyLight->DeferredMesh());
 
 			pipeline.AppendRenderStage(m_keylightStage);
 		}
 
 
-		// Point lights: Draw multiple light volume meshes within a single stage
-		vector<shared_ptr<Light>> const& pointLights = en::CoreEngine::GetSceneManager()->GetSceneData()->GetPointLights();
+		// Point light stage:
+		vector<shared_ptr<Light>> const& pointLights = 
+			en::CoreEngine::GetSceneManager()->GetSceneData()->GetPointLights();
 		if (pointLights.size() > 0)
 		{
 			m_pointlightStage.GetStageCamera() = deferredLightingCam;
@@ -390,25 +489,9 @@ namespace gr
 			pointlightStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Front; // Cull front faces of light volumes
 			m_pointlightStage.SetRenderStageParams(pointlightStageParams);
 
-			// TEMP HAX: Store all pointlight meshes, so we can match them against entries in m_perMeshShaderUniforms
-			for (shared_ptr<Light> const pointlight : pointLights)
-			{
-				m_pointlightInstanceMesh.emplace_back(pointlight->DeferredMesh());
-				// Note: need to use the attached DeferredMesh here for now, so we get its transform
-			}
-
-			// All point lights use the same shader
-			m_pointlightStage.GetStageShader() = pointLights[0]->GetDeferredLightShader();
-
-			// Compute unchanging shader uniforms:
-			const int xRes = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
-			const int yRes = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
-			const vec4 screenParams = vec4(xRes, yRes, 1.0f / xRes, 1.0f / yRes);
-			m_pointlightStage.GetStageShader()->SetUniform(
-				"screenParams",
-				&screenParams.x,
-				platform::Shader::UniformType::Vec4f,
-				1);
+			m_pointlightStage.GetStageShader() = make_shared<Shader>(
+				en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredPointLightShaderName"));
+			m_pointlightStage.GetStageShader()->Create();
 
 			pipeline.AppendRenderStage(m_pointlightStage);
 		}
@@ -419,25 +502,17 @@ namespace gr
 	{
 		// Note: Culling is not (currently) supported. For now, we attempt to draw everything
 
-		// TODO: Move some of these uniforms back to the Create() function, held in something that doesn't get cleared
-		// every frame
-
 		// Clear all stages for the new frame:
 		m_ambientStage.InitializeForNewFrame();
 		m_keylightStage.InitializeForNewFrame();
 		m_pointlightStage.InitializeForNewFrame();
 		// TODO: Is there some way to automate these calls so we don't need to remember them in every stage?
 
+		CreateBatches();
+
 		// Light pointers:
 		shared_ptr<Light> const keyLight = CoreEngine::GetSceneManager()->GetSceneData()->GetKeyLight();
 		vector<shared_ptr<Light>> const& pointLights = CoreEngine::GetSceneManager()->GetSceneData()->GetPointLights();
-
-		// Re-set geometry for each stage:
-		m_ambientStage.SetGeometryBatches(&m_ambientMesh);
-		m_keylightStage.SetGeometryBatches(&m_keylightMesh);
-		m_pointlightStage.SetGeometryBatches(&m_pointlightInstanceMesh);
-		// TEMP HAX: Store all pointlight meshes, so we can match them against entries in m_perMeshShaderUniforms
-
 
 		// Add GBuffer textures as stage inputs:		
 		shared_ptr<GBufferGraphicsSystem> gBufferGS = std::dynamic_pointer_cast<GBufferGraphicsSystem>(
@@ -512,104 +587,82 @@ namespace gr
 				"Depth0",
 				keylightDepthTex,
 				Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear));
+		}
+	}
 
-			vec4 const keylightDepthTexelDims = keylightDepthTex->GetTexelDimenions();
-			m_keylightStage.GetStageShader()->SetUniform(
-				"texelSize", &keylightDepthTexelDims, platform::Shader::UniformType::Vec4f, 1);
-			m_keylightStage.SetPerFrameShaderUniformByValue(
-				"maxShadowBias", keyLightShadowMap->MaxShadowBias(), platform::Shader::UniformType::Float, 1);
-			m_keylightStage.SetPerFrameShaderUniformByValue(
-				"minShadowBias", keyLightShadowMap->MinShadowBias(), platform::Shader::UniformType::Float, 1);
 
-			// Keylight shadow camera:
-			shared_ptr<Camera> const keyLightShadowCam = keyLightShadowMap->ShadowCamera();
-			m_keylightStage.SetPerFrameShaderUniformByValue( // GetViewProjectionMatrix() returns by value; must cache it for later
-				"shadowCam_vp", keyLightShadowCam->GetViewProjectionMatrix(), platform::Shader::UniformType::Matrix4x4f, 1);
-			m_keylightStage.SetPerFrameShaderUniformByValue(
-				"shadowCam_near", keyLightShadowCam->Near(), platform::Shader::UniformType::Float, 1);
-			m_keylightStage.SetPerFrameShaderUniformByValue(
-				"shadowCam_far", keyLightShadowCam->Far(), platform::Shader::UniformType::Float, 1);
+	void DeferredLightingGraphicsSystem::CreateBatches()
+	{
+		// Ambient stage batches:
+		const Batch ambeintFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
+		m_ambientStage.AddBatch(ambeintFullscreenQuadBatch);
+
+		// Keylight stage batches:
+		shared_ptr<Light> const keyLight = CoreEngine::GetSceneManager()->GetSceneData()->GetKeyLight();
+		if (keyLight)
+		{
+			Batch keylightFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
+
+			LightParams keylightParams = GetLightParamData(keyLight);
+			shared_ptr<re::ParameterBlock> keylightPB = re::ParameterBlock::Create(
+				"LightParams",
+				keylightParams,
+				re::ParameterBlock::UpdateType::Immutable,
+				re::ParameterBlock::Lifetime::SingleFrame);
+
+			keylightFullscreenQuadBatch.AddBatchParameterBlock(keylightPB);
+
+			m_keylightStage.AddBatch(keylightFullscreenQuadBatch);
 		}
 
-		if (pointLights.size() > 0)
-		{
-			// TODO: Support instancing. For now, just pack a vector with vectors of per-mesh parameters
-			for (size_t lightIdx = 0; lightIdx < pointLights.size(); lightIdx++)
+		// Pointlight stage batches:
+		vector<shared_ptr<Light>> const& pointLights = CoreEngine::GetSceneManager()->GetSceneData()->GetPointLights();
+		for (shared_ptr<Light> const pointlight : pointLights)
+		{			
+			Batch pointlightBatch = Batch(pointlight->DeferredMesh().get(), nullptr, nullptr);
+
+			// Point light params:
+			LightParams pointlightParams = GetLightParamData(pointlight);
+			shared_ptr<re::ParameterBlock> pointlightPB = re::ParameterBlock::Create(
+				"LightParams", 
+				pointlightParams, 
+				re::ParameterBlock::UpdateType::Immutable, 
+				re::ParameterBlock::Lifetime::SingleFrame);
+
+			pointlightBatch.AddBatchParameterBlock(pointlightPB);
+
+			// Point light mesh params:
+			shared_ptr<ParameterBlock> pointlightMeshParams = ParameterBlock::Create(
+				"InstancedMeshParams",
+				pointlight->DeferredMesh()->GetTransform().GetWorldMatrix(Transform::WorldModel),
+				ParameterBlock::UpdateType::Immutable,
+				ParameterBlock::Lifetime::SingleFrame);
+
+			pointlightBatch.AddBatchParameterBlock(pointlightMeshParams);
+
+			// Batch uniforms:
+			std::shared_ptr<ShadowMap> shadowMap = pointlight->GetShadowMap();
+			if (shadowMap != nullptr)
 			{
-				m_pointlightStage.SetPerMeshPerFrameShaderUniformByValue(
-					lightIdx,
-					"lightColor",
-					pointLights[lightIdx]->GetColor(),
-					platform::Shader::UniformType::Vec3f,
+				std::shared_ptr<gr::Texture> const depthTexture = 
+					shadowMap->GetTextureTargetSet().DepthStencilTarget().GetTexture();
+
+				pointlightBatch.AddBatchUniform<shared_ptr<gr::Texture>>(
+					"CubeMap0", depthTexture, platform::Shader::UniformType::Texture, 1);
+
+				// Our template function expects a shared_ptr to a non-const type; cast it here even though it's gross
+				std::shared_ptr<gr::Sampler> const sampler = 
+					std::const_pointer_cast<gr::Sampler>(Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear));
+
+				pointlightBatch.AddBatchUniform<shared_ptr<gr::Sampler>>(
+					"CubeMap0", 
+					sampler,
+					platform::Shader::UniformType::Sampler, 
 					1);
+			}			
 
-				m_pointlightStage.SetPerMeshPerFrameShaderUniformByValue(
-					lightIdx,
-					"lightWorldPos",
-					pointLights[lightIdx]->GetTransform()->GetWorldPosition(),
-					platform::Shader::UniformType::Vec3f,
-					1);
-
-				std::shared_ptr<ShadowMap> activeShadowMap = pointLights[lightIdx]->GetShadowMap();
-				if (activeShadowMap != nullptr)
-				{
-					std::shared_ptr<Camera> shadowCam = activeShadowMap->ShadowCamera();
-					if (shadowCam != nullptr)
-					{
-						m_pointlightStage.SetPerMeshPerFrameShaderUniformByValue(
-							lightIdx,
-							"shadowCam_vp",
-							shadowCam->GetViewProjectionMatrix(), //returns value
-							platform::Shader::UniformType::Matrix4x4f,
-							1);
-
-						m_pointlightStage.SetPerMeshPerFrameShaderUniformByValue(
-							lightIdx,
-							"maxShadowBias",
-							activeShadowMap->MaxShadowBias(),
-							platform::Shader::UniformType::Float,
-							1);
-
-						m_pointlightStage.SetPerMeshPerFrameShaderUniformByValue(
-							lightIdx,
-							"minShadowBias",
-							activeShadowMap->MinShadowBias(),
-							platform::Shader::UniformType::Float,
-							1);
-
-						m_pointlightStage.SetPerMeshPerFrameShaderUniformByValue(
-							lightIdx,
-							"shadowCam_near",
-							shadowCam->Near(),
-							platform::Shader::UniformType::Float,
-							1);
-
-						m_pointlightStage.SetPerMeshPerFrameShaderUniformByValue(
-							lightIdx,
-							"shadowCam_far",
-							shadowCam->Far(),
-							platform::Shader::UniformType::Float,
-							1);
-
-						// Manually set depth textures and samplers...
-						std::shared_ptr<gr::Texture> depthTexture =
-							activeShadowMap->GetTextureTargetSet().DepthStencilTarget().GetTexture();
-
-						m_pointlightStage.SetPerMeshPerFrameTextureInput(
-							lightIdx,
-							"CubeMap0",
-							depthTexture,
-							Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear));
-
-						m_pointlightStage.SetPerMeshPerFrameShaderUniformByValue(
-							lightIdx,
-							"texelSize",
-							depthTexture->GetTexelDimenions(),
-							platform::Shader::UniformType::Vec4f,
-							1);
-					}
-				}
-			}
-		} // pointlights
+			// Finally, add the completed batch:
+			m_pointlightStage.AddBatch(pointlightBatch);
+		}
 	}
 }

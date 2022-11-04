@@ -13,8 +13,24 @@ using std::shared_ptr;
 using std::unique_ptr;
 using std::make_unique;
 using glm::mat4;
+using glm::vec2;
 using glm::vec3;
+using glm::vec4;
 
+
+namespace
+{
+	struct CubemapShadowRenderParams
+	{
+		glm::mat4 g_cubemapShadowCam_VP[6];
+
+		glm::vec2 g_cubemapShadowCamNearFar; // .xy = near, far
+		const glm::vec2 padding0 = { 0.f, 0.f };
+
+		glm::vec3 g_cubemapLightWorldPos;
+		const float padding1 = 0.f;
+	};
+}
 
 namespace gr
 {
@@ -78,6 +94,21 @@ namespace gr
 
 				shadowStage->SetRenderStageParams(shadowStageParams);
 
+				// Cubemap shadow param block:
+				CubemapShadowRenderParams cubemapShadowParams;
+				memcpy(&cubemapShadowParams.g_cubemapShadowCam_VP[0][0].x,
+					shadowCam->GetCubeViewProjectionMatrix().data(), 
+					6 * sizeof(mat4));
+				cubemapShadowParams.g_cubemapShadowCamNearFar = shadowCam->NearFar();
+				cubemapShadowParams.g_cubemapLightWorldPos = shadowCam->GetTransform()->GetWorldPosition();
+
+				shared_ptr<re::ParameterBlock> cubemapShadowPB = re::ParameterBlock::Create(
+					"CubemapShadowRenderParams",
+					cubemapShadowParams,
+					re::ParameterBlock::UpdateType::Mutable,
+					re::ParameterBlock::Lifetime::Permanent);
+				shadowStage->AddPermanentParameterBlock(cubemapShadowPB);
+
 				pipeline.AppendRenderStage(*shadowStage);
 			}
 		}
@@ -87,24 +118,46 @@ namespace gr
 	void ShadowsGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
 		m_directionalShadowStage.InitializeForNewFrame();
-		m_directionalShadowStage.SetGeometryBatches(&CoreEngine::GetSceneManager()->GetSceneData()->GetMeshes());
-
 
 		for (shared_ptr<RenderStage> pointShadowStage : m_pointLightShadowStages)
 		{
 			pointShadowStage->InitializeForNewFrame();
-			pointShadowStage->SetGeometryBatches(&CoreEngine::GetSceneManager()->GetSceneData()->GetMeshes());
+		}
 
+		CreateBatches();
+
+
+		for (shared_ptr<RenderStage> pointShadowStage : m_pointLightShadowStages)
+		{		
 			shared_ptr<Camera> pointShadowCam = pointShadowStage->GetStageCamera();
 
-			pointShadowStage->SetPerFrameShaderUniformByValue(
-				"shadowCamCubeMap_vp", pointShadowCam->GetCubeViewProjectionMatrix(), platform::Shader::UniformType::Matrix4x4f, 6);
-			pointShadowStage->SetPerFrameShaderUniformByValue(
-				"lightWorldPos", (*(pointShadowCam->GetTransform())).GetWorldPosition(), platform::Shader::UniformType::Vec3f, 1);
-			pointShadowStage->SetPerFrameShaderUniformByValue(
-				"shadowCam_near", pointShadowCam->Near(), platform::Shader::UniformType::Float, 1);
-			pointShadowStage->SetPerFrameShaderUniformByValue(
-				"shadowCam_far", pointShadowCam->Far(), platform::Shader::UniformType::Float, 1);
+			// Update the param block data:
+			vector<shared_ptr<re::ParameterBlock>> const& pbs = pointShadowStage->GetPermanentParameterBlocks();
+
+			// TODO: Handle this properly. Currently just assuming we'll have 1 PB per cubemap shadow stage, but
+			// otherwise we'll need to ensure we're updating the corrent one/type here
+			SEAssert("DANGER! We expect only a single PB here", pbs.size() == 1);
+
+			CubemapShadowRenderParams cubemapShadowParams;
+			memcpy(&cubemapShadowParams.g_cubemapShadowCam_VP[0][0].x,
+				pointShadowCam->GetCubeViewProjectionMatrix().data(),
+				6 * sizeof(mat4)
+			);
+			cubemapShadowParams.g_cubemapShadowCamNearFar = pointShadowCam->NearFar();
+			cubemapShadowParams.g_cubemapLightWorldPos = pointShadowCam->GetTransform()->GetWorldPosition();
+
+			pbs[0]->SetData(cubemapShadowParams);
+		}
+	}
+
+
+	void ShadowsGraphicsSystem::CreateBatches()
+	{
+		m_directionalShadowStage.AddBatches(en::CoreEngine::GetRenderManager()->GetSceneBatches());
+
+		for (shared_ptr<RenderStage> pointShadowStage : m_pointLightShadowStages)
+		{
+			pointShadowStage->AddBatches(en::CoreEngine::GetRenderManager()->GetSceneBatches());
 		}
 	}
 }

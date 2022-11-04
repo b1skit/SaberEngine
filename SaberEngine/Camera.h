@@ -73,8 +73,7 @@ namespace gr
 		void Update() override;
 
 		inline float const FieldOfView() const { return m_cameraConfig.m_fieldOfView; }
-		inline float const Near() const { return m_cameraConfig.m_near; }
-		inline float const Far() const { return m_cameraConfig.m_far; }
+		inline glm::vec2 NearFar() const { return glm::vec2(m_cameraConfig.m_near, m_cameraConfig.m_far); }
 
 		inline glm::mat4 GetViewMatrix() const { return glm::inverse(m_transform.GetWorldMatrix()); }
 		inline glm::mat4 GetInverseViewMatrix() const { return m_transform.GetWorldMatrix(); }

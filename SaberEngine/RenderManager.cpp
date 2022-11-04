@@ -1,6 +1,7 @@
 #include <string>
 #include <unordered_map>
-
+#include <algorithm>
+#include <utility>
 
 #include "RenderManager.h"
 #include "RenderManager_Platform.h"
@@ -11,6 +12,7 @@
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
+#include "Batch.h"
 
 using gr::TextureTargetSet;
 using gr::GBufferGraphicsSystem;
@@ -20,11 +22,21 @@ using gr::ShadowsGraphicsSystem;
 using gr::SkyboxGraphicsSystem;
 using gr::BloomGraphicsSystem;
 using gr::TonemappingGraphicsSystem;
+using gr::Transform;
+using gr::Mesh;
+using re::Batch;
 using en::CoreEngine;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
+using std::vector;
+using glm::mat4;
 
+
+namespace
+{
+	constexpr size_t k_initialBatchReservations = 100;
+}
 
 
 namespace re
@@ -33,6 +45,7 @@ namespace re
 		m_defaultTargetSet(nullptr),
 		m_pipeline("Main pipeline")
 	{
+		m_sceneBatches.reserve(k_initialBatchReservations);
 	}
 
 
@@ -70,6 +83,9 @@ namespace re
 
 	void RenderManager::Update()
 	{
+		// Build batches:
+		BuildSceneBatches();
+
 		// Update the graphics systems:
 		for (size_t gs = 0; gs < m_graphicsSystems.size(); gs++)
 		{
@@ -79,11 +95,87 @@ namespace re
 		// Update/buffer param blocks:
 		m_paramBlockManager.UpdateParamBlocks();
 
-		// API-specific rendering:
+		// API-specific rendering loop:
 		platform::RenderManager::Render(*this);
 
-		// End of frame:
+		// End of frame cleanup:
 		m_paramBlockManager.EndOfFrame();
+	}
+
+
+	void RenderManager::BuildSceneBatches()
+	{
+		m_sceneBatches.clear();
+
+		shared_ptr<fr::SceneData const> const sceneData = en::CoreEngine::GetSceneManager()->GetSceneData();
+
+		std::vector<shared_ptr<gr::Mesh>> const& sceneMeshes = sceneData->GetMeshes();
+		if (sceneMeshes.empty())
+		{
+			return;
+		}
+
+		// Build batches from scene meshes:
+		// TODO: Build this by traversing the scene hierarchy once a scene graph is implemented
+		std::vector<Batch> unmergedBatches;
+		for (shared_ptr<gr::Mesh const> const mesh : sceneData->GetMeshes())
+		{
+			unmergedBatches.emplace_back(
+				mesh.get(), mesh->MeshMaterial().get(), mesh->MeshMaterial()->GetShader().get());
+		}
+
+		// Sort the batches:
+		std::sort(
+			unmergedBatches.begin(),
+			unmergedBatches.end(),
+			[](Batch const& a, Batch const& b) -> bool { return (a.GetDataHash() > b.GetDataHash()); }
+		);
+
+		// Assemble a list of merged batches:
+		size_t unmergedIdx = 0;
+		do
+		{
+			// Add the first batch in the sequence to our final list:
+			m_sceneBatches.emplace_back(unmergedBatches[unmergedIdx]);
+			const uint64_t curBatchHash = m_sceneBatches.back().GetDataHash();
+
+			// Find the index of the last batch with a matching hash in the sequence:
+			const size_t instanceStartIdx = unmergedIdx++;
+			while (unmergedIdx < unmergedBatches.size() && 
+				unmergedBatches[unmergedIdx].GetDataHash() == curBatchHash)
+			{
+				unmergedIdx++;
+			}
+			const size_t numInstances = unmergedIdx - instanceStartIdx;
+
+			// Get the first model matrix:
+			std::vector<mat4> modelMatrices;		
+			modelMatrices.reserve(numInstances);
+			modelMatrices.emplace_back(
+				unmergedBatches[instanceStartIdx].GetBatchMesh()->GetTransform().GetWorldMatrix(Transform::WorldModel));
+
+			// Append the remaining batches in the sequence:
+			for (size_t instanceIdx = instanceStartIdx + 1; instanceIdx < unmergedIdx; instanceIdx++)
+			{
+				m_sceneBatches.back().IncrementBatchInstanceCount();
+
+				modelMatrices.emplace_back(
+					unmergedBatches[instanceIdx].GetBatchMesh()->GetTransform().GetWorldMatrix(Transform::WorldModel));
+			}
+
+			// Construct PB of model transform matrices:
+			shared_ptr<ParameterBlock> instancedMeshParams = ParameterBlock::Create(
+				"InstancedMeshParams",
+				modelMatrices.data(),
+				sizeof(mat4),
+				numInstances,
+				ParameterBlock::UpdateType::Immutable,
+				ParameterBlock::Lifetime::SingleFrame);
+			// TODO: We're currently creating/destroying these parameter blocks each frame. This is expensive. Instead,
+			// we should create a pool of PBs, and reuse by re-buffering data each frame
+
+			m_sceneBatches.back().AddBatchParameterBlock(instancedMeshParams);
+		} while (unmergedIdx < unmergedBatches.size());
 	}
 
 

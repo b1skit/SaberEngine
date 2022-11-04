@@ -7,6 +7,7 @@
 #include "Material.h"
 #include "Mesh_Platform.h"
 #include "NamedObject.h"
+#include "HashedDataObject.h"
 
 
 namespace gr
@@ -61,7 +62,7 @@ namespace gr
 	};
 
 
-	class Mesh : public virtual en::NamedObject
+	class Mesh : public virtual en::NamedObject, public virtual en::HashedDataObject
 	{
 	public:
 		enum class DrawMode
@@ -92,7 +93,7 @@ namespace gr
 			std::shared_ptr<gr::Material> material,
 			gr::Mesh::MeshParams const& meshParams);
 		
-		// ^^^^^^^^TODO: Force a parent Transform* here???????????????
+		// TODO: Force a parent Transform* in the ctor?
 		// TODO: Rearrange these args to match shader vertex attribute definition order
 
 		// Constructing a mesh modifies the GPU state; disallow all move semantics for now
@@ -104,7 +105,7 @@ namespace gr
 
 		~Mesh(){ Destroy(); }
 
-		void Bind(bool doBind);
+		void Bind(bool doBind) const;
 		void Destroy();
 		
 		// Getters/Setters:
@@ -154,6 +155,8 @@ namespace gr
 		// TODO: Move mesh bounds to the RenderMesh object
 		Bounds m_localBounds; // Mesh bounds, in local space		
 		void ComputeBounds(); // Computes m_localBounds
+
+		void ComputeDataHash() override;
 	};
 
 	/******************************************************************************************************************/

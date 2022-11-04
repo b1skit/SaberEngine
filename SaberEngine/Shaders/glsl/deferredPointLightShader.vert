@@ -8,7 +8,6 @@
 
 void main()
 {
-	gl_Position		= g_viewProjection * in_model * vec4(in_position.xyz, 1.0);
-
-	data.worldPos	= (in_model * vec4(in_position.xyz, 1.0f)).xyz;
+	gl_Position		= g_viewProjection * g_model[gl_InstanceID] * vec4(in_position, 1.0);
+	data.worldPos	= (g_model[gl_InstanceID] * vec4(in_position, 1.0f)).xyz;
 }

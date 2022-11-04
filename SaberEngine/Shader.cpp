@@ -15,8 +15,8 @@ namespace gr
 	class Texture;
 
 
-	Shader::Shader(string const& shaderName) :
-		m_shaderName{shaderName}
+	Shader::Shader(string const& extensionlessShaderFilename) :
+		NamedObject(extensionlessShaderFilename)
 	{
 		platform::Shader::PlatformParams::CreatePlatformParams(*this);
 	}

@@ -34,7 +34,6 @@ namespace gr
 			re::ParameterBlock::Lifetime::Permanent);
 
 		Initialize();
-		UpdateCameraParamBlockData();
 	}
 
 

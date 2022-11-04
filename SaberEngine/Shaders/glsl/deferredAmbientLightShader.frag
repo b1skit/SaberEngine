@@ -15,8 +15,6 @@
 
 #if defined AMBIENT_IBL
 
-uniform int maxMipLevel; // Largest mip level in the PMREM cube map texture (CubeMap1). Uploaded during ImageBasedLight setup
-
 void main()
 {	
 	// Note: All PBR calculations are performed in linear space
@@ -55,7 +53,7 @@ void main()
 	vec3 worldReflection = normalize(reflect(-worldView, worldNormal));
 
 	vec2 BRDF = texture(Tex7, vec2(max(NoV, 0.0), MatRMAO.x) ).rg; // Sample our generated BRDF Integration map
-	vec3 specular = textureLod(CubeMap1, worldReflection, MatRMAO.x * maxMipLevel).xyz * ((fresnel_kS * BRDF.x) + BRDF.y);
+	vec3 specular = textureLod(CubeMap1, worldReflection, MatRMAO.x * g_maxPMREMMip).xyz * ((fresnel_kS * BRDF.x) + BRDF.y);
 
 
 	// FragColor = vec4((linearAlbedo.rgb * irradiance * k_d + specular), 1.0); // Note: Omitted the "/ PI" factor here
@@ -75,7 +73,7 @@ void main()
 	float AO = texture(GBufferRMAO, data.uv0.xy).b;
 
 	// Phong ambient contribution:
-	FragColor	= texture(GBufferAlbedo, data.uv0.xy) * vec4(lightColor, 1) * AO;	
+	FragColor = texture(GBufferAlbedo, data.uv0.xy) * vec4(lightColor, 1) * AO;
 }
 
 #endif

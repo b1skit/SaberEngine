@@ -26,6 +26,9 @@ namespace gr
 		gr::TextureTargetSet const& GetFinalTextureTargetSet() const override { return m_gBufferStage.GetTextureTargetSet(); }
 
 	private:
+		void CreateBatches() override;
+
+	private:
 		gr::RenderStage m_gBufferStage;
 
 	};

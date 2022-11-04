@@ -13,6 +13,7 @@
 using gr::Texture;
 using gr::DeferredLightingGraphicsSystem;
 using gr::GBufferGraphicsSystem;
+using re::Batch;
 using en::CoreEngine;
 using std::shared_ptr;
 using std::string;
@@ -29,6 +30,13 @@ namespace gr
 		m_skyboxStage("Skybox stage"),
 		m_skyTexture(nullptr)
 	{
+		m_screenAlignedQuad = gr::meshfactory::CreateQuad
+		(
+			vec3(-1.0f, 1.0f, 1.0f), // z == 1.0f, since we're in clip space (and camera's negative Z has been reversed)
+			vec3(1.0f, 1.0f, 1.0f),
+			vec3(-1.0f, -1.0f, 1.0f),
+			vec3(1.0f, -1.0f, 1.0f)
+		); // TODO: Simplify this interface
 	}
 
 
@@ -130,26 +138,8 @@ namespace gr
 		{
 			LOG_WARNING("Scene has no skybox");
 			return;
-		}		
+		}
 
-		// Set unchanging shader uniforms:
-		const int xRes = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
-		const int yRes = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
-		const vec4 screenParams = vec4(xRes, yRes, 1.0f / xRes, 1.0f / yRes);
-		m_skyboxStage.GetStageShader()->SetUniform(
-			"screenParams",
-			&screenParams.x,
-			platform::Shader::UniformType::Vec4f,
-			1);
-
-		// Create a quad at furthest point in the depth buffer		
-		m_skyMesh.emplace_back(gr::meshfactory::CreateQuad
-		(
-			vec3(-1.0f, 1.0f, 1.0f), // z == 1.0f, since we're in clip space (and camera's negative Z has been reversed)
-			vec3(1.0f, 1.0f, 1.0f),
-			vec3(-1.0f, -1.0f, 1.0f),
-			vec3(1.0f, -1.0f, 1.0f)
-		)); // TODO: Simplify this interface
 
 		RenderStage::RenderStageParams skyboxStageParams;
 		skyboxStageParams.m_targetClearMode = platform::Context::ClearTarget::None;
@@ -185,7 +175,7 @@ namespace gr
 	void SkyboxGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
 		m_skyboxStage.InitializeForNewFrame();
-		m_skyboxStage.SetGeometryBatches(&m_skyMesh);
+		CreateBatches();
 
 		// Skybox texture can be null if we didn't load anything, but this GS should have been removed
 		m_skyboxStage.SetTextureInput(
@@ -195,5 +185,12 @@ namespace gr
 
 		shared_ptr<GBufferGraphicsSystem> gBufferGS = dynamic_pointer_cast<GBufferGraphicsSystem>(
 			CoreEngine::GetRenderManager()->GetGraphicsSystem<GBufferGraphicsSystem>());
+	}
+
+
+	void SkyboxGraphicsSystem::CreateBatches()
+	{
+		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
+		m_skyboxStage.AddBatch(fullscreenQuadBatch);
 	}
 }

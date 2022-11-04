@@ -4,11 +4,9 @@
 #include <vector>
 
 #include "EngineComponent.h"
-#include "TextureTarget.h"
 #include "Context.h"
-#include "Context_Platform.h"
+#include "TextureTarget.h"
 #include "RenderPipeline.h"
-#include "GraphicsSystem.h"
 #include "ParameterBlockManager.h"
 
 
@@ -21,6 +19,13 @@ namespace gr
 {
 	class GraphicsSystem;
 }
+
+namespace re
+{
+	class Batch;
+	class RenderPipeline;
+}
+
 
 namespace re
 {
@@ -53,6 +58,11 @@ namespace re
 		inline re::ParameterBlockManager& GetParameterBlockManager() { return m_paramBlockManager; }
 		inline re::ParameterBlockManager const& GetParameterBlockManager() const { return m_paramBlockManager; }
 
+		inline std::vector<re::Batch> const& GetSceneBatches() { return m_sceneBatches; }
+
+	private:
+		void BuildSceneBatches();
+
 	private:	
 		re::Context m_context;
 		std::vector<std::shared_ptr<gr::GraphicsSystem>> m_graphicsSystems;
@@ -62,6 +72,8 @@ namespace re
 		std::shared_ptr<gr::TextureTargetSet> m_defaultTargetSet; // Default backbuffer
 
 		re::ParameterBlockManager m_paramBlockManager;
+
+		std::vector<re::Batch> m_sceneBatches;
 
 		// Friends
 		friend class opengl::RenderManager;

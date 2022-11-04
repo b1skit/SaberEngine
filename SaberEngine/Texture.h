@@ -98,26 +98,20 @@ namespace gr
 		explicit Texture(std::string const& name, TextureParams const& params);
 		~Texture() { Destroy();	}
 
-		Texture() = delete;
-		Texture(Texture const& rhs) = delete;
-		Texture(Texture const&& rhs) = delete;
-		Texture& operator=(Texture const& rhs) = delete;
-
 		void Create();
 		void Bind(uint32_t textureUnit, bool doBind) const; // TODO: Write an explicit unbind
 
 		void Destroy();
 
+		glm::vec4 GetTextureDimenions() const;	// .xyzw = width, height, 1/width, 1/height
 		inline uint32_t const& Width() const { return m_texParams.m_width; }
-		inline uint32_t const& Height() const { return m_texParams.m_height; }
+		inline uint32_t const& Height() const { return m_texParams.m_height; }		
 
 		uint8_t const* GetTexel(uint32_t u, uint32_t v, uint32_t faceIdx) const; // u == x == col, v == y == row
 		uint8_t const* GetTexel(uint32_t index) const;
 
 		std::vector<uint8_t> const& Texels() const { return m_texels; }
 		std::vector<uint8_t>& Texels() { m_isDirty = true; return m_texels; }
-		
-		glm::vec4 GetTexelDimenions() const;	// .xyzw = 1/width, 1/height, width, height
 
 		uint32_t GetNumMips() const;
 		uint32_t GetMipDimension(uint32_t mipLevel) const;
@@ -147,10 +141,16 @@ namespace gr
 
 		bool m_isCreated;
 		bool m_isDirty;
-		
+	
+	private:
 		// Friends:
 		friend bool platform::RegisterPlatformFunctions();
 		friend void platform::Texture::PlatformParams::CreatePlatformParams(gr::Texture&);
+
+		Texture() = delete;
+		Texture(Texture const& rhs) = delete;
+		Texture(Texture const&& rhs) = delete;
+		Texture& operator=(Texture const& rhs) = delete;
 	};
 }
 

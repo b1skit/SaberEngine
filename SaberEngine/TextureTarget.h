@@ -6,6 +6,8 @@
 #include "Texture.h"
 #include "TextureTarget_Platform.h"
 #include "NamedObject.h"
+#include "ParameterBlock.h"
+
 
 namespace gr
 {
@@ -44,7 +46,7 @@ namespace gr
 	{
 	public:
 		Viewport();
-		explicit Viewport(uint32_t xMin, uint32_t yMin, uint32_t width, uint32_t height);
+		Viewport(uint32_t xMin, uint32_t yMin, uint32_t width, uint32_t height);
 
 		Viewport(Viewport const&) = default;
 		Viewport(Viewport&&) = default;
@@ -79,6 +81,12 @@ namespace gr
 	class TextureTargetSet : public virtual en::NamedObject
 	{
 	public:
+		struct TargetParams
+		{
+			glm::vec4 g_targetResolution;
+		};
+
+	public:
 		explicit TextureTargetSet(std::string name);
 		TextureTargetSet(TextureTargetSet const& rhs, std::string const& newName);
 		TextureTargetSet(TextureTargetSet&&) = default;
@@ -102,6 +110,8 @@ namespace gr
 		inline platform::TextureTargetSet::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
 		inline platform::TextureTargetSet::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
 		
+		inline std::shared_ptr<re::ParameterBlock> GetTargetParameterBlock() const { return m_targetParameterBlock; }
+
 		bool HasTargets();
 
 		// Platform wrappers:
@@ -124,14 +134,19 @@ namespace gr
 
 		std::shared_ptr<platform::TextureTargetSet::PlatformParams> m_platformParams;
 
+		std::shared_ptr<re::ParameterBlock> m_targetParameterBlock;
+
 		bool m_colorIsCreated;
 		bool m_depthIsCreated;
 
+	private:
+		void CreateUpdateTargetParameterBlock();
+
+	private:
 		// Friends:
 		friend bool platform::RegisterPlatformFunctions();
 		friend void platform::TextureTargetSet::PlatformParams::CreatePlatformParams(gr::TextureTargetSet&);
 
-	private:
 		TextureTargetSet() = delete;
 		TextureTargetSet(TextureTargetSet const&) = delete;
 	};

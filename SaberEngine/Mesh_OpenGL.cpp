@@ -217,23 +217,23 @@ namespace opengl
 	}
 
 
-	void opengl::Mesh::Bind(gr::Mesh& mesh, bool doBind/*= true*/)
+	void opengl::Mesh::Bind(platform::Mesh::PlatformParams const* params, bool doBind)
 	{
 		if (doBind)
 		{
-			opengl::Mesh::PlatformParams* params =
-				dynamic_cast<opengl::Mesh::PlatformParams*>(mesh.GetPlatformParams().get());
+			opengl::Mesh::PlatformParams const* const glMeshParams =
+				dynamic_cast<opengl::Mesh::PlatformParams const* const>(params);
 
-			glBindVertexArray(params->m_meshVAO);
+			glBindVertexArray(glMeshParams->m_meshVAO);
 			for (size_t i = 0; i < opengl::Mesh::VertexAttribute::VertexAttribute_Count; i++)
 			{
 				if (i == VertexAttribute::Indexes)
 				{
-					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, params->m_meshVBOs[opengl::Mesh::VertexAttribute::Indexes]);
+					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMeshParams->m_meshVBOs[opengl::Mesh::VertexAttribute::Indexes]);
 				}
 				else
 				{
-					glBindBuffer(GL_ARRAY_BUFFER, params->m_meshVBOs[i]);
+					glBindBuffer(GL_ARRAY_BUFFER, glMeshParams->m_meshVBOs[i]);
 				}
 			}
 		}

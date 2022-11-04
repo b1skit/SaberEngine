@@ -20,9 +20,11 @@ namespace gr
 		gr::TextureTargetSet& GetFinalTextureTargetSet() override { return m_emissiveBlitStage.GetTextureTargetSet(); }
 		gr::TextureTargetSet const& GetFinalTextureTargetSet() const override { return m_emissiveBlitStage.GetTextureTargetSet(); }
 
+	private:
+		void CreateBatches() override;
 
 	private:
-		std::vector<std::shared_ptr<gr::Mesh>> m_screenAlignedQuad;
+		std::shared_ptr<gr::Mesh> m_screenAlignedQuad;
 
 		gr::RenderStage m_emissiveBlitStage;
 		std::vector<gr::RenderStage> m_downResStages;

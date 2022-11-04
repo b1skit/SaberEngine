@@ -20,8 +20,8 @@ namespace gr
 	RenderStage::RenderStage(std::string const& name) :
 			NamedObject(name),
 		m_textureTargetSet(name + " target"),
-		m_stageGeometryBatches(nullptr),
-		m_writesColor(true) // Reasonable assumption; Updated when we set the param block
+		m_writesColor(true), // Reasonable assumption; Updated when we set the param block
+		m_batchFilterMask(0) // Accept all batches by default
 	{
 	}
 
@@ -39,9 +39,7 @@ namespace gr
 
 		m_stageParamBlocks = rhs.m_stageParamBlocks;
 
-		m_stageGeometryBatches = rhs.m_stageGeometryBatches;
-
-		m_perMeshShaderUniforms = vector<vector<StageShaderUniform>>(rhs.m_perMeshShaderUniforms);
+		m_stageBatches = rhs.m_stageBatches;
 	}
 
 
@@ -62,8 +60,9 @@ namespace gr
 		m_perFrameShaderUniforms.emplace_back(shaderName, sampler.get(), platform::Shader::UniformType::Sampler, 1);
 	}
 
+
 	template <typename T>
-	void RenderStage::SetPerFrameShaderUniformByValue(
+	void RenderStage::SetPerFrameShaderUniform(
 		string const& uniformName, T const& value, platform::Shader::UniformType const& type, int const count)
 	{
 		// Dynamically allocate a copy of value so we have a pointer to it when we need for the current frame
@@ -84,28 +83,27 @@ namespace gr
 		m_perFrameShaderUniforms.emplace_back(uniformName, valuePtr, type, count);
 	}
 	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
-	template void RenderStage::SetPerFrameShaderUniformByValue<mat4>(
+	template void RenderStage::SetPerFrameShaderUniform<mat4>(
 		string const& uniformName, mat4 const& value, platform::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerFrameShaderUniformByValue<vector<mat4>>(
+	template void RenderStage::SetPerFrameShaderUniform<vector<mat4>>(
 		string const& uniformName, vector<mat4> const& value, platform::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerFrameShaderUniformByValue<mat3>(
+	template void RenderStage::SetPerFrameShaderUniform<mat3>(
 		string const& uniformName, mat3 const& value, platform::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerFrameShaderUniformByValue<vec3>(
+	template void RenderStage::SetPerFrameShaderUniform<vec3>(
 		string const& uniformName, vec3 const& value, platform::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerFrameShaderUniformByValue<vec4>(
+	template void RenderStage::SetPerFrameShaderUniform<vec4>(
 		string const& uniformName, vec4 const& value, platform::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerFrameShaderUniformByValue<float>(
+	template void RenderStage::SetPerFrameShaderUniform<float>(
 		string const& uniformName, float const& value, platform::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerFrameShaderUniformByValue<int>(
+	template void RenderStage::SetPerFrameShaderUniform<int>(
 		string const& uniformName, int const& value, platform::Shader::UniformType const& type, int const count);
 
 
 	void RenderStage::InitializeForNewFrame()
 	{
-		m_stageGeometryBatches = nullptr;
 		m_perFrameShaderUniforms.clear();
 		m_perFrameShaderUniformValues.clear();
-		m_perMeshShaderUniforms.clear();
+		m_stageBatches.clear();
 	}
 
 
@@ -121,67 +119,44 @@ namespace gr
 	}
 
 
-	//void RenderStage::SetPerMeshPerFrameTextureOrSamplerByPtr(
-	//	size_t meshIdx, std::string const& uniformName, void const* value, platform::Shader::UniformType const& type, 
-	//	int const count)
-	//{
-	//	SEAssert("meshIdx is OOB", meshIdx <= m_perMeshShaderUniforms.size());
-
-	//	if (meshIdx == m_perMeshShaderUniforms.size())
-	//	{
-	//		m_perMeshShaderUniforms.emplace_back();
-	//	}
-
-	//	m_perMeshShaderUniforms[meshIdx].emplace_back(uniformName, value, type, count);
-	//}
-
-	void RenderStage::SetPerMeshPerFrameTextureInput(
-		size_t meshIdx, 
-		std::string const& shaderName, 
-		std::shared_ptr<gr::Texture const> tex, 
-		std::shared_ptr<gr::Sampler const> sampler)
+	void RenderStage::AddBatches(std::vector<re::Batch> const& batches)
 	{
-		SEAssert("meshIdx is OOB", meshIdx <= m_perMeshShaderUniforms.size());
-
-		if (meshIdx == m_perMeshShaderUniforms.size())
+		for (size_t i = 0; i < batches.size(); i++)
 		{
-			m_perMeshShaderUniforms.emplace_back();
+			AddBatch(batches[i]); // Checks filter mask bit before accepting the batch
 		}
-
-		m_perMeshShaderUniforms[meshIdx].emplace_back(shaderName, tex.get(), platform::Shader::UniformType::Texture, 1);
-		m_perMeshShaderUniforms[meshIdx].emplace_back(shaderName, sampler.get(), platform::Shader::UniformType::Sampler, 1);
 	}
 
 
-	template <typename T>
-	void RenderStage::SetPerMeshPerFrameShaderUniformByValue(
-		size_t meshIdx, std::string const& uniformName, T const& value, platform::Shader::UniformType const& type, int const count)
+	void RenderStage::AddBatch(re::Batch const& batch)
 	{
-		// Dynamically allocate a copy of value so we have a pointer to it when we need for the current frame
-		m_perFrameShaderUniformValues.emplace_back(std::make_shared<T>(value));
-
-		SEAssert("meshIdx is OOB", meshIdx <= m_perMeshShaderUniforms.size());
-
-		if (meshIdx == m_perMeshShaderUniforms.size())
+		if (m_batchFilterMask & batch.GetBatchFilterMask() || !m_batchFilterMask) // Accept all batches by default
 		{
-			m_perMeshShaderUniforms.emplace_back(); // Add a new vector
+			m_stageBatches.emplace_back(batch);
+		}
+	}
+
+
+	void RenderStage::SetBatchFilterMaskBit(re::Batch::Filter filterBit)
+	{
+		m_batchFilterMask |= (1 << (uint32_t)filterBit);
+	}
+
+
+	std::shared_ptr<re::ParameterBlock> RenderStage::GetPermanentParameterBlock(std::string const& pbShaderName) const
+	{
+		const uint64_t hashedName = en::NamedObject::ComputeIDFromName(pbShaderName);
+
+		// TODO: This should not be a linear search. We should use an unordered_map instead
+		for (size_t i = 0; i < m_stageParamBlocks.size(); i++)
+		{
+			if (m_stageParamBlocks[i]->GetNameID() == hashedName)
+			{
+				return m_stageParamBlocks[i];
+			}
 		}
 
-		m_perMeshShaderUniforms[meshIdx].emplace_back(
-			uniformName, m_perFrameShaderUniformValues.back().get(), type, count);
-
+		SEAssert("Could not find a parameter block with the given shader name", false);
+		return nullptr;
 	}
-	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
-	template void RenderStage::SetPerMeshPerFrameShaderUniformByValue<mat4>(
-		size_t meshIdx, string const& uniformName, mat4 const& value, platform::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerMeshPerFrameShaderUniformByValue<mat3>(
-		size_t meshIdx, string const& uniformName, mat3 const& value, platform::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerMeshPerFrameShaderUniformByValue<vec3>(
-		size_t meshIdx, string const& uniformName, vec3 const& value, platform::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerMeshPerFrameShaderUniformByValue<vec4>(
-		size_t meshIdx, string const& uniformName, vec4 const& value, platform::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerMeshPerFrameShaderUniformByValue<float>(
-		size_t meshIdx, string const& uniformName, float const& value, platform::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerMeshPerFrameShaderUniformByValue<int>(
-		size_t meshIdx, string const& uniformName, int const& value, platform::Shader::UniformType const& type, int const count);
 }

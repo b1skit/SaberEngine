@@ -19,15 +19,13 @@
 
 void main()
 {	
-	// If we've made it this far, sample the cube map:
+	// Sample the cube map:
 	vec4 ndcPosition;
-	ndcPosition.xy	= ((2.0 * gl_FragCoord.xy) / screenParams.xy) - 1.0;
-	ndcPosition.z	= ((2.0 * gl_FragCoord.z) - gl_DepthRange.near - gl_DepthRange.far) / (gl_DepthRange.diff);	
+	ndcPosition.xy	= ((2.0 * gl_FragCoord.xy) / g_targetResolution.xy) - 1.0;
+	ndcPosition.z	= 1.0;
 	ndcPosition.w	= 1.0;
-
-	const vec4 clipPos	= ndcPosition / gl_FragCoord.w;
 	
-	const vec4 worldPos	= g_invViewProjection * clipPos;
+	const vec4 worldPos	= g_invViewProjection * ndcPosition;
 
 
 #if defined(CUBEMAP_SKY)
@@ -37,7 +35,7 @@ void main()
 	// Equirectangular skybox image:
 	const vec3 sampleDir = worldPos.xyz;
 
-	vec2 sphericalUVs = WorldDirToSphericalUV(sampleDir);
+	const vec2 sphericalUVs = WorldDirToSphericalUV(sampleDir);
 
 	FragColor = texture(Tex0, sphericalUVs);
 #endif	

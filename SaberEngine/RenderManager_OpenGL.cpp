@@ -21,6 +21,7 @@
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "Mesh_OpenGL.h"
+#include "CoreEngine.h"
 
 using gr::RenderStage;
 using gr::TextureTargetSet;
@@ -100,22 +101,24 @@ namespace opengl
 
 				RenderStage::RenderStageParams const& renderStageParams = renderStage->GetRenderStageParams();
 
+				// Configure the shader:
+				std::shared_ptr<Shader const> stageShader = renderStage->GetStageShader();
+				stageShader->Bind(true);
+				// TODO: Handle shaders set by stages/materials/batches
+				// Priority order: Stage, batch/material?
+
 				// Attach the stage targets:
 				TextureTargetSet const& stageTargets = renderStage->GetTextureTargetSet();
 				stageTargets.AttachColorDepthStencilTargets(
 					renderStageParams.m_textureTargetSetConfig.m_targetFace, 
 					renderStageParams.m_textureTargetSetConfig.m_targetMip, 
 					true);
-
-				// Configure the shader:
-				std::shared_ptr<Shader const> stageShader = renderStage->GetStageShader();
-				stageShader->Bind(true);
-				// TODO: Use shaders from materials in some cases? Set shaders/materials per batch, don't decide here
+				stageShader->SetParameterBlock(*stageTargets.GetTargetParameterBlock().get());
 
 				// Set stage param blocks:
-				for (std::shared_ptr<re::ParameterBlock const> pb : renderStage->GetPermanentParameterBlocks())
+				for (std::shared_ptr<re::ParameterBlock const> renderStagePB : renderStage->GetPermanentParameterBlocks())
 				{
-					stageShader->SetParameterBlock(*pb.get());
+					stageShader->SetParameterBlock(*renderStagePB.get());
 				}
 
 				// Set per-frame stage shader uniforms:
@@ -143,55 +146,49 @@ namespace opengl
 				renderManager.m_context.ClearTargets(renderStageParams.m_targetClearMode); // Clear AFTER setting color/depth modes
 				// TODO: Move this to a "set pipeline state" helper within Context?
 
-				// Render stage geometry:
-				std::vector<std::shared_ptr<gr::Mesh>> const* meshes = renderStage->GetGeometryBatches();
-				SEAssert("Stage does not have any geometry to render", meshes != nullptr);
-				size_t meshIdx = 0;
-				for (std::shared_ptr<gr::Mesh> mesh : *meshes)
+
+				// Render stage batches:
+				std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
+				SEAssert("Stage does not have any batches to render", !batches.empty());
+				for (re::Batch const& batch : batches)
 				{
-					mesh->Bind(true);
+					opengl::Mesh::PlatformParams const* const meshPlatParams =
+						dynamic_cast<opengl::Mesh::PlatformParams const* const>(batch.GetBatchMesh()->GetPlatformParams().get());
 
-					shared_ptr<gr::Material> meshMaterial = mesh->MeshMaterial();
-					if (meshMaterial != nullptr &&
-						renderStage->WritesColor())
+					opengl::Mesh::Bind(meshPlatParams, true);
+
+					// Batch material:
+					gr::Material const* batchmaterial = batch.GetBatchMaterial();
+					if (batchmaterial && renderStage->WritesColor())
 					{
-						// TODO: Is there a more elegant way to handle this?
-						meshMaterial->BindToShader(stageShader);
+						batchmaterial->BindToShader(stageShader);
 					}
 
-
-					// TODO: Support instancing. For now, just upload per-mesh parameters as a workaround...
-					std::vector<std::vector<RenderStage::StageShaderUniform>> const& perMeshUniforms =
-						renderStage->GetPerMeshPerFrameShaderUniforms();
-					if (perMeshUniforms.size() > 0)
+					// Batch parameter blocks:
+					vector<shared_ptr<re::ParameterBlock const>> const& batchPBs = batch.GetBatchParameterBlocks();
+					for (shared_ptr<re::ParameterBlock const> batchPB : batchPBs)
 					{
-						for (size_t curUniform = 0; curUniform < perMeshUniforms[meshIdx].size(); curUniform++)
-						{
-							stageShader->SetUniform(
-								perMeshUniforms[meshIdx][curUniform].m_uniformName,
-								perMeshUniforms[meshIdx][curUniform].m_value,
-								perMeshUniforms[meshIdx][curUniform].m_type,
-								perMeshUniforms[meshIdx][curUniform].m_count);
-						}
+						stageShader->SetParameterBlock(*batchPB.get());
 					}
 
-
-					// Assemble and upload mesh-specific matrices:
-					const mat4 model = mesh->GetTransform().GetWorldMatrix(Transform::WorldModel);
-					stageShader->SetUniform("in_model", &model[0][0], platform::Shader::UniformType::Matrix4x4f, 1);
-
-					opengl::Mesh::PlatformParams const* const meshPlatParams=
-						dynamic_cast<opengl::Mesh::PlatformParams const* const>(mesh->GetPlatformParams().get());
+					// Batch uniforms:
+					for (re::Batch::ShaderUniform const& shaderUniform : batch.GetBatchUniforms())
+					{
+						stageShader->SetUniform(
+							shaderUniform.m_uniformName,
+							shaderUniform.m_value.get(),
+							shaderUniform.m_type,
+							shaderUniform.m_count);
+					}
 
 					// Draw!
-					glDrawElements(
-						meshPlatParams->m_drawMode,
-						(GLsizei)mesh->NumIndices(),
-						GL_UNSIGNED_INT, // TODO: Configure based on the Mesh/verts parameters, instead of assuming uints
-						0); // (GLenum mode, GLsizei count, GLenum type, byte offset (to bound index buffer));
-
-					meshIdx++;
-				} // meshes
+					glDrawElementsInstanced(
+						meshPlatParams->m_drawMode,						// GLenum mode
+						(GLsizei)batch.GetBatchMesh()->NumIndices(),	// GLsizei count
+						GL_UNSIGNED_INT,								// GLenum type. TODO: Store type in Mesh parameters, instead of assuming uints
+						0,												// Byte offset (into bound index buffer)
+						(GLsizei)batch.GetInstanceCount());				// Instance count
+				} // batches
 
 				glPopDebugGroup();
 			};

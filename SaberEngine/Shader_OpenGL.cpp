@@ -21,7 +21,7 @@ namespace opengl
 {
 	void Shader::Create(gr::Shader& shader)
 	{
-		string const& shaderFileName = shader.Name();
+		string const& shaderFileName = shader.GetName();
 
 		LOG("Creating shader \"%s\"", shaderFileName.c_str());
 

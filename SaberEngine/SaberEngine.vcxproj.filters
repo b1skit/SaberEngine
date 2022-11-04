@@ -233,6 +233,9 @@
     <ClCompile Include="ParameterBlockManager.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
+    <ClCompile Include="Batch.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Mesh.h">
@@ -411,6 +414,12 @@
     </ClInclude>
     <ClInclude Include="ParameterBlockManager.h">
       <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="Batch.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="HashedDataObject.h">
+      <Filter>Header Files\en</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

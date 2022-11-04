@@ -9,6 +9,7 @@ using en::CoreEngine;
 using gr::Shader;
 using gr::DeferredLightingGraphicsSystem;
 using gr::TextureTargetSet;
+using re::Batch;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
@@ -20,20 +21,18 @@ namespace gr
 	TonemappingGraphicsSystem::TonemappingGraphicsSystem(std::string name) : GraphicsSystem(name), NamedObject(name),
 		m_tonemappingStage("Tonemapping stage")
 	{
-	}
-
-
-	void TonemappingGraphicsSystem::Create(re::StagePipeline& pipeline)
-	{
-		m_screenAlignedQuad.reserve(1);  // MUST reserve so our pointers won't change
-		m_screenAlignedQuad.emplace_back(gr::meshfactory::CreateQuad
+		m_screenAlignedQuad = gr::meshfactory::CreateQuad
 		(
 			vec3(-1.0f, 1.0f, 0.0f),	// TL
 			vec3(1.0f, 1.0f, 0.0f),		// TR
 			vec3(-1.0f, -1.0f, 0.0f),	// BL
 			vec3(1.0f, -1.0f, 0.0f)		// BR
-		));
+		);
+	}
 
+
+	void TonemappingGraphicsSystem::Create(re::StagePipeline& pipeline)
+	{
 		RenderStage::RenderStageParams tonemappingStageParam;
 		tonemappingStageParam.m_targetClearMode	= platform::Context::ClearTarget::None;
 		tonemappingStageParam.m_faceCullingMode	= platform::Context::FaceCullingMode::Back;
@@ -64,7 +63,7 @@ namespace gr
 	void TonemappingGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
 		m_tonemappingStage.InitializeForNewFrame();
-		m_tonemappingStage.SetGeometryBatches(&m_screenAlignedQuad);
+		CreateBatches();
 
 		TextureTargetSet& deferredLightTextureTargetSet =
 			CoreEngine::GetRenderManager()->GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
@@ -73,5 +72,12 @@ namespace gr
 			"GBufferAlbedo",
 			deferredLightTextureTargetSet.ColorTarget(0).GetTexture(),
 			Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear));
+	}
+
+
+	void TonemappingGraphicsSystem::CreateBatches()
+	{
+		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
+		m_tonemappingStage.AddBatch(fullscreenQuadBatch);
 	}
 }

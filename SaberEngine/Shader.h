@@ -6,6 +6,7 @@
 
 #include "Shader_Platform.h"
 #include "ParameterBlock.h"
+#include "NamedObject.h"
 
 
 namespace platform
@@ -15,7 +16,7 @@ namespace platform
 
 namespace gr
 {
-	class Shader
+	class Shader : public virtual en::NamedObject
 	{
 	public:
 		// Shader #define keywords
@@ -32,7 +33,7 @@ namespace gr
 
 
 	public:
-		explicit Shader(std::string const& shaderName);
+		explicit Shader(std::string const& extensionlessShaderFilename);
 		~Shader() { Destroy(); }
 
 		Shader() = delete;
@@ -44,9 +45,6 @@ namespace gr
 		void Bind(bool doBind) const;
 
 		void Destroy();
-
-		// Getters/Setters:
-		inline std::string const& Name() const { return m_shaderName; }
 
 		void SetUniform(
 			std::string const&,
@@ -70,10 +68,6 @@ namespace gr
 		inline std::vector<std::string> const& ShaderKeywords() const { return m_shaderKeywords; }
 
 	private:
-		// Extensionless shader filename. Will have .vert/.geom.frag appended (thus all shader text must have the
-		// same extensionless name)
-		std::string m_shaderName;
-
 		std::unique_ptr<platform::Shader::PlatformParams> m_platformParams;
 
 		std::vector<std::string> m_shaderKeywords;

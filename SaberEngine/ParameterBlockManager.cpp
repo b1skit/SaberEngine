@@ -42,6 +42,31 @@ namespace re
 	}
 
 
+	std::shared_ptr<re::ParameterBlock const> const ParameterBlockManager::GetParameterBlock(size_t pbID) const
+	{
+		auto mutableResult = m_mutablePBs.find(pbID);
+		if (mutableResult != m_mutablePBs.end())
+		{
+			return mutableResult->second;
+		}
+
+		auto immutableResult = m_immutablePBs.find(pbID);
+		if (immutableResult != m_immutablePBs.end())
+		{
+			return immutableResult->second;
+		}
+
+		auto singleFrameResult = m_singleFramePBs.find(pbID);
+		if (singleFrameResult != m_singleFramePBs.end())
+		{
+			return singleFrameResult->second;
+		}
+
+		SEAssert("Failed to find param block", false);
+		return nullptr;
+	}
+
+
 	void ParameterBlockManager::UpdateParamBlocks()
 	{
 		for (auto pb : m_mutablePBs) // Immutable and single-frame PBs are buffered at creation

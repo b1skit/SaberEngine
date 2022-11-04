@@ -245,14 +245,14 @@ namespace gr
 	}
 
 
-	vec4 Texture::GetTexelDimenions() const
+	vec4 Texture::GetTextureDimenions() const
 	{
-		// .xyzw = 1/width, 1/height, width, height
+		// .xyzw = width, height, 1/width, 1/height
 		return glm::vec4(
+			m_texParams.m_width,
+			m_texParams.m_height,
 			1.0f / m_texParams.m_width, 
-			1.0f / m_texParams.m_height, 
-			m_texParams.m_width, 
-			m_texParams.m_height);
+			1.0f / m_texParams.m_height);
 	}
 
 

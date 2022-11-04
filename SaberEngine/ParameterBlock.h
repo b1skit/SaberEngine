@@ -44,6 +44,27 @@ namespace re
 			return newPB;
 		}
 
+
+		template<typename T>
+		static std::shared_ptr<re::ParameterBlock> Create(
+			std::string paramBlockName,
+			T const* dataArray,
+			size_t dataElementByteSize,
+			size_t numArrayElements,
+			UpdateType updateType,
+			Lifetime lifetime)
+		{
+			std::shared_ptr<T> dataCopy(new T[numArrayElements], [](T* t) {delete[] t; } );
+			memcpy(dataCopy.get(), dataArray, dataElementByteSize * numArrayElements);
+
+			std::shared_ptr<re::ParameterBlock> newPB = make_shared<re::ParameterBlock>(
+				Accessor(), paramBlockName, dataCopy, dataElementByteSize * numArrayElements, updateType, lifetime);
+
+			Register(newPB);
+
+			return newPB;
+		}
+
 	private:
 		static void Register(std::shared_ptr<re::ParameterBlock> newPB);
 		struct Accessor { explicit Accessor() = default; }; // Prevents direct access to the CTOR
@@ -77,7 +98,7 @@ namespace re
 				typeid(T).hash_code() == m_typeIDHashCode);
 			SEAssert("Cannot set data of an immutable param block", m_updateType != UpdateType::Immutable);
 
-			m_dataCopy = make_shared<T>(data);
+			m_dataCopy = std::make_shared<T>(data);
 			m_isDirty = true;
 		}
 	

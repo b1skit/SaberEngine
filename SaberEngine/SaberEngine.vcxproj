@@ -168,6 +168,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Batch.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ParameterBlock.cpp" />
     <ClCompile Include="ParameterBlockManager.cpp" />
@@ -223,6 +224,8 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Batch.h" />
+    <ClInclude Include="HashedDataObject.h" />
     <ClInclude Include="ParameterBlock.h" />
     <ClInclude Include="ParameterBlockManager.h" />
     <ClInclude Include="ParameterBlock_OpenGL.h" />

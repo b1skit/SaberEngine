@@ -115,10 +115,18 @@ namespace gr
 
 	void GBufferGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
-		m_gBufferStage.SetGeometryBatches(&en::CoreEngine::GetSceneManager()->GetSceneData()->GetMeshes());
+		m_gBufferStage.InitializeForNewFrame();
+
+		CreateBatches();
 
 		// TODO: Support transparency
-		// -> Split meshes with transparent materials out from opaque during load
+		// -> Mark meshes with transparent materials with a filter bit during load
 		// -> Render in a separate forward mode
+	}
+
+
+	void GBufferGraphicsSystem::CreateBatches()
+	{
+		m_gBufferStage.AddBatches(en::CoreEngine::GetRenderManager()->GetSceneBatches());
 	}
 }

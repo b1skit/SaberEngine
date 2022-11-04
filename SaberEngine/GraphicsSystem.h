@@ -25,5 +25,8 @@ namespace gr
 
 		virtual gr::TextureTargetSet& GetFinalTextureTargetSet() = 0;
 		virtual gr::TextureTargetSet const& GetFinalTextureTargetSet() const = 0;
+
+	private:
+		virtual void CreateBatches() = 0;
 	};
 }

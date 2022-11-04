@@ -1,6 +1,7 @@
 #include "TextureTarget.h"
 #include "CoreEngine.h"
 
+using en::CoreEngine;
 using std::string;
 
 
@@ -67,6 +68,7 @@ namespace gr
 			NamedObject(name),
 		m_targetStateDirty(true),
 		m_hasTargets(false),
+		m_targetParameterBlock(nullptr),
 		m_colorIsCreated(false),
 		m_depthIsCreated(false)
 	{
@@ -98,6 +100,7 @@ namespace gr
 		m_hasTargets(rhs.m_hasTargets),
 		m_viewport(rhs.m_viewport),
 		m_platformParams(nullptr), // Targets are copied, but the target set must be created
+		m_targetParameterBlock(rhs.m_targetParameterBlock),
 		m_colorIsCreated(false),
 		m_depthIsCreated(false)
 	{
@@ -120,6 +123,7 @@ namespace gr
 		m_hasTargets = rhs.m_hasTargets;
 		m_viewport = rhs.m_viewport;
 		m_platformParams = rhs.m_platformParams;
+		m_targetParameterBlock = rhs.m_targetParameterBlock;
 		m_colorIsCreated = rhs.m_colorIsCreated;
 		m_depthIsCreated = rhs.m_depthIsCreated;
 
@@ -132,6 +136,7 @@ namespace gr
 		SEAssert("Texture Target Set already created!", m_colorIsCreated == false);
 		m_colorIsCreated = true;
 		platform::TextureTargetSet::CreateColorTargets(*this);
+		CreateUpdateTargetParameterBlock();
 	}
 
 
@@ -146,6 +151,7 @@ namespace gr
 		SEAssert("Texture Target Set already created!", m_depthIsCreated == false);
 		m_depthIsCreated = true;
 		platform::TextureTargetSet::CreateDepthStencilTarget(*this);
+		CreateUpdateTargetParameterBlock();
 	}
 
 
@@ -159,6 +165,8 @@ namespace gr
 	{
 		CreateColorTargets();
 		CreateDepthStencilTarget();
+		// Note: Calling both of these results in the param block being created and updated in the same call. This 
+		// shouldn't be a problem; it's just a little wasteful
 	}
 
 
@@ -190,5 +198,70 @@ namespace gr
 		m_targetStateDirty = false;
 
 		return m_hasTargets;
+	}
+
+
+	void TextureTargetSet::CreateUpdateTargetParameterBlock()
+	{
+		glm::vec4 targetDimensions;
+		bool foundDimensions = false;
+
+		// Default framebuffer has no texture targets
+		if (!HasTargets())
+		{
+			const uint32_t xRes = (uint32_t)CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
+			const uint32_t yRes = (uint32_t)CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
+
+			targetDimensions.x = (float)xRes;
+			targetDimensions.y = (float)yRes;
+			targetDimensions.z = 1.0f / xRes;
+			targetDimensions.w = 1.0f / yRes;
+
+			foundDimensions = true;
+		}		
+
+		// Find a single target we can get the resolution details from; This assumes all targets are the same dimensions
+		if (m_depthIsCreated && !foundDimensions)
+		{
+			std::shared_ptr<gr::Texture> depthTarget = m_depthStencilTarget.GetTexture();
+			if (depthTarget)
+			{
+				targetDimensions = depthTarget->GetTextureDimenions();
+				foundDimensions = true;
+			}
+		}
+
+		if (m_colorIsCreated && !foundDimensions)
+		{
+			for (size_t i = 0; i < m_colorTargets.size(); i++)
+			{
+				std::shared_ptr<gr::Texture> texTarget = m_colorTargets[i].GetTexture();
+				if (texTarget)
+				{
+					targetDimensions = texTarget->GetTextureDimenions();
+					foundDimensions = true;
+					break;
+				}
+			}
+		}
+
+		SEAssert("Cannot create parameter block with no texture dimensions", foundDimensions);
+
+		TargetParams targetParams;
+		targetParams.g_targetResolution = targetDimensions;
+
+		// Create the PB if required, or update it otherwise
+		if (m_targetParameterBlock == nullptr)
+		{
+			m_targetParameterBlock = re::ParameterBlock::Create(
+				"RenderTargetParams", 
+				targetParams,
+				re::ParameterBlock::UpdateType::Mutable, 
+				re::ParameterBlock::Lifetime::Permanent);
+		}
+		else
+		{
+			m_targetParameterBlock->SetData(targetParams);
+		}
 	}
 }

@@ -1,4 +1,5 @@
 #include <memory>
+#include <functional>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
@@ -123,6 +124,8 @@ namespace gr
 		ComputeBounds(); // Compute m_localBounds
 
 		platform::Mesh::Create(*this); // Platform-specific setup
+
+		ComputeDataHash();
 	}
 
 
@@ -142,9 +145,9 @@ namespace gr
 	}
 
 
-	void Mesh::Bind(bool doBind)
+	void Mesh::Bind(bool doBind) const
 	{
-		platform::Mesh::Bind(*this, doBind);
+		platform::Mesh::Bind(m_platformParams.get(), doBind);
 	}
 
 
@@ -181,6 +184,43 @@ namespace gr
 				m_localBounds.zMax() = posVector.z;
 			}
 		}
+	}
+
+
+	void Mesh::ComputeDataHash()
+	{
+		// Material:
+		if (m_meshMaterial)
+		{
+			AddDataBytesToHash(&m_meshMaterial->GetName()[0], m_meshMaterial->GetName().length() * sizeof(char));
+		}
+
+		// Mesh params:
+		AddDataBytesToHash(&m_params, sizeof(MeshParams));
+
+		// Vertex data streams:
+		AddDataBytesToHash(&m_positions[0], sizeof(float) * m_positions.size());
+
+		if (!m_normals.empty())
+		{
+			AddDataBytesToHash(&m_normals[0], sizeof(float) * m_normals.size());
+		}
+		if (!m_colors.empty())
+		{
+			AddDataBytesToHash(&m_colors[0], sizeof(float) * m_colors.size());
+		}
+		if (!m_uv0.empty())
+		{
+			AddDataBytesToHash(&m_uv0[0], sizeof(float) * m_uv0.size());
+		}
+		if (!m_tangents.empty())
+		{
+			AddDataBytesToHash(&m_tangents[0], sizeof(float) * m_tangents.size());
+		}
+		if (!m_indices.empty())
+		{
+			AddDataBytesToHash(&m_indices[0], sizeof(uint32_t) * m_indices.size());
+		}		
 	}
 
 

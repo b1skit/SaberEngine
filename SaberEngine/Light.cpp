@@ -22,10 +22,9 @@ namespace gr
 			m_ownerTransform(ownerTransform),
 			m_type(lightType),
 			m_shadowMap(nullptr),
-			m_deferredMesh(nullptr),
-			m_deferredLightShader(nullptr)
+			m_deferredMesh(nullptr)
 	{		
-		m_lightParams.g_colorIntensity = colorIntensity;
+		m_colorIntensity = colorIntensity;
 
 		// Set up deferred light mesh:
 		string shaderName;
@@ -33,40 +32,10 @@ namespace gr
 		{
 		case AmbientIBL:
 		{
-			m_deferredLightShader = make_shared<Shader>(
-				en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"));
-			
-			m_deferredLightShader->ShaderKeywords().emplace_back("AMBIENT_IBL");
-
-			m_deferredLightShader->Create();
-
-			// Attach a screen aligned quad:
-			m_deferredMesh = gr::meshfactory::CreateQuad	// Align along near plane
-			(
-				vec3(-1.0f, 1.0f,	-1.0f),	// TL
-				vec3(1.0f,	1.0f,	-1.0f),	// TR
-				vec3(-1.0f, -1.0f,	-1.0f),	// BL
-				vec3(1.0f,	-1.0f,	-1.0f)	// BR
-			);
 		}
 		break;
 		case Directional:
 		{
-			m_lightParams.g_worldPos = GetTransform()->ForwardWorld();
-
-			m_deferredLightShader = make_shared<Shader>(
-				en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredKeylightShaderName"));
-			m_deferredLightShader->Create();
-
-			// Attach a screen aligned quad:
-			m_deferredMesh = gr::meshfactory::CreateQuad	// Align along near plane
-			(
-				vec3(-1.0f,	1.0f,	-1.0f),	// TL
-				vec3(1.0f,	1.0f,	-1.0f),	// TR
-				vec3(-1.0f,	-1.0f,	-1.0f),	// BL
-				vec3(1.0f,	-1.0f,	-1.0f)	// BR
-			);
-
 			if (hasShadow)
 			{
 				gr::Bounds sceneWorldBounds =
@@ -97,18 +66,12 @@ namespace gr
 		break;
 		case Point:
 		{
-			m_lightParams.g_worldPos = GetTransform()->GetWorldPosition();
-
 			// Compute the radius: 
 			const float cutoff = 0.05f; // Want the sphere mesh radius where light intensity will be close to zero
 			const float maxColor = glm::max(
-				glm::max(m_lightParams.g_colorIntensity.r, m_lightParams.g_colorIntensity.g), 
-				m_lightParams.g_colorIntensity.b);
+				glm::max(m_colorIntensity.r, m_colorIntensity.g), 
+				m_colorIntensity.b);
 			const float radius = glm::sqrt((maxColor / cutoff) - 1.0f);
-
-			m_deferredLightShader = make_shared<Shader>(
-				en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredPointLightShaderName"));
-			m_deferredLightShader->Create();
 
 			// Create the sphere with a radius of 1, and scale it to allow us to instance deferred lights with a single
 			// mesh and multiple MVP matrices
@@ -116,8 +79,9 @@ namespace gr
 
 			m_deferredMesh->GetTransform().SetParent(m_ownerTransform);
 			
-			// Currently, we scale the deferred mesh directly. Ideally, a Mesh object wouldn't have a transform (it
-			// should be owned by a RenderMesh object and implicitely use its transform)
+			// TODO: Currently, we scale the deferred mesh directly. Ideally, a Mesh object wouldn't have a transform (it
+			// should be owned by a RenderMesh object and implicitely use its transform). Also, lights should not have
+			// a mesh; one should be created by the GS and assigned as a batch
 			m_deferredMesh->GetTransform().SetModelScale(vec3(radius, radius, radius));
 
 			if (hasShadow)
@@ -154,12 +118,6 @@ namespace gr
 			// TODO: Implement light meshes for additional light types
 			break;
 		}
-
-		m_lightParameterBlock = ParameterBlock::Create(
-			"LightParams",
-			m_lightParams,
-			ParameterBlock::UpdateType::Immutable,
-			ParameterBlock::Lifetime::Permanent);
 	}
 
 
@@ -167,7 +125,6 @@ namespace gr
 	{
 		m_shadowMap = nullptr;
 		m_deferredMesh = nullptr;
-		m_deferredLightShader = nullptr;
 	}
 
 

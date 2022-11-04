@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "Shader.h"
 #include "Shader_Platform.h"
@@ -11,6 +12,7 @@
 #include "Mesh.h"
 #include "NamedObject.h"
 #include "ParameterBlock.h"
+#include "Batch.h"
 
 
 namespace gr
@@ -92,28 +94,21 @@ namespace gr
 		inline std::vector<StageShaderUniform> const& GetPerFrameShaderUniforms() const { return m_perFrameShaderUniforms; }
 
 		template <typename T>
-		void SetPerFrameShaderUniformByValue(
+		void SetPerFrameShaderUniform(
 			std::string const& uniformName, T const& value, platform::Shader::UniformType const& type, int const count);
 
-		// TODO: Support per-frame uniform blocks, to allow PB data to change between frames
-		inline void AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock const> pb) { m_stageParamBlocks.emplace_back(pb); }
-		inline std::vector<std::shared_ptr<re::ParameterBlock const>> const& GetPermanentParameterBlocks() const { return m_stageParamBlocks; }
+		// TODO: Support per-frame stage uniform blocks
+		inline void AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb) { m_stageParamBlocks.emplace_back(pb); }
+		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetPermanentParameterBlocks() const { return m_stageParamBlocks; }
+		std::shared_ptr<re::ParameterBlock> GetPermanentParameterBlock(std::string const& pbShaderName) const;
 
-		inline std::vector<std::shared_ptr<gr::Mesh>> const* GetGeometryBatches() const { return m_stageGeometryBatches; }
-		inline void SetGeometryBatches(std::vector<std::shared_ptr<gr::Mesh>> const* batches) { m_stageGeometryBatches = batches; }
+		// Stage Batches:
+		inline std::vector<re::Batch> const& GetStageBatches() const { return m_stageBatches; }
+		void AddBatches(std::vector<re::Batch> const& batches);
+		void AddBatch(re::Batch const& batch);
 
-
-
-		// TODO: Support instancing. For now, just use vectors of per-mesh uniforms with indexes to correspond to the
-		// entires in m_stageGeometryBatches
-		void SetPerMeshPerFrameTextureInput(
-			size_t meshIdx, std::string const& shaderName, std::shared_ptr<gr::Texture const> tex, std::shared_ptr<gr::Sampler const> sampler);	
-		template <typename T>
-		void SetPerMeshPerFrameShaderUniformByValue(
-			size_t meshIdx, std::string const& uniformName, T const& value, platform::Shader::UniformType const& type, int const count);
-
-		std::vector<std::vector<StageShaderUniform>> const& GetPerMeshPerFrameShaderUniforms() const { return m_perMeshShaderUniforms; }
-
+		inline uint32_t GetBatchFilterMask() const { return m_batchFilterMask; }
+		void SetBatchFilterMaskBit(re::Batch::Filter filterBit);
 
 	private:
 		std::shared_ptr<gr::Shader> m_stageShader;
@@ -127,17 +122,11 @@ namespace gr
 		std::vector<StageShaderUniform> m_perFrameShaderUniforms; // TODO: Handle selection of face, miplevel when binding color/depth targets?
 		std::vector<std::shared_ptr<const void>> m_perFrameShaderUniformValues; // Generic, per-frame data storage buffer
 		
-		std::vector<std::shared_ptr<re::ParameterBlock const>> m_stageParamBlocks;
+		std::vector<std::shared_ptr<re::ParameterBlock>> m_stageParamBlocks; // TODO: This should be an unordered_map
 
-		// TODO: Implement a "m_stageConstantShaderUniforms" -> Things like textures, samplers, etc that don't change
-		// between frames
+		std::vector<re::Batch> m_stageBatches;
+		uint32_t m_batchFilterMask;
 
-		// TODO: Batches should be a slimmed-down version of everything we need to draw, rather than pointers to gr:: objects
-		std::vector<std::shared_ptr<gr::Mesh>> const* m_stageGeometryBatches;
-
-
-		// TEMP HAX: Shader uniforms for point lights, until I write an instancing solution
-		std::vector<std::vector<StageShaderUniform>> m_perMeshShaderUniforms;
 		
 	private:
 		RenderStage() = delete;

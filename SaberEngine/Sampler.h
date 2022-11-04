@@ -90,22 +90,20 @@ namespace gr
 		void Bind(uint32_t textureUnit, bool doBind) const;
 		void Destroy();
 
-
-
-	public:
-		Sampler() = delete;
-		Sampler(Sampler const& rhs) = delete;
-		Sampler(Sampler const&& rhs) = delete;
-		Sampler& operator=(Sampler const& rhs) = delete;
-
 	private:
 		SamplerParams m_samplerParams;
 		std::unique_ptr<platform::Sampler::PlatformParams> m_platformParams;
 
 
+	private:
 		// Friends:
 		friend bool platform::RegisterPlatformFunctions();
 		friend void platform::Sampler::PlatformParams::CreatePlatformParams(gr::Sampler&);
 		friend std::shared_ptr<gr::Sampler const> const GetSampler(Sampler::SamplerType type);
+
+		Sampler() = delete;
+		Sampler(Sampler const& rhs) = delete;
+		Sampler(Sampler const&& rhs) = delete;
+		Sampler& operator=(Sampler const& rhs) = delete;
 	};
 }

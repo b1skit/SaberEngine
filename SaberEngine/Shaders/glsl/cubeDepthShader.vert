@@ -1,15 +1,12 @@
-// Saber Engine Cube Map Depth Shader
-
 #version 460 core
 
-// Set the location of the position input variable
-layout (location = 0) in vec3 in_position;
+#define SABER_VERTEX_SHADER
+#define SABER_DEPTH
 
-uniform mat4 in_model;
+#include "SaberCommon.glsl"
+
 
 void main()
 {
-	// Transform to world space:
-    gl_Position = in_model * vec4(in_position.xyz, 1.0);
-
+    gl_Position = g_model[gl_InstanceID] * vec4(in_position.xyz, 1.0);
 }
