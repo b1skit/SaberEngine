@@ -30,6 +30,19 @@ namespace
 		glm::vec3 g_cubemapLightWorldPos;
 		const float padding1 = 0.f;
 	};
+
+
+	CubemapShadowRenderParams GetCubemapShadowRenderParamsData(std::shared_ptr<gr::Camera> shadowCam)
+	{
+		CubemapShadowRenderParams cubemapShadowParams;
+		memcpy(&cubemapShadowParams.g_cubemapShadowCam_VP[0][0].x,
+			shadowCam->GetCubeViewProjectionMatrix().data(),
+			6 * sizeof(mat4));
+		cubemapShadowParams.g_cubemapShadowCamNearFar = shadowCam->NearFar();
+		cubemapShadowParams.g_cubemapLightWorldPos = shadowCam->GetTransform()->GetWorldPosition();
+
+		return cubemapShadowParams;
+	}
 }
 
 namespace gr
@@ -95,12 +108,7 @@ namespace gr
 				shadowStage->SetRenderStageParams(shadowStageParams);
 
 				// Cubemap shadow param block:
-				CubemapShadowRenderParams cubemapShadowParams;
-				memcpy(&cubemapShadowParams.g_cubemapShadowCam_VP[0][0].x,
-					shadowCam->GetCubeViewProjectionMatrix().data(), 
-					6 * sizeof(mat4));
-				cubemapShadowParams.g_cubemapShadowCamNearFar = shadowCam->NearFar();
-				cubemapShadowParams.g_cubemapLightWorldPos = shadowCam->GetTransform()->GetWorldPosition();
+				CubemapShadowRenderParams cubemapShadowParams = GetCubemapShadowRenderParamsData(shadowCam);
 
 				shared_ptr<re::ParameterBlock> cubemapShadowPB = re::ParameterBlock::Create(
 					"CubemapShadowRenderParams",
@@ -129,19 +137,13 @@ namespace gr
 
 		for (shared_ptr<RenderStage> pointShadowStage : m_pointLightShadowStages)
 		{		
-			shared_ptr<Camera> pointShadowCam = pointShadowStage->GetStageCamera();
+			shared_ptr<Camera> shadowCam = pointShadowStage->GetStageCamera();
 
 			// Update the param block data:
 			shared_ptr<re::ParameterBlock> shadowParams =
 				pointShadowStage->GetPermanentParameterBlock("CubemapShadowRenderParams");
 
-			CubemapShadowRenderParams cubemapShadowParams;
-			memcpy(&cubemapShadowParams.g_cubemapShadowCam_VP[0][0].x,
-				pointShadowCam->GetCubeViewProjectionMatrix().data(),
-				6 * sizeof(mat4)
-			);
-			cubemapShadowParams.g_cubemapShadowCamNearFar = pointShadowCam->NearFar();
-			cubemapShadowParams.g_cubemapLightWorldPos = pointShadowCam->GetTransform()->GetWorldPosition();
+			CubemapShadowRenderParams cubemapShadowParams = GetCubemapShadowRenderParamsData(shadowCam);
 
 			shadowParams->SetData(cubemapShadowParams);
 		}
