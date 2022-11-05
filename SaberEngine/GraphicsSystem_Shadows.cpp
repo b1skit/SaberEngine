@@ -132,11 +132,8 @@ namespace gr
 			shared_ptr<Camera> pointShadowCam = pointShadowStage->GetStageCamera();
 
 			// Update the param block data:
-			vector<shared_ptr<re::ParameterBlock>> const& pbs = pointShadowStage->GetPermanentParameterBlocks();
-
-			// TODO: Handle this properly. Currently just assuming we'll have 1 PB per cubemap shadow stage, but
-			// otherwise we'll need to ensure we're updating the corrent one/type here
-			SEAssert("DANGER! We expect only a single PB here", pbs.size() == 1);
+			shared_ptr<re::ParameterBlock> shadowParams =
+				pointShadowStage->GetPermanentParameterBlock("CubemapShadowRenderParams");
 
 			CubemapShadowRenderParams cubemapShadowParams;
 			memcpy(&cubemapShadowParams.g_cubemapShadowCam_VP[0][0].x,
@@ -146,7 +143,7 @@ namespace gr
 			cubemapShadowParams.g_cubemapShadowCamNearFar = pointShadowCam->NearFar();
 			cubemapShadowParams.g_cubemapLightWorldPos = pointShadowCam->GetTransform()->GetWorldPosition();
 
-			pbs[0]->SetData(cubemapShadowParams);
+			shadowParams->SetData(cubemapShadowParams);
 		}
 	}
 

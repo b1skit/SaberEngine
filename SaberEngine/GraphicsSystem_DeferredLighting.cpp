@@ -269,9 +269,8 @@ namespace gr
 		iblStageParams.m_depthWriteMode = platform::Context::DepthWriteMode::Disabled;
 
 		const mat4 cubeProjectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-		const mat4 captureViews[] =
+		const mat4 cubemapViews[] =
 		{
-			// TODO: Move this to a common factory somewhere
 			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(1.0f,  0.0f,  0.0f), vec3(0.0f, -1.0f,  0.0f)),
 			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(-1.0f, 0.0f,  0.0f), vec3(0.0f, -1.0f,  0.0f)),
 			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f,  1.0f,  0.0f), vec3(0.0f,  0.0f,  1.0f)),
@@ -321,7 +320,7 @@ namespace gr
 					"numSamples", numSamples, platform::Shader::UniformType::Int, 1);
 				
 				// Construct a camera param block to draw into our cubemap rendering targets:
-				cubemapCamParams.g_view = captureViews[face];
+				cubemapCamParams.g_view = cubemapViews[face];
 				shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
 					"CameraParams",
 					cubemapCamParams,
@@ -380,7 +379,7 @@ namespace gr
 						"numSamples", numSamples, platform::Shader::UniformType::Int, 1);
 					
 					// Construct a camera param block to draw into our cubemap rendering targets:
-					cubemapCamParams.g_view = captureViews[face];
+					cubemapCamParams.g_view = cubemapViews[face];
 					shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
 						"CameraParams",
 						cubemapCamParams,
