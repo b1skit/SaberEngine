@@ -441,9 +441,6 @@
     <None Include="Shaders\glsl\BRDFIntegrationMapShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\glsl\cubeDepthShader.frag">
-      <Filter>Source Files\Shaders\OpenGL</Filter>
-    </None>
     <None Include="Shaders\glsl\cubeDepthShader.geom">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>

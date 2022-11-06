@@ -68,9 +68,7 @@ namespace gr
 		{
 			// Compute the radius: 
 			const float cutoff = 0.05f; // Want the sphere mesh radius where light intensity will be close to zero
-			const float maxColor = glm::max(
-				glm::max(m_colorIntensity.r, m_colorIntensity.g), 
-				m_colorIntensity.b);
+			const float maxColor = glm::max(glm::max(m_colorIntensity.r, m_colorIntensity.g), m_colorIntensity.b);
 			const float radius = glm::sqrt((maxColor / cutoff) - 1.0f);
 
 			// Create the sphere with a radius of 1, and scale it to allow us to instance deferred lights with a single
@@ -88,21 +86,22 @@ namespace gr
 			{
 				gr::Camera::CameraConfig shadowCamConfig;
 				shadowCamConfig.m_fieldOfView		= 90.0f;
-				shadowCamConfig.m_near				= 1.0f;
-				shadowCamConfig.m_aspectRatio		= 1.0f;
-				shadowCamConfig.m_isOrthographic	= false;
+				shadowCamConfig.m_near				= 0.1f;
 				shadowCamConfig.m_far				= radius;
+				shadowCamConfig.m_aspectRatio		= 1.0f;
+				shadowCamConfig.m_isOrthographic	= false;				
 			
 				const uint32_t cubeMapRes = 
 					en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowCubeMapRes");
+
 				m_shadowMap = make_shared<ShadowMap>(
 					m_name,
 					cubeMapRes,
 					cubeMapRes,
 					shadowCamConfig,
 					m_ownerTransform,
-					vec3(0.0f, 0.0f, 0.0f),	// No offset
-					true); // useCubeMap
+					vec3(0.0f, 0.0f, 0.0f),	// shadowCamPosition: No offset
+					true);					// useCubeMap
 
 				m_shadowMap->MinShadowBias() =
 					en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultMinShadowBias");

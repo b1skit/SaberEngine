@@ -293,7 +293,6 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <None Include="Shaders\glsl\blurShader.vert" />
     <None Include="Shaders\glsl\BRDFIntegrationMapShader.frag" />
     <None Include="Shaders\glsl\BRDFIntegrationMapShader.vert" />
-    <None Include="Shaders\glsl\cubeDepthShader.frag" />
     <None Include="Shaders\glsl\cubeDepthShader.geom" />
     <None Include="Shaders\glsl\cubeDepthShader.vert" />
     <None Include="Shaders\glsl\deferredAmbientLightShader.frag" />

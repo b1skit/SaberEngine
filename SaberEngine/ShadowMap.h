@@ -30,8 +30,6 @@ namespace gr
 		ShadowMap(ShadowMap&&) = default;
 		ShadowMap& operator=(ShadowMap const&) = default;
 
-		ShadowMap() = delete;
-
 		// Get the current shadow camera
 		inline std::shared_ptr<gr::Camera> ShadowCamera() { return m_shadowCam; }
 		inline std::shared_ptr<gr::Camera const> ShadowCamera() const { return m_shadowCam; }
@@ -56,6 +54,9 @@ namespace gr
 
 		float m_maxShadowBias = 0.005f;	// Small offsets for shadow comparisons
 		float m_minShadowBias = 0.0005f;
+
+	private:
+		ShadowMap() = delete;
 	};
 }
 

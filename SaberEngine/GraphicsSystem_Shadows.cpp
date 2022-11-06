@@ -45,6 +45,7 @@ namespace
 	}
 }
 
+
 namespace gr
 {
 	ShadowsGraphicsSystem::ShadowsGraphicsSystem(std::string name) : GraphicsSystem(name), NamedObject(name),
@@ -57,7 +58,12 @@ namespace gr
 	{
 		RenderStage::RenderStageParams shadowStageParams;
 		shadowStageParams.m_targetClearMode = platform::Context::ClearTarget::Depth;
-		shadowStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Disabled; // Minimize peter-panning
+		
+		// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
+		// want to be able to place lights inside of geometry (eg. emissive spheres). For now, enable backface culling.
+		// In future, we need to support tagging assets to not cast shadows
+		shadowStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Back;
+
 		shadowStageParams.m_srcBlendMode	= platform::Context::BlendMode::Disabled;
 		shadowStageParams.m_dstBlendMode	= platform::Context::BlendMode::Disabled;
 		shadowStageParams.m_depthTestMode	= platform::Context::DepthTestMode::Less;
@@ -81,7 +87,6 @@ namespace gr
 
 				m_directionalShadowStage.GetTextureTargetSet() = directionalLight->GetShadowMap()->GetTextureTargetSet();
 				// TODO: Target set should be a member of the stage, instead of the shadow map?
-
 
 				m_directionalShadowStage.SetRenderStageParams(shadowStageParams);
 
@@ -109,13 +114,14 @@ namespace gr
 
 				// Cubemap shadow param block:
 				CubemapShadowRenderParams cubemapShadowParams = GetCubemapShadowRenderParamsData(shadowCam);
-
 				shared_ptr<re::ParameterBlock> cubemapShadowPB = re::ParameterBlock::Create(
 					"CubemapShadowRenderParams",
 					cubemapShadowParams,
 					re::ParameterBlock::UpdateType::Mutable,
 					re::ParameterBlock::Lifetime::Permanent);
+
 				shadowStage->AddPermanentParameterBlock(cubemapShadowPB);
+				// TODO: The cubemap shadows param block should be created/maintained by the shadow map object, or the shadow camera
 
 				pipeline.AppendRenderStage(*shadowStage);
 			}

@@ -537,7 +537,7 @@ namespace gr
 					gBufferGS->GetFinalTextureTargetSet().ColorTarget(i).GetTexture(),
 					Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear));
 			}
-			if (pointLights.size() > 0)
+			if (!pointLights.empty())
 			{
 				m_pointlightStage.SetTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[i],

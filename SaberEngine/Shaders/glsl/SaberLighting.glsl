@@ -218,7 +218,7 @@ float GetShadowFactor(vec3 shadowPos, sampler2D shadowMap, float NoL)
 		for (int col = 0; col < gridSize; col++)
 		{
 			depthSum += (biasedDepth < texture(shadowMap, shadowScreen.xy).r ? 1.0 : 0.0);
-			
+
 			shadowScreen.x += g_shadowMapTexelSize.z;
 		}
 
@@ -232,27 +232,57 @@ float GetShadowFactor(vec3 shadowPos, sampler2D shadowMap, float NoL)
 }
 
 
-// Get shadow factor from a cube map:
-float GetShadowFactor(vec3 lightToFrag, samplerCube shadowMap, float NoL)
+// Compute a soft shadow factor from a cube map.
+// Based on Lengyel's Foundations of Game Engine Development Volume 2: Rendering, p164, listing 8.8
+float GetShadowFactor(vec3 lightToFrag, samplerCube shadowMap, const float NoL)
 {
-	float cubemapShadowDepth = texture(shadowMap, lightToFrag).r;
-	cubemapShadowDepth *= g_shadowCamNearFar.y;	// [0,1] -> [0, far]
+	const float cubemapFaceResolution = g_shadowMapTexelSize.x; // Assume our shadow cubemap has square faces...	
 
-	float fragDepth = length(lightToFrag); // We're using linear depth, for now...
+	// Calculate non-linear, projected depth buffer depth from the light-to-fragment direction. The eye depth w.r.t
+	// our cubemap view is the value of the largest component of this direction. Also apply a slope-scale bias.
+	const vec3 absLightToFrag = abs(lightToFrag);
+	const float maxXY = max(absLightToFrag.x, absLightToFrag.y);
+	const float eyeDepth = max(maxXY, absLightToFrag.z);
+	const float biasedEyeDepth = eyeDepth - GetSlopeScaleBias(NoL);
 
-	// Compute a slope-scaled bias:
-	float biasedDepth = fragDepth - GetSlopeScaleBias(NoL);
+	const float nonLinearDepth = 
+		ConvertLinearDepthToNonLinear(g_shadowCamNearFar.x, g_shadowCamNearFar.y, biasedEyeDepth);
 
-	// TODO: PCF cube map: (jitter the ray)
-	// https://www.gamedev.net/forums/topic/674852-pcf-in-cubemap/
+	// Compute a sample offset for PCF shadow samples:
+	const float sampleOffset = 2.0 / cubemapFaceResolution;
 
-	float shadowFactor = 1.0;
-	if (biasedDepth > cubemapShadowDepth)
-	{
-		shadowFactor = 0.0;
-	}
+	// Calculate offset vectors:
+	float offset = sampleOffset * eyeDepth;
+	float dxy = (maxXY > absLightToFrag.z) ? offset : 0.0;
+	float dx = (absLightToFrag.x > absLightToFrag.y) ? dxy : 0.0;
+	vec2 oxy = vec2(offset - dx, dx);
+	vec2 oyz = vec2(offset - dxy, dxy);
 
-	return shadowFactor;
+	vec3 limit = vec3(eyeDepth, eyeDepth, eyeDepth);
+	const float bias = 1.0 / 1024.0; // Epsilon = 1/1024.
+
+	limit.xy -= oxy * bias;
+	limit.yz -= oyz * bias;
+
+	// Get the center sample:
+	float light = texture(shadowMap, lightToFrag).r > nonLinearDepth ? 1.0 : 0.0;
+
+	// Get 4 extra samples at diagonal offsets:
+	lightToFrag.xy -= oxy;
+	lightToFrag.yz -= oyz;
+
+	light += texture(shadowMap, clamp(lightToFrag, -limit, limit)).r > nonLinearDepth ? 1.0 : 0.0;
+	lightToFrag.xy += oxy * 2.0;
+
+	light += texture(shadowMap, clamp(lightToFrag, -limit, limit)).r > nonLinearDepth ? 1.0 : 0.0;
+	lightToFrag.yz += oyz * 2.0;
+
+	light += texture(shadowMap, clamp(lightToFrag, -limit, limit)).r > nonLinearDepth ? 1.0 : 0.0;
+	lightToFrag.xy -= oxy * 2.0;
+
+	light += texture(shadowMap, clamp(lightToFrag, -limit, limit)).r > nonLinearDepth ? 1.0 : 0.0;
+
+	return (light * 0.2);	// Return the average of our 5 samples
 }
 
 

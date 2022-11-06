@@ -58,7 +58,7 @@ mat3 AssembleTBN(const vec3 faceNormal, const vec4 localTangent, const mat4 mode
 }
 
 
-// Convert a MatNormal sampled from a texture to an object-space MatNormal
+// Convert a normal sampled from a texture to an object-space normal
 vec3 ObjectNormalFromTexture(mat3 TBN, vec3 textureNormal)
 {
 	textureNormal	= normalize((textureNormal * 2.0) - 1.0);	// Transform [0,1] -> [-1,1]
@@ -121,6 +121,25 @@ vec3 SphericalUVToWorldDir(vec2 uv)
 	dir.z = sinPhi * cos(theta);
 
 	return normalize(dir);
+}
+
+
+// Convert a non-linear depth buffer value in [0,1] to a linear depth in [near, far] (eye space)
+float ConvertNonLinearDepthToLinear(const float near, const float far, const float nonLinearDepth)
+{
+	float cubemapDepth_NDC = (2.0 * nonLinearDepth) - 1.0;
+	float cubemapDepth_linear = (2.0 * near * far) / (far + near - cubemapDepth_NDC * (far - near));
+
+	return cubemapDepth_linear;
+}
+
+// Convert a linear depth in [near, far] (eye space) to a non-linear depth buffer value in [0,1]
+float ConvertLinearDepthToNonLinear(const float near, const float far, const float depthLinear)
+{
+	const float depthNDC = (((2.0 * near * far) / depthLinear) - far - near) / (near - far);
+	const float depthNonLinear = (depthNDC + 1.0) / 2.0;
+
+	return depthNonLinear;
 }
 
 #endif // SABER_GLOBALS

@@ -118,32 +118,32 @@ namespace gr
 		{
 			m_cubeView.reserve(6);
 
-			m_cubeView.emplace_back( 
-				glm::lookAt(m_transform.GetWorldPosition(), 
-				m_transform.GetWorldPosition() + Transform::WORLD_X,
-				-Transform::WORLD_Y) );
-			m_cubeView.emplace_back( 
-				glm::lookAt(m_transform.GetWorldPosition(), 
+			m_cubeView.emplace_back(glm::lookAt(
+				m_transform.GetWorldPosition(),							// eye
+				m_transform.GetWorldPosition() + Transform::WORLD_X,	// center: Position the camera is looking at
+				-Transform::WORLD_Y));									// Normalized camera up vector
+			m_cubeView.emplace_back(glm::lookAt(
+				m_transform.GetWorldPosition(), 
 				m_transform.GetWorldPosition() - Transform::WORLD_X, 
-				-Transform::WORLD_Y) );
+				-Transform::WORLD_Y));
 
-			m_cubeView.emplace_back( 
-				glm::lookAt(m_transform.GetWorldPosition(), 
+			m_cubeView.emplace_back(glm::lookAt(
+				m_transform.GetWorldPosition(), 
 				m_transform.GetWorldPosition() + Transform::WORLD_Y, 
-					Transform::WORLD_Z) );
-			m_cubeView.emplace_back( 
-				glm::lookAt(m_transform.GetWorldPosition(), 
+					Transform::WORLD_Z));
+			m_cubeView.emplace_back(glm::lookAt(
+				m_transform.GetWorldPosition(), 
 				m_transform.GetWorldPosition() - Transform::WORLD_Y, 
-				-Transform::WORLD_Z) );
+				-Transform::WORLD_Z));
 
-			m_cubeView.emplace_back( 
-				glm::lookAt(m_transform.GetWorldPosition(), 
+			m_cubeView.emplace_back(glm::lookAt(
+				m_transform.GetWorldPosition(), 
 				m_transform.GetWorldPosition() + Transform::WORLD_Z,
-				-Transform::WORLD_Y) );
-			m_cubeView.emplace_back( 
-				glm::lookAt(m_transform.GetWorldPosition(), 
+				-Transform::WORLD_Y));
+			m_cubeView.emplace_back(glm::lookAt(
+				m_transform.GetWorldPosition(), 
 				m_transform.GetWorldPosition() - Transform::WORLD_Z, 
-				-Transform::WORLD_Y) );
+				-Transform::WORLD_Y));
 		}
 
 		// TODO: Recalculate this if the camera has moved

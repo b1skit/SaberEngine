@@ -43,8 +43,8 @@ namespace en
 
 			// Camera defaults:
 			{"defaultFieldOfView",					{60.0f, SettingType::Common}},
-			{"defaultNear",							{1.0f,	SettingType::Common}},// Note: Default used by shadow cameras
-			{"defaultFar",							{100.0f,SettingType::Common}},// Note: Default used by shadow cameras
+			{"defaultNear",							{1.0f,	SettingType::Common}},
+			{"defaultFar",							{100.0f,SettingType::Common}},
 			{"defaultExposure",						{1.0f,	SettingType::Common}},
 
 			// Input parameters:
