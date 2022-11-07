@@ -17,8 +17,6 @@ namespace fr
 		SceneObject(SceneObject&&) = default;
 		~SceneObject() = default;
 
-		SceneObject() = delete;		
-
 		// NamedObject interface:
 		void Update() override {}
 
@@ -29,6 +27,10 @@ namespace fr
 
 	private:
 		std::vector<std::shared_ptr<gr::RenderMesh>> m_renderMeshes;
+
+
+	private:
+		SceneObject() = delete;
 	};
 }
 

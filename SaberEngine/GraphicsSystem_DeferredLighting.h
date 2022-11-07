@@ -21,7 +21,6 @@ namespace gr
 		gr::TextureTargetSet& GetFinalTextureTargetSet() override { return m_ambientStage.GetTextureTargetSet(); }
 		gr::TextureTargetSet const& GetFinalTextureTargetSet() const override { return m_ambientStage.GetTextureTargetSet(); }
 
-	
 
 	private:
 		gr::RenderStage m_ambientStage;

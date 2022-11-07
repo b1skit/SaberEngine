@@ -25,7 +25,7 @@ namespace gr
 
 	void RenderMesh::AddChildMeshPrimitive(shared_ptr<gr::Mesh> mesh)
 	{
-		mesh->GetTransform().SetParent(&m_transform);
+		mesh->GetOwnerTransform() = &m_transform;
 		m_meshPrimitives.push_back(mesh);
 	}
 }

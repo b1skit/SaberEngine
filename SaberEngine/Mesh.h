@@ -91,17 +91,9 @@ namespace gr
 			std::vector<float>& tangents,
 			std::vector<uint32_t>& indices,
 			std::shared_ptr<gr::Material> material,
-			gr::Mesh::MeshParams const& meshParams);
-		
-		// TODO: Force a parent Transform* in the ctor?
+			gr::Mesh::MeshParams const& meshParams,
+			gr::Transform* ownerTransform);		
 		// TODO: Rearrange these args to match shader vertex attribute definition order
-
-		// Constructing a mesh modifies the GPU state; disallow all move semantics for now
-		Mesh() = delete;
-		Mesh(Mesh const& rhs) = delete;
-		Mesh(Mesh&& rhs) noexcept = delete;
-		Mesh& operator=(Mesh const& rhs) = delete;
-		Mesh& operator=(Mesh&& rhs) = delete;
 
 		~Mesh(){ Destroy(); }
 
@@ -115,8 +107,8 @@ namespace gr
 		inline std::shared_ptr<gr::Material> MeshMaterial() { return m_meshMaterial; }
 		inline std::shared_ptr<gr::Material const> const MeshMaterial() const { return m_meshMaterial; }
 
-		inline gr::Transform& GetTransform() { return m_transform; }
-		inline gr::Transform const& GetTransform() const { return m_transform; }
+		inline gr::Transform*& GetOwnerTransform() { return m_ownerTransform; }
+		inline gr::Transform const* GetOwnerTransform() const { return m_ownerTransform; }
 
 		inline Bounds& GetLocalBounds() { return m_localBounds; }
 		inline Bounds const& GetLocalBounds() const { return m_localBounds; }
@@ -150,33 +142,41 @@ namespace gr
 
 		std::vector<uint32_t> m_indices;
 
-		gr::Transform m_transform; // TODO: Remove this once we're using GLTF
+		gr::Transform* m_ownerTransform;
 
 		// TODO: Move mesh bounds to the RenderMesh object
 		Bounds m_localBounds; // Mesh bounds, in local space		
 		void ComputeBounds(); // Computes m_localBounds
 
 		void ComputeDataHash() override;
+
+	private:
+		// Constructing a mesh modifies the GPU state; disallow all copy/move semantics
+		Mesh() = delete;
+		Mesh(Mesh const& rhs) = delete;
+		Mesh(Mesh&& rhs) noexcept = delete;
+		Mesh& operator=(Mesh const& rhs) = delete;
+		Mesh& operator=(Mesh&& rhs) = delete;
 	};
 
 	/******************************************************************************************************************/
 
 	namespace meshfactory
 	{
-		extern std::shared_ptr<Mesh> CreateCube(std::shared_ptr<gr::Material> newMeshMaterial = nullptr);
+		extern std::shared_ptr<Mesh> CreateCube();
+
+		extern std::shared_ptr<Mesh> CreateFullscreenQuad(bool onNearPlane); // On far plane by default
 
 		extern std::shared_ptr<Mesh> CreateQuad(
 			glm::vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,
 			glm::vec3 tr /*= vec3(0.5f, 0.5f, 0.0f)*/,
 			glm::vec3 bl /*= vec3(-0.5f, -0.5f, 0.0f)*/,
-			glm::vec3 br /*= vec3(0.5f, -0.5f, 0.0f)*/,
-			std::shared_ptr<gr::Material> newMeshMaterial = nullptr);
+			glm::vec3 br /*= vec3(0.5f, -0.5f, 0.0f)*/);
 
 		extern std::shared_ptr<Mesh> CreateSphere(
 			float radius = 0.5f,
 			size_t numLatSlices = 16,
-			size_t numLongSlices = 16,
-			std::shared_ptr<gr::Material> newMeshMaterial = nullptr);
+			size_t numLongSlices = 16);
 	}
 }
 

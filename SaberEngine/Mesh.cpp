@@ -5,6 +5,7 @@
 #include <glm/gtc/constants.hpp>
 
 #include "Mesh.h"
+#include "CoreEngine.h"
 
 using gr::Transform;
 using glm::pi;
@@ -20,8 +21,8 @@ using std::shared_ptr;
 
 namespace gr
 {
-	// Returns a Bounds, transformed from local space using transform
-	Bounds Bounds::GetTransformedBounds(mat4 const& transform)
+	// Returns a Bounds, transformed from local space using worldMatrix
+	Bounds Bounds::GetTransformedBounds(mat4 const& worldMatrix)
 	{
 		// Temp: Ensure the bounds are 3D here, before we do any calculations
 		Make3Dimensional();
@@ -41,7 +42,7 @@ namespace gr
 
 		for (size_t i = 0; i < 8; i++)
 		{
-			points[i] = transform * points[i];
+			points[i] = worldMatrix * points[i];
 
 			if (points[i].x < result.m_xMin)
 			{
@@ -109,10 +110,12 @@ namespace gr
 		vector<float>& tangents,
 		vector<uint32_t>& indices,
 		shared_ptr<gr::Material> material,
-		MeshParams const& meshParams) : NamedObject(name),
+		MeshParams const& meshParams,
+		Transform* ownerTransform) : NamedObject(name),
 			m_platformParams(nullptr),
 			m_meshMaterial(material),
-			m_params(meshParams)
+			m_params(meshParams),
+			m_ownerTransform(ownerTransform)
 	{
 		m_positions		= move(positions);
 		m_normals		= move(normals);
@@ -226,7 +229,7 @@ namespace gr
 
 	namespace meshfactory
 	{
-		inline std::shared_ptr<Mesh> CreateCube(std::shared_ptr<gr::Material> newMeshMaterial /*= nullptr*/)
+		inline std::shared_ptr<Mesh> CreateCube()
 		{
 			// Note: Using a RHCS
 			const vector<vec3> positions
@@ -391,16 +394,86 @@ namespace gr
 				*reinterpret_cast<vector<float>*>(&assembledUVs),
 				*reinterpret_cast<vector<float>*>(&assembledTangents),
 				cubeIndices, 
-				newMeshMaterial,
-				Mesh::MeshParams());
+				nullptr,
+				Mesh::MeshParams(),
+				nullptr);
 		}
 
 
-		inline std::shared_ptr<Mesh> CreateQuad(vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,
+		inline std::shared_ptr<Mesh> CreateFullscreenQuad(bool onNearPlane) // On far plane by default
+		{
+			float zDepth;
+			switch (en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI())
+			{
+			case platform::RenderingAPI::OpenGL:
+			{
+				if (onNearPlane) zDepth = -1.0f;
+				else zDepth = 1.f;
+			}
+			break;
+			case platform::RenderingAPI::DX12:
+			{
+				SEAssertF("DX12 is not yet supported");
+			}
+			break;
+			default:
+			{
+				SEAssertF("Invalid rendering API argument received");
+			}
+			}
+
+			#if 0
+			return CreateQuad(nullptr,
+				vec3(-1.0f, 1.0f,	zDepth),	// TL
+				vec3(1.0f,	1.0f,	zDepth),	// TR
+				vec3(-1.0f, -1.0f,	zDepth),	// BL
+				vec3(1.0f,	-1.0f,	zDepth));	// BR
+			#endif
+
+			// Create a triangle twice the size of clip space, and let the clipping hardware trim it to size:
+			std::vector<vec2> uvs
+			{
+				vec2(0.f, 2.f), // tl
+				vec2(0.f, 0.f), // bl
+				vec2(2.f, 0.f)  // br
+			};
+
+			const vec3 tl = vec3(-1.f, 3.f, zDepth);
+			const vec3 bl = vec3(-1.f, -1.f, zDepth);
+			const vec3 br = vec3(3.0f, -1.0f, zDepth);
+
+			std::vector<vec3> positions = {tl, bl, br};
+			const vec3 tangent = normalize(vec3(br - bl));
+			const vec3 bitangent = normalize(vec3(tl - bl));
+			const vec3 normal = normalize(cross(tangent, bitangent));
+			const vec4 redColor = vec4(1, 0, 0, 1); // Assign a bright red color by default
+
+			std::vector<vec3> normals(3, normal);
+			std::vector<vec4> colors(3, redColor);
+			std::vector<vec3> tangents(3, tangent); // TODO: Populate this
+
+			std::vector<uint32_t> triIndices {0, 1, 2}; // Note: CCW winding
+			
+			return std::make_shared<Mesh>(
+				"optimizedFullscreenQuad",
+				*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
+				*reinterpret_cast<vector<float>*>(&normals),
+				*reinterpret_cast<vector<float>*>(&colors),
+				*reinterpret_cast<vector<float>*>(&uvs),
+				*reinterpret_cast<vector<float>*>(&tangents),
+				triIndices,
+				nullptr,
+				Mesh::MeshParams(),
+				nullptr);
+		}
+
+
+		// TODO: Most of the meshfactory functions are still hard-coded for OpenGL spaces
+		inline std::shared_ptr<Mesh> CreateQuad(
+			vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,
 			vec3 tr /*= vec3(0.5f, 0.5f, 0.0f)*/,
 			vec3 bl /*= vec3(-0.5f, -0.5f, 0.0f)*/,
-			vec3 br /*= vec3(0.5f, -0.5f, 0.0f)*/,
-			std::shared_ptr<gr::Material> newMeshMaterial /*= nullptr*/)
+			vec3 br /*= vec3(0.5f, -0.5f, 0.0f)*/)
 		{
 			vec3 tangent = normalize(vec3(br - bl));
 			vec3 bitangent = normalize(vec3(tl - bl));
@@ -417,10 +490,8 @@ namespace gr
 
 			std::vector<uint32_t> quadIndices
 			{
-				// TL face:
-				0, 1, 2,
-				// BR face:
-				2, 1, 3
+				0, 1, 2,	// TL face
+				2, 1, 3		// BR face
 			}; // Note: CCW winding
 
 			// Assemble the vertex data streams:
@@ -429,7 +500,7 @@ namespace gr
 			std::vector<vec4> colors(4, redColor);
 			std::vector<vec3> tangents(positions.size()); // TODO: Populate this
 
-			// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
+			// It's easier to reason about geometry in vecN types; cast to float now we're done
 			return std::make_shared<Mesh>(
 				"quad", 
 				*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
@@ -438,18 +509,16 @@ namespace gr
 				*reinterpret_cast<vector<float>*>(&uvs),
 				*reinterpret_cast<vector<float>*>(&tangents),
 				quadIndices, 
-				newMeshMaterial,
-				Mesh::MeshParams());
-
-			return nullptr;
+				nullptr,
+				Mesh::MeshParams(),
+				nullptr);
 		}
 
 
 		inline std::shared_ptr<Mesh> CreateSphere(
 			float radius /*= 0.5f*/,
 			size_t numLatSlices /*= 16*/,
-			size_t numLongSlices /*= 16*/,
-			std::shared_ptr<gr::Material> newMeshMaterial /*= nullptr*/)
+			size_t numLongSlices /*= 16*/)
 		{
 			// NOTE: Currently, this function does not generate valid tangents for any verts. Some UV's are distorted,
 			// as we're using merged vertices. TODO: Fix this
@@ -625,10 +694,10 @@ namespace gr
 				*reinterpret_cast<vector<float>*>(&colors),
 				*reinterpret_cast<vector<float>*>(&uvs),
 				*reinterpret_cast<vector<float>*>(&tangents),
-				indices, newMeshMaterial,
-				Mesh::MeshParams());
-
-			return nullptr;
+				indices, 
+				nullptr,
+				Mesh::MeshParams(),
+				nullptr);
 		}
 	} // meshfactory
 } // gr

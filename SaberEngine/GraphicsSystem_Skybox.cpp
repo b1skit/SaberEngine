@@ -30,13 +30,7 @@ namespace gr
 		m_skyboxStage("Skybox stage"),
 		m_skyTexture(nullptr)
 	{
-		m_screenAlignedQuad = gr::meshfactory::CreateQuad
-		(
-			vec3(-1.0f, 1.0f, 1.0f), // z == 1.0f, since we're in clip space (and camera's negative Z has been reversed)
-			vec3(1.0f, 1.0f, 1.0f),
-			vec3(-1.0f, -1.0f, 1.0f),
-			vec3(1.0f, -1.0f, 1.0f)
-		); // TODO: Simplify this interface
+		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(false);
 	}
 
 

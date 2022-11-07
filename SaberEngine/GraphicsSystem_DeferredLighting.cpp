@@ -132,13 +132,7 @@ namespace gr
 		m_BRDF_integrationMap(nullptr)
 	{
 		// Create a fullscreen quad, for reuse when building batches:
-		m_screenAlignedQuad = gr::meshfactory::CreateQuad	// Align along near plane
-		(
-			vec3(-1.0f, 1.0f, -1.0f),	// TL
-			vec3(1.0f, 1.0f, -1.0f),	// TR
-			vec3(-1.0f, -1.0f, -1.0f),	// BL
-			vec3(1.0f, -1.0f, -1.0f)	// BR
-		);
+		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(true);
 
 		// Cube mesh, for rendering of IBL cubemaps
 		m_cubeMesh = gr::meshfactory::CreateCube();
@@ -612,8 +606,8 @@ namespace gr
 		// Pointlight stage batches:
 		vector<shared_ptr<Light>> const& pointLights = CoreEngine::GetSceneManager()->GetSceneData()->GetPointLights();
 		for (shared_ptr<Light> const pointlight : pointLights)
-		{			
-			Batch pointlightBatch = Batch(pointlight->DeferredMesh().get(), nullptr, nullptr);
+		{
+			Batch pointlightBatch = Batch(pointlight->DeferredMesh(), nullptr, nullptr);
 
 			// Point light params:
 			LightParams pointlightParams = GetLightParamData(pointlight);

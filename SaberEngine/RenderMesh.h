@@ -21,12 +21,8 @@ namespace gr
 		RenderMesh& operator=(RenderMesh const&) = default;
 		~RenderMesh() = default;	
 
-		RenderMesh() = delete;
-
 		// Getters/Setters:
-		inline gr::Transform& GetTransform() { return m_transform; } // BEWARE: DOESN'T UPDATE CHILD MESH TRANSFORMS
-		// -> NOT A RISK ONCE WE REMOVE TRANSFORMS FROM MESH PRIMITIVES
-		// -> CALLING AddChildMeshPrimitive SETS CHILD MESH PRIMITIVE TRANSFORMS
+		inline gr::Transform& GetTransform() { return m_transform; }
 		inline gr::Transform const& GetTransform() const { return m_transform; }
 
 		void AddChildMeshPrimitive(std::shared_ptr<gr::Mesh> mesh);
@@ -34,7 +30,11 @@ namespace gr
 
 
 	private:
-		std::vector<std::shared_ptr<gr::Mesh>> m_meshPrimitives;  // Pointers to Mesh objects held by the scene manager
+		std::vector<std::shared_ptr<gr::Mesh>> m_meshPrimitives;
 		gr::Transform m_transform;
+
+
+	private:
+		RenderMesh() = delete;
 	};
 }

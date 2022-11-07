@@ -822,7 +822,8 @@ namespace
 					tangents,
 					indices,
 					material,
-					meshParams));
+					meshParams,
+					nullptr));
 
 				SetTransformValues(current, &parent->GetRenderMeshes().back()->GetTransform());
 			}
@@ -1041,7 +1042,7 @@ namespace fr
 	void SceneData::UpdateSceneBounds(std::shared_ptr<gr::Mesh> mesh)
 	{
 		// Update scene (world) bounds to contain the new mesh:
-		Bounds meshWorldBounds(mesh->GetLocalBounds().GetTransformedBounds(mesh->GetTransform().GetWorldMatrix()));
+		Bounds meshWorldBounds(mesh->GetLocalBounds().GetTransformedBounds(mesh->GetOwnerTransform()->GetWorldMatrix()));
 
 		if (meshWorldBounds.xMin() < m_sceneWorldSpaceBounds.xMin())
 		{
