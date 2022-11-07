@@ -165,7 +165,12 @@ namespace gr
 	{
 		extern std::shared_ptr<Mesh> CreateCube();
 
-		extern std::shared_ptr<Mesh> CreateFullscreenQuad(bool onNearPlane); // On far plane by default
+		enum class ZLocation
+		{
+			Near,
+			Far
+		};
+		extern std::shared_ptr<Mesh> CreateFullscreenQuad(ZLocation zLocation);
 
 		extern std::shared_ptr<Mesh> CreateQuad(
 			glm::vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,

@@ -400,15 +400,21 @@ namespace gr
 		}
 
 
-		inline std::shared_ptr<Mesh> CreateFullscreenQuad(bool onNearPlane) // On far plane by default
+		inline std::shared_ptr<Mesh> CreateFullscreenQuad(ZLocation zLocation) // On far plane by default
 		{
 			float zDepth;
 			switch (en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI())
 			{
 			case platform::RenderingAPI::OpenGL:
 			{
-				if (onNearPlane) zDepth = -1.0f;
-				else zDepth = 1.f;
+				switch (zLocation)
+				{
+				case ZLocation::Near: zDepth = -1.0f;
+					break;
+				case ZLocation::Far: zDepth = 1.f;
+					break;
+				default: SEAssertF("Invalid Z location");
+				}
 			}
 			break;
 			case platform::RenderingAPI::DX12:

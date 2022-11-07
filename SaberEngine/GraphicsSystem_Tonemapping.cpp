@@ -21,7 +21,7 @@ namespace gr
 	TonemappingGraphicsSystem::TonemappingGraphicsSystem(std::string name) : GraphicsSystem(name), NamedObject(name),
 		m_tonemappingStage("Tonemapping stage")
 	{
-		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(true);
+		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Near);
 	}
 
 
