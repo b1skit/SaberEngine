@@ -82,7 +82,7 @@ namespace util
 		// Convert indexed triangle lists to non-indexed:
 		if (isIndexed)
 		{
-			LOG("Mesh \"%s\" uses triangle indexing, de-indexing...", meshData->m_name.c_str());
+			LOG("MeshPrimitive \"%s\" uses triangle indexing, de-indexing...", meshData->m_name.c_str());
 			RemoveTriangleIndexing(meshData);
 		}
 
@@ -92,18 +92,18 @@ namespace util
 		// Build any missing attributes:
 		if (!hasUVs)
 		{
-			LOG("Mesh \"%s\" is missing UVs, generating a simple set...", meshData->m_name.c_str());
+			LOG("MeshPrimitive \"%s\" is missing UVs, generating a simple set...", meshData->m_name.c_str());
 			BuildSimpleTriangleUVs(meshData);
 		}
 		if (!hasNormals)
 		{
-			LOG("Mesh \"%s\" is missing normals, flat normals will be generated...", meshData->m_name.c_str());
+			LOG("MeshPrimitive \"%s\" is missing normals, flat normals will be generated...", meshData->m_name.c_str());
 
 			BuildFlatNormals(meshData);
 		}
 		if (!hasTangents)
 		{
-			LOG("Mesh \"%s\" is missing tangents, they will be generated...", meshData->m_name.c_str());
+			LOG("MeshPrimitive \"%s\" is missing tangents, they will be generated...", meshData->m_name.c_str());
 
 			m_context.m_pUserData = meshData;
 			tbool result = genTangSpaceDefault(&this->m_context);
@@ -117,7 +117,7 @@ namespace util
 			WeldUnindexedTriangles(meshData);
 		}
 
-		LOG("Mesh \"%s\" now has %d unique vertices", meshData->m_name.c_str(), meshData->m_positions->size());
+		LOG("MeshPrimitive \"%s\" now has %d unique vertices", meshData->m_name.c_str(), meshData->m_positions->size());
 	}
 
 
@@ -420,7 +420,7 @@ namespace util
 		MeshData* meshData = static_cast<MeshData*> (m_context->m_pUserData);
 
 		SEAssert("Only triangular faces are currently supported", 
-			meshData->m_meshParams->m_drawMode == gr::Mesh::DrawMode::Triangles);
+			meshData->m_meshParams->m_drawMode == gr::MeshPrimitive::DrawMode::Triangles);
 		
 		return 3;
 	}

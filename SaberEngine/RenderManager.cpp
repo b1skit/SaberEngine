@@ -23,7 +23,7 @@ using gr::SkyboxGraphicsSystem;
 using gr::BloomGraphicsSystem;
 using gr::TonemappingGraphicsSystem;
 using gr::Transform;
-using gr::Mesh;
+using gr::MeshPrimitive;
 using re::Batch;
 using en::CoreEngine;
 using std::shared_ptr;
@@ -109,7 +109,7 @@ namespace re
 
 		shared_ptr<fr::SceneData const> const sceneData = en::CoreEngine::GetSceneManager()->GetSceneData();
 
-		std::vector<shared_ptr<gr::Mesh>> const& sceneMeshes = sceneData->GetMeshes();
+		std::vector<shared_ptr<gr::MeshPrimitive>> const& sceneMeshes = sceneData->GetMeshPrimitives();
 		if (sceneMeshes.empty())
 		{
 			return;
@@ -118,10 +118,10 @@ namespace re
 		// Build batches from scene meshes:
 		// TODO: Build this by traversing the scene hierarchy once a scene graph is implemented
 		std::vector<Batch> unmergedBatches;
-		for (shared_ptr<gr::Mesh const> const mesh : sceneData->GetMeshes())
+		for (shared_ptr<gr::MeshPrimitive const> const meshPrimitive : sceneData->GetMeshPrimitives())
 		{
 			unmergedBatches.emplace_back(
-				mesh.get(), mesh->MeshMaterial().get(), mesh->MeshMaterial()->GetShader().get());
+				meshPrimitive.get(), meshPrimitive->MeshMaterial().get(), meshPrimitive->MeshMaterial()->GetShader().get());
 		}
 
 		// Sort the batches:

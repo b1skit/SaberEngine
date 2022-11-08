@@ -21,7 +21,7 @@ namespace fr
 		void Update() override {}
 
 		// Getters/Setters:
-		void AddMeshPrimitive(std::shared_ptr<gr::Mesh> meshPrimitive);
+		void AddMeshPrimitive(std::shared_ptr<gr::MeshPrimitive> meshPrimitive);
 		inline std::vector<std::shared_ptr<gr::RenderMesh>> const& GetRenderMeshes() const { return m_renderMeshes; }
 
 

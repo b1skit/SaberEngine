@@ -6,7 +6,7 @@
 #include "mikktspace.h"
 #include <glm/glm.hpp>
 
-#include "Mesh.h"
+#include "MeshPrimitive.h"
 
 
 namespace util
@@ -18,7 +18,7 @@ class VertexAttributeBuilder
 		struct MeshData
 		{
 		std::string const& m_name; // For debug spew...
-		gr::Mesh::MeshParams* m_meshParams;
+		gr::MeshPrimitive::MeshPrimitiveParams* m_meshParams;
 		std::vector<uint32_t>* m_indices;
 		std::vector<glm::vec3>* m_positions;
 		std::vector<glm::vec3>* m_normals;

@@ -10,8 +10,8 @@
 #include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
 
-#include "Mesh_Platform.h"
-#include "Mesh_OpenGL.h"
+#include "MeshPrimitive_Platform.h"
+#include "MeshPrimitive_OpenGL.h"
 
 #include "Texture_Platform.h"
 #include "Texture_OpenGL.h"
@@ -60,10 +60,10 @@ namespace platform
 			platform::RenderManager::Initialize		= &opengl::RenderManager::Initialize;
 			platform::RenderManager::Render			= &opengl::RenderManager::Render;
 			
-			// Mesh:
-			platform::Mesh::Create	= &opengl::Mesh::Create;
-			platform::Mesh::Destroy	= &opengl::Mesh::Destroy;
-			platform::Mesh::Bind	= &opengl::Mesh::Bind;
+			// MeshPrimitive:
+			platform::MeshPrimitive::Create	= &opengl::MeshPrimitive::Create;
+			platform::MeshPrimitive::Destroy	= &opengl::MeshPrimitive::Destroy;
+			platform::MeshPrimitive::Bind	= &opengl::MeshPrimitive::Bind;
 
 			// Texture:
 			platform::Texture::Create			= &opengl::Texture::Create;

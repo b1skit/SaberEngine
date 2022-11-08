@@ -9,7 +9,7 @@
 #include "Camera.h"
 #include "TextureTarget.h"
 #include "Context_Platform.h"
-#include "Mesh.h"
+#include "MeshPrimitive.h"
 #include "NamedObject.h"
 #include "ParameterBlock.h"
 #include "Batch.h"

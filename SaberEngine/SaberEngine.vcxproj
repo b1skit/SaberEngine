@@ -204,11 +204,11 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="LogManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Material.cpp" />
-    <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="MeshPrimitive.cpp" />
     <ClCompile Include="Context_OpenGL.cpp" />
     <ClCompile Include="PlayerObject.cpp" />
-    <ClCompile Include="Mesh_OpenGL.cpp" />
-    <ClCompile Include="Mesh_Platform.cpp" />
+    <ClCompile Include="MeshPrimitive_OpenGL.cpp" />
+    <ClCompile Include="MeshPrimitive_Platform.cpp" />
     <ClCompile Include="Context.cpp" />
     <ClCompile Include="RenderMesh.cpp" />
     <ClCompile Include="RenderManager.cpp" />
@@ -242,7 +242,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="GraphicsSystem_Shadows.h" />
     <ClInclude Include="GraphicsSystem_Skybox.h" />
     <ClInclude Include="GraphicsSystem_Tonemapping.h" />
-    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="MeshPrimitive.h" />
     <ClInclude Include="RenderManager_OpenGL.h" />
     <ClInclude Include="RenderManager_Platform.h" />
     <ClInclude Include="RenderPipeline.h" />
@@ -254,8 +254,8 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="Shader_Platform.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureTarget.h" />
-    <ClInclude Include="Mesh_OpenGL.h" />
-    <ClInclude Include="Mesh_Platform.h" />
+    <ClInclude Include="MeshPrimitive_OpenGL.h" />
+    <ClInclude Include="MeshPrimitive_Platform.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="Context_OpenGL.h" />
     <ClInclude Include="Context.h" />

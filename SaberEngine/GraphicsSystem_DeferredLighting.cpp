@@ -7,7 +7,7 @@
 #include "ShadowMap.h"
 #include "RenderStage.h"
 #include "GraphicsSystem_GBuffer.h"
-#include "Mesh.h"
+#include "MeshPrimitive.h"
 #include "Batch.h"
 #include "ParameterBlock.h"
 
@@ -135,7 +135,7 @@ namespace gr
 		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Near);
 
 		// Cube mesh, for rendering of IBL cubemaps
-		m_cubeMesh = gr::meshfactory::CreateCube();
+		m_cubeMeshPrimitive = gr::meshfactory::CreateCube();
 	}
 
 
@@ -281,7 +281,7 @@ namespace gr
 		cubemapCamParams.g_cameraWPos = vec3(0.f, 0.f, 0.f); // Unused
 
 		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
-		Batch cubeMeshBatch = Batch(m_cubeMesh.get(), nullptr, nullptr);
+		Batch cubeMeshBatch = Batch(m_cubeMeshPrimitive.get(), nullptr, nullptr);
 
 		const string equilinearToCubemapShaderName =
 			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("equilinearToCubemapBlitShaderName");

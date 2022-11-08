@@ -15,7 +15,7 @@
 namespace gr
 {
 	class Camera;
-	class Mesh;
+	class MeshPrimitive;
 	class Shader;
 	class ShadowMap;
 }

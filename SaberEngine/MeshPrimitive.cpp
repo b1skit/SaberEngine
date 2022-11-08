@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
-#include "Mesh.h"
+#include "MeshPrimitive.h"
 #include "CoreEngine.h"
 
 
@@ -22,7 +22,7 @@ namespace gr
 	using std::shared_ptr;
 
 
-	Mesh::Mesh(
+	MeshPrimitive::MeshPrimitive(
 		string const& name,
 		vector<float>& positions,
 		vector<float>& normals,
@@ -31,7 +31,7 @@ namespace gr
 		vector<float>& tangents,
 		vector<uint32_t>& indices,
 		shared_ptr<gr::Material> material,
-		MeshParams const& meshParams,
+		MeshPrimitiveParams const& meshParams,
 		Transform* ownerTransform) : NamedObject(name),
 			m_platformParams(nullptr),
 			m_meshMaterial(material),
@@ -47,13 +47,13 @@ namespace gr
 
 		ComputeBounds(); // Compute m_localBounds
 
-		platform::Mesh::Create(*this); // Platform-specific setup
+		platform::MeshPrimitive::Create(*this); // Platform-specific setup
 
 		ComputeDataHash();
 	}
 
 
-	void Mesh::Destroy()
+	void MeshPrimitive::Destroy()
 	{
 		m_positions.clear();
 		m_normals.clear();
@@ -64,18 +64,18 @@ namespace gr
 
 		m_meshMaterial = nullptr;
 
-		platform::Mesh::Destroy(*this); // Platform-specific destruction
+		platform::MeshPrimitive::Destroy(*this); // Platform-specific destruction
 		m_platformParams = nullptr;
 	}
 
 
-	void Mesh::Bind(bool doBind) const
+	void MeshPrimitive::Bind(bool doBind) const
 	{
-		platform::Mesh::Bind(m_platformParams.get(), doBind);
+		platform::MeshPrimitive::Bind(m_platformParams.get(), doBind);
 	}
 
 
-	void Mesh::ComputeBounds()
+	void MeshPrimitive::ComputeBounds()
 	{
 		for (size_t i = 0; i < m_positions.size(); i+=3) // Stride of 3
 		{
@@ -111,7 +111,7 @@ namespace gr
 	}
 
 
-	void Mesh::ComputeDataHash()
+	void MeshPrimitive::ComputeDataHash()
 	{
 		// Material:
 		if (m_meshMaterial)
@@ -119,8 +119,8 @@ namespace gr
 			AddDataBytesToHash(&m_meshMaterial->GetName()[0], m_meshMaterial->GetName().length() * sizeof(char));
 		}
 
-		// Mesh params:
-		AddDataBytesToHash(&m_params, sizeof(MeshParams));
+		// MeshPrimitive params:
+		AddDataBytesToHash(&m_params, sizeof(MeshPrimitiveParams));
 
 		// Vertex data streams:
 		AddDataBytesToHash(&m_positions[0], sizeof(float) * m_positions.size());
@@ -150,7 +150,7 @@ namespace gr
 
 	namespace meshfactory
 	{
-		inline std::shared_ptr<Mesh> CreateCube()
+		inline std::shared_ptr<MeshPrimitive> CreateCube()
 		{
 			// Note: Using a RHCS
 			const vector<vec3> positions
@@ -307,7 +307,7 @@ namespace gr
 
 			
 			// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
-			return std::make_shared<Mesh>(
+			return std::make_shared<MeshPrimitive>(
 				"cube", 
 				*reinterpret_cast<vector<float>*>(&assembledPositions),	// Cast our vector<vec3> to vector<float>
 				*reinterpret_cast<vector<float>*>(&assembledNormals),
@@ -316,12 +316,12 @@ namespace gr
 				*reinterpret_cast<vector<float>*>(&assembledTangents),
 				cubeIndices, 
 				nullptr,
-				Mesh::MeshParams(),
+				MeshPrimitive::MeshPrimitiveParams(),
 				nullptr);
 		}
 
 
-		inline std::shared_ptr<Mesh> CreateFullscreenQuad(ZLocation zLocation) // On far plane by default
+		inline std::shared_ptr<MeshPrimitive> CreateFullscreenQuad(ZLocation zLocation) // On far plane by default
 		{
 			float zDepth;
 			switch (en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI())
@@ -381,7 +381,7 @@ namespace gr
 
 			std::vector<uint32_t> triIndices {0, 1, 2}; // Note: CCW winding
 			
-			return std::make_shared<Mesh>(
+			return std::make_shared<MeshPrimitive>(
 				"optimizedFullscreenQuad",
 				*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
 				*reinterpret_cast<vector<float>*>(&normals),
@@ -390,13 +390,13 @@ namespace gr
 				*reinterpret_cast<vector<float>*>(&tangents),
 				triIndices,
 				nullptr,
-				Mesh::MeshParams(),
+				MeshPrimitive::MeshPrimitiveParams(),
 				nullptr);
 		}
 
 
 		// TODO: Most of the meshfactory functions are still hard-coded for OpenGL spaces
-		inline std::shared_ptr<Mesh> CreateQuad(
+		inline std::shared_ptr<MeshPrimitive> CreateQuad(
 			vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,
 			vec3 tr /*= vec3(0.5f, 0.5f, 0.0f)*/,
 			vec3 bl /*= vec3(-0.5f, -0.5f, 0.0f)*/,
@@ -428,7 +428,7 @@ namespace gr
 			std::vector<vec3> tangents(positions.size()); // TODO: Populate this
 
 			// It's easier to reason about geometry in vecN types; cast to float now we're done
-			return std::make_shared<Mesh>(
+			return std::make_shared<MeshPrimitive>(
 				"quad", 
 				*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
 				*reinterpret_cast<vector<float>*>(&normals),
@@ -437,12 +437,12 @@ namespace gr
 				*reinterpret_cast<vector<float>*>(&tangents),
 				quadIndices, 
 				nullptr,
-				Mesh::MeshParams(),
+				MeshPrimitive::MeshPrimitiveParams(),
 				nullptr);
 		}
 
 
-		inline std::shared_ptr<Mesh> CreateSphere(
+		inline std::shared_ptr<MeshPrimitive> CreateSphere(
 			float radius /*= 0.5f*/,
 			size_t numLatSlices /*= 16*/,
 			size_t numLongSlices /*= 16*/)
@@ -614,7 +614,7 @@ namespace gr
 			indices[currentIndex - 1] = (uint32_t)(numVerts - numLatSlices - 1); // Wrap the last edge back to the start		
 
 			// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
-			return make_shared<Mesh>(
+			return make_shared<MeshPrimitive>(
 				"sphere", 
 				*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
 				*reinterpret_cast<vector<float>*>(&normals),
@@ -623,7 +623,7 @@ namespace gr
 				*reinterpret_cast<vector<float>*>(&tangents),
 				indices, 
 				nullptr,
-				Mesh::MeshParams(),
+				MeshPrimitive::MeshPrimitiveParams(),
 				nullptr);
 		}
 	} // meshfactory

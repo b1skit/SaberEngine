@@ -4,7 +4,7 @@
 #include <vector>
 #include <unordered_map>
 
-#include "Mesh.h"
+#include "MeshPrimitive.h"
 #include "Updateable.h"
 #include "NamedObject.h"
 
@@ -58,7 +58,7 @@ namespace fr
 		inline std::vector<std::shared_ptr<en::Updateable>> const& GetUpdateables() const { return m_updateables; }
 
 		// Meshes:
-		inline std::vector<std::shared_ptr<gr::Mesh>> const& GetMeshes() const { return m_meshes; }
+		inline std::vector<std::shared_ptr<gr::MeshPrimitive>> const& GetMeshPrimitives() const { return m_meshPrimitives; }
 
 		// Textures:
 		void AddUniqueTexture(std::shared_ptr<gr::Texture>& newTexture); // Note: newTexture may be modified
@@ -76,12 +76,12 @@ namespace fr
 
 	private:
 		void AddRenderMesh(std::shared_ptr<gr::RenderMesh> newRenderMesh);
-		void UpdateSceneBounds(std::shared_ptr<gr::Mesh> newMesh);
+		void UpdateSceneBounds(std::shared_ptr<gr::MeshPrimitive> newMesh);
 
 	private:
 		std::vector<std::shared_ptr<en::Updateable>> m_updateables;
 		std::vector<std::shared_ptr<gr::RenderMesh>> m_renderMeshes;
-		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;
+		std::vector<std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
 
 		std::unordered_map<size_t, std::shared_ptr<gr::Texture>> m_textures;
 		std::unordered_map<size_t, std::shared_ptr<gr::Material>> m_materials;

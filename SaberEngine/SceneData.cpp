@@ -20,7 +20,7 @@
 #include "Camera.h"
 #include "SceneObject.h"
 #include "RenderMesh.h"
-#include "Mesh.h"
+#include "MeshPrimitive.h"
 #include "Transform.h"
 #include "Material.h"
 #include "Light.h"
@@ -33,7 +33,7 @@ using gr::Camera;
 using gr::Light;
 using gr::Texture;
 using gr::Material;
-using gr::Mesh;
+using gr::MeshPrimitive;
 using gr::Bounds;
 using gr::Transform;
 using gr::Light;
@@ -614,7 +614,7 @@ namespace
 		}
 		else // Node has a mesh: Create a mesh primitive and attach it to a RenderMesh
 		{
-			// Add each Mesh primitive as a child of the SceneObject's RenderMesh:
+			// Add each MeshPrimitive as a child of the SceneObject's RenderMesh:
 			for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
 			{
 				SEAssert(
@@ -622,42 +622,42 @@ namespace
 					current->mesh->primitives[primitive].type == cgltf_primitive_type::cgltf_primitive_type_triangles);
 
 				// Populate the mesh params:
-				Mesh::MeshParams meshParams;
+				MeshPrimitive::MeshPrimitiveParams meshPrimitiveParams;
 				switch (current->mesh->primitives[primitive].type)
 				{
 					case cgltf_primitive_type::cgltf_primitive_type_points:
 					{
-						meshParams.m_drawMode = Mesh::DrawMode::Points; 
+						meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::Points; 
 					}
 					break;
 					case cgltf_primitive_type::cgltf_primitive_type_lines:
 					{
-						meshParams.m_drawMode = Mesh::DrawMode::Lines;
+						meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::Lines;
 					}
 					break;
 					case cgltf_primitive_type::cgltf_primitive_type_line_loop:
 					{
-						meshParams.m_drawMode = Mesh::DrawMode::LineLoop;
+						meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::LineLoop;
 					}
 					break;
 					case cgltf_primitive_type::cgltf_primitive_type_line_strip:
 					{
-						meshParams.m_drawMode = Mesh::DrawMode::LineStrip;
+						meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::LineStrip;
 					}
 					break;
 					case cgltf_primitive_type::cgltf_primitive_type_triangles:
 					{
-						meshParams.m_drawMode = Mesh::DrawMode::Triangles;
+						meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::Triangles;
 					}
 					break;
 					case cgltf_primitive_type::cgltf_primitive_type_triangle_strip:
 					{
-						meshParams.m_drawMode = Mesh::DrawMode::TriangleStrip;
+						meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::TriangleStrip;
 					}
 					break;
 					case cgltf_primitive_type::cgltf_primitive_type_triangle_fan:
 					{
-						meshParams.m_drawMode = Mesh::DrawMode::TriangleFan;
+						meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::TriangleFan;
 					}
 					break;
 					case cgltf_primitive_type::cgltf_primitive_type_max_enum:
@@ -684,7 +684,7 @@ namespace
 				for (size_t attrib = 0; attrib < current->mesh->primitives[primitive].attributes_count; attrib++)
 				{
 					// TODO: Use the incoming pre-computed min/max to optimize local bounds calculation
-					// -> Override the Mesh ctor!
+					// -> Override the MeshPrimitive ctor!
 
 					size_t elementsPerComponent;
 					switch (current->mesh->primitives[primitive].attributes[attrib].data->type)
@@ -799,7 +799,7 @@ namespace
 				util::VertexAttributeBuilder::MeshData meshData
 				{
 					nodeName,
-					&meshParams,
+					&meshPrimitiveParams,
 					&indices,
 					reinterpret_cast<vector<vec3>*>(&positions),
 					reinterpret_cast<vector<vec3>*>(&normals),
@@ -814,7 +814,7 @@ namespace
 					LoadAddMaterial(scene, sceneRootPath, current->mesh->primitives[primitive].material);
 
 				// Attach the primitive:
-				parent->AddMeshPrimitive(make_shared<Mesh>(
+				parent->AddMeshPrimitive(make_shared<MeshPrimitive>(
 					nodeName,
 					positions,
 					normals,
@@ -823,7 +823,7 @@ namespace
 					tangents,
 					indices,
 					material,
-					meshParams,
+					meshPrimitiveParams,
 					nullptr));
 
 				SetTransformValues(current, &parent->GetRenderMeshes().back()->GetTransform());
@@ -923,7 +923,7 @@ namespace fr
 		// Pre-reserve our vectors:
 		m_updateables.reserve(max((int)data->nodes_count, 10));
 		m_renderMeshes.reserve(max((int)data->meshes_count, 10));
-		m_meshes.reserve(max((int)data->meshes_count, 10));
+		m_meshPrimitives.reserve(max((int)data->meshes_count, 10));
 		m_textures.reserve(max((int)data->textures_count, 10));
 		m_materials.reserve(max((int)data->materials_count, 10));
 		m_pointLights.reserve(max((int)data->lights_count, 10)); // Probably an over-estimation
@@ -952,7 +952,7 @@ namespace fr
 	{
 		m_updateables.clear();
 		m_renderMeshes.clear();
-		m_meshes.clear();
+		m_meshPrimitives.clear();
 		m_textures.clear();
 		m_materials.clear();
 		m_ambientLight = nullptr;
@@ -1023,12 +1023,12 @@ namespace fr
 	{
 		m_renderMeshes.emplace_back(newRenderMesh); // Add the rendermesh to our tracking list
 		
-		for (shared_ptr<Mesh> mesh : newRenderMesh->GetChildMeshPrimitives())
+		for (shared_ptr<MeshPrimitive> meshPrimitive : newRenderMesh->GetChildMeshPrimitives())
 		{
 			// Add the mesh to our tracking array:
-			m_meshes.push_back(mesh);
+			m_meshPrimitives.push_back(meshPrimitive);
 
-			UpdateSceneBounds(mesh);
+			UpdateSceneBounds(meshPrimitive);
 			// TODO: Bounds management should belong to a RenderMesh object (not the mesh primitives)
 		}
 	}
@@ -1040,10 +1040,11 @@ namespace fr
 	}
 
 
-	void SceneData::UpdateSceneBounds(std::shared_ptr<gr::Mesh> mesh)
+	void SceneData::UpdateSceneBounds(std::shared_ptr<gr::MeshPrimitive> meshPrimitive)
 	{
-		// Update scene (world) bounds to contain the new mesh:
-		Bounds meshWorldBounds(mesh->GetLocalBounds().GetTransformedBounds(mesh->GetOwnerTransform()->GetWorldMatrix()));
+		// Update scene (world) bounds to contain the new mesh primitive:
+		Bounds meshWorldBounds(
+			meshPrimitive->GetLocalBounds().GetTransformedBounds(meshPrimitive->GetOwnerTransform()->GetWorldMatrix()));
 
 		if (meshWorldBounds.xMin() < m_sceneWorldSpaceBounds.xMin())
 		{

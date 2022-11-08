@@ -20,7 +20,7 @@
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
-#include "Mesh_OpenGL.h"
+#include "MeshPrimitive_OpenGL.h"
 #include "CoreEngine.h"
 
 using gr::RenderStage;
@@ -152,10 +152,10 @@ namespace opengl
 				SEAssert("Stage does not have any batches to render", !batches.empty());
 				for (re::Batch const& batch : batches)
 				{
-					opengl::Mesh::PlatformParams const* const meshPlatParams =
-						dynamic_cast<opengl::Mesh::PlatformParams const* const>(batch.GetBatchMesh()->GetPlatformParams().get());
+					opengl::MeshPrimitive::PlatformParams const* const meshPlatParams =
+						dynamic_cast<opengl::MeshPrimitive::PlatformParams const* const>(batch.GetBatchMesh()->GetPlatformParams().get());
 
-					opengl::Mesh::Bind(meshPlatParams, true);
+					opengl::MeshPrimitive::Bind(meshPlatParams, true);
 
 					// Batch material:
 					gr::Material const* batchmaterial = batch.GetBatchMaterial();
@@ -185,7 +185,7 @@ namespace opengl
 					glDrawElementsInstanced(
 						meshPlatParams->m_drawMode,						// GLenum mode
 						(GLsizei)batch.GetBatchMesh()->NumIndices(),	// GLsizei count
-						GL_UNSIGNED_INT,								// GLenum type. TODO: Store type in Mesh parameters, instead of assuming uints
+						GL_UNSIGNED_INT,								// GLenum type. TODO: Store type in parameters, instead of assuming uints
 						0,												// Byte offset (into bound index buffer)
 						(GLsizei)batch.GetInstanceCount());				// Instance count
 				} // batches

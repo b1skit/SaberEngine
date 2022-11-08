@@ -24,7 +24,7 @@ namespace gr
 		void CreateBatches() override;
 
 	private:
-		std::shared_ptr<gr::Mesh> m_screenAlignedQuad;
+		std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
 		gr::RenderStage m_tonemappingStage;		
 	};
 }

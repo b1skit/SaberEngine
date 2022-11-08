@@ -4,7 +4,7 @@
 #include "DebugConfiguration.h"
 #include "ShadowMap.h"
 #include "Shader.h"
-#include "Mesh.h"
+#include "MeshPrimitive.h"
 
 using gr::Shader;
 using gr::Transform;

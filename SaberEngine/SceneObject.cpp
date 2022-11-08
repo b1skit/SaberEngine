@@ -1,6 +1,6 @@
 #include "SceneObject.h"
 
-using gr::Mesh;
+using gr::MeshPrimitive;
 using gr::Transform;
 using std::string;
 using std::shared_ptr;
@@ -22,7 +22,7 @@ namespace fr
 	}
 
 
-	void SceneObject::AddMeshPrimitive(shared_ptr<Mesh> meshPrimitive)
+	void SceneObject::AddMeshPrimitive(shared_ptr<MeshPrimitive> meshPrimitive)
 	{
 		m_renderMeshes.emplace_back(make_shared<gr::RenderMesh>(&m_transform, meshPrimitive));
 	}

@@ -1,5 +1,5 @@
 #include "Batch.h"
-#include "Mesh.h"
+#include "MeshPrimitive.h"
 #include "Material.h"
 #include "Shader.h"
 #include "ParameterBlock.h"
@@ -17,8 +17,8 @@ namespace
 
 namespace re
 {
-	Batch::Batch(gr::Mesh const* mesh, gr::Material const* material, gr::Shader const* shader) :	
-		m_batchMesh(mesh),
+	Batch::Batch(gr::MeshPrimitive const* meshPrimitive, gr::Material const* material, gr::Shader const* shader) :	
+		m_batchMeshPrimitive(meshPrimitive),
 		m_batchMaterial(material),
 		m_batchShader(shader),
 		m_batchGeometryMode(GeometryMode::Indexed),
@@ -68,9 +68,9 @@ namespace re
 		// Batch filter mask bit:
 		AddDataBytesToHash(m_batchFilterMask);
 
-		// Mesh data:
-		SEAssert("Batch must have a valid mesh", m_batchMesh);
-		AddDataBytesToHash(m_batchMesh->GetDataHash());
+		// MeshPrimitive data:
+		SEAssert("Batch must have a valid MeshPrimitive", m_batchMeshPrimitive);
+		AddDataBytesToHash(m_batchMeshPrimitive->GetDataHash());
 		
 		// Material:
 		if (m_batchMaterial)

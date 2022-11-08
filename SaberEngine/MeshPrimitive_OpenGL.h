@@ -2,18 +2,18 @@
 
 #include <GL/glew.h>
 
-#include "Mesh_Platform.h"
-#include "Mesh.h"
+#include "MeshPrimitive_Platform.h"
+#include "MeshPrimitive.h"
 
 
 namespace gr
 {
-	class Mesh;
+	class MeshPrimitive;
 }
 
 namespace opengl
 {
-	class Mesh
+	class MeshPrimitive
 	{
 	public:
 		enum VertexAttribute
@@ -30,9 +30,9 @@ namespace opengl
 		};
 		// Note: The order/indexing of this enum MUST match the vertex layout locations in SaberCommon.glsl
 
-		struct PlatformParams : public virtual platform::Mesh::PlatformParams
+		struct PlatformParams : public virtual platform::MeshPrimitive::PlatformParams
 		{
-			PlatformParams(gr::Mesh& mesh);
+			PlatformParams(gr::MeshPrimitive& meshPrimitive);
 			~PlatformParams() override = default;
 
 			GLuint m_meshVAO; // Vertex array object
@@ -43,8 +43,8 @@ namespace opengl
 			GLenum m_drawMode = GL_TRIANGLES;
 		};
 
-		static void Create(gr::Mesh& mesh);
-		static void Bind(platform::Mesh::PlatformParams const* params, bool doBind);
-		static void Destroy(gr::Mesh& mesh);
+		static void Create(gr::MeshPrimitive& meshPrimitive);
+		static void Bind(platform::MeshPrimitive::PlatformParams const* params, bool doBind);
+		static void Destroy(gr::MeshPrimitive& meshPrimitive);
 	};
 }

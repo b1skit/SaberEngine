@@ -29,6 +29,6 @@ namespace gr
 		gr::RenderStage m_skyboxStage;
 		std::shared_ptr<gr::Texture> m_skyTexture;
 		std::string m_skyTextureShaderName;
-		std::shared_ptr<gr::Mesh> m_screenAlignedQuad;
+		std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
 	};
 }

@@ -9,7 +9,7 @@
 
 namespace gr
 {
-	class Mesh;
+	class MeshPrimitive;
 	class Material;
 	class Shader;
 	class RenderMesh;
@@ -52,7 +52,7 @@ namespace re
 		};
 
 	public:
-		Batch(gr::Mesh const* mesh, gr::Material const* material, gr::Shader const* shader);
+		Batch(gr::MeshPrimitive const* meshPrimitive, gr::Material const* material, gr::Shader const* shader);
 		Batch(std::shared_ptr<gr::RenderMesh> const renderMesh, gr::Material const* material, gr::Shader const* shader);
 
 		~Batch() = default;
@@ -60,7 +60,7 @@ namespace re
 		Batch(Batch&&) = default;
 		Batch& operator=(Batch const&) = default;
 		
-		inline gr::Mesh const* GetBatchMesh() const { return m_batchMesh; }
+		inline gr::MeshPrimitive const* GetBatchMesh() const { return m_batchMeshPrimitive; }
 		inline gr::Material const* GetBatchMaterial() const { return m_batchMaterial; }
 		inline gr::Shader const* GetBatchShader() const { return m_batchShader; }
 
@@ -84,7 +84,7 @@ namespace re
 		void ComputeDataHash() override;
 
 	private:
-		gr::Mesh const* m_batchMesh;
+		gr::MeshPrimitive const* m_batchMeshPrimitive;
 		gr::Material const* m_batchMaterial;
 		gr::Shader const* m_batchShader;
 
