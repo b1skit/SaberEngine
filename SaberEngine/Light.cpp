@@ -73,7 +73,7 @@ namespace gr
 
 			// Create the sphere with a radius of 1, and scale it to allow us to instance deferred lights with a single
 			// mesh and multiple MVP matrices
-			m_deferredMesh = make_shared<gr::RenderMesh>(m_ownerTransform, gr::meshfactory::CreateSphere(1.0f));
+			m_deferredMesh = make_shared<gr::Mesh>(m_ownerTransform, gr::meshfactory::CreateSphere(1.0f));
 			
 			// TODO: Currently, we scale the deferred mesh directly. Ideally, lights should not have
 			// a mesh; one should be created by the GS and assigned as a batch

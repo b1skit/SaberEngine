@@ -24,7 +24,7 @@ namespace fr
 
 	void SceneObject::AddMeshPrimitive(shared_ptr<MeshPrimitive> meshPrimitive)
 	{
-		m_renderMeshes.emplace_back(make_shared<gr::RenderMesh>(&m_transform, meshPrimitive));
+		m_meshes.emplace_back(make_shared<gr::Mesh>(&m_transform, meshPrimitive));
 	}
 }
 

@@ -13,7 +13,7 @@ namespace gr
 {
 	class Camera;
 	class Light;
-	class RenderMesh;
+	class Mesh;
 }
 
 namespace fr
@@ -52,7 +52,7 @@ namespace fr
 		inline std::vector<std::shared_ptr<gr::Light>> const& GetPointLights() const { return m_pointLights; }
 
 		// SceneObjects:
-		void AddSceneObject(std::shared_ptr<fr::SceneObject> newGameObject); // Internally add Updateable & RenderMesh
+		void AddSceneObject(std::shared_ptr<fr::SceneObject> newGameObject); // Internally add Updateable & Mesh
 
 		void AddUpdateable(std::shared_ptr<en::Updateable> updateable);
 		inline std::vector<std::shared_ptr<en::Updateable>> const& GetUpdateables() const { return m_updateables; }
@@ -75,12 +75,12 @@ namespace fr
 		inline gr::Bounds const& GetWorldSpaceSceneBounds() const { return m_sceneWorldSpaceBounds; }
 
 	private:
-		void AddRenderMesh(std::shared_ptr<gr::RenderMesh> newRenderMesh);
-		void UpdateSceneBounds(std::shared_ptr<gr::MeshPrimitive> newMesh);
+		void AddMesh(std::shared_ptr<gr::Mesh> mesh);
+		void UpdateSceneBounds(std::shared_ptr<gr::MeshPrimitive> meshPrimitive);
 
 	private:
 		std::vector<std::shared_ptr<en::Updateable>> m_updateables;
-		std::vector<std::shared_ptr<gr::RenderMesh>> m_renderMeshes;
+		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;
 		std::vector<std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
 
 		std::unordered_map<size_t, std::shared_ptr<gr::Texture>> m_textures;

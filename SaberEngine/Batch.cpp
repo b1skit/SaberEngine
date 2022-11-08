@@ -3,7 +3,7 @@
 #include "Material.h"
 #include "Shader.h"
 #include "ParameterBlock.h"
-#include "RenderMesh.h"
+#include "Mesh.h"
 
 using std::string;
 using std::shared_ptr;
@@ -37,11 +37,11 @@ namespace re
 	}
 
 
-	Batch::Batch(std::shared_ptr<gr::RenderMesh> const renderMesh, gr::Material const* material, gr::Shader const* shader)
-		: Batch(renderMesh->GetChildMeshPrimitives()[0].get(), material, shader) // Delegating ctor
+	Batch::Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material const* material, gr::Shader const* shader)
+		: Batch(mesh->GetMeshPrimitives()[0].get(), material, shader) // Delegating ctor
 	{
-			SEAssert("Currently only support RenderMesh with a single mesh primitve. TODO: Support > 1 mesh primitive", 
-			renderMesh->GetChildMeshPrimitives().size() == 1);
+			SEAssert("Currently only support Mesh with a single MeshPrimitve. TODO: Support > 1 MeshPrimitve", 
+			mesh->GetMeshPrimitives().size() == 1);
 	}
 
 

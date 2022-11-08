@@ -19,7 +19,7 @@
 #include "Light.h"
 #include "Camera.h"
 #include "SceneObject.h"
-#include "RenderMesh.h"
+#include "Mesh.h"
 #include "MeshPrimitive.h"
 #include "Transform.h"
 #include "Material.h"
@@ -612,9 +612,9 @@ namespace
 		{
 			SetTransformValues(current, parent->GetTransform());
 		}
-		else // Node has a mesh: Create a mesh primitive and attach it to a RenderMesh
+		else // Node has a mesh: Create a mesh primitive and attach it to a Mesh
 		{
-			// Add each MeshPrimitive as a child of the SceneObject's RenderMesh:
+			// Add each MeshPrimitive as a child of the SceneObject's Mesh:
 			for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
 			{
 				SEAssert(
@@ -826,9 +826,9 @@ namespace
 					meshPrimitiveParams,
 					nullptr));
 
-				SetTransformValues(current, &parent->GetRenderMeshes().back()->GetTransform());
+				SetTransformValues(current, &parent->GetMeshes().back()->GetTransform());
 			}
-		} // End RenderMesh population
+		} // End Mesh population
 
 		// Add other attachments now the SceneObject transformations have been populated:
 		if (current->light)
@@ -922,7 +922,7 @@ namespace fr
 		
 		// Pre-reserve our vectors:
 		m_updateables.reserve(max((int)data->nodes_count, 10));
-		m_renderMeshes.reserve(max((int)data->meshes_count, 10));
+		m_meshes.reserve(max((int)data->meshes_count, 10));
 		m_meshPrimitives.reserve(max((int)data->meshes_count, 10));
 		m_textures.reserve(max((int)data->textures_count, 10));
 		m_materials.reserve(max((int)data->materials_count, 10));
@@ -951,7 +951,7 @@ namespace fr
 	void SceneData::Destroy()
 	{
 		m_updateables.clear();
-		m_renderMeshes.clear();
+		m_meshes.clear();
 		m_meshPrimitives.clear();
 		m_textures.clear();
 		m_materials.clear();
@@ -1012,24 +1012,24 @@ namespace fr
 	{
 		m_updateables.emplace_back(sceneObject);
 
-		for (size_t i = 0; i < sceneObject->GetRenderMeshes().size(); i++)
+		for (size_t i = 0; i < sceneObject->GetMeshes().size(); i++)
 		{
-			AddRenderMesh(sceneObject->GetRenderMeshes()[i]);
+			AddMesh(sceneObject->GetMeshes()[i]);
 		}
 	}
 
 
-	void SceneData::AddRenderMesh(std::shared_ptr<gr::RenderMesh> newRenderMesh)
+	void SceneData::AddMesh(std::shared_ptr<gr::Mesh> mesh)
 	{
-		m_renderMeshes.emplace_back(newRenderMesh); // Add the rendermesh to our tracking list
+		m_meshes.emplace_back(mesh); // Add the mesh to our tracking list
 		
-		for (shared_ptr<MeshPrimitive> meshPrimitive : newRenderMesh->GetChildMeshPrimitives())
+		for (shared_ptr<MeshPrimitive> meshPrimitive : mesh->GetMeshPrimitives())
 		{
 			// Add the mesh to our tracking array:
 			m_meshPrimitives.push_back(meshPrimitive);
 
 			UpdateSceneBounds(meshPrimitive);
-			// TODO: Bounds management should belong to a RenderMesh object (not the mesh primitives)
+			// TODO: Bounds management should belong to a Mesh object (not the mesh primitives)
 		}
 	}
 

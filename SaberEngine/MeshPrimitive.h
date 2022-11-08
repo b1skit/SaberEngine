@@ -13,6 +13,7 @@
 
 namespace gr
 {
+	// TODO: This should be in the re namespace: Meshes are gr objects, MeshPrimitives are re objects
 	class MeshPrimitive : public virtual en::NamedObject, public virtual en::HashedDataObject
 	{
 	public:
@@ -95,7 +96,7 @@ namespace gr
 
 		gr::Transform* m_ownerTransform;
 
-		// TODO: Move mesh bounds to the RenderMesh object
+		// TODO: Move bounds to the Mesh object
 		Bounds m_localBounds; // MeshPrimitive bounds, in local space		
 		void ComputeBounds(); // Computes m_localBounds
 

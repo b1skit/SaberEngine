@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Transformable.h"
-#include "RenderMesh.h"
+#include "Mesh.h"
 #include "NamedObject.h"
 #include "Updateable.h"
 
@@ -22,11 +22,11 @@ namespace fr
 
 		// Getters/Setters:
 		void AddMeshPrimitive(std::shared_ptr<gr::MeshPrimitive> meshPrimitive);
-		inline std::vector<std::shared_ptr<gr::RenderMesh>> const& GetRenderMeshes() const { return m_renderMeshes; }
+		inline std::vector<std::shared_ptr<gr::Mesh>> const& GetMeshes() const { return m_meshes; }
 
 
 	private:
-		std::vector<std::shared_ptr<gr::RenderMesh>> m_renderMeshes;
+		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;
 
 
 	private:

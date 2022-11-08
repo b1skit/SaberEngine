@@ -210,7 +210,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="MeshPrimitive_OpenGL.cpp" />
     <ClCompile Include="MeshPrimitive_Platform.cpp" />
     <ClCompile Include="Context.cpp" />
-    <ClCompile Include="RenderMesh.cpp" />
+    <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="RenderManager.cpp" />
     <ClCompile Include="Platform.cpp" />
     <ClCompile Include="Texture_OpenGL.cpp" />
@@ -278,7 +278,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="LogManager.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="PlayerObject.h" />
-    <ClInclude Include="RenderMesh.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="RenderManager.h" />
     <ClInclude Include="SceneData.h" />
     <ClInclude Include="SceneManager.h" />

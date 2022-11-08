@@ -12,7 +12,7 @@ namespace gr
 	class MeshPrimitive;
 	class Material;
 	class Shader;
-	class RenderMesh;
+	class Mesh;
 }
 namespace re
 {
@@ -53,7 +53,7 @@ namespace re
 
 	public:
 		Batch(gr::MeshPrimitive const* meshPrimitive, gr::Material const* material, gr::Shader const* shader);
-		Batch(std::shared_ptr<gr::RenderMesh> const renderMesh, gr::Material const* material, gr::Shader const* shader);
+		Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material const* material, gr::Shader const* shader);
 
 		~Batch() = default;
 		Batch(Batch const&) = default;
