@@ -477,8 +477,9 @@ namespace
 		LOG("Loading camera \"%s\"", camName.c_str());
 
 		gr::Camera::CameraConfig camConfig;
-		camConfig.m_isOrthographic = camera->type == cgltf_camera_type_orthographic;
-		if (camConfig.m_isOrthographic)
+		camConfig.m_projectionType = camera->type == cgltf_camera_type_orthographic ? 
+			Camera::CameraConfig::ProjectionType::Orthographic : Camera::CameraConfig::ProjectionType::Perspective;
+		if (camConfig.m_projectionType == Camera::CameraConfig::ProjectionType::Orthographic)
 		{
 			camConfig.m_fieldOfView = 0;
 			camConfig.m_near		= camera->data.orthographic.znear;

@@ -47,7 +47,7 @@ namespace gr
 				gr::Camera::CameraConfig shadowCamConfig;
 				shadowCamConfig.m_near				= -transformedBounds.zMax();
 				shadowCamConfig.m_far				= -transformedBounds.zMin();
-				shadowCamConfig.m_isOrthographic	= true;
+				shadowCamConfig.m_projectionType	= Camera::CameraConfig::ProjectionType::Orthographic;
 				shadowCamConfig.m_orthoLeft			= transformedBounds.xMin();
 				shadowCamConfig.m_orthoRight		= transformedBounds.xMax();
 				shadowCamConfig.m_orthoBottom		= transformedBounds.yMin();
@@ -86,7 +86,7 @@ namespace gr
 				shadowCamConfig.m_near				= 0.1f;
 				shadowCamConfig.m_far				= radius;
 				shadowCamConfig.m_aspectRatio		= 1.0f;
-				shadowCamConfig.m_isOrthographic	= false;				
+				shadowCamConfig.m_projectionType	= Camera::CameraConfig::ProjectionType::Perspective;
 			
 				const uint32_t cubeMapRes = 
 					en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowCubeMapRes");
@@ -137,7 +137,7 @@ namespace gr
 			gr::Camera::CameraConfig shadowCamConfig;
 			shadowCamConfig.m_near				= -transformedBounds.zMax();
 			shadowCamConfig.m_far				= -transformedBounds.zMin();
-			shadowCamConfig.m_isOrthographic	= true;
+			shadowCamConfig.m_projectionType	= Camera::CameraConfig::ProjectionType::Orthographic;
 			shadowCamConfig.m_orthoLeft			= transformedBounds.xMin();
 			shadowCamConfig.m_orthoRight		= transformedBounds.xMax();
 			shadowCamConfig.m_orthoBottom		= transformedBounds.yMin();

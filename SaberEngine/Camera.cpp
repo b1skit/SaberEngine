@@ -71,7 +71,7 @@ namespace gr
 
 	void Camera::Initialize()
 	{
-		if (m_cameraConfig.m_isOrthographic)
+		if (m_cameraConfig.m_projectionType == CameraConfig::ProjectionType::Orthographic)
 		{
 			m_cameraConfig.m_fieldOfView = 0.0f;
 

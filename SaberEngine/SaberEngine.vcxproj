@@ -169,6 +169,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Batch.cpp" />
+    <ClCompile Include="Bounds.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ParameterBlock.cpp" />
     <ClCompile Include="ParameterBlockManager.cpp" />
@@ -225,6 +226,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Batch.h" />
+    <ClInclude Include="Bounds.h" />
     <ClInclude Include="HashedDataObject.h" />
     <ClInclude Include="ParameterBlock.h" />
     <ClInclude Include="ParameterBlockManager.h" />

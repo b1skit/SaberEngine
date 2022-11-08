@@ -18,6 +18,12 @@ namespace gr
 	public:
 		struct CameraConfig
 		{
+			enum class ProjectionType
+			{
+				Perspective,
+				Orthographic
+			} m_projectionType = ProjectionType::Perspective;
+
 			float m_fieldOfView = 90.0f; // == 0 if orthographic. 
 			// TODO: Store this in Radians (currently in degrees)
 			// TODO: Convert this to vertical FOV, as per GLTF convention (currently horizontal)
@@ -27,11 +33,11 @@ namespace gr
 			float m_aspectRatio = 1.0f; // == width / height
 
 			// Orthographic properties:
-			bool m_isOrthographic = false;
 			float m_orthoLeft = -5;
 			float m_orthoRight = 5;
 			float m_orthoBottom = -5;
 			float m_orthoTop = 5;
+			// TODO: Use a vec4 here
 
 			// Image properties:
 			float m_exposure = 1.0f; // TODO: Should this be stored here?
@@ -39,9 +45,7 @@ namespace gr
 
 	public:
 		struct CameraParams
-		{
-			// TODO: Handle cubemap matrices
-			
+		{		
 			// Shader parameter block
 			glm::mat4 g_view;
 			glm::mat4 g_invView;

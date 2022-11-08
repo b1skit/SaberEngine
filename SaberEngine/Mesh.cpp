@@ -7,99 +7,20 @@
 #include "Mesh.h"
 #include "CoreEngine.h"
 
-using gr::Transform;
-using glm::pi;
-using glm::mat4;
-using glm::vec2;
-using glm::vec3;
-using glm::vec4;
-using std::move;
-using std::vector;
-using std::string;
-using std::shared_ptr;
-
 
 namespace gr
 {
-	// Returns a Bounds, transformed from local space using worldMatrix
-	Bounds Bounds::GetTransformedBounds(mat4 const& worldMatrix)
-	{
-		// Temp: Ensure the bounds are 3D here, before we do any calculations
-		Make3Dimensional();
+	using gr::Transform;
+	using glm::pi;
+	using glm::mat4;
+	using glm::vec2;
+	using glm::vec3;
+	using glm::vec4;
+	using std::move;
+	using std::vector;
+	using std::string;
+	using std::shared_ptr;
 
-		Bounds result;
-
-		std::vector<vec4>points(8);											// "front" == fwd == Z -
-		points[0] = vec4(m_xMin, m_yMax, m_zMin, 1.0f);		// Left		top		front 
-		points[1] = vec4(m_xMax, m_yMax, m_zMin, 1.0f);		// Right	top		front
-		points[2] = vec4(m_xMin, m_yMin, m_zMin, 1.0f);		// Left		bot		front
-		points[3] = vec4(m_xMax, m_yMin, m_zMin, 1.0f);		// Right	bot		front
-
-		points[4] = vec4(m_xMin, m_yMax, m_zMax, 1.0f);		// Left		top		back
-		points[5] = vec4(m_xMax, m_yMax, m_zMax, 1.0f);		// Right	top		back
-		points[6] = vec4(m_xMin, m_yMin, m_zMax, 1.0f);		// Left		bot		back
-		points[7] = vec4(m_xMax, m_yMin, m_zMax, 1.0f);		// Right	bot		back
-
-		for (size_t i = 0; i < 8; i++)
-		{
-			points[i] = worldMatrix * points[i];
-
-			if (points[i].x < result.m_xMin)
-			{
-				result.m_xMin = points[i].x;
-			}
-			if (points[i].x > result.m_xMax)
-			{
-				result.m_xMax = points[i].x;
-			}
-
-			if (points[i].y < result.m_yMin)
-			{
-				result.m_yMin = points[i].y;
-			}
-			if (points[i].y > result.m_yMax)
-			{
-				result.m_yMax = points[i].y;
-			}
-
-			if (points[i].z < result.m_zMin)
-			{
-				result.m_zMin = points[i].z;
-			}
-			if (points[i].z > result.m_zMax)
-			{
-				result.m_zMax = points[i].z;
-			}
-		}
-
-		return result;
-	}
-
-
-	void Bounds::Make3Dimensional()
-	{
-		float depthBias = 0.01f;
-		if (glm::abs(m_xMax - m_xMin) < depthBias)
-		{
-			m_xMax += depthBias;
-			m_xMin -= depthBias;
-		}
-
-		if (glm::abs(m_yMax - m_yMin) < depthBias)
-		{
-			m_yMax += depthBias;
-			m_yMin -= depthBias;
-		}
-
-		if (glm::abs(m_zMax - m_zMin) < depthBias)
-		{
-			m_zMax += depthBias;
-			m_zMin -= depthBias;
-		}
-	}
-
-
-	/******************************************************************************************************************/
 
 	Mesh::Mesh(
 		string const& name,

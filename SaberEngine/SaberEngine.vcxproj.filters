@@ -236,6 +236,9 @@
     <ClCompile Include="Batch.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
+    <ClCompile Include="Bounds.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Mesh.h">
@@ -420,6 +423,9 @@
     </ClInclude>
     <ClInclude Include="HashedDataObject.h">
       <Filter>Header Files\en</Filter>
+    </ClInclude>
+    <ClInclude Include="Bounds.h">
+      <Filter>Header Files\gr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
