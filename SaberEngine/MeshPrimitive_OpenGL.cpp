@@ -7,51 +7,51 @@
 namespace opengl
 {
 	// Platform Params:
-	MeshPrimitive::PlatformParams::PlatformParams(gr::MeshPrimitive& meshPrimitive) :
+	MeshPrimitive::PlatformParams::PlatformParams(re::MeshPrimitive& meshPrimitive) :
 		m_meshVAO(0),
 		m_meshVBOs(VertexAttribute::VertexAttribute_Count, 0)
 	{
 		SEAssert("TODO: Support more primitive types/draw modes!", 
-			meshPrimitive.GetMeshParams().m_drawMode == gr::MeshPrimitive::DrawMode::Triangles);
+			meshPrimitive.GetMeshParams().m_drawMode == re::MeshPrimitive::DrawMode::Triangles);
 
 		switch (meshPrimitive.GetMeshParams().m_drawMode)
 		{
-			case gr::MeshPrimitive::DrawMode::Points:
+			case re::MeshPrimitive::DrawMode::Points:
 			{
 				m_drawMode = GL_POINTS;
 			}
 			break;
-			case gr::MeshPrimitive::DrawMode::Lines:
+			case re::MeshPrimitive::DrawMode::Lines:
 			{
 				m_drawMode = GL_LINES;
 			}
 			break;
-			case gr::MeshPrimitive::DrawMode::LineStrip:
+			case re::MeshPrimitive::DrawMode::LineStrip:
 			{
 				m_drawMode = GL_LINE_STRIP;
 			}
 			break;
-			case gr::MeshPrimitive::DrawMode::LineLoop:
+			case re::MeshPrimitive::DrawMode::LineLoop:
 			{
 				m_drawMode = GL_LINE_LOOP;
 			}
 			break;
-			case gr::MeshPrimitive::DrawMode::Triangles:
+			case re::MeshPrimitive::DrawMode::Triangles:
 			{
 				m_drawMode = GL_TRIANGLES;
 			}
 			break;
-			case gr::MeshPrimitive::DrawMode::TriangleStrip:
+			case re::MeshPrimitive::DrawMode::TriangleStrip:
 			{
 				m_drawMode = GL_TRIANGLE_STRIP;
 			}
 			break;
-			case gr::MeshPrimitive::DrawMode::TriangleFan:
+			case re::MeshPrimitive::DrawMode::TriangleFan:
 			{
 				m_drawMode = GL_TRIANGLE_FAN;
 			}
 			break;
-			case gr::MeshPrimitive::DrawMode::DrawMode_Count:
+			case re::MeshPrimitive::DrawMode::DrawMode_Count:
 			default:
 				SEAssertF("Unsupported draw mode");
 		}
@@ -61,7 +61,7 @@ namespace opengl
 	// Static meshPrimitive function implementations:
 	/***************************************/
 
-	void opengl::MeshPrimitive::Create(gr::MeshPrimitive& meshPrimitive)
+	void opengl::MeshPrimitive::Create(re::MeshPrimitive& meshPrimitive)
 	{
 		// Create the platform params, then get a pointer to it:
 		platform::MeshPrimitive::PlatformParams::CreatePlatformParams(meshPrimitive);
@@ -256,7 +256,7 @@ namespace opengl
 	}
 
 
-	void opengl::MeshPrimitive::Destroy(gr::MeshPrimitive& meshPrimitive)
+	void opengl::MeshPrimitive::Destroy(re::MeshPrimitive& meshPrimitive)
 	{
 		opengl::MeshPrimitive::PlatformParams* mp =
 			dynamic_cast<opengl::MeshPrimitive::PlatformParams*>(meshPrimitive.GetPlatformParams().get());

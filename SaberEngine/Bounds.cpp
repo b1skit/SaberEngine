@@ -4,7 +4,7 @@
 
 #include "Bounds.h"
 
-namespace gr
+namespace re
 {
 	using glm::mat4;
 	using glm::vec4;

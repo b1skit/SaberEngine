@@ -23,7 +23,7 @@ namespace gr
 	BloomGraphicsSystem::BloomGraphicsSystem(std::string name) : GraphicsSystem(name), NamedObject(name),
 		m_emissiveBlitStage("Emissive blit stage")
 	{
-		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Near);
+		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Near);
 	}
 
 

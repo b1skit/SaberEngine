@@ -25,8 +25,8 @@ namespace gr
 	private:
 		gr::RenderStage m_ambientStage;
 
-		std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
-		std::shared_ptr<gr::MeshPrimitive> m_cubeMeshPrimitive; // For rendering into a cube map. TODO: We only use this in the 1st frame, should probably clean it up
+		std::shared_ptr<re::MeshPrimitive> m_screenAlignedQuad;
+		std::shared_ptr<re::MeshPrimitive> m_cubeMeshPrimitive; // For rendering into a cube map. TODO: We only use this in the 1st frame, should probably clean it up
 
 		std::shared_ptr<gr::Texture> m_BRDF_integrationMap;
 		std::shared_ptr<gr::Texture> m_IEMTex;
@@ -35,7 +35,7 @@ namespace gr
 		gr::RenderStage m_keylightStage;
 
 		gr::RenderStage m_pointlightStage;
-		std::vector<std::shared_ptr<gr::MeshPrimitive>> m_pointlightInstanceMesh;
+		std::vector<std::shared_ptr<re::MeshPrimitive>> m_pointlightInstanceMesh;
 
 
 	private:

@@ -38,11 +38,12 @@ namespace gr
 		{
 			if (hasShadow)
 			{
-				gr::Bounds sceneWorldBounds =
+				re::Bounds sceneWorldBounds =
 					en::CoreEngine::GetSceneManager()->GetSceneData()->GetWorldSpaceSceneBounds();
 
-				const gr::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
+				const re::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
 					glm::inverse(m_ownerTransform->GetWorldMatrix()));
+				// TODO: We should retrieve the scene bounds from the root note of the scene graph, once it is implemented
 
 				gr::Camera::CameraConfig shadowCamConfig;
 				shadowCamConfig.m_near				= -transformedBounds.zMax();
@@ -73,7 +74,7 @@ namespace gr
 
 			// Create the sphere with a radius of 1, and scale it to allow us to instance deferred lights with a single
 			// mesh and multiple MVP matrices
-			m_deferredMesh = make_shared<gr::Mesh>(m_ownerTransform, gr::meshfactory::CreateSphere(1.0f));
+			m_deferredMesh = make_shared<gr::Mesh>(m_ownerTransform, meshfactory::CreateSphere(1.0f));
 			
 			// TODO: Currently, we scale the deferred mesh directly. Ideally, lights should not have
 			// a mesh; one should be created by the GS and assigned as a batch
@@ -128,10 +129,10 @@ namespace gr
 	{
 		if (m_type == LightType::Directional) // Update shadow cam bounds
 		{
-			gr::Bounds sceneWorldBounds =
+			re::Bounds sceneWorldBounds =
 				en::CoreEngine::GetSceneManager()->GetSceneData()->GetWorldSpaceSceneBounds();
 
-			const gr::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
+			const re::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
 				glm::inverse(m_ownerTransform->GetWorldMatrix()));
 
 			gr::Camera::CameraConfig shadowCamConfig;

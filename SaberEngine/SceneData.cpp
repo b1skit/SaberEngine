@@ -33,8 +33,8 @@ using gr::Camera;
 using gr::Light;
 using gr::Texture;
 using gr::Material;
-using gr::MeshPrimitive;
-using gr::Bounds;
+using re::MeshPrimitive;
+using re::Bounds;
 using gr::Transform;
 using gr::Light;
 using gr::ShadowMap;
@@ -1040,7 +1040,7 @@ namespace fr
 	}
 
 
-	void SceneData::UpdateSceneBounds(std::shared_ptr<gr::MeshPrimitive> meshPrimitive)
+	void SceneData::UpdateSceneBounds(std::shared_ptr<re::MeshPrimitive> meshPrimitive)
 	{
 		// Update scene (world) bounds to contain the new mesh primitive:
 		Bounds meshWorldBounds(

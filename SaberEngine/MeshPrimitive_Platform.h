@@ -3,8 +3,7 @@
 #include <memory>
 
 
-// Pre-declarations:
-namespace gr
+namespace re
 {
 	class MeshPrimitive;
 }
@@ -21,13 +20,13 @@ namespace platform
 		{
 			virtual ~PlatformParams() = 0;
 
-			static void CreatePlatformParams(gr::MeshPrimitive& meshPrimitive);
+			static void CreatePlatformParams(re::MeshPrimitive& meshPrimitive);
 		};
 
 
-		static void (*Create)(gr::MeshPrimitive& meshPrimitive);
+		static void (*Create)(re::MeshPrimitive& meshPrimitive);
 		static void (*Bind)(platform::MeshPrimitive::PlatformParams const* params, bool doBind);
-		static void (*Destroy)(gr::MeshPrimitive& meshPrimitive);
+		static void (*Destroy)(re::MeshPrimitive& meshPrimitive);
 	};
 
 

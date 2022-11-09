@@ -1,6 +1,6 @@
 #pragma once
 
-namespace gr
+namespace re
 {
 	class Bounds
 	{

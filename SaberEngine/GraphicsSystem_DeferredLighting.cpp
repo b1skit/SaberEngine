@@ -132,10 +132,10 @@ namespace gr
 		m_BRDF_integrationMap(nullptr)
 	{
 		// Create a fullscreen quad, for reuse when building batches:
-		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Near);
+		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Near);
 
 		// Cube mesh, for rendering of IBL cubemaps
-		m_cubeMeshPrimitive = gr::meshfactory::CreateCube();
+		m_cubeMeshPrimitive = meshfactory::CreateCube();
 	}
 
 

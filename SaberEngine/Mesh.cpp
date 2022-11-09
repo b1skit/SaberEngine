@@ -3,13 +3,13 @@
 #include "Transform.h"
 
 using gr::Transform;
-using gr::MeshPrimitive;
+using re::MeshPrimitive;
 using std::shared_ptr;
 using std::vector;
 
 namespace gr
 {
-	Mesh::Mesh(Transform* parent, shared_ptr<MeshPrimitive> meshPrimitive)
+	Mesh::Mesh(Transform* parent, shared_ptr<re::MeshPrimitive> meshPrimitive)
 	{
 		m_transform.SetParent(parent);
 		AddMeshPrimitive(meshPrimitive);
@@ -23,7 +23,7 @@ namespace gr
 	}
 
 
-	void Mesh::AddMeshPrimitive(shared_ptr<gr::MeshPrimitive> meshPrimitive)
+	void Mesh::AddMeshPrimitive(shared_ptr<re::MeshPrimitive> meshPrimitive)
 	{
 		meshPrimitive->GetOwnerTransform() = &m_transform;
 		m_meshPrimitives.push_back(meshPrimitive);

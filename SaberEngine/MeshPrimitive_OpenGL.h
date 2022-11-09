@@ -32,7 +32,7 @@ namespace opengl
 
 		struct PlatformParams : public virtual platform::MeshPrimitive::PlatformParams
 		{
-			PlatformParams(gr::MeshPrimitive& meshPrimitive);
+			PlatformParams(re::MeshPrimitive& meshPrimitive);
 			~PlatformParams() override = default;
 
 			GLuint m_meshVAO; // Vertex array object
@@ -43,8 +43,8 @@ namespace opengl
 			GLenum m_drawMode = GL_TRIANGLES;
 		};
 
-		static void Create(gr::MeshPrimitive& meshPrimitive);
+		static void Create(re::MeshPrimitive& meshPrimitive);
 		static void Bind(platform::MeshPrimitive::PlatformParams const* params, bool doBind);
-		static void Destroy(gr::MeshPrimitive& meshPrimitive);
+		static void Destroy(re::MeshPrimitive& meshPrimitive);
 	};
 }

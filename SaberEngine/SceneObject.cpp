@@ -1,6 +1,6 @@
 #include "SceneObject.h"
 
-using gr::MeshPrimitive;
+using re::MeshPrimitive;
 using gr::Transform;
 using std::string;
 using std::shared_ptr;

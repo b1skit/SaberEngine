@@ -11,9 +11,8 @@
 #include "Bounds.h"
 
 
-namespace gr
+namespace re
 {
-	// TODO: This should be in the re namespace: Meshes are gr objects, MeshPrimitives are re objects
 	class MeshPrimitive : public virtual en::NamedObject, public virtual en::HashedDataObject
 	{
 	public:
@@ -43,7 +42,7 @@ namespace gr
 			std::vector<float>& tangents,
 			std::vector<uint32_t>& indices,
 			std::shared_ptr<gr::Material> material,
-			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams,
+			re::MeshPrimitive::MeshPrimitiveParams const& meshParams,
 			gr::Transform* ownerTransform);		
 		// TODO: Rearrange these args to match shader vertex attribute definition order
 
@@ -110,32 +109,30 @@ namespace gr
 		MeshPrimitive& operator=(MeshPrimitive const& rhs) = delete;
 		MeshPrimitive& operator=(MeshPrimitive&& rhs) = delete;
 	};
-
-	/******************************************************************************************************************/
-
-	namespace meshfactory
-	{
-		extern std::shared_ptr<MeshPrimitive> CreateCube();
-
-		enum class ZLocation
-		{
-			Near,
-			Far
-		};
-		extern std::shared_ptr<MeshPrimitive> CreateFullscreenQuad(ZLocation zLocation);
-
-		extern std::shared_ptr<MeshPrimitive> CreateQuad(
-			glm::vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,
-			glm::vec3 tr /*= vec3(0.5f, 0.5f, 0.0f)*/,
-			glm::vec3 bl /*= vec3(-0.5f, -0.5f, 0.0f)*/,
-			glm::vec3 br /*= vec3(0.5f, -0.5f, 0.0f)*/);
-
-		extern std::shared_ptr<MeshPrimitive> CreateSphere(
-			float radius = 0.5f,
-			size_t numLatSlices = 16,
-			size_t numLongSlices = 16);
-	}
 }
 
+
+namespace meshfactory
+{
+	extern std::shared_ptr<re::MeshPrimitive> CreateCube();
+
+	enum class ZLocation
+	{
+		Near,
+		Far
+	};
+	extern std::shared_ptr<re::MeshPrimitive> CreateFullscreenQuad(ZLocation zLocation);
+
+	extern std::shared_ptr<re::MeshPrimitive> CreateQuad(
+		glm::vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,
+		glm::vec3 tr /*= vec3(0.5f, 0.5f, 0.0f)*/,
+		glm::vec3 bl /*= vec3(-0.5f, -0.5f, 0.0f)*/,
+		glm::vec3 br /*= vec3(0.5f, -0.5f, 0.0f)*/);
+
+	extern std::shared_ptr<re::MeshPrimitive> CreateSphere(
+		float radius = 0.5f,
+		size_t numLatSlices = 16,
+		size_t numLongSlices = 16);
+}
 
 

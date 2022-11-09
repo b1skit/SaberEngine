@@ -420,7 +420,7 @@ namespace util
 		MeshData* meshData = static_cast<MeshData*> (m_context->m_pUserData);
 
 		SEAssert("Only triangular faces are currently supported", 
-			meshData->m_meshParams->m_drawMode == gr::MeshPrimitive::DrawMode::Triangles);
+			meshData->m_meshParams->m_drawMode == re::MeshPrimitive::DrawMode::Triangles);
 		
 		return 3;
 	}

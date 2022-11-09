@@ -30,7 +30,7 @@ namespace gr
 		m_skyboxStage("Skybox stage"),
 		m_skyTexture(nullptr)
 	{
-		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Far);
+		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Far);
 	}
 
 

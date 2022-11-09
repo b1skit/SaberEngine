@@ -7,7 +7,7 @@
 
 namespace platform
 {
-	void platform::MeshPrimitive::PlatformParams::CreatePlatformParams(gr::MeshPrimitive& meshPrimitive)
+	void platform::MeshPrimitive::PlatformParams::CreatePlatformParams(re::MeshPrimitive& meshPrimitive)
 	{
 		const platform::RenderingAPI& api =
 			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
@@ -35,7 +35,7 @@ namespace platform
 
 	// platform::MeshPrimitive static members:
 	/********************************/
-	void (*MeshPrimitive::Create)(gr::MeshPrimitive& meshPrimitive);
+	void (*MeshPrimitive::Create)(re::MeshPrimitive& meshPrimitive);
 	void (*MeshPrimitive::Bind)(platform::MeshPrimitive::PlatformParams const* params, bool doBind);
-	void (*MeshPrimitive::Destroy)(gr::MeshPrimitive& meshPrimitive);
+	void (*MeshPrimitive::Destroy)(re::MeshPrimitive& meshPrimitive);
 }

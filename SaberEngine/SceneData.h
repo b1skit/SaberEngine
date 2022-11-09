@@ -58,7 +58,7 @@ namespace fr
 		inline std::vector<std::shared_ptr<en::Updateable>> const& GetUpdateables() const { return m_updateables; }
 
 		// Meshes:
-		inline std::vector<std::shared_ptr<gr::MeshPrimitive>> const& GetMeshPrimitives() const { return m_meshPrimitives; }
+		inline std::vector<std::shared_ptr<re::MeshPrimitive>> const& GetMeshPrimitives() const { return m_meshPrimitives; }
 
 		// Textures:
 		void AddUniqueTexture(std::shared_ptr<gr::Texture>& newTexture); // Note: newTexture may be modified
@@ -72,16 +72,16 @@ namespace fr
 		inline bool MaterialExists(std::string const& matName) const;
 
 		// SceneData bounds:
-		inline gr::Bounds const& GetWorldSpaceSceneBounds() const { return m_sceneWorldSpaceBounds; }
+		inline re::Bounds const& GetWorldSpaceSceneBounds() const { return m_sceneWorldSpaceBounds; }
 
 	private:
 		void AddMesh(std::shared_ptr<gr::Mesh> mesh);
-		void UpdateSceneBounds(std::shared_ptr<gr::MeshPrimitive> meshPrimitive);
+		void UpdateSceneBounds(std::shared_ptr<re::MeshPrimitive> meshPrimitive);
 
 	private:
 		std::vector<std::shared_ptr<en::Updateable>> m_updateables;
 		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;
-		std::vector<std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
+		std::vector<std::shared_ptr<re::MeshPrimitive>> m_meshPrimitives;
 
 		std::unordered_map<size_t, std::shared_ptr<gr::Texture>> m_textures;
 		std::unordered_map<size_t, std::shared_ptr<gr::Material>> m_materials;
@@ -92,7 +92,7 @@ namespace fr
 
 		std::vector<std::shared_ptr<gr::Camera>> m_cameras;
 
-		gr::Bounds m_sceneWorldSpaceBounds;
+		re::Bounds m_sceneWorldSpaceBounds;
 	};
 }
 

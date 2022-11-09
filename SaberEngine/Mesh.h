@@ -11,7 +11,7 @@ namespace gr
 	class Mesh
 	{
 	public:
-		explicit Mesh(gr::Transform* parent, std::shared_ptr<gr::MeshPrimitive> meshPrimitive);
+		explicit Mesh(gr::Transform* parent, std::shared_ptr<re::MeshPrimitive> meshPrimitive);
 
 		Mesh(Mesh const&);
 		Mesh(Mesh&&) = default;
@@ -22,12 +22,12 @@ namespace gr
 		inline gr::Transform& GetTransform() { return m_transform; }
 		inline gr::Transform const& GetTransform() const { return m_transform; }
 
-		void AddMeshPrimitive(std::shared_ptr<gr::MeshPrimitive> meshPrimitive);
-		inline std::vector<std::shared_ptr<gr::MeshPrimitive>> const& GetMeshPrimitives() const { return m_meshPrimitives; }
+		void AddMeshPrimitive(std::shared_ptr<re::MeshPrimitive> meshPrimitive);
+		inline std::vector<std::shared_ptr<re::MeshPrimitive>> const& GetMeshPrimitives() const { return m_meshPrimitives; }
 
 
 	private:
-		std::vector<std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
+		std::vector<std::shared_ptr<re::MeshPrimitive>> m_meshPrimitives;
 		gr::Transform m_transform;
 
 
