@@ -4,11 +4,13 @@
 #include <memory>
 
 #include "MeshPrimitive.h"
+#include "Transformable.h"
+
 
 namespace gr
 {	
 	// Contains a set of mesh primitives
-	class Mesh
+	class Mesh : public virtual fr::Transformable
 	{
 	public:
 		explicit Mesh(gr::Transform* parent, std::shared_ptr<re::MeshPrimitive> meshPrimitive);
@@ -28,7 +30,6 @@ namespace gr
 
 	private:
 		std::vector<std::shared_ptr<re::MeshPrimitive>> m_meshPrimitives;
-		gr::Transform m_transform;
 
 
 	private:

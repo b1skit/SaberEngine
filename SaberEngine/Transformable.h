@@ -11,9 +11,7 @@ namespace fr
 	{
 	public:
 		Transformable() = default;
-
-		Transformable(const Transformable& rhs) : m_transform(rhs.m_transform) {}
-
+		Transformable(const Transformable& rhs) = default;
 		Transformable(Transformable&&) = default;
 		Transformable& operator=(Transformable const&) = default;
 
