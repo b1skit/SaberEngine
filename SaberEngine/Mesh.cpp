@@ -16,13 +16,6 @@ namespace gr
 	}
 
 
-	Mesh::Mesh(Mesh const& rhs)
-	{
-		m_meshPrimitives = rhs.m_meshPrimitives;
-		m_transform = rhs.m_transform;
-	}
-
-
 	void Mesh::AddMeshPrimitive(shared_ptr<re::MeshPrimitive> meshPrimitive)
 	{
 		meshPrimitive->GetOwnerTransform() = &m_transform;

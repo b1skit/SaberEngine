@@ -13,7 +13,7 @@ namespace gr
 	public:
 		explicit Mesh(gr::Transform* parent, std::shared_ptr<re::MeshPrimitive> meshPrimitive);
 
-		Mesh(Mesh const&);
+		Mesh(Mesh const&) = default;
 		Mesh(Mesh&&) = default;
 		Mesh& operator=(Mesh const&) = default;
 		~Mesh() = default;	
