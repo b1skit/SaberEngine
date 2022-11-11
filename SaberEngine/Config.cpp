@@ -121,7 +121,6 @@ namespace en
 
 			// Deferred rendering:
 			TryInsertDefault("gBufferFillShaderName",				std::string("gBufferFillShader"));
-			TryInsertDefault("gBufferFillShaderName",				std::string("gBufferFillShader"));
 			TryInsertDefault("deferredAmbientLightShaderName",		std::string("deferredAmbientLightShader"));
 			TryInsertDefault("deferredKeylightShaderName",			std::string("deferredKeyLightShader"));
 			TryInsertDefault("deferredPointLightShaderName",		std::string("deferredPointLightShader"));
