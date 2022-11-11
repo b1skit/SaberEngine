@@ -22,7 +22,12 @@ namespace fr
 		m_savedPosition(vec3(0.0f, 0.0f, 0.0f)),
 		m_savedEulerRotation(vec3(0.0f, 0.0f, 0.0f))
 	{
-		m_playerCam->GetTransform()->SetParent(&m_transform);
+		// The PlayerObject and Camera must be located at the same point. To avoid stomping imported Camera locations,
+		// we move the PlayerObject to the camera. Then, we re-parent the Camera's Transform, to maintain its global
+		// orientation but update its local orientation under the PlayerObject Transform
+		m_transform.SetGlobalTranslation(m_playerCam->GetTransform()->GetGlobalPosition());
+		m_playerCam->GetTransform()->ReParent(&m_transform);
+
 		m_sprintSpeedModifier = Config::Get()->GetValue<float>("sprintSpeedModifier");
 	}
 

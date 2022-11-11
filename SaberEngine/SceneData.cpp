@@ -449,10 +449,53 @@ namespace
 	}
 
 
-	// Creates a default camera if camera == nullptr, and no cameras exist in scene
-	void LoadAddCamera(fr::SceneData& scene, shared_ptr<SceneObject> parent, cgltf_camera* camera)
+	void SetTransformValues(cgltf_node* current, Transform* targetTransform)
 	{
-		if (parent == nullptr && camera == nullptr)
+		SEAssert("Transform has both matrix and decomposed properties",
+			(current->has_matrix != (current->has_rotation || current->has_scale || current->has_translation)) ||
+			(current->has_matrix == 0 && current->has_rotation == 0 &&
+				current->has_scale == 0 && current->has_translation == 0)
+		);
+
+		if (current->has_matrix)
+		{
+			const mat4 nodeModelMatrix = make_mat4(current->matrix);
+			vec3 scale;
+			quat rotation;
+			vec3 translation;
+			vec3 skew;
+			vec4 perspective;
+			decompose(nodeModelMatrix, scale, rotation, translation, skew, perspective);
+
+			targetTransform->SetLocalRotation(rotation);
+			targetTransform->SetLocalScale(scale);
+			targetTransform->SetLocalTranslation(translation);
+		}
+		else
+		{
+			if (current->has_rotation)
+			{
+				// Note: GLM expects quaternions to be specified in WXYZ order
+				targetTransform->SetLocalRotation(
+					glm::quat(current->rotation[3], current->rotation[0], current->rotation[1], current->rotation[2]));
+			}
+			if (current->has_scale)
+			{
+				targetTransform->SetLocalScale(glm::vec3(current->scale[0], current->scale[1], current->scale[2]));
+			}
+			if (current->has_translation)
+			{
+				targetTransform->SetLocalTranslation(
+					glm::vec3(current->translation[0], current->translation[1], current->translation[2]));
+			}
+		}
+	};
+
+
+	// Creates a default camera if camera == nullptr, and no cameras exist in scene
+	void LoadAddCamera(fr::SceneData& scene, shared_ptr<SceneObject> parent, cgltf_node* current)
+	{
+		if (parent == nullptr && (current == nullptr || current->camera == nullptr))
 		{
 			if (scene.GetCameras().size() == 0) // Create a default camera at the origin
 			{
@@ -470,6 +513,8 @@ namespace
 
 			return;
 		}
+
+		cgltf_camera const* const camera = current->camera;
 
 		SEAssert("Must supply a parent and camera pointer", parent != nullptr && camera != nullptr);
 
@@ -506,7 +551,10 @@ namespace
 			camConfig.m_orthoTop	= 0;
 		}
 
+		// Create the camera and set the transform values on the parent object:
 		shared_ptr<Camera> newCam = make_shared<Camera>(camName, camConfig, parent->GetTransform());
+		SetTransformValues(current, parent->GetTransform());
+		
 		scene.AddCamera(newCam);
 	}
 
@@ -562,55 +610,11 @@ namespace
 
 		const string nodeName = current->name ? string(current->name) : "unnamedNode";
 
-		auto SetTransformValues = [](cgltf_node* current, Transform* targetTransform)
-		{
-			SEAssert("Transform has both matrix and decomposed properties", 
-				(current->has_matrix != (current->has_rotation || current->has_scale || current->has_translation)) ||
-					(current->has_matrix == 0 && current->has_rotation == 0 && 
-					current->has_scale == 0 && current->has_translation == 0)
-			);
-
-			if (current->has_matrix)
-			{
-				const mat4 nodeModelMatrix = make_mat4(current->matrix);
-				vec3 scale;
-				quat rotation;
-				vec3 translation;
-				vec3 skew;
-				vec4 perspective;
-				decompose(nodeModelMatrix, scale, rotation, translation, skew, perspective);
-
-				targetTransform->SetLocalRotation(rotation);
-				targetTransform->SetLocalScale(scale);
-				targetTransform->SetLocalTranslation(translation);
-			}
-			else
-			{
-				if (current->has_rotation)
-				{
-					// Note: GLM expects quaternions to be specified in WXYZ order
-					targetTransform->SetLocalRotation(
-						glm::quat(current->rotation[3], current->rotation[0], current->rotation[1], current->rotation[2]));
-				}
-				if (current->has_scale)
-				{
-					targetTransform->SetLocalScale(glm::vec3(current->scale[0], current->scale[1], current->scale[2]));
-				}
-				if (current->has_translation)
-				{
-					targetTransform->SetLocalTranslation(
-						glm::vec3(current->translation[0], current->translation[1], current->translation[2]));
-				}
-			}
-		};
-
-		SEAssert("TODO: Handle nodes with multiple things that depend on a transform", 
+		SEAssert("TODO: Handle nodes with multiple things (eg. Light & Mesh) that depend on a transform", 
 			current->light == nullptr || current->mesh == nullptr);
-
 
 		// Set the SceneObject transform:
 		SetTransformValues(current, parent->GetTransform());
-		// NOTE: Currently, any child Transforms (ie. Mesh : Transformable) are left as identity
 
 		// Process any meshe primitives:
 		if (current->mesh != nullptr)
@@ -837,7 +841,7 @@ namespace
 
 		if (current->camera)
 		{
-			LoadAddCamera(scene, parent, current->camera);
+			LoadAddCamera(scene, parent, current);
 		}
 
 		scene.AddSceneObject(parent);
@@ -930,7 +934,11 @@ namespace fr
 		
 		const string sceneRootPath = Config::Get()->GetValue<string>("sceneRootPath");
 		LoadSceneHierarchy(sceneRootPath, *this, data);
-		LoadAddCamera(*this, nullptr, nullptr); // Adds a default camera if none were found during LoadSceneHierarchy()
+
+		if (m_cameras.empty()) // Add a default camera if none were found during LoadSceneHierarchy()
+		{
+			LoadAddCamera(*this, nullptr, nullptr); 
+		}
 
 		// Cleanup:
 		cgltf_free(data);

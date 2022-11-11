@@ -87,6 +87,16 @@ namespace gr
 	}
 
 
+	void Transform::SetGlobalTranslation(glm::vec3 position)
+	{
+		const mat4 parentGlobalTRS = m_parent ? m_parent->GetGlobalMatrix(TRS) : mat4(1.f);
+		SetLocalTranslation(inverse(parentGlobalTRS) * glm::vec4(position, 0.f));
+
+		MarkDirty();
+		RecomputeWorldTransforms();
+	}
+
+
 	void Transform::SetParent(Transform* newParent)
 	{
 		SEAssert("Cannot parent a Transform to itself", newParent != this);
@@ -105,6 +115,33 @@ namespace gr
 			m_parent->RegisterChild(this);
 		}
 		
+		MarkDirty();
+		RecomputeWorldTransforms();
+	}
+
+
+	void Transform::ReParent(Transform* newParent)
+	{
+		SEAssert("New parent cannot be null", newParent != nullptr);
+
+		// Based on the technique presented in GPU Pro 360, Ch.15.2.5: 
+		// Managing Transformations in Hierarchy: Parent Switch in Hierarchy (p.243 - p.253).
+		// To move from current local space to a new local space where the parent changes but the global transformation
+		// stays the same, we first find the current global transform by going up in the hierarchy to the root. Then,
+		// we move down the hierarchy to the new parent:
+		mat4 newLocalMatrix = glm::inverse(newParent->GetGlobalMatrix(TRS)) * GetGlobalMatrix(TRS);
+
+		// Decompose our new matrix & update the individual components for when we call RecomputeWorldTransforms():
+		vec3 skew;
+		vec4 perspective;
+		decompose(newLocalMatrix, m_localScale, m_localRotationQuat, m_localPosition, skew, perspective);
+
+		m_localTranslationMat	= glm::translate(mat4(1.0f), m_localPosition);
+		m_localRotationMat		= glm::mat4_cast(m_localRotationQuat);
+		m_localScaleMat			= glm::scale(mat4(1.0f), m_localScale);
+
+		SetParent(newParent);
+
 		MarkDirty();
 		RecomputeWorldTransforms();
 	}
@@ -236,7 +273,7 @@ namespace gr
 		}
 		m_isDirty = false; // Must immediately remove our dirty flag due to recursive calls
 
-		m_localMat = m_localTranslationMat * m_localScaleMat * m_localRotationMat;
+		m_localMat = m_localTranslationMat * m_localRotationMat * m_localScaleMat;
 
 		// Update the combined world-space transformations with respect to the parent hierarchy:
 		if (m_parent != nullptr)
