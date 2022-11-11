@@ -607,12 +607,13 @@ namespace
 		SEAssert("TODO: Handle nodes with multiple things that depend on a transform", 
 			current->light == nullptr || current->mesh == nullptr);
 
+
 		// Set the SceneObject transform:
-		if (current->mesh == nullptr)
-		{
-			SetTransformValues(current, parent->GetTransform());
-		}
-		else // Node has a mesh: Create a mesh primitive and attach it to a Mesh
+		SetTransformValues(current, parent->GetTransform());
+		// NOTE: Currently, any child Transforms (ie. Mesh : Transformable) are left as identity
+
+		// Process any meshe primitives:
+		if (current->mesh != nullptr)
 		{
 			// Add each MeshPrimitive as a child of the SceneObject's Mesh:
 			for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
@@ -825,8 +826,6 @@ namespace
 					material,
 					meshPrimitiveParams,
 					nullptr));
-
-				SetTransformValues(current, &parent->GetMeshes().back()->GetTransform());
 			}
 		} // End Mesh population
 

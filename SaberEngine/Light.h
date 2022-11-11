@@ -51,8 +51,6 @@ namespace gr
 		Light(Light&&) = default;
 		Light& operator=(Light const&) = default;
 
-		
-
 		void Destroy();
 
 		void Update() override;
