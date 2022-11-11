@@ -23,7 +23,7 @@ namespace en
 	#define BIND_CMD	"bind "		// Bind a key
 
 
-	// Input binding names: Used as hash keys in EngineConfig <key, value> mappings
+	// Input binding names: Used as hash keys in Config <key, value> mappings
 	#define InputButton_Forward		btn_forward
 	#define InputButton_Backward	btn_backward
 	#define InputButton_Left		btn_strafeLeft

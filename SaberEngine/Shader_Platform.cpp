@@ -1,11 +1,12 @@
 #include <fstream>
 
 #include "DebugConfiguration.h"
-#include "CoreEngine.h"
+#include "Config.h"
 #include "Shader.h"
 #include "Shader_Platform.h"
 #include "Shader_OpenGL.h"
 
+using en::Config;
 using std::ifstream;
 using std::string;
 using std::vector;
@@ -16,8 +17,7 @@ namespace platform
 	// Parameter struct object factory:
 	void platform::Shader::PlatformParams::CreatePlatformParams(gr::Shader& shader)
 	{
-		const platform::RenderingAPI& api =
-			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{
@@ -44,8 +44,7 @@ namespace platform
 	string platform::Shader::LoadShaderText(const string& filename)
 	{
 		// Assemble the full shader file path:
-		string filepath = 
-			en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("shaderDirectory") + filename;
+		string filepath = Config::Get()->GetValue<string>("shaderDirectory") + filename;
 
 		ifstream file;
 		file.open(filepath.c_str());

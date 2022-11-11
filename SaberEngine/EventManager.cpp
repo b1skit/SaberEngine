@@ -1,6 +1,5 @@
 #include "EventManager.h"
 #include "NamedObject.h"
-#include "CoreEngine.h"
 #include "DebugConfiguration.h"
 #include "EventListener.h"
 
@@ -38,6 +37,17 @@ namespace en
 		"InputMouseRelease_Right",
 
 	}; // NOTE: String order must match the order of EventType enum
+
+
+	std::unique_ptr<EventManager> EventManager::m_instance = nullptr;
+	EventManager* EventManager::Get()
+	{
+		if (m_instance == nullptr)
+		{
+			m_instance = std::make_unique<EventManager>();
+		}
+		return m_instance.get();
+	}
 
 
 	EventManager::EventManager()

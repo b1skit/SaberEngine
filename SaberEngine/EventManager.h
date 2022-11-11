@@ -6,12 +6,14 @@
 
 #include "EngineComponent.h"
 
+namespace en
+{
+	class EventListener;
+}
+
 
 namespace en
 {
-	class EventListener;	
-
-
 	class EventManager : public virtual en::EngineComponent
 	{
 	public:
@@ -58,13 +60,14 @@ namespace en
 		};
 
 
+	public: // Singleton functionality:		
+		static EventManager* Get();
+	private:
+		static std::unique_ptr<EventManager> m_instance;
+
 	public:
 		EventManager();
 		~EventManager() = default;
-		
-		EventManager(EventManager const&) = delete;
-		EventManager(EventManager&&) = delete;
-		void operator=(EventManager const&) = delete;
 		
 		// EngineComponent interface:
 		void Startup() override;
@@ -75,9 +78,16 @@ namespace en
 		void Subscribe(EventType eventType, EventListener* listener); // Subscribe to an event
 		void Notify(std::shared_ptr<EventInfo const> eventInfo); // Post an event
 
+
 	private:
 		std::vector<std::vector<std::shared_ptr<EventInfo const>>> m_eventQueues;
 		std::vector<std::vector<EventListener*>> m_eventListeners;
+
+
+	private:
+		EventManager(EventManager const&) = delete;
+		EventManager(EventManager&&) = delete;
+		void operator=(EventManager const&) = delete;
 	};
 
 

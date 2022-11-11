@@ -2,7 +2,9 @@
 #include "ParameterBlock.h"
 #include "ParameterBlock_OpenGL.h"
 #include "DebugConfiguration.h"
-#include "CoreEngine.h"
+#include "Config.h"
+
+using en::Config;
 
 
 namespace platform
@@ -12,8 +14,7 @@ namespace platform
 		SEAssert("Attempting to create platform params for a texture that already exists",
 			paramBlock.m_platformParams == nullptr);
 
-		const platform::RenderingAPI& api =
-			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

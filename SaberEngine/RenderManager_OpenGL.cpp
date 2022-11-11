@@ -21,7 +21,6 @@
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "MeshPrimitive_OpenGL.h"
-#include "CoreEngine.h"
 
 using gr::RenderStage;
 using gr::TextureTargetSet;

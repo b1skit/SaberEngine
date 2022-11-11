@@ -3,28 +3,32 @@
 #include <string>
 #include <unordered_map>
 #include <any>
-using std::to_string;
-using std::unordered_map;
-using std::any;
-
+#include <memory>
 #include "Platform.h"
 
 
 namespace en
 {
-	enum class SettingType
+	class Config
 	{
-		Common,				// Platform-agnostic value. Saved to disk.
-		APISpecific,		// API-specific value: Not saved to disk (unless found in config at load time)
-		Runtime,			// Platform-agnostic value populated at runtime. Not saved to disk.
-		SettingType_Count
-	};
+	public: 
+		enum class SettingType
+		{
+			Common,				// Platform-agnostic value. Saved to disk.
+			APISpecific,		// API-specific value: Not saved to disk (unless found in config at load time)
+			Runtime,			// Platform-agnostic value populated at runtime. Not saved to disk.
+			SettingType_Count
+		};
 
 
-	class EngineConfig
-	{
+	public: // Singleton functionality:		
+		static Config* Get();
+	private:
+		static std::unique_ptr<Config> m_instance;
+
+
 	public:
-		EngineConfig();		
+		Config();		
 
 		// Get a config value, by type
 		template<typename T>
@@ -61,7 +65,7 @@ namespace en
 
 		void SetAPIDefaults();
 
-		unordered_map<std::string, std::pair<any, SettingType>> m_configValues;	// The config parameter/value map
+		std::unordered_map<std::string, std::pair<std::any, SettingType>> m_configValues;	// The config parameter/value map
 		bool m_isDirty; // Marks whether we need to save the config file or not
 
 

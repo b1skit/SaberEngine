@@ -1,7 +1,7 @@
 #include <string>
 
 #include "Platform.h"
-#include "CoreEngine.h"
+#include "Config.h"
 #include "DebugConfiguration.h"
 
 #include "Context_Platform.h"
@@ -28,6 +28,8 @@
 #include "ParameterBlock.h"
 #include "ParameterBlock_OpenGL.h"
 
+using en::Config;
+
 
 namespace platform
 {
@@ -36,8 +38,7 @@ namespace platform
 	{
 		LOG("Configuring API-specific platform bindings...");
 
-		const platform::RenderingAPI& api = 
-			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
 		bool result = false;
 		switch (api)

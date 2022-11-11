@@ -8,9 +8,10 @@
 #include "Context_OpenGL.h"
 #include "Context.h"
 
-#include "CoreEngine.h"
+#include "Config.h"
 #include "DebugConfiguration.h"
 
+using en::Config;
 using std::string;
 using std::to_string;
 
@@ -156,10 +157,9 @@ namespace opengl
 		//SDL_GL_SetSwapInterval(1);
 
 		// Create a window:
-		const string windowTitle = 
-			en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("windowTitle");
-		const int xRes = en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
-		const int yRes = en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
+		const string windowTitle = Config::Get()->GetValue<string>("windowTitle");
+		const int xRes = Config::Get()->GetValue<int>("windowXRes");
+		const int yRes = Config::Get()->GetValue<int>("windowYRes");
 		platformParams->m_glWindow = SDL_CreateWindow
 		(
 			windowTitle.c_str(),

@@ -6,7 +6,6 @@ using std::cout;
 
 #include "LogManager.h"
 #include "EventManager.h"
-#include "CoreEngine.h"
 #include "DebugConfiguration.h"
 
 

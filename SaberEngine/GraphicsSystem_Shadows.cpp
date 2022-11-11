@@ -1,9 +1,11 @@
 #include "GraphicsSystem_Shadows.h"
 #include "Light.h"
 #include "ShadowMap.h"
-#include "CoreEngine.h"
+#include "SceneManager.h"
+#include "RenderManager.h"
 
-using en::CoreEngine;
+using en::SceneManager;
+using re::RenderManager;
 using gr::Light;
 using gr::RenderStage;
 using gr::ShadowMap;
@@ -76,7 +78,7 @@ namespace gr
 		};
 
 		// Directional light shadow:		
-		shared_ptr<Light> directionalLight = CoreEngine::GetSceneManager()->GetSceneData()->GetKeyLight();
+		shared_ptr<Light> directionalLight = SceneManager::Get()->GetSceneData()->GetKeyLight();
 		if (directionalLight)
 		{
 			shared_ptr<ShadowMap> directionalShadow = directionalLight->GetShadowMap();
@@ -95,7 +97,7 @@ namespace gr
 		}
 		
 		// Point light shadows:
-		vector<shared_ptr<Light>> const& deferredLights = CoreEngine::GetSceneManager()->GetSceneData()->GetPointLights();
+		vector<shared_ptr<Light>> const& deferredLights = SceneManager::Get()->GetSceneData()->GetPointLights();
 		for (shared_ptr<Light> curLight : deferredLights)
 		{
 			m_pointLightShadowStages.emplace_back(make_shared<RenderStage>(curLight->GetName() + " shadow"));
@@ -158,11 +160,11 @@ namespace gr
 
 	void ShadowsGraphicsSystem::CreateBatches()
 	{
-		m_directionalShadowStage.AddBatches(en::CoreEngine::GetRenderManager()->GetSceneBatches());
+		m_directionalShadowStage.AddBatches(RenderManager::Get()->GetSceneBatches());
 
 		for (shared_ptr<RenderStage> pointShadowStage : m_pointLightShadowStages)
 		{
-			pointShadowStage->AddBatches(en::CoreEngine::GetRenderManager()->GetSceneBatches());
+			pointShadowStage->AddBatches(RenderManager::Get()->GetSceneBatches());
 		}
 	}
 }

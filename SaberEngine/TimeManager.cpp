@@ -1,7 +1,6 @@
 #include <SDL.h>
 
 #include "TimeManager.h"
-#include "CoreEngine.h"
 #include "DebugConfiguration.h"
 
 

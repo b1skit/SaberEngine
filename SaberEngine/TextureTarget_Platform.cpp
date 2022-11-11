@@ -1,18 +1,19 @@
 #include <memory>
 
 #include "DebugConfiguration.h"
-#include "CoreEngine.h"
+#include "Config.h"
 #include "TextureTarget_Platform.h"
 #include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"
+
+using en::Config;
 
 
 namespace platform
 {
 	void TextureTarget::PlatformParams::CreatePlatformParams(gr::TextureTarget& texTarget)
 	{
-		const platform::RenderingAPI& api =
-			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{
@@ -38,8 +39,7 @@ namespace platform
 
 	void TextureTargetSet::PlatformParams::CreatePlatformParams(gr::TextureTargetSet& texTarget)
 	{
-		const platform::RenderingAPI& api =
-			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

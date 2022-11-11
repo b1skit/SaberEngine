@@ -5,7 +5,8 @@
 
 #include "RenderManager.h"
 #include "RenderManager_Platform.h"
-#include "CoreEngine.h"
+#include "Config.h"
+#include "SceneManager.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_Shadows.h"
@@ -25,7 +26,8 @@ using gr::TonemappingGraphicsSystem;
 using gr::Transform;
 using re::MeshPrimitive;
 using re::Batch;
-using en::CoreEngine;
+using en::Config;
+using en::SceneManager;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
@@ -41,6 +43,17 @@ namespace
 
 namespace re
 {
+	std::unique_ptr<RenderManager> RenderManager::m_instance = nullptr;
+	RenderManager* RenderManager::Get()
+	{
+		if (m_instance == nullptr)
+		{
+			m_instance = std::make_unique<RenderManager>();
+		}
+		return m_instance.get();
+	}
+
+
 	RenderManager::RenderManager() :
 		m_defaultTargetSet(nullptr),
 		m_pipeline("Main pipeline")
@@ -68,8 +81,8 @@ namespace re
 		{ 
 			0, 
 			0, 
-			(uint32_t)CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes"),
-			(uint32_t)CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes")
+			(uint32_t)Config::Get()->GetValue<int>("windowXRes"),
+			(uint32_t)Config::Get()->GetValue<int>("windowYRes")
 		};
 		m_defaultTargetSet->CreateColorTargets(); // Default framebuffer has no texture targets
 	}
@@ -107,7 +120,7 @@ namespace re
 	{
 		m_sceneBatches.clear();
 
-		shared_ptr<fr::SceneData const> const sceneData = en::CoreEngine::GetSceneManager()->GetSceneData();
+		shared_ptr<fr::SceneData const> const sceneData = SceneManager::Get()->GetSceneData();
 
 		std::vector<shared_ptr<re::MeshPrimitive>> const& sceneMeshes = sceneData->GetMeshPrimitives();
 		if (sceneMeshes.empty())

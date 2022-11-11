@@ -4,12 +4,7 @@
 #include <glm/glm.hpp>
 
 #include "Texture_Platform.h"
-
-// Predeclarations
-namespace gr
-{
-	class Texture;
-}
+#include "Texture.h"
 
 
 namespace opengl

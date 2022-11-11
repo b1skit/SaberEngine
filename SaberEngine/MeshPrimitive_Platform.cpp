@@ -1,16 +1,16 @@
 #include "DebugConfiguration.h"
-#include "CoreEngine.h"
+#include "Config.h"
 #include "MeshPrimitive_Platform.h"
 #include "MeshPrimitive_OpenGL.h"
 
+using en::Config;
 
 
 namespace platform
 {
 	void platform::MeshPrimitive::PlatformParams::CreatePlatformParams(re::MeshPrimitive& meshPrimitive)
 	{
-		const platform::RenderingAPI& api =
-			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

@@ -1,12 +1,14 @@
 #include <SDL.h>
 
 #include "InputManager.h"
-#include "CoreEngine.h"
+#include "Config.h"
+#include "RenderManager.h"
 #include "DebugConfiguration.h"
 #include "EventManager.h"
 
-using en::CoreEngine;
+using en::Config;
 using en::EventManager;
+using re::RenderManager;
 using std::string;
 
 
@@ -21,7 +23,17 @@ namespace en
 	float InputManager::m_mouseYawSensitivity	= -0.00005f;
 
 
-	// Constructor:
+	std::unique_ptr<InputManager> InputManager::m_instance = nullptr;
+	InputManager* InputManager::Get()
+	{
+		if (m_instance == nullptr)
+		{
+			m_instance = std::make_unique<InputManager>();
+		}
+		return m_instance.get();
+	}
+
+
 	InputManager::InputManager()
 	{
 		// Initialize keyboard keys:
@@ -72,15 +84,15 @@ namespace en
 		LOG("InputManager starting...");
 
 		// Cache the context (created earlier by the render manager):
-		m_context = &en::CoreEngine::GetRenderManager()->GetContext();
+		m_context = &RenderManager::Get()->GetContext();
 
 		LoadInputBindings();
 
 		// Cache sensitivity params. For whatever reason, we must multiply by -1 (we store positive values for sanity)
 		InputManager::m_mousePitchSensitivity =
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("mousePitchSensitivity") * -1.0f;
+			Config::Get()->GetValue<float>("mousePitchSensitivity") * -1.0f;
 		InputManager::m_mouseYawSensitivity	= 
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("mouseYawSensitivity") * -1.0f;
+			Config::Get()->GetValue<float>("mouseYawSensitivity") * -1.0f;
 	}
 
 
@@ -141,7 +153,7 @@ namespace en
 	{
 		for (int i = 0; i < en::KeyboardButtonState_Count; i++)
 		{
-			const string buttonString = CoreEngine::GetCoreEngine()->GetConfig()->GetValueAsString(en::KEY_NAMES[i]);
+			const string buttonString = Config::Get()->GetValueAsString(en::KEY_NAMES[i]);
 
 			if (buttonString.length() == 1) // Handle chars:
 			{

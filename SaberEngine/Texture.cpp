@@ -1,5 +1,4 @@
 #include "Texture.h"
-#include "CoreEngine.h"
 #include "DebugConfiguration.h"
 
 using glm::vec4;

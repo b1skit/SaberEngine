@@ -24,7 +24,7 @@
 #include "Transform.h"
 #include "Material.h"
 #include "Light.h"
-#include "CoreEngine.h"
+#include "Config.h"
 #include "DebugConfiguration.h"
 #include "ShadowMap.h"
 #include "ParameterBlock.h"
@@ -40,7 +40,7 @@ using gr::Light;
 using gr::ShadowMap;
 using re::ParameterBlock;
 using fr::SceneObject;
-using en::CoreEngine;
+using en::Config;
 using en::NamedObject;
 using std::string;
 using std::vector;
@@ -49,6 +49,7 @@ using std::make_shared;
 using std::unordered_map;
 using std::stringstream;
 using std::max;
+using std::to_string;
 using glm::quat;
 using glm::vec2;
 using glm::vec3;
@@ -97,8 +98,7 @@ namespace
 		LOG("Attempting to load %d textures: \"%s\"...", texturePaths.size(), texturePaths[0].c_str());
 
 		// Flip the y-axis on loading (so pixel (0,0) is in the bottom-left of the image if using OpenGL
-		platform::RenderingAPI const& api =
-			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+		platform::RenderingAPI const& api = Config::Get()->GetRenderingAPI();
 		const bool flipY = api == platform::RenderingAPI::OpenGL ? true : false;
 
 		stbi_set_flip_vertically_on_load(flipY);
@@ -459,11 +459,11 @@ namespace
 				LOG("\nCreating a default camera");
 
 				gr::Camera::CameraConfig camConfig;
-				camConfig.m_aspectRatio = CoreEngine::GetCoreEngine()->GetConfig()->GetWindowAspectRatio();
-				camConfig.m_fieldOfView = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultFieldOfView");
-				camConfig.m_near = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultNear");
-				camConfig.m_far = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultFar");
-				camConfig.m_exposure = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultExposure");
+				camConfig.m_aspectRatio = Config::Get()->GetWindowAspectRatio();
+				camConfig.m_fieldOfView = Config::Get()->GetValue<float>("defaultFieldOfView");
+				camConfig.m_near = Config::Get()->GetValue<float>("defaultNear");
+				camConfig.m_far = Config::Get()->GetValue<float>("defaultFar");
+				camConfig.m_exposure = Config::Get()->GetValue<float>("defaultExposure");
 
 				scene.AddCamera(make_shared<Camera>("Default camera", camConfig, nullptr));
 			}
@@ -783,7 +783,7 @@ namespace
 						// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#images
 						// In OpenGL, we already flip the image Y onimport, so flip the UVs here to compensate
 						platform::RenderingAPI const& api =
-							en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+							Config::Get()->GetRenderingAPI();
 						const bool flipY = api == platform::RenderingAPI::OpenGL ? true : false;
 						if (flipY)
 						{
@@ -929,7 +929,7 @@ namespace fr
 		m_pointLights.reserve(max((int)data->lights_count, 10)); // Probably an over-estimation
 		m_cameras.reserve(max((int)data->cameras_count, 5));
 		
-		const string sceneRootPath = en::CoreEngine::GetConfig()->GetValue<string>("sceneRootPath");
+		const string sceneRootPath = Config::Get()->GetValue<string>("sceneRootPath");
 		LoadSceneHierarchy(sceneRootPath, *this, data);
 		LoadAddCamera(*this, nullptr, nullptr); // Adds a default camera if none were found during LoadSceneHierarchy()
 

@@ -1,9 +1,19 @@
 #include <string>
 
 #include "CoreEngine.h"
+#include "Config.h"
 #include "DebugConfiguration.h"
 #include "Platform.h"
+#include "RenderManager.h"
+#include "SceneManager.h"
+#include "EventManager.h"
+#include "InputManager.h"
 
+using en::Config;
+using en::SceneManager;
+using en::EventManager;
+using en::InputManager;
+using re::RenderManager;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
@@ -11,14 +21,7 @@ using std::string;
 
 namespace en
 {
-	// Static members:
-	en::EngineConfig					CoreEngine::m_config;
-
-	CoreEngine*							CoreEngine::m_coreEngine	= nullptr;
-	std::shared_ptr<en::EventManager>	CoreEngine::m_eventManager	= nullptr;
-	std::shared_ptr<en::InputManager>	CoreEngine::m_inputManager	= nullptr;
-	std::shared_ptr<en::SceneManager>	CoreEngine::m_sceneManager	= nullptr;
-	std::shared_ptr<re::RenderManager>	CoreEngine::m_renderManager	= nullptr;
+	CoreEngine*			CoreEngine::m_coreEngine = nullptr;
 
 
 	CoreEngine::CoreEngine(int argc, char** argv) :
@@ -40,31 +43,25 @@ namespace en
 	{
 		LOG("CoreEngine starting...");
 
-		// Initialize manager singletons:
-		m_eventManager	= std::make_shared<en::EventManager>();
-		m_inputManager	= std::make_shared<en::InputManager>();
-		m_sceneManager	= std::make_shared<en::SceneManager>();
-		m_renderManager	= std::make_shared<re::RenderManager>();
-
 		// Start managers:
-		m_eventManager->Startup();
+		EventManager::Get()->Startup();
 		m_logManager->Startup();
 
-		m_eventManager->Subscribe(en::EventManager::EngineQuit, this);
+		EventManager::Get()->Subscribe(en::EventManager::EngineQuit, this);
 
 		m_timeManager->Startup();
 
-		m_renderManager->Startup();	// Initializes SDL events and video subsystems
+		RenderManager::Get()->Startup();	// Initializes SDL events and video subsystems
 
 		// For some reason, this needs to be called after the SDL video subsystem (!) has been initialized:
-		m_inputManager->Startup();
+		InputManager::Get()->Startup();
 
 		// Must wait to start scene manager and load a scene until the renderer is called, since we need to initialize
-		// OpenGL in the RenderManager before creating shaders
-		m_sceneManager->Startup();
+		// the rendering context in the RenderManager before creating shaders
+		SceneManager::Get()->Startup();
 
 		// Now that the scene (and its materials/shaders) has been loaded, we can initialize the shaders
-		m_renderManager->Initialize();
+		RenderManager::Get()->Initialize();
 
 		m_isRunning = true;
 
@@ -78,7 +75,7 @@ namespace en
 		LOG("CoreEngine beginning main game loop!");
 
 		// Process any events that might have occurred during startup:
-		m_eventManager->Update();
+		EventManager::Get()->Update();
 		m_logManager->Update();
 
 		// Initialize game loop timing:
@@ -87,27 +84,27 @@ namespace en
 
 		while (m_isRunning)
 		{
-			m_inputManager->Update();
+			InputManager::Get()->Update();
 
 			// Process events
-			m_eventManager->Update(); // Clears SDL event queue: Must occur after any other component that listens to SDL events
+			EventManager::Get()->Update(); // Clears SDL event queue: Must occur after any other component that listens to SDL events
 			m_logManager->Update();
 
-			m_timeManager->Update();	// We only need to call this once per loop. DeltaTime() effectively == #ms between calls to TimeManager.Update()
+			m_timeManager->Update(); // We only need to call this once per loop. DeltaTime() effectively == #ms between calls to TimeManager.Update()
 			elapsed += m_timeManager->DeltaTime();
 
 			while (elapsed >= m_FixedTimeStep)
 			{
 				// Update components:
-				m_eventManager->Update(); // Clears SDL event queue: Must occur after any other component that listens to SDL events
+				EventManager::Get()->Update(); // Clears SDL event queue: Must occur after any other component that listens to SDL events
 				m_logManager->Update();
 
-				m_sceneManager->Update(); // Updates all of the scene objects
+				SceneManager::Get()->Update(); // Updates all of the scene objects
 
 				elapsed -= m_FixedTimeStep;
 			}
 			
-			m_renderManager->Update();
+			RenderManager::Get()->Update();
 
 			Update();
 		}
@@ -124,43 +121,27 @@ namespace en
 	{
 		LOG("CoreEngine shutting down...");
 
-		m_config.SaveConfig();
+		Config::Get()->SaveConfig();
 		
 		// Note: Shutdown order matters!
 		m_timeManager->Shutdown();		
-		m_inputManager->Shutdown();
-		m_renderManager->Shutdown();		
-		m_sceneManager->Shutdown();		
-		m_eventManager->Shutdown();
+		InputManager::Get()->Shutdown();
+		RenderManager::Get()->Shutdown();
+		SceneManager::Get()->Shutdown();
+		EventManager::Get()->Shutdown();
 		m_logManager->Shutdown();
 
-		m_inputManager = nullptr;
-		m_renderManager = nullptr;
-		m_sceneManager = nullptr;
-		m_eventManager = nullptr;
-
 		return;
-	}
-
-
-	en::EngineConfig const* CoreEngine::GetConfig()
-	{
-		return &m_config;
 	}
 
 	
 	void CoreEngine::Update()
 	{
 		// Generate a quit event if the quit button is pressed:
-		if (m_inputManager->GetKeyboardInputState(en::InputButton_Quit) == true)
+		if (InputManager::Get()->GetKeyboardInputState(en::InputButton_Quit) == true)
 		{
-			m_eventManager->Notify(
-				std::make_shared<en::EventManager::EventInfo const>(en::EventManager::EventInfo
-				{
-					en::EventManager::EngineQuit,
-					this,
-					"Core Engine Quit"
-				}));
+			EventManager::Get()->Notify(std::make_shared<en::EventManager::EventInfo const>(
+					en::EventManager::EventInfo{en::EventManager::EngineQuit, this, "Core Engine Quit"}));
 		}
 	}
 
@@ -211,29 +192,28 @@ namespace en
 
 					LOG("\tReceived scene command: \"%s %s\"", currentArg.c_str(), param.c_str());
 
-					const string scenesRoot =
-						CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("scenesRoot"); // "..\Scenes\"
+					const string scenesRoot = Config::Get()->GetValue<string>("scenesRoot"); // "..\Scenes\"
 
 					// From param of the form "Scene\Folder\Names\sceneFile.extension", we extract:
 
 					// sceneFilePath == "..\Scenes\Scene\Folder\Names\sceneFile.extension":
 					const string sceneFilePath = scenesRoot + param; 
-					m_config.SetValue("sceneFilePath", sceneFilePath, SettingType::Runtime);
+					Config::Get()->SetValue("sceneFilePath", sceneFilePath, Config::SettingType::Runtime);
 
 					// sceneRootPath == "..\Scenes\Scene\Folder\Names\":
 					const size_t lastSlash = sceneFilePath.find_last_of("\\");
 					const string sceneRootPath = sceneFilePath.substr(0, lastSlash) + "\\"; 
-					m_config.SetValue("sceneRootPath", sceneRootPath, SettingType::Runtime);
+					Config::Get()->SetValue("sceneRootPath", sceneRootPath, Config::SettingType::Runtime);
 
 					// sceneName == "sceneFile"
 					const string filenameAndExt = sceneFilePath.substr(lastSlash + 1, sceneFilePath.size() - lastSlash);
 					const size_t extensionPeriod = filenameAndExt.find_last_of(".");
 					const string sceneName = filenameAndExt.substr(0, extensionPeriod);
-					m_config.SetValue("sceneName", sceneName, SettingType::Runtime);
+					Config::Get()->SetValue("sceneName", sceneName, Config::SettingType::Runtime);
 
 					// sceneIBLPath == "..\Scenes\SceneFolderName\IBL\ibl.hdr"
 					const string sceneIBLPath = sceneRootPath + "IBL\\ibl.hdr";
-					m_config.SetValue("sceneIBLPath", sceneIBLPath, SettingType::Runtime);
+					Config::Get()->SetValue("sceneIBLPath", sceneIBLPath, Config::SettingType::Runtime);
 				}
 				else
 				{

@@ -8,18 +8,16 @@
 
 namespace en
 {
-	
-
 	class InputManager : public virtual en::EngineComponent, public virtual en::EventListener
 	{
+	public: // Singleton functionality:		
+		static InputManager* Get();
+	private:
+		static std::unique_ptr<InputManager> m_instance;
+
 	public:
 		InputManager();
 		~InputManager() = default;
-
-		// Singleton functionality:
-		InputManager(InputManager const&) = delete; // Disallow copying of our Singleton
-		InputManager(InputManager&&) = delete;
-		void operator=(InputManager const&) = delete;
 
 		// Static member functions:
 		static bool const& GetKeyboardInputState(en::KeyboardButtonState key);
@@ -49,6 +47,12 @@ namespace en
 		static float m_mouseYawSensitivity;
 
 		re::Context const* m_context;
+
+
+	private:
+		InputManager(InputManager const&) = delete; // Disallow copying of our Singleton
+		InputManager(InputManager&&) = delete;
+		void operator=(InputManager const&) = delete;
 	};
 }
 

@@ -31,19 +31,19 @@ namespace re
 {
 	class RenderManager : public virtual en::EngineComponent
 	{
+	public: // Singleton functionality:		
+		static RenderManager* Get();
+	private:
+		static std::unique_ptr<RenderManager> m_instance;
+
 	public:
 		RenderManager();
 		~RenderManager();
-
-		RenderManager(RenderManager const&) = delete;
-		RenderManager(RenderManager&&) = delete;
-		void operator=(RenderManager const&) = delete;
 
 		// EngineComponent interface:
 		void Startup() override;
 		void Shutdown() override;
 		void Update() override;
-
 		
 		// Member functions:
 		void Initialize();
@@ -60,8 +60,10 @@ namespace re
 
 		inline std::vector<re::Batch> const& GetSceneBatches() { return m_sceneBatches; }
 
+
 	private:
 		void BuildSceneBatches();
+
 
 	private:	
 		re::Context m_context;
@@ -75,8 +77,14 @@ namespace re
 
 		std::vector<re::Batch> m_sceneBatches;
 
+
+	private:
 		// Friends
 		friend class opengl::RenderManager;
+
+		RenderManager(RenderManager const&) = delete;
+		RenderManager(RenderManager&&) = delete;
+		void operator=(RenderManager const&) = delete;
 	};
 }
 

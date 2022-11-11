@@ -1,17 +1,14 @@
 #include "Material.h"
-#include "CoreEngine.h"
 #include "Shader.h"
 #include "Texture.h"
 #include "DebugConfiguration.h"
 #include "Shader.h"
-#include "CoreEngine.h"
 #include "ParameterBlock.h"
 
 using gr::Shader;
 using gr::Texture;
 using gr::Sampler;
 using re::ParameterBlock;
-using en::CoreEngine;
 
 using std::string;
 using std::shared_ptr;

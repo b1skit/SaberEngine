@@ -2,7 +2,6 @@
 
 #include "DebugConfiguration.h"
 #include "Camera.h"
-#include "CoreEngine.h"
 #include "Texture.h"
 #include "Material.h"
 #include "Shader.h"

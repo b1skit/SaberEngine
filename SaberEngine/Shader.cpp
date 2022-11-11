@@ -1,12 +1,10 @@
 #include "Shader.h"
 #include "Shader_Platform.h"
-#include "CoreEngine.h"
 #include "DebugConfiguration.h"
 
 using std::string;
 using std::vector;
 using std::shared_ptr;
-using gr::Material;
 
 
 namespace gr

@@ -2,7 +2,8 @@
 
 #include "GraphicsSystem_DeferredLighting.h"
 #include "SceneManager.h"
-#include "CoreEngine.h"
+#include "Config.h"
+#include "RenderManager.h"
 #include "Light.h"
 #include "ShadowMap.h"
 #include "RenderStage.h"
@@ -10,19 +11,23 @@
 #include "MeshPrimitive.h"
 #include "Batch.h"
 #include "ParameterBlock.h"
+#include "SceneManager.h"
 
 using gr::Light;
 using gr::RenderStage;
 using gr::Texture;
 using gr::TextureTargetSet;
 using gr::ShadowMap;
+using re::RenderManager;
 using re::ParameterBlock;
 using re::Batch;
-using en::CoreEngine;
+using en::Config;
+using en::SceneManager;
 using std::string;
 using std::shared_ptr;
 using std::make_shared;
 using std::vector;
+using std::to_string;
 using glm::vec3;
 using glm::vec4;
 using glm::mat4;
@@ -142,13 +147,13 @@ namespace gr
 	void DeferredLightingGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
 		shared_ptr<GBufferGraphicsSystem> gBufferGS = std::dynamic_pointer_cast<GBufferGraphicsSystem>(
-			en::CoreEngine::GetRenderManager()->GetGraphicsSystem<GBufferGraphicsSystem>());
+			RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>());
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
 		
 		// Create a shared lighting stage texture target:
 		Texture::TextureParams lightTargetParams;
-		lightTargetParams.m_width = en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
-		lightTargetParams.m_height = en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
+		lightTargetParams.m_width = Config::Get()->GetValue<int>("windowXRes");
+		lightTargetParams.m_height = Config::Get()->GetValue<int>("windowYRes");
 		lightTargetParams.m_faces = 1;
 		lightTargetParams.m_texUse = Texture::TextureUse::ColorTarget;
 		lightTargetParams.m_texDimension = Texture::TextureDimension::Texture2D;
@@ -163,8 +168,7 @@ namespace gr
 		deferredLightingTargetSet.DepthStencilTarget() = gBufferGS->GetFinalTextureTargetSet().DepthStencilTarget();
 		deferredLightingTargetSet.CreateColorDepthStencilTargets();
 
-		shared_ptr<Camera> deferredLightingCam = 
-			en::CoreEngine::GetSceneManager()->GetSceneData()->GetMainCamera();
+		shared_ptr<Camera> deferredLightingCam = SceneManager::Get()->GetSceneData()->GetMainCamera();
 
 		
 		// Set the target sets, even if the stages aren't actually used (to ensure they're still valid)
@@ -184,13 +188,13 @@ namespace gr
 
 		// Ambient lights are not supported by GLTF 2.0; Instead, we just check for a \IBL\ibl.hdr file.
 		// Attempt to load the source IBL image (gets a pink error image if it fails)
-		const string sceneIBLPath = en::CoreEngine::GetConfig()->GetValue<string>("sceneIBLPath");
+		const string sceneIBLPath = Config::Get()->GetValue<string>("sceneIBLPath");
 		shared_ptr<Texture> iblTexture =
-			CoreEngine::GetSceneManager()->GetSceneData()->GetLoadTextureByPath({ sceneIBLPath }, false);
+			SceneManager::Get()->GetSceneData()->GetLoadTextureByPath({ sceneIBLPath }, false);
 		if (!iblTexture)
 		{
-			const string defaultIBLPath = en::CoreEngine::GetConfig()->GetValue<string>("defaultIBLPath");
-			iblTexture = CoreEngine::GetSceneManager()->GetSceneData()->GetLoadTextureByPath({ defaultIBLPath }, true);
+			const string defaultIBLPath = Config::Get()->GetValue<string>("defaultIBLPath");
+			iblTexture = SceneManager::Get()->GetSceneData()->GetLoadTextureByPath({ defaultIBLPath }, true);
 		}
 		Texture::TextureParams iblParams = iblTexture->GetTextureParams();
 		iblParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
@@ -203,7 +207,7 @@ namespace gr
 			RenderStage brdfStage("BRDF pre-integration stage");
 
 			brdfStage.GetStageShader() = make_shared<Shader>(
-				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("BRDFIntegrationMapShaderName"));
+				Config::Get()->GetValue<string>("BRDFIntegrationMapShaderName"));
 			brdfStage.GetStageShader()->Create();
 
 			// Create a render target texture:			
@@ -284,7 +288,7 @@ namespace gr
 		Batch cubeMeshBatch = Batch(m_cubeMeshPrimitive.get(), nullptr, nullptr);
 
 		const string equilinearToCubemapShaderName =
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("equilinearToCubemapBlitShaderName");
+			Config::Get()->GetValue<string>("equilinearToCubemapBlitShaderName");
 
 		// TODO: We should use equirectangular images, instead of bothering to convert to cubemaps for IEM/PMREM
 
@@ -309,7 +313,7 @@ namespace gr
 					iblTexture,
 					gr::Sampler::GetSampler(gr::Sampler::SamplerType::ClampLinearMipMapLinearLinear));
 
-				const int numSamples = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("numIEMSamples");
+				const int numSamples = Config::Get()->GetValue<int>("numIEMSamples");
 				iemStage.SetPerFrameShaderUniform(
 					"numSamples", numSamples, platform::Shader::UniformType::Int, 1);
 				
@@ -368,7 +372,7 @@ namespace gr
 						iblTexture,
 						gr::Sampler::GetSampler(gr::Sampler::SamplerType::ClampLinearMipMapLinearLinear));
 
-					const int numSamples = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("numPMREMSamples");
+					const int numSamples = Config::Get()->GetValue<int>("numPMREMSamples");
 					pmremStage.SetPerFrameShaderUniform(
 						"numSamples", numSamples, platform::Shader::UniformType::Int, 1);
 					
@@ -401,7 +405,7 @@ namespace gr
 		
 		// Ambient light stage:
 		m_ambientStage.GetStageShader() = make_shared<Shader>(
-			en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredAmbientLightShaderName"));
+			Config::Get()->GetValue<string>("deferredAmbientLightShaderName"));
 		m_ambientStage.GetStageShader()->ShaderKeywords().emplace_back("AMBIENT_IBL");
 		m_ambientStage.GetStageShader()->Create();
 
@@ -423,7 +427,7 @@ namespace gr
 		
 
 		// Key light stage:
-		shared_ptr<Light> keyLight = en::CoreEngine::GetSceneManager()->GetSceneData()->GetKeyLight();
+		shared_ptr<Light> keyLight = SceneManager::Get()->GetSceneData()->GetKeyLight();
 
 		RenderStage::RenderStageParams keylightStageParams(ambientStageParams);
 		if (keyLight)
@@ -439,7 +443,7 @@ namespace gr
 			m_keylightStage.SetRenderStageParams(keylightStageParams);
 
 			m_keylightStage.GetStageShader() = make_shared<Shader>(
-				en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredKeylightShaderName"));
+				Config::Get()->GetValue<string>("deferredKeylightShaderName"));
 			m_keylightStage.GetStageShader()->Create();
 
 			m_keylightStage.GetStageCamera() = deferredLightingCam;
@@ -449,8 +453,7 @@ namespace gr
 
 
 		// Point light stage:
-		vector<shared_ptr<Light>> const& pointLights = 
-			en::CoreEngine::GetSceneManager()->GetSceneData()->GetPointLights();
+		vector<shared_ptr<Light>> const& pointLights = SceneManager::Get()->GetSceneData()->GetPointLights();
 		if (pointLights.size() > 0)
 		{
 			m_pointlightStage.GetStageCamera() = deferredLightingCam;
@@ -478,7 +481,7 @@ namespace gr
 			m_pointlightStage.SetRenderStageParams(pointlightStageParams);
 
 			m_pointlightStage.GetStageShader() = make_shared<Shader>(
-				en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("deferredPointLightShaderName"));
+				Config::Get()->GetValue<string>("deferredPointLightShaderName"));
 			m_pointlightStage.GetStageShader()->Create();
 
 			pipeline.AppendRenderStage(m_pointlightStage);
@@ -499,12 +502,12 @@ namespace gr
 		CreateBatches();
 
 		// Light pointers:
-		shared_ptr<Light> const keyLight = CoreEngine::GetSceneManager()->GetSceneData()->GetKeyLight();
-		vector<shared_ptr<Light>> const& pointLights = CoreEngine::GetSceneManager()->GetSceneData()->GetPointLights();
+		shared_ptr<Light> const keyLight = SceneManager::Get()->GetSceneData()->GetKeyLight();
+		vector<shared_ptr<Light>> const& pointLights = SceneManager::Get()->GetSceneData()->GetPointLights();
 
 		// Add GBuffer textures as stage inputs:		
 		shared_ptr<GBufferGraphicsSystem> gBufferGS = std::dynamic_pointer_cast<GBufferGraphicsSystem>(
-			en::CoreEngine::GetRenderManager()->GetGraphicsSystem<GBufferGraphicsSystem>());
+			RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>());
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
 
 		for (size_t i = 0; i < (GBufferGraphicsSystem::GBufferTexNames.size() - 1); i++) // -1, since we handle depth @end
@@ -586,7 +589,7 @@ namespace gr
 		m_ambientStage.AddBatch(ambeintFullscreenQuadBatch);
 
 		// Keylight stage batches:
-		shared_ptr<Light> const keyLight = CoreEngine::GetSceneManager()->GetSceneData()->GetKeyLight();
+		shared_ptr<Light> const keyLight = SceneManager::Get()->GetSceneData()->GetKeyLight();
 		if (keyLight)
 		{
 			Batch keylightFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
@@ -604,7 +607,7 @@ namespace gr
 		}
 
 		// Pointlight stage batches:
-		vector<shared_ptr<Light>> const& pointLights = CoreEngine::GetSceneManager()->GetSceneData()->GetPointLights();
+		vector<shared_ptr<Light>> const& pointLights = SceneManager::Get()->GetSceneData()->GetPointLights();
 		for (shared_ptr<Light> const pointlight : pointLights)
 		{
 			Batch pointlightBatch = Batch(pointlight->DeferredMesh(), nullptr, nullptr);

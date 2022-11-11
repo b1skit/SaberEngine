@@ -3,12 +3,16 @@
 #include "GraphicsSystem_Tonemapping.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "Shader.h"
-#include "CoreEngine.h"
+#include "Config.h"
+#include "SceneManager.h"
+#include "RenderManager.h"
 
-using en::CoreEngine;
+using en::Config;
+using en::SceneManager;
 using gr::Shader;
 using gr::DeferredLightingGraphicsSystem;
 using gr::TextureTargetSet;
+using re::RenderManager;
 using re::Batch;
 using std::shared_ptr;
 using std::make_shared;
@@ -36,19 +40,18 @@ namespace gr
 
 		m_tonemappingStage.SetRenderStageParams(tonemappingStageParam);
 
-		m_tonemappingStage.GetStageShader() = make_shared<Shader>(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("toneMapShader"));
+		m_tonemappingStage.GetStageShader() = make_shared<Shader>(Config::Get()->GetValue<string>("toneMapShader"));
 		m_tonemappingStage.GetStageShader()->Create();
 		
 		// Set shader constants:
 		m_tonemappingStage.GetStageShader()->SetUniform(
 			"exposure",
-			&CoreEngine::GetSceneManager()->GetSceneData()->GetMainCamera()->GetExposure(),
+			&SceneManager::Get()->GetSceneData()->GetMainCamera()->GetExposure(),
 			platform::Shader::UniformType::Float,
 			1);
 
-		m_tonemappingStage.GetStageCamera() = CoreEngine::GetSceneManager()->GetSceneData()->GetMainCamera();
-		m_tonemappingStage.GetTextureTargetSet() = *CoreEngine::GetRenderManager()->GetDefaultTextureTargetSet();
+		m_tonemappingStage.GetStageCamera() = SceneManager::Get()->GetSceneData()->GetMainCamera();
+		m_tonemappingStage.GetTextureTargetSet() = *RenderManager::Get()->GetDefaultTextureTargetSet();
 
 		pipeline.AppendRenderStage(m_tonemappingStage);
 	}
@@ -60,7 +63,7 @@ namespace gr
 		CreateBatches();
 
 		TextureTargetSet& deferredLightTextureTargetSet =
-			CoreEngine::GetRenderManager()->GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
+			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
 
 		m_tonemappingStage.SetTextureInput(
 			"GBufferAlbedo",

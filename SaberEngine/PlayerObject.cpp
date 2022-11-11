@@ -1,16 +1,17 @@
 #include "PlayerObject.h"
 #include "TimeManager.h"
 #include "InputManager.h"
-#include "CoreEngine.h"
+#include "Config.h"
 #include "Camera.h"
 
 #include <glm/gtc/constants.hpp>
 
 using gr::Transform;
 using gr::Camera;
-using glm::vec3;
+using en::Config;
 using en::InputManager;
 using en::TimeManager;
+using glm::vec3;
 
 
 namespace fr
@@ -22,7 +23,7 @@ namespace fr
 		m_savedEulerRotation(vec3(0.0f, 0.0f, 0.0f))
 	{
 		m_playerCam->GetTransform()->SetParent(&m_transform);
-		m_sprintSpeedModifier = en::CoreEngine::GetConfig()->GetValue<float>("sprintSpeedModifier");
+		m_sprintSpeedModifier = Config::Get()->GetValue<float>("sprintSpeedModifier");
 	}
 
 

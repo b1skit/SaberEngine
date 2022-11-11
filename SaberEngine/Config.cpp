@@ -1,4 +1,4 @@
-#include "EngineConfig.h"
+#include "Config.h"
 #include "DebugConfiguration.h"
 #include "KeyConfiguration.h"
 
@@ -11,6 +11,9 @@
 using std::ifstream;
 using std::any_cast;
 using std::string;
+using std::to_string;
+using std::unordered_map;
+using std::any;
 
 
 namespace
@@ -29,7 +32,18 @@ namespace
 
 namespace en
 {
-	void EngineConfig::InitializeDefaultValues()
+	std::unique_ptr<Config> Config::m_instance = nullptr;
+	Config* Config::Get()
+	{
+		if (m_instance == nullptr)
+		{
+			m_instance = std::make_unique<Config>();
+		}
+		return m_instance.get();
+	}
+
+
+	void Config::InitializeDefaultValues()
 	{
 		// Define the default values in unordered_map, to simplify (de)serialization.
 		// Note: String values must be explicitely defined as string objects
@@ -77,7 +91,7 @@ namespace en
 	}
 
 
-	void en::EngineConfig::SetAPIDefaults()
+	void en::Config::SetAPIDefaults()
 	{
 		// We only set these defaults if they're not specified in the (now already loaded) config file. This allows the
 		// config to override these values, if required. We also tag these keys as API-specific (but if they're found in
@@ -159,7 +173,7 @@ namespace en
 
 	// Get a config value, by type
 	template<typename T>
-	T EngineConfig::GetValue(const string& valueName) const
+	T Config::GetValue(const string& valueName) const
 	{
 		auto result = m_configValues.find(valueName);
 		T returnVal{};
@@ -171,7 +185,7 @@ namespace en
 			}
 			catch (const std::bad_any_cast& e)
 			{
-				LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from EngineConfig\n%s", e.what());
+				LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what());
 			}
 		}
 		else
@@ -182,15 +196,15 @@ namespace en
 		return returnVal;
 	}
 	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
-	template string EngineConfig::GetValue<string>(const string& valueName) const;
-	template float EngineConfig::GetValue<float>(const string& valueName) const;
-	template int32_t EngineConfig::GetValue<int32_t>(const string& valueName) const;
-	template uint32_t EngineConfig::GetValue<uint32_t>(const string& valueName) const;
-	template bool EngineConfig::GetValue<bool>(const string& valueName) const;
-	template char EngineConfig::GetValue<char>(const string& valueName) const;
+	template string Config::GetValue<string>(const string& valueName) const;
+	template float Config::GetValue<float>(const string& valueName) const;
+	template int32_t Config::GetValue<int32_t>(const string& valueName) const;
+	template uint32_t Config::GetValue<uint32_t>(const string& valueName) const;
+	template bool Config::GetValue<bool>(const string& valueName) const;
+	template char Config::GetValue<char>(const string& valueName) const;
 
 
-	string EngineConfig::GetValueAsString(const string& valueName) const
+	string Config::GetValueAsString(const string& valueName) const
 	{
 		auto result = m_configValues.find(valueName);
 		string returnVal = "";
@@ -225,7 +239,7 @@ namespace en
 			}
 			catch (const std::bad_any_cast& e)
 			{
-				LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from EngineConfig\n%s", e.what());
+				LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what());
 			}
 		}
 		else
@@ -240,22 +254,22 @@ namespace en
 	// Set a config value
 	// Note: Strings must be explicitely defined as a string("value")
 	template<typename T>
-	void EngineConfig::SetValue(const string& valueName, T value, SettingType settingType /*= SettingType::Common*/) 
+	void Config::SetValue(const string& valueName, T value, SettingType settingType /*= SettingType::Common*/) 
 	{
 		m_configValues[valueName] = {value, settingType};
 		m_isDirty = true;
 	}
 	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
-	template void EngineConfig::SetValue<string>(const string& valueName, string value, SettingType settingType);
-	template void EngineConfig::SetValue<float>(const string& valueName, float value, SettingType settingType);
-	template void EngineConfig::SetValue<int>(const string& valueName, int value, SettingType settingType);
-	template void EngineConfig::SetValue<bool>(const string& valueName, bool value, SettingType settingType);
-	template void EngineConfig::SetValue<char>(const string& valueName, char value, SettingType settingType);
+	template void Config::SetValue<string>(const string& valueName, string value, SettingType settingType);
+	template void Config::SetValue<float>(const string& valueName, float value, SettingType settingType);
+	template void Config::SetValue<int>(const string& valueName, int value, SettingType settingType);
+	template void Config::SetValue<bool>(const string& valueName, bool value, SettingType settingType);
+	template void Config::SetValue<char>(const string& valueName, char value, SettingType settingType);
 
 
 
 	// Constructor
-	EngineConfig::EngineConfig() :
+	Config::Config() :
 		m_isDirty{ true },
 		m_renderingAPI{ platform::RenderingAPI::RenderingAPI_Count }
 	{
@@ -290,7 +304,7 @@ namespace en
 	}
 
 
-	void EngineConfig::LoadConfig()
+	void Config::LoadConfig()
 	{
 		LOG("Loading %s...", CONFIG_FILENAME.c_str());
 
@@ -475,7 +489,7 @@ namespace en
 	}
 
 
-	void EngineConfig::SaveConfig()
+	void Config::SaveConfig()
 	{
 		if (m_isDirty == false)
 		{
@@ -541,5 +555,5 @@ namespace en
 
 
 	// Note: We inline this here, as it depends on macros defined in KeyConfiguration.h
-	inline string EngineConfig::PropertyToConfigString(bool property) { return string(" ") + (property == true ? TRUE_STRING : FALSE_STRING) + string("\n"); }
+	inline string Config::PropertyToConfigString(bool property) { return string(" ") + (property == true ? TRUE_STRING : FALSE_STRING) + string("\n"); }
 }

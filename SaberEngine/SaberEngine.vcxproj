@@ -178,7 +178,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="VertexAttributeBuilder.cpp" />
     <ClCompile Include="Context_Platform.cpp" />
     <ClCompile Include="CoreEngine.cpp" />
-    <ClCompile Include="EngineConfig.cpp" />
+    <ClCompile Include="Config.cpp" />
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="SceneObject.cpp" />
     <ClCompile Include="GraphicsSystem_Bloom.cpp" />
@@ -268,7 +268,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CoreEngine.h" />
     <ClInclude Include="EngineComponent.h" />
-    <ClInclude Include="EngineConfig.h" />
+    <ClInclude Include="Config.h" />
     <ClInclude Include="EventListener.h" />
     <ClInclude Include="EventManager.h" />
     <ClInclude Include="SceneObject.h" />

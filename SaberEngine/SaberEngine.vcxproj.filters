@@ -86,7 +86,7 @@
     <ClCompile Include="MeshPrimitive_Platform.cpp">
       <Filter>Source Files\gr\platform</Filter>
     </ClCompile>
-    <ClCompile Include="EngineConfig.cpp">
+    <ClCompile Include="Config.cpp">
       <Filter>Source Files\en</Filter>
     </ClCompile>
     <ClCompile Include="Texture_Platform.cpp">
@@ -250,7 +250,7 @@
     <ClInclude Include="MeshPrimitive_Platform.h">
       <Filter>Header Files\gr\platform</Filter>
     </ClInclude>
-    <ClInclude Include="EngineConfig.h">
+    <ClInclude Include="Config.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="Texture_Platform.h">

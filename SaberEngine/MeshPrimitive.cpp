@@ -5,11 +5,12 @@
 #include <glm/gtc/constants.hpp>
 
 #include "MeshPrimitive.h"
-#include "CoreEngine.h"
+#include "Config.h"
 
 
 namespace re
 {
+	using en::Config;
 	using gr::Transform;
 	using glm::pi;
 	using glm::mat4;
@@ -156,6 +157,7 @@ namespace meshfactory
 	using glm::vec3;
 	using glm::vec4;
 	using re::MeshPrimitive;
+	using en::Config;
 	
 
 	inline std::shared_ptr<MeshPrimitive> CreateCube()
@@ -332,7 +334,7 @@ namespace meshfactory
 	inline std::shared_ptr<MeshPrimitive> CreateFullscreenQuad(ZLocation zLocation) // On far plane by default
 	{
 		float zDepth;
-		switch (en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI())
+		switch (Config::Get()->GetRenderingAPI())
 		{
 		case platform::RenderingAPI::OpenGL:
 		{

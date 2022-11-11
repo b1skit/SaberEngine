@@ -1,5 +1,6 @@
 #include "Light.h"
-#include "CoreEngine.h"
+#include "Config.h"
+#include "SceneManager.h"
 #include "Camera.h"
 #include "DebugConfiguration.h"
 #include "ShadowMap.h"
@@ -8,6 +9,8 @@
 
 using gr::Shader;
 using gr::Transform;
+using en::Config;
+using en::SceneManager;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
@@ -38,8 +41,7 @@ namespace gr
 		{
 			if (hasShadow)
 			{
-				re::Bounds sceneWorldBounds =
-					en::CoreEngine::GetSceneManager()->GetSceneData()->GetWorldSpaceSceneBounds();
+				re::Bounds sceneWorldBounds = SceneManager::Get()->GetSceneData()->GetWorldSpaceSceneBounds();
 
 				const re::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
 					glm::inverse(m_ownerTransform->GetWorldMatrix()));
@@ -54,8 +56,7 @@ namespace gr
 				shadowCamConfig.m_orthoBottom		= transformedBounds.yMin();
 				shadowCamConfig.m_orthoTop			= transformedBounds.yMax();
 
-				const uint32_t shadowMapRes = 
-					en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowMapRes");
+				const uint32_t shadowMapRes = Config::Get()->GetValue<uint32_t>("defaultShadowMapRes");
 				m_shadowMap = make_shared<ShadowMap>(
 					m_name,
 					shadowMapRes,
@@ -89,8 +90,7 @@ namespace gr
 				shadowCamConfig.m_aspectRatio		= 1.0f;
 				shadowCamConfig.m_projectionType	= Camera::CameraConfig::ProjectionType::Perspective;
 			
-				const uint32_t cubeMapRes = 
-					en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<uint32_t>("defaultShadowCubeMapRes");
+				const uint32_t cubeMapRes = Config::Get()->GetValue<uint32_t>("defaultShadowCubeMapRes");
 
 				m_shadowMap = make_shared<ShadowMap>(
 					m_name,
@@ -101,10 +101,8 @@ namespace gr
 					vec3(0.0f, 0.0f, 0.0f),	// shadowCamPosition: No offset
 					true);					// useCubeMap
 
-				m_shadowMap->MinShadowBias() =
-					en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultMinShadowBias");
-				m_shadowMap->MaxShadowBias() =
-					en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultMaxShadowBias");
+				m_shadowMap->MinShadowBias() = Config::Get()->GetValue<float>("defaultMinShadowBias");
+				m_shadowMap->MaxShadowBias() = Config::Get()->GetValue<float>("defaultMaxShadowBias");
 			}
 		}
 		break;
@@ -129,8 +127,7 @@ namespace gr
 	{
 		if (m_type == LightType::Directional) // Update shadow cam bounds
 		{
-			re::Bounds sceneWorldBounds =
-				en::CoreEngine::GetSceneManager()->GetSceneData()->GetWorldSpaceSceneBounds();
+			re::Bounds sceneWorldBounds = SceneManager::Get()->GetSceneData()->GetWorldSpaceSceneBounds();
 
 			const re::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
 				glm::inverse(m_ownerTransform->GetWorldMatrix()));

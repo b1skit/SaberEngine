@@ -1,13 +1,18 @@
 #include <memory>
 
 #include "GraphicsSystem_GBuffer.h"
-#include "CoreEngine.h"
+#include "Config.h"
+#include "RenderManager.h"
+#include "SceneManager.h"
 #include "Shader.h"
 #include "Texture.h"
 #include "SceneData.h"
 
 using gr::Shader;
 using gr::Texture;
+using en::Config;
+using en::SceneManager;
+using re::RenderManager;
 using std::string;
 
 
@@ -38,12 +43,12 @@ namespace gr
 	{
 		// Shader:
 		std::shared_ptr<Shader> gBufferShader = std::make_shared<Shader>(
-			en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("gBufferFillShaderName"));
+			Config::Get()->GetValue<string>("gBufferFillShaderName"));
 		gBufferShader->Create();
 
 		// Shader constants: Only set once here
 		const float emissiveIntensity =
-			en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<float>("defaultSceneEmissiveIntensity");
+			Config::Get()->GetValue<float>("defaultSceneEmissiveIntensity");
 		gBufferShader->SetUniform("emissiveIntensity", &emissiveIntensity, platform::Shader::UniformType::Float, 1);
 
 		// Set the shader:
@@ -51,8 +56,8 @@ namespace gr
 
 		// Create GBuffer color targets:
 		Texture::TextureParams gBufferParams;
-		gBufferParams.m_width = en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
-		gBufferParams.m_height = en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
+		gBufferParams.m_width = Config::Get()->GetValue<int>("windowXRes");
+		gBufferParams.m_height = Config::Get()->GetValue<int>("windowYRes");
 		gBufferParams.m_faces = 1;
 		gBufferParams.m_texUse = gr::Texture::TextureUse::ColorTarget;
 		gBufferParams.m_texDimension = gr::Texture::TextureDimension::Texture2D;
@@ -94,8 +99,7 @@ namespace gr
 		gBufferTargets.CreateColorDepthStencilTargets();
 
 		// Camera:
-		m_gBufferStage.GetStageCamera() =
-			en::CoreEngine::GetSceneManager()->GetSceneData()->GetMainCamera();
+		m_gBufferStage.GetStageCamera() = SceneManager::Get()->GetSceneData()->GetMainCamera();
 
 		// Set the stage params:
 		RenderStage::RenderStageParams gBufferStageParams;
@@ -127,6 +131,6 @@ namespace gr
 
 	void GBufferGraphicsSystem::CreateBatches()
 	{
-		m_gBufferStage.AddBatches(en::CoreEngine::GetRenderManager()->GetSceneBatches());
+		m_gBufferStage.AddBatches(RenderManager::Get()->GetSceneBatches());
 	}
 }

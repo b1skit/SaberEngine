@@ -5,11 +5,15 @@
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "Shader.h"
-#include "CoreEngine.h"
+#include "Config.h"
+#include "SceneManager.h"
+#include "RenderManager.h"
 
 using gr::DeferredLightingGraphicsSystem;
 using re::Batch;
-using en::CoreEngine;
+using en::Config;
+using en::SceneManager;
+using re::RenderManager;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
@@ -31,12 +35,11 @@ namespace gr
 	{
 
 		shared_ptr<DeferredLightingGraphicsSystem> deferredLightGS = dynamic_pointer_cast<DeferredLightingGraphicsSystem>(
-			CoreEngine::GetRenderManager()->GetGraphicsSystem<DeferredLightingGraphicsSystem>());
+			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>());
 
-		shared_ptr<Camera> sceneCam = CoreEngine::GetSceneManager()->GetSceneData()->GetMainCamera();
+		shared_ptr<Camera> sceneCam = SceneManager::Get()->GetSceneData()->GetMainCamera();
 
-		shared_ptr<Shader> blitShader = make_shared<Shader>(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blitShaderName"));
+		shared_ptr<Shader> blitShader = make_shared<Shader>(Config::Get()->GetValue<string>("blitShaderName"));
 		blitShader->Create();
 
 		// Emissive blit stage:
@@ -67,8 +70,8 @@ namespace gr
 		const uint32_t numScalingStages = m_numDownSamplePasses;
 		m_downResStages.reserve(numScalingStages); // MUST reserve so our pointers won't change
 
-		int currentXRes = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes") / 2;
-		int currentYRes = CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes") / 2;
+		int currentXRes = Config::Get()->GetValue<int>("windowXRes") / 2;
+		int currentYRes = Config::Get()->GetValue<int>("windowYRes") / 2;
 
 		Texture::TextureParams resScaleParams;
 		resScaleParams.m_width = currentXRes;
@@ -82,7 +85,7 @@ namespace gr
 		resScaleParams.m_useMIPs = false;
 
 		shared_ptr<Shader> luminanceThresholdShader = make_shared<Shader>(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShaderName"));
+			Config::Get()->GetValue<string>("blurShaderName"));
 		luminanceThresholdShader->ShaderKeywords().emplace_back("BLUR_SHADER_LUMINANCE_THRESHOLD");
 		luminanceThresholdShader->Create();
 
@@ -126,12 +129,12 @@ namespace gr
 
 		// Blur stages:
 		shared_ptr<Shader> horizontalBlurShader = make_shared<Shader>(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShaderName"));
+			Config::Get()->GetValue<string>("blurShaderName"));
 		horizontalBlurShader->ShaderKeywords().emplace_back("BLUR_SHADER_HORIZONTAL");
 		horizontalBlurShader->Create();
 
 		shared_ptr<Shader> verticalBlurShader = make_shared<Shader>(
-			CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("blurShaderName"));
+			Config::Get()->GetValue<string>("blurShaderName"));
 		verticalBlurShader->ShaderKeywords().emplace_back("BLUR_SHADER_VERTICAL");
 		verticalBlurShader->Create();
 
@@ -241,11 +244,11 @@ namespace gr
 
 
 		shared_ptr<GBufferGraphicsSystem> gbufferGS = dynamic_pointer_cast<GBufferGraphicsSystem>(
-			CoreEngine::GetRenderManager()->GetGraphicsSystem<GBufferGraphicsSystem>());
+			RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>());
 
 		shared_ptr<DeferredLightingGraphicsSystem> deferredLightGS =
 			dynamic_pointer_cast<DeferredLightingGraphicsSystem>(
-				CoreEngine::GetRenderManager()->GetGraphicsSystem<DeferredLightingGraphicsSystem>());
+				RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>());
 
 		shared_ptr<Sampler const> const bloomStageSampler = Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear);
 

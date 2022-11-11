@@ -8,9 +8,9 @@
 
 #include "VertexAttributeBuilder.h"
 #include "DebugConfiguration.h"
-#include "CoreEngine.h"
+#include "Config.h"
 
-using en::CoreEngine;
+using en::Config;
 using std::string;
 using std::to_string;
 using std::vector;
@@ -239,8 +239,7 @@ namespace util
 		SEAssert("Expected a triangle list and pre-allocated UV0 vector",
 			meshData->m_indices->size() % 3 == 0 && meshData->m_UV0->size() == meshData->m_indices->size());
 
-		platform::RenderingAPI const& api =
-			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+		platform::RenderingAPI const& api = Config::Get()->GetRenderingAPI();
 		const bool botLeftZeroZero = api == platform::RenderingAPI::OpenGL ? true : false;
 
 		// Build simple, overlapping UVs, placing the vertices of every triangle in the TL, BL, BR corners of UV space:

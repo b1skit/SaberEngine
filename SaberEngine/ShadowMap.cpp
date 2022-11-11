@@ -1,12 +1,13 @@
 #include <memory>
 
 #include "ShadowMap.h"
-#include "CoreEngine.h"
+#include "Config.h"
 #include "Camera.h"
 #include "SceneData.h"
 #include "Texture.h"
 #include "Material.h"
 
+using en::Config;
 using gr::Material;
 using gr::Texture;
 using gr::Shader;
@@ -59,7 +60,7 @@ namespace gr
 
 			depthTexture = std::make_shared<gr::Texture>(texName, shadowParams);
 
-			shaderName = en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("cubeDepthShaderName");
+			shaderName = Config::Get()->GetValue<string>("cubeDepthShaderName");
 		}
 		else // Single texture shadowmap setup:
 		{
@@ -69,7 +70,7 @@ namespace gr
 			
 			depthTexture = std::make_shared<gr::Texture>(texName, shadowParams);
 
-			shaderName = en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("depthShaderName");
+			shaderName = Config::Get()->GetValue<string>("depthShaderName");
 		}
 
 		m_shadowCam->GetRenderShader() = make_shared<Shader>(shaderName);

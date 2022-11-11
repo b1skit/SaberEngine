@@ -1,7 +1,7 @@
 #include "TextureTarget.h"
-#include "CoreEngine.h"
+#include "Config.h"
 
-using en::CoreEngine;
+using en::Config;
 using std::string;
 
 
@@ -45,8 +45,8 @@ namespace gr
 	Viewport::Viewport() :
 		m_xMin(0),
 		m_yMin(0),
-		m_width(en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes")),
-		m_height(en::CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes"))
+		m_width(Config::Get()->GetValue<int>("windowXRes")),
+		m_height(Config::Get()->GetValue<int>("windowYRes"))
 	{
 
 	}
@@ -209,8 +209,8 @@ namespace gr
 		// Default framebuffer has no texture targets
 		if (!HasTargets())
 		{
-			const uint32_t xRes = (uint32_t)CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowXRes");
-			const uint32_t yRes = (uint32_t)CoreEngine::GetCoreEngine()->GetConfig()->GetValue<int>("windowYRes");
+			const uint32_t xRes = (uint32_t)Config::Get()->GetValue<int>("windowXRes");
+			const uint32_t yRes = (uint32_t)Config::Get()->GetValue<int>("windowYRes");
 
 			targetDimensions.x = (float)xRes;
 			targetDimensions.y = (float)yRes;

@@ -2,7 +2,8 @@
 #include <string>
 
 #include "SceneManager.h"
-#include "CoreEngine.h"
+#include "Config.h"
+#include "EventManager.h"
 #include "Camera.h"
 #include "PlayerObject.h"
 #include "Light.h"
@@ -10,6 +11,8 @@
 using gr::Camera;
 using gr::Light;
 using fr::SceneData;
+using en::Config;
+using en::EventManager;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
@@ -17,7 +20,20 @@ using std::string;
 
 namespace en
 {
-	SceneManager::SceneManager() : m_sceneData(nullptr) {}
+	std::unique_ptr<SceneManager> SceneManager::m_instance = nullptr;
+	SceneManager* SceneManager::Get()
+	{
+		if (m_instance == nullptr)
+		{
+			m_instance = std::make_unique<SceneManager>();
+		}
+		return m_instance.get();
+	}
+
+
+	SceneManager::SceneManager() : m_sceneData(nullptr)
+	{
+	}
 
 
 	void SceneManager::Startup()
@@ -25,14 +41,14 @@ namespace en
 		LOG("SceneManager starting...");
 		
 		// Load the scene:
-		const string sceneName = en::CoreEngine::GetConfig()->GetValue<string>("sceneName");
+		const string sceneName = Config::Get()->GetValue<string>("sceneName");
 		m_sceneData = std::make_shared<SceneData>(sceneName);
 
-		const string sceneFilePath = en::CoreEngine::GetConfig()->GetValue<string>("sceneFilePath");
+		const string sceneFilePath = Config::Get()->GetValue<string>("sceneFilePath");
 		const bool loadResult = m_sceneData->Load(sceneFilePath);
 		if (!loadResult)
 		{
-			CoreEngine::GetEventManager()->Notify(std::make_shared<EventManager::EventInfo const>(
+			EventManager::Get()->Notify(std::make_shared<EventManager::EventInfo const>(
 				EventManager::EventInfo{ EventManager::EngineQuit, this, "Failed to load scene" }));
 		}
 

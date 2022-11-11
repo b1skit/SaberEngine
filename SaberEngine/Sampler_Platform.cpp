@@ -1,10 +1,12 @@
 #pragma once
 
-#include "CoreEngine.h"
+#include "Config.h"
 #include "Sampler.h"
 #include "Sampler_Platform.h"
 #include "Sampler_OpenGL.h"
 #include "DebugConfiguration.h"
+
+using en::Config;
 
 
 namespace platform
@@ -12,8 +14,7 @@ namespace platform
 	// Parameter struct object factory:
 	void Sampler::PlatformParams::CreatePlatformParams(gr::Sampler& sampler)
 	{
-		const platform::RenderingAPI& api =
-			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{

@@ -7,14 +7,18 @@
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
-#include "CoreEngine.h"
+#include "Config.h"
+#include "RenderManager.h"
+#include "SceneManager.h"
 #include "Texture.h"
 
 using gr::Texture;
 using gr::DeferredLightingGraphicsSystem;
 using gr::GBufferGraphicsSystem;
 using re::Batch;
-using en::CoreEngine;
+using en::Config;
+using en::SceneManager;
+using re::RenderManager;
 using std::shared_ptr;
 using std::string;
 using std::vector;
@@ -37,23 +41,22 @@ namespace gr
 	void SkyboxGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
 		// Create a skybox shader, now that we have some sort of image loaded:
-		m_skyboxStage.GetStageShader() =
-			make_shared<Shader>(CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("skyboxShaderName"));
+		m_skyboxStage.GetStageShader() = make_shared<Shader>(Config::Get()->GetValue<string>("skyboxShaderName"));
 
 		// Load the HDR image:
-		const string iblTexturePath = en::CoreEngine::GetConfig()->GetValue<string>("sceneIBLPath");
-		m_skyTexture = CoreEngine::GetSceneManager()->GetSceneData()->GetLoadTextureByPath({ iblTexturePath }, false);
+		const string iblTexturePath = Config::Get()->GetValue<string>("sceneIBLPath");
+		m_skyTexture = SceneManager::Get()->GetSceneData()->GetLoadTextureByPath({ iblTexturePath }, false);
 		if (!m_skyTexture)
 		{
-			const string defaultIBLPath = en::CoreEngine::GetConfig()->GetValue<string>("defaultIBLPath");
-			m_skyTexture = CoreEngine::GetSceneManager()->GetSceneData()->GetLoadTextureByPath({ defaultIBLPath }, true);
+			const string defaultIBLPath = Config::Get()->GetValue<string>("defaultIBLPath");
+			m_skyTexture = SceneManager::Get()->GetSceneData()->GetLoadTextureByPath({ defaultIBLPath }, true);
 		}
 
 		if (m_skyTexture == nullptr)
 		{
-			const string& sceneName = CoreEngine::GetSceneManager()->GetSceneData()->GetName();
+			const string& sceneName = SceneManager::Get()->GetSceneData()->GetName();
 			const string skyboxTextureRoot =
-				CoreEngine::GetCoreEngine()->GetConfig()->GetValue<string>("scenesRoot") + sceneName + "\\Skybox\\";
+				Config::Get()->GetValue<string>("scenesRoot") + sceneName + "\\Skybox\\";
 			// TODO: This skybox path should be user-configurable
 
 
@@ -96,7 +99,7 @@ namespace gr
 
 			if (cubemapTexPaths.size() == 6)
 			{
-				m_skyTexture = CoreEngine::GetSceneManager()->GetSceneData()->GetLoadTextureByPath(cubemapTexPaths);
+				m_skyTexture = SceneManager::Get()->GetSceneData()->GetLoadTextureByPath(cubemapTexPaths);
 			}
 			else
 			{
@@ -145,10 +148,10 @@ namespace gr
 
 		m_skyboxStage.SetRenderStageParams(skyboxStageParams);
 
-		m_skyboxStage.GetStageCamera() = CoreEngine::GetSceneManager()->GetSceneData()->GetMainCamera();
+		m_skyboxStage.GetStageCamera() = SceneManager::Get()->GetSceneData()->GetMainCamera();
 
 		shared_ptr<DeferredLightingGraphicsSystem> deferredLightGS = dynamic_pointer_cast<DeferredLightingGraphicsSystem>(
-			CoreEngine::GetRenderManager()->GetGraphicsSystem<DeferredLightingGraphicsSystem>());
+			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>());
 
 		// Need to create a new texture target set, so we can write to the deferred lighting color targets, but use the
 		// GBuffer depth buffer for HW depth testing
@@ -157,7 +160,7 @@ namespace gr
 			"Skybox Target Set");
 
 		shared_ptr<GBufferGraphicsSystem> gBufferGS = std::dynamic_pointer_cast<GBufferGraphicsSystem>(
-			en::CoreEngine::GetRenderManager()->GetGraphicsSystem<GBufferGraphicsSystem>());
+			RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>());
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
 		m_skyboxStage.GetTextureTargetSet().DepthStencilTarget() = gBufferGS->GetFinalTextureTargetSet().DepthStencilTarget();
 		m_skyboxStage.GetTextureTargetSet().CreateDepthStencilTarget();
@@ -178,7 +181,7 @@ namespace gr
 			Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear));
 
 		shared_ptr<GBufferGraphicsSystem> gBufferGS = dynamic_pointer_cast<GBufferGraphicsSystem>(
-			CoreEngine::GetRenderManager()->GetGraphicsSystem<GBufferGraphicsSystem>());
+			RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>());
 	}
 
 

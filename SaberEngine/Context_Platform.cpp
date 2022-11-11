@@ -1,16 +1,17 @@
 #include "DebugConfiguration.h"
-#include "CoreEngine.h"
+#include "Config.h"
 #include "Context.h"
 #include "Context_OpenGL.h"
 #include "Context_Platform.h"
+
+using en::Config;
 
 
 namespace platform
 {
 	void Context::PlatformParams::CreatePlatformParams(re::Context& m_context)
 	{
-		const platform::RenderingAPI& api =
-			en::CoreEngine::GetCoreEngine()->GetConfig()->GetRenderingAPI();
+		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
 		switch (api)
 		{
