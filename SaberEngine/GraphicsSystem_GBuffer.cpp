@@ -99,7 +99,7 @@ namespace gr
 		gBufferTargets.CreateColorDepthStencilTargets();
 
 		// Camera:
-		m_gBufferStage.GetStageCamera() = SceneManager::Get()->GetSceneData()->GetMainCamera();
+		m_gBufferStage.GetStageCamera() = SceneManager::GetSceneData()->GetMainCamera();
 
 		// Set the stage params:
 		RenderStage::RenderStageParams gBufferStageParams;

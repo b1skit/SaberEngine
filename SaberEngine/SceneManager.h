@@ -11,6 +11,7 @@ namespace en
 	{
 	public: // Singleton functionality:		
 		static SceneManager* Get();
+		static fr::SceneData* GetSceneData() { return m_instance->m_sceneData.get(); }
 	private:
 		static std::unique_ptr<SceneManager> m_instance;
 
@@ -26,15 +27,8 @@ namespace en
 		// EventListener interface:
 		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override;
 
-		// Member functions:
-		inline std::shared_ptr<fr::SceneData> GetSceneData() { return m_sceneData; }
-		inline std::shared_ptr<fr::SceneData const> const GetSceneData() const { return m_sceneData; }
-
 	private:
 		std::shared_ptr<fr::SceneData> m_sceneData = nullptr;
-
-
-	
 
 
 	private:

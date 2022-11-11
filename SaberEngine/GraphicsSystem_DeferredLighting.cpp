@@ -168,7 +168,7 @@ namespace gr
 		deferredLightingTargetSet.DepthStencilTarget() = gBufferGS->GetFinalTextureTargetSet().DepthStencilTarget();
 		deferredLightingTargetSet.CreateColorDepthStencilTargets();
 
-		shared_ptr<Camera> deferredLightingCam = SceneManager::Get()->GetSceneData()->GetMainCamera();
+		shared_ptr<Camera> deferredLightingCam = SceneManager::GetSceneData()->GetMainCamera();
 
 		
 		// Set the target sets, even if the stages aren't actually used (to ensure they're still valid)
@@ -189,12 +189,11 @@ namespace gr
 		// Ambient lights are not supported by GLTF 2.0; Instead, we just check for a \IBL\ibl.hdr file.
 		// Attempt to load the source IBL image (gets a pink error image if it fails)
 		const string sceneIBLPath = Config::Get()->GetValue<string>("sceneIBLPath");
-		shared_ptr<Texture> iblTexture =
-			SceneManager::Get()->GetSceneData()->GetLoadTextureByPath({ sceneIBLPath }, false);
+		shared_ptr<Texture> iblTexture = SceneManager::GetSceneData()->GetLoadTextureByPath({ sceneIBLPath }, false);
 		if (!iblTexture)
 		{
 			const string defaultIBLPath = Config::Get()->GetValue<string>("defaultIBLPath");
-			iblTexture = SceneManager::Get()->GetSceneData()->GetLoadTextureByPath({ defaultIBLPath }, true);
+			iblTexture = SceneManager::GetSceneData()->GetLoadTextureByPath({ defaultIBLPath }, true);
 		}
 		Texture::TextureParams iblParams = iblTexture->GetTextureParams();
 		iblParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
@@ -427,7 +426,7 @@ namespace gr
 		
 
 		// Key light stage:
-		shared_ptr<Light> keyLight = SceneManager::Get()->GetSceneData()->GetKeyLight();
+		shared_ptr<Light> keyLight = SceneManager::GetSceneData()->GetKeyLight();
 
 		RenderStage::RenderStageParams keylightStageParams(ambientStageParams);
 		if (keyLight)
@@ -453,7 +452,7 @@ namespace gr
 
 
 		// Point light stage:
-		vector<shared_ptr<Light>> const& pointLights = SceneManager::Get()->GetSceneData()->GetPointLights();
+		vector<shared_ptr<Light>> const& pointLights = SceneManager::GetSceneData()->GetPointLights();
 		if (pointLights.size() > 0)
 		{
 			m_pointlightStage.GetStageCamera() = deferredLightingCam;
@@ -502,8 +501,8 @@ namespace gr
 		CreateBatches();
 
 		// Light pointers:
-		shared_ptr<Light> const keyLight = SceneManager::Get()->GetSceneData()->GetKeyLight();
-		vector<shared_ptr<Light>> const& pointLights = SceneManager::Get()->GetSceneData()->GetPointLights();
+		shared_ptr<Light> const keyLight = SceneManager::GetSceneData()->GetKeyLight();
+		vector<shared_ptr<Light>> const& pointLights = SceneManager::GetSceneData()->GetPointLights();
 
 		// Add GBuffer textures as stage inputs:		
 		shared_ptr<GBufferGraphicsSystem> gBufferGS = std::dynamic_pointer_cast<GBufferGraphicsSystem>(
@@ -589,7 +588,7 @@ namespace gr
 		m_ambientStage.AddBatch(ambeintFullscreenQuadBatch);
 
 		// Keylight stage batches:
-		shared_ptr<Light> const keyLight = SceneManager::Get()->GetSceneData()->GetKeyLight();
+		shared_ptr<Light> const keyLight = SceneManager::GetSceneData()->GetKeyLight();
 		if (keyLight)
 		{
 			Batch keylightFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
@@ -607,7 +606,7 @@ namespace gr
 		}
 
 		// Pointlight stage batches:
-		vector<shared_ptr<Light>> const& pointLights = SceneManager::Get()->GetSceneData()->GetPointLights();
+		vector<shared_ptr<Light>> const& pointLights = SceneManager::GetSceneData()->GetPointLights();
 		for (shared_ptr<Light> const pointlight : pointLights)
 		{
 			Batch pointlightBatch = Batch(pointlight->DeferredMesh(), nullptr, nullptr);

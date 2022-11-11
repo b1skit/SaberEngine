@@ -41,7 +41,7 @@ namespace gr
 		{
 			if (hasShadow)
 			{
-				re::Bounds sceneWorldBounds = SceneManager::Get()->GetSceneData()->GetWorldSpaceSceneBounds();
+				re::Bounds sceneWorldBounds = SceneManager::GetSceneData()->GetWorldSpaceSceneBounds();
 
 				const re::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
 					glm::inverse(m_ownerTransform->GetGlobalMatrix(Transform::TRS)));
@@ -127,7 +127,7 @@ namespace gr
 	{
 		if (m_type == LightType::Directional) // Update shadow cam bounds
 		{
-			re::Bounds sceneWorldBounds = SceneManager::Get()->GetSceneData()->GetWorldSpaceSceneBounds();
+			re::Bounds sceneWorldBounds = SceneManager::GetSceneData()->GetWorldSpaceSceneBounds();
 
 			const re::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
 				glm::inverse(m_ownerTransform->GetGlobalMatrix(Transform::TRS)));

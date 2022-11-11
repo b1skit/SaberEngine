@@ -78,7 +78,7 @@ namespace gr
 		};
 
 		// Directional light shadow:		
-		shared_ptr<Light> directionalLight = SceneManager::Get()->GetSceneData()->GetKeyLight();
+		shared_ptr<Light> directionalLight = SceneManager::GetSceneData()->GetKeyLight();
 		if (directionalLight)
 		{
 			shared_ptr<ShadowMap> directionalShadow = directionalLight->GetShadowMap();
@@ -97,7 +97,7 @@ namespace gr
 		}
 		
 		// Point light shadows:
-		vector<shared_ptr<Light>> const& deferredLights = SceneManager::Get()->GetSceneData()->GetPointLights();
+		vector<shared_ptr<Light>> const& deferredLights = SceneManager::GetSceneData()->GetPointLights();
 		for (shared_ptr<Light> curLight : deferredLights)
 		{
 			m_pointLightShadowStages.emplace_back(make_shared<RenderStage>(curLight->GetName() + " shadow"));
