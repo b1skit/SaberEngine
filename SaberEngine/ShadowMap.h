@@ -30,7 +30,6 @@ namespace gr
 		ShadowMap(ShadowMap&&) = default;
 		ShadowMap& operator=(ShadowMap const&) = default;
 
-		// Get the current shadow camera
 		inline std::shared_ptr<gr::Camera> ShadowCamera() { return m_shadowCam; }
 		inline std::shared_ptr<gr::Camera const> ShadowCamera() const { return m_shadowCam; }
 

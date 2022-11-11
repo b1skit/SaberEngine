@@ -1,10 +1,14 @@
+#include <memory>
+
 #include "GraphicsSystem_Shadows.h"
 #include "Light.h"
 #include "ShadowMap.h"
 #include "SceneManager.h"
 #include "RenderManager.h"
+#include "Config.h"
 
 using en::SceneManager;
+using en::Config;
 using re::RenderManager;
 using gr::Light;
 using gr::RenderStage;
@@ -12,8 +16,7 @@ using gr::ShadowMap;
 using std::vector;
 using std::string;
 using std::shared_ptr;
-using std::unique_ptr;
-using std::make_unique;
+using std::make_shared;
 using glm::mat4;
 using glm::vec2;
 using glm::vec3;
@@ -85,7 +88,11 @@ namespace gr
 			if (directionalShadow)
 			{
 				m_directionalShadowStage.GetStageCamera() = directionalShadow->ShadowCamera();
-				m_directionalShadowStage.GetStageShader() = directionalShadow->ShadowCamera()->GetRenderShader();
+
+				// Shader:
+				m_directionalShadowStage.GetStageShader() = 
+					make_shared<Shader>(Config::Get()->GetValue<string>("depthShaderName"));
+				m_directionalShadowStage.GetStageShader()->Create();
 
 				m_directionalShadowStage.GetTextureTargetSet() = directionalLight->GetShadowMap()->GetTextureTargetSet();
 				// TODO: Target set should be a member of the stage, instead of the shadow map?
@@ -109,7 +116,12 @@ namespace gr
 			{
 				std::shared_ptr<Camera> const shadowCam = lightShadow->ShadowCamera();
 				shadowStage->GetStageCamera() = shadowCam;
-				shadowStage->GetStageShader() = shadowCam->GetRenderShader();
+				
+				// Shader:
+				shadowStage->GetStageShader() = 
+					make_shared<Shader>(Config::Get()->GetValue<string>("cubeDepthShaderName"));
+				shadowStage->GetStageShader()->Create();
+
 				shadowStage->GetTextureTargetSet() = curLight->GetShadowMap()->GetTextureTargetSet();
 
 				shadowStage->SetRenderStageParams(shadowStageParams);

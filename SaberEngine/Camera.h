@@ -6,7 +6,6 @@
 #include "NamedObject.h"
 #include "Transformable.h"
 #include "TextureTarget.h"
-#include "Shader.h"
 #include "ParameterBlock.h"
 #include "Updateable.h"
 
@@ -89,9 +88,6 @@ namespace gr
 		inline glm::mat4 GetInverseViewProjectionMatrix() const { return glm::inverse(GetViewProjectionMatrix()); }
 		
 		std::vector<glm::mat4> const& GetCubeViewProjectionMatrix();
-
-		std::shared_ptr<gr::Shader>& GetRenderShader() { return m_cameraShader; }
-		std::shared_ptr<gr::Shader> const GetRenderShader() const { return m_cameraShader; }
 		
 		float& GetExposure() { return m_cameraConfig.m_exposure; }
 		float GetExposure() const { return m_cameraConfig.m_exposure; }
@@ -115,8 +111,6 @@ namespace gr
 
 		std::vector<glm::mat4> m_cubeView;
 		std::vector<glm::mat4> m_cubeViewProjection;
-		
-		std::shared_ptr<gr::Shader> m_cameraShader; // TODO: Cameras shouldn't need a shader
 
 		std::shared_ptr<re::ParameterBlock> m_cameraParamBlock;
 		CameraParams m_cameraPBData;

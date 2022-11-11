@@ -4,11 +4,9 @@
 #include "Camera.h"
 #include "Texture.h"
 #include "Material.h"
-#include "Shader.h"
 
 using gr::Material;
 using gr::Texture;
-using gr::Shader;
 using gr::Transform;
 using std::shared_ptr;
 using std::string;
@@ -20,8 +18,7 @@ namespace gr
 {
 	Camera::Camera(string const& cameraName, CameraConfig const& camConfig, Transform* parent) :
 		NamedObject(cameraName),
-			m_cameraConfig(camConfig),
-			m_cameraShader(nullptr)
+			m_cameraConfig(camConfig)
 	{
 		m_transform.SetParent(parent);
 
@@ -106,7 +103,6 @@ namespace gr
 
 	void Camera::Destroy()
 	{
-		m_cameraShader = nullptr;
 	}
 
 

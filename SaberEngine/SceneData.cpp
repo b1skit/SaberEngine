@@ -452,7 +452,7 @@ namespace
 	// Creates a default camera if camera == nullptr, and no cameras exist in scene
 	void LoadAddCamera(fr::SceneData& scene, shared_ptr<SceneObject> parent, cgltf_camera* camera)
 	{
-		if (camera == nullptr && parent == nullptr)
+		if (parent == nullptr && camera == nullptr)
 		{
 			if (scene.GetCameras().size() == 0) // Create a default camera at the origin
 			{
