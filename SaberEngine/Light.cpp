@@ -44,7 +44,7 @@ namespace gr
 				re::Bounds sceneWorldBounds = SceneManager::Get()->GetSceneData()->GetWorldSpaceSceneBounds();
 
 				const re::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
-					glm::inverse(m_ownerTransform->GetWorldMatrix()));
+					glm::inverse(m_ownerTransform->GetGlobalMatrix(Transform::TRS)));
 				// TODO: We should retrieve the scene bounds from the root note of the scene graph, once it is implemented
 
 				gr::Camera::CameraConfig shadowCamConfig;
@@ -79,7 +79,7 @@ namespace gr
 			
 			// TODO: Currently, we scale the deferred mesh directly. Ideally, lights should not have
 			// a mesh; one should be created by the GS and assigned as a batch
-			m_deferredMesh->GetTransform().SetModelScale(vec3(radius, radius, radius));
+			m_deferredMesh->GetTransform().SetLocalScale(vec3(radius, radius, radius));
 
 			if (hasShadow)
 			{
@@ -130,7 +130,7 @@ namespace gr
 			re::Bounds sceneWorldBounds = SceneManager::Get()->GetSceneData()->GetWorldSpaceSceneBounds();
 
 			const re::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
-				glm::inverse(m_ownerTransform->GetWorldMatrix()));
+				glm::inverse(m_ownerTransform->GetGlobalMatrix(Transform::TRS)));
 
 			gr::Camera::CameraConfig shadowCamConfig;
 			shadowCamConfig.m_near				= -transformedBounds.zMax();

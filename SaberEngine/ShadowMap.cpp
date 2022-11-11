@@ -32,7 +32,7 @@ namespace gr
 			m_shadowTargetSet(lightName + " target")
 	{
 		m_shadowCam = std::make_shared<gr::Camera>(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent);
-		m_shadowCam->GetTransform()->SetModelPosition(shadowCamPosition);
+		m_shadowCam->GetTransform()->SetLocalTranslation(shadowCamPosition);
 
 		// Texture params are mostly the same between a single shadow map, or a cube map
 		Texture::TextureParams shadowParams;

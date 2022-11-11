@@ -37,35 +37,35 @@ namespace fr
 		yaw.y	= (float)InputManager::GetMouseAxisInput(en::Input_MouseX) * (float)TimeManager::DeltaTime();
 		pitch.x = (float)InputManager::GetMouseAxisInput(en::Input_MouseY) * (float)TimeManager::DeltaTime();
 
-		m_transform.RotateModel(yaw);
-		m_playerCam->GetTransform()->RotateModel(pitch);
+		m_transform.RotateLocal(yaw);
+		m_playerCam->GetTransform()->RotateLocal(pitch);
 
 		// Handle direction:
 		vec3 direction = vec3(0.0f, 0.0f, 0.0f);
 
 		if (InputManager::GetKeyboardInputState(en::InputButton_Forward))
 		{		
-			direction -= m_playerCam->GetTransform()->ForwardWorld();
+			direction -= m_playerCam->GetTransform()->GetGlobalForward();
 		}
 		if (InputManager::GetKeyboardInputState(en::InputButton_Backward))
 		{
-			direction += m_playerCam->GetTransform()->ForwardWorld();
+			direction += m_playerCam->GetTransform()->GetGlobalForward();
 		}
 		if (InputManager::GetKeyboardInputState(en::InputButton_Left))
 		{
-			direction -= m_playerCam->GetTransform()->RightWorld();
+			direction -= m_playerCam->GetTransform()->GetGlobalRight();
 		}
 		if (InputManager::GetKeyboardInputState(en::InputButton_Right))
 		{
-			direction += m_playerCam->GetTransform()->RightWorld();
+			direction += m_playerCam->GetTransform()->GetGlobalRight();
 		}
 		if (InputManager::GetKeyboardInputState(en::InputButton_Up))
 		{
-			direction += m_transform.UpWorld(); // PlayerCam is tilted; use the parent transform instead
+			direction += m_transform.GetGlobalUp(); // PlayerCam is tilted; use the parent transform instead
 		}
 		if (InputManager::GetKeyboardInputState(en::InputButton_Down))
 		{
-			direction -= m_transform.UpWorld(); // PlayerCam is tilted; use the parent transform instead
+			direction -= m_transform.GetGlobalUp(); // PlayerCam is tilted; use the parent transform instead
 		}
 
 		float sprintModifier = 1.0f;
@@ -79,24 +79,24 @@ namespace fr
 			direction = glm::normalize(direction);
 			direction *= (float)(m_movementSpeed * sprintModifier * TimeManager::DeltaTime());
 
-			m_transform.TranslateModel(direction);
+			m_transform.TranslateLocal(direction);
 		}
 
 		// Reset the cam back to the saved position
 		if (InputManager::GetMouseInputState(en::InputMouse_Left))
 		{
-			m_transform.SetModelPosition(m_savedPosition);
-			m_transform.SetModelRotation(vec3(0, m_savedEulerRotation.y, 0));
-			m_playerCam->GetTransform()->SetModelRotation(vec3(m_savedEulerRotation.x, 0, 0));
+			m_transform.SetLocalTranslation(m_savedPosition);
+			m_transform.SetLocalRotation(vec3(0, m_savedEulerRotation.y, 0));
+			m_playerCam->GetTransform()->SetLocalRotation(vec3(m_savedEulerRotation.x, 0, 0));
 		}
 
 		// Save the current position/rotation:
 		if (InputManager::GetMouseInputState(en::InputMouse_Right))
 		{
-			m_savedPosition = m_transform.GetWorldPosition();
+			m_savedPosition = m_transform.GetGlobalPosition();
 			m_savedEulerRotation = vec3(
-				m_playerCam->GetTransform()->GetModelEulerXYZRotationRadians().x, 
-				m_transform.GetWorldEulerXYZRotationRadians().y, 
+				m_playerCam->GetTransform()->GetLocalEulerXYZRotationRadians().x, 
+				m_transform.GetGlobalEulerXYZRotationRadians().y, 
 				0 );
 		}
 	}

@@ -83,12 +83,12 @@ namespace
 		{
 		case gr::Light::LightType::Directional:
 		{
-			lightParams.g_lightWorldPos = light->GetTransform()->ForwardWorld(); // WorldPos == Light dir
+			lightParams.g_lightWorldPos = light->GetTransform()->GetGlobalForward(); // WorldPos == Light dir
 		}
 		break;
 		case gr::Light::LightType::Point:
 		{
-			lightParams.g_lightWorldPos = light->GetTransform()->GetWorldPosition();
+			lightParams.g_lightWorldPos = light->GetTransform()->GetGlobalPosition();
 		}
 		break;
 		default:
@@ -625,7 +625,7 @@ namespace gr
 			// Point light mesh params:
 			shared_ptr<ParameterBlock> pointlightMeshParams = ParameterBlock::Create(
 				"InstancedMeshParams",
-				pointlight->DeferredMesh()->GetTransform().GetWorldMatrix(Transform::WorldModel),
+				pointlight->DeferredMesh()->GetTransform().GetGlobalMatrix(Transform::TRS),
 				ParameterBlock::UpdateType::Immutable,
 				ParameterBlock::Lifetime::SingleFrame);
 

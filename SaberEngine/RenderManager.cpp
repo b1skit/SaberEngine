@@ -165,7 +165,7 @@ namespace re
 			std::vector<mat4> modelMatrices;		
 			modelMatrices.reserve(numInstances);
 			modelMatrices.emplace_back(
-				unmergedBatches[instanceStartIdx].GetBatchMesh()->GetOwnerTransform()->GetWorldMatrix(Transform::WorldModel));
+				unmergedBatches[instanceStartIdx].GetBatchMesh()->GetOwnerTransform()->GetGlobalMatrix(Transform::TRS));
 
 			// Append the remaining batches in the sequence:
 			for (size_t instanceIdx = instanceStartIdx + 1; instanceIdx < unmergedIdx; instanceIdx++)
@@ -173,7 +173,7 @@ namespace re
 				m_sceneBatches.back().IncrementBatchInstanceCount();
 
 				modelMatrices.emplace_back(
-					unmergedBatches[instanceIdx].GetBatchMesh()->GetOwnerTransform()->GetWorldMatrix(Transform::WorldModel));
+					unmergedBatches[instanceIdx].GetBatchMesh()->GetOwnerTransform()->GetGlobalMatrix(Transform::TRS));
 			}
 
 			// Construct PB of model transform matrices:

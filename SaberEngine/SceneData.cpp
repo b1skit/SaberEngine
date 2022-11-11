@@ -580,25 +580,25 @@ namespace
 				vec4 perspective;
 				decompose(nodeModelMatrix, scale, rotation, translation, skew, perspective);
 
-				targetTransform->SetModelRotation(rotation);
-				targetTransform->SetModelScale(scale);
-				targetTransform->SetModelPosition(translation);
+				targetTransform->SetLocalRotation(rotation);
+				targetTransform->SetLocalScale(scale);
+				targetTransform->SetLocalTranslation(translation);
 			}
 			else
 			{
 				if (current->has_rotation)
 				{
 					// Note: GLM expects quaternions to be specified in WXYZ order
-					targetTransform->SetModelRotation(
+					targetTransform->SetLocalRotation(
 						glm::quat(current->rotation[3], current->rotation[0], current->rotation[1], current->rotation[2]));
 				}
 				if (current->has_scale)
 				{
-					targetTransform->SetModelScale(glm::vec3(current->scale[0], current->scale[1], current->scale[2]));
+					targetTransform->SetLocalScale(glm::vec3(current->scale[0], current->scale[1], current->scale[2]));
 				}
 				if (current->has_translation)
 				{
-					targetTransform->SetModelPosition(
+					targetTransform->SetLocalTranslation(
 						glm::vec3(current->translation[0], current->translation[1], current->translation[2]));
 				}
 			}
@@ -1044,7 +1044,8 @@ namespace fr
 	{
 		// Update scene (world) bounds to contain the new mesh primitive:
 		Bounds meshWorldBounds(
-			meshPrimitive->GetLocalBounds().GetTransformedBounds(meshPrimitive->GetOwnerTransform()->GetWorldMatrix()));
+			meshPrimitive->GetLocalBounds().GetTransformedBounds(
+				meshPrimitive->GetOwnerTransform()->GetGlobalMatrix(Transform::TRS)));
 
 		if (meshWorldBounds.xMin() < m_sceneWorldSpaceBounds.xMin())
 		{

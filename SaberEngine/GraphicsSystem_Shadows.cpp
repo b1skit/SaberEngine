@@ -41,7 +41,7 @@ namespace
 			shadowCam->GetCubeViewProjectionMatrix().data(),
 			6 * sizeof(mat4));
 		cubemapShadowParams.g_cubemapShadowCamNearFar = shadowCam->NearFar();
-		cubemapShadowParams.g_cubemapLightWorldPos = shadowCam->GetTransform()->GetWorldPosition();
+		cubemapShadowParams.g_cubemapLightWorldPos = shadowCam->GetTransform()->GetGlobalPosition();
 
 		return cubemapShadowParams;
 	}

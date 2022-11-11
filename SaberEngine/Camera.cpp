@@ -57,7 +57,7 @@ namespace gr
 		m_cameraPBData.g_projectionParams = 
 			glm::vec4(1.f, m_cameraConfig.m_near, m_cameraConfig.m_far, 1.0f / m_cameraConfig.m_far);
 
-		m_cameraPBData.g_cameraWPos = GetTransform()->GetWorldPosition();
+		m_cameraPBData.g_cameraWPos = GetTransform()->GetGlobalPosition();
 
 		m_cameraParamBlock->SetData(m_cameraPBData);
 
@@ -118,31 +118,31 @@ namespace gr
 			m_cubeView.reserve(6);
 
 			m_cubeView.emplace_back(glm::lookAt(
-				m_transform.GetWorldPosition(),							// eye
-				m_transform.GetWorldPosition() + Transform::WORLD_X,	// center: Position the camera is looking at
-				-Transform::WORLD_Y));									// Normalized camera up vector
+				m_transform.GetGlobalPosition(),							// eye
+				m_transform.GetGlobalPosition() + Transform::WorldAxisX,	// center: Position the camera is looking at
+				-Transform::WorldAxisY));									// Normalized camera up vector
 			m_cubeView.emplace_back(glm::lookAt(
-				m_transform.GetWorldPosition(), 
-				m_transform.GetWorldPosition() - Transform::WORLD_X, 
-				-Transform::WORLD_Y));
+				m_transform.GetGlobalPosition(), 
+				m_transform.GetGlobalPosition() - Transform::WorldAxisX, 
+				-Transform::WorldAxisY));
 
 			m_cubeView.emplace_back(glm::lookAt(
-				m_transform.GetWorldPosition(), 
-				m_transform.GetWorldPosition() + Transform::WORLD_Y, 
-					Transform::WORLD_Z));
+				m_transform.GetGlobalPosition(), 
+				m_transform.GetGlobalPosition() + Transform::WorldAxisY, 
+					Transform::WorldAxisZ));
 			m_cubeView.emplace_back(glm::lookAt(
-				m_transform.GetWorldPosition(), 
-				m_transform.GetWorldPosition() - Transform::WORLD_Y, 
-				-Transform::WORLD_Z));
+				m_transform.GetGlobalPosition(), 
+				m_transform.GetGlobalPosition() - Transform::WorldAxisY, 
+				-Transform::WorldAxisZ));
 
 			m_cubeView.emplace_back(glm::lookAt(
-				m_transform.GetWorldPosition(), 
-				m_transform.GetWorldPosition() + Transform::WORLD_Z,
-				-Transform::WORLD_Y));
+				m_transform.GetGlobalPosition(), 
+				m_transform.GetGlobalPosition() + Transform::WorldAxisZ,
+				-Transform::WorldAxisY));
 			m_cubeView.emplace_back(glm::lookAt(
-				m_transform.GetWorldPosition(), 
-				m_transform.GetWorldPosition() - Transform::WORLD_Z, 
-				-Transform::WORLD_Y));
+				m_transform.GetGlobalPosition(), 
+				m_transform.GetGlobalPosition() - Transform::WorldAxisZ, 
+				-Transform::WorldAxisY));
 		}
 
 		// TODO: Recalculate this if the camera has moved
