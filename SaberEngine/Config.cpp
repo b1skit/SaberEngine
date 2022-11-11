@@ -141,8 +141,6 @@ namespace en
 			TryInsertDefault("defaultIBLPath",	std::string("IBL\\ibl.hdr"));
 
 			// Shadow map defaults:
-			TryInsertDefault("defaultOrthoHalfWidth",	5.0f);		// TODO: Choose appropriate values??
-			TryInsertDefault("defaultOrthoHalfHeight",	5.0f);		// -> Function of resolution and scene width
 			TryInsertDefault("defaultMinShadowBias",	0.01f);
 			TryInsertDefault("defaultMaxShadowBias",	0.05f);
 
