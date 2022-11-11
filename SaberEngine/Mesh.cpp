@@ -9,16 +9,16 @@ using std::vector;
 
 namespace gr
 {
-	Mesh::Mesh(Transform* parent, shared_ptr<re::MeshPrimitive> meshPrimitive)
+	Mesh::Mesh(Transform* ownerTransform, shared_ptr<re::MeshPrimitive> meshPrimitive) :
+		m_ownerTransform(ownerTransform)
 	{
-		m_transform.SetParent(parent);
 		AddMeshPrimitive(meshPrimitive);
 	}
 
 
 	void Mesh::AddMeshPrimitive(shared_ptr<re::MeshPrimitive> meshPrimitive)
 	{
-		meshPrimitive->GetOwnerTransform() = &m_transform;
+		meshPrimitive->GetOwnerTransform() = m_ownerTransform;
 		m_meshPrimitives.push_back(meshPrimitive);
 	}
 }

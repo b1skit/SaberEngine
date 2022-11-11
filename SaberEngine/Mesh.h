@@ -4,16 +4,15 @@
 #include <memory>
 
 #include "MeshPrimitive.h"
-#include "Transformable.h"
+#include "Transform.h"
 
 
 namespace gr
 {	
-	// Contains a set of mesh primitives
-	class Mesh : public virtual fr::Transformable
+	class Mesh
 	{
 	public:
-		explicit Mesh(gr::Transform* parent, std::shared_ptr<re::MeshPrimitive> meshPrimitive);
+		explicit Mesh(gr::Transform* ownerTransform, std::shared_ptr<re::MeshPrimitive> meshPrimitive);
 
 		Mesh(Mesh const&) = default;
 		Mesh(Mesh&&) = default;
@@ -21,8 +20,8 @@ namespace gr
 		~Mesh() = default;	
 
 		// Getters/Setters:
-		inline gr::Transform& GetTransform() { return m_transform; }
-		inline gr::Transform const& GetTransform() const { return m_transform; }
+		inline gr::Transform* GetTransform() { return m_ownerTransform; }
+		inline gr::Transform const* GetTransform() const { return m_ownerTransform; }
 
 		void AddMeshPrimitive(std::shared_ptr<re::MeshPrimitive> meshPrimitive);
 		inline std::vector<std::shared_ptr<re::MeshPrimitive>> const& GetMeshPrimitives() const { return m_meshPrimitives; }
@@ -31,6 +30,7 @@ namespace gr
 	private:
 		std::vector<std::shared_ptr<re::MeshPrimitive>> m_meshPrimitives;
 
+		Transform* m_ownerTransform;
 
 	private:
 		Mesh() = delete;

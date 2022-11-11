@@ -624,7 +624,7 @@ namespace gr
 			// Point light mesh params:
 			shared_ptr<ParameterBlock> pointlightMeshParams = ParameterBlock::Create(
 				"InstancedMeshParams",
-				pointlight->DeferredMesh()->GetTransform().GetGlobalMatrix(Transform::TRS),
+				pointlight->DeferredMesh()->GetTransform()->GetGlobalMatrix(Transform::TRS),
 				ParameterBlock::UpdateType::Immutable,
 				ParameterBlock::Lifetime::SingleFrame);
 

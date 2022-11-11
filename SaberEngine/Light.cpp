@@ -79,7 +79,7 @@ namespace gr
 			
 			// TODO: Currently, we scale the deferred mesh directly. Ideally, lights should not have
 			// a mesh; one should be created by the GS and assigned as a batch
-			m_deferredMesh->GetTransform().SetLocalScale(vec3(radius, radius, radius));
+			m_deferredMesh->GetTransform()->SetLocalScale(vec3(radius, radius, radius));
 
 			if (hasShadow)
 			{
