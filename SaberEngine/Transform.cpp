@@ -97,6 +97,42 @@ namespace gr
 	}
 
 
+	glm::vec3 const& Transform::GetGlobalPosition() const
+	{ 
+		return m_globalPosition; 
+	}
+
+
+	glm::vec3 const& Transform::GetGlobalEulerXYZRotationRadians() const
+	{ 
+		return m_globalRotationEulerRadians; 
+	}
+
+
+	glm::vec3 const& Transform::GetGlobalForward() const
+	{ 
+		return m_globalForward; 
+	}
+
+
+	glm::vec3 const& Transform::GetGlobalRight() const
+	{ 
+		return m_globalRight; 
+	}
+
+
+	glm::vec3 const& Transform::GetGlobalUp() const
+	{ 
+		return m_globalUp; 
+	}
+
+
+	Transform* Transform::GetParent() const
+	{ 
+		return m_parent; 
+	}
+
+
 	void Transform::SetParent(Transform* newParent)
 	{
 		SEAssert("Cannot parent a Transform to itself", newParent != this);
@@ -167,6 +203,12 @@ namespace gr
 	}
 
 
+	glm::vec3 const& Transform::GetLocalPosition() const
+	{ 
+		return m_localPosition;
+	}
+
+
 	void Transform::RotateLocal(vec3 eulerXYZRadians)
 	{
 		// Compute rotations via quaternions:
@@ -214,6 +256,12 @@ namespace gr
 
 		MarkDirty();
 		RecomputeWorldTransforms();
+	}
+
+
+	glm::vec3 const& Transform::GetLocalEulerXYZRotationRadians() const
+	{
+		return m_localRotationEulerRadians;
 	}
 
 

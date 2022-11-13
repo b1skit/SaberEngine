@@ -55,21 +55,21 @@ namespace gr
 		Transform& operator=(Transform const&) = default;
 		
 		// Transform functionality:
-		inline Transform* GetParent() const { return m_parent; }
+		Transform* GetParent() const;
 		void SetParent(Transform* newParent);
 		void ReParent(Transform* newParent); // Changes parents, and preserves current global orientation
 
 		// Local-space translation:
 		void TranslateLocal(glm::vec3 amount); // Apply additional translation to the current position, in local space
 		void SetLocalTranslation(glm::vec3 position); // Set the total translation of this Transform, in local space
-		inline glm::vec3 const& GetLocalPosition() const { return m_localPosition; } // The local position
+		glm::vec3 const& GetLocalPosition() const; // The local position
 
 		// Local-space rotation:
 		void RotateLocal(glm::vec3 eulerXYZRadians); // Rotation is applied in XYZ order
 		void RotateLocal(float angleRads, glm::vec3 axis); // Apply an axis-angle rotation to the current transform state
 		void SetLocalRotation(glm::vec3 eulerXYZ);
 		void SetLocalRotation(glm::quat newRotation);
-		inline glm::vec3 const& GetLocalEulerXYZRotationRadians() const { return m_localRotationEulerRadians; }
+		glm::vec3 const& GetLocalEulerXYZRotationRadians() const;
 		
 		// Local-space scale:
 		void SetLocalScale(glm::vec3 scale);
@@ -80,15 +80,15 @@ namespace gr
 
 		// World-space translation:
 		void SetGlobalTranslation(glm::vec3 position);
-		inline glm::vec3 const& GetGlobalPosition() const { return m_globalPosition; } // World-space position
+		glm::vec3 const& GetGlobalPosition() const; // World-space position
 
 		// World-space rotation:
-		inline glm::vec3 const& GetGlobalEulerXYZRotationRadians() const { return m_globalRotationEulerRadians; }
+		glm::vec3 const& GetGlobalEulerXYZRotationRadians() const;
 
 		// World-space coordinate system axis:
-		inline glm::vec3 const& GetGlobalForward() const { return m_globalForward; } // World-space forward (Z+) vector
-		inline glm::vec3 const& GetGlobalRight() const { return m_globalRight; } // World-space right (X+) vector
-		inline glm::vec3 const& GetGlobalUp() const { return m_globalUp; } // World-space up (Y+) vector
+		glm::vec3 const& GetGlobalForward() const; // World-space forward (Z+) vector
+		glm::vec3 const& GetGlobalRight() const; // World-space right (X+) vector
+		glm::vec3 const& GetGlobalUp() const; // World-space up (Y+) vector
 		// TODO: Add ForwardModel, RightModel, UpModel
 		
 
