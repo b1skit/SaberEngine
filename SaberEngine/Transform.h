@@ -62,33 +62,33 @@ namespace gr
 		// Local-space translation:
 		void TranslateLocal(glm::vec3 amount); // Apply additional translation to the current position, in local space
 		void SetLocalTranslation(glm::vec3 position); // Set the total translation of this Transform, in local space
-		glm::vec3 const& GetLocalPosition() const; // The local position
+		glm::vec3 const& GetLocalPosition(); // The local position
 
 		// Local-space rotation:
 		void RotateLocal(glm::vec3 eulerXYZRadians); // Rotation is applied in XYZ order
 		void RotateLocal(float angleRads, glm::vec3 axis); // Apply an axis-angle rotation to the current transform state
 		void SetLocalRotation(glm::vec3 eulerXYZ);
 		void SetLocalRotation(glm::quat newRotation);
-		glm::vec3 const& GetLocalEulerXYZRotationRadians() const;
+		glm::vec3 const& GetLocalEulerXYZRotationRadians();
 		
 		// Local-space scale:
 		void SetLocalScale(glm::vec3 scale);
 
 
 		// Global transformations: 
-		glm::mat4 const& GetGlobalMatrix(TransformComponent component) const;
+		glm::mat4 const& GetGlobalMatrix(TransformComponent component);
 
 		// World-space translation:
 		void SetGlobalTranslation(glm::vec3 position);
-		glm::vec3 const& GetGlobalPosition() const; // World-space position
+		glm::vec3 const& GetGlobalPosition(); // World-space position
 
 		// World-space rotation:
-		glm::vec3 const& GetGlobalEulerXYZRotationRadians() const;
+		glm::vec3 const& GetGlobalEulerXYZRotationRadians();
 
 		// World-space coordinate system axis:
-		glm::vec3 const& GetGlobalForward() const; // World-space forward (Z+) vector
-		glm::vec3 const& GetGlobalRight() const; // World-space right (X+) vector
-		glm::vec3 const& GetGlobalUp() const; // World-space up (Y+) vector
+		glm::vec3 const& GetGlobalForward(); // World-space forward (Z+) vector
+		glm::vec3 const& GetGlobalRight(); // World-space right (X+) vector
+		glm::vec3 const& GetGlobalUp(); // World-space up (Y+) vector
 		// TODO: Add ForwardModel, RightModel, UpModel
 		
 
@@ -130,18 +130,12 @@ namespace gr
 
 
 	private:
-		// TODO: MarkDirty() should be used trigger RecomputeWorldTransforms() on an as-needed basis; currently we
-		// pair these instructions since we have some const dependencies that need to be untangled...
-
-		void MarkDirty(); // Mark this transform as dirty, requiring a recomputation of it's local matrices
-		void RecomputeWorldTransforms(); // Recomute the components of the local matrix. Sets isDirty to false
+		void MarkDirty(); // Mark this transform as requiring a recomputation of it's global matrices
+		void RecomputeWorldTransforms(); // Recomputes the the global matrices
 
 		// Helper functions for SetParent()/Unparent():
 		void RegisterChild(Transform* child);
 		void UnregisterChild(Transform const* child);
-
-		// RecomputeWorldTransforms (normalized) world-space Right/Up/Forward CS axis vectors by applying m_globalRotationMat
-		void UpdateWorldSpaceAxis();
 
 		void RecomputeEulerXYZRadians(); // Helper: Updates m_localRotationEulerRadians from m_localRotationQuat
 	};

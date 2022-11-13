@@ -64,8 +64,11 @@ namespace gr
 	}
 
 
-	mat4 const& Transform::GetGlobalMatrix(TransformComponent component) const
+	mat4 const& Transform::GetGlobalMatrix(TransformComponent component)
 	{
+		RecomputeWorldTransforms();
+		SEAssert("Transformation should not be dirty", !m_isDirty);
+
 		switch (component)
 		{
 		case Translation:
@@ -91,44 +94,47 @@ namespace gr
 	{
 		const mat4 parentGlobalTRS = m_parent ? m_parent->GetGlobalMatrix(TRS) : mat4(1.f);
 		SetLocalTranslation(inverse(parentGlobalTRS) * glm::vec4(position, 0.f));
-
 		MarkDirty();
-		RecomputeWorldTransforms();
 	}
 
 
-	glm::vec3 const& Transform::GetGlobalPosition() const
+	glm::vec3 const& Transform::GetGlobalPosition()
 	{ 
+		RecomputeWorldTransforms();
 		return m_globalPosition; 
 	}
 
 
-	glm::vec3 const& Transform::GetGlobalEulerXYZRotationRadians() const
+	glm::vec3 const& Transform::GetGlobalEulerXYZRotationRadians()
 	{ 
+		RecomputeWorldTransforms();
 		return m_globalRotationEulerRadians; 
 	}
 
 
-	glm::vec3 const& Transform::GetGlobalForward() const
+	glm::vec3 const& Transform::GetGlobalForward()
 	{ 
+		RecomputeWorldTransforms();
 		return m_globalForward; 
 	}
 
 
-	glm::vec3 const& Transform::GetGlobalRight() const
-	{ 
+	glm::vec3 const& Transform::GetGlobalRight()
+	{
+		RecomputeWorldTransforms();
 		return m_globalRight; 
 	}
 
 
-	glm::vec3 const& Transform::GetGlobalUp() const
+	glm::vec3 const& Transform::GetGlobalUp()
 	{ 
+		RecomputeWorldTransforms();
 		return m_globalUp; 
 	}
 
 
 	Transform* Transform::GetParent() const
-	{ 
+	{
 		return m_parent; 
 	}
 
@@ -150,13 +156,15 @@ namespace gr
 		}
 		
 		MarkDirty();
-		RecomputeWorldTransforms();
 	}
 
 
 	void Transform::ReParent(Transform* newParent)
 	{
 		SEAssert("New parent cannot be null", newParent != nullptr);
+
+		RecomputeWorldTransforms();
+		SEAssert("Transformation should not be dirty", !m_isDirty);
 
 		// Based on the technique presented in GPU Pro 360, Ch.15.2.5: 
 		// Managing Transformations in Hierarchy: Parent Switch in Hierarchy (p.243 - p.253).
@@ -177,7 +185,6 @@ namespace gr
 		SetParent(newParent);
 
 		MarkDirty();
-		RecomputeWorldTransforms();
 	}
 
 
@@ -189,7 +196,6 @@ namespace gr
 		m_localPosition = m_localTranslationMat[3].xyz; // == (m_localTranslationMat * vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz;
 
 		MarkDirty();
-		RecomputeWorldTransforms();
 	}
 
 
@@ -199,12 +205,12 @@ namespace gr
 		m_localPosition = position;
 
 		MarkDirty();
-		RecomputeWorldTransforms();
 	}
 
 
-	glm::vec3 const& Transform::GetLocalPosition() const
-	{ 
+	glm::vec3 const& Transform::GetLocalPosition()
+	{
+		RecomputeWorldTransforms();
 		return m_localPosition;
 	}
 
@@ -216,9 +222,7 @@ namespace gr
 		m_localRotationMat = glm::mat4_cast(m_localRotationQuat);
 
 		RecomputeEulerXYZRadians();
-
 		MarkDirty();
-		RecomputeWorldTransforms();
 	}
 
 
@@ -228,9 +232,7 @@ namespace gr
 		m_localRotationMat = glm::mat4_cast(m_localRotationQuat);
 
 		RecomputeEulerXYZRadians();
-
 		MarkDirty();
-		RecomputeWorldTransforms();
 	}
 
 
@@ -241,9 +243,7 @@ namespace gr
 		m_localRotationMat = glm::mat4_cast(m_localRotationQuat);
 
 		RecomputeEulerXYZRadians();
-
 		MarkDirty();
-		RecomputeWorldTransforms();
 	}
 
 
@@ -253,14 +253,13 @@ namespace gr
 		m_localRotationMat = glm::mat4_cast(newRotation);
 
 		RecomputeEulerXYZRadians();
-
 		MarkDirty();
-		RecomputeWorldTransforms();
 	}
 
 
-	glm::vec3 const& Transform::GetLocalEulerXYZRotationRadians() const
+	glm::vec3 const& Transform::GetLocalEulerXYZRotationRadians()
 	{
+		RecomputeWorldTransforms();
 		return m_localRotationEulerRadians;
 	}
 
@@ -271,18 +270,12 @@ namespace gr
 		m_localScaleMat = glm::scale(mat4(1.0f), scale);
 
 		MarkDirty();
-		RecomputeWorldTransforms();
 	}
 
 
 	void Transform::MarkDirty()
 	{
 		m_isDirty = true;
-
-		for (int i = 0; i < (int)m_children.size(); i++)
-		{
-			m_children.at(i)->MarkDirty();
-		}
 	}
 
 
@@ -323,7 +316,6 @@ namespace gr
 		{
 			return;
 		}
-		m_isDirty = false; // Must immediately remove our dirty flag due to recursive calls
 
 		m_localMat = m_localTranslationMat * m_localRotationMat * m_localScaleMat;
 
@@ -344,34 +336,26 @@ namespace gr
 		}
 
 		// Decompose our world matrix & update the individual components:
-		vec3 skew;
-		vec4 perspective;
-		decompose(m_globalMat, m_globalScale, m_globalRotationQuat, m_globalPosition, skew, perspective);
-		m_globalRotationEulerRadians = glm::eulerAngles(m_globalRotationQuat);
-
-		// RecomputeWorldTransforms (normalized) world-space Right/Up/Forward CS axis vectors by applying m_globalRotationMat
-		UpdateWorldSpaceAxis();
-
-		for (int i = 0; i < (int)m_children.size(); i++)
 		{
-			m_children.at(i)->MarkDirty(); // Propagates down the entire hierarchy
-			m_children.at(i)->RecomputeWorldTransforms();
+			vec3 skew;
+			vec4 perspective;
+			decompose(m_globalMat, m_globalScale, m_globalRotationQuat, m_globalPosition, skew, perspective);
+			m_globalRotationEulerRadians = glm::eulerAngles(m_globalRotationQuat);
 		}
-	}
-
-
-	void Transform::UpdateWorldSpaceAxis()
-	{
-		const glm::mat3 rot = glm::mat3(m_globalRotationMat); // Convert to mat3 to save some operations
 
 		// Update the world-space orientation of our local CS axis:
-		m_globalRight	= normalize(rot * WorldAxisX);
-		m_globalUp		= normalize(rot * WorldAxisY);
-		m_globalForward = normalize(rot * WorldAxisZ);
+		{
+			const glm::mat3 rot = glm::mat3(m_globalRotationMat); // Convert to mat3 to save some operations
+			m_globalRight = normalize(rot * WorldAxisX);
+			m_globalUp = normalize(rot * WorldAxisY);
+			m_globalForward = normalize(rot * WorldAxisZ);
+		}
+
+		m_isDirty = false;
 	}
 
 
-	void Transform::RecomputeEulerXYZRadians() // Should be anytime rotation has been modified
+	void Transform::RecomputeEulerXYZRadians() // Should be called anytime rotation has been modified
 	{
 		// Update our Euler rotation tracker:
 		m_localRotationEulerRadians = glm::eulerAngles(m_localRotationQuat);
@@ -383,6 +367,8 @@ namespace gr
 			fmod<float>(abs(m_localRotationEulerRadians.y), two_pi<float>()) * sign(m_localRotationEulerRadians.y);
 		m_localRotationEulerRadians.z = 
 			fmod<float>(abs(m_localRotationEulerRadians.z), two_pi<float>()) * sign(m_localRotationEulerRadians.z);
+
+		MarkDirty();
 	}
 }
 

@@ -17,7 +17,7 @@ namespace
 
 namespace re
 {
-	Batch::Batch(re::MeshPrimitive const* meshPrimitive, gr::Material const* material, gr::Shader const* shader) :	
+	Batch::Batch(re::MeshPrimitive* meshPrimitive, gr::Material const* material, gr::Shader const* shader) :	
 		m_batchMeshPrimitive(meshPrimitive),
 		m_batchMaterial(material),
 		m_batchShader(shader),

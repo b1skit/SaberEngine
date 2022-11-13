@@ -62,7 +62,6 @@ namespace gr
 		inline LightType const& Type() const { return m_type; }
 														 
 		inline gr::Transform* GetTransform() { return m_ownerTransform; }	// Directional lights shine forward (Z+)
-		inline gr::Transform const* const GetTransform() const { return m_ownerTransform; }
 
 		inline std::shared_ptr<gr::ShadowMap>& GetShadowMap() { return m_shadowMap; }
 		inline std::shared_ptr<gr::ShadowMap> const& GetShadowMap() const { return m_shadowMap; }

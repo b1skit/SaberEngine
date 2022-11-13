@@ -131,7 +131,7 @@ namespace re
 		// Build batches from scene meshes:
 		// TODO: Build this by traversing the scene hierarchy once a scene graph is implemented
 		std::vector<Batch> unmergedBatches;
-		for (shared_ptr<re::MeshPrimitive const> const meshPrimitive : sceneData->GetMeshPrimitives())
+		for (shared_ptr<re::MeshPrimitive> const meshPrimitive : sceneData->GetMeshPrimitives())
 		{
 			unmergedBatches.emplace_back(
 				meshPrimitive.get(), meshPrimitive->MeshMaterial().get(), meshPrimitive->MeshMaterial()->GetShader().get());

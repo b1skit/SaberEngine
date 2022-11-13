@@ -78,14 +78,14 @@ namespace gr
 		inline float const FieldOfView() const { return m_cameraConfig.m_fieldOfView; }
 		inline glm::vec2 NearFar() const { return glm::vec2(m_cameraConfig.m_near, m_cameraConfig.m_far); }
 
-		inline glm::mat4 GetViewMatrix() const { return glm::inverse(m_transform.GetGlobalMatrix(Transform::TRS)); }
-		inline glm::mat4 GetInverseViewMatrix() const { return m_transform.GetGlobalMatrix(Transform::TRS); }
+		inline glm::mat4 GetViewMatrix() { return glm::inverse(m_transform.GetGlobalMatrix(Transform::TRS)); }
+		inline glm::mat4 GetInverseViewMatrix() { return m_transform.GetGlobalMatrix(Transform::TRS); }
 
 		inline glm::mat4 const&	GetProjectionMatrix() const { return m_projection; }
 		inline glm::mat4 GetInverseProjectionMatrix() const { return glm::inverse(m_projection); }
 
-		inline glm::mat4 GetViewProjectionMatrix() const { return m_projection * GetViewMatrix(); }
-		inline glm::mat4 GetInverseViewProjectionMatrix() const { return glm::inverse(GetViewProjectionMatrix()); }
+		inline glm::mat4 GetViewProjectionMatrix() { return m_projection * GetViewMatrix(); }
+		inline glm::mat4 GetInverseViewProjectionMatrix() { return glm::inverse(GetViewProjectionMatrix()); }
 		
 		std::vector<glm::mat4> const& GetCubeViewProjectionMatrix();
 		

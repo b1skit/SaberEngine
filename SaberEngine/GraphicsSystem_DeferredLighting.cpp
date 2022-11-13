@@ -71,7 +71,7 @@ namespace
 	};
 
 
-	LightParams GetLightParamData(shared_ptr<Light const> const light)
+	LightParams GetLightParamData(shared_ptr<Light> const light)
 	{
 		LightParams lightParams;
 		memset(&lightParams, 0, sizeof(LightParams)); // Ensure unused elements are zeroed
@@ -95,7 +95,7 @@ namespace
 			SEAssertF("Light type does not use this param block");
 		}
 		
-		shared_ptr<gr::ShadowMap const> const shadowMap = light->GetShadowMap();
+		shared_ptr<gr::ShadowMap> const shadowMap = light->GetShadowMap();
 		if (shadowMap)
 		{
 			lightParams.g_shadowMapTexelSize =
@@ -103,7 +103,7 @@ namespace
 
 			lightParams.g_shadowBiasMinMax = shadowMap->MinMaxShadowBias();
 
-			shared_ptr<gr::Camera const> const shadowCam = shadowMap->ShadowCamera();
+			shared_ptr<gr::Camera> const shadowCam = shadowMap->ShadowCamera();
 			lightParams.g_shadowCamNearFar = shadowCam->NearFar();
 
 			// Type-specific shadow params:
