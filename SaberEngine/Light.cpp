@@ -58,7 +58,7 @@ namespace gr
 
 				const uint32_t shadowMapRes = Config::Get()->GetValue<uint32_t>("defaultShadowMapRes");
 				m_shadowMap = make_shared<ShadowMap>(
-					m_name,
+					GetName(),
 					shadowMapRes,
 					shadowMapRes,
 					shadowCamConfig,
@@ -93,7 +93,7 @@ namespace gr
 				const uint32_t cubeMapRes = Config::Get()->GetValue<uint32_t>("defaultShadowCubeMapRes");
 
 				m_shadowMap = make_shared<ShadowMap>(
-					m_name,
+					GetName(),
 					cubeMapRes,
 					cubeMapRes,
 					shadowCamConfig,

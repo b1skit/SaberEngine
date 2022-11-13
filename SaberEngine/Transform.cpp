@@ -101,17 +101,15 @@ namespace gr
 	{
 		SEAssert("Cannot parent a Transform to itself", newParent != this);
 
-		if (newParent == nullptr) // Unparent:
+		if (m_parent != nullptr)
 		{
-			if (m_parent != nullptr)
-			{
-				m_parent->UnregisterChild(this);
-				m_parent = nullptr;
-			}
+			m_parent->UnregisterChild(this);
 		}
-		else // Parent:
+
+		m_parent = newParent;
+	
+		if (m_parent)
 		{
-			m_parent = newParent;
 			m_parent->RegisterChild(this);
 		}
 		
@@ -242,6 +240,8 @@ namespace gr
 
 	void Transform::RegisterChild(Transform* child)
 	{
+		SEAssert("Child must update their parent pointer", child->m_parent == this);
+
 		if (find(m_children.begin(), m_children.end(), child) ==  m_children.end())
 		{
 			m_children.push_back(child);
@@ -249,12 +249,16 @@ namespace gr
 			child->MarkDirty();
 			child->RecomputeWorldTransforms();
 		}
+		else
+		{
+			SEAssertF("Child is already registered");
+		}
 	}
 
 
 	void Transform::UnregisterChild(Transform const* child)
 	{
-		for (size_t i = 0; i < child->m_children.size(); i++)
+		for (size_t i = 0; i < m_children.size(); i++)
 		{
 			if (m_children.at(i) == child)
 			{

@@ -9,8 +9,14 @@ using std::vector;
 
 namespace gr
 {
-	Mesh::Mesh(Transform* ownerTransform, shared_ptr<re::MeshPrimitive> meshPrimitive) :
-		m_ownerTransform(ownerTransform)
+	Mesh::Mesh(gr::Transform* ownerTransform)
+		: m_ownerTransform(ownerTransform)
+	{
+	}
+
+
+	Mesh::Mesh(Transform* ownerTransform, shared_ptr<re::MeshPrimitive> meshPrimitive)
+		: m_ownerTransform(ownerTransform)
 	{
 		AddMeshPrimitive(meshPrimitive);
 	}
@@ -18,6 +24,10 @@ namespace gr
 
 	void Mesh::AddMeshPrimitive(shared_ptr<re::MeshPrimitive> meshPrimitive)
 	{
+		SEAssert("Cannot add a null mesh primitive", meshPrimitive != nullptr);
+		SEAssert("Mesh primitive unexpectedly already has an owner transform",
+			meshPrimitive->GetOwnerTransform() == nullptr);
+
 		meshPrimitive->GetOwnerTransform() = m_ownerTransform;
 		m_meshPrimitives.push_back(meshPrimitive);
 	}

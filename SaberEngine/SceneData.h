@@ -3,8 +3,9 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
-#include "MeshPrimitive.h"
+#include "Mesh.h"
 #include "Updateable.h"
 #include "NamedObject.h"
 
@@ -13,7 +14,6 @@ namespace gr
 {
 	class Camera;
 	class Light;
-	class Mesh;
 }
 
 namespace fr
@@ -26,11 +26,6 @@ namespace fr
 	public:
 		explicit SceneData(std::string const& sceneName);
 		~SceneData() { Destroy(); }
-
-		SceneData() = delete;
-		SceneData(SceneData const&) = delete;
-		SceneData(SceneData&&) = delete;
-		SceneData& operator=(SceneData const&) = delete;
 
 		void Destroy();
 
@@ -52,7 +47,7 @@ namespace fr
 		inline std::vector<std::shared_ptr<gr::Light>> const& GetPointLights() const { return m_pointLights; }
 
 		// SceneObjects:
-		void AddSceneObject(std::shared_ptr<fr::SceneObject> newGameObject); // Internally add Updateable & Mesh
+		void AddSceneObject(std::shared_ptr<fr::SceneObject> sceneObject); // Internally adds Updateable & Mesh
 
 		void AddUpdateable(std::shared_ptr<en::Updateable> updateable);
 		inline std::vector<std::shared_ptr<en::Updateable>> const& GetUpdateables() const { return m_updateables; }
@@ -93,6 +88,13 @@ namespace fr
 		std::vector<std::shared_ptr<gr::Camera>> m_cameras;
 
 		re::Bounds m_sceneWorldSpaceBounds;
+
+
+	private:
+		SceneData() = delete;
+		SceneData(SceneData const&) = delete;
+		SceneData(SceneData&&) = delete;
+		SceneData& operator=(SceneData const&) = delete;
 	};
 }
 

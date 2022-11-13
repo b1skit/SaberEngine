@@ -115,7 +115,7 @@ namespace gr
 			return *this;
 		}
 
-		*const_cast<std::string*>(&m_name) = rhs.GetName();
+		*const_cast<std::string*>(&GetName()) = rhs.GetName();
 
 		m_colorTargets = rhs.m_colorTargets;
 		m_depthStencilTarget = rhs.m_depthStencilTarget;

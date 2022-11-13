@@ -619,6 +619,8 @@ namespace
 		// Process any meshe primitives:
 		if (current->mesh != nullptr)
 		{
+			parent->AddMesh(make_shared<gr::Mesh>(parent->GetTransform()));
+
 			// Add each MeshPrimitive as a child of the SceneObject's Mesh:
 			for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
 			{
@@ -819,7 +821,7 @@ namespace
 					LoadAddMaterial(scene, sceneRootPath, current->mesh->primitives[primitive].material);
 
 				// Attach the primitive:
-				parent->AddMeshPrimitive(make_shared<MeshPrimitive>(
+				parent->GetMesh()->AddMeshPrimitive(make_shared<MeshPrimitive>(
 					nodeName,
 					positions,
 					normals,
@@ -907,13 +909,13 @@ namespace fr
 			SEAssert("Failed to parse scene file \"" + sceneFilePath + "\"", parseResult == cgltf_result_success);
 			return false;
 		}
-		
+
 		cgltf_result bufferLoadResult = cgltf_load_buffers(&options, data, sceneFilePath.c_str());
 		if (bufferLoadResult != cgltf_result::cgltf_result_success)
 		{
 			SEAssert("Failed to load scene data \"" + sceneFilePath + "\"", bufferLoadResult == cgltf_result_success);
 			return false;
-		}		
+		}
 
 		// TODO: Add a cmd line flag to validated GLTF files, for efficiency?
 		cgltf_result validationResult = cgltf_validate(data);
@@ -922,7 +924,7 @@ namespace fr
 			SEAssert("GLTF file failed validation!", validationResult == cgltf_result_success);
 			return false;
 		}
-		
+
 		// Pre-reserve our vectors:
 		m_updateables.reserve(max((int)data->nodes_count, 10));
 		m_meshes.reserve(max((int)data->meshes_count, 10));
@@ -931,13 +933,13 @@ namespace fr
 		m_materials.reserve(max((int)data->materials_count, 10));
 		m_pointLights.reserve(max((int)data->lights_count, 10)); // Probably an over-estimation
 		m_cameras.reserve(max((int)data->cameras_count, 5));
-		
+
 		const string sceneRootPath = Config::Get()->GetValue<string>("sceneRootPath");
 		LoadSceneHierarchy(sceneRootPath, *this, data);
 
 		if (m_cameras.empty()) // Add a default camera if none were found during LoadSceneHierarchy()
 		{
-			LoadAddCamera(*this, nullptr, nullptr); 
+			LoadAddCamera(*this, nullptr, nullptr);
 		}
 
 		// Cleanup:
@@ -947,10 +949,10 @@ namespace fr
 	}
 
 
-	SceneData::SceneData(string const& sceneName) :
-			NamedObject(sceneName),
-		m_ambientLight(nullptr),
-		m_keyLight(nullptr)
+	SceneData::SceneData(string const& sceneName)
+		: NamedObject(sceneName)
+		, m_ambientLight(nullptr)
+		, m_keyLight(nullptr)
 	{
 	}
 
@@ -1007,21 +1009,21 @@ namespace fr
 		case Light::Tube:
 		default:
 			LOG_ERROR("Ignorring unsupported light type");
-		break;
+			break;
 		}
 
 		// Updateables get pumped every frame:
 		m_updateables.emplace_back(newLight);
 	}
 
-	
+
 	void SceneData::AddSceneObject(std::shared_ptr<fr::SceneObject> sceneObject)
 	{
 		m_updateables.emplace_back(sceneObject);
 
-		for (size_t i = 0; i < sceneObject->GetMeshes().size(); i++)
+		if (sceneObject->GetMesh())
 		{
-			AddMesh(sceneObject->GetMeshes()[i]);
+			AddMesh(sceneObject->GetMesh());
 		}
 	}
 
@@ -1029,7 +1031,7 @@ namespace fr
 	void SceneData::AddMesh(std::shared_ptr<gr::Mesh> mesh)
 	{
 		m_meshes.emplace_back(mesh); // Add the mesh to our tracking list
-		
+
 		for (shared_ptr<MeshPrimitive> meshPrimitive : mesh->GetMeshPrimitives())
 		{
 			// Add the mesh to our tracking array:
@@ -1087,7 +1089,7 @@ namespace fr
 	{
 		SEAssert("Cannot add null texture to textures table", newTexture != nullptr);
 
-		unordered_map<size_t, shared_ptr<gr::Texture>>::const_iterator texturePosition = 
+		unordered_map<size_t, shared_ptr<gr::Texture>>::const_iterator texturePosition =
 			m_textures.find(newTexture->GetNameID());
 		if (texturePosition != m_textures.end()) // Found existing
 		{
@@ -1128,7 +1130,7 @@ namespace fr
 		SEAssert("Cannot add null material to material table", newMaterial != nullptr);
 
 		// Note: Materials are uniquely identified by name, regardless of the MaterialDefinition they might use
-		unordered_map<size_t, shared_ptr<gr::Material>>::const_iterator matPosition = 
+		unordered_map<size_t, shared_ptr<gr::Material>>::const_iterator matPosition =
 			m_materials.find(newMaterial->GetNameID());
 		if (matPosition != m_materials.end()) // Found existing
 		{
@@ -1153,7 +1155,7 @@ namespace fr
 
 
 	bool SceneData::MaterialExists(std::string const& matName) const
-	{ 
+	{
 		const size_t nameID = NamedObject::ComputeIDFromName(matName);
 		return m_materials.find(nameID) != m_materials.end();
 	}

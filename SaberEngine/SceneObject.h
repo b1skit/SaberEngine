@@ -6,6 +6,7 @@
 #include "Updateable.h"
 
 
+
 namespace fr
 {
 	class SceneObject : public virtual en::NamedObject, public virtual fr::Transformable, public virtual en::Updateable
@@ -21,12 +22,13 @@ namespace fr
 		void Update() override {}
 
 		// Getters/Setters:
-		void AddMeshPrimitive(std::shared_ptr<re::MeshPrimitive> meshPrimitive);
-		inline std::vector<std::shared_ptr<gr::Mesh>> const& GetMeshes() const { return m_meshes; }
+		void AddMesh(std::shared_ptr<gr::Mesh> mesh);
 
+		inline std::shared_ptr<gr::Mesh const> const GetMesh() const { return m_mesh; }
+		inline std::shared_ptr<gr::Mesh> GetMesh() { return m_mesh; }
 
 	private:
-		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;
+		std::shared_ptr<gr::Mesh> m_mesh;
 
 
 	private:

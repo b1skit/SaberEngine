@@ -12,6 +12,7 @@ namespace gr
 	class Mesh
 	{
 	public:
+		explicit Mesh(gr::Transform* ownerTransform);
 		explicit Mesh(gr::Transform* ownerTransform, std::shared_ptr<re::MeshPrimitive> meshPrimitive);
 
 		Mesh(Mesh const&) = default;
