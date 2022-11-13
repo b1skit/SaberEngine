@@ -89,7 +89,6 @@ namespace gr
 		glm::vec3 const& GetGlobalForward(); // World-space forward (Z+) vector
 		glm::vec3 const& GetGlobalRight(); // World-space right (X+) vector
 		glm::vec3 const& GetGlobalUp(); // World-space up (Y+) vector
-		// TODO: Add ForwardModel, RightModel, UpModel
 		
 
 	private:
