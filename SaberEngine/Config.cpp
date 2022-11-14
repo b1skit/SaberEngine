@@ -55,6 +55,8 @@ namespace en
 			{"windowXRes",							{1920, SettingType::Common}},
 			{"windowYRes",							{1080, SettingType::Common}},
 
+			{"vsync",								{true, SettingType::Common}},
+
 			// Camera defaults:
 			{"defaultFieldOfView",					{60.0f, SettingType::Common}},
 			{"defaultNear",							{1.0f,	SettingType::Common}},
