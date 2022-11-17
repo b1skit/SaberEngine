@@ -21,7 +21,7 @@ using std::string;
 
 namespace en
 {
-	CoreEngine*			CoreEngine::m_coreEngine = nullptr;
+	CoreEngine*	CoreEngine::m_coreEngine = nullptr;
 
 
 	CoreEngine::CoreEngine(int argc, char** argv) :
@@ -76,37 +76,39 @@ namespace en
 
 		// Process any events that might have occurred during startup:
 		EventManager::Get()->Update();
-		m_logManager->Update();
 
 		// Initialize game loop timing:
 		m_timeManager->Update();
-		double elapsed = 0.0;
+		double elapsed = (double)m_FixedTimeStep; // Ensure we pump Updates once before the 1st render
+
+		m_logManager->Update();
 
 		while (m_isRunning)
 		{
+			// Initializes ImGui for a new frame, so we can call ImGui functions throughout the loop.
+			// NOTE: ImGui is NOT thread safe TODO: Figure out a safe way to handle this. Perhaps use a Command pattern?
+			RenderManager::Get()->StartOfFrame();
+
+			// We only update the TimeManager once per outer loop. 		
+			m_timeManager->Update();
+			elapsed += m_timeManager->DeltaTimeMs(); // Effectively == #ms between calls to TimeManager.Update()
+
 			InputManager::Get()->Update();
+			CoreEngine::Update();
+			EventManager::Get()->Update();			
 
-			// Process events
-			EventManager::Get()->Update(); // Clears SDL event queue: Must occur after any other component that listens to SDL events
-			m_logManager->Update();
-
-			m_timeManager->Update(); // We only need to call this once per loop. DeltaTime() effectively == #ms between calls to TimeManager.Update()
-			elapsed += m_timeManager->DeltaTime();
-
+			// Update components until enough time has passed to trigger a render:
 			while (elapsed >= m_FixedTimeStep)
-			{
-				// Update components:
-				EventManager::Get()->Update(); // Clears SDL event queue: Must occur after any other component that listens to SDL events
-				m_logManager->Update();
-
+			{			
 				SceneManager::Get()->Update(); // Updates all of the scene objects
+				// AI, physics, etc should also be pumped here (eventually)
 
 				elapsed -= m_FixedTimeStep;
 			}
 			
-			RenderManager::Get()->Update();
+			m_logManager->Update(); // Must run this before the RenderManager closes the ImGui frame
 
-			Update();
+			RenderManager::Get()->Update();			
 		}
 	}
 
@@ -140,15 +142,14 @@ namespace en
 		// Generate a quit event if the quit button is pressed:
 		if (InputManager::Get()->GetKeyboardInputState(en::InputButton_Quit) == true)
 		{
-			EventManager::Get()->Notify(std::make_shared<en::EventManager::EventInfo const>(
-					en::EventManager::EventInfo{en::EventManager::EngineQuit, this, "Core Engine Quit"}));
+			EventManager::Get()->Notify(en::EventManager::EventInfo{en::EventManager::EngineQuit});
 		}
 	}
 
 
-	void CoreEngine::HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo)
+	void CoreEngine::HandleEvent(en::EventManager::EventInfo const& eventInfo)
 	{
-		switch (eventInfo->m_type)
+		switch (eventInfo.m_type)
 		{
 		case en::EventManager::EngineQuit:
 		{

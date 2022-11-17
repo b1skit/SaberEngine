@@ -1,14 +1,7 @@
 #pragma once
 
 #include <string>
-#include <sstream>
 #include <iostream>
-
-#include <cstdio>
-#include <stdio.h> // sprintf_s 
-
-// TODO: REMOVE DEPRECATED ONES!!!!
-
 
 #include "EventListener.h"
 #include "EngineComponent.h"
@@ -19,7 +12,7 @@ namespace en
 	class LogManager : public virtual en::EngineComponent, public virtual en::EventListener
 	{
 	public:
-		LogManager() = default;
+		LogManager();
 		~LogManager() = default;
 
 		// Singleton functionality:
@@ -36,7 +29,14 @@ namespace en
 		void Update() override;
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override;
+		void HandleEvent(en::EventManager::EventInfo const& eventInfo) override;
+
+	private:
+		struct
+		{
+			bool m_consoleRequested;
+			bool m_consoleReady;
+		} m_consoleState;
 
 
 	public:

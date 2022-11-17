@@ -34,6 +34,7 @@ namespace platform
 		return;
 	}
 
+
 	bool Context::WindowHasFocus(re::Context const& context)
 	{
 		platform::Context::PlatformParams const* const contextPlatformParams = context.GetPlatformParams();

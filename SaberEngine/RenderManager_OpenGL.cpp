@@ -3,6 +3,10 @@
 #include <GL/glew.h>
 #include <GL/GL.h> // Must follow glew.h...
 
+#include "imgui.h"
+#include "backends/imgui_impl_sdl.h"
+#include "backends/imgui_impl_opengl3.h"
+
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 
@@ -77,10 +81,20 @@ namespace opengl
 	}
 
 
+	void RenderManager::StartOfFrame()
+	{
+		// Start the Dear ImGui frame
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplSDL2_NewFrame();
+		ImGui::NewFrame();
+	}
+
+
 	void RenderManager::Render(re::RenderManager& renderManager)
 	{
 		// TODO: Add an assert somewhere that checks if any possible shader uniform isn't set
 		// -> Catch bugs where we forget to upload a common param
+
 
 		// Render each stage:
 		for (StagePipeline const& stagePipeline : renderManager.m_pipeline.GetPipeline())
@@ -209,6 +223,14 @@ namespace opengl
 
 			glPopDebugGroup();
 		}
+
+
+		// Imgui Rendering
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "ImGui stage");
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		glPopDebugGroup();
+
 
 		// Display the final frame:
 		renderManager.m_context.SwapWindow();

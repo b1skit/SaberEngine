@@ -1,27 +1,30 @@
+#include <memory>
+
 #include <SDL.h>
+
+#include "imgui.h"
+#include "backends/imgui_impl_sdl.h"
 
 #include "InputManager.h"
 #include "Config.h"
-#include "RenderManager.h"
 #include "DebugConfiguration.h"
 #include "EventManager.h"
 
 using en::Config;
 using en::EventManager;
-using re::RenderManager;
 using std::string;
+using std::make_shared;
 
 
 namespace en
 {
 	// Static members:
-	bool InputManager::m_keyboardButtonStates[en::KeyboardButtonState_Count];
-	bool InputManager::m_mouseButtonStates[en::MouseButtonState_Count];
-	float InputManager::m_mouseAxisStates[en::InputAxis_Count];
+	bool InputManager::m_keyboardInputButtonStates[en::KeyboardInputButton_Count];
+	bool InputManager::m_mouseButtonStates[en::MouseInputButton_Count];
+	float InputManager::m_mouseAxisStates[en::MouseInputAxis_Count];
 
 	float InputManager::m_mousePitchSensitivity	= -0.00005f;
 	float InputManager::m_mouseYawSensitivity	= -0.00005f;
-
 
 	std::unique_ptr<InputManager> InputManager::m_instance = nullptr;
 	InputManager* InputManager::Get()
@@ -35,47 +38,38 @@ namespace en
 
 
 	InputManager::InputManager()
+		: m_consoleTriggered(false)
+		, m_prevConsoleTriggeredState(false)
 	{
 		// Initialize keyboard keys:
-		for (int i = 0; i < en::KeyboardButtonState_Count; i++)
+		for (size_t i = 0; i < en::KeyboardInputButton_Count; i++)
 		{
-			m_inputKeyboardBindings[i]	= SDL_SCANCODE_UNKNOWN; // == 0
-			m_keyboardButtonStates[i]	= false;
+			m_keyboardInputButtonStates[i]	= false;
 		}
 
 		// Initialize mouse axes:
-		for (int i = 0; i < en::InputAxis_Count; i++)
+		for (int i = 0; i < en::MouseInputAxis_Count; i++)
 		{
 			m_mouseAxisStates[i] = 0.0f;
 		}
 	}
 
 
-	bool const& InputManager::GetKeyboardInputState(en::KeyboardButtonState key)
+	bool const& InputManager::GetKeyboardInputState(en::KeyboardInputButton key)
 	{
-		return InputManager::m_keyboardButtonStates[key];
+		return m_keyboardInputButtonStates[key];
 	}
 
 
-	bool const& InputManager::GetMouseInputState(en::MouseButtonState button)
+	bool const& InputManager::GetMouseInputState(en::MouseInputButton button)
 	{
-		return InputManager::m_mouseButtonStates[button];
+		return m_mouseButtonStates[button];
 	}
 
 
-	float InputManager::GetMouseAxisInput(en::InputAxis axis)
+	float InputManager::GetMouseAxisInput(en::MouseInputAxis axis)
 	{
-		float sensitivity;
-		if (axis == en::Input_MouseX)
-		{
-			sensitivity = m_mousePitchSensitivity;
-		}
-		else
-		{
-			sensitivity = m_mouseYawSensitivity;
-		}
-
-		return InputManager::m_mouseAxisStates[axis] * sensitivity;
+		return m_mouseAxisStates[axis];
 	}
 	
 
@@ -83,16 +77,15 @@ namespace en
 	{
 		LOG("InputManager starting...");
 
-		// Cache the context (created earlier by the render manager):
-		m_context = &RenderManager::Get()->GetContext();
-
 		LoadInputBindings();
 
-		// Cache sensitivity params. For whatever reason, we must multiply by -1 (we store positive values for sanity)
-		InputManager::m_mousePitchSensitivity =
-			Config::Get()->GetValue<float>("mousePitchSensitivity") * -1.0f;
-		InputManager::m_mouseYawSensitivity	= 
-			Config::Get()->GetValue<float>("mouseYawSensitivity") * -1.0f;
+		InputManager::m_mousePitchSensitivity = Config::Get()->GetValue<float>("mousePitchSensitivity") * -1.0f;
+		InputManager::m_mouseYawSensitivity	= Config::Get()->GetValue<float>("mouseYawSensitivity") * -1.0f;
+
+		// Event subscriptions:
+		EventManager::Get()->Subscribe(EventManager::KeyEvent, this);
+		EventManager::Get()->Subscribe(EventManager::MouseMotionEvent, this);
+		EventManager::Get()->Subscribe(EventManager::MouseButtonEvent, this);
 	}
 
 
@@ -104,68 +97,213 @@ namespace en
 
 	void InputManager::Update()
 	{
-		const bool windowFocus = m_context->WindowHasFocus();
+		// Prepare for the next around of input events fired by the EventManager
+		m_mouseAxisStates[MouseInputAxis::Input_MouseX] = 0.f;
+		m_mouseAxisStates[MouseInputAxis::Input_MouseY] = 0.f;
 
-		// Update keyboard states:
-		const Uint8* SDLKeyboardState = SDL_GetKeyboardState(NULL);
+		m_mouseButtonStates[en::InputMouse_Left] = false;
+		m_mouseButtonStates[en::InputMouse_Right] = false;
 
-		m_keyboardButtonStates[en::InputButton_Forward] =
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Forward]] && windowFocus;
-		m_keyboardButtonStates[en::InputButton_Backward] =
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Backward]] && windowFocus;
-		m_keyboardButtonStates[en::InputButton_Left] =
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Left]] && windowFocus;
-		m_keyboardButtonStates[en::InputButton_Right] =
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Right]] && windowFocus;
-		m_keyboardButtonStates[en::InputButton_Up]	=
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Up]] && windowFocus;
-		m_keyboardButtonStates[en::InputButton_Down] =
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Down]] && windowFocus;
-		m_keyboardButtonStates[en::InputButton_Sprint] =
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Sprint]] && windowFocus;
-
-		m_keyboardButtonStates[en::InputButton_Quit] =
-			(bool)SDLKeyboardState[m_inputKeyboardBindings[en::InputButton_Quit]] && windowFocus;
-
-
-		// Update mouse button states:
-		m_mouseButtonStates[en::InputMouse_Left] =
-			(bool)(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT)) && windowFocus;
-		m_mouseButtonStates[en::InputMouse_Right] =
-			(bool)(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_RIGHT)) && windowFocus;
-
-
-		// Get the mouse deltas, once per frame:
-		int xRel, yRel = 0;
-		SDL_GetRelativeMouseState(&xRel, &yRel);
-		m_mouseAxisStates[en::Input_MouseX] = (float)xRel;
-		m_mouseAxisStates[en::Input_MouseY] = (float)yRel;
+		// Handle the console toggle key: Enables/disables locking the mouse to the window and hiding the pointer
+		if (m_consoleTriggered != m_prevConsoleTriggeredState)
+		{
+			m_prevConsoleTriggeredState = m_consoleTriggered;
+			SDL_SetRelativeMouseMode((SDL_bool)!m_consoleTriggered); // True hides the mouse and locks it to the window
+		}
 	}
 
 
-	void InputManager::HandleEvent(std::shared_ptr<EventManager::EventInfo const> eventInfo)
+	void InputManager::HandleEvent(EventManager::EventInfo const& eventInfo)
 	{
+		ImGuiIO& io = ImGui::GetIO();
+		const bool imguiWantsToCaptureMouse = io.WantCaptureMouse;
+		const bool imguiWantsToCaptureKeyboard = io.WantCaptureKeyboard;
 		
+		// Transform key/mouse events into SaberEngine functionality events (eg. "w" -> "move forward")
+		// NOTE: We may receive more than 1 of each type of event between calls to Update() from input with high
+		// polling rates (e.g. mouse motion)
+
+		EventManager::EventInfo transformedEvent;
+
+		bool eventIsBroadcastable = true;
+		bool imguiCapturedEvent = false;
+
+		switch (eventInfo.m_type)
+		{
+		case EventManager::KeyEvent:
+		{
+			const uint32_t sdlScancode = eventInfo.m_data0.m_dataUI;
+
+			auto result = m_SDLScancodsToSaberEngineEventEnums.find(sdlScancode);
+			if (result != m_SDLScancodsToSaberEngineEventEnums.end())
+			{
+				en::KeyboardInputButton key = result->second;
+				const bool keystate = eventInfo.m_data1.m_dataB;
+
+				m_keyboardInputButtonStates[key] = keystate;
+
+				transformedEvent.m_data0.m_dataB = keystate;
+
+				switch (key)
+				{
+				case KeyboardInputButton::InputButton_Forward:
+				{
+					transformedEvent.m_type = EventManager::EventType::InputForward;
+				}
+				break;
+				case KeyboardInputButton::InputButton_Backward:
+				{
+					transformedEvent.m_type = EventManager::EventType::InputBackward;
+				}
+				break;
+				case KeyboardInputButton::InputButton_Left:
+				{
+					transformedEvent.m_type = EventManager::EventType::InputLeft;
+				}
+				break;
+				case KeyboardInputButton::InputButton_Right:
+				{
+					transformedEvent.m_type = EventManager::EventType::InputRight;
+				}
+				break;
+				case KeyboardInputButton::InputButton_Up:
+				{
+					transformedEvent.m_type = EventManager::EventType::InputUp;
+				}
+				break;
+				case KeyboardInputButton::InputButton_Down:
+				{
+					transformedEvent.m_type = EventManager::EventType::InputDown;
+				}
+				break;
+				case KeyboardInputButton::InputButton_Sprint:
+				{
+					transformedEvent.m_type = EventManager::EventType::InputSprint;
+				}
+				break;
+				case KeyboardInputButton::InputButton_Console:
+				{
+					// The InputManager must broadcast the transformed console toggle event, as well as react to it
+					transformedEvent.m_type = EventManager::EventType::InputToggleConsole;
+
+					// Toggle the mouse locking for the console display when the button is pressed down only
+					if (keystate == true)
+					{
+						m_consoleTriggered = !m_consoleTriggered;
+					}
+				}
+				break;
+				case KeyboardInputButton::InputButton_Quit:
+				{
+					transformedEvent.m_type = EventManager::EventType::EngineQuit;
+				}
+				break;
+				default:
+					SEAssertF("Invalid scancode");
+					break;
+				}				
+			}
+			else
+			{
+				eventIsBroadcastable = false;
+			}
+		} // End KeyEvent
+		break;
+		case EventManager::MouseMotionEvent:
+		{
+			// Unpack the mouse data:
+			m_mouseAxisStates[en::Input_MouseX] += static_cast<float>(eventInfo.m_data0.m_dataI) * m_mousePitchSensitivity;
+			m_mouseAxisStates[en::Input_MouseY] += static_cast<float>(eventInfo.m_data1.m_dataI) * m_mouseYawSensitivity;
+			eventIsBroadcastable = false;
+		}
+		break;
+		case EventManager::MouseButtonEvent:
+		{
+			const bool buttonState = eventInfo.m_data1.m_dataB;
+			switch (eventInfo.m_data0.m_dataUI)
+			{
+			case 0: // Left
+			{
+				io.AddMouseButtonEvent(ImGuiMouseButton_Left, buttonState);
+				if (imguiWantsToCaptureMouse)
+				{
+					imguiCapturedEvent = true;
+				}
+				else
+				{
+					m_mouseButtonStates[en::InputMouse_Left] = buttonState;
+					transformedEvent.m_type = EventManager::EventType::InputMouseLeft;
+					transformedEvent.m_data0.m_dataB = buttonState;
+				}
+			}
+			break;
+			case 1: // Middle
+			{
+				SEAssertF("TODO: Support middle mouse");
+			}
+			break;
+			case 2: // Right
+			{
+				io.AddMouseButtonEvent(ImGuiMouseButton_Right, buttonState);
+				if (imguiWantsToCaptureMouse)
+				{
+					imguiCapturedEvent = true;
+				}
+				else
+				{
+					m_mouseButtonStates[en::InputMouse_Right] = buttonState;
+					transformedEvent.m_type = EventManager::EventType::InputMouseRight;
+					transformedEvent.m_data0.m_dataB = buttonState;
+				}
+			}
+			break;
+			default:
+				SEAssertF("Invalid mouse button");
+			}
+		}
+		break;
+		default:
+			SEAssertF("Invalid event type");
+			break;
+		}
+
+		if (eventIsBroadcastable && !imguiCapturedEvent)
+		{
+			EventManager::Get()->Notify(transformedEvent);
+		}
 	}
 
 
 	void InputManager::LoadInputBindings()
 	{
-		for (int i = 0; i < en::KeyboardButtonState_Count; i++)
+		for (size_t i = 0; i < en::KeyboardInputButton_Count; i++)
 		{
-			const string buttonString = Config::Get()->GetValueAsString(en::KEY_NAMES[i]);
+			const string configButtonName = Config::Get()->GetValueAsString(en::KeyboardInputButtonNames[i]);
 
-			if (buttonString.length() == 1) // Handle chars:
+			SEAssert("Button not found in config.cfg. Did you forget to set one in Config::InitializeDefaultValues()?", 
+				!configButtonName.empty());
+
+			// Note: For now, we use SDL_Scancodes for all button presses.
+			// Scancode = Location of a press. Best suited for layout-dependent keys (eg. WASD)
+			// Keycode = Meaning of a press, with respect to the current keyboard layout (eg. qwerty vs azerty). Best
+			//			suited for character-dependent keys (eg. Press "I" for inventory)
+			// More info here:
+			// https://stackoverflow.com/questions/56915258/difference-between-sdl-scancode-and-sdl-keycode
+
+			SDL_Scancode scancode = SDL_GetScancodeFromName(configButtonName.c_str());
+			if (scancode != SDL_SCANCODE_UNKNOWN)
 			{
-				m_inputKeyboardBindings[i] = SDL_GetScancodeFromKey((SDL_Keycode)buttonString.c_str()[0]);
+				m_SDLScancodsToSaberEngineEventEnums.insert(
+					{ (uint32_t)scancode, static_cast<en::KeyboardInputButton>(i) });
 			}
-			else // Handle strings:
+			else
 			{
-				auto result = en::ScancodeMappings.find(buttonString);
-
-				SEAssert("Invalid button string", result != en::ScancodeMappings.end());
-				
-				m_inputKeyboardBindings[i] = result->second;
+				// We want to assert if we can, but even if we're in Release mode we want to log an error:
+				const string errorMessage = "Invalid key name: \"" + configButtonName + "\", cannot find a matching "
+					"SDL scancode. Key names are case sensitive, see the \"Key Name\" column on this page for exact "
+					"values: \nhttps://wiki.libsdl.org/SDL_Scancode";
+				LOG_ERROR(errorMessage.c_str());
+				SEAssertF(errorMessage.c_str());
 			}
 		}
 	}

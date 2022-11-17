@@ -48,8 +48,8 @@ namespace en
 		const bool loadResult = m_sceneData->Load(sceneFilePath);
 		if (!loadResult)
 		{
-			EventManager::Get()->Notify(std::make_shared<EventManager::EventInfo const>(
-				EventManager::EventInfo{ EventManager::EngineQuit, this, "Failed to load scene" }));
+			LOG_ERROR("Failed to load scene: %s", sceneFilePath);
+			EventManager::Get()->Notify(EventManager::EventInfo{ EventManager::EngineQuit});
 		}
 
 		// Add a player object to the scene:
@@ -77,9 +77,8 @@ namespace en
 	}
 
 
-	void SceneManager::HandleEvent(shared_ptr<EventManager::EventInfo const> eventInfo)
+	void SceneManager::HandleEvent(EventManager::EventInfo const& eventInfo)
 	{
-		return;
 	}
 }
 

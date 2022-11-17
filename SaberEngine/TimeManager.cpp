@@ -7,15 +7,16 @@
 namespace en
 {
 	// Static values:
-	unsigned int TimeManager::m_startTime;
-	unsigned int TimeManager::m_prevTime;
-	unsigned int TimeManager::m_currentTime;
-	unsigned int TimeManager::m_deltaTime;
+	uint64_t TimeManager::m_prevTimeMs;
+	uint64_t TimeManager::m_currentTimeMs;
+	uint64_t TimeManager::m_deltaTimeMs;
 
 
 	TimeManager::TimeManager()
 	{
-		m_startTime = m_prevTime = m_currentTime = SDL_GetTicks();
+		const uint64_t numTicks = SDL_GetTicks64();
+		m_prevTimeMs = numTicks;
+		m_currentTimeMs = numTicks;
 	}
 
 	void TimeManager::Startup()
@@ -32,9 +33,9 @@ namespace en
 
 	void TimeManager::Update()
 	{
-		m_prevTime	= m_currentTime;
-		m_currentTime = SDL_GetTicks();
-		m_deltaTime	= (m_currentTime - m_prevTime);
+		m_prevTimeMs	= m_currentTimeMs;
+		m_currentTimeMs = SDL_GetTicks64();
+		m_deltaTimeMs	= (m_currentTimeMs - m_prevTimeMs);
 	}
 }
 

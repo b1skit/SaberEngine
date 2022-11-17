@@ -16,6 +16,15 @@ using std::unordered_map;
 using std::any;
 
 
+// Default true/false strings (Must be lowercase)
+#define TRUE_STRING		"true"		
+#define FALSE_STRING	"false"
+
+// Command strings: End with a space to maintain formatting
+#define SET_CMD		"set "		// Set a value
+#define BIND_CMD	"bind "		// Bind a key
+
+
 namespace
 {
 	// Convert a string to lower case: Used to simplify comparisons
@@ -73,19 +82,21 @@ namespace en
 			{"defaultIBLPath",						{string("..\\Assets\\DefaultIBL\\ibl.hdr"), SettingType::Common}},
 
 			// Key bindings:
-			{MACRO_TO_STR(InputButton_Forward),		{'w', SettingType::Common}},
-			{MACRO_TO_STR(InputButton_Backward),	{'s', SettingType::Common}},
-			{MACRO_TO_STR(InputButton_Left),		{'a', SettingType::Common}},
-			{MACRO_TO_STR(InputButton_Right),		{'d', SettingType::Common}},
-			{MACRO_TO_STR(InputButton_Up),			{string(SPACE), SettingType::Common}},
-			{MACRO_TO_STR(InputButton_Down),		{string(L_SHIFT), SettingType::Common}},
-			{MACRO_TO_STR(InputButton_Sprint),		{string(L_CTRL), SettingType::Common}},
+			//--------------
+			{ENUM_TO_STR(InputButton_Forward),	{'w', SettingType::Common}},
+			{ENUM_TO_STR(InputButton_Backward),	{'s', SettingType::Common}},
+			{ENUM_TO_STR(InputButton_Left),		{'a', SettingType::Common}},
+			{ENUM_TO_STR(InputButton_Right),	{'d', SettingType::Common}},
+			{ENUM_TO_STR(InputButton_Up),		{"Space", SettingType::Common}},
+			{ENUM_TO_STR(InputButton_Down),		{"Left Shift", SettingType::Common}},
+			{ENUM_TO_STR(InputButton_Sprint),	{"Left Ctrl", SettingType::Common}},
 
-			{MACRO_TO_STR(InputButton_Quit),		{string(ESC), SettingType::Common}},
+			{ENUM_TO_STR(InputButton_Console),	{'`', SettingType::Common}}, // The "grave accent"/tilde key
+			{ENUM_TO_STR(InputButton_Quit),		{"Escape", SettingType::Common}},
 
 			// Mouse bindings:
-			{MACRO_TO_STR(InputMouse_Left),		{string(MACRO_TO_STR(InputMouse_Left)), SettingType::Common}},
-			{MACRO_TO_STR(InputMouse_Right),	{string(MACRO_TO_STR(InputMouse_Right)), SettingType::Common}},
+			{ENUM_TO_STR(InputMouse_Left),		{string(ENUM_TO_STR(InputMouse_Left)), SettingType::Common}},
+			{ENUM_TO_STR(InputMouse_Right),		{string(ENUM_TO_STR(InputMouse_Right)), SettingType::Common}},
 
 		};
 
@@ -304,10 +315,10 @@ namespace en
 
 	void Config::LoadConfig()
 	{
-		LOG("Loading %s...", CONFIG_FILENAME.c_str());
+		LOG("Loading %s...", m_configFilename.c_str());
 
 		ifstream file;
-		file.open((CONFIG_DIR + CONFIG_FILENAME).c_str());
+		file.open((m_configDir + m_configFilename).c_str());
 
 		// If no config is found, create one:
 		if (!file.is_open())
@@ -496,7 +507,7 @@ namespace en
 		}
 
 		// Create the .\config\ directory, if none exists
-		std::filesystem::path configPath = CONFIG_DIR;
+		std::filesystem::path configPath = m_configDir;
 		if (!std::filesystem::exists(configPath))
 		{
 			LOG("Creating .\\config\\ directory");
@@ -505,7 +516,7 @@ namespace en
 		}
 
 		// Write our config to disk:
-		std::ofstream config_ofstream(CONFIG_DIR + CONFIG_FILENAME);
+		std::ofstream config_ofstream(m_configDir + m_configFilename);
 		config_ofstream << "# SaberEngine config.cfg file:\n";
 
 

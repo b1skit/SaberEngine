@@ -95,7 +95,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\Dependencies\Welder\;$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\SDL2\include\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\Dependencies\imgui\;$(ProjectDir)..\Dependencies\Welder\;$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\SDL2\include\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -144,7 +144,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Debug\SDL2.dll" "$(ProjectDi
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\Dependencies\Welder\;$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\SDL2\include\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\Dependencies\imgui\;$(ProjectDir)..\Dependencies\Welder\;$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\SDL2\include\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
@@ -168,6 +168,15 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_dx12.cpp" />
+    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_sdl.cpp" />
+    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_sdlrenderer.cpp" />
+    <ClCompile Include="..\Dependencies\imgui\imgui.cpp" />
+    <ClCompile Include="..\Dependencies\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\Dependencies\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\Dependencies\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\Dependencies\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Batch.cpp" />
     <ClCompile Include="Bounds.cpp" />
     <ClCompile Include="Camera.cpp" />
@@ -225,6 +234,17 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_dx12.h" />
+    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_opengl3.h" />
+    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_sdl.h" />
+    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_sdlrenderer.h" />
+    <ClInclude Include="..\Dependencies\imgui\imconfig.h" />
+    <ClInclude Include="..\Dependencies\imgui\imgui.h" />
+    <ClInclude Include="..\Dependencies\imgui\imgui_internal.h" />
+    <ClInclude Include="..\Dependencies\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\Dependencies\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\Dependencies\imgui\imstb_truetype.h" />
     <ClInclude Include="Batch.h" />
     <ClInclude Include="Bounds.h" />
     <ClInclude Include="HashedDataObject.h" />

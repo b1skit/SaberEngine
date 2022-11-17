@@ -48,6 +48,15 @@ A per-scene IBL is loaded from ""<project root>\Scenes\SceneFolderName\IBL\ibl.h
 Dependencies:
 -------------
 
+Imgui: https://github.com/ocornut/imgui/
+-----------------------------------------
+- Current version: v1.88
+- Unzip to <project root>\Dependencies\imgui\
+- Add "$(ProjectDir)..\Dependencies\imgui\" to "Project properties -> C/C++ -> Additional Include Directories"
+- Add the \Dependencies\imgui\.h/.cpp files to the Visual Studio project (i.e. under the "imgui" filter in the project view)
+- Add the \Dependencies\imgui\backends\imgui_impl_ .h/.cpp files for dx12, opengl3, sdl to the Visual Studio project (i.e. under the "imgui\backends" filter in the project view)
+
+
 CGLTF: https://github.com/jkuhlmann/cgltf
 -----------------------------------------
 - Current version: cgltf-1.13

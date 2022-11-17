@@ -41,17 +41,6 @@
 
 
 #if defined(_DEBUG)
-	// Event logging:
-	//---------------
-	//#define DEBUG_PRINT_NOTIFICATIONS				// Print notifications as the event manager receives them
-	
-	//#define DEBUG_LOGMANAGER_LOG_EVENTS				// Print events as the log manager receives them. Logged events are configured below
-	#if defined (DEBUG_LOGMANAGER_LOG_EVENTS)
-		#define DEBUG_LOGMANAGER_KEY_INPUT_LOGGING		// Log keypress input events
-		#define DEBUG_LOGMANAGER_MOUSE_INPUT_LOGGING	// Log mouse input events
-		#define DEBUG_LOGMANAGER_QUIT_LOGGING			// Log quit 
-	#endif
-	
 	// OpenGL-specific logging (in RenderManager.cpp)
 	//-----------------------------------------------
 	#define DEBUG_LOG_OPENGL						// Enable/disable OpenGL logging

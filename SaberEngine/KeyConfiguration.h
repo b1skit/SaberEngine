@@ -9,53 +9,22 @@
 #include <unordered_map>
 #include <string>
 
+
 namespace en
 {
-	// Macros:
-	#define MACRO_TO_STR(x) #x
+	// Adding new button input functionality to SaberEngine:
+	// 1) Add the new button function to KeyboardInputButton and KeyboardInputButtonNames in this file
+	// 2) Add a default button for this function in Config::InitializeDefaultValues()
+	// 3) Add an event type to EventManager::EventType
+	// 4) Fire an event in InputManager::Update()
+	// 5) Subscribe to the event anywhere you want to react to the button press
 
-	// Default true/false strings (Must be lowercase)
-	#define TRUE_STRING		"true"		
-	#define FALSE_STRING	"false"
+	// Note: This macro is also used outside of this file (eg. Config.cpp)
+	#define ENUM_TO_STR(x) #x
 
-	// Command strings: End with a space to maintain formatting
-	#define SET_CMD		"set "		// Set a value
-	#define BIND_CMD	"bind "		// Bind a key
-
-
-	// Input binding names: Used as hash keys in Config <key, value> mappings
-	#define InputButton_Forward		btn_forward
-	#define InputButton_Backward	btn_backward
-	#define InputButton_Left		btn_strafeLeft
-	#define InputButton_Right		btn_strafeRight
-	#define InputButton_Up			btn_up
-	#define InputButton_Down		btn_down
-	#define InputButton_Sprint		btn_sprint
-
-	#define InputButton_Quit		btn_quit
-
-	#define InputMouse_Left			mouse_left
-	#define InputMouse_Right		mouse_right
-
-
-	// Key binding names: Used as hash key names in InputManager to map keys to SDL ScanCodes
-	#define L_SHIFT		"lshift"
-	#define SPACE		"space"
-	#define ESC			"esc"
-	#define L_CTRL		"lctrl"
-
-
-	const std::unordered_map<std::string, SDL_Scancode> ScancodeMappings =
-	{
-		{L_SHIFT,	SDL_SCANCODE_LSHIFT},
-		{SPACE,		SDL_SCANCODE_SPACE},
-		{ESC,		SDL_SCANCODE_ESCAPE},
-		{L_CTRL,	SDL_SCANCODE_LCTRL},
-	};
-
-
-	// Binary controls: Enums index keyboardButtonStates array elements
-	enum KeyboardButtonState
+	// Buttons for specific functionality/controls (eg. forward, sprint, quit, etc)
+	// These enums are also converted to strings by a pre-processor macro, and mapped to buttons in the config.cfg
+	enum KeyboardInputButton
 	{
 		InputButton_Forward,
 		InputButton_Backward,
@@ -65,48 +34,51 @@ namespace en
 		InputButton_Down,
 		InputButton_Sprint,
 
-		InputButton_Quit, // Temporary. TODO: Hard code a quit button
+		InputButton_Console,
+		InputButton_Quit,
 
-		KeyboardButtonState_Count
+		KeyboardInputButton_Count
 	};
 
-	// Array of key name strings: Used to iterate through all possible buttons
-	// Note: These MUST be in the same order as the KeyboardButtonState enum
-	const std::string KEY_NAMES[KeyboardButtonState_Count] =
+	// KeyboardInputButton enum names, as strings.
+	// Used to map functionality (eg. forward, sprint, quit, etc) to specific buttons in the config.cfg
+	// Note: These MUST be in the same order as the KeyboardInputButton enum
+	const std::string KeyboardInputButtonNames[KeyboardInputButton_Count] =
 	{
-		MACRO_TO_STR(InputButton_Forward),
-		MACRO_TO_STR(InputButton_Backward),
-		MACRO_TO_STR(InputButton_Left),
-		MACRO_TO_STR(InputButton_Right),
-		MACRO_TO_STR(InputButton_Up),
-		MACRO_TO_STR(InputButton_Down),
-		MACRO_TO_STR(InputButton_Sprint),
+		ENUM_TO_STR(InputButton_Forward),
+		ENUM_TO_STR(InputButton_Backward),
+		ENUM_TO_STR(InputButton_Left),
+		ENUM_TO_STR(InputButton_Right),
+		ENUM_TO_STR(InputButton_Up),
+		ENUM_TO_STR(InputButton_Down),
+		ENUM_TO_STR(InputButton_Sprint),
 
-		MACRO_TO_STR(InputButton_Quit),
+		ENUM_TO_STR(InputButton_Console),
+		ENUM_TO_STR(InputButton_Quit),
 	};
 
-	enum MouseButtonState
+	enum MouseInputButton
 	{
 		InputMouse_Left,
 		InputMouse_Right,
 
-		MouseButtonState_Count
+		MouseInputButton_Count
 	};
 
 	// Array of mouse button name strings: Used to iterate through all possible buttons
-	// Note: These MUST be in the same order as the MouseButtonState enum
-	const std::string MouseButtonNames[MouseButtonState_Count] =
+	// Note: These MUST be in the same order as the MouseInputButton enum
+	const std::string MouseInputButtonNames[MouseInputButton_Count] =
 	{
-		MACRO_TO_STR(InputMouse_Left),
-		MACRO_TO_STR(InputMouse_Right),
+		ENUM_TO_STR(InputMouse_Left),
+		ENUM_TO_STR(InputMouse_Right),
 	};
 
 	// Analogue controls (eg. mouse movement): Enums index mouseAxisStates array elements
-	enum InputAxis
+	enum MouseInputAxis
 	{
 		Input_MouseX,
 		Input_MouseY,
 
-		InputAxis_Count
+		MouseInputAxis_Count
 	};
 }

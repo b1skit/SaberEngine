@@ -94,6 +94,12 @@ namespace re
 	}
 
 
+	void RenderManager::StartOfFrame()
+	{
+		platform::RenderManager::StartOfFrame();
+	}
+
+
 	void RenderManager::Update()
 	{
 		// Build batches:

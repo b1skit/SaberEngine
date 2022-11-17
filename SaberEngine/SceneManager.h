@@ -25,7 +25,7 @@ namespace en
 		void Update() override;
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override;
+		void HandleEvent(en::EventManager::EventInfo const& eventInfo) override;
 
 	private:
 		std::shared_ptr<fr::SceneData> m_sceneData = nullptr;

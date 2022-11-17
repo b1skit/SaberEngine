@@ -5,6 +5,10 @@
 #include <GL/glew.h>
 #include <GL/GL.h> // Must follow glew.h
 
+#include "imgui.h"
+#include "backends/imgui_impl_sdl.h"
+#include "backends/imgui_impl_opengl3.h"
+
 #include "Context_OpenGL.h"
 #include "Context.h"
 
@@ -14,6 +18,7 @@
 using en::Config;
 using std::string;
 using std::to_string;
+
 
 namespace opengl
 {
@@ -30,8 +35,6 @@ namespace opengl
 			const void* userParam
 	)
 	{
-		
-		
 		string srcMsg;
 		switch (source)
 		{
@@ -143,19 +146,16 @@ namespace opengl
 		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 		SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
-		//SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 32); // Crashes if uncommented???
+		SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
 		// Specify relative mouse mode
 		// https://wiki.libsdl.org/SDL_HINT_MOUSE_RELATIVE_MODE_WARP
 		SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0", SDL_HINT_OVERRIDE);
 		SDL_SetRelativeMouseMode(SDL_TRUE);	// Lock the mouse to the window
-
-		//// Make our buffer swap syncronized with the monitor's vertical refresh:
-		//SDL_GL_SetSwapInterval(1);
-
+		
 		// Create a window:
 		const string windowTitle = Config::Get()->GetValue<string>("windowTitle");
 		const int xRes = Config::Get()->GetValue<int>("windowXRes");
@@ -177,6 +177,10 @@ namespace opengl
 		SEAssert(
 			"Failed to make OpenGL context current", 
 			SDL_GL_MakeCurrent(platformParams->m_glWindow, platformParams->m_glContext) >= 0);
+
+		// Synchronize buffer swapping with the monitor's vertical refresh (VSync):
+		const bool vsyncEnabled = Config::Get()->GetValue<bool>("vsync");
+		SDL_GL_SetSwapInterval(static_cast<int>(vsyncEnabled));
 		
 		// Verify the context version:
 		int glMajorVersionCheck = 0;
@@ -203,6 +207,21 @@ namespace opengl
 
 		// Global OpenGL settings:
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+
+		// Setup our ImGui context
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		ImGuiIO& io = ImGui::GetIO();
+		io.IniFilename = re::k_imguiIniPath;
+		// Setup Dear ImGui style
+		ImGui::StyleColorsDark();
+
+		// Setup Platform/Renderer backends
+		ImGui_ImplSDL2_InitForOpenGL(platformParams->m_glWindow, platformParams->m_glContext);
+
+		const string imguiGLSLVersionString = "#version 130";
+		ImGui_ImplOpenGL3_Init(imguiGLSLVersionString.c_str());
 	}
 
 
@@ -210,6 +229,11 @@ namespace opengl
 	{
 		opengl::Context::PlatformParams* const platformParams =
 			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
+
+		// Imgui cleanup
+		ImGui_ImplOpenGL3_Shutdown();
+		ImGui_ImplSDL2_Shutdown();
+		ImGui::DestroyContext();
 		
 		SDL_GL_DeleteContext(platformParams->m_glContext);
 		SDL_DestroyWindow(platformParams->m_glWindow);

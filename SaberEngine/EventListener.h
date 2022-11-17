@@ -10,7 +10,10 @@ namespace en
 	class EventListener
 	{
 	public:
-		virtual void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) = 0;
+		virtual void HandleEvent(en::EventManager::EventInfo const& eventInfo) = 0;
+
+	private:
+		// TODO: Maintain a queue of (thread-safe written) incoming events (by value)
 	};
 
 }

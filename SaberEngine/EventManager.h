@@ -6,9 +6,15 @@
 
 #include "EngineComponent.h"
 
+
+
 namespace en
 {
 	class EventListener;
+}
+namespace re
+{
+	class Context;
 }
 
 
@@ -19,44 +25,42 @@ namespace en
 	public:
 		enum EventType
 		{
+			// Generic events: These will likely have packed data that needs to be interpreted
+			KeyEvent,
+			MouseMotionEvent,
+			MouseButtonEvent,
+
+			// Functionality triggers: Typically a system will be interested in these, not specific button states
+			InputForward,
+			InputBackward,
+			InputLeft,
+			InputRight,
+			InputUp,
+			InputDown,
+			InputSprint,
+
 			// System:
+			InputToggleConsole,
+
 			EngineQuit,
 
-			// Button inputs:
-			InputButtonDown_Forward,
-			InputButtonUp_Forward,
-			InputButtonDown_Backward,
-			InputButtonUp_Backward,
-			InputButtonDown_Left,
-			InputButtonUp_Left,
-			InputButtonDown_Right,
-			InputButtonUp_Right,
-			InputButtonDown_Up,
-			InputButtonUp_Up,
-			InputButtonDown_Down,
-			InputButtonUp_Down,
+			// Mouse functions. TODO: These should be named w.r.t what they actually do:
+			InputMouseLeft,
+			InputMouseRight,
 
-			// Mouse inputs:
-			InputMouseClick_Left,
-			InputMouseRelease_Left,
-			InputMouseClick_Right,
-			InputMouseRelease_Right,
-
-			// EventTick ??
-			// EventUpdate ??
-			// ...
-
-			EventType_Count // RESERVED: A count of the number of EventType's
+			EventType_Count
 		};
 
 		// Matched event string names:
 		const static std::string EventName[EventType_Count];
 
+
+		typedef union { float m_dataF; int32_t m_dataI; uint32_t m_dataUI; bool m_dataB; } EventData;
 		struct EventInfo
 		{
 			EventType m_type;
-			en::EngineComponent* m_generator;
-			std::string m_eventMessage;
+			EventData m_data0;
+			EventData m_data1;
 		};
 
 
@@ -76,11 +80,11 @@ namespace en
 
 		// Member functions:
 		void Subscribe(EventType eventType, EventListener* listener); // Subscribe to an event
-		void Notify(std::shared_ptr<EventInfo const> eventInfo); // Post an event
+		void Notify(EventInfo const& eventInfo); // Post an event
 
 
 	private:
-		std::vector<std::vector<std::shared_ptr<EventInfo const>>> m_eventQueues;
+		std::vector<std::vector<EventInfo>> m_eventQueues;
 		std::vector<std::vector<EventListener*>> m_eventListeners;
 
 

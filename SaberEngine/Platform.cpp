@@ -59,6 +59,7 @@ namespace platform
 
 			// Render manager:
 			platform::RenderManager::Initialize		= &opengl::RenderManager::Initialize;
+			platform::RenderManager::StartOfFrame	= &opengl::RenderManager::StartOfFrame;
 			platform::RenderManager::Render			= &opengl::RenderManager::Render;
 			
 			// MeshPrimitive:

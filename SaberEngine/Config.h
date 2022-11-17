@@ -39,7 +39,7 @@ namespace en
 		template<typename T>
 		void SetValue(const std::string& valueName, T value, SettingType settingType = SettingType::Common);
 
-		// Load the config.cfg from CONFIG_FILENAME
+		// Load the config.cfg file
 		void LoadConfig();
 
 		// Save config.cfg to disk
@@ -73,9 +73,8 @@ namespace en
 		/***********************************/
 		platform::RenderingAPI m_renderingAPI;
 
-
-		const std::string CONFIG_DIR = "..\\config\\";
-		const std::string CONFIG_FILENAME = "config.cfg";
+		const std::string m_configDir = "..\\config\\";
+		const std::string m_configFilename = "config.cfg";
 
 
 		// Helper functions:

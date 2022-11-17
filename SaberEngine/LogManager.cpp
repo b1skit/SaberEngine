@@ -1,12 +1,13 @@
 #include <string>
-using std::to_string;
-
 #include <iostream>
-using std::cout;
+
+#include "imgui.h"
 
 #include "LogManager.h"
 #include "EventManager.h"
 #include "DebugConfiguration.h"
+
+using en::EventManager;
 
 
 namespace en
@@ -17,39 +18,19 @@ namespace en
 		return *instance;
 	}
 
+
+	LogManager::LogManager()
+		: m_consoleState{false, true} // Starting state = "not requested" and "ready"
+	{
+	}
+
+
 	void LogManager::Startup() 
 	{
 		LOG("Log manager starting...");
 
-		#if defined(DEBUG_LOGMANAGER_KEY_INPUT_LOGGING)
-			CoreEngine::GetEventManager()->Subscribe(InputButtonDown_Forward, this);
-			CoreEngine::GetEventManager()->Subscribe(InputButtonUp_Forward, this);
-			CoreEngine::GetEventManager()->Subscribe(InputButtonDown_Backward, this);
-			CoreEngine::GetEventManager()->Subscribe(InputButtonUp_Backward, this);
-			CoreEngine::GetEventManager()->Subscribe(InputButtonDown_Left, this);
-			CoreEngine::GetEventManager()->Subscribe(InputButtonUp_Left, this);
-			CoreEngine::GetEventManager()->Subscribe(InputButtonDown_Right, this);
-			CoreEngine::GetEventManager()->Subscribe(InputButtonUp_Right, this);
-			CoreEngine::GetEventManager()->Subscribe(InputButtonDown_Up, this);
-			CoreEngine::GetEventManager()->Subscribe(InputButtonUp_Up, this);
-			CoreEngine::GetEventManager()->Subscribe(InputButtonDown_Down, this);
-			CoreEngine::GetEventManager()->Subscribe(InputButtonUp_Down, this);
-			LOG("\tKey input logging enabled");
-		#endif
-
-		#if defined(DEBUG_LOGMANAGER_MOUSE_INPUT_LOGGING)
-			CoreEngine::GetEventManager()->Subscribe(InputMouseClick_Left, this);
-			CoreEngine::GetEventManager()->Subscribe(InputMouseRelease_Left, this);
-			CoreEngine::GetEventManager()->Subscribe(InputMouseClick_Right, this);
-			CoreEngine::GetEventManager()->Subscribe(InputMouseRelease_Right, this);
-			CoreEngine::GetEventManager()->Subscribe(EVENT_INPUT_MOUSE_MOVED, this);
-			LOG("\tMouse input logging enabled");
-		#endif
-
-		#if defined(DEBUG_LOGMANAGER_QUIT_LOGGING)
-			CoreEngine::GetEventManager()->Subscribe(EngineQuit, this);
-			LOG("\tQuit event logging enabled");
-		#endif
+		// Event subscriptions:
+		EventManager::Get()->Subscribe(EventManager::InputToggleConsole, this);
 	}
 
 
@@ -61,31 +42,33 @@ namespace en
 
 	void LogManager::Update()
 	{
+		// Users can open the console by pressing a key, but can close it by pressing the same key again, or by clicking
+		// the [x] button to close it. We track the m_consoleRequested status (which toggles each time the users taps
+		// the console key) to determine if we're in an open/closed console state. We track the m_consoleReady state
+		// to catch when a user clicks [x] to close the window
+		if (m_consoleState.m_consoleRequested == true && m_consoleState.m_consoleReady == true)
+		{
+			ImGui::ShowDemoWindow(&m_consoleState.m_consoleReady);
+		}
+		else if (m_consoleState.m_consoleRequested == true && m_consoleState.m_consoleReady == false)
+		{
+			EventManager::EventInfo logClosedEvent;
+			logClosedEvent.m_type = EventManager::EventType::InputToggleConsole;
+			logClosedEvent.m_data0.m_dataB = false;
+
+			EventManager::Get()->Notify(EventManager::EventInfo(logClosedEvent));
+
+			m_consoleState.m_consoleRequested = !m_consoleState.m_consoleRequested;
+			m_consoleState.m_consoleReady = true;
+		}
 	}
 
 
-	void LogManager::HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo)
+	void LogManager::HandleEvent(en::EventManager::EventInfo const& eventInfo)
 	{
-		#if defined(DEBUG_LOGMANAGER_LOG_EVENTS)
-			string logMessage = EventName[eventInfo->m_type] + ": Object #";
-
-			if (eventInfo->m_generator)
-			{
-				logMessage += std::to_string(eventInfo->m_generator->GetUniqueID()) + " (" + eventInfo->m_generator->GetName() + ")\t";
-			}
-			else
-			{
-				logMessage += "anonymous (     ??    )\t";
-			}
-
-			if (eventInfo->m_eventMessage && eventInfo->m_eventMessage->length() > 0)
-			{
-				logMessage += ": " + *eventInfo->m_eventMessage;
-			}
-
-			LOG(logMessage);
-		#endif		
-		
-		return;
+		if (eventInfo.m_type == EventManager::EventType::InputToggleConsole && eventInfo.m_data0.m_dataB == true)
+		{
+			m_consoleState.m_consoleRequested = !m_consoleState.m_consoleRequested;
+		}
 	}
 }

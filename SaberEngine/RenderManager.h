@@ -48,6 +48,8 @@ namespace re
 		// Member functions:
 		void Initialize();
 
+		void StartOfFrame(); // Starts the ImGui frame
+
 		re::Context const& GetContext() { return m_context; }
 
 		std::shared_ptr<gr::TextureTargetSet> GetDefaultTextureTargetSet() { return m_defaultTargetSet; }

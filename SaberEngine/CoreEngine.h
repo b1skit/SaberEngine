@@ -28,7 +28,7 @@ namespace en
 		void Update() override;
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override;
+		void HandleEvent(en::EventManager::EventInfo const& eventInfo) override;
 
 	
 	private:
@@ -37,7 +37,6 @@ namespace en
 
 	private:	
 		const double m_FixedTimeStep; // Regular step size, in ms
-		//const double MAX_TIMESTEP = 0.5;	// Max amount of time before giving up
 
 		bool m_isRunning;
 

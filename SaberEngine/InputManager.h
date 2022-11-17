@@ -1,9 +1,9 @@
 #pragma once
 
 #include "EngineComponent.h"
+#include "EventManager.h"
 #include "EventListener.h"
 #include "KeyConfiguration.h"
-#include "Context.h"
 
 
 namespace en
@@ -20,9 +20,9 @@ namespace en
 		~InputManager() = default;
 
 		// Static member functions:
-		static bool const& GetKeyboardInputState(en::KeyboardButtonState key);
-		static bool const& GetMouseInputState(en::MouseButtonState button);
-		static float GetMouseAxisInput(en::InputAxis axis);
+		static bool const& GetKeyboardInputState(en::KeyboardInputButton key);
+		static bool const& GetMouseInputState(en::MouseInputButton button);
+		static float GetMouseAxisInput(en::MouseInputAxis axis);
 
 		// EngineComponent interface:
 		void Startup() override;
@@ -30,24 +30,27 @@ namespace en
 		void Update() override;
 
 		// EventListener interface:
-		void HandleEvent(std::shared_ptr<en::EventManager::EventInfo const> eventInfo) override;
+		void HandleEvent(en::EventManager::EventInfo const& eventInfo) override;
 
 	private:
 		void LoadInputBindings();
 
-		int	 m_inputKeyboardBindings[en::KeyboardButtonState_Count]; // Maps from KeyboardButtonState enums to SDL_SCANCODE_ values
-		static bool m_keyboardButtonStates[en::KeyboardButtonState_Count]; // Stores the state of keyboard keys
+	private:
+		static bool m_keyboardInputButtonStates[en::KeyboardInputButton_Count]; // Stores the state of keyboard keys
+		static bool	m_mouseButtonStates[en::MouseInputButton_Count]; // Stores the state of mouse buttons
+		static float m_mouseAxisStates[en::MouseInputAxis_Count]; // Mouse axis deltas
 
-		static bool	m_mouseButtonStates[en::MouseButtonState_Count]; // Stores the state of mouse buttons
+		std::unordered_map<uint32_t, en::KeyboardInputButton> m_SDLScancodsToSaberEngineEventEnums;
 
-		static float m_mouseAxisStates[en::InputAxis_Count]; // Mouse axis deltas
 
-		// Cache sensitivity params:
+		// Sensitivity params:
 		static float m_mousePitchSensitivity;
 		static float m_mouseYawSensitivity;
 
 		re::Context const* m_context;
 
+		bool m_consoleTriggered; // Is the console menu currently holding focus?
+		bool m_prevConsoleTriggeredState;
 
 	private:
 		InputManager(InputManager const&) = delete; // Disallow copying of our Singleton

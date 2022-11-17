@@ -9,10 +9,6 @@ namespace en
 	{
 	public:
 		TimeManager();
-
-		TimeManager(TimeManager const&) = delete;
-		TimeManager(TimeManager&&) = delete;
-		void operator=(TimeManager const&) = delete;
 		
 		// EngineComponent interface:
 		void Startup() override;
@@ -21,16 +17,19 @@ namespace en
 
 		void Destroy() { /*Do nothing*/ }
 
-		// Member functions:		
-		static inline unsigned int	DeltaTime()						{ return m_deltaTime; } // ms elapsed since last frame
-		static unsigned int			GetTotalRunningTimeMs()			{ return m_currentTime - m_startTime; }
-		static double				GetTotalRunningTimeSeconds()	{ return (double)GetTotalRunningTimeMs() * 0.001; }
+		// Milliseconds (ms) elapsed since last frame
+		static inline uint64_t	DeltaTimeMs() { return m_deltaTimeMs; }
+
 
 	private:
-		static unsigned int m_startTime;
-		static unsigned int m_prevTime;
-		static unsigned int m_currentTime;
-		static unsigned int	m_deltaTime;
+		static uint64_t m_prevTimeMs;
+		static uint64_t m_currentTimeMs;
+		static uint64_t	m_deltaTimeMs;
+
+	private:
+		TimeManager(TimeManager const&) = delete;
+		TimeManager(TimeManager&&) = delete;
+		void operator=(TimeManager const&) = delete;
 	};
 
 	
