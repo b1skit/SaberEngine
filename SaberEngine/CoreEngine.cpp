@@ -139,6 +139,8 @@ namespace en
 	
 	void CoreEngine::Update()
 	{
+		HandleEvents();
+
 		// Generate a quit event if the quit button is pressed:
 		if (InputManager::Get()->GetKeyboardInputState(en::InputButton_Quit) == true)
 		{
@@ -147,22 +149,23 @@ namespace en
 	}
 
 
-	void CoreEngine::HandleEvent(en::EventManager::EventInfo const& eventInfo)
+	void CoreEngine::HandleEvents()
 	{
-		switch (eventInfo.m_type)
+		while (HasEvents())
 		{
-		case en::EventManager::EngineQuit:
-		{
-			Stop();
-		}			
-			break;
+			en::EventManager::EventInfo eventInfo = GetEvent();
 
-		default:
-			LOG_ERROR("ERROR: Default event generated in CoreEngine!");
+			switch (eventInfo.m_type)
+			{
+			case en::EventManager::EngineQuit:
+			{
+				Stop();
+			}
 			break;
+			default:
+				break;
+			}
 		}
-
-		return;
 	}
 
 

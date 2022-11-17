@@ -7,7 +7,7 @@
 
 namespace en
 {
-	class SceneManager : public virtual en::EngineComponent, public virtual en::EventListener
+	class SceneManager : public virtual en::EngineComponent
 	{
 	public: // Singleton functionality:		
 		static SceneManager* Get();
@@ -23,9 +23,6 @@ namespace en
 		void Startup() override;
 		void Shutdown() override;
 		void Update() override;
-
-		// EventListener interface:
-		void HandleEvent(en::EventManager::EventInfo const& eventInfo) override;
 
 	private:
 		std::shared_ptr<fr::SceneData> m_sceneData = nullptr;

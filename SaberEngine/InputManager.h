@@ -30,7 +30,7 @@ namespace en
 		void Update() override;
 
 		// EventListener interface:
-		void HandleEvent(en::EventManager::EventInfo const& eventInfo) override;
+		void HandleEvents() override;
 
 	private:
 		void LoadInputBindings();

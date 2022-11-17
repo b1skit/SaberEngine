@@ -42,6 +42,8 @@ namespace en
 
 	void LogManager::Update()
 	{
+		HandleEvents();
+
 		// Users can open the console by pressing a key, but can close it by pressing the same key again, or by clicking
 		// the [x] button to close it. We track the m_consoleRequested status (which toggles each time the users taps
 		// the console key) to determine if we're in an open/closed console state. We track the m_consoleReady state
@@ -64,11 +66,16 @@ namespace en
 	}
 
 
-	void LogManager::HandleEvent(en::EventManager::EventInfo const& eventInfo)
+	void LogManager::HandleEvents()
 	{
-		if (eventInfo.m_type == EventManager::EventType::InputToggleConsole && eventInfo.m_data0.m_dataB == true)
+		while (HasEvents())
 		{
-			m_consoleState.m_consoleRequested = !m_consoleState.m_consoleRequested;
-		}
+			en::EventManager::EventInfo eventInfo = GetEvent();
+
+			if (eventInfo.m_type == EventManager::EventType::InputToggleConsole && eventInfo.m_data0.m_dataB == true)
+			{
+				m_consoleState.m_consoleRequested = !m_consoleState.m_consoleRequested;
+			}
+		}	
 	}
 }

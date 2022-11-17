@@ -33,7 +33,7 @@ namespace fr
 		void Update() override;
 
 		// EventListener:
-		void HandleEvent(en::EventManager::EventInfo const& eventInfo) override;
+		void HandleEvents() override;
 
 		// Getters/Setters:
 		inline std::shared_ptr<gr::Camera> GetCamera() { return m_playerCam; }

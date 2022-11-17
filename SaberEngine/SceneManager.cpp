@@ -75,11 +75,6 @@ namespace en
 			m_sceneData->GetUpdateables().at(i)->Update();
 		}
 	}
-
-
-	void SceneManager::HandleEvent(EventManager::EventInfo const& eventInfo)
-	{
-	}
 }
 
 

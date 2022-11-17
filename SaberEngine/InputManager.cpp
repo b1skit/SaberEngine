@@ -104,6 +104,8 @@ namespace en
 		m_mouseButtonStates[en::InputMouse_Left] = false;
 		m_mouseButtonStates[en::InputMouse_Right] = false;
 
+		HandleEvents();
+		
 		// Handle the console toggle key: Enables/disables locking the mouse to the window and hiding the pointer
 		if (m_consoleTriggered != m_prevConsoleTriggeredState)
 		{
@@ -113,164 +115,169 @@ namespace en
 	}
 
 
-	void InputManager::HandleEvent(EventManager::EventInfo const& eventInfo)
+	void InputManager::HandleEvents()
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		const bool imguiWantsToCaptureMouse = io.WantCaptureMouse;
 		const bool imguiWantsToCaptureKeyboard = io.WantCaptureKeyboard;
-		
-		// Transform key/mouse events into SaberEngine functionality events (eg. "w" -> "move forward")
-		// NOTE: We may receive more than 1 of each type of event between calls to Update() from input with high
-		// polling rates (e.g. mouse motion)
 
-		EventManager::EventInfo transformedEvent;
-
-		bool eventIsBroadcastable = true;
-		bool imguiCapturedEvent = false;
-
-		switch (eventInfo.m_type)
+		while (HasEvents())
 		{
-		case EventManager::KeyEvent:
-		{
-			const uint32_t sdlScancode = eventInfo.m_data0.m_dataUI;
+			en::EventManager::EventInfo eventInfo = GetEvent();
 
-			auto result = m_SDLScancodsToSaberEngineEventEnums.find(sdlScancode);
-			if (result != m_SDLScancodsToSaberEngineEventEnums.end())
+			// Transform key/mouse events into SaberEngine functionality events (eg. "w" -> "move forward")
+			// NOTE: We may receive more than 1 of each type of event between calls to Update() from input with high
+			// polling rates (e.g. mouse motion)
+
+			EventManager::EventInfo transformedEvent;
+
+			bool eventIsBroadcastable = true;
+			bool imguiCapturedEvent = false;
+
+			switch (eventInfo.m_type)
 			{
-				en::KeyboardInputButton key = result->second;
-				const bool keystate = eventInfo.m_data1.m_dataB;
+			case EventManager::KeyEvent:
+			{
+				const uint32_t sdlScancode = eventInfo.m_data0.m_dataUI;
 
-				m_keyboardInputButtonStates[key] = keystate;
+				auto result = m_SDLScancodsToSaberEngineEventEnums.find(sdlScancode);
+				if (result != m_SDLScancodsToSaberEngineEventEnums.end())
+				{
+					en::KeyboardInputButton key = result->second;
+					const bool keystate = eventInfo.m_data1.m_dataB;
 
-				transformedEvent.m_data0.m_dataB = keystate;
+					m_keyboardInputButtonStates[key] = keystate;
 
-				switch (key)
-				{
-				case KeyboardInputButton::InputButton_Forward:
-				{
-					transformedEvent.m_type = EventManager::EventType::InputForward;
-				}
-				break;
-				case KeyboardInputButton::InputButton_Backward:
-				{
-					transformedEvent.m_type = EventManager::EventType::InputBackward;
-				}
-				break;
-				case KeyboardInputButton::InputButton_Left:
-				{
-					transformedEvent.m_type = EventManager::EventType::InputLeft;
-				}
-				break;
-				case KeyboardInputButton::InputButton_Right:
-				{
-					transformedEvent.m_type = EventManager::EventType::InputRight;
-				}
-				break;
-				case KeyboardInputButton::InputButton_Up:
-				{
-					transformedEvent.m_type = EventManager::EventType::InputUp;
-				}
-				break;
-				case KeyboardInputButton::InputButton_Down:
-				{
-					transformedEvent.m_type = EventManager::EventType::InputDown;
-				}
-				break;
-				case KeyboardInputButton::InputButton_Sprint:
-				{
-					transformedEvent.m_type = EventManager::EventType::InputSprint;
-				}
-				break;
-				case KeyboardInputButton::InputButton_Console:
-				{
-					// The InputManager must broadcast the transformed console toggle event, as well as react to it
-					transformedEvent.m_type = EventManager::EventType::InputToggleConsole;
+					transformedEvent.m_data0.m_dataB = keystate;
 
-					// Toggle the mouse locking for the console display when the button is pressed down only
-					if (keystate == true)
+					switch (key)
 					{
-						m_consoleTriggered = !m_consoleTriggered;
+					case KeyboardInputButton::InputButton_Forward:
+					{
+						transformedEvent.m_type = EventManager::EventType::InputForward;
+					}
+					break;
+					case KeyboardInputButton::InputButton_Backward:
+					{
+						transformedEvent.m_type = EventManager::EventType::InputBackward;
+					}
+					break;
+					case KeyboardInputButton::InputButton_Left:
+					{
+						transformedEvent.m_type = EventManager::EventType::InputLeft;
+					}
+					break;
+					case KeyboardInputButton::InputButton_Right:
+					{
+						transformedEvent.m_type = EventManager::EventType::InputRight;
+					}
+					break;
+					case KeyboardInputButton::InputButton_Up:
+					{
+						transformedEvent.m_type = EventManager::EventType::InputUp;
+					}
+					break;
+					case KeyboardInputButton::InputButton_Down:
+					{
+						transformedEvent.m_type = EventManager::EventType::InputDown;
+					}
+					break;
+					case KeyboardInputButton::InputButton_Sprint:
+					{
+						transformedEvent.m_type = EventManager::EventType::InputSprint;
+					}
+					break;
+					case KeyboardInputButton::InputButton_Console:
+					{
+						// The InputManager must broadcast the transformed console toggle event, as well as react to it
+						transformedEvent.m_type = EventManager::EventType::InputToggleConsole;
+
+						// Toggle the mouse locking for the console display when the button is pressed down only
+						if (keystate == true)
+						{
+							m_consoleTriggered = !m_consoleTriggered;
+						}
+					}
+					break;
+					case KeyboardInputButton::InputButton_Quit:
+					{
+						transformedEvent.m_type = EventManager::EventType::EngineQuit;
+					}
+					break;
+					default:
+						SEAssertF("Invalid scancode");
+						break;
+					}
+				}
+				else
+				{
+					eventIsBroadcastable = false;
+				}
+			} // End KeyEvent
+			break;
+			case EventManager::MouseMotionEvent:
+			{
+				// Unpack the mouse data:
+				m_mouseAxisStates[en::Input_MouseX] += static_cast<float>(eventInfo.m_data0.m_dataI) * m_mousePitchSensitivity;
+				m_mouseAxisStates[en::Input_MouseY] += static_cast<float>(eventInfo.m_data1.m_dataI) * m_mouseYawSensitivity;
+				eventIsBroadcastable = false;
+			}
+			break;
+			case EventManager::MouseButtonEvent:
+			{
+				const bool buttonState = eventInfo.m_data1.m_dataB;
+				switch (eventInfo.m_data0.m_dataUI)
+				{
+				case 0: // Left
+				{
+					io.AddMouseButtonEvent(ImGuiMouseButton_Left, buttonState);
+					if (imguiWantsToCaptureMouse)
+					{
+						imguiCapturedEvent = true;
+					}
+					else
+					{
+						m_mouseButtonStates[en::InputMouse_Left] = buttonState;
+						transformedEvent.m_type = EventManager::EventType::InputMouseLeft;
+						transformedEvent.m_data0.m_dataB = buttonState;
 					}
 				}
 				break;
-				case KeyboardInputButton::InputButton_Quit:
+				case 1: // Middle
 				{
-					transformedEvent.m_type = EventManager::EventType::EngineQuit;
+					SEAssertF("TODO: Support middle mouse");
+				}
+				break;
+				case 2: // Right
+				{
+					io.AddMouseButtonEvent(ImGuiMouseButton_Right, buttonState);
+					if (imguiWantsToCaptureMouse)
+					{
+						imguiCapturedEvent = true;
+					}
+					else
+					{
+						m_mouseButtonStates[en::InputMouse_Right] = buttonState;
+						transformedEvent.m_type = EventManager::EventType::InputMouseRight;
+						transformedEvent.m_data0.m_dataB = buttonState;
+					}
 				}
 				break;
 				default:
-					SEAssertF("Invalid scancode");
-					break;
-				}				
-			}
-			else
-			{
-				eventIsBroadcastable = false;
-			}
-		} // End KeyEvent
-		break;
-		case EventManager::MouseMotionEvent:
-		{
-			// Unpack the mouse data:
-			m_mouseAxisStates[en::Input_MouseX] += static_cast<float>(eventInfo.m_data0.m_dataI) * m_mousePitchSensitivity;
-			m_mouseAxisStates[en::Input_MouseY] += static_cast<float>(eventInfo.m_data1.m_dataI) * m_mouseYawSensitivity;
-			eventIsBroadcastable = false;
-		}
-		break;
-		case EventManager::MouseButtonEvent:
-		{
-			const bool buttonState = eventInfo.m_data1.m_dataB;
-			switch (eventInfo.m_data0.m_dataUI)
-			{
-			case 0: // Left
-			{
-				io.AddMouseButtonEvent(ImGuiMouseButton_Left, buttonState);
-				if (imguiWantsToCaptureMouse)
-				{
-					imguiCapturedEvent = true;
-				}
-				else
-				{
-					m_mouseButtonStates[en::InputMouse_Left] = buttonState;
-					transformedEvent.m_type = EventManager::EventType::InputMouseLeft;
-					transformedEvent.m_data0.m_dataB = buttonState;
-				}
-			}
-			break;
-			case 1: // Middle
-			{
-				SEAssertF("TODO: Support middle mouse");
-			}
-			break;
-			case 2: // Right
-			{
-				io.AddMouseButtonEvent(ImGuiMouseButton_Right, buttonState);
-				if (imguiWantsToCaptureMouse)
-				{
-					imguiCapturedEvent = true;
-				}
-				else
-				{
-					m_mouseButtonStates[en::InputMouse_Right] = buttonState;
-					transformedEvent.m_type = EventManager::EventType::InputMouseRight;
-					transformedEvent.m_data0.m_dataB = buttonState;
+					SEAssertF("Invalid mouse button");
 				}
 			}
 			break;
 			default:
-				SEAssertF("Invalid mouse button");
+				SEAssertF("Invalid event type");
+				break;
 			}
-		}
-		break;
-		default:
-			SEAssertF("Invalid event type");
-			break;
-		}
 
-		if (eventIsBroadcastable && !imguiCapturedEvent)
-		{
-			EventManager::Get()->Notify(transformedEvent);
-		}
+			if (eventIsBroadcastable && !imguiCapturedEvent)
+			{
+				EventManager::Get()->Notify(transformedEvent);
+			}
+		}		
 	}
 
 

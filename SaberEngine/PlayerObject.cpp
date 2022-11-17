@@ -39,27 +39,34 @@ namespace fr
 	}
 
 
-	void PlayerObject::HandleEvent(en::EventManager::EventInfo const& eventInfo)
+	void PlayerObject::HandleEvents()
 	{
-		switch (eventInfo.m_type)
+		while (HasEvents())
 		{
-		case en::EventManager::EventType::InputToggleConsole:
-		{
-			// Only enable/disable input processing when the console button is toggled
-			if (eventInfo.m_data0.m_dataB)
+			en::EventManager::EventInfo eventInfo = GetEvent();
+
+			switch (eventInfo.m_type)
 			{
-				m_processInput = !m_processInput;
-			}			
-		}
-		break;
-		default:
+			case en::EventManager::EventType::InputToggleConsole:
+			{
+				// Only enable/disable input processing when the console button is toggled
+				if (eventInfo.m_data0.m_dataB)
+				{
+					m_processInput = !m_processInput;
+				}
+			}
 			break;
+			default:
+				break;
+			}
 		}
 	}
 
 
 	void PlayerObject::Update()
 	{
+		HandleEvents();
+
 		if (!m_processInput)
 		{
 			return;

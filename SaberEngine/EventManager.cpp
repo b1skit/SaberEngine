@@ -144,7 +144,8 @@ namespace en
 				size_t numListeners = m_eventListeners[currentEventType].size();
 				for (size_t currentListener = 0; currentListener < numListeners; currentListener++)
 				{
-					m_eventListeners[currentEventType][currentListener]->HandleEvent(m_eventQueues[currentEventType][currentEvent]);
+					m_eventListeners[currentEventType][currentListener]->RegisterEvent(
+						m_eventQueues[currentEventType][currentEvent]);
 				}
 			}
 
