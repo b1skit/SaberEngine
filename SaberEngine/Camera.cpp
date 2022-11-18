@@ -69,7 +69,7 @@ namespace gr
 	{
 		if (m_cameraConfig.m_projectionType == CameraConfig::ProjectionType::Orthographic)
 		{
-			m_cameraConfig.m_fieldOfView = 0.0f;
+			m_cameraConfig.m_yFOV = 0.0f;
 
 			m_projection = glm::ortho
 			(
@@ -90,7 +90,7 @@ namespace gr
 
 			m_projection = glm::perspective
 			(
-				glm::radians(m_cameraConfig.m_fieldOfView), 
+				m_cameraConfig.m_yFOV,
 				m_cameraConfig.m_aspectRatio, 
 				m_cameraConfig.m_near, 
 				m_cameraConfig.m_far

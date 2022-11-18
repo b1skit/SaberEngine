@@ -511,10 +511,10 @@ namespace
 
 				gr::Camera::CameraConfig camConfig;
 				camConfig.m_aspectRatio = Config::Get()->GetWindowAspectRatio();
-				camConfig.m_fieldOfView = Config::Get()->GetValue<float>("defaultFieldOfView");
-				camConfig.m_near = Config::Get()->GetValue<float>("defaultNear");
-				camConfig.m_far = Config::Get()->GetValue<float>("defaultFar");
-				camConfig.m_exposure = Config::Get()->GetValue<float>("defaultExposure");
+				camConfig.m_yFOV		= Config::Get()->GetValue<float>("defaultyFOV");
+				camConfig.m_near		= Config::Get()->GetValue<float>("defaultNear");
+				camConfig.m_far			= Config::Get()->GetValue<float>("defaultFar");
+				camConfig.m_exposure	= Config::Get()->GetValue<float>("defaultExposure");
 
 				scene.AddCamera(make_shared<Camera>("Default camera", camConfig, nullptr));
 			}
@@ -534,7 +534,7 @@ namespace
 			Camera::CameraConfig::ProjectionType::Orthographic : Camera::CameraConfig::ProjectionType::Perspective;
 		if (camConfig.m_projectionType == Camera::CameraConfig::ProjectionType::Orthographic)
 		{
-			camConfig.m_fieldOfView = 0;
+			camConfig.m_yFOV		= 0;
 			camConfig.m_near		= camera->data.orthographic.znear;
 			camConfig.m_far			= camera->data.orthographic.zfar;
 			camConfig.m_orthoLeft	= -camera->data.orthographic.xmag / 2.0f;
@@ -544,11 +544,7 @@ namespace
 		}
 		else
 		{
-			LOG_WARNING("Loading a perspective camera, but this implementation is not yet complete");
-
-			// TODO: Store this in Radians, and convert to vertical FOV so we can use camera->data.perspective.yfov
-			camConfig.m_fieldOfView = 90.0f;
-
+			camConfig.m_yFOV		= camera->data.perspective.yfov;
 			camConfig.m_near		= camera->data.perspective.znear;
 			camConfig.m_far			= camera->data.perspective.zfar;
 			camConfig.m_aspectRatio = camera->data.perspective.has_aspect_ratio ?

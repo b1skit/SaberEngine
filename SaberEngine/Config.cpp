@@ -67,10 +67,10 @@ namespace en
 			{"vsync",								{true, SettingType::Common}},
 
 			// Camera defaults:
-			{"defaultFieldOfView",					{60.0f, SettingType::Common}},
-			{"defaultNear",							{1.0f,	SettingType::Common}},
-			{"defaultFar",							{100.0f,SettingType::Common}},
-			{"defaultExposure",						{1.0f,	SettingType::Common}},
+			{"defaultyFOV",							{1.570796f, SettingType::Common}},
+			{"defaultNear",							{1.0f,		SettingType::Common}},
+			{"defaultFar",							{100.0f,	SettingType::Common}},
+			{"defaultExposure",						{1.0f,		SettingType::Common}},
 
 			// Input parameters:
 			{"mousePitchSensitivity",				{0.00005f,	SettingType::Common}},

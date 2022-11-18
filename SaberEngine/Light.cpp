@@ -84,7 +84,7 @@ namespace gr
 			if (hasShadow)
 			{
 				gr::Camera::CameraConfig shadowCamConfig;
-				shadowCamConfig.m_fieldOfView		= 90.0f;
+				shadowCamConfig.m_yFOV				= static_cast<float>(std::numbers::pi) / 2.0f;
 				shadowCamConfig.m_near				= 0.1f;
 				shadowCamConfig.m_far				= radius;
 				shadowCamConfig.m_aspectRatio		= 1.0f;
