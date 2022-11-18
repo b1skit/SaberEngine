@@ -21,10 +21,8 @@ namespace en
 		};
 
 
-	public: // Singleton functionality:		
-		static Config* Get();
-	private:
-		static std::unique_ptr<Config> m_instance;
+	public: 
+		static Config* Get(); // Singleton functionality
 
 
 	public:

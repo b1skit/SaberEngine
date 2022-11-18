@@ -9,11 +9,10 @@ namespace en
 {
 	class SceneManager : public virtual en::EngineComponent
 	{
-	public: // Singleton functionality:		
-		static SceneManager* Get();
-		static fr::SceneData* GetSceneData() { return m_instance->m_sceneData.get(); }
-	private:
-		static std::unique_ptr<SceneManager> m_instance;
+	public:
+		static SceneManager* Get(); // Singleton functionality
+		static fr::SceneData* GetSceneData() { return SceneManager::Get()->m_sceneData.get(); }
+
 
 	public:
 		SceneManager();

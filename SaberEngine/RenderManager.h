@@ -31,10 +31,8 @@ namespace re
 {
 	class RenderManager : public virtual en::EngineComponent
 	{
-	public: // Singleton functionality:		
-		static RenderManager* Get();
-	private:
-		static std::unique_ptr<RenderManager> m_instance;
+	public:
+		static RenderManager* Get(); // Singleton functionality
 
 	public:
 		RenderManager();

@@ -43,14 +43,10 @@ namespace
 
 namespace re
 {
-	std::unique_ptr<RenderManager> RenderManager::m_instance = nullptr;
 	RenderManager* RenderManager::Get()
 	{
-		if (m_instance == nullptr)
-		{
-			m_instance = std::make_unique<RenderManager>();
-		}
-		return m_instance.get();
+		static std::unique_ptr<re::RenderManager> instance = std::make_unique<re::RenderManager>();
+		return instance.get();
 	}
 
 

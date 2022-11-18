@@ -12,14 +12,10 @@ using std::vector;
 
 namespace en
 {
-	std::unique_ptr<EventManager> EventManager::m_instance = nullptr;
 	EventManager* EventManager::Get()
 	{
-		if (m_instance == nullptr)
-		{
-			m_instance = std::make_unique<EventManager>();
-		}
-		return m_instance.get();
+		static std::unique_ptr<en::EventManager> instance = std::make_unique<en::EventManager>();
+		return instance.get();
 	}
 
 

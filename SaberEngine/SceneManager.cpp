@@ -20,14 +20,10 @@ using std::string;
 
 namespace en
 {
-	std::unique_ptr<SceneManager> SceneManager::m_instance = nullptr;
 	SceneManager* SceneManager::Get()
 	{
-		if (m_instance == nullptr)
-		{
-			m_instance = std::make_unique<SceneManager>();
-		}
-		return m_instance.get();
+		static std::unique_ptr<en::SceneManager> instance = std::make_unique<en::SceneManager>();
+		return instance.get();
 	}
 
 

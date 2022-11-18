@@ -64,10 +64,8 @@ namespace en
 		};
 
 
-	public: // Singleton functionality:		
-		static EventManager* Get();
-	private:
-		static std::unique_ptr<EventManager> m_instance;
+	public:
+		static EventManager* Get(); // Singleton functionality
 
 	public:
 		EventManager();

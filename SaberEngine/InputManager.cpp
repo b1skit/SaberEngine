@@ -26,14 +26,10 @@ namespace en
 	float InputManager::m_mousePitchSensitivity	= -0.00005f;
 	float InputManager::m_mouseYawSensitivity	= -0.00005f;
 
-	std::unique_ptr<InputManager> InputManager::m_instance = nullptr;
 	InputManager* InputManager::Get()
 	{
-		if (m_instance == nullptr)
-		{
-			m_instance = std::make_unique<InputManager>();
-		}
-		return m_instance.get();
+		static std::unique_ptr<en::InputManager> instance = std::make_unique<en::InputManager>();
+		return instance.get();
 	}
 
 

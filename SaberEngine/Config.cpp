@@ -41,14 +41,10 @@ namespace
 
 namespace en
 {
-	std::unique_ptr<Config> Config::m_instance = nullptr;
 	Config* Config::Get()
 	{
-		if (m_instance == nullptr)
-		{
-			m_instance = std::make_unique<Config>();
-		}
-		return m_instance.get();
+		static std::unique_ptr<en::Config> instance = std::make_unique<en::Config>();
+		return instance.get();
 	}
 
 

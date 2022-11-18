@@ -10,10 +10,9 @@ namespace en
 {
 	class InputManager : public virtual en::EngineComponent, public virtual en::EventListener
 	{
-	public: // Singleton functionality:		
-		static InputManager* Get();
-	private:
-		static std::unique_ptr<InputManager> m_instance;
+	public:
+		static InputManager* Get(); // Singleton functionality
+
 
 	public:
 		InputManager();
