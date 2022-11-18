@@ -84,7 +84,7 @@ namespace fr
 		// Map mouse pixel deltas to pitch/yaw rotations in radians. This ensures that we have consistent mouse 
 		// movement regardless of the resolution/aspect ratio/etc
 		const float mousePxDeltaX = InputManager::GetMouseAxisInput(en::Input_MouseX); // RENAME
-		const float mousePmousePxDeltaXY = InputManager::GetMouseAxisInput(en::Input_MouseY); // RENAME yPixelDelta
+		const float mousePxDeltaY = InputManager::GetMouseAxisInput(en::Input_MouseY); // RENAME yPixelDelta
 		
 		const float xRes = static_cast<float>(Config::Get()->GetValue<int>("windowXRes"));
 		const float yRes = static_cast<float>(Config::Get()->GetValue<int>("windowYRes"));
@@ -95,7 +95,7 @@ namespace fr
 		constexpr float twoPi = 2.0f * static_cast<float>(std::numbers::pi);
 
 		const float fullRotationResolutionY = (yRes * twoPi) / yFOV; // No. of pixels in a 360 degree (2pi) arc about X
-		const float yRotationRadians = (mousePmousePxDeltaXY / fullRotationResolutionY) * twoPi;
+		const float yRotationRadians = (mousePxDeltaY / fullRotationResolutionY) * twoPi;
 
 		const float fullRotationResolutionX = (xRes * twoPi) / xFOV; // No. of pixels in a 360 degree (2pi) arc about Y
 		const float xRotationRadians = (mousePxDeltaX / fullRotationResolutionX) * twoPi;
