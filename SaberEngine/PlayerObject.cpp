@@ -1,3 +1,5 @@
+#include <numbers>
+
 #include "PlayerObject.h"
 #include "InputManager.h"
 #include <glm/gtc/constants.hpp>
@@ -79,16 +81,28 @@ namespace fr
 			return;
 		}
 
-		// Handle first person view orientation: (pitch + yaw)
-		vec3 yaw(0.0f, 0.0f, 0.0f);
-		vec3 pitch(0.0f, 0.0f, 0.0f);
+		// Map mouse pixel deltas to pitch/yaw rotations in radians. This ensures that we have consistent mouse 
+		// movement regardless of the resolution/aspect ratio/etc
+		const float mousePxDeltaX = InputManager::GetMouseAxisInput(en::Input_MouseX); // RENAME
+		const float mousePmousePxDeltaXY = InputManager::GetMouseAxisInput(en::Input_MouseY); // RENAME yPixelDelta
+		
+		const float xRes = static_cast<float>(Config::Get()->GetValue<int>("windowXRes"));
+		const float yRes = static_cast<float>(Config::Get()->GetValue<int>("windowYRes"));
+		
+		const float yFOV = m_playerCam->FieldOfViewYRad();
+		const float xFOV = (xRes * yFOV) / yRes;
 
-		// Compute camera pitch/yaw rotations using the raw mouse pixel deltas.
-		// TODO: We might get better/more consistent results if we map our mouse pixel deltas to 2pi radians, with
-		// respect to the resolution, field of view, and aspect ratio.
-		yaw.y = InputManager::GetMouseAxisInput(en::Input_MouseX);
-		pitch.x = InputManager::GetMouseAxisInput(en::Input_MouseY);
+		constexpr float twoPi = 2.0f * static_cast<float>(std::numbers::pi);
 
+		const float fullRotationResolutionY = (yRes * twoPi) / yFOV; // No. of pixels in a 360 degree (2pi) arc about X
+		const float yRotationRadians = (mousePmousePxDeltaXY / fullRotationResolutionY) * twoPi;
+
+		const float fullRotationResolutionX = (xRes * twoPi) / xFOV; // No. of pixels in a 360 degree (2pi) arc about Y
+		const float xRotationRadians = (mousePxDeltaX / fullRotationResolutionX) * twoPi;
+
+		// Apply the first person view orientation: (pitch + yaw)
+		const vec3 yaw(0.0f, xRotationRadians, 0.0f);
+		const vec3 pitch(yRotationRadians, 0.0f, 0.0f);
 		m_transform.RotateLocal(yaw);
 		m_playerCam->GetTransform()->RotateLocal(pitch);
 

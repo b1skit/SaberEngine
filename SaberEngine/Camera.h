@@ -75,8 +75,9 @@ namespace gr
 
 		void Update(const double stepTimeMs) override;
 
-		inline float const FieldOfViewRad() const { return m_cameraConfig.m_yFOV; }
+		inline float const FieldOfViewYRad() const { return m_cameraConfig.m_yFOV; }
 		inline glm::vec2 NearFar() const { return glm::vec2(m_cameraConfig.m_near, m_cameraConfig.m_far); }
+		inline float GetAspectRatio() const { return m_cameraConfig.m_aspectRatio; }
 
 		inline glm::mat4 GetViewMatrix() { return glm::inverse(m_transform.GetGlobalMatrix(Transform::TRS)); }
 		inline glm::mat4 GetInverseViewMatrix() { return m_transform.GetGlobalMatrix(Transform::TRS); }
