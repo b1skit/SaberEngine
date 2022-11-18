@@ -40,7 +40,7 @@ namespace en
 	}
 
 
-	void LogManager::Update()
+	void LogManager::Update(const double stepTimeMs)
 	{
 		HandleEvents();
 

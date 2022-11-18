@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "LogManager.h"
-#include "TimeManager.h"
 #include "EngineComponent.h"
 
 
@@ -25,7 +24,7 @@ namespace en
 		void Shutdown();
 
 		// NamedObject interface:
-		void Update() override;
+		void Update(const double stepTimeMs) override;
 
 		// EventListener interface:
 		void HandleEvents() override;
@@ -35,14 +34,14 @@ namespace en
 		bool ProcessCommandLineArgs(int argc, char** argv);
 
 
-	private:	
-		const double m_FixedTimeStep; // Regular step size, in ms
+	private:
+		// How much time we want to spend updating the game state (in ms) before we render a new frame
+		const double m_fixedTimeStep;
 
 		bool m_isRunning;
 
 		// Non-singleton engine components:
 		std::shared_ptr<en::LogManager> const m_logManager;
-		std::shared_ptr<en::TimeManager> const m_timeManager;
 
 
 	private: 

@@ -67,12 +67,12 @@ namespace en
 	}
 
 
-	void SceneManager::Update()
+	void SceneManager::Update(const double stepTimeMs)
 	{
 		// Tick Updateables:
 		for (int i = 0; i < (int)m_sceneData->GetUpdateables().size(); i++)
 		{
-			m_sceneData->GetUpdateables().at(i)->Update();
+			m_sceneData->GetUpdateables().at(i)->Update(stepTimeMs);
 		}
 	}
 }

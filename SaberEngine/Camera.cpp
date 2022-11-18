@@ -33,7 +33,7 @@ namespace gr
 	}
 
 
-	void Camera::Update()
+	void Camera::Update(const double stepTimeMs)
 	{
 		UpdateCameraParamBlockData();
 	}

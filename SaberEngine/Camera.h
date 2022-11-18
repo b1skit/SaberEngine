@@ -73,9 +73,9 @@ namespace gr
 		Camera(Camera&&) = default;
 		Camera& operator=(Camera const&) = default;
 
-		void Update() override;
+		void Update(const double stepTimeMs) override;
 
-		inline float const FieldOfView() const { return m_cameraConfig.m_fieldOfView; }
+		inline float const FieldOfView() const { return m_cameraConfig.m_fieldOfView; } // Degrees
 		inline glm::vec2 NearFar() const { return glm::vec2(m_cameraConfig.m_near, m_cameraConfig.m_far); }
 
 		inline glm::mat4 GetViewMatrix() { return glm::inverse(m_transform.GetGlobalMatrix(Transform::TRS)); }

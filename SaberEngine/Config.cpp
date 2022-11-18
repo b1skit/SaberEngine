@@ -16,8 +16,8 @@ using std::unordered_map;
 using std::any;
 
 
-// Default true/false strings (Must be lowercase)
-#define TRUE_STRING		"true"		
+// Default true/false strings. We convert config values to lowercase and compare against these
+#define TRUE_STRING		"true"
 #define FALSE_STRING	"false"
 
 // Command strings: End with a space to maintain formatting

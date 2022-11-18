@@ -76,7 +76,7 @@ namespace en
 		// EngineComponent interface:
 		void Startup() override;
 		void Shutdown() override;
-		void Update() override;
+		void Update(const double stepTimeMs) override;
 
 		// Member functions:
 		void Subscribe(EventType eventType, EventListener* listener); // Subscribe to an event

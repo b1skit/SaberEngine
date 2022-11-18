@@ -8,12 +8,14 @@
 #include "SceneManager.h"
 #include "EventManager.h"
 #include "InputManager.h"
+#include "PerformanceTimer.h"
 
 using en::Config;
 using en::SceneManager;
 using en::EventManager;
 using en::InputManager;
 using re::RenderManager;
+using util::PerformanceTimer;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
@@ -24,11 +26,10 @@ namespace en
 	CoreEngine*	CoreEngine::m_coreEngine = nullptr;
 
 
-	CoreEngine::CoreEngine(int argc, char** argv) :
-		m_FixedTimeStep(1000.0 / 120.0),
-		m_isRunning(false),
-		m_logManager(make_shared<en::LogManager>()),
-		m_timeManager(make_shared<en::TimeManager>())
+	CoreEngine::CoreEngine(int argc, char** argv)
+		: m_fixedTimeStep(1000.0 / 120.0)
+		, m_isRunning(false)
+		, m_logManager(make_shared<en::LogManager>())
 	{
 		m_coreEngine = this;
 
@@ -49,11 +50,9 @@ namespace en
 
 		EventManager::Get()->Subscribe(en::EventManager::EngineQuit, this);
 
-		m_timeManager->Startup();
-
 		RenderManager::Get()->Startup();	// Initializes SDL events and video subsystems
 
-		// For some reason, this needs to be called after the SDL video subsystem (!) has been initialized:
+		// For whatever reason, this needs to be called after the SDL video subsystem (!) has been initialized:
 		InputManager::Get()->Startup();
 
 		// Must wait to start scene manager and load a scene until the renderer is called, since we need to initialize
@@ -75,40 +74,47 @@ namespace en
 		LOG("CoreEngine beginning main game loop!");
 
 		// Process any events that might have occurred during startup:
-		EventManager::Get()->Update();
+		EventManager::Get()->Update(0.0);
 
 		// Initialize game loop timing:
-		m_timeManager->Update();
-		double elapsed = (double)m_FixedTimeStep; // Ensure we pump Updates once before the 1st render
+		double elapsed = (double)m_fixedTimeStep; // Ensure we pump Updates once before the 1st render
 
-		m_logManager->Update();
+		PerformanceTimer outerLoopTimer;
+		PerformanceTimer innerLoopTimer;
+		double lastOuterFrameTime = 0.0;
+		double lastInnerFrameTime = 0.0;
 
 		while (m_isRunning)
 		{
+			outerLoopTimer.Start();
+
 			// Initializes ImGui for a new frame, so we can call ImGui functions throughout the loop.
 			// NOTE: ImGui is NOT thread safe TODO: Figure out a safe way to handle this. Perhaps use a Command pattern?
 			RenderManager::Get()->StartOfFrame();
 
-			// We only update the TimeManager once per outer loop. 		
-			m_timeManager->Update();
-			elapsed += m_timeManager->DeltaTimeMs(); // Effectively == #ms between calls to TimeManager.Update()
+			EventManager::Get()->Update(lastOuterFrameTime);
+			InputManager::Get()->Update(lastOuterFrameTime);
+			CoreEngine::Update(lastOuterFrameTime);
+			m_logManager->Update(lastOuterFrameTime);
 
-			InputManager::Get()->Update();
-			CoreEngine::Update();
-			EventManager::Get()->Update();			
+			// Update components until enough time has passed to trigger a render.
+			// Or, continue rendering frames until it's time to update again
+			elapsed += lastOuterFrameTime;
+			while (elapsed >= m_fixedTimeStep)
+			{	
+				innerLoopTimer.Start();
 
-			// Update components until enough time has passed to trigger a render:
-			while (elapsed >= m_FixedTimeStep)
-			{			
-				SceneManager::Get()->Update(); // Updates all of the scene objects
+				SceneManager::Get()->Update(lastInnerFrameTime); // Updates all of the scene objects
 				// AI, physics, etc should also be pumped here (eventually)
 
-				elapsed -= m_FixedTimeStep;
-			}
-			
-			m_logManager->Update(); // Must run this before the RenderManager closes the ImGui frame
+				elapsed -= m_fixedTimeStep;
 
-			RenderManager::Get()->Update();			
+				lastInnerFrameTime = innerLoopTimer.StopMs();
+			}
+
+			RenderManager::Get()->Update(lastOuterFrameTime);
+
+			lastOuterFrameTime = outerLoopTimer.StopMs();
 		}
 	}
 
@@ -126,7 +132,6 @@ namespace en
 		Config::Get()->SaveConfig();
 		
 		// Note: Shutdown order matters!
-		m_timeManager->Shutdown();		
 		InputManager::Get()->Shutdown();
 		RenderManager::Get()->Shutdown();
 		SceneManager::Get()->Shutdown();
@@ -137,7 +142,7 @@ namespace en
 	}
 
 	
-	void CoreEngine::Update()
+	void CoreEngine::Update(const double stepTimeMs)
 	{
 		HandleEvents();
 

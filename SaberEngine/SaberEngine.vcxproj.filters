@@ -206,9 +206,6 @@
     <ClCompile Include="LogManager.cpp">
       <Filter>Source Files\en</Filter>
     </ClCompile>
-    <ClCompile Include="TimeManager.cpp">
-      <Filter>Source Files\en</Filter>
-    </ClCompile>
     <ClCompile Include="SceneObject.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
@@ -271,6 +268,9 @@
     </ClCompile>
     <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_sdlrenderer.cpp">
       <Filter>imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="PerformanceTimer.cpp">
+      <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -409,9 +409,6 @@
     <ClInclude Include="LogManager.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
-    <ClInclude Include="TimeManager.h">
-      <Filter>Header Files\en</Filter>
-    </ClInclude>
     <ClInclude Include="KeyConfiguration.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
@@ -492,6 +489,9 @@
     </ClInclude>
     <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_sdlrenderer.h">
       <Filter>imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="PerformanceTimer.h">
+      <Filter>Header Files\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

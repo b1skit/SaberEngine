@@ -15,6 +15,6 @@ namespace en
 		~Updateable() = default;
 		
 		// Updateable interface:
-		virtual void Update() = 0;
+		virtual void Update(const double stepTimeMs) = 0;
 	};
 }

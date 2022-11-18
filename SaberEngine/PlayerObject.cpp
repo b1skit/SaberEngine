@@ -1,5 +1,4 @@
 #include "PlayerObject.h"
-#include "TimeManager.h"
 #include "InputManager.h"
 #include <glm/gtc/constants.hpp>
 
@@ -7,12 +6,10 @@
 #include "Camera.h"
 #include "EventManager.h"
 
-
 using gr::Transform;
 using gr::Camera;
 using en::Config;
 using en::InputManager;
-using en::TimeManager;
 using glm::vec3;
 
 
@@ -22,7 +19,7 @@ namespace fr
 		: en::NamedObject("Player Object")
 		, m_playerCam(playerCam)
 		, m_processInput(true)
-		, m_movementSpeed(0.003f)
+		, m_movementSpeed(0.006f)
 		, m_savedPosition(vec3(0.0f, 0.0f, 0.0f))
 		, m_savedEulerRotation(vec3(0.0f, 0.0f, 0.0f))
 	{
@@ -63,7 +60,7 @@ namespace fr
 	}
 
 
-	void PlayerObject::Update()
+	void PlayerObject::Update(const double stepTimeMs)
 	{
 		HandleEvents();
 
@@ -86,9 +83,11 @@ namespace fr
 		vec3 yaw(0.0f, 0.0f, 0.0f);
 		vec3 pitch(0.0f, 0.0f, 0.0f);
 
-		// Compute rotation amounts, in radians:
-		yaw.y	= InputManager::GetMouseAxisInput(en::Input_MouseX) * (float)TimeManager::DeltaTimeMs();
-		pitch.x = InputManager::GetMouseAxisInput(en::Input_MouseY) * (float)TimeManager::DeltaTimeMs();
+		// Compute camera pitch/yaw rotations using the raw mouse pixel deltas.
+		// TODO: We might get better/more consistent results if we map our mouse pixel deltas to 2pi radians, with
+		// respect to the resolution, field of view, and aspect ratio.
+		yaw.y = InputManager::GetMouseAxisInput(en::Input_MouseX);
+		pitch.x = InputManager::GetMouseAxisInput(en::Input_MouseY);
 
 		m_transform.RotateLocal(yaw);
 		m_playerCam->GetTransform()->RotateLocal(pitch);
@@ -123,14 +122,16 @@ namespace fr
 
 		if (glm::length(direction) > 0.f) // Check the length since opposite inputs can zero out the direction
 		{
+			direction = glm::normalize(direction);
+
 			float sprintModifier = 1.0f;
 			if (InputManager::GetKeyboardInputState(en::InputButton_Sprint))
 			{
 				sprintModifier = m_sprintSpeedModifier;
 			}
 
-			direction = glm::normalize(direction);
-			direction *= (float)(m_movementSpeed * sprintModifier * TimeManager::DeltaTimeMs());
+			// Speed is distance/ms
+			direction *= m_movementSpeed * sprintModifier / static_cast<float>(stepTimeMs);
 
 			m_transform.TranslateLocal(direction);
 		}

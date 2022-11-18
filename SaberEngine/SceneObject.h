@@ -18,8 +18,7 @@ namespace fr
 		SceneObject(SceneObject&&) = default;
 		~SceneObject() = default;
 
-		// NamedObject interface:
-		void Update() override {}
+		void Update(const double stepTimeMs) override {}
 
 		// Getters/Setters:
 		void AddMesh(std::shared_ptr<gr::Mesh> mesh);

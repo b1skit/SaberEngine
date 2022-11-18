@@ -123,7 +123,7 @@ namespace gr
 	}
 
 
-	void Light::Update()
+	void Light::Update(const double stepTimeMs)
 	{
 		if (m_type == LightType::Directional) // Update shadow cam bounds
 		{

@@ -28,6 +28,7 @@
 #include "DebugConfiguration.h"
 #include "ShadowMap.h"
 #include "ParameterBlock.h"
+#include "PerformanceTimer.h"
 
 using gr::Camera;
 using gr::Light;
@@ -42,6 +43,7 @@ using re::ParameterBlock;
 using fr::SceneObject;
 using en::Config;
 using en::NamedObject;
+using util::PerformanceTimer;
 using std::string;
 using std::vector;
 using std::shared_ptr;
@@ -96,6 +98,9 @@ namespace
 		SEAssert("Invalid number of texture paths", texturePaths.size() == 1 || texturePaths.size() == 6);
 
 		LOG("Attempting to load %d textures: \"%s\"...", texturePaths.size(), texturePaths[0].c_str());
+
+		PerformanceTimer timer;
+		timer.Start();
 
 		// Flip the y-axis on loading (so pixel (0,0) is in the bottom-left of the image if using OpenGL
 		platform::RenderingAPI const& api = Config::Get()->GetRenderingAPI();
@@ -245,9 +250,12 @@ namespace
 			{
 				char const* failResult = stbi_failure_reason();
 				LOG_WARNING("Failed to load image \"%s\": %s", texturePaths[0].c_str(), failResult);
+				timer.StopSec();
 				return nullptr;
 			}
 		}
+
+		LOG("Texture loading completed in %f seconds...", timer.StopSec());
 
 		// Note: Texture color space must be set, and Create() must be called
 		return texture; 
@@ -892,6 +900,9 @@ namespace fr
 {
 	bool SceneData::Load(string const& sceneFilePath)
 	{
+		PerformanceTimer timer;
+		timer.Start();
+
 		if (sceneFilePath.empty())
 		{
 			SEAssert("No scene name received. Did you forget to use the \"-scene theSceneName\" command line "
@@ -944,6 +955,8 @@ namespace fr
 
 		// Cleanup:
 		cgltf_free(data);
+
+		LOG("Finished loading scene in %f seconds...", timer.StopSec());
 
 		return true;
 	}

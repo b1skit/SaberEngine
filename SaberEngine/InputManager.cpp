@@ -95,7 +95,7 @@ namespace en
 	}
 
 
-	void InputManager::Update()
+	void InputManager::Update(const double stepTimeMs)
 	{
 		// Prepare for the next around of input events fired by the EventManager
 		m_mouseAxisStates[MouseInputAxis::Input_MouseX] = 0.f;

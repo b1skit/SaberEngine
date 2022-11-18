@@ -53,7 +53,7 @@ namespace gr
 
 		void Destroy();
 
-		void Update() override;
+		void Update(const double stepTimeMs) override;
 
 		// Getters/Setters:
 		inline glm::vec3& GetColor() { return m_colorIntensity; }

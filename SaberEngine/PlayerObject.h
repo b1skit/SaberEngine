@@ -30,7 +30,7 @@ namespace fr
 		PlayerObject& operator=(PlayerObject const&) = delete;
 
 		// NamedObject interface:
-		void Update() override;
+		void Update(const double stepTimeMs) override;
 
 		// EventListener:
 		void HandleEvents() override;

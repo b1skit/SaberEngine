@@ -100,7 +100,7 @@ namespace re
 	}
 
 
-	void RenderManager::Update()
+	void RenderManager::Update(const double stepTimeMs)
 	{
 		// Build batches:
 		BuildSceneBatches();

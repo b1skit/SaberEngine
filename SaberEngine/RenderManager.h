@@ -43,7 +43,7 @@ namespace re
 		// EngineComponent interface:
 		void Startup() override;
 		void Shutdown() override;
-		void Update() override;
+		void Update(const double stepTimeMs) override;
 		
 		// Member functions:
 		void Initialize();

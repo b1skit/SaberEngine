@@ -16,7 +16,7 @@ namespace en
 		~EngineComponent() = default;
 
 		// Updateable interface:
-		virtual void Update() override = 0;
+		virtual void Update(const double stepTimeMs) override = 0;
 
 		// EngineComponent interface:
 		virtual void Startup() = 0; // We can't control construction order, so this is called to start the object
