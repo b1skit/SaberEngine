@@ -2,13 +2,15 @@
 #include "DebugConfiguration.h"
 #include "ParameterBlock_Platform.h"
 
-using std::shared_ptr;
 using re::ParameterBlock;
+using std::shared_ptr;
+using std::unordered_map;
+using std::shared_ptr;
 
 
 namespace re
 {
-	size_t ParameterBlockManager::RegisterParameterBlock(std::shared_ptr<re::ParameterBlock> pb)
+	uint64_t ParameterBlockManager::RegisterParameterBlock(std::shared_ptr<re::ParameterBlock> pb)
 	{
 		if (pb->GetLifetime() == re::ParameterBlock::Lifetime::SingleFrame)
 		{
@@ -42,7 +44,19 @@ namespace re
 	}
 
 
-	std::shared_ptr<re::ParameterBlock const> const ParameterBlockManager::GetParameterBlock(size_t pbID) const
+	unordered_map<uint64_t, shared_ptr<ParameterBlock const>> const& ParameterBlockManager::GetImmutableParamBlocks() const
+	{
+		return m_immutablePBs;
+	}
+
+
+	unordered_map<uint64_t, shared_ptr<ParameterBlock>> const& ParameterBlockManager::GetMutableParamBlocks() const
+	{
+		return m_mutablePBs;
+	}
+
+
+	shared_ptr<ParameterBlock const> const ParameterBlockManager::GetParameterBlock(uint64_t pbID) const
 	{
 		auto mutableResult = m_mutablePBs.find(pbID);
 		if (mutableResult != m_mutablePBs.end())
