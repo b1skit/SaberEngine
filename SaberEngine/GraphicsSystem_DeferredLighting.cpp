@@ -103,7 +103,7 @@ namespace
 
 			lightParams.g_shadowBiasMinMax = shadowMap->MinMaxShadowBias();
 
-			shared_ptr<gr::Camera> const shadowCam = shadowMap->ShadowCamera();
+			gr::Camera* const shadowCam = shadowMap->ShadowCamera();
 			lightParams.g_shadowCamNearFar = shadowCam->NearFar();
 
 			// Type-specific shadow params:
@@ -168,7 +168,7 @@ namespace gr
 		deferredLightingTargetSet.DepthStencilTarget() = gBufferGS->GetFinalTextureTargetSet().DepthStencilTarget();
 		deferredLightingTargetSet.CreateColorDepthStencilTargets();
 
-		shared_ptr<Camera> deferredLightingCam = SceneManager::GetSceneData()->GetMainCamera();
+		Camera* deferredLightingCam = SceneManager::GetSceneData()->GetMainCamera().get();
 
 		
 		// Set the target sets, even if the stages aren't actually used (to ensure they're still valid)

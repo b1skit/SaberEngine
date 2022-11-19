@@ -148,7 +148,7 @@ namespace gr
 
 		m_skyboxStage.SetRenderStageParams(skyboxStageParams);
 
-		m_skyboxStage.GetStageCamera() = SceneManager::GetSceneData()->GetMainCamera();
+		m_skyboxStage.GetStageCamera() = SceneManager::GetSceneData()->GetMainCamera().get();
 
 		shared_ptr<DeferredLightingGraphicsSystem> deferredLightGS = dynamic_pointer_cast<DeferredLightingGraphicsSystem>(
 			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>());

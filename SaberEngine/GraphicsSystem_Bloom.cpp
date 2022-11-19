@@ -37,7 +37,7 @@ namespace gr
 		shared_ptr<DeferredLightingGraphicsSystem> deferredLightGS = dynamic_pointer_cast<DeferredLightingGraphicsSystem>(
 			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>());
 
-		shared_ptr<Camera> sceneCam = SceneManager::GetSceneData()->GetMainCamera();
+		Camera* sceneCam = SceneManager::GetSceneData()->GetMainCamera().get();
 
 		shared_ptr<Shader> blitShader = make_shared<Shader>(Config::Get()->GetValue<string>("blitShaderName"));
 		blitShader->Create();

@@ -80,8 +80,8 @@ namespace gr
 		inline std::shared_ptr<gr::Shader>& GetStageShader() { return m_stageShader; }
 		inline std::shared_ptr<gr::Shader const> GetStageShader() const { return m_stageShader; }
 
-		inline std::shared_ptr<gr::Camera>& GetStageCamera() { return m_stageCam; }
-		inline std::shared_ptr<gr::Camera const> GetStageCamera() const { return m_stageCam; }
+		inline gr::Camera*& GetStageCamera() { return m_stageCam; }
+		inline gr::Camera const* GetStageCamera() const { return m_stageCam; }
 
 		inline gr::TextureTargetSet& GetTextureTargetSet() { return m_textureTargetSet; }
 		inline gr::TextureTargetSet const& GetTextureTargetSet() const { return m_textureTargetSet; }
@@ -113,7 +113,7 @@ namespace gr
 	private:
 		std::shared_ptr<gr::Shader> m_stageShader;
 		gr::TextureTargetSet m_textureTargetSet;
-		std::shared_ptr<gr::Camera> m_stageCam;
+		gr::Camera* m_stageCam;
 		
 		RenderStageParams m_stageParams;
 		bool m_writesColor;

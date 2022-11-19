@@ -144,7 +144,7 @@ namespace opengl
 				}
 
 				// Set camera params:
-				std::shared_ptr<Camera const> stageCam = renderStage->GetStageCamera();
+				Camera const* const stageCam = renderStage->GetStageCamera();
 				if (stageCam)
 				{
 					stageShader->SetParameterBlock(*stageCam->GetCameraParams().get());

@@ -50,7 +50,7 @@ namespace gr
 			platform::Shader::UniformType::Float,
 			1);
 
-		m_tonemappingStage.GetStageCamera() = SceneManager::GetSceneData()->GetMainCamera();
+		m_tonemappingStage.GetStageCamera() = SceneManager::GetSceneData()->GetMainCamera().get();
 		m_tonemappingStage.GetTextureTargetSet() = *RenderManager::Get()->GetDefaultTextureTargetSet();
 
 		pipeline.AppendRenderStage(m_tonemappingStage);

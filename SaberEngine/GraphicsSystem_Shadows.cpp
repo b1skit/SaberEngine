@@ -37,7 +37,7 @@ namespace
 	};
 
 
-	CubemapShadowRenderParams GetCubemapShadowRenderParamsData(std::shared_ptr<gr::Camera> shadowCam)
+	CubemapShadowRenderParams GetCubemapShadowRenderParamsData(gr::Camera* shadowCam)
 	{
 		CubemapShadowRenderParams cubemapShadowParams;
 		memcpy(&cubemapShadowParams.g_cubemapShadowCam_VP[0][0].x,
@@ -114,7 +114,7 @@ namespace gr
 			ShadowMap* const lightShadow = curLight->GetShadowMap();
 			if (lightShadow)
 			{
-				std::shared_ptr<Camera> const shadowCam = lightShadow->ShadowCamera();
+				Camera* const shadowCam = lightShadow->ShadowCamera();
 				shadowStage->GetStageCamera() = shadowCam;
 				
 				// Shader:
@@ -157,7 +157,7 @@ namespace gr
 
 		for (shared_ptr<RenderStage> pointShadowStage : m_pointLightShadowStages)
 		{		
-			shared_ptr<Camera> shadowCam = pointShadowStage->GetStageCamera();
+			Camera* shadowCam = pointShadowStage->GetStageCamera();
 
 			// Update the param block data:
 			shared_ptr<re::ParameterBlock> shadowParams =

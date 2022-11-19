@@ -30,8 +30,8 @@ namespace gr
 		ShadowMap(ShadowMap&&) = default;
 		ShadowMap& operator=(ShadowMap const&) = default;
 
-		inline std::shared_ptr<gr::Camera> ShadowCamera() { return m_shadowCam; }
-		inline std::shared_ptr<gr::Camera const> ShadowCamera() const { return m_shadowCam; }
+		inline gr::Camera* ShadowCamera() { return &m_shadowCam; }
+		inline gr::Camera const* ShadowCamera() const { return &m_shadowCam; }
 
 		inline float& MaxShadowBias() { return m_maxShadowBias; }
 		inline float const MaxShadowBias() const { return m_maxShadowBias; }
@@ -47,8 +47,7 @@ namespace gr
 
 
 	private:
-		// Registed in the SceneManager's currentScene
-		std::shared_ptr<gr::Camera>	m_shadowCam = nullptr; 
+		gr::Camera m_shadowCam;
 		gr::TextureTargetSet m_shadowTargetSet;
 
 		float m_maxShadowBias = 0.005f;	// Small offsets for shadow comparisons

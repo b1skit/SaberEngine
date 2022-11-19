@@ -28,11 +28,11 @@ namespace gr
 		gr::Camera::CameraConfig shadowCamConfig, 
 		Transform* shadowCamParent /*= nullptr*/, 
 		vec3 shadowCamPosition /* = vec3(0.0f, 0.0f, 0.0f)*/, 
-		bool useCubeMap /*= false*/) :
-			m_shadowTargetSet(lightName + " target")
+		bool useCubeMap /*= false*/)
+		: m_shadowTargetSet(lightName + " target")
+		, m_shadowCam(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent)
 	{
-		m_shadowCam = std::make_shared<gr::Camera>(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent);
-		m_shadowCam->GetTransform()->SetLocalTranslation(shadowCamPosition);
+		m_shadowCam.GetTransform()->SetLocalTranslation(shadowCamPosition);
 
 		// Texture params are mostly the same between a single shadow map, or a cube map
 		Texture::TextureParams shadowParams;

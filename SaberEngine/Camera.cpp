@@ -16,9 +16,9 @@ using glm::mat4;
 
 namespace gr
 {
-	Camera::Camera(string const& cameraName, CameraConfig const& camConfig, Transform* parent) :
-		NamedObject(cameraName),
-			m_cameraConfig(camConfig)
+	Camera::Camera(string const& cameraName, CameraConfig const& camConfig, Transform* parent)
+		: NamedObject(cameraName)
+		, m_cameraConfig(camConfig)
 	{
 		m_transform.SetParent(parent);
 
