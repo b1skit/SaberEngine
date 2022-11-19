@@ -84,7 +84,7 @@ namespace gr
 		shared_ptr<Light> directionalLight = SceneManager::GetSceneData()->GetKeyLight();
 		if (directionalLight)
 		{
-			shared_ptr<ShadowMap> directionalShadow = directionalLight->GetShadowMap();
+			ShadowMap* const directionalShadow = directionalLight->GetShadowMap();
 			if (directionalShadow)
 			{
 				m_directionalShadowStage.GetStageCamera() = directionalShadow->ShadowCamera();
@@ -111,7 +111,7 @@ namespace gr
 
 			RenderStage* shadowStage = m_pointLightShadowStages.back().get();
 			
-			shared_ptr<ShadowMap> const lightShadow = curLight->GetShadowMap();
+			ShadowMap* const lightShadow = curLight->GetShadowMap();
 			if (lightShadow)
 			{
 				std::shared_ptr<Camera> const shadowCam = lightShadow->ShadowCamera();

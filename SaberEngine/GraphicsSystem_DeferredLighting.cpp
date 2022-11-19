@@ -95,7 +95,7 @@ namespace
 			SEAssertF("Light type does not use this param block");
 		}
 		
-		shared_ptr<gr::ShadowMap> const shadowMap = light->GetShadowMap();
+		gr::ShadowMap* const shadowMap = light->GetShadowMap();
 		if (shadowMap)
 		{
 			lightParams.g_shadowMapTexelSize =
@@ -574,7 +574,7 @@ namespace gr
 		if (keyLight)
 		{
 			// Keylight shadowmap:		
-			shared_ptr<ShadowMap> keyLightShadowMap = keyLight->GetShadowMap();
+			ShadowMap* const keyLightShadowMap = keyLight->GetShadowMap();
 			SEAssert("Key light shadow map is null", keyLightShadowMap != nullptr);
 
 			// Set the key light shadow map:
@@ -639,7 +639,7 @@ namespace gr
 			pointlightBatch.AddBatchParameterBlock(pointlightMeshParams);
 
 			// Batch uniforms:
-			std::shared_ptr<ShadowMap> shadowMap = pointLights[i]->GetShadowMap();
+			ShadowMap* const shadowMap = pointLights[i]->GetShadowMap();
 			if (shadowMap != nullptr)
 			{
 				std::shared_ptr<gr::Texture> const depthTexture = 

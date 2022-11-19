@@ -10,6 +10,7 @@
 #include "Transform.h"
 #include "ParameterBlock.h"
 #include "Mesh.h"
+#include "ShadowMap.h"
 
 
 namespace gr
@@ -17,7 +18,6 @@ namespace gr
 	class Camera;
 	class MeshPrimitive;
 	class Shader;
-	class ShadowMap;
 }
 
 namespace gr
@@ -63,8 +63,7 @@ namespace gr
 														 
 		inline gr::Transform* GetTransform() { return m_ownerTransform; }	// Directional lights shine forward (Z+)
 
-		inline std::shared_ptr<gr::ShadowMap>& GetShadowMap() { return m_shadowMap; }
-		inline std::shared_ptr<gr::ShadowMap> const& GetShadowMap() const { return m_shadowMap; }
+		inline gr::ShadowMap* GetShadowMap() const { return m_shadowMap.get(); }
 
 	private:
 		gr::Transform* m_ownerTransform;
@@ -73,7 +72,7 @@ namespace gr
 
 		LightType m_type;
 
-		std::shared_ptr<gr::ShadowMap> m_shadowMap;
+		std::unique_ptr<gr::ShadowMap> m_shadowMap;
 
 	private:
 		Light() = delete;

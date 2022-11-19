@@ -3,7 +3,6 @@
 #include "SceneManager.h"
 #include "Camera.h"
 #include "DebugConfiguration.h"
-#include "ShadowMap.h"
 #include "Shader.h"
 #include "MeshPrimitive.h"
 
@@ -11,8 +10,8 @@ using gr::Shader;
 using gr::Transform;
 using en::Config;
 using en::SceneManager;
-using std::shared_ptr;
-using std::make_shared;
+using std::unique_ptr;
+using std::make_unique;
 using std::string;
 using glm::vec3;
 using re::ParameterBlock;
@@ -56,7 +55,7 @@ namespace gr
 				shadowCamConfig.m_orthoTop			= transformedBounds.yMax();
 
 				const uint32_t shadowMapRes = Config::Get()->GetValue<uint32_t>("defaultShadowMapRes");
-				m_shadowMap = make_shared<ShadowMap>(
+				m_shadowMap = make_unique<ShadowMap>(
 					GetName(),
 					shadowMapRes,
 					shadowMapRes,
@@ -86,7 +85,7 @@ namespace gr
 			
 				const uint32_t cubeMapRes = Config::Get()->GetValue<uint32_t>("defaultShadowCubeMapRes");
 
-				m_shadowMap = make_shared<ShadowMap>(
+				m_shadowMap = make_unique<ShadowMap>(
 					GetName(),
 					cubeMapRes,
 					cubeMapRes,
