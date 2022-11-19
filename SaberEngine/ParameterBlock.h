@@ -39,7 +39,7 @@ namespace re
 
 		// Create a PB for an array of several objects of the same type (eg. instanced mesh matrices)
 		template<typename T>
-		static std::shared_ptr<re::ParameterBlock> Create(
+		static std::shared_ptr<re::ParameterBlock> CreateFromArray(
 			std::string pbName, T const* dataArray, size_t dataByteSize, size_t numElements, UpdateType updateType, Lifetime lifetime);
 
 	private:
@@ -122,7 +122,7 @@ namespace re
 
 	// Create a PB for an array of several objects of the same type (eg. instanced mesh matrices)
 	template<typename T>
-	static std::shared_ptr<re::ParameterBlock> ParameterBlock::Create(
+	static std::shared_ptr<re::ParameterBlock> ParameterBlock::CreateFromArray(
 		std::string pbName, T const* dataArray, size_t dataByteSize, size_t numElements, UpdateType updateType, Lifetime lifetime)
 	{
 		std::shared_ptr<T> dataCopy(new T[numElements], [](T* t) {delete[] t; });

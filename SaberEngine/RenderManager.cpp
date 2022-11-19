@@ -179,7 +179,7 @@ namespace re
 			}
 
 			// Construct PB of model transform matrices:
-			shared_ptr<ParameterBlock> instancedMeshParams = ParameterBlock::Create(
+			shared_ptr<ParameterBlock> instancedMeshParams = ParameterBlock::CreateFromArray(
 				"InstancedMeshParams",
 				modelMatrices.data(),
 				sizeof(mat4),
