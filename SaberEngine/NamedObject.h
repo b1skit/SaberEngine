@@ -17,13 +17,13 @@ namespace en
 		inline std::string const& GetName() const { return m_name; }
 
 		// Integer identifier computed by hasing m_name. Any object with the same m_name will have the same NameID
-		inline size_t GetNameID() const { return m_nameID; }
+		inline uint64_t GetNameID() const { return m_nameID; }
 
 		// Unique integer identifier, hashed from m_name concatenated with a monotonically-increasing value
-		inline size_t GetUniqueID() const { return m_uniqueID; }
+		inline uint64_t GetUniqueID() const { return m_uniqueID; }
 
 		// Compute an integer identifier from a string equivalent to the GetNameID() of objects with the same name
-		inline static size_t ComputeIDFromName(std::string const& name);
+		inline static uint64_t ComputeIDFromName(std::string const& name);
 
 
 	private:
@@ -31,8 +31,8 @@ namespace en
 
 	private:
 		const std::string m_name;
-		size_t m_uniqueID;
-		size_t m_nameID;
+		uint64_t m_uniqueID;
+		uint64_t m_nameID;
 
 
 	private:
@@ -47,7 +47,7 @@ namespace en
 		ComputeUniqueID();
 	}
 
-	size_t NamedObject::ComputeIDFromName(std::string const& name)
+	uint64_t NamedObject::ComputeIDFromName(std::string const& name)
 	{
 		return std::hash<std::string>{}(name);
 	}
@@ -56,7 +56,7 @@ namespace en
 	void NamedObject::ComputeUniqueID()
 	{
 		// Hash the name and a unique digit; Will be unique for all objects regardless of their name
-		static size_t objectIDs{ 0 };
+		static uint64_t objectIDs{ 0 };
 		const std::string hashString = m_name + std::to_string(objectIDs++);
 		m_uniqueID = std::hash<std::string>{}(hashString);
 	}
