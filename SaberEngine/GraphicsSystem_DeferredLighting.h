@@ -2,6 +2,16 @@
 
 #include "GraphicsSystem.h"
 
+namespace gr
+{
+	class Mesh;
+	class Texture;
+}
+namespace re
+{
+	class MeshPrimitive;
+}
+
 
 namespace gr
 {
@@ -27,6 +37,7 @@ namespace gr
 
 		std::shared_ptr<re::MeshPrimitive> m_screenAlignedQuad;
 		std::shared_ptr<re::MeshPrimitive> m_cubeMeshPrimitive; // For rendering into a cube map. TODO: We only use this in the 1st frame, should probably clean it up
+		std::vector<std::shared_ptr<gr::Mesh>> m_sphereMeshes; // Deferred point lights
 
 		std::shared_ptr<gr::Texture> m_BRDF_integrationMap;
 		std::shared_ptr<gr::Texture> m_IEMTex;

@@ -66,9 +66,6 @@ namespace gr
 		inline std::shared_ptr<gr::ShadowMap>& GetShadowMap() { return m_shadowMap; }
 		inline std::shared_ptr<gr::ShadowMap> const& GetShadowMap() const { return m_shadowMap; }
 
-		inline std::shared_ptr<gr::Mesh>& DeferredMesh() { return m_deferredMesh; }
-		inline std::shared_ptr<gr::Mesh> const& DeferredMesh() const { return m_deferredMesh; }
-
 	private:
 		gr::Transform* m_ownerTransform;
 
@@ -77,9 +74,6 @@ namespace gr
 		LightType m_type;
 
 		std::shared_ptr<gr::ShadowMap> m_shadowMap;
-
-		// TODO: Lights shouldn't have a mesh
-		std::shared_ptr<gr::Mesh> m_deferredMesh;
 
 	private:
 		Light() = delete;

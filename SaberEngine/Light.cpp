@@ -20,12 +20,11 @@ using re::ParameterBlock;
 
 namespace gr
 {
-	Light::Light(string const& name, Transform* ownerTransform, LightType lightType, vec3 colorIntensity, bool hasShadow) :
-		en::NamedObject(name),
-			m_ownerTransform(ownerTransform),
-			m_type(lightType),
-			m_shadowMap(nullptr),
-			m_deferredMesh(nullptr)
+	Light::Light(string const& name, Transform* ownerTransform, LightType lightType, vec3 colorIntensity, bool hasShadow)
+		: en::NamedObject(name)
+		, m_ownerTransform(ownerTransform)
+		, m_type(lightType)
+		, m_shadowMap(nullptr)
 	{		
 		m_colorIntensity = colorIntensity;
 
@@ -72,14 +71,9 @@ namespace gr
 			const float cutoff = 0.05f; // Want the sphere mesh radius where light intensity will be close to zero
 			const float maxColor = glm::max(glm::max(m_colorIntensity.r, m_colorIntensity.g), m_colorIntensity.b);
 			const float radius = glm::sqrt((maxColor / cutoff) - 1.0f);
-
-			// Create the sphere with a radius of 1, and scale it to allow us to instance deferred lights with a single
-			// mesh and multiple MVP matrices
-			m_deferredMesh = make_shared<gr::Mesh>(m_ownerTransform, meshfactory::CreateSphere(1.0f));
 			
-			// TODO: Currently, we scale the deferred mesh directly. Ideally, lights should not have
-			// a mesh; one should be created by the GS and assigned as a batch
-			m_deferredMesh->GetTransform()->SetLocalScale(vec3(radius, radius, radius));
+			// Scale the owning transform such that a sphere created with a radius of 1 will be the correct size
+			m_ownerTransform->SetLocalScale(vec3(radius, radius, radius));
 
 			if (hasShadow)
 			{
@@ -119,7 +113,6 @@ namespace gr
 	void Light::Destroy()
 	{
 		m_shadowMap = nullptr;
-		m_deferredMesh = nullptr;
 	}
 
 

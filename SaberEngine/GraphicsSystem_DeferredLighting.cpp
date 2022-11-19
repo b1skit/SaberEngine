@@ -484,6 +484,13 @@ namespace gr
 			m_pointlightStage.GetStageShader()->Create();
 
 			pipeline.AppendRenderStage(m_pointlightStage);
+
+			// Create a sphere mesh for each pointlights:
+			for (shared_ptr<Light> pointlight : pointLights)
+			{
+				m_sphereMeshes.emplace_back(
+					std::make_shared<gr::Mesh>(pointlight->GetTransform(), meshfactory::CreateSphere(1.0f)));
+			}
 		}
 	}
 
@@ -607,12 +614,13 @@ namespace gr
 
 		// Pointlight stage batches:
 		vector<shared_ptr<Light>> const& pointLights = SceneManager::GetSceneData()->GetPointLights();
-		for (shared_ptr<Light> const pointlight : pointLights)
+		for (size_t i = 0; i < pointLights.size(); i++)
 		{
-			Batch pointlightBatch = Batch(pointlight->DeferredMesh(), nullptr, nullptr);
+			
+			Batch pointlightBatch = Batch(m_sphereMeshes[i], nullptr, nullptr);
 
 			// Point light params:
-			LightParams pointlightParams = GetLightParamData(pointlight);
+			LightParams pointlightParams = GetLightParamData(pointLights[i]);
 			shared_ptr<re::ParameterBlock> pointlightPB = re::ParameterBlock::Create(
 				"LightParams", 
 				pointlightParams, 
@@ -624,14 +632,14 @@ namespace gr
 			// Point light mesh params:
 			shared_ptr<ParameterBlock> pointlightMeshParams = ParameterBlock::Create(
 				"InstancedMeshParams",
-				pointlight->DeferredMesh()->GetTransform()->GetGlobalMatrix(Transform::TRS),
+				m_sphereMeshes[i]->GetTransform()->GetGlobalMatrix(Transform::TRS),
 				ParameterBlock::UpdateType::Immutable,
 				ParameterBlock::Lifetime::SingleFrame);
 
 			pointlightBatch.AddBatchParameterBlock(pointlightMeshParams);
 
 			// Batch uniforms:
-			std::shared_ptr<ShadowMap> shadowMap = pointlight->GetShadowMap();
+			std::shared_ptr<ShadowMap> shadowMap = pointLights[i]->GetShadowMap();
 			if (shadowMap != nullptr)
 			{
 				std::shared_ptr<gr::Texture> const depthTexture = 
