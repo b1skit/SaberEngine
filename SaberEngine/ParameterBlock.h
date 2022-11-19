@@ -90,7 +90,7 @@ namespace re
 		friend void platform::ParameterBlock::PlatformParams::CreatePlatformParams(re::ParameterBlock&);
 	};
 
-
+	// Pseudo-private CTOR: private ParameterBlock::Accessor forces access via one of the Create factories
 	template <typename T>
 	ParameterBlock::ParameterBlock(
 		ParameterBlock::Accessor, std::string pbName, std::shared_ptr<T> dataCopy, size_t dataByteSize, UpdateType updateType, Lifetime lifetime)

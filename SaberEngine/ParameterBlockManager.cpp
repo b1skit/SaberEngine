@@ -12,10 +12,12 @@ namespace re
 {
 	uint64_t ParameterBlockManager::RegisterParameterBlock(std::shared_ptr<re::ParameterBlock> pb)
 	{
+		MapType mapType;
 		if (pb->GetLifetime() == re::ParameterBlock::Lifetime::SingleFrame)
 		{
 			SEAssert("Parameter block is already registered", !m_singleFramePBs.contains(pb->GetUniqueID()));
 			m_singleFramePBs[pb->GetUniqueID()] = pb;
+			mapType = MapType::SingleFrame;
 		}
 		else
 		{
@@ -25,12 +27,14 @@ namespace re
 			{
 				SEAssert("Parameter block is already registered", !m_immutablePBs.contains(pb->GetUniqueID()));
 				m_immutablePBs[pb->GetUniqueID()] = pb;
+				mapType = MapType::Immutable;
 			}
 			break;
 			case ParameterBlock::UpdateType::Mutable:
 			{
 				SEAssert("Parameter block is already registered", !m_mutablePBs.contains(pb->GetUniqueID()));
 				m_mutablePBs[pb->GetUniqueID()] = pb;
+				mapType = MapType::Mutable;
 			}
 			break;
 			default:
@@ -39,6 +43,8 @@ namespace re
 			}
 			}
 		}
+
+		m_pbIDToMap.insert({ pb->GetUniqueID() , mapType});
 
 		return pb->GetUniqueID();
 	}
@@ -58,25 +64,35 @@ namespace re
 
 	shared_ptr<ParameterBlock const> const ParameterBlockManager::GetParameterBlock(uint64_t pbID) const
 	{
-		auto mutableResult = m_mutablePBs.find(pbID);
-		if (mutableResult != m_mutablePBs.end())
+		auto result = m_pbIDToMap.find(pbID);
+		SEAssert("Parameter block not found", result != m_pbIDToMap.end());
+		switch (result->second)
 		{
-			return mutableResult->second;
-		}
-
-		auto immutableResult = m_immutablePBs.find(pbID);
-		if (immutableResult != m_immutablePBs.end())
+		case MapType::Immutable:
 		{
+			auto immutableResult = m_immutablePBs.find(pbID);
+			SEAssert("Parameter block not found", immutableResult != m_immutablePBs.end());
 			return immutableResult->second;
 		}
-
-		auto singleFrameResult = m_singleFramePBs.find(pbID);
-		if (singleFrameResult != m_singleFramePBs.end())
+		break;
+		case MapType::Mutable:
 		{
+			auto mutableResult = m_mutablePBs.find(pbID);
+			SEAssert("Parameter block not found", mutableResult != m_mutablePBs.end());
+			return mutableResult->second;
+		}
+		break;
+		case MapType::SingleFrame:
+		{
+			auto singleFrameResult = m_singleFramePBs.find(pbID);
+			SEAssert("Parameter block not found", singleFrameResult != m_singleFramePBs.end());
 			return singleFrameResult->second;
 		}
+		break;
+		default:
+			SEAssertF("Invalid map type");
+		}
 
-		SEAssertF("Failed to find param block");
 		return nullptr;
 	}
 
