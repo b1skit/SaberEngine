@@ -66,12 +66,13 @@ namespace gr
 
 	public:
 		Camera(std::string const& cameraName, CameraConfig const& camConfig, gr::Transform* parent);
+	
+		Camera(Camera const&) = default;
+		Camera(Camera&&) = default;
+		Camera& operator=(Camera const&) = default;
 		~Camera() { Destroy(); }
 
 		void Destroy();
-
-		Camera(Camera&&) = default;
-		Camera& operator=(Camera const&) = default;
 
 		void Update(const double stepTimeMs) override;
 
