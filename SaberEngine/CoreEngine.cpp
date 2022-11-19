@@ -82,14 +82,13 @@ namespace en
 		PerformanceTimer outerLoopTimer;
 		PerformanceTimer innerLoopTimer;
 		double lastOuterFrameTime = 0.0;
-		double lastInnerFrameTime = 0.0;
 
 		while (m_isRunning)
 		{
 			outerLoopTimer.Start();
 
 			// Initializes ImGui for a new frame, so we can call ImGui functions throughout the loop.
-			// NOTE: ImGui is NOT thread safe TODO: Figure out a safe way to handle this. Perhaps use a Command pattern?
+			// NOTE: ImGui is NOT thread safe TODO: Handle this using a Command pattern
 			RenderManager::Get()->StartOfFrame();
 
 			EventManager::Get()->Update(lastOuterFrameTime);
@@ -99,17 +98,13 @@ namespace en
 
 			// Update components until enough time has passed to trigger a render.
 			// Or, continue rendering frames until it's time to update again
-			elapsed += lastOuterFrameTime;
+			elapsed += lastOuterFrameTime;			
 			while (elapsed >= m_fixedTimeStep)
 			{	
-				innerLoopTimer.Start();
-
-				SceneManager::Get()->Update(lastInnerFrameTime); // Updates all of the scene objects
-				// AI, physics, etc should also be pumped here (eventually)
-
 				elapsed -= m_fixedTimeStep;
 
-				lastInnerFrameTime = innerLoopTimer.StopMs();
+				SceneManager::Get()->Update(m_fixedTimeStep); // Updates all of the scene objects
+				// AI, physics, etc should also be pumped here (eventually)
 			}
 
 			RenderManager::Get()->Update(lastOuterFrameTime);

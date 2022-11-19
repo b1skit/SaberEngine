@@ -144,8 +144,9 @@ namespace fr
 				sprintModifier = m_sprintSpeedModifier;
 			}
 
-			// Speed is distance/ms
-			direction *= m_movementSpeed * sprintModifier / static_cast<float>(stepTimeMs);
+			// Note: Velocity = (delta displacement) / (delta time)
+			// delta displacement = velocity * delta time
+			direction *= m_movementSpeed * sprintModifier * static_cast<float>(stepTimeMs);
 
 			m_transform.TranslateLocal(direction);
 		}
