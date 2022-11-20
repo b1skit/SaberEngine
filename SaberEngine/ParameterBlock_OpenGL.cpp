@@ -38,6 +38,7 @@ namespace opengl
 		paramBlock.MarkClean();
 	}
 
+
 	void ParameterBlock::Destroy(re::ParameterBlock& paramBlock)
 	{
 		PlatformParams* const params =
