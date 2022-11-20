@@ -157,7 +157,8 @@ namespace opengl
 		SDL_SetRelativeMouseMode(SDL_TRUE);	// Lock the mouse to the window
 		
 		// Create a window:
-		const string windowTitle = Config::Get()->GetValue<string>("windowTitle");
+		const string windowTitle = Config::Get()->GetValue<string>("windowTitle") + " " + 
+			Config::Get()->GetValue<string>("commandLineArgs");
 		const int xRes = Config::Get()->GetValue<int>("windowXRes");
 		const int yRes = Config::Get()->GetValue<int>("windowYRes");
 		platformParams->m_glWindow = SDL_CreateWindow

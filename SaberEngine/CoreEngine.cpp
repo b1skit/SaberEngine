@@ -179,29 +179,33 @@ namespace en
 		const int numTokens = argc - 1; // -1, as 1st arg is program name
 		LOG("Processing %d command line tokens...", numTokens);
 
-		bool foundSceneArg = false;
+		bool successfulParse = true;
+
+		string argString; // The full list of all command line args received
 
 		for (int i = 1; i < argc; i++)
 		{			
 			const string currentArg(argv[i]);
+			
+			argString += currentArg + (i < (argc - 1) ? " " : "");
+
 			if (currentArg.find("-scene") != string::npos)
 			{
-				SEAssert("\"-scene\" argument specified more than once!", foundSceneArg == false);
-				foundSceneArg = true;
-
 				if (i < argc - 1) // -1 as we need to peek ahead
 				{
 					const int nextArg = i + 1;
-					const string param = string(argv[nextArg]);
+					const string sceneNameParam = string(argv[nextArg]);
 
-					LOG("\tReceived scene command: \"%s %s\"", currentArg.c_str(), param.c_str());
+					argString += sceneNameParam;
+
+					LOG("\tReceived scene command: \"%s %s\"", currentArg.c_str(), sceneNameParam.c_str());
 
 					const string scenesRoot = Config::Get()->GetValue<string>("scenesRoot"); // "..\Scenes\"
 
 					// From param of the form "Scene\Folder\Names\sceneFile.extension", we extract:
 
 					// sceneFilePath == "..\Scenes\Scene\Folder\Names\sceneFile.extension":
-					const string sceneFilePath = scenesRoot + param; 
+					const string sceneFilePath = scenesRoot + sceneNameParam; 
 					Config::Get()->SetValue("sceneFilePath", sceneFilePath, Config::SettingType::Runtime);
 
 					// sceneRootPath == "..\Scenes\Scene\Folder\Names\":
@@ -222,7 +226,7 @@ namespace en
 				else
 				{
 					LOG_ERROR("Received \"-scene\" token, but no matching scene name");
-					return false;
+					successfulParse = false;
 				}
 				
 				i++; // Consume the token
@@ -230,10 +234,15 @@ namespace en
 			else
 			{
 				LOG_ERROR("\"%s\" is not a recognized command!", currentArg.c_str());
+				successfulParse = false;
 			}
-
 		}
 
-		return true;
+		// Store the received command line string
+		Config::Get()->SetValue("commandLineArgs", argString, Config::SettingType::Runtime);
+
+		SEAssert("Command line argument parsing failed", successfulParse);		
+
+		return successfulParse;
 	}
 }
