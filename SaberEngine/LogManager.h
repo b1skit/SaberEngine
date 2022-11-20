@@ -43,7 +43,7 @@ namespace en
 		/* Templated static functions:
 		----------------------------*/
 		template<typename...Args>
-		inline static void Log(char const* msg, Args... args)
+		inline static void Log(char const* msg, Args&&... args)
 		{
 			const size_t msgLen = strlen(msg);
 
@@ -71,7 +71,7 @@ namespace en
 
 
 		template<typename... Args>
-		inline static void LogWarning(char const* msg, Args&& ... args)
+		inline static void LogWarning(char const* msg, Args&&... args)
 		{
 			const size_t msgLen = strlen(msg);
 			std::unique_ptr<char[]> prefixedMsg;
@@ -98,7 +98,7 @@ namespace en
 
 
 		template<typename... Args>
-		inline static void LogError(char const* msg, Args&& ... args)
+		inline static void LogError(char const* msg, Args&&... args)
 		{
 			const size_t msgLen = strlen(msg);
 			std::unique_ptr<char[]> prefixedMsg;
