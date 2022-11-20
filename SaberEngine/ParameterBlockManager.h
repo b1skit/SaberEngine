@@ -17,11 +17,16 @@ namespace re
 		void UpdateParamBlocks();
 		void EndOfFrame(); // Clears single-frame PBs
 
-		uint64_t RegisterParameterBlock(std::shared_ptr<re::ParameterBlock> pb);
+		ParameterBlock::Handle RegisterParameterBlock(std::shared_ptr<re::ParameterBlock> pb);
 
-		std::unordered_map<uint64_t, std::shared_ptr<re::ParameterBlock const>> const& GetImmutableParamBlocks() const;
-		std::unordered_map<uint64_t, std::shared_ptr<re::ParameterBlock>> const& GetMutableParamBlocks() const;
-		std::shared_ptr<re::ParameterBlock const> const GetParameterBlock(uint64_t pbID) const;
+		std::unordered_map<ParameterBlock::Handle, std::shared_ptr<re::ParameterBlock>> const& GetImmutableParamBlocks() const;
+		std::unordered_map<ParameterBlock::Handle, std::shared_ptr<re::ParameterBlock>> const& GetMutableParamBlocks() const;
+
+		std::shared_ptr<re::ParameterBlock> GetParameterBlock(ParameterBlock::Handle pbID) const;
+
+		template <typename T>
+		void SetData(ParameterBlock::Handle pbID, T const& data);
+
 
 	private:
 		enum class MapType
@@ -32,16 +37,26 @@ namespace re
 			MapType_Count
 		};
 
-		// TODO: Is it optimal to maintain PBs in separate unordered_maps, or should they be combined together?
-		std::unordered_map<uint64_t, std::shared_ptr<re::ParameterBlock const>> m_immutablePBs;
-		std::unordered_map<uint64_t, std::shared_ptr<re::ParameterBlock>> m_mutablePBs;
-		std::unordered_map<uint64_t, std::shared_ptr<re::ParameterBlock>> m_singleFramePBs;
+		std::unordered_map<ParameterBlock::Handle, std::shared_ptr<re::ParameterBlock>> m_immutablePBs;
+		std::unordered_map<ParameterBlock::Handle, std::shared_ptr<re::ParameterBlock>> m_mutablePBs;
+		std::unordered_map<ParameterBlock::Handle, std::shared_ptr<re::ParameterBlock>> m_singleFramePBs;
 
-		std::unordered_map<uint64_t, MapType> m_pbIDToMap;
+		std::unordered_map<ParameterBlock::Handle, MapType> m_pbIDToMap;
 
 	private:
 		ParameterBlockManager(ParameterBlockManager const&) = delete;
 		ParameterBlockManager(ParameterBlockManager&&) = delete;
 		ParameterBlockManager& operator=(ParameterBlockManager const&) = delete;
 	};
+
+
+	template <typename T>
+	void ParameterBlockManager::SetData(ParameterBlock::Handle pbID, T const& data)
+	{
+		std::shared_ptr<ParameterBlock> pb = GetParameterBlock(pbID);
+		SEAssert("Parameter block pointer is null", pb != nullptr);
+		SEAssert("Cannot set data of an immutable param block", 
+			pb->GetUpdateType() != ParameterBlock::UpdateType::Immutable);
+		pb->SetData(data);
+	}
 }

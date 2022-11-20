@@ -7,12 +7,19 @@
 #include "NamedObject.h"
 #include "DebugConfiguration.h"
 
+namespace re
+{
+	class ParameterBlockManager;
+}
 
 namespace re
 {
 	class ParameterBlock : public virtual en::NamedObject
 	{
 	public:
+		typedef uint64_t Handle; // == NamedObject::UniqueID()
+		static const uint64_t k_invalidPBHandle = static_cast<uint64_t>(-1);
+
 		enum class UpdateType
 		{
 			Mutable,	// Data can be updated per frame
@@ -34,27 +41,22 @@ namespace re
 
 		// Create a PB for a single data object (eg. stage parameter block)
 		template<typename T>
-		static std::shared_ptr<re::ParameterBlock> Create(
-			std::string pbName, T const& data, UpdateType updateType, Lifetime lifetime);
+		static Handle Create(std::string pbName, T const& data, UpdateType updateType, Lifetime lifetime);
+
+		template<typename T> 
+		static Handle CreateSingleFrame(std::string pbName, T const& data);
+
 
 		// Create a PB for an array of several objects of the same type (eg. instanced mesh matrices)
 		template<typename T>
-		static std::shared_ptr<re::ParameterBlock> CreateFromArray(
+		static Handle CreateFromArray(
 			std::string pbName, T const* dataArray, size_t dataByteSize, size_t numElements, UpdateType updateType, Lifetime lifetime);
 
-	private:
-		static void Register(std::shared_ptr<re::ParameterBlock> newPB);
-		struct Accessor { explicit Accessor() = default; }; // Prevents direct access to the CTOR
-	public:
-		template <typename T>
-		ParameterBlock(Accessor, std::string pbName, std::shared_ptr<T> dataCopy, size_t dataByteSize, UpdateType updateType, Lifetime lifetime);
+		template<typename T>
+		static Handle CreateFromArraySingleFrame(
+			std::string pbName, T const* dataArray, size_t dataByteSize, size_t numElements);
 
-		~ParameterBlock() { Destroy(); };
 
-		template <typename T>
-		void SetData(T const& data);
-	
-	public:
 		inline void const* const GetData() const { return m_dataCopy.get(); }
 		size_t GetDataSize() const { return m_dataSizeInBytes; }
 
@@ -64,7 +66,21 @@ namespace re
 		bool GetDirty() const { return m_isDirty; }
 		void MarkClean() { m_isDirty = false; }
 
+		~ParameterBlock() { Destroy(); };
+
 		inline platform::ParameterBlock::PlatformParams* const GetPlatformParams() const { return m_platformParams.get(); }
+
+
+	private:
+		template <typename T>
+		void SetData(T const& data); // Called from ParameterBlockManager
+
+		static ParameterBlock::Handle Register(std::shared_ptr<re::ParameterBlock> newPB);
+		struct Accessor { explicit Accessor() = default; }; // Prevents direct access to the CTOR
+	public:
+		template <typename T>
+		ParameterBlock(Accessor, std::string pbName, std::shared_ptr<T> dataCopy, size_t dataByteSize, UpdateType updateType, Lifetime lifetime);
+		
 
 	private:		
 		std::shared_ptr<void> m_dataCopy;
@@ -88,7 +104,9 @@ namespace re
 
 		// Friends:
 		friend void platform::ParameterBlock::PlatformParams::CreatePlatformParams(re::ParameterBlock&);
+		friend class re::ParameterBlockManager;
 	};
+
 
 	// Pseudo-private CTOR: private ParameterBlock::Accessor forces access via one of the Create factories
 	template <typename T>
@@ -109,31 +127,44 @@ namespace re
 
 	// Create a PB for a single data object (eg. stage parameter block)
 	template<typename T>
-	std::shared_ptr<re::ParameterBlock> ParameterBlock::Create(
+	ParameterBlock::Handle ParameterBlock::Create(
 		std::string pbName, T const& data, UpdateType updateType, Lifetime lifetime)
 	{
 		std::shared_ptr<T> dataCopy = std::make_shared<T>(data);
 		std::shared_ptr<re::ParameterBlock> newPB = 
 			make_shared<re::ParameterBlock>(Accessor(), pbName, dataCopy, sizeof(T), updateType, lifetime);
-		Register(newPB);
-		return newPB;
+		return Register(newPB);
+	}
+
+
+	template<typename T>
+	ParameterBlock::Handle ParameterBlock::CreateSingleFrame(std::string pbName, T const& data)
+	{
+		return Create(pbName, data, ParameterBlock::UpdateType::Immutable, ParameterBlock::Lifetime::SingleFrame);
 	}
 
 
 	// Create a PB for an array of several objects of the same type (eg. instanced mesh matrices)
 	template<typename T>
-	static std::shared_ptr<re::ParameterBlock> ParameterBlock::CreateFromArray(
+	static ParameterBlock::Handle ParameterBlock::CreateFromArray(
 		std::string pbName, T const* dataArray, size_t dataByteSize, size_t numElements, UpdateType updateType, Lifetime lifetime)
 	{
 		std::shared_ptr<T> dataCopy(new T[numElements], [](T* t) {delete[] t; });
 		memcpy(dataCopy.get(), dataArray, dataByteSize * numElements);
 
-		std::shared_ptr<re::ParameterBlock> newPB = 
+		std::shared_ptr<re::ParameterBlock> newPB =
 			make_shared<ParameterBlock>(Accessor(), pbName, dataCopy, dataByteSize * numElements, updateType, lifetime);
 
-		Register(newPB);
+		return Register(newPB);
+	}
 
-		return newPB;
+
+	template<typename T>
+	ParameterBlock::Handle ParameterBlock::CreateFromArraySingleFrame(
+		std::string pbName, T const* dataArray, size_t dataByteSize, size_t numElements)
+	{
+		return CreateFromArray(pbName, dataArray, dataByteSize, numElements, 
+			ParameterBlock::UpdateType::Immutable, ParameterBlock::Lifetime::SingleFrame);
 	}
 
 

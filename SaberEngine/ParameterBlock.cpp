@@ -9,9 +9,9 @@ using std::make_shared;
 
 namespace re
 {
-	void ParameterBlock::Register(std::shared_ptr<re::ParameterBlock> newPB)
+	ParameterBlock::Handle ParameterBlock::Register(std::shared_ptr<re::ParameterBlock> newPB)
 	{
-		RenderManager::Get()->GetParameterBlockManager().RegisterParameterBlock(newPB);
+		return RenderManager::Get()->GetParameterBlockManager().RegisterParameterBlock(newPB);
 	}
 
 

@@ -25,12 +25,12 @@ namespace re
 		m_batchFilterMask(0),
 		m_numInstances(1)
 	{
-		m_batchParamBlocks.reserve(k_batchParamBlockIDsReserveAmount);
+		m_paramBlocks.reserve(k_batchParamBlockIDsReserveAmount);
 
 		// Material params:
 		if (material)
 		{
-			m_batchParamBlocks.emplace_back(material->GetParameterBlock());
+			m_paramBlocks.emplace_back(material->GetParameterBlock());
 		}
 		
 		ComputeDataHash();
@@ -85,9 +85,9 @@ namespace re
 		}
 
 		// Parameter blocks:
-		for (size_t i = 0; i < m_batchParamBlocks.size(); i++)
+		for (size_t i = 0; i < m_paramBlocks.size(); i++)
 		{
-			AddDataBytesToHash(m_batchParamBlocks[i]->GetUniqueID());
+			AddDataBytesToHash(m_paramBlocks[i]);
 		}
 
 		// Note: We don't compute hashes for any batch uniforms here; they're appended as they're added to the batch

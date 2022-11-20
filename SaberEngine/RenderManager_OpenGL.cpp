@@ -126,12 +126,16 @@ namespace opengl
 					renderStageParams.m_textureTargetSetConfig.m_targetFace, 
 					renderStageParams.m_textureTargetSetConfig.m_targetMip, 
 					true);
-				stageShader->SetParameterBlock(*stageTargets.GetTargetParameterBlock().get());
+				stageShader->SetParameterBlock(stageTargets.GetTargetParameterBlock());
 
 				// Set stage param blocks:
-				for (std::shared_ptr<re::ParameterBlock const> renderStagePB : renderStage->GetPermanentParameterBlocks())
+				for (re::ParameterBlock::Handle renderStagePermPB : renderStage->GetPermanentParameterBlocks())
 				{
-					stageShader->SetParameterBlock(*renderStagePB.get());
+					stageShader->SetParameterBlock(renderStagePermPB);
+				}
+				for (re::ParameterBlock::Handle renderStagePB : renderStage->GetPerFrameParameterBlocks())
+				{
+					stageShader->SetParameterBlock(renderStagePB);
 				}
 
 				// Set per-frame stage shader uniforms:
@@ -147,7 +151,7 @@ namespace opengl
 				Camera const* const stageCam = renderStage->GetStageCamera();
 				if (stageCam)
 				{
-					stageShader->SetParameterBlock(*stageCam->GetCameraParams().get());
+					stageShader->SetParameterBlock(stageCam->GetCameraParams());
 				}
 
 				// Configure the context:
@@ -178,10 +182,10 @@ namespace opengl
 					}
 
 					// Batch parameter blocks:
-					vector<shared_ptr<re::ParameterBlock const>> const& batchPBs = batch.GetBatchParameterBlocks();
-					for (shared_ptr<re::ParameterBlock const> batchPB : batchPBs)
+					vector<re::ParameterBlock::Handle> const& batchPBs = batch.GetBatchParameterBlocks();
+					for (re::ParameterBlock::Handle batchPBHandle : batchPBs)
 					{
-						stageShader->SetParameterBlock(*batchPB.get());
+						stageShader->SetParameterBlock(batchPBHandle);
 					}
 
 					// Batch uniforms:
