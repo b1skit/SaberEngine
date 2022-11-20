@@ -359,9 +359,6 @@ namespace opengl
 		opengl::Shader::PlatformParams const* const shaderPlatformParams =
 			dynamic_cast<opengl::Shader::PlatformParams const* const>(shader.GetPlatformParams());
 
-		opengl::ParameterBlock::PlatformParams const* const paramBlockPlatformParams = 
-			dynamic_cast<opengl::ParameterBlock::PlatformParams const* const>(paramBlock.GetPlatformParams());
-
 		// Track if the current shader is bound or not, so we can set values without breaking the current state
 		GLint currentProgram = 0;
 		bool isBound = true;
