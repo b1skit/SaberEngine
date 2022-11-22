@@ -179,8 +179,13 @@ namespace re
 			}
 
 			// Construct PB of model transform matrices:
-			ParameterBlock::Handle instancedMeshParams = ParameterBlock::CreateFromArraySingleFrame(
-				"InstancedMeshParams", modelMatrices.data(), sizeof(mat4), numInstances);
+			shared_ptr<ParameterBlock> instancedMeshParams = ParameterBlock::CreateFromArray(
+				"InstancedMeshParams",
+				modelMatrices.data(),
+				sizeof(mat4),
+				numInstances,
+				ParameterBlock::UpdateType::Immutable,
+				ParameterBlock::Lifetime::SingleFrame);
 			// TODO: We're currently creating/destroying these parameter blocks each frame. This is expensive. Instead,
 			// we should create a pool of PBs, and reuse by re-buffering data each frame
 

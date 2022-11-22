@@ -5,7 +5,6 @@
 
 #include "HashedDataObject.h"
 #include "Shader_Platform.h"
-#include "ParameterBlock.h"
 
 
 namespace gr
@@ -67,12 +66,13 @@ namespace re
 
 		inline size_t GetInstanceCount() const { return m_numInstances; }
 
-		inline void AddBatchParameterBlock(re::ParameterBlock::Handle pb) { m_paramBlocks.emplace_back(pb); }
-		inline std::vector<re::ParameterBlock::Handle> const& GetBatchParameterBlocks() const { return m_paramBlocks; }
+		inline void AddBatchParameterBlock(std::shared_ptr<re::ParameterBlock const> paramBlock) 
+			{ m_batchParamBlocks.emplace_back(paramBlock); }
+		inline std::vector<std::shared_ptr<re::ParameterBlock const>> const& GetBatchParameterBlocks() const 
+			{ return m_batchParamBlocks; }
 
 		template <typename T>
-		void AddBatchUniform(
-			std::string const& uniformName, T const& value, platform::Shader::UniformType const& type, int const count);
+		void AddBatchUniform(std::string const& uniformName, T const& value, platform::Shader::UniformType const& type, int const count);
 		inline std::vector<Batch::ShaderUniform> const& GetBatchUniforms() const { return m_batchUniforms; }
 
 		inline uint32_t GetBatchFilterMask() const { return m_batchFilterMask; }
@@ -88,7 +88,7 @@ namespace re
 		gr::Material const* m_batchMaterial;
 		gr::Shader const* m_batchShader;
 
-		std::vector<re::ParameterBlock::Handle> m_paramBlocks;
+		std::vector<std::shared_ptr<re::ParameterBlock const>> m_batchParamBlocks;
 
 		std::vector<Batch::ShaderUniform> m_batchUniforms;
 

@@ -89,8 +89,8 @@ namespace gr
 		inline std::shared_ptr<gr::Shader>& GetShader()	{ return m_shader; }
 		inline std::shared_ptr<gr::Shader> const& GetShader() const { return m_shader; }
 
-		inline re::ParameterBlock::Handle& GetParameterBlock() { return m_matParams; }
-		inline re::ParameterBlock::Handle GetParameterBlock() const { return m_matParams; }
+		inline std::shared_ptr<re::ParameterBlock const>& GetParameterBlock() { return m_matParams; }
+		inline std::shared_ptr<re::ParameterBlock const> const GetParameterBlock() const { return m_matParams; }
 
 		inline std::shared_ptr<gr::Texture>& GetTexture(uint32_t slotIndex) { return m_texSlots[slotIndex].m_texture; }
 		inline std::shared_ptr<gr::Texture> const GetTexture(uint32_t slotIndex) const { return m_texSlots[slotIndex].m_texture; }
@@ -106,7 +106,7 @@ namespace gr
 		std::vector<TextureSlotDesc> m_texSlots;
 		std::unordered_map<std::string, uint32_t> m_namesToSlotIndex;
 		std::shared_ptr<gr::Shader> m_shader;
-		re::ParameterBlock::Handle m_matParams;
+		std::shared_ptr<re::ParameterBlock const> m_matParams;
 	};
 }
 

@@ -37,8 +37,7 @@ namespace gr
 		m_perFrameShaderUniforms = vector<StageShaderUniform>(rhs.m_perFrameShaderUniforms);
 		m_perFrameShaderUniformValues = rhs.m_perFrameShaderUniformValues;
 
-		m_perFrameParamBlocks = rhs.m_perFrameParamBlocks;
-		m_permanentParamBlocks = rhs.m_permanentParamBlocks;
+		m_stageParamBlocks = rhs.m_stageParamBlocks;
 
 		m_stageBatches = rhs.m_stageBatches;
 	}
@@ -104,7 +103,6 @@ namespace gr
 	{
 		m_perFrameShaderUniforms.clear();
 		m_perFrameShaderUniformValues.clear();
-		m_perFrameParamBlocks.clear();
 		m_stageBatches.clear();
 	}
 
@@ -145,14 +143,20 @@ namespace gr
 	}
 
 
-	void RenderStage::AddPermanentParameterBlock(re::ParameterBlock::Handle pb)
-	{ 
-		m_permanentParamBlocks.emplace_back(pb);
-	}
-
-
-	void RenderStage::AddPerFrameParameterBlock(re::ParameterBlock::Handle pb)
+	std::shared_ptr<re::ParameterBlock> RenderStage::GetPermanentParameterBlock(std::string const& pbShaderName) const
 	{
-		m_perFrameParamBlocks.emplace_back(pb);
+		const uint64_t hashedName = en::NamedObject::ComputeIDFromName(pbShaderName);
+
+		// TODO: This should not be a linear search. We should use an unordered_map instead
+		for (size_t i = 0; i < m_stageParamBlocks.size(); i++)
+		{
+			if (m_stageParamBlocks[i]->GetNameID() == hashedName)
+			{
+				return m_stageParamBlocks[i];
+			}
+		}
+
+		SEAssertF("Could not find a parameter block with the given shader name");
+		return nullptr;
 	}
 }

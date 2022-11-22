@@ -33,7 +33,7 @@ namespace gr
 			platform::Shader::UniformType const type, 
 			int count) const;
 
-		void SetParameterBlock(re::ParameterBlock::Handle parambBlock) const;
+		void SetParameterBlock(re::ParameterBlock const& parambBlock) const;
 			
 		// Helper: Simultaneously calls SetUniform for the texture and sampler
 		void SetTextureSamplerUniform(

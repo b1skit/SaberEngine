@@ -318,7 +318,11 @@ namespace gr
 				
 				// Construct a camera param block to draw into our cubemap rendering targets:
 				cubemapCamParams.g_view = cubemapViews[face];
-				re::ParameterBlock::Handle pb = re::ParameterBlock::CreateSingleFrame("CameraParams", cubemapCamParams);
+				shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
+					"CameraParams",
+					cubemapCamParams,
+					re::ParameterBlock::UpdateType::Immutable,
+					re::ParameterBlock::Lifetime::SingleFrame);
 				iemStage.AddPermanentParameterBlock(pb);
 
 				iemStage.GetTextureTargetSet().ColorTarget(0) = m_IEMTex;
@@ -373,8 +377,11 @@ namespace gr
 					
 					// Construct a camera param block to draw into our cubemap rendering targets:
 					cubemapCamParams.g_view = cubemapViews[face];
-					re::ParameterBlock::Handle pb = 
-						re::ParameterBlock::CreateSingleFrame("CameraParams", cubemapCamParams);
+					shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
+						"CameraParams",
+						cubemapCamParams,
+						re::ParameterBlock::UpdateType::Immutable,
+						re::ParameterBlock::Lifetime::SingleFrame);
 					pmremStage.AddPermanentParameterBlock(pb);
 
 					const float roughness = (float)currentMipLevel / (float)(numMipLevels - 1);
@@ -406,7 +413,7 @@ namespace gr
 
 		// Ambient parameters:		
 		AmbientLightParams ambientLightParams = GetAmbientLightParamData();
-		re::ParameterBlock::Handle ambientLightPB = re::ParameterBlock::Create(
+		std::shared_ptr<re::ParameterBlock> ambientLightPB = re::ParameterBlock::Create(
 			"AmbientLightParams",
 			ambientLightParams,
 			re::ParameterBlock::UpdateType::Immutable,
@@ -594,8 +601,11 @@ namespace gr
 			Batch keylightFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
 
 			LightParams keylightParams = GetLightParamData(keyLight);
-			re::ParameterBlock::Handle keylightPB = 
-				re::ParameterBlock::CreateSingleFrame("LightParams", keylightParams);
+			shared_ptr<re::ParameterBlock> keylightPB = re::ParameterBlock::Create(
+				"LightParams",
+				keylightParams,
+				re::ParameterBlock::UpdateType::Immutable,
+				re::ParameterBlock::Lifetime::SingleFrame);
 
 			keylightFullscreenQuadBatch.AddBatchParameterBlock(keylightPB);
 
@@ -611,14 +621,20 @@ namespace gr
 
 			// Point light params:
 			LightParams pointlightParams = GetLightParamData(pointLights[i]);
-			re::ParameterBlock::Handle pointlightPB = 
-				re::ParameterBlock::CreateSingleFrame("LightParams", pointlightParams);
+			shared_ptr<re::ParameterBlock> pointlightPB = re::ParameterBlock::Create(
+				"LightParams", 
+				pointlightParams, 
+				re::ParameterBlock::UpdateType::Immutable, 
+				re::ParameterBlock::Lifetime::SingleFrame);
 
 			pointlightBatch.AddBatchParameterBlock(pointlightPB);
 
 			// Point light mesh params:
-			re::ParameterBlock::Handle pointlightMeshParams = ParameterBlock::CreateSingleFrame(
-				"InstancedMeshParams", m_sphereMeshes[i]->GetTransform()->GetGlobalMatrix(Transform::TRS));
+			shared_ptr<ParameterBlock> pointlightMeshParams = ParameterBlock::Create(
+				"InstancedMeshParams",
+				m_sphereMeshes[i]->GetTransform()->GetGlobalMatrix(Transform::TRS),
+				ParameterBlock::UpdateType::Immutable,
+				ParameterBlock::Lifetime::SingleFrame);
 
 			pointlightBatch.AddBatchParameterBlock(pointlightMeshParams);
 

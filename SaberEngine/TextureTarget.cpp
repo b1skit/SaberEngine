@@ -1,6 +1,5 @@
 #include "TextureTarget.h"
 #include "Config.h"
-#include "RenderManager.h"
 
 using en::Config;
 using std::string;
@@ -69,7 +68,7 @@ namespace gr
 			NamedObject(name),
 		m_targetStateDirty(true),
 		m_hasTargets(false),
-		m_targetParameterBlock(re::ParameterBlock::k_invalidPBHandle),
+		m_targetParameterBlock(nullptr),
 		m_colorIsCreated(false),
 		m_depthIsCreated(false)
 	{
@@ -252,7 +251,7 @@ namespace gr
 		targetParams.g_targetResolution = targetDimensions;
 
 		// Create the PB if required, or update it otherwise
-		if (m_targetParameterBlock == re::ParameterBlock::k_invalidPBHandle)
+		if (m_targetParameterBlock == nullptr)
 		{
 			m_targetParameterBlock = re::ParameterBlock::Create(
 				"RenderTargetParams", 
@@ -262,7 +261,7 @@ namespace gr
 		}
 		else
 		{
-			re::RenderManager::Get()->GetParameterBlockManager().SetData(m_targetParameterBlock, targetParams);
+			m_targetParameterBlock->SetData(targetParams);
 		}
 	}
 }

@@ -4,7 +4,6 @@
 #include "DebugConfiguration.h"
 #include "Shader.h"
 #include "ParameterBlock.h"
-#include "RenderManager.h"
 
 using gr::Shader;
 using gr::Texture;
@@ -65,7 +64,7 @@ namespace gr
 			NamedObject(name),
 		m_texSlots(matDefinition->m_textureSlots),
 		m_shader(matDefinition->m_shader),
-		m_matParams(re::ParameterBlock::k_invalidPBHandle)
+		m_matParams(nullptr)
 	{
 		// Build a map from shader sampler name, to texture slot index:
 		for (size_t i = 0; i < m_texSlots.size(); i++)
@@ -97,9 +96,9 @@ namespace gr
 			}
 		}
 
-		if (m_matParams != re::ParameterBlock::k_invalidPBHandle)
+		if (m_matParams)
 		{
-			shader->SetParameterBlock(m_matParams);
+			shader->SetParameterBlock(*m_matParams.get());
 		}
 	}
 

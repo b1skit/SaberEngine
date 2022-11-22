@@ -1,7 +1,6 @@
 #include "Shader.h"
 #include "Shader_Platform.h"
 #include "DebugConfiguration.h"
-#include "RenderManager.h"
 
 using std::string;
 using std::vector;
@@ -55,11 +54,8 @@ namespace gr
 	}
 
 
-	void Shader::SetParameterBlock(re::ParameterBlock::Handle parambBlock) const
+	void Shader::SetParameterBlock(re::ParameterBlock const& paramBlock) const
 	{
-		SEAssert("Invalid parameter block handle", parambBlock != re::ParameterBlock::k_invalidPBHandle);
-		shared_ptr<re::ParameterBlock const> pb =
-			re::RenderManager::Get()->GetParameterBlockManager().GetParameterBlock(parambBlock);
-		platform::Shader::SetParameterBlock(*this, *pb);
+		platform::Shader::SetParameterBlock(*this, paramBlock);
 	}
 }

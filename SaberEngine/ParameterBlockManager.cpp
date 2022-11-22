@@ -10,14 +10,12 @@ using std::shared_ptr;
 
 namespace re
 {
-	ParameterBlock::Handle ParameterBlockManager::RegisterParameterBlock(std::shared_ptr<re::ParameterBlock> pb)
+	uint64_t ParameterBlockManager::RegisterParameterBlock(std::shared_ptr<re::ParameterBlock> pb)
 	{
 		MapType mapType;
 		if (pb->GetLifetime() == re::ParameterBlock::Lifetime::SingleFrame)
 		{
 			SEAssert("Parameter block is already registered", !m_singleFramePBs.contains(pb->GetUniqueID()));
-			SEAssert("Single frame parameter block is marked as mutable, this doesn't make sense", 
-				pb->GetUpdateType() != ParameterBlock::UpdateType::Mutable);
 			m_singleFramePBs[pb->GetUniqueID()] = pb;
 			mapType = MapType::SingleFrame;
 		}
@@ -52,19 +50,19 @@ namespace re
 	}
 
 
-	unordered_map<ParameterBlock::Handle, shared_ptr<ParameterBlock>> const& ParameterBlockManager::GetImmutableParamBlocks() const
+	unordered_map<uint64_t, shared_ptr<ParameterBlock const>> const& ParameterBlockManager::GetImmutableParamBlocks() const
 	{
 		return m_immutablePBs;
 	}
 
 
-	unordered_map<ParameterBlock::Handle, shared_ptr<ParameterBlock>> const& ParameterBlockManager::GetMutableParamBlocks() const
+	unordered_map<uint64_t, shared_ptr<ParameterBlock>> const& ParameterBlockManager::GetMutableParamBlocks() const
 	{
 		return m_mutablePBs;
 	}
 
 
-	shared_ptr<ParameterBlock> ParameterBlockManager::GetParameterBlock(ParameterBlock::Handle pbID) const
+	shared_ptr<ParameterBlock const> const ParameterBlockManager::GetParameterBlock(uint64_t pbID) const
 	{
 		auto result = m_pbIDToMap.find(pbID);
 		SEAssert("Parameter block not found", result != m_pbIDToMap.end());

@@ -96,7 +96,7 @@ namespace gr
 
 		void SetCameraConfig(CameraConfig const& newConfig);
 
-		inline re::ParameterBlock::Handle GetCameraParams() const {return m_cameraParamBlock; }
+		inline std::shared_ptr<re::ParameterBlock> GetCameraParams() const {return m_cameraParamBlock; }
 
 	private:
 		// Helper function: Configures the camera based on the cameraConfig. MUST be called at least once during setup
@@ -114,7 +114,7 @@ namespace gr
 		std::vector<glm::mat4> m_cubeView;
 		std::vector<glm::mat4> m_cubeViewProjection;
 
-		re::ParameterBlock::Handle m_cameraParamBlock;
+		std::shared_ptr<re::ParameterBlock> m_cameraParamBlock;
 		CameraParams m_cameraPBData;
 
 	private:

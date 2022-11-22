@@ -110,7 +110,7 @@ namespace gr
 		inline platform::TextureTargetSet::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
 		inline platform::TextureTargetSet::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
 		
-		inline re::ParameterBlock::Handle GetTargetParameterBlock() const { return m_targetParameterBlock; }
+		inline std::shared_ptr<re::ParameterBlock> GetTargetParameterBlock() const { return m_targetParameterBlock; }
 
 		bool HasTargets();
 
@@ -134,7 +134,7 @@ namespace gr
 
 		std::shared_ptr<platform::TextureTargetSet::PlatformParams> m_platformParams;
 
-		re::ParameterBlock::Handle m_targetParameterBlock;
+		std::shared_ptr<re::ParameterBlock> m_targetParameterBlock;
 
 		bool m_colorIsCreated;
 		bool m_depthIsCreated;

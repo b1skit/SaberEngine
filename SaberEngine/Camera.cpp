@@ -4,7 +4,6 @@
 #include "Camera.h"
 #include "Texture.h"
 #include "Material.h"
-#include "RenderManager.h"
 
 using gr::Material;
 using gr::Texture;
@@ -19,7 +18,6 @@ namespace gr
 {
 	Camera::Camera(string const& cameraName, CameraConfig const& camConfig, Transform* parent)
 		: NamedObject(cameraName)
-		, m_cameraParamBlock(re::ParameterBlock::k_invalidPBHandle)
 		, m_cameraConfig(camConfig)
 	{
 		m_transform.SetParent(parent);
@@ -58,7 +56,7 @@ namespace gr
 
 		m_cameraPBData.g_cameraWPos = GetTransform()->GetGlobalPosition();
 
-		re::RenderManager::Get()->GetParameterBlockManager().SetData(m_cameraParamBlock, m_cameraPBData);
+		m_cameraParamBlock->SetData(m_cameraPBData);
 
 		// TODO: It's possible to update the camera params multiple times in a frame if SetCameraConfig is called by
 		// another object in the Updateable list.
