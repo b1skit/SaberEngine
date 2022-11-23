@@ -154,7 +154,6 @@ namespace en
 	void EventManager::Subscribe(EventType eventType, EventListener* listener)
 	{
 		m_eventListeners[eventType].push_back(listener);
-		return;
 	}
 
 

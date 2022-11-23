@@ -56,7 +56,7 @@ namespace gr
 
 		m_cameraPBData.g_cameraWPos = GetTransform()->GetGlobalPosition();
 
-		m_cameraParamBlock->SetData(m_cameraPBData);
+		m_cameraParamBlock->Commit(m_cameraPBData);
 
 		// TODO: It's possible to update the camera params multiple times in a frame if SetCameraConfig is called by
 		// another object in the Updateable list.

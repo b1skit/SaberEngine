@@ -63,8 +63,6 @@ namespace en
 		RenderManager::Get()->Initialize();
 
 		m_isRunning = true;
-
-		return;
 	}
 
 
@@ -132,8 +130,6 @@ namespace en
 		SceneManager::Get()->Shutdown();
 		EventManager::Get()->Shutdown();
 		m_logManager->Shutdown();
-
-		return;
 	}
 
 	

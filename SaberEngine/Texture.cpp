@@ -32,8 +32,6 @@ namespace gr
 		platform::Texture::Create(*this);
 		m_isDirty = false;
 		m_isCreated = true;
-
-		return;
 	}
 
 

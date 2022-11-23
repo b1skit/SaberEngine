@@ -165,7 +165,7 @@ namespace gr
 
 			CubemapShadowRenderParams cubemapShadowParams = GetCubemapShadowRenderParamsData(shadowCam);
 
-			shadowParams->SetData(cubemapShadowParams);
+			shadowParams->Commit(cubemapShadowParams);
 		}
 	}
 

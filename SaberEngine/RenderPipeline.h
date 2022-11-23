@@ -12,13 +12,12 @@ namespace re
 	{
 	public:
 		StagePipeline(std::string name) : NamedObject(name) {};
-		
-		~StagePipeline() = default;
+
 		StagePipeline(StagePipeline&&) = default;
 
-		StagePipeline() = delete;
-		StagePipeline(StagePipeline const&) = delete;
-		StagePipeline& operator=(StagePipeline const&) = delete;
+		~StagePipeline() { Destroy(); };
+
+		void Destroy();
 
 		std::vector<gr::RenderStage const*>::iterator AppendRenderStage(gr::RenderStage const& renderStage);
 		std::vector<gr::RenderStage>::iterator AppendSingleFrameRenderStage(gr::RenderStage const& renderStage);
@@ -36,6 +35,11 @@ namespace re
 	private:
 		std::vector<gr::RenderStage const*> m_stagePipeline;
 		std::vector<gr::RenderStage> m_singleFrameStagePipeline;
+
+	private:
+		StagePipeline() = delete;
+		StagePipeline(StagePipeline const&) = delete;
+		StagePipeline& operator=(StagePipeline const&) = delete;
 	};
 
 
@@ -43,12 +47,9 @@ namespace re
 	{
 	public:	
 		RenderPipeline(std::string const& name) : NamedObject(name) {}
-		~RenderPipeline() = default;
+		~RenderPipeline() { Destroy(); };
 
-		RenderPipeline() = delete;
-		RenderPipeline(RenderPipeline const&) = delete;
-		RenderPipeline(RenderPipeline&&) = delete;
-		RenderPipeline& operator=(RenderPipeline const&) = delete;
+		void Destroy();
 
 		StagePipeline& AddNewStagePipeline(std::string stagePipelineName);
 
@@ -56,8 +57,6 @@ namespace re
 		std::vector<StagePipeline> const& GetPipeline() const { return m_pipeline; }
 
 		inline size_t GetNumberGraphicsSystems() const { return m_pipeline.size(); }
-		/*inline size_t GetNumberOfGraphicsSystemStages(size_t gsIndex) const 
-			{ return m_pipeline[gsIndex].GetNumberOfStages(); }*/
 
 
 	private:
@@ -70,5 +69,12 @@ namespace re
 		//   |
 		//   *
 		std::vector<StagePipeline> m_pipeline;
+
+
+	private:
+		RenderPipeline() = delete;
+		RenderPipeline(RenderPipeline const&) = delete;
+		RenderPipeline(RenderPipeline&&) = delete;
+		RenderPipeline& operator=(RenderPipeline const&) = delete;
 	};
 }

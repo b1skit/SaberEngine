@@ -18,10 +18,14 @@ namespace opengl
 		// RenderDoc label:
 		glObjectLabel(GL_BUFFER, params->m_ssbo, -1, paramBlock.GetName().c_str());
 
+		void* data;
+		size_t numBytes;
+		paramBlock.GetDataAndSize(data, numBytes);
+
 		// Buffer the data:
 		glBufferData(GL_SHADER_STORAGE_BUFFER, 
-			(GLsizeiptr)paramBlock.GetDataSize(), 
-			paramBlock.GetData(), 
+			(GLsizeiptr)numBytes,
+			data,
 			GL_STATIC_DRAW);
 
 		paramBlock.MarkClean();
@@ -33,7 +37,11 @@ namespace opengl
 		PlatformParams* const params =
 			dynamic_cast<opengl::ParameterBlock::PlatformParams* const>(paramBlock.GetPlatformParams());
 
-		glNamedBufferSubData(params->m_ssbo, 0, (GLsizeiptr)paramBlock.GetDataSize(), paramBlock.GetData());
+		void* data;
+		size_t numBytes;
+		paramBlock.GetDataAndSize(data, numBytes);
+
+		glNamedBufferSubData(params->m_ssbo, 0, (GLsizeiptr)numBytes, data);
 
 		paramBlock.MarkClean();
 	}

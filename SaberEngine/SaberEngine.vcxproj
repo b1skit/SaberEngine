@@ -181,7 +181,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="Bounds.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ParameterBlock.cpp" />
-    <ClCompile Include="ParameterBlockManager.cpp" />
+    <ClCompile Include="ParameterBlockAllocator.cpp" />
     <ClCompile Include="ParameterBlock_OpenGL.cpp" />
     <ClCompile Include="ParameterBlock_Platform.cpp" />
     <ClCompile Include="PerformanceTimer.cpp" />
@@ -249,7 +249,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="Bounds.h" />
     <ClInclude Include="HashedDataObject.h" />
     <ClInclude Include="ParameterBlock.h" />
-    <ClInclude Include="ParameterBlockManager.h" />
+    <ClInclude Include="ParameterBlockAllocator.h" />
     <ClInclude Include="ParameterBlock_OpenGL.h" />
     <ClInclude Include="ParameterBlock_Platform.h" />
     <ClInclude Include="PerformanceTimer.h" />

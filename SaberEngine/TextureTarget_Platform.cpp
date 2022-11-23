@@ -32,8 +32,6 @@ namespace platform
 			SEAssertF("Invalid rendering API argument received");
 		}
 		}
-
-		return;
 	}
 
 
@@ -58,8 +56,6 @@ namespace platform
 			SEAssertF("Invalid rendering API argument received");
 		}
 		}
-
-		return;
 	}
 
 

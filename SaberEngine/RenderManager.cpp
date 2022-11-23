@@ -60,6 +60,16 @@ namespace re
 
 	RenderManager::~RenderManager()
 	{
+		m_pipeline.Destroy();
+		m_graphicsSystems.clear();
+		m_sceneBatches.clear();
+
+		m_defaultTargetSet = nullptr;
+
+		// NOTE: We must destroy anything that holds a parameter block before the ParameterBlockAllocator is destroyed, 
+		// as parameter blocks call the ParameterBlockAllocator in their destructor
+		m_paramBlockManager.Destroy();
+
 		// Do this in the destructor so we can still read any final OpenGL error messages before it is destroyed
 		m_context.Destroy();
 	}

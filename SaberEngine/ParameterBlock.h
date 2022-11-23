@@ -37,27 +37,26 @@ namespace re
 		static std::shared_ptr<re::ParameterBlock> Create(
 			std::string pbName, T const& data, UpdateType updateType, Lifetime lifetime);
 
+		
 		// Create a PB for an array of several objects of the same type (eg. instanced mesh matrices)
 		template<typename T>
 		static std::shared_ptr<re::ParameterBlock> CreateFromArray(
 			std::string pbName, T const* dataArray, size_t dataByteSize, size_t numElements, UpdateType updateType, Lifetime lifetime);
 
+
 	private:
-		static void Register(std::shared_ptr<re::ParameterBlock> newPB);
 		struct Accessor { explicit Accessor() = default; }; // Prevents direct access to the CTOR
 	public:
-		template <typename T>
-		ParameterBlock(Accessor, std::string pbName, std::shared_ptr<T> dataCopy, size_t dataByteSize, UpdateType updateType, Lifetime lifetime);
+		ParameterBlock(Accessor, size_t typeIDHashCode, std::string pbName, UpdateType updateType, Lifetime lifetime);
 
 		~ParameterBlock() { Destroy(); };
 
-		template <typename T>
-		void SetData(T const& data);
-	
 	public:
-		inline void const* const GetData() const { return m_dataCopy.get(); }
-		size_t GetDataSize() const { return m_dataSizeInBytes; }
-
+		template <typename T>
+		void Commit(T const& data);
+	
+		void GetDataAndSize(void*& out_data, size_t& out_numBytes);
+	
 		inline UpdateType GetUpdateType() const { return m_updateType; }
 		inline Lifetime GetLifetime() const { return m_lifetime; }
 
@@ -67,18 +66,22 @@ namespace re
 		inline platform::ParameterBlock::PlatformParams* const GetPlatformParams() const { return m_platformParams.get(); }
 
 	private:		
-		std::shared_ptr<void> m_dataCopy;
-		const size_t m_dataSizeInBytes;
-		uint64_t m_typeIDHashCode; // Hash of the typeid(T) at Create: Used to verify data type doesn't change
-
-		const UpdateType m_updateType;
-		bool m_isDirty;
+		uint64_t m_typeIDHash; // Hash of the typeid(T) at Create: Used to verify committed data types don't change
 
 		const Lifetime m_lifetime;
+		const UpdateType m_updateType;
+
+		bool m_isDirty;
 
 		std::unique_ptr<platform::ParameterBlock::PlatformParams> m_platformParams;
 		
+
+	private:
+		static void RegisterAndCommit(std::shared_ptr<re::ParameterBlock> newPB, void const* data, size_t numBytes);
+		void CommitInternal(void const* data, uint64_t typeIDHash);
+
 		void Destroy();
+
 
 	private:
 		ParameterBlock() = delete;
@@ -90,32 +93,17 @@ namespace re
 		friend void platform::ParameterBlock::PlatformParams::CreatePlatformParams(re::ParameterBlock&);
 	};
 
-	// Pseudo-private CTOR: private ParameterBlock::Accessor forces access via one of the Create factories
-	template <typename T>
-	ParameterBlock::ParameterBlock(
-		ParameterBlock::Accessor, std::string pbName, std::shared_ptr<T> dataCopy, size_t dataByteSize, UpdateType updateType, Lifetime lifetime)
-		: NamedObject(pbName)
-		, m_dataCopy(dataCopy)
-		, m_dataSizeInBytes(dataByteSize)
-		, m_typeIDHashCode(typeid(T).hash_code())
-		, m_updateType(updateType)
-		, m_isDirty(true)
-		, m_lifetime(lifetime)
-	{
-		platform::ParameterBlock::PlatformParams::CreatePlatformParams(*this);
-		platform::ParameterBlock::Create(*this);
-	}
-
 
 	// Create a PB for a single data object (eg. stage parameter block)
 	template<typename T>
 	std::shared_ptr<re::ParameterBlock> ParameterBlock::Create(
 		std::string pbName, T const& data, UpdateType updateType, Lifetime lifetime)
 	{
-		std::shared_ptr<T> dataCopy = std::make_shared<T>(data);
-		std::shared_ptr<re::ParameterBlock> newPB = 
-			make_shared<re::ParameterBlock>(Accessor(), pbName, dataCopy, sizeof(T), updateType, lifetime);
-		Register(newPB);
+		std::shared_ptr<re::ParameterBlock> newPB =
+			make_shared<re::ParameterBlock>(Accessor(), typeid(T).hash_code(), pbName, updateType, lifetime);
+
+		RegisterAndCommit(newPB, &data, sizeof(T));
+
 		return newPB;
 	}
 
@@ -125,26 +113,18 @@ namespace re
 	static std::shared_ptr<re::ParameterBlock> ParameterBlock::CreateFromArray(
 		std::string pbName, T const* dataArray, size_t dataByteSize, size_t numElements, UpdateType updateType, Lifetime lifetime)
 	{
-		std::shared_ptr<T> dataCopy(new T[numElements], [](T* t) {delete[] t; });
-		memcpy(dataCopy.get(), dataArray, dataByteSize * numElements);
+		std::shared_ptr<re::ParameterBlock> newPB =
+			make_shared<ParameterBlock>(Accessor(), typeid(T).hash_code(), pbName, updateType, lifetime);
 
-		std::shared_ptr<re::ParameterBlock> newPB = 
-			make_shared<ParameterBlock>(Accessor(), pbName, dataCopy, dataByteSize * numElements, updateType, lifetime);
-
-		Register(newPB);
+		RegisterAndCommit(newPB, dataArray, dataByteSize * numElements);
 
 		return newPB;
 	}
 
 
 	template <typename T>
-	void ParameterBlock::SetData(T const& data)
+	void ParameterBlock::Commit(T const& data)
 	{
-		SEAssert("Invalid type detected. Can only set data of the original type",
-			typeid(T).hash_code() == m_typeIDHashCode);
-		SEAssert("Cannot set data of an immutable param block", m_updateType != UpdateType::Immutable);
-
-		m_dataCopy = std::make_shared<T>(data);
-		m_isDirty = true;
+		CommitInternal(&data, typeid(T).hash_code());
 	}
 }

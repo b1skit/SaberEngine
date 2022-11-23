@@ -261,7 +261,7 @@ namespace gr
 		}
 		else
 		{
-			m_targetParameterBlock->SetData(targetParams);
+			m_targetParameterBlock->Commit(targetParams);
 		}
 	}
 }

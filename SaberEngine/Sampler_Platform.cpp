@@ -33,8 +33,6 @@ namespace platform
 			SEAssertF("Invalid rendering API argument received");
 		}
 		}
-
-		return;
 	}
 
 	void (*Sampler::Create)(gr::Sampler&);

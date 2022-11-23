@@ -46,11 +46,24 @@ namespace re
 	}
 
 
+	void StagePipeline::Destroy()
+	{
+		m_stagePipeline.clear();
+		m_singleFrameStagePipeline.clear();
+	}
+
+
 	/******************************************** RenderPipeline********************************************/
 
 	StagePipeline& RenderPipeline::AddNewStagePipeline(std::string stagePipelineName)
 	{ 
 		m_pipeline.emplace_back(stagePipelineName); 
 		return m_pipeline.back();
-	}	
+	}
+
+
+	void RenderPipeline::Destroy()
+	{
+		m_pipeline.clear();
+	}
 }

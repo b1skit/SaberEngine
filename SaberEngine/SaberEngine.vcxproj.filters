@@ -233,7 +233,7 @@
     <ClCompile Include="ParameterBlock_OpenGL.cpp">
       <Filter>Source Files\re\platform\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="ParameterBlockManager.cpp">
+    <ClCompile Include="ParameterBlockAllocator.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
     <ClCompile Include="Batch.cpp">
@@ -445,7 +445,7 @@
     <ClInclude Include="Updateable.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
-    <ClInclude Include="ParameterBlockManager.h">
+    <ClInclude Include="ParameterBlockAllocator.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
     <ClInclude Include="Batch.h">
