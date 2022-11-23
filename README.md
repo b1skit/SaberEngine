@@ -121,3 +121,5 @@ Recommended Visual Studio extensions:
 - Editor Guidelines
 - GLSL Language Integration: https://github.com/danielscherzer/GLSL
 - Beyond Compare
+
+© 2022 Adam Badke. All rights reserved.
