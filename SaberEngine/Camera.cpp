@@ -22,13 +22,6 @@ namespace gr
 	{
 		m_transform.SetParent(parent);
 
-		// Initialize the param block pointer first:
-		m_cameraParamBlock = re::ParameterBlock::Create(
-			"CameraParams",
-			m_cameraPBData, // Initialize with a default struct: Updated in UpdateCameraParamBlockData()
-			re::ParameterBlock::UpdateType::Mutable,
-			re::ParameterBlock::Lifetime::Permanent);
-
 		Initialize();
 	}
 
@@ -41,6 +34,8 @@ namespace gr
 
 	void Camera::UpdateCameraParamBlockData()
 	{
+		SEAssert("Camera parameter block has not been initialized yet", m_cameraParamBlock != nullptr);
+
 		m_cameraPBData.g_view = GetViewMatrix();
 		m_cameraPBData.g_invView = GetInverseViewMatrix();
 
@@ -95,6 +90,16 @@ namespace gr
 				m_cameraConfig.m_near, 
 				m_cameraConfig.m_far
 			);
+		}
+
+		// Initialize the param block pointer first:
+		if (m_cameraParamBlock == nullptr)
+		{
+			m_cameraParamBlock = re::ParameterBlock::Create(
+				"CameraParams",
+				m_cameraPBData, // Initialize with a default struct: Updated in UpdateCameraParamBlockData()
+				re::ParameterBlock::UpdateType::Mutable,
+				re::ParameterBlock::Lifetime::Permanent);
 		}
 
 		UpdateCameraParamBlockData();
