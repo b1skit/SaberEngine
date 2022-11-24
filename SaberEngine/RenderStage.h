@@ -38,7 +38,7 @@ namespace gr
 		};
 
 
-		struct RenderStageParams // Platform/context configuration:
+		struct PipelineStateParams // Platform/context configuration:
 		{			
 			platform::Context::ClearTarget		m_targetClearMode	= platform::Context::ClearTarget::None;
 			platform::Context::FaceCullingMode	m_faceCullingMode	= platform::Context::FaceCullingMode::Back;
@@ -74,8 +74,8 @@ namespace gr
 
 		bool WritesColor() const { return m_writesColor; }; // Are any of the params.m_colorWriteMode channels enabled?
 
-		void SetRenderStageParams(RenderStageParams const& params);
-		inline RenderStageParams const& GetRenderStageParams() const { return m_stageParams; }
+		void SetStagePipelineStateParams(PipelineStateParams const& params);
+		inline PipelineStateParams const& GetStagePipelineStateParams() const { return m_stageParams; }
 
 		inline std::shared_ptr<gr::Shader>& GetStageShader() { return m_stageShader; }
 		inline std::shared_ptr<gr::Shader const> GetStageShader() const { return m_stageShader; }
@@ -116,7 +116,7 @@ namespace gr
 		gr::TextureTargetSet m_textureTargetSet;
 		gr::Camera* m_stageCam;
 		
-		RenderStageParams m_stageParams;
+		PipelineStateParams m_stageParams;
 		bool m_writesColor;
 
 		// Per-frame members are cleared every frame

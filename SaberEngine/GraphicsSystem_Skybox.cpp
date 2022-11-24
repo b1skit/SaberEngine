@@ -138,7 +138,7 @@ namespace gr
 		}
 
 
-		RenderStage::RenderStageParams skyboxStageParams;
+		RenderStage::PipelineStateParams skyboxStageParams;
 		skyboxStageParams.m_targetClearMode = platform::Context::ClearTarget::None;
 		skyboxStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Back;
 		skyboxStageParams.m_srcBlendMode	= platform::Context::BlendMode::Disabled; // Render on top of the frame
@@ -146,7 +146,7 @@ namespace gr
 		skyboxStageParams.m_depthTestMode	= platform::Context::DepthTestMode::LEqual;
 		skyboxStageParams.m_depthWriteMode	= platform::Context::DepthWriteMode::Disabled;
 
-		m_skyboxStage.SetRenderStageParams(skyboxStageParams);
+		m_skyboxStage.SetStagePipelineStateParams(skyboxStageParams);
 
 		m_skyboxStage.GetStageCamera() = SceneManager::GetSceneData()->GetMainCamera().get();
 

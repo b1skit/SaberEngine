@@ -31,14 +31,14 @@ namespace gr
 
 	void TonemappingGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		RenderStage::RenderStageParams tonemappingStageParam;
+		RenderStage::PipelineStateParams tonemappingStageParam;
 		tonemappingStageParam.m_targetClearMode	= platform::Context::ClearTarget::None;
 		tonemappingStageParam.m_faceCullingMode	= platform::Context::FaceCullingMode::Back;
 		tonemappingStageParam.m_srcBlendMode	= platform::Context::BlendMode::One;
 		tonemappingStageParam.m_dstBlendMode	= platform::Context::BlendMode::Zero;
 		tonemappingStageParam.m_depthTestMode	= platform::Context::DepthTestMode::Always;
 
-		m_tonemappingStage.SetRenderStageParams(tonemappingStageParam);
+		m_tonemappingStage.SetStagePipelineStateParams(tonemappingStageParam);
 
 		m_tonemappingStage.GetStageShader() = make_shared<Shader>(Config::Get()->GetValue<string>("toneMapShader"));
 		m_tonemappingStage.GetStageShader()->Create();

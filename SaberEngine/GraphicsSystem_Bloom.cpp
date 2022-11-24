@@ -43,14 +43,14 @@ namespace gr
 		blitShader->Create();
 
 		// Emissive blit stage:
-		RenderStage::RenderStageParams emissiveStageParams;
+		RenderStage::PipelineStateParams emissiveStageParams;
 		emissiveStageParams.m_targetClearMode	= platform::Context::ClearTarget::None;
 		emissiveStageParams.m_faceCullingMode	= platform::Context::FaceCullingMode::Back;
 		emissiveStageParams.m_srcBlendMode		= platform::Context::BlendMode::One;
 		emissiveStageParams.m_dstBlendMode		= platform::Context::BlendMode::One;
 		emissiveStageParams.m_depthTestMode		= platform::Context::DepthTestMode::Always;
 
-		m_emissiveBlitStage.SetRenderStageParams(emissiveStageParams);
+		m_emissiveBlitStage.SetStagePipelineStateParams(emissiveStageParams);
 		m_emissiveBlitStage.GetStageShader() = blitShader;
 		m_emissiveBlitStage.GetStageCamera() = sceneCam;
 
@@ -60,7 +60,7 @@ namespace gr
 
 
 		// Bloom stages:
-		RenderStage::RenderStageParams bloomStageParams;
+		RenderStage::PipelineStateParams bloomStageParams;
 		bloomStageParams.m_targetClearMode	= platform::Context::ClearTarget::None;
 		bloomStageParams.m_faceCullingMode	= platform::Context::FaceCullingMode::Back;
 		bloomStageParams.m_srcBlendMode		= platform::Context::BlendMode::One;
@@ -105,7 +105,7 @@ namespace gr
 				std::make_shared<gr::Texture>(texPath, resScaleParams);
 			m_downResStages.back().GetTextureTargetSet().CreateColorTargets();
 
-			m_downResStages.back().SetRenderStageParams(bloomStageParams);
+			m_downResStages.back().SetStagePipelineStateParams(bloomStageParams);
 			m_downResStages.back().GetStageCamera() = sceneCam;
 
 			if (i == 0)
@@ -156,7 +156,7 @@ namespace gr
 			m_blurStages.back().GetTextureTargetSet().Viewport().Width() = currentXRes;
 			m_blurStages.back().GetTextureTargetSet().Viewport().Height() = currentYRes;
 
-			m_blurStages.back().SetRenderStageParams(bloomStageParams);
+			m_blurStages.back().SetStagePipelineStateParams(bloomStageParams);
 			m_blurStages.back().GetStageCamera() = sceneCam;
 
 			if (i % 2 == 0)
@@ -195,12 +195,12 @@ namespace gr
 			{
 				m_upResStages.back().GetTextureTargetSet() = deferredLightGS->GetFinalTextureTargetSet();
 
-				RenderStage::RenderStageParams addStageParams(bloomStageParams);
+				RenderStage::PipelineStateParams addStageParams(bloomStageParams);
 				addStageParams.m_targetClearMode	= platform::Context::ClearTarget::None;
 				addStageParams.m_srcBlendMode		= platform::Context::BlendMode::One;
 				addStageParams.m_dstBlendMode		= platform::Context::BlendMode::One;
 
-				m_upResStages.back().SetRenderStageParams(addStageParams);
+				m_upResStages.back().SetStagePipelineStateParams(addStageParams);
 			}
 			else
 			{
@@ -208,7 +208,7 @@ namespace gr
 					m_downResStages[m_downResStages.size() - (i + 2)].GetTextureTargetSet().ColorTarget(0);
 				m_upResStages.back().GetTextureTargetSet().CreateColorTargets();
 
-				m_upResStages.back().SetRenderStageParams(bloomStageParams);
+				m_upResStages.back().SetStagePipelineStateParams(bloomStageParams);
 			}
 
 			pipeline.AppendRenderStage(m_upResStages[i]);

@@ -109,7 +109,7 @@ namespace gr
 	}
 
 
-	void RenderStage::SetRenderStageParams(RenderStageParams const& params)
+	void RenderStage::SetStagePipelineStateParams(PipelineStateParams const& params)
 	{
 		m_stageParams = params;
 

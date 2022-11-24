@@ -112,7 +112,7 @@ namespace opengl
 				// RenderDoc makers: Render stage name
 				glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderStage->GetName().c_str());
 
-				RenderStage::RenderStageParams const& renderStageParams = renderStage->GetRenderStageParams();
+				RenderStage::PipelineStateParams const& stagePipelineParams = renderStage->GetStagePipelineStateParams();
 
 				// Configure the shader:
 				std::shared_ptr<Shader const> stageShader = renderStage->GetStageShader();
@@ -123,8 +123,8 @@ namespace opengl
 				// Attach the stage targets:
 				TextureTargetSet const& stageTargets = renderStage->GetTextureTargetSet();
 				stageTargets.AttachColorDepthStencilTargets(
-					renderStageParams.m_textureTargetSetConfig.m_targetFace, 
-					renderStageParams.m_textureTargetSetConfig.m_targetMip, 
+					stagePipelineParams.m_textureTargetSetConfig.m_targetFace, 
+					stagePipelineParams.m_textureTargetSetConfig.m_targetMip, 
 					true);
 				stageShader->SetParameterBlock(*stageTargets.GetTargetParameterBlock().get());
 
@@ -155,12 +155,12 @@ namespace opengl
 				}
 
 				// Configure the context:
-				renderManager.m_context.SetCullingMode(renderStageParams.m_faceCullingMode);
-				renderManager.m_context.SetBlendMode(renderStageParams.m_srcBlendMode, renderStageParams.m_dstBlendMode);
-				renderManager.m_context.SetDepthTestMode(renderStageParams.m_depthTestMode);
-				renderManager.m_context.SetDepthWriteMode(renderStageParams.m_depthWriteMode);
-				renderManager.m_context.SetColorWriteMode(renderStageParams.m_colorWriteMode);
-				renderManager.m_context.ClearTargets(renderStageParams.m_targetClearMode); // Clear AFTER setting color/depth modes
+				renderManager.m_context.SetCullingMode(stagePipelineParams.m_faceCullingMode);
+				renderManager.m_context.SetBlendMode(stagePipelineParams.m_srcBlendMode, stagePipelineParams.m_dstBlendMode);
+				renderManager.m_context.SetDepthTestMode(stagePipelineParams.m_depthTestMode);
+				renderManager.m_context.SetDepthWriteMode(stagePipelineParams.m_depthWriteMode);
+				renderManager.m_context.SetColorWriteMode(stagePipelineParams.m_colorWriteMode);
+				renderManager.m_context.ClearTargets(stagePipelineParams.m_targetClearMode); // Clear AFTER setting color/depth modes
 				// TODO: Move this to a "set pipeline state" helper within Context?
 
 

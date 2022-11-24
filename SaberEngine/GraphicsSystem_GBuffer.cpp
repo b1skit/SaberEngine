@@ -102,7 +102,7 @@ namespace gr
 		m_gBufferStage.GetStageCamera() = SceneManager::GetSceneData()->GetMainCamera().get();
 
 		// Set the stage params:
-		RenderStage::RenderStageParams gBufferStageParams;
+		RenderStage::PipelineStateParams gBufferStageParams;
 		gBufferStageParams.m_targetClearMode = platform::Context::ClearTarget::ColorDepth;
 
 		gBufferStageParams.m_faceCullingMode	= platform::Context::FaceCullingMode::Back;
@@ -110,7 +110,7 @@ namespace gr
 		gBufferStageParams.m_dstBlendMode		= platform::Context::BlendMode::Disabled;
 		gBufferStageParams.m_depthTestMode		= platform::Context::DepthTestMode::Less;
 
-		m_gBufferStage.SetRenderStageParams(gBufferStageParams);
+		m_gBufferStage.SetStagePipelineStateParams(gBufferStageParams);
 
 		// Finally, append the render stage to the pipeline:
 		pipeline.AppendRenderStage(m_gBufferStage);

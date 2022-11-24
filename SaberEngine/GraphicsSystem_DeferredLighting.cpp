@@ -177,7 +177,7 @@ namespace gr
 		m_pointlightStage.GetTextureTargetSet() = deferredLightingTargetSet;
 	
 		
-		RenderStage::RenderStageParams ambientStageParams;
+		RenderStage::PipelineStateParams ambientStageParams;
 		ambientStageParams.m_targetClearMode	= platform::Context::ClearTarget::Color;
 		ambientStageParams.m_faceCullingMode	= platform::Context::FaceCullingMode::Back; // Ambient and directional lights (currently) use back face culling
 		ambientStageParams.m_srcBlendMode		= platform::Context::BlendMode::One; // All deferred lighting is additive
@@ -229,7 +229,7 @@ namespace gr
 			brdfStage.GetTextureTargetSet().CreateColorTargets();
 
 			// Stage params:
-			RenderStage::RenderStageParams brdfStageParams;
+			RenderStage::PipelineStateParams brdfStageParams;
 			brdfStageParams.m_targetClearMode = platform::Context::ClearTarget::None;
 			brdfStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Disabled;
 			brdfStageParams.m_srcBlendMode = platform::Context::BlendMode::One;
@@ -237,7 +237,7 @@ namespace gr
 			brdfStageParams.m_depthTestMode = platform::Context::DepthTestMode::Always;
 			brdfStageParams.m_depthWriteMode = platform::Context::DepthWriteMode::Disabled;
 
-			brdfStage.SetRenderStageParams(brdfStageParams);
+			brdfStage.SetStagePipelineStateParams(brdfStageParams);
 
 			Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
 			brdfStage.AddBatch(fullscreenQuadBatch);
@@ -257,7 +257,7 @@ namespace gr
 		cubeParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
 
 		// Common IBL texture generation stage params:
-		RenderStage::RenderStageParams iblStageParams;
+		RenderStage::PipelineStateParams iblStageParams;
 		iblStageParams.m_targetClearMode = platform::Context::ClearTarget::None;
 		iblStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Disabled;
 		iblStageParams.m_srcBlendMode = platform::Context::BlendMode::One;
@@ -332,7 +332,7 @@ namespace gr
 
 				iblStageParams.m_textureTargetSetConfig.m_targetFace = face;
 				iblStageParams.m_textureTargetSetConfig.m_targetMip = 0;
-				iemStage.SetRenderStageParams(iblStageParams);
+				iemStage.SetStagePipelineStateParams(iblStageParams);
 
 				iemStage.AddBatch(cubeMeshBatch);
 
@@ -392,7 +392,7 @@ namespace gr
 
 					iblStageParams.m_textureTargetSetConfig.m_targetFace = face;
 					iblStageParams.m_textureTargetSetConfig.m_targetMip = currentMipLevel;
-					pmremStage.SetRenderStageParams(iblStageParams);
+					pmremStage.SetStagePipelineStateParams(iblStageParams);
 
 					pmremStage.AddBatch(cubeMeshBatch);
 
@@ -409,7 +409,7 @@ namespace gr
 		m_ambientStage.GetStageShader()->Create();
 
 		m_ambientStage.GetStageCamera() = deferredLightingCam;
-		m_ambientStage.SetRenderStageParams(ambientStageParams);
+		m_ambientStage.SetStagePipelineStateParams(ambientStageParams);
 
 		// Ambient parameters:		
 		AmbientLightParams ambientLightParams = GetAmbientLightParamData();
@@ -428,7 +428,7 @@ namespace gr
 		// Key light stage:
 		shared_ptr<Light> keyLight = SceneManager::GetSceneData()->GetKeyLight();
 
-		RenderStage::RenderStageParams keylightStageParams(ambientStageParams);
+		RenderStage::PipelineStateParams keylightStageParams(ambientStageParams);
 		if (keyLight)
 		{
 			if (!AmbientIsValid()) // Don't clear after 1st light
@@ -439,7 +439,7 @@ namespace gr
 			{
 				keylightStageParams.m_targetClearMode = platform::Context::ClearTarget::None;
 			}
-			m_keylightStage.SetRenderStageParams(keylightStageParams);
+			m_keylightStage.SetStagePipelineStateParams(keylightStageParams);
 
 			m_keylightStage.GetStageShader() = make_shared<Shader>(
 				Config::Get()->GetValue<string>("deferredKeylightShaderName"));
@@ -457,7 +457,7 @@ namespace gr
 		{
 			m_pointlightStage.GetStageCamera() = deferredLightingCam;
 
-			RenderStage::RenderStageParams pointlightStageParams(keylightStageParams);
+			RenderStage::PipelineStateParams pointlightStageParams(keylightStageParams);
 
 			if (!keyLight && !AmbientIsValid())
 			{
@@ -477,7 +477,7 @@ namespace gr
 			}
 
 			pointlightStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Front; // Cull front faces of light volumes
-			m_pointlightStage.SetRenderStageParams(pointlightStageParams);
+			m_pointlightStage.SetStagePipelineStateParams(pointlightStageParams);
 
 			m_pointlightStage.GetStageShader() = make_shared<Shader>(
 				Config::Get()->GetValue<string>("deferredPointLightShaderName"));

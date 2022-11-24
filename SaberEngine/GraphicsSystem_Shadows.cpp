@@ -61,7 +61,7 @@ namespace gr
 
 	void ShadowsGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		RenderStage::RenderStageParams shadowStageParams;
+		RenderStage::PipelineStateParams shadowStageParams;
 		shadowStageParams.m_targetClearMode = platform::Context::ClearTarget::Depth;
 		
 		// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
@@ -97,7 +97,7 @@ namespace gr
 				m_directionalShadowStage.GetTextureTargetSet() = directionalLight->GetShadowMap()->GetTextureTargetSet();
 				// TODO: Target set should be a member of the stage, instead of the shadow map?
 
-				m_directionalShadowStage.SetRenderStageParams(shadowStageParams);
+				m_directionalShadowStage.SetStagePipelineStateParams(shadowStageParams);
 
 				pipeline.AppendRenderStage(m_directionalShadowStage);
 			}
@@ -124,7 +124,7 @@ namespace gr
 
 				shadowStage->GetTextureTargetSet() = curLight->GetShadowMap()->GetTextureTargetSet();
 
-				shadowStage->SetRenderStageParams(shadowStageParams);
+				shadowStage->SetStagePipelineStateParams(shadowStageParams);
 
 				// Cubemap shadow param block:
 				CubemapShadowRenderParams cubemapShadowParams = GetCubemapShadowRenderParamsData(shadowCam);
