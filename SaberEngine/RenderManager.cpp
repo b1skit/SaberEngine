@@ -15,7 +15,7 @@
 #include "GraphicsSystem_Tonemapping.h"
 #include "Batch.h"
 
-using gr::TextureTargetSet;
+using re::TextureTargetSet;
 using gr::GBufferGraphicsSystem;
 using gr::DeferredLightingGraphicsSystem;
 using gr::GraphicsSystem;

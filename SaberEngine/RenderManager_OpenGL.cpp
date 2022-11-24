@@ -27,7 +27,7 @@
 #include "MeshPrimitive_OpenGL.h"
 
 using gr::RenderStage;
-using gr::TextureTargetSet;
+using re::TextureTargetSet;
 using gr::Shader;
 using gr::Camera;
 using gr::Transform;

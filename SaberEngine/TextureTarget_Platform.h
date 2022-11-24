@@ -6,6 +6,9 @@
 namespace gr
 {
 	class Texture;
+}
+namespace re
+{
 	class TextureTarget;
 	class TextureTargetSet;
 }
@@ -23,7 +26,7 @@ namespace platform
 			virtual ~PlatformParams() = 0;
 
 			// Static member functions:
-			static void CreatePlatformParams(gr::TextureTarget&);
+			static void CreatePlatformParams(re::TextureTarget&);
 		};
 	};
 
@@ -39,18 +42,18 @@ namespace platform
 			virtual ~PlatformParams() = 0;
 
 			// Static member functions:
-			static void CreatePlatformParams(gr::TextureTargetSet&);
+			static void CreatePlatformParams(re::TextureTargetSet&);
 		};
 
 		// Dynamically-linked static functions:
 
 
 
-		static void (*CreateColorTargets)(gr::TextureTargetSet& targetSet);
-		static void (*AttachColorTargets)(gr::TextureTargetSet const& targetSet, uint32_t face, uint32_t mipLevel, bool doBind);
+		static void (*CreateColorTargets)(re::TextureTargetSet& targetSet);
+		static void (*AttachColorTargets)(re::TextureTargetSet const& targetSet, uint32_t face, uint32_t mipLevel, bool doBind);
 
-		static void (*CreateDepthStencilTarget)(gr::TextureTargetSet& targetSet);
-		static void (*AttachDepthStencilTarget)(gr::TextureTargetSet const& targetSet, bool doBind);
+		static void (*CreateDepthStencilTarget)(re::TextureTargetSet& targetSet);
+		static void (*AttachDepthStencilTarget)(re::TextureTargetSet const& targetSet, bool doBind);
 
 		static uint32_t(*MaxColorTargets)();
 	};

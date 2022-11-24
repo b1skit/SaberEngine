@@ -11,7 +11,7 @@ using en::Config;
 
 namespace platform
 {
-	void TextureTarget::PlatformParams::CreatePlatformParams(gr::TextureTarget& texTarget)
+	void TextureTarget::PlatformParams::CreatePlatformParams(re::TextureTarget& texTarget)
 	{
 		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
@@ -35,7 +35,7 @@ namespace platform
 	}
 
 
-	void TextureTargetSet::PlatformParams::CreatePlatformParams(gr::TextureTargetSet& texTarget)
+	void TextureTargetSet::PlatformParams::CreatePlatformParams(re::TextureTargetSet& texTarget)
 	{
 		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
@@ -61,11 +61,11 @@ namespace platform
 
 	// platform::TextureTarget static members:
 	/****************************************/
-	void (*TextureTargetSet::CreateColorTargets)(gr::TextureTargetSet&);
-	void (*TextureTargetSet::AttachColorTargets)(gr::TextureTargetSet const& targetSet, uint32_t face, uint32_t mipLevel, bool doBind);
+	void (*TextureTargetSet::CreateColorTargets)(re::TextureTargetSet&);
+	void (*TextureTargetSet::AttachColorTargets)(re::TextureTargetSet const& targetSet, uint32_t face, uint32_t mipLevel, bool doBind);
 
-	void (*TextureTargetSet::CreateDepthStencilTarget)(gr::TextureTargetSet& targetSet);
-	void (*TextureTargetSet::AttachDepthStencilTarget)(gr::TextureTargetSet const& targetSet, bool doBind);
+	void (*TextureTargetSet::CreateDepthStencilTarget)(re::TextureTargetSet& targetSet);
+	void (*TextureTargetSet::AttachDepthStencilTarget)(re::TextureTargetSet const& targetSet, bool doBind);
 
 	uint32_t(*TextureTargetSet::MaxColorTargets)();
 

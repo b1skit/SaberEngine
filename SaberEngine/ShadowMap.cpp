@@ -69,7 +69,7 @@ namespace gr
 		}
 
 		m_shadowTargetSet.DepthStencilTarget() = depthTexture;
-		m_shadowTargetSet.Viewport() = gr::Viewport(0, 0, depthTexture->Width(), depthTexture->Height());
+		m_shadowTargetSet.Viewport() = re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height());
 		m_shadowTargetSet.CreateDepthStencilTarget();
 	}
 }

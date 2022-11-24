@@ -11,7 +11,7 @@ using en::Config;
 using en::SceneManager;
 using gr::Shader;
 using gr::DeferredLightingGraphicsSystem;
-using gr::TextureTargetSet;
+using re::TextureTargetSet;
 using re::RenderManager;
 using re::Batch;
 using std::shared_ptr;

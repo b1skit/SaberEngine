@@ -74,7 +74,7 @@ namespace gr
 		// -> We'll also need to trigger mip generation after laying down the GBuffer
 
 
-		gr::TextureTargetSet& gBufferTargets = m_gBufferStage.GetTextureTargetSet();
+		re::TextureTargetSet& gBufferTargets = m_gBufferStage.GetTextureTargetSet();
 		for (size_t i = 0; i <= 5; i++)
 		{
 			std::shared_ptr<gr::Texture> gBufferTex = std::make_shared<gr::Texture>(GBufferTexNames[i], gBufferParams);

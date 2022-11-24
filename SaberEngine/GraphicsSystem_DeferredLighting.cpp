@@ -16,7 +16,7 @@
 using gr::Light;
 using gr::RenderStage;
 using gr::Texture;
-using gr::TextureTargetSet;
+using re::TextureTargetSet;
 using gr::ShadowMap;
 using re::RenderManager;
 using re::ParameterBlock;
@@ -225,7 +225,7 @@ namespace gr
 
 			brdfStage.GetTextureTargetSet().ColorTarget(0) = m_BRDF_integrationMap;
 			brdfStage.GetTextureTargetSet().Viewport() = 
-				gr::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
+				re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
 			brdfStage.GetTextureTargetSet().CreateColorTargets();
 
 			// Stage params:
@@ -327,7 +327,7 @@ namespace gr
 
 				iemStage.GetTextureTargetSet().ColorTarget(0) = m_IEMTex;
 				iemStage.GetTextureTargetSet().Viewport() = 
-					gr::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
+					re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
 				iemStage.GetTextureTargetSet().CreateColorTargets();
 
 				iblStageParams.m_textureTargetSetConfig.m_targetFace = face;
@@ -352,7 +352,7 @@ namespace gr
 
 			TextureTargetSet pmremTargetSet("PMREM texture targets");
 			pmremTargetSet.ColorTarget(0) = m_PMREMTex;
-			pmremTargetSet.Viewport() = gr::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
+			pmremTargetSet.Viewport() = re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
 			pmremTargetSet.CreateColorTargets();
 
 			const uint32_t numMipLevels = m_PMREMTex->GetNumMips(); // # of mips we need to render

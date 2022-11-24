@@ -50,7 +50,7 @@ namespace re
 
 		re::Context const& GetContext() { return m_context; }
 
-		std::shared_ptr<gr::TextureTargetSet> GetDefaultTextureTargetSet() { return m_defaultTargetSet; }
+		std::shared_ptr<re::TextureTargetSet> GetDefaultTextureTargetSet() { return m_defaultTargetSet; }
 
 		template <typename T>
 		std::shared_ptr<gr::GraphicsSystem> GetGraphicsSystem();
@@ -71,7 +71,7 @@ namespace re
 		re::RenderPipeline m_pipeline;
 
 		// Note: We store this as a shared_ptr so we can instantiate it once the context has been created
-		std::shared_ptr<gr::TextureTargetSet> m_defaultTargetSet; // Default backbuffer
+		std::shared_ptr<re::TextureTargetSet> m_defaultTargetSet; // Default backbuffer
 
 		std::vector<re::Batch> m_sceneBatches;
 

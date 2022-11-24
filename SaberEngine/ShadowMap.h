@@ -42,13 +42,13 @@ namespace gr
 		inline glm::vec2 MinMaxShadowBias() const { return glm::vec2(m_minShadowBias, m_maxShadowBias); }
 		// TODO: Store min, max shadow bias as a vec2
 
-		inline gr::TextureTargetSet& GetTextureTargetSet() { return m_shadowTargetSet; }
-		inline gr::TextureTargetSet const& GetTextureTargetSet() const { return m_shadowTargetSet; }
+		inline re::TextureTargetSet& GetTextureTargetSet() { return m_shadowTargetSet; }
+		inline re::TextureTargetSet const& GetTextureTargetSet() const { return m_shadowTargetSet; }
 
 
 	private:
 		gr::Camera m_shadowCam;
-		gr::TextureTargetSet m_shadowTargetSet;
+		re::TextureTargetSet m_shadowTargetSet;
 
 		float m_maxShadowBias = 0.005f;	// Small offsets for shadow comparisons
 		float m_minShadowBias = 0.0005f;

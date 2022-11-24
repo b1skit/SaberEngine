@@ -23,8 +23,8 @@ namespace gr
 		virtual void Create(re::StagePipeline& pipeline) = 0; // Initial Graphics System setup
 		virtual void PreRender(re::StagePipeline& pipeline) = 0; // Called every frame
 
-		virtual gr::TextureTargetSet& GetFinalTextureTargetSet() = 0;
-		virtual gr::TextureTargetSet const& GetFinalTextureTargetSet() const = 0;
+		virtual re::TextureTargetSet& GetFinalTextureTargetSet() = 0;
+		virtual re::TextureTargetSet const& GetFinalTextureTargetSet() const = 0;
 
 	private:
 		virtual void CreateBatches() = 0;

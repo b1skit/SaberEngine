@@ -56,7 +56,7 @@ namespace opengl
 	// Target Set
 	/************/
 
-	void TextureTargetSet::CreateColorTargets(gr::TextureTargetSet& targetSet)
+	void TextureTargetSet::CreateColorTargets(re::TextureTargetSet& targetSet)
 	{
 		opengl::TextureTargetSet::PlatformParams* const targetSetParams =
 			dynamic_cast<opengl::TextureTargetSet::PlatformParams*>(targetSet.GetPlatformParams());
@@ -155,7 +155,7 @@ namespace opengl
 
 
 	void TextureTargetSet::AttachColorTargets(
-		gr::TextureTargetSet const& targetSet,
+		re::TextureTargetSet const& targetSet,
 		uint32_t face,
 		uint32_t mipLevel, 
 		bool doBind)
@@ -255,7 +255,7 @@ namespace opengl
 	}
 
 
-	void TextureTargetSet::CreateDepthStencilTarget(gr::TextureTargetSet& targetSet)
+	void TextureTargetSet::CreateDepthStencilTarget(re::TextureTargetSet& targetSet)
 	{
 		std::shared_ptr<gr::Texture>& depthStencilTex = targetSet.DepthStencilTarget().GetTexture();
 
@@ -314,7 +314,7 @@ namespace opengl
 	}
 
 
-	void TextureTargetSet::AttachDepthStencilTarget(gr::TextureTargetSet const& targetSet, bool doBind)
+	void TextureTargetSet::AttachDepthStencilTarget(re::TextureTargetSet const& targetSet, bool doBind)
 	{
 		// Unbinding:
 		if (!doBind)

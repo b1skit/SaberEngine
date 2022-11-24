@@ -9,7 +9,7 @@
 #include "ParameterBlock.h"
 
 
-namespace gr
+namespace re
 {
 	// Wrapper for an individual render target texture
 	class TextureTarget
@@ -38,7 +38,7 @@ namespace gr
 
 		// Friends:
 		friend bool platform::RegisterPlatformFunctions();
-		friend void platform::TextureTarget::PlatformParams::CreatePlatformParams(gr::TextureTarget&);
+		friend void platform::TextureTarget::PlatformParams::CreatePlatformParams(re::TextureTarget&);
 	};
 
 
@@ -93,19 +93,19 @@ namespace gr
 		TextureTargetSet& operator=(TextureTargetSet const&);
 		~TextureTargetSet();
 
-		inline std::vector<gr::TextureTarget>& ColorTargets() { m_targetStateDirty = true; return m_colorTargets; }
-		inline std::vector<gr::TextureTarget> const& ColorTargets() const { return m_colorTargets; }
+		inline std::vector<re::TextureTarget>& ColorTargets() { m_targetStateDirty = true; return m_colorTargets; }
+		inline std::vector<re::TextureTarget> const& ColorTargets() const { return m_colorTargets; }
 
-		inline gr::TextureTarget& ColorTarget(size_t i)
+		inline re::TextureTarget& ColorTarget(size_t i)
 			{ SEAssert("OOB index", i < m_colorTargets.size()); m_targetStateDirty = true; return m_colorTargets[i]; }
-		inline gr::TextureTarget const& ColorTarget(size_t i) const 
+		inline re::TextureTarget const& ColorTarget(size_t i) const 
 			{ SEAssert("OOB index", i < m_colorTargets.size()); return m_colorTargets[i]; }
 
-		inline gr::TextureTarget& DepthStencilTarget() { m_targetStateDirty = true; return m_depthStencilTarget; }
-		inline gr::TextureTarget const& DepthStencilTarget() const { return m_depthStencilTarget; }
+		inline re::TextureTarget& DepthStencilTarget() { m_targetStateDirty = true; return m_depthStencilTarget; }
+		inline re::TextureTarget const& DepthStencilTarget() const { return m_depthStencilTarget; }
 
-		inline gr::Viewport& Viewport() { return m_viewport; }
-		inline gr::Viewport const& Viewport() const { return m_viewport; }
+		inline re::Viewport& Viewport() { return m_viewport; }
+		inline re::Viewport const& Viewport() const { return m_viewport; }
 
 		inline platform::TextureTargetSet::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
 		inline platform::TextureTargetSet::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
@@ -125,12 +125,12 @@ namespace gr
 		void AttachColorDepthStencilTargets(uint32_t colorFace, uint32_t colorMipLevel, bool doBind) const;
 		
 	private:
-		std::vector<gr::TextureTarget> m_colorTargets;
-		gr::TextureTarget m_depthStencilTarget;
+		std::vector<re::TextureTarget> m_colorTargets;
+		re::TextureTarget m_depthStencilTarget;
 		bool m_targetStateDirty;
 		bool m_hasTargets;
 
-		gr::Viewport m_viewport;
+		re::Viewport m_viewport;
 
 		std::shared_ptr<platform::TextureTargetSet::PlatformParams> m_platformParams;
 
@@ -145,7 +145,7 @@ namespace gr
 	private:
 		// Friends:
 		friend bool platform::RegisterPlatformFunctions();
-		friend void platform::TextureTargetSet::PlatformParams::CreatePlatformParams(gr::TextureTargetSet&);
+		friend void platform::TextureTargetSet::PlatformParams::CreatePlatformParams(re::TextureTargetSet&);
 
 		TextureTargetSet() = delete;
 		TextureTargetSet(TextureTargetSet const&) = delete;

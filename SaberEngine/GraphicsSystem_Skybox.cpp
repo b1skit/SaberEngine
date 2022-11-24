@@ -11,11 +11,13 @@
 #include "RenderManager.h"
 #include "SceneManager.h"
 #include "Texture.h"
+#include "TextureTarget.h"
 
 using gr::Texture;
 using gr::DeferredLightingGraphicsSystem;
 using gr::GBufferGraphicsSystem;
 using re::Batch;
+using re::TextureTargetSet;
 using en::Config;
 using en::SceneManager;
 using re::RenderManager;

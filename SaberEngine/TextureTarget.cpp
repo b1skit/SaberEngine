@@ -5,19 +5,19 @@ using en::Config;
 using std::string;
 
 
-namespace gr
+namespace re
 {
 	/**************/
 	//TextureTarget
 	/**************/
-	gr::TextureTarget::TextureTarget() :
+	TextureTarget::TextureTarget() :
 		m_texture(nullptr)
 	{
 		platform::TextureTarget::PlatformParams::CreatePlatformParams(*this);
 	}
 
 
-	gr::TextureTarget::TextureTarget(std::shared_ptr<gr::Texture> texture) :
+	TextureTarget::TextureTarget(std::shared_ptr<gr::Texture> texture) :
 		m_texture(texture)
 	{
 		platform::TextureTarget::PlatformParams::CreatePlatformParams(*this);
