@@ -31,7 +31,7 @@ namespace
 	inline std::string ToLowerCase(std::string input)
 	{
 		std::string output;
-		for (auto currentChar : input)
+		for (auto const& currentChar : input)
 		{
 			output += std::tolower(currentChar);
 		}
@@ -108,7 +108,7 @@ namespace en
 		// Note: Strings must be passed as string objects (not CStrings)
 		auto TryInsertDefault = [&](std::string const& key, auto const& value)
 		{
-			auto result = m_configValues.find(key);
+			auto const& result = m_configValues.find(key);
 			if (result == m_configValues.end())
 			{
 				SetValue(key, value, SettingType::APISpecific);
@@ -180,7 +180,7 @@ namespace en
 	template<typename T>
 	T Config::GetValue(const string& valueName) const
 	{
-		auto result = m_configValues.find(valueName);
+		auto const& result = m_configValues.find(valueName);
 		T returnVal{};
 		if (result != m_configValues.end())
 		{
@@ -211,7 +211,7 @@ namespace en
 
 	string Config::GetValueAsString(const string& valueName) const
 	{
-		auto result = m_configValues.find(valueName);
+		auto const& result = m_configValues.find(valueName);
 		string returnVal = "";
 		if (result != m_configValues.end())
 		{

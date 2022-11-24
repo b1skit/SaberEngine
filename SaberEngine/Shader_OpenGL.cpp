@@ -317,7 +317,7 @@ namespace opengl
 		
 		case platform::Shader::UniformType::Texture:
 		{
-			auto bindingUnit = params->m_samplerUnits.find(uniformName);
+			auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
 
 #if defined(STRICT_SHADER_BINDING)
 			SEAssert("Invalid texture name", bindingUnit != params->m_samplerUnits.end());
@@ -329,7 +329,7 @@ namespace opengl
 		break;
 		case platform::Shader::UniformType::Sampler:
 		{
-			auto bindingUnit = params->m_samplerUnits.find(uniformName);
+			auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
 
 #if defined(STRICT_SHADER_BINDING)
 			SEAssert("Invalid sampler name", bindingUnit != params->m_samplerUnits.end());

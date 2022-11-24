@@ -457,7 +457,7 @@ namespace util
 	{
 		MeshData* meshData = static_cast<MeshData*>(m_context->m_pUserData);
 
-		auto index = GetVertexIndex(m_context, faceIdx, vertIdx);
+		auto const& index = GetVertexIndex(m_context, faceIdx, vertIdx);
 		vec2 uv = meshData->m_UV0->at(index);
 
 		outuv[0] = uv.x;

@@ -101,7 +101,7 @@ namespace re
 
 	void ParameterBlockAllocator::Commit(Handle uniqueID, void const* data)
 	{
-		auto result = m_data.m_uniqueIDToTypeAndByteIndex.find(uniqueID);
+		auto const& result = m_data.m_uniqueIDToTypeAndByteIndex.find(uniqueID);
 
 		SEAssert("Parameter block with this ID has not been allocated", 
 			result != m_data.m_uniqueIDToTypeAndByteIndex.end());
@@ -119,7 +119,7 @@ namespace re
 
 	void ParameterBlockAllocator::Get(Handle uniqueID, void*& out_data, size_t& out_numBytes)
 	{
-		auto result = m_data.m_uniqueIDToTypeAndByteIndex.find(uniqueID);
+		auto const& result = m_data.m_uniqueIDToTypeAndByteIndex.find(uniqueID);
 
 		SEAssert("Parameter block with this ID has not been allocated",
 			result != m_data.m_uniqueIDToTypeAndByteIndex.end());
@@ -134,7 +134,7 @@ namespace re
 
 	void ParameterBlockAllocator::Deallocate(Handle uniqueID)
 	{
-		auto pb = m_data.m_uniqueIDToTypeAndByteIndex.find(uniqueID);
+		auto const& pb = m_data.m_uniqueIDToTypeAndByteIndex.find(uniqueID);
 
 		SEAssert("Cannot deallocate a parameter block that does not exist", 
 			pb != m_data.m_uniqueIDToTypeAndByteIndex.end());
@@ -167,7 +167,7 @@ namespace re
 
 	void ParameterBlockAllocator::UpdateParamBlocks()
 	{
-		for (auto pb : m_mutablePBs) // Immutable and single-frame PBs are buffered at creation
+		for (auto const& pb : m_mutablePBs) // Immutable and single-frame PBs are buffered at creation
 		{
 			if (pb.second->GetDirty())
 			{

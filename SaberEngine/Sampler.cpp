@@ -97,7 +97,7 @@ namespace gr
 			Sampler::m_samplerLibrary->insert({ Sampler::SamplerType::WrapLinearMipMapLinearLinear, ClampLinearMipMapLinearLinear });
 		}
 
-		auto result = Sampler::m_samplerLibrary->find(type);
+		auto const& result = Sampler::m_samplerLibrary->find(type);
 
 		SEAssert("Invalid sampler name", result != Sampler::m_samplerLibrary->end());
 

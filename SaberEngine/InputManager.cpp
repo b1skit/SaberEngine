@@ -136,7 +136,7 @@ namespace en
 			{
 				const uint32_t sdlScancode = eventInfo.m_data0.m_dataUI;
 
-				auto result = m_SDLScancodsToSaberEngineEventEnums.find(sdlScancode);
+				auto const& result = m_SDLScancodsToSaberEngineEventEnums.find(sdlScancode);
 				if (result != m_SDLScancodsToSaberEngineEventEnums.end())
 				{
 					en::KeyboardInputButton key = result->second;

@@ -52,7 +52,7 @@ namespace gr
 			m_materialLibrary->insert({ gltfPBRMat->m_definitionName, gltfPBRMat });
 		}
 
-		auto result = Material::m_materialLibrary->find(matName);
+		auto const& result = Material::m_materialLibrary->find(matName);
 
 		SEAssert("Invalid Material name", result != Material::m_materialLibrary->end());
 
@@ -111,7 +111,7 @@ namespace gr
 
 	std::shared_ptr<gr::Texture> const& Material::GetTexture(std::string const& samplerName) const
 	{
-		auto index = m_namesToSlotIndex.find(samplerName);
+		auto const& index = m_namesToSlotIndex.find(samplerName);
 
 		SEAssert("Invalid sampler name",
 			index != m_namesToSlotIndex.end() && 
