@@ -167,6 +167,8 @@ namespace gr
 				cubemapShadowParams,
 				re::ParameterBlock::UpdateType::Immutable, 
 				re::ParameterBlock::Lifetime::SingleFrame);
+
+			pointShadowStage->AddSingleFrameParameterBlock(cubemapShadowPB);
 		}
 	}
 

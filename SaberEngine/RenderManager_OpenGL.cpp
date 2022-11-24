@@ -129,9 +129,13 @@ namespace opengl
 				stageShader->SetParameterBlock(*stageTargets.GetTargetParameterBlock().get());
 
 				// Set stage param blocks:
-				for (std::shared_ptr<re::ParameterBlock const> renderStagePB : renderStage->GetPermanentParameterBlocks())
+				for (std::shared_ptr<re::ParameterBlock const> permanentPB : renderStage->GetPermanentParameterBlocks())
 				{
-					stageShader->SetParameterBlock(*renderStagePB.get());
+					stageShader->SetParameterBlock(*permanentPB.get());
+				}
+				for (std::shared_ptr<re::ParameterBlock const> perFramePB : renderStage->GetPerFrameParameterBlocks())
+				{
+					stageShader->SetParameterBlock(*perFramePB.get());
 				}
 
 				// Set per-frame stage shader uniforms:
