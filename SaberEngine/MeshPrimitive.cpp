@@ -31,7 +31,7 @@ namespace re
 		vector<float>& uv0,
 		vector<float>& tangents,
 		vector<uint32_t>& indices,
-		shared_ptr<gr::Material> material,
+		shared_ptr<gr::Material const> material,
 		MeshPrimitiveParams const& meshParams,
 		Transform* ownerTransform) : NamedObject(name),
 			m_platformParams(nullptr),

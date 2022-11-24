@@ -41,7 +41,7 @@ namespace re
 			std::vector<float>& uv0,
 			std::vector<float>& tangents,
 			std::vector<uint32_t>& indices,
-			std::shared_ptr<gr::Material> material,
+			std::shared_ptr<gr::Material const> material,
 			re::MeshPrimitive::MeshPrimitiveParams const& meshParams,
 			gr::Transform* ownerTransform);		
 		// TODO: Rearrange these args to match shader vertex attribute definition order
@@ -55,8 +55,7 @@ namespace re
 		inline MeshPrimitiveParams& GetMeshParams() { return m_params; }
 		inline MeshPrimitiveParams const& GetMeshParams() const { return m_params; }
 
-		inline std::shared_ptr<gr::Material> MeshMaterial() { return m_meshMaterial; }
-		inline std::shared_ptr<gr::Material const> const MeshMaterial() const { return m_meshMaterial; }
+		inline std::shared_ptr<gr::Material const> MeshMaterial() const { return m_meshMaterial; }
 
 		inline gr::Transform*& GetOwnerTransform() { return m_ownerTransform; }
 		inline gr::Transform const* GetOwnerTransform() const { return m_ownerTransform; }
@@ -79,7 +78,7 @@ namespace re
 	private:		
 		MeshPrimitiveParams m_params;
 
-		std::shared_ptr<gr::Material> m_meshMaterial;
+		std::shared_ptr<gr::Material const> m_meshMaterial;
 
 		// API-specific mesh params:
 		std::unique_ptr<platform::MeshPrimitive::PlatformParams> m_platformParams;

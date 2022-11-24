@@ -34,7 +34,7 @@ namespace fr
 		// Cameras:
 		void AddCamera(std::shared_ptr<gr::Camera> newCamera);
 	
-		inline std::shared_ptr<gr::Camera> GetMainCamera()	const { return m_cameras.at(0); } // First camera added
+		inline std::shared_ptr<gr::Camera> GetMainCamera() const { return m_cameras.at(0); } // First camera added
 		inline std::vector<std::shared_ptr<gr::Camera>> const& GetCameras() const { return m_cameras; }
 		
 		// Lights:
@@ -63,7 +63,7 @@ namespace fr
 
 		// Materials:
 		void AddUniqueMaterial(std::shared_ptr<gr::Material>& newMaterial);
-		std::shared_ptr<gr::Material> const GetMaterial(std::string const& materialName) const;
+		std::shared_ptr<gr::Material const> GetMaterial(std::string const& materialName) const;
 		inline bool MaterialExists(std::string const& matName) const;
 
 		// SceneData bounds:

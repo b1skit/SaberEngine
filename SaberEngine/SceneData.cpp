@@ -305,7 +305,7 @@ namespace
 	}
 
 
-	shared_ptr<Material> LoadAddMaterial(
+	shared_ptr<Material const> LoadAddMaterial(
 		fr::SceneData& scene, std::string const& sceneRootPath, cgltf_material const* material)
 	{
 		const string matName = material == nullptr ? "MissingMaterial" : GenerateMaterialName(*material);
@@ -821,7 +821,7 @@ namespace
 				tangentBuilder.ConstructMissingVertexAttributes(&meshData);
 
 				// Material:
-				shared_ptr<Material> material = 
+				shared_ptr<Material const> material = 
 					LoadAddMaterial(scene, sceneRootPath, current->mesh->primitives[primitive].material);
 
 				// Attach the primitive:
@@ -1153,7 +1153,7 @@ namespace fr
 	}
 
 
-	std::shared_ptr<gr::Material> const SceneData::GetMaterial(std::string const& materialName) const
+	std::shared_ptr<gr::Material const> SceneData::GetMaterial(std::string const& materialName) const
 	{
 		const size_t nameID = NamedObject::ComputeIDFromName(materialName);
 		unordered_map<size_t, shared_ptr<gr::Material>>::const_iterator matPos = m_materials.find(nameID);
