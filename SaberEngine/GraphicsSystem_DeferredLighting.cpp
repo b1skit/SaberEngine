@@ -14,7 +14,7 @@
 #include "SceneManager.h"
 
 using gr::Light;
-using gr::RenderStage;
+using re::RenderStage;
 using gr::Texture;
 using re::TextureTargetSet;
 using gr::ShadowMap;

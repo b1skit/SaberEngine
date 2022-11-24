@@ -21,6 +21,7 @@ using re::TextureTargetSet;
 using en::Config;
 using en::SceneManager;
 using re::RenderManager;
+using re::RenderStage;
 using std::shared_ptr;
 using std::string;
 using std::vector;

@@ -26,7 +26,7 @@ namespace gr
 		void CreateBatches() override;
 
 	private:
-		gr::RenderStage m_skyboxStage;
+		re::RenderStage m_skyboxStage;
 		std::shared_ptr<gr::Texture> m_skyTexture;
 		std::string m_skyTextureShaderName;
 		std::shared_ptr<re::MeshPrimitive> m_screenAlignedQuad;

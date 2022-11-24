@@ -2,7 +2,7 @@
 
 #include "RenderPipeline.h"
 
-using gr::RenderStage;
+using re::RenderStage;
 using std::vector;
 
 namespace
@@ -22,7 +22,7 @@ namespace re
 {
 	/******************************************** StagePipeline********************************************/
 
-	std::vector<gr::RenderStage const*>::iterator StagePipeline::AppendRenderStage(RenderStage const& renderStage)
+	std::vector<re::RenderStage const*>::iterator StagePipeline::AppendRenderStage(RenderStage const& renderStage)
 	{
 		SanityCheckRenderStage(renderStage);
 		
@@ -31,7 +31,7 @@ namespace re
 	}
 
 
-	std::vector<gr::RenderStage>::iterator StagePipeline::AppendSingleFrameRenderStage(RenderStage const& renderStage)
+	std::vector<re::RenderStage>::iterator StagePipeline::AppendSingleFrameRenderStage(RenderStage const& renderStage)
 	{
 		SanityCheckRenderStage(renderStage);
 		

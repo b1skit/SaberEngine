@@ -11,7 +11,7 @@ using en::SceneManager;
 using en::Config;
 using re::RenderManager;
 using gr::Light;
-using gr::RenderStage;
+using re::RenderStage;
 using gr::ShadowMap;
 using std::vector;
 using std::string;

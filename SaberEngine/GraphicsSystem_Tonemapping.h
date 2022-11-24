@@ -25,6 +25,6 @@ namespace gr
 
 	private:
 		std::shared_ptr<re::MeshPrimitive> m_screenAlignedQuad;
-		gr::RenderStage m_tonemappingStage;		
+		re::RenderStage m_tonemappingStage;		
 	};
 }

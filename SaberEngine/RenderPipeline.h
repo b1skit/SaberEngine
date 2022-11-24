@@ -19,22 +19,22 @@ namespace re
 
 		void Destroy();
 
-		std::vector<gr::RenderStage const*>::iterator AppendRenderStage(gr::RenderStage const& renderStage);
-		std::vector<gr::RenderStage>::iterator AppendSingleFrameRenderStage(gr::RenderStage const& renderStage);
+		std::vector<re::RenderStage const*>::iterator AppendRenderStage(re::RenderStage const& renderStage);
+		std::vector<re::RenderStage>::iterator AppendSingleFrameRenderStage(re::RenderStage const& renderStage);
 
 		size_t GetNumberOfStages() const { return m_stagePipeline.size(); }
 
-		inline std::vector<gr::RenderStage const*>& GetRenderStages() { return m_stagePipeline; }
-		inline std::vector<gr::RenderStage const*> const& GetRenderStages() const { return m_stagePipeline; }
+		inline std::vector<re::RenderStage const*>& GetRenderStages() { return m_stagePipeline; }
+		inline std::vector<re::RenderStage const*> const& GetRenderStages() const { return m_stagePipeline; }
 
-		inline std::vector<gr::RenderStage>& GetSingleFrameRenderStages() { return m_singleFrameStagePipeline; }
-		inline std::vector<gr::RenderStage> const& GetSingleFrameRenderStages() const { return m_singleFrameStagePipeline; }
+		inline std::vector<re::RenderStage>& GetSingleFrameRenderStages() { return m_singleFrameStagePipeline; }
+		inline std::vector<re::RenderStage> const& GetSingleFrameRenderStages() const { return m_singleFrameStagePipeline; }
 
 		void EndOfFrame(); // Clear m_singleFrameStagePipeline etc
 
 	private:
-		std::vector<gr::RenderStage const*> m_stagePipeline;
-		std::vector<gr::RenderStage> m_singleFrameStagePipeline;
+		std::vector<re::RenderStage const*> m_stagePipeline;
+		std::vector<re::RenderStage> m_singleFrameStagePipeline;
 
 	private:
 		StagePipeline() = delete;

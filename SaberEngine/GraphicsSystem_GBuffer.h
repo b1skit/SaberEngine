@@ -29,7 +29,7 @@ namespace gr
 		void CreateBatches() override;
 
 	private:
-		gr::RenderStage m_gBufferStage;
+		re::RenderStage m_gBufferStage;
 
 	};
 }

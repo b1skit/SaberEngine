@@ -14,6 +14,7 @@ using re::Batch;
 using en::Config;
 using en::SceneManager;
 using re::RenderManager;
+using re::RenderStage;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;

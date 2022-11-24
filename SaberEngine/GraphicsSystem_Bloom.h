@@ -26,10 +26,10 @@ namespace gr
 	private:
 		std::shared_ptr<re::MeshPrimitive> m_screenAlignedQuad;
 
-		gr::RenderStage m_emissiveBlitStage;
-		std::vector<gr::RenderStage> m_downResStages;
-		std::vector<gr::RenderStage> m_blurStages;
-		std::vector<gr::RenderStage> m_upResStages;
+		re::RenderStage m_emissiveBlitStage;
+		std::vector<re::RenderStage> m_downResStages;
+		std::vector<re::RenderStage> m_blurStages;
+		std::vector<re::RenderStage> m_upResStages;
 
 		const uint32_t m_numDownSamplePasses	= 2; // Scaling factor: # times we half the frame size
 		const uint32_t m_numBlurPasses			= 3; // How many pairs of horizontal + vertical blur passes to perform

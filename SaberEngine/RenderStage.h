@@ -15,7 +15,7 @@
 #include "Batch.h"
 
 
-namespace gr
+namespace re
 {
 	class RenderStage : public virtual en::NamedObject
 	{

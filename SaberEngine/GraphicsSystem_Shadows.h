@@ -29,7 +29,7 @@ namespace gr
 		void CreateBatches() override;
 
 	private:
-		gr::RenderStage m_directionalShadowStage;
-		std::vector<std::shared_ptr<gr::RenderStage>> m_pointLightShadowStages; // 1 stage per light
+		re::RenderStage m_directionalShadowStage;
+		std::vector<std::shared_ptr<re::RenderStage>> m_pointLightShadowStages; // 1 stage per light
 	};
 }

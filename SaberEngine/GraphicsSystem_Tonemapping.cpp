@@ -13,6 +13,7 @@ using gr::Shader;
 using gr::DeferredLightingGraphicsSystem;
 using re::TextureTargetSet;
 using re::RenderManager;
+using re::RenderStage;
 using re::Batch;
 using std::shared_ptr;
 using std::make_shared;

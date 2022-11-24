@@ -15,7 +15,7 @@ using glm::vec3;
 using glm::vec4;
 
 
-namespace gr
+namespace re
 {
 	RenderStage::RenderStage(std::string const& name) :
 			NamedObject(name),

@@ -13,6 +13,7 @@ using gr::Texture;
 using en::Config;
 using en::SceneManager;
 using re::RenderManager;
+using re::RenderStage;
 using std::string;
 
 
