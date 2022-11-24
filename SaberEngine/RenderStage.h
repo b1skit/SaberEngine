@@ -97,10 +97,11 @@ namespace gr
 		void SetPerFrameShaderUniform(
 			std::string const& uniformName, T const& value, platform::Shader::UniformType const& type, int const count);
 
-		// TODO: Support per-frame stage uniform blocks
-		inline void AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb) { m_stageParamBlocks.emplace_back(pb); }
-		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetPermanentParameterBlocks() const { return m_stageParamBlocks; }
-		std::shared_ptr<re::ParameterBlock> GetPermanentParameterBlock(std::string const& pbShaderName) const;
+		void AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb);
+		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetPermanentParameterBlocks() const { return m_permanentParamBlocks; }
+		
+		void AddSingleFrameParameterBlock(std::shared_ptr<re::ParameterBlock> pb);
+		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetPerFrameParameterBlocks() const { return m_perFrameParamBlocks; }
 
 		// Stage Batches:
 		inline std::vector<re::Batch> const& GetStageBatches() const { return m_stageBatches; }
@@ -122,7 +123,9 @@ namespace gr
 		std::vector<StageShaderUniform> m_perFrameShaderUniforms; // TODO: Handle selection of face, miplevel when binding color/depth targets?
 		std::vector<std::shared_ptr<const void>> m_perFrameShaderUniformValues; // Generic, per-frame data storage buffer
 		
-		std::vector<std::shared_ptr<re::ParameterBlock>> m_stageParamBlocks; // TODO: This should be an unordered_map
+		std::vector<std::shared_ptr<re::ParameterBlock>> m_perFrameParamBlocks;
+		std::vector<std::shared_ptr<re::ParameterBlock >> m_permanentParamBlocks;
+
 
 		std::vector<re::Batch> m_stageBatches;
 		uint32_t m_batchFilterMask;

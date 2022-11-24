@@ -160,12 +160,13 @@ namespace gr
 			Camera* shadowCam = pointShadowStage->GetStageCamera();
 
 			// Update the param block data:
-			shared_ptr<re::ParameterBlock> shadowParams =
-				pointShadowStage->GetPermanentParameterBlock("CubemapShadowRenderParams");
-
 			CubemapShadowRenderParams cubemapShadowParams = GetCubemapShadowRenderParamsData(shadowCam);
 
-			shadowParams->Commit(cubemapShadowParams);
+			shared_ptr<re::ParameterBlock> cubemapShadowPB = re::ParameterBlock::Create(
+				"CubemapShadowRenderParams", 
+				cubemapShadowParams,
+				re::ParameterBlock::UpdateType::Immutable, 
+				re::ParameterBlock::Lifetime::SingleFrame);
 		}
 	}
 
