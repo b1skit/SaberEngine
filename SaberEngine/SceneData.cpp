@@ -817,8 +817,7 @@ namespace
 					reinterpret_cast<vector<vec2>*>(&uv0),
 					reinterpret_cast<vector<vec4>*>(&tangents)
 				};
-				util::VertexAttributeBuilder tangentBuilder;
-				tangentBuilder.ConstructMissingVertexAttributes(&meshData);
+				util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
 
 				// Material:
 				shared_ptr<Material const> material = 

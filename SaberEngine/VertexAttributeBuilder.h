@@ -27,10 +27,13 @@ class VertexAttributeBuilder
 		};
 
 	public:
-		VertexAttributeBuilder();
-		void ConstructMissingVertexAttributes(MeshData* meshData);
+		static void BuildMissingVertexAttributes(MeshData* meshData);
+
 
 	private:
+		VertexAttributeBuilder();
+		void ConstructMissingVertexAttributes(MeshData* meshData);
+	
 		void RemoveDegenerateTriangles(MeshData* meshData);
 		void BuildSimpleTriangleUVs(MeshData* meshData);
 		void BuildFlatNormals(MeshData* meshData);

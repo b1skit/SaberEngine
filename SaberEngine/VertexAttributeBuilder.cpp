@@ -22,6 +22,13 @@ using glm::vec4;
 
 namespace util
 {
+	void VertexAttributeBuilder::BuildMissingVertexAttributes(MeshData* meshData)
+	{
+		util::VertexAttributeBuilder tangentBuilder;
+		tangentBuilder.ConstructMissingVertexAttributes(meshData);
+	}
+
+
 	VertexAttributeBuilder::VertexAttributeBuilder()
 	{
 		m_interface.m_getNumFaces			= GetNumFaces;

@@ -3,6 +3,10 @@
   "Id": "80c62e80-7437-4bb9-b7e0-693fa4c402a1",
   "Items": [
     {
+      "Id": "1bfead22-6f3e-43ec-b679-439e0a804f73",
+      "Command": "-scene VertexColor\\VertexColorTest.gltf"
+    },
+    {
       "Id": "a597a9cc-5fd1-4493-9515-92281f037b50",
       "Command": "-scene MyInstanceTest\\InstanceTest.gltf"
     },
