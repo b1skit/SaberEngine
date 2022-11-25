@@ -12,5 +12,6 @@ void main()
 	
 	data.worldPos = (g_model[gl_InstanceID] * vec4(in_position.xyz, 1.0f)).xyz;
 	data.uv0 = in_uv0;
+	data.vertexColor = in_color;
 	data.TBN = AssembleTBN(in_normal, in_tangent, g_model[gl_InstanceID]);
 }

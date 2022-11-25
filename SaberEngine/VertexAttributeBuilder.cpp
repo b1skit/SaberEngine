@@ -48,14 +48,15 @@ namespace util
 
 		SEAssert("Cannot pass null data. If an attribute does not exist, a vector of size 0 is expected.", 
 			meshData->m_meshParams && meshData->m_indices && meshData->m_positions && 
-			meshData->m_normals && meshData->m_UV0 && meshData->m_tangents);
+			meshData->m_normals && meshData->m_UV0 && meshData->m_tangents && meshData->m_colors);
 
 		const bool isIndexed = meshData->m_indices->size() > meshData->m_positions->size();
 		const bool hasUVs = !meshData->m_UV0->empty();
 		const bool hasNormals = !meshData->m_normals->empty();
 		bool hasTangents = !meshData->m_tangents->empty();
+		const bool hasColors = !meshData->m_colors->empty();
 
-		if (hasUVs && hasNormals && hasTangents)
+		if (hasUVs && hasNormals && hasTangents && hasColors)
 		{
 			LOG("Mesh \"%s\" has all required attributes", meshData->m_name.c_str());
 			return; // Note: We skip degenerate triangle removal this way, but low risk as the asset came with all attribs
@@ -84,6 +85,10 @@ namespace util
 		if (!hasTangents)
 		{
 			meshData->m_tangents->resize(numVerts, vec4(0, 0, 0, 0));
+		}
+		if (!hasColors)
+		{
+			meshData->m_colors->resize(numVerts, vec4(1.f, 1.f, 1.f, 1.f));
 		}
 
 		// Convert indexed triangle lists to non-indexed:
@@ -117,6 +122,7 @@ namespace util
 			SEAssert("Failed to generate tangents", result);
 		}
 
+
 		// Re-index the result, if required:
 		if (isIndexed)
 		{
@@ -134,8 +140,9 @@ namespace util
 			meshData->m_indices->size() % 3 == 0 &&
 			meshData->m_positions->size() == meshData->m_indices->size() &&
 			meshData->m_normals->size() == meshData->m_indices->size() &&
-			meshData->m_UV0->size() == meshData->m_indices->size()&&
-			meshData->m_tangents->size() == meshData->m_indices->size()
+			meshData->m_UV0->size() == meshData->m_indices->size() &&
+			meshData->m_tangents->size() == meshData->m_indices->size() &&
+			meshData->m_colors->size() == meshData->m_indices->size()
 		);
 
 		vector<uint32_t> newIndices;
@@ -143,6 +150,7 @@ namespace util
 		vector<vec3> newNormals;
 		vector<vec2> newUVs;
 		vector<vec4> newTangents;
+		vector<vec4> newColors;
 
 		// We might remove verts, so reserve rather than resize...
 		const size_t maxNumVerts = meshData->m_indices->size(); // Assume triangle lists: 3 index entries per triangle
@@ -151,6 +159,7 @@ namespace util
 		newNormals.reserve(maxNumVerts);
 		newUVs.reserve(maxNumVerts);
 		newTangents.reserve(maxNumVerts);
+		newColors.reserve(maxNumVerts);
 
 		size_t numDegeneratesFound = 0;
 		uint32_t insertIdx = 0;
@@ -197,6 +206,10 @@ namespace util
 				newTangents.emplace_back(meshData->m_tangents->at(meshData->m_indices->at(i + 1)));
 				newTangents.emplace_back(meshData->m_tangents->at(meshData->m_indices->at(i + 2)));
 
+				newColors.emplace_back(meshData->m_colors->at(meshData->m_indices->at(i)));
+				newColors.emplace_back(meshData->m_colors->at(meshData->m_indices->at(i + 1)));
+				newColors.emplace_back(meshData->m_colors->at(meshData->m_indices->at(i + 2)));
+
 				insertIdx += 3;
 			}
 			else
@@ -210,6 +223,7 @@ namespace util
 		*meshData->m_normals = move(newNormals);
 		*meshData->m_UV0 = move(newUVs);
 		*meshData->m_tangents = move(newTangents);
+		*meshData->m_colors = move(newColors);
 
 		if (numDegeneratesFound > 0)
 		{
@@ -285,6 +299,7 @@ namespace util
 		vector<vec3> newNormals(numVerts);
 		vector<vec2> newUVs(numVerts);
 		vector<vec4> newTangents(numVerts);
+		vector<vec4> newColors(numVerts);
 
 		// Use our indices to unpack duplicated vertex attributes:
 		for (size_t i = 0; i < numVerts; i++)
@@ -294,6 +309,7 @@ namespace util
 			newNormals[i] = meshData->m_normals->at(meshData->m_indices->at(i));
 			newUVs[i] = meshData->m_UV0->at(meshData->m_indices->at(i));
 			newTangents[i] = meshData->m_tangents->at(meshData->m_indices->at(i));
+			newColors[i] = meshData->m_colors->at(meshData->m_indices->at(i));
 		}
 
 		*meshData->m_indices = move(newIndices);
@@ -301,6 +317,7 @@ namespace util
 		*meshData->m_normals = move(newNormals);
 		*meshData->m_UV0 = move(newUVs);
 		*meshData->m_tangents = move(newTangents);
+		*meshData->m_colors = move(newColors);
 	}
 
 
@@ -326,9 +343,11 @@ namespace util
 		// piRemapTable: iNrVerticesIn * sizeof(int)
 		vector<int> remapTable(meshData->m_positions->size(), 0); // This will contain our final indexes
 
-		// We'll pack our vertex attributes together into blocks of floats:
-		const size_t floatsPerVertex = (sizeof(vec3) + sizeof(vec3) + sizeof(vec2) + sizeof(vec4)) / sizeof(float);
-		SEAssert("Data size mismatch/miscalulation", floatsPerVertex == 12);
+		// We'll pack our vertex attributes together into blocks of floats.
+		// Compute the total number of floats for all attributes per vertex:
+		const size_t floatsPerVertex = 
+			(sizeof(vec3) + sizeof(vec3) + sizeof(vec2) + sizeof(vec4) + sizeof(vec4)) / sizeof(float);
+		SEAssert("Data size mismatch/miscalulation", floatsPerVertex == 16); // All non-index members in MeshData
 
 		// pfVertexDataOut: iNrVerticesIn * iFloatsPerVert * sizeof(float)
 		const size_t numElements = meshData->m_positions->size();
@@ -339,7 +358,7 @@ namespace util
 		// pfVertexDataIn: Our tightly-packed vertex data:
 		vector<float> packedVertexData(meshData->m_positions->size() * floatsPerVertex, 0);		
 
-		const size_t strideSizeInBytes = floatsPerVertex * sizeof(float);
+		const size_t strideSizeInBytes = floatsPerVertex * sizeof(float); // TODO: THIS IS DUPLICATED IN vertexStrideBytes !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		size_t byteOffset = 0;
 		PackAttribute(
 			(float*)meshData->m_positions->data(), 
@@ -377,6 +396,15 @@ namespace util
 			sizeof(vec4));	// tangents = vec4
 		byteOffset += sizeof(vec4);
 
+		PackAttribute(
+			(float*)meshData->m_colors->data(),
+			packedVertexData.data(),
+			byteOffset,
+			strideSizeInBytes,
+			numElements,
+			sizeof(vec4));	// colors = vec4
+		byteOffset += sizeof(vec4);
+
 		// Weld the verts to obtain our final unique indexing:
 		const int numUniqueVertsFound = 
 			WeldMesh(remapTable.data(), vertexDataOut.data(), packedVertexData.data(), (int)numElements, (int)floatsPerVertex);
@@ -387,6 +415,7 @@ namespace util
 		meshData->m_normals->resize(numUniqueVertsFound);
 		meshData->m_UV0->resize(numUniqueVertsFound);
 		meshData->m_tangents->resize(numUniqueVertsFound);
+		meshData->m_colors->resize(numUniqueVertsFound);
 		for (size_t i = 0; i < remapTable.size(); i++)
 		{
 			const int vertexIndex = remapTable[i];
@@ -407,6 +436,9 @@ namespace util
 			packedVertByteOffset += sizeof(vec2);
 
 			memcpy(&meshData->m_tangents->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec4));
+			packedVertByteOffset += sizeof(vec4);
+
+			memcpy(&meshData->m_colors->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec4));
 			packedVertByteOffset += sizeof(vec4);
 		}
 	}

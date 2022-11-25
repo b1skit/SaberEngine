@@ -26,11 +26,8 @@ uniform float emissiveIntensity = 1.0;	// Overwritten during RenderManager.Initi
 void main()
 {
 	// Albedo. Note: We use an sRGB-format texture, which converts this value from sRGB->linear space for free
-	gBuffer_out_albedo = texture(MatAlbedo, data.uv0.xy) * g_baseColorFactor;
-
-	// TODO: If a primitive specifies a vertex color using the attribute semantic property COLOR_0, then this value acts 
-	// as an additional linear multiplier to base color.
-	//https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
+	// g_baseColorFactor and data.vertexColor are factored into the albedo as per the GLTF 2.0 specifications
+	gBuffer_out_albedo = texture(MatAlbedo, data.uv0.xy) * g_baseColorFactor * data.vertexColor;
 
 	const vec3 texNormal = texture(MatNormal, data.uv0.xy).xyz;
 	const vec3 worldNormal = WorldNormalFromTextureNormal(texNormal, data.TBN) * vec3(g_normalScale, g_normalScale, 1.0f);
