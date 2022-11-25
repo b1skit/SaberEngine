@@ -81,15 +81,6 @@ namespace opengl
 	}
 
 
-	void RenderManager::StartOfFrame()
-	{
-		// Start the Dear ImGui frame
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplSDL2_NewFrame();
-		ImGui::NewFrame();
-	}
-
-
 	void RenderManager::Render(re::RenderManager& renderManager)
 	{
 		// TODO: Add an assert somewhere that checks if any possible shader uniform isn't set
@@ -229,20 +220,33 @@ namespace opengl
 		}
 
 
-		// Imgui Rendering
-		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "ImGui stage");
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-		glPopDebugGroup();
-
-
-		// Display the final frame:
-		renderManager.m_context.SwapWindow();
 
 		// Cleanup:
 		for (StagePipeline& stagePipeline : renderManager.m_pipeline.GetPipeline())
 		{
 			stagePipeline.EndOfFrame();
 		}
-	}		
+	}	
+
+
+	void RenderManager::RenderImGui(re::RenderManager& renderManager)
+	{
+		// Start the Dear ImGui frame
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplSDL2_NewFrame();
+		ImGui::NewFrame();
+
+		// Process the queue of commands for the current frame:
+		while (!renderManager.m_imGuiCommands.empty())
+		{
+			renderManager.m_imGuiCommands.front()->Execute();
+			renderManager.m_imGuiCommands.pop();
+		}
+
+		// Composite Imgui rendering on top of the finished frame:
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "ImGui stage");
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		glPopDebugGroup();
+	}
 }

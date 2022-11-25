@@ -8,6 +8,7 @@
 #include "TextureTarget.h"
 #include "RenderPipeline.h"
 #include "ParameterBlockAllocator.h"
+#include "Command.h"
 
 
 namespace opengl
@@ -46,8 +47,6 @@ namespace re
 		// Member functions:
 		void Initialize();
 
-		void StartOfFrame(); // Starts the ImGui frame
-
 		re::Context const& GetContext() { return m_context; }
 
 		std::shared_ptr<re::TextureTargetSet> GetDefaultTextureTargetSet() { return m_defaultTargetSet; }
@@ -60,6 +59,7 @@ namespace re
 
 		inline std::vector<re::Batch> const& GetSceneBatches() { return m_sceneBatches; }
 
+		void EnqueueImGuiCommand(std::shared_ptr<en::Command> command);
 
 	private:
 		void BuildSceneBatches();
@@ -77,6 +77,7 @@ namespace re
 
 		re::ParameterBlockAllocator m_paramBlockManager;	
 
+		std::queue<std::shared_ptr<en::Command>> m_imGuiCommands;
 
 	private:
 		// Friends

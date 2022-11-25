@@ -247,6 +247,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="..\Dependencies\imgui\imstb_truetype.h" />
     <ClInclude Include="Batch.h" />
     <ClInclude Include="Bounds.h" />
+    <ClInclude Include="Command.h" />
     <ClInclude Include="HashedDataObject.h" />
     <ClInclude Include="ParameterBlock.h" />
     <ClInclude Include="ParameterBlockAllocator.h" />

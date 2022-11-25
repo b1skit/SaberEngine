@@ -100,12 +100,6 @@ namespace re
 	}
 
 
-	void RenderManager::StartOfFrame()
-	{
-		platform::RenderManager::StartOfFrame();
-	}
-
-
 	void RenderManager::Update(const double stepTimeMs)
 	{
 		// Build batches:
@@ -123,8 +117,13 @@ namespace re
 		// API-specific rendering loop:
 		platform::RenderManager::Render(*this);
 
+		platform::RenderManager::RenderImGui(*this);
+
+		// Present the final frame:
+		m_context.SwapWindow();
+
 		// End of frame cleanup:
-		m_paramBlockManager.EndOfFrame();
+		m_paramBlockManager.EndOfFrame();		
 	}
 
 
@@ -207,6 +206,12 @@ namespace re
 	void RenderManager::Initialize()
 	{
 		platform::RenderManager::Initialize(*this);
+	}
+
+
+	void RenderManager::EnqueueImGuiCommand(std::shared_ptr<en::Command> command)
+	{
+		m_imGuiCommands.emplace(command);
 	}
 
 

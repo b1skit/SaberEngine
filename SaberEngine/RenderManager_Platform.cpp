@@ -4,6 +4,6 @@
 namespace platform
 {
 	void (*RenderManager::Initialize)(re::RenderManager&);
-	void (*RenderManager::StartOfFrame)();
-	void (*RenderManager::Render)(re::RenderManager&);	
+	void (*RenderManager::Render)(re::RenderManager&);
+	void (*RenderManager::RenderImGui)(re::RenderManager&);
 }

@@ -85,10 +85,6 @@ namespace en
 		{
 			outerLoopTimer.Start();
 
-			// Initializes ImGui for a new frame, so we can call ImGui functions throughout the loop.
-			// NOTE: ImGui is NOT thread safe TODO: Handle this using a Command pattern
-			RenderManager::Get()->StartOfFrame();
-
 			EventManager::Get()->Update(lastOuterFrameTime);
 			InputManager::Get()->Update(lastOuterFrameTime);
 			CoreEngine::Update(lastOuterFrameTime);

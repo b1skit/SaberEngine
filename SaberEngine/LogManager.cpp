@@ -1,14 +1,35 @@
 #include <string>
 #include <iostream>
+#include <memory>
 
 #include "imgui.h"
 
 #include "LogManager.h"
 #include "EventManager.h"
 #include "DebugConfiguration.h"
+#include "Command.h"
+#include "RenderManager.h"
 
 using en::EventManager;
+using std::make_shared;
 
+
+namespace
+{
+	class DisplayConsoleCommand : public virtual en::Command
+	{
+	public:
+		DisplayConsoleCommand(bool* consoleOpen) : m_consoleOpen(consoleOpen) {}
+
+		void Execute() override
+		{
+			ImGui::ShowDemoWindow(m_consoleOpen);
+		}
+
+	private:
+		bool* m_consoleOpen;
+	};
+}
 
 namespace en
 {
@@ -50,7 +71,8 @@ namespace en
 		// to catch when a user clicks [x] to close the window
 		if (m_consoleState.m_consoleRequested == true && m_consoleState.m_consoleReady == true)
 		{
-			ImGui::ShowDemoWindow(&m_consoleState.m_consoleReady);
+			re::RenderManager::Get()->EnqueueImGuiCommand(
+				make_shared<DisplayConsoleCommand>(&m_consoleState.m_consoleReady));
 		}
 		else if (m_consoleState.m_consoleRequested == true && m_consoleState.m_consoleReady == false)
 		{
