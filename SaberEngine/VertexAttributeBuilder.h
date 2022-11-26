@@ -22,8 +22,8 @@ class VertexAttributeBuilder
 		std::vector<uint32_t>* m_indices;
 		std::vector<glm::vec3>* m_positions;
 		std::vector<glm::vec3>* m_normals;
-		std::vector<glm::vec2>* m_UV0;
 		std::vector<glm::vec4>* m_tangents;
+		std::vector<glm::vec2>* m_UV0;
 		std::vector<glm::vec4>* m_colors;
 		};
 

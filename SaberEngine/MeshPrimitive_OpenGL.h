@@ -18,11 +18,11 @@ namespace opengl
 	public:
 		enum VertexAttribute
 		{
-			Position = 0,
-			Color = 1,
-			Normal = 2,
-			Tangent = 3,
-			UV0 = 4,
+			Position	= 0,
+			Normal		= 1,
+			Tangent		= 2,
+			UV0			= 3,
+			Color		= 4,
 
 			Indexes, // Not assigned a layout binding location
 

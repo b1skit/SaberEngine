@@ -25,26 +25,29 @@ namespace re
 
 	MeshPrimitive::MeshPrimitive(
 		string const& name,
+		vector<uint32_t>& indices,
 		vector<float>& positions,
 		vector<float>& normals,
-		vector<float>& colors,
-		vector<float>& uv0,
 		vector<float>& tangents,
-		vector<uint32_t>& indices,
+		vector<float>& uv0,
+		vector<float>& colors,		
 		shared_ptr<gr::Material const> material,
 		MeshPrimitiveParams const& meshParams,
-		Transform* ownerTransform) : NamedObject(name),
-			m_platformParams(nullptr),
-			m_meshMaterial(material),
-			m_params(meshParams),
-			m_ownerTransform(ownerTransform)
+		Transform* ownerTransform) 
+		: NamedObject(name)
+		, m_platformParams(nullptr)
+		, m_meshMaterial(material)
+		, m_params(meshParams)
+		, m_ownerTransform(ownerTransform)
 	{
+		m_indices		= move(indices);
+
 		m_positions		= move(positions);
 		m_normals		= move(normals);
 		m_colors		= move(colors);
 		m_uv0			= move(uv0);
 		m_tangents		= move(tangents);
-		m_indices		= move(indices);
+		
 
 		ComputeBounds(); // Compute m_localBounds
 
@@ -56,13 +59,14 @@ namespace re
 
 	void MeshPrimitive::Destroy()
 	{
+		m_indices.clear();
+
 		m_positions.clear();
 		m_normals.clear();
 		m_colors.clear();
 		m_uv0.clear();
 		m_tangents.clear();
-		m_indices.clear();
-
+		
 		m_meshMaterial = nullptr;
 
 		platform::MeshPrimitive::Destroy(*this); // Platform-specific destruction
@@ -319,12 +323,12 @@ namespace meshfactory
 		// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
 		return std::make_shared<MeshPrimitive>(
 			"cube",
+			cubeIndices,
 			*reinterpret_cast<vector<float>*>(&assembledPositions),	// Cast our vector<vec3> to vector<float>
 			*reinterpret_cast<vector<float>*>(&assembledNormals),
-			*reinterpret_cast<vector<float>*>(&assembledColors),
-			*reinterpret_cast<vector<float>*>(&assembledUVs),
 			*reinterpret_cast<vector<float>*>(&assembledTangents),
-			cubeIndices,
+			*reinterpret_cast<vector<float>*>(&assembledUVs),
+			*reinterpret_cast<vector<float>*>(&assembledColors),			
 			nullptr,
 			MeshPrimitive::MeshPrimitiveParams(),
 			nullptr);
@@ -393,12 +397,12 @@ namespace meshfactory
 
 		return std::make_shared<MeshPrimitive>(
 			"optimizedFullscreenQuad",
+			triIndices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
 			*reinterpret_cast<vector<float>*>(&normals),
-			*reinterpret_cast<vector<float>*>(&colors),
-			*reinterpret_cast<vector<float>*>(&uvs),
 			*reinterpret_cast<vector<float>*>(&tangents),
-			triIndices,
+			*reinterpret_cast<vector<float>*>(&uvs),
+			*reinterpret_cast<vector<float>*>(&colors),
 			nullptr,
 			MeshPrimitive::MeshPrimitiveParams(),
 			nullptr);
@@ -440,12 +444,12 @@ namespace meshfactory
 		// It's easier to reason about geometry in vecN types; cast to float now we're done
 		return std::make_shared<MeshPrimitive>(
 			"quad",
+			quadIndices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
 			*reinterpret_cast<vector<float>*>(&normals),
-			*reinterpret_cast<vector<float>*>(&colors),
-			*reinterpret_cast<vector<float>*>(&uvs),
 			*reinterpret_cast<vector<float>*>(&tangents),
-			quadIndices,
+			*reinterpret_cast<vector<float>*>(&uvs),
+			* reinterpret_cast<vector<float>*>(&colors),			
 			nullptr,
 			MeshPrimitive::MeshPrimitiveParams(),
 			nullptr);
@@ -626,12 +630,12 @@ namespace meshfactory
 		// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
 		return make_shared<MeshPrimitive>(
 			"sphere",
+			indices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
 			*reinterpret_cast<vector<float>*>(&normals),
-			*reinterpret_cast<vector<float>*>(&colors),
-			*reinterpret_cast<vector<float>*>(&uvs),
 			*reinterpret_cast<vector<float>*>(&tangents),
-			indices,
+			*reinterpret_cast<vector<float>*>(&uvs),
+			*reinterpret_cast<vector<float>*>(&colors),
 			nullptr,
 			MeshPrimitive::MeshPrimitiveParams(),
 			nullptr);

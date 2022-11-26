@@ -35,16 +35,16 @@ namespace re
 
 	public:
 		MeshPrimitive(std::string const& name,
+			std::vector<uint32_t>& indices,
 			std::vector<float>& positions,
 			std::vector<float>& normals,
-			std::vector<float>& colors,
-			std::vector<float>& uv0,
 			std::vector<float>& tangents,
-			std::vector<uint32_t>& indices,
+			std::vector<float>& uv0,
+			std::vector<float>& colors,	
+			
 			std::shared_ptr<gr::Material const> material,
 			re::MeshPrimitive::MeshPrimitiveParams const& meshParams,
 			gr::Transform* ownerTransform);		
-		// TODO: Rearrange these args to match shader vertex attribute definition order
 
 		~MeshPrimitive(){ Destroy(); }
 
@@ -84,13 +84,17 @@ namespace re
 		std::unique_ptr<platform::MeshPrimitive::PlatformParams> m_platformParams;
 
 		// Vertex data streams:
+		std::vector<uint32_t> m_indices;
+
 		std::vector<float> m_positions;		// vec3
 		std::vector<float> m_normals;		// vec3
 		std::vector<float> m_colors;		// vec4
 		std::vector<float> m_uv0;			// vec2
 		std::vector<float> m_tangents;		// vec4
 
-		std::vector<uint32_t> m_indices;
+		//std::vector<uint8_t> m_joints;		// tvec4<uint8_t>
+		//std::vector<float> m_weights;		// vec4
+		
 
 		gr::Transform* m_ownerTransform;
 

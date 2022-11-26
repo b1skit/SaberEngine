@@ -77,6 +77,21 @@ namespace opengl
 
 		// Define, buffer, & label our arrays of vertex attribute data:
 		//-------------------------------------------------------------
+
+		// Indexes:	
+		SEAssert("MeshPrimitive has no indexes", meshPrimitive.GetIndices().size() > 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mp->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Indexes]);
+		glNamedBufferData(
+			mp->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Indexes],
+			meshPrimitive.GetIndices().size() * sizeof(uint32_t),
+			&meshPrimitive.GetIndices()[0],
+			GL_DYNAMIC_DRAW);
+		glObjectLabel(
+			GL_BUFFER,
+			mp->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Indexes],
+			-1,
+			(meshPrimitive.GetName() + " index").c_str());
+
 		// Position:
 		SEAssert("MeshPrimitive has no vertex positions", meshPrimitive.GetPositions().size() > 0);
 		glBindBuffer(GL_ARRAY_BUFFER, mp->m_meshVBOs[VertexAttribute::Position]);
@@ -98,30 +113,6 @@ namespace opengl
 			mp->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Position],
 			-1,
 			(meshPrimitive.GetName() + " position").c_str());
-
-		// Color:
-		if (meshPrimitive.GetColors().size() > 0)
-		{
-			glBindBuffer(GL_ARRAY_BUFFER, mp->m_meshVBOs[VertexAttribute::Color]);
-			glEnableVertexArrayAttrib(mp->m_meshVAO, VertexAttribute::Color);
-			glVertexAttribPointer(
-				VertexAttribute::Color,
-				4,
-				GL_FLOAT,
-				GL_FALSE,
-				0,
-				0);
-			glNamedBufferData(
-				mp->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Color],
-				meshPrimitive.GetColors().size() * sizeof(float),
-				&meshPrimitive.GetColors()[0],
-				GL_DYNAMIC_DRAW);
-			glObjectLabel(
-				GL_BUFFER,
-				mp->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Color],
-				-1,
-				(meshPrimitive.GetName() + " color").c_str());
-		}
 
 		// Normals:
 		if (meshPrimitive.GetNormals().size() > 0)
@@ -198,19 +189,29 @@ namespace opengl
 				(meshPrimitive.GetName() + " UV0").c_str());
 		}
 
-		// Indexes:	
-		SEAssert("MeshPrimitive has no indexes", meshPrimitive.GetIndices().size() > 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mp->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Indexes]);
-		glNamedBufferData(
-			mp->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Indexes],
-			meshPrimitive.GetIndices().size() * sizeof(uint32_t),
-			&meshPrimitive.GetIndices()[0],
-			GL_DYNAMIC_DRAW);
-		glObjectLabel(
-			GL_BUFFER,
-			mp->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Indexes],
-			-1,
-			(meshPrimitive.GetName() + " index").c_str());
+		// Color:
+		if (meshPrimitive.GetColors().size() > 0)
+		{
+			glBindBuffer(GL_ARRAY_BUFFER, mp->m_meshVBOs[VertexAttribute::Color]);
+			glEnableVertexArrayAttrib(mp->m_meshVAO, VertexAttribute::Color);
+			glVertexAttribPointer(
+				VertexAttribute::Color,
+				4,
+				GL_FLOAT,
+				GL_FALSE,
+				0,
+				0);
+			glNamedBufferData(
+				mp->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Color],
+				meshPrimitive.GetColors().size() * sizeof(float),
+				&meshPrimitive.GetColors()[0],
+				GL_DYNAMIC_DRAW);
+			glObjectLabel(
+				GL_BUFFER,
+				mp->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Color],
+				-1,
+				(meshPrimitive.GetName() + " color").c_str());
+		}
 
 		// Renderdoc name for the VAO now that everything is bound
 		glObjectLabel(GL_VERTEX_ARRAY, mp->m_meshVAO, -1, (meshPrimitive.GetName() + " VAO").c_str());

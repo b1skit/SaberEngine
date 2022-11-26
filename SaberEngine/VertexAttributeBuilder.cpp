@@ -33,8 +33,8 @@ namespace util
 	{
 		m_interface.m_getNumFaces			= GetNumFaces;
 		m_interface.m_getNumVerticesOfFace  = GetNumFaceVerts;
-		m_interface.m_getNormal				= GetNormal;
 		m_interface.m_getPosition			= GetPosition;
+		m_interface.m_getNormal				= GetNormal;		
 		m_interface.m_getTexCoord			= GetTexCoords;
 		m_interface.m_setTSpaceBasic		= SetTangentSpaceBasic;
 
@@ -48,15 +48,15 @@ namespace util
 
 		SEAssert("Cannot pass null data. If an attribute does not exist, a vector of size 0 is expected.", 
 			meshData->m_meshParams && meshData->m_indices && meshData->m_positions && 
-			meshData->m_normals && meshData->m_UV0 && meshData->m_tangents && meshData->m_colors);
+			meshData->m_normals && meshData->m_tangents && meshData->m_UV0 && meshData->m_colors);
 
 		const bool isIndexed = meshData->m_indices->size() > meshData->m_positions->size();
-		const bool hasUVs = !meshData->m_UV0->empty();
 		const bool hasNormals = !meshData->m_normals->empty();
 		bool hasTangents = !meshData->m_tangents->empty();
+		const bool hasUVs = !meshData->m_UV0->empty();
 		const bool hasColors = !meshData->m_colors->empty();
 
-		if (hasUVs && hasNormals && hasTangents && hasColors)
+		if (hasNormals && hasTangents && hasUVs && hasColors)
 		{
 			LOG("Mesh \"%s\" has all required attributes", meshData->m_name.c_str());
 			return; // Note: We skip degenerate triangle removal this way, but low risk as the asset came with all attribs
@@ -64,10 +64,6 @@ namespace util
 
 		// Allocate space for any missing attributes:
 		const size_t numVerts = meshData->m_indices->size(); // Assume triangle lists: 3 index entries per triangle
-		if (!hasUVs)
-		{
-			meshData->m_UV0->resize(numVerts, vec2(0, 0));
-		}
 		if (!hasNormals)
 		{
 			meshData->m_normals->resize(numVerts, vec3(0, 0, 0));
@@ -86,6 +82,10 @@ namespace util
 		{
 			meshData->m_tangents->resize(numVerts, vec4(0, 0, 0, 0));
 		}
+		if (!hasUVs)
+		{
+			meshData->m_UV0->resize(numVerts, vec2(0, 0));
+		}
 		if (!hasColors)
 		{
 			meshData->m_colors->resize(numVerts, vec4(1.f, 1.f, 1.f, 1.f));
@@ -102,11 +102,6 @@ namespace util
 		RemoveDegenerateTriangles(meshData);
 
 		// Build any missing attributes:
-		if (!hasUVs)
-		{
-			LOG("MeshPrimitive \"%s\" is missing UVs, generating a simple set...", meshData->m_name.c_str());
-			BuildSimpleTriangleUVs(meshData);
-		}
 		if (!hasNormals)
 		{
 			LOG("MeshPrimitive \"%s\" is missing normals, flat normals will be generated...", meshData->m_name.c_str());
@@ -120,6 +115,11 @@ namespace util
 			m_context.m_pUserData = meshData;
 			tbool result = genTangSpaceDefault(&this->m_context);
 			SEAssert("Failed to generate tangents", result);
+		}
+		if (!hasUVs)
+		{
+			LOG("MeshPrimitive \"%s\" is missing UVs, generating a simple set...", meshData->m_name.c_str());
+			BuildSimpleTriangleUVs(meshData);
 		}
 
 
@@ -140,16 +140,16 @@ namespace util
 			meshData->m_indices->size() % 3 == 0 &&
 			meshData->m_positions->size() == meshData->m_indices->size() &&
 			meshData->m_normals->size() == meshData->m_indices->size() &&
-			meshData->m_UV0->size() == meshData->m_indices->size() &&
 			meshData->m_tangents->size() == meshData->m_indices->size() &&
+			meshData->m_UV0->size() == meshData->m_indices->size() &&
 			meshData->m_colors->size() == meshData->m_indices->size()
 		);
 
 		vector<uint32_t> newIndices;
 		vector<vec3> newPositions;
 		vector<vec3> newNormals;
-		vector<vec2> newUVs;
 		vector<vec4> newTangents;
+		vector<vec2> newUVs;
 		vector<vec4> newColors;
 
 		// We might remove verts, so reserve rather than resize...
@@ -157,8 +157,8 @@ namespace util
 		newIndices.reserve(maxNumVerts);
 		newPositions.reserve(maxNumVerts);
 		newNormals.reserve(maxNumVerts);
-		newUVs.reserve(maxNumVerts);
 		newTangents.reserve(maxNumVerts);
+		newUVs.reserve(maxNumVerts);
 		newColors.reserve(maxNumVerts);
 
 		size_t numDegeneratesFound = 0;
@@ -197,14 +197,14 @@ namespace util
 				newNormals.emplace_back(meshData->m_normals->at(meshData->m_indices->at(i)));
 				newNormals.emplace_back(meshData->m_normals->at(meshData->m_indices->at(i + 1)));
 				newNormals.emplace_back(meshData->m_normals->at(meshData->m_indices->at(i + 2)));
-				
-				newUVs.emplace_back(meshData->m_UV0->at(meshData->m_indices->at(i)));
-				newUVs.emplace_back(meshData->m_UV0->at(meshData->m_indices->at(i + 1)));
-				newUVs.emplace_back(meshData->m_UV0->at(meshData->m_indices->at(i + 2)));
 
 				newTangents.emplace_back(meshData->m_tangents->at(meshData->m_indices->at(i)));
 				newTangents.emplace_back(meshData->m_tangents->at(meshData->m_indices->at(i + 1)));
 				newTangents.emplace_back(meshData->m_tangents->at(meshData->m_indices->at(i + 2)));
+
+				newUVs.emplace_back(meshData->m_UV0->at(meshData->m_indices->at(i)));
+				newUVs.emplace_back(meshData->m_UV0->at(meshData->m_indices->at(i + 1)));
+				newUVs.emplace_back(meshData->m_UV0->at(meshData->m_indices->at(i + 2)));
 
 				newColors.emplace_back(meshData->m_colors->at(meshData->m_indices->at(i)));
 				newColors.emplace_back(meshData->m_colors->at(meshData->m_indices->at(i + 1)));
@@ -221,8 +221,8 @@ namespace util
 		*meshData->m_indices = move(newIndices);
 		*meshData->m_positions = move(newPositions);
 		*meshData->m_normals = move(newNormals);
-		*meshData->m_UV0 = move(newUVs);
 		*meshData->m_tangents = move(newTangents);
+		*meshData->m_UV0 = move(newUVs);
 		*meshData->m_colors = move(newColors);
 
 		if (numDegeneratesFound > 0)
@@ -297,8 +297,8 @@ namespace util
 		vector<uint32_t> newIndices(numVerts);
 		vector<vec3> newPositions(numVerts);
 		vector<vec3> newNormals(numVerts);
-		vector<vec2> newUVs(numVerts);
 		vector<vec4> newTangents(numVerts);
+		vector<vec2> newUVs(numVerts);
 		vector<vec4> newColors(numVerts);
 
 		// Use our indices to unpack duplicated vertex attributes:
@@ -307,16 +307,16 @@ namespace util
 			newIndices[i] = (uint32_t)i;
 			newPositions[i] = meshData->m_positions->at(meshData->m_indices->at(i));
 			newNormals[i] = meshData->m_normals->at(meshData->m_indices->at(i));
-			newUVs[i] = meshData->m_UV0->at(meshData->m_indices->at(i));
 			newTangents[i] = meshData->m_tangents->at(meshData->m_indices->at(i));
+			newUVs[i] = meshData->m_UV0->at(meshData->m_indices->at(i));
 			newColors[i] = meshData->m_colors->at(meshData->m_indices->at(i));
 		}
 
 		*meshData->m_indices = move(newIndices);
 		*meshData->m_positions = move(newPositions);
 		*meshData->m_normals = move(newNormals);
-		*meshData->m_UV0 = move(newUVs);
 		*meshData->m_tangents = move(newTangents);
+		*meshData->m_UV0 = move(newUVs);
 		*meshData->m_colors = move(newColors);
 	}
 
@@ -358,13 +358,12 @@ namespace util
 		// pfVertexDataIn: Our tightly-packed vertex data:
 		vector<float> packedVertexData(meshData->m_positions->size() * floatsPerVertex, 0);		
 
-		const size_t strideSizeInBytes = floatsPerVertex * sizeof(float); // TODO: THIS IS DUPLICATED IN vertexStrideBytes !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		size_t byteOffset = 0;
 		PackAttribute(
 			(float*)meshData->m_positions->data(), 
 			packedVertexData.data(), 
 			byteOffset,
-			strideSizeInBytes,
+			vertexStrideBytes,
 			numElements,
 			sizeof(vec3));	// Position = vec3
 		byteOffset += sizeof(vec3);
@@ -373,34 +372,34 @@ namespace util
 			(float*)meshData->m_normals->data(),
 			packedVertexData.data(),
 			byteOffset,
-			strideSizeInBytes,
+			vertexStrideBytes,
 			numElements,
 			sizeof(vec3));	// Normals = vec3
 		byteOffset += sizeof(vec3);
 
 		PackAttribute(
-			(float*)meshData->m_UV0->data(),
-			packedVertexData.data(),
-			byteOffset,
-			strideSizeInBytes,
-			numElements,
-			sizeof(vec2));	// UV0 = vec2
-		byteOffset += sizeof(vec2);
-
-		PackAttribute(
 			(float*)meshData->m_tangents->data(),
 			packedVertexData.data(),
 			byteOffset,
-			strideSizeInBytes,
+			vertexStrideBytes,
 			numElements,
 			sizeof(vec4));	// tangents = vec4
 		byteOffset += sizeof(vec4);
 
 		PackAttribute(
+			(float*)meshData->m_UV0->data(),
+			packedVertexData.data(),
+			byteOffset,
+			vertexStrideBytes,
+			numElements,
+			sizeof(vec2));	// UV0 = vec2
+		byteOffset += sizeof(vec2);
+
+		PackAttribute(
 			(float*)meshData->m_colors->data(),
 			packedVertexData.data(),
 			byteOffset,
-			strideSizeInBytes,
+			vertexStrideBytes,
 			numElements,
 			sizeof(vec4));	// colors = vec4
 		byteOffset += sizeof(vec4);
@@ -413,8 +412,8 @@ namespace util
 		meshData->m_indices->resize(remapTable.size());
 		meshData->m_positions->resize(numUniqueVertsFound);
 		meshData->m_normals->resize(numUniqueVertsFound);
-		meshData->m_UV0->resize(numUniqueVertsFound);
 		meshData->m_tangents->resize(numUniqueVertsFound);
+		meshData->m_UV0->resize(numUniqueVertsFound);
 		meshData->m_colors->resize(numUniqueVertsFound);
 		for (size_t i = 0; i < remapTable.size(); i++)
 		{
@@ -432,11 +431,11 @@ namespace util
 			memcpy(&meshData->m_normals->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec3));
 			packedVertByteOffset += sizeof(vec3);
 
-			memcpy(&meshData->m_UV0->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec2));
-			packedVertByteOffset += sizeof(vec2);
-
 			memcpy(&meshData->m_tangents->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec4));
 			packedVertByteOffset += sizeof(vec4);
+
+			memcpy(&meshData->m_UV0->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec2));
+			packedVertByteOffset += sizeof(vec2);
 
 			memcpy(&meshData->m_colors->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec4));
 			packedVertByteOffset += sizeof(vec4);

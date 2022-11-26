@@ -814,8 +814,8 @@ namespace
 					&indices,
 					reinterpret_cast<vector<vec3>*>(&positions),
 					reinterpret_cast<vector<vec3>*>(&normals),
-					reinterpret_cast<vector<vec2>*>(&uv0),
 					reinterpret_cast<vector<vec4>*>(&tangents),
+					reinterpret_cast<vector<vec2>*>(&uv0),					
 					reinterpret_cast<vector<vec4>*>(&colors)
 				};
 				util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
@@ -827,12 +827,12 @@ namespace
 				// Attach the primitive:
 				parent->GetMesh()->AddMeshPrimitive(make_shared<MeshPrimitive>(
 					nodeName,
+					indices,
 					positions,
 					normals,
-					colors,
-					uv0,
 					tangents,
-					indices,
+					uv0,
+					colors,					
 					material,
 					meshPrimitiveParams,
 					nullptr));
