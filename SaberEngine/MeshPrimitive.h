@@ -41,7 +41,8 @@ namespace re
 			std::vector<float>& tangents,
 			std::vector<float>& uv0,
 			std::vector<float>& colors,	
-			
+			std::vector<uint8_t> joints,
+			std::vector<float> weights,
 			std::shared_ptr<gr::Material const> material,
 			re::MeshPrimitive::MeshPrimitiveParams const& meshParams,
 			gr::Transform* ownerTransform);		
@@ -92,8 +93,8 @@ namespace re
 		std::vector<float> m_uv0;			// vec2
 		std::vector<float> m_tangents;		// vec4
 
-		//std::vector<uint8_t> m_joints;		// tvec4<uint8_t>
-		//std::vector<float> m_weights;		// vec4
+		std::vector<uint8_t> m_joints;		// tvec4<uint8_t>
+		std::vector<float> m_weights;		// vec4
 		
 
 		gr::Transform* m_ownerTransform;

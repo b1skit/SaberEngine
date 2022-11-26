@@ -3,6 +3,10 @@
   "Id": "80c62e80-7437-4bb9-b7e0-693fa4c402a1",
   "Items": [
     {
+      "Id": "98ea750c-14cb-49ec-a6fe-f66d284f3cf5",
+      "Command": "-scene SimpleSkin\\SimpleSkin.gltf"
+    },
+    {
       "Id": "1bfead22-6f3e-43ec-b679-439e0a804f73",
       "Command": "-scene VertexColor\\VertexColorTest.gltf"
     },

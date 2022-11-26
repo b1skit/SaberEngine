@@ -30,6 +30,8 @@ namespace util
 
 
 	VertexAttributeBuilder::VertexAttributeBuilder()
+		: m_hasJoints(false)
+		, m_hasWeights(false)
 	{
 		m_interface.m_getNumFaces			= GetNumFaces;
 		m_interface.m_getNumVerticesOfFace  = GetNumFaceVerts;
@@ -46,23 +48,29 @@ namespace util
 	{
 		LOG("Processing mesh \"%s\" with %d vertices...", meshData->m_name.c_str(), meshData->m_positions->size());
 
-		SEAssert("Cannot pass null data. If an attribute does not exist, a vector of size 0 is expected.", 
-			meshData->m_meshParams && meshData->m_indices && meshData->m_positions && 
-			meshData->m_normals && meshData->m_tangents && meshData->m_UV0 && meshData->m_colors);
+		SEAssert("Cannot pass null data (except for joints/weights). If an attribute does not exist, a vector of size "
+			"0 is expected.", 
+			meshData->m_meshParams && meshData->m_indices && meshData->m_positions && meshData->m_normals && 
+			meshData->m_tangents && meshData->m_UV0 && meshData->m_colors && meshData->m_joints && meshData->m_weights);
 
 		const bool isIndexed = meshData->m_indices->size() > meshData->m_positions->size();
 		const bool hasNormals = !meshData->m_normals->empty();
 		bool hasTangents = !meshData->m_tangents->empty();
 		const bool hasUVs = !meshData->m_UV0->empty();
 		const bool hasColors = !meshData->m_colors->empty();
+		m_hasJoints = !meshData->m_joints->empty();
+		m_hasWeights = !meshData->m_weights->empty();
 
-		if (hasNormals && hasTangents && hasUVs && hasColors)
+		// Ensure we have the mandatory minimum vertex attributes:
+		if (hasNormals && hasTangents && hasUVs && hasColors) // joints, weights are optional
 		{
 			LOG("Mesh \"%s\" has all required attributes", meshData->m_name.c_str());
 			return; // Note: We skip degenerate triangle removal this way, but low risk as the asset came with all attribs
 		}
 
 		// Allocate space for any missing attributes:
+		SEAssert("Only triangle lists are currently supported",
+			meshData->m_meshParams->m_drawMode == re::MeshPrimitive::DrawMode::Triangles);
 		const size_t numVerts = meshData->m_indices->size(); // Assume triangle lists: 3 index entries per triangle
 		if (!hasNormals)
 		{
@@ -142,7 +150,9 @@ namespace util
 			meshData->m_normals->size() == meshData->m_indices->size() &&
 			meshData->m_tangents->size() == meshData->m_indices->size() &&
 			meshData->m_UV0->size() == meshData->m_indices->size() &&
-			meshData->m_colors->size() == meshData->m_indices->size()
+			meshData->m_colors->size() == meshData->m_indices->size() &&
+			(!m_hasJoints || meshData->m_joints->size() == meshData->m_indices->size()) &&
+			(!m_hasWeights || meshData->m_weights->size() == meshData->m_indices->size())
 		);
 
 		vector<uint32_t> newIndices;
@@ -151,6 +161,8 @@ namespace util
 		vector<vec4> newTangents;
 		vector<vec2> newUVs;
 		vector<vec4> newColors;
+		vector<glm::tvec4<uint8_t>> newJoints;
+		vector<vec4> newWeights;
 
 		// We might remove verts, so reserve rather than resize...
 		const size_t maxNumVerts = meshData->m_indices->size(); // Assume triangle lists: 3 index entries per triangle
@@ -160,6 +172,14 @@ namespace util
 		newTangents.reserve(maxNumVerts);
 		newUVs.reserve(maxNumVerts);
 		newColors.reserve(maxNumVerts);
+		if (m_hasJoints)
+		{
+			newJoints.reserve(maxNumVerts);
+		}
+		if (m_hasWeights)
+		{
+			newWeights.reserve(maxNumVerts);
+		}
 
 		size_t numDegeneratesFound = 0;
 		uint32_t insertIdx = 0;
@@ -210,6 +230,19 @@ namespace util
 				newColors.emplace_back(meshData->m_colors->at(meshData->m_indices->at(i + 1)));
 				newColors.emplace_back(meshData->m_colors->at(meshData->m_indices->at(i + 2)));
 
+				if (m_hasJoints)
+				{
+					newJoints.emplace_back(meshData->m_joints->at(meshData->m_indices->at(i)));
+					newJoints.emplace_back(meshData->m_joints->at(meshData->m_indices->at(i + 1)));
+					newJoints.emplace_back(meshData->m_joints->at(meshData->m_indices->at(i + 2)));
+				}
+				if (m_hasWeights)
+				{
+					newWeights.emplace_back(meshData->m_weights->at(meshData->m_indices->at(i)));
+					newWeights.emplace_back(meshData->m_weights->at(meshData->m_indices->at(i + 1)));
+					newWeights.emplace_back(meshData->m_weights->at(meshData->m_indices->at(i + 2)));
+				}
+
 				insertIdx += 3;
 			}
 			else
@@ -224,6 +257,14 @@ namespace util
 		*meshData->m_tangents = move(newTangents);
 		*meshData->m_UV0 = move(newUVs);
 		*meshData->m_colors = move(newColors);
+		if (m_hasJoints)
+		{
+			*meshData->m_joints = move(newJoints);
+		}
+		if (m_hasWeights)
+		{
+			*meshData->m_weights = move(newWeights);
+		}
 
 		if (numDegeneratesFound > 0)
 		{
@@ -300,6 +341,8 @@ namespace util
 		vector<vec4> newTangents(numVerts);
 		vector<vec2> newUVs(numVerts);
 		vector<vec4> newColors(numVerts);
+		vector<glm::tvec4<uint8_t>> newJoints(m_hasJoints ? numVerts : 0);
+		vector<vec4> newWeights(m_hasWeights ? numVerts : 0);
 
 		// Use our indices to unpack duplicated vertex attributes:
 		for (size_t i = 0; i < numVerts; i++)
@@ -310,14 +353,30 @@ namespace util
 			newTangents[i] = meshData->m_tangents->at(meshData->m_indices->at(i));
 			newUVs[i] = meshData->m_UV0->at(meshData->m_indices->at(i));
 			newColors[i] = meshData->m_colors->at(meshData->m_indices->at(i));
+			if (m_hasJoints)
+			{
+				newJoints[i] = meshData->m_joints->at(meshData->m_indices->at(i));
+			}
+			if (m_hasWeights)
+			{
+				newWeights[i] = meshData->m_weights->at(meshData->m_indices->at(i));
+			}
 		}
 
-		*meshData->m_indices = move(newIndices);
-		*meshData->m_positions = move(newPositions);
-		*meshData->m_normals = move(newNormals);
-		*meshData->m_tangents = move(newTangents);
-		*meshData->m_UV0 = move(newUVs);
-		*meshData->m_colors = move(newColors);
+		*meshData->m_indices	= move(newIndices);
+		*meshData->m_positions	= move(newPositions);
+		*meshData->m_normals	= move(newNormals);
+		*meshData->m_tangents	= move(newTangents);
+		*meshData->m_UV0		= move(newUVs);
+		*meshData->m_colors		= move(newColors);
+		if (m_hasJoints)
+		{
+			*meshData->m_joints = move(newJoints);
+		}
+		if (m_hasWeights)
+		{
+			*meshData->m_weights = move(newWeights);
+		}
 	}
 
 
@@ -345,9 +404,19 @@ namespace util
 
 		// We'll pack our vertex attributes together into blocks of floats.
 		// Compute the total number of floats for all attributes per vertex:
-		const size_t floatsPerVertex = 
-			(sizeof(vec3) + sizeof(vec3) + sizeof(vec2) + sizeof(vec4) + sizeof(vec4)) / sizeof(float);
-		SEAssert("Data size mismatch/miscalulation", floatsPerVertex == 16); // All non-index members in MeshData
+		const size_t floatsPerVertex = (
+			sizeof(vec3)										// position
+			+ sizeof(vec3)										// normal
+			+ sizeof(vec4)										// tangent
+			+ sizeof(vec2)										// uv0
+			+ sizeof(vec4)										// color
+			+ (m_hasJoints ? sizeof(glm::tvec4<uint8_t>) : 0)	// joints
+			+ (m_hasWeights ? sizeof(vec4) : 0)					// weights
+				) / sizeof(float);
+		
+		// Make sure we've counted for all non-index members in MeshData
+		SEAssert("Data size mismatch/miscalulation", 
+			floatsPerVertex == (3 + 3 + 4 + 2 + 4 + (m_hasJoints ? 1 : 0) + (m_hasWeights ? 4 : 0)));
 
 		// pfVertexDataOut: iNrVerticesIn * iFloatsPerVert * sizeof(float)
 		const size_t numElements = meshData->m_positions->size();
@@ -404,9 +473,33 @@ namespace util
 			sizeof(vec4));	// colors = vec4
 		byteOffset += sizeof(vec4);
 
+		if (m_hasJoints)
+		{
+			PackAttribute(
+				(uint8_t*)meshData->m_joints->data(),
+				packedVertexData.data(),
+				byteOffset,
+				vertexStrideBytes,
+				numElements,
+				sizeof(glm::tvec4<uint8_t>));	// joints = tvec4<uint8_t>
+			byteOffset += sizeof(glm::tvec4<uint8_t>);
+		}
+		if (m_hasWeights)
+		{
+			PackAttribute(
+				(float*)meshData->m_weights->data(),
+				packedVertexData.data(),
+				byteOffset,
+				vertexStrideBytes,
+				numElements,
+				sizeof(vec4));	// weights = vec4
+			byteOffset += sizeof(vec4);
+		}
+
+
 		// Weld the verts to obtain our final unique indexing:
-		const int numUniqueVertsFound = 
-			WeldMesh(remapTable.data(), vertexDataOut.data(), packedVertexData.data(), (int)numElements, (int)floatsPerVertex);
+		const int numUniqueVertsFound = WeldMesh(
+			remapTable.data(), vertexDataOut.data(), packedVertexData.data(), (int)numElements, (int)floatsPerVertex);
 
 		// Repack existing data streams according to the updated indexes:
 		meshData->m_indices->resize(remapTable.size());
@@ -415,6 +508,15 @@ namespace util
 		meshData->m_tangents->resize(numUniqueVertsFound);
 		meshData->m_UV0->resize(numUniqueVertsFound);
 		meshData->m_colors->resize(numUniqueVertsFound);
+		if (m_hasJoints)
+		{
+			meshData->m_joints->resize(numUniqueVertsFound);
+		}
+		if (m_hasWeights)
+		{
+			meshData->m_weights->resize(numUniqueVertsFound);
+		}
+
 		for (size_t i = 0; i < remapTable.size(); i++)
 		{
 			const int vertexIndex = remapTable[i];
@@ -439,6 +541,17 @@ namespace util
 
 			memcpy(&meshData->m_colors->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec4));
 			packedVertByteOffset += sizeof(vec4);
+
+			if (m_hasJoints)
+			{
+				memcpy(&meshData->m_joints->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(glm::tvec4<uint8_t>));
+				packedVertByteOffset += sizeof(glm::tvec4<uint8_t>);
+			}
+			if (m_hasWeights)
+			{
+				memcpy(&meshData->m_weights->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec4));
+				packedVertByteOffset += sizeof(vec4);
+			}
 		}
 	}
 
@@ -452,6 +565,7 @@ namespace util
 		return (int)meshData->m_indices->size() / 3;
 	}
 
+
 	int VertexAttributeBuilder::GetNumFaceVerts(const SMikkTSpaceContext* m_context, const int faceIdx)
 	{
 		MeshData* meshData = static_cast<MeshData*> (m_context->m_pUserData);
@@ -461,6 +575,7 @@ namespace util
 		
 		return 3;
 	}
+
 
 	void VertexAttributeBuilder::GetPosition(
 		const SMikkTSpaceContext* m_context, float* outpos, const int faceIdx, const int vertIdx)

@@ -30,7 +30,9 @@ namespace re
 		vector<float>& normals,
 		vector<float>& tangents,
 		vector<float>& uv0,
-		vector<float>& colors,		
+		vector<float>& colors,
+		vector<uint8_t> joints,
+		vector<float> weights,
 		shared_ptr<gr::Material const> material,
 		MeshPrimitiveParams const& meshParams,
 		Transform* ownerTransform) 
@@ -47,6 +49,9 @@ namespace re
 		m_colors		= move(colors);
 		m_uv0			= move(uv0);
 		m_tangents		= move(tangents);
+
+		m_joints		= move(joints);
+		m_weights		= move(weights);
 		
 
 		ComputeBounds(); // Compute m_localBounds
@@ -63,9 +68,12 @@ namespace re
 
 		m_positions.clear();
 		m_normals.clear();
-		m_colors.clear();
-		m_uv0.clear();
 		m_tangents.clear();
+		m_uv0.clear();
+		m_colors.clear();
+		
+		m_joints.clear();
+		m_weights.clear();
 		
 		m_meshMaterial = nullptr;
 
@@ -128,28 +136,42 @@ namespace re
 		AddDataBytesToHash(&m_params, sizeof(MeshPrimitiveParams));
 
 		// Vertex data streams:
-		AddDataBytesToHash(&m_positions[0], sizeof(float) * m_positions.size());
+		
 
+		if (!m_indices.empty())
+		{
+			AddDataBytesToHash(&m_indices[0], sizeof(uint32_t) * m_indices.size());
+		}
+
+		if (!m_positions.empty())
+		{
+			AddDataBytesToHash(&m_positions[0], sizeof(float) * m_positions.size());
+		}
 		if (!m_normals.empty())
 		{
 			AddDataBytesToHash(&m_normals[0], sizeof(float) * m_normals.size());
-		}
-		if (!m_colors.empty())
-		{
-			AddDataBytesToHash(&m_colors[0], sizeof(float) * m_colors.size());
-		}
-		if (!m_uv0.empty())
-		{
-			AddDataBytesToHash(&m_uv0[0], sizeof(float) * m_uv0.size());
 		}
 		if (!m_tangents.empty())
 		{
 			AddDataBytesToHash(&m_tangents[0], sizeof(float) * m_tangents.size());
 		}
-		if (!m_indices.empty())
+		if (!m_uv0.empty())
 		{
-			AddDataBytesToHash(&m_indices[0], sizeof(uint32_t) * m_indices.size());
+			AddDataBytesToHash(&m_uv0[0], sizeof(float) * m_uv0.size());
+		}
+		if (!m_colors.empty())
+		{
+			AddDataBytesToHash(&m_colors[0], sizeof(float) * m_colors.size());
 		}		
+		
+		if (!m_joints.empty())
+		{
+			AddDataBytesToHash(&m_joints[0], sizeof(uint8_t) * m_joints.size());
+		}
+		if (!m_weights.empty())
+		{
+			AddDataBytesToHash(&m_weights[0], sizeof(float) * m_weights.size());
+		}
 	}
 } // re
 
@@ -319,6 +341,8 @@ namespace meshfactory
 			21, 22, 23,
 		};
 
+		std::vector<uint8_t> joints;
+		std::vector<float> weights;
 
 		// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
 		return std::make_shared<MeshPrimitive>(
@@ -328,7 +352,9 @@ namespace meshfactory
 			*reinterpret_cast<vector<float>*>(&assembledNormals),
 			*reinterpret_cast<vector<float>*>(&assembledTangents),
 			*reinterpret_cast<vector<float>*>(&assembledUVs),
-			*reinterpret_cast<vector<float>*>(&assembledColors),			
+			*reinterpret_cast<vector<float>*>(&assembledColors),
+			joints,
+			weights,
 			nullptr,
 			MeshPrimitive::MeshPrimitiveParams(),
 			nullptr);
@@ -395,6 +421,9 @@ namespace meshfactory
 
 		std::vector<uint32_t> triIndices{ 0, 1, 2 }; // Note: CCW winding
 
+		std::vector<uint8_t> joints;
+		std::vector<float> weights;
+
 		return std::make_shared<MeshPrimitive>(
 			"optimizedFullscreenQuad",
 			triIndices,
@@ -403,6 +432,8 @@ namespace meshfactory
 			*reinterpret_cast<vector<float>*>(&tangents),
 			*reinterpret_cast<vector<float>*>(&uvs),
 			*reinterpret_cast<vector<float>*>(&colors),
+			joints,
+			weights,
 			nullptr,
 			MeshPrimitive::MeshPrimitiveParams(),
 			nullptr);
@@ -441,6 +472,9 @@ namespace meshfactory
 		std::vector<vec4> colors(4, redColor);
 		std::vector<vec3> tangents(positions.size()); // TODO: Populate this
 
+		std::vector<uint8_t> joints;
+		std::vector<float> weights;
+
 		// It's easier to reason about geometry in vecN types; cast to float now we're done
 		return std::make_shared<MeshPrimitive>(
 			"quad",
@@ -449,7 +483,9 @@ namespace meshfactory
 			*reinterpret_cast<vector<float>*>(&normals),
 			*reinterpret_cast<vector<float>*>(&tangents),
 			*reinterpret_cast<vector<float>*>(&uvs),
-			* reinterpret_cast<vector<float>*>(&colors),			
+			*reinterpret_cast<vector<float>*>(&colors),
+			joints,
+			weights,
 			nullptr,
 			MeshPrimitive::MeshPrimitiveParams(),
 			nullptr);
@@ -625,7 +661,10 @@ namespace meshfactory
 			indices[currentIndex++] = (uint32_t)(numVerts - 1);
 			indices[currentIndex++] = (uint32_t)(i + 1);
 		}
-		indices[currentIndex - 1] = (uint32_t)(numVerts - numLatSlices - 1); // Wrap the last edge back to the start		
+		indices[currentIndex - 1] = (uint32_t)(numVerts - numLatSlices - 1); // Wrap the last edge back to the start
+
+		std::vector<uint8_t> joints;
+		std::vector<float> weights;
 
 		// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
 		return make_shared<MeshPrimitive>(
@@ -636,6 +675,8 @@ namespace meshfactory
 			*reinterpret_cast<vector<float>*>(&tangents),
 			*reinterpret_cast<vector<float>*>(&uvs),
 			*reinterpret_cast<vector<float>*>(&colors),
+			joints,
+			weights,
 			nullptr,
 			MeshPrimitive::MeshPrimitiveParams(),
 			nullptr);

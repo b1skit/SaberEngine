@@ -689,9 +689,12 @@ namespace
 				// Unpack each of the primitive's vertex attrbutes:
 				vector<float> positions;
 				vector<float> normals;
-				vector<float> colors;
-				vector<float> uv0;
 				vector<float> tangents;
+				vector<float> uv0;
+				vector<float> colors;
+				std::vector<float> jointsAsFloats; // We unpack the joints as floats...
+				std::vector<uint8_t> jointsAsUints; // ...but eventually convert and store them as uint8_t
+				std::vector<float> weights;
 				for (size_t attrib = 0; attrib < current->mesh->primitives[primitive].attributes_count; attrib++)
 				{
 					// TODO: Use the incoming pre-computed min/max to optimize local bounds calculation
@@ -766,12 +769,28 @@ namespace
 					break;
 					case cgltf_attribute_type::cgltf_attribute_type_color:
 					{
+						SEAssert("Only 4-channel colors (RGBA) are currently supported", elementsPerComponent == 4);
 						colors.resize(totalFloatElements, 0);
 						dataTarget = &colors[0];
 					}
 					break;
 					case cgltf_attribute_type::cgltf_attribute_type_joints:
+					{
+						LOG_WARNING("Found vertex joint attributes: Data will be loaded but has not been tested. "
+							"Skinning is not currently supported");
+						jointsAsFloats.resize(totalFloatElements, 0);
+						jointsAsUints.resize(totalFloatElements, 0);
+						dataTarget = &jointsAsFloats[0];
+					}
+					break;
 					case cgltf_attribute_type::cgltf_attribute_type_weights:
+					{
+						LOG_WARNING("Found vertex weight attributes: Data will be loaded but has not been tested. "
+							"Skinning is not currently supported");
+						weights.resize(totalFloatElements, 0);
+						dataTarget = &weights[0];
+					}
+					break;
 					case cgltf_attribute_type::cgltf_attribute_type_custom:
 					case cgltf_attribute_type::cgltf_attribute_type_max_enum:
 					case cgltf_attribute_type::cgltf_attribute_type_invalid:
@@ -804,6 +823,17 @@ namespace
 							}
 						}
 					}
+
+					if (attributeType == cgltf_attribute_type_joints)
+					{
+						// Cast our joint indexes from floats to uint8_t's:
+						SEAssert("Source/destination size mismatch", jointsAsFloats.size() == jointsAsUints.size());
+						for (size_t jointIdx = 0; jointIdx < jointsAsFloats.size(); jointIdx++)
+						{
+							jointsAsUints[jointIdx] = static_cast<uint8_t>(jointsAsFloats[jointIdx]);
+						}
+					}
+
 				} // End attribute unpacking
 
 				// Construct any missing vertex attributes for the mesh:
@@ -815,8 +845,10 @@ namespace
 					reinterpret_cast<vector<vec3>*>(&positions),
 					reinterpret_cast<vector<vec3>*>(&normals),
 					reinterpret_cast<vector<vec4>*>(&tangents),
-					reinterpret_cast<vector<vec2>*>(&uv0),					
-					reinterpret_cast<vector<vec4>*>(&colors)
+					reinterpret_cast<vector<vec2>*>(&uv0),
+					reinterpret_cast<vector<vec4>*>(&colors),
+					reinterpret_cast<vector<glm::tvec4<uint8_t>>*>(&jointsAsUints),
+					reinterpret_cast<vector<vec4>*>(&weights)
 				};
 				util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
 
@@ -832,7 +864,9 @@ namespace
 					normals,
 					tangents,
 					uv0,
-					colors,					
+					colors,
+					jointsAsUints,
+					weights,
 					material,
 					meshPrimitiveParams,
 					nullptr));
