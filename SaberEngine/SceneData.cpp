@@ -71,6 +71,10 @@ namespace
 	#define DEFAULT_ALPHA_VALUE 1.0f // Default alpha value when loading texture data, if no alpha exists
 
 
+	// STBI Image data loading helpers:
+	/*****************************************************************************************************************/
+
+
 	void CopyImageData(
 		std::vector<uint8_t>& texels,
 		const uint8_t* imageData,
@@ -99,7 +103,7 @@ namespace
 		SEAssert("Can load single faces or cubemaps only", texturePaths.size() == 1 || texturePaths.size() == 6);
 		SEAssert("Invalid number of texture paths", texturePaths.size() == 1 || texturePaths.size() == 6);
 
-		LOG("Attempting to load %d textures: \"%s\"...", texturePaths.size(), texturePaths[0].c_str());
+		LOG("Attempting to load %d texture(s): \"%s\"...", texturePaths.size(), texturePaths[0].c_str());
 
 		PerformanceTimer timer;
 		timer.Start();
@@ -264,11 +268,8 @@ namespace
 	}
 
 
-
-
 	// GLTF loading helpers:
 	/*****************************************************************************************************************/
-
 
 
 	// Generate a unique name for a material from (some of) the values in the cgltf_material struct
@@ -307,155 +308,152 @@ namespace
 	}
 
 
-	shared_ptr<Material const> LoadAddMaterial(
-		SceneData& scene, std::string const& sceneRootPath, cgltf_material const* material)
+	shared_ptr<gr::Texture> LoadTextureOrColor(
+		SceneData& scene, string const& sceneRootPath, cgltf_texture* texture, vec4 const& colorFallback, 
+		Texture::TextureFormat formatFallback, Texture::TextureColorSpace colorSpace)
 	{
-		const string matName = material == nullptr ? "MissingMaterial" : GenerateMaterialName(*material);
-		if (scene.MaterialExists(matName))
+		SEAssert("Invalid fallback format",
+			formatFallback != Texture::TextureFormat::Depth32F && formatFallback != Texture::TextureFormat::Invalid);
+
+		shared_ptr<Texture> tex;
+		if (texture && texture->image && texture->image->uri)
 		{
-			return scene.GetMaterial(matName);
+			// Load texture data:
+			tex = scene.GetLoadTextureByPath(
+				{ sceneRootPath + texture->image->uri });
+
+			Texture::TextureParams texParams = tex->GetTextureParams();
+			texParams.m_texColorSpace = colorSpace;
+			tex->SetTextureParams(texParams);
+		}
+		else
+		{
+			// Create a texture color fallback:
+			Texture::TextureParams colorTexParams;
+			colorTexParams.m_clearColor = colorFallback; // Clear color = initial fill color
+			colorTexParams.m_texFormat = formatFallback;
+			colorTexParams.m_texColorSpace = colorSpace;
+
+			// Construct a name:
+			const size_t numChannels = Texture::GetNumberOfChannels(formatFallback);
+			string texName = "Color_" + to_string(colorTexParams.m_clearColor.x) + "_";
+			if (numChannels >= 2)
+			{
+				texName += to_string(colorTexParams.m_clearColor.y) + "_";
+				if (numChannels >= 3)
+				{
+					texName += to_string(colorTexParams.m_clearColor.z) + "_";
+					if (numChannels >= 4)
+					{
+						texName += to_string(colorTexParams.m_clearColor.w) + "_";
+					}
+				}
+			}
+			texName += (colorSpace == Texture::TextureColorSpace::sRGB ? "sRGB" : "Linear");
+
+			tex = make_shared<Texture>(texName, colorTexParams);
 		}
 
-		if (material == nullptr)
+		scene.AddUniqueTexture(tex);
+		tex->Create(); // Create the texture after calling AddUniqueTexture(), as we now know it won't be destroyed
+
+		return tex;
+	}
+
+
+	void PreLoadMaterials(SceneData& scene, std::string const& sceneRootPath, cgltf_data* data)
+	{
+		const size_t numMaterials = data->materials_count;
+		LOG("Loading %d scene materials", numMaterials);
+
+		for (size_t cur = 0; cur < numMaterials; cur++)
 		{
-			LOG_ERROR("Mesh does not have a material. Creating an error material");
+			cgltf_material const* const material = &data->materials[cur];
+
+			const string matName = material == nullptr ? "MissingMaterial" : GenerateMaterialName(*material);
+			if (scene.MaterialExists(matName))
+			{
+				SEAssertF("We expect all materials in the incoming scene data are unique");
+				continue;
+			}
+
+			SEAssert("We currently only support the PBR metallic/roughness material model", 
+				material->has_pbr_metallic_roughness == 1);
+
 			shared_ptr<Material> newMat =
 				make_shared<Material>(matName, Material::GetMaterialDefinition("pbrMetallicRoughness"));
 
-			for (size_t i = 0; i < 5; i++)
-			{
-				// TODO: Currently, this inserts the error color as the normal texture, which is invalid
-				newMat->GetTexture((uint32_t)i) = scene.GetLoadTextureByPath({ ERROR_TEXTURE_NAME }, true);
-				newMat->GetTexture((uint32_t)i)->Create();
-			}
+			newMat->GetShader() = nullptr; // Not required; just for clarity
 
+			// GLTF specifications: If a texture is not given, all respective texture components must be assumed to be 1.0f
+			// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
+			constexpr vec4 missingTextureColor(1.f, 1.f, 1.f, 1.f);
+
+			// MatAlbedo
+			newMat->GetTexture(0) = LoadTextureOrColor(
+				scene,
+				sceneRootPath,
+				material->pbr_metallic_roughness.base_color_texture.texture,
+				missingTextureColor,
+				Texture::TextureFormat::RGB8,
+				Texture::TextureColorSpace::sRGB);
+
+			// MatMetallicRoughness
+			newMat->GetTexture(1) = LoadTextureOrColor(
+				scene,
+				sceneRootPath,
+				material->pbr_metallic_roughness.metallic_roughness_texture.texture,
+				missingTextureColor,
+				Texture::TextureFormat::RGB8,
+				Texture::TextureColorSpace::Linear);
+
+			// MatNormal
+			newMat->GetTexture(2) = LoadTextureOrColor(
+				scene,
+				sceneRootPath,
+				material->normal_texture.texture,
+				vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
+				Texture::TextureFormat::RGB8,
+				Texture::TextureColorSpace::Linear);
+
+			// MatOcclusion
+			newMat->GetTexture(3) = LoadTextureOrColor(
+				scene,
+				sceneRootPath,
+				material->occlusion_texture.texture,
+				missingTextureColor,	// Completely unoccluded
+				Texture::TextureFormat::RGB8,
+				Texture::TextureColorSpace::Linear);
+
+			// MatEmissive
+			newMat->GetTexture(4) = LoadTextureOrColor(
+				scene,
+				sceneRootPath,
+				material->emissive_texture.texture,
+				missingTextureColor,
+				Texture::TextureFormat::RGB8,
+				Texture::TextureColorSpace::sRGB); // GLTF convention: Must be converted to linear before use
+
+			// Construct a permanent parameter block for the material params:
+			Material::PBRMetallicRoughnessParams matParams;
+			matParams.g_baseColorFactor = glm::make_vec4(material->pbr_metallic_roughness.base_color_factor);
+			matParams.g_metallicFactor = material->pbr_metallic_roughness.metallic_factor;
+			matParams.g_roughnessFactor = material->pbr_metallic_roughness.roughness_factor;
+			matParams.g_normalScale = material->normal_texture.texture ? material->normal_texture.scale : 1.0f;
+			matParams.g_occlusionStrength = material->occlusion_texture.texture ? material->occlusion_texture.scale : 1.0f;
+			matParams.g_emissiveStrength = material->has_emissive_strength ? material->emissive_strength.emissive_strength : 1.0f;
+			matParams.g_emissiveFactor = glm::make_vec3(material->emissive_factor);
+			matParams.g_f0 = vec3(0.04f, 0.04f, 0.04f);
+
+			// TODO: Material MatParams (ParameterBlocks in general) shouldn't be created in the frontend
 			newMat->GetParameterBlock() = ParameterBlock::Create(
-				"PBRMetallicRoughnessParams", 
-				Material::PBRMetallicRoughnessParams(), 
-				re::ParameterBlock::UpdateType::Immutable,
-				re::ParameterBlock::Lifetime::Permanent);
+				"PBRMetallicRoughnessParams",
+				matParams,
+				ParameterBlock::UpdateType::Immutable,
+				ParameterBlock::Lifetime::Permanent);
 
 			scene.AddUniqueMaterial(newMat);
-			return newMat;
 		}
-
-		SEAssert("Unsupported material model", material->has_pbr_metallic_roughness == 1);	
-
-		shared_ptr<Material> newMat =
-			make_shared<Material>(matName, Material::GetMaterialDefinition("pbrMetallicRoughness"));
-
-		newMat->GetShader() = nullptr; // Not required; just for clarity
-			
-		auto LoadTextureOrColor = [&](
-			cgltf_texture* texture, 
-			vec4 const& colorFallback, 
-			Texture::TextureFormat formatFallback,
-			Texture::TextureColorSpace colorSpace)
-		{
-			SEAssert("Invalid fallback format", 
-				formatFallback != Texture::TextureFormat::Depth32F && formatFallback != Texture::TextureFormat::Invalid);
-
-			shared_ptr<Texture> tex;
-			if (texture && texture->image && texture->image->uri)
-			{
-				tex = scene.GetLoadTextureByPath(
-					{ sceneRootPath + texture->image->uri });
-
-				Texture::TextureParams texParams = tex->GetTextureParams();
-				texParams.m_texColorSpace = colorSpace;
-				tex->SetTextureParams(texParams);
-			}
-			else
-			{
-				Texture::TextureParams colorTexParams;
-				colorTexParams.m_clearColor = colorFallback; // Clear color = initial fill color
-				colorTexParams.m_texFormat = formatFallback;
-				colorTexParams.m_texColorSpace = colorSpace;				
-
-				// Construct a name:
-				const size_t numChannels = Texture::GetNumberOfChannels(formatFallback);
-				string texName = "Color_" + to_string(colorTexParams.m_clearColor.x) + "_";
-				if (numChannels >= 2)
-				{
-					texName += to_string(colorTexParams.m_clearColor.y) + "_";
-					if (numChannels >= 3)
-					{
-						texName += to_string(colorTexParams.m_clearColor.z) + "_";
-						if (numChannels >= 4)
-						{
-							texName += to_string(colorTexParams.m_clearColor.w) + "_";
-						}
-					}
-				}				
-				texName += (colorSpace == Texture::TextureColorSpace::sRGB ? "sRGB" : "Linear");
-
-				tex = make_shared<Texture>(texName, colorTexParams);
-			}
-
-			scene.AddUniqueTexture(tex);
-			tex->Create(); // Create the texture after calling AddUniqueTexture(), as we now know it won't be destroyed
-			return tex;
-		};
-
-		// GLTF specifications: If a texture is not given, all respective texture components must be assumed to be 1.0f
-		// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
-		const vec4 missingTextureColor(1.0f, 1.0f, 1.0f, 1.0f);
-
-		// MatAlbedo
-		newMat->GetTexture(0) = LoadTextureOrColor(
-			material->pbr_metallic_roughness.base_color_texture.texture,
-			missingTextureColor,
-			Texture::TextureFormat::RGB8,
-			Texture::TextureColorSpace::sRGB);
-
-		// MatMetallicRoughness
-		newMat->GetTexture(1) = LoadTextureOrColor(
-			material->pbr_metallic_roughness.metallic_roughness_texture.texture,
-			missingTextureColor,
-			Texture::TextureFormat::RGB8,
-			Texture::TextureColorSpace::Linear);
-
-		// MatNormal
-		newMat->GetTexture(2) = LoadTextureOrColor(
-			material->normal_texture.texture,
-			vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
-			Texture::TextureFormat::RGB8,
-			Texture::TextureColorSpace::Linear);
-
-		// MatOcclusion
-		newMat->GetTexture(3) = LoadTextureOrColor(
-			material->occlusion_texture.texture,
-			missingTextureColor,	// Completely unoccluded
-			Texture::TextureFormat::RGB8,
-			Texture::TextureColorSpace::Linear);
-
-		// MatEmissive
-		newMat->GetTexture(4) = LoadTextureOrColor(
-			material->emissive_texture.texture,
-			missingTextureColor,
-			Texture::TextureFormat::RGB8,
-			Texture::TextureColorSpace::sRGB); // GLTF convention: Must be converted to linear before use
-
-		// Construct a permanent parameter block for the material params:
-		Material::PBRMetallicRoughnessParams matParams;
-		matParams.g_baseColorFactor = glm::make_vec4(material->pbr_metallic_roughness.base_color_factor);
-		matParams.g_metallicFactor = material->pbr_metallic_roughness.metallic_factor;
-		matParams.g_roughnessFactor = material->pbr_metallic_roughness.roughness_factor;
-		matParams.g_normalScale = material->normal_texture.texture ? material->normal_texture.scale : 1.0f;
-		matParams.g_occlusionStrength = material->occlusion_texture.texture ? material->occlusion_texture.scale : 1.0f;
-		matParams.g_emissiveStrength = material->has_emissive_strength ? material->emissive_strength.emissive_strength : 1.0f;
-		matParams.g_emissiveFactor = glm::make_vec3(material->emissive_factor);
-		matParams.g_f0 = vec3(0.04f, 0.04f, 0.04f);
-
-		// TODO: Material MatParams should be passed as a ctor argument
-		newMat->GetParameterBlock() = ParameterBlock::Create(
-			"PBRMetallicRoughnessParams", 
-			matParams, 
-			ParameterBlock::UpdateType::Immutable, 
-			ParameterBlock::Lifetime::Permanent);
-
-		scene.AddUniqueMaterial(newMat);
-		return newMat;
 	}
 
 
@@ -859,10 +857,13 @@ namespace
 			};
 			util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
 
-			// Material:
-			shared_ptr<Material const> material =
-				LoadAddMaterial(scene, sceneRootPath, current->mesh->primitives[primitive].material);
-			// TODO: Decouple mesh and material loading
+			SEAssert("Mesh primitive has a null material", current->mesh->primitives[primitive].material != nullptr);
+			// TODO: Should we load a fallback error material if we ever hit this?
+
+			// Get the pre-loaded material:
+			const string matName = GenerateMaterialName(*current->mesh->primitives[primitive].material);
+			SEAssert("Could not find material", scene.MaterialExists(matName));
+			shared_ptr<gr::Material const> material = scene.GetMaterial(matName);
 
 			// Attach the primitive:
 			parent->GetMesh()->AddMeshPrimitive(make_shared<MeshPrimitive>(
@@ -1006,6 +1007,11 @@ namespace fr
 		m_cameras.reserve(max((int)data->cameras_count, 5));
 
 		const string sceneRootPath = Config::Get()->GetValue<string>("sceneRootPath");
+
+		// Load the materials first:
+		PreLoadMaterials(*this, sceneRootPath, data);
+
+		// Load the scene hierarchy:
 		LoadSceneHierarchy(sceneRootPath, *this, data);
 
 		if (m_cameras.empty()) // Add a default camera if none were found during LoadSceneHierarchy()
@@ -1016,7 +1022,7 @@ namespace fr
 		// Cleanup:
 		cgltf_free(data);
 
-		LOG("Finished loading scene in %f seconds...", timer.StopSec());
+		LOG("\nFinished loading scene data in %f seconds...\n", timer.StopSec());
 
 		return true;
 	}
