@@ -358,9 +358,16 @@ namespace
 			const size_t numChannels = Texture::GetNumberOfChannels(formatFallback);
 
 			const string fallbackName = GenerateTextureColorFallbackName(colorFallback, numChannels, colorSpace);
-			tex = make_shared<Texture>(fallbackName, colorTexParams);
 
-			scene.AddUniqueTexture(tex);
+			if (scene.TextureExists(fallbackName))
+			{
+				tex = scene.GetTexture(fallbackName);
+			}
+			else
+			{
+				tex = make_shared<Texture>(fallbackName, colorTexParams);
+				scene.AddUniqueTexture(tex);
+			}			
 		}
 		
 		tex->Create(); // Create the texture after calling AddUniqueTexture(), as we now know it won't be destroyed
