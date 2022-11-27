@@ -308,6 +308,28 @@ namespace
 	}
 
 
+	string GenerateTextureColorFallbackName(
+		vec4 const& colorFallback, size_t numChannels, Texture::TextureColorSpace colorSpace)
+	{
+		string texName = "Color_" + to_string(colorFallback.x) + "_";
+		if (numChannels >= 2)
+		{
+			texName += to_string(colorFallback.y) + "_";
+			if (numChannels >= 3)
+			{
+				texName += to_string(colorFallback.z) + "_";
+				if (numChannels >= 4)
+				{
+					texName += to_string(colorFallback.w) + "_";
+				}
+			}
+		}
+		texName += (colorSpace == Texture::TextureColorSpace::sRGB ? "sRGB" : "Linear");
+
+		return texName;
+	}
+
+
 	shared_ptr<gr::Texture> LoadTextureOrColor(
 		SceneData& scene, string const& sceneRootPath, cgltf_texture* texture, vec4 const& colorFallback, 
 		Texture::TextureFormat formatFallback, Texture::TextureColorSpace colorSpace)
@@ -318,9 +340,8 @@ namespace
 		shared_ptr<Texture> tex;
 		if (texture && texture->image && texture->image->uri)
 		{
-			// Load texture data:
-			tex = scene.GetLoadTextureByPath(
-				{ sceneRootPath + texture->image->uri });
+			// Load texture data; also adds it if it's new
+			tex = scene.GetLoadTextureByPath({ sceneRootPath + texture->image->uri });
 
 			Texture::TextureParams texParams = tex->GetTextureParams();
 			texParams.m_texColorSpace = colorSpace;
@@ -334,27 +355,14 @@ namespace
 			colorTexParams.m_texFormat = formatFallback;
 			colorTexParams.m_texColorSpace = colorSpace;
 
-			// Construct a name:
 			const size_t numChannels = Texture::GetNumberOfChannels(formatFallback);
-			string texName = "Color_" + to_string(colorTexParams.m_clearColor.x) + "_";
-			if (numChannels >= 2)
-			{
-				texName += to_string(colorTexParams.m_clearColor.y) + "_";
-				if (numChannels >= 3)
-				{
-					texName += to_string(colorTexParams.m_clearColor.z) + "_";
-					if (numChannels >= 4)
-					{
-						texName += to_string(colorTexParams.m_clearColor.w) + "_";
-					}
-				}
-			}
-			texName += (colorSpace == Texture::TextureColorSpace::sRGB ? "sRGB" : "Linear");
 
-			tex = make_shared<Texture>(texName, colorTexParams);
+			const string fallbackName = GenerateTextureColorFallbackName(colorFallback, numChannels, colorSpace);
+			tex = make_shared<Texture>(fallbackName, colorTexParams);
+
+			scene.AddUniqueTexture(tex);
 		}
-
-		scene.AddUniqueTexture(tex);
+		
 		tex->Create(); // Create the texture after calling AddUniqueTexture(), as we now know it won't be destroyed
 
 		return tex;
@@ -376,6 +384,8 @@ namespace
 				SEAssertF("We expect all materials in the incoming scene data are unique");
 				continue;
 			}
+
+			LOG("Loading material \"%s\"", matName.c_str());
 
 			SEAssert("We currently only support the PBR metallic/roughness material model", 
 				material->has_pbr_metallic_roughness == 1);
@@ -1146,6 +1156,7 @@ namespace fr
 			m_textures.find(newTexture->GetNameID());
 		if (texturePosition != m_textures.end()) // Found existing
 		{
+			LOG("Texture \"%s\" has alredy been registed with scene", newTexture->GetName().c_str());
 			newTexture = texturePosition->second;
 		}
 		else  // Add new
@@ -1156,17 +1167,32 @@ namespace fr
 	}
 
 
+	std::shared_ptr<gr::Texture> SceneData::GetTexture(std::string textureName)
+	{
+		const uint64_t nameID = en::NamedObject::ComputeIDFromName(textureName);
+
+		auto result = m_textures.find(nameID);
+		SEAssert("Texture with that name does not exist", result != m_textures.end());
+
+		return result->second;
+	}
+
+
+	bool SceneData::TextureExists(std::string textureName)
+	{
+		const uint64_t nameID = en::NamedObject::ComputeIDFromName(textureName);
+		return m_textures.find(nameID) != m_textures.end();
+	}
+
+
 	shared_ptr<Texture> SceneData::GetLoadTextureByPath(vector<string> texturePaths, bool returnErrorTex /*= false*/)
 	{
 		SEAssert("Expected either 1 or 6 texture paths", texturePaths.size() == 1 || texturePaths.size() == 6);
 
-		const size_t nameID = NamedObject::ComputeIDFromName(texturePaths[0]);
-
-		unordered_map<size_t, shared_ptr<gr::Texture>>::const_iterator texturePosition = m_textures.find(nameID);
-		if (texturePosition != m_textures.end())
+		if (TextureExists(texturePaths[0]))
 		{
 			LOG("Texture(s) at \"%s\" has already been loaded", texturePaths[0].c_str());
-			return texturePosition->second;
+			return GetTexture(texturePaths[0]);
 		}
 
 		shared_ptr<gr::Texture> result = LoadTextureFileFromPath(vector<string>(texturePaths), returnErrorTex);
