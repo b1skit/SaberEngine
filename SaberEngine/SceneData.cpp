@@ -64,6 +64,8 @@ using glm::decompose;
 // Data loading helpers:
 namespace
 {
+	using fr::SceneData;
+
 	#define ERROR_TEXTURE_NAME "ErrorTexture"
 	#define ERROR_TEXTURE_COLOR_VEC4 vec4(1.0f, 0.0f, 1.0f, 1.0f)
 	#define DEFAULT_ALPHA_VALUE 1.0f // Default alpha value when loading texture data, if no alpha exists
@@ -306,7 +308,7 @@ namespace
 
 
 	shared_ptr<Material const> LoadAddMaterial(
-		fr::SceneData& scene, std::string const& sceneRootPath, cgltf_material const* material)
+		SceneData& scene, std::string const& sceneRootPath, cgltf_material const* material)
 	{
 		const string matName = material == nullptr ? "MissingMaterial" : GenerateMaterialName(*material);
 		if (scene.MaterialExists(matName))
@@ -501,7 +503,7 @@ namespace
 
 
 	// Creates a default camera if camera == nullptr, and no cameras exist in scene
-	void LoadAddCamera(fr::SceneData& scene, shared_ptr<SceneObject> parent, cgltf_node* current)
+	void LoadAddCamera(SceneData& scene, shared_ptr<SceneObject> parent, cgltf_node* current)
 	{
 		if (parent == nullptr && (current == nullptr || current->camera == nullptr))
 		{
@@ -563,14 +565,14 @@ namespace
 	}
 
 
-	void LoadAddLight(fr::SceneData& scene, shared_ptr<SceneObject> parent, cgltf_light* light)
+	void LoadAddLight(SceneData& scene, shared_ptr<SceneObject> parent, cgltf_node* current)
 	{
-		const string lightName = (light->name ? string(light->name) : "Unnamed light");
+		const string lightName = (current->light->name ? string(current->light->name) : "Unnamed light");
 
 		LOG("Found light \"%s\"", lightName.c_str());
 
 		Light::LightType lightType = Light::LightType::Directional;
-		switch (light->type)
+		switch (current->light->type)
 		{
 		case cgltf_light_type::cgltf_light_type_directional:
 		{
@@ -594,7 +596,7 @@ namespace
 			SEAssertF("Invalid light type");
 		}
 
-		const vec3 colorIntensity = glm::make_vec3(light->color) * light->intensity;
+		const vec3 colorIntensity = glm::make_vec3(current->light->color) * current->light->intensity;
 		const bool attachShadow = true;
 		shared_ptr<Light> newLight = 
 			make_shared<Light>(lightName, parent->GetTransform(), lightType, colorIntensity, attachShadow);
@@ -603,304 +605,310 @@ namespace
 	}
 
 
+	void LoadMeshGeometry(
+		string const& sceneRootPath, SceneData& scene, cgltf_node* current, shared_ptr<SceneObject> parent)
+	{
+		parent->AddMesh(make_shared<gr::Mesh>(parent->GetTransform()));
+
+		// Add each MeshPrimitive as a child of the SceneObject's Mesh:
+		for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
+		{
+			SEAssert(
+				"TODO: Support more primitive types/draw modes!",
+				current->mesh->primitives[primitive].type == cgltf_primitive_type::cgltf_primitive_type_triangles);
+
+			// Populate the mesh params:
+			MeshPrimitive::MeshPrimitiveParams meshPrimitiveParams;
+			switch (current->mesh->primitives[primitive].type)
+			{
+			case cgltf_primitive_type::cgltf_primitive_type_points:
+			{
+				meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::Points;
+			}
+			break;
+			case cgltf_primitive_type::cgltf_primitive_type_lines:
+			{
+				meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::Lines;
+			}
+			break;
+			case cgltf_primitive_type::cgltf_primitive_type_line_loop:
+			{
+				meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::LineLoop;
+			}
+			break;
+			case cgltf_primitive_type::cgltf_primitive_type_line_strip:
+			{
+				meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::LineStrip;
+			}
+			break;
+			case cgltf_primitive_type::cgltf_primitive_type_triangles:
+			{
+				meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::Triangles;
+			}
+			break;
+			case cgltf_primitive_type::cgltf_primitive_type_triangle_strip:
+			{
+				meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::TriangleStrip;
+			}
+			break;
+			case cgltf_primitive_type::cgltf_primitive_type_triangle_fan:
+			{
+				meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::TriangleFan;
+			}
+			break;
+			case cgltf_primitive_type::cgltf_primitive_type_max_enum:
+			default:
+				SEAssertF("Unsupported primitive type/draw mode");
+			}
+
+			SEAssert("Mesh is missing indices", current->mesh->primitives[primitive].indices != nullptr);
+			vector<uint32_t> indices;
+			indices.resize(current->mesh->primitives[primitive].indices->count, 0);
+			for (size_t index = 0; index < current->mesh->primitives[primitive].indices->count; index++)
+			{
+				// Note: We use 32-bit indexes, but cgltf uses size_t's
+				indices[index] = (uint32_t)cgltf_accessor_read_index(
+					current->mesh->primitives[primitive].indices, (uint64_t)index);
+			}
+
+			// Unpack each of the primitive's vertex attrbutes:
+			vector<float> positions;
+			vec3 positionsMinXYZ(Bounds::k_invalidMinXYZ);
+			vec3 positionsMaxXYZ(Bounds::k_invalidMaxXYZ);
+			vector<float> normals;
+			vector<float> tangents;
+			vector<float> uv0;
+			vector<float> colors;
+			std::vector<float> jointsAsFloats; // We unpack the joints as floats...
+			std::vector<uint8_t> jointsAsUints; // ...but eventually convert and store them as uint8_t
+			std::vector<float> weights;
+			for (size_t attrib = 0; attrib < current->mesh->primitives[primitive].attributes_count; attrib++)
+			{
+				size_t elementsPerComponent;
+				switch (current->mesh->primitives[primitive].attributes[attrib].data->type)
+				{
+				case cgltf_type::cgltf_type_scalar:
+				{
+					elementsPerComponent = 1;
+				}
+				break;
+				case cgltf_type::cgltf_type_vec2:
+				{
+					elementsPerComponent = 2;
+				}
+				break;
+				case cgltf_type::cgltf_type_vec3:
+				{
+					elementsPerComponent = 3;
+				}
+				break;
+				case cgltf_type::cgltf_type_vec4:
+				{
+					elementsPerComponent = 4;
+				}
+				break;
+				case cgltf_type::cgltf_type_mat2:
+				case cgltf_type::cgltf_type_mat3:
+				case cgltf_type::cgltf_type_mat4:
+				case cgltf_type::cgltf_type_max_enum:
+				case cgltf_type::cgltf_type_invalid:
+				default:
+				{
+					// GLTF mesh vertex attributes are stored as vecN's only:
+					// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#meshes-overview
+					SEAssertF("Invalid vertex attribute data type");
+				}
+				}
+				const size_t numComponents = current->mesh->primitives[primitive].attributes[attrib].data->count;
+				const size_t totalFloatElements = numComponents * elementsPerComponent;
+
+				float* dataTarget = nullptr;
+				const cgltf_attribute_type attributeType =
+					current->mesh->primitives[primitive].attributes[attrib].type;
+				switch (attributeType)
+				{
+				case cgltf_attribute_type::cgltf_attribute_type_position:
+				{
+					positions.resize(totalFloatElements, 0);
+					dataTarget = &positions[0];
+
+					if (current->mesh->primitives[primitive].attributes[attrib].data->has_min)
+					{
+						SEAssert("Unexpected number of bytes in min value array data",
+							sizeof(current->mesh->primitives[primitive].attributes[attrib].data->min) == 64);
+
+						float* xyzComponent = current->mesh->primitives[primitive].attributes[attrib].data->min;
+						positionsMinXYZ.x = *xyzComponent++;
+						positionsMinXYZ.y = *xyzComponent++;
+						positionsMinXYZ.z = *xyzComponent;
+					}
+					if (current->mesh->primitives[primitive].attributes[attrib].data->has_max)
+					{
+						SEAssert("Unexpected number of bytes in max value array data",
+							sizeof(current->mesh->primitives[primitive].attributes[attrib].data->max) == 64);
+
+						float* xyzComponent = current->mesh->primitives[primitive].attributes[attrib].data->max;
+						positionsMaxXYZ.x = *xyzComponent++;
+						positionsMaxXYZ.y = *xyzComponent++;
+						positionsMaxXYZ.z = *xyzComponent;
+					}
+				}
+				break;
+				case cgltf_attribute_type::cgltf_attribute_type_normal:
+				{
+					normals.resize(totalFloatElements, 0);
+					dataTarget = &normals[0];
+				}
+				break;
+				case cgltf_attribute_type::cgltf_attribute_type_tangent:
+				{
+					tangents.resize(totalFloatElements, 0);
+					dataTarget = &tangents[0];
+				}
+				break;
+				case cgltf_attribute_type::cgltf_attribute_type_texcoord:
+				{
+					uv0.resize(totalFloatElements, 0);
+					dataTarget = &uv0[0];
+				}
+				break;
+				case cgltf_attribute_type::cgltf_attribute_type_color:
+				{
+					SEAssert("Only 4-channel colors (RGBA) are currently supported", elementsPerComponent == 4);
+					colors.resize(totalFloatElements, 0);
+					dataTarget = &colors[0];
+				}
+				break;
+				case cgltf_attribute_type::cgltf_attribute_type_joints:
+				{
+					LOG_WARNING("Found vertex joint attributes: Data will be loaded but has not been tested. "
+						"Skinning is not currently supported");
+					jointsAsFloats.resize(totalFloatElements, 0);
+					jointsAsUints.resize(totalFloatElements, 0);
+					dataTarget = &jointsAsFloats[0];
+				}
+				break;
+				case cgltf_attribute_type::cgltf_attribute_type_weights:
+				{
+					LOG_WARNING("Found vertex weight attributes: Data will be loaded but has not been tested. "
+						"Skinning is not currently supported");
+					weights.resize(totalFloatElements, 0);
+					dataTarget = &weights[0];
+				}
+				break;
+				case cgltf_attribute_type::cgltf_attribute_type_custom:
+				case cgltf_attribute_type::cgltf_attribute_type_max_enum:
+				case cgltf_attribute_type::cgltf_attribute_type_invalid:
+				default:
+					SEAssertF("Invalid attribute type");
+				}
+
+				cgltf_accessor* const accessor = current->mesh->primitives[primitive].attributes[attrib].data;
+
+				bool unpackResult = cgltf_accessor_unpack_floats(
+					accessor,
+					dataTarget,
+					totalFloatElements);
+				SEAssert("Failed to unpack data", unpackResult);
+
+				// Post-process the data:
+				if (attributeType == cgltf_attribute_type_texcoord)
+				{
+					// GLTF specifies (0,0) as the top-left of a texture. 
+					// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#images
+					// In OpenGL, we already flip the image Y onimport, so flip the UVs here to compensate
+					platform::RenderingAPI const& api =
+						Config::Get()->GetRenderingAPI();
+					const bool flipY = api == platform::RenderingAPI::OpenGL ? true : false;
+					if (flipY)
+					{
+						for (size_t v = 1; v < uv0.size(); v += 2)
+						{
+							uv0[v] = 1.0f - uv0[v];
+						}
+					}
+				}
+
+				if (attributeType == cgltf_attribute_type_joints)
+				{
+					// Cast our joint indexes from floats to uint8_t's:
+					SEAssert("Source/destination size mismatch", jointsAsFloats.size() == jointsAsUints.size());
+					for (size_t jointIdx = 0; jointIdx < jointsAsFloats.size(); jointIdx++)
+					{
+						jointsAsUints[jointIdx] = static_cast<uint8_t>(jointsAsFloats[jointIdx]);
+					}
+				}
+
+			} // End attribute unpacking
+
+			const string nodeName = current->name ? string(current->name) : "unnamedNode";
+
+			// Construct any missing vertex attributes for the mesh:
+			util::VertexAttributeBuilder::MeshData meshData
+			{
+				nodeName,
+				&meshPrimitiveParams,
+				&indices,
+				reinterpret_cast<vector<vec3>*>(&positions),
+				reinterpret_cast<vector<vec3>*>(&normals),
+				reinterpret_cast<vector<vec4>*>(&tangents),
+				reinterpret_cast<vector<vec2>*>(&uv0),
+				reinterpret_cast<vector<vec4>*>(&colors),
+				reinterpret_cast<vector<glm::tvec4<uint8_t>>*>(&jointsAsUints),
+				reinterpret_cast<vector<vec4>*>(&weights)
+			};
+			util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
+
+			// Material:
+			shared_ptr<Material const> material =
+				LoadAddMaterial(scene, sceneRootPath, current->mesh->primitives[primitive].material);
+			// TODO: Decouple mesh and material loading
+
+			// Attach the primitive:
+			parent->GetMesh()->AddMeshPrimitive(make_shared<MeshPrimitive>(
+				nodeName,
+				indices,
+				positions,
+				positionsMinXYZ,
+				positionsMaxXYZ,
+				normals,
+				tangents,
+				uv0,
+				colors,
+				jointsAsUints,
+				weights,
+				material,
+				meshPrimitiveParams,
+				nullptr));
+		}
+	}
+
+
 	// Depth-first traversal
 	void LoadObjectHierarchyRecursiveHelper(
-		std::string const& sceneRootPath, fr::SceneData& scene, cgltf_data* data, cgltf_node* current, shared_ptr<SceneObject> parent)
+		string const& sceneRootPath, SceneData& scene, cgltf_data* data, cgltf_node* current, shared_ptr<SceneObject> parent)
 	{
 		if (current == nullptr)
 		{
 			return;
-		}	
-
-		const string nodeName = current->name ? string(current->name) : "unnamedNode";
+		}
 
 		SEAssert("TODO: Handle nodes with multiple things (eg. Light & Mesh) that depend on a transform", 
 			current->light == nullptr || current->mesh == nullptr);
+		// TODO: Seems we never hit this... Does GLTF support multiple attachments per node?
 
 		// Set the SceneObject transform:
 		SetTransformValues(current, parent->GetTransform());
 
-		// Process any mesh primitives:
+		// Process node attachments:
 		if (current->mesh != nullptr)
 		{
-			parent->AddMesh(make_shared<gr::Mesh>(parent->GetTransform()));
-
-			// Add each MeshPrimitive as a child of the SceneObject's Mesh:
-			for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
-			{
-				SEAssert(
-					"TODO: Support more primitive types/draw modes!",
-					current->mesh->primitives[primitive].type == cgltf_primitive_type::cgltf_primitive_type_triangles);
-
-				// Populate the mesh params:
-				MeshPrimitive::MeshPrimitiveParams meshPrimitiveParams;
-				switch (current->mesh->primitives[primitive].type)
-				{
-					case cgltf_primitive_type::cgltf_primitive_type_points:
-					{
-						meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::Points; 
-					}
-					break;
-					case cgltf_primitive_type::cgltf_primitive_type_lines:
-					{
-						meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::Lines;
-					}
-					break;
-					case cgltf_primitive_type::cgltf_primitive_type_line_loop:
-					{
-						meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::LineLoop;
-					}
-					break;
-					case cgltf_primitive_type::cgltf_primitive_type_line_strip:
-					{
-						meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::LineStrip;
-					}
-					break;
-					case cgltf_primitive_type::cgltf_primitive_type_triangles:
-					{
-						meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::Triangles;
-					}
-					break;
-					case cgltf_primitive_type::cgltf_primitive_type_triangle_strip:
-					{
-						meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::TriangleStrip;
-					}
-					break;
-					case cgltf_primitive_type::cgltf_primitive_type_triangle_fan:
-					{
-						meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::TriangleFan;
-					}
-					break;
-					case cgltf_primitive_type::cgltf_primitive_type_max_enum:
-					default:
-						SEAssertF("Unsupported primitive type/draw mode");
-				}
-
-				SEAssert("Mesh is missing indices", current->mesh->primitives[primitive].indices != nullptr);
-				vector<uint32_t> indices;
-				indices.resize(current->mesh->primitives[primitive].indices->count, 0);
-				for (size_t index = 0; index < current->mesh->primitives[primitive].indices->count; index++)
-				{
-					// Note: We use 32-bit indexes, but cgltf uses size_t's
-					indices[index] = (uint32_t)cgltf_accessor_read_index(
-						current->mesh->primitives[primitive].indices, (uint64_t)index);
-				}
-
-				// Unpack each of the primitive's vertex attrbutes:
-				vector<float> positions;
-				vec3 positionsMinXYZ(Bounds::k_invalidMinXYZ);
-				vec3 positionsMaxXYZ(Bounds::k_invalidMaxXYZ);
-				vector<float> normals;
-				vector<float> tangents;
-				vector<float> uv0;
-				vector<float> colors;
-				std::vector<float> jointsAsFloats; // We unpack the joints as floats...
-				std::vector<uint8_t> jointsAsUints; // ...but eventually convert and store them as uint8_t
-				std::vector<float> weights;
-				for (size_t attrib = 0; attrib < current->mesh->primitives[primitive].attributes_count; attrib++)
-				{
-					size_t elementsPerComponent;
-					switch (current->mesh->primitives[primitive].attributes[attrib].data->type)
-					{
-						case cgltf_type::cgltf_type_scalar:
-						{
-							elementsPerComponent = 1;
-						}
-						break;
-						case cgltf_type::cgltf_type_vec2:
-						{
-							elementsPerComponent = 2;
-						}
-						break;
-						case cgltf_type::cgltf_type_vec3:
-						{
-							elementsPerComponent = 3;
-						}
-						break;
-						case cgltf_type::cgltf_type_vec4:
-						{
-							elementsPerComponent = 4;
-						}
-						break;
-						case cgltf_type::cgltf_type_mat2:
-						case cgltf_type::cgltf_type_mat3:
-						case cgltf_type::cgltf_type_mat4:
-						case cgltf_type::cgltf_type_max_enum:
-						case cgltf_type::cgltf_type_invalid:
-						default:
-						{
-							// GLTF mesh vertex attributes are stored as vecN's only:
-							// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#meshes-overview
-							SEAssertF("Invalid vertex attribute data type");
-						}
-					}	
-					const size_t numComponents = current->mesh->primitives[primitive].attributes[attrib].data->count;
-					const size_t totalFloatElements = numComponents * elementsPerComponent;
-
-					float* dataTarget = nullptr;
-					const cgltf_attribute_type attributeType = 
-						current->mesh->primitives[primitive].attributes[attrib].type;
-					switch (attributeType)
-					{
-					case cgltf_attribute_type::cgltf_attribute_type_position:
-					{
-						positions.resize(totalFloatElements, 0);
-						dataTarget = &positions[0];
-
-						if (current->mesh->primitives[primitive].attributes[attrib].data->has_min)
-						{
-							SEAssert("Unexpected number of bytes in min value array data", 
-								sizeof(current->mesh->primitives[primitive].attributes[attrib].data->min) == 64);
-
-							float* xyzComponent = current->mesh->primitives[primitive].attributes[attrib].data->min;
-							positionsMinXYZ.x = *xyzComponent++;
-							positionsMinXYZ.y = *xyzComponent++;
-							positionsMinXYZ.z = *xyzComponent;
-						}
-						if (current->mesh->primitives[primitive].attributes[attrib].data->has_max)
-						{
-							SEAssert("Unexpected number of bytes in max value array data",
-								sizeof(current->mesh->primitives[primitive].attributes[attrib].data->max) == 64);
-
-							float* xyzComponent = current->mesh->primitives[primitive].attributes[attrib].data->max;
-							positionsMaxXYZ.x = *xyzComponent++;
-							positionsMaxXYZ.y = *xyzComponent++;
-							positionsMaxXYZ.z = *xyzComponent;
-						}
-					}
-					break;
-					case cgltf_attribute_type::cgltf_attribute_type_normal:
-					{
-						normals.resize(totalFloatElements, 0);
-						dataTarget = &normals[0];
-					}
-					break;
-					case cgltf_attribute_type::cgltf_attribute_type_tangent:
-					{
-						tangents.resize(totalFloatElements, 0);
-						dataTarget = &tangents[0];
-					}
-					break;
-					case cgltf_attribute_type::cgltf_attribute_type_texcoord:
-					{
-						uv0.resize(totalFloatElements, 0);
-						dataTarget = &uv0[0];
-					}
-					break;
-					case cgltf_attribute_type::cgltf_attribute_type_color:
-					{
-						SEAssert("Only 4-channel colors (RGBA) are currently supported", elementsPerComponent == 4);
-						colors.resize(totalFloatElements, 0);
-						dataTarget = &colors[0];
-					}
-					break;
-					case cgltf_attribute_type::cgltf_attribute_type_joints:
-					{
-						LOG_WARNING("Found vertex joint attributes: Data will be loaded but has not been tested. "
-							"Skinning is not currently supported");
-						jointsAsFloats.resize(totalFloatElements, 0);
-						jointsAsUints.resize(totalFloatElements, 0);
-						dataTarget = &jointsAsFloats[0];
-					}
-					break;
-					case cgltf_attribute_type::cgltf_attribute_type_weights:
-					{
-						LOG_WARNING("Found vertex weight attributes: Data will be loaded but has not been tested. "
-							"Skinning is not currently supported");
-						weights.resize(totalFloatElements, 0);
-						dataTarget = &weights[0];
-					}
-					break;
-					case cgltf_attribute_type::cgltf_attribute_type_custom:
-					case cgltf_attribute_type::cgltf_attribute_type_max_enum:
-					case cgltf_attribute_type::cgltf_attribute_type_invalid:
-					default:
-						SEAssertF("Invalid attribute type");
-					}
-
-					cgltf_accessor* const accessor = current->mesh->primitives[primitive].attributes[attrib].data;
-					
-					bool unpackResult = cgltf_accessor_unpack_floats(
-						accessor,
-						dataTarget,
-						totalFloatElements);
-					SEAssert("Failed to unpack data", unpackResult);
-
-					// Post-process the data:
-					if (attributeType == cgltf_attribute_type_texcoord)
-					{
-						// GLTF specifies (0,0) as the top-left of a texture. 
-						// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#images
-						// In OpenGL, we already flip the image Y onimport, so flip the UVs here to compensate
-						platform::RenderingAPI const& api =
-							Config::Get()->GetRenderingAPI();
-						const bool flipY = api == platform::RenderingAPI::OpenGL ? true : false;
-						if (flipY)
-						{
-							for (size_t v = 1; v < uv0.size(); v += 2)
-							{
-								uv0[v] = 1.0f - uv0[v];
-							}
-						}
-					}
-
-					if (attributeType == cgltf_attribute_type_joints)
-					{
-						// Cast our joint indexes from floats to uint8_t's:
-						SEAssert("Source/destination size mismatch", jointsAsFloats.size() == jointsAsUints.size());
-						for (size_t jointIdx = 0; jointIdx < jointsAsFloats.size(); jointIdx++)
-						{
-							jointsAsUints[jointIdx] = static_cast<uint8_t>(jointsAsFloats[jointIdx]);
-						}
-					}
-
-				} // End attribute unpacking
-
-				// Construct any missing vertex attributes for the mesh:
-				util::VertexAttributeBuilder::MeshData meshData
-				{
-					nodeName,
-					&meshPrimitiveParams,
-					&indices,
-					reinterpret_cast<vector<vec3>*>(&positions),
-					reinterpret_cast<vector<vec3>*>(&normals),
-					reinterpret_cast<vector<vec4>*>(&tangents),
-					reinterpret_cast<vector<vec2>*>(&uv0),
-					reinterpret_cast<vector<vec4>*>(&colors),
-					reinterpret_cast<vector<glm::tvec4<uint8_t>>*>(&jointsAsUints),
-					reinterpret_cast<vector<vec4>*>(&weights)
-				};
-				util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
-
-				// Material:
-				shared_ptr<Material const> material = 
-					LoadAddMaterial(scene, sceneRootPath, current->mesh->primitives[primitive].material);
-
-				// Attach the primitive:
-				parent->GetMesh()->AddMeshPrimitive(make_shared<MeshPrimitive>(
-					nodeName,
-					indices,
-					positions,
-					positionsMinXYZ,
-					positionsMaxXYZ,
-					normals,
-					tangents,
-					uv0,
-					colors,
-					jointsAsUints,
-					weights,
-					material,
-					meshPrimitiveParams,
-					nullptr));
-			}
-		} // End Mesh population
-
-		// Add other attachments now the SceneObject transformations have been populated:
+			LoadMeshGeometry(sceneRootPath, scene, current, parent);
+		}
 		if (current->light)
 		{
-			LoadAddLight(scene, parent, current->light);
+			LoadAddLight(scene, parent, current);
 		}
-
 		if (current->camera)
 		{
 			LoadAddCamera(scene, parent, current);
