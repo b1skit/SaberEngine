@@ -57,8 +57,8 @@ namespace fr
 
 		// Textures:
 		void AddUniqueTexture(std::shared_ptr<gr::Texture>& newTexture); // Note: newTexture may be modified
-		std::shared_ptr<gr::Texture> GetTexture(std::string textureName);
-		bool TextureExists(std::string textureName);		
+		std::shared_ptr<gr::Texture> GetTexture(std::string textureName) const;
+		bool TextureExists(std::string textureName) const;
 
 		// Gets already-loaded textures, or loads if it's unseen. Returns nullptr if texture file doesn't exist
 		std::shared_ptr<gr::Texture> GetLoadTextureByPath(std::vector<std::string> texturePaths, bool returnErrorTex = false);

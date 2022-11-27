@@ -1174,7 +1174,7 @@ namespace fr
 	}
 
 
-	std::shared_ptr<gr::Texture> SceneData::GetTexture(std::string textureName)
+	std::shared_ptr<gr::Texture> SceneData::GetTexture(std::string textureName) const
 	{
 		const uint64_t nameID = en::NamedObject::ComputeIDFromName(textureName);
 
@@ -1185,7 +1185,7 @@ namespace fr
 	}
 
 
-	bool SceneData::TextureExists(std::string textureName)
+	bool SceneData::TextureExists(std::string textureName) const
 	{
 		const uint64_t nameID = en::NamedObject::ComputeIDFromName(textureName);
 		return m_textures.find(nameID) != m_textures.end();
