@@ -61,7 +61,7 @@ namespace fr
 		bool TextureExists(std::string textureName) const;
 
 		// Gets already-loaded textures, or loads if it's unseen. Returns nullptr if texture file doesn't exist
-		std::shared_ptr<gr::Texture> GetLoadTextureByPath(std::vector<std::string> texturePaths, bool returnErrorTex = false);
+		std::shared_ptr<gr::Texture> GetLoadTextureByPath(std::vector<std::string> texturePaths, bool returnErrorTex);
 
 		// Materials:
 		void AddUniqueMaterial(std::shared_ptr<gr::Material>& newMaterial);

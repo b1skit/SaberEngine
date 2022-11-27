@@ -102,7 +102,7 @@ namespace gr
 
 			if (cubemapTexPaths.size() == 6)
 			{
-				m_skyTexture = SceneManager::GetSceneData()->GetLoadTextureByPath(cubemapTexPaths);
+				m_skyTexture = SceneManager::GetSceneData()->GetLoadTextureByPath(cubemapTexPaths, false);
 			}
 			else
 			{

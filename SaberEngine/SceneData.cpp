@@ -341,7 +341,7 @@ namespace
 		if (texture && texture->image && texture->image->uri)
 		{
 			// Load texture data; also adds it if it's new
-			tex = scene.GetLoadTextureByPath({ sceneRootPath + texture->image->uri });
+			tex = scene.GetLoadTextureByPath({ sceneRootPath + texture->image->uri }, false);
 
 			Texture::TextureParams texParams = tex->GetTextureParams();
 			texParams.m_texColorSpace = colorSpace;
@@ -1192,7 +1192,7 @@ namespace fr
 	}
 
 
-	shared_ptr<Texture> SceneData::GetLoadTextureByPath(vector<string> texturePaths, bool returnErrorTex /*= false*/)
+	shared_ptr<Texture> SceneData::GetLoadTextureByPath(vector<string> texturePaths, bool returnErrorTex)
 	{
 		SEAssert("Expected either 1 or 6 texture paths", texturePaths.size() == 1 || texturePaths.size() == 6);
 
