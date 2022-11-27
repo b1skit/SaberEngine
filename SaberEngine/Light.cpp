@@ -17,6 +17,29 @@ using glm::vec3;
 using re::ParameterBlock;
 
 
+namespace
+{
+	gr::Camera::CameraConfig ComputeDirectionalShadowCameraConfigFromSceneBounds(
+		gr::Transform* lightTransform, re::Bounds& sceneWorldBounds)
+	{
+		re::Bounds const& transformedBounds = sceneWorldBounds.GetTransformedBounds(
+			glm::inverse(lightTransform->GetGlobalMatrix(Transform::TRS)));
+
+		gr::Camera::CameraConfig shadowCamConfig;
+
+		shadowCamConfig.m_near				= -transformedBounds.zMax();
+		shadowCamConfig.m_far				= -transformedBounds.zMin();
+		shadowCamConfig.m_projectionType	= gr::Camera::CameraConfig::ProjectionType::Orthographic;
+		shadowCamConfig.m_orthoLeft			= transformedBounds.xMin();
+		shadowCamConfig.m_orthoRight		= transformedBounds.xMax();
+		shadowCamConfig.m_orthoBottom		= transformedBounds.yMin();
+		shadowCamConfig.m_orthoTop			= transformedBounds.yMax();
+
+		return shadowCamConfig;
+	}
+}
+
+
 namespace gr
 {
 	Light::Light(string const& name, Transform* ownerTransform, LightType lightType, vec3 colorIntensity, bool hasShadow)
@@ -40,19 +63,8 @@ namespace gr
 			if (hasShadow)
 			{
 				re::Bounds sceneWorldBounds = SceneManager::GetSceneData()->GetWorldSpaceSceneBounds();
-
-				const re::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
-					glm::inverse(m_ownerTransform->GetGlobalMatrix(Transform::TRS)));
-				// TODO: We should retrieve the scene bounds from the root note of the scene graph, once it is implemented
-
-				gr::Camera::CameraConfig shadowCamConfig;
-				shadowCamConfig.m_near				= -transformedBounds.zMax();
-				shadowCamConfig.m_far				= -transformedBounds.zMin();
-				shadowCamConfig.m_projectionType	= Camera::CameraConfig::ProjectionType::Orthographic;
-				shadowCamConfig.m_orthoLeft			= transformedBounds.xMin();
-				shadowCamConfig.m_orthoRight		= transformedBounds.xMax();
-				shadowCamConfig.m_orthoBottom		= transformedBounds.yMin();
-				shadowCamConfig.m_orthoTop			= transformedBounds.yMax();
+				Camera::CameraConfig shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
+					m_ownerTransform, sceneWorldBounds);
 
 				const uint32_t shadowMapRes = Config::Get()->GetValue<uint32_t>("defaultShadowMapRes");
 				m_shadowMap = make_unique<ShadowMap>(
@@ -120,18 +132,8 @@ namespace gr
 		if (m_type == LightType::Directional) // Update shadow cam bounds
 		{
 			re::Bounds sceneWorldBounds = SceneManager::GetSceneData()->GetWorldSpaceSceneBounds();
-
-			const re::Bounds transformedBounds = sceneWorldBounds.GetTransformedBounds(
-				glm::inverse(m_ownerTransform->GetGlobalMatrix(Transform::TRS)));
-
-			gr::Camera::CameraConfig shadowCamConfig;
-			shadowCamConfig.m_near				= -transformedBounds.zMax();
-			shadowCamConfig.m_far				= -transformedBounds.zMin();
-			shadowCamConfig.m_projectionType	= Camera::CameraConfig::ProjectionType::Orthographic;
-			shadowCamConfig.m_orthoLeft			= transformedBounds.xMin();
-			shadowCamConfig.m_orthoRight		= transformedBounds.xMax();
-			shadowCamConfig.m_orthoBottom		= transformedBounds.yMin();
-			shadowCamConfig.m_orthoTop			= transformedBounds.yMax();
+			Camera::CameraConfig shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
+				m_ownerTransform, sceneWorldBounds);
 
 			m_shadowMap->ShadowCamera()->SetCameraConfig(shadowCamConfig);
 		}

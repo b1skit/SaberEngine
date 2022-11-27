@@ -27,6 +27,8 @@ namespace re
 		string const& name,
 		vector<uint32_t>& indices,
 		vector<float>& positions,
+		glm::vec3 const& positionMinXYZ,
+		glm::vec3 const& positionMaxXYZ,
 		vector<float>& normals,
 		vector<float>& tangents,
 		vector<float>& uv0,
@@ -52,9 +54,16 @@ namespace re
 
 		m_joints		= move(joints);
 		m_weights		= move(weights);
-		
 
-		ComputeBounds(); // Compute m_localBounds
+		if (positionMinXYZ == re::Bounds::k_invalidMinXYZ || positionMaxXYZ == re::Bounds::k_invalidMaxXYZ)
+		{
+			// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast from floats
+			m_localBounds.ComputeBounds(reinterpret_cast<std::vector<vec3> const&>(m_positions));
+		}
+		else
+		{
+			m_localBounds = Bounds(positionMinXYZ, positionMaxXYZ);
+		}		
 
 		platform::MeshPrimitive::Create(*this); // Platform-specific setup
 
@@ -85,42 +94,6 @@ namespace re
 	void MeshPrimitive::Bind(bool doBind) const
 	{
 		platform::MeshPrimitive::Bind(m_platformParams.get(), doBind);
-	}
-
-
-	void MeshPrimitive::ComputeBounds()
-	{
-		for (size_t i = 0; i < m_positions.size(); i+=3) // Stride of 3
-		{
-			// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
-			vec3 const& posVector = reinterpret_cast<vec3 const&>(m_positions[i]);
-			if (posVector.x < m_localBounds.xMin())
-			{
-				m_localBounds.xMin() = posVector.x;
-			}
-			if (posVector.x > m_localBounds.xMax())
-			{
-				m_localBounds.xMax() = posVector.x;
-			}
-
-			if (posVector.y < m_localBounds.yMin())
-			{
-				m_localBounds.yMin() = posVector.y;
-			}
-			if (posVector.y > m_localBounds.yMax())
-			{
-				m_localBounds.yMax() = posVector.y;
-			}
-
-			if (posVector.z < m_localBounds.zMin())
-			{
-				m_localBounds.zMin() = posVector.z;
-			}
-			if (posVector.z > m_localBounds.zMax())
-			{
-				m_localBounds.zMax() = posVector.z;
-			}
-		}
 	}
 
 
@@ -349,6 +322,8 @@ namespace meshfactory
 			"cube",
 			cubeIndices,
 			*reinterpret_cast<vector<float>*>(&assembledPositions),	// Cast our vector<vec3> to vector<float>
+			re::Bounds::k_invalidMinXYZ,
+			re::Bounds::k_invalidMaxXYZ,
 			*reinterpret_cast<vector<float>*>(&assembledNormals),
 			*reinterpret_cast<vector<float>*>(&assembledTangents),
 			*reinterpret_cast<vector<float>*>(&assembledUVs),
@@ -428,6 +403,8 @@ namespace meshfactory
 			"optimizedFullscreenQuad",
 			triIndices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
+			re::Bounds::k_invalidMinXYZ,
+			re::Bounds::k_invalidMaxXYZ,
 			*reinterpret_cast<vector<float>*>(&normals),
 			*reinterpret_cast<vector<float>*>(&tangents),
 			*reinterpret_cast<vector<float>*>(&uvs),
@@ -480,6 +457,8 @@ namespace meshfactory
 			"quad",
 			quadIndices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
+			re::Bounds::k_invalidMinXYZ,
+			re::Bounds::k_invalidMaxXYZ,
 			*reinterpret_cast<vector<float>*>(&normals),
 			*reinterpret_cast<vector<float>*>(&tangents),
 			*reinterpret_cast<vector<float>*>(&uvs),
@@ -671,6 +650,8 @@ namespace meshfactory
 			"sphere",
 			indices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
+			re::Bounds::k_invalidMinXYZ,
+			re::Bounds::k_invalidMaxXYZ,
 			*reinterpret_cast<vector<float>*>(&normals),
 			*reinterpret_cast<vector<float>*>(&tangents),
 			*reinterpret_cast<vector<float>*>(&uvs),

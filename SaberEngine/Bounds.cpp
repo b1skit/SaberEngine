@@ -6,20 +6,28 @@
 
 namespace re
 {
-	using glm::mat4;
+	using glm::vec3;
 	using glm::vec4;
+	using glm::mat4;	
 
 	constexpr float k_bounds3DDepthBias = 0.01f; // Offset to ensure axis min != axis max
 
 
 	Bounds::Bounds() :
-		m_minXYZ(glm::vec3(std::numeric_limits<float>::max())),
-		m_maxXYZ(-glm::vec3(std::numeric_limits<float>::max())) // Note: -max is the furthest away from max
+		m_minXYZ(k_invalidMinXYZ),
+		m_maxXYZ(k_invalidMaxXYZ) 
 	{
 	}
 
 
-	// Returns a Bounds, transformed from local space using worldMatrix
+	Bounds::Bounds(glm::vec3 minXYZ, glm::vec3 maxXYZ)
+		: m_minXYZ(minXYZ)
+		, m_maxXYZ(maxXYZ)
+	{
+	}
+
+
+	// Returns a Bounds, transformed in global/world space using worldMatrix
 	Bounds Bounds::GetTransformedBounds(mat4 const& worldMatrix)
 	{
 		// Temp: Ensure the bounds are 3D here, before we do any calculations
@@ -71,6 +79,71 @@ namespace re
 		}
 
 		return result;
+	}
+
+
+	void Bounds::ComputeBounds(std::vector<glm::vec3> const& positions)
+	{
+		for (size_t i = 0; i < positions.size(); i++)
+		{
+			if (positions[i].x < xMin())
+			{
+				xMin() = positions[i].x;
+			}
+			if (positions[i].x > xMax())
+			{
+				xMax() = positions[i].x;
+			}
+
+			if (positions[i].y < yMin())
+			{
+				yMin() = positions[i].y;
+			}
+			if (positions[i].y > yMax())
+			{
+				yMax() = positions[i].y;
+			}
+
+			if (positions[i].z < zMin())
+			{
+				zMin() = positions[i].z;
+			}
+			if (positions[i].z > zMax())
+			{
+				zMax() = positions[i].z;
+			}
+		}
+	}
+
+
+	void Bounds::ExpandBounds(Bounds const& newContents)
+	{
+		if (newContents.xMin() < xMin())
+		{
+			xMin() = newContents.xMin();
+		}
+		if (newContents.xMax() > xMax())
+		{
+			xMax() = newContents.xMax();
+		}
+
+		if (newContents.yMin() < yMin())
+		{
+			yMin() = newContents.yMin();
+		}
+		if (newContents.yMax() > yMax())
+		{
+			yMax() = newContents.yMax();
+		}
+
+		if (newContents.zMin() < zMin())
+		{
+			zMin() = newContents.zMin();
+		}
+		if (newContents.zMax() > zMax())
+		{
+			zMax() = newContents.zMax();
+		}
 	}
 
 

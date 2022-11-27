@@ -620,7 +620,7 @@ namespace
 		// Set the SceneObject transform:
 		SetTransformValues(current, parent->GetTransform());
 
-		// Process any meshe primitives:
+		// Process any mesh primitives:
 		if (current->mesh != nullptr)
 		{
 			parent->AddMesh(make_shared<gr::Mesh>(parent->GetTransform()));
@@ -688,6 +688,8 @@ namespace
 
 				// Unpack each of the primitive's vertex attrbutes:
 				vector<float> positions;
+				vec3 positionsMinXYZ(Bounds::k_invalidMinXYZ);
+				vec3 positionsMaxXYZ(Bounds::k_invalidMaxXYZ);
 				vector<float> normals;
 				vector<float> tangents;
 				vector<float> uv0;
@@ -697,9 +699,6 @@ namespace
 				std::vector<float> weights;
 				for (size_t attrib = 0; attrib < current->mesh->primitives[primitive].attributes_count; attrib++)
 				{
-					// TODO: Use the incoming pre-computed min/max to optimize local bounds calculation
-					// -> Override the MeshPrimitive ctor!
-
 					size_t elementsPerComponent;
 					switch (current->mesh->primitives[primitive].attributes[attrib].data->type)
 					{
@@ -747,6 +746,27 @@ namespace
 					{
 						positions.resize(totalFloatElements, 0);
 						dataTarget = &positions[0];
+
+						if (current->mesh->primitives[primitive].attributes[attrib].data->has_min)
+						{
+							SEAssert("Unexpected number of bytes in min value array data", 
+								sizeof(current->mesh->primitives[primitive].attributes[attrib].data->min) == 64);
+
+							float* xyzComponent = current->mesh->primitives[primitive].attributes[attrib].data->min;
+							positionsMinXYZ.x = *xyzComponent++;
+							positionsMinXYZ.y = *xyzComponent++;
+							positionsMinXYZ.z = *xyzComponent;
+						}
+						if (current->mesh->primitives[primitive].attributes[attrib].data->has_max)
+						{
+							SEAssert("Unexpected number of bytes in max value array data",
+								sizeof(current->mesh->primitives[primitive].attributes[attrib].data->max) == 64);
+
+							float* xyzComponent = current->mesh->primitives[primitive].attributes[attrib].data->max;
+							positionsMaxXYZ.x = *xyzComponent++;
+							positionsMaxXYZ.y = *xyzComponent++;
+							positionsMaxXYZ.z = *xyzComponent;
+						}
 					}
 					break;
 					case cgltf_attribute_type::cgltf_attribute_type_normal:
@@ -861,6 +881,8 @@ namespace
 					nodeName,
 					indices,
 					positions,
+					positionsMinXYZ,
+					positionsMaxXYZ,
 					normals,
 					tangents,
 					uv0,
@@ -1080,8 +1102,8 @@ namespace fr
 			// Add the mesh to our tracking array:
 			m_meshPrimitives.push_back(meshPrimitive);
 
+			// TODO: Scene bounds should be updated every frame
 			UpdateSceneBounds(meshPrimitive);
-			// TODO: Bounds management should belong to a Mesh object (not the mesh primitives)
 		}
 	}
 
@@ -1095,36 +1117,10 @@ namespace fr
 	void SceneData::UpdateSceneBounds(std::shared_ptr<re::MeshPrimitive> meshPrimitive)
 	{
 		// Update scene (world) bounds to contain the new mesh primitive:
-		Bounds meshWorldBounds(
-			meshPrimitive->GetLocalBounds().GetTransformedBounds(
+		Bounds meshWorldBounds(meshPrimitive->GetBounds().GetTransformedBounds(
 				meshPrimitive->GetOwnerTransform()->GetGlobalMatrix(Transform::TRS)));
 
-		if (meshWorldBounds.xMin() < m_sceneWorldSpaceBounds.xMin())
-		{
-			m_sceneWorldSpaceBounds.xMin() = meshWorldBounds.xMin();
-		}
-		if (meshWorldBounds.xMax() > m_sceneWorldSpaceBounds.xMax())
-		{
-			m_sceneWorldSpaceBounds.xMax() = meshWorldBounds.xMax();
-		}
-
-		if (meshWorldBounds.yMin() < m_sceneWorldSpaceBounds.yMin())
-		{
-			m_sceneWorldSpaceBounds.yMin() = meshWorldBounds.yMin();
-		}
-		if (meshWorldBounds.yMax() > m_sceneWorldSpaceBounds.yMax())
-		{
-			m_sceneWorldSpaceBounds.yMax() = meshWorldBounds.yMax();
-		}
-
-		if (meshWorldBounds.zMin() < m_sceneWorldSpaceBounds.zMin())
-		{
-			m_sceneWorldSpaceBounds.zMin() = meshWorldBounds.zMin();
-		}
-		if (meshWorldBounds.zMax() > m_sceneWorldSpaceBounds.zMax())
-		{
-			m_sceneWorldSpaceBounds.zMax() = meshWorldBounds.zMax();
-		}
+		m_sceneWorldSpaceBounds.ExpandBounds(meshWorldBounds);
 	}
 
 

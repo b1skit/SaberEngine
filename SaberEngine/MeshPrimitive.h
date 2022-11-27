@@ -37,6 +37,8 @@ namespace re
 		MeshPrimitive(std::string const& name,
 			std::vector<uint32_t>& indices,
 			std::vector<float>& positions,
+			glm::vec3 const& positionMinXYZ, // Pass re::Bounds::k_invalidMinXYZ to compute bounds manually
+			glm::vec3 const& positionMaxXYZ, // Pass re::Bounds::k_invalidMaxXYZ to compute bounds manually
 			std::vector<float>& normals,
 			std::vector<float>& tangents,
 			std::vector<float>& uv0,
@@ -45,7 +47,7 @@ namespace re
 			std::vector<float> weights,
 			std::shared_ptr<gr::Material const> material,
 			re::MeshPrimitive::MeshPrimitiveParams const& meshParams,
-			gr::Transform* ownerTransform);		
+			gr::Transform* ownerTransform);
 
 		~MeshPrimitive(){ Destroy(); }
 
@@ -61,8 +63,8 @@ namespace re
 		inline gr::Transform*& GetOwnerTransform() { return m_ownerTransform; }
 		inline gr::Transform const* GetOwnerTransform() const { return m_ownerTransform; }
 
-		inline Bounds& GetLocalBounds() { return m_localBounds; }
-		inline Bounds const& GetLocalBounds() const { return m_localBounds; }
+		inline Bounds& GetBounds() { return m_localBounds; }
+		inline Bounds const& GetBounds() const { return m_localBounds; }
 
 		inline std::vector<float> const& GetPositions() const { return m_positions; }
 		inline std::vector<float> const& GetNormals() const { return m_normals; }
@@ -96,12 +98,9 @@ namespace re
 		std::vector<uint8_t> m_joints;		// tvec4<uint8_t>
 		std::vector<float> m_weights;		// vec4
 		
-
 		gr::Transform* m_ownerTransform;
 
-		// TODO: Move bounds to the Mesh object
 		Bounds m_localBounds; // MeshPrimitive bounds, in local space		
-		void ComputeBounds(); // Computes m_localBounds
 
 		void ComputeDataHash() override;
 
