@@ -38,9 +38,9 @@ namespace gr
 		Texture::TextureParams shadowParams;
 		shadowParams.m_width = xRes;
 		shadowParams.m_height = yRes;
-		shadowParams.m_texUse = Texture::TextureUse::DepthTarget;
-		shadowParams.m_texFormat = Texture::TextureFormat::Depth32F;
-		shadowParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+		shadowParams.m_usage = Texture::Usage::DepthTarget;
+		shadowParams.m_format = Texture::Format::Depth32F;
+		shadowParams.m_colorSpace = Texture::ColorSpace::Linear;
 		shadowParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		shadowParams.m_useMIPs = false;
 
@@ -53,7 +53,7 @@ namespace gr
 		// Omni-directional (Cube map) shadowmap setup:
 		if (useCubeMap)
 		{
-			shadowParams.m_texDimension = Texture::TextureDimension::TextureCubeMap;
+			shadowParams.m_dimension = Texture::Dimension::TextureCubeMap;
 			shadowParams.m_faces = 6;
 			const string texName = lightName + "_CubeShadowMap";
 
@@ -61,7 +61,7 @@ namespace gr
 		}
 		else // Single texture shadowmap setup:
 		{
-			shadowParams.m_texDimension = Texture::TextureDimension::Texture2D;
+			shadowParams.m_dimension = Texture::Dimension::Texture2D;
 			shadowParams.m_faces = 1;
 			const string texName = lightName + "_SingleShadowMap";
 			

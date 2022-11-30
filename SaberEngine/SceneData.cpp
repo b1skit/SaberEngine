@@ -126,11 +126,11 @@ namespace
 		texParams.m_height = 2;
 		texParams.m_faces = totalFaces;
 
-		texParams.m_texUse = gr::Texture::TextureUse::Color;
-		texParams.m_texDimension = totalFaces == 1 ?
-			gr::Texture::TextureDimension::Texture2D : gr::Texture::TextureDimension::TextureCubeMap;
-		texParams.m_texFormat = gr::Texture::TextureFormat::RGBA8;
-		texParams.m_texColorSpace = Texture::TextureColorSpace::Unknown;
+		texParams.m_usage = gr::Texture::Usage::Color;
+		texParams.m_dimension = totalFaces == 1 ?
+			gr::Texture::Dimension::Texture2D : gr::Texture::Dimension::TextureCubeMap;
+		texParams.m_format = gr::Texture::Format::RGBA8;
+		texParams.m_colorSpace = Texture::ColorSpace::Unknown;
 
 		texParams.m_clearColor = ERROR_TEXTURE_COLOR_VEC4;
 		texParams.m_useMIPs = true;
@@ -176,38 +176,38 @@ namespace
 					{
 						LOG_WARNING("Found 1D texture, but 1D textures are currently not supported. Treating "
 							"this texture as 2D");
-						texParams.m_texDimension = gr::Texture::TextureDimension::Texture2D; // TODO: Support 1D textures
-						/*texParams.m_texDimension = gr::Texture::TextureDimension::Texture1D;*/
+						texParams.m_dimension = gr::Texture::Dimension::Texture2D; // TODO: Support 1D textures
+						/*texParams.m_dimension = gr::Texture::Dimension::Texture1D;*/
 					}
 
 					switch (numChannels)
 					{
 					case 1:
 					{
-						if (bitDepth == 8) texParams.m_texFormat = gr::Texture::TextureFormat::R8;
-						else if (bitDepth == 16) texParams.m_texFormat = gr::Texture::TextureFormat::R16F;
-						else texParams.m_texFormat = gr::Texture::TextureFormat::R32F;
+						if (bitDepth == 8) texParams.m_format = gr::Texture::Format::R8;
+						else if (bitDepth == 16) texParams.m_format = gr::Texture::Format::R16F;
+						else texParams.m_format = gr::Texture::Format::R32F;
 					}
 					break;
 					case 2:
 					{
-						if (bitDepth == 8) texParams.m_texFormat = gr::Texture::TextureFormat::RG8;
-						else if (bitDepth == 16) texParams.m_texFormat = gr::Texture::TextureFormat::RG16F;
-						else texParams.m_texFormat = gr::Texture::TextureFormat::RG32F;
+						if (bitDepth == 8) texParams.m_format = gr::Texture::Format::RG8;
+						else if (bitDepth == 16) texParams.m_format = gr::Texture::Format::RG16F;
+						else texParams.m_format = gr::Texture::Format::RG32F;
 					}
 					break;
 					case 3:
 					{
-						if (bitDepth == 8) texParams.m_texFormat = gr::Texture::TextureFormat::RGB8;
-						else if (bitDepth == 16) texParams.m_texFormat = gr::Texture::TextureFormat::RGB16F;
-						else texParams.m_texFormat = gr::Texture::TextureFormat::RGB32F;
+						if (bitDepth == 8) texParams.m_format = gr::Texture::Format::RGB8;
+						else if (bitDepth == 16) texParams.m_format = gr::Texture::Format::RGB16F;
+						else texParams.m_format = gr::Texture::Format::RGB32F;
 					}
 					break;
 					case 4:
 					{
-						if (bitDepth == 8) texParams.m_texFormat = gr::Texture::TextureFormat::RGBA8;
-						else if (bitDepth == 16) texParams.m_texFormat = gr::Texture::TextureFormat::RGBA16F;
-						else texParams.m_texFormat = gr::Texture::TextureFormat::RGBA32F;
+						if (bitDepth == 8) texParams.m_format = gr::Texture::Format::RGBA8;
+						else if (bitDepth == 16) texParams.m_format = gr::Texture::Format::RGBA16F;
+						else texParams.m_format = gr::Texture::Format::RGBA32F;
 					}
 					break;
 					default:
@@ -247,10 +247,10 @@ namespace
 					// Reset texParams to be suitable for an error texture
 					texParams.m_width = 2;
 					texParams.m_height = 2;
-					texParams.m_texDimension = totalFaces == 1 ?
-						gr::Texture::TextureDimension::Texture2D : gr::Texture::TextureDimension::TextureCubeMap;
-					texParams.m_texFormat = gr::Texture::TextureFormat::RGBA8;
-					texParams.m_texColorSpace = Texture::TextureColorSpace::Unknown;
+					texParams.m_dimension = totalFaces == 1 ?
+						gr::Texture::Dimension::Texture2D : gr::Texture::Dimension::TextureCubeMap;
+					texParams.m_format = gr::Texture::Format::RGBA8;
+					texParams.m_colorSpace = Texture::ColorSpace::Unknown;
 
 					texParams.m_clearColor = ERROR_TEXTURE_COLOR_VEC4;
 					texParams.m_useMIPs = true;
@@ -314,7 +314,7 @@ namespace
 
 
 	string GenerateTextureColorFallbackName(
-		vec4 const& colorFallback, size_t numChannels, Texture::TextureColorSpace colorSpace)
+		vec4 const& colorFallback, size_t numChannels, Texture::ColorSpace colorSpace)
 	{
 		string texName = "Color_" + to_string(colorFallback.x) + "_";
 		if (numChannels >= 2)
@@ -329,7 +329,7 @@ namespace
 				}
 			}
 		}
-		texName += (colorSpace == Texture::TextureColorSpace::sRGB ? "sRGB" : "Linear");
+		texName += (colorSpace == Texture::ColorSpace::sRGB ? "sRGB" : "Linear");
 
 		return texName;
 	}
@@ -337,10 +337,10 @@ namespace
 
 	shared_ptr<gr::Texture> LoadTextureOrColor(
 		SceneData& scene, string const& sceneRootPath, cgltf_texture* texture, vec4 const& colorFallback, 
-		Texture::TextureFormat formatFallback, Texture::TextureColorSpace colorSpace)
+		Texture::Format formatFallback, Texture::ColorSpace colorSpace)
 	{
 		SEAssert("Invalid fallback format",
-			formatFallback != Texture::TextureFormat::Depth32F && formatFallback != Texture::TextureFormat::Invalid);
+			formatFallback != Texture::Format::Depth32F && formatFallback != Texture::Format::Invalid);
 
 		shared_ptr<Texture> tex;
 		if (texture && texture->image && texture->image->uri)
@@ -349,7 +349,7 @@ namespace
 			tex = scene.GetLoadTextureByPath({ sceneRootPath + texture->image->uri }, false);
 
 			Texture::TextureParams texParams = tex->GetTextureParams();
-			texParams.m_texColorSpace = colorSpace;
+			texParams.m_colorSpace = colorSpace;
 			tex->SetTextureParams(texParams);
 		}
 		else
@@ -357,8 +357,8 @@ namespace
 			// Create a texture color fallback:
 			Texture::TextureParams colorTexParams;
 			colorTexParams.m_clearColor = colorFallback; // Clear color = initial fill color
-			colorTexParams.m_texFormat = formatFallback;
-			colorTexParams.m_texColorSpace = colorSpace;
+			colorTexParams.m_format = formatFallback;
+			colorTexParams.m_colorSpace = colorSpace;
 
 			const size_t numChannels = Texture::GetNumberOfChannels(formatFallback);
 
@@ -425,8 +425,8 @@ namespace
 					sceneRootPath,
 					material->pbr_metallic_roughness.base_color_texture.texture,
 					missingTextureColor,
-					Texture::TextureFormat::RGB8,
-					Texture::TextureColorSpace::sRGB);
+					Texture::Format::RGB8,
+					Texture::ColorSpace::sRGB);
 				numMatLoads--;
 				});			
 
@@ -438,8 +438,8 @@ namespace
 					sceneRootPath,
 					material->pbr_metallic_roughness.metallic_roughness_texture.texture,
 					missingTextureColor,
-					Texture::TextureFormat::RGB8,
-					Texture::TextureColorSpace::Linear);
+					Texture::Format::RGB8,
+					Texture::ColorSpace::Linear);
 				numMatLoads--;
 				});
 
@@ -451,8 +451,8 @@ namespace
 					sceneRootPath,
 					material->normal_texture.texture,
 					vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
-					Texture::TextureFormat::RGB8,
-					Texture::TextureColorSpace::Linear);
+					Texture::Format::RGB8,
+					Texture::ColorSpace::Linear);
 				numMatLoads--;
 				});
 
@@ -464,8 +464,8 @@ namespace
 					sceneRootPath,
 					material->occlusion_texture.texture,
 					missingTextureColor,	// Completely unoccluded
-					Texture::TextureFormat::RGB8,
-					Texture::TextureColorSpace::Linear);
+					Texture::Format::RGB8,
+					Texture::ColorSpace::Linear);
 				numMatLoads--;
 				});
 
@@ -477,8 +477,8 @@ namespace
 					sceneRootPath,
 					material->emissive_texture.texture,
 					missingTextureColor,
-					Texture::TextureFormat::RGB8,
-					Texture::TextureColorSpace::sRGB); // GLTF convention: Must be converted to linear before use
+					Texture::Format::RGB8,
+					Texture::ColorSpace::sRGB); // GLTF convention: Must be converted to linear before use
 				numMatLoads--;
 				});
 

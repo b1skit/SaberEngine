@@ -78,10 +78,10 @@ namespace gr
 		resScaleParams.m_width = currentXRes;
 		resScaleParams.m_height = currentYRes;
 		resScaleParams.m_faces = 1;
-		resScaleParams.m_texUse = Texture::TextureUse::ColorTarget;
-		resScaleParams.m_texDimension = Texture::TextureDimension::Texture2D;
-		resScaleParams.m_texFormat = Texture::TextureFormat::RGBA32F;
-		resScaleParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+		resScaleParams.m_usage = Texture::Usage::ColorTarget;
+		resScaleParams.m_dimension = Texture::Dimension::Texture2D;
+		resScaleParams.m_format = Texture::Format::RGBA32F;
+		resScaleParams.m_colorSpace = Texture::ColorSpace::Linear;
 		resScaleParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		resScaleParams.m_useMIPs = false;
 

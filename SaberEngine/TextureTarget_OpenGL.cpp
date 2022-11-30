@@ -77,7 +77,7 @@ namespace opengl
 
 				gr::Texture::TextureParams const& textureParams = texture->GetTextureParams();
 				SEAssert("Attempting to bind a color target with a different texture use parameter",
-					textureParams.m_texUse == gr::Texture::TextureUse::ColorTarget);
+					textureParams.m_usage == gr::Texture::Usage::ColorTarget);
 
 				// Validate the texture:
 				if (!foundTarget)
@@ -192,10 +192,10 @@ namespace opengl
 					dynamic_cast<opengl::TextureTarget::PlatformParams const*>(targetSet.ColorTarget(i).GetPlatformParams());
 
 				SEAssert("Attempting to bind a color target with a different texture use parameter", 
-					textureParams.m_texUse == gr::Texture::TextureUse::ColorTarget);
+					textureParams.m_usage == gr::Texture::Usage::ColorTarget);
 
 				GLenum texTarget = texPlatformParams->m_texTarget;
-				if (textureParams.m_texDimension == gr::Texture::TextureDimension::TextureCubeMap)
+				if (textureParams.m_dimension == gr::Texture::Dimension::TextureCubeMap)
 				{
 					SEAssert("Invalid cubemap face index", (face <= 5));
 					texTarget = GL_TEXTURE_CUBE_MAP_POSITIVE_X + face;
@@ -267,7 +267,7 @@ namespace opengl
 			// Create framebuffer:
 			gr::Texture::TextureParams const& depthTextureParams = depthStencilTex->GetTextureParams();
 			SEAssert("Attempting to bind a depth target with a different texture use parameter",
-				depthTextureParams.m_texUse == gr::Texture::TextureUse::DepthTarget);
+				depthTextureParams.m_usage == gr::Texture::Usage::DepthTarget);
 
 			if (!glIsFramebuffer(targetSetParams->m_frameBufferObject))
 			{
@@ -335,7 +335,7 @@ namespace opengl
 		{
 			gr::Texture::TextureParams const& textureParams = depthStencilTex->GetTextureParams();
 			SEAssert("Attempting to bind a depth target with a different texture use parameter",
-				textureParams.m_texUse == gr::Texture::TextureUse::DepthTarget);
+				textureParams.m_usage == gr::Texture::Usage::DepthTarget);
 
 			opengl::Texture::PlatformParams* const depthPlatformParams =
 				dynamic_cast<opengl::Texture::PlatformParams*>(depthStencilTex->GetPlatformParams());
@@ -344,7 +344,7 @@ namespace opengl
 				dynamic_cast<opengl::TextureTarget::PlatformParams const*>(targetSet.DepthStencilTarget().GetPlatformParams());
 
 			// Attach a texture object to the bound framebuffer:
-			if (textureParams.m_texDimension == gr::Texture::TextureDimension::TextureCubeMap)
+			if (textureParams.m_dimension == gr::Texture::Dimension::TextureCubeMap)
 			{
 				// Attach a level of a texture as a logical buffer of a framebuffer object
 				glFramebufferTexture(

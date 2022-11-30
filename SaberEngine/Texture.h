@@ -20,7 +20,7 @@ namespace gr
 	class Texture : public virtual en::NamedObject
 	{
 	public:
-		enum class TextureUse
+		enum class Usage
 		{
 			Color,
 			ColorTarget,
@@ -32,7 +32,7 @@ namespace gr
 			TextureUse_Count = Invalid
 		};
 
-		enum class TextureDimension
+		enum class Dimension
 		{
 			/*Texture1D,*/
 			Texture2D,
@@ -44,7 +44,7 @@ namespace gr
 			TextureDimension_Count = Invalid
 		};
 
-		enum class TextureFormat
+		enum class Format
 		{
 			RGBA32F,	// 32 bits per channel x N channels
 			RGB32F,
@@ -67,7 +67,7 @@ namespace gr
 			TextureFormat_Count = Invalid
 		};
 
-		enum class TextureColorSpace
+		enum class ColorSpace
 		{
 			sRGB,
 			Linear,
@@ -84,10 +84,10 @@ namespace gr
 			uint32_t m_height = 2;
 			uint32_t m_faces = 1;
 
-			TextureUse m_texUse = TextureUse::Color;
-			TextureDimension m_texDimension = TextureDimension::Texture2D;
-			TextureFormat m_texFormat = TextureFormat::RGBA32F;
-			TextureColorSpace m_texColorSpace = TextureColorSpace::sRGB;
+			Usage m_usage = Usage::Color;
+			Dimension m_dimension = Dimension::Texture2D;
+			Format m_format = Format::RGBA32F;
+			ColorSpace m_colorSpace = ColorSpace::sRGB;
 
 			glm::vec4 m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f); // Also used as initial fill color
 			bool m_useMIPs = true; // Should MIPs be created for this texture?
@@ -124,8 +124,8 @@ namespace gr
 
 	public:
 		// Static helpers:
-		static uint8_t GetNumberOfChannels(const TextureFormat texFormat);
-		static uint8_t GetNumBytesPerTexel(const TextureFormat texFormat);
+		static uint8_t GetNumberOfChannels(const Format texFormat);
+		static uint8_t GetNumBytesPerTexel(const Format texFormat);
 
 	private:
 		void Fill(glm::vec4 solidColor);	// Fill texture with a solid color

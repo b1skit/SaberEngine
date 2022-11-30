@@ -22,14 +22,14 @@ namespace opengl
 	{
 		// Dimension:
 		/************/
-		switch (texParams.m_texDimension)
+		switch (texParams.m_dimension)
 		{
-		case gr::Texture::TextureDimension::Texture2D:
+		case gr::Texture::Dimension::Texture2D:
 		{
 			m_texTarget = GL_TEXTURE_2D;
 		}
 		break;
-		case gr::Texture::TextureDimension::TextureCubeMap:
+		case gr::Texture::Dimension::TextureCubeMap:
 		{
 			m_texTarget = GL_TEXTURE_CUBE_MAP;
 		}
@@ -39,94 +39,94 @@ namespace opengl
 		}
 
 
-		// TextureFormat:
+		// Format:
 		/****************/
-		switch (texParams.m_texFormat)
+		switch (texParams.m_format)
 		{
-		case gr::Texture::TextureFormat::RGBA32F:
+		case gr::Texture::Format::RGBA32F:
 		{
 			m_format = GL_RGBA;
 			m_internalFormat = GL_RGBA32F;
 			m_type = GL_FLOAT;
 		}
 		break;
-		case gr::Texture::TextureFormat::RGB32F:
+		case gr::Texture::Format::RGB32F:
 		{
 			m_format = GL_RGB;
 			m_internalFormat = GL_RGB32F;
 			m_type = GL_FLOAT;
 		}
 		break;
-		case gr::Texture::TextureFormat::RG32F:
+		case gr::Texture::Format::RG32F:
 		{
 			m_format = GL_RG;
 			m_internalFormat = GL_RG32F;
 			m_type = GL_FLOAT;
 		}
 		break;
-		case gr::Texture::TextureFormat::R32F:
+		case gr::Texture::Format::R32F:
 		{
 			m_format = GL_R;
 			m_internalFormat = GL_R32F;
 			m_type = GL_FLOAT;
 		}
 		break;
-		case gr::Texture::TextureFormat::RGBA16F:
+		case gr::Texture::Format::RGBA16F:
 		{
 			m_format = GL_RGBA;
 			m_internalFormat = GL_RGBA16F;
 			m_type = GL_HALF_FLOAT;
 		}
 		break;
-		case gr::Texture::TextureFormat::RGB16F:
+		case gr::Texture::Format::RGB16F:
 		{
 			m_format = GL_RGB;
 			m_internalFormat = GL_RGB16F;
 			m_type = GL_HALF_FLOAT;
 		}
 		break;
-		case gr::Texture::TextureFormat::RG16F:
+		case gr::Texture::Format::RG16F:
 		{
 			m_format = GL_RG;
 			m_internalFormat = GL_RG16F;
 			m_type = GL_HALF_FLOAT;
 		}
 		break;
-		case gr::Texture::TextureFormat::R16F:
+		case gr::Texture::Format::R16F:
 		{
 			m_format = GL_R;
 			m_internalFormat = GL_R16F;
 			m_type = GL_HALF_FLOAT;
 		}
 		break;
-		case gr::Texture::TextureFormat::RGBA8:
+		case gr::Texture::Format::RGBA8:
 		{
 			m_format = GL_RGBA;
 			m_internalFormat = 
-				texParams.m_texColorSpace == gr::Texture::TextureColorSpace::sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
+				texParams.m_colorSpace == gr::Texture::ColorSpace::sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
 			// Note: Alpha in GL_SRGB8_ALPHA8 is stored in linear color space, RGB are in sRGB color space
 			m_type = GL_UNSIGNED_BYTE;
 		}
 		break;
-		case gr::Texture::TextureFormat::RGB8:
+		case gr::Texture::Format::RGB8:
 		{
 			m_format = GL_RGB;
 			m_internalFormat = 
-				texParams.m_texColorSpace == gr::Texture::TextureColorSpace::sRGB ? GL_SRGB8 : GL_RGB8;		
+				texParams.m_colorSpace == gr::Texture::ColorSpace::sRGB ? GL_SRGB8 : GL_RGB8;		
 			m_type = GL_UNSIGNED_BYTE;
 		}
 		break;
-		case gr::Texture::TextureFormat::RG8:
+		case gr::Texture::Format::RG8:
 		{
 			SEAssertF("Invalid/unsupported texture format");
 		}
 		break;
-		case gr::Texture::TextureFormat::R8:
+		case gr::Texture::Format::R8:
 		{
 			SEAssertF("Invalid/unsupported texture format");
 		}
 		break;
-		case gr::Texture::TextureFormat::Depth32F:
+		case gr::Texture::Format::Depth32F:
 		{
 			m_format = GL_DEPTH_COMPONENT;
 			m_internalFormat = GL_DEPTH_COMPONENT32F;
@@ -208,7 +208,7 @@ namespace opengl
 		// Ensure our texture is correctly configured:
 		gr::Texture::TextureParams const& texParams = texture.GetTextureParams();
 		SEAssert("Texture has a bad configuration", texParams.m_faces == 1 ||
-			(texParams.m_faces == 6 && texParams.m_texDimension == gr::Texture::TextureDimension::TextureCubeMap));
+			(texParams.m_faces == 6 && texParams.m_dimension == gr::Texture::Dimension::TextureCubeMap));
 
 		// Buffer the texture data:
 		const uint32_t width = texture.Width();
@@ -219,17 +219,17 @@ namespace opengl
 		{
 			// Get the image data pointer; for render targets, this is nullptr
 			void* data = nullptr;
-			if (texParams.m_texUse == gr::Texture::TextureUse::Color)
+			if (texParams.m_usage == gr::Texture::Usage::Color)
 			{
 				SEAssert("Color target must have data to buffer", 
 					texture.Texels().size() == 
-					(texParams.m_faces * texParams.m_width * texParams.m_height * gr::Texture::GetNumBytesPerTexel(texParams.m_texFormat)));
+					(texParams.m_faces * texParams.m_width * texParams.m_height * gr::Texture::GetNumBytesPerTexel(texParams.m_format)));
 
 				data = (void*)texture.GetTexel(0, 0, i);
 			}
 
 			GLenum target;
-			if (texParams.m_texDimension == gr::Texture::TextureDimension::TextureCubeMap)
+			if (texParams.m_dimension == gr::Texture::Dimension::TextureCubeMap)
 			{
 				target = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
 				// TODO: Switch to a generic specification/buffering functionality, using GL_TEXTURE_CUBE_MAP for 

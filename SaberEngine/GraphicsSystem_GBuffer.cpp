@@ -60,10 +60,10 @@ namespace gr
 		gBufferParams.m_width = Config::Get()->GetValue<int>("windowXRes");
 		gBufferParams.m_height = Config::Get()->GetValue<int>("windowYRes");
 		gBufferParams.m_faces = 1;
-		gBufferParams.m_texUse = gr::Texture::TextureUse::ColorTarget;
-		gBufferParams.m_texDimension = gr::Texture::TextureDimension::Texture2D;
-		gBufferParams.m_texFormat = gr::Texture::TextureFormat::RGBA32F; // Using 4 channels for future flexibility
-		gBufferParams.m_texColorSpace = gr::Texture::TextureColorSpace::sRGB;
+		gBufferParams.m_usage = gr::Texture::Usage::ColorTarget;
+		gBufferParams.m_dimension = gr::Texture::Dimension::Texture2D;
+		gBufferParams.m_format = gr::Texture::Format::RGBA32F; // Using 4 channels for future flexibility
+		gBufferParams.m_colorSpace = gr::Texture::ColorSpace::sRGB;
 		gBufferParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 
@@ -84,9 +84,9 @@ namespace gr
 
 		// Create GBuffer depth target:
 		gr::Texture::TextureParams depthTexParams(gBufferParams);
-		depthTexParams.m_texUse = gr::Texture::TextureUse::DepthTarget;
-		depthTexParams.m_texFormat = gr::Texture::TextureFormat::Depth32F;
-		depthTexParams.m_texColorSpace = gr::Texture::TextureColorSpace::Linear;
+		depthTexParams.m_usage = gr::Texture::Usage::DepthTarget;
+		depthTexParams.m_format = gr::Texture::Format::Depth32F;
+		depthTexParams.m_colorSpace = gr::Texture::ColorSpace::Linear;
 
 		const size_t gBufferDepthTextureNameIdx = 6; //TODO: Handle this in a less brittle way
 

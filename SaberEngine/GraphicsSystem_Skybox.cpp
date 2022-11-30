@@ -112,8 +112,8 @@ namespace gr
 			if (m_skyTexture)
 			{
 				Texture::TextureParams cubemapParams = m_skyTexture->GetTextureParams();
-				cubemapParams.m_texFormat = Texture::TextureFormat::RGBA8;
-				cubemapParams.m_texColorSpace = Texture::TextureColorSpace::sRGB;
+				cubemapParams.m_format = Texture::Format::RGBA8;
+				cubemapParams.m_colorSpace = Texture::ColorSpace::sRGB;
 				m_skyTexture->SetTextureParams(cubemapParams);
 
 				m_skyboxStage.GetStageShader()->ShaderKeywords().emplace_back("CUBEMAP_SKY");
@@ -123,7 +123,7 @@ namespace gr
 		else
 		{
 			Texture::TextureParams iblParams = m_skyTexture->GetTextureParams();
-			iblParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+			iblParams.m_colorSpace = Texture::ColorSpace::Linear;
 			m_skyTexture->SetTextureParams(iblParams);
 			m_skyTextureShaderName = "Tex0";
 		}

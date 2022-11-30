@@ -155,10 +155,10 @@ namespace gr
 		lightTargetParams.m_width = Config::Get()->GetValue<int>("windowXRes");
 		lightTargetParams.m_height = Config::Get()->GetValue<int>("windowYRes");
 		lightTargetParams.m_faces = 1;
-		lightTargetParams.m_texUse = Texture::TextureUse::ColorTarget;
-		lightTargetParams.m_texDimension = Texture::TextureDimension::Texture2D;
-		lightTargetParams.m_texFormat = Texture::TextureFormat::RGBA32F;
-		lightTargetParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+		lightTargetParams.m_usage = Texture::Usage::ColorTarget;
+		lightTargetParams.m_dimension = Texture::Dimension::Texture2D;
+		lightTargetParams.m_format = Texture::Format::RGBA32F;
+		lightTargetParams.m_colorSpace = Texture::ColorSpace::Linear;
 		lightTargetParams.m_clearColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		std::shared_ptr<Texture> outputTexture = make_shared<Texture>("DeferredLightTarget", lightTargetParams);
@@ -196,7 +196,7 @@ namespace gr
 			iblTexture = SceneManager::GetSceneData()->GetLoadTextureByPath({ defaultIBLPath }, true);
 		}
 		Texture::TextureParams iblParams = iblTexture->GetTextureParams();
-		iblParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+		iblParams.m_colorSpace = Texture::ColorSpace::Linear;
 		iblTexture->SetTextureParams(iblParams);
 		iblTexture->Create();
 
@@ -214,10 +214,10 @@ namespace gr
 			brdfParams.m_width = k_generatedAmbientIBLTexRes;
 			brdfParams.m_height = k_generatedAmbientIBLTexRes;
 			brdfParams.m_faces = 1;
-			brdfParams.m_texUse = Texture::TextureUse::ColorTarget;
-			brdfParams.m_texDimension = Texture::TextureDimension::Texture2D;
-			brdfParams.m_texFormat = Texture::TextureFormat::RG16F; // Epic recommends 2 channel, 16-bit floats
-			brdfParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+			brdfParams.m_usage = Texture::Usage::ColorTarget;
+			brdfParams.m_dimension = Texture::Dimension::Texture2D;
+			brdfParams.m_format = Texture::Format::RG16F; // Epic recommends 2 channel, 16-bit floats
+			brdfParams.m_colorSpace = Texture::ColorSpace::Linear;
 			brdfParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 			brdfParams.m_useMIPs = false;
 
@@ -251,10 +251,10 @@ namespace gr
 		cubeParams.m_width = k_generatedAmbientIBLTexRes;
 		cubeParams.m_height = k_generatedAmbientIBLTexRes;
 		cubeParams.m_faces = 6;
-		cubeParams.m_texUse = Texture::TextureUse::ColorTarget;
-		cubeParams.m_texDimension = Texture::TextureDimension::TextureCubeMap;
-		cubeParams.m_texFormat = Texture::TextureFormat::RGB16F;
-		cubeParams.m_texColorSpace = Texture::TextureColorSpace::Linear;
+		cubeParams.m_usage = Texture::Usage::ColorTarget;
+		cubeParams.m_dimension = Texture::Dimension::TextureCubeMap;
+		cubeParams.m_format = Texture::Format::RGB16F;
+		cubeParams.m_colorSpace = Texture::ColorSpace::Linear;
 
 		// Common IBL texture generation stage params:
 		RenderStage::PipelineStateParams iblStageParams;
