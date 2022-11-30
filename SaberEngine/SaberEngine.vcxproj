@@ -185,6 +185,8 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="ParameterBlock_OpenGL.cpp" />
     <ClCompile Include="ParameterBlock_Platform.cpp" />
     <ClCompile Include="PerformanceTimer.cpp" />
+    <ClCompile Include="SceneData_OpenGL.cpp" />
+    <ClCompile Include="SceneData_Platform.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="VertexAttributeBuilder.cpp" />
     <ClCompile Include="Context_Platform.cpp" />
@@ -255,6 +257,8 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="ParameterBlock_OpenGL.h" />
     <ClInclude Include="ParameterBlock_Platform.h" />
     <ClInclude Include="PerformanceTimer.h" />
+    <ClInclude Include="SceneData_OpenGL.h" />
+    <ClInclude Include="SceneData_Platform.h" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Updateable.h" />
     <ClInclude Include="VertexAttributeBuilder.h" />

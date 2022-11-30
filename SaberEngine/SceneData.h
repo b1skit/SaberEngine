@@ -17,6 +17,11 @@ namespace gr
 	class Light;
 }
 
+namespace opengl
+{
+	class SceneData;
+}
+
 namespace fr
 {
 	class SceneObject;
@@ -100,6 +105,9 @@ namespace fr
 		SceneData(SceneData const&) = delete;
 		SceneData(SceneData&&) = delete;
 		SceneData& operator=(SceneData const&) = delete;
+
+		// Friends:
+		friend class opengl::SceneData;
 	};
 }
 
