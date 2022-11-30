@@ -272,6 +272,9 @@
     <ClCompile Include="PerformanceTimer.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
+    <ClCompile Include="ThreadPool.cpp">
+      <Filter>Source Files\en</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshPrimitive.h">
@@ -494,6 +497,9 @@
       <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="Command.h">
+      <Filter>Header Files\en</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadPool.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
   </ItemGroup>

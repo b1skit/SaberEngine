@@ -1,6 +1,7 @@
 #include <memory>
 #include <vector>
 #include <sstream>
+#include <condition_variable>
 
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -29,6 +30,8 @@
 #include "ShadowMap.h"
 #include "ParameterBlock.h"
 #include "PerformanceTimer.h"
+#include "ThreadPool.h"
+#include "CoreEngine.h"
 
 using gr::Camera;
 using gr::Light;
@@ -159,7 +162,8 @@ namespace
 
 			if (imageData)
 			{
-				LOG("Found %dx%d, %d-bit texture with %d channels", width, height, bitDepth, numChannels);
+				LOG("Texture \"%s\" is %dx%d, %d-bit, %d channels",
+					texturePaths[face].c_str(), width, height, bitDepth, numChannels);
 
 				if (texture == nullptr) // 1st face
 				{
@@ -370,7 +374,7 @@ namespace
 			}			
 		}
 		
-		tex->Create(); // Create the texture after calling AddUniqueTexture(), as we now know it won't be destroyed
+		// Note: We must still call Texture::Create on the main thread
 
 		return tex;
 	}
@@ -380,6 +384,9 @@ namespace
 	{
 		const size_t numMaterials = data->materials_count;
 		LOG("Loading %d scene materials", numMaterials);
+
+		std::condition_variable matLoadsCV;
+		std::atomic_uint numMatLoads(0);
 
 		for (size_t cur = 0; cur < numMaterials; cur++)
 		{
@@ -402,54 +409,78 @@ namespace
 
 			newMat->GetShader() = nullptr; // Not required; just for clarity
 
-			// GLTF specifications: If a texture is not given, all respective texture components must be assumed to be 1.0f
+			// GLTF specifications: If a texture is not given, all respective texture components are assumed to be 1.f
 			// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
 			constexpr vec4 missingTextureColor(1.f, 1.f, 1.f, 1.f);
 
+
+			// TODO: Material::GetTexture should be made concurrency safe
+
 			// MatAlbedo
-			newMat->GetTexture(0) = LoadTextureOrColor(
-				scene,
-				sceneRootPath,
-				material->pbr_metallic_roughness.base_color_texture.texture,
-				missingTextureColor,
-				Texture::TextureFormat::RGB8,
-				Texture::TextureColorSpace::sRGB);
+			numMatLoads++;
+			en::CoreEngine::GetThreadPool()->EnqueueJob([newMat, &scene, &sceneRootPath, material, &numMatLoads]() {
+				newMat->GetTexture(0) = LoadTextureOrColor(
+					scene,
+					sceneRootPath,
+					material->pbr_metallic_roughness.base_color_texture.texture,
+					missingTextureColor,
+					Texture::TextureFormat::RGB8,
+					Texture::TextureColorSpace::sRGB);
+				numMatLoads--;
+				});			
 
 			// MatMetallicRoughness
-			newMat->GetTexture(1) = LoadTextureOrColor(
-				scene,
-				sceneRootPath,
-				material->pbr_metallic_roughness.metallic_roughness_texture.texture,
-				missingTextureColor,
-				Texture::TextureFormat::RGB8,
-				Texture::TextureColorSpace::Linear);
+			numMatLoads++;
+			en::CoreEngine::GetThreadPool()->EnqueueJob([newMat, &scene, &sceneRootPath, material, &numMatLoads]() {
+				newMat->GetTexture(1) = LoadTextureOrColor(
+					scene,
+					sceneRootPath,
+					material->pbr_metallic_roughness.metallic_roughness_texture.texture,
+					missingTextureColor,
+					Texture::TextureFormat::RGB8,
+					Texture::TextureColorSpace::Linear);
+				numMatLoads--;
+				});
 
 			// MatNormal
-			newMat->GetTexture(2) = LoadTextureOrColor(
-				scene,
-				sceneRootPath,
-				material->normal_texture.texture,
-				vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
-				Texture::TextureFormat::RGB8,
-				Texture::TextureColorSpace::Linear);
+			numMatLoads++;
+			en::CoreEngine::GetThreadPool()->EnqueueJob([newMat, &scene, &sceneRootPath, material, &numMatLoads]() {
+				newMat->GetTexture(2) = LoadTextureOrColor(
+					scene,
+					sceneRootPath,
+					material->normal_texture.texture,
+					vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
+					Texture::TextureFormat::RGB8,
+					Texture::TextureColorSpace::Linear);
+				numMatLoads--;
+				});
 
 			// MatOcclusion
-			newMat->GetTexture(3) = LoadTextureOrColor(
-				scene,
-				sceneRootPath,
-				material->occlusion_texture.texture,
-				missingTextureColor,	// Completely unoccluded
-				Texture::TextureFormat::RGB8,
-				Texture::TextureColorSpace::Linear);
+			numMatLoads++;
+			en::CoreEngine::GetThreadPool()->EnqueueJob([newMat, &scene, &sceneRootPath, material, &numMatLoads]() {
+				newMat->GetTexture(3) = LoadTextureOrColor(
+					scene,
+					sceneRootPath,
+					material->occlusion_texture.texture,
+					missingTextureColor,	// Completely unoccluded
+					Texture::TextureFormat::RGB8,
+					Texture::TextureColorSpace::Linear);
+				numMatLoads--;
+				});
 
 			// MatEmissive
-			newMat->GetTexture(4) = LoadTextureOrColor(
-				scene,
-				sceneRootPath,
-				material->emissive_texture.texture,
-				missingTextureColor,
-				Texture::TextureFormat::RGB8,
-				Texture::TextureColorSpace::sRGB); // GLTF convention: Must be converted to linear before use
+			numMatLoads++;
+			en::CoreEngine::GetThreadPool()->EnqueueJob([newMat, &scene, &sceneRootPath, material, &numMatLoads]() {
+				newMat->GetTexture(4) = LoadTextureOrColor(
+					scene,
+					sceneRootPath,
+					material->emissive_texture.texture,
+					missingTextureColor,
+					Texture::TextureFormat::RGB8,
+					Texture::TextureColorSpace::sRGB); // GLTF convention: Must be converted to linear before use
+				numMatLoads--;
+				});
+
 
 			// Construct a permanent parameter block for the material params:
 			Material::PBRMetallicRoughnessParams matParams;
@@ -470,6 +501,12 @@ namespace
 				ParameterBlock::Lifetime::Permanent);
 
 			scene.AddUniqueMaterial(newMat);
+		}
+
+		// Wait until all of the textures are loaded:
+		while (numMatLoads > 0)
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		}
 	}
 
@@ -1028,6 +1065,13 @@ namespace fr
 		// Load the materials first:
 		PreLoadMaterials(*this, sceneRootPath, data);
 
+		// Create all of the textures, now that the data has finished loading
+		// TODO: Handle this a bit more elegantly...
+		for (auto& textureItr : m_textures)
+		{
+			textureItr.second->Create();
+		}
+
 		// Load the scene hierarchy:
 		LoadSceneHierarchy(sceneRootPath, *this, data);
 
@@ -1159,8 +1203,11 @@ namespace fr
 	{
 		SEAssert("Cannot add null texture to textures table", newTexture != nullptr);
 
+		std::unique_lock<std::shared_mutex> writeLock(m_texturesMutex);
+
 		unordered_map<size_t, shared_ptr<gr::Texture>>::const_iterator texturePosition =
 			m_textures.find(newTexture->GetNameID());
+
 		if (texturePosition != m_textures.end()) // Found existing
 		{
 			LOG("Texture \"%s\" has alredy been registed with scene", newTexture->GetName().c_str());
@@ -1178,6 +1225,8 @@ namespace fr
 	{
 		const uint64_t nameID = en::NamedObject::ComputeIDFromName(textureName);
 
+		std::shared_lock<std::shared_mutex> readLock(m_texturesMutex);
+
 		auto result = m_textures.find(nameID);
 		SEAssert("Texture with that name does not exist", result != m_textures.end());
 
@@ -1188,6 +1237,9 @@ namespace fr
 	bool SceneData::TextureExists(std::string textureName) const
 	{
 		const uint64_t nameID = en::NamedObject::ComputeIDFromName(textureName);
+
+		std::shared_lock<std::shared_mutex> readLock(m_texturesMutex);
+
 		return m_textures.find(nameID) != m_textures.end();
 	}
 

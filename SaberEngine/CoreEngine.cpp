@@ -44,6 +44,8 @@ namespace en
 	{
 		LOG("CoreEngine starting...");
 
+		m_threadPool.Startup();
+
 		// Start managers:
 		EventManager::Get()->Startup();
 		m_logManager->Startup();
@@ -126,6 +128,8 @@ namespace en
 		SceneManager::Get()->Shutdown();
 		EventManager::Get()->Shutdown();
 		m_logManager->Shutdown();
+
+		m_threadPool.Stop();
 	}
 
 	

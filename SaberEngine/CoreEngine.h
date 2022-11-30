@@ -4,6 +4,7 @@
 
 #include "LogManager.h"
 #include "EngineComponent.h"
+#include "ThreadPool.h"
 
 
 namespace en
@@ -12,6 +13,7 @@ namespace en
 	{
 	public: // Singleton functionality:	
 		static inline CoreEngine* Get() { return m_coreEngine; }
+		static inline ThreadPool* GetThreadPool() { return &m_coreEngine->m_threadPool; }
 
 	public:
 		explicit CoreEngine(int argc, char** argv);
@@ -43,6 +45,7 @@ namespace en
 		// Non-singleton engine components:
 		std::shared_ptr<en::LogManager> const m_logManager;
 
+		en::ThreadPool m_threadPool;
 
 	private: 
 		static CoreEngine* m_coreEngine;

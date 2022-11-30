@@ -4,6 +4,7 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <shared_mutex>
 
 #include "Mesh.h"
 #include "Updateable.h"
@@ -81,6 +82,8 @@ namespace fr
 		std::vector<std::shared_ptr<re::MeshPrimitive>> m_meshPrimitives;
 
 		std::unordered_map<size_t, std::shared_ptr<gr::Texture>> m_textures;
+		mutable std::shared_mutex m_texturesMutex; // mutable, as we need to be able to modify it in const functions
+
 		std::unordered_map<size_t, std::shared_ptr<gr::Material>> m_materials;
 
 		std::shared_ptr<gr::Light> m_ambientLight;
