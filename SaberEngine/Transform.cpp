@@ -31,34 +31,34 @@ namespace gr
 	const glm::vec3 Transform::WorldAxisZ	= vec3(0.0f,	0.0f,	1.0f); // Note: SaberEngine (currently) uses a RHCS
 
 	
-	Transform::Transform() :
-		m_parent(nullptr),
+	Transform::Transform()
+		: m_parent(nullptr)
 		
-		m_localPosition(0.0f, 0.0f, 0.0f),
-		m_localRotationEulerRadians(0.0f, 0.0f, 0.0f),
-		m_localRotationQuat(glm::vec3(0, 0, 0)),
-		m_localScale(1.0f, 1.0f, 1.0f),
+		, m_localPosition(0.0f, 0.0f, 0.0f)
+		, m_localRotationEulerRadians(0.0f, 0.0f, 0.0f)
+		, m_localRotationQuat(glm::vec3(0, 0, 0))
+		, m_localScale(1.0f, 1.0f, 1.0f)
 		
-		m_localMat(1.0f),
-		m_localScaleMat(1.0f),
-		m_localRotationMat(1.0f),
-		m_localTranslationMat(1.0f),
+		, m_localMat(1.0f)
+		, m_localScaleMat(1.0f)
+		, m_localRotationMat(1.0f)
+		, m_localTranslationMat(1.0f)
 				
-		m_globalMat(1.0f),
-		m_globalScaleMat(1.0f),
-		m_globalRotationMat(1.0f),
-		m_globalTranslationMat(1.0f),
+		, m_globalMat(1.0f)
+		, m_globalScaleMat(1.0f)
+		, m_globalRotationMat(1.0f)
+		, m_globalTranslationMat(1.0f)
 
-		m_globalPosition(0.0f, 0.0f, 0.0f),
-		m_globalRotationEulerRadians(0.0f, 0.0f, 0.0f),
-		m_globalRotationQuat(glm::vec3(0, 0, 0)),
-		m_globalScale(1.0f, 1.0f, 1.0f),
+		, m_globalPosition(0.0f, 0.0f, 0.0f)
+		, m_globalRotationEulerRadians(0.0f, 0.0f, 0.0f)
+		, m_globalRotationQuat(glm::vec3(0, 0, 0))
+		, m_globalScale(1.0f, 1.0f, 1.0f)
 
-		m_globalRight(WorldAxisX),
-		m_globalUp(WorldAxisY),
-		m_globalForward(WorldAxisZ),
+		, m_globalRight(WorldAxisX)
+		, m_globalUp(WorldAxisY)
+		, m_globalForward(WorldAxisZ)
 
-		m_isDirty(true)
+		, m_isDirty(true)
 	{
 		m_children.reserve(10);
 	}
@@ -276,6 +276,17 @@ namespace gr
 	void Transform::MarkDirty()
 	{
 		m_isDirty = true;
+
+		for (Transform* child : m_children)
+		{
+			child->MarkDirty();
+		}
+	}
+
+
+	bool Transform::IsDirty()
+	{
+		return m_isDirty || (m_parent != nullptr && m_parent->IsDirty());
 	}
 
 
@@ -288,7 +299,6 @@ namespace gr
 			m_children.push_back(child);
 
 			child->MarkDirty();
-			child->RecomputeWorldTransforms();
 		}
 		else
 		{
@@ -312,7 +322,7 @@ namespace gr
 	
 	void Transform::RecomputeWorldTransforms()
 	{
-		if (!m_isDirty)
+		if (!IsDirty())
 		{
 			return;
 		}

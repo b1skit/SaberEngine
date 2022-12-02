@@ -130,6 +130,7 @@ namespace gr
 
 	private:
 		void MarkDirty(); // Mark this transform as requiring a recomputation of it's global matrices
+		bool IsDirty();		
 		void RecomputeWorldTransforms(); // Recomputes the the global matrices
 
 		// Helper functions for SetParent()/Unparent():
