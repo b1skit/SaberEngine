@@ -264,6 +264,7 @@ namespace gr
 		return (uint32_t)glm::log2((float)largestDimension) + 1;
 	}
 
+
 	uint32_t Texture::GetMipDimension(uint32_t mipLevel) const
 	{
 		// No reason we can't support non-square textures, but until we need to just assert

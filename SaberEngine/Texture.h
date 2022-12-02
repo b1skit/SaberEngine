@@ -144,7 +144,6 @@ namespace gr
 	
 	private:
 		// Friends:
-		friend bool platform::RegisterPlatformFunctions();
 		friend void platform::Texture::PlatformParams::CreatePlatformParams(gr::Texture&);
 
 		Texture() = delete;
