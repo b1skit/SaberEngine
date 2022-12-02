@@ -414,9 +414,6 @@ namespace
 			// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
 			constexpr vec4 missingTextureColor(1.f, 1.f, 1.f, 1.f);
 
-
-			// TODO: Material::GetTexture should be made concurrency safe
-
 			// MatAlbedo
 			numMatLoads++;
 			en::CoreEngine::GetThreadPool()->EnqueueJob([newMat, &scene, &sceneRootPath, material, &numMatLoads]() {
@@ -949,9 +946,20 @@ namespace
 			return;
 		}
 
-		SEAssert("TODO: Handle nodes with multiple things (eg. Light & Mesh) that depend on a transform", 
+		SEAssert("TODO: Handle nodes with multiple things (eg. Light & Mesh) that depend on a transform",
 			current->light == nullptr || current->mesh == nullptr);
 		// TODO: Seems we never hit this... Does GLTF support multiple attachments per node?
+
+		if (current->children_count > 0)
+		{
+			for (size_t i = 0; i < current->children_count; i++)
+			{
+				const string childName = current->children[i]->name ? current->children[i]->name : "Unnamed node";
+				shared_ptr<SceneObject> childNode = make_shared<SceneObject>(childName, parent->GetTransform());
+
+				LoadObjectHierarchyRecursiveHelper(sceneRootPath, scene, data, current->children[i], childNode);
+			}
+		}
 
 		// Set the SceneObject transform:
 		SetTransformValues(current, parent->GetTransform());
@@ -971,17 +979,6 @@ namespace
 		}
 
 		scene.AddSceneObject(parent);
-		
-		if (current->children_count > 0)
-		{
-			for (size_t i = 0; i < current->children_count; i++)
-			{
-				const string childName = current->children[i]->name ? current->children[i]->name : "Unnamed node";
-				shared_ptr<SceneObject> childNode = make_shared<SceneObject>(childName, parent->GetTransform());
-
-				LoadObjectHierarchyRecursiveHelper(sceneRootPath, scene, data, current->children[i], childNode);
-			}
-		}
 	}
 
 	// Note: data must already be populated by calling cgltf_load_buffers
