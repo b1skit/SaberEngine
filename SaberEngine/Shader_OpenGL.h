@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "Shader.h"
 #include "Shader_Platform.h"
 
 
@@ -22,7 +23,7 @@ namespace opengl
 	class Shader
 	{
 	public:
-		struct PlatformParams : public virtual platform::Shader::PlatformParams
+		struct PlatformParams : public virtual gr::Shader::PlatformParams
 		{
 			PlatformParams() {}
 			~PlatformParams() override {}
@@ -33,14 +34,15 @@ namespace opengl
 		};
 
 		static void Create(gr::Shader& shader);
-		static void Bind(gr::Shader const& shader, bool doBind);
+		static void Bind(gr::Shader& shader, bool doBind);
+
 		static void SetUniform(
-			gr::Shader const& shader, 
+			gr::Shader& shader, 
 			std::string const& uniformName, 
 			void* value, 
-			platform::Shader::UniformType const type, 
+			gr::Shader::UniformType const type, 
 			int const count);
-		static void SetParameterBlock(gr::Shader const&, re::ParameterBlock const&);
+		static void SetParameterBlock(gr::Shader&, re::ParameterBlock const&);
 		static void Destroy(gr::Shader& shader);
 	};
 }

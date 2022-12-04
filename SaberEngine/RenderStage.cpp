@@ -57,14 +57,14 @@ namespace re
 		m_perFrameShaderUniformValues.emplace_back(std::static_pointer_cast<void>(sampler));
 
 		// Add our raw pointers to the list of StageShaderUniforms:
-		m_perFrameShaderUniforms.emplace_back(shaderName, tex.get(), platform::Shader::UniformType::Texture, 1);
-		m_perFrameShaderUniforms.emplace_back(shaderName, sampler.get(), platform::Shader::UniformType::Sampler, 1);
+		m_perFrameShaderUniforms.emplace_back(shaderName, tex.get(), gr::Shader::UniformType::Texture, 1);
+		m_perFrameShaderUniforms.emplace_back(shaderName, sampler.get(), gr::Shader::UniformType::Sampler, 1);
 	}
 
 
 	template <typename T>
 	void RenderStage::SetPerFrameShaderUniform(
-		string const& uniformName, T const& value, platform::Shader::UniformType const& type, int const count)
+		string const& uniformName, T const& value, gr::Shader::UniformType const& type, int const count)
 	{
 		// Dynamically allocate a copy of value so we have a pointer to it when we need for the current frame
 		m_perFrameShaderUniformValues.emplace_back(std::make_shared<T>(value));
@@ -85,20 +85,21 @@ namespace re
 	}
 	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
 	template void RenderStage::SetPerFrameShaderUniform<mat4>(
-		string const& uniformName, mat4 const& value, platform::Shader::UniformType const& type, int const count);
+		string const& uniformName, mat4 const& value, gr::Shader::UniformType const& type, int const count);
 	template void RenderStage::SetPerFrameShaderUniform<vector<mat4>>(
-		string const& uniformName, vector<mat4> const& value, platform::Shader::UniformType const& type, int const count);
+		string const& uniformName, vector<mat4> const& value, gr::Shader::UniformType const& type, int const count);
 	template void RenderStage::SetPerFrameShaderUniform<mat3>(
-		string const& uniformName, mat3 const& value, platform::Shader::UniformType const& type, int const count);
+		string const& uniformName, mat3 const& value, gr::Shader::UniformType const& type, int const count);
 	template void RenderStage::SetPerFrameShaderUniform<vec3>(
-		string const& uniformName, vec3 const& value, platform::Shader::UniformType const& type, int const count);
+		string const& uniformName, vec3 const& value, gr::Shader::UniformType const& type, int const count);
 	template void RenderStage::SetPerFrameShaderUniform<vec4>(
-		string const& uniformName, vec4 const& value, platform::Shader::UniformType const& type, int const count);
+		string const& uniformName, vec4 const& value, gr::Shader::UniformType const& type, int const count);
 	template void RenderStage::SetPerFrameShaderUniform<float>(
-		string const& uniformName, float const& value, platform::Shader::UniformType const& type, int const count);
+		string const& uniformName, float const& value, gr::Shader::UniformType const& type, int const count);
 	template void RenderStage::SetPerFrameShaderUniform<int>(
-		string const& uniformName, int const& value, platform::Shader::UniformType const& type, int const count);
-
+		string const& uniformName, int const& value, gr::Shader::UniformType const& type, int const count);
+	// TODO: Move this to the .h file
+	
 
 	void RenderStage::InitializeForNewFrame()
 	{

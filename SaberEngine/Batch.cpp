@@ -96,12 +96,12 @@ namespace re
 
 	template <typename T>
 	void Batch::AddBatchUniform(
-		string const& uniformName, T const& value, platform::Shader::UniformType const& type, int const count)
+		string const& uniformName, T const& value, gr::Shader::UniformType const& type, int const count)
 	{
 		SEAssert("TODO: Support count > 1", count == 1);
 
 		// Store the shared_ptr for textures/samplers, or copy the data for other types
-		if (type == platform::Shader::UniformType::Texture || type == platform::Shader::UniformType::Sampler)
+		if (type == gr::Shader::UniformType::Texture || type == gr::Shader::UniformType::Sampler)
 		{
 			SEAssert("Invalid pointer type",
 				typeid(T) == typeid(shared_ptr<gr::Texture>) || typeid(T) == typeid(shared_ptr<gr::Sampler>));
@@ -123,9 +123,9 @@ namespace re
 	}
 	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
 	template void Batch::AddBatchUniform<shared_ptr<gr::Texture>>(
-		string const& uniformName, shared_ptr<gr::Texture> const& value, platform::Shader::UniformType const& type, int const count);
+		string const& uniformName, shared_ptr<gr::Texture> const& value, gr::Shader::UniformType const& type, int const count);
 	template void Batch::AddBatchUniform<shared_ptr<gr::Sampler>>(
-		string const& uniformName, shared_ptr<gr::Sampler> const& value, platform::Shader::UniformType const& type, int const count);
+		string const& uniformName, shared_ptr<gr::Sampler> const& value, gr::Shader::UniformType const& type, int const count);
 
 
 	void Batch::SetBatchFilterMaskBit(Filter filterBit)

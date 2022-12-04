@@ -24,7 +24,7 @@ namespace re
 		{
 			std::string m_uniformName;
 			void* m_value;
-			platform::Shader::UniformType const m_type;
+			gr::Shader::UniformType const m_type;
 			int m_count;
 		};
 
@@ -78,7 +78,7 @@ namespace re
 		inline PipelineStateParams const& GetStagePipelineStateParams() const { return m_stageParams; }
 
 		inline std::shared_ptr<gr::Shader>& GetStageShader() { return m_stageShader; }
-		inline std::shared_ptr<gr::Shader const> GetStageShader() const { return m_stageShader; }
+		inline std::shared_ptr<gr::Shader> GetStageShader() const { return m_stageShader; }
 
 		inline gr::Camera*& GetStageCamera() { return m_stageCam; }
 		inline gr::Camera const* GetStageCamera() const { return m_stageCam; }
@@ -95,7 +95,7 @@ namespace re
 
 		template <typename T>
 		void SetPerFrameShaderUniform(
-			std::string const& uniformName, T const& value, platform::Shader::UniformType const& type, int const count);
+			std::string const& uniformName, T const& value, gr::Shader::UniformType const& type, int const count);
 
 		void AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb);
 		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetPermanentParameterBlocks() const { return m_permanentParamBlocks; }

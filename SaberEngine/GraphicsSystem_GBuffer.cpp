@@ -45,12 +45,11 @@ namespace gr
 		// Shader:
 		std::shared_ptr<Shader> gBufferShader = std::make_shared<Shader>(
 			Config::Get()->GetValue<string>("gBufferFillShaderName"));
-		gBufferShader->Create();
 
 		// Shader constants: Only set once here
 		float emissiveIntensity =
 			Config::Get()->GetValue<float>("defaultSceneEmissiveIntensity");
-		gBufferShader->SetUniform("emissiveIntensity", &emissiveIntensity, platform::Shader::UniformType::Float, 1);
+		gBufferShader->SetUniform("emissiveIntensity", &emissiveIntensity, gr::Shader::UniformType::Float, 1);
 
 		// Set the shader:
 		m_gBufferStage.GetStageShader() = gBufferShader;

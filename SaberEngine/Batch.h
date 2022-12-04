@@ -47,7 +47,7 @@ namespace re
 		{
 			std::string m_uniformName;
 			std::shared_ptr<void> m_value;
-			platform::Shader::UniformType m_type;
+			gr::Shader::UniformType m_type;
 			int m_count;
 		};
 
@@ -72,7 +72,7 @@ namespace re
 			{ return m_batchParamBlocks; }
 
 		template <typename T>
-		void AddBatchUniform(std::string const& uniformName, T const& value, platform::Shader::UniformType const& type, int const count);
+		void AddBatchUniform(std::string const& uniformName, T const& value, gr::Shader::UniformType const& type, int const count);
 		inline std::vector<Batch::ShaderUniform> const& GetBatchUniforms() const { return m_batchUniforms; }
 
 		inline uint32_t GetBatchFilterMask() const { return m_batchFilterMask; }

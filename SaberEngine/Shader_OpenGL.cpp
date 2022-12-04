@@ -22,9 +22,21 @@ namespace opengl
 {
 	void Shader::Create(gr::Shader& shader)
 	{
+		opengl::Shader::PlatformParams* const params =
+			dynamic_cast<opengl::Shader::PlatformParams* const>(shader.GetPlatformParams());
+
+		if (params->m_isCreated)
+		{
+			return;
+		}
+		else
+		{
+			params->m_isCreated = true;
+		}
+
 		string const& shaderFileName = shader.GetName();
 
-		LOG("Creating shader \"%s\"", shaderFileName.c_str());
+		LOG("Creating shader: \"%s\"", shaderFileName.c_str());
 
 		// Helper mappings:
 		const uint32_t numShaderTypes = 3;
@@ -141,8 +153,6 @@ namespace opengl
 		AssertShaderIsValid(shaderReference, GL_VALIDATE_STATUS, true);
 
 		// Update our shader's platform params:
-		opengl::Shader::PlatformParams* const params =
-			dynamic_cast<opengl::Shader::PlatformParams* const>(shader.GetPlatformParams());
 		params->m_shaderReference = shaderReference;
 
 		// Populate the uniform locations
@@ -229,8 +239,11 @@ namespace opengl
 	}
 
 
-	void Shader::Bind(gr::Shader const& shader, bool doBind)
+	void Shader::Bind(gr::Shader& shader, bool doBind)
 	{
+		// Ensure the shader is created
+		opengl::Shader::Create(shader);
+
 		opengl::Shader::PlatformParams const* const params =
 			dynamic_cast<opengl::Shader::PlatformParams const* const>(shader.GetPlatformParams());
 
@@ -257,12 +270,15 @@ namespace opengl
 
 
 	void Shader::SetUniform(
-		gr::Shader const& shader,
+		gr::Shader& shader,
 		string const& uniformName,
 		void* value, 
-		platform::Shader::UniformType const type, 
+		gr::Shader::UniformType const type, 
 		int const count)
 	{
+		// Ensure the shader is created
+		opengl::Shader::Create(shader);
+
 		PlatformParams const* const params =
 			dynamic_cast<opengl::Shader::PlatformParams const* const>(shader.GetPlatformParams());
 
@@ -280,43 +296,43 @@ namespace opengl
 
 		switch (type)
 		{
-		case platform::Shader::UniformType::Matrix4x4f:
+		case gr::Shader::UniformType::Matrix4x4f:
 		{
 			glUniformMatrix4fv(uniformID, count, GL_FALSE, (GLfloat const*)value);
 		}
 		break;
 
-		case platform::Shader::UniformType::Matrix3x3f:
+		case gr::Shader::UniformType::Matrix3x3f:
 		{
 			glUniformMatrix3fv(uniformID, count, GL_FALSE, (GLfloat const*)value);
 		}
 		break;
 
-		case platform::Shader::UniformType::Vec3f:
+		case gr::Shader::UniformType::Vec3f:
 		{
 			glUniform3fv(uniformID, count, (GLfloat const*)value);
 		}
 		break;
 
-		case platform::Shader::UniformType::Vec4f:
+		case gr::Shader::UniformType::Vec4f:
 		{
 			glUniform4fv(uniformID, count, (GLfloat const*)value);
 		}
 		break;
 
-		case platform::Shader::UniformType::Float:
+		case gr::Shader::UniformType::Float:
 		{
 			glUniform1f(uniformID, *(GLfloat const*)value);
 		}
 		break;
 
-		case platform::Shader::UniformType::Int:
+		case gr::Shader::UniformType::Int:
 		{
 			glUniform1i(uniformID, *(GLint const*)value);
 		}
 		break;
 		
-		case platform::Shader::UniformType::Texture:
+		case gr::Shader::UniformType::Texture:
 		{
 			auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
 
@@ -328,7 +344,7 @@ namespace opengl
 			opengl::Texture::Bind(*static_cast<gr::Texture*>(value), bindingUnit->second, true);
 		}
 		break;
-		case platform::Shader::UniformType::Sampler:
+		case gr::Shader::UniformType::Sampler:
 		{
 			auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
 
@@ -353,8 +369,11 @@ namespace opengl
 	}
 
 
-	void Shader::SetParameterBlock(gr::Shader const& shader, re::ParameterBlock const& paramBlock)
+	void Shader::SetParameterBlock(gr::Shader& shader, re::ParameterBlock const& paramBlock)
 	{
+		// Ensure the shader is created
+		opengl::Shader::Create(shader);
+
 		// TODO: Handle non-permanent parameter blocks. For now, just bind without considering if the data has changed
 
 		opengl::Shader::PlatformParams const* const shaderPlatformParams =
@@ -378,7 +397,7 @@ namespace opengl
 
 		SEAssert("Failed to get resource index", resourceIdx != GL_INVALID_ENUM);
 
-//#define ASSERT_ON_MISSING_RESOURCE_NAME
+#define ASSERT_ON_MISSING_RESOURCE_NAME
 #if defined(ASSERT_ON_MISSING_RESOURCE_NAME)
 		// GL_INVALID_INDEX is returned if name is not the name of a resource within the shader program
 		SEAssert("Failed to find the resource in the shader. This is is not an error, but a useful debugging helper", 

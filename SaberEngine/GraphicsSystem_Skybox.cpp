@@ -128,17 +128,12 @@ namespace gr
 			m_skyTextureShaderName = "Tex0";
 		}
 
-		if (m_skyTexture != nullptr)
-		{
-			m_skyboxStage.GetStageShader()->Create();
-			LOG("Successfully loaded skybox");			
-		}
-		else
+		if (m_skyTexture == nullptr)
 		{
 			LOG_WARNING("Scene has no skybox");
 			return;
 		}
-
+		LOG("Successfully loaded skybox");
 
 		RenderStage::PipelineStateParams skyboxStageParams;
 		skyboxStageParams.m_targetClearMode = platform::Context::ClearTarget::None;

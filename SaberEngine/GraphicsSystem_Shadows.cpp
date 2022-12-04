@@ -92,7 +92,6 @@ namespace gr
 				// Shader:
 				m_directionalShadowStage.GetStageShader() = 
 					make_shared<Shader>(Config::Get()->GetValue<string>("depthShaderName"));
-				m_directionalShadowStage.GetStageShader()->Create();
 
 				m_directionalShadowStage.GetTextureTargetSet() = directionalLight->GetShadowMap()->GetTextureTargetSet();
 				// TODO: Target set should be a member of the stage, instead of the shadow map?
@@ -120,7 +119,6 @@ namespace gr
 				// Shader:
 				shadowStage->GetStageShader() = 
 					make_shared<Shader>(Config::Get()->GetValue<string>("cubeDepthShaderName"));
-				shadowStage->GetStageShader()->Create();
 
 				shadowStage->GetTextureTargetSet() = curLight->GetShadowMap()->GetTextureTargetSet();
 

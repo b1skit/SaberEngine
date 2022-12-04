@@ -22,7 +22,7 @@ namespace re
 {
 	/******************************************** StagePipeline********************************************/
 
-	std::vector<re::RenderStage const*>::iterator StagePipeline::AppendRenderStage(RenderStage const& renderStage)
+	std::vector<re::RenderStage*>::iterator StagePipeline::AppendRenderStage(RenderStage& renderStage)
 	{
 		SanityCheckRenderStage(renderStage);
 		
@@ -31,7 +31,7 @@ namespace re
 	}
 
 
-	std::vector<re::RenderStage>::iterator StagePipeline::AppendSingleFrameRenderStage(RenderStage const& renderStage)
+	std::vector<re::RenderStage>::iterator StagePipeline::AppendSingleFrameRenderStage(RenderStage& renderStage)
 	{
 		SanityCheckRenderStage(renderStage);
 		

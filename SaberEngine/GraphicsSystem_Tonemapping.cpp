@@ -42,13 +42,12 @@ namespace gr
 		m_tonemappingStage.SetStagePipelineStateParams(tonemappingStageParam);
 
 		m_tonemappingStage.GetStageShader() = make_shared<Shader>(Config::Get()->GetValue<string>("toneMapShader"));
-		m_tonemappingStage.GetStageShader()->Create();
 		
 		// Set shader constants:
 		m_tonemappingStage.GetStageShader()->SetUniform(
 			"exposure",
 			&SceneManager::GetSceneData()->GetMainCamera()->GetExposure(),
-			platform::Shader::UniformType::Float,
+			gr::Shader::UniformType::Float,
 			1);
 
 		m_tonemappingStage.GetStageCamera() = SceneManager::GetSceneData()->GetMainCamera().get();

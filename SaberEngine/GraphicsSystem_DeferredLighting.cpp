@@ -206,7 +206,6 @@ namespace gr
 
 			brdfStage.GetStageShader() = make_shared<Shader>(
 				Config::Get()->GetValue<string>("BRDFIntegrationMapShaderName"));
-			brdfStage.GetStageShader()->Create();
 
 			// Create a render target texture:			
 			Texture::TextureParams brdfParams;
@@ -295,7 +294,6 @@ namespace gr
 		{
 			shared_ptr<Shader> iemShader = make_shared<gr::Shader>(equilinearToCubemapShaderName);
 			iemShader->ShaderKeywords().emplace_back("BLIT_IEM");
-			iemShader->Create();
 
 			// IEM-specific texture params:
 			cubeParams.m_useMIPs = false;
@@ -312,8 +310,7 @@ namespace gr
 					gr::Sampler::GetSampler(gr::Sampler::SamplerType::ClampLinearMipMapLinearLinear));
 
 				const int numSamples = Config::Get()->GetValue<int>("numIEMSamples");
-				iemStage.SetPerFrameShaderUniform(
-					"numSamples", numSamples, platform::Shader::UniformType::Int, 1);
+				iemStage.SetPerFrameShaderUniform("numSamples", numSamples, gr::Shader::UniformType::Int, 1);
 				
 				// Construct a camera param block to draw into our cubemap rendering targets:
 				cubemapCamParams.g_view = cubemapViews[face];
@@ -343,7 +340,6 @@ namespace gr
 		{
 			shared_ptr<Shader> pmremShader = make_shared<gr::Shader>(equilinearToCubemapShaderName);
 			pmremShader->ShaderKeywords().emplace_back("BLIT_PMREM");
-			pmremShader->Create();
 
 			// PMREM-specific texture params:
 			cubeParams.m_useMIPs = true;
@@ -371,8 +367,7 @@ namespace gr
 						gr::Sampler::GetSampler(gr::Sampler::SamplerType::ClampLinearMipMapLinearLinear));
 
 					const int numSamples = Config::Get()->GetValue<int>("numPMREMSamples");
-					pmremStage.SetPerFrameShaderUniform(
-						"numSamples", numSamples, platform::Shader::UniformType::Int, 1);
+					pmremStage.SetPerFrameShaderUniform("numSamples", numSamples, gr::Shader::UniformType::Int, 1);
 					
 					// Construct a camera param block to draw into our cubemap rendering targets:
 					cubemapCamParams.g_view = cubemapViews[face];
@@ -384,8 +379,7 @@ namespace gr
 					pmremStage.AddPermanentParameterBlock(pb);
 
 					const float roughness = (float)currentMipLevel / (float)(numMipLevels - 1);
-					pmremStage.SetPerFrameShaderUniform(
-						"roughness", roughness, platform::Shader::UniformType::Float, 1);
+					pmremStage.SetPerFrameShaderUniform("roughness", roughness, gr::Shader::UniformType::Float, 1);
 
 					pmremStage.GetTextureTargetSet() = pmremTargetSet;
 
@@ -405,7 +399,6 @@ namespace gr
 		m_ambientStage.GetStageShader() = make_shared<Shader>(
 			Config::Get()->GetValue<string>("deferredAmbientLightShaderName"));
 		m_ambientStage.GetStageShader()->ShaderKeywords().emplace_back("AMBIENT_IBL");
-		m_ambientStage.GetStageShader()->Create();
 
 		m_ambientStage.GetStageCamera() = deferredLightingCam;
 		m_ambientStage.SetStagePipelineStateParams(ambientStageParams);
@@ -442,7 +435,6 @@ namespace gr
 
 			m_keylightStage.GetStageShader() = make_shared<Shader>(
 				Config::Get()->GetValue<string>("deferredKeylightShaderName"));
-			m_keylightStage.GetStageShader()->Create();
 
 			m_keylightStage.GetStageCamera() = deferredLightingCam;
 
@@ -480,7 +472,6 @@ namespace gr
 
 			m_pointlightStage.GetStageShader() = make_shared<Shader>(
 				Config::Get()->GetValue<string>("deferredPointLightShaderName"));
-			m_pointlightStage.GetStageShader()->Create();
 
 			pipeline.AppendRenderStage(m_pointlightStage);
 
@@ -645,7 +636,7 @@ namespace gr
 					shadowMap->GetTextureTargetSet().DepthStencilTarget().GetTexture();
 
 				pointlightBatch.AddBatchUniform<shared_ptr<gr::Texture>>(
-					"CubeMap0", depthTexture, platform::Shader::UniformType::Texture, 1);
+					"CubeMap0", depthTexture, gr::Shader::UniformType::Texture, 1);
 
 				// Our template function expects a shared_ptr to a non-const type; cast it here even though it's gross
 				std::shared_ptr<gr::Sampler> const sampler = 
@@ -654,7 +645,7 @@ namespace gr
 				pointlightBatch.AddBatchUniform<shared_ptr<gr::Sampler>>(
 					"CubeMap0", 
 					sampler,
-					platform::Shader::UniformType::Sampler, 
+					gr::Shader::UniformType::Sampler, 
 					1);
 			}			
 

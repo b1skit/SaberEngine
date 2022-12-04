@@ -15,7 +15,7 @@ using std::vector;
 namespace platform
 {
 	// Parameter struct object factory:
-	void platform::Shader::PlatformParams::CreatePlatformParams(gr::Shader& shader)
+	void platform::Shader::CreatePlatformParams(gr::Shader& shader)
 	{
 		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
@@ -23,7 +23,7 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			shader.m_platformParams = std::make_unique<opengl::Shader::PlatformParams>();
+			shader.SetPlatformParams(std::make_unique<opengl::Shader::PlatformParams>());
 		}
 		break;
 		case RenderingAPI::DX12:
@@ -202,14 +202,14 @@ namespace platform
 	// platform::Shader static members:
 	/**********************************/
 	void (*platform::Shader::Create)(gr::Shader& shader) = nullptr;
-	void (*platform::Shader::Bind)(gr::Shader const&, bool doBind) = nullptr;
+	void (*platform::Shader::Bind)(gr::Shader&, bool doBind) = nullptr;
 	void (*platform::Shader::SetUniform)(
-		gr::Shader const& shader, 
+		gr::Shader& shader, 
 		string const& uniformName, 
 		void* value, 
-		platform::Shader::UniformType const type, 
+		gr::Shader::UniformType const type, 
 		int const count) = nullptr;
-	void (*platform::Shader::SetParameterBlock)(gr::Shader const&, re::ParameterBlock const&) = nullptr;
+	void (*platform::Shader::SetParameterBlock)(gr::Shader&, re::ParameterBlock const&) = nullptr;
 	void (*platform::Shader::Destroy)(gr::Shader&) = nullptr;
 
 }

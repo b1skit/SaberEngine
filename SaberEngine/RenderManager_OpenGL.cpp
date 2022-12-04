@@ -15,6 +15,7 @@
 #include "RenderStage.h"
 #include "TextureTarget.h"
 #include "Shader.h"
+#include "Shader_OpenGL.h"
 #include "Camera.h"
 #include "Transform.h"
 #include "GraphicsSystem.h"
@@ -88,7 +89,7 @@ namespace opengl
 
 
 		// Render each stage:
-		for (StagePipeline const& stagePipeline : renderManager.m_pipeline.GetPipeline())
+		for (StagePipeline& stagePipeline : renderManager.m_pipeline.GetPipeline())
 		{
 			// RenderDoc markers: Graphics system group name
 			glPushDebugGroup(
@@ -98,7 +99,7 @@ namespace opengl
 				stagePipeline.GetName().c_str());
 
 			// Generic lambda: Process stages from various pipelines
-			auto ProcessRenderStage = [&](RenderStage const* renderStage)
+			auto ProcessRenderStage = [&](RenderStage* renderStage)
 			{
 				// RenderDoc makers: Render stage name
 				glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderStage->GetName().c_str());
@@ -106,8 +107,8 @@ namespace opengl
 				RenderStage::PipelineStateParams const& stagePipelineParams = renderStage->GetStagePipelineStateParams();
 
 				// Configure the shader:
-				std::shared_ptr<Shader const> stageShader = renderStage->GetStageShader();
-				stageShader->Bind(true);
+				std::shared_ptr<gr::Shader> stageShader = renderStage->GetStageShader();
+				opengl::Shader::Bind(*stageShader, true);
 				// TODO: Handle shaders set by stages/materials/batches
 				// Priority order: Stage, batch/material?
 
@@ -204,15 +205,15 @@ namespace opengl
 
 
 			// Single frame render stages:
-			vector<RenderStage> const& singleFrameRenderStages = stagePipeline.GetSingleFrameRenderStages();
-			for (RenderStage const& renderStage : singleFrameRenderStages)
+			vector<RenderStage>& singleFrameRenderStages = stagePipeline.GetSingleFrameRenderStages();
+			for (RenderStage& renderStage : singleFrameRenderStages)
 			{
 				ProcessRenderStage(&renderStage);
 			}
 
 			// Render stages:
-			vector<RenderStage const*> const& renderStages = stagePipeline.GetRenderStages();
-			for (RenderStage const* renderStage : renderStages)
+			vector<RenderStage*> const& renderStages = stagePipeline.GetRenderStages();
+			for (RenderStage* renderStage : renderStages)
 			{			
 				ProcessRenderStage(renderStage);
 			}

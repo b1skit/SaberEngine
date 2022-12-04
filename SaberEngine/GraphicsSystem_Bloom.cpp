@@ -41,7 +41,6 @@ namespace gr
 		Camera* sceneCam = SceneManager::GetSceneData()->GetMainCamera().get();
 
 		shared_ptr<Shader> blitShader = make_shared<Shader>(Config::Get()->GetValue<string>("blitShaderName"));
-		blitShader->Create();
 
 		// Emissive blit stage:
 		RenderStage::PipelineStateParams emissiveStageParams;
@@ -88,7 +87,6 @@ namespace gr
 		shared_ptr<Shader> luminanceThresholdShader = make_shared<Shader>(
 			Config::Get()->GetValue<string>("blurShaderName"));
 		luminanceThresholdShader->ShaderKeywords().emplace_back("BLUR_SHADER_LUMINANCE_THRESHOLD");
-		luminanceThresholdShader->Create();
 
 		// Downsampling stages (w/luminance threshold in 1st pass):
 		for (uint32_t i = 0; i < numScalingStages; i++)
@@ -129,15 +127,11 @@ namespace gr
 		}
 
 		// Blur stages:
-		shared_ptr<Shader> horizontalBlurShader = make_shared<Shader>(
-			Config::Get()->GetValue<string>("blurShaderName"));
+		shared_ptr<Shader> horizontalBlurShader = make_shared<Shader>(Config::Get()->GetValue<string>("blurShaderName"));
 		horizontalBlurShader->ShaderKeywords().emplace_back("BLUR_SHADER_HORIZONTAL");
-		horizontalBlurShader->Create();
 
-		shared_ptr<Shader> verticalBlurShader = make_shared<Shader>(
-			Config::Get()->GetValue<string>("blurShaderName"));
+		shared_ptr<Shader> verticalBlurShader = make_shared<Shader>(Config::Get()->GetValue<string>("blurShaderName"));
 		verticalBlurShader->ShaderKeywords().emplace_back("BLUR_SHADER_VERTICAL");
-		verticalBlurShader->Create();
 
 		Texture::TextureParams blurParams(resScaleParams);
 		blurParams.m_width = currentXRes;
