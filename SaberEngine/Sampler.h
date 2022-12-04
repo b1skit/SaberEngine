@@ -36,7 +36,7 @@ namespace gr
 	public:
 		static const std::vector<std::string> SamplerTypeLibraryNames;
 
-		enum class SamplerType
+		enum class WrapAndFilterMode
 		{
 			// EdgeMode, MinFilter, MaxFilter
 			WrapLinearLinear,
@@ -44,12 +44,13 @@ namespace gr
 			ClampNearestNearest,
 			ClampLinearMipMapLinearLinear,
 			WrapLinearMipMapLinearLinear,
+
 			SamplerType_Count
 		};
-		static std::shared_ptr<gr::Sampler> const GetSampler(SamplerType type);
+		static std::shared_ptr<gr::Sampler> const GetSampler(WrapAndFilterMode type);
 
 	private:
-		static std::unique_ptr<std::unordered_map<SamplerType, std::shared_ptr<gr::Sampler>>> m_samplerLibrary;
+		static std::unique_ptr<std::unordered_map<WrapAndFilterMode, std::shared_ptr<gr::Sampler>>> m_samplerLibrary;
 
 
 	public:
@@ -113,7 +114,7 @@ namespace gr
 		// Friends:
 		friend bool platform::RegisterPlatformFunctions();
 		friend void platform::Sampler::CreatePlatformParams(gr::Sampler&);
-		friend std::shared_ptr<gr::Sampler const> const GetSampler(Sampler::SamplerType type);
+		friend std::shared_ptr<gr::Sampler const> const GetSampler(Sampler::WrapAndFilterMode type);
 
 		Sampler() = delete;
 		Sampler(Sampler const& rhs) = delete;

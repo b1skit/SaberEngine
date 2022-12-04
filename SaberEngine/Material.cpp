@@ -42,11 +42,11 @@ namespace gr
 			gltfPBRMat->m_definitionName = "pbrMetallicRoughness";
 			gltfPBRMat->m_textureSlots =
 			{
-				{nullptr, Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear), "MatAlbedo" },
-				{nullptr, Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear), "MatMetallicRoughness" }, // G = roughness, B = metalness. R & A are unused.
-				{nullptr, Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear), "MatNormal" },
-				{nullptr, Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear), "MatOcclusion" },
-				{nullptr, Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear), "MatEmissive" },
+				{nullptr, Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear), "MatAlbedo" },
+				{nullptr, Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear), "MatMetallicRoughness" }, // G = roughness, B = metalness. R & A are unused.
+				{nullptr, Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear), "MatNormal" },
+				{nullptr, Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear), "MatOcclusion" },
+				{nullptr, Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear), "MatEmissive" },
 			};
 			gltfPBRMat->m_shader = nullptr; // Don't need a shader; PBR materials are written directly to the GBuffer
 			m_materialLibrary->insert({ gltfPBRMat->m_definitionName, gltfPBRMat });

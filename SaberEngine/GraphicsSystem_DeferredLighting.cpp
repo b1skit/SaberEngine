@@ -307,7 +307,7 @@ namespace gr
 				iemStage.SetTextureInput(
 					"MatAlbedo",
 					iblTexture,
-					gr::Sampler::GetSampler(gr::Sampler::SamplerType::ClampLinearMipMapLinearLinear));
+					gr::Sampler::GetSampler(gr::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
 
 				const int numSamples = Config::Get()->GetValue<int>("numIEMSamples");
 				iemStage.SetPerFrameShaderUniform("numSamples", numSamples, gr::Shader::UniformType::Int, 1);
@@ -364,7 +364,7 @@ namespace gr
 					pmremStage.SetTextureInput(
 						"MatAlbedo",
 						iblTexture,
-						gr::Sampler::GetSampler(gr::Sampler::SamplerType::ClampLinearMipMapLinearLinear));
+						gr::Sampler::GetSampler(gr::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
 
 					const int numSamples = Config::Get()->GetValue<int>("numPMREMSamples");
 					pmremStage.SetPerFrameShaderUniform("numSamples", numSamples, gr::Shader::UniformType::Int, 1);
@@ -521,21 +521,21 @@ namespace gr
 				m_ambientStage.SetTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[i],
 					gBufferGS->GetFinalTextureTargetSet().ColorTarget(i).GetTexture(),
-					Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear));
+					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 			if (keyLight)
 			{
 				m_keylightStage.SetTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[i],
 					gBufferGS->GetFinalTextureTargetSet().ColorTarget(i).GetTexture(),
-					Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear));
+					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 			if (!pointLights.empty())
 			{
 				m_pointlightStage.SetTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[i],
 					gBufferGS->GetFinalTextureTargetSet().ColorTarget(i).GetTexture(),
-					Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear));
+					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 		}
 
@@ -545,19 +545,19 @@ namespace gr
 			m_ambientStage.SetTextureInput(
 				"CubeMap0",
 				m_IEMTex,
-				Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear)
+				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear)
 			);
 
 			m_ambientStage.SetTextureInput(
 				"CubeMap1",
 				m_PMREMTex,
-				Sampler::GetSampler(Sampler::SamplerType::WrapLinearMipMapLinearLinear)
+				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearMipMapLinearLinear)
 			);
 
 			m_ambientStage.SetTextureInput(
 				"Tex7",
 				m_BRDF_integrationMap,
-				Sampler::GetSampler(Sampler::SamplerType::ClampNearestNearest)
+				Sampler::GetSampler(Sampler::WrapAndFilterMode::ClampNearestNearest)
 			);
 		}
 		
@@ -573,7 +573,7 @@ namespace gr
 			m_keylightStage.SetTextureInput(
 				"Depth0",
 				keylightDepthTex,
-				Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear));
+				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 		}
 	}
 
@@ -640,7 +640,7 @@ namespace gr
 
 				// Our template function expects a shared_ptr to a non-const type; cast it here even though it's gross
 				std::shared_ptr<gr::Sampler> const sampler = 
-					std::const_pointer_cast<gr::Sampler>(Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear));
+					std::const_pointer_cast<gr::Sampler>(Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 
 				pointlightBatch.AddBatchUniform<shared_ptr<gr::Sampler>>(
 					"CubeMap0", 

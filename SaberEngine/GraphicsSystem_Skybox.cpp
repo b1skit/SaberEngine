@@ -175,7 +175,7 @@ namespace gr
 		m_skyboxStage.SetTextureInput(
 			m_skyTextureShaderName,
 			m_skyTexture,
-			Sampler::GetSampler(Sampler::SamplerType::WrapLinearLinear));
+			Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 
 		shared_ptr<GBufferGraphicsSystem> gBufferGS = dynamic_pointer_cast<GBufferGraphicsSystem>(
 			RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>());

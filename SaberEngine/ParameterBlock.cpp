@@ -28,6 +28,7 @@ namespace re
 		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetParameterBlockAllocator();
 		pbm.RegisterAndAllocateParameterBlock(newPB, numBytes);
 
+		// TODO: This should happen via ParameterBlock::CommitInternal, so we verify the typeIDHash on all paths
 		pbm.Commit(newPB->GetUniqueID(), data);
 
 		// Now that we've allocated and committed some data, we can finally perform platform creation (which buffers)
