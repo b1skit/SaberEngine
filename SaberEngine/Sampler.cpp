@@ -27,7 +27,7 @@ namespace gr
 	std::unique_ptr<std::unordered_map<Sampler::SamplerType, std::shared_ptr<gr::Sampler>>> Sampler::m_samplerLibrary = 
 		nullptr;
 
-	std::shared_ptr<gr::Sampler const> const Sampler::GetSampler(Sampler::SamplerType type)
+	std::shared_ptr<gr::Sampler> const Sampler::GetSampler(Sampler::SamplerType type)
 	{
 		if (Sampler::m_samplerLibrary == nullptr)
 		{

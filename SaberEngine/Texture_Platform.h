@@ -2,10 +2,8 @@
 
 #include <memory>
 
-namespace gr
-{
-	class Texture;
-}
+#include "Texture.h"
+
 
 namespace platform
 {
@@ -22,7 +20,7 @@ namespace platform
 		};
 
 
-		struct PlatformParams
+		struct PlatformParams : gr::Texture::PlatformParams
 		{
 			// Params contain unique GPU bindings that should not be arbitrarily copied/duplicated
 			PlatformParams() = default;
@@ -33,15 +31,16 @@ namespace platform
 
 			// API-specific GPU bindings should be destroyed here
 			virtual ~PlatformParams() = 0;
-
-			static void CreatePlatformParams(gr::Texture& texture);
 		};
 
 
-		// Static members:
-		/*****************/
+		static void CreatePlatformParams(gr::Texture& texture);
+
+
+		// API-specific function bindings:
+		/*********************************/
 		static void (*Create)(gr::Texture&);
-		static void (*Bind)(gr::Texture const&, uint32_t textureUnit, bool doBind);
+		static void (*Bind)(gr::Texture&, uint32_t textureUnit, bool doBind);
 		static void (*Destroy)(gr::Texture&);
 
 		static void (*GenerateMipMaps)(gr::Texture&);

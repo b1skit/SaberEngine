@@ -206,7 +206,7 @@ namespace platform
 	void (*platform::Shader::SetUniform)(
 		gr::Shader const& shader, 
 		string const& uniformName, 
-		void const* value, 
+		void* value, 
 		platform::Shader::UniformType const type, 
 		int const count) = nullptr;
 	void (*platform::Shader::SetParameterBlock)(gr::Shader const&, re::ParameterBlock const&) = nullptr;

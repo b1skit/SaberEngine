@@ -23,7 +23,7 @@ namespace re
 		struct StageShaderUniform
 		{
 			std::string m_uniformName;
-			void const* m_value;
+			void* m_value;
 			platform::Shader::UniformType const m_type;
 			int m_count;
 		};
@@ -88,7 +88,7 @@ namespace re
 
 		// Helper: Simultaneously binds a texture and sampler by name to the stage shader
 		void SetTextureInput(
-			std::string const& shaderName, std::shared_ptr<gr::Texture const> tex, std::shared_ptr<gr::Sampler const> sampler);
+			std::string const& shaderName, std::shared_ptr<gr::Texture> tex, std::shared_ptr<gr::Sampler> sampler);
 
 		// Per-frame uniforms are set every frame
 		inline std::vector<StageShaderUniform> const& GetPerFrameShaderUniforms() const { return m_perFrameShaderUniforms; }
@@ -121,7 +121,7 @@ namespace re
 
 		// Per-frame members are cleared every frame
 		std::vector<StageShaderUniform> m_perFrameShaderUniforms; // TODO: Handle selection of face, miplevel when binding color/depth targets?
-		std::vector<std::shared_ptr<const void>> m_perFrameShaderUniformValues; // Generic, per-frame data storage buffer
+		std::vector<std::shared_ptr<void>> m_perFrameShaderUniformValues; // Generic, per-frame data storage buffer
 		
 		std::vector<std::shared_ptr<re::ParameterBlock>> m_perFrameParamBlocks;
 		std::vector<std::shared_ptr<re::ParameterBlock >> m_permanentParamBlocks;

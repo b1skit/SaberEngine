@@ -12,7 +12,7 @@ namespace opengl
 	class Texture
 	{
 	public:
-		struct PlatformParams : public virtual platform::Texture::PlatformParams
+		struct PlatformParams final : public virtual platform::Texture::PlatformParams
 		{
 			PlatformParams(gr::Texture::TextureParams const& texParams);
 
@@ -36,7 +36,7 @@ namespace opengl
 
 	public:
 		static void Create(gr::Texture& texture);
-		static void Bind(gr::Texture const& texture, uint32_t textureUnit, bool doBind = true);
+		static void Bind(gr::Texture& texture, uint32_t textureUnit, bool doBind);
 		static void Destroy(gr::Texture& texture);
 		static void GenerateMipMaps(gr::Texture& texture);
 

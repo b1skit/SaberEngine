@@ -37,7 +37,7 @@ namespace opengl
 		static void SetUniform(
 			gr::Shader const& shader, 
 			std::string const& uniformName, 
-			void const* value, 
+			void* value, 
 			platform::Shader::UniformType const type, 
 			int const count);
 		static void SetParameterBlock(gr::Shader const&, re::ParameterBlock const&);

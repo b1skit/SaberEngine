@@ -198,7 +198,6 @@ namespace gr
 		Texture::TextureParams iblParams = iblTexture->GetTextureParams();
 		iblParams.m_colorSpace = Texture::ColorSpace::Linear;
 		iblTexture->SetTextureParams(iblParams);
-		iblTexture->Create();
 
 
 		// 1st frame: Generate the pre-integrated BRDF LUT via a single-frame render stage:

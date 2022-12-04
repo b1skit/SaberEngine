@@ -78,18 +78,6 @@
     <Filter Include="imgui\backends">
       <UniqueIdentifier>{111822b3-fd88-44ec-9a63-11bcf5725bcd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\fr\platform">
-      <UniqueIdentifier>{f25b32fe-ef5c-453e-b132-2bb16de6e38b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\fr\platform">
-      <UniqueIdentifier>{898010c9-7b42-4a1b-bb04-36ffc5d0406b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\fr\platform\OpenGL">
-      <UniqueIdentifier>{d9db9a07-8260-4fa5-9565-86ffe8c5fa51}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\fr\platform\OpenGL">
-      <UniqueIdentifier>{c78f8613-f27f-4a99-8b53-46724ad76c62}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -286,12 +274,6 @@
     </ClCompile>
     <ClCompile Include="ThreadPool.cpp">
       <Filter>Source Files\en</Filter>
-    </ClCompile>
-    <ClCompile Include="SceneData_Platform.cpp">
-      <Filter>Source Files\fr\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="SceneData_OpenGL.cpp">
-      <Filter>Source Files\fr\platform\OpenGL</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -519,12 +501,6 @@
     </ClInclude>
     <ClInclude Include="ThreadPool.h">
       <Filter>Header Files\en</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneData_Platform.h">
-      <Filter>Header Files\fr\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneData_OpenGL.h">
-      <Filter>Header Files\fr\platform\OpenGL</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

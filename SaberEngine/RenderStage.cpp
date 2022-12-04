@@ -45,7 +45,7 @@ namespace re
 
 
 	void RenderStage::SetTextureInput(
-		string const& shaderName, shared_ptr<Texture const> tex, shared_ptr<Sampler const> sampler)
+		string const& shaderName, shared_ptr<Texture> tex, shared_ptr<Sampler> sampler)
 	{
 		SEAssert("Stage shader is null. Set the stage shader before this call", m_stageShader != nullptr);
 		SEAssert("Invalid shader sampler name", !shaderName.empty());
@@ -53,8 +53,8 @@ namespace re
 		SEAssert("Invalid sampler", sampler != nullptr);
 
 		// Hold a copy of our shared pointers to ensure they don't go out of scope until we're done with them:
-		m_perFrameShaderUniformValues.emplace_back(std::static_pointer_cast<const void>(tex));
-		m_perFrameShaderUniformValues.emplace_back(std::static_pointer_cast<const void>(sampler));
+		m_perFrameShaderUniformValues.emplace_back(std::static_pointer_cast<void>(tex));
+		m_perFrameShaderUniformValues.emplace_back(std::static_pointer_cast<void>(sampler));
 
 		// Add our raw pointers to the list of StageShaderUniforms:
 		m_perFrameShaderUniforms.emplace_back(shaderName, tex.get(), platform::Shader::UniformType::Texture, 1);
@@ -69,12 +69,12 @@ namespace re
 		// Dynamically allocate a copy of value so we have a pointer to it when we need for the current frame
 		m_perFrameShaderUniformValues.emplace_back(std::make_shared<T>(value));
 
-		void const* valuePtr;
+		void* valuePtr;
 		if (count > 1)
 		{
 			// Assume if count > 1, we've recieved multiple values packed into a std::vector. 
 			// Thus, we must store the address of the first element of the vector (NOT the address of the vector object!)
-			valuePtr = &(reinterpret_cast<vector<T> const*>(m_perFrameShaderUniformValues.back().get())->at(0));
+			valuePtr = &(reinterpret_cast<vector<T>*>(m_perFrameShaderUniformValues.back().get())->at(0));
 		}
 		else
 		{

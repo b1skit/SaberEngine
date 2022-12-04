@@ -48,7 +48,7 @@ namespace gr
 		gBufferShader->Create();
 
 		// Shader constants: Only set once here
-		const float emissiveIntensity =
+		float emissiveIntensity =
 			Config::Get()->GetValue<float>("defaultSceneEmissiveIntensity");
 		gBufferShader->SetUniform("emissiveIntensity", &emissiveIntensity, platform::Shader::UniformType::Float, 1);
 

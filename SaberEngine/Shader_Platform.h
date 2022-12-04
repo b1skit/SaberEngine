@@ -57,7 +57,7 @@ namespace platform
 		static void (*SetUniform)(
 			gr::Shader const& shader, 
 			std::string const& uniformName, 
-			void const* value, 
+			void* value, 
 			UniformType const type,
 			int const count);
 		static void (*SetParameterBlock)(gr::Shader const& shader, re::ParameterBlock const& paramBlock);

@@ -16,7 +16,6 @@
 
 
 #include "SceneData.h"
-#include "SceneData_Platform.h"
 #include "VertexAttributeBuilder.h"
 #include "Light.h"
 #include "Camera.h"
@@ -1062,9 +1061,6 @@ namespace fr
 
 		// Load the materials first:
 		PreLoadMaterials(*this, sceneRootPath, data);
-
-		// Perform API-specific asset processing now that our data is loaded
-		platform::SceneData::PostProcessLoadedData(*this);
 
 		// Load the scene hierarchy:
 		LoadSceneHierarchy(sceneRootPath, *this, data);

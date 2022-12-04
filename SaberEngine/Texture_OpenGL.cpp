@@ -148,8 +148,8 @@ namespace opengl
 
 	void opengl::Texture::Destroy(gr::Texture& texture)
 	{
-		PlatformParams const* const params =
-			dynamic_cast<opengl::Texture::PlatformParams*>(texture.GetPlatformParams());
+		PlatformParams* const params =
+			dynamic_cast<opengl::Texture::PlatformParams* const>(texture.GetPlatformParams());
 
 		if (!params)
 		{
@@ -159,17 +159,23 @@ namespace opengl
 		if (glIsTexture(params->m_textureID))
 		{
 			glDeleteTextures(1, &params->m_textureID);
+			params->m_textureID = 0;
 		}
 	}
 
 
-	void opengl::Texture::Bind(gr::Texture const& texture, uint32_t textureUnit, bool doBind/*= true*/)
+	void opengl::Texture::Bind(gr::Texture& texture, uint32_t textureUnit, bool doBind)
 	{
 		// TODO: Is there a way to avoid needing to pass textureUnit?
 		// textureUnit is a target, ie. GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, etc
 
+		opengl::Texture::Create(texture); // Ensure the texture is created before we attempt to bind
+
 		opengl::Texture::PlatformParams const* const params =
 			dynamic_cast<opengl::Texture::PlatformParams const*>(texture.GetPlatformParams());
+
+		// TODO: Support texture updates after modification
+		SEAssert("Texture has been modified, and needs to be rebuffered", params->m_isDirty == false);
 
 		if (doBind)
 		{
@@ -184,15 +190,20 @@ namespace opengl
 
 	void opengl::Texture::Create(gr::Texture& texture)
 	{
+		if (!texture.GetPlatformParams()->m_isCreated)
+		{
+			platform::Texture::CreatePlatformParams(texture);
+		}
+		else
+		{
+			return; // Note: Textures are shared, so duplicate Create() calls can/do happen. We just abort here if so
+		}
+
 		LOG("Creating & buffering texture: \"%s\"", texture.GetName().c_str());
 
-		// Create the platform-specific parameters object:
-		platform::Texture::PlatformParams::CreatePlatformParams(texture);
-
-		// Get our platform params now that the texture has been created:
-		PlatformParams* const params =
-			dynamic_cast<opengl::Texture::PlatformParams* const>(texture.GetPlatformParams());
-		SEAssert("Attempting to create a texture that already exists", !glIsTexture(params->m_textureID));
+		PlatformParams* const params = dynamic_cast<opengl::Texture::PlatformParams* const>(texture.GetPlatformParams());
+		SEAssert("Attempting to create a texture that already exists", 
+			!glIsTexture(params->m_textureID) && !params->m_isCreated);
 
 		// Generate textureID names. Note: We must call glBindTexture immediately after to associate the name with 
 		// a texture. It will not have the correct dimensionality until this is done
@@ -275,14 +286,18 @@ namespace opengl
 		// Create mips:
 		opengl::Texture::GenerateMipMaps(texture);
 
+		// Finally, update the platform params state:
+		params->m_isCreated = true;
+		params->m_isDirty = false;
+
 		// Note: We leave the texture and samplers bound
 	}
 
 
 	void opengl::Texture::GenerateMipMaps(gr::Texture& texture)
 	{
-		opengl::Texture::PlatformParams const* const params =
-			dynamic_cast<opengl::Texture::PlatformParams*>(texture.GetPlatformParams());
+		opengl::Texture::PlatformParams const* params =
+			dynamic_cast<opengl::Texture::PlatformParams const*>(texture.GetPlatformParams());
 
 		if (texture.GetTextureParams().m_useMIPs == false)
 		{

@@ -30,7 +30,7 @@ namespace gr
 			WrapLinearMipMapLinearLinear,
 			SamplerType_Count
 		};
-		static std::shared_ptr<gr::Sampler const> const GetSampler(SamplerType type);
+		static std::shared_ptr<gr::Sampler> const GetSampler(SamplerType type);
 
 	private:
 		static std::unique_ptr<std::unordered_map<SamplerType, std::shared_ptr<gr::Sampler>>> m_samplerLibrary;

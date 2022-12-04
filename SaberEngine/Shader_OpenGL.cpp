@@ -7,6 +7,7 @@
 #include "Shader_OpenGL.h"
 #include "Material.h"
 #include "Texture.h"
+#include "Texture_OpenGL.h"
 #include "ParameterBlock_OpenGL.h"
 
 using std::vector;
@@ -258,7 +259,7 @@ namespace opengl
 	void Shader::SetUniform(
 		gr::Shader const& shader,
 		string const& uniformName,
-		void const* value, 
+		void* value, 
 		platform::Shader::UniformType const type, 
 		int const count)
 	{
@@ -324,7 +325,7 @@ namespace opengl
 #else
 			if (bindingUnit == params->m_samplerUnits.end()) return;
 #endif
-			static_cast<gr::Texture const*>(value)->Bind(bindingUnit->second, true);
+			opengl::Texture::Bind(*static_cast<gr::Texture*>(value), bindingUnit->second, true);
 		}
 		break;
 		case platform::Shader::UniformType::Sampler:

@@ -28,9 +28,6 @@
 #include "ParameterBlock.h"
 #include "ParameterBlock_OpenGL.h"
 
-#include "SceneData_Platform.h"
-#include "SceneData_OpenGL.h"
-
 using en::Config;
 
 
@@ -103,9 +100,6 @@ namespace platform
 			platform::ParameterBlock::Create	= &opengl::ParameterBlock::Create;
 			platform::ParameterBlock::Update	= &opengl::ParameterBlock::Update;
 			platform::ParameterBlock::Destroy	= &opengl::ParameterBlock::Destroy;
-
-			// Scene data:
-			platform::SceneData::PostProcessLoadedData = &opengl::SceneData::PostProcessLoadedData;
 			
 
 			result = true;

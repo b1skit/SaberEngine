@@ -251,7 +251,7 @@ namespace gr
 			dynamic_pointer_cast<DeferredLightingGraphicsSystem>(
 				RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>());
 
-		shared_ptr<Sampler const> const bloomStageSampler = Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear);
+		shared_ptr<Sampler> const bloomStageSampler = Sampler::GetSampler(Sampler::SamplerType::ClampLinearLinear);
 
 		// This index corresponds with the GBuffer texture layout bindings in SaberCommon.glsl
 		// TODO: Have a less brittle way of handling this.

@@ -37,7 +37,6 @@ namespace re
 		std::shared_ptr<platform::TextureTarget::PlatformParams> m_platformParams;
 
 		// Friends:
-		friend bool platform::RegisterPlatformFunctions();
 		friend void platform::TextureTarget::PlatformParams::CreatePlatformParams(re::TextureTarget&);
 	};
 
@@ -144,7 +143,6 @@ namespace re
 
 	private:
 		// Friends:
-		friend bool platform::RegisterPlatformFunctions();
 		friend void platform::TextureTargetSet::PlatformParams::CreatePlatformParams(re::TextureTargetSet&);
 
 		TextureTargetSet() = delete;

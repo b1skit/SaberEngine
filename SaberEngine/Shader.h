@@ -29,7 +29,7 @@ namespace gr
 
 		void SetUniform(
 			std::string const&,
-			void const* value,
+			void* value,
 			platform::Shader::UniformType const type, 
 			int count) const;
 
@@ -39,7 +39,7 @@ namespace gr
 		void SetTextureSamplerUniform(
 			std::string const& uniformName,
 			std::shared_ptr<gr::Texture> texture, 
-			std::shared_ptr<gr::Sampler const> sampler) const;
+			std::shared_ptr<gr::Sampler> sampler) const;
 
 		inline platform::Shader::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
 		inline platform::Shader::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }

@@ -1,4 +1,5 @@
 #include "Texture.h"
+#include "Texture_Platform.h"
 #include "DebugConfiguration.h"
 
 using glm::vec4;
@@ -7,37 +8,17 @@ using std::string;
 
 namespace gr
 {
-	Texture::Texture(string const& name, TextureParams const& params) :
-			NamedObject(name),
-		m_texParams{ params },
-		m_isCreated{ false },
-		m_isDirty{ true },
-		m_platformParams{ nullptr } // Initialized during Create(), to ensure the texture is correctly configured
+	Texture::Texture(string const& name, TextureParams const& params)
+		: NamedObject(name)
+		, m_texParams{ params }
+		, m_platformParams{ nullptr }
 	{
+		platform::Texture::CreatePlatformParams(*this);
+
 		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
 		
 		m_texels.resize(params.m_faces * params.m_width * params.m_height * bytesPerPixel);
-		Fill(params.m_clearColor);
-	}
-
-
-	void gr::Texture::Create()
-	{
-		// Note: Textures are shared, so duplicate Create() calls can/do happen. Simplest solution is to just abort here
-		if (m_isCreated)
-		{
-			return;
-		}
-
-		platform::Texture::Create(*this);
-		m_isDirty = false;
-		m_isCreated = true;
-	}
-
-
-	void gr::Texture::Bind(uint32_t textureUnit, bool doBind) const
-	{
-		platform::Texture::Bind(*this, textureUnit, doBind);
+		Fill(params.m_clearColor);		
 	}
 
 
@@ -47,8 +28,6 @@ namespace gr
 		{
 			m_texels.clear();
 		}
-		m_isCreated = false;
-		m_isDirty = true;
 
 		platform::Texture::Destroy(*this);
 
@@ -56,7 +35,27 @@ namespace gr
 	}
 
 
-	uint8_t const* gr::Texture::GetTexel(uint32_t u, uint32_t v, uint32_t faceIdx) const
+	void Texture::SetPlatformParams(std::unique_ptr<gr::Texture::PlatformParams> platformParams)
+	{ 
+		m_platformParams = std::move(platformParams);
+	}
+
+
+	void Texture::SetTextureParams(gr::Texture::TextureParams const& params) 
+	{ 
+		m_texParams = params; 
+		m_platformParams->m_isDirty = true; 
+	}
+
+
+	std::vector<uint8_t>& Texture::Texels() 
+	{ 
+		m_platformParams->m_isDirty = true; 
+		return m_texels; 
+	}
+
+
+	uint8_t const* Texture::GetTexel(uint32_t u, uint32_t v, uint32_t faceIdx) const
 	{
 		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
 
@@ -206,7 +205,7 @@ namespace gr
 		}
 		}
 
-		m_isDirty = true;
+		m_platformParams->m_isDirty = true;
 	}
 
 
@@ -219,7 +218,7 @@ namespace gr
 				SetTexel(col, row, solidColor);
 			}
 		}
-		m_isDirty = true;
+		m_platformParams->m_isDirty = true;
 	}
 
 
@@ -238,7 +237,7 @@ namespace gr
 				SetTexel(col, row, (horDelta * endCol) + ((1.0f - horDelta) * startCol));
 			}
 		}
-		m_isDirty = true;
+		m_platformParams->m_isDirty = true;
 	}
 
 

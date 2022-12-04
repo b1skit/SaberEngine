@@ -130,7 +130,6 @@ namespace gr
 
 		if (m_skyTexture != nullptr)
 		{
-			m_skyTexture->Create();
 			m_skyboxStage.GetStageShader()->Create();
 			LOG("Successfully loaded skybox");			
 		}
