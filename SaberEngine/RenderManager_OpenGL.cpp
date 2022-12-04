@@ -131,11 +131,11 @@ namespace opengl
 				// Set stage param blocks:
 				opengl::Shader::SetParameterBlock(*stageShader, *stageTargets.GetTargetParameterBlock().get());
 
-				for (std::shared_ptr<re::ParameterBlock const> permanentPB : renderStage->GetPermanentParameterBlocks())
+				for (std::shared_ptr<re::ParameterBlock> permanentPB : renderStage->GetPermanentParameterBlocks())
 				{
 					opengl::Shader::SetParameterBlock(*stageShader, *permanentPB.get());
 				}
-				for (std::shared_ptr<re::ParameterBlock const> perFramePB : renderStage->GetPerFrameParameterBlocks())
+				for (std::shared_ptr<re::ParameterBlock> perFramePB : renderStage->GetPerFrameParameterBlocks())
 				{
 					opengl::Shader::SetParameterBlock(*stageShader, *perFramePB.get());
 				}
@@ -167,7 +167,7 @@ namespace opengl
 					opengl::MeshPrimitive::Bind(*batch.GetBatchMesh(), true);
 
 					// Batch material:
-					gr::Material const* batchmaterial = batch.GetBatchMaterial();
+					gr::Material* batchmaterial = batch.GetBatchMaterial();
 					if (batchmaterial && renderStage->WritesColor())
 					{
 						// TODO: Reverse this logic. It should be stageShader->BindMaterial
@@ -175,8 +175,8 @@ namespace opengl
 					}
 
 					// Batch parameter blocks:
-					vector<shared_ptr<re::ParameterBlock const>> const& batchPBs = batch.GetBatchParameterBlocks();
-					for (shared_ptr<re::ParameterBlock const> batchPB : batchPBs)
+					vector<shared_ptr<re::ParameterBlock>> const& batchPBs = batch.GetBatchParameterBlocks();
+					for (shared_ptr<re::ParameterBlock> batchPB : batchPBs)
 					{
 						opengl::Shader::SetParameterBlock(*stageShader, *batchPB.get());
 					}

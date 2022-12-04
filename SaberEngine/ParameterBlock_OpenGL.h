@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 
 #include "ParameterBlock_Platform.h"
+#include "ParameterBlock.h"
 
 
 namespace opengl
@@ -10,7 +11,7 @@ namespace opengl
 	class ParameterBlock
 	{
 	public:
-		struct PlatformParams : public virtual platform::ParameterBlock::PlatformParams
+		struct PlatformParams final : public virtual re::ParameterBlock::PlatformParams
 		{
 			PlatformParams() = default;
 			~PlatformParams() override = default;
@@ -18,6 +19,8 @@ namespace opengl
 			// OpenGL-specific parameters:
 			GLuint m_ssbo = 0; // Shader Storage Buffer Object (SSBO) handle
 		};
+
+
 	public:
 		// ParameterBlock platform handles:
 		static void Create(re::ParameterBlock& paramBlock);
@@ -25,7 +28,7 @@ namespace opengl
 		static void Destroy(re::ParameterBlock& paramBlock);
 
 		// OpenGL-specific functionality:
-		static void Bind(re::ParameterBlock const& paramBlock, GLuint uniformBlockIdx);
+		static void Bind(re::ParameterBlock& paramBlock, GLuint uniformBlockIdx);
 
 	private:
 

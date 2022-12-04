@@ -71,7 +71,7 @@ namespace fr
 
 		// Materials:
 		void AddUniqueMaterial(std::shared_ptr<gr::Material>& newMaterial);
-		std::shared_ptr<gr::Material const> GetMaterial(std::string const& materialName) const;
+		std::shared_ptr<gr::Material> GetMaterial(std::string const& materialName) const;
 		inline bool MaterialExists(std::string const& matName) const;
 
 		// SceneData bounds:

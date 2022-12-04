@@ -3,7 +3,6 @@
 #include <memory>
 #include <string>
 
-#include "ParameterBlock_Platform.h"
 #include "NamedObject.h"
 #include "DebugConfiguration.h"
 
@@ -12,6 +11,23 @@ namespace re
 {
 	class ParameterBlock : public virtual en::NamedObject
 	{
+	public:
+		struct PlatformParams
+		{
+			// Params contain unique GPU bindings that should not be arbitrarily copied/duplicated
+			PlatformParams() = default;
+			PlatformParams(PlatformParams&) = delete;
+			PlatformParams(PlatformParams&&) = delete;
+			PlatformParams& operator=(PlatformParams&) = delete;
+			PlatformParams& operator=(PlatformParams&&) = delete;
+
+			// API-specific GPU bindings should be destroyed here
+			virtual ~PlatformParams() = 0;
+
+			bool m_isCreated = false;
+		};
+
+
 	public:
 		enum class UpdateType
 		{
@@ -63,7 +79,8 @@ namespace re
 		bool GetDirty() const { return m_isDirty; }
 		void MarkClean() { m_isDirty = false; }
 
-		inline platform::ParameterBlock::PlatformParams* const GetPlatformParams() const { return m_platformParams.get(); }
+		inline PlatformParams* const GetPlatformParams() const { return m_platformParams.get(); }
+		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
 
 	private:		
 		uint64_t m_typeIDHash; // Hash of the typeid(T) at Create: Used to verify committed data types don't change
@@ -73,11 +90,12 @@ namespace re
 
 		bool m_isDirty;
 
-		std::unique_ptr<platform::ParameterBlock::PlatformParams> m_platformParams;
+		std::unique_ptr<PlatformParams> m_platformParams;
 		
 
 	private:
-		static void RegisterAndCommit(std::shared_ptr<re::ParameterBlock> newPB, void const* data, size_t numBytes);
+		static void RegisterAndCommit(
+			std::shared_ptr<re::ParameterBlock> newPB, void const* data, size_t numBytes, uint64_t typeIDHash);
 		void CommitInternal(void const* data, uint64_t typeIDHash);
 
 		void Destroy();
@@ -88,9 +106,6 @@ namespace re
 		ParameterBlock(ParameterBlock const&) = delete;
 		ParameterBlock(ParameterBlock&&) = delete;
 		ParameterBlock& operator=(ParameterBlock const&) = delete;
-
-		// Friends:
-		friend void platform::ParameterBlock::PlatformParams::CreatePlatformParams(re::ParameterBlock&);
 	};
 
 
@@ -102,7 +117,7 @@ namespace re
 		std::shared_ptr<re::ParameterBlock> newPB =
 			make_shared<re::ParameterBlock>(Accessor(), typeid(T).hash_code(), pbName, updateType, lifetime);
 
-		RegisterAndCommit(newPB, &data, sizeof(T));
+		RegisterAndCommit(newPB, &data, sizeof(T), typeid(T).hash_code());
 
 		return newPB;
 	}
@@ -116,7 +131,7 @@ namespace re
 		std::shared_ptr<re::ParameterBlock> newPB =
 			make_shared<ParameterBlock>(Accessor(), typeid(T).hash_code(), pbName, updateType, lifetime);
 
-		RegisterAndCommit(newPB, dataArray, dataByteSize * numElements);
+		RegisterAndCommit(newPB, dataArray, dataByteSize * numElements, typeid(T).hash_code());
 
 		return newPB;
 	}
@@ -127,4 +142,8 @@ namespace re
 	{
 		CommitInternal(&data, typeid(T).hash_code());
 	}
+
+
+	// We need to provide a destructor implementation since it's pure virtual
+	inline ParameterBlock::PlatformParams::~PlatformParams() {};
 }

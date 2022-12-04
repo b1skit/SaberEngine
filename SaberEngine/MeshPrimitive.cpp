@@ -36,7 +36,7 @@ namespace re
 		vector<float>& colors,
 		vector<uint8_t> joints,
 		vector<float> weights,
-		shared_ptr<gr::Material const> material,
+		shared_ptr<gr::Material> material,
 		MeshPrimitiveParams const& meshParams,
 		Transform* ownerTransform) 
 		: NamedObject(name)

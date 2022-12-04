@@ -913,7 +913,7 @@ namespace
 			// Get the pre-loaded material:
 			const string matName = GenerateMaterialName(*current->mesh->primitives[primitive].material);
 			SEAssert("Could not find material", scene.MaterialExists(matName));
-			shared_ptr<gr::Material const> material = scene.GetMaterial(matName);
+			shared_ptr<gr::Material> material = scene.GetMaterial(matName);
 
 			// Attach the primitive:
 			parent->GetMesh()->AddMeshPrimitive(make_shared<MeshPrimitive>(
@@ -1271,7 +1271,7 @@ namespace fr
 	}
 
 
-	std::shared_ptr<gr::Material const> SceneData::GetMaterial(std::string const& materialName) const
+	std::shared_ptr<gr::Material> SceneData::GetMaterial(std::string const& materialName) const
 	{
 		const size_t nameID = NamedObject::ComputeIDFromName(materialName);
 		unordered_map<size_t, shared_ptr<gr::Material>>::const_iterator matPos = m_materials.find(nameID);

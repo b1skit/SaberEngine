@@ -52,8 +52,8 @@ namespace re
 		};
 
 	public:
-		Batch(re::MeshPrimitive* meshPrimitive, gr::Material const* material, gr::Shader const* shader);
-		Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material const* material, gr::Shader const* shader);
+		Batch(re::MeshPrimitive* meshPrimitive, gr::Material* material, gr::Shader const* shader);
+		Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material* material, gr::Shader const* shader);
 
 		~Batch() = default;
 		Batch(Batch const&) = default;
@@ -61,14 +61,14 @@ namespace re
 		Batch& operator=(Batch const&) = default;
 		
 		inline re::MeshPrimitive* GetBatchMesh() const { return m_batchMeshPrimitive; }
-		inline gr::Material const* GetBatchMaterial() const { return m_batchMaterial; }
+		inline gr::Material* GetBatchMaterial() const { return m_batchMaterial; }
 		inline gr::Shader const* GetBatchShader() const { return m_batchShader; }
 
 		inline size_t GetInstanceCount() const { return m_numInstances; }
 
-		inline void AddBatchParameterBlock(std::shared_ptr<re::ParameterBlock const> paramBlock) 
+		inline void AddBatchParameterBlock(std::shared_ptr<re::ParameterBlock> paramBlock) 
 			{ m_batchParamBlocks.emplace_back(paramBlock); }
-		inline std::vector<std::shared_ptr<re::ParameterBlock const>> const& GetBatchParameterBlocks() const 
+		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetBatchParameterBlocks() const 
 			{ return m_batchParamBlocks; }
 
 		template <typename T>
@@ -85,10 +85,10 @@ namespace re
 
 	private:
 		re::MeshPrimitive* m_batchMeshPrimitive;
-		gr::Material const* m_batchMaterial;
+		gr::Material* m_batchMaterial;
 		gr::Shader const* m_batchShader;
 
-		std::vector<std::shared_ptr<re::ParameterBlock const>> m_batchParamBlocks;
+		std::vector<std::shared_ptr<re::ParameterBlock>> m_batchParamBlocks;
 
 		std::vector<Batch::ShaderUniform> m_batchUniforms;
 

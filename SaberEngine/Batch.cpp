@@ -17,13 +17,13 @@ namespace
 
 namespace re
 {
-	Batch::Batch(re::MeshPrimitive* meshPrimitive, gr::Material const* material, gr::Shader const* shader) :	
-		m_batchMeshPrimitive(meshPrimitive),
-		m_batchMaterial(material),
-		m_batchShader(shader),
-		m_batchGeometryMode(GeometryMode::Indexed),
-		m_batchFilterMask(0),
-		m_numInstances(1)
+	Batch::Batch(re::MeshPrimitive* meshPrimitive, gr::Material* material, gr::Shader const* shader)
+		: m_batchMeshPrimitive(meshPrimitive)
+		, m_batchMaterial(material)
+		, m_batchShader(shader)
+		, m_batchGeometryMode(GeometryMode::Indexed)
+		, m_batchFilterMask(0)
+		, m_numInstances(1)
 	{
 		m_batchParamBlocks.reserve(k_batchParamBlockIDsReserveAmount);
 
@@ -37,8 +37,8 @@ namespace re
 	}
 
 
-	Batch::Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material const* material, gr::Shader const* shader)
-		: Batch(mesh->GetMeshPrimitives()[0].get(), material, shader) // Delegating ctor
+	Batch::Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material* material, gr::Shader const* shader)
+		: Batch(mesh->GetMeshPrimitives()[0].get(), material, shader)
 	{
 			SEAssert("Currently only support Mesh with a single MeshPrimitve. TODO: Support > 1 MeshPrimitve", 
 			mesh->GetMeshPrimitives().size() == 1);

@@ -369,7 +369,7 @@ namespace opengl
 	}
 
 
-	void Shader::SetParameterBlock(gr::Shader& shader, re::ParameterBlock const& paramBlock)
+	void Shader::SetParameterBlock(gr::Shader& shader, re::ParameterBlock& paramBlock)
 	{
 		// Ensure the shader is created
 		opengl::Shader::Create(shader);

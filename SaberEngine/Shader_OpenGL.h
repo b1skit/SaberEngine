@@ -42,7 +42,7 @@ namespace opengl
 			void* value, 
 			gr::Shader::UniformType const type, 
 			int const count);
-		static void SetParameterBlock(gr::Shader&, re::ParameterBlock const&);
+		static void SetParameterBlock(gr::Shader&, re::ParameterBlock&);
 		static void Destroy(gr::Shader& shader);
 	};
 }

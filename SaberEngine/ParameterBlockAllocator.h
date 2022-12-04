@@ -35,7 +35,7 @@ namespace re
 
 		// We hold a reference to all parameter blocks so we can pump update on mutable PBs; We don't really need
 		// to hold them for immutable or single frame PBs, but no harm for now
-		std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock const>> m_immutablePBs;
+		std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>> m_immutablePBs;
 		std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>> m_mutablePBs;
 		std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>> m_singleFramePBs;
 		

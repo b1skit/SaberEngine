@@ -39,7 +39,7 @@ namespace platform
 			void* value, 
 			gr::Shader::UniformType const type,
 			int const count);
-		static void (*SetParameterBlock)(gr::Shader& shader, re::ParameterBlock const& paramBlock);
+		static void (*SetParameterBlock)(gr::Shader& shader, re::ParameterBlock& paramBlock);
 		static void (*Destroy)(gr::Shader&);
 	};
 }	

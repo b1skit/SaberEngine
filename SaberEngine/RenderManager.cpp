@@ -131,7 +131,7 @@ namespace re
 	{
 		m_sceneBatches.clear();
 
-		fr::SceneData const * const sceneData = SceneManager::GetSceneData();
+		fr::SceneData const* const sceneData = SceneManager::GetSceneData();
 
 		std::vector<shared_ptr<re::MeshPrimitive>> const& sceneMeshPrimitives = sceneData->GetMeshPrimitives();
 		if (sceneMeshPrimitives.empty())

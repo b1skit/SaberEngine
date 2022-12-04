@@ -209,7 +209,7 @@ namespace platform
 		void* value, 
 		gr::Shader::UniformType const type, 
 		int const count) = nullptr;
-	void (*platform::Shader::SetParameterBlock)(gr::Shader&, re::ParameterBlock const&) = nullptr;
+	void (*platform::Shader::SetParameterBlock)(gr::Shader&, re::ParameterBlock&) = nullptr;
 	void (*platform::Shader::Destroy)(gr::Shader&) = nullptr;
 
 }

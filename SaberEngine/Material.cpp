@@ -81,7 +81,7 @@ namespace gr
 	}
 
 
-	void Material::BindToShader(std::shared_ptr<gr::Shader> shaderOverride) const
+	void Material::BindToShader(std::shared_ptr<gr::Shader> shaderOverride)
 	{
 		shared_ptr<gr::Shader> shader = shaderOverride == nullptr ? m_shader : shaderOverride;
 

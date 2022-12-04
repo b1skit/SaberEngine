@@ -53,7 +53,7 @@ namespace re
 			std::vector<float>& colors,	
 			std::vector<uint8_t> joints,
 			std::vector<float> weights,
-			std::shared_ptr<gr::Material const> material,
+			std::shared_ptr<gr::Material> material,
 			re::MeshPrimitive::MeshPrimitiveParams const& meshParams,
 			gr::Transform* ownerTransform);
 
@@ -63,7 +63,7 @@ namespace re
 		// Getters/Setters:
 		inline MeshPrimitiveParams const& GetMeshParams() const { return m_params; }
 
-		inline std::shared_ptr<gr::Material const> MeshMaterial() const { return m_meshMaterial; }
+		inline std::shared_ptr<gr::Material> MeshMaterial() { return m_meshMaterial; }
 
 		inline gr::Transform*& GetOwnerTransform() { return m_ownerTransform; }
 		inline gr::Transform const* GetOwnerTransform() const { return m_ownerTransform; }
@@ -91,7 +91,7 @@ namespace re
 	private:		
 		MeshPrimitiveParams m_params;
 
-		std::shared_ptr<gr::Material const> m_meshMaterial;
+		std::shared_ptr<gr::Material> m_meshMaterial;
 
 		// API-specific mesh params:
 		std::unique_ptr<PlatformParams> m_platformParams;

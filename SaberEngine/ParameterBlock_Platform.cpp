@@ -9,10 +9,10 @@ using en::Config;
 
 namespace platform
 {
-	void platform::ParameterBlock::PlatformParams::CreatePlatformParams(re::ParameterBlock& paramBlock)
+	void platform::ParameterBlock::CreatePlatformParams(re::ParameterBlock& paramBlock)
 	{
 		SEAssert("Attempting to create platform params for a texture that already exists",
-			paramBlock.m_platformParams == nullptr);
+			paramBlock.GetPlatformParams() == nullptr);
 
 		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
@@ -20,7 +20,7 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			paramBlock.m_platformParams = std::make_unique<opengl::ParameterBlock::PlatformParams>();
+			paramBlock.SetPlatformParams(std::make_unique<opengl::ParameterBlock::PlatformParams>());
 		}
 		break;
 		case RenderingAPI::DX12:

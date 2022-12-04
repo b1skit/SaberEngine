@@ -6,9 +6,15 @@
 namespace opengl
 {
 	void ParameterBlock::Create(re::ParameterBlock& paramBlock)
-	{		
+	{
 		PlatformParams* const params =
 			dynamic_cast<opengl::ParameterBlock::PlatformParams* const>(paramBlock.GetPlatformParams());
+
+		if (params->m_isCreated)
+		{
+			return;
+		}
+		params->m_isCreated = true;
 
 		// Generate the buffer:
 		glGenBuffers(1, &params->m_ssbo);
@@ -37,6 +43,9 @@ namespace opengl
 		PlatformParams* const params =
 			dynamic_cast<opengl::ParameterBlock::PlatformParams* const>(paramBlock.GetPlatformParams());
 
+		// Ensure the PB is created before we attempt to update it
+		opengl::ParameterBlock::Create(paramBlock);
+
 		void* data;
 		size_t numBytes;
 		paramBlock.GetDataAndSize(data, numBytes);
@@ -57,8 +66,11 @@ namespace opengl
 	}
 
 
-	void ParameterBlock::Bind(re::ParameterBlock const& paramBlock, GLuint bindIndex)
+	void ParameterBlock::Bind(re::ParameterBlock& paramBlock, GLuint bindIndex)
 	{
+		// Ensure the PB is created before we attempt to bind it
+		opengl::ParameterBlock::Create(paramBlock);
+
 		PlatformParams* const params =
 			dynamic_cast<opengl::ParameterBlock::PlatformParams* const>(paramBlock.GetPlatformParams());
 		 

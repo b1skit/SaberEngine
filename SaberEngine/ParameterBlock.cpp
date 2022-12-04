@@ -19,20 +19,21 @@ namespace re
 		, m_isDirty(true)
 		, m_platformParams(nullptr)
 	{
-		platform::ParameterBlock::PlatformParams::CreatePlatformParams(*this);
+		platform::ParameterBlock::CreatePlatformParams(*this);
 	}
 
 
-	void ParameterBlock::RegisterAndCommit(std::shared_ptr<re::ParameterBlock> newPB, void const* data, size_t numBytes)
+	void ParameterBlock::RegisterAndCommit(
+		std::shared_ptr<re::ParameterBlock> newPB, void const* data, size_t numBytes, uint64_t typeIDHash)
 	{
 		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetParameterBlockAllocator();
 		pbm.RegisterAndAllocateParameterBlock(newPB, numBytes);
 
-		// TODO: This should happen via ParameterBlock::CommitInternal, so we verify the typeIDHash on all paths
-		pbm.Commit(newPB->GetUniqueID(), data);
+		SEAssert("Invalid type detected. Can only set data of the original type",
+			typeIDHash == newPB->m_typeIDHash);
 
-		// Now that we've allocated and committed some data, we can finally perform platform creation (which buffers)
-		platform::ParameterBlock::Create(*newPB);
+		// Note: We commit via the PBM directly here, as we might be an immutable PB
+		pbm.Commit(newPB->GetUniqueID(), data);
 	}
 
 
