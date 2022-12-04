@@ -44,7 +44,7 @@ namespace gr
 			Clamp,
 
 			Invalid,
-			TextureSamplerMode_Count = Invalid
+			Mode_Count = Invalid
 		};
 
 		enum class MinFilter
@@ -55,7 +55,7 @@ namespace gr
 			LinearMipMapLinear,
 
 			Invalid,
-			TextureMinificationMode_Count = Invalid
+			MinFilter_Count = Invalid
 		};
 
 		enum class MaxFilter
@@ -64,7 +64,7 @@ namespace gr
 			Linear,
 
 			Invalid,
-			TextureMaxificationMode_Count = Invalid
+			MaxFilter_Count = Invalid
 		};
 
 		struct SamplerParams
