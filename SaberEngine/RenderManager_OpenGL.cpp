@@ -106,21 +106,31 @@ namespace opengl
 
 				RenderStage::PipelineStateParams const& stagePipelineParams = renderStage->GetStagePipelineStateParams();
 
-				// Configure the shader:
-				std::shared_ptr<gr::Shader> stageShader = renderStage->GetStageShader();
-				opengl::Shader::Bind(*stageShader, true);
-				// TODO: Handle shaders set by stages/materials/batches
-				// Priority order: Stage, batch/material?
-
 				// Attach the stage targets:
 				TextureTargetSet const& stageTargets = renderStage->GetTextureTargetSet();
 				stageTargets.AttachColorDepthStencilTargets(
 					stagePipelineParams.m_textureTargetSetConfig.m_targetFace, 
 					stagePipelineParams.m_textureTargetSetConfig.m_targetMip, 
 					true);
-				stageShader->SetParameterBlock(*stageTargets.GetTargetParameterBlock().get());
+				
+				// Configure the context:
+				renderManager.m_context.SetCullingMode(stagePipelineParams.m_faceCullingMode);
+				renderManager.m_context.SetBlendMode(stagePipelineParams.m_srcBlendMode, stagePipelineParams.m_dstBlendMode);
+				renderManager.m_context.SetDepthTestMode(stagePipelineParams.m_depthTestMode);
+				renderManager.m_context.SetDepthWriteMode(stagePipelineParams.m_depthWriteMode);
+				renderManager.m_context.SetColorWriteMode(stagePipelineParams.m_colorWriteMode);
+				renderManager.m_context.ClearTargets(stagePipelineParams.m_targetClearMode); // Clear AFTER setting color/depth modes
+				// TODO: Move this to a "set pipeline state" helper within Context?
+
+				// Bind the shader now that the context configuration is known:
+				std::shared_ptr<gr::Shader> stageShader = renderStage->GetStageShader();
+				opengl::Shader::Bind(*stageShader, true);
+				// TODO: Handle shaders set by stages/materials/batches
+				// Priority order: Stage, batch/material?
 
 				// Set stage param blocks:
+				stageShader->SetParameterBlock(*stageTargets.GetTargetParameterBlock().get());
+
 				for (std::shared_ptr<re::ParameterBlock const> permanentPB : renderStage->GetPermanentParameterBlocks())
 				{
 					stageShader->SetParameterBlock(*permanentPB.get());
@@ -145,16 +155,6 @@ namespace opengl
 				{
 					stageShader->SetParameterBlock(*stageCam->GetCameraParams().get());
 				}
-
-				// Configure the context:
-				renderManager.m_context.SetCullingMode(stagePipelineParams.m_faceCullingMode);
-				renderManager.m_context.SetBlendMode(stagePipelineParams.m_srcBlendMode, stagePipelineParams.m_dstBlendMode);
-				renderManager.m_context.SetDepthTestMode(stagePipelineParams.m_depthTestMode);
-				renderManager.m_context.SetDepthWriteMode(stagePipelineParams.m_depthWriteMode);
-				renderManager.m_context.SetColorWriteMode(stagePipelineParams.m_colorWriteMode);
-				renderManager.m_context.ClearTargets(stagePipelineParams.m_targetClearMode); // Clear AFTER setting color/depth modes
-				// TODO: Move this to a "set pipeline state" helper within Context?
-
 
 				// Render stage batches:
 				std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
