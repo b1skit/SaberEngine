@@ -37,7 +37,7 @@ namespace gr
 
 
 	public:
-		enum class TextureSamplerMode
+		enum class Mode
 		{
 			Wrap,
 			Mirrored,
@@ -47,7 +47,7 @@ namespace gr
 			TextureSamplerMode_Count = Invalid
 		};
 
-		enum class TextureMinFilter
+		enum class MinFilter
 		{
 			Nearest,
 			NearestMipMapLinear,
@@ -58,7 +58,7 @@ namespace gr
 			TextureMinificationMode_Count = Invalid
 		};
 
-		enum class TextureMaxFilter
+		enum class MaxFilter
 		{
 			Nearest,
 			Linear,
@@ -69,9 +69,9 @@ namespace gr
 
 		struct SamplerParams
 		{
-			TextureSamplerMode m_texSamplerMode = TextureSamplerMode::Wrap;
-			TextureMinFilter m_texMinMode = TextureMinFilter::LinearMipMapLinear;
-			TextureMaxFilter m_texMaxMode = TextureMaxFilter::Linear;
+			Mode m_texSamplerMode = Mode::Wrap;
+			MinFilter m_texMinMode = MinFilter::LinearMipMapLinear;
+			MaxFilter m_texMaxMode = MaxFilter::Linear;
 		};
 
 

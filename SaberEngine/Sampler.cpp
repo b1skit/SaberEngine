@@ -38,9 +38,9 @@ namespace gr
 			
 			// WrapWrapLinear: Reading/writing to the GBuffer
 			Sampler::SamplerParams WrapLinearLinearParams = {
-				Sampler::TextureSamplerMode::Wrap,
-				Sampler::TextureMinFilter::Linear,
-				Sampler::TextureMaxFilter::Linear
+				Sampler::Mode::Wrap,
+				Sampler::MinFilter::Linear,
+				Sampler::MaxFilter::Linear
 			};
 			shared_ptr<gr::Sampler> WrapLinearLinear = make_shared<gr::Sampler>(
 				SamplerTypeLibraryNames[(size_t)Sampler::SamplerType::WrapLinearLinear], 
@@ -50,9 +50,9 @@ namespace gr
 
 			// ClampLinearLinear: Depth maps
 			Sampler::SamplerParams ClampLinearLinearParams = {
-				Sampler::TextureSamplerMode::Clamp ,
-				Sampler::TextureMinFilter::Linear,
-				Sampler::TextureMaxFilter::Linear
+				Sampler::Mode::Clamp ,
+				Sampler::MinFilter::Linear,
+				Sampler::MaxFilter::Linear
 			};
 			shared_ptr<gr::Sampler> ClampLinearLinear = make_shared<gr::Sampler>(
 				SamplerTypeLibraryNames[(size_t)Sampler::SamplerType::ClampLinearLinear],
@@ -62,9 +62,9 @@ namespace gr
 
 			// ClampNearestNearest: BRDF pre-integration map
 			Sampler::SamplerParams ClampNearestNearestParams = {
-				Sampler::TextureSamplerMode::Clamp,
-				Sampler::TextureMinFilter::Nearest,
-				Sampler::TextureMaxFilter::Nearest
+				Sampler::Mode::Clamp,
+				Sampler::MinFilter::Nearest,
+				Sampler::MaxFilter::Nearest
 			};
 			shared_ptr<gr::Sampler> ClampNearestNearest = make_shared<gr::Sampler>(
 				SamplerTypeLibraryNames[(size_t)Sampler::SamplerType::ClampNearestNearest],
@@ -74,9 +74,9 @@ namespace gr
 
 			// Clamp, LinearMipMapLinear, Linear: HDR input images for IBL
 			Sampler::SamplerParams ClampLinearMipMapLinearLinearParams = {
-				Sampler::TextureSamplerMode::Clamp ,
-				Sampler::TextureMinFilter::LinearMipMapLinear,
-				Sampler::TextureMaxFilter::Linear
+				Sampler::Mode::Clamp ,
+				Sampler::MinFilter::LinearMipMapLinear,
+				Sampler::MaxFilter::Linear
 			};
 			shared_ptr<gr::Sampler> ClampLinearMipMapLinearLinear = make_shared<gr::Sampler>(
 				SamplerTypeLibraryNames[(size_t)Sampler::SamplerType::ClampLinearMipMapLinearLinear],
@@ -86,9 +86,9 @@ namespace gr
 
 			// Wrap, LinearMipMapLinear, Linear: Skybox/IBL cubemaps
 			Sampler::SamplerParams WrapLinearMipMapLinearLinearParams = {
-				Sampler::TextureSamplerMode::Wrap,
-				Sampler::TextureMinFilter::LinearMipMapLinear,
-				Sampler::TextureMaxFilter::Linear
+				Sampler::Mode::Wrap,
+				Sampler::MinFilter::LinearMipMapLinear,
+				Sampler::MaxFilter::Linear
 			};
 			shared_ptr<gr::Sampler> WrapLinearMipMapLinearLinear = make_shared<gr::Sampler>(
 				SamplerTypeLibraryNames[(size_t)Sampler::SamplerType::WrapLinearMipMapLinearLinear],

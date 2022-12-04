@@ -15,22 +15,22 @@ namespace opengl
 		/*********************/
 		switch (samplerParams.m_texMinMode)
 		{
-		case gr::Sampler::TextureMinFilter::Nearest:
+		case gr::Sampler::MinFilter::Nearest:
 		{
 			m_textureMinFilter = GL_NEAREST;
 		}
 		break;
-		case gr::Sampler::TextureMinFilter::NearestMipMapLinear:
+		case gr::Sampler::MinFilter::NearestMipMapLinear:
 		{
 			m_textureMinFilter = GL_NEAREST_MIPMAP_LINEAR;
 		}
 		break;
-		case gr::Sampler::TextureMinFilter::Linear:
+		case gr::Sampler::MinFilter::Linear:
 		{
 			m_textureMinFilter = GL_LINEAR;
 		}
 		break;
-		case gr::Sampler::TextureMinFilter::LinearMipMapLinear:
+		case gr::Sampler::MinFilter::LinearMipMapLinear:
 		{
 			m_textureMinFilter = GL_LINEAR_MIPMAP_LINEAR;
 		}
@@ -43,12 +43,12 @@ namespace opengl
 		/*********************/
 		switch (samplerParams.m_texMaxMode)
 		{
-		case gr::Sampler::TextureMaxFilter::Nearest: // Point sampling
+		case gr::Sampler::MaxFilter::Nearest: // Point sampling
 		{
 			m_textureMaxFilter = GL_NEAREST;
 		}
 		break;
-		case gr::Sampler::TextureMaxFilter::Linear: // Weighted linear blend
+		case gr::Sampler::MaxFilter::Linear: // Weighted linear blend
 		{
 			m_textureMaxFilter = GL_LINEAR;
 		}
@@ -62,21 +62,21 @@ namespace opengl
 		/***************/
 		switch (samplerParams.m_texSamplerMode)
 		{
-		case gr::Sampler::TextureSamplerMode::Wrap:
+		case gr::Sampler::Mode::Wrap:
 		{
 			m_textureWrapS = GL_REPEAT;
 			m_textureWrapT = GL_REPEAT;
 			m_textureWrapR = GL_REPEAT;
 		}
 		break;
-		case gr::Sampler::TextureSamplerMode::Mirrored:
+		case gr::Sampler::Mode::Mirrored:
 		{
 			m_textureWrapS = GL_MIRRORED_REPEAT;
 			m_textureWrapT = GL_MIRRORED_REPEAT;
 			m_textureWrapR = GL_MIRRORED_REPEAT;
 		}
 		break;
-		case gr::Sampler::TextureSamplerMode::Clamp:
+		case gr::Sampler::Mode::Clamp:
 		{
 			m_textureWrapS = GL_CLAMP_TO_EDGE;
 			m_textureWrapT = GL_CLAMP_TO_EDGE;
