@@ -385,7 +385,6 @@ namespace
 		const size_t numMaterials = data->materials_count;
 		LOG("Loading %d scene materials", numMaterials);
 
-		std::condition_variable matLoadsCV;
 		std::atomic_uint numMatLoads(0);
 
 		for (size_t cur = 0; cur < numMaterials; cur++)
@@ -500,10 +499,10 @@ namespace
 			scene.AddUniqueMaterial(newMat);
 		}
 
-		// Wait until all of the textures are loaded:
+		// Wait until all of the textures are loaded:	
 		while (numMatLoads > 0)
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+			std::this_thread::yield();
 		}
 	}
 
