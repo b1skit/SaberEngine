@@ -1,5 +1,5 @@
 #include "Material.h"
-#include "Shader.h"
+#include "Shader_Platform.h"
 #include "Texture.h"
 #include "DebugConfiguration.h"
 #include "Shader.h"
@@ -98,7 +98,7 @@ namespace gr
 
 		if (m_matParams)
 		{
-			shader->SetParameterBlock(*m_matParams.get());
+			platform::Shader::SetParameterBlock(*shader, *m_matParams.get());
 		}
 	}
 

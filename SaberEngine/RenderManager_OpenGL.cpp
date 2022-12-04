@@ -129,15 +129,15 @@ namespace opengl
 				// Priority order: Stage, batch/material?
 
 				// Set stage param blocks:
-				stageShader->SetParameterBlock(*stageTargets.GetTargetParameterBlock().get());
+				opengl::Shader::SetParameterBlock(*stageShader, *stageTargets.GetTargetParameterBlock().get());
 
 				for (std::shared_ptr<re::ParameterBlock const> permanentPB : renderStage->GetPermanentParameterBlocks())
 				{
-					stageShader->SetParameterBlock(*permanentPB.get());
+					opengl::Shader::SetParameterBlock(*stageShader, *permanentPB.get());
 				}
 				for (std::shared_ptr<re::ParameterBlock const> perFramePB : renderStage->GetPerFrameParameterBlocks())
 				{
-					stageShader->SetParameterBlock(*perFramePB.get());
+					opengl::Shader::SetParameterBlock(*stageShader, *perFramePB.get());
 				}
 
 				// Set per-frame stage shader uniforms:
@@ -145,15 +145,15 @@ namespace opengl
 					renderStage->GetPerFrameShaderUniforms();
 				for (RenderStage::StageShaderUniform curUniform : stagePerFrameShaderUniforms)
 				{
-					stageShader->SetUniform(
-						curUniform.m_uniformName, curUniform.m_value, curUniform.m_type, curUniform.m_count);
+					opengl::Shader::SetUniform(
+						*stageShader, curUniform.m_uniformName, curUniform.m_value, curUniform.m_type, curUniform.m_count);
 				}
 
 				// Set camera params:
 				Camera const* const stageCam = renderStage->GetStageCamera();
 				if (stageCam)
 				{
-					stageShader->SetParameterBlock(*stageCam->GetCameraParams().get());
+					opengl::Shader::SetParameterBlock(*stageShader, *stageCam->GetCameraParams().get());
 				}
 
 				// Render stage batches:
@@ -178,13 +178,13 @@ namespace opengl
 					vector<shared_ptr<re::ParameterBlock const>> const& batchPBs = batch.GetBatchParameterBlocks();
 					for (shared_ptr<re::ParameterBlock const> batchPB : batchPBs)
 					{
-						stageShader->SetParameterBlock(*batchPB.get());
+						opengl::Shader::SetParameterBlock(*stageShader, *batchPB.get());
 					}
 
 					// Batch uniforms:
 					for (re::Batch::ShaderUniform const& shaderUniform : batch.GetBatchUniforms())
 					{
-						stageShader->SetUniform(
+						opengl::Shader::SetUniform(*stageShader,
 							shaderUniform.m_uniformName,
 							shaderUniform.m_value.get(),
 							shaderUniform.m_type,

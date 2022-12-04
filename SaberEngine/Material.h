@@ -100,6 +100,7 @@ namespace gr
 
 		inline size_t const& NumTextureSlots() { return m_texSlots.size(); }
 
+		// TODO: Move this functionality to the shader
 		void BindToShader(std::shared_ptr<gr::Shader> shaderOverride) const;
 
 	private:
