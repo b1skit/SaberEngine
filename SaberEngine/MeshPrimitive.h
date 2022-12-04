@@ -5,7 +5,6 @@
 
 #include "Transform.h"
 #include "Material.h"
-#include "MeshPrimitive_Platform.h"
 #include "NamedObject.h"
 #include "HashedDataObject.h"
 #include "Bounds.h"
@@ -15,6 +14,15 @@ namespace re
 {
 	class MeshPrimitive : public virtual en::NamedObject, public virtual en::HashedDataObject
 	{
+	public:
+		struct PlatformParams
+		{
+			virtual ~PlatformParams() = 0;
+
+			bool m_isCreated = false;
+		};
+
+
 	public:
 		enum class DrawMode
 		{
@@ -50,12 +58,9 @@ namespace re
 			gr::Transform* ownerTransform);
 
 		~MeshPrimitive(){ Destroy(); }
-
-		void Bind(bool doBind) const;
-		void Destroy();
+		
 		
 		// Getters/Setters:
-		inline MeshPrimitiveParams& GetMeshParams() { return m_params; }
 		inline MeshPrimitiveParams const& GetMeshParams() const { return m_params; }
 
 		inline std::shared_ptr<gr::Material const> MeshMaterial() const { return m_meshMaterial; }
@@ -75,8 +80,13 @@ namespace re
 
 		inline size_t NumIndices() const { return m_indices.size(); }
 
-		inline std::unique_ptr<platform::MeshPrimitive::PlatformParams>& GetPlatformParams() { return m_platformParams; }
-		inline std::unique_ptr<platform::MeshPrimitive::PlatformParams> const& GetPlatformParams() const { return m_platformParams; }
+		inline std::unique_ptr<PlatformParams>& GetPlatformParams() { return m_platformParams; }
+		inline std::unique_ptr<PlatformParams> const& GetPlatformParams() const { return m_platformParams; }
+
+
+	private:
+		void Destroy();
+
 
 	private:		
 		MeshPrimitiveParams m_params;
@@ -84,7 +94,7 @@ namespace re
 		std::shared_ptr<gr::Material const> m_meshMaterial;
 
 		// API-specific mesh params:
-		std::unique_ptr<platform::MeshPrimitive::PlatformParams> m_platformParams;
+		std::unique_ptr<PlatformParams> m_platformParams;
 
 		// Vertex data streams:
 		std::vector<uint32_t> m_indices;
@@ -112,7 +122,11 @@ namespace re
 		MeshPrimitive& operator=(MeshPrimitive const& rhs) = delete;
 		MeshPrimitive& operator=(MeshPrimitive&& rhs) = delete;
 	};
-}
+
+
+	// We need to provide a destructor implementation since it's pure virtual
+	inline re::MeshPrimitive::PlatformParams::~PlatformParams() {};
+} // re
 
 
 namespace meshfactory
@@ -136,6 +150,4 @@ namespace meshfactory
 		float radius = 0.5f,
 		size_t numLatSlices = 16,
 		size_t numLongSlices = 16);
-}
-
-
+} // meshfactory

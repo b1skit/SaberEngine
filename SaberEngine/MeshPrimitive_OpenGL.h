@@ -30,7 +30,8 @@ namespace opengl
 		};
 		// Note: The order/indexing of this enum MUST match the vertex layout locations in SaberCommon.glsl
 
-		struct PlatformParams : public virtual platform::MeshPrimitive::PlatformParams
+
+		struct PlatformParams final : public virtual re::MeshPrimitive::PlatformParams
 		{
 			PlatformParams(re::MeshPrimitive& meshPrimitive);
 			~PlatformParams() override = default;
@@ -44,7 +45,7 @@ namespace opengl
 		};
 
 		static void Create(re::MeshPrimitive& meshPrimitive);
-		static void Bind(platform::MeshPrimitive::PlatformParams const* params, bool doBind);
+		static void Bind(re::MeshPrimitive& meshPrimitive, bool doBind);
 		static void Destroy(re::MeshPrimitive& meshPrimitive);
 	};
 }

@@ -163,12 +163,13 @@ namespace opengl
 					opengl::MeshPrimitive::PlatformParams const* const meshPlatParams =
 						dynamic_cast<opengl::MeshPrimitive::PlatformParams const* const>(batch.GetBatchMesh()->GetPlatformParams().get());
 
-					opengl::MeshPrimitive::Bind(meshPlatParams, true);
+					opengl::MeshPrimitive::Bind(*batch.GetBatchMesh(), true);
 
 					// Batch material:
 					gr::Material const* batchmaterial = batch.GetBatchMaterial();
 					if (batchmaterial && renderStage->WritesColor())
 					{
+						// TODO: Reverse this logic. It should be stageShader->BindMaterial
 						batchmaterial->BindToShader(stageShader);
 					}
 

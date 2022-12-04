@@ -5,6 +5,7 @@
 #include <glm/gtc/constants.hpp>
 
 #include "MeshPrimitive.h"
+#include "MeshPrimitive_Platform.h"
 #include "Config.h"
 
 
@@ -44,6 +45,8 @@ namespace re
 		, m_params(meshParams)
 		, m_ownerTransform(ownerTransform)
 	{
+		platform::MeshPrimitive::CreatePlatformParams(*this);
+			
 		m_indices		= move(indices);
 
 		m_positions		= move(positions);
@@ -63,9 +66,7 @@ namespace re
 		else
 		{
 			m_localBounds = Bounds(positionMinXYZ, positionMaxXYZ);
-		}		
-
-		platform::MeshPrimitive::Create(*this); // Platform-specific setup
+		}
 
 		ComputeDataHash();
 	}
@@ -88,12 +89,6 @@ namespace re
 
 		platform::MeshPrimitive::Destroy(*this); // Platform-specific destruction
 		m_platformParams = nullptr;
-	}
-
-
-	void MeshPrimitive::Bind(bool doBind) const
-	{
-		platform::MeshPrimitive::Bind(m_platformParams.get(), doBind);
 	}
 
 

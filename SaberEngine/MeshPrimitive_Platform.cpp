@@ -8,7 +8,7 @@ using en::Config;
 
 namespace platform
 {
-	void platform::MeshPrimitive::PlatformParams::CreatePlatformParams(re::MeshPrimitive& meshPrimitive)
+	void platform::MeshPrimitive::CreatePlatformParams(re::MeshPrimitive& meshPrimitive)
 	{
 		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
@@ -36,6 +36,6 @@ namespace platform
 	// platform::MeshPrimitive static members:
 	/********************************/
 	void (*MeshPrimitive::Create)(re::MeshPrimitive& meshPrimitive);
-	void (*MeshPrimitive::Bind)(platform::MeshPrimitive::PlatformParams const* params, bool doBind);
+	void (*MeshPrimitive::Bind)(re::MeshPrimitive& meshPrimitive, bool doBind);
 	void (*MeshPrimitive::Destroy)(re::MeshPrimitive& meshPrimitive);
 }
