@@ -12,7 +12,7 @@ namespace opengl
 	class Texture
 	{
 	public:
-		struct PlatformParams final : public virtual platform::Texture::PlatformParams
+		struct PlatformParams final : public virtual gr::Texture::PlatformParams
 		{
 			PlatformParams(gr::Texture::TextureParams const& texParams);
 
