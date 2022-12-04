@@ -11,7 +11,7 @@ namespace opengl
 	class Sampler
 	{
 	public:
-		struct PlatformParams : public virtual platform::Sampler::PlatformParams
+		struct PlatformParams final : public virtual gr::Sampler::PlatformParams
 		{
 			PlatformParams(gr::Sampler::SamplerParams const& samplerParams);
 			~PlatformParams() override;
@@ -34,7 +34,7 @@ namespace opengl
 
 	public:
 		static void Create(gr::Sampler& sampler);
-		static void Bind(gr::Sampler const& sampler, uint32_t textureUnit, bool doBind);
+		static void Bind(gr::Sampler& sampler, uint32_t textureUnit, bool doBind);
 		static void Destroy(gr::Sampler& sampler);
 
 	private:

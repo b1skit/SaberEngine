@@ -18,6 +18,22 @@ namespace gr
 	class Sampler : public virtual en::NamedObject
 	{
 	public:
+		struct PlatformParams
+		{
+			// Params contain unique GPU bindings that should not be arbitrarily copied/duplicated
+			PlatformParams() = default;
+			PlatformParams(PlatformParams&) = delete;
+			PlatformParams(PlatformParams&&) = delete;
+			PlatformParams& operator=(PlatformParams&) = delete;
+			PlatformParams& operator=(PlatformParams&&) = delete;
+
+			// API-specific GPU bindings should be destroyed here
+			virtual ~PlatformParams() = 0;
+
+			bool m_isCreated = false;
+		};
+
+	public:
 		static const std::vector<std::string> SamplerTypeLibraryNames;
 
 		enum class SamplerType
@@ -81,24 +97,22 @@ namespace gr
 
 		SamplerParams const& GetSamplerParams() const { return m_samplerParams; }
 
-		platform::Sampler::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
-		platform::Sampler::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
-		
+		Sampler::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
+		Sampler::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
 
-		// Platform wrappers:
-		void Create();
-		void Bind(uint32_t textureUnit, bool doBind) const;
+
+	private:
 		void Destroy();
 
 	private:
 		SamplerParams m_samplerParams;
-		std::unique_ptr<platform::Sampler::PlatformParams> m_platformParams;
+		std::unique_ptr<Sampler::PlatformParams> m_platformParams;
 
 
 	private:
 		// Friends:
 		friend bool platform::RegisterPlatformFunctions();
-		friend void platform::Sampler::PlatformParams::CreatePlatformParams(gr::Sampler&);
+		friend void platform::Sampler::CreatePlatformParams(gr::Sampler&);
 		friend std::shared_ptr<gr::Sampler const> const GetSampler(Sampler::SamplerType type);
 
 		Sampler() = delete;
@@ -106,4 +120,8 @@ namespace gr
 		Sampler(Sampler const&& rhs) = delete;
 		Sampler& operator=(Sampler const& rhs) = delete;
 	};
+
+
+	// We need to provide a destructor implementation since it's pure virtual
+	inline Sampler::PlatformParams::~PlatformParams() {};
 }

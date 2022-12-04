@@ -338,7 +338,7 @@ namespace opengl
 			if (bindingUnit == params->m_samplerUnits.end()) return;
 #endif
 
-			static_cast<gr::Sampler const*>(value)->Bind(bindingUnit->second, true);
+			platform::Sampler::Bind(*static_cast<gr::Sampler*>(value), bindingUnit->second, true);
 		}
 		break;
 		default:

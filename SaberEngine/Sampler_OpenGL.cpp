@@ -97,6 +97,11 @@ namespace opengl
 
 	void Sampler::Create(gr::Sampler& sampler)
 	{
+		if (sampler.GetPlatformParams()->m_isCreated)
+		{
+			return;
+		}
+
 		LOG("Creating sampler: \"%s\"", sampler.GetName().c_str());
 
 		PlatformParams* const params =
@@ -123,12 +128,18 @@ namespace opengl
 		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MIN_FILTER, params->m_textureMinFilter);
 		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MAG_FILTER, params->m_textureMaxFilter);
 
+		// Finally, update the platform state:
+		params->m_isCreated = true;
+
 		// Note: We leave the sampler bound
 	}
 
 
-	void Sampler::Bind(gr::Sampler const& sampler, uint32_t textureUnit, bool doBind)
+	void Sampler::Bind(gr::Sampler& sampler, uint32_t textureUnit, bool doBind)
 	{
+		// Ensure the sampler is created before we attempt to bind it
+		opengl::Sampler::Create(sampler);
+
 		PlatformParams const* const params =
 			dynamic_cast<opengl::Sampler::PlatformParams const* const>(sampler.GetPlatformParams());
 
