@@ -9,6 +9,7 @@
 #include "Texture.h"
 #include "Texture_OpenGL.h"
 #include "ParameterBlock_OpenGL.h"
+#include "PerformanceTimer.h"
 
 using std::vector;
 using std::shared_ptr;
@@ -16,6 +17,7 @@ using std::string;
 using std::to_string;
 using gr::Texture;
 using gr::Sampler;
+using util::PerformanceTimer;
 
 
 namespace opengl
@@ -37,6 +39,9 @@ namespace opengl
 		string const& shaderFileName = shader.GetName();
 
 		LOG("Creating shader: \"%s\"", shaderFileName.c_str());
+
+		PerformanceTimer timer;
+		timer.Start();
 
 		// Helper mappings:
 		const uint32_t numShaderTypes = 3;
@@ -236,6 +241,9 @@ namespace opengl
 			}			
 		}
 		delete[] name;
+
+
+		LOG("Shader \"%s\" created in %f seconds", shaderFileName.c_str(), timer.StopSec());
 	}
 
 

@@ -14,6 +14,7 @@
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "Batch.h"
+#include "PerformanceTimer.h"
 
 using re::TextureTargetSet;
 using gr::GBufferGraphicsSystem;
@@ -28,6 +29,7 @@ using re::MeshPrimitive;
 using re::Batch;
 using en::Config;
 using en::SceneManager;
+using util::PerformanceTimer;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
@@ -205,7 +207,13 @@ namespace re
 
 	void RenderManager::Initialize()
 	{
+		LOG("RenderManager Initializing...");
+		PerformanceTimer timer;
+		timer.Start();
+
 		platform::RenderManager::Initialize(*this);
+
+		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
 	}
 
 
