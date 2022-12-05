@@ -34,8 +34,10 @@ namespace gr
 	// -> Often need to loop over color, and treat depth differently
 
 
-	GBufferGraphicsSystem::GBufferGraphicsSystem(std::string name) : GraphicsSystem(name), 
-		m_gBufferStage("GBuffer Stage"), NamedObject(name)
+	GBufferGraphicsSystem::GBufferGraphicsSystem(std::string name)
+		: NamedObject(name)
+		, GraphicsSystem(name)
+		, m_gBufferStage("GBuffer Stage")		
 	{
 	}
 
@@ -47,8 +49,7 @@ namespace gr
 			Config::Get()->GetValue<string>("gBufferFillShaderName"));
 
 		// Shader constants: Only set once here
-		float emissiveIntensity =
-			Config::Get()->GetValue<float>("defaultSceneEmissiveIntensity");
+		float emissiveIntensity = Config::Get()->GetValue<float>("defaultSceneEmissiveIntensity");
 		gBufferShader->SetUniform("emissiveIntensity", &emissiveIntensity, gr::Shader::UniformType::Float, 1);
 
 		// Set the shader:
