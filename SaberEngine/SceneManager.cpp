@@ -7,12 +7,14 @@
 #include "Camera.h"
 #include "PlayerObject.h"
 #include "Light.h"
+#include "PerformanceTimer.h"
 
 using gr::Camera;
 using gr::Light;
 using fr::SceneData;
 using en::Config;
 using en::EventManager;
+using util::PerformanceTimer;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
@@ -35,6 +37,9 @@ namespace en
 	void SceneManager::Startup()
 	{
 		LOG("SceneManager starting...");
+
+		PerformanceTimer timer;
+		timer.Start();
 		
 		// Load the scene:
 		const string sceneName = Config::Get()->GetValue<string>("sceneName");
@@ -52,6 +57,8 @@ namespace en
 		shared_ptr<fr::PlayerObject> player = std::make_shared<fr::PlayerObject>(m_sceneData->GetMainCamera());
 		m_sceneData->AddUpdateable(player);
 		LOG("Created PlayerObject using \"%s\"", m_sceneData->GetMainCamera()->GetName().c_str());
+
+		LOG("\nSceneManager::Startup complete in %f seconds...\n", timer.StopSec());
 	}
 
 

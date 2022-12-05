@@ -1022,9 +1022,6 @@ namespace fr
 {
 	bool SceneData::Load(string const& sceneFilePath)
 	{
-		PerformanceTimer timer;
-		timer.Start();
-
 		if (sceneFilePath.empty())
 		{
 			SEAssert("No scene name received. Did you forget to use the \"-scene theSceneName\" command line "
@@ -1082,8 +1079,6 @@ namespace fr
 
 		// Cleanup:
 		cgltf_free(data);
-
-		LOG("\nFinished loading scene data in %f seconds...\n", timer.StopSec());
 
 		return true;
 	}
