@@ -255,6 +255,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="ParameterBlock_OpenGL.h" />
     <ClInclude Include="ParameterBlock_Platform.h" />
     <ClInclude Include="PerformanceTimer.h" />
+    <ClInclude Include="TextLoader.h" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Updateable.h" />
     <ClInclude Include="VertexAttributeBuilder.h" />

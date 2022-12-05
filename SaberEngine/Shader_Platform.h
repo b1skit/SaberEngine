@@ -24,7 +24,6 @@ namespace platform
 
 		// Static helpers:
 		static std::string LoadShaderText(const std::string& filepath); // Loads file "filepath" within the shaders dir
-		// TODO: Move this function to the util namespace, as a generic text loader
 
 		static void	InsertIncludedFiles(std::string& shaderText);
 		static void	InsertDefines(std::string& shaderText, std::vector<std::string> const* shaderKeywords);
@@ -41,6 +40,7 @@ namespace platform
 			int const count);
 		static void (*SetParameterBlock)(gr::Shader& shader, re::ParameterBlock& paramBlock);
 		static void (*Destroy)(gr::Shader&);
+		static void (*LoadShaderTexts)(std::string const& extensionlessName, std::vector<std::string>& shaderTexts_out);
 	};
 }	
 

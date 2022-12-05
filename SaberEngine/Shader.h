@@ -70,14 +70,16 @@ namespace gr
 		inline std::vector<std::string>& ShaderKeywords() { return m_shaderKeywords; }
 		inline std::vector<std::string> const& ShaderKeywords() const { return m_shaderKeywords; }
 
+		std::vector<std::string>& GetShaderTexts() { return m_shaderTexts; }
 
 	private:
 		void Destroy();
-
+		void LoadShaderTexts();
 
 	private:
 		std::unique_ptr<PlatformParams> m_platformParams;
 
+		std::vector<std::string> m_shaderTexts; // Cleared when shader is created
 		std::vector<std::string> m_shaderKeywords;
 
 	private:

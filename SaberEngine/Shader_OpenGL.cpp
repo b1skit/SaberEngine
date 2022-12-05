@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <GL/glew.h> 
 
+#include <array>
+
 #include "DebugConfiguration.h"
 #include "Shader.h"
 #include "Shader_Platform.h"
@@ -10,6 +12,7 @@
 #include "Texture_OpenGL.h"
 #include "ParameterBlock_OpenGL.h"
 #include "PerformanceTimer.h"
+#include "CoreEngine.h"
 
 using std::vector;
 using std::shared_ptr;
@@ -97,22 +100,39 @@ namespace opengl
 		vector<uint32_t> foundShaderTypeFlags;
 		foundShaderTypeFlags.reserve(numShaderTypes);
 
+		SEAssert("Expected an entry for each shader type", shader.GetShaderTexts().size() == numShaderTypes);
+
 		for (size_t i = 0; i < numShaderTypes; i++)
 		{
-			shaderFiles.emplace_back(platform::Shader::LoadShaderText(shaderFileName + shaderFileExtensions[i]));
-			
-			if (shaderFiles.back().empty())
+			// We don't need the shader texts after loading, so we move them here
+			if (!shader.GetShaderTexts()[i].empty())
 			{
-				shaderFiles.pop_back();
-			}
-			else
-			{
+				shaderFiles.emplace_back(std::move(shader.GetShaderTexts()[i]));
 				foundShaderTypeFlags.emplace_back(shaderTypeFlags[i]);
 				shaderFileNames.emplace_back(shaderFileName + shaderFileExtensions[i]);
 			}
 
 			// We tried loading the vertex shader first, so if we hit this it means we failed to find the vertex shader
 			SEAssert("No vertex shader found", shaderFiles.size() > 0);
+		}
+		shader.GetShaderTexts().clear(); // Remove the empty strings
+
+		// Pre-process the shader text:
+		std::atomic<uint8_t> numPreprocessed = 0;
+		for (size_t i = 0; i < shaderFiles.size(); i++)
+		{
+			numPreprocessed++;
+			en::CoreEngine::GetThreadPool()->EnqueueJob(
+				[&shaderFiles, &shader, i, &numPreprocessed]() {
+					platform::Shader::InsertDefines(shaderFiles[i], &shader.ShaderKeywords());
+					platform::Shader::InsertIncludedFiles(shaderFiles[i]);
+					numPreprocessed--;
+				}
+			);			
+		}
+		while (numPreprocessed > 0)
+		{
+			std::this_thread::yield();
 		}
 
 		// Create an empty shader program object:
@@ -121,10 +141,6 @@ namespace opengl
 		// Create and attach the shader stages:
 		for (size_t i = 0; i < shaderFiles.size(); i++)
 		{
-			// Pre-process the shader text:
-			platform::Shader::InsertDefines(shaderFiles[i], &shader.ShaderKeywords());
-			platform::Shader::InsertIncludedFiles(shaderFiles[i]);
-
 			// Create and attach the shader object:
 			GLuint shaderObject = glCreateShader(foundShaderTypeFlags[i]);
 			SEAssert("glCreateShader failed!", shaderObject > 0);
@@ -433,6 +449,36 @@ namespace opengl
 		if (!isBound)
 		{
 			glUseProgram(currentProgram);
+		}
+	}
+
+
+	void Shader::LoadShaderTexts(string const& extensionlessName, std::vector<std::string>& shaderTexts_out)
+	{
+		constexpr uint32_t numShaderTypes = 3;
+		const std::array<std::string, numShaderTypes> shaderFileExtensions = {
+			".vert",
+			".geom",
+			".frag",
+		};
+
+		shaderTexts_out.resize(numShaderTypes);
+		std::atomic<uint8_t> numShadersLoaded;
+		for (size_t i = 0; i < numShaderTypes; i++)
+		{
+			std::string assembledName = extensionlessName + shaderFileExtensions[i];
+			numShadersLoaded++;
+			en::CoreEngine::GetThreadPool()->EnqueueJob(
+				[&shaderTexts_out, assembledName, i, &numShadersLoaded]()
+				{
+					shaderTexts_out[i] = std::move((platform::Shader::LoadShaderText(assembledName)));
+					numShadersLoaded--;
+				});
+		}
+
+		while (numShadersLoaded > 0)
+		{
+			std::this_thread::yield();
 		}
 	}
 }

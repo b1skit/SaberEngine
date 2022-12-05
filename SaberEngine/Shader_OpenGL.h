@@ -44,5 +44,6 @@ namespace opengl
 			int const count);
 		static void SetParameterBlock(gr::Shader&, re::ParameterBlock&);
 		static void Destroy(gr::Shader& shader);
+		static void LoadShaderTexts(std::string const& extensionlessName, std::vector<std::string>& shaderTexts_out);
 	};
 }

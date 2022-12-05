@@ -5,6 +5,7 @@
 #include "Shader.h"
 #include "Shader_Platform.h"
 #include "Shader_OpenGL.h"
+#include "TextLoader.h"
 
 using en::Config;
 using std::ifstream;
@@ -39,44 +40,17 @@ namespace platform
 	}
 
 
-	string platform::Shader::LoadShaderText(const string& filename)
+	string platform::Shader::LoadShaderText(string const& filename)
 	{
 		// Assemble the full shader file path:
-		string filepath = Config::Get()->GetValue<string>("shaderDirectory") + filename;
+		const string filepath = Config::Get()->GetValue<string>("shaderDirectory") + filename;
 
-		ifstream file;
-		file.open(filepath.c_str());
-
-		string output;
-		string line;
-		if (file.is_open())
-		{
-			while (file.good())
-			{
-				getline(file, line);
-				output.append(line + "\n");
-			}
-		}
-		else
-		{
-			#if defined(DEBUG_SHADER_SETUP_LOGGING)
-				LOG_WARNING("LoadShaderFile failed: Could not open shader " + filepath);
-			#endif
-
-			return "";
-		}
-
-		return output;
+		return util::LoadTextAsString(filepath);
 	}
 
 
 	void platform::Shader::InsertIncludedFiles(string& shaderText)
 	{
-		#if defined(DEBUG_SHADER_SETUP_LOGGING)
-			LOG("Processing shader #include directives");
-			bool foundInclude = false;
-		#endif
-
 		const string INCLUDE_KEYWORD = "#include";
 
 		int foundIndex = 0;
@@ -118,12 +92,7 @@ namespace platform
 						{
 							firstQuoteIndex++; // Move ahead 1 element from the first quotation mark
 
-							string includeFileName = shaderText.substr(firstQuoteIndex, lastQuoteIndex - firstQuoteIndex);
-
-							#if defined(DEBUG_SHADER_SETUP_LOGGING)
-								string includeDirective = shaderText.substr(foundIndex, endIndex - foundIndex - 1);	// - 1 to move back from the index of the last "
-								LOG("Found include directive \"" + includeDirective + "\". Attempting to load file \"" + includeFileName + "\"");
-							#endif							
+							const string includeFileName = shaderText.substr(firstQuoteIndex, lastQuoteIndex - firstQuoteIndex);					
 
 							string includeFile = LoadShaderText(includeFileName);
 							if (includeFile != "")
@@ -132,11 +101,6 @@ namespace platform
 								string firstHalf = shaderText.substr(0, foundIndex);
 								string secondHalf = shaderText.substr(endIndex + 1, shaderText.length() - 1);
 								shaderText = firstHalf + includeFile + secondHalf;								
-
-								#if defined(DEBUG_SHADER_SETUP_LOGGING)
-									LOG("Successfully processed shader directive \"" + includeDirective + "\"");
-									foundInclude = true;
-								#endif	
 							}
 							else
 							{
@@ -148,22 +112,6 @@ namespace platform
 				}
 			}							
 		}
-
-		#if defined(DEBUG_SHADER_SETUP_LOGGING)
-			if (foundInclude)
-			{
-
-				#if defined(DEBUG_SHADER_PRINT_FINAL_SHADER)
-					LOG("Final shader text:\n" + shaderText);
-				#else
-					LOG("Finished processing #include directives");
-				#endif
-			}
-			else
-			{
-				LOG("No #include directives processed. Shader is unchanged");
-			}
-		#endif
 	}
 
 
@@ -211,5 +159,5 @@ namespace platform
 		int const count) = nullptr;
 	void (*platform::Shader::SetParameterBlock)(gr::Shader&, re::ParameterBlock&) = nullptr;
 	void (*platform::Shader::Destroy)(gr::Shader&) = nullptr;
-
+	void (*platform::Shader::LoadShaderTexts)(string const& extensionlessName, std::vector<std::string>& shaderTexts_out) = nullptr;
 }

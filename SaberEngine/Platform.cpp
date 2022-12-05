@@ -95,6 +95,7 @@ namespace platform
 			platform::Shader::SetUniform		= &opengl::Shader::SetUniform;
 			platform::Shader::SetParameterBlock = &opengl::Shader::SetParameterBlock;
 			platform::Shader::Destroy			= &opengl::Shader::Destroy;
+			platform::Shader::LoadShaderTexts	= &opengl::Shader::LoadShaderTexts;
 
 			// Parameter blocks:
 			platform::ParameterBlock::Create	= &opengl::ParameterBlock::Create;
