@@ -1,5 +1,7 @@
 #pragma once
 
+#include <mutex>
+
 #include "DebugConfiguration.h"
 #include "Sampler.h"
 #include "Sampler_Platform.h"
@@ -29,6 +31,9 @@ namespace gr
 
 	std::shared_ptr<gr::Sampler> const Sampler::GetSampler(Sampler::WrapAndFilterMode type)
 	{
+		static std::mutex samplerMutex;
+		std::unique_lock<std::mutex> samplerLock(samplerMutex);
+
 		if (Sampler::m_samplerLibrary == nullptr)
 		{
 			SEAssert("Size of sampler type enum and sampler type library names mismatch",

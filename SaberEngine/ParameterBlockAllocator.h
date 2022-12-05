@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <memory>
 #include <array>
+#include <mutex>
 
 #include "ParameterBlock.h"
 
@@ -51,7 +52,9 @@ namespace re
 			std::array<std::vector<uint8_t>, static_cast<size_t>(PBType::PBType_Count)> m_committed;
 			std::unordered_map<Handle, CommitMetadata> m_uniqueIDToTypeAndByteIndex;
 		} m_data;
-		
+		std::recursive_mutex m_dataMutex;
+		// TODO: A recursive mutex might be a little heavy handed here
+
 
 	private:
 		// Interfaces for the ParameterBlock friend class:
@@ -60,7 +63,6 @@ namespace re
 		void Commit(Handle uniqueID, void const* data);	// Update the parameter block data held by the allocator
 		void Get(Handle uniqueID, void*& out_data, size_t& out_numBytes); // Get the parameter block data
 		void Deallocate(Handle uniqueID);
-
 
 	private:
 		ParameterBlockAllocator(ParameterBlockAllocator const&) = delete;

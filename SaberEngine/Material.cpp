@@ -1,3 +1,5 @@
+#include <mutex>
+
 #include "Material.h"
 #include "Shader_Platform.h"
 #include "Texture.h"
@@ -30,6 +32,9 @@ namespace gr
 
 	shared_ptr<Material::MaterialDefinition const> Material::GetMaterialDefinition(std::string const& matName)
 	{
+		static std::mutex matLibraryMutex;
+		std::unique_lock<std::mutex> samplerLock(matLibraryMutex);
+
 		if (Material::m_materialLibrary == nullptr)
 		{
 			// TODO: Materials should be described externally; for now, we hard code them

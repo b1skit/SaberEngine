@@ -12,6 +12,8 @@ namespace re
 {
 	void ParameterBlockAllocator::Destroy()
 	{
+		std::unique_lock<std::recursive_mutex> writeLock(m_dataMutex);
+
 		m_immutablePBs.clear();
 		m_mutablePBs.clear();
 		m_singleFramePBs.clear();
@@ -20,6 +22,8 @@ namespace re
 
 	void ParameterBlockAllocator::RegisterAndAllocateParameterBlock(std::shared_ptr<re::ParameterBlock> pb, size_t numBytes)
 	{
+		std::unique_lock<std::recursive_mutex> writeLock(m_dataMutex);
+
 		PBType pbType;
 		if (pb->GetLifetime() == re::ParameterBlock::Lifetime::SingleFrame)
 		{
@@ -60,6 +64,8 @@ namespace re
 	void ParameterBlockAllocator::Allocate(
 		Handle uniqueID, size_t numBytes, ParameterBlock::UpdateType updateType, ParameterBlock::Lifetime lifetime)
 	{
+		std::unique_lock<std::recursive_mutex> writeLock(m_dataMutex);
+
 		SEAssert("A parameter block with this handle has already been added",
 			m_data.m_uniqueIDToTypeAndByteIndex.find(uniqueID) == m_data.m_uniqueIDToTypeAndByteIndex.end());
 
@@ -101,6 +107,8 @@ namespace re
 
 	void ParameterBlockAllocator::Commit(Handle uniqueID, void const* data)
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_dataMutex);
+
 		auto const& result = m_data.m_uniqueIDToTypeAndByteIndex.find(uniqueID);
 
 		SEAssert("Parameter block with this ID has not been allocated", 
@@ -119,6 +127,8 @@ namespace re
 
 	void ParameterBlockAllocator::Get(Handle uniqueID, void*& out_data, size_t& out_numBytes)
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_dataMutex);
+
 		auto const& result = m_data.m_uniqueIDToTypeAndByteIndex.find(uniqueID);
 
 		SEAssert("Parameter block with this ID has not been allocated",
@@ -134,6 +144,8 @@ namespace re
 
 	void ParameterBlockAllocator::Deallocate(Handle uniqueID)
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_dataMutex);
+
 		auto const& pb = m_data.m_uniqueIDToTypeAndByteIndex.find(uniqueID);
 
 		SEAssert("Cannot deallocate a parameter block that does not exist", 
@@ -167,6 +179,8 @@ namespace re
 
 	void ParameterBlockAllocator::UpdateParamBlocks()
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_dataMutex);
+
 		for (auto const& pb : m_mutablePBs) // Immutable and single-frame PBs are buffered at creation
 		{
 			if (pb.second->GetDirty())
@@ -179,6 +193,8 @@ namespace re
 
 	void ParameterBlockAllocator::EndOfFrame()
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_dataMutex);
+
 		m_singleFramePBs.clear(); // PB destructors call Deallocate()
 
 		m_data.m_committed[static_cast<size_t>(PBType::SingleFrame)].clear();

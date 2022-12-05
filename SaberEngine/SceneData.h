@@ -90,6 +90,7 @@ namespace fr
 		mutable std::shared_mutex m_texturesMutex; // mutable, as we need to be able to modify it in const functions
 
 		std::unordered_map<size_t, std::shared_ptr<gr::Material>> m_materials;
+		mutable std::shared_mutex m_materialsMutex;
 
 		std::shared_ptr<gr::Light> m_ambientLight;
 		std::shared_ptr<gr::Light> m_keyLight;
