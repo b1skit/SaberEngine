@@ -3,9 +3,9 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <mutex>
 
 #include "EngineComponent.h"
-
 
 
 namespace en
@@ -84,7 +84,7 @@ namespace en
 	private:
 		std::vector<std::vector<EventInfo>> m_eventQueues;
 		std::vector<std::vector<EventListener*>> m_eventListeners;
-
+		std::mutex m_eventMutex;
 
 	private:
 		EventManager(EventManager const&) = delete;

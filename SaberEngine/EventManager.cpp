@@ -21,6 +21,8 @@ namespace en
 
 	EventManager::EventManager()
 	{
+		std::lock_guard<std::mutex> lock(m_eventMutex);
+
 		m_eventQueues.reserve(EventType_Count);
 		for (uint32_t i = 0; i < EventType_Count; i++)
 		{
@@ -129,6 +131,8 @@ namespace en
 			}
 		}
 
+		std::lock_guard<std::mutex> lock(m_eventMutex);
+
 		// Loop through each type of event:
 		for (size_t currentEventType = 0; currentEventType < EventType_Count; currentEventType++)
 		{
@@ -153,12 +157,16 @@ namespace en
 
 	void EventManager::Subscribe(EventType eventType, EventListener* listener)
 	{
-		m_eventListeners[eventType].push_back(listener);
+		std::lock_guard<std::mutex> lock(m_eventMutex);
+
+		m_eventListeners[eventType].emplace_back(listener);
 	}
 
 
 	void EventManager::Notify(EventInfo const& eventInfo)
 	{
+		std::lock_guard<std::mutex> lock(m_eventMutex);
+
 		m_eventQueues[(size_t)eventInfo.m_type].emplace_back(eventInfo);
 	}
 }
