@@ -30,6 +30,8 @@ namespace gr
 	const glm::vec3 Transform::WorldAxisY	= vec3(0.0f,	1.0f,	0.0f);
 	const glm::vec3 Transform::WorldAxisZ	= vec3(0.0f,	0.0f,	1.0f); // Note: SaberEngine (currently) uses a RHCS
 
+	std::recursive_mutex Transform::m_transformHierarchyMutex;
+
 	
 	Transform::Transform()
 		: m_parent(nullptr)
@@ -66,6 +68,8 @@ namespace gr
 
 	mat4 const& Transform::GetGlobalMatrix(TransformComponent component)
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		RecomputeWorldTransforms();
 		SEAssert("Transformation should not be dirty", !m_isDirty);
 
@@ -92,6 +96,8 @@ namespace gr
 
 	void Transform::SetGlobalTranslation(glm::vec3 position)
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		const mat4 parentGlobalTRS = m_parent ? m_parent->GetGlobalMatrix(TRS) : mat4(1.f);
 		SetLocalTranslation(inverse(parentGlobalTRS) * glm::vec4(position, 0.f));
 		MarkDirty();
@@ -99,21 +105,27 @@ namespace gr
 
 
 	glm::vec3 const& Transform::GetGlobalPosition()
-	{ 
+	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		RecomputeWorldTransforms();
 		return m_globalPosition; 
 	}
 
 
 	glm::vec3 const& Transform::GetGlobalEulerXYZRotationRadians()
-	{ 
+	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		RecomputeWorldTransforms();
 		return m_globalRotationEulerRadians; 
 	}
 
 
 	glm::vec3 const& Transform::GetGlobalForward()
-	{ 
+	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		RecomputeWorldTransforms();
 		return m_globalForward; 
 	}
@@ -121,13 +133,17 @@ namespace gr
 
 	glm::vec3 const& Transform::GetGlobalRight()
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		RecomputeWorldTransforms();
 		return m_globalRight; 
 	}
 
 
 	glm::vec3 const& Transform::GetGlobalUp()
-	{ 
+	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		RecomputeWorldTransforms();
 		return m_globalUp; 
 	}
@@ -135,12 +151,16 @@ namespace gr
 
 	Transform* Transform::GetParent() const
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		return m_parent; 
 	}
 
 
 	void Transform::SetParent(Transform* newParent)
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		SEAssert("Cannot parent a Transform to itself", newParent != this);
 
 		if (m_parent != nullptr)
@@ -161,6 +181,8 @@ namespace gr
 
 	void Transform::ReParent(Transform* newParent)
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		SEAssert("New parent cannot be null", newParent != nullptr);
 
 		RecomputeWorldTransforms();
@@ -190,6 +212,8 @@ namespace gr
 
 	void Transform::TranslateLocal(vec3 amount)
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		m_localTranslationMat = glm::translate(m_localTranslationMat, amount);
 		
 		// Extract the translation from the last column of the matrix:
@@ -201,6 +225,8 @@ namespace gr
 
 	void Transform::SetLocalTranslation(vec3 position)
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		m_localTranslationMat = glm::translate(mat4(1.0f), position);
 		m_localPosition = position;
 
@@ -210,6 +236,8 @@ namespace gr
 
 	glm::vec3 const& Transform::GetLocalPosition()
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		RecomputeWorldTransforms();
 		return m_localPosition;
 	}
@@ -217,6 +245,8 @@ namespace gr
 
 	void Transform::RotateLocal(vec3 eulerXYZRadians)
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		// Compute rotations via quaternions:
 		m_localRotationQuat = m_localRotationQuat * glm::quat(eulerXYZRadians);
 		m_localRotationMat = glm::mat4_cast(m_localRotationQuat);
@@ -228,6 +258,8 @@ namespace gr
 
 	void Transform::RotateLocal(float angleRads, vec3 axis)
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		m_localRotationQuat = glm::rotate(m_localRotationQuat, angleRads, axis);
 		m_localRotationMat = glm::mat4_cast(m_localRotationQuat);
 
@@ -238,6 +270,8 @@ namespace gr
 
 	void Transform::SetLocalRotation(vec3 eulerXYZ)
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		// Compute rotations via quaternions:
 		m_localRotationQuat = glm::quat(eulerXYZ);
 		m_localRotationMat = glm::mat4_cast(m_localRotationQuat);
@@ -249,6 +283,8 @@ namespace gr
 
 	void Transform::SetLocalRotation(quat newRotation)
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		m_localRotationQuat = newRotation;
 		m_localRotationMat = glm::mat4_cast(newRotation);
 
@@ -259,6 +295,8 @@ namespace gr
 
 	glm::vec3 const& Transform::GetLocalEulerXYZRotationRadians()
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		RecomputeWorldTransforms();
 		return m_localRotationEulerRadians;
 	}
@@ -266,6 +304,8 @@ namespace gr
 
 	void Transform::SetLocalScale(vec3 scale)
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		m_localScale = scale;
 		m_localScaleMat = glm::scale(mat4(1.0f), scale);
 
@@ -275,6 +315,8 @@ namespace gr
 
 	void Transform::MarkDirty()
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		m_isDirty = true;
 
 		for (Transform* child : m_children)
@@ -286,12 +328,16 @@ namespace gr
 
 	bool Transform::IsDirty()
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		return m_isDirty || (m_parent != nullptr && m_parent->IsDirty());
 	}
 
 
 	void Transform::RegisterChild(Transform* child)
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		SEAssert("Child must update their parent pointer", child->m_parent == this);
 
 		if (find(m_children.begin(), m_children.end(), child) ==  m_children.end())
@@ -309,6 +355,8 @@ namespace gr
 
 	void Transform::UnregisterChild(Transform const* child)
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		for (size_t i = 0; i < m_children.size(); i++)
 		{
 			if (m_children.at(i) == child)
@@ -322,6 +370,8 @@ namespace gr
 	
 	void Transform::RecomputeWorldTransforms()
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		if (!IsDirty())
 		{
 			return;
@@ -367,6 +417,8 @@ namespace gr
 
 	void Transform::RecomputeEulerXYZRadians() // Should be called anytime rotation has been modified
 	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformHierarchyMutex);
+
 		// Update our Euler rotation tracker:
 		m_localRotationEulerRadians = glm::eulerAngles(m_localRotationQuat);
 

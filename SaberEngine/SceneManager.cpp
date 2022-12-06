@@ -3,17 +3,10 @@
 
 #include "SceneManager.h"
 #include "Config.h"
-#include "EventManager.h"
-#include "Camera.h"
-#include "PlayerObject.h"
-#include "Light.h"
 #include "PerformanceTimer.h"
 
-using gr::Camera;
-using gr::Light;
 using fr::SceneData;
 using en::Config;
-using en::EventManager;
 using util::PerformanceTimer;
 using std::shared_ptr;
 using std::make_shared;
@@ -52,11 +45,6 @@ namespace en
 			LOG_ERROR("Failed to load scene: %s", sceneFilePath);
 			EventManager::Get()->Notify(EventManager::EventInfo{ EventManager::EngineQuit});
 		}
-
-		// Add a player object to the scene:
-		shared_ptr<fr::PlayerObject> player = std::make_shared<fr::PlayerObject>(m_sceneData->GetMainCamera());
-		m_sceneData->AddUpdateable(player);
-		LOG("Created PlayerObject using \"%s\"", m_sceneData->GetMainCamera()->GetName().c_str());
 
 		LOG("\nSceneManager::Startup complete in %f seconds...\n", timer.StopSec());
 	}

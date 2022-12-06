@@ -13,15 +13,17 @@ namespace fr
 	{
 	public:
 		SceneObject(std::string const& name, gr::Transform* parent);
-		SceneObject(SceneObject const& sceneObject);
 
+		SceneObject(SceneObject const& sceneObject) = default;
 		SceneObject(SceneObject&&) = default;
+		SceneObject& operator=(SceneObject const&) = default;
+		SceneObject& operator=(SceneObject&&) = default;
 		~SceneObject() = default;
 
 		void Update(const double stepTimeMs) override {}
 
 		// Getters/Setters:
-		void AddMesh(std::shared_ptr<gr::Mesh> mesh);
+		void SetMesh(std::shared_ptr<gr::Mesh> mesh);
 
 		inline std::shared_ptr<gr::Mesh const> const GetMesh() const { return m_mesh; }
 		inline std::shared_ptr<gr::Mesh> GetMesh() { return m_mesh; }

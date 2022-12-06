@@ -33,7 +33,7 @@ namespace en
 
 	void ThreadPool::Stop()
 	{
-		LOG("Stopping thread pool...");
+		LOG("ThreadPool stopping...");
 
 		std::unique_lock<std::mutex> waitingLock(m_jobQueueMutex);
 		m_isRunning = false;

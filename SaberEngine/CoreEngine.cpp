@@ -9,12 +9,15 @@
 #include "EventManager.h"
 #include "InputManager.h"
 #include "PerformanceTimer.h"
+#include "GameplayManager.h"
+
 
 using en::Config;
 using en::SceneManager;
 using en::EventManager;
 using en::InputManager;
 using re::RenderManager;
+using fr::GameplayManager;
 using util::PerformanceTimer;
 using std::shared_ptr;
 using std::make_shared;
@@ -61,8 +64,13 @@ namespace en
 		// the rendering context in the RenderManager before creating shaders
 		SceneManager::Get()->Startup();
 
-		// Now that the scene (and its materials/shaders) has been loaded, we can initialize the shaders
 		RenderManager::Get()->Initialize();
+
+		// All render assets (textures/shaders etc) should have been created by now
+		SceneManager::GetSceneData()->SetLoadingFinished();
+
+		// Create gameplay objects now that the scene data is loaded
+		GameplayManager::Get()->Startup();
 
 		m_isRunning = true;
 	}
@@ -71,7 +79,7 @@ namespace en
 	// Main game loop
 	void CoreEngine::Run()
 	{
-		LOG("CoreEngine beginning main game loop!");
+		LOG("\nCoreEngine: Starting main game loop\n");
 
 		// Process any events that might have occurred during startup:
 		EventManager::Get()->Update(0.0);
@@ -99,6 +107,7 @@ namespace en
 			{	
 				elapsed -= m_fixedTimeStep;
 
+				GameplayManager::Get()->Update(m_fixedTimeStep);
 				SceneManager::Get()->Update(m_fixedTimeStep); // Updates all of the scene objects
 				// AI, physics, etc should also be pumped here (eventually)
 			}
@@ -123,6 +132,7 @@ namespace en
 		Config::Get()->SaveConfig();
 		
 		// Note: Shutdown order matters!
+		GameplayManager::Get()->Shutdown();
 		InputManager::Get()->Shutdown();
 		RenderManager::Get()->Shutdown();
 		SceneManager::Get()->Shutdown();

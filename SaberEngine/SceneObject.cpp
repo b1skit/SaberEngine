@@ -17,14 +17,7 @@ namespace fr
 	}
 
 
-	SceneObject::SceneObject(SceneObject const& rhs) : en::NamedObject::NamedObject(rhs.GetName())
-	{
-		m_transform = rhs.m_transform;
-		m_mesh = rhs.m_mesh;
-	}
-
-
-	void SceneObject::AddMesh(std::shared_ptr<gr::Mesh> mesh)
+	void SceneObject::SetMesh(std::shared_ptr<gr::Mesh> mesh)
 	{
 		SEAssert("Scene object already has a mesh", m_mesh == nullptr);
 

@@ -135,8 +135,8 @@ namespace re
 
 		fr::SceneData const* const sceneData = SceneManager::GetSceneData();
 
-		std::vector<shared_ptr<re::MeshPrimitive>> const& sceneMeshPrimitives = sceneData->GetMeshPrimitives();
-		if (sceneMeshPrimitives.empty())
+		std::vector<shared_ptr<gr::Mesh>> const& sceneMeshes = sceneData->GetMeshes();
+		if (sceneMeshes.empty())
 		{
 			return;
 		}
@@ -144,11 +144,15 @@ namespace re
 		// Build batches from scene meshes:
 		// TODO: Build this by traversing the scene hierarchy once a scene graph is implemented
 		std::vector<Batch> unmergedBatches;
-		for (shared_ptr<re::MeshPrimitive> const meshPrimitive : sceneMeshPrimitives)
+		for (shared_ptr<gr::Mesh> mesh : sceneMeshes)
 		{
-			unmergedBatches.emplace_back(
-				meshPrimitive.get(), meshPrimitive->MeshMaterial().get(), meshPrimitive->MeshMaterial()->GetShader().get());
+			for (shared_ptr<re::MeshPrimitive> const meshPrimitive : mesh->GetMeshPrimitives())
+			{
+				unmergedBatches.emplace_back(
+					meshPrimitive.get(), meshPrimitive->MeshMaterial().get(), meshPrimitive->MeshMaterial()->GetShader().get());
+			}
 		}
+
 
 		// Sort the batches:
 		std::sort(

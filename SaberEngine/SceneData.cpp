@@ -46,6 +46,7 @@ using re::ParameterBlock;
 using fr::SceneObject;
 using en::Config;
 using en::NamedObject;
+using en::CoreEngine;
 using util::PerformanceTimer;
 using std::string;
 using std::vector;
@@ -624,7 +625,7 @@ namespace
 	}
 
 
-	void LoadAddLight(SceneData& scene, shared_ptr<SceneObject> parent, cgltf_node* current)
+	void LoadAddLight(SceneData& scene, cgltf_node* current, shared_ptr<SceneObject> parent)
 	{
 		const string lightName = (current->light->name ? string(current->light->name) : "Unnamed light");
 
@@ -667,7 +668,7 @@ namespace
 	void LoadMeshGeometry(
 		string const& sceneRootPath, SceneData& scene, cgltf_node* current, shared_ptr<SceneObject> parent)
 	{
-		parent->AddMesh(make_shared<gr::Mesh>(parent->GetTransform()));
+		std::shared_ptr<gr::Mesh> newMesh = make_shared<gr::Mesh>(parent->GetTransform());
 
 		// Add each MeshPrimitive as a child of the SceneObject's Mesh:
 		for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
@@ -926,8 +927,8 @@ namespace
 			SEAssert("Could not find material", scene.MaterialExists(matName));
 			shared_ptr<gr::Material> material = scene.GetMaterial(matName);
 
-			// Attach the primitive:
-			parent->GetMesh()->AddMeshPrimitive(make_shared<MeshPrimitive>(
+			// Attach the MeshPrimitive to the Mesh:
+			newMesh->AddMeshPrimitive(make_shared<MeshPrimitive>(
 				nodeName,
 				indices,
 				positions,
@@ -943,15 +944,21 @@ namespace
 				meshPrimitiveParams,
 				nullptr));
 		}
+
+		// Finally, add the mesh to the parent SceneObject, and register it with the scene
+		parent->SetMesh(newMesh);
+		scene.AddMesh(newMesh);
 	}
 
 
 	// Depth-first traversal
 	void LoadObjectHierarchyRecursiveHelper(
-		string const& sceneRootPath, SceneData& scene, cgltf_data* data, cgltf_node* current, shared_ptr<SceneObject> parent)
+		string const& sceneRootPath, SceneData& scene, cgltf_data* data, cgltf_node* current, 
+		shared_ptr<SceneObject> parent, std::atomic<uint32_t>& numLoadJobs)
 	{
 		if (current == nullptr)
 		{
+			SEAssertF("We should not be traversing into null nodes");
 			return;
 		}
 
@@ -963,32 +970,62 @@ namespace
 		{
 			for (size_t i = 0; i < current->children_count; i++)
 			{
-				const string childName = current->children[i]->name ? current->children[i]->name : "Unnamed node";
-				shared_ptr<SceneObject> childNode = make_shared<SceneObject>(childName, parent->GetTransform());
+				CoreEngine::GetThreadPool()->EnqueueJob(
+					[current, i, parent, &sceneRootPath, &scene, data, &numLoadJobs]()
+				{
+					const string childName = current->children[i]->name ? current->children[i]->name : "Unnamed node";
+					shared_ptr<SceneObject> childNode = make_shared<SceneObject>(childName, parent->GetTransform());
 
-				LoadObjectHierarchyRecursiveHelper(sceneRootPath, scene, data, current->children[i], childNode);
+					numLoadJobs++;
+					LoadObjectHierarchyRecursiveHelper(
+						sceneRootPath, scene, data, current->children[i], childNode, numLoadJobs);
+				});
 			}
 		}
 
 		// Set the SceneObject transform:
-		SetTransformValues(current, parent->GetTransform());
+		numLoadJobs++;
+		CoreEngine::GetThreadPool()->EnqueueJob([current, parent, &numLoadJobs]()
+		{
+			SetTransformValues(current, parent->GetTransform());
+			numLoadJobs--;
+		});
+		
 
 		// Process node attachments:
 		if (current->mesh != nullptr)
 		{
-			LoadMeshGeometry(sceneRootPath, scene, current, parent);
+			numLoadJobs++;
+			CoreEngine::GetThreadPool()->EnqueueJob([&sceneRootPath, &scene, current, parent, &numLoadJobs]()
+			{
+				LoadMeshGeometry(sceneRootPath, scene, current, parent);
+				numLoadJobs--;
+			});
 		}
 		if (current->light)
 		{
-			LoadAddLight(scene, parent, current);
+			numLoadJobs++;
+			CoreEngine::GetThreadPool()->EnqueueJob([&scene, current, parent, &numLoadJobs]()
+			{
+				LoadAddLight(scene, current, parent);
+				numLoadJobs--;
+			});
 		}
 		if (current->camera)
 		{
-			LoadAddCamera(scene, parent, current);
+			numLoadJobs++;
+			CoreEngine::GetThreadPool()->EnqueueJob([&scene, current, parent, &numLoadJobs]()
+			{
+				LoadAddCamera(scene, parent, current);
+				numLoadJobs--;
+			});
 		}
 
-		scene.AddSceneObject(parent);
+		scene.AddUpdateable(parent);
+
+		numLoadJobs--;
 	}
+
 
 	// Note: data must already be populated by calling cgltf_load_buffers
 	void LoadSceneHierarchy(std::string const& sceneRootPath, fr::SceneData& scene, cgltf_data* data)
@@ -998,6 +1035,7 @@ namespace
 		SEAssert("Loading > 1 scene is currently unsupported", data->scenes_count == 1);
 
 		// Each node is the root in a transformation hierarchy:
+		std::atomic<uint32_t> numLoadJobs = 0;
 		for (size_t node = 0; node < data->scenes->nodes_count; node++)
 		{
 			SEAssert("Error: Node is not a root", data->scenes->nodes[node]->parent == nullptr);
@@ -1007,7 +1045,14 @@ namespace
 				"Unnamed_node_" + to_string(node),
 				nullptr); // Root node has no parent
 
-			LoadObjectHierarchyRecursiveHelper(sceneRootPath, scene, data, data->scenes->nodes[node], currentNode);
+			numLoadJobs++;
+			LoadObjectHierarchyRecursiveHelper(
+				sceneRootPath, scene, data, data->scenes->nodes[node], currentNode, numLoadJobs);
+		}
+
+		while (numLoadJobs > 0)
+		{
+			std::this_thread::yield();
 		}
 	}
 } // namespace
@@ -1058,7 +1103,6 @@ namespace fr
 		// Pre-reserve our vectors:
 		m_updateables.reserve(max((int)data->nodes_count, 10));
 		m_meshes.reserve(max((int)data->meshes_count, 10));
-		m_meshPrimitives.reserve(max((int)data->meshes_count, 10));
 		m_textures.reserve(max((int)data->textures_count, 10));
 		m_materials.reserve(max((int)data->materials_count, 10));
 		m_pointLights.reserve(max((int)data->lights_count, 10)); // Probably an over-estimation
@@ -1088,54 +1132,88 @@ namespace fr
 		: NamedObject(sceneName)
 		, m_ambientLight(nullptr)
 		, m_keyLight(nullptr)
+		, m_finishedLoading(false)
 	{
 	}
 
 
 	void SceneData::Destroy()
 	{
-		m_updateables.clear();
-		m_meshes.clear();
-		m_meshPrimitives.clear();
-		m_textures.clear();
-		m_materials.clear();
-		m_ambientLight = nullptr;
-		m_keyLight = nullptr;
-		m_pointLights.clear();
-		m_cameras.clear();
-		m_sceneWorldSpaceBounds = Bounds();
+		{
+			std::lock_guard<std::mutex> lock(m_updateablesMutex);
+			m_updateables.clear();
+		}
+		{
+			std::lock_guard<std::mutex> lock(m_meshesMutex);
+			m_meshes.clear();
+		}
+		{
+			std::lock_guard<std::shared_mutex> lock(m_texturesMutex);
+			m_textures.clear();
+		}
+		{
+			std::lock_guard<std::shared_mutex> lock(m_materialsMutex);
+			m_materials.clear();
+		}
+		{
+			std::lock_guard<std::mutex> lock(m_ambientLightMutex);
+			m_ambientLight = nullptr;
+		}
+		{
+			std::lock_guard<std::mutex> lock(m_keyLightMutex);
+			m_keyLight = nullptr;
+		}
+		{
+			std::lock_guard<std::mutex> lock(m_pointLightsMutex);
+			m_pointLights.clear();
+		}
+		{
+			std::lock_guard<std::mutex> lock(m_camerasMutex);
+			m_cameras.clear();
+		}
+		{
+			std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
+			m_sceneWorldSpaceBounds = Bounds();
+		}
 	}
 
 
 	void SceneData::AddCamera(std::shared_ptr<gr::Camera> newCamera)
 	{
 		SEAssert("Cannot add a null camera", newCamera != nullptr);
-		m_cameras.emplace_back(newCamera);
-		m_updateables.emplace_back(newCamera);
+		{
+			std::lock_guard<std::mutex> lock(m_camerasMutex);
+			m_cameras.emplace_back(newCamera);
+		}
+
+		AddUpdateable(newCamera);
 	}
 
 
 	void SceneData::AddLight(std::shared_ptr<Light> newLight)
 	{
-		// TODO: Seems arbitrary that we cannot duplicate directional (and even ambient?) lights... Why even bother 
+		// TODO: Seems arbitrary that we cannot have multiple directional lights... Why even bother 
 		// enforcing this? Just treat all lights the same
 
 		switch (newLight->Type())
 		{
 		case Light::AmbientIBL:
 		{
+			std::lock_guard<std::mutex> lock(m_ambientLightMutex);
 			SEAssert("Ambient light already exists, cannot have 2 ambient lights", m_ambientLight == nullptr);
 			m_ambientLight = newLight;
 		}
 		break;
 		case Light::Directional:
 		{
+			std::lock_guard<std::mutex> lock(m_keyLightMutex);
 			SEAssert("Direction light already exists, cannot have 2 directional lights", m_keyLight == nullptr);
 			m_keyLight = newLight;
 		}
 		break;
 		case Light::Point:
 		{
+			std::lock_guard<std::mutex> lock(m_pointLightsMutex);
 			m_pointLights.emplace_back(newLight);
 		}
 		break;
@@ -1147,55 +1225,87 @@ namespace fr
 			break;
 		}
 
-		// Updateables get pumped every frame:
-		m_updateables.emplace_back(newLight);
-	}
-
-
-	void SceneData::AddSceneObject(std::shared_ptr<fr::SceneObject> sceneObject)
-	{
-		m_updateables.emplace_back(sceneObject);
-
-		if (sceneObject->GetMesh())
-		{
-			AddMesh(sceneObject->GetMesh());
-		}
+		AddUpdateable(newLight); // Updateables get pumped every frame
 	}
 
 
 	void SceneData::AddMesh(std::shared_ptr<gr::Mesh> mesh)
 	{
-		m_meshes.emplace_back(mesh); // Add the mesh to our tracking list
+		SEAssert("Adding data is not thread safe once loading is complete", !m_finishedLoading);
+
+		// Only need to hold the lock while we modify m_meshes
+		{
+			std::lock_guard<std::mutex> lock(m_meshesMutex);
+			m_meshes.emplace_back(mesh); // Add the mesh to our tracking list
+		}
 
 		for (shared_ptr<MeshPrimitive> meshPrimitive : mesh->GetMeshPrimitives())
 		{
-			// Add the mesh to our tracking array:
-			m_meshPrimitives.push_back(meshPrimitive);
-
 			// TODO: Scene bounds should be updated every frame
 			UpdateSceneBounds(meshPrimitive);
 		}
 	}
 
 
+	std::vector<std::shared_ptr<gr::Mesh>> const& SceneData::GetMeshes() const
+	{
+		SEAssert("Accessing data container is not thread safe during loading", m_finishedLoading);
+		return m_meshes;
+	}
+
+
+	std::vector<std::shared_ptr<gr::Camera>> const& SceneData::GetCameras() const 
+	{
+		SEAssert("Accessing data container is not thread safe during loading", m_finishedLoading);
+		return m_cameras;
+	}
+
+
+	std::shared_ptr<gr::Camera> SceneData::GetMainCamera() const
+	{
+		// TODO: This camera is accessed multiple times before the first frame is rendered (e.g. PlayerObject, various
+		// graphics systems). Currently, this is fine as we currently join any loading threads before creating these
+		// objects, but it may not always be the case.
+
+		/*SEAssert("Accessing this data is not thread safe during loading", m_finishedLoading);*/
+		return m_cameras.at(0);
+	}
+
+	re::Bounds const& SceneData::GetWorldSpaceSceneBounds() const 
+	{
+		SEAssert("Accessing this data is not thread safe during loading", m_finishedLoading);
+		return m_sceneWorldSpaceBounds;
+	}
+
+
+	std::vector<std::shared_ptr<en::Updateable>> const& SceneData::GetUpdateables() const
+	{
+		SEAssert("Accessing data container is not thread safe during loading", m_finishedLoading);
+		return m_updateables;
+	}
+
+
 	void SceneData::AddUpdateable(std::shared_ptr<en::Updateable> updateable)
 	{
+		SEAssert("Adding data is not thread safe once loading is complete", !m_finishedLoading);
 		m_updateables.emplace_back(updateable);
 	}
 
 
 	void SceneData::UpdateSceneBounds(std::shared_ptr<re::MeshPrimitive> meshPrimitive)
 	{
-		// Update scene (world) bounds to contain the new mesh primitive:
+		// Expand the scene (world-space) bounds to contain the new mesh primitive:
 		Bounds meshWorldBounds(meshPrimitive->GetBounds().GetTransformedBounds(
 				meshPrimitive->GetOwnerTransform()->GetGlobalMatrix(Transform::TRS)));
 
+		std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
 		m_sceneWorldSpaceBounds.ExpandBounds(meshWorldBounds);
 	}
 
 
 	void SceneData::AddUniqueTexture(shared_ptr<gr::Texture>& newTexture)
 	{
+		SEAssert("Adding data is not thread safe once loading is complete", !m_finishedLoading);
 		SEAssert("Cannot add null texture to textures table", newTexture != nullptr);
 
 		std::unique_lock<std::shared_mutex> writeLock(m_texturesMutex);
@@ -1221,8 +1331,8 @@ namespace fr
 		const uint64_t nameID = en::NamedObject::ComputeIDFromName(textureName);
 
 		std::shared_lock<std::shared_mutex> readLock(m_texturesMutex);
-
 		auto result = m_textures.find(nameID);
+
 		SEAssert("Texture with that name does not exist", result != m_textures.end());
 
 		return result->second;
@@ -1234,7 +1344,6 @@ namespace fr
 		const uint64_t nameID = en::NamedObject::ComputeIDFromName(textureName);
 
 		std::shared_lock<std::shared_mutex> readLock(m_texturesMutex);
-
 		return m_textures.find(nameID) != m_textures.end();
 	}
 
@@ -1260,6 +1369,7 @@ namespace fr
 
 	void SceneData::AddUniqueMaterial(shared_ptr<Material>& newMaterial)
 	{
+		SEAssert("Adding data is not thread safe once loading is complete", !m_finishedLoading);
 		SEAssert("Cannot add null material to material table", newMaterial != nullptr);
 
 		std::unique_lock<std::shared_mutex> writeLock(m_materialsMutex);
@@ -1284,8 +1394,8 @@ namespace fr
 		const size_t nameID = NamedObject::ComputeIDFromName(materialName);
 
 		std::shared_lock<std::shared_mutex> readLock(m_materialsMutex);
-
 		unordered_map<size_t, shared_ptr<gr::Material>>::const_iterator matPos = m_materials.find(nameID);
+
 		SEAssert("Could not find material", matPos != m_materials.end());
 
 		return matPos->second;

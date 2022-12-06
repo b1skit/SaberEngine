@@ -3,6 +3,7 @@
 #pragma once
 
 #include <vector>
+#include <mutex>
 
 #define GLM_FORCE_SWIZZLE // Enable swizzle operators
 #include <glm/glm.hpp>
@@ -127,6 +128,11 @@ namespace gr
 
 		bool m_isDirty;	// Do our local or combinedModel matrices need to be recomputed?
 
+	public:
+		// Thread-safe trees are hard; for now, just just a recursive mutex and accept that transform updates are
+		// effectively single-threaded. TODO: Optimize. Decouple sub-trees by not maintaining a root. Use per-node locks
+		// instead of a single, shared lock
+		static std::recursive_mutex m_transformHierarchyMutex;
 
 	private:
 		void MarkDirty(); // Mark this transform as requiring a recomputation of it's global matrices

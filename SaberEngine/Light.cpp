@@ -62,17 +62,15 @@ namespace gr
 		{
 			if (hasShadow)
 			{
-				re::Bounds sceneWorldBounds = SceneManager::GetSceneData()->GetWorldSpaceSceneBounds();
-				Camera::CameraConfig shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
-					m_ownerTransform, sceneWorldBounds);
-
 				const uint32_t shadowMapRes = Config::Get()->GetValue<uint32_t>("defaultShadowMapRes");
 				m_shadowMap = make_unique<ShadowMap>(
 					GetName(),
 					shadowMapRes,
 					shadowMapRes,
-					shadowCamConfig,
+					Camera::CameraConfig(),
 					m_ownerTransform);
+				// Note: We'll compute the camera config from the scene bounds during the first call to Update(); so
+				// here we just pass a default camera config
 			}
 		}
 		break;

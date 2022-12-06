@@ -180,6 +180,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="Batch.cpp" />
     <ClCompile Include="Bounds.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="GameplayManager.cpp" />
     <ClCompile Include="ParameterBlock.cpp" />
     <ClCompile Include="ParameterBlockAllocator.cpp" />
     <ClCompile Include="ParameterBlock_OpenGL.cpp" />
@@ -249,6 +250,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="Batch.h" />
     <ClInclude Include="Bounds.h" />
     <ClInclude Include="Command.h" />
+    <ClInclude Include="GameplayManager.h" />
     <ClInclude Include="HashedDataObject.h" />
     <ClInclude Include="ParameterBlock.h" />
     <ClInclude Include="ParameterBlockAllocator.h" />

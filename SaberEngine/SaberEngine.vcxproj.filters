@@ -275,6 +275,9 @@
     <ClCompile Include="ThreadPool.cpp">
       <Filter>Source Files\en</Filter>
     </ClCompile>
+    <ClCompile Include="GameplayManager.cpp">
+      <Filter>Source Files\fr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshPrimitive.h">
@@ -504,6 +507,9 @@
     </ClInclude>
     <ClInclude Include="TextLoader.h">
       <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="GameplayManager.h">
+      <Filter>Header Files\fr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
