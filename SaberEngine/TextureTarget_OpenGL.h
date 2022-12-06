@@ -1,16 +1,17 @@
 #pragma once
 
+#include "TextureTarget.h"
 #include "TextureTarget_Platform.h"
 #include <GL/glew.h>
 
 
 namespace opengl
 {
-	class TextureTarget : public virtual platform::TextureTarget
+	class TextureTarget
 	{
 	public:
 	
-		struct PlatformParams : public virtual platform::TextureTarget::PlatformParams
+		struct PlatformParams final : public virtual re::TextureTarget::PlatformParams
 		{
 			PlatformParams();
 			~PlatformParams();
@@ -24,10 +25,10 @@ namespace opengl
 	};
 
 
-	class TextureTargetSet : public virtual platform::TextureTargetSet
+	class TextureTargetSet
 	{
 	public:
-		struct PlatformParams : public virtual platform::TextureTargetSet::PlatformParams
+		struct PlatformParams final : public virtual re::TextureTargetSet::PlatformParams
 		{
 			PlatformParams();
 			~PlatformParams() override;
@@ -37,10 +38,10 @@ namespace opengl
 
 		// Static members:
 		static void CreateColorTargets(re::TextureTargetSet& targetSet);
-		static void AttachColorTargets(re::TextureTargetSet const& targetSet, uint32_t face, uint32_t mipLevel, bool doBind);
+		static void AttachColorTargets(re::TextureTargetSet& targetSet, uint32_t face, uint32_t mipLevel, bool doBind);
 
 		static void CreateDepthStencilTarget(re::TextureTargetSet& targetSet);
-		static void AttachDepthStencilTarget(re::TextureTargetSet const& targetSet, bool doBind);
+		static void AttachDepthStencilTarget(re::TextureTargetSet& targetSet, bool doBind);
 
 		static uint32_t MaxColorTargets();
 	};

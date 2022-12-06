@@ -92,7 +92,7 @@ namespace re
 			(uint32_t)Config::Get()->GetValue<int>("windowXRes"),
 			(uint32_t)Config::Get()->GetValue<int>("windowYRes")
 		};
-		m_defaultTargetSet->CreateColorTargets(); // Default framebuffer has no texture targets
+		// Note: Default framebuffer has no texture targets
 	}
 
 

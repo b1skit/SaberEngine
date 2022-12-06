@@ -61,6 +61,13 @@ namespace opengl
 		opengl::TextureTargetSet::PlatformParams* const targetSetParams =
 			dynamic_cast<opengl::TextureTargetSet::PlatformParams*>(targetSet.GetPlatformParams());
 
+		if (targetSetParams->m_colorIsCreated)
+		{
+			return;
+		}
+		targetSetParams->m_colorIsCreated = true;
+
+
 		// Configure the framebuffer and each texture target:
 		uint32_t attachmentPointOffset = 0; // TODO: Attach to the array index, rather than the offset?
 		bool foundTarget = false;
@@ -70,10 +77,10 @@ namespace opengl
 		uint32_t insertIdx = 0;
 		for (uint32_t i = 0; i < targetSet.ColorTargets().size(); i++)
 		{
-			if (targetSet.ColorTarget(i).GetTexture() != nullptr)
+			if (targetSet.GetColorTarget(i).GetTexture() != nullptr)
 			{
 				// Create/bind the texture:
-				std::shared_ptr<gr::Texture>& texture = targetSet.ColorTarget(i).GetTexture();
+				std::shared_ptr<gr::Texture> const& texture = targetSet.GetColorTarget(i).GetTexture();
 
 				gr::Texture::TextureParams const& textureParams = texture->GetTextureParams();
 				SEAssert("Attempting to bind a color target with a different texture use parameter",
@@ -96,7 +103,7 @@ namespace opengl
 				 
 				// Configure the target parameters:
 				opengl::TextureTarget::PlatformParams* const targetParams =
-					dynamic_cast<opengl::TextureTarget::PlatformParams*>(targetSet.ColorTarget(i).GetPlatformParams());
+					dynamic_cast<opengl::TextureTarget::PlatformParams*>(targetSet.GetColorTarget(i).GetPlatformParams());
 
 				targetParams->m_attachmentPoint = GL_COLOR_ATTACHMENT0 + attachmentPointOffset;
 				targetParams->m_drawBuffer		= GL_COLOR_ATTACHMENT0 + attachmentPointOffset;
@@ -153,11 +160,11 @@ namespace opengl
 
 
 	void TextureTargetSet::AttachColorTargets(
-		re::TextureTargetSet const& targetSet,
-		uint32_t face,
-		uint32_t mipLevel, 
-		bool doBind)
+		re::TextureTargetSet& targetSet, uint32_t face, uint32_t mipLevel, bool doBind)
 	{
+		// Ensure the targets are created before we try and attach them
+		opengl::TextureTargetSet::CreateColorTargets(targetSet);
+
 		// Unbinding:
 		if (!doBind)
 		{
@@ -179,9 +186,9 @@ namespace opengl
 		std::shared_ptr<gr::Texture> firstTarget = nullptr;
 		for (uint32_t i = 0; i < targetSet.ColorTargets().size(); i++)
 		{
-			if (targetSet.ColorTarget(i).GetTexture() != nullptr)
+			if (targetSet.GetColorTarget(i).GetTexture() != nullptr)
 			{
-				std::shared_ptr<gr::Texture> texture = targetSet.ColorTarget(i).GetTexture();
+				std::shared_ptr<gr::Texture> texture = targetSet.GetColorTarget(i).GetTexture();
 				
 				// Ensure the texture is created before we access its platform params
 				opengl::Texture::Create(*texture);
@@ -190,7 +197,7 @@ namespace opengl
 				opengl::Texture::PlatformParams const* texPlatformParams =
 					dynamic_cast<opengl::Texture::PlatformParams const*>(texture->GetPlatformParams());
 				opengl::TextureTarget::PlatformParams const* const targetPlatformParams =
-					dynamic_cast<opengl::TextureTarget::PlatformParams const*>(targetSet.ColorTarget(i).GetPlatformParams());
+					dynamic_cast<opengl::TextureTarget::PlatformParams const*>(targetSet.GetColorTarget(i).GetPlatformParams());
 
 				SEAssert("Attempting to bind a color target with a different texture use parameter", 
 					textureParams.m_usage == gr::Texture::Usage::ColorTarget);
@@ -258,10 +265,16 @@ namespace opengl
 
 	void TextureTargetSet::CreateDepthStencilTarget(re::TextureTargetSet& targetSet)
 	{
-		std::shared_ptr<gr::Texture>& depthStencilTex = targetSet.DepthStencilTarget().GetTexture();
-
 		opengl::TextureTargetSet::PlatformParams* const targetSetParams =
 			dynamic_cast<opengl::TextureTargetSet::PlatformParams*>(targetSet.GetPlatformParams());
+
+		if (targetSetParams->m_depthIsCreated)
+		{
+			return;
+		}
+		targetSetParams->m_depthIsCreated = true;
+
+		std::shared_ptr<gr::Texture const> depthStencilTex = targetSet.DepthStencilTarget().GetTexture();
 
 		if (depthStencilTex != nullptr)
 		{
@@ -313,8 +326,11 @@ namespace opengl
 	}
 
 
-	void TextureTargetSet::AttachDepthStencilTarget(re::TextureTargetSet const& targetSet, bool doBind)
+	void TextureTargetSet::AttachDepthStencilTarget(re::TextureTargetSet& targetSet, bool doBind)
 	{
+		// Ensure the target is created before we try and attach it
+		opengl::TextureTargetSet::CreateDepthStencilTarget(targetSet);
+
 		// Unbinding:
 		if (!doBind)
 		{

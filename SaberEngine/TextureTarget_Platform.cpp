@@ -11,7 +11,7 @@ using en::Config;
 
 namespace platform
 {
-	void TextureTarget::PlatformParams::CreatePlatformParams(re::TextureTarget& texTarget)
+	void TextureTarget::CreatePlatformParams(re::TextureTarget& texTarget)
 	{
 		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
@@ -19,7 +19,7 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			texTarget.m_platformParams = std::make_shared<opengl::TextureTarget::PlatformParams>();
+			texTarget.SetPlatformParams(std::make_shared<opengl::TextureTarget::PlatformParams>());
 		}
 		break;
 		case RenderingAPI::DX12:
@@ -35,7 +35,7 @@ namespace platform
 	}
 
 
-	void TextureTargetSet::PlatformParams::CreatePlatformParams(re::TextureTargetSet& texTarget)
+	void TextureTargetSet::CreatePlatformParams(re::TextureTargetSet& texTarget)
 	{
 		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
@@ -43,7 +43,7 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			texTarget.m_platformParams = std::make_shared<opengl::TextureTargetSet::PlatformParams>();
+			texTarget.SetPlatformParams(std::make_shared<opengl::TextureTargetSet::PlatformParams>());
 		}
 		break;
 		case RenderingAPI::DX12:
@@ -62,10 +62,10 @@ namespace platform
 	// platform::TextureTarget static members:
 	/****************************************/
 	void (*TextureTargetSet::CreateColorTargets)(re::TextureTargetSet&);
-	void (*TextureTargetSet::AttachColorTargets)(re::TextureTargetSet const& targetSet, uint32_t face, uint32_t mipLevel, bool doBind);
+	void (*TextureTargetSet::AttachColorTargets)(re::TextureTargetSet& targetSet, uint32_t face, uint32_t mipLevel, bool doBind);
 
 	void (*TextureTargetSet::CreateDepthStencilTarget)(re::TextureTargetSet& targetSet);
-	void (*TextureTargetSet::AttachDepthStencilTarget)(re::TextureTargetSet const& targetSet, bool doBind);
+	void (*TextureTargetSet::AttachDepthStencilTarget)(re::TextureTargetSet& targetSet, bool doBind);
 
 	uint32_t(*TextureTargetSet::MaxColorTargets)();
 

@@ -2,15 +2,12 @@
 
 #include <memory>
 
+#include "TextureTarget.h"
+
 
 namespace gr
 {
 	class Texture;
-}
-namespace re
-{
-	class TextureTarget;
-	class TextureTargetSet;
 }
 
 namespace platform
@@ -21,13 +18,7 @@ namespace platform
 	class TextureTarget
 	{
 	public:
-		struct PlatformParams
-		{
-			virtual ~PlatformParams() = 0;
-
-			// Static member functions:
-			static void CreatePlatformParams(re::TextureTarget&);
-		};
+		static void CreatePlatformParams(re::TextureTarget&);
 	};
 
 
@@ -37,29 +28,15 @@ namespace platform
 	class TextureTargetSet
 	{
 	public:
-		struct PlatformParams
-		{
-			virtual ~PlatformParams() = 0;
-
-			// Static member functions:
-			static void CreatePlatformParams(re::TextureTargetSet&);
-		};
-
-		// Dynamically-linked static functions:
-
+		static void CreatePlatformParams(re::TextureTargetSet&);
 
 
 		static void (*CreateColorTargets)(re::TextureTargetSet& targetSet);
-		static void (*AttachColorTargets)(re::TextureTargetSet const& targetSet, uint32_t face, uint32_t mipLevel, bool doBind);
+		static void (*AttachColorTargets)(re::TextureTargetSet& targetSet, uint32_t face, uint32_t mipLevel, bool doBind);
 
 		static void (*CreateDepthStencilTarget)(re::TextureTargetSet& targetSet);
-		static void (*AttachDepthStencilTarget)(re::TextureTargetSet const& targetSet, bool doBind);
+		static void (*AttachDepthStencilTarget)(re::TextureTargetSet& targetSet, bool doBind);
 
 		static uint32_t(*MaxColorTargets)();
 	};
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline platform::TextureTarget::PlatformParams::~PlatformParams() {};
-	inline platform::TextureTargetSet::PlatformParams::~PlatformParams() {};
 }

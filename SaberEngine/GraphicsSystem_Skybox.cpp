@@ -159,8 +159,7 @@ namespace gr
 		shared_ptr<GBufferGraphicsSystem> gBufferGS = std::dynamic_pointer_cast<GBufferGraphicsSystem>(
 			RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>());
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
-		m_skyboxStage.GetTextureTargetSet().DepthStencilTarget() = gBufferGS->GetFinalTextureTargetSet().DepthStencilTarget();
-		m_skyboxStage.GetTextureTargetSet().CreateDepthStencilTarget();
+		m_skyboxStage.GetTextureTargetSet().SetDepthStencilTarget(gBufferGS->GetFinalTextureTargetSet().DepthStencilTarget());
 
 		pipeline.AppendRenderStage(m_skyboxStage);
 	}

@@ -100,9 +100,8 @@ namespace gr
 			resScaleParams.m_height = currentYRes;
 			const string texPath = "ScaledResolution_" + to_string(currentXRes) + "x" + to_string(currentYRes);
 
-			m_downResStages.back().GetTextureTargetSet().ColorTarget(0) = 
-				std::make_shared<gr::Texture>(texPath, resScaleParams);
-			m_downResStages.back().GetTextureTargetSet().CreateColorTargets();
+			m_downResStages.back().GetTextureTargetSet().SetColorTarget(0, 
+				std::make_shared<gr::Texture>(texPath, resScaleParams));
 
 			m_downResStages.back().SetStagePipelineStateParams(bloomStageParams);
 			m_downResStages.back().GetStageCamera() = sceneCam;
@@ -156,15 +155,13 @@ namespace gr
 
 			if (i % 2 == 0)
 			{
-				m_blurStages.back().GetTextureTargetSet().ColorTarget(0) = blurPingPongTexture;
-				m_blurStages.back().GetTextureTargetSet().CreateColorTargets();
+				m_blurStages.back().GetTextureTargetSet().SetColorTarget(0, blurPingPongTexture);
 				m_blurStages.back().GetStageShader() = horizontalBlurShader;
 			}
 			else
 			{
-				m_blurStages.back().GetTextureTargetSet().ColorTarget(0) 
-					= m_downResStages.back().GetTextureTargetSet().ColorTarget(0);
-				m_blurStages.back().GetTextureTargetSet().CreateColorTargets();
+				m_blurStages.back().GetTextureTargetSet().SetColorTarget(0, 
+					m_downResStages.back().GetTextureTargetSet().GetColorTarget(0));
 				m_blurStages.back().GetStageShader() = verticalBlurShader;
 			}
 
@@ -199,9 +196,8 @@ namespace gr
 			}
 			else
 			{
-				m_upResStages.back().GetTextureTargetSet().ColorTarget(0) = 
-					m_downResStages[m_downResStages.size() - (i + 2)].GetTextureTargetSet().ColorTarget(0);
-				m_upResStages.back().GetTextureTargetSet().CreateColorTargets();
+				m_upResStages.back().GetTextureTargetSet().SetColorTarget(0,
+					m_downResStages[m_downResStages.size() - (i + 2)].GetTextureTargetSet().GetColorTarget(0));
 
 				m_upResStages.back().SetStagePipelineStateParams(bloomStageParams);
 			}
@@ -252,7 +248,7 @@ namespace gr
 		const size_t gBufferEmissiveTextureIndex = 3; 
 		m_emissiveBlitStage.SetTextureInput(
 			"GBufferAlbedo",
-			gbufferGS->GetFinalTextureTargetSet().ColorTarget(gBufferEmissiveTextureIndex).GetTexture(),
+			gbufferGS->GetFinalTextureTargetSet().GetColorTarget(gBufferEmissiveTextureIndex).GetTexture(),
 			bloomStageSampler);
 
 		for (size_t i = 0; i < m_downResStages.size(); i++)
@@ -261,14 +257,14 @@ namespace gr
 			{
 				m_downResStages[i].SetTextureInput(
 					"GBufferAlbedo", 
-					m_emissiveBlitStage.GetTextureTargetSet().ColorTarget(0).GetTexture(),
+					m_emissiveBlitStage.GetTextureTargetSet().GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
 				m_downResStages[i].SetTextureInput(
 					"GBufferAlbedo",
-					m_downResStages[i - 1].GetTextureTargetSet().ColorTarget(0).GetTexture(),
+					m_downResStages[i - 1].GetTextureTargetSet().GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 		}
@@ -279,14 +275,14 @@ namespace gr
 			{
 				m_blurStages[i].SetTextureInput(
 					"GBufferAlbedo",
-					m_downResStages.back().GetTextureTargetSet().ColorTarget(0).GetTexture(),
+					m_downResStages.back().GetTextureTargetSet().GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
 				m_blurStages[i].SetTextureInput(
 					"GBufferAlbedo",
-					m_blurStages[i-1].GetTextureTargetSet().ColorTarget(0).GetTexture(),
+					m_blurStages[i-1].GetTextureTargetSet().GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 		}
@@ -297,14 +293,14 @@ namespace gr
 			{
 				m_upResStages[i].SetTextureInput(
 					"GBufferAlbedo",
-					m_blurStages.back().GetTextureTargetSet().ColorTarget(0).GetTexture(),
+					m_blurStages.back().GetTextureTargetSet().GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
 				m_upResStages[i].SetTextureInput(
 					"GBufferAlbedo",
-					m_upResStages[i-1].GetTextureTargetSet().ColorTarget(0).GetTexture(),
+					m_upResStages[i-1].GetTextureTargetSet().GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 		}

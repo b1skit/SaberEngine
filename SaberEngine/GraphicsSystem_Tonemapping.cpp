@@ -67,7 +67,7 @@ namespace gr
 
 		m_tonemappingStage.SetTextureInput(
 			"GBufferAlbedo",
-			deferredLightTextureTargetSet.ColorTarget(0).GetTexture(),
+			deferredLightTextureTargetSet.GetColorTarget(0).GetTexture(),
 			Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 	}
 

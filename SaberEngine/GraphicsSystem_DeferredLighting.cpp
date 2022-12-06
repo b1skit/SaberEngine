@@ -164,9 +164,8 @@ namespace gr
 		std::shared_ptr<Texture> outputTexture = make_shared<Texture>("DeferredLightTarget", lightTargetParams);
 
 		TextureTargetSet deferredLightingTargetSet("Deferred lighting target");
-		deferredLightingTargetSet.ColorTarget(0) = outputTexture;
-		deferredLightingTargetSet.DepthStencilTarget() = gBufferGS->GetFinalTextureTargetSet().DepthStencilTarget();
-		deferredLightingTargetSet.CreateColorDepthStencilTargets();
+		deferredLightingTargetSet.SetColorTarget(0, outputTexture);
+		deferredLightingTargetSet.SetDepthStencilTarget(gBufferGS->GetFinalTextureTargetSet().DepthStencilTarget());
 
 		Camera* deferredLightingCam = SceneManager::GetSceneData()->GetMainCamera().get();
 
@@ -221,10 +220,9 @@ namespace gr
 
 			m_BRDF_integrationMap = std::make_shared<gr::Texture>("BRDFIntegrationMap", brdfParams);
 
-			brdfStage.GetTextureTargetSet().ColorTarget(0) = m_BRDF_integrationMap;
+			brdfStage.GetTextureTargetSet().SetColorTarget(0, m_BRDF_integrationMap);
 			brdfStage.GetTextureTargetSet().Viewport() = 
 				re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
-			brdfStage.GetTextureTargetSet().CreateColorTargets();
 
 			// Stage params:
 			RenderStage::PipelineStateParams brdfStageParams;
@@ -321,10 +319,9 @@ namespace gr
 					re::ParameterBlock::Lifetime::SingleFrame);
 				iemStage.AddPermanentParameterBlock(pb);
 
-				iemStage.GetTextureTargetSet().ColorTarget(0) = m_IEMTex;
+				iemStage.GetTextureTargetSet().SetColorTarget(0, m_IEMTex);
 				iemStage.GetTextureTargetSet().Viewport() = 
 					re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
-				iemStage.GetTextureTargetSet().CreateColorTargets();
 
 				iblStageParams.m_textureTargetSetConfig.m_targetFace = face;
 				iblStageParams.m_textureTargetSetConfig.m_targetMip = 0;
@@ -346,9 +343,8 @@ namespace gr
 			m_PMREMTex = make_shared<Texture>("PMREMTexture", cubeParams);
 
 			TextureTargetSet pmremTargetSet("PMREM texture targets");
-			pmremTargetSet.ColorTarget(0) = m_PMREMTex;
+			pmremTargetSet.SetColorTarget(0, m_PMREMTex);
 			pmremTargetSet.Viewport() = re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
-			pmremTargetSet.CreateColorTargets();
 
 			const uint32_t numMipLevels = m_PMREMTex->GetNumMips(); // # of mips we need to render
 
@@ -520,21 +516,21 @@ namespace gr
 			{
 				m_ambientStage.SetTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[i],
-					gBufferGS->GetFinalTextureTargetSet().ColorTarget(i).GetTexture(),
+					gBufferGS->GetFinalTextureTargetSet().GetColorTarget(i).GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 			if (keyLight)
 			{
 				m_keylightStage.SetTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[i],
-					gBufferGS->GetFinalTextureTargetSet().ColorTarget(i).GetTexture(),
+					gBufferGS->GetFinalTextureTargetSet().GetColorTarget(i).GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 			if (!pointLights.empty())
 			{
 				m_pointlightStage.SetTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[i],
-					gBufferGS->GetFinalTextureTargetSet().ColorTarget(i).GetTexture(),
+					gBufferGS->GetFinalTextureTargetSet().GetColorTarget(i).GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 		}

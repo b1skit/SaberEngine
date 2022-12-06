@@ -68,9 +68,8 @@ namespace gr
 			depthTexture = std::make_shared<gr::Texture>(texName, shadowParams);
 		}
 
-		m_shadowTargetSet.DepthStencilTarget() = depthTexture;
+		m_shadowTargetSet.SetDepthStencilTarget(depthTexture);
 		m_shadowTargetSet.Viewport() = re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height());
-		m_shadowTargetSet.CreateDepthStencilTarget();
 	}
 }
 

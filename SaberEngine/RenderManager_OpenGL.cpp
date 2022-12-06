@@ -107,8 +107,8 @@ namespace opengl
 				RenderStage::PipelineStateParams const& stagePipelineParams = renderStage->GetStagePipelineStateParams();
 
 				// Attach the stage targets:
-				TextureTargetSet const& stageTargets = renderStage->GetTextureTargetSet();
-				stageTargets.AttachColorDepthStencilTargets(
+				TextureTargetSet& stageTargets = renderStage->GetTextureTargetSet();
+				stageTargets.AttachTargets(
 					stagePipelineParams.m_textureTargetSetConfig.m_targetFace, 
 					stagePipelineParams.m_textureTargetSetConfig.m_targetMip, 
 					true);

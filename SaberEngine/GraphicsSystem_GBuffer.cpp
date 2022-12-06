@@ -78,8 +78,7 @@ namespace gr
 		re::TextureTargetSet& gBufferTargets = m_gBufferStage.GetTextureTargetSet();
 		for (size_t i = 0; i <= 5; i++)
 		{
-			std::shared_ptr<gr::Texture> gBufferTex = std::make_shared<gr::Texture>(GBufferTexNames[i], gBufferParams);
-			gBufferTargets.ColorTarget(i) = gBufferTex;
+			gBufferTargets.SetColorTarget(i, std::make_shared<gr::Texture>(GBufferTexNames[i], gBufferParams));
 		}
 
 		// Create GBuffer depth target:
@@ -89,15 +88,9 @@ namespace gr
 		depthTexParams.m_colorSpace = gr::Texture::ColorSpace::Linear;
 
 		const size_t gBufferDepthTextureNameIdx = 6; //TODO: Handle this in a less brittle way
-
-		std::shared_ptr<gr::Texture> depthTex = 
-			std::make_shared<gr::Texture>(GBufferTexNames[gBufferDepthTextureNameIdx], depthTexParams);
-		
-
-		gBufferTargets.DepthStencilTarget() = depthTex;
-
-		// Initialize the target set:
-		gBufferTargets.CreateColorDepthStencilTargets();
+				
+		gBufferTargets.SetDepthStencilTarget(
+			std::make_shared<gr::Texture>(GBufferTexNames[gBufferDepthTextureNameIdx], depthTexParams));
 
 		// Camera:
 		m_gBufferStage.GetStageCamera() = SceneManager::GetSceneData()->GetMainCamera().get();

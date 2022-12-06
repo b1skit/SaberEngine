@@ -4,7 +4,6 @@
 
 #include "DebugConfiguration.h"
 #include "Texture.h"
-#include "TextureTarget_Platform.h"
 #include "NamedObject.h"
 #include "ParameterBlock.h"
 
@@ -15,6 +14,13 @@ namespace re
 	class TextureTarget
 	{
 	public:
+		struct PlatformParams
+		{
+			virtual ~PlatformParams() = 0;
+		};
+
+
+	public:
 		TextureTarget();
 		explicit TextureTarget(std::shared_ptr<gr::Texture> texture);
 		
@@ -22,22 +28,19 @@ namespace re
 
 		TextureTarget(TextureTarget const&) = default;
 		TextureTarget(TextureTarget&&) = default;
-
 		TextureTarget& operator=(TextureTarget const&) = default;
+
 		TextureTarget& operator=(std::shared_ptr<gr::Texture> texture);
 
 		std::shared_ptr<gr::Texture>& GetTexture() { return m_texture; }
 		std::shared_ptr<gr::Texture> const& GetTexture() const { return m_texture; }
 
-		platform::TextureTarget::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
-		platform::TextureTarget::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
+		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
+		void SetPlatformParams(std::shared_ptr<PlatformParams> params) { m_platformParams = params; }
 
 	private:
 		std::shared_ptr<gr::Texture> m_texture;
-		std::shared_ptr<platform::TextureTarget::PlatformParams> m_platformParams;
-
-		// Friends:
-		friend void platform::TextureTarget::PlatformParams::CreatePlatformParams(re::TextureTarget&);
+		std::shared_ptr<PlatformParams> m_platformParams;
 	};
 
 
@@ -80,10 +83,21 @@ namespace re
 	class TextureTargetSet : public virtual en::NamedObject
 	{
 	public:
+		struct PlatformParams
+		{
+			virtual ~PlatformParams() = 0;
+
+			bool m_colorIsCreated = false;
+			bool m_depthIsCreated = false;
+		};
+
+
+	public:
 		struct TargetParams
 		{
 			glm::vec4 g_targetResolution;
 		};
+
 
 	public:
 		explicit TextureTargetSet(std::string name);
@@ -92,60 +106,58 @@ namespace re
 		TextureTargetSet& operator=(TextureTargetSet const&);
 		~TextureTargetSet();
 
-		inline std::vector<re::TextureTarget>& ColorTargets() { m_targetStateDirty = true; return m_colorTargets; }
 		inline std::vector<re::TextureTarget> const& ColorTargets() const { return m_colorTargets; }
+		re::TextureTarget const& GetColorTarget(size_t i) const;
+		void SetColorTarget(size_t i, re::TextureTarget texTarget);
+		void SetColorTarget(size_t i, std::shared_ptr<gr::Texture> texTarget);
 
-		inline re::TextureTarget& ColorTarget(size_t i)
-			{ SEAssert("OOB index", i < m_colorTargets.size()); m_targetStateDirty = true; return m_colorTargets[i]; }
-		inline re::TextureTarget const& ColorTarget(size_t i) const 
-			{ SEAssert("OOB index", i < m_colorTargets.size()); return m_colorTargets[i]; }
-
-		inline re::TextureTarget& DepthStencilTarget() { m_targetStateDirty = true; return m_depthStencilTarget; }
 		inline re::TextureTarget const& DepthStencilTarget() const { return m_depthStencilTarget; }
+		void SetDepthStencilTarget(re::TextureTarget const& depthStencilTarget);
+		void SetDepthStencilTarget(std::shared_ptr<gr::Texture> depthStencilTarget);
+
+		bool HasTargets();
+		bool HasColorTarget();
+		bool HasDepthTarget();
 
 		inline re::Viewport& Viewport() { return m_viewport; }
 		inline re::Viewport const& Viewport() const { return m_viewport; }
 
-		inline platform::TextureTargetSet::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
-		inline platform::TextureTargetSet::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
+		inline PlatformParams* GetPlatformParams() { return m_platformParams.get(); }
+		inline PlatformParams const* GetPlatformParams() const { return m_platformParams.get(); }
+		void SetPlatformParams(std::shared_ptr<PlatformParams> params) { m_platformParams = params; }
 		
-		inline std::shared_ptr<re::ParameterBlock> GetTargetParameterBlock() const { return m_targetParameterBlock; }
-
-		bool HasTargets();
+		std::shared_ptr<re::ParameterBlock> GetTargetParameterBlock();		
 
 		// Platform wrappers:
-		void CreateColorTargets();
-		void AttachColorTargets(uint32_t face, uint32_t mipLevel, bool doBind) const;
+		void AttachTargets(uint32_t colorFace, uint32_t colorMipLevel, bool doBind);
 
-		void CreateDepthStencilTarget();
-		void AttachDepthStencilTarget(bool doBind) const;
-
-		void CreateColorDepthStencilTargets();
-		void AttachColorDepthStencilTargets(uint32_t colorFace, uint32_t colorMipLevel, bool doBind) const;
-		
-	private:
-		std::vector<re::TextureTarget> m_colorTargets;
-		re::TextureTarget m_depthStencilTarget;
-		bool m_targetStateDirty;
-		bool m_hasTargets;
-
-		re::Viewport m_viewport;
-
-		std::shared_ptr<platform::TextureTargetSet::PlatformParams> m_platformParams;
-
-		std::shared_ptr<re::ParameterBlock> m_targetParameterBlock;
-
-		bool m_colorIsCreated;
-		bool m_depthIsCreated;
 
 	private:
 		void CreateUpdateTargetParameterBlock();
 
-	private:
-		// Friends:
-		friend void platform::TextureTargetSet::PlatformParams::CreatePlatformParams(re::TextureTargetSet&);
 
+	private:
+		std::vector<re::TextureTarget> m_colorTargets;
+		re::TextureTarget m_depthStencilTarget;
+
+		bool m_hasColorTarget;
+		bool m_colorTargetStateDirty;
+
+		re::Viewport m_viewport;
+
+		std::shared_ptr<PlatformParams> m_platformParams;
+
+		std::shared_ptr<re::ParameterBlock> m_targetParameterBlock;
+		bool m_targetParamsDirty; // Do we need to recompute the target parameter block?
+
+
+	private:
 		TextureTargetSet() = delete;
 		TextureTargetSet(TextureTargetSet const&) = delete;
 	};
+
+
+	// We need to provide a destructor implementation since it's pure virtual
+	inline TextureTarget::PlatformParams::~PlatformParams() {};
+	inline TextureTargetSet::PlatformParams::~PlatformParams() {};
 }

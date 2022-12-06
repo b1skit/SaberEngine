@@ -1,4 +1,5 @@
 #include "TextureTarget.h"
+#include "TextureTarget_Platform.h"
 #include "Config.h"
 
 using en::Config;
@@ -13,14 +14,14 @@ namespace re
 	TextureTarget::TextureTarget() :
 		m_texture(nullptr)
 	{
-		platform::TextureTarget::PlatformParams::CreatePlatformParams(*this);
+		platform::TextureTarget::CreatePlatformParams(*this);
 	}
 
 
 	TextureTarget::TextureTarget(std::shared_ptr<gr::Texture> texture) :
 		m_texture(texture)
 	{
-		platform::TextureTarget::PlatformParams::CreatePlatformParams(*this);
+		platform::TextureTarget::CreatePlatformParams(*this);
 	}
 
 
@@ -64,15 +65,14 @@ namespace re
 	/******************/
 	// TextureTargetSet
 	/******************/
-	TextureTargetSet::TextureTargetSet(string name) :
-			NamedObject(name),
-		m_targetStateDirty(true),
-		m_hasTargets(false),
-		m_targetParameterBlock(nullptr),
-		m_colorIsCreated(false),
-		m_depthIsCreated(false)
+	TextureTargetSet::TextureTargetSet(string name)
+		: NamedObject(name)
+		, m_colorTargetStateDirty(true)
+		, m_hasColorTarget(false)
+		, m_targetParameterBlock(nullptr)
+		, m_targetParamsDirty(true)
 	{
-		platform::TextureTargetSet::PlatformParams::CreatePlatformParams(*this);
+		platform::TextureTargetSet::CreatePlatformParams(*this);
 	
 		m_colorTargets.resize(platform::TextureTargetSet::MaxColorTargets());
 	}
@@ -87,24 +87,26 @@ namespace re
 		m_depthStencilTarget = nullptr;
 		m_platformParams = nullptr;
 
-		m_targetStateDirty = true;
-		m_hasTargets = false;
+		m_colorTargetStateDirty = true;
+		m_hasColorTarget = false;
+
+		m_targetParameterBlock = nullptr;
+		m_targetParamsDirty = true;
 	}
 
 
-	TextureTargetSet::TextureTargetSet(TextureTargetSet const& rhs, std::string const& newName) : 
-			NamedObject(newName),
-		m_colorTargets(rhs.m_colorTargets),
-		m_depthStencilTarget(rhs.m_depthStencilTarget),
-		m_targetStateDirty(true),
-		m_hasTargets(rhs.m_hasTargets),
-		m_viewport(rhs.m_viewport),
-		m_platformParams(nullptr), // Targets are copied, but the target set must be created
-		m_targetParameterBlock(rhs.m_targetParameterBlock),
-		m_colorIsCreated(false),
-		m_depthIsCreated(false)
+	TextureTargetSet::TextureTargetSet(TextureTargetSet const& rhs, std::string const& newName)
+		: NamedObject(newName)
+		, m_colorTargets(rhs.m_colorTargets)
+		, m_depthStencilTarget(rhs.m_depthStencilTarget)
+		, m_colorTargetStateDirty(true)
+		, m_hasColorTarget(rhs.m_hasColorTarget)
+		, m_viewport(rhs.m_viewport)
+		, m_platformParams(nullptr) // Targets are copied, but the target set must be created
+		, m_targetParameterBlock(rhs.m_targetParameterBlock)
+		, m_targetParamsDirty(rhs.m_targetParamsDirty)
 	{
-		platform::TextureTargetSet::PlatformParams::CreatePlatformParams(*this);
+		platform::TextureTargetSet::CreatePlatformParams(*this);
 	}
 
 
@@ -119,149 +121,187 @@ namespace re
 
 		m_colorTargets = rhs.m_colorTargets;
 		m_depthStencilTarget = rhs.m_depthStencilTarget;
-		m_targetStateDirty = rhs.m_targetStateDirty;
-		m_hasTargets = rhs.m_hasTargets;
+		m_colorTargetStateDirty = rhs.m_colorTargetStateDirty;
+		m_hasColorTarget = rhs.m_hasColorTarget;
 		m_viewport = rhs.m_viewport;
 		m_platformParams = rhs.m_platformParams;
 		m_targetParameterBlock = rhs.m_targetParameterBlock;
-		m_colorIsCreated = rhs.m_colorIsCreated;
-		m_depthIsCreated = rhs.m_depthIsCreated;
+		m_targetParamsDirty = rhs.m_targetParamsDirty;
 
 		return *this;
 	}
 
 
-	void TextureTargetSet::CreateColorTargets()
+	re::TextureTarget const& TextureTargetSet::GetColorTarget(size_t i) const
 	{
-		SEAssert("Texture Target Set already created!", m_colorIsCreated == false);
-		m_colorIsCreated = true;
-		platform::TextureTargetSet::CreateColorTargets(*this);
-		CreateUpdateTargetParameterBlock();
+		SEAssert("OOB index", i < m_colorTargets.size()); 
+		return m_colorTargets[i];
 	}
 
 
-	void TextureTargetSet::AttachColorTargets(uint32_t face, uint32_t mipLevel, bool doBind) const
+	void TextureTargetSet::SetColorTarget(size_t i, re::TextureTarget texTarget)
 	{
-		platform::TextureTargetSet::AttachColorTargets(*this, face, mipLevel, doBind);
+		m_colorTargets[i] = texTarget;
+		m_colorTargetStateDirty = true;
+		m_targetParamsDirty = true;
 	}
 
 
-	void TextureTargetSet::CreateDepthStencilTarget()
+	void TextureTargetSet::SetColorTarget(size_t i, std::shared_ptr<gr::Texture> texTarget)
 	{
-		SEAssert("Texture Target Set already created!", m_depthIsCreated == false);
-		m_depthIsCreated = true;
-		platform::TextureTargetSet::CreateDepthStencilTarget(*this);
-		CreateUpdateTargetParameterBlock();
+		m_colorTargets[i] = texTarget;
+		m_colorTargetStateDirty = true;
+		m_targetParamsDirty = true;
 	}
 
 
-	void TextureTargetSet::AttachDepthStencilTarget(bool doBind) const
+	void TextureTargetSet::SetDepthStencilTarget(re::TextureTarget const& depthStencilTarget)
 	{
-		platform::TextureTargetSet::AttachDepthStencilTarget(*this, doBind);
+		m_depthStencilTarget = depthStencilTarget;
+		m_targetParamsDirty = true;
 	}
 
 
-	void TextureTargetSet::CreateColorDepthStencilTargets()
+	void TextureTargetSet::SetDepthStencilTarget(std::shared_ptr<gr::Texture> depthStencilTarget)
 	{
-		CreateColorTargets();
-		CreateDepthStencilTarget();
-		// Note: Calling both of these results in the param block being created and updated in the same call. This 
-		// shouldn't be a problem; it's just a little wasteful
+		m_depthStencilTarget = depthStencilTarget;
+		m_targetParamsDirty = true;
 	}
 
 
-	void TextureTargetSet::AttachColorDepthStencilTargets(uint32_t colorFace, uint32_t colorMipLevel, bool doBind) const
+	void TextureTargetSet::AttachTargets(uint32_t colorFace, uint32_t colorMipLevel, bool doBind)
 	{
-		AttachColorTargets(colorFace, colorMipLevel, doBind);
-		AttachDepthStencilTarget(doBind);
+		const bool hasColorTarget = HasColorTarget();
+		if (hasColorTarget)
+		{
+			platform::TextureTargetSet::AttachColorTargets(*this, colorFace, colorMipLevel, doBind);
+		}
+
+		const bool hasDepthTarget = HasDepthTarget();
+		if (hasDepthTarget)
+		{
+			platform::TextureTargetSet::AttachDepthStencilTarget(*this, doBind);
+		}
+
+		// TODO: This is a bit of a hack; we assume that if a TextureTargetSet has neither color nor depth targets
+		// attached, that it's the default framebuffer. This might not always be the case (e.g. could be an error, or
+		// we might only want to bind color or depth seperately etc), but for now it works
+		if (!hasColorTarget && !hasDepthTarget)
+		{
+			platform::TextureTargetSet::AttachColorTargets(*this, colorFace, colorMipLevel, doBind);
+			platform::TextureTargetSet::AttachDepthStencilTarget(*this, doBind);
+		}
 	}
 
 
 	bool TextureTargetSet::HasTargets()
 	{
-		if (!m_targetStateDirty)
+		return (HasDepthTarget() || HasColorTarget());
+	}
+
+
+	bool TextureTargetSet::HasColorTarget()
+	{
+		if (!m_colorTargetStateDirty)
 		{
-			return m_hasTargets;
+			return m_hasColorTarget;
 		}
 
-		m_hasTargets = DepthStencilTarget().GetTexture() != nullptr;
-
+		// If the state is dirty, we need to recheck:
+		m_hasColorTarget = false;
 		for (size_t i = 0; i < m_colorTargets.size(); i++)
 		{
 			if (m_colorTargets[i].GetTexture() != nullptr)
 			{
-				m_hasTargets = true;
+				m_hasColorTarget = true;
 				break;
 			}
 		}
+		m_colorTargetStateDirty = false;
 
-		m_targetStateDirty = false;
+		return m_hasColorTarget;
+	}
 
-		return m_hasTargets;
+
+	bool TextureTargetSet::HasDepthTarget()
+	{
+		return DepthStencilTarget().GetTexture() != nullptr;
+	}
+
+
+	std::shared_ptr<re::ParameterBlock> TextureTargetSet::GetTargetParameterBlock()
+	{
+		CreateUpdateTargetParameterBlock();
+		return m_targetParameterBlock;
 	}
 
 
 	void TextureTargetSet::CreateUpdateTargetParameterBlock()
 	{
-		glm::vec4 targetDimensions;
-		bool foundDimensions = false;
-
-		// Default framebuffer has no texture targets
-		if (!HasTargets())
+		if (m_targetParamsDirty)
 		{
-			const uint32_t xRes = (uint32_t)Config::Get()->GetValue<int>("windowXRes");
-			const uint32_t yRes = (uint32_t)Config::Get()->GetValue<int>("windowYRes");
+			glm::vec4 targetDimensions;
+			bool foundDimensions = false;
 
-			targetDimensions.x = (float)xRes;
-			targetDimensions.y = (float)yRes;
-			targetDimensions.z = 1.0f / xRes;
-			targetDimensions.w = 1.0f / yRes;
-
-			foundDimensions = true;
-		}		
-
-		// Find a single target we can get the resolution details from; This assumes all targets are the same dimensions
-		if (m_depthIsCreated && !foundDimensions)
-		{
-			std::shared_ptr<gr::Texture> depthTarget = m_depthStencilTarget.GetTexture();
-			if (depthTarget)
+			// Default framebuffer has no texture targets
+			if (!HasTargets())
 			{
-				targetDimensions = depthTarget->GetTextureDimenions();
+				const uint32_t xRes = (uint32_t)Config::Get()->GetValue<int>("windowXRes");
+				const uint32_t yRes = (uint32_t)Config::Get()->GetValue<int>("windowYRes");
+
+				targetDimensions.x = (float)xRes;
+				targetDimensions.y = (float)yRes;
+				targetDimensions.z = 1.0f / xRes;
+				targetDimensions.w = 1.0f / yRes;
+
 				foundDimensions = true;
 			}
-		}
 
-		if (m_colorIsCreated && !foundDimensions)
-		{
-			for (size_t i = 0; i < m_colorTargets.size(); i++)
+			// Find a single target we can get the resolution details from; This assumes all targets are the same dimensions
+			if (!foundDimensions && HasDepthTarget())
 			{
-				std::shared_ptr<gr::Texture> texTarget = m_colorTargets[i].GetTexture();
-				if (texTarget)
+				std::shared_ptr<gr::Texture> depthTarget = m_depthStencilTarget.GetTexture();
+				if (depthTarget)
 				{
-					targetDimensions = texTarget->GetTextureDimenions();
+					targetDimensions = depthTarget->GetTextureDimenions();
 					foundDimensions = true;
-					break;
 				}
 			}
-		}
 
-		SEAssert("Cannot create parameter block with no texture dimensions", foundDimensions);
+			if (!foundDimensions && HasColorTarget())
+			{
+				for (size_t i = 0; i < m_colorTargets.size(); i++)
+				{
+					std::shared_ptr<gr::Texture> texTarget = m_colorTargets[i].GetTexture();
+					if (texTarget)
+					{
+						targetDimensions = texTarget->GetTextureDimenions();
+						foundDimensions = true;
+						break;
+					}
+				}
+			}
 
-		TargetParams targetParams;
-		targetParams.g_targetResolution = targetDimensions;
+			SEAssert("Cannot create parameter block with no texture dimensions", foundDimensions);
 
-		// Create the PB if required, or update it otherwise
-		if (m_targetParameterBlock == nullptr)
-		{
-			m_targetParameterBlock = re::ParameterBlock::Create(
-				"RenderTargetParams", 
-				targetParams,
-				re::ParameterBlock::UpdateType::Mutable, 
-				re::ParameterBlock::Lifetime::Permanent);
-		}
-		else
-		{
-			m_targetParameterBlock->Commit(targetParams);
+			TargetParams targetParams;
+			targetParams.g_targetResolution = targetDimensions;
+
+			// Create the PB if required, or update it otherwise
+			if (m_targetParameterBlock == nullptr)
+			{
+				m_targetParameterBlock = re::ParameterBlock::Create(
+					"RenderTargetParams",
+					targetParams,
+					re::ParameterBlock::UpdateType::Mutable,
+					re::ParameterBlock::Lifetime::Permanent);
+			}
+			else
+			{
+				m_targetParameterBlock->Commit(targetParams);
+			}
+
+			m_targetParamsDirty = false;
 		}
 	}
 }
