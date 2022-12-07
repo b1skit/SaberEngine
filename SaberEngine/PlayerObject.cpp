@@ -19,6 +19,7 @@ namespace fr
 {
 	PlayerObject::PlayerObject(std::shared_ptr<Camera> playerCam)
 		: en::NamedObject("Player Object")
+		, fr::Transformable(nullptr)
 		, m_playerCam(playerCam)
 		, m_processInput(true)
 		, m_movementSpeed(0.006f)

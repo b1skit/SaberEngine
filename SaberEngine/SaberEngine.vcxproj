@@ -192,7 +192,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="CoreEngine.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="EventManager.cpp" />
-    <ClCompile Include="SceneObject.cpp" />
+    <ClCompile Include="SceneNode.cpp" />
     <ClCompile Include="GraphicsSystem_Bloom.cpp" />
     <ClCompile Include="GraphicsSystem_DeferredLighting.cpp" />
     <ClCompile Include="GraphicsSystem_GBuffer.cpp" />
@@ -298,7 +298,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="Config.h" />
     <ClInclude Include="EventListener.h" />
     <ClInclude Include="EventManager.h" />
-    <ClInclude Include="SceneObject.h" />
+    <ClInclude Include="SceneNode.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="KeyConfiguration.h" />
     <ClInclude Include="Light.h" />

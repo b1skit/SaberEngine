@@ -33,8 +33,8 @@ namespace gr
 	std::recursive_mutex Transform::m_transformHierarchyMutex;
 
 	
-	Transform::Transform()
-		: m_parent(nullptr)
+	Transform::Transform(Transform* parent)
+		: m_parent(parent)
 		
 		, m_localPosition(0.0f, 0.0f, 0.0f)
 		, m_localRotationEulerRadians(0.0f, 0.0f, 0.0f)

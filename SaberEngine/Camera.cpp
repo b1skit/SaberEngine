@@ -18,10 +18,9 @@ namespace gr
 {
 	Camera::Camera(string const& cameraName, CameraConfig const& camConfig, Transform* parent)
 		: NamedObject(cameraName)
+		, Transformable(parent)
 		, m_cameraConfig(camConfig)
 	{
-		m_transform.SetParent(parent);
-
 		Initialize();
 	}
 

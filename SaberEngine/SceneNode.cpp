@@ -1,4 +1,4 @@
-#include "SceneObject.h"
+#include "SceneNode.h"
 
 using re::MeshPrimitive;
 using gr::Transform;
@@ -9,9 +9,9 @@ using std::make_shared;
 
 namespace fr
 {
-	SceneObject::SceneObject(Transform* parent)
+	SceneNode::SceneNode(Transform* parent)
+		: Transformable(parent)
 	{
-		m_transform.SetParent(parent);
 	}
 }
 

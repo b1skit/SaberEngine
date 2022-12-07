@@ -19,7 +19,7 @@
 #include "VertexAttributeBuilder.h"
 #include "Light.h"
 #include "Camera.h"
-#include "SceneObject.h"
+#include "SceneNode.h"
 #include "Mesh.h"
 #include "MeshPrimitive.h"
 #include "Transform.h"
@@ -43,7 +43,7 @@ using gr::Transform;
 using gr::Light;
 using gr::ShadowMap;
 using re::ParameterBlock;
-using fr::SceneObject;
+using fr::SceneNode;
 using en::Config;
 using en::NamedObject;
 using en::CoreEngine;
@@ -563,7 +563,7 @@ namespace
 
 
 	// Creates a default camera if camera == nullptr, and no cameras exist in scene
-	void LoadAddCamera(SceneData& scene, shared_ptr<SceneObject> parent, cgltf_node* current)
+	void LoadAddCamera(SceneData& scene, shared_ptr<SceneNode> parent, cgltf_node* current)
 	{
 		if (parent == nullptr && (current == nullptr || current->camera == nullptr))
 		{
@@ -625,7 +625,7 @@ namespace
 	}
 
 
-	void LoadAddLight(SceneData& scene, cgltf_node* current, shared_ptr<SceneObject> parent)
+	void LoadAddLight(SceneData& scene, cgltf_node* current, shared_ptr<SceneNode> parent)
 	{
 		const string lightName = (current->light->name ? string(current->light->name) : "Unnamed light");
 
@@ -666,11 +666,11 @@ namespace
 
 
 	void LoadMeshGeometry(
-		string const& sceneRootPath, SceneData& scene, cgltf_node* current, shared_ptr<SceneObject> parent)
+		string const& sceneRootPath, SceneData& scene, cgltf_node* current, shared_ptr<SceneNode> parent)
 	{
 		std::shared_ptr<gr::Mesh> newMesh = make_shared<gr::Mesh>(parent->GetTransform());
 
-		// Add each MeshPrimitive as a child of the SceneObject's Mesh:
+		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
 		for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
 		{
 			SEAssert(
@@ -952,7 +952,7 @@ namespace
 	// Depth-first traversal
 	void LoadObjectHierarchyRecursiveHelper(
 		string const& sceneRootPath, SceneData& scene, cgltf_data* data, cgltf_node* current, 
-		shared_ptr<SceneObject> parent, std::atomic<uint32_t>& numLoadJobs)
+		shared_ptr<SceneNode> parent, std::atomic<uint32_t>& numLoadJobs)
 	{
 		if (current == nullptr)
 		{
@@ -971,7 +971,7 @@ namespace
 				CoreEngine::GetThreadPool()->EnqueueJob(
 					[current, i, parent, &sceneRootPath, &scene, data, &numLoadJobs]()
 				{
-					shared_ptr<SceneObject> childNode = make_shared<SceneObject>(parent->GetTransform());
+					shared_ptr<SceneNode> childNode = make_shared<SceneNode>(parent->GetTransform());
 
 					numLoadJobs++;
 					LoadObjectHierarchyRecursiveHelper(
@@ -980,7 +980,7 @@ namespace
 			}
 		}
 
-		// Set the SceneObject transform:
+		// Set the SceneNode transform:
 		numLoadJobs++;
 		CoreEngine::GetThreadPool()->EnqueueJob([current, parent, &numLoadJobs]()
 		{
@@ -1037,7 +1037,9 @@ namespace
 		{
 			SEAssert("Error: Node is not a root", data->scenes->nodes[node]->parent == nullptr);
 
-			shared_ptr<SceneObject> currentNode = make_shared<SceneObject>(nullptr); // Root node has no parent
+			LOG("Loading root node %zu: \"%s\"", node, data->scenes->nodes[node]->name);
+
+			shared_ptr<SceneNode> currentNode = make_shared<SceneNode>(nullptr); // Root node has no parent
 
 			numLoadJobs++;
 			LoadObjectHierarchyRecursiveHelper(

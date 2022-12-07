@@ -10,7 +10,7 @@ namespace fr
 	class Transformable
 	{
 	public:
-		Transformable() = default;
+		Transformable(gr::Transform* parent) : m_transform(parent) {}
 		Transformable(const Transformable& rhs) = default;
 		Transformable(Transformable&&) = default;
 		Transformable& operator=(Transformable const&) = default;
@@ -24,6 +24,9 @@ namespace fr
 
 	protected:
 		gr::Transform m_transform;
+
+	private:
+		Transformable() = delete;
 	};
 
 	// We need to provide a destructor implementation since it's pure virtual

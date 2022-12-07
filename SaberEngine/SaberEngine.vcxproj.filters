@@ -206,7 +206,7 @@
     <ClCompile Include="LogManager.cpp">
       <Filter>Source Files\en</Filter>
     </ClCompile>
-    <ClCompile Include="SceneObject.cpp">
+    <ClCompile Include="SceneNode.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
@@ -421,7 +421,7 @@
     <ClInclude Include="Transformable.h">
       <Filter>Header Files\fr</Filter>
     </ClInclude>
-    <ClInclude Include="SceneObject.h">
+    <ClInclude Include="SceneNode.h">
       <Filter>Header Files\fr</Filter>
     </ClInclude>
     <ClInclude Include="Mesh.h">

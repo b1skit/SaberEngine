@@ -26,7 +26,7 @@ namespace opengl
 
 namespace fr
 {
-	class SceneObject;
+	class SceneNode;
 
 
 	class SceneData : public virtual en::NamedObject

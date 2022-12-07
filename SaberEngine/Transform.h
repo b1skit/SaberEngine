@@ -48,7 +48,7 @@ namespace gr
 		static const glm::vec3 WorldAxisZ;	// +Z
 
 	public:
-		Transform();
+		explicit Transform(Transform* parent);
 		
 		~Transform() = default;
 		Transform(Transform const&) = default;
@@ -144,6 +144,9 @@ namespace gr
 		void UnregisterChild(Transform const* child);
 
 		void RecomputeEulerXYZRadians(); // Helper: Updates m_localRotationEulerRadians from m_localRotationQuat
+
+	private:
+		Transform() = delete;
 	};
 }
 
