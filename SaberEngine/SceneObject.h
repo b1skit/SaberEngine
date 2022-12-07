@@ -9,7 +9,7 @@
 
 namespace fr
 {
-	class SceneObject : public virtual fr::Transformable, public virtual en::Updateable
+	class SceneObject : public virtual fr::Transformable
 	{
 	public:
 		SceneObject(gr::Transform* parent);
@@ -19,8 +19,6 @@ namespace fr
 		SceneObject& operator=(SceneObject const&) = default;
 		SceneObject& operator=(SceneObject&&) = default;
 		~SceneObject() = default;
-
-		void Update(const double stepTimeMs) override {}
 
 
 	private:

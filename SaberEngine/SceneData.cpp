@@ -1018,7 +1018,7 @@ namespace
 			});
 		}
 
-		scene.AddUpdateable(parent);
+		scene.AddTransformable(parent);
 
 		numLoadJobs--;
 	}
@@ -1136,6 +1136,10 @@ namespace fr
 		{
 			std::lock_guard<std::mutex> lock(m_updateablesMutex);
 			m_updateables.clear();
+		}
+		{
+			std::lock_guard<std::mutex> lock(m_transformablesMutex);
+			m_transformables.clear();
 		}
 		{
 			std::lock_guard<std::mutex> lock(m_meshesMutex);
@@ -1278,8 +1282,15 @@ namespace fr
 
 	void SceneData::AddUpdateable(std::shared_ptr<en::Updateable> updateable)
 	{
-		SEAssert("Adding data is not thread safe once loading is complete", !m_finishedLoading);
+		std::lock_guard<std::mutex> lock(m_updateablesMutex);
 		m_updateables.emplace_back(updateable);
+	}
+
+
+	void SceneData::AddTransformable(std::shared_ptr<fr::Transformable> transformable)
+	{
+		std::lock_guard<std::mutex> lock(m_transformablesMutex);
+		m_transformables.emplace_back(transformable);
 	}
 
 
