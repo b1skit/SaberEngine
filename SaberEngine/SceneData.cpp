@@ -1018,7 +1018,7 @@ namespace
 			});
 		}
 
-		scene.AddTransformable(parent);
+		scene.AddSceneNode(parent);
 
 		numLoadJobs--;
 	}
@@ -1140,8 +1140,8 @@ namespace fr
 			m_updateables.clear();
 		}
 		{
-			std::lock_guard<std::mutex> lock(m_transformablesMutex);
-			m_transformables.clear();
+			std::lock_guard<std::mutex> lock(m_sceneNodesMutex);
+			m_sceneNodes.clear();
 		}
 		{
 			std::lock_guard<std::mutex> lock(m_meshesMutex);
@@ -1289,10 +1289,10 @@ namespace fr
 	}
 
 
-	void SceneData::AddTransformable(std::shared_ptr<fr::Transformable> transformable)
+	void SceneData::AddSceneNode(std::shared_ptr<fr::SceneNode> transformable)
 	{
-		std::lock_guard<std::mutex> lock(m_transformablesMutex);
-		m_transformables.emplace_back(transformable);
+		std::lock_guard<std::mutex> lock(m_sceneNodesMutex);
+		m_sceneNodes.emplace_back(transformable);
 	}
 
 

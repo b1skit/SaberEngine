@@ -57,7 +57,7 @@ namespace fr
 		std::vector<std::shared_ptr<en::Updateable>> const& GetUpdateables() const;
 
 		// Transforms:
-		void AddTransformable(std::shared_ptr<fr::Transformable> transformable);
+		void AddSceneNode(std::shared_ptr<fr::SceneNode> transformable);
 
 		// Meshes:
 		void AddMesh(std::shared_ptr<gr::Mesh> mesh);
@@ -87,8 +87,8 @@ namespace fr
 		std::vector<std::shared_ptr<en::Updateable>> m_updateables;
 		std::mutex m_updateablesMutex;
 
-		std::vector<std::shared_ptr<fr::Transformable>> m_transformables;
-		std::mutex m_transformablesMutex;
+		std::vector<std::shared_ptr<fr::SceneNode>> m_sceneNodes; // Transformation hierarchy
+		std::mutex m_sceneNodesMutex;
 
 		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;
 		std::mutex m_meshesMutex;
