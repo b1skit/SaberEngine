@@ -25,15 +25,15 @@ namespace en
 		// Compute an integer identifier from a string equivalent to the GetNameID() of objects with the same name
 		inline static uint64_t ComputeIDFromName(std::string const& name);
 
-
 	private:
 		inline void ComputeUniqueID();
 
-	private:
-		const std::string m_name;
-		uint64_t m_uniqueID;
+	protected: // Should only be modified during copy/assignment of a NamedObject
+		std::string m_name;
 		uint64_t m_nameID;
 
+	private:
+		uint64_t m_uniqueID;
 
 	private:
 		NamedObject() = delete;

@@ -117,7 +117,8 @@ namespace re
 			return *this;
 		}
 
-		*const_cast<std::string*>(&GetName()) = rhs.GetName();
+		m_name = rhs.m_name;
+		m_nameID = rhs.m_nameID;
 
 		m_colorTargets = rhs.m_colorTargets;
 		m_depthStencilTarget = rhs.m_depthStencilTarget;
