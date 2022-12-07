@@ -17,7 +17,7 @@ namespace
 
 namespace re
 {
-	Batch::Batch(re::MeshPrimitive* meshPrimitive, gr::Material* material, gr::Shader const* shader)
+	Batch::Batch(re::MeshPrimitive* meshPrimitive, gr::Material* material, gr::Shader* shader)
 		: m_batchMeshPrimitive(meshPrimitive)
 		, m_batchMaterial(material)
 		, m_batchShader(shader)
@@ -37,7 +37,7 @@ namespace re
 	}
 
 
-	Batch::Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material* material, gr::Shader const* shader)
+	Batch::Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material* material, gr::Shader* shader)
 		: Batch(mesh->GetMeshPrimitives()[0].get(), material, shader)
 	{
 			SEAssert("Currently only support Mesh with a single MeshPrimitve. TODO: Support > 1 MeshPrimitve", 

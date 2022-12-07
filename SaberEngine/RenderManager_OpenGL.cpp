@@ -222,7 +222,6 @@ namespace opengl
 		}
 
 
-
 		// Cleanup:
 		for (StagePipeline& stagePipeline : renderManager.m_pipeline.GetPipeline())
 		{
