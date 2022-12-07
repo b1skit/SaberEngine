@@ -944,8 +944,7 @@ namespace
 				meshPrimitiveParams));
 		}
 
-		// Finally, add the mesh to the parent SceneObject, and register it with the scene
-		parent->SetMesh(newMesh);
+		// Finally, register the mesh with the scene
 		scene.AddMesh(newMesh);
 	}
 
@@ -972,8 +971,7 @@ namespace
 				CoreEngine::GetThreadPool()->EnqueueJob(
 					[current, i, parent, &sceneRootPath, &scene, data, &numLoadJobs]()
 				{
-					const string childName = current->children[i]->name ? current->children[i]->name : "Unnamed node";
-					shared_ptr<SceneObject> childNode = make_shared<SceneObject>(childName, parent->GetTransform());
+					shared_ptr<SceneObject> childNode = make_shared<SceneObject>(parent->GetTransform());
 
 					numLoadJobs++;
 					LoadObjectHierarchyRecursiveHelper(
@@ -1039,10 +1037,7 @@ namespace
 		{
 			SEAssert("Error: Node is not a root", data->scenes->nodes[node]->parent == nullptr);
 
-			shared_ptr<SceneObject> currentNode = make_shared<SceneObject>(
-				data->scenes->nodes[node]->name ? string(data->scenes->nodes[node]->name) : 
-				"Unnamed_node_" + to_string(node),
-				nullptr); // Root node has no parent
+			shared_ptr<SceneObject> currentNode = make_shared<SceneObject>(nullptr); // Root node has no parent
 
 			numLoadJobs++;
 			LoadObjectHierarchyRecursiveHelper(

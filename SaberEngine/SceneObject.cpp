@@ -9,22 +9,9 @@ using std::make_shared;
 
 namespace fr
 {
-	SceneObject::SceneObject(string const& name, Transform* parent)
-		: en::NamedObject::NamedObject(name)
-		, m_mesh(nullptr)
+	SceneObject::SceneObject(Transform* parent)
 	{
 		m_transform.SetParent(parent);
-	}
-
-
-	void SceneObject::SetMesh(std::shared_ptr<gr::Mesh> mesh)
-	{
-		SEAssert("Scene object already has a mesh", m_mesh == nullptr);
-
-		SEAssert("Mesh transform is not this object. This isn't necessarily bad, just unexpected. TODO: Handle this if it occurs",
-			mesh->GetTransform() == &m_transform);
-
-		m_mesh = mesh;
 	}
 }
 
