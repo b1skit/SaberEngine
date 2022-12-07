@@ -56,7 +56,7 @@ namespace fr
 		void AddUpdateable(std::shared_ptr<en::Updateable> updateable);
 		std::vector<std::shared_ptr<en::Updateable>> const& GetUpdateables() const;
 
-		// Transforms:
+		// Transformation hierarchy:
 		void AddSceneNode(std::shared_ptr<fr::SceneNode> transformable);
 
 		// Meshes:

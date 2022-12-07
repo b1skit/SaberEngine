@@ -567,19 +567,16 @@ namespace
 	{
 		if (parent == nullptr && (current == nullptr || current->camera == nullptr))
 		{
-			if (scene.GetCameras().size() == 0) // Create a default camera at the origin
-			{
-				LOG("\nCreating a default camera");
+			LOG("\nCreating a default camera");
 
-				gr::Camera::CameraConfig camConfig;
-				camConfig.m_aspectRatio = Config::Get()->GetWindowAspectRatio();
-				camConfig.m_yFOV		= Config::Get()->GetValue<float>("defaultyFOV");
-				camConfig.m_near		= Config::Get()->GetValue<float>("defaultNear");
-				camConfig.m_far			= Config::Get()->GetValue<float>("defaultFar");
-				camConfig.m_exposure	= Config::Get()->GetValue<float>("defaultExposure");
+			gr::Camera::CameraConfig camConfig;
+			camConfig.m_aspectRatio = Config::Get()->GetWindowAspectRatio();
+			camConfig.m_yFOV = Config::Get()->GetValue<float>("defaultyFOV");
+			camConfig.m_near = Config::Get()->GetValue<float>("defaultNear");
+			camConfig.m_far = Config::Get()->GetValue<float>("defaultFar");
+			camConfig.m_exposure = Config::Get()->GetValue<float>("defaultExposure");
 
-				scene.AddCamera(make_shared<Camera>("Default camera", camConfig, nullptr));
-			}
+			scene.AddCamera(make_shared<Camera>("Default camera", camConfig, nullptr));
 
 			return;
 		}
@@ -919,8 +916,9 @@ namespace
 			};
 			util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
 
-			SEAssert("Mesh primitive has a null material", current->mesh->primitives[primitive].material != nullptr);
-			// TODO: Should we load a fallback error material if we ever hit this?
+			SEAssert("Mesh primitive has a null material. This is valid, we just don't handle it (currently)", 
+				current->mesh->primitives[primitive].material != nullptr);
+			// TODO: Should we load a fallback error material?
 
 			// Get the pre-loaded material:
 			const string matName = GenerateMaterialName(*current->mesh->primitives[primitive].material);
