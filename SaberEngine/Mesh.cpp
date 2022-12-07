@@ -25,10 +25,6 @@ namespace gr
 	void Mesh::AddMeshPrimitive(shared_ptr<re::MeshPrimitive> meshPrimitive)
 	{
 		SEAssert("Cannot add a null mesh primitive", meshPrimitive != nullptr);
-		SEAssert("Mesh primitive unexpectedly already has an owner transform",
-			meshPrimitive->GetOwnerTransform() == nullptr);
-
-		meshPrimitive->GetOwnerTransform() = m_ownerTransform;
 		m_meshPrimitives.push_back(meshPrimitive);
 	}
 }

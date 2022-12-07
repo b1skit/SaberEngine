@@ -941,8 +941,7 @@ namespace
 				jointsAsUints,
 				weights,
 				material,
-				meshPrimitiveParams,
-				nullptr));
+				meshPrimitiveParams));
 		}
 
 		// Finally, add the mesh to the parent SceneObject, and register it with the scene
@@ -1239,11 +1238,8 @@ namespace fr
 			m_meshes.emplace_back(mesh); // Add the mesh to our tracking list
 		}
 
-		for (shared_ptr<MeshPrimitive> meshPrimitive : mesh->GetMeshPrimitives())
-		{
-			// TODO: Scene bounds should be updated every frame
-			UpdateSceneBounds(meshPrimitive);
-		}
+		// TODO: Scene bounds should be updated every frame
+		UpdateSceneBounds(mesh);
 	}
 
 
@@ -1292,14 +1288,20 @@ namespace fr
 	}
 
 
-	void SceneData::UpdateSceneBounds(std::shared_ptr<re::MeshPrimitive> meshPrimitive)
+	void SceneData::UpdateSceneBounds(std::shared_ptr<gr::Mesh> mesh)
 	{
-		// Expand the scene (world-space) bounds to contain the new mesh primitive:
-		Bounds meshWorldBounds(meshPrimitive->GetBounds().GetTransformedBounds(
-				meshPrimitive->GetOwnerTransform()->GetGlobalMatrix(Transform::TRS)));
+		glm::mat4 const& meshGlobalTransform = mesh->GetTransform()->GetGlobalMatrix(Transform::TRS);
 
-		std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
-		m_sceneWorldSpaceBounds.ExpandBounds(meshWorldBounds);
+		// Expand the scene (world-space) bounds to contain each mesh primitive:
+		for (shared_ptr<MeshPrimitive> meshPrimitive : mesh->GetMeshPrimitives())
+		{
+			Bounds meshWorldBounds(meshPrimitive->GetBounds().GetTransformedBounds(meshGlobalTransform));
+
+			std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
+			m_sceneWorldSpaceBounds.ExpandBounds(meshWorldBounds);
+		}
+		// TODO: The Mesh should maintain a bounds (updated each time a new MeshPrimitive is added), and the scene
+		// bounds should be updated from that
 	}
 
 

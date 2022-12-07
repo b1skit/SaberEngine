@@ -54,8 +54,7 @@ namespace re
 			std::vector<uint8_t> joints,
 			std::vector<float> weights,
 			std::shared_ptr<gr::Material> material,
-			re::MeshPrimitive::MeshPrimitiveParams const& meshParams,
-			gr::Transform* ownerTransform);
+			re::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
 		~MeshPrimitive(){ Destroy(); }
 		
@@ -64,9 +63,6 @@ namespace re
 		inline MeshPrimitiveParams const& GetMeshParams() const { return m_params; }
 
 		inline std::shared_ptr<gr::Material> MeshMaterial() { return m_meshMaterial; }
-
-		inline gr::Transform*& GetOwnerTransform() { return m_ownerTransform; }
-		inline gr::Transform const* GetOwnerTransform() const { return m_ownerTransform; }
 
 		inline Bounds& GetBounds() { return m_localBounds; }
 		inline Bounds const& GetBounds() const { return m_localBounds; }
@@ -107,8 +103,6 @@ namespace re
 
 		std::vector<uint8_t> m_joints;		// tvec4<uint8_t>
 		std::vector<float> m_weights;		// vec4
-		
-		gr::Transform* m_ownerTransform;
 
 		Bounds m_localBounds; // MeshPrimitive bounds, in local space		
 

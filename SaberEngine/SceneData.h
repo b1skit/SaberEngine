@@ -77,7 +77,7 @@ namespace fr
 
 
 	private:
-		void UpdateSceneBounds(std::shared_ptr<re::MeshPrimitive> meshPrimitive);
+		void UpdateSceneBounds(std::shared_ptr<gr::Mesh> mesh);
 
 	private:
 		std::vector<std::shared_ptr<en::Updateable>> m_updateables;

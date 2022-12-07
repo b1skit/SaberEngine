@@ -143,22 +143,27 @@ namespace re
 
 		// Build batches from scene meshes:
 		// TODO: Build this by traversing the scene hierarchy once a scene graph is implemented
-		std::vector<Batch> unmergedBatches;
+		std::vector<std::pair<Batch, Transform*>> unmergedBatches;
 		for (shared_ptr<gr::Mesh> mesh : sceneMeshes)
 		{
 			for (shared_ptr<re::MeshPrimitive> const meshPrimitive : mesh->GetMeshPrimitives())
 			{
-				unmergedBatches.emplace_back(
-					meshPrimitive.get(), meshPrimitive->MeshMaterial().get(), meshPrimitive->MeshMaterial()->GetShader().get());
+				unmergedBatches.emplace_back(std::pair<Batch, Transform*>(
+				{
+					meshPrimitive.get(), 
+					meshPrimitive->MeshMaterial().get(), 
+					meshPrimitive->MeshMaterial()->GetShader().get() 
+				}, 
+				mesh->GetTransform()));
 			}
 		}
-
 
 		// Sort the batches:
 		std::sort(
 			unmergedBatches.begin(),
 			unmergedBatches.end(),
-			[](Batch const& a, Batch const& b) -> bool { return (a.GetDataHash() > b.GetDataHash()); }
+			[](std::pair<Batch, Transform*> const& a, std::pair<Batch, Transform*> const& b) 
+				-> bool { return (a.first.GetDataHash() > b.first.GetDataHash()); }
 		);
 
 		// Assemble a list of merged batches:
@@ -166,13 +171,13 @@ namespace re
 		do
 		{
 			// Add the first batch in the sequence to our final list:
-			m_sceneBatches.emplace_back(unmergedBatches[unmergedIdx]);
+			m_sceneBatches.emplace_back(unmergedBatches[unmergedIdx].first);
 			const uint64_t curBatchHash = m_sceneBatches.back().GetDataHash();
 
 			// Find the index of the last batch with a matching hash in the sequence:
 			const size_t instanceStartIdx = unmergedIdx++;
 			while (unmergedIdx < unmergedBatches.size() && 
-				unmergedBatches[unmergedIdx].GetDataHash() == curBatchHash)
+				unmergedBatches[unmergedIdx].first.GetDataHash() == curBatchHash)
 			{
 				unmergedIdx++;
 			}
@@ -181,16 +186,14 @@ namespace re
 			// Get the first model matrix:
 			std::vector<mat4> modelMatrices;		
 			modelMatrices.reserve(numInstances);
-			modelMatrices.emplace_back(
-				unmergedBatches[instanceStartIdx].GetBatchMesh()->GetOwnerTransform()->GetGlobalMatrix(Transform::TRS));
+			modelMatrices.emplace_back(unmergedBatches[instanceStartIdx].second->GetGlobalMatrix(Transform::TRS));
 
 			// Append the remaining batches in the sequence:
 			for (size_t instanceIdx = instanceStartIdx + 1; instanceIdx < unmergedIdx; instanceIdx++)
 			{
 				m_sceneBatches.back().IncrementBatchInstanceCount();
 
-				modelMatrices.emplace_back(
-					unmergedBatches[instanceIdx].GetBatchMesh()->GetOwnerTransform()->GetGlobalMatrix(Transform::TRS));
+				modelMatrices.emplace_back(unmergedBatches[instanceIdx].second->GetGlobalMatrix(Transform::TRS));
 			}
 
 			// Construct PB of model transform matrices:

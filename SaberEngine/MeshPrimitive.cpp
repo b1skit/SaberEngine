@@ -37,13 +37,11 @@ namespace re
 		vector<uint8_t> joints,
 		vector<float> weights,
 		shared_ptr<gr::Material> material,
-		MeshPrimitiveParams const& meshParams,
-		Transform* ownerTransform) 
+		MeshPrimitiveParams const& meshParams) 
 		: NamedObject(name)
 		, m_platformParams(nullptr)
 		, m_meshMaterial(material)
 		, m_params(meshParams)
-		, m_ownerTransform(ownerTransform)
 	{
 		platform::MeshPrimitive::CreatePlatformParams(*this);
 			
@@ -326,8 +324,7 @@ namespace meshfactory
 			joints,
 			weights,
 			nullptr,
-			MeshPrimitive::MeshPrimitiveParams(),
-			nullptr);
+			MeshPrimitive::MeshPrimitiveParams());
 	}
 
 
@@ -407,8 +404,7 @@ namespace meshfactory
 			joints,
 			weights,
 			nullptr,
-			MeshPrimitive::MeshPrimitiveParams(),
-			nullptr);
+			MeshPrimitive::MeshPrimitiveParams());
 	}
 
 
@@ -461,8 +457,7 @@ namespace meshfactory
 			joints,
 			weights,
 			nullptr,
-			MeshPrimitive::MeshPrimitiveParams(),
-			nullptr);
+			MeshPrimitive::MeshPrimitiveParams());
 	}
 
 
@@ -654,8 +649,7 @@ namespace meshfactory
 			joints,
 			weights,
 			nullptr,
-			MeshPrimitive::MeshPrimitiveParams(),
-			nullptr);
+			MeshPrimitive::MeshPrimitiveParams());
 	}
 } // meshfactory
 
