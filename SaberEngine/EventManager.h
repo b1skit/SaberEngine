@@ -29,6 +29,7 @@ namespace en
 			KeyEvent,
 			MouseMotionEvent,
 			MouseButtonEvent,
+			MouseWheelEvent,
 
 			// Functionality triggers: Typically a system will be interested in these, not specific button states
 			InputForward,

@@ -1,3 +1,8 @@
+#include <SDL.h>
+
+#include "imgui.h"
+#include "backends/imgui_impl_sdl.h"
+
 #include "EventManager.h"
 #include "NamedObject.h"
 #include "DebugConfiguration.h"
@@ -5,7 +10,6 @@
 #include "Context.h"
 #include "RenderManager.h"
 
-#include <SDL.h>
 
 using std::vector;
 
@@ -116,8 +120,9 @@ namespace en
 			break;
 			case SDL_MOUSEWHEEL:
 			{
-				// TODO...
-				doBroadcastEvent = false;
+				eventInfo.m_type = MouseWheelEvent;
+				eventInfo.m_data0.m_dataF = event.wheel.preciseX;
+				eventInfo.m_data1.m_dataF = event.wheel.preciseY;
 			}
 			break;
 			default:

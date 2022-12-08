@@ -82,6 +82,7 @@ namespace en
 		EventManager::Get()->Subscribe(EventManager::KeyEvent, this);
 		EventManager::Get()->Subscribe(EventManager::MouseMotionEvent, this);
 		EventManager::Get()->Subscribe(EventManager::MouseButtonEvent, this);
+		EventManager::Get()->Subscribe(EventManager::MouseWheelEvent, this);
 	}
 
 
@@ -135,12 +136,50 @@ namespace en
 			case EventManager::KeyEvent:
 			{
 				const uint32_t sdlScancode = eventInfo.m_data0.m_dataUI;
+				const bool keystate = eventInfo.m_data1.m_dataB;
+
+				// Broadcast to ImGui:
+				eventIsBroadcastable = !io.WantCaptureKeyboard;
+				switch (sdlScancode)
+				{
+				case SDL_SCANCODE_RETURN:
+				{
+					io.AddKeyEvent(ImGuiKey_Enter, keystate);
+				}
+				break;
+				case SDL_SCANCODE_SPACE:
+				{
+					io.AddKeyEvent(ImGuiKey_Space, keystate);
+				}
+				break;
+				case SDL_SCANCODE_UP:
+				{
+					io.AddKeyEvent(ImGuiKey_UpArrow, keystate);
+				}
+				break;
+				case SDL_SCANCODE_DOWN:
+				{
+					io.AddKeyEvent(ImGuiKey_DownArrow, keystate);
+				}
+				break;
+				case SDL_SCANCODE_LEFT:
+				{
+					io.AddKeyEvent(ImGuiKey_LeftArrow, keystate);
+				}
+				break;
+				case SDL_SCANCODE_RIGHT:
+				{
+					io.AddKeyEvent(ImGuiKey_RightArrow, keystate);
+				}
+				break;
+				default:
+					break; // Do nothing
+				}
 
 				auto const& result = m_SDLScancodsToSaberEngineEventEnums.find(sdlScancode);
 				if (result != m_SDLScancodsToSaberEngineEventEnums.end())
 				{
-					en::KeyboardInputButton key = result->second;
-					const bool keystate = eventInfo.m_data1.m_dataB;
+					const en::KeyboardInputButton key = result->second;
 
 					m_keyboardInputButtonStates[key] = keystate;
 
@@ -262,6 +301,13 @@ namespace en
 				default:
 					SEAssertF("Invalid mouse button");
 				}
+			}
+			break;
+			case EventManager::MouseWheelEvent:
+			{
+				// Broadcast to ImGui:
+				io.AddMouseWheelEvent(eventInfo.m_data0.m_dataF, eventInfo.m_data1.m_dataF);
+				eventIsBroadcastable = false;
 			}
 			break;
 			default:
