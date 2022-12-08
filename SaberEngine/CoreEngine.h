@@ -42,9 +42,6 @@ namespace en
 
 		bool m_isRunning;
 
-		// Non-singleton engine components:
-		std::shared_ptr<en::LogManager> const m_logManager;
-
 		en::ThreadPool m_threadPool;
 
 	private: 

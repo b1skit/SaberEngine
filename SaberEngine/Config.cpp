@@ -274,9 +274,9 @@ namespace en
 
 
 	// Constructor
-	Config::Config() :
-		m_isDirty{ true },
-		m_renderingAPI{ platform::RenderingAPI::RenderingAPI_Count }
+	Config::Config()
+		: m_isDirty(true)
+		, m_renderingAPI(platform::RenderingAPI::RenderingAPI_Count)
 	{
 		// Populate the config hash table with initial values
 		InitializeDefaultValues();
@@ -554,7 +554,6 @@ namespace en
 			}
 		}
 		
-
 		m_isDirty = false;
 	}
 

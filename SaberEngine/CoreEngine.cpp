@@ -10,12 +10,13 @@
 #include "InputManager.h"
 #include "PerformanceTimer.h"
 #include "GameplayManager.h"
-
+#include "LogManager.h"
 
 using en::Config;
 using en::SceneManager;
 using en::EventManager;
 using en::InputManager;
+using en::LogManager;
 using re::RenderManager;
 using fr::GameplayManager;
 using util::PerformanceTimer;
@@ -32,7 +33,6 @@ namespace en
 	CoreEngine::CoreEngine(int argc, char** argv)
 		: m_fixedTimeStep(1000.0 / 120.0)
 		, m_isRunning(false)
-		, m_logManager(make_shared<en::LogManager>())
 	{
 		m_coreEngine = this;
 
@@ -51,7 +51,7 @@ namespace en
 
 		// Start managers:
 		EventManager::Get()->Startup();
-		m_logManager->Startup();
+		LogManager::Get()->Startup();
 
 		EventManager::Get()->Subscribe(en::EventManager::EngineQuit, this);
 
@@ -98,7 +98,7 @@ namespace en
 			EventManager::Get()->Update(lastOuterFrameTime);
 			InputManager::Get()->Update(lastOuterFrameTime);
 			CoreEngine::Update(lastOuterFrameTime);
-			m_logManager->Update(lastOuterFrameTime);
+			LogManager::Get()->Update(lastOuterFrameTime);
 
 			// Update components until enough time has passed to trigger a render.
 			// Or, continue rendering frames until it's time to update again
@@ -137,7 +137,7 @@ namespace en
 		RenderManager::Get()->Shutdown();
 		SceneManager::Get()->Shutdown();
 		EventManager::Get()->Shutdown();
-		m_logManager->Shutdown();
+		LogManager::Get()->Shutdown();
 
 		m_threadPool.Stop();
 	}

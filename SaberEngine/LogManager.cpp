@@ -33,15 +33,16 @@ namespace
 
 namespace en
 {
-	LogManager& LogManager::Instance()
+	LogManager* LogManager::Get()
 	{
-		static LogManager* instance = new LogManager();
-		return *instance;
+		static std::unique_ptr<en::LogManager> instance = std::make_unique<en::LogManager>();
+		return instance.get();
 	}
 
 
 	LogManager::LogManager()
 		: m_consoleState{false, true} // Starting state = "not requested" and "ready"
+		, m_maxLogLines(1000) // TODO: Make this controllable via the config.cfg
 	{
 	}
 
@@ -92,12 +93,24 @@ namespace en
 	{
 		while (HasEvents())
 		{
-			en::EventManager::EventInfo eventInfo = GetEvent();
+			en::EventManager::EventInfo const& eventInfo = GetEvent();
 
 			if (eventInfo.m_type == EventManager::EventType::InputToggleConsole && eventInfo.m_data0.m_dataB == true)
 			{
 				m_consoleState.m_consoleRequested = !m_consoleState.m_consoleRequested;
 			}
 		}	
+	}
+
+
+	void LogManager::AddMessage(std::string&& msg)
+	{
+		std::lock_guard<std::mutex> lock(m_logMessagesMutex);
+
+		if (m_logMessages.size() >= m_maxLogLines)
+		{
+			m_logMessages.pop();
+		}
+		m_logMessages.emplace(std::move(msg));
 	}
 }

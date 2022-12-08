@@ -36,9 +36,9 @@ namespace platform
 	// Bind API-specific strategy implementations:
 	bool RegisterPlatformFunctions()
 	{
-		LOG("Configuring API-specific platform bindings...");
-
 		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
+
+		LOG("Configuring API-specific platform bindings...");
 
 		bool result = false;
 		switch (api)

@@ -567,7 +567,7 @@ namespace
 	{
 		if (parent == nullptr && (current == nullptr || current->camera == nullptr))
 		{
-			LOG("\nCreating a default camera");
+			LOG("Creating a default camera");
 
 			gr::Camera::CameraConfig camConfig;
 			camConfig.m_aspectRatio = Config::Get()->GetWindowAspectRatio();
