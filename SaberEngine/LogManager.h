@@ -118,9 +118,6 @@ namespace en
 			formattedStr = FormatStringForLog(nullptr, tagPrefix, assembledMsg.data());
 		}
 
-	#if defined(_DEBUG)
-		printf(formattedStr.c_str());
-	#endif
 		LogManager::Get()->AddMessage(std::move(formattedStr));
 	}
 }

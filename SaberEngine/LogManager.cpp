@@ -112,6 +112,11 @@ namespace en
 			m_logMessages.pop();
 		}
 		m_logMessages.emplace(std::forward<std::string>(msg));
+
+	#if defined(_DEBUG)
+		// Print the message to the terminal while we're holding the lock, to ensure the same ordering as the log queue
+		printf(m_logMessages.back().c_str());
+	#endif
 	}
 
 
