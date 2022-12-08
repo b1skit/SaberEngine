@@ -111,6 +111,34 @@ namespace en
 		{
 			m_logMessages.pop();
 		}
-		m_logMessages.emplace(std::move(msg));
+		m_logMessages.emplace(std::forward<std::string>(msg));
+	}
+
+
+	void LogManager::AssembleStringFromVariadicArgs(char* buf, uint32_t bufferSize, const char* msg, ...)
+	{
+		va_list args;
+		va_start(args, msg);
+		const int numChars = vsprintf_s(buf, bufferSize, msg, args);
+		SEAssert("Message is larger than the buffer size; it will be truncated",
+			static_cast<uint32_t>(numChars) < bufferSize);
+		va_end(args);
+	}
+
+
+	std::string LogManager::FormatStringForLog(char const* prefix, const char* tag, char const* assembledMsg)
+	{
+		std::ostringstream stream;
+		if (prefix)
+		{
+			stream << prefix;
+		}
+		if (tag)
+		{
+			stream << tag;
+		}
+		stream << assembledMsg << "\n";
+
+		return stream.str();
 	}
 }

@@ -6,6 +6,8 @@
 #include <mutex>
 #include <sstream>
 #include <array>
+#include <stdio.h>
+#include <stdarg.h>
 
 #include "EventListener.h"
 #include "EngineComponent.h"
@@ -23,24 +25,13 @@ namespace en
 		/* Public logging interface:
 		----------------------------*/
 		template<typename...Args>
-		inline static void Log(char const* msg, Args&&... args)
-		{
-			LogInternal("Log:\t", msg, std::forward<Args>(args)...);
-		}
-
+		inline static void Log(char const* msg, Args&&... args);
 
 		template<typename... Args>
-		inline static void LogWarning(char const* msg, Args&&... args)
-		{
-			LogInternal("Warn:\t", msg, std::forward<Args>(args)...);
-		}
-
+		inline static void LogWarning(char const* msg, Args&&... args);
 
 		template<typename... Args>
-		inline static void LogError(char const* msg, Args&&... args)
-		{
-			LogInternal("Error:\t", msg, std::forward<Args>(args)...);
-		}
+		inline static void LogError(char const* msg, Args&&... args);
 
 	public:
 		LogManager();
@@ -76,101 +67,67 @@ namespace en
 
 
 	private:
+
 		// Private logging implementation:
 		template<typename... Args>
-		inline static void LogInternal(char const* tagPrefix, char const* msg, Args&&... args)
+		inline static void LogInternal(char const* tagPrefix, char const* msg, Args&&... args);
+
+
+	private:
+		// Static helpers:
+		static void AssembleStringFromVariadicArgs(char* buf, uint32_t bufferSize, const char* fmt, ...);
+		static std::string FormatStringForLog(char const* prefix, const char* tag, char const* assembledMsg);
+	};
+
+
+	template<typename...Args>
+	inline static void LogManager::Log(char const* msg, Args&&... args)
+	{
+		LogInternal("Log:\t", msg, std::forward<Args>(args)...);
+	}
+
+
+	template<typename... Args>
+	inline static void LogManager::LogWarning(char const* msg, Args&&... args)
+	{
+		LogInternal("Warn:\t", msg, std::forward<Args>(args)...);
+	}
+
+
+	template<typename... Args>
+	inline static void LogManager::LogError(char const* msg, Args&&... args)
+	{
+		LogInternal("Error:\t", msg, std::forward<Args>(args)...);
+	}
+
+
+	template<typename... Args>
+	inline static void LogManager::LogInternal(char const* tagPrefix, char const* msg, Args&&... args)
+	{
+		constexpr uint32_t bufferSize = 128;
+		std::array<char, bufferSize> assembledMsg;
+
+		AssembleStringFromVariadicArgs(assembledMsg.data(), bufferSize, msg, args...);
+
+		std::string formattedStr;
+		if (msg[0] == '\n')
 		{
-			const size_t msgLen = strlen(msg);
-
-			std::string formattedStr;
-			if (msg[0] == '\n')
-			{
-				formattedStr = FormatStringArgs("\n", tagPrefix, &msg[1], std::forward<Args>(args)...);
-			}
-			else if (msg[0] == '\t')
-			{
-				formattedStr = FormatStringArgs("\t", nullptr, &msg[1], std::forward<Args>(args)...);
-			}
-			else
-			{
-				formattedStr = FormatStringArgs(nullptr, tagPrefix, msg, std::forward<Args>(args)...);
-			}
-
-		#if defined(_DEBUG)
-			printf(formattedStr.c_str());
-		#endif
-			LogManager::Get()->AddMessage(std::move(formattedStr));
+			formattedStr = FormatStringForLog("\n", tagPrefix, &assembledMsg.data()[1]);
+		}
+		else if (msg[0] == '\t')
+		{
+			formattedStr = FormatStringForLog("\t", nullptr, &assembledMsg.data()[1]);
+		}
+		else
+		{
+			formattedStr = FormatStringForLog(nullptr, tagPrefix, assembledMsg.data());
 		}
 
-
-		// Static helpers:
-		private:
-			template<typename T>
-			static std::string ConvertArg(T arg)
-			{
-				std::ostringstream oss;
-				oss << arg;
-				return oss.str();
-			}
-
-			template<>
-			static std::string ConvertArg<uint8_t>(uint8_t arg)
-			{
-				std::ostringstream oss;
-				oss << (uint16_t)arg; // Stringstream always treats uint8_t as a char; override it here
-				return oss.str();
-			}
-
-			template <size_t numArgs>
-			static inline void RecursiveArgsToStr(std::array<std::string, numArgs>& argStrings)
-			{
-				// Do nothing; base case
-			}
-
-			template <size_t numArgs, typename argType, typename... Args>
-			static inline void RecursiveArgsToStr(
-				std::array<std::string, numArgs>& argStrings, argType&& curArg, Args&&...arguments)
-			{
-				argStrings[numArgs - 1 - sizeof...(Args)] = std::move(ConvertArg(curArg));
-				RecursiveArgsToStr(argStrings, std::forward<Args>(arguments)...);
-			}
-
-			template<typename...Args>
-			static inline std::string FormatStringArgs(
-				char const* prefix, const char* tag, char const* msg, Args&&... args)
-			{
-				const size_t msgLen = strlen(msg);
-				const size_t numArgs = sizeof...(args);
-				std::array<std::string, numArgs> argStrings;
-				RecursiveArgsToStr(argStrings, std::forward<Args>(args)...);
-
-				std::ostringstream stream;
-				if (prefix)
-				{
-					stream << prefix;
-				}
-				if (tag)
-				{
-					stream << tag;
-				}
-				size_t argIdx = 0;
-				for (size_t i = 0; i < msgLen; i++)
-				{
-					if (msg[i] == '%' && (i + 1) < msgLen && argIdx < numArgs)
-					{
-						stream << argStrings[argIdx++];
-						i++;
-						// TODO: Handle multi-char format specifiers (eg. size_t == %zu)
-					}
-					else
-					{
-						stream << msg[i];
-					}
-				}
-				stream << "\n";
-				return stream.str();
-			}
-	};
+	#if defined(_DEBUG)
+		printf(formattedStr.c_str());
+	#endif
+		LogManager::Get()->AddMessage(std::move(formattedStr));
+	}
 }
 
 
