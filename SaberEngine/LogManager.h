@@ -67,14 +67,9 @@ namespace en
 
 
 	private:
-
-		// Private logging implementation:
+		// Static helpers:
 		template<typename... Args>
 		inline static void LogInternal(char const* tagPrefix, char const* msg, Args&&... args);
-
-
-	private:
-		// Static helpers:
 		static void AssembleStringFromVariadicArgs(char* buf, uint32_t bufferSize, const char* fmt, ...);
 		static std::string FormatStringForLog(char const* prefix, const char* tag, char const* assembledMsg);
 	};
