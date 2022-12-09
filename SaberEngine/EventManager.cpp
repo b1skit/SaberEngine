@@ -1,8 +1,5 @@
 #include <SDL.h>
 
-#include "imgui.h"
-#include "backends/imgui_impl_sdl.h"
-
 #include "EventManager.h"
 #include "NamedObject.h"
 #include "DebugConfiguration.h"
