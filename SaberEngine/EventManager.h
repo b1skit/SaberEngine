@@ -30,6 +30,7 @@ namespace en
 			MouseMotionEvent,
 			MouseButtonEvent,
 			MouseWheelEvent,
+			TextInputEvent,
 
 			// Functionality triggers: Typically a system will be interested in these, not specific button states
 			InputForward,
@@ -49,17 +50,18 @@ namespace en
 			InputMouseLeft,
 			InputMouseRight,
 
-			EventType_Count
+			Uninitialized, // Error
+			EventType_Count = Uninitialized
 		};
 
 		// Matched event string names:
 		const static std::string EventName[EventType_Count];
 
 
-		typedef union { float m_dataF; int32_t m_dataI; uint32_t m_dataUI; bool m_dataB; } EventData;
+		typedef union { float m_dataF; int32_t m_dataI; uint32_t m_dataUI; bool m_dataB; char m_dataC; } EventData;
 		struct EventInfo
 		{
-			EventType m_type;
+			EventType m_type = Uninitialized;
 			EventData m_data0;
 			EventData m_data1;
 		};

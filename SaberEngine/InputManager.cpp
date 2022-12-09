@@ -16,6 +16,117 @@ using std::string;
 using std::make_shared;
 
 
+namespace
+{
+	void AddKeyEventToImGui(ImGuiIO& io, uint32_t sdlScancode, bool keystate)
+	{		
+		// Keyboard sections: left to right, row-by-row
+		switch (sdlScancode)
+		{
+		case SDL_SCANCODE_ESCAPE: io.AddKeyEvent(ImGuiKey_Escape, keystate); break;
+		case SDL_SCANCODE_F1: io.AddKeyEvent(ImGuiKey_F1, keystate); break;
+		case SDL_SCANCODE_F2: io.AddKeyEvent(ImGuiKey_F2, keystate); break;
+		case SDL_SCANCODE_F3: io.AddKeyEvent(ImGuiKey_F3, keystate); break;
+		case SDL_SCANCODE_F4: io.AddKeyEvent(ImGuiKey_F4, keystate); break;
+		case SDL_SCANCODE_F5: io.AddKeyEvent(ImGuiKey_F5, keystate); break;
+		case SDL_SCANCODE_F6: io.AddKeyEvent(ImGuiKey_F6, keystate); break;
+		case SDL_SCANCODE_F7: io.AddKeyEvent(ImGuiKey_F7, keystate); break;
+		case SDL_SCANCODE_F8: io.AddKeyEvent(ImGuiKey_F8, keystate); break;
+		case SDL_SCANCODE_F9: io.AddKeyEvent(ImGuiKey_F9, keystate); break;
+		case SDL_SCANCODE_F10: io.AddKeyEvent(ImGuiKey_F10, keystate); break;
+		case SDL_SCANCODE_F11: io.AddKeyEvent(ImGuiKey_F11, keystate); break;
+		case SDL_SCANCODE_F12: io.AddKeyEvent(ImGuiKey_F12, keystate); break;
+
+		case SDL_SCANCODE_GRAVE: io.AddKeyEvent(ImGuiKey_GraveAccent, keystate); break;
+		case SDL_SCANCODE_0: io.AddKeyEvent(ImGuiKey_0, keystate); break;
+		case SDL_SCANCODE_1: io.AddKeyEvent(ImGuiKey_1, keystate); break;
+		case SDL_SCANCODE_2: io.AddKeyEvent(ImGuiKey_2, keystate); break;
+		case SDL_SCANCODE_3: io.AddKeyEvent(ImGuiKey_3, keystate); break;
+		case SDL_SCANCODE_4: io.AddKeyEvent(ImGuiKey_4, keystate); break;
+		case SDL_SCANCODE_5: io.AddKeyEvent(ImGuiKey_5, keystate); break;
+		case SDL_SCANCODE_6: io.AddKeyEvent(ImGuiKey_6, keystate); break;
+		case SDL_SCANCODE_7: io.AddKeyEvent(ImGuiKey_7, keystate); break;
+		case SDL_SCANCODE_8: io.AddKeyEvent(ImGuiKey_8, keystate); break;
+		case SDL_SCANCODE_9: io.AddKeyEvent(ImGuiKey_9, keystate); break;
+		case SDL_SCANCODE_MINUS: io.AddKeyEvent(ImGuiKey_Minus, keystate); break;
+		case SDL_SCANCODE_EQUALS: io.AddKeyEvent(ImGuiKey_Equal, keystate); break;
+		case SDL_SCANCODE_BACKSPACE: io.AddKeyEvent(ImGuiKey_Backspace, keystate); break;
+
+		case SDL_SCANCODE_TAB: io.AddKeyEvent(ImGuiKey_Tab, keystate); break;
+		case SDL_SCANCODE_Q: io.AddKeyEvent(ImGuiKey_Q, keystate); break;
+		case SDL_SCANCODE_W: io.AddKeyEvent(ImGuiKey_W, keystate); break;
+		case SDL_SCANCODE_E: io.AddKeyEvent(ImGuiKey_E, keystate); break;
+		case SDL_SCANCODE_R: io.AddKeyEvent(ImGuiKey_R, keystate); break;
+		case SDL_SCANCODE_T: io.AddKeyEvent(ImGuiKey_T, keystate); break;
+		case SDL_SCANCODE_Y: io.AddKeyEvent(ImGuiKey_Y, keystate); break;
+		case SDL_SCANCODE_U: io.AddKeyEvent(ImGuiKey_U, keystate); break;
+		case SDL_SCANCODE_I: io.AddKeyEvent(ImGuiKey_I, keystate); break;
+		case SDL_SCANCODE_O: io.AddKeyEvent(ImGuiKey_O, keystate); break;
+		case SDL_SCANCODE_P: io.AddKeyEvent(ImGuiKey_P, keystate); break;
+		case SDL_SCANCODE_LEFTBRACKET: io.AddKeyEvent(ImGuiKey_LeftBracket, keystate); break;
+		case SDL_SCANCODE_RIGHTBRACKET: io.AddKeyEvent(ImGuiKey_RightBracket, keystate); break;
+		case SDL_SCANCODE_BACKSLASH: io.AddKeyEvent(ImGuiKey_Backslash, keystate); break;
+
+		case SDL_SCANCODE_CAPSLOCK: io.AddKeyEvent(ImGuiKey_CapsLock, keystate); break;
+		case SDL_SCANCODE_A: io.AddKeyEvent(ImGuiKey_A, keystate); break;
+		case SDL_SCANCODE_S: io.AddKeyEvent(ImGuiKey_S, keystate); break;
+		case SDL_SCANCODE_D: io.AddKeyEvent(ImGuiKey_D, keystate); break;
+		case SDL_SCANCODE_F: io.AddKeyEvent(ImGuiKey_F, keystate); break;
+		case SDL_SCANCODE_G: io.AddKeyEvent(ImGuiKey_G, keystate); break;
+		case SDL_SCANCODE_H: io.AddKeyEvent(ImGuiKey_H, keystate); break;
+		case SDL_SCANCODE_J: io.AddKeyEvent(ImGuiKey_J, keystate); break;
+		case SDL_SCANCODE_K: io.AddKeyEvent(ImGuiKey_K, keystate); break;
+		case SDL_SCANCODE_L: io.AddKeyEvent(ImGuiKey_L, keystate); break;
+		case SDL_SCANCODE_SEMICOLON: io.AddKeyEvent(ImGuiKey_Semicolon, keystate); break;
+		case SDL_SCANCODE_APOSTROPHE: io.AddKeyEvent(ImGuiKey_Apostrophe, keystate); break;
+		case SDL_SCANCODE_RETURN: io.AddKeyEvent(ImGuiKey_Enter, keystate); break;
+
+		case SDL_SCANCODE_LSHIFT: io.AddKeyEvent(ImGuiKey_LeftShift, keystate); break;
+		case SDL_SCANCODE_Z: io.AddKeyEvent(ImGuiKey_Z, keystate); break;
+		case SDL_SCANCODE_X: io.AddKeyEvent(ImGuiKey_X, keystate); break;
+		case SDL_SCANCODE_C: io.AddKeyEvent(ImGuiKey_C, keystate); break;
+		case SDL_SCANCODE_V: io.AddKeyEvent(ImGuiKey_V, keystate); break;
+		case SDL_SCANCODE_B: io.AddKeyEvent(ImGuiKey_B, keystate); break;
+		case SDL_SCANCODE_N: io.AddKeyEvent(ImGuiKey_N, keystate); break;
+		case SDL_SCANCODE_M: io.AddKeyEvent(ImGuiKey_M, keystate); break;
+		case SDL_SCANCODE_COMMA: io.AddKeyEvent(ImGuiKey_Comma, keystate); break;
+		case SDL_SCANCODE_PERIOD: io.AddKeyEvent(ImGuiKey_Period, keystate); break;
+		case SDL_SCANCODE_SLASH: io.AddKeyEvent(ImGuiKey_Slash, keystate); break;
+		case SDL_SCANCODE_RSHIFT: io.AddKeyEvent(ImGuiKey_RightShift, keystate); break;
+
+		case SDL_SCANCODE_LCTRL: io.AddKeyEvent(ImGuiKey_LeftCtrl, keystate); break;
+		case SDL_SCANCODE_APPLICATION: io.AddKeyEvent(ImGuiKey_Menu, keystate); break; // ?
+		case SDL_SCANCODE_LALT: io.AddKeyEvent(ImGuiKey_LeftAlt, keystate); break;
+		case SDL_SCANCODE_SPACE: io.AddKeyEvent(ImGuiKey_Space, keystate); break;
+		case SDL_SCANCODE_RALT: io.AddKeyEvent(ImGuiKey_RightAlt, keystate); break;
+		case SDL_SCANCODE_RCTRL: io.AddKeyEvent(ImGuiKey_RightCtrl, keystate); break;
+
+		case SDL_SCANCODE_PRINTSCREEN: io.AddKeyEvent(ImGuiKey_PrintScreen, keystate); break;
+		case SDL_SCANCODE_SCROLLLOCK: io.AddKeyEvent(ImGuiKey_ScrollLock, keystate); break;
+		case SDL_SCANCODE_PAUSE: io.AddKeyEvent(ImGuiKey_Pause, keystate); break;
+
+		case SDL_SCANCODE_INSERT: io.AddKeyEvent(ImGuiKey_Insert, keystate); break;
+		case SDL_SCANCODE_HOME: io.AddKeyEvent(ImGuiKey_Home, keystate); break;
+		case SDL_SCANCODE_PAGEUP: io.AddKeyEvent(ImGuiKey_PageUp, keystate); break;
+
+		case SDL_SCANCODE_DELETE: io.AddKeyEvent(ImGuiKey_Delete, keystate); break;
+		case SDL_SCANCODE_END: io.AddKeyEvent(ImGuiKey_End, keystate); break;
+		case SDL_SCANCODE_PAGEDOWN: io.AddKeyEvent(ImGuiKey_PageDown, keystate); break;
+		
+		case SDL_SCANCODE_UP: io.AddKeyEvent(ImGuiKey_UpArrow, keystate); break;
+		case SDL_SCANCODE_DOWN: io.AddKeyEvent(ImGuiKey_DownArrow, keystate); break;
+		case SDL_SCANCODE_LEFT: io.AddKeyEvent(ImGuiKey_LeftArrow, keystate); break;
+		case SDL_SCANCODE_RIGHT: io.AddKeyEvent(ImGuiKey_RightArrow, keystate);	break;
+
+		case SDL_SCANCODE_NUMLOCKCLEAR: io.AddKeyEvent(ImGuiKey_NumLock, keystate);	break;
+		// Note: No scancode for "*" or "+"
+ 
+		default: break; // Do nothing
+		}
+	}
+}
+
+
 namespace en
 {
 	// Static members:
@@ -80,6 +191,7 @@ namespace en
 
 		// Event subscriptions:
 		EventManager::Get()->Subscribe(EventManager::KeyEvent, this);
+		EventManager::Get()->Subscribe(EventManager::TextInputEvent, this);
 		EventManager::Get()->Subscribe(EventManager::MouseMotionEvent, this);
 		EventManager::Get()->Subscribe(EventManager::MouseButtonEvent, this);
 		EventManager::Get()->Subscribe(EventManager::MouseWheelEvent, this);
@@ -128,134 +240,108 @@ namespace en
 
 			EventManager::EventInfo transformedEvent;
 
-			bool eventIsBroadcastable = true;
-			bool imguiCapturedEvent = false;
+			bool doBroadcast = true;
 
 			switch (eventInfo.m_type)
 			{
+			case EventManager::TextInputEvent:
+			{
+				io.AddInputCharacter(eventInfo.m_data0.m_dataC);
+				doBroadcast = false;
+			}
+			break;
 			case EventManager::KeyEvent:
 			{
 				const uint32_t sdlScancode = eventInfo.m_data0.m_dataUI;
 				const bool keystate = eventInfo.m_data1.m_dataB;
 
-				// Broadcast to ImGui:
-				eventIsBroadcastable = !io.WantCaptureKeyboard;
-				switch (sdlScancode)
-				{
-				case SDL_SCANCODE_RETURN:
-				{
-					io.AddKeyEvent(ImGuiKey_Enter, keystate);
-				}
-				break;
-				case SDL_SCANCODE_SPACE:
-				{
-					io.AddKeyEvent(ImGuiKey_Space, keystate);
-				}
-				break;
-				case SDL_SCANCODE_UP:
-				{
-					io.AddKeyEvent(ImGuiKey_UpArrow, keystate);
-				}
-				break;
-				case SDL_SCANCODE_DOWN:
-				{
-					io.AddKeyEvent(ImGuiKey_DownArrow, keystate);
-				}
-				break;
-				case SDL_SCANCODE_LEFT:
-				{
-					io.AddKeyEvent(ImGuiKey_LeftArrow, keystate);
-				}
-				break;
-				case SDL_SCANCODE_RIGHT:
-				{
-					io.AddKeyEvent(ImGuiKey_RightArrow, keystate);
-				}
-				break;
-				default:
-					break; // Do nothing
-				}
+				AddKeyEventToImGui(io, sdlScancode, keystate);
 
-				auto const& result = m_SDLScancodsToSaberEngineEventEnums.find(sdlScancode);
-				if (result != m_SDLScancodsToSaberEngineEventEnums.end())
+				doBroadcast = !io.WantCaptureKeyboard && !io.WantTextInput;
+				if (doBroadcast)
 				{
-					const en::KeyboardInputButton key = result->second;
+					auto const& result = m_SDLScancodsToSaberEngineEventEnums.find(sdlScancode);
+					if (result != m_SDLScancodsToSaberEngineEventEnums.end())
+					{
+						const en::KeyboardInputButton key = result->second;
 
-					m_keyboardInputButtonStates[key] = keystate;
+						m_keyboardInputButtonStates[key] = keystate;
 
-					transformedEvent.m_data0.m_dataB = keystate;
+						transformedEvent.m_data0.m_dataB = keystate;
 
-					switch (key)
-					{
-					case KeyboardInputButton::InputButton_Forward:
-					{
-						transformedEvent.m_type = EventManager::EventType::InputForward;
-					}
-					break;
-					case KeyboardInputButton::InputButton_Backward:
-					{
-						transformedEvent.m_type = EventManager::EventType::InputBackward;
-					}
-					break;
-					case KeyboardInputButton::InputButton_Left:
-					{
-						transformedEvent.m_type = EventManager::EventType::InputLeft;
-					}
-					break;
-					case KeyboardInputButton::InputButton_Right:
-					{
-						transformedEvent.m_type = EventManager::EventType::InputRight;
-					}
-					break;
-					case KeyboardInputButton::InputButton_Up:
-					{
-						transformedEvent.m_type = EventManager::EventType::InputUp;
-					}
-					break;
-					case KeyboardInputButton::InputButton_Down:
-					{
-						transformedEvent.m_type = EventManager::EventType::InputDown;
-					}
-					break;
-					case KeyboardInputButton::InputButton_Sprint:
-					{
-						transformedEvent.m_type = EventManager::EventType::InputSprint;
-					}
-					break;
-					case KeyboardInputButton::InputButton_Console:
-					{
-						// The InputManager must broadcast the transformed console toggle event, as well as react to it
-						transformedEvent.m_type = EventManager::EventType::InputToggleConsole;
-
-						// Toggle the mouse locking for the console display when the button is pressed down only
-						if (keystate == true)
+						switch (key)
 						{
-							m_consoleTriggered = !m_consoleTriggered;
+						case KeyboardInputButton::InputButton_Forward:
+						{
+							transformedEvent.m_type = EventManager::EventType::InputForward;
+						}
+						break;
+						case KeyboardInputButton::InputButton_Backward:
+						{
+							transformedEvent.m_type = EventManager::EventType::InputBackward;
+						}
+						break;
+						case KeyboardInputButton::InputButton_Left:
+						{
+							transformedEvent.m_type = EventManager::EventType::InputLeft;
+						}
+						break;
+						case KeyboardInputButton::InputButton_Right:
+						{
+							transformedEvent.m_type = EventManager::EventType::InputRight;
+						}
+						break;
+						case KeyboardInputButton::InputButton_Up:
+						{
+							transformedEvent.m_type = EventManager::EventType::InputUp;
+						}
+						break;
+						case KeyboardInputButton::InputButton_Down:
+						{
+							transformedEvent.m_type = EventManager::EventType::InputDown;
+						}
+						break;
+						case KeyboardInputButton::InputButton_Sprint:
+						{
+							transformedEvent.m_type = EventManager::EventType::InputSprint;
+						}
+						break;
+						case KeyboardInputButton::InputButton_Console:
+						{
+							// The InputManager must broadcast the transformed console toggle event, as well as react to it
+							transformedEvent.m_type = EventManager::EventType::InputToggleConsole;
+
+							// Toggle the mouse locking for the console display when the button is pressed down only
+							if (keystate == true)
+							{
+								m_consoleTriggered = !m_consoleTriggered;
+							}
+						}
+						break;
+						case KeyboardInputButton::InputButton_Quit:
+						{
+							transformedEvent.m_type = EventManager::EventType::EngineQuit;
+						}
+						break;
+						default:
+							SEAssertF("Invalid scancode");
+							break;
 						}
 					}
-					break;
-					case KeyboardInputButton::InputButton_Quit:
+					else
 					{
-						transformedEvent.m_type = EventManager::EventType::EngineQuit;
-					}
-					break;
-					default:
-						SEAssertF("Invalid scancode");
-						break;
+						// Not a key we've got mapped to an input/function
+						doBroadcast = false; 
 					}
 				}
-				else
-				{
-					eventIsBroadcastable = false;
-				}
-			} // End KeyEvent
+			} // end KeyEvent
 			break;
 			case EventManager::MouseMotionEvent:
 			{
 				// Unpack the mouse data:
 				m_mouseAxisStates[en::Input_MouseX] += static_cast<float>(eventInfo.m_data0.m_dataI) * m_mousePitchSensitivity;
 				m_mouseAxisStates[en::Input_MouseY] += static_cast<float>(eventInfo.m_data1.m_dataI) * m_mouseYawSensitivity;
-				eventIsBroadcastable = false;
+				doBroadcast = false;
 			}
 			break;
 			case EventManager::MouseButtonEvent:
@@ -268,7 +354,7 @@ namespace en
 					io.AddMouseButtonEvent(ImGuiMouseButton_Left, buttonState);
 					if (imguiWantsToCaptureMouse)
 					{
-						imguiCapturedEvent = true;
+						doBroadcast = false;
 					}
 					else
 					{
@@ -288,7 +374,7 @@ namespace en
 					io.AddMouseButtonEvent(ImGuiMouseButton_Right, buttonState);
 					if (imguiWantsToCaptureMouse)
 					{
-						imguiCapturedEvent = true;
+						doBroadcast = true;
 					}
 					else
 					{
@@ -307,7 +393,7 @@ namespace en
 			{
 				// Broadcast to ImGui:
 				io.AddMouseWheelEvent(eventInfo.m_data0.m_dataF, eventInfo.m_data1.m_dataF);
-				eventIsBroadcastable = false;
+				doBroadcast = false;
 			}
 			break;
 			default:
@@ -315,8 +401,9 @@ namespace en
 				break;
 			}
 
-			if (eventIsBroadcastable && !imguiCapturedEvent)
+			if (doBroadcast)
 			{
+				SEAssert("Event type is not initialized", transformedEvent.m_type != EventManager::Uninitialized);
 				EventManager::Get()->Notify(transformedEvent);
 			}
 		}		

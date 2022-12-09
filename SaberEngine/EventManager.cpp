@@ -75,9 +75,16 @@ namespace en
 				eventInfo.m_type = EngineQuit;
 			}
 			break;
+			case SDL_TEXTINPUT:
+			{
+				eventInfo.m_type = TextInputEvent;
+				eventInfo.m_data0.m_dataC = event.text.text[0]; // Only ever seem to get a single char
+			}
+			break;
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
 			{
+				
 				eventInfo.m_type = KeyEvent;
 				// Pack the data: m_data0.m_dataUI = SDL_Scancode, m_data0.m_dataB = button state up/down (T/F)
 				eventInfo.m_data0.m_dataUI = event.key.keysym.scancode;
