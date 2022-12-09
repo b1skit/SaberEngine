@@ -1142,7 +1142,7 @@ namespace fr
 			m_sceneNodes.clear();
 		}
 		{
-			std::lock_guard<std::mutex> lock(m_meshesMutex);
+			std::lock_guard<std::mutex> lock(m_meshesAndMeshPrimitivesMutex);
 			m_meshes.clear();
 		}
 		{
@@ -1231,9 +1231,28 @@ namespace fr
 	{
 		SEAssert("Adding data is not thread safe once loading is complete", !m_finishedLoading);
 
-		// Only need to hold the lock while we modify m_meshes
+		// Only need to hold the lock while we modify m_meshes and m_meshPrimitives
 		{
-			std::lock_guard<std::mutex> lock(m_meshesMutex);
+			std::lock_guard<std::mutex> lock(m_meshesAndMeshPrimitivesMutex);
+
+			for (size_t i = 0; i < mesh->GetMeshPrimitives().size(); i++)
+			{
+				const uint64_t meshPrimitiveDataHash = mesh->GetMeshPrimitives()[i]->GetDataHash();
+				auto const& result = m_meshPrimitives.find(meshPrimitiveDataHash);
+				if (result != m_meshPrimitives.end())
+				{
+					LOG("Mesh primitive \"%s\" has the same data hash as an existing mesh primitive. It will be "
+						"replaced with a shared copy", mesh->GetMeshPrimitives()[i]->GetName());
+
+					// Already have a mesh primitive with the same data hash; replace the MeshPrimitive
+					mesh->ReplaceMeshPrimitive(i, result->second);
+				}
+				else
+				{
+					m_meshPrimitives.insert({ meshPrimitiveDataHash, mesh->GetMeshPrimitives()[i] });
+				}
+			}
+
 			m_meshes.emplace_back(mesh); // Add the mesh to our tracking list
 		}
 

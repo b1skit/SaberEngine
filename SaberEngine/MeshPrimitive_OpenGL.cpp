@@ -271,6 +271,11 @@ namespace opengl
 		opengl::MeshPrimitive::PlatformParams* mp =
 			dynamic_cast<opengl::MeshPrimitive::PlatformParams*>(meshPrimitive.GetPlatformParams().get());
 
+		if (!mp->m_isCreated)
+		{
+			return;
+		}
+
 		glDeleteVertexArrays(1, &mp->m_meshVAO);
 		glDeleteBuffers(opengl::MeshPrimitive::VertexAttribute::VertexAttribute_Count, &mp->m_meshVBOs[0]);
 	}

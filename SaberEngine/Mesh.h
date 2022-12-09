@@ -25,8 +25,8 @@ namespace gr
 		inline gr::Transform const* GetTransform() const { return m_ownerTransform; }
 
 		void AddMeshPrimitive(std::shared_ptr<re::MeshPrimitive> meshPrimitive);
-		inline std::vector<std::shared_ptr<re::MeshPrimitive>> const& GetMeshPrimitives() const { return m_meshPrimitives; }
-
+		std::vector<std::shared_ptr<re::MeshPrimitive>> const& GetMeshPrimitives() const;
+		void ReplaceMeshPrimitive(size_t index, std::shared_ptr<re::MeshPrimitive> replacement);
 
 	private:
 		std::vector<std::shared_ptr<re::MeshPrimitive>> m_meshPrimitives;

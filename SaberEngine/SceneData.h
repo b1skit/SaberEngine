@@ -91,7 +91,8 @@ namespace fr
 		std::mutex m_sceneNodesMutex;
 
 		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;
-		std::mutex m_meshesMutex;
+		std::unordered_map<uint64_t, std::shared_ptr<re::MeshPrimitive>> m_meshPrimitives;
+		std::mutex m_meshesAndMeshPrimitivesMutex;		
 
 		std::unordered_map<size_t, std::shared_ptr<gr::Texture>> m_textures;
 		mutable std::shared_mutex m_texturesMutex; // mutable, as we need to be able to modify it in const functions
