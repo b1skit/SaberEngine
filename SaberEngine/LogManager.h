@@ -13,6 +13,11 @@
 #include "EngineComponent.h"
 
 
+namespace
+{
+	struct ImGuiLogWindow;
+}
+
 namespace en
 {
 	class LogManager : public virtual en::EngineComponent, public virtual en::EventListener
@@ -53,10 +58,7 @@ namespace en
 
 	private:
 		void AddMessage(std::string&& msg);
-		std::queue<std::string> m_logMessages;
-		size_t m_maxLogLines;
-		std::mutex m_logMessagesMutex;
-
+		std::unique_ptr<ImGuiLogWindow> m_imGuiLogWindow; // Internally contains a mutex
 
 	private:
 		struct
@@ -64,7 +66,6 @@ namespace en
 			bool m_consoleRequested;
 			bool m_consoleReady;
 		} m_consoleState;
-
 
 	private:
 		// Static helpers:
@@ -123,19 +124,8 @@ namespace en
 }
 
 
-// Log Manager macros:
+// Log macros:
 // ------------------------------------------------
-
-#if defined (_DEBUG)
-	#include "LogManager.h"
-	#define LOG(msg, ...)			en::LogManager::Log(msg, __VA_ARGS__);
-	#define LOG_WARNING(msg, ...)	en::LogManager::LogWarning(msg, __VA_ARGS__);
-	#define LOG_ERROR(msg, ...)		en::LogManager::LogError(msg, __VA_ARGS__);
-#else
-	// Disable compiler warning C4834: discarding return value of function with 'nodiscard' attribute
-	#pragma warning(disable : 4834) 
-	#define LOG(...)			do {__VA_ARGS__;} while(false);
-	#define LOG_WARNING(...)	do {__VA_ARGS__;} while(false);
-	#define LOG_ERROR(...)		do {__VA_ARGS__;} while(false);
-	// "__VA_ARGS__;" marks our arguments as "used" to the compiler; Avoids "warning C4101: unreferenced local variable"
-#endif
+#define LOG(msg, ...)			en::LogManager::Log(msg, __VA_ARGS__);
+#define LOG_WARNING(msg, ...)	en::LogManager::LogWarning(msg, __VA_ARGS__);
+#define LOG_ERROR(msg, ...)		en::LogManager::LogError(msg, __VA_ARGS__);

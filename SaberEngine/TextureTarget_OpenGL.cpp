@@ -150,7 +150,7 @@ namespace opengl
 		else if (targetSet.DepthStencilTarget().GetTexture() == nullptr)
 		{
 			
-			LOG("Texture target set \"%s\" has no color/depth targets. Assuming it is the default color framebuffer", 
+			LOG_WARNING("Texture target set \"%s\" has no color/depth targets. Assuming it is the default color framebuffer", 
 				targetSet.GetName().c_str());
 			targetSetParams->m_frameBufferObject = 0;
 		}
@@ -318,7 +318,7 @@ namespace opengl
 		}
 		else if (!targetSet.HasTargets())
 		{
-			LOG("Texture target set \"%s\" has no color or depth targets. Assuming it is the default depth framebuffer", 
+			LOG_WARNING("Texture target set \"%s\" has no color or depth targets. Assuming it is the default depth framebuffer",
 				targetSet.GetName().c_str());
 			targetSetParams->m_frameBufferObject = 0;
 		}
