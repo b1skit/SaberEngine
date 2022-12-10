@@ -9,28 +9,28 @@
 
 namespace opengl
 {
-	Sampler::PlatformParams::PlatformParams(gr::Sampler::SamplerParams const& samplerParams)
+	Sampler::PlatformParams::PlatformParams(re::Sampler::SamplerParams const& samplerParams)
 	{
 		// Minification filter:
 		/*********************/
 		switch (samplerParams.m_texMinMode)
 		{
-		case gr::Sampler::MinFilter::Nearest:
+		case re::Sampler::MinFilter::Nearest:
 		{
 			m_textureMinFilter = GL_NEAREST;
 		}
 		break;
-		case gr::Sampler::MinFilter::NearestMipMapLinear:
+		case re::Sampler::MinFilter::NearestMipMapLinear:
 		{
 			m_textureMinFilter = GL_NEAREST_MIPMAP_LINEAR;
 		}
 		break;
-		case gr::Sampler::MinFilter::Linear:
+		case re::Sampler::MinFilter::Linear:
 		{
 			m_textureMinFilter = GL_LINEAR;
 		}
 		break;
-		case gr::Sampler::MinFilter::LinearMipMapLinear:
+		case re::Sampler::MinFilter::LinearMipMapLinear:
 		{
 			m_textureMinFilter = GL_LINEAR_MIPMAP_LINEAR;
 		}
@@ -43,12 +43,12 @@ namespace opengl
 		/*********************/
 		switch (samplerParams.m_texMaxMode)
 		{
-		case gr::Sampler::MaxFilter::Nearest: // Point sampling
+		case re::Sampler::MaxFilter::Nearest: // Point sampling
 		{
 			m_textureMaxFilter = GL_NEAREST;
 		}
 		break;
-		case gr::Sampler::MaxFilter::Linear: // Weighted linear blend
+		case re::Sampler::MaxFilter::Linear: // Weighted linear blend
 		{
 			m_textureMaxFilter = GL_LINEAR;
 		}
@@ -62,21 +62,21 @@ namespace opengl
 		/***************/
 		switch (samplerParams.m_texSamplerMode)
 		{
-		case gr::Sampler::Mode::Wrap:
+		case re::Sampler::Mode::Wrap:
 		{
 			m_textureWrapS = GL_REPEAT;
 			m_textureWrapT = GL_REPEAT;
 			m_textureWrapR = GL_REPEAT;
 		}
 		break;
-		case gr::Sampler::Mode::Mirrored:
+		case re::Sampler::Mode::Mirrored:
 		{
 			m_textureWrapS = GL_MIRRORED_REPEAT;
 			m_textureWrapT = GL_MIRRORED_REPEAT;
 			m_textureWrapR = GL_MIRRORED_REPEAT;
 		}
 		break;
-		case gr::Sampler::Mode::Clamp:
+		case re::Sampler::Mode::Clamp:
 		{
 			m_textureWrapS = GL_CLAMP_TO_EDGE;
 			m_textureWrapT = GL_CLAMP_TO_EDGE;
@@ -95,7 +95,7 @@ namespace opengl
 	}
 
 
-	void Sampler::Create(gr::Sampler& sampler)
+	void Sampler::Create(re::Sampler& sampler)
 	{
 		if (sampler.GetPlatformParams()->m_isCreated)
 		{
@@ -135,7 +135,7 @@ namespace opengl
 	}
 
 
-	void Sampler::Bind(gr::Sampler& sampler, uint32_t textureUnit, bool doBind)
+	void Sampler::Bind(re::Sampler& sampler, uint32_t textureUnit, bool doBind)
 	{
 		// Ensure the sampler is created before we attempt to bind it
 		opengl::Sampler::Create(sampler);
@@ -154,7 +154,7 @@ namespace opengl
 	}
 
 
-	void Sampler::Destroy(gr::Sampler& sampler)
+	void Sampler::Destroy(re::Sampler& sampler)
 	{
 		PlatformParams* const params =
 			dynamic_cast<opengl::Sampler::PlatformParams* const>(sampler.GetPlatformParams());

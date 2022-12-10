@@ -33,7 +33,7 @@ namespace gr
 		struct TextureSlotDesc
 		{
 			std::shared_ptr<gr::Texture> m_texture = nullptr;
-			std::shared_ptr<gr::Sampler> m_samplerObject = nullptr; // eg. Sampler object from the sampler library
+			std::shared_ptr<re::Sampler> m_samplerObject = nullptr; // eg. Sampler object from the sampler library
 			std::string m_shaderSamplerName;
 		};
 

@@ -13,15 +13,16 @@
 #include "Texture.h"
 #include "TextureTarget.h"
 
+using en::Config;
+using en::SceneManager;
 using gr::Texture;
 using gr::DeferredLightingGraphicsSystem;
 using gr::GBufferGraphicsSystem;
-using re::Batch;
-using re::TextureTargetSet;
-using en::Config;
-using en::SceneManager;
 using re::RenderManager;
 using re::RenderStage;
+using re::Sampler;
+using re::Batch;
+using re::TextureTargetSet;
 using std::shared_ptr;
 using std::string;
 using std::vector;

@@ -13,7 +13,7 @@ using std::make_unique;
 using std::unordered_map;
 
 
-namespace gr
+namespace re
 {
 	const std::vector<std::string> Sampler::SamplerTypeLibraryNames
 	{
@@ -26,10 +26,10 @@ namespace gr
 	// Elements must correspond with enum class WrapAndFilterMode in Sampler.h
 
 
-	std::unique_ptr<std::unordered_map<Sampler::WrapAndFilterMode, std::shared_ptr<gr::Sampler>>> Sampler::m_samplerLibrary = 
+	std::unique_ptr<std::unordered_map<Sampler::WrapAndFilterMode, std::shared_ptr<re::Sampler>>> Sampler::m_samplerLibrary = 
 		nullptr;
 
-	std::shared_ptr<gr::Sampler> const Sampler::GetSampler(Sampler::WrapAndFilterMode type)
+	std::shared_ptr<re::Sampler> const Sampler::GetSampler(Sampler::WrapAndFilterMode type)
 	{
 		static std::mutex samplerMutex;
 		std::unique_lock<std::mutex> samplerLock(samplerMutex);
@@ -48,7 +48,7 @@ namespace gr
 				Sampler::MaxFilter::Linear
 			};
 			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::WrapLinearLinear,
-				make_shared<gr::Sampler>(
+				make_shared<re::Sampler>(
 					SamplerTypeLibraryNames[(size_t)Sampler::WrapAndFilterMode::WrapLinearLinear],
 					WrapLinearLinearParams));
 
@@ -59,7 +59,7 @@ namespace gr
 				Sampler::MaxFilter::Linear
 			};
 			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::ClampLinearLinear,
-				make_shared<gr::Sampler>(
+				make_shared<re::Sampler>(
 					SamplerTypeLibraryNames[(size_t)Sampler::WrapAndFilterMode::ClampLinearLinear],
 					ClampLinearLinearParams));
 
@@ -70,7 +70,7 @@ namespace gr
 				Sampler::MaxFilter::Nearest
 			};
 			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::ClampNearestNearest, 
-				make_shared<gr::Sampler>(
+				make_shared<re::Sampler>(
 					SamplerTypeLibraryNames[(size_t)Sampler::WrapAndFilterMode::ClampNearestNearest],
 					ClampNearestNearestParams));
 
@@ -81,7 +81,7 @@ namespace gr
 				Sampler::MaxFilter::Linear
 			};
 			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear,
-				make_shared<gr::Sampler>(
+				make_shared<re::Sampler>(
 					SamplerTypeLibraryNames[(size_t)Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear],
 					ClampLinearMipMapLinearLinearParams));
 
@@ -92,7 +92,7 @@ namespace gr
 				Sampler::MaxFilter::Linear
 			};
 			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::WrapLinearMipMapLinearLinear,  
-				make_shared<gr::Sampler>(
+				make_shared<re::Sampler>(
 					SamplerTypeLibraryNames[(size_t)Sampler::WrapAndFilterMode::WrapLinearMipMapLinearLinear],
 					WrapLinearMipMapLinearLinearParams));
 		}

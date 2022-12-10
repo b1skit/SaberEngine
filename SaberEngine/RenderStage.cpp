@@ -3,7 +3,7 @@
 #include "RenderStage.h"
 
 
-using gr::Sampler;
+using re::Sampler;
 using gr::Texture;
 using std::string;
 using std::shared_ptr;

@@ -15,6 +15,7 @@ using re::TextureTargetSet;
 using re::RenderManager;
 using re::RenderStage;
 using re::Batch;
+using re::Sampler;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;

@@ -19,7 +19,7 @@ using std::shared_ptr;
 using std::string;
 using std::to_string;
 using gr::Texture;
-using gr::Sampler;
+using re::Sampler;
 using util::PerformanceTimer;
 
 
@@ -378,7 +378,7 @@ namespace opengl
 			if (bindingUnit == params->m_samplerUnits.end()) return;
 #endif
 
-			platform::Sampler::Bind(*static_cast<gr::Sampler*>(value), bindingUnit->second, true);
+			platform::Sampler::Bind(*static_cast<re::Sampler*>(value), bindingUnit->second, true);
 		}
 		break;
 		default:

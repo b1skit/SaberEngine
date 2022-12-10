@@ -13,7 +13,7 @@ namespace platform
 	bool RegisterPlatformFunctions();
 }
 
-namespace gr
+namespace re
 {
 	class Sampler : public virtual en::NamedObject
 	{
@@ -47,10 +47,10 @@ namespace gr
 
 			SamplerType_Count
 		};
-		static std::shared_ptr<gr::Sampler> const GetSampler(WrapAndFilterMode type);
+		static std::shared_ptr<re::Sampler> const GetSampler(WrapAndFilterMode type);
 
 	private:
-		static std::unique_ptr<std::unordered_map<WrapAndFilterMode, std::shared_ptr<gr::Sampler>>> m_samplerLibrary;
+		static std::unique_ptr<std::unordered_map<WrapAndFilterMode, std::shared_ptr<re::Sampler>>> m_samplerLibrary;
 
 
 	public:
@@ -113,8 +113,8 @@ namespace gr
 	private:
 		// Friends:
 		friend bool platform::RegisterPlatformFunctions();
-		friend void platform::Sampler::CreatePlatformParams(gr::Sampler&);
-		friend std::shared_ptr<gr::Sampler const> const GetSampler(Sampler::WrapAndFilterMode type);
+		friend void platform::Sampler::CreatePlatformParams(re::Sampler&);
+		friend std::shared_ptr<re::Sampler const> const GetSampler(Sampler::WrapAndFilterMode type);
 
 		Sampler() = delete;
 		Sampler(Sampler const& rhs) = delete;

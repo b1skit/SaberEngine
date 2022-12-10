@@ -7,12 +7,12 @@ namespace gr
 {
 	class Shader;
 	class Texture;
-	class Sampler;
 }
 
 namespace re
 {
 	class ParameterBlock;
+	class Sampler;
 }
 
 namespace platform

@@ -9,7 +9,7 @@
 
 using gr::Shader;
 using gr::Texture;
-using gr::Sampler;
+using re::Sampler;
 using re::ParameterBlock;
 
 using std::string;

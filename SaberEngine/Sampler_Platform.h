@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 
-namespace gr
+namespace re
 {
 	class Sampler;
 }
@@ -13,12 +13,12 @@ namespace platform
 	class Sampler
 	{
 	public:
-		static void CreatePlatformParams(gr::Sampler& sampler);
+		static void CreatePlatformParams(re::Sampler& sampler);
 
 
-		static void (*Create)(gr::Sampler&);
-		static void (*Bind)(gr::Sampler&, uint32_t textureUnit, bool doBind);
-		static void (*Destroy)(gr::Sampler&);
+		static void (*Create)(re::Sampler&);
+		static void (*Bind)(re::Sampler&, uint32_t textureUnit, bool doBind);
+		static void (*Destroy)(re::Sampler&);
 
 	private:
 

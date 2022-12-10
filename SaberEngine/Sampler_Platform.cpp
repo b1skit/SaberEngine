@@ -12,7 +12,7 @@ using en::Config;
 namespace platform
 {
 	// Parameter struct object factory:
-	void Sampler::CreatePlatformParams(gr::Sampler& sampler)
+	void Sampler::CreatePlatformParams(re::Sampler& sampler)
 	{
 		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
@@ -35,8 +35,8 @@ namespace platform
 		}
 	}
 
-	void (*Sampler::Create)(gr::Sampler&);
-	void (*Sampler::Bind)(gr::Sampler&, uint32_t textureUnit, bool doBind);
-	void (*Sampler::Destroy)(gr::Sampler&);
+	void (*Sampler::Create)(re::Sampler&);
+	void (*Sampler::Bind)(re::Sampler&, uint32_t textureUnit, bool doBind);
+	void (*Sampler::Destroy)(re::Sampler&);
 
 }

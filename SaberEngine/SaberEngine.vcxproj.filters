@@ -122,15 +122,6 @@
     <ClCompile Include="Shader_OpenGL.cpp">
       <Filter>Source Files\gr\platform\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="Sampler.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="Sampler_Platform.cpp">
-      <Filter>Source Files\gr\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="Sampler_OpenGL.cpp">
-      <Filter>Source Files\gr\platform\OpenGL</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
@@ -278,6 +269,15 @@
     <ClCompile Include="MeshPrimitive.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
+    <ClCompile Include="Sampler.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="Sampler_Platform.cpp">
+      <Filter>Source Files\re\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="Sampler_OpenGL.cpp">
+      <Filter>Source Files\re\platform\OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshPrimitive_OpenGL.h">
@@ -320,15 +320,6 @@
       <Filter>Header Files\gr\platform</Filter>
     </ClInclude>
     <ClInclude Include="Shader_OpenGL.h">
-      <Filter>Header Files\gr\platform\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="Sampler.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="Sampler_Platform.h">
-      <Filter>Header Files\gr\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="Sampler_OpenGL.h">
       <Filter>Header Files\gr\platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
@@ -510,6 +501,15 @@
     </ClInclude>
     <ClInclude Include="MeshPrimitive.h">
       <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="Sampler.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="Sampler_OpenGL.h">
+      <Filter>Header Files\re\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="Sampler_Platform.h">
+      <Filter>Header Files\re\platform</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

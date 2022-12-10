@@ -13,10 +13,14 @@ namespace platform
 	bool RegisterPlatformFunctions();
 }
 
+namespace re
+{
+	class Sampler;
+}
+
 namespace gr
 {
-	class Texture; 
-	class Sampler;
+	class Texture;
 
 
 	class Shader : public virtual en::NamedObject
@@ -61,7 +65,7 @@ namespace gr
 			
 		// Helper: Simultaneously calls SetUniform for the texture and sampler
 		void SetTextureSamplerUniform(
-			std::string const& uniformName, std::shared_ptr<gr::Texture> texture, std::shared_ptr<gr::Sampler> sampler);
+			std::string const& uniformName, std::shared_ptr<gr::Texture> texture, std::shared_ptr<re::Sampler> sampler);
 
 		inline PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
 		inline PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }

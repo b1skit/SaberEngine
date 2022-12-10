@@ -7,9 +7,13 @@ using std::vector;
 using std::shared_ptr;
 
 
-namespace gr
+namespace re
 {
 	class Sampler;
+}
+
+namespace gr
+{	
 	class Texture;
 
 
@@ -45,7 +49,7 @@ namespace gr
 	void Shader::SetTextureSamplerUniform(
 		string const& uniformName,
 		shared_ptr<gr::Texture> texture,
-		shared_ptr<gr::Sampler> sampler)
+		shared_ptr<re::Sampler> sampler)
 	{
 		SetUniform(uniformName, texture.get(), gr::Shader::UniformType::Texture, 1);
 		SetUniform(uniformName, sampler.get(), gr::Shader::UniformType::Sampler, 1);

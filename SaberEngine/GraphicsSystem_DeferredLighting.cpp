@@ -14,13 +14,14 @@
 #include "SceneManager.h"
 
 using gr::Light;
-using re::RenderStage;
 using gr::Texture;
-using re::TextureTargetSet;
 using gr::ShadowMap;
 using re::RenderManager;
 using re::ParameterBlock;
 using re::Batch;
+using re::RenderStage;
+using re::TextureTargetSet;
+using re::Sampler;
 using en::Config;
 using en::SceneManager;
 using std::string;
@@ -305,7 +306,7 @@ namespace gr
 				iemStage.SetTextureInput(
 					"MatAlbedo",
 					iblTexture,
-					gr::Sampler::GetSampler(gr::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
+					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
 
 				const int numSamples = Config::Get()->GetValue<int>("numIEMSamples");
 				iemStage.SetPerFrameShaderUniform("numSamples", numSamples, gr::Shader::UniformType::Int, 1);
@@ -360,7 +361,7 @@ namespace gr
 					pmremStage.SetTextureInput(
 						"MatAlbedo",
 						iblTexture,
-						gr::Sampler::GetSampler(gr::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
+						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
 
 					const int numSamples = Config::Get()->GetValue<int>("numPMREMSamples");
 					pmremStage.SetPerFrameShaderUniform("numSamples", numSamples, gr::Shader::UniformType::Int, 1);
@@ -635,10 +636,10 @@ namespace gr
 					"CubeMap0", depthTexture, gr::Shader::UniformType::Texture, 1);
 
 				// Our template function expects a shared_ptr to a non-const type; cast it here even though it's gross
-				std::shared_ptr<gr::Sampler> const sampler = 
-					std::const_pointer_cast<gr::Sampler>(Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+				std::shared_ptr<re::Sampler> const sampler = 
+					std::const_pointer_cast<re::Sampler>(Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 
-				pointlightBatch.AddBatchUniform<shared_ptr<gr::Sampler>>(
+				pointlightBatch.AddBatchUniform<shared_ptr<re::Sampler>>(
 					"CubeMap0", 
 					sampler,
 					gr::Shader::UniformType::Sampler, 
