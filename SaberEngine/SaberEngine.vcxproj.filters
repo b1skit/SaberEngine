@@ -101,15 +101,6 @@
     <ClCompile Include="Texture_OpenGL.cpp">
       <Filter>Source Files\gr\platform\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="TextureTarget.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="TextureTarget_Platform.cpp">
-      <Filter>Source Files\gr\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="TextureTarget_OpenGL.cpp">
-      <Filter>Source Files\gr\platform\OpenGL</Filter>
-    </ClCompile>
     <ClCompile Include="Context.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
@@ -278,6 +269,15 @@
     <ClCompile Include="GameplayManager.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
+    <ClCompile Include="TextureTarget.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureTarget_Platform.cpp">
+      <Filter>Source Files\re\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureTarget_OpenGL.cpp">
+      <Filter>Source Files\re\platform\OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshPrimitive.h">
@@ -296,15 +296,6 @@
       <Filter>Header Files\gr\platform</Filter>
     </ClInclude>
     <ClInclude Include="Texture_OpenGL.h">
-      <Filter>Header Files\gr\platform\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="TextureTarget.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="TextureTarget_Platform.h">
-      <Filter>Header Files\gr\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="TextureTarget_OpenGL.h">
       <Filter>Header Files\gr\platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="Context.h">
@@ -510,6 +501,15 @@
     </ClInclude>
     <ClInclude Include="GameplayManager.h">
       <Filter>Header Files\fr</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureTarget.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureTarget_Platform.h">
+      <Filter>Header Files\re\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureTarget_OpenGL.h">
+      <Filter>Header Files\re\platform\OpenGL</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
