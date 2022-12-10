@@ -83,9 +83,6 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MeshPrimitive.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
     <ClCompile Include="MeshPrimitive_OpenGL.cpp">
       <Filter>Source Files\gr\platform\OpenGL</Filter>
     </ClCompile>
@@ -278,11 +275,11 @@
     <ClCompile Include="RenderStage.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
+    <ClCompile Include="MeshPrimitive.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshPrimitive.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
     <ClInclude Include="MeshPrimitive_OpenGL.h">
       <Filter>Header Files\gr\platform\OpenGL</Filter>
     </ClInclude>
@@ -509,6 +506,9 @@
       <Filter>Header Files\re\platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="RenderStage.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshPrimitive.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
   </ItemGroup>
