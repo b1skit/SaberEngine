@@ -83,26 +83,11 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MeshPrimitive_OpenGL.cpp">
-      <Filter>Source Files\gr\platform\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshPrimitive_Platform.cpp">
-      <Filter>Source Files\gr\platform</Filter>
-    </ClCompile>
     <ClCompile Include="Config.cpp">
       <Filter>Source Files\en</Filter>
     </ClCompile>
-    <ClCompile Include="Texture_Platform.cpp">
-      <Filter>Source Files\gr\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="Texture_OpenGL.cpp">
-      <Filter>Source Files\gr\platform\OpenGL</Filter>
-    </ClCompile>
     <ClCompile Include="Context.cpp">
       <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="Texture.cpp">
-      <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="Context_OpenGL.cpp">
       <Filter>Source Files\re\platform\OpenGL</Filter>
@@ -278,28 +263,28 @@
     <ClCompile Include="Sampler_OpenGL.cpp">
       <Filter>Source Files\re\platform\OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture_Platform.cpp">
+      <Filter>Source Files\re\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture_OpenGL.cpp">
+      <Filter>Source Files\re\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshPrimitive_Platform.cpp">
+      <Filter>Source Files\re\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshPrimitive_OpenGL.cpp">
+      <Filter>Source Files\re\platform\OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshPrimitive_OpenGL.h">
-      <Filter>Header Files\gr\platform\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshPrimitive_Platform.h">
-      <Filter>Header Files\gr\platform</Filter>
-    </ClInclude>
     <ClInclude Include="Config.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
-    <ClInclude Include="Texture_Platform.h">
-      <Filter>Header Files\gr\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="Texture_OpenGL.h">
-      <Filter>Header Files\gr\platform\OpenGL</Filter>
-    </ClInclude>
     <ClInclude Include="Context.h">
       <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="Texture.h">
-      <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="Context_OpenGL.h">
       <Filter>Header Files\re\platform\OpenGL</Filter>
@@ -509,6 +494,21 @@
       <Filter>Header Files\re\platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="Sampler_Platform.h">
+      <Filter>Header Files\re\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture_Platform.h">
+      <Filter>Header Files\re\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture_OpenGL.h">
+      <Filter>Header Files\re\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshPrimitive_OpenGL.h">
+      <Filter>Header Files\re\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshPrimitive_Platform.h">
       <Filter>Header Files\re\platform</Filter>
     </ClInclude>
   </ItemGroup>
