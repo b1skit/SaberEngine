@@ -146,9 +146,6 @@
     <ClCompile Include="GraphicsSystem.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="RenderStage.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
     <ClCompile Include="GraphicsSystem_GBuffer.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
@@ -278,6 +275,9 @@
     <ClCompile Include="TextureTarget_OpenGL.cpp">
       <Filter>Source Files\re\platform\OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="RenderStage.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MeshPrimitive.h">
@@ -347,9 +347,6 @@
       <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsSystem.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderStage.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsSystem_GBuffer.h">
@@ -510,6 +507,9 @@
     </ClInclude>
     <ClInclude Include="TextureTarget_OpenGL.h">
       <Filter>Header Files\re\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderStage.h">
+      <Filter>Header Files\re</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
