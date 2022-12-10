@@ -17,10 +17,6 @@ namespace re
 {
 	class ParameterBlock;
 	class Texture;
-}
-
-namespace gr
-{
 	class Shader;
 }
 
@@ -41,7 +37,7 @@ namespace gr
 		{
 			std::string m_definitionName = "uninitializeddMaterialDefinition";
 			std::vector<TextureSlotDesc> m_textureSlots; // Vector index == shader binding index
-			std::shared_ptr<gr::Shader> m_shader = nullptr;
+			std::shared_ptr<re::Shader> m_shader = nullptr;
 		};
 		static std::shared_ptr<MaterialDefinition const> GetMaterialDefinition(std::string const& matName);
 
@@ -86,8 +82,8 @@ namespace gr
 		Material& operator=(Material const&) = default;
 
 		// Getters/Setters:	
-		inline std::shared_ptr<gr::Shader>& GetShader()	{ return m_shader; }
-		inline std::shared_ptr<gr::Shader> const& GetShader() const { return m_shader; }
+		inline std::shared_ptr<re::Shader>& GetShader()	{ return m_shader; }
+		inline std::shared_ptr<re::Shader> const& GetShader() const { return m_shader; }
 
 		inline std::shared_ptr<re::ParameterBlock>& GetParameterBlock() { return m_matParams; }
 		inline std::shared_ptr<re::ParameterBlock> const GetParameterBlock() const { return m_matParams; }
@@ -101,12 +97,12 @@ namespace gr
 		inline size_t const& NumTextureSlots() { return m_texSlots.size(); }
 
 		// TODO: Move this functionality to the shader
-		void BindToShader(std::shared_ptr<gr::Shader> shaderOverride);
+		void BindToShader(std::shared_ptr<re::Shader> shaderOverride);
 
 	private:
 		std::vector<TextureSlotDesc> m_texSlots;
 		std::unordered_map<std::string, uint32_t> m_namesToSlotIndex;
-		std::shared_ptr<gr::Shader> m_shader;
+		std::shared_ptr<re::Shader> m_shader;
 		std::shared_ptr<re::ParameterBlock> m_matParams;
 	};
 }

@@ -9,7 +9,7 @@
 
 using en::Config;
 using en::SceneManager;
-using gr::Shader;
+using re::Shader;
 using gr::DeferredLightingGraphicsSystem;
 using re::TextureTargetSet;
 using re::RenderManager;
@@ -48,7 +48,7 @@ namespace gr
 		m_tonemappingStage.GetStageShader()->SetUniform(
 			"exposure",
 			&SceneManager::GetSceneData()->GetMainCamera()->GetExposure(),
-			gr::Shader::UniformType::Float,
+			re::Shader::UniformType::Float,
 			1);
 
 		m_tonemappingStage.GetStageCamera() = SceneManager::GetSceneData()->GetMainCamera().get();

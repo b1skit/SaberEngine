@@ -7,7 +7,7 @@
 #include "Shader.h"
 #include "ParameterBlock.h"
 
-using gr::Shader;
+using re::Shader;
 using re::Texture;
 using re::Sampler;
 using re::ParameterBlock;
@@ -86,9 +86,9 @@ namespace gr
 	}
 
 
-	void Material::BindToShader(std::shared_ptr<gr::Shader> shaderOverride)
+	void Material::BindToShader(std::shared_ptr<re::Shader> shaderOverride)
 	{
-		shared_ptr<gr::Shader> shader = shaderOverride == nullptr ? m_shader : shaderOverride;
+		shared_ptr<re::Shader> shader = shaderOverride == nullptr ? m_shader : shaderOverride;
 
 		for (size_t i = 0; i < m_texSlots.size(); i++)
 		{

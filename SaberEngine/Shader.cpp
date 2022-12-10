@@ -9,12 +9,6 @@ using std::shared_ptr;
 
 namespace re
 {
-	class Sampler;
-	class Texture;
-}
-
-namespace gr
-{
 	Shader::Shader(string const& extensionlessShaderFilename) :
 		NamedObject(extensionlessShaderFilename)
 	{
@@ -49,7 +43,7 @@ namespace gr
 		shared_ptr<re::Texture> texture,
 		shared_ptr<re::Sampler> sampler)
 	{
-		SetUniform(uniformName, texture.get(), gr::Shader::UniformType::Texture, 1);
-		SetUniform(uniformName, sampler.get(), gr::Shader::UniformType::Sampler, 1);
+		SetUniform(uniformName, texture.get(), Shader::UniformType::Texture, 1);
+		SetUniform(uniformName, sampler.get(), Shader::UniformType::Sampler, 1);
 	}
 }

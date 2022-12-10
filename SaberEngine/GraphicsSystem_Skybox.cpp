@@ -15,7 +15,6 @@
 
 using en::Config;
 using en::SceneManager;
-using re::Texture;
 using gr::DeferredLightingGraphicsSystem;
 using gr::GBufferGraphicsSystem;
 using re::RenderManager;
@@ -23,6 +22,8 @@ using re::RenderStage;
 using re::Sampler;
 using re::Batch;
 using re::TextureTargetSet;
+using re::Texture;
+using re::Shader;
 using std::shared_ptr;
 using std::string;
 using std::vector;

@@ -8,7 +8,7 @@
 #include "Texture.h"
 #include "SceneData.h"
 
-using gr::Shader;
+using re::Shader;
 using re::Texture;
 using en::Config;
 using en::SceneManager;
@@ -50,7 +50,7 @@ namespace gr
 
 		// Shader constants: Only set once here
 		float emissiveIntensity = Config::Get()->GetValue<float>("defaultSceneEmissiveIntensity");
-		gBufferShader->SetUniform("emissiveIntensity", &emissiveIntensity, gr::Shader::UniformType::Float, 1);
+		gBufferShader->SetUniform("emissiveIntensity", &emissiveIntensity, re::Shader::UniformType::Float, 1);
 
 		// Set the shader:
 		m_gBufferStage.GetStageShader() = gBufferShader;

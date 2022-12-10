@@ -10,13 +10,13 @@
 namespace gr
 {
 	class Material;
-	class Shader;
 	class Mesh;
 }
 namespace re
 {
 	class MeshPrimitive;
 	class ParameterBlock;
+	class Shader;
 }
 
 
@@ -47,13 +47,13 @@ namespace re
 		{
 			std::string m_uniformName;
 			std::shared_ptr<void> m_value;
-			gr::Shader::UniformType m_type;
+			re::Shader::UniformType m_type;
 			int m_count;
 		};
 
 	public:
-		Batch(re::MeshPrimitive* meshPrimitive, gr::Material* material, gr::Shader* shader);
-		Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material* material, gr::Shader* shader);
+		Batch(re::MeshPrimitive* meshPrimitive, gr::Material* material, re::Shader* shader);
+		Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material* material, re::Shader* shader);
 
 		~Batch() = default;
 		Batch(Batch const&) = default;
@@ -62,7 +62,7 @@ namespace re
 		
 		inline re::MeshPrimitive* GetBatchMesh() const { return m_batchMeshPrimitive; }
 		inline gr::Material* GetBatchMaterial() const { return m_batchMaterial; }
-		inline gr::Shader* GetBatchShader() const { return m_batchShader; }
+		inline re::Shader* GetBatchShader() const { return m_batchShader; }
 
 		inline size_t GetInstanceCount() const { return m_numInstances; }
 
@@ -72,7 +72,7 @@ namespace re
 			{ return m_batchParamBlocks; }
 
 		template <typename T>
-		void AddBatchUniform(std::string const& uniformName, T const& value, gr::Shader::UniformType const& type, int const count);
+		void AddBatchUniform(std::string const& uniformName, T const& value, re::Shader::UniformType const& type, int const count);
 		inline std::vector<Batch::ShaderUniform> const& GetBatchUniforms() const { return m_batchUniforms; }
 
 		inline uint32_t GetBatchFilterMask() const { return m_batchFilterMask; }
@@ -86,7 +86,7 @@ namespace re
 	private:
 		re::MeshPrimitive* m_batchMeshPrimitive;
 		gr::Material* m_batchMaterial;
-		gr::Shader* m_batchShader;
+		re::Shader* m_batchShader;
 
 		std::vector<std::shared_ptr<re::ParameterBlock>> m_batchParamBlocks;
 

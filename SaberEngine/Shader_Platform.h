@@ -3,16 +3,12 @@
 #include "Shader.h"
 
 
-namespace gr
-{
-	class Shader;
-}
-
 namespace re
 {
 	class ParameterBlock;
 	class Sampler;
 	class Texture;
+	class Shader;
 }
 
 namespace platform
@@ -20,7 +16,7 @@ namespace platform
 	class Shader
 	{
 	public:
-		static void CreatePlatformParams(gr::Shader& shader);
+		static void CreatePlatformParams(re::Shader& shader);
 
 		// Static helpers:
 		static std::string LoadShaderText(const std::string& filepath); // Loads file "filepath" within the shaders dir
@@ -30,16 +26,16 @@ namespace platform
 		
 
 		// Static pointers:
-		static void (*Create)(gr::Shader& shader);
-		static void (*Bind)(gr::Shader&, bool doBind);
+		static void (*Create)(re::Shader& shader);
+		static void (*Bind)(re::Shader&, bool doBind);
 		static void (*SetUniform)(
-			gr::Shader& shader, 
+			re::Shader& shader, 
 			std::string const& uniformName, 
 			void* value, 
-			gr::Shader::UniformType const type,
+			re::Shader::UniformType const type,
 			int const count);
-		static void (*SetParameterBlock)(gr::Shader& shader, re::ParameterBlock& paramBlock);
-		static void (*Destroy)(gr::Shader&);
+		static void (*SetParameterBlock)(re::Shader& shader, re::ParameterBlock& paramBlock);
+		static void (*Destroy)(re::Shader&);
 		static void (*LoadShaderTexts)(std::string const& extensionlessName, std::vector<std::string>& shaderTexts_out);
 	};
 }	

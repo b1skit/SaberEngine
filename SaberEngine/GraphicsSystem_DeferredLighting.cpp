@@ -22,6 +22,7 @@ using re::Batch;
 using re::RenderStage;
 using re::TextureTargetSet;
 using re::Sampler;
+using re::Shader;
 using en::Config;
 using en::SceneManager;
 using std::string;
@@ -291,7 +292,7 @@ namespace gr
 
 		// 1st frame: Generate an IEM (Irradiance Environment Map) cubemap texture for diffuse irradiance
 		{
-			shared_ptr<Shader> iemShader = make_shared<gr::Shader>(equilinearToCubemapShaderName);
+			shared_ptr<Shader> iemShader = make_shared<re::Shader>(equilinearToCubemapShaderName);
 			iemShader->ShaderKeywords().emplace_back("BLIT_IEM");
 
 			// IEM-specific texture params:
@@ -309,7 +310,7 @@ namespace gr
 					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
 
 				const int numSamples = Config::Get()->GetValue<int>("numIEMSamples");
-				iemStage.SetPerFrameShaderUniform("numSamples", numSamples, gr::Shader::UniformType::Int, 1);
+				iemStage.SetPerFrameShaderUniform("numSamples", numSamples, re::Shader::UniformType::Int, 1);
 				
 				// Construct a camera param block to draw into our cubemap rendering targets:
 				cubemapCamParams.g_view = cubemapViews[face];
@@ -336,7 +337,7 @@ namespace gr
 
 		// 1st frame: Generate PMREM (Pre-filtered Mip-mapped Radiance Environment Map) cubemap for specular reflections
 		{
-			shared_ptr<Shader> pmremShader = make_shared<gr::Shader>(equilinearToCubemapShaderName);
+			shared_ptr<Shader> pmremShader = make_shared<re::Shader>(equilinearToCubemapShaderName);
 			pmremShader->ShaderKeywords().emplace_back("BLIT_PMREM");
 
 			// PMREM-specific texture params:
@@ -364,7 +365,7 @@ namespace gr
 						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
 
 					const int numSamples = Config::Get()->GetValue<int>("numPMREMSamples");
-					pmremStage.SetPerFrameShaderUniform("numSamples", numSamples, gr::Shader::UniformType::Int, 1);
+					pmremStage.SetPerFrameShaderUniform("numSamples", numSamples, re::Shader::UniformType::Int, 1);
 					
 					// Construct a camera param block to draw into our cubemap rendering targets:
 					cubemapCamParams.g_view = cubemapViews[face];
@@ -376,7 +377,7 @@ namespace gr
 					pmremStage.AddPermanentParameterBlock(pb);
 
 					const float roughness = (float)currentMipLevel / (float)(numMipLevels - 1);
-					pmremStage.SetPerFrameShaderUniform("roughness", roughness, gr::Shader::UniformType::Float, 1);
+					pmremStage.SetPerFrameShaderUniform("roughness", roughness, re::Shader::UniformType::Float, 1);
 
 					pmremStage.GetTextureTargetSet() = pmremTargetSet;
 
@@ -633,7 +634,7 @@ namespace gr
 					shadowMap->GetTextureTargetSet().DepthStencilTarget().GetTexture();
 
 				pointlightBatch.AddBatchUniform<shared_ptr<re::Texture>>(
-					"CubeMap0", depthTexture, gr::Shader::UniformType::Texture, 1);
+					"CubeMap0", depthTexture, re::Shader::UniformType::Texture, 1);
 
 				// Our template function expects a shared_ptr to a non-const type; cast it here even though it's gross
 				std::shared_ptr<re::Sampler> const sampler = 
@@ -642,7 +643,7 @@ namespace gr
 				pointlightBatch.AddBatchUniform<shared_ptr<re::Sampler>>(
 					"CubeMap0", 
 					sampler,
-					gr::Shader::UniformType::Sampler, 
+					re::Shader::UniformType::Sampler, 
 					1);
 			}			
 

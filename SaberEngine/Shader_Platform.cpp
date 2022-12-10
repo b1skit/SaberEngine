@@ -16,7 +16,7 @@ using std::vector;
 namespace platform
 {
 	// Parameter struct object factory:
-	void platform::Shader::CreatePlatformParams(gr::Shader& shader)
+	void platform::Shader::CreatePlatformParams(re::Shader& shader)
 	{
 		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
@@ -149,15 +149,15 @@ namespace platform
 
 	// platform::Shader static members:
 	/**********************************/
-	void (*platform::Shader::Create)(gr::Shader& shader) = nullptr;
-	void (*platform::Shader::Bind)(gr::Shader&, bool doBind) = nullptr;
+	void (*platform::Shader::Create)(re::Shader& shader) = nullptr;
+	void (*platform::Shader::Bind)(re::Shader&, bool doBind) = nullptr;
 	void (*platform::Shader::SetUniform)(
-		gr::Shader& shader, 
+		re::Shader& shader, 
 		string const& uniformName, 
 		void* value, 
-		gr::Shader::UniformType const type, 
+		re::Shader::UniformType const type, 
 		int const count) = nullptr;
-	void (*platform::Shader::SetParameterBlock)(gr::Shader&, re::ParameterBlock&) = nullptr;
-	void (*platform::Shader::Destroy)(gr::Shader&) = nullptr;
+	void (*platform::Shader::SetParameterBlock)(re::Shader&, re::ParameterBlock&) = nullptr;
+	void (*platform::Shader::Destroy)(re::Shader&) = nullptr;
 	void (*platform::Shader::LoadShaderTexts)(string const& extensionlessName, std::vector<std::string>& shaderTexts_out) = nullptr;
 }

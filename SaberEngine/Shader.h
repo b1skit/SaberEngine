@@ -13,14 +13,13 @@ namespace platform
 	bool RegisterPlatformFunctions();
 }
 
+
 namespace re
 {
 	class Sampler;
 	class Texture;
-}
 
-namespace gr
-{
+
 	class Shader : public virtual en::NamedObject
 	{
 	public:

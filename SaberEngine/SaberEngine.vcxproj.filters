@@ -45,18 +45,6 @@
     <Filter Include="Header Files\re\platform\OpenGL">
       <UniqueIdentifier>{7bcdd248-abcf-4294-8d59-f6a63c54554b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\gr\platform">
-      <UniqueIdentifier>{03f7fb93-12a0-45e5-beec-39b6d6330ba4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\gr\platform\OpenGL">
-      <UniqueIdentifier>{4baacfcf-aa1f-44c9-9e93-1dccfc227a1b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\gr\platform">
-      <UniqueIdentifier>{afdc443a-307c-4991-9e5b-f6b7cd08c30c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\gr\platform\OpenGL">
-      <UniqueIdentifier>{c142e74e-c194-4df2-8137-395acd37f345}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\re\platform">
       <UniqueIdentifier>{2a550363-f17a-4d7c-95cf-8f4bbdb3aaed}</UniqueIdentifier>
     </Filter>
@@ -100,12 +88,6 @@
     </ClCompile>
     <ClCompile Include="Shader.cpp">
       <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader_Platform.cpp">
-      <Filter>Source Files\gr\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader_OpenGL.cpp">
-      <Filter>Source Files\gr\platform\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Source Files\gr</Filter>
@@ -278,6 +260,12 @@
     <ClCompile Include="MeshPrimitive_OpenGL.cpp">
       <Filter>Source Files\re\platform\OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="Shader_OpenGL.cpp">
+      <Filter>Source Files\re\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader_Platform.cpp">
+      <Filter>Source Files\re\platform</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -297,15 +285,6 @@
     </ClInclude>
     <ClInclude Include="Material.h">
       <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader_Platform.h">
-      <Filter>Header Files\gr\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader_OpenGL.h">
-      <Filter>Header Files\gr\platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Header Files\gr</Filter>
@@ -510,6 +489,15 @@
     </ClInclude>
     <ClInclude Include="MeshPrimitive_Platform.h">
       <Filter>Header Files\re\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader_OpenGL.h">
+      <Filter>Header Files\re\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader_Platform.h">
+      <Filter>Header Files\re\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>Header Files\re</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

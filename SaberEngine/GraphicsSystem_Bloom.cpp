@@ -15,6 +15,7 @@ using en::SceneManager;
 using re::RenderManager;
 using re::RenderStage;
 using re::Sampler;
+using re::Shader;
 using re::Batch;
 using re::Texture;
 using std::shared_ptr;

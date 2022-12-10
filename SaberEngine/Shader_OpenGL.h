@@ -8,14 +8,10 @@
 #include "Shader_Platform.h"
 
 
-namespace gr
-{
-	class Shader;
-}
-
 namespace re
 {
 	class ParameterBlock;
+	class Shader;
 }
 
 namespace opengl
@@ -23,7 +19,7 @@ namespace opengl
 	class Shader
 	{
 	public:
-		struct PlatformParams : public virtual gr::Shader::PlatformParams
+		struct PlatformParams : public virtual re::Shader::PlatformParams
 		{
 			PlatformParams() {}
 			~PlatformParams() override {}
@@ -33,17 +29,17 @@ namespace opengl
 			std::unordered_map<std::string, int32_t> m_samplerUnits;
 		};
 
-		static void Create(gr::Shader& shader);
-		static void Bind(gr::Shader& shader, bool doBind);
+		static void Create(re::Shader& shader);
+		static void Bind(re::Shader& shader, bool doBind);
 
 		static void SetUniform(
-			gr::Shader& shader, 
+			re::Shader& shader, 
 			std::string const& uniformName, 
 			void* value, 
-			gr::Shader::UniformType const type, 
+			re::Shader::UniformType const type, 
 			int const count);
-		static void SetParameterBlock(gr::Shader&, re::ParameterBlock&);
-		static void Destroy(gr::Shader& shader);
+		static void SetParameterBlock(re::Shader&, re::ParameterBlock&);
+		static void Destroy(re::Shader& shader);
 		static void LoadShaderTexts(std::string const& extensionlessName, std::vector<std::string>& shaderTexts_out);
 	};
 }

@@ -29,7 +29,7 @@
 
 using re::RenderStage;
 using re::TextureTargetSet;
-using gr::Shader;
+using re::Shader;
 using gr::Camera;
 using gr::Transform;
 using gr::GraphicsSystem;
@@ -123,7 +123,7 @@ namespace opengl
 				// TODO: Move this to a "set pipeline state" helper within Context?
 
 				// Bind the shader now that the context configuration is known:
-				std::shared_ptr<gr::Shader> stageShader = renderStage->GetStageShader();
+				std::shared_ptr<re::Shader> stageShader = renderStage->GetStageShader();
 				opengl::Shader::Bind(*stageShader, true);
 				// TODO: Handle shaders set by stages/materials/batches
 				// Priority order: Stage, batch/material?

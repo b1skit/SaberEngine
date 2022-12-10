@@ -17,7 +17,7 @@ namespace
 
 namespace re
 {
-	Batch::Batch(re::MeshPrimitive* meshPrimitive, gr::Material* material, gr::Shader* shader)
+	Batch::Batch(re::MeshPrimitive* meshPrimitive, gr::Material* material, re::Shader* shader)
 		: m_batchMeshPrimitive(meshPrimitive)
 		, m_batchMaterial(material)
 		, m_batchShader(shader)
@@ -37,7 +37,7 @@ namespace re
 	}
 
 
-	Batch::Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material* material, gr::Shader* shader)
+	Batch::Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material* material, re::Shader* shader)
 		: Batch(mesh->GetMeshPrimitives()[0].get(), material, shader)
 	{
 			SEAssert("Currently only support Mesh with a single MeshPrimitve. TODO: Support > 1 MeshPrimitve", 
@@ -96,12 +96,12 @@ namespace re
 
 	template <typename T>
 	void Batch::AddBatchUniform(
-		string const& uniformName, T const& value, gr::Shader::UniformType const& type, int const count)
+		string const& uniformName, T const& value, re::Shader::UniformType const& type, int const count)
 	{
 		SEAssert("TODO: Support count > 1", count == 1);
 
 		// Store the shared_ptr for textures/samplers, or copy the data for other types
-		if (type == gr::Shader::UniformType::Texture || type == gr::Shader::UniformType::Sampler)
+		if (type == re::Shader::UniformType::Texture || type == re::Shader::UniformType::Sampler)
 		{
 			SEAssert("Invalid pointer type",
 				typeid(T) == typeid(shared_ptr<re::Texture>) || typeid(T) == typeid(shared_ptr<re::Sampler>));
@@ -123,9 +123,9 @@ namespace re
 	}
 	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
 	template void Batch::AddBatchUniform<shared_ptr<re::Texture>>(
-		string const& uniformName, shared_ptr<re::Texture> const& value, gr::Shader::UniformType const& type, int const count);
+		string const& uniformName, shared_ptr<re::Texture> const& value, re::Shader::UniformType const& type, int const count);
 	template void Batch::AddBatchUniform<shared_ptr<re::Sampler>>(
-		string const& uniformName, shared_ptr<re::Sampler> const& value, gr::Shader::UniformType const& type, int const count);
+		string const& uniformName, shared_ptr<re::Sampler> const& value, re::Shader::UniformType const& type, int const count);
 
 
 	void Batch::SetBatchFilterMaskBit(Filter filterBit)

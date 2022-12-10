@@ -25,7 +25,7 @@ using util::PerformanceTimer;
 
 namespace opengl
 {
-	void Shader::Create(gr::Shader& shader)
+	void Shader::Create(re::Shader& shader)
 	{
 		opengl::Shader::PlatformParams* const params =
 			dynamic_cast<opengl::Shader::PlatformParams* const>(shader.GetPlatformParams());
@@ -263,7 +263,7 @@ namespace opengl
 	}
 
 
-	void Shader::Bind(gr::Shader& shader, bool doBind)
+	void Shader::Bind(re::Shader& shader, bool doBind)
 	{
 		// Ensure the shader is created
 		opengl::Shader::Create(shader);
@@ -282,7 +282,7 @@ namespace opengl
 	}
 
 
-	void Shader::Destroy(gr::Shader& shader)
+	void Shader::Destroy(re::Shader& shader)
 	{
 		PlatformParams* const params =
 			dynamic_cast<opengl::Shader::PlatformParams* const>(shader.GetPlatformParams());
@@ -294,10 +294,10 @@ namespace opengl
 
 
 	void Shader::SetUniform(
-		gr::Shader& shader,
+		re::Shader& shader,
 		string const& uniformName,
 		void* value, 
-		gr::Shader::UniformType const type, 
+		re::Shader::UniformType const type, 
 		int const count)
 	{
 		// Ensure the shader is created
@@ -320,43 +320,43 @@ namespace opengl
 
 		switch (type)
 		{
-		case gr::Shader::UniformType::Matrix4x4f:
+		case re::Shader::UniformType::Matrix4x4f:
 		{
 			glUniformMatrix4fv(uniformID, count, GL_FALSE, (GLfloat const*)value);
 		}
 		break;
 
-		case gr::Shader::UniformType::Matrix3x3f:
+		case re::Shader::UniformType::Matrix3x3f:
 		{
 			glUniformMatrix3fv(uniformID, count, GL_FALSE, (GLfloat const*)value);
 		}
 		break;
 
-		case gr::Shader::UniformType::Vec3f:
+		case re::Shader::UniformType::Vec3f:
 		{
 			glUniform3fv(uniformID, count, (GLfloat const*)value);
 		}
 		break;
 
-		case gr::Shader::UniformType::Vec4f:
+		case re::Shader::UniformType::Vec4f:
 		{
 			glUniform4fv(uniformID, count, (GLfloat const*)value);
 		}
 		break;
 
-		case gr::Shader::UniformType::Float:
+		case re::Shader::UniformType::Float:
 		{
 			glUniform1f(uniformID, *(GLfloat const*)value);
 		}
 		break;
 
-		case gr::Shader::UniformType::Int:
+		case re::Shader::UniformType::Int:
 		{
 			glUniform1i(uniformID, *(GLint const*)value);
 		}
 		break;
 		
-		case gr::Shader::UniformType::Texture:
+		case re::Shader::UniformType::Texture:
 		{
 			auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
 
@@ -368,7 +368,7 @@ namespace opengl
 			opengl::Texture::Bind(*static_cast<re::Texture*>(value), bindingUnit->second, true);
 		}
 		break;
-		case gr::Shader::UniformType::Sampler:
+		case re::Shader::UniformType::Sampler:
 		{
 			auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
 
@@ -393,7 +393,7 @@ namespace opengl
 	}
 
 
-	void Shader::SetParameterBlock(gr::Shader& shader, re::ParameterBlock& paramBlock)
+	void Shader::SetParameterBlock(re::Shader& shader, re::ParameterBlock& paramBlock)
 	{
 		// Ensure the shader is created
 		opengl::Shader::Create(shader);

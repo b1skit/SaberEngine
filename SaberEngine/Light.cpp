@@ -6,7 +6,7 @@
 #include "Shader.h"
 #include "MeshPrimitive.h"
 
-using gr::Shader;
+using re::Shader;
 using gr::Transform;
 using en::Config;
 using en::SceneManager;

@@ -17,6 +17,10 @@ namespace gr
 {
 	class Camera;
 	class MeshPrimitive;
+}
+
+namespace re
+{
 	class Shader;
 }
 

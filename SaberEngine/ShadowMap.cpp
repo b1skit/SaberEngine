@@ -10,7 +10,7 @@
 using en::Config;
 using gr::Material;
 using re::Texture;
-using gr::Shader;
+using re::Shader;
 using gr::Camera;
 using gr::Transform;
 using std::shared_ptr;
