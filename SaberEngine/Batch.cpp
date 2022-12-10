@@ -104,7 +104,7 @@ namespace re
 		if (type == gr::Shader::UniformType::Texture || type == gr::Shader::UniformType::Sampler)
 		{
 			SEAssert("Invalid pointer type",
-				typeid(T) == typeid(shared_ptr<gr::Texture>) || typeid(T) == typeid(shared_ptr<re::Sampler>));
+				typeid(T) == typeid(shared_ptr<re::Texture>) || typeid(T) == typeid(shared_ptr<re::Sampler>));
 			SEAssert("Pointer is null", std::static_pointer_cast<const void>(value) != nullptr);
 
 			m_batchUniforms.emplace_back(uniformName, value, type, count);
@@ -122,8 +122,8 @@ namespace re
 		}
 	}
 	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
-	template void Batch::AddBatchUniform<shared_ptr<gr::Texture>>(
-		string const& uniformName, shared_ptr<gr::Texture> const& value, gr::Shader::UniformType const& type, int const count);
+	template void Batch::AddBatchUniform<shared_ptr<re::Texture>>(
+		string const& uniformName, shared_ptr<re::Texture> const& value, gr::Shader::UniformType const& type, int const count);
 	template void Batch::AddBatchUniform<shared_ptr<re::Sampler>>(
 		string const& uniformName, shared_ptr<re::Sampler> const& value, gr::Shader::UniformType const& type, int const count);
 

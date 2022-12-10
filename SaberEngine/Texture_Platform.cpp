@@ -10,7 +10,7 @@ using en::Config;
 namespace platform
 {
 	// Parameter struct object factory:
-	void platform::Texture::CreatePlatformParams(gr::Texture& texture)
+	void platform::Texture::CreatePlatformParams(re::Texture& texture)
 	{
 		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
@@ -36,10 +36,10 @@ namespace platform
 
 	// platform::Texture static members:
 	/***********************************/
-	void (*platform::Texture::Create)(gr::Texture&);
-	void (*platform::Texture::Bind)(gr::Texture&, uint32_t textureUnit, bool doBind);
-	void (*platform::Texture::Destroy)(gr::Texture&);
-	void (*platform::Texture::GenerateMipMaps)(gr::Texture&);
+	void (*platform::Texture::Create)(re::Texture&);
+	void (*platform::Texture::Bind)(re::Texture&, uint32_t textureUnit, bool doBind);
+	void (*platform::Texture::Destroy)(re::Texture&);
+	void (*platform::Texture::GenerateMipMaps)(re::Texture&);
 
 	platform::Texture::UVOrigin (*platform::Texture::GetUVOrigin)();
 }

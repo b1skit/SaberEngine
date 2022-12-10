@@ -5,7 +5,7 @@
 #include "TextureTarget.h"
 
 
-namespace gr
+namespace re
 {
 	class Texture;
 }

@@ -18,14 +18,14 @@ namespace re
 	}
 
 
-	TextureTarget::TextureTarget(std::shared_ptr<gr::Texture> texture) :
+	TextureTarget::TextureTarget(std::shared_ptr<re::Texture> texture) :
 		m_texture(texture)
 	{
 		platform::TextureTarget::CreatePlatformParams(*this);
 	}
 
 
-	TextureTarget& TextureTarget::operator=(std::shared_ptr<gr::Texture> texture)
+	TextureTarget& TextureTarget::operator=(std::shared_ptr<re::Texture> texture)
 	{
 		m_texture = texture;
 
@@ -148,7 +148,7 @@ namespace re
 	}
 
 
-	void TextureTargetSet::SetColorTarget(size_t i, std::shared_ptr<gr::Texture> texTarget)
+	void TextureTargetSet::SetColorTarget(size_t i, std::shared_ptr<re::Texture> texTarget)
 	{
 		m_colorTargets[i] = texTarget;
 		m_colorTargetStateDirty = true;
@@ -163,7 +163,7 @@ namespace re
 	}
 
 
-	void TextureTargetSet::SetDepthStencilTarget(std::shared_ptr<gr::Texture> depthStencilTarget)
+	void TextureTargetSet::SetDepthStencilTarget(std::shared_ptr<re::Texture> depthStencilTarget)
 	{
 		m_depthStencilTarget = depthStencilTarget;
 		m_targetParamsDirty = true;
@@ -261,7 +261,7 @@ namespace re
 			// Find a single target we can get the resolution details from; This assumes all targets are the same dimensions
 			if (!foundDimensions && HasDepthTarget())
 			{
-				std::shared_ptr<gr::Texture> depthTarget = m_depthStencilTarget.GetTexture();
+				std::shared_ptr<re::Texture> depthTarget = m_depthStencilTarget.GetTexture();
 				if (depthTarget)
 				{
 					targetDimensions = depthTarget->GetTextureDimenions();
@@ -273,7 +273,7 @@ namespace re
 			{
 				for (size_t i = 0; i < m_colorTargets.size(); i++)
 				{
-					std::shared_ptr<gr::Texture> texTarget = m_colorTargets[i].GetTexture();
+					std::shared_ptr<re::Texture> texTarget = m_colorTargets[i].GetTexture();
 					if (texTarget)
 					{
 						targetDimensions = texTarget->GetTextureDimenions();

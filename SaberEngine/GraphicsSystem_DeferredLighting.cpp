@@ -14,7 +14,7 @@
 #include "SceneManager.h"
 
 using gr::Light;
-using gr::Texture;
+using re::Texture;
 using gr::ShadowMap;
 using re::RenderManager;
 using re::ParameterBlock;
@@ -219,7 +219,7 @@ namespace gr
 			brdfParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 			brdfParams.m_useMIPs = false;
 
-			m_BRDF_integrationMap = std::make_shared<gr::Texture>("BRDFIntegrationMap", brdfParams);
+			m_BRDF_integrationMap = std::make_shared<re::Texture>("BRDFIntegrationMap", brdfParams);
 
 			brdfStage.GetTextureTargetSet().SetColorTarget(0, m_BRDF_integrationMap);
 			brdfStage.GetTextureTargetSet().Viewport() = 
@@ -629,10 +629,10 @@ namespace gr
 			ShadowMap* const shadowMap = pointLights[i]->GetShadowMap();
 			if (shadowMap != nullptr)
 			{
-				std::shared_ptr<gr::Texture> const depthTexture = 
+				std::shared_ptr<re::Texture> const depthTexture = 
 					shadowMap->GetTextureTargetSet().DepthStencilTarget().GetTexture();
 
-				pointlightBatch.AddBatchUniform<shared_ptr<gr::Texture>>(
+				pointlightBatch.AddBatchUniform<shared_ptr<re::Texture>>(
 					"CubeMap0", depthTexture, gr::Shader::UniformType::Texture, 1);
 
 				// Our template function expects a shared_ptr to a non-const type; cast it here even though it's gross

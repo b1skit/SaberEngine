@@ -6,7 +6,7 @@
 #include "Material.h"
 
 using gr::Material;
-using gr::Texture;
+using re::Texture;
 using gr::Transform;
 using std::shared_ptr;
 using std::string;

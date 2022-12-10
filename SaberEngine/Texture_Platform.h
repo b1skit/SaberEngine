@@ -20,16 +20,16 @@ namespace platform
 		};
 
 
-		static void CreatePlatformParams(gr::Texture& texture);
+		static void CreatePlatformParams(re::Texture& texture);
 
 
 		// API-specific function bindings:
 		/*********************************/
-		static void (*Create)(gr::Texture&);
-		static void (*Bind)(gr::Texture&, uint32_t textureUnit, bool doBind);
-		static void (*Destroy)(gr::Texture&);
+		static void (*Create)(re::Texture&);
+		static void (*Bind)(re::Texture&, uint32_t textureUnit, bool doBind);
+		static void (*Destroy)(re::Texture&);
 
-		static void (*GenerateMipMaps)(gr::Texture&);
+		static void (*GenerateMipMaps)(re::Texture&);
 		static UVOrigin (*GetUVOrigin)();
 	};
 }

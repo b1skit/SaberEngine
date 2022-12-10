@@ -15,7 +15,7 @@
 
 using en::Config;
 using en::SceneManager;
-using gr::Texture;
+using re::Texture;
 using gr::DeferredLightingGraphicsSystem;
 using gr::GBufferGraphicsSystem;
 using re::RenderManager;

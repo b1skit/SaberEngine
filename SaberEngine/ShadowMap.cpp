@@ -9,7 +9,7 @@
 
 using en::Config;
 using gr::Material;
-using gr::Texture;
+using re::Texture;
 using gr::Shader;
 using gr::Camera;
 using gr::Transform;
@@ -48,7 +48,7 @@ namespace gr
 		// http://www.joshbarczak.com/blog/?p=396
 		// https://www.khronos.org/opengl/wiki/Sampler_Object#Anisotropic_filtering
 
-		std::shared_ptr<gr::Texture> depthTexture;
+		std::shared_ptr<re::Texture> depthTexture;
 
 		// Omni-directional (Cube map) shadowmap setup:
 		if (useCubeMap)
@@ -57,7 +57,7 @@ namespace gr
 			shadowParams.m_faces = 6;
 			const string texName = lightName + "_CubeShadowMap";
 
-			depthTexture = std::make_shared<gr::Texture>(texName, shadowParams);
+			depthTexture = std::make_shared<re::Texture>(texName, shadowParams);
 		}
 		else // Single texture shadowmap setup:
 		{
@@ -65,7 +65,7 @@ namespace gr
 			shadowParams.m_faces = 1;
 			const string texName = lightName + "_SingleShadowMap";
 			
-			depthTexture = std::make_shared<gr::Texture>(texName, shadowParams);
+			depthTexture = std::make_shared<re::Texture>(texName, shadowParams);
 		}
 
 		m_shadowTargetSet.SetDepthStencilTarget(depthTexture);

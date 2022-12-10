@@ -88,7 +88,7 @@ namespace re
 
 		// Helper: Simultaneously binds a texture and sampler by name to the stage shader
 		void SetTextureInput(
-			std::string const& shaderName, std::shared_ptr<gr::Texture> tex, std::shared_ptr<re::Sampler> sampler);
+			std::string const& shaderName, std::shared_ptr<re::Texture> tex, std::shared_ptr<re::Sampler> sampler);
 
 		// Per-frame uniforms are set every frame
 		inline std::vector<StageShaderUniform> const& GetPerFrameShaderUniforms() const { return m_perFrameShaderUniforms; }

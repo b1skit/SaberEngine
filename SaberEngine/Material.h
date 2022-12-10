@@ -16,11 +16,11 @@
 namespace re
 {
 	class ParameterBlock;
+	class Texture;
 }
 
 namespace gr
 {
-	class Texture;
 	class Shader;
 }
 
@@ -32,7 +32,7 @@ namespace gr
 		// Material definitions:
 		struct TextureSlotDesc
 		{
-			std::shared_ptr<gr::Texture> m_texture = nullptr;
+			std::shared_ptr<re::Texture> m_texture = nullptr;
 			std::shared_ptr<re::Sampler> m_samplerObject = nullptr; // eg. Sampler object from the sampler library
 			std::string m_shaderSamplerName;
 		};
@@ -92,11 +92,11 @@ namespace gr
 		inline std::shared_ptr<re::ParameterBlock>& GetParameterBlock() { return m_matParams; }
 		inline std::shared_ptr<re::ParameterBlock> const GetParameterBlock() const { return m_matParams; }
 
-		inline std::shared_ptr<gr::Texture>& GetTexture(uint32_t slotIndex) { return m_texSlots[slotIndex].m_texture; }
-		inline std::shared_ptr<gr::Texture> const GetTexture(uint32_t slotIndex) const { return m_texSlots[slotIndex].m_texture; }
+		inline std::shared_ptr<re::Texture>& GetTexture(uint32_t slotIndex) { return m_texSlots[slotIndex].m_texture; }
+		inline std::shared_ptr<re::Texture> const GetTexture(uint32_t slotIndex) const { return m_texSlots[slotIndex].m_texture; }
 
-		std::shared_ptr<gr::Texture>& GetTexture(std::string const& samplerName);
-		std::shared_ptr<gr::Texture> const& GetTexture(std::string const& samplerName) const;
+		std::shared_ptr<re::Texture>& GetTexture(std::string const& samplerName);
+		std::shared_ptr<re::Texture> const& GetTexture(std::string const& samplerName) const;
 
 		inline size_t const& NumTextureSlots() { return m_texSlots.size(); }
 

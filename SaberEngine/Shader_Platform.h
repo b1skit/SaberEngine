@@ -6,13 +6,13 @@
 namespace gr
 {
 	class Shader;
-	class Texture;
 }
 
 namespace re
 {
 	class ParameterBlock;
 	class Sampler;
+	class Texture;
 }
 
 namespace platform

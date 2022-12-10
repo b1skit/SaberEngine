@@ -6,7 +6,7 @@ using glm::vec4;
 using std::string;
 
 
-namespace gr
+namespace re
 {
 	Texture::Texture(string const& name, TextureParams const& params)
 		: NamedObject(name)
@@ -35,13 +35,13 @@ namespace gr
 	}
 
 
-	void Texture::SetPlatformParams(std::unique_ptr<gr::Texture::PlatformParams> platformParams)
+	void Texture::SetPlatformParams(std::unique_ptr<re::Texture::PlatformParams> platformParams)
 	{ 
 		m_platformParams = std::move(platformParams);
 	}
 
 
-	void Texture::SetTextureParams(gr::Texture::TextureParams const& params) 
+	void Texture::SetTextureParams(re::Texture::TextureParams const& params) 
 	{ 
 		m_texParams = params; 
 		m_platformParams->m_isDirty = true; 
@@ -72,7 +72,7 @@ namespace gr
 	}
 
 
-	uint8_t const* gr::Texture::GetTexel(uint32_t index) const
+	uint8_t const* re::Texture::GetTexel(uint32_t index) const
 	{
 		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
 
@@ -83,7 +83,7 @@ namespace gr
 	}
 
 
-	void gr::Texture::SetTexel(uint32_t u, uint32_t v, glm::vec4 value)
+	void re::Texture::SetTexel(uint32_t u, uint32_t v, glm::vec4 value)
 	{
 		// Note: If texture has < 4 channels, the corresponding channels in value are ignored
 
@@ -107,28 +107,28 @@ namespace gr
 		void* const pixelPtr = &m_texels[((v * m_texParams.m_width) + u) * bytesPerPixel];
 		switch (m_texParams.m_format)
 		{
-		case gr::Texture::Format::RGBA32F:
+		case re::Texture::Format::RGBA32F:
 		{
 			*static_cast<glm::vec4*>(pixelPtr) = *static_cast<glm::vec4*>(valuePtr);
 		}
 		break;
-		case gr::Texture::Format::RGB32F:
+		case re::Texture::Format::RGB32F:
 		{
 			*static_cast<glm::vec3*>(pixelPtr) = *static_cast<glm::vec3*>(valuePtr);
 		}
 		break;
-		case gr::Texture::Format::RG32F:
+		case re::Texture::Format::RG32F:
 		{
 			*static_cast<glm::vec2*>(pixelPtr) = *static_cast<glm::vec2*>(valuePtr);
 		}
 		break;
-		case gr::Texture::Format::Depth32F:
-		case gr::Texture::Format::R32F:
+		case re::Texture::Format::Depth32F:
+		case re::Texture::Format::R32F:
 		{
 			*static_cast<float*>(pixelPtr) = *static_cast<float*>(valuePtr);
 		}
 		break;
-		case gr::Texture::Format::RGBA16F:
+		case re::Texture::Format::RGBA16F:
 		{
 			// TODO: Support half-precision floats. For now, just fill with black
 			for (size_t numBytes = 0; numBytes < 8; numBytes++)
@@ -137,7 +137,7 @@ namespace gr
 			}
 		}
 		break;
-		case gr::Texture::Format::RGB16F:
+		case re::Texture::Format::RGB16F:
 		{
 			// TODO: Support half-precision floats. For now, just fill with black
 			for (size_t numBytes = 0; numBytes < 6; numBytes++)
@@ -147,7 +147,7 @@ namespace gr
 			
 		}
 		break;
-		case gr::Texture::Format::RG16F:
+		case re::Texture::Format::RG16F:
 		{
 			// TODO: Support half-precision floats. For now, just fill with black
 			for (size_t numBytes = 0; numBytes < 4; numBytes++)
@@ -156,7 +156,7 @@ namespace gr
 			}
 		}
 		break;
-		case gr::Texture::Format::R16F:
+		case re::Texture::Format::R16F:
 		{
 			// TODO: Support half-precision floats. For now, just fill with black
 			for (size_t numBytes = 0; numBytes < 2; numBytes++)
@@ -165,7 +165,7 @@ namespace gr
 			}
 		}
 		break;
-		case gr::Texture::Format::RGBA8:
+		case re::Texture::Format::RGBA8:
 		{
 			for (uint8_t i = 0; i < 4; i++)
 			{
@@ -174,7 +174,7 @@ namespace gr
 			}
 		}
 		break;
-		case gr::Texture::Format::RGB8:
+		case re::Texture::Format::RGB8:
 		{
 			for (uint8_t i = 0; i < 3; i++)
 			{
@@ -183,7 +183,7 @@ namespace gr
 			}
 		}
 		break;
-		case gr::Texture::Format::RG8:
+		case re::Texture::Format::RG8:
 		{
 			for (uint8_t i = 0; i < 2; i++)
 			{
@@ -192,13 +192,13 @@ namespace gr
 			}
 		}
 		break;
-		case gr::Texture::Format::R8:
+		case re::Texture::Format::R8:
 		{
 			const uint8_t channelValue = (uint8_t)(value[0] * 255.0f);
 			*(static_cast<uint8_t*>(pixelPtr)) = channelValue;
 		}
 		break;
-		case gr::Texture::Format::Invalid:
+		case re::Texture::Format::Invalid:
 		default:
 		{
 			SEAssertF("Invalid texture format to set a texel");
@@ -209,7 +209,7 @@ namespace gr
 	}
 
 
-	void gr::Texture::Fill(vec4 solidColor)
+	void re::Texture::Fill(vec4 solidColor)
 	{
 		for (uint32_t row = 0; row < m_texParams.m_height; row++)
 		{
@@ -222,7 +222,7 @@ namespace gr
 	}
 
 
-	void gr::Texture::Fill(vec4 tl, vec4 tr, vec4 bl, vec4 br)
+	void re::Texture::Fill(vec4 tl, vec4 tr, vec4 bl, vec4 br)
 	{
 		for (unsigned int row = 0; row < m_texParams.m_height; row++)
 		{
@@ -276,53 +276,53 @@ namespace gr
 	{
 		switch (texFormat)
 		{
-		case gr::Texture::Format::RGBA32F:
+		case re::Texture::Format::RGBA32F:
 		{
 			return 16;
 		}
 		break;
-		case gr::Texture::Format::RGB32F:
+		case re::Texture::Format::RGB32F:
 		{
 			return 12;
 		}
 		break;
-		case gr::Texture::Format::RG32F:
-		case gr::Texture::Format::RGBA16F:
+		case re::Texture::Format::RG32F:
+		case re::Texture::Format::RGBA16F:
 		{
 			return 8;
 		}
 		break;
-		case gr::Texture::Format::RGB16F:
+		case re::Texture::Format::RGB16F:
 		{
 			return 6;
 		}
 		break;
-		case gr::Texture::Format::R32F:
-		case gr::Texture::Format::RG16F:
-		case gr::Texture::Format::RGBA8:
-		case gr::Texture::Format::Depth32F:
+		case re::Texture::Format::R32F:
+		case re::Texture::Format::RG16F:
+		case re::Texture::Format::RGBA8:
+		case re::Texture::Format::Depth32F:
 		{
 			return 4;
 		}
 		break;
-		case gr::Texture::Format::RGB8:
+		case re::Texture::Format::RGB8:
 		{
 			return 3;
 		}
 		break;
-		case gr::Texture::Format::R16F:
-		case gr::Texture::Format::RG8:
+		case re::Texture::Format::R16F:
+		case re::Texture::Format::RG8:
 		{
 			return 2;
 		}
 		break;
-		case gr::Texture::Format::R8:
+		case re::Texture::Format::R8:
 		{
 			return 1;
 		}
 		break;
 		break;
-		case gr::Texture::Format::Invalid:
+		case re::Texture::Format::Invalid:
 		default:
 		{
 			SEAssertF("Invalid texture format for stride computation");
@@ -336,35 +336,35 @@ namespace gr
 	{
 		switch (texFormat)
 		{
-		case gr::Texture::Format::RGBA32F:
-		case gr::Texture::Format::RGBA16F:
-		case gr::Texture::Format::RGBA8:
+		case re::Texture::Format::RGBA32F:
+		case re::Texture::Format::RGBA16F:
+		case re::Texture::Format::RGBA8:
 		{
 			return 4;
 		}
 		break;
-		case gr::Texture::Format::RGB32F:
-		case gr::Texture::Format::RGB16F:
-		case gr::Texture::Format::RGB8:
+		case re::Texture::Format::RGB32F:
+		case re::Texture::Format::RGB16F:
+		case re::Texture::Format::RGB8:
 		{
 			return 3;
 		}
 		break;
-		case gr::Texture::Format::RG32F:
-		case gr::Texture::Format::RG16F:
-		case gr::Texture::Format::RG8:
+		case re::Texture::Format::RG32F:
+		case re::Texture::Format::RG16F:
+		case re::Texture::Format::RG8:
 		{
 			return 2;
 		}
 		break;
-		case gr::Texture::Format::R32F:
-		case gr::Texture::Format::R16F:
-		case gr::Texture::Format::R8:
-		case gr::Texture::Format::Depth32F:
+		case re::Texture::Format::R32F:
+		case re::Texture::Format::R16F:
+		case re::Texture::Format::R8:
+		case re::Texture::Format::Depth32F:
 		{
 			return 1;
 		}
-		case gr::Texture::Format::Invalid:
+		case re::Texture::Format::Invalid:
 		default:
 		{
 			SEAssertF("Invalid texture format for stride computation");

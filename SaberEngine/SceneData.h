@@ -64,12 +64,12 @@ namespace fr
 		std::vector <std::shared_ptr<gr::Mesh>> const& GetMeshes() const;
 
 		// Textures:
-		void AddUniqueTexture(std::shared_ptr<gr::Texture>& newTexture); // Note: newTexture may be modified
-		std::shared_ptr<gr::Texture> GetTexture(std::string textureName) const;
+		void AddUniqueTexture(std::shared_ptr<re::Texture>& newTexture); // Note: newTexture may be modified
+		std::shared_ptr<re::Texture> GetTexture(std::string textureName) const;
 		bool TextureExists(std::string textureName) const;
 
 		// Gets already-loaded textures, or loads if it's unseen. Returns nullptr if texture file doesn't exist
-		std::shared_ptr<gr::Texture> GetLoadTextureByPath(std::vector<std::string> texturePaths, bool returnErrorTex);
+		std::shared_ptr<re::Texture> GetLoadTextureByPath(std::vector<std::string> texturePaths, bool returnErrorTex);
 
 		// Materials:
 		void AddUniqueMaterial(std::shared_ptr<gr::Material>& newMaterial);
@@ -94,7 +94,7 @@ namespace fr
 		std::unordered_map<uint64_t, std::shared_ptr<re::MeshPrimitive>> m_meshPrimitives;
 		std::mutex m_meshesAndMeshPrimitivesMutex;		
 
-		std::unordered_map<size_t, std::shared_ptr<gr::Texture>> m_textures;
+		std::unordered_map<size_t, std::shared_ptr<re::Texture>> m_textures;
 		mutable std::shared_mutex m_texturesMutex; // mutable, as we need to be able to modify it in const functions
 
 		std::unordered_map<size_t, std::shared_ptr<gr::Material>> m_materials;

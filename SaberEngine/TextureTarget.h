@@ -22,7 +22,7 @@ namespace re
 
 	public:
 		TextureTarget();
-		explicit TextureTarget(std::shared_ptr<gr::Texture> texture);
+		explicit TextureTarget(std::shared_ptr<re::Texture> texture);
 		
 		~TextureTarget();
 
@@ -30,16 +30,16 @@ namespace re
 		TextureTarget(TextureTarget&&) = default;
 		TextureTarget& operator=(TextureTarget const&) = default;
 
-		TextureTarget& operator=(std::shared_ptr<gr::Texture> texture);
+		TextureTarget& operator=(std::shared_ptr<re::Texture> texture);
 
-		std::shared_ptr<gr::Texture>& GetTexture() { return m_texture; }
-		std::shared_ptr<gr::Texture> const& GetTexture() const { return m_texture; }
+		std::shared_ptr<re::Texture>& GetTexture() { return m_texture; }
+		std::shared_ptr<re::Texture> const& GetTexture() const { return m_texture; }
 
 		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::shared_ptr<PlatformParams> params) { m_platformParams = params; }
 
 	private:
-		std::shared_ptr<gr::Texture> m_texture;
+		std::shared_ptr<re::Texture> m_texture;
 		std::shared_ptr<PlatformParams> m_platformParams;
 	};
 
@@ -109,11 +109,11 @@ namespace re
 		inline std::vector<re::TextureTarget> const& ColorTargets() const { return m_colorTargets; }
 		re::TextureTarget const& GetColorTarget(size_t i) const;
 		void SetColorTarget(size_t i, re::TextureTarget texTarget);
-		void SetColorTarget(size_t i, std::shared_ptr<gr::Texture> texTarget);
+		void SetColorTarget(size_t i, std::shared_ptr<re::Texture> texTarget);
 
 		inline re::TextureTarget const& DepthStencilTarget() const { return m_depthStencilTarget; }
 		void SetDepthStencilTarget(re::TextureTarget const& depthStencilTarget);
-		void SetDepthStencilTarget(std::shared_ptr<gr::Texture> depthStencilTarget);
+		void SetDepthStencilTarget(std::shared_ptr<re::Texture> depthStencilTarget);
 
 		bool HasTargets();
 		bool HasColorTarget();

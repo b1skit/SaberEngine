@@ -18,7 +18,7 @@ using std::vector;
 using std::shared_ptr;
 using std::string;
 using std::to_string;
-using gr::Texture;
+using re::Texture;
 using re::Sampler;
 using util::PerformanceTimer;
 
@@ -365,7 +365,7 @@ namespace opengl
 #else
 			if (bindingUnit == params->m_samplerUnits.end()) return;
 #endif
-			opengl::Texture::Bind(*static_cast<gr::Texture*>(value), bindingUnit->second, true);
+			opengl::Texture::Bind(*static_cast<re::Texture*>(value), bindingUnit->second, true);
 		}
 		break;
 		case gr::Shader::UniformType::Sampler:

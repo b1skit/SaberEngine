@@ -9,7 +9,7 @@
 #include "NamedObject.h"
 
 
-namespace gr
+namespace re
 {
 	class Texture : public virtual en::NamedObject
 	{
@@ -123,11 +123,11 @@ namespace gr
 		uint32_t GetNumMips() const;
 		uint32_t GetMipDimension(uint32_t mipLevel) const;
 
-		gr::Texture::PlatformParams* GetPlatformParams() { return m_platformParams.get(); }
-		gr::Texture::PlatformParams const* GetPlatformParams() const { return m_platformParams.get(); }
-		void SetPlatformParams(std::unique_ptr<gr::Texture::PlatformParams> platformParams);
+		re::Texture::PlatformParams* GetPlatformParams() { return m_platformParams.get(); }
+		re::Texture::PlatformParams const* GetPlatformParams() const { return m_platformParams.get(); }
+		void SetPlatformParams(std::unique_ptr<re::Texture::PlatformParams> platformParams);
 
-		void SetTextureParams(gr::Texture::TextureParams const& params);
+		void SetTextureParams(re::Texture::TextureParams const& params);
 		TextureParams const& GetTextureParams() const { return m_texParams; }
 
 
@@ -148,7 +148,7 @@ namespace gr
 
 	private:
 		TextureParams m_texParams;
-		std::unique_ptr<gr::Texture::PlatformParams> m_platformParams;
+		std::unique_ptr<re::Texture::PlatformParams> m_platformParams;
 
 		std::vector<uint8_t> m_texels;
 	
@@ -162,7 +162,7 @@ namespace gr
 
 
 	// We need to provide a destructor implementation since it's pure virtual
-	inline gr::Texture::PlatformParams::~PlatformParams() {};
+	inline re::Texture::PlatformParams::~PlatformParams() {};
 }
 
 

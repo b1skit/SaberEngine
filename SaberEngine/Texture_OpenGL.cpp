@@ -12,7 +12,7 @@
 namespace opengl
 {
 	// Ctor: Maps SaberEngine -> OpenGL texture params:
-	Texture::PlatformParams::PlatformParams(gr::Texture::TextureParams const& texParams) :
+	Texture::PlatformParams::PlatformParams(re::Texture::TextureParams const& texParams) :
 		m_textureID(0),
 		m_texTarget(GL_TEXTURE_2D),
 		m_format(GL_RGBA),
@@ -24,12 +24,12 @@ namespace opengl
 		/************/
 		switch (texParams.m_dimension)
 		{
-		case gr::Texture::Dimension::Texture2D:
+		case re::Texture::Dimension::Texture2D:
 		{
 			m_texTarget = GL_TEXTURE_2D;
 		}
 		break;
-		case gr::Texture::Dimension::TextureCubeMap:
+		case re::Texture::Dimension::TextureCubeMap:
 		{
 			m_texTarget = GL_TEXTURE_CUBE_MAP;
 		}
@@ -43,90 +43,90 @@ namespace opengl
 		/****************/
 		switch (texParams.m_format)
 		{
-		case gr::Texture::Format::RGBA32F:
+		case re::Texture::Format::RGBA32F:
 		{
 			m_format = GL_RGBA;
 			m_internalFormat = GL_RGBA32F;
 			m_type = GL_FLOAT;
 		}
 		break;
-		case gr::Texture::Format::RGB32F:
+		case re::Texture::Format::RGB32F:
 		{
 			m_format = GL_RGB;
 			m_internalFormat = GL_RGB32F;
 			m_type = GL_FLOAT;
 		}
 		break;
-		case gr::Texture::Format::RG32F:
+		case re::Texture::Format::RG32F:
 		{
 			m_format = GL_RG;
 			m_internalFormat = GL_RG32F;
 			m_type = GL_FLOAT;
 		}
 		break;
-		case gr::Texture::Format::R32F:
+		case re::Texture::Format::R32F:
 		{
 			m_format = GL_R;
 			m_internalFormat = GL_R32F;
 			m_type = GL_FLOAT;
 		}
 		break;
-		case gr::Texture::Format::RGBA16F:
+		case re::Texture::Format::RGBA16F:
 		{
 			m_format = GL_RGBA;
 			m_internalFormat = GL_RGBA16F;
 			m_type = GL_HALF_FLOAT;
 		}
 		break;
-		case gr::Texture::Format::RGB16F:
+		case re::Texture::Format::RGB16F:
 		{
 			m_format = GL_RGB;
 			m_internalFormat = GL_RGB16F;
 			m_type = GL_HALF_FLOAT;
 		}
 		break;
-		case gr::Texture::Format::RG16F:
+		case re::Texture::Format::RG16F:
 		{
 			m_format = GL_RG;
 			m_internalFormat = GL_RG16F;
 			m_type = GL_HALF_FLOAT;
 		}
 		break;
-		case gr::Texture::Format::R16F:
+		case re::Texture::Format::R16F:
 		{
 			m_format = GL_R;
 			m_internalFormat = GL_R16F;
 			m_type = GL_HALF_FLOAT;
 		}
 		break;
-		case gr::Texture::Format::RGBA8:
+		case re::Texture::Format::RGBA8:
 		{
 			m_format = GL_RGBA;
 			m_internalFormat = 
-				texParams.m_colorSpace == gr::Texture::ColorSpace::sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
+				texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
 			// Note: Alpha in GL_SRGB8_ALPHA8 is stored in linear color space, RGB are in sRGB color space
 			m_type = GL_UNSIGNED_BYTE;
 		}
 		break;
-		case gr::Texture::Format::RGB8:
+		case re::Texture::Format::RGB8:
 		{
 			m_format = GL_RGB;
 			m_internalFormat = 
-				texParams.m_colorSpace == gr::Texture::ColorSpace::sRGB ? GL_SRGB8 : GL_RGB8;		
+				texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? GL_SRGB8 : GL_RGB8;		
 			m_type = GL_UNSIGNED_BYTE;
 		}
 		break;
-		case gr::Texture::Format::RG8:
+		case re::Texture::Format::RG8:
 		{
 			SEAssertF("Invalid/unsupported texture format");
 		}
 		break;
-		case gr::Texture::Format::R8:
+		case re::Texture::Format::R8:
 		{
 			SEAssertF("Invalid/unsupported texture format");
 		}
 		break;
-		case gr::Texture::Format::Depth32F:
+		case re::Texture::Format::Depth32F:
 		{
 			m_format = GL_DEPTH_COMPONENT;
 			m_internalFormat = GL_DEPTH_COMPONENT32F;
@@ -146,7 +146,7 @@ namespace opengl
 	}
 
 
-	void opengl::Texture::Destroy(gr::Texture& texture)
+	void opengl::Texture::Destroy(re::Texture& texture)
 	{
 		PlatformParams* const params =
 			dynamic_cast<opengl::Texture::PlatformParams* const>(texture.GetPlatformParams());
@@ -164,7 +164,7 @@ namespace opengl
 	}
 
 
-	void opengl::Texture::Bind(gr::Texture& texture, uint32_t textureUnit, bool doBind)
+	void opengl::Texture::Bind(re::Texture& texture, uint32_t textureUnit, bool doBind)
 	{
 		// TODO: Is there a way to avoid needing to pass textureUnit?
 		// textureUnit is a target, ie. GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, etc
@@ -188,7 +188,7 @@ namespace opengl
 	}
 
 
-	void opengl::Texture::Create(gr::Texture& texture)
+	void opengl::Texture::Create(re::Texture& texture)
 	{
 		if (!texture.GetPlatformParams()->m_isCreated)
 		{
@@ -217,9 +217,9 @@ namespace opengl
 			glIsTexture(params->m_textureID) == GL_TRUE);
 
 		// Ensure our texture is correctly configured:
-		gr::Texture::TextureParams const& texParams = texture.GetTextureParams();
+		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 		SEAssert("Texture has a bad configuration", texParams.m_faces == 1 ||
-			(texParams.m_faces == 6 && texParams.m_dimension == gr::Texture::Dimension::TextureCubeMap));
+			(texParams.m_faces == 6 && texParams.m_dimension == re::Texture::Dimension::TextureCubeMap));
 
 		// Buffer the texture data:
 		const uint32_t width = texture.Width();
@@ -230,17 +230,17 @@ namespace opengl
 		{
 			// Get the image data pointer; for render targets, this is nullptr
 			void* data = nullptr;
-			if (texParams.m_usage == gr::Texture::Usage::Color)
+			if (texParams.m_usage == re::Texture::Usage::Color)
 			{
 				SEAssert("Color target must have data to buffer", 
 					texture.Texels().size() == 
-					(texParams.m_faces * texParams.m_width * texParams.m_height * gr::Texture::GetNumBytesPerTexel(texParams.m_format)));
+					(texParams.m_faces * texParams.m_width * texParams.m_height * re::Texture::GetNumBytesPerTexel(texParams.m_format)));
 
 				data = (void*)texture.GetTexel(0, 0, i);
 			}
 
 			GLenum target;
-			if (texParams.m_dimension == gr::Texture::Dimension::TextureCubeMap)
+			if (texParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
 			{
 				target = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
 				// TODO: Switch to a generic specification/buffering functionality, using GL_TEXTURE_CUBE_MAP for 
@@ -294,7 +294,7 @@ namespace opengl
 	}
 
 
-	void opengl::Texture::GenerateMipMaps(gr::Texture& texture)
+	void opengl::Texture::GenerateMipMaps(re::Texture& texture)
 	{
 		opengl::Texture::PlatformParams const* params =
 			dynamic_cast<opengl::Texture::PlatformParams const*>(texture.GetPlatformParams());

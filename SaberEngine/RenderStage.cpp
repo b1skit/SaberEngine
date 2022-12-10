@@ -4,7 +4,7 @@
 
 
 using re::Sampler;
-using gr::Texture;
+using re::Texture;
 using std::string;
 using std::shared_ptr;
 using std::make_shared;

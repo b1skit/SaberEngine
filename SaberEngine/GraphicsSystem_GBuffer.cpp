@@ -9,7 +9,7 @@
 #include "SceneData.h"
 
 using gr::Shader;
-using gr::Texture;
+using re::Texture;
 using en::Config;
 using en::SceneManager;
 using re::RenderManager;
@@ -60,10 +60,10 @@ namespace gr
 		gBufferParams.m_width = Config::Get()->GetValue<int>("windowXRes");
 		gBufferParams.m_height = Config::Get()->GetValue<int>("windowYRes");
 		gBufferParams.m_faces = 1;
-		gBufferParams.m_usage = gr::Texture::Usage::ColorTarget;
-		gBufferParams.m_dimension = gr::Texture::Dimension::Texture2D;
-		gBufferParams.m_format = gr::Texture::Format::RGBA32F; // Using 4 channels for future flexibility
-		gBufferParams.m_colorSpace = gr::Texture::ColorSpace::sRGB;
+		gBufferParams.m_usage = re::Texture::Usage::ColorTarget;
+		gBufferParams.m_dimension = re::Texture::Dimension::Texture2D;
+		gBufferParams.m_format = re::Texture::Format::RGBA32F; // Using 4 channels for future flexibility
+		gBufferParams.m_colorSpace = re::Texture::ColorSpace::sRGB;
 		gBufferParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 
@@ -78,19 +78,19 @@ namespace gr
 		re::TextureTargetSet& gBufferTargets = m_gBufferStage.GetTextureTargetSet();
 		for (size_t i = 0; i <= 5; i++)
 		{
-			gBufferTargets.SetColorTarget(i, std::make_shared<gr::Texture>(GBufferTexNames[i], gBufferParams));
+			gBufferTargets.SetColorTarget(i, std::make_shared<re::Texture>(GBufferTexNames[i], gBufferParams));
 		}
 
 		// Create GBuffer depth target:
-		gr::Texture::TextureParams depthTexParams(gBufferParams);
-		depthTexParams.m_usage = gr::Texture::Usage::DepthTarget;
-		depthTexParams.m_format = gr::Texture::Format::Depth32F;
-		depthTexParams.m_colorSpace = gr::Texture::ColorSpace::Linear;
+		re::Texture::TextureParams depthTexParams(gBufferParams);
+		depthTexParams.m_usage = re::Texture::Usage::DepthTarget;
+		depthTexParams.m_format = re::Texture::Format::Depth32F;
+		depthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 
 		const size_t gBufferDepthTextureNameIdx = 6; //TODO: Handle this in a less brittle way
 				
 		gBufferTargets.SetDepthStencilTarget(
-			std::make_shared<gr::Texture>(GBufferTexNames[gBufferDepthTextureNameIdx], depthTexParams));
+			std::make_shared<re::Texture>(GBufferTexNames[gBufferDepthTextureNameIdx], depthTexParams));
 
 		// Camera:
 		m_gBufferStage.GetStageCamera() = SceneManager::GetSceneData()->GetMainCamera().get();

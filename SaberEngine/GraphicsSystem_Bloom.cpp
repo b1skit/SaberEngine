@@ -10,12 +10,13 @@
 #include "RenderManager.h"
 
 using gr::DeferredLightingGraphicsSystem;
-using re::Batch;
 using en::Config;
 using en::SceneManager;
 using re::RenderManager;
 using re::RenderStage;
 using re::Sampler;
+using re::Batch;
+using re::Texture;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
@@ -102,7 +103,7 @@ namespace gr
 			const string texPath = "ScaledResolution_" + to_string(currentXRes) + "x" + to_string(currentYRes);
 
 			m_downResStages.back().GetTextureTargetSet().SetColorTarget(0, 
-				std::make_shared<gr::Texture>(texPath, resScaleParams));
+				std::make_shared<re::Texture>(texPath, resScaleParams));
 
 			m_downResStages.back().SetStagePipelineStateParams(bloomStageParams);
 			m_downResStages.back().GetStageCamera() = sceneCam;
@@ -138,7 +139,7 @@ namespace gr
 		blurParams.m_height = currentYRes;
 		const string texName = "BlurPingPong_" + to_string(currentXRes) + "x" + to_string(currentYRes);
 		
-		shared_ptr<Texture> blurPingPongTexture = make_shared<gr::Texture>(texName, blurParams);
+		shared_ptr<Texture> blurPingPongTexture = make_shared<re::Texture>(texName, blurParams);
 
 		uint32_t totalBlurPasses = m_numBlurPasses * 2; // x2 for horizontal + blur separation
 		m_blurStages.reserve(totalBlurPasses);  // MUST reserve so our pointers won't change

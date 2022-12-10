@@ -35,7 +35,7 @@
 
 using gr::Camera;
 using gr::Light;
-using gr::Texture;
+using re::Texture;
 using gr::Material;
 using re::MeshPrimitive;
 using re::Bounds;
@@ -102,7 +102,7 @@ namespace
 	}
 
 
-	std::shared_ptr<gr::Texture> LoadTextureFileFromPath(vector<string> texturePaths, bool returnErrorTex = false)
+	std::shared_ptr<re::Texture> LoadTextureFileFromPath(vector<string> texturePaths, bool returnErrorTex = false)
 	{
 		SEAssert("Can load single faces or cubemaps only", texturePaths.size() == 1 || texturePaths.size() == 6);
 		SEAssert("Invalid number of texture paths", texturePaths.size() == 1 || texturePaths.size() == 6);
@@ -126,10 +126,10 @@ namespace
 		texParams.m_height = 2;
 		texParams.m_faces = totalFaces;
 
-		texParams.m_usage = gr::Texture::Usage::Color;
+		texParams.m_usage = re::Texture::Usage::Color;
 		texParams.m_dimension = totalFaces == 1 ?
-			gr::Texture::Dimension::Texture2D : gr::Texture::Dimension::TextureCubeMap;
-		texParams.m_format = gr::Texture::Format::RGBA8;
+			re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCubeMap;
+		texParams.m_format = re::Texture::Format::RGBA8;
 		texParams.m_colorSpace = Texture::ColorSpace::Unknown;
 
 		texParams.m_clearColor = ERROR_TEXTURE_COLOR_VEC4;
@@ -176,38 +176,38 @@ namespace
 					{
 						LOG_WARNING("Found 1D texture, but 1D textures are currently not supported. Treating "
 							"this texture as 2D");
-						texParams.m_dimension = gr::Texture::Dimension::Texture2D; // TODO: Support 1D textures
-						/*texParams.m_dimension = gr::Texture::Dimension::Texture1D;*/
+						texParams.m_dimension = re::Texture::Dimension::Texture2D; // TODO: Support 1D textures
+						/*texParams.m_dimension = re::Texture::Dimension::Texture1D;*/
 					}
 
 					switch (numChannels)
 					{
 					case 1:
 					{
-						if (bitDepth == 8) texParams.m_format = gr::Texture::Format::R8;
-						else if (bitDepth == 16) texParams.m_format = gr::Texture::Format::R16F;
-						else texParams.m_format = gr::Texture::Format::R32F;
+						if (bitDepth == 8) texParams.m_format = re::Texture::Format::R8;
+						else if (bitDepth == 16) texParams.m_format = re::Texture::Format::R16F;
+						else texParams.m_format = re::Texture::Format::R32F;
 					}
 					break;
 					case 2:
 					{
-						if (bitDepth == 8) texParams.m_format = gr::Texture::Format::RG8;
-						else if (bitDepth == 16) texParams.m_format = gr::Texture::Format::RG16F;
-						else texParams.m_format = gr::Texture::Format::RG32F;
+						if (bitDepth == 8) texParams.m_format = re::Texture::Format::RG8;
+						else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RG16F;
+						else texParams.m_format = re::Texture::Format::RG32F;
 					}
 					break;
 					case 3:
 					{
-						if (bitDepth == 8) texParams.m_format = gr::Texture::Format::RGB8;
-						else if (bitDepth == 16) texParams.m_format = gr::Texture::Format::RGB16F;
-						else texParams.m_format = gr::Texture::Format::RGB32F;
+						if (bitDepth == 8) texParams.m_format = re::Texture::Format::RGB8;
+						else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RGB16F;
+						else texParams.m_format = re::Texture::Format::RGB32F;
 					}
 					break;
 					case 4:
 					{
-						if (bitDepth == 8) texParams.m_format = gr::Texture::Format::RGBA8;
-						else if (bitDepth == 16) texParams.m_format = gr::Texture::Format::RGBA16F;
-						else texParams.m_format = gr::Texture::Format::RGBA32F;
+						if (bitDepth == 8) texParams.m_format = re::Texture::Format::RGBA8;
+						else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RGBA16F;
+						else texParams.m_format = re::Texture::Format::RGBA32F;
 					}
 					break;
 					default:
@@ -217,7 +217,7 @@ namespace
 					texParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
 
 					// Create the texture now the params are configured:
-					texture = std::make_shared<gr::Texture>(texturePaths[0], texParams);
+					texture = std::make_shared<re::Texture>(texturePaths[0], texParams);
 				}
 				else // texture already exists: Ensure the face has the same dimensions
 				{
@@ -248,14 +248,14 @@ namespace
 					texParams.m_width = 2;
 					texParams.m_height = 2;
 					texParams.m_dimension = totalFaces == 1 ?
-						gr::Texture::Dimension::Texture2D : gr::Texture::Dimension::TextureCubeMap;
-					texParams.m_format = gr::Texture::Format::RGBA8;
+						re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCubeMap;
+					texParams.m_format = re::Texture::Format::RGBA8;
 					texParams.m_colorSpace = Texture::ColorSpace::Unknown;
 
 					texParams.m_clearColor = ERROR_TEXTURE_COLOR_VEC4;
 					texParams.m_useMIPs = true;
 				}
-				texture = std::make_shared<gr::Texture>(ERROR_TEXTURE_NAME, texParams);
+				texture = std::make_shared<re::Texture>(ERROR_TEXTURE_NAME, texParams);
 			}
 			else
 			{
@@ -335,7 +335,7 @@ namespace
 	}
 
 
-	shared_ptr<gr::Texture> LoadTextureOrColor(
+	shared_ptr<re::Texture> LoadTextureOrColor(
 		SceneData& scene, string const& sceneRootPath, cgltf_texture* texture, vec4 const& colorFallback, 
 		Texture::Format formatFallback, Texture::ColorSpace colorSpace)
 	{
@@ -1330,14 +1330,14 @@ namespace fr
 	}
 
 
-	void SceneData::AddUniqueTexture(shared_ptr<gr::Texture>& newTexture)
+	void SceneData::AddUniqueTexture(shared_ptr<re::Texture>& newTexture)
 	{
 		SEAssert("Adding data is not thread safe once loading is complete", !m_finishedLoading);
 		SEAssert("Cannot add null texture to textures table", newTexture != nullptr);
 
 		std::unique_lock<std::shared_mutex> writeLock(m_texturesMutex);
 
-		unordered_map<size_t, shared_ptr<gr::Texture>>::const_iterator texturePosition =
+		unordered_map<size_t, shared_ptr<re::Texture>>::const_iterator texturePosition =
 			m_textures.find(newTexture->GetNameID());
 
 		if (texturePosition != m_textures.end()) // Found existing
@@ -1353,7 +1353,7 @@ namespace fr
 	}
 
 
-	std::shared_ptr<gr::Texture> SceneData::GetTexture(std::string textureName) const
+	std::shared_ptr<re::Texture> SceneData::GetTexture(std::string textureName) const
 	{
 		const uint64_t nameID = en::NamedObject::ComputeIDFromName(textureName);
 
@@ -1385,7 +1385,7 @@ namespace fr
 			return GetTexture(texturePaths[0]);
 		}
 
-		shared_ptr<gr::Texture> result = LoadTextureFileFromPath(vector<string>(texturePaths), returnErrorTex);
+		shared_ptr<re::Texture> result = LoadTextureFileFromPath(vector<string>(texturePaths), returnErrorTex);
 		if (result)
 		{
 			AddUniqueTexture(result);
