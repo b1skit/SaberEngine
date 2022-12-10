@@ -5,15 +5,15 @@
 
 #include "MeshPrimitive.h"
 #include "Transform.h"
-
+#include "NamedObject.h"
 
 namespace gr
 {	
-	class Mesh
+	class Mesh : public virtual en::NamedObject
 	{
 	public:
-		explicit Mesh(gr::Transform* ownerTransform);
-		explicit Mesh(gr::Transform* ownerTransform, std::shared_ptr<re::MeshPrimitive> meshPrimitive);
+		explicit Mesh(std::string const& name, gr::Transform* ownerTransform);
+		explicit Mesh(std::string const& name, gr::Transform* ownerTransform, std::shared_ptr<re::MeshPrimitive> meshPrimitive);
 
 		Mesh(Mesh const&) = default;
 		Mesh(Mesh&&) = default;

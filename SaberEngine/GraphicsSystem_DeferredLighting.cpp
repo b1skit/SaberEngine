@@ -474,8 +474,8 @@ namespace gr
 			// Create a sphere mesh for each pointlights:
 			for (shared_ptr<Light> pointlight : pointLights)
 			{
-				m_sphereMeshes.emplace_back(
-					std::make_shared<gr::Mesh>(pointlight->GetTransform(), meshfactory::CreateSphere(1.0f)));
+				m_sphereMeshes.emplace_back(std::make_shared<gr::Mesh>(
+					"PointLightDeferredMesh", pointlight->GetTransform(), meshfactory::CreateSphere(1.0f)));
 			}
 		}
 	}

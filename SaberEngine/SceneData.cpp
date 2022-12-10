@@ -665,7 +665,9 @@ namespace
 	void LoadMeshGeometry(
 		string const& sceneRootPath, SceneData& scene, cgltf_node* current, shared_ptr<SceneNode> parent)
 	{
-		std::shared_ptr<gr::Mesh> newMesh = make_shared<gr::Mesh>(parent->GetTransform());
+		const string meshName = current->mesh->name ? string(current->mesh->name) : "unnamedMesh";
+
+		std::shared_ptr<gr::Mesh> newMesh = make_shared<gr::Mesh>(meshName, parent->GetTransform());
 
 		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
 		for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
@@ -898,12 +900,10 @@ namespace
 
 			} // End attribute unpacking
 
-			const string nodeName = current->name ? string(current->name) : "unnamedNode";
-
 			// Construct any missing vertex attributes for the mesh:
 			util::VertexAttributeBuilder::MeshData meshData
 			{
-				nodeName,
+				meshName,
 				&meshPrimitiveParams,
 				&indices,
 				reinterpret_cast<vector<vec3>*>(&positions),
@@ -927,7 +927,7 @@ namespace
 
 			// Attach the MeshPrimitive to the Mesh:
 			newMesh->AddMeshPrimitive(make_shared<MeshPrimitive>(
-				nodeName,
+				meshName,
 				indices,
 				positions,
 				positionsMinXYZ,
@@ -1241,8 +1241,8 @@ namespace fr
 				auto const& result = m_meshPrimitives.find(meshPrimitiveDataHash);
 				if (result != m_meshPrimitives.end())
 				{
-					LOG("Mesh primitive \"%s\" has the same data hash as an existing mesh primitive. It will be "
-						"replaced with a shared copy", mesh->GetMeshPrimitives()[i]->GetName());
+					LOG("Mesh \"%s\" has a primitive with the same data hash as an existing mesh primitive. It will be "
+						"replaced with a shared copy", mesh->GetName());
 
 					// Already have a mesh primitive with the same data hash; replace the MeshPrimitive
 					mesh->ReplaceMeshPrimitive(i, result->second);

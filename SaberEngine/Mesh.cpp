@@ -9,14 +9,16 @@ using std::vector;
 
 namespace gr
 {
-	Mesh::Mesh(gr::Transform* ownerTransform)
-		: m_ownerTransform(ownerTransform)
+	Mesh::Mesh(std::string const& name, gr::Transform* ownerTransform)
+		: NamedObject(name)
+		, m_ownerTransform(ownerTransform)
 	{
 	}
 
 
-	Mesh::Mesh(Transform* ownerTransform, shared_ptr<re::MeshPrimitive> meshPrimitive)
-		: m_ownerTransform(ownerTransform)
+	Mesh::Mesh(std::string const& name, Transform* ownerTransform, shared_ptr<re::MeshPrimitive> meshPrimitive)
+		: NamedObject(name)
+		, m_ownerTransform(ownerTransform)
 	{
 		AddMeshPrimitive(meshPrimitive);
 	}
