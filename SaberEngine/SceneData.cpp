@@ -1315,18 +1315,10 @@ namespace fr
 
 	void SceneData::UpdateSceneBounds(std::shared_ptr<gr::Mesh> mesh)
 	{
-		glm::mat4 const& meshGlobalTransform = mesh->GetTransform()->GetGlobalMatrix(Transform::TRS);
+		std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
 
-		// Expand the scene (world-space) bounds to contain each mesh primitive:
-		for (shared_ptr<MeshPrimitive> meshPrimitive : mesh->GetMeshPrimitives())
-		{
-			Bounds meshWorldBounds(meshPrimitive->GetBounds().GetTransformedBounds(meshGlobalTransform));
-
-			std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
-			m_sceneWorldSpaceBounds.ExpandBounds(meshWorldBounds);
-		}
-		// TODO: The Mesh should maintain a bounds (updated each time a new MeshPrimitive is added), and the scene
-		// bounds should be updated from that
+		m_sceneWorldSpaceBounds.ExpandBounds(
+			mesh->GetBounds().GetTransformedBounds(mesh->GetTransform()->GetGlobalMatrix(Transform::TRS)));
 	}
 
 

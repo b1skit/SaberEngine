@@ -3,6 +3,7 @@
 #include "Transform.h"
 
 using gr::Transform;
+using gr::Bounds;
 using re::MeshPrimitive;
 using std::shared_ptr;
 using std::vector;
@@ -26,8 +27,11 @@ namespace gr
 
 	void Mesh::AddMeshPrimitive(shared_ptr<re::MeshPrimitive> meshPrimitive)
 	{
-		SEAssert("Cannot add a null mesh primitive", meshPrimitive != nullptr);
+		SEAssert("Cannot add a nullptr MeshPrimitive", meshPrimitive != nullptr);
 		m_meshPrimitives.push_back(meshPrimitive);
+
+		m_localBounds.ExpandBounds(
+			meshPrimitive->GetBounds().GetTransformedBounds(GetTransform()->GetGlobalMatrix(Transform::TRS)));
 	}
 
 
@@ -39,7 +43,16 @@ namespace gr
 
 	void Mesh::ReplaceMeshPrimitive(size_t index, std::shared_ptr<re::MeshPrimitive> replacement)
 	{
+		SEAssert("Cannot replace a MeshPrimitive with nullptr", replacement != nullptr);
 		SEAssert("Index is out of bounds", index < m_meshPrimitives.size());
 		m_meshPrimitives[index] = replacement;
+
+		// Recompute the bounds
+		m_localBounds = Bounds();
+		for (shared_ptr<re::MeshPrimitive> meshPrimitive : m_meshPrimitives)
+		{
+			m_localBounds.ExpandBounds(
+				meshPrimitive->GetBounds().GetTransformedBounds(GetTransform()->GetGlobalMatrix(Transform::TRS)));
+		}
 	}
 }
