@@ -38,7 +38,7 @@ using gr::Light;
 using re::Texture;
 using gr::Material;
 using re::MeshPrimitive;
-using re::Bounds;
+using gr::Bounds;
 using gr::Transform;
 using gr::Light;
 using gr::ShadowMap;
@@ -1285,7 +1285,7 @@ namespace fr
 		return m_cameras.at(0);
 	}
 
-	re::Bounds const& SceneData::GetWorldSpaceSceneBounds() const 
+	gr::Bounds const& SceneData::GetWorldSpaceSceneBounds() const 
 	{
 		SEAssert("Accessing this data is not thread safe during loading", m_finishedLoading);
 		return m_sceneWorldSpaceBounds;

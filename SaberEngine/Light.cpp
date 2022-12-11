@@ -20,9 +20,9 @@ using re::ParameterBlock;
 namespace
 {
 	gr::Camera::CameraConfig ComputeDirectionalShadowCameraConfigFromSceneBounds(
-		gr::Transform* lightTransform, re::Bounds& sceneWorldBounds)
+		gr::Transform* lightTransform, gr::Bounds& sceneWorldBounds)
 	{
-		re::Bounds const& transformedBounds = sceneWorldBounds.GetTransformedBounds(
+		gr::Bounds const& transformedBounds = sceneWorldBounds.GetTransformedBounds(
 			glm::inverse(lightTransform->GetGlobalMatrix(Transform::TRS)));
 
 		gr::Camera::CameraConfig shadowCamConfig;
@@ -129,7 +129,7 @@ namespace gr
 	{
 		if (m_type == LightType::Directional) // Update shadow cam bounds
 		{
-			re::Bounds sceneWorldBounds = SceneManager::GetSceneData()->GetWorldSpaceSceneBounds();
+			gr::Bounds sceneWorldBounds = SceneManager::GetSceneData()->GetWorldSpaceSceneBounds();
 			Camera::CameraConfig shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
 				m_ownerTransform, sceneWorldBounds);
 

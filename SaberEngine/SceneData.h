@@ -77,7 +77,7 @@ namespace fr
 		inline bool MaterialExists(std::string const& matName) const;
 
 		// SceneData bounds:
-		re::Bounds const& GetWorldSpaceSceneBounds() const;
+		gr::Bounds const& GetWorldSpaceSceneBounds() const;
 
 
 	private:
@@ -112,7 +112,7 @@ namespace fr
 		std::vector<std::shared_ptr<gr::Camera>> m_cameras;
 		std::mutex m_camerasMutex;
 
-		re::Bounds m_sceneWorldSpaceBounds;
+		gr::Bounds m_sceneWorldSpaceBounds;
 		std::mutex m_sceneBoundsMutex;
 		
 

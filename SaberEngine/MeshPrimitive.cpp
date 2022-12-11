@@ -13,6 +13,7 @@ namespace re
 {
 	using en::Config;
 	using gr::Transform;
+	using gr::Bounds;
 	using glm::pi;
 	using glm::mat4;
 	using glm::vec2;
@@ -56,7 +57,7 @@ namespace re
 		m_joints		= move(joints);
 		m_weights		= move(weights);
 
-		if (positionMinXYZ == re::Bounds::k_invalidMinXYZ || positionMaxXYZ == re::Bounds::k_invalidMaxXYZ)
+		if (positionMinXYZ == gr::Bounds::k_invalidMinXYZ || positionMaxXYZ == gr::Bounds::k_invalidMaxXYZ)
 		{
 			// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast from floats
 			m_localBounds.ComputeBounds(reinterpret_cast<std::vector<vec3> const&>(m_positions));
@@ -315,8 +316,8 @@ namespace meshfactory
 			"cube",
 			cubeIndices,
 			*reinterpret_cast<vector<float>*>(&assembledPositions),	// Cast our vector<vec3> to vector<float>
-			re::Bounds::k_invalidMinXYZ,
-			re::Bounds::k_invalidMaxXYZ,
+			gr::Bounds::k_invalidMinXYZ,
+			gr::Bounds::k_invalidMaxXYZ,
 			*reinterpret_cast<vector<float>*>(&assembledNormals),
 			*reinterpret_cast<vector<float>*>(&assembledTangents),
 			*reinterpret_cast<vector<float>*>(&assembledUVs),
@@ -395,8 +396,8 @@ namespace meshfactory
 			"optimizedFullscreenQuad",
 			triIndices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
-			re::Bounds::k_invalidMinXYZ,
-			re::Bounds::k_invalidMaxXYZ,
+			gr::Bounds::k_invalidMinXYZ,
+			gr::Bounds::k_invalidMaxXYZ,
 			*reinterpret_cast<vector<float>*>(&normals),
 			*reinterpret_cast<vector<float>*>(&tangents),
 			*reinterpret_cast<vector<float>*>(&uvs),
@@ -448,8 +449,8 @@ namespace meshfactory
 			"quad",
 			quadIndices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
-			re::Bounds::k_invalidMinXYZ,
-			re::Bounds::k_invalidMaxXYZ,
+			gr::Bounds::k_invalidMinXYZ,
+			gr::Bounds::k_invalidMaxXYZ,
 			*reinterpret_cast<vector<float>*>(&normals),
 			*reinterpret_cast<vector<float>*>(&tangents),
 			*reinterpret_cast<vector<float>*>(&uvs),
@@ -640,8 +641,8 @@ namespace meshfactory
 			"sphere",
 			indices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
-			re::Bounds::k_invalidMinXYZ,
-			re::Bounds::k_invalidMaxXYZ,
+			gr::Bounds::k_invalidMinXYZ,
+			gr::Bounds::k_invalidMaxXYZ,
 			*reinterpret_cast<vector<float>*>(&normals),
 			*reinterpret_cast<vector<float>*>(&tangents),
 			*reinterpret_cast<vector<float>*>(&uvs),

@@ -45,8 +45,8 @@ namespace re
 		MeshPrimitive(std::string const& name,
 			std::vector<uint32_t>& indices,
 			std::vector<float>& positions,
-			glm::vec3 const& positionMinXYZ, // Pass re::Bounds::k_invalidMinXYZ to compute bounds manually
-			glm::vec3 const& positionMaxXYZ, // Pass re::Bounds::k_invalidMaxXYZ to compute bounds manually
+			glm::vec3 const& positionMinXYZ, // Pass gr::Bounds::k_invalidMinXYZ to compute bounds manually
+			glm::vec3 const& positionMaxXYZ, // Pass gr::Bounds::k_invalidMaxXYZ to compute bounds manually
 			std::vector<float>& normals,
 			std::vector<float>& tangents,
 			std::vector<float>& uv0,
@@ -64,8 +64,8 @@ namespace re
 
 		inline std::shared_ptr<gr::Material> MeshMaterial() { return m_meshMaterial; }
 
-		inline Bounds& GetBounds() { return m_localBounds; }
-		inline Bounds const& GetBounds() const { return m_localBounds; }
+		inline gr::Bounds& GetBounds() { return m_localBounds; }
+		inline gr::Bounds const& GetBounds() const { return m_localBounds; }
 
 		inline std::vector<float> const& GetPositions() const { return m_positions; }
 		inline std::vector<float> const& GetNormals() const { return m_normals; }
@@ -104,7 +104,7 @@ namespace re
 		std::vector<uint8_t> m_joints;		// tvec4<uint8_t>
 		std::vector<float> m_weights;		// vec4
 
-		Bounds m_localBounds; // MeshPrimitive bounds, in local space		
+		gr::Bounds m_localBounds; // MeshPrimitive bounds, in local space		
 
 		void ComputeDataHash() override;
 
