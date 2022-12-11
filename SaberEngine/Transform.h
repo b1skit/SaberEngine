@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <mutex>
+#include <unordered_map>
 
 #define GLM_FORCE_SWIZZLE // Enable swizzle operators
 #include <glm/glm.hpp>
@@ -128,22 +129,40 @@ namespace gr
 
 		bool m_isDirty;	// Do our local or combinedModel matrices need to be recomputed?
 
-	public:
-		// Thread-safe trees are hard; for now, just just a recursive mutex and accept that transform updates are
-		// effectively single-threaded. TODO: Optimize. Decouple sub-trees by not maintaining a root. Use per-node locks
-		// instead of a single, shared lock
-		static std::recursive_mutex m_transformHierarchyMutex;
+
+	private:
+		void RecomputeWorldTransforms(); // Recomputes the the global matrices
+		void RecomputeEulerXYZRadians(); // Helper: Updates m_localRotationEulerRadians from m_localRotationQuat
+
 
 	private:
 		void MarkDirty(); // Mark this transform as requiring a recomputation of it's global matrices
 		bool IsDirty();		
-		void RecomputeWorldTransforms(); // Recomputes the the global matrices
-
+		
 		// Helper functions for SetParent()/Unparent():
 		void RegisterChild(Transform* child);
 		void UnregisterChild(Transform const* child);
 
-		void RecomputeEulerXYZRadians(); // Helper: Updates m_localRotationEulerRadians from m_localRotationQuat
+
+	private:
+		// NOTE: To prevent deadlocks, Transforms aquire locks along the hierarchy in the order of child -> parent, and
+		// release in the reverse order (parent -> child) ONLY
+		mutable std::recursive_mutex m_transformMutex;
+
+		// Aquire/release all locks between the current node, and the root
+		void AquireLockHierarchy();
+		void ReleaseLockHierarchy();
+
+		// Aquire/release all locks in 2 (potentially disjoint) hierarchies. Useful when re-parenting a Transform
+		struct SharedHierarchy
+		{
+			std::unordered_map<size_t, bool> visitedTransforms;
+			std::vector<Transform*> visitOrder;
+		};
+		void AquireSharedHierarchyHelper(SharedHierarchy& sharedHierarchy, Transform* cur);
+		SharedHierarchy AquireSharedHierarchy(Transform* parentA, Transform* parentB);
+		void ReleaseSharedHierarchy(SharedHierarchy const& sharedHierarchy);
+
 
 	private:
 		Transform() = delete;
