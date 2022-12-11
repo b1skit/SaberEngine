@@ -1242,7 +1242,7 @@ namespace fr
 				if (result != m_meshPrimitives.end())
 				{
 					LOG("Mesh \"%s\" has a primitive with the same data hash as an existing mesh primitive. It will be "
-						"replaced with a shared copy", mesh->GetName());
+						"replaced with a shared copy", mesh->GetName().c_str());
 
 					// Already have a mesh primitive with the same data hash; replace the MeshPrimitive
 					mesh->ReplaceMeshPrimitive(i, result->second);
