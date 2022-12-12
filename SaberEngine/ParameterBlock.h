@@ -51,21 +51,13 @@ namespace re
 		// Create a PB for a single data object (eg. stage parameter block)
 		template<typename T>
 		static std::shared_ptr<re::ParameterBlock> Create(
-			std::string pbName, T const& data, UpdateType updateType, Lifetime lifetime);
+			std::string const& pbName, T const& data, UpdateType updateType, Lifetime lifetime);
 
-		
 		// Create a PB for an array of several objects of the same type (eg. instanced mesh matrices)
 		template<typename T>
 		static std::shared_ptr<re::ParameterBlock> CreateFromArray(
-			std::string pbName, T const* dataArray, size_t dataByteSize, size_t numElements, UpdateType updateType, Lifetime lifetime);
+			std::string const& pbName, T const* dataArray, size_t dataByteSize, size_t numElements, UpdateType updateType, Lifetime lifetime);
 
-
-	private:
-		struct Accessor { explicit Accessor() = default; }; // Prevents direct access to the CTOR
-	public:
-		ParameterBlock(Accessor, size_t typeIDHashCode, std::string pbName, UpdateType updateType, Lifetime lifetime);
-
-		~ParameterBlock() { Destroy(); };
 
 	public:
 		template <typename T>
@@ -94,6 +86,13 @@ namespace re
 		
 
 	private:
+		struct Accessor { explicit Accessor() = default; }; // Prevents direct access to the CTOR
+	public:
+		ParameterBlock(Accessor, size_t typeIDHashCode, std::string const& pbName, UpdateType updateType, Lifetime lifetime);
+
+		~ParameterBlock() { Destroy(); };
+
+	private:
 		static void RegisterAndCommit(
 			std::shared_ptr<re::ParameterBlock> newPB, void const* data, size_t numBytes, uint64_t typeIDHash);
 		void CommitInternal(void const* data, uint64_t typeIDHash);
@@ -112,7 +111,7 @@ namespace re
 	// Create a PB for a single data object (eg. stage parameter block)
 	template<typename T>
 	std::shared_ptr<re::ParameterBlock> ParameterBlock::Create(
-		std::string pbName, T const& data, UpdateType updateType, Lifetime lifetime)
+		std::string const& pbName, T const& data, UpdateType updateType, Lifetime lifetime)
 	{
 		std::shared_ptr<re::ParameterBlock> newPB =
 			make_shared<re::ParameterBlock>(Accessor(), typeid(T).hash_code(), pbName, updateType, lifetime);
@@ -126,7 +125,7 @@ namespace re
 	// Create a PB for an array of several objects of the same type (eg. instanced mesh matrices)
 	template<typename T>
 	static std::shared_ptr<re::ParameterBlock> ParameterBlock::CreateFromArray(
-		std::string pbName, T const* dataArray, size_t dataByteSize, size_t numElements, UpdateType updateType, Lifetime lifetime)
+		std::string const& pbName, T const* dataArray, size_t dataByteSize, size_t numElements, UpdateType updateType, Lifetime lifetime)
 	{
 		std::shared_ptr<re::ParameterBlock> newPB =
 			make_shared<ParameterBlock>(Accessor(), typeid(T).hash_code(), pbName, updateType, lifetime);

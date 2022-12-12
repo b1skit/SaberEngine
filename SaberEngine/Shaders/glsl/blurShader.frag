@@ -46,7 +46,7 @@
 	{	
 		// Sigmoid function tuning: https://www.desmos.com/calculator/w3hrskwpyb
 
-		vec3 fragRGB	= texture(GBufferAlbedo, data.uv0.xy).rgb;
+		vec3 fragRGB	= texture(GBufferAlbedo, vOut.uv0.xy).rgb;
 		
 		float maxChannel = max(fragRGB.x, max(fragRGB.y, fragRGB.z));
 		float scale		= pow(SPEED * maxChannel, RAMP_POWER);
@@ -66,7 +66,7 @@
 	void main()
 	{
 		vec3 total = vec3(0,0,0);
-		vec2 uvs = data.uv0.xy;
+		vec2 uvs = vOut.uv0.xy;
 		uvs.x -= g_targetResolution.z * TEXEL_OFFSET;	// Offset to the left
 
 		for (int i = 0; i < NUM_TAPS; i++)
@@ -86,7 +86,7 @@
 	void main()
 	{	
 		vec3 total = vec3(0,0,0);
-		vec2 uvs = data.uv0.xy;
+		vec2 uvs = vOut.uv0.xy;
 		uvs.y += g_targetResolution.w * TEXEL_OFFSET;	// Offset
 
 		for (int i = 0; i < NUM_TAPS; i++)

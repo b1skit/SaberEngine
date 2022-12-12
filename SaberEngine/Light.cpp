@@ -27,13 +27,13 @@ namespace
 
 		gr::Camera::CameraConfig shadowCamConfig;
 
-		shadowCamConfig.m_near				= -transformedBounds.zMax();
-		shadowCamConfig.m_far				= -transformedBounds.zMin();
-		shadowCamConfig.m_projectionType	= gr::Camera::CameraConfig::ProjectionType::Orthographic;
-		shadowCamConfig.m_orthoLeft			= transformedBounds.xMin();
-		shadowCamConfig.m_orthoRight		= transformedBounds.xMax();
-		shadowCamConfig.m_orthoBottom		= transformedBounds.yMin();
-		shadowCamConfig.m_orthoTop			= transformedBounds.yMax();
+		shadowCamConfig.m_near						= -transformedBounds.zMax();
+		shadowCamConfig.m_far						= -transformedBounds.zMin();
+		shadowCamConfig.m_projectionType			= gr::Camera::CameraConfig::ProjectionType::Orthographic;
+		shadowCamConfig.m_orthoLeftRightBotTop.x	= transformedBounds.xMin();
+		shadowCamConfig.m_orthoLeftRightBotTop.y	= transformedBounds.xMax();
+		shadowCamConfig.m_orthoLeftRightBotTop.z	= transformedBounds.yMin();
+		shadowCamConfig.m_orthoLeftRightBotTop.w	= transformedBounds.yMax();
 
 		return shadowCamConfig;
 	}
@@ -68,7 +68,9 @@ namespace gr
 					shadowMapRes,
 					shadowMapRes,
 					Camera::CameraConfig(),
-					m_ownerTransform);
+					m_ownerTransform,
+					glm::vec3(0.f, 0.f, 0.f),
+					false);
 				// Note: We'll compute the camera config from the scene bounds during the first call to Update(); so
 				// here we just pass a default camera config
 			}
@@ -104,8 +106,9 @@ namespace gr
 					vec3(0.0f, 0.0f, 0.0f),	// shadowCamPosition: No offset
 					true);					// useCubeMap
 
-				m_shadowMap->MinShadowBias() = Config::Get()->GetValue<float>("defaultMinShadowBias");
-				m_shadowMap->MaxShadowBias() = Config::Get()->GetValue<float>("defaultMaxShadowBias");
+				m_shadowMap->MinMaxShadowBias() = glm::vec2( 
+					Config::Get()->GetValue<float>("defaultMinShadowBias"),
+					Config::Get()->GetValue<float>("defaultMaxShadowBias"));
 			}
 		}
 		break;

@@ -16,7 +16,7 @@ uniform int numSamples;
 void main()
 {	
 	// Direction from the center of the cube map towards the current pixel, in "world" space:
-	vec3 worldDir   = normalize(data.localPos);
+	vec3 worldDir   = normalize(vOut.localPos);
 
 	// Create an orthonormal basis, with worldDir as our "MatNormal"/up:
 	vec3 tangent    = normalize(vec3(worldDir.y + 1.0, worldDir.z, worldDir.x)); // Arbitrary: Ensure we don't end up with cross(worldDir, worldDir)
@@ -58,7 +58,7 @@ uniform float	roughness;
 // Remap from equirectangular to cubemap, performing PMREM filtering (ie. for specular IBL)
 void main()
 {
-	vec3 N = normalize(data.localPos);    
+	vec3 N = normalize(vOut.localPos);    
 	vec3 R = N;
 	vec3 V = R;		
 

@@ -57,5 +57,5 @@ vec2 UVsToIntegratedBRDF(vec2 UVs)
 
 void main() 
 {
-    FragColor       = UVsToIntegratedBRDF(data.uv0.xy);
+    FragColor = UVsToIntegratedBRDF(vOut.uv0.xy);
 }

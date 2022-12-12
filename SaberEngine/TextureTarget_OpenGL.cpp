@@ -134,7 +134,6 @@ namespace opengl
 			if (!glIsFramebuffer(targetSetParams->m_frameBufferObject))
 			{
 				glGenFramebuffers(1, &targetSetParams->m_frameBufferObject);
-
 				glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
 
 				// RenderDoc object name:
@@ -306,7 +305,6 @@ namespace opengl
 			if (!glIsFramebuffer(targetSetParams->m_frameBufferObject))
 			{
 				glGenFramebuffers(1, &targetSetParams->m_frameBufferObject);
-
 				glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
 
 				// RenderDoc object name:
@@ -319,7 +317,6 @@ namespace opengl
 			{
 				glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
 			}
-			// TODO: This is duplicated with color targets: Break it out into a helper function?
 
 			// Configure the target parameters:
 			opengl::TextureTarget::PlatformParams* const depthTargetParams =

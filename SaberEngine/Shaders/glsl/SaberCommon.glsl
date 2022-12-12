@@ -54,7 +54,7 @@
 		mat3 TBN;		// Normal map change-of-basis matrix
 
 #if defined(SABER_VERTEX_SHADER) || defined(SABER_FRAGMENT_SHADER) || defined(SABER_GEOMETRY_SHADER)
-	} data; // TODO: Rename this as vOut
+	} vOut;
 #endif
 
 // Dynamic uniforms for instancing:

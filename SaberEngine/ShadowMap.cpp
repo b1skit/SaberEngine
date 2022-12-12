@@ -26,11 +26,12 @@ namespace gr
 		uint32_t xRes,
 		uint32_t yRes,
 		gr::Camera::CameraConfig shadowCamConfig, 
-		Transform* shadowCamParent /*= nullptr*/, 
-		vec3 shadowCamPosition /* = vec3(0.0f, 0.0f, 0.0f)*/, 
-		bool useCubeMap /*= false*/)
+		Transform* shadowCamParent, 
+		vec3 shadowCamPosition, 
+		bool useCubeMap)
 		: m_shadowTargetSet(lightName + " target")
 		, m_shadowCam(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent)
+		, m_minMaxShadowBias(0.005f, 0.0005f)
 	{
 		m_shadowCam.GetTransform()->SetLocalTranslation(shadowCamPosition);
 

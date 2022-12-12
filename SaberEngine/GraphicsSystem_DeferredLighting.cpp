@@ -37,7 +37,7 @@ using glm::mat4;
 
 namespace
 {
-	constexpr uint32_t k_generatedAmbientIBLTexRes = 512; // TODO: Make this user-controllable via the config
+	constexpr uint32_t k_generatedAmbientIBLTexRes = 1024; // TODO: Make this user-controllable via the config
 
 
 	struct AmbientLightParams

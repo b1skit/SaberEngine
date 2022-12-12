@@ -67,20 +67,20 @@ namespace gr
 
 			m_projection = glm::ortho
 			(
-				m_cameraConfig.m_orthoLeft, 
-				m_cameraConfig.m_orthoRight, 
-				m_cameraConfig.m_orthoBottom, 
-				m_cameraConfig.m_orthoTop, 
+				m_cameraConfig.m_orthoLeftRightBotTop.x,
+				m_cameraConfig.m_orthoLeftRightBotTop.y,
+				m_cameraConfig.m_orthoLeftRightBotTop.z,
+				m_cameraConfig.m_orthoLeftRightBotTop.w,
 				m_cameraConfig.m_near, 
 				m_cameraConfig.m_far
 			);
 		}
 		else
 		{
-			m_cameraConfig.m_orthoLeft		= 0.0f;
-			m_cameraConfig.m_orthoRight		= 0.0f;
-			m_cameraConfig.m_orthoBottom	= 0.0f;
-			m_cameraConfig.m_orthoTop		= 0.0f;
+			m_cameraConfig.m_orthoLeftRightBotTop.x = 0.0f;
+			m_cameraConfig.m_orthoLeftRightBotTop.y = 0.0f;
+			m_cameraConfig.m_orthoLeftRightBotTop.z = 0.0f;
+			m_cameraConfig.m_orthoLeftRightBotTop.w = 0.0f;
 
 			m_projection = glm::perspective
 			(
@@ -112,61 +112,54 @@ namespace gr
 
 	std::vector<glm::mat4> const& Camera::GetCubeViewMatrix()
 	{
-		// If we've never allocated cubeView, do it now:
-		if (m_cubeView.size() == 0)
-		{
-			m_cubeView.reserve(6);
+		m_cubeView.clear();
+		m_cubeView.reserve(6);
 
-			m_cubeView.emplace_back(glm::lookAt(
-				m_transform.GetGlobalPosition(),							// eye
-				m_transform.GetGlobalPosition() + Transform::WorldAxisX,	// center: Position the camera is looking at
-				-Transform::WorldAxisY));									// Normalized camera up vector
-			m_cubeView.emplace_back(glm::lookAt(
-				m_transform.GetGlobalPosition(), 
-				m_transform.GetGlobalPosition() - Transform::WorldAxisX, 
-				-Transform::WorldAxisY));
+		m_cubeView.emplace_back(glm::lookAt(
+			m_transform.GetGlobalPosition(),							// eye
+			m_transform.GetGlobalPosition() + Transform::WorldAxisX,	// center: Position the camera is looking at
+			-Transform::WorldAxisY));									// Normalized camera up vector
+		m_cubeView.emplace_back(glm::lookAt(
+			m_transform.GetGlobalPosition(),
+			m_transform.GetGlobalPosition() - Transform::WorldAxisX,
+			-Transform::WorldAxisY));
 
-			m_cubeView.emplace_back(glm::lookAt(
-				m_transform.GetGlobalPosition(), 
-				m_transform.GetGlobalPosition() + Transform::WorldAxisY, 
-					Transform::WorldAxisZ));
-			m_cubeView.emplace_back(glm::lookAt(
-				m_transform.GetGlobalPosition(), 
-				m_transform.GetGlobalPosition() - Transform::WorldAxisY, 
-				-Transform::WorldAxisZ));
+		m_cubeView.emplace_back(glm::lookAt(
+			m_transform.GetGlobalPosition(),
+			m_transform.GetGlobalPosition() + Transform::WorldAxisY,
+			Transform::WorldAxisZ));
+		m_cubeView.emplace_back(glm::lookAt(
+			m_transform.GetGlobalPosition(),
+			m_transform.GetGlobalPosition() - Transform::WorldAxisY,
+			-Transform::WorldAxisZ));
 
-			m_cubeView.emplace_back(glm::lookAt(
-				m_transform.GetGlobalPosition(), 
-				m_transform.GetGlobalPosition() + Transform::WorldAxisZ,
-				-Transform::WorldAxisY));
-			m_cubeView.emplace_back(glm::lookAt(
-				m_transform.GetGlobalPosition(), 
-				m_transform.GetGlobalPosition() - Transform::WorldAxisZ, 
-				-Transform::WorldAxisY));
-		}
-
-		// TODO: Recalculate this if the camera has moved
+		m_cubeView.emplace_back(glm::lookAt(
+			m_transform.GetGlobalPosition(),
+			m_transform.GetGlobalPosition() + Transform::WorldAxisZ,
+			-Transform::WorldAxisY));
+		m_cubeView.emplace_back(glm::lookAt(
+			m_transform.GetGlobalPosition(),
+			m_transform.GetGlobalPosition() - Transform::WorldAxisZ,
+			-Transform::WorldAxisY));
 
 		return m_cubeView;
 	}
 
+
 	std::vector<glm::mat4> const& Camera::GetCubeViewProjectionMatrix()
 	{
-		// If we've never allocated cubeViewProjection, do it now:
-		if (m_cubeViewProjection.size() == 0)
-		{
-			m_cubeViewProjection.reserve(6);
+		m_cubeViewProjection.clear();
+		m_cubeViewProjection.reserve(6);
 
-			// Call this to ensure cubeView has been initialized
-			std::vector<glm::mat4> const& ourCubeViews = GetCubeViewMatrix(); 
+		// Call this to ensure cubeView has been initialized
+		std::vector<glm::mat4> const& ourCubeViews = GetCubeViewMatrix();
 
-			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[0]);
-			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[1]);
-			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[2]);
-			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[3]);
-			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[4]);
-			m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[5]);
-		}
+		m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[0]);
+		m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[1]);
+		m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[2]);
+		m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[3]);
+		m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[4]);
+		m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[5]);
 
 		return m_cubeViewProjection;
 	}

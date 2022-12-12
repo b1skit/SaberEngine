@@ -96,6 +96,7 @@ namespace gr
 
 				m_directionalShadowStage.GetTextureTargetSet() = directionalLight->GetShadowMap()->GetTextureTargetSet();
 				// TODO: Target set should be a member of the stage, instead of the shadow map?
+				// -> HARD: The stages are already created, we don't know what lights are associated with each stage
 
 				m_directionalShadowStage.SetStagePipelineStateParams(shadowStageParams);
 

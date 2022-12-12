@@ -297,7 +297,7 @@ namespace en
 			string cleanLine = std::regex_replace(line, tabMatch, " ");
 
 			// Skip empty or near-empty lines:
-			if (cleanLine.find_first_not_of(" \t\n") == string::npos || cleanLine.length() <= 2) // TODO: Choose a more meaningful minimum line length
+			if (cleanLine.find_first_not_of(" \t\n") == string::npos || cleanLine.length() <= 2)
 			{
 				continue;
 			}

@@ -46,7 +46,7 @@ namespace en
 
 			EngineQuit,
 
-			// Mouse functions. TODO: These should be named w.r.t what they actually do:
+			// Mouse functions:
 			InputMouseLeft,
 			InputMouseRight,
 

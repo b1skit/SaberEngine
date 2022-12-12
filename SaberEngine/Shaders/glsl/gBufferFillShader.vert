@@ -10,8 +10,8 @@ void main()
 {
 	gl_Position = g_viewProjection * g_model[gl_InstanceID] * vec4(in_position.xyz, 1.0);
 	
-	data.worldPos = (g_model[gl_InstanceID] * vec4(in_position.xyz, 1.0f)).xyz;
-	data.uv0 = in_uv0;
-	data.vertexColor = in_color;
-	data.TBN = AssembleTBN(in_normal, in_tangent, g_model[gl_InstanceID]);
+	vOut.worldPos = (g_model[gl_InstanceID] * vec4(in_position.xyz, 1.0f)).xyz;
+	vOut.uv0 = in_uv0;
+	vOut.vertexColor = in_color;
+	vOut.TBN = AssembleTBN(in_normal, in_tangent, g_model[gl_InstanceID]);
 }

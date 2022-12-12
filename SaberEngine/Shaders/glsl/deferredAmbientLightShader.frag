@@ -20,12 +20,12 @@ void main()
 	// Note: All PBR calculations are performed in linear space
 	// However, we use sRGB-format textures, getting the sRGB->Linear transformation for free when writing our GBuffer
 	// for sRGB-format inputs (eg. MatAlbedo, ... and?) so no need to degamma MatAlbedo here
-	const vec4 linearAlbedo	= texture(GBufferAlbedo, data.uv0);
+	const vec4 linearAlbedo	= texture(GBufferAlbedo, vOut.uv0);
 
-	const vec3 worldNormal = texture(GBufferWNormal, data.uv0).xyz;
-	const vec4 MatRMAO = texture(GBufferRMAO, data.uv0.xy);
-	const vec4 worldPosition = texture(GBufferWPos, data.uv0.xy);
-	const vec4 matProp0 = texture(GBufferMatProp0, data.uv0.xy); // .rgb = F0 (Surface response at 0 degrees)
+	const vec3 worldNormal = texture(GBufferWNormal, vOut.uv0).xyz;
+	const vec4 MatRMAO = texture(GBufferRMAO, vOut.uv0.xy);
+	const vec4 worldPosition = texture(GBufferWPos, vOut.uv0.xy);
+	const vec4 matProp0 = texture(GBufferMatProp0, vOut.uv0.xy); // .rgb = F0 (Surface response at 0 degrees)
 
 	const float AO = MatRMAO.b;
 	float metalness	= MatRMAO.y;
@@ -70,10 +70,10 @@ void main()
 
 void main()
 {	
-	float AO = texture(GBufferRMAO, data.uv0.xy).b;
+	float AO = texture(GBufferRMAO, vOut.uv0.xy).b;
 
 	// Phong ambient contribution:
-	FragColor = texture(GBufferAlbedo, data.uv0.xy) * vec4(lightColor, 1) * AO;
+	FragColor = texture(GBufferAlbedo, vOut.uv0.xy) * vec4(lightColor, 1) * AO;
 }
 
 #endif

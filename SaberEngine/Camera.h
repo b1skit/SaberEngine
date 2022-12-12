@@ -32,11 +32,7 @@ namespace gr
 			float m_aspectRatio = 1.0f; // == width / height
 
 			// Orthographic properties:
-			float m_orthoLeft = -5;
-			float m_orthoRight = 5;
-			float m_orthoBottom = -5;
-			float m_orthoTop = 5;
-			// TODO: Use a vec4 here
+			glm::vec4 m_orthoLeftRightBotTop = glm::vec4(-5.f, 5.f, -5.f, 5.f);
 
 			// Image properties:
 			float m_exposure = 1.0f; // TODO: Should this be stored here?
@@ -103,7 +99,7 @@ namespace gr
 		void Initialize();
 		void UpdateCameraParamBlockData();
 
-		std::vector<glm::mat4> const& GetCubeViewMatrix(); // TODO: Recompute this if the camera has moved
+		std::vector<glm::mat4> const& GetCubeViewMatrix();
 
 	private:
 		CameraConfig m_cameraConfig;

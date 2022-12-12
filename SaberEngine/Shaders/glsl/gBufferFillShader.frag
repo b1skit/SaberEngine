@@ -26,19 +26,19 @@ uniform float emissiveIntensity = 1.0;	// Overwritten during RenderManager.Initi
 void main()
 {
 	// Albedo. Note: We use an sRGB-format texture, which converts this value from sRGB->linear space for free
-	// g_baseColorFactor and data.vertexColor are factored into the albedo as per the GLTF 2.0 specifications
-	gBuffer_out_albedo = texture(MatAlbedo, data.uv0.xy) * g_baseColorFactor * data.vertexColor;
+	// g_baseColorFactor and vOut.vertexColor are factored into the albedo as per the GLTF 2.0 specifications
+	gBuffer_out_albedo = texture(MatAlbedo, vOut.uv0.xy) * g_baseColorFactor * vOut.vertexColor;
 
-	const vec3 texNormal = texture(MatNormal, data.uv0.xy).xyz;
-	const vec3 worldNormal = WorldNormalFromTextureNormal(texNormal, data.TBN) * vec3(g_normalScale, g_normalScale, 1.0f);
+	const vec3 texNormal = texture(MatNormal, vOut.uv0.xy).xyz;
+	const vec3 worldNormal = WorldNormalFromTextureNormal(texNormal, vOut.TBN) * vec3(g_normalScale, g_normalScale, 1.0f);
 	gBuffer_out_worldNormal = vec4(worldNormal, 0.0f);
 	
 	// Unpack/scale metallic/roughness: .G = roughness, .B = metallness
-	const vec2 roughMetal = texture(MatMetallicRoughness, data.uv0.xy).gb * vec2(g_roughnessFactor, g_metallicFactor);
+	const vec2 roughMetal = texture(MatMetallicRoughness, vOut.uv0.xy).gb * vec2(g_roughnessFactor, g_metallicFactor);
 
 	// Unpack/scale AO:
-	const float occlusion = texture(MatOcclusion, data.uv0.xy).r * g_occlusionStrength;
-	//const float occlusion = clamp((1.0f + g_occlusionStrength) * (texture(MatOcclusion, data.uv0.xy).r - 1.0f), 0.0f, 1.0f);
+	const float occlusion = texture(MatOcclusion, vOut.uv0.xy).r * g_occlusionStrength;
+	//const float occlusion = clamp((1.0f + g_occlusionStrength) * (texture(MatOcclusion, vOut.uv0.xy).r - 1.0f), 0.0f, 1.0f);
 	// TODO: GLTF specifies the above occlusion scaling, but CGLTF seems non-complicant & packs occlusion strength into
 	// the texture scale value. For now, just use something sane.
 	
@@ -50,12 +50,12 @@ void main()
 	const float exposure = Exposure(ev100);
 
 	// Product of (emissiveTexture * emissiveFactor) is in cd/(m^2) (Candela per square meter)
-	const vec3 emissive = texture(MatEmissive, data.uv0.xy).rgb * g_emissiveFactor * g_emissiveStrength;
+	const vec3 emissive = texture(MatEmissive, vOut.uv0.xy).rgb * g_emissiveFactor * g_emissiveStrength;
 	const float EC = 3.0; // EC == Exposure compensation. TODO: Make this user-controllable
 
 	gBuffer_out_emissive = vec4(emissive * pow(2.0, ev100 + EC - 3.0) * exposure, 1.0f);
 
-	gBuffer_out_wPos = vec4(data.worldPos.xyz, 1);
+	gBuffer_out_wPos = vec4(vOut.worldPos.xyz, 1);
 
 	// Material properties:
 	gBuffer_out_matProp0 = vec4(g_f0, 1.0f);

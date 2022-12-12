@@ -16,11 +16,11 @@
 void main()
 {
 	// Sample textures once inside the main shader flow, and pass the values as required:
-	vec4 linearAlbedo = texture(GBufferAlbedo, data.uv0.xy); // PBR calculations are performed in linear space
-	vec3 worldNormal = texture(GBufferWNormal, data.uv0.xy).xyz;
-	vec4 MatRMAO = texture(GBufferRMAO, data.uv0.xy);
-	vec4 worldPosition = texture(GBufferWPos, data.uv0.xy);
-	vec4 matProp0 = texture(GBufferMatProp0, data.uv0.xy); // .rgb = F0 (Surface response at 0 degrees)
+	vec4 linearAlbedo = texture(GBufferAlbedo, vOut.uv0.xy); // PBR calculations are performed in linear space
+	vec3 worldNormal = texture(GBufferWNormal, vOut.uv0.xy).xyz;
+	vec4 MatRMAO = texture(GBufferRMAO, vOut.uv0.xy);
+	vec4 worldPosition = texture(GBufferWPos, vOut.uv0.xy);
+	vec4 matProp0 = texture(GBufferMatProp0, vOut.uv0.xy); // .rgb = F0 (Surface response at 0 degrees)
 
 	// Directional light direction is packed into the light position
 	const vec3 keylightWorldDir = g_lightWorldPos;
