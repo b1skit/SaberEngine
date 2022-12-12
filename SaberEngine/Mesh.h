@@ -29,6 +29,7 @@ namespace gr
 		// Union of Bounds of all attached MeshPrimitives
 		inline gr::Bounds& GetBounds() { return m_localBounds; }
 		inline gr::Bounds const& GetBounds() const { return m_localBounds; }
+		void UpdateBounds();
 
 		void AddMeshPrimitive(std::shared_ptr<re::MeshPrimitive> meshPrimitive);
 		std::vector<std::shared_ptr<re::MeshPrimitive>> const& GetMeshPrimitives() const;

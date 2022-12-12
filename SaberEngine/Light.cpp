@@ -22,7 +22,7 @@ namespace
 	gr::Camera::CameraConfig ComputeDirectionalShadowCameraConfigFromSceneBounds(
 		gr::Transform* lightTransform, gr::Bounds& sceneWorldBounds)
 	{
-		gr::Bounds const& transformedBounds = sceneWorldBounds.GetTransformedBounds(
+		gr::Bounds const& transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
 			glm::inverse(lightTransform->GetGlobalMatrix(Transform::TRS)));
 
 		gr::Camera::CameraConfig shadowCamConfig;

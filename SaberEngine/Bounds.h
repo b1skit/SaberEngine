@@ -2,6 +2,9 @@
 
 namespace gr
 {
+	class Transform;
+
+
 	class Bounds
 	{
 	public:
@@ -19,11 +22,13 @@ namespace gr
 		~Bounds() = default;
 
 		// Returns a new AABB Bounds, transformed from local space using transform
-		Bounds GetTransformedBounds(glm::mat4 const& worldMatrix);
+		Bounds GetTransformedAABBBounds(glm::mat4 const& worldMatrix);
 
 		void ComputeBounds(std::vector<glm::vec3> const& positions);
 
 		void ExpandBounds(Bounds const& newContents); // Expands a bounds to contain another bounds
+
+		void UpdateAABBBounds(Transform* transform); // Updates current AABB Bounds from a global Transform
 
 		inline float xMin() const { return m_minXYZ.x; }		
 		inline float xMax() const { return m_maxXYZ.x; }

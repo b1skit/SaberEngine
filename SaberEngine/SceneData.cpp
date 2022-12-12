@@ -2,6 +2,7 @@
 #include <vector>
 #include <sstream>
 #include <condition_variable>
+#include <stack>
 
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -1256,7 +1257,6 @@ namespace fr
 			m_meshes.emplace_back(mesh); // Add the mesh to our tracking list
 		}
 
-		// TODO: Scene bounds should be updated every frame
 		UpdateSceneBounds(mesh);
 	}
 
@@ -1318,7 +1318,52 @@ namespace fr
 		std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
 
 		m_sceneWorldSpaceBounds.ExpandBounds(
-			mesh->GetBounds().GetTransformedBounds(mesh->GetTransform()->GetGlobalMatrix(Transform::TRS)));
+			mesh->GetBounds().GetTransformedAABBBounds(mesh->GetTransform()->GetGlobalMatrix(Transform::TRS)));
+	}
+
+
+	void SceneData::RecomputeSceneBounds()
+	{
+		SEAssert("This function should be called during the main loop only", m_finishedLoading);
+
+		// Walk down our Transform hierarchy, recomputing each Transform in turn (just for efficiency). This also has
+		// the benefit that our Transforms will be up to date when we copy them for the Render thread
+		std::atomic<uint32_t> numJobs = 0;
+		for (shared_ptr<fr::SceneNode> root : m_sceneNodes)
+		{
+			numJobs++;
+			en::CoreEngine::GetThreadPool()->EnqueueJob(
+				[root, &numJobs]() 
+				{
+					std::stack<gr::Transform*> transforms;
+					transforms.push(root->GetTransform());
+
+					while (!transforms.empty())
+					{
+						transforms.top()->Recompute();
+						transforms.pop();
+
+						for (gr::Transform* child : root->GetTransform()->GetChildren())
+						{
+							transforms.push(child);
+						}
+					}
+					numJobs--;
+				});
+		}
+		while (numJobs > 0)
+		{
+			std::this_thread::yield();
+		}
+
+		// Now all of our transforms are clean, update the scene bounds:
+		std::unique_lock<std::mutex> lock(m_sceneBoundsMutex);
+		m_sceneWorldSpaceBounds = gr::Bounds();
+		for (shared_ptr<gr::Mesh> mesh : m_meshes)
+		{
+			m_sceneWorldSpaceBounds.ExpandBounds(
+				mesh->GetBounds().GetTransformedAABBBounds(mesh->GetTransform()->GetGlobalMatrix(Transform::TRS)));
+		}
 	}
 
 

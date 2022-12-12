@@ -78,7 +78,7 @@ namespace fr
 
 		// SceneData bounds:
 		gr::Bounds const& GetWorldSpaceSceneBounds() const;
-
+		void RecomputeSceneBounds();
 
 	private:
 		void UpdateSceneBounds(std::shared_ptr<gr::Mesh> mesh);

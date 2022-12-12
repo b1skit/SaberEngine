@@ -31,7 +31,7 @@ namespace gr
 		m_meshPrimitives.push_back(meshPrimitive);
 
 		m_localBounds.ExpandBounds(
-			meshPrimitive->GetBounds().GetTransformedBounds(GetTransform()->GetGlobalMatrix(Transform::TRS)));
+			meshPrimitive->GetBounds().GetTransformedAABBBounds(GetTransform()->GetGlobalMatrix(Transform::TRS)));
 	}
 
 
@@ -47,12 +47,17 @@ namespace gr
 		SEAssert("Index is out of bounds", index < m_meshPrimitives.size());
 		m_meshPrimitives[index] = replacement;
 
-		// Recompute the bounds
+		UpdateBounds();		
+	}
+
+
+	void Mesh::UpdateBounds()
+	{
 		m_localBounds = Bounds();
 		for (shared_ptr<re::MeshPrimitive> meshPrimitive : m_meshPrimitives)
 		{
 			m_localBounds.ExpandBounds(
-				meshPrimitive->GetBounds().GetTransformedBounds(GetTransform()->GetGlobalMatrix(Transform::TRS)));
+				meshPrimitive->GetBounds().GetTransformedAABBBounds(GetTransform()->GetGlobalMatrix(Transform::TRS)));
 		}
 	}
 }

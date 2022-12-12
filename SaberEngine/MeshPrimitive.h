@@ -3,12 +3,16 @@
 #include <string>
 #include <memory>
 
-#include "Transform.h"
 #include "Material.h"
 #include "NamedObject.h"
 #include "HashedDataObject.h"
 #include "Bounds.h"
 
+
+namespace gr
+{
+	class Transform;
+}
 
 namespace re
 {
@@ -66,6 +70,7 @@ namespace re
 
 		inline gr::Bounds& GetBounds() { return m_localBounds; }
 		inline gr::Bounds const& GetBounds() const { return m_localBounds; }
+		void UpdateBounds(gr::Transform* transform); // TODO: Currently this assumes the MeshPrimitive is not skinned
 
 		inline std::vector<float> const& GetPositions() const { return m_positions; }
 		inline std::vector<float> const& GetNormals() const { return m_normals; }

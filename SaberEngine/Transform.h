@@ -60,6 +60,7 @@ namespace gr
 		Transform* GetParent() const;
 		void SetParent(Transform* newParent);
 		void ReParent(Transform* newParent); // Changes parents, and preserves current global orientation
+		std::vector<Transform*> const& GetChildren() { return m_children; }
 
 		// Local-space translation:
 		void TranslateLocal(glm::vec3 amount); // Apply additional translation to the current position, in local space
@@ -78,6 +79,8 @@ namespace gr
 
 
 		// Global transformations: 
+		void Recompute() { RecomputeWorldTransforms(); }; // Explicitely recompute the global transforms
+
 		glm::mat4 const& GetGlobalMatrix(TransformComponent component);
 
 		// World-space translation:

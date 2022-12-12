@@ -7,6 +7,7 @@
 #include "MeshPrimitive.h"
 #include "MeshPrimitive_Platform.h"
 #include "Config.h"
+#include "Transform.h"
 
 
 namespace re
@@ -38,24 +39,24 @@ namespace re
 		vector<uint8_t> joints,
 		vector<float> weights,
 		shared_ptr<gr::Material> material,
-		MeshPrimitiveParams const& meshParams) 
+		MeshPrimitiveParams const& meshParams)
 		: NamedObject(name)
 		, m_platformParams(nullptr)
 		, m_meshMaterial(material)
 		, m_params(meshParams)
 	{
 		platform::MeshPrimitive::CreatePlatformParams(*this);
-			
-		m_indices		= move(indices);
 
-		m_positions		= move(positions);
-		m_normals		= move(normals);
-		m_colors		= move(colors);
-		m_uv0			= move(uv0);
-		m_tangents		= move(tangents);
+		m_indices = move(indices);
 
-		m_joints		= move(joints);
-		m_weights		= move(weights);
+		m_positions = move(positions);
+		m_normals = move(normals);
+		m_colors = move(colors);
+		m_uv0 = move(uv0);
+		m_tangents = move(tangents);
+
+		m_joints = move(joints);
+		m_weights = move(weights);
 
 		if (positionMinXYZ == gr::Bounds::k_invalidMinXYZ || positionMaxXYZ == gr::Bounds::k_invalidMaxXYZ)
 		{
@@ -80,10 +81,10 @@ namespace re
 		m_tangents.clear();
 		m_uv0.clear();
 		m_colors.clear();
-		
+
 		m_joints.clear();
 		m_weights.clear();
-		
+
 		m_meshMaterial = nullptr;
 
 		platform::MeshPrimitive::Destroy(*this); // Platform-specific destruction
@@ -103,13 +104,10 @@ namespace re
 		AddDataBytesToHash(&m_params, sizeof(MeshPrimitiveParams));
 
 		// Vertex data streams:
-		
-
 		if (!m_indices.empty())
 		{
 			AddDataBytesToHash(&m_indices[0], sizeof(uint32_t) * m_indices.size());
 		}
-
 		if (!m_positions.empty())
 		{
 			AddDataBytesToHash(&m_positions[0], sizeof(float) * m_positions.size());
@@ -129,8 +127,7 @@ namespace re
 		if (!m_colors.empty())
 		{
 			AddDataBytesToHash(&m_colors[0], sizeof(float) * m_colors.size());
-		}		
-		
+		}
 		if (!m_joints.empty())
 		{
 			AddDataBytesToHash(&m_joints[0], sizeof(uint8_t) * m_joints.size());
@@ -139,6 +136,12 @@ namespace re
 		{
 			AddDataBytesToHash(&m_weights[0], sizeof(float) * m_weights.size());
 		}
+	}
+
+
+	void MeshPrimitive::UpdateBounds(gr::Transform* transform)
+	{
+		m_localBounds.UpdateAABBBounds(transform);
 	}
 } // re
 

@@ -3,12 +3,15 @@
 #include <glm/glm.hpp>
 
 #include "Bounds.h"
+#include "Transform.h"
+
 
 namespace gr
 {
 	using glm::vec3;
 	using glm::vec4;
-	using glm::mat4;	
+	using glm::mat4;
+	using gr::Transform;
 
 	constexpr float k_bounds3DDepthBias = 0.01f; // Offset to ensure axis min != axis max
 
@@ -27,14 +30,15 @@ namespace gr
 	}
 
 
-	// Returns a Bounds, transformed in global/world space using worldMatrix
-	Bounds Bounds::GetTransformedBounds(mat4 const& worldMatrix)
+	// Returns a new AABB Bounds, transformed from local space using transform
+	Bounds Bounds::GetTransformedAABBBounds(mat4 const& worldMatrix)
 	{
 		// Temp: Ensure the bounds are 3D here, before we do any calculations
 		Make3Dimensional();
 
 		Bounds result;
 
+		// Assemble our current AABB points into a cube of 8 vertices:
 		std::vector<vec4>points(8);											// "front" == fwd == Z -
 		points[0] = vec4(xMin(), yMax(), zMin(), 1.0f);		// Left		top		front 
 		points[1] = vec4(xMax(), yMax(), zMin(), 1.0f);		// Right	top		front
@@ -46,6 +50,7 @@ namespace gr
 		points[6] = vec4(xMin(), yMin(), zMax(), 1.0f);		// Left		bot		back
 		points[7] = vec4(xMax(), yMin(), zMax(), 1.0f);		// Right	bot		back
 
+		// Transform each point into world space, and record the min/max coordinate in each dimension:
 		for (size_t i = 0; i < 8; i++)
 		{
 			points[i] = worldMatrix * points[i];
@@ -78,6 +83,7 @@ namespace gr
 			}
 		}
 
+		// Result is an AABB Bounds
 		return result;
 	}
 
@@ -144,6 +150,12 @@ namespace gr
 		{
 			zMax() = newContents.zMax();
 		}
+	}
+
+
+	void Bounds::UpdateAABBBounds(Transform* transform)
+	{
+		*this = GetTransformedAABBBounds(transform->GetGlobalMatrix(Transform::TRS));
 	}
 
 
