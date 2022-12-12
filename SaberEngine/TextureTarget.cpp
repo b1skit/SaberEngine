@@ -170,31 +170,6 @@ namespace re
 	}
 
 
-	void TextureTargetSet::AttachTargets(uint32_t colorFace, uint32_t colorMipLevel, bool doBind)
-	{
-		const bool hasColorTarget = HasColorTarget();
-		if (hasColorTarget)
-		{
-			platform::TextureTargetSet::AttachColorTargets(*this, colorFace, colorMipLevel, doBind);
-		}
-
-		const bool hasDepthTarget = HasDepthTarget();
-		if (hasDepthTarget)
-		{
-			platform::TextureTargetSet::AttachDepthStencilTarget(*this, doBind);
-		}
-
-		// TODO: This is a bit of a hack; we assume that if a TextureTargetSet has neither color nor depth targets
-		// attached, that it's the default framebuffer. This might not always be the case (e.g. could be an error, or
-		// we might only want to bind color or depth seperately etc), but for now it works
-		if (!hasColorTarget && !hasDepthTarget)
-		{
-			platform::TextureTargetSet::AttachColorTargets(*this, colorFace, colorMipLevel, doBind);
-			platform::TextureTargetSet::AttachDepthStencilTarget(*this, doBind);
-		}
-	}
-
-
 	bool TextureTargetSet::HasTargets()
 	{
 		return (HasDepthTarget() || HasColorTarget());

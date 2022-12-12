@@ -26,6 +26,7 @@
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "MeshPrimitive_OpenGL.h"
+#include "TextureTarget_OpenGL.h"
 
 using re::RenderStage;
 using re::TextureTargetSet;
@@ -107,11 +108,12 @@ namespace opengl
 				RenderStage::PipelineStateParams const& stagePipelineParams = renderStage->GetStagePipelineStateParams();
 
 				// Attach the stage targets:
-				TextureTargetSet& stageTargets = renderStage->GetTextureTargetSet();
-				stageTargets.AttachTargets(
-					stagePipelineParams.m_textureTargetSetConfig.m_targetFace, 
-					stagePipelineParams.m_textureTargetSetConfig.m_targetMip, 
+				re::TextureTargetSet& stageTargets = renderStage->GetTextureTargetSet();
+				opengl::TextureTargetSet::AttachColorTargets(stageTargets, 
+					stagePipelineParams.m_textureTargetSetConfig.m_targetFace,
+					stagePipelineParams.m_textureTargetSetConfig.m_targetMip,
 					true);
+				opengl::TextureTargetSet::AttachDepthStencilTarget(stageTargets, true);
 				
 				// Configure the context:
 				renderManager.m_context.SetCullingMode(stagePipelineParams.m_faceCullingMode);

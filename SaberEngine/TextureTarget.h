@@ -126,10 +126,7 @@ namespace re
 		inline PlatformParams const* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::shared_ptr<PlatformParams> params) { m_platformParams = params; }
 		
-		std::shared_ptr<re::ParameterBlock> GetTargetParameterBlock();		
-
-		// Platform wrappers:
-		void AttachTargets(uint32_t colorFace, uint32_t colorMipLevel, bool doBind);
+		std::shared_ptr<re::ParameterBlock> GetTargetParameterBlock();
 
 
 	private:

@@ -61,6 +61,15 @@ namespace opengl
 		opengl::TextureTargetSet::PlatformParams* const targetSetParams =
 			dynamic_cast<opengl::TextureTargetSet::PlatformParams*>(targetSet.GetPlatformParams());
 
+		// This is a bit of a hack: If we have a color target, we create it. If we have neither a color nor depth
+		// target, we assume this is the default framebuffer and create the color target here now well. This might not
+		// always be the case (e.g. could be an error, or we might only want to bind color or depth seperately etc), but
+		// for now it works
+		if (!targetSet.HasColorTarget() && targetSet.HasDepthTarget())
+		{
+			return;
+		}
+
 		if (targetSetParams->m_colorIsCreated)
 		{
 			return;
@@ -267,6 +276,15 @@ namespace opengl
 
 	void TextureTargetSet::CreateDepthStencilTarget(re::TextureTargetSet& targetSet)
 	{
+		// This is a bit of a hack: If we have a depth target, we create it. If we have neither a color nor depth
+		// target, we assume this is the default framebuffer and create the depth target here now well. This might not
+		// always be the case (e.g. could be an error, or we might only want to bind color or depth seperately etc), but
+		// for now it works
+		if (!targetSet.HasDepthTarget() && targetSet.HasColorTarget())
+		{
+			return;
+		}
+
 		opengl::TextureTargetSet::PlatformParams* const targetSetParams =
 			dynamic_cast<opengl::TextureTargetSet::PlatformParams*>(targetSet.GetPlatformParams());
 
