@@ -94,40 +94,6 @@ namespace re
 	}
 
 
-	template <typename T>
-	void Batch::AddBatchUniform(
-		string const& uniformName, T const& value, re::Shader::UniformType const& type, int const count)
-	{
-		SEAssert("TODO: Support count > 1", count == 1);
-
-		// Store the shared_ptr for textures/samplers, or copy the data for other types
-		if (type == re::Shader::UniformType::Texture || type == re::Shader::UniformType::Sampler)
-		{
-			SEAssert("Invalid pointer type",
-				typeid(T) == typeid(shared_ptr<re::Texture>) || typeid(T) == typeid(shared_ptr<re::Sampler>));
-			SEAssert("Pointer is null", std::static_pointer_cast<const void>(value) != nullptr);
-
-			m_batchUniforms.emplace_back(uniformName, value, type, count);
-
-			// Add the pointer value to the hash; Should be safe as we manage them via shared_ptrs & don't allow copying
-			AddDataBytesToHash(std::static_pointer_cast<const void>(value).get());
-		}
-		else
-		{
-			m_batchUniforms.emplace_back(uniformName, make_shared<T>(value), type, count);
-
-			// Add the reference address to the hash; Risky, as this could be anything, but will allow instancing IF
-			// the value has a consistent memory location...
-			AddDataBytesToHash(&value);
-		}
-	}
-	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
-	template void Batch::AddBatchUniform<shared_ptr<re::Texture>>(
-		string const& uniformName, shared_ptr<re::Texture> const& value, re::Shader::UniformType const& type, int const count);
-	template void Batch::AddBatchUniform<shared_ptr<re::Sampler>>(
-		string const& uniformName, shared_ptr<re::Sampler> const& value, re::Shader::UniformType const& type, int const count);
-
-
 	void Batch::SetBatchFilterMaskBit(Filter filterBit)
 	{
 		m_batchFilterMask |= (1 << (uint32_t)filterBit);

@@ -1,5 +1,4 @@
 #include "Config.h"
-#include "DebugConfiguration.h"
 #include "KeyConfiguration.h"
 
 #include <fstream>
@@ -176,39 +175,6 @@ namespace en
 	}
 
 
-	// Get a config value, by type
-	template<typename T>
-	T Config::GetValue(const string& valueName) const
-	{
-		auto const& result = m_configValues.find(valueName);
-		T returnVal{};
-		if (result != m_configValues.end())
-		{
-			try
-			{
-				returnVal = any_cast<T>(result->second.first);
-			}
-			catch (const std::bad_any_cast& e)
-			{
-				LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what());
-			}
-		}
-		else
-		{
-			throw std::runtime_error("Config key does not exist");
-		}
-
-		return returnVal;
-	}
-	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
-	template string Config::GetValue<string>(const string& valueName) const;
-	template float Config::GetValue<float>(const string& valueName) const;
-	template int32_t Config::GetValue<int32_t>(const string& valueName) const;
-	template uint32_t Config::GetValue<uint32_t>(const string& valueName) const;
-	template bool Config::GetValue<bool>(const string& valueName) const;
-	template char Config::GetValue<char>(const string& valueName) const;
-
-
 	string Config::GetValueAsString(const string& valueName) const
 	{
 		auto const& result = m_configValues.find(valueName);
@@ -254,23 +220,6 @@ namespace en
 
 		return returnVal;
 	}
-
-
-	// Set a config value
-	// Note: Strings must be explicitely defined as a string("value")
-	template<typename T>
-	void Config::SetValue(const string& valueName, T value, SettingType settingType /*= SettingType::Common*/) 
-	{
-		m_configValues[valueName] = {value, settingType};
-		m_isDirty = true;
-	}
-	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
-	template void Config::SetValue<string>(const string& valueName, string value, SettingType settingType);
-	template void Config::SetValue<float>(const string& valueName, float value, SettingType settingType);
-	template void Config::SetValue<int>(const string& valueName, int value, SettingType settingType);
-	template void Config::SetValue<bool>(const string& valueName, bool value, SettingType settingType);
-	template void Config::SetValue<char>(const string& valueName, char value, SettingType settingType);
-
 
 
 	// Constructor

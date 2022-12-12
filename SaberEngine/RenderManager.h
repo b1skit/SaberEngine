@@ -87,6 +87,23 @@ namespace re
 		RenderManager(RenderManager&&) = delete;
 		void operator=(RenderManager const&) = delete;
 	};
+
+
+	template <typename T>
+	std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem()
+	{
+		// TODO: A linear search isn't optimal here, but there aren't many graphics systems in practice so ok for now
+		for (size_t i = 0; i < m_graphicsSystems.size(); i++)
+		{
+			if (dynamic_cast<T*>(m_graphicsSystems[i].get()) != nullptr)
+			{
+				return m_graphicsSystems[i];
+			}
+		}
+
+		SEAssertF("Graphics system not found");
+		return nullptr;
+	}
 }
 
 

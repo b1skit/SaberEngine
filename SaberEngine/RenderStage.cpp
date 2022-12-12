@@ -60,45 +60,6 @@ namespace re
 		m_perFrameShaderUniforms.emplace_back(shaderName, tex.get(), re::Shader::UniformType::Texture, 1);
 		m_perFrameShaderUniforms.emplace_back(shaderName, sampler.get(), re::Shader::UniformType::Sampler, 1);
 	}
-
-
-	template <typename T>
-	void RenderStage::SetPerFrameShaderUniform(
-		string const& uniformName, T const& value, re::Shader::UniformType const& type, int const count)
-	{
-		// Dynamically allocate a copy of value so we have a pointer to it when we need for the current frame
-		m_perFrameShaderUniformValues.emplace_back(std::make_shared<T>(value));
-
-		void* valuePtr;
-		if (count > 1)
-		{
-			// Assume if count > 1, we've recieved multiple values packed into a std::vector. 
-			// Thus, we must store the address of the first element of the vector (NOT the address of the vector object!)
-			valuePtr = &(reinterpret_cast<vector<T>*>(m_perFrameShaderUniformValues.back().get())->at(0));
-		}
-		else
-		{
-			valuePtr = m_perFrameShaderUniformValues.back().get();
-		}
-
-		m_perFrameShaderUniforms.emplace_back(uniformName, valuePtr, type, count);
-	}
-	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
-	template void RenderStage::SetPerFrameShaderUniform<mat4>(
-		string const& uniformName, mat4 const& value, re::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerFrameShaderUniform<vector<mat4>>(
-		string const& uniformName, vector<mat4> const& value, re::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerFrameShaderUniform<mat3>(
-		string const& uniformName, mat3 const& value, re::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerFrameShaderUniform<vec3>(
-		string const& uniformName, vec3 const& value, re::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerFrameShaderUniform<vec4>(
-		string const& uniformName, vec4 const& value, re::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerFrameShaderUniform<float>(
-		string const& uniformName, float const& value, re::Shader::UniformType const& type, int const count);
-	template void RenderStage::SetPerFrameShaderUniform<int>(
-		string const& uniformName, int const& value, re::Shader::UniformType const& type, int const count);
-	// TODO: Move this to the .h file
 	
 
 	void RenderStage::InitializeForNewFrame()

@@ -5,6 +5,7 @@
 #include <any>
 #include <memory>
 #include "Platform.h"
+#include "DebugConfiguration.h"
 
 
 namespace en
@@ -85,6 +86,42 @@ namespace en
 		// Note: Inlined in .cpp file, as it depends on macros defined in KeyConfiguration.h
 		std::string PropertyToConfigString(bool property);
 	};
+
+
+	// Get a config value, by type
+	template<typename T>
+	T Config::GetValue(const std::string& valueName) const
+	{
+		auto const& result = m_configValues.find(valueName);
+		T returnVal{};
+		if (result != m_configValues.end())
+		{
+			try
+			{
+				returnVal = any_cast<T>(result->second.first);
+			}
+			catch (const std::bad_any_cast& e)
+			{
+				LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what());
+			}
+		}
+		else
+		{
+			throw std::runtime_error("Config key does not exist");
+		}
+
+		return returnVal;
+	}
+
+
+	// Set a config value
+	// Note: Strings must be explicitely defined as a string("value")
+	template<typename T>
+	void Config::SetValue(const std::string& valueName, T value, SettingType settingType /*= SettingType::Common*/)
+	{
+		m_configValues[valueName] = { value, settingType };
+		m_isDirty = true;
+	}
 }
 
 

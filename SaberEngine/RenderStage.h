@@ -136,4 +136,26 @@ namespace re
 		RenderStage& operator=(RenderStage const&) = delete;
 	};
 
+
+	template <typename T>
+	void RenderStage::SetPerFrameShaderUniform(
+		std::string const& uniformName, T const& value, re::Shader::UniformType const& type, int const count)
+	{
+		// Dynamically allocate a copy of value so we have a pointer to it when we need for the current frame
+		m_perFrameShaderUniformValues.emplace_back(std::make_shared<T>(value));
+
+		void* valuePtr;
+		if (count > 1)
+		{
+			// Assume if count > 1, we've recieved multiple values packed into a std::vector. 
+			// Thus, we must store the address of the first element of the vector (NOT the address of the vector object!)
+			valuePtr = &(reinterpret_cast<std::vector<T>*>(m_perFrameShaderUniformValues.back().get())->at(0));
+		}
+		else
+		{
+			valuePtr = m_perFrameShaderUniformValues.back().get();
+		}
+
+		m_perFrameShaderUniforms.emplace_back(uniformName, valuePtr, type, count);
+	}
 }

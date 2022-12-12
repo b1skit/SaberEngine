@@ -228,30 +228,6 @@ namespace re
 	{
 		m_imGuiCommands.emplace(command);
 	}
-
-
-	template <typename T>
-	shared_ptr<GraphicsSystem> RenderManager::GetGraphicsSystem()
-	{
-		// TODO: A linear search isn't optimal here, but there aren't many graphics systems in practice so ok for now
-		for (size_t i = 0; i < m_graphicsSystems.size(); i++)
-		{
-			if (dynamic_cast<T*>(m_graphicsSystems[i].get()) != nullptr)
-			{
-				return m_graphicsSystems[i];
-			}
-		}
-
-		SEAssertF("Graphics system not found");
-		return nullptr;
-	}
-	// Explicitely instantiate our templates so the compiler can link them from the .cpp file:
-	template shared_ptr<GraphicsSystem> RenderManager::GetGraphicsSystem<GBufferGraphicsSystem>();
-	template shared_ptr<GraphicsSystem> RenderManager::GetGraphicsSystem<DeferredLightingGraphicsSystem>();
-	template shared_ptr<GraphicsSystem> RenderManager::GetGraphicsSystem<ShadowsGraphicsSystem>();
-	template shared_ptr<GraphicsSystem> RenderManager::GetGraphicsSystem<SkyboxGraphicsSystem>();
-	template shared_ptr<GraphicsSystem> RenderManager::GetGraphicsSystem<BloomGraphicsSystem>();
-	template shared_ptr<GraphicsSystem> RenderManager::GetGraphicsSystem<TonemappingGraphicsSystem>();
 }
 
 
