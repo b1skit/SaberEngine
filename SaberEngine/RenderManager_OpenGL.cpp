@@ -172,8 +172,7 @@ namespace opengl
 					gr::Material* batchmaterial = batch.GetBatchMaterial();
 					if (batchmaterial && renderStage->WritesColor())
 					{
-						// TODO: Reverse this logic. It should be stageShader->BindMaterial
-						batchmaterial->BindToShader(stageShader);
+						stageShader->SetMaterial(batchmaterial);
 					}
 
 					// Batch parameter blocks:

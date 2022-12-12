@@ -1,11 +1,12 @@
 #include "Shader.h"
 #include "Shader_Platform.h"
 #include "DebugConfiguration.h"
+#include "Material.h"
 
 using std::string;
 using std::vector;
 using std::shared_ptr;
-
+using gr::Material;
 
 namespace re
 {
@@ -45,5 +46,25 @@ namespace re
 	{
 		SetUniform(uniformName, texture.get(), Shader::UniformType::Texture, 1);
 		SetUniform(uniformName, sampler.get(), Shader::UniformType::Sampler, 1);
+	}
+
+
+	void Shader::SetMaterial(gr::Material* material)
+	{
+		SEAssert("Cannot bind incomplete material", 
+			material->GetTexureSlotDescs().size() > 0 && material->GetParameterBlock() != nullptr);
+
+		for (size_t i = 0; i < material->GetTexureSlotDescs().size(); i++)
+		{
+			if (material->GetTexureSlotDescs()[i].m_texture)
+			{
+				SetTextureSamplerUniform(
+					material->GetTexureSlotDescs()[i].m_shaderSamplerName,
+					material->GetTexureSlotDescs()[i].m_texture,
+					material->GetTexureSlotDescs()[i].m_samplerObject);
+			}
+		}
+
+		platform::Shader::SetParameterBlock(*this, *material->GetParameterBlock().get());
 	}
 }

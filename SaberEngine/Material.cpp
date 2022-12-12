@@ -86,28 +86,6 @@ namespace gr
 	}
 
 
-	void Material::BindToShader(std::shared_ptr<re::Shader> shaderOverride)
-	{
-		shared_ptr<re::Shader> shader = shaderOverride == nullptr ? m_shader : shaderOverride;
-
-		for (size_t i = 0; i < m_texSlots.size(); i++)
-		{
-			if (m_texSlots[i].m_texture != nullptr)
-			{
-				shader->SetTextureSamplerUniform(
-					m_texSlots[i].m_shaderSamplerName, 
-					m_texSlots[i].m_texture,
-					m_texSlots[i].m_samplerObject);
-			}
-		}
-
-		if (m_matParams)
-		{
-			platform::Shader::SetParameterBlock(*shader, *m_matParams.get());
-		}
-	}
-
-
 	std::shared_ptr<re::Texture>& Material::GetTexture(std::string const& samplerName)
 	{
 		return const_cast<std::shared_ptr<re::Texture>&>(const_cast<const Material*>(this)->GetTexture(samplerName));

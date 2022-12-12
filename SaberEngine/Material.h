@@ -75,8 +75,6 @@ namespace gr
 		
 		void Destroy();
 
-		Material() = delete;
-
 		Material(Material const&) = default;
 		Material(Material&&) = default;
 		Material& operator=(Material const&) = default;
@@ -93,17 +91,19 @@ namespace gr
 
 		std::shared_ptr<re::Texture>& GetTexture(std::string const& samplerName);
 		std::shared_ptr<re::Texture> const& GetTexture(std::string const& samplerName) const;
+		std::vector<TextureSlotDesc> const& GetTexureSlotDescs() { return m_texSlots; }
 
-		inline size_t const& NumTextureSlots() { return m_texSlots.size(); }
+		std::shared_ptr<re::ParameterBlock> GetMaterialParameterBlock() const { return m_matParams; }
 
-		// TODO: Move this functionality to the shader
-		void BindToShader(std::shared_ptr<re::Shader> shaderOverride);
 
 	private:
 		std::vector<TextureSlotDesc> m_texSlots;
 		std::unordered_map<std::string, uint32_t> m_namesToSlotIndex;
 		std::shared_ptr<re::Shader> m_shader;
 		std::shared_ptr<re::ParameterBlock> m_matParams;
+
+	private:
+		Material() = delete;
 	};
 }
 
