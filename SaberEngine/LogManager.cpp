@@ -234,7 +234,7 @@ namespace en
 	}
 
 
-	void LogManager::Update(const double stepTimeMs)
+	void LogManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
 		HandleEvents();
 

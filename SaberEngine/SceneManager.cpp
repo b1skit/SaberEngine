@@ -58,7 +58,7 @@ namespace en
 	}
 
 
-	void SceneManager::Update(const double stepTimeMs)
+	void SceneManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
 		// Tick Updateables:
 		for (int i = 0; i < (int)m_sceneData->GetUpdateables().size(); i++)

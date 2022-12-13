@@ -33,6 +33,7 @@ namespace en
 	CoreEngine::CoreEngine(int argc, char** argv)
 		: m_fixedTimeStep(1000.0 / 120.0)
 		, m_isRunning(false)
+		, m_frameNum(0)
 	{
 		m_coreEngine = this;
 
@@ -55,7 +56,7 @@ namespace en
 
 		EventManager::Get()->Subscribe(en::EventManager::EngineQuit, this);
 
-		RenderManager::Get()->Startup();	// Initializes SDL events and video subsystems
+		RenderManager::Get()->Startup(); // Initializes SDL events and video subsystems
 
 		// For whatever reason, this needs to be called after the SDL video subsystem (!) has been initialized:
 		InputManager::Get()->Startup();
@@ -82,7 +83,7 @@ namespace en
 		LOG("\nCoreEngine: Starting main game loop\n");
 
 		// Process any events that might have occurred during startup:
-		EventManager::Get()->Update(0.0);
+		EventManager::Get()->Update(m_frameNum, 0.0);
 
 		// Initialize game loop timing:
 		double elapsed = (double)m_fixedTimeStep; // Ensure we pump Updates once before the 1st render
@@ -95,10 +96,10 @@ namespace en
 		{
 			outerLoopTimer.Start();
 
-			EventManager::Get()->Update(lastOuterFrameTime);
-			InputManager::Get()->Update(lastOuterFrameTime);
-			CoreEngine::Update(lastOuterFrameTime);
-			LogManager::Get()->Update(lastOuterFrameTime);
+			EventManager::Get()->Update(m_frameNum, lastOuterFrameTime);
+			InputManager::Get()->Update(m_frameNum, lastOuterFrameTime);
+			CoreEngine::Update(m_frameNum, lastOuterFrameTime);
+			LogManager::Get()->Update(m_frameNum, lastOuterFrameTime);
 
 			// Update components until enough time has passed to trigger a render.
 			// Or, continue rendering frames until it's time to update again
@@ -107,12 +108,14 @@ namespace en
 			{	
 				elapsed -= m_fixedTimeStep;
 
-				GameplayManager::Get()->Update(m_fixedTimeStep);
-				SceneManager::Get()->Update(m_fixedTimeStep); // Updates all of the scene objects
+				GameplayManager::Get()->Update(m_frameNum, m_fixedTimeStep);
+				SceneManager::Get()->Update(m_frameNum, m_fixedTimeStep); // Updates all of the scene objects
 				// AI, physics, etc should also be pumped here (eventually)
 			}
 
-			RenderManager::Get()->Update(lastOuterFrameTime);
+			RenderManager::Get()->Update(m_frameNum, lastOuterFrameTime);
+
+			++m_frameNum;
 
 			lastOuterFrameTime = outerLoopTimer.StopMs();
 		}
@@ -143,7 +146,7 @@ namespace en
 	}
 
 	
-	void CoreEngine::Update(const double stepTimeMs)
+	void CoreEngine::Update(uint64_t frameNum, double stepTimeMs)
 	{
 		HandleEvents();
 

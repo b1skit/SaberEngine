@@ -1,12 +1,10 @@
 #pragma once
 
-#include "Updateable.h"
-
 
 namespace en
 {
 	// EngineComponent Interface: Functionality common to components in main game loop
-	class EngineComponent : public en::Updateable
+	class EngineComponent
 	{
 	public:
 		EngineComponent() = default;
@@ -17,7 +15,7 @@ namespace en
 		virtual ~EngineComponent() = 0;
 
 		// Updateable interface:
-		virtual void Update(const double stepTimeMs) override = 0;
+		virtual void Update(uint64_t frameNum, double stepTimeMs) = 0;
 
 		// EngineComponent interface:
 		virtual void Startup() = 0; // We can't control construction order, so this is called to start the object

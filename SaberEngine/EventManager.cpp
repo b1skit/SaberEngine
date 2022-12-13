@@ -47,13 +47,13 @@ namespace en
 
 	void EventManager::Shutdown()
 	{
-		Update(0.0); // Run one last update
+		Update(0, 0.0); // Run one last update
 
 		LOG("Event manager shutting down...");
 	}
 
 
-	void EventManager::Update(const double stepTimeMs)
+	void EventManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
 		// NOTE: SDL event handling must be run on the same thread that initialized the video subsystem (ie. main), as
 		// it may implicitely call SDL_PumpEvents()

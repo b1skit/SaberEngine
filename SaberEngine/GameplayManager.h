@@ -14,7 +14,7 @@ namespace fr
 		static GameplayManager* Get(); // Singleton functionality
 
 	public:
-		virtual void Update(const double stepTimeMs) override;
+		virtual void Update(uint64_t frameNum, double stepTimeMs) override;
 
 		virtual void Startup();
 		virtual void Shutdown();

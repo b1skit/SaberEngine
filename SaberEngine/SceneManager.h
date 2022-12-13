@@ -21,7 +21,7 @@ namespace en
 		// EngineComponent interface:
 		void Startup() override;
 		void Shutdown() override;
-		void Update(const double stepTimeMs) override;
+		void Update(uint64_t frameNum, double stepTimeMs) override;
 
 	private:
 		std::shared_ptr<fr::SceneData> m_sceneData = nullptr;

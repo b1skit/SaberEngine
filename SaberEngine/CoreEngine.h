@@ -26,7 +26,7 @@ namespace en
 		void Shutdown();
 
 		// NamedObject interface:
-		void Update(const double stepTimeMs) override;
+		void Update(uint64_t frameNum, double stepTimeMs) override;
 
 		// EventListener interface:
 		void HandleEvents() override;
@@ -41,6 +41,8 @@ namespace en
 		const double m_fixedTimeStep;
 
 		bool m_isRunning;
+
+		uint64_t m_frameNum;
 
 		en::ThreadPool m_threadPool;
 

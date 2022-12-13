@@ -43,7 +43,7 @@ namespace fr
 	}
 
 
-	void GameplayManager::Update(const double stepTimeMs)
+	void GameplayManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
 		for (shared_ptr<Updateable> updateable : m_updateables)
 		{
