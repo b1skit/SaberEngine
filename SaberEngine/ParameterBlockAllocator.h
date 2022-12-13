@@ -53,7 +53,6 @@ namespace re
 			std::unordered_map<Handle, CommitMetadata> m_uniqueIDToTypeAndByteIndex;
 		} m_data;
 		std::recursive_mutex m_dataMutex;
-		// TODO: A recursive mutex might be a little heavy handed here
 
 
 	private:
