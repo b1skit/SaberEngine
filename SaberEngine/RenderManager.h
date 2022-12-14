@@ -54,8 +54,8 @@ namespace re
 		template <typename T>
 		std::shared_ptr<gr::GraphicsSystem> GetGraphicsSystem();
 		
-		inline re::ParameterBlockAllocator& GetParameterBlockAllocator() { return m_paramBlockManager; }
-		inline re::ParameterBlockAllocator const& GetParameterBlockAllocator() const { return m_paramBlockManager; }
+		inline re::ParameterBlockAllocator& GetParameterBlockAllocator() { return m_paramBlockAllocator; }
+		inline re::ParameterBlockAllocator const& GetParameterBlockAllocator() const { return m_paramBlockAllocator; }
 
 		inline std::vector<re::Batch> const& GetSceneBatches() { return m_sceneBatches; }
 
@@ -64,6 +64,7 @@ namespace re
 	private:
 		void BuildSceneBatches();
 
+		void EndOfFrame();
 
 	private:	
 		re::Context m_context;
@@ -75,7 +76,7 @@ namespace re
 
 		std::vector<re::Batch> m_sceneBatches;
 
-		re::ParameterBlockAllocator m_paramBlockManager;	
+		re::ParameterBlockAllocator m_paramBlockAllocator;	
 
 		std::queue<std::shared_ptr<en::Command>> m_imGuiCommands;
 

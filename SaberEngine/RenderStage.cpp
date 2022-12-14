@@ -62,7 +62,7 @@ namespace re
 	}
 	
 
-	void RenderStage::InitializeForNewFrame()
+	void RenderStage::EndOfFrame()
 	{
 		m_perFrameShaderUniforms.clear();
 		m_perFrameShaderUniformValues.clear();

@@ -60,7 +60,6 @@ namespace gr
 
 	void TonemappingGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
-		m_tonemappingStage.InitializeForNewFrame();
 		CreateBatches();
 
 		TextureTargetSet& deferredLightTextureTargetSet =

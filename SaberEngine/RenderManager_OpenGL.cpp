@@ -56,14 +56,13 @@ namespace opengl
 {
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
-		// Add graphics systems, in order:
+		// Add graphics systems, in order of execution:
 		renderManager.m_graphicsSystems.emplace_back(make_shared<GBufferGraphicsSystem>("GBuffer Graphics System"));
 		renderManager.m_graphicsSystems.emplace_back(make_shared<ShadowsGraphicsSystem>("Shadows Graphics System"));
 		renderManager.m_graphicsSystems.emplace_back(make_shared<DeferredLightingGraphicsSystem>("Deferred Lighting Graphics System"));
 		renderManager.m_graphicsSystems.emplace_back(make_shared<SkyboxGraphicsSystem>("Skybox Graphics System"));
 		renderManager.m_graphicsSystems.emplace_back(make_shared<BloomGraphicsSystem>("Bloom Graphics System"));
 		renderManager.m_graphicsSystems.emplace_back(make_shared<TonemappingGraphicsSystem>("Tonemapping Graphics System"));
-		// NOTE: Adding a new graphics system? Don't forget to add a new template instantiation below GetGraphicsSystem()
 
 		// Create each graphics system in turn:
 		vector<shared_ptr<GraphicsSystem>>::iterator gsIt;
@@ -220,13 +219,6 @@ namespace opengl
 			}
 
 			glPopDebugGroup();
-		}
-
-
-		// Cleanup:
-		for (StagePipeline& stagePipeline : renderManager.m_pipeline.GetPipeline())
-		{
-			stagePipeline.EndOfFrame();
 		}
 	}	
 

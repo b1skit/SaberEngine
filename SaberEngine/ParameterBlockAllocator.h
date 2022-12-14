@@ -10,6 +10,19 @@
 
 namespace re
 {
+	/*******************************************************************************************************************
+	* Parameter Blocks have 2 modification/access types:
+	* 1) Mutable:		Can be modified, and are rebuffered when modification is detected
+	* 2) Immutable:		Buffered once at creation, and cannot be modified
+	* 
+	* Parameter Blocks have 2 lifetime scopes:
+	* 1) Permanent:		Allocated once, and held for the lifetime of the program
+	* 2) Single frame:	Allocated and destroyed within a single frame
+	*					-> Single frame parameter blocks are immutable once they are committed
+	*
+	* The union of these properties give us Immutable, Mutable, and SingleFrame Parameter Block types
+	*******************************************************************************************************************/
+
 	class ParameterBlockAllocator
 	{
 	public:
@@ -18,7 +31,7 @@ namespace re
 
 		void Destroy();
 
-		void UpdateParamBlocks(); // TODO: Deprecate this once we switch to a double buffer
+		void UpdateMutableParamBlocks(); // TODO: Deprecate this once we switch to a double buffer
 		void EndOfFrame(); // Clears single-frame PBs
 
 
@@ -29,7 +42,7 @@ namespace re
 		{
 			Immutable,
 			Mutable,
-			SingleFrame,
+			SingleFrame, // also immutable once committed
 			PBType_Count
 		};
 		typedef uint64_t Handle; // == NamedObject::UniqueID()

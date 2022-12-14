@@ -145,15 +145,7 @@ namespace gr
 
 	void ShadowsGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
-		m_directionalShadowStage.InitializeForNewFrame();
-
-		for (shared_ptr<RenderStage> pointShadowStage : m_pointLightShadowStages)
-		{
-			pointShadowStage->InitializeForNewFrame();
-		}
-
 		CreateBatches();
-
 
 		for (shared_ptr<RenderStage> pointShadowStage : m_pointLightShadowStages)
 		{		

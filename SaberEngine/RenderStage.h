@@ -70,7 +70,7 @@ namespace re
 		~RenderStage() = default;
 		RenderStage(RenderStage&&) = default;
 
-		void InitializeForNewFrame(); // Clears per-frame data
+		void EndOfFrame(); // Clears per-frame data. Called by the owning RenderPipeline
 
 		bool WritesColor() const { return m_writesColor; }; // Are any of the params.m_colorWriteMode channels enabled?
 

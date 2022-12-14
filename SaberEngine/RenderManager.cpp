@@ -70,7 +70,7 @@ namespace re
 
 		// NOTE: We must destroy anything that holds a parameter block before the ParameterBlockAllocator is destroyed, 
 		// as parameter blocks call the ParameterBlockAllocator in their destructor
-		m_paramBlockManager.Destroy();
+		m_paramBlockAllocator.Destroy();
 
 		// Do this in the destructor so we can still read any final OpenGL error messages before it is destroyed
 		m_context.Destroy();
@@ -114,24 +114,36 @@ namespace re
 		}
 
 		// Update/buffer param blocks:
-		m_paramBlockManager.UpdateParamBlocks();
+		m_paramBlockAllocator.UpdateMutableParamBlocks();
 
 		// API-specific rendering loop:
 		platform::RenderManager::Render(*this);
-
 		platform::RenderManager::RenderImGui(*this);
 
 		// Present the final frame:
 		m_context.SwapWindow();
 
-		// End of frame cleanup:
-		m_paramBlockManager.EndOfFrame();		
+		// Cleanup:
+		EndOfFrame();
+	}
+
+
+	void RenderManager::EndOfFrame()
+	{
+		for (StagePipeline& stagePipeline : m_pipeline.GetPipeline())
+		{
+			stagePipeline.EndOfFrame();
+		}
+
+		m_sceneBatches.clear(); // Need to make sure we're not holding any PB's before the next call
+		
+		m_paramBlockAllocator.EndOfFrame();
 	}
 
 
 	void RenderManager::BuildSceneBatches()
 	{
-		m_sceneBatches.clear();
+		SEAssert("Scene batches have not been cleared", m_sceneBatches.empty());
 
 		fr::SceneData const* const sceneData = SceneManager::GetSceneData();
 

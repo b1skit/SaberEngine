@@ -485,14 +485,6 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
-		// Note: Culling is not (currently) supported. For now, we attempt to draw everything
-
-		// Clear all stages for the new frame:
-		m_ambientStage.InitializeForNewFrame();
-		m_keylightStage.InitializeForNewFrame();
-		m_pointlightStage.InitializeForNewFrame();
-		// TODO: Is there some way to automate these calls so we don't need to remember them in every stage?
-
 		CreateBatches();
 
 		// Light pointers:
@@ -578,6 +570,8 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::CreateBatches()
 	{
+		// Note: Culling is not (currently) supported. For now, we attempt to draw everything
+		
 		// Ambient stage batches:
 		const Batch ambeintFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
 		m_ambientStage.AddBatch(ambeintFullscreenQuadBatch);

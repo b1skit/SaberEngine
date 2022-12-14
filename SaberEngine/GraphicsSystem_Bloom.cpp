@@ -219,23 +219,7 @@ namespace gr
 
 	void BloomGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
-		m_emissiveBlitStage.InitializeForNewFrame();
-
-		for (size_t i = 0; i < m_downResStages.size(); i++)
-		{
-			m_downResStages[i].InitializeForNewFrame();
-		}
-		for (size_t i = 0; i < m_blurStages.size(); i++)
-		{
-			m_blurStages[i].InitializeForNewFrame();
-		}
-		for (size_t i = 0; i < m_upResStages.size(); i++)
-		{
-			m_upResStages[i].InitializeForNewFrame();
-		}
-
 		CreateBatches();
-
 
 		shared_ptr<GBufferGraphicsSystem> gbufferGS = dynamic_pointer_cast<GBufferGraphicsSystem>(
 			RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>());

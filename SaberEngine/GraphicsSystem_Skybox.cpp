@@ -169,7 +169,6 @@ namespace gr
 
 	void SkyboxGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
-		m_skyboxStage.InitializeForNewFrame();
 		CreateBatches();
 
 		// Skybox texture can be null if we didn't load anything, but this GS should have been removed

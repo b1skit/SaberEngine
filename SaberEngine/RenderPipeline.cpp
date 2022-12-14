@@ -43,6 +43,11 @@ namespace re
 	void StagePipeline::EndOfFrame()
 	{
 		m_singleFrameStagePipeline.clear();
+
+		for (RenderStage* renderStage : m_stagePipeline)
+		{
+			renderStage->EndOfFrame();
+		}
 	}
 
 

@@ -17,6 +17,12 @@ namespace re
 		m_immutablePBs.clear();
 		m_mutablePBs.clear();
 		m_singleFramePBs.clear();
+
+		for (size_t i = 0; i < static_cast<size_t>(PBType::PBType_Count); i++)
+		{
+			m_data.m_committed[i].clear();
+		}
+		m_data.m_uniqueIDToTypeAndByteIndex.clear();
 	}
 
 
@@ -154,17 +160,15 @@ namespace re
 		switch (pb->second.m_type)
 		{
 		case PBType::Immutable:
-		{
-			// TODO: Repack the parameter block data so it's contiguous again.
-		}
-		break;
 		case PBType::Mutable:
-		{
-			// TODO: Repack the parameter block data so it's contiguous again.
-		}
-		break;
+			break; // Do nothing: Permanent PBs are held for the lifetime of the program
 		case PBType::SingleFrame:
 		{
+			// We zero out the allocation here. This isn't actually necessary (since we clear all single frame 
+			// allocations during EndOfFrame()), but is intended to simplify debugging
+			const size_t singleFrameIdx = static_cast<size_t>(PBType::SingleFrame);
+			memset(&m_data.m_committed[singleFrameIdx][pb->second.m_startIndex], 0, pb->second.m_numBytes);
+			
 			break; // We clear all allocations during EndOfFrame() call
 		}
 		break;
@@ -177,7 +181,7 @@ namespace re
 	}
 
 
-	void ParameterBlockAllocator::UpdateParamBlocks()
+	void ParameterBlockAllocator::UpdateMutableParamBlocks()
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_dataMutex);
 
