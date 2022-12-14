@@ -11,11 +11,10 @@ namespace re
 {
 	// Pseudo-private CTOR: private ParameterBlock::Accessor forces access via one of the Create factories
 	ParameterBlock::ParameterBlock(
-		ParameterBlock::Accessor, size_t typeIDHashCode, std::string const& pbName, UpdateType updateType, Lifetime lifetime)
+		ParameterBlock::Accessor, size_t typeIDHashCode, std::string const& pbName, PBType pbType)
 		: NamedObject(pbName)
 		, m_typeIDHash(typeIDHashCode)
-		, m_lifetime(lifetime)
-		, m_updateType(updateType)
+		, m_pbType(pbType)
 		, m_isDirty(true)
 		, m_platformParams(nullptr)
 	{
@@ -41,7 +40,7 @@ namespace re
 	{
 		SEAssert("Invalid type detected. Can only set data of the original type",
 			typeIDHash == m_typeIDHash);
-		SEAssert("Cannot set data of an immutable param block", m_updateType != UpdateType::Immutable);
+		SEAssert("Cannot set data of an immutable param block", m_pbType == PBType::Mutable);
 
 		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetParameterBlockAllocator();
 		pbm.Commit(GetUniqueID(), data);

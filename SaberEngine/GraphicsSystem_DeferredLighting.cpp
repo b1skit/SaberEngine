@@ -317,8 +317,7 @@ namespace gr
 				shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
 					"CameraParams",
 					cubemapCamParams,
-					re::ParameterBlock::UpdateType::Immutable,
-					re::ParameterBlock::Lifetime::SingleFrame);
+					re::ParameterBlock::PBType::SingleFrame);
 				iemStage.AddPermanentParameterBlock(pb);
 
 				iemStage.GetTextureTargetSet().SetColorTarget(0, m_IEMTex);
@@ -372,8 +371,7 @@ namespace gr
 					shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
 						"CameraParams",
 						cubemapCamParams,
-						re::ParameterBlock::UpdateType::Immutable,
-						re::ParameterBlock::Lifetime::SingleFrame);
+						re::ParameterBlock::PBType::SingleFrame);
 					pmremStage.AddPermanentParameterBlock(pb);
 
 					const float roughness = (float)currentMipLevel / (float)(numMipLevels - 1);
@@ -406,8 +404,7 @@ namespace gr
 		std::shared_ptr<re::ParameterBlock> ambientLightPB = re::ParameterBlock::Create(
 			"AmbientLightParams",
 			ambientLightParams,
-			re::ParameterBlock::UpdateType::Immutable,
-			re::ParameterBlock::Lifetime::Permanent);
+			re::ParameterBlock::PBType::Immutable);
 
 		m_ambientStage.AddPermanentParameterBlock(ambientLightPB);
 
@@ -586,8 +583,7 @@ namespace gr
 			shared_ptr<re::ParameterBlock> keylightPB = re::ParameterBlock::Create(
 				"LightParams",
 				keylightParams,
-				re::ParameterBlock::UpdateType::Immutable,
-				re::ParameterBlock::Lifetime::SingleFrame);
+				re::ParameterBlock::PBType::SingleFrame);
 
 			keylightFullscreenQuadBatch.AddBatchParameterBlock(keylightPB);
 
@@ -606,8 +602,7 @@ namespace gr
 			shared_ptr<re::ParameterBlock> pointlightPB = re::ParameterBlock::Create(
 				"LightParams", 
 				pointlightParams, 
-				re::ParameterBlock::UpdateType::Immutable, 
-				re::ParameterBlock::Lifetime::SingleFrame);
+				re::ParameterBlock::PBType::SingleFrame);
 
 			pointlightBatch.AddBatchParameterBlock(pointlightPB);
 
@@ -615,8 +610,7 @@ namespace gr
 			shared_ptr<ParameterBlock> pointlightMeshParams = ParameterBlock::Create(
 				"InstancedMeshParams",
 				m_sphereMeshes[i]->GetTransform()->GetGlobalMatrix(Transform::TRS),
-				ParameterBlock::UpdateType::Immutable,
-				ParameterBlock::Lifetime::SingleFrame);
+				ParameterBlock::PBType::SingleFrame);
 
 			pointlightBatch.AddBatchParameterBlock(pointlightMeshParams);
 

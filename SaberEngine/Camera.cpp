@@ -97,8 +97,7 @@ namespace gr
 			m_cameraParamBlock = re::ParameterBlock::Create(
 				"CameraParams",
 				m_cameraPBData, // Initialize with a default struct: Updated in UpdateCameraParamBlockData()
-				re::ParameterBlock::UpdateType::Mutable,
-				re::ParameterBlock::Lifetime::Permanent);
+				re::ParameterBlock::PBType::Mutable);
 		}
 
 		UpdateCameraParamBlockData();

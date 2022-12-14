@@ -214,8 +214,7 @@ namespace re
 				modelMatrices.data(),
 				sizeof(mat4),
 				numInstances,
-				ParameterBlock::UpdateType::Immutable,
-				ParameterBlock::Lifetime::SingleFrame);
+				ParameterBlock::PBType::SingleFrame);
 			// TODO: We're currently creating/destroying these parameter blocks each frame. This is expensive. Instead,
 			// we should create a pool of PBs, and reuse by re-buffering data each frame
 

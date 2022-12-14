@@ -504,8 +504,7 @@ namespace
 				newMat->GetParameterBlock() = ParameterBlock::Create(
 					"PBRMetallicRoughnessParams",
 					matParams,
-					ParameterBlock::UpdateType::Immutable,
-					ParameterBlock::Lifetime::Permanent);
+					ParameterBlock::PBType::Immutable);
 
 				scene.AddUniqueMaterial(newMat);
 				numMatLoads--;

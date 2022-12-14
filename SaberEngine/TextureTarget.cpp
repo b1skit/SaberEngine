@@ -269,8 +269,7 @@ namespace re
 				m_targetParameterBlock = re::ParameterBlock::Create(
 					"RenderTargetParams",
 					targetParams,
-					re::ParameterBlock::UpdateType::Mutable,
-					re::ParameterBlock::Lifetime::Permanent);
+					re::ParameterBlock::PBType::Mutable);
 			}
 			else
 			{

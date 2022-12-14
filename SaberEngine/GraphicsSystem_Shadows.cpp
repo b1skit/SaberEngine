@@ -131,8 +131,7 @@ namespace gr
 				shared_ptr<re::ParameterBlock> cubemapShadowPB = re::ParameterBlock::Create(
 					"CubemapShadowRenderParams",
 					cubemapShadowParams,
-					re::ParameterBlock::UpdateType::Mutable,
-					re::ParameterBlock::Lifetime::Permanent);
+					re::ParameterBlock::PBType::Mutable);
 
 				shadowStage->AddPermanentParameterBlock(cubemapShadowPB);
 				// TODO: The cubemap shadows param block should be created/maintained by the shadow map object, or the shadow camera
@@ -157,8 +156,7 @@ namespace gr
 			shared_ptr<re::ParameterBlock> cubemapShadowPB = re::ParameterBlock::Create(
 				"CubemapShadowRenderParams", 
 				cubemapShadowParams,
-				re::ParameterBlock::UpdateType::Immutable, 
-				re::ParameterBlock::Lifetime::SingleFrame);
+				re::ParameterBlock::PBType::SingleFrame);
 
 			pointShadowStage->AddSingleFrameParameterBlock(cubemapShadowPB);
 		}

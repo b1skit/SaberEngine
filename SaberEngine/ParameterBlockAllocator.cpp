@@ -18,7 +18,7 @@ namespace re
 		m_mutablePBs.clear();
 		m_singleFramePBs.clear();
 
-		for (size_t i = 0; i < static_cast<size_t>(PBType::PBType_Count); i++)
+		for (size_t i = 0; i < static_cast<size_t>(ParameterBlock::PBType::PBType_Count); i++)
 		{
 			m_data.m_committed[i].clear();
 		}
@@ -30,74 +30,44 @@ namespace re
 	{
 		std::unique_lock<std::recursive_mutex> writeLock(m_dataMutex);
 
-		PBType pbType;
-		if (pb->GetLifetime() == re::ParameterBlock::Lifetime::SingleFrame)
+		const ParameterBlock::PBType pbType = pb->GetType();
+		switch (pbType)
+		{
+		case ParameterBlock::PBType::SingleFrame:
 		{
 			SEAssert("Parameter block is already registered", !m_singleFramePBs.contains(pb->GetUniqueID()));
 			m_singleFramePBs[pb->GetUniqueID()] = pb;
-			pbType = PBType::SingleFrame;
 		}
-		else
+		break;
+		case ParameterBlock::PBType::Immutable:
 		{
-			switch (pb->GetUpdateType())
-			{
-			case ParameterBlock::UpdateType::Immutable:
-			{
-				SEAssert("Parameter block is already registered", !m_immutablePBs.contains(pb->GetUniqueID()));
-				m_immutablePBs[pb->GetUniqueID()] = pb;
-				pbType = PBType::Immutable;
-			}
-			break;
-			case ParameterBlock::UpdateType::Mutable:
-			{
-				SEAssert("Parameter block is already registered", !m_mutablePBs.contains(pb->GetUniqueID()));
-				m_mutablePBs[pb->GetUniqueID()] = pb;
-				pbType = PBType::Mutable;
-			}
-			break;
-			default:
-			{
-				SEAssertF("Invalid update type");
-			}
-			}
+			SEAssert("Parameter block is already registered", !m_immutablePBs.contains(pb->GetUniqueID()));
+			m_immutablePBs[pb->GetUniqueID()] = pb;
+		}
+		break;
+		case ParameterBlock::PBType::Mutable:
+		{
+			SEAssert("Parameter block is already registered", !m_mutablePBs.contains(pb->GetUniqueID()));
+			m_mutablePBs[pb->GetUniqueID()] = pb;
+		}
+		break;
+		default:
+		{
+			SEAssertF("Invalid update type");
+		}
 		}
 
 		// Pre-allocate our PB so it's ready to commit to:
-		Allocate(pb->GetUniqueID(), numBytes, pb->GetUpdateType(), pb->GetLifetime());
+		Allocate(pb->GetUniqueID(), numBytes, pbType);
 	}
 
 
-	void ParameterBlockAllocator::Allocate(
-		Handle uniqueID, size_t numBytes, ParameterBlock::UpdateType updateType, ParameterBlock::Lifetime lifetime)
+	void ParameterBlockAllocator::Allocate(Handle uniqueID, size_t numBytes, ParameterBlock::PBType pbType)
 	{
 		std::unique_lock<std::recursive_mutex> writeLock(m_dataMutex);
 
 		SEAssert("A parameter block with this handle has already been added",
 			m_data.m_uniqueIDToTypeAndByteIndex.find(uniqueID) == m_data.m_uniqueIDToTypeAndByteIndex.end());
-
-		PBType pbType;
-		if (lifetime == ParameterBlock::Lifetime::SingleFrame)
-		{
-			pbType = PBType::SingleFrame;
-		}
-		else
-		{
-			switch (updateType)
-			{
-			case ParameterBlock::UpdateType::Mutable:
-			{
-				pbType = PBType::Mutable;
-			}
-			break;
-			case ParameterBlock::UpdateType::Immutable:
-			{
-				pbType = PBType::Immutable;
-			}
-			break;
-			default:
-				SEAssertF("Invalid UpdateType");
-			}
-		}
 
 		// Record the index we'll be inserting the 1st byte of our data to
 		const size_t pbTypeIdx = static_cast<size_t>(pbType);
@@ -159,17 +129,18 @@ namespace re
 
 		switch (pb->second.m_type)
 		{
-		case PBType::Immutable:
-		case PBType::Mutable:
-			break; // Do nothing: Permanent PBs are held for the lifetime of the program
-		case PBType::SingleFrame:
+		case ParameterBlock::PBType::Immutable:
+		case ParameterBlock::PBType::Mutable:
+		{
+			// Do nothing: Permanent PBs are held for the lifetime of the program
+		}
+		break;		
+		case ParameterBlock::PBType::SingleFrame:
 		{
 			// We zero out the allocation here. This isn't actually necessary (since we clear all single frame 
 			// allocations during EndOfFrame()), but is intended to simplify debugging
-			const size_t singleFrameIdx = static_cast<size_t>(PBType::SingleFrame);
+			const size_t singleFrameIdx = static_cast<size_t>(ParameterBlock::PBType::SingleFrame);
 			memset(&m_data.m_committed[singleFrameIdx][pb->second.m_startIndex], 0, pb->second.m_numBytes);
-			
-			break; // We clear all allocations during EndOfFrame() call
 		}
 		break;
 		default:
@@ -201,6 +172,6 @@ namespace re
 
 		m_singleFramePBs.clear(); // PB destructors call Deallocate()
 
-		m_data.m_committed[static_cast<size_t>(PBType::SingleFrame)].clear();
+		m_data.m_committed[static_cast<size_t>(ParameterBlock::PBType::SingleFrame)].clear();
 	}
 }
