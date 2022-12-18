@@ -32,17 +32,13 @@
 		std::cerr << "Occurred at: " << __FILE__ << ":" << __LINE__ << "::" << __FUNCTION__ << std::endl; \
 		std::abort();
 #else
-// Disable asserts: Just log an error message in release mode
 #define SEAssert(errorMsg, condition)	\
-	if(!(condition)) \
-	{ \
-		const std::string errorStr((errorMsg)); \
-		LOG_ERROR(errorStr.c_str()); \
-	}
+	do {static_cast<void>(errorMsg); const bool supressCompilerWarningByUsingCondition = condition;} while(0)
 #define SEAssertF(errorMsg)	\
-	const std::string errorStr((errorMsg)); \
-	LOG_ERROR(errorStr.c_str());
+	do {static_cast<void>(errorMsg);} while(0)
 #endif
+
+
 
 
 #if defined(_DEBUG)

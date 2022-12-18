@@ -175,8 +175,7 @@ namespace opengl
 		platformParams->m_glContext = SDL_GL_CreateContext(platformParams->m_glWindow);
 		SEAssert("Could not create OpenGL context", platformParams->m_glContext != NULL);
 
-		SEAssert(
-			"Failed to make OpenGL context current", 
+		SEAssert("Failed to make OpenGL context current", 
 			SDL_GL_MakeCurrent(platformParams->m_glWindow, platformParams->m_glContext) >= 0);
 
 		// Synchronize buffer swapping with the monitor's vertical refresh (VSync):

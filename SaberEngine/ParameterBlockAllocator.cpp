@@ -123,7 +123,7 @@ namespace re
 		const size_t numBytes = result->second.m_numBytes;
 		const ParameterBlock::PBType pbType = result->second.m_type;
 
-		void* dest;
+		void* dest = nullptr;
 
 		switch (pbType)
 		{
