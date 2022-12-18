@@ -57,12 +57,12 @@ namespace re
 		inline re::ParameterBlockAllocator& GetParameterBlockAllocator() { return m_paramBlockAllocator; }
 		inline re::ParameterBlockAllocator const& GetParameterBlockAllocator() const { return m_paramBlockAllocator; }
 
-		inline std::vector<re::Batch> const& GetSceneBatches() { return m_sceneBatches; }
+		inline std::vector<re::Batch> const& GetSceneBatches() { return m_renderBatches; }
 
 		void EnqueueImGuiCommand(std::shared_ptr<en::Command> command);
 
 	private:
-		void BuildSceneBatches();
+		void CopyFrameData();
 
 		void EndOfFrame();
 
@@ -74,7 +74,7 @@ namespace re
 		// Note: We store this as a shared_ptr so we can instantiate it once the context has been created
 		std::shared_ptr<re::TextureTargetSet> m_defaultTargetSet; // Default backbuffer
 
-		std::vector<re::Batch> m_sceneBatches;
+		std::vector<re::Batch> m_renderBatches; // Union of all batches created by all systems. Populated in CopyFrameData
 
 		re::ParameterBlockAllocator m_paramBlockAllocator;	
 
