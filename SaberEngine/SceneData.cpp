@@ -966,12 +966,12 @@ namespace
 		{
 			for (size_t i = 0; i < current->children_count; i++)
 			{
+				numLoadJobs++;
 				CoreEngine::GetThreadPool()->EnqueueJob(
 					[current, i, parent, &sceneRootPath, &scene, data, &numLoadJobs]()
 				{
 					shared_ptr<SceneNode> childNode = make_shared<SceneNode>(parent->GetTransform());
-
-					numLoadJobs++;
+					
 					LoadObjectHierarchyRecursiveHelper(
 						sceneRootPath, scene, data, current->children[i], childNode, numLoadJobs);
 				});
@@ -1031,6 +1031,7 @@ namespace
 
 		// Each node is the root in a transformation hierarchy:
 		std::atomic<uint32_t> numLoadJobs = 0;
+
 		for (size_t node = 0; node < data->scenes->nodes_count; node++)
 		{
 			SEAssert("Error: Node is not a root", data->scenes->nodes[node]->parent == nullptr);
@@ -1043,7 +1044,7 @@ namespace
 			LoadObjectHierarchyRecursiveHelper(
 				sceneRootPath, scene, data, data->scenes->nodes[node], currentNode, numLoadJobs);
 		}
-
+		
 		while (numLoadJobs > 0)
 		{
 			std::this_thread::yield();
@@ -1305,10 +1306,10 @@ namespace fr
 	}
 
 
-	void SceneData::AddSceneNode(std::shared_ptr<fr::SceneNode> transformable)
+	void SceneData::AddSceneNode(std::shared_ptr<fr::SceneNode> sceneNode)
 	{
 		std::lock_guard<std::mutex> lock(m_sceneNodesMutex);
-		m_sceneNodes.emplace_back(transformable);
+		m_sceneNodes.emplace_back(sceneNode);
 	}
 
 
