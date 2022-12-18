@@ -242,6 +242,14 @@ namespace re
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_dataMutex);
 
+		// This is compiled out in Release
+		for (auto const& it : m_singleFrameAllocations.m_handleToPtr)
+		{
+			SEAssert("Trying to deallocate a single frame parameter block, but there is still a live shared_ptr. Is "
+				"something holding onto a single frame parameter block beyond the frame lifetime?", 
+				it.second.use_count() == 1);
+		}
+
 		m_singleFrameAllocations.m_handleToPtr.clear(); // PB destructors call Deallocate(), so destroy shared_ptrs 1st
 		m_singleFrameAllocations.m_committed.clear();
 	}
