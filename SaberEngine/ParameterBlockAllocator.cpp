@@ -10,13 +10,20 @@ using std::shared_ptr;
 
 namespace re
 {
+	ParameterBlockAllocator::ParameterBlockAllocator()
+		: m_allocationPeriodEnded(false)
+		, m_permanentPBsHaveBeenBuffered(false)
+	{
+	}
+	
+
 	void ParameterBlockAllocator::Destroy()
 	{
 		std::unique_lock<std::recursive_mutex> writeLock(m_dataMutex);
 
 		// Must clear the parameter blocks shared_ptrs before clearing the committed memory
 		m_immutableAllocations.m_handleToPtr.clear();
-		m_mutableAllocations.m_handleToPtr.clear();
+		m_mutableAllocations.m_handleToPtrAndDirty.clear();
 		m_singleFrameAllocations.m_handleToPtr.clear();
 
 		// Clear the committed memory
@@ -29,8 +36,17 @@ namespace re
 	}
 
 
+	void ParameterBlockAllocator::ClosePermanentPBRegistrationPeriod()
+	{
+		m_allocationPeriodEnded = true;
+	}
+
+
 	void ParameterBlockAllocator::RegisterAndAllocateParameterBlock(std::shared_ptr<re::ParameterBlock> pb, size_t numBytes)
 	{
+		SEAssert("Permanent parameter blocks can only be registered at startup, before the 1st render frame", 
+			pb->GetType() == ParameterBlock::PBType::SingleFrame || !m_allocationPeriodEnded);
+
 		std::unique_lock<std::recursive_mutex> writeLock(m_dataMutex);
 
 		const ParameterBlock::PBType pbType = pb->GetType();
@@ -53,8 +69,10 @@ namespace re
 		case ParameterBlock::PBType::Mutable:
 		{
 			SEAssert("Parameter block is already registered",
-				!m_mutableAllocations.m_handleToPtr.contains(pb->GetUniqueID()));
-			m_mutableAllocations.m_handleToPtr[pb->GetUniqueID()] = pb;
+				!m_mutableAllocations.m_handleToPtrAndDirty.contains(pb->GetUniqueID()));
+
+			m_mutableAllocations.m_handleToPtrAndDirty[pb->GetUniqueID()] = 
+				std::pair<std::shared_ptr<ParameterBlock>, bool>{ pb, true };
 		}
 		break;
 		default:
@@ -70,6 +88,11 @@ namespace re
 
 	void ParameterBlockAllocator::Allocate(Handle uniqueID, size_t numBytes, ParameterBlock::PBType pbType)
 	{
+		// TODO: Allocate twice once double buffering is implemented
+
+		SEAssert("Permanent parameter blocks can only be allocated at startup, before the 1st render frame",
+			pbType == ParameterBlock::PBType::SingleFrame || !m_allocationPeriodEnded);
+
 		std::unique_lock<std::recursive_mutex> writeLock(m_dataMutex);
 
 		SEAssert("A parameter block with this handle has already been added",
@@ -114,9 +137,12 @@ namespace re
 		std::unique_lock<std::recursive_mutex> lock(m_dataMutex);
 
 		auto const& result = m_uniqueIDToTypeAndByteIndex.find(uniqueID);
+		
+		SEAssert("Immutable parameter blocks can only be committed at startup",
+			!m_allocationPeriodEnded || result->second.m_type != ParameterBlock::PBType::Immutable);
 
 		SEAssert("Parameter block with this ID has not been allocated", 
-			result != m_uniqueIDToTypeAndByteIndex.end());
+			 result != m_uniqueIDToTypeAndByteIndex.end());
 
 		// Copy the data to our pre-allocated region:
 		const size_t startIdx = result->second.m_startIndex;
@@ -140,6 +166,7 @@ namespace re
 		case ParameterBlock::PBType::Mutable:
 		{
 			dest = &m_mutableAllocations.m_committed[startIdx];
+			m_mutableAllocations.m_handleToPtrAndDirty[uniqueID].second = true; // Mark dirty
 		}
 		break;
 		default:
@@ -224,16 +251,36 @@ namespace re
 	}
 
 
-	void ParameterBlockAllocator::UpdateMutableParamBlocks()
+	void ParameterBlockAllocator::BufferParamBlocks()
 	{
+		// TODO: Data should be buffered from the inactive buffer once double-buffering is implemented
+
 		std::unique_lock<std::recursive_mutex> lock(m_dataMutex);
 
-		for (auto const& pb : m_mutableAllocations.m_handleToPtr) // Immutable & single-frame PBs are buffered at creation
+		// Create/buffer Mutable PBs, if they've been modified
+		for (auto& pb : m_mutableAllocations.m_handleToPtrAndDirty)
 		{
-			if (pb.second->GetDirty())
+			if (pb.second.second == true)
 			{
-				platform::ParameterBlock::Update(*pb.second.get());
+				platform::ParameterBlock::Update(*pb.second.first.get());
+				pb.second.second = false; // Mark clean
 			}
+		}
+
+		// Create/buffer SingleFrame PBs 
+		for (auto const& pb : m_singleFrameAllocations.m_handleToPtr)
+		{
+			platform::ParameterBlock::Create(*pb.second.get());
+		}
+
+		// Create/buffer Immutable PBs once
+		if (!m_permanentPBsHaveBeenBuffered)
+		{
+			for (auto const& pb : m_immutableAllocations.m_handleToPtr)
+			{
+				platform::ParameterBlock::Create(*pb.second.get());
+			}
+			m_permanentPBsHaveBeenBuffered = true;
 		}
 	}
 

@@ -75,6 +75,11 @@ namespace re
 		platform::TextureTargetSet::CreatePlatformParams(*this);
 	
 		m_colorTargets.resize(platform::TextureTargetSet::MaxColorTargets());
+
+		m_targetParameterBlock = re::ParameterBlock::Create(
+			"RenderTargetParams",
+			TargetParams(), // Defaults for now
+			re::ParameterBlock::PBType::Mutable);
 	}
 
 
@@ -107,6 +112,11 @@ namespace re
 		, m_targetParamsDirty(rhs.m_targetParamsDirty)
 	{
 		platform::TextureTargetSet::CreatePlatformParams(*this);
+
+		m_targetParameterBlock = re::ParameterBlock::Create(
+			"RenderTargetParams",
+			TargetParams(), // Defaults for now
+			re::ParameterBlock::PBType::Mutable);
 	}
 
 
@@ -207,12 +217,12 @@ namespace re
 
 	std::shared_ptr<re::ParameterBlock> TextureTargetSet::GetTargetParameterBlock()
 	{
-		CreateUpdateTargetParameterBlock();
+		UpdateTargetParameterBlock();
 		return m_targetParameterBlock;
 	}
 
 
-	void TextureTargetSet::CreateUpdateTargetParameterBlock()
+	void TextureTargetSet::UpdateTargetParameterBlock()
 	{
 		if (m_targetParamsDirty)
 		{
@@ -263,18 +273,7 @@ namespace re
 			TargetParams targetParams;
 			targetParams.g_targetResolution = targetDimensions;
 
-			// Create the PB if required, or update it otherwise
-			if (m_targetParameterBlock == nullptr)
-			{
-				m_targetParameterBlock = re::ParameterBlock::Create(
-					"RenderTargetParams",
-					targetParams,
-					re::ParameterBlock::PBType::Mutable);
-			}
-			else
-			{
-				m_targetParameterBlock->Commit(targetParams);
-			}
+			m_targetParameterBlock->Commit(targetParams);
 
 			m_targetParamsDirty = false;
 		}

@@ -15,7 +15,6 @@ namespace re
 		: NamedObject(pbName)
 		, m_typeIDHash(typeIDHashCode)
 		, m_pbType(pbType)
-		, m_isDirty(true)
 		, m_platformParams(nullptr)
 	{
 		platform::ParameterBlock::CreatePlatformParams(*this);
@@ -44,8 +43,6 @@ namespace re
 
 		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetParameterBlockAllocator();
 		pbm.Commit(GetUniqueID(), data);
-
-		m_isDirty = true;
 	}
 
 

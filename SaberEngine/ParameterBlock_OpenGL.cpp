@@ -33,8 +33,6 @@ namespace opengl
 			(GLsizeiptr)numBytes,
 			data,
 			GL_STATIC_DRAW);
-
-		paramBlock.MarkClean();
 	}
 
 
@@ -51,8 +49,6 @@ namespace opengl
 		paramBlock.GetDataAndSize(data, numBytes);
 
 		glNamedBufferSubData(params->m_ssbo, 0, (GLsizeiptr)numBytes, data);
-
-		paramBlock.MarkClean();
 	}
 
 

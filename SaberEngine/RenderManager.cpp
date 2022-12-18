@@ -104,8 +104,10 @@ namespace re
 			m_graphicsSystems[gs]->PreRender(m_pipeline.GetPipeline()[gs]);
 		}
 
+		// TODO: Switch ParameterBlockAllocator read/write targets, unblock waiting threads here before proceeding
+
 		// Update/buffer param blocks:
-		m_paramBlockAllocator.UpdateMutableParamBlocks();
+		m_paramBlockAllocator.BufferParamBlocks();
 
 		// API-specific rendering loop:
 		platform::RenderManager::Render(*this);
@@ -145,6 +147,8 @@ namespace re
 		timer.Start();
 
 		platform::RenderManager::Initialize(*this);
+
+		m_paramBlockAllocator.ClosePermanentPBRegistrationPeriod();
 
 		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
 	}

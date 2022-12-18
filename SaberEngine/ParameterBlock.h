@@ -71,9 +71,6 @@ namespace re
 		void GetDataAndSize(void*& out_data, size_t& out_numBytes);
 		inline PBType GetType() const { return m_pbType; }
 
-		bool GetDirty() const { return m_isDirty; }
-		void MarkClean() { m_isDirty = false; }
-
 		inline PlatformParams* const GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
 
@@ -81,8 +78,6 @@ namespace re
 		uint64_t m_typeIDHash; // Hash of the typeid(T) at Create: Used to verify committed data types don't change
 
 		const PBType m_pbType;
-
-		bool m_isDirty;
 
 		std::unique_ptr<PlatformParams> m_platformParams;
 		

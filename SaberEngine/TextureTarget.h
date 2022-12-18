@@ -95,7 +95,7 @@ namespace re
 	public:
 		struct TargetParams
 		{
-			glm::vec4 g_targetResolution;
+			glm::vec4 g_targetResolution = glm::vec4(0.f);
 		};
 
 
@@ -130,7 +130,7 @@ namespace re
 
 
 	private:
-		void CreateUpdateTargetParameterBlock();
+		void UpdateTargetParameterBlock();
 
 
 	private:
