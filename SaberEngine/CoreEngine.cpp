@@ -113,6 +113,8 @@ namespace en
 				// AI, physics, etc should also be pumped here (eventually)
 			}
 
+			SceneManager::Get()->FinalUpdate(); // Builds batches, ready for RenderManager to consume
+
 			RenderManager::Get()->Update(m_frameNum, lastOuterFrameTime);
 
 			++m_frameNum;

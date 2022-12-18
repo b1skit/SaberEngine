@@ -121,7 +121,7 @@ namespace re
 	void RenderManager::CopyFrameData()
 	{
 		SEAssert("Render batches should be empty", m_renderBatches.empty());
-		m_renderBatches = SceneManager::Get()->GetSceneBatches();
+		m_renderBatches = std::move(SceneManager::Get()->GetSceneBatches());
 	}
 
 

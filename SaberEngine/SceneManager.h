@@ -24,9 +24,14 @@ namespace en
 		void Shutdown() override;
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
-		std::vector<re::Batch> GetSceneBatches() const;
+		std::vector<re::Batch>& GetSceneBatches();
+
+		void FinalUpdate(); // Called once after final Update call in main game loop
 
 	private:
+		void BuildSceneBatches();
+		std::vector<re::Batch> m_sceneBatches;
+
 		std::shared_ptr<fr::SceneData> m_sceneData = nullptr;
 
 

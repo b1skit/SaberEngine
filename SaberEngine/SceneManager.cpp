@@ -38,6 +38,7 @@ namespace en
 	SceneManager::SceneManager() 
 		: m_sceneData(nullptr)
 	{
+		m_sceneBatches.reserve(k_initialBatchReservations);
 	}
 
 
@@ -85,17 +86,28 @@ namespace en
 	}
 
 
-	std::vector<re::Batch> SceneManager::GetSceneBatches() const
+	void SceneManager::FinalUpdate()
 	{
-		std::vector<re::Batch> mergedBatches;
+		BuildSceneBatches();
+	}
+
+
+	std::vector<re::Batch>& SceneManager::GetSceneBatches()
+	{
+		// NOTE: The caller should std::move this; m_sceneBatches must be empty for the next BuildSceneBatches call
+		return m_sceneBatches;
+	};
+
+
+	void SceneManager::BuildSceneBatches()
+	{
+		SEAssert("Scene batches should be empty", m_sceneBatches.empty());
 
 		std::vector<shared_ptr<gr::Mesh>> const& sceneMeshes = SceneManager::GetSceneData()->GetMeshes();
 		if (sceneMeshes.empty())
 		{
-			return mergedBatches;
+			return;
 		}
-
-		mergedBatches.reserve(k_initialBatchReservations);
 
 		// Build batches from scene meshes:
 		// TODO: Build this by traversing the scene hierarchy once a scene graph is implemented
@@ -127,8 +139,8 @@ namespace en
 		do
 		{
 			// Add the first batch in the sequence to our final list:
-			mergedBatches.emplace_back(unmergedBatches[unmergedIdx].first);
-			const uint64_t curBatchHash = mergedBatches.back().GetDataHash();
+			m_sceneBatches.emplace_back(unmergedBatches[unmergedIdx].first);
+			const uint64_t curBatchHash = m_sceneBatches.back().GetDataHash();
 
 			// Find the index of the last batch with a matching hash in the sequence:
 			const size_t instanceStartIdx = unmergedIdx++;
@@ -147,7 +159,7 @@ namespace en
 			// Append the remaining batches in the sequence:
 			for (size_t instanceIdx = instanceStartIdx + 1; instanceIdx < unmergedIdx; instanceIdx++)
 			{
-				mergedBatches.back().IncrementBatchInstanceCount();
+				m_sceneBatches.back().IncrementBatchInstanceCount();
 
 				modelMatrices.emplace_back(unmergedBatches[instanceIdx].second->GetGlobalMatrix(Transform::TRS));
 			}
@@ -162,10 +174,8 @@ namespace en
 			// TODO: We're currently creating/destroying these parameter blocks each frame. This is expensive. Instead,
 			// we should create a pool of PBs, and reuse by re-buffering data each frame
 
-			mergedBatches.back().AddBatchParameterBlock(instancedMeshParams);
+			m_sceneBatches.back().AddBatchParameterBlock(instancedMeshParams);
 		} while (unmergedIdx < unmergedBatches.size());
-
-		return mergedBatches;
 	}
 }
 
