@@ -30,6 +30,7 @@ namespace gr
 
 	private:
 		re::RenderStage m_directionalShadowStage;
+		bool m_hasDirectionalLight;
 		std::vector<std::shared_ptr<re::RenderStage>> m_pointLightShadowStages; // 1 stage per light
 	};
 }

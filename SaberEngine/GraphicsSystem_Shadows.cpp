@@ -54,8 +54,10 @@ namespace
 
 namespace gr
 {
-	ShadowsGraphicsSystem::ShadowsGraphicsSystem(std::string name) : GraphicsSystem(name), NamedObject(name),
-		m_directionalShadowStage("Keylight shadow")
+	ShadowsGraphicsSystem::ShadowsGraphicsSystem(std::string name) 
+		: GraphicsSystem(name), NamedObject(name)
+		, m_directionalShadowStage("Keylight shadow")
+		, m_hasDirectionalLight(false)
 	{
 	}
 
@@ -85,6 +87,8 @@ namespace gr
 		shared_ptr<Light> directionalLight = SceneManager::GetSceneData()->GetKeyLight();
 		if (directionalLight)
 		{
+			m_hasDirectionalLight = true;
+
 			ShadowMap* const directionalShadow = directionalLight->GetShadowMap();
 			if (directionalShadow)
 			{
@@ -165,7 +169,10 @@ namespace gr
 
 	void ShadowsGraphicsSystem::CreateBatches()
 	{
-		m_directionalShadowStage.AddBatches(RenderManager::Get()->GetSceneBatches());
+		if (m_hasDirectionalLight)
+		{
+			m_directionalShadowStage.AddBatches(RenderManager::Get()->GetSceneBatches());
+		}
 
 		for (shared_ptr<RenderStage> pointShadowStage : m_pointLightShadowStages)
 		{
