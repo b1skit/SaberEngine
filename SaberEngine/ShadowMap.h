@@ -36,13 +36,12 @@ namespace gr
 		inline glm::vec2 MinMaxShadowBias() const { return m_minMaxShadowBias; }
 		inline glm::vec2& MinMaxShadowBias() { return m_minMaxShadowBias; }
 
-		inline re::TextureTargetSet& GetTextureTargetSet() { return m_shadowTargetSet; }
-		inline re::TextureTargetSet const& GetTextureTargetSet() const { return m_shadowTargetSet; }
+		std::shared_ptr<re::TextureTargetSet> GetTextureTargetSet() const { return m_shadowTargetSet; }
 
 
 	private:
 		gr::Camera m_shadowCam;
-		re::TextureTargetSet m_shadowTargetSet;
+		std::shared_ptr<re::TextureTargetSet> m_shadowTargetSet;
 
 		glm::vec2 m_minMaxShadowBias; // Small offsets for shadow comparisons
 

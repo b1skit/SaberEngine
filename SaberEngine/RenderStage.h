@@ -83,8 +83,8 @@ namespace re
 		inline gr::Camera*& GetStageCamera() { return m_stageCam; }
 		inline gr::Camera const* GetStageCamera() const { return m_stageCam; }
 
-		inline re::TextureTargetSet& GetTextureTargetSet() { return m_textureTargetSet; }
-		inline re::TextureTargetSet const& GetTextureTargetSet() const { return m_textureTargetSet; }
+		inline std::shared_ptr<re::TextureTargetSet> GetTextureTargetSet() const { return m_textureTargetSet; }
+		void SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet);
 
 		// Helper: Simultaneously binds a texture and sampler by name to the stage shader
 		void SetTextureInput(
@@ -113,7 +113,7 @@ namespace re
 
 	private:
 		std::shared_ptr<re::Shader> m_stageShader;
-		re::TextureTargetSet m_textureTargetSet;
+		std::shared_ptr<re::TextureTargetSet> m_textureTargetSet;
 		gr::Camera* m_stageCam;
 		
 		PipelineStateParams m_stageParams;

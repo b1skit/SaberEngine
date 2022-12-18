@@ -19,8 +19,7 @@ namespace gr
 
 		void PreRender(re::StagePipeline& pipeline) override;
 
-		re::TextureTargetSet& GetFinalTextureTargetSet() override {	return m_skyboxStage.GetTextureTargetSet(); }
-		re::TextureTargetSet const& GetFinalTextureTargetSet() const override {	return m_skyboxStage.GetTextureTargetSet(); }
+		std::shared_ptr<re::TextureTargetSet> GetFinalTextureTargetSet() const override;
 
 	private:
 		void CreateBatches() override;

@@ -17,12 +17,12 @@ using glm::vec4;
 
 namespace re
 {
-	RenderStage::RenderStage(std::string const& name) :
-			NamedObject(name),
-		m_textureTargetSet(name + " target"),
-		m_writesColor(true), // Reasonable assumption; Updated when we set the param block
-		m_batchFilterMask(0) // Accept all batches by default
+	RenderStage::RenderStage(std::string const& name)
+		: NamedObject(name)
+		, m_writesColor(true) // Reasonable assumption; Updated when we set the param block
+		, m_batchFilterMask(0) // Accept all batches by default
 	{
+		m_textureTargetSet = std::make_shared<re::TextureTargetSet>(name + " target");
 	}
 
 
@@ -41,6 +41,13 @@ namespace re
 		m_permanentParamBlocks = rhs.m_permanentParamBlocks;
 
 		m_stageBatches = rhs.m_stageBatches;
+	}
+
+
+	void RenderStage::SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet)
+	{
+		SEAssert("Cannot set a null target set", targetSet != nullptr);
+		m_textureTargetSet = targetSet;
 	}
 
 

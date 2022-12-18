@@ -107,12 +107,12 @@ namespace opengl
 				RenderStage::PipelineStateParams const& stagePipelineParams = renderStage->GetStagePipelineStateParams();
 
 				// Attach the stage targets:
-				re::TextureTargetSet& stageTargets = renderStage->GetTextureTargetSet();
-				opengl::TextureTargetSet::AttachColorTargets(stageTargets, 
+				std::shared_ptr<re::TextureTargetSet> stageTargets = renderStage->GetTextureTargetSet();
+				opengl::TextureTargetSet::AttachColorTargets(*stageTargets, 
 					stagePipelineParams.m_textureTargetSetConfig.m_targetFace,
 					stagePipelineParams.m_textureTargetSetConfig.m_targetMip,
 					true);
-				opengl::TextureTargetSet::AttachDepthStencilTarget(stageTargets, true);
+				opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets, true);
 				
 				// Configure the context:
 				renderManager.m_context.SetCullingMode(stagePipelineParams.m_faceCullingMode);
@@ -130,7 +130,7 @@ namespace opengl
 				// Priority order: Stage, batch/material?
 
 				// Set stage param blocks:
-				opengl::Shader::SetParameterBlock(*stageShader, *stageTargets.GetTargetParameterBlock().get());
+				opengl::Shader::SetParameterBlock(*stageShader, *stageTargets->GetTargetParameterBlock().get());
 
 				for (std::shared_ptr<re::ParameterBlock> permanentPB : renderStage->GetPermanentParameterBlocks())
 				{

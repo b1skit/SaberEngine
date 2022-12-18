@@ -154,14 +154,15 @@ namespace gr
 
 		// Need to create a new texture target set, so we can write to the deferred lighting color targets, but use the
 		// GBuffer depth buffer for HW depth testing
-		m_skyboxStage.GetTextureTargetSet() = TextureTargetSet(
-			deferredLightGS->GetFinalTextureTargetSet(), 
-			"Skybox Target Set");
+		m_skyboxStage.SetTextureTargetSet(std::make_shared<re::TextureTargetSet>(
+			*deferredLightGS->GetFinalTextureTargetSet(), 
+			"Skybox Target Set"));
 
 		shared_ptr<GBufferGraphicsSystem> gBufferGS = std::dynamic_pointer_cast<GBufferGraphicsSystem>(
 			RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>());
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
-		m_skyboxStage.GetTextureTargetSet().SetDepthStencilTarget(gBufferGS->GetFinalTextureTargetSet().DepthStencilTarget());
+		m_skyboxStage.GetTextureTargetSet()->SetDepthStencilTarget(
+			gBufferGS->GetFinalTextureTargetSet()->DepthStencilTarget());
 
 		pipeline.AppendRenderStage(m_skyboxStage);
 	}
@@ -186,5 +187,11 @@ namespace gr
 	{
 		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
 		m_skyboxStage.AddBatch(fullscreenQuadBatch);
+	}
+
+
+	std::shared_ptr<re::TextureTargetSet> SkyboxGraphicsSystem::GetFinalTextureTargetSet() const
+	{
+		return m_skyboxStage.GetTextureTargetSet();
 	}
 }

@@ -98,7 +98,7 @@ namespace gr
 				m_directionalShadowStage.GetStageShader() = 
 					make_shared<Shader>(Config::Get()->GetValue<string>("depthShaderName"));
 
-				m_directionalShadowStage.GetTextureTargetSet() = directionalLight->GetShadowMap()->GetTextureTargetSet();
+				m_directionalShadowStage.SetTextureTargetSet(directionalLight->GetShadowMap()->GetTextureTargetSet());
 				// TODO: Target set should be a member of the stage, instead of the shadow map?
 				// -> HARD: The stages are already created, we don't know what lights are associated with each stage
 
@@ -126,7 +126,7 @@ namespace gr
 				shadowStage->GetStageShader() = 
 					make_shared<Shader>(Config::Get()->GetValue<string>("cubeDepthShaderName"));
 
-				shadowStage->GetTextureTargetSet() = curLight->GetShadowMap()->GetTextureTargetSet();
+				shadowStage->SetTextureTargetSet(curLight->GetShadowMap()->GetTextureTargetSet());
 
 				shadowStage->SetStagePipelineStateParams(shadowStageParams);
 
@@ -178,5 +178,11 @@ namespace gr
 		{
 			pointShadowStage->AddBatches(RenderManager::Get()->GetSceneBatches());
 		}
+	}
+
+
+	std::shared_ptr<re::TextureTargetSet> ShadowsGraphicsSystem::GetFinalTextureTargetSet() const
+	{
+		return m_directionalShadowStage.GetTextureTargetSet();
 	}
 }

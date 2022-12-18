@@ -57,7 +57,7 @@ namespace gr
 		m_emissiveBlitStage.GetStageShader() = blitShader;
 		m_emissiveBlitStage.GetStageCamera() = sceneCam;
 
-		m_emissiveBlitStage.GetTextureTargetSet() = deferredLightGS->GetFinalTextureTargetSet();
+		m_emissiveBlitStage.SetTextureTargetSet(deferredLightGS->GetFinalTextureTargetSet());
 		
 		pipeline.AppendRenderStage(m_emissiveBlitStage);
 
@@ -96,14 +96,14 @@ namespace gr
 		{
 			m_downResStages.emplace_back("Down-res stage " + to_string(i + 1) + " / " + to_string(numScalingStages));
 
-			m_downResStages.back().GetTextureTargetSet().Viewport().Width() = currentXRes;
-			m_downResStages.back().GetTextureTargetSet().Viewport().Height() = currentYRes;
+			m_downResStages.back().GetTextureTargetSet()->Viewport().Width() = currentXRes;
+			m_downResStages.back().GetTextureTargetSet()->Viewport().Height() = currentYRes;
 
 			resScaleParams.m_width = currentXRes;
 			resScaleParams.m_height = currentYRes;
 			const string texPath = "ScaledResolution_" + to_string(currentXRes) + "x" + to_string(currentYRes);
 
-			m_downResStages.back().GetTextureTargetSet().SetColorTarget(0, 
+			m_downResStages.back().GetTextureTargetSet()->SetColorTarget(0, 
 				std::make_shared<re::Texture>(texPath, resScaleParams));
 
 			m_downResStages.back().SetStagePipelineStateParams(bloomStageParams);
@@ -150,21 +150,21 @@ namespace gr
 			m_blurStages.emplace_back(
 				stagePrefix + "blur stage " + to_string((i+2)/2) + " / " + to_string(m_numBlurPasses));
 
-			m_blurStages.back().GetTextureTargetSet().Viewport().Width() = currentXRes;
-			m_blurStages.back().GetTextureTargetSet().Viewport().Height() = currentYRes;
+			m_blurStages.back().GetTextureTargetSet()->Viewport().Width() = currentXRes;
+			m_blurStages.back().GetTextureTargetSet()->Viewport().Height() = currentYRes;
 
 			m_blurStages.back().SetStagePipelineStateParams(bloomStageParams);
 			m_blurStages.back().GetStageCamera() = sceneCam;
 
 			if (i % 2 == 0)
 			{
-				m_blurStages.back().GetTextureTargetSet().SetColorTarget(0, blurPingPongTexture);
+				m_blurStages.back().GetTextureTargetSet()->SetColorTarget(0, blurPingPongTexture);
 				m_blurStages.back().GetStageShader() = horizontalBlurShader;
 			}
 			else
 			{
-				m_blurStages.back().GetTextureTargetSet().SetColorTarget(0, 
-					m_downResStages.back().GetTextureTargetSet().GetColorTarget(0));
+				m_blurStages.back().GetTextureTargetSet()->SetColorTarget(0,
+					m_downResStages.back().GetTextureTargetSet()->GetColorTarget(0));
 				m_blurStages.back().GetStageShader() = verticalBlurShader;
 			}
 
@@ -180,15 +180,15 @@ namespace gr
 
 			m_upResStages.emplace_back("Up-res stage " + to_string(i + 1) + " / " + to_string(numScalingStages));
 
-			m_upResStages.back().GetTextureTargetSet().Viewport().Width() = currentXRes;
-			m_upResStages.back().GetTextureTargetSet().Viewport().Height() = currentYRes;
+			m_upResStages.back().GetTextureTargetSet()->Viewport().Width() = currentXRes;
+			m_upResStages.back().GetTextureTargetSet()->Viewport().Height() = currentYRes;
 	
 			m_upResStages.back().GetStageCamera() = sceneCam;
 			m_upResStages[i].GetStageShader() = blitShader;
 
 			if (i == (numScalingStages - 1)) // Last iteration: Additive blit back to the src gs
 			{
-				m_upResStages.back().GetTextureTargetSet() = deferredLightGS->GetFinalTextureTargetSet();
+				m_upResStages.back().SetTextureTargetSet(deferredLightGS->GetFinalTextureTargetSet());
 
 				RenderStage::PipelineStateParams addStageParams(bloomStageParams);
 				addStageParams.m_targetClearMode	= platform::Context::ClearTarget::None;
@@ -199,8 +199,8 @@ namespace gr
 			}
 			else
 			{
-				m_upResStages.back().GetTextureTargetSet().SetColorTarget(0,
-					m_downResStages[m_downResStages.size() - (i + 2)].GetTextureTargetSet().GetColorTarget(0));
+				m_upResStages.back().GetTextureTargetSet()->SetColorTarget(0,
+					m_downResStages[m_downResStages.size() - (i + 2)].GetTextureTargetSet()->GetColorTarget(0));
 
 				m_upResStages.back().SetStagePipelineStateParams(bloomStageParams);
 			}
@@ -235,7 +235,7 @@ namespace gr
 		const size_t gBufferEmissiveTextureIndex = 3; 
 		m_emissiveBlitStage.SetTextureInput(
 			"GBufferAlbedo",
-			gbufferGS->GetFinalTextureTargetSet().GetColorTarget(gBufferEmissiveTextureIndex).GetTexture(),
+			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(gBufferEmissiveTextureIndex).GetTexture(),
 			bloomStageSampler);
 
 		for (size_t i = 0; i < m_downResStages.size(); i++)
@@ -244,14 +244,14 @@ namespace gr
 			{
 				m_downResStages[i].SetTextureInput(
 					"GBufferAlbedo", 
-					m_emissiveBlitStage.GetTextureTargetSet().GetColorTarget(0).GetTexture(),
+					m_emissiveBlitStage.GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
 				m_downResStages[i].SetTextureInput(
 					"GBufferAlbedo",
-					m_downResStages[i - 1].GetTextureTargetSet().GetColorTarget(0).GetTexture(),
+					m_downResStages[i - 1].GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 		}
@@ -262,14 +262,14 @@ namespace gr
 			{
 				m_blurStages[i].SetTextureInput(
 					"GBufferAlbedo",
-					m_downResStages.back().GetTextureTargetSet().GetColorTarget(0).GetTexture(),
+					m_downResStages.back().GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
 				m_blurStages[i].SetTextureInput(
 					"GBufferAlbedo",
-					m_blurStages[i-1].GetTextureTargetSet().GetColorTarget(0).GetTexture(),
+					m_blurStages[i-1].GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 		}
@@ -280,14 +280,14 @@ namespace gr
 			{
 				m_upResStages[i].SetTextureInput(
 					"GBufferAlbedo",
-					m_blurStages.back().GetTextureTargetSet().GetColorTarget(0).GetTexture(),
+					m_blurStages.back().GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
 				m_upResStages[i].SetTextureInput(
 					"GBufferAlbedo",
-					m_upResStages[i-1].GetTextureTargetSet().GetColorTarget(0).GetTexture(),
+					m_upResStages[i-1].GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 		}

@@ -29,10 +29,10 @@ namespace gr
 		Transform* shadowCamParent, 
 		vec3 shadowCamPosition, 
 		bool useCubeMap)
-		: m_shadowTargetSet(lightName + " target")
-		, m_shadowCam(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent)
+		: m_shadowCam(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent)
 		, m_minMaxShadowBias(0.005f, 0.0005f)
 	{
+		m_shadowTargetSet = std::make_shared<re::TextureTargetSet>(lightName + " target");
 		m_shadowCam.GetTransform()->SetLocalTranslation(shadowCamPosition);
 
 		// Texture params are mostly the same between a single shadow map, or a cube map
@@ -69,8 +69,8 @@ namespace gr
 			depthTexture = std::make_shared<re::Texture>(texName, shadowParams);
 		}
 
-		m_shadowTargetSet.SetDepthStencilTarget(depthTexture);
-		m_shadowTargetSet.Viewport() = re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height());
+		m_shadowTargetSet->SetDepthStencilTarget(depthTexture);
+		m_shadowTargetSet->Viewport() = re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height());
 	}
 }
 

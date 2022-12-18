@@ -28,8 +28,7 @@ namespace gr
 		void PreRender(re::StagePipeline& pipeline) override;
 
 		// Note: All light stages write to the same target
-		re::TextureTargetSet& GetFinalTextureTargetSet() override { return m_ambientStage.GetTextureTargetSet(); }
-		re::TextureTargetSet const& GetFinalTextureTargetSet() const override { return m_ambientStage.GetTextureTargetSet(); }
+		std::shared_ptr<re::TextureTargetSet> GetFinalTextureTargetSet() const override;
 
 
 	private:

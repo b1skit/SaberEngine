@@ -75,10 +75,10 @@ namespace gr
 		// -> We'll also need to trigger mip generation after laying down the GBuffer
 
 
-		re::TextureTargetSet& gBufferTargets = m_gBufferStage.GetTextureTargetSet();
+		std::shared_ptr<re::TextureTargetSet> gBufferTargets = m_gBufferStage.GetTextureTargetSet();
 		for (size_t i = 0; i <= 5; i++)
 		{
-			gBufferTargets.SetColorTarget(i, std::make_shared<re::Texture>(GBufferTexNames[i], gBufferParams));
+			gBufferTargets->SetColorTarget(i, std::make_shared<re::Texture>(GBufferTexNames[i], gBufferParams));
 		}
 
 		// Create GBuffer depth target:
@@ -89,7 +89,7 @@ namespace gr
 
 		const size_t gBufferDepthTextureNameIdx = 6; //TODO: Handle this in a less brittle way
 				
-		gBufferTargets.SetDepthStencilTarget(
+		gBufferTargets->SetDepthStencilTarget(
 			std::make_shared<re::Texture>(GBufferTexNames[gBufferDepthTextureNameIdx], depthTexParams));
 
 		// Camera:
@@ -124,5 +124,11 @@ namespace gr
 	void GBufferGraphicsSystem::CreateBatches()
 	{
 		m_gBufferStage.AddBatches(RenderManager::Get()->GetSceneBatches());
+	}
+
+
+	std::shared_ptr<re::TextureTargetSet> GBufferGraphicsSystem::GetFinalTextureTargetSet() const
+	{
+		return m_gBufferStage.GetTextureTargetSet();
 	}
 }

@@ -52,7 +52,7 @@ namespace gr
 			1);
 
 		m_tonemappingStage.GetStageCamera() = SceneManager::GetSceneData()->GetMainCamera().get();
-		m_tonemappingStage.GetTextureTargetSet() = *RenderManager::Get()->GetDefaultTextureTargetSet();
+		m_tonemappingStage.SetTextureTargetSet(RenderManager::Get()->GetDefaultTextureTargetSet());
 
 		pipeline.AppendRenderStage(m_tonemappingStage);
 	}
@@ -62,12 +62,12 @@ namespace gr
 	{
 		CreateBatches();
 
-		TextureTargetSet& deferredLightTextureTargetSet =
+		std::shared_ptr<TextureTargetSet> deferredLightTextureTargetSet =
 			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
 
 		m_tonemappingStage.SetTextureInput(
 			"GBufferAlbedo",
-			deferredLightTextureTargetSet.GetColorTarget(0).GetTexture(),
+			deferredLightTextureTargetSet->GetColorTarget(0).GetTexture(),
 			Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 	}
 
@@ -76,5 +76,11 @@ namespace gr
 	{
 		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
 		m_tonemappingStage.AddBatch(fullscreenQuadBatch);
+	}
+
+
+	std::shared_ptr<re::TextureTargetSet> TonemappingGraphicsSystem::GetFinalTextureTargetSet() const 
+	{
+		return m_tonemappingStage.GetTextureTargetSet();
 	}
 }
