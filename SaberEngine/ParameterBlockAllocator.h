@@ -22,6 +22,8 @@ namespace re
 		void BufferParamBlocks();
 
 		void ClosePermanentPBRegistrationPeriod(); // Called once after all permanent PBs are created
+
+		void SwapBuffers(uint64_t renderFrameNum);
 		void EndOfFrame(); // Clears single-frame PBs
 
 
@@ -43,24 +45,34 @@ namespace re
 		{
 			std::vector<uint8_t> m_committed;
 			std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>> m_handleToPtr;
+			std::recursive_mutex m_mutex;
 		} m_immutableAllocations;
+
+		static constexpr size_t k_numBuffers = 2;
 
 		struct MutableAllocation
 		{
-			std::vector<uint8_t> m_committed; // TODO: Double buffer this
+			std::array<std::vector<uint8_t>, k_numBuffers> m_committed;
 			std::unordered_map<Handle, std::pair<std::shared_ptr<re::ParameterBlock>, bool>> m_handleToPtrAndDirty;
+			std::recursive_mutex m_mutex;
 		} m_mutableAllocations;
 
 		struct SingleFrameAllocation
 		{
-			std::vector<uint8_t> m_committed; // TODO: Double buffer this
+			std::array<std::vector<uint8_t>, k_numBuffers> m_committed;
 			std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>> m_handleToPtr;
+			std::recursive_mutex m_mutex;
 		} m_singleFrameAllocations;
 
 		std::unordered_map<Handle, CommitMetadata> m_uniqueIDToTypeAndByteIndex;
+		std::recursive_mutex m_uniqueIDToTypeAndByteIndexMutex;
 
-		std::recursive_mutex m_dataMutex;
-		// TODO: Implement a mutex per allocation type + for the m_uniqueIDToTypeAndByteIndex?
+
+	private:
+		uint64_t m_readFrameNum; // Read frame # is always 1 behind the write frame
+		uint64_t GetReadIdx() const { return m_readFrameNum % 2; }
+		uint64_t GetWriteIdx() const { return (m_readFrameNum + 1 ) % 2; }
+		
 
 	private:
 		bool m_allocationPeriodEnded; // Debugging helper: Used to assert we're not creating PBs after startup

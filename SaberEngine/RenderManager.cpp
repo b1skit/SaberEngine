@@ -104,7 +104,9 @@ namespace re
 			m_graphicsSystems[gs]->PreRender(m_pipeline.GetPipeline()[gs]);
 		}
 
-		// TODO: Switch ParameterBlockAllocator read/write targets, unblock waiting threads here before proceeding
+		m_paramBlockAllocator.SwapBuffers(frameNum);
+
+		// TODO: unblock waiting threads here before proceeding
 
 		// Update/buffer param blocks:
 		m_paramBlockAllocator.BufferParamBlocks();
