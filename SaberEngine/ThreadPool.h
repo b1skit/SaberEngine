@@ -1,12 +1,5 @@
 #pragma once
 
-#include <thread>
-#include <functional>
-#include <mutex>
-#include <condition_variable>
-#include <queue>
-#include <vector>
-
 
 namespace en
 {

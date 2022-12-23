@@ -6,9 +6,6 @@
 #include <SDL_keycode.h>
 #include <SDL_scancode.h>
 
-#include <unordered_map>
-#include <string>
-
 
 namespace en
 {

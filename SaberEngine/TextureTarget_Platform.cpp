@@ -1,5 +1,3 @@
-#include <memory>
-
 #include "DebugConfiguration.h"
 #include "Config.h"
 #include "TextureTarget_Platform.h"

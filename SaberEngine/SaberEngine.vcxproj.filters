@@ -269,6 +269,9 @@
     <ClCompile Include="Shader_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
     </ClCompile>
+    <ClCompile Include="pch\stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -504,6 +507,9 @@
     </ClInclude>
     <ClInclude Include="Math.h">
       <Filter>Header Files\external</Filter>
+    </ClInclude>
+    <ClInclude Include="pch\stdafx.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

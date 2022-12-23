@@ -1,8 +1,3 @@
-#include <string>
-#include <unordered_map>
-#include <algorithm>
-#include <utility>
-
 #include "Batch.h"
 #include "Config.h"
 #include "GraphicsSystem_GBuffer.h"

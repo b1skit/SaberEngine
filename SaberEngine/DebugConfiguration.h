@@ -13,9 +13,6 @@
 // Custom assert:
 #if defined(_DEBUG)
 
-#include <iostream>
-#include <string>
-
 #define SEAssert(errorMsg, condition) \
 	if(!(condition)) \
 	{ \

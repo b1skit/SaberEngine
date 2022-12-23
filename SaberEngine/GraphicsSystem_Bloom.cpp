@@ -1,6 +1,3 @@
-#include <memory>
-#include <string>
-
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"

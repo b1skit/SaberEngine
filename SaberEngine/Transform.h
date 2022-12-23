@@ -1,10 +1,4 @@
-// Game object transformation component
-
 #pragma once
-
-#include <vector>
-#include <mutex>
-#include <unordered_map>
 
 #include "Math.h"
 

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-#include <vector>
 #include "EngineComponent.h"
 #include "Updateable.h"
 

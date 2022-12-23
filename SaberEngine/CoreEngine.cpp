@@ -1,5 +1,3 @@
-#include <string>
-
 #include "CoreEngine.h"
 #include "Config.h"
 #include "DebugConfiguration.h"

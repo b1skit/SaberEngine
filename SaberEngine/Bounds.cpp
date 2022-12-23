@@ -1,5 +1,3 @@
-#include <vector>
-
 #include "Math.h"
 #include "Bounds.h"
 #include "Transform.h"

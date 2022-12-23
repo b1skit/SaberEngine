@@ -1,5 +1,3 @@
-#include <memory>
-
 #include "Camera.h"
 #include "Config.h"
 #include "Material.h"

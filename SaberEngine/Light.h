@@ -1,8 +1,5 @@
 #pragma once
 
-#include <string>
-#include <memory>
-
 #include "Math.h"
 #include "Mesh.h"
 #include "NamedObject.h"

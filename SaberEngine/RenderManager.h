@@ -1,8 +1,5 @@
 #pragma once
 
-#include <memory>
-#include <vector>
-
 #include "EngineComponent.h"
 #include "Context.h"
 #include "TextureTarget.h"

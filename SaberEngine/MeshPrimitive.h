@@ -1,8 +1,5 @@
 #pragma once
 
-#include <string>
-#include <memory>
-
 #include "Material.h"
 #include "NamedObject.h"
 #include "HashedDataObject.h"

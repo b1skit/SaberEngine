@@ -1,5 +1,3 @@
-#include <memory>
-
 #include "Config.h"
 #include "GraphicsSystem_Shadows.h"
 #include "Light.h"

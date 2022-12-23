@@ -1,10 +1,5 @@
 #pragma once
 
-#include <vector>
-#include <string>
-#include <memory>
-#include <unordered_map>
-
 #include "Math.h"
 #include "NamedObject.h"
 #include "ParameterBlock.h"

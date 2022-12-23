@@ -1,9 +1,5 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <memory>
-
 #include "Math.h"
 #include "NamedObject.h"
 

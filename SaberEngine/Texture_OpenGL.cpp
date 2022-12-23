@@ -1,5 +1,3 @@
-#include <memory>
-
 #include <GL/glew.h>
 
 #include "DebugConfiguration.h"

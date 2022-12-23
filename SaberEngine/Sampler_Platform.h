@@ -1,8 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-
-
 namespace re
 {
 	class Sampler;

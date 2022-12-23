@@ -1,12 +1,5 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <memory>
-#include <shared_mutex>
-#include <mutex>
-
 #include "Mesh.h"
 #include "Updateable.h"
 #include "Transformable.h"

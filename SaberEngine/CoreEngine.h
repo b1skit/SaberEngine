@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 #include "LogManager.h"
 #include "EngineComponent.h"
 #include "ThreadPool.h"

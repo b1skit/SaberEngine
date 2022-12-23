@@ -1,5 +1,3 @@
-#include <string>
-
 #include "Platform.h"
 #include "Config.h"
 #include "DebugConfiguration.h"

@@ -1,6 +1,3 @@
-#include <memory>
-#include <filesystem>
-
 #include "Config.h"
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_DeferredLighting.h"

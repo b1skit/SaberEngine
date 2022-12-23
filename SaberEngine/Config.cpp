@@ -1,20 +1,6 @@
 #include "Config.h"
 #include "KeyConfiguration.h"
 
-#include <fstream>
-#include <filesystem>
-#include <regex>
-#include <stdexcept>
-#include <type_traits>
-
-using std::ifstream;
-using std::any_cast;
-using std::string;
-using std::to_string;
-using std::unordered_map;
-using std::any;
-
-
 // Default true/false strings. We convert config values to lowercase and compare against these
 #define TRUE_STRING		"true"
 #define FALSE_STRING	"false"
@@ -40,6 +26,14 @@ namespace
 
 namespace en
 {
+	using std::ifstream;
+	using std::any_cast;
+	using std::string;
+	using std::to_string;
+	using std::unordered_map;
+	using std::any;
+
+
 	Config* Config::Get()
 	{
 		static std::unique_ptr<en::Config> instance = std::make_unique<en::Config>();

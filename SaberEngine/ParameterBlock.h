@@ -1,8 +1,5 @@
 #pragma once
 
-#include <memory>
-#include <string>
-
 #include "NamedObject.h"
 #include "DebugConfiguration.h"
 

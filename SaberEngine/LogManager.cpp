@@ -1,9 +1,3 @@
-#include <string>
-#include <iostream>
-#include <memory>
-
-#include "imgui.h"
-
 #include "LogManager.h"
 #include "EventManager.h"
 #include "DebugConfiguration.h"

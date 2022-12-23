@@ -1,5 +1,3 @@
-#include <numbers>
-
 #include "Camera.h"
 #include "Config.h"
 #include "EventManager.h"

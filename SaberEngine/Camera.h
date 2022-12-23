@@ -1,7 +1,5 @@
 #pragma once
 
-#include <numbers>
-
 #include "Math.h"
 #include "ParameterBlock.h"
 #include "NamedObject.h"

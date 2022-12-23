@@ -1,6 +1,3 @@
-#include <memory>
-#include <functional>
-
 #include "Config.h"
 #include "Math.h"
 #include "MeshPrimitive.h"

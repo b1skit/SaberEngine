@@ -1,10 +1,5 @@
-#include <memory>
-#include <vector>
-#include <sstream>
-#include <condition_variable>
-#include <stack>
-
-#define STB_IMAGE_IMPLEMENTATION	// Only include this define ONCE in the project
+// Note: We can't include STBI in our pch, as the following define can only be included ONCE in the project
+#define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
 #include <stb_image.h>
 

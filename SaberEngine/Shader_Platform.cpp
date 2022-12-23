@@ -1,5 +1,3 @@
-#include <fstream>
-
 #include "DebugConfiguration.h"
 #include "Config.h"
 #include "Shader.h"

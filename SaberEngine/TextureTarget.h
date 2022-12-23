@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 #include "DebugConfiguration.h"
 #include "Texture.h"
 #include "NamedObject.h"

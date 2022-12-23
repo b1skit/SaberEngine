@@ -1,5 +1,3 @@
-#include <memory>
-
 #include "Config.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "GraphicsSystem_DeferredLighting.h"

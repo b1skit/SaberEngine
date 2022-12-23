@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "Platform.h"
 #include "CoreEngine.h"
 #include "DebugConfiguration.h"

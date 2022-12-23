@@ -1,5 +1,3 @@
-#include <mutex>
-
 #include "DebugConfiguration.h"
 #include "Material.h"
 #include "ParameterBlock.h"

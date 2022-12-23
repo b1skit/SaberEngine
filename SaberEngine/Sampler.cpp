@@ -1,7 +1,5 @@
 #pragma once
 
-#include <mutex>
-
 #include "DebugConfiguration.h"
 #include "Sampler.h"
 #include "Sampler_Platform.h"
