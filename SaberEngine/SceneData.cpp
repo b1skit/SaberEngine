@@ -4,9 +4,6 @@
 #include <condition_variable>
 #include <stack>
 
-#include <glm/gtx/matrix_decompose.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #define STB_IMAGE_IMPLEMENTATION	// Only include this define ONCE in the project
 #define STBI_FAILURE_USERMSG
 #include <stb_image.h>
@@ -15,61 +12,54 @@
 #define CGLTF_IMPLEMENTATION
 #include "cgltf.h"
 
-
-#include "SceneData.h"
-#include "VertexAttributeBuilder.h"
-#include "Light.h"
 #include "Camera.h"
-#include "SceneNode.h"
+#include "Config.h"
+#include "CoreEngine.h"
+#include "DebugConfiguration.h"
+#include "Light.h"
+#include "Math.h"
+#include "Material.h"
 #include "Mesh.h"
 #include "MeshPrimitive.h"
-#include "Transform.h"
-#include "Material.h"
-#include "Light.h"
-#include "Config.h"
-#include "DebugConfiguration.h"
-#include "ShadowMap.h"
 #include "ParameterBlock.h"
 #include "PerformanceTimer.h"
+#include "SceneData.h"
+#include "SceneNode.h"
+#include "ShadowMap.h"
 #include "ThreadPool.h"
-#include "CoreEngine.h"
-
-using gr::Camera;
-using gr::Light;
-using re::Texture;
-using gr::Material;
-using re::MeshPrimitive;
-using gr::Bounds;
-using gr::Transform;
-using gr::Light;
-using gr::ShadowMap;
-using re::ParameterBlock;
-using fr::SceneNode;
-using en::Config;
-using en::NamedObject;
-using en::CoreEngine;
-using util::PerformanceTimer;
-using std::string;
-using std::vector;
-using std::shared_ptr;
-using std::make_shared;
-using std::unordered_map;
-using std::stringstream;
-using std::max;
-using std::to_string;
-using glm::quat;
-using glm::vec2;
-using glm::vec3;
-using glm::vec4;
-using glm::mat4;
-using glm::make_mat4;
-using glm::decompose;
+#include "Transform.h"
+#include "VertexAttributeBuilder.h"
 
 
 // Data loading helpers:
 namespace
 {
 	using fr::SceneData;
+	using gr::Camera;
+	using gr::Light;
+	using re::Texture;
+	using gr::Material;
+	using re::MeshPrimitive;
+	using gr::Bounds;
+	using gr::Transform;
+	using re::ParameterBlock;
+	using fr::SceneNode;
+	using en::Config;
+	using en::CoreEngine;
+	using util::PerformanceTimer;
+	using std::string;
+	using std::vector;
+	using std::shared_ptr;
+	using std::make_shared;
+	using std::stringstream;
+	using std::to_string;
+	using glm::quat;
+	using glm::vec2;
+	using glm::vec3;
+	using glm::vec4;
+	using glm::mat4;
+	using glm::make_mat4;
+
 
 	#define ERROR_TEXTURE_NAME "ErrorTexture"
 	#define ERROR_TEXTURE_COLOR_VEC4 vec4(1.0f, 0.0f, 1.0f, 1.0f)
@@ -1060,6 +1050,12 @@ namespace
 
 namespace fr
 {
+	using std::string;
+	using std::vector;
+	using std::unordered_map;
+	using std::max;
+
+
 	bool SceneData::Load(string const& sceneFilePath)
 	{
 		if (sceneFilePath.empty())

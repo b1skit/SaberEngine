@@ -1,10 +1,10 @@
 #pragma once
 
-#include "NamedObject.h"
-#include "Updateable.h"
-#include "Transformable.h"
 #include "EventListener.h"
-#include <glm/glm.hpp>
+#include "Math.h"
+#include "NamedObject.h"
+#include "Transformable.h"
+#include "Updateable.h"
 
 
 namespace gr

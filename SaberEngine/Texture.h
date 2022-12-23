@@ -4,8 +4,7 @@
 #include <vector>
 #include <memory>
 
-#include <glm/glm.hpp>
-
+#include "Math.h"
 #include "NamedObject.h"
 
 

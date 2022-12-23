@@ -6,9 +6,7 @@
 #include <mutex>
 #include <unordered_map>
 
-#define GLM_FORCE_SWIZZLE // Enable swizzle operators
-#include <glm/glm.hpp>
-#include <glm/gtc/quaternion.hpp>
+#include "Math.h"
 
 
 namespace gr

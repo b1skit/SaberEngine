@@ -1,12 +1,10 @@
 #include <memory>
 #include <functional>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
-
+#include "Config.h"
+#include "Math.h"
 #include "MeshPrimitive.h"
 #include "MeshPrimitive_Platform.h"
-#include "Config.h"
 #include "Transform.h"
 
 

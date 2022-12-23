@@ -1,13 +1,14 @@
+#include "DebugConfiguration.h"
 #include "Texture.h"
 #include "Texture_Platform.h"
-#include "DebugConfiguration.h"
-
-using glm::vec4;
-using std::string;
 
 
 namespace re
 {
+	using glm::vec4;
+	using std::string;
+
+
 	Texture::Texture(string const& name, TextureParams const& params)
 		: NamedObject(name)
 		, m_texParams{ params }

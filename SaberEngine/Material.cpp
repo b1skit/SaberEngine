@@ -1,31 +1,32 @@
 #include <mutex>
 
-#include "Material.h"
-#include "Shader_Platform.h"
-#include "Texture.h"
 #include "DebugConfiguration.h"
-#include "Shader.h"
+#include "Material.h"
 #include "ParameterBlock.h"
-
-using re::Shader;
-using re::Texture;
-using re::Sampler;
-using re::ParameterBlock;
-
-using std::string;
-using std::shared_ptr;
-using std::unique_ptr;
-using std::vector;
-using std::unordered_map;
-using std::make_unique;
-using std::make_shared;
-using std::vector;
-using glm::vec4;
-using glm::vec3;
+#include "Shader_Platform.h"
+#include "Shader.h"
+#include "Texture.h"
 
 
 namespace gr
 {
+	using re::Shader;
+	using re::Texture;
+	using re::Sampler;
+	using re::ParameterBlock;
+
+	using std::string;
+	using std::shared_ptr;
+	using std::unique_ptr;
+	using std::vector;
+	using std::unordered_map;
+	using std::make_unique;
+	using std::make_shared;
+	using std::vector;
+	using glm::vec4;
+	using glm::vec3;
+
+
 	// Static members:
 	unique_ptr<unordered_map<string, shared_ptr<Material::MaterialDefinition>>> Material::m_materialLibrary = nullptr;
 

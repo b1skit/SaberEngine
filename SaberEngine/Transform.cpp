@@ -1,29 +1,24 @@
 #include "DebugConfiguration.h"
+#include "Math.h"
 #include "Transform.h"
-#include <algorithm>
-
-#include <glm/gtc/constants.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
-
-#define GLM_ENABLE_EXPERIMENTAL 
-#include <glm/gtx/common.hpp>
-
-using glm::vec3;
-using glm::vec4;
-using glm::quat;
-using glm::mat4;
-using glm::normalize;
-using glm::rotate;
-using glm::fmod;
-using glm::abs;
-using glm::two_pi;
-using glm::sign;
-using std::vector;
-using std::find;
 
 
 namespace gr
 {
+	using glm::vec3;
+	using glm::vec4;
+	using glm::quat;
+	using glm::mat4;
+	using glm::normalize;
+	using glm::rotate;
+	using glm::fmod;
+	using glm::abs;
+	using glm::two_pi;
+	using glm::sign;
+	using std::vector;
+	using std::find;
+
+
 	// Static members:
 	//----------------
 	const glm::vec3 Transform::WorldAxisX	= vec3(1.0f,	0.0f,	0.0f);

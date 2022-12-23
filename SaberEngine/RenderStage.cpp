@@ -3,20 +3,20 @@
 #include "RenderStage.h"
 
 
-using re::Sampler;
-using re::Texture;
-using std::string;
-using std::shared_ptr;
-using std::make_shared;
-using std::vector;
-using glm::mat4;
-using glm::mat3;
-using glm::vec3;
-using glm::vec4;
-
-
 namespace re
 {
+	using re::Sampler;
+	using re::Texture;
+	using std::string;
+	using std::shared_ptr;
+	using std::make_shared;
+	using std::vector;
+	using glm::mat4;
+	using glm::mat3;
+	using glm::vec3;
+	using glm::vec4;
+
+
 	RenderStage::RenderStage(std::string const& name)
 		: NamedObject(name)
 		, m_writesColor(true) // Reasonable assumption; Updated when we set the param block

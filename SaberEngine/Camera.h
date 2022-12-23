@@ -2,13 +2,11 @@
 
 #include <numbers>
 
-#define GLM_FORCE_SWIZZLE
-#include <glm/glm.hpp>
-
+#include "Math.h"
+#include "ParameterBlock.h"
 #include "NamedObject.h"
 #include "Transformable.h"
 #include "TextureTarget.h"
-#include "ParameterBlock.h"
 #include "Updateable.h"
 
 

@@ -4,24 +4,24 @@
 #include "weldmesh.h"
 #include "weldmesh.c" // LNK2019 otherwise...
 
-#include <glm/glm.hpp>
-
-#include "VertexAttributeBuilder.h"
-#include "DebugConfiguration.h"
 #include "Config.h"
-
-using en::Config;
-using std::string;
-using std::to_string;
-using std::vector;
-using std::move;
-using glm::vec2;
-using glm::vec3;
-using glm::vec4;
+#include "DebugConfiguration.h"
+#include "Math.h"
+#include "VertexAttributeBuilder.h"
 
 
 namespace util
 {
+	using en::Config;
+	using std::string;
+	using std::to_string;
+	using std::vector;
+	using std::move;
+	using glm::vec2;
+	using glm::vec3;
+	using glm::vec4;
+
+
 	void VertexAttributeBuilder::BuildMissingVertexAttributes(MeshData* meshData)
 	{
 		util::VertexAttributeBuilder tangentBuilder;

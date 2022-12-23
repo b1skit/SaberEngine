@@ -1,40 +1,39 @@
 #include <memory>
 #include <filesystem>
 
-#define GLM_FORCE_SWIZZLE
-#include <glm/glm.hpp>
-
+#include "Config.h"
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
-#include "Config.h"
+#include "Math.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
 #include "Texture.h"
 #include "TextureTarget.h"
 
-using en::Config;
-using en::SceneManager;
-using gr::DeferredLightingGraphicsSystem;
-using gr::GBufferGraphicsSystem;
-using re::RenderManager;
-using re::RenderStage;
-using re::Sampler;
-using re::Batch;
-using re::TextureTargetSet;
-using re::Texture;
-using re::Shader;
-using std::shared_ptr;
-using std::string;
-using std::vector;
-using std::filesystem::exists;
-using glm::vec3;
-using glm::vec4;
-using glm::mat4;
-
 
 namespace gr
 {
+	using en::Config;
+	using en::SceneManager;
+	using gr::DeferredLightingGraphicsSystem;
+	using gr::GBufferGraphicsSystem;
+	using re::RenderManager;
+	using re::RenderStage;
+	using re::Sampler;
+	using re::Batch;
+	using re::TextureTargetSet;
+	using re::Texture;
+	using re::Shader;
+	using std::shared_ptr;
+	using std::string;
+	using std::vector;
+	using std::filesystem::exists;
+	using glm::vec3;
+	using glm::vec4;
+	using glm::mat4;
+
+
 	SkyboxGraphicsSystem::SkyboxGraphicsSystem(std::string name) : GraphicsSystem(name), NamedObject(name),
 		m_skyboxStage("Skybox stage"),
 		m_skyTexture(nullptr)

@@ -1,26 +1,27 @@
 #include <memory>
 
-#include "ShadowMap.h"
-#include "Config.h"
 #include "Camera.h"
-#include "SceneData.h"
-#include "Texture.h"
+#include "Config.h"
 #include "Material.h"
-
-using en::Config;
-using gr::Material;
-using re::Texture;
-using re::Shader;
-using gr::Camera;
-using gr::Transform;
-using std::shared_ptr;
-using std::make_shared;
-using std::string;
-using glm::vec3;
+#include "SceneData.h"
+#include "ShadowMap.h"
+#include "Texture.h"
 
 
 namespace gr
 {
+	using en::Config;
+	using gr::Material;
+	using re::Texture;
+	using re::Shader;
+	using gr::Camera;
+	using gr::Transform;
+	using std::shared_ptr;
+	using std::make_shared;
+	using std::string;
+	using glm::vec3;
+
+
 	ShadowMap::ShadowMap(
 		string lightName, 
 		uint32_t xRes,

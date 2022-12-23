@@ -1,42 +1,42 @@
-#include <glm/glm.hpp>
-
-#include "GraphicsSystem_DeferredLighting.h"
-#include "SceneManager.h"
-#include "Config.h"
-#include "RenderManager.h"
-#include "Light.h"
-#include "ShadowMap.h"
-#include "RenderStage.h"
-#include "GraphicsSystem_GBuffer.h"
-#include "MeshPrimitive.h"
 #include "Batch.h"
+#include "Config.h"
+#include "GraphicsSystem_DeferredLighting.h"
+#include "GraphicsSystem_GBuffer.h"
+#include "Light.h"
+#include "MeshPrimitive.h"
+#include "Math.h"
 #include "ParameterBlock.h"
 #include "SceneManager.h"
-
-using gr::Light;
-using re::Texture;
-using gr::ShadowMap;
-using re::RenderManager;
-using re::ParameterBlock;
-using re::Batch;
-using re::RenderStage;
-using re::TextureTargetSet;
-using re::Sampler;
-using re::Shader;
-using en::Config;
-using en::SceneManager;
-using std::string;
-using std::shared_ptr;
-using std::make_shared;
-using std::vector;
-using std::to_string;
-using glm::vec3;
-using glm::vec4;
-using glm::mat4;
+#include "SceneManager.h"
+#include "ShadowMap.h"
+#include "RenderManager.h"
+#include "RenderStage.h"
 
 
 namespace
 {
+	using gr::Light;
+	using re::Texture;
+	using gr::ShadowMap;
+	using re::RenderManager;
+	using re::ParameterBlock;
+	using re::Batch;
+	using re::RenderStage;
+	using re::TextureTargetSet;
+	using re::Sampler;
+	using re::Shader;
+	using en::Config;
+	using en::SceneManager;
+	using std::string;
+	using std::shared_ptr;
+	using std::make_shared;
+	using std::vector;
+	using std::to_string;
+	using glm::vec3;
+	using glm::vec4;
+	using glm::mat4;
+
+
 	constexpr uint32_t k_generatedAmbientIBLTexRes = 1024; // TODO: Make this user-controllable via the config
 
 

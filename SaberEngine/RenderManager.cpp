@@ -3,42 +3,44 @@
 #include <algorithm>
 #include <utility>
 
-#include "RenderManager.h"
-#include "RenderManager_Platform.h"
+#include "Batch.h"
 #include "Config.h"
-#include "SceneManager.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
-#include "Batch.h"
+#include "Math.h"
 #include "PerformanceTimer.h"
-
-using re::TextureTargetSet;
-using gr::GBufferGraphicsSystem;
-using gr::DeferredLightingGraphicsSystem;
-using gr::GraphicsSystem;
-using gr::ShadowsGraphicsSystem;
-using gr::SkyboxGraphicsSystem;
-using gr::BloomGraphicsSystem;
-using gr::TonemappingGraphicsSystem;
-using gr::Transform;
-using re::MeshPrimitive;
-using re::Batch;
-using en::Config;
-using en::SceneManager;
-using util::PerformanceTimer;
-using std::shared_ptr;
-using std::make_shared;
-using std::string;
-using std::vector;
-using glm::mat4;
+#include "RenderManager.h"
+#include "RenderManager_Platform.h"
+#include "SceneManager.h"
 
 
 namespace re
 {
+	using re::TextureTargetSet;
+	using gr::GBufferGraphicsSystem;
+	using gr::DeferredLightingGraphicsSystem;
+	using gr::GraphicsSystem;
+	using gr::ShadowsGraphicsSystem;
+	using gr::SkyboxGraphicsSystem;
+	using gr::BloomGraphicsSystem;
+	using gr::TonemappingGraphicsSystem;
+	using gr::Transform;
+	using re::MeshPrimitive;
+	using re::Batch;
+	using en::Config;
+	using en::SceneManager;
+	using util::PerformanceTimer;
+	using std::shared_ptr;
+	using std::make_shared;
+	using std::string;
+	using std::vector;
+	using glm::mat4;
+
+
 	RenderManager* RenderManager::Get()
 	{
 		static std::unique_ptr<re::RenderManager> instance = std::make_unique<re::RenderManager>();

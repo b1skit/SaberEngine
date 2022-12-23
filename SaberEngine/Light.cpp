@@ -1,24 +1,17 @@
-#include "Light.h"
-#include "Config.h"
-#include "SceneManager.h"
 #include "Camera.h"
+#include "Config.h"
 #include "DebugConfiguration.h"
-#include "Shader.h"
+#include "Light.h"
 #include "MeshPrimitive.h"
-
-using re::Shader;
-using gr::Transform;
-using en::Config;
-using en::SceneManager;
-using std::unique_ptr;
-using std::make_unique;
-using std::string;
-using glm::vec3;
-using re::ParameterBlock;
+#include "SceneManager.h"
+#include "Shader.h"
 
 
 namespace
 {
+	using gr::Transform;
+
+
 	gr::Camera::CameraConfig ComputeDirectionalShadowCameraConfigFromSceneBounds(
 		gr::Transform* lightTransform, gr::Bounds& sceneWorldBounds)
 	{
@@ -42,6 +35,17 @@ namespace
 
 namespace gr
 {
+	using re::Shader;
+	using gr::Transform;
+	using en::Config;
+	using en::SceneManager;
+	using std::unique_ptr;
+	using std::make_unique;
+	using std::string;
+	using glm::vec3;
+	using re::ParameterBlock;
+
+
 	Light::Light(string const& name, Transform* ownerTransform, LightType lightType, vec3 colorIntensity, bool hasShadow)
 		: en::NamedObject(name)
 		, m_ownerTransform(ownerTransform)

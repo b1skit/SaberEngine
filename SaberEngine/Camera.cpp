@@ -1,21 +1,20 @@
-#include <glm/glm.hpp>
-
 #include "DebugConfiguration.h"
 #include "Camera.h"
 #include "Texture.h"
 #include "Material.h"
 
-using gr::Material;
-using re::Texture;
-using gr::Transform;
-using std::shared_ptr;
-using std::string;
-using std::make_shared;
-using glm::mat4;
-
 
 namespace gr
 {
+	using gr::Material;
+	using re::Texture;
+	using gr::Transform;
+	using std::shared_ptr;
+	using std::string;
+	using std::make_shared;
+	using glm::mat4;
+
+
 	Camera::Camera(string const& cameraName, CameraConfig const& camConfig, Transform* parent)
 		: NamedObject(cameraName)
 		, Transformable(parent)

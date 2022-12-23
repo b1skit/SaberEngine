@@ -1,31 +1,21 @@
 #include <memory>
 
+#include "Config.h"
 #include "GraphicsSystem_Shadows.h"
 #include "Light.h"
-#include "ShadowMap.h"
-#include "SceneManager.h"
 #include "RenderManager.h"
-#include "Config.h"
-
-using en::SceneManager;
-using en::Config;
-using re::RenderManager;
-using gr::Light;
-using gr::ShadowMap;
-using re::RenderStage;
-using re::Shader;
-using std::vector;
-using std::string;
-using std::shared_ptr;
-using std::make_shared;
-using glm::mat4;
-using glm::vec2;
-using glm::vec3;
-using glm::vec4;
+#include "SceneManager.h"
+#include "ShadowMap.h"
+#include "Math.h"
 
 
 namespace
 {
+	using glm::mat4;
+	using glm::vec2;
+	using glm::vec3;
+
+
 	struct CubemapShadowRenderParams
 	{
 		glm::mat4 g_cubemapShadowCam_VP[6];
@@ -54,6 +44,23 @@ namespace
 
 namespace gr
 {
+	using en::SceneManager;
+	using en::Config;
+	using re::RenderManager;
+	using gr::Light;
+	using gr::ShadowMap;
+	using re::RenderStage;
+	using re::Shader;
+	using std::vector;
+	using std::string;
+	using std::shared_ptr;
+	using std::make_shared;
+	using glm::mat4;
+	using glm::vec2;
+	using glm::vec3;
+	using glm::vec4;
+
+
 	ShadowsGraphicsSystem::ShadowsGraphicsSystem(std::string name) 
 		: GraphicsSystem(name), NamedObject(name)
 		, m_directionalShadowStage("Keylight shadow")

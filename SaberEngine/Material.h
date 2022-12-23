@@ -5,12 +5,10 @@
 #include <memory>
 #include <unordered_map>
 
-#include <GL/glew.h>
-#include <glm/glm.hpp>
-
-#include "Sampler.h"
-#include "ParameterBlock.h"
+#include "Math.h"
 #include "NamedObject.h"
+#include "ParameterBlock.h"
+#include "Sampler.h"
 
 
 namespace re

@@ -1,29 +1,31 @@
 #include <memory>
 
+#include "Config.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "GraphicsSystem_DeferredLighting.h"
-#include "Shader.h"
-#include "Config.h"
-#include "SceneManager.h"
+#include "Math.h"
 #include "RenderManager.h"
-
-using en::Config;
-using en::SceneManager;
-using re::Shader;
-using gr::DeferredLightingGraphicsSystem;
-using re::TextureTargetSet;
-using re::RenderManager;
-using re::RenderStage;
-using re::Batch;
-using re::Sampler;
-using std::shared_ptr;
-using std::make_shared;
-using std::string;
-using glm::vec3;
+#include "Shader.h"
+#include "SceneManager.h"
 
 
 namespace gr
 {
+	using en::Config;
+	using en::SceneManager;
+	using re::Shader;
+	using gr::DeferredLightingGraphicsSystem;
+	using re::TextureTargetSet;
+	using re::RenderManager;
+	using re::RenderStage;
+	using re::Batch;
+	using re::Sampler;
+	using std::shared_ptr;
+	using std::make_shared;
+	using std::string;
+	using glm::vec3;
+
+
 	TonemappingGraphicsSystem::TonemappingGraphicsSystem(std::string name) : GraphicsSystem(name), NamedObject(name),
 		m_tonemappingStage("Tonemapping stage")
 	{

@@ -1,22 +1,22 @@
 #include <numbers>
 
-#include "PlayerObject.h"
-#include "InputManager.h"
-#include <glm/gtc/constants.hpp>
-
-#include "Config.h"
 #include "Camera.h"
+#include "Config.h"
 #include "EventManager.h"
-
-using gr::Transform;
-using gr::Camera;
-using en::Config;
-using en::InputManager;
-using glm::vec3;
+#include "InputManager.h"
+#include "Math.h"
+#include "PlayerObject.h"
 
 
 namespace fr
 {
+	using gr::Transform;
+	using gr::Camera;
+	using en::Config;
+	using en::InputManager;
+	using glm::vec3;
+
+
 	PlayerObject::PlayerObject(std::shared_ptr<Camera> playerCam)
 		: en::NamedObject("Player Object")
 		, fr::Transformable(nullptr)

@@ -1,24 +1,12 @@
 #include <algorithm>
 #include <string>
 
-#include <glm/glm.hpp>
-
-#include "SceneManager.h"
 #include "Config.h"
-#include "PerformanceTimer.h"
-#include "Transform.h"
+#include "Math.h"
 #include "ParameterBlock.h"
-
-using fr::SceneData;
-using en::Config;
-using re::Batch;
-using re::ParameterBlock;
-using gr::Transform;
-using util::PerformanceTimer;
-using std::shared_ptr;
-using std::make_shared;
-using std::string;
-using glm::mat4;
+#include "PerformanceTimer.h"
+#include "SceneManager.h"
+#include "Transform.h"
 
 
 namespace
@@ -28,6 +16,18 @@ namespace
 
 namespace en
 {
+	using fr::SceneData;
+	using en::Config;
+	using re::Batch;
+	using re::ParameterBlock;
+	using gr::Transform;
+	using util::PerformanceTimer;
+	using std::shared_ptr;
+	using std::make_shared;
+	using std::string;
+	using glm::mat4;
+
+
 	SceneManager* SceneManager::Get()
 	{
 		static std::unique_ptr<en::SceneManager> instance = std::make_unique<en::SceneManager>();

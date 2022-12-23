@@ -3,11 +3,10 @@
 #include <memory>
 #include <string>
 
-#include <glm/glm.hpp>
-
+#include "Camera.h"
+#include "Math.h"
 #include "Texture.h"
 #include "TextureTarget.h"
-#include "Camera.h"
 
 
 namespace gr

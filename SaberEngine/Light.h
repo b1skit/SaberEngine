@@ -3,14 +3,13 @@
 #include <string>
 #include <memory>
 
-#include <glm/glm.hpp>
-
-#include "NamedObject.h"
-#include "Updateable.h"
-#include "Transform.h"
-#include "ParameterBlock.h"
+#include "Math.h"
 #include "Mesh.h"
+#include "NamedObject.h"
+#include "ParameterBlock.h"
 #include "ShadowMap.h"
+#include "Transform.h"
+#include "Updateable.h"
 
 
 namespace gr

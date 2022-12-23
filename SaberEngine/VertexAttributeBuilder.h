@@ -4,8 +4,8 @@
 #include <string>
 
 #include "mikktspace.h"
-#include <glm/glm.hpp>
 
+#include "Math.h"
 #include "MeshPrimitive.h"
 
 

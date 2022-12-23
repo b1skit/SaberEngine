@@ -7,17 +7,7 @@
 #include "backends/imgui_impl_sdl.h"
 #include "backends/imgui_impl_opengl3.h"
 
-#define GLM_FORCE_SWIZZLE
-#include <glm/glm.hpp>
-
-#include "RenderManager_OpenGL.h"
-#include "RenderManager.h"
-#include "RenderStage.h"
-#include "TextureTarget.h"
-#include "Shader.h"
-#include "Shader_OpenGL.h"
 #include "Camera.h"
-#include "Transform.h"
 #include "GraphicsSystem.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_DeferredLighting.h"
@@ -25,35 +15,42 @@
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
+#include "Math.h"
 #include "MeshPrimitive_OpenGL.h"
+#include "RenderManager_OpenGL.h"
+#include "RenderManager.h"
+#include "RenderStage.h"
+#include "Shader.h"
+#include "Shader_OpenGL.h"
+#include "TextureTarget.h"
+#include "Transform.h"
 #include "TextureTarget_OpenGL.h"
-
-using re::RenderStage;
-using re::TextureTargetSet;
-using re::Shader;
-using gr::Camera;
-using gr::Transform;
-using gr::GraphicsSystem;
-using gr::GBufferGraphicsSystem;
-using gr::ShadowsGraphicsSystem;
-using gr::DeferredLightingGraphicsSystem;
-using gr::SkyboxGraphicsSystem;
-using gr::BloomGraphicsSystem;
-using gr::TonemappingGraphicsSystem;
-using re::StagePipeline;
-using std::shared_ptr;
-using std::make_unique;
-using std::make_shared;
-using std::string;
-using std::vector;
-using glm::vec3;
-using glm::vec4;
-using glm::mat3;
-using glm::mat4;
 
 
 namespace opengl
 {
+	using re::RenderStage;
+	using gr::Camera;
+	using gr::Transform;
+	using gr::GraphicsSystem;
+	using gr::GBufferGraphicsSystem;
+	using gr::ShadowsGraphicsSystem;
+	using gr::DeferredLightingGraphicsSystem;
+	using gr::SkyboxGraphicsSystem;
+	using gr::BloomGraphicsSystem;
+	using gr::TonemappingGraphicsSystem;
+	using re::StagePipeline;
+	using std::shared_ptr;
+	using std::make_unique;
+	using std::make_shared;
+	using std::string;
+	using std::vector;
+	using glm::vec3;
+	using glm::vec4;
+	using glm::mat3;
+	using glm::mat4;
+
+
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
 		// Add graphics systems, in order of execution:

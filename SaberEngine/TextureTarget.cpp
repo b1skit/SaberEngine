@@ -1,13 +1,14 @@
+#include "Config.h"
 #include "TextureTarget.h"
 #include "TextureTarget_Platform.h"
-#include "Config.h"
-
-using en::Config;
-using std::string;
 
 
 namespace re
 {
+	using en::Config;
+	using std::string;
+
+
 	/**************/
 	//TextureTarget
 	/**************/

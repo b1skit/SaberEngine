@@ -2,8 +2,7 @@
 
 #include <SDL.h>
 
-#define GLM_FORCE_SWIZZLE
-#include <glm/glm.hpp>
+#include "Math.h"
 
 
 namespace re
@@ -14,8 +13,6 @@ namespace re
 
 namespace platform
 {
-
-
 	class Context
 	{
 	public:
