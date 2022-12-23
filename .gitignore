@@ -36,7 +36,6 @@
 
 # Project dependencies
 /Dependencies/*
-/SaberEngine/assimp*.dll
 /SaberEngine/glew32.dll
 
 # Scene data
@@ -389,23 +388,6 @@ healthchecksdb
 #------------------------
 **/.mayaSwatches
 **/workspace.mel
-
-# BlazeEngine exlcusions:
-#------------------------
-BlazeEngine/config/**
-
-
-# Forced inclusions:
-#-------------------
-!/BlazeEngine/Dependencies/**
-!/BlazeEngine/BlazeEngine/SDL2.dll
-!/BlazeEngine/BlazeEngine/glew32.dll
-!/BlazeEngine/assimp-vc141-mt.dll
-
-# Exceptions to the forced inclusions: (Must come AFTER)
-#-------------------------------------------------------
-BlazeEngine/Dependencies/glm/out/build/x64-Debug
-BlazeEngine/Dependencies/glm/CMakeSettings.json
 
 
 
