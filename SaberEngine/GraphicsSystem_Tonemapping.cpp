@@ -1,7 +1,6 @@
 #include "Config.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "GraphicsSystem_DeferredLighting.h"
-#include "Math.h"
 #include "RenderManager.h"
 #include "Shader.h"
 #include "SceneManager.h"

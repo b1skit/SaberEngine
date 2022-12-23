@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Math.h"
 #include "NamedObject.h"
 #include "ParameterBlock.h"
 #include "Sampler.h"

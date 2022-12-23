@@ -1,5 +1,4 @@
 #include "Config.h"
-#include "Math.h"
 #include "ParameterBlock.h"
 #include "PerformanceTimer.h"
 #include "SceneManager.h"

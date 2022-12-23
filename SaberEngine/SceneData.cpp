@@ -12,7 +12,6 @@
 #include "CoreEngine.h"
 #include "DebugConfiguration.h"
 #include "Light.h"
-#include "Math.h"
 #include "Material.h"
 #include "Mesh.h"
 #include "MeshPrimitive.h"

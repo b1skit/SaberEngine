@@ -6,7 +6,6 @@
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
-#include "Math.h"
 #include "PerformanceTimer.h"
 #include "RenderManager.h"
 #include "RenderManager_Platform.h"

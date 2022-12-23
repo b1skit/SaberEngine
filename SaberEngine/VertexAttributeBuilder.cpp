@@ -4,7 +4,6 @@
 
 #include "Config.h"
 #include "DebugConfiguration.h"
-#include "Math.h"
 #include "VertexAttributeBuilder.h"
 
 

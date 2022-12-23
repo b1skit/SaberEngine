@@ -1,7 +1,6 @@
 #pragma once
 
 #include "EventListener.h"
-#include "Math.h"
 #include "NamedObject.h"
 #include "Transformable.h"
 #include "Updateable.h"

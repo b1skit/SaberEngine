@@ -4,7 +4,6 @@
 #include "NamedObject.h"
 #include "HashedDataObject.h"
 #include "Bounds.h"
-#include "Math.h"
 
 
 namespace gr

@@ -1,5 +1,4 @@
 #include "Config.h"
-#include "Math.h"
 #include "MeshPrimitive.h"
 #include "MeshPrimitive_Platform.h"
 #include "Transform.h"

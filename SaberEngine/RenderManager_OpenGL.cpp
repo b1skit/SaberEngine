@@ -12,7 +12,6 @@
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
-#include "Math.h"
 #include "MeshPrimitive_OpenGL.h"
 #include "RenderManager_OpenGL.h"
 #include "RenderManager.h"

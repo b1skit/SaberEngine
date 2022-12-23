@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Math.h"
 #include "Mesh.h"
 #include "NamedObject.h"
 #include "ParameterBlock.h"

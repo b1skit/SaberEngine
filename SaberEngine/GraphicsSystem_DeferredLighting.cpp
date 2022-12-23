@@ -4,7 +4,6 @@
 #include "GraphicsSystem_GBuffer.h"
 #include "Light.h"
 #include "MeshPrimitive.h"
-#include "Math.h"
 #include "ParameterBlock.h"
 #include "SceneManager.h"
 #include "SceneManager.h"

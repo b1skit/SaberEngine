@@ -66,9 +66,6 @@
     <Filter Include="imgui\backends">
       <UniqueIdentifier>{111822b3-fd88-44ec-9a63-11bcf5725bcd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\external">
-      <UniqueIdentifier>{8d2459c2-85ca-4e11-b2ac-c8d7743cb933}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -504,9 +501,6 @@
     </ClInclude>
     <ClInclude Include="Shader.h">
       <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="Math.h">
-      <Filter>Header Files\external</Filter>
     </ClInclude>
     <ClInclude Include="pch\stdafx.h">
       <Filter>Header Files</Filter>

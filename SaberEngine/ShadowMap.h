@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Camera.h"
-#include "Math.h"
 #include "Texture.h"
 #include "TextureTarget.h"
 

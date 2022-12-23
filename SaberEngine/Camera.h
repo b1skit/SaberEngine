@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Math.h"
 #include "ParameterBlock.h"
 #include "NamedObject.h"
 #include "Transformable.h"

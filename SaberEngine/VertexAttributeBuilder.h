@@ -2,7 +2,6 @@
 
 #include "mikktspace.h"
 
-#include "Math.h"
 #include "MeshPrimitive.h"
 
 

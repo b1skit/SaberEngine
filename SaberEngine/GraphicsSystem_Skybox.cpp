@@ -2,7 +2,6 @@
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
-#include "Math.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
 #include "Texture.h"

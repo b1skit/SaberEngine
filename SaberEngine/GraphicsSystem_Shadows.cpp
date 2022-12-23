@@ -4,7 +4,6 @@
 #include "RenderManager.h"
 #include "SceneManager.h"
 #include "ShadowMap.h"
-#include "Math.h"
 
 
 namespace

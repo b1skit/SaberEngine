@@ -2,8 +2,6 @@
 
 #include <SDL.h>
 
-#include "Math.h"
-
 
 namespace re
 {

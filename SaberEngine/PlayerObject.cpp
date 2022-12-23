@@ -2,7 +2,6 @@
 #include "Config.h"
 #include "EventManager.h"
 #include "InputManager.h"
-#include "Math.h"
 #include "PlayerObject.h"
 
 
