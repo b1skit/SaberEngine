@@ -12,13 +12,22 @@ namespace gr
 	class ShadowMap
 	{
 	public:
+		enum class ShadowType
+		{
+			Single,	// 2D
+			CubeMap,
+
+			ShadowType_Count
+		};
+
+	public:
 		ShadowMap(std::string lightName,
 			uint32_t xRes,
 			uint32_t yRes,
 			gr::Camera::CameraConfig shadowCamConfig,
 			gr::Transform* shadowCamParent,
 			glm::vec3 shadowCamPosition,
-			bool useCubeMap);
+			ShadowType shadowType);
 
 		~ShadowMap() = default;
 		ShadowMap(ShadowMap const&) = default;

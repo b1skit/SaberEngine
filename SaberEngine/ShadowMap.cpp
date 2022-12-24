@@ -27,7 +27,7 @@ namespace gr
 		gr::Camera::CameraConfig shadowCamConfig, 
 		Transform* shadowCamParent, 
 		vec3 shadowCamPosition, 
-		bool useCubeMap)
+		ShadowType shadowType)
 		: m_shadowCam(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent)
 		, m_minMaxShadowBias(0.005f, 0.0005f)
 	{
@@ -51,7 +51,7 @@ namespace gr
 		std::shared_ptr<re::Texture> depthTexture;
 
 		// Omni-directional (Cube map) shadowmap setup:
-		if (useCubeMap)
+		if (shadowType == ShadowType::CubeMap)
 		{
 			shadowParams.m_dimension = Texture::Dimension::TextureCubeMap;
 			shadowParams.m_faces = 6;

@@ -74,7 +74,7 @@ namespace gr
 					Camera::CameraConfig(),
 					m_ownerTransform,
 					glm::vec3(0.f, 0.f, 0.f),
-					false);
+					ShadowMap::ShadowType::Single);
 				// Note: We'll compute the camera config from the scene bounds during the first call to Update(); so
 				// here we just pass a default camera config
 			}
@@ -108,7 +108,7 @@ namespace gr
 					shadowCamConfig,
 					m_ownerTransform,
 					vec3(0.0f, 0.0f, 0.0f),	// shadowCamPosition: No offset
-					true);					// useCubeMap
+					ShadowMap::ShadowType::CubeMap);
 
 				m_shadowMap->MinMaxShadowBias() = glm::vec2( 
 					Config::Get()->GetValue<float>("defaultMinShadowBias"),
