@@ -1,8 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-#include <SDL.h>
-
 
 namespace util
 {
@@ -13,14 +11,14 @@ namespace util
 		~PerformanceTimer();
 
 		void Start();
-		double PeekMs(); // Gets the current delta (in ms) since Start(), without stopping
-		double PeekSec(); // Gets the current delta (in seconds) since Start(), without stopping
+		double PeekMs() const; // Gets the current delta (in ms) since Start(), without stopping
+		double PeekSec() const; // Gets the current delta (in seconds) since Start(), without stopping
 
 		double StopMs(); // Stops the timer, and returns the high precision time since Start() in ms
 		double StopSec(); // Stops the timer, and returns the high precision time since Start() in seconds
 
 	private:
-		uint64_t m_startTime;
+		std::chrono::steady_clock::time_point m_startTime;
 		bool m_isStarted;
 	};
 }

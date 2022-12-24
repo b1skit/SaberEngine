@@ -6,8 +6,7 @@
 namespace util
 {
 	PerformanceTimer::PerformanceTimer() 
-		: m_startTime(0)
-		, m_isStarted(false)
+		: m_isStarted(false)
 	{
 	}
 
@@ -22,36 +21,38 @@ namespace util
 	{
 		SEAssert("Timer has already been started", !m_isStarted);
 		m_isStarted = true;
-		m_startTime = SDL_GetPerformanceCounter();
+		m_startTime = std::chrono::steady_clock::now();
 	}
 
 
-	double PerformanceTimer::PeekMs()
+	double PerformanceTimer::PeekMs() const
 	{
 		SEAssert("Timer has not been started", m_isStarted);
-		const uint64_t currentTime = SDL_GetPerformanceCounter();
-		return ((currentTime - m_startTime) * 1000.0) / SDL_GetPerformanceFrequency();
+		const std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
+		return std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - m_startTime).count() / 1000000.f;
 	}
 
 
-	double PerformanceTimer::PeekSec()
+	double PerformanceTimer::PeekSec() const
 	{
-		constexpr double oneOverOneThousand = 1.0 / 1000.0;
-		return PeekMs() * oneOverOneThousand;
+		SEAssert("Timer has not been started", m_isStarted);
+		const std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
+		return std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - m_startTime).count() / 1000000000.f;
 	}
 
 
 	double PerformanceTimer::StopMs()
 	{
+		const double msTime = PeekMs();
 		m_isStarted = false;
-		const uint64_t currentTime = SDL_GetPerformanceCounter();
-		return ((currentTime - m_startTime) * 1000.0) / SDL_GetPerformanceFrequency();
+		return msTime;
 	} 
 
 
 	double PerformanceTimer::StopSec()
 	{
-		constexpr double oneOverOneThousand = 1.0 / 1000.0;
-		return StopMs() * oneOverOneThousand;
+		const double secTime = PeekSec();
+		m_isStarted = false;
+		return secTime;
 	}
 }
