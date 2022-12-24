@@ -129,8 +129,7 @@ namespace re
 			return *this;
 		}
 
-		m_name = rhs.m_name;
-		m_nameID = rhs.m_nameID;
+		SetName(rhs.GetName());
 
 		m_colorTargets = rhs.m_colorTargets;
 		m_depthStencilTarget = rhs.m_depthStencilTarget;
