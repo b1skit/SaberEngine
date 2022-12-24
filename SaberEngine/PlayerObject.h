@@ -13,7 +13,7 @@ namespace gr
 
 namespace fr
 {
-	class PlayerObject 
+	class PlayerObject final
 		: public virtual en::NamedObject
 		, public virtual en::Updateable
 		, public virtual fr::Transformable

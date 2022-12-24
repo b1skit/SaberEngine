@@ -8,7 +8,7 @@
 
 namespace en
 {
-	class SceneManager : public virtual en::EngineComponent
+	class SceneManager final : public virtual en::EngineComponent
 	{
 	public:
 		static SceneManager* Get(); // Singleton functionality

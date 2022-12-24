@@ -14,7 +14,7 @@ namespace opengl
 	class Context
 	{
 	public:
-		struct PlatformParams : public virtual platform::Context::PlatformParams
+		struct PlatformParams final : public virtual platform::Context::PlatformParams
 		{
 			PlatformParams() = default;
 			~PlatformParams() override = default;

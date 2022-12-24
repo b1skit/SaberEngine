@@ -13,7 +13,7 @@ namespace gr
 
 namespace re
 {
-	class MeshPrimitive : public virtual en::NamedObject, public virtual en::HashedDataObject
+	class MeshPrimitive final : public virtual en::NamedObject, public virtual en::HashedDataObject
 	{
 	public:
 		struct PlatformParams

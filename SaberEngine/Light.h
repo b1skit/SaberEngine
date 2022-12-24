@@ -21,7 +21,7 @@ namespace re
 
 namespace gr
 {
-	class Light : public virtual en::NamedObject, public virtual en::Updateable
+	class Light final : public virtual en::NamedObject, public virtual en::Updateable
 	{
 	public:
 		enum LightType

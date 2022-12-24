@@ -158,7 +158,7 @@ namespace
 	};
 
 
-	class DisplayConsoleCommand : public virtual en::Command
+	class DisplayConsoleCommand final : public virtual en::Command
 	{
 	public:
 		DisplayConsoleCommand(bool* consoleOpen, ImGuiLogWindow* imGuiLogWindow) 

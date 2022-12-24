@@ -5,7 +5,7 @@
 
 namespace gr
 {
-	class TonemappingGraphicsSystem : public virtual GraphicsSystem
+	class TonemappingGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
 		explicit TonemappingGraphicsSystem(std::string name);

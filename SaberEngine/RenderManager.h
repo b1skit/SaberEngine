@@ -27,7 +27,7 @@ namespace re
 
 namespace re
 {
-	class RenderManager : public virtual en::EngineComponent
+	class RenderManager final : public virtual en::EngineComponent
 	{
 	public:
 		static RenderManager* Get(); // Singleton functionality

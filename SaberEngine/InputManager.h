@@ -8,7 +8,7 @@
 
 namespace en
 {
-	class InputManager : public virtual en::EngineComponent, public virtual en::EventListener
+	class InputManager final : public virtual en::EngineComponent, public virtual en::EventListener
 	{
 	public:
 		static InputManager* Get(); // Singleton functionality

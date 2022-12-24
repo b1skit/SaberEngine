@@ -6,7 +6,7 @@
 
 namespace gr
 {
-	class GBufferGraphicsSystem : public virtual GraphicsSystem
+	class GBufferGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
 		static const std::vector<std::string> GBufferTexNames;

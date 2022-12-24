@@ -10,7 +10,7 @@
 namespace fr
 {
 	// A concrete implementation of Transformable; Used to construct a scene object transformation hierarchy
-	class SceneNode : public virtual fr::Transformable
+	class SceneNode final : public virtual fr::Transformable
 	{
 	public:
 		explicit SceneNode(gr::Transform* parent);

@@ -15,7 +15,7 @@ namespace opengl
 	class Shader
 	{
 	public:
-		struct PlatformParams : public virtual re::Shader::PlatformParams
+		struct PlatformParams final : public virtual re::Shader::PlatformParams
 		{
 			PlatformParams() {}
 			~PlatformParams() override {}

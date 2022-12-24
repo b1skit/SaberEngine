@@ -78,7 +78,7 @@ namespace re
 
 
 	// Collection of render target textures
-	class TextureTargetSet : public virtual en::NamedObject
+	class TextureTargetSet final : public virtual en::NamedObject
 	{
 	public:
 		struct PlatformParams

@@ -5,7 +5,7 @@
 
 namespace gr
 {
-	class SkyboxGraphicsSystem : public virtual GraphicsSystem
+	class SkyboxGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
 		explicit SkyboxGraphicsSystem(std::string name);

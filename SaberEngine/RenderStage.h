@@ -13,7 +13,7 @@
 
 namespace re
 {
-	class RenderStage : public virtual en::NamedObject
+	class RenderStage final : public virtual en::NamedObject
 	{
 	public:
 		struct StageShaderUniform

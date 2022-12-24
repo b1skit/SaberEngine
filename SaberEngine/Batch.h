@@ -19,7 +19,7 @@ namespace re
 
 namespace re
 {
-	class Batch : public virtual en::HashedDataObject
+	class Batch final : public virtual en::HashedDataObject
 	{
 	public:
 		enum class GeometryMode

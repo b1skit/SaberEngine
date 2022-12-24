@@ -6,7 +6,7 @@
 
 namespace re
 {
-	class StagePipeline : public virtual en::NamedObject
+	class StagePipeline final : public virtual en::NamedObject
 	{
 	public:
 		StagePipeline(std::string name) : NamedObject(name) {};
@@ -41,7 +41,7 @@ namespace re
 	};
 
 
-	class RenderPipeline : public virtual en::NamedObject
+	class RenderPipeline final : public virtual en::NamedObject
 	{
 	public:	
 		RenderPipeline(std::string const& name) : NamedObject(name) {}

@@ -5,7 +5,7 @@
 
 namespace re
 {
-	class Texture : public virtual en::NamedObject
+	class Texture final : public virtual en::NamedObject
 	{
 	public:
 		struct PlatformParams

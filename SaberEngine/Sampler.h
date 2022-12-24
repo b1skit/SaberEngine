@@ -11,7 +11,7 @@ namespace platform
 
 namespace re
 {
-	class Sampler : public virtual en::NamedObject
+	class Sampler final : public virtual en::NamedObject
 	{
 	public:
 		struct PlatformParams

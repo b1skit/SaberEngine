@@ -6,7 +6,7 @@
 
 namespace fr
 {
-	class GameplayManager : public virtual en::EngineComponent
+	class GameplayManager final : public virtual en::EngineComponent
 	{
 	public:
 		static GameplayManager* Get(); // Singleton functionality

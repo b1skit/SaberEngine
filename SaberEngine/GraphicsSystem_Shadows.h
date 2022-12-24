@@ -5,7 +5,7 @@
 
 namespace gr
 {
-	class ShadowsGraphicsSystem : public virtual GraphicsSystem
+	class ShadowsGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
 		explicit ShadowsGraphicsSystem(std::string name);

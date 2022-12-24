@@ -8,7 +8,7 @@
 
 namespace gr
 {	
-	class Mesh : public virtual en::NamedObject
+	class Mesh final : public virtual en::NamedObject
 	{
 	public:
 		explicit Mesh(std::string const& name, gr::Transform* ownerTransform);

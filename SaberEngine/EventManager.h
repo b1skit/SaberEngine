@@ -15,7 +15,7 @@ namespace re
 
 namespace en
 {
-	class EventManager : public virtual en::EngineComponent
+	class EventManager final : public virtual en::EngineComponent
 	{
 	public:
 		enum EventType

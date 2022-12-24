@@ -9,7 +9,7 @@
 
 namespace gr
 {
-	class Camera : public virtual en::NamedObject, public virtual fr::Transformable, public virtual en::Updateable
+	class Camera final : public virtual en::NamedObject, public virtual fr::Transformable, public virtual en::Updateable
 	{
 	public:
 		struct CameraConfig

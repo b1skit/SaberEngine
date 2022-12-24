@@ -2,16 +2,17 @@
 
 #include "LogManager.h"
 #include "EngineComponent.h"
+#include "EventListener.h"
 #include "ThreadPool.h"
 
 
 namespace en
 {
-	class CoreEngine : public virtual en::EngineComponent, public virtual en::EventListener
+	class CoreEngine final : public virtual en::EngineComponent, public virtual en::EventListener
 	{
 	public: // Singleton functionality:	
 		static inline CoreEngine* Get() { return m_coreEngine; }
-		static inline ThreadPool* GetThreadPool() { return &m_coreEngine->m_threadPool; }
+		static inline en::ThreadPool* GetThreadPool() { return &m_coreEngine->m_threadPool; }
 
 	public:
 		explicit CoreEngine(int argc, char** argv);

@@ -22,7 +22,7 @@ namespace fr
 	class SceneNode;
 
 
-	class SceneData : public virtual en::NamedObject
+	class SceneData final : public virtual en::NamedObject
 	{
 	public:
 		explicit SceneData(std::string const& sceneName);

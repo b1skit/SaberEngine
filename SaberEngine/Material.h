@@ -14,7 +14,7 @@ namespace re
 
 namespace gr
 {
-	class Material : public virtual en::NamedObject
+	class Material final : public virtual en::NamedObject
 	{
 	public:
 		// Material definitions:

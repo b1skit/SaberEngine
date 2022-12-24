@@ -11,7 +11,7 @@ namespace
 
 namespace en
 {
-	class LogManager : public virtual en::EngineComponent, public virtual en::EventListener
+	class LogManager final : public virtual en::EngineComponent, public virtual en::EventListener
 	{
 	public:
 		static LogManager* Get(); // Singleton functionality

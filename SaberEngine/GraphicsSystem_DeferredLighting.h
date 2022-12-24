@@ -15,7 +15,7 @@ namespace re
 
 namespace gr
 {
-	class DeferredLightingGraphicsSystem : public virtual GraphicsSystem
+	class DeferredLightingGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
 		explicit DeferredLightingGraphicsSystem(std::string name);

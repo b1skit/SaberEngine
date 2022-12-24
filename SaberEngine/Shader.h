@@ -20,7 +20,7 @@ namespace re
 	class Texture;
 
 
-	class Shader : public virtual en::NamedObject
+	class Shader final : public virtual en::NamedObject
 	{
 	public:
 		struct PlatformParams
