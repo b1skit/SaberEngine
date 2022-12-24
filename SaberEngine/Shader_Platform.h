@@ -27,7 +27,7 @@ namespace platform
 
 		// Static pointers:
 		static void (*Create)(re::Shader& shader);
-		static void (*Bind)(re::Shader&, bool doBind);
+		static void (*Bind)(re::Shader&);
 		static void (*SetUniform)(
 			re::Shader& shader, 
 			std::string const& uniformName, 

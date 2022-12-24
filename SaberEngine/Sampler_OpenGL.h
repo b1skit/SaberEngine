@@ -34,7 +34,7 @@ namespace opengl
 
 	public:
 		static void Create(re::Sampler& sampler);
-		static void Bind(re::Sampler& sampler, uint32_t textureUnit, bool doBind);
+		static void Bind(re::Sampler& sampler, uint32_t textureUnit);
 		static void Destroy(re::Sampler& sampler);
 
 	private:

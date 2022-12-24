@@ -103,9 +103,8 @@ namespace opengl
 				std::shared_ptr<re::TextureTargetSet> stageTargets = renderStage->GetTextureTargetSet();
 				opengl::TextureTargetSet::AttachColorTargets(*stageTargets, 
 					stagePipelineParams.m_textureTargetSetConfig.m_targetFace,
-					stagePipelineParams.m_textureTargetSetConfig.m_targetMip,
-					true);
-				opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets, true);
+					stagePipelineParams.m_textureTargetSetConfig.m_targetMip);
+				opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
 				
 				// Configure the context:
 				renderManager.m_context.SetCullingMode(stagePipelineParams.m_faceCullingMode);
@@ -118,7 +117,7 @@ namespace opengl
 
 				// Bind the shader now that the context configuration is known:
 				std::shared_ptr<re::Shader> stageShader = renderStage->GetStageShader();
-				opengl::Shader::Bind(*stageShader, true);
+				opengl::Shader::Bind(*stageShader);
 				// TODO: Handle shaders set by stages/materials/batches
 				// Priority order: Stage, batch/material?
 
@@ -158,7 +157,7 @@ namespace opengl
 					opengl::MeshPrimitive::PlatformParams const* const meshPlatParams =
 						dynamic_cast<opengl::MeshPrimitive::PlatformParams const* const>(batch.GetBatchMesh()->GetPlatformParams().get());
 
-					opengl::MeshPrimitive::Bind(*batch.GetBatchMesh(), true);
+					opengl::MeshPrimitive::Bind(*batch.GetBatchMesh());
 
 					// Batch material:
 					gr::Material* batchmaterial = batch.GetBatchMaterial();

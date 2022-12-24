@@ -224,44 +224,25 @@ namespace opengl
 	}
 
 
-	void opengl::MeshPrimitive::Bind(re::MeshPrimitive& meshPrimitive, bool doBind)
+	void opengl::MeshPrimitive::Bind(re::MeshPrimitive& meshPrimitive)
 	{
 		// Ensure the mesh is created
 		opengl::MeshPrimitive::Create(meshPrimitive);
 
-		if (doBind)
-		{
-			opengl::MeshPrimitive::PlatformParams const* const glMeshParams =
-				dynamic_cast<opengl::MeshPrimitive::PlatformParams const* const>(meshPrimitive.GetPlatformParams().get());
+		opengl::MeshPrimitive::PlatformParams const* const glMeshParams =
+			dynamic_cast<opengl::MeshPrimitive::PlatformParams const* const>(meshPrimitive.GetPlatformParams().get());
 
-			glBindVertexArray(glMeshParams->m_meshVAO);
-			for (size_t i = 0; i < opengl::MeshPrimitive::VertexAttribute::VertexAttribute_Count; i++)
-			{
-				if (i == VertexAttribute::Indexes)
-				{
-					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMeshParams->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Indexes]);
-				}
-				else
-				{
-					glBindBuffer(GL_ARRAY_BUFFER, glMeshParams->m_meshVBOs[i]);
-				}
-			}
-		}
-		else
+		glBindVertexArray(glMeshParams->m_meshVAO);
+		for (size_t i = 0; i < opengl::MeshPrimitive::VertexAttribute::VertexAttribute_Count; i++)
 		{
-			glBindVertexArray(0);
-			for (size_t i = 0; i < opengl::MeshPrimitive::VertexAttribute::VertexAttribute_Count; i++)
+			if (i == VertexAttribute::Indexes)
 			{
-				if (i == VertexAttribute::Indexes)
-				{
-					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-				}
-				else
-				{
-					glBindBuffer(GL_ARRAY_BUFFER, 0);
-				}
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMeshParams->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Indexes]);
 			}
-
+			else
+			{
+				glBindBuffer(GL_ARRAY_BUFFER, glMeshParams->m_meshVBOs[i]);
+			}
 		}
 	}
 

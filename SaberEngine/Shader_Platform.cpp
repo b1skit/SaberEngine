@@ -148,7 +148,7 @@ namespace platform
 	// platform::Shader static members:
 	/**********************************/
 	void (*platform::Shader::Create)(re::Shader& shader) = nullptr;
-	void (*platform::Shader::Bind)(re::Shader&, bool doBind) = nullptr;
+	void (*platform::Shader::Bind)(re::Shader&) = nullptr;
 	void (*platform::Shader::SetUniform)(
 		re::Shader& shader, 
 		string const& uniformName, 

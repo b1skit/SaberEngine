@@ -12,7 +12,7 @@ namespace platform
 
 
 		static void (*Create)(re::MeshPrimitive& meshPrimitive);
-		static void (*Bind)(re::MeshPrimitive& meshPrimitive, bool doBind);
+		static void (*Bind)(re::MeshPrimitive& meshPrimitive);
 		static void (*Destroy)(re::MeshPrimitive& meshPrimitive);
 	};
 }

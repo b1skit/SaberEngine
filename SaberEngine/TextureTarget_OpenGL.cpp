@@ -170,17 +170,10 @@ namespace opengl
 
 
 	void TextureTargetSet::AttachColorTargets(
-		re::TextureTargetSet& targetSet, uint32_t face, uint32_t mipLevel, bool doBind)
+		re::TextureTargetSet& targetSet, uint32_t face, uint32_t mipLevel)
 	{
 		// Ensure the targets are created before we try and attach them
 		opengl::TextureTargetSet::CreateColorTargets(targetSet);
-
-		// Unbinding:
-		if (!doBind)
-		{
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			return;
-		}
 
 		// Binding:
 		opengl::TextureTargetSet::PlatformParams const* const targetSetParams =
@@ -344,17 +337,10 @@ namespace opengl
 	}
 
 
-	void TextureTargetSet::AttachDepthStencilTarget(re::TextureTargetSet& targetSet, bool doBind)
+	void TextureTargetSet::AttachDepthStencilTarget(re::TextureTargetSet& targetSet)
 	{
 		// Ensure the target is created before we try and attach it
 		opengl::TextureTargetSet::CreateDepthStencilTarget(targetSet);
-
-		// Unbinding:
-		if (!doBind)
-		{
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			return;
-		}
 
 		// Binding:
 		opengl::TextureTargetSet::PlatformParams const* const targetSetParams =

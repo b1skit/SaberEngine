@@ -36,6 +36,6 @@ namespace platform
 	// platform::MeshPrimitive static members:
 	/********************************/
 	void (*MeshPrimitive::Create)(re::MeshPrimitive& meshPrimitive);
-	void (*MeshPrimitive::Bind)(re::MeshPrimitive& meshPrimitive, bool doBind);
+	void (*MeshPrimitive::Bind)(re::MeshPrimitive& meshPrimitive);
 	void (*MeshPrimitive::Destroy)(re::MeshPrimitive& meshPrimitive);
 }

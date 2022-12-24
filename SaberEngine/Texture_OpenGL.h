@@ -35,7 +35,7 @@ namespace opengl
 
 	public:
 		static void Create(re::Texture& texture);
-		static void Bind(re::Texture& texture, uint32_t textureUnit, bool doBind);
+		static void Bind(re::Texture& texture, uint32_t textureUnit);
 		static void Destroy(re::Texture& texture);
 		static void GenerateMipMaps(re::Texture& texture);
 

@@ -162,7 +162,7 @@ namespace opengl
 	}
 
 
-	void opengl::Texture::Bind(re::Texture& texture, uint32_t textureUnit, bool doBind)
+	void opengl::Texture::Bind(re::Texture& texture, uint32_t textureUnit)
 	{
 		// TODO: Is there a way to avoid needing to pass textureUnit?
 		// textureUnit is a target, ie. GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, etc
@@ -175,14 +175,7 @@ namespace opengl
 		// TODO: Support texture updates after modification
 		SEAssert("Texture has been modified, and needs to be rebuffered", params->m_isDirty == false);
 
-		if (doBind)
-		{
-			glBindTextures(textureUnit, 1, &params->m_textureID);
-		}
-		else
-		{
-			glBindTextures(textureUnit, 1, 0);
-		}
+		glBindTextures(textureUnit, 1, &params->m_textureID);
 	}
 
 

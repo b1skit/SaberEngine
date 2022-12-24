@@ -14,7 +14,7 @@ namespace platform
 
 
 		static void (*Create)(re::Sampler&);
-		static void (*Bind)(re::Sampler&, uint32_t textureUnit, bool doBind);
+		static void (*Bind)(re::Sampler&, uint32_t textureUnit);
 		static void (*Destroy)(re::Sampler&);
 
 	private:

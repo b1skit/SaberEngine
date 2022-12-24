@@ -36,7 +36,7 @@ namespace platform
 	}
 
 	void (*Sampler::Create)(re::Sampler&);
-	void (*Sampler::Bind)(re::Sampler&, uint32_t textureUnit, bool doBind);
+	void (*Sampler::Bind)(re::Sampler&, uint32_t textureUnit);
 	void (*Sampler::Destroy)(re::Sampler&);
 
 }

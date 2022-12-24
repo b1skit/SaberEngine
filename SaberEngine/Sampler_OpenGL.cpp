@@ -133,7 +133,7 @@ namespace opengl
 	}
 
 
-	void Sampler::Bind(re::Sampler& sampler, uint32_t textureUnit, bool doBind)
+	void Sampler::Bind(re::Sampler& sampler, uint32_t textureUnit)
 	{
 		// Ensure the sampler is created before we attempt to bind it
 		opengl::Sampler::Create(sampler);
@@ -141,14 +141,7 @@ namespace opengl
 		PlatformParams const* const params =
 			dynamic_cast<opengl::Sampler::PlatformParams const* const>(sampler.GetPlatformParams());
 
-		if (doBind)
-		{
-			glBindSampler(textureUnit, params->m_samplerID);
-		}
-		else
-		{
-			glBindSampler(textureUnit, 0);
-		}
+		glBindSampler(textureUnit, params->m_samplerID);
 	}
 
 

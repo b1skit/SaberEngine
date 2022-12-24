@@ -263,7 +263,7 @@ namespace opengl
 	}
 
 
-	void Shader::Bind(re::Shader& shader, bool doBind)
+	void Shader::Bind(re::Shader& shader)
 	{
 		// Ensure the shader is created
 		opengl::Shader::Create(shader);
@@ -271,14 +271,7 @@ namespace opengl
 		opengl::Shader::PlatformParams const* const params =
 			dynamic_cast<opengl::Shader::PlatformParams const* const>(shader.GetPlatformParams());
 
-		if (doBind)
-		{
-			glUseProgram(params->m_shaderReference);
-		}
-		else
-		{
-			glUseProgram(0);
-		}
+		glUseProgram(params->m_shaderReference);
 	}
 
 
@@ -365,7 +358,7 @@ namespace opengl
 #else
 			if (bindingUnit == params->m_samplerUnits.end()) return;
 #endif
-			opengl::Texture::Bind(*static_cast<re::Texture*>(value), bindingUnit->second, true);
+			opengl::Texture::Bind(*static_cast<re::Texture*>(value), bindingUnit->second);
 		}
 		break;
 		case re::Shader::UniformType::Sampler:
@@ -378,7 +371,7 @@ namespace opengl
 			if (bindingUnit == params->m_samplerUnits.end()) return;
 #endif
 
-			platform::Sampler::Bind(*static_cast<re::Sampler*>(value), bindingUnit->second, true);
+			platform::Sampler::Bind(*static_cast<re::Sampler*>(value), bindingUnit->second);
 		}
 		break;
 		default:

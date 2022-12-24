@@ -26,7 +26,7 @@ namespace opengl
 		};
 
 		static void Create(re::Shader& shader);
-		static void Bind(re::Shader& shader, bool doBind);
+		static void Bind(re::Shader& shader);
 
 		static void SetUniform(
 			re::Shader& shader, 
