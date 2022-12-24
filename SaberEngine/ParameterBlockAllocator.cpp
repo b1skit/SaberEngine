@@ -30,7 +30,7 @@ namespace re
 		// Must clear the parameter blocks shared_ptrs before clearing the committed memory
 		m_immutableAllocations.m_handleToPtr.clear();
 		m_mutableAllocations.m_handleToPtrAndDirty.clear();
-		m_singleFrameAllocations.m_handleToPtr.clear();
+		
 
 		// Clear the committed memory
 		m_immutableAllocations.m_committed.clear();
@@ -38,6 +38,7 @@ namespace re
 		{
 			m_mutableAllocations.m_committed[i].clear();
 			m_singleFrameAllocations.m_committed[i].clear();
+			m_singleFrameAllocations.m_handleToPtr[i].clear();
 		}
 
 		// Clear the handle -> commit map
@@ -67,11 +68,13 @@ namespace re
 		{
 		case ParameterBlock::PBType::SingleFrame:
 		{
+			const size_t writeIdx = GetWriteIdx();
+
 			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
 
 			SEAssert("Parameter block is already registered",
-				!m_singleFrameAllocations.m_handleToPtr.contains(pb->GetUniqueID()));
-			m_singleFrameAllocations.m_handleToPtr[pb->GetUniqueID()] = pb;
+				!m_singleFrameAllocations.m_handleToPtr[writeIdx].contains(pb->GetUniqueID()));
+			m_singleFrameAllocations.m_handleToPtr[writeIdx][pb->GetUniqueID()] = pb;
 		}
 		break;
 		case ParameterBlock::PBType::Immutable:
@@ -359,9 +362,11 @@ namespace re
 
 		// Create/buffer SingleFrame PBs 
 		{
+			const size_t readIdx = GetReadIdx();
+
 			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
 
-			for (auto const& pb : m_singleFrameAllocations.m_handleToPtr)
+			for (auto const& pb : m_singleFrameAllocations.m_handleToPtr[readIdx])
 			{
 				platform::ParameterBlock::Create(*pb.second.get());
 			}
@@ -389,14 +394,14 @@ namespace re
 		std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
 
 		// This is compiled out in Release
-		for (auto const& it : m_singleFrameAllocations.m_handleToPtr)
+		for (auto const& it : m_singleFrameAllocations.m_handleToPtr[readIdx])
 		{
 			SEAssert("Trying to deallocate a single frame parameter block, but there is still a live shared_ptr. Is "
 				"something holding onto a single frame parameter block beyond the frame lifetime?", 
 				it.second.use_count() == 1);
 		}
 
-		m_singleFrameAllocations.m_handleToPtr.clear(); // PB destructors call Deallocate(), so destroy shared_ptrs 1st
+		m_singleFrameAllocations.m_handleToPtr[readIdx].clear(); // PB destructors call Deallocate(), so destroy shared_ptrs 1st
 		m_singleFrameAllocations.m_committed[readIdx].clear();
 	}
 }

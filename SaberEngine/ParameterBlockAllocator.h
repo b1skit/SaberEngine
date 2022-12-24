@@ -55,7 +55,7 @@ namespace re
 		struct SingleFrameAllocation
 		{
 			std::array<std::vector<uint8_t>, k_numBuffers> m_committed;
-			std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>> m_handleToPtr;
+			std::array< std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>>, k_numBuffers> m_handleToPtr;
 			std::recursive_mutex m_mutex;
 		} m_singleFrameAllocations;
 
