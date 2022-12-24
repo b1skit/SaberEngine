@@ -330,6 +330,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="Transform.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="SaberEngine.licenseheader" />
     <None Include="Shaders\glsl\blitShader.frag" />
     <None Include="Shaders\glsl\blitShader.vert" />
     <None Include="Shaders\glsl\blurShader.frag" />

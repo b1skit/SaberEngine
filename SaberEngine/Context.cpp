@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "Context.h"
 #include "Context_Platform.h"
 

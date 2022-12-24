@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "DebugConfiguration.h"
 #include "Texture.h"
 #include "Texture_Platform.h"

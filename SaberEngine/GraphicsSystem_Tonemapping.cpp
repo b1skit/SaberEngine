@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "Config.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "GraphicsSystem_DeferredLighting.h"

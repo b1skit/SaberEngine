@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "CoreEngine.h"
 #include "Config.h"
 #include "DebugConfiguration.h"

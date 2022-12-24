@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "ParameterBlockAllocator.h"
 #include "DebugConfiguration.h"
 #include "ParameterBlock_Platform.h"

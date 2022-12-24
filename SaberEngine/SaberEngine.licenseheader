@@ -1,0 +1,13 @@
+﻿extensions: designer.cs generated.cs
+extensions: .cs .cpp .h
+// © 2022 Adam Badke. All rights reserved.
+extensions: .aspx .ascx
+<%-- 
+© 2022 Adam Badke. All rights reserved.
+--%>
+extensions: .vb
+© 2022 Adam Badke. All rights reserved.
+extensions:  .xml .config .xsd
+<!--
+© 2022 Adam Badke. All rights reserved.
+-->

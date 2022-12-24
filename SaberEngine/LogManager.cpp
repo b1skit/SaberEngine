@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "LogManager.h"
 #include "EventManager.h"
 #include "DebugConfiguration.h"

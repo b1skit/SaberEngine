@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "Mesh.h"
 #include "MeshPrimitive.h"
 #include "Transform.h"

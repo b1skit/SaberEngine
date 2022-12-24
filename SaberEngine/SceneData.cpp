@@ -1,3 +1,5 @@
+// © 2022 Adam Badke. All rights reserved.
+
 // Note: We can't include STBI in our pch, as the following define can only be included ONCE in the project
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG

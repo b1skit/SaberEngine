@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "ParameterBlock_Platform.h"
 #include "ParameterBlock.h"
 #include "ParameterBlock_OpenGL.h"

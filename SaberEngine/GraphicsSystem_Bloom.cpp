@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"

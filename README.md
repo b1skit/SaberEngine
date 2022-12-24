@@ -1,15 +1,16 @@
 # Saber Engine
 
-"Ideally, a Jedi took many months to construct a single perfect weapon that he or she would keep and use for a lifetime. Once you build it, the lightsaber will become your constant companion, your tool, and a ready means of defense." - Luke Skywalker
+"Ideally, a Jedi took many months to construct a single perfect weapon that he or she would keep and use for a lifetime. Once you build it, the lightsaber will become your constant companion, your tool, and a ready means of defense."  
+- Luke Skywalker
 
 --------------
 Project goals:
 --------------
-- Progressive gpu forward path tracer
-	-> GPU implementation of PBRT
-- Fork of Blaze Engine, but highly modernized
-	-> Multi-threaded
-	-> Supports animation, GPU instancing
+- Progressive gpu forward path tracer  
+	-> GPU implementation of PBRT  
+- Fork of Blaze Engine, but highly modernized  
+	-> Multi-threaded  
+	-> Supports animation, GPU instancing  
 - Modern API: DX12/Vulkan
 
 
@@ -25,28 +26,31 @@ Details:
 -----------------------
 Command line arguments:
 -----------------------
-Scene loading: -scene Folder\Name\filename.extension
-	- Path is relative to the "<project root>\Scenes\" directory
+Scene loading: -scene Folder\Name\filename.extension  
+	- Path is relative to the "<project root>\Scenes\" directory  
 	- Supports GLTF 2.0 files
 
 
---------------
-Configuration:
---------------
-Loaded from the "<project root>\config\config.cfg"
-	- Commands for system configuration ("set"), input ("bind"), etc
+----------------------
+Runtime Configuration:
+----------------------
+Settings are loaded from the "<project root>\config\config.cfg" file  
+	- Commands for system configuration ("set"), input ("bind"), etc  
+	- See the existing file for examples  
 
 
 ---------------------
 Image-based Lighting:
 ---------------------
-A per-scene IBL is loaded from ""<project root>\Scenes\SceneFolderName\IBL\ibl.hdr", if it exists
-	- A default IBL ("<project root>\Assets\DefaultIBL\ibl.hdr") is used as a fallback if no scene IBL is found
+A per-scene IBL is loaded from ""<project root>\Scenes\SceneFolderName\IBL\ibl.hdr", if it exists  
+	- A default IBL ("<project root>\Assets\DefaultIBL\ibl.hdr") is used as a fallback if no scene IBL is found  
 
 
 -------------
 Dependencies:
 -------------
+Dependencies have already been configured, and will just need to be downloaded and placed in the listed locations. The configuration instructions are included for reference.  
+
 
 Imgui: https://github.com/ocornut/imgui/
 -----------------------------------------
@@ -114,12 +118,13 @@ stb_image.h: https://github.com/nothings/stb/blob/master/stb_image.h
 - Add "$(ProjectDir)..\Dependencies\stb\" to "Project properties -> C/C++ -> Additional Include Directories" for all configurations
 
 
--------------------------------------
-Recommended Visual Studio extensions:
--------------------------------------
+--------------------------------------------------
+Recommended Visual Studio extensions and Software:
+--------------------------------------------------
 - Smart Command Line Arguments
 - Editor Guidelines
 - GLSL Language Integration: https://github.com/danielscherzer/GLSL
+- License Header Manager
 - Beyond Compare
 
 © 2022 Adam Badke. All rights reserved.

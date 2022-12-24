@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "MeshPrimitive_OpenGL.h"
 
 #include "MeshPrimitive.h"

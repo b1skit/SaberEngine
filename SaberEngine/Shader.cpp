@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "Shader.h"
 #include "Shader_Platform.h"
 #include "DebugConfiguration.h"

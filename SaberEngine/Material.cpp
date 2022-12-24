@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "DebugConfiguration.h"
 #include "Material.h"
 #include "ParameterBlock.h"

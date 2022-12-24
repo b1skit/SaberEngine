@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include <SDL.h>
 
 #include "backends/imgui_impl_sdl.h"

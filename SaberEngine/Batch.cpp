@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "MeshPrimitive.h"
 #include "Material.h"

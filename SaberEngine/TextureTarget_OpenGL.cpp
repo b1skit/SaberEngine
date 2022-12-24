@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include <GL/glew.h>
 
 #include "DebugConfiguration.h"

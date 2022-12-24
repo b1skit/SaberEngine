@@ -585,5 +585,6 @@
     <None Include="Shaders\glsl\toneMapShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
+    <None Include="SaberEngine.licenseheader" />
   </ItemGroup>
 </Project>

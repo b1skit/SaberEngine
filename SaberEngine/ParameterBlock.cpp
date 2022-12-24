@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "ParameterBlock.h"
 #include "ParameterBlock_Platform.h"
 #include "RenderManager.h"

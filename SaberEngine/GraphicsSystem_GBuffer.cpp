@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "GraphicsSystem_GBuffer.h"
 #include "Config.h"
 #include "RenderManager.h"

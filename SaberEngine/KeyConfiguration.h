@@ -1,3 +1,5 @@
+// © 2022 Adam Badke. All rights reserved.
+
 // Input key string defines. Used to share mappings between config keys/values and input managers
 
 #pragma once

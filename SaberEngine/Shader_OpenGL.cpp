@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #include <assert.h>
 #include <GL/glew.h> 
 
