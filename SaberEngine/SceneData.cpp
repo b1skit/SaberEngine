@@ -436,6 +436,25 @@ namespace
 	}
 
 
+	// Assemble a name for textures loaded from memory: Either use the provided name, or create a unique one
+	std::string GenerateEmbeddedTextureName(char const* texName)
+	{
+		string texNameStr;
+
+		if (texName != nullptr)
+		{
+			texNameStr = string(texName);
+		}
+		else
+		{
+			static std::atomic<uint32_t> unnamedTexIdx = 0;
+			texNameStr = "EmbeddedTexture_" + std::to_string(unnamedTexIdx++);
+		}
+
+		return texNameStr;
+	}
+
+
 	shared_ptr<re::Texture> LoadTextureOrColor(
 		SceneData& scene, string const& sceneRootPath, cgltf_texture* texture, vec4 const& colorFallback, 
 		Texture::Format formatFallback, Texture::ColorSpace colorSpace)
@@ -446,25 +465,50 @@ namespace
 		shared_ptr<Texture> tex;
 		if (texture && texture->image)
 		{
-			if (texture->image->uri) // BUG HERE: Embedded image data also satisfies this check
+			if (std::strncmp(texture->image->uri, "data:image/", 11) == 0) // uri is embedded data
+			{
+				// Unpack the base64 data embedded in the URI. Note: Usage of cgltf's cgltf_load_buffer_base64 function
+				// is currently not well documented. This solution was cribbed from Google's filament usage
+				// (parseDataUri, line 285):
+				// https://github.com/google/filament/blob/676694e4589dca55c1cdbbb669cf3dba0e2b576f/libs/gltfio/src/ResourceLoader.cpp
+
+				const char* comma = strchr(texture->image->uri, ',');
+				if (comma && comma - texture->image->uri >= 7 && strncmp(comma - 7, ";base64", 7) == 0)
+				{
+					const char* base64 = comma + 1;
+					const size_t base64Size = strlen(base64);
+					size_t size = base64Size - base64Size / 4;
+					if (base64Size >= 2) {
+						size -= base64[base64Size - 2] == '=';
+						size -= base64[base64Size - 1] == '=';
+					}
+					void* data = 0;
+					cgltf_options options = {};
+					cgltf_result result = cgltf_load_buffer_base64(&options, size, base64, &data);
+
+					// Data is decoded, now load it as usual:
+					const std::string texNameStr = GenerateEmbeddedTextureName(texture->image->name);
+					if (scene.TextureExists(texNameStr))
+					{
+						tex = scene.GetTexture(texNameStr);
+					}
+					else
+					{
+						tex = LoadTextureFromMemory(texNameStr, static_cast<unsigned char const*>(data), size);
+					}
+
+					scene.AddUniqueTexture(tex);
+				}
+			}
+			else if (texture->image->uri) // uri is a filename (e.g. "myImage.png")
 			{
 				// Load texture data from disk
 				tex = scene.GetLoadTextureByPath({ sceneRootPath + texture->image->uri }, false);
 				// TODO: Make pattern of loading/adding textures within these if/else blocks consistent
 			}
-			else if (texture->image->buffer_view)
+			else if (texture->image->buffer_view) // texture data is already loaded in memory
 			{
-				// Assemble a name for textures loaded from memory
-				string texNameStr;
-				if (texture->image->name != nullptr)
-				{
-					texNameStr = string(texture->image->name);
-				}
-				else
-				{
-					static std::atomic<uint32_t> unnamedTexIdx = 0;
-					texNameStr = "EmbeddedTexture_" + std::to_string(unnamedTexIdx++);
-				}
+				const std::string texNameStr = GenerateEmbeddedTextureName(texture->image->name);
 
 				if (scene.TextureExists(texNameStr))
 				{
