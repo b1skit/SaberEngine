@@ -3,6 +3,14 @@
   "Id": "80c62e80-7437-4bb9-b7e0-693fa4c402a1",
   "Items": [
     {
+      "Id": "98bedead-9373-4ad5-a1c2-c716f6322f5c",
+      "Command": "-scene Corset\\glTF-Binary\\Corset.glb"
+    },
+    {
+      "Id": "4655280e-785b-4a54-81ad-5f907ba49804",
+      "Command": "-scene Corset\\glTF\\Corset.gltf"
+    },
+    {
       "Id": "98ea750c-14cb-49ec-a6fe-f66d284f3cf5",
       "Command": "-scene SimpleSkin\\SimpleSkin.gltf"
     },

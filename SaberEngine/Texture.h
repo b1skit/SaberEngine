@@ -93,7 +93,7 @@ namespace re
 
 			Usage m_usage = Usage::Color;
 			Dimension m_dimension = Dimension::Texture2D;
-			Format m_format = Format::RGBA32F;
+			Format m_format = Format::RGBA32F; // TODO: Default to RGBA8?
 			ColorSpace m_colorSpace = ColorSpace::sRGB;
 
 			glm::vec4 m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f); // Also used as initial fill color
