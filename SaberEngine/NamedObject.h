@@ -65,7 +65,8 @@ namespace en
 	{
 		// Hash the name and a unique digit; Will be unique for all objects regardless of their name
 		static std::atomic<uint64_t> objectIDs = 0;
-		const std::string hashString = m_name + std::to_string(objectIDs++);
+		const uint64_t thisObjectID = objectIDs.fetch_add(1);
+		const std::string hashString = m_name + std::to_string(thisObjectID);
 		m_uniqueID = std::hash<std::string>{}(hashString);
 	}
 
