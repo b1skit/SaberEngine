@@ -51,7 +51,9 @@ namespace util
 			meshData->m_meshParams && meshData->m_indices && meshData->m_positions && meshData->m_normals && 
 			meshData->m_tangents && meshData->m_UV0 && meshData->m_colors && meshData->m_joints && meshData->m_weights);
 
-		const bool isIndexed = meshData->m_indices->size() > meshData->m_positions->size();
+		const bool isTriangleList = meshData->m_meshParams->m_drawMode == re::MeshPrimitive::DrawMode::Triangles;
+		SEAssert("Only indexed triangle lists are (currently) supported", isTriangleList);
+
 		const bool hasNormals = !meshData->m_normals->empty();
 		bool hasTangents = !meshData->m_tangents->empty();
 		const bool hasUVs = !meshData->m_UV0->empty();
@@ -66,13 +68,16 @@ namespace util
 			return; // Note: We skip degenerate triangle removal this way, but low risk as the asset came with all attribs
 		}
 
-		// Allocate space for any missing attributes:
-		SEAssert("Only triangle lists are currently supported",
-			meshData->m_meshParams->m_drawMode == re::MeshPrimitive::DrawMode::Triangles);
-		const size_t numVerts = meshData->m_indices->size(); // Assume triangle lists: 3 index entries per triangle
+		// Ensure that any valid indexes will not go out of bounds: Allocate enough space for any missing attributes:
+		const size_t maxElements = std::max(meshData->m_indices->size(), 
+			std::max(meshData->m_positions->size(), 
+				std::max(meshData->m_normals->size(), 
+					std::max(meshData->m_tangents->size(), 
+						std::max(meshData->m_UV0->size(), meshData->m_colors->size())))));
+
 		if (!hasNormals)
 		{
-			meshData->m_normals->resize(numVerts, vec3(0, 0, 0));
+			meshData->m_normals->resize(maxElements, vec3(0, 0, 0));
 
 			if (hasTangents)
 			{
@@ -86,22 +91,23 @@ namespace util
 		}
 		if (!hasTangents)
 		{
-			meshData->m_tangents->resize(numVerts, vec4(0, 0, 0, 0));
+			meshData->m_tangents->resize(maxElements, vec4(0, 0, 0, 0));
 		}
 		if (!hasUVs)
 		{
-			meshData->m_UV0->resize(numVerts, vec2(0, 0));
+			meshData->m_UV0->resize(maxElements, vec2(0, 0));
 		}
 		if (!hasColors)
 		{
-			meshData->m_colors->resize(numVerts, vec4(1.f, 1.f, 1.f, 1.f));
+			meshData->m_colors->resize(maxElements, vec4(1.f, 1.f, 1.f, 1.f));
 		}
 
-		// Convert indexed triangle lists to non-indexed:
-		if (isIndexed)
+		// Expand shared attributes into distinct entries
+		const bool hasSharedAttributes = meshData->m_indices->size() > meshData->m_positions->size();
+		if (hasSharedAttributes)
 		{
-			LOG("MeshPrimitive \"%s\" uses triangle indexing, de-indexing...", meshData->m_name.c_str());
-			RemoveTriangleIndexing(meshData);
+			LOG("MeshPrimitive \"%s\" contains shared vertex attributes, splitting...", meshData->m_name.c_str());
+			SplitSharedAttributes(meshData);
 		}
 
 		// Find and remove any degenerate triangles:
@@ -110,8 +116,6 @@ namespace util
 		// Build any missing attributes:
 		if (!hasNormals)
 		{
-			LOG("MeshPrimitive \"%s\" is missing normals, flat normals will be generated...", meshData->m_name.c_str());
-
 			BuildFlatNormals(meshData);
 		}
 		if (!hasTangents)
@@ -124,16 +128,13 @@ namespace util
 		}
 		if (!hasUVs)
 		{
-			LOG("MeshPrimitive \"%s\" is missing UVs, generating a simple set...", meshData->m_name.c_str());
 			BuildSimpleTriangleUVs(meshData);
 		}
 
-
-		// Re-index the result, if required:
-		if (isIndexed)
+		// Reuse duplicate attributes, if required:
+		if (hasSharedAttributes)
 		{
-			LOG("Re-welding vertices to build unique vertex index list for mesh \"%s\"", meshData->m_name.c_str());
-			WeldUnindexedTriangles(meshData);
+			WeldTriangles(meshData);
 		}
 
 		LOG("MeshPrimitive \"%s\" now has %d unique vertices", meshData->m_name.c_str(), meshData->m_positions->size());
@@ -142,16 +143,14 @@ namespace util
 
 	void VertexAttributeBuilder::RemoveDegenerateTriangles(MeshData* meshData)
 	{
-		SEAssert("Expected an un-indexed triangle list", 
-			meshData->m_indices->size() % 3 == 0 &&
-			meshData->m_positions->size() == meshData->m_indices->size() &&
-			meshData->m_normals->size() == meshData->m_indices->size() &&
-			meshData->m_tangents->size() == meshData->m_indices->size() &&
-			meshData->m_UV0->size() == meshData->m_indices->size() &&
-			meshData->m_colors->size() == meshData->m_indices->size() &&
-			(!m_hasJoints || meshData->m_joints->size() == meshData->m_indices->size()) &&
-			(!m_hasWeights || meshData->m_weights->size() == meshData->m_indices->size())
-		);
+		SEAssert("Expected a triangle list", meshData->m_indices->size() % 3 == 0);
+		SEAssert("Expected a triangle list", meshData->m_positions->size() >= meshData->m_indices->size());
+		SEAssert("Expected a triangle list", meshData->m_normals->size() >= meshData->m_indices->size());
+		SEAssert("Expected a triangle list", meshData->m_tangents->size() >= meshData->m_indices->size());
+		SEAssert("Expected a triangle list", meshData->m_UV0->size() >= meshData->m_indices->size());
+		SEAssert("Expected a triangle list", meshData->m_colors->size() >= meshData->m_indices->size());
+		SEAssert("Expected a triangle list", (!m_hasJoints || meshData->m_joints->size() >= meshData->m_indices->size()));
+		SEAssert("Expected a triangle list", (!m_hasWeights || meshData->m_weights->size() >= meshData->m_indices->size()));
 
 		vector<uint32_t> newIndices;
 		vector<vec3> newPositions;
@@ -203,10 +202,9 @@ namespace util
 			if (isValid)
 			{
 				SEAssert("Insertions are out of sync", insertIdx == newPositions.size());
-
-				newIndices.emplace_back(insertIdx);
-				newIndices.emplace_back(insertIdx + 1);
-				newIndices.emplace_back(insertIdx + 2);
+				newIndices.emplace_back(insertIdx++);
+				newIndices.emplace_back(insertIdx++);
+				newIndices.emplace_back(insertIdx++);
 
 				newPositions.emplace_back(meshData->m_positions->at(meshData->m_indices->at(i)));
 				newPositions.emplace_back(meshData->m_positions->at(meshData->m_indices->at(i + 1)));
@@ -240,8 +238,6 @@ namespace util
 					newWeights.emplace_back(meshData->m_weights->at(meshData->m_indices->at(i + 1)));
 					newWeights.emplace_back(meshData->m_weights->at(meshData->m_indices->at(i + 2)));
 				}
-
-				insertIdx += 3;
 			}
 			else
 			{
@@ -276,6 +272,8 @@ namespace util
 		SEAssert("Expected a triangle list and pre-allocated normals vector", 
 			meshData->m_indices->size() % 3 == 0 && meshData->m_normals->size() == meshData->m_indices->size());
 
+		LOG("MeshPrimitive \"%s\" is missing normals, generating flat normals...", meshData->m_name.c_str());
+
 		for (size_t i = 0; i < meshData->m_indices->size(); i += 3)
 		{
 			const vec3& p0 = meshData->m_positions->at(meshData->m_indices->at(i));
@@ -298,6 +296,8 @@ namespace util
 	{
 		SEAssert("Expected a triangle list and pre-allocated UV0 vector",
 			meshData->m_indices->size() % 3 == 0 && meshData->m_UV0->size() == meshData->m_indices->size());
+
+		LOG("MeshPrimitive \"%s\" is missing UVs, generating a simple set...", meshData->m_name.c_str());
 
 		platform::RenderingAPI const& api = Config::Get()->GetRenderingAPI();
 		const bool botLeftZeroZero = api == platform::RenderingAPI::OpenGL ? true : false;
@@ -330,7 +330,7 @@ namespace util
 	}
 
 
-	void VertexAttributeBuilder::RemoveTriangleIndexing(MeshData* meshData)
+	void VertexAttributeBuilder::SplitSharedAttributes(MeshData* meshData)
 	{
 		const size_t numVerts = meshData->m_indices->size(); // Assume triangle lists: 3 index entries per triangle
 		vector<uint32_t> newIndices(numVerts);
@@ -345,7 +345,7 @@ namespace util
 		// Use our indices to unpack duplicated vertex attributes:
 		for (size_t i = 0; i < numVerts; i++)
 		{
-			newIndices[i] = (uint32_t)i;
+			newIndices[i] = static_cast<uint32_t>(i);
 			newPositions[i] = meshData->m_positions->at(meshData->m_indices->at(i));
 			newNormals[i] = meshData->m_normals->at(meshData->m_indices->at(i));
 			newTangents[i] = meshData->m_tangents->at(meshData->m_indices->at(i));
@@ -378,10 +378,13 @@ namespace util
 	}
 
 
-	void VertexAttributeBuilder::WeldUnindexedTriangles(MeshData* meshData)
+	void VertexAttributeBuilder::WeldTriangles(MeshData* meshData)
 	{
 		SEAssert("Mikktspace operates on system's int, SaberEngine operates on explicit 32-bit uints", 
 			sizeof(int) == sizeof(uint32_t));
+
+		LOG("Re-welding %d vertices to build unique vertex index list for mesh \"%s\"",
+			meshData->m_positions->size(), meshData->m_name.c_str());
 
 		// The Mikktspace welder expects tightly-packed vertex data; Pack it to get the index list, then reorder our
 		// individual streams once welding is complete
@@ -418,6 +421,8 @@ namespace util
 
 		// pfVertexDataOut: iNrVerticesIn * iFloatsPerVert * sizeof(float)
 		const size_t numElements = meshData->m_positions->size();
+		SEAssert("Unexpected position/index size mismatch", meshData->m_positions->size() == meshData->m_indices->size());
+
 		const size_t vertexStrideBytes = floatsPerVertex * sizeof(float);
 		const size_t numVertexBytesOut = numElements * vertexStrideBytes;
 		vector<float> vertexDataOut(numVertexBytesOut, 0); // Will contain only unique vertices after welding

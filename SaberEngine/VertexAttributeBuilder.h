@@ -38,8 +38,8 @@ class VertexAttributeBuilder
 		void RemoveDegenerateTriangles(MeshData* meshData);
 		void BuildSimpleTriangleUVs(MeshData* meshData);
 		void BuildFlatNormals(MeshData* meshData);
-		void RemoveTriangleIndexing(MeshData* meshData);
-		void WeldUnindexedTriangles(MeshData* meshData);
+		void SplitSharedAttributes(MeshData* meshData);
+		void WeldTriangles(MeshData* meshData);
 
 		// Optional vertex attributes:
 		bool m_hasJoints;
