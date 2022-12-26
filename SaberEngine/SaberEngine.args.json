@@ -3,6 +3,10 @@
   "Id": "80c62e80-7437-4bb9-b7e0-693fa4c402a1",
   "Items": [
     {
+      "Id": "cb55f864-2acd-4c42-ba1c-7861e297bd99",
+      "Command": "-scene Sponza_Intel\\NewSponza_Main_glTF_002.gltf"
+    },
+    {
       "Id": "98bedead-9373-4ad5-a1c2-c716f6322f5c",
       "Command": "-scene Corset\\glTF-Binary\\Corset.glb"
     },

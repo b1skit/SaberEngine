@@ -528,6 +528,8 @@ namespace
 				}
 			}
 
+			SEAssert("Failed to load texture: Does the asset exist?", tex != nullptr);
+
 			Texture::TextureParams texParams = tex->GetTextureParams();
 			texParams.m_colorSpace = colorSpace;
 			tex->SetTextureParams(texParams);
