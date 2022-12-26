@@ -189,20 +189,7 @@ namespace gr
 		ambientStageParams.m_depthTestMode		= platform::Context::DepthTestMode::LEqual; // Ambient & directional
 		ambientStageParams.m_depthWriteMode		= platform::Context::DepthWriteMode::Disabled;
 
-
-		// Ambient lights are not supported by GLTF 2.0; Instead, we just check for a \IBL\ibl.hdr file.
-		// Attempt to load the source IBL image (gets a pink error image if it fails)
-		const string sceneIBLPath = Config::Get()->GetValue<string>("sceneIBLPath");
-		shared_ptr<Texture> iblTexture = SceneManager::GetSceneData()->GetLoadTextureByPath({ sceneIBLPath }, false);
-		if (!iblTexture)
-		{
-			const string defaultIBLPath = Config::Get()->GetValue<string>("defaultIBLPath");
-			iblTexture = SceneManager::GetSceneData()->GetLoadTextureByPath({ defaultIBLPath }, true);
-		}
-		Texture::TextureParams iblParams = iblTexture->GetTextureParams();
-		iblParams.m_colorSpace = Texture::ColorSpace::Linear;
-		iblTexture->SetTextureParams(iblParams);
-
+		shared_ptr<Texture> iblTexture = SceneManager::GetSceneData()->GetIBLTexture();
 
 		// 1st frame: Generate the pre-integrated BRDF LUT via a single-frame render stage:
 		{

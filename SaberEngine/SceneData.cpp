@@ -627,7 +627,7 @@ namespace
 	}
 
 
-	void PreLoadMaterials(SceneData& scene, std::string const& sceneRootPath, cgltf_data* data)
+	void PreLoadMaterials(std::string const& sceneRootPath, SceneData& scene, cgltf_data* data)
 	{
 		const size_t numMaterials = data->materials_count;
 		LOG("Loading %d scene materials", numMaterials);
@@ -921,6 +921,29 @@ namespace
 			make_shared<Light>(lightName, parent->GetTransform(), lightType, colorIntensity, attachShadow);
 
 		scene.AddLight(newLight);
+	}
+
+
+	void LoadIBL(string const& sceneRootPath, SceneData& scene)
+	{
+		// Ambient lights are not supported by GLTF 2.0; Instead, we handle it manually.
+		// First, we check for a <sceneRoot>\IBL\ibl.hdr file for per-scene IBLs/skyboxes.
+		// If that fails, we fall back to a default HDRI
+		const string sceneIBLPath = Config::Get()->GetValue<string>("sceneIBLPath");
+		shared_ptr<Texture> iblTexture = scene.GetLoadTextureByPath({ sceneIBLPath }, false);
+		if (!iblTexture)
+		{
+			const string defaultIBLPath = Config::Get()->GetValue<string>("defaultIBLPath");
+			iblTexture = scene.GetLoadTextureByPath({ defaultIBLPath }, true);
+		}
+		SEAssert("Missing IBL texture. Per scene IBLs must be placed at <sceneRoot>\\IBL\\ibl.hdr; A default fallback "
+			"must exist at Assets\\DefaultIBL\\ibl.hdr", iblTexture != nullptr);
+
+		Texture::TextureParams iblParams = iblTexture->GetTextureParams();
+		iblParams.m_colorSpace = Texture::ColorSpace::Linear;
+		iblTexture->SetTextureParams(iblParams);
+
+		scene.AddUniqueTexture(iblTexture);
 	}
 
 
@@ -1398,10 +1421,13 @@ namespace fr
 		const string sceneRootPath = Config::Get()->GetValue<string>("sceneRootPath");
 
 		// Load the materials first:
-		PreLoadMaterials(*this, sceneRootPath, data);
+		PreLoadMaterials(sceneRootPath, *this, data);
 
 		// Load the scene hierarchy:
 		LoadSceneHierarchy(sceneRootPath, *this, data);
+
+		// Load the IBL/skybox HDRI:
+		LoadIBL(sceneRootPath, *this); // TODO: Enqueue this onto a worker thread while we're loading other stuff
 
 		if (m_cameras.empty()) // Add a default camera if none were found during LoadSceneHierarchy()
 		{
@@ -1517,6 +1543,20 @@ namespace fr
 		}
 
 		AddUpdateable(newLight); // Updateables get pumped every frame
+	}
+
+
+	std::shared_ptr<re::Texture> SceneData::GetIBLTexture() const
+	{
+		const string sceneIBLPath = Config::Get()->GetValue<string>("sceneIBLPath");
+		shared_ptr<Texture> iblTexture = TryGetTexture(sceneIBLPath);
+		if (!iblTexture)
+		{
+			const string defaultIBLPath = Config::Get()->GetValue<string>("defaultIBLPath");
+			iblTexture = GetTexture(defaultIBLPath); // Will exist
+		}
+
+		return iblTexture;
 	}
 
 
@@ -1682,9 +1722,9 @@ namespace fr
 	}
 
 
-	std::shared_ptr<re::Texture> SceneData::GetTexture(std::string textureName) const
+	std::shared_ptr<re::Texture> SceneData::GetTexture(std::string const& texName) const
 	{
-		const uint64_t nameID = en::NamedObject::ComputeIDFromName(textureName);
+		const uint64_t nameID = en::NamedObject::ComputeIDFromName(texName);
 
 		std::shared_lock<std::shared_mutex> readLock(m_texturesMutex);
 		auto result = m_textures.find(nameID);
@@ -1695,7 +1735,18 @@ namespace fr
 	}
 
 
-	bool SceneData::TextureExists(std::string textureName) const
+	std::shared_ptr<re::Texture> SceneData::TryGetTexture(std::string const& texName) const
+	{
+		const uint64_t nameID = en::NamedObject::ComputeIDFromName(texName);
+
+		std::shared_lock<std::shared_mutex> readLock(m_texturesMutex);
+		auto result = m_textures.find(nameID);
+
+		return result == m_textures.end() ? nullptr : result->second;
+	}
+
+
+	bool SceneData::TextureExists(std::string const& textureName) const
 	{
 		const uint64_t nameID = en::NamedObject::ComputeIDFromName(textureName);
 
@@ -1704,7 +1755,7 @@ namespace fr
 	}
 
 
-	shared_ptr<Texture> SceneData::GetLoadTextureByPath(vector<string> texturePaths, bool returnErrorTex)
+	shared_ptr<Texture> SceneData::GetLoadTextureByPath(vector<string> const& texturePaths, bool returnErrorTex)
 	{
 		SEAssert("Expected either 1 or 6 texture paths", texturePaths.size() == 1 || texturePaths.size() == 6);
 

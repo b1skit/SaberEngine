@@ -39,12 +39,13 @@ namespace fr
 		std::vector<std::shared_ptr<gr::Camera>> const& GetCameras() const;
 		std::shared_ptr<gr::Camera> GetMainCamera() const; // TODO: Maintain an active camera index, and allow camera switching cameras. For now, return 1st camera added
 		
-		
 		// Lights:
 		void AddLight(std::shared_ptr<gr::Light> newLight);
 		inline std::shared_ptr<gr::Light> const GetAmbientLight() const { return m_ambientLight; }
 		inline std::shared_ptr<gr::Light> GetKeyLight() const { return m_keyLight; }
 		inline std::vector<std::shared_ptr<gr::Light>> const& GetPointLights() const { return m_pointLights; }
+
+		std::shared_ptr<re::Texture> GetIBLTexture() const;
 
 		// Updateables:
 		void AddUpdateable(std::shared_ptr<en::Updateable> updateable);
@@ -59,11 +60,12 @@ namespace fr
 
 		// Textures:
 		void AddUniqueTexture(std::shared_ptr<re::Texture>& newTexture); // Note: newTexture may be modified
-		std::shared_ptr<re::Texture> GetTexture(std::string textureName) const;
-		bool TextureExists(std::string textureName) const;
+		std::shared_ptr<re::Texture> GetTexture(std::string const& texName) const;
+		std::shared_ptr<re::Texture> TryGetTexture(std::string const& texName) const;
+		bool TextureExists(std::string const& textureName) const;
 
 		// Gets already-loaded textures, or loads if it's unseen. Returns nullptr if texture file doesn't exist
-		std::shared_ptr<re::Texture> GetLoadTextureByPath(std::vector<std::string> texturePaths, bool returnErrorTex);
+		std::shared_ptr<re::Texture> GetLoadTextureByPath(std::vector<std::string> const& texturePaths, bool returnErrorTex);
 
 		// Materials:
 		void AddUniqueMaterial(std::shared_ptr<gr::Material>& newMaterial);
