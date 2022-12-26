@@ -46,7 +46,7 @@ namespace re
 	void Texture::SetTextureParams(re::Texture::TextureParams const& params) 
 	{ 
 		m_texParams = params; 
-		m_platformParams->m_isDirty = true; 
+		m_platformParams->m_isDirty = true;
 	}
 
 

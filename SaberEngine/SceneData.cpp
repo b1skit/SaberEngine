@@ -57,9 +57,8 @@ namespace
 	using glm::make_mat4;
 
 
-	#define ERROR_TEXTURE_NAME "ErrorTexture"
-	#define ERROR_TEXTURE_COLOR_VEC4 vec4(1.0f, 0.0f, 1.0f, 1.0f)
-	#define DEFAULT_ALPHA_VALUE 1.0f // Default alpha value when loading texture data, if no alpha exists
+	constexpr glm::vec4 k_errorTextureColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
+	constexpr char k_missingMaterialName[] = "MissingMaterial";
 
 
 	// STBI Image data loading helpers:
@@ -89,7 +88,8 @@ namespace
 	}
 
 
-	std::shared_ptr<re::Texture> LoadTextureFromFilePath(vector<string> texturePaths, bool returnErrorTex = false)
+	std::shared_ptr<re::Texture> LoadTextureFromFilePath(
+		vector<string> texturePaths, bool returnErrorTex, glm::vec4 const& errorTexFillColor)
 	{
 		SEAssert("Can load single faces or cubemaps only", texturePaths.size() == 1 || texturePaths.size() == 6);
 		SEAssert("Invalid number of texture paths", texturePaths.size() == 1 || texturePaths.size() == 6);
@@ -115,7 +115,7 @@ namespace
 			re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCubeMap;
 		texParams.m_format = re::Texture::Format::RGBA8;
 		texParams.m_colorSpace = Texture::ColorSpace::Unknown;
-		texParams.m_clearColor = ERROR_TEXTURE_COLOR_VEC4;
+		texParams.m_clearColor = errorTexFillColor;
 
 		// Load the texture, face-by-face:
 		shared_ptr<Texture> texture(nullptr);
@@ -233,10 +233,10 @@ namespace
 					texParams.m_format = re::Texture::Format::RGBA8;
 					texParams.m_colorSpace = Texture::ColorSpace::Unknown;
 
-					texParams.m_clearColor = ERROR_TEXTURE_COLOR_VEC4;
+					texParams.m_clearColor = errorTexFillColor;
 					texParams.m_useMIPs = true;
 				}
-				texture = std::make_shared<re::Texture>(ERROR_TEXTURE_NAME, texParams);
+				texture = std::make_shared<re::Texture>(texturePaths[0], texParams);
 			}
 			else
 			{
@@ -274,7 +274,7 @@ namespace
 		Texture::TextureParams texParams;
 		texParams.m_format = re::Texture::Format::RGBA8;
 		texParams.m_colorSpace = Texture::ColorSpace::Unknown;
-		texParams.m_clearColor = ERROR_TEXTURE_COLOR_VEC4;
+		texParams.m_clearColor = k_errorTextureColor;
 		
 		int width, height, numChannels;
 		uint8_t bitDepth = 0;
@@ -561,13 +561,86 @@ namespace
 	}
 
 
+	void GenerateErrorMaterial(SceneData& scene)
+	{
+		LOG("Generating an error material \"%s\"...", k_missingMaterialName);
+
+		constexpr char missingAlbedoTexName[]				= "MissingAlbedoTexture";
+		constexpr char missingMetallicRoughnessTexName[]	= "MissingMetallicRoughnessTexture";
+		constexpr char missingNormalTexName[]				= "MissingNormalTexture";
+		constexpr char missingOcclusionTexName[]			= "MissingOcclusionTexture";
+		constexpr char missingEmissiveTexName[]				= "MissingEmissiveTexture";
+
+		std::shared_ptr<gr::Material> errorMat = 
+			std::make_shared<gr::Material>(k_missingMaterialName, Material::GetMaterialDefinition("pbrMetallicRoughness"));
+
+		// MatAlbedo
+		std::shared_ptr<re::Texture> errorAlbedo = 
+			LoadTextureFromFilePath({ missingAlbedoTexName }, true, k_errorTextureColor);
+		re::Texture::TextureParams srgbParams = errorAlbedo->GetTextureParams();
+		srgbParams.m_colorSpace = re::Texture::ColorSpace::sRGB;
+		errorAlbedo->SetTextureParams(srgbParams);
+		errorMat->GetTexture(0) = errorAlbedo;
+		scene.AddUniqueTexture(errorAlbedo);
+
+		// MatMetallicRoughness
+		std::shared_ptr<re::Texture> errorMetallicRoughness =
+			LoadTextureFromFilePath({ missingMetallicRoughnessTexName }, true, glm::vec4(0.f, 1.f, 0.f, 0.f));
+		re::Texture::TextureParams linearParams = errorMetallicRoughness->GetTextureParams();
+		linearParams.m_colorSpace = re::Texture::ColorSpace::Linear;
+		errorMetallicRoughness->SetTextureParams(linearParams);
+		errorMat->GetTexture(1) = errorMetallicRoughness;
+		scene.AddUniqueTexture(errorMetallicRoughness);
+
+		// MatNormal
+		std::shared_ptr<re::Texture> errorNormal = 
+			LoadTextureFromFilePath({ missingNormalTexName }, true, glm::vec4(0.5f, 0.5f, 1.0f, 0.0f));
+		errorNormal->SetTextureParams(linearParams);
+		errorMat->GetTexture(2) = errorNormal;
+		scene.AddUniqueTexture(errorNormal);
+
+		// MatOcclusion
+		std::shared_ptr<re::Texture> errorOcclusion =
+			LoadTextureFromFilePath({ missingOcclusionTexName }, true, glm::vec4(1.f));
+		errorOcclusion->SetTextureParams(linearParams);
+		errorMat->GetTexture(3) = errorOcclusion;
+		scene.AddUniqueTexture(errorOcclusion);
+
+		// MatEmissive
+		std::shared_ptr<re::Texture> errorEmissive =
+			LoadTextureFromFilePath({ missingEmissiveTexName }, true, k_errorTextureColor);
+		errorEmissive->SetTextureParams(srgbParams);
+		errorMat->GetTexture(4) = errorEmissive;
+		scene.AddUniqueTexture(errorEmissive);
+
+		// Construct a default permanent parameter block for the material params:
+		Material::PBRMetallicRoughnessParams matParams;
+		matParams.g_f0 = vec3(0.04f, 0.04f, 0.04f);
+
+		// TODO: Material MatParams (ParameterBlocks in general) shouldn't be created in the frontend
+		errorMat->GetParameterBlock() = ParameterBlock::Create(
+			"PBRMetallicRoughnessParams",
+			matParams,
+			ParameterBlock::PBType::Immutable);
+
+		scene.AddUniqueMaterial(errorMat);
+	}
+
+
 	void PreLoadMaterials(SceneData& scene, std::string const& sceneRootPath, cgltf_data* data)
 	{
 		const size_t numMaterials = data->materials_count;
 		LOG("Loading %d scene materials", numMaterials);
 
-		std::atomic_uint numTexLoads(0);
-		std::atomic_uint numMatLoads(0);
+		// Note: We need to wait for both the materials AND textures to be completely loaded
+		std::atomic<uint32_t> numTexLoads(0);
+		std::atomic<uint32_t> numMatLoads(0);
+
+		numMatLoads++;
+		en::CoreEngine::GetThreadPool()->EnqueueJob([&scene, &numMatLoads]() {
+			GenerateErrorMaterial(scene);
+			numMatLoads--;
+			});
 
 		for (size_t cur = 0; cur < numMaterials; cur++)
 		{
@@ -803,10 +876,17 @@ namespace
 
 	void LoadAddLight(SceneData& scene, cgltf_node* current, shared_ptr<SceneNode> parent)
 	{
-		static std::atomic<uint32_t> unnamedLightIndex = 0;
-		const uint32_t thisIndex = unnamedLightIndex.fetch_add(1);
-		const string lightName = 
-			(current->light->name ? string(current->light->name) : "UnnamedLight_" + std::to_string(thisIndex));
+		string lightName;
+		if (current->light->name)
+		{
+			lightName = string(current->light->name);
+		}
+		else
+		{
+			static std::atomic<uint32_t> unnamedLightIndex = 0;
+			const uint32_t thisLightIndex = unnamedLightIndex.fetch_add(1);
+			lightName = "UnnamedLight_" + to_string(thisLightIndex);
+		}
 
 		LOG("Found light \"%s\"", lightName.c_str());
 
@@ -847,7 +927,17 @@ namespace
 	void LoadMeshGeometry(
 		string const& sceneRootPath, SceneData& scene, cgltf_node* current, shared_ptr<SceneNode> parent)
 	{
-		const string meshName = current->mesh->name ? string(current->mesh->name) : "unnamedMesh";
+		string meshName;
+		if (current->mesh->name)
+		{
+			meshName = string(current->mesh->name);
+		}
+		else
+		{
+			static std::atomic<uint32_t> unnamedMeshIdx = 0;
+			const uint32_t thisMeshIdx = unnamedMeshIdx.fetch_add(1);
+			meshName = "UnnamedMesh_" + to_string(thisMeshIdx);
+		}
 
 		std::shared_ptr<gr::Mesh> newMesh = make_shared<gr::Mesh>(meshName, parent->GetTransform());
 
@@ -1107,14 +1197,19 @@ namespace
 			};
 			util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
 
-			SEAssert("Mesh primitive has a null material. This is valid, we just don't handle it (currently)", 
-				current->mesh->primitives[primitive].material != nullptr);
-			// TODO: Should we load a fallback error material?
-
-			// Get the pre-loaded material:
-			const string matName = GenerateMaterialName(*current->mesh->primitives[primitive].material);
-			SEAssert("Could not find material", scene.MaterialExists(matName));
-			shared_ptr<gr::Material> material = scene.GetMaterial(matName);
+			// Assign a material:
+			shared_ptr<gr::Material> material;
+			if (current->mesh->primitives[primitive].material != nullptr)
+			{
+				const string generatedMatName = GenerateMaterialName(*current->mesh->primitives[primitive].material);
+				material = scene.GetMaterial(generatedMatName);
+			}
+			else
+			{
+				LOG_WARNING("MeshPrimitive \"%s\" does not have a material. Assigning \"%s\"", 
+					meshName.c_str(), k_missingMaterialName);
+				material = scene.GetMaterial(k_missingMaterialName);
+			}
 
 			// Attach the MeshPrimitive to the Mesh:
 			newMesh->AddMeshPrimitive(make_shared<MeshPrimitive>(
@@ -1619,7 +1714,8 @@ namespace fr
 			return GetTexture(texturePaths[0]);
 		}
 
-		shared_ptr<re::Texture> result = LoadTextureFromFilePath(vector<string>(texturePaths), returnErrorTex);
+		shared_ptr<re::Texture> result = 
+			LoadTextureFromFilePath(vector<string>(texturePaths), returnErrorTex, k_errorTextureColor);
 		if (result)
 		{
 			AddUniqueTexture(result);
