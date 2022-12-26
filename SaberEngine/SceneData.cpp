@@ -448,7 +448,8 @@ namespace
 		else
 		{
 			static std::atomic<uint32_t> unnamedTexIdx = 0;
-			texNameStr = "EmbeddedTexture_" + std::to_string(unnamedTexIdx++);
+			const uint32_t thisTexIdx = unnamedTexIdx.fetch_add(1);
+			texNameStr = "EmbeddedTexture_" + std::to_string(thisTexIdx);
 		}
 
 		return texNameStr;
@@ -800,7 +801,10 @@ namespace
 
 	void LoadAddLight(SceneData& scene, cgltf_node* current, shared_ptr<SceneNode> parent)
 	{
-		const string lightName = (current->light->name ? string(current->light->name) : "Unnamed light");
+		static std::atomic<uint32_t> unnamedLightIndex = 0;
+		const uint32_t thisIndex = unnamedLightIndex.fetch_add(1);
+		const string lightName = 
+			(current->light->name ? string(current->light->name) : "UnnamedLight_" + std::to_string(thisIndex));
 
 		LOG("Found light \"%s\"", lightName.c_str());
 
