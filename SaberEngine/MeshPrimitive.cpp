@@ -3,6 +3,7 @@
 #include "MeshPrimitive.h"
 #include "MeshPrimitive_Platform.h"
 #include "Transform.h"
+#include "VertexAttributeBuilder.h"
 
 
 namespace re
@@ -150,6 +151,8 @@ namespace meshfactory
 	using re::MeshPrimitive;
 	using en::Config;
 	
+	// TODO: These functions should only create geometry once, and register it with the scene data inventory for reuse
+
 
 	inline std::shared_ptr<MeshPrimitive> CreateCube()
 	{
@@ -164,28 +167,6 @@ namespace meshfactory
 			vec3(-1.0f, -1.0f, -1.0f),
 			vec3(1.0f, -1.0f, -1.0f),
 			vec3(1.0f, 1.0f, -1.0f)
-		};
-
-		const vector<vec3 > normals
-		{
-			vec3(0.0f, 0.0f, 1.0f),		// Front = 0
-			vec3(0.0f, 0.0f, -1.0f),	// Back = 1
-			vec3(-1.0f, 0.0f, 0.0f),	// Left = 2
-			vec3(1.0f, 0.0f, 0.0f),		// Right = 3
-			vec3(0.0f, 1.0f, 0.0f),		// Up = 4
-			vec3(0.0f, -1.0f, 0.0f),	// Down = 5
-		};
-
-		const vector<vec4> colors
-		{
-			vec4(0.0f, 0.0f, 0.0f, 1.0f),
-			vec4(0.0f, 0.0f, 1.0f, 1.0f),
-			vec4(0.0f, 1.0f, 0.0f, 1.0f),
-			vec4(0.0f, 1.0f, 1.0f, 1.0f),
-			vec4(1.0f, 0.0f, 0.0f, 1.0f),
-			vec4(1.0f, 0.0f, 1.0f, 1.0f),
-			vec4(1.0f, 1.0f, 0.0f, 1.0f),
-			vec4(1.0f, 1.0f, 1.0f, 1.0f),
 		};
 
 		const vector<vec2> uvs
@@ -219,48 +200,6 @@ namespace meshfactory
 			positions[7], positions[6], positions[5], positions[4]
 		};
 
-		vector<vec3> assembledNormals
-		{
-			// Front face
-			normals[0], normals[0], normals[0],	normals[0],
-
-			// Left face
-			normals[2], normals[2],	normals[2],	normals[2],
-
-			// Right face
-			normals[3], normals[3],	normals[3],	normals[3],
-
-			// Top face
-			normals[4], normals[4], normals[4],	normals[4],
-
-			// Bottom face
-			normals[5], normals[5],	normals[5],	normals[5],
-
-			// Back face
-			normals[1], normals[1],	normals[1],	normals[1]
-		};
-
-		vector<vec4> assembledColors
-		{
-			// Front face
-			colors[0], colors[1], colors[2], colors[3],
-
-			// Left face
-			colors[4], colors[5], colors[1], colors[0],
-
-			// Right face
-			colors[3], colors[2], colors[6], colors[7],
-
-			// Top face
-			colors[4], colors[0], colors[3], colors[7],
-
-			// Bottom face
-			colors[1], colors[5], colors[6], colors[2],
-
-			// Back face
-			colors[7], colors[6], colors[5], colors[4]
-		};
-
 		vector<vec2> assembledUVs
 		{
 			// Front face
@@ -281,9 +220,6 @@ namespace meshfactory
 			// Back face
 			uvs[1], uvs[0],	uvs[2],	uvs[3]
 		};
-
-		// TODO: Populate these with meaningful data
-		vector<vec3> assembledTangents(positions.size());
 
 		std::vector<uint32_t> cubeIndices // 6 faces * 2 tris * 3 indices 
 		{
@@ -306,24 +242,46 @@ namespace meshfactory
 			21, 22, 23,
 		};
 
-		std::vector<uint8_t> joints;
-		std::vector<float> weights;
+		// Construct any missing vertex attributes for the mesh:
+		vector<vec3> normals;
+		vector<vec4> tangents;
+		vector<vec4> colors;
+		std::vector<glm::tvec4<uint8_t>> jointsPlaceholder; // Optional: Will not be generated
+		std::vector<glm::vec4> weightsPlaceholder; // Optional: Will not be generated
+
+		constexpr char meshName[] = "cube";
+
+		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
+		util::VertexAttributeBuilder::MeshData meshData
+		{
+			meshName,
+			&defaultMeshPrimitiveParams,
+			&cubeIndices,
+			&assembledPositions,
+			&normals,
+			&tangents,
+			&assembledUVs,
+			&colors,
+			&jointsPlaceholder,
+			&weightsPlaceholder
+		};
+		util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
 		return std::make_shared<MeshPrimitive>(
-			"cube",
+			meshName,
 			cubeIndices,
 			*reinterpret_cast<vector<float>*>(&assembledPositions),	// Cast our vector<vec3> to vector<float>
 			gr::Bounds::k_invalidMinXYZ,
 			gr::Bounds::k_invalidMaxXYZ,
-			*reinterpret_cast<vector<float>*>(&assembledNormals),
-			*reinterpret_cast<vector<float>*>(&assembledTangents),
+			*reinterpret_cast<vector<float>*>(&normals),
+			*reinterpret_cast<vector<float>*>(&tangents),
 			*reinterpret_cast<vector<float>*>(&assembledUVs),
-			*reinterpret_cast<vector<float>*>(&assembledColors),
-			joints,
-			weights,
-			nullptr,
-			MeshPrimitive::MeshPrimitiveParams());
+			*reinterpret_cast<vector<float>*>(&colors),
+			std::vector<uint8_t>(), // No joints
+			std::vector<float>(), // No weights
+			nullptr, // No material
+			defaultMeshPrimitiveParams);
 	}
 
 
@@ -355,14 +313,6 @@ namespace meshfactory
 		}
 		}
 
-#if 0
-		return CreateQuad(nullptr,
-			vec3(-1.0f, 1.0f, zDepth),	// TL
-			vec3(1.0f, 1.0f, zDepth),	// TR
-			vec3(-1.0f, -1.0f, zDepth),	// BL
-			vec3(1.0f, -1.0f, zDepth));	// BR
-#endif
-
 		// Create a triangle twice the size of clip space, and let the clipping hardware trim it to size:
 		std::vector<vec2> uvs
 		{
@@ -375,20 +325,34 @@ namespace meshfactory
 		const vec3 bl = vec3(-1.f, -1.f, zDepth);
 		const vec3 br = vec3(3.0f, -1.0f, zDepth);
 
+		// Assemble geometry:
 		std::vector<vec3> positions = { tl, bl, br };
-		const vec3 tangent = normalize(vec3(br - bl));
-		const vec3 bitangent = normalize(vec3(tl - bl));
-		const vec3 normal = normalize(cross(tangent, bitangent));
-		const vec4 redColor = vec4(1, 0, 0, 1); // Assign a bright red color by default
-
-		std::vector<vec3> normals(3, normal);
-		std::vector<vec4> colors(3, redColor);
-		std::vector<vec3> tangents(3, tangent); // TODO: Populate this
-
+		std::vector<vec4> colors(3, vec4(1, 0, 0, 1)); // Assign a bright red color by default
 		std::vector<uint32_t> triIndices{ 0, 1, 2 }; // Note: CCW winding
 
-		std::vector<uint8_t> joints;
-		std::vector<float> weights;
+		// Populate missing data:
+		std::vector<vec3> normals;
+		std::vector<vec4> tangents;
+		std::vector<glm::tvec4<uint8_t>> jointsPlaceholder;
+		std::vector<glm::vec4> weightsPlaceholder;
+
+		constexpr char meshName[] = "optimizedFullscreenQuad";
+
+		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams; // Use defaults
+		util::VertexAttributeBuilder::MeshData meshData
+		{
+			meshName,
+			&defaultMeshPrimitiveParams,
+			&triIndices,
+			&positions,
+			&normals,
+			&tangents,
+			&uvs,
+			&colors,
+			&jointsPlaceholder,
+			&weightsPlaceholder
+		};
+		util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
 
 		return std::make_shared<MeshPrimitive>(
 			"optimizedFullscreenQuad",
@@ -400,10 +364,10 @@ namespace meshfactory
 			*reinterpret_cast<vector<float>*>(&tangents),
 			*reinterpret_cast<vector<float>*>(&uvs),
 			*reinterpret_cast<vector<float>*>(&colors),
-			joints,
-			weights,
-			nullptr,
-			MeshPrimitive::MeshPrimitiveParams());
+			std::vector<uint8_t>(), // No joints
+			std::vector<float>(), // No weights
+			nullptr, // No material
+			defaultMeshPrimitiveParams);
 	}
 
 
@@ -414,10 +378,7 @@ namespace meshfactory
 		vec3 bl /*= vec3(-0.5f, -0.5f, 0.0f)*/,
 		vec3 br /*= vec3(0.5f, -0.5f, 0.0f)*/)
 	{
-		vec3 tangent = normalize(vec3(br - bl));
-		vec3 bitangent = normalize(vec3(tl - bl));
-		vec3 quadNormal = normalize(cross(tangent, bitangent));
-		vec4 redColor = vec4(1, 0, 0, 1); // Assign a bright red color by default...
+		std::vector<vec3> positions = { tl, bl, tr, br };
 
 		std::vector<vec2> uvs
 		{
@@ -433,18 +394,35 @@ namespace meshfactory
 			2, 1, 3		// BR face
 		}; // Note: CCW winding
 
-		// Assemble the vertex data streams:
-		std::vector<vec3> positions = { tl, bl, tr, br };
-		std::vector<vec3> normals(4, quadNormal);
-		std::vector<vec4> colors(4, redColor);
-		std::vector<vec3> tangents(positions.size()); // TODO: Populate this
+		std::vector<vec4> colors(4, vec4(1, 0, 0, 1)); // Assign a bright red color by default...
 
-		std::vector<uint8_t> joints;
-		std::vector<float> weights;
+		// Populate missing data:		
+		std::vector<vec3> normals;		
+		std::vector<vec4> tangents;
+		std::vector<glm::tvec4<uint8_t>> jointsPlaceholder;
+		std::vector<glm::vec4> weightsPlaceholder;
+
+		constexpr char meshName[] = "quad";
+
+		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
+		util::VertexAttributeBuilder::MeshData meshData
+		{
+			meshName,
+			&defaultMeshPrimitiveParams,
+			&quadIndices,
+			&positions,
+			&normals,
+			&tangents,
+			&uvs,
+			&colors,
+			&jointsPlaceholder,
+			&weightsPlaceholder
+		};
+		util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// It's easier to reason about geometry in vecN types; cast to float now we're done
 		return std::make_shared<MeshPrimitive>(
-			"quad",
+			meshName,
 			quadIndices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
 			gr::Bounds::k_invalidMinXYZ,
@@ -453,9 +431,9 @@ namespace meshfactory
 			*reinterpret_cast<vector<float>*>(&tangents),
 			*reinterpret_cast<vector<float>*>(&uvs),
 			*reinterpret_cast<vector<float>*>(&colors),
-			joints,
-			weights,
-			nullptr,
+			std::vector<uint8_t>(), // No joints
+			std::vector<float>(), // No weights
+			nullptr, // No material
 			MeshPrimitive::MeshPrimitiveParams());
 	}
 
@@ -465,8 +443,7 @@ namespace meshfactory
 		size_t numLatSlices /*= 16*/,
 		size_t numLongSlices /*= 16*/)
 	{
-		// NOTE: Currently, this function does not generate valid tangents for any verts. Some UV's are distorted,
-		// as we're using merged vertices. TODO: Fix this
+		// NOTE: Some UV's are distorted, as we're using merged vertices. TODO: Fix this
 
 		// Note: Latitude = horizontal lines about Y
 		//		Longitude = vertical lines about sphere
@@ -474,17 +451,10 @@ namespace meshfactory
 		//		numLongSlices = vertical segments
 
 		const size_t numVerts = numLatSlices * numLongSlices + 2; // + 2 for end caps
-
 		vector<vec3> positions(numVerts);
 		vector<vec3> normals(numVerts);
-		vector<vec4> colors(numVerts);
 		vector<vec2> uvs(numVerts);
-		vector<vec3> tangents(numVerts);
-
-		// TODO: Actually compute these. For now, just use dummy values
-		const vec4 vertColor(1.0f, 1.0f, 1.0f, 1.0f);
-
-
+		
 		const size_t numIndices = 3 * numLatSlices * numLongSlices * 2;
 		vector<uint32_t> indices(numIndices);
 
@@ -498,9 +468,7 @@ namespace meshfactory
 
 		positions[currentIndex] = firstPosition;
 		normals[currentIndex] = firstNormal;
-		colors[currentIndex] = vertColor;
 		uvs[currentIndex] = firstUv0;
-		tangents[currentIndex] = firstTangent;
 		currentIndex++;
 
 		// Rotate about Z: Arc down the side profile of our sphere
@@ -534,15 +502,11 @@ namespace meshfactory
 
 				vec3 position = vec3(x, y, z);
 				vec3 normal = normalize(position);
-
-				vec3 tangent = vec3(1, 0, 0); // TODO: Compute this
 				vec2 uv0 = vec2(uvX, uvY);
 
 				positions[currentIndex] = position;
 				normals[currentIndex] = normal;
-				colors[currentIndex] = vertColor;
 				uvs[currentIndex] = uv0;
-				tangents[currentIndex] = tangent;
 				currentIndex++;
 
 				uvX += uvXStep;
@@ -555,18 +519,13 @@ namespace meshfactory
 		}
 
 		// Final endcap:
-		vec3 finalPosition = vec3(0.0f, -radius, 0.0f);
-		vec3 finalNormal = vec3(0, -1, 0);
-
-		vec3 finalTangent = vec3(0, 0, 0);
-		vec3 finalBitangent = vec3(0, 0, 0);
-		vec2 finalUv0 = vec2(0.5f, 0.0f);
+		const vec3 finalPosition = vec3(0.0f, -radius, 0.0f);
+		const vec3 finalNormal = vec3(0, -1, 0);
+		const vec2 finalUv0 = vec2(0.5f, 0.0f);
 
 		positions[currentIndex] = finalPosition;
 		normals[currentIndex] = finalNormal;
-		colors[currentIndex] = vertColor;
 		uvs[currentIndex] = finalUv0;
-		tangents[currentIndex] = finalTangent;
 
 		// Indices: (Note: We use counter-clockwise vertex winding)
 		currentIndex = 0;
@@ -631,12 +590,33 @@ namespace meshfactory
 		}
 		indices[currentIndex - 1] = (uint32_t)(numVerts - numLatSlices - 1); // Wrap the last edge back to the start
 
-		std::vector<uint8_t> joints;
-		std::vector<float> weights;
+		// Populate missing data:
+		vector<vec4> colors;
+		vector<vec4> tangents;
+		std::vector<glm::tvec4<uint8_t>> jointsPlaceholder;
+		std::vector<glm::vec4> weightsPlaceholder;
+
+		constexpr char meshName[] = "sphere";
+
+		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
+		util::VertexAttributeBuilder::MeshData meshData
+		{
+			meshName,
+			&defaultMeshPrimitiveParams,
+			&indices,
+			&positions,
+			&normals,
+			&tangents,
+			&uvs,
+			&colors,
+			&jointsPlaceholder,
+			&weightsPlaceholder
+		};
+		util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
 		return make_shared<MeshPrimitive>(
-			"sphere",
+			meshName,
 			indices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
 			gr::Bounds::k_invalidMinXYZ,
@@ -645,10 +625,10 @@ namespace meshfactory
 			*reinterpret_cast<vector<float>*>(&tangents),
 			*reinterpret_cast<vector<float>*>(&uvs),
 			*reinterpret_cast<vector<float>*>(&colors),
-			joints,
-			weights,
-			nullptr,
-			MeshPrimitive::MeshPrimitiveParams());
+			std::vector<uint8_t>(), // No joints
+			std::vector<float>(), // No weights
+			nullptr, // No material
+			defaultMeshPrimitiveParams);
 	}
 } // meshfactory
 

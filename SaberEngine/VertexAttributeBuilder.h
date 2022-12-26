@@ -15,7 +15,7 @@ class VertexAttributeBuilder
 		struct MeshData
 		{
 			std::string const& m_name; // For debug spew...
-			re::MeshPrimitive::MeshPrimitiveParams* m_meshParams;
+			re::MeshPrimitive::MeshPrimitiveParams const* m_meshParams;
 			std::vector<uint32_t>* m_indices;
 			std::vector<glm::vec3>* m_positions;
 			std::vector<glm::vec3>* m_normals;			// Created as face normals if empty

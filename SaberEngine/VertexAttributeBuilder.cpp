@@ -137,7 +137,8 @@ namespace util
 			WeldTriangles(meshData);
 		}
 
-		LOG("MeshPrimitive \"%s\" now has %d unique vertices", meshData->m_name.c_str(), meshData->m_positions->size());
+		LOG("Processed MeshPrimitive \"%s\" now has %d unique vertices",
+			meshData->m_name.c_str(), meshData->m_positions->size());
 	}
 
 
