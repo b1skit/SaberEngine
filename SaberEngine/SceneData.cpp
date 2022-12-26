@@ -465,7 +465,7 @@ namespace
 		shared_ptr<Texture> tex;
 		if (texture && texture->image)
 		{
-			if (std::strncmp(texture->image->uri, "data:image/", 11) == 0) // uri is embedded data
+			if (texture->image->uri && std::strncmp(texture->image->uri, "data:image/", 11) == 0) // uri = embedded data
 			{
 				// Unpack the base64 data embedded in the URI. Note: Usage of cgltf's cgltf_load_buffer_base64 function
 				// is currently not well documented. This solution was cribbed from Google's filament usage
@@ -494,9 +494,10 @@ namespace
 					}
 					else
 					{
-						tex = LoadTextureFromMemory(texNameStr, static_cast<unsigned char const*>(data), size);
+						tex = LoadTextureFromMemory(
+							texNameStr, static_cast<unsigned char const*>(data), static_cast<uint32_t>(size));
 					}
-
+					
 					scene.AddUniqueTexture(tex);
 				}
 			}
@@ -912,6 +913,7 @@ namespace
 			vector<float> normals;
 			vector<float> tangents;
 			vector<float> uv0;
+			bool foundUV0 = false; // TODO: Support minimum of 2 UV sets. For now, just use the 1st
 			vector<float> colors;
 			std::vector<float> jointsAsFloats; // We unpack the joints as floats...
 			std::vector<uint8_t> jointsAsUints; // ...but eventually convert and store them as uint8_t
@@ -1002,6 +1004,14 @@ namespace
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_texcoord:
 				{
+					// TODO: Support minimum of 2 UV sets. For now, just use the 1st set encountered
+					if (foundUV0)
+					{
+						LOG_WARNING("MeshPrimitive \"%s\" contains >1 UV set. Currently, only a single UV channel is "
+							"supported, subsequent sets are ignored", meshName.c_str());
+						continue;
+					}
+					foundUV0 = true;
 					uv0.resize(totalFloatElements, 0);
 					dataTarget = &uv0[0];
 				}
