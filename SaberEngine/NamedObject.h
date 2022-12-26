@@ -64,7 +64,7 @@ namespace en
 	void NamedObject::ComputeUniqueID()
 	{
 		// Hash the name and a unique digit; Will be unique for all objects regardless of their name
-		static uint64_t objectIDs{ 0 };
+		static std::atomic<uint64_t> objectIDs{ 0 };
 		const std::string hashString = m_name + std::to_string(objectIDs++);
 		m_uniqueID = std::hash<std::string>{}(hashString);
 	}
