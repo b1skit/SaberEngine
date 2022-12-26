@@ -617,11 +617,7 @@ namespace
 		Material::PBRMetallicRoughnessParams matParams;
 		matParams.g_f0 = vec3(0.04f, 0.04f, 0.04f);
 
-		// TODO: Material MatParams (ParameterBlocks in general) shouldn't be created in the frontend
-		errorMat->GetParameterBlock() = ParameterBlock::Create(
-			"PBRMetallicRoughnessParams",
-			matParams,
-			ParameterBlock::PBType::Immutable);
+		errorMat->SetParameterBlock(matParams);
 
 		scene.AddUniqueMaterial(errorMat);
 	}
@@ -752,11 +748,7 @@ namespace
 				matParams.g_emissiveFactor = glm::make_vec3(material->emissive_factor);
 				matParams.g_f0 = vec3(0.04f, 0.04f, 0.04f);
 
-				// TODO: Material MatParams (ParameterBlocks in general) shouldn't be created in the frontend
-				newMat->GetParameterBlock() = ParameterBlock::Create(
-					"PBRMetallicRoughnessParams",
-					matParams,
-					ParameterBlock::PBType::Immutable);
+				newMat->SetParameterBlock(matParams);
 
 				scene.AddUniqueMaterial(newMat);
 				numMatLoads--;

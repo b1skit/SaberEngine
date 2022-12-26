@@ -76,7 +76,7 @@ namespace gr
 		inline std::shared_ptr<re::Shader>& GetShader()	{ return m_shader; }
 		inline std::shared_ptr<re::Shader> const& GetShader() const { return m_shader; }
 
-		inline std::shared_ptr<re::ParameterBlock>& GetParameterBlock() { return m_matParams; }
+		void SetParameterBlock(PBRMetallicRoughnessParams const& params);
 		inline std::shared_ptr<re::ParameterBlock> const GetParameterBlock() const { return m_matParams; }
 
 		inline std::shared_ptr<re::Texture>& GetTexture(uint32_t slotIndex) { return m_texSlots[slotIndex].m_texture; }
@@ -85,8 +85,6 @@ namespace gr
 		std::shared_ptr<re::Texture>& GetTexture(std::string const& samplerName);
 		std::shared_ptr<re::Texture> const& GetTexture(std::string const& samplerName) const;
 		std::vector<TextureSlotDesc> const& GetTexureSlotDescs() { return m_texSlots; }
-
-		std::shared_ptr<re::ParameterBlock> GetMaterialParameterBlock() const { return m_matParams; }
 
 
 	private:

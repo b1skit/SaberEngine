@@ -102,5 +102,17 @@ namespace gr
 
 		return m_texSlots[index->second].m_texture;
 	}
+
+
+	void Material::SetParameterBlock(PBRMetallicRoughnessParams const& params)
+	{
+		// TODO: Support multiple material types/parameter blocks besides PBRMetallicRoughnessParams
+		// Write a templated function that takes a struct of data, and packs it a struct with the appropriate padding
+
+		m_matParams = ParameterBlock::Create(
+			"PBRMetallicRoughnessParams",
+			params,
+			ParameterBlock::PBType::Immutable);
+	}
 }
 
