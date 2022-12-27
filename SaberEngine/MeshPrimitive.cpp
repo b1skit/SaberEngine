@@ -285,16 +285,18 @@ namespace meshfactory
 	}
 
 
-	inline std::shared_ptr<MeshPrimitive> CreateFullscreenQuad(ZLocation zLocation) // On far plane by default
+	inline std::shared_ptr<MeshPrimitive> CreateFullscreenQuad(ZLocation zLocation)
 	{
 		float zDepth;
 		switch (Config::Get()->GetRenderingAPI())
 		{
 		case platform::RenderingAPI::OpenGL:
 		{
+			// NOTE: OpenGL & GLM's default clip coordinates have been overridden
+			// (via glClipControl/GLM_FORCE_DEPTH_ZERO_TO_ONE)
 			switch (zLocation)
 			{
-			case ZLocation::Near: zDepth = -1.0f;
+			case ZLocation::Near: zDepth = 0.f;
 				break;
 			case ZLocation::Far: zDepth = 1.f;
 				break;

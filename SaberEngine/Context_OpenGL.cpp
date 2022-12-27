@@ -204,6 +204,7 @@ namespace opengl
 
 		// Global OpenGL settings:
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+		glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 
 
 		// Setup our ImGui context

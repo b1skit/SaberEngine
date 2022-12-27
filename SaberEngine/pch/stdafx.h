@@ -39,9 +39,10 @@
 
 // GLM:
 //#define GLM_FORCE_MESSAGES // View compilation/configuration details. Currently:
-//		GLM: GLM_FORCE_DEPTH_ZERO_TO_ONE is undefined.Using negative one to one depth clip space.
-//		GLM: GLM_FORCE_LEFT_HANDED is undefined.Using right handed coordinate system.
+//1 > GLM: GLM_FORCE_DEPTH_ZERO_TO_ONE is defined.Using zero to one depth clip space.
+//1 > GLM: GLM_FORCE_LEFT_HANDED is undefined.Using right handed coordinate system.
 
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_SWIZZLE // Enable swizzle operators
 #define GLM_ENABLE_EXPERIMENTAL // Recommended for common.hpp
 #include <glm/glm.hpp>

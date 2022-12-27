@@ -199,10 +199,13 @@ float GetSlopeScaleBias(float NoL)
 // Find out if a fragment (in world space) is in shadow
 float GetShadowFactor(vec3 shadowPos, sampler2D shadowMap, float NoL)
 {
-	vec3 shadowScreen = (shadowPos.xyz + 1.0) / 2.0; // Projection -> Screen/UV [0,1] space
+	// Convert Projection [-1, 1], -> Screen/UV [0,1] space.
+	// Note: SaberEngine overrides the default OpenGL coordinate system (via glClipControl/GLM_FORCE_DEPTH_ZERO_TO_ONE),
+	// so z is already in [0,1]
+	vec3 shadowScreen = vec3((shadowPos.xy + 1.f) / 2.f, shadowPos.z); 
 
 	// Compute a slope-scaled bias depth:
-	float biasedDepth = shadowScreen.z - GetSlopeScaleBias(NoL);
+	const float biasedDepth = shadowScreen.z - GetSlopeScaleBias(NoL);
 
 	// Compute a block of samples around our fragment, starting at the top-left:
 	const int gridSize = 4; // MUST be a power of two TODO: Compute this on C++ side and allow for uploading of arbitrary samples (eg. odd, even)
