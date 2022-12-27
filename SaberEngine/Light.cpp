@@ -141,7 +141,10 @@ namespace gr
 			Camera::CameraConfig shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
 				m_ownerTransform, sceneWorldBounds);
 
-			m_shadowMap->ShadowCamera()->SetCameraConfig(shadowCamConfig);
+			if (m_shadowMap)
+			{
+				m_shadowMap->ShadowCamera()->SetCameraConfig(shadowCamConfig);
+			}
 		}
 	}
 }

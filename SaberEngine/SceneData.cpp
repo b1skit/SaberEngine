@@ -908,7 +908,14 @@ namespace
 		}
 
 		const vec3 colorIntensity = glm::make_vec3(current->light->color) * current->light->intensity;
-		const bool attachShadow = true;
+		bool attachShadow = true;
+		if (colorIntensity.r + colorIntensity.g + colorIntensity.b == 0.f)
+		{
+			LOG_WARNING("Light \"%s\" has 0 intensity. Disabling its shadow map, as it will not contribute any energy "
+				"to the scene", lightName.c_str());
+			attachShadow = false; // No point rendering shadows for non-contributing lights
+		}
+		
 		shared_ptr<Light> newLight = 
 			make_shared<Light>(lightName, parent->GetTransform(), lightType, colorIntensity, attachShadow);
 
