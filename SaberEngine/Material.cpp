@@ -109,6 +109,8 @@ namespace gr
 		// TODO: Support multiple material types/parameter blocks besides PBRMetallicRoughnessParams
 		// Write a templated function that takes a struct of data, and packs it a struct with the appropriate padding
 
+		SEAssert("Material parameter block already set", m_matParams == nullptr);
+
 		m_matParams = ParameterBlock::Create(
 			"PBRMetallicRoughnessParams",
 			params,
