@@ -10,9 +10,10 @@
 
 
 // std library:
+#include <cstdlib>
 #include <any>
 #include <array>
-#include <assert.h>
+#include <cassert>
 #include <chrono>
 #include <condition_variable>
 #include <filesystem>
@@ -28,7 +29,7 @@
 #include <sstream>
 #include <stack>
 #include <stdarg.h>
-#include <stdio.h>
+#include <cstdio>
 #include <stdexcept>
 #include <string>
 #include <thread>
