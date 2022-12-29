@@ -7,11 +7,6 @@
 #include "SaberGlobals.glsl"
 #include "SaberLighting.glsl"
 
-// Built-in input variables:
-//layout(pixel_center_integer) in vec4 gl_FragCoord; //  Fragment in window-space location: window-relative (x,y,z,1/w)
-// in bool gl_FrontFacing;
-// in vec2 gl_PointCoord;
-
 
 #if defined AMBIENT_IBL
 
@@ -32,7 +27,7 @@ void main()
 
 	vec4 viewPosition = g_view * worldPosition; // View-space position
 	vec3 viewEyeDir	= normalize(-viewPosition.xyz);	// View-space eye/camera direction
-	vec3 viewNormal	= normalize(g_view * vec4(worldNormal, 0)).xyz;// View-space surface MatNormal
+	vec3 viewNormal	= normalize(g_view * vec4(worldNormal, 0)).xyz; // View-space surface MatNormal
 
 	float NoV = max(0.0, dot(viewNormal, viewEyeDir) );
 
@@ -44,17 +39,19 @@ void main()
 	vec3 fresnel_kS	= FresnelSchlick_Roughness(NoV, F0, MatRMAO.x);
 	vec3 k_d = 1.0 - fresnel_kS;	
 
-	// Sample the diffuse irradiance from our prefiltered irradiance environment map:
-	vec3 irradiance	= texture(CubeMap0, worldNormal).xyz * AO;
-
+	// Sample the diffuse irradiance from our prefiltered irradiance environment map.
+	// Note: We must flip the Y component of our normal to compensate for our UV (0,0) top-left convention
+	const vec3 diffuseCubeSampleDir = vec3(worldNormal.x, -worldNormal.y, worldNormal.z);
+	vec3 irradiance	= texture(CubeMap0, diffuseCubeSampleDir).xyz * AO;
 
 	// Get the specular reflectance term:
-	vec3 worldView = normalize(g_cameraWPos - worldPosition.xyz); // Direction = Point -> Eye
+	// Note: We must flip the Y component of our reflected vector to compensate for our UV (0,0) top-left convention
+	const vec3 worldView = normalize(g_cameraWPos - worldPosition.xyz); // Direction = Point -> Eye
 	vec3 worldReflection = normalize(reflect(-worldView, worldNormal));
+	worldReflection.y *= -1;
 
 	vec2 BRDF = texture(Tex7, vec2(max(NoV, 0.0), MatRMAO.x) ).rg; // Sample our generated BRDF Integration map
 	vec3 specular = textureLod(CubeMap1, worldReflection, MatRMAO.x * g_maxPMREMMip).xyz * ((fresnel_kS * BRDF.x) + BRDF.y);
-
 
 	// FragColor = vec4((linearAlbedo.rgb * irradiance * k_d + specular), 1.0); // Note: Omitted the "/ PI" factor here
 	// OLD:	FragColor = vec4((FragColor.rgb * irradiance * k_d + specular) * AO / M_PI, 1.0); // Note: Omitted the "/ PI" factor here

@@ -6,10 +6,6 @@
 #include "SaberGlobals.glsl"
 #include "SaberLighting.glsl"
 
-// Built-in input variables:
-// in vec4 gl_FragCoord; //  location of the fragment in window space. 
-// in bool gl_FrontFacing;
-// in vec2 gl_PointCoord;
 
 // Note: Locations must match the order defined in material.h
 layout (location = 0) out vec4 gBuffer_out_albedo;

@@ -6,6 +6,9 @@
 #include "MeshPrimitive.h"
 
 
+// Enable this if the UV (0,0) origin is in the top-left of the image. It will negate the sign packed into tangent.w
+#define UPPER_LEFT_UV_ORIGIN
+
 namespace util
 {
 

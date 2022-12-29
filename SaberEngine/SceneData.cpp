@@ -99,12 +99,8 @@ namespace
 		PerformanceTimer timer;
 		timer.Start();
 
-		// Flip the y-axis on loading (so pixel (0,0) is in the bottom-left of the image if using OpenGL
-		platform::RenderingAPI const& api = Config::Get()->GetRenderingAPI();
-		const bool flipY = api == platform::RenderingAPI::OpenGL ? true : false;
-
 		// TODO: We shouldn't set/reset this on every call
-		stbi_set_flip_vertically_on_load(flipY);
+		stbi_set_flip_vertically_on_load(false);
 
 		const uint32_t totalFaces = (uint32_t)texturePaths.size();
 
@@ -263,12 +259,8 @@ namespace
 		PerformanceTimer timer;
 		timer.Start();
 
-		// Flip the y-axis on loading (so pixel (0,0) is in the bottom-left of the image if using OpenGL
-		platform::RenderingAPI const& api = Config::Get()->GetRenderingAPI();
-		const bool flipY = api == platform::RenderingAPI::OpenGL ? true : false;
-
 		// TODO: We shouldn't set/reset this on every call
-		stbi_set_flip_vertically_on_load(flipY);
+		stbi_set_flip_vertically_on_load(false);
 
 		// Modify default TextureParams to be suitable for a generic error texture:
 		Texture::TextureParams texParams;
@@ -1174,23 +1166,6 @@ namespace
 				SEAssert("Failed to unpack data", unpackResult);
 
 				// Post-process the data:
-				if (attributeType == cgltf_attribute_type_texcoord)
-				{
-					// GLTF specifies (0,0) as the top-left of a texture. 
-					// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#images
-					// In OpenGL, we already flip the image Y onimport, so flip the UVs here to compensate
-					platform::RenderingAPI const& api =
-						Config::Get()->GetRenderingAPI();
-					const bool flipY = api == platform::RenderingAPI::OpenGL ? true : false;
-					if (flipY)
-					{
-						for (size_t v = 1; v < uv0.size(); v += 2)
-						{
-							uv0[v] = 1.0f - uv0[v];
-						}
-					}
-				}
-
 				if (attributeType == cgltf_attribute_type_joints)
 				{
 					// Cast our joint indexes from floats to uint8_t's:

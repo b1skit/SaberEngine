@@ -633,7 +633,12 @@ namespace util
 		tangent->x = tangentu[0];
 		tangent->y = tangentu[1];
 		tangent->z = tangentu[2];
+
+#if defined(UPPER_LEFT_UV_ORIGIN)
+		tangent->w = -fSign;
+#else
 		tangent->w = fSign;
+#endif
 	}
 
 

@@ -3,6 +3,14 @@
   "Id": "80c62e80-7437-4bb9-b7e0-693fa4c402a1",
   "Items": [
     {
+      "Id": "6dd1fc69-ed79-4d85-b912-fcc514e395a2",
+      "Command": "-scene MetalRoughSpheresNoTextures\\glTF\\MetalRoughSpheresNoTextures.gltf"
+    },
+    {
+      "Id": "839a8f0d-8f42-430f-9fb6-34250cda78b9",
+      "Command": "-scene MetalRoughSpheres\\glTF\\MetalRoughSpheres.gltf"
+    },
+    {
       "Id": "98bedead-9373-4ad5-a1c2-c716f6322f5c",
       "Command": "-scene Corset\\glTF-Binary\\Corset.glb"
     },

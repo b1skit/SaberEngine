@@ -6,16 +6,9 @@
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"
 
-// Note: This shader uses the following built-in GLSL shader variables:
-//in vec4 gl_FragCoord; //  Location of the fragment in window space. (x,y,z,w) = window-relative (x,y,z,1/w)
-//struct gl_DepthRangeParameters
-//{
-//    float near;
-//    float far;
-//    float diff;	// far - near
-//};
-//uniform gl_DepthRangeParameters gl_DepthRange;
 
+// Make our frag coordinates match our uv (0,0) = top-left convention
+layout(origin_upper_left) in vec4 gl_FragCoord;
 
 void main()
 {	
@@ -27,16 +20,9 @@ void main()
 	
 	const vec4 worldPos	= g_invViewProjection * ndcPosition;
 
-
-#if defined(CUBEMAP_SKY)
-	FragColor = texture(CubeMap0, worldPos.xyz);
-
-#else
-	// Equirectangular skybox image:
+	// Sample our equirectangular skybox projection:
 	const vec3 sampleDir = worldPos.xyz;
-
 	const vec2 sphericalUVs = WorldDirToSphericalUV(sampleDir);
 
 	FragColor = texture(Tex0, sphericalUVs);
-#endif	
 }

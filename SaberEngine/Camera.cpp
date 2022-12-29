@@ -21,6 +21,7 @@ namespace gr
 		, Transformable(parent)
 		, m_cameraConfig(camConfig)
 	{
+		m_cubeView.reserve(6);
 		Initialize();
 	}
 
@@ -109,56 +110,56 @@ namespace gr
 	}
 
 
-	std::vector<glm::mat4> const& Camera::GetCubeViewMatrix()
+	std::vector<glm::mat4> Camera::GetCubeViewMatrix(glm::vec3 centerPos)
 	{
-		m_cubeView.clear();
-		m_cubeView.reserve(6);
+		std::vector<glm::mat4> cubeView;
+		cubeView.reserve(6);
 
-		m_cubeView.emplace_back(glm::lookAt(
-			m_transform.GetGlobalPosition(),							// eye
-			m_transform.GetGlobalPosition() + Transform::WorldAxisX,	// center: Position the camera is looking at
+		cubeView.emplace_back(glm::lookAt( // X+
+			centerPos,							// eye
+			centerPos + Transform::WorldAxisX,	// center: Position the camera is looking at
 			-Transform::WorldAxisY));									// Normalized camera up vector
-		m_cubeView.emplace_back(glm::lookAt(
-			m_transform.GetGlobalPosition(),
-			m_transform.GetGlobalPosition() - Transform::WorldAxisX,
+		cubeView.emplace_back(glm::lookAt( // X-
+			centerPos,
+			centerPos - Transform::WorldAxisX,
 			-Transform::WorldAxisY));
 
-		m_cubeView.emplace_back(glm::lookAt(
-			m_transform.GetGlobalPosition(),
-			m_transform.GetGlobalPosition() + Transform::WorldAxisY,
-			Transform::WorldAxisZ));
-		m_cubeView.emplace_back(glm::lookAt(
-			m_transform.GetGlobalPosition(),
-			m_transform.GetGlobalPosition() - Transform::WorldAxisY,
+		// Note: The cubemap Y matrices generated here are flipped to (partially) compensate for our use of the  
+		// uv (0,0) = top-left convention we've forced in OpenGL
+		cubeView.emplace_back(glm::lookAt( // Y+
+			centerPos,
+			centerPos - Transform::WorldAxisY,
 			-Transform::WorldAxisZ));
+		cubeView.emplace_back(glm::lookAt( // Y-
+			centerPos,
+			centerPos + Transform::WorldAxisY,
+			Transform::WorldAxisZ));
 
-		m_cubeView.emplace_back(glm::lookAt(
-			m_transform.GetGlobalPosition(),
-			m_transform.GetGlobalPosition() + Transform::WorldAxisZ,
+		cubeView.emplace_back(glm::lookAt( // Z+
+			centerPos,
+			centerPos + Transform::WorldAxisZ,
 			-Transform::WorldAxisY));
-		m_cubeView.emplace_back(glm::lookAt(
-			m_transform.GetGlobalPosition(),
-			m_transform.GetGlobalPosition() - Transform::WorldAxisZ,
+		cubeView.emplace_back(glm::lookAt( // Z-
+			centerPos,
+			centerPos - Transform::WorldAxisZ,
 			-Transform::WorldAxisY));
 
-		return m_cubeView;
+		return cubeView;
 	}
 
 
 	std::vector<glm::mat4> const& Camera::GetCubeViewProjectionMatrix()
 	{
 		m_cubeViewProjection.clear();
-		m_cubeViewProjection.reserve(6);
 
-		// Call this to ensure cubeView has been initialized
-		std::vector<glm::mat4> const& ourCubeViews = GetCubeViewMatrix();
+		std::vector<glm::mat4> const& cubeViews = GetCubeViewMatrix(m_transform.GetGlobalPosition());
 
-		m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[0]);
-		m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[1]);
-		m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[2]);
-		m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[3]);
-		m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[4]);
-		m_cubeViewProjection.emplace_back(m_projection * ourCubeViews[5]);
+		m_cubeViewProjection.emplace_back(m_projection * cubeViews[0]);
+		m_cubeViewProjection.emplace_back(m_projection * cubeViews[1]);
+		m_cubeViewProjection.emplace_back(m_projection * cubeViews[2]);
+		m_cubeViewProjection.emplace_back(m_projection * cubeViews[3]);
+		m_cubeViewProjection.emplace_back(m_projection * cubeViews[4]);
+		m_cubeViewProjection.emplace_back(m_projection * cubeViews[5]);
 
 		return m_cubeViewProjection;
 	}

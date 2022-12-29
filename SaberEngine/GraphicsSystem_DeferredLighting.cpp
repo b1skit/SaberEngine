@@ -253,16 +253,10 @@ namespace gr
 		iblStageParams.m_depthTestMode = platform::Context::DepthTestMode::Always;
 		iblStageParams.m_depthWriteMode = platform::Context::DepthWriteMode::Disabled;
 
+		// TODO: Use a camera here; A GS should not be manually computing this
 		const mat4 cubeProjectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-		const mat4 cubemapViews[] =
-		{
-			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(1.0f,  0.0f,  0.0f), vec3(0.0f, -1.0f,  0.0f)),
-			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(-1.0f, 0.0f,  0.0f), vec3(0.0f, -1.0f,  0.0f)),
-			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f,  1.0f,  0.0f), vec3(0.0f,  0.0f,  1.0f)),
-			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, -1.0f,  0.0f), vec3(0.0f,  0.0f, -1.0f)),
-			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f,  0.0f,  1.0f), vec3(0.0f, -1.0f,  0.0f)),
-			glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f,  0.0f, -1.0f), vec3(0.0f, -1.0f,  0.0f))
-		};
+
+		const std::vector<glm::mat4> cubemapViews = gr::Camera::GetCubeViewMatrix(vec3(0));
 
 		// Common cubemap camera rendering params; Just need to update g_view for each face/stage
 		Camera::CameraParams cubemapCamParams;

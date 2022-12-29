@@ -90,12 +90,18 @@ namespace gr
 
 		inline std::shared_ptr<re::ParameterBlock> GetCameraParams() const {return m_cameraParamBlock; }
 
+
+	public: 
+		// Static members:
+		static std::vector<glm::mat4> GetCubeViewMatrix(glm::vec3 centerPos);
+
+
 	private:
 		// Helper function: Configures the camera based on the cameraConfig. MUST be called at least once during setup
 		void Initialize();
 		void UpdateCameraParamBlockData();
 
-		std::vector<glm::mat4> const& GetCubeViewMatrix();
+		
 
 	private:
 		CameraConfig m_cameraConfig;

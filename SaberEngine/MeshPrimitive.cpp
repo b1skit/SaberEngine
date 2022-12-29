@@ -169,56 +169,34 @@ namespace meshfactory
 			vec3(1.0f, 1.0f, -1.0f)
 		};
 
-		const vector<vec2> uvs
-		{
-			vec2(0.0f, 0.0f),
-			vec2(0.0f, 1.0f),
-			vec2(1.0f, 0.0f),
-			vec2(1.0f, 1.0f),
-		};
-
 		// Assemble the vertex data into streams.
 		// Debugging hint: position index should = color index. All UV's should be used once per face.		
 		vector<vec3> assembledPositions
 		{
-			// Front face
-			positions[0], positions[1], positions[2], positions[3],
+			positions[0], positions[1], positions[2], positions[3], // Front face
+			positions[4], positions[5],	positions[1], positions[0], // Left face
+			positions[3], positions[2], positions[6], positions[7], // Right face
+			positions[4], positions[0], positions[3], positions[7], // Top face
+			positions[1], positions[5],	positions[6], positions[2], // Bottom face
+			positions[7], positions[6], positions[5], positions[4]  // Back face
+		};
 
-			// Left face
-			positions[4], positions[5],	positions[1], positions[0],
-
-			// Right face
-			positions[3], positions[2], positions[6], positions[7],
-
-			// Top face
-			positions[4], positions[0], positions[3], positions[7],
-
-			// Bottom face
-			positions[1], positions[5],	positions[6], positions[2],
-
-			// Back face
-			positions[7], positions[6], positions[5], positions[4]
+		const vector<vec2> uvs // NOTE: (0,0) = Top left
+		{
+			vec2(0.0f, 1.0f), // 0
+			vec2(0.0f, 0.0f), // 1
+			vec2(1.0f, 1.0f), // 2
+			vec2(1.0f, 0.0f), // 3
 		};
 
 		vector<vec2> assembledUVs
 		{
-			// Front face
-			uvs[1], uvs[0], uvs[2],	uvs[3],
-
-			// Left face
-			uvs[1], uvs[0],	uvs[2],	uvs[3],
-
-			// Right face
-			uvs[1], uvs[0],	uvs[2],	uvs[3],
-
-			// Top face
-			uvs[1], uvs[0],	uvs[2],	uvs[3],
-
-			// Bottom face
-			uvs[1], uvs[0],	uvs[2],	uvs[3],
-
-			// Back face
-			uvs[1], uvs[0],	uvs[2],	uvs[3]
+			uvs[1], uvs[0], uvs[2],	uvs[3], // Front face
+			uvs[1], uvs[0],	uvs[2],	uvs[3], // Left face
+			uvs[1], uvs[0],	uvs[2],	uvs[3], // Right face
+			uvs[1], uvs[0],	uvs[2],	uvs[3], // Top face
+			uvs[1], uvs[0],	uvs[2],	uvs[3], // Bottom face
+			uvs[1], uvs[0],	uvs[2],	uvs[3]  // Back face
 		};
 
 		std::vector<uint32_t> cubeIndices // 6 faces * 2 tris * 3 indices 
@@ -316,11 +294,11 @@ namespace meshfactory
 		}
 
 		// Create a triangle twice the size of clip space, and let the clipping hardware trim it to size:
-		std::vector<vec2> uvs
+		std::vector<vec2> uvs // NOTE: (0,0) = Top left of UV space
 		{
-			vec2(0.f, 2.f), // tl
-			vec2(0.f, 0.f), // bl
-			vec2(2.f, 0.f)  // br
+			vec2(0.f, -1.f), // tl
+			vec2(0.f, 1.f), // bl
+			vec2(2.f, 1.f)  // br
 		};
 
 		const vec3 tl = vec3(-1.f, 3.f, zDepth);
@@ -382,12 +360,12 @@ namespace meshfactory
 	{
 		std::vector<vec3> positions = { tl, bl, tr, br };
 
-		std::vector<vec2> uvs
+		std::vector<vec2> uvs // Note: (0,0) = Top left
 		{
-			vec2(0, 1), // tl
-			vec2(0, 0), // bl
-			vec2(1, 1), // tr
-			vec2(1, 0)  // br
+			vec2(0.f, 0.f), // tl
+			vec2(0.f, 1.f), // bl
+			vec2(1.f, 0.f), // tr
+			vec2(1.f, 1.f)  // br
 		};
 
 		std::vector<uint32_t> quadIndices
@@ -464,7 +442,7 @@ namespace meshfactory
 		vec3 firstPosition = vec3(0.0f, radius, 0.0f);
 		vec3 firstNormal = vec3(0, 1.0f, 0);
 		vec3 firstTangent = vec3(0, 0, 0);
-		vec2 firstUv0 = vec2(0.5f, 1.0f);
+		vec2 firstUv0 = vec2(0.5f, 0.0f);
 
 		size_t currentIndex = 0;
 
@@ -484,11 +462,11 @@ namespace meshfactory
 		float yRadianStep = (2.0f * glm::pi<float>()) / (float)numLatSlices; //
 		float yRadians = 0.0f;
 
-		// Build UV's, from top left (0,1) to bottom right (1.0, 0)
+		// Build UV's, from top left (0,0) to bottom right (1,1)
 		float uvXStep = 1.0f / (float)numLatSlices;
 		float uvYStep = 1.0f / (float)(numLongSlices + 1);
 		float uvX = 0;
-		float uvY = 1.0f - uvYStep;
+		float uvY = uvYStep;
 
 		// Outer loop: Rotate about Z, tracing the arc of the side silhouette down the Y axis
 		for (int curLongSlices = 0; curLongSlices < numLongSlices; curLongSlices++)
@@ -517,13 +495,13 @@ namespace meshfactory
 			zRadians += zRadianStep;
 
 			uvX = 0;
-			uvY -= uvYStep;
+			uvY += uvYStep;
 		}
 
 		// Final endcap:
 		const vec3 finalPosition = vec3(0.0f, -radius, 0.0f);
 		const vec3 finalNormal = vec3(0, -1, 0);
-		const vec2 finalUv0 = vec2(0.5f, 0.0f);
+		const vec2 finalUv0 = vec2(0.5f, 1.0f);
 
 		positions[currentIndex] = finalPosition;
 		normals[currentIndex] = finalNormal;

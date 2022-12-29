@@ -45,6 +45,14 @@ A per-scene IBL is loaded from ""<project root>\Scenes\SceneFolderName\IBL\ibl.h
 	- A default IBL ("<project root>\Assets\DefaultIBL\ibl.hdr") is used as a fallback if no scene IBL is found  
 
 
+------------
+Conventions:
+------------
+- Right-handed coordinate system  
+- UV (0,0) = Top-left  
+- Depth near/far = [0,1]  
+
+
 -------------
 Dependencies:
 -------------

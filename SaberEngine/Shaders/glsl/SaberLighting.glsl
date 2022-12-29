@@ -203,6 +203,7 @@ float GetShadowFactor(vec3 shadowPos, sampler2D shadowMap, float NoL)
 	// Note: SaberEngine overrides the default OpenGL coordinate system (via glClipControl/GLM_FORCE_DEPTH_ZERO_TO_ONE),
 	// so z is already in [0,1]
 	vec3 shadowScreen = vec3((shadowPos.xy + 1.f) / 2.f, shadowPos.z); 
+	shadowScreen.y = 1.f - shadowScreen.y; // UV (0,0) is in the top-left
 
 	// Compute a slope-scaled bias depth:
 	const float biasedDepth = shadowScreen.z - GetSlopeScaleBias(NoL);
@@ -239,6 +240,10 @@ float GetShadowFactor(vec3 shadowPos, sampler2D shadowMap, float NoL)
 // Based on Lengyel's Foundations of Game Engine Development Volume 2: Rendering, p164, listing 8.8
 float GetShadowFactor(vec3 lightToFrag, samplerCube shadowMap, const float NoL)
 {
+	// Note: We negate the y component here to (partially) compensate for our use of the uv (0,0) = top-left convention
+	// when sampling our cubemaps
+	lightToFrag.y *= -1.f;
+
 	const float cubemapFaceResolution = g_shadowMapTexelSize.x; // Assume our shadow cubemap has square faces...	
 
 	// Calculate non-linear, projected depth buffer depth from the light-to-fragment direction. The eye depth w.r.t
