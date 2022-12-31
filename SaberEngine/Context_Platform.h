@@ -91,9 +91,6 @@ namespace platform
 			PlatformParams(PlatformParams const&) = delete;
 			virtual ~PlatformParams() = 0;
 
-			const glm::vec4 m_windowClearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-			const float m_depthClearColor = 1.0f;
-
 			// API-specific function pointers:
 			static void CreatePlatformParams(re::Context& m_context);
 		};
@@ -103,7 +100,6 @@ namespace platform
 		// Static function pointers:
 		static void (*Create)(re::Context& context);
 		static void (*Destroy)(re::Context& context);
-		static void (*Present)(re::Context const& context);
 		static void (*SetCullingMode)(FaceCullingMode const& mode);
 		static void (*ClearTargets)(ClearTarget const& clearTarget);
 		static void (*SetBlendMode)(BlendMode const& src, BlendMode const& dst);
@@ -111,7 +107,6 @@ namespace platform
 		static void (*SetDepthWriteMode)(DepthWriteMode const& mode);
 		static void (*SetColorWriteMode)(ColorWriteMode const& channelModes);
 		static uint32_t(*GetMaxTextureInputs)();
-		static bool (*WindowHasFocus)(re::Context const& context);
 
 		
 	private:

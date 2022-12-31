@@ -269,6 +269,15 @@
     <ClCompile Include="pch\stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Window.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="Window_Platform.cpp">
+      <Filter>Source Files\re\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="Window_OpenGL.cpp">
+      <Filter>Source Files\re\platform\OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -504,6 +513,15 @@
     </ClInclude>
     <ClInclude Include="pch\stdafx.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Window.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="Window_Platform.h">
+      <Filter>Header Files\re\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="Window_OpenGL.h">
+      <Filter>Header Files\re\platform\OpenGL</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

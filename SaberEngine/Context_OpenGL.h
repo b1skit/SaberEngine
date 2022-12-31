@@ -22,14 +22,12 @@ namespace opengl
 			PlatformParams() = default;
 			~PlatformParams() override = default;
 
-			SDL_Window* m_glWindow = 0;
 			SDL_GLContext m_glContext = 0;
 		};
 
 	public:
 		static void Create(re::Context& context);
 		static void Destroy(re::Context& context);
-		static void Present(re::Context const& context);
 		static void SetCullingMode(platform::Context::FaceCullingMode const& mode);
 		static void ClearTargets(platform::Context::ClearTarget const& clearTarget);
 		static void SetBlendMode(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst);
@@ -37,6 +35,5 @@ namespace opengl
 		static void SetDepthWriteMode(platform::Context::DepthWriteMode const& mode);
 		static void SetColorWriteMode(platform::Context::ColorWriteMode const& channelModes);
 		static uint32_t GetMaxTextureInputs();
-		static bool WindowHasFocus(re::Context const& context);
 	};
 }

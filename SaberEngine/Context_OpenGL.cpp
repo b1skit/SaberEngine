@@ -9,6 +9,8 @@
 #include "Context_OpenGL.h"
 #include "Context.h"
 
+#include "Window_OpenGL.h"
+
 #include "Config.h"
 #include "DebugConfiguration.h"
 
@@ -158,22 +160,19 @@ namespace opengl
 			Config::Get()->GetValue<string>("commandLineArgs");
 		const int xRes = Config::Get()->GetValue<int>("windowXRes");
 		const int yRes = Config::Get()->GetValue<int>("windowYRes");
-		platformParams->m_glWindow = SDL_CreateWindow
-		(
-			windowTitle.c_str(),
-			SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-			xRes,
-			yRes,
-			SDL_WINDOW_OPENGL
-		);
-		SEAssert("Could not create window", platformParams->m_glWindow != NULL);
+
+		re::Window* window = context.GetWindow();
+		window->Create(windowTitle, xRes, yRes);
+
+		opengl::Window::PlatformParams* const windowPlatformParams =
+			dynamic_cast<opengl::Window::PlatformParams*>(window->GetPlatformParams());
 
 		// Create an OpenGL context and make it current:
-		platformParams->m_glContext = SDL_GL_CreateContext(platformParams->m_glWindow);
+		platformParams->m_glContext = SDL_GL_CreateContext(windowPlatformParams->m_glWindow);
 		SEAssert("Could not create OpenGL context", platformParams->m_glContext != NULL);
 
 		SEAssert("Failed to make OpenGL context current", 
-			SDL_GL_MakeCurrent(platformParams->m_glWindow, platformParams->m_glContext) >= 0);
+			SDL_GL_MakeCurrent(windowPlatformParams->m_glWindow, platformParams->m_glContext) >= 0);
 
 		// Synchronize buffer swapping with the monitor's vertical refresh (VSync):
 		const bool vsyncEnabled = Config::Get()->GetValue<bool>("vsync");
@@ -216,7 +215,7 @@ namespace opengl
 		ImGui::StyleColorsDark();
 
 		// Setup Platform/Renderer backends
-		ImGui_ImplSDL2_InitForOpenGL(platformParams->m_glWindow, platformParams->m_glContext);
+		ImGui_ImplSDL2_InitForOpenGL(windowPlatformParams->m_glWindow, platformParams->m_glContext);
 
 		const string imguiGLSLVersionString = "#version 130";
 		ImGui_ImplOpenGL3_Init(imguiGLSLVersionString.c_str());
@@ -234,17 +233,8 @@ namespace opengl
 		ImGui::DestroyContext();
 		
 		SDL_GL_DeleteContext(platformParams->m_glContext);
-		SDL_DestroyWindow(platformParams->m_glWindow);
+		context.GetWindow()->Destroy();
 		SDL_Quit(); // Force a shutdown, instead of calling SDL_QuitSubSystem() for each subsystem
-	}
-
-
-	void Context::Present(re::Context const& context)
-	{
-		opengl::Context::PlatformParams const* const platformParams =
-			dynamic_cast<opengl::Context::PlatformParams const*>(context.GetPlatformParams());
-
-		SDL_GL_SwapWindow(platformParams->m_glWindow);
 	}
 
 
@@ -496,16 +486,5 @@ namespace opengl
 		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTexInputs);
 		SEAssert("GL_MAX_TEXTURE_IMAGE_UNITS query failed", maxTexInputs > 0);
 		return (uint32_t)maxTexInputs;
-	}
-
-
-	bool opengl::Context::WindowHasFocus(re::Context const& context)
-	{
-		opengl::Context::PlatformParams const* contextPlatformParams =
-			dynamic_cast<opengl::Context::PlatformParams const*>(context.GetPlatformParams());
-
-		const uint32_t windowFlags = SDL_GetWindowFlags(contextPlatformParams->m_glWindow);
-
-		return (windowFlags & (SDL_WINDOW_INPUT_FOCUS));
 	}
 }

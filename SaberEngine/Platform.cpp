@@ -6,6 +6,9 @@
 #include "Context_Platform.h"
 #include "Context_OpenGL.h"
 
+#include "Window_Platform.h"
+#include "Window_OpenGL.h"
+
 #include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
 
@@ -47,7 +50,6 @@ namespace platform
 			// Context:
 			platform::Context::Create				= &opengl::Context::Create;
 			platform::Context::Destroy				= &opengl::Context::Destroy;
-			platform::Context::Present				= &opengl::Context::Present;
 			platform::Context::SetCullingMode		= &opengl::Context::SetCullingMode;
 			platform::Context::ClearTargets			= &opengl::Context::ClearTargets;
 			platform::Context::SetBlendMode			= &opengl::Context::SetBlendMode;
@@ -55,7 +57,12 @@ namespace platform
 			platform::Context::SetDepthWriteMode	= &opengl::Context::SetDepthWriteMode;
 			platform::Context::SetColorWriteMode	= &opengl::Context::SetColorWriteMode;
 			platform::Context::GetMaxTextureInputs	= &opengl::Context::GetMaxTextureInputs;
-			platform::Context::WindowHasFocus		= &opengl::Context::WindowHasFocus;
+			
+			// Window:
+			platform::Window::Create			= &opengl::Window::Create;
+			platform::Window::Destroy			= &opengl::Window::Destroy;
+			platform::Window::Present			= &opengl::Window::Present;
+			platform::Window::HasFocus			= &opengl::Window::HasFocus;
 
 			// Render manager:
 			platform::RenderManager::Initialize		= &opengl::RenderManager::Initialize;

@@ -248,6 +248,9 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
     <ClCompile Include="Transform.cpp" />
+    <ClCompile Include="Window.cpp" />
+    <ClCompile Include="Window_OpenGL.cpp" />
+    <ClCompile Include="Window_Platform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_dx12.h" />
@@ -328,6 +331,9 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="Transform.h" />
+    <ClInclude Include="Window.h" />
+    <ClInclude Include="Window_OpenGL.h" />
+    <ClInclude Include="Window_Platform.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SaberEngine.licenseheader" />
