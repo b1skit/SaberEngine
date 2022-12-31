@@ -1,8 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-#include <SDL.h>
-
 
 namespace re
 {
@@ -96,19 +94,12 @@ namespace platform
 			const glm::vec4 m_windowClearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 			const float m_depthClearColor = 1.0f;
 
-			// SDL-specific, api-agnostic params:
-			SDL_Window* m_glWindow = 0;
-
 			// API-specific function pointers:
 			static void CreatePlatformParams(re::Context& m_context);
 		};
 
 
 	public:
-		// platform implementations:
-		static bool WindowHasFocus(re::Context const& context);
-
-
 		// Static function pointers:
 		static void (*Create)(re::Context& context);
 		static void (*Destroy)(re::Context& context);
@@ -120,6 +111,7 @@ namespace platform
 		static void (*SetDepthWriteMode)(DepthWriteMode const& mode);
 		static void (*SetColorWriteMode)(ColorWriteMode const& channelModes);
 		static uint32_t(*GetMaxTextureInputs)();
+		static bool (*WindowHasFocus)(re::Context const& context);
 
 		
 	private:

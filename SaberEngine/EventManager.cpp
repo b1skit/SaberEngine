@@ -82,7 +82,6 @@ namespace en
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
 			{
-				
 				eventInfo.m_type = KeyEvent;
 				// Pack the data: m_data0.m_dataUI = SDL_Scancode, m_data0.m_dataB = button state up/down (T/F)
 				eventInfo.m_data0.m_dataUI = event.key.keysym.scancode;

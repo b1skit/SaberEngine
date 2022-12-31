@@ -1,6 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
+#include <SDL.h>
+
 #include "Context_Platform.h"
 
 
@@ -20,6 +22,7 @@ namespace opengl
 			PlatformParams() = default;
 			~PlatformParams() override = default;
 
+			SDL_Window* m_glWindow = 0;
 			SDL_GLContext m_glContext = 0;
 		};
 
@@ -34,5 +37,6 @@ namespace opengl
 		static void SetDepthWriteMode(platform::Context::DepthWriteMode const& mode);
 		static void SetColorWriteMode(platform::Context::ColorWriteMode const& channelModes);
 		static uint32_t GetMaxTextureInputs();
+		static bool WindowHasFocus(re::Context const& context);
 	};
 }

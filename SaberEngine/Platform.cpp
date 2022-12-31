@@ -44,10 +44,10 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			// API-specific:
+			// Context:
 			platform::Context::Create				= &opengl::Context::Create;
 			platform::Context::Destroy				= &opengl::Context::Destroy;
-			platform::Context::Present			= &opengl::Context::Present;
+			platform::Context::Present				= &opengl::Context::Present;
 			platform::Context::SetCullingMode		= &opengl::Context::SetCullingMode;
 			platform::Context::ClearTargets			= &opengl::Context::ClearTargets;
 			platform::Context::SetBlendMode			= &opengl::Context::SetBlendMode;
@@ -55,6 +55,7 @@ namespace platform
 			platform::Context::SetDepthWriteMode	= &opengl::Context::SetDepthWriteMode;
 			platform::Context::SetColorWriteMode	= &opengl::Context::SetColorWriteMode;
 			platform::Context::GetMaxTextureInputs	= &opengl::Context::GetMaxTextureInputs;
+			platform::Context::WindowHasFocus		= &opengl::Context::WindowHasFocus;
 
 			// Render manager:
 			platform::RenderManager::Initialize		= &opengl::RenderManager::Initialize;

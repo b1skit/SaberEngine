@@ -497,4 +497,15 @@ namespace opengl
 		SEAssert("GL_MAX_TEXTURE_IMAGE_UNITS query failed", maxTexInputs > 0);
 		return (uint32_t)maxTexInputs;
 	}
+
+
+	bool opengl::Context::WindowHasFocus(re::Context const& context)
+	{
+		opengl::Context::PlatformParams const* contextPlatformParams =
+			dynamic_cast<opengl::Context::PlatformParams const*>(context.GetPlatformParams());
+
+		const uint32_t windowFlags = SDL_GetWindowFlags(contextPlatformParams->m_glWindow);
+
+		return (windowFlags & (SDL_WINDOW_INPUT_FOCUS));
+	}
 }
