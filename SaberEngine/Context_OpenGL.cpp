@@ -239,7 +239,7 @@ namespace opengl
 	}
 
 
-	void Context::SwapWindow(re::Context const& context)
+	void Context::Present(re::Context const& context)
 	{
 		opengl::Context::PlatformParams const* const platformParams =
 			dynamic_cast<opengl::Context::PlatformParams const*>(context.GetPlatformParams());

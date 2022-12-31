@@ -112,7 +112,7 @@ namespace platform
 		// Static function pointers:
 		static void (*Create)(re::Context& context);
 		static void (*Destroy)(re::Context& context);
-		static void (*SwapWindow)(re::Context const& context);
+		static void (*Present)(re::Context const& context);
 		static void (*SetCullingMode)(FaceCullingMode const& mode);
 		static void (*ClearTargets)(ClearTarget const& clearTarget);
 		static void (*SetBlendMode)(BlendMode const& src, BlendMode const& dst);

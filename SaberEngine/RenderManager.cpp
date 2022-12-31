@@ -113,7 +113,7 @@ namespace re
 		platform::RenderManager::RenderImGui(*this);
 
 		// Present the final frame:
-		m_context.SwapWindow();
+		m_context.Present();
 
 		EndOfFrame();
 	}

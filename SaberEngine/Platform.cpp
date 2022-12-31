@@ -47,7 +47,7 @@ namespace platform
 			// API-specific:
 			platform::Context::Create				= &opengl::Context::Create;
 			platform::Context::Destroy				= &opengl::Context::Destroy;
-			platform::Context::SwapWindow			= &opengl::Context::SwapWindow;
+			platform::Context::Present			= &opengl::Context::Present;
 			platform::Context::SetCullingMode		= &opengl::Context::SetCullingMode;
 			platform::Context::ClearTargets			= &opengl::Context::ClearTargets;
 			platform::Context::SetBlendMode			= &opengl::Context::SetBlendMode;

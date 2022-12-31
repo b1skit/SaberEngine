@@ -20,9 +20,9 @@ namespace re
 		platform::Context::Destroy(*this);
 	}
 
-	void Context::SwapWindow() const
+	void Context::Present() const
 	{
-		platform::Context::SwapWindow(*this);
+		platform::Context::Present(*this);
 	}
 
 	void Context::SetCullingMode(platform::Context::FaceCullingMode const& mode) const
