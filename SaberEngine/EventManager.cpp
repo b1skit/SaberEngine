@@ -9,11 +9,101 @@
 #include "RenderManager.h"
 
 
-using std::vector;
+namespace
+{
+	void ProcessSDLEvents()
+	{
+		// NOTE: SDL event handling must be run on the same thread that initialized the video subsystem (ie. main), as
+		// it may implicitely call SDL_PumpEvents()
+		SDL_Event event;
+		while (SDL_PollEvent(&event))
+		{
+			en::EventManager::EventInfo eventInfo;
+			bool doBroadcastEvent = true;
 
+			switch (event.type)
+			{
+			case SDL_QUIT:
+			{
+				// Note: This is called when the user manually quits the program (eg. by clicking the close "X" button)
+				// This is different to the SaberEngine InputButton_Quit event
+				eventInfo.m_type = en::EventManager::EventType::EngineQuit;
+			}
+			break;
+			case SDL_TEXTINPUT:
+			{
+				eventInfo.m_type = en::EventManager::EventType::TextInputEvent;
+				eventInfo.m_data0.m_dataC = event.text.text[0]; // Only ever seem to get a single char
+			}
+			break;
+			case SDL_KEYDOWN:
+			case SDL_KEYUP:
+			{
+				eventInfo.m_type = en::EventManager::EventType::KeyEvent;
+				// Pack the data: m_data0.m_dataUI = SDL_Scancode, m_data0.m_dataB = button state up/down (T/F)
+				eventInfo.m_data0.m_dataUI = event.key.keysym.scancode;
+				eventInfo.m_data1.m_dataB = event.type == SDL_KEYDOWN ? true : false;
+			}
+			break;
+			case SDL_MOUSEMOTION:
+			{
+				eventInfo.m_type = en::EventManager::EventType::MouseMotionEvent;
+				eventInfo.m_data0.m_dataI = event.motion.xrel;
+				eventInfo.m_data1.m_dataI = event.motion.yrel;
+			}
+			break;
+			case SDL_MOUSEBUTTONDOWN:
+			case SDL_MOUSEBUTTONUP:
+			{
+				eventInfo.m_type = en::EventManager::EventType::MouseButtonEvent;
+				// Pack the data: 
+				// m_data0.m_dataUI = button index (0/1/2 = L/M/R)
+				// m_data1.m_dataUB = button state (T/F = pressed/released)
+				switch (event.button.button)
+				{
+				case SDL_BUTTON_LEFT:
+				{
+					eventInfo.m_data0.m_dataUI = 0;
+				}
+				break;
+				case SDL_BUTTON_MIDDLE:
+				{
+					eventInfo.m_data0.m_dataUI = 1;
+				}
+				case SDL_BUTTON_RIGHT:
+				{
+					eventInfo.m_data0.m_dataUI = 2;
+				}
+				break;
+				}
+				eventInfo.m_data1.m_dataB = event.button.state == SDL_PRESSED ? true : false;
+			}
+			break;
+			case SDL_MOUSEWHEEL:
+			{
+				eventInfo.m_type = en::EventManager::EventType::MouseWheelEvent;
+				eventInfo.m_data0.m_dataF = event.wheel.preciseX;
+				eventInfo.m_data1.m_dataF = event.wheel.preciseY;
+			}
+			break;
+			default:
+				doBroadcastEvent = false;
+			}
+
+			// Only broadcast the event if it has been populated by something we're interested in
+			if (doBroadcastEvent)
+			{
+				en::EventManager::Get()->Notify(eventInfo);
+			}
+		}
+	}
+}
 
 namespace en
 {
+	using std::vector;
+
+
 	EventManager* EventManager::Get()
 	{
 		static std::unique_ptr<en::EventManager> instance = std::make_unique<en::EventManager>();
@@ -56,89 +146,8 @@ namespace en
 
 	void EventManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
-		// NOTE: SDL event handling must be run on the same thread that initialized the video subsystem (ie. main), as
-		// it may implicitely call SDL_PumpEvents()
-		SDL_Event event;
-		while (SDL_PollEvent(&event))
-		{
-			EventInfo eventInfo;
-			bool doBroadcastEvent = true;
-
-			switch (event.type)
-			{
-			case SDL_QUIT:
-			{
-				// Note: This is called when the user manually quits the program (eg. by clicking the close "X" button)
-				// This is different to the SaberEngine InputButton_Quit event
-				eventInfo.m_type = EngineQuit;
-			}
-			break;
-			case SDL_TEXTINPUT:
-			{
-				eventInfo.m_type = TextInputEvent;
-				eventInfo.m_data0.m_dataC = event.text.text[0]; // Only ever seem to get a single char
-			}
-			break;
-			case SDL_KEYDOWN:
-			case SDL_KEYUP:
-			{
-				eventInfo.m_type = KeyEvent;
-				// Pack the data: m_data0.m_dataUI = SDL_Scancode, m_data0.m_dataB = button state up/down (T/F)
-				eventInfo.m_data0.m_dataUI = event.key.keysym.scancode;
-				eventInfo.m_data1.m_dataB = event.type == SDL_KEYDOWN ? true : false;
-			}
-			break;
-			case SDL_MOUSEMOTION:
-			{
-				eventInfo.m_type = MouseMotionEvent;
-				eventInfo.m_data0.m_dataI = event.motion.xrel;
-				eventInfo.m_data1.m_dataI = event.motion.yrel;
-			}
-			break;
-			case SDL_MOUSEBUTTONDOWN:
-			case SDL_MOUSEBUTTONUP:
-			{
-				eventInfo.m_type = MouseButtonEvent;
-				// Pack the data: 
-				// m_data0.m_dataUI = button index (0/1/2 = L/M/R)
-				// m_data1.m_dataUB = button state (T/F = pressed/released)
-				switch (event.button.button)
-				{
-				case SDL_BUTTON_LEFT:
-				{
-					eventInfo.m_data0.m_dataUI = 0;
-				}
-				break;
-				case SDL_BUTTON_MIDDLE:
-				{
-					eventInfo.m_data0.m_dataUI = 1;
-				}
-				case SDL_BUTTON_RIGHT:
-				{
-					eventInfo.m_data0.m_dataUI = 2;
-				}
-				break;
-				}
-				eventInfo.m_data1.m_dataB = event.button.state == SDL_PRESSED ? true : false;
-			}
-			break;
-			case SDL_MOUSEWHEEL:
-			{
-				eventInfo.m_type = MouseWheelEvent;
-				eventInfo.m_data0.m_dataF = event.wheel.preciseX;
-				eventInfo.m_data1.m_dataF = event.wheel.preciseY;
-			}
-			break;
-			default:
-				doBroadcastEvent = false;
-			}
-
-			// Only broadcast the event if it has been populated by something we're interested in
-			if (doBroadcastEvent)
-			{
-				Notify(eventInfo);
-			}
-		}
+		// Deprecated: Populates the queue with events polled via SDL
+		ProcessSDLEvents();
 
 		std::lock_guard<std::mutex> lock(m_eventMutex);
 
