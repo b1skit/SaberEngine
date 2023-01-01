@@ -66,6 +66,9 @@
     <Filter Include="imgui\backends">
       <UniqueIdentifier>{111822b3-fd88-44ec-9a63-11bcf5725bcd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\en\Platform">
+      <UniqueIdentifier>{600b373f-06b3-4495-a7f5-42d65e9fed88}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -291,9 +294,6 @@
     </ClInclude>
     <ClInclude Include="Context_Platform.h">
       <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="Platform.h">
-      <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="Material.h">
       <Filter>Header Files\gr</Filter>
@@ -522,6 +522,9 @@
     </ClInclude>
     <ClInclude Include="Window_OpenGL.h">
       <Filter>Header Files\re\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="Platform.h">
+      <Filter>Header Files\en\Platform</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
