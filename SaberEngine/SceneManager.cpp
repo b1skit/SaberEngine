@@ -58,6 +58,8 @@ namespace en
 			EventManager::Get()->Notify(EventManager::EventInfo{ EventManager::EngineQuit});
 		}
 
+		m_sceneData->SetLoadingFinished();
+
 		LOG("\nSceneManager::Startup complete in %f seconds...\n", timer.StopSec());
 	}
 

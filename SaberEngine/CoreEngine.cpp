@@ -59,12 +59,9 @@ namespace en
 
 		RenderManager::Get()->Startup(); // Initializes context, window, etc
 
-		SceneManager::Get()->Startup();
+		SceneManager::Get()->Startup(); // Load assets
 
-		RenderManager::Get()->Initialize();
-
-		// All render assets (textures/shaders etc) should have been loaded by now
-		SceneManager::GetSceneData()->SetLoadingFinished();
+		RenderManager::Get()->Initialize(); // Create graphics systems
 
 		// Create gameplay objects now that the scene data is loaded
 		GameplayManager::Get()->Startup();
