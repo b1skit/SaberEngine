@@ -51,22 +51,19 @@ namespace en
 
 		// Start managers:
 		EventManager::Get()->Startup();
-		LogManager::Get()->Startup();
+		InputManager::Get()->Startup();
 
 		EventManager::Get()->Subscribe(en::EventManager::EngineQuit, this);
 
-		RenderManager::Get()->Startup(); // Initializes SDL events and video subsystems
+		LogManager::Get()->Startup();
 
-		// For whatever reason, this needs to be called after the SDL video subsystem (!) has been initialized:
-		InputManager::Get()->Startup();
+		RenderManager::Get()->Startup(); // Initializes context, window, etc
 
-		// Must wait to start scene manager and load a scene until the renderer is called, since we need to initialize
-		// the rendering context in the RenderManager before creating shaders
 		SceneManager::Get()->Startup();
 
 		RenderManager::Get()->Initialize();
 
-		// All render assets (textures/shaders etc) should have been created by now
+		// All render assets (textures/shaders etc) should have been loaded by now
 		SceneManager::GetSceneData()->SetLoadingFinished();
 
 		// Create gameplay objects now that the scene data is loaded
