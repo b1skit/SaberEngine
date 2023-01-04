@@ -190,9 +190,9 @@ namespace opengl
 		LOG("Using OpenGL version %d.%d", glMajorVersionCheck, glMinorVersionCheck);
 
 		// Initialize glew:
-		glewExperimental = GL_TRUE; // Expose OpenGL 3.x+ interfaces
-		GLenum glStatus = glewInit();
-		SEAssert("glStatus not ok!", glStatus == GLEW_OK);
+		::glewExperimental = GL_TRUE; // Expose OpenGL 3.x+ interfaces
+		const GLenum glStatus = glewInit();
+		SEAssert("glewInit failed", glStatus == GLEW_OK);
 
 		// Configure OpenGL logging:
 #if defined(DEBUG_LOG_OPENGL)		// Defined in BuildConfiguration.h

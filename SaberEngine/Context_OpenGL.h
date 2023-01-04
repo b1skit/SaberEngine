@@ -22,7 +22,7 @@ namespace opengl
 			PlatformParams() = default;
 			~PlatformParams() override = default;
 
-			SDL_GLContext m_glContext = 0;
+			SDL_GLContext m_glContext = 0; // Rendering context
 		};
 
 	public:

@@ -38,6 +38,12 @@
 #include <vector>
 
 
+// Win32 API:
+#define WIN32_LEAN_AND_MEAN // Limit the number of header files included via Windows.h
+#include <Windows.h>
+#include <shellapi.h>
+
+
 // GLM:
 //#define GLM_FORCE_MESSAGES // View compilation/configuration details. Currently:
 //1 > GLM: GLM_FORCE_DEPTH_ZERO_TO_ONE is defined.Using zero to one depth clip space.
