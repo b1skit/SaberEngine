@@ -24,6 +24,9 @@ namespace re
 		void Create();
 		void Destroy();
 
+		void Present() const;
+		void SetVSyncMode(bool enabled) const;
+
 		// Pipeline state:
 		void SetCullingMode(platform::Context::FaceCullingMode const& mode) const;
 		void ClearTargets(platform::Context::ClearTarget const& clearTarget) const;

@@ -6,17 +6,20 @@
 
 // Optional checks in debug mode:
 #if defined(_DEBUG)
-	// Assert if textures/PBs aren't found when attempting to bind them. Helpful, but can be annoying
-	#define STRICT_SHADER_BINDING
-	
+	#define STRICT_SHADER_BINDING // Assert if textures/PBs aren't found at bind time. Helpful, but can be annoying
+	//#define DEBUG_LOG_OPENGL_NOTIFICATIONS // Enable non-essential OpenGL notification logging
 #endif
+
 
 // Custom assert:
 #if defined(_DEBUG)
 
+// TODO: Move the Win32-specific stuff to a platform wrapper (ClipCursor, ShowCursor)
+
 #define SEAssert(errorMsg, condition) \
 	if(!(condition)) \
 	{ \
+		ClipCursor(NULL); ShowCursor(true); /* Disable relative mouse mode* */ \
 		const std::string errorStr((errorMsg)); \
 		LOG_ERROR(errorStr.c_str()); \
 		std::cerr << "Assertion failed: " << #condition << " == " << (condition ? "true" : "false") << std::endl; \
@@ -25,6 +28,7 @@
 	}
 
 #define SEAssertF(errorMsg) \
+		ClipCursor(NULL); ShowCursor(true); /* Disable relative mouse mode* */ \
 		const std::string errorStr((errorMsg)); \
 		LOG_ERROR(errorStr.c_str()); \
 		std::cerr << "Occurred at: " << __FILE__ << ":" << __LINE__ << "::" << __FUNCTION__ << std::endl; \
@@ -37,14 +41,3 @@
 #endif
 
 
-
-
-#if defined(_DEBUG)
-	// OpenGL-specific logging (in RenderManager.cpp)
-	//-----------------------------------------------
-	#define DEBUG_LOG_OPENGL						// Enable/disable OpenGL logging
-	#if defined(DEBUG_LOG_OPENGL)
-		//#define DEBUG_LOG_OPENGL_NOTIFICATIONS	// Enable non-essential OpenGL notification logging
-	#endif
-
-#endif

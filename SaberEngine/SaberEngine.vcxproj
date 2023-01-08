@@ -99,7 +99,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\Projects\Game Development\SaberEngine\SaberEngine\pch;$(ProjectDir)..\Dependencies\imgui\;$(ProjectDir)..\Dependencies\Welder\;$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\SDL2\include\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Projects\Game Development\SaberEngine\SaberEngine\pch;$(ProjectDir)..\Dependencies\imgui\;$(ProjectDir)..\Dependencies\Welder\;$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -110,7 +110,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Debug\;$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(ProjectDir)..\Dependencies\glm\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <PerUserRedirection>true</PerUserRedirection>
     </Link>
@@ -121,8 +121,7 @@
       </Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>copy "$(ProjectDir)..\Dependencies\glew\bin\Release\x64\glew32.dll" "$(ProjectDir)"
-copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Debug\SDL2.dll" "$(ProjectDir)"</Command>
+      <Command>copy "$(ProjectDir)..\Dependencies\glew\bin\Release\x64\glew32.dll" "$(ProjectDir)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copy dependencies to project directory</Message>
@@ -151,7 +150,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Debug\SDL2.dll" "$(ProjectDi
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\Projects\Game Development\SaberEngine\SaberEngine\pch;$(ProjectDir)..\Dependencies\imgui\;$(ProjectDir)..\Dependencies\Welder\;$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\SDL2\include\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Projects\Game Development\SaberEngine\SaberEngine\pch;$(ProjectDir)..\Dependencies\imgui\;$(ProjectDir)..\Dependencies\Welder\;$(ProjectDir)..\Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
@@ -162,7 +161,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Debug\SDL2.dll" "$(ProjectDi
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;glew32.lib;opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
     </Link>
     <PreBuildEvent>
@@ -172,16 +171,14 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Debug\SDL2.dll" "$(ProjectDi
       </Message>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>copy "$(ProjectDir)..\Dependencies\glew\bin\Release\x64\glew32.dll" "$(ProjectDir)"
-copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(ProjectDir)"</Command>
+      <Command>copy "$(ProjectDir)..\Dependencies\glew\bin\Release\x64\glew32.dll" "$(ProjectDir)"</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_dx12.cpp" />
     <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_opengl3.cpp" />
-    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_sdl.cpp" />
-    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_sdlrenderer.cpp" />
+    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="..\Dependencies\imgui\imgui.cpp" />
     <ClCompile Include="..\Dependencies\imgui\imgui_demo.cpp" />
     <ClCompile Include="..\Dependencies\imgui\imgui_draw.cpp" />
@@ -190,7 +187,11 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="Batch.cpp" />
     <ClCompile Include="Bounds.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="EventManager_Platform.cpp" />
+    <ClCompile Include="EventManager_Win32.cpp" />
     <ClCompile Include="GameplayManager.cpp" />
+    <ClCompile Include="InputManager_Platform.cpp" />
+    <ClCompile Include="InputManager_Win32.cpp" />
     <ClCompile Include="ParameterBlock.cpp" />
     <ClCompile Include="ParameterBlockAllocator.cpp" />
     <ClCompile Include="ParameterBlock_OpenGL.cpp" />
@@ -249,15 +250,14 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClCompile Include="ShadowMap.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Window.cpp" />
-    <ClCompile Include="Window_OpenGL.cpp" />
+    <ClCompile Include="Window_Win32.cpp" />
     <ClCompile Include="Window_Platform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_dx12.h" />
     <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_opengl3.h" />
     <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_opengl3_loader.h" />
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_sdl.h" />
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_sdlrenderer.h" />
+    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_win32.h" />
     <ClInclude Include="..\Dependencies\imgui\imconfig.h" />
     <ClInclude Include="..\Dependencies\imgui\imgui.h" />
     <ClInclude Include="..\Dependencies\imgui\imgui_internal.h" />
@@ -267,8 +267,12 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="Batch.h" />
     <ClInclude Include="Bounds.h" />
     <ClInclude Include="Command.h" />
+    <ClInclude Include="EventManager_Platform.h" />
+    <ClInclude Include="EventManager_Win32.h" />
     <ClInclude Include="GameplayManager.h" />
     <ClInclude Include="HashedDataObject.h" />
+    <ClInclude Include="InputManager_Platform.h" />
+    <ClInclude Include="InputManager_Win32.h" />
     <ClInclude Include="ParameterBlock.h" />
     <ClInclude Include="ParameterBlockAllocator.h" />
     <ClInclude Include="ParameterBlock_OpenGL.h" />
@@ -332,7 +336,7 @@ copy "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\SDL2.dll" "$(Project
     <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Window.h" />
-    <ClInclude Include="Window_OpenGL.h" />
+    <ClInclude Include="Window_Win32.h" />
     <ClInclude Include="Window_Platform.h" />
   </ItemGroup>
   <ItemGroup>

@@ -1,6 +1,7 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "Window.h"
 #include "Window_Platform.h"
-#include "Window_OpenGL.h"
+#include "Window_Win32.h"
 #include "DebugConfiguration.h"
 #include "Config.h"
 
@@ -18,7 +19,7 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			window.m_platformParams = std::make_unique<opengl::Window::PlatformParams>();
+			window.m_platformParams = std::make_unique<win32::Window::PlatformParams>();
 		}
 		break;
 		case RenderingAPI::DX12:
@@ -36,6 +37,5 @@ namespace platform
 
 	bool (*platform::Window::Create)(re::Window& window, std::string const& title, uint32_t width, uint32_t height);
 	void (*platform::Window::Destroy)(re::Window& window);
-	void (*platform::Window::Present)(re::Window const& window);
-	bool (*platform::Window::HasFocus)(re::Window const& window);
+	void (*platform::Window::SetRelativeMouseMode)(re::Window const& window, bool enabled);
 }

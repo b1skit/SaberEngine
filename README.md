@@ -107,17 +107,6 @@ GLM: https://github.com/g-truc/glm/releases
 - Add "$(ProjectDir)..\Dependencies\glm\" to "project properties -> Linker -> General -> Additional Library Directories"
 
 
-SDL2: https://www.libsdl.org/index.php
---------------------------------------
-- Current version: SDL2-2.0.22-win32-x64.zip (stable)
-- Unzip to <project root>\Dependencies\SDL2\
-- Open the .\SDL2\VisualC\SDL.sln in Visual Studio, and compile the 3 SDL2 projects (SDL2, SDL2main, SDL2test) for both the Debug and Release configurations
-- Add "$(ProjectDir)..\Dependencies\SDL2\include\" to "Project properties -> C/C++ -> Additional Include Directories" for all configurations
-- Add "$(ProjectDir)..\Dependencies\SDL2\VisualC\x64\Release\" to "project properties -> Linker -> General -> Additional Library Directories" for all build configurations
-- Add "SDL2.lib" to "Project properties -> Linker -> Input -> Additional Dependences"
-- Ensure the "Project properties -> Build Events -> Post-Build Event" copies the relevant Debug/Release configuration of the SDL2.dll to the <Project Root>\SaberEngine\ directory
-
-
 stb_image.h: https://github.com/nothings/stb/blob/master/stb_image.h
 --------------------------------------------------------------------
 - Current version: v2.27 

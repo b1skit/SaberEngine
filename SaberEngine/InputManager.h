@@ -22,7 +22,7 @@ namespace en
 		// Static member functions:
 		static bool const& GetKeyboardInputState(en::KeyboardInputButton key);
 		static bool const& GetMouseInputState(en::MouseInputButton button);
-		static float GetMouseAxisInput(en::MouseInputAxis axis);
+		static float GetRelativeMouseInput(en::MouseInputAxis axis);
 
 		// EngineComponent interface:
 		void Startup() override;
@@ -40,7 +40,7 @@ namespace en
 		static bool	m_mouseButtonStates[en::MouseInputButton_Count]; // Stores the state of mouse buttons
 		static float m_mouseAxisStates[en::MouseInputAxis_Count]; // Mouse axis deltas
 
-		std::unordered_map<uint32_t, en::KeyboardInputButton> m_SDLScancodsToSaberEngineEventEnums;
+		std::unordered_map<SEKeycode, en::KeyboardInputButton> m_SEKeycodesToSEEventEnums;
 
 
 		// Sensitivity params:

@@ -37,6 +37,8 @@ namespace platform
 	
 	void (*platform::Context::Create)(re::Context& context);
 	void (*platform::Context::Destroy)(re::Context& context);
+	void (*platform::Context::Present)(re::Context const& context);
+	void (*platform::Context::SetVSyncMode)(re::Context const& window, bool enabled);
 	void (*platform::Context::SetCullingMode)(platform::Context::FaceCullingMode const& mode);
 	void (*platform::Context::ClearTargets)(platform::Context::ClearTarget const& clearTarget);
 	void (*platform::Context::SetBlendMode)(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst);

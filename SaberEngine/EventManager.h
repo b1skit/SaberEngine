@@ -44,6 +44,7 @@ namespace en
 
 			// Mouse functions:
 			InputMouseLeft,
+			InputMouseMiddle,
 			InputMouseRight,
 
 			Uninitialized, // Error

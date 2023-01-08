@@ -51,13 +51,14 @@ namespace en
 
 		// Start managers:
 		EventManager::Get()->Startup();
-		InputManager::Get()->Startup();
 
 		EventManager::Get()->Subscribe(en::EventManager::EngineQuit, this);
 
 		LogManager::Get()->Startup();
 
 		RenderManager::Get()->Startup(); // Initializes context, window, etc
+
+		InputManager::Get()->Startup(); // Now that the window/context are created
 
 		SceneManager::Get()->Startup(); // Load assets
 

@@ -24,6 +24,18 @@ namespace re
 	}
 
 
+	void Context::Present() const
+	{
+		platform::Context::Present(*this);
+	}
+
+
+	void Context::SetVSyncMode(bool enabled) const
+	{
+		platform::Context::SetVSyncMode(*this, enabled);
+	}
+
+
 	void Context::SetCullingMode(platform::Context::FaceCullingMode const& mode) const
 	{
 		platform::Context::SetCullingMode(mode);

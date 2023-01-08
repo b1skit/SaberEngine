@@ -2,7 +2,7 @@
 #include <GL/glew.h>
 #include <GL/GL.h> // Must follow glew.h...
 
-#include "backends/imgui_impl_sdl.h"
+#include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_opengl3.h"
 
 #include "Camera.h"
@@ -220,7 +220,7 @@ namespace opengl
 	{
 		// Start the Dear ImGui frame
 		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplSDL2_NewFrame();
+		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
 		// Process the queue of commands for the current frame:

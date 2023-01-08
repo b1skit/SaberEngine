@@ -1,3 +1,4 @@
+// © 2022 Adam Badke. All rights reserved.
 #pragma once
 
 
@@ -25,8 +26,7 @@ namespace platform
 	public:
 		static bool (*Create)(re::Window& window, std::string const& title, uint32_t width, uint32_t height);
 		static void (*Destroy)(re::Window& window);
-		static void (*Present)(re::Window const& window);
-		static bool (*HasFocus)(re::Window const& window);
+		static void (*SetRelativeMouseMode)(re::Window const& window, bool enabled);
 	};
 
 	// We need to provide a destructor implementation since it's pure virtual

@@ -1,8 +1,10 @@
+// © 2022 Adam Badke. All rights reserved.
 #include "Window.h"
 
 namespace re
 {
 	Window::Window()
+		: m_hasFocus(false)
 	{
 		platform::Window::PlatformParams::CreatePlatformParams(*this);
 	}
@@ -20,14 +22,20 @@ namespace re
 	}
 
 
-	void Window::Present() const
+	void Window::SetFocusState(bool hasFocus)
 	{
-		platform::Window::Present(*this);
+		m_hasFocus = hasFocus;
 	}
 
 
-	bool Window::HasFocus() const
+	bool Window::GetFocusState() const
 	{
-		return platform::Window::HasFocus(*this);
+		return m_hasFocus;
+	}
+
+
+	void Window::SetRelativeMouseMode(bool enabled) const
+	{
+		platform::Window::SetRelativeMouseMode(*this, enabled);
 	}
 }

@@ -1,15 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <SDL.h>
 #include <GL/glew.h>
+#include <GL/wglew.h> // Windows-specific GL functions and macros
 #include <GL/GL.h> // Must follow glew.h
 
-#include "backends/imgui_impl_sdl.h"
+#include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_opengl3.h"
 
 #include "Context_OpenGL.h"
 #include "Context.h"
 
-#include "Window_OpenGL.h"
+#include "Window_Win32.h"
 
 #include "Config.h"
 #include "DebugConfiguration.h"
@@ -19,10 +19,88 @@ using std::string;
 using std::to_string;
 
 
+namespace
+{
+	// The function used to get WGL extensions is an extension itself, thus it needs an OpenGL context. Thus, we create
+	// a temp window and context, retrieve and store our function pointers, and then destroy the temp objects
+	// More info: https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)
+	void GetOpenGLExtensionProcessAddresses(re::Context& context)
+	{
+		WNDCLASS windowClass = {};
+		windowClass.style = CS_OWNDC;
+		windowClass.lpfnWndProc = (WNDPROC)DefWindowProcA; // Window message handler function pointer
+		windowClass.hInstance = GetModuleHandle(0); // Handle to the instance containing the window procedure
+		windowClass.lpszClassName = "SaberEngineOpenGLTempWindow"; // Set the unique window identifier
+
+		const ATOM registerResult = RegisterClassA(&windowClass);
+		SEAssert("Failed to register temp OpenGL window", registerResult);
+
+		HWND tempWindow = ::CreateWindowExA(
+			0,
+			windowClass.lpszClassName,
+			"Saber Engine Temp OpenGL Window",
+			0,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			0,
+			0,
+			windowClass.hInstance,
+			0);
+		SEAssert("Failed to create dummy OpenGL window", tempWindow);
+
+		// These don't matter, we set actual values later via the wgl extension functions
+		PIXELFORMATDESCRIPTOR pfd;
+		pfd.nSize = sizeof(pfd);
+		pfd.nVersion = 1;
+		pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+		pfd.iPixelType = PFD_TYPE_RGBA;
+		pfd.cColorBits = 32;
+		pfd.cAlphaBits = 8;
+		pfd.iLayerType = PFD_MAIN_PLANE;
+		pfd.cDepthBits = 24;
+		pfd.cStencilBits = 8;
+
+		HDC tempDeviceContext = ::GetDC(tempWindow); // Get the device context
+
+		int pxFormat = ::ChoosePixelFormat(tempDeviceContext, &pfd);
+		SEAssert("Failed to find a suitable pixel format", pxFormat);
+
+		if (!::SetPixelFormat(tempDeviceContext, pxFormat, &pfd))
+		{
+			SEAssertF("Failed to set the pixel format");
+		}
+
+		HGLRC tempRenderContext = ::wglCreateContext(tempDeviceContext);
+		SEAssert("Failed to create a dummy OpenGL rendering context", tempRenderContext);
+
+		if (!::wglMakeCurrent(tempDeviceContext, tempRenderContext))
+		{
+			SEAssertF("Failed to activate dummy OpenGL rendering context");
+		}
+
+		opengl::Context::PlatformParams* const platformParams =
+			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
+
+		platformParams->wglCreateContextAttribsARBFn =
+			(opengl::Context::PlatformParams::wglCreateContextAttribsARB_type*)::wglGetProcAddress("wglCreateContextAttribsARB");
+		platformParams->wglChoosePixelFormatARBFn =
+			(opengl::Context::PlatformParams::wglChoosePixelFormatARB_type*)::wglGetProcAddress("wglChoosePixelFormatARB");
+
+		// Cleanup:
+		::wglMakeCurrent(tempDeviceContext, 0);
+		::wglDeleteContext(tempRenderContext);
+		::ReleaseDC(tempWindow, tempDeviceContext);
+		::DestroyWindow(tempWindow);
+	}
+}
+
+
 namespace opengl
 {
 	// OpenGL error message helper function: (Enable/disable via BuildConfiguration.h)
-#if defined(DEBUG_LOG_OPENGL)
+#if defined(_DEBUG)
 	void GLAPIENTRY GLMessageCallback
 	(
 			GLenum source,
@@ -122,88 +200,106 @@ namespace opengl
 
 	void Context::Create(re::Context& context)
 	{
-		opengl::Context::PlatformParams* const platformParams =
-			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
+		GetOpenGLExtensionProcessAddresses(context);
 
-		// SDL_INIT_VIDEO automatically inits events, but SDL_INIT_EVENTS included here as a reminder
-		SEAssert(
-			SDL_GetError(), 
-			SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO) == 0);
-
-		
-		// Configure SDL before creating a window:
-		const int glMajorVersion = 4;
-		const int glMinorVersion = 6;
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, glMajorVersion);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, glMinorVersion);
-
-		SEAssert(
-			SDL_GetError(), 
-			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE) >= 0);		
-
-		SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-		SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
-		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-
-		// Specify relative mouse mode
-		// https://wiki.libsdl.org/SDL_HINT_MOUSE_RELATIVE_MODE_WARP
-		SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0", SDL_HINT_OVERRIDE);
-		SDL_SetRelativeMouseMode(SDL_TRUE);	// Lock the mouse to the window
-		
 		// Create a window:
-		const string windowTitle = Config::Get()->GetValue<string>("windowTitle") + " " + 
+		const string windowTitle = Config::Get()->GetValue<string>("windowTitle") + " " +
 			Config::Get()->GetValue<string>("commandLineArgs");
 		const int xRes = Config::Get()->GetValue<int>("windowXRes");
 		const int yRes = Config::Get()->GetValue<int>("windowYRes");
 
 		re::Window* window = context.GetWindow();
-		window->Create(windowTitle, xRes, yRes);
+		const bool windowCreated = window->Create(windowTitle, xRes, yRes);
+		SEAssert("Failed to create a window", windowCreated);
 
-		opengl::Window::PlatformParams* const windowPlatformParams =
-			dynamic_cast<opengl::Window::PlatformParams*>(window->GetPlatformParams());
+		win32::Window::PlatformParams* const windowPlatParams =
+			dynamic_cast<win32::Window::PlatformParams*>(window->GetPlatformParams());
 
-		// Create an OpenGL context and make it current:
-		platformParams->m_glContext = SDL_GL_CreateContext(windowPlatformParams->m_glWindow);
-		SEAssert("Could not create OpenGL context", platformParams->m_glContext != NULL);
+		opengl::Context::PlatformParams* const contextPlatParams =
+			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
 
-		SEAssert("Failed to make OpenGL context current", 
-			SDL_GL_MakeCurrent(windowPlatformParams->m_glWindow, platformParams->m_glContext) >= 0);
+		// Get the Device Context Handle
+		contextPlatParams->m_hDeviceContext = GetDC(windowPlatParams->m_hWindow); 
 
-		// Synchronize buffer swapping with the monitor's vertical refresh (VSync):
-		const bool vsyncEnabled = Config::Get()->GetValue<bool>("vsync");
-		SDL_GL_SetSwapInterval(static_cast<int>(vsyncEnabled));
-		
+		// Now we can choose a pixel format using wglChoosePixelFormatARB:
+		int pixel_format_attribs[] = {
+			WGL_DRAW_TO_WINDOW_ARB,     GL_TRUE,
+			WGL_SUPPORT_OPENGL_ARB,     GL_TRUE,
+			WGL_DOUBLE_BUFFER_ARB,      GL_TRUE,
+			WGL_ACCELERATION_ARB,       WGL_FULL_ACCELERATION_ARB,
+			WGL_PIXEL_TYPE_ARB,         WGL_TYPE_RGBA_ARB,
+			WGL_COLOR_BITS_ARB,         32,
+			WGL_DEPTH_BITS_ARB,         24,
+			WGL_STENCIL_BITS_ARB,       8,
+			0
+		};
+
+		int pixel_format;
+		UINT num_formats;
+		contextPlatParams->wglChoosePixelFormatARBFn(contextPlatParams->m_hDeviceContext, pixel_format_attribs, 0, 1, &pixel_format, &num_formats);
+		if (!num_formats)
+		{
+			SEAssertF("Failed to set the OpenGL pixel format");
+		}
+
+		PIXELFORMATDESCRIPTOR pfd;
+		DescribePixelFormat(contextPlatParams->m_hDeviceContext, pixel_format, sizeof(pfd), &pfd);
+		if (!SetPixelFormat(contextPlatParams->m_hDeviceContext, pixel_format, &pfd))
+		{
+			SEAssertF("Failed to set the OpenGL pixel format");
+		}
+
+		// Specify our OpenGL core profile context version
+		const int glMajorVersion = 4;
+		const int glMinorVersion = 6;
+		int glAttribs[] = {
+			WGL_CONTEXT_MAJOR_VERSION_ARB, glMajorVersion,
+			WGL_CONTEXT_MINOR_VERSION_ARB, glMinorVersion,
+			WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+			0,
+		};
+
+		contextPlatParams->m_glRenderContext = 
+			contextPlatParams->wglCreateContextAttribsARBFn(contextPlatParams->m_hDeviceContext, 0, glAttribs);
+		SEAssert("Failed to create OpenGL context", contextPlatParams->m_glRenderContext);
+
+		if (!wglMakeCurrent(contextPlatParams->m_hDeviceContext, contextPlatParams->m_glRenderContext))
+		{
+			SEAssertF("Failed to activate OpenGL rendering context");
+		}
+
 		// Verify the context version:
 		int glMajorVersionCheck = 0;
 		int glMinorVersionCheck = 0;
 		glGetIntegerv(GL_MAJOR_VERSION, &glMajorVersionCheck);
 		glGetIntegerv(GL_MINOR_VERSION, &glMinorVersionCheck);
-		
-		SEAssert("Reported OpenGL version does not match the version set", 
+
+		SEAssert("Reported OpenGL version does not match the version set",
 			glMajorVersion == glMajorVersionCheck && glMinorVersion == glMinorVersionCheck);
 
 		LOG("Using OpenGL version %d.%d", glMajorVersionCheck, glMinorVersionCheck);
+
+		window->SetRelativeMouseMode(true);
+
+		context.SetVSyncMode(Config::Get()->GetValue<bool>("vsync"));
+		
 
 		// Initialize glew:
 		::glewExperimental = GL_TRUE; // Expose OpenGL 3.x+ interfaces
 		const GLenum glStatus = glewInit();
 		SEAssert("glewInit failed", glStatus == GLEW_OK);
 
+		
+#if defined(_DEBUG)
 		// Configure OpenGL logging:
-#if defined(DEBUG_LOG_OPENGL)		// Defined in BuildConfiguration.h
-		glEnable(GL_DEBUG_OUTPUT);
-		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);	// Make the error callback immediately
-		glDebugMessageCallback(GLMessageCallback, 0);
+		::glEnable(GL_DEBUG_OUTPUT);
+		::glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);	// Make the error callback immediately
+		::glDebugMessageCallback(GLMessageCallback, 0);
 #endif
 
 		// Global OpenGL settings:
-		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-		glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE);
+		::glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+		::glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE);
 
 
 		// Setup our ImGui context
@@ -211,30 +307,77 @@ namespace opengl
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
 		io.IniFilename = re::k_imguiIniPath;
+
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();
 
 		// Setup Platform/Renderer backends
-		ImGui_ImplSDL2_InitForOpenGL(windowPlatformParams->m_glWindow, platformParams->m_glContext);
+		::ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
 
 		const string imguiGLSLVersionString = "#version 130";
-		ImGui_ImplOpenGL3_Init(imguiGLSLVersionString.c_str());
+		::ImGui_ImplOpenGL3_Init(imguiGLSLVersionString.c_str());
 	}
 
 
 	void Context::Destroy(re::Context& context)
 	{
-		opengl::Context::PlatformParams* const platformParams =
+		opengl::Context::PlatformParams* const contextPlatformParams =
 			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
 
 		// Imgui cleanup
-		ImGui_ImplOpenGL3_Shutdown();
-		ImGui_ImplSDL2_Shutdown();
+		::ImGui_ImplOpenGL3_Shutdown();
+		::ImGui_ImplWin32_Shutdown();
 		ImGui::DestroyContext();
 		
-		SDL_GL_DeleteContext(platformParams->m_glContext);
+		::wglMakeCurrent(NULL, NULL); // Make the rendering context not current  
+
+		win32::Window::PlatformParams* const windowPlatformParams =
+			dynamic_cast<win32::Window::PlatformParams*>(context.GetWindow()->GetPlatformParams());
+		::ReleaseDC(windowPlatformParams->m_hWindow, contextPlatformParams->m_hDeviceContext); // Release device context
+
+		::wglDeleteContext(contextPlatformParams->m_glRenderContext); // Delete the rendering context
+
 		context.GetWindow()->Destroy();
-		SDL_Quit(); // Force a shutdown, instead of calling SDL_QuitSubSystem() for each subsystem
+	}
+
+
+	void Context::Present(re::Context const& context)
+	{
+		opengl::Context::PlatformParams const* platformParams =
+			dynamic_cast<opengl::Context::PlatformParams const*>(context.GetPlatformParams());
+
+		::SwapBuffers(platformParams->m_hDeviceContext);
+	}
+
+
+	void Context::SetVSyncMode(re::Context const& context, bool enabled)
+	{
+		// Based on the technique desecribed here:
+		// https://stackoverflow.com/questions/589064/how-to-enable-vertical-sync-in-opengl
+		auto WGLExtensionSupported = [](const char* extension_name)
+		{
+			// Wgl function pointer, gets a string with list of wgl extensions:
+			PFNWGLGETEXTENSIONSSTRINGEXTPROC _wglGetExtensionsStringEXT = 
+				(PFNWGLGETEXTENSIONSSTRINGEXTPROC)wglGetProcAddress("wglGetExtensionsStringEXT");
+
+			if (::strstr(_wglGetExtensionsStringEXT(), extension_name) == nullptr)
+			{
+				return false; // Extension not found/supported
+			}
+
+			return true; // Extension supported
+		};
+
+		PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = nullptr;
+		if (WGLExtensionSupported("WGL_EXT_swap_control"))
+		{
+			wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+			wglSwapIntervalEXT(static_cast<int8_t>(enabled)); // # frames of delay: VSync == 1
+		}
+		else
+		{
+			SEAssertF("VSync extension not supported");
+		}
 	}
 
 

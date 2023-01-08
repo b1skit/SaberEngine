@@ -6,29 +6,35 @@
 #include "Context_Platform.h"
 #include "Context_OpenGL.h"
 
-#include "Window_Platform.h"
-#include "Window_OpenGL.h"
+#include "EventManager_Platform.h"
+#include "EventManager_Win32.h"
 
-#include "RenderManager_Platform.h"
-#include "RenderManager_OpenGL.h"
+#include "InputManager_Platform.h"
+#include "InputManager_Win32.h"
 
 #include "MeshPrimitive_Platform.h"
 #include "MeshPrimitive_OpenGL.h"
 
-#include "Texture_Platform.h"
-#include "Texture_OpenGL.h"
+#include "ParameterBlock.h"
+#include "ParameterBlock_OpenGL.h"
+
+#include "RenderManager_Platform.h"
+#include "RenderManager_OpenGL.h"
 
 #include "Sampler_Platform.h"
 #include "Sampler_OpenGL.h"
 
-#include "TextureTarget_Platform.h"
-#include "TextureTarget_OpenGL.h"
-
 #include "Shader_Platform.h"
 #include "Shader_OpenGL.h"
 
-#include "ParameterBlock.h"
-#include "ParameterBlock_OpenGL.h"
+#include "Texture_Platform.h"
+#include "Texture_OpenGL.h"
+
+#include "TextureTarget_Platform.h"
+#include "TextureTarget_OpenGL.h"
+
+#include "Window_Platform.h"
+#include "Window_Win32.h"
 
 using en::Config;
 
@@ -50,6 +56,8 @@ namespace platform
 			// Context:
 			platform::Context::Create				= &opengl::Context::Create;
 			platform::Context::Destroy				= &opengl::Context::Destroy;
+			platform::Context::Present				= &opengl::Context::Present;
+			platform::Context::SetVSyncMode			= &opengl::Context::SetVSyncMode;
 			platform::Context::SetCullingMode		= &opengl::Context::SetCullingMode;
 			platform::Context::ClearTargets			= &opengl::Context::ClearTargets;
 			platform::Context::SetBlendMode			= &opengl::Context::SetBlendMode;
@@ -59,10 +67,16 @@ namespace platform
 			platform::Context::GetMaxTextureInputs	= &opengl::Context::GetMaxTextureInputs;
 			
 			// Window:
-			platform::Window::Create			= &opengl::Window::Create;
-			platform::Window::Destroy			= &opengl::Window::Destroy;
-			platform::Window::Present			= &opengl::Window::Present;
-			platform::Window::HasFocus			= &opengl::Window::HasFocus;
+			platform::Window::Create				= &win32::Window::Create;
+			platform::Window::Destroy				= &win32::Window::Destroy;
+			platform::Window::SetRelativeMouseMode	= &win32::Window::SetRelativeMouseMode;
+
+			// Event manager:
+			platform::EventManager::ProcessMessages = &win32::EventManager::ProcessMessages;
+
+			// Input manager:
+			platform::InputManager::Startup				= &win32::InputManager::Startup;
+			platform::InputManager::ConvertToSEKeycode	= &win32::InputManager::ConvertToSEKeycode;
 
 			// Render manager:
 			platform::RenderManager::Initialize		= &opengl::RenderManager::Initialize;
@@ -86,9 +100,6 @@ namespace platform
 			platform::Sampler::Destroy	= &opengl::Sampler::Destroy;
 			platform::Sampler::Bind		= &opengl::Sampler::Bind;
 
-
-			// Texture target:
-			
 			// Texture target set:
 			platform::TextureTargetSet::CreateColorTargets			= &opengl::TextureTargetSet::CreateColorTargets;
 			platform::TextureTargetSet::AttachColorTargets			= &opengl::TextureTargetSet::AttachColorTargets;

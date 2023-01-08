@@ -1,12 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <SDL.h>
-
-#include "backends/imgui_impl_sdl.h"
-
 #include "InputManager.h"
 #include "Config.h"
 #include "DebugConfiguration.h"
 #include "EventManager.h"
+#include "RenderManager.h"
+#include "InputManager_Platform.h"
 
 using en::Config;
 using en::EventManager;
@@ -16,108 +14,107 @@ using std::make_shared;
 
 namespace
 {
-	void AddKeyEventToImGui(ImGuiIO& io, uint32_t sdlScancode, bool keystate)
+	void AddKeyEventToImGui(ImGuiIO& io, en::SEKeycode keycode, bool keystate)
 	{		
 		// Keyboard sections: left to right, row-by-row
-		switch (sdlScancode)
+		switch (keycode)
 		{
-		case SDL_SCANCODE_ESCAPE: io.AddKeyEvent(ImGuiKey_Escape, keystate); break;
-		case SDL_SCANCODE_F1: io.AddKeyEvent(ImGuiKey_F1, keystate); break;
-		case SDL_SCANCODE_F2: io.AddKeyEvent(ImGuiKey_F2, keystate); break;
-		case SDL_SCANCODE_F3: io.AddKeyEvent(ImGuiKey_F3, keystate); break;
-		case SDL_SCANCODE_F4: io.AddKeyEvent(ImGuiKey_F4, keystate); break;
-		case SDL_SCANCODE_F5: io.AddKeyEvent(ImGuiKey_F5, keystate); break;
-		case SDL_SCANCODE_F6: io.AddKeyEvent(ImGuiKey_F6, keystate); break;
-		case SDL_SCANCODE_F7: io.AddKeyEvent(ImGuiKey_F7, keystate); break;
-		case SDL_SCANCODE_F8: io.AddKeyEvent(ImGuiKey_F8, keystate); break;
-		case SDL_SCANCODE_F9: io.AddKeyEvent(ImGuiKey_F9, keystate); break;
-		case SDL_SCANCODE_F10: io.AddKeyEvent(ImGuiKey_F10, keystate); break;
-		case SDL_SCANCODE_F11: io.AddKeyEvent(ImGuiKey_F11, keystate); break;
-		case SDL_SCANCODE_F12: io.AddKeyEvent(ImGuiKey_F12, keystate); break;
+		case en::SEK_ESCAPE: io.AddKeyEvent(ImGuiKey_Escape, keystate); break;
+		case en::SEK_F1: io.AddKeyEvent(ImGuiKey_F1, keystate); break;
+		case en::SEK_F2: io.AddKeyEvent(ImGuiKey_F2, keystate); break;
+		case en::SEK_F3: io.AddKeyEvent(ImGuiKey_F3, keystate); break;
+		case en::SEK_F4: io.AddKeyEvent(ImGuiKey_F4, keystate); break;
+		case en::SEK_F5: io.AddKeyEvent(ImGuiKey_F5, keystate); break;
+		case en::SEK_F6: io.AddKeyEvent(ImGuiKey_F6, keystate); break;
+		case en::SEK_F7: io.AddKeyEvent(ImGuiKey_F7, keystate); break;
+		case en::SEK_F8: io.AddKeyEvent(ImGuiKey_F8, keystate); break;
+		case en::SEK_F9: io.AddKeyEvent(ImGuiKey_F9, keystate); break;
+		case en::SEK_F10: io.AddKeyEvent(ImGuiKey_F10, keystate); break;
+		case en::SEK_F11: io.AddKeyEvent(ImGuiKey_F11, keystate); break;
+		case en::SEK_F12: io.AddKeyEvent(ImGuiKey_F12, keystate); break;
 
-		case SDL_SCANCODE_GRAVE: io.AddKeyEvent(ImGuiKey_GraveAccent, keystate); break;
-		case SDL_SCANCODE_0: io.AddKeyEvent(ImGuiKey_0, keystate); break;
-		case SDL_SCANCODE_1: io.AddKeyEvent(ImGuiKey_1, keystate); break;
-		case SDL_SCANCODE_2: io.AddKeyEvent(ImGuiKey_2, keystate); break;
-		case SDL_SCANCODE_3: io.AddKeyEvent(ImGuiKey_3, keystate); break;
-		case SDL_SCANCODE_4: io.AddKeyEvent(ImGuiKey_4, keystate); break;
-		case SDL_SCANCODE_5: io.AddKeyEvent(ImGuiKey_5, keystate); break;
-		case SDL_SCANCODE_6: io.AddKeyEvent(ImGuiKey_6, keystate); break;
-		case SDL_SCANCODE_7: io.AddKeyEvent(ImGuiKey_7, keystate); break;
-		case SDL_SCANCODE_8: io.AddKeyEvent(ImGuiKey_8, keystate); break;
-		case SDL_SCANCODE_9: io.AddKeyEvent(ImGuiKey_9, keystate); break;
-		case SDL_SCANCODE_MINUS: io.AddKeyEvent(ImGuiKey_Minus, keystate); break;
-		case SDL_SCANCODE_EQUALS: io.AddKeyEvent(ImGuiKey_Equal, keystate); break;
-		case SDL_SCANCODE_BACKSPACE: io.AddKeyEvent(ImGuiKey_Backspace, keystate); break;
+		case en::SEK_GRAVE: io.AddKeyEvent(ImGuiKey_GraveAccent, keystate); break;
+		case en::SEK_0: io.AddKeyEvent(ImGuiKey_0, keystate); break;
+		case en::SEK_1: io.AddKeyEvent(ImGuiKey_1, keystate); break;
+		case en::SEK_2: io.AddKeyEvent(ImGuiKey_2, keystate); break;
+		case en::SEK_3: io.AddKeyEvent(ImGuiKey_3, keystate); break;
+		case en::SEK_4: io.AddKeyEvent(ImGuiKey_4, keystate); break;
+		case en::SEK_5: io.AddKeyEvent(ImGuiKey_5, keystate); break;
+		case en::SEK_6: io.AddKeyEvent(ImGuiKey_6, keystate); break;
+		case en::SEK_7: io.AddKeyEvent(ImGuiKey_7, keystate); break;
+		case en::SEK_8: io.AddKeyEvent(ImGuiKey_8, keystate); break;
+		case en::SEK_9: io.AddKeyEvent(ImGuiKey_9, keystate); break;
+		case en::SEK_MINUS: io.AddKeyEvent(ImGuiKey_Minus, keystate); break;
+		case en::SEK_EQUALS: io.AddKeyEvent(ImGuiKey_Equal, keystate); break;
+		case en::SEK_BACKSPACE: io.AddKeyEvent(ImGuiKey_Backspace, keystate); break;
 
-		case SDL_SCANCODE_TAB: io.AddKeyEvent(ImGuiKey_Tab, keystate); break;
-		case SDL_SCANCODE_Q: io.AddKeyEvent(ImGuiKey_Q, keystate); break;
-		case SDL_SCANCODE_W: io.AddKeyEvent(ImGuiKey_W, keystate); break;
-		case SDL_SCANCODE_E: io.AddKeyEvent(ImGuiKey_E, keystate); break;
-		case SDL_SCANCODE_R: io.AddKeyEvent(ImGuiKey_R, keystate); break;
-		case SDL_SCANCODE_T: io.AddKeyEvent(ImGuiKey_T, keystate); break;
-		case SDL_SCANCODE_Y: io.AddKeyEvent(ImGuiKey_Y, keystate); break;
-		case SDL_SCANCODE_U: io.AddKeyEvent(ImGuiKey_U, keystate); break;
-		case SDL_SCANCODE_I: io.AddKeyEvent(ImGuiKey_I, keystate); break;
-		case SDL_SCANCODE_O: io.AddKeyEvent(ImGuiKey_O, keystate); break;
-		case SDL_SCANCODE_P: io.AddKeyEvent(ImGuiKey_P, keystate); break;
-		case SDL_SCANCODE_LEFTBRACKET: io.AddKeyEvent(ImGuiKey_LeftBracket, keystate); break;
-		case SDL_SCANCODE_RIGHTBRACKET: io.AddKeyEvent(ImGuiKey_RightBracket, keystate); break;
-		case SDL_SCANCODE_BACKSLASH: io.AddKeyEvent(ImGuiKey_Backslash, keystate); break;
+		case en::SEK_TAB: io.AddKeyEvent(ImGuiKey_Tab, keystate); break;
+		case en::SEK_Q: io.AddKeyEvent(ImGuiKey_Q, keystate); break;
+		case en::SEK_W: io.AddKeyEvent(ImGuiKey_W, keystate); break;
+		case en::SEK_E: io.AddKeyEvent(ImGuiKey_E, keystate); break;
+		case en::SEK_R: io.AddKeyEvent(ImGuiKey_R, keystate); break;
+		case en::SEK_T: io.AddKeyEvent(ImGuiKey_T, keystate); break;
+		case en::SEK_Y: io.AddKeyEvent(ImGuiKey_Y, keystate); break;
+		case en::SEK_U: io.AddKeyEvent(ImGuiKey_U, keystate); break;
+		case en::SEK_I: io.AddKeyEvent(ImGuiKey_I, keystate); break;
+		case en::SEK_O: io.AddKeyEvent(ImGuiKey_O, keystate); break;
+		case en::SEK_P: io.AddKeyEvent(ImGuiKey_P, keystate); break;
+		case en::SEK_LEFTBRACKET: io.AddKeyEvent(ImGuiKey_LeftBracket, keystate); break;
+		case en::SEK_RIGHTBRACKET: io.AddKeyEvent(ImGuiKey_RightBracket, keystate); break;
+		case en::SEK_BACKSLASH: io.AddKeyEvent(ImGuiKey_Backslash, keystate); break;
 
-		case SDL_SCANCODE_CAPSLOCK: io.AddKeyEvent(ImGuiKey_CapsLock, keystate); break;
-		case SDL_SCANCODE_A: io.AddKeyEvent(ImGuiKey_A, keystate); break;
-		case SDL_SCANCODE_S: io.AddKeyEvent(ImGuiKey_S, keystate); break;
-		case SDL_SCANCODE_D: io.AddKeyEvent(ImGuiKey_D, keystate); break;
-		case SDL_SCANCODE_F: io.AddKeyEvent(ImGuiKey_F, keystate); break;
-		case SDL_SCANCODE_G: io.AddKeyEvent(ImGuiKey_G, keystate); break;
-		case SDL_SCANCODE_H: io.AddKeyEvent(ImGuiKey_H, keystate); break;
-		case SDL_SCANCODE_J: io.AddKeyEvent(ImGuiKey_J, keystate); break;
-		case SDL_SCANCODE_K: io.AddKeyEvent(ImGuiKey_K, keystate); break;
-		case SDL_SCANCODE_L: io.AddKeyEvent(ImGuiKey_L, keystate); break;
-		case SDL_SCANCODE_SEMICOLON: io.AddKeyEvent(ImGuiKey_Semicolon, keystate); break;
-		case SDL_SCANCODE_APOSTROPHE: io.AddKeyEvent(ImGuiKey_Apostrophe, keystate); break;
-		case SDL_SCANCODE_RETURN: io.AddKeyEvent(ImGuiKey_Enter, keystate); break;
+		case en::SEK_CAPSLOCK: io.AddKeyEvent(ImGuiKey_CapsLock, keystate); break;
+		case en::SEK_A: io.AddKeyEvent(ImGuiKey_A, keystate); break;
+		case en::SEK_S: io.AddKeyEvent(ImGuiKey_S, keystate); break;
+		case en::SEK_D: io.AddKeyEvent(ImGuiKey_D, keystate); break;
+		case en::SEK_F: io.AddKeyEvent(ImGuiKey_F, keystate); break;
+		case en::SEK_G: io.AddKeyEvent(ImGuiKey_G, keystate); break;
+		case en::SEK_H: io.AddKeyEvent(ImGuiKey_H, keystate); break;
+		case en::SEK_J: io.AddKeyEvent(ImGuiKey_J, keystate); break;
+		case en::SEK_K: io.AddKeyEvent(ImGuiKey_K, keystate); break;
+		case en::SEK_L: io.AddKeyEvent(ImGuiKey_L, keystate); break;
+		case en::SEK_SEMICOLON: io.AddKeyEvent(ImGuiKey_Semicolon, keystate); break;
+		case en::SEK_APOSTROPHE: io.AddKeyEvent(ImGuiKey_Apostrophe, keystate); break;
+		case en::SEK_RETURN: io.AddKeyEvent(ImGuiKey_Enter, keystate); break;
 
-		case SDL_SCANCODE_LSHIFT: io.AddKeyEvent(ImGuiKey_LeftShift, keystate); break;
-		case SDL_SCANCODE_Z: io.AddKeyEvent(ImGuiKey_Z, keystate); break;
-		case SDL_SCANCODE_X: io.AddKeyEvent(ImGuiKey_X, keystate); break;
-		case SDL_SCANCODE_C: io.AddKeyEvent(ImGuiKey_C, keystate); break;
-		case SDL_SCANCODE_V: io.AddKeyEvent(ImGuiKey_V, keystate); break;
-		case SDL_SCANCODE_B: io.AddKeyEvent(ImGuiKey_B, keystate); break;
-		case SDL_SCANCODE_N: io.AddKeyEvent(ImGuiKey_N, keystate); break;
-		case SDL_SCANCODE_M: io.AddKeyEvent(ImGuiKey_M, keystate); break;
-		case SDL_SCANCODE_COMMA: io.AddKeyEvent(ImGuiKey_Comma, keystate); break;
-		case SDL_SCANCODE_PERIOD: io.AddKeyEvent(ImGuiKey_Period, keystate); break;
-		case SDL_SCANCODE_SLASH: io.AddKeyEvent(ImGuiKey_Slash, keystate); break;
-		case SDL_SCANCODE_RSHIFT: io.AddKeyEvent(ImGuiKey_RightShift, keystate); break;
+		case en::SEK_LSHIFT: io.AddKeyEvent(ImGuiKey_LeftShift, keystate); break;
+		case en::SEK_Z: io.AddKeyEvent(ImGuiKey_Z, keystate); break;
+		case en::SEK_X: io.AddKeyEvent(ImGuiKey_X, keystate); break;
+		case en::SEK_C: io.AddKeyEvent(ImGuiKey_C, keystate); break;
+		case en::SEK_V: io.AddKeyEvent(ImGuiKey_V, keystate); break;
+		case en::SEK_B: io.AddKeyEvent(ImGuiKey_B, keystate); break;
+		case en::SEK_N: io.AddKeyEvent(ImGuiKey_N, keystate); break;
+		case en::SEK_M: io.AddKeyEvent(ImGuiKey_M, keystate); break;
+		case en::SEK_COMMA: io.AddKeyEvent(ImGuiKey_Comma, keystate); break;
+		case en::SEK_PERIOD: io.AddKeyEvent(ImGuiKey_Period, keystate); break;
+		case en::SEK_SLASH: io.AddKeyEvent(ImGuiKey_Slash, keystate); break;
+		case en::SEK_RSHIFT: io.AddKeyEvent(ImGuiKey_RightShift, keystate); break;
 
-		case SDL_SCANCODE_LCTRL: io.AddKeyEvent(ImGuiKey_LeftCtrl, keystate); break;
-		case SDL_SCANCODE_APPLICATION: io.AddKeyEvent(ImGuiKey_Menu, keystate); break; // ?
-		case SDL_SCANCODE_LALT: io.AddKeyEvent(ImGuiKey_LeftAlt, keystate); break;
-		case SDL_SCANCODE_SPACE: io.AddKeyEvent(ImGuiKey_Space, keystate); break;
-		case SDL_SCANCODE_RALT: io.AddKeyEvent(ImGuiKey_RightAlt, keystate); break;
-		case SDL_SCANCODE_RCTRL: io.AddKeyEvent(ImGuiKey_RightCtrl, keystate); break;
+		case en::SEK_LCTRL: io.AddKeyEvent(ImGuiKey_LeftCtrl, keystate); break;
+		case en::SEK_APPLICATION: io.AddKeyEvent(ImGuiKey_Menu, keystate); break; // ?
+		case en::SEK_LALT: io.AddKeyEvent(ImGuiKey_LeftAlt, keystate); break;
+		case en::SEK_SPACE: io.AddKeyEvent(ImGuiKey_Space, keystate); break;
+		case en::SEK_RALT: io.AddKeyEvent(ImGuiKey_RightAlt, keystate); break;
+		case en::SEK_RCTRL: io.AddKeyEvent(ImGuiKey_RightCtrl, keystate); break;
 
-		case SDL_SCANCODE_PRINTSCREEN: io.AddKeyEvent(ImGuiKey_PrintScreen, keystate); break;
-		case SDL_SCANCODE_SCROLLLOCK: io.AddKeyEvent(ImGuiKey_ScrollLock, keystate); break;
-		case SDL_SCANCODE_PAUSE: io.AddKeyEvent(ImGuiKey_Pause, keystate); break;
+		case en::SEK_PRINTSCREEN: io.AddKeyEvent(ImGuiKey_PrintScreen, keystate); break;
+		case en::SEK_SCROLLLOCK: io.AddKeyEvent(ImGuiKey_ScrollLock, keystate); break;
+		case en::SEK_PAUSE: io.AddKeyEvent(ImGuiKey_Pause, keystate); break;
 
-		case SDL_SCANCODE_INSERT: io.AddKeyEvent(ImGuiKey_Insert, keystate); break;
-		case SDL_SCANCODE_HOME: io.AddKeyEvent(ImGuiKey_Home, keystate); break;
-		case SDL_SCANCODE_PAGEUP: io.AddKeyEvent(ImGuiKey_PageUp, keystate); break;
+		case en::SEK_INSERT: io.AddKeyEvent(ImGuiKey_Insert, keystate); break;
+		case en::SEK_HOME: io.AddKeyEvent(ImGuiKey_Home, keystate); break;
+		case en::SEK_PAGEUP: io.AddKeyEvent(ImGuiKey_PageUp, keystate); break;
 
-		case SDL_SCANCODE_DELETE: io.AddKeyEvent(ImGuiKey_Delete, keystate); break;
-		case SDL_SCANCODE_END: io.AddKeyEvent(ImGuiKey_End, keystate); break;
-		case SDL_SCANCODE_PAGEDOWN: io.AddKeyEvent(ImGuiKey_PageDown, keystate); break;
+		case en::SEK_DELETE: io.AddKeyEvent(ImGuiKey_Delete, keystate); break;
+		case en::SEK_END: io.AddKeyEvent(ImGuiKey_End, keystate); break;
+		case en::SEK_PAGEDOWN: io.AddKeyEvent(ImGuiKey_PageDown, keystate); break;
 		
-		case SDL_SCANCODE_UP: io.AddKeyEvent(ImGuiKey_UpArrow, keystate); break;
-		case SDL_SCANCODE_DOWN: io.AddKeyEvent(ImGuiKey_DownArrow, keystate); break;
-		case SDL_SCANCODE_LEFT: io.AddKeyEvent(ImGuiKey_LeftArrow, keystate); break;
-		case SDL_SCANCODE_RIGHT: io.AddKeyEvent(ImGuiKey_RightArrow, keystate);	break;
+		case en::SEK_UP: io.AddKeyEvent(ImGuiKey_UpArrow, keystate); break;
+		case en::SEK_DOWN: io.AddKeyEvent(ImGuiKey_DownArrow, keystate); break;
+		case en::SEK_LEFT: io.AddKeyEvent(ImGuiKey_LeftArrow, keystate); break;
+		case en::SEK_RIGHT: io.AddKeyEvent(ImGuiKey_RightArrow, keystate);	break;
 
-		case SDL_SCANCODE_NUMLOCKCLEAR: io.AddKeyEvent(ImGuiKey_NumLock, keystate);	break;
-		// Note: No scancode for "*" or "+"
+		case en::SEK_NUMLOCK: io.AddKeyEvent(ImGuiKey_NumLock, keystate);	break;
  
 		default: break; // Do nothing
 		}
@@ -172,7 +169,7 @@ namespace en
 	}
 
 
-	float InputManager::GetMouseAxisInput(en::MouseInputAxis axis)
+	float InputManager::GetRelativeMouseInput(en::MouseInputAxis axis)
 	{
 		return m_mouseAxisStates[axis];
 	}
@@ -193,6 +190,8 @@ namespace en
 		EventManager::Get()->Subscribe(EventManager::MouseMotionEvent, this);
 		EventManager::Get()->Subscribe(EventManager::MouseButtonEvent, this);
 		EventManager::Get()->Subscribe(EventManager::MouseWheelEvent, this);
+
+		platform::InputManager::Startup(*this);
 	}
 
 
@@ -208,8 +207,10 @@ namespace en
 		m_mouseAxisStates[MouseInputAxis::Input_MouseX] = 0.f;
 		m_mouseAxisStates[MouseInputAxis::Input_MouseY] = 0.f;
 
-		m_mouseButtonStates[en::InputMouse_Left] = false;
-		m_mouseButtonStates[en::InputMouse_Right] = false;
+		for (size_t mButton = 0; mButton < MouseInputButton_Count; mButton++)
+		{
+			m_mouseButtonStates[mButton] = false;
+		}
 
 		HandleEvents();
 		
@@ -217,7 +218,9 @@ namespace en
 		if (m_consoleTriggered != m_prevConsoleTriggeredState)
 		{
 			m_prevConsoleTriggeredState = m_consoleTriggered;
-			SDL_SetRelativeMouseMode((SDL_bool)!m_consoleTriggered); // True hides the mouse and locks it to the window
+			
+			// True hides the mouse and locks it to the window
+			re::RenderManager::Get()->GetContext().GetWindow()->SetRelativeMouseMode(!m_consoleTriggered);
 		}
 	}
 
@@ -250,16 +253,16 @@ namespace en
 			break;
 			case EventManager::KeyEvent:
 			{
-				const uint32_t sdlScancode = eventInfo.m_data0.m_dataUI;
+				const SEKeycode keycode = platform::InputManager::ConvertToSEKeycode(eventInfo.m_data0.m_dataUI);
 				const bool keystate = eventInfo.m_data1.m_dataB;
 
-				AddKeyEventToImGui(io, sdlScancode, keystate);
+				AddKeyEventToImGui(io, keycode, keystate);
 
 				doBroadcast = !io.WantCaptureKeyboard && !io.WantTextInput;
 				if (doBroadcast)
 				{
-					auto const& result = m_SDLScancodsToSaberEngineEventEnums.find(sdlScancode);
-					if (result != m_SDLScancodsToSaberEngineEventEnums.end())
+					auto const& result = m_SEKeycodesToSEEventEnums.find(keycode);
+					if (result != m_SEKeycodesToSEEventEnums.end())
 					{
 						const en::KeyboardInputButton key = result->second;
 
@@ -364,7 +367,17 @@ namespace en
 				break;
 				case 1: // Middle
 				{
-					SEAssertF("TODO: Support middle mouse");
+					io.AddMouseButtonEvent(ImGuiMouseButton_Middle, buttonState);
+					if (imguiWantsToCaptureMouse)
+					{
+						doBroadcast = false;
+					}
+					else
+					{
+						m_mouseButtonStates[en::InputMouse_Middle] = buttonState;
+						transformedEvent.m_type = EventManager::EventType::InputMouseMiddle;
+						transformedEvent.m_data0.m_dataB = buttonState;
+					}
 				}
 				break;
 				case 2: // Right
@@ -372,7 +385,7 @@ namespace en
 					io.AddMouseButtonEvent(ImGuiMouseButton_Right, buttonState);
 					if (imguiWantsToCaptureMouse)
 					{
-						doBroadcast = true;
+						doBroadcast = false;
 					}
 					else
 					{
@@ -390,7 +403,8 @@ namespace en
 			case EventManager::MouseWheelEvent:
 			{
 				// Broadcast to ImGui:
-				io.AddMouseWheelEvent(eventInfo.m_data0.m_dataF, eventInfo.m_data1.m_dataF);
+				io.AddMouseWheelEvent(
+					static_cast<float>(eventInfo.m_data0.m_dataI), static_cast<float>(eventInfo.m_data1.m_dataI));
 				doBroadcast = false;
 			}
 			break;
@@ -412,32 +426,28 @@ namespace en
 	{
 		for (size_t i = 0; i < en::KeyboardInputButton_Count; i++)
 		{
-			const string configButtonName = Config::Get()->GetValueAsString(en::KeyboardInputButtonNames[i]);
+			// Get the key actually assigned to the current named input button
+			// eg. Get "w" from "InputButton_Forward"
+			const string keyAssignment = Config::Get()->GetValueAsString(en::KeyboardInputButtonNames[i]);
 
 			SEAssert("Button not found in config.cfg. Did you forget to set one in Config::InitializeDefaultValues()?", 
-				!configButtonName.empty());
+				!keyAssignment.empty());
 
-			// Note: For now, we use SDL_Scancodes for all button presses.
-			// Scancode = Location of a press. Best suited for layout-dependent keys (eg. WASD)
-			// Keycode = Meaning of a press, with respect to the current keyboard layout (eg. qwerty vs azerty). Best
-			//			suited for character-dependent keys (eg. Press "I" for inventory)
-			// More info here:
-			// https://stackoverflow.com/questions/56915258/difference-between-sdl-scancode-and-sdl-keycode
-
-			SDL_Scancode scancode = SDL_GetScancodeFromName(configButtonName.c_str());
-			if (scancode != SDL_SCANCODE_UNKNOWN)
+			SEKeycode keycode = GetSEKeycodeFromName(keyAssignment);
+			if (keycode != SEK_UNKNOWN)
 			{
-				m_SDLScancodsToSaberEngineEventEnums.insert(
-					{ (uint32_t)scancode, static_cast<en::KeyboardInputButton>(i) });
+				// Build a map: SEKeycode -> SaberEngine keyboard input function
+				m_SEKeycodesToSEEventEnums.insert({keycode, static_cast<en::KeyboardInputButton>(i) });
 			}
 			else
 			{
 				// We want to assert if we can, but even if we're in Release mode we want to log an error:
-				const string errorMessage = "Invalid key name: \"" + configButtonName + "\", cannot find a matching "
-					"SDL scancode. Key names are case sensitive, see the \"Key Name\" column on this page for exact "
-					"values: \nhttps://wiki.libsdl.org/SDL_Scancode";
+				const string errorMessage = "Invalid key name: \"" + keyAssignment + "\", cannot find a matching "
+					"SEKeycode. Note: Key names are (currently) case sensitive";
 				LOG_ERROR(errorMessage.c_str());
 				SEAssertF(errorMessage.c_str());
+
+				// TODO: Key names shouldn't be case sensitive
 			}
 		}
 	}

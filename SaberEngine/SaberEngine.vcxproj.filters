@@ -69,6 +69,18 @@
     <Filter Include="Header Files\en\Platform">
       <UniqueIdentifier>{600b373f-06b3-4495-a7f5-42d65e9fed88}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\en\Platform\win32">
+      <UniqueIdentifier>{d6310138-0ea0-4318-8790-179f829c797c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\en\platform\win32">
+      <UniqueIdentifier>{e9148669-8e9a-448c-90d6-3da71ce4166a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\re\platform\win32">
+      <UniqueIdentifier>{4ca3df88-f3ef-41c3-a332-c3087a521a0b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\re\platform\win32">
+      <UniqueIdentifier>{9670f360-dd01-474b-87fd-50e2bd73791b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -209,12 +221,6 @@
     <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_opengl3.cpp">
       <Filter>imgui\backends</Filter>
     </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_sdl.cpp">
-      <Filter>imgui\backends</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_sdlrenderer.cpp">
-      <Filter>imgui\backends</Filter>
-    </ClCompile>
     <ClCompile Include="PerformanceTimer.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
@@ -278,8 +284,23 @@
     <ClCompile Include="Window_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
     </ClCompile>
-    <ClCompile Include="Window_OpenGL.cpp">
-      <Filter>Source Files\re\platform\OpenGL</Filter>
+    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="EventManager_Win32.cpp">
+      <Filter>Source Files\en\platform\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="EventManager_Platform.cpp">
+      <Filter>Source Files\en\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="InputManager_Platform.cpp">
+      <Filter>Source Files\en\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="InputManager_Win32.cpp">
+      <Filter>Source Files\en\platform\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="Window_Win32.cpp">
+      <Filter>Source Files\re\platform\win32</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -442,12 +463,6 @@
     <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_opengl3_loader.h">
       <Filter>imgui\backends</Filter>
     </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_sdl.h">
-      <Filter>imgui\backends</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_sdlrenderer.h">
-      <Filter>imgui\backends</Filter>
-    </ClInclude>
     <ClInclude Include="PerformanceTimer.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
@@ -520,11 +535,26 @@
     <ClInclude Include="Window_Platform.h">
       <Filter>Header Files\re\platform</Filter>
     </ClInclude>
-    <ClInclude Include="Window_OpenGL.h">
-      <Filter>Header Files\re\platform\OpenGL</Filter>
-    </ClInclude>
     <ClInclude Include="Platform.h">
       <Filter>Header Files\en\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_win32.h">
+      <Filter>imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="EventManager_Win32.h">
+      <Filter>Header Files\en\Platform\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="EventManager_Platform.h">
+      <Filter>Header Files\en\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager_Platform.h">
+      <Filter>Header Files\en\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager_Win32.h">
+      <Filter>Header Files\en\Platform\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="Window_Win32.h">
+      <Filter>Header Files\re\platform\win32</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

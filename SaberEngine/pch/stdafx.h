@@ -42,6 +42,8 @@
 #define WIN32_LEAN_AND_MEAN // Limit the number of header files included via Windows.h
 #include <Windows.h>
 #include <shellapi.h>
+#include <hidusage.h>
+// TODO: Move these OS-specific out of the PCH and into platform-specific files that require them
 
 
 // GLM:

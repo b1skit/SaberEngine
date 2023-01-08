@@ -12,6 +12,11 @@ namespace platform
 {
 	class Context
 	{
+		// TODO: These enums should belong to re::Context. The platform layer is just a common binding interface.
+		// We currently define them here to avoid a cyclic dependency: Context.h includes Context_Platform for 
+		// Context_Platform::PlatformParams. We need to move the PlatformParams to re::Context, and inherit from it
+		// on the API layer
+
 	public:
 		enum class FaceCullingMode
 		{
@@ -100,6 +105,8 @@ namespace platform
 		// Static function pointers:
 		static void (*Create)(re::Context& context);
 		static void (*Destroy)(re::Context& context);
+		static void (*Present)(re::Context const& context);
+		static void (*SetVSyncMode)(re::Context const& window, bool enabled);
 		static void (*SetCullingMode)(FaceCullingMode const& mode);
 		static void (*ClearTargets)(ClearTarget const& clearTarget);
 		static void (*SetBlendMode)(BlendMode const& src, BlendMode const& dst);
@@ -107,10 +114,6 @@ namespace platform
 		static void (*SetDepthWriteMode)(DepthWriteMode const& mode);
 		static void (*SetColorWriteMode)(ColorWriteMode const& channelModes);
 		static uint32_t(*GetMaxTextureInputs)();
-
-		
-	private:
-
 	};
 
 	// We need to provide a destructor implementation since it's pure virtual
