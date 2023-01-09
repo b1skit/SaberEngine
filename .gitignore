@@ -37,9 +37,10 @@
 # Project dependencies
 /Dependencies/*
 /SaberEngine/glew32.dll
+/SaberEngine/Shaders/glsl/*
 
 # Scene data
-/Scenes/*
+/SaberEngine/Scenes/*
 
 # Personal
 /notes/*

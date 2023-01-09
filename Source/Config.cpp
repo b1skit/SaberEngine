@@ -68,8 +68,8 @@ namespace en
 			{"sprintSpeedModifier",					{2.0f,		SettingType::Common}},
 
 			// SceneData config root path: All assets stored here
-			{"scenesRoot",							{string("..\\Scenes\\"), SettingType::Common}},	
-			{"defaultIBLPath",						{string("..\\Assets\\DefaultIBL\\ibl.hdr"), SettingType::Common}},
+			{"scenesRoot",							{string("Scenes\\"), SettingType::Common}},	
+			{"defaultIBLPath",						{string("Assets\\DefaultIBL\\ibl.hdr"), SettingType::Common}},
 
 			// Key bindings:
 			//--------------
