@@ -52,17 +52,6 @@ namespace re
 
 	RenderManager::~RenderManager()
 	{
-		m_pipeline.Destroy();
-		m_graphicsSystems.clear();
-
-		m_defaultTargetSet = nullptr;
-
-		// NOTE: We must destroy anything that holds a parameter block before the ParameterBlockAllocator is destroyed, 
-		// as parameter blocks call the ParameterBlockAllocator in their destructor
-		m_paramBlockAllocator.Destroy();
-
-		// Do this in the destructor so we can still read any final OpenGL error messages before it is destroyed
-		m_context.Destroy();
 	}
 
 
@@ -88,6 +77,18 @@ namespace re
 	void RenderManager::Shutdown()
 	{
 		LOG("Render manager shutting down...");
+
+		m_pipeline.Destroy();
+		m_graphicsSystems.clear();
+
+		m_defaultTargetSet = nullptr;
+
+		// NOTE: We must destroy anything that holds a parameter block before the ParameterBlockAllocator is destroyed, 
+		// as parameter blocks call the ParameterBlockAllocator in their destructor
+		m_paramBlockAllocator.Destroy();
+
+		// Need to do this here so the CoreEngine's Window can be destroyed
+		m_context.Destroy();
 	}
 
 

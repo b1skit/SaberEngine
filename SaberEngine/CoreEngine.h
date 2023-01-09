@@ -5,6 +5,7 @@
 #include "EngineComponent.h"
 #include "EventListener.h"
 #include "ThreadPool.h"
+#include "Window.h"
 
 
 namespace en
@@ -31,6 +32,7 @@ namespace en
 		// EventListener interface:
 		void HandleEvents() override;
 
+		re::Window* GetWindow() const { return m_window.get(); }
 	
 	private:
 		bool ProcessCommandLineArgs(int argc, char** argv);
@@ -45,6 +47,8 @@ namespace en
 		uint64_t m_frameNum;
 
 		en::ThreadPool m_threadPool;
+
+		std::unique_ptr<re::Window> m_window;
 
 	private: 
 		static CoreEngine* m_coreEngine;

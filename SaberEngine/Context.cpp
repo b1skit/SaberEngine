@@ -13,7 +13,6 @@ namespace re
 
 	void Context::Create()
 	{
-		m_window = std::make_unique<re::Window>();
 		platform::Context::Create(*this);
 	}
 

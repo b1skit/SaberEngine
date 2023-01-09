@@ -5,7 +5,7 @@
 #include "Window.h"
 #include "Window_Win32.h"
 #include "DebugConfiguration.h"
-#include "RenderManager.h"
+#include "CoreEngine.h"
 
 
 namespace win32
@@ -28,12 +28,12 @@ namespace win32
 		break;
 		case WM_SETFOCUS:
 		{
-			re::RenderManager::Get()->GetContext().GetWindow()->SetFocusState(true);
+			en::CoreEngine::Get()->GetWindow()->SetFocusState(true);
 		}
 		break;
 		case WM_KILLFOCUS:
 		{
-			re::RenderManager::Get()->GetContext().GetWindow()->SetFocusState(false);
+			en::CoreEngine::Get()->GetWindow()->SetFocusState(false);
 		}
 		break;
 		default:

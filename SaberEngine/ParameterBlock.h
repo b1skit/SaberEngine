@@ -2,7 +2,6 @@
 #pragma once
 
 #include "NamedObject.h"
-#include "DebugConfiguration.h"
 
 
 namespace re

@@ -33,6 +33,7 @@ namespace en
 		: m_fixedTimeStep(1000.0 / 120.0)
 		, m_isRunning(false)
 		, m_frameNum(0)
+		, m_window(nullptr)
 	{
 		m_coreEngine = this;
 
@@ -49,17 +50,23 @@ namespace en
 
 		m_threadPool.Startup();
 
+		// Create a window:
+		const string windowTitle = Config::Get()->GetValue<string>("windowTitle") + " " +
+			Config::Get()->GetValue<string>("commandLineArgs");
+		const int xRes = Config::Get()->GetValue<int>("windowXRes");
+		const int yRes = Config::Get()->GetValue<int>("windowYRes");
+
+		m_window = std::make_unique<re::Window>(); // Ensure Window exists for first callbacks triggered by Create
+		const bool windowCreated = m_window->Create(windowTitle, xRes, yRes);
+		SEAssert("Failed to create a window", windowCreated);
+
 		// Start managers:
 		EventManager::Get()->Startup();
-
 		EventManager::Get()->Subscribe(en::EventManager::EngineQuit, this);
 
 		LogManager::Get()->Startup();
-
-		RenderManager::Get()->Startup(); // Initializes context, window, etc
-
-		InputManager::Get()->Startup(); // Now that the window/context are created
-
+		InputManager::Get()->Startup(); // Now that the window is created
+		RenderManager::Get()->Startup(); // Initializes context		
 		SceneManager::Get()->Startup(); // Load assets
 
 		RenderManager::Get()->Initialize(); // Create graphics systems
@@ -133,10 +140,12 @@ namespace en
 		// Note: Shutdown order matters!
 		GameplayManager::Get()->Shutdown();
 		InputManager::Get()->Shutdown();
-		RenderManager::Get()->Shutdown();
 		SceneManager::Get()->Shutdown();
+		RenderManager::Get()->Shutdown();
 		EventManager::Get()->Shutdown();
 		LogManager::Get()->Shutdown();
+
+		m_window->Destroy();
 
 		m_threadPool.Stop();
 	}

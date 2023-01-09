@@ -2,7 +2,6 @@
 #pragma once
 
 #include "Context_Platform.h"
-#include "Window.h"
 
 
 namespace re
@@ -17,8 +16,6 @@ namespace re
 
 		platform::Context::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
 		platform::Context::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
-
-		re::Window* GetWindow() const { return m_window.get(); }
 
 		// Platform wrappers:
 		void Create();
@@ -40,7 +37,6 @@ namespace re
 
 	private:
 		std::unique_ptr<platform::Context::PlatformParams> m_platformParams;
-		std::unique_ptr<re::Window> m_window;
 
 
 	private:

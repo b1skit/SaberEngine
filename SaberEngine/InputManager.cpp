@@ -3,7 +3,7 @@
 #include "Config.h"
 #include "DebugConfiguration.h"
 #include "EventManager.h"
-#include "RenderManager.h"
+#include "CoreEngine.h"
 #include "InputManager_Platform.h"
 
 using en::Config;
@@ -220,7 +220,7 @@ namespace en
 			m_prevConsoleTriggeredState = m_consoleTriggered;
 			
 			// True hides the mouse and locks it to the window
-			re::RenderManager::Get()->GetContext().GetWindow()->SetRelativeMouseMode(!m_consoleTriggered);
+			en::CoreEngine::Get()->GetWindow()->SetRelativeMouseMode(!m_consoleTriggered);
 		}
 	}
 

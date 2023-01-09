@@ -1,7 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "EventManager_Win32.h"
 #include "EventManager.h"
-#include "RenderManager.h"
+#include "CoreEngine.h"
+#include "DebugConfiguration.h"
 
 
 namespace win32
@@ -12,7 +13,7 @@ namespace win32
 		while (::PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			en::EventManager::EventInfo eventInfo;
-			bool doBroadcastSEEvent = re::RenderManager::Get()->GetContext().GetWindow()->GetFocusState();
+			bool doBroadcastSEEvent = en::CoreEngine::Get()->GetWindow()->GetFocusState();
 			bool doTranslateAndDispatchWin32Msg = true;
 
 			switch (msg.message)

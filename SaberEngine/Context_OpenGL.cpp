@@ -12,15 +12,17 @@
 #include "Window_Win32.h"
 
 #include "Config.h"
+#include "CoreEngine.h"
 #include "DebugConfiguration.h"
-
-using en::Config;
-using std::string;
-using std::to_string;
 
 
 namespace
 {
+	using en::Config;
+	using std::string;
+	using std::to_string;
+
+
 	// The function used to get WGL extensions is an extension itself, thus it needs an OpenGL context. Thus, we create
 	// a temp window and context, retrieve and store our function pointers, and then destroy the temp objects
 	// More info: https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)
@@ -202,15 +204,8 @@ namespace opengl
 	{
 		GetOpenGLExtensionProcessAddresses(context);
 
-		// Create a window:
-		const string windowTitle = Config::Get()->GetValue<string>("windowTitle") + " " +
-			Config::Get()->GetValue<string>("commandLineArgs");
-		const int xRes = Config::Get()->GetValue<int>("windowXRes");
-		const int yRes = Config::Get()->GetValue<int>("windowYRes");
-
-		re::Window* window = context.GetWindow();
-		const bool windowCreated = window->Create(windowTitle, xRes, yRes);
-		SEAssert("Failed to create a window", windowCreated);
+		re::Window* window = en::CoreEngine::Get()->GetWindow();
+		SEAssert("Window pointer cannot be null", window);
 
 		win32::Window::PlatformParams* const windowPlatParams =
 			dynamic_cast<win32::Window::PlatformParams*>(window->GetPlatformParams());
@@ -332,12 +327,9 @@ namespace opengl
 		::wglMakeCurrent(NULL, NULL); // Make the rendering context not current  
 
 		win32::Window::PlatformParams* const windowPlatformParams =
-			dynamic_cast<win32::Window::PlatformParams*>(context.GetWindow()->GetPlatformParams());
+			dynamic_cast<win32::Window::PlatformParams*>(en::CoreEngine::Get()->GetWindow()->GetPlatformParams());
 		::ReleaseDC(windowPlatformParams->m_hWindow, contextPlatformParams->m_hDeviceContext); // Release device context
-
 		::wglDeleteContext(contextPlatformParams->m_glRenderContext); // Delete the rendering context
-
-		context.GetWindow()->Destroy();
 	}
 
 
