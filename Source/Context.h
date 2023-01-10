@@ -6,7 +6,7 @@
 
 namespace re
 {
-	static constexpr char k_imguiIniPath[] = "..\\config\\imgui.ini";
+	static constexpr char k_imguiIniPath[] = "config\\imgui.ini";
 
 
 	class Context
