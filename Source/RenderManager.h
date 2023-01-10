@@ -45,9 +45,7 @@ namespace re
 		// Member functions:
 		void Initialize();
 
-		re::Context const& GetContext() { return m_context; }
-
-		std::shared_ptr<re::TextureTargetSet> GetDefaultTextureTargetSet() { return m_defaultTargetSet; }
+		re::Context const& GetContext() const { return m_context; }
 
 		template <typename T>
 		std::shared_ptr<gr::GraphicsSystem> GetGraphicsSystem();
@@ -68,9 +66,6 @@ namespace re
 		re::Context m_context;
 		std::vector<std::shared_ptr<gr::GraphicsSystem>> m_graphicsSystems;
 		re::RenderPipeline m_pipeline;
-
-		// Note: We store this as a shared_ptr so we can instantiate it once the context has been created
-		std::shared_ptr<re::TextureTargetSet> m_defaultTargetSet; // Default backbuffer
 
 		std::vector<re::Batch> m_renderBatches; // Union of all batches created by all systems. Populated in CopyFrameData
 

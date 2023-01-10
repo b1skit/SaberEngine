@@ -43,9 +43,8 @@ namespace re
 	}
 
 
-	RenderManager::RenderManager() :
-		m_defaultTargetSet(nullptr),
-		m_pipeline("Main pipeline")
+	RenderManager::RenderManager()
+		: m_pipeline("Main pipeline")
 	{
 	}
 
@@ -59,18 +58,6 @@ namespace re
 	{
 		LOG("RenderManager starting...");
 		m_context.Create();
-
-		// Default target set:
-		LOG("Creating default texure target set");
-		m_defaultTargetSet = make_shared<TextureTargetSet>("Default target");
-		m_defaultTargetSet->Viewport() = 
-		{ 
-			0, 
-			0, 
-			(uint32_t)Config::Get()->GetValue<int>("windowXRes"),
-			(uint32_t)Config::Get()->GetValue<int>("windowYRes")
-		};
-		// Note: Default framebuffer has no texture targets
 	}
 
 
@@ -81,14 +68,12 @@ namespace re
 		m_pipeline.Destroy();
 		m_graphicsSystems.clear();
 
-		m_defaultTargetSet = nullptr;
+		// Need to do this here so the CoreEngine's Window can be destroyed
+		m_context.Destroy();
 
 		// NOTE: We must destroy anything that holds a parameter block before the ParameterBlockAllocator is destroyed, 
 		// as parameter blocks call the ParameterBlockAllocator in their destructor
 		m_paramBlockAllocator.Destroy();
-
-		// Need to do this here so the CoreEngine's Window can be destroyed
-		m_context.Destroy();
 	}
 
 
