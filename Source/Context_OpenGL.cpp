@@ -274,8 +274,6 @@ namespace opengl
 
 		LOG("Using OpenGL version %d.%d", glMajorVersionCheck, glMinorVersionCheck);
 
-		window->SetRelativeMouseMode(true);
-
 		context.SetVSyncMode(Config::Get()->GetValue<bool>("vsync"));
 		
 

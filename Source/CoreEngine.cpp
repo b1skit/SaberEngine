@@ -83,6 +83,8 @@ namespace en
 	{
 		LOG("\nCoreEngine: Starting main game loop\n");
 
+		m_window->SetRelativeMouseMode(true);
+
 		// Process any events that might have occurred during startup:
 		EventManager::Get()->Update(m_frameNum, 0.0);
 
