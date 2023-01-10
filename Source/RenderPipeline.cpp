@@ -10,7 +10,7 @@ namespace
 {
 	inline void SanityCheckRenderStage(RenderStage const& renderStage)
 	{
-		SEAssert("renderStage not fully configured",
+		SEAssert("RenderStage not fully configured",
 			renderStage.GetName() != "" &&
 			renderStage.GetStageShader() != nullptr
 			// TODO: Add more conditions

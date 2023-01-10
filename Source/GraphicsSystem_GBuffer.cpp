@@ -92,7 +92,7 @@ namespace gr
 			std::make_shared<re::Texture>(GBufferTexNames[gBufferDepthTextureNameIdx], depthTexParams));
 
 		// Camera:
-		m_gBufferStage.GetStageCamera() = SceneManager::GetSceneData()->GetMainCamera().get();
+		m_gBufferStage.SetStageCamera(SceneManager::GetSceneData()->GetMainCamera().get());
 
 		// Set the stage params:
 		RenderStage::PipelineStateParams gBufferStageParams;

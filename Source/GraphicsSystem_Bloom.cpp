@@ -54,7 +54,7 @@ namespace gr
 
 		m_emissiveBlitStage.SetStagePipelineStateParams(emissiveStageParams);
 		m_emissiveBlitStage.GetStageShader() = blitShader;
-		m_emissiveBlitStage.GetStageCamera() = sceneCam;
+		m_emissiveBlitStage.SetStageCamera(sceneCam);
 
 		m_emissiveBlitStage.SetTextureTargetSet(deferredLightGS->GetFinalTextureTargetSet());
 		
@@ -106,7 +106,7 @@ namespace gr
 				std::make_shared<re::Texture>(texPath, resScaleParams));
 
 			m_downResStages.back().SetStagePipelineStateParams(bloomStageParams);
-			m_downResStages.back().GetStageCamera() = sceneCam;
+			m_downResStages.back().SetStageCamera(sceneCam);
 
 			if (i == 0)
 			{
@@ -153,7 +153,7 @@ namespace gr
 			m_blurStages.back().GetTextureTargetSet()->Viewport().Height() = currentYRes;
 
 			m_blurStages.back().SetStagePipelineStateParams(bloomStageParams);
-			m_blurStages.back().GetStageCamera() = sceneCam;
+			m_blurStages.back().SetStageCamera(sceneCam);
 
 			if (i % 2 == 0)
 			{
@@ -182,7 +182,7 @@ namespace gr
 			m_upResStages.back().GetTextureTargetSet()->Viewport().Width() = currentXRes;
 			m_upResStages.back().GetTextureTargetSet()->Viewport().Height() = currentYRes;
 	
-			m_upResStages.back().GetStageCamera() = sceneCam;
+			m_upResStages.back().SetStageCamera(sceneCam);
 			m_upResStages[i].GetStageShader() = blitShader;
 
 			if (i == (numScalingStages - 1)) // Last iteration: Additive blit back to the src gs

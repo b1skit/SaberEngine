@@ -97,7 +97,7 @@ namespace gr
 			ShadowMap* const directionalShadow = directionalLight->GetShadowMap();
 			if (directionalShadow)
 			{
-				m_directionalShadowStage.GetStageCamera() = directionalShadow->ShadowCamera();
+				m_directionalShadowStage.SetStageCamera(directionalShadow->ShadowCamera());
 
 				// Shader:
 				m_directionalShadowStage.GetStageShader() = 
@@ -125,7 +125,7 @@ namespace gr
 			if (lightShadow)
 			{
 				Camera* const shadowCam = lightShadow->ShadowCamera();
-				shadowStage->GetStageCamera() = shadowCam;
+				shadowStage->SetStageCamera(shadowCam);
 				
 				// Shader:
 				shadowStage->GetStageShader() = 

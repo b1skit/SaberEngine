@@ -20,6 +20,9 @@ namespace re
 
 	RenderStage::RenderStage(std::string const& name)
 		: NamedObject(name)
+		, m_stageShader(nullptr)
+		, m_textureTargetSet(nullptr)
+		, m_stageCam(nullptr)
 		, m_writesColor(true) // Reasonable assumption; Updated when we set the param block
 		, m_batchFilterMask(0) // Accept all batches by default
 	{
