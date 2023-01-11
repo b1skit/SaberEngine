@@ -82,6 +82,10 @@
     <OutDir>..\Build\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
   </PropertyGroup>
+  <PropertyGroup>
+	<RunPostBuildEvent>Always</RunPostBuildEvent>
+	<DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
