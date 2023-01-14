@@ -7,12 +7,11 @@
 #include "SaberGlobals.glsl"
 
 
-// Make our frag coordinates match our uv (0,0) = top-left convention
+// Make our fragment coordinates ([0,xRes], [0,yRes]) match our uv (0,0) = top-left convention
 layout(origin_upper_left) in vec4 gl_FragCoord;
 
 void main()
 {	
-	// Sample the cube map:
 	vec4 ndcPosition;
 	ndcPosition.xy	= ((2.0 * gl_FragCoord.xy) / g_targetResolution.xy) - 1.0;
 	ndcPosition.z	= 1.0;
@@ -22,7 +21,7 @@ void main()
 
 	// Sample our equirectangular skybox projection:
 	const vec3 sampleDir = worldPos.xyz;
-	const vec2 sphericalUVs = WorldDirToSphericalUV(sampleDir);
+	const vec2 sphericalUVs = WorldDirToSphericalUV(sampleDir); // Normalizes incoming sampleDir
 
 	FragColor = texture(Tex0, sphericalUVs);
 }
