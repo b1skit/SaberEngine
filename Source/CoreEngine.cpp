@@ -227,15 +227,15 @@ namespace en
 
 					LOG("\tReceived scene command: \"%s %s\"", currentArg.c_str(), sceneNameParam.c_str());
 
-					const string scenesRoot = Config::Get()->GetValue<string>("scenesRoot"); // "..\Scenes\"
+					const string scenesRoot = Config::Get()->GetValue<string>("scenesRoot"); // ".\Scenes\"
 
 					// From param of the form "Scene\Folder\Names\sceneFile.extension", we extract:
 
-					// sceneFilePath == "..\Scenes\Scene\Folder\Names\sceneFile.extension":
+					// sceneFilePath == ".\Scenes\Scene\Folder\Names\sceneFile.extension":
 					const string sceneFilePath = scenesRoot + sceneNameParam; 
 					Config::Get()->SetValue("sceneFilePath", sceneFilePath, Config::SettingType::Runtime);
 
-					// sceneRootPath == "..\Scenes\Scene\Folder\Names\":
+					// sceneRootPath == ".\Scenes\Scene\Folder\Names\":
 					const size_t lastSlash = sceneFilePath.find_last_of("\\");
 					const string sceneRootPath = sceneFilePath.substr(0, lastSlash) + "\\"; 
 					Config::Get()->SetValue("sceneRootPath", sceneRootPath, Config::SettingType::Runtime);
@@ -246,7 +246,7 @@ namespace en
 					const string sceneName = filenameAndExt.substr(0, extensionPeriod);
 					Config::Get()->SetValue("sceneName", sceneName, Config::SettingType::Runtime);
 
-					// sceneIBLPath == "..\Scenes\SceneFolderName\IBL\ibl.hdr"
+					// sceneIBLPath == ".\Scenes\SceneFolderName\IBL\ibl.hdr"
 					const string sceneIBLPath = sceneRootPath + "IBL\\ibl.hdr";
 					Config::Get()->SetValue("sceneIBLPath", sceneIBLPath, Config::SettingType::Runtime);
 				}
