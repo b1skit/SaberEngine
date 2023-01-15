@@ -29,6 +29,10 @@ namespace en
 		// Get a config value, by type
 		template<typename T>
 		T GetValue(const std::string& valueName) const;
+
+		template<typename T>
+		bool GetValue(std::string const& valueName, T& value) const;
+
 		std::string GetValueAsString(const std::string& valueName) const;
 
 		// Set a config value. Note: Strings must be explicitely defined as a string("value")
@@ -108,6 +112,28 @@ namespace en
 		}
 
 		return returnVal;
+	}
+
+
+	template<typename T>
+	bool Config::GetValue(std::string const& valueName, T& value) const
+	{
+		auto const& result = m_configValues.find(valueName);
+
+		if (result != m_configValues.end())
+		{
+			try
+			{
+				value = any_cast<T>(result->second.first);
+			}
+			catch (const std::bad_any_cast& e)
+			{
+				LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what())
+				SEAssertF("bad_any_cast exception thrown: Invalid type requested from Config");
+			}
+		}
+		
+		return false;
 	}
 
 
