@@ -50,6 +50,9 @@ namespace en
 
 		std::unique_ptr<re::Window> m_window;
 
+		std::unique_ptr<std::barrier<>> m_copyBarrier;
+		
+
 	private: 
 		static CoreEngine* m_coreEngine;
 

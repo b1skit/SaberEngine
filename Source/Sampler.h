@@ -45,10 +45,11 @@ namespace re
 			SamplerType_Count
 		};
 		static std::shared_ptr<re::Sampler> const GetSampler(WrapAndFilterMode type);
+		static void DestroySamplerLibrary();
 
 	private:
 		static std::unique_ptr<std::unordered_map<WrapAndFilterMode, std::shared_ptr<re::Sampler>>> m_samplerLibrary;
-
+		static std::mutex m_samplerLibraryMutex;
 
 	public:
 		enum class Mode

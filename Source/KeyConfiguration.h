@@ -11,9 +11,6 @@ namespace en
 	// 4) Fire an event in InputManager::Update()
 	// 5) Subscribe to the event anywhere you want to react to the button press
 
-	// Note: This macro is also used outside of this file (eg. Config.cpp)
-	#define ENUM_TO_STR(x) #x
-
 	// Buttons for specific functionality/controls (eg. forward, sprint, quit, etc)
 	// These enums are also converted to strings by a pre-processor macro, and mapped to buttons in the config.cfg
 	enum KeyboardInputButton

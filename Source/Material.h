@@ -33,7 +33,7 @@ namespace gr
 			std::shared_ptr<re::Shader> m_shader = nullptr;
 		};
 		static std::shared_ptr<MaterialDefinition const> GetMaterialDefinition(std::string const& matName);
-
+		static void DestroyMaterialLibrary();
 
 		struct PBRMetallicRoughnessParams
 		{
@@ -61,6 +61,7 @@ namespace gr
 
 	private:
 		static std::unique_ptr<std::unordered_map<std::string, std::shared_ptr<Material::MaterialDefinition>>> m_materialLibrary;
+		static std::mutex m_matLibraryMutex;
 
 	public:
 		Material(std::string const& name, std::shared_ptr<MaterialDefinition const> matDefinition);

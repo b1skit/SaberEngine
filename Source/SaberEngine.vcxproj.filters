@@ -302,6 +302,9 @@
     <ClCompile Include="Window_Win32.cpp">
       <Filter>Source Files\re\platform\win32</Filter>
     </ClCompile>
+    <ClCompile Include="EngineThread.cpp">
+      <Filter>Source Files\en</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -555,6 +558,9 @@
     </ClInclude>
     <ClInclude Include="Window_Win32.h">
       <Filter>Header Files\re\platform\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineThread.h">
+      <Filter>Header Files\en</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

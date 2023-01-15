@@ -28,12 +28,12 @@ namespace gr
 
 	// Static members:
 	unique_ptr<unordered_map<string, shared_ptr<Material::MaterialDefinition>>> Material::m_materialLibrary = nullptr;
+	std::mutex Material::m_matLibraryMutex;
 
 
 	shared_ptr<Material::MaterialDefinition const> Material::GetMaterialDefinition(std::string const& matName)
 	{
-		static std::mutex matLibraryMutex;
-		std::unique_lock<std::mutex> samplerLock(matLibraryMutex);
+		std::unique_lock<std::mutex> samplerLock(m_matLibraryMutex);
 
 		if (Material::m_materialLibrary == nullptr)
 		{
@@ -62,6 +62,13 @@ namespace gr
 		SEAssert("Invalid Material name", result != Material::m_materialLibrary->end());
 
 		return result->second;
+	}
+
+
+	void Material::DestroyMaterialLibrary()
+	{
+		std::unique_lock<std::mutex> samplerLock(m_matLibraryMutex);
+		m_materialLibrary = nullptr;
 	}
 
 

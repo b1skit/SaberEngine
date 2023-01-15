@@ -24,6 +24,11 @@ using std::make_shared;
 using std::string;
 
 
+namespace
+{
+	constexpr size_t k_numSystemThreads = 2;
+}
+
 namespace en
 {
 	CoreEngine*	CoreEngine::m_coreEngine = nullptr;
@@ -41,6 +46,8 @@ namespace en
 		{
 			exit(-1);
 		}
+
+		m_copyBarrier = std::make_unique<std::barrier<>>(k_numSystemThreads);
 	}
 
 
@@ -66,10 +73,14 @@ namespace en
 
 		LogManager::Get()->Startup();
 		InputManager::Get()->Startup(); // Now that the window is created
-		RenderManager::Get()->Startup(); // Initializes context		
+
+		// Render thread:
+		m_threadPool.EnqueueJob([&]() {RenderManager::Get()->Lifetime(m_copyBarrier.get()); });
+		RenderManager::Get()->ThreadStartup(); // Initializes context
+
 		SceneManager::Get()->Startup(); // Load assets
 
-		RenderManager::Get()->Initialize(); // Create graphics systems
+		RenderManager::Get()->ThreadInitialize(); // Create graphics systems
 
 		// Create gameplay objects now that the scene data is loaded
 		GameplayManager::Get()->Startup();
@@ -118,7 +129,9 @@ namespace en
 
 			SceneManager::Get()->FinalUpdate(); // Builds batches, ready for RenderManager to consume
 
-			RenderManager::Get()->Update(m_frameNum, lastOuterFrameTime);
+			// Pump the render thread, and wait for it to signal copying is complete:
+			RenderManager::Get()->EnqueueUpdate({m_frameNum, lastOuterFrameTime});
+			m_copyBarrier->arrive_and_wait();
 
 			++m_frameNum;
 
@@ -142,8 +155,10 @@ namespace en
 		// Note: Shutdown order matters!
 		GameplayManager::Get()->Shutdown();
 		InputManager::Get()->Shutdown();
+
+		RenderManager::Get()->ThreadShutdown();
+
 		SceneManager::Get()->Shutdown();
-		RenderManager::Get()->Shutdown();
 		EventManager::Get()->Shutdown();
 		LogManager::Get()->Shutdown();
 
@@ -156,12 +171,6 @@ namespace en
 	void CoreEngine::Update(uint64_t frameNum, double stepTimeMs)
 	{
 		HandleEvents();
-
-		// Generate a quit event if the quit button is pressed:
-		if (InputManager::Get()->GetKeyboardInputState(en::InputButton_Quit) == true)
-		{
-			EventManager::Get()->Notify(en::EventManager::EventInfo{en::EventManager::EngineQuit});
-		}
 	}
 
 
@@ -189,7 +198,9 @@ namespace en
 	{
 		if (argc <= 1)
 		{
-			LOG_ERROR("No command line arguments received! Use \"-scene <scene name>\" to launch a scene from the .\\Scenes directory.\n\n\t\tEg. \tSaberEngine.exe -scene Sponza\n\nNote: The scene directory name and scene .FBX file must be the same");
+			LOG_ERROR("No command line arguments received! Use \"-scene <scene name>\" to launch a scene from the "
+				".\\Scenes directory.\n\n\t\tEg. \tSaberEngine.exe -scene Sponza\n\nNote: The scene directory name and "
+				"scene .FBX file must be the same");
 			return false;
 		}
 		const int numTokens = argc - 1; // -1, as 1st arg is program name

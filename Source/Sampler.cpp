@@ -16,22 +16,23 @@ namespace re
 {
 	const std::vector<std::string> Sampler::SamplerTypeLibraryNames
 	{
-		"WrapLinearLinear",
-		"ClampLinearLinear",
-		"ClampNearestNearest",
-		"ClampLinearMipMapLinearLinear",
-		"WrapLinearMipMapLinearLinear"
+		ENUM_TO_STR(WrapAndFilterMode::WrapLinearLinear),
+		ENUM_TO_STR(WrapAndFilterMode::ClampLinearLinear),
+		ENUM_TO_STR(WrapAndFilterMode::ClampNearestNearest),
+		ENUM_TO_STR(WrapAndFilterMode::ClampLinearMipMapLinearLinear),
+		ENUM_TO_STR(WrapAndFilterMode::WrapLinearMipMapLinearLinear),
 	};
-	// Elements must correspond with enum class WrapAndFilterMode in Sampler.h
 
-
+	// Static members:
 	std::unique_ptr<std::unordered_map<Sampler::WrapAndFilterMode, std::shared_ptr<re::Sampler>>> Sampler::m_samplerLibrary = 
 		nullptr;
+	std::mutex Sampler::m_samplerLibraryMutex;
+
 
 	std::shared_ptr<re::Sampler> const Sampler::GetSampler(Sampler::WrapAndFilterMode type)
 	{
-		static std::mutex samplerMutex;
-		std::unique_lock<std::mutex> samplerLock(samplerMutex);
+		std::unique_lock<std::mutex> samplerLock(m_samplerLibraryMutex);
+		// TODO: Rewrite this to be lockless once m_samplerLibrary has been created
 
 		if (Sampler::m_samplerLibrary == nullptr)
 		{
@@ -101,6 +102,13 @@ namespace re
 		SEAssert("Invalid sampler name", result != Sampler::m_samplerLibrary->end());
 
 		return result->second;
+	}
+
+
+	void Sampler::DestroySamplerLibrary()
+	{
+		std::unique_lock<std::mutex> samplerLock(m_samplerLibraryMutex);
+		m_samplerLibrary = nullptr;
 	}
 
 

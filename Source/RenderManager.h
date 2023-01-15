@@ -1,12 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-#include "EngineComponent.h"
-#include "Context.h"
-#include "TextureTarget.h"
-#include "RenderPipeline.h"
-#include "ParameterBlockAllocator.h"
 #include "Command.h"
+#include "Context.h"
+#include "EngineComponent.h"
+#include "EngineThread.h"
+#include "ParameterBlockAllocator.h"
+#include "RenderPipeline.h"
+#include "TextureTarget.h"
 
 
 namespace opengl
@@ -28,23 +29,19 @@ namespace re
 
 namespace re
 {
-	class RenderManager final : public virtual en::EngineComponent
+	class RenderManager final : public virtual en::EngineComponent, public virtual en::EngineThread
 	{
 	public:
 		static RenderManager* Get(); // Singleton functionality
 
 	public:
 		RenderManager();
-		~RenderManager();
+		~RenderManager() = default;
 
-		// EngineComponent interface:
-		void Startup() override;
-		void Shutdown() override;
-		void Update(uint64_t frameNum, double stepTimeMs) override;
-		
+		// EngineThread interface:
+		void Lifetime(std::barrier<>* copyBarrier) override;
+
 		// Member functions:
-		void Initialize();
-
 		re::Context const& GetContext() const { return m_context; }
 
 		template <typename T>
@@ -57,10 +54,18 @@ namespace re
 
 		void EnqueueImGuiCommand(std::shared_ptr<en::Command> command);
 
-	private:
-		void CopyFrameData();
 
+	private:
+		// EngineComponent interface:
+		void Update(uint64_t frameNum, double stepTimeMs) override;
+		void Startup() override;
+		void Shutdown() override;
+		
+		// Member functions:
+		void Initialize();
+		void PreUpdate(uint64_t frameNum); // Synchronization step: Copies data, swaps buffers etc
 		void EndOfFrame();
+
 
 	private:	
 		re::Context m_context;
@@ -73,10 +78,10 @@ namespace re
 
 		std::queue<std::shared_ptr<en::Command>> m_imGuiCommands;
 
-	private:
-		// Friends
+	private: // Friends		
 		friend class opengl::RenderManager;
 
+	private:
 		RenderManager(RenderManager const&) = delete;
 		RenderManager(RenderManager&&) = delete;
 		void operator=(RenderManager const&) = delete;

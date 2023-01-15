@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <any>
 #include <array>
+#include <barrier>
 #include <cassert>
 #include <chrono>
 #include <condition_variable>
@@ -20,6 +21,7 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <latch>
 #include <memory>
 #include <mutex>
 #include <numbers>
@@ -60,3 +62,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/common.hpp>	// fmod
 #include <glm/gtx/matrix_decompose.hpp>
+
+
+// Macros:
+#define ENUM_TO_STR(x) #x

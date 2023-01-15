@@ -15,5 +15,6 @@ namespace opengl
 		static void Initialize(re::RenderManager&);
 		static void Render(re::RenderManager&);		
 		static void RenderImGui(re::RenderManager&);
+		static void Shutdown(re::RenderManager&);
 	};
 }

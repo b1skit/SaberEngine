@@ -22,6 +22,7 @@
 #include "TextureTarget.h"
 #include "Transform.h"
 #include "TextureTarget_OpenGL.h"
+#include "SceneManager.h"
 
 
 namespace opengl
@@ -235,5 +236,14 @@ namespace opengl
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		glPopDebugGroup();
+	}
+
+
+	void RenderManager::Shutdown(re::RenderManager& renderManager)
+	{
+		// OpenGL objects must be destroyed on the render thread
+		en::SceneManager::GetSceneData()->Destroy();
+		gr::Material::DestroyMaterialLibrary();
+		re::Sampler::DestroySamplerLibrary();
 	}
 }

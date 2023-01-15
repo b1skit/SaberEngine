@@ -1436,6 +1436,7 @@ namespace fr
 		}
 		{
 			std::lock_guard<std::mutex> lock(m_meshesAndMeshPrimitivesMutex);
+			m_meshPrimitives.clear();
 			m_meshes.clear();
 		}
 		{

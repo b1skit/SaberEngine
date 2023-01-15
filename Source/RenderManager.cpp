@@ -49,8 +49,42 @@ namespace re
 	}
 
 
-	RenderManager::~RenderManager()
+	void RenderManager::Lifetime(std::barrier<>* copyBarrier)
 	{
+		// Synchronized startup: Blocks main thread until complete
+		m_startupLatch[static_cast<size_t>(SyncType::ReleaseWorker)].arrive_and_wait();
+		Startup();
+		m_startupLatch[static_cast<size_t>(SyncType::ReleaseCommander)].arrive_and_wait();
+
+		// Synchronized initialization: Blocks main thread until complete
+		m_initializeLatch[static_cast<size_t>(SyncType::ReleaseWorker)].arrive_and_wait();
+		Initialize();
+		m_initializeLatch[static_cast<size_t>(SyncType::ReleaseCommander)].arrive_and_wait();
+
+
+		EngineThread::ThreadUpdateParams updateParams;
+
+		m_isRunning = true;
+		while (m_isRunning)
+		{
+			// Blocks until a new update params is received, or the EngineThread has been signaled to stop
+			const bool doUpdate = GetUpdateParams(updateParams);
+			if (!doUpdate)
+			{
+				break;
+			}
+
+			// Copy stage: Blocks other threads until complete
+			PreUpdate(updateParams.m_frameNum);
+			const std::barrier<>::arrival_token& copyArrive = copyBarrier->arrive();
+
+			Update(updateParams.m_frameNum, updateParams.m_elapsed);
+		}
+
+		// Synchronized shutdown: Blocks main thread until complete
+		m_shutdownLatch[static_cast<size_t>(SyncType::ReleaseWorker)].arrive_and_wait();
+		Shutdown();
+		m_shutdownLatch[static_cast<size_t>(SyncType::ReleaseCommander)].arrive_and_wait();
 	}
 
 
@@ -59,27 +93,27 @@ namespace re
 		LOG("RenderManager starting...");
 		m_context.Create();
 	}
-
-
-	void RenderManager::Shutdown()
+	
+	
+	void RenderManager::Initialize()
 	{
-		LOG("Render manager shutting down...");
+		LOG("RenderManager Initializing...");
+		PerformanceTimer timer;
+		timer.Start();
 
-		m_pipeline.Destroy();
-		m_graphicsSystems.clear();
+		platform::RenderManager::Initialize(*this);
 
-		// Need to do this here so the CoreEngine's Window can be destroyed
-		m_context.Destroy();
+		m_paramBlockAllocator.ClosePermanentPBRegistrationPeriod();
 
-		// NOTE: We must destroy anything that holds a parameter block before the ParameterBlockAllocator is destroyed, 
-		// as parameter blocks call the ParameterBlockAllocator in their destructor
-		m_paramBlockAllocator.Destroy();
+		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
 	}
 
 
-	void RenderManager::Update(uint64_t frameNum, double stepTimeMs)
+	void RenderManager::PreUpdate(uint64_t frameNum)
 	{
-		CopyFrameData();
+		// Copy frame data:
+		SEAssert("Render batches should be empty", m_renderBatches.empty());
+		m_renderBatches = std::move(SceneManager::Get()->GetSceneBatches());
 
 		// Update the graphics systems:
 		for (size_t gs = 0; gs < m_graphicsSystems.size(); gs++)
@@ -88,9 +122,11 @@ namespace re
 		}
 
 		m_paramBlockAllocator.SwapBuffers(frameNum);
+	}
 
-		// TODO: unblock waiting threads here before proceeding
 
+	void RenderManager::Update(uint64_t frameNum, double stepTimeMs)
+	{
 		// Update/buffer param blocks:
 		m_paramBlockAllocator.BufferParamBlocks();
 
@@ -102,13 +138,6 @@ namespace re
 		m_context.Present();
 
 		EndOfFrame();
-	}
-
-
-	void RenderManager::CopyFrameData()
-	{
-		SEAssert("Render batches should be empty", m_renderBatches.empty());
-		m_renderBatches = std::move(SceneManager::Get()->GetSceneBatches());
 	}
 
 
@@ -125,17 +154,22 @@ namespace re
 	}
 
 
-	void RenderManager::Initialize()
+	void RenderManager::Shutdown()
 	{
-		LOG("RenderManager Initializing...");
-		PerformanceTimer timer;
-		timer.Start();
+		LOG("Render manager shutting down...");
+		
+		// API-specific destruction:
+		platform::RenderManager::Shutdown(*this);
 
-		platform::RenderManager::Initialize(*this);
+		m_pipeline.Destroy();
+		m_graphicsSystems.clear();
 
-		m_paramBlockAllocator.ClosePermanentPBRegistrationPeriod();
+		// Need to do this here so the CoreEngine's Window can be destroyed
+		m_context.Destroy();
 
-		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
+		// NOTE: We must destroy anything that holds a parameter block before the ParameterBlockAllocator is destroyed, 
+		// as parameter blocks call the ParameterBlockAllocator in their destructor
+		m_paramBlockAllocator.Destroy();
 	}
 
 
