@@ -45,20 +45,28 @@ namespace en
 
 		PerformanceTimer timer;
 		timer.Start();
-		
+
 		// Load the scene:
-		const string sceneName = Config::Get()->GetValue<string>("sceneName");
-		m_sceneData = std::make_shared<SceneData>(sceneName);
-
-		const string sceneFilePath = Config::Get()->GetValue<string>("sceneFilePath");
-		const bool loadResult = m_sceneData->Load(sceneFilePath);
-		if (!loadResult)
+		string sceneName;
+		if (Config::Get()->GetValue<string>("sceneName", sceneName))
 		{
-			LOG_ERROR("Failed to load scene: %s", sceneFilePath);
-			EventManager::Get()->Notify(EventManager::EventInfo{ EventManager::EngineQuit});
-		}
+			m_sceneData = std::make_shared<SceneData>(sceneName);
 
-		m_sceneData->SetLoadingFinished();
+			const string sceneFilePath = Config::Get()->GetValue<string>("sceneFilePath");
+			const bool loadResult = m_sceneData->Load(sceneFilePath);
+			if (!loadResult)
+			{
+				LOG_ERROR("Failed to load scene: %s", sceneFilePath);
+				EventManager::Get()->Notify(EventManager::EventInfo{ EventManager::EngineQuit });
+			}
+
+			m_sceneData->SetLoadingFinished();
+		}
+		else
+		{
+			LOG_ERROR("No scene name found to load");
+			// TODO: Bug here, we never create the SceneData object so we'll crash when we try and access it
+		}		
 
 		LOG("\nSceneManager::Startup complete in %f seconds...\n", timer.StopSec());
 	}

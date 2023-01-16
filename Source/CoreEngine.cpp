@@ -34,19 +34,13 @@ namespace en
 	CoreEngine*	CoreEngine::m_coreEngine = nullptr;
 
 
-	CoreEngine::CoreEngine(int argc, char** argv)
+	CoreEngine::CoreEngine()
 		: m_fixedTimeStep(1000.0 / 120.0)
 		, m_isRunning(false)
 		, m_frameNum(0)
 		, m_window(nullptr)
 	{
 		m_coreEngine = this;
-
-		if (!ProcessCommandLineArgs(argc, argv))
-		{
-			exit(-1);
-		}
-
 		m_copyBarrier = std::make_unique<std::barrier<>>(k_numSystemThreads);
 	}
 
@@ -58,8 +52,10 @@ namespace en
 		m_threadPool.Startup();
 
 		// Create a window:
-		const string windowTitle = Config::Get()->GetValue<string>("windowTitle") + " " +
-			Config::Get()->GetValue<string>("commandLineArgs");
+		std::string commandLineArgs;
+		Config::Get()->GetValue<string>(en::Config::k_commandLineArgsValueName, commandLineArgs);
+
+		const string windowTitle = Config::Get()->GetValue<string>("windowTitle") + " " + commandLineArgs;
 		const int xRes = Config::Get()->GetValue<int>("windowXRes");
 		const int yRes = Config::Get()->GetValue<int>("windowYRes");
 
@@ -191,85 +187,5 @@ namespace en
 				break;
 			}
 		}
-	}
-
-
-	bool CoreEngine::ProcessCommandLineArgs(int argc, char** argv)
-	{
-		if (argc <= 1)
-		{
-			LOG_ERROR("No command line arguments received! Use \"-scene <scene name>\" to launch a scene from the "
-				".\\Scenes directory.\n\n\t\tEg. \tSaberEngine.exe -scene Sponza\n\nNote: The scene directory name and "
-				"scene .FBX file must be the same");
-			return false;
-		}
-		const int numTokens = argc - 1; // -1, as 1st arg is program name
-		LOG("Processing %d command line tokens...", numTokens);
-
-		bool successfulParse = true;
-
-		string argString; // The full list of all command line args received
-
-		for (int i = 1; i < argc; i++)
-		{			
-			const string currentArg(argv[i]);
-			
-			argString += currentArg + (i < (argc - 1) ? " " : "");
-
-			if (currentArg.find("-scene") != string::npos)
-			{
-				if (i < argc - 1) // -1 as we need to peek ahead
-				{
-					const int nextArg = i + 1;
-					const string sceneNameParam = string(argv[nextArg]);
-
-					argString += sceneNameParam;
-
-					LOG("\tReceived scene command: \"%s %s\"", currentArg.c_str(), sceneNameParam.c_str());
-
-					const string scenesRoot = Config::Get()->GetValue<string>("scenesRoot"); // ".\Scenes\"
-
-					// From param of the form "Scene\Folder\Names\sceneFile.extension", we extract:
-
-					// sceneFilePath == ".\Scenes\Scene\Folder\Names\sceneFile.extension":
-					const string sceneFilePath = scenesRoot + sceneNameParam; 
-					Config::Get()->SetValue("sceneFilePath", sceneFilePath, Config::SettingType::Runtime);
-
-					// sceneRootPath == ".\Scenes\Scene\Folder\Names\":
-					const size_t lastSlash = sceneFilePath.find_last_of("\\");
-					const string sceneRootPath = sceneFilePath.substr(0, lastSlash) + "\\"; 
-					Config::Get()->SetValue("sceneRootPath", sceneRootPath, Config::SettingType::Runtime);
-
-					// sceneName == "sceneFile"
-					const string filenameAndExt = sceneFilePath.substr(lastSlash + 1, sceneFilePath.size() - lastSlash);
-					const size_t extensionPeriod = filenameAndExt.find_last_of(".");
-					const string sceneName = filenameAndExt.substr(0, extensionPeriod);
-					Config::Get()->SetValue("sceneName", sceneName, Config::SettingType::Runtime);
-
-					// sceneIBLPath == ".\Scenes\SceneFolderName\IBL\ibl.hdr"
-					const string sceneIBLPath = sceneRootPath + "IBL\\ibl.hdr";
-					Config::Get()->SetValue("sceneIBLPath", sceneIBLPath, Config::SettingType::Runtime);
-				}
-				else
-				{
-					LOG_ERROR("Received \"-scene\" token, but no matching scene name");
-					successfulParse = false;
-				}
-				
-				i++; // Consume the token
-			}
-			else
-			{
-				LOG_ERROR("\"%s\" is not a recognized command!", currentArg.c_str());
-				successfulParse = false;
-			}
-		}
-
-		// Store the received command line string
-		Config::Get()->SetValue("commandLineArgs", argString, Config::SettingType::Runtime);
-
-		SEAssert("Command line argument parsing failed", successfulParse);		
-
-		return successfulParse;
 	}
 }

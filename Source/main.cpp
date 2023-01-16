@@ -1,8 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Platform.h"
+#include "Config.h"
 #include "CoreEngine.h"
 #include "DebugConfiguration.h"
+#include "Platform.h"
 #include "Window_Win32.h"
+
 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -10,11 +12,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Store the HINSTANCE for when we initialize our window
 	win32::Window::PlatformState.m_hInstance = hInstance;
 
-#if defined(_DEBUG)
-	// Display a Win32 console in debug mode
-	AllocConsole();
-	freopen("CONOUT$", "wb", stdout);
-#endif
+	// Initialize Config from our pre-parsed argument vector
+	int argc = __argc;
+	char** argv = __argv;
+	const bool gotCommandLineArgs = en::Config::Get()->ProcessCommandLineArgs(argc, argv);
+
+	const bool showConsole = 
+		en::Config::Get()->ValueExists(en::Config::k_showSystemConsoleWindowCommand) || !gotCommandLineArgs;
+
+	if (showConsole)
+	{
+		AllocConsole();
+		freopen("CONOUT$", "wb", stdout);
+
+		// TODO: If no command line args are received, load into an empty scene
+		if (!gotCommandLineArgs)
+		{
+			LOG_ERROR("No command line arguments received");
+			system("pause");
+			
+			FreeConsole();
+			fclose(stdout);
+			exit(-1);
+		}
+	}
 
 	// Register our API-specific bindings before anything attempts to call them:
 	if (!platform::RegisterPlatformFunctions())
@@ -25,10 +46,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	LOG("\nWelcome to the Saber Engine!\n");
 
-	// Get our pre-parsed argument vector
-	int argc = __argc;
-	char** argv = __argv;	
-	en::CoreEngine m_coreEngine(argc, argv); // TODO: Implement command line config file path passing
+	en::CoreEngine m_coreEngine; // TODO: Implement command line config file path passing
 
 	m_coreEngine.Startup();
 	m_coreEngine.Run();
@@ -36,10 +54,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	LOG("\nGoodbye!\n");
 
-#if defined(_DEBUG)
-	FreeConsole();
-	fclose(stdout);
-#endif
+	if (showConsole)
+	{
+		FreeConsole();
+		fclose(stdout);
+	}
 
 	return 0;
 }

@@ -35,10 +35,98 @@ namespace en
 	using std::any;
 
 
+	char const* const Config::k_showSystemConsoleWindowCommand = "console";
+	char const* const Config::k_commandLineArgsValueName = "commandLineArgs";
+
+
 	Config* Config::Get()
 	{
 		static std::unique_ptr<en::Config> instance = std::make_unique<en::Config>();
 		return instance.get();
+	}
+
+
+	bool Config::ProcessCommandLineArgs(int argc, char** argv)
+	{
+		// NOTE: This is one of the first functions run at startup; We cannot use the LogManager yet so we directly printf
+		if (argc <= 1)
+		{
+			printf("ERROR: No command line arguments received! Use \"-scene <scene path>\" to launch a scene from the "
+				".\\Scenes directory.\n\n\t\tEg. \tSaberEngine.exe -scene Sponza\\Sponza.gltf\n");
+			return false;
+		}
+		const int numTokens = argc - 1; // -1, as 1st arg is program name
+		printf("Processing %d command line tokens...", numTokens);
+
+		bool successfulParse = false;
+
+		string argString; // The full list of all command line args received
+
+		for (int i = 1; i < argc; i++)
+		{
+			const string currentArg(argv[i]); // The raw token, including any delimiters. eg. "-string"
+
+			argString += currentArg + (i < (argc - 1) ? " " : "");
+
+			// TODO: Write a token/value parser. For now, just match the commands
+			if (currentArg.find("scene") != string::npos)
+			{
+				if (i < argc - 1) // -1 as we need to peek ahead
+				{
+					const int nextArg = i + 1;
+					const string sceneNameParam = string(argv[nextArg]);
+
+					argString += sceneNameParam;
+
+					printf("\tReceived scene command: \"%s %s\"", currentArg.c_str(), sceneNameParam.c_str());
+
+					const string scenesRoot = GetValue<string>("scenesRoot"); // ".\Scenes\"
+
+					// From param of the form "Scene\Folder\Names\sceneFile.extension", we extract:
+
+					// sceneFilePath == ".\Scenes\Scene\Folder\Names\sceneFile.extension":
+					const string sceneFilePath = scenesRoot + sceneNameParam;
+					SetValue("sceneFilePath", sceneFilePath, Config::SettingType::Runtime);
+
+					// sceneRootPath == ".\Scenes\Scene\Folder\Names\":
+					const size_t lastSlash = sceneFilePath.find_last_of("\\");
+					const string sceneRootPath = sceneFilePath.substr(0, lastSlash) + "\\";
+					SetValue("sceneRootPath", sceneRootPath, Config::SettingType::Runtime);
+
+					// sceneName == "sceneFile"
+					const string filenameAndExt = sceneFilePath.substr(lastSlash + 1, sceneFilePath.size() - lastSlash);
+					const size_t extensionPeriod = filenameAndExt.find_last_of(".");
+					const string sceneName = filenameAndExt.substr(0, extensionPeriod);
+					SetValue("sceneName", sceneName, Config::SettingType::Runtime);
+
+					// sceneIBLPath == ".\Scenes\SceneFolderName\IBL\ibl.hdr"
+					const string sceneIBLPath = sceneRootPath + "IBL\\ibl.hdr";
+					SetValue("sceneIBLPath", sceneIBLPath, Config::SettingType::Runtime);
+
+					// TODO: Just load into an empty scene
+					successfulParse = true;
+				}
+				else
+				{
+					printf("Received \"-scene\" token, but no matching scene name");
+				}
+
+				i++; // Consume the token
+			}
+			else if (currentArg.find(k_showSystemConsoleWindowCommand) != string::npos)
+			{
+				SetValue(k_showSystemConsoleWindowCommand, true, Config::SettingType::Runtime);
+			}
+			else
+			{
+				printf("ERROR: \"%s\" is not a recognized command!", currentArg.c_str());
+			}
+		}
+
+		// Store the received command line string
+		SetValue(k_commandLineArgsValueName, argString, Config::SettingType::Runtime);
+
+		return successfulParse;
 	}
 
 
@@ -170,6 +258,50 @@ namespace en
 	}
 
 
+
+	// Constructor
+	Config::Config()
+		: m_isDirty(true)
+		, m_renderingAPI(platform::RenderingAPI::RenderingAPI_Count)
+	{
+		// Populate the config hash table with initial values
+		InitializeDefaultValues();
+
+		// Load config.cfg file
+		LoadConfig();
+
+		// Update specific efficiency functions:
+		std::string platform = GetValueAsString("platform");
+		if (platform == "opengl")
+		{
+			m_renderingAPI = platform::RenderingAPI::OpenGL;
+		}
+		else if (platform == "dx12")
+		{
+			m_renderingAPI = platform::RenderingAPI::DX12;
+		}
+		else
+		{
+			LOG_ERROR("Config failed to set valid rendering API! "
+				"Does the config contain a 'set platform \"<API>\" command? e.g:\n"
+				"set platform \"opengl\"\n"
+				"set platform \"dx12\"\n"
+				"Defaulting to OpenGL...");
+			m_renderingAPI = platform::RenderingAPI::OpenGL;
+		}
+
+		// Set API-specific defaults:
+		SetAPIDefaults();
+	}
+
+
+	bool Config::ValueExists(std::string const& valueName) const
+	{
+		auto const& result = m_configValues.find(valueName);
+		return result != m_configValues.end();
+	}
+
+
 	string Config::GetValueAsString(const string& valueName) const
 	{
 		auto const& result = m_configValues.find(valueName);
@@ -214,42 +346,6 @@ namespace en
 		}
 
 		return returnVal;
-	}
-
-
-	// Constructor
-	Config::Config()
-		: m_isDirty(true)
-		, m_renderingAPI(platform::RenderingAPI::RenderingAPI_Count)
-	{
-		// Populate the config hash table with initial values
-		InitializeDefaultValues();
-
-		// Load config.cfg file
-		LoadConfig();
-
-		// Update specific efficiency functions:
-		std::string platform = GetValueAsString("platform");
-		if (platform == "opengl")
-		{
-			m_renderingAPI = platform::RenderingAPI::OpenGL;
-		}
-		else if (platform == "dx12")
-		{
-			m_renderingAPI = platform::RenderingAPI::DX12;
-		}
-		else
-		{
-			LOG_ERROR("Config failed to set valid rendering API! "
-				"Does the config contain a 'set platform \"<API>\" command? e.g:\n"
-				"set platform \"opengl\"\n"
-				"set platform \"dx12\"\n"
-				"Defaulting to OpenGL...");
-			m_renderingAPI = platform::RenderingAPI::OpenGL;
-		}
-
-		// Set API-specific defaults:
-		SetAPIDefaults();
 	}
 
 

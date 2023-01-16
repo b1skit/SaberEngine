@@ -29,6 +29,8 @@ Scene loading: -scene Folder\Name\filename.extension
 	- Path is relative to the "<project root>\Scenes\" directory  
 	- Supports GLTF 2.0 files
 
+Display log messages in a system console window: -console  
+
 
 ----------------------
 Runtime Configuration:

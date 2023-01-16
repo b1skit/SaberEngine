@@ -9,6 +9,11 @@ namespace en
 {
 	class Config
 	{
+	public:
+		static char const* const k_showSystemConsoleWindowCommand;
+		static char const* const k_commandLineArgsValueName; // Retrieves the received command line arg string
+
+
 	public: 
 		enum class SettingType
 		{
@@ -24,7 +29,9 @@ namespace en
 
 
 	public:
-		Config();		
+		Config();
+
+		bool ProcessCommandLineArgs(int argc, char** argv);
 
 		// Get a config value, by type
 		template<typename T>
@@ -32,6 +39,8 @@ namespace en
 
 		template<typename T>
 		bool GetValue(std::string const& valueName, T& value) const;
+
+		bool ValueExists(std::string const& valueName) const;
 
 		std::string GetValueAsString(const std::string& valueName) const;
 
@@ -125,6 +134,7 @@ namespace en
 			try
 			{
 				value = any_cast<T>(result->second.first);
+				return true;
 			}
 			catch (const std::bad_any_cast& e)
 			{

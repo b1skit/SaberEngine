@@ -17,7 +17,7 @@ namespace en
 		static inline en::ThreadPool* GetThreadPool() { return &m_coreEngine->m_threadPool; }
 
 	public:
-		explicit CoreEngine(int argc, char** argv);
+		CoreEngine();
 		~CoreEngine() = default;
 
 		// Lifetime flow:
@@ -33,9 +33,6 @@ namespace en
 		void HandleEvents() override;
 
 		re::Window* GetWindow() const { return m_window.get(); }
-	
-	private:
-		bool ProcessCommandLineArgs(int argc, char** argv);
 
 
 	private:
@@ -58,7 +55,6 @@ namespace en
 
 
 	private:
-		CoreEngine() = delete;
 		CoreEngine(CoreEngine const&) = delete;
 		CoreEngine(CoreEngine&&) = delete;
 		CoreEngine& operator=(CoreEngine const&) = delete;

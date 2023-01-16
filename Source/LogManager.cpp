@@ -274,11 +274,9 @@ namespace en
 	{
 		m_imGuiLogWindow->AddLog(msg.c_str());
 
-	#if defined(_DEBUG)
 		// Print the message to the terminal. Note: We might get different ordering since m_imGuiLogWindow internally
 		// locks a mutex before appending the new message
 		printf(msg.c_str());
-	#endif
 	}
 
 
