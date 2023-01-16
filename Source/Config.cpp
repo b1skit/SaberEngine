@@ -170,6 +170,7 @@ namespace en
 			{ENUM_TO_STR(InputButton_Sprint),	{"Left Ctrl", SettingType::Common}},
 
 			{ENUM_TO_STR(InputButton_Console),	{'`', SettingType::Common}}, // The "grave accent"/tilde key
+			{ENUM_TO_STR(InputButton_VSync),	{'v', SettingType::Common}},
 			{ENUM_TO_STR(InputButton_Quit),		{"Escape", SettingType::Common}},
 
 			// Mouse bindings:

@@ -268,7 +268,10 @@ namespace en
 
 						m_keyboardInputButtonStates[key] = keystate;
 
-						transformedEvent.m_data0.m_dataB = keystate;
+						transformedEvent.m_data0.m_dataB = keystate; // Always true...
+
+						// Note: We only broadcast key presses (not releases)
+						doBroadcast = keystate;
 
 						switch (key)
 						{
@@ -319,13 +322,18 @@ namespace en
 							}
 						}
 						break;
+						case KeyboardInputButton::InputButton_VSync:
+						{
+							transformedEvent.m_type = EventManager::EventType::InputToggleVSync;							
+						}
+						break;
 						case KeyboardInputButton::InputButton_Quit:
 						{
 							transformedEvent.m_type = EventManager::EventType::EngineQuit;
 						}
 						break;
 						default:
-							SEAssertF("Invalid scancode");
+							SEAssertF("Input has not been handled. Is there a case for it in this switch?");
 							break;
 						}
 					}

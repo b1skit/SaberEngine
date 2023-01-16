@@ -34,6 +34,7 @@ namespace en
 		return !m_events.empty();
 	}
 
+
 	en::EventManager::EventInfo EventListener::GetEvent()
 	{
 		std::lock_guard<std::mutex> lock(m_eventsMutex);

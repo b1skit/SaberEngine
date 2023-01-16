@@ -39,6 +39,7 @@ namespace en
 
 			// System:
 			InputToggleConsole,
+			InputToggleVSync,
 
 			EngineQuit,
 

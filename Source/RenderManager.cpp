@@ -46,6 +46,7 @@ namespace re
 	RenderManager::RenderManager()
 		: m_pipeline("Main pipeline")
 	{
+		m_vsyncEnabled = en::Config::Get()->GetValue<bool>("vsync");
 	}
 
 
@@ -92,6 +93,7 @@ namespace re
 	{
 		LOG("RenderManager starting...");
 		m_context.Create();
+		en::EventManager::Get()->Subscribe(en::EventManager::InputToggleVSync, this);
 	}
 	
 	
@@ -127,6 +129,8 @@ namespace re
 
 	void RenderManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
+		HandleEvents();
+
 		// Update/buffer param blocks:
 		m_paramBlockAllocator.BufferParamBlocks();
 
@@ -176,6 +180,31 @@ namespace re
 	void RenderManager::EnqueueImGuiCommand(std::shared_ptr<en::Command> command)
 	{
 		m_imGuiCommands.emplace(command);
+	}
+
+
+	void RenderManager::HandleEvents()
+	{
+		while (HasEvents())
+		{
+			en::EventManager::EventInfo eventInfo = GetEvent();
+
+			switch (eventInfo.m_type)
+			{
+			case en::EventManager::EventType::InputToggleVSync:
+			{
+				m_vsyncEnabled = !m_vsyncEnabled;
+				m_context.SetVSyncMode(m_vsyncEnabled);
+				LOG("VSync %s", m_vsyncEnabled ? "enabled" : "disabled");
+			}
+			break;
+			default:
+			{
+				SEAssertF("Unexpected event type received");
+			}
+			break;
+			}
+		}
 	}
 }
 

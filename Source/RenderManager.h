@@ -5,6 +5,7 @@
 #include "Context.h"
 #include "EngineComponent.h"
 #include "EngineThread.h"
+#include "EventListener.h"
 #include "ParameterBlockAllocator.h"
 #include "RenderPipeline.h"
 #include "TextureTarget.h"
@@ -29,7 +30,8 @@ namespace re
 
 namespace re
 {
-	class RenderManager final : public virtual en::EngineComponent, public virtual en::EngineThread
+	class RenderManager final 
+		: public virtual en::EngineComponent, public virtual en::EngineThread, public virtual en::EventListener
 	{
 	public:
 		static RenderManager* Get(); // Singleton functionality
@@ -54,6 +56,9 @@ namespace re
 
 		void EnqueueImGuiCommand(std::shared_ptr<en::Command> command);
 
+		// EventListener interface:
+		void HandleEvents() override;
+
 
 	private:
 		// EngineComponent interface:
@@ -77,6 +82,8 @@ namespace re
 		re::ParameterBlockAllocator m_paramBlockAllocator;	
 
 		std::queue<std::shared_ptr<en::Command>> m_imGuiCommands;
+
+		bool m_vsyncEnabled;
 
 	private: // Friends		
 		friend class opengl::RenderManager;

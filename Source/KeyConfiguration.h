@@ -8,7 +8,7 @@ namespace en
 	// 1) Add the new button function to KeyboardInputButton and KeyboardInputButtonNames in this file
 	// 2) Add a default button for this function in Config::InitializeDefaultValues()
 	// 3) Add an event type to EventManager::EventType
-	// 4) Fire an event in InputManager::Update()
+	// 4) Fire a SaberEngine EventManager::EventType event in InputManager::HandleEvents()
 	// 5) Subscribe to the event anywhere you want to react to the button press
 
 	// Buttons for specific functionality/controls (eg. forward, sprint, quit, etc)
@@ -24,6 +24,7 @@ namespace en
 		InputButton_Sprint,
 
 		InputButton_Console,
+		InputButton_VSync,
 		InputButton_Quit,
 
 		KeyboardInputButton_Count
@@ -43,6 +44,7 @@ namespace en
 		ENUM_TO_STR(InputButton_Sprint),
 
 		ENUM_TO_STR(InputButton_Console),
+		ENUM_TO_STR(InputButton_VSync),
 		ENUM_TO_STR(InputButton_Quit),
 	};
 

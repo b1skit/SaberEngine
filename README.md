@@ -38,6 +38,11 @@ Runtime Configuration:
 Settings are loaded from the "<project root>\config\config.cfg" file  
 	- Commands for system configuration ("set"), input ("bind"), etc  
 	- See the existing file for examples  
+Default controls:  
+	- Movement: WASD + mouse look  
+	- Down: Shift  
+	- Up: Space  
+	- Toggle VSync: v  
 
 
 ---------------------
