@@ -6,9 +6,8 @@
 #define TRUE_STRING		"true"
 #define FALSE_STRING	"false"
 
-// Command strings: End with a space to maintain formatting
-#define SET_CMD		"set "		// Set a value
-#define BIND_CMD	"bind "		// Bind a key
+#define SET_CMD		"set"		// Set a value
+#define BIND_CMD	"bind"		// Bind a key
 
 
 namespace
@@ -151,8 +150,8 @@ namespace en
 			{"defaultExposure",						{1.0f,		SettingType::Common}},
 
 			// Input parameters:
-			{"mousePitchSensitivity",				{0.00005f,	SettingType::Common}},
-			{"mouseYawSensitivity",					{0.00005f,	SettingType::Common}},
+			{"mousePitchSensitivity",				{0.5f,	SettingType::Common}},
+			{"mouseYawSensitivity",					{0.5f,	SettingType::Common}},
 			{"sprintSpeedModifier",					{2.0f,		SettingType::Common}},
 
 			// SceneData config root path: All assets stored here
@@ -169,7 +168,7 @@ namespace en
 			{ENUM_TO_STR(InputButton_Down),		{"Left Shift", SettingType::Common}},
 			{ENUM_TO_STR(InputButton_Sprint),	{"Left Ctrl", SettingType::Common}},
 
-			{ENUM_TO_STR(InputButton_Console),	{'`', SettingType::Common}}, // The "grave accent"/tilde key
+			{ENUM_TO_STR(InputButton_Console),	{"Grave", SettingType::Common}}, // The "grave accent"/tilde key: `
 			{ENUM_TO_STR(InputButton_VSync),	{'v', SettingType::Common}},
 			{ENUM_TO_STR(InputButton_Quit),		{"Escape", SettingType::Common}},
 
@@ -314,6 +313,10 @@ namespace en
 				if (result->second.first.type() == typeid(string))
 				{
 					returnVal = any_cast<string>(result->second.first);
+				}
+				else if (result->second.first.type() == typeid(char const*))
+				{
+					returnVal = string(any_cast<char const*>(result->second.first));
 				}
 				else if (result->second.first.type() == typeid(float))
 				{
@@ -463,7 +466,7 @@ namespace en
 
 			// Update config hashtables. We set all SettingsType as common, to ensure otherwise API-specific settings
 			// will be written to disk
-			if (command == "set")
+			if (command == SET_CMD)
 			{
 				// Strings:
 				if (isString)
@@ -565,29 +568,37 @@ namespace en
 				continue;	// Skip API-specific settings
 			}
 
-			if (currentElement.second.first.type() == typeid(string) && currentElement.first.find("INPUT") == string::npos)
+			if (currentElement.second.first.type() == typeid(string) && currentElement.first.find("Input") == string::npos)
 			{
-				config_ofstream << SET_CMD << currentElement.first << PropertyToConfigString(any_cast<string>(currentElement.second.first));
+				config_ofstream << SET_CMD << " " << currentElement.first << PropertyToConfigString(any_cast<string>(currentElement.second.first));
+			}
+			else if (currentElement.second.first.type() == typeid(char const*) && currentElement.first.find("Input") == string::npos)
+			{
+				config_ofstream << SET_CMD << " " << currentElement.first << PropertyToConfigString(any_cast<char const*>(currentElement.second.first));
 			}
 			else if (currentElement.second.first.type() == typeid(float))
 			{
-				config_ofstream << SET_CMD << currentElement.first << PropertyToConfigString(any_cast<float>(currentElement.second.first));
+				config_ofstream << SET_CMD << " " << currentElement.first << PropertyToConfigString(any_cast<float>(currentElement.second.first));
 			}
 			else if (currentElement.second.first.type() == typeid(int))
 			{
-				config_ofstream << SET_CMD << currentElement.first << PropertyToConfigString(any_cast<int>(currentElement.second.first));
+				config_ofstream << SET_CMD << " " << currentElement.first << PropertyToConfigString(any_cast<int>(currentElement.second.first));
 			}
 			else if (currentElement.second.first.type() == typeid(bool))
 			{
-				config_ofstream << SET_CMD << currentElement.first << PropertyToConfigString(any_cast<bool>(currentElement.second.first));
+				config_ofstream << SET_CMD << " " << currentElement.first << PropertyToConfigString(any_cast<bool>(currentElement.second.first));
 			}
 			else if (currentElement.second.first.type() == typeid(char))
 			{
-				config_ofstream << BIND_CMD << currentElement.first << PropertyToConfigString(any_cast<char>(currentElement.second.first));
+				config_ofstream << BIND_CMD << " " << currentElement.first << PropertyToConfigString(any_cast<char>(currentElement.second.first));
 			}
-			else if (currentElement.second.first.type() == typeid(string) && currentElement.first.find("INPUT") != string::npos)
+			else if (currentElement.second.first.type() == typeid(string) && currentElement.first.find("Input") != string::npos)
 			{
-				config_ofstream << BIND_CMD << currentElement.first << PropertyToConfigString(any_cast<string>(currentElement.second.first));
+				config_ofstream << BIND_CMD << " " << currentElement.first << PropertyToConfigString(any_cast<string>(currentElement.second.first));
+			}
+			else if (currentElement.second.first.type() == typeid(char const*) && currentElement.first.find("Input") != string::npos)
+			{
+				config_ofstream << BIND_CMD << " " << currentElement.first << PropertyToConfigString(any_cast<char const*>(currentElement.second.first));
 			}
 			else
 			{

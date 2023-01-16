@@ -89,6 +89,7 @@ namespace en
 		// Helper functions:
 		//------------------
 		inline std::string PropertyToConfigString(std::string property)	{ return " \"" + property + "\"\n"; }
+		inline std::string PropertyToConfigString(char const* property) { return " \"" + std::string(property) + "\"\n"; }
 		inline std::string PropertyToConfigString(float property) { return " " + std::to_string(property) + "\n"; }
 		inline std::string PropertyToConfigString(int property) { return " " + std::to_string(property) + "\n"; }
 		inline std::string PropertyToConfigString(char property) {return std::string(" ") + property + std::string("\n");}
