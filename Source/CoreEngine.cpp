@@ -63,16 +63,16 @@ namespace en
 		const bool windowCreated = m_window->Create(windowTitle, xRes, yRes);
 		SEAssert("Failed to create a window", windowCreated);
 
+		// Render thread:
+		m_threadPool.EnqueueJob([&]() {RenderManager::Get()->Lifetime(m_copyBarrier.get()); });
+		RenderManager::Get()->ThreadStartup(); // Initializes context
+
 		// Start managers:
 		EventManager::Get()->Startup();
 		EventManager::Get()->Subscribe(en::EventManager::EngineQuit, this);
 
 		LogManager::Get()->Startup();
 		InputManager::Get()->Startup(); // Now that the window is created
-
-		// Render thread:
-		m_threadPool.EnqueueJob([&]() {RenderManager::Get()->Lifetime(m_copyBarrier.get()); });
-		RenderManager::Get()->ThreadStartup(); // Initializes context
 
 		SceneManager::Get()->Startup(); // Load assets
 
