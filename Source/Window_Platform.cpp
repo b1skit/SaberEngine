@@ -1,5 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Window.h"
 #include "Window_Platform.h"
 #include "Window_Win32.h"
 #include "DebugConfiguration.h"
@@ -11,7 +10,7 @@ namespace platform
 	using en::Config;
 
 
-	void Window::PlatformParams::CreatePlatformParams(re::Window& window)
+	void Window::CreatePlatformParams(re::Window& window)
 	{
 		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
 
@@ -19,7 +18,7 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			window.m_platformParams = std::make_unique<win32::Window::PlatformParams>();
+			window.SetPlatformParams(std::make_unique<win32::Window::PlatformParams>());
 		}
 		break;
 		case RenderingAPI::DX12:

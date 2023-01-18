@@ -1,12 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Window.h"
+#include "Window_Platform.h"
 
 namespace re
 {
 	Window::Window()
 		: m_hasFocus(false)
 	{
-		platform::Window::PlatformParams::CreatePlatformParams(*this);
+		platform::Window::CreatePlatformParams(*this);
 	}
 
 

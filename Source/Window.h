@@ -1,13 +1,20 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-#include "Window_Platform.h"
-
 
 namespace re
 {
 	class Window
 	{
+	public:
+		struct PlatformParams
+		{
+			PlatformParams() = default;
+			PlatformParams(PlatformParams const&) = delete;
+			virtual ~PlatformParams() = 0;
+		};
+
+
 	public:
 		Window();
 		
@@ -16,7 +23,9 @@ namespace re
 		void SetFocusState(bool hasFocus); // To be called by event handlers only
 		bool GetFocusState() const;
 
-		platform::Window::PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
+		Window::PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
+		void SetPlatformParams(std::unique_ptr<Window::PlatformParams> params) { m_platformParams = std::move(params); }
+
 
 		// Platform wrappers:
 		bool Create(std::string const& title, uint32_t width, uint32_t height);
@@ -25,7 +34,7 @@ namespace re
 
 
 	private:
-		std::unique_ptr<platform::Window::PlatformParams> m_platformParams;
+		std::unique_ptr<Window::PlatformParams> m_platformParams;
 		bool m_hasFocus;
 
 	private:
@@ -33,9 +42,9 @@ namespace re
 		Window(Window const&) = delete;
 		Window(Window&&) = delete;
 		Window& operator=(Window const&) = delete;
-
-
-	private:
-		friend void platform::Window::PlatformParams::CreatePlatformParams(re::Window&);
 	};
+
+
+	// We need to provide a destructor implementation since it's pure virtual
+	inline Window::PlatformParams::~PlatformParams() {};
 }

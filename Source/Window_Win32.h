@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-#include "Window_Platform.h"
+#include "Window.h"
 
 
 namespace win32
@@ -17,11 +17,8 @@ namespace win32
 
 
 	public:
-		struct PlatformParams final : public virtual platform::Window::PlatformParams
+		struct PlatformParams final : public virtual re::Window::PlatformParams
 		{
-			PlatformParams() = default;
-			~PlatformParams() override = default;
-
 			HWND m_hWindow = NULL;
 		};
 
