@@ -15,7 +15,7 @@ namespace opengl
 	class Context
 	{
 	public:
-		struct PlatformParams final : public virtual platform::Context::PlatformParams
+		struct PlatformParams final : public virtual re::Context::PlatformParams
 		{
 			PlatformParams() = default;
 			~PlatformParams() override = default;
@@ -36,12 +36,12 @@ namespace opengl
 		static void Destroy(re::Context& context);
 		static void Present(re::Context const& context);
 		static void SetVSyncMode(re::Context const& window, bool enabled);
-		static void SetCullingMode(platform::Context::FaceCullingMode const& mode);
-		static void ClearTargets(platform::Context::ClearTarget const& clearTarget);
-		static void SetBlendMode(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst);
-		static void SetDepthTestMode(platform::Context::DepthTestMode const& mode);
-		static void SetDepthWriteMode(platform::Context::DepthWriteMode const& mode);
-		static void SetColorWriteMode(platform::Context::ColorWriteMode const& channelModes);
+		static void SetCullingMode(re::Context::FaceCullingMode const& mode);
+		static void ClearTargets(re::Context::ClearTarget const& clearTarget);
+		static void SetBlendMode(re::Context::BlendMode const& src, re::Context::BlendMode const& dst);
+		static void SetDepthTestMode(re::Context::DepthTestMode const& mode);
+		static void SetDepthWriteMode(re::Context::DepthWriteMode const& mode);
+		static void SetColorWriteMode(re::Context::ColorWriteMode const& channelModes);
 		static uint32_t GetMaxTextureInputs();
 	};
 }

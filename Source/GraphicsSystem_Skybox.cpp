@@ -49,12 +49,12 @@ namespace gr
 		m_skyTextureShaderName = "Tex0";
 
 		RenderStage::PipelineStateParams skyboxStageParams;
-		skyboxStageParams.m_targetClearMode = platform::Context::ClearTarget::None;
-		skyboxStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Back;
-		skyboxStageParams.m_srcBlendMode	= platform::Context::BlendMode::Disabled; // Render on top of the frame
-		skyboxStageParams.m_dstBlendMode	= platform::Context::BlendMode::Disabled;
-		skyboxStageParams.m_depthTestMode	= platform::Context::DepthTestMode::LEqual;
-		skyboxStageParams.m_depthWriteMode	= platform::Context::DepthWriteMode::Disabled;
+		skyboxStageParams.m_targetClearMode = re::Context::ClearTarget::None;
+		skyboxStageParams.m_faceCullingMode = re::Context::FaceCullingMode::Back;
+		skyboxStageParams.m_srcBlendMode	= re::Context::BlendMode::Disabled; // Render on top of the frame
+		skyboxStageParams.m_dstBlendMode	= re::Context::BlendMode::Disabled;
+		skyboxStageParams.m_depthTestMode	= re::Context::DepthTestMode::LEqual;
+		skyboxStageParams.m_depthWriteMode	= re::Context::DepthWriteMode::Disabled;
 
 		m_skyboxStage.SetStagePipelineStateParams(skyboxStageParams);
 

@@ -34,11 +34,11 @@ namespace gr
 	void TonemappingGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
 		RenderStage::PipelineStateParams tonemappingStageParam;
-		tonemappingStageParam.m_targetClearMode	= platform::Context::ClearTarget::None;
-		tonemappingStageParam.m_faceCullingMode	= platform::Context::FaceCullingMode::Back;
-		tonemappingStageParam.m_srcBlendMode	= platform::Context::BlendMode::One;
-		tonemappingStageParam.m_dstBlendMode	= platform::Context::BlendMode::Zero;
-		tonemappingStageParam.m_depthTestMode	= platform::Context::DepthTestMode::Always;
+		tonemappingStageParam.m_targetClearMode	= re::Context::ClearTarget::None;
+		tonemappingStageParam.m_faceCullingMode	= re::Context::FaceCullingMode::Back;
+		tonemappingStageParam.m_srcBlendMode	= re::Context::BlendMode::One;
+		tonemappingStageParam.m_dstBlendMode	= re::Context::BlendMode::Zero;
+		tonemappingStageParam.m_depthTestMode	= re::Context::DepthTestMode::Always;
 
 		m_tonemappingStage.SetStagePipelineStateParams(tonemappingStageParam);
 

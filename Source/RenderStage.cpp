@@ -87,10 +87,10 @@ namespace re
 		m_stageParams = params;
 
 		m_writesColor =
-			m_stageParams.m_colorWriteMode.R == platform::Context::ColorWriteMode::ChannelMode::Enabled ||
-			m_stageParams.m_colorWriteMode.G == platform::Context::ColorWriteMode::ChannelMode::Enabled ||
-			m_stageParams.m_colorWriteMode.B == platform::Context::ColorWriteMode::ChannelMode::Enabled ||
-			m_stageParams.m_colorWriteMode.A == platform::Context::ColorWriteMode::ChannelMode::Enabled ? true : false;
+			m_stageParams.m_colorWriteMode.R == re::Context::ColorWriteMode::ChannelMode::Enabled ||
+			m_stageParams.m_colorWriteMode.G == re::Context::ColorWriteMode::ChannelMode::Enabled ||
+			m_stageParams.m_colorWriteMode.B == re::Context::ColorWriteMode::ChannelMode::Enabled ||
+			m_stageParams.m_colorWriteMode.A == re::Context::ColorWriteMode::ChannelMode::Enabled ? true : false;
 	}
 
 

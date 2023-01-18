@@ -37,18 +37,18 @@ namespace re
 
 		struct PipelineStateParams // Platform/context configuration:
 		{			
-			platform::Context::ClearTarget		m_targetClearMode	= platform::Context::ClearTarget::None;
-			platform::Context::FaceCullingMode	m_faceCullingMode	= platform::Context::FaceCullingMode::Back;
-			platform::Context::BlendMode		m_srcBlendMode		= platform::Context::BlendMode::One;
-			platform::Context::BlendMode		m_dstBlendMode		= platform::Context::BlendMode::One;
-			platform::Context::DepthTestMode	m_depthTestMode		= platform::Context::DepthTestMode::GEqual;
-			platform::Context::DepthWriteMode	m_depthWriteMode	= platform::Context::DepthWriteMode::Enabled;
-			platform::Context::ColorWriteMode	m_colorWriteMode =
+			re::Context::ClearTarget	m_targetClearMode		= re::Context::ClearTarget::None;
+			re::Context::FaceCullingMode m_faceCullingMode		= re::Context::FaceCullingMode::Back;
+			re::Context::BlendMode		m_srcBlendMode			= re::Context::BlendMode::One;
+			re::Context::BlendMode		m_dstBlendMode			= re::Context::BlendMode::One;
+			re::Context::DepthTestMode	m_depthTestMode			= re::Context::DepthTestMode::GEqual;
+			re::Context::DepthWriteMode	m_depthWriteMode		= re::Context::DepthWriteMode::Enabled;
+			re::Context::ColorWriteMode	m_colorWriteMode =
 			{ 
-				platform::Context::ColorWriteMode::ChannelMode::Enabled, // R
-				platform::Context::ColorWriteMode::ChannelMode::Enabled, // G
-				platform::Context::ColorWriteMode::ChannelMode::Enabled, // B
-				platform::Context::ColorWriteMode::ChannelMode::Enabled  // A
+				re::Context::ColorWriteMode::ChannelMode::Enabled, // R
+				re::Context::ColorWriteMode::ChannelMode::Enabled, // G
+				re::Context::ColorWriteMode::ChannelMode::Enabled, // B
+				re::Context::ColorWriteMode::ChannelMode::Enabled  // A
 			};
 
 			struct

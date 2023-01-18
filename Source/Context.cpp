@@ -13,7 +13,7 @@ namespace re
 	Context::Context()
 		: m_backbuffer(nullptr)
 	{
-		platform::Context::PlatformParams::CreatePlatformParams(*this);
+		platform::Context::CreatePlatformParams(*this);
 	}
 
 
@@ -54,37 +54,37 @@ namespace re
 	}
 
 
-	void Context::SetCullingMode(platform::Context::FaceCullingMode const& mode) const
+	void Context::SetCullingMode(re::Context::FaceCullingMode const& mode) const
 	{
 		platform::Context::SetCullingMode(mode);
 	}
 
 
-	void Context::ClearTargets(platform::Context::ClearTarget const& clearTarget) const
+	void Context::ClearTargets(re::Context::ClearTarget const& clearTarget) const
 	{
 		platform::Context::ClearTargets(clearTarget);
 	}
 
 
-	void Context::SetBlendMode(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst) const
+	void Context::SetBlendMode(re::Context::BlendMode const& src, re::Context::BlendMode const& dst) const
 	{
 		platform::Context::SetBlendMode(src, dst);
 	}
 
 
-	void Context::SetDepthTestMode(platform::Context::DepthTestMode const& mode) const
+	void Context::SetDepthTestMode(re::Context::DepthTestMode const& mode) const
 	{
 		platform::Context::SetDepthTestMode(mode);
 	}
 
 
-	void Context::SetDepthWriteMode(platform::Context::DepthWriteMode const& mode) const
+	void Context::SetDepthWriteMode(re::Context::DepthWriteMode const& mode) const
 	{
 		platform::Context::SetDepthWriteMode(mode);
 	}
 
 
-	void Context::SetColorWriteMode(platform::Context::ColorWriteMode const& channelModes) const
+	void Context::SetColorWriteMode(re::Context::ColorWriteMode const& channelModes) const
 	{
 		platform::Context::SetColorWriteMode(channelModes);
 	}

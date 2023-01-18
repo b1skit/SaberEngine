@@ -76,7 +76,7 @@ namespace en
 
 		SceneManager::Get()->Startup(); // Load assets
 
-		RenderManager::Get()->ThreadInitialize(); // Create graphics systems
+		RenderManager::Get()->ThreadInitialize(); // Create graphics systems, close PB registration
 
 		// Create gameplay objects now that the scene data is loaded
 		GameplayManager::Get()->Startup();

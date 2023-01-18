@@ -46,11 +46,11 @@ namespace gr
 
 		// Emissive blit stage:
 		RenderStage::PipelineStateParams emissiveStageParams;
-		emissiveStageParams.m_targetClearMode	= platform::Context::ClearTarget::None;
-		emissiveStageParams.m_faceCullingMode	= platform::Context::FaceCullingMode::Back;
-		emissiveStageParams.m_srcBlendMode		= platform::Context::BlendMode::One;
-		emissiveStageParams.m_dstBlendMode		= platform::Context::BlendMode::One;
-		emissiveStageParams.m_depthTestMode		= platform::Context::DepthTestMode::Always;
+		emissiveStageParams.m_targetClearMode	= re::Context::ClearTarget::None;
+		emissiveStageParams.m_faceCullingMode	= re::Context::FaceCullingMode::Back;
+		emissiveStageParams.m_srcBlendMode		= re::Context::BlendMode::One;
+		emissiveStageParams.m_dstBlendMode		= re::Context::BlendMode::One;
+		emissiveStageParams.m_depthTestMode		= re::Context::DepthTestMode::Always;
 
 		m_emissiveBlitStage.SetStagePipelineStateParams(emissiveStageParams);
 		m_emissiveBlitStage.GetStageShader() = blitShader;
@@ -63,11 +63,11 @@ namespace gr
 
 		// Bloom stages:
 		RenderStage::PipelineStateParams bloomStageParams;
-		bloomStageParams.m_targetClearMode	= platform::Context::ClearTarget::None;
-		bloomStageParams.m_faceCullingMode	= platform::Context::FaceCullingMode::Back;
-		bloomStageParams.m_srcBlendMode		= platform::Context::BlendMode::One;
-		bloomStageParams.m_dstBlendMode		= platform::Context::BlendMode::Zero;
-		bloomStageParams.m_depthTestMode	= platform::Context::DepthTestMode::Always;
+		bloomStageParams.m_targetClearMode	= re::Context::ClearTarget::None;
+		bloomStageParams.m_faceCullingMode	= re::Context::FaceCullingMode::Back;
+		bloomStageParams.m_srcBlendMode		= re::Context::BlendMode::One;
+		bloomStageParams.m_dstBlendMode		= re::Context::BlendMode::Zero;
+		bloomStageParams.m_depthTestMode	= re::Context::DepthTestMode::Always;
 		
 		const uint32_t numScalingStages = m_numDownSamplePasses;
 		m_downResStages.reserve(numScalingStages); // MUST reserve so our pointers won't change
@@ -190,9 +190,9 @@ namespace gr
 				m_upResStages.back().SetTextureTargetSet(deferredLightGS->GetFinalTextureTargetSet());
 
 				RenderStage::PipelineStateParams addStageParams(bloomStageParams);
-				addStageParams.m_targetClearMode	= platform::Context::ClearTarget::None;
-				addStageParams.m_srcBlendMode		= platform::Context::BlendMode::One;
-				addStageParams.m_dstBlendMode		= platform::Context::BlendMode::One;
+				addStageParams.m_targetClearMode	= re::Context::ClearTarget::None;
+				addStageParams.m_srcBlendMode		= re::Context::BlendMode::One;
+				addStageParams.m_dstBlendMode		= re::Context::BlendMode::One;
 
 				m_upResStages.back().SetStagePipelineStateParams(addStageParams);
 			}

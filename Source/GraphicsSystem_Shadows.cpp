@@ -70,22 +70,22 @@ namespace gr
 	void ShadowsGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
 		RenderStage::PipelineStateParams shadowStageParams;
-		shadowStageParams.m_targetClearMode = platform::Context::ClearTarget::Depth;
+		shadowStageParams.m_targetClearMode = re::Context::ClearTarget::Depth;
 		
 		// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
 		// want to be able to place lights inside of geometry (eg. emissive spheres). For now, enable backface culling.
 		// In future, we need to support tagging assets to not cast shadows
-		shadowStageParams.m_faceCullingMode = platform::Context::FaceCullingMode::Back;
+		shadowStageParams.m_faceCullingMode = re::Context::FaceCullingMode::Back;
 
-		shadowStageParams.m_srcBlendMode	= platform::Context::BlendMode::Disabled;
-		shadowStageParams.m_dstBlendMode	= platform::Context::BlendMode::Disabled;
-		shadowStageParams.m_depthTestMode	= platform::Context::DepthTestMode::Less;
+		shadowStageParams.m_srcBlendMode	= re::Context::BlendMode::Disabled;
+		shadowStageParams.m_dstBlendMode	= re::Context::BlendMode::Disabled;
+		shadowStageParams.m_depthTestMode	= re::Context::DepthTestMode::Less;
 		shadowStageParams.m_colorWriteMode	= 
 		{ 
-			platform::Context::ColorWriteMode::ChannelMode::Disabled,
-			platform::Context::ColorWriteMode::ChannelMode::Disabled,
-			platform::Context::ColorWriteMode::ChannelMode::Disabled,
-			platform::Context::ColorWriteMode::ChannelMode::Disabled
+			re::Context::ColorWriteMode::ChannelMode::Disabled,
+			re::Context::ColorWriteMode::ChannelMode::Disabled,
+			re::Context::ColorWriteMode::ChannelMode::Disabled,
+			re::Context::ColorWriteMode::ChannelMode::Disabled
 		};
 
 		// Directional light shadow:		

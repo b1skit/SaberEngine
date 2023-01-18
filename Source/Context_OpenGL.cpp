@@ -371,31 +371,31 @@ namespace opengl
 	}
 
 
-	void Context::SetCullingMode(platform::Context::FaceCullingMode const& mode)
+	void Context::SetCullingMode(re::Context::FaceCullingMode const& mode)
 	{
-		if (mode != platform::Context::FaceCullingMode::Disabled)
+		if (mode != re::Context::FaceCullingMode::Disabled)
 		{
 			glEnable(GL_CULL_FACE);
 		}
 
 		switch (mode)
 		{
-		case platform::Context::FaceCullingMode::Disabled:
+		case re::Context::FaceCullingMode::Disabled:
 		{
 			glDisable(GL_CULL_FACE);
 		}
 		break;
-		case platform::Context::FaceCullingMode::Front:
+		case re::Context::FaceCullingMode::Front:
 		{
 			glCullFace(GL_FRONT);
 		}
 		break;
-		case platform::Context::FaceCullingMode::Back:
+		case re::Context::FaceCullingMode::Back:
 		{
 			glCullFace(GL_BACK);
 		}
 		break;
-		case platform::Context::FaceCullingMode::FrontBack:
+		case re::Context::FaceCullingMode::FrontBack:
 		{
 			glCullFace(GL_FRONT_AND_BACK);
 		}
@@ -406,26 +406,26 @@ namespace opengl
 	}
 
 
-	void Context::ClearTargets(platform::Context::ClearTarget const& clearTarget)
+	void Context::ClearTargets(re::Context::ClearTarget const& clearTarget)
 	{
 		switch (clearTarget)
 		{
-		case platform::Context::ClearTarget::Color:
+		case re::Context::ClearTarget::Color:
 		{
 			glClear(GL_COLOR_BUFFER_BIT);
 		}
 		break;
-		case platform::Context::ClearTarget::Depth:
+		case re::Context::ClearTarget::Depth:
 		{
 			glClear(GL_DEPTH_BUFFER_BIT);
 		}
 		break;
-		case platform::Context::ClearTarget::ColorDepth:
+		case re::Context::ClearTarget::ColorDepth:
 		{
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		}
 		break;
-		case platform::Context::ClearTarget::None:
+		case re::Context::ClearTarget::None:
 		{
 			return;
 		}
@@ -436,9 +436,9 @@ namespace opengl
 	}
 	
 
-	void Context::SetBlendMode(platform::Context::BlendMode const& src, platform::Context::BlendMode const& dst)
+	void Context::SetBlendMode(re::Context::BlendMode const& src, re::Context::BlendMode const& dst)
 	{
-		if (src == platform::Context::BlendMode::Disabled)
+		if (src == re::Context::BlendMode::Disabled)
 		{
 			SEAssert("Must disable blending for both source and destination", src == dst);
 
@@ -452,55 +452,55 @@ namespace opengl
 		GLenum dFactor = GL_ZERO;
 
 		auto SetGLBlendFactor = [](
-			platform::Context::BlendMode const& platformBlendMode, 
+			re::Context::BlendMode const& platformBlendMode,
 			GLenum& blendFactor,
 			bool isSrc
 			)
 		{
 			switch (platformBlendMode)
 			{
-			case platform::Context::BlendMode::Zero:
+			case re::Context::BlendMode::Zero:
 			{
 				blendFactor = GL_ZERO;
 			}
 			break;
-			case platform::Context::BlendMode::One:
+			case re::Context::BlendMode::One:
 			{
 				blendFactor = GL_ONE;
 			}
 			break;
-			case platform::Context::BlendMode::SrcColor:
+			case re::Context::BlendMode::SrcColor:
 			{
 				blendFactor = GL_SRC_COLOR;
 			}
 			break;
-			case platform::Context::BlendMode::OneMinusSrcColor:
+			case re::Context::BlendMode::OneMinusSrcColor:
 			{
 				blendFactor = GL_ONE_MINUS_SRC_COLOR;
 			}
 			break;
-			case platform::Context::BlendMode::DstColor:
+			case re::Context::BlendMode::DstColor:
 			{
 				blendFactor = GL_DST_COLOR;
 			}
 			break;
-			case platform::Context::BlendMode::OneMinusDstColor:
+			case re::Context::BlendMode::OneMinusDstColor:
 			{
 				blendFactor = GL_ONE_MINUS_DST_COLOR;
 			}
-			case platform::Context::BlendMode::SrcAlpha:
+			case re::Context::BlendMode::SrcAlpha:
 			{
 				blendFactor = GL_SRC_ALPHA;
 			}
-			case platform::Context::BlendMode::OneMinusSrcAlpha:
+			case re::Context::BlendMode::OneMinusSrcAlpha:
 			{
 				blendFactor = GL_ONE_MINUS_SRC_ALPHA;
 			}
-			case platform::Context::BlendMode::DstAlpha:
+			case re::Context::BlendMode::DstAlpha:
 			{
 				blendFactor = GL_DST_ALPHA;
 			}
-			case platform::Context::BlendMode::OneMinusDstAlpha:
+			case re::Context::BlendMode::OneMinusDstAlpha:
 			{
 				blendFactor = GL_ONE_MINUS_DST_ALPHA;
 			}
@@ -512,12 +512,12 @@ namespace opengl
 			}
 		};
 
-		if (src != platform::Context::BlendMode::Default)
+		if (src != re::Context::BlendMode::Default)
 		{
 			SetGLBlendFactor(src, sFactor, true);
 		}
 
-		if (dst != platform::Context::BlendMode::Default)
+		if (dst != re::Context::BlendMode::Default)
 		{
 			SetGLBlendFactor(dst, dFactor, false);
 		}
@@ -526,9 +526,9 @@ namespace opengl
 	}
 
 
-	void Context::SetDepthTestMode(platform::Context::DepthTestMode const& mode)
+	void Context::SetDepthTestMode(re::Context::DepthTestMode const& mode)
 	{
-		if (mode == platform::Context::DepthTestMode::Always)
+		if (mode == re::Context::DepthTestMode::Always)
 		{
 			glDisable(GL_DEPTH_TEST);
 			return;
@@ -539,33 +539,33 @@ namespace opengl
 		GLenum depthMode = GL_LESS;
 		switch (mode)
 		{
-		case platform::Context::DepthTestMode::Default:
-		case platform::Context::DepthTestMode::Less:
+		case re::Context::DepthTestMode::Default:
+		case re::Context::DepthTestMode::Less:
 		{
 			depthMode = GL_LESS;
 		}
 		break;
-		case platform::Context::DepthTestMode::Equal:
+		case re::Context::DepthTestMode::Equal:
 		{
 			depthMode = GL_EQUAL;
 		}
 		break;
-		case platform::Context::DepthTestMode::LEqual:
+		case re::Context::DepthTestMode::LEqual:
 		{
 			depthMode = GL_LEQUAL;
 		}
 		break;
-		case platform::Context::DepthTestMode::Greater:
+		case re::Context::DepthTestMode::Greater:
 		{
 			depthMode = GL_GREATER;
 		}
 		break;
-		case platform::Context::DepthTestMode::NotEqual:
+		case re::Context::DepthTestMode::NotEqual:
 		{
 			depthMode = GL_NOTEQUAL;
 		}
 		break;
-		case platform::Context::DepthTestMode::GEqual:
+		case re::Context::DepthTestMode::GEqual:
 		{
 			depthMode = GL_GEQUAL;
 		}
@@ -580,16 +580,16 @@ namespace opengl
 	}
 
 
-	void opengl::Context::SetDepthWriteMode(platform::Context::DepthWriteMode const& mode)
+	void opengl::Context::SetDepthWriteMode(re::Context::DepthWriteMode const& mode)
 	{
 		switch (mode)
 		{
-		case platform::Context::DepthWriteMode::Enabled:
+		case re::Context::DepthWriteMode::Enabled:
 		{
 			glDepthMask(GL_TRUE);
 		}
 		break;
-		case platform::Context::DepthWriteMode::Disabled:
+		case re::Context::DepthWriteMode::Disabled:
 		{
 			glDepthMask(GL_FALSE);
 		}
@@ -602,12 +602,12 @@ namespace opengl
 	}
 
 
-	void opengl::Context::SetColorWriteMode(platform::Context::ColorWriteMode const& channelModes)
+	void opengl::Context::SetColorWriteMode(re::Context::ColorWriteMode const& channelModes)
 	{
-		GLboolean r = channelModes.R == platform::Context::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
-		GLboolean g = channelModes.G == platform::Context::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
-		GLboolean b = channelModes.B == platform::Context::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
-		GLboolean a = channelModes.A == platform::Context::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
+		GLboolean r = channelModes.R == re::Context::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
+		GLboolean g = channelModes.G == re::Context::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
+		GLboolean b = channelModes.B == re::Context::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
+		GLboolean a = channelModes.A == re::Context::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
 
 		glColorMask(r, g, b, a);
 	}

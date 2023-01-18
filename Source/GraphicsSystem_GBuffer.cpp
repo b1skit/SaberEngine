@@ -96,12 +96,12 @@ namespace gr
 
 		// Set the stage params:
 		RenderStage::PipelineStateParams gBufferStageParams;
-		gBufferStageParams.m_targetClearMode = platform::Context::ClearTarget::ColorDepth;
+		gBufferStageParams.m_targetClearMode = re::Context::ClearTarget::ColorDepth;
 
-		gBufferStageParams.m_faceCullingMode	= platform::Context::FaceCullingMode::Back;
-		gBufferStageParams.m_srcBlendMode		= platform::Context::BlendMode::Disabled;
-		gBufferStageParams.m_dstBlendMode		= platform::Context::BlendMode::Disabled;
-		gBufferStageParams.m_depthTestMode		= platform::Context::DepthTestMode::Less;
+		gBufferStageParams.m_faceCullingMode	= re::Context::FaceCullingMode::Back;
+		gBufferStageParams.m_srcBlendMode		= re::Context::BlendMode::Disabled;
+		gBufferStageParams.m_dstBlendMode		= re::Context::BlendMode::Disabled;
+		gBufferStageParams.m_depthTestMode		= re::Context::DepthTestMode::Less;
 
 		m_gBufferStage.SetStagePipelineStateParams(gBufferStageParams);
 
