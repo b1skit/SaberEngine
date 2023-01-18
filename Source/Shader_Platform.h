@@ -19,7 +19,7 @@ namespace platform
 	public:
 		static void CreatePlatformParams(re::Shader& shader);
 
-		// Static helpers:
+		// TODO: These helpers probably belong in the OpenGL namespace
 		static std::string LoadShaderText(const std::string& filepath); // Loads file "filepath" within the shaders dir
 
 		static void	InsertIncludedFiles(std::string& shaderText);
