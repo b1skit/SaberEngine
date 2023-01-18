@@ -32,7 +32,7 @@ namespace fr
 		void Destroy();
 
 		bool Load(std::string const& relativeFilePath); // Filename and path, relative to the ..\Scenes\ dir
-		inline void SetLoadingFinished() { m_finishedLoading = true; }
+		void PostLoadFinalize();
 
 		// Cameras:
 		void AddCamera(std::shared_ptr<gr::Camera> newCamera);

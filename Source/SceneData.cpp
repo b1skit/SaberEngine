@@ -920,12 +920,18 @@ namespace
 		// Ambient lights are not supported by GLTF 2.0; Instead, we handle it manually.
 		// First, we check for a <sceneRoot>\IBL\ibl.hdr file for per-scene IBLs/skyboxes.
 		// If that fails, we fall back to a default HDRI
-		const string sceneIBLPath = Config::Get()->GetValue<string>("sceneIBLPath");
-		shared_ptr<Texture> iblTexture = scene.GetLoadTextureByPath({ sceneIBLPath }, false);
+		shared_ptr<Texture> iblTexture = nullptr;
+
+		string IBLPath;
+		if (Config::Get()->TryGetValue<string>("sceneIBLPath", IBLPath))
+		{
+			scene.GetLoadTextureByPath({ IBLPath }, false);
+		}		
+		
 		if (!iblTexture)
 		{
-			const string defaultIBLPath = Config::Get()->GetValue<string>("defaultIBLPath");
-			iblTexture = scene.GetLoadTextureByPath({ defaultIBLPath }, true);
+			IBLPath = Config::Get()->GetValue<string>("defaultIBLPath");
+			iblTexture = scene.GetLoadTextureByPath({ IBLPath }, true);
 		}
 		SEAssert("Missing IBL texture. Per scene IBLs must be placed at <sceneRoot>\\IBL\\ibl.hdr; A default fallback "
 			"must exist at Assets\\DefaultIBL\\ibl.hdr", iblTexture != nullptr);
@@ -1351,54 +1357,55 @@ namespace fr
 
 	bool SceneData::Load(string const& sceneFilePath)
 	{
-		if (sceneFilePath.empty())
+		string sceneRootPath;
+		Config::Get()->TryGetValue<string>("sceneRootPath", sceneRootPath);
+
+		const bool gotSceneFilePath = !sceneFilePath.empty();
+		if (gotSceneFilePath)
 		{
-			SEAssert("No scene name received. Did you forget to use the \"-scene theSceneName\" command line "
-				"argument?", !sceneFilePath.empty());
+			// Parse the GLTF file data:
+			cgltf_options options = { (cgltf_file_type)0 };
+			cgltf_data* data = NULL;
+			cgltf_result parseResult = cgltf_parse_file(&options, sceneFilePath.c_str(), &data);
+			if (parseResult != cgltf_result::cgltf_result_success)
+			{
+				SEAssert("Failed to parse scene file \"" + sceneFilePath + "\"", parseResult == cgltf_result_success);
+				return false;
+			}
 
-			return false;
+			cgltf_result bufferLoadResult = cgltf_load_buffers(&options, data, sceneFilePath.c_str());
+			if (bufferLoadResult != cgltf_result::cgltf_result_success)
+			{
+				SEAssert("Failed to load scene data \"" + sceneFilePath + "\"", bufferLoadResult == cgltf_result_success);
+				return false;
+			}
+
+			// TODO: Add a cmd line flag to validated GLTF files, for efficiency?
+			cgltf_result validationResult = cgltf_validate(data);
+			if (validationResult != cgltf_result::cgltf_result_success)
+			{
+				SEAssert("GLTF file failed validation!", validationResult == cgltf_result_success);
+				return false;
+			}
+
+			// Pre-reserve our vectors:
+			m_updateables.reserve(max((int)data->nodes_count, 10));
+			m_meshes.reserve(max((int)data->meshes_count, 10));
+			m_textures.reserve(max((int)data->textures_count, 10));
+			m_materials.reserve(max((int)data->materials_count, 10));
+			m_pointLights.reserve(max((int)data->lights_count, 10)); // Probably an over-estimation
+			m_cameras.reserve(max((int)data->cameras_count, 5));
+
+			
+			// Load the materials first:
+			PreLoadMaterials(sceneRootPath, *this, data);
+
+			// Load the scene hierarchy:
+			LoadSceneHierarchy(sceneRootPath, *this, data);
+
+			// Cleanup:
+			cgltf_free(data);
 		}
-
-		// Parse the GLTF file data:
-		cgltf_options options = { (cgltf_file_type)0 };
-		cgltf_data* data = NULL;
-		cgltf_result parseResult = cgltf_parse_file(&options, sceneFilePath.c_str(), &data);
-		if (parseResult != cgltf_result::cgltf_result_success)
-		{
-			SEAssert("Failed to parse scene file \"" + sceneFilePath + "\"", parseResult == cgltf_result_success);
-			return false;
-		}
-
-		cgltf_result bufferLoadResult = cgltf_load_buffers(&options, data, sceneFilePath.c_str());
-		if (bufferLoadResult != cgltf_result::cgltf_result_success)
-		{
-			SEAssert("Failed to load scene data \"" + sceneFilePath + "\"", bufferLoadResult == cgltf_result_success);
-			return false;
-		}
-
-		// TODO: Add a cmd line flag to validated GLTF files, for efficiency?
-		cgltf_result validationResult = cgltf_validate(data);
-		if (validationResult != cgltf_result::cgltf_result_success)
-		{
-			SEAssert("GLTF file failed validation!", validationResult == cgltf_result_success);
-			return false;
-		}
-
-		// Pre-reserve our vectors:
-		m_updateables.reserve(max((int)data->nodes_count, 10));
-		m_meshes.reserve(max((int)data->meshes_count, 10));
-		m_textures.reserve(max((int)data->textures_count, 10));
-		m_materials.reserve(max((int)data->materials_count, 10));
-		m_pointLights.reserve(max((int)data->lights_count, 10)); // Probably an over-estimation
-		m_cameras.reserve(max((int)data->cameras_count, 5));
-
-		const string sceneRootPath = Config::Get()->GetValue<string>("sceneRootPath");
-
-		// Load the materials first:
-		PreLoadMaterials(sceneRootPath, *this, data);
-
-		// Load the scene hierarchy:
-		LoadSceneHierarchy(sceneRootPath, *this, data);
 
 		// Load the IBL/skybox HDRI:
 		LoadIBL(sceneRootPath, *this); // TODO: Enqueue this onto a worker thread while we're loading other stuff
@@ -1408,10 +1415,13 @@ namespace fr
 			LoadAddCamera(*this, nullptr, nullptr);
 		}
 
-		// Cleanup:
-		cgltf_free(data);
-
 		return true;
+	}
+
+
+	void SceneData::PostLoadFinalize()
+	{
+		m_finishedLoading = true;
 	}
 
 
@@ -1523,8 +1533,14 @@ namespace fr
 
 	std::shared_ptr<re::Texture> SceneData::GetIBLTexture() const
 	{
-		const string sceneIBLPath = Config::Get()->GetValue<string>("sceneIBLPath");
-		shared_ptr<Texture> iblTexture = TryGetTexture(sceneIBLPath);
+		shared_ptr<Texture> iblTexture = nullptr;
+		string sceneIBLPath;
+		bool result = Config::Get()->TryGetValue<string>("sceneIBLPath", sceneIBLPath);
+		if (result)
+		{
+			iblTexture = TryGetTexture(sceneIBLPath);
+		}
+		
 		if (!iblTexture)
 		{
 			const string defaultIBLPath = Config::Get()->GetValue<string>("defaultIBLPath");

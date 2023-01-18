@@ -15,26 +15,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Initialize Config from our pre-parsed argument vector
 	int argc = __argc;
 	char** argv = __argv;
-	const bool gotCommandLineArgs = en::Config::Get()->ProcessCommandLineArgs(argc, argv);
+	const bool gotCommandLineArgs = argc > 1;
+	if (gotCommandLineArgs)
+	{
+		en::Config::Get()->ProcessCommandLineArgs(argc, argv);
+	}	
 
-	const bool showConsole = 
-		en::Config::Get()->ValueExists(en::Config::k_showSystemConsoleWindowCommand) || !gotCommandLineArgs;
-
+	const bool showConsole = en::Config::Get()->ValueExists(en::Config::k_showSystemConsoleWindowCmdLineArg);
 	if (showConsole)
 	{
 		AllocConsole();
 		freopen("CONOUT$", "wb", stdout);
+	}
 
-		// TODO: If no command line args are received, load into an empty scene
-		if (!gotCommandLineArgs)
-		{
-			LOG_ERROR("No command line arguments received");
-			system("pause");
-			
-			FreeConsole();
-			fclose(stdout);
-			exit(-1);
-		}
+	if (!gotCommandLineArgs)
+	{
+		LOG_WARNING("No command line arguments received");
 	}
 
 	// Register our API-specific bindings before anything attempts to call them:

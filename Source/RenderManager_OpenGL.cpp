@@ -153,7 +153,6 @@ namespace opengl
 
 				// Render stage batches:
 				std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
-				SEAssert("Stage does not have any batches to render", !batches.empty());
 				for (re::Batch const& batch : batches)
 				{
 					opengl::MeshPrimitive::PlatformParams const* const meshPlatParams =

@@ -34,8 +34,10 @@ namespace en
 	using std::any;
 
 
-	char const* const Config::k_showSystemConsoleWindowCommand = "console";
+	char const* const Config::k_showSystemConsoleWindowCmdLineArg = "console";
 	char const* const Config::k_commandLineArgsValueName = "commandLineArgs";
+	char const* const Config::k_sceneNameValueName = "sceneName";
+	char const* const Config::k_sceneFilePathValueName = "sceneFilePath";
 
 
 	Config* Config::Get()
@@ -45,19 +47,16 @@ namespace en
 	}
 
 
-	bool Config::ProcessCommandLineArgs(int argc, char** argv)
+	void Config::ProcessCommandLineArgs(int argc, char** argv)
 	{
 		// NOTE: This is one of the first functions run at startup; We cannot use the LogManager yet so we directly printf
+		
 		if (argc <= 1)
 		{
-			printf("ERROR: No command line arguments received! Use \"-scene <scene path>\" to launch a scene from the "
-				".\\Scenes directory.\n\n\t\tEg. \tSaberEngine.exe -scene Sponza\\Sponza.gltf\n");
-			return false;
+			return;
 		}
 		const int numTokens = argc - 1; // -1, as 1st arg is program name
 		printf("Processing %d command line tokens...", numTokens);
-
-		bool successfulParse = false;
 
 		string argString; // The full list of all command line args received
 
@@ -96,14 +95,11 @@ namespace en
 					const string filenameAndExt = sceneFilePath.substr(lastSlash + 1, sceneFilePath.size() - lastSlash);
 					const size_t extensionPeriod = filenameAndExt.find_last_of(".");
 					const string sceneName = filenameAndExt.substr(0, extensionPeriod);
-					SetValue("sceneName", sceneName, Config::SettingType::Runtime);
+					SetValue(Config::k_sceneNameValueName, sceneName, Config::SettingType::Runtime);
 
 					// sceneIBLPath == ".\Scenes\SceneFolderName\IBL\ibl.hdr"
 					const string sceneIBLPath = sceneRootPath + "IBL\\ibl.hdr";
 					SetValue("sceneIBLPath", sceneIBLPath, Config::SettingType::Runtime);
-
-					// TODO: Just load into an empty scene
-					successfulParse = true;
 				}
 				else
 				{
@@ -112,9 +108,9 @@ namespace en
 
 				i++; // Consume the token
 			}
-			else if (currentArg.find(k_showSystemConsoleWindowCommand) != string::npos)
+			else if (currentArg.find(k_showSystemConsoleWindowCmdLineArg) != string::npos)
 			{
-				SetValue(k_showSystemConsoleWindowCommand, true, Config::SettingType::Runtime);
+				SetValue(k_showSystemConsoleWindowCmdLineArg, true, Config::SettingType::Runtime);
 			}
 			else
 			{
@@ -124,8 +120,6 @@ namespace en
 
 		// Store the received command line string
 		SetValue(k_commandLineArgsValueName, argString, Config::SettingType::Runtime);
-
-		return successfulParse;
 	}
 
 

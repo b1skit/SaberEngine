@@ -10,8 +10,10 @@ namespace en
 	class Config
 	{
 	public:
-		static char const* const k_showSystemConsoleWindowCommand;
+		static char const* const k_showSystemConsoleWindowCmdLineArg;
 		static char const* const k_commandLineArgsValueName; // Retrieves the received command line arg string
+		static char const* const k_sceneNameValueName;
+		static char const* const k_sceneFilePathValueName;
 
 
 	public: 
@@ -31,14 +33,13 @@ namespace en
 	public:
 		Config();
 
-		bool ProcessCommandLineArgs(int argc, char** argv);
+		void ProcessCommandLineArgs(int argc, char** argv);
 
-		// Get a config value, by type
 		template<typename T>
 		T GetValue(const std::string& valueName) const;
 
 		template<typename T>
-		bool GetValue(std::string const& valueName, T& value) const;
+		bool TryGetValue(std::string const& valueName, T& value) const;
 
 		bool ValueExists(std::string const& valueName) const;
 
@@ -126,25 +127,15 @@ namespace en
 
 
 	template<typename T>
-	bool Config::GetValue(std::string const& valueName, T& value) const
+	bool Config::TryGetValue(std::string const& valueName, T& value) const
 	{
-		auto const& result = m_configValues.find(valueName);
-
-		if (result != m_configValues.end())
+		if (!ValueExists(valueName))
 		{
-			try
-			{
-				value = any_cast<T>(result->second.first);
-				return true;
-			}
-			catch (const std::bad_any_cast& e)
-			{
-				LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what())
-				SEAssertF("bad_any_cast exception thrown: Invalid type requested from Config");
-			}
+			return false;
 		}
-		
-		return false;
+
+		value = GetValue<T>(valueName);
+		return true;
 	}
 
 

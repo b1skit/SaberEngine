@@ -53,7 +53,7 @@ namespace en
 
 		// Create a window:
 		std::string commandLineArgs;
-		Config::Get()->GetValue<string>(en::Config::k_commandLineArgsValueName, commandLineArgs);
+		Config::Get()->TryGetValue<string>(en::Config::k_commandLineArgsValueName, commandLineArgs);
 
 		const string windowTitle = Config::Get()->GetValue<string>("windowTitle") + " " + commandLineArgs;
 		const int xRes = Config::Get()->GetValue<int>("windowXRes");
