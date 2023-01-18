@@ -60,12 +60,10 @@ namespace platform
 
 	// platform::TextureTarget static members:
 	/****************************************/
-	void (*TextureTargetSet::CreateColorTargets)(re::TextureTargetSet&);
-	void (*TextureTargetSet::AttachColorTargets)(re::TextureTargetSet& targetSet, uint32_t face, uint32_t mipLevel);
-
-	void (*TextureTargetSet::CreateDepthStencilTarget)(re::TextureTargetSet& targetSet);
-	void (*TextureTargetSet::AttachDepthStencilTarget)(re::TextureTargetSet& targetSet);
-
-	uint32_t(*TextureTargetSet::MaxColorTargets)();
+	void (*TextureTargetSet::CreateColorTargets)(re::TextureTargetSet&) = nullptr;
+	void (*TextureTargetSet::AttachColorTargets)(re::TextureTargetSet& targetSet, uint32_t face, uint32_t mipLevel) = nullptr;
+	void (*TextureTargetSet::CreateDepthStencilTarget)(re::TextureTargetSet& targetSet) = nullptr;
+	void (*TextureTargetSet::AttachDepthStencilTarget)(re::TextureTargetSet& targetSet) = nullptr;
+	uint32_t(*TextureTargetSet::MaxColorTargets)() = nullptr;
 
 }

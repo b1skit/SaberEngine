@@ -37,10 +37,9 @@ namespace platform
 
 	// platform::Texture static members:
 	/***********************************/
-	void (*platform::Texture::Create)(re::Texture&);
-	void (*platform::Texture::Bind)(re::Texture&, uint32_t textureUnit);
-	void (*platform::Texture::Destroy)(re::Texture&);
-	void (*platform::Texture::GenerateMipMaps)(re::Texture&);
-
-	platform::Texture::UVOrigin (*platform::Texture::GetUVOrigin)();
+	void (*platform::Texture::Create)(re::Texture&) = nullptr;
+	void (*platform::Texture::Bind)(re::Texture&, uint32_t textureUnit) = nullptr;
+	void (*platform::Texture::Destroy)(re::Texture&) = nullptr;
+	void (*platform::Texture::GenerateMipMaps)(re::Texture&) = nullptr;
+	platform::Texture::UVOrigin (*platform::Texture::GetUVOrigin)() = nullptr;
 }

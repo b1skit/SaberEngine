@@ -4,8 +4,8 @@
 
 namespace platform
 {
-	void (*RenderManager::Initialize)(re::RenderManager&);
-	void (*RenderManager::Render)(re::RenderManager&);
-	void (*RenderManager::RenderImGui)(re::RenderManager&);
-	void (*RenderManager::Shutdown)(re::RenderManager&);
+	void (*RenderManager::Initialize)(re::RenderManager&) = nullptr;
+	void (*RenderManager::Render)(re::RenderManager&) = nullptr;
+	void (*RenderManager::RenderImGui)(re::RenderManager&) = nullptr;
+	void (*RenderManager::Shutdown)(re::RenderManager&) = nullptr;
 }
