@@ -230,7 +230,8 @@ namespace opengl
 
 		int pixel_format;
 		UINT num_formats;
-		contextPlatParams->wglChoosePixelFormatARBFn(contextPlatParams->m_hDeviceContext, pixel_format_attribs, 0, 1, &pixel_format, &num_formats);
+		contextPlatParams->wglChoosePixelFormatARBFn(
+			contextPlatParams->m_hDeviceContext, pixel_format_attribs, 0, 1, &pixel_format, &num_formats);
 		if (!num_formats)
 		{
 			SEAssertF("Failed to set the OpenGL pixel format");
