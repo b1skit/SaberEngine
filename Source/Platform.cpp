@@ -121,18 +121,19 @@ namespace platform
 			platform::ParameterBlock::Update	= &opengl::ParameterBlock::Update;
 			platform::ParameterBlock::Destroy	= &opengl::ParameterBlock::Destroy;
 			
+			result = true;
+		}
+		break;
+		case RenderingAPI::DX12:
+		{
+			// Window:
+			platform::Window::Create = &win32::Window::Create;
+			platform::Window::Destroy = &win32::Window::Destroy;
+			platform::Window::SetRelativeMouseMode = &win32::Window::SetRelativeMouseMode;
 
 			result = true;
 		}
 		break;
-
-		case RenderingAPI::DX12:
-		{
-			SEAssertF("Unsupported rendering API");
-			result = false;
-		}
-		break;
-
 		default:
 		{
 			SEAssertF("Unsupported rendering API");

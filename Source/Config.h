@@ -11,7 +11,10 @@ namespace en
 	{
 	public:
 		static char const* const k_showSystemConsoleWindowCmdLineArg;
+		static char const* const k_platformCmdLineArg;
+
 		static char const* const k_commandLineArgsValueName; // Retrieves the received command line arg string
+
 		static char const* const k_sceneNameValueName;
 		static char const* const k_sceneFilePathValueName;
 
@@ -50,10 +53,10 @@ namespace en
 		void SetValue(const std::string& valueName, T value, SettingType settingType = SettingType::Common);
 
 		// Load the config.cfg file
-		void LoadConfig();
+		void LoadConfigFile();
 
 		// Save config.cfg to disk
-		void SaveConfig();
+		void SaveConfigFile();
 
 
 		// Specific configuration retrieval:

@@ -146,7 +146,7 @@ namespace en
 	{
 		LOG("CoreEngine shutting down...");
 
-		Config::Get()->SaveConfig();
+		Config::Get()->SaveConfigFile();
 		
 		// Note: Shutdown order matters!
 		GameplayManager::Get()->Shutdown();

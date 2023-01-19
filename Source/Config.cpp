@@ -34,10 +34,13 @@ namespace en
 	using std::any;
 
 
-	char const* const Config::k_showSystemConsoleWindowCmdLineArg = "console";
-	char const* const Config::k_commandLineArgsValueName = "commandLineArgs";
-	char const* const Config::k_sceneNameValueName = "sceneName";
-	char const* const Config::k_sceneFilePathValueName = "sceneFilePath";
+	char const* const Config::k_showSystemConsoleWindowCmdLineArg	= "console";
+	char const* const Config::k_platformCmdLineArg					= "platform";
+
+	char const* const Config::k_commandLineArgsValueName			= "commandLineArgs";
+
+	char const* const Config::k_sceneNameValueName					= "sceneName";
+	char const* const Config::k_sceneFilePathValueName				= "sceneFilePath";
 
 
 	Config* Config::Get()
@@ -72,6 +75,8 @@ namespace en
 				if (i < argc - 1) // -1 as we need to peek ahead
 				{
 					const int nextArg = i + 1;
+					SEAssert("Missing scene value", nextArg < argc);
+
 					const string sceneNameParam = string(argv[nextArg]);
 
 					argString += sceneNameParam;
@@ -112,6 +117,24 @@ namespace en
 			{
 				SetValue(k_showSystemConsoleWindowCmdLineArg, true, Config::SettingType::Runtime);
 			}
+			else if (currentArg.find(k_platformCmdLineArg) != string::npos)
+			{
+				const int nextArg = i + 1;
+				SEAssert("Missing platform value", nextArg < argc);
+
+				const string platformParam = string(argv[nextArg]);
+
+				SetValue(k_platformCmdLineArg, platformParam, SettingType::APISpecific);
+				
+				if (platformParam.find("opengl") != string::npos)
+				{
+					m_renderingAPI = platform::RenderingAPI::OpenGL;
+				}
+				else if (platformParam.find("dx12") != string::npos)
+				{
+					m_renderingAPI = platform::RenderingAPI::DX12;
+				}
+			}
 			else
 			{
 				printf("ERROR: \"%s\" is not a recognized command!", currentArg.c_str());
@@ -125,11 +148,14 @@ namespace en
 
 	void Config::InitializeDefaultValues()
 	{
+		// OpenGL by default, for now...
+		m_renderingAPI = platform::RenderingAPI::OpenGL;
+
 		// Define the default values in unordered_map, to simplify (de)serialization.
 		// Note: String values must be explicitely defined as string objects
 		m_configValues =
 		{
-			{"platform",							{string("opengl"), SettingType::Common}},
+			{k_platformCmdLineArg,					{string("opengl"), SettingType::Common}},
 
 			{"windowTitle",							{string("Saber Engine"), SettingType::Common}},
 			{"windowXRes",							{1920, SettingType::Common}},
@@ -169,7 +195,6 @@ namespace en
 			// Mouse bindings:
 			{ENUM_TO_STR(InputMouse_Left),		{string(ENUM_TO_STR(InputMouse_Left)), SettingType::Common}},
 			{ENUM_TO_STR(InputMouse_Right),		{string(ENUM_TO_STR(InputMouse_Right)), SettingType::Common}},
-
 		};
 
 		m_isDirty = true;
@@ -234,26 +259,21 @@ namespace en
 			TryInsertDefault("defaultShadowCubeMapRes",	(uint32_t)512);
 
 		}
-			break;
-
+		break;
 		case platform::RenderingAPI::DX12:
 		{
 			// TBC...
 		}
 		break;
-
 		default:
 			LOG_ERROR("Config failed to set API Defaults! "
 				"Does the config.cfg file contain a 'set platform \"<API>\" command for a supported API?");
 
 			throw std::runtime_error("Invalid Rendering API set, cannot set API defaults");
 		}
-		
 	}
 
 
-
-	// Constructor
 	Config::Config()
 		: m_isDirty(true)
 		, m_renderingAPI(platform::RenderingAPI::RenderingAPI_Count)
@@ -262,27 +282,7 @@ namespace en
 		InitializeDefaultValues();
 
 		// Load config.cfg file
-		LoadConfig();
-
-		// Update specific efficiency functions:
-		std::string platform = GetValueAsString("platform");
-		if (platform == "opengl")
-		{
-			m_renderingAPI = platform::RenderingAPI::OpenGL;
-		}
-		else if (platform == "dx12")
-		{
-			m_renderingAPI = platform::RenderingAPI::DX12;
-		}
-		else
-		{
-			LOG_ERROR("Config failed to set valid rendering API! "
-				"Does the config contain a 'set platform \"<API>\" command? e.g:\n"
-				"set platform \"opengl\"\n"
-				"set platform \"dx12\"\n"
-				"Defaulting to OpenGL...");
-			m_renderingAPI = platform::RenderingAPI::OpenGL;
-		}
+		LoadConfigFile();
 
 		// Set API-specific defaults:
 		SetAPIDefaults();
@@ -347,7 +347,7 @@ namespace en
 	}
 
 
-	void Config::LoadConfig()
+	void Config::LoadConfigFile()
 	{
 		LOG("Loading %s...", m_configFilename.c_str());
 
@@ -361,7 +361,7 @@ namespace en
 
 			m_isDirty = true;
 
-			SaveConfig();
+			SaveConfigFile();
 
 			return;
 		}
@@ -532,11 +532,11 @@ namespace en
 	}
 
 
-	void Config::SaveConfig()
+	void Config::SaveConfigFile()
 	{
 		if (m_isDirty == false)
 		{
-			LOG("SaveConfig called, but config has not changed. Returning without modifying file on disk");
+			LOG("SaveConfigFile called, but config has not changed. Returning without modifying file on disk");
 			return;
 		}
 
@@ -557,7 +557,8 @@ namespace en
 		// Output each value, by type:
 		for (std::pair<string, std::pair<any, SettingType>> currentElement : m_configValues)
 		{
-			if (currentElement.second.second == SettingType::APISpecific || currentElement.second.second == SettingType::Runtime)
+			if (currentElement.second.second == SettingType::APISpecific || 
+				currentElement.second.second == SettingType::Runtime)
 			{
 				continue;	// Skip API-specific settings
 			}

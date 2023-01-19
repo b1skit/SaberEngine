@@ -3,6 +3,14 @@
   "Id": "80c62e80-7437-4bb9-b7e0-693fa4c402a1",
   "Items": [
     {
+      "Id": "807d7fbe-0c73-45d1-a81d-2ea78d049415",
+      "Command": "-platform dx12"
+    },
+    {
+      "Id": "8b6142f0-756c-4279-a323-091c03d7e495",
+      "Command": "-platform opengl"
+    },
+    {
       "Id": "bcab5ca4-fc56-4988-ae94-77438e7e80de",
       "Command": "-console"
     },
