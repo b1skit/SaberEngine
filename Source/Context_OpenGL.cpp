@@ -128,8 +128,7 @@ namespace opengl
 			srcMsg = "GL_DEBUG_SOURCE_THIRD_PARTY";
 				break;
 		default:
-			srcMsg = "CURRENTLY UNRECOGNIZED ENUM VALUE: " + to_string(source) + " (Todo: Convert to hex!)";
-			// If we ever hit this, we should add the enum as a new string
+			srcMsg = "Unknown ENUM: " + std::format("{:x}", source);
 		}
 		
 		string typeMsg;
