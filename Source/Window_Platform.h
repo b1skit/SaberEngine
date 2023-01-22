@@ -9,11 +9,11 @@ namespace platform
 	class Window
 	{
 	public:
-		static void CreatePlatformParams(re::Window&);
+		static void CreatePlatformParams(en::Window&);
 
 	public:
-		static bool (*Create)(re::Window& window, std::string const& title, uint32_t width, uint32_t height);
-		static void (*Destroy)(re::Window& window);
-		static void (*SetRelativeMouseMode)(re::Window const& window, bool enabled);
+		static bool (*Create)(en::Window& window, std::string const& title, uint32_t width, uint32_t height);
+		static void (*Destroy)(en::Window& window);
+		static void (*SetRelativeMouseMode)(en::Window const& window, bool enabled);
 	};
 }

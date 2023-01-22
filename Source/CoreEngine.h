@@ -32,7 +32,7 @@ namespace en
 		// EventListener interface:
 		void HandleEvents() override;
 
-		re::Window* GetWindow() const { return m_window.get(); }
+		en::Window* GetWindow() const { return m_window.get(); }
 
 
 	private:
@@ -45,7 +45,7 @@ namespace en
 
 		en::ThreadPool m_threadPool;
 
-		std::unique_ptr<re::Window> m_window;
+		std::unique_ptr<en::Window> m_window;
 
 		std::unique_ptr<std::barrier<>> m_copyBarrier;
 		

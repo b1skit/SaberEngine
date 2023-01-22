@@ -17,7 +17,7 @@ namespace win32
 
 
 	public:
-		struct PlatformParams final : public virtual re::Window::PlatformParams
+		struct PlatformParams final : public virtual en::Window::PlatformParams
 		{
 			HWND m_hWindow = NULL;
 		};
@@ -28,8 +28,8 @@ namespace win32
 
 
 	public:
-		static bool Create(re::Window& window, std::string const& title, uint32_t width, uint32_t height);
-		static void Destroy(re::Window& window);
-		static void SetRelativeMouseMode(re::Window const& window, bool enabled);
+		static bool Create(en::Window& window, std::string const& title, uint32_t width, uint32_t height);
+		static void Destroy(en::Window& window);
+		static void SetRelativeMouseMode(en::Window const& window, bool enabled);
 	};
 }

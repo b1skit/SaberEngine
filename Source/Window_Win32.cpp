@@ -45,7 +45,7 @@ namespace win32
 	}
 
 	
-	bool Window::Create(re::Window& window, std::string const& title, uint32_t width, uint32_t height)
+	bool Window::Create(en::Window& window, std::string const& title, uint32_t width, uint32_t height)
 	{
 		// Since the Windows 10 Creators update, we have per-monitor V2 DPI awareness context. This allows the client
 		// area of the window to achieve 100% scaling while still allowing non-client window content to be rendered in
@@ -124,7 +124,7 @@ namespace win32
 	}
 
 
-	void Window::Destroy(re::Window& window)
+	void Window::Destroy(en::Window& window)
 	{
 		win32::Window::PlatformParams* const platformParams =
 			dynamic_cast<win32::Window::PlatformParams*>(window.GetPlatformParams());
@@ -133,7 +133,7 @@ namespace win32
 	}
 
 
-	void Window::SetRelativeMouseMode(re::Window const& window, bool enabled)
+	void Window::SetRelativeMouseMode(en::Window const& window, bool enabled)
 	{
 		if (enabled)
 		{

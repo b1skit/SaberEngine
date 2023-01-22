@@ -2,7 +2,7 @@
 #include "Window.h"
 #include "Window_Platform.h"
 
-namespace re
+namespace en
 {
 	Window::Window()
 		: m_hasFocus(false)

@@ -75,11 +75,8 @@
     <Filter Include="Source Files\en\platform\win32">
       <UniqueIdentifier>{e9148669-8e9a-448c-90d6-3da71ce4166a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\re\platform\win32">
-      <UniqueIdentifier>{4ca3df88-f3ef-41c3-a332-c3087a521a0b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\re\platform\win32">
-      <UniqueIdentifier>{9670f360-dd01-474b-87fd-50e2bd73791b}</UniqueIdentifier>
+    <Filter Include="Header Files\re\platform\DX12">
+      <UniqueIdentifier>{f2a0cff1-b569-4542-b705-06a1dbd039a2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -278,12 +275,6 @@
     <ClCompile Include="pch\stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Window.cpp">
-      <Filter>Source Files\re</Filter>
-    </ClCompile>
-    <ClCompile Include="Window_Platform.cpp">
-      <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
     <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_win32.cpp">
       <Filter>imgui\backends</Filter>
     </ClCompile>
@@ -299,11 +290,17 @@
     <ClCompile Include="InputManager_Win32.cpp">
       <Filter>Source Files\en\platform\win32</Filter>
     </ClCompile>
-    <ClCompile Include="Window_Win32.cpp">
-      <Filter>Source Files\re\platform\win32</Filter>
-    </ClCompile>
     <ClCompile Include="EngineThread.cpp">
       <Filter>Source Files\en</Filter>
+    </ClCompile>
+    <ClCompile Include="Window.cpp">
+      <Filter>Source Files\en</Filter>
+    </ClCompile>
+    <ClCompile Include="Window_Platform.cpp">
+      <Filter>Source Files\en\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="Window_Win32.cpp">
+      <Filter>Source Files\en\platform\win32</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -532,12 +529,6 @@
     <ClInclude Include="pch\stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Window.h">
-      <Filter>Header Files\re</Filter>
-    </ClInclude>
-    <ClInclude Include="Window_Platform.h">
-      <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
     <ClInclude Include="Platform.h">
       <Filter>Header Files\en\Platform</Filter>
     </ClInclude>
@@ -556,10 +547,16 @@
     <ClInclude Include="InputManager_Win32.h">
       <Filter>Header Files\en\Platform\win32</Filter>
     </ClInclude>
-    <ClInclude Include="Window_Win32.h">
-      <Filter>Header Files\re\platform\win32</Filter>
-    </ClInclude>
     <ClInclude Include="EngineThread.h">
+      <Filter>Header Files\en</Filter>
+    </ClInclude>
+    <ClInclude Include="Window_Win32.h">
+      <Filter>Header Files\en\Platform\win32</Filter>
+    </ClInclude>
+    <ClInclude Include="Window_Platform.h">
+      <Filter>Header Files\en\Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="Window.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
   </ItemGroup>

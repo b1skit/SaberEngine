@@ -10,7 +10,7 @@ namespace platform
 	using en::Config;
 
 
-	void Window::CreatePlatformParams(re::Window& window)
+	void Window::CreatePlatformParams(en::Window& window)
 	{
 		// TODO: We only support windows for now, but eventually the Window interface should be decided by the
 		// OS/platform, not the rendering API.
@@ -36,7 +36,7 @@ namespace platform
 	}
 
 
-	bool (*platform::Window::Create)(re::Window& window, std::string const& title, uint32_t width, uint32_t height) = nullptr;
-	void (*platform::Window::Destroy)(re::Window& window) = nullptr;
-	void (*platform::Window::SetRelativeMouseMode)(re::Window const& window, bool enabled) = nullptr;
+	bool (*platform::Window::Create)(en::Window& window, std::string const& title, uint32_t width, uint32_t height) = nullptr;
+	void (*platform::Window::Destroy)(en::Window& window) = nullptr;
+	void (*platform::Window::SetRelativeMouseMode)(en::Window const& window, bool enabled) = nullptr;
 }

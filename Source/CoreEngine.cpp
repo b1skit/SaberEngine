@@ -59,7 +59,7 @@ namespace en
 		const int xRes = Config::Get()->GetValue<int>("windowXRes");
 		const int yRes = Config::Get()->GetValue<int>("windowYRes");
 
-		m_window = std::make_unique<re::Window>(); // Ensure Window exists for first callbacks triggered by Create
+		m_window = std::make_unique<en::Window>(); // Ensure Window exists for first callbacks triggered by Create
 		const bool windowCreated = m_window->Create(windowTitle, xRes, yRes);
 		SEAssert("Failed to create a window", windowCreated);
 

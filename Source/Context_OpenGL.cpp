@@ -209,7 +209,7 @@ namespace opengl
 	{
 		GetOpenGLExtensionProcessAddresses(context);
 
-		re::Window* window = en::CoreEngine::Get()->GetWindow();
+		en::Window* window = en::CoreEngine::Get()->GetWindow();
 		SEAssert("Window pointer cannot be null", window);
 
 		win32::Window::PlatformParams* const windowPlatParams =
