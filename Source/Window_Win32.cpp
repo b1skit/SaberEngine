@@ -47,6 +47,11 @@ namespace win32
 	
 	bool Window::Create(re::Window& window, std::string const& title, uint32_t width, uint32_t height)
 	{
+		// Since the Windows 10 Creators update, we have per-monitor V2 DPI awareness context. This allows the client
+		// area of the window to achieve 100% scaling while still allowing non-client window content to be rendered in
+		// a DPI-sensitive fashion
+		SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+
 		// Window class name. Used for registering / creating the window.
 		const wchar_t* const windowClassName = L"SaberEngineWindow"; // Unique window identifier
 
