@@ -37,7 +37,7 @@ namespace win32
 		}
 		break;
 		default:
-			result = DefWindowProcA(window, msg, wParam, lParam);
+			result = DefWindowProcW(window, msg, wParam, lParam);
 			break;
 		}
 
@@ -47,8 +47,14 @@ namespace win32
 	
 	bool Window::Create(re::Window& window, std::string const& title, uint32_t width, uint32_t height)
 	{
-		WNDCLASS windowClass;
-		windowClass.style = CS_OWNDC; // DEPRECATED? Could just be 0...
+		// Window class name. Used for registering / creating the window.
+		const wchar_t* const windowClassName = L"SaberEngineWindow"; // Unique window identifier
+
+		// Register a window class for creating our render window with
+		WNDCLASSEXW windowClass = {};
+
+		windowClass.cbSize = sizeof(WNDCLASSEX); // Size of the structure
+		windowClass.style = CS_HREDRAW | CS_VREDRAW; // CS_HREDRAW/CS_VREDRAW: Redraw entire window if movement/size adjustment changes the window width/height
 		windowClass.lpfnWndProc = (WNDPROC)win32::Window::WindowEventCallback; // Window message handler function pointer
 		windowClass.cbClsExtra = 0; // # of extra bytes following the structure. 0, as not used here
 		windowClass.cbWndExtra = 0; // # of extra bytes to allocate following the structure. 0, as not used here
@@ -57,9 +63,10 @@ namespace win32
 		windowClass.hCursor = ::LoadCursor(NULL, IDC_ARROW); // Handle to the class cursor. IDC_ARROW = default arrow icon
 		windowClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1); // Handle to the class background brush. COLOR_WINDOW + 1 = COLOR_WINDOWFRAME
 		windowClass.lpszMenuName = NULL; // Null-terminated char string for the resource name of the class menu (as it appears in the resource file)
-		windowClass.lpszClassName = "SaberEngineWindow"; // Set the unique window identifier
+		windowClass.lpszClassName = windowClassName; // Set the unique window identifier
+		windowClass.hIconSm = ::LoadIcon(win32::Window::PlatformState.m_hInstance, NULL); // Handle to the small icon associated with the window class. Null = Search the windowClass.hIcon resource
 
-		if (!RegisterClassA(&windowClass))
+		if (!::RegisterClassExW(&windowClass))
 		{
 			SEAssertF("Failed to register window");
 			return false;
@@ -86,10 +93,12 @@ namespace win32
 		win32::Window::PlatformParams* const platformParams =
 			dynamic_cast<win32::Window::PlatformParams*>(window.GetPlatformParams());
 
-		platformParams->m_hWindow = ::CreateWindowExA(
+		std::wstring titleWideStr = std::wstring(title.begin(), title.end());
+
+		platformParams->m_hWindow = ::CreateWindowExW(
 			NULL, // Extended window styles: https://learn.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
 			windowClass.lpszClassName, // Unique window class name
-			title.c_str(), // Window/titlebar name
+			titleWideStr.c_str(), // Window/titlebar name
 			WS_OVERLAPPEDWINDOW, // Window styles: https://learn.microsoft.com/en-us/windows/win32/winmsg/window-styles
 			windowX, // Initial horizontal position
 			windowY, // Initial vertical position
@@ -98,7 +107,7 @@ namespace win32
 			NULL, // Optional: Handle to the window parent
 			NULL, // Handle to a menu, or, specifies a child-window identifier
 			win32::Window::PlatformState.m_hInstance, // Handle to the instance of the module associated with the window
-			nullptr // Ptr passed to the window through the CREATESTRUCT. Sent by this function before it returns
+			nullptr // Pointer to a value that will be passed to the window through the CREATESTRUCT. Sent by this function before it returns
 		);
 
 		SEAssert("Failed to create window", platformParams->m_hWindow);

@@ -28,19 +28,25 @@ namespace
 	// More info: https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)
 	void GetOpenGLExtensionProcessAddresses(re::Context& context)
 	{
-		WNDCLASS windowClass = {};
+		const wchar_t* const tempWindowID = L"SaberEngineOpenGLTempWindow";
+
+		WNDCLASSEXW windowClass = {};
+
+		windowClass.cbSize = sizeof(WNDCLASSEX);
 		windowClass.style = CS_OWNDC;
 		windowClass.lpfnWndProc = (WNDPROC)DefWindowProcA; // Window message handler function pointer
 		windowClass.hInstance = GetModuleHandle(0); // Handle to the instance containing the window procedure
-		windowClass.lpszClassName = "SaberEngineOpenGLTempWindow"; // Set the unique window identifier
+		windowClass.lpszClassName = tempWindowID; // Set the unique window identifier
 
-		const ATOM registerResult = RegisterClassA(&windowClass);
+		const ATOM registerResult = RegisterClassExW(&windowClass);
 		SEAssert("Failed to register temp OpenGL window", registerResult);
 
-		HWND tempWindow = ::CreateWindowExA(
+		const wchar_t* const tempWindowTitle = L"Saber Engine Temp OpenGL Window";
+
+		HWND tempWindow = ::CreateWindowExW(
 			0,
 			windowClass.lpszClassName,
-			"Saber Engine Temp OpenGL Window",
+			tempWindowTitle,
 			0,
 			CW_USEDEFAULT,
 			CW_USEDEFAULT,
