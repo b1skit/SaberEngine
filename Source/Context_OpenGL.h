@@ -17,9 +17,6 @@ namespace opengl
 	public:
 		struct PlatformParams final : public virtual re::Context::PlatformParams
 		{
-			PlatformParams() = default;
-			~PlatformParams() override = default;
-
 			HGLRC m_glRenderContext;
 			HDC m_hDeviceContext;
 
@@ -35,13 +32,16 @@ namespace opengl
 		static void Create(re::Context& context);
 		static void Destroy(re::Context& context);
 		static void Present(re::Context const& context);
-		static void SetVSyncMode(re::Context const& window, bool enabled);
-		static void SetCullingMode(re::Context::FaceCullingMode const& mode);
-		static void ClearTargets(re::Context::ClearTarget const& clearTarget);
-		static void SetBlendMode(re::Context::BlendMode const& src, re::Context::BlendMode const& dst);
-		static void SetDepthTestMode(re::Context::DepthTestMode const& mode);
-		static void SetDepthWriteMode(re::Context::DepthWriteMode const& mode);
-		static void SetColorWriteMode(re::Context::ColorWriteMode const& channelModes);
+		static void SetVSyncMode(re::Context const& context, bool enabled);
+		static void SetPipelineState(re::Context const& context, gr::PipelineState const& pipelineState);
 		static uint32_t GetMaxTextureInputs();
+
+		// OpenGL-specific interface:
+		static void SetCullingMode(gr::PipelineState::FaceCullingMode const& mode);
+		static void ClearTargets(gr::PipelineState::ClearTarget const& clearTarget);
+		static void SetBlendMode(gr::PipelineState::BlendMode const& src, gr::PipelineState::BlendMode const& dst);
+		static void SetDepthTestMode(gr::PipelineState::DepthTestMode const& mode);
+		static void SetDepthWriteMode(gr::PipelineState::DepthWriteMode const& mode);
+		static void SetColorWriteMode(gr::PipelineState::ColorWriteMode const& channelModes);		
 	};
 }

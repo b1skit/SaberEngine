@@ -377,31 +377,42 @@ namespace opengl
 	}
 
 
-	void Context::SetCullingMode(re::Context::FaceCullingMode const& mode)
+	void Context::SetPipelineState(re::Context const& context, gr::PipelineState const& pipelineState)
 	{
-		if (mode != re::Context::FaceCullingMode::Disabled)
+		opengl::Context::SetCullingMode(pipelineState.m_faceCullingMode);
+		opengl::Context::SetBlendMode(pipelineState.m_srcBlendMode, pipelineState.m_dstBlendMode);
+		opengl::Context::SetDepthTestMode(pipelineState.m_depthTestMode);
+		opengl::Context::SetDepthWriteMode(pipelineState.m_depthWriteMode);
+		opengl::Context::SetColorWriteMode(pipelineState.m_colorWriteMode);
+		opengl::Context::ClearTargets(pipelineState.m_targetClearMode); // Clear AFTER setting color/depth modes
+	}
+
+
+	void Context::SetCullingMode(gr::PipelineState::FaceCullingMode const& mode)
+	{
+		if (mode != gr::PipelineState::FaceCullingMode::Disabled)
 		{
 			glEnable(GL_CULL_FACE);
 		}
 
 		switch (mode)
 		{
-		case re::Context::FaceCullingMode::Disabled:
+		case gr::PipelineState::FaceCullingMode::Disabled:
 		{
 			glDisable(GL_CULL_FACE);
 		}
 		break;
-		case re::Context::FaceCullingMode::Front:
+		case gr::PipelineState::FaceCullingMode::Front:
 		{
 			glCullFace(GL_FRONT);
 		}
 		break;
-		case re::Context::FaceCullingMode::Back:
+		case gr::PipelineState::FaceCullingMode::Back:
 		{
 			glCullFace(GL_BACK);
 		}
 		break;
-		case re::Context::FaceCullingMode::FrontBack:
+		case gr::PipelineState::FaceCullingMode::FrontBack:
 		{
 			glCullFace(GL_FRONT_AND_BACK);
 		}
@@ -412,26 +423,26 @@ namespace opengl
 	}
 
 
-	void Context::ClearTargets(re::Context::ClearTarget const& clearTarget)
+	void Context::ClearTargets(gr::PipelineState::ClearTarget const& clearTarget)
 	{
 		switch (clearTarget)
 		{
-		case re::Context::ClearTarget::Color:
+		case gr::PipelineState::ClearTarget::Color:
 		{
 			glClear(GL_COLOR_BUFFER_BIT);
 		}
 		break;
-		case re::Context::ClearTarget::Depth:
+		case gr::PipelineState::ClearTarget::Depth:
 		{
 			glClear(GL_DEPTH_BUFFER_BIT);
 		}
 		break;
-		case re::Context::ClearTarget::ColorDepth:
+		case gr::PipelineState::ClearTarget::ColorDepth:
 		{
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		}
 		break;
-		case re::Context::ClearTarget::None:
+		case gr::PipelineState::ClearTarget::None:
 		{
 			return;
 		}
@@ -442,9 +453,9 @@ namespace opengl
 	}
 	
 
-	void Context::SetBlendMode(re::Context::BlendMode const& src, re::Context::BlendMode const& dst)
+	void Context::SetBlendMode(gr::PipelineState::BlendMode const& src, gr::PipelineState::BlendMode const& dst)
 	{
-		if (src == re::Context::BlendMode::Disabled)
+		if (src == gr::PipelineState::BlendMode::Disabled)
 		{
 			SEAssert("Must disable blending for both source and destination", src == dst);
 
@@ -458,55 +469,55 @@ namespace opengl
 		GLenum dFactor = GL_ZERO;
 
 		auto SetGLBlendFactor = [](
-			re::Context::BlendMode const& platformBlendMode,
+			gr::PipelineState::BlendMode const& platformBlendMode,
 			GLenum& blendFactor,
 			bool isSrc
 			)
 		{
 			switch (platformBlendMode)
 			{
-			case re::Context::BlendMode::Zero:
+			case gr::PipelineState::BlendMode::Zero:
 			{
 				blendFactor = GL_ZERO;
 			}
 			break;
-			case re::Context::BlendMode::One:
+			case gr::PipelineState::BlendMode::One:
 			{
 				blendFactor = GL_ONE;
 			}
 			break;
-			case re::Context::BlendMode::SrcColor:
+			case gr::PipelineState::BlendMode::SrcColor:
 			{
 				blendFactor = GL_SRC_COLOR;
 			}
 			break;
-			case re::Context::BlendMode::OneMinusSrcColor:
+			case gr::PipelineState::BlendMode::OneMinusSrcColor:
 			{
 				blendFactor = GL_ONE_MINUS_SRC_COLOR;
 			}
 			break;
-			case re::Context::BlendMode::DstColor:
+			case gr::PipelineState::BlendMode::DstColor:
 			{
 				blendFactor = GL_DST_COLOR;
 			}
 			break;
-			case re::Context::BlendMode::OneMinusDstColor:
+			case gr::PipelineState::BlendMode::OneMinusDstColor:
 			{
 				blendFactor = GL_ONE_MINUS_DST_COLOR;
 			}
-			case re::Context::BlendMode::SrcAlpha:
+			case gr::PipelineState::BlendMode::SrcAlpha:
 			{
 				blendFactor = GL_SRC_ALPHA;
 			}
-			case re::Context::BlendMode::OneMinusSrcAlpha:
+			case gr::PipelineState::BlendMode::OneMinusSrcAlpha:
 			{
 				blendFactor = GL_ONE_MINUS_SRC_ALPHA;
 			}
-			case re::Context::BlendMode::DstAlpha:
+			case gr::PipelineState::BlendMode::DstAlpha:
 			{
 				blendFactor = GL_DST_ALPHA;
 			}
-			case re::Context::BlendMode::OneMinusDstAlpha:
+			case gr::PipelineState::BlendMode::OneMinusDstAlpha:
 			{
 				blendFactor = GL_ONE_MINUS_DST_ALPHA;
 			}
@@ -518,12 +529,12 @@ namespace opengl
 			}
 		};
 
-		if (src != re::Context::BlendMode::Default)
+		if (src != gr::PipelineState::BlendMode::Default)
 		{
 			SetGLBlendFactor(src, sFactor, true);
 		}
 
-		if (dst != re::Context::BlendMode::Default)
+		if (dst != gr::PipelineState::BlendMode::Default)
 		{
 			SetGLBlendFactor(dst, dFactor, false);
 		}
@@ -532,9 +543,9 @@ namespace opengl
 	}
 
 
-	void Context::SetDepthTestMode(re::Context::DepthTestMode const& mode)
+	void Context::SetDepthTestMode(gr::PipelineState::DepthTestMode const& mode)
 	{
-		if (mode == re::Context::DepthTestMode::Always)
+		if (mode == gr::PipelineState::DepthTestMode::Always)
 		{
 			glDisable(GL_DEPTH_TEST);
 			return;
@@ -545,33 +556,33 @@ namespace opengl
 		GLenum depthMode = GL_LESS;
 		switch (mode)
 		{
-		case re::Context::DepthTestMode::Default:
-		case re::Context::DepthTestMode::Less:
+		case gr::PipelineState::DepthTestMode::Default:
+		case gr::PipelineState::DepthTestMode::Less:
 		{
 			depthMode = GL_LESS;
 		}
 		break;
-		case re::Context::DepthTestMode::Equal:
+		case gr::PipelineState::DepthTestMode::Equal:
 		{
 			depthMode = GL_EQUAL;
 		}
 		break;
-		case re::Context::DepthTestMode::LEqual:
+		case gr::PipelineState::DepthTestMode::LEqual:
 		{
 			depthMode = GL_LEQUAL;
 		}
 		break;
-		case re::Context::DepthTestMode::Greater:
+		case gr::PipelineState::DepthTestMode::Greater:
 		{
 			depthMode = GL_GREATER;
 		}
 		break;
-		case re::Context::DepthTestMode::NotEqual:
+		case gr::PipelineState::DepthTestMode::NotEqual:
 		{
 			depthMode = GL_NOTEQUAL;
 		}
 		break;
-		case re::Context::DepthTestMode::GEqual:
+		case gr::PipelineState::DepthTestMode::GEqual:
 		{
 			depthMode = GL_GEQUAL;
 		}
@@ -586,16 +597,16 @@ namespace opengl
 	}
 
 
-	void opengl::Context::SetDepthWriteMode(re::Context::DepthWriteMode const& mode)
+	void opengl::Context::SetDepthWriteMode(gr::PipelineState::DepthWriteMode const& mode)
 	{
 		switch (mode)
 		{
-		case re::Context::DepthWriteMode::Enabled:
+		case gr::PipelineState::DepthWriteMode::Enabled:
 		{
 			glDepthMask(GL_TRUE);
 		}
 		break;
-		case re::Context::DepthWriteMode::Disabled:
+		case gr::PipelineState::DepthWriteMode::Disabled:
 		{
 			glDepthMask(GL_FALSE);
 		}
@@ -608,12 +619,12 @@ namespace opengl
 	}
 
 
-	void opengl::Context::SetColorWriteMode(re::Context::ColorWriteMode const& channelModes)
+	void opengl::Context::SetColorWriteMode(gr::PipelineState::ColorWriteMode const& channelModes)
 	{
-		GLboolean r = channelModes.R == re::Context::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
-		GLboolean g = channelModes.G == re::Context::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
-		GLboolean b = channelModes.B == re::Context::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
-		GLboolean a = channelModes.A == re::Context::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
+		GLboolean r = channelModes.R == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
+		GLboolean g = channelModes.G == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
+		GLboolean b = channelModes.B == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
+		GLboolean a = channelModes.A == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
 
 		glColorMask(r, g, b, a);
 	}

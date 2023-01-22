@@ -48,15 +48,15 @@ namespace gr
 		m_skyTexture = SceneManager::GetSceneData()->GetIBLTexture();
 		m_skyTextureShaderName = "Tex0";
 
-		RenderStage::PipelineStateParams skyboxStageParams;
-		skyboxStageParams.m_targetClearMode = re::Context::ClearTarget::None;
-		skyboxStageParams.m_faceCullingMode = re::Context::FaceCullingMode::Back;
-		skyboxStageParams.m_srcBlendMode	= re::Context::BlendMode::Disabled; // Render on top of the frame
-		skyboxStageParams.m_dstBlendMode	= re::Context::BlendMode::Disabled;
-		skyboxStageParams.m_depthTestMode	= re::Context::DepthTestMode::LEqual;
-		skyboxStageParams.m_depthWriteMode	= re::Context::DepthWriteMode::Disabled;
+		gr::PipelineState skyboxStageParams;
+		skyboxStageParams.m_targetClearMode = gr::PipelineState::ClearTarget::None;
+		skyboxStageParams.m_faceCullingMode = gr::PipelineState::FaceCullingMode::Back;
+		skyboxStageParams.m_srcBlendMode	= gr::PipelineState::BlendMode::Disabled; // Render on top of the frame
+		skyboxStageParams.m_dstBlendMode	= gr::PipelineState::BlendMode::Disabled;
+		skyboxStageParams.m_depthTestMode	= gr::PipelineState::DepthTestMode::LEqual;
+		skyboxStageParams.m_depthWriteMode	= gr::PipelineState::DepthWriteMode::Disabled;
 
-		m_skyboxStage.SetStagePipelineStateParams(skyboxStageParams);
+		m_skyboxStage.SetStagePipelineState(skyboxStageParams);
 
 		m_skyboxStage.SetStageCamera(SceneManager::GetSceneData()->GetMainCamera().get());
 

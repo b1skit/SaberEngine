@@ -69,23 +69,23 @@ namespace gr
 
 	void ShadowsGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		RenderStage::PipelineStateParams shadowStageParams;
-		shadowStageParams.m_targetClearMode = re::Context::ClearTarget::Depth;
+		gr::PipelineState shadowStageParams;
+		shadowStageParams.m_targetClearMode = gr::PipelineState::ClearTarget::Depth;
 		
 		// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
 		// want to be able to place lights inside of geometry (eg. emissive spheres). For now, enable backface culling.
 		// In future, we need to support tagging assets to not cast shadows
-		shadowStageParams.m_faceCullingMode = re::Context::FaceCullingMode::Back;
+		shadowStageParams.m_faceCullingMode = gr::PipelineState::FaceCullingMode::Back;
 
-		shadowStageParams.m_srcBlendMode	= re::Context::BlendMode::Disabled;
-		shadowStageParams.m_dstBlendMode	= re::Context::BlendMode::Disabled;
-		shadowStageParams.m_depthTestMode	= re::Context::DepthTestMode::Less;
+		shadowStageParams.m_srcBlendMode	= gr::PipelineState::BlendMode::Disabled;
+		shadowStageParams.m_dstBlendMode	= gr::PipelineState::BlendMode::Disabled;
+		shadowStageParams.m_depthTestMode	= gr::PipelineState::DepthTestMode::Less;
 		shadowStageParams.m_colorWriteMode	= 
 		{ 
-			re::Context::ColorWriteMode::ChannelMode::Disabled,
-			re::Context::ColorWriteMode::ChannelMode::Disabled,
-			re::Context::ColorWriteMode::ChannelMode::Disabled,
-			re::Context::ColorWriteMode::ChannelMode::Disabled
+			gr::PipelineState::ColorWriteMode::ChannelMode::Disabled,
+			gr::PipelineState::ColorWriteMode::ChannelMode::Disabled,
+			gr::PipelineState::ColorWriteMode::ChannelMode::Disabled,
+			gr::PipelineState::ColorWriteMode::ChannelMode::Disabled
 		};
 
 		// Directional light shadow:		
@@ -107,7 +107,7 @@ namespace gr
 				// TODO: Target set should be a member of the stage, instead of the shadow map?
 				// -> HARD: The stages are already created, we don't know what lights are associated with each stage
 
-				m_directionalShadowStage.SetStagePipelineStateParams(shadowStageParams);
+				m_directionalShadowStage.SetStagePipelineState(shadowStageParams);
 
 				pipeline.AppendRenderStage(m_directionalShadowStage);
 			}
@@ -133,7 +133,7 @@ namespace gr
 
 				shadowStage->SetTextureTargetSet(curLight->GetShadowMap()->GetTextureTargetSet());
 
-				shadowStage->SetStagePipelineStateParams(shadowStageParams);
+				shadowStage->SetStagePipelineState(shadowStageParams);
 
 				// Cubemap shadow param block:
 				CubemapShadowRenderParams cubemapShadowParams = GetCubemapShadowRenderParamsData(shadowCam);

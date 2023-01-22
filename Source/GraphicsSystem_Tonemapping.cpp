@@ -33,14 +33,14 @@ namespace gr
 
 	void TonemappingGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		RenderStage::PipelineStateParams tonemappingStageParam;
-		tonemappingStageParam.m_targetClearMode	= re::Context::ClearTarget::None;
-		tonemappingStageParam.m_faceCullingMode	= re::Context::FaceCullingMode::Back;
-		tonemappingStageParam.m_srcBlendMode	= re::Context::BlendMode::One;
-		tonemappingStageParam.m_dstBlendMode	= re::Context::BlendMode::Zero;
-		tonemappingStageParam.m_depthTestMode	= re::Context::DepthTestMode::Always;
+		gr::PipelineState tonemappingStageParam;
+		tonemappingStageParam.m_targetClearMode	= gr::PipelineState::ClearTarget::None;
+		tonemappingStageParam.m_faceCullingMode	= gr::PipelineState::FaceCullingMode::Back;
+		tonemappingStageParam.m_srcBlendMode	= gr::PipelineState::BlendMode::One;
+		tonemappingStageParam.m_dstBlendMode	= gr::PipelineState::BlendMode::Zero;
+		tonemappingStageParam.m_depthTestMode	= gr::PipelineState::DepthTestMode::Always;
 
-		m_tonemappingStage.SetStagePipelineStateParams(tonemappingStageParam);
+		m_tonemappingStage.SetStagePipelineState(tonemappingStageParam);
 
 		m_tonemappingStage.GetStageShader() = make_shared<Shader>(Config::Get()->GetValue<string>("toneMapShader"));
 		

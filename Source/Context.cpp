@@ -54,39 +54,9 @@ namespace re
 	}
 
 
-	void Context::SetCullingMode(re::Context::FaceCullingMode const& mode) const
+	void Context::SetPipelineState(gr::PipelineState const& pipelineState)
 	{
-		platform::Context::SetCullingMode(mode);
-	}
-
-
-	void Context::ClearTargets(re::Context::ClearTarget const& clearTarget) const
-	{
-		platform::Context::ClearTargets(clearTarget);
-	}
-
-
-	void Context::SetBlendMode(re::Context::BlendMode const& src, re::Context::BlendMode const& dst) const
-	{
-		platform::Context::SetBlendMode(src, dst);
-	}
-
-
-	void Context::SetDepthTestMode(re::Context::DepthTestMode const& mode) const
-	{
-		platform::Context::SetDepthTestMode(mode);
-	}
-
-
-	void Context::SetDepthWriteMode(re::Context::DepthWriteMode const& mode) const
-	{
-		platform::Context::SetDepthWriteMode(mode);
-	}
-
-
-	void Context::SetColorWriteMode(re::Context::ColorWriteMode const& channelModes) const
-	{
-		platform::Context::SetColorWriteMode(channelModes);
+		platform::Context::SetPipelineState(*this, pipelineState);
 	}
 
 

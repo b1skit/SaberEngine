@@ -1,15 +1,16 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-#include "Shader.h"
-#include "Shader_Platform.h"
+#include "Batch.h"
 #include "Camera.h"
-#include "TextureTarget.h"
 #include "Context_Platform.h"
 #include "MeshPrimitive.h"
 #include "NamedObject.h"
 #include "ParameterBlock.h"
-#include "Batch.h"
+#include "PipelineState.h"
+#include "Shader.h"
+#include "Shader_Platform.h"
+#include "TextureTarget.h"
 
 
 namespace re
@@ -35,30 +36,6 @@ namespace re
 		};
 
 
-		struct PipelineStateParams // Platform/context configuration:
-		{			
-			re::Context::ClearTarget	m_targetClearMode		= re::Context::ClearTarget::None;
-			re::Context::FaceCullingMode m_faceCullingMode		= re::Context::FaceCullingMode::Back;
-			re::Context::BlendMode		m_srcBlendMode			= re::Context::BlendMode::One;
-			re::Context::BlendMode		m_dstBlendMode			= re::Context::BlendMode::One;
-			re::Context::DepthTestMode	m_depthTestMode			= re::Context::DepthTestMode::GEqual;
-			re::Context::DepthWriteMode	m_depthWriteMode		= re::Context::DepthWriteMode::Enabled;
-			re::Context::ColorWriteMode	m_colorWriteMode =
-			{ 
-				re::Context::ColorWriteMode::ChannelMode::Enabled, // R
-				re::Context::ColorWriteMode::ChannelMode::Enabled, // G
-				re::Context::ColorWriteMode::ChannelMode::Enabled, // B
-				re::Context::ColorWriteMode::ChannelMode::Enabled  // A
-			};
-
-			struct
-			{
-				uint32_t m_targetFace = 0;
-				uint32_t m_targetMip = 0;
-			} m_textureTargetSetConfig;
-		};
-
-
 	public:
 		explicit RenderStage(std::string const& name);
 				
@@ -71,8 +48,8 @@ namespace re
 
 		bool WritesColor() const { return m_writesColor; }; // Are any of the params.m_colorWriteMode channels enabled?
 
-		void SetStagePipelineStateParams(PipelineStateParams const& params);
-		inline PipelineStateParams const& GetStagePipelineStateParams() const { return m_stageParams; }
+		void SetStagePipelineState(gr::PipelineState const& params);
+		inline gr::PipelineState const& GetStagePipelineState() const { return m_pipelineState; }
 
 		inline std::shared_ptr<re::Shader>& GetStageShader() { return m_stageShader; }
 		inline std::shared_ptr<re::Shader> GetStageShader() const { return m_stageShader; }
@@ -113,7 +90,7 @@ namespace re
 		std::shared_ptr<re::TextureTargetSet> m_textureTargetSet;
 		gr::Camera* m_stageCam;
 		
-		PipelineStateParams m_stageParams;
+		gr::PipelineState m_pipelineState;
 		bool m_writesColor;
 
 		// Per-frame members are cleared every frame

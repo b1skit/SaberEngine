@@ -2,6 +2,7 @@
 #pragma once
 
 #include "TextureTarget.h"
+#include "PipelineState.h"
 
 
 namespace re
@@ -12,83 +13,15 @@ namespace re
 	class Context
 	{
 	public:
-		enum class FaceCullingMode
-		{
-			Disabled,
-			Front,
-			Back,
-			FrontBack,
-			FaceCullingMode_Count
-		};
-
-		enum class ClearTarget
-		{
-			Color,
-			Depth,
-			ColorDepth,
-			None,
-			ClearTarget_Count
-		};
-
-		enum class BlendMode
-		{
-			Disabled,
-			Default, // Src one, Dst zero
-			Zero,
-			One,
-			SrcColor,
-			OneMinusSrcColor,
-			DstColor,
-			OneMinusDstColor,
-			SrcAlpha,
-			OneMinusSrcAlpha,
-			DstAlpha,
-			OneMinusDstAlpha,
-			BlendMode_Count
-		};
-
-		enum class DepthTestMode
-		{
-			Default,	// Less
-			Never,		// Never pass
-			Less,		// <
-			Equal,		// ==
-			LEqual,		// <=
-			Greater,	// >
-			NotEqual,	// !=
-			GEqual,		// >=
-			Always,		// Always pass: Disables depth testing
-			DepthTestMode_Count
-		};
-
-		enum class DepthWriteMode
-		{
-			Enabled,
-			Disabled,
-			DepthWriteMode_Count
-		};
-
-
-		struct ColorWriteMode
-		{
-			enum class ChannelMode
-			{
-				Enabled,
-				Disabled,
-				ChannelMode_Count
-			};
-			ChannelMode R = ChannelMode::Enabled;
-			ChannelMode G = ChannelMode::Enabled;
-			ChannelMode B = ChannelMode::Enabled;
-			ChannelMode A = ChannelMode::Enabled;
-		};
-
-	public:
 		struct PlatformParams
 		{
 			PlatformParams() = default;
-			PlatformParams(PlatformParams const&) = delete;
 			virtual ~PlatformParams() = 0;
+
+			// Copying not allowed
+			PlatformParams(PlatformParams const&) = delete;
+			PlatformParams(PlatformParams&&) = delete;
+			PlatformParams& operator=(PlatformParams const&) = delete;			
 		};
 
 
@@ -108,13 +41,7 @@ namespace re
 		void Present() const;
 		void SetVSyncMode(bool enabled) const;
 
-		// Pipeline state:
-		void SetCullingMode(Context::FaceCullingMode const& mode) const;
-		void ClearTargets(Context::ClearTarget const& clearTarget) const;
-		void SetBlendMode(Context::BlendMode const& src, Context::BlendMode const& dst) const;
-		void SetDepthTestMode(Context::DepthTestMode const& mode) const;
-		void SetDepthWriteMode(Context::DepthWriteMode const& mode) const;
-		void SetColorWriteMode(Context::ColorWriteMode const& channelModes) const;
+		void SetPipelineState(gr::PipelineState const& pipelineState);
 		
 		// Static platform wrappers:
 		static uint32_t GetMaxTextureInputs();		

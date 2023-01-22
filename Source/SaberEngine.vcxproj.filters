@@ -78,6 +78,9 @@
     <Filter Include="Header Files\re\platform\DX12">
       <UniqueIdentifier>{f2a0cff1-b569-4542-b705-06a1dbd039a2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\re\platform\DX12">
+      <UniqueIdentifier>{39354178-16a6-456b-955d-b06161823123}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -121,9 +124,6 @@
     </ClCompile>
     <ClCompile Include="GraphicsSystem_DeferredLighting.cpp">
       <Filter>Source Files\gr</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderPipeline.cpp">
-      <Filter>Source Files\re</Filter>
     </ClCompile>
     <ClCompile Include="GraphicsSystem_Shadows.cpp">
       <Filter>Source Files\gr</Filter>
@@ -301,6 +301,15 @@
     </ClCompile>
     <ClCompile Include="Window_Win32.cpp">
       <Filter>Source Files\en\platform\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="Context_DX12.cpp">
+      <Filter>Source Files\re\platform\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderManager_DX12.cpp">
+      <Filter>Source Files\re\platform\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPipeline.cpp">
+      <Filter>Source Files\re</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -558,6 +567,15 @@
     </ClInclude>
     <ClInclude Include="Window.h">
       <Filter>Header Files\en</Filter>
+    </ClInclude>
+    <ClInclude Include="Context_DX12.h">
+      <Filter>Header Files\re\platform\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderManager_DX12.h">
+      <Filter>Header Files\re\platform\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineState.h">
+      <Filter>Header Files\gr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

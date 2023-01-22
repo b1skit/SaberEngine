@@ -35,7 +35,7 @@ namespace re
 		m_stageShader = rhs.m_stageShader;
 		m_textureTargetSet = rhs.m_textureTargetSet;
 		m_stageCam = rhs.m_stageCam;
-		m_stageParams = rhs.m_stageParams;
+		m_pipelineState = rhs.m_pipelineState;
 		m_writesColor = rhs.m_writesColor;
 
 		m_perFrameShaderUniforms = vector<StageShaderUniform>(rhs.m_perFrameShaderUniforms);
@@ -82,15 +82,15 @@ namespace re
 	}
 
 
-	void RenderStage::SetStagePipelineStateParams(PipelineStateParams const& params)
+	void RenderStage::SetStagePipelineState(gr::PipelineState const& params)
 	{
-		m_stageParams = params;
+		m_pipelineState = params;
 
 		m_writesColor =
-			m_stageParams.m_colorWriteMode.R == re::Context::ColorWriteMode::ChannelMode::Enabled ||
-			m_stageParams.m_colorWriteMode.G == re::Context::ColorWriteMode::ChannelMode::Enabled ||
-			m_stageParams.m_colorWriteMode.B == re::Context::ColorWriteMode::ChannelMode::Enabled ||
-			m_stageParams.m_colorWriteMode.A == re::Context::ColorWriteMode::ChannelMode::Enabled ? true : false;
+			m_pipelineState.m_colorWriteMode.R == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
+			m_pipelineState.m_colorWriteMode.G == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
+			m_pipelineState.m_colorWriteMode.B == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
+			m_pipelineState.m_colorWriteMode.A == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? true : false;
 	}
 
 

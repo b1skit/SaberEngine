@@ -83,8 +83,8 @@
     <IntDir>..\Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
   </PropertyGroup>
   <PropertyGroup>
-	<RunPostBuildEvent>Always</RunPostBuildEvent>
-	<DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -193,6 +193,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClCompile Include="Batch.cpp" />
     <ClCompile Include="Bounds.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Context_DX12.cpp" />
     <ClCompile Include="EngineThread.cpp" />
     <ClCompile Include="EventManager_Platform.cpp" />
     <ClCompile Include="EventManager_Win32.cpp" />
@@ -210,6 +211,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafx.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="PerformanceTimer.cpp" />
+    <ClCompile Include="RenderManager_DX12.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="VertexAttributeBuilder.cpp" />
     <ClCompile Include="Context_Platform.cpp" />
@@ -276,6 +278,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClInclude Include="Batch.h" />
     <ClInclude Include="Bounds.h" />
     <ClInclude Include="Command.h" />
+    <ClInclude Include="Context_DX12.h" />
     <ClInclude Include="EngineThread.h" />
     <ClInclude Include="EventManager_Platform.h" />
     <ClInclude Include="EventManager_Win32.h" />
@@ -289,6 +292,8 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClInclude Include="ParameterBlock_Platform.h" />
     <ClInclude Include="pch\stdafx.h" />
     <ClInclude Include="PerformanceTimer.h" />
+    <ClInclude Include="PipelineState.h" />
+    <ClInclude Include="RenderManager_DX12.h" />
     <ClInclude Include="TextLoader.h" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Updateable.h" />

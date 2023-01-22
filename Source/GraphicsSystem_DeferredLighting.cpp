@@ -181,13 +181,13 @@ namespace gr
 		m_pointlightStage.SetTextureTargetSet(deferredLightingTargetSet);
 	
 		
-		RenderStage::PipelineStateParams ambientStageParams;
-		ambientStageParams.m_targetClearMode	= re::Context::ClearTarget::Color;
-		ambientStageParams.m_faceCullingMode	= re::Context::FaceCullingMode::Back; // Ambient and directional lights (currently) use back face culling
-		ambientStageParams.m_srcBlendMode		= re::Context::BlendMode::One; // All deferred lighting is additive
-		ambientStageParams.m_dstBlendMode		= re::Context::BlendMode::One;
-		ambientStageParams.m_depthTestMode		= re::Context::DepthTestMode::LEqual; // Ambient & directional
-		ambientStageParams.m_depthWriteMode		= re::Context::DepthWriteMode::Disabled;
+		gr::PipelineState ambientStageParams;
+		ambientStageParams.m_targetClearMode	= gr::PipelineState::ClearTarget::Color;
+		ambientStageParams.m_faceCullingMode	= gr::PipelineState::FaceCullingMode::Back; // Ambient and directional lights (currently) use back face culling
+		ambientStageParams.m_srcBlendMode		= gr::PipelineState::BlendMode::One; // All deferred lighting is additive
+		ambientStageParams.m_dstBlendMode		= gr::PipelineState::BlendMode::One;
+		ambientStageParams.m_depthTestMode		= gr::PipelineState::DepthTestMode::LEqual; // Ambient & directional
+		ambientStageParams.m_depthWriteMode		= gr::PipelineState::DepthWriteMode::Disabled;
 
 		shared_ptr<Texture> iblTexture = SceneManager::GetSceneData()->GetIBLTexture();
 
@@ -217,15 +217,15 @@ namespace gr
 				re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
 
 			// Stage params:
-			RenderStage::PipelineStateParams brdfStageParams;
-			brdfStageParams.m_targetClearMode = re::Context::ClearTarget::None;
-			brdfStageParams.m_faceCullingMode = re::Context::FaceCullingMode::Disabled;
-			brdfStageParams.m_srcBlendMode = re::Context::BlendMode::One;
-			brdfStageParams.m_dstBlendMode = re::Context::BlendMode::Zero;
-			brdfStageParams.m_depthTestMode = re::Context::DepthTestMode::Always;
-			brdfStageParams.m_depthWriteMode = re::Context::DepthWriteMode::Disabled;
+			gr::PipelineState brdfStageParams;
+			brdfStageParams.m_targetClearMode = gr::PipelineState::ClearTarget::None;
+			brdfStageParams.m_faceCullingMode = gr::PipelineState::FaceCullingMode::Disabled;
+			brdfStageParams.m_srcBlendMode = gr::PipelineState::BlendMode::One;
+			brdfStageParams.m_dstBlendMode = gr::PipelineState::BlendMode::Zero;
+			brdfStageParams.m_depthTestMode = gr::PipelineState::DepthTestMode::Always;
+			brdfStageParams.m_depthWriteMode = gr::PipelineState::DepthWriteMode::Disabled;
 
-			brdfStage.SetStagePipelineStateParams(brdfStageParams);
+			brdfStage.SetStagePipelineState(brdfStageParams);
 
 			Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
 			brdfStage.AddBatch(fullscreenQuadBatch);
@@ -245,13 +245,13 @@ namespace gr
 		cubeParams.m_colorSpace = Texture::ColorSpace::Linear;
 
 		// Common IBL texture generation stage params:
-		RenderStage::PipelineStateParams iblStageParams;
-		iblStageParams.m_targetClearMode = re::Context::ClearTarget::None;
-		iblStageParams.m_faceCullingMode = re::Context::FaceCullingMode::Disabled;
-		iblStageParams.m_srcBlendMode = re::Context::BlendMode::One;
-		iblStageParams.m_dstBlendMode = re::Context::BlendMode::Zero;
-		iblStageParams.m_depthTestMode = re::Context::DepthTestMode::Always;
-		iblStageParams.m_depthWriteMode = re::Context::DepthWriteMode::Disabled;
+		gr::PipelineState iblStageParams;
+		iblStageParams.m_targetClearMode = gr::PipelineState::ClearTarget::None;
+		iblStageParams.m_faceCullingMode = gr::PipelineState::FaceCullingMode::Disabled;
+		iblStageParams.m_srcBlendMode = gr::PipelineState::BlendMode::One;
+		iblStageParams.m_dstBlendMode = gr::PipelineState::BlendMode::Zero;
+		iblStageParams.m_depthTestMode = gr::PipelineState::DepthTestMode::Always;
+		iblStageParams.m_depthWriteMode = gr::PipelineState::DepthWriteMode::Disabled;
 
 		// TODO: Use a camera here; A GS should not be manually computing this
 		const mat4 cubeProjectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
@@ -310,7 +310,7 @@ namespace gr
 
 				iblStageParams.m_textureTargetSetConfig.m_targetFace = face;
 				iblStageParams.m_textureTargetSetConfig.m_targetMip = 0;
-				iemStage.SetStagePipelineStateParams(iblStageParams);
+				iemStage.SetStagePipelineState(iblStageParams);
 
 				iemStage.AddBatch(cubeMeshBatch);
 
@@ -366,7 +366,7 @@ namespace gr
 
 					iblStageParams.m_textureTargetSetConfig.m_targetFace = face;
 					iblStageParams.m_textureTargetSetConfig.m_targetMip = currentMipLevel;
-					pmremStage.SetStagePipelineStateParams(iblStageParams);
+					pmremStage.SetStagePipelineState(iblStageParams);
 
 					pmremStage.AddBatch(cubeMeshBatch);
 
@@ -382,7 +382,7 @@ namespace gr
 		m_ambientStage.GetStageShader()->ShaderKeywords().emplace_back("AMBIENT_IBL");
 
 		m_ambientStage.SetStageCamera(deferredLightingCam);
-		m_ambientStage.SetStagePipelineStateParams(ambientStageParams);
+		m_ambientStage.SetStagePipelineState(ambientStageParams);
 
 		// Ambient parameters:		
 		AmbientLightParams ambientLightParams = GetAmbientLightParamData();
@@ -400,18 +400,18 @@ namespace gr
 		// Key light stage:
 		shared_ptr<Light> keyLight = SceneManager::GetSceneData()->GetKeyLight();
 
-		RenderStage::PipelineStateParams keylightStageParams(ambientStageParams);
+		gr::PipelineState keylightStageParams(ambientStageParams);
 		if (keyLight)
 		{
 			if (!AmbientIsValid()) // Don't clear after 1st light
 			{
-				keylightStageParams.m_targetClearMode = re::Context::ClearTarget::Color;
+				keylightStageParams.m_targetClearMode = gr::PipelineState::ClearTarget::Color;
 			}
 			else
 			{
-				keylightStageParams.m_targetClearMode = re::Context::ClearTarget::None;
+				keylightStageParams.m_targetClearMode = gr::PipelineState::ClearTarget::None;
 			}
-			m_keylightStage.SetStagePipelineStateParams(keylightStageParams);
+			m_keylightStage.SetStagePipelineState(keylightStageParams);
 
 			m_keylightStage.GetStageShader() = make_shared<Shader>(
 				Config::Get()->GetValue<string>("deferredKeylightShaderName"));
@@ -428,27 +428,27 @@ namespace gr
 		{
 			m_pointlightStage.SetStageCamera(deferredLightingCam);
 
-			RenderStage::PipelineStateParams pointlightStageParams(keylightStageParams);
+			gr::PipelineState pointlightStageParams(keylightStageParams);
 
 			if (!keyLight && !AmbientIsValid())
 			{
-				keylightStageParams.m_targetClearMode = re::Context::ClearTarget::Color;
+				keylightStageParams.m_targetClearMode = gr::PipelineState::ClearTarget::Color;
 			}
 
 			// Pointlights only illuminate something if the sphere volume is behind it
-			pointlightStageParams.m_depthTestMode = re::Context::DepthTestMode::GEqual;
+			pointlightStageParams.m_depthTestMode = gr::PipelineState::DepthTestMode::GEqual;
 
 			if (!iblTexture && !keyLight) // Don't clear after 1st light
 			{
-				pointlightStageParams.m_targetClearMode = re::Context::ClearTarget::Color;
+				pointlightStageParams.m_targetClearMode = gr::PipelineState::ClearTarget::Color;
 			}
 			else
 			{
-				pointlightStageParams.m_targetClearMode = re::Context::ClearTarget::None;
+				pointlightStageParams.m_targetClearMode = gr::PipelineState::ClearTarget::None;
 			}
 
-			pointlightStageParams.m_faceCullingMode = re::Context::FaceCullingMode::Front; // Cull front faces of light volumes
-			m_pointlightStage.SetStagePipelineStateParams(pointlightStageParams);
+			pointlightStageParams.m_faceCullingMode = gr::PipelineState::FaceCullingMode::Front; // Cull front faces of light volumes
+			m_pointlightStage.SetStagePipelineState(pointlightStageParams);
 
 			m_pointlightStage.GetStageShader() = make_shared<Shader>(
 				Config::Get()->GetValue<string>("deferredPointLightShaderName"));

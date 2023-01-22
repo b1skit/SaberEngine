@@ -45,14 +45,14 @@ namespace gr
 		shared_ptr<Shader> blitShader = make_shared<Shader>(Config::Get()->GetValue<string>("blitShaderName"));
 
 		// Emissive blit stage:
-		RenderStage::PipelineStateParams emissiveStageParams;
-		emissiveStageParams.m_targetClearMode	= re::Context::ClearTarget::None;
-		emissiveStageParams.m_faceCullingMode	= re::Context::FaceCullingMode::Back;
-		emissiveStageParams.m_srcBlendMode		= re::Context::BlendMode::One;
-		emissiveStageParams.m_dstBlendMode		= re::Context::BlendMode::One;
-		emissiveStageParams.m_depthTestMode		= re::Context::DepthTestMode::Always;
+		gr::PipelineState emissiveStageParams;
+		emissiveStageParams.m_targetClearMode	= gr::PipelineState::ClearTarget::None;
+		emissiveStageParams.m_faceCullingMode	= gr::PipelineState::FaceCullingMode::Back;
+		emissiveStageParams.m_srcBlendMode		= gr::PipelineState::BlendMode::One;
+		emissiveStageParams.m_dstBlendMode		= gr::PipelineState::BlendMode::One;
+		emissiveStageParams.m_depthTestMode		= gr::PipelineState::DepthTestMode::Always;
 
-		m_emissiveBlitStage.SetStagePipelineStateParams(emissiveStageParams);
+		m_emissiveBlitStage.SetStagePipelineState(emissiveStageParams);
 		m_emissiveBlitStage.GetStageShader() = blitShader;
 		m_emissiveBlitStage.SetStageCamera(sceneCam);
 
@@ -62,12 +62,12 @@ namespace gr
 
 
 		// Bloom stages:
-		RenderStage::PipelineStateParams bloomStageParams;
-		bloomStageParams.m_targetClearMode	= re::Context::ClearTarget::None;
-		bloomStageParams.m_faceCullingMode	= re::Context::FaceCullingMode::Back;
-		bloomStageParams.m_srcBlendMode		= re::Context::BlendMode::One;
-		bloomStageParams.m_dstBlendMode		= re::Context::BlendMode::Zero;
-		bloomStageParams.m_depthTestMode	= re::Context::DepthTestMode::Always;
+		gr::PipelineState bloomStageParams;
+		bloomStageParams.m_targetClearMode	= gr::PipelineState::ClearTarget::None;
+		bloomStageParams.m_faceCullingMode	= gr::PipelineState::FaceCullingMode::Back;
+		bloomStageParams.m_srcBlendMode		= gr::PipelineState::BlendMode::One;
+		bloomStageParams.m_dstBlendMode		= gr::PipelineState::BlendMode::Zero;
+		bloomStageParams.m_depthTestMode	= gr::PipelineState::DepthTestMode::Always;
 		
 		const uint32_t numScalingStages = m_numDownSamplePasses;
 		m_downResStages.reserve(numScalingStages); // MUST reserve so our pointers won't change
@@ -105,7 +105,7 @@ namespace gr
 			m_downResStages.back().GetTextureTargetSet()->SetColorTarget(0, 
 				std::make_shared<re::Texture>(texPath, resScaleParams));
 
-			m_downResStages.back().SetStagePipelineStateParams(bloomStageParams);
+			m_downResStages.back().SetStagePipelineState(bloomStageParams);
 			m_downResStages.back().SetStageCamera(sceneCam);
 
 			if (i == 0)
@@ -152,7 +152,7 @@ namespace gr
 			m_blurStages.back().GetTextureTargetSet()->Viewport().Width() = currentXRes;
 			m_blurStages.back().GetTextureTargetSet()->Viewport().Height() = currentYRes;
 
-			m_blurStages.back().SetStagePipelineStateParams(bloomStageParams);
+			m_blurStages.back().SetStagePipelineState(bloomStageParams);
 			m_blurStages.back().SetStageCamera(sceneCam);
 
 			if (i % 2 == 0)
@@ -189,19 +189,19 @@ namespace gr
 			{
 				m_upResStages.back().SetTextureTargetSet(deferredLightGS->GetFinalTextureTargetSet());
 
-				RenderStage::PipelineStateParams addStageParams(bloomStageParams);
-				addStageParams.m_targetClearMode	= re::Context::ClearTarget::None;
-				addStageParams.m_srcBlendMode		= re::Context::BlendMode::One;
-				addStageParams.m_dstBlendMode		= re::Context::BlendMode::One;
+				gr::PipelineState addStageParams(bloomStageParams);
+				addStageParams.m_targetClearMode	= gr::PipelineState::ClearTarget::None;
+				addStageParams.m_srcBlendMode		= gr::PipelineState::BlendMode::One;
+				addStageParams.m_dstBlendMode		= gr::PipelineState::BlendMode::One;
 
-				m_upResStages.back().SetStagePipelineStateParams(addStageParams);
+				m_upResStages.back().SetStagePipelineState(addStageParams);
 			}
 			else
 			{
 				m_upResStages.back().GetTextureTargetSet()->SetColorTarget(0,
 					m_downResStages[m_downResStages.size() - (i + 2)].GetTextureTargetSet()->GetColorTarget(0));
 
-				m_upResStages.back().SetStagePipelineStateParams(bloomStageParams);
+				m_upResStages.back().SetStagePipelineState(bloomStageParams);
 			}
 
 			pipeline.AppendRenderStage(m_upResStages[i]);

@@ -99,7 +99,7 @@ namespace opengl
 				// RenderDoc makers: Render stage name
 				glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderStage->GetName().c_str());
 
-				RenderStage::PipelineStateParams const& stagePipelineParams = renderStage->GetStagePipelineStateParams();
+				gr::PipelineState const& stagePipelineParams = renderStage->GetStagePipelineState();
 
 				// Attach the stage targets:
 				std::shared_ptr<re::TextureTargetSet> stageTargets = renderStage->GetTextureTargetSet();
@@ -108,16 +108,10 @@ namespace opengl
 					stagePipelineParams.m_textureTargetSetConfig.m_targetMip);
 				opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
 				
-				// Configure the context:
-				renderManager.m_context.SetCullingMode(stagePipelineParams.m_faceCullingMode);
-				renderManager.m_context.SetBlendMode(stagePipelineParams.m_srcBlendMode, stagePipelineParams.m_dstBlendMode);
-				renderManager.m_context.SetDepthTestMode(stagePipelineParams.m_depthTestMode);
-				renderManager.m_context.SetDepthWriteMode(stagePipelineParams.m_depthWriteMode);
-				renderManager.m_context.SetColorWriteMode(stagePipelineParams.m_colorWriteMode);
-				renderManager.m_context.ClearTargets(stagePipelineParams.m_targetClearMode); // Clear AFTER setting color/depth modes
-				// TODO: Move this to a "set pipeline state" helper within Context?
+				// Configure the pipeline state:
+				renderManager.m_context.SetPipelineState(stagePipelineParams);
 
-				// Bind the shader now that the context configuration is known:
+				// Bind the shader now that the pipeline state is set:
 				std::shared_ptr<re::Shader> stageShader = renderStage->GetStageShader();
 				opengl::Shader::Bind(*stageShader);
 				// TODO: Handle shaders set by stages/materials/batches
