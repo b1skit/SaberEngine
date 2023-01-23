@@ -56,8 +56,8 @@ namespace gr
 
 		// Create GBuffer color targets:
 		Texture::TextureParams gBufferParams;
-		gBufferParams.m_width = Config::Get()->GetValue<int>("windowXRes");
-		gBufferParams.m_height = Config::Get()->GetValue<int>("windowYRes");
+		gBufferParams.m_width = Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
+		gBufferParams.m_height = Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
 		gBufferParams.m_faces = 1;
 		gBufferParams.m_usage = re::Texture::Usage::ColorTarget;
 		gBufferParams.m_dimension = re::Texture::Dimension::Texture2D;

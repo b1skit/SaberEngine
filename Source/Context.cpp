@@ -28,8 +28,8 @@ namespace re
 		{
 			0,
 			0,
-			(uint32_t)en::Config::Get()->GetValue<int>("windowXRes"),
-			(uint32_t)en::Config::Get()->GetValue<int>("windowYRes")
+			(uint32_t)en::Config::Get()->GetValue<int>(en::Config::k_windowXResValueName),
+			(uint32_t)en::Config::Get()->GetValue<int>(en::Config::k_windowYResValueName)
 		};
 		// Note: Default framebuffer has no texture targets
 	}

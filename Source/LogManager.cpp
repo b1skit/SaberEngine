@@ -169,14 +169,14 @@ namespace
 
 		void Execute() override
 		{
-			const int logWindowWidth = en::Config::Get()->GetValue<int>("windowXRes");
-			const int logWindowHeight = en::Config::Get()->GetValue<int>("windowYRes") / 2;
+			const int consoleWindowWidth = en::Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
+			const int consoleWindowHeight = en::Config::Get()->GetValue<int>(en::Config::k_windowYResValueName) / 2;
 
 			// For the demo: add a debug button _BEFORE_ the normal log window contents
 			// We take advantage of a rarely used feature: multiple calls to Begin()/End() are appending to the _same_ window.
 			// Most of the contents of the window will be added by the log.Draw() call.
 			ImGui::SetNextWindowSize(ImVec2(
-				static_cast<float>(logWindowWidth), static_cast<float>(logWindowHeight)), ImGuiCond_Always);
+				static_cast<float>(consoleWindowWidth), static_cast<float>(consoleWindowHeight)), ImGuiCond_Always);
 			ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always, ImVec2(0, 0));
 			
 			constexpr char logWindowTitle[] = "Saber Engine Log";
@@ -291,9 +291,37 @@ namespace en
 	}
 
 
+	void LogManager::AssembleStringFromVariadicArgs(wchar_t* buf, uint32_t bufferSize, const wchar_t* msg, ...)
+	{
+		va_list args;
+		va_start(args, msg);
+		const int numChars = vswprintf_s(buf, bufferSize, msg, args);
+		SEAssert("Message is larger than the buffer size; it will be truncated",
+			static_cast<uint32_t>(numChars) < bufferSize);
+		va_end(args);
+	}
+
+
 	std::string LogManager::FormatStringForLog(char const* prefix, const char* tag, char const* assembledMsg)
 	{
 		std::ostringstream stream;
+		if (prefix)
+		{
+			stream << prefix;
+		}
+		if (tag)
+		{
+			stream << tag;
+		}
+		stream << assembledMsg << "\n";
+
+		return stream.str();
+	}
+
+
+	std::wstring LogManager::FormatStringForLog(wchar_t const* prefix, wchar_t const* tag, wchar_t const* assembledMsg)
+	{
+		std::wstringstream stream;
 		if (prefix)
 		{
 			stream << prefix;

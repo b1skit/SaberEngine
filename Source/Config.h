@@ -17,6 +17,8 @@ namespace en
 
 		static char const* const k_sceneNameValueName;
 		static char const* const k_sceneFilePathValueName;
+		static char const* const k_windowXResValueName;
+		static char const* const k_windowYResValueName;
 
 
 	public: 

@@ -41,6 +41,8 @@ namespace en
 
 	char const* const Config::k_sceneNameValueName					= "sceneName";
 	char const* const Config::k_sceneFilePathValueName				= "sceneFilePath";
+	char const* const Config::k_windowXResValueName					= "windowXRes";
+	char const* const Config::k_windowYResValueName					= "windowYRes";
 
 
 	Config* Config::Get()
@@ -158,8 +160,8 @@ namespace en
 			{k_platformCmdLineArg,					{string("opengl"), SettingType::Common}},
 
 			{"windowTitle",							{string("Saber Engine"), SettingType::Common}},
-			{"windowXRes",							{1920, SettingType::Common}},
-			{"windowYRes",							{1080, SettingType::Common}},
+			{k_windowXResValueName,					{1920, SettingType::Common}},
+			{k_windowYResValueName,					{1080, SettingType::Common}},
 
 			{"vsync",								{true, SettingType::Common}},
 

@@ -56,8 +56,8 @@ namespace en
 		Config::Get()->TryGetValue<string>(en::Config::k_commandLineArgsValueName, commandLineArgs);
 
 		const string windowTitle = Config::Get()->GetValue<string>("windowTitle") + " " + commandLineArgs;
-		const int xRes = Config::Get()->GetValue<int>("windowXRes");
-		const int yRes = Config::Get()->GetValue<int>("windowYRes");
+		const int xRes = Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
+		const int yRes = Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
 
 		m_window = std::make_unique<en::Window>(); // Ensure Window exists for first callbacks triggered by Create
 		const bool windowCreated = m_window->Create(windowTitle, xRes, yRes);

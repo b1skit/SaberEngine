@@ -30,8 +30,7 @@ namespace re
 		
 		std::shared_ptr<re::TextureTargetSet> GetBackbufferTextureTargetSet() const { return m_backbuffer; }
 
-		Context::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
-		Context::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
+		Context::PlatformParams* const GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<Context::PlatformParams> params) { m_platformParams = std::move(params); }
 
 		// Platform wrappers:

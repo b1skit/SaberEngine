@@ -23,6 +23,9 @@ namespace en
 		----------------------------*/
 		template<typename...Args>
 		inline static void Log(char const* msg, Args&&... args);
+		
+		template<typename...Args>
+		inline static void Log(wchar_t const* msg, Args&&... args);
 
 		template<typename... Args>
 		inline static void LogWarning(char const* msg, Args&&... args);
@@ -52,6 +55,7 @@ namespace en
 		void AddMessage(std::string&& msg);
 		std::unique_ptr<ImGuiLogWindow> m_imGuiLogWindow; // Internally contains a mutex
 
+
 	private:
 		struct
 		{
@@ -63,8 +67,15 @@ namespace en
 		// Static helpers:
 		template<typename... Args>
 		inline static void LogInternal(char const* tagPrefix, char const* msg, Args&&... args);
-		static void AssembleStringFromVariadicArgs(char* buf, uint32_t bufferSize, const char* fmt, ...);
-		static std::string FormatStringForLog(char const* prefix, const char* tag, char const* assembledMsg);
+		
+		template<typename... Args>
+		inline static void LogInternal(wchar_t const* tagPrefix, wchar_t const* msg, Args&&... args);
+
+		static void AssembleStringFromVariadicArgs(char* buf, uint32_t bufferSize, char const* fmt, ...);
+		static void AssembleStringFromVariadicArgs(wchar_t* buf, uint32_t bufferSize, wchar_t const* fmt, ...);
+
+		static std::string FormatStringForLog(char const* prefix, char const* tag, char const* assembledMsg);
+		static std::wstring FormatStringForLog(wchar_t const* prefix, wchar_t const* tag, wchar_t const* assembledMsg);
 	};
 
 
@@ -74,6 +85,12 @@ namespace en
 		LogInternal("Log:\t", msg, std::forward<Args>(args)...);
 	}
 
+
+	template<typename...Args>
+	inline static void LogManager::Log(wchar_t const* msg, Args&&... args)
+	{
+		LogInternal(L"Log:\t", msg, std::forward<Args>(args)...);
+	}
 
 	template<typename... Args>
 	inline static void LogManager::LogWarning(char const* msg, Args&&... args)
@@ -112,6 +129,37 @@ namespace en
 		}
 
 		LogManager::Get()->AddMessage(std::move(formattedStr));
+	}
+
+
+
+	template<typename... Args>
+	inline static void LogManager::LogInternal(wchar_t const* tagPrefix, wchar_t const* msg, Args&&... args)
+	{
+		constexpr uint32_t bufferSize = 256;
+		std::array<wchar_t, bufferSize> assembledMsg;
+
+		AssembleStringFromVariadicArgs(assembledMsg.data(), bufferSize, msg, args...);
+
+		std::wstring formattedStr;
+		if (msg[0] == '\n')
+		{
+			formattedStr = FormatStringForLog(L"\n", tagPrefix, &assembledMsg.data()[1]);
+		}
+		else if (msg[0] == '\t')
+		{
+			formattedStr = FormatStringForLog(L"\t", nullptr, &assembledMsg.data()[1]);
+		}
+		else
+		{
+			formattedStr = FormatStringForLog(nullptr, tagPrefix, assembledMsg.data());
+		}
+
+		// Convert wstring -> string. Note: This is deprecated. TODO: Handle this correctly
+		std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> wstringConverter;
+		std::string convertedStr = wstringConverter.to_bytes(formattedStr);
+
+		LogManager::Get()->AddMessage(std::move(convertedStr));
 	}
 }
 

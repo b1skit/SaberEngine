@@ -15,6 +15,7 @@
 #if defined(_DEBUG)
 
 // TODO: Move the Win32-specific stuff to a platform wrapper (ClipCursor, ShowCursor)
+// TODO: Reverse the argument order, so we can support variadic arguments in the message: condition, msg, args
 
 #define SEAssert(errorMsg, condition) \
 	if(!(condition)) \
@@ -26,7 +27,6 @@
 		std::cerr << "Occurred at: " << __FILE__ << ":" << __LINE__ << "::" << __FUNCTION__ << std::endl; \
 		std::abort(); \
 	}
-
 #define SEAssertF(errorMsg) \
 		ClipCursor(NULL); ShowCursor(true); /* Disable relative mouse mode* */ \
 		const std::string errorStr((errorMsg)); \

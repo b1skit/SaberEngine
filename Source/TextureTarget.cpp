@@ -48,8 +48,8 @@ namespace re
 	Viewport::Viewport() :
 		m_xMin(0),
 		m_yMin(0),
-		m_width(Config::Get()->GetValue<int>("windowXRes")),
-		m_height(Config::Get()->GetValue<int>("windowYRes"))
+		m_width(Config::Get()->GetValue<int>(en::Config::k_windowXResValueName)),
+		m_height(Config::Get()->GetValue<int>(en::Config::k_windowYResValueName))
 	{
 
 	}
@@ -233,8 +233,8 @@ namespace re
 			// Default framebuffer has no texture targets
 			if (!HasTargets())
 			{
-				const uint32_t xRes = (uint32_t)Config::Get()->GetValue<int>("windowXRes");
-				const uint32_t yRes = (uint32_t)Config::Get()->GetValue<int>("windowYRes");
+				const uint32_t xRes = (uint32_t)Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
+				const uint32_t yRes = (uint32_t)Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
 
 				targetDimensions.x = (float)xRes;
 				targetDimensions.y = (float)yRes;

@@ -97,6 +97,12 @@ MikkTSpace Welder: https://github.com/mmikk/Welder
 - Add "$(ProjectDir)..\Dependencies\Welder\" to "Project properties -> C/C++ -> Additional Include Directories"
 
 
+Direct-X Headers: https://github.com/microsoft/DirectX-Headers
+--------------------------------------------------------------
+- Add ".\include\directx\" to "Project properties -> C/C++ -> General -> Additional Include Directories"  
+- Add "$(WindowsSDK_LibraryPath)\x64\d3d12.lib" and "$(WindowsSDK_LibraryPath)\x64\dxgi.lib" to "Project properties -> Linker -> Input -> Additional Dependencies"  
+
+
 Glew: https://github.com/nigels-com/glew/releases
 -------------------------------------------------
 - Current version: glew-2.2.0-win32 (pre-compiled)

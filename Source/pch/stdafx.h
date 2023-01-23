@@ -10,11 +10,14 @@
 
 
 // std library:
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // codecvt is deprecated. TODO: Handle wstring -> string better
+
 #include <any>
 #include <array>
 #include <barrier>
 #include <cassert>
 #include <chrono>
+#include <codecvt>
 #include <condition_variable>
 #include <cstdio>
 #include <cstdlib>

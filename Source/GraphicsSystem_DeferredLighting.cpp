@@ -156,8 +156,8 @@ namespace gr
 		
 		// Create a shared lighting stage texture target:
 		Texture::TextureParams lightTargetParams;
-		lightTargetParams.m_width = Config::Get()->GetValue<int>("windowXRes");
-		lightTargetParams.m_height = Config::Get()->GetValue<int>("windowYRes");
+		lightTargetParams.m_width = Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
+		lightTargetParams.m_height = Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
 		lightTargetParams.m_faces = 1;
 		lightTargetParams.m_usage = Texture::Usage::ColorTarget;
 		lightTargetParams.m_dimension = Texture::Dimension::Texture2D;
