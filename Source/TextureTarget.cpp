@@ -85,23 +85,6 @@ namespace re
 	}
 
 
-	TextureTargetSet::~TextureTargetSet()
-	{
-		for (size_t i = 0; i < m_colorTargets.size(); i++)
-		{
-			m_colorTargets[i] = nullptr;
-		}
-		m_depthStencilTarget = nullptr;
-		m_platformParams = nullptr;
-
-		m_colorTargetStateDirty = true;
-		m_hasColorTarget = false;
-
-		m_targetParameterBlock = nullptr;
-		m_targetParamsDirty = true;
-	}
-
-
 	TextureTargetSet::TextureTargetSet(TextureTargetSet const& rhs, std::string const& newName)
 		: NamedObject(newName)
 		, m_colorTargets(rhs.m_colorTargets)
@@ -141,6 +124,23 @@ namespace re
 		m_targetParamsDirty = rhs.m_targetParamsDirty;
 
 		return *this;
+	}
+
+
+	TextureTargetSet::~TextureTargetSet()
+	{
+		for (size_t i = 0; i < m_colorTargets.size(); i++)
+		{
+			m_colorTargets[i] = nullptr;
+		}
+		m_depthStencilTarget = nullptr;
+		m_platformParams = nullptr;
+
+		m_colorTargetStateDirty = true;
+		m_hasColorTarget = false;
+
+		m_targetParameterBlock = nullptr;
+		m_targetParamsDirty = true;
 	}
 
 

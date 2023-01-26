@@ -72,8 +72,8 @@ namespace gr
 		const uint32_t numScalingStages = m_numDownSamplePasses;
 		m_downResStages.reserve(numScalingStages); // MUST reserve so our pointers won't change
 
-		const int currentXRes = Config::Get()->GetValue<int>(en::Config::k_windowXResValueName) / 2;
-		const int currentYRes = Config::Get()->GetValue<int>(en::Config::k_windowYResValueName) / 2;
+		int currentXRes = Config::Get()->GetValue<int>(en::Config::k_windowXResValueName) / 2;
+		int currentYRes = Config::Get()->GetValue<int>(en::Config::k_windowYResValueName) / 2;
 
 		Texture::TextureParams resScaleParams;
 		resScaleParams.m_width = currentXRes;
