@@ -212,6 +212,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     </ClCompile>
     <ClCompile Include="PerformanceTimer.cpp" />
     <ClCompile Include="RenderManager_DX12.cpp" />
+    <ClCompile Include="TextureTarget_DX12.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="VertexAttributeBuilder.cpp" />
     <ClCompile Include="Context_Platform.cpp" />
@@ -295,6 +296,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClInclude Include="PipelineState.h" />
     <ClInclude Include="RenderManager_DX12.h" />
     <ClInclude Include="TextLoader.h" />
+    <ClInclude Include="TextureTarget_DX12.h" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Updateable.h" />
     <ClInclude Include="VertexAttributeBuilder.h" />

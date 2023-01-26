@@ -28,13 +28,15 @@ namespace opengl
 			wglChoosePixelFormatARB_type* wglChoosePixelFormatARBFn = nullptr;
 		};
 
+
 	public:
 		static void Create(re::Context& context);
 		static void Destroy(re::Context& context);
 		static void Present(re::Context const& context);
 		static void SetVSyncMode(re::Context const& context, bool enabled);
 		static void SetPipelineState(re::Context const& context, gr::PipelineState const& pipelineState);
-		static uint32_t GetMaxTextureInputs();
+		static uint8_t GetMaxTextureInputs();
+		static uint8_t GetMaxColorTargets();
 
 		// OpenGL-specific interface:
 		static void SetCullingMode(gr::PipelineState::FaceCullingMode const& mode);
@@ -42,6 +44,6 @@ namespace opengl
 		static void SetBlendMode(gr::PipelineState::BlendMode const& src, gr::PipelineState::BlendMode const& dst);
 		static void SetDepthTestMode(gr::PipelineState::DepthTestMode const& mode);
 		static void SetDepthWriteMode(gr::PipelineState::DepthWriteMode const& mode);
-		static void SetColorWriteMode(gr::PipelineState::ColorWriteMode const& channelModes);		
+		static void SetColorWriteMode(gr::PipelineState::ColorWriteMode const& channelModes);
 	};
 }

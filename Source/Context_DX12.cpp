@@ -122,10 +122,16 @@ namespace dx12
 	}
 
 
-	uint32_t Context::GetMaxTextureInputs()
+	uint8_t Context::GetMaxTextureInputs()
 	{
 		SEAssertF("TODO: Implement this");
 		return 0;
+	}
+
+
+	uint8_t Context::GetMaxColorTargets()
+	{
+		return D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT;
 	}
 
 

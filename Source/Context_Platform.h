@@ -20,6 +20,7 @@ namespace platform
 		static void (*Present)(re::Context const& context);
 		static void (*SetVSyncMode)(re::Context const& window, bool enabled);
 		static void (*SetPipelineState)(re::Context const&, gr::PipelineState const& pipelineState);
-		static uint32_t(*GetMaxTextureInputs)();
+		static uint8_t(*GetMaxTextureInputs)();
+		static uint8_t(*GetMaxColorTargets)();
 	};
 }

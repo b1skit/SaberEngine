@@ -51,7 +51,8 @@ namespace dx12
 		static void Present(re::Context const& context);
 		static void SetVSyncMode(re::Context const& context, bool enabled);
 		static void SetPipelineState(re::Context const& context, gr::PipelineState const& pipelineState);
-		static uint32_t GetMaxTextureInputs();
+		static uint8_t GetMaxTextureInputs();
+		static uint8_t GetMaxColorTargets();
 
 
 		// DX12-specific interface:

@@ -11,7 +11,6 @@ namespace opengl
 	class TextureTarget
 	{
 	public:
-	
 		struct PlatformParams final : public virtual re::TextureTarget::PlatformParams
 		{
 			PlatformParams();
@@ -43,7 +42,5 @@ namespace opengl
 
 		static void CreateDepthStencilTarget(re::TextureTargetSet& targetSet);
 		static void AttachDepthStencilTarget(re::TextureTargetSet& targetSet);
-
-		static uint32_t MaxColorTargets();
 	};
 }

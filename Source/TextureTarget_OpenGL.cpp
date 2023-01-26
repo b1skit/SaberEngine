@@ -406,12 +406,4 @@ namespace opengl
 				targetSet.Viewport().Height());
 		}
 	}
-
-
-	uint32_t TextureTargetSet::MaxColorTargets()
-	{
-		GLint maxColorAttachments = 0;
-		glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAttachments);
-		return maxColorAttachments;
-	}
 }

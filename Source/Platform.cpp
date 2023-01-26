@@ -34,6 +34,7 @@
 
 #include "TextureTarget_Platform.h"
 #include "TextureTarget_OpenGL.h"
+#include "TextureTarget_DX12.h"
 
 #include "Window_Platform.h"
 #include "Window_Win32.h"
@@ -80,6 +81,7 @@ namespace platform
 			platform::Context::SetVSyncMode			= &opengl::Context::SetVSyncMode;
 			platform::Context::SetPipelineState		= &opengl::Context::SetPipelineState;
 			platform::Context::GetMaxTextureInputs	= &opengl::Context::GetMaxTextureInputs;
+			platform::Context::GetMaxColorTargets	= &opengl::Context::GetMaxColorTargets;
 			
 			// Render manager:
 			platform::RenderManager::Initialize		= &opengl::RenderManager::Initialize;
@@ -109,7 +111,6 @@ namespace platform
 			platform::TextureTargetSet::AttachColorTargets			= &opengl::TextureTargetSet::AttachColorTargets;
 			platform::TextureTargetSet::CreateDepthStencilTarget	= &opengl::TextureTargetSet::CreateDepthStencilTarget;
 			platform::TextureTargetSet::AttachDepthStencilTarget	= &opengl::TextureTargetSet::AttachDepthStencilTarget;
-			platform::TextureTargetSet::MaxColorTargets				= &opengl::TextureTargetSet::MaxColorTargets;
 
 			// Shader:
 			platform::Shader::Create			= &opengl::Shader::Create;
@@ -135,12 +136,19 @@ namespace platform
 			platform::Context::Present				= &dx12::Context::Present;
 			platform::Context::SetVSyncMode			= &dx12::Context::SetVSyncMode;
 			platform::Context::GetMaxTextureInputs	= &dx12::Context::GetMaxTextureInputs;
+			platform::Context::GetMaxColorTargets	= &dx12::Context::GetMaxColorTargets;
 			
 			// Render manager:
 			platform::RenderManager::Initialize		= &dx12::RenderManager::Initialize;
 			platform::RenderManager::Render			= &dx12::RenderManager::Render;
 			platform::RenderManager::RenderImGui	= &dx12::RenderManager::RenderImGui;
 			platform::RenderManager::Shutdown		= &dx12::RenderManager::Shutdown;
+
+			// Texture target set:
+			platform::TextureTargetSet::CreateColorTargets			= &dx12::TextureTargetSet::CreateColorTargets;
+			platform::TextureTargetSet::AttachColorTargets			= &dx12::TextureTargetSet::AttachColorTargets;
+			platform::TextureTargetSet::CreateDepthStencilTarget	= &dx12::TextureTargetSet::CreateDepthStencilTarget;
+			platform::TextureTargetSet::AttachDepthStencilTarget	= &dx12::TextureTargetSet::AttachDepthStencilTarget;
 
 			result = true;
 		}

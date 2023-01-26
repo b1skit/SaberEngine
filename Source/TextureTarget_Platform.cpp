@@ -4,6 +4,8 @@
 #include "TextureTarget_Platform.h"
 #include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"
+#include "TextureTarget_DX12.h"
+
 
 using en::Config;
 
@@ -23,7 +25,7 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			SEAssertF("DX12 is not yet supported");
+			texTarget.SetPlatformParams(std::make_shared<dx12::TextureTarget::PlatformParams>());
 		}
 		break;
 		default:
@@ -47,7 +49,7 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			SEAssertF("DX12 is not yet supported");
+			texTarget.SetPlatformParams(std::make_shared<dx12::TextureTargetSet::PlatformParams>());
 		}
 		break;
 		default:
@@ -64,6 +66,4 @@ namespace platform
 	void (*TextureTargetSet::AttachColorTargets)(re::TextureTargetSet& targetSet, uint32_t face, uint32_t mipLevel) = nullptr;
 	void (*TextureTargetSet::CreateDepthStencilTarget)(re::TextureTargetSet& targetSet) = nullptr;
 	void (*TextureTargetSet::AttachDepthStencilTarget)(re::TextureTargetSet& targetSet) = nullptr;
-	uint32_t(*TextureTargetSet::MaxColorTargets)() = nullptr;
-
 }

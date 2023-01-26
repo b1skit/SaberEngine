@@ -35,7 +35,5 @@ namespace platform
 
 		static void (*CreateDepthStencilTarget)(re::TextureTargetSet& targetSet);
 		static void (*AttachDepthStencilTarget)(re::TextureTargetSet& targetSet);
-
-		static uint32_t(*MaxColorTargets)();
 	};
 }

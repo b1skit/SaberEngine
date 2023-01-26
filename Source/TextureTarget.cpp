@@ -2,6 +2,7 @@
 #include "Config.h"
 #include "TextureTarget.h"
 #include "TextureTarget_Platform.h"
+#include "RenderManager.h"
 
 
 namespace re
@@ -76,7 +77,7 @@ namespace re
 	{
 		platform::TextureTargetSet::CreatePlatformParams(*this);
 	
-		m_colorTargets.resize(platform::TextureTargetSet::MaxColorTargets());
+		m_colorTargets.resize(re::RenderManager::Get()->GetContext().GetMaxColorTargets());
 
 		m_targetParameterBlock = re::ParameterBlock::Create(
 			"RenderTargetParams",

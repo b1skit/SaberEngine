@@ -311,6 +311,9 @@
     <ClCompile Include="RenderPipeline.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
+    <ClCompile Include="TextureTarget_DX12.cpp">
+      <Filter>Source Files\re\platform\DX12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -576,6 +579,9 @@
     </ClInclude>
     <ClInclude Include="PipelineState.h">
       <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureTarget_DX12.h">
+      <Filter>Header Files\re\platform\DX12</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

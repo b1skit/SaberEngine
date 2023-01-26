@@ -42,8 +42,9 @@ namespace re
 
 		void SetPipelineState(gr::PipelineState const& pipelineState);
 		
-		// Static platform wrappers:
-		static uint32_t GetMaxTextureInputs();		
+		// Platform wrappers:
+		uint8_t GetMaxTextureInputs() const;
+		uint8_t GetMaxColorTargets() const;
 
 	private:
 		// Note: We store this as a shared_ptr so we can instantiate it once the context has been created

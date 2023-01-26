@@ -60,8 +60,14 @@ namespace re
 	}
 
 
-	uint32_t Context::GetMaxTextureInputs()
+	uint8_t Context::GetMaxTextureInputs() const
 	{
 		return platform::Context::GetMaxTextureInputs();
+	}
+
+
+	uint8_t Context::GetMaxColorTargets() const
+	{
+		return platform::Context::GetMaxColorTargets();
 	}
 }

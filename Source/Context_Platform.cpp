@@ -41,5 +41,6 @@ namespace platform
 	void (*platform::Context::Present)(re::Context const& context) = nullptr;
 	void (*platform::Context::SetVSyncMode)(re::Context const& window, bool enabled) = nullptr;
 	void (*platform::Context::SetPipelineState)(re::Context const& context, gr::PipelineState const& pipelineState) = nullptr;
-	uint32_t(*platform::Context::GetMaxTextureInputs)() = nullptr;
+	uint8_t (*platform::Context::GetMaxTextureInputs)() = nullptr;
+	uint8_t (*platform::Context::GetMaxColorTargets)() = nullptr;
 }

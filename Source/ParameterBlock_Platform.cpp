@@ -12,7 +12,7 @@ namespace platform
 {
 	void platform::ParameterBlock::CreatePlatformParams(re::ParameterBlock& paramBlock)
 	{
-		SEAssert("Attempting to create platform params for a texture that already exists",
+		SEAssert("Attempting to create platform params for a parameter block that already exists",
 			paramBlock.GetPlatformParams() == nullptr);
 
 		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
