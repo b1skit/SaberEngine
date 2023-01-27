@@ -40,7 +40,6 @@ namespace re
 		void Destroy();
 
 		void Present() const;
-		void SetVSyncMode(bool enabled) const;
 
 		void SetPipelineState(gr::PipelineState const& pipelineState);
 		

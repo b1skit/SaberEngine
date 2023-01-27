@@ -36,4 +36,5 @@ namespace platform
 
 	void (*platform::SwapChain::Create)(re::SwapChain&) = nullptr;
 	void (*platform::SwapChain::Destroy)(re::SwapChain&) = nullptr;
+	void (*platform::SwapChain::SetVSyncMode)(re::SwapChain const& swapChain, bool enabled) = nullptr;
 }

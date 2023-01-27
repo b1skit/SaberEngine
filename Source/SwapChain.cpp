@@ -22,4 +22,10 @@ namespace re
 	{
 		platform::SwapChain::Destroy(*this);
 	}
+
+
+	void SwapChain::SetVSyncMode(bool enabled) const
+	{
+		platform::SwapChain::SetVSyncMode(*this, enabled);
+	}
 }

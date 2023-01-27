@@ -280,7 +280,7 @@ namespace opengl
 
 		LOG("Using OpenGL version %d.%d", glMajorVersionCheck, glMinorVersionCheck);
 
-		context.SetVSyncMode(Config::Get()->GetValue<bool>("vsync"));
+		context.GetSwapChain().SetVSyncMode(Config::Get()->GetValue<bool>("vsync"));
 
 		// Create the (implied) swap chain
 		context.GetSwapChain().Create();
@@ -346,37 +346,6 @@ namespace opengl
 			dynamic_cast<opengl::Context::PlatformParams const*>(context.GetPlatformParams());
 
 		::SwapBuffers(platformParams->m_hDeviceContext);
-	}
-
-
-	void Context::SetVSyncMode(re::Context const& context, bool enabled)
-	{
-		// Based on the technique desecribed here:
-		// https://stackoverflow.com/questions/589064/how-to-enable-vertical-sync-in-opengl
-		auto WGLExtensionSupported = [](const char* extension_name)
-		{
-			// Wgl function pointer, gets a string with list of wgl extensions:
-			PFNWGLGETEXTENSIONSSTRINGEXTPROC _wglGetExtensionsStringEXT = 
-				(PFNWGLGETEXTENSIONSSTRINGEXTPROC)wglGetProcAddress("wglGetExtensionsStringEXT");
-
-			if (::strstr(_wglGetExtensionsStringEXT(), extension_name) == nullptr)
-			{
-				return false; // Extension not found/supported
-			}
-
-			return true; // Extension supported
-		};
-
-		PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = nullptr;
-		if (WGLExtensionSupported("WGL_EXT_swap_control"))
-		{
-			wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-			wglSwapIntervalEXT(static_cast<int8_t>(enabled)); // # frames of delay: VSync == 1
-		}
-		else
-		{
-			SEAssertF("VSync extension not supported");
-		}
 	}
 
 

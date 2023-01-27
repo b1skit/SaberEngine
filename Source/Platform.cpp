@@ -82,7 +82,6 @@ namespace platform
 			platform::Context::Create				= &opengl::Context::Create;
 			platform::Context::Destroy				= &opengl::Context::Destroy;
 			platform::Context::Present				= &opengl::Context::Present;
-			platform::Context::SetVSyncMode			= &opengl::Context::SetVSyncMode;
 			platform::Context::SetPipelineState		= &opengl::Context::SetPipelineState;
 			platform::Context::GetMaxTextureInputs	= &opengl::Context::GetMaxTextureInputs;
 			platform::Context::GetMaxColorTargets	= &opengl::Context::GetMaxColorTargets;
@@ -125,8 +124,9 @@ namespace platform
 			platform::Shader::LoadShaderTexts	= &opengl::Shader::LoadShaderTexts;
 
 			// Swap chain:
-			platform::SwapChain::Create		= &opengl::SwapChain::Create;
-			platform::SwapChain::Destroy	= &opengl::SwapChain::Destroy;
+			platform::SwapChain::Create			= &opengl::SwapChain::Create;
+			platform::SwapChain::Destroy		= &opengl::SwapChain::Destroy;
+			platform::SwapChain::SetVSyncMode	= &opengl::SwapChain::SetVSyncMode;
 
 			// Parameter blocks:
 			platform::ParameterBlock::Create	= &opengl::ParameterBlock::Create;
@@ -142,7 +142,6 @@ namespace platform
 			platform::Context::Create				= &dx12::Context::Create;
 			platform::Context::Destroy				= &dx12::Context::Destroy;
 			platform::Context::Present				= &dx12::Context::Present;
-			platform::Context::SetVSyncMode			= &dx12::Context::SetVSyncMode;
 			platform::Context::GetMaxTextureInputs	= &dx12::Context::GetMaxTextureInputs;
 			platform::Context::GetMaxColorTargets	= &dx12::Context::GetMaxColorTargets;
 			
@@ -153,8 +152,9 @@ namespace platform
 			platform::RenderManager::Shutdown		= &dx12::RenderManager::Shutdown;
 
 			// Swap chain:
-			platform::SwapChain::Create		= &dx12::SwapChain::Create;
-			platform::SwapChain::Destroy	= &dx12::SwapChain::Destroy;
+			platform::SwapChain::Create			= &dx12::SwapChain::Create;
+			platform::SwapChain::Destroy		= &dx12::SwapChain::Destroy;
+			platform::SwapChain::SetVSyncMode	= &dx12::SwapChain::SetVSyncMode;
 
 			// Texture target set:
 			platform::TextureTargetSet::CreateColorTargets			= &dx12::TextureTargetSet::CreateColorTargets;

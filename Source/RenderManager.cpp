@@ -194,7 +194,7 @@ namespace re
 			case en::EventManager::EventType::InputToggleVSync:
 			{
 				m_vsyncEnabled = !m_vsyncEnabled;
-				m_context.SetVSyncMode(m_vsyncEnabled);
+				m_context.GetSwapChain().SetVSyncMode(m_vsyncEnabled);
 				LOG("VSync %s", m_vsyncEnabled ? "enabled" : "disabled");
 			}
 			break;

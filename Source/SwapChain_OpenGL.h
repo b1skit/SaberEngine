@@ -21,5 +21,6 @@ namespace opengl
 	public:
 		static void Create(re::SwapChain& swapChain);
 		static void Destroy(re::SwapChain& swapChain);
+		static void SetVSyncMode(re::SwapChain const& swapChain, bool enabled);
 	};
 }

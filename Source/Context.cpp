@@ -5,7 +5,6 @@
 #include "DebugConfiguration.h"
 
 
-
 namespace re
 {
 	using std::make_shared;
@@ -32,12 +31,6 @@ namespace re
 	void Context::Present() const
 	{
 		platform::Context::Present(*this);
-	}
-
-
-	void Context::SetVSyncMode(bool enabled) const
-	{
-		platform::Context::SetVSyncMode(*this, enabled);
 	}
 
 

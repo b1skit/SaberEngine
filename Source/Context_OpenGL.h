@@ -33,7 +33,6 @@ namespace opengl
 		static void Create(re::Context& context);
 		static void Destroy(re::Context& context);
 		static void Present(re::Context const& context);
-		static void SetVSyncMode(re::Context const& context, bool enabled);
 		static void SetPipelineState(re::Context const& context, gr::PipelineState const& pipelineState);
 		static uint8_t GetMaxTextureInputs();
 		static uint8_t GetMaxColorTargets();

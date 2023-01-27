@@ -194,6 +194,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClCompile Include="Bounds.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Context_DX12.cpp" />
+    <ClCompile Include="Debug_DX12.cpp" />
     <ClCompile Include="EngineThread.cpp" />
     <ClCompile Include="EventManager_Platform.cpp" />
     <ClCompile Include="EventManager_Win32.cpp" />
@@ -284,6 +285,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClInclude Include="Bounds.h" />
     <ClInclude Include="Command.h" />
     <ClInclude Include="Context_DX12.h" />
+    <ClInclude Include="Debug_DX12.h" />
     <ClInclude Include="EngineThread.h" />
     <ClInclude Include="EventManager_Platform.h" />
     <ClInclude Include="EventManager_Win32.h" />

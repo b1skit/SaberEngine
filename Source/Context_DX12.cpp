@@ -4,7 +4,9 @@
 #include "Config.h"
 #include "Context_DX12.h"
 #include "CoreEngine.h"
+#include "Debug_DX12.h"
 #include "DebugConfiguration.h"
+#include "SwapChain_DX12.h"
 #include "Window_Win32.h"
 
 
@@ -27,10 +29,6 @@ namespace dx12
 
 		EnableDebugLayer();
 
-		// By default, prefer tearing enable and vsync disabled (best for variable refresh displays)
-		ctxPlatParams->m_tearingSupported = CheckTearingSupport();
-		ctxPlatParams->m_vsyncEnabled = !ctxPlatParams->m_tearingSupported;
-
 		// Find the display adapter with the most VRAM:
 		ctxPlatParams->m_dxgiAdapter4 = GetDisplayAdapter();
 
@@ -44,34 +42,32 @@ namespace dx12
 			CreateCommandQueue(ctxPlatParams->m_device, D3D12_COMMAND_LIST_TYPE_DIRECT);
 
 
-		SEAssert("Window cannot be null", en::CoreEngine::Get()->GetWindow());
-		win32::Window::PlatformParams* const windowPlatParams =
-			dynamic_cast<win32::Window::PlatformParams*>(en::CoreEngine::Get()->GetWindow()->GetPlatformParams());
+		
+		// NOTE: Currently, this call retrieves m_commandQueue from the Context platform params
+		// TODO: Clean this up, it's gross. Command queue should be its own object
+		context.GetSwapChain().Create();
+		
+		dx12::SwapChain::PlatformParams* const swapChainParams =
+			dynamic_cast<dx12::SwapChain::PlatformParams*>(context.GetSwapChain().GetPlatformParams());
+		
 
-		const int width = en::Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
-		const int height = en::Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
-
-		ctxPlatParams->m_swapChain = CreateSwapChain(
-			windowPlatParams->m_hWindow, ctxPlatParams->m_commandQueue, width, height, ctxPlatParams->m_numBuffers);
-
-		ctxPlatParams->m_backBufferIdx = ctxPlatParams->m_swapChain->GetCurrentBackBufferIndex();
 
 		ctxPlatParams->m_RTVDescHeap = CreateDescriptorHeap(
 			ctxPlatParams->m_device, 
 			D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 
-			ctxPlatParams->m_numBuffers);
+			swapChainParams->m_numBuffers);
 		
 		ctxPlatParams->m_RTVDescSize = 
 			ctxPlatParams->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 		UpdateRenderTargetViews(
 			ctxPlatParams->m_device, 
-			ctxPlatParams->m_swapChain, 
-			ctxPlatParams->m_backBuffers, 
-			ctxPlatParams->m_numBuffers, 
+			swapChainParams->m_swapChain,
+			swapChainParams->m_backBuffers,
+			swapChainParams->m_numBuffers,
 			ctxPlatParams->m_RTVDescHeap);
 
-		for (int i = 0; i < ctxPlatParams->m_numBuffers; ++i)
+		for (int i = 0; i < swapChainParams->m_numBuffers; ++i)
 		{
 			ctxPlatParams->m_commandAllocators[i] = 
 				CreateCommandAllocator(ctxPlatParams->m_device, D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -79,7 +75,7 @@ namespace dx12
 
 		ctxPlatParams->m_commandList = CreateCommandList(
 			ctxPlatParams->m_device,
-			ctxPlatParams->m_commandAllocators[ctxPlatParams->m_backBufferIdx], 
+			ctxPlatParams->m_commandAllocators[swapChainParams->m_backBufferIdx],
 			D3D12_COMMAND_LIST_TYPE_DIRECT);
 
 		ctxPlatParams->m_fence = CreateFence(ctxPlatParams->m_device);
@@ -107,15 +103,6 @@ namespace dx12
 	}
 
 
-	void Context::SetVSyncMode(re::Context const& context, bool enabled)
-	{
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
-
-		ctxPlatParams->m_vsyncEnabled = enabled;
-	}
-
-
 	void Context::SetPipelineState(re::Context const& context, gr::PipelineState const& pipelineState)
 	{
 		SEAssertF("TODO: Implement this");
@@ -132,70 +119,6 @@ namespace dx12
 	uint8_t Context::GetMaxColorTargets()
 	{
 		return D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT;
-	}
-
-
-	bool Context::CheckHResult(HRESULT hr, char const* msg)
-	{
-		switch (hr)
-		{
-		case S_OK:
-		{
-			return true;
-		}
-		break;
-		case S_FALSE:
-		{
-			SEAssertF("S_FALSE is a success code. Use the SUCCEEDED or FAILED macros instead of calling this function");
-		}
-		break;
-		case E_INVALIDARG:
-		{
-			LOG_ERROR("%s: One or more arguments are invalid", msg);
-			SEAssertF(msg);
-		}
-		break;
-		default:
-		{
-			LOG_ERROR(msg);
-			throw std::exception();
-		}
-		}
-
-		// Throw an exception here; asserts are disabled in release mode
-		throw std::exception();
-		return false;
-	}
-
-
-	void Context::EnableDebugLayer()
-	{
-		// Enable the debug layer in debug build configuration to catch any errors generated while creating DX12 objects
-#if defined(_DEBUG)
-		ComPtr<ID3D12Debug> debugInterface;
-		const HRESULT hr = D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)); // IID_PPV_ARGS macro supplies the RIID & interface pointer
-		CheckHResult(hr, "Failed to enable debug layer");
-		debugInterface->EnableDebugLayer();
-#endif
-	}
-
-	
-	bool Context::CheckTearingSupport()
-	{
-		int allowTearing = 0;
-
-		ComPtr<IDXGIFactory5> factory5;
-		
-		HRESULT hr = CreateDXGIFactory(IID_PPV_ARGS(&factory5));
-		CheckHResult(hr, "Failed to create DXGI Factory");
-		
-		hr = factory5->CheckFeatureSupport(
-			DXGI_FEATURE_PRESENT_ALLOW_TEARING,
-			&allowTearing,
-			sizeof(allowTearing));
-		CheckHResult(hr, "Failed to check feature support");
-
-		return allowTearing > 0;
 	}
 
 
@@ -304,60 +227,6 @@ namespace dx12
 		CheckHResult(hr, "Failed to create command queue");
 
 		return cmdQueue;
-	}
-
-
-	ComPtr<IDXGISwapChain4> Context::CreateSwapChain(
-		HWND hWnd, 
-		ComPtr<ID3D12CommandQueue> commandQueue,
-		uint32_t width, 
-		uint32_t height, 
-		uint32_t numBuffers)
-	{
-		UINT createFactoryFlags = 0;
-#if defined(_DEBUG)
-		// Catch errors during device creation. Should not be used in release builds
-		createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
-#endif
-
-		ComPtr<IDXGIFactory4> dxgiFactory4;
-		HRESULT hr = CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory4));
-		CheckHResult(hr, "Failed to create DXGIFactory2");
-
-		// Create our swap chain description:
-		DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-		swapChainDesc.Width = width;
-		swapChainDesc.Height = height;
-		swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // Display format
-		swapChainDesc.Stereo = FALSE; // We're not creating a stereo swap chain
-		swapChainDesc.SampleDesc = { 1, 0 }; // Mandatory value if NOT using a DX11-style bitblt swap chain
-		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // Specify back-buffer surface usage and CPU access
-		swapChainDesc.BufferCount = numBuffers; // # buffers (>= 2), including the front buffer
-		swapChainDesc.Scaling = DXGI_SCALING_STRETCH; // Resize behavior when back-buffer size != output target size
-		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // How to handle buffer contents after presenting a surface
-		swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED; // Back-buffer transparency behavior
-		swapChainDesc.Flags = CheckTearingSupport() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-
-		// Create the swap chain:
-		ComPtr<IDXGISwapChain1> swapChain1;
-		hr = dxgiFactory4->CreateSwapChainForHwnd(
-			commandQueue.Get(), // Pointer to direct command queue
-			hWnd, // Window handle associated with the swap chain
-			&swapChainDesc, // Swap chain descriptor
-			nullptr, // Full-screen swap chain descriptor. Creates a window swap chain if null
-			nullptr, // Pointer to an interface that content should be restricted to. Content is unrestricted if null
-			&swapChain1); // Output: Our created swap chain
-		CheckHResult(hr, "Failed to create swap chain");
-
-		// Disable the Alt+Enter fullscreen toggle feature. Switching to fullscreen will be handled manually
-		hr = dxgiFactory4->MakeWindowAssociation(hWnd, DXGI_MWA_NO_ALT_ENTER);
-		CheckHResult(hr, "Failed to make window association");
-
-		ComPtr<IDXGISwapChain4> dxgiSwapChain4;
-		hr = swapChain1.As(&dxgiSwapChain4);
-		CheckHResult(hr, "Failed to convert swap chain"); // Convert IDXGISwapChain1 -> IDXGISwapChain4
-
-		return dxgiSwapChain4;
 	}
 
 
