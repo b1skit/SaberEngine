@@ -51,7 +51,7 @@ namespace gr
 			re::Shader::UniformType::Float,
 			1);
 
-		m_tonemappingStage.SetTextureTargetSet(RenderManager::Get()->GetContext().GetBackbufferTextureTargetSet());
+		m_tonemappingStage.SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 
 		pipeline.AppendRenderStage(m_tonemappingStage);
 	}

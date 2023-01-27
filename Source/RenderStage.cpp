@@ -50,7 +50,6 @@ namespace re
 
 	void RenderStage::SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet)
 	{
-		SEAssert("Cannot set a null target set", targetSet != nullptr);
 		m_textureTargetSet = targetSet;
 	}
 

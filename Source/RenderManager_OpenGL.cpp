@@ -19,6 +19,7 @@
 #include "RenderStage.h"
 #include "Shader.h"
 #include "Shader_OpenGL.h"
+#include "SwapChain_OpenGL.h"
 #include "TextureTarget.h"
 #include "Transform.h"
 #include "TextureTarget_OpenGL.h"
@@ -103,7 +104,17 @@ namespace opengl
 
 				// Attach the stage targets:
 				std::shared_ptr<re::TextureTargetSet> stageTargets = renderStage->GetTextureTargetSet();
-				opengl::TextureTargetSet::AttachColorTargets(*stageTargets, 
+				if (!stageTargets)
+				{
+					opengl::SwapChain::PlatformParams* const swapChainParams =
+						dynamic_cast<opengl::SwapChain::PlatformParams*>(renderManager.GetContext().GetSwapChain().GetPlatformParams());
+					SEAssert("Swap chain params and backbuffer cannot be null", 
+						swapChainParams && swapChainParams->m_backbuffer);
+
+					stageTargets = swapChainParams->m_backbuffer; // Draw directly to the swapchain backbuffer
+				}
+
+				opengl::TextureTargetSet::AttachColorTargets(*stageTargets,
 					stagePipelineParams.m_textureTargetSetConfig.m_targetFace,
 					stagePipelineParams.m_textureTargetSetConfig.m_targetMip);
 				opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);

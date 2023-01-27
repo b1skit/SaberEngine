@@ -212,6 +212,10 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     </ClCompile>
     <ClCompile Include="PerformanceTimer.cpp" />
     <ClCompile Include="RenderManager_DX12.cpp" />
+    <ClCompile Include="SwapChain.cpp" />
+    <ClCompile Include="SwapChain_DX12.cpp" />
+    <ClCompile Include="SwapChain_OpenGL.cpp" />
+    <ClCompile Include="SwapChain_Platform.cpp" />
     <ClCompile Include="TextureTarget_DX12.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="VertexAttributeBuilder.cpp" />
@@ -295,6 +299,10 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClInclude Include="PerformanceTimer.h" />
     <ClInclude Include="PipelineState.h" />
     <ClInclude Include="RenderManager_DX12.h" />
+    <ClInclude Include="SwapChain.h" />
+    <ClInclude Include="SwapChain_DX12.h" />
+    <ClInclude Include="SwapChain_OpenGL.h" />
+    <ClInclude Include="SwapChain_Platform.h" />
     <ClInclude Include="TextLoader.h" />
     <ClInclude Include="TextureTarget_DX12.h" />
     <ClInclude Include="ThreadPool.h" />

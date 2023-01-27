@@ -281,6 +281,9 @@ namespace opengl
 		LOG("Using OpenGL version %d.%d", glMajorVersionCheck, glMinorVersionCheck);
 
 		context.SetVSyncMode(Config::Get()->GetValue<bool>("vsync"));
+
+		// Create the (implied) swap chain
+		context.GetSwapChain().Create();
 		
 
 		// Initialize glew:

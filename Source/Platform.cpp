@@ -29,6 +29,10 @@
 #include "Shader_Platform.h"
 #include "Shader_OpenGL.h"
 
+#include "SwapChain_Platform.h"
+#include "SwapChain_OpenGL.h"
+#include "SwapChain_DX12.h"
+
 #include "Texture_Platform.h"
 #include "Texture_OpenGL.h"
 
@@ -120,6 +124,10 @@ namespace platform
 			platform::Shader::Destroy			= &opengl::Shader::Destroy;
 			platform::Shader::LoadShaderTexts	= &opengl::Shader::LoadShaderTexts;
 
+			// Swap chain:
+			platform::SwapChain::Create		= &opengl::SwapChain::Create;
+			platform::SwapChain::Destroy	= &opengl::SwapChain::Destroy;
+
 			// Parameter blocks:
 			platform::ParameterBlock::Create	= &opengl::ParameterBlock::Create;
 			platform::ParameterBlock::Update	= &opengl::ParameterBlock::Update;
@@ -143,6 +151,10 @@ namespace platform
 			platform::RenderManager::Render			= &dx12::RenderManager::Render;
 			platform::RenderManager::RenderImGui	= &dx12::RenderManager::RenderImGui;
 			platform::RenderManager::Shutdown		= &dx12::RenderManager::Shutdown;
+
+			// Swap chain:
+			platform::SwapChain::Create		= &dx12::SwapChain::Create;
+			platform::SwapChain::Destroy	= &dx12::SwapChain::Destroy;
 
 			// Texture target set:
 			platform::TextureTargetSet::CreateColorTargets			= &dx12::TextureTargetSet::CreateColorTargets;

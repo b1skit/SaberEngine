@@ -3,6 +3,7 @@
 
 #include "TextureTarget.h"
 #include "PipelineState.h"
+#include "SwapChain.h"
 
 
 namespace re
@@ -27,8 +28,9 @@ namespace re
 
 	public:
 		Context();
-		
-		std::shared_ptr<re::TextureTargetSet> GetBackbufferTextureTargetSet() const { return m_backbuffer; }
+
+		re::SwapChain& GetSwapChain() { return m_swapChain; }
+		re::SwapChain const& GetSwapChain() const { return m_swapChain; }
 
 		Context::PlatformParams* const GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<Context::PlatformParams> params) { m_platformParams = std::move(params); }
@@ -47,8 +49,7 @@ namespace re
 		uint8_t GetMaxColorTargets() const;
 
 	private:
-		// Note: We store this as a shared_ptr so we can instantiate it once the context has been created
-		std::shared_ptr<re::TextureTargetSet> m_backbuffer;
+		re::SwapChain m_swapChain;
 		
 		std::unique_ptr<Context::PlatformParams> m_platformParams;
 	};

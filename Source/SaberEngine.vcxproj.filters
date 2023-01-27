@@ -314,6 +314,18 @@
     <ClCompile Include="TextureTarget_DX12.cpp">
       <Filter>Source Files\re\platform\DX12</Filter>
     </ClCompile>
+    <ClCompile Include="SwapChain.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="SwapChain_Platform.cpp">
+      <Filter>Source Files\re\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="SwapChain_OpenGL.cpp">
+      <Filter>Source Files\re\platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="SwapChain_DX12.cpp">
+      <Filter>Source Files\re\platform\DX12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -581,6 +593,18 @@
       <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="TextureTarget_DX12.h">
+      <Filter>Header Files\re\platform\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="SwapChain.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="SwapChain_Platform.h">
+      <Filter>Header Files\re\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="SwapChain_OpenGL.h">
+      <Filter>Header Files\re\platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="SwapChain_DX12.h">
       <Filter>Header Files\re\platform\DX12</Filter>
     </ClInclude>
   </ItemGroup>

@@ -11,7 +11,6 @@ namespace re
 	using std::make_shared;
 
 	Context::Context()
-		: m_backbuffer(nullptr)
 	{
 		platform::Context::CreatePlatformParams(*this);
 	}
@@ -20,24 +19,12 @@ namespace re
 	void Context::Create()
 	{
 		platform::Context::Create(*this);
-
-		// Default target set:
-		LOG("Creating default texure target set");
-		m_backbuffer = make_shared<re::TextureTargetSet>("Backbuffer");
-		m_backbuffer->Viewport() =
-		{
-			0,
-			0,
-			(uint32_t)en::Config::Get()->GetValue<int>(en::Config::k_windowXResValueName),
-			(uint32_t)en::Config::Get()->GetValue<int>(en::Config::k_windowYResValueName)
-		};
-		// Note: Default framebuffer has no texture targets
 	}
 
 
 	void Context::Destroy()
 	{
-		m_backbuffer = nullptr;
+		m_swapChain.Destroy();
 		platform::Context::Destroy(*this);
 	}
 
