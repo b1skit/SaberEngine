@@ -53,6 +53,8 @@ namespace dx12
 		dx12::SwapChain::PlatformParams* const swapChainParams =
 			dynamic_cast<dx12::SwapChain::PlatformParams*>(context.GetSwapChain().GetPlatformParams());
 		
+		SEAssert("These values should (currently) match", 
+			ctxPlatParams->m_numCommandAllocators == swapChainParams->m_numBuffers);
 
 
 		ctxPlatParams->m_RTVDescHeap = CreateDescriptorHeap(
@@ -70,7 +72,7 @@ namespace dx12
 			swapChainParams->m_numBuffers,
 			ctxPlatParams->m_RTVDescHeap);
 
-		for (int i = 0; i < swapChainParams->m_numBuffers; ++i)
+		for (uint32_t i = 0; i < ctxPlatParams->m_numCommandAllocators; ++i)
 		{
 			ctxPlatParams->m_commandAllocators[i] = 
 				CreateCommandAllocator(ctxPlatParams->m_device, D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -125,14 +127,61 @@ namespace dx12
 		Flush(ctxPlatParams->m_commandQueue, ctxPlatParams->m_fence, ctxPlatParams->m_fenceValue, ctxPlatParams->m_fenceEvent);
 
 		::CloseHandle(ctxPlatParams->m_fenceEvent);
-
-		ctxPlatParams->m_dxgiAdapter4->Release();
 	}
 
 
 	void Context::Present(re::Context const& context)
 	{
-		SEAssertF("TODO: Implement this");
+		// TODO: Replace all of these direct accesss via the platform params with dx12-layer getters/setters
+
+		dx12::Context::PlatformParams* const ctxPlatParams =
+			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
+
+		dx12::SwapChain::PlatformParams* const swapChainPlatParams =
+			dynamic_cast<dx12::SwapChain::PlatformParams*>(context.GetSwapChain().GetPlatformParams());
+
+		uint8_t& backbufferIdx = swapChainPlatParams->m_backBufferIdx;
+
+
+		ComPtr<ID3D12Resource>& backBuffer = swapChainPlatParams->m_backBuffers[backbufferIdx];
+
+
+		// First, we must transition our backbuffer to the present state:
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			backBuffer.Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+		ctxPlatParams->m_commandList->ResourceBarrier(1, &barrier);
+
+		// Close the command list before we execute it
+		HRESULT hr = ctxPlatParams->m_commandList->Close();
+		CheckHResult(hr, "Failed to close command list");
+
+		// Build an array of command lists, and execute them:
+		ID3D12CommandList* const commandLists[] = {
+			ctxPlatParams->m_commandList.Get()
+		};
+		ctxPlatParams->m_commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
+
+
+		// Present the backbuffer:
+		const bool vsyncEnabled = swapChainPlatParams->m_vsyncEnabled;
+		UINT syncInterval = vsyncEnabled ? 1 : 0;
+		UINT presentFlags = swapChainPlatParams->m_tearingSupported && !vsyncEnabled ? DXGI_PRESENT_ALLOW_TEARING : 0;
+
+		hr = swapChainPlatParams->m_swapChain->Present(syncInterval, presentFlags);
+		CheckHResult(hr, "Failed to present backbuffer");
+
+		// Insert a signal into the command queue:
+		ctxPlatParams->m_frameFenceValues[backbufferIdx] =
+			Signal(ctxPlatParams->m_commandQueue, ctxPlatParams->m_fence, ctxPlatParams->m_fenceValue);
+
+		// Update the index of our current backbuffer
+		// Note: Backbuffer indices are not guaranteed to be sequential if we're using DXGI_SWAP_EFFECT_FLIP_DISCARD
+		backbufferIdx = swapChainPlatParams->m_swapChain->GetCurrentBackBufferIndex();
+
+		
+		// Wait on our fence (blocking)
+		WaitForFenceValue(ctxPlatParams->m_fence, ctxPlatParams->m_frameFenceValues[backbufferIdx], ctxPlatParams->m_fenceEvent);
 	}
 
 

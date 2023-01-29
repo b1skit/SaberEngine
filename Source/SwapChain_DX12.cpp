@@ -1,4 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
+#include <dxgi1_6.h>
+
 #include "Config.h"
 #include "Context_DX12.h"
 #include "CoreEngine.h"
@@ -84,7 +86,11 @@ namespace dx12
 
 	void SwapChain::Destroy(re::SwapChain& swapChain)
 	{
-		SEAssertF("TODO: Implement this");
+		dx12::SwapChain::PlatformParams* const swapChainParams =
+			dynamic_cast<dx12::SwapChain::PlatformParams*>(swapChain.GetPlatformParams());
+
+		// Must exit fullscreen before releasing the swapchain
+		HRESULT hr = swapChainParams->m_swapChain->SetFullscreenState(false, NULL);
 	}
 
 

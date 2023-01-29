@@ -58,7 +58,16 @@ namespace re
 	{
 		platform::ParameterBlock::Destroy(*this);
 
-		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetParameterBlockAllocator();
-		pbm.Deallocate(GetUniqueID());
+		re::ParameterBlock::PlatformParams* const params =
+			dynamic_cast<re::ParameterBlock::PlatformParams* const>(GetPlatformParams());
+		if (params->m_isCreated)
+		{
+			re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetParameterBlockAllocator();
+			pbm.Deallocate(GetUniqueID());
+		}
+		else
+		{
+			LOG_ERROR("ParameterBlock::Destroy called for a parameter block that was not created");
+		}
 	}
 }

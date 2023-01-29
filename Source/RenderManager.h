@@ -16,6 +16,11 @@ namespace opengl
 	class RenderManager;
 }
 
+namespace dx12
+{
+	class RenderManager;
+}
+
 namespace gr
 {
 	class GraphicsSystem;
@@ -87,6 +92,7 @@ namespace re
 
 	private: // Friends		
 		friend class opengl::RenderManager;
+		friend class dx12::RenderManager;
 
 	private:
 		RenderManager(RenderManager const&) = delete;

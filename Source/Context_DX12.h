@@ -16,24 +16,34 @@ namespace dx12
 		struct PlatformParams final : public virtual re::Context::PlatformParams
 		{
 			Microsoft::WRL::ComPtr<IDXGIAdapter4> m_dxgiAdapter4 = nullptr;
+
+			// TODO: Move to a "Device" object, owned by the Context:
 			Microsoft::WRL::ComPtr<ID3D12Device2> m_device = nullptr; // Display adapter device
 
-			// TODO: Many of these properties should be moved to their own object
+			// TODO: Move to a "CommandQueue" object, owned by the Context:
 			Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_commandQueue = nullptr;
 
+			// TODO: Move to a "DescriptorHeapManager", owned by the Context:
 			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVDescHeap; // Array of descriptors/resource views
 			uint32_t m_RTVDescSize; // Stride size of a single descriptor/resource view
 
+			// TODO: Move to a "CommandList" object:
 			// Backing memory for recording command lists into. Only reusable once commands have finished GPU execution
 			static const uint8_t m_numCommandAllocators = 3; // Note: For now, we're using one command allocator per backbuffer
+			// TODO: Make this a dx12 constant, so we can access it without a PlatformParams ?????
 			Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocators[m_numCommandAllocators];
 
+			// TODO: Move to a "CommandList" object:
 			// Currently only 1 command list is needed as we record on a single thread. TODO: Multi-thread recording
-			Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_commandList;
+			Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_commandList = nullptr;
 
-			Microsoft::WRL::ComPtr<ID3D12Fence> m_fence;
+			// TODO: Move to a "Fence" object, managed by the "Device" object:
+			Microsoft::WRL::ComPtr<ID3D12Fence> m_fence = nullptr;
 			HANDLE m_fenceEvent; // OS event object: Receives notifications when a fence reaches a specific value
 			uint64_t m_fenceValue = 0;
+			uint64_t m_frameFenceValues[m_numCommandAllocators] = {}; // Tracks fence values used to signal the command queue for a particular frame
+
+			// TODO: m_numCommandAllocators currently needs to be the same as dx12::SwapChain::PlatformParams::m_numBuffers
 		};
 
 

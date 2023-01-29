@@ -21,6 +21,6 @@ namespace dx12
 	void ParameterBlock::Destroy(re::ParameterBlock& paramBlock)
 	{
 		#pragma message("TODO: Impelement dx12::ParameterBlock::Destroy")
-		SEAssertF("TODO: Implement this");
+		LOG_ERROR("TODO: Implement dx12::ParameterBlock::Destroy");
 	}
 }

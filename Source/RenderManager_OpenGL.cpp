@@ -245,9 +245,5 @@ namespace opengl
 
 	void RenderManager::Shutdown(re::RenderManager& renderManager)
 	{
-		// OpenGL objects must be destroyed on the render thread
-		en::SceneManager::GetSceneData()->Destroy();
-		gr::Material::DestroyMaterialLibrary();
-		re::Sampler::DestroySamplerLibrary();
 	}
 }

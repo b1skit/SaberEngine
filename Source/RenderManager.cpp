@@ -141,7 +141,7 @@ namespace re
 		// Present the final frame:
 		m_context.Present();
 
-		EndOfFrame();
+		EndOfFrame(); // Clear batches, process pipeline and parameter block allocator EndOfFrames
 	}
 
 
@@ -164,6 +164,11 @@ namespace re
 		
 		// API-specific destruction:
 		platform::RenderManager::Shutdown(*this);
+
+		// NOTE: OpenGL objects must be destroyed on the render thread, so we trigger them here
+		en::SceneManager::GetSceneData()->Destroy();
+		gr::Material::DestroyMaterialLibrary();
+		re::Sampler::DestroySamplerLibrary();
 
 		m_pipeline.Destroy();
 		m_graphicsSystems.clear();
