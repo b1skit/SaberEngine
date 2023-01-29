@@ -15,7 +15,6 @@ namespace dx12
 	void ParameterBlock::Update(re::ParameterBlock& paramBlock)
 	{
 		#pragma message("TODO: Impelement dx12::ParameterBlock::Update")
-		SEAssertF("TODO: Implement this");
 	}
 
 

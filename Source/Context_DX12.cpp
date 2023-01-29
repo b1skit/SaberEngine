@@ -1,4 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "backends/imgui_impl_win32.h"
+#include "backends/imgui_impl_dx12.h"
+
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
 #include "Config.h"
@@ -80,6 +83,31 @@ namespace dx12
 
 		ctxPlatParams->m_fence = CreateFence(ctxPlatParams->m_device);
 		ctxPlatParams->m_fenceEvent = CreateEventHandle();
+
+		en::Window* window = en::CoreEngine::Get()->GetWindow();
+		SEAssert("Window pointer cannot be null", window);
+		win32::Window::PlatformParams* const windowPlatParams =
+			dynamic_cast<win32::Window::PlatformParams*>(window->GetPlatformParams());
+
+
+		// Setup our ImGui context
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		ImGuiIO& io = ImGui::GetIO();
+		io.IniFilename = re::k_imguiIniPath;
+
+		// Setup Dear ImGui style
+		ImGui::StyleColorsDark();
+
+		// Setup Platform/Renderer backends
+		ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
+		ImGui_ImplDX12_Init(
+			ctxPlatParams->m_device.Get(),
+			swapChainParams->m_numBuffers, // Number of frames in flight
+			swapChainParams->m_displayFormat,
+			ctxPlatParams->m_RTVDescHeap.Get(),
+			ctxPlatParams->m_RTVDescHeap->GetCPUDescriptorHandleForHeapStart(),
+			ctxPlatParams->m_RTVDescHeap->GetGPUDescriptorHandleForHeapStart());
 	}
 
 

@@ -50,7 +50,7 @@ namespace dx12
 		DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
 		swapChainDesc.Width = width;
 		swapChainDesc.Height = height;
-		swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // Display format
+		swapChainDesc.Format = swapChainParams->m_displayFormat;
 		swapChainDesc.Stereo = FALSE; // We're not creating a stereo swap chain
 		swapChainDesc.SampleDesc = { 1, 0 }; // Mandatory value if NOT using a DX11-style bitblt swap chain
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // Specify back-buffer surface usage and CPU access

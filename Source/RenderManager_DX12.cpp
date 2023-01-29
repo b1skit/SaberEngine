@@ -13,18 +13,19 @@ namespace dx12
 
 	void RenderManager::Render(re::RenderManager&)
 	{
-		SEAssertF("TODO: Implement this");
+		#pragma message("TODO: Implement dx12::RenderManager::Render")
 	}
 
 
 	void RenderManager::RenderImGui(re::RenderManager&)
 	{
-		SEAssertF("TODO: Implement this");
+		#pragma message("TODO: Implement dx12::RenderManager::RenderImGui")
 	}
 
 
 	void RenderManager::Shutdown(re::RenderManager&)
 	{
-		SEAssertF("TODO: Implement this");
+		#pragma message("TODO: Implement dx12::RenderManager::Shutdown")
+		LOG_ERROR("TODO: Implement dx12::RenderManager::Shutdown");
 	}
 }

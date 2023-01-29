@@ -20,6 +20,8 @@ namespace dx12
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_backBuffers[m_numBuffers]; // Pointers to our backbuffer resources
 			uint8_t m_backBufferIdx;
 
+			DXGI_FORMAT m_displayFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+
 			bool m_vsyncEnabled = false; // Disabled if tearing is enabled (ie. using a variable refresh display)
 			bool m_tearingSupported = false; // Always allow tearing if supported. Required for variable refresh dispays (eg. G-Sync/FreeSync)
 		};
