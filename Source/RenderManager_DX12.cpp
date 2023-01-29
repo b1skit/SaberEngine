@@ -6,7 +6,8 @@ namespace dx12
 {
 	void RenderManager::Initialize(re::RenderManager&)
 	{
-		SEAssertF("TODO: Implement this");
+		#pragma message("TODO: Implement dx12::RenderManager::Initialize")
+		LOG_ERROR("TODO: Implement dx12::RenderManager::Initialize");
 	}
 
 

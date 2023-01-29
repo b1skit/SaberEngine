@@ -329,6 +329,12 @@
     <ClCompile Include="Debug_DX12.cpp">
       <Filter>Source Files\re\platform\DX12</Filter>
     </ClCompile>
+    <ClCompile Include="Texture_DX12.cpp">
+      <Filter>Source Files\re\platform\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="ParameterBlock_DX12.cpp">
+      <Filter>Source Files\re\platform\DX12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -611,6 +617,12 @@
       <Filter>Header Files\re\platform\DX12</Filter>
     </ClInclude>
     <ClInclude Include="Debug_DX12.h">
+      <Filter>Header Files\re\platform\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture_DX12.h">
+      <Filter>Header Files\re\platform\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="ParameterBlock_DX12.h">
       <Filter>Header Files\re\platform\DX12</Filter>
     </ClInclude>
   </ItemGroup>

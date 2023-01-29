@@ -300,10 +300,4 @@ namespace opengl
 
 		glGenerateTextureMipmap(params->m_textureID);
 	}
-
-
-	platform::Texture::UVOrigin opengl::Texture::GetUVOrigin()
-	{
-		return platform::Texture::UVOrigin::BottomLeft;
-	}
 }

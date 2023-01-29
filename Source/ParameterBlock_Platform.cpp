@@ -2,6 +2,7 @@
 #include "ParameterBlock_Platform.h"
 #include "ParameterBlock.h"
 #include "ParameterBlock_OpenGL.h"
+#include "ParameterBlock_DX12.h"
 #include "DebugConfiguration.h"
 #include "Config.h"
 
@@ -26,7 +27,7 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			SEAssertF("DX12 is not yet supported");
+			paramBlock.SetPlatformParams(std::make_unique<dx12::ParameterBlock::PlatformParams>());
 		}
 		break;
 		default:

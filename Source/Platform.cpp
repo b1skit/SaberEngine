@@ -4,8 +4,8 @@
 #include "DebugConfiguration.h"
 
 #include "Context_Platform.h"
-#include "Context_OpenGL.h"
 #include "Context_DX12.h"
+#include "Context_OpenGL.h"
 
 #include "EventManager_Platform.h"
 #include "EventManager_Win32.h"
@@ -17,11 +17,12 @@
 #include "MeshPrimitive_OpenGL.h"
 
 #include "ParameterBlock.h"
+#include "ParameterBlock_DX12.h"
 #include "ParameterBlock_OpenGL.h"
 
 #include "RenderManager_Platform.h"
-#include "RenderManager_OpenGL.h"
 #include "RenderManager_DX12.h"
+#include "RenderManager_OpenGL.h"
 
 #include "Sampler_Platform.h"
 #include "Sampler_OpenGL.h"
@@ -30,15 +31,16 @@
 #include "Shader_OpenGL.h"
 
 #include "SwapChain_Platform.h"
-#include "SwapChain_OpenGL.h"
 #include "SwapChain_DX12.h"
+#include "SwapChain_OpenGL.h"
 
 #include "Texture_Platform.h"
+#include "Texture_DX12.h"
 #include "Texture_OpenGL.h"
 
 #include "TextureTarget_Platform.h"
-#include "TextureTarget_OpenGL.h"
 #include "TextureTarget_DX12.h"
+#include "TextureTarget_OpenGL.h"
 
 #include "Window_Platform.h"
 #include "Window_Win32.h"
@@ -86,34 +88,21 @@ namespace platform
 			platform::Context::GetMaxTextureInputs	= &opengl::Context::GetMaxTextureInputs;
 			platform::Context::GetMaxColorTargets	= &opengl::Context::GetMaxColorTargets;
 			
-			// Render manager:
-			platform::RenderManager::Initialize		= &opengl::RenderManager::Initialize;
-			platform::RenderManager::Render			= &opengl::RenderManager::Render;
-			platform::RenderManager::RenderImGui	= &opengl::RenderManager::RenderImGui;
-			platform::RenderManager::Shutdown		= &opengl::RenderManager::Shutdown;
-
 			// MeshPrimitive:
 			platform::MeshPrimitive::Create		= &opengl::MeshPrimitive::Create;
 			platform::MeshPrimitive::Destroy	= &opengl::MeshPrimitive::Destroy;
 			platform::MeshPrimitive::Bind		= &opengl::MeshPrimitive::Bind;
 
-			// Texture:
-			platform::Texture::Create			= &opengl::Texture::Create;
-			platform::Texture::Destroy			= &opengl::Texture::Destroy;
-			platform::Texture::Bind				= &opengl::Texture::Bind;
-			platform::Texture::GenerateMipMaps	= &opengl::Texture::GenerateMipMaps;
-			platform::Texture::GetUVOrigin		= &opengl::Texture::GetUVOrigin;
+			// Parameter blocks:
+			platform::ParameterBlock::Create	= &opengl::ParameterBlock::Create;
+			platform::ParameterBlock::Update	= &opengl::ParameterBlock::Update;
+			platform::ParameterBlock::Destroy	= &opengl::ParameterBlock::Destroy;
 
-			// Texture Samplers:
-			platform::Sampler::Create	= &opengl::Sampler::Create;
-			platform::Sampler::Destroy	= &opengl::Sampler::Destroy;
-			platform::Sampler::Bind		= &opengl::Sampler::Bind;
-
-			// Texture target set:
-			platform::TextureTargetSet::CreateColorTargets			= &opengl::TextureTargetSet::CreateColorTargets;
-			platform::TextureTargetSet::AttachColorTargets			= &opengl::TextureTargetSet::AttachColorTargets;
-			platform::TextureTargetSet::CreateDepthStencilTarget	= &opengl::TextureTargetSet::CreateDepthStencilTarget;
-			platform::TextureTargetSet::AttachDepthStencilTarget	= &opengl::TextureTargetSet::AttachDepthStencilTarget;
+			// Render manager:
+			platform::RenderManager::Initialize		= &opengl::RenderManager::Initialize;
+			platform::RenderManager::Render			= &opengl::RenderManager::Render;
+			platform::RenderManager::RenderImGui	= &opengl::RenderManager::RenderImGui;
+			platform::RenderManager::Shutdown		= &opengl::RenderManager::Shutdown;
 
 			// Shader:
 			platform::Shader::Create			= &opengl::Shader::Create;
@@ -128,11 +117,23 @@ namespace platform
 			platform::SwapChain::Destroy		= &opengl::SwapChain::Destroy;
 			platform::SwapChain::SetVSyncMode	= &opengl::SwapChain::SetVSyncMode;
 
-			// Parameter blocks:
-			platform::ParameterBlock::Create	= &opengl::ParameterBlock::Create;
-			platform::ParameterBlock::Update	= &opengl::ParameterBlock::Update;
-			platform::ParameterBlock::Destroy	= &opengl::ParameterBlock::Destroy;
-			
+			// Texture:
+			platform::Texture::Create			= &opengl::Texture::Create;
+			platform::Texture::Destroy			= &opengl::Texture::Destroy;
+			platform::Texture::Bind				= &opengl::Texture::Bind;
+			platform::Texture::GenerateMipMaps	= &opengl::Texture::GenerateMipMaps;
+
+			// Texture Samplers:
+			platform::Sampler::Create	= &opengl::Sampler::Create;
+			platform::Sampler::Destroy	= &opengl::Sampler::Destroy;
+			platform::Sampler::Bind		= &opengl::Sampler::Bind;
+
+			// Texture target set:
+			platform::TextureTargetSet::CreateColorTargets			= &opengl::TextureTargetSet::CreateColorTargets;
+			platform::TextureTargetSet::AttachColorTargets			= &opengl::TextureTargetSet::AttachColorTargets;
+			platform::TextureTargetSet::CreateDepthStencilTarget	= &opengl::TextureTargetSet::CreateDepthStencilTarget;
+			platform::TextureTargetSet::AttachDepthStencilTarget	= &opengl::TextureTargetSet::AttachDepthStencilTarget;
+
 			result = true;
 		}
 		break;
@@ -144,6 +145,11 @@ namespace platform
 			platform::Context::Present				= &dx12::Context::Present;
 			platform::Context::GetMaxTextureInputs	= &dx12::Context::GetMaxTextureInputs;
 			platform::Context::GetMaxColorTargets	= &dx12::Context::GetMaxColorTargets;
+
+			// Parameter blocks:
+			platform::ParameterBlock::Create	= &dx12::ParameterBlock::Create;
+			platform::ParameterBlock::Update	= &dx12::ParameterBlock::Update;
+			platform::ParameterBlock::Destroy	= &dx12::ParameterBlock::Destroy;
 			
 			// Render manager:
 			platform::RenderManager::Initialize		= &dx12::RenderManager::Initialize;
@@ -155,6 +161,12 @@ namespace platform
 			platform::SwapChain::Create			= &dx12::SwapChain::Create;
 			platform::SwapChain::Destroy		= &dx12::SwapChain::Destroy;
 			platform::SwapChain::SetVSyncMode	= &dx12::SwapChain::SetVSyncMode;
+
+			// Texture:
+			platform::Texture::Create			= &dx12::Texture::Create;
+			platform::Texture::Destroy			= &dx12::Texture::Destroy;
+			platform::Texture::Bind				= &dx12::Texture::Bind;
+			platform::Texture::GenerateMipMaps	= &dx12::Texture::GenerateMipMaps;
 
 			// Texture target set:
 			platform::TextureTargetSet::CreateColorTargets			= &dx12::TextureTargetSet::CreateColorTargets;

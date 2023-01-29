@@ -203,6 +203,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClCompile Include="InputManager_Win32.cpp" />
     <ClCompile Include="ParameterBlock.cpp" />
     <ClCompile Include="ParameterBlockAllocator.cpp" />
+    <ClCompile Include="ParameterBlock_DX12.cpp" />
     <ClCompile Include="ParameterBlock_OpenGL.cpp" />
     <ClCompile Include="ParameterBlock_Platform.cpp" />
     <ClCompile Include="pch\stdafx.cpp">
@@ -218,6 +219,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClCompile Include="SwapChain_OpenGL.cpp" />
     <ClCompile Include="SwapChain_Platform.cpp" />
     <ClCompile Include="TextureTarget_DX12.cpp" />
+    <ClCompile Include="Texture_DX12.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="VertexAttributeBuilder.cpp" />
     <ClCompile Include="Context_Platform.cpp" />
@@ -295,6 +297,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClInclude Include="InputManager_Win32.h" />
     <ClInclude Include="ParameterBlock.h" />
     <ClInclude Include="ParameterBlockAllocator.h" />
+    <ClInclude Include="ParameterBlock_DX12.h" />
     <ClInclude Include="ParameterBlock_OpenGL.h" />
     <ClInclude Include="ParameterBlock_Platform.h" />
     <ClInclude Include="pch\stdafx.h" />
@@ -307,6 +310,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClInclude Include="SwapChain_Platform.h" />
     <ClInclude Include="TextLoader.h" />
     <ClInclude Include="TextureTarget_DX12.h" />
+    <ClInclude Include="Texture_DX12.h" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Updateable.h" />
     <ClInclude Include="VertexAttributeBuilder.h" />

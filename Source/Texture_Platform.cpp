@@ -4,6 +4,7 @@
 #include "Texture.h"
 #include "Texture_Platform.h"
 #include "Texture_OpenGL.h"
+#include "Texture_DX12.h"
 
 using en::Config;
 
@@ -24,7 +25,7 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			SEAssertF("DX12 is not yet supported");
+			texture.SetPlatformParams(std::make_unique<dx12::Texture::PlatformParams>(texture.GetTextureParams()));
 		}
 		break;
 		default:
@@ -38,8 +39,7 @@ namespace platform
 	// platform::Texture static members:
 	/***********************************/
 	void (*platform::Texture::Create)(re::Texture&) = nullptr;
-	void (*platform::Texture::Bind)(re::Texture&, uint32_t textureUnit) = nullptr;
 	void (*platform::Texture::Destroy)(re::Texture&) = nullptr;
+	void (*platform::Texture::Bind)(re::Texture&, uint32_t textureUnit) = nullptr;	
 	void (*platform::Texture::GenerateMipMaps)(re::Texture&) = nullptr;
-	platform::Texture::UVOrigin (*platform::Texture::GetUVOrigin)() = nullptr;
 }
