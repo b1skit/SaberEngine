@@ -113,6 +113,11 @@ namespace dx12
 
 	void Context::Destroy(re::Context& context)
 	{
+		// ImGui Cleanup:
+		ImGui_ImplDX12_Shutdown();
+		ImGui_ImplWin32_Shutdown();
+		ImGui::DestroyContext();
+
 		dx12::Context::PlatformParams* const ctxPlatParams =
 			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
 
