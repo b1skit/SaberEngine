@@ -291,6 +291,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClInclude Include="EngineThread.h" />
     <ClInclude Include="EventManager_Platform.h" />
     <ClInclude Include="EventManager_Win32.h" />
+    <ClInclude Include="Fence_DX12.h" />
     <ClInclude Include="GameplayManager.h" />
     <ClInclude Include="HashedDataObject.h" />
     <ClInclude Include="InputManager_Platform.h" />
