@@ -157,7 +157,7 @@ namespace en
 		// Note: String values must be explicitely defined as string objects
 		m_configValues =
 		{
-			{k_platformCmdLineArg,					{string("opengl"), SettingType::Common}},
+			{k_platformCmdLineArg,					{string("opengl"), SettingType::Runtime}},
 
 			{"windowTitle",							{string("Saber Engine"), SettingType::Common}},
 			{k_windowXResValueName,					{1920, SettingType::Common}},
