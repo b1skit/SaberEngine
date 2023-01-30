@@ -1,9 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Debug_DX12.h"
 #include "Fence_DX12.h"
 
 
 namespace dx12
 {
+	Fence::Fence()
+	{
+	}
+
+
 	void Fence::Create()
 	{
 
