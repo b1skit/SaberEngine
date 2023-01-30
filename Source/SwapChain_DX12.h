@@ -4,6 +4,7 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
+#include "RenderManager_DX12.h"
 #include "SwapChain.h"
 
 
@@ -15,9 +16,9 @@ namespace dx12
 		struct PlatformParams final : public virtual re::SwapChain::PlatformParams
 		{
 			Microsoft::WRL::ComPtr<IDXGISwapChain4> m_swapChain = nullptr;
-			static const uint8_t m_numBuffers = 3; // Includes front buffer. Must be >= 2 to use the flip presentation model
 
-			Microsoft::WRL::ComPtr<ID3D12Resource> m_backBuffers[m_numBuffers]; // Pointers to our backbuffer resources
+			// Pointers to our backbuffer resources
+			Microsoft::WRL::ComPtr<ID3D12Resource> m_backBuffers[dx12::RenderManager::k_numFrames];
 			uint8_t m_backBufferIdx;
 
 			DXGI_FORMAT m_displayFormat = DXGI_FORMAT_R8G8B8A8_UNORM;

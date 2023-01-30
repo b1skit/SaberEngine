@@ -56,7 +56,7 @@ namespace dx12
 		swapChainDesc.Stereo = FALSE; // We're not creating a stereo swap chain
 		swapChainDesc.SampleDesc = { 1, 0 }; // Mandatory value if NOT using a DX11-style bitblt swap chain
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // Specify back-buffer surface usage and CPU access
-		swapChainDesc.BufferCount = swapChainParams->m_numBuffers; // # buffers (>= 2), including the front buffer
+		swapChainDesc.BufferCount = dx12::RenderManager::k_numFrames; // # buffers (>= 2), including the front buffer
 		swapChainDesc.Scaling = DXGI_SCALING_STRETCH; // Resize behavior when back-buffer size != output target size
 		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // How to handle buffer contents after presenting a surface
 		swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED; // Back-buffer transparency behavior

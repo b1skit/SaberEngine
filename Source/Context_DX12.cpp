@@ -9,22 +9,16 @@
 #include "CoreEngine.h"
 #include "Debug_DX12.h"
 #include "DebugConfiguration.h"
+#include "RenderManager_DX12.h"
 #include "SwapChain_DX12.h"
 #include "Window_Win32.h"
 
 
-using Microsoft::WRL::ComPtr;
-
-
-namespace
-{
-	// TODO: Figure out why creation fails for D3D_FEATURE_LEVEL_12_2
-	constexpr D3D_FEATURE_LEVEL k_targetFeatureLevel = D3D_FEATURE_LEVEL_12_1;
-}
-
-
 namespace dx12
 {
+	using Microsoft::WRL::ComPtr;
+
+
 	void Context::Create(re::Context& context)
 	{
 		dx12::Context::PlatformParams* const ctxPlatParams =
@@ -32,17 +26,15 @@ namespace dx12
 
 		EnableDebugLayer();
 
-		// Find the display adapter with the most VRAM:
-		ctxPlatParams->m_dxgiAdapter4 = GetDisplayAdapter();
+		ctxPlatParams->m_device.Create();
 
-		// Create a device from the selected adapter:
-		ctxPlatParams->m_device = CreateDevice(ctxPlatParams->m_dxgiAdapter4);
+		
 
 
 		// TODO: Move command queue management to its own object?
 		// TODO: Support command queues of different types (direct/copy/compute/etc)
 		ctxPlatParams->m_commandQueue = 
-			CreateCommandQueue(ctxPlatParams->m_device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+			CreateCommandQueue(ctxPlatParams->m_device.GetDisplayDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT);
 
 
 		
@@ -52,38 +44,35 @@ namespace dx12
 		
 		dx12::SwapChain::PlatformParams* const swapChainParams =
 			dynamic_cast<dx12::SwapChain::PlatformParams*>(context.GetSwapChain().GetPlatformParams());
-		
-		SEAssert("These values should (currently) match", 
-			ctxPlatParams->m_numCommandAllocators == swapChainParams->m_numBuffers);
 
 
 		ctxPlatParams->m_RTVDescHeap = CreateDescriptorHeap(
-			ctxPlatParams->m_device, 
+			ctxPlatParams->m_device.GetDisplayDevice(),
 			D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 
-			swapChainParams->m_numBuffers);
+			dx12::RenderManager::k_numFrames);
 		
 		ctxPlatParams->m_RTVDescSize = 
-			ctxPlatParams->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+			ctxPlatParams->m_device.GetDisplayDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 		UpdateRenderTargetViews(
-			ctxPlatParams->m_device, 
+			ctxPlatParams->m_device.GetDisplayDevice(),
 			swapChainParams->m_swapChain,
 			swapChainParams->m_backBuffers,
-			swapChainParams->m_numBuffers,
+			dx12::RenderManager::k_numFrames,
 			ctxPlatParams->m_RTVDescHeap);
 
-		for (uint32_t i = 0; i < ctxPlatParams->m_numCommandAllocators; ++i)
+		for (uint32_t i = 0; i < dx12::RenderManager::k_numFrames; ++i)
 		{
 			ctxPlatParams->m_commandAllocators[i] = 
-				CreateCommandAllocator(ctxPlatParams->m_device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+				CreateCommandAllocator(ctxPlatParams->m_device.GetDisplayDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT);
 		}
 
 		ctxPlatParams->m_commandList = CreateCommandList(
-			ctxPlatParams->m_device,
+			ctxPlatParams->m_device.GetDisplayDevice(),
 			ctxPlatParams->m_commandAllocators[swapChainParams->m_backBufferIdx],
 			D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-		ctxPlatParams->m_fence = CreateFence(ctxPlatParams->m_device);
+		ctxPlatParams->m_fence = CreateFence(ctxPlatParams->m_device.GetDisplayDevice());
 		ctxPlatParams->m_fenceEvent = CreateEventHandle();
 
 		en::Window* window = en::CoreEngine::Get()->GetWindow();
@@ -104,8 +93,8 @@ namespace dx12
 		// Setup Platform/Renderer backends
 		ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
 		ImGui_ImplDX12_Init(
-			ctxPlatParams->m_device.Get(),
-			swapChainParams->m_numBuffers, // Number of frames in flight
+			ctxPlatParams->m_device.GetDisplayDevice().Get(),
+			dx12::RenderManager::k_numFrames, // Number of frames in flight
 			swapChainParams->m_displayFormat,
 			ctxPlatParams->m_RTVDescHeap.Get(),
 			ctxPlatParams->m_RTVDescHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -127,6 +116,8 @@ namespace dx12
 		Flush(ctxPlatParams->m_commandQueue, ctxPlatParams->m_fence, ctxPlatParams->m_fenceValue, ctxPlatParams->m_fenceEvent);
 
 		::CloseHandle(ctxPlatParams->m_fenceEvent);
+
+		ctxPlatParams->m_device.Destroy();
 	}
 
 
@@ -201,95 +192,6 @@ namespace dx12
 	uint8_t Context::GetMaxColorTargets()
 	{
 		return D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT;
-	}
-
-
-	ComPtr<IDXGIAdapter4> Context::GetDisplayAdapter()
-	{
-		// Create a DXGI factory object
-		ComPtr<IDXGIFactory4> dxgiFactory;
-		uint32_t createFactoryFlags = 0;
-#if defined(_DEBUG)
-		createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
-#endif
-		
-		HRESULT hr = CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory));
-		CheckHResult(hr, "Failed to create DXGIFactory2");
-
-		ComPtr<IDXGIAdapter1> dxgiAdapter1;
-		ComPtr<IDXGIAdapter4> dxgiAdapter4;
-
-		// Query each of our HW adapters:
-		size_t maxVRAM = 0;
-		for (uint32_t i = 0; dxgiFactory->EnumAdapters1(i, &dxgiAdapter1) != DXGI_ERROR_NOT_FOUND; ++i)
-		{
-			DXGI_ADAPTER_DESC1 dxgiAdapterDesc1;
-			dxgiAdapter1->GetDesc1(&dxgiAdapterDesc1);
-			
-			const size_t vram = dxgiAdapterDesc1.DedicatedVideoMemory / (1024u * 1024u);
-			LOG(L"Querying adapter %d: %s, %ju MB VRAM", dxgiAdapterDesc1.DeviceId, dxgiAdapterDesc1.Description, vram);
-
-			if ((dxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
-				SUCCEEDED(
-					D3D12CreateDevice(dxgiAdapter1.Get(), k_targetFeatureLevel, __uuidof(ID3D12Device), nullptr)) &&
-				dxgiAdapterDesc1.DedicatedVideoMemory > maxVRAM)
-			{
-				maxVRAM = dxgiAdapterDesc1.DedicatedVideoMemory;
-
-				hr = dxgiAdapter1.As(&dxgiAdapter4);
-				CheckHResult(hr, "Failed to cast selected dxgiAdapter4 to dxgiAdapter1");
-			}
-		}
-
-		return dxgiAdapter4;
-	}
-
-
-	ComPtr<ID3D12Device2> Context::CreateDevice(ComPtr<IDXGIAdapter4> adapter)
-	{
-		ComPtr<ID3D12Device2> d3d12Device2;
-		HRESULT hr = D3D12CreateDevice(adapter.Get(), k_targetFeatureLevel, IID_PPV_ARGS(&d3d12Device2));
-		CheckHResult(hr, "Failed to create device");
-
-#if defined(_DEBUG)
-		ComPtr<ID3D12InfoQueue> infoQueue;
-		if (SUCCEEDED(d3d12Device2.As(&infoQueue)))
-		{
-			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
-
-			// Suppress message categories
-			//D3D12_MESSAGE_CATEGORY Categories[] = {};
-
-			// Suppress messages by severity level
-			D3D12_MESSAGE_SEVERITY severities[] =
-			{
-				D3D12_MESSAGE_SEVERITY_INFO
-			};
-
-			// Suppress individual messages by ID
-			D3D12_MESSAGE_ID denyIds[] = 
-			{
-				D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,	// No idea how to avoid this message yet
-				D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,							// Occurs when using capture frame while graphics debugging
-				D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,						// Occurs when using capture frame while graphics debugging
-			};
-
-			D3D12_INFO_QUEUE_FILTER newFilter = {};
-			//NewFilter.DenyList.NumCategories = _countof(Categories);
-			//NewFilter.DenyList.pCategoryList = Categories;
-			newFilter.DenyList.NumSeverities = _countof(severities);
-			newFilter.DenyList.pSeverityList = severities;
-			newFilter.DenyList.NumIDs = _countof(denyIds);
-			newFilter.DenyList.pIDList = denyIds;
-
-			hr = infoQueue->PushStorageFilter(&newFilter);
-			CheckHResult(hr, "Failed to push storage filter");
-		}
-#endif
-
-		return d3d12Device2;
 	}
 
 

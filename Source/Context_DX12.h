@@ -1,11 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-#include "Context.h"
-
 #include <wrl.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
+
+#include "Context.h"
+#include "Device_DX12.h"
+#include "RenderManager_DX12.h"
 
 
 namespace dx12
@@ -15,10 +17,7 @@ namespace dx12
 	public:
 		struct PlatformParams final : public virtual re::Context::PlatformParams
 		{
-			Microsoft::WRL::ComPtr<IDXGIAdapter4> m_dxgiAdapter4 = nullptr;
-
-			// TODO: Move to a "Device" object, owned by the Context:
-			Microsoft::WRL::ComPtr<ID3D12Device2> m_device = nullptr; // Display adapter device
+			dx12::Device m_device;
 
 			// TODO: Move to a "CommandQueue" object, owned by the Context:
 			Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_commandQueue = nullptr;
@@ -29,9 +28,9 @@ namespace dx12
 
 			// TODO: Move to a "CommandList" object:
 			// Backing memory for recording command lists into. Only reusable once commands have finished GPU execution
-			static const uint8_t m_numCommandAllocators = 3; // Note: For now, we're using one command allocator per backbuffer
+			// Note: For now, we're using one command allocator per backbuffer (i.e. 3)
 			// TODO: Make this a dx12 constant, so we can access it without a PlatformParams ?????
-			Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocators[m_numCommandAllocators];
+			Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocators[dx12::RenderManager::k_numFrames];
 
 			// TODO: Move to a "CommandList" object:
 			// Currently only 1 command list is needed as we record on a single thread. TODO: Multi-thread recording
@@ -41,9 +40,7 @@ namespace dx12
 			Microsoft::WRL::ComPtr<ID3D12Fence> m_fence = nullptr;
 			HANDLE m_fenceEvent; // OS event object: Receives notifications when a fence reaches a specific value
 			uint64_t m_fenceValue = 0;
-			uint64_t m_frameFenceValues[m_numCommandAllocators] = {}; // Tracks fence values used to signal the command queue for a particular frame
-
-			// TODO: m_numCommandAllocators currently needs to be the same as dx12::SwapChain::PlatformParams::m_numBuffers
+			uint64_t m_frameFenceValues[dx12::RenderManager::k_numFrames] = {}; // Tracks fence values used to signal the command queue for a particular frame
 		};
 
 
@@ -57,7 +54,7 @@ namespace dx12
 
 
 		// DX12-specific interface:
-		static Microsoft::WRL::ComPtr<IDXGIAdapter4> GetDisplayAdapter(); // Find adapter with most VRAM
+		static Microsoft::WRL::ComPtr<IDXGIAdapter4> GetBestDisplayAdapter(); // Find adapter with most VRAM
 		static Microsoft::WRL::ComPtr<ID3D12Device2> CreateDevice(Microsoft::WRL::ComPtr<IDXGIAdapter4> adapter);
 		static Microsoft::WRL::ComPtr<ID3D12CommandQueue> CreateCommandQueue(
 			Microsoft::WRL::ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type);
