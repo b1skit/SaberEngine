@@ -8,14 +8,14 @@ namespace dx12
 	Texture::PlatformParams::PlatformParams(re::Texture::TextureParams const& texParams)
 	{
 		#pragma message("TODO: Implement dx12::Texture::PlatformParams::PlatformParams")
-		LOG_ERROR("TODO: Implement dx12::PlatformParams::PlatformParams");
+		LOG_ERROR("TODO: Implement dx12::Texture::PlatformParams::PlatformParams");
 	}
 
 
 	Texture::PlatformParams::~PlatformParams()
 	{
 		#pragma message("TODO: Implement dx12::Texture::PlatformParams::~PlatformParams")
-		LOG_ERROR("TODO: Implement dx12::PlatformParams::PlatformParams");
+		LOG_ERROR("TODO: Implement dx12::Texture::PlatformParams::PlatformParams");
 	}
 
 

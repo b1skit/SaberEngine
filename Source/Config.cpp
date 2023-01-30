@@ -264,7 +264,8 @@ namespace en
 		break;
 		case platform::RenderingAPI::DX12:
 		{
-			// TBC...
+			#pragma message("TODO: Implement en:Config::SetAPIDefaults for DX12")
+			LOG_ERROR("TODO: Implement en:Config::SetAPIDefaults for DX12");
 		}
 		break;
 		default:
