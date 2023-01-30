@@ -14,4 +14,22 @@ namespace dx12
 	{
 
 	}
+
+
+	uint64_t Fence::Signal()
+	{
+		return 0;
+	}
+
+
+	void Fence::Wait()
+	{
+
+	}
+
+
+	void Fence::Flush()
+	{
+
+	}
 }

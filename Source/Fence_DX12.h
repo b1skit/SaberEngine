@@ -13,6 +13,9 @@ namespace dx12
 		void Create();
 		void Destroy();
 
+		uint64_t Signal();
+		void Wait();
+		void Flush();
 
 	private:
 
