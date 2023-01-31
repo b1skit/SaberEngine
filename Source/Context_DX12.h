@@ -29,7 +29,6 @@ namespace dx12
 			// TODO: Move to a "CommandList" object:
 			// Backing memory for recording command lists into. Only reusable once commands have finished GPU execution
 			// Note: For now, we're using one command allocator per backbuffer (i.e. 3)
-			// TODO: Make this a dx12 constant, so we can access it without a PlatformParams ?????
 			Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocators[dx12::RenderManager::k_numFrames];
 
 			// TODO: Move to a "CommandList" object:
