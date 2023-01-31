@@ -29,8 +29,6 @@ namespace dx12
 		ctxPlatParams->m_device.Create();
 
 		
-
-
 		// TODO: Move command queue management to its own object?
 		// TODO: Support command queues of different types (direct/copy/compute/etc)
 		ctxPlatParams->m_commandQueue = 
@@ -72,13 +70,14 @@ namespace dx12
 			ctxPlatParams->m_commandAllocators[swapChainParams->m_backBufferIdx],
 			D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-		ctxPlatParams->m_fence = CreateFence(ctxPlatParams->m_device.GetDisplayDevice());
-		ctxPlatParams->m_fenceEvent = CreateEventHandle();
 
-		en::Window* window = en::CoreEngine::Get()->GetWindow();
-		SEAssert("Window pointer cannot be null", window);
+		// Fence:
+		ctxPlatParams->m_fence.Create(ctxPlatParams->m_device.GetDisplayDevice());
+
+
+		SEAssert("Window pointer cannot be null", en::CoreEngine::Get()->GetWindow());
 		win32::Window::PlatformParams* const windowPlatParams =
-			dynamic_cast<win32::Window::PlatformParams*>(window->GetPlatformParams());
+			dynamic_cast<win32::Window::PlatformParams*>(en::CoreEngine::Get()->GetWindow()->GetPlatformParams());
 
 
 		// Setup our ImGui context
@@ -113,9 +112,8 @@ namespace dx12
 			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
 
 		// Make sure the command queue has finished all commands before closing.
-		Flush(ctxPlatParams->m_commandQueue, ctxPlatParams->m_fence, ctxPlatParams->m_fenceValue, ctxPlatParams->m_fenceEvent);
-
-		::CloseHandle(ctxPlatParams->m_fenceEvent);
+		ctxPlatParams->m_fence.Flush(ctxPlatParams->m_commandQueue, ctxPlatParams->m_fenceValue);
+		ctxPlatParams->m_fence.Destroy();
 
 		ctxPlatParams->m_device.Destroy();
 	}
@@ -133,9 +131,7 @@ namespace dx12
 
 		uint8_t& backbufferIdx = swapChainPlatParams->m_backBufferIdx;
 
-
 		ComPtr<ID3D12Resource>& backBuffer = swapChainPlatParams->m_backBuffers[backbufferIdx];
-
 
 		// First, we must transition our backbuffer to the present state:
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -163,16 +159,15 @@ namespace dx12
 		CheckHResult(hr, "Failed to present backbuffer");
 
 		// Insert a signal into the command queue:
-		ctxPlatParams->m_frameFenceValues[backbufferIdx] =
-			Signal(ctxPlatParams->m_commandQueue, ctxPlatParams->m_fence, ctxPlatParams->m_fenceValue);
+		ctxPlatParams->m_frameFenceValues[backbufferIdx] = 
+			ctxPlatParams->m_fence.Signal(ctxPlatParams->m_commandQueue, ctxPlatParams->m_fenceValue);
 
 		// Update the index of our current backbuffer
 		// Note: Backbuffer indices are not guaranteed to be sequential if we're using DXGI_SWAP_EFFECT_FLIP_DISCARD
 		backbufferIdx = swapChainPlatParams->m_swapChain->GetCurrentBackBufferIndex();
-
 		
 		// Wait on our fence (blocking)
-		WaitForFenceValue(ctxPlatParams->m_fence, ctxPlatParams->m_frameFenceValues[backbufferIdx], ctxPlatParams->m_fenceEvent);
+		ctxPlatParams->m_fence.WaitForGPU(ctxPlatParams->m_frameFenceValues[backbufferIdx]);
 	}
 
 
@@ -308,69 +303,5 @@ namespace dx12
 		CheckHResult(hr, "Failed to close command list");
 
 		return commandList;
-	}
-
-
-	ComPtr<ID3D12Fence> Context::CreateFence(ComPtr<ID3D12Device2> device)
-	{
-		ComPtr<ID3D12Fence> fence;
-		HRESULT hr = device->CreateFence(
-			0, // Initial value: It's recommended that fences always start at 0, and increase monotonically ONLY
-			D3D12_FENCE_FLAG_NONE, // Fence flags: Shared, cross-adapter, etc
-			IID_PPV_ARGS(&fence)); // REFIIF and destination pointer for the populated fence
-		
-		CheckHResult(hr, "Failed to create fence");
-
-		return fence;
-	}
-
-
-	HANDLE Context::CreateEventHandle()
-	{
-		HANDLE fenceEvent = ::CreateEvent(
-			NULL, // Pointer to event SECURITY_ATTRIBUTES. If null, the handle cannot be inherited by child processes
-			FALSE, // Manual reset? If true, event must be reset to non-signalled by calling ResetEvent. Auto-resets if false
-			FALSE, // Initial state: true/false = signalled/unsignalled
-			NULL); // Event object name: Unnamed if null
-
-		SEAssert("Failed to create fence event", fenceEvent);
-
-		return fenceEvent;
-	}
-
-
-	void Context::Flush(
-		ComPtr<ID3D12CommandQueue> commandQueue, ComPtr<ID3D12Fence> fence,	uint64_t& fenceValue, HANDLE fenceEvent)
-	{
-		uint64_t fenceValueForSignal = Signal(commandQueue, fence, fenceValue);
-		WaitForFenceValue(fence, fenceValueForSignal, fenceEvent);
-	}
-
-
-	uint64_t Context::Signal(ComPtr<ID3D12CommandQueue> commandQueue, ComPtr<ID3D12Fence> fence, uint64_t& fenceValue)
-	{
-		uint64_t fenceValueForSignal = ++fenceValue;
-
-		HRESULT hr = commandQueue->Signal(
-			fence.Get(), // Fence object ptr
-			fenceValueForSignal); // Value to signal the fence with
-		
-		CheckHResult(hr, "Failed to signal fence");
-
-		return fenceValueForSignal;
-	}
-
-
-	void Context::WaitForFenceValue(ComPtr<ID3D12Fence> fence, uint64_t fenceValue, HANDLE fenceEvent)
-	{
-		constexpr std::chrono::milliseconds duration = std::chrono::milliseconds::max();
-
-		if (fence->GetCompletedValue() < fenceValue)
-		{
-			HRESULT hr = fence->SetEventOnCompletion(fenceValue, fenceEvent);
-			CheckHResult(hr, "Failed to set completion event");
-
-			::WaitForSingleObject(fenceEvent, static_cast<DWORD>(duration.count()));
-		}
 	}
 }

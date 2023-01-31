@@ -26,8 +26,6 @@ namespace dx12
 		Microsoft::WRL::ComPtr<IDXGIAdapter4> m_dxgiAdapter4 = nullptr;
 		Microsoft::WRL::ComPtr<ID3D12Device2> m_displayDevice = nullptr; // Display adapter device
 
-		dx12::Fence m_fence;
-
 
 	private:
 		// Copying not allowed:

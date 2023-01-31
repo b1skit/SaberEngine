@@ -36,9 +36,7 @@ namespace dx12
 			// Currently only 1 command list is needed as we record on a single thread. TODO: Multi-thread recording
 			Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_commandList = nullptr;
 
-			// TODO: Move to a "Fence" object, managed by the "Device" object:
-			Microsoft::WRL::ComPtr<ID3D12Fence> m_fence = nullptr;
-			HANDLE m_fenceEvent; // OS event object: Receives notifications when a fence reaches a specific value
+			dx12::Fence m_fence;
 			uint64_t m_fenceValue = 0;
 			uint64_t m_frameFenceValues[dx12::RenderManager::k_numFrames] = {}; // Tracks fence values used to signal the command queue for a particular frame
 		};

@@ -109,15 +109,11 @@ namespace dx12
 	{
 		m_dxgiAdapter4 = GetBestDisplayAdapter(); // Find the display adapter with the most VRAM
 		m_displayDevice = CreateDevice(m_dxgiAdapter4); // Create a device from the selected adapter
-
-		m_fence.Create();
 	}
 
 
 	void Device::Destroy()
 	{
-		m_fence.Destroy();
-
 		m_displayDevice = nullptr;
 		m_dxgiAdapter4 = nullptr;
 	}
