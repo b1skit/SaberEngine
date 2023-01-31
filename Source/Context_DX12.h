@@ -5,6 +5,8 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
+#include "CommandList_DX12.h"
+#include "CommandQueue_DX12.h"
 #include "Context.h"
 #include "Device_DX12.h"
 #include "RenderManager_DX12.h"

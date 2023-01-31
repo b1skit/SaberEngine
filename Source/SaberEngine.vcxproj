@@ -193,6 +193,8 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClCompile Include="Batch.cpp" />
     <ClCompile Include="Bounds.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CommandList_DX12.cpp" />
+    <ClCompile Include="CommandQueue_DX12.cpp" />
     <ClCompile Include="Context_DX12.cpp" />
     <ClCompile Include="Debug_DX12.cpp" />
     <ClCompile Include="Device_DX12.cpp" />
@@ -288,6 +290,8 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClInclude Include="Batch.h" />
     <ClInclude Include="Bounds.h" />
     <ClInclude Include="Command.h" />
+    <ClInclude Include="CommandList_DX12.h" />
+    <ClInclude Include="CommandQueue_DX12.h" />
     <ClInclude Include="Context_DX12.h" />
     <ClInclude Include="Debug_DX12.h" />
     <ClInclude Include="Device_DX12.h" />
