@@ -65,11 +65,9 @@ namespace dx12
 				CreateCommandAllocator(ctxPlatParams->m_device.GetDisplayDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT);
 		}
 
-		ctxPlatParams->m_commandList = CreateCommandList(
-			ctxPlatParams->m_device.GetDisplayDevice(),
+		ctxPlatParams->m_commandList.Create(ctxPlatParams->m_device.GetDisplayDevice(), 
 			ctxPlatParams->m_commandAllocators[swapChainParams->m_backBufferIdx],
 			D3D12_COMMAND_LIST_TYPE_DIRECT);
-
 
 		// Fence:
 		ctxPlatParams->m_fence.Create(ctxPlatParams->m_device.GetDisplayDevice());
@@ -136,16 +134,16 @@ namespace dx12
 		// First, we must transition our backbuffer to the present state:
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 			backBuffer.Get(),
-			D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-		ctxPlatParams->m_commandList->ResourceBarrier(1, &barrier);
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PRESENT); // Note: D3D12_RESOURCE_STATE_PRESENT == D3D12_RESOURCE_STATE_COMMON
+		ctxPlatParams->m_commandList.AddResourceBarrier(1, &barrier);
 
 		// Close the command list before we execute it
-		HRESULT hr = ctxPlatParams->m_commandList->Close();
-		CheckHResult(hr, "Failed to close command list");
+		ctxPlatParams->m_commandList.Close();
 
 		// Build an array of command lists, and execute them:
 		ID3D12CommandList* const commandLists[] = {
-			ctxPlatParams->m_commandList.Get()
+			ctxPlatParams->m_commandList.GetD3DCommandList().Get()
 		};
 		ctxPlatParams->m_commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
 
@@ -155,7 +153,7 @@ namespace dx12
 		UINT syncInterval = vsyncEnabled ? 1 : 0;
 		UINT presentFlags = swapChainPlatParams->m_tearingSupported && !vsyncEnabled ? DXGI_PRESENT_ALLOW_TEARING : 0;
 
-		hr = swapChainPlatParams->m_swapChain->Present(syncInterval, presentFlags);
+		HRESULT hr = swapChainPlatParams->m_swapChain->Present(syncInterval, presentFlags);
 		CheckHResult(hr, "Failed to present backbuffer");
 
 		// Insert a signal into the command queue:
@@ -274,34 +272,5 @@ namespace dx12
 		CheckHResult(hr, "Failed to create command allocator");
 
 		return commandAllocator;
-	}
-
-
-	ComPtr<ID3D12GraphicsCommandList> Context::CreateCommandList(
-		ComPtr<ID3D12Device2> device,
-		ComPtr<ID3D12CommandAllocator> cmdAllocator, 
-		D3D12_COMMAND_LIST_TYPE type)
-	{
-		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
-
-		ComPtr<ID3D12GraphicsCommandList> commandList;
-
-		HRESULT hr = device->CreateCommandList(
-			deviceNodeMask,
-			type, // Direct draw/compute/copy/etc
-			cmdAllocator.Get(), // The command allocator the command lists will be created on
-			nullptr,  // Optional: Command list initial pipeline state
-			IID_PPV_ARGS(&commandList)); // REFIID/GUID of the command list interface, & destination for the populated command list
-		// NOTE: IID_PPV_ARGS macro automatically supplies both the RIID & interface pointer
-
-		CheckHResult(hr, "Failed to create command list");
-
-		// Note: Command lists are created in the recording state by default. The render loop resets the command list,
-		// which requires the command list to be closed. So, we pre-close new command lists so they're ready to be reset 
-		// before recording
-		hr = commandList->Close();
-		CheckHResult(hr, "Failed to close command list");
-
-		return commandList;
 	}
 }

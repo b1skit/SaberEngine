@@ -33,9 +33,9 @@ namespace dx12
 			// Note: For now, we're using one command allocator per backbuffer (i.e. 3)
 			Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocators[dx12::RenderManager::k_numFrames];
 
-			// TODO: Move to a "CommandList" object:
-			// Currently only 1 command list is needed as we record on a single thread. TODO: Multi-thread recording
-			Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_commandList = nullptr;
+			// Currently only 1 command list is needed as we record on a single thread.
+			//TODO: Multi-thread recording
+			dx12::CommandList_DX12 m_commandList;
 
 			dx12::Fence m_fence;
 			uint64_t m_fenceValue = 0;
