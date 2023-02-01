@@ -105,6 +105,13 @@ namespace
 
 namespace dx12
 {
+	Device::Device()
+		: m_dxgiAdapter4(nullptr)
+		, m_displayDevice(nullptr)
+	{
+	}
+
+
 	void Device::Create()
 	{
 		m_dxgiAdapter4 = GetBestDisplayAdapter(); // Find the display adapter with the most VRAM

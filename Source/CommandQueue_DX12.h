@@ -11,7 +11,7 @@ namespace dx12
 	class CommandQueue
 	{
 	public:
-		CommandQueue() = default;
+		CommandQueue();
 		~CommandQueue() = default;
 
 		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, D3D12_COMMAND_LIST_TYPE type);

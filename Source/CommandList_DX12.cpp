@@ -12,7 +12,6 @@ namespace dx12
 	CommandList_DX12::CommandList_DX12()
 		: m_commandList(nullptr)
 	{
-
 	}
 
 

@@ -19,6 +19,11 @@ namespace dx12
 	using Microsoft::WRL::ComPtr;
 
 
+	Context::Context()
+	{
+	}
+
+
 	void Context::Create(re::Context& context)
 	{
 		dx12::Context::PlatformParams* const ctxPlatParams =

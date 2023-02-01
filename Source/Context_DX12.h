@@ -39,11 +39,14 @@ namespace dx12
 
 			dx12::Fence m_fence;
 			uint64_t m_fenceValue = 0;
-			uint64_t m_frameFenceValues[dx12::RenderManager::k_numFrames] = {}; // Tracks fence values used to signal the command queue for a particular frame
+			uint64_t m_frameFenceValues[dx12::RenderManager::k_numFrames] = {}; // Tracks fence values for signalling the command queue
 		};
 
 
 	public:
+		Context();
+		~Context() = default;
+
 		static void Create(re::Context& context);
 		static void Destroy(re::Context& context);
 		static void Present(re::Context const& context);
@@ -53,8 +56,6 @@ namespace dx12
 
 
 		// DX12-specific interface:
-		static Microsoft::WRL::ComPtr<IDXGIAdapter4> GetBestDisplayAdapter(); // Find adapter with most VRAM
-		static Microsoft::WRL::ComPtr<ID3D12Device2> CreateDevice(Microsoft::WRL::ComPtr<IDXGIAdapter4> adapter);
 		static Microsoft::WRL::ComPtr<ID3D12CommandQueue> CreateCommandQueue(
 			Microsoft::WRL::ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type);
 		static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(
@@ -64,14 +65,5 @@ namespace dx12
 			uint8_t numBuffers, Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap);
 		static Microsoft::WRL::ComPtr<ID3D12CommandAllocator> CreateCommandAllocator(
 			Microsoft::WRL::ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type);
-		static Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> CreateCommandList(
-			Microsoft::WRL::ComPtr<ID3D12Device2> device, Microsoft::WRL::ComPtr<ID3D12CommandAllocator> cmdAllocator, D3D12_COMMAND_LIST_TYPE type);
-		static Microsoft::WRL::ComPtr<ID3D12Fence> CreateFence(Microsoft::WRL::ComPtr<ID3D12Device2> device);
-		static HANDLE CreateEventHandle();
-		static void Flush(
-			Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue, Microsoft::WRL::ComPtr<ID3D12Fence> fence, uint64_t& fenceValue, HANDLE fenceEvent);
-		static uint64_t Signal(
-			Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue, Microsoft::WRL::ComPtr<ID3D12Fence> fence, uint64_t& fenceValue);
-		static void WaitForFenceValue(Microsoft::WRL::ComPtr<ID3D12Fence> fence, uint64_t fenceValue, HANDLE fenceEvent);
 	};
 }

@@ -8,6 +8,12 @@ namespace dx12
 	using Microsoft::WRL::ComPtr;
 
 
+	CommandQueue::CommandQueue()
+		: m_commandQueue(nullptr)
+	{
+	}
+
+
 	void CommandQueue::Create(ComPtr<ID3D12Device2> displayDevice, D3D12_COMMAND_LIST_TYPE type)
 	{
 		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs

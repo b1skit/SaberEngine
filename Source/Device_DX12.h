@@ -13,7 +13,7 @@ namespace dx12
 	class Device
 	{
 	public:
-		Device() = default;
+		Device();
 		~Device() = default;
 
 		void Create();
