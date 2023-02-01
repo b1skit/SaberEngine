@@ -14,7 +14,7 @@ namespace dx12
 	class CommandList_DX12
 	{
 	public:
-		CommandList_DX12() = default;
+		CommandList_DX12();
 		~CommandList_DX12() = default;
 
 		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> device,

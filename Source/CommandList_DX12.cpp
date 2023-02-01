@@ -9,6 +9,12 @@ namespace dx12
 {
 	using Microsoft::WRL::ComPtr;
 
+	CommandList_DX12::CommandList_DX12()
+		: m_commandList(nullptr)
+	{
+
+	}
+
 
 	void CommandList_DX12::Create(Microsoft::WRL::ComPtr<ID3D12Device2> device,
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> cmdAllocator,
@@ -29,8 +35,7 @@ namespace dx12
 		// Note: Command lists are created in the recording state by default. The render loop resets the command list,
 		// which requires the command list to be closed. So, we pre-close new command lists so they're ready to be reset 
 		// before recording
-		hr = m_commandList->Close();
-		CheckHResult(hr, "Failed to close command list");
+		Close();
 	}
 
 
