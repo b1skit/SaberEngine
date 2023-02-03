@@ -35,5 +35,8 @@ namespace dx12
 
 		// DX12-specific functionality:
 		static bool CheckTearingSupport(); // Variable refresh rate dispays (eg. G-Sync/FreeSync) require tearing enabled
+
+		static uint8_t GetBackBufferIdx(re::SwapChain const& swapChain);
+		static Microsoft::WRL::ComPtr<ID3D12Resource> GetBackBufferResource(re::SwapChain const& swapChain);
 	};
 }

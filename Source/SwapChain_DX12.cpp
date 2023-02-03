@@ -120,4 +120,22 @@ namespace dx12
 
 		swapchainParams->m_vsyncEnabled = enabled;
 	}
+
+
+	uint8_t SwapChain::GetBackBufferIdx(re::SwapChain const& swapChain)
+	{
+		dx12::SwapChain::PlatformParams* const swapChainPlatParams =
+			dynamic_cast<dx12::SwapChain::PlatformParams*>(swapChain.GetPlatformParams());
+
+		return swapChainPlatParams->m_backBufferIdx;
+	}
+
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> SwapChain::GetBackBufferResource(re::SwapChain const& swapChain)
+	{
+		dx12::SwapChain::PlatformParams* const swapChainPlatParams =
+			dynamic_cast<dx12::SwapChain::PlatformParams*>(swapChain.GetPlatformParams());
+
+		return swapChainPlatParams->m_backBuffers[swapChainPlatParams->m_backBufferIdx];
+	}
 }

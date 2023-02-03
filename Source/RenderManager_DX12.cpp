@@ -31,11 +31,8 @@ namespace dx12
 
 		dx12::Context::PlatformParams* const ctxPlatParams =
 			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
-
-		dx12::SwapChain::PlatformParams* const swapChainPlatParams =
-			dynamic_cast<dx12::SwapChain::PlatformParams*>(context.GetSwapChain().GetPlatformParams());
 		
-		const uint8_t backbufferIdx = swapChainPlatParams->m_backBufferIdx;
+		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
 
 
 		// Reset our command allocator and command list to their original states, so we can start recording commands
@@ -43,7 +40,7 @@ namespace dx12
 		ctxPlatParams->m_commandLists[backbufferIdx].Reset(nullptr);
 
 		// Clear the render target:
-		ComPtr<ID3D12Resource>& backBuffer = swapChainPlatParams->m_backBuffers[backbufferIdx];
+		ComPtr<ID3D12Resource> backBuffer = dx12::SwapChain::GetBackBufferResource(context.GetSwapChain());
 
 		// First, transition our resource (back) to a render target state:
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(

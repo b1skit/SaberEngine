@@ -140,9 +140,9 @@ namespace dx12
 		dx12::SwapChain::PlatformParams* const swapChainPlatParams =
 			dynamic_cast<dx12::SwapChain::PlatformParams*>(context.GetSwapChain().GetPlatformParams());
 
-		uint8_t& backbufferIdx = swapChainPlatParams->m_backBufferIdx;
+		const uint8_t backbufferIdx = swapChainPlatParams->m_backBufferIdx;
 
-		ComPtr<ID3D12Resource>& backBuffer = swapChainPlatParams->m_backBuffers[backbufferIdx];
+		ComPtr<ID3D12Resource> backBuffer = dx12::SwapChain::GetBackBufferResource(context.GetSwapChain());
 
 		// First, we must transition our backbuffer to the present state:
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -163,8 +163,9 @@ namespace dx12
 
 		// Present the backbuffer:
 		const bool vsyncEnabled = swapChainPlatParams->m_vsyncEnabled;
-		UINT syncInterval = vsyncEnabled ? 1 : 0;
-		UINT presentFlags = swapChainPlatParams->m_tearingSupported && !vsyncEnabled ? DXGI_PRESENT_ALLOW_TEARING : 0;
+		const uint32_t syncInterval = vsyncEnabled ? 1 : 0;
+		const uint32_t presentFlags = 
+			swapChainPlatParams->m_tearingSupported && !vsyncEnabled ? DXGI_PRESENT_ALLOW_TEARING : 0;
 
 		HRESULT hr = swapChainPlatParams->m_swapChain->Present(syncInterval, presentFlags);
 		CheckHResult(hr, "Failed to present backbuffer");
@@ -173,9 +174,9 @@ namespace dx12
 		ctxPlatParams->m_frameFenceValues[backbufferIdx] = 
 			ctxPlatParams->m_fence.Signal(ctxPlatParams->m_commandQueue.GetD3DCommandQueue(), ctxPlatParams->m_fenceValue);
 
-		// Update the index of our current backbuffer
+		// Get the next backbuffer index:
 		// Note: Backbuffer indices are not guaranteed to be sequential if we're using DXGI_SWAP_EFFECT_FLIP_DISCARD
-		backbufferIdx = swapChainPlatParams->m_swapChain->GetCurrentBackBufferIndex();
+		swapChainPlatParams->m_backBufferIdx = swapChainPlatParams->m_swapChain->GetCurrentBackBufferIndex();
 		
 		// Wait on our fence (blocking)
 		ctxPlatParams->m_fence.WaitForGPU(ctxPlatParams->m_frameFenceValues[backbufferIdx]);
