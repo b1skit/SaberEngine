@@ -16,6 +16,8 @@ namespace dx12
 
 		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, D3D12_COMMAND_LIST_TYPE type);
 
+		void Execute(uint32_t numCmdLists, ID3D12CommandList* const* cmdLists);
+
 		Microsoft::WRL::ComPtr<ID3D12CommandQueue> GetD3DCommandQueue() { return m_commandQueue; }
 
 

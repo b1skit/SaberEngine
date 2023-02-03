@@ -36,8 +36,7 @@ namespace dx12
 		
 		// TODO: Move command queue management to its own object?
 		// TODO: Support command queues of different types (direct/copy/compute/etc)
-		ctxPlatParams->m_commandQueue = 
-			CreateCommandQueue(ctxPlatParams->m_device.GetDisplayDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT);
+		ctxPlatParams->m_commandQueue.Create(ctxPlatParams->m_device.GetDisplayDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT);
 
 
 		
@@ -115,7 +114,7 @@ namespace dx12
 			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
 
 		// Make sure the command queue has finished all commands before closing.
-		ctxPlatParams->m_fence.Flush(ctxPlatParams->m_commandQueue, ctxPlatParams->m_fenceValue);
+		ctxPlatParams->m_fence.Flush(ctxPlatParams->m_commandQueue.GetD3DCommandQueue().Get(), ctxPlatParams->m_fenceValue);
 		ctxPlatParams->m_fence.Destroy();
 
 		ctxPlatParams->m_device.Destroy();
@@ -150,7 +149,7 @@ namespace dx12
 		ID3D12CommandList* const commandLists[] = {
 			ctxPlatParams->m_commandList.GetD3DCommandList().Get()
 		};
-		ctxPlatParams->m_commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
+		ctxPlatParams->m_commandQueue.Execute(_countof(commandLists), commandLists);
 
 
 		// Present the backbuffer:
@@ -163,7 +162,7 @@ namespace dx12
 
 		// Insert a signal into the command queue:
 		ctxPlatParams->m_frameFenceValues[backbufferIdx] = 
-			ctxPlatParams->m_fence.Signal(ctxPlatParams->m_commandQueue, ctxPlatParams->m_fenceValue);
+			ctxPlatParams->m_fence.Signal(ctxPlatParams->m_commandQueue.GetD3DCommandQueue(), ctxPlatParams->m_fenceValue);
 
 		// Update the index of our current backbuffer
 		// Note: Backbuffer indices are not guaranteed to be sequential if we're using DXGI_SWAP_EFFECT_FLIP_DISCARD

@@ -20,9 +20,7 @@ namespace dx12
 		struct PlatformParams final : public virtual re::Context::PlatformParams
 		{
 			dx12::Device m_device;
-
-			// TODO: Move to a "CommandQueue" object, owned by the Context:
-			Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_commandQueue = nullptr;
+			dx12::CommandQueue m_commandQueue;
 
 			// TODO: Move to a "DescriptorHeapManager", owned by the Context:
 			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVDescHeap; // Array of descriptors/resource views

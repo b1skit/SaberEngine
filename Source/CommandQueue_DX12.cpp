@@ -27,4 +27,10 @@ namespace dx12
 		HRESULT hr = displayDevice->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&m_commandQueue));
 		CheckHResult(hr, "Failed to create command queue");
 	}
+
+
+	void CommandQueue::Execute(uint32_t numCmdLists, ID3D12CommandList* const* cmdLists)
+	{
+		m_commandQueue->ExecuteCommandLists(numCmdLists, cmdLists);
+	}
 }
