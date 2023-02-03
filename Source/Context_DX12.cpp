@@ -65,13 +65,10 @@ namespace dx12
 
 		for (uint32_t i = 0; i < dx12::RenderManager::k_numFrames; ++i)
 		{
-			ctxPlatParams->m_commandAllocators[i] = 
-				CreateCommandAllocator(ctxPlatParams->m_device.GetDisplayDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT);
+			ctxPlatParams->m_commandLists[i].Create(
+				ctxPlatParams->m_device.GetDisplayDevice(),
+				D3D12_COMMAND_LIST_TYPE_DIRECT);
 		}
-
-		ctxPlatParams->m_commandList.Create(ctxPlatParams->m_device.GetDisplayDevice(), 
-			ctxPlatParams->m_commandAllocators[swapChainParams->m_backBufferIdx],
-			D3D12_COMMAND_LIST_TYPE_DIRECT);
 
 		// Fence:
 		ctxPlatParams->m_fence.Create(ctxPlatParams->m_device.GetDisplayDevice());
@@ -140,14 +137,14 @@ namespace dx12
 			backBuffer.Get(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PRESENT); // Note: D3D12_RESOURCE_STATE_PRESENT == D3D12_RESOURCE_STATE_COMMON
-		ctxPlatParams->m_commandList.AddResourceBarrier(1, &barrier);
+		ctxPlatParams->m_commandLists[backbufferIdx].AddResourceBarrier(1, &barrier);
 
 		// Close the command list before we execute it
-		ctxPlatParams->m_commandList.Close();
+		ctxPlatParams->m_commandLists[backbufferIdx].Close();
 
 		// Build an array of command lists, and execute them:
 		ID3D12CommandList* const commandLists[] = {
-			ctxPlatParams->m_commandList.GetD3DCommandList().Get()
+			ctxPlatParams->m_commandLists[backbufferIdx].GetD3DCommandList().Get()
 		};
 		ctxPlatParams->m_commandQueue.Execute(_countof(commandLists), commandLists);
 

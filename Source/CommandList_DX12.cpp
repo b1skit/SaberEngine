@@ -15,16 +15,18 @@ namespace dx12
 	}
 
 
-	void CommandList_DX12::Create(Microsoft::WRL::ComPtr<ID3D12Device2> device,
-		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> cmdAllocator,
-		D3D12_COMMAND_LIST_TYPE type)
+	void CommandList_DX12::Create(Microsoft::WRL::ComPtr<ID3D12Device2> device,	D3D12_COMMAND_LIST_TYPE type)
 	{
+		// Create the command allocator first:
+		CreateCommandAllocator(device, type);
+
+		// Create the command list:
 		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
 
 		HRESULT hr = device->CreateCommandList(
 			deviceNodeMask,
 			type, // Direct draw/compute/copy/etc
-			cmdAllocator.Get(), // The command allocator the command lists will be created on
+			m_commandAllocator.Get(), // The command allocator the command lists will be created on
 			nullptr,  // Optional: Command list initial pipeline state
 			IID_PPV_ARGS(&m_commandList)); // REFIID/GUID of the command list interface, & destination for the populated command list
 		// NOTE: IID_PPV_ARGS macro automatically supplies both the RIID & interface pointer
@@ -35,6 +37,17 @@ namespace dx12
 		// which requires the command list to be closed. So, we pre-close new command lists so they're ready to be reset 
 		// before recording
 		Close();
+	}
+
+
+	void CommandList_DX12::CreateCommandAllocator(Microsoft::WRL::ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type)
+	{
+		HRESULT hr = device->CreateCommandAllocator(
+			type, // Copy, compute, direct draw, etc
+			IID_PPV_ARGS(&m_commandAllocator)); // REFIID/GUID (Globally-Unique IDentifier) for the command allocator
+		// NOTE: IID_PPV_ARGS macro automatically supplies both the RIID & interface pointer
+
+		CheckHResult(hr, "Failed to create command allocator");
 	}
 
 
@@ -51,10 +64,10 @@ namespace dx12
 	}
 
 
-	void CommandList_DX12::Reset(ComPtr<ID3D12CommandAllocator> commandAllocator, ID3D12PipelineState* pso)
+	void CommandList_DX12::Reset(ID3D12PipelineState* pso)
 	{
-		// Note: pso is optional; A dummy initial PSO is set if nullptr
-		m_commandList->Reset(commandAllocator.Get(), pso);
+		m_commandAllocator->Reset();
+		m_commandList->Reset(m_commandAllocator.Get(), pso); // Note: pso is optional; Sets a dummy PSO if nullptr
 	}
 
 

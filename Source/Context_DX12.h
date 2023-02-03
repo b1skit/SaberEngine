@@ -26,14 +26,8 @@ namespace dx12
 			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVDescHeap; // Array of descriptors/resource views
 			uint32_t m_RTVDescSize; // Stride size of a single descriptor/resource view
 
-			// TODO: Move to a "CommandList" object:
-			// Backing memory for recording command lists into. Only reusable once commands have finished GPU execution
-			// Note: For now, we're using one command allocator per backbuffer (i.e. 3)
-			Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocators[dx12::RenderManager::k_numFrames];
-
-			// Currently only 1 command list is needed as we record on a single thread.
-			//TODO: Multi-thread recording
-			dx12::CommandList_DX12 m_commandList;
+			// Currently only record a single command list per frame. TODO: Multi-thread/multi-cmd list recording
+			dx12::CommandList_DX12 m_commandLists[dx12::RenderManager::k_numFrames];
 
 			dx12::Fence m_fence;
 			uint64_t m_fenceValue = 0;

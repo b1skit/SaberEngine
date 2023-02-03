@@ -37,15 +37,14 @@ namespace dx12
 		
 		const uint8_t backbufferIdx = swapChainPlatParams->m_backBufferIdx;
 
-		ComPtr<ID3D12CommandAllocator>& commandAllocator = ctxPlatParams->m_commandAllocators[backbufferIdx];
-		ComPtr<ID3D12Resource>& backBuffer = swapChainPlatParams->m_backBuffers[backbufferIdx];
 
 		// Reset our command allocator and command list to their original states, so we can start recording commands
 		// Note: Our command lists are closed immediately after they were created
-		commandAllocator->Reset();
-		ctxPlatParams->m_commandList.Reset(commandAllocator.Get(), nullptr);
+		ctxPlatParams->m_commandLists[backbufferIdx].Reset(nullptr);
 
 		// Clear the render target:
+		ComPtr<ID3D12Resource>& backBuffer = swapChainPlatParams->m_backBuffers[backbufferIdx];
+
 		// First, transition our resource (back) to a render target state:
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 			backBuffer.Get(), // Resource ptr
@@ -53,7 +52,7 @@ namespace dx12
 			D3D12_RESOURCE_STATE_RENDER_TARGET); // State after
 
 		// Record the transition on the command list:
-		ctxPlatParams->m_commandList.AddResourceBarrier(1, &barrier);
+		ctxPlatParams->m_commandLists[backbufferIdx].AddResourceBarrier(1, &barrier);
 
 		// Construct a CPU descriptor handle to a render target view.
 		// Our RTV is offset from the beginning of the descriptor heap using an index and descriptor size
@@ -64,7 +63,7 @@ namespace dx12
 
 		// Record our clear RTV command:
 		const vec4 clearColor = vec4(0.38f, 0.36f, 0.1f, 1.0f);
-		ctxPlatParams->m_commandList.ClearRTV(
+		ctxPlatParams->m_commandLists[backbufferIdx].ClearRTV(
 			rtv, // Descriptor we're clearning
 			clearColor,
 			0, // Number of rectangles in the proceeding D3D12_RECT ptr
