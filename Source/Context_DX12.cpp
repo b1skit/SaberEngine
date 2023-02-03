@@ -201,25 +201,6 @@ namespace dx12
 	}
 
 
-	ComPtr<ID3D12CommandQueue> Context::CreateCommandQueue(ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type)
-	{
-		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
-
-		ComPtr<ID3D12CommandQueue> cmdQueue;
-
-		D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
-		cmdQueueDesc.Type		= type; // Direct, compute, copy, etc
-		cmdQueueDesc.Priority	= D3D12_COMMAND_QUEUE_PRIORITY_NORMAL; 
-		cmdQueueDesc.Flags		= D3D12_COMMAND_QUEUE_FLAG_NONE; // None, or Disable Timeout
-		cmdQueueDesc.NodeMask	= deviceNodeMask;
-
-		HRESULT hr = device->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&cmdQueue));
-		CheckHResult(hr, "Failed to create command queue");
-
-		return cmdQueue;
-	}
-
-
 	ComPtr<ID3D12DescriptorHeap> Context::CreateDescriptorHeap(
 		ComPtr<ID3D12Device2> device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors)
 	{
@@ -270,20 +251,5 @@ namespace dx12
 
 			rtvHandle.Offset(rtvDescriptorSize); // Stride to the next descriptor
 		}
-	}
-
-
-	ComPtr<ID3D12CommandAllocator> Context::CreateCommandAllocator(
-		ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type)
-	{
-		ComPtr<ID3D12CommandAllocator> commandAllocator;
-		HRESULT hr = device->CreateCommandAllocator(
-			type, // Copy, compute, direct draw, etc
-			IID_PPV_ARGS(&commandAllocator)); // REFIID/GUID (Globally-Unique IDentifier) for the command allocator
-		// NOTE: IID_PPV_ARGS macro automatically supplies both the RIID & interface pointer
-
-		CheckHResult(hr, "Failed to create command allocator");
-
-		return commandAllocator;
 	}
 }
