@@ -50,14 +50,10 @@ namespace dx12
 
 
 		// DX12-specific interface:
-		static Microsoft::WRL::ComPtr<ID3D12CommandQueue> CreateCommandQueue(
-			Microsoft::WRL::ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type);
 		static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(
 			Microsoft::WRL::ComPtr<ID3D12Device2> device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors);
 		static void UpdateRenderTargetViews(Microsoft::WRL::ComPtr<ID3D12Device2> device,
 			Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain, Microsoft::WRL::ComPtr<ID3D12Resource>* buffers, 
 			uint8_t numBuffers, Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap);
-		static Microsoft::WRL::ComPtr<ID3D12CommandAllocator> CreateCommandAllocator(
-			Microsoft::WRL::ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type);
 	};
 }
