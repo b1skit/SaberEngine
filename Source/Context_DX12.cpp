@@ -19,6 +19,18 @@ namespace dx12
 	using Microsoft::WRL::ComPtr;
 
 
+	Context::PlatformParams::PlatformParams()
+		: m_fenceValue(0)
+		, m_RTVDescHeap(nullptr)
+		, m_RTVDescSize(0)
+	{
+		for (uint32_t i = 0; i < dx12::RenderManager::k_numFrames; i++)
+		{
+			m_frameFenceValues[i] = 0;
+		}
+	}
+
+
 	Context::Context()
 	{
 	}

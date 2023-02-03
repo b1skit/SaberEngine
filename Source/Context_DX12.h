@@ -19,6 +19,8 @@ namespace dx12
 	public:
 		struct PlatformParams final : public virtual re::Context::PlatformParams
 		{
+			PlatformParams();
+
 			dx12::Device m_device;
 			dx12::CommandQueue m_commandQueue;
 
@@ -31,7 +33,7 @@ namespace dx12
 
 			dx12::Fence m_fence;
 			uint64_t m_fenceValue = 0;
-			uint64_t m_frameFenceValues[dx12::RenderManager::k_numFrames] = {}; // Tracks fence values for signalling the command queue
+			uint64_t m_frameFenceValues[dx12::RenderManager::k_numFrames]; // Fence values for signalling the command queue
 		};
 
 
