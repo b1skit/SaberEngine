@@ -181,4 +181,10 @@ layout(std430, binding=6) readonly buffer RenderTargetParams
 	vec4 g_targetResolution; // .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
 };
 
+
+// GraphicsSystem_Tonemapping.cpp
+layout(std430, binding=7) readonly buffer TonemappingParams
+{
+	vec4 g_exposure; // .x = exposure, .yzw = unused
+};
 #endif

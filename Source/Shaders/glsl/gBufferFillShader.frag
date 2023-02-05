@@ -16,8 +16,6 @@ layout (location = 4) out vec4 gBuffer_out_wPos;
 layout (location = 5) out vec4 gBuffer_out_matProp0;
 layout (location = 6) out vec4 gBuffer_out_depth;
 
-uniform float emissiveIntensity = 1.0;	// Overwritten during RenderManager.Initialize()
-
 
 void main()
 {
@@ -44,6 +42,7 @@ void main()
 	// Exposure:
 	const float ev100 = GetEV100FromExposureSettings(CAM_APERTURE, CAM_SHUTTERSPEED, CAM_SENSITIVITY);
 	const float exposure = Exposure(ev100);
+	// TODO: Move this to a helper function (duplicated in deferredAmbientLightShader.frag)
 
 	// Product of (emissiveTexture * emissiveFactor) is in cd/(m^2) (Candela per square meter)
 	const vec3 emissive = texture(MatEmissive, vOut.uv0.xy).rgb * g_emissiveFactor * g_emissiveStrength;

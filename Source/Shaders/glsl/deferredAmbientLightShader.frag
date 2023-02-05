@@ -58,6 +58,8 @@ void main()
 
 	const float ev100 = GetEV100FromExposureSettings(CAM_APERTURE, CAM_SHUTTERSPEED, CAM_SENSITIVITY);
 	const float exposure = Exposure(ev100);
+	// TODO: Move this to a helper function (duplicated in gBufferFillShader.frag)
+
 	FragColor = vec4((linearAlbedo.rgb * irradiance * k_d + specular) * exposure, 1.0); // Note: Omitted the "/ PI" factor here
 }
 

@@ -57,9 +57,6 @@ namespace re
 	public:
 		explicit Shader(std::string const& extensionlessShaderFilename);
 		~Shader() { Destroy(); }
-
-		// TODO: Deprecate this; Shader values should not be directly set from the gr layer
-		void SetUniform(std::string const&, void* value, UniformType const type, int count);
 			
 		// Helper: Simultaneously calls SetUniform for the texture and sampler
 		void SetTextureSamplerUniform(

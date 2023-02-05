@@ -7,21 +7,42 @@
 #include "SceneManager.h"
 
 
+using en::Config;
+using en::SceneManager;
+using re::Shader;
+using gr::DeferredLightingGraphicsSystem;
+using re::TextureTargetSet;
+using re::RenderManager;
+using re::RenderStage;
+using re::Batch;
+using re::Sampler;
+using std::shared_ptr;
+using std::make_shared;
+using std::string;
+using glm::vec3;
+
+
+namespace
+{
+	struct TonemappingParams
+	{
+		glm::vec4 g_exposure; // .x = exposure, .yzw = unused
+	};
+
+	TonemappingParams CreateTonemappingParamsData()
+	{
+		TonemappingParams tonemappingParams;
+		tonemappingParams.g_exposure = 
+			glm::vec4(SceneManager::GetSceneData()->GetMainCamera()->GetExposure(), 0.f, 0.f, 0.f);
+
+		return tonemappingParams;
+	}
+}
+
+
 namespace gr
 {
-	using en::Config;
-	using en::SceneManager;
-	using re::Shader;
-	using gr::DeferredLightingGraphicsSystem;
-	using re::TextureTargetSet;
-	using re::RenderManager;
-	using re::RenderStage;
-	using re::Batch;
-	using re::Sampler;
-	using std::shared_ptr;
-	using std::make_shared;
-	using std::string;
-	using glm::vec3;
+
 
 
 	TonemappingGraphicsSystem::TonemappingGraphicsSystem(std::string name) : GraphicsSystem(name), NamedObject(name),
@@ -43,15 +64,17 @@ namespace gr
 		m_tonemappingStage.SetStagePipelineState(tonemappingStageParam);
 
 		m_tonemappingStage.GetStageShader() = make_shared<Shader>(Config::Get()->GetValue<string>("toneMapShader"));
-		
-		// Set shader constants:
-		m_tonemappingStage.GetStageShader()->SetUniform(
-			"exposure",
-			&SceneManager::GetSceneData()->GetMainCamera()->GetExposure(),
-			re::Shader::UniformType::Float,
-			1);
 
 		m_tonemappingStage.SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
+
+		// Tonemapping param block:
+		TonemappingParams tonemappingParams = CreateTonemappingParamsData();
+		shared_ptr<re::ParameterBlock> tonemappingPB = re::ParameterBlock::Create(
+			"TonemappingParams",
+			tonemappingParams,
+			re::ParameterBlock::PBType::Immutable);
+
+		m_tonemappingStage.AddPermanentParameterBlock(tonemappingPB);
 
 		pipeline.AppendRenderStage(m_tonemappingStage);
 	}
