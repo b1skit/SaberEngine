@@ -116,6 +116,7 @@ namespace re
 		// Copy frame data:
 		SEAssert("Render batches should be empty", m_renderBatches.empty());
 		m_renderBatches = std::move(SceneManager::Get()->GetSceneBatches());
+		// TODO: Create a BatchManager object (owned by the SceneManager) that can handle batch double-buffering
 
 		// Update the graphics systems:
 		for (size_t gs = 0; gs < m_graphicsSystems.size(); gs++)

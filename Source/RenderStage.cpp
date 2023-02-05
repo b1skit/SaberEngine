@@ -30,7 +30,8 @@ namespace re
 	}
 
 
-	RenderStage::RenderStage(RenderStage const& rhs) : RenderStage(rhs.GetName())
+	RenderStage::RenderStage(RenderStage const& rhs) 
+		: RenderStage(rhs.GetName())
 	{
 		m_stageShader = rhs.m_stageShader;
 		m_textureTargetSet = rhs.m_textureTargetSet;
