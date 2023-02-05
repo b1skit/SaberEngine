@@ -1,10 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Batch.h"
+#include "DebugConfiguration.h"
 #include "MeshPrimitive.h"
 #include "Material.h"
-#include "Shader.h"
-#include "ParameterBlock.h"
 #include "Mesh.h"
+#include "ParameterBlock.h"
+#include "Shader.h"
+#include "Texture.h"
+
 
 using std::string;
 using std::shared_ptr;
@@ -20,7 +23,6 @@ namespace re
 {
 	Batch::Batch(re::MeshPrimitive* meshPrimitive, gr::Material* material, re::Shader* shader)
 		: m_batchMeshPrimitive(meshPrimitive)
-		, m_batchMaterial(material)
 		, m_batchShader(shader)
 		, m_batchGeometryMode(GeometryMode::Indexed)
 		, m_batchFilterMask(0)
@@ -28,9 +30,18 @@ namespace re
 	{
 		m_batchParamBlocks.reserve(k_batchParamBlockIDsReserveAmount);
 
-		// Material params:
 		if (material)
 		{
+			// Material textures/samplers:
+			for (size_t i = 0; i < material->GetTexureSlotDescs().size(); i++)
+			{
+				AddBatchTextureAndSamplerInput(
+					material->GetTexureSlotDescs()[i].m_shaderSamplerName, 
+					material->GetTexureSlotDescs()[i].m_texture, 
+					material->GetTexureSlotDescs()[i].m_samplerObject);
+			}
+
+			// Material params:
 			m_batchParamBlocks.emplace_back(material->GetParameterBlock());
 		}
 		
@@ -72,12 +83,6 @@ namespace re
 		// MeshPrimitive data:
 		SEAssert("Batch must have a valid MeshPrimitive", m_batchMeshPrimitive);
 		AddDataBytesToHash(m_batchMeshPrimitive->GetDataHash());
-		
-		// Material:
-		if (m_batchMaterial)
-		{
-			AddDataBytesToHash(&m_batchMaterial->GetName()[0], m_batchMaterial->GetName().length() * sizeof(char));
-		}
 
 		// Shader:
 		if (m_batchShader)
@@ -91,12 +96,27 @@ namespace re
 			AddDataBytesToHash(m_batchParamBlocks[i]->GetUniqueID());
 		}
 
-		// Note: We don't compute hashes for any batch uniforms here; they're appended as they're added to the batch
+		// Note: We don't compute hashes for batch textures/samplers here; they're appended as they're added
 	}
 
 
 	void Batch::SetBatchFilterMaskBit(Filter filterBit)
 	{
 		m_batchFilterMask |= (1 << (uint32_t)filterBit);
+	}
+
+
+	void Batch::AddBatchTextureAndSamplerInput(
+		std::string const& shaderName, std::shared_ptr<re::Texture> texture, std::shared_ptr<re::Sampler> sampler)
+	{
+		SEAssert("Invalid shader sampler name", !shaderName.empty());
+		SEAssert("Invalid texture", texture != nullptr);
+		SEAssert("Invalid sampler", sampler != nullptr);
+
+		m_batchTextureSamplerInputs.emplace_back(shaderName, texture, sampler);
+
+		// Include textures/samplers in the batch hash:
+		AddDataBytesToHash(texture->GetUniqueID());
+		AddDataBytesToHash(sampler->GetUniqueID());
 	}
 }

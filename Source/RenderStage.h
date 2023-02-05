@@ -35,7 +35,7 @@ namespace re
 			RenderStageType_Count
 		};
 
-		typedef std::vector<std::tuple<std::string, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>>> TextureAndSamplerInput;
+		typedef std::vector<std::tuple<std::string, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>>> RenderStageTextureAndSamplerInput;
 
 
 	public:
@@ -62,11 +62,10 @@ namespace re
 		inline std::shared_ptr<re::TextureTargetSet> GetTextureTargetSet() const { return m_textureTargetSet; }
 		void SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet);
 
+		// Per-frame values must be re-set every frame
 		void SetPerFrameTextureInput(
 			std::string const& shaderName, std::shared_ptr<re::Texture> tex, std::shared_ptr<re::Sampler> sampler);
-
-		// Per-frame values must be re-set every frame
-		inline TextureAndSamplerInput const& GetPerFrameTextureInputs() const { return m_perFrameTextureSamplerInputs; }
+		inline RenderStageTextureAndSamplerInput const& GetPerFrameTextureInputs() const { return m_perFrameTextureSamplerInputs; }
 
 		void AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb);
 		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetPermanentParameterBlocks() const { return m_permanentParamBlocks; }
@@ -91,7 +90,7 @@ namespace re
 		bool m_writesColor;
 
 		// Per-frame members are cleared every frame
-		TextureAndSamplerInput m_perFrameTextureSamplerInputs;
+		RenderStageTextureAndSamplerInput m_perFrameTextureSamplerInputs;
 		std::vector<std::shared_ptr<re::ParameterBlock>> m_perFrameParamBlocks;
 
 		std::vector<std::shared_ptr<re::ParameterBlock >> m_permanentParamBlocks;

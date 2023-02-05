@@ -166,30 +166,18 @@ namespace opengl
 
 					opengl::MeshPrimitive::Bind(*batch.GetBatchMesh());
 
-					// Batch material:
-					gr::Material* batchmaterial = batch.GetBatchMaterial();
-					if (batchmaterial && renderStage->WritesColor())
+					// Batch Texture/Sampler inputs:
+					if (renderStage->WritesColor())
 					{
-						// Note: The batch material PB is already added to the batch PB list
+						// TODO: Reconsider this WritesColor() check once alpha clipping/blending is implemented
 
-						for (size_t i = 0; i < batchmaterial->GetTexureSlotDescs().size(); i++)
+						for (auto const& texSamplerInput : batch.GetBatchTextureAndSamplerInputs())
 						{
-							if (batchmaterial->GetTexureSlotDescs()[i].m_texture)
-							{
-								opengl::Shader::SetUniform(
-									*stageShader, 
-									batchmaterial->GetTexureSlotDescs()[i].m_shaderSamplerName, 
-									batchmaterial->GetTexureSlotDescs()[i].m_texture.get(), 
-									re::Shader::UniformType::Texture, 
-									1);
-
-								opengl::Shader::SetUniform(
-									*stageShader, 
-									batchmaterial->GetTexureSlotDescs()[i].m_shaderSamplerName, 
-									batchmaterial->GetTexureSlotDescs()[i].m_samplerObject.get(), 
-									re::Shader::UniformType::Sampler, 
-									1);
-							}
+							opengl::Shader::SetTextureAndSampler(
+								*stageShader,
+								std::get<0>(texSamplerInput), // uniform name
+								std::get<1>(texSamplerInput), // texture
+								std::get<2>(texSamplerInput)); // sampler
 						}
 					}
 
@@ -198,16 +186,6 @@ namespace opengl
 					for (shared_ptr<re::ParameterBlock> batchPB : batchPBs)
 					{
 						opengl::Shader::SetParameterBlock(*stageShader, *batchPB.get());
-					}
-
-					// Batch uniforms:
-					for (re::Batch::ShaderUniform const& shaderUniform : batch.GetBatchUniforms())
-					{
-						opengl::Shader::SetUniform(*stageShader,
-							shaderUniform.m_uniformName,
-							shaderUniform.m_value.get(),
-							shaderUniform.m_type,
-							shaderUniform.m_count);
 					}
 
 					// Draw!

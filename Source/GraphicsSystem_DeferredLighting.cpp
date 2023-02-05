@@ -628,25 +628,18 @@ namespace gr
 
 			pointlightBatch.AddBatchParameterBlock(pointlightMeshParams);
 
-			// Batch uniforms:
+			// Batch textures/samplers:
 			ShadowMap* const shadowMap = pointLights[i]->GetShadowMap();
 			if (shadowMap != nullptr)
 			{
 				std::shared_ptr<re::Texture> const depthTexture = 
 					shadowMap->GetTextureTargetSet()->DepthStencilTarget().GetTexture();
 
-				pointlightBatch.AddBatchUniform<shared_ptr<re::Texture>>(
-					"CubeMap0", depthTexture, re::Shader::UniformType::Texture, 1);
-
 				// Our template function expects a shared_ptr to a non-const type; cast it here even though it's gross
 				std::shared_ptr<re::Sampler> const sampler = 
 					std::const_pointer_cast<re::Sampler>(Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 
-				pointlightBatch.AddBatchUniform<shared_ptr<re::Sampler>>(
-					"CubeMap0", 
-					sampler,
-					re::Shader::UniformType::Sampler, 
-					1);
+				pointlightBatch.AddBatchTextureAndSamplerInput("CubeMap0", depthTexture, sampler);
 			}			
 
 			// Finally, add the completed batch:
