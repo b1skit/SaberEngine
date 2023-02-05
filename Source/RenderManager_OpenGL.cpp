@@ -170,7 +170,7 @@ namespace opengl
 					gr::Material* batchmaterial = batch.GetBatchMaterial();
 					if (batchmaterial && renderStage->WritesColor())
 					{
-						opengl::Shader::SetParameterBlock(*stageShader, *batchmaterial->GetParameterBlock().get());
+						// Note: The batch material PB is already added to the batch PB list
 
 						for (size_t i = 0; i < batchmaterial->GetTexureSlotDescs().size(); i++)
 						{
