@@ -58,12 +58,6 @@ namespace re
 		explicit Shader(std::string const& extensionlessShaderFilename);
 		~Shader() { Destroy(); }
 			
-		// Helper: Simultaneously calls SetUniform for the texture and sampler
-		void SetTextureSamplerUniform(
-			std::string const& uniformName, std::shared_ptr<re::Texture> texture, std::shared_ptr<re::Sampler> sampler);
-
-		void SetMaterial(gr::Material* material);
-
 		inline PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
 		inline PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }

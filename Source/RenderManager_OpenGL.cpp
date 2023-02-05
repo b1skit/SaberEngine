@@ -140,13 +140,14 @@ namespace opengl
 					opengl::Shader::SetParameterBlock(*stageShader, *perFramePB.get());
 				}
 
-				// Set per-frame stage shader uniforms:
-				vector<RenderStage::StageShaderUniform> const& stagePerFrameShaderUniforms =
-					renderStage->GetPerFrameShaderUniforms();
-				for (RenderStage::StageShaderUniform curUniform : stagePerFrameShaderUniforms)
+				// Set per-frame stage textures/sampler inputs:
+				for (auto const& texSamplerInput : renderStage->GetPerFrameTextureInputs())
 				{
-					opengl::Shader::SetUniform(
-						*stageShader, curUniform.m_uniformName, curUniform.m_value, curUniform.m_type, curUniform.m_count);
+					opengl::Shader::SetTextureAndSampler(
+						*stageShader, 
+						std::get<0>(texSamplerInput), // uniform name
+						std::get<1>(texSamplerInput), // texture
+						std::get<2>(texSamplerInput)); // sampler
 				}
 
 				// Set camera params:
@@ -169,7 +170,27 @@ namespace opengl
 					gr::Material* batchmaterial = batch.GetBatchMaterial();
 					if (batchmaterial && renderStage->WritesColor())
 					{
-						stageShader->SetMaterial(batchmaterial);
+						opengl::Shader::SetParameterBlock(*stageShader, *batchmaterial->GetParameterBlock().get());
+
+						for (size_t i = 0; i < batchmaterial->GetTexureSlotDescs().size(); i++)
+						{
+							if (batchmaterial->GetTexureSlotDescs()[i].m_texture)
+							{
+								opengl::Shader::SetUniform(
+									*stageShader, 
+									batchmaterial->GetTexureSlotDescs()[i].m_shaderSamplerName, 
+									batchmaterial->GetTexureSlotDescs()[i].m_texture.get(), 
+									re::Shader::UniformType::Texture, 
+									1);
+
+								opengl::Shader::SetUniform(
+									*stageShader, 
+									batchmaterial->GetTexureSlotDescs()[i].m_shaderSamplerName, 
+									batchmaterial->GetTexureSlotDescs()[i].m_samplerObject.get(), 
+									re::Shader::UniformType::Sampler, 
+									1);
+							}
+						}
 					}
 
 					// Batch parameter blocks:

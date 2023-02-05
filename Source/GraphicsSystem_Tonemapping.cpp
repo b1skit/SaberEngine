@@ -87,7 +87,7 @@ namespace gr
 		std::shared_ptr<TextureTargetSet> deferredLightTextureTargetSet =
 			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
 
-		m_tonemappingStage.SetTextureInput(
+		m_tonemappingStage.SetPerFrameTextureInput(
 			"GBufferAlbedo",
 			deferredLightTextureTargetSet->GetColorTarget(0).GetTexture(),
 			Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));

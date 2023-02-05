@@ -84,7 +84,7 @@ namespace gr
 		CreateBatches();
 
 		// Skybox texture can be null if we didn't load anything, but this GS should have been removed
-		m_skyboxStage.SetTextureInput(
+		m_skyboxStage.SetPerFrameTextureInput(
 			m_skyTextureShaderName,
 			m_skyTexture,
 			Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));

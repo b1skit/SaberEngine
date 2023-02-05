@@ -310,7 +310,7 @@ namespace gr
 				RenderStage iemStage("IEM generation: Face " + to_string(face + 1) + "/6");
 
 				iemStage.GetStageShader() = iemShader;
-				iemStage.SetTextureInput(
+				iemStage.SetPerFrameTextureInput(
 					"MatAlbedo",
 					iblTexture,
 					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
@@ -369,7 +369,7 @@ namespace gr
 						to_string(currentMipLevel + 1) + "/" + to_string(numMipLevels));
 
 					pmremStage.GetStageShader() = pmremShader;
-					pmremStage.SetTextureInput(
+					pmremStage.SetPerFrameTextureInput(
 						"MatAlbedo",
 						iblTexture,
 						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
@@ -518,21 +518,21 @@ namespace gr
 
 			if (AmbientIsValid())
 			{
-				m_ambientStage.SetTextureInput(
+				m_ambientStage.SetPerFrameTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[i],
 					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(i).GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 			if (keyLight)
 			{
-				m_keylightStage.SetTextureInput(
+				m_keylightStage.SetPerFrameTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[i],
 					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(i).GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 			if (!pointLights.empty())
 			{
-				m_pointlightStage.SetTextureInput(
+				m_pointlightStage.SetPerFrameTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[i],
 					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(i).GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
@@ -542,19 +542,19 @@ namespace gr
 		if (AmbientIsValid())
 		{
 			// Add IBL texture inputs for ambient stage:
-			m_ambientStage.SetTextureInput(
+			m_ambientStage.SetPerFrameTextureInput(
 				"CubeMap0",
 				m_IEMTex,
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear)
 			);
 
-			m_ambientStage.SetTextureInput(
+			m_ambientStage.SetPerFrameTextureInput(
 				"CubeMap1",
 				m_PMREMTex,
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearMipMapLinearLinear)
 			);
 
-			m_ambientStage.SetTextureInput(
+			m_ambientStage.SetPerFrameTextureInput(
 				"Tex7",
 				m_BRDF_integrationMap,
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::ClampNearestNearest)
@@ -570,7 +570,7 @@ namespace gr
 				// Set the key light shadow map:
 				shared_ptr<Texture> keylightDepthTex =
 					keyLightShadowMap->GetTextureTargetSet()->DepthStencilTarget().GetTexture();
-				m_keylightStage.SetTextureInput(
+				m_keylightStage.SetPerFrameTextureInput(
 					"Depth0",
 					keylightDepthTex,
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));

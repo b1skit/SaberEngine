@@ -38,10 +38,9 @@ namespace re
 		m_pipelineState = rhs.m_pipelineState;
 		m_writesColor = rhs.m_writesColor;
 
-		m_perFrameShaderUniforms = vector<StageShaderUniform>(rhs.m_perFrameShaderUniforms);
-		m_perFrameShaderUniformValues = rhs.m_perFrameShaderUniformValues;
-
+		m_perFrameTextureSamplerInputs = rhs.m_perFrameTextureSamplerInputs;
 		m_perFrameParamBlocks = rhs.m_perFrameParamBlocks;
+
 		m_permanentParamBlocks = rhs.m_permanentParamBlocks;
 
 		m_stageBatches = rhs.m_stageBatches;
@@ -54,7 +53,7 @@ namespace re
 	}
 
 
-	void RenderStage::SetTextureInput(
+	void RenderStage::SetPerFrameTextureInput(
 		string const& shaderName, shared_ptr<Texture> tex, shared_ptr<Sampler> sampler)
 	{
 		SEAssert("Stage shader is null. Set the stage shader before this call", m_stageShader != nullptr);
@@ -62,20 +61,13 @@ namespace re
 		SEAssert("Invalid texture", tex != nullptr);
 		SEAssert("Invalid sampler", sampler != nullptr);
 
-		// Hold a copy of our shared pointers to ensure they don't go out of scope until we're done with them:
-		m_perFrameShaderUniformValues.emplace_back(std::static_pointer_cast<void>(tex));
-		m_perFrameShaderUniformValues.emplace_back(std::static_pointer_cast<void>(sampler));
-
-		// Add our raw pointers to the list of StageShaderUniforms:
-		m_perFrameShaderUniforms.emplace_back(shaderName, tex.get(), re::Shader::UniformType::Texture, 1);
-		m_perFrameShaderUniforms.emplace_back(shaderName, sampler.get(), re::Shader::UniformType::Sampler, 1);
+		m_perFrameTextureSamplerInputs.emplace_back(shaderName, tex, sampler);
 	}
 	
 
 	void RenderStage::EndOfFrame()
 	{
-		m_perFrameShaderUniforms.clear();
-		m_perFrameShaderUniformValues.clear();
+		m_perFrameTextureSamplerInputs.clear();
 		m_perFrameParamBlocks.clear();
 		m_stageBatches.clear();
 	}

@@ -28,15 +28,9 @@ namespace platform
 
 		// Static pointers:
 		static void (*Create)(re::Shader& shader);
-		static void (*Bind)(re::Shader&);
-		static void (*SetUniform)(
-			re::Shader& shader, 
-			std::string const& uniformName, 
-			void* value, 
-			re::Shader::UniformType const type,
-			int const count);
-		static void (*SetParameterBlock)(re::Shader& shader, re::ParameterBlock& paramBlock);
 		static void (*Destroy)(re::Shader&);
+
+		static void (*SetParameterBlock)(re::Shader& shader, re::ParameterBlock& paramBlock);		
 		static void (*LoadShaderTexts)(std::string const& extensionlessName, std::vector<std::string>& shaderTexts_out);
 	};
 }	

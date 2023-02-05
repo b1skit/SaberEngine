@@ -264,6 +264,17 @@ namespace opengl
 	}
 
 
+	void Shader::Destroy(re::Shader& shader)
+	{
+		PlatformParams* const params =
+			dynamic_cast<opengl::Shader::PlatformParams* const>(shader.GetPlatformParams());
+
+		glDeleteProgram(params->m_shaderReference);
+		params->m_shaderReference = 0;
+		glUseProgram(0); // Unbind, as glGetIntegerv(GL_CURRENT_PROGRAM, shaderRef) still returns the shader ref otherwise
+	}
+
+
 	void Shader::Bind(re::Shader& shader)
 	{
 		// Ensure the shader is created
@@ -273,17 +284,6 @@ namespace opengl
 			dynamic_cast<opengl::Shader::PlatformParams const* const>(shader.GetPlatformParams());
 
 		glUseProgram(params->m_shaderReference);
-	}
-
-
-	void Shader::Destroy(re::Shader& shader)
-	{
-		PlatformParams* const params =
-			dynamic_cast<opengl::Shader::PlatformParams* const>(shader.GetPlatformParams());
-
-		glDeleteProgram(params->m_shaderReference);
-		params->m_shaderReference = 0;
-		glUseProgram(0); // Unbind, as glGetIntegerv(GL_CURRENT_PROGRAM, shaderRef) still returns the shader ref otherwise
 	}
 
 
@@ -444,6 +444,14 @@ namespace opengl
 		{
 			glUseProgram(currentProgram);
 		}
+	}
+
+
+	void Shader::SetTextureAndSampler(
+		re::Shader& shader, std::string const& uniformName, std::shared_ptr<re::Texture> texture, std::shared_ptr<re::Sampler>sampler)
+	{
+		opengl::Shader::SetUniform(shader, uniformName, texture.get(), re::Shader::UniformType::Texture, 1);
+		opengl::Shader::SetUniform(shader, uniformName, sampler.get(), re::Shader::UniformType::Sampler, 1);
 	}
 
 

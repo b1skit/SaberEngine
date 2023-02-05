@@ -27,16 +27,17 @@ namespace opengl
 		};
 
 		static void Create(re::Shader& shader);
-		static void Bind(re::Shader& shader);
+		static void Destroy(re::Shader& shader);
 
+		static void Bind(re::Shader& shader);
 		static void SetUniform(
 			re::Shader& shader, 
 			std::string const& uniformName, 
 			void* value, 
 			re::Shader::UniformType const type, 
 			int const count);
-		static void SetParameterBlock(re::Shader&, re::ParameterBlock&);
-		static void Destroy(re::Shader& shader);
+		static void SetParameterBlock(re::Shader&, re::ParameterBlock&); // TODO: This Shader& can probably be const
+		static void SetTextureAndSampler(re::Shader&, std::string const& uniformName, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>);
 		static void LoadShaderTexts(std::string const& extensionlessName, std::vector<std::string>& shaderTexts_out);
 	};
 }

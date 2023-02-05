@@ -149,14 +149,8 @@ namespace platform
 	// platform::Shader static members:
 	/**********************************/
 	void (*platform::Shader::Create)(re::Shader& shader) = nullptr;
-	void (*platform::Shader::Bind)(re::Shader&) = nullptr;
-	void (*platform::Shader::SetUniform)(
-		re::Shader& shader, 
-		string const& uniformName, 
-		void* value, 
-		re::Shader::UniformType const type, 
-		int const count) = nullptr;
-	void (*platform::Shader::SetParameterBlock)(re::Shader&, re::ParameterBlock&) = nullptr;
 	void (*platform::Shader::Destroy)(re::Shader&) = nullptr;
+
+	void (*platform::Shader::SetParameterBlock)(re::Shader&, re::ParameterBlock&) = nullptr;	
 	void (*platform::Shader::LoadShaderTexts)(string const& extensionlessName, std::vector<std::string>& shaderTexts_out) = nullptr;
 }

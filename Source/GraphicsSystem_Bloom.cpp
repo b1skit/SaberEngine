@@ -232,7 +232,7 @@ namespace gr
 		// This index corresponds with the GBuffer texture layout bindings in SaberCommon.glsl
 		// TODO: Have a less brittle way of handling this.
 		const size_t gBufferEmissiveTextureIndex = 3; 
-		m_emissiveBlitStage.SetTextureInput(
+		m_emissiveBlitStage.SetPerFrameTextureInput(
 			"GBufferAlbedo",
 			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(gBufferEmissiveTextureIndex).GetTexture(),
 			bloomStageSampler);
@@ -241,14 +241,14 @@ namespace gr
 		{
 			if (i == 0)
 			{
-				m_downResStages[i].SetTextureInput(
+				m_downResStages[i].SetPerFrameTextureInput(
 					"GBufferAlbedo", 
 					m_emissiveBlitStage.GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
-				m_downResStages[i].SetTextureInput(
+				m_downResStages[i].SetPerFrameTextureInput(
 					"GBufferAlbedo",
 					m_downResStages[i - 1].GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
@@ -259,14 +259,14 @@ namespace gr
 		{
 			if (i == 0)
 			{
-				m_blurStages[i].SetTextureInput(
+				m_blurStages[i].SetPerFrameTextureInput(
 					"GBufferAlbedo",
 					m_downResStages.back().GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
-				m_blurStages[i].SetTextureInput(
+				m_blurStages[i].SetPerFrameTextureInput(
 					"GBufferAlbedo",
 					m_blurStages[i-1].GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
@@ -277,14 +277,14 @@ namespace gr
 		{
 			if (i == 0)
 			{
-				m_upResStages[i].SetTextureInput(
+				m_upResStages[i].SetPerFrameTextureInput(
 					"GBufferAlbedo",
 					m_blurStages.back().GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
-				m_upResStages[i].SetTextureInput(
+				m_upResStages[i].SetPerFrameTextureInput(
 					"GBufferAlbedo",
 					m_upResStages[i-1].GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);

@@ -35,6 +35,8 @@ namespace re
 			RenderStageType_Count
 		};
 
+		typedef std::vector<std::tuple<std::string, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>>> TextureAndSamplerInput;
+
 
 	public:
 		explicit RenderStage(std::string const& name);
@@ -60,12 +62,11 @@ namespace re
 		inline std::shared_ptr<re::TextureTargetSet> GetTextureTargetSet() const { return m_textureTargetSet; }
 		void SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet);
 
-		// Helper: Simultaneously binds a texture and sampler by name to the stage shader
-		void SetTextureInput(
+		void SetPerFrameTextureInput(
 			std::string const& shaderName, std::shared_ptr<re::Texture> tex, std::shared_ptr<re::Sampler> sampler);
 
-		// Per-frame uniforms are set every frame
-		inline std::vector<StageShaderUniform> const& GetPerFrameShaderUniforms() const { return m_perFrameShaderUniforms; }
+		// Per-frame values must be re-set every frame
+		inline TextureAndSamplerInput const& GetPerFrameTextureInputs() const { return m_perFrameTextureSamplerInputs; }
 
 		void AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb);
 		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetPermanentParameterBlocks() const { return m_permanentParamBlocks; }
@@ -90,12 +91,10 @@ namespace re
 		bool m_writesColor;
 
 		// Per-frame members are cleared every frame
-		std::vector<StageShaderUniform> m_perFrameShaderUniforms; // TODO: Handle selection of face, miplevel when binding color/depth targets?
-		std::vector<std::shared_ptr<void>> m_perFrameShaderUniformValues; // Generic, per-frame data storage buffer
-		
+		TextureAndSamplerInput m_perFrameTextureSamplerInputs;
 		std::vector<std::shared_ptr<re::ParameterBlock>> m_perFrameParamBlocks;
-		std::vector<std::shared_ptr<re::ParameterBlock >> m_permanentParamBlocks;
 
+		std::vector<std::shared_ptr<re::ParameterBlock >> m_permanentParamBlocks;
 
 		std::vector<re::Batch> m_stageBatches;
 		uint32_t m_batchFilterMask;

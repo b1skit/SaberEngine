@@ -106,10 +106,8 @@ namespace platform
 
 			// Shader:
 			platform::Shader::Create			= &opengl::Shader::Create;
-			platform::Shader::Bind				= &opengl::Shader::Bind;
-			platform::Shader::SetUniform		= &opengl::Shader::SetUniform;
-			platform::Shader::SetParameterBlock = &opengl::Shader::SetParameterBlock;
 			platform::Shader::Destroy			= &opengl::Shader::Destroy;
+			platform::Shader::SetParameterBlock = &opengl::Shader::SetParameterBlock;
 			platform::Shader::LoadShaderTexts	= &opengl::Shader::LoadShaderTexts;
 
 			// Swap chain:

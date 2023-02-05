@@ -32,34 +32,4 @@ namespace re
 		platform::Shader::LoadShaderTexts(GetName(), m_shaderTexts);
 		SEAssert("Failed to load any shader text", !m_shaderTexts.empty());
 	}
-	
-
-	void Shader::SetTextureSamplerUniform(
-		string const& uniformName,
-		shared_ptr<re::Texture> texture,
-		shared_ptr<re::Sampler> sampler)
-	{
-		platform::Shader::SetUniform(*this, uniformName, texture.get(), Shader::UniformType::Texture, 1);
-		platform::Shader::SetUniform(*this, uniformName, sampler.get(), Shader::UniformType::Sampler, 1);
-	}
-
-
-	void Shader::SetMaterial(gr::Material* material)
-	{
-		SEAssert("Cannot bind incomplete material", 
-			material->GetTexureSlotDescs().size() > 0 && material->GetParameterBlock() != nullptr);
-
-		for (size_t i = 0; i < material->GetTexureSlotDescs().size(); i++)
-		{
-			if (material->GetTexureSlotDescs()[i].m_texture)
-			{
-				SetTextureSamplerUniform(
-					material->GetTexureSlotDescs()[i].m_shaderSamplerName,
-					material->GetTexureSlotDescs()[i].m_texture,
-					material->GetTexureSlotDescs()[i].m_samplerObject);
-			}
-		}
-
-		platform::Shader::SetParameterBlock(*this, *material->GetParameterBlock().get());
-	}
 }
