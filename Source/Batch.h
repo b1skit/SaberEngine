@@ -41,14 +41,6 @@ namespace re
 		};
 		static_assert((uint32_t)re::Batch::Filter::Filter_Count < 32);
 
-		struct ShaderUniform
-		{
-			std::string m_uniformName;
-			std::shared_ptr<void> m_value;
-			re::Shader::UniformType m_type;
-			int m_count;
-		};
-
 		typedef std::vector<std::tuple<std::string, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>>> BatchTextureAndSamplerInput;
 
 
