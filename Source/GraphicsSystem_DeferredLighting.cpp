@@ -40,6 +40,28 @@ namespace
 	constexpr uint32_t k_generatedAmbientIBLTexRes = 1024; // TODO: Make this user-controllable via the config
 
 
+	struct IEMPMREMGenerationParams
+	{
+		glm::vec4 g_numSamplesRoughness; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness
+	};
+
+	IEMPMREMGenerationParams GetIEMPMREMGenerationParamsData(int currentMipLevel, int numMipLevels)
+	{
+		IEMPMREMGenerationParams generationParams;
+
+		SEAssert("Mip level params are invalid. These must be reasonable, even if they're not used (i.e. IEM generation)",
+			currentMipLevel >= 0 && numMipLevels >= 1);
+		const float roughness = static_cast<float>(currentMipLevel) / static_cast<float>(numMipLevels - 1);
+
+		generationParams.g_numSamplesRoughness = glm::vec4(
+			static_cast<float>(Config::Get()->GetValue<int>("numIEMSamples")),
+			static_cast<float>(Config::Get()->GetValue<int>("numPMREMSamples")),
+			roughness,
+			0.f
+		);
+		return generationParams;
+	}
+
 	struct AmbientLightParams
 	{
 		uint32_t g_maxPMREMMip;
@@ -293,8 +315,12 @@ namespace gr
 					iblTexture,
 					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
 
-				const int numSamples = Config::Get()->GetValue<int>("numIEMSamples");
-				iemStage.SetPerFrameShaderUniform("numSamples", numSamples, re::Shader::UniformType::Int, 1);
+				IEMPMREMGenerationParams iemGenerationParams = GetIEMPMREMGenerationParamsData(0, 1);
+				shared_ptr<re::ParameterBlock> iemGenerationPB = re::ParameterBlock::Create(
+					"IEMPMREMGenerationParams",
+					iemGenerationParams,
+					re::ParameterBlock::PBType::SingleFrame);
+				iemStage.AddPermanentParameterBlock(iemGenerationPB);
 				
 				// Construct a camera param block to draw into our cubemap rendering targets:
 				cubemapCamParams.g_view = cubemapViews[face];
@@ -347,9 +373,6 @@ namespace gr
 						"MatAlbedo",
 						iblTexture,
 						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
-
-					const int numSamples = Config::Get()->GetValue<int>("numPMREMSamples");
-					pmremStage.SetPerFrameShaderUniform("numSamples", numSamples, re::Shader::UniformType::Int, 1);
 					
 					// Construct a camera param block to draw into our cubemap rendering targets:
 					cubemapCamParams.g_view = cubemapViews[face];
@@ -359,8 +382,13 @@ namespace gr
 						re::ParameterBlock::PBType::SingleFrame);
 					pmremStage.AddPermanentParameterBlock(pb);
 
-					const float roughness = (float)currentMipLevel / (float)(numMipLevels - 1);
-					pmremStage.SetPerFrameShaderUniform("roughness", roughness, re::Shader::UniformType::Float, 1);
+					IEMPMREMGenerationParams pmremGenerationParams = 
+						GetIEMPMREMGenerationParamsData(currentMipLevel, numMipLevels);
+					shared_ptr<re::ParameterBlock> pmremGenerationPB = re::ParameterBlock::Create(
+						"IEMPMREMGenerationParams",
+						pmremGenerationParams,
+						re::ParameterBlock::PBType::SingleFrame);
+					pmremStage.AddPermanentParameterBlock(pmremGenerationPB);
 
 					pmremStage.SetTextureTargetSet(pmremTargetSet);
 

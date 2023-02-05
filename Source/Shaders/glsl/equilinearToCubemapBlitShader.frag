@@ -10,8 +10,6 @@
 
 #ifdef BLIT_IEM
 
-uniform int numSamples;
-
 // Remap from equirectangular to cubemap, performing IEM filtering (ie. for diffuse IBL)
 void main()
 {	
@@ -26,6 +24,7 @@ void main()
 	vec3 irradiance = vec3(0.0);
 	
 	// Hammerseley cosine-weighted sampling:
+	const int numSamples = int(g_numSamplesRoughness.x); // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness
 	for (int i = 0; i < numSamples; i++)
 	{
 		vec2 samplePoints = Hammersley2D(i, numSamples);
@@ -52,8 +51,6 @@ void main()
 
 #elif defined BLIT_PMREM
 
-uniform int		numSamples;
-uniform float	roughness;
 
 // Remap from equirectangular to cubemap, performing PMREM filtering (ie. for specular IBL)
 void main()
@@ -63,7 +60,9 @@ void main()
 	vec3 V = R;		
 
 	float totalWeight = 0.0;
-	vec3 sampledColor = vec3(0.0);     
+	vec3 sampledColor = vec3(0.0);
+	const int numSamples = int(g_numSamplesRoughness.y); // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness
+	const float roughness = g_numSamplesRoughness.z;
 	for(int i = 0; i < numSamples; i++)
 	{
 		vec2 Xi = Hammersley2D(i, numSamples);
@@ -85,12 +84,5 @@ void main()
 	FragColor = vec4(sampledColor, 1.0);
 }
 
-
-#else
-
-void main() // Deprecated: Just show an error color to be safe
-{	
-	FragColor = vec4(1.0, 0, 0, 1.0);
-}
 
 #endif

@@ -187,4 +187,11 @@ layout(std430, binding=7) readonly buffer TonemappingParams
 {
 	vec4 g_exposure; // .x = exposure, .yzw = unused
 };
+
+
+// GraphicsSystem_DeferredLighting.cpp
+layout(std430, binding=8) readonly buffer IEMPMREMGenerationParams
+{
+	vec4 g_numSamplesRoughness; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness
+};
 #endif
