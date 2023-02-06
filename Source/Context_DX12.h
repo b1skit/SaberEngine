@@ -24,16 +24,17 @@ namespace dx12
 			dx12::Device m_device;
 			dx12::CommandQueue m_commandQueue;
 
-			// TODO: Move to a "DescriptorHeapManager", owned by the Context:
-			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVDescHeap; // Array of descriptors/resource views
-			uint32_t m_RTVDescSize; // Stride size of a single descriptor/resource view
-
 			// Currently only record a single command list per frame. TODO: Multi-thread/multi-cmd list recording
 			dx12::CommandList_DX12 m_commandLists[dx12::RenderManager::k_numFrames];
 
 			dx12::Fence m_fence;
 			uint64_t m_fenceValue = 0;
 			uint64_t m_frameFenceValues[dx12::RenderManager::k_numFrames]; // Fence values for signalling the command queue
+
+
+			// TODO: Move to a "DescriptorHeapManager", owned by the Context:
+			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVDescHeap; // Array of descriptors/resource views
+			uint32_t m_RTVDescSize; // Stride size of a single descriptor/resource view
 		};
 
 

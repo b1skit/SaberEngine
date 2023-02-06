@@ -46,14 +46,13 @@ namespace dx12
 		ctxPlatParams->m_device.Create();
 
 		
-		// TODO: Move command queue management to its own object?
 		// TODO: Support command queues of different types (direct/copy/compute/etc)
 		ctxPlatParams->m_commandQueue.Create(ctxPlatParams->m_device.GetDisplayDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT);
 
 
 		
 		// NOTE: Currently, this call retrieves m_commandQueue from the Context platform params
-		// TODO: Clean this up, it's gross. Command queue should be its own object
+		// TODO: Clean this up, it's gross.
 		context.GetSwapChain().Create();
 		
 		dx12::SwapChain::PlatformParams* const swapChainParams =
