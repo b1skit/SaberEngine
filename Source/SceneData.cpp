@@ -24,7 +24,7 @@
 #include "ShadowMap.h"
 #include "ThreadPool.h"
 #include "Transform.h"
-#include "VertexAttributeBuilder.h"
+#include "VertexStreamBuilder.h"
 
 
 // Data loading helpers:
@@ -1185,7 +1185,7 @@ namespace
 			} // End attribute unpacking
 
 			// Construct any missing vertex attributes for the mesh:
-			util::VertexAttributeBuilder::MeshData meshData
+			util::VertexStreamBuilder::MeshData meshData
 			{
 				meshName,
 				&meshPrimitiveParams,
@@ -1198,7 +1198,7 @@ namespace
 				reinterpret_cast<vector<glm::tvec4<uint8_t>>*>(&jointsAsUints),
 				reinterpret_cast<vector<vec4>*>(&weights)
 			};
-			util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
+			util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 			// Assign a material:
 			shared_ptr<gr::Material> material;

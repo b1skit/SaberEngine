@@ -225,7 +225,8 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClCompile Include="TextureTarget_DX12.cpp" />
     <ClCompile Include="Texture_DX12.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
-    <ClCompile Include="VertexAttributeBuilder.cpp" />
+    <ClCompile Include="VertexStream.cpp" />
+    <ClCompile Include="VertexStreamBuilder.cpp" />
     <ClCompile Include="Context_Platform.cpp" />
     <ClCompile Include="CoreEngine.cpp" />
     <ClCompile Include="Config.cpp" />
@@ -272,6 +273,8 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
     <ClCompile Include="Transform.cpp" />
+    <ClCompile Include="VertexStream_OpenGL.cpp" />
+    <ClCompile Include="VertexStream_Platform.cpp" />
     <ClCompile Include="Window.cpp" />
     <ClCompile Include="Window_Win32.cpp" />
     <ClCompile Include="Window_Platform.cpp" />
@@ -321,7 +324,8 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClInclude Include="Texture_DX12.h" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Updateable.h" />
-    <ClInclude Include="VertexAttributeBuilder.h" />
+    <ClInclude Include="VertexStream.h" />
+    <ClInclude Include="VertexStreamBuilder.h" />
     <ClInclude Include="Context_Platform.h" />
     <ClInclude Include="GraphicsSystem_Bloom.h" />
     <ClInclude Include="GraphicsSystem_DeferredLighting.h" />
@@ -374,6 +378,8 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="Transform.h" />
+    <ClInclude Include="VertexStream_OpenGL.h" />
+    <ClInclude Include="VertexStream_Platform.h" />
     <ClInclude Include="Window.h" />
     <ClInclude Include="Window_Win32.h" />
     <ClInclude Include="Window_Platform.h" />

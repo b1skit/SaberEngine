@@ -1,17 +1,16 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "MeshPrimitive_OpenGL.h"
-
-#include "MeshPrimitive.h"
 #include "DebugConfiguration.h"
+#include "MeshPrimitive.h"
+#include "MeshPrimitive_OpenGL.h"
+#include "VertexStream_OpenGL.h"
 
 
 namespace opengl
 {
 	// Platform Params:
-	MeshPrimitive::PlatformParams::PlatformParams(re::MeshPrimitive& meshPrimitive) :
-		m_meshVAO(0),
-		m_meshVBOs(VertexAttribute::VertexAttribute_Count, 0)
-	{
+	MeshPrimitive::PlatformParams::PlatformParams(re::MeshPrimitive& meshPrimitive)
+		: m_meshVAO(0)
+	{	
 		SEAssert("TODO: Support more primitive types/draw modes!", 
 			meshPrimitive.GetMeshParams().m_drawMode == re::MeshPrimitive::DrawMode::Triangles);
 
@@ -59,169 +58,37 @@ namespace opengl
 	}
 
 
-	// Static meshPrimitive function implementations:
-	/***************************************/
-
 	void opengl::MeshPrimitive::Create(re::MeshPrimitive& meshPrimitive)
 	{
-		if (meshPrimitive.GetPlatformParams()->m_isCreated)
-		{
-			return;
-		}
-
 		opengl::MeshPrimitive::PlatformParams* const meshPlatformParams =
 			dynamic_cast<opengl::MeshPrimitive::PlatformParams*>(meshPrimitive.GetPlatformParams().get());
+
+		if (meshPlatformParams->m_meshVAO != 0)
+		{
+			return; // Already created
+		}
 
 		// Create a Vertex Array Object:
 		glGenVertexArrays(1, &meshPlatformParams->m_meshVAO);
 		glBindVertexArray(meshPlatformParams->m_meshVAO);
 
-		// Generate names for the vertex and index buffers:
-		glGenBuffers(VertexAttribute::VertexAttribute_Count, &meshPlatformParams->m_meshVBOs[0]);
-
-		// Define, buffer, & label our arrays of vertex attribute data:
-		//-------------------------------------------------------------
-
-		// Indexes:	
-		SEAssert("MeshPrimitive has no indexes", meshPrimitive.GetIndices().size() > 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, meshPlatformParams->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Indexes]);
-		glNamedBufferData(
-			meshPlatformParams->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Indexes],
-			meshPrimitive.GetIndices().size() * sizeof(uint32_t),
-			&meshPrimitive.GetIndices()[0],
-			GL_DYNAMIC_DRAW);
-		glObjectLabel(
-			GL_BUFFER,
-			meshPlatformParams->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Indexes],
-			-1,
-			(meshPrimitive.GetName() + " index").c_str());
-
-		// Position:
-		SEAssert("MeshPrimitive has no vertex positions", meshPrimitive.GetPositions().size() > 0);
-		glBindBuffer(GL_ARRAY_BUFFER, meshPlatformParams->m_meshVBOs[VertexAttribute::Position]);
-		glEnableVertexArrayAttrib(meshPlatformParams->m_meshVAO, VertexAttribute::Position);
-		glVertexAttribPointer(			// Define array of vertex attribute data: 
-			VertexAttribute::Position,	// index
-			3,							// number of components in the attribute
-			GL_FLOAT,					// type
-			GL_FALSE,					// Should data be normalized?
-			0,							// Stride
-			0);							// Offset from start to 1st component
-		glNamedBufferData(
-			meshPlatformParams->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Position],
-			meshPrimitive.GetPositions().size() * sizeof(float),
-			&meshPrimitive.GetPositions()[0],
-			GL_DYNAMIC_DRAW);
-		glObjectLabel(
-			GL_BUFFER,
-			meshPlatformParams->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Position],
-			-1,
-			(meshPrimitive.GetName() + " position").c_str());
-
-		// Normals:
-		if (meshPrimitive.GetNormals().size() > 0)
+		// Create and enable our vertex buffers
+		for (size_t i = 0; i < re::MeshPrimitive::Slot_Count; i++)
 		{
-			glBindBuffer(GL_ARRAY_BUFFER, meshPlatformParams->m_meshVBOs[VertexAttribute::Normal]);
-			glEnableVertexArrayAttrib(meshPlatformParams->m_meshVAO, VertexAttribute::Normal);
-			glVertexAttribPointer(
-				VertexAttribute::Normal,
-				3,
-				GL_FLOAT,
-				GL_TRUE,
-				0,
-				0);
-			glNamedBufferData(
-				meshPlatformParams->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Normal],
-				meshPrimitive.GetNormals().size() * sizeof(float),
-				&meshPrimitive.GetNormals()[0],
-				GL_DYNAMIC_DRAW);
-			glObjectLabel(
-				GL_BUFFER,
-				meshPlatformParams->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Normal],
-				-1,
-				(meshPrimitive.GetName() + " normal").c_str());
-		}
+			const re::MeshPrimitive::Slot slot = static_cast<re::MeshPrimitive::Slot>(i);
+			if (meshPrimitive.GetVertexStream(slot))
+			{
+				VertexStream::Create(*meshPrimitive.GetVertexStream(slot), slot);
 
-		// Tangents:
-		if (meshPrimitive.GetTangents().size() > 0)
-		{
-
-			glBindBuffer(GL_ARRAY_BUFFER, meshPlatformParams->m_meshVBOs[VertexAttribute::Tangent]);
-			glEnableVertexArrayAttrib(meshPlatformParams->m_meshVAO, VertexAttribute::Tangent);
-
-			glVertexAttribPointer(
-				VertexAttribute::Tangent,
-				4,
-				GL_FLOAT,
-				GL_TRUE,
-				0,
-				0);
-
-			glNamedBufferData(
-				meshPlatformParams->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Tangent],
-				meshPrimitive.GetTangents().size() * sizeof(float),
-				&meshPrimitive.GetTangents()[0],
-				GL_DYNAMIC_DRAW);
-			glObjectLabel(
-				GL_BUFFER,
-				meshPlatformParams->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Tangent],
-				-1,
-				(meshPrimitive.GetName() + " tangent").c_str());
-		}
-
-		// UV0:
-		if (meshPrimitive.GetUV0().size() > 0)
-		{
-			glBindBuffer(GL_ARRAY_BUFFER, meshPlatformParams->m_meshVBOs[VertexAttribute::UV0]);
-			glEnableVertexArrayAttrib(meshPlatformParams->m_meshVAO, VertexAttribute::UV0);
-			glVertexAttribPointer(
-				VertexAttribute::UV0,
-				2, 
-				GL_FLOAT,
-				GL_FALSE,
-				0,
-				0);
-			glNamedBufferData(
-				meshPlatformParams->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::UV0],
-				meshPrimitive.GetUV0().size() * sizeof(float),
-				&meshPrimitive.GetUV0()[0],
-				GL_DYNAMIC_DRAW);
-			glObjectLabel(
-				GL_BUFFER,
-				meshPlatformParams->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::UV0],
-				-1,
-				(meshPrimitive.GetName() + " UV0").c_str());
-		}
-
-		// Color:
-		if (meshPrimitive.GetColors().size() > 0)
-		{
-			glBindBuffer(GL_ARRAY_BUFFER, meshPlatformParams->m_meshVBOs[VertexAttribute::Color]);
-			glEnableVertexArrayAttrib(meshPlatformParams->m_meshVAO, VertexAttribute::Color);
-			glVertexAttribPointer(
-				VertexAttribute::Color,
-				4,
-				GL_FLOAT,
-				GL_FALSE,
-				0,
-				0);
-			glNamedBufferData(
-				meshPlatformParams->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Color],
-				meshPrimitive.GetColors().size() * sizeof(float),
-				&meshPrimitive.GetColors()[0],
-				GL_DYNAMIC_DRAW);
-			glObjectLabel(
-				GL_BUFFER,
-				meshPlatformParams->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Color],
-				-1,
-				(meshPrimitive.GetName() + " color").c_str());
+				if (slot != re::MeshPrimitive::Slot::Indexes)
+				{
+					glEnableVertexArrayAttrib(meshPlatformParams->m_meshVAO, slot);
+				}
+			}
 		}
 
 		// Renderdoc name for the VAO now that everything is bound
 		glObjectLabel(GL_VERTEX_ARRAY, meshPlatformParams->m_meshVAO, -1, (meshPrimitive.GetName() + " VAO").c_str());
-
-		// Finally, update the platform param state:
-		meshPlatformParams->m_isCreated = true;
 	}
 
 
@@ -233,16 +100,15 @@ namespace opengl
 		opengl::MeshPrimitive::PlatformParams const* const glMeshParams =
 			dynamic_cast<opengl::MeshPrimitive::PlatformParams const* const>(meshPrimitive.GetPlatformParams().get());
 
+		// The VAO state describes the expected format/stride/etc of the vertex buffers at each binding index
 		glBindVertexArray(glMeshParams->m_meshVAO);
-		for (size_t i = 0; i < opengl::MeshPrimitive::VertexAttribute::VertexAttribute_Count; i++)
+
+		for (size_t i = 0; i < re::MeshPrimitive::Slot_Count; i++)
 		{
-			if (i == VertexAttribute::Indexes)
+			const re::MeshPrimitive::Slot slot = static_cast<re::MeshPrimitive::Slot>(i);
+			if (meshPrimitive.GetVertexStream(slot))
 			{
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMeshParams->m_meshVBOs[opengl::MeshPrimitive::VertexAttribute::Indexes]);
-			}
-			else
-			{
-				glBindBuffer(GL_ARRAY_BUFFER, glMeshParams->m_meshVBOs[i]);
+				opengl::VertexStream::Bind(*meshPrimitive.GetVertexStream(slot), slot);
 			}
 		}
 	}
@@ -253,12 +119,22 @@ namespace opengl
 		opengl::MeshPrimitive::PlatformParams* mp =
 			dynamic_cast<opengl::MeshPrimitive::PlatformParams*>(meshPrimitive.GetPlatformParams().get());
 
-		if (!mp->m_isCreated)
+		if (mp->m_meshVAO == 0)
 		{
 			return;
 		}
 
 		glDeleteVertexArrays(1, &mp->m_meshVAO);
-		glDeleteBuffers(opengl::MeshPrimitive::VertexAttribute::VertexAttribute_Count, &mp->m_meshVBOs[0]);
+		mp->m_meshVAO = 0;
+
+		for (size_t i = 0; i < re::MeshPrimitive::Slot_Count; i++)
+		{
+			const re::MeshPrimitive::Slot slot = static_cast<re::MeshPrimitive::Slot>(i);
+
+			if (meshPrimitive.GetVertexStream(slot))
+			{
+				opengl::VertexStream::Destroy(*meshPrimitive.GetVertexStream(slot));
+			}
+		}
 	}
 }

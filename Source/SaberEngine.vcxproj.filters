@@ -170,7 +170,7 @@
     <ClCompile Include="Platform.cpp">
       <Filter>Source Files\en\platform</Filter>
     </ClCompile>
-    <ClCompile Include="VertexAttributeBuilder.cpp">
+    <ClCompile Include="VertexStreamBuilder.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="SceneManager.cpp">
@@ -347,6 +347,15 @@
     <ClCompile Include="CommandList_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
+    <ClCompile Include="VertexStream.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexStream_Platform.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexStream_OpenGL.cpp">
+      <Filter>Source Files\re\OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -448,7 +457,7 @@
     <ClInclude Include="NamedObject.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
-    <ClInclude Include="VertexAttributeBuilder.h">
+    <ClInclude Include="VertexStreamBuilder.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="SceneManager.h">
@@ -648,6 +657,15 @@
     </ClInclude>
     <ClInclude Include="CommandList_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexStream.h">
+      <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexStream_Platform.h">
+      <Filter>Header Files\re\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexStream_OpenGL.h">
+      <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

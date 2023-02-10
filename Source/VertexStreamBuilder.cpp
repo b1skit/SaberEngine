@@ -5,7 +5,7 @@
 
 #include "Config.h"
 #include "DebugConfiguration.h"
-#include "VertexAttributeBuilder.h"
+#include "VertexStreamBuilder.h"
 
 
 namespace util
@@ -20,14 +20,14 @@ namespace util
 	using glm::vec4;
 
 
-	void VertexAttributeBuilder::BuildMissingVertexAttributes(MeshData* meshData)
+	void VertexStreamBuilder::BuildMissingVertexAttributes(MeshData* meshData)
 	{
-		util::VertexAttributeBuilder tangentBuilder;
+		util::VertexStreamBuilder tangentBuilder;
 		tangentBuilder.ConstructMissingVertexAttributes(meshData);
 	}
 
 
-	VertexAttributeBuilder::VertexAttributeBuilder()
+	VertexStreamBuilder::VertexStreamBuilder()
 		: m_hasJoints(false)
 		, m_hasWeights(false)
 	{
@@ -42,7 +42,7 @@ namespace util
 	}
 
 
-	void VertexAttributeBuilder::ConstructMissingVertexAttributes(MeshData* meshData)
+	void VertexStreamBuilder::ConstructMissingVertexAttributes(MeshData* meshData)
 	{
 		LOG("Processing mesh \"%s\" with %d vertices...", meshData->m_name.c_str(), meshData->m_positions->size());
 
@@ -142,7 +142,7 @@ namespace util
 	}
 
 
-	void VertexAttributeBuilder::RemoveDegenerateTriangles(MeshData* meshData)
+	void VertexStreamBuilder::RemoveDegenerateTriangles(MeshData* meshData)
 	{
 		SEAssert("Expected a triangle list", meshData->m_indices->size() % 3 == 0);
 		SEAssert("Expected a triangle list", meshData->m_positions->size() >= meshData->m_indices->size());
@@ -268,7 +268,7 @@ namespace util
 	}
 
 
-	void VertexAttributeBuilder::BuildFlatNormals(MeshData* meshData)
+	void VertexStreamBuilder::BuildFlatNormals(MeshData* meshData)
 	{
 		SEAssert("Expected a triangle list and pre-allocated normals vector", 
 			meshData->m_indices->size() % 3 == 0 && meshData->m_normals->size() == meshData->m_indices->size());
@@ -293,7 +293,7 @@ namespace util
 	}
 
 
-	void VertexAttributeBuilder::BuildSimpleTriangleUVs(MeshData* meshData)
+	void VertexStreamBuilder::BuildSimpleTriangleUVs(MeshData* meshData)
 	{
 		SEAssert("Expected a triangle list and pre-allocated UV0 vector",
 			meshData->m_indices->size() % 3 == 0 && meshData->m_UV0->size() == meshData->m_indices->size());
@@ -331,7 +331,7 @@ namespace util
 	}
 
 
-	void VertexAttributeBuilder::SplitSharedAttributes(MeshData* meshData)
+	void VertexStreamBuilder::SplitSharedAttributes(MeshData* meshData)
 	{
 		const size_t numVerts = meshData->m_indices->size(); // Assume triangle lists: 3 index entries per triangle
 		vector<uint32_t> newIndices(numVerts);
@@ -379,7 +379,7 @@ namespace util
 	}
 
 
-	void VertexAttributeBuilder::WeldTriangles(MeshData* meshData)
+	void VertexStreamBuilder::WeldTriangles(MeshData* meshData)
 	{
 		SEAssert("Mikktspace operates on system's int, SaberEngine operates on explicit 32-bit uints", 
 			sizeof(int) == sizeof(uint32_t));
@@ -560,7 +560,7 @@ namespace util
 	}
 
 
-	int VertexAttributeBuilder::GetNumFaces(const SMikkTSpaceContext* m_context)
+	int VertexStreamBuilder::GetNumFaces(const SMikkTSpaceContext* m_context)
 	{
 		MeshData* meshData = static_cast<MeshData*> (m_context->m_pUserData);
 		
@@ -570,7 +570,7 @@ namespace util
 	}
 
 
-	int VertexAttributeBuilder::GetNumFaceVerts(const SMikkTSpaceContext* m_context, const int faceIdx)
+	int VertexStreamBuilder::GetNumFaceVerts(const SMikkTSpaceContext* m_context, const int faceIdx)
 	{
 		MeshData* meshData = static_cast<MeshData*> (m_context->m_pUserData);
 
@@ -581,7 +581,7 @@ namespace util
 	}
 
 
-	void VertexAttributeBuilder::GetPosition(
+	void VertexStreamBuilder::GetPosition(
 		const SMikkTSpaceContext* m_context, float* outpos, const int faceIdx, const int vertIdx)
 	{
 		MeshData* meshData = static_cast<MeshData*>(m_context->m_pUserData);
@@ -595,7 +595,7 @@ namespace util
 	}
 
 
-	void VertexAttributeBuilder::GetNormal(
+	void VertexStreamBuilder::GetNormal(
 		const SMikkTSpaceContext* m_context, float* outnormal, const int faceIdx, const int vertIdx)
 	{
 		MeshData* meshData = static_cast<MeshData*>(m_context->m_pUserData);
@@ -609,7 +609,7 @@ namespace util
 	}
 
 
-	void VertexAttributeBuilder::GetTexCoords(
+	void VertexStreamBuilder::GetTexCoords(
 		const SMikkTSpaceContext* m_context, float* outuv, const int faceIdx, const int vertIdx)
 	{
 		MeshData* meshData = static_cast<MeshData*>(m_context->m_pUserData);
@@ -622,7 +622,7 @@ namespace util
 	}
 
 
-	void VertexAttributeBuilder::SetTangentSpaceBasic(
+	void VertexStreamBuilder::SetTangentSpaceBasic(
 		const SMikkTSpaceContext* m_context, const float* tangentu, const float fSign, const int faceIdx, const int vertIdx)
 	{
 		MeshData* meshData = static_cast<MeshData*>(m_context->m_pUserData);
@@ -642,7 +642,7 @@ namespace util
 	}
 
 
-	int VertexAttributeBuilder::GetVertexIndex(const SMikkTSpaceContext* m_context, int faceIdx, int vertIdx)
+	int VertexStreamBuilder::GetVertexIndex(const SMikkTSpaceContext* m_context, int faceIdx, int vertIdx)
 	{
 		MeshData* meshData = static_cast<MeshData*>(m_context->m_pUserData);
 

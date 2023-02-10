@@ -11,9 +11,8 @@
 
 namespace util
 {
-
-class VertexAttributeBuilder
-{
+	class VertexStreamBuilder
+	{
 	public:
 		struct MeshData
 		{
@@ -35,7 +34,7 @@ class VertexAttributeBuilder
 
 
 	private:
-		VertexAttributeBuilder();
+		VertexStreamBuilder();
 		void ConstructMissingVertexAttributes(MeshData* meshData);
 	
 		void RemoveDegenerateTriangles(MeshData* meshData);

@@ -1,10 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
+#include "Bounds.h"
+#include "HashedDataObject.h"
 #include "Material.h"
 #include "NamedObject.h"
-#include "HashedDataObject.h"
-#include "Bounds.h"
+#include "VertexStream.h"
 
 
 namespace gr
@@ -20,8 +21,6 @@ namespace re
 		struct PlatformParams
 		{
 			virtual ~PlatformParams() = 0;
-
-			bool m_isCreated = false;
 		};
 
 
@@ -42,6 +41,26 @@ namespace re
 		{
 			DrawMode m_drawMode = DrawMode::Triangles;
 		};
+
+		enum Slot // Binding index
+		{
+			Position	= 0, // vec3
+			Normal		= 1, // vec3
+			Tangent		= 2, // vec4
+			UV0			= 3, // vec2
+			Color		= 4, // vec4
+
+			Joints		= 5, // tvec4<uint8_t>
+			Weights		= 6, // vec4
+
+			Indexes		= 7, // uint32_t Note: NOT a valid binding location
+
+			Slot_Count
+		};
+		// Note: The order/indexing of this enum MUST match the vertex layout locations in SaberCommon.glsl
+	
+		static std::string GetSlotDebugName(Slot slot);
+
 
 	public:
 		MeshPrimitive(std::string const& name,
@@ -69,15 +88,8 @@ namespace re
 		inline gr::Bounds& GetBounds() { return m_localBounds; }
 		inline gr::Bounds const& GetBounds() const { return m_localBounds; }
 		void UpdateBounds(gr::Transform* transform); // TODO: Currently this assumes the MeshPrimitive is not skinned
-
-		inline std::vector<float> const& GetPositions() const { return m_positions; }
-		inline std::vector<float> const& GetNormals() const { return m_normals; }
-		inline std::vector<float> const& GetColors() const { return m_colors; }
-		inline std::vector<float> const& GetUV0() const { return m_uv0; }
-		inline std::vector<float> const& GetTangents() const { return m_tangents; }
-		inline std::vector<uint32_t> const& GetIndices() { return m_indices; }
-
-		inline size_t NumIndices() const { return m_indices.size(); }
+		
+		std::shared_ptr<re::VertexStream> GetVertexStream(Slot slot) const;
 
 		inline std::unique_ptr<PlatformParams>& GetPlatformParams() { return m_platformParams; }
 		inline std::unique_ptr<PlatformParams> const& GetPlatformParams() const { return m_platformParams; }
@@ -95,17 +107,7 @@ namespace re
 		// API-specific mesh params:
 		std::unique_ptr<PlatformParams> m_platformParams;
 
-		// Vertex data streams:
-		std::vector<uint32_t> m_indices;
-
-		std::vector<float> m_positions;		// vec3
-		std::vector<float> m_normals;		// vec3
-		std::vector<float> m_colors;		// vec4
-		std::vector<float> m_uv0;			// vec2
-		std::vector<float> m_tangents;		// vec4
-
-		std::vector<uint8_t> m_joints;		// tvec4<uint8_t>
-		std::vector<float> m_weights;		// vec4
+		std::vector<std::shared_ptr<re::VertexStream>> m_vertexStreams;
 
 		gr::Bounds m_localBounds; // MeshPrimitive bounds, in local space		
 

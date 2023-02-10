@@ -3,7 +3,7 @@
 #include "MeshPrimitive.h"
 #include "MeshPrimitive_Platform.h"
 #include "Transform.h"
-#include "VertexAttributeBuilder.h"
+#include "VertexStreamBuilder.h"
 
 
 namespace re
@@ -43,21 +43,80 @@ namespace re
 	{
 		platform::MeshPrimitive::CreatePlatformParams(*this);
 
-		m_indices = move(indices);
+		m_vertexStreams.resize(Slot::Slot_Count, nullptr);
 
-		m_positions = move(positions);
-		m_normals = move(normals);
-		m_colors = move(colors);
-		m_uv0 = move(uv0);
-		m_tangents = move(tangents);
+		m_vertexStreams[Slot::Indexes] = std::make_shared<re::VertexStream>(
+			1, 
+			re::VertexStream::DataType::UInt,
+			re::VertexStream::Normalize::False,
+			std::move(reinterpret_cast<std::vector<uint8_t>&>(indices)));
 
-		m_joints = move(joints);
-		m_weights = move(weights);
+		m_vertexStreams[Slot::Position] = std::make_shared<re::VertexStream>(
+			3,
+			re::VertexStream::DataType::Float,
+			re::VertexStream::Normalize::False,
+			std::move(reinterpret_cast<std::vector<uint8_t>&>(positions)));
+
+		if (!normals.empty())
+		{
+			m_vertexStreams[Slot::Normal] = std::make_shared<re::VertexStream>(
+				3,
+				re::VertexStream::DataType::Float,
+				re::VertexStream::Normalize::True,
+				std::move(reinterpret_cast<std::vector<uint8_t>&>(normals)));
+		}
+
+		if (!colors.empty())
+		{
+			m_vertexStreams[Slot::Color] = std::make_shared<re::VertexStream>(
+				4,
+				re::VertexStream::DataType::Float,
+				re::VertexStream::Normalize::False,
+				std::move(reinterpret_cast<std::vector<uint8_t>&>(colors)));
+		}
+
+		if (!uv0.empty())
+		{
+			m_vertexStreams[Slot::UV0] = std::make_shared<re::VertexStream>(
+				2,
+				re::VertexStream::DataType::Float,
+				re::VertexStream::Normalize::False,
+				std::move(reinterpret_cast<std::vector<uint8_t>&>(uv0)));
+		}
+
+		if (!tangents.empty())
+		{
+			m_vertexStreams[Slot::Tangent] = std::make_shared<re::VertexStream>(
+				4,
+				re::VertexStream::DataType::Float,
+				re::VertexStream::Normalize::True,
+				std::move(reinterpret_cast<std::vector<uint8_t>&>(tangents)));
+		}
+		
+		if (!joints.empty())
+		{
+			m_vertexStreams[Slot::Joints] = std::make_shared<re::VertexStream>(
+				1,
+				re::VertexStream::DataType::UByte,
+				re::VertexStream::Normalize::False,
+				std::move(reinterpret_cast<std::vector<uint8_t>&>(joints)));
+		}
+
+		if (!weights.empty())
+		{
+			m_vertexStreams[Slot::Weights] = std::make_shared<re::VertexStream>(
+				1,
+				re::VertexStream::DataType::Float,
+				re::VertexStream::Normalize::False,
+				std::move(reinterpret_cast<std::vector<uint8_t>&>(weights)));
+		}
+
 
 		if (positionMinXYZ == gr::Bounds::k_invalidMinXYZ || positionMaxXYZ == gr::Bounds::k_invalidMaxXYZ)
 		{
 			// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast from floats
-			m_localBounds.ComputeBounds(reinterpret_cast<std::vector<vec3> const&>(m_positions));
+			m_localBounds.ComputeBounds(reinterpret_cast<std::vector<vec3> const&>(
+				m_vertexStreams[Slot::Position]->GetDataAsVector()));
 		}
 		else
 		{
@@ -70,20 +129,9 @@ namespace re
 
 	void MeshPrimitive::Destroy()
 	{
-		m_indices.clear();
-
-		m_positions.clear();
-		m_normals.clear();
-		m_tangents.clear();
-		m_uv0.clear();
-		m_colors.clear();
-
-		m_joints.clear();
-		m_weights.clear();
-
-		m_meshMaterial = nullptr;
-
 		platform::MeshPrimitive::Destroy(*this); // Platform-specific destruction
+		m_vertexStreams.clear();
+		m_meshMaterial = nullptr;
 		m_platformParams = nullptr;
 	}
 
@@ -100,37 +148,12 @@ namespace re
 		AddDataBytesToHash(&m_params, sizeof(MeshPrimitiveParams));
 
 		// Vertex data streams:
-		if (!m_indices.empty())
+		for (size_t i = 0; i < m_vertexStreams.size(); i++)
 		{
-			AddDataBytesToHash(&m_indices[0], sizeof(uint32_t) * m_indices.size());
-		}
-		if (!m_positions.empty())
-		{
-			AddDataBytesToHash(&m_positions[0], sizeof(float) * m_positions.size());
-		}
-		if (!m_normals.empty())
-		{
-			AddDataBytesToHash(&m_normals[0], sizeof(float) * m_normals.size());
-		}
-		if (!m_tangents.empty())
-		{
-			AddDataBytesToHash(&m_tangents[0], sizeof(float) * m_tangents.size());
-		}
-		if (!m_uv0.empty())
-		{
-			AddDataBytesToHash(&m_uv0[0], sizeof(float) * m_uv0.size());
-		}
-		if (!m_colors.empty())
-		{
-			AddDataBytesToHash(&m_colors[0], sizeof(float) * m_colors.size());
-		}
-		if (!m_joints.empty())
-		{
-			AddDataBytesToHash(&m_joints[0], sizeof(uint8_t) * m_joints.size());
-		}
-		if (!m_weights.empty())
-		{
-			AddDataBytesToHash(&m_weights[0], sizeof(float) * m_weights.size());
+			if (m_vertexStreams[i])
+			{
+				AddDataBytesToHash(m_vertexStreams[i]->GetData(), m_vertexStreams[i]->GetTotalDataByteSize());
+			}
 		}
 	}
 
@@ -139,6 +162,59 @@ namespace re
 	{
 		m_localBounds.UpdateAABBBounds(transform);
 	}
+
+
+	std::shared_ptr<re::VertexStream> MeshPrimitive::GetVertexStream(Slot slot) const
+	{
+		return m_vertexStreams[slot];
+	}
+
+
+	std::string MeshPrimitive::GetSlotDebugName(Slot slot)
+	{
+		switch (slot)
+		{
+		case Position:
+		{
+			return ENUM_TO_STR(Position);
+		}
+		case Normal:
+		{
+			return ENUM_TO_STR(Normal);
+		}
+		case Tangent:
+		{
+			return ENUM_TO_STR(Tangent);
+		}
+		case UV0:
+		{
+			return ENUM_TO_STR(Position);
+		}
+		case Color:
+		{
+			return ENUM_TO_STR(Color);
+		}
+		case Joints:
+		{
+			return ENUM_TO_STR(Joints);
+		}
+		case Weights:
+		{
+			return ENUM_TO_STR(Weights);
+		}
+		case Indexes:
+		{
+			return ENUM_TO_STR(Indexes);
+		}
+		default:
+		{
+			SEAssertF("Invalid slot");
+		}
+		}
+
+		return "Invalid slot";
+	}
+	
 } // re
 
 
@@ -230,7 +306,7 @@ namespace meshfactory
 		constexpr char meshName[] = "cube";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
-		util::VertexAttributeBuilder::MeshData meshData
+		util::VertexStreamBuilder::MeshData meshData
 		{
 			meshName,
 			&defaultMeshPrimitiveParams,
@@ -243,7 +319,7 @@ namespace meshfactory
 			&jointsPlaceholder,
 			&weightsPlaceholder
 		};
-		util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
+		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
 		return std::make_shared<MeshPrimitive>(
@@ -319,7 +395,7 @@ namespace meshfactory
 		constexpr char meshName[] = "optimizedFullscreenQuad";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams; // Use defaults
-		util::VertexAttributeBuilder::MeshData meshData
+		util::VertexStreamBuilder::MeshData meshData
 		{
 			meshName,
 			&defaultMeshPrimitiveParams,
@@ -332,7 +408,7 @@ namespace meshfactory
 			&jointsPlaceholder,
 			&weightsPlaceholder
 		};
-		util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
+		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		return std::make_shared<MeshPrimitive>(
 			"optimizedFullscreenQuad",
@@ -385,7 +461,7 @@ namespace meshfactory
 		constexpr char meshName[] = "quad";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
-		util::VertexAttributeBuilder::MeshData meshData
+		util::VertexStreamBuilder::MeshData meshData
 		{
 			meshName,
 			&defaultMeshPrimitiveParams,
@@ -398,7 +474,7 @@ namespace meshfactory
 			&jointsPlaceholder,
 			&weightsPlaceholder
 		};
-		util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
+		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// It's easier to reason about geometry in vecN types; cast to float now we're done
 		return std::make_shared<MeshPrimitive>(
@@ -579,7 +655,7 @@ namespace meshfactory
 		constexpr char meshName[] = "sphere";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
-		util::VertexAttributeBuilder::MeshData meshData
+		util::VertexStreamBuilder::MeshData meshData
 		{
 			meshName,
 			&defaultMeshPrimitiveParams,
@@ -592,7 +668,7 @@ namespace meshfactory
 			&jointsPlaceholder,
 			&weightsPlaceholder
 		};
-		util::VertexAttributeBuilder::BuildMissingVertexAttributes(&meshData);
+		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
 		return make_shared<MeshPrimitive>(

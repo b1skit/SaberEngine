@@ -191,7 +191,7 @@ namespace opengl
 					// Draw!
 					glDrawElementsInstanced(
 						meshPlatParams->m_drawMode,						// GLenum mode
-						(GLsizei)batch.GetBatchMesh()->NumIndices(),	// GLsizei count
+						(GLsizei)batch.GetBatchMesh()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),	// GLsizei count
 						GL_UNSIGNED_INT,								// GLenum type. TODO: Store type in parameters, instead of assuming uints
 						0,												// Byte offset (into bound index buffer)
 						(GLsizei)batch.GetInstanceCount());				// Instance count
