@@ -81,6 +81,9 @@
     <Filter Include="Header Files\en\win32">
       <UniqueIdentifier>{d6310138-0ea0-4318-8790-179f829c797c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Shaders\DX12">
+      <UniqueIdentifier>{ca22796c-1011-432d-ac46-e02825116631}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -742,5 +745,10 @@
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
     <None Include="SaberEngine.licenseheader" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="HelloTriangle.hlsl">
+      <Filter>Source Files\Shaders\DX12</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

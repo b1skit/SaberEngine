@@ -411,6 +411,9 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <None Include="Shaders\glsl\toneMapShader.frag" />
     <None Include="Shaders\glsl\toneMapShader.vert" />
   </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="HelloTriangle.hlsl" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

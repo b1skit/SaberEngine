@@ -76,7 +76,6 @@ namespace dx12
 		// Return our command allocators to the pool:
 		for (ID3D12CommandAllocator* cmdAllocator : storedCommandAllocators)
 		{
-			// WTF?? WE SHOULDN'T BE STORING THE RAW POINTER AS A COMPTR HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			m_commandAllocatorPool.emplace(CommandAllocatorInstance{ cmdAllocator, fenceValue });
 		}
 	}
