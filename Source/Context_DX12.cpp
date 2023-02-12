@@ -20,8 +20,7 @@ namespace dx12
 
 
 	Context::PlatformParams::PlatformParams()
-		: m_fenceValue(0)
-		, m_RTVDescHeap(nullptr)
+		: m_RTVDescHeap(nullptr)
 		, m_RTVDescSize(0)
 	{
 		for (uint32_t i = 0; i < dx12::RenderManager::k_numFrames; i++)
@@ -119,7 +118,7 @@ namespace dx12
 			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
 
 		// Make sure the command queue has finished all commands before closing.
-		ctxPlatParams->m_commandQueue.Flush(ctxPlatParams->m_fenceValue);
+		ctxPlatParams->m_commandQueue.Flush();
 		ctxPlatParams->m_commandQueue.Destroy();
 
 		ctxPlatParams->m_device.Destroy();
@@ -167,14 +166,13 @@ namespace dx12
 		CheckHResult(hr, "Failed to present backbuffer");
 
 		// Insert a signal into the command queue:
-		ctxPlatParams->m_frameFenceValues[backbufferIdx] = 
-			ctxPlatParams->m_commandQueue.Signal(ctxPlatParams->m_fenceValue);
+		ctxPlatParams->m_frameFenceValues[backbufferIdx] = ctxPlatParams->m_commandQueue.Signal();
 
 		// Get the next backbuffer index:
 		// Note: Backbuffer indices are not guaranteed to be sequential if we're using DXGI_SWAP_EFFECT_FLIP_DISCARD
 		swapChainPlatParams->m_backBufferIdx = swapChainPlatParams->m_swapChain->GetCurrentBackBufferIndex();
 		
-		// Wait on our fence (blocking)
+		// Wait on the fence for our new backbuffer index, to ensure the GPU is finished with it (blocking)
 		ctxPlatParams->m_commandQueue.WaitForGPU(ctxPlatParams->m_frameFenceValues[backbufferIdx]);
 	}
 

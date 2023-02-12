@@ -24,10 +24,11 @@ namespace dx12
 
 		void Execute(uint32_t numCmdLists, ID3D12CommandList* const* cmdLists);
 
-		uint64_t Signal(uint64_t& fenceValue);
+		uint64_t Signal();
 		void WaitForGPU(uint64_t fenceValue); // Blocks the CPU
-		void Flush(uint64_t& fenceValue);
+		void Flush();
 
+		//Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> GetCommandList();
 
 		Microsoft::WRL::ComPtr<ID3D12CommandQueue> GetD3DCommandQueue() { return m_commandQueue; }
 
@@ -36,6 +37,10 @@ namespace dx12
 		Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_commandQueue;
 
 		Fence_DX12 m_fence;
+		uint64_t m_fenceValue = 0;
+
+		//std::queue<Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>> m_commandListPool;
+		//std::queue<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>> m_commandAllocatorPool;
 
 
 	private: // No copying allowed

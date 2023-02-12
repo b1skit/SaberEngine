@@ -10,6 +10,7 @@ namespace dx12
 {
 	CommandQueue_DX12::CommandQueue_DX12()
 		: m_commandQueue(nullptr)
+		, m_fenceValue(0)
 	{
 	}
 
@@ -43,9 +44,9 @@ namespace dx12
 	}
 
 
-	uint64_t CommandQueue_DX12::Signal(uint64_t& fenceValue)
+	uint64_t CommandQueue_DX12::Signal()
 	{
-		return m_fence.Signal(m_commandQueue, fenceValue);
+		return m_fence.Signal(m_commandQueue, m_fenceValue);
 	}
 
 
@@ -55,9 +56,15 @@ namespace dx12
 	}
 
 
-	void CommandQueue_DX12::Flush(uint64_t& fenceValue)
+	void CommandQueue_DX12::Flush()
 	{
-		const uint64_t fenceValueForSignal = m_fence.Signal(m_commandQueue, fenceValue);
+		const uint64_t fenceValueForSignal = m_fence.Signal(m_commandQueue, m_fenceValue);
 		m_fence.WaitForGPU(fenceValueForSignal);
 	}
+
+
+	//Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> CommandQueue_DX12::GetCommandList()
+	//{
+
+	//}
 }

@@ -28,7 +28,7 @@ namespace dx12
 			type, // Direct draw/compute/copy/etc
 			m_commandAllocator.Get(), // The command allocator the command lists will be created on
 			nullptr,  // Optional: Command list initial pipeline state
-			IID_PPV_ARGS(&m_commandList)); // REFIID/GUID of the command list interface, & destination for the populated command list
+			IID_PPV_ARGS(&m_commandList)); // Command list interface REFIID/GUID, & destination for the populated command list
 		// NOTE: IID_PPV_ARGS macro automatically supplies both the RIID & interface pointer
 
 		CheckHResult(hr, "Failed to create command list");

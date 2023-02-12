@@ -6,6 +6,7 @@
 #include "backends/imgui_impl_dx12.h"
 
 #include "Context_DX12.h"
+#include "DebugConfiguration.h"
 #include "RenderManager_DX12.h"
 #include "SwapChain_DX12.h"
 
@@ -58,8 +59,15 @@ namespace dx12
 			backbufferIdx,
 			ctxPlatParams->m_RTVDescSize);
 
+		
+		// Debug: Vary the clear color to easily verify things are working
+		auto now = std::chrono::system_clock::now().time_since_epoch();
+		size_t seconds = std::chrono::duration_cast<std::chrono::seconds>(now).count();
+		const float scale = static_cast<float>((glm::sin(seconds) + 1.0) / 2.0);
+
+		const vec4 clearColor = vec4(0.38f, 0.36f, 0.1f, 1.0f) * scale;
+		
 		// Record our clear RTV command:
-		const vec4 clearColor = vec4(0.38f, 0.36f, 0.1f, 1.0f);
 		ctxPlatParams->m_commandLists[backbufferIdx].ClearRTV(
 			rtv, // Descriptor we're clearning
 			clearColor,
