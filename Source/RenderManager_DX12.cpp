@@ -35,10 +35,8 @@ namespace dx12
 		
 		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
 
-
-		// Reset our command allocator and command list to their original states, so we can start recording commands
-		// Note: Our command lists are closed immediately after they were created
-		ctxPlatParams->m_commandLists[backbufferIdx].Reset(nullptr);
+		// Note: Our command lists and associated command allocators are already closed/reset
+		ComPtr<ID3D12GraphicsCommandList> commandList = ctxPlatParams->m_commandQueue.GetCreateCommandList();
 
 		// Clear the render target:
 		ComPtr<ID3D12Resource> backBuffer = dx12::SwapChain::GetBackBufferResource(context.GetSwapChain());
@@ -50,7 +48,7 @@ namespace dx12
 			D3D12_RESOURCE_STATE_RENDER_TARGET); // State after
 
 		// Record the transition on the command list:
-		ctxPlatParams->m_commandLists[backbufferIdx].AddResourceBarrier(1, &barrier);
+		commandList->ResourceBarrier(1, &barrier);
 
 		// Construct a CPU descriptor handle to a render target view.
 		// Our RTV is offset from the beginning of the descriptor heap using an index and descriptor size
@@ -67,12 +65,25 @@ namespace dx12
 
 		const vec4 clearColor = vec4(0.38f, 0.36f, 0.1f, 1.0f) * scale;
 		
-		// Record our clear RTV command:
-		ctxPlatParams->m_commandLists[backbufferIdx].ClearRTV(
+		commandList->ClearRenderTargetView(
 			rtv, // Descriptor we're clearning
-			clearColor,
+			&clearColor.x,
 			0, // Number of rectangles in the proceeding D3D12_RECT ptr
 			nullptr); // Ptr to an array of rectangles to clear in the resource view. Clears the entire view if null
+
+		// Transition our backbuffer resource back to the present state:
+		CD3DX12_RESOURCE_BARRIER presentBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			backBuffer.Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PRESENT); // Note: D3D12_RESOURCE_STATE_PRESENT == D3D12_RESOURCE_STATE_COMMON
+
+		commandList->ResourceBarrier(1, &presentBarrier);
+
+		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandLists[] =
+		{
+			commandList
+		};
+		ctxPlatParams->m_commandQueue.Execute(1, commandLists);
 	}
 
 

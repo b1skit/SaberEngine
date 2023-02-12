@@ -19,6 +19,7 @@ namespace dx12
 
 		uint64_t Signal(Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue, uint64_t& fenceValue);
 		void WaitForGPU(uint64_t fenceValue); // Blocks the CPU
+		bool IsFenceComplete(uint64_t fenceValue);
 
 
 	private:

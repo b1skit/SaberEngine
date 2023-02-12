@@ -5,7 +5,6 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
-#include "CommandList_DX12.h"
 #include "CommandQueue_DX12.h"
 #include "Context.h"
 #include "Device_DX12.h"
@@ -24,11 +23,7 @@ namespace dx12
 			dx12::Device_DX12 m_device;
 			dx12::CommandQueue_DX12 m_commandQueue;
 
-			// Currently only record a single command list per frame. TODO: Multi-thread/multi-cmd list recording
-			dx12::CommandList_DX12 m_commandLists[dx12::RenderManager::k_numFrames];
-
 			uint64_t m_frameFenceValues[dx12::RenderManager::k_numFrames]; // Fence values for signalling the command queue
-
 
 			// TODO: Move to a "DescriptorHeapManager", owned by the Context:
 			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVDescHeap; // Array of descriptors/resource views

@@ -66,4 +66,10 @@ namespace dx12
 			::WaitForSingleObject(m_fenceEvent, static_cast<DWORD>(duration.count()));
 		}
 	}
+
+
+	bool Fence_DX12::IsFenceComplete(uint64_t fenceValue)
+	{
+		return m_fence->GetCompletedValue() >= fenceValue;
+	}
 }

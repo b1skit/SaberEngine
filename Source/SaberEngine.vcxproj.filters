@@ -344,9 +344,6 @@
     <ClCompile Include="CommandQueue_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
-    <ClCompile Include="CommandList_DX12.cpp">
-      <Filter>Source Files\re\DX12</Filter>
-    </ClCompile>
     <ClCompile Include="VertexStream.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
@@ -653,9 +650,6 @@
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
     <ClInclude Include="CommandQueue_DX12.h">
-      <Filter>Header Files\re\DX12</Filter>
-    </ClInclude>
-    <ClInclude Include="CommandList_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
     <ClInclude Include="VertexStream.h">

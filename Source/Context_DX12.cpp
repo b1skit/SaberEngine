@@ -44,10 +44,10 @@ namespace dx12
 
 		ctxPlatParams->m_device.Create();
 
-		
-		// TODO: Support command queues of different types (direct/copy/compute/etc)
-		ctxPlatParams->m_commandQueue.Create(ctxPlatParams->m_device.GetDisplayDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT);
-
+		// TODO: Use command queues of different types (direct/copy/compute/etc)
+		ctxPlatParams->m_commandQueue.Create(
+			ctxPlatParams->m_device.GetDisplayDevice(), 
+			D3D12_COMMAND_LIST_TYPE_DIRECT);
 
 		
 		// NOTE: Currently, this call retrieves m_commandQueue from the Context platform params
@@ -72,14 +72,6 @@ namespace dx12
 			swapChainParams->m_backBuffers,
 			dx12::RenderManager::k_numFrames,
 			ctxPlatParams->m_RTVDescHeap);
-
-		for (uint32_t i = 0; i < dx12::RenderManager::k_numFrames; ++i)
-		{
-			ctxPlatParams->m_commandLists[i].Create(
-				ctxPlatParams->m_device.GetDisplayDevice(),
-				D3D12_COMMAND_LIST_TYPE_DIRECT);
-		}
-
 
 		SEAssert("Window pointer cannot be null", en::CoreEngine::Get()->GetWindow());
 		win32::Window::PlatformParams* const windowPlatParams =
@@ -127,8 +119,6 @@ namespace dx12
 
 	void Context::Present(re::Context const& context)
 	{
-		// TODO: Replace all of these direct accesss via the platform params with dx12-layer getters/setters
-
 		dx12::Context::PlatformParams* const ctxPlatParams =
 			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
 
@@ -136,25 +126,6 @@ namespace dx12
 			dynamic_cast<dx12::SwapChain::PlatformParams*>(context.GetSwapChain().GetPlatformParams());
 
 		const uint8_t backbufferIdx = swapChainPlatParams->m_backBufferIdx;
-
-		ComPtr<ID3D12Resource> backBuffer = dx12::SwapChain::GetBackBufferResource(context.GetSwapChain());
-
-		// First, we must transition our backbuffer to the present state:
-		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-			backBuffer.Get(),
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_PRESENT); // Note: D3D12_RESOURCE_STATE_PRESENT == D3D12_RESOURCE_STATE_COMMON
-		ctxPlatParams->m_commandLists[backbufferIdx].AddResourceBarrier(1, &barrier);
-
-		// Close the command list before we execute it
-		ctxPlatParams->m_commandLists[backbufferIdx].Close();
-
-		// Build an array of command lists, and execute them:
-		ID3D12CommandList* const commandLists[] = {
-			ctxPlatParams->m_commandLists[backbufferIdx].GetD3DCommandList().Get()
-		};
-		ctxPlatParams->m_commandQueue.Execute(_countof(commandLists), commandLists);
-
 
 		// Present the backbuffer:
 		const bool vsyncEnabled = swapChainPlatParams->m_vsyncEnabled;
@@ -167,6 +138,7 @@ namespace dx12
 
 		// Insert a signal into the command queue:
 		ctxPlatParams->m_frameFenceValues[backbufferIdx] = ctxPlatParams->m_commandQueue.Signal();
+		// TODO: We should maintain a frame fence, and individual fences per command queue
 
 		// Get the next backbuffer index:
 		// Note: Backbuffer indices are not guaranteed to be sequential if we're using DXGI_SWAP_EFFECT_FLIP_DISCARD
