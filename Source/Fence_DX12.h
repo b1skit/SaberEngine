@@ -8,11 +8,11 @@
 
 namespace dx12
 {
-	class Fence
+	class Fence_DX12
 	{
 	public:
-		Fence();
-		~Fence() = default;
+		Fence_DX12();
+		~Fence_DX12() = default;
 
 		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice);
 		void Destroy();
@@ -26,10 +26,11 @@ namespace dx12
 		Microsoft::WRL::ComPtr<ID3D12Fence> m_fence;
 		HANDLE m_fenceEvent; // OS event object: Receives notifications when a fence reaches a specific value
 
+
 	private:
 		// Copying not allowed:
-		Fence(Fence const&) = delete;
-		Fence(Fence&&) = delete;
-		Fence& operator=(Fence const&) = delete;
+		Fence_DX12(Fence_DX12 const&) = delete;
+		Fence_DX12(Fence_DX12&&) = delete;
+		Fence_DX12& operator=(Fence_DX12 const&) = delete;
 	};
 }

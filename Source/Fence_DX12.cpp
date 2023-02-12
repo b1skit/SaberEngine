@@ -8,14 +8,14 @@ namespace dx12
 	using Microsoft::WRL::ComPtr;
 
 
-	Fence::Fence()
+	Fence_DX12::Fence_DX12()
 		: m_fence(nullptr)
 		, m_fenceEvent(nullptr)
 	{
 	}
 
 
-	void Fence::Create(ComPtr<ID3D12Device2> displayDevice)
+	void Fence_DX12::Create(ComPtr<ID3D12Device2> displayDevice)
 	{
 		// Create our fence:
 		HRESULT hr = displayDevice->CreateFence(
@@ -35,13 +35,13 @@ namespace dx12
 	}
 
 
-	void Fence::Destroy()
+	void Fence_DX12::Destroy()
 	{
 		::CloseHandle(m_fenceEvent);
 	}
 
 
-	uint64_t Fence::Signal(Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue, uint64_t& fenceValue)
+	uint64_t Fence_DX12::Signal(Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue, uint64_t& fenceValue)
 	{
 		const uint64_t fenceValueForSignal = ++fenceValue; // Note: First fenceValueForSignal == 1
 
@@ -55,7 +55,7 @@ namespace dx12
 	}
 
 
-	void Fence::WaitForGPU(uint64_t fenceValue)
+	void Fence_DX12::WaitForGPU(uint64_t fenceValue)
 	{
 		if (m_fence->GetCompletedValue() < fenceValue)
 		{
@@ -68,7 +68,7 @@ namespace dx12
 	}
 
 
-	void Fence::Flush(Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue, uint64_t& fenceValue)
+	void Fence_DX12::Flush(Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue, uint64_t& fenceValue)
 	{
 		const uint64_t fenceValueForSignal = Signal(commandQueue, fenceValue);
 		WaitForGPU(fenceValueForSignal);
