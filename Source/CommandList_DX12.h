@@ -22,6 +22,7 @@ namespace dx12
 		void AddResourceBarrier(uint8_t numBarriers, CD3DX12_RESOURCE_BARRIER* const barriers);
 		void Close();
 		void Reset(ID3D12PipelineState* pso);
+
 		void ClearRTV(CD3DX12_CPU_DESCRIPTOR_HANDLE& rtv, glm::vec4 const& clearColor, uint8_t numRects, D3D12_RECT const* rects);
 
 		inline Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> GetD3DCommandList() const { return m_commandList; }

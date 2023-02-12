@@ -66,11 +66,4 @@ namespace dx12
 			::WaitForSingleObject(m_fenceEvent, static_cast<DWORD>(duration.count()));
 		}
 	}
-
-
-	void Fence_DX12::Flush(Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue, uint64_t& fenceValue)
-	{
-		const uint64_t fenceValueForSignal = Signal(commandQueue, fenceValue);
-		WaitForGPU(fenceValueForSignal);
-	}
 }

@@ -21,13 +21,12 @@ namespace dx12
 		{
 			PlatformParams();
 
-			dx12::Device m_device;
-			dx12::CommandQueue m_commandQueue;
+			dx12::Device_DX12 m_device;
+			dx12::CommandQueue_DX12 m_commandQueue;
 
 			// Currently only record a single command list per frame. TODO: Multi-thread/multi-cmd list recording
 			dx12::CommandList_DX12 m_commandLists[dx12::RenderManager::k_numFrames];
 
-			dx12::Fence_DX12 m_fence;
 			uint64_t m_fenceValue = 0;
 			uint64_t m_frameFenceValues[dx12::RenderManager::k_numFrames]; // Fence values for signalling the command queue
 
