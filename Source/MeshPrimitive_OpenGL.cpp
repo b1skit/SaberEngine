@@ -126,15 +126,5 @@ namespace opengl
 
 		glDeleteVertexArrays(1, &mp->m_meshVAO);
 		mp->m_meshVAO = 0;
-
-		for (size_t i = 0; i < re::MeshPrimitive::Slot_Count; i++)
-		{
-			const re::MeshPrimitive::Slot slot = static_cast<re::MeshPrimitive::Slot>(i);
-
-			if (meshPrimitive.GetVertexStream(slot))
-			{
-				opengl::VertexStream::Destroy(*meshPrimitive.GetVertexStream(slot));
-			}
-		}
 	}
 }

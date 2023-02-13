@@ -92,6 +92,11 @@ namespace opengl
 		opengl::VertexStream::PlatformParams* const platformParams =
 			dynamic_cast<opengl::VertexStream::PlatformParams*>(vertexStream.GetPlatformParams());
 
+		if (platformParams->m_VBO == 0)
+		{
+			return;
+		}
+
 		glDeleteBuffers(1, &platformParams->m_VBO);
 		platformParams->m_VBO = 0;
 	}

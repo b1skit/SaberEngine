@@ -8,5 +8,9 @@ namespace platform
 	{
 	public:
 		static std::unique_ptr<re::VertexStream::PlatformParams> CreatePlatformParams();
+
+
+	public:
+		static void (*Destroy)(re::VertexStream&);
 	};
 }

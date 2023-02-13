@@ -32,17 +32,21 @@
 #include "Shader_Platform.h"
 #include "Shader_OpenGL.h"
 
-#include "SwapChain_Platform.h"
 #include "SwapChain_DX12.h"
+#include "SwapChain_Platform.h"
 #include "SwapChain_OpenGL.h"
 
-#include "Texture_Platform.h"
 #include "Texture_DX12.h"
+#include "Texture_Platform.h"
 #include "Texture_OpenGL.h"
 
-#include "TextureTarget_Platform.h"
 #include "TextureTarget_DX12.h"
+#include "TextureTarget_Platform.h"
 #include "TextureTarget_OpenGL.h"
+
+#include "VertexStream_DX12.h"
+#include "VertexStream_Platform.h"
+#include "VertexStream_OpenGL.h"
 
 #include "Window_Platform.h"
 #include "Window_Win32.h"
@@ -129,6 +133,9 @@ namespace platform
 			platform::TextureTargetSet::CreateDepthStencilTarget	= &opengl::TextureTargetSet::CreateDepthStencilTarget;
 			platform::TextureTargetSet::AttachDepthStencilTarget	= &opengl::TextureTargetSet::AttachDepthStencilTarget;
 
+			// Vertex stream:
+			platform::VertexStream::Destroy		= &opengl::VertexStream::Destroy;
+
 			result = true;
 		}
 		break;
@@ -175,6 +182,9 @@ namespace platform
 			platform::TextureTargetSet::AttachColorTargets			= &dx12::TextureTargetSet::AttachColorTargets;
 			platform::TextureTargetSet::CreateDepthStencilTarget	= &dx12::TextureTargetSet::CreateDepthStencilTarget;
 			platform::TextureTargetSet::AttachDepthStencilTarget	= &dx12::TextureTargetSet::AttachDepthStencilTarget;
+
+			// Vertex stream:
+			platform::VertexStream::Destroy		= &dx12::VertexStream::Destroy;
 
 			result = true;
 		}

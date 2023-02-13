@@ -44,6 +44,12 @@ namespace re
 	}
 
 
+	void VertexStream::Destroy()
+	{
+		platform::VertexStream::Destroy(*this);
+	}
+
+
 	void* VertexStream::GetData()
 	{
 		if (m_data.empty())

@@ -30,4 +30,7 @@ namespace platform
 		}
 		return nullptr;
 	}
+
+
+	void (*VertexStream::Destroy)(re::VertexStream&) = nullptr;
 }

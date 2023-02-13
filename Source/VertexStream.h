@@ -32,7 +32,7 @@ namespace re
 
 	public:
 		VertexStream(uint32_t numComponents, DataType dataType, Normalize doNormalize, std::vector<uint8_t>&& data);
-		~VertexStream() = default;
+		~VertexStream() { Destroy(); };
 
 		void* GetData();
 		void const* GetData() const;
@@ -51,6 +51,9 @@ namespace re
 		
 		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 
+
+	private:
+		void Destroy();
 
 	private:
 		uint8_t m_numComponents; 
