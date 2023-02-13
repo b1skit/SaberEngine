@@ -40,6 +40,8 @@ namespace opengl
 			params->m_isCreated = true;
 		}
 
+		opengl::Shader::LoadShaderTexts(shader);
+
 		string const& shaderFileName = shader.GetName();
 
 		LOG("Creating shader: \"%s\"", shaderFileName.c_str());
@@ -131,6 +133,8 @@ namespace opengl
 				}
 			);			
 		}
+
+		// TODO: Replace this with a condition variable
 		while (numPreprocessed > 0)
 		{
 			std::this_thread::yield();
@@ -455,8 +459,11 @@ namespace opengl
 	}
 
 
-	void Shader::LoadShaderTexts(string const& extensionlessName, std::vector<std::string>& shaderTexts_out)
+	void Shader::LoadShaderTexts(re::Shader& shader)
 	{
+		std::vector<std::string>& shaderTexts = shader.GetShaderTexts();
+		shaderTexts.clear();
+
 		constexpr uint32_t numShaderTypes = 3;
 		const std::array<std::string, numShaderTypes> shaderFileExtensions = {
 			".vert",
@@ -464,20 +471,21 @@ namespace opengl
 			".frag",
 		};
 
-		shaderTexts_out.resize(numShaderTypes);
+		shaderTexts.resize(numShaderTypes);
 		std::atomic<uint8_t> numShadersLoaded;
 		for (size_t i = 0; i < numShaderTypes; i++)
 		{
-			std::string assembledName = extensionlessName + shaderFileExtensions[i];
+			std::string assembledName = shader.GetName() + shaderFileExtensions[i];
 			numShadersLoaded++;
 			en::CoreEngine::GetThreadPool()->EnqueueJob(
-				[&shaderTexts_out, assembledName, i, &numShadersLoaded]()
+				[&shaderTexts, assembledName, i, &numShadersLoaded]()
 				{
-					shaderTexts_out[i] = std::move((platform::Shader::LoadShaderText(assembledName)));
+					shaderTexts[i] = std::move((platform::Shader::LoadShaderText(assembledName)));
 					numShadersLoaded--;
 				});
 		}
 
+		// TODO: Use a condition variable
 		while (numShadersLoaded > 0)
 		{
 			std::this_thread::yield();

@@ -5,22 +5,13 @@
 #include "NamedObject.h"
 
 
-namespace platform
+namespace opengl
 {
-	bool RegisterPlatformFunctions();
-}
-
-namespace gr
-{
-	class Material;
+	class Shader;
 }
 
 namespace re
 {
-	class Sampler;
-	class Texture;
-
-
 	class Shader final : public virtual en::NamedObject
 	{
 	public:
@@ -69,12 +60,12 @@ namespace re
 
 	private:
 		void Destroy();
-		void LoadShaderTexts();
 
 	private:
 		std::unique_ptr<PlatformParams> m_platformParams;
 
-		std::vector<std::string> m_shaderTexts; // Cleared when shader is created
+	protected:
+		std::vector<std::string> m_shaderTexts;
 		std::vector<std::string> m_shaderKeywords;
 
 	private:

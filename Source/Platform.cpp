@@ -27,6 +27,7 @@
 #include "Sampler_Platform.h"
 #include "Sampler_OpenGL.h"
 
+#include "Shader_DX12.h"
 #include "Shader_Platform.h"
 #include "Shader_OpenGL.h"
 
@@ -107,8 +108,6 @@ namespace platform
 			// Shader:
 			platform::Shader::Create			= &opengl::Shader::Create;
 			platform::Shader::Destroy			= &opengl::Shader::Destroy;
-			platform::Shader::SetParameterBlock = &opengl::Shader::SetParameterBlock;
-			platform::Shader::LoadShaderTexts	= &opengl::Shader::LoadShaderTexts;
 
 			// Swap chain:
 			platform::SwapChain::Create			= &opengl::SwapChain::Create;
@@ -154,6 +153,10 @@ namespace platform
 			platform::RenderManager::Render			= &dx12::RenderManager::Render;
 			platform::RenderManager::RenderImGui	= &dx12::RenderManager::RenderImGui;
 			platform::RenderManager::Shutdown		= &dx12::RenderManager::Shutdown;
+
+			// Shader:
+			platform::Shader::Create			= &dx12::Shader::Create;
+			platform::Shader::Destroy			= &dx12::Shader::Destroy;
 
 			// Swap chain:
 			platform::SwapChain::Create			= &dx12::SwapChain::Create;

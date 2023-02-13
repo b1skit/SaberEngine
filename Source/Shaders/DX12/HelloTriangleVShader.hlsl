@@ -1,3 +1,5 @@
+// © 2022 Adam Badke. All rights reserved.
+
 struct VertexPosColor
 {
 	float3 Position : POSITION;
@@ -17,24 +19,14 @@ struct VertexShaderOutput
 	float4 Position	: SV_Position;
 };
 
-VertexShaderOutput VShader(VertexPosColor In)
+// TODO: Rename as VShader
+VertexShaderOutput main(VertexPosColor In)
 {
 	VertexShaderOutput Out;
 
 	/*Out.Position = mul(ModelViewProjectionCB.MVP, float4(IN.Position, 1.0f));*/
-	Out.Position = In.Position;
+	Out.Position = float4(In.Position.xyz, 0.5f);
 	Out.Color = float4(In.Color, 1.0f);
 
 	return Out;
-}
-
-
-struct PixelShaderInput
-{
-	float4 Color	: COLOR;
-};
-
-float4 PShader(PixelShaderInput In) : SV_Target
-{
-	return In.Color;
 }

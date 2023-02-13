@@ -2,8 +2,9 @@
 #include "DebugConfiguration.h"
 #include "Config.h"
 #include "Shader.h"
-#include "Shader_Platform.h"
+#include "Shader_DX12.h"
 #include "Shader_OpenGL.h"
+#include "Shader_Platform.h"
 #include "TextLoader.h"
 
 using en::Config;
@@ -14,7 +15,6 @@ using std::vector;
 
 namespace platform
 {
-	// Parameter struct object factory:
 	void platform::Shader::CreatePlatformParams(re::Shader& shader)
 	{
 		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
@@ -28,7 +28,7 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			SEAssertF("DX12 is not yet supported");
+			shader.SetPlatformParams(std::make_unique<dx12::Shader::PlatformParams>());
 		}
 		break;
 		default:
@@ -150,7 +150,4 @@ namespace platform
 	/**********************************/
 	void (*platform::Shader::Create)(re::Shader& shader) = nullptr;
 	void (*platform::Shader::Destroy)(re::Shader&) = nullptr;
-
-	void (*platform::Shader::SetParameterBlock)(re::Shader&, re::ParameterBlock&) = nullptr;	
-	void (*platform::Shader::LoadShaderTexts)(string const& extensionlessName, std::vector<std::string>& shaderTexts_out) = nullptr;
 }

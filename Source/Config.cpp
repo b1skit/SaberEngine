@@ -250,7 +250,8 @@ namespace en
 			TryInsertDefault("numIEMSamples",	20000);	// Number of samples to use when generating IBL IEM texture
 			TryInsertDefault("numPMREMSamples",	4096);	// Number of samples to use when generating IBL PMREM texture
 
-			TryInsertDefault("defaultIBLPath",	std::string("IBL\\ibl.hdr"));
+			//// TODO: This shouldn't be an OpenGL-specific setting
+			//TryInsertDefault("defaultIBLPath",	std::string("IBL\\ibl.hdr"));
 
 			// Shadow map defaults:
 			TryInsertDefault("defaultMinShadowBias",	0.01f);
@@ -264,8 +265,7 @@ namespace en
 		break;
 		case platform::RenderingAPI::DX12:
 		{
-			#pragma message("TODO: Implement en:Config::SetAPIDefaults for DX12")
-			LOG_ERROR("TODO: Implement en:Config::SetAPIDefaults for DX12");
+			TryInsertDefault("shaderDirectory", std::string(".\\Shaders\\DX12\\"));
 		}
 		break;
 		default:

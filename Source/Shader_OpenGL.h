@@ -18,17 +18,19 @@ namespace opengl
 	public:
 		struct PlatformParams final : public virtual re::Shader::PlatformParams
 		{
-			PlatformParams() {}
-			~PlatformParams() override {}
-
 			uint32_t m_shaderReference = 0;
 
 			std::unordered_map<std::string, int32_t> m_samplerUnits;
 		};
 
+
+	public:
 		static void Create(re::Shader& shader);
 		static void Destroy(re::Shader& shader);
 
+		static void LoadShaderTexts(re::Shader&);
+
+		// OpenGL-specific functions:
 		static void Bind(re::Shader& shader);
 		static void SetUniform(
 			re::Shader& shader, 
@@ -36,8 +38,7 @@ namespace opengl
 			void* value, 
 			re::Shader::UniformType const type, 
 			int const count);
-		static void SetParameterBlock(re::Shader&, re::ParameterBlock&); // TODO: This Shader& can probably be const
 		static void SetTextureAndSampler(re::Shader&, std::string const& uniformName, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>);
-		static void LoadShaderTexts(std::string const& extensionlessName, std::vector<std::string>& shaderTexts_out);
+		static void SetParameterBlock(re::Shader&, re::ParameterBlock&); // TODO: This Shader& can probably be const
 	};
 }

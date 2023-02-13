@@ -76,11 +76,13 @@
     <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
     <OutDir>..\Build\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
+    <MultiProcFXC>true</MultiProcFXC>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PreBuildEventUseInBuild />
     <OutDir>..\Build\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>..\Build\$(Platform)\$(Configuration)\Intermediate\</IntDir>
+    <MultiProcFXC>true</MultiProcFXC>
   </PropertyGroup>
   <PropertyGroup>
     <RunPostBuildEvent>Always</RunPostBuildEvent>
@@ -113,7 +115,7 @@
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(ProjectDir)..\Dependencies\glm\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(ProjectDir)..\Dependencies\glm\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <PerUserRedirection>true</PerUserRedirection>
@@ -131,6 +133,9 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <PostBuildEvent>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
+    <FxCompile>
+      <ShaderModel>5.1</ShaderModel>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -165,7 +170,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(ProjectDir)..\Dependencies\glm\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(ProjectDir)..\Dependencies\glm\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
     </Link>
@@ -180,6 +185,9 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
 copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
+    <FxCompile>
+      <ShaderModel>5.1</ShaderModel>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_dx12.cpp" />
@@ -217,6 +225,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     </ClCompile>
     <ClCompile Include="PerformanceTimer.cpp" />
     <ClCompile Include="RenderManager_DX12.cpp" />
+    <ClCompile Include="Shader_DX12.cpp" />
     <ClCompile Include="SwapChain.cpp" />
     <ClCompile Include="SwapChain_DX12.cpp" />
     <ClCompile Include="SwapChain_OpenGL.cpp" />
@@ -313,6 +322,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClInclude Include="PerformanceTimer.h" />
     <ClInclude Include="PipelineState.h" />
     <ClInclude Include="RenderManager_DX12.h" />
+    <ClInclude Include="Shader_DX12.h" />
     <ClInclude Include="SwapChain.h" />
     <ClInclude Include="SwapChain_DX12.h" />
     <ClInclude Include="SwapChain_OpenGL.h" />
@@ -412,7 +422,14 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <None Include="Shaders\glsl\toneMapShader.vert" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="HelloTriangle.hlsl" />
+    <FxCompile Include="Shaders\DX12\HelloTrianglePShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\DX12\HelloTriangleVShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
