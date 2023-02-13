@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "VertexStream.h"
+#include "MeshPrimitive.h"
 
 
 namespace dx12
@@ -10,7 +11,6 @@ namespace dx12
 	public:
 		struct PlatformParams final : public virtual re::VertexStream::PlatformParams
 		{
-			
 		};
 
 
