@@ -17,7 +17,7 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			meshPrimitive.GetPlatformParams() = std::make_unique<opengl::MeshPrimitive::PlatformParams>(meshPrimitive);
+			meshPrimitive.SetPlatformParams(std::make_unique<opengl::MeshPrimitive::PlatformParams>(meshPrimitive));
 		}
 		break;
 		case RenderingAPI::DX12:
@@ -37,6 +37,5 @@ namespace platform
 	// platform::MeshPrimitive static members:
 	/********************************/
 	void (*MeshPrimitive::Create)(re::MeshPrimitive& meshPrimitive) = nullptr;
-	void (*MeshPrimitive::Bind)(re::MeshPrimitive& meshPrimitive) = nullptr;
 	void (*MeshPrimitive::Destroy)(re::MeshPrimitive& meshPrimitive) = nullptr;
 }

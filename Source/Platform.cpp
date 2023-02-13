@@ -13,8 +13,9 @@
 #include "InputManager_Platform.h"
 #include "InputManager_Win32.h"
 
-#include "MeshPrimitive_Platform.h"
+#include "MeshPrimitive_DX12.h"
 #include "MeshPrimitive_OpenGL.h"
+#include "MeshPrimitive_Platform.h"
 
 #include "ParameterBlock.h"
 #include "ParameterBlock_DX12.h"
@@ -92,7 +93,6 @@ namespace platform
 			// MeshPrimitive:
 			platform::MeshPrimitive::Create		= &opengl::MeshPrimitive::Create;
 			platform::MeshPrimitive::Destroy	= &opengl::MeshPrimitive::Destroy;
-			platform::MeshPrimitive::Bind		= &opengl::MeshPrimitive::Bind;
 
 			// Parameter blocks:
 			platform::ParameterBlock::Create	= &opengl::ParameterBlock::Create;
@@ -117,13 +117,11 @@ namespace platform
 			// Texture:
 			platform::Texture::Create			= &opengl::Texture::Create;
 			platform::Texture::Destroy			= &opengl::Texture::Destroy;
-			platform::Texture::Bind				= &opengl::Texture::Bind;
 			platform::Texture::GenerateMipMaps	= &opengl::Texture::GenerateMipMaps;
 
 			// Texture Samplers:
 			platform::Sampler::Create	= &opengl::Sampler::Create;
 			platform::Sampler::Destroy	= &opengl::Sampler::Destroy;
-			platform::Sampler::Bind		= &opengl::Sampler::Bind;
 
 			// Texture target set:
 			platform::TextureTargetSet::CreateColorTargets			= &opengl::TextureTargetSet::CreateColorTargets;
@@ -142,6 +140,10 @@ namespace platform
 			platform::Context::Present				= &dx12::Context::Present;
 			platform::Context::GetMaxTextureInputs	= &dx12::Context::GetMaxTextureInputs;
 			platform::Context::GetMaxColorTargets	= &dx12::Context::GetMaxColorTargets;
+
+			// MeshPrimitive:
+			platform::MeshPrimitive::Create		= &dx12::MeshPrimitive::Create;
+			platform::MeshPrimitive::Destroy	= &dx12::MeshPrimitive::Destroy;
 
 			// Parameter blocks:
 			platform::ParameterBlock::Create	= &dx12::ParameterBlock::Create;
@@ -166,7 +168,6 @@ namespace platform
 			// Texture:
 			platform::Texture::Create			= &dx12::Texture::Create;
 			platform::Texture::Destroy			= &dx12::Texture::Destroy;
-			platform::Texture::Bind				= &dx12::Texture::Bind;
 			platform::Texture::GenerateMipMaps	= &dx12::Texture::GenerateMipMaps;
 
 			// Texture target set:

@@ -15,17 +15,17 @@ namespace opengl
 		struct PlatformParams final : public virtual re::MeshPrimitive::PlatformParams
 		{
 			PlatformParams(re::MeshPrimitive& meshPrimitive);
-			~PlatformParams() override = default;
 
 			GLuint m_meshVAO = 0; // Vertex array object
-
 			GLenum m_drawMode = GL_TRIANGLES;
 		};
 
 
 	public:
 		static void Create(re::MeshPrimitive& meshPrimitive);
-		static void Bind(re::MeshPrimitive& meshPrimitive);
 		static void Destroy(re::MeshPrimitive& meshPrimitive);
+
+		// OpenGL-specific functionality:
+		static void Bind(re::MeshPrimitive& meshPrimitive);
 	};
 }

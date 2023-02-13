@@ -16,7 +16,6 @@ namespace platform
 		/*********************************/
 		static void (*Create)(re::Texture&);
 		static void (*Destroy)(re::Texture&);
-		static void (*Bind)(re::Texture&, uint32_t textureUnit);
 		static void (*GenerateMipMaps)(re::Texture&);
 	};
 }

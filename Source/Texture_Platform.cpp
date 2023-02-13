@@ -40,6 +40,5 @@ namespace platform
 	/***********************************/
 	void (*platform::Texture::Create)(re::Texture&) = nullptr;
 	void (*platform::Texture::Destroy)(re::Texture&) = nullptr;
-	void (*platform::Texture::Bind)(re::Texture&, uint32_t textureUnit) = nullptr;	
 	void (*platform::Texture::GenerateMipMaps)(re::Texture&) = nullptr;
 }

@@ -162,7 +162,7 @@ namespace opengl
 				for (re::Batch const& batch : batches)
 				{
 					opengl::MeshPrimitive::PlatformParams const* const meshPlatParams =
-						dynamic_cast<opengl::MeshPrimitive::PlatformParams const* const>(batch.GetBatchMesh()->GetPlatformParams().get());
+						dynamic_cast<opengl::MeshPrimitive::PlatformParams const* const>(batch.GetBatchMesh()->GetPlatformParams());
 
 					opengl::MeshPrimitive::Bind(*batch.GetBatchMesh());
 

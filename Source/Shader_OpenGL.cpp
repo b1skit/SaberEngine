@@ -9,6 +9,7 @@
 #include "Material.h"
 #include "ParameterBlock_OpenGL.h"
 #include "PerformanceTimer.h"
+#include "Sampler_OpenGL.h"
 #include "Shader.h"
 #include "Shader_Platform.h"
 #include "Shader_OpenGL.h"
@@ -377,7 +378,7 @@ namespace opengl
 			if (bindingUnit == params->m_samplerUnits.end()) return;
 #endif
 
-			platform::Sampler::Bind(*static_cast<re::Sampler*>(value), bindingUnit->second);
+			opengl::Sampler::Bind(*static_cast<re::Sampler*>(value), bindingUnit->second);
 		}
 		break;
 		default:

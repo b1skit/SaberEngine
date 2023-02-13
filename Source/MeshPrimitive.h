@@ -91,9 +91,8 @@ namespace re
 		
 		std::shared_ptr<re::VertexStream> GetVertexStream(Slot slot) const;
 
-		inline std::unique_ptr<PlatformParams>& GetPlatformParams() { return m_platformParams; }
-		inline std::unique_ptr<PlatformParams> const& GetPlatformParams() const { return m_platformParams; }
-
+		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
+		inline void SetPlatformParams(std::unique_ptr<re::MeshPrimitive::PlatformParams> params) { m_platformParams = std::move(params); }
 
 	private:
 		void Destroy();

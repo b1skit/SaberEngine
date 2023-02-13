@@ -212,6 +212,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClCompile Include="GameplayManager.cpp" />
     <ClCompile Include="InputManager_Platform.cpp" />
     <ClCompile Include="InputManager_Win32.cpp" />
+    <ClCompile Include="MeshPrimitive_DX12.cpp" />
     <ClCompile Include="ParameterBlock.cpp" />
     <ClCompile Include="ParameterBlockAllocator.cpp" />
     <ClCompile Include="ParameterBlock_DX12.cpp" />
@@ -281,6 +282,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
     <ClCompile Include="Transform.cpp" />
+    <ClCompile Include="VertexStream_DX12.cpp" />
     <ClCompile Include="VertexStream_OpenGL.cpp" />
     <ClCompile Include="VertexStream_Platform.cpp" />
     <ClCompile Include="Window.cpp" />
@@ -313,6 +315,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClInclude Include="HashedDataObject.h" />
     <ClInclude Include="InputManager_Platform.h" />
     <ClInclude Include="InputManager_Win32.h" />
+    <ClInclude Include="MeshPrimitive_DX12.h" />
     <ClInclude Include="ParameterBlock.h" />
     <ClInclude Include="ParameterBlockAllocator.h" />
     <ClInclude Include="ParameterBlock_DX12.h" />
@@ -386,6 +389,7 @@ copy "$(ProjectDir)Shaders\glsl\*.*" "$(SolutionDir)SaberEngine\Shaders\glsl\"</
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="Transform.h" />
+    <ClInclude Include="VertexStream_DX12.h" />
     <ClInclude Include="VertexStream_OpenGL.h" />
     <ClInclude Include="VertexStream_Platform.h" />
     <ClInclude Include="Window.h" />

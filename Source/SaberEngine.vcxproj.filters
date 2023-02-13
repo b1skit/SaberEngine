@@ -359,6 +359,12 @@
     <ClCompile Include="Shader_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
+    <ClCompile Include="MeshPrimitive_DX12.cpp">
+      <Filter>Source Files\re\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexStream_DX12.cpp">
+      <Filter>Source Files\re\DX12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -668,6 +674,12 @@
       <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="Shader_DX12.h">
+      <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshPrimitive_DX12.h">
+      <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexStream_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
   </ItemGroup>

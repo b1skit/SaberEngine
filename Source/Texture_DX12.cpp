@@ -31,13 +31,6 @@ namespace dx12
 		#pragma message("TODO: Implement dx12::Texture::Destroy")
 		LOG_ERROR("TODO: Implement dx12::Texture::Destroy");
 	}
-
-
-	void Texture::Bind(re::Texture& texture, uint32_t textureUnit)
-	{
-		#pragma message("TODO: Implement dx12::Texture::Bind")
-		SEAssertF("TODO: Implement this");
-	}
 	
 	
 	void Texture::GenerateMipMaps(re::Texture& texture)
