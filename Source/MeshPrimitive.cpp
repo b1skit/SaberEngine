@@ -342,31 +342,15 @@ namespace meshfactory
 	inline std::shared_ptr<MeshPrimitive> CreateFullscreenQuad(ZLocation zLocation)
 	{
 		float zDepth;
-		switch (Config::Get()->GetRenderingAPI())
+		// NOTE: OpenGL & GLM's default clip coordinates have been overridden
+		// (via glClipControl/GLM_FORCE_DEPTH_ZERO_TO_ONE)
+		switch (zLocation)
 		{
-		case platform::RenderingAPI::OpenGL:
-		{
-			// NOTE: OpenGL & GLM's default clip coordinates have been overridden
-			// (via glClipControl/GLM_FORCE_DEPTH_ZERO_TO_ONE)
-			switch (zLocation)
-			{
-			case ZLocation::Near: zDepth = 0.f;
-				break;
-			case ZLocation::Far: zDepth = 1.f;
-				break;
-			default: SEAssertF("Invalid Z location");
-			}
-		}
-		break;
-		case platform::RenderingAPI::DX12:
-		{
-			SEAssertF("DX12 is not yet supported");
-		}
-		break;
-		default:
-		{
-			SEAssertF("Invalid rendering API argument received");
-		}
+		case ZLocation::Near: zDepth = 0.f;
+			break;
+		case ZLocation::Far: zDepth = 1.f;
+			break;
+		default: SEAssertF("Invalid Z location");
 		}
 
 		// Create a triangle twice the size of clip space, and let the clipping hardware trim it to size:
@@ -685,6 +669,78 @@ namespace meshfactory
 			std::vector<float>(), // No weights
 			nullptr, // No material
 			defaultMeshPrimitiveParams);
+	}
+
+
+	inline std::shared_ptr<re::MeshPrimitive> CreateHelloTriangle()
+	{
+		const float zDepth = 1.0f;
+		
+		std::vector<glm::vec3> positions
+		{
+			vec3(0.5f, 0.25f, zDepth),	// Top center
+			vec3(0.25f, 0.75f, zDepth), // bl
+			vec3(0.75f, 0.75f, zDepth)	// br
+		};
+
+		std::vector<vec2> uvs // Note: (0,0) = Top left
+		{
+			vec2(0.5f, 0.f),	// Top center
+			vec2(0.f, 1.f),		// bl
+			vec2(1.f, 0.f),		// br
+		};
+
+		std::vector<uint32_t> indices
+		{
+			0, 1, 2
+		}; // Note: CCW winding
+
+		std::vector<vec4> colors
+		{
+			vec4(1.f, 0.f, 0.f, 1.f), // Top center
+			vec4(0.f, 1.f, 0.f, 1.f), // bl
+			vec4(0.f, 0.f, 1.f, 1.f), // br
+		};
+
+		// Populate missing data:		
+		std::vector<vec3> normals;
+		std::vector<vec4> tangents;
+		std::vector<glm::tvec4<uint8_t>> jointsPlaceholder;
+		std::vector<glm::vec4> weightsPlaceholder;
+
+		constexpr char meshName[] = "helloTriangle";
+
+		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
+		util::VertexStreamBuilder::MeshData meshData
+		{
+			meshName,
+			&defaultMeshPrimitiveParams,
+			&indices,
+			&positions,
+			&normals,
+			&tangents,
+			&uvs,
+			&colors,
+			&jointsPlaceholder,
+			&weightsPlaceholder
+		};
+		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
+
+		// It's easier to reason about geometry in vecN types; cast to float now we're done
+		return std::make_shared<MeshPrimitive>(
+			meshName,
+			indices,
+			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
+			gr::Bounds::k_invalidMinXYZ,
+			gr::Bounds::k_invalidMaxXYZ,
+			*reinterpret_cast<vector<float>*>(&normals),
+			*reinterpret_cast<vector<float>*>(&tangents),
+			*reinterpret_cast<vector<float>*>(&uvs),
+			*reinterpret_cast<vector<float>*>(&colors),
+			std::vector<uint8_t>(), // No joints
+			std::vector<float>(), // No weights
+			nullptr, // No material
+			MeshPrimitive::MeshPrimitiveParams());
 	}
 } // meshfactory
 
