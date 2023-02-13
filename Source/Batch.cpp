@@ -5,6 +5,7 @@
 #include "Material.h"
 #include "Mesh.h"
 #include "ParameterBlock.h"
+#include "Sampler.h"
 #include "Shader.h"
 #include "Texture.h"
 

@@ -15,6 +15,8 @@ namespace re
 	class MeshPrimitive;
 	class ParameterBlock;
 	class Shader;
+	class Texture;
+	class Sampler;
 }
 
 

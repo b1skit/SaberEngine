@@ -9,6 +9,8 @@ namespace re
 {
 	class ParameterBlock;
 	class Shader;
+	class Texture;
+	class Sampler;
 }
 
 namespace opengl

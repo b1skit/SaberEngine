@@ -4,14 +4,6 @@
 #include "Shader.h"
 
 
-namespace re
-{
-	class ParameterBlock;
-	class Sampler;
-	class Texture;
-	class Shader;
-}
-
 namespace platform
 {
 	class Shader

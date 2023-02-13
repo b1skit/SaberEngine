@@ -4,16 +4,17 @@
 
 #include <array>
 
+#include "CoreEngine.h"
 #include "DebugConfiguration.h"
+#include "Material.h"
+#include "ParameterBlock_OpenGL.h"
+#include "PerformanceTimer.h"
 #include "Shader.h"
 #include "Shader_Platform.h"
 #include "Shader_OpenGL.h"
-#include "Material.h"
 #include "Texture.h"
 #include "Texture_OpenGL.h"
-#include "ParameterBlock_OpenGL.h"
-#include "PerformanceTimer.h"
-#include "CoreEngine.h"
+
 
 using std::vector;
 using std::shared_ptr;
