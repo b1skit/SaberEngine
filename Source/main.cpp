@@ -28,10 +28,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		freopen("CONOUT$", "wb", stdout);
 	}
 
-	if (!gotCommandLineArgs)
+	if (gotCommandLineArgs)
 	{
-		LOG_WARNING("No command line arguments received");
+		const int numTokens = argc - 1; // -1, as 1st arg is program name
+		LOG("Received %d command line tokens: %s",
+			numTokens, 
+			en::Config::Get()->GetValueAsString(en::Config::k_commandLineArgsValueName).c_str());
 	}
+	else
+	{
+		LOG("No command line arguments received");
+	}
+
+	en::Config::Get()->LoadConfigFile();
 
 	// Register our API-specific bindings before anything attempts to call them:
 	if (!platform::RegisterPlatformFunctions())

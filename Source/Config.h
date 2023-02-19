@@ -10,16 +10,21 @@ namespace en
 	class Config
 	{
 	public:
-		static char const* const k_showSystemConsoleWindowCmdLineArg;
-		static char const* const k_platformCmdLineArg;
+		// Configuration constants:
+		static char const* k_scenesDirName;	// "Scenes\\"
 
-		static char const* const k_commandLineArgsValueName; // Retrieves the received command line arg string
 
-		static char const* const k_sceneNameValueName;
-		static char const* const k_sceneFilePathValueName;
-		static char const* const k_windowXResValueName;
-		static char const* const k_windowYResValueName;
+		// Config keys:
+		static char const* const k_showSystemConsoleWindowCmdLineArg;	// "console"
+		static char const* const k_platformCmdLineArg;					// "platform"
 
+		static char const* const k_commandLineArgsValueName;	// "commandLineArgs": Gets the command line arg string
+
+		static char const* const k_sceneNameValueName;			// "sceneName"
+		static char const* const k_sceneFilePathValueName;		// "sceneFilePath"
+		static char const* const k_windowXResValueName;			// "windowXRes"
+		static char const* const k_windowYResValueName;			// windowYRes"
+				
 
 	public: 
 		enum class SettingType
@@ -53,6 +58,16 @@ namespace en
 		// Set a config value. Note: Strings must be explicitely defined as a string("value")
 		template<typename T>
 		void SetValue(const std::string& valueName, T value, SettingType settingType = SettingType::Common);
+
+		template<typename T>
+		void SetValue(char const* valueName, T value, SettingType settingType = SettingType::Common);
+
+		// Set a new config value, but only if it doesn't already exist. Returns true if the value was set
+		template<typename T>
+		bool TrySetValue(const std::string& valueName, T value, SettingType settingType = SettingType::Common);
+
+		template<typename T>
+		bool TrySetValue(char const* valueName, T value, SettingType settingType = SettingType::Common);
 
 		// Load the config.cfg file
 		void LoadConfigFile();
@@ -150,7 +165,34 @@ namespace en
 	void Config::SetValue(const std::string& valueName, T value, SettingType settingType /*= SettingType::Common*/)
 	{
 		m_configValues[valueName] = { value, settingType };
-		m_isDirty = true;
+		if (settingType == SettingType::Common)
+		{
+			m_isDirty = true;
+		}
+	}
+
+	template<typename T>
+	inline void Config::SetValue(char const* valueName, T value, SettingType settingType /*= SettingType::Common*/)
+	{
+		SetValue(std::string(valueName), value, settingType);
+	}
+
+	template<typename T>
+	bool Config::TrySetValue(const std::string& valueName, T value, SettingType settingType /*= SettingType::Common*/)
+	{
+		if (ValueExists(valueName))
+		{
+			return false;
+		}
+		
+		SetValue(valueName, value, settingType);
+		return true;
+	}
+
+	template<typename T>
+	inline bool Config::TrySetValue(char const* valueName, T value, SettingType settingType /*= SettingType::Common*/)
+	{
+		return TrySetValue(std::string(valueName), value, settingType);
 	}
 }
 
