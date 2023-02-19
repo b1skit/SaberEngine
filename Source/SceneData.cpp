@@ -27,36 +27,38 @@
 #include "VertexStreamBuilder.h"
 
 
+using fr::SceneData;
+using gr::Camera;
+using gr::Light;
+using re::Texture;
+using gr::Material;
+using re::MeshPrimitive;
+using gr::Bounds;
+using gr::Transform;
+using re::ParameterBlock;
+using fr::SceneNode;
+using en::Config;
+using en::CoreEngine;
+using util::PerformanceTimer;
+using std::string;
+using std::vector;
+using std::shared_ptr;
+using std::make_shared;
+using std::stringstream;
+using std::to_string;
+using glm::quat;
+using glm::vec2;
+using glm::vec3;
+using glm::vec4;
+using glm::mat4;
+using glm::make_mat4;
+using std::unordered_map;
+using std::max;
+
+
 // Data loading helpers:
 namespace
 {
-	using fr::SceneData;
-	using gr::Camera;
-	using gr::Light;
-	using re::Texture;
-	using gr::Material;
-	using re::MeshPrimitive;
-	using gr::Bounds;
-	using gr::Transform;
-	using re::ParameterBlock;
-	using fr::SceneNode;
-	using en::Config;
-	using en::CoreEngine;
-	using util::PerformanceTimer;
-	using std::string;
-	using std::vector;
-	using std::shared_ptr;
-	using std::make_shared;
-	using std::stringstream;
-	using std::to_string;
-	using glm::quat;
-	using glm::vec2;
-	using glm::vec3;
-	using glm::vec4;
-	using glm::mat4;
-	using glm::make_mat4;
-
-
 	constexpr glm::vec4 k_errorTextureColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
 	constexpr char k_missingMaterialName[] = "MissingMaterial";
 
@@ -1349,12 +1351,6 @@ namespace
 
 namespace fr
 {
-	using std::string;
-	using std::vector;
-	using std::unordered_map;
-	using std::max;
-
-
 	bool SceneData::Load(string const& sceneFilePath)
 	{
 		string sceneRootPath;

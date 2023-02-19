@@ -334,6 +334,8 @@ namespace en
 		InitializeDefaultValues();
 		SetAPIDefaults();
 
+		SaveConfigFile(); // Write out the results immediately
+
 		LOG("Done!");
 	}
 
@@ -592,6 +594,49 @@ namespace en
 	}
 
 
-	// Note: We inline this here, as it depends on macros defined in KeyConfiguration.h
-	inline string Config::PropertyToConfigString(bool property) { return string(" ") + (property == true ? TRUE_STRING : FALSE_STRING) + string("\n"); }
+	float Config::GetWindowAspectRatio() const
+	{
+		return (float)(GetValue<int>("windowXRes")) / (float)(GetValue<int>("windowYRes"));
+	}
+
+
+	inline const platform::RenderingAPI Config::GetRenderingAPI() const
+	{
+		return m_renderingAPI;
+	}
+
+	inline std::string Config::PropertyToConfigString(std::string property)
+	{
+		return " \"" + property + "\"\n";
+	}
+
+
+	inline std::string Config::PropertyToConfigString(char const* property)
+	{
+		return " \"" + std::string(property) + "\"\n";
+	}
+
+
+	inline std::string Config::PropertyToConfigString(float property)
+	{
+		return " " + std::to_string(property) + "\n";
+	}
+
+
+	inline std::string Config::PropertyToConfigString(int property)
+	{
+		return " " + std::to_string(property) + "\n";
+	}
+
+
+	inline std::string Config::PropertyToConfigString(char property)
+	{
+		return std::string(" ") + property + std::string("\n");
+	}
+
+
+	inline string Config::PropertyToConfigString(bool property)
+	{
+		return string(" ") + (property == true ? TRUE_STRING : FALSE_STRING) + string("\n");
+	}
 }

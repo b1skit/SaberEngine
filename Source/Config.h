@@ -45,6 +45,10 @@ namespace en
 
 		void ProcessCommandLineArgs(int argc, char** argv);
 
+		void LoadConfigFile(); // Load the config.cfg file
+
+		void SaveConfigFile(); // Save config.cfg to disk
+
 		template<typename T>
 		T GetValue(const std::string& valueName) const;
 
@@ -54,68 +58,51 @@ namespace en
 		bool ValueExists(std::string const& valueName) const;
 
 		std::string GetValueAsString(const std::string& valueName) const;
+		
+		// Specific configuration retrieval:
+		/**********************************/
+		float GetWindowAspectRatio() const; // Compute the aspect ratio: width / height
 
-		// Set a config value. Note: Strings must be explicitely defined as a string("value")
+		const platform::RenderingAPI GetRenderingAPI() const;
+
+
+	private:
 		template<typename T>
 		void SetValue(const std::string& valueName, T value, SettingType settingType = SettingType::Common);
 
 		template<typename T>
 		void SetValue(char const* valueName, T value, SettingType settingType = SettingType::Common);
 
-		// Set a new config value, but only if it doesn't already exist. Returns true if the value was set
+		// Set a new config value, IFF it doesn't already exist. Returns true if the value was set
 		template<typename T>
 		bool TrySetValue(const std::string& valueName, T value, SettingType settingType = SettingType::Common);
 
 		template<typename T>
 		bool TrySetValue(char const* valueName, T value, SettingType settingType = SettingType::Common);
 
-		// Load the config.cfg file
-		void LoadConfigFile();
-
-		// Save config.cfg to disk
-		void SaveConfigFile();
-
-
-		// Specific configuration retrieval:
-		/**********************************/
-
-		// Compute the aspect ratio == width / height
-		inline float GetWindowAspectRatio() const
-		{
-			return (float)(GetValue<int>("windowXRes")) / (float)(GetValue<int>("windowYRes"));
-		}
-
-		inline const platform::RenderingAPI& GetRenderingAPI() const { return m_renderingAPI; }
-
 
 	private:
-		// Initialize the configValues mapping with default values. MUST be called before the config can be accessed.
-		// Note: Default values should be set inside here.
-		void InitializeDefaultValues();
+		void InitializeDefaultValues(); // Initialize any unpopulated configuration values with defaults
 
 		void SetAPIDefaults();
 
+
+	private:
 		std::unordered_map<std::string, std::pair<std::any, SettingType>> m_configValues;	// The config parameter/value map
 		bool m_isDirty; // Marks whether we need to save the config file or not
 
-
-		// Explicit members (for efficiency):
-		/***********************************/
 		platform::RenderingAPI m_renderingAPI;
 
 		const std::string m_configDir = "config\\";
 		const std::string m_configFilename = "config.cfg";
 
 
-		// Helper functions:
-		//------------------
-		inline std::string PropertyToConfigString(std::string property)	{ return " \"" + property + "\"\n"; }
-		inline std::string PropertyToConfigString(char const* property) { return " \"" + std::string(property) + "\"\n"; }
-		inline std::string PropertyToConfigString(float property) { return " " + std::to_string(property) + "\n"; }
-		inline std::string PropertyToConfigString(int property) { return " " + std::to_string(property) + "\n"; }
-		inline std::string PropertyToConfigString(char property) {return std::string(" ") + property + std::string("\n");}
-		
-		// Note: Inlined in .cpp file, as it depends on macros defined in KeyConfiguration.h
+	private: // Helper functions:
+		std::string PropertyToConfigString(std::string property);
+		std::string PropertyToConfigString(char const* property);
+		std::string PropertyToConfigString(float property);
+		std::string PropertyToConfigString(int property);
+		std::string PropertyToConfigString(char property);
 		std::string PropertyToConfigString(bool property);
 	};
 
