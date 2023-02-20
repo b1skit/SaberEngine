@@ -29,9 +29,16 @@ namespace re
 			DataType_Count
 		};
 
+		enum class StreamType
+		{
+			Index,
+			Vertex,
+			StreamType_Count
+		};
+
 
 	public:
-		VertexStream(uint32_t numComponents, DataType dataType, Normalize doNormalize, std::vector<uint8_t>&& data);
+		VertexStream(StreamType type, uint32_t numComponents, DataType dataType, Normalize doNormalize, std::vector<uint8_t>&& data);
 		~VertexStream() { Destroy(); };
 
 		void* GetData();

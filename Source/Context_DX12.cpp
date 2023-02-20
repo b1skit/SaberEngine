@@ -44,12 +44,17 @@ namespace dx12
 
 		ctxPlatParams->m_device.Create();
 
-		// TODO: Use command queues of different types (direct/copy/compute/etc)
-		ctxPlatParams->m_commandQueue.Create(
-			ctxPlatParams->m_device.GetDisplayDevice(), 
-			D3D12_COMMAND_LIST_TYPE_DIRECT);
+		// TODO: Create/support more command queue types
 
-		
+		ctxPlatParams->m_commandQueues[CommandQueue_DX12::CommandListType::Direct].Create(
+			ctxPlatParams->m_device.GetDisplayDevice(),
+			CommandQueue_DX12::CommandListType::Direct);
+
+		ctxPlatParams->m_commandQueues[CommandQueue_DX12::CommandListType::Copy].Create(
+			ctxPlatParams->m_device.GetDisplayDevice(),
+			CommandQueue_DX12::CommandListType::Copy);
+
+
 		// NOTE: Currently, this call retrieves m_commandQueue from the Context platform params
 		// TODO: Clean this up, it's gross.
 		context.GetSwapChain().Create();
@@ -109,9 +114,12 @@ namespace dx12
 		dx12::Context::PlatformParams* const ctxPlatParams =
 			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
 
-		// Make sure the command queue has finished all commands before closing.
-		ctxPlatParams->m_commandQueue.Flush();
-		ctxPlatParams->m_commandQueue.Destroy();
+		// Make sure our command queues have finished all commands before closing.
+		ctxPlatParams->m_commandQueues[CommandQueue_DX12::Copy].Flush();
+		ctxPlatParams->m_commandQueues[CommandQueue_DX12::Copy].Destroy();
+		
+		ctxPlatParams->m_commandQueues[CommandQueue_DX12::Direct].Flush();
+		ctxPlatParams->m_commandQueues[CommandQueue_DX12::Direct].Destroy();
 
 		ctxPlatParams->m_device.Destroy();
 	}
@@ -133,19 +141,19 @@ namespace dx12
 		const uint32_t presentFlags = 
 			swapChainPlatParams->m_tearingSupported && !vsyncEnabled ? DXGI_PRESENT_ALLOW_TEARING : 0;
 
-		HRESULT hr = swapChainPlatParams->m_swapChain->Present(syncInterval, presentFlags);
-		CheckHResult(hr, "Failed to present backbuffer");
+		swapChainPlatParams->m_swapChain->Present(syncInterval, presentFlags);
 
 		// Insert a signal into the command queue:
-		ctxPlatParams->m_frameFenceValues[backbufferIdx] = ctxPlatParams->m_commandQueue.Signal();
+		ctxPlatParams->m_frameFenceValues[backbufferIdx] = 
+			ctxPlatParams->m_commandQueues[CommandQueue_DX12::Direct].Signal();
 		// TODO: We should maintain a frame fence, and individual fences per command queue
 
 		// Get the next backbuffer index:
 		// Note: Backbuffer indices are not guaranteed to be sequential if we're using DXGI_SWAP_EFFECT_FLIP_DISCARD
 		swapChainPlatParams->m_backBufferIdx = swapChainPlatParams->m_swapChain->GetCurrentBackBufferIndex();
 		
-		// Wait on the fence for our new backbuffer index, to ensure the GPU is finished with it (blocking)
-		ctxPlatParams->m_commandQueue.WaitForGPU(ctxPlatParams->m_frameFenceValues[backbufferIdx]);
+		// Wait on the fence for the next backbuffer, to ensure its previous frame is done (blocking)
+		ctxPlatParams->m_commandQueues[CommandQueue_DX12::Direct].WaitForGPU(ctxPlatParams->m_frameFenceValues[backbufferIdx]);
 	}
 
 
@@ -165,6 +173,16 @@ namespace dx12
 	uint8_t Context::GetMaxColorTargets()
 	{
 		return D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT;
+	}
+
+
+	CommandQueue_DX12& GetCommandQueue(CommandQueue_DX12::CommandListType type)
+	{
+		re::Context const& context = re::RenderManager::Get()->GetContext();
+		dx12::Context::PlatformParams* const ctxPlatParams =
+			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
+
+		return ctxPlatParams->m_commandQueues[type];
 	}
 
 

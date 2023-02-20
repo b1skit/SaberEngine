@@ -46,12 +46,14 @@ namespace re
 		m_vertexStreams.resize(Slot::Slot_Count, nullptr);
 
 		m_vertexStreams[Slot::Indexes] = std::make_shared<re::VertexStream>(
+			VertexStream::StreamType::Index,
 			1, 
 			re::VertexStream::DataType::UInt,
 			re::VertexStream::Normalize::False,
 			std::move(reinterpret_cast<std::vector<uint8_t>&>(indices)));
 
 		m_vertexStreams[Slot::Position] = std::make_shared<re::VertexStream>(
+			VertexStream::StreamType::Vertex,
 			3,
 			re::VertexStream::DataType::Float,
 			re::VertexStream::Normalize::False,
@@ -60,6 +62,7 @@ namespace re
 		if (!normals.empty())
 		{
 			m_vertexStreams[Slot::Normal] = std::make_shared<re::VertexStream>(
+				VertexStream::StreamType::Vertex,
 				3,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::True,
@@ -69,6 +72,7 @@ namespace re
 		if (!colors.empty())
 		{
 			m_vertexStreams[Slot::Color] = std::make_shared<re::VertexStream>(
+				VertexStream::StreamType::Vertex,
 				4,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::False,
@@ -78,6 +82,7 @@ namespace re
 		if (!uv0.empty())
 		{
 			m_vertexStreams[Slot::UV0] = std::make_shared<re::VertexStream>(
+				VertexStream::StreamType::Vertex,
 				2,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::False,
@@ -87,6 +92,7 @@ namespace re
 		if (!tangents.empty())
 		{
 			m_vertexStreams[Slot::Tangent] = std::make_shared<re::VertexStream>(
+				VertexStream::StreamType::Vertex,
 				4,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::True,
@@ -96,6 +102,7 @@ namespace re
 		if (!joints.empty())
 		{
 			m_vertexStreams[Slot::Joints] = std::make_shared<re::VertexStream>(
+				VertexStream::StreamType::Vertex, // TODO: Is this appropriate?
 				1,
 				re::VertexStream::DataType::UByte,
 				re::VertexStream::Normalize::False,
@@ -105,6 +112,7 @@ namespace re
 		if (!weights.empty())
 		{
 			m_vertexStreams[Slot::Weights] = std::make_shared<re::VertexStream>(
+				VertexStream::StreamType::Vertex, // TODO: Is this appropriate?
 				1,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::False,
@@ -674,13 +682,13 @@ namespace meshfactory
 
 	inline std::shared_ptr<re::MeshPrimitive> CreateHelloTriangle()
 	{
-		const float zDepth = 1.0f;
+		const float zDepth = 0.5f;
 		
-		std::vector<glm::vec3> positions
+		std::vector<glm::vec3> positions // In clip space: bl near = [-1,-1, 0] , tr far = [1,1,1]
 		{
-			vec3(0.5f, 0.25f, zDepth),	// Top center
-			vec3(0.25f, 0.75f, zDepth), // bl
-			vec3(0.75f, 0.75f, zDepth)	// br
+			vec3(0.0f, 0.75f, zDepth),		// Top center
+			vec3(-0.75f, -0.75f, zDepth),	// bl
+			vec3(0.75f, -0.75f, zDepth)		// br
 		};
 
 		std::vector<vec2> uvs // Note: (0,0) = Top left
@@ -697,9 +705,9 @@ namespace meshfactory
 
 		std::vector<vec4> colors
 		{
-			vec4(1.f, 0.f, 0.f, 1.f), // Top center
-			vec4(0.f, 1.f, 0.f, 1.f), // bl
-			vec4(0.f, 0.f, 1.f, 1.f), // br
+			vec4(1.f, 0.f, 0.f, 1.f), // Top center: Red
+			vec4(0.f, 1.f, 0.f, 1.f), // bl: Green
+			vec4(0.f, 0.f, 1.f, 1.f), // br: Blue
 		};
 
 		// Populate missing data:		

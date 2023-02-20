@@ -16,8 +16,9 @@ namespace opengl
 		{
 			GLuint m_VBO = 0;
 		};
-
+		static std::unique_ptr<re::VertexStream::PlatformParams> CreatePlatformParams(re::VertexStream::StreamType type);
 		
+
 	public:
 		static void Create(re::VertexStream& vertexStream, re::MeshPrimitive::Slot);
 		static void Destroy(re::VertexStream&);

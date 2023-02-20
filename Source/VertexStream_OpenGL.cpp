@@ -36,6 +36,12 @@ namespace
 
 namespace opengl
 {
+	std::unique_ptr<re::VertexStream::PlatformParams> VertexStream::CreatePlatformParams(re::VertexStream::StreamType type)
+	{
+		return std::make_unique<opengl::VertexStream::PlatformParams>();
+	}
+
+
 	void VertexStream::Create(re::VertexStream& vertexStream, re::MeshPrimitive::Slot slot)
 	{
 		SEAssert("Vertex stream has no data", vertexStream.GetData() && vertexStream.GetNumElements() > 0);

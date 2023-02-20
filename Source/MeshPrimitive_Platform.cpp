@@ -1,8 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "DebugConfiguration.h"
 #include "Config.h"
-#include "MeshPrimitive_Platform.h"
+#include "MeshPrimitive_DX12.h"
 #include "MeshPrimitive_OpenGL.h"
+#include "MeshPrimitive_Platform.h"
 
 using en::Config;
 
@@ -22,14 +23,12 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			SEAssertF("DX12 is not yet supported");
-			return;
+			meshPrimitive.SetPlatformParams(std::make_unique<dx12::MeshPrimitive::PlatformParams>(meshPrimitive));
 		}
 		break;
 		default:
 		{
 			SEAssertF("Invalid rendering API argument received");
-			return;
 		}
 		}
 	}

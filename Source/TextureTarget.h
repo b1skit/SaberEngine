@@ -68,7 +68,7 @@ namespace re
 
 		
 	private:
-		// Viewport origin pixel coordinates. (0,0) by default
+		// Viewport origin pixel coordinates. (0,0) (top-left) by default
 		uint32_t m_xMin;
 		uint32_t m_yMin;
 

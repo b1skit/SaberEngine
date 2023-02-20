@@ -21,25 +21,30 @@ namespace dx12
 		}
 		break;
 		case S_FALSE:
+		case DXGI_STATUS_OCCLUDED:
 		{
-			SEAssertF("S_FALSE is a success code. Use the SUCCEEDED or FAILED macros instead of calling this function");
+			SEAssertF("Checked HRESULT of a success code. Use the SUCCEEDED or FAILED macros instead of calling this function");
 		}
 		break;
 		case E_INVALIDARG:
 		{
 			LOG_ERROR("%s: One or more arguments are invalid", msg);
-			SEAssertF(msg);
+		}
+		break;
+		case ERROR_FILE_NOT_FOUND:
+		{
+			LOG_ERROR("File not found: %s", msg);
 		}
 		break;
 		default:
 		{
 			LOG_ERROR(msg);
-			throw std::exception();
+			
 		}
 		}
 
-		// Throw an exception here; asserts are disabled in release mode
-		throw std::exception();
+		SEAssertF(msg);
+		throw std::exception(); // Throw an exception here; asserts are disabled in release mode
 		return false;
 	}
 

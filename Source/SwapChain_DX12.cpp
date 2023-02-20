@@ -62,10 +62,11 @@ namespace dx12
 		swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED; // Back-buffer transparency behavior
 		swapChainDesc.Flags = CheckTearingSupport() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
+
 		// Create the swap chain:
 		ComPtr<IDXGISwapChain1> swapChain1;
 		hr = dxgiFactory4->CreateSwapChainForHwnd(
-			ctxPlatParams->m_commandQueue.GetD3DCommandQueue().Get(), // Pointer to direct command queue
+			ctxPlatParams->m_commandQueues[CommandQueue_DX12::Direct].GetD3DCommandQueue().Get(),
 			windowPlatParams->m_hWindow, // Window handle associated with the swap chain
 			&swapChainDesc, // Swap chain descriptor
 			nullptr, // Full-screen swap chain descriptor. Creates a window swap chain if null

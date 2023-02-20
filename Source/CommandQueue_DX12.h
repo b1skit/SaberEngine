@@ -13,19 +13,33 @@ namespace dx12
 	class CommandQueue_DX12
 	{
 	public:
+		enum CommandListType
+		{
+			Direct,
+			Bundle,
+			Compute,
+			Copy,
+			VideoDecode,
+			VideoProcess,
+			VideoEncode,
+
+			CommandListType_Count
+		};
+
+	public:
 		CommandQueue_DX12();
 		~CommandQueue_DX12() = default;
 
-		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, D3D12_COMMAND_LIST_TYPE type);
+		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, CommandListType type);
 		void Destroy();
 
-		void Execute(uint32_t numCmdLists, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> cmdLists[]);
+		uint64_t Execute(uint32_t numCmdLists, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> cmdLists[]);
 
 		uint64_t Signal();
 		void WaitForGPU(uint64_t fenceValue); // Blocks the CPU
 		void Flush();
 
-		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> GetCreateCommandList();
+		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> GetCreateCommandList();
 
 		Microsoft::WRL::ComPtr<ID3D12CommandQueue> GetD3DCommandQueue() { return m_commandQueue; }
 
@@ -41,7 +55,7 @@ namespace dx12
 
 
 		// Command list pool:
-		std::queue<Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>> m_commandListPool;
+		std::queue<Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2>> m_commandListPool;
 
 
 		// Command allocator pool:

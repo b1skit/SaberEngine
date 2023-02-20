@@ -4,29 +4,77 @@
 
 using Microsoft::WRL::ComPtr;
 
+namespace
+{
+	constexpr D3D12_COMMAND_LIST_TYPE D3DCommandListType(dx12::CommandQueue_DX12::CommandListType type)
+	{
+		switch (type)
+		{
+		case dx12::CommandQueue_DX12::CommandListType::Direct:
+			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT;
+		case dx12::CommandQueue_DX12::CommandListType::Bundle:
+			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_BUNDLE;
+		case dx12::CommandQueue_DX12::CommandListType::Compute:
+			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE;
+		case dx12::CommandQueue_DX12::CommandListType::Copy:
+			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY;
+		case dx12::CommandQueue_DX12::CommandListType::VideoDecode:
+			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE;
+		case dx12::CommandQueue_DX12::CommandListType::VideoProcess:
+			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS;
+		case dx12::CommandQueue_DX12::CommandListType::VideoEncode:
+			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE;
+		case dx12::CommandQueue_DX12::CommandListType::CommandListType_Count:
+		default:
+			static_assert("Invalid type");
+		}
+
+		return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT;
+	}
+}
+
 
 namespace dx12
 {
 	CommandQueue_DX12::CommandQueue_DX12()
 		: m_commandQueue(nullptr)
+		, m_type(D3DCommandListType(CommandListType::CommandListType_Count))
 		, m_deviceCache(nullptr)
 		, m_fenceValue(0)
 	{
 	}
 
 
-	void CommandQueue_DX12::Create(ComPtr<ID3D12Device2> displayDevice, D3D12_COMMAND_LIST_TYPE type)
+	void CommandQueue_DX12::Create(ComPtr<ID3D12Device2> displayDevice, CommandListType type)
 	{
-		m_type = type;
+		m_type = D3DCommandListType(type);
 		m_deviceCache = displayDevice; // Store a local copy, for convenience
 
 		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
 
 		D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
-		cmdQueueDesc.Type = m_type; // Direct, compute, copy, etc
-		cmdQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-		cmdQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE; // None, or Disable Timeout
-		cmdQueueDesc.NodeMask = deviceNodeMask;
+		switch (type)
+		{
+		case CommandListType::Direct:
+		case CommandListType::Copy:
+		{
+			cmdQueueDesc.Type = m_type;
+			cmdQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+			cmdQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE; // None, or Disable Timeout
+			cmdQueueDesc.NodeMask = deviceNodeMask;
+		}
+		break;
+		case CommandListType::Compute: // TODO: Implement more command queue/list types
+		case CommandListType::Bundle:
+		case CommandListType::VideoDecode:
+		case CommandListType::VideoProcess:
+		case CommandListType::VideoEncode:
+		default:
+		{
+			SEAssertF("Invalid or (currently) unsupported command list type");
+		}
+		break;
+		}
 
 		HRESULT hr = m_deviceCache->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&m_commandQueue));
 		CheckHResult(hr, "Failed to create command queue");
@@ -41,7 +89,7 @@ namespace dx12
 	}
 
 
-	void CommandQueue_DX12::Execute(uint32_t numCmdLists, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> cmdLists[])
+	uint64_t CommandQueue_DX12::Execute(uint32_t numCmdLists, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> cmdLists[])
 	{
 		// Extract our raw pointers so we can execute them in a single call
 		std::vector<ID3D12CommandList*> commandListPtrs;
@@ -71,19 +119,23 @@ namespace dx12
 
 		// Execute the command lists:
 		m_commandQueue->ExecuteCommandLists(numCmdLists, &commandListPtrs[0]);
-		uint64_t fenceValue = Signal();
+
+
+		uint64_t commandAllocatorDoneFenceValue = Signal();
 
 		// Return our command allocators to the pool:
 		for (ID3D12CommandAllocator* cmdAllocator : storedCommandAllocators)
 		{
-			m_commandAllocatorPool.emplace(CommandAllocatorInstance{ cmdAllocator, fenceValue });
+			m_commandAllocatorPool.emplace(CommandAllocatorInstance{ cmdAllocator, commandAllocatorDoneFenceValue });
 		}
+
+		return commandAllocatorDoneFenceValue;
 	}
 
 
 	uint64_t CommandQueue_DX12::Signal()
 	{
-		return m_fence.Signal(m_commandQueue, m_fenceValue);
+		return m_fence.Signal(m_commandQueue, m_fenceValue); // m_fenceValue will be incremented
 	}
 
 
@@ -100,11 +152,11 @@ namespace dx12
 	}
 
 
-	ComPtr<ID3D12GraphicsCommandList> CommandQueue_DX12::GetCreateCommandList()
+	ComPtr<ID3D12GraphicsCommandList2> CommandQueue_DX12::GetCreateCommandList()
 	{
 		ComPtr<ID3D12CommandAllocator> commandAllocator = GetCreateCommandAllocator();
 
-		ComPtr<ID3D12GraphicsCommandList> commandList = nullptr;
+		ComPtr<ID3D12GraphicsCommandList2> commandList = nullptr;
 
 		if (!m_commandListPool.empty())
 		{

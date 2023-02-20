@@ -134,7 +134,8 @@ namespace platform
 			platform::TextureTargetSet::AttachDepthStencilTarget	= &opengl::TextureTargetSet::AttachDepthStencilTarget;
 
 			// Vertex stream:
-			platform::VertexStream::Destroy		= &opengl::VertexStream::Destroy;
+			platform::VertexStream::CreatePlatformParams	= &opengl::VertexStream::CreatePlatformParams;
+			platform::VertexStream::Destroy					= &opengl::VertexStream::Destroy;
 
 			result = true;
 		}
@@ -184,7 +185,8 @@ namespace platform
 			platform::TextureTargetSet::AttachDepthStencilTarget	= &dx12::TextureTargetSet::AttachDepthStencilTarget;
 
 			// Vertex stream:
-			platform::VertexStream::Destroy		= &dx12::VertexStream::Destroy;
+			platform::VertexStream::CreatePlatformParams	= &dx12::VertexStream::CreatePlatformParams;
+			platform::VertexStream::Destroy					= &dx12::VertexStream::Destroy;
 
 			result = true;
 		}

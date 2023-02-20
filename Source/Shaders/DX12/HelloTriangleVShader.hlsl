@@ -3,7 +3,7 @@
 struct VertexPosColor
 {
 	float3 Position : POSITION;
-	float3 Color	: COLOR;
+	float4 Color	: COLOR;
 };
 
 struct ModelViewProjection
@@ -25,8 +25,9 @@ VertexShaderOutput main(VertexPosColor In)
 	VertexShaderOutput Out;
 
 	/*Out.Position = mul(ModelViewProjectionCB.MVP, float4(IN.Position, 1.0f));*/
-	Out.Position = float4(In.Position.xyz, 0.5f);
-	Out.Color = float4(In.Color, 1.0f);
+
+	Out.Position = float4(In.Position.xyz, 1.0f);
+	Out.Color = In.Color;
 
 	return Out;
 }

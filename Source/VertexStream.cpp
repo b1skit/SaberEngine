@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "DebugConfiguration.h"
+#include "MeshPrimitive.h"
 #include "VertexStream.h"
 #include "VertexStream_Platform.h"
 
@@ -7,7 +8,7 @@
 namespace re
 {
 	VertexStream::VertexStream(
-		uint32_t numComponents, DataType dataType, Normalize doNormalize, std::vector<uint8_t>&& data)
+		StreamType type, uint32_t numComponents, DataType dataType, Normalize doNormalize, std::vector<uint8_t>&& data)
 		: m_numComponents(numComponents)
 		, m_dataType(dataType)
 		, m_doNormalize(doNormalize)
@@ -15,7 +16,7 @@ namespace re
 	{
 		SEAssert("Only 1, 2, 3, or 4 components are valid", numComponents >= 1 && numComponents <= 4);
 
-		m_platformParams = std::move(platform::VertexStream::CreatePlatformParams());
+		m_platformParams = std::move(platform::VertexStream::CreatePlatformParams(type));
 		
 		switch (dataType)
 		{
@@ -26,7 +27,7 @@ namespace re
 		break;
 		case DataType::UInt:
 		{
-			m_componentByteSize = sizeof(uint32_t);
+			m_componentByteSize = sizeof(uint32_t); // TODO: Support variably-sized indices
 		}
 		break;
 		case DataType::UByte:
@@ -84,6 +85,7 @@ namespace re
 
 	uint32_t VertexStream::GetNumElements() const
 	{
+		// i.e. Get the number of vertices
 		SEAssert("Invalid denominator", m_numComponents > 0 && m_componentByteSize > 0);
 		return static_cast<uint32_t>(m_data.size() / (m_numComponents * m_componentByteSize));
 	}
