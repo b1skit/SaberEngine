@@ -58,6 +58,7 @@ namespace en
 		bool ValueExists(std::string const& valueName) const;
 
 		std::string GetValueAsString(const std::string& valueName) const;
+		std::wstring GetValueAsWString(const std::string& valueName) const;
 		
 		// Specific configuration retrieval:
 		/**********************************/

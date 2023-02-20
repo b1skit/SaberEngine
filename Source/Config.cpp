@@ -521,6 +521,13 @@ namespace en
 	}
 
 
+	std::wstring Config::GetValueAsWString(const std::string& valueName) const
+	{
+		std::string const& result = GetValueAsString(valueName);
+		return std::wstring(result.begin(), result.end());
+	}
+
+
 	void Config::SaveConfigFile()
 	{
 		if (m_isDirty == false)

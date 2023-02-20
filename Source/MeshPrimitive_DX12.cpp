@@ -28,9 +28,6 @@ namespace dx12
 
 	void MeshPrimitive::Destroy(re::MeshPrimitive& meshPrimitive)
 	{
-		// TBC...
-		// -> Note: Vertex attributes are destroyed when re::MeshPrimitive clears its vector
-
 		#pragma message("TODO: Implement dx12::MeshPrimitive::Destroy")
 	}
 }

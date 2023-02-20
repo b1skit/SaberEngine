@@ -186,8 +186,7 @@ namespace
 
 
 		// Assemble root shader path, as a wide string
-		const std::string shaderRoot = en::Config::Get()->GetValueAsString("shaderDirectory");
-		const std::wstring shaderRootWStr = std::wstring(shaderRoot.begin(), shaderRoot.end());
+		const std::wstring shaderRootWStr = en::Config::Get()->GetValueAsWString("shaderDirectory");
 
 		// Load the vertex shader
 		const std::wstring vShaderPath = shaderRootWStr + L"HelloTriangleVShader.cso";
