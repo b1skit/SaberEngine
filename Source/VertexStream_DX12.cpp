@@ -37,6 +37,6 @@ namespace dx12
 
 	void VertexStream::Destroy(re::VertexStream&)
 	{
-		#pragma message("TODO: Implement dx12::VertexStream::Destroy");
+		#pragma message("TODO: Implement dx12::VertexStream::Destroy")
 	}
 }

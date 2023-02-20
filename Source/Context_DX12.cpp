@@ -127,21 +127,21 @@ namespace dx12
 
 	void Context::Present(re::Context const& context)
 	{
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
-
 		dx12::SwapChain::PlatformParams* const swapChainPlatParams =
 			dynamic_cast<dx12::SwapChain::PlatformParams*>(context.GetSwapChain().GetPlatformParams());
 
-		const uint8_t backbufferIdx = swapChainPlatParams->m_backBufferIdx;
+		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
 
 		// Present the backbuffer:
 		const bool vsyncEnabled = swapChainPlatParams->m_vsyncEnabled;
 		const uint32_t syncInterval = vsyncEnabled ? 1 : 0;
 		const uint32_t presentFlags = 
-			swapChainPlatParams->m_tearingSupported && !vsyncEnabled ? DXGI_PRESENT_ALLOW_TEARING : 0;
+			(swapChainPlatParams->m_tearingSupported && !vsyncEnabled) ? DXGI_PRESENT_ALLOW_TEARING : 0;
 
 		swapChainPlatParams->m_swapChain->Present(syncInterval, presentFlags);
+
+		dx12::Context::PlatformParams* const ctxPlatParams =
+			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
 
 		// Insert a signal into the command queue:
 		ctxPlatParams->m_frameFenceValues[backbufferIdx] = 

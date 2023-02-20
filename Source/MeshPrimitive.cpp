@@ -5,23 +5,23 @@
 #include "Transform.h"
 #include "VertexStreamBuilder.h"
 
+using en::Config;
+using gr::Transform;
+using gr::Bounds;
+using re::MeshPrimitive;
+using glm::pi;
+using glm::mat4;
+using glm::vec2;
+using glm::vec3;
+using glm::vec4;
+using std::move;
+using std::vector;
+using std::string;
+using std::shared_ptr;
+
 
 namespace re
 {
-	using en::Config;
-	using gr::Transform;
-	using gr::Bounds;
-	using glm::pi;
-	using glm::mat4;
-	using glm::vec2;
-	using glm::vec3;
-	using glm::vec4;
-	using std::move;
-	using std::vector;
-	using std::string;
-	using std::shared_ptr;
-
-
 	MeshPrimitive::MeshPrimitive(
 		string const& name,
 		vector<uint32_t>& indices,
@@ -228,13 +228,6 @@ namespace re
 
 namespace meshfactory
 {
-	using std::vector;
-	using glm::vec2;
-	using glm::vec3;
-	using glm::vec4;
-	using re::MeshPrimitive;
-	using en::Config;
-	
 	// TODO: These functions should only create geometry once, and register it with the scene data inventory for reuse
 
 
