@@ -727,6 +727,10 @@ namespace meshfactory
 		};
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
+		std::shared_ptr<gr::Material> helloMaterial = std::make_shared<gr::Material>(
+			"HelloTriangleMaterial", 
+			gr::Material::GetMaterialDefinition("pbrMetallicRoughness"));
+
 		// It's easier to reason about geometry in vecN types; cast to float now we're done
 		return std::make_shared<MeshPrimitive>(
 			meshName,
@@ -740,7 +744,7 @@ namespace meshfactory
 			*reinterpret_cast<vector<float>*>(&colors),
 			std::vector<uint8_t>(), // No joints
 			std::vector<float>(), // No weights
-			nullptr, // No material
+			helloMaterial,
 			MeshPrimitive::MeshPrimitiveParams());
 	}
 } // meshfactory

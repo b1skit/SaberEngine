@@ -2,10 +2,11 @@
 #pragma once
 
 #include "Config.h"
-#include "Sampler.h"
-#include "Sampler_Platform.h"
-#include "Sampler_OpenGL.h"
 #include "DebugConfiguration.h"
+#include "Sampler.h"
+#include "Sampler_DX12.h"
+#include "Sampler_OpenGL.h"
+#include "Sampler_Platform.h"
 
 using en::Config;
 
@@ -26,7 +27,7 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			SEAssertF("DX12 is not yet supported");
+			sampler.m_platformParams = std::make_unique<dx12::Sampler::PlatformParams>(sampler.GetSamplerParams());
 		}
 		break;
 		default:

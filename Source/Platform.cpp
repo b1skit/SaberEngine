@@ -1,11 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Platform.h"
 #include "Config.h"
 #include "DebugConfiguration.h"
+#include "Platform.h"
 
-#include "Context_Platform.h"
 #include "Context_DX12.h"
 #include "Context_OpenGL.h"
+#include "Context_Platform.h"
 
 #include "EventManager_Platform.h"
 #include "EventManager_Win32.h"
@@ -25,8 +25,9 @@
 #include "RenderManager_DX12.h"
 #include "RenderManager_OpenGL.h"
 
-#include "Sampler_Platform.h"
+#include "Sampler_DX12.h"
 #include "Sampler_OpenGL.h"
+#include "Sampler_Platform.h"
 
 #include "Shader_DX12.h"
 #include "Shader_Platform.h"

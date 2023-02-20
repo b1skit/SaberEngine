@@ -228,6 +228,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     </ClCompile>
     <ClCompile Include="PerformanceTimer.cpp" />
     <ClCompile Include="RenderManager_DX12.cpp" />
+    <ClCompile Include="Sampler_DX12.cpp" />
     <ClCompile Include="Shader_DX12.cpp" />
     <ClCompile Include="SwapChain.cpp" />
     <ClCompile Include="SwapChain_DX12.cpp" />
@@ -327,6 +328,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClInclude Include="PerformanceTimer.h" />
     <ClInclude Include="PipelineState.h" />
     <ClInclude Include="RenderManager_DX12.h" />
+    <ClInclude Include="Sampler_DX12.h" />
     <ClInclude Include="Shader_DX12.h" />
     <ClInclude Include="SwapChain.h" />
     <ClInclude Include="SwapChain_DX12.h" />

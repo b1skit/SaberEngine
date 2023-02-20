@@ -24,21 +24,14 @@ namespace opengl
 			GLenum m_textureWrapR;
 
 			GLenum m_textureMinFilter;
-			GLenum m_textureMaxFilter;	
-
-			// Samplers are uniquely bound to the GPU, thus they should not be duplicated
-			PlatformParams() = delete;
-			PlatformParams(PlatformParams const&) = delete;
-			PlatformParams(PlatformParams&&) = delete;
-			PlatformParams& operator=(PlatformParams const&) = delete;
+			GLenum m_textureMaxFilter;
 		};
 
 	public:
 		static void Create(re::Sampler& sampler);
-		static void Bind(re::Sampler& sampler, uint32_t textureUnit);
 		static void Destroy(re::Sampler& sampler);
 
-	private:
-
+		// OpenGL-specific functionality:
+		static void Bind(re::Sampler& sampler, uint32_t textureUnit);
 	};
 }
