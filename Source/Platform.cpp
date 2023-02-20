@@ -96,7 +96,6 @@ namespace platform
 			platform::Context::GetMaxColorTargets	= &opengl::Context::GetMaxColorTargets;
 			
 			// MeshPrimitive:
-			platform::MeshPrimitive::Create		= &opengl::MeshPrimitive::Create;
 			platform::MeshPrimitive::Destroy	= &opengl::MeshPrimitive::Destroy;
 
 			// Parameter blocks:
@@ -151,7 +150,6 @@ namespace platform
 			platform::Context::GetMaxColorTargets	= &dx12::Context::GetMaxColorTargets;
 
 			// MeshPrimitive:
-			platform::MeshPrimitive::Create		= &dx12::MeshPrimitive::Create;
 			platform::MeshPrimitive::Destroy	= &dx12::MeshPrimitive::Destroy;
 
 			// Parameter blocks:

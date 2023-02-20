@@ -33,8 +33,6 @@ namespace platform
 		}
 	}
 
-	// platform::MeshPrimitive static members:
-	/********************************/
-	void (*MeshPrimitive::Create)(re::MeshPrimitive& meshPrimitive) = nullptr;
+
 	void (*MeshPrimitive::Destroy)(re::MeshPrimitive& meshPrimitive) = nullptr;
 }

@@ -9,7 +9,13 @@ namespace re
 	public:
 		struct PlatformParams
 		{
+			PlatformParams() = default;
 			virtual ~PlatformParams() = 0;
+
+		private: // No copying allowed
+			PlatformParams(PlatformParams const&) = delete;
+			PlatformParams(PlatformParams&&) = delete;
+			PlatformParams& operator=(PlatformParams const&) = delete;
 		};
 
 
@@ -22,9 +28,12 @@ namespace re
 
 		enum class DataType // Of each component in a vertex. Eg. Color/Float4 == Float
 		{
-			Float,
-			UInt, // 32-bit
-			UByte,
+			Float,	// 32-bit
+			UInt,	// 32-bit
+			UByte,	// 8-bit
+
+			// NOTE: If adding more data types, check re::VertexStream::VertexStream() to see if we need to handle
+			// additional normalization cases
 
 			DataType_Count
 		};
@@ -38,7 +47,8 @@ namespace re
 
 
 	public:
-		VertexStream(StreamType type, uint32_t numComponents, DataType dataType, Normalize doNormalize, std::vector<uint8_t>&& data);
+		VertexStream(
+			StreamType type, uint32_t numComponents, DataType dataType, Normalize doNormalize, std::vector<uint8_t>&& data);
 		~VertexStream() { Destroy(); };
 
 		void* GetData();

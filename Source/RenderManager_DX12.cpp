@@ -170,79 +170,8 @@ namespace
 
 		ComPtr<ID3D12GraphicsCommandList2> commandList = copyQueue.GetCreateCommandList();
 
-
-		// TEMP HAX: Get the position buffer/buffer view:
-		dx12::VertexStream::PlatformParams_Vertex* const positionPlatformParams =
-			dynamic_cast<dx12::VertexStream::PlatformParams_Vertex*>(k_helloTriangle->GetVertexStream(re::MeshPrimitive::Position)->GetPlatformParams());
-
-		Microsoft::WRL::ComPtr<ID3D12Resource>& positionBuffer = positionPlatformParams->m_bufferResource;
-		D3D12_VERTEX_BUFFER_VIEW& positionBufferView = positionPlatformParams->m_bufferView;
-
-		// TEMP HAX: Get the colr buffer/buffer view:
-		dx12::VertexStream::PlatformParams_Vertex* const colorPlatformParams =
-			dynamic_cast<dx12::VertexStream::PlatformParams_Vertex*>(k_helloTriangle->GetVertexStream(re::MeshPrimitive::Color)->GetPlatformParams());
-
-		Microsoft::WRL::ComPtr<ID3D12Resource>& colorBuffer = colorPlatformParams->m_bufferResource;
-		D3D12_VERTEX_BUFFER_VIEW& colorBufferView = colorPlatformParams->m_bufferView;
-
-		// TEMP HAX: Get the index buffer/buffer view
-		dx12::VertexStream::PlatformParams_Index* const indexPlatformParams =
-			dynamic_cast<dx12::VertexStream::PlatformParams_Index*>(k_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetPlatformParams());
-
-		Microsoft::WRL::ComPtr<ID3D12Resource>& indexBuffer = indexPlatformParams->m_bufferResource;
-		D3D12_INDEX_BUFFER_VIEW& indexBufferView = indexPlatformParams->m_bufferView;
-
-		
-		// NEED TO FIGURE OUT A WAY TO CREATE ALL OF MY VARIOUS VERTEX ATTRIBUTES ON A SINGLE COMMAND LIST
-		// -> Just get the command queue within each VertexStream Create call?
-
-		// Upload position buffer data.
-		ComPtr<ID3D12Resource> intermediatePositionBuffer;
-		UpdateBufferResource(
-			commandList.Get(),
-			&positionBuffer, 
-			&intermediatePositionBuffer,
-			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Position)->GetNumElements(),
-			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Position)->GetElementByteSize(),
-			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Position)->GetData(),
-			D3D12_RESOURCE_FLAG_NONE /*Is this appropriate?*/);
-
-		// Create the position buffer view.
-		positionBufferView.BufferLocation = positionBuffer->GetGPUVirtualAddress();
-		positionBufferView.SizeInBytes = k_helloTriangle->GetVertexStream(re::MeshPrimitive::Position)->GetTotalDataByteSize();
-		positionBufferView.StrideInBytes = k_helloTriangle->GetVertexStream(re::MeshPrimitive::Position)->GetElementByteSize();
-
-		// Upload color buffer data.
-		ComPtr<ID3D12Resource> intermediateColorBuffer;
-		UpdateBufferResource(
-			commandList.Get(),
-			&colorBuffer,
-			&intermediateColorBuffer,
-			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Color)->GetNumElements(),
-			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Color)->GetElementByteSize(),
-			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Color)->GetData(),
-			D3D12_RESOURCE_FLAG_NONE);
-
-		// Create the color buffer view.
-		colorBufferView.BufferLocation = colorBuffer->GetGPUVirtualAddress();
-		colorBufferView.SizeInBytes = k_helloTriangle->GetVertexStream(re::MeshPrimitive::Color)->GetTotalDataByteSize();
-		colorBufferView.StrideInBytes = k_helloTriangle->GetVertexStream(re::MeshPrimitive::Color)->GetElementByteSize();
-
-		// Upload index buffer data.
-		ComPtr<ID3D12Resource> intermediateIndexBuffer;
-		UpdateBufferResource(
-			commandList.Get(),
-			&indexBuffer,
-			&intermediateIndexBuffer,
-			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
-			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetElementByteSize(),
-			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetData(),
-			D3D12_RESOURCE_FLAG_NONE);
-
-		// Create index buffer view.
-		indexBufferView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
-		indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-		indexBufferView.SizeInBytes = k_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetTotalDataByteSize();
+		// Internally creates all of the vertex stream resources
+		dx12::MeshPrimitive::Create(*k_helloTriangle, commandList);
 
 
 		// Create the descriptor heap for the depth-stencil view.
@@ -257,7 +186,7 @@ namespace
 
 
 		// Assemble root shader path, as a wide string
-		const std::string shaderRoot = en::Config::Get()->GetValue<std::string>("shaderDirectory");
+		const std::string shaderRoot = en::Config::Get()->GetValueAsString("shaderDirectory");
 		const std::wstring shaderRootWStr = std::wstring(shaderRoot.begin(), shaderRoot.end());
 
 		// Load the vertex shader
@@ -321,6 +250,7 @@ namespace
 
 
 		// Create the vertex input layout
+		// TODO: This should be created by a member of the MeshPrimitive_DX12
 		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
 		{
 			{
@@ -480,7 +410,7 @@ namespace dx12
 
 		// TEMP DEBUG CODE:
 		k_helloTriangle = meshfactory::CreateHelloTriangle();
-		dx12::MeshPrimitive::Create(*k_helloTriangle);
+		
 
 		LoadResources();
 	}
@@ -541,26 +471,28 @@ namespace dx12
 			dynamic_cast<dx12::VertexStream::PlatformParams_Vertex*>(k_helloTriangle->GetVertexStream(re::MeshPrimitive::Position)->GetPlatformParams());
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> positionBuffer = positionPlatformParams->m_bufferResource;
-		D3D12_VERTEX_BUFFER_VIEW& positionBufferView = positionPlatformParams->m_bufferView;
+		D3D12_VERTEX_BUFFER_VIEW& positionBufferView = positionPlatformParams->m_vertexBufferView;
 
 		// TEMP HAX: Get the color buffer/buffer view:
 		dx12::VertexStream::PlatformParams_Vertex* const colorPlatformParams =
 			dynamic_cast<dx12::VertexStream::PlatformParams_Vertex*>(k_helloTriangle->GetVertexStream(re::MeshPrimitive::Color)->GetPlatformParams());
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> colorBuffer = colorPlatformParams->m_bufferResource;
-		D3D12_VERTEX_BUFFER_VIEW& colorBufferView = colorPlatformParams->m_bufferView;
+		D3D12_VERTEX_BUFFER_VIEW& colorBufferView = colorPlatformParams->m_vertexBufferView;
 
 		// TEMP HAX: Get the index buffer/buffer view
 		dx12::VertexStream::PlatformParams_Index* const indexPlatformParams =
 			dynamic_cast<dx12::VertexStream::PlatformParams_Index*>(k_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetPlatformParams());
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> indexBuffer = indexPlatformParams->m_bufferResource;
-		D3D12_INDEX_BUFFER_VIEW& indexBufferView = indexPlatformParams->m_bufferView;
+		D3D12_INDEX_BUFFER_VIEW& indexBufferView = indexPlatformParams->m_indexBufferView;
 
 
-		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // TODO: This should be set by a batch, w.r.t MeshPrimitive::Drawmode
+
 		commandList->IASetVertexBuffers(re::MeshPrimitive::Position, 1, &positionBufferView);
 		commandList->IASetVertexBuffers(re::MeshPrimitive::Color, 1, &colorBufferView);
+
 		commandList->IASetIndexBuffer(&indexBufferView);
 
 		commandList->RSSetViewports(1, &m_viewport);

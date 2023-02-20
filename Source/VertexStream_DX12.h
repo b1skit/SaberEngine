@@ -14,22 +14,47 @@ namespace dx12
 	class VertexStream
 	{
 	public:
-		struct PlatformParams_Vertex final : public virtual re::VertexStream::PlatformParams
+		struct PlatformParams : public virtual re::VertexStream::PlatformParams
 		{
+			PlatformParams(re::VertexStream const&, re::VertexStream::StreamType);
+			virtual ~PlatformParams() override = 0;
+
+			re::VertexStream::StreamType m_type;
+
+			Microsoft::WRL::ComPtr<ID3D12Resource> m_intermediateBufferResource;
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_bufferResource;
-			D3D12_VERTEX_BUFFER_VIEW m_bufferView;
+
+			DXGI_FORMAT m_format;
 		};
 
-		struct PlatformParams_Index final : public virtual re::VertexStream::PlatformParams
+
+		struct PlatformParams_Index final : public virtual dx12::VertexStream::PlatformParams
 		{
-			Microsoft::WRL::ComPtr<ID3D12Resource> m_bufferResource;
-			D3D12_INDEX_BUFFER_VIEW  m_bufferView;
+			PlatformParams_Index(re::VertexStream const&);
+
+			D3D12_INDEX_BUFFER_VIEW  m_indexBufferView;
+		};
+
+
+		struct PlatformParams_Vertex final : public virtual dx12::VertexStream::PlatformParams
+		{
+			PlatformParams_Vertex(re::VertexStream const&);
+
+			D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 		};
 		
-		static std::unique_ptr<re::VertexStream::PlatformParams> CreatePlatformParams(re::VertexStream::StreamType type);
+		
+		static std::unique_ptr<re::VertexStream::PlatformParams> CreatePlatformParams(
+			re::VertexStream const&, re::VertexStream::StreamType);
 
 	public:
-		static void Create(re::VertexStream& vertexStream, re::MeshPrimitive::Slot);
 		static void Destroy(re::VertexStream&);
+
+		// DX12-specific functionality
+		static void Create(re::VertexStream&, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2>);
 	};
+
+
+	// We need to provide a destructor implementation since it's pure virtual
+	inline dx12::VertexStream::PlatformParams::~PlatformParams() {};
 }

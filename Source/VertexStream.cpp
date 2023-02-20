@@ -5,6 +5,68 @@
 #include "VertexStream_Platform.h"
 
 
+namespace
+{
+	template <typename T>
+	void Normalize(std::vector<T>& data)
+	{
+		for (T& element : data)
+		{
+			element = glm::normalize(element);
+		}
+	}
+
+	void NormalizeData(std::vector<uint8_t>& data, uint32_t numComponents, re::VertexStream::DataType dataType)
+	{
+		switch (dataType)
+		{
+		case re::VertexStream::DataType::Float:
+		{
+			switch (numComponents)
+			{
+			case 1:
+			{
+				SEAssertF("Cannot normalize a single component vector");
+				return;
+			}
+			break;
+			case 2:
+			{
+				Normalize(reinterpret_cast<std::vector<glm::vec2>&>(data));
+			}
+			break;
+			case 3:
+			{
+				Normalize(reinterpret_cast<std::vector<glm::vec3>&>(data));
+			}
+			break;
+			case 4:
+			{
+				Normalize(reinterpret_cast<std::vector<glm::vec4>&>(data));
+			}
+			break;
+			default:
+			{
+				SEAssertF("Invalid number of components");
+			}
+			}
+		}
+		break;
+		case re::VertexStream::DataType::UInt:
+		case re::VertexStream::DataType::UByte:
+		{
+			SEAssertF("Only floating point types can be normalized");
+		}
+		break;
+		default:
+		{
+			SEAssertF("Invalid data type");
+		}
+		}
+	}
+}
+
+
 namespace re
 {
 	VertexStream::VertexStream(
@@ -16,7 +78,17 @@ namespace re
 	{
 		SEAssert("Only 1, 2, 3, or 4 components are valid", numComponents >= 1 && numComponents <= 4);
 
-		m_platformParams = std::move(platform::VertexStream::CreatePlatformParams(type));
+		m_data = std::move(data);
+
+		// D3D12 does not support GPU-normalization of 32 bit types. As a hail-mary, we attempt to pre-normalize here
+		if (DoNormalize() && m_dataType == re::VertexStream::DataType::Float)
+		{
+			LOG_WARNING("Pre-normalizing vertex stream data as its format incompatible is with GPU-normalization");
+
+			NormalizeData(m_data, m_numComponents, m_dataType);
+
+			m_doNormalize = Normalize::False;
+		}
 		
 		switch (dataType)
 		{
@@ -41,7 +113,8 @@ namespace re
 		SEAssert("Data and description don't match",
 			data.size() % ((static_cast<size_t>(numComponents) * m_componentByteSize)) == 0);
 
-		m_data = std::move(data);
+
+		m_platformParams = std::move(platform::VertexStream::CreatePlatformParams(*this, type));
 	}
 
 

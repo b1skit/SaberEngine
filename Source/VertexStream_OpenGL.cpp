@@ -36,7 +36,8 @@ namespace
 
 namespace opengl
 {
-	std::unique_ptr<re::VertexStream::PlatformParams> VertexStream::CreatePlatformParams(re::VertexStream::StreamType type)
+	std::unique_ptr<re::VertexStream::PlatformParams> VertexStream::CreatePlatformParams(
+		re::VertexStream const&, re::VertexStream::StreamType)
 	{
 		return std::make_unique<opengl::VertexStream::PlatformParams>();
 	}
