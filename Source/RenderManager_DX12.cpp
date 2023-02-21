@@ -236,6 +236,11 @@ namespace
 		CheckHResult(hr, "Failed to create root signature");
 
 
+		dx12::VertexStream::PlatformParams_Vertex* const positionPlatformParams =
+			dynamic_cast<dx12::VertexStream::PlatformParams_Vertex*>(k_helloTriangle->GetVertexStream(re::MeshPrimitive::Position)->GetPlatformParams());
+		dx12::VertexStream::PlatformParams_Vertex* const colorPlatformParams =
+			dynamic_cast<dx12::VertexStream::PlatformParams_Vertex*>(k_helloTriangle->GetVertexStream(re::MeshPrimitive::Color)->GetPlatformParams());
+
 		// Create the vertex input layout
 		// TODO: This should be created by a member of the MeshPrimitive_DX12
 		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
@@ -243,7 +248,7 @@ namespace
 			{
 				"POSITION",									// Semantic name
 				0,											// Semantic idx: Only needed when >1 element of same semantic
-				DXGI_FORMAT_R32G32B32_FLOAT,				// Format
+				positionPlatformParams->m_format,			// Format
 				re::MeshPrimitive::Position,				// Input slot [0, 15]
 				D3D12_APPEND_ALIGNED_ELEMENT,				// Aligned byte offset
 				D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,	// Input slot class
@@ -252,7 +257,7 @@ namespace
 			{
 				"COLOR",
 				0,
-				DXGI_FORMAT_R32G32B32A32_FLOAT,
+				colorPlatformParams->m_format,
 				re::MeshPrimitive::Color,
 				D3D12_APPEND_ALIGNED_ELEMENT,
 				D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
