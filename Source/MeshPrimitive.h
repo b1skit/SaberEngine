@@ -113,7 +113,7 @@ namespace re
 		void ComputeDataHash() override;
 
 	private:
-		// Constructing a mesh primitive modifies the GPU state; disallow all copy/move semantics
+		// No copying allowed
 		MeshPrimitive() = delete;
 		MeshPrimitive(MeshPrimitive const& rhs) = delete;
 		MeshPrimitive(MeshPrimitive&& rhs) noexcept = delete;

@@ -2,8 +2,7 @@
 #include <assert.h>
 #include <GL/glew.h> 
 
-#include <array>
-
+#include "Config.h"
 #include "CoreEngine.h"
 #include "DebugConfiguration.h"
 #include "Material.h"
@@ -13,17 +12,128 @@
 #include "Shader.h"
 #include "Shader_Platform.h"
 #include "Shader_OpenGL.h"
+#include "TextLoader.h"
 #include "Texture.h"
 #include "Texture_OpenGL.h"
 
-
+using en::Config;
+using re::Texture;
+using re::Sampler;
+using util::PerformanceTimer;
 using std::vector;
 using std::shared_ptr;
 using std::string;
 using std::to_string;
-using re::Texture;
-using re::Sampler;
-using util::PerformanceTimer;
+
+
+namespace
+{
+	string LoadShaderText(string const& filename)
+	{
+		// Assemble the full shader file path:
+		const string filepath = Config::Get()->GetValue<string>("shaderDirectory") + filename;
+
+		return util::LoadTextAsString(filepath);
+	}
+
+
+	void InsertIncludedFiles(string& shaderText)
+	{
+		const string INCLUDE_KEYWORD = "#include";
+
+		int foundIndex = 0;
+		while (foundIndex != string::npos && foundIndex < shaderText.length())
+		{
+			foundIndex = (int)shaderText.find(INCLUDE_KEYWORD, foundIndex + 1);
+			if (foundIndex != string::npos)
+			{
+				// Check we're not on a commented line:
+				int checkIndex = foundIndex;
+				bool foundComment = false;
+				while (checkIndex >= 0 && shaderText[checkIndex] != '\n')
+				{
+					// TODO: Search from the beginning of the line
+					// -> If we hit a "#include" substring first, we've got an include
+					// -> Seach until the end of the line, to strip out any trailing //comments
+					if (shaderText[checkIndex] == '/' && checkIndex > 0 && shaderText[checkIndex - 1] == '/')
+					{
+						foundComment = true;
+						break;
+					}
+					checkIndex--;
+				}
+				if (foundComment)
+				{
+					continue;
+				}
+
+				int endIndex = (int)shaderText.find("\n", foundIndex + 1);
+				if (endIndex != string::npos)
+				{
+					int firstQuoteIndex, lastQuoteIndex;
+
+					firstQuoteIndex = (int)shaderText.find("\"", foundIndex + 1);
+					if (firstQuoteIndex != string::npos && firstQuoteIndex > 0 && firstQuoteIndex < endIndex)
+					{
+						lastQuoteIndex = (int)shaderText.find("\"", firstQuoteIndex + 1);
+						if (lastQuoteIndex != string::npos && lastQuoteIndex > firstQuoteIndex && lastQuoteIndex < endIndex)
+						{
+							firstQuoteIndex++; // Move ahead 1 element from the first quotation mark
+
+							const string includeFileName = shaderText.substr(firstQuoteIndex, lastQuoteIndex - firstQuoteIndex);
+
+							string includeFile = LoadShaderText(includeFileName);
+							if (includeFile != "")
+							{
+								// Perform the insertion:
+								string firstHalf = shaderText.substr(0, foundIndex);
+								string secondHalf = shaderText.substr(endIndex + 1, shaderText.length() - 1);
+								shaderText = firstHalf + includeFile + secondHalf;
+							}
+							else
+							{
+								LOG_ERROR("Could not find include file. Shader loading failed.");
+								return;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+	void InsertDefines(string& shaderText, vector<string> const* shaderKeywords)
+	{
+		if ((int)shaderText.length() <= 0 || shaderKeywords == nullptr || (int)shaderKeywords->size() <= 0)
+		{
+			return;
+		}
+
+		// Find the #version directive, and insert our keywords immediately after it
+
+		int foundIndex = (int)shaderText.find("#version", 0);
+		if (foundIndex == string::npos)
+		{
+			foundIndex = 0;
+		}
+		// Find the next newline character:
+		int endLine = (int)shaderText.find("\n", foundIndex + 1);
+
+		// Assemble our #define lines:
+		const string DEFINE_KEYWORD = "#define ";
+		string assembledKeywords = "";
+		for (int currentKeyword = 0; currentKeyword < (int)shaderKeywords->size(); currentKeyword++)
+		{
+			string defineLine = DEFINE_KEYWORD + shaderKeywords->at(currentKeyword) + "\n";
+
+			assembledKeywords += defineLine;
+		}
+
+		// Insert our #define lines:
+		shaderText.insert(endLine + 1, assembledKeywords);
+	}
+}
 
 
 namespace opengl
@@ -105,14 +215,14 @@ namespace opengl
 		vector<uint32_t> foundShaderTypeFlags;
 		foundShaderTypeFlags.reserve(numShaderTypes);
 
-		SEAssert("Expected an entry for each shader type", shader.GetShaderTexts().size() == numShaderTypes);
+		SEAssert("Expected an entry for each shader type", params->m_shaderTexts.size() == numShaderTypes);
 
 		for (size_t i = 0; i < numShaderTypes; i++)
 		{
 			// We don't need the shader texts after loading, so we move them here
-			if (!shader.GetShaderTexts()[i].empty())
+			if (!params->m_shaderTexts[i].empty())
 			{
-				shaderFiles.emplace_back(std::move(shader.GetShaderTexts()[i]));
+				shaderFiles.emplace_back(std::move(params->m_shaderTexts[i]));
 				foundShaderTypeFlags.emplace_back(shaderTypeFlags[i]);
 				shaderFileNames.emplace_back(shaderFileName + shaderFileExtensions[i]);
 			}
@@ -120,7 +230,7 @@ namespace opengl
 			// We tried loading the vertex shader first, so if we hit this it means we failed to find the vertex shader
 			SEAssert("No vertex shader found", shaderFiles.size() > 0);
 		}
-		shader.GetShaderTexts().clear(); // Remove the empty strings
+		params->m_shaderTexts.clear(); // Remove the empty strings
 
 		// Pre-process the shader text:
 		std::atomic<uint8_t> numPreprocessed = 0;
@@ -129,8 +239,8 @@ namespace opengl
 			numPreprocessed++;
 			en::CoreEngine::GetThreadPool()->EnqueueJob(
 				[&shaderFiles, &shader, i, &numPreprocessed]() {
-					platform::Shader::InsertDefines(shaderFiles[i], &shader.ShaderKeywords());
-					platform::Shader::InsertIncludedFiles(shaderFiles[i]);
+					InsertDefines(shaderFiles[i], &shader.ShaderKeywords());
+					InsertIncludedFiles(shaderFiles[i]);
 					numPreprocessed--;
 				}
 			);			
@@ -463,7 +573,10 @@ namespace opengl
 
 	void Shader::LoadShaderTexts(re::Shader& shader)
 	{
-		std::vector<std::string>& shaderTexts = shader.GetShaderTexts();
+		opengl::Shader::PlatformParams* const shaderPlatformParams =
+			dynamic_cast<opengl::Shader::PlatformParams* const>(shader.GetPlatformParams());
+
+		std::vector<std::string>& shaderTexts = shaderPlatformParams->m_shaderTexts;
 		shaderTexts.clear();
 
 		constexpr uint32_t numShaderTypes = 3;
@@ -482,7 +595,7 @@ namespace opengl
 			en::CoreEngine::GetThreadPool()->EnqueueJob(
 				[&shaderTexts, assembledName, i, &numShadersLoaded]()
 				{
-					shaderTexts[i] = std::move((platform::Shader::LoadShaderText(assembledName)));
+					shaderTexts[i] = std::move((LoadShaderText(assembledName)));
 					numShadersLoaded--;
 				});
 		}

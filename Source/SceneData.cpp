@@ -654,7 +654,7 @@ namespace
 				shared_ptr<Material> newMat =
 					make_shared<Material>(matName, Material::GetMaterialDefinition("pbrMetallicRoughness"));
 
-				newMat->GetShader() = nullptr; // Not required; just for clarity
+				newMat->SetShader(nullptr); // Not required; just for clarity
 
 				// GLTF specifications: If a texture is not given, all respective texture components are assumed to be 1.f
 				// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material

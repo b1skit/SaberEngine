@@ -56,16 +56,11 @@ namespace re
 		inline std::vector<std::string>& ShaderKeywords() { return m_shaderKeywords; }
 		inline std::vector<std::string> const& ShaderKeywords() const { return m_shaderKeywords; }
 
-		std::vector<std::string>& GetShaderTexts() { return m_shaderTexts; }
-
 	private:
 		void Destroy();
 
 	private:
 		std::unique_ptr<PlatformParams> m_platformParams;
-
-	protected:
-		std::vector<std::string> m_shaderTexts;
 		std::vector<std::string> m_shaderKeywords;
 
 	private:

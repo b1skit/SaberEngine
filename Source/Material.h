@@ -74,7 +74,7 @@ namespace gr
 		Material& operator=(Material const&) = default;
 
 		// Getters/Setters:	
-		inline std::shared_ptr<re::Shader>& GetShader()	{ return m_shader; }
+		inline void SetShader(std::shared_ptr<re::Shader> shader) { m_shader = shader; }
 		inline std::shared_ptr<re::Shader> const& GetShader() const { return m_shader; }
 
 		void SetParameterBlock(PBRMetallicRoughnessParams const& params);

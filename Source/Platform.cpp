@@ -110,7 +110,6 @@ namespace platform
 			platform::RenderManager::Shutdown		= &opengl::RenderManager::Shutdown;
 
 			// Shader:
-			platform::Shader::Create			= &opengl::Shader::Create;
 			platform::Shader::Destroy			= &opengl::Shader::Destroy;
 
 			// Swap chain:
@@ -164,7 +163,6 @@ namespace platform
 			platform::RenderManager::Shutdown		= &dx12::RenderManager::Shutdown;
 
 			// Shader:
-			platform::Shader::Create			= &dx12::Shader::Create;
 			platform::Shader::Destroy			= &dx12::Shader::Destroy;
 
 			// Swap chain:

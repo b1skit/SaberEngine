@@ -53,7 +53,7 @@ namespace gr
 				{nullptr, Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear), "MatOcclusion" },
 				{nullptr, Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear), "MatEmissive" },
 			};
-			gltfPBRMat->m_shader = nullptr; // Don't need a shader; PBR materials are written directly to the GBuffer
+			gltfPBRMat->m_shader = nullptr; // No default shader; PBR materials are written directly to the GBuffer
 			m_materialLibrary->insert({ gltfPBRMat->m_definitionName, gltfPBRMat });
 		}
 

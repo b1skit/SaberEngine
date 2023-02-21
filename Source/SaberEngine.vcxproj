@@ -136,6 +136,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     </PostBuildEvent>
     <FxCompile>
       <ShaderModel>5.1</ShaderModel>
+      <AdditionalIncludeDirectories>D:\Projects\Game Development\SaberEngine\Source\Shaders\DX12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -189,6 +190,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     </PostBuildEvent>
     <FxCompile>
       <ShaderModel>5.1</ShaderModel>
+      <AdditionalIncludeDirectories>D:\Projects\Game Development\SaberEngine\Source\Shaders\DX12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -430,13 +432,17 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <None Include="Shaders\glsl\toneMapShader.vert" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Shaders\DX12\HelloTrianglePShader.hlsl">
+    <FxCompile Include="Shaders\DX12\HelloTriangle_PShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
     </FxCompile>
-    <FxCompile Include="Shaders\DX12\HelloTriangleVShader.hlsl">
+    <FxCompile Include="Shaders\DX12\HelloTriangle_VShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

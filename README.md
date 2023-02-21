@@ -45,19 +45,26 @@ Default controls:
 	- Toggle VSync: v  
 
 
----------------------
-Image-based Lighting:
----------------------
-A per-scene IBL is loaded from ""<project root>\Scenes\SceneFolderName\IBL\ibl.hdr", if it exists  
-	- A default IBL ("<project root>\Assets\DefaultIBL\ibl.hdr") is used as a fallback if no scene IBL is found  
-
-
 ------------
 Conventions:
 ------------
 - Right-handed coordinate system  
 - UV (0,0) = Top-left  
 - Depth near/far = [0,1]  
+
+
+---------------------
+Image-based Lighting:
+---------------------
+A per-scene IBL is loaded from ""<project root>\Scenes\SceneFolderName\IBL\ibl.hdr", if it exists  
+	- A default IBL ("<project root>\Assets\DefaultIBL\ibl.hdr") is used as a fallback if no scene IBL is found  
+
+--------
+Shaders:
+--------
+For simplicity, naming patterns are used to associate Shaders.  
+- OpenGL: Shaders sharing common names (with .vert/.geom/.frag suffixes) will be concatenated and compiled at runtime  
+- DX12: Compiled Shader Objects (.cso) sharing a common name prefix are differentiated by a "_<?>Shader.hlsl" suffix (e.g. Some_VShader.hlsl, Some_GShader.hlsl, Some_PShader.hlsl), and associated at runtime  
 
 
 -------------

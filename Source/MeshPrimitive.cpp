@@ -727,6 +727,7 @@ namespace meshfactory
 		};
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
+		// Create a Material with a null shader
 		std::shared_ptr<gr::Material> helloMaterial = std::make_shared<gr::Material>(
 			"HelloTriangleMaterial", 
 			gr::Material::GetMaterialDefinition("pbrMetallicRoughness"));

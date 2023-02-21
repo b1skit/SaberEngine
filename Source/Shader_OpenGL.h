@@ -20,6 +20,8 @@ namespace opengl
 	public:
 		struct PlatformParams final : public virtual re::Shader::PlatformParams
 		{
+			std::vector<std::string> m_shaderTexts;
+
 			uint32_t m_shaderReference = 0;
 
 			std::unordered_map<std::string, int32_t> m_samplerUnits;

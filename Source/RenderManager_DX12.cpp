@@ -20,8 +20,8 @@ using glm::vec4;
 #include "VertexStream_DX12.h"
 #include "Debug_DX12.h"
 #include "Config.h"
+#include "Shader_DX12.h"
 
-#include <d3dcompiler.h>
 
 
 // TEMP DEBUG CODE:
@@ -170,8 +170,12 @@ namespace
 
 		ComPtr<ID3D12GraphicsCommandList2> commandList = copyQueue.GetCreateCommandList();
 
-		// Internally creates all of the vertex stream resources
-		dx12::MeshPrimitive::Create(*k_helloTriangle, commandList);
+		
+		dx12::MeshPrimitive::Create(*k_helloTriangle, commandList); // Internally creates all of the vertex stream resources
+
+		std::shared_ptr<re::Shader> k_helloShader = std::make_shared<re::Shader>("HelloTriangle");
+		dx12::Shader::Create(*k_helloShader);
+		k_helloTriangle->GetMeshMaterial()->SetShader(k_helloShader);
 
 
 		// Create the descriptor heap for the depth-stencil view.
@@ -183,22 +187,6 @@ namespace
 		dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 		HRESULT hr = device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_DSVHeap));
 		CheckHResult(hr, "Failed to create descriptor heap");
-
-
-		// Assemble root shader path, as a wide string
-		const std::wstring shaderRootWStr = en::Config::Get()->GetValueAsWString("shaderDirectory");
-
-		// Load the vertex shader
-		const std::wstring vShaderPath = shaderRootWStr + L"HelloTriangleVShader.cso";
-		ComPtr<ID3DBlob> vertexShaderBlob;		
-		hr = D3DReadFileToBlob(vShaderPath.c_str(), &vertexShaderBlob);
-		CheckHResult(hr, "Failed to read vertex shader blob");
-
-		// Load the pixel shader
-		const std::wstring pShaderPath = shaderRootWStr + L"HelloTrianglePShader.cso";
-		ComPtr<ID3DBlob> pixelShaderBlob;
-		hr = D3DReadFileToBlob(pShaderPath.c_str(), &pixelShaderBlob);
-		CheckHResult(hr, "Failed to read pixel shader blob");
 
 
 		// Create a root signature
@@ -277,10 +265,13 @@ namespace
 		rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 
+		dx12::Shader::PlatformParams* const shaderParams =
+			dynamic_cast<dx12::Shader::PlatformParams* const>(k_helloShader->GetPlatformParams());
+
 		// TODO: Move this to the PipelineState object
 		// Stage PSO? Target?
-		// -> Build from stage pipeline state?
-		//		-> Once, or every frame?
+		// -> Build from stage pipeline state + Shaders, etc
+		//		-> Once, after pipeline is created
 		// TODO: Set up the depth bias correctly for shadows
 		D3D12_RASTERIZER_DESC rasterizerDesc = D3D12_RASTERIZER_DESC();
 		rasterizerDesc.FillMode = D3D12_FILL_MODE::D3D12_FILL_MODE_SOLID;
@@ -311,8 +302,9 @@ namespace
 		pipelineStateStream.rootSignature = ctxPlatParams->m_rootSignature.Get();
 		pipelineStateStream.inputLayout = { inputLayout, _countof(inputLayout) };
 		pipelineStateStream.primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-		pipelineStateStream.vShader = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
-		pipelineStateStream.pShader = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());
+		pipelineStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[dx12::Shader::Vertex].Get());
+		pipelineStateStream.pShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[dx12::Shader::Pixel].Get());
+
 		pipelineStateStream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 		pipelineStateStream.RTVFormats = rtvFormats;
 		pipelineStateStream.rasterizer = CD3DX12_RASTERIZER_DESC(rasterizerDesc);

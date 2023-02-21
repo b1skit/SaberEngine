@@ -6,6 +6,7 @@ struct VertexPosColor
 	float4 Color	: COLOR;
 };
 
+
 struct ModelViewProjection
 {
 	matrix MVP;
@@ -19,8 +20,7 @@ struct VertexShaderOutput
 	float4 Position	: SV_Position;
 };
 
-// TODO: Rename as VShader
-VertexShaderOutput main(VertexPosColor In)
+VertexShaderOutput VShader(VertexPosColor In)
 {
 	VertexShaderOutput Out;
 

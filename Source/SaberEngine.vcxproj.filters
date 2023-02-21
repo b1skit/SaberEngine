@@ -365,6 +365,9 @@
     <ClCompile Include="VertexStream_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
+    <ClCompile Include="Sampler_DX12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -682,6 +685,9 @@
     <ClInclude Include="VertexStream_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
+    <ClInclude Include="Sampler_DX12.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\glsl\blitShader.frag">
@@ -765,10 +771,10 @@
     <None Include="SaberEngine.licenseheader" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Shaders\DX12\HelloTrianglePShader.hlsl">
+    <FxCompile Include="Shaders\DX12\HelloTriangle_PShader.hlsl">
       <Filter>Source Files\Shaders\DX12</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\DX12\HelloTriangleVShader.hlsl">
+    <FxCompile Include="Shaders\DX12\HelloTriangle_VShader.hlsl">
       <Filter>Source Files\Shaders\DX12</Filter>
     </FxCompile>
   </ItemGroup>
