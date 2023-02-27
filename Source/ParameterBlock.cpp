@@ -56,12 +56,12 @@ namespace re
 
 	void ParameterBlock::Destroy()
 	{
-		platform::ParameterBlock::Destroy(*this);
-
 		re::ParameterBlock::PlatformParams* const params =
 			dynamic_cast<re::ParameterBlock::PlatformParams* const>(GetPlatformParams());
 		if (params->m_isCreated)
 		{
+			platform::ParameterBlock::Destroy(*this);
+
 			re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetParameterBlockAllocator();
 			pbm.Deallocate(GetUniqueID());
 		}

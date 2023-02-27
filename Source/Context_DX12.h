@@ -29,11 +29,10 @@ namespace dx12
 
 			// TODO: Move to a "DescriptorHeapManager", owned by the Context
 			// -> Need a helper: GetCurrentBackbufferRTVDescriptor
+			// -> For now: Owned by TextureTargetSet?
 			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVDescHeap; // ComPtr to an array of RTV descriptors
 			uint32_t m_RTVDescSize; // Stride size of a single RTV descriptor/resource view
 			// NOTE: Currently, we create k_numFrames descriptors (1 for each frame) during Context::Create()
-
-			Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature; // 1 graphics & 1 compute root signature per (shader) app
 		};
 
 

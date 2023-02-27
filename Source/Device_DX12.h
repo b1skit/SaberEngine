@@ -19,8 +19,8 @@ namespace dx12
 		void Create();
 		void Destroy();
 		
-		Microsoft::WRL::ComPtr<IDXGIAdapter4> GetAdapter() { return m_dxgiAdapter4; }
-		Microsoft::WRL::ComPtr<ID3D12Device2> GetDisplayDevice() { return m_displayDevice; }
+		IDXGIAdapter4* GetD3DAdapter() { return m_dxgiAdapter4.Get(); }
+		ID3D12Device2* GetD3DDisplayDevice() { return m_displayDevice.Get(); }
 
 	private:
 		Microsoft::WRL::ComPtr<IDXGIAdapter4> m_dxgiAdapter4 = nullptr;

@@ -126,12 +126,6 @@ namespace platform
 			platform::Sampler::Create	= &opengl::Sampler::Create;
 			platform::Sampler::Destroy	= &opengl::Sampler::Destroy;
 
-			// Texture target set:
-			platform::TextureTargetSet::CreateColorTargets			= &opengl::TextureTargetSet::CreateColorTargets;
-			platform::TextureTargetSet::AttachColorTargets			= &opengl::TextureTargetSet::AttachColorTargets;
-			platform::TextureTargetSet::CreateDepthStencilTarget	= &opengl::TextureTargetSet::CreateDepthStencilTarget;
-			platform::TextureTargetSet::AttachDepthStencilTarget	= &opengl::TextureTargetSet::AttachDepthStencilTarget;
-
 			// Vertex stream:
 			platform::VertexStream::CreatePlatformParams	= &opengl::VertexStream::CreatePlatformParams;
 			platform::VertexStream::Destroy					= &opengl::VertexStream::Destroy;
@@ -174,12 +168,6 @@ namespace platform
 			platform::Texture::Create			= &dx12::Texture::Create;
 			platform::Texture::Destroy			= &dx12::Texture::Destroy;
 			platform::Texture::GenerateMipMaps	= &dx12::Texture::GenerateMipMaps;
-
-			// Texture target set:
-			platform::TextureTargetSet::CreateColorTargets			= &dx12::TextureTargetSet::CreateColorTargets;
-			platform::TextureTargetSet::AttachColorTargets			= &dx12::TextureTargetSet::AttachColorTargets;
-			platform::TextureTargetSet::CreateDepthStencilTarget	= &dx12::TextureTargetSet::CreateDepthStencilTarget;
-			platform::TextureTargetSet::AttachDepthStencilTarget	= &dx12::TextureTargetSet::AttachDepthStencilTarget;
 
 			// Vertex stream:
 			platform::VertexStream::CreatePlatformParams	= &dx12::VertexStream::CreatePlatformParams;

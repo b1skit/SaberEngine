@@ -83,9 +83,9 @@ namespace opengl
 		bool foundTarget = false;
 		uint32_t width = 0;
 		uint32_t height = 0;
-		std::vector<GLenum> drawBuffers(targetSet.ColorTargets().size());
+		std::vector<GLenum> drawBuffers(targetSet.GetColorTargets().size());
 		uint32_t insertIdx = 0;
-		for (uint32_t i = 0; i < targetSet.ColorTargets().size(); i++)
+		for (uint32_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
 			if (targetSet.GetColorTarget(i).GetTexture() != nullptr)
 			{
@@ -156,7 +156,7 @@ namespace opengl
 				width == targetSet.Viewport().Width() &&
 				height == targetSet.Viewport().Height());
 		}
-		else if (targetSet.DepthStencilTarget().GetTexture() == nullptr)
+		else if (!targetSet.GetDepthStencilTarget().HasTexture())
 		{
 			
 			LOG_WARNING("Texture target set \"%s\" has no color/depth targets. Assuming it is the default color framebuffer", 
@@ -188,9 +188,9 @@ namespace opengl
 
 		uint32_t attachmentPointOffset = 0;
 		std::shared_ptr<re::Texture> firstTarget = nullptr;
-		for (uint32_t i = 0; i < targetSet.ColorTargets().size(); i++)
+		for (uint32_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
-			if (targetSet.GetColorTarget(i).GetTexture() != nullptr)
+			if (targetSet.GetColorTarget(i).HasTexture())
 			{
 				std::shared_ptr<re::Texture> texture = targetSet.GetColorTarget(i).GetTexture();
 				
@@ -287,7 +287,7 @@ namespace opengl
 		}
 		targetSetParams->m_depthIsCreated = true;
 
-		std::shared_ptr<re::Texture const> depthStencilTex = targetSet.DepthStencilTarget().GetTexture();
+		std::shared_ptr<re::Texture const> depthStencilTex = targetSet.GetDepthStencilTarget().GetTexture();
 
 		if (depthStencilTex != nullptr)
 		{
@@ -314,7 +314,7 @@ namespace opengl
 
 			// Configure the target parameters:
 			opengl::TextureTarget::PlatformParams* const depthTargetParams =
-				dynamic_cast<opengl::TextureTarget::PlatformParams*>(targetSet.DepthStencilTarget().GetPlatformParams());
+				dynamic_cast<opengl::TextureTarget::PlatformParams*>(targetSet.GetDepthStencilTarget().GetPlatformParams());
 
 			depthTargetParams->m_attachmentPoint = GL_DEPTH_ATTACHMENT;
 			depthTargetParams->m_drawBuffer = GL_NONE;
@@ -349,7 +349,7 @@ namespace opengl
 
 		glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
 
-		std::shared_ptr<re::Texture> const& depthStencilTex = targetSet.DepthStencilTarget().GetTexture();
+		std::shared_ptr<re::Texture> const& depthStencilTex = targetSet.GetDepthStencilTarget().GetTexture();
 
 		if (depthStencilTex != nullptr)
 		{
@@ -364,7 +364,7 @@ namespace opengl
 				dynamic_cast<opengl::Texture::PlatformParams const*>(depthStencilTex->GetPlatformParams());
 
 			opengl::TextureTarget::PlatformParams const* const depthTargetParams =
-				dynamic_cast<opengl::TextureTarget::PlatformParams const*>(targetSet.DepthStencilTarget().GetPlatformParams());
+				dynamic_cast<opengl::TextureTarget::PlatformParams const*>(targetSet.GetDepthStencilTarget().GetPlatformParams());
 
 			// Attach a texture object to the bound framebuffer:
 			if (textureParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
@@ -396,7 +396,7 @@ namespace opengl
 
 			SEAssert("TODO: Implement support for correctly setting the viewport dimensions for depth textures with "
 				"mip maps. See the color target attach function for an example", 
-				targetSet.DepthStencilTarget().GetTexture()->GetNumMips() == 1);
+				targetSet.GetDepthStencilTarget().GetTexture()->GetNumMips() == 1);
 			// TODO: We currently just assume the depth buffer is full resolution, but it doesn't have to be. Leaving
 			// this assert to save debugging time at a later date...
 			glViewport(

@@ -42,6 +42,7 @@ namespace re
 			DrawMode m_drawMode = DrawMode::Triangles;
 		};
 
+		// TODO: We'd prefer to have the Tangent and Bitanent/Binormal and reconstruct the Normal
 		enum Slot // Binding index
 		{
 			Position	= 0, // vec3
@@ -57,7 +58,8 @@ namespace re
 
 			Slot_Count
 		};
-		// Note: The order/indexing of this enum MUST match the vertex layout locations in SaberCommon.glsl
+		// Note: The order/indexing of this enum MUST match the vertex layout locations in SaberCommon.glsl, and be
+		// correctly mapped in PipelineState_DX12.cpp
 	
 		static std::string GetSlotDebugName(Slot slot);
 

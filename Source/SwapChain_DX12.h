@@ -6,6 +6,7 @@
 
 #include "RenderManager_DX12.h"
 #include "SwapChain.h"
+#include "TextureTarget.h"
 
 
 namespace dx12
@@ -21,7 +22,7 @@ namespace dx12
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_backBuffers[dx12::RenderManager::k_numFrames];
 			uint8_t m_backBufferIdx;
 
-			DXGI_FORMAT m_displayFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+			std::array<std::shared_ptr<re::TextureTargetSet>, dx12::RenderManager::k_numFrames> m_backbufferTargetSets;
 
 			bool m_vsyncEnabled = false; // Disabled if tearing is enabled (ie. using a variable refresh display)
 			bool m_tearingSupported = false; // Always allow tearing if supported. Required for variable refresh dispays (eg. G-Sync/FreeSync)

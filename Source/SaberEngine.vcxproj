@@ -229,6 +229,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafx.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="PerformanceTimer.cpp" />
+    <ClCompile Include="PipelineState_DX12.cpp" />
     <ClCompile Include="RenderManager_DX12.cpp" />
     <ClCompile Include="Sampler_DX12.cpp" />
     <ClCompile Include="Shader_DX12.cpp" />
@@ -329,6 +330,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClInclude Include="pch\stdafx.h" />
     <ClInclude Include="PerformanceTimer.h" />
     <ClInclude Include="PipelineState.h" />
+    <ClInclude Include="PipelineState_DX12.h" />
     <ClInclude Include="RenderManager_DX12.h" />
     <ClInclude Include="Sampler_DX12.h" />
     <ClInclude Include="Shader_DX12.h" />

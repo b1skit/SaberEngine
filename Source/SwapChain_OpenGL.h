@@ -11,10 +11,10 @@ namespace opengl
 	public:
 		struct PlatformParams final : public virtual re::SwapChain::PlatformParams
 		{
-			// OpenGL manages the swap chain implicitly. We just maintain a target set representing the default
+			// OpenGL manages the swap chain implicitly. We just maintain a target single set representing the default
 			// framebuffer instead
 			// Note: We store this as a shared_ptr so we can instantiate it once the context has been initialized
-			std::shared_ptr<re::TextureTargetSet> m_backbuffer;
+			std::shared_ptr<re::TextureTargetSet> m_backbufferTargetSet;
 		};
 
 

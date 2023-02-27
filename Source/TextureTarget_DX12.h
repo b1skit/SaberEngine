@@ -1,5 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include <d3d12.h>
+#include <wrl.h>
+
 #include "TextureTarget.h"
 #include "TextureTarget_Platform.h"
 
@@ -22,14 +25,27 @@ class TextureTargetSet
 public:
 	struct PlatformParams final : public virtual re::TextureTargetSet::PlatformParams
 	{
+		// Color targets:
+		D3D12_RT_FORMAT_ARRAY m_renderTargetFormats;
+		DXGI_FORMAT m_depthTargetFormat;
 
+		// Depth/stencil target: Depth buffer + descriptor heap for depth buffer		
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_depthBufferResource = nullptr;
+		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DSVHeap = nullptr; // ComPtr to an array of DSV descriptors
+
+		// Other target params:
+		D3D12_VIEWPORT m_viewport;
+		D3D12_RECT m_scissorRect;
 	};
 
-	// Static members:
+
+public:
+
 	static void CreateColorTargets(re::TextureTargetSet& targetSet);
-	static void AttachColorTargets(re::TextureTargetSet& targetSet, uint32_t face, uint32_t mipLevel);
 
 	static void CreateDepthStencilTarget(re::TextureTargetSet& targetSet);
-	static void AttachDepthStencilTarget(re::TextureTargetSet& targetSet);
+
+	static void SetViewport(re::TextureTargetSet const& targetSet, ID3D12GraphicsCommandList2* commandList);
+	static void SetScissorRect(re::TextureTargetSet const& targetSet, ID3D12GraphicsCommandList2* commandList);
 };
 }

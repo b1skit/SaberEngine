@@ -123,7 +123,7 @@ namespace
 		if (shadowMap)
 		{
 			lightParams.g_shadowMapTexelSize =
-				shadowMap->GetTextureTargetSet()->DepthStencilTarget().GetTexture()->GetTextureDimenions();
+				shadowMap->GetTextureTargetSet()->GetDepthStencilTarget().GetTexture()->GetTextureDimenions();
 
 			lightParams.g_shadowBiasMinMax = shadowMap->MinMaxShadowBias();
 
@@ -192,7 +192,7 @@ namespace gr
 		std::shared_ptr<TextureTargetSet> deferredLightingTargetSet =
 			make_shared<TextureTargetSet>("Deferred lighting target");
 		deferredLightingTargetSet->SetColorTarget(0, outputTexture);
-		deferredLightingTargetSet->SetDepthStencilTarget(gBufferGS->GetFinalTextureTargetSet()->DepthStencilTarget());
+		deferredLightingTargetSet->SetDepthStencilTarget(gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget());
 
 		Camera* deferredLightingCam = SceneManager::GetSceneData()->GetMainCamera().get();
 
@@ -506,9 +506,9 @@ namespace gr
 			RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>());
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
 
-		for (size_t i = 0; i < (GBufferGraphicsSystem::GBufferTexNames.size() - 1); i++) // -1, since we handle depth @end
+		for (uint8_t slot = 0; slot < (GBufferGraphicsSystem::GBufferTexNames.size() - 1); slot++) // -1, since we handle depth @end
 		{
-			if (GBufferGraphicsSystem::GBufferTexNames[i] == "GBufferEmissive")
+			if (GBufferGraphicsSystem::GBufferTexNames[slot] == "GBufferEmissive")
 			{
 				// Skip the emissive texture since we don't use it in the lighting shaders
 				// -> Currently, we assert when trying to bind textures by name to a shader, if the name is not found...
@@ -519,22 +519,22 @@ namespace gr
 			if (AmbientIsValid())
 			{
 				m_ambientStage.SetPerFrameTextureInput(
-					GBufferGraphicsSystem::GBufferTexNames[i],
-					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(i).GetTexture(),
+					GBufferGraphicsSystem::GBufferTexNames[slot],
+					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 			if (keyLight)
 			{
 				m_keylightStage.SetPerFrameTextureInput(
-					GBufferGraphicsSystem::GBufferTexNames[i],
-					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(i).GetTexture(),
+					GBufferGraphicsSystem::GBufferTexNames[slot],
+					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 			if (!pointLights.empty())
 			{
 				m_pointlightStage.SetPerFrameTextureInput(
-					GBufferGraphicsSystem::GBufferTexNames[i],
-					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(i).GetTexture(),
+					GBufferGraphicsSystem::GBufferTexNames[slot],
+					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 		}
@@ -569,7 +569,7 @@ namespace gr
 			{
 				// Set the key light shadow map:
 				shared_ptr<Texture> keylightDepthTex =
-					keyLightShadowMap->GetTextureTargetSet()->DepthStencilTarget().GetTexture();
+					keyLightShadowMap->GetTextureTargetSet()->GetDepthStencilTarget().GetTexture();
 				m_keylightStage.SetPerFrameTextureInput(
 					"Depth0",
 					keylightDepthTex,
@@ -633,7 +633,7 @@ namespace gr
 			if (shadowMap != nullptr)
 			{
 				std::shared_ptr<re::Texture> const depthTexture = 
-					shadowMap->GetTextureTargetSet()->DepthStencilTarget().GetTexture();
+					shadowMap->GetTextureTargetSet()->GetDepthStencilTarget().GetTexture();
 
 				// Our template function expects a shared_ptr to a non-const type; cast it here even though it's gross
 				std::shared_ptr<re::Sampler> const sampler = 

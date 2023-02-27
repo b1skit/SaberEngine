@@ -52,7 +52,6 @@ namespace re
 		m_width(Config::Get()->GetValue<int>(en::Config::k_windowXResValueName)),
 		m_height(Config::Get()->GetValue<int>(en::Config::k_windowYResValueName))
 	{
-
 	}
 
 
@@ -62,8 +61,28 @@ namespace re
 		m_width(width),
 		m_height(height)
 	{
-
 	}
+
+	/************/
+	// ScissorRect
+	/************/
+	ScissorRect::ScissorRect()
+		: m_left(0)
+		, m_top(0)
+		, m_right(std::numeric_limits<long>::max())
+		, m_bottom(std::numeric_limits<long>::max())
+	{
+	}
+
+
+	ScissorRect::ScissorRect(long left, long top, long right, long bottom)
+		: m_left(left)
+		, m_top(top)
+		, m_right(right)
+		, m_bottom(bottom)
+	{
+	}
+
 
 	/******************/
 	// TextureTargetSet
@@ -77,7 +96,7 @@ namespace re
 	{
 		platform::TextureTargetSet::CreatePlatformParams(*this);
 	
-		m_colorTargets.resize(re::RenderManager::Get()->GetContext().GetMaxColorTargets());
+		m_colorTargets.resize(platform::Context::GetMaxColorTargets());
 
 		m_targetParameterBlock = re::ParameterBlock::Create(
 			"RenderTargetParams",
@@ -130,9 +149,9 @@ namespace re
 
 	TextureTargetSet::~TextureTargetSet()
 	{
-		for (size_t i = 0; i < m_colorTargets.size(); i++)
+		for (uint8_t slot = 0; slot < m_colorTargets.size(); slot++)
 		{
-			m_colorTargets[i] = nullptr;
+			m_colorTargets[slot] = nullptr;
 		}
 		m_depthStencilTarget = nullptr;
 		m_platformParams = nullptr;
@@ -145,24 +164,24 @@ namespace re
 	}
 
 
-	re::TextureTarget const& TextureTargetSet::GetColorTarget(size_t i) const
+	re::TextureTarget const& TextureTargetSet::GetColorTarget(uint8_t slot) const
 	{
-		SEAssert("OOB index", i < m_colorTargets.size()); 
-		return m_colorTargets[i];
+		SEAssert("OOB index", slot < m_colorTargets.size()); 
+		return m_colorTargets[slot];
 	}
 
 
-	void TextureTargetSet::SetColorTarget(size_t i, re::TextureTarget texTarget)
+	void TextureTargetSet::SetColorTarget(uint8_t slot, re::TextureTarget texTarget)
 	{
-		m_colorTargets[i] = texTarget;
+		m_colorTargets[slot] = texTarget;
 		m_colorTargetStateDirty = true;
 		m_targetParamsDirty = true;
 	}
 
 
-	void TextureTargetSet::SetColorTarget(size_t i, std::shared_ptr<re::Texture> texTarget)
+	void TextureTargetSet::SetColorTarget(uint8_t slot, std::shared_ptr<re::Texture> texTarget)
 	{
-		m_colorTargets[i] = texTarget;
+		m_colorTargets[slot] = texTarget;
 		m_colorTargetStateDirty = true;
 		m_targetParamsDirty = true;
 	}
@@ -197,9 +216,9 @@ namespace re
 
 		// If the state is dirty, we need to recheck:
 		m_hasColorTarget = false;
-		for (size_t i = 0; i < m_colorTargets.size(); i++)
+		for (uint8_t slot = 0; slot < m_colorTargets.size(); slot++)
 		{
-			if (m_colorTargets[i].GetTexture() != nullptr)
+			if (m_colorTargets[slot].GetTexture() != nullptr)
 			{
 				m_hasColorTarget = true;
 				break;
@@ -213,7 +232,23 @@ namespace re
 
 	bool TextureTargetSet::HasDepthTarget()
 	{
-		return DepthStencilTarget().GetTexture() != nullptr;
+		return GetDepthStencilTarget().GetTexture() != nullptr;
+	}
+
+
+	uint8_t TextureTargetSet::GetNumColorTargets() const
+	{
+		// TODO: Optimize this. We should track/update the state with the dirty flag. For now, just count.
+
+		uint8_t numTargets = 0;
+		for (re::TextureTarget const& target : m_colorTargets)
+		{
+			if (target.HasTexture())
+			{
+				numTargets++;
+			}
+		}
+		return numTargets;
 	}
 
 
@@ -258,9 +293,9 @@ namespace re
 
 			if (!foundDimensions && HasColorTarget())
 			{
-				for (size_t i = 0; i < m_colorTargets.size(); i++)
+				for (uint8_t slot = 0; slot < m_colorTargets.size(); slot++)
 				{
-					std::shared_ptr<re::Texture> texTarget = m_colorTargets[i].GetTexture();
+					std::shared_ptr<re::Texture> texTarget = m_colorTargets[slot].GetTexture();
 					if (texTarget)
 					{
 						targetDimensions = texTarget->GetTextureDimenions();

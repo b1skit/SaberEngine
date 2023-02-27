@@ -18,14 +18,6 @@ namespace re
 	class RenderStage final : public virtual en::NamedObject
 	{
 	public:
-		struct StageShaderUniform
-		{
-			std::string m_uniformName;
-			void* m_value;
-			re::Shader::UniformType const m_type;
-			int m_count;
-		};
-
 		enum class RenderStageType
 		{
 			ColorOnly,

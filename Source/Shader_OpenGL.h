@@ -18,6 +18,20 @@ namespace opengl
 	class Shader
 	{
 	public:
+		enum UniformType
+		{
+			Matrix4x4f,
+			Matrix3x3f,
+			Vec3f,
+			Vec4f,
+			Float,
+			Int,
+			Texture,
+			Sampler
+		};
+
+
+	public:
 		struct PlatformParams final : public virtual re::Shader::PlatformParams
 		{
 			std::vector<std::string> m_shaderTexts;
@@ -40,7 +54,7 @@ namespace opengl
 			re::Shader& shader, 
 			std::string const& uniformName, 
 			void* value, 
-			re::Shader::UniformType const type, 
+			opengl::Shader::UniformType const type, 
 			int const count);
 		static void SetTextureAndSampler(re::Shader&, std::string const& uniformName, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>);
 		static void SetParameterBlock(re::Shader&, re::ParameterBlock&); // TODO: This Shader& can probably be const

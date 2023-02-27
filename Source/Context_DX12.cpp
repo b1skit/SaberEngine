@@ -11,6 +11,8 @@
 #include "DebugConfiguration.h"
 #include "RenderManager_DX12.h"
 #include "SwapChain_DX12.h"
+#include "TextureTarget_DX12.h"
+#include "Texture_DX12.h"
 #include "Window_Win32.h"
 
 
@@ -47,11 +49,11 @@ namespace dx12
 		// TODO: Create/support more command queue types
 
 		ctxPlatParams->m_commandQueues[CommandQueue_DX12::CommandListType::Direct].Create(
-			ctxPlatParams->m_device.GetDisplayDevice(),
+			ctxPlatParams->m_device.GetD3DDisplayDevice(),
 			CommandQueue_DX12::CommandListType::Direct);
 
 		ctxPlatParams->m_commandQueues[CommandQueue_DX12::CommandListType::Copy].Create(
-			ctxPlatParams->m_device.GetDisplayDevice(),
+			ctxPlatParams->m_device.GetD3DDisplayDevice(),
 			CommandQueue_DX12::CommandListType::Copy);
 
 
@@ -64,15 +66,15 @@ namespace dx12
 
 
 		ctxPlatParams->m_RTVDescHeap = CreateDescriptorHeap(
-			ctxPlatParams->m_device.GetDisplayDevice(),
+			ctxPlatParams->m_device.GetD3DDisplayDevice(),
 			D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 
 			dx12::RenderManager::k_numFrames);
 		
 		ctxPlatParams->m_RTVDescSize = 
-			ctxPlatParams->m_device.GetDisplayDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+			ctxPlatParams->m_device.GetD3DDisplayDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 		UpdateRenderTargetViews(
-			ctxPlatParams->m_device.GetDisplayDevice(),
+			ctxPlatParams->m_device.GetD3DDisplayDevice(),
 			swapChainParams->m_swapChain,
 			swapChainParams->m_backBuffers,
 			dx12::RenderManager::k_numFrames,
@@ -82,6 +84,9 @@ namespace dx12
 		win32::Window::PlatformParams* const windowPlatParams =
 			dynamic_cast<win32::Window::PlatformParams*>(en::CoreEngine::Get()->GetWindow()->GetPlatformParams());
 
+
+		dx12::TextureTargetSet::PlatformParams* const swapChainTargetSetParams =
+			dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(swapChainParams->m_backbufferTargetSets[0]->GetPlatformParams());
 
 		// Setup our ImGui context
 		IMGUI_CHECKVERSION();
@@ -95,9 +100,9 @@ namespace dx12
 		// Setup Platform/Renderer backends
 		ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
 		ImGui_ImplDX12_Init(
-			ctxPlatParams->m_device.GetDisplayDevice().Get(),
+			ctxPlatParams->m_device.GetD3DDisplayDevice(),
 			dx12::RenderManager::k_numFrames, // Number of frames in flight
-			swapChainParams->m_displayFormat,
+			swapChainTargetSetParams->m_renderTargetFormats.RTFormats[0],
 			ctxPlatParams->m_RTVDescHeap.Get(),
 			ctxPlatParams->m_RTVDescHeap->GetCPUDescriptorHandleForHeapStart(),
 			ctxPlatParams->m_RTVDescHeap->GetGPUDescriptorHandleForHeapStart());

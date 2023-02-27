@@ -39,9 +39,10 @@ namespace dx12
 		void WaitForGPU(uint64_t fenceValue); // Blocks the CPU
 		void Flush();
 
+		// TODO: Return raw pointers instead of ComPtr
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> GetCreateCommandList();
 
-		Microsoft::WRL::ComPtr<ID3D12CommandQueue> GetD3DCommandQueue() { return m_commandQueue; }
+		ID3D12CommandQueue* GetD3DCommandQueue() { return m_commandQueue.Get(); }
 
 
 	private:

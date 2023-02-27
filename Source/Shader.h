@@ -32,20 +32,6 @@ namespace re
 
 
 	public:
-		enum UniformType
-		{
-			Matrix4x4f,
-			Matrix3x3f,
-			Vec3f,
-			Vec4f,
-			Float,
-			Int,
-			Texture,
-			Sampler
-		};
-
-
-	public:
 		explicit Shader(std::string const& extensionlessShaderFilename);
 		~Shader() { Destroy(); }
 			

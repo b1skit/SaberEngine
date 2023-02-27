@@ -407,7 +407,7 @@ namespace opengl
 		re::Shader& shader,
 		string const& uniformName,
 		void* value, 
-		re::Shader::UniformType const type, 
+		opengl::Shader::UniformType const type, 
 		int const count)
 	{
 		// Ensure the shader is created
@@ -430,43 +430,43 @@ namespace opengl
 
 		switch (type)
 		{
-		case re::Shader::UniformType::Matrix4x4f:
+		case opengl::Shader::UniformType::Matrix4x4f:
 		{
 			glUniformMatrix4fv(uniformID, count, GL_FALSE, (GLfloat const*)value);
 		}
 		break;
 
-		case re::Shader::UniformType::Matrix3x3f:
+		case opengl::Shader::UniformType::Matrix3x3f:
 		{
 			glUniformMatrix3fv(uniformID, count, GL_FALSE, (GLfloat const*)value);
 		}
 		break;
 
-		case re::Shader::UniformType::Vec3f:
+		case opengl::Shader::UniformType::Vec3f:
 		{
 			glUniform3fv(uniformID, count, (GLfloat const*)value);
 		}
 		break;
 
-		case re::Shader::UniformType::Vec4f:
+		case opengl::Shader::UniformType::Vec4f:
 		{
 			glUniform4fv(uniformID, count, (GLfloat const*)value);
 		}
 		break;
 
-		case re::Shader::UniformType::Float:
+		case opengl::Shader::UniformType::Float:
 		{
 			glUniform1f(uniformID, *(GLfloat const*)value);
 		}
 		break;
 
-		case re::Shader::UniformType::Int:
+		case opengl::Shader::UniformType::Int:
 		{
 			glUniform1i(uniformID, *(GLint const*)value);
 		}
 		break;
 		
-		case re::Shader::UniformType::Texture:
+		case opengl::Shader::UniformType::Texture:
 		{
 			auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
 
@@ -478,7 +478,7 @@ namespace opengl
 			opengl::Texture::Bind(*static_cast<re::Texture*>(value), bindingUnit->second);
 		}
 		break;
-		case re::Shader::UniformType::Sampler:
+		case opengl::Shader::UniformType::Sampler:
 		{
 			auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
 
@@ -566,8 +566,8 @@ namespace opengl
 	void Shader::SetTextureAndSampler(
 		re::Shader& shader, std::string const& uniformName, std::shared_ptr<re::Texture> texture, std::shared_ptr<re::Sampler>sampler)
 	{
-		opengl::Shader::SetUniform(shader, uniformName, texture.get(), re::Shader::UniformType::Texture, 1);
-		opengl::Shader::SetUniform(shader, uniformName, sampler.get(), re::Shader::UniformType::Sampler, 1);
+		opengl::Shader::SetUniform(shader, uniformName, texture.get(), opengl::Shader::UniformType::Texture, 1);
+		opengl::Shader::SetUniform(shader, uniformName, sampler.get(), opengl::Shader::UniformType::Sampler, 1);
 	}
 
 

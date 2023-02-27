@@ -21,6 +21,9 @@ namespace dx12
 			ShaderType_Count
 		};
 
+		// Arbitrary: Limits the number of indexes we search for semantics (POSITION, NORMAL[n], COLOR[n], etc)
+		static const uint8_t k_maxVShaderVertexInputs = 32;
+
 
 	public:
 		struct PlatformParams final : public virtual re::Shader::PlatformParams

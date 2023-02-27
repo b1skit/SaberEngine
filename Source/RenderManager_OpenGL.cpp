@@ -109,9 +109,9 @@ namespace opengl
 					opengl::SwapChain::PlatformParams* const swapChainParams =
 						dynamic_cast<opengl::SwapChain::PlatformParams*>(renderManager.GetContext().GetSwapChain().GetPlatformParams());
 					SEAssert("Swap chain params and backbuffer cannot be null", 
-						swapChainParams && swapChainParams->m_backbuffer);
+						swapChainParams && swapChainParams->m_backbufferTargetSet);
 
-					stageTargets = swapChainParams->m_backbuffer; // Draw directly to the swapchain backbuffer
+					stageTargets = swapChainParams->m_backbufferTargetSet; // Draw directly to the swapchain backbuffer
 				}
 
 				opengl::TextureTargetSet::AttachColorTargets(*stageTargets,

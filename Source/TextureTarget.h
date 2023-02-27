@@ -31,6 +31,8 @@ namespace re
 
 		TextureTarget& operator=(std::shared_ptr<re::Texture> texture);
 
+		inline bool HasTexture() const { return m_texture != nullptr; }
+
 		std::shared_ptr<re::Texture>& GetTexture() { return m_texture; }
 		std::shared_ptr<re::Texture> const& GetTexture() const { return m_texture; }
 
@@ -54,17 +56,17 @@ namespace re
 		Viewport& operator=(Viewport const&) = default;
 		~Viewport() = default;
 
-		uint32_t& xMin() { return m_xMin; }
-		uint32_t const& xMin() const{ return m_xMin; }
+		uint32_t& xMin() { return m_xMin; } // Top-left X
+		uint32_t const xMin() const{ return m_xMin; }
 
-		uint32_t& yMin() { return m_yMin; }
-		uint32_t const& yMin() const { return m_yMin; }
+		uint32_t& yMin() { return m_yMin; } // Top-left Y
+		uint32_t const yMin() const { return m_yMin; }
 
 		uint32_t& Width() { return m_width; }
-		uint32_t const& Width() const { return m_width; }
+		uint32_t const Width() const { return m_width; }
 
 		uint32_t& Height() { return m_height; }
-		uint32_t const& Height() const { return m_height; }
+		uint32_t const Height() const { return m_height; }
 
 		
 	private:
@@ -75,6 +77,34 @@ namespace re
 		// Viewport dimensions. Full window resolution by default
 		uint32_t m_width;
 		uint32_t m_height;
+	};
+
+
+	class ScissorRect
+	{
+	public:
+		ScissorRect();
+		ScissorRect(long left, long top, long right, long bottom);
+
+		long& Left() { return m_left; }
+		long Left() const { return m_left; }
+
+		long& Top() { return m_top; }
+		long Top() const { return m_top; }
+
+		long& Right() { return m_right; }
+		long Right() const { return m_right; }
+
+		long& Bottom() { return m_bottom; }
+		long Bottom() const { return m_bottom; }
+
+	private:
+		long m_left;
+		long m_top;
+		long m_right;
+		long m_bottom;
+
+		// TODO: For some reason, D3D12 doesn't render if right/bottom are not std::numeric_limits<long>::max(). Why?
 	};
 
 
@@ -105,12 +135,12 @@ namespace re
 		TextureTargetSet& operator=(TextureTargetSet const&);
 		~TextureTargetSet();
 
-		inline std::vector<re::TextureTarget> const& ColorTargets() const { return m_colorTargets; }
-		re::TextureTarget const& GetColorTarget(size_t i) const;
-		void SetColorTarget(size_t i, re::TextureTarget texTarget);
-		void SetColorTarget(size_t i, std::shared_ptr<re::Texture> texTarget);
+		inline std::vector<re::TextureTarget> const& GetColorTargets() const { return m_colorTargets; }
+		re::TextureTarget const& GetColorTarget(uint8_t slot) const;
+		void SetColorTarget(uint8_t slot, re::TextureTarget texTarget);
+		void SetColorTarget(uint8_t slot, std::shared_ptr<re::Texture> texTarget);
 
-		inline re::TextureTarget const& DepthStencilTarget() const { return m_depthStencilTarget; }
+		inline re::TextureTarget const& GetDepthStencilTarget() const { return m_depthStencilTarget; }
 		void SetDepthStencilTarget(re::TextureTarget const& depthStencilTarget);
 		void SetDepthStencilTarget(std::shared_ptr<re::Texture> depthStencilTarget);
 
@@ -118,11 +148,15 @@ namespace re
 		bool HasColorTarget();
 		bool HasDepthTarget();
 
+		uint8_t GetNumColorTargets() const;
+
 		inline re::Viewport& Viewport() { return m_viewport; }
 		inline re::Viewport const& Viewport() const { return m_viewport; }
 
-		inline PlatformParams* GetPlatformParams() { return m_platformParams.get(); }
-		inline PlatformParams const* GetPlatformParams() const { return m_platformParams.get(); }
+		inline re::ScissorRect& ScissorRect() { return m_scissorRect; }
+		inline re::ScissorRect const& ScissorRect() const { return m_scissorRect; }
+
+		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::shared_ptr<PlatformParams> params) { m_platformParams = params; }
 		
 		std::shared_ptr<re::ParameterBlock> GetTargetParameterBlock();
@@ -140,6 +174,7 @@ namespace re
 		bool m_colorTargetStateDirty;
 
 		re::Viewport m_viewport;
+		re::ScissorRect m_scissorRect; // TODO: Use this in OpenGL
 
 		std::shared_ptr<PlatformParams> m_platformParams;
 

@@ -211,7 +211,7 @@ namespace dx12
 
 		dx12::Context::PlatformParams* const ctxPlatParams =
 			dynamic_cast<dx12::Context::PlatformParams*>(re::RenderManager::Get()->GetContext().GetPlatformParams());
-		Microsoft::WRL::ComPtr<ID3D12Device2> device = ctxPlatParams->m_device.GetDisplayDevice();
+		Microsoft::WRL::ComPtr<ID3D12Device2> device = ctxPlatParams->m_device.GetD3DDisplayDevice();
 
 		// Create a committed resource for the GPU resource in a default heap:
 		HRESULT hr = device->CreateCommittedResource(

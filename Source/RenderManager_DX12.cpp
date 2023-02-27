@@ -15,152 +15,28 @@ using glm::vec4;
 
 
 // TEMP DEBUG CODE:
-#include "MeshPrimitive.h"
 #include "MeshPrimitive_DX12.h"
 #include "VertexStream_DX12.h"
 #include "Debug_DX12.h"
 #include "Config.h"
 #include "Shader_DX12.h"
+#include "PipelineState_DX12.h"
+#include "TextureTarget_DX12.h"
 
 
 
 // TEMP DEBUG CODE:
 namespace
 {
-	using Microsoft::WRL::ComPtr;
 	using dx12::CheckHResult;
 
 	static std::shared_ptr<re::MeshPrimitive> k_helloTriangle = nullptr;
 
-	// Depth buffer
-	Microsoft::WRL::ComPtr<ID3D12Resource> m_depthBufferResource;
-
-	// Descriptor heap for depth buffer
-	static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DSVHeap; // ComPtr to an array of DSV descriptors
-
-	// Pipeline state object: Can create an unlimited number (typically at initialization time), & select at runtime
-	Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineState;
-
-	// TODO: Move this to TextureTarget
-	D3D12_VIEWPORT m_viewport;
-	D3D12_RECT m_scissorRect; // Note: Geometry shaders use multiple scissor rects
+	static std::shared_ptr<dx12::PipelineState> k_pipelineState;
 
 
-	void UpdateBufferResource(
-		ComPtr<ID3D12GraphicsCommandList2> commandList,
-		ID3D12Resource** pDestinationResource,
-		ID3D12Resource** pIntermediateResource,
-		size_t numElements, 
-		size_t elementSize, 
-		const void* bufferData,
-		D3D12_RESOURCE_FLAGS flags)
-	{
-		SEAssert("Buffer data cannot be null", bufferData);
-
-		re::Context const& context = re::RenderManager::Get()->GetContext();
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
-
-		Microsoft::WRL::ComPtr<ID3D12Device2> device = ctxPlatParams->m_device.GetDisplayDevice();
-
-		size_t bufferSize = numElements * elementSize;
-
-		const CD3DX12_HEAP_PROPERTIES defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-
-		const CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize, flags);
-
-		// Create a committed resource for the GPU resource in a default heap
-		HRESULT hr = device->CreateCommittedResource(
-			&defaultHeapProperties,
-			D3D12_HEAP_FLAG_NONE,
-			&resourceDesc,
-			D3D12_RESOURCE_STATE_COPY_DEST,
-			nullptr,
-			IID_PPV_ARGS(pDestinationResource));
-
-		// Create an committed resource for the upload
-		const CD3DX12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-
-		const CD3DX12_RESOURCE_DESC committedresourceDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-
-		hr = ctxPlatParams->m_device.GetDisplayDevice()->CreateCommittedResource(
-			&uploadHeapProperties,
-			D3D12_HEAP_FLAG_NONE,
-			&committedresourceDesc,
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			nullptr,
-			IID_PPV_ARGS(pIntermediateResource));
-
-		D3D12_SUBRESOURCE_DATA subresourceData = {};
-		subresourceData.pData = bufferData;
-		subresourceData.RowPitch = bufferSize;
-		subresourceData.SlicePitch = subresourceData.RowPitch;
-
-		::UpdateSubresources(
-			commandList.Get(),
-			*pDestinationResource,
-			*pIntermediateResource,
-			0,						// Index of 1st subresource in the resource
-			0,						// Number of subresources in the resource.
-			1,						// Required byte size for the update
-			&subresourceData);
-	}
-
-
-	void CreateDepthBuffer(int width, int height)
-	{
-		// NOTE: We assume the depth buffer is not in use. If this ever changes (eg. we're recreating the depth buffer,
-		// and it may still be in flight, we should ensure we flush all commands that might reference it first
-
-		SEAssert("Invalid dimensions", width >= 1 && height >= 1);
-
-		re::Context const& context = re::RenderManager::Get()->GetContext();
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
-
-		ComPtr<ID3D12Device2> device = ctxPlatParams->m_device.GetDisplayDevice();
-
-		// Create a depth buffer.
-		D3D12_CLEAR_VALUE optimizedClearValue = {};
-		optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-		optimizedClearValue.DepthStencil = { 1.0f, 0 };
-
-		CD3DX12_HEAP_PROPERTIES depthHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-
-		CD3DX12_RESOURCE_DESC depthResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-			DXGI_FORMAT_D32_FLOAT,
-			width,
-			height,
-			1,
-			0,
-			1,
-			0,
-			D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-
-		HRESULT hr = device->CreateCommittedResource(
-			&depthHeapProperties,
-			D3D12_HEAP_FLAG_NONE,
-			&depthResourceDesc,
-			D3D12_RESOURCE_STATE_DEPTH_WRITE,
-			&optimizedClearValue,
-			IID_PPV_ARGS(&m_depthBufferResource)
-		);
-
-		// Update the depth-stencil view
-		D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-		dsv.Format = DXGI_FORMAT_D32_FLOAT;
-		dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-		dsv.Texture2D.MipSlice = 0;
-		dsv.Flags = D3D12_DSV_FLAG_NONE;
-
-		device->CreateDepthStencilView(
-			m_depthBufferResource.Get(),
-			&dsv,
-			m_DSVHeap->GetCPUDescriptorHandleForHeapStart());
-	}
-
-
-	bool LoadResources()
+	// TODO: Make this a platform function, and call it for all APIs during startup
+	bool CreateAPIResources()
 	{
 		re::Context const& context = re::RenderManager::Get()->GetContext();
 		dx12::Context::PlatformParams* const ctxPlatParams =
@@ -178,149 +54,20 @@ namespace
 		k_helloTriangle->GetMeshMaterial()->SetShader(k_helloShader);
 
 
-		// Create the descriptor heap for the depth-stencil view.
-		ComPtr<ID3D12Device2> device = ctxPlatParams->m_device.GetDisplayDevice();
-
-		D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-		dsvHeapDesc.NumDescriptors = 1;
-		dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-		dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		HRESULT hr = device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_DSVHeap));
-		CheckHResult(hr, "Failed to create descriptor heap");
+		dx12::SwapChain::PlatformParams const* const swapChainParams =
+			dynamic_cast<dx12::SwapChain::PlatformParams*>(context.GetSwapChain().GetPlatformParams());
 
 
-		// Create a root signature
-		D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
-		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-		if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
-		{
-			featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
-		}
 
-		// Allow input layout and deny unnecessary access to certain pipeline stages
-		D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
-			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+		// Create a pipeline state:
+		gr::PipelineState defaultGrPipelineState{}; // Temp hax: Use a default gr::PipelineState
 
-		// A single 32-bit constant root parameter that is used by the vertex shader
-		CD3DX12_ROOT_PARAMETER1 rootParameters[1];
-		rootParameters[0].InitAsConstants(
-			sizeof(glm::mat4) / 4, 
-			0, 
-			0, 
-			D3D12_SHADER_VISIBILITY_VERTEX);
+		k_pipelineState = std::make_shared<dx12::PipelineState>(
+			defaultGrPipelineState, 
+			k_helloShader.get(), 
+			swapChainParams->m_backbufferTargetSets[0].get());
+		// TODO: Move PipelineState object(s) to the Context!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-		// Create the root signature description:
-		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDescription;
-		rootSignatureDescription.Init_1_1(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlags);
-
-		// Serialize the root signature.
-		ComPtr<ID3DBlob> rootSignatureBlob;
-		ComPtr<ID3DBlob> errorBlob;
-		hr = D3DX12SerializeVersionedRootSignature(
-			&rootSignatureDescription,
-			featureData.HighestVersion, 
-			&rootSignatureBlob, 
-			&errorBlob);
-		CheckHResult(hr, "Failed to serialize versioned root signature");
-
-		// Create the root signature.
-		hr = device->CreateRootSignature(
-			0, 
-			rootSignatureBlob->GetBufferPointer(),
-			rootSignatureBlob->GetBufferSize(), 
-			IID_PPV_ARGS(&ctxPlatParams->m_rootSignature));
-		CheckHResult(hr, "Failed to create root signature");
-
-
-		dx12::VertexStream::PlatformParams_Vertex* const positionPlatformParams =
-			dynamic_cast<dx12::VertexStream::PlatformParams_Vertex*>(k_helloTriangle->GetVertexStream(re::MeshPrimitive::Position)->GetPlatformParams());
-		dx12::VertexStream::PlatformParams_Vertex* const colorPlatformParams =
-			dynamic_cast<dx12::VertexStream::PlatformParams_Vertex*>(k_helloTriangle->GetVertexStream(re::MeshPrimitive::Color)->GetPlatformParams());
-
-		// Create the vertex input layout
-		// TODO: This should be created by a member of the MeshPrimitive_DX12
-		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
-		{
-			{
-				"POSITION",									// Semantic name
-				0,											// Semantic idx: Only needed when >1 element of same semantic
-				positionPlatformParams->m_format,			// Format
-				re::MeshPrimitive::Position,				// Input slot [0, 15]
-				D3D12_APPEND_ALIGNED_ELEMENT,				// Aligned byte offset
-				D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,	// Input slot class
-				0											// Input data step rate
-			},
-			{
-				"COLOR",
-				0,
-				colorPlatformParams->m_format,
-				re::MeshPrimitive::Color,
-				D3D12_APPEND_ALIGNED_ELEMENT,
-				D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-				0
-			},
-		};
-
-		D3D12_RT_FORMAT_ARRAY rtvFormats = {};
-		rtvFormats.NumRenderTargets = 1;
-		rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-
-
-		dx12::Shader::PlatformParams* const shaderParams =
-			dynamic_cast<dx12::Shader::PlatformParams* const>(k_helloShader->GetPlatformParams());
-
-		// TODO: Move this to the PipelineState object
-		// Stage PSO? Target?
-		// -> Build from stage pipeline state + Shaders, etc
-		//		-> Once, after pipeline is created
-		// TODO: Set up the depth bias correctly for shadows
-		D3D12_RASTERIZER_DESC rasterizerDesc = D3D12_RASTERIZER_DESC();
-		rasterizerDesc.FillMode = D3D12_FILL_MODE::D3D12_FILL_MODE_SOLID;
-		rasterizerDesc.CullMode = D3D12_CULL_MODE::D3D12_CULL_MODE_BACK;
-		rasterizerDesc.FrontCounterClockwise = true;
-		rasterizerDesc.DepthBias = 0;
-		rasterizerDesc.DepthBiasClamp = 0.f;
-		rasterizerDesc.SlopeScaledDepthBias = 0.f;
-		rasterizerDesc.DepthClipEnable = true;
-		rasterizerDesc.MultisampleEnable = false;
-		rasterizerDesc.AntialiasedLineEnable = false; // Only applies if drawing lines with .MultisampleEnable = false
-		rasterizerDesc.ForcedSampleCount = 0;
-		rasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE::D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-
-		// TODO: Should this be defined in a common space?
-		struct PipelineStateStream
-		{
-			CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE rootSignature;
-			CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT inputLayout;
-			CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY primitiveTopologyType;
-			CD3DX12_PIPELINE_STATE_STREAM_VS vShader;
-			CD3DX12_PIPELINE_STATE_STREAM_PS pShader;
-			CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT DSVFormat;
-			CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;
-			CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER rasterizer;
-		} pipelineStateStream;
-
-		pipelineStateStream.rootSignature = ctxPlatParams->m_rootSignature.Get();
-		pipelineStateStream.inputLayout = { inputLayout, _countof(inputLayout) };
-		pipelineStateStream.primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-		pipelineStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[dx12::Shader::Vertex].Get());
-		pipelineStateStream.pShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[dx12::Shader::Pixel].Get());
-
-		pipelineStateStream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-		pipelineStateStream.RTVFormats = rtvFormats;
-		pipelineStateStream.rasterizer = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
-		
-
-		D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = {
-			sizeof(PipelineStateStream),
-			&pipelineStateStream
-		};
-		hr = device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
-		CheckHResult(hr, "Failed to create pipeline state");
 
 
 		// Execute command queue, and wait for it to be done (blocking)
@@ -333,24 +80,6 @@ namespace
 		copyQueue.WaitForGPU(copyQueueFenceVal);
 
 
-		// Create the depth buffer		
-		CreateDepthBuffer(
-			en::Config::Get()->GetValue<int>("windowXRes"), 
-			en::Config::Get()->GetValue<int>("windowYRes"));
-
-
-		// Compositor setup:
-		m_viewport = CD3DX12_VIEWPORT(
-			0.0f,
-			0.0f,
-			static_cast<float>(en::Config::Get()->GetValue<int>("windowXRes")),
-			static_cast<float>(en::Config::Get()->GetValue<int>("windowYRes")));
-
-		m_scissorRect = CD3DX12_RECT(
-			0, 
-			0, 
-			LONG_MAX, 
-			LONG_MAX);
 
 		return true;
 	}
@@ -408,7 +137,7 @@ namespace dx12
 		k_helloTriangle = meshfactory::CreateHelloTriangle();
 		
 
-		LoadResources();
+		CreateAPIResources();
 	}
 
 
@@ -436,8 +165,14 @@ namespace dx12
 			backbufferIdx,
 			ctxPlatParams->m_RTVDescSize);
 
-		// TODO: Move the dsv stuff to the context, for now...
-		auto depthStencilView = m_DSVHeap->GetCPUDescriptorHandleForHeapStart();
+
+		dx12::SwapChain::PlatformParams* const swapChainParams =
+			dynamic_cast<dx12::SwapChain::PlatformParams*>(context.GetSwapChain().GetPlatformParams());
+
+		dx12::TextureTargetSet::PlatformParams* const depthTargetParams =
+			dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(swapChainParams->m_backbufferTargetSets[backbufferIdx]->GetPlatformParams());
+
+		D3D12_CPU_DESCRIPTOR_HANDLE depthStencilView = depthTargetParams->m_DSVHeap->GetCPUDescriptorHandleForHeapStart();
 
 		// Clear the render targets.
 		TransitionResource(
@@ -458,9 +193,8 @@ namespace dx12
 
 
 		// Set the pipeline state:
-		commandList->SetPipelineState(m_pipelineState.Get());
-		commandList->SetGraphicsRootSignature(ctxPlatParams->m_rootSignature.Get());
-
+		commandList->SetPipelineState(k_pipelineState->GetD3DPipelineState());
+		commandList->SetGraphicsRootSignature(k_pipelineState->GetD3DRootSignature());
 
 		// TEMP HAX: Get the position buffer/buffer view:
 		dx12::VertexStream::PlatformParams_Vertex* const positionPlatformParams =
@@ -491,8 +225,12 @@ namespace dx12
 
 		commandList->IASetIndexBuffer(&indexBufferView);
 
-		commandList->RSSetViewports(1, &m_viewport);
-		commandList->RSSetScissorRects(1, &m_scissorRect);
+
+	
+		dx12::TextureTargetSet::SetViewport(*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList.Get());
+		dx12::TextureTargetSet::SetScissorRect(*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList.Get());
+
+
 
 		// Bind our render target(s) to the output merger (OM):
 		commandList->OMSetRenderTargets(1, &renderTargetView, FALSE, &depthStencilView);
@@ -588,5 +326,9 @@ namespace dx12
 	{
 		#pragma message("TODO: Implement dx12::RenderManager::Shutdown")
 		LOG_ERROR("TODO: Implement dx12::RenderManager::Shutdown");
+
+
+		// TEMP DEBUG CODE:
+		k_helloTriangle = nullptr;
 	}
 }

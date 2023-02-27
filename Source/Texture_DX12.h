@@ -1,5 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include <d3d12.h>
+
 #include "Texture.h"
 
 
@@ -7,6 +9,10 @@ namespace dx12
 {
 	class Texture
 	{
+	public:
+		static DXGI_FORMAT GetTextureFormat(re::Texture::TextureParams const&);
+
+
 	public:
 		struct PlatformParams final : public virtual re::Texture::PlatformParams
 		{

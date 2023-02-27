@@ -11,7 +11,6 @@ using en::Config;
 
 namespace platform
 {
-	// Parameter struct object factory:
 	void platform::Texture::CreatePlatformParams(re::Texture& texture)
 	{
 		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();

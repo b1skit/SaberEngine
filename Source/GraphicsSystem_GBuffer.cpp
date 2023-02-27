@@ -70,7 +70,7 @@ namespace gr
 
 
 		std::shared_ptr<re::TextureTargetSet> gBufferTargets = m_gBufferStage.GetTextureTargetSet();
-		for (size_t i = 0; i <= 5; i++)
+		for (uint8_t i = 0; i <= 5; i++)
 		{
 			gBufferTargets->SetColorTarget(i, std::make_shared<re::Texture>(GBufferTexNames[i], gBufferTexParams));
 		}

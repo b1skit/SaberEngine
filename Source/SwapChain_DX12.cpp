@@ -8,35 +8,88 @@
 #include "Debug_DX12.h"
 #include "RenderManager.h"
 #include "SwapChain_DX12.h"
+#include "TextureTarget_DX12.h"
+#include "Texture.h"
+#include "Texture_DX12.h"
 #include "Window_Win32.h"
 
+using Microsoft::WRL::ComPtr;
+
+
+namespace
+{
+	void CreateSwapChainTargetSet(dx12::SwapChain::PlatformParams* swapChainParams)
+	{
+		re::Texture::TextureParams colorParams;
+		colorParams.m_width =
+			en::Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
+		colorParams.m_height =
+			en::Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
+		colorParams.m_faces = 1;
+		colorParams.m_usage = re::Texture::Usage::ColorTarget;
+		colorParams.m_dimension = re::Texture::Dimension::Texture2D;
+		colorParams.m_format = re::Texture::Format::RGBA8;
+		colorParams.m_colorSpace = re::Texture::ColorSpace::Linear;
+		colorParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		colorParams.m_useMIPs = false;
+
+		re::Texture::TextureParams depthParams;
+		depthParams.m_width =
+			en::Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
+		depthParams.m_height =
+			en::Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
+		depthParams.m_faces = 1;
+		depthParams.m_usage = re::Texture::Usage::DepthTarget;
+		depthParams.m_dimension = re::Texture::Dimension::Texture2D;
+		depthParams.m_format = re::Texture::Format::Depth32F;
+		depthParams.m_colorSpace = re::Texture::ColorSpace::Linear;
+		depthParams.m_clearColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		depthParams.m_useMIPs = false;
+
+		for (uint8_t backbuffer = 0; backbuffer < dx12::RenderManager::k_numFrames; backbuffer++)
+		{
+			// Target set:
+			swapChainParams->m_backbufferTargetSets[backbuffer] =
+				std::make_shared<re::TextureTargetSet>(std::string("Backbuffer_%s", backbuffer));
+
+			// Color target:
+			std::shared_ptr<re::Texture> colorTargetTex = 
+				std::make_shared<re::Texture>("SwapChainColorTarget", colorParams);
+			dx12::Texture::Create(*colorTargetTex);
+
+			swapChainParams->m_backbufferTargetSets[backbuffer]->SetColorTarget(0, colorTargetTex);
+
+			dx12::TextureTargetSet::CreateColorTargets(*swapChainParams->m_backbufferTargetSets[backbuffer]);
+
+			// Depth target:
+			std::shared_ptr<re::Texture> depthTargetTex =
+				std::make_shared<re::Texture>("SwapChainDepthTarget", depthParams);
+			dx12::Texture::Create(*depthTargetTex);
+
+			swapChainParams->m_backbufferTargetSets[backbuffer]->SetDepthStencilTarget(depthTargetTex);
+			
+			dx12::TextureTargetSet::CreateDepthStencilTarget(*swapChainParams->m_backbufferTargetSets[backbuffer]);
+
+			// Set default viewports and scissor rects. Note: This is NOT required, just included for clarity
+			swapChainParams->m_backbufferTargetSets[backbuffer]->Viewport() = re::Viewport(); // Defaults = 0, 0, xRes, yRes
+			swapChainParams->m_backbufferTargetSets[backbuffer]->ScissorRect() = re::ScissorRect(); // Defaults = 0, 0, long::max, long::max
+		}		
+	}
+}
 
 namespace dx12
 {
-	using Microsoft::WRL::ComPtr;
-
-
 	void SwapChain::Create(re::SwapChain& swapChain)
 	{
 		dx12::SwapChain::PlatformParams* const swapChainParams =
 			dynamic_cast<dx12::SwapChain::PlatformParams*>(swapChain.GetPlatformParams());
 
+		// Create our target set textures:
+		CreateSwapChainTargetSet(swapChainParams);
+		
 		// By default, prefer tearing enable and vsync disabled (best for variable refresh displays)
 		swapChainParams->m_tearingSupported = SwapChain::CheckTearingSupport();
 		swapChainParams->m_vsyncEnabled = !swapChainParams->m_tearingSupported;
-
-		SEAssert("Window cannot be null", en::CoreEngine::Get()->GetWindow());
-		win32::Window::PlatformParams* const windowPlatParams =
-			dynamic_cast<win32::Window::PlatformParams*>(en::CoreEngine::Get()->GetWindow()->GetPlatformParams());
-
-		const int width = en::Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
-		const int height = en::Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
-
-
-		// TODO: The context (currently) calls this function. We shouldn't be calling the context from here
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(re::RenderManager::Get()->GetContext().GetPlatformParams());
-
 
 		UINT createFactoryFlags = 0;
 #if defined(_DEBUG)
@@ -48,11 +101,21 @@ namespace dx12
 		HRESULT hr = CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory4));
 		CheckHResult(hr, "Failed to create DXGIFactory2");
 
+		// TODO: The context (currently) calls this function. We shouldn't be calling the context from here
+		dx12::Context::PlatformParams* const ctxPlatParams =
+			dynamic_cast<dx12::Context::PlatformParams*>(re::RenderManager::Get()->GetContext().GetPlatformParams());
+
+		const int width = en::Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
+		const int height = en::Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
+
+		dx12::TextureTargetSet::PlatformParams* const swapChainTargetSetParams =
+			dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(swapChainParams->m_backbufferTargetSets[0]->GetPlatformParams());
+
 		// Create our swap chain description:
 		DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
 		swapChainDesc.Width = width;
 		swapChainDesc.Height = height;
-		swapChainDesc.Format = swapChainParams->m_displayFormat;
+		swapChainDesc.Format = swapChainTargetSetParams->m_renderTargetFormats.RTFormats[0];
 		swapChainDesc.Stereo = FALSE; // We're not creating a stereo swap chain
 		swapChainDesc.SampleDesc = { 1, 0 }; // Mandatory value if NOT using a DX11-style bitblt swap chain
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // Specify back-buffer surface usage and CPU access
@@ -63,10 +126,14 @@ namespace dx12
 		swapChainDesc.Flags = CheckTearingSupport() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 
+		SEAssert("Window cannot be null", en::CoreEngine::Get()->GetWindow());
+		win32::Window::PlatformParams* const windowPlatParams =
+			dynamic_cast<win32::Window::PlatformParams*>(en::CoreEngine::Get()->GetWindow()->GetPlatformParams());
+
 		// Create the swap chain:
 		ComPtr<IDXGISwapChain1> swapChain1;
 		hr = dxgiFactory4->CreateSwapChainForHwnd(
-			ctxPlatParams->m_commandQueues[CommandQueue_DX12::Direct].GetD3DCommandQueue().Get(),
+			ctxPlatParams->m_commandQueues[CommandQueue_DX12::Direct].GetD3DCommandQueue(),
 			windowPlatParams->m_hWindow, // Window handle associated with the swap chain
 			&swapChainDesc, // Swap chain descriptor
 			nullptr, // Full-screen swap chain descriptor. Creates a window swap chain if null

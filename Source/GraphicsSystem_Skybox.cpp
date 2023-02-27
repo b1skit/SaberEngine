@@ -73,7 +73,7 @@ namespace gr
 			RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>());
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
 		m_skyboxStage.GetTextureTargetSet()->SetDepthStencilTarget(
-			gBufferGS->GetFinalTextureTargetSet()->DepthStencilTarget());
+			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget());
 
 		pipeline.AppendRenderStage(m_skyboxStage);
 	}
