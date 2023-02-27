@@ -227,19 +227,19 @@ namespace dx12
 		for (uint8_t i = 0; i < numBuffers; ++i)
 		{
 			// Get a pointer to the back-buffer:
-			ComPtr<ID3D12Resource> backBuffer;
-			HRESULT hr = swapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer));
+			ComPtr<ID3D12Resource> backbufferResource;
+			HRESULT hr = swapChain->GetBuffer(i, IID_PPV_ARGS(&backbufferResource));
 			CheckHResult(hr, "Failed to get backbuffer");
 
 			// Create the RTV:
 			device->CreateRenderTargetView(
-				backBuffer.Get(), // Pointer to the resource containing the render target texture
+				backbufferResource.Get(), // Pointer to the resource containing the render target texture
 				nullptr,  // Pointer to a render target view descriptor. nullptr = default
 				rtvHandle); // Descriptor destination
 
-			buffers[i] = backBuffer; // Store the backbuffer pointer obtained from the swap chain
+			buffers[i] = backbufferResource; // Store the backbuffer pointer obtained from the swap chain
 
-			rtvHandle.Offset(rtvDescriptorSize); // Stride to the next descriptor
+			rtvHandle.Offset(rtvDescriptorSize); // Internally strides to the next descriptor
 		}
 	}
 }

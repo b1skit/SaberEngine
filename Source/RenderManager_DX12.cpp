@@ -32,7 +32,7 @@ namespace
 
 	static std::shared_ptr<re::MeshPrimitive> k_helloTriangle = nullptr;
 
-	static std::shared_ptr<dx12::PipelineState> k_pipelineState;
+	static std::shared_ptr<dx12::PipelineState> k_pipelineState; // TODO: Move to the context!!!!!!
 
 
 	// TODO: Make this a platform function, and call it for all APIs during startup
