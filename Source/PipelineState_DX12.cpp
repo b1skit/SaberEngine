@@ -35,7 +35,7 @@ namespace
 
 	DXGI_FORMAT GetDefaultInputParameterFormat(std::string const& semantic)
 	{
-		static const std::unordered_map<std::string, DXGI_FORMAT> k_sematicToFormat =
+		static const std::unordered_map<std::string, DXGI_FORMAT> k_semanticToFormat =
 		{
 			{"POSITION",		DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
 			{"NORMAL",			DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
@@ -48,8 +48,8 @@ namespace
 			{"BLENDWEIGHT",		DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
 		};
 
-		auto const& result = k_sematicToFormat.find(semantic);
-		SEAssert("Invalid semantic name", result != k_sematicToFormat.end());
+		auto const& result = k_semanticToFormat.find(semantic);
+		SEAssert("Invalid semantic name", result != k_semanticToFormat.end());
 
 		return result->second;
 	}
