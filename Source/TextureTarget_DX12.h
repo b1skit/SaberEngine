@@ -31,7 +31,6 @@ public:
 
 		// Depth/stencil target: Depth buffer + descriptor heap for depth buffer		
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_depthBufferResource = nullptr;
-		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DSVHeap = nullptr; // ComPtr to an array of DSV descriptors
 
 		// Other target params:
 		D3D12_VIEWPORT m_viewport;

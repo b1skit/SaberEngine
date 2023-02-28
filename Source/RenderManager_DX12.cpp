@@ -172,7 +172,7 @@ namespace dx12
 		dx12::TextureTargetSet::PlatformParams* const depthTargetParams =
 			dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(swapChainParams->m_backbufferTargetSets[backbufferIdx]->GetPlatformParams());
 
-		D3D12_CPU_DESCRIPTOR_HANDLE depthStencilView = depthTargetParams->m_DSVHeap->GetCPUDescriptorHandleForHeapStart();
+		D3D12_CPU_DESCRIPTOR_HANDLE depthStencilView = ctxPlatParams->m_DSVHeap->GetCPUDescriptorHandleForHeapStart();
 
 		// Clear the render targets.
 		TransitionResource(

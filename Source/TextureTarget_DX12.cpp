@@ -67,7 +67,7 @@ namespace dx12
 		dsvHeapDesc.NumDescriptors = 1;
 		dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 		dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		HRESULT hr = device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&targetSetParams->m_DSVHeap));
+		HRESULT hr = device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&ctxPlatParams->m_DSVHeap));
 		CheckHResult(hr, "Failed to create descriptor heap");
 
 		const int width = en::Config::Get()->GetValue<int>("windowXRes");
@@ -110,7 +110,7 @@ namespace dx12
 		device->CreateDepthStencilView(
 			targetSetParams->m_depthBufferResource.Get(),
 			&dsv,
-			targetSetParams->m_DSVHeap->GetCPUDescriptorHandleForHeapStart());
+			ctxPlatParams->m_DSVHeap->GetCPUDescriptorHandleForHeapStart());
 	}
 
 

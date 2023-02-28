@@ -33,6 +33,8 @@ namespace dx12
 			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVDescHeap; // ComPtr to an array of RTV descriptors
 			uint32_t m_RTVDescSize; // Stride size of a single RTV descriptor/resource view
 			// NOTE: Currently, we create k_numFrames descriptors (1 for each frame) during Context::Create()
+
+			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DSVHeap = nullptr; // ComPtr to an array of DSV descriptors
 		};
 
 
