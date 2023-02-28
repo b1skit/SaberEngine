@@ -47,6 +47,7 @@ namespace
 			{"BLENDINDICES",	DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UINT},
 			{"BLENDWEIGHT",		DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
 		};
+		SEAssert("Missing semantics", k_semanticToFormat.size() == re::MeshPrimitive::Slot_CountNoIndices);
 
 		auto const& result = k_semanticToFormat.find(semantic);
 		SEAssert("Invalid semantic name", result != k_semanticToFormat.end());
@@ -69,6 +70,7 @@ namespace
 			{"BLENDINDICES0",	re::MeshPrimitive::Joints},
 			{"BLENDWEIGHT0",	re::MeshPrimitive::Weights},
 		};
+		SEAssert("Missing semantics", k_sematicToSlot.size() == re::MeshPrimitive::Slot_CountNoIndices);
 
 		const std::string semanticAndIndex = semantic + std::to_string(semanticIndex);
 

@@ -56,7 +56,8 @@ namespace re
 
 			Indexes		= 7, // uint32_t Note: NOT a valid binding location
 
-			Slot_Count
+			Slot_Count,
+			Slot_CountNoIndices = (Slot_Count - 1),
 		};
 		// Note: The order/indexing of this enum MUST match the vertex layout locations in SaberCommon.glsl, and be
 		// correctly mapped in PipelineState_DX12.cpp
