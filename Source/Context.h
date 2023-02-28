@@ -28,7 +28,7 @@ namespace re
 
 	public:
 		Context();
-		~Context() = default;
+		~Context() { Destroy(); }
 
 		re::SwapChain& GetSwapChain() { return m_swapChain; }
 		re::SwapChain const& GetSwapChain() const { return m_swapChain; }

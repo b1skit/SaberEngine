@@ -247,6 +247,13 @@ namespace dx12
 	}
 
 
+	void PipelineState::Destroy()
+	{
+		m_rootSignature = nullptr;
+		m_pipelineState = nullptr;		
+	}
+
+
 	ID3D12PipelineState* PipelineState::GetD3DPipelineState() const
 	{
 		return m_pipelineState.Get();

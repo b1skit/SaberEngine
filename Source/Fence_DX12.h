@@ -12,7 +12,7 @@ namespace dx12
 	{
 	public:
 		Fence_DX12();
-		~Fence_DX12() = default;
+		~Fence_DX12() { Destroy(); };
 
 		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice);
 		void Destroy();

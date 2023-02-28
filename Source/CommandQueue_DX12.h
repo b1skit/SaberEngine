@@ -28,7 +28,7 @@ namespace dx12
 
 	public:
 		CommandQueue_DX12();
-		~CommandQueue_DX12() = default;
+		~CommandQueue_DX12() { Destroy(); };
 
 		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, CommandListType type);
 		void Destroy();

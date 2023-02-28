@@ -14,7 +14,7 @@ namespace dx12
 	{
 	public:
 		Device_DX12();
-		~Device_DX12() = default;
+		~Device_DX12() { Destroy(); };
 
 		void Create();
 		void Destroy();

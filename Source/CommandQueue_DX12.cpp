@@ -86,6 +86,8 @@ namespace dx12
 	void CommandQueue_DX12::Destroy()
 	{
 		m_fence.Destroy();
+		m_commandQueue = nullptr;
+		m_deviceCache = nullptr;
 	}
 
 

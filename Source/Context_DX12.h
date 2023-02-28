@@ -37,9 +37,6 @@ namespace dx12
 
 
 	public:
-		Context();
-		~Context() = default;
-
 		static void Create(re::Context& context);
 		static void Destroy(re::Context& context);
 		static void Present(re::Context const& context);

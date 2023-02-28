@@ -25,6 +25,7 @@ namespace re
 	{
 		m_swapChain.Destroy();
 		platform::Context::Destroy(*this);
+		m_platformParams = nullptr;
 	}
 
 

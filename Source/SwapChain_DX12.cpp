@@ -156,9 +156,19 @@ namespace dx12
 	{
 		dx12::SwapChain::PlatformParams* const swapChainParams =
 			dynamic_cast<dx12::SwapChain::PlatformParams*>(swapChain.GetPlatformParams());
+		if (!swapChainParams)
+		{
+			return;
+		}
 
 		// Must exit fullscreen before releasing the swapchain
 		HRESULT hr = swapChainParams->m_swapChain->SetFullscreenState(false, NULL);
+
+		for (uint8_t backbuffer = 0; backbuffer < dx12::RenderManager::k_numFrames; backbuffer++)
+		{
+			swapChainParams->m_backBuffers[backbuffer] = nullptr;
+			swapChainParams->m_backbufferTargetSets[backbuffer] = nullptr;
+		}
 	}
 
 

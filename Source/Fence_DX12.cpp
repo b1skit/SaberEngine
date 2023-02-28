@@ -38,6 +38,8 @@ namespace dx12
 	void Fence_DX12::Destroy()
 	{
 		::CloseHandle(m_fenceEvent);
+		m_fence = nullptr;
+		m_fenceEvent = 0;
 	}
 
 

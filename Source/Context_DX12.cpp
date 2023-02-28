@@ -32,11 +32,6 @@ namespace dx12
 	}
 
 
-	Context::Context()
-	{
-	}
-
-
 	void Context::Create(re::Context& context)
 	{
 		dx12::Context::PlatformParams* const ctxPlatParams =
@@ -111,13 +106,17 @@ namespace dx12
 
 	void Context::Destroy(re::Context& context)
 	{
+		dx12::Context::PlatformParams* const ctxPlatParams =
+			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
+		if (!ctxPlatParams)
+		{
+			return;
+		}
+
 		// ImGui Cleanup:
 		ImGui_ImplDX12_Shutdown();
 		ImGui_ImplWin32_Shutdown();
-		ImGui::DestroyContext();
-
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
+		ImGui::DestroyContext();		
 
 		// Make sure our command queues have finished all commands before closing.
 		ctxPlatParams->m_commandQueues[CommandQueue_DX12::Copy].Flush();
@@ -125,6 +124,8 @@ namespace dx12
 		
 		ctxPlatParams->m_commandQueues[CommandQueue_DX12::Direct].Flush();
 		ctxPlatParams->m_commandQueues[CommandQueue_DX12::Direct].Destroy();
+
+		ctxPlatParams->m_RTVDescHeap = nullptr;
 
 		ctxPlatParams->m_device.Destroy();
 	}

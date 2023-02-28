@@ -23,6 +23,9 @@ namespace dx12
 	public:
 		PipelineState(gr::PipelineState const& grPipelineState, re::Shader* shader, re::TextureTargetSet* targetSet);
 
+		~PipelineState() { Destroy(); }
+
+		void Destroy();
 		
 		ID3D12PipelineState* GetD3DPipelineState() const;
 		ID3D12RootSignature* GetD3DRootSignature() const;

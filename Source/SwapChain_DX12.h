@@ -21,6 +21,7 @@ namespace dx12
 			// Pointers to our backbuffer resources
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_backBuffers[dx12::RenderManager::k_numFrames];
 			uint8_t m_backBufferIdx;
+			// TODO: These should be held by the backbuffer target set(s) ???
 
 			std::array<std::shared_ptr<re::TextureTargetSet>, dx12::RenderManager::k_numFrames> m_backbufferTargetSets;
 

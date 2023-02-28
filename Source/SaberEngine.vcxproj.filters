@@ -365,10 +365,10 @@
     <ClCompile Include="VertexStream_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
-    <ClCompile Include="Sampler_DX12.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PipelineState_DX12.cpp">
+      <Filter>Source Files\re\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Sampler_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
   </ItemGroup>
@@ -688,10 +688,10 @@
     <ClInclude Include="VertexStream_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="Sampler_DX12.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PipelineState_DX12.h">
+      <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="Sampler_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
   </ItemGroup>

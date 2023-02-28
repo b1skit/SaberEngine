@@ -21,6 +21,7 @@ namespace re
 	void SwapChain::Destroy()
 	{
 		platform::SwapChain::Destroy(*this);
+		m_platformParams = nullptr;
 	}
 
 
