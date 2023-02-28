@@ -8,6 +8,7 @@
 #include "CommandQueue_DX12.h"
 #include "Context.h"
 #include "Device_DX12.h"
+#include "PipelineState_DX12.h"
 #include "RenderManager_DX12.h"
 
 
@@ -35,6 +36,9 @@ namespace dx12
 			// NOTE: Currently, we create k_numFrames descriptors (1 for each frame) during Context::Create()
 
 			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DSVHeap = nullptr; // ComPtr to an array of DSV descriptors
+
+			// TODO: Precompute a library of all pipeline states needed at startup. For now, we just have a single PSO
+			std::shared_ptr<dx12::PipelineState> m_pipelineState;
 		};
 
 
@@ -42,6 +46,8 @@ namespace dx12
 		static void Create(re::Context& context);
 		static void Destroy(re::Context& context);
 		static void Present(re::Context const& context);
+		static std::shared_ptr<dx12::PipelineState> CreateAddPipelineState(
+			gr::PipelineState const&, re::Shader const&, D3D12_RT_FORMAT_ARRAY const& rtvFormats, const DXGI_FORMAT dsvFormat);
 		static void SetPipelineState(re::Context const& context, gr::PipelineState const& pipelineState);
 		static uint8_t GetMaxTextureInputs();
 		static uint8_t GetMaxColorTargets();

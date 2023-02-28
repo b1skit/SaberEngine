@@ -35,8 +35,7 @@ namespace re
 		explicit Shader(std::string const& extensionlessShaderFilename);
 		~Shader() { Destroy(); }
 			
-		inline PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
-		inline PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
+		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
 
 		inline std::vector<std::string>& ShaderKeywords() { return m_shaderKeywords; }

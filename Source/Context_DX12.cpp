@@ -79,7 +79,6 @@ namespace dx12
 		win32::Window::PlatformParams* const windowPlatParams =
 			dynamic_cast<win32::Window::PlatformParams*>(en::CoreEngine::Get()->GetWindow()->GetPlatformParams());
 
-
 		dx12::TextureTargetSet::PlatformParams* const swapChainTargetSetParams =
 			dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(swapChainParams->m_backbufferTargetSets[0]->GetPlatformParams());
 
@@ -163,6 +162,29 @@ namespace dx12
 	}
 
 
+	std::shared_ptr<dx12::PipelineState> Context::CreateAddPipelineState(
+		gr::PipelineState const& grPipelineState, 
+		re::Shader const& shader, 
+		D3D12_RT_FORMAT_ARRAY const& rtvFormats, 
+		const DXGI_FORMAT dsvFormat)
+	{
+		dx12::Context::PlatformParams* const ctxPlatParams =
+			dynamic_cast<dx12::Context::PlatformParams*>(re::RenderManager::Get()->GetContext().GetPlatformParams());
+
+		// TEMP HAX: For now, we just have a single PSO, so just hard-code it. TODO: Create a library of pre-computed
+		// PSOs at startup
+		ctxPlatParams->m_pipelineState = std::make_shared<dx12::PipelineState>(
+			grPipelineState,
+			&shader,
+			rtvFormats, 
+			dsvFormat);
+
+		LOG_ERROR("TODO: Implement dx12::Context::CreateAddPipelineState correctly");
+
+		return ctxPlatParams->m_pipelineState;
+	}
+
+
 	void Context::SetPipelineState(re::Context const& context, gr::PipelineState const& pipelineState)
 	{
 		SEAssertF("TODO: Implement this");
@@ -184,9 +206,8 @@ namespace dx12
 
 	CommandQueue_DX12& GetCommandQueue(CommandQueue_DX12::CommandListType type)
 	{
-		re::Context const& context = re::RenderManager::Get()->GetContext();
 		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
+			dynamic_cast<dx12::Context::PlatformParams*>(re::RenderManager::Get()->GetContext().GetPlatformParams());
 
 		return ctxPlatParams->m_commandQueues[type];
 	}

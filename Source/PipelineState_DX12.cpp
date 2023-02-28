@@ -188,10 +188,13 @@ namespace
 namespace dx12
 {
 	PipelineState::PipelineState(
-		gr::PipelineState const& grPipelineState, re::Shader* shader, re::TextureTargetSet* targetSet)
+		gr::PipelineState const& grPipelineState, 
+		re::Shader const* shader, 
+		D3D12_RT_FORMAT_ARRAY const& rtvFormats,
+		const DXGI_FORMAT dsvFormat)
 		: m_pipelineState(nullptr)
 	{
-		SEAssert("Arguments cannot be null", shader && targetSet);
+		SEAssert("Arguments cannot be null", shader);
 
 		dx12::Context::PlatformParams* const ctxPlatParams =
 			dynamic_cast<dx12::Context::PlatformParams*>(re::RenderManager::Get()->GetContext().GetPlatformParams());
@@ -224,12 +227,10 @@ namespace dx12
 			pipelineStateStream.primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 			pipelineStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[dx12::Shader::Vertex].Get());
 			pipelineStateStream.pShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[dx12::Shader::Pixel].Get());
-			
-			dx12::TextureTargetSet::PlatformParams* const targetSetParams =
-				dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(targetSet->GetPlatformParams());
 
-			pipelineStateStream.DSVFormat = targetSetParams->m_depthTargetFormat;
-			pipelineStateStream.RTVFormats = targetSetParams->m_renderTargetFormats;
+			pipelineStateStream.RTVFormats = rtvFormats;
+			pipelineStateStream.DSVFormat = dsvFormat;
+			
 			pipelineStateStream.rasterizer = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
 
 			D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc =

@@ -21,7 +21,8 @@ namespace dx12
 	class PipelineState
 	{
 	public:
-		PipelineState(gr::PipelineState const& grPipelineState, re::Shader* shader, re::TextureTargetSet* targetSet);
+		PipelineState(
+			gr::PipelineState const&, re::Shader const*, D3D12_RT_FORMAT_ARRAY const& rtvFormats, const DXGI_FORMAT dsvFormat);
 
 		~PipelineState() { Destroy(); }
 

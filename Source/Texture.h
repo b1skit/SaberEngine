@@ -29,7 +29,7 @@ namespace re
 
 
 	public:
-		enum class Usage
+		enum class Usage // Currently just used to assert correct/intended usage
 		{
 			Color,
 			ColorTarget,

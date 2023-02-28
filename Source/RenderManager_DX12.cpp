@@ -32,8 +32,6 @@ namespace
 
 	static std::shared_ptr<re::MeshPrimitive> k_helloTriangle = nullptr;
 
-	static std::shared_ptr<dx12::PipelineState> k_pipelineState; // TODO: Move to the context!!!!!!
-
 
 	// TODO: Make this a platform function, and call it for all APIs during startup
 	bool CreateAPIResources()
@@ -58,16 +56,17 @@ namespace
 			dynamic_cast<dx12::SwapChain::PlatformParams*>(context.GetSwapChain().GetPlatformParams());
 
 
-
 		// Create a pipeline state:
+		// TODO: We shouldn't be using target sets for the backbuffer
+		dx12::TextureTargetSet::PlatformParams* const swapChainTargetSetPlatParams =
+			dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(swapChainParams->m_backbufferTargetSets[0]->GetPlatformParams());
+
 		gr::PipelineState defaultGrPipelineState{}; // Temp hax: Use a default gr::PipelineState
-
-		k_pipelineState = std::make_shared<dx12::PipelineState>(
-			defaultGrPipelineState, 
-			k_helloShader.get(), 
-			swapChainParams->m_backbufferTargetSets[0].get());
-		// TODO: Move PipelineState object(s) to the Context!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+		std::shared_ptr<dx12::PipelineState> pso = dx12::Context::CreateAddPipelineState(
+			defaultGrPipelineState,
+			*k_helloShader, 
+			swapChainTargetSetPlatParams->m_renderTargetFormats,
+			swapChainTargetSetPlatParams->m_depthTargetFormat);
 
 
 		// Execute command queue, and wait for it to be done (blocking)
@@ -191,10 +190,10 @@ namespace dx12
 		ClearRTV(commandList, renderTargetView, clearColor);
 		ClearDepth(commandList, depthStencilView, 1.f);
 
-
+		
 		// Set the pipeline state:
-		commandList->SetPipelineState(k_pipelineState->GetD3DPipelineState());
-		commandList->SetGraphicsRootSignature(k_pipelineState->GetD3DRootSignature());
+		commandList->SetPipelineState(ctxPlatParams->m_pipelineState->GetD3DPipelineState());
+		commandList->SetGraphicsRootSignature(ctxPlatParams->m_pipelineState->GetD3DRootSignature());
 
 		// TEMP HAX: Get the position buffer/buffer view:
 		dx12::VertexStream::PlatformParams_Vertex* const positionPlatformParams =
