@@ -25,12 +25,9 @@ class TextureTargetSet
 public:
 	struct PlatformParams final : public virtual re::TextureTargetSet::PlatformParams
 	{
-		// Color targets:
+		// Target formats (cached during CreateColorTargets/CreateDepthStencilTarget):
 		D3D12_RT_FORMAT_ARRAY m_renderTargetFormats;
 		DXGI_FORMAT m_depthTargetFormat;
-
-		// Depth/stencil target: Depth buffer + descriptor heap for depth buffer		
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_depthBufferResource = nullptr;
 
 		// Other target params:
 		D3D12_VIEWPORT m_viewport;

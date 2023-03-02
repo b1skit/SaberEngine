@@ -36,6 +36,8 @@ namespace dx12
 			{
 				targetSetParams->m_renderTargetFormats.RTFormats[formatSlot++] = 
 					dx12::Texture::GetTextureFormat(colorTarget.GetTexture()->GetTextureParams());
+
+				dx12::Texture::Create(*colorTarget.GetTexture());
 			}			
 		}
 		SEAssert("NumRenderTargets must equal the number of format slots set", formatSlot == numColorTargets);
@@ -44,73 +46,22 @@ namespace dx12
 
 	void TextureTargetSet::CreateDepthStencilTarget(re::TextureTargetSet& targetSet)
 	{
-		// NOTE: We assume the depth buffer is not in use. If this ever changes (eg. we're recreating the depth buffer,
-		// and it may still be in flight, we should ensure we flush all commands that might reference it first
+		SEAssert("Cannot create depth stencil if target set has no depth target", targetSet.HasDepthTarget());
 
-		dx12::TextureTargetSet::PlatformParams* const targetSetParams =
+		dx12::TextureTargetSet::PlatformParams* targetSetParams =
 			dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(targetSet.GetPlatformParams());
 
 		// Note: We handle this differently in OpenGL; Putting this here to help with debugging for now
 		SEAssert("Depth target is already created", !targetSetParams->m_depthIsCreated);
 		targetSetParams->m_depthIsCreated = true;
 
+		SEAssert("Target has the wrong usage type", 
+			targetSet.GetDepthStencilTarget().GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::DepthTarget);
+
+		dx12::Texture::Create(*targetSet.GetDepthStencilTarget().GetTexture());		
+
 		targetSetParams->m_depthTargetFormat = 
 			dx12::Texture::GetTextureFormat(targetSet.GetDepthStencilTarget().GetTexture()->GetTextureParams());
-
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(re::RenderManager::Get()->GetContext().GetPlatformParams());
-
-		// Create the descriptor heap for the depth-stencil view:
-		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
-
-		D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-		dsvHeapDesc.NumDescriptors = 1;
-		dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-		dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		HRESULT hr = device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&ctxPlatParams->m_DSVHeap));
-		CheckHResult(hr, "Failed to create descriptor heap");
-
-		const int width = en::Config::Get()->GetValue<int>("windowXRes");
-		const int height = en::Config::Get()->GetValue<int>("windowYRes");
-		SEAssert("Invalid dimensions", width >= 1 && height >= 1);
-
-		// Create a depth buffer.
-		D3D12_CLEAR_VALUE optimizedClearValue = {};
-		optimizedClearValue.Format = targetSetParams->m_depthTargetFormat;
-		optimizedClearValue.DepthStencil = { 1.0f, 0 };
-
-		CD3DX12_HEAP_PROPERTIES depthHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-
-		CD3DX12_RESOURCE_DESC depthResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-			targetSetParams->m_depthTargetFormat,
-			width,
-			height,
-			1,
-			0,
-			1,
-			0,
-			D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-
-		hr = device->CreateCommittedResource(
-			&depthHeapProperties,
-			D3D12_HEAP_FLAG_NONE,
-			&depthResourceDesc,
-			D3D12_RESOURCE_STATE_DEPTH_WRITE,
-			&optimizedClearValue,
-			IID_PPV_ARGS(&targetSetParams->m_depthBufferResource)
-		);
-
-		// Update the depth-stencil view
-		D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-		dsv.Format = targetSetParams->m_depthTargetFormat;
-		dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-		dsv.Texture2D.MipSlice = 0;
-		dsv.Flags = D3D12_DSV_FLAG_NONE;
-
-		device->CreateDepthStencilView(
-			targetSetParams->m_depthBufferResource.Get(),
-			&dsv,
-			ctxPlatParams->m_DSVHeap->GetCPUDescriptorHandleForHeapStart());
 	}
 
 

@@ -36,6 +36,7 @@ namespace dx12
 			// NOTE: Currently, we create k_numFrames descriptors (1 for each frame) during Context::Create()
 
 			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DSVHeap = nullptr; // ComPtr to an array of DSV descriptors
+			uint32_t m_DSVDescSize;
 
 			// TODO: Precompute a library of all pipeline states needed at startup. For now, we just have a single PSO
 			std::shared_ptr<dx12::PipelineState> m_pipelineState;
@@ -58,10 +59,6 @@ namespace dx12
 
 		static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(
 			Microsoft::WRL::ComPtr<ID3D12Device2> device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors);
-
-		static void UpdateRenderTargetViews(Microsoft::WRL::ComPtr<ID3D12Device2> device,
-			Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain, Microsoft::WRL::ComPtr<ID3D12Resource>* buffers, 
-			uint8_t numBuffers, Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap);
 
 		// TODO:
 		// Add a helper wrapper to get:

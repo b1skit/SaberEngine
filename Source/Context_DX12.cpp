@@ -43,13 +43,29 @@ namespace dx12
 
 		// TODO: Create/support more command queue types
 
+		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+
 		ctxPlatParams->m_commandQueues[CommandQueue_DX12::CommandListType::Direct].Create(
-			ctxPlatParams->m_device.GetD3DDisplayDevice(),
-			CommandQueue_DX12::CommandListType::Direct);
+			device, CommandQueue_DX12::CommandListType::Direct);
 
 		ctxPlatParams->m_commandQueues[CommandQueue_DX12::CommandListType::Copy].Create(
+			device, CommandQueue_DX12::CommandListType::Copy);
+
+
+		// RTV Descriptor Heap:
+		ctxPlatParams->m_RTVDescHeap = CreateDescriptorHeap(
+			device,
+			D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+			dx12::RenderManager::k_numFrames); // TODO: We're going to need more RTV descriptors!!!!!!
+		ctxPlatParams->m_RTVDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		
+
+		// DSV Descriptor Heap:
+		ctxPlatParams->m_DSVHeap = CreateDescriptorHeap(
 			ctxPlatParams->m_device.GetD3DDisplayDevice(),
-			CommandQueue_DX12::CommandListType::Copy);
+			D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+			1); // TODO: We're going to need more DSV descriptors!!!!!!
+		ctxPlatParams->m_DSVDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
 
 		// NOTE: Currently, this call retrieves m_commandQueue from the Context platform params
@@ -59,21 +75,6 @@ namespace dx12
 		dx12::SwapChain::PlatformParams* const swapChainParams =
 			dynamic_cast<dx12::SwapChain::PlatformParams*>(context.GetSwapChain().GetPlatformParams());
 
-
-		ctxPlatParams->m_RTVDescHeap = CreateDescriptorHeap(
-			ctxPlatParams->m_device.GetD3DDisplayDevice(),
-			D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 
-			dx12::RenderManager::k_numFrames);
-		
-		ctxPlatParams->m_RTVDescSize = 
-			ctxPlatParams->m_device.GetD3DDisplayDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-		UpdateRenderTargetViews(
-			ctxPlatParams->m_device.GetD3DDisplayDevice(),
-			swapChainParams->m_swapChain,
-			swapChainParams->m_backBuffers,
-			dx12::RenderManager::k_numFrames,
-			ctxPlatParams->m_RTVDescHeap);
 
 		SEAssert("Window pointer cannot be null", en::CoreEngine::Get()->GetWindow());
 		win32::Window::PlatformParams* const windowPlatParams =
@@ -125,6 +126,7 @@ namespace dx12
 		ctxPlatParams->m_commandQueues[CommandQueue_DX12::Direct].Destroy();
 
 		ctxPlatParams->m_RTVDescHeap = nullptr;
+		ctxPlatParams->m_DSVHeap = nullptr;
 
 		ctxPlatParams->m_device.Destroy();
 	}
@@ -230,38 +232,5 @@ namespace dx12
 		CheckHResult(hr, "Failed to create descriptor heap");
 
 		return descriptorHeap;
-	}
-
-
-	void Context::UpdateRenderTargetViews(
-		ComPtr<ID3D12Device2> device,
-		ComPtr<IDXGISwapChain4> swapChain, 
-		ComPtr<ID3D12Resource>* buffers, 
-		uint8_t numBuffers, 
-		ComPtr<ID3D12DescriptorHeap> descriptorHeap)
-	{
-		// The size of a single descriptor is vendor-specific, so we retrieve it here:
-		uint32_t rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-		// Get a pointer/handle to the 1st descriptor in our heap:
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(descriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
-		for (uint8_t i = 0; i < numBuffers; ++i)
-		{
-			// Get a pointer to the back-buffer:
-			ComPtr<ID3D12Resource> backbufferResource;
-			HRESULT hr = swapChain->GetBuffer(i, IID_PPV_ARGS(&backbufferResource));
-			CheckHResult(hr, "Failed to get backbuffer");
-
-			// Create the RTV:
-			device->CreateRenderTargetView(
-				backbufferResource.Get(), // Pointer to the resource containing the render target texture
-				nullptr,  // Pointer to a render target view descriptor. nullptr = default
-				rtvHandle); // Descriptor destination
-
-			buffers[i] = backbufferResource; // Store the backbuffer pointer obtained from the swap chain
-
-			rtvHandle.Offset(rtvDescriptorSize); // Internally strides to the next descriptor
-		}
 	}
 }

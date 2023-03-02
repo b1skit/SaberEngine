@@ -171,6 +171,7 @@ namespace dx12
 		dx12::TextureTargetSet::PlatformParams* const depthTargetParams =
 			dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(swapChainParams->m_backbufferTargetSets[backbufferIdx]->GetPlatformParams());
 
+		// TODO: MANAGE DESCRIPTOR POINTERS INSTEAD OF JUST USING THE FIRST ONE IN THE HEAP
 		D3D12_CPU_DESCRIPTOR_HANDLE depthStencilView = ctxPlatParams->m_DSVHeap->GetCPUDescriptorHandleForHeapStart();
 
 		// Clear the render targets.
