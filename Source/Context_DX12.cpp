@@ -59,6 +59,7 @@ namespace dx12
 			dx12::RenderManager::k_numFrames); // TODO: We're going to need more RTV descriptors!!!!!!
 		ctxPlatParams->m_RTVDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		
+		LOG("RTV descriptor size is %dB", ctxPlatParams->m_RTVDescSize);
 
 		// DSV Descriptor Heap:
 		ctxPlatParams->m_DSVHeap = CreateDescriptorHeap(
@@ -67,6 +68,7 @@ namespace dx12
 			1); // TODO: We're going to need more DSV descriptors!!!!!!
 		ctxPlatParams->m_DSVDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
+		LOG("DSV descriptor size is %dB", ctxPlatParams->m_DSVDescSize);
 
 		// NOTE: Currently, this call retrieves m_commandQueue from the Context platform params
 		// TODO: Clean this up, it's gross.
