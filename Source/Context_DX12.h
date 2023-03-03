@@ -16,6 +16,10 @@ namespace dx12
 {
 	class Context
 	{
+	public:
+		static constexpr uint32_t k_numRTVDescriptors = dx12::RenderManager::k_numFrames;
+		static constexpr uint32_t k_numDSVDescriptors = 1;
+		// TODO: Move these to a descriptor heap manager, and choose sensible larger values
 
 	public:
 		struct PlatformParams final : public virtual re::Context::PlatformParams

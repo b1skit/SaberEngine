@@ -56,7 +56,7 @@ namespace dx12
 		ctxPlatParams->m_RTVDescHeap = CreateDescriptorHeap(
 			device,
 			D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-			dx12::RenderManager::k_numFrames); // TODO: We're going to need more RTV descriptors!!!!!!
+			k_numRTVDescriptors); // TODO: We're going to need more RTV descriptors!!!!!!
 		ctxPlatParams->m_RTVDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		
 		LOG("RTV descriptor size is %dB", ctxPlatParams->m_RTVDescSize);
@@ -65,7 +65,7 @@ namespace dx12
 		ctxPlatParams->m_DSVHeap = CreateDescriptorHeap(
 			ctxPlatParams->m_device.GetD3DDisplayDevice(),
 			D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-			1); // TODO: We're going to need more DSV descriptors!!!!!!
+			k_numDSVDescriptors); // TODO: We're going to need more DSV descriptors!!!!!!
 		ctxPlatParams->m_DSVDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
 		LOG("DSV descriptor size is %dB", ctxPlatParams->m_DSVDescSize);
