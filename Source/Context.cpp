@@ -35,12 +35,6 @@ namespace re
 	}
 
 
-	void Context::SetPipelineState(gr::PipelineState const& pipelineState)
-	{
-		platform::Context::SetPipelineState(*this, pipelineState);
-	}
-
-
 	uint8_t Context::GetMaxTextureInputs() const
 	{
 		return platform::Context::GetMaxTextureInputs();

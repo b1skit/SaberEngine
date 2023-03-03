@@ -39,7 +39,6 @@ namespace platform
 	void (*platform::Context::Create)(re::Context& context) = nullptr;
 	void (*platform::Context::Destroy)(re::Context& context) = nullptr;
 	void (*platform::Context::Present)(re::Context const& context) = nullptr;
-	void (*platform::Context::SetPipelineState)(re::Context const& context, gr::PipelineState const& pipelineState) = nullptr;
 	uint8_t (*platform::Context::GetMaxTextureInputs)() = nullptr;
 	uint8_t (*platform::Context::GetMaxColorTargets)() = nullptr;
 }

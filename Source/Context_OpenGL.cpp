@@ -325,6 +325,10 @@ namespace opengl
 	{
 		opengl::Context::PlatformParams* const contextPlatformParams =
 			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
+		if (!contextPlatformParams)
+		{
+			return;
+		}
 
 		// Imgui cleanup
 		::ImGui_ImplOpenGL3_Shutdown();

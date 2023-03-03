@@ -159,7 +159,7 @@ namespace
 			0,
 			0,
 			D3D12_SHADER_VISIBILITY_VERTEX);
-		// TODO: ^^^ Handle populating root params (just use them for now)!!!!!!!!!!!!!!!!!!!!!!!!!!
+		// TODO: ^^^ Handle setting constants in the root params (just use them for now)!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 		// Create the root signature description:

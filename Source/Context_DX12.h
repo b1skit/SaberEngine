@@ -53,7 +53,6 @@ namespace dx12
 		static void Present(re::Context const& context);
 		static std::shared_ptr<dx12::PipelineState> CreateAddPipelineState(
 			gr::PipelineState const&, re::Shader const&, D3D12_RT_FORMAT_ARRAY const& rtvFormats, const DXGI_FORMAT dsvFormat);
-		static void SetPipelineState(re::Context const& context, gr::PipelineState const& pipelineState);
 		static uint8_t GetMaxTextureInputs();
 		static uint8_t GetMaxColorTargets();
 

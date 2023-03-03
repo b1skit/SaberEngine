@@ -56,7 +56,7 @@ namespace dx12
 		ctxPlatParams->m_RTVDescHeap = CreateDescriptorHeap(
 			device,
 			D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-			k_numRTVDescriptors); // TODO: We're going to need more RTV descriptors!!!!!!
+			k_numRTVDescriptors);
 		ctxPlatParams->m_RTVDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		
 		LOG("RTV descriptor size is %dB", ctxPlatParams->m_RTVDescSize);
@@ -65,7 +65,7 @@ namespace dx12
 		ctxPlatParams->m_DSVHeap = CreateDescriptorHeap(
 			ctxPlatParams->m_device.GetD3DDisplayDevice(),
 			D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-			k_numDSVDescriptors); // TODO: We're going to need more DSV descriptors!!!!!!
+			k_numDSVDescriptors);
 		ctxPlatParams->m_DSVDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
 		LOG("DSV descriptor size is %dB", ctxPlatParams->m_DSVDescSize);
@@ -186,12 +186,6 @@ namespace dx12
 		LOG_ERROR("TODO: Implement dx12::Context::CreateAddPipelineState correctly");
 
 		return ctxPlatParams->m_pipelineState;
-	}
-
-
-	void Context::SetPipelineState(re::Context const& context, gr::PipelineState const& pipelineState)
-	{
-		SEAssertF("TODO: Implement this");
 	}
 
 

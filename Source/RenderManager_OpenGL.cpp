@@ -6,6 +6,7 @@
 #include "backends/imgui_impl_opengl3.h"
 
 #include "Camera.h"
+#include "Context_OpenGL.h"
 #include "GraphicsSystem.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_DeferredLighting.h"
@@ -120,7 +121,7 @@ namespace opengl
 				opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
 				
 				// Configure the pipeline state:
-				renderManager.m_context.SetPipelineState(stagePipelineParams);
+				opengl::Context::SetPipelineState(renderManager.m_context, stagePipelineParams);
 
 				// Bind the shader now that the pipeline state is set:
 				std::shared_ptr<re::Shader> stageShader = renderStage->GetStageShader();

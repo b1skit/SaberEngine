@@ -18,9 +18,7 @@ using glm::vec4;
 #include "MeshPrimitive_DX12.h"
 #include "VertexStream_DX12.h"
 #include "Debug_DX12.h"
-#include "Config.h"
 #include "Shader_DX12.h"
-#include "PipelineState_DX12.h"
 #include "TextureTarget_DX12.h"
 
 
@@ -57,12 +55,12 @@ namespace
 
 
 		// Create a pipeline state:
-		// TODO: We shouldn't be using target sets for the backbuffer
+		// TODO: We should be creating a library of these at startup
 		dx12::TextureTargetSet::PlatformParams* const swapChainTargetSetPlatParams =
 			dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(swapChainParams->m_backbufferTargetSets[0]->GetPlatformParams());
 
 		gr::PipelineState defaultGrPipelineState{}; // Temp hax: Use a default gr::PipelineState
-		std::shared_ptr<dx12::PipelineState> pso = dx12::Context::CreateAddPipelineState(
+		dx12::Context::CreateAddPipelineState(
 			defaultGrPipelineState,
 			*k_helloShader, 
 			swapChainTargetSetPlatParams->m_renderTargetFormats,
@@ -84,6 +82,7 @@ namespace
 	}
 
 
+	// TODO: Should this be a member of a command list wrapper?
 	void TransitionResource(
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
 		Microsoft::WRL::ComPtr<ID3D12Resource> resource,

@@ -91,7 +91,6 @@ namespace platform
 			platform::Context::Create				= &opengl::Context::Create;
 			platform::Context::Destroy				= &opengl::Context::Destroy;
 			platform::Context::Present				= &opengl::Context::Present;
-			platform::Context::SetPipelineState		= &opengl::Context::SetPipelineState;
 			platform::Context::GetMaxTextureInputs	= &opengl::Context::GetMaxTextureInputs;
 			platform::Context::GetMaxColorTargets	= &opengl::Context::GetMaxColorTargets;
 			

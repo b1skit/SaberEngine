@@ -33,6 +33,11 @@ namespace opengl
 		opengl::SwapChain::PlatformParams* const swapChainParams =
 			dynamic_cast<opengl::SwapChain::PlatformParams*>(swapChain.GetPlatformParams());
 
+		if (!swapChainParams)
+		{
+			return;
+		}
+
 		swapChainParams->m_backbufferTargetSet = nullptr;
 	}
 
