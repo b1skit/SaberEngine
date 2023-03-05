@@ -32,7 +32,7 @@ namespace opengl
 
 
 	public:
-		struct PlatformParams final : public virtual re::Shader::PlatformParams
+		struct PlatformParams final : public re::Shader::PlatformParams
 		{
 			std::vector<std::string> m_shaderTexts;
 

@@ -140,8 +140,7 @@ namespace opengl
 {
 	void Shader::Create(re::Shader& shader)
 	{
-		opengl::Shader::PlatformParams* const params =
-			dynamic_cast<opengl::Shader::PlatformParams* const>(shader.GetPlatformParams());
+		opengl::Shader::PlatformParams* params = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams*>();
 
 		if (params->m_isCreated)
 		{
@@ -382,8 +381,7 @@ namespace opengl
 
 	void Shader::Destroy(re::Shader& shader)
 	{
-		PlatformParams* const params =
-			dynamic_cast<opengl::Shader::PlatformParams* const>(shader.GetPlatformParams());
+		PlatformParams* params = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams*>();
 
 		glDeleteProgram(params->m_shaderReference);
 		params->m_shaderReference = 0;
@@ -396,8 +394,8 @@ namespace opengl
 		// Ensure the shader is created
 		opengl::Shader::Create(shader);
 
-		opengl::Shader::PlatformParams const* const params =
-			dynamic_cast<opengl::Shader::PlatformParams const* const>(shader.GetPlatformParams());
+		opengl::Shader::PlatformParams const* params = 
+			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
 
 		glUseProgram(params->m_shaderReference);
 	}
@@ -413,8 +411,7 @@ namespace opengl
 		// Ensure the shader is created
 		opengl::Shader::Create(shader);
 
-		PlatformParams const* const params =
-			dynamic_cast<opengl::Shader::PlatformParams const* const>(shader.GetPlatformParams());
+		PlatformParams const* params = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
 
 		// Track if the current shader is bound or not, so we can set values without breaking the current state
 		GLint currentProgram = 0;
@@ -510,8 +507,8 @@ namespace opengl
 
 		// TODO: Handle non-permanent parameter blocks. For now, just bind without considering if the data has changed
 
-		opengl::Shader::PlatformParams const* const shaderPlatformParams =
-			dynamic_cast<opengl::Shader::PlatformParams const* const>(shader.GetPlatformParams());
+		opengl::Shader::PlatformParams const* shaderPlatformParams = 
+			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
 
 		// Track if the current shader is bound or not, so we can set values without breaking the current state
 		GLint currentProgram = 0;
@@ -573,8 +570,8 @@ namespace opengl
 
 	void Shader::LoadShaderTexts(re::Shader& shader)
 	{
-		opengl::Shader::PlatformParams* const shaderPlatformParams =
-			dynamic_cast<opengl::Shader::PlatformParams* const>(shader.GetPlatformParams());
+		opengl::Shader::PlatformParams* shaderPlatformParams = 
+			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams*>();
 
 		std::vector<std::string>& shaderTexts = shaderPlatformParams->m_shaderTexts;
 		shaderTexts.clear();

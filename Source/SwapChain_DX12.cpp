@@ -27,9 +27,8 @@ namespace
 		re::Texture::TextureParams const& colorParams,
 		re::Texture::TextureParams const& depthParams)
 	{
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(re::RenderManager::Get()->GetContext().GetPlatformParams());
-
+		dx12::Context::PlatformParams* ctxPlatParams = 
+			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		// TEMP HAX!!!
 		// TODO: GET AN RTV HANDLE IN A LESS BRITTLE WAY!
@@ -81,8 +80,8 @@ namespace dx12
 {
 	void SwapChain::Create(re::SwapChain& swapChain)
 	{
-		dx12::SwapChain::PlatformParams* const swapChainParams =
-			dynamic_cast<dx12::SwapChain::PlatformParams*>(swapChain.GetPlatformParams());
+		dx12::SwapChain::PlatformParams* swapChainParams =
+			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 		
 		// By default, prefer tearing enable and vsync disabled (best for variable refresh displays)
 		swapChainParams->m_tearingSupported = SwapChain::CheckTearingSupport();
@@ -99,8 +98,8 @@ namespace dx12
 		CheckHResult(hr, "Failed to create DXGIFactory2");
 
 		// TODO: The context (currently) calls this function. We shouldn't be calling the context from here
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(re::RenderManager::Get()->GetContext().GetPlatformParams());
+		dx12::Context::PlatformParams* ctxPlatParams =
+			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		const int width = en::Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
 		const int height = en::Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
@@ -137,8 +136,8 @@ namespace dx12
 
 
 		SEAssert("Window cannot be null", en::CoreEngine::Get()->GetWindow());
-		win32::Window::PlatformParams* const windowPlatParams =
-			dynamic_cast<win32::Window::PlatformParams*>(en::CoreEngine::Get()->GetWindow()->GetPlatformParams());
+		win32::Window::PlatformParams* windowPlatParams =
+			en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 		// Create the swap chain:
 		ComPtr<IDXGISwapChain1> swapChain1;
@@ -179,8 +178,8 @@ namespace dx12
 
 	void SwapChain::Destroy(re::SwapChain& swapChain)
 	{
-		dx12::SwapChain::PlatformParams* const swapChainParams =
-			dynamic_cast<dx12::SwapChain::PlatformParams*>(swapChain.GetPlatformParams());
+		dx12::SwapChain::PlatformParams* swapChainParams =
+			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 		if (!swapChainParams)
 		{
 			return;
@@ -218,8 +217,8 @@ namespace dx12
 
 	void SwapChain::SetVSyncMode(re::SwapChain const& swapChain, bool enabled)
 	{
-		dx12::SwapChain::PlatformParams* const swapchainParams =
-			dynamic_cast<dx12::SwapChain::PlatformParams*>(swapChain.GetPlatformParams());
+		dx12::SwapChain::PlatformParams* swapchainParams =
+			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
 		swapchainParams->m_vsyncEnabled = enabled;
 	}
@@ -227,8 +226,8 @@ namespace dx12
 
 	uint8_t SwapChain::GetBackBufferIdx(re::SwapChain const& swapChain)
 	{
-		dx12::SwapChain::PlatformParams* const swapChainPlatParams =
-			dynamic_cast<dx12::SwapChain::PlatformParams*>(swapChain.GetPlatformParams());
+		dx12::SwapChain::PlatformParams* swapChainPlatParams = 
+			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
 		return swapChainPlatParams->m_backBufferIdx;
 	}
@@ -236,11 +235,11 @@ namespace dx12
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> SwapChain::GetBackBufferResource(re::SwapChain const& swapChain)
 	{
-		dx12::SwapChain::PlatformParams* const swapChainPlatParams =
-			dynamic_cast<dx12::SwapChain::PlatformParams*>(swapChain.GetPlatformParams());
+		dx12::SwapChain::PlatformParams* swapChainPlatParams = 
+			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
-		dx12::Texture::PlatformParams* const backbufferColorTexPlatParams = dynamic_cast<dx12::Texture::PlatformParams*>(
-			swapChainPlatParams->m_backbufferTargetSets[swapChainPlatParams->m_backBufferIdx]->GetColorTarget(0).GetTexture()->GetPlatformParams());
+		dx12::Texture::PlatformParams const* backbufferColorTexPlatParams = 
+			swapChainPlatParams->m_backbufferTargetSets[swapChainPlatParams->m_backBufferIdx]->GetColorTarget(0).GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		return backbufferColorTexPlatParams->m_textureResource;
 	}

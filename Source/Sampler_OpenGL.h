@@ -12,7 +12,7 @@ namespace opengl
 	class Sampler
 	{
 	public:
-		struct PlatformParams final : public virtual re::Sampler::PlatformParams
+		struct PlatformParams final : public re::Sampler::PlatformParams
 		{
 			PlatformParams(re::Sampler::SamplerParams const& samplerParams);
 			~PlatformParams() override;

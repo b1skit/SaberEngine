@@ -8,8 +8,7 @@ namespace opengl
 {
 	void ParameterBlock::Create(re::ParameterBlock& paramBlock)
 	{
-		PlatformParams* const params =
-			dynamic_cast<opengl::ParameterBlock::PlatformParams* const>(paramBlock.GetPlatformParams());
+		PlatformParams* params = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
 
 		if (params->m_isCreated)
 		{
@@ -39,8 +38,7 @@ namespace opengl
 
 	void ParameterBlock::Update(re::ParameterBlock& paramBlock)
 	{
-		PlatformParams* const params =
-			dynamic_cast<opengl::ParameterBlock::PlatformParams* const>(paramBlock.GetPlatformParams());
+		PlatformParams* params = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
 
 		// Ensure the PB is created before we attempt to update it
 		opengl::ParameterBlock::Create(paramBlock);
@@ -55,8 +53,7 @@ namespace opengl
 
 	void ParameterBlock::Destroy(re::ParameterBlock& paramBlock)
 	{
-		PlatformParams* const params =
-			dynamic_cast<opengl::ParameterBlock::PlatformParams* const>(paramBlock.GetPlatformParams());
+		PlatformParams* const params = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
 
 		glDeleteBuffers(1, &params->m_ssbo);
 		params->m_ssbo = 0;
@@ -68,8 +65,7 @@ namespace opengl
 		// Ensure the PB is created before we attempt to bind it
 		opengl::ParameterBlock::Create(paramBlock);
 
-		PlatformParams* const params =
-			dynamic_cast<opengl::ParameterBlock::PlatformParams* const>(paramBlock.GetPlatformParams());
+		PlatformParams* params = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
 		 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindIndex, params->m_ssbo);
 	}

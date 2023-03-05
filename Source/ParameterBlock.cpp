@@ -56,8 +56,7 @@ namespace re
 
 	void ParameterBlock::Destroy()
 	{
-		re::ParameterBlock::PlatformParams* const params =
-			dynamic_cast<re::ParameterBlock::PlatformParams* const>(GetPlatformParams());
+		re::ParameterBlock::PlatformParams* params = GetPlatformParams()->As<re::ParameterBlock::PlatformParams*>();
 		if (params->m_isCreated)
 		{
 			platform::ParameterBlock::Destroy(*this);

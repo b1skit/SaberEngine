@@ -12,7 +12,7 @@ namespace dx12
 class TextureTarget
 {
 public:
-	struct PlatformParams final : public virtual re::TextureTarget::PlatformParams
+	struct PlatformParams final : public re::TextureTarget::PlatformParams
 	{
 
 	};
@@ -23,7 +23,7 @@ public:
 class TextureTargetSet
 {
 public:
-	struct PlatformParams final : public virtual re::TextureTargetSet::PlatformParams
+	struct PlatformParams final : public re::TextureTargetSet::PlatformParams
 	{
 		// Target formats (cached during CreateColorTargets/CreateDepthStencilTarget):
 		D3D12_RT_FORMAT_ARRAY m_renderTargetFormats;

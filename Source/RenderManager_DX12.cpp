@@ -35,8 +35,7 @@ namespace
 	bool CreateAPIResources()
 	{
 		re::Context const& context = re::RenderManager::Get()->GetContext();
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
+		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		dx12::CommandQueue_DX12& copyQueue = ctxPlatParams->m_commandQueues[dx12::CommandQueue_DX12::Copy];
 
@@ -50,14 +49,14 @@ namespace
 		k_helloTriangle->GetMeshMaterial()->SetShader(k_helloShader);
 
 
-		dx12::SwapChain::PlatformParams const* const swapChainParams =
-			dynamic_cast<dx12::SwapChain::PlatformParams*>(context.GetSwapChain().GetPlatformParams());
+		dx12::SwapChain::PlatformParams const* swapChainParams = 
+			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
 
 		// Create a pipeline state:
 		// TODO: We should be creating a library of these at startup
-		dx12::TextureTargetSet::PlatformParams* const swapChainTargetSetPlatParams =
-			dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(swapChainParams->m_backbufferTargetSets[0]->GetPlatformParams());
+		dx12::TextureTargetSet::PlatformParams* swapChainTargetSetPlatParams = 
+			swapChainParams->m_backbufferTargetSets[0]->GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 
 		gr::PipelineState defaultGrPipelineState{}; // Temp hax: Use a default gr::PipelineState
 		dx12::Context::CreateAddPipelineState(
@@ -143,8 +142,7 @@ namespace dx12
 	{
 		re::Context const& context = re::RenderManager::Get()->GetContext();
 
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
+		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		dx12::CommandQueue_DX12& directQueue = ctxPlatParams->m_commandQueues[dx12::CommandQueue_DX12::Direct];
 
@@ -164,11 +162,11 @@ namespace dx12
 			ctxPlatParams->m_RTVDescSize);
 
 
-		dx12::SwapChain::PlatformParams* const swapChainParams =
-			dynamic_cast<dx12::SwapChain::PlatformParams*>(context.GetSwapChain().GetPlatformParams());
+		dx12::SwapChain::PlatformParams* swapChainParams = 
+			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
-		dx12::TextureTargetSet::PlatformParams* const depthTargetParams =
-			dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(swapChainParams->m_backbufferTargetSets[backbufferIdx]->GetPlatformParams());
+		dx12::TextureTargetSet::PlatformParams* depthTargetParams = 
+			swapChainParams->m_backbufferTargetSets[backbufferIdx]->GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 
 		// TODO: MANAGE DESCRIPTOR POINTERS INSTEAD OF JUST USING THE FIRST ONE IN THE HEAP
 		D3D12_CPU_DESCRIPTOR_HANDLE depthStencilView = ctxPlatParams->m_DSVHeap->GetCPUDescriptorHandleForHeapStart();
@@ -196,22 +194,22 @@ namespace dx12
 		commandList->SetGraphicsRootSignature(ctxPlatParams->m_pipelineState->GetD3DRootSignature());
 
 		// TEMP HAX: Get the position buffer/buffer view:
-		dx12::VertexStream::PlatformParams_Vertex* const positionPlatformParams =
-			dynamic_cast<dx12::VertexStream::PlatformParams_Vertex*>(k_helloTriangle->GetVertexStream(re::MeshPrimitive::Position)->GetPlatformParams());
+		dx12::VertexStream::PlatformParams_Vertex* positionPlatformParams = 
+			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Position)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> positionBuffer = positionPlatformParams->m_bufferResource;
 		D3D12_VERTEX_BUFFER_VIEW& positionBufferView = positionPlatformParams->m_vertexBufferView;
 
 		// TEMP HAX: Get the color buffer/buffer view:
-		dx12::VertexStream::PlatformParams_Vertex* const colorPlatformParams =
-			dynamic_cast<dx12::VertexStream::PlatformParams_Vertex*>(k_helloTriangle->GetVertexStream(re::MeshPrimitive::Color)->GetPlatformParams());
+		dx12::VertexStream::PlatformParams_Vertex* colorPlatformParams = 
+			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Color)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> colorBuffer = colorPlatformParams->m_bufferResource;
 		D3D12_VERTEX_BUFFER_VIEW& colorBufferView = colorPlatformParams->m_vertexBufferView;
 
 		// TEMP HAX: Get the index buffer/buffer view
-		dx12::VertexStream::PlatformParams_Index* const indexPlatformParams =
-			dynamic_cast<dx12::VertexStream::PlatformParams_Index*>(k_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetPlatformParams());
+		dx12::VertexStream::PlatformParams_Index* indexPlatformParams = 
+			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> indexBuffer = indexPlatformParams->m_bufferResource;
 		D3D12_INDEX_BUFFER_VIEW& indexBufferView = indexPlatformParams->m_indexBufferView;

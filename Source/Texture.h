@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
+#include "IPlatformParams.h"
 #include "NamedObject.h"
 
 
@@ -9,7 +10,7 @@ namespace re
 	class Texture final : public virtual en::NamedObject
 	{
 	public:
-		struct PlatformParams
+		struct PlatformParams : public IPlatformParams
 		{
 			PlatformParams() = default;
 

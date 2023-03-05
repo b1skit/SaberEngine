@@ -59,8 +59,8 @@ namespace opengl
 
 	void TextureTargetSet::CreateColorTargets(re::TextureTargetSet& targetSet)
 	{
-		opengl::TextureTargetSet::PlatformParams* const targetSetParams =
-			dynamic_cast<opengl::TextureTargetSet::PlatformParams*>(targetSet.GetPlatformParams());
+		opengl::TextureTargetSet::PlatformParams* targetSetParams =
+			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams*>();
 
 		// This is a bit of a hack: If we have a color target, we create it. If we have neither a color nor depth
 		// target, we assume this is the default framebuffer and create the color target here now well. This might not
@@ -113,7 +113,7 @@ namespace opengl
 				 
 				// Configure the target parameters:
 				opengl::TextureTarget::PlatformParams* const targetParams =
-					dynamic_cast<opengl::TextureTarget::PlatformParams*>(targetSet.GetColorTarget(i).GetPlatformParams());
+					targetSet.GetColorTarget(i).GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
 
 				targetParams->m_attachmentPoint = GL_COLOR_ATTACHMENT0 + attachmentPointOffset;
 				targetParams->m_drawBuffer		= GL_COLOR_ATTACHMENT0 + attachmentPointOffset;
@@ -177,8 +177,8 @@ namespace opengl
 		opengl::TextureTargetSet::CreateColorTargets(targetSet);
 
 		// Binding:
-		opengl::TextureTargetSet::PlatformParams const* const targetSetParams =
-			dynamic_cast<opengl::TextureTargetSet::PlatformParams const*>(targetSet.GetPlatformParams());
+		opengl::TextureTargetSet::PlatformParams const* targetSetParams =
+			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
 
 		SEAssert("Cannot bind nonexistant framebuffer",
 			(glIsFramebuffer(targetSetParams->m_frameBufferObject) || 
@@ -199,9 +199,9 @@ namespace opengl
 
 				re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
 				opengl::Texture::PlatformParams const* texPlatformParams =
-					dynamic_cast<opengl::Texture::PlatformParams const*>(texture->GetPlatformParams());
-				opengl::TextureTarget::PlatformParams const* const targetPlatformParams =
-					dynamic_cast<opengl::TextureTarget::PlatformParams const*>(targetSet.GetColorTarget(i).GetPlatformParams());
+					texture->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+				opengl::TextureTarget::PlatformParams const* targetPlatformParams =
+					targetSet.GetColorTarget(i).GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
 
 				SEAssert("Attempting to bind a color target with a different texture use parameter", 
 					textureParams.m_usage == re::Texture::Usage::ColorTarget);
@@ -278,8 +278,8 @@ namespace opengl
 			return;
 		}
 
-		opengl::TextureTargetSet::PlatformParams* const targetSetParams =
-			dynamic_cast<opengl::TextureTargetSet::PlatformParams*>(targetSet.GetPlatformParams());
+		opengl::TextureTargetSet::PlatformParams* targetSetParams =
+			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams*>();
 
 		if (targetSetParams->m_depthIsCreated)
 		{
@@ -313,8 +313,8 @@ namespace opengl
 			}
 
 			// Configure the target parameters:
-			opengl::TextureTarget::PlatformParams* const depthTargetParams =
-				dynamic_cast<opengl::TextureTarget::PlatformParams*>(targetSet.GetDepthStencilTarget().GetPlatformParams());
+			opengl::TextureTarget::PlatformParams* depthTargetParams =
+				targetSet.GetDepthStencilTarget().GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
 
 			depthTargetParams->m_attachmentPoint = GL_DEPTH_ATTACHMENT;
 			depthTargetParams->m_drawBuffer = GL_NONE;
@@ -344,8 +344,8 @@ namespace opengl
 		opengl::TextureTargetSet::CreateDepthStencilTarget(targetSet);
 
 		// Binding:
-		opengl::TextureTargetSet::PlatformParams const* const targetSetParams =
-			dynamic_cast<opengl::TextureTargetSet::PlatformParams const*>(targetSet.GetPlatformParams());
+		opengl::TextureTargetSet::PlatformParams const* targetSetParams =
+			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
 
 		glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
 
@@ -361,10 +361,10 @@ namespace opengl
 				textureParams.m_usage == re::Texture::Usage::DepthTarget);
 
 			opengl::Texture::PlatformParams const* depthPlatformParams =
-				dynamic_cast<opengl::Texture::PlatformParams const*>(depthStencilTex->GetPlatformParams());
+				depthStencilTex->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
-			opengl::TextureTarget::PlatformParams const* const depthTargetParams =
-				dynamic_cast<opengl::TextureTarget::PlatformParams const*>(targetSet.GetDepthStencilTarget().GetPlatformParams());
+			opengl::TextureTarget::PlatformParams const* depthTargetParams =
+				targetSet.GetDepthStencilTarget().GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
 
 			// Attach a texture object to the bound framebuffer:
 			if (textureParams.m_dimension == re::Texture::Dimension::TextureCubeMap)

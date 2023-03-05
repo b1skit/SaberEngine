@@ -48,8 +48,8 @@ namespace opengl
 		SEAssert("Vertex stream has no data", vertexStream.GetData() && vertexStream.GetNumElements() > 0);
 		SEAssert("Invalid slot", slot != re::MeshPrimitive::Slot::Slot_Count);
 
-		opengl::VertexStream::PlatformParams* const platformParams =
-			dynamic_cast<opengl::VertexStream::PlatformParams*>(vertexStream.GetPlatformParams());
+		opengl::VertexStream::PlatformParams* platformParams = 
+			vertexStream.GetPlatformParams()->As<opengl::VertexStream::PlatformParams*>();
 
 		if (platformParams->m_VBO != 0)
 		{
@@ -96,8 +96,8 @@ namespace opengl
 
 	void VertexStream::Destroy(re::VertexStream& vertexStream)
 	{
-		opengl::VertexStream::PlatformParams* const platformParams =
-			dynamic_cast<opengl::VertexStream::PlatformParams*>(vertexStream.GetPlatformParams());
+		opengl::VertexStream::PlatformParams* platformParams =
+			vertexStream.GetPlatformParams()->As<opengl::VertexStream::PlatformParams*>();
 
 		if (platformParams->m_VBO == 0)
 		{
@@ -114,7 +114,7 @@ namespace opengl
 		Create(vertexStream, slot); // Ensure the stream is created
 
 		opengl::VertexStream::PlatformParams* const platformParams =
-			dynamic_cast<opengl::VertexStream::PlatformParams*>(vertexStream.GetPlatformParams());
+			vertexStream.GetPlatformParams()->As<opengl::VertexStream::PlatformParams*>();
 
 		switch (slot)
 		{

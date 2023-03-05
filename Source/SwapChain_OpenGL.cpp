@@ -11,8 +11,8 @@ namespace opengl
 {
 	void SwapChain::Create(re::SwapChain& swapChain)
 	{
-		opengl::SwapChain::PlatformParams* const swapChainParams =
-			dynamic_cast<opengl::SwapChain::PlatformParams*>(swapChain.GetPlatformParams());
+		opengl::SwapChain::PlatformParams* swapChainParams = 
+			swapChain.GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
 
 		// Default target set:
 		LOG("Creating default texure target set");
@@ -30,8 +30,8 @@ namespace opengl
 
 	void SwapChain::Destroy(re::SwapChain& swapChain)
 	{
-		opengl::SwapChain::PlatformParams* const swapChainParams =
-			dynamic_cast<opengl::SwapChain::PlatformParams*>(swapChain.GetPlatformParams());
+		opengl::SwapChain::PlatformParams* swapChainParams = 
+			swapChain.GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
 
 		if (!swapChainParams)
 		{

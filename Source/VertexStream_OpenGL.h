@@ -12,7 +12,7 @@ namespace opengl
 	class VertexStream
 	{
 	public:
-		struct PlatformParams final : public virtual re::VertexStream::PlatformParams
+		struct PlatformParams final : public re::VertexStream::PlatformParams
 		{
 			GLuint m_VBO = 0;
 		};

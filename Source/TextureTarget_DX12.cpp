@@ -14,8 +14,8 @@ namespace dx12
 {
 	void TextureTargetSet::CreateColorTargets(re::TextureTargetSet& targetSet)
 	{
-		dx12::TextureTargetSet::PlatformParams* const targetSetParams =
-			dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(targetSet.GetPlatformParams());
+		dx12::TextureTargetSet::PlatformParams* targetSetParams =
+			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 
 		// Note: We handle this differently in OpenGL; Putting this here to help with debugging for now
 		SEAssert("Color target is already created", !targetSetParams->m_colorIsCreated);
@@ -48,8 +48,8 @@ namespace dx12
 	{
 		SEAssert("Cannot create depth stencil if target set has no depth target", targetSet.HasDepthTarget());
 
-		dx12::TextureTargetSet::PlatformParams* targetSetParams =
-			dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(targetSet.GetPlatformParams());
+		dx12::TextureTargetSet::PlatformParams* targetSetParams = 
+			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 
 		// Note: We handle this differently in OpenGL; Putting this here to help with debugging for now
 		SEAssert("Depth target is already created", !targetSetParams->m_depthIsCreated);
@@ -67,8 +67,8 @@ namespace dx12
 
 	void TextureTargetSet::SetViewport(re::TextureTargetSet const& targetSet, ID3D12GraphicsCommandList2* commandList)
 	{
-		dx12::TextureTargetSet::PlatformParams* const targetSetParams =
-			dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(targetSet.GetPlatformParams());
+		dx12::TextureTargetSet::PlatformParams* targetSetParams = 
+			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 
 		re::Viewport const& viewport = targetSet.Viewport();
 
@@ -89,8 +89,8 @@ namespace dx12
 
 	void TextureTargetSet::SetScissorRect(re::TextureTargetSet const& targetSet, ID3D12GraphicsCommandList2* commandList)
 	{
-		dx12::TextureTargetSet::PlatformParams* const targetSetParams =
-			dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(targetSet.GetPlatformParams());
+		dx12::TextureTargetSet::PlatformParams* targetSetParams =
+			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 
 		re::ScissorRect const& scissorRect = targetSet.ScissorRect();
 

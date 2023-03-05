@@ -107,8 +107,8 @@ namespace opengl
 				std::shared_ptr<re::TextureTargetSet> stageTargets = renderStage->GetTextureTargetSet();
 				if (!stageTargets)
 				{
-					opengl::SwapChain::PlatformParams* const swapChainParams =
-						dynamic_cast<opengl::SwapChain::PlatformParams*>(renderManager.GetContext().GetSwapChain().GetPlatformParams());
+					opengl::SwapChain::PlatformParams* const swapChainParams = 
+						renderManager.GetContext().GetSwapChain().GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
 					SEAssert("Swap chain params and backbuffer cannot be null", 
 						swapChainParams && swapChainParams->m_backbufferTargetSet);
 
@@ -162,8 +162,8 @@ namespace opengl
 				std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
 				for (re::Batch const& batch : batches)
 				{
-					opengl::MeshPrimitive::PlatformParams const* const meshPlatParams =
-						dynamic_cast<opengl::MeshPrimitive::PlatformParams const* const>(batch.GetBatchMesh()->GetPlatformParams());
+					opengl::MeshPrimitive::PlatformParams const* meshPlatParams = 
+						batch.GetBatchMesh()->GetPlatformParams()->As<opengl::MeshPrimitive::PlatformParams const*>();
 
 					opengl::MeshPrimitive::Bind(*batch.GetBatchMesh());
 

@@ -1,16 +1,16 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
+#include "IPlatformParams.h"
+
 
 namespace en
 {
 	class Window
 	{
 	public:
-		struct PlatformParams
+		struct PlatformParams : public IPlatformParams
 		{
-			PlatformParams() = default;
-			PlatformParams(PlatformParams const&) = delete;
 			virtual ~PlatformParams() = 0;
 		};
 

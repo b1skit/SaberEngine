@@ -28,8 +28,7 @@ namespace dx12
 		// Assemble root shader dir, as a wide string
 		std::wstring const& shaderRootWStr = en::Config::Get()->GetValueAsWString("shaderDirectory");
 
-		dx12::Shader::PlatformParams* const params =
-			dynamic_cast<dx12::Shader::PlatformParams* const>(shader.GetPlatformParams());
+		dx12::Shader::PlatformParams* params = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 
 		for (size_t i = 0; i < nameSuffix.size(); i++)
 		{
@@ -50,8 +49,7 @@ namespace dx12
 
 	void Shader::Destroy(re::Shader& shader)
 	{
-		dx12::Shader::PlatformParams* const params =
-			dynamic_cast<dx12::Shader::PlatformParams* const>(shader.GetPlatformParams());
+		dx12::Shader::PlatformParams* params = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 
 		if (!params->m_isCreated)
 		{

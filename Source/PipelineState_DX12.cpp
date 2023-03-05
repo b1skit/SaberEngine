@@ -198,16 +198,15 @@ namespace dx12
 	{
 		SEAssert("Arguments cannot be null", shader);
 
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(re::RenderManager::Get()->GetContext().GetPlatformParams());
+		dx12::Context::PlatformParams* ctxPlatParams = 
+			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
 
 		// Generate the root signature:
 		GenerateRootSignature(device, m_rootSignature);
 
 		// Generate the PSO:
-		dx12::Shader::PlatformParams* const shaderParams =
-			dynamic_cast<dx12::Shader::PlatformParams*>(shader->GetPlatformParams());
+		dx12::Shader::PlatformParams* shaderParams = shader->GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 
 		SEAssert("Shader doesn't have a pixel and vertex shader blob. TODO: Support this", 
 			shaderParams->m_shaderBlobs[dx12::Shader::Vertex] && shaderParams->m_shaderBlobs[dx12::Shader::Pixel]);

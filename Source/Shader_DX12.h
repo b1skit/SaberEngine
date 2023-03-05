@@ -26,7 +26,7 @@ namespace dx12
 
 
 	public:
-		struct PlatformParams final : public virtual re::Shader::PlatformParams
+		struct PlatformParams final : public re::Shader::PlatformParams
 		{
 			std::array< Microsoft::WRL::ComPtr<ID3DBlob>, ShaderType_Count> m_shaderBlobs = {0};
 		};

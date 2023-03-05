@@ -103,8 +103,7 @@ namespace opengl
 
 		LOG("Creating sampler: \"%s\"", sampler.GetName().c_str());
 
-		PlatformParams* const params =
-			dynamic_cast<opengl::Sampler::PlatformParams* const>(sampler.GetPlatformParams());
+		opengl::Sampler::PlatformParams* params = sampler.GetPlatformParams()->As<opengl::Sampler::PlatformParams*>();
 
 		SEAssert("Attempting to create a sampler that already has been created", !glIsSampler(params->m_samplerID));
 
@@ -139,8 +138,7 @@ namespace opengl
 		// Ensure the sampler is created before we attempt to bind it
 		opengl::Sampler::Create(sampler);
 
-		PlatformParams const* const params =
-			dynamic_cast<opengl::Sampler::PlatformParams const* const>(sampler.GetPlatformParams());
+		opengl::Sampler::PlatformParams* params = sampler.GetPlatformParams()->As<opengl::Sampler::PlatformParams*>();
 
 		glBindSampler(textureUnit, params->m_samplerID);
 	}
@@ -148,8 +146,7 @@ namespace opengl
 
 	void Sampler::Destroy(re::Sampler& sampler)
 	{
-		PlatformParams* const params =
-			dynamic_cast<opengl::Sampler::PlatformParams* const>(sampler.GetPlatformParams());
+		opengl::Sampler::PlatformParams* params = sampler.GetPlatformParams()->As<opengl::Sampler::PlatformParams*>();
 
 		glDeleteSamplers(1, &params->m_samplerID);
 		params->m_samplerID = 0;

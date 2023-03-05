@@ -182,8 +182,8 @@ namespace dx12
 		const size_t bufferSize = stream.GetTotalDataByteSize();
 		const CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize, flags);
 
-		dx12::VertexStream::PlatformParams* const streamPlatformParams =
-			dynamic_cast<dx12::VertexStream::PlatformParams*>(stream.GetPlatformParams());
+		dx12::VertexStream::PlatformParams* streamPlatformParams =
+			stream.GetPlatformParams()->As<dx12::VertexStream::PlatformParams*>();
 
 		// Get our interface pointers from the stream platform params:
 		ID3D12Resource** intermediateBufferResource = nullptr;
@@ -192,8 +192,8 @@ namespace dx12
 		{
 		case re::VertexStream::StreamType::Index:
 		{
-			dx12::VertexStream::PlatformParams_Index* const indexPlatformParams =
-				dynamic_cast<dx12::VertexStream::PlatformParams_Index*>(streamPlatformParams);
+			dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
+				streamPlatformParams->As<dx12::VertexStream::PlatformParams_Index*>();
 
 			intermediateBufferResource = &indexPlatformParams->m_intermediateBufferResource;
 			destBufferResource = &indexPlatformParams->m_bufferResource;
@@ -202,15 +202,15 @@ namespace dx12
 		default:
 		{
 			dx12::VertexStream::PlatformParams_Vertex* const vertPlatformParams =
-				dynamic_cast<dx12::VertexStream::PlatformParams_Vertex*>(streamPlatformParams);
+				streamPlatformParams->As<dx12::VertexStream::PlatformParams_Vertex*>();
 			
 			intermediateBufferResource = &vertPlatformParams->m_intermediateBufferResource;
 			destBufferResource = &vertPlatformParams->m_bufferResource;
 		}
 		}
 
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(re::RenderManager::Get()->GetContext().GetPlatformParams());
+		dx12::Context::PlatformParams* ctxPlatParams =
+			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 		Microsoft::WRL::ComPtr<ID3D12Device2> device = ctxPlatParams->m_device.GetD3DDisplayDevice();
 
 		// Create a committed resource for the GPU resource in a default heap:
@@ -255,8 +255,8 @@ namespace dx12
 		{
 		case re::VertexStream::StreamType::Index:
 		{
-			dx12::VertexStream::PlatformParams_Index* const indexPlatformParams =
-				dynamic_cast<dx12::VertexStream::PlatformParams_Index*>(streamPlatformParams);
+			dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
+				streamPlatformParams->As<dx12::VertexStream::PlatformParams_Index*>();
 
 			// Create the index buffer view:
 			indexPlatformParams->m_indexBufferView.BufferLocation = 
@@ -269,7 +269,7 @@ namespace dx12
 		default:
 		{
 			dx12::VertexStream::PlatformParams_Vertex* const vertPlatformParams =
-				dynamic_cast<dx12::VertexStream::PlatformParams_Vertex*>(streamPlatformParams);
+				streamPlatformParams->As<dx12::VertexStream::PlatformParams_Vertex*>();
 
 			// Create the vertex buffer view:
 			vertPlatformParams->m_vertexBufferView.BufferLocation = 
@@ -284,15 +284,15 @@ namespace dx12
 
 	void VertexStream::Destroy(re::VertexStream& stream)
 	{
-		dx12::VertexStream::PlatformParams* const streamPlatformParams =
-			dynamic_cast<dx12::VertexStream::PlatformParams*>(stream.GetPlatformParams());
+		dx12::VertexStream::PlatformParams* streamPlatformParams =
+			stream.GetPlatformParams()->As<dx12::VertexStream::PlatformParams*>();
 
 		switch (streamPlatformParams->m_type)
 		{
 		case re::VertexStream::StreamType::Index:
 		{
-			dx12::VertexStream::PlatformParams_Index* const indexPlatformParams =
-				dynamic_cast<dx12::VertexStream::PlatformParams_Index*>(streamPlatformParams);
+			dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
+				streamPlatformParams->As<dx12::VertexStream::PlatformParams_Index*>();
 
 			indexPlatformParams->m_indexBufferView = { 0 };
 		}
@@ -300,7 +300,7 @@ namespace dx12
 		default:
 		{
 			dx12::VertexStream::PlatformParams_Vertex* const vertPlatformParams =
-				dynamic_cast<dx12::VertexStream::PlatformParams_Vertex*>(streamPlatformParams);
+				streamPlatformParams->As<dx12::VertexStream::PlatformParams_Vertex*>();
 
 			vertPlatformParams->m_vertexBufferView = { 0 };
 		}

@@ -88,8 +88,9 @@ namespace
 			SEAssertF("Failed to activate dummy OpenGL rendering context");
 		}
 
-		opengl::Context::PlatformParams* const platformParams =
-			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
+		opengl::Context::PlatformParams* platformParams = 
+			context.GetPlatformParams()->As<opengl::Context::PlatformParams*>();
+
 
 		platformParams->wglCreateContextAttribsARBFn =
 			(opengl::Context::PlatformParams::wglCreateContextAttribsARB_type*)::wglGetProcAddress("wglCreateContextAttribsARB");
@@ -212,11 +213,11 @@ namespace opengl
 		en::Window* window = en::CoreEngine::Get()->GetWindow();
 		SEAssert("Window pointer cannot be null", window);
 
-		win32::Window::PlatformParams* const windowPlatParams =
-			dynamic_cast<win32::Window::PlatformParams*>(window->GetPlatformParams());
+		win32::Window::PlatformParams* windowPlatParams = 
+			window->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
-		opengl::Context::PlatformParams* const contextPlatParams =
-			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
+		opengl::Context::PlatformParams* contextPlatParams =
+			context.GetPlatformParams()->As<opengl::Context::PlatformParams*>();
 
 		// Get the Device Context Handle
 		contextPlatParams->m_hDeviceContext = GetDC(windowPlatParams->m_hWindow); 
@@ -323,8 +324,8 @@ namespace opengl
 
 	void Context::Destroy(re::Context& context)
 	{
-		opengl::Context::PlatformParams* const contextPlatformParams =
-			dynamic_cast<opengl::Context::PlatformParams*>(context.GetPlatformParams());
+		opengl::Context::PlatformParams* contextPlatformParams =
+			context.GetPlatformParams()->As<opengl::Context::PlatformParams*>();
 		if (!contextPlatformParams)
 		{
 			return;
@@ -337,8 +338,9 @@ namespace opengl
 		
 		::wglMakeCurrent(NULL, NULL); // Make the rendering context not current  
 
-		win32::Window::PlatformParams* const windowPlatformParams =
-			dynamic_cast<win32::Window::PlatformParams*>(en::CoreEngine::Get()->GetWindow()->GetPlatformParams());
+		win32::Window::PlatformParams* windowPlatformParams = 
+			en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
+
 		::ReleaseDC(windowPlatformParams->m_hWindow, contextPlatformParams->m_hDeviceContext); // Release device context
 		::wglDeleteContext(contextPlatformParams->m_glRenderContext); // Delete the rendering context
 	}
@@ -346,8 +348,8 @@ namespace opengl
 
 	void Context::Present(re::Context const& context)
 	{
-		opengl::Context::PlatformParams const* platformParams =
-			dynamic_cast<opengl::Context::PlatformParams const*>(context.GetPlatformParams());
+		opengl::Context::PlatformParams* platformParams =
+			context.GetPlatformParams()->As<opengl::Context::PlatformParams*>();
 
 		::SwapBuffers(platformParams->m_hDeviceContext);
 	}

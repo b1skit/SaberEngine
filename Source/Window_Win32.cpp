@@ -95,8 +95,7 @@ namespace win32
 		int windowX = std::max<int>(0, (screenWidth - windowWidth) / 2);
 		int windowY = std::max<int>(0, (screenHeight - windowHeight) / 2);
 
-		win32::Window::PlatformParams* const platformParams =
-			dynamic_cast<win32::Window::PlatformParams*>(window.GetPlatformParams());
+		win32::Window::PlatformParams* platformParams = window.GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 		std::wstring titleWideStr = std::wstring(title.begin(), title.end());
 
@@ -126,8 +125,8 @@ namespace win32
 
 	void Window::Destroy(en::Window& window)
 	{
-		win32::Window::PlatformParams* const platformParams =
-			dynamic_cast<win32::Window::PlatformParams*>(window.GetPlatformParams());
+		win32::Window::PlatformParams* const platformParams = 
+			window.GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 		::DestroyWindow(platformParams->m_hWindow);
 	}
@@ -137,8 +136,8 @@ namespace win32
 	{
 		if (enabled)
 		{
-			win32::Window::PlatformParams* const platformParams =
-				dynamic_cast<win32::Window::PlatformParams*>(window.GetPlatformParams());
+			win32::Window::PlatformParams* platformParams = 
+				window.GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 			// Wrap mouse movements about the screen rectangle:
 			RECT rect;

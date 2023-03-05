@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
+#include "IPlatformParams.h"
 #include "Sampler_Platform.h"
 #include "NamedObject.h"
 
@@ -15,7 +16,7 @@ namespace re
 	class Sampler final : public virtual en::NamedObject
 	{
 	public:
-		struct PlatformParams
+		struct PlatformParams : public IPlatformParams
 		{
 			// Params contain unique GPU bindings that should not be arbitrarily copied/duplicated
 			PlatformParams() = default;
@@ -96,12 +97,13 @@ namespace re
 
 		SamplerParams const& GetSamplerParams() const { return m_samplerParams; }
 
-		Sampler::PlatformParams* const GetPlatformParams() { return m_platformParams.get(); }
-		Sampler::PlatformParams const* const GetPlatformParams() const { return m_platformParams.get(); }
+		void SetPlatformParams(std::unique_ptr<Sampler::PlatformParams> params) { m_platformParams = std::move(params); }
+		Sampler::PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 
 
 	private:
 		void Destroy();
+
 
 	private:
 		SamplerParams m_samplerParams;
@@ -109,11 +111,6 @@ namespace re
 
 
 	private:
-		// Friends:
-		friend bool platform::RegisterPlatformFunctions();
-		friend void platform::Sampler::CreatePlatformParams(re::Sampler&);
-		friend std::shared_ptr<re::Sampler const> const GetSampler(Sampler::WrapAndFilterMode type);
-
 		Sampler() = delete;
 		Sampler(Sampler const& rhs) = delete;
 		Sampler(Sampler const&& rhs) = delete;

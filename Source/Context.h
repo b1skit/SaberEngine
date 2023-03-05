@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
+#include "IPlatformParams.h"
 #include "TextureTarget.h"
 #include "PipelineState.h"
 #include "SwapChain.h"
@@ -14,7 +15,7 @@ namespace re
 	class Context
 	{
 	public:
-		struct PlatformParams
+		struct PlatformParams : public IPlatformParams
 		{
 			PlatformParams() = default;
 			virtual ~PlatformParams() = 0;

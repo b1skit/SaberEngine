@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
+#include "IPlatformParams.h"
 #include "Bounds.h"
 #include "HashedDataObject.h"
 #include "Material.h"
@@ -18,7 +19,7 @@ namespace re
 	class MeshPrimitive final : public virtual en::NamedObject, public virtual en::HashedDataObject
 	{
 	public:
-		struct PlatformParams
+		struct PlatformParams : public IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
 		};

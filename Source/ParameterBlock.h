@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
+#include "IPlatformParams.h"
 #include "NamedObject.h"
 
 
@@ -22,16 +23,8 @@ namespace re
 	class ParameterBlock : public virtual en::NamedObject
 	{
 	public:
-		struct PlatformParams
+		struct PlatformParams : public IPlatformParams
 		{
-			// Params contain unique GPU bindings that should not be arbitrarily copied/duplicated
-			PlatformParams() = default;
-			PlatformParams(PlatformParams&) = delete;
-			PlatformParams(PlatformParams&&) = delete;
-			PlatformParams& operator=(PlatformParams&) = delete;
-			PlatformParams& operator=(PlatformParams&&) = delete;
-
-			// API-specific GPU bindings should be destroyed here
 			virtual ~PlatformParams() = 0;
 
 			bool m_isCreated = false;
@@ -68,7 +61,7 @@ namespace re
 		void GetDataAndSize(void*& out_data, size_t& out_numBytes);
 		inline PBType GetType() const { return m_pbType; }
 
-		inline PlatformParams* const GetPlatformParams() const { return m_platformParams.get(); }
+		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
 
 	private:		

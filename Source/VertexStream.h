@@ -1,21 +1,17 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
+#include "IPlatformParams.h"
+
 
 namespace re
 {
 	class VertexStream
 	{
 	public:
-		struct PlatformParams
+		struct PlatformParams : public IPlatformParams
 		{
-			PlatformParams() = default;
 			virtual ~PlatformParams() = 0;
-
-		private: // No copying allowed
-			PlatformParams(PlatformParams const&) = delete;
-			PlatformParams(PlatformParams&&) = delete;
-			PlatformParams& operator=(PlatformParams const&) = delete;
 		};
 
 

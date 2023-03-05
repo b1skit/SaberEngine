@@ -12,7 +12,7 @@ namespace opengl
 	class ParameterBlock
 	{
 	public:
-		struct PlatformParams final : public virtual re::ParameterBlock::PlatformParams
+		struct PlatformParams final : public re::ParameterBlock::PlatformParams
 		{
 			PlatformParams() = default;
 			~PlatformParams() override = default;

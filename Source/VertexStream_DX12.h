@@ -14,7 +14,7 @@ namespace dx12
 	class VertexStream
 	{
 	public:
-		struct PlatformParams : public virtual re::VertexStream::PlatformParams
+		struct PlatformParams : public re::VertexStream::PlatformParams
 		{
 			PlatformParams(re::VertexStream const&, re::VertexStream::StreamType);
 			virtual ~PlatformParams() override = 0;
@@ -28,7 +28,7 @@ namespace dx12
 		};
 
 
-		struct PlatformParams_Index final : public virtual dx12::VertexStream::PlatformParams
+		struct PlatformParams_Index final : public dx12::VertexStream::PlatformParams
 		{
 			PlatformParams_Index(re::VertexStream const&);
 
@@ -36,7 +36,7 @@ namespace dx12
 		};
 
 
-		struct PlatformParams_Vertex final : public virtual dx12::VertexStream::PlatformParams
+		struct PlatformParams_Vertex final : public dx12::VertexStream::PlatformParams
 		{
 			PlatformParams_Vertex(re::VertexStream const&);
 

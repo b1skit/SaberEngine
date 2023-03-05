@@ -147,9 +147,7 @@ namespace opengl
 
 	void opengl::Texture::Destroy(re::Texture& texture)
 	{
-		PlatformParams* const params =
-			dynamic_cast<opengl::Texture::PlatformParams* const>(texture.GetPlatformParams());
-
+		PlatformParams* params = texture.GetPlatformParams()->As<opengl::Texture::PlatformParams*>();
 		if (!params)
 		{
 			return;
@@ -170,8 +168,8 @@ namespace opengl
 
 		opengl::Texture::Create(texture); // Ensure the texture is created before we attempt to bind
 
-		opengl::Texture::PlatformParams const* const params =
-			dynamic_cast<opengl::Texture::PlatformParams const*>(texture.GetPlatformParams());
+		opengl::Texture::PlatformParams const* params =
+			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
 		// TODO: Support texture updates after modification
 		SEAssert("Texture has been modified, and needs to be rebuffered", params->m_isDirty == false);
@@ -193,7 +191,7 @@ namespace opengl
 
 		LOG("Creating & buffering texture: \"%s\"", texture.GetName().c_str());
 
-		PlatformParams* const params = dynamic_cast<opengl::Texture::PlatformParams* const>(texture.GetPlatformParams());
+		PlatformParams* params = texture.GetPlatformParams()->As<opengl::Texture::PlatformParams*>();
 		SEAssert("Attempting to create a texture that already exists", 
 			!glIsTexture(params->m_textureID) && !params->m_isCreated);
 
@@ -289,7 +287,7 @@ namespace opengl
 	void opengl::Texture::GenerateMipMaps(re::Texture& texture)
 	{
 		opengl::Texture::PlatformParams const* params =
-			dynamic_cast<opengl::Texture::PlatformParams const*>(texture.GetPlatformParams());
+			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
 		if (texture.GetTextureParams().m_useMIPs == false)
 		{

@@ -17,7 +17,7 @@ namespace dx12
 
 
 	public:
-		struct PlatformParams final : public virtual re::Texture::PlatformParams
+		struct PlatformParams final : public re::Texture::PlatformParams
 		{
 			PlatformParams(re::Texture::TextureParams const& texParams);
 

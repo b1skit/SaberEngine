@@ -11,7 +11,7 @@ namespace dx12
 	class MeshPrimitive
 	{
 	public:
-		struct PlatformParams final : public virtual re::MeshPrimitive::PlatformParams
+		struct PlatformParams final : public re::MeshPrimitive::PlatformParams
 		{
 			PlatformParams(re::MeshPrimitive& meshPrimitive);
 		};

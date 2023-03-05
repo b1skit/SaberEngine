@@ -17,7 +17,7 @@ namespace win32
 
 
 	public:
-		struct PlatformParams final : public virtual en::Window::PlatformParams
+		struct PlatformParams final : public en::Window::PlatformParams
 		{
 			HWND m_hWindow = NULL;
 		};

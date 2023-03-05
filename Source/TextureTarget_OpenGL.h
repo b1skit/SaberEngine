@@ -11,7 +11,7 @@ namespace opengl
 	class TextureTarget
 	{
 	public:
-		struct PlatformParams final : public virtual re::TextureTarget::PlatformParams
+		struct PlatformParams final : public re::TextureTarget::PlatformParams
 		{
 			PlatformParams();
 			~PlatformParams();
@@ -28,7 +28,7 @@ namespace opengl
 	class TextureTargetSet
 	{
 	public:
-		struct PlatformParams final : public virtual re::TextureTargetSet::PlatformParams
+		struct PlatformParams final : public re::TextureTargetSet::PlatformParams
 		{
 			PlatformParams();
 			~PlatformParams() override;

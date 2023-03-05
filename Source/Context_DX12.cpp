@@ -34,8 +34,8 @@ namespace dx12
 
 	void Context::Create(re::Context& context)
 	{
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
+		dx12::Context::PlatformParams* ctxPlatParams =
+			context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		EnableDebugLayer();
 
@@ -74,16 +74,15 @@ namespace dx12
 		// TODO: Clean this up, it's gross.
 		context.GetSwapChain().Create();
 		
-		dx12::SwapChain::PlatformParams* const swapChainParams =
-			dynamic_cast<dx12::SwapChain::PlatformParams*>(context.GetSwapChain().GetPlatformParams());
-
+		dx12::SwapChain::PlatformParams* swapChainParams = 
+			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
 		SEAssert("Window pointer cannot be null", en::CoreEngine::Get()->GetWindow());
-		win32::Window::PlatformParams* const windowPlatParams =
-			dynamic_cast<win32::Window::PlatformParams*>(en::CoreEngine::Get()->GetWindow()->GetPlatformParams());
+		win32::Window::PlatformParams* windowPlatParams = 
+			en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
-		dx12::TextureTargetSet::PlatformParams* const swapChainTargetSetParams =
-			dynamic_cast<dx12::TextureTargetSet::PlatformParams*>(swapChainParams->m_backbufferTargetSets[0]->GetPlatformParams());
+		dx12::TextureTargetSet::PlatformParams* swapChainTargetSetParams = 
+			swapChainParams->m_backbufferTargetSets[0]->GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 
 		// Setup our ImGui context
 		IMGUI_CHECKVERSION();
@@ -108,8 +107,7 @@ namespace dx12
 
 	void Context::Destroy(re::Context& context)
 	{
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
+		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 		if (!ctxPlatParams)
 		{
 			return;
@@ -136,8 +134,8 @@ namespace dx12
 
 	void Context::Present(re::Context const& context)
 	{
-		dx12::SwapChain::PlatformParams* const swapChainPlatParams =
-			dynamic_cast<dx12::SwapChain::PlatformParams*>(context.GetSwapChain().GetPlatformParams());
+		dx12::SwapChain::PlatformParams* swapChainPlatParams = 
+			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
 		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
 
@@ -149,8 +147,7 @@ namespace dx12
 
 		swapChainPlatParams->m_swapChain->Present(syncInterval, presentFlags);
 
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
+		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		// Insert a signal into the command queue:
 		ctxPlatParams->m_frameFenceValues[backbufferIdx] = 
@@ -172,8 +169,8 @@ namespace dx12
 		D3D12_RT_FORMAT_ARRAY const& rtvFormats, 
 		const DXGI_FORMAT dsvFormat)
 	{
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(re::RenderManager::Get()->GetContext().GetPlatformParams());
+		dx12::Context::PlatformParams* ctxPlatParams = 
+			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		// TEMP HAX: For now, we just have a single PSO, so just hard-code it. TODO: Create a library of pre-computed
 		// PSOs at startup
@@ -204,8 +201,8 @@ namespace dx12
 
 	CommandQueue_DX12& GetCommandQueue(CommandQueue_DX12::CommandListType type)
 	{
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(re::RenderManager::Get()->GetContext().GetPlatformParams());
+		dx12::Context::PlatformParams* ctxPlatParams = 
+			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		return ctxPlatParams->m_commandQueues[type];
 	}

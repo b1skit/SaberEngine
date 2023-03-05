@@ -1,20 +1,16 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
+#include "IPlatformParams.h"
+
 
 namespace re
 {
 	class SwapChain
 	{
 	public:
-		struct PlatformParams
+		struct PlatformParams : public IPlatformParams
 		{
-			PlatformParams() = default;
-
-			// Copying not allowed
-			PlatformParams(PlatformParams const&) = delete;
-			PlatformParams(PlatformParams&&) = delete;
-			PlatformParams& operator=(PlatformParams const&) = delete;
 			virtual ~PlatformParams() = 0;
 		};
 

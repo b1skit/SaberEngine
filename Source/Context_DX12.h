@@ -22,7 +22,7 @@ namespace dx12
 		// TODO: Move these to a descriptor heap manager, and choose sensible larger values
 
 	public:
-		struct PlatformParams final : public virtual re::Context::PlatformParams
+		struct PlatformParams final : public re::Context::PlatformParams
 		{
 			PlatformParams();
 

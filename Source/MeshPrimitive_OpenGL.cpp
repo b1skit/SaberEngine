@@ -60,8 +60,8 @@ namespace opengl
 
 	void opengl::MeshPrimitive::Create(re::MeshPrimitive& meshPrimitive)
 	{
-		opengl::MeshPrimitive::PlatformParams* const meshPlatformParams =
-			dynamic_cast<opengl::MeshPrimitive::PlatformParams*>(meshPrimitive.GetPlatformParams());
+		opengl::MeshPrimitive::PlatformParams* meshPlatformParams = 
+			meshPrimitive.GetPlatformParams()->As<opengl::MeshPrimitive::PlatformParams*>();
 
 		if (meshPlatformParams->m_meshVAO != 0)
 		{
@@ -97,8 +97,8 @@ namespace opengl
 		// Ensure the mesh is created
 		opengl::MeshPrimitive::Create(meshPrimitive);
 
-		opengl::MeshPrimitive::PlatformParams const* const glMeshParams =
-			dynamic_cast<opengl::MeshPrimitive::PlatformParams const* const>(meshPrimitive.GetPlatformParams());
+		opengl::MeshPrimitive::PlatformParams const* glMeshParams = 
+			meshPrimitive.GetPlatformParams()->As<opengl::MeshPrimitive::PlatformParams const*>();
 
 		// The VAO state describes the expected format/stride/etc of the vertex buffers at each binding index
 		glBindVertexArray(glMeshParams->m_meshVAO);
@@ -116,8 +116,8 @@ namespace opengl
 
 	void opengl::MeshPrimitive::Destroy(re::MeshPrimitive& meshPrimitive)
 	{
-		opengl::MeshPrimitive::PlatformParams* mp =
-			dynamic_cast<opengl::MeshPrimitive::PlatformParams*>(meshPrimitive.GetPlatformParams());
+		opengl::MeshPrimitive::PlatformParams* mp = 
+			meshPrimitive.GetPlatformParams()->As<opengl::MeshPrimitive::PlatformParams*>();
 
 		if (mp->m_meshVAO == 0)
 		{

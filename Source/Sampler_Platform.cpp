@@ -13,7 +13,6 @@ using en::Config;
 
 namespace platform
 {
-	// Parameter struct object factory:
 	void Sampler::CreatePlatformParams(re::Sampler& sampler)
 	{
 		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
@@ -22,12 +21,12 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			sampler.m_platformParams = std::make_unique<opengl::Sampler::PlatformParams>(sampler.GetSamplerParams());
+			sampler.SetPlatformParams(std::make_unique<opengl::Sampler::PlatformParams>(sampler.GetSamplerParams()));
 		}
 		break;
 		case RenderingAPI::DX12:
 		{
-			sampler.m_platformParams = std::make_unique<dx12::Sampler::PlatformParams>(sampler.GetSamplerParams());
+			sampler.SetPlatformParams(std::make_unique<dx12::Sampler::PlatformParams>(sampler.GetSamplerParams()));
 		}
 		break;
 		default:
@@ -39,5 +38,4 @@ namespace platform
 
 	void (*Sampler::Create)(re::Sampler&) = nullptr;
 	void (*Sampler::Destroy)(re::Sampler&) = nullptr;
-
 }

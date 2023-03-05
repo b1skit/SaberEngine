@@ -18,8 +18,8 @@ namespace win32
 		rawInputDevice[0].usUsage = HID_USAGE_GENERIC_MOUSE;
 		rawInputDevice[0].dwFlags = RIDEV_INPUTSINK;
 
-		win32::Window::PlatformParams* const windowPlatformParams =
-			dynamic_cast<win32::Window::PlatformParams*>(en::CoreEngine::Get()->GetWindow()->GetPlatformParams());
+		win32::Window::PlatformParams* windowPlatformParams = 
+			en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 		rawInputDevice[0].hwndTarget = windowPlatformParams->m_hWindow;
 		RegisterRawInputDevices(rawInputDevice, 1, sizeof(rawInputDevice[0]));

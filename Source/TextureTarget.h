@@ -2,6 +2,7 @@
 #pragma once
 
 #include "DebugConfiguration.h"
+#include "IPlatformParams.h"
 #include "Texture.h"
 #include "NamedObject.h"
 #include "ParameterBlock.h"
@@ -13,7 +14,7 @@ namespace re
 	class TextureTarget
 	{
 	public:
-		struct PlatformParams
+		struct PlatformParams : public IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
 		};
@@ -112,7 +113,7 @@ namespace re
 	class TextureTargetSet final : public virtual en::NamedObject
 	{
 	public:
-		struct PlatformParams
+		struct PlatformParams : public IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
 

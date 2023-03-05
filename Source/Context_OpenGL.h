@@ -15,7 +15,7 @@ namespace opengl
 	class Context
 	{
 	public:
-		struct PlatformParams final : public virtual re::Context::PlatformParams
+		struct PlatformParams final : public re::Context::PlatformParams
 		{
 			HGLRC m_glRenderContext;
 			HDC m_hDeviceContext;

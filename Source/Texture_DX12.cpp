@@ -100,8 +100,7 @@ namespace dx12
 
 	void Texture::Create(re::Texture& texture)
 	{
-		dx12::Texture::PlatformParams* const texPlatParams =
-			dynamic_cast<dx12::Texture::PlatformParams*>(texture.GetPlatformParams());
+		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 		if (texPlatParams->m_isCreated)
 		{
 			return;
@@ -110,8 +109,8 @@ namespace dx12
 
 		re::Context const& context = re::RenderManager::Get()->GetContext();
 
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
+		dx12::Context::PlatformParams* const ctxPlatParams = 
+			context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
 
@@ -194,15 +193,14 @@ namespace dx12
 		SEAssert("Buffer cannot be null", bufferResource);
 
 		re::Context const& context = re::RenderManager::Get()->GetContext();
-		dx12::Context::PlatformParams* const ctxPlatParams =
-			dynamic_cast<dx12::Context::PlatformParams*>(context.GetPlatformParams());
+		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
 
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 
-		dx12::Texture::PlatformParams* const texPlatParams =
-			dynamic_cast<dx12::Texture::PlatformParams*>(texture.GetPlatformParams());
+		dx12::Texture::PlatformParams* const texPlatParams = 
+			texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 		
 		SEAssert("We only currently handle color target creation here (i.e. from the backbuffer resource)", 
 			texParams.m_usage == re::Texture::Usage::ColorTarget);
@@ -220,8 +218,7 @@ namespace dx12
 
 	void Texture::Destroy(re::Texture& texture)
 	{
-		dx12::Texture::PlatformParams* const texPlatParams =
-			dynamic_cast<dx12::Texture::PlatformParams*>(texture.GetPlatformParams());
+		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		texPlatParams->m_textureResource = nullptr;
 	}
