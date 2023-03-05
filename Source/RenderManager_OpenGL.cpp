@@ -107,7 +107,7 @@ namespace opengl
 				std::shared_ptr<re::TextureTargetSet> stageTargets = renderStage->GetTextureTargetSet();
 				if (!stageTargets)
 				{
-					opengl::SwapChain::PlatformParams* const swapChainParams = 
+					opengl::SwapChain::PlatformParams* swapChainParams = 
 						renderManager.GetContext().GetSwapChain().GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
 					SEAssert("Swap chain params and backbuffer cannot be null", 
 						swapChainParams && swapChainParams->m_backbufferTargetSet);

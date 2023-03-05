@@ -34,7 +34,7 @@ namespace re
 		re::SwapChain& GetSwapChain() { return m_swapChain; }
 		re::SwapChain const& GetSwapChain() const { return m_swapChain; }
 
-		Context::PlatformParams* const GetPlatformParams() const { return m_platformParams.get(); }
+		Context::PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<Context::PlatformParams> params) { m_platformParams = std::move(params); }
 
 		// Platform wrappers:

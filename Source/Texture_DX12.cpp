@@ -109,7 +109,7 @@ namespace dx12
 
 		re::Context const& context = re::RenderManager::Get()->GetContext();
 
-		dx12::Context::PlatformParams* const ctxPlatParams = 
+		dx12::Context::PlatformParams* ctxPlatParams = 
 			context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
@@ -199,8 +199,7 @@ namespace dx12
 
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 
-		dx12::Texture::PlatformParams* const texPlatParams = 
-			texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 		
 		SEAssert("We only currently handle color target creation here (i.e. from the backbuffer resource)", 
 			texParams.m_usage == re::Texture::Usage::ColorTarget);

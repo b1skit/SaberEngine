@@ -190,7 +190,6 @@ namespace dx12
 
 		for (uint8_t backbuffer = 0; backbuffer < dx12::RenderManager::k_numFrames; backbuffer++)
 		{
-			swapChainParams->m_backBuffers[backbuffer] = nullptr;
 			swapChainParams->m_backbufferTargetSets[backbuffer] = nullptr;
 		}
 	}

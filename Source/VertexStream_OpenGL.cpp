@@ -113,7 +113,7 @@ namespace opengl
 	{
 		Create(vertexStream, slot); // Ensure the stream is created
 
-		opengl::VertexStream::PlatformParams* const platformParams =
+		opengl::VertexStream::PlatformParams* platformParams =
 			vertexStream.GetPlatformParams()->As<opengl::VertexStream::PlatformParams*>();
 
 		switch (slot)

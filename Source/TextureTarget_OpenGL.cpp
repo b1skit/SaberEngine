@@ -112,7 +112,7 @@ namespace opengl
 				}
 				 
 				// Configure the target parameters:
-				opengl::TextureTarget::PlatformParams* const targetParams =
+				opengl::TextureTarget::PlatformParams* targetParams =
 					targetSet.GetColorTarget(i).GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
 
 				targetParams->m_attachmentPoint = GL_COLOR_ATTACHMENT0 + attachmentPointOffset;

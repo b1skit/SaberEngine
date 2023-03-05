@@ -82,7 +82,7 @@ namespace
 
 
 	void BuildInputLayout(
-		dx12::Shader::PlatformParams* const shaderParams, std::vector<D3D12_INPUT_ELEMENT_DESC>& inputLayout)
+		dx12::Shader::PlatformParams* shaderParams, std::vector<D3D12_INPUT_ELEMENT_DESC>& inputLayout)
 	{
 		ID3D12ShaderReflection* shaderReflection;
 		HRESULT hr = ::D3DReflect(

@@ -125,7 +125,7 @@ namespace win32
 
 	void Window::Destroy(en::Window& window)
 	{
-		win32::Window::PlatformParams* const platformParams = 
+		win32::Window::PlatformParams* platformParams = 
 			window.GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 		::DestroyWindow(platformParams->m_hWindow);
