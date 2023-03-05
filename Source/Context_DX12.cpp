@@ -45,11 +45,11 @@ namespace dx12
 
 		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
 
-		ctxPlatParams->m_commandQueues[CommandQueue::CommandListType::Direct].Create(
-			device, CommandQueue::CommandListType::Direct);
+		ctxPlatParams->m_commandQueues[CommandList::CommandListType::Direct].Create(
+			device, CommandList::CommandListType::Direct);
 
-		ctxPlatParams->m_commandQueues[CommandQueue::CommandListType::Copy].Create(
-			device, CommandQueue::CommandListType::Copy);
+		ctxPlatParams->m_commandQueues[CommandList::CommandListType::Copy].Create(
+			device, CommandList::CommandListType::Copy);
 
 
 		// RTV Descriptor Heap:
@@ -119,11 +119,11 @@ namespace dx12
 		ImGui::DestroyContext();		
 
 		// Make sure our command queues have finished all commands before closing.
-		ctxPlatParams->m_commandQueues[CommandQueue::Copy].Flush();
-		ctxPlatParams->m_commandQueues[CommandQueue::Copy].Destroy();
+		ctxPlatParams->m_commandQueues[CommandList::Copy].Flush();
+		ctxPlatParams->m_commandQueues[CommandList::Copy].Destroy();
 		
-		ctxPlatParams->m_commandQueues[CommandQueue::Direct].Flush();
-		ctxPlatParams->m_commandQueues[CommandQueue::Direct].Destroy();
+		ctxPlatParams->m_commandQueues[CommandList::Direct].Flush();
+		ctxPlatParams->m_commandQueues[CommandList::Direct].Destroy();
 
 		ctxPlatParams->m_RTVDescHeap = nullptr;
 		ctxPlatParams->m_DSVHeap = nullptr;
@@ -151,7 +151,7 @@ namespace dx12
 
 		// Insert a signal into the command queue:
 		ctxPlatParams->m_frameFenceValues[backbufferIdx] = 
-			ctxPlatParams->m_commandQueues[CommandQueue::Direct].Signal();
+			ctxPlatParams->m_commandQueues[CommandList::Direct].Signal();
 		// TODO: We should maintain a frame fence, and individual fences per command queue
 
 		// Get the next backbuffer index:
@@ -159,7 +159,7 @@ namespace dx12
 		swapChainPlatParams->m_backBufferIdx = swapChainPlatParams->m_swapChain->GetCurrentBackBufferIndex();
 		
 		// Wait on the fence for the next backbuffer, to ensure its previous frame is done (blocking)
-		ctxPlatParams->m_commandQueues[CommandQueue::Direct].WaitForGPU(ctxPlatParams->m_frameFenceValues[backbufferIdx]);
+		ctxPlatParams->m_commandQueues[CommandList::Direct].WaitForGPU(ctxPlatParams->m_frameFenceValues[backbufferIdx]);
 	}
 
 
@@ -199,7 +199,7 @@ namespace dx12
 	}
 
 
-	CommandQueue& GetCommandQueue(CommandQueue::CommandListType type)
+	CommandQueue& GetCommandQueue(CommandList::CommandListType type)
 	{
 		dx12::Context::PlatformParams* ctxPlatParams = 
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();

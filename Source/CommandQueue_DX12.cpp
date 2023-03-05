@@ -4,50 +4,21 @@
 
 using Microsoft::WRL::ComPtr;
 
-namespace
-{
-	constexpr D3D12_COMMAND_LIST_TYPE D3DCommandListType(dx12::CommandQueue::CommandListType type)
-	{
-		switch (type)
-		{
-		case dx12::CommandQueue::CommandListType::Direct:
-			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT;
-		case dx12::CommandQueue::CommandListType::Bundle:
-			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_BUNDLE;
-		case dx12::CommandQueue::CommandListType::Compute:
-			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE;
-		case dx12::CommandQueue::CommandListType::Copy:
-			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY;
-		case dx12::CommandQueue::CommandListType::VideoDecode:
-			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE;
-		case dx12::CommandQueue::CommandListType::VideoProcess:
-			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS;
-		case dx12::CommandQueue::CommandListType::VideoEncode:
-			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE;
-		case dx12::CommandQueue::CommandListType::CommandListType_Count:
-		default:
-			static_assert("Invalid type");
-		}
-
-		return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT;
-	}
-}
-
 
 namespace dx12
 {
 	CommandQueue::CommandQueue()
 		: m_commandQueue(nullptr)
-		, m_type(D3DCommandListType(CommandListType::CommandListType_Count))
+		, m_type(CommandList::D3DCommandListType(CommandList::CommandListType::CommandListType_Count))
 		, m_deviceCache(nullptr)
 		, m_fenceValue(0)
 	{
 	}
 
 
-	void CommandQueue::Create(ComPtr<ID3D12Device2> displayDevice, CommandListType type)
+	void CommandQueue::Create(ComPtr<ID3D12Device2> displayDevice, CommandList::CommandListType type)
 	{
-		m_type = D3DCommandListType(type);
+		m_type = CommandList::D3DCommandListType(type);
 		m_deviceCache = displayDevice; // Store a local copy, for convenience
 
 		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
@@ -55,8 +26,8 @@ namespace dx12
 		D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
 		switch (type)
 		{
-		case CommandListType::Direct:
-		case CommandListType::Copy:
+		case CommandList::CommandListType::Direct:
+		case CommandList::CommandListType::Copy:
 		{
 			cmdQueueDesc.Type = m_type;
 			cmdQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
@@ -64,11 +35,11 @@ namespace dx12
 			cmdQueueDesc.NodeMask = deviceNodeMask;
 		}
 		break;
-		case CommandListType::Compute: // TODO: Implement more command queue/list types
-		case CommandListType::Bundle:
-		case CommandListType::VideoDecode:
-		case CommandListType::VideoProcess:
-		case CommandListType::VideoEncode:
+		case CommandList::CommandListType::Compute: // TODO: Implement more command queue/list types
+		case CommandList::CommandListType::Bundle:
+		case CommandList::CommandListType::VideoDecode:
+		case CommandList::CommandListType::VideoProcess:
+		case CommandList::CommandListType::VideoEncode:
 		default:
 		{
 			SEAssertF("Invalid or (currently) unsupported command list type");
@@ -91,47 +62,36 @@ namespace dx12
 	}
 
 
-	uint64_t CommandQueue::Execute(uint32_t numCmdLists, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> cmdLists[])
+	uint64_t CommandQueue::Execute(uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists)
 	{
 		// Extract our raw pointers so we can execute them in a single call
 		std::vector<ID3D12CommandList*> commandListPtrs;
 		commandListPtrs.reserve(numCmdLists);
 
-		std::vector<ID3D12CommandAllocator*> storedCommandAllocators;
-		storedCommandAllocators.reserve(numCmdLists);
-
+		// Get our raw command list pointers, and close them before they're executed
 		for (uint32_t i = 0; i < numCmdLists; i++)
 		{
-			cmdLists[i]->Close(); // Close the command list(s) before we execute them
+			SEAssert("Command list type does not match command queue type", cmdLists[i]->GetType() == m_type);
 
-			commandListPtrs.emplace_back(cmdLists[i].Get());
-
-			// Retrive the command allocator:
-			ID3D12CommandAllocator* storedCmdAllocator;
-			uint32_t cmdAllocatorSize = sizeof(storedCmdAllocator);
-			HRESULT hr = 
-				cmdLists[i]->GetPrivateData(__uuidof(ID3D12CommandAllocator), &cmdAllocatorSize, &storedCmdAllocator);
-			CheckHResult(hr, "Failed to retrieve stored command allocator from command list");
-
-			storedCommandAllocators.emplace_back(storedCmdAllocator);
-
-			// Return our command list to the pool:
-			m_commandListPool.emplace(cmdLists[i]);
+			cmdLists[i]->Close(); 
+			commandListPtrs.emplace_back(cmdLists[i]->GetD3DCommandList());
 		}
 
 		// Execute the command lists:
 		m_commandQueue->ExecuteCommandLists(numCmdLists, &commandListPtrs[0]);
 
+		// Fence value for when the command list's internal command allocator will be available for reuse
+		const uint64_t fenceVal = Signal();
 
-		uint64_t commandAllocatorDoneFenceValue = Signal();
-
-		// Return our command allocators to the pool:
-		for (ID3D12CommandAllocator* cmdAllocator : storedCommandAllocators)
+		// Return our command list(s) to the pool:
+		for (uint32_t i = 0; i < numCmdLists; i++)
 		{
-			m_commandAllocatorPool.emplace(CommandAllocatorInstance{ cmdAllocator, commandAllocatorDoneFenceValue });
+			cmdLists[i]->SetFenceValue(fenceVal);			
+			m_commandListPool.emplace(cmdLists[i]);
+			cmdLists[i] = nullptr; // We don't want the caller retaining access to a command list in our pool
 		}
 
-		return commandAllocatorDoneFenceValue;
+		return fenceVal;
 	}
 
 
@@ -154,77 +114,22 @@ namespace dx12
 	}
 
 
-	ComPtr<ID3D12GraphicsCommandList2> CommandQueue::GetCreateCommandList()
+	std::shared_ptr<dx12::CommandList> CommandQueue::GetCreateCommandList()
 	{
-		ComPtr<ID3D12CommandAllocator> commandAllocator = GetCreateCommandAllocator();
-
-		ComPtr<ID3D12GraphicsCommandList2> commandList = nullptr;
-
-		if (!m_commandListPool.empty())
+		std::shared_ptr<dx12::CommandList> commandList = nullptr;
+		if (!m_commandListPool.empty() && m_fence.IsFenceComplete(m_commandListPool.front()->GetFenceValue()))
 		{
 			commandList = m_commandListPool.front();
 			m_commandListPool.pop();
 		}
 		else
 		{
-			// Create the command list:
-			constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
-
-			HRESULT hr = m_deviceCache->CreateCommandList(
-				deviceNodeMask,
-				m_type, // Direct draw/compute/copy/etc
-				commandAllocator.Get(), // The command allocator the command lists will be created on
-				nullptr,  // Optional: Command list initial pipeline state
-				IID_PPV_ARGS(&commandList)); // Command list interface REFIID/GUID, & destination for the populated command list
-			// NOTE: IID_PPV_ARGS macro automatically supplies both the RIID & interface pointer
-
-			CheckHResult(hr, "Failed to create command list");
-
-			// Note: Command lists are created in the recording state by default. The render loop resets the command 
-			// list, which requires the command list to be closed. So, we pre-close new command lists so they're ready
-			// to be reset before recording
-			hr = commandList->Close();
-			CheckHResult(hr, "Failed to close command list");
+			commandList = std::make_shared<dx12::CommandList>(m_deviceCache.Get(), m_type);
 		}
 
-		ID3D12PipelineState* pso = nullptr; // Note: pso is optional; Sets a dummy PSO if nullptr. TODO: Accept a PSO?
-		commandList->Reset(commandAllocator.Get(), pso);
-
-		// Store a pointer to the command allocator in the command list, so we can retrieve it when the command list
-		// is executed
-		HRESULT hr = commandList->SetPrivateDataInterface(__uuidof(ID3D12CommandAllocator), commandAllocator.Get());
-		CheckHResult(hr, "Failed to set private data interface");
+		ID3D12PipelineState* dummyPSO = nullptr; // Note: Sets a dummy if PSO is null
+		commandList->Reset(dummyPSO);
 
 		return commandList;
-	}
-
-
-	ComPtr<ID3D12CommandAllocator> CommandQueue::GetCreateCommandAllocator()
-	{
-		ComPtr<ID3D12CommandAllocator> commandAllocator = nullptr;
-
-		if (!m_commandAllocatorPool.empty() &&
-			m_fence.IsFenceComplete(m_commandAllocatorPool.front().m_fenceValue))
-		{
-			commandAllocator = m_commandAllocatorPool.front().m_commandAllocator;
-			m_commandAllocatorPool.pop();
-
-			HRESULT hr = commandAllocator->Reset();
-			CheckHResult(hr, "Failed to reset command allocator");
-		}
-		else
-		{
-			HRESULT hr = m_deviceCache->CreateCommandAllocator(
-				m_type, // Copy, compute, direct draw, etc
-				IID_PPV_ARGS(&commandAllocator)); // REFIID/GUID (Globally-Unique IDentifier) for the command allocator
-			// NOTE: IID_PPV_ARGS macro automatically supplies both the RIID & interface pointer
-
-			CheckHResult(hr, "Failed to create command allocator");
-		}
-
-		HRESULT hr = commandAllocator->Reset();
-		CheckHResult(hr, "Failed to reset command allocator");
-
-		return commandAllocator;
 	}
 }

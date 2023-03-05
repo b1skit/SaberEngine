@@ -38,12 +38,12 @@ namespace
 		re::Context const& context = re::RenderManager::Get()->GetContext();
 		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
-		dx12::CommandQueue& copyQueue = ctxPlatParams->m_commandQueues[dx12::CommandQueue::Copy];
+		dx12::CommandQueue& copyQueue = ctxPlatParams->m_commandQueues[dx12::CommandList::Copy];
 
-		ComPtr<ID3D12GraphicsCommandList2> commandList = copyQueue.GetCreateCommandList();
+		std::shared_ptr<dx12::CommandList> commandList = copyQueue.GetCreateCommandList();
 
-		
-		dx12::MeshPrimitive::Create(*k_helloTriangle, commandList); // Internally creates all of the vertex stream resources
+		// Note: This internally create all of the vertex stream resources
+		dx12::MeshPrimitive::Create(*k_helloTriangle, commandList->GetD3DCommandList()); 
 
 		std::shared_ptr<re::Shader> k_helloShader = std::make_shared<re::Shader>("HelloTriangle");
 		dx12::Shader::Create(*k_helloShader);
@@ -68,7 +68,7 @@ namespace
 
 
 		// Execute command queue, and wait for it to be done (blocking)
-		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandLists[] =
+		std::shared_ptr<dx12::CommandList> commandLists[] =
 		{
 			commandList
 		};
@@ -76,49 +76,7 @@ namespace
 		uint64_t copyQueueFenceVal = copyQueue.Execute(1, commandLists);
 		copyQueue.WaitForGPU(copyQueueFenceVal);
 
-
-
 		return true;
-	}
-
-
-	// TODO: Should this be a member of a command list wrapper, or a resource state manager member of the command list?
-	void TransitionResource(
-		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
-		Microsoft::WRL::ComPtr<ID3D12Resource> resource,
-		D3D12_RESOURCE_STATES stateBefore, 
-		D3D12_RESOURCE_STATES stateAfter)
-	{
-		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-			resource.Get(),
-			stateBefore,
-			stateAfter);
-
-		commandList->ResourceBarrier(1, &barrier);
-	}
-
-
-	// TODO: Should this be a member of a command list wrapper?
-	void ClearRTV(
-		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
-		D3D12_CPU_DESCRIPTOR_HANDLE rtv, 
-		glm::vec4 clearColor)
-	{
-		commandList->ClearRenderTargetView(
-			rtv, 
-			&clearColor.r, 
-			0,			// Number of rectangles in the proceeding D3D12_RECT ptr
-			nullptr);	// Ptr to an array of rectangles to clear in the resource view. Clears entire view if null
-	}
-
-
-	// TODO: Should this be a member of a command list wrapper?
-	void ClearDepth(
-		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
-		D3D12_CPU_DESCRIPTOR_HANDLE dsv, 
-		float depth)
-	{
-		commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
 	}
 }
 
@@ -133,7 +91,7 @@ namespace dx12
 
 
 		// TEMP DEBUG CODE:
-		k_helloTriangle = meshfactory::CreateHelloTriangle(10.f, 1.f);
+		k_helloTriangle = meshfactory::CreateHelloTriangle(10.f, -10.f);
 
 		CreateAPIResources();
 	}
@@ -145,10 +103,10 @@ namespace dx12
 
 		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
-		dx12::CommandQueue& directQueue = ctxPlatParams->m_commandQueues[dx12::CommandQueue::Direct];
+		dx12::CommandQueue& directQueue = ctxPlatParams->m_commandQueues[dx12::CommandList::Direct];
 
 		// Note: Our command lists and associated command allocators are already closed/reset
-		ComPtr<ID3D12GraphicsCommandList2> commandList = directQueue.GetCreateCommandList();
+		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
 		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
 
@@ -173,9 +131,8 @@ namespace dx12
 		D3D12_CPU_DESCRIPTOR_HANDLE depthStencilView = ctxPlatParams->m_DSVHeap->GetCPUDescriptorHandleForHeapStart();
 
 		// Clear the render targets.
-		TransitionResource(
-			commandList,
-			backbufferResource,
+		commandList->TransitionResource(			
+			backbufferResource.Get(),
 			D3D12_RESOURCE_STATE_PRESENT,
 			D3D12_RESOURCE_STATE_RENDER_TARGET);
 
@@ -186,8 +143,8 @@ namespace dx12
 
 		const vec4 clearColor = vec4(0.38f, 0.36f, 0.1f, 1.0f) * scale;
 
-		ClearRTV(commandList, renderTargetView, clearColor);
-		ClearDepth(commandList, depthStencilView, 1.f);
+		commandList->ClearRTV(renderTargetView, clearColor);
+		commandList->ClearDepth(depthStencilView, 1.f);
 
 		
 		// Set the pipeline state:
@@ -196,7 +153,7 @@ namespace dx12
 
 
 		// TODO: This should be set by a batch, w.r.t MeshPrimitive::Drawmode
-		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		commandList->SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 
 		// TEMP HAX: Get the vertex buffer views:
@@ -215,24 +172,27 @@ namespace dx12
 		dx12::VertexStream::PlatformParams_Vertex* colorPlatformParams =
 			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Color)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
 
-		commandList->IASetVertexBuffers(re::MeshPrimitive::Position, 1, &positionPlatformParams->m_vertexBufferView);
-		commandList->IASetVertexBuffers(re::MeshPrimitive::Normal, 1, &normalPlatformParams->m_vertexBufferView);
-		commandList->IASetVertexBuffers(re::MeshPrimitive::Tangent, 1, &tangentPlatformParams->m_vertexBufferView);
-		commandList->IASetVertexBuffers(re::MeshPrimitive::UV0, 1, &uv0PlatformParams->m_vertexBufferView);
-		commandList->IASetVertexBuffers(re::MeshPrimitive::Color, 1, &colorPlatformParams->m_vertexBufferView);
+		// Note: We could set these in a single call, if we're ok with using sequential slots
+		commandList->SetVertexBuffers(re::MeshPrimitive::Position, 1, &positionPlatformParams->m_vertexBufferView);
+		commandList->SetVertexBuffers(re::MeshPrimitive::Normal, 1, &normalPlatformParams->m_vertexBufferView);
+		commandList->SetVertexBuffers(re::MeshPrimitive::Tangent, 1, &tangentPlatformParams->m_vertexBufferView);
+		commandList->SetVertexBuffers(re::MeshPrimitive::UV0, 1, &uv0PlatformParams->m_vertexBufferView);
+		commandList->SetVertexBuffers(re::MeshPrimitive::Color, 1, &colorPlatformParams->m_vertexBufferView);
 
 		dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
 			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
 
-		commandList->IASetIndexBuffer(&indexPlatformParams->m_indexBufferView);
+		commandList->SetIndexBuffer(&indexPlatformParams->m_indexBufferView);
 
 	
-		dx12::TextureTargetSet::SetViewport(*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList.Get());
-		dx12::TextureTargetSet::SetScissorRect(*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList.Get());
+		dx12::TextureTargetSet::SetViewport(
+			*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList->GetD3DCommandList());
+		dx12::TextureTargetSet::SetScissorRect(
+			*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList->GetD3DCommandList());
 
 
 		// Bind our render target(s) to the output merger (OM):
-		commandList->OMSetRenderTargets(1, &renderTargetView, FALSE, &depthStencilView);
+		commandList->SetRenderTargets(1, &renderTargetView, false, &depthStencilView);
 
 
 		// Update the MVP matrix
@@ -243,7 +203,7 @@ namespace dx12
 		commandList->SetGraphicsRoot32BitConstants(
 			0,										// RootParameterIndex (As set in our CD3DX12_ROOT_PARAMETER1)
 			sizeof(glm::mat4) / 4,					// Num32BitValuesToSet
-			&viewProj,	// pSrcData
+			&viewProj,								// pSrcData
 			0);										// DestOffsetIn32BitValues
 
 
@@ -256,14 +216,13 @@ namespace dx12
 
 
 		// Transition our backbuffer resource back to the present state:
-		// TODO: Move this to the present function?
-		TransitionResource(
-			commandList,
-			backbufferResource,
+		// TODO: Move this to the present function as a separate command list?
+		commandList->TransitionResource(
+			backbufferResource.Get(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PRESENT);
 
-		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandLists[] =
+		std::shared_ptr<dx12::CommandList> commandLists[] =
 		{
 			commandList
 		};

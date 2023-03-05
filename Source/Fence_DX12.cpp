@@ -47,11 +47,13 @@ namespace dx12
 
 	uint64_t Fence::Signal(Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue, uint64_t& fenceValue)
 	{
+		// TODO: Should this functionality be a member of the CommandQueue?
+
 		const uint64_t fenceValueForSignal = ++fenceValue; // Note: First fenceValueForSignal == 1
 
 		HRESULT hr = commandQueue->Signal(
-			m_fence.Get(), // Fence object ptr
-			fenceValueForSignal); // Value to signal the fence with
+			m_fence.Get(),			// Fence object ptr
+			fenceValueForSignal);	// Value to signal the fence with
 
 		CheckHResult(hr, "Failed to signal fence");
 

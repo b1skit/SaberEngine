@@ -5,6 +5,7 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
+#include "CommandList_DX12.h"
 #include "Fence_DX12.h"
 
 
@@ -13,35 +14,22 @@ namespace dx12
 	class CommandQueue
 	{
 	public:
-		enum CommandListType
-		{
-			Direct,
-			Bundle,
-			Compute,
-			Copy,
-			VideoDecode,
-			VideoProcess,
-			VideoEncode,
-
-			CommandListType_Count
-		};
-
-	public:
 		CommandQueue();
 		~CommandQueue() { Destroy(); };
 
-		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, CommandListType type);
+		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, CommandList::CommandListType type);
 		void Destroy();
 
-		// TODO: Split this into "Submit" and "Execute", to allow multiple command lists to be executed?
-		uint64_t Execute(uint32_t numCmdLists, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> cmdLists[]);
+		// Note: shared_ptrs in cmdLists will be null after this call
+		uint64_t Execute(uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists);
 
 		uint64_t Signal();
 		void WaitForGPU(uint64_t fenceValue); // Blocks the CPU
 		void Flush();
 
-		// TODO: Return raw pointers instead of ComPtr
-		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> GetCreateCommandList();
+
+		std::shared_ptr<dx12::CommandList> GetCreateCommandList();
+		
 
 		ID3D12CommandQueue* GetD3DCommandQueue() { return m_commandQueue.Get(); }
 
@@ -55,20 +43,7 @@ namespace dx12
 		Fence m_fence;
 		uint64_t m_fenceValue = 0;
 
-
-		// Command list pool:
-		std::queue<Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2>> m_commandListPool;
-
-
-		// Command allocator pool:
-		struct CommandAllocatorInstance
-		{
-			Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator;
-			uint64_t m_fenceValue;
-		};
-		std::queue<CommandAllocatorInstance> m_commandAllocatorPool;
-
-		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> GetCreateCommandAllocator();
+		std::queue<std::shared_ptr<dx12::CommandList>> m_commandListPool;
 
 
 	private: // No copying allowed

@@ -153,6 +153,9 @@ namespace meshfactory
 		size_t numLatSlices = 16,
 		size_t numLongSlices = 16);
 
-	// Creates a triangle in NDC
+	// Creates a simple debug triangle.
+	// Using the default arguments, the triangle will be in NDC.
+	// Override the defaults to simulate a world-space transform (Reminder: We use a RHCS. Use negative zDepths to push
+	// the triangle in front of the camera once a view-projection transformation is applied)
 	extern std::shared_ptr<re::MeshPrimitive> CreateHelloTriangle(float scale = 1.f, float zDepth = 0.5f);
 } // meshfactory

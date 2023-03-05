@@ -11,8 +11,7 @@ namespace dx12
 	}
 
 
-	void MeshPrimitive::Create(
-		re::MeshPrimitive& meshPrimitive, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList)
+	void MeshPrimitive::Create(re::MeshPrimitive& meshPrimitive, ID3D12GraphicsCommandList2* commandList)
 	{
 		// Create and enable our vertex buffers
 		for (size_t i = 0; i < re::MeshPrimitive::Slot_Count; i++)

@@ -142,7 +142,7 @@ namespace dx12
 		// Create the swap chain:
 		ComPtr<IDXGISwapChain1> swapChain1;
 		hr = dxgiFactory4->CreateSwapChainForHwnd(
-			ctxPlatParams->m_commandQueues[CommandQueue::Direct].GetD3DCommandQueue(),
+			ctxPlatParams->m_commandQueues[CommandList::Direct].GetD3DCommandQueue(),
 			windowPlatParams->m_hWindow, // Window handle associated with the swap chain
 			&swapChainDesc, // Swap chain descriptor
 			nullptr, // Full-screen swap chain descriptor. Creates a window swap chain if null

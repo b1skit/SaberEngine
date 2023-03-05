@@ -205,6 +205,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClCompile Include="Batch.cpp" />
     <ClCompile Include="Bounds.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CommandList_DX12.cpp" />
     <ClCompile Include="CommandQueue_DX12.cpp" />
     <ClCompile Include="Context_DX12.cpp" />
     <ClCompile Include="Debug_DX12.cpp" />
@@ -309,6 +310,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClInclude Include="Batch.h" />
     <ClInclude Include="Bounds.h" />
     <ClInclude Include="Command.h" />
+    <ClInclude Include="CommandList_DX12.h" />
     <ClInclude Include="CommandQueue_DX12.h" />
     <ClInclude Include="Context_DX12.h" />
     <ClInclude Include="Debug_DX12.h" />
