@@ -38,7 +38,7 @@ namespace
 		re::Context const& context = re::RenderManager::Get()->GetContext();
 		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
-		dx12::CommandQueue_DX12& copyQueue = ctxPlatParams->m_commandQueues[dx12::CommandQueue_DX12::Copy];
+		dx12::CommandQueue& copyQueue = ctxPlatParams->m_commandQueues[dx12::CommandQueue::Copy];
 
 		ComPtr<ID3D12GraphicsCommandList2> commandList = copyQueue.GetCreateCommandList();
 
@@ -145,7 +145,7 @@ namespace dx12
 
 		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
-		dx12::CommandQueue_DX12& directQueue = ctxPlatParams->m_commandQueues[dx12::CommandQueue_DX12::Direct];
+		dx12::CommandQueue& directQueue = ctxPlatParams->m_commandQueues[dx12::CommandQueue::Direct];
 
 		// Note: Our command lists and associated command allocators are already closed/reset
 		ComPtr<ID3D12GraphicsCommandList2> commandList = directQueue.GetCreateCommandList();

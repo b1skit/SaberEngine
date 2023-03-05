@@ -8,11 +8,11 @@
 
 namespace dx12
 {
-	class Fence_DX12
+	class Fence
 	{
 	public:
-		Fence_DX12();
-		~Fence_DX12() { Destroy(); };
+		Fence();
+		~Fence() { Destroy(); };
 
 		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice);
 		void Destroy();
@@ -29,8 +29,8 @@ namespace dx12
 
 	private:
 		// Copying not allowed:
-		Fence_DX12(Fence_DX12 const&) = delete;
-		Fence_DX12(Fence_DX12&&) = delete;
-		Fence_DX12& operator=(Fence_DX12 const&) = delete;
+		Fence(Fence const&) = delete;
+		Fence(Fence&&) = delete;
+		Fence& operator=(Fence const&) = delete;
 	};
 }

@@ -105,21 +105,21 @@ namespace
 
 namespace dx12
 {
-	Device_DX12::Device_DX12()
+	Device::Device()
 		: m_dxgiAdapter4(nullptr)
 		, m_displayDevice(nullptr)
 	{
 	}
 
 
-	void Device_DX12::Create()
+	void Device::Create()
 	{
 		m_dxgiAdapter4 = GetBestDisplayAdapter(); // Find the display adapter with the most VRAM
 		m_displayDevice = CreateDevice(m_dxgiAdapter4); // Create a device from the selected adapter
 	}
 
 
-	void Device_DX12::Destroy()
+	void Device::Destroy()
 	{
 		m_displayDevice = nullptr;
 		m_dxgiAdapter4 = nullptr;

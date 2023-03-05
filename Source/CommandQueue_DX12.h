@@ -10,7 +10,7 @@
 
 namespace dx12
 {
-	class CommandQueue_DX12
+	class CommandQueue
 	{
 	public:
 		enum CommandListType
@@ -27,12 +27,13 @@ namespace dx12
 		};
 
 	public:
-		CommandQueue_DX12();
-		~CommandQueue_DX12() { Destroy(); };
+		CommandQueue();
+		~CommandQueue() { Destroy(); };
 
 		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, CommandListType type);
 		void Destroy();
 
+		// TODO: Split this into "Submit" and "Execute", to allow multiple command lists to be executed?
 		uint64_t Execute(uint32_t numCmdLists, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> cmdLists[]);
 
 		uint64_t Signal();
@@ -51,7 +52,7 @@ namespace dx12
 
 		Microsoft::WRL::ComPtr<ID3D12Device2> m_deviceCache;
 
-		Fence_DX12 m_fence;
+		Fence m_fence;
 		uint64_t m_fenceValue = 0;
 
 
@@ -71,8 +72,8 @@ namespace dx12
 
 
 	private: // No copying allowed
-		CommandQueue_DX12(CommandQueue_DX12 const&) = delete;
-		CommandQueue_DX12(CommandQueue_DX12&&) = delete;
-		CommandQueue_DX12& operator=(CommandQueue_DX12 const&) = delete;
+		CommandQueue(CommandQueue const&) = delete;
+		CommandQueue(CommandQueue&&) = delete;
+		CommandQueue& operator=(CommandQueue const&) = delete;
 	};
 }

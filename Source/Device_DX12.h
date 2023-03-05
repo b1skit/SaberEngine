@@ -10,11 +10,11 @@
 
 namespace dx12
 {
-	class Device_DX12
+	class Device
 	{
 	public:
-		Device_DX12();
-		~Device_DX12() { Destroy(); };
+		Device();
+		~Device() { Destroy(); };
 
 		void Create();
 		void Destroy();
@@ -29,8 +29,8 @@ namespace dx12
 
 	private:
 		// Copying not allowed:
-		Device_DX12(Device_DX12 const&) = delete;
-		Device_DX12(Device_DX12&&) = delete;
-		Device_DX12& operator=(Device_DX12 const&) = delete;
+		Device(Device const&) = delete;
+		Device(Device&&) = delete;
+		Device& operator=(Device const&) = delete;
 	};
 }

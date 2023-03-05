@@ -6,25 +6,25 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-	constexpr D3D12_COMMAND_LIST_TYPE D3DCommandListType(dx12::CommandQueue_DX12::CommandListType type)
+	constexpr D3D12_COMMAND_LIST_TYPE D3DCommandListType(dx12::CommandQueue::CommandListType type)
 	{
 		switch (type)
 		{
-		case dx12::CommandQueue_DX12::CommandListType::Direct:
+		case dx12::CommandQueue::CommandListType::Direct:
 			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT;
-		case dx12::CommandQueue_DX12::CommandListType::Bundle:
+		case dx12::CommandQueue::CommandListType::Bundle:
 			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_BUNDLE;
-		case dx12::CommandQueue_DX12::CommandListType::Compute:
+		case dx12::CommandQueue::CommandListType::Compute:
 			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE;
-		case dx12::CommandQueue_DX12::CommandListType::Copy:
+		case dx12::CommandQueue::CommandListType::Copy:
 			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY;
-		case dx12::CommandQueue_DX12::CommandListType::VideoDecode:
+		case dx12::CommandQueue::CommandListType::VideoDecode:
 			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE;
-		case dx12::CommandQueue_DX12::CommandListType::VideoProcess:
+		case dx12::CommandQueue::CommandListType::VideoProcess:
 			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS;
-		case dx12::CommandQueue_DX12::CommandListType::VideoEncode:
+		case dx12::CommandQueue::CommandListType::VideoEncode:
 			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE;
-		case dx12::CommandQueue_DX12::CommandListType::CommandListType_Count:
+		case dx12::CommandQueue::CommandListType::CommandListType_Count:
 		default:
 			static_assert("Invalid type");
 		}
@@ -36,7 +36,7 @@ namespace
 
 namespace dx12
 {
-	CommandQueue_DX12::CommandQueue_DX12()
+	CommandQueue::CommandQueue()
 		: m_commandQueue(nullptr)
 		, m_type(D3DCommandListType(CommandListType::CommandListType_Count))
 		, m_deviceCache(nullptr)
@@ -45,7 +45,7 @@ namespace dx12
 	}
 
 
-	void CommandQueue_DX12::Create(ComPtr<ID3D12Device2> displayDevice, CommandListType type)
+	void CommandQueue::Create(ComPtr<ID3D12Device2> displayDevice, CommandListType type)
 	{
 		m_type = D3DCommandListType(type);
 		m_deviceCache = displayDevice; // Store a local copy, for convenience
@@ -83,7 +83,7 @@ namespace dx12
 	}
 
 
-	void CommandQueue_DX12::Destroy()
+	void CommandQueue::Destroy()
 	{
 		m_fence.Destroy();
 		m_commandQueue = nullptr;
@@ -91,7 +91,7 @@ namespace dx12
 	}
 
 
-	uint64_t CommandQueue_DX12::Execute(uint32_t numCmdLists, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> cmdLists[])
+	uint64_t CommandQueue::Execute(uint32_t numCmdLists, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> cmdLists[])
 	{
 		// Extract our raw pointers so we can execute them in a single call
 		std::vector<ID3D12CommandList*> commandListPtrs;
@@ -135,26 +135,26 @@ namespace dx12
 	}
 
 
-	uint64_t CommandQueue_DX12::Signal()
+	uint64_t CommandQueue::Signal()
 	{
 		return m_fence.Signal(m_commandQueue, m_fenceValue); // m_fenceValue will be incremented
 	}
 
 
-	void CommandQueue_DX12::WaitForGPU(uint64_t fenceValue)
+	void CommandQueue::WaitForGPU(uint64_t fenceValue)
 	{
 		m_fence.WaitForGPU(fenceValue);
 	}
 
 
-	void CommandQueue_DX12::Flush()
+	void CommandQueue::Flush()
 	{
 		const uint64_t fenceValueForSignal = m_fence.Signal(m_commandQueue, m_fenceValue);
 		m_fence.WaitForGPU(fenceValueForSignal);
 	}
 
 
-	ComPtr<ID3D12GraphicsCommandList2> CommandQueue_DX12::GetCreateCommandList()
+	ComPtr<ID3D12GraphicsCommandList2> CommandQueue::GetCreateCommandList()
 	{
 		ComPtr<ID3D12CommandAllocator> commandAllocator = GetCreateCommandAllocator();
 
@@ -199,7 +199,7 @@ namespace dx12
 	}
 
 
-	ComPtr<ID3D12CommandAllocator> CommandQueue_DX12::GetCreateCommandAllocator()
+	ComPtr<ID3D12CommandAllocator> CommandQueue::GetCreateCommandAllocator()
 	{
 		ComPtr<ID3D12CommandAllocator> commandAllocator = nullptr;
 

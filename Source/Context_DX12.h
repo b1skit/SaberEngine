@@ -26,9 +26,9 @@ namespace dx12
 		{
 			PlatformParams();
 
-			dx12::Device_DX12 m_device;
+			dx12::Device m_device;
 
-			std::array<dx12::CommandQueue_DX12, CommandQueue_DX12::CommandListType::CommandListType_Count> m_commandQueues;
+			std::array<dx12::CommandQueue, CommandQueue::CommandListType::CommandListType_Count> m_commandQueues;
 
 			uint64_t m_frameFenceValues[dx12::RenderManager::k_numFrames]; // Fence values for signalling the command queue
 
@@ -58,7 +58,7 @@ namespace dx12
 
 
 		// DX12-specific interface:
-		static dx12::CommandQueue_DX12& GetCommandQueue(CommandQueue_DX12::CommandListType type);
+		static dx12::CommandQueue& GetCommandQueue(CommandQueue::CommandListType type);
 
 		static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(
 			Microsoft::WRL::ComPtr<ID3D12Device2> device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors);
