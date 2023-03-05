@@ -134,6 +134,34 @@ namespace dx12
 
 	void Context::Present(re::Context const& context)
 	{
+		// Create a command list to transition the backbuffer to the presentation state
+		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+
+		dx12::CommandQueue& directQueue = ctxPlatParams->m_commandQueues[dx12::CommandList::Direct];
+
+		// Add a GPU wait to ensure our graphics work has finished before we present
+		directQueue.GPUWait(ctxPlatParams->m_lastFenceBeforePresent);
+
+		// Note: Our command lists and associated command allocators are already closed/reset
+		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
+
+		Microsoft::WRL::ComPtr<ID3D12Resource> backbufferResource =
+			dx12::SwapChain::GetBackBufferResource(context.GetSwapChain());
+
+		// Transition our backbuffer resource back to the present state:
+		commandList->TransitionResource(
+			backbufferResource.Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PRESENT);
+
+		std::shared_ptr<dx12::CommandList> commandLists[] =
+		{
+			commandList
+		};
+
+		directQueue.Execute(1, commandLists);
+
+		// Present:
 		dx12::SwapChain::PlatformParams* swapChainPlatParams = 
 			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
@@ -146,8 +174,6 @@ namespace dx12
 			(swapChainPlatParams->m_tearingSupported && !vsyncEnabled) ? DXGI_PRESENT_ALLOW_TEARING : 0;
 
 		swapChainPlatParams->m_swapChain->Present(syncInterval, presentFlags);
-
-		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		// Insert a signal into the command queue:
 		ctxPlatParams->m_frameFenceValues[backbufferIdx] = 

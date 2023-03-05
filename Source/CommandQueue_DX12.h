@@ -27,6 +27,7 @@ namespace dx12
 		void WaitForGPU(uint64_t fenceValue); // Blocks the CPU
 		void Flush();
 
+		void GPUWait(uint64_t fenceValue); // Blocks the GPU
 
 		std::shared_ptr<dx12::CommandList> GetCreateCommandList();
 		
@@ -41,7 +42,7 @@ namespace dx12
 		Microsoft::WRL::ComPtr<ID3D12Device2> m_deviceCache;
 
 		Fence m_fence;
-		uint64_t m_fenceValue = 0;
+		uint64_t m_fenceValue; // Monotonically increasing global fence value
 
 		std::queue<std::shared_ptr<dx12::CommandList>> m_commandListPool;
 

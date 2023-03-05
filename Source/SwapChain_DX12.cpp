@@ -239,7 +239,8 @@ namespace dx12
 			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
 		dx12::Texture::PlatformParams const* backbufferColorTexPlatParams = 
-			swapChainPlatParams->m_backbufferTargetSets[swapChainPlatParams->m_backBufferIdx]->GetColorTarget(0).GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+			swapChainPlatParams->m_backbufferTargetSets[swapChainPlatParams->m_backBufferIdx]->GetColorTarget(0).
+				GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		return backbufferColorTexPlatParams->m_textureResource;
 	}

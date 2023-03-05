@@ -215,19 +215,14 @@ namespace dx12
 			0);	// Start instance location
 
 
-		// Transition our backbuffer resource back to the present state:
-		// TODO: Move this to the present function as a separate command list?
-		commandList->TransitionResource(
-			backbufferResource.Get(),
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_PRESENT);
-
 		std::shared_ptr<dx12::CommandList> commandLists[] =
 		{
 			commandList
 		};
 
-		directQueue.Execute(1, commandLists);
+		// Record our last fence value, so we can add a GPU wait before transitioning the backbuffer for presentation
+		ctxPlatParams->m_lastFenceBeforePresent = directQueue.Execute(1, commandLists);
+		// TODO: Should this value be tracked by the command queue?
 	}
 
 

@@ -21,6 +21,7 @@ namespace dx12
 		void WaitForGPU(uint64_t fenceValue); // Blocks the CPU
 		bool IsFenceComplete(uint64_t fenceValue);
 
+		ID3D12Fence* GetD3DFence();
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Fence> m_fence;
@@ -33,4 +34,10 @@ namespace dx12
 		Fence(Fence&&) = delete;
 		Fence& operator=(Fence const&) = delete;
 	};
+
+
+	inline ID3D12Fence* Fence::GetD3DFence()
+	{
+		return m_fence.Get();
+	}
 }

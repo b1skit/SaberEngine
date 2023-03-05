@@ -114,6 +114,12 @@ namespace dx12
 	}
 
 
+	void CommandQueue::GPUWait(uint64_t fenceValue)
+	{
+		HRESULT hr = m_commandQueue->Wait(m_fence.GetD3DFence(), fenceValue);
+	}
+
+
 	std::shared_ptr<dx12::CommandList> CommandQueue::GetCreateCommandList()
 	{
 		std::shared_ptr<dx12::CommandList> commandList = nullptr;

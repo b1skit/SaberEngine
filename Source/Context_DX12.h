@@ -31,6 +31,10 @@ namespace dx12
 			std::array<dx12::CommandQueue, CommandList::CommandListType::CommandListType_Count> m_commandQueues;
 
 			uint64_t m_frameFenceValues[dx12::RenderManager::k_numFrames]; // Fence values for signalling the command queue
+			
+			// Last fence value signalled from the current frame's command lists. Populated at the end of 
+			// dx12::RenderManager::Render, and used to insert a GPU wait in dx12::Context::Present
+			uint64_t m_lastFenceBeforePresent = 0;
 
 			// TODO: Move to a "DescriptorHeapManager", owned by the Context
 			// -> Need a helper: GetCurrentBackbufferRTVDescriptor
