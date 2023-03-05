@@ -83,9 +83,10 @@ namespace dx12
 		dx12::SwapChain::PlatformParams* swapChainParams =
 			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 		
-		// By default, prefer tearing enable and vsync disabled (best for variable refresh displays)
+		// Ideally, tearing should be enabled and vsync disabled (best for variable refresh displays), but we respect
+		// the config
 		swapChainParams->m_tearingSupported = SwapChain::CheckTearingSupport();
-		swapChainParams->m_vsyncEnabled = !swapChainParams->m_tearingSupported;
+		swapChainParams->m_vsyncEnabled = en::Config::Get()->GetValue<bool>("vsync");
 
 		UINT createFactoryFlags = 0;
 #if defined(_DEBUG)
