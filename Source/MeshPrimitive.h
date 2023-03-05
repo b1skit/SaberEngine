@@ -153,5 +153,6 @@ namespace meshfactory
 		size_t numLatSlices = 16,
 		size_t numLongSlices = 16);
 
-	extern std::shared_ptr<re::MeshPrimitive> CreateHelloTriangle();
+	// Creates a triangle in NDC
+	extern std::shared_ptr<re::MeshPrimitive> CreateHelloTriangle(float scale = 1.f, float zDepth = 0.5f);
 } // meshfactory

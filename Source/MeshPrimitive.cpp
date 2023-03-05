@@ -673,15 +673,13 @@ namespace meshfactory
 	}
 
 
-	inline std::shared_ptr<re::MeshPrimitive> CreateHelloTriangle()
+	inline std::shared_ptr<re::MeshPrimitive> CreateHelloTriangle(float scale /*= 1.f*/, float zDepth /*= 0.5f*/)
 	{
-		const float zDepth = 0.5f;
-		
 		std::vector<glm::vec3> positions // In clip space: bl near = [-1,-1, 0] , tr far = [1,1,1]
 		{
-			vec3(0.0f, 0.75f, zDepth),		// Top center
-			vec3(-0.75f, -0.75f, zDepth),	// bl
-			vec3(0.75f, -0.75f, zDepth)		// br
+			vec3(0.0f * scale,		0.75f * scale,	zDepth),	// Top center
+			vec3(-0.75f * scale,	-0.75f * scale, zDepth),	// bl
+			vec3(0.75f * scale,		-0.75f * scale, zDepth)		// br
 		};
 
 		std::vector<vec2> uvs // Note: (0,0) = Top left

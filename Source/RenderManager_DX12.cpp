@@ -20,7 +20,8 @@ using glm::vec4;
 #include "Debug_DX12.h"
 #include "Shader_DX12.h"
 #include "TextureTarget_DX12.h"
-
+#include "SceneManager.h"
+#include "Camera.h"
 
 
 // TEMP DEBUG CODE:
@@ -81,7 +82,7 @@ namespace
 	}
 
 
-	// TODO: Should this be a member of a command list wrapper?
+	// TODO: Should this be a member of a command list wrapper, or a resource state manager member of the command list?
 	void TransitionResource(
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
 		Microsoft::WRL::ComPtr<ID3D12Resource> resource,
@@ -111,6 +112,7 @@ namespace
 	}
 
 
+	// TODO: Should this be a member of a command list wrapper?
 	void ClearDepth(
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
 		D3D12_CPU_DESCRIPTOR_HANDLE dsv, 
@@ -131,8 +133,7 @@ namespace dx12
 
 
 		// TEMP DEBUG CODE:
-		k_helloTriangle = meshfactory::CreateHelloTriangle();
-		
+		k_helloTriangle = meshfactory::CreateHelloTriangle(10.f, 1.f);
 
 		CreateAPIResources();
 	}
@@ -193,49 +194,57 @@ namespace dx12
 		commandList->SetPipelineState(ctxPlatParams->m_pipelineState->GetD3DPipelineState());
 		commandList->SetGraphicsRootSignature(ctxPlatParams->m_pipelineState->GetD3DRootSignature());
 
-		// TEMP HAX: Get the position buffer/buffer view:
+
+		// TODO: This should be set by a batch, w.r.t MeshPrimitive::Drawmode
+		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+
+		// TEMP HAX: Get the vertex buffer views:
 		dx12::VertexStream::PlatformParams_Vertex* positionPlatformParams = 
 			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Position)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
 
-		Microsoft::WRL::ComPtr<ID3D12Resource> positionBuffer = positionPlatformParams->m_bufferResource;
-		D3D12_VERTEX_BUFFER_VIEW& positionBufferView = positionPlatformParams->m_vertexBufferView;
+		dx12::VertexStream::PlatformParams_Vertex* normalPlatformParams = 
+			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Normal)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
 
-		// TEMP HAX: Get the color buffer/buffer view:
-		dx12::VertexStream::PlatformParams_Vertex* colorPlatformParams = 
+		dx12::VertexStream::PlatformParams_Vertex* tangentPlatformParams =
+			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Tangent)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
+
+		dx12::VertexStream::PlatformParams_Vertex* uv0PlatformParams =
+			k_helloTriangle->GetVertexStream(re::MeshPrimitive::UV0)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
+
+		dx12::VertexStream::PlatformParams_Vertex* colorPlatformParams =
 			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Color)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
 
-		Microsoft::WRL::ComPtr<ID3D12Resource> colorBuffer = colorPlatformParams->m_bufferResource;
-		D3D12_VERTEX_BUFFER_VIEW& colorBufferView = colorPlatformParams->m_vertexBufferView;
+		commandList->IASetVertexBuffers(re::MeshPrimitive::Position, 1, &positionPlatformParams->m_vertexBufferView);
+		commandList->IASetVertexBuffers(re::MeshPrimitive::Normal, 1, &normalPlatformParams->m_vertexBufferView);
+		commandList->IASetVertexBuffers(re::MeshPrimitive::Tangent, 1, &tangentPlatformParams->m_vertexBufferView);
+		commandList->IASetVertexBuffers(re::MeshPrimitive::UV0, 1, &uv0PlatformParams->m_vertexBufferView);
+		commandList->IASetVertexBuffers(re::MeshPrimitive::Color, 1, &colorPlatformParams->m_vertexBufferView);
 
-		// TEMP HAX: Get the index buffer/buffer view
-		dx12::VertexStream::PlatformParams_Index* indexPlatformParams = 
+		dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
 			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
 
-		Microsoft::WRL::ComPtr<ID3D12Resource> indexBuffer = indexPlatformParams->m_bufferResource;
-		D3D12_INDEX_BUFFER_VIEW& indexBufferView = indexPlatformParams->m_indexBufferView;
-
-
-		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // TODO: This should be set by a batch, w.r.t MeshPrimitive::Drawmode
-
-		commandList->IASetVertexBuffers(re::MeshPrimitive::Position, 1, &positionBufferView);
-		commandList->IASetVertexBuffers(re::MeshPrimitive::Color, 1, &colorBufferView);
-
-		commandList->IASetIndexBuffer(&indexBufferView);
-
+		commandList->IASetIndexBuffer(&indexPlatformParams->m_indexBufferView);
 
 	
 		dx12::TextureTargetSet::SetViewport(*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList.Get());
 		dx12::TextureTargetSet::SetScissorRect(*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList.Get());
 
 
-
 		// Bind our render target(s) to the output merger (OM):
 		commandList->OMSetRenderTargets(1, &renderTargetView, FALSE, &depthStencilView);
 
-		//// Update the MVP matrix
-		//XMMATRIX mvpMatrix = XMMatrixMultiply(m_ModelMatrix, m_ViewMatrix);
-		//mvpMatrix = XMMatrixMultiply(mvpMatrix, m_ProjectionMatrix);
-		//commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
+
+		// Update the MVP matrix
+		// TODO: Automatically bind parameter blocks
+		std::shared_ptr<gr::Camera> mainCamera = en::SceneManager::GetSceneData()->GetMainCamera();
+		const glm::mat4 viewProj = mainCamera->GetViewProjectionMatrix();
+		
+		commandList->SetGraphicsRoot32BitConstants(
+			0,										// RootParameterIndex (As set in our CD3DX12_ROOT_PARAMETER1)
+			sizeof(glm::mat4) / 4,					// Num32BitValuesToSet
+			&viewProj,	// pSrcData
+			0);										// DestOffsetIn32BitValues
 
 
 		commandList->DrawIndexedInstanced(

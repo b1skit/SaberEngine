@@ -152,14 +152,18 @@ namespace
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
 
+
 		// A single 32-bit constant root parameter that is used in our current HelloTriangle vertex shader
+		// TODO: Remove this, and replace it with a system:
+		// - Use shader introspection to bind structures by name to the correct registers
+		// - Set shader visibility based on introspection search results?
 		CD3DX12_ROOT_PARAMETER1 rootParameters[1];
 		rootParameters[0].InitAsConstants(
-			sizeof(glm::mat4) / 4,
-			0,
-			0,
-			D3D12_SHADER_VISIBILITY_VERTEX);
-		// TODO: ^^^ Handle setting constants in the root params (just use them for now)!!!!!!!!!!!!!!!!!!!!!!!!!!
+			sizeof(glm::mat4) / 4,				// num32BitValues
+			0,									// shaderRegister
+			0,									// registerSpace = 0
+			D3D12_SHADER_VISIBILITY_VERTEX);	// shader visibility
+
 
 
 		// Create the root signature description:

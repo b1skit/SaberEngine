@@ -78,10 +78,7 @@ namespace gr
 		}
 		else
 		{
-			m_cameraConfig.m_orthoLeftRightBotTop.x = 0.0f;
-			m_cameraConfig.m_orthoLeftRightBotTop.y = 0.0f;
-			m_cameraConfig.m_orthoLeftRightBotTop.z = 0.0f;
-			m_cameraConfig.m_orthoLeftRightBotTop.w = 0.0f;
+			m_cameraConfig.m_orthoLeftRightBotTop = glm::vec4(0.f, 0.f, 0.f, 0.f);
 
 			m_projection = glm::perspective
 			(
