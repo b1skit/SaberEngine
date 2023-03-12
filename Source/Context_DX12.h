@@ -5,6 +5,7 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
+#include "CPUDescriptorHeapManager_DX12.h"
 #include "CommandQueue_DX12.h"
 #include "Context.h"
 #include "Device_DX12.h"
@@ -17,9 +18,16 @@ namespace dx12
 	class Context
 	{
 	public:
-		static constexpr uint32_t k_numRTVDescriptors = dx12::RenderManager::k_numFrames;
-		static constexpr uint32_t k_numDSVDescriptors = 1;
-		// TODO: Move these to a descriptor heap manager, and choose sensible larger values
+		enum DescriptorHeapType
+		{
+			CBV_SRV_UAV,
+			Sampler,
+			RTV,
+			DSV,
+
+			DescriptorHeapType_Count
+		};
+
 
 	public:
 		struct PlatformParams final : public re::Context::PlatformParams
@@ -36,18 +44,10 @@ namespace dx12
 			// dx12::RenderManager::Render, and used to insert a GPU wait in dx12::Context::Present
 			uint64_t m_lastFenceBeforePresent = 0;
 
-			// TODO: Move to a "DescriptorHeapManager", owned by the Context
-			// -> Need a helper: GetCurrentBackbufferRTVDescriptor
-			// -> For now: Owned by TextureTargetSet?
-			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVDescHeap; // ComPtr to an array of RTV descriptors
-			uint32_t m_RTVDescSize; // Stride size of a single RTV descriptor/resource view
-			// NOTE: Currently, we create k_numFrames descriptors (1 for each frame) during Context::Create()
-
-			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DSVHeap = nullptr; // ComPtr to an array of DSV descriptors
-			uint32_t m_DSVDescSize;
-
 			// TODO: Precompute a library of all pipeline states needed at startup. For now, we just have a single PSO
 			std::shared_ptr<dx12::PipelineState> m_pipelineState;
+
+			std::vector<dx12::CPUDescriptorHeapManager> m_descriptorHeapMgrs; // DescriptorHeapType_Count
 		};
 
 

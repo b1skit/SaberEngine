@@ -374,6 +374,9 @@
     <ClCompile Include="CommandList_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
+    <ClCompile Include="CPUDescriptorHeapManager_DX12.cpp">
+      <Filter>Source Files\re\DX12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -701,6 +704,9 @@
       <Filter>Source Files\re</Filter>
     </ClInclude>
     <ClInclude Include="CommandList_DX12.h">
+      <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="CPUDescriptorHeapManager_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
   </ItemGroup>

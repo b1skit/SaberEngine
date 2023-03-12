@@ -169,12 +169,14 @@ namespace dx12
 			dsv.Texture2D.MipSlice = 0;
 			dsv.Flags = D3D12_DSV_FLAG_NONE;
 
-			CD3DX12_CPU_DESCRIPTOR_HANDLE dsvDescHandle(ctxPlatParams->m_DSVHeap->GetCPUDescriptorHandleForHeapStart());
+			texPlatParams->m_descriptor =
+				ctxPlatParams->m_descriptorHeapMgrs[Context::DescriptorHeapType::DSV].Allocate(1);
+			SEAssert("DSV descriptor is not valid", texPlatParams->m_descriptor.IsValid());
 
 			device->CreateDepthStencilView(
 				texPlatParams->m_textureResource.Get(),
 				&dsv,
-				dsvDescHandle);
+				texPlatParams->m_descriptor.GetFirstDescriptor());
 		}
 		break;
 		case re::Texture::Usage::Invalid:
@@ -186,7 +188,6 @@ namespace dx12
 	}
 
 
-	// TODO: descHandle should be retrieved directly from a descriptor heap manager!!!!
 	void Texture::CreateFromExistingResource(
 		re::Texture& texture, ComPtr<ID3D12Resource> bufferResource, CD3DX12_CPU_DESCRIPTOR_HANDLE const& descHandle)
 	{
@@ -220,6 +221,7 @@ namespace dx12
 		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		texPlatParams->m_textureResource = nullptr;
+		texPlatParams->m_descriptor.Free(0);
 	}
 	
 	

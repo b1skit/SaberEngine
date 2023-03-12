@@ -4,6 +4,7 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
+#include "CPUDescriptorHeapManager_DX12.h"
 #include "RenderManager_DX12.h"
 #include "SwapChain.h"
 #include "TextureTarget.h"
@@ -25,6 +26,9 @@ namespace dx12
 
 			bool m_vsyncEnabled = false; // Disabled if tearing is enabled (ie. using a variable refresh display)
 			bool m_tearingSupported = false; // Always allow tearing if supported. Required for variable refresh dispays (eg. G-Sync/FreeSync)
+
+			// The swapchain requires contiguous RTV descriptors allocated in the same heap
+			dx12::DescriptorAllocation m_backbufferRTVDescriptors;
 		};
 
 

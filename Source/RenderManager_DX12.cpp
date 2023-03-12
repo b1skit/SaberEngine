@@ -9,6 +9,7 @@
 #include "DebugConfiguration.h"
 #include "RenderManager_DX12.h"
 #include "SwapChain_DX12.h"
+#include "Texture_DX12.h"
 
 using Microsoft::WRL::ComPtr;
 using glm::vec4;
@@ -110,31 +111,25 @@ namespace dx12
 
 		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
 
+		
+		// Transition the backbuffer to the render target state:
 		Microsoft::WRL::ComPtr<ID3D12Resource> backbufferResource =
 			dx12::SwapChain::GetBackBufferResource(context.GetSwapChain());
 
-		// Clear the render targets:
-		// TODO: Move this to a helper "GetCurrentBackbufferRTVDescriptor" ?
-		CD3DX12_CPU_DESCRIPTOR_HANDLE renderTargetView(
-			ctxPlatParams->m_RTVDescHeap->GetCPUDescriptorHandleForHeapStart(),
-			backbufferIdx,
-			ctxPlatParams->m_RTVDescSize);
-
-
-		dx12::SwapChain::PlatformParams* swapChainParams = 
-			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
-
-		dx12::TextureTargetSet::PlatformParams* depthTargetParams = 
-			swapChainParams->m_backbufferTargetSets[backbufferIdx]->GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
-
-		// TODO: MANAGE DESCRIPTOR POINTERS INSTEAD OF JUST USING THE FIRST ONE IN THE HEAP
-		D3D12_CPU_DESCRIPTOR_HANDLE depthStencilView = ctxPlatParams->m_DSVHeap->GetCPUDescriptorHandleForHeapStart();
-
-		// Clear the render targets.
 		commandList->TransitionResource(			
 			backbufferResource.Get(),
 			D3D12_RESOURCE_STATE_PRESENT,
 			D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+
+		// Clear the render targets:
+		dx12::SwapChain::PlatformParams* swapChainParams =
+			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+		
+		// The swapchain requires contiguous RTV descriptors allocated in the same heap; compute the current one:
+		// TODO: Stage CPU descriptor handles into GPU-visible descriptor heap, and pack into descriptor tables
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(swapChainParams->m_backbufferRTVDescriptors.GetFirstDescriptor());
+		rtvHandle.Offset(swapChainParams->m_backbufferRTVDescriptors.GetDescriptorSize() * backbufferIdx);
 
 		// Debug: Vary the clear color to easily verify things are working
 		auto now = std::chrono::system_clock::now().time_since_epoch();
@@ -143,18 +138,44 @@ namespace dx12
 
 		const vec4 clearColor = vec4(0.38f, 0.36f, 0.1f, 1.0f) * scale;
 
+		dx12::Texture::PlatformParams* renderTargetPlatParams =
+			swapChainParams->m_backbufferTargetSets[backbufferIdx]->GetColorTarget(0).GetTexture()
+				->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+
+		CD3DX12_CPU_DESCRIPTOR_HANDLE renderTargetView(
+			rtvHandle,
+			backbufferIdx,
+			renderTargetPlatParams->m_descriptor.GetDescriptorSize());
+
 		commandList->ClearRTV(renderTargetView, clearColor);
-		commandList->ClearDepth(depthStencilView, 1.f);
+
+
+		// Clear depth target:
+		dx12::Texture::PlatformParams* depthPlatParams =
+			swapChainParams->m_backbufferTargetSets[backbufferIdx]->GetDepthStencilTarget().GetTexture()
+			->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+
+		// TODO: Stage CPU descriptor handles into GPU-visible descriptor heap, and pack into descriptor tables
+		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = depthPlatParams->m_descriptor.GetFirstDescriptor();
+		commandList->ClearDepth(dsvDescriptor, 1.f);
 
 		
+		// Bind our render target(s) to the output merger (OM):
+		commandList->SetRenderTargets(1, &renderTargetView, false, &dsvDescriptor);
+
+
 		// Set the pipeline state:
 		commandList->SetPipelineState(ctxPlatParams->m_pipelineState->GetD3DPipelineState());
 		commandList->SetGraphicsRootSignature(ctxPlatParams->m_pipelineState->GetD3DRootSignature());
 
+		dx12::TextureTargetSet::SetViewport(
+			*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList->GetD3DCommandList());
+		dx12::TextureTargetSet::SetScissorRect(
+			*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList->GetD3DCommandList());
+
 
 		// TODO: This should be set by a batch, w.r.t MeshPrimitive::Drawmode
 		commandList->SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
 
 		// TEMP HAX: Get the vertex buffer views:
 		dx12::VertexStream::PlatformParams_Vertex* positionPlatformParams = 
@@ -183,16 +204,6 @@ namespace dx12
 			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
 
 		commandList->SetIndexBuffer(&indexPlatformParams->m_indexBufferView);
-
-	
-		dx12::TextureTargetSet::SetViewport(
-			*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList->GetD3DCommandList());
-		dx12::TextureTargetSet::SetScissorRect(
-			*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList->GetD3DCommandList());
-
-
-		// Bind our render target(s) to the output merger (OM):
-		commandList->SetRenderTargets(1, &renderTargetView, false, &depthStencilView);
 
 
 		// Update the MVP matrix

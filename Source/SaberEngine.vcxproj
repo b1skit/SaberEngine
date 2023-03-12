@@ -208,6 +208,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClCompile Include="CommandList_DX12.cpp" />
     <ClCompile Include="CommandQueue_DX12.cpp" />
     <ClCompile Include="Context_DX12.cpp" />
+    <ClCompile Include="CPUDescriptorHeapManager_DX12.cpp" />
     <ClCompile Include="Debug_DX12.cpp" />
     <ClCompile Include="Device_DX12.cpp" />
     <ClCompile Include="EngineThread.cpp" />
@@ -307,6 +308,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClInclude Include="..\Dependencies\imgui\imstb_rectpack.h" />
     <ClInclude Include="..\Dependencies\imgui\imstb_textedit.h" />
     <ClInclude Include="..\Dependencies\imgui\imstb_truetype.h" />
+    <ClInclude Include="CPUDescriptorHeapManager_DX12.h" />
     <ClInclude Include="Batch.h" />
     <ClInclude Include="Bounds.h" />
     <ClInclude Include="Command.h" />

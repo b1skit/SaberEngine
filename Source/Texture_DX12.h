@@ -3,6 +3,7 @@
 #include <d3d12.h>
 #include <wrl.h>
 
+#include "CPUDescriptorHeapManager_DX12.h"
 #include "Texture.h"
 
 struct CD3DX12_CPU_DESCRIPTOR_HANDLE;
@@ -24,6 +25,7 @@ namespace dx12
 			~PlatformParams() override;
 
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_textureResource;
+			dx12::DescriptorAllocation m_descriptor;
 		};
 
 

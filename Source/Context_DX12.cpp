@@ -22,8 +22,6 @@ namespace dx12
 
 
 	Context::PlatformParams::PlatformParams()
-		: m_RTVDescHeap(nullptr)
-		, m_RTVDescSize(0)
 	{
 		for (uint32_t i = 0; i < dx12::RenderManager::k_numFrames; i++)
 		{
@@ -41,8 +39,41 @@ namespace dx12
 
 		ctxPlatParams->m_device.Create();
 
-		// TODO: Create/support more command queue types
 
+		// Descriptor heap managers:
+		ctxPlatParams->m_descriptorHeapMgrs.reserve(static_cast<size_t>(DescriptorHeapType_Count));
+		for (size_t i = 0; i < DescriptorHeapType_Count; i++)
+		{
+			switch (static_cast<DescriptorHeapType>(i))
+			{
+			case DescriptorHeapType::CBV_SRV_UAV:
+			{
+				ctxPlatParams->m_descriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+			}
+			break;
+			case DescriptorHeapType::Sampler:
+			{
+				ctxPlatParams->m_descriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+			}
+			break;
+			case DescriptorHeapType::RTV:
+			{
+				ctxPlatParams->m_descriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+			}
+			break;
+			case DescriptorHeapType::DSV:
+			{
+				ctxPlatParams->m_descriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+			}
+			break;
+			default:
+				SEAssertF("Invalid descriptor heap type");
+			}
+		}
+
+
+		// Command Queues:
+		// TODO: Create/support more command queue types
 		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
 
 		ctxPlatParams->m_commandQueues[CommandList::CommandListType::Direct].Create(
@@ -51,24 +82,6 @@ namespace dx12
 		ctxPlatParams->m_commandQueues[CommandList::CommandListType::Copy].Create(
 			device, CommandList::CommandListType::Copy);
 
-
-		// RTV Descriptor Heap:
-		ctxPlatParams->m_RTVDescHeap = CreateDescriptorHeap(
-			device,
-			D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-			k_numRTVDescriptors);
-		ctxPlatParams->m_RTVDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-		
-		LOG("RTV descriptor size is %dB", ctxPlatParams->m_RTVDescSize);
-
-		// DSV Descriptor Heap:
-		ctxPlatParams->m_DSVHeap = CreateDescriptorHeap(
-			ctxPlatParams->m_device.GetD3DDisplayDevice(),
-			D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-			k_numDSVDescriptors);
-		ctxPlatParams->m_DSVDescSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-
-		LOG("DSV descriptor size is %dB", ctxPlatParams->m_DSVDescSize);
 
 		// NOTE: Currently, this call retrieves m_commandQueue from the Context platform params
 		// TODO: Clean this up, it's gross.
@@ -93,15 +106,21 @@ namespace dx12
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();
 
+
+
+		// TODO: Create Imgui descriptor handles
+		// - Needs a single CPU-visible and single GPU-visible SRV descriptor for the internal font texture
+		// -> Some code also commented out in Context::Destroy
+		
 		// Setup Platform/Renderer backends
 		ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
-		ImGui_ImplDX12_Init(
-			ctxPlatParams->m_device.GetD3DDisplayDevice(),
-			dx12::RenderManager::k_numFrames, // Number of frames in flight
-			swapChainTargetSetParams->m_renderTargetFormats.RTFormats[0],
-			ctxPlatParams->m_RTVDescHeap.Get(),
-			ctxPlatParams->m_RTVDescHeap->GetCPUDescriptorHandleForHeapStart(),
-			ctxPlatParams->m_RTVDescHeap->GetGPUDescriptorHandleForHeapStart());
+		//ImGui_ImplDX12_Init(
+		//	ctxPlatParams->m_device.GetD3DDisplayDevice(),
+		//	dx12::RenderManager::k_numFrames, // Number of frames in flight
+		//	swapChainTargetSetParams->m_renderTargetFormats.RTFormats[0],
+		//	ctxPlatParams->m_RTVDescHeap.Get(),
+		//	ctxPlatParams->m_RTVDescHeap->GetCPUDescriptorHandleForHeapStart(),
+		//	ctxPlatParams->m_RTVDescHeap->GetGPUDescriptorHandleForHeapStart());
 	}
 
 
@@ -114,7 +133,7 @@ namespace dx12
 		}
 
 		// ImGui Cleanup:
-		ImGui_ImplDX12_Shutdown();
+		//ImGui_ImplDX12_Shutdown();
 		ImGui_ImplWin32_Shutdown();
 		ImGui::DestroyContext();		
 
@@ -125,8 +144,9 @@ namespace dx12
 		ctxPlatParams->m_commandQueues[CommandList::Direct].Flush();
 		ctxPlatParams->m_commandQueues[CommandList::Direct].Destroy();
 
-		ctxPlatParams->m_RTVDescHeap = nullptr;
-		ctxPlatParams->m_DSVHeap = nullptr;
+		context.GetSwapChain().Destroy();
+
+		ctxPlatParams->m_descriptorHeapMgrs.clear();
 
 		ctxPlatParams->m_device.Destroy();
 	}

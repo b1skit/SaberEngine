@@ -30,9 +30,12 @@ namespace
 		dx12::Context::PlatformParams* ctxPlatParams = 
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
-		// TEMP HAX!!!
-		// TODO: GET AN RTV HANDLE IN A LESS BRITTLE WAY!
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(ctxPlatParams->m_RTVDescHeap->GetCPUDescriptorHandleForHeapStart());
+		// The swapchain requires contiguous descriptors allocated in the same heap
+		swapChainParams->m_backbufferRTVDescriptors = 
+			ctxPlatParams->m_descriptorHeapMgrs[dx12::Context::DescriptorHeapType::RTV].Allocate(3);
+
+		CD3DX12_CPU_DESCRIPTOR_HANDLE backbufferRTVDescriptorsHandle(
+			swapChainParams->m_backbufferRTVDescriptors.GetFirstDescriptor());
 
 
 		for (uint8_t backbufferIdx = 0; backbufferIdx < dx12::RenderManager::k_numFrames; backbufferIdx++)
@@ -48,17 +51,16 @@ namespace
 			// Color target:
 			std::shared_ptr<re::Texture> colorTargetTex = 
 				std::make_shared<re::Texture>("SwapChainColorTarget", colorParams);
-			dx12::Texture::CreateFromExistingResource(*colorTargetTex, backbufferResource, rtvHandle);
 
+			dx12::Texture::CreateFromExistingResource(
+				*colorTargetTex, backbufferResource, backbufferRTVDescriptorsHandle);
+
+			// Stride to the next descriptor for the next iteration:
+			backbufferRTVDescriptorsHandle.Offset(swapChainParams->m_backbufferRTVDescriptors.GetDescriptorSize()); 
+
+			// Create the color target:
 			swapChainParams->m_backbufferTargetSets[backbufferIdx]->SetColorTarget(0, colorTargetTex);
-
-			dx12::TextureTargetSet::CreateColorTargets(*swapChainParams->m_backbufferTargetSets[backbufferIdx]);
-
-
-			// TEMP HAX!!!
-			// TODO: REQUEST ALL THE VIEWS WE NEED AT ONCE!!!!!
-			rtvHandle.Offset(ctxPlatParams->m_RTVDescSize); // Internally strides to the next descriptor
-
+			dx12::TextureTargetSet::CreateColorTargets(*swapChainParams->m_backbufferTargetSets[backbufferIdx]);	
 
 			// Depth target:
 			std::shared_ptr<re::Texture> depthTargetTex = 
