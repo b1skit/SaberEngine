@@ -86,13 +86,13 @@ namespace dx12
 	}
 
 
-	void CPUDescriptorHeapManager::ReleaseFreedAllocations(uint64_t frameNum)
+	void CPUDescriptorHeapManager::ReleaseFreedAllocations(uint64_t fenceVal)
 	{
 		std::lock_guard<std::mutex> allocationLock(m_allocationPagesIndexesMutex);
 
 		for (size_t i = 0; i < m_allocationPages.size(); i++)
 		{
-			m_allocationPages[i]->ReleaseFreedAllocations(frameNum);
+			m_allocationPages[i]->ReleaseFreedAllocations(fenceVal);
 
 			if (m_allocationPages[i]->GetNumFreeElements() > 0)
 			{
@@ -223,25 +223,25 @@ namespace dx12
 	}
 
 
-	void AllocationPage::Free(DescriptorAllocation const& allocation, size_t frameNum)
+	void AllocationPage::Free(DescriptorAllocation const& allocation, size_t fenceVal)
 	{
 		std::lock_guard<std::mutex> pageLock(m_pageMutex);
 
 		const size_t offset =
 			(allocation.GetFirstDescriptor().ptr - m_baseDescriptor.ptr) / m_descriptorElementSize;
 
-		m_deferredDeletions.emplace(FreedAllocation{ offset, allocation.GetNumDescriptors(), frameNum});
+		m_deferredDeletions.emplace(FreedAllocation{ offset, allocation.GetNumDescriptors(), fenceVal});
 
 		// Note: The DescriptorAllocation will mark itself invalid after returning from this function
 	}
 
 
-	void AllocationPage::ReleaseFreedAllocations(uint64_t frameNum)
+	void AllocationPage::ReleaseFreedAllocations(uint64_t fenceVal)
 	{
 		std::lock_guard<std::mutex> pageLock(m_pageMutex);
 
 		// Process the deferred deletion queue:
-		while (!m_deferredDeletions.empty() && m_deferredDeletions.front().m_frameNum <= frameNum)
+		while (!m_deferredDeletions.empty() && m_deferredDeletions.front().m_fenceVal <= fenceVal)
 		{
 			FreeRange(m_deferredDeletions.front().m_offset, m_deferredDeletions.front().m_numElements);
 
@@ -383,11 +383,11 @@ namespace dx12
 	}
 
 
-	void DescriptorAllocation::Free(size_t frameNum)
+	void DescriptorAllocation::Free(size_t fenceVal)
 	{
 		if (IsValid())
 		{
-			m_allocationPage->Free(*this, frameNum);
+			m_allocationPage->Free(*this, fenceVal);
 			MarkInvalid();
 		}
 	}

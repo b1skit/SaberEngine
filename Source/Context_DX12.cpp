@@ -206,6 +206,13 @@ namespace dx12
 		
 		// Wait on the fence for the next backbuffer, to ensure its previous frame is done (blocking)
 		ctxPlatParams->m_commandQueues[CommandList::Direct].WaitForGPU(ctxPlatParams->m_frameFenceValues[backbufferIdx]);
+
+		// Free the descriptors used on the next backbuffer now that we know the fence has been signalled:
+		for (size_t i = 0; i < DescriptorHeapType_Count; i++)
+		{
+			ctxPlatParams->m_descriptorHeapMgrs[static_cast<DescriptorHeapType>(i)].ReleaseFreedAllocations(
+				ctxPlatParams->m_frameFenceValues[backbufferIdx]);
+		}	
 	}
 
 

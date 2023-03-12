@@ -24,8 +24,9 @@ namespace dx12
 
 		DescriptorAllocation Allocate(uint32_t count);
 
-		// Call this at the end of a frame after all allocations are no longer in use
-		void ReleaseFreedAllocations(uint64_t frameNum);
+		// Call this after waiting on the fence value to ensure the allocations are no longer in use. Any allocations 
+		// freed with a fence value <= fenceVal will be released
+		void ReleaseFreedAllocations(uint64_t fenceVal);
 
 
 	private:
@@ -62,7 +63,7 @@ namespace dx12
 		DescriptorAllocation& operator=(DescriptorAllocation&&) noexcept;
 
 		~DescriptorAllocation();
-		void Free(size_t frameNum);
+		void Free(size_t fenceVal);
 
 		bool IsValid() const;
 
@@ -101,9 +102,9 @@ namespace dx12
 
 		DescriptorAllocation Allocate(uint32_t descriptorCount);
 
-		void Free(DescriptorAllocation const&, uint64_t frameNum); // Called by DescriptorAllocation::Free
+		void Free(DescriptorAllocation const&, uint64_t fenceVal); // Called by DescriptorAllocation::Free
 
-		void ReleaseFreedAllocations(uint64_t frameNum);
+		void ReleaseFreedAllocations(uint64_t fenceVal);
 
 		uint32_t GetNumFreeElements() const;
 
@@ -145,7 +146,7 @@ namespace dx12
 		{
 			size_t m_offset;
 			uint32_t m_numElements;
-			uint64_t m_frameNum;
+			uint64_t m_fenceVal;
 		};
 		std::queue<FreedAllocation> m_deferredDeletions;
 
