@@ -228,7 +228,7 @@ namespace dx12
 		std::lock_guard<std::mutex> pageLock(m_pageMutex);
 
 		const size_t offset =
-			(allocation.GetFirstDescriptor().ptr - m_baseDescriptor.ptr) / m_descriptorElementSize;
+			(allocation.GetBaseDescriptor().ptr - m_baseDescriptor.ptr) / m_descriptorElementSize;
 
 		m_deferredDeletions.emplace(FreedAllocation{ offset, allocation.GetNumDescriptors(), fenceVal});
 
@@ -406,7 +406,7 @@ namespace dx12
 	}
 
 
-	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorAllocation::GetFirstDescriptor() const
+	D3D12_CPU_DESCRIPTOR_HANDLE DescriptorAllocation::GetBaseDescriptor() const
 	{
 		return m_baseDescriptor;
 	}

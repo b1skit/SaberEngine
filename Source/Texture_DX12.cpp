@@ -176,7 +176,7 @@ namespace dx12
 			device->CreateDepthStencilView(
 				texPlatParams->m_textureResource.Get(),
 				&dsv,
-				texPlatParams->m_descriptor.GetFirstDescriptor());
+				texPlatParams->m_descriptor.GetBaseDescriptor());
 		}
 		break;
 		case re::Texture::Usage::Invalid:

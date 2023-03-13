@@ -67,7 +67,7 @@ namespace dx12
 
 		bool IsValid() const;
 
-		D3D12_CPU_DESCRIPTOR_HANDLE GetFirstDescriptor() const;
+		D3D12_CPU_DESCRIPTOR_HANDLE GetBaseDescriptor() const;
 		uint32_t GetNumDescriptors() const;
 		uint32_t GetDescriptorSize() const;
 		

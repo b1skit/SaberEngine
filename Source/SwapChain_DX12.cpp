@@ -35,7 +35,7 @@ namespace
 			ctxPlatParams->m_descriptorHeapMgrs[dx12::Context::DescriptorHeapType::RTV].Allocate(3);
 
 		CD3DX12_CPU_DESCRIPTOR_HANDLE backbufferRTVDescriptorsHandle(
-			swapChainParams->m_backbufferRTVDescriptors.GetFirstDescriptor());
+			swapChainParams->m_backbufferRTVDescriptors.GetBaseDescriptor());
 
 
 		for (uint8_t backbufferIdx = 0; backbufferIdx < dx12::RenderManager::k_numFrames; backbufferIdx++)
