@@ -128,7 +128,7 @@ namespace dx12
 		
 		// The swapchain requires contiguous RTV descriptors allocated in the same heap; compute the current one:
 		// TODO: Stage CPU descriptor handles into GPU-visible descriptor heap, and pack into descriptor tables
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(swapChainParams->m_backbufferRTVDescriptors.GetFirstDescriptor());
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(swapChainParams->m_backbufferRTVDescriptors.GetBaseDescriptor());
 		rtvHandle.Offset(swapChainParams->m_backbufferRTVDescriptors.GetDescriptorSize() * backbufferIdx);
 
 		// Debug: Vary the clear color to easily verify things are working
@@ -156,7 +156,7 @@ namespace dx12
 			->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		// TODO: Stage CPU descriptor handles into GPU-visible descriptor heap, and pack into descriptor tables
-		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = depthPlatParams->m_descriptor.GetFirstDescriptor();
+		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = depthPlatParams->m_descriptor.GetBaseDescriptor();
 		commandList->ClearDepth(dsvDescriptor, 1.f);
 
 		

@@ -3,6 +3,10 @@
   "Id": "80c62e80-7437-4bb9-b7e0-693fa4c402a1",
   "Items": [
     {
+      "Id": "15160182-e078-445a-a6de-53d0ec3f403a",
+      "Command": "-scene AbandonedWarehouse\\AbandonedWarehouse.gltf"
+    },
+    {
       "Id": "807d7fbe-0c73-45d1-a81d-2ea78d049415",
       "Command": "-platform dx12"
     },
