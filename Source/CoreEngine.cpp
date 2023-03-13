@@ -35,7 +35,7 @@ namespace en
 
 
 	CoreEngine::CoreEngine()
-		: m_fixedTimeStep(1000.0 / 120.0)
+		: m_fixedTimeStep(1000.0 / 120.0) // 1000/120 = 8.33ms per update
 		, m_isRunning(false)
 		, m_frameNum(0)
 		, m_window(nullptr)
@@ -113,14 +113,23 @@ namespace en
 
 			// Update components until enough time has passed to trigger a render.
 			// Or, continue rendering frames until it's time to update again
-			elapsed += lastOuterFrameTime;			
+			elapsed += lastOuterFrameTime;
+			bool enteredInnerLoop = false;
 			while (elapsed >= m_fixedTimeStep)
 			{	
+				enteredInnerLoop = true;
 				elapsed -= m_fixedTimeStep;
 
 				GameplayManager::Get()->Update(m_frameNum, m_fixedTimeStep);
 				SceneManager::Get()->Update(m_frameNum, m_fixedTimeStep); // Updates all of the scene objects
 				// AI, physics, etc should also be pumped here (eventually)
+			}
+			if (enteredInnerLoop)
+			{
+				// In situations where the render thread is running fast, we may not enter the inner loop (where we
+				// handle input) every iteration of the outer loop. To avoid losing accumulated inputs, we only clear
+				// the inputs once we're certain they've been handled
+				InputManager::Get()->OnInputHandled();
 			}
 
 			SceneManager::Get()->FinalUpdate(); // Builds batches, ready for RenderManager to consume

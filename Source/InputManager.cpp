@@ -201,7 +201,7 @@ namespace en
 	}
 
 
-	void InputManager::Update(uint64_t frameNum, double stepTimeMs)
+	void InputManager::OnInputHandled()
 	{
 		// Prepare for the next around of input events fired by the EventManager
 		m_mouseAxisStates[MouseInputAxis::Input_MouseX] = 0.f;
@@ -211,7 +211,11 @@ namespace en
 		{
 			m_mouseButtonStates[mButton] = false;
 		}
+	}
 
+
+	void InputManager::Update(uint64_t frameNum, double stepTimeMs)
+	{
 		HandleEvents();
 		
 		// Handle the console toggle key: Enables/disables locking the mouse to the window and hiding the pointer
