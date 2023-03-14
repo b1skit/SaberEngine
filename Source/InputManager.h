@@ -19,8 +19,6 @@ namespace en
 		InputManager();
 		~InputManager() = default;
 
-		void OnInputHandled(); // Call once after input has been successfully handled in a frame
-
 		// Static member functions:
 		static bool const& GetKeyboardInputState(en::KeyboardInputButton key);
 		static bool const& GetMouseInputState(en::MouseInputButton button);
