@@ -15,6 +15,8 @@ namespace dx12
 	class GPUDescriptorHeap
 	{
 	public:
+		// TODO: This should probably be dynamic: We might want to allocate a set number of descriptors for a specific
+		// usage (E.g. ImGui)
 		static constexpr uint32_t k_totalDescriptors = 512; // Total GPU-visible descriptors allocated
 	
 		static constexpr uint32_t k_totalRootSigDescriptorTableIndices = 32; // No. of root signature descriptor table indices
