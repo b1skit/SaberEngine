@@ -161,6 +161,9 @@ namespace dx12
 				&optimizedClearValue,
 				IID_PPV_ARGS(&texPlatParams->m_textureResource)
 			);
+			
+			texPlatParams->m_textureResource->SetName(
+				std::wstring(texture.GetName().begin(), texture.GetName().end()).c_str());
 
 			// Update the depth-stencil view
 			D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
@@ -170,7 +173,7 @@ namespace dx12
 			dsv.Flags = D3D12_DSV_FLAG_NONE;
 
 			texPlatParams->m_descriptor =
-				ctxPlatParams->m_descriptorHeapMgrs[Context::DescriptorHeapType::DSV].Allocate(1);
+				ctxPlatParams->m_cpuDescriptorHeapMgrs[Context::CPUDescriptorHeapType::DSV].Allocate(1);
 			SEAssert("DSV descriptor is not valid", texPlatParams->m_descriptor.IsValid());
 
 			device->CreateDepthStencilView(

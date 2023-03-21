@@ -3,6 +3,7 @@
 #include <wrl.h>
 #include <d3d12.h>
 
+#include "GPUDescriptorHeap_DX12.h"
 
 struct CD3DX12_CPU_DESCRIPTOR_HANDLE;
 struct D3D12_CPU_DESCRIPTOR_HANDLE;
@@ -42,7 +43,8 @@ namespace dx12
 		void Close() const;
 
 		void SetPipelineState(ID3D12PipelineState*) const;
-		void SetGraphicsRootSignature(ID3D12RootSignature*) const;
+		void SetGraphicsRootSignature(dx12::RootSignature const& rootSig);
+		// TODO: void SetComputeRootSignature(dx12::RootSignature const& rootSig);
 
 		// TODO: Write a helper that takes a MeshPrimitive; make these private
 		void SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY) const;
@@ -54,7 +56,8 @@ namespace dx12
 		void ClearRTV(CD3DX12_CPU_DESCRIPTOR_HANDLE const& rtv, glm::vec4 const& clearColor);
 		void ClearDepth(D3D12_CPU_DESCRIPTOR_HANDLE const& dsv, float clearColor);
 
-		void SetGraphicsRoot32BitConstants(uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;
+		void SetGraphicsRoot32BitConstants(
+			uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;
 
 		void DrawIndexedInstanced(
 			uint32_t numIndexes, uint32_t numInstances, uint32_t idxStartOffset, int32_t baseVertexOffset, uint32_t instanceOffset) const;
@@ -64,6 +67,8 @@ namespace dx12
 		D3D12_COMMAND_LIST_TYPE GetType() const;
 		ID3D12GraphicsCommandList2* GetD3DCommandList() const;
 
+		// TODO: Should we be providing access to this? Or, just handle it internally via our command list interface?
+		dx12::GPUDescriptorHeap* GetGPUDescriptorHeap() const;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> m_commandList;
@@ -71,6 +76,10 @@ namespace dx12
 
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator;
 		uint64_t m_fenceValue; // When the command allocator can be reused
+
+
+	private:
+		std::unique_ptr<dx12::GPUDescriptorHeap> m_gpuDescriptorHeaps;
 
 
 	private: // No copying allowed
@@ -98,6 +107,16 @@ namespace dx12
 		// Note: pso is optional; Sets a dummy PSO if nullptr. TODO: Accept a PSO?
 
 		m_commandList->Reset(m_commandAllocator.Get(), pso);
+
+
+		// Re-bind the descriptor heaps (unless we're a copy command list):
+		if (m_type != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY)
+		{
+			// TODO: Handle sampler descriptor heaps
+
+			ID3D12DescriptorHeap* descriptorHeaps[1] = { m_gpuDescriptorHeaps->GetD3DDescriptorHeap() };
+			m_commandList->SetDescriptorHeaps(1, descriptorHeaps);
+		}
 	}
 
 	inline void CommandList::Close() const
@@ -108,13 +127,18 @@ namespace dx12
 
 	inline void CommandList::SetPipelineState(ID3D12PipelineState* pso) const
 	{
+		// TODO: Should we cache the dx12::PipelineState object on the command list?
+		// We'd be able to use it to assert various things for sanity
+
 		m_commandList->SetPipelineState(pso);
 	}
 
 
-	inline void CommandList::SetGraphicsRootSignature(ID3D12RootSignature* rootSig) const
+	inline void CommandList::SetGraphicsRootSignature(dx12::RootSignature const& rootSig)
 	{
-		m_commandList->SetGraphicsRootSignature(rootSig);
+		m_gpuDescriptorHeaps->ParseRootSignatureDescriptorTables(rootSig);
+
+		m_commandList->SetGraphicsRootSignature(rootSig.GetD3DRootSignature());
 	}
 
 
@@ -149,6 +173,8 @@ namespace dx12
 	inline void CommandList::SetGraphicsRoot32BitConstants(
 		uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const
 	{
+		// TODO: Add an assert: Is the root param index free?
+
 		m_commandList->SetGraphicsRoot32BitConstants(
 			rootParamIdx,	// RootParameterIndex (As set in our CD3DX12_ROOT_PARAMETER1)
 			count,			// Num32BitValuesToSet
@@ -205,5 +231,11 @@ namespace dx12
 		}
 
 		return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT;
+	}
+
+
+	inline dx12::GPUDescriptorHeap* CommandList::GetGPUDescriptorHeap() const
+	{
+		return m_gpuDescriptorHeaps.get();
 	}
 }

@@ -23,6 +23,8 @@ using glm::vec4;
 #include "TextureTarget_DX12.h"
 #include "SceneManager.h"
 #include "Camera.h"
+#include "CPUDescriptorHeapManager_DX12.h"
+#include "MathUtils.h"
 
 
 // TEMP DEBUG CODE:
@@ -30,7 +32,12 @@ namespace
 {
 	using dx12::CheckHResult;
 
-	static std::shared_ptr<re::MeshPrimitive> k_helloTriangle = nullptr;
+	static std::shared_ptr<re::MeshPrimitive> s_helloTriangle = nullptr;
+	static std::unique_ptr<dx12::DescriptorAllocation> s_helloAllocation = nullptr;
+
+	static ComPtr<ID3D12Resource> s_helloConstantBufferResource = nullptr;
+
+	static void* s_helloMappedMemory = nullptr; 
 
 
 	// TODO: Make this a platform function, and call it for all APIs during startup
@@ -41,14 +48,15 @@ namespace
 
 		dx12::CommandQueue& copyQueue = ctxPlatParams->m_commandQueues[dx12::CommandList::Copy];
 
-		std::shared_ptr<dx12::CommandList> commandList = copyQueue.GetCreateCommandList();
+		std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue.GetCreateCommandList();
 
 		// Note: This internally create all of the vertex stream resources
-		dx12::MeshPrimitive::Create(*k_helloTriangle, commandList->GetD3DCommandList()); 
+		dx12::MeshPrimitive::Create(*s_helloTriangle, copyCommandList->GetD3DCommandList()); 
 
 		std::shared_ptr<re::Shader> k_helloShader = std::make_shared<re::Shader>("HelloTriangle");
 		dx12::Shader::Create(*k_helloShader);
-		k_helloTriangle->GetMeshMaterial()->SetShader(k_helloShader);
+
+		s_helloTriangle->GetMeshMaterial()->SetShader(k_helloShader);
 
 
 		dx12::SwapChain::PlatformParams const* swapChainParams = 
@@ -71,11 +79,56 @@ namespace
 		// Execute command queue, and wait for it to be done (blocking)
 		std::shared_ptr<dx12::CommandList> commandLists[] =
 		{
-			commandList
+			copyCommandList
 		};
 
 		uint64_t copyQueueFenceVal = copyQueue.Execute(1, commandLists);
 		copyQueue.WaitForGPU(copyQueueFenceVal);
+
+
+
+		// Create a Constant Buffer for our camera params
+		// TODO: Handle this correctly via a parameter block
+
+		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+
+		// CBV sizes must be in multiples of 256B
+		const uint32_t size = util::RoundUpToNearestMultiple<uint32_t>(sizeof(glm::mat4), 256);
+
+		const CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_UPLOAD);
+		const CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
+
+		HRESULT hr = device->CreateCommittedResource(
+			&heapProperties,					// this heap will be used to upload the constant buffer data
+			D3D12_HEAP_FLAG_NONE,				// no flags
+			&resourceDesc,						// Size of the resource heap: Alignment must be a multiple of 64KB for single-textures and constant buffers
+			D3D12_RESOURCE_STATE_GENERIC_READ,	// Will be data that is read from: Keep it in the generic read state
+			nullptr,							// Optimized clear value: None for constant buffers
+			IID_PPV_ARGS(&s_helloConstantBufferResource));
+		CheckHResult(hr, "Failed to create committed resource");
+
+		s_helloConstantBufferResource->SetName(L"Camera Parameters"); // TODO: Upload the full camera param block
+
+		s_helloAllocation = std::make_unique<dx12::DescriptorAllocation>(
+			ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(1));
+
+		D3D12_CONSTANT_BUFFER_VIEW_DESC constantBufferViewDesc;
+		constantBufferViewDesc.BufferLocation = s_helloConstantBufferResource->GetGPUVirtualAddress();
+		constantBufferViewDesc.SizeInBytes = size;
+		
+		device->CreateConstantBufferView(
+			&constantBufferViewDesc,
+			s_helloAllocation->GetBaseDescriptor());
+
+		// Get a CPU pointer to the subresource (i.e subresource 0) in our constant buffer resource
+		CD3DX12_RANGE readRange(0, 0);    // We do not intend to read from this resource on the CPU (end is <= to begin)
+		hr = s_helloConstantBufferResource->Map(
+			0,				// Subresource
+			&readRange, 
+			&s_helloMappedMemory);
+
+		// Zero the allocation
+		memset(s_helloMappedMemory, 0, size);
 
 		return true;
 	}
@@ -92,7 +145,7 @@ namespace dx12
 
 
 		// TEMP DEBUG CODE:
-		k_helloTriangle = meshfactory::CreateHelloTriangle(10.f, -10.f);
+		s_helloTriangle = meshfactory::CreateHelloTriangle(10.f, -10.f);
 
 		CreateAPIResources();
 	}
@@ -153,7 +206,7 @@ namespace dx12
 		// Clear depth target:
 		dx12::Texture::PlatformParams* depthPlatParams =
 			swapChainParams->m_backbufferTargetSets[backbufferIdx]->GetDepthStencilTarget().GetTexture()
-			->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+				->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		// TODO: Stage CPU descriptor handles into GPU-visible descriptor heap, and pack into descriptor tables
 		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = depthPlatParams->m_descriptor.GetBaseDescriptor();
@@ -166,7 +219,7 @@ namespace dx12
 
 		// Set the pipeline state:
 		commandList->SetPipelineState(ctxPlatParams->m_pipelineState->GetD3DPipelineState());
-		commandList->SetGraphicsRootSignature(ctxPlatParams->m_pipelineState->GetD3DRootSignature());
+		commandList->SetGraphicsRootSignature(ctxPlatParams->m_pipelineState->GetRootSignature());
 
 		dx12::TextureTargetSet::SetViewport(
 			*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList->GetD3DCommandList());
@@ -179,19 +232,19 @@ namespace dx12
 
 		// TEMP HAX: Get the vertex buffer views:
 		dx12::VertexStream::PlatformParams_Vertex* positionPlatformParams = 
-			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Position)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
+			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Position)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
 
 		dx12::VertexStream::PlatformParams_Vertex* normalPlatformParams = 
-			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Normal)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
+			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Normal)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
 
 		dx12::VertexStream::PlatformParams_Vertex* tangentPlatformParams =
-			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Tangent)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
+			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Tangent)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
 
 		dx12::VertexStream::PlatformParams_Vertex* uv0PlatformParams =
-			k_helloTriangle->GetVertexStream(re::MeshPrimitive::UV0)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
+			s_helloTriangle->GetVertexStream(re::MeshPrimitive::UV0)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
 
 		dx12::VertexStream::PlatformParams_Vertex* colorPlatformParams =
-			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Color)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
+			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Color)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
 
 		// Note: We could set these in a single call, if we're ok with using sequential slots
 		commandList->SetVertexBuffers(re::MeshPrimitive::Position, 1, &positionPlatformParams->m_vertexBufferView);
@@ -201,9 +254,13 @@ namespace dx12
 		commandList->SetVertexBuffers(re::MeshPrimitive::Color, 1, &colorPlatformParams->m_vertexBufferView);
 
 		dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
-			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
+			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
 
 		commandList->SetIndexBuffer(&indexPlatformParams->m_indexBufferView);
+
+
+
+
 
 
 		// Update the MVP matrix
@@ -211,15 +268,23 @@ namespace dx12
 		std::shared_ptr<gr::Camera> mainCamera = en::SceneManager::GetSceneData()->GetMainCamera();
 		const glm::mat4 viewProj = mainCamera->GetViewProjectionMatrix();
 		
-		commandList->SetGraphicsRoot32BitConstants(
-			0,										// RootParameterIndex (As set in our CD3DX12_ROOT_PARAMETER1)
-			sizeof(glm::mat4) / 4,					// Num32BitValuesToSet
-			&viewProj,								// pSrcData
-			0);										// DestOffsetIn32BitValues
+		memcpy(s_helloMappedMemory, &viewProj, sizeof(glm::mat4));
+
+		//commandList->SetGraphicsRoot32BitConstants(
+		//	0,										// RootParameterIndex (As set in our CD3DX12_ROOT_PARAMETER1)
+		//	sizeof(glm::mat4) / 4,					// Num32BitValuesToSet
+		//	&viewProj,								// pSrcData
+		//	0);										// DestOffsetIn32BitValues
+
+		//commandList->GetGPUDescriptorHeap()->SetInlineCBV(0, s_helloConstantBufferResource.Get());
+
+		commandList->GetGPUDescriptorHeap()->SetDescriptorTable(0, s_helloAllocation->GetBaseDescriptor(), 0, 1);
+		commandList->GetGPUDescriptorHeap()->Commit(); // Must be done before the draw command
+
 
 
 		commandList->DrawIndexedInstanced(
-			k_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
+			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
 			1,	// Instance count
 			0,	// Start index location
 			0,	// Base vertex location
@@ -300,6 +365,12 @@ namespace dx12
 
 
 		// TEMP DEBUG CODE:
-		k_helloTriangle = nullptr;
+		s_helloAllocation = nullptr;
+		s_helloTriangle = nullptr;
+
+		// Undo the mapping to s_helloMappedMemory
+		s_helloConstantBufferResource->Unmap(
+			0, 
+			nullptr); // Range of memory to unmap: The region the CPU may have modified. Nullptr = entire subresource may have been modified (used for tooling)
 	}
 }

@@ -131,63 +131,6 @@ namespace
 
 		return rasterizerDesc;
 	}
-
-
-	void GenerateRootSignature(ID3D12Device2* device, Microsoft::WRL::ComPtr<ID3D12RootSignature>& rootSignature)
-	{
-		// Create a root signature
-		D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
-		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-		if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
-		{
-			featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
-		}
-
-		// Allow input layout and deny unnecessary access to certain pipeline stages
-		D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
-			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
-
-
-
-		// A single 32-bit constant root parameter that is used in our current HelloTriangle vertex shader
-		// TODO: Remove this, and replace it with a system:
-		// - Use shader introspection to bind structures by name to the correct registers
-		// - Set shader visibility based on introspection search results?
-		CD3DX12_ROOT_PARAMETER1 rootParameters[1];
-		rootParameters[0].InitAsConstants(
-			sizeof(glm::mat4) / 4,				// num32BitValues
-			0,									// shaderRegister
-			0,									// registerSpace = 0
-			D3D12_SHADER_VISIBILITY_VERTEX);	// shader visibility
-
-
-
-		// Create the root signature description:
-		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDescription;
-		rootSignatureDescription.Init_1_1(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlags);
-
-		// Serialize the root signature.
-		ComPtr<ID3DBlob> rootSignatureBlob;
-		ComPtr<ID3DBlob> errorBlob;
-		HRESULT hr = D3DX12SerializeVersionedRootSignature(
-			&rootSignatureDescription,
-			featureData.HighestVersion,
-			&rootSignatureBlob,
-			&errorBlob);
-		CheckHResult(hr, "Failed to serialize versioned root signature");
-
-		// Create the root signature.
-		hr = device->CreateRootSignature(
-			0,
-			rootSignatureBlob->GetBufferPointer(),
-			rootSignatureBlob->GetBufferSize(),
-			IID_PPV_ARGS(&rootSignature));
-		CheckHResult(hr, "Failed to create root signature");
-	}
 }
 
 
@@ -206,8 +149,6 @@ namespace dx12
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
 
-		// Generate the root signature:
-		GenerateRootSignature(device, m_rootSignature);
 
 		// Generate the PSO:
 		dx12::Shader::PlatformParams* shaderParams = shader->GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
@@ -227,7 +168,7 @@ namespace dx12
 			// Populate the pipeline state stream helper:
 			PipelineStateStream pipelineStateStream;
 
-			pipelineStateStream.rootSignature = m_rootSignature.Get();
+			pipelineStateStream.rootSignature = m_rootSignature.GetD3DRootSignature();
 			pipelineStateStream.inputLayout = { &inputLayout[0], static_cast<uint32_t>(inputLayout.size()) };
 			pipelineStateStream.primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 			pipelineStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[dx12::Shader::Vertex].Get());
@@ -255,7 +196,7 @@ namespace dx12
 
 	void PipelineState::Destroy()
 	{
-		m_rootSignature = nullptr;
+		m_rootSignature.Destroy();
 		m_pipelineState = nullptr;		
 	}
 
@@ -266,8 +207,8 @@ namespace dx12
 	}
 
 
-	ID3D12RootSignature* PipelineState::GetD3DRootSignature() const
+	dx12::RootSignature const& PipelineState::GetRootSignature() const
 	{
-		return m_rootSignature.Get();
+		return m_rootSignature;
 	}
 }

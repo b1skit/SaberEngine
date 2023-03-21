@@ -18,14 +18,16 @@ namespace dx12
 	class Context
 	{
 	public:
-		enum DescriptorHeapType
+		enum CPUDescriptorHeapType
 		{
 			CBV_SRV_UAV,
 			Sampler,
+
+			// These types cannot be used with D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
 			RTV,
 			DSV,
 
-			DescriptorHeapType_Count
+			CPUDescriptorHeapType_Count
 		};
 
 
@@ -47,7 +49,7 @@ namespace dx12
 			// TODO: Precompute a library of all pipeline states needed at startup. For now, we just have a single PSO
 			std::shared_ptr<dx12::PipelineState> m_pipelineState;
 
-			std::vector<dx12::CPUDescriptorHeapManager> m_descriptorHeapMgrs; // DescriptorHeapType_Count
+			std::vector<dx12::CPUDescriptorHeapManager> m_cpuDescriptorHeapMgrs; // CPUDescriptorHeapType_Count
 		};
 
 

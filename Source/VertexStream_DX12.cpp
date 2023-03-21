@@ -213,7 +213,7 @@ namespace dx12
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 		Microsoft::WRL::ComPtr<ID3D12Device2> device = ctxPlatParams->m_device.GetD3DDisplayDevice();
 
-		// Create a committed resource for the GPU resource in a default heap:
+		// Create a committed resource for the GPU-visible resource in a default heap:
 		HRESULT hr = device->CreateCommittedResource(
 			&defaultHeapProperties,				// Heap properties
 			D3D12_HEAP_FLAG_NONE,				// Heap flags
@@ -222,8 +222,9 @@ namespace dx12
 			nullptr,							// Clear value: nullptr as these are not texture resources
 			IID_PPV_ARGS(destBufferResource));	// RefIID and interface pointer
 
+		(*destBufferResource)->SetName(L"Vertex stream destination buffer");
 
-		// Create an committed resource for the upload:
+		// Create an committed resource for the CPU-side upload:
 		const CD3DX12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 		const CD3DX12_RESOURCE_DESC committedresourceDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
 
@@ -234,6 +235,8 @@ namespace dx12
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
 			IID_PPV_ARGS(intermediateBufferResource));
+
+		(*intermediateBufferResource)->SetName(L"Vertex stream intermediate buffer");
 
 		// Populate the subresource:
 		D3D12_SUBRESOURCE_DATA subresourceData = {};

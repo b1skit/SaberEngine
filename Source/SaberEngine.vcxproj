@@ -216,6 +216,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClCompile Include="EventManager_Win32.cpp" />
     <ClCompile Include="Fence_DX12.cpp" />
     <ClCompile Include="GameplayManager.cpp" />
+    <ClCompile Include="GPUDescriptorHeap_DX12.cpp" />
     <ClCompile Include="InputManager_Platform.cpp" />
     <ClCompile Include="InputManager_Win32.cpp" />
     <ClCompile Include="MeshPrimitive_DX12.cpp" />
@@ -233,6 +234,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClCompile Include="PerformanceTimer.cpp" />
     <ClCompile Include="PipelineState_DX12.cpp" />
     <ClCompile Include="RenderManager_DX12.cpp" />
+    <ClCompile Include="RootSignature_DX12.cpp" />
     <ClCompile Include="Sampler_DX12.cpp" />
     <ClCompile Include="Shader_DX12.cpp" />
     <ClCompile Include="SwapChain.cpp" />
@@ -322,10 +324,12 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClInclude Include="EventManager_Win32.h" />
     <ClInclude Include="Fence_DX12.h" />
     <ClInclude Include="GameplayManager.h" />
+    <ClInclude Include="GPUDescriptorHeap_DX12.h" />
     <ClInclude Include="HashedDataObject.h" />
     <ClInclude Include="InputManager_Platform.h" />
     <ClInclude Include="InputManager_Win32.h" />
     <ClInclude Include="IPlatformParams.h" />
+    <ClInclude Include="MathUtils.h" />
     <ClInclude Include="MeshPrimitive_DX12.h" />
     <ClInclude Include="ParameterBlock.h" />
     <ClInclude Include="ParameterBlockAllocator.h" />
@@ -337,6 +341,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClInclude Include="PipelineState.h" />
     <ClInclude Include="PipelineState_DX12.h" />
     <ClInclude Include="RenderManager_DX12.h" />
+    <ClInclude Include="RootSignature_DX12.h" />
     <ClInclude Include="Sampler_DX12.h" />
     <ClInclude Include="Shader_DX12.h" />
     <ClInclude Include="SwapChain.h" />

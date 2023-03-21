@@ -3,6 +3,8 @@
 #include <wrl.h>
 #include <d3d12.h>
 
+#include "RootSignature_DX12.h"
+
 
 namespace gr
 {
@@ -29,11 +31,13 @@ namespace dx12
 		void Destroy();
 		
 		ID3D12PipelineState* GetD3DPipelineState() const;
-		ID3D12RootSignature* GetD3DRootSignature() const;
+
+		dx12::RootSignature const& GetRootSignature() const;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineState;
-		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
+
+		dx12::RootSignature m_rootSignature;
 
 	private:
 		PipelineState() = delete;

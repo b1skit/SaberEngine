@@ -34,10 +34,10 @@ namespace
 namespace dx12
 {
 	CommandList::CommandList(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type)
+		: m_gpuDescriptorHeaps(nullptr)
+		, m_type(type)
 	{
 		m_commandAllocator = CreateCommandAllocator(device, type);
-
-		m_type = type;
 
 		// Create the command list:
 		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
@@ -51,6 +51,18 @@ namespace dx12
 		// NOTE: IID_PPV_ARGS macro automatically supplies both the RIID & interface pointer
 
 		CheckHResult(hr, "Failed to create command list");
+
+		// Set the descriptor heaps (unless we're a copy command list):
+		if (m_type != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY)
+		{
+			// Create our GPU-visible descriptor heaps:
+			m_gpuDescriptorHeaps = std::make_unique<GPUDescriptorHeap>(
+				m_commandList.Get(),
+				m_type,
+				D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+			// TODO: Handle Sampler descriptor heaps
+		}
 
 		// Note: Command lists are created in the recording state by default. The render loop resets the command 
 		// list, which requires the command list to be closed. So, we pre-close new command lists so they're ready

@@ -377,6 +377,12 @@
     <ClCompile Include="CPUDescriptorHeapManager_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
+    <ClCompile Include="GPUDescriptorHeap_DX12.cpp">
+      <Filter>Source Files\re\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="RootSignature_DX12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -708,6 +714,15 @@
     </ClInclude>
     <ClInclude Include="CPUDescriptorHeapManager_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="GPUDescriptorHeap_DX12.h">
+      <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="RootSignature_DX12.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MathUtils.h">
+      <Filter>Source Files\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

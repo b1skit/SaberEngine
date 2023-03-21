@@ -41,29 +41,29 @@ namespace dx12
 
 
 		// Descriptor heap managers:
-		ctxPlatParams->m_descriptorHeapMgrs.reserve(static_cast<size_t>(DescriptorHeapType_Count));
-		for (size_t i = 0; i < DescriptorHeapType_Count; i++)
+		ctxPlatParams->m_cpuDescriptorHeapMgrs.reserve(static_cast<size_t>(CPUDescriptorHeapType_Count));
+		for (size_t i = 0; i < CPUDescriptorHeapType_Count; i++)
 		{
-			switch (static_cast<DescriptorHeapType>(i))
+			switch (static_cast<CPUDescriptorHeapType>(i))
 			{
-			case DescriptorHeapType::CBV_SRV_UAV:
+			case CPUDescriptorHeapType::CBV_SRV_UAV:
 			{
-				ctxPlatParams->m_descriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+				ctxPlatParams->m_cpuDescriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 			}
 			break;
-			case DescriptorHeapType::Sampler:
+			case CPUDescriptorHeapType::Sampler:
 			{
-				ctxPlatParams->m_descriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+				ctxPlatParams->m_cpuDescriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 			}
 			break;
-			case DescriptorHeapType::RTV:
+			case CPUDescriptorHeapType::RTV:
 			{
-				ctxPlatParams->m_descriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+				ctxPlatParams->m_cpuDescriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 			}
 			break;
-			case DescriptorHeapType::DSV:
+			case CPUDescriptorHeapType::DSV:
 			{
-				ctxPlatParams->m_descriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+				ctxPlatParams->m_cpuDescriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 			}
 			break;
 			default:
@@ -146,7 +146,7 @@ namespace dx12
 
 		context.GetSwapChain().Destroy();
 
-		ctxPlatParams->m_descriptorHeapMgrs.clear();
+		ctxPlatParams->m_cpuDescriptorHeapMgrs.clear();
 
 		ctxPlatParams->m_device.Destroy();
 	}
@@ -208,9 +208,9 @@ namespace dx12
 		ctxPlatParams->m_commandQueues[CommandList::Direct].WaitForGPU(ctxPlatParams->m_frameFenceValues[backbufferIdx]);
 
 		// Free the descriptors used on the next backbuffer now that we know the fence has been signalled:
-		for (size_t i = 0; i < DescriptorHeapType_Count; i++)
+		for (size_t i = 0; i < CPUDescriptorHeapType_Count; i++)
 		{
-			ctxPlatParams->m_descriptorHeapMgrs[static_cast<DescriptorHeapType>(i)].ReleaseFreedAllocations(
+			ctxPlatParams->m_cpuDescriptorHeapMgrs[static_cast<CPUDescriptorHeapType>(i)].ReleaseFreedAllocations(
 				ctxPlatParams->m_frameFenceValues[backbufferIdx]);
 		}	
 	}

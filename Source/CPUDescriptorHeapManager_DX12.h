@@ -3,8 +3,6 @@
 #include <d3d12.h>
 
 
-struct CD3DX12_CPU_DESCRIPTOR_HANDLE;
-
 namespace dx12
 {
 	class AllocationPage;
