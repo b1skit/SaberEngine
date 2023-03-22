@@ -8,32 +8,33 @@
 #include "Texture.h"
 #include "TextureTarget.h"
 
+using en::Config;
+using en::SceneManager;
+using gr::DeferredLightingGraphicsSystem;
+using gr::GBufferGraphicsSystem;
+using re::RenderManager;
+using re::RenderStage;
+using re::Sampler;
+using re::Batch;
+using re::TextureTargetSet;
+using re::Texture;
+using re::Shader;
+using std::shared_ptr;
+using std::string;
+using std::vector;
+using std::filesystem::exists;
+using glm::vec3;
+using glm::vec4;
+using glm::mat4;
+
 
 namespace gr
 {
-	using en::Config;
-	using en::SceneManager;
-	using gr::DeferredLightingGraphicsSystem;
-	using gr::GBufferGraphicsSystem;
-	using re::RenderManager;
-	using re::RenderStage;
-	using re::Sampler;
-	using re::Batch;
-	using re::TextureTargetSet;
-	using re::Texture;
-	using re::Shader;
-	using std::shared_ptr;
-	using std::string;
-	using std::vector;
-	using std::filesystem::exists;
-	using glm::vec3;
-	using glm::vec4;
-	using glm::mat4;
-
-
-	SkyboxGraphicsSystem::SkyboxGraphicsSystem(std::string name) : GraphicsSystem(name), NamedObject(name),
-		m_skyboxStage("Skybox stage"),
-		m_skyTexture(nullptr)
+	SkyboxGraphicsSystem::SkyboxGraphicsSystem(std::string name)
+		: GraphicsSystem(name)
+		, NamedObject(name)
+		, m_skyboxStage("Skybox stage")
+		, m_skyTexture(nullptr)
 	{
 		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Far);
 	}
@@ -94,15 +95,15 @@ namespace gr
 	}
 
 
+	std::shared_ptr<re::TextureTargetSet> SkyboxGraphicsSystem::GetFinalTextureTargetSet() const
+	{
+		return m_skyboxStage.GetTextureTargetSet();
+	}
+
+
 	void SkyboxGraphicsSystem::CreateBatches()
 	{
 		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
 		m_skyboxStage.AddBatch(fullscreenQuadBatch);
-	}
-
-
-	std::shared_ptr<re::TextureTargetSet> SkyboxGraphicsSystem::GetFinalTextureTargetSet() const
-	{
-		return m_skyboxStage.GetTextureTargetSet();
 	}
 }

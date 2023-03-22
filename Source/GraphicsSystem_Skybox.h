@@ -11,7 +11,6 @@ namespace gr
 	public:
 		explicit SkyboxGraphicsSystem(std::string name);
 
-		SkyboxGraphicsSystem() = delete;
 		~SkyboxGraphicsSystem() override {}
 
 		void Create(re::StagePipeline& pipeline) override;
@@ -20,13 +19,19 @@ namespace gr
 
 		std::shared_ptr<re::TextureTargetSet> GetFinalTextureTargetSet() const override;
 
+
 	private:
 		void CreateBatches() override;
+
 
 	private:
 		re::RenderStage m_skyboxStage;
 		std::shared_ptr<re::Texture> m_skyTexture;
 		std::string m_skyTextureShaderName;
 		std::shared_ptr<re::MeshPrimitive> m_screenAlignedQuad;
+
+
+	private:
+		SkyboxGraphicsSystem() = delete;
 	};
 }
