@@ -103,7 +103,43 @@ namespace re
 		PerformanceTimer timer;
 		timer.Start();
 
+		// Build our platform-specific graphics systems:
 		platform::RenderManager::Initialize(*this);
+
+		// Create each graphics system in turn:
+		{
+			vector<shared_ptr<GraphicsSystem>>::iterator gsIt;
+			for (gsIt = m_graphicsSystems.begin(); gsIt != m_graphicsSystems.end(); gsIt++)
+			{
+				(*gsIt)->Create(m_pipeline.AddNewStagePipeline((*gsIt)->GetName()));
+
+				// Remove GS if it didn't attach any render stages (Ensuring indexes of m_pipeline & m_graphicsSystems match)
+				if (m_pipeline.GetPipeline().back().GetNumberOfStages() == 0)
+				{
+					m_pipeline.GetPipeline().pop_back();
+					vector<shared_ptr<GraphicsSystem>>::iterator deleteIt = gsIt;
+					
+					// Handle the case where the 1st GS didn't append anything
+					const bool isFirstGS = gsIt == m_graphicsSystems.begin();
+					if (isFirstGS == false)
+					{
+						gsIt--;		
+					}
+
+					m_graphicsSystems.erase(deleteIt);
+
+					// Iterators at/after the erase point are invalidated: Reset our iterator to the start
+					if (isFirstGS)
+					{
+						if (m_graphicsSystems.empty())
+						{
+							break;
+						}
+						gsIt = m_graphicsSystems.begin();
+					}
+				}
+			}
+		}
 
 		m_paramBlockAllocator.ClosePermanentPBRegistrationPeriod();
 

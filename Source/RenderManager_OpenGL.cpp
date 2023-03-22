@@ -59,22 +59,6 @@ namespace opengl
 		renderManager.m_graphicsSystems.emplace_back(make_shared<SkyboxGraphicsSystem>("Skybox Graphics System"));
 		renderManager.m_graphicsSystems.emplace_back(make_shared<BloomGraphicsSystem>("Bloom Graphics System"));
 		renderManager.m_graphicsSystems.emplace_back(make_shared<TonemappingGraphicsSystem>("Tonemapping Graphics System"));
-
-		// Create each graphics system in turn:
-		vector<shared_ptr<GraphicsSystem>>::iterator gsIt;
-		for (gsIt = renderManager.m_graphicsSystems.begin(); gsIt != renderManager.m_graphicsSystems.end(); gsIt++)
-		{
-			(*gsIt)->Create(renderManager.m_pipeline.AddNewStagePipeline((*gsIt)->GetName()));
-
-			// Remove GS if it didn't attach any render stages (Ensuring indexes of m_pipeline & m_graphicsSystems match)
-			if (renderManager.m_pipeline.GetPipeline().back().GetNumberOfStages() == 0)
-			{
-				renderManager.m_pipeline.GetPipeline().pop_back();
-				vector<shared_ptr<GraphicsSystem>>::iterator deleteIt = gsIt;
-				gsIt--;
-				renderManager.m_graphicsSystems.erase(deleteIt);
-			}
-		}
 	}
 
 
