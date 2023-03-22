@@ -26,31 +26,30 @@
 #include "TextureTarget_OpenGL.h"
 #include "SceneManager.h"
 
+using re::RenderStage;
+using gr::Camera;
+using gr::Transform;
+using gr::GraphicsSystem;
+using gr::GBufferGraphicsSystem;
+using gr::ShadowsGraphicsSystem;
+using gr::DeferredLightingGraphicsSystem;
+using gr::SkyboxGraphicsSystem;
+using gr::BloomGraphicsSystem;
+using gr::TonemappingGraphicsSystem;
+using re::StagePipeline;
+using std::shared_ptr;
+using std::make_unique;
+using std::make_shared;
+using std::string;
+using std::vector;
+using glm::vec3;
+using glm::vec4;
+using glm::mat3;
+using glm::mat4;
+
 
 namespace opengl
 {
-	using re::RenderStage;
-	using gr::Camera;
-	using gr::Transform;
-	using gr::GraphicsSystem;
-	using gr::GBufferGraphicsSystem;
-	using gr::ShadowsGraphicsSystem;
-	using gr::DeferredLightingGraphicsSystem;
-	using gr::SkyboxGraphicsSystem;
-	using gr::BloomGraphicsSystem;
-	using gr::TonemappingGraphicsSystem;
-	using re::StagePipeline;
-	using std::shared_ptr;
-	using std::make_unique;
-	using std::make_shared;
-	using std::string;
-	using std::vector;
-	using glm::vec3;
-	using glm::vec4;
-	using glm::mat3;
-	using glm::mat4;
-
-
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
 		// Add graphics systems, in order of execution:
