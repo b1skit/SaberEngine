@@ -35,9 +35,8 @@ namespace gr
 		};
 
 	public:
-		struct CameraParams
-		{		
-			// Shader parameter block
+		struct CameraParams // Shader parameter block
+		{
 			glm::mat4 g_view;
 			glm::mat4 g_invView;
 			glm::mat4 g_projection;
