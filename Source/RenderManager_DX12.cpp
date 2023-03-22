@@ -13,6 +13,8 @@
 
 using Microsoft::WRL::ComPtr;
 using glm::vec4;
+using std::make_shared;
+using std::shared_ptr;
 
 
 // TEMP DEBUG CODE:
@@ -25,6 +27,7 @@ using glm::vec4;
 #include "Camera.h"
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "MathUtils.h"
+#include "GraphicsSystem_TempDebug.h"
 
 
 // TEMP DEBUG CODE:
@@ -140,14 +143,17 @@ namespace dx12
 {
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
-		#pragma message("TODO: Implement dx12::RenderManager::Initialize")
-		LOG_ERROR("TODO: Implement dx12::RenderManager::Initialize");
-
-
-		// TEMP DEBUG CODE:
+		// TEMP DEBUG CODE: Need to have this created before CreateAPIResources
 		s_helloTriangle = meshfactory::CreateHelloTriangle(10.f, -10.f);
 
+
+
 		CreateAPIResources();
+
+		renderManager.m_graphicsSystems.emplace_back(
+			make_shared<gr::TempDebugGraphicsSystem>("DX12 Temp Debug Graphics System"));
+
+
 	}
 
 

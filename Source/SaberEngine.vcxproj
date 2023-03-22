@@ -217,6 +217,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClCompile Include="Fence_DX12.cpp" />
     <ClCompile Include="GameplayManager.cpp" />
     <ClCompile Include="GPUDescriptorHeap_DX12.cpp" />
+    <ClCompile Include="GraphicsSystem_TempDebug.cpp" />
     <ClCompile Include="InputManager_Platform.cpp" />
     <ClCompile Include="InputManager_Win32.cpp" />
     <ClCompile Include="MeshPrimitive_DX12.cpp" />
@@ -325,6 +326,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClInclude Include="Fence_DX12.h" />
     <ClInclude Include="GameplayManager.h" />
     <ClInclude Include="GPUDescriptorHeap_DX12.h" />
+    <ClInclude Include="GraphicsSystem_TempDebug.h" />
     <ClInclude Include="HashedDataObject.h" />
     <ClInclude Include="InputManager_Platform.h" />
     <ClInclude Include="InputManager_Win32.h" />

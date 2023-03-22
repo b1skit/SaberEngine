@@ -383,6 +383,9 @@
     <ClCompile Include="RootSignature_DX12.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicsSystem_TempDebug.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -723,6 +726,9 @@
     </ClInclude>
     <ClInclude Include="MathUtils.h">
       <Filter>Source Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsSystem_TempDebug.h">
+      <Filter>Header Files\gr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
