@@ -106,6 +106,7 @@ namespace dx12
 	AllocationPage* CPUDescriptorHeapManager::AllocateNewPage()
 	{
 		// Note: m_allocationPagesIndexesMutex has been locked already
+
 		m_allocationPages.emplace_back(std::make_unique<AllocationPage>(m_type, m_elementSize, k_numDescriptorsPerPage));
 
 		// The new page currently has 0 allocations, so we can safely add it to our free page index list
@@ -211,7 +212,10 @@ namespace dx12
 		if (remainingBlockSize > 0)
 		{
 			const size_t newOffset = offsetIdx + descriptorCount;
+
+			SEAssert("About to underflow unsigned value", m_numFreeElements >= remainingBlockSize);
 			m_numFreeElements -= remainingBlockSize; // FreeRange will re-add the number of freed blocks to the count
+
 			FreeRange(newOffset, remainingBlockSize);
 		}
 
@@ -322,7 +326,8 @@ namespace dx12
 		auto nextLocation = std::next(offsetLocation.first);
 		if (nextLocation != m_freeOffsetsToSizes.end())
 		{
-			MergeBlocks(offsetLocation.first, offset, nextLocation);
+			size_t nextOffset = nextLocation->first;
+			MergeBlocks(offsetLocation.first, nextOffset, nextLocation);
 		}
 	}
 
