@@ -350,7 +350,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClInclude Include="SwapChain_DX12.h" />
     <ClInclude Include="SwapChain_OpenGL.h" />
     <ClInclude Include="SwapChain_Platform.h" />
-    <ClInclude Include="TextLoader.h" />
+    <ClInclude Include="TextUtils.h" />
     <ClInclude Include="TextureTarget_DX12.h" />
     <ClInclude Include="Texture_DX12.h" />
     <ClInclude Include="ThreadPool.h" />
