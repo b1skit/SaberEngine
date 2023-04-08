@@ -26,4 +26,9 @@ namespace util
 
 		return output;
 	}
+
+	std::wstring ToWideString(std::string const& str)
+	{
+		return std::wstring(str.begin(), str.end());
+	}
 }
