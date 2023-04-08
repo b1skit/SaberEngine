@@ -17,4 +17,11 @@ namespace util
 		}
 		return val + multiple - remainder;
 	}
+
+	template<typename T>
+	bool IsPowerOfTwo(T v)
+	{
+		// Bit twiddling hack: http://www.graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2
+		return v && !(v & (v - 1));
+	}
 }
