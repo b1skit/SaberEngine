@@ -162,8 +162,7 @@ namespace dx12
 				IID_PPV_ARGS(&texPlatParams->m_textureResource)
 			);
 			
-			texPlatParams->m_textureResource->SetName(
-				std::wstring(texture.GetName().begin(), texture.GetName().end()).c_str());
+			texPlatParams->m_textureResource->SetName(texture.GetWName().c_str());
 
 			// Update the depth-stencil view
 			D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};

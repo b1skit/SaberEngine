@@ -14,6 +14,7 @@ namespace en
 
 		// m_name as supplied at construction
 		inline std::string const& GetName() const { return m_name; }
+		inline std::wstring const& GetWName() const { return m_wName; }
 
 		// Integer identifier computed by hasing m_name. Any object with the same m_name will have the same NameID
 		inline uint64_t GetNameID() const { return m_nameID; }
@@ -32,6 +33,7 @@ namespace en
 
 	private:
 		std::string m_name;
+		std::wstring m_wName;
 		uint64_t m_nameID;
 		uint64_t m_uniqueID;
 		
@@ -58,6 +60,8 @@ namespace en
 	{
 		m_name = name;
 		m_nameID = ComputeIDFromName(name);
+
+		m_wName = std::wstring(m_name.begin(), m_name.end()).c_str();
 	}
 
 
