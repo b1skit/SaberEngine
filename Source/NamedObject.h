@@ -43,9 +43,8 @@ namespace en
 
 
 	NamedObject::NamedObject(std::string const& name)
-		: m_name(name)
-		, m_nameID(ComputeIDFromName(name))
 	{
+		SetName(name);
 		ComputeUniqueID();
 	}
 
