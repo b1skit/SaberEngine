@@ -282,6 +282,8 @@ namespace dx12
 		std::shared_ptr<gr::Camera> mainCamera = en::SceneManager::GetSceneData()->GetMainCamera();
 		const glm::mat4 viewProj = mainCamera->GetViewProjectionMatrix();
 		
+		// TODO: Is there a risk of a race condition here? Our constant buffer lives in D3D12_HEAP_TYPE_UPLOAD, is it
+		// possible to stomp in-flight data when updating the buffer here for the next frame?
 		memcpy(s_helloMappedMemory, &viewProj, sizeof(glm::mat4));
 
 		//commandList->SetGraphicsRoot32BitConstants(
