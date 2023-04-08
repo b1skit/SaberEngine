@@ -155,7 +155,7 @@ namespace dx12
 
 			HRESULT hr = device->CreateCommittedResource(
 				&depthHeapProperties,
-				D3D12_HEAP_FLAG_NONE,
+				D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
 				&depthResourceDesc,
 				D3D12_RESOURCE_STATE_DEPTH_WRITE,
 				&optimizedClearValue,

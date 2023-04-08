@@ -176,53 +176,30 @@ namespace dx12
 
 	void VertexStream::Create(re::VertexStream& stream, ComPtr<ID3D12GraphicsCommandList2> commandList)
 	{
+		dx12::VertexStream::PlatformParams* streamPlatformParams =
+			stream.GetPlatformParams()->As<dx12::VertexStream::PlatformParams*>();
+
+		dx12::Context::PlatformParams* ctxPlatParams =
+			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+		Microsoft::WRL::ComPtr<ID3D12Device2> device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+
+
 		const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
 		const CD3DX12_HEAP_PROPERTIES defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
 		const size_t bufferSize = stream.GetTotalDataByteSize();
 		const CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize, flags);
 
-		dx12::VertexStream::PlatformParams* streamPlatformParams =
-			stream.GetPlatformParams()->As<dx12::VertexStream::PlatformParams*>();
-
-		// Get our interface pointers from the stream platform params:
-		ID3D12Resource** intermediateBufferResource = nullptr;
-		ID3D12Resource** destBufferResource = nullptr;
-		switch (streamPlatformParams->m_type)
-		{
-		case re::VertexStream::StreamType::Index:
-		{
-			dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
-				streamPlatformParams->As<dx12::VertexStream::PlatformParams_Index*>();
-
-			intermediateBufferResource = &indexPlatformParams->m_intermediateBufferResource;
-			destBufferResource = &indexPlatformParams->m_bufferResource;
-		}
-		break;
-		default:
-		{
-			dx12::VertexStream::PlatformParams_Vertex* const vertPlatformParams =
-				streamPlatformParams->As<dx12::VertexStream::PlatformParams_Vertex*>();
-			
-			intermediateBufferResource = &vertPlatformParams->m_intermediateBufferResource;
-			destBufferResource = &vertPlatformParams->m_bufferResource;
-		}
-		}
-
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-		Microsoft::WRL::ComPtr<ID3D12Device2> device = ctxPlatParams->m_device.GetD3DDisplayDevice();
-
 		// Create a committed resource for the GPU-visible resource in a default heap:
 		HRESULT hr = device->CreateCommittedResource(
 			&defaultHeapProperties,				// Heap properties
-			D3D12_HEAP_FLAG_NONE,				// Heap flags
+			D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Heap flags
 			&resourceDesc,						// Resource description
 			D3D12_RESOURCE_STATE_COPY_DEST,		// Initial resource state
 			nullptr,							// Clear value: nullptr as these are not texture resources
-			IID_PPV_ARGS(destBufferResource));	// RefIID and interface pointer
+			IID_PPV_ARGS(&streamPlatformParams->m_bufferResource));	// RefIID and interface pointer
 
-		(*destBufferResource)->SetName(L"Vertex stream destination buffer");
+		(streamPlatformParams->m_bufferResource)->SetName(L"Vertex stream destination buffer");
 
 		// Create an committed resource for the CPU-side upload:
 		const CD3DX12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
@@ -230,13 +207,13 @@ namespace dx12
 
 		hr = device->CreateCommittedResource(
 			&uploadHeapProperties,
-			D3D12_HEAP_FLAG_NONE,
+			D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
 			&committedresourceDesc,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
-			IID_PPV_ARGS(intermediateBufferResource));
+			IID_PPV_ARGS(&streamPlatformParams->m_intermediateBufferResource));
 
-		(*intermediateBufferResource)->SetName(L"Vertex stream intermediate buffer");
+		(streamPlatformParams->m_intermediateBufferResource)->SetName(L"Vertex stream intermediate buffer");
 
 		// Populate the subresource:
 		D3D12_SUBRESOURCE_DATA subresourceData = {};
@@ -246,8 +223,8 @@ namespace dx12
 
 		::UpdateSubresources(
 			commandList.Get(),
-			*destBufferResource,			// Destination resource
-			*intermediateBufferResource,	// Intermediate resource
+			streamPlatformParams->m_bufferResource.Get(),				// Destination resource
+			streamPlatformParams->m_intermediateBufferResource.Get(),	// Intermediate resource
 			0,								// Index of 1st subresource in the resource
 			0,								// Number of subresources in the resource.
 			1,								// Required byte size for the update
@@ -282,6 +259,8 @@ namespace dx12
 			vertPlatformParams->m_vertexBufferView.StrideInBytes = stream.GetElementByteSize();
 		}
 		}
+
+		// TODO: We should destroy the vertex stream intermediate HEAP_TYPE_UPLOAD resources once the copy is done
 	}
 
 

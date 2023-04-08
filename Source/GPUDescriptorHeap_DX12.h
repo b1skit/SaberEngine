@@ -96,6 +96,6 @@ namespace dx12
 
 		// Inline root signature descriptors:
 		D3D12_GPU_VIRTUAL_ADDRESS m_inlineDescriptors[InlineRootType_Count][k_totalRootSigDescriptorTableIndices];
-		uint32_t m_dirtyInlineDescriptorIdxBitmask[InlineRootType_Count]; // Marked when SetInline_() is called
+		uint32_t m_dirtyInlineDescriptorIdxBitmask[InlineRootType_Count]; // Marked during SetInlineCBV/SRV/UAV() calls
 	};
 }

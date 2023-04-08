@@ -36,7 +36,7 @@ namespace
 	using dx12::CheckHResult;
 
 	static std::shared_ptr<re::MeshPrimitive> s_helloTriangle = nullptr;
-	static std::unique_ptr<dx12::DescriptorAllocation> s_helloAllocation = nullptr;
+	static std::unique_ptr<dx12::DescriptorAllocation> s_helloCPUDescAllocation = nullptr;
 
 	static ComPtr<ID3D12Resource> s_helloConstantBufferResource = nullptr;
 
@@ -55,6 +55,17 @@ namespace
 
 		// Note: This internally create all of the vertex stream resources
 		dx12::MeshPrimitive::Create(*s_helloTriangle, copyCommandList->GetD3DCommandList()); 
+
+		// Execute command queue, and wait for it to be done (blocking)
+		std::shared_ptr<dx12::CommandList> commandLists[] =
+		{
+			copyCommandList
+		};
+
+		uint64_t copyQueueFenceVal = copyQueue.Execute(1, commandLists);
+		copyQueue.WaitForGPU(copyQueueFenceVal);
+
+		// TODO: We should destroy the vertex stream intermediate HEAP_TYPE_UPLOAD resources now that the copy is done
 
 		std::shared_ptr<re::Shader> k_helloShader = std::make_shared<re::Shader>("HelloTriangle");
 		dx12::Shader::Create(*k_helloShader);
@@ -79,14 +90,7 @@ namespace
 			swapChainTargetSetPlatParams->m_depthTargetFormat);
 
 
-		// Execute command queue, and wait for it to be done (blocking)
-		std::shared_ptr<dx12::CommandList> commandLists[] =
-		{
-			copyCommandList
-		};
-
-		uint64_t copyQueueFenceVal = copyQueue.Execute(1, commandLists);
-		copyQueue.WaitForGPU(copyQueueFenceVal);
+		
 
 
 
@@ -103,7 +107,7 @@ namespace
 
 		HRESULT hr = device->CreateCommittedResource(
 			&heapProperties,					// this heap will be used to upload the constant buffer data
-			D3D12_HEAP_FLAG_NONE,				// no flags
+			D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Flags
 			&resourceDesc,						// Size of the resource heap: Alignment must be a multiple of 64KB for single-textures and constant buffers
 			D3D12_RESOURCE_STATE_GENERIC_READ,	// Will be data that is read from: Keep it in the generic read state
 			nullptr,							// Optimized clear value: None for constant buffers
@@ -112,26 +116,30 @@ namespace
 
 		s_helloConstantBufferResource->SetName(L"Camera Parameters"); // TODO: Upload the full camera param block
 
-		s_helloAllocation = std::make_unique<dx12::DescriptorAllocation>(
-			ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(1));
-
-		D3D12_CONSTANT_BUFFER_VIEW_DESC constantBufferViewDesc;
-		constantBufferViewDesc.BufferLocation = s_helloConstantBufferResource->GetGPUVirtualAddress();
-		constantBufferViewDesc.SizeInBytes = size;
 		
-		device->CreateConstantBufferView(
-			&constantBufferViewDesc,
-			s_helloAllocation->GetBaseDescriptor());
-
+		
 		// Get a CPU pointer to the subresource (i.e subresource 0) in our constant buffer resource
 		CD3DX12_RANGE readRange(0, 0);    // We do not intend to read from this resource on the CPU (end is <= to begin)
 		hr = s_helloConstantBufferResource->Map(
-			0,				// Subresource
+			0,						// Subresource
 			&readRange, 
 			&s_helloMappedMemory);
 
 		// Zero the allocation
 		memset(s_helloMappedMemory, 0, size);
+
+		// Allocate a cpu-visible descriptor to hold our view:
+		s_helloCPUDescAllocation = std::make_unique<dx12::DescriptorAllocation>(
+			ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(1));
+
+		// Create the constant buffer view:
+		D3D12_CONSTANT_BUFFER_VIEW_DESC constantBufferViewDesc;
+		constantBufferViewDesc.BufferLocation = s_helloConstantBufferResource->GetGPUVirtualAddress();
+		constantBufferViewDesc.SizeInBytes = size;
+
+		device->CreateConstantBufferView(
+			&constantBufferViewDesc,
+			s_helloCPUDescAllocation->GetBaseDescriptor());
 
 		return true;
 	}
@@ -284,7 +292,7 @@ namespace dx12
 
 		//commandList->GetGPUDescriptorHeap()->SetInlineCBV(0, s_helloConstantBufferResource.Get());
 
-		commandList->GetGPUDescriptorHeap()->SetDescriptorTable(0, s_helloAllocation->GetBaseDescriptor(), 0, 1);
+		commandList->GetGPUDescriptorHeap()->SetDescriptorTable(0, s_helloCPUDescAllocation->GetBaseDescriptor(), 0, 1);
 		commandList->GetGPUDescriptorHeap()->Commit(); // Must be done before the draw command
 
 
@@ -371,7 +379,7 @@ namespace dx12
 
 
 		// TEMP DEBUG CODE:
-		s_helloAllocation = nullptr;
+		s_helloCPUDescAllocation = nullptr;
 		s_helloTriangle = nullptr;
 
 		// Undo the mapping to s_helloMappedMemory
