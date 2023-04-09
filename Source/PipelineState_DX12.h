@@ -3,6 +3,7 @@
 #include <wrl.h>
 #include <d3d12.h>
 
+#include "HashedDataObject.h"
 #include "RootSignature_DX12.h"
 
 
@@ -19,9 +20,7 @@ namespace re
 
 namespace dx12
 {
-	// TODO: Make this a hashed object, so we can find/reuse/batch PSOs
-
-	class PipelineState
+	class PipelineState final : public en::HashedDataObject
 	{
 	public:
 		PipelineState(
@@ -35,10 +34,16 @@ namespace dx12
 
 		dx12::RootSignature const& GetRootSignature() const;
 
+
+	private:
+		void ComputeDataHash() override;
+
+
 	private:
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineState;
 
 		dx12::RootSignature m_rootSignature;
+
 
 	private:
 		PipelineState() = delete;

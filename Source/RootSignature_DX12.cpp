@@ -162,4 +162,10 @@ namespace dx12
 	{
 		return m_rootSigDescription;
 	}
+
+
+	void RootSignature::ComputeDataHash()
+	{
+		#pragma message("TODO: Implement RootSignature::ComputeDataHash")
+	}
 }

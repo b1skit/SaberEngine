@@ -5,16 +5,55 @@ namespace gr
 {
 	struct PipelineState
 	{
+		enum class FillMode
+		{
+			Wireframe, // TODO: Implement support for this
+			Solid,
+			FillMode_Count
+		} m_fillMode = FillMode::Solid;
+
+
 		enum class FaceCullingMode
 		{
 			Disabled,
 			Front,
 			Back,
-			FrontBack,
 			FaceCullingMode_Count
 		} m_faceCullingMode = FaceCullingMode::Back;
 
 
+		enum class WindingOrder // To determine a front-facing polygon
+		{
+			CCW,
+			CW,
+			WindingOrder_Count
+		} m_windingOrder = WindingOrder::CCW;
+
+
+		enum class DepthTestMode
+		{
+			Default,	// Less
+			Never,		// Never pass
+			Less,		// <
+			Equal,		// ==
+			LEqual,		// <=
+			Greater,	// >
+			NotEqual,	// !=
+			GEqual,		// >=
+			Always,		// Always pass: Disables depth testing
+			DepthTestMode_Count
+		} m_depthTestMode = DepthTestMode::Default;
+
+
+		enum class DepthWriteMode
+		{
+			Enabled,
+			Disabled,
+			DepthWriteMode_Count
+		} m_depthWriteMode = DepthWriteMode::Enabled;
+
+
+		// TODO: These should be per-target, to allow different outputs when using MRTs
 		enum class BlendMode
 		{
 			Disabled,
@@ -31,31 +70,15 @@ namespace gr
 			OneMinusDstAlpha,
 			BlendMode_Count
 		} m_srcBlendMode = BlendMode::One, m_dstBlendMode = BlendMode::One;
+		// TODO: We should support alpha blend modes, in addition to the color blend modes here
 
 
-		enum class DepthTestMode
-		{
-			Default,	// Less
-			Never,		// Never pass
-			Less,		// <
-			Equal,		// ==
-			LEqual,		// <=
-			Greater,	// >
-			NotEqual,	// !=
-			GEqual,		// >=
-			Always,		// Always pass: Disables depth testing
-			DepthTestMode_Count
-		} m_depthTestMode = DepthTestMode::GEqual;
+		// TODO: Support blend operations (add/subtract/min/max etc) for both color and alpha channels
+
+		// TODO: Support logical operations (AND/OR/XOR etc)
 
 
-		enum class DepthWriteMode
-		{
-			Enabled,
-			Disabled,
-			DepthWriteMode_Count
-		} m_depthWriteMode = DepthWriteMode::Enabled;
-
-
+		// TODO: These should be per-target, to allow different outputs when using MRTs
 		struct ColorWriteMode
 		{
 			enum class ChannelMode
@@ -77,6 +100,7 @@ namespace gr
 		};
 
 
+		// TODO: These should be per-target, to allow different outputs when using MRTs
 		enum class ClearTarget
 		{
 			Color,
@@ -87,6 +111,7 @@ namespace gr
 		} m_targetClearMode = ClearTarget::None;
 
 
+		// TODO: We should be able to target individual target sub-resources, instead of specifying this here
 		struct
 		{
 			uint32_t m_targetFace = 0;

@@ -3,10 +3,12 @@
 #include <wrl.h>
 #include <d3d12.h>
 
+#include "HashedDataObject.h"
+
 
 namespace dx12
 {
-	class RootSignature
+	class RootSignature final : public en::HashedDataObject
 	{
 	public:
 		static constexpr uint32_t k_totalRootSigDescriptorTableIndices = 32;
@@ -24,6 +26,11 @@ namespace dx12
 		ID3D12RootSignature* GetD3DRootSignature() const;
 
 		D3D12_ROOT_SIGNATURE_DESC1 const& GetD3DRootSignatureDesc() const;
+
+
+	private:
+		void ComputeDataHash() override;
+
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;

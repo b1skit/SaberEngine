@@ -37,6 +37,8 @@ namespace
 {
 	using dx12::CheckHResult;
 
+
+	// TODO: Move this to GraphicsSystem_TempDebug, and push it through as a batch
 	static std::shared_ptr<re::MeshPrimitive> s_helloTriangle = nullptr;
 
 

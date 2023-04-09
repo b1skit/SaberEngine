@@ -72,6 +72,8 @@ namespace fr
 		std::shared_ptr<gr::Material> GetMaterial(std::string const& materialName) const;
 		inline bool MaterialExists(std::string const& matName) const;
 
+		// TODO: We should maintain a list of Shader objects to avoid duplication
+
 		// SceneData bounds:
 		gr::Bounds const& GetWorldSpaceSceneBounds() const;
 		void RecomputeSceneBounds();

@@ -394,11 +394,6 @@ namespace opengl
 			glCullFace(GL_BACK);
 		}
 		break;
-		case gr::PipelineState::FaceCullingMode::FrontBack:
-		{
-			glCullFace(GL_FRONT_AND_BACK);
-		}
-		break;
 		default:
 			SEAssertF("Invalid face culling mode");
 		}
