@@ -46,8 +46,6 @@ namespace re
 		void Destroy();
 
 		void Present() const;
-
-		void SetPipelineState(gr::PipelineState const& pipelineState);
 		
 		// Platform wrappers:
 		uint8_t GetMaxTextureInputs() const;
