@@ -93,7 +93,7 @@ namespace gr
 		if (m_cameraParamBlock == nullptr)
 		{
 			m_cameraParamBlock = re::ParameterBlock::Create(
-				"CameraParams",
+				CameraParams::s_shaderName,
 				m_cameraPBData, // Initialize with a default struct: Updated in UpdateCameraParamBlockData()
 				re::ParameterBlock::PBType::Mutable);
 		}

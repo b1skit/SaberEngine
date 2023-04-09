@@ -99,8 +99,8 @@ namespace re
 		m_colorTargets.resize(platform::Context::GetMaxColorTargets());
 
 		m_targetParameterBlock = re::ParameterBlock::Create(
-			"RenderTargetParams",
-			TargetParams(), // Defaults for now
+			RenderTargetParams::s_shaderName,
+			RenderTargetParams(), // Defaults for now
 			re::ParameterBlock::PBType::Mutable);
 	}
 
@@ -119,8 +119,8 @@ namespace re
 		platform::TextureTargetSet::CreatePlatformParams(*this);
 
 		m_targetParameterBlock = re::ParameterBlock::Create(
-			"RenderTargetParams",
-			TargetParams(), // Defaults for now
+			RenderTargetParams::s_shaderName,
+			RenderTargetParams(), // Defaults for now
 			re::ParameterBlock::PBType::Mutable);
 	}
 
@@ -307,7 +307,7 @@ namespace re
 
 			SEAssert("Cannot create parameter block with no texture dimensions", foundDimensions);
 
-			TargetParams targetParams;
+			RenderTargetParams targetParams;
 			targetParams.g_targetResolution = targetDimensions;
 
 			m_targetParameterBlock->Commit(targetParams);

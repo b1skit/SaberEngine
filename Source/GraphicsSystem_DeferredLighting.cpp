@@ -43,6 +43,8 @@ namespace
 	struct IEMPMREMGenerationParams
 	{
 		glm::vec4 g_numSamplesRoughness; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness
+
+		static constexpr char const* const s_shaderName = "IEMPMREMGenerationParams"; // Not counted towards size of struct
 	};
 
 	IEMPMREMGenerationParams GetIEMPMREMGenerationParamsData(int currentMipLevel, int numMipLevels)
@@ -65,6 +67,8 @@ namespace
 	struct AmbientLightParams
 	{
 		uint32_t g_maxPMREMMip;
+
+		static constexpr char const* const s_shaderName = "AmbientLightParams"; // Not counted towards size of struct
 	};
 
 
@@ -92,6 +96,8 @@ namespace
 		glm::vec2 g_shadowBiasMinMax; // .xy = min, max shadow bias
 
 		glm::mat4 g_shadowCam_VP;
+
+		static constexpr char const* const s_shaderName = "LightParams"; // Not counted towards size of struct
 	};
 
 
@@ -317,7 +323,7 @@ namespace gr
 
 				IEMPMREMGenerationParams iemGenerationParams = GetIEMPMREMGenerationParamsData(0, 1);
 				shared_ptr<re::ParameterBlock> iemGenerationPB = re::ParameterBlock::Create(
-					"IEMPMREMGenerationParams",
+					IEMPMREMGenerationParams::s_shaderName,
 					iemGenerationParams,
 					re::ParameterBlock::PBType::SingleFrame);
 				iemStage.AddPermanentParameterBlock(iemGenerationPB);
@@ -325,7 +331,7 @@ namespace gr
 				// Construct a camera param block to draw into our cubemap rendering targets:
 				cubemapCamParams.g_view = cubemapViews[face];
 				shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
-					"CameraParams",
+					gr::Camera::CameraParams::s_shaderName,
 					cubemapCamParams,
 					re::ParameterBlock::PBType::SingleFrame);
 				iemStage.AddPermanentParameterBlock(pb);
@@ -377,7 +383,7 @@ namespace gr
 					// Construct a camera param block to draw into our cubemap rendering targets:
 					cubemapCamParams.g_view = cubemapViews[face];
 					shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
-						"CameraParams",
+						gr::Camera::CameraParams::s_shaderName,
 						cubemapCamParams,
 						re::ParameterBlock::PBType::SingleFrame);
 					pmremStage.AddPermanentParameterBlock(pb);
@@ -385,7 +391,7 @@ namespace gr
 					IEMPMREMGenerationParams pmremGenerationParams = 
 						GetIEMPMREMGenerationParamsData(currentMipLevel, numMipLevels);
 					shared_ptr<re::ParameterBlock> pmremGenerationPB = re::ParameterBlock::Create(
-						"IEMPMREMGenerationParams",
+						IEMPMREMGenerationParams::s_shaderName,
 						pmremGenerationParams,
 						re::ParameterBlock::PBType::SingleFrame);
 					pmremStage.AddPermanentParameterBlock(pmremGenerationPB);
@@ -415,7 +421,7 @@ namespace gr
 		// Ambient parameters:		
 		AmbientLightParams ambientLightParams = GetAmbientLightParamData();
 		std::shared_ptr<re::ParameterBlock> ambientLightPB = re::ParameterBlock::Create(
-			"AmbientLightParams",
+			AmbientLightParams::s_shaderName,
 			ambientLightParams,
 			re::ParameterBlock::PBType::Immutable);
 
@@ -595,7 +601,7 @@ namespace gr
 
 			LightParams keylightParams = GetLightParamData(keyLight);
 			shared_ptr<re::ParameterBlock> keylightPB = re::ParameterBlock::Create(
-				"LightParams",
+				LightParams::s_shaderName,
 				keylightParams,
 				re::ParameterBlock::PBType::SingleFrame);
 
@@ -614,7 +620,7 @@ namespace gr
 			// Point light params:
 			LightParams pointlightParams = GetLightParamData(pointLights[i]);
 			shared_ptr<re::ParameterBlock> pointlightPB = re::ParameterBlock::Create(
-				"LightParams", 
+				LightParams::s_shaderName,
 				pointlightParams, 
 				re::ParameterBlock::PBType::SingleFrame);
 
@@ -622,7 +628,7 @@ namespace gr
 
 			// Point light mesh params:
 			shared_ptr<ParameterBlock> pointlightMeshParams = ParameterBlock::Create(
-				"InstancedMeshParams",
+				en::SceneManager::InstancedMeshParams::s_shaderName,
 				m_sphereMeshes[i]->GetTransform()->GetGlobalMatrix(Transform::TRS),
 				ParameterBlock::PBType::SingleFrame);
 

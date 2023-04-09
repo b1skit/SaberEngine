@@ -53,6 +53,8 @@ namespace gr
 			// -> Currently using an exposure defined in the config to do tonemapping, and another exposure value when 
 			// blooming...
 			/*float g_exposure;*/
+
+			static constexpr char const* const s_shaderName = "CameraParams"; // Not counted towards size of struct
 		};
 
 	public:

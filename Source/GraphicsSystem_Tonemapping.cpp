@@ -27,6 +27,8 @@ namespace
 	struct TonemappingParams
 	{
 		glm::vec4 g_exposure; // .x = exposure, .yzw = unused
+
+		static constexpr char const* const s_shaderName = "TonemappingParams"; // Not counted towards size of struct
 	};
 
 	TonemappingParams CreateTonemappingParamsData()
@@ -70,7 +72,7 @@ namespace gr
 		// Tonemapping param block:
 		TonemappingParams tonemappingParams = CreateTonemappingParamsData();
 		shared_ptr<re::ParameterBlock> tonemappingPB = re::ParameterBlock::Create(
-			"TonemappingParams",
+			TonemappingParams::s_shaderName,
 			tonemappingParams,
 			re::ParameterBlock::PBType::Immutable);
 

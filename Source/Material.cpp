@@ -119,7 +119,7 @@ namespace gr
 		SEAssert("Material parameter block already set", m_matParams == nullptr);
 
 		m_matParams = ParameterBlock::Create(
-			"PBRMetallicRoughnessParams",
+			PBRMetallicRoughnessParams::s_shaderName,
 			params,
 			ParameterBlock::PBType::Immutable);
 	}

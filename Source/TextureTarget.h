@@ -123,9 +123,11 @@ namespace re
 
 
 	public:
-		struct TargetParams
+		struct RenderTargetParams
 		{
 			glm::vec4 g_targetResolution = glm::vec4(0.f);
+
+			static constexpr char const* const s_shaderName = "RenderTargetParams"; // Not counted towards size of struct
 		};
 
 

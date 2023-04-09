@@ -23,6 +23,8 @@ namespace
 
 		glm::vec3 g_cubemapLightWorldPos;
 		const float padding1 = 0.f;
+
+		static constexpr char const* const s_shaderName = "CubemapShadowRenderParams"; // Not counted towards size of struct
 	};
 
 
@@ -141,7 +143,7 @@ namespace gr
 				// Cubemap shadow param block:
 				CubemapShadowRenderParams cubemapShadowParams = GetCubemapShadowRenderParamsData(shadowCam);
 				shared_ptr<re::ParameterBlock> cubemapShadowPB = re::ParameterBlock::Create(
-					"CubemapShadowRenderParams",
+					CubemapShadowRenderParams::s_shaderName,
 					cubemapShadowParams,
 					re::ParameterBlock::PBType::Mutable);
 
@@ -171,7 +173,7 @@ namespace gr
 				CubemapShadowRenderParams cubemapShadowParams = GetCubemapShadowRenderParamsData(shadowCam);
 
 				shared_ptr<re::ParameterBlock> cubemapShadowPB = re::ParameterBlock::Create(
-					"CubemapShadowRenderParams",
+					CubemapShadowRenderParams::s_shaderName,
 					cubemapShadowParams,
 					re::ParameterBlock::PBType::SingleFrame);
 

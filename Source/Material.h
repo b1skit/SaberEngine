@@ -56,6 +56,8 @@ namespace gr
 			float padding2;
 
 			//float g_isDoubleSided;
+
+			static constexpr char const* const s_shaderName = "PBRMetallicRoughnessParams"; // Not counted towards size of struct
 		};
 		// NOTE: OpenGL std430 rules requires padding on N/2N/4N float strides when buffering UBOs/SSBOs
 
