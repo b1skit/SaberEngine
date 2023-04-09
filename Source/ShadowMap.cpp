@@ -58,7 +58,7 @@ namespace gr
 			shadowParams.m_faces = 6;
 			const string texName = lightName + "_CubeShadowMap";
 
-			depthTexture = std::make_shared<re::Texture>(texName, shadowParams);
+			depthTexture = std::make_shared<re::Texture>(texName, shadowParams, false);
 		}
 		else // Single texture shadowmap setup:
 		{
@@ -66,7 +66,7 @@ namespace gr
 			shadowParams.m_faces = 1;
 			const string texName = lightName + "_SingleShadowMap";
 			
-			depthTexture = std::make_shared<re::Texture>(texName, shadowParams);
+			depthTexture = std::make_shared<re::Texture>(texName, shadowParams, false);
 		}
 
 		m_shadowTargetSet->SetDepthStencilTarget(depthTexture);

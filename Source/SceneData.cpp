@@ -196,7 +196,7 @@ namespace
 					texParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
 
 					// Create the texture now the params are configured:
-					texture = std::make_shared<re::Texture>(texturePaths[0], texParams);
+					texture = std::make_shared<re::Texture>(texturePaths[0], texParams, false);
 				}
 				else // texture already exists: Ensure the face has the same dimensions
 				{
@@ -234,7 +234,7 @@ namespace
 					texParams.m_clearColor = errorTexFillColor;
 					texParams.m_useMIPs = true;
 				}
-				texture = std::make_shared<re::Texture>(texturePaths[0], texParams);
+				texture = std::make_shared<re::Texture>(texturePaths[0], texParams, true);
 			}
 			else
 			{
@@ -344,7 +344,7 @@ namespace
 			texParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
 
 			// Create the texture now the params are configured:
-			texture = std::make_shared<re::Texture>(texName, texParams);
+			texture = std::make_shared<re::Texture>(texName, texParams, false);
 
 			// Copy the data to our texture's texel vector:
 			CopyImageData(
@@ -546,7 +546,7 @@ namespace
 			}
 			else
 			{
-				tex = make_shared<Texture>(fallbackName, colorTexParams);
+				tex = make_shared<Texture>(fallbackName, colorTexParams, true);
 				scene.AddUniqueTexture(tex);
 			}			
 		}

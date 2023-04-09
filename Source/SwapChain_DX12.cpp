@@ -50,7 +50,7 @@ namespace
 
 			// Color target:
 			std::shared_ptr<re::Texture> colorTargetTex = 
-				std::make_shared<re::Texture>("SwapChainColorTarget", colorParams);
+				std::make_shared<re::Texture>("SwapChainColorTarget", colorParams, false);
 
 			dx12::Texture::CreateFromExistingResource(
 				*colorTargetTex, backbufferResource, backbufferRTVDescriptorsHandle);
@@ -64,7 +64,7 @@ namespace
 
 			// Depth target:
 			std::shared_ptr<re::Texture> depthTargetTex = 
-				std::make_shared<re::Texture>("SwapChainDepthTarget", depthParams);
+				std::make_shared<re::Texture>("SwapChainDepthTarget", depthParams, false);
 			dx12::Texture::Create(*depthTargetTex);
 
 			swapChainParams->m_backbufferTargetSets[backbufferIdx]->SetDepthStencilTarget(depthTargetTex);

@@ -105,7 +105,7 @@ namespace re
 
 
 	public:
-		explicit Texture(std::string const& name, TextureParams const& params);
+		explicit Texture(std::string const& name, TextureParams const& params, bool doClear);
 		~Texture() { Destroy();	}
 
 		glm::vec4 GetTextureDimenions() const;	// .xyzw = width, height, 1/width, 1/height

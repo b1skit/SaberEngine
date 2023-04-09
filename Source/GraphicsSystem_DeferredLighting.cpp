@@ -187,7 +187,7 @@ namespace gr
 		lightTargetParams.m_colorSpace = Texture::ColorSpace::Linear;
 		lightTargetParams.m_clearColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-		std::shared_ptr<Texture> outputTexture = make_shared<Texture>("DeferredLightTarget", lightTargetParams);
+		std::shared_ptr<Texture> outputTexture = make_shared<Texture>("DeferredLightTarget", lightTargetParams, false);
 
 		std::shared_ptr<TextureTargetSet> deferredLightingTargetSet =
 			make_shared<TextureTargetSet>("Deferred lighting target");
@@ -232,7 +232,7 @@ namespace gr
 			brdfParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 			brdfParams.m_useMIPs = false;
 
-			m_BRDF_integrationMap = std::make_shared<re::Texture>("BRDFIntegrationMap", brdfParams);
+			m_BRDF_integrationMap = std::make_shared<re::Texture>("BRDFIntegrationMap", brdfParams, false);
 
 			brdfStage.GetTextureTargetSet()->SetColorTarget(0, m_BRDF_integrationMap);
 			brdfStage.GetTextureTargetSet()->Viewport() =
@@ -303,7 +303,7 @@ namespace gr
 
 			// IEM-specific texture params:
 			cubeParams.m_useMIPs = false;
-			m_IEMTex = make_shared<Texture>("IEMTexture", cubeParams);
+			m_IEMTex = make_shared<Texture>("IEMTexture", cubeParams, false);
 
 			for (uint32_t face = 0; face < 6; face++)
 			{
@@ -351,7 +351,7 @@ namespace gr
 
 			// PMREM-specific texture params:
 			cubeParams.m_useMIPs = true;
-			m_PMREMTex = make_shared<Texture>("PMREMTexture", cubeParams);
+			m_PMREMTex = make_shared<Texture>("PMREMTexture", cubeParams, false);
 
 			std::shared_ptr<TextureTargetSet> pmremTargetSet = 
 				std::make_shared<TextureTargetSet>("PMREM texture targets");

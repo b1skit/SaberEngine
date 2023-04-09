@@ -10,7 +10,7 @@ namespace re
 	using std::string;
 
 
-	Texture::Texture(string const& name, TextureParams const& params)
+	Texture::Texture(string const& name, TextureParams const& params, bool doClear)
 		: NamedObject(name)
 		, m_texParams{ params }
 		, m_platformParams{ nullptr }
@@ -18,9 +18,16 @@ namespace re
 		platform::Texture::CreatePlatformParams(*this);
 
 		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
-		
-		m_texels.resize(params.m_faces * params.m_width * params.m_height * bytesPerPixel);
-		Fill(params.m_clearColor);		
+
+		if (m_texParams.m_usage == Usage::Color)
+		{
+			m_texels.resize(params.m_faces * params.m_width * params.m_height * bytesPerPixel, 0.f);
+
+			if (doClear) // Optimization: Only fill the texture if necessary
+			{
+				Fill(params.m_clearColor);
+			}
+		}
 	}
 
 
@@ -59,6 +66,8 @@ namespace re
 
 	uint8_t const* Texture::GetTexel(uint32_t u, uint32_t v, uint32_t faceIdx) const
 	{
+		SEAssert("There are no texels. Texels are only allocated for non-target textures", m_texels.size() > 0);
+
 		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
 
 		SEAssert("OOB texel coordinates",
@@ -76,6 +85,8 @@ namespace re
 
 	uint8_t const* re::Texture::GetTexel(uint32_t index) const
 	{
+		SEAssert("There are no texels. Texels are only allocated for non-target textures", m_texels.size() > 0);
+
 		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
 
 		SEAssert("OOB texel coordinates", 
@@ -88,6 +99,8 @@ namespace re
 	void re::Texture::SetTexel(uint32_t u, uint32_t v, glm::vec4 value)
 	{
 		// Note: If texture has < 4 channels, the corresponding channels in value are ignored
+
+		SEAssert("There are no texels. Texels are only allocated for non-target textures", m_texels.size() > 0);
 
 		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
 
@@ -213,6 +226,8 @@ namespace re
 
 	void re::Texture::Fill(vec4 solidColor)
 	{
+		SEAssert("There are no texels. Texels are only allocated for non-target textures", m_texels.size() > 0);
+
 		for (uint32_t row = 0; row < m_texParams.m_height; row++)
 		{
 			for (uint32_t col = 0; col < m_texParams.m_width; col++)
@@ -226,6 +241,8 @@ namespace re
 
 	void re::Texture::Fill(vec4 tl, vec4 tr, vec4 bl, vec4 br)
 	{
+		SEAssert("There are no texels. Texels are only allocated for non-target textures", m_texels.size() > 0);
+
 		for (unsigned int row = 0; row < m_texParams.m_height; row++)
 		{
 			float vertDelta = (float)((float)row / (float)m_texParams.m_height);
