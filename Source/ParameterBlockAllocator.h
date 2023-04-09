@@ -10,9 +10,10 @@ namespace re
 	{
 	public:
 		ParameterBlockAllocator();
-		~ParameterBlockAllocator() { Destroy(); }
+		~ParameterBlockAllocator();
 
 		void Destroy();
+		bool IsValid() const; // Has Destroy() been called?
 
 		void BufferParamBlocks();
 
@@ -72,7 +73,7 @@ namespace re
 	private:
 		bool m_allocationPeriodEnded; // Debugging helper: Used to assert we're not creating PBs after startup
 		bool m_permanentPBsHaveBeenBuffered;
-
+		bool m_isValid;
 
 	private: // Interfaces for the ParameterBlock friend class:
 		void Allocate(Handle uniqueID, size_t numBytes, ParameterBlock::PBType pbType); // Called once at creation

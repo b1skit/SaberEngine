@@ -38,8 +38,8 @@ namespace re
 		Context::PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<Context::PlatformParams> params) { m_platformParams = std::move(params); }
 
-		inline re::ParameterBlockAllocator& GetParameterBlockAllocator() { return m_paramBlockAllocator; }
-		inline re::ParameterBlockAllocator const& GetParameterBlockAllocator() const { return m_paramBlockAllocator; }
+		inline re::ParameterBlockAllocator& GetParameterBlockAllocator();
+		inline re::ParameterBlockAllocator const& GetParameterBlockAllocator() const;
 
 		// Platform wrappers:
 		void Create();
@@ -60,6 +60,20 @@ namespace re
 		
 		std::unique_ptr<Context::PlatformParams> m_platformParams;
 	};
+
+
+	inline re::ParameterBlockAllocator& Context::GetParameterBlockAllocator()
+	{
+		SEAssert("Parameter block allocator has already been destroyed", m_paramBlockAllocator.IsValid());
+		return m_paramBlockAllocator;
+	}
+
+
+	inline re::ParameterBlockAllocator const& Context::GetParameterBlockAllocator() const
+	{
+		SEAssert("Parameter block allocator has already been destroyed", m_paramBlockAllocator.IsValid());
+		return m_paramBlockAllocator;
+	}
 
 
 	// We need to provide a destructor implementation since it's pure virtual

@@ -172,9 +172,9 @@ namespace re
 	}
 
 
-	std::shared_ptr<re::VertexStream> MeshPrimitive::GetVertexStream(Slot slot) const
+	re::VertexStream* MeshPrimitive::GetVertexStream(Slot slot) const
 	{
-		return m_vertexStreams[slot];
+		return m_vertexStreams[slot].get();
 	}
 
 

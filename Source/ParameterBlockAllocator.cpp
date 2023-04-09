@@ -14,8 +14,16 @@ namespace re
 	ParameterBlockAllocator::ParameterBlockAllocator()
 		: m_allocationPeriodEnded(false)
 		, m_permanentPBsHaveBeenBuffered(false)
+		, m_isValid(true)
 		, m_readFrameNum(1) // Start at 1 so GetWriteIdx() == 0 for 1st commits
 	{
+	}
+
+
+	ParameterBlockAllocator::~ParameterBlockAllocator()
+	{
+		SEAssert("Parameter block allocator destructor called before Destroy(). The parameter block allocator must "
+			"be manually destroyed (i.e. in the api-specific Context::Destroy())", !IsValid());
 	}
 	
 
@@ -43,6 +51,14 @@ namespace re
 
 		// Clear the handle -> commit map
 		m_uniqueIDToTypeAndByteIndex.clear();
+
+		m_isValid = false;
+	}
+
+
+	bool ParameterBlockAllocator::IsValid() const
+	{
+		return m_isValid;
 	}
 
 

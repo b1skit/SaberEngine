@@ -343,6 +343,10 @@ namespace opengl
 
 		::ReleaseDC(windowPlatformParams->m_hWindow, contextPlatformParams->m_hDeviceContext); // Release device context
 		::wglDeleteContext(contextPlatformParams->m_glRenderContext); // Delete the rendering context
+
+		// NOTE: We must destroy anything that holds a parameter block before the ParameterBlockAllocator is destroyed, 
+		// as parameter blocks call the ParameterBlockAllocator in their destructor
+		context.GetParameterBlockAllocator().Destroy();
 	}
 
 

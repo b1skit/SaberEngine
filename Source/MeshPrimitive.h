@@ -93,7 +93,7 @@ namespace re
 		inline gr::Bounds const& GetBounds() const { return m_localBounds; }
 		void UpdateBounds(gr::Transform* transform); // TODO: Currently this assumes the MeshPrimitive is not skinned
 		
-		std::shared_ptr<re::VertexStream> GetVertexStream(Slot slot) const;
+		re::VertexStream* GetVertexStream(Slot slot) const;
 
 		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		inline void SetPlatformParams(std::unique_ptr<re::MeshPrimitive::PlatformParams> params) { m_platformParams = std::move(params); }
