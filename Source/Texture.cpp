@@ -19,7 +19,7 @@ namespace re
 
 		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
 
-		if (m_texParams.m_usage == Usage::Color)
+		if (m_texParams.m_usage == Usage::Color) // Optimization: Only allocate texels for non-target types
 		{
 			m_texels.resize(params.m_faces * params.m_width * params.m_height * bytesPerPixel, 0);
 
