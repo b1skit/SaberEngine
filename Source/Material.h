@@ -75,7 +75,7 @@ namespace gr
 
 		// Getters/Setters:	
 		inline void SetShader(std::shared_ptr<re::Shader> shader) { m_shader = shader; }
-		inline std::shared_ptr<re::Shader> const& GetShader() const { return m_shader; }
+		inline re::Shader* GetShader() const { return m_shader.get(); }
 
 		void SetParameterBlock(PBRMetallicRoughnessParams const& params);
 		inline std::shared_ptr<re::ParameterBlock> const GetParameterBlock() const { return m_matParams; }

@@ -87,7 +87,7 @@ namespace re
 		// Getters/Setters:
 		inline MeshPrimitiveParams const& GetMeshParams() const { return m_params; }
 
-		inline std::shared_ptr<gr::Material> GetMeshMaterial() const { return m_meshMaterial; }
+		inline gr::Material* GetMeshMaterial() const { return m_meshMaterial.get(); }
 
 		inline gr::Bounds& GetBounds() { return m_localBounds; }
 		inline gr::Bounds const& GetBounds() const { return m_localBounds; }
