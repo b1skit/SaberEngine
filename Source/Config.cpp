@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Config.h"
 #include "KeyConfiguration.h"
+#include "TextUtils.h"
 
 // Default true/false strings. We convert config values to lowercase and compare against these
 #define TRUE_STRING		"true"
@@ -524,7 +525,7 @@ namespace en
 	std::wstring Config::GetValueAsWString(const std::string& valueName) const
 	{
 		std::string const& result = GetValueAsString(valueName);
-		return std::wstring(result.begin(), result.end());
+		return util::ToWideString(result);
 	}
 
 

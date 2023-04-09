@@ -4,7 +4,7 @@
 
 namespace util
 {
-	std::string LoadTextAsString(std::string const& filepath)
+	inline std::string LoadTextAsString(std::string const& filepath)
 	{
 		std::ifstream file;
 		file.open(filepath.c_str());
@@ -27,7 +27,7 @@ namespace util
 		return output;
 	}
 
-	std::wstring ToWideString(std::string const& str)
+	inline std::wstring ToWideString(std::string const& str)
 	{
 		return std::wstring(str.begin(), str.end());
 	}
