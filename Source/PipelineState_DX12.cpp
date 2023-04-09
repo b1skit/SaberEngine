@@ -11,6 +11,7 @@
 #include "PipelineState_DX12.h"
 #include "Shader.h"
 #include "Shader_DX12.h"
+#include "TextureTarget.h"
 #include "TextureTarget_DX12.h"
 
 
@@ -138,12 +139,15 @@ namespace dx12
 {
 	PipelineState::PipelineState(
 		gr::PipelineState const& grPipelineState, 
-		re::Shader const* shader, 
-		D3D12_RT_FORMAT_ARRAY const& rtvFormats,
-		const DXGI_FORMAT dsvFormat)
+		re::Shader const& shader, 
+		re::TextureTargetSet const& targetSet)
 		: m_pipelineState(nullptr)
 	{
-		SEAssert("Arguments cannot be null", shader);
+		dx12::TextureTargetSet::PlatformParams* swapChainTargetSetPlatParams =
+			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
+
+		D3D12_RT_FORMAT_ARRAY const& rtvFormats = swapChainTargetSetPlatParams->m_renderTargetFormats;
+		const DXGI_FORMAT dsvFormat = swapChainTargetSetPlatParams->m_depthTargetFormat;
 
 		dx12::Context::PlatformParams* ctxPlatParams = 
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
@@ -151,7 +155,7 @@ namespace dx12
 
 
 		// Generate the PSO:
-		dx12::Shader::PlatformParams* shaderParams = shader->GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
+		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 
 		SEAssert("Shader doesn't have a pixel and vertex shader blob. TODO: Support this", 
 			shaderParams->m_shaderBlobs[dx12::Shader::Vertex] && shaderParams->m_shaderBlobs[dx12::Shader::Pixel]);

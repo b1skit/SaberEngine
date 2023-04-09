@@ -80,12 +80,11 @@ namespace
 			swapChainParams->m_backbufferTargetSets[0]->GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 
 		gr::PipelineState defaultGrPipelineState{}; // Temp hax: Use a default gr::PipelineState
+
 		dx12::Context::CreateAddPipelineState(
 			defaultGrPipelineState,
 			*k_helloShader, 
-			swapChainTargetSetPlatParams->m_renderTargetFormats,
-			swapChainTargetSetPlatParams->m_depthTargetFormat);
-
+			*swapChainParams->m_backbufferTargetSets[0]);
 
 		return true;
 	}

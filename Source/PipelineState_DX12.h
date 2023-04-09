@@ -14,6 +14,7 @@ namespace gr
 namespace re
 {
 	class Shader;
+	class TextureTargetSet;
 }
 
 namespace dx12
@@ -24,7 +25,7 @@ namespace dx12
 	{
 	public:
 		PipelineState(
-			gr::PipelineState const&, re::Shader const*, D3D12_RT_FORMAT_ARRAY const& rtvFormats, const DXGI_FORMAT dsvFormat);
+			gr::PipelineState const&, re::Shader const&, re::TextureTargetSet const&);
 
 		~PipelineState() { Destroy(); }
 

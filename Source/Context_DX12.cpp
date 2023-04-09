@@ -225,21 +225,19 @@ namespace dx12
 	std::shared_ptr<dx12::PipelineState> Context::CreateAddPipelineState(
 		gr::PipelineState const& grPipelineState, 
 		re::Shader const& shader, 
-		D3D12_RT_FORMAT_ARRAY const& rtvFormats, 
-		const DXGI_FORMAT dsvFormat)
+		re::TextureTargetSet const& targetSet)
 	{
-		dx12::Context::PlatformParams* ctxPlatParams = 
+		dx12::Context::PlatformParams* ctxPlatParams =
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		// TEMP HAX: For now, we just have a single PSO, so just hard-code it. TODO: Create a library of pre-computed
 		// PSOs at startup
+		LOG_ERROR("TODO: Implement dx12::Context::CreateAddPipelineState correctly");
+
 		ctxPlatParams->m_pipelineState = std::make_shared<dx12::PipelineState>(
 			grPipelineState,
-			&shader,
-			rtvFormats, 
-			dsvFormat);
-
-		LOG_ERROR("TODO: Implement dx12::Context::CreateAddPipelineState correctly");
+			shader,
+			targetSet);
 
 		return ctxPlatParams->m_pipelineState;
 	}
