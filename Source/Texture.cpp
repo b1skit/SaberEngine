@@ -21,7 +21,7 @@ namespace re
 
 		if (m_texParams.m_usage == Usage::Color)
 		{
-			m_texels.resize(params.m_faces * params.m_width * params.m_height * bytesPerPixel, 0.f);
+			m_texels.resize(params.m_faces * params.m_width * params.m_height * bytesPerPixel, 0);
 
 			if (doClear) // Optimization: Only fill the texture if necessary
 			{
