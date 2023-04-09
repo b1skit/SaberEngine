@@ -234,6 +234,8 @@ namespace dx12
 		// PSOs at startup
 		LOG_ERROR("TODO: Implement dx12::Context::CreateAddPipelineState correctly");
 
+		// TODO: We need to be able to pre-compute the dx12::PipelineState data hash, so we can check if it exists
+		// before we attempt to create it. Currently, the hash is computed during construction...
 		ctxPlatParams->m_pipelineState = std::make_shared<dx12::PipelineState>(
 			grPipelineState,
 			shader,
