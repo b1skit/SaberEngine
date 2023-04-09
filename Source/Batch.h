@@ -36,12 +36,12 @@ namespace re
 
 		enum class Filter
 		{
-			GBufferWrite	= 0,
-			ShadowCaster	= 1,
+			GBuffer_DoNotWrite	= 1 << 0,
+			NoShadow			= 1 << 1,
 
 			Filter_Count
 		};
-		static_assert((uint32_t)re::Batch::Filter::Filter_Count < 32);
+		static_assert((uint32_t)re::Batch::Filter::Filter_Count <= 32);
 
 		typedef std::vector<std::tuple<std::string, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>>> BatchTextureAndSamplerInput;
 
