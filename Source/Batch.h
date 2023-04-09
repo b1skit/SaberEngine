@@ -78,7 +78,8 @@ namespace re
 		void ComputeDataHash() override;
 
 	private:
-		// TODO: Split this into vertex attribute pointers
+		// TODO: Split this into vertex streams
+		// -> TRICKY: OpenGL encapsulates state with VAOs, but we only need one VAO per mesh
 		re::MeshPrimitive* m_batchMeshPrimitive;
 
 		re::Shader* m_batchShader;
