@@ -614,7 +614,6 @@ namespace gr
 		vector<shared_ptr<Light>> const& pointLights = SceneManager::GetSceneData()->GetPointLights();
 		for (size_t i = 0; i < pointLights.size(); i++)
 		{
-			
 			Batch pointlightBatch = Batch(m_sphereMeshes[i], nullptr, nullptr);
 
 			// Point light params:
@@ -628,7 +627,7 @@ namespace gr
 
 			// Point light mesh params:
 			shared_ptr<ParameterBlock> pointlightMeshParams = ParameterBlock::Create(
-				en::SceneManager::InstancedMeshParams::s_shaderName,
+				re::Batch::InstancedMeshParams::s_shaderName,
 				m_sphereMeshes[i]->GetTransform()->GetGlobalMatrix(Transform::TRS),
 				ParameterBlock::PBType::SingleFrame);
 

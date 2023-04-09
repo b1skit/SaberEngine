@@ -25,6 +25,12 @@ namespace re
 	class Batch final : public virtual en::HashedDataObject
 	{
 	public:
+		struct InstancedMeshParams
+		{
+			static constexpr char const* const s_shaderName = "InstancedMeshParams"; // Not counted towards size of struct
+		};
+
+	public:
 		enum class GeometryMode
 		{
 			Indexed,

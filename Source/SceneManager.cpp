@@ -175,7 +175,7 @@ namespace en
 
 			// Construct PB of model transform matrices:
 			shared_ptr<ParameterBlock> instancedMeshParams = ParameterBlock::CreateFromArray(
-				en::SceneManager::InstancedMeshParams::s_shaderName,
+				re::Batch::InstancedMeshParams::s_shaderName,
 				modelMatrices.data(),
 				sizeof(mat4),
 				numInstances,

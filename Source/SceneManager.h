@@ -12,13 +12,6 @@ namespace en
 	class SceneManager final : public virtual en::EngineComponent
 	{
 	public:
-		struct InstancedMeshParams // TODO: Is there a better place for this?
-		{
-			static constexpr char const* const s_shaderName = "InstancedMeshParams"; // Not counted towards size of struct
-		};
-
-
-	public:
 		static SceneManager* Get(); // Singleton functionality
 		static fr::SceneData* GetSceneData() { return SceneManager::Get()->m_sceneData.get(); }
 
