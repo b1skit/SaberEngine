@@ -19,8 +19,13 @@ namespace en
 
 		inline void AddDataBytesToHash(void const* const data, size_t numBytes);
 
+		inline void AddDataBytesToHash(std::string const& str);
+
 		template<typename T>
 		inline void AddDataBytesToHash(T const& data);
+
+		template<typename T>
+		inline void AddDataBytesToHash(std::vector<T> const& dataVec);
 
 	private:
 		uint64_t m_dataHash;
@@ -47,9 +52,25 @@ namespace en
 	}
 
 
+	inline void HashedDataObject::AddDataBytesToHash(std::string const& str)
+	{
+		AddDataBytesToHash(str.c_str(), str.size());
+	}
+
+
 	template<typename T>
 	void HashedDataObject::AddDataBytesToHash(T const& data)
 	{
 		AddDataBytesToHash(&data, sizeof(T));
+	}
+
+
+	template<typename T>
+	inline void HashedDataObject::AddDataBytesToHash(std::vector<T> const& dataVec)
+	{
+		for (T const& t : dataVec)
+		{
+			AddDataBytesToHash(t);
+		}
 	}
 }
