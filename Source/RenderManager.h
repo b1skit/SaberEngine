@@ -6,7 +6,6 @@
 #include "EngineComponent.h"
 #include "EngineThread.h"
 #include "EventListener.h"
-#include "ParameterBlockAllocator.h"
 #include "RenderPipeline.h"
 #include "TextureTarget.h"
 
@@ -49,13 +48,11 @@ namespace re
 		void Lifetime(std::barrier<>* copyBarrier) override;
 
 		// Member functions:
+		re::Context& GetContext() { return m_context; }
 		re::Context const& GetContext() const { return m_context; }
 
 		template <typename T>
 		std::shared_ptr<gr::GraphicsSystem> GetGraphicsSystem();
-		
-		inline re::ParameterBlockAllocator& GetParameterBlockAllocator() { return m_paramBlockAllocator; }
-		inline re::ParameterBlockAllocator const& GetParameterBlockAllocator() const { return m_paramBlockAllocator; }
 
 		inline std::vector<re::Batch> const& GetSceneBatches() { return m_renderBatches; }
 
@@ -83,8 +80,6 @@ namespace re
 		re::RenderPipeline m_pipeline;
 
 		std::vector<re::Batch> m_renderBatches; // Union of all batches created by all systems. Populated in CopyFrameData
-
-		re::ParameterBlockAllocator m_paramBlockAllocator;	
 
 		std::queue<std::shared_ptr<en::Command>> m_imGuiCommands;
 

@@ -199,7 +199,7 @@ namespace dx12
 			nullptr,							// Clear value: nullptr as these are not texture resources
 			IID_PPV_ARGS(&streamPlatformParams->m_bufferResource));	// RefIID and interface pointer
 
-		(streamPlatformParams->m_bufferResource)->SetName(L"Vertex stream destination buffer");
+		streamPlatformParams->m_bufferResource->SetName(L"Vertex stream destination buffer");
 
 		// Create an committed resource for the CPU-side upload:
 		const CD3DX12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
@@ -213,7 +213,7 @@ namespace dx12
 			nullptr,
 			IID_PPV_ARGS(&streamPlatformParams->m_intermediateBufferResource));
 
-		(streamPlatformParams->m_intermediateBufferResource)->SetName(L"Vertex stream intermediate buffer");
+		streamPlatformParams->m_intermediateBufferResource->SetName(L"Vertex stream intermediate buffer");
 
 		// Populate the subresource:
 		D3D12_SUBRESOURCE_DATA subresourceData = {};

@@ -24,7 +24,7 @@ namespace opengl
 		// RenderDoc label:
 		glObjectLabel(GL_BUFFER, params->m_ssbo, -1, paramBlock.GetName().c_str());
 
-		void* data;
+		void const* data;
 		size_t numBytes;
 		paramBlock.GetDataAndSize(data, numBytes);
 
@@ -38,12 +38,12 @@ namespace opengl
 
 	void ParameterBlock::Update(re::ParameterBlock& paramBlock)
 	{
-		PlatformParams* params = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
-
 		// Ensure the PB is created before we attempt to update it
 		opengl::ParameterBlock::Create(paramBlock);
 
-		void* data;
+		PlatformParams* params = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
+
+		void const* data;
 		size_t numBytes;
 		paramBlock.GetDataAndSize(data, numBytes);
 

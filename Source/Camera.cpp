@@ -104,6 +104,7 @@ namespace gr
 
 	void Camera::Destroy()
 	{
+		m_cameraParamBlock = nullptr;
 	}
 
 

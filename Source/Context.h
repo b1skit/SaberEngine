@@ -3,6 +3,7 @@
 
 #include "IPlatformParams.h"
 #include "TextureTarget.h"
+#include "ParameterBlockAllocator.h"
 #include "PipelineState.h"
 #include "SwapChain.h"
 
@@ -37,6 +38,9 @@ namespace re
 		Context::PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<Context::PlatformParams> params) { m_platformParams = std::move(params); }
 
+		inline re::ParameterBlockAllocator& GetParameterBlockAllocator() { return m_paramBlockAllocator; }
+		inline re::ParameterBlockAllocator const& GetParameterBlockAllocator() const { return m_paramBlockAllocator; }
+
 		// Platform wrappers:
 		void Create();
 		void Destroy();
@@ -51,6 +55,8 @@ namespace re
 
 	private:
 		re::SwapChain m_swapChain;
+
+		re::ParameterBlockAllocator m_paramBlockAllocator;
 		
 		std::unique_ptr<Context::PlatformParams> m_platformParams;
 	};

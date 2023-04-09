@@ -10,9 +10,18 @@ struct VertexPosColor
 };
 
 
-struct CameraParams
+struct CameraParams // Shader parameter block
 {
+	matrix g_view;
+	matrix g_invView;
+	matrix g_projection;
+	matrix g_invProjection;
 	matrix g_viewProjection;
+	matrix g_invViewProjection;
+
+	float4 g_projectionParams; // .x = 1 (unused), .y = near, .z = far, .w = 1/far
+
+	float3 g_cameraWPos;
 };
 ConstantBuffer<CameraParams> CameraParamsCB : register(b0);
 // TODO: Replace this with a structure buffer

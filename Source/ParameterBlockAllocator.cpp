@@ -242,7 +242,7 @@ namespace re
 	}
 
 
-	void ParameterBlockAllocator::Get(Handle uniqueID, void*& out_data, size_t& out_numBytes)
+	void ParameterBlockAllocator::GetDataAndSize(Handle uniqueID, void const*& out_data, size_t& out_numBytes) const
 	{
 		ParameterBlock::PBType pbType;
 		size_t startIdx;
@@ -287,6 +287,19 @@ namespace re
 			SEAssertF("Invalid Parameter Block type");
 		}
 		}
+	}
+
+
+	size_t ParameterBlockAllocator::GetSize(Handle uniqueID) const
+	{
+		std::lock_guard<std::recursive_mutex> lock(m_uniqueIDToTypeAndByteIndexMutex);
+
+		auto const& result = m_uniqueIDToTypeAndByteIndex.find(uniqueID);
+
+		SEAssert("Parameter block with this ID has not been allocated",
+			result != m_uniqueIDToTypeAndByteIndex.end());
+
+		return result->second.m_numBytes;
 	}
 
 

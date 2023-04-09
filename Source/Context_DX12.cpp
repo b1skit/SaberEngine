@@ -146,6 +146,12 @@ namespace dx12
 
 		context.GetSwapChain().Destroy();
 
+		// NOTE: We must destroy anything that holds a parameter block before the ParameterBlockAllocator is destroyed, 
+		// as parameter blocks call the ParameterBlockAllocator in their destructor
+		context.GetParameterBlockAllocator().Destroy();
+
+		// DX12 parameter blocks contain cpu descriptors, so we must destroy the cpu descriptor heap manager after the
+		// parameter block allocator
 		ctxPlatParams->m_cpuDescriptorHeapMgrs.clear();
 
 		ctxPlatParams->m_device.Destroy();

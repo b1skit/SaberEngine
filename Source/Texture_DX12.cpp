@@ -171,8 +171,8 @@ namespace dx12
 			dsv.Texture2D.MipSlice = 0;
 			dsv.Flags = D3D12_DSV_FLAG_NONE;
 
-			texPlatParams->m_descriptor =
-				ctxPlatParams->m_cpuDescriptorHeapMgrs[Context::CPUDescriptorHeapType::DSV].Allocate(1);
+			texPlatParams->m_descriptor = std::move(
+				ctxPlatParams->m_cpuDescriptorHeapMgrs[Context::CPUDescriptorHeapType::DSV].Allocate(1));
 			SEAssert("DSV descriptor is not valid", texPlatParams->m_descriptor.IsValid());
 
 			device->CreateDepthStencilView(

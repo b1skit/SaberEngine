@@ -38,6 +38,7 @@ namespace dx12
 
 			dx12::Device m_device;
 
+			// TODO: We should template the CommandQueue types, to allow specific helper functions on each type
 			std::array<dx12::CommandQueue, CommandList::CommandListType::CommandListType_Count> m_commandQueues;
 
 			uint64_t m_frameFenceValues[dx12::RenderManager::k_numFrames]; // Fence values for signalling the command queue

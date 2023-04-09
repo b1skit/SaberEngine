@@ -205,6 +205,7 @@ namespace dx12
 		m_freeOffsetsToSizes.erase(offsetLocation);
 		m_sizesToFreeOffsets.erase(smallestSuitableBlock);
 
+		SEAssert("About to underflow unsigned value", m_numFreeElements >= descriptorCount);
 		m_numFreeElements -= descriptorCount;
 
 		// Compute our updated metadata, and Free any remaining allocations for reuse:
@@ -369,6 +370,11 @@ namespace dx12
 	{
 		if (&rhs != this)
 		{
+			if (this->IsValid())
+			{
+				Free(0);
+			}
+
 			m_baseDescriptor = std::move(rhs.m_baseDescriptor);
 			m_numDescriptors = rhs.m_numDescriptors;
 			m_descriptorSize = rhs.m_descriptorSize;

@@ -138,7 +138,7 @@ namespace opengl
 				Camera const* const stageCam = renderStage->GetStageCamera();
 				if (stageCam)
 				{
-					opengl::Shader::SetParameterBlock(*stageShader, *stageCam->GetCameraParams().get());
+					opengl::Shader::SetParameterBlock(*stageShader, *stageCam->GetCameraParams());
 				}
 
 				// Render stage batches:

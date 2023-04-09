@@ -40,7 +40,7 @@ namespace re
 		{
 			std::vector<uint8_t> m_committed;
 			std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>> m_handleToPtr;
-			std::recursive_mutex m_mutex;
+			mutable std::recursive_mutex m_mutex;
 		} m_immutableAllocations;
 
 		static constexpr size_t k_numBuffers = 2;
@@ -49,18 +49,18 @@ namespace re
 		{
 			std::array<std::vector<uint8_t>, k_numBuffers> m_committed;
 			std::unordered_map<Handle, std::pair<std::shared_ptr<re::ParameterBlock>, bool>> m_handleToPtrAndDirty;
-			std::recursive_mutex m_mutex;
+			mutable std::recursive_mutex m_mutex;
 		} m_mutableAllocations;
 
 		struct SingleFrameAllocation
 		{
 			std::array<std::vector<uint8_t>, k_numBuffers> m_committed;
 			std::array< std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>>, k_numBuffers> m_handleToPtr;
-			std::recursive_mutex m_mutex;
+			mutable std::recursive_mutex m_mutex;
 		} m_singleFrameAllocations;
 
 		std::unordered_map<Handle, CommitMetadata> m_uniqueIDToTypeAndByteIndex;
-		std::recursive_mutex m_uniqueIDToTypeAndByteIndexMutex;
+		mutable std::recursive_mutex m_uniqueIDToTypeAndByteIndexMutex;
 
 
 	private:
@@ -73,11 +73,14 @@ namespace re
 		bool m_allocationPeriodEnded; // Debugging helper: Used to assert we're not creating PBs after startup
 		bool m_permanentPBsHaveBeenBuffered;
 
-	private:
-		// Interfaces for the ParameterBlock friend class:
+
+	private: // Interfaces for the ParameterBlock friend class:
 		void Allocate(Handle uniqueID, size_t numBytes, ParameterBlock::PBType pbType); // Called once at creation
 		void Commit(Handle uniqueID, void const* data);	// Update the parameter block data held by the allocator
-		void Get(Handle uniqueID, void*& out_data, size_t& out_numBytes); // Get the parameter block data
+		
+		void GetDataAndSize(Handle uniqueID, void const*& out_data, size_t& out_numBytes) const; // Get PB metadata
+		size_t GetSize(Handle uniqueID) const;
+
 		void Deallocate(Handle uniqueID);
 
 

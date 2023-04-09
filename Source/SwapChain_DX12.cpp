@@ -32,7 +32,7 @@ namespace
 
 		// The swapchain requires contiguous descriptors allocated in the same heap
 		swapChainParams->m_backbufferRTVDescriptors = 
-			ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::RTV].Allocate(3);
+			std::move(ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::RTV].Allocate(3));
 
 		CD3DX12_CPU_DESCRIPTOR_HANDLE backbufferRTVDescriptorsHandle(
 			swapChainParams->m_backbufferRTVDescriptors.GetBaseDescriptor());

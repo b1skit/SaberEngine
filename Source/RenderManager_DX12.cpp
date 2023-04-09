@@ -7,9 +7,11 @@
 
 #include "Context_DX12.h"
 #include "DebugConfiguration.h"
+#include "ParameterBlock_DX12.h"
 #include "RenderManager_DX12.h"
 #include "SwapChain_DX12.h"
 #include "Texture_DX12.h"
+
 
 using Microsoft::WRL::ComPtr;
 using glm::vec4;
@@ -36,11 +38,6 @@ namespace
 	using dx12::CheckHResult;
 
 	static std::shared_ptr<re::MeshPrimitive> s_helloTriangle = nullptr;
-	static std::unique_ptr<dx12::DescriptorAllocation> s_helloCPUDescAllocation = nullptr;
-
-	static ComPtr<ID3D12Resource> s_helloConstantBufferResource = nullptr;
-
-	static void* s_helloMappedMemory = nullptr; 
 
 
 	// TODO: Make this a platform function, and call it for all APIs during startup
@@ -90,57 +87,6 @@ namespace
 			swapChainTargetSetPlatParams->m_depthTargetFormat);
 
 
-		
-
-
-
-		// Create a Constant Buffer for our camera params
-		// TODO: Handle this correctly via a parameter block
-
-		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
-
-		// CBV sizes must be in multiples of 256B
-		const uint32_t size = util::RoundUpToNearestMultiple<uint32_t>(sizeof(glm::mat4), 256);
-
-		const CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_UPLOAD);
-		const CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
-
-		HRESULT hr = device->CreateCommittedResource(
-			&heapProperties,					// this heap will be used to upload the constant buffer data
-			D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Flags
-			&resourceDesc,						// Size of the resource heap: Alignment must be a multiple of 64KB for single-textures and constant buffers
-			D3D12_RESOURCE_STATE_GENERIC_READ,	// Will be data that is read from: Keep it in the generic read state
-			nullptr,							// Optimized clear value: None for constant buffers
-			IID_PPV_ARGS(&s_helloConstantBufferResource));
-		CheckHResult(hr, "Failed to create committed resource");
-
-		s_helloConstantBufferResource->SetName(L"Camera Parameters"); // TODO: Upload the full camera param block
-
-		
-		
-		// Get a CPU pointer to the subresource (i.e subresource 0) in our constant buffer resource
-		CD3DX12_RANGE readRange(0, 0);    // We do not intend to read from this resource on the CPU (end is <= to begin)
-		hr = s_helloConstantBufferResource->Map(
-			0,						// Subresource
-			&readRange, 
-			&s_helloMappedMemory);
-
-		// Zero the allocation
-		memset(s_helloMappedMemory, 0, size);
-
-		// Allocate a cpu-visible descriptor to hold our view:
-		s_helloCPUDescAllocation = std::make_unique<dx12::DescriptorAllocation>(
-			ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(1));
-
-		// Create the constant buffer view:
-		D3D12_CONSTANT_BUFFER_VIEW_DESC constantBufferViewDesc;
-		constantBufferViewDesc.BufferLocation = s_helloConstantBufferResource->GetGPUVirtualAddress();
-		constantBufferViewDesc.SizeInBytes = size;
-
-		device->CreateConstantBufferView(
-			&constantBufferViewDesc,
-			s_helloCPUDescAllocation->GetBaseDescriptor());
-
 		return true;
 	}
 }
@@ -160,7 +106,6 @@ namespace dx12
 
 		renderManager.m_graphicsSystems.emplace_back(
 			make_shared<gr::TempDebugGraphicsSystem>("DX12 Temp Debug Graphics System"));
-
 
 	}
 
@@ -275,26 +220,18 @@ namespace dx12
 
 
 
-
-
-		// Update the MVP matrix
 		// TODO: Automatically bind parameter blocks
-		std::shared_ptr<gr::Camera> mainCamera = en::SceneManager::GetSceneData()->GetMainCamera();
-		const glm::mat4 viewProj = mainCamera->GetViewProjectionMatrix();
-		
-		// TODO: Is there a risk of a race condition here? Our constant buffer lives in D3D12_HEAP_TYPE_UPLOAD, is it
-		// possible to stomp in-flight data when updating the buffer here for the next frame?
-		memcpy(s_helloMappedMemory, &viewProj, sizeof(glm::mat4));
+		// -> We need to be able to automatically set PBs to the correct locations in our descriptor tables
+		dx12::ParameterBlock::PlatformParams* cameraPlatParams = en::SceneManager::GetSceneData()->GetMainCamera()
+			->GetCameraParams()->GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
 
-		//commandList->SetGraphicsRoot32BitConstants(
-		//	0,										// RootParameterIndex (As set in our CD3DX12_ROOT_PARAMETER1)
-		//	sizeof(glm::mat4) / 4,					// Num32BitValuesToSet
-		//	&viewProj,								// pSrcData
-		//	0);										// DestOffsetIn32BitValues
 
-		//commandList->GetGPUDescriptorHeap()->SetInlineCBV(0, s_helloConstantBufferResource.Get());
-
-		commandList->GetGPUDescriptorHeap()->SetDescriptorTable(0, s_helloCPUDescAllocation->GetBaseDescriptor(), 0, 1);
+		// TODO: The command list should wrap the GPU Descriptor Heap
+		commandList->GetGPUDescriptorHeap()->SetDescriptorTable(
+			0,															// Root param idx
+			cameraPlatParams->m_cpuDescAllocation.GetBaseDescriptor(),	// D3D12_CPU_DESCRIPTOR_HANDLE
+			0,															// offset
+			1);															// count
 		commandList->GetGPUDescriptorHeap()->Commit(); // Must be done before the draw command
 
 
@@ -381,12 +318,6 @@ namespace dx12
 
 
 		// TEMP DEBUG CODE:
-		s_helloCPUDescAllocation = nullptr;
 		s_helloTriangle = nullptr;
-
-		// Undo the mapping to s_helloMappedMemory
-		s_helloConstantBufferResource->Unmap(
-			0, 
-			nullptr); // Range of memory to unmap: The region the CPU may have modified. Nullptr = entire subresource may have been modified (used for tooling)
 	}
 }

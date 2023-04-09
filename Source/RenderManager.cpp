@@ -141,7 +141,7 @@ namespace re
 			}
 		}
 
-		m_paramBlockAllocator.ClosePermanentPBRegistrationPeriod();
+		m_context.GetParameterBlockAllocator().ClosePermanentPBRegistrationPeriod();
 
 		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
 	}
@@ -160,7 +160,7 @@ namespace re
 			m_graphicsSystems[gs]->PreRender(m_pipeline.GetPipeline()[gs]);
 		}
 
-		m_paramBlockAllocator.SwapBuffers(frameNum);
+		m_context.GetParameterBlockAllocator().SwapBuffers(frameNum);
 	}
 
 
@@ -169,7 +169,7 @@ namespace re
 		HandleEvents();
 
 		// Update/buffer param blocks:
-		m_paramBlockAllocator.BufferParamBlocks();
+		m_context.GetParameterBlockAllocator().BufferParamBlocks();
 
 		// API-specific rendering loop:
 		platform::RenderManager::Render(*this);
@@ -191,7 +191,7 @@ namespace re
 			stagePipeline.EndOfFrame();
 		}
 		
-		m_paramBlockAllocator.EndOfFrame();
+		m_context.GetParameterBlockAllocator().EndOfFrame();
 	}
 
 
@@ -212,10 +212,6 @@ namespace re
 
 		// Need to do this here so the CoreEngine's Window can be destroyed
 		m_context.Destroy();
-
-		// NOTE: We must destroy anything that holds a parameter block before the ParameterBlockAllocator is destroyed, 
-		// as parameter blocks call the ParameterBlockAllocator in their destructor
-		m_paramBlockAllocator.Destroy();
 	}
 
 

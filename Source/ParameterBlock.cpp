@@ -25,7 +25,7 @@ namespace re
 	void ParameterBlock::RegisterAndCommit(
 		std::shared_ptr<re::ParameterBlock> newPB, void const* data, size_t numBytes, uint64_t typeIDHash)
 	{
-		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetParameterBlockAllocator();
+		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetContext().GetParameterBlockAllocator();
 		pbm.RegisterAndAllocateParameterBlock(newPB, numBytes);
 
 		SEAssert("Invalid type detected. Can only set data of the original type",
@@ -42,15 +42,22 @@ namespace re
 			typeIDHash == m_typeIDHash);
 		SEAssert("Cannot set data of an immutable param block", m_pbType == PBType::Mutable);
 
-		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetParameterBlockAllocator();
+		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetContext().GetParameterBlockAllocator();
 		pbm.Commit(GetUniqueID(), data);
 	}
 
 
-	void ParameterBlock::GetDataAndSize(void*& out_data, size_t& out_numBytes)
+	void ParameterBlock::GetDataAndSize(void const*& out_data, size_t& out_numBytes) const
 	{
-		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetParameterBlockAllocator();
-		pbm.Get(GetUniqueID(), out_data, out_numBytes);
+		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetContext().GetParameterBlockAllocator();
+		pbm.GetDataAndSize(GetUniqueID(), out_data, out_numBytes);
+	}
+
+
+	size_t ParameterBlock::GetSize() const
+	{
+		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetContext().GetParameterBlockAllocator();
+		return pbm.GetSize(GetUniqueID());
 	}
 
 
@@ -61,7 +68,7 @@ namespace re
 		{
 			platform::ParameterBlock::Destroy(*this);
 
-			re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetParameterBlockAllocator();
+			re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetContext().GetParameterBlockAllocator();
 			pbm.Deallocate(GetUniqueID());
 		}
 		else
