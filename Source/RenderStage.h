@@ -48,9 +48,6 @@ namespace re
 		inline std::shared_ptr<re::Shader>& GetStageShader() { return m_stageShader; }
 		inline std::shared_ptr<re::Shader> GetStageShader() const { return m_stageShader; }
 
-		inline void SetStageCamera(gr::Camera* stageCam) { m_stageCam = stageCam; }
-		inline gr::Camera* GetStageCamera() const { return m_stageCam; }
-
 		inline std::shared_ptr<re::TextureTargetSet> GetTextureTargetSet() const { return m_textureTargetSet; }
 		void SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet);
 
@@ -76,7 +73,6 @@ namespace re
 	private:
 		std::shared_ptr<re::Shader> m_stageShader;
 		std::shared_ptr<re::TextureTargetSet> m_textureTargetSet;
-		gr::Camera* m_stageCam;
 		
 		gr::PipelineState m_pipelineState;
 		bool m_writesColor;

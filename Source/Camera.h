@@ -87,7 +87,7 @@ namespace gr
 
 		void SetCameraConfig(CameraConfig const& newConfig);
 
-		inline re::ParameterBlock* GetCameraParams() const;
+		inline std::shared_ptr<re::ParameterBlock> GetCameraParams() const;
 
 
 	public: 
@@ -119,8 +119,8 @@ namespace gr
 	};
 
 
-	re::ParameterBlock* Camera::GetCameraParams() const
+	std::shared_ptr<re::ParameterBlock> Camera::GetCameraParams() const
 	{
-		return m_cameraParamBlock.get();
+		return m_cameraParamBlock;
 	}
 }

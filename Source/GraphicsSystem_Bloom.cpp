@@ -36,7 +36,6 @@ namespace gr
 
 	void BloomGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-
 		shared_ptr<DeferredLightingGraphicsSystem> deferredLightGS = dynamic_pointer_cast<DeferredLightingGraphicsSystem>(
 			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>());
 
@@ -54,7 +53,7 @@ namespace gr
 
 		m_emissiveBlitStage.SetStagePipelineState(emissiveStageParams);
 		m_emissiveBlitStage.GetStageShader() = blitShader;
-		m_emissiveBlitStage.SetStageCamera(sceneCam);
+		m_emissiveBlitStage.AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
 		m_emissiveBlitStage.SetTextureTargetSet(deferredLightGS->GetFinalTextureTargetSet());
 		
@@ -106,7 +105,7 @@ namespace gr
 				std::make_shared<re::Texture>(texPath, resScaleParams));
 
 			m_downResStages.back().SetStagePipelineState(bloomStageParams);
-			m_downResStages.back().SetStageCamera(sceneCam);
+			m_downResStages.back().AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
 			if (i == 0)
 			{
@@ -153,7 +152,7 @@ namespace gr
 			m_blurStages.back().GetTextureTargetSet()->Viewport().Height() = currentYRes;
 
 			m_blurStages.back().SetStagePipelineState(bloomStageParams);
-			m_blurStages.back().SetStageCamera(sceneCam);
+			m_blurStages.back().AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
 			if (i % 2 == 0)
 			{
@@ -182,7 +181,7 @@ namespace gr
 			m_upResStages.back().GetTextureTargetSet()->Viewport().Width() = currentXRes;
 			m_upResStages.back().GetTextureTargetSet()->Viewport().Height() = currentYRes;
 	
-			m_upResStages.back().SetStageCamera(sceneCam);
+			m_upResStages.back().AddPermanentParameterBlock(sceneCam->GetCameraParams());
 			m_upResStages[i].GetStageShader() = blitShader;
 
 			if (i == (numScalingStages - 1)) // Last iteration: Additive blit back to the src gs

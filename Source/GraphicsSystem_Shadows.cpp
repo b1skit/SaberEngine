@@ -97,7 +97,8 @@ namespace gr
 			ShadowMap* const directionalShadow = directionalLight->GetShadowMap();
 			if (directionalShadow)
 			{
-				m_directionalShadowStage.SetStageCamera(directionalShadow->ShadowCamera());
+				m_directionalShadowStage.AddPermanentParameterBlock(
+					directionalShadow->ShadowCamera()->GetCameraParams());
 
 				// Shader:
 				m_directionalShadowStage.GetStageShader() = 
@@ -115,6 +116,7 @@ namespace gr
 		
 		// Point light shadows:
 		vector<shared_ptr<Light>> const& deferredLights = SceneManager::GetSceneData()->GetPointLights();
+		m_pointLightShadowStageCams.reserve(deferredLights.size());
 		for (shared_ptr<Light> curLight : deferredLights)
 		{
 			m_pointLightShadowStages.emplace_back(make_shared<RenderStage>(curLight->GetName() + " shadow"));
@@ -125,8 +127,9 @@ namespace gr
 			if (lightShadow)
 			{
 				Camera* const shadowCam = lightShadow->ShadowCamera();
-				shadowStage->SetStageCamera(shadowCam);
-				
+				shadowStage->AddPermanentParameterBlock(shadowCam->GetCameraParams());
+				m_pointLightShadowStageCams.emplace_back(shadowCam);
+
 				// Shader:
 				shadowStage->GetStageShader() = 
 					make_shared<Shader>(Config::Get()->GetValue<string>("cubeDepthShaderName"));
@@ -147,6 +150,10 @@ namespace gr
 
 				pipeline.AppendRenderStage(*shadowStage);
 			}
+			else
+			{
+				m_pointLightShadowStageCams.emplace_back(nullptr); // Ensure we stay in sync: 1 entry per stage
+			}
 		}
 	}
 
@@ -154,20 +161,22 @@ namespace gr
 	void ShadowsGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
 		CreateBatches();
+		
+		for (size_t i = 0; i < m_pointLightShadowStages.size(); i++)
+		{
+			Camera* shadowCam = m_pointLightShadowStageCams[i];
+			if (shadowCam)
+			{
+				// Update the param block data:
+				CubemapShadowRenderParams cubemapShadowParams = GetCubemapShadowRenderParamsData(shadowCam);
 
-		for (shared_ptr<RenderStage> pointShadowStage : m_pointLightShadowStages)
-		{		
-			Camera* shadowCam = pointShadowStage->GetStageCamera();
+				shared_ptr<re::ParameterBlock> cubemapShadowPB = re::ParameterBlock::Create(
+					"CubemapShadowRenderParams",
+					cubemapShadowParams,
+					re::ParameterBlock::PBType::SingleFrame);
 
-			// Update the param block data:
-			CubemapShadowRenderParams cubemapShadowParams = GetCubemapShadowRenderParamsData(shadowCam);
-
-			shared_ptr<re::ParameterBlock> cubemapShadowPB = re::ParameterBlock::Create(
-				"CubemapShadowRenderParams", 
-				cubemapShadowParams,
-				re::ParameterBlock::PBType::SingleFrame);
-
-			pointShadowStage->AddSingleFrameParameterBlock(cubemapShadowPB);
+				m_pointLightShadowStages[i]->AddSingleFrameParameterBlock(cubemapShadowPB);
+			}
 		}
 	}
 

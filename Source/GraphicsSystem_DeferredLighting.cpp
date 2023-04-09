@@ -409,7 +409,7 @@ namespace gr
 			Config::Get()->GetValue<string>("deferredAmbientLightShaderName"));
 		m_ambientStage.GetStageShader()->ShaderKeywords().emplace_back("AMBIENT_IBL");
 
-		m_ambientStage.SetStageCamera(deferredLightingCam);
+		m_ambientStage.AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 		m_ambientStage.SetStagePipelineState(ambientStageParams);
 
 		// Ambient parameters:		
@@ -444,7 +444,7 @@ namespace gr
 			m_keylightStage.GetStageShader() = make_shared<Shader>(
 				Config::Get()->GetValue<string>("deferredKeylightShaderName"));
 
-			m_keylightStage.SetStageCamera(deferredLightingCam);
+			m_keylightStage.AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 
 			pipeline.AppendRenderStage(m_keylightStage);
 		}
@@ -454,7 +454,7 @@ namespace gr
 		vector<shared_ptr<Light>> const& pointLights = SceneManager::GetSceneData()->GetPointLights();
 		if (pointLights.size() > 0)
 		{
-			m_pointlightStage.SetStageCamera(deferredLightingCam);
+			m_pointlightStage.AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 
 			gr::PipelineState pointlightStageParams(keylightStageParams);
 

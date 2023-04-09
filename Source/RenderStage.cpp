@@ -22,7 +22,6 @@ namespace re
 		: NamedObject(name)
 		, m_stageShader(nullptr)
 		, m_textureTargetSet(nullptr)
-		, m_stageCam(nullptr)
 		, m_writesColor(true) // Reasonable assumption; Updated when we set the param block
 		, m_batchFilterMask(0) // Accept all batches by default
 	{
@@ -35,7 +34,6 @@ namespace re
 	{
 		m_stageShader = rhs.m_stageShader;
 		m_textureTargetSet = rhs.m_textureTargetSet;
-		m_stageCam = rhs.m_stageCam;
 		m_pipelineState = rhs.m_pipelineState;
 		m_writesColor = rhs.m_writesColor;
 

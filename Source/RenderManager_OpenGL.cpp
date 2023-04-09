@@ -134,13 +134,6 @@ namespace opengl
 						std::get<2>(texSamplerInput)); // sampler
 				}
 
-				// Set camera params:
-				Camera const* const stageCam = renderStage->GetStageCamera();
-				if (stageCam)
-				{
-					opengl::Shader::SetParameterBlock(*stageShader, *stageCam->GetCameraParams());
-				}
-
 				// Render stage batches:
 				std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
 				for (re::Batch const& batch : batches)
