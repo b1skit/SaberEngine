@@ -78,9 +78,6 @@ namespace
 
 		// Create a pipeline state:
 		// TODO: We should be creating a library of these at startup
-		dx12::TextureTargetSet::PlatformParams* swapChainTargetSetPlatParams = 
-			swapChainParams->m_backbufferTargetSets[0]->GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
-
 		gr::PipelineState defaultGrPipelineState{}; // Temp hax: Use a default gr::PipelineState
 
 		dx12::Context::CreateAddPipelineState(
@@ -187,8 +184,11 @@ namespace dx12
 			*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList->GetD3DCommandList());
 
 
-		// TODO: This should be set by a batch, w.r.t MeshPrimitive::Drawmode
-		commandList->SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		dx12::MeshPrimitive::PlatformParams* meshPrimPlatParams = 
+			s_helloTriangle->GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
+
+		// TODO: The batch should contain the draw mode directly
+		commandList->SetPrimitiveType(meshPrimPlatParams->m_drawMode);
 
 		// TEMP HAX: Get the vertex buffer views:
 		dx12::VertexStream::PlatformParams_Vertex* positionPlatformParams = 
@@ -223,14 +223,14 @@ namespace dx12
 
 		// TODO: Automatically bind parameter blocks
 		// -> We need to be able to automatically set PBs to the correct locations in our descriptor tables
-		dx12::ParameterBlock::PlatformParams* cameraPlatParams = en::SceneManager::GetSceneData()->GetMainCamera()
+		dx12::ParameterBlock::PlatformParams* cameraPBPlatParams = en::SceneManager::GetSceneData()->GetMainCamera()
 			->GetCameraParams()->GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
 
 
 		// TODO: The command list should wrap the GPU Descriptor Heap
 		commandList->GetGPUDescriptorHeap()->SetDescriptorTable(
 			0,															// Root param idx
-			cameraPlatParams->m_cpuDescAllocation.GetBaseDescriptor(),	// D3D12_CPU_DESCRIPTOR_HANDLE
+			cameraPBPlatParams->m_cpuDescAllocation.GetBaseDescriptor(),	// D3D12_CPU_DESCRIPTOR_HANDLE
 			0,															// offset
 			1);															// count
 		commandList->GetGPUDescriptorHeap()->Commit(); // Must be done before the draw command

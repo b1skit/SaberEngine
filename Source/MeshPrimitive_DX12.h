@@ -14,6 +14,8 @@ namespace dx12
 		struct PlatformParams final : public re::MeshPrimitive::PlatformParams
 		{
 			PlatformParams(re::MeshPrimitive& meshPrimitive);
+
+			D3D_PRIMITIVE_TOPOLOGY m_drawMode;
 		};
 
 

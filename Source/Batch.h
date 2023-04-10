@@ -86,6 +86,7 @@ namespace re
 	private:
 		// TODO: Split this into vertex streams
 		// -> TRICKY: OpenGL encapsulates state with VAOs, but we only need one VAO per mesh
+		// -> Also need to pack the mesh draw mode on the batch (points/lines/triangles/etc)
 		re::MeshPrimitive* m_batchMeshPrimitive;
 
 		re::Shader* m_batchShader;
