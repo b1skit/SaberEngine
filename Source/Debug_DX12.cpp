@@ -23,28 +23,33 @@ namespace dx12
 		case S_FALSE:
 		case DXGI_STATUS_OCCLUDED:
 		{
-			SEAssertF("Checked HRESULT of a success code. Use the SUCCEEDED or FAILED macros instead of calling this function");
+			SEAssertF(
+				"Checked HRESULT of a success code. Use the SUCCEEDED or FAILED macros instead of calling this function");
 		}
 		break;
-		case E_INVALIDARG:
-		{
-			LOG_ERROR("%s: One or more arguments are invalid", msg);
-		}
-		break;
-		case ERROR_FILE_NOT_FOUND:
-		{
-			LOG_ERROR("File not found: %s", msg);
-		}
-		break;
+		case E_ABORT:				LOG_ERROR("%s: Operation aborted", msg); break;
+		case E_ACCESSDENIED:		LOG_ERROR("%s: General access denied error", msg); break;
+		case E_FAIL:				LOG_ERROR("%s: Unspecified failure", msg); break;
+		case E_HANDLE:				LOG_ERROR("%s: Handle that is not valid", msg); break;
+		case E_INVALIDARG:			LOG_ERROR("%s: One or more arguments are invalid", msg); break;
+		case E_NOINTERFACE:			LOG_ERROR("%s: No such interface supported", msg); break;
+		case E_NOTIMPL:				LOG_ERROR("%s: Not implemented", msg); break;
+		case E_OUTOFMEMORY:			LOG_ERROR("%s: Failed to allocate necessary memory", msg); break;
+		case E_POINTER:				LOG_ERROR("%s: Pointer that is not valid", msg); break;
+		case E_UNEXPECTED:			LOG_ERROR("%s: Unexpected failure", msg); break;
+		case ERROR_FILE_NOT_FOUND:	LOG_ERROR("File not found: %s", msg); break;
 		default:
 		{
 			LOG_ERROR(msg);
-			
 		}
 		}
 
+#if defined(_DEBUG)
 		SEAssertF(msg);
+#else
 		throw std::exception(); // Throw an exception here; asserts are disabled in release mode
+#endif
+
 		return false;
 	}
 
