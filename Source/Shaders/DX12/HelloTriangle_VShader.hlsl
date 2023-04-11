@@ -10,20 +10,20 @@ struct VertexPosColor
 };
 
 
-struct CameraParams // Shader parameter block
+struct CameraParamsCB
 {
-	matrix g_view;
-	matrix g_invView;
-	matrix g_projection;
-	matrix g_invProjection;
-	matrix g_viewProjection;
-	matrix g_invViewProjection;
+	float4x4 g_view;
+	float4x4 g_invView;
+	float4x4 g_projection;
+	float4x4 g_invProjection;
+	float4x4 g_viewProjection;
+	float4x4 g_invViewProjection;
 
 	float4 g_projectionParams; // .x = 1 (unused), .y = near, .z = far, .w = 1/far
 
 	float3 g_cameraWPos;
 };
-ConstantBuffer<CameraParams> CameraParamsCB : register(b0);
+ConstantBuffer<CameraParamsCB> CameraParams : register(b0);
 // TODO: Replace this with a structure buffer
 
 
@@ -38,7 +38,7 @@ VertexShaderOutput VShader(VertexPosColor In)
 {
 	VertexShaderOutput Out;
 
-	Out.Position = mul(CameraParamsCB.g_viewProjection, float4(In.Position, 1.0f));
+	Out.Position = mul(CameraParams.g_viewProjection, float4(In.Position, 1.0f));
 	Out.Color = In.Color;
 
 	//Out.Color = float4(In.Normal, 1.f);

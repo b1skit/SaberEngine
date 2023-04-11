@@ -14,7 +14,7 @@ namespace dx12
 	public:
 		struct PlatformParams final : public re::ParameterBlock::PlatformParams
 		{
-			Microsoft::WRL::ComPtr<ID3D12Resource> m_constantBufferResource = nullptr;
+			Microsoft::WRL::ComPtr<ID3D12Resource> m_resource = nullptr;
 			DescriptorAllocation m_cpuDescAllocation;
 		};
 

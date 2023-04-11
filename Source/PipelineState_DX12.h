@@ -23,12 +23,13 @@ namespace dx12
 	class PipelineState final : public en::HashedDataObject
 	{
 	public:
-		PipelineState(
-			gr::PipelineState const&, re::Shader const&, re::TextureTargetSet const&);
+		PipelineState();
 
 		~PipelineState() { Destroy(); }
 
 		void Destroy();
+
+		void Create(gr::PipelineState const&, re::Shader const&, re::TextureTargetSet const&);
 		
 		ID3D12PipelineState* GetD3DPipelineState() const;
 
@@ -43,9 +44,5 @@ namespace dx12
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineState;
 
 		dx12::RootSignature m_rootSignature;
-
-
-	private:
-		PipelineState() = delete;
 	};
 }

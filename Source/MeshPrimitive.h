@@ -43,13 +43,14 @@ namespace re
 			DrawMode m_drawMode = DrawMode::Triangles;
 		};
 
-		// TODO: We'd prefer to have the Tangent and Bitanent/Binormal and reconstruct the Normal
+		// TODO: We'd prefer to have the Tangent and Bitangent/Binormal and reconstruct the Normal
 		enum Slot // Binding index
 		{
 			Position	= 0, // vec3
 			Normal		= 1, // vec3
 			Tangent		= 2, // vec4
 			UV0			= 3, // vec2
+			// TODO: Support UV1
 			Color		= 4, // vec4
 
 			Joints		= 5, // tvec4<uint8_t>

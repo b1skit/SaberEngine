@@ -16,6 +16,8 @@
 		layout(location = 3) in vec2 in_uv0;
 		layout(location = 4) in vec4 in_color;
 	#endif
+
+	// TODO: Support joints/weights
 #endif
 
 

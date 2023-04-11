@@ -100,7 +100,7 @@ namespace dx12
 
 			if (m_descriptorTableIdxBitmask & rootIdxBit)
 			{
-				const uint32_t numDescriptors = rootSig.GetNumDescriptors(rootIdx);
+				const uint32_t numDescriptors = rootSig.GetNumDescriptorsInTable(rootIdx);
 
 				// Update our cache:
 				m_descriptorTables[rootIdx].m_baseDescriptor = &m_descriptorHandleCache[offset];

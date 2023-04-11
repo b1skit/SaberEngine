@@ -4,7 +4,13 @@
 #include <d3d12.h>
 
 #include "HashedDataObject.h"
+#include "Shader_DX12.h"
 
+
+namespace re
+{
+	class Shader;
+}
 
 namespace dx12
 {
@@ -16,12 +22,13 @@ namespace dx12
 
 	public:
 		RootSignature();
-
 		~RootSignature();
 		void Destroy();
 
+		void Create(re::Shader const&);
+
 		uint32_t GetDescriptorTableIdxBitmask() const;
-		uint32_t GetNumDescriptors(uint8_t rootIndex) const;
+		uint32_t GetNumDescriptorsInTable(uint8_t rootIndex) const;
 
 		ID3D12RootSignature* GetD3DRootSignature() const;
 
@@ -34,7 +41,7 @@ namespace dx12
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
-		D3D12_ROOT_SIGNATURE_DESC1 m_rootSigDescription;
+		D3D12_VERSIONED_ROOT_SIGNATURE_DESC m_rootSigDescription;
 
 		uint32_t m_descriptorTableIdxBitmask; 
 		uint32_t m_numDescriptorsPerTable[k_totalRootSigDescriptorTableIndices];

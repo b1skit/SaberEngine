@@ -157,7 +157,7 @@ namespace dx12
 			backbufferIdx,
 			renderTargetPlatParams->m_descriptor.GetDescriptorSize());
 
-		commandList->ClearRTV(renderTargetView, clearColor);
+		commandList->ClearRTV(renderTargetView, clearColor); // TODO: This should just take the Target object
 
 
 		// Clear depth target:
@@ -167,7 +167,7 @@ namespace dx12
 
 		// TODO: Stage CPU descriptor handles into GPU-visible descriptor heap, and pack into descriptor tables
 		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = depthPlatParams->m_descriptor.GetBaseDescriptor();
-		commandList->ClearDepth(dsvDescriptor, 1.f);
+		commandList->ClearDepth(dsvDescriptor, 1.f); // TODO: This should just take the Target object
 
 		
 		// Bind our render target(s) to the output merger (OM):
@@ -175,9 +175,14 @@ namespace dx12
 
 
 		// Set the pipeline state:
+		// TODO: Command list should take our dx12 objects, and retrieve what it needs from inside the wrapper
 		commandList->SetPipelineState(ctxPlatParams->m_pipelineState->GetD3DPipelineState());
+
+		// Set the root signature:
 		commandList->SetGraphicsRootSignature(ctxPlatParams->m_pipelineState->GetRootSignature());
 
+		// TODO: Command list should have a SetViewport/SetScissorRect function that takes a TextureTargetSet. We should
+		// not be passing command lists around
 		dx12::TextureTargetSet::SetViewport(
 			*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList->GetD3DCommandList());
 		dx12::TextureTargetSet::SetScissorRect(
@@ -187,7 +192,7 @@ namespace dx12
 		dx12::MeshPrimitive::PlatformParams* meshPrimPlatParams = 
 			s_helloTriangle->GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
 
-		// TODO: The batch should contain the draw mode directly
+		// TODO: Batches should contain the draw mode, instead of carrying around a MeshPrimitive
 		commandList->SetPrimitiveType(meshPrimPlatParams->m_drawMode);
 
 		// TEMP HAX: Get the vertex buffer views:
@@ -223,20 +228,37 @@ namespace dx12
 
 		// TODO: Automatically bind parameter blocks
 		// -> We need to be able to automatically set PBs to the correct locations in our descriptor tables
-		dx12::ParameterBlock::PlatformParams* cameraPBPlatParams = en::SceneManager::GetSceneData()->GetMainCamera()
-			->GetCameraParams()->GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
+		std::shared_ptr<gr::Camera> mainCam = en::SceneManager::GetSceneData()->GetMainCamera();
+		dx12::ParameterBlock::PlatformParams* cameraPBPlatParams = 
+			mainCam->GetCameraParams()->GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
 
 
 		// TODO: The command list should wrap the GPU Descriptor Heap
-		commandList->GetGPUDescriptorHeap()->SetDescriptorTable(
-			0,															// Root param idx
-			cameraPBPlatParams->m_cpuDescAllocation.GetBaseDescriptor(),	// D3D12_CPU_DESCRIPTOR_HANDLE
-			0,															// offset
-			1);															// count
+		
+
+		//// CBV AS DESCRIPTOR TABLE:
+		//commandList->GetGPUDescriptorHeap()->SetDescriptorTable(
+		//	0,																// Root signature slot
+		//	cameraPBPlatParams->m_cpuDescAllocation.GetBaseDescriptor(),	// D3D12_CPU_DESCRIPTOR_HANDLE
+		//	0,																// offset
+		//	1);																// count
+
+
+		// CBV AS INLINE CB VIEW
+		const uint32_t rootSigSlot = 0;
+
+		commandList->GetGPUDescriptorHeap()->SetInlineCBV(
+			rootSigSlot,							// Root signature slot
+			cameraPBPlatParams->m_resource.Get());	// Resource
+
+
+
+
 		commandList->GetGPUDescriptorHeap()->Commit(); // Must be done before the draw command
 
 
-
+		// TODO: Command list should have a wrapper for draw calls
+		// -> Internally, call GetGPUDescriptorHeap()->Commit() etc
 		commandList->DrawIndexedInstanced(
 			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
 			1,	// Instance count

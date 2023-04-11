@@ -346,15 +346,23 @@ namespace
 
 namespace dx12
 {
-	PipelineState::PipelineState(
-		gr::PipelineState const& grPipelineState, 
-		re::Shader const& shader, 
-		re::TextureTargetSet const& targetSet)
+	PipelineState::PipelineState()
 		: m_pipelineState(nullptr)
 	{
+	}
+
+
+	void PipelineState::Create(
+		gr::PipelineState const& grPipelineState,
+		re::Shader const& shader,
+		re::TextureTargetSet const& targetSet)
+	{
+		m_rootSignature.Create(shader);
+
+
 		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 
-		SEAssert("Shader doesn't have a pixel and vertex shader blob. TODO: Support this", 
+		SEAssert("Shader doesn't have a pixel and vertex shader blob. TODO: Support this",
 			shaderParams->m_shaderBlobs[dx12::Shader::Vertex] && shaderParams->m_shaderBlobs[dx12::Shader::Pixel]);
 
 		if (shaderParams->m_shaderBlobs[dx12::Shader::Vertex] != nullptr)
@@ -407,7 +415,7 @@ namespace dx12
 		{
 			SEAssertF("Found a Shader object without a vertex shader. TODO: Support this (e.g. compute shaders)");
 		}
-		
+
 		// Finally, compute the data hash, appending the inputs here while we have them:
 
 		//if (shaderParams->m_shaderBlobs[dx12::Shader::Vertex] != nullptr)

@@ -236,11 +236,11 @@ namespace dx12
 
 		// TODO: We need to be able to pre-compute the dx12::PipelineState data hash, so we can check if it exists
 		// before we attempt to create it. Currently, the hash is computed during construction...
-		ctxPlatParams->m_pipelineState = std::make_shared<dx12::PipelineState>(
+		ctxPlatParams->m_pipelineState = std::make_shared<dx12::PipelineState>();
+		ctxPlatParams->m_pipelineState->Create(
 			grPipelineState,
 			shader,
 			targetSet);
-
 		return ctxPlatParams->m_pipelineState;
 	}
 
