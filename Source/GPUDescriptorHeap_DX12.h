@@ -3,7 +3,6 @@
 #include <d3d12.h>
 #include <wrl.h>
 
-#include "PipelineState_DX12.h"
 #include "RootSignature_DX12.h"
 
 
@@ -46,7 +45,8 @@ namespace dx12
 		void ParseRootSignatureDescriptorTables(dx12::RootSignature const&);
 
 		// Register a set of CPU descriptors for copy to a GPU-visible heap when CommitDescriptorTables() is called
-		// Each descriptor table/range entry = 1 DWORD each
+		// Each descriptor table/range entry = 1 DWORD each.
+		// Note: Individual descriptors can be set within the table at each rootParamIdx via the offset & count params
 		void SetDescriptorTable(
 			uint32_t rootParamIdx, const D3D12_CPU_DESCRIPTOR_HANDLE src, uint32_t offset, uint32_t count);
 

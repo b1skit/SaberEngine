@@ -3,6 +3,9 @@
 
 #include "CommandList_DX12.h"
 #include "Debug_DX12.h"
+#include "ParameterBlock.h"
+#include "ParameterBlock_DX12.h"
+#include "RootSignature_DX12.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -34,8 +37,14 @@ namespace
 namespace dx12
 {
 	CommandList::CommandList(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type)
-		: m_gpuDescriptorHeaps(nullptr)
+		: m_commandList(nullptr)
 		, m_type(type)
+		, m_commandAllocator(nullptr)
+		, m_fenceValue(0)
+		, m_gpuDescriptorHeaps(nullptr)
+		, m_currentGraphicsRootSignature(nullptr)
+		, m_currentPSO(nullptr)
+		
 	{
 		m_commandAllocator = CreateCommandAllocator(device, type);
 
@@ -75,7 +84,31 @@ namespace dx12
 	void CommandList::Destroy()
 	{
 		m_commandList = nullptr;
+		m_type = D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_NONE;
 		m_commandAllocator = nullptr;
+		m_fenceValue = 0;
+		m_gpuDescriptorHeaps = nullptr;
+		m_currentGraphicsRootSignature = nullptr;
+		m_currentPSO = nullptr;
+	}
+
+
+	void CommandList::SetParameterBlock(re::ParameterBlock const* parameterBlock)
+	{
+		// TODO: Handle setting parameter blocks for different root signature types (e.g. compute)
+		// -> Can probably just assume only 1 single root signature type will be set, and the other will be null?
+		SEAssert("Root signature has not been set", m_currentGraphicsRootSignature != nullptr);
+
+		dx12::ParameterBlock::PlatformParams const* pbPlatParams =
+			parameterBlock->GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
+
+		// We (currently) bind our CBVs as root descriptors:
+		const uint32_t rootSigSlot =
+			m_currentGraphicsRootSignature->GetResourceRegisterBindPoint(parameterBlock->GetName()).m_rootSigIndex;
+
+		m_gpuDescriptorHeaps->SetInlineCBV(
+			rootSigSlot,						// Root signature index 
+			pbPlatParams->m_resource.Get());	// Resource
 	}
 
 

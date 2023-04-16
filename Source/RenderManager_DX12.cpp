@@ -174,11 +174,8 @@ namespace dx12
 		commandList->SetRenderTargets(1, &renderTargetView, false, &dsvDescriptor);
 
 
-		// Set the pipeline state:
-		// TODO: Command list should take our dx12 objects, and retrieve what it needs from inside the wrapper
-		commandList->SetPipelineState(ctxPlatParams->m_pipelineState->GetD3DPipelineState());
-
-		// Set the root signature:
+		// Set the pipeline state and root signature first:
+		commandList->SetPipelineState(*ctxPlatParams->m_pipelineState);
 		commandList->SetGraphicsRootSignature(ctxPlatParams->m_pipelineState->GetRootSignature());
 
 		// TODO: Command list should have a SetViewport/SetScissorRect function that takes a TextureTargetSet. We should
@@ -217,6 +214,11 @@ namespace dx12
 		commandList->SetVertexBuffers(re::MeshPrimitive::Tangent, 1, &tangentPlatformParams->m_vertexBufferView);
 		commandList->SetVertexBuffers(re::MeshPrimitive::UV0, 1, &uv0PlatformParams->m_vertexBufferView);
 		commandList->SetVertexBuffers(re::MeshPrimitive::Color, 1, &colorPlatformParams->m_vertexBufferView);
+		// TODO: The root signature should record the number of input vertex streams, and we should use this information
+		// when binding the vertex buffers
+		// -> Feels like the command list should have wrappers for all of this
+		//		-> Set the root signature and pipeline state first
+		//			-> Use this information to blindly set everything else on an as-needed basis
 
 		dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
 			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
@@ -226,35 +228,12 @@ namespace dx12
 
 
 
-		// TODO: Automatically bind parameter blocks
-		// -> We need to be able to automatically set PBs to the correct locations in our descriptor tables
+		// Bind parameter blocks:
 		std::shared_ptr<gr::Camera> mainCam = en::SceneManager::GetSceneData()->GetMainCamera();
-		dx12::ParameterBlock::PlatformParams* cameraPBPlatParams = 
-			mainCam->GetCameraParams()->GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
-
-
-		// TODO: The command list should wrap the GPU Descriptor Heap
 		
+		commandList->SetParameterBlock(mainCam->GetCameraParams().get());
 
-		//// CBV AS DESCRIPTOR TABLE:
-		//commandList->GetGPUDescriptorHeap()->SetDescriptorTable(
-		//	0,																// Root signature slot
-		//	cameraPBPlatParams->m_cpuDescAllocation.GetBaseDescriptor(),	// D3D12_CPU_DESCRIPTOR_HANDLE
-		//	0,																// offset
-		//	1);																// count
-
-
-		// CBV AS INLINE CB VIEW
-		const uint32_t rootSigSlot = 0;
-
-		commandList->GetGPUDescriptorHeap()->SetInlineCBV(
-			rootSigSlot,							// Root signature slot
-			cameraPBPlatParams->m_resource.Get());	// Resource
-
-
-
-
-		commandList->GetGPUDescriptorHeap()->Commit(); // Must be done before the draw command
+		commandList->CommitGPUDescriptors(); // Must be done before the draw command
 
 
 		// TODO: Command list should have a wrapper for draw calls

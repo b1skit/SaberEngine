@@ -88,6 +88,9 @@ namespace dx12
 
 	void GPUDescriptorHeap::ParseRootSignatureDescriptorTables(dx12::RootSignature const& rootSig)
 	{
+		// TODO: Insert null descriptors into empty slots (unless strict shader binding is enabled?)
+		// -> Gives well defined "nothing" bindings (except in root descriptors, which would be a page fault)
+
 		D3D12_ROOT_SIGNATURE_DESC1 const& rootSigDesc = rootSig.GetD3DRootSignatureDesc();
 		
 		m_descriptorTableIdxBitmask = rootSig.GetDescriptorTableIdxBitmask();

@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 
+
 struct PixelShaderInput
 {
 	float4 Color	: COLOR;

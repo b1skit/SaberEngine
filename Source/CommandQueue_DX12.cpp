@@ -62,6 +62,25 @@ namespace dx12
 	}
 
 
+	std::shared_ptr<dx12::CommandList> CommandQueue::GetCreateCommandList()
+	{
+		std::shared_ptr<dx12::CommandList> commandList = nullptr;
+		if (!m_commandListPool.empty() && m_fence.IsFenceComplete(m_commandListPool.front()->GetFenceValue()))
+		{
+			commandList = m_commandListPool.front();
+			m_commandListPool.pop();
+		}
+		else
+		{
+			commandList = std::make_shared<dx12::CommandList>(m_deviceCache.Get(), m_type);
+		}
+
+		commandList->Reset();
+
+		return commandList;
+	}
+
+
 	uint64_t CommandQueue::Execute(uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists)
 	{
 		// Extract our raw pointers so we can execute them in a single call
@@ -117,25 +136,5 @@ namespace dx12
 	void CommandQueue::GPUWait(uint64_t fenceValue)
 	{
 		HRESULT hr = m_commandQueue->Wait(m_fence.GetD3DFence(), fenceValue);
-	}
-
-
-	std::shared_ptr<dx12::CommandList> CommandQueue::GetCreateCommandList()
-	{
-		std::shared_ptr<dx12::CommandList> commandList = nullptr;
-		if (!m_commandListPool.empty() && m_fence.IsFenceComplete(m_commandListPool.front()->GetFenceValue()))
-		{
-			commandList = m_commandListPool.front();
-			m_commandListPool.pop();
-		}
-		else
-		{
-			commandList = std::make_shared<dx12::CommandList>(m_deviceCache.Get(), m_type);
-		}
-
-		ID3D12PipelineState* dummyPSO = nullptr; // Note: Sets a dummy if PSO is null
-		commandList->Reset(dummyPSO);
-
-		return commandList;
 	}
 }

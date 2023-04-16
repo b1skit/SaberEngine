@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 
+
 struct VertexPosColor
 {
 	float3 Position		: POSITION0;
@@ -10,6 +11,7 @@ struct VertexPosColor
 };
 
 
+// Note: Definitions made here are also visible in later related shader stages
 struct CameraParamsCB
 {
 	float4x4 g_view;
@@ -23,7 +25,7 @@ struct CameraParamsCB
 
 	float3 g_cameraWPos;
 };
-ConstantBuffer<CameraParamsCB> CameraParams : register(b0);
+ConstantBuffer<CameraParamsCB> CameraParams;
 // TODO: Replace this with a structure buffer
 
 
@@ -40,10 +42,6 @@ VertexShaderOutput VShader(VertexPosColor In)
 
 	Out.Position = mul(CameraParams.g_viewProjection, float4(In.Position, 1.0f));
 	Out.Color = In.Color;
-
-	//Out.Color = float4(In.Normal, 1.f);
-	//Out.Color = In.Tangent;
-	//Out.Color = float4(In.UV0.xy, 0.f, 1.f);
 
 	return Out;
 }

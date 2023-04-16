@@ -3,14 +3,25 @@
 #include <wrl.h>
 #include <d3d12.h>
 
+#include "Debug_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"
+#include "PipelineState_DX12.h"
 
+// TODO: Just take our SE wrapper objects
 struct CD3DX12_CPU_DESCRIPTOR_HANDLE;
 struct D3D12_CPU_DESCRIPTOR_HANDLE;
 
 
+namespace re
+{
+	class ParameterBlock;
+}
+
 namespace dx12
 {
+	class RootSignature;
+	class PipelineState;
+
 	class CommandList
 	{
 	public:
@@ -39,12 +50,17 @@ namespace dx12
 		bool GetFenceValue() const;
 		void SetFenceValue(uint64_t);
 
-		void Reset(ID3D12PipelineState*) const;
+		void Reset();
 		void Close() const;
 
-		void SetPipelineState(ID3D12PipelineState*) const;
-		void SetGraphicsRootSignature(dx12::RootSignature const& rootSig);
+		// The pipeline state and root signature must be set before subsequent interactions with the command list
+		void SetPipelineState(dx12::PipelineState const&);
+		void SetGraphicsRootSignature(dx12::RootSignature const& rootSig); // Makes all descriptors stale
 		// TODO: void SetComputeRootSignature(dx12::RootSignature const& rootSig);
+
+		// GPU descriptors:
+		void SetParameterBlock(re::ParameterBlock const*);
+		void CommitGPUDescriptors(); // Must be called before issuing draw commands
 
 		// TODO: Write a helper that takes a MeshPrimitive; make these private
 		void SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY) const;
@@ -67,8 +83,8 @@ namespace dx12
 		D3D12_COMMAND_LIST_TYPE GetType() const;
 		ID3D12GraphicsCommandList2* GetD3DCommandList() const;
 
-		// TODO: Should we be providing access to this? Or, just handle it internally via our command list interface?
-		dx12::GPUDescriptorHeap* GetGPUDescriptorHeap() const;
+		
+
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> m_commandList;
@@ -80,6 +96,11 @@ namespace dx12
 
 	private:
 		std::unique_ptr<dx12::GPUDescriptorHeap> m_gpuDescriptorHeaps;
+
+
+	private:
+		dx12::RootSignature const* m_currentGraphicsRootSignature;
+		dx12::PipelineState const* m_currentPSO;
 
 
 	private: // No copying allowed
@@ -102,17 +123,22 @@ namespace dx12
 	}
 
 
-	inline void CommandList::Reset(ID3D12PipelineState* pso) const
+	inline void CommandList::Reset()
 	{
-		// Note: pso is optional; Sets a dummy PSO if nullptr. TODO: Accept a PSO?
+		m_currentGraphicsRootSignature = nullptr;
+		m_currentPSO = nullptr;
 
-		m_commandList->Reset(m_commandAllocator.Get(), pso);
-
+		// Note: pso is optional here; nullptr sets a dummy PSO
+		HRESULT hr = m_commandList->Reset(m_commandAllocator.Get(), nullptr);   
+		CheckHResult(hr, "Failed to reset command list");
 
 		// Re-bind the descriptor heaps (unless we're a copy command list):
 		if (m_type != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY)
 		{
 			// TODO: Handle sampler descriptor heaps
+
+			// TODO: Is this correct? What happens when I want to switch shaders (different root sigs) on the current
+			// command list?
 
 			ID3D12DescriptorHeap* descriptorHeaps[1] = { m_gpuDescriptorHeaps->GetD3DDescriptorHeap() };
 			m_commandList->SetDescriptorHeaps(1, descriptorHeaps);
@@ -121,21 +147,23 @@ namespace dx12
 
 	inline void CommandList::Close() const
 	{
-		m_commandList->Close();
+		HRESULT hr = m_commandList->Close();
+		CheckHResult(hr, "Failed to close command list");
 	}
 
 
-	inline void CommandList::SetPipelineState(ID3D12PipelineState* pso) const
+	inline void CommandList::SetPipelineState(dx12::PipelineState const& pso)
 	{
-		// TODO: Should we cache the dx12::PipelineState object on the command list?
-		// We'd be able to use it to assert various things for sanity
+		m_currentPSO = &pso;
 
-		m_commandList->SetPipelineState(pso);
+		m_commandList->SetPipelineState(pso.GetD3DPipelineState());
 	}
 
 
 	inline void CommandList::SetGraphicsRootSignature(dx12::RootSignature const& rootSig)
 	{
+		m_currentGraphicsRootSignature = &rootSig;
+
 		m_gpuDescriptorHeaps->ParseRootSignatureDescriptorTables(rootSig);
 
 		m_commandList->SetGraphicsRootSignature(rootSig.GetD3DRootSignature());
@@ -234,8 +262,8 @@ namespace dx12
 	}
 
 
-	inline dx12::GPUDescriptorHeap* CommandList::GetGPUDescriptorHeap() const
+	inline void CommandList::CommitGPUDescriptors()
 	{
-		return m_gpuDescriptorHeaps.get();
+		m_gpuDescriptorHeaps->Commit();
 	}
 }
