@@ -6,6 +6,8 @@
 #include "ParameterBlock.h"
 #include "ParameterBlock_DX12.h"
 #include "RootSignature_DX12.h"
+#include "VertexStream.h"
+#include "VertexStream_DX12.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -109,6 +111,64 @@ namespace dx12
 		m_gpuDescriptorHeaps->SetInlineCBV(
 			rootSigSlot,						// Root signature index 
 			pbPlatParams->m_resource.Get());	// Resource
+	}
+
+
+	void CommandList::SetVertexBuffer(uint32_t slot, re::VertexStream const* stream) const
+	{
+		m_commandList->IASetVertexBuffers(
+			slot, 
+			1, 
+			&stream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>()->m_vertexBufferView);
+	}
+
+
+	void CommandList::SetVertexBuffers(std::vector<std::shared_ptr<re::VertexStream>> const& streams) const
+	{
+		SEAssert("The position stream is mandatory", 
+			streams.size() > 0 && streams[re::MeshPrimitive::Slot::Position] != nullptr);
+
+		uint32_t currentStartSlot = 0;
+
+		std::vector<D3D12_VERTEX_BUFFER_VIEW> streamViews;
+		streamViews.reserve(streams.size());
+
+		for (uint32_t streamIdx = 0; streamIdx < static_cast<uint32_t>(streams.size()); streamIdx++)
+		{
+			if (streamIdx == static_cast<size_t>(re::MeshPrimitive::Slot::Indexes))
+			{
+				break;
+			}
+			if (streams[streamIdx] == nullptr)
+			{
+				// Submit the list we've built so far
+				if (!streamViews.empty())
+				{
+					m_commandList->IASetVertexBuffers(
+						currentStartSlot, 
+						static_cast<uint32_t>(streamViews.size()), 
+						&streamViews[0]);
+
+					streamViews.clear();
+				}
+
+				// Prepare for the next iteration:
+				currentStartSlot = streamIdx + 1;
+
+				continue;
+			}
+
+			streamViews.emplace_back(
+				streams[streamIdx]->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>()->m_vertexBufferView);
+		}
+
+		if (!streamViews.empty())
+		{
+			m_commandList->IASetVertexBuffers(
+				currentStartSlot, 
+				static_cast<uint32_t>(streamViews.size()), 
+				&streamViews[0]);
+		}
 	}
 
 

@@ -191,34 +191,9 @@ namespace dx12
 
 		// TODO: Batches should contain the draw mode, instead of carrying around a MeshPrimitive
 		commandList->SetPrimitiveType(meshPrimPlatParams->m_drawMode);
+		
+		commandList->SetVertexBuffers(s_helloTriangle->GetVertexStreams());
 
-		// TEMP HAX: Get the vertex buffer views:
-		dx12::VertexStream::PlatformParams_Vertex* positionPlatformParams = 
-			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Position)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
-
-		dx12::VertexStream::PlatformParams_Vertex* normalPlatformParams = 
-			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Normal)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
-
-		dx12::VertexStream::PlatformParams_Vertex* tangentPlatformParams =
-			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Tangent)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
-
-		dx12::VertexStream::PlatformParams_Vertex* uv0PlatformParams =
-			s_helloTriangle->GetVertexStream(re::MeshPrimitive::UV0)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
-
-		dx12::VertexStream::PlatformParams_Vertex* colorPlatformParams =
-			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Color)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>();
-
-		// Note: We could set these in a single call, if we're ok with using sequential slots
-		commandList->SetVertexBuffers(re::MeshPrimitive::Position, 1, &positionPlatformParams->m_vertexBufferView);
-		commandList->SetVertexBuffers(re::MeshPrimitive::Normal, 1, &normalPlatformParams->m_vertexBufferView);
-		commandList->SetVertexBuffers(re::MeshPrimitive::Tangent, 1, &tangentPlatformParams->m_vertexBufferView);
-		commandList->SetVertexBuffers(re::MeshPrimitive::UV0, 1, &uv0PlatformParams->m_vertexBufferView);
-		commandList->SetVertexBuffers(re::MeshPrimitive::Color, 1, &colorPlatformParams->m_vertexBufferView);
-		// TODO: The root signature should record the number of input vertex streams, and we should use this information
-		// when binding the vertex buffers
-		// -> Feels like the command list should have wrappers for all of this
-		//		-> Set the root signature and pipeline state first
-		//			-> Use this information to blindly set everything else on an as-needed basis
 
 		dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
 			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();

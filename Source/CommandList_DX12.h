@@ -15,6 +15,7 @@ struct D3D12_CPU_DESCRIPTOR_HANDLE;
 namespace re
 {
 	class ParameterBlock;
+	class VertexStream;
 }
 
 namespace dx12
@@ -64,7 +65,10 @@ namespace dx12
 
 		// TODO: Write a helper that takes a MeshPrimitive; make these private
 		void SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY) const;
-		void SetVertexBuffers(uint32_t startSlot, uint32_t numViews, D3D12_VERTEX_BUFFER_VIEW* views) const;
+		
+		void SetVertexBuffer(uint32_t slot, re::VertexStream const*) const;
+		void SetVertexBuffers(std::vector<std::shared_ptr<re::VertexStream>> const&) const;
+		
 		void SetIndexBuffer(D3D12_INDEX_BUFFER_VIEW*) const;
 
 		void SetRenderTargets(
@@ -81,9 +85,7 @@ namespace dx12
 		void TransitionResource(ID3D12Resource* resources, D3D12_RESOURCE_STATES from, D3D12_RESOURCE_STATES to) const;
 
 		D3D12_COMMAND_LIST_TYPE GetType() const;
-		ID3D12GraphicsCommandList2* GetD3DCommandList() const;
-
-		
+		ID3D12GraphicsCommandList2* GetD3DCommandList() const;		
 
 
 	private:
@@ -173,12 +175,6 @@ namespace dx12
 	inline void CommandList::SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY topologyType) const
 	{
 		m_commandList->IASetPrimitiveTopology(topologyType);
-	}
-
-
-	inline void CommandList::SetVertexBuffers(uint32_t startSlot, uint32_t numViews, D3D12_VERTEX_BUFFER_VIEW* views) const
-	{
-		m_commandList->IASetVertexBuffers(startSlot, numViews, views);
 	}
 
 

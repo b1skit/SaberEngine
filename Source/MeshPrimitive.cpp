@@ -178,6 +178,12 @@ namespace re
 	}
 
 
+	std::vector<std::shared_ptr<re::VertexStream>> const& MeshPrimitive::GetVertexStreams() const
+	{
+		return m_vertexStreams;
+	}
+
+
 	std::string MeshPrimitive::GetSlotDebugName(Slot slot)
 	{
 		switch (slot)

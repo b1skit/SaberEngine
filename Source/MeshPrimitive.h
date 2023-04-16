@@ -61,8 +61,11 @@ namespace re
 			Slot_Count,
 			Slot_CountNoIndices = (Slot_Count - 1),
 		};
+		static_assert(Slot::Position == 0); // Position MUST be first
+		static_assert(Slot::Indexes == Slot_Count - 1); // Indexes MUST be last
 		// Note: The order/indexing of this enum MUST match the vertex layout locations in SaberCommon.glsl, and be
 		// correctly mapped in PipelineState_DX12.cpp
+		
 	
 		static std::string GetSlotDebugName(Slot slot);
 
@@ -95,6 +98,7 @@ namespace re
 		void UpdateBounds(gr::Transform* transform); // TODO: Currently this assumes the MeshPrimitive is not skinned
 		
 		re::VertexStream* GetVertexStream(Slot slot) const;
+		std::vector<std::shared_ptr<re::VertexStream>> const& GetVertexStreams() const;
 
 		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		inline void SetPlatformParams(std::unique_ptr<re::MeshPrimitive::PlatformParams> params) { m_platformParams = std::move(params); }
