@@ -14,14 +14,15 @@ namespace dx12
 		Fence();
 		~Fence() { Destroy(); };
 
-		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice);
+		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, char const* eventName);
 		void Destroy();
 
-		uint64_t Signal(Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue, uint64_t& fenceValue);
-		void WaitForGPU(uint64_t fenceValue); // Blocks the CPU
-		bool IsFenceComplete(uint64_t fenceValue);
+		void CPUSignal(uint64_t fenceValue) const; // Updates the fence to the given value from the CPU side
+		void CPUWait(uint64_t fenceValue) const; // Blocks the CPU until the fence reaches the given value
+		
+		bool IsFenceComplete(uint64_t fenceValue) const;
 
-		ID3D12Fence* GetD3DFence();
+		ID3D12Fence* GetD3DFence() const;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Fence> m_fence;
@@ -36,7 +37,7 @@ namespace dx12
 	};
 
 
-	inline ID3D12Fence* Fence::GetD3DFence()
+	inline ID3D12Fence* Fence::GetD3DFence() const
 	{
 		return m_fence.Get();
 	}

@@ -7,9 +7,6 @@ using Microsoft::WRL::ComPtr;
 
 namespace dx12
 {
-	
-
-
 	Fence::Fence()
 		: m_fence(nullptr)
 		, m_fenceEvent(nullptr)
@@ -17,21 +14,21 @@ namespace dx12
 	}
 
 
-	void Fence::Create(ComPtr<ID3D12Device2> displayDevice)
+	void Fence::Create(ComPtr<ID3D12Device2> displayDevice, char const* eventName)
 	{
 		// Create our fence:
 		HRESULT hr = displayDevice->CreateFence(
-			0, // Initial value: It's recommended that fences always start at 0, and increase monotonically ONLY
-			D3D12_FENCE_FLAG_NONE, // Fence flags: Shared, cross-adapter, etc
-			IID_PPV_ARGS(&m_fence)); // REFIIF and destination pointer for the populated fence
+			0,							// Initial value: Increase monotonically from hereONLY
+			D3D12_FENCE_FLAG_NONE,		// Fence flags: Shared, cross-adapter, etc
+			IID_PPV_ARGS(&m_fence));	// REFIIF and destination pointer for the populated fence
 		CheckHResult(hr, "Failed to create fence");
 
 		// Create our event handle:
 		m_fenceEvent = ::CreateEvent(
-			NULL, // Pointer to event SECURITY_ATTRIBUTES. If null, the handle cannot be inherited by child processes
-			FALSE, // Manual reset? If true, event must be reset to non-signalled by calling ResetEvent. Auto-resets if false
-			FALSE, // Initial state: true/false = signalled/unsignalled
-			NULL); // Event object name: Unnamed if null
+			nullptr,	// Pointer to event SECURITY_ATTRIBUTES. If null, the handle cannot be inherited by child processes
+			false,		// Manual reset: True = Reset event to non-signalled by calling ResetEvent. False = Auto-reset
+			false,		// Initial state: true = signalled, false = unsignalled
+			eventName);	// Event object name: Unnamed if null
 
 		SEAssert("Failed to create fence event", m_fenceEvent);
 	}
@@ -45,25 +42,18 @@ namespace dx12
 	}
 
 
-	uint64_t Fence::Signal(Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue, uint64_t& fenceValue)
+	void Fence::CPUSignal(uint64_t fenceValue) const
 	{
-		// TODO: Should this functionality be a member of the CommandQueue?
-
-		const uint64_t fenceValueForSignal = ++fenceValue; // Note: First fenceValueForSignal == 1
-
-		HRESULT hr = commandQueue->Signal(
-			m_fence.Get(),			// Fence object ptr
-			fenceValueForSignal);	// Value to signal the fence with
-
+		// Updates the fence to the specified value from the CPU side
+		HRESULT hr = m_fence->Signal(fenceValue);
 		CheckHResult(hr, "Failed to signal fence");
-
-		return fenceValueForSignal;
 	}
 
 
-	void Fence::WaitForGPU(uint64_t fenceValue)
+	void Fence::CPUWait(uint64_t fenceValue) const
 	{
-		if (m_fence->GetCompletedValue() < fenceValue)
+		// Blocks the CPU until the fence reaches the given value
+		if (!IsFenceComplete(fenceValue))
 		{
 			HRESULT hr = m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent);
 			CheckHResult(hr, "Failed to set completion event");
@@ -74,7 +64,7 @@ namespace dx12
 	}
 
 
-	bool Fence::IsFenceComplete(uint64_t fenceValue)
+	bool Fence::IsFenceComplete(uint64_t fenceValue) const
 	{
 		return m_fence->GetCompletedValue() >= fenceValue;
 	}

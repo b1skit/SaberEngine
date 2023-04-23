@@ -43,14 +43,13 @@ namespace dx12
 
 			uint64_t m_frameFenceValues[dx12::RenderManager::k_numFrames]; // Fence values for signalling the command queue
 			
-			// Last fence value signalled from the current frame's command lists. Populated at the end of 
-			// dx12::RenderManager::Render, and used to insert a GPU wait in dx12::Context::Present
-			uint64_t m_lastFenceBeforePresent = 0;
-
 			// TODO: Precompute a library of all pipeline states needed at startup. For now, we just have a single PSO
 			std::shared_ptr<dx12::PipelineState> m_pipelineState;
 
 			std::vector<dx12::CPUDescriptorHeapManager> m_cpuDescriptorHeapMgrs; // CPUDescriptorHeapType_Count
+
+			// Imgui descriptor heap: A single, CPU and GPU-visible SRV descriptor for the internal font texture
+			Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_imGuiGPUVisibleSRVDescriptorHeap;
 		};
 
 
@@ -67,8 +66,6 @@ namespace dx12
 		// DX12-specific interface:
 		static dx12::CommandQueue& GetCommandQueue(CommandList::CommandListType type);
 
-		static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(
-			Microsoft::WRL::ComPtr<ID3D12Device2> device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors);
 
 		// TODO:
 		// Add a helper wrapper to get:

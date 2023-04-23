@@ -106,21 +106,28 @@ namespace dx12
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();
 
+		// Imgui descriptor heap: Holds a single, CPU and GPU-visible SRV descriptor for the internal font texture
+		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
 
+		D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
+		descriptorHeapDesc.Type				= D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		descriptorHeapDesc.NumDescriptors	= 1;
+		descriptorHeapDesc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+		descriptorHeapDesc.NodeMask			= deviceNodeMask;
 
-		// TODO: Create Imgui descriptor handles
-		// - Needs a single CPU-visible and single GPU-visible SRV descriptor for the internal font texture
-		// -> Some code also commented out in Context::Destroy
-		
-		// Setup Platform/Renderer backends
+		HRESULT hr = device->CreateDescriptorHeap(
+			&descriptorHeapDesc, IID_PPV_ARGS(&ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap));
+		CheckHResult(hr, "Failed to create single element descriptor heap for ImGui SRV");
+
+		// Setup ImGui platform/Renderer backends:
 		ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
-		//ImGui_ImplDX12_Init(
-		//	ctxPlatParams->m_device.GetD3DDisplayDevice(),
-		//	dx12::RenderManager::k_numFrames, // Number of frames in flight
-		//	swapChainTargetSetParams->m_renderTargetFormats.RTFormats[0],
-		//	ctxPlatParams->m_RTVDescHeap.Get(),
-		//	ctxPlatParams->m_RTVDescHeap->GetCPUDescriptorHandleForHeapStart(),
-		//	ctxPlatParams->m_RTVDescHeap->GetGPUDescriptorHandleForHeapStart());
+		ImGui_ImplDX12_Init(
+			ctxPlatParams->m_device.GetD3DDisplayDevice(),
+			dx12::RenderManager::k_numFrames, // Number of frames in flight
+			swapChainTargetSetParams->m_renderTargetFormats.RTFormats[0],
+			ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap.Get(),
+			ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+			ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 	}
 
 
@@ -133,7 +140,7 @@ namespace dx12
 		}
 
 		// ImGui Cleanup:
-		//ImGui_ImplDX12_Shutdown();
+		ImGui_ImplDX12_Shutdown();
 		ImGui_ImplWin32_Shutdown();
 		ImGui::DestroyContext();		
 
@@ -165,10 +172,6 @@ namespace dx12
 
 		dx12::CommandQueue& directQueue = ctxPlatParams->m_commandQueues[dx12::CommandList::Direct];
 
-		// Add a GPU wait to ensure our graphics work has finished before we present
-		directQueue.GPUWait(ctxPlatParams->m_lastFenceBeforePresent);
-
-		// Note: Our command lists and associated command allocators are already closed/reset
 		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
 		Microsoft::WRL::ComPtr<ID3D12Resource> backbufferResource =
@@ -184,14 +187,13 @@ namespace dx12
 		{
 			commandList
 		};
-
 		directQueue.Execute(1, commandLists);
 
 		// Present:
 		dx12::SwapChain::PlatformParams* swapChainPlatParams = 
 			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
-		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
+		const uint8_t currentFrameBackbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
 
 		// Present the backbuffer:
 		const bool vsyncEnabled = swapChainPlatParams->m_vsyncEnabled;
@@ -199,25 +201,28 @@ namespace dx12
 		const uint32_t presentFlags = 
 			(swapChainPlatParams->m_tearingSupported && !vsyncEnabled) ? DXGI_PRESENT_ALLOW_TEARING : 0;
 
-		swapChainPlatParams->m_swapChain->Present(syncInterval, presentFlags);
+		HRESULT hr = swapChainPlatParams->m_swapChain->Present(syncInterval, presentFlags);
+		CheckHResult(hr, "Failed to present");
 
-		// Insert a signal into the command queue:
-		ctxPlatParams->m_frameFenceValues[backbufferIdx] = 
-			ctxPlatParams->m_commandQueues[CommandList::Direct].Signal();
-		// TODO: We should maintain a frame fence, and individual fences per command queue
+		// Insert a signal into the command queue: Once this is reached, we know the work for the current frame is done
+		ctxPlatParams->m_frameFenceValues[currentFrameBackbufferIdx] = 
+			ctxPlatParams->m_commandQueues[CommandList::Direct].GPUSignal();
 
-		// Get the next backbuffer index:
-		// Note: Backbuffer indices are not guaranteed to be sequential if we're using DXGI_SWAP_EFFECT_FLIP_DISCARD
-		swapChainPlatParams->m_backBufferIdx = swapChainPlatParams->m_swapChain->GetCurrentBackBufferIndex();
+		// Get the next backbuffer index (Note: Backbuffer indices are not guaranteed to be sequential if we're using 
+		// DXGI_SWAP_EFFECT_FLIP_DISCARD)
+		const uint8_t nextFrameBackbufferIdx = swapChainPlatParams->m_swapChain->GetCurrentBackBufferIndex();
+
+		swapChainPlatParams->m_backBufferIdx = nextFrameBackbufferIdx;
 		
-		// Wait on the fence for the next backbuffer, to ensure its previous frame is done (blocking)
-		ctxPlatParams->m_commandQueues[CommandList::Direct].WaitForGPU(ctxPlatParams->m_frameFenceValues[backbufferIdx]);
+		// Block the CPU on the fence for our new backbuffer, to ensure all of its work is done
+		ctxPlatParams->m_commandQueues[CommandList::Direct].CPUWait(
+			ctxPlatParams->m_frameFenceValues[nextFrameBackbufferIdx]);
 
-		// Free the descriptors used on the next backbuffer now that we know the fence has been signalled:
+		// Free the descriptors used on the next backbuffer now that we know the fence has been reached:
 		for (size_t i = 0; i < CPUDescriptorHeapType_Count; i++)
 		{
 			ctxPlatParams->m_cpuDescriptorHeapMgrs[static_cast<CPUDescriptorHeapType>(i)].ReleaseFreedAllocations(
-				ctxPlatParams->m_frameFenceValues[backbufferIdx]);
+				ctxPlatParams->m_frameFenceValues[nextFrameBackbufferIdx]);
 		}	
 	}
 
@@ -245,14 +250,14 @@ namespace dx12
 	}
 
 
-	uint8_t Context::GetMaxTextureInputs()
+	uint8_t Context::GetMaxTextureInputs() // TODO: This should be a member of SysInfo
 	{
-		SEAssertF("TODO: Implement this");
+		SEAssertF("TODO: Implement this"); 
 		return 0;
 	}
 
 
-	uint8_t Context::GetMaxColorTargets()
+	uint8_t Context::GetMaxColorTargets() // TODO: This should be a member of SysInfo
 	{
 		return D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT;
 	}
@@ -264,25 +269,5 @@ namespace dx12
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		return ctxPlatParams->m_commandQueues[type];
-	}
-
-
-	ComPtr<ID3D12DescriptorHeap> Context::CreateDescriptorHeap(
-		ComPtr<ID3D12Device2> device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors)
-	{
-		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
-
-		ComPtr<ID3D12DescriptorHeap> descriptorHeap;
-
-		D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-		desc.Type = type; // What's in our heap? CBV/SRV/UAV, sampler, RTV, DSV
-		desc.NumDescriptors = numDescriptors;
-		//desc.Flags = ; // TODO: Do we need any specific flags?
-		desc.NodeMask = deviceNodeMask;
-
-		HRESULT hr = device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap));
-		CheckHResult(hr, "Failed to create descriptor heap");
-
-		return descriptorHeap;
 	}
 }

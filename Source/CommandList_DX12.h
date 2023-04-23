@@ -48,7 +48,7 @@ namespace dx12
 
 		void Destroy();
 
-		bool GetFenceValue() const;
+		uint64_t GetFenceValue() const;
 		void SetFenceValue(uint64_t);
 
 		void Reset();
@@ -72,7 +72,7 @@ namespace dx12
 		void SetIndexBuffer(D3D12_INDEX_BUFFER_VIEW*) const;
 
 		void SetRenderTargets(
-			uint32_t count, D3D12_CPU_DESCRIPTOR_HANDLE* rtvs, bool isSingleHandle, D3D12_CPU_DESCRIPTOR_HANDLE* dsv) const;
+			uint32_t count, D3D12_CPU_DESCRIPTOR_HANDLE* rtvs, bool isSingleHandleToDescRange, D3D12_CPU_DESCRIPTOR_HANDLE* dsv) const;
 		void ClearRTV(CD3DX12_CPU_DESCRIPTOR_HANDLE const& rtv, glm::vec4 const& clearColor);
 		void ClearDepth(D3D12_CPU_DESCRIPTOR_HANDLE const& dsv, float clearColor);
 
@@ -85,7 +85,7 @@ namespace dx12
 		void TransitionResource(ID3D12Resource* resources, D3D12_RESOURCE_STATES from, D3D12_RESOURCE_STATES to) const;
 
 		D3D12_COMMAND_LIST_TYPE GetType() const;
-		ID3D12GraphicsCommandList2* GetD3DCommandList() const;		
+		ID3D12GraphicsCommandList2* GetD3DCommandList() const;
 
 
 	private:
@@ -113,7 +113,7 @@ namespace dx12
 	};
 
 
-	inline bool CommandList::GetFenceValue() const
+	inline uint64_t CommandList::GetFenceValue() const
 	{
 		return m_fenceValue;
 	}
@@ -185,12 +185,12 @@ namespace dx12
 
 
 	inline void CommandList::SetRenderTargets(
-		uint32_t count, D3D12_CPU_DESCRIPTOR_HANDLE* rtvs, bool isSingleHandle, D3D12_CPU_DESCRIPTOR_HANDLE* dsv) const
+		uint32_t count, D3D12_CPU_DESCRIPTOR_HANDLE* rtvs, bool isSingleHandleToDescRange, D3D12_CPU_DESCRIPTOR_HANDLE* dsv) const
 	{
-		// NOTE: isSingleHandle == true specifies that the rtvs are contiguous in memory, thus count rtv descriptors
+		// NOTE: isSingleHandleToDescRange == true specifies that the rtvs are contiguous in memory, thus count rtv descriptors
 		// will be found by offsetting from rtvs[0]. Otherwise, it is assumed rtvs is an array of descriptor pointers
 
-		m_commandList->OMSetRenderTargets(count, rtvs, isSingleHandle, dsv);
+		m_commandList->OMSetRenderTargets(count, rtvs, isSingleHandleToDescRange, dsv);
 	}
 
 

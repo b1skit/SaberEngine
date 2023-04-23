@@ -62,7 +62,7 @@ namespace
 		};
 
 		uint64_t copyQueueFenceVal = copyQueue.Execute(1, commandLists);
-		copyQueue.WaitForGPU(copyQueueFenceVal);
+		copyQueue.CPUWait(copyQueueFenceVal);
 
 		// TODO: We should destroy the vertex stream intermediate HEAP_TYPE_UPLOAD resources now that the copy is done
 
@@ -120,7 +120,6 @@ namespace dx12
 		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
 		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
-
 		
 		// Transition the backbuffer to the render target state:
 		Microsoft::WRL::ComPtr<ID3D12Resource> backbufferResource =
@@ -139,7 +138,7 @@ namespace dx12
 		// The swapchain requires contiguous RTV descriptors allocated in the same heap; compute the current one:
 		// TODO: Stage CPU descriptor handles into GPU-visible descriptor heap, and pack into descriptor tables
 		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(swapChainParams->m_backbufferRTVDescriptors.GetBaseDescriptor());
-		rtvHandle.Offset(swapChainParams->m_backbufferRTVDescriptors.GetDescriptorSize() * backbufferIdx);
+		rtvHandle.Offset(swapChainParams->m_backbufferRTVDescriptors.GetDescriptorSize() * backbufferIdx); // TODO: The CD3DX12_CPU_DESCRIPTOR_HANDLE copy ctor does the offset automatically????
 
 		// Debug: Vary the clear color to easily verify things are working
 		auto now = std::chrono::system_clock::now().time_since_epoch();
@@ -152,13 +151,7 @@ namespace dx12
 			swapChainParams->m_backbufferTargetSets[backbufferIdx]->GetColorTarget(0).GetTexture()
 				->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
-		CD3DX12_CPU_DESCRIPTOR_HANDLE renderTargetView(
-			rtvHandle,
-			backbufferIdx,
-			renderTargetPlatParams->m_descriptor.GetDescriptorSize());
-
-		commandList->ClearRTV(renderTargetView, clearColor); // TODO: This should just take the Target object
-
+		commandList->ClearRTV(rtvHandle, clearColor); // TODO: This should just take the Target object
 
 		// Clear depth target:
 		dx12::Texture::PlatformParams* depthPlatParams =
@@ -171,7 +164,7 @@ namespace dx12
 
 		
 		// Bind our render target(s) to the output merger (OM):
-		commandList->SetRenderTargets(1, &renderTargetView, false, &dsvDescriptor);
+		commandList->SetRenderTargets(1, &rtvHandle, false, &dsvDescriptor);
 
 
 		// Set the pipeline state and root signature first:
@@ -227,64 +220,67 @@ namespace dx12
 		};
 
 		// Record our last fence value, so we can add a GPU wait before transitioning the backbuffer for presentation
-		ctxPlatParams->m_lastFenceBeforePresent = directQueue.Execute(1, commandLists);
+		directQueue.Execute(1, commandLists);
 		// TODO: Should this value be tracked by the command queue?
 	}
 
 
 	void RenderManager::RenderImGui(re::RenderManager& renderManager)
 	{
-		#pragma message("TODO: Implement dx12::RenderManager::RenderImGui")
+		// Early out if there is nothing to draw:
+		if (renderManager.m_imGuiCommands.empty())
+		{
+			return;
+		}
 
-		//// Start the Dear ImGui frame
-		//ImGui_ImplDX12_NewFrame();
-		//ImGui_ImplWin32_NewFrame();
-		//ImGui::NewFrame();
+		// Start a new ImGui frame
+		ImGui_ImplDX12_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
 
 		// Process the queue of commands for the current frame:
 		while (!renderManager.m_imGuiCommands.empty())
 		{
-			//renderManager.m_imGuiCommands.front()->Execute();
+			renderManager.m_imGuiCommands.front()->Execute();
 			renderManager.m_imGuiCommands.pop();
 		}
 
-		//// Rendering
-		//ImGui::Render();
+		// ImGui internal rendering
+		ImGui::Render(); // Note: Does not touch the GPU/graphics API
 
-		//FrameContext* frameCtx = WaitForNextFrameResources();
-		//UINT backBufferIdx = g_pSwapChain->GetCurrentBackBufferIndex();
-		//frameCtx->CommandAllocator->Reset();
+		// Get our SE rendering objects:
+		re::Context const& context = re::RenderManager::Get()->GetContext();
+		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+		dx12::SwapChain::PlatformParams const* swapChainParams =
+			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+		dx12::CommandQueue& directQueue = ctxPlatParams->m_commandQueues[dx12::CommandList::Direct];
 
-		//D3D12_RESOURCE_BARRIER barrier = {};
-		//barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		//barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		//barrier.Transition.pResource = g_mainRenderTargetResource[backBufferIdx];
-		//barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-		//barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-		//barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		//g_pd3dCommandList->Reset(frameCtx->CommandAllocator, NULL);
-		//g_pd3dCommandList->ResourceBarrier(1, &barrier);
+		// Configure the render target:
+		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
 
-		//// Render Dear ImGui graphics
-		//const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
-		//g_pd3dCommandList->ClearRenderTargetView(g_mainRenderTargetDescriptor[backBufferIdx], clear_color_with_alpha, 0, NULL);
-		//g_pd3dCommandList->OMSetRenderTargets(1, &g_mainRenderTargetDescriptor[backBufferIdx], FALSE, NULL);
-		//g_pd3dCommandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
-		//ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), g_pd3dCommandList);
-		//barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		//barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-		//g_pd3dCommandList->ResourceBarrier(1, &barrier);
-		//g_pd3dCommandList->Close();
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(swapChainParams->m_backbufferRTVDescriptors.GetBaseDescriptor());
+		rtvHandle.Offset(swapChainParams->m_backbufferRTVDescriptors.GetDescriptorSize() * backbufferIdx);
 
-		//g_pd3dCommandQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)&g_pd3dCommandList);
+		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
-		//g_pSwapChain->Present(1, 0); // Present with vsync
-		////g_pSwapChain->Present(0, 0); // Present without vsync
+		commandList->SetRenderTargets(1, &rtvHandle, false, nullptr);
 
-		//UINT64 fenceValue = g_fenceLastSignaledValue + 1;
-		//g_pd3dCommandQueue->Signal(g_fence, fenceValue);
-		//g_fenceLastSignaledValue = fenceValue;
-		//frameCtx->FenceValue = fenceValue;
+		// Configure the descriptor heap:
+		ID3D12GraphicsCommandList2* d3dCommandList = commandList->GetD3DCommandList();
+
+		ID3D12DescriptorHeap* descriptorHeaps[1] = { ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap.Get() };
+		d3dCommandList->SetDescriptorHeaps(1, descriptorHeaps);
+		
+		// Record our ImGui draws:
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), d3dCommandList);
+
+		// Submit the populated command list:
+		std::shared_ptr<dx12::CommandList> commandLists[] =
+		{
+			commandList
+		};
+
+		directQueue.Execute(1, commandLists);
 	}
 
 
@@ -293,6 +289,13 @@ namespace dx12
 		#pragma message("TODO: Implement dx12::RenderManager::Shutdown")
 		LOG_ERROR("TODO: Implement dx12::RenderManager::Shutdown");
 
+		re::Context const& context = re::RenderManager::Get()->GetContext();
+		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+
+		// TODO: We should be able to iterate over all of these, but some of them aren't initialized
+		// TODO: We also flush these in the context as well... But it's necessary here, since we delete objects next
+		ctxPlatParams->m_commandQueues[CommandList::CommandListType::Direct].Flush();
+		ctxPlatParams->m_commandQueues[CommandList::CommandListType::Copy].Flush();
 
 		// TEMP DEBUG CODE:
 		s_helloTriangle = nullptr;

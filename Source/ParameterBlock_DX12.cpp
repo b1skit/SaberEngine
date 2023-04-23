@@ -83,7 +83,7 @@ namespace dx12
 			0,						// Subresource
 			&readRange,
 			&cpuVisibleData);
-		CheckHResult(hr, "Failed to map committed resource");
+		CheckHResult(hr, "ParameterBlock: Failed to map committed resource");
 
 		// Get the PB data:
 		void const* srcData = nullptr;

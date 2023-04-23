@@ -23,9 +23,7 @@ namespace
 
 		HRESULT hr = device->CreateCommandAllocator(
 			type, // Copy, compute, direct draw, etc
-			IID_PPV_ARGS(&commandAllocator)); // REFIID/GUID (Globally-Unique IDentifier) for the command allocator
-		// NOTE: IID_PPV_ARGS macro automatically supplies both the RIID & interface pointer
-
+			IID_PPV_ARGS(&commandAllocator)); // IID_PPV_ARGS: RIID & interface pointer
 		CheckHResult(hr, "Failed to create command allocator");
 
 		hr = commandAllocator->Reset();
@@ -58,9 +56,7 @@ namespace dx12
 			m_type,						// Direct draw/compute/copy/etc
 			m_commandAllocator.Get(),	// The command allocator the command lists will be created on
 			nullptr,					// Optional: Command list initial pipeline state
-			IID_PPV_ARGS(&m_commandList)); // Command list interface REFIID/GUID, & destination for the populated command list
-		// NOTE: IID_PPV_ARGS macro automatically supplies both the RIID & interface pointer
-
+			IID_PPV_ARGS(&m_commandList)); // IID_PPV_ARGS: RIID & destination for the populated command list
 		CheckHResult(hr, "Failed to create command list");
 
 		// Set the descriptor heaps (unless we're a copy command list):
@@ -205,5 +201,4 @@ namespace dx12
 		// TODO: Support batching of multiple barriers
 		m_commandList->ResourceBarrier(1, &barrier);
 	}
-
 }
