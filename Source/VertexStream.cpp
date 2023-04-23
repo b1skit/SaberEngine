@@ -83,7 +83,7 @@ namespace re
 		// D3D12 does not support GPU-normalization of 32 bit types. As a hail-mary, we attempt to pre-normalize here
 		if (DoNormalize() && m_dataType == re::VertexStream::DataType::Float)
 		{
-			LOG_WARNING("Pre-normalizing vertex stream data as its format incompatible is with GPU-normalization");
+			LOG_WARNING("Pre-normalizing vertex stream data as its format is incompatible with GPU-normalization");
 
 			NormalizeData(m_data, m_numComponents, m_dataType);
 
