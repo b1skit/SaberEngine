@@ -130,6 +130,9 @@ namespace dx12
 		m_currentGraphicsRootSignature = nullptr;
 		m_currentPSO = nullptr;
 
+		// Reset the command allocator BEFORE we reset the command list (to avoid leaking memory)
+		m_commandAllocator->Reset();
+
 		// Note: pso is optional here; nullptr sets a dummy PSO
 		HRESULT hr = m_commandList->Reset(m_commandAllocator.Get(), nullptr);   
 		CheckHResult(hr, "Failed to reset command list");
