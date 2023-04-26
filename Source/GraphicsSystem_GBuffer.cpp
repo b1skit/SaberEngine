@@ -18,20 +18,19 @@ using std::string;
 
 namespace gr
 {
-	// These names are ordered to align with the layout binding indexes defined in SaberCommon.glsl
-	const std::vector<std::string> GBufferGraphicsSystem::GBufferTexNames
+	const std::array<std::string, GBufferGraphicsSystem::GBufferTexIdx_Count> GBufferGraphicsSystem::GBufferTexNames
 	{
-		"GBufferAlbedo",	// 0
-		"GBufferWNormal",	// 1
-		"GBufferRMAO",		// 2
-		"GBufferEmissive",	// 3
-		"GBufferWPos",		// 4
-		"GBufferMatProp0",	// 5
-		"GBufferDepth",		// 6
+		ENUM_TO_STR(GBufferAlbedo),		// 0
+		ENUM_TO_STR(GBufferWNormal),	// 1
+		ENUM_TO_STR(GBufferRMAO),		// 2
+		ENUM_TO_STR(GBufferEmissive),	// 3
+		ENUM_TO_STR(GBufferWPos),		// 4
+		ENUM_TO_STR(GBufferMatProp0),	// 5
+		ENUM_TO_STR(GBufferDepth),		// 6
 	};
 	// TODO: Split this into 2 lists: color target names, and depth names
 	// -> Often need to loop over color, and treat depth differently
-
+	
 
 	GBufferGraphicsSystem::GBufferGraphicsSystem(std::string name)
 		: NamedObject(name)
@@ -47,7 +46,7 @@ namespace gr
 		std::shared_ptr<Shader> gBufferShader = 
 			std::make_shared<Shader>(Config::Get()->GetValue<string>("gBufferFillShaderName"));
 
-		m_gBufferStage.GetStageShader() = gBufferShader;
+		m_gBufferStage.SetStageShader(gBufferShader);
 
 		// Create GBuffer color targets:
 		Texture::TextureParams gBufferTexParams;
@@ -70,7 +69,7 @@ namespace gr
 
 
 		std::shared_ptr<re::TextureTargetSet> gBufferTargets = m_gBufferStage.GetTextureTargetSet();
-		for (uint8_t i = 0; i <= 5; i++)
+		for (uint8_t i = GBufferTexIdx::GBufferAlbedo; i <= GBufferTexIdx::GBufferMatProp0; i++)
 		{
 			gBufferTargets->SetColorTarget(
 				i, std::make_shared<re::Texture>(GBufferTexNames[i], gBufferTexParams, false));
@@ -81,11 +80,9 @@ namespace gr
 		depthTexParams.m_usage = re::Texture::Usage::DepthTarget;
 		depthTexParams.m_format = re::Texture::Format::Depth32F;
 		depthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-
-		const size_t gBufferDepthTextureNameIdx = 6; //TODO: Handle this in a less brittle way
 				
 		gBufferTargets->SetDepthStencilTarget(
-			std::make_shared<re::Texture>(GBufferTexNames[gBufferDepthTextureNameIdx], depthTexParams, false));
+			std::make_shared<re::Texture>(GBufferTexNames[GBufferTexIdx::GBufferDepth], depthTexParams, false));
 
 		// Camera:
 		m_gBufferStage.AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());
@@ -112,7 +109,7 @@ namespace gr
 
 		// TODO: Support transparency
 		// -> Mark meshes with transparent materials with a filter bit during load
-		// -> Render in a separate forward mode
+		// -> Render in a separate forward pass
 	}
 
 

@@ -223,8 +223,8 @@ namespace gr
 		{
 			RenderStage brdfStage("BRDF pre-integration stage");
 
-			brdfStage.GetStageShader() = make_shared<Shader>(
-				Config::Get()->GetValue<string>("BRDFIntegrationMapShaderName"));
+			brdfStage.SetStageShader(
+				make_shared<Shader>(Config::Get()->GetValue<string>("BRDFIntegrationMapShaderName")));
 
 			// Create a render target texture:			
 			Texture::TextureParams brdfParams;
@@ -315,7 +315,7 @@ namespace gr
 			{
 				RenderStage iemStage("IEM generation: Face " + to_string(face + 1) + "/6");
 
-				iemStage.GetStageShader() = iemShader;
+				iemStage.SetStageShader(iemShader);
 				iemStage.SetPerFrameTextureInput(
 					"MatAlbedo",
 					iblTexture,
@@ -374,7 +374,7 @@ namespace gr
 						"PMREM generation: Face " + to_string(face + 1) + "/6, MIP " +
 						to_string(currentMipLevel + 1) + "/" + to_string(numMipLevels));
 
-					pmremStage.GetStageShader() = pmremShader;
+					pmremStage.SetStageShader(pmremShader);
 					pmremStage.SetPerFrameTextureInput(
 						"MatAlbedo",
 						iblTexture,
@@ -411,8 +411,8 @@ namespace gr
 
 		
 		// Ambient light stage:
-		m_ambientStage.GetStageShader() = make_shared<Shader>(
-			Config::Get()->GetValue<string>("deferredAmbientLightShaderName"));
+		m_ambientStage.SetStageShader(make_shared<Shader>(
+			Config::Get()->GetValue<string>("deferredAmbientLightShaderName")));
 		m_ambientStage.GetStageShader()->ShaderKeywords().emplace_back("AMBIENT_IBL");
 
 		m_ambientStage.AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
@@ -447,8 +447,8 @@ namespace gr
 			}
 			m_keylightStage.SetStagePipelineState(keylightStageParams);
 
-			m_keylightStage.GetStageShader() = make_shared<Shader>(
-				Config::Get()->GetValue<string>("deferredKeylightShaderName"));
+			m_keylightStage.SetStageShader(
+				make_shared<Shader>(Config::Get()->GetValue<string>("deferredKeylightShaderName")));
 
 			m_keylightStage.AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 
@@ -484,8 +484,8 @@ namespace gr
 			pointlightStageParams.m_faceCullingMode = gr::PipelineState::FaceCullingMode::Front; // Cull front faces of light volumes
 			m_pointlightStage.SetStagePipelineState(pointlightStageParams);
 
-			m_pointlightStage.GetStageShader() = make_shared<Shader>(
-				Config::Get()->GetValue<string>("deferredPointLightShaderName"));
+			m_pointlightStage.SetStageShader(
+				make_shared<Shader>(Config::Get()->GetValue<string>("deferredPointLightShaderName")));
 
 			pipeline.AppendRenderStage(m_pointlightStage);
 

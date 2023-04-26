@@ -22,7 +22,7 @@ namespace re
 		: NamedObject(name)
 		, m_stageShader(nullptr)
 		, m_textureTargetSet(nullptr)
-		, m_writesColor(true) // Reasonable assumption; Updated when we set the param block
+		, m_writesColor(true) // Reasonable assumption; Updated when we set the pipeline state
 		, m_batchFilterMask(0) // Accept all batches by default
 	{
 		m_textureTargetSet = std::make_shared<re::TextureTargetSet>(name + " target");

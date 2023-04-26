@@ -52,7 +52,7 @@ namespace gr
 		emissiveStageParams.m_depthTestMode		= gr::PipelineState::DepthTestMode::Always;
 
 		m_emissiveBlitStage.SetStagePipelineState(emissiveStageParams);
-		m_emissiveBlitStage.GetStageShader() = blitShader;
+		m_emissiveBlitStage.SetStageShader(blitShader);
 		m_emissiveBlitStage.AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
 		m_emissiveBlitStage.SetTextureTargetSet(deferredLightGS->GetFinalTextureTargetSet());
@@ -109,11 +109,11 @@ namespace gr
 
 			if (i == 0)
 			{
-				m_downResStages[i].GetStageShader() = luminanceThresholdShader;
+				m_downResStages[i].SetStageShader(luminanceThresholdShader);
 			}
 			else
 			{
-				m_downResStages[i].GetStageShader() = blitShader;
+				m_downResStages[i].SetStageShader(blitShader);
 			}
 
 			pipeline.AppendRenderStage(m_downResStages[i]);
@@ -157,13 +157,13 @@ namespace gr
 			if (i % 2 == 0)
 			{
 				m_blurStages.back().GetTextureTargetSet()->SetColorTarget(0, blurPingPongTexture);
-				m_blurStages.back().GetStageShader() = horizontalBlurShader;
+				m_blurStages.back().SetStageShader(horizontalBlurShader);
 			}
 			else
 			{
 				m_blurStages.back().GetTextureTargetSet()->SetColorTarget(0,
 					m_downResStages.back().GetTextureTargetSet()->GetColorTarget(0));
-				m_blurStages.back().GetStageShader() = verticalBlurShader;
+				m_blurStages.back().SetStageShader(verticalBlurShader);
 			}
 
 			pipeline.AppendRenderStage(m_blurStages[i]);
@@ -182,7 +182,7 @@ namespace gr
 			m_upResStages.back().GetTextureTargetSet()->Viewport().Height() = currentYRes;
 	
 			m_upResStages.back().AddPermanentParameterBlock(sceneCam->GetCameraParams());
-			m_upResStages[i].GetStageShader() = blitShader;
+			m_upResStages[i].SetStageShader(blitShader);
 
 			if (i == (numScalingStages - 1)) // Last iteration: Additive blit back to the src gs
 			{

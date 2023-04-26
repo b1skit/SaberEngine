@@ -10,7 +10,21 @@ namespace gr
 	class GBufferGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
-		static const std::vector<std::string> GBufferTexNames;
+		// These enums are converted to strings, & must align with the layout binding indexes defined in SaberCommon.glsl
+		enum GBufferTexIdx
+		{
+			GBufferAlbedo	= 0,
+			GBufferWNormal	= 1,
+			GBufferRMAO		= 2,
+			GBufferEmissive = 3,
+			GBufferWPos		= 4,
+			GBufferMatProp0 = 5,
+			GBufferDepth	= 6,
+
+			GBufferTexIdx_Count
+		};
+		static const std::array<std::string, GBufferTexIdx_Count> GBufferTexNames;
+
 
 	public:
 		explicit GBufferGraphicsSystem(std::string name);

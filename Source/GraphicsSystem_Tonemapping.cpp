@@ -65,7 +65,7 @@ namespace gr
 
 		m_tonemappingStage.SetStagePipelineState(tonemappingStageParam);
 
-		m_tonemappingStage.GetStageShader() = make_shared<Shader>(Config::Get()->GetValue<string>("toneMapShader"));
+		m_tonemappingStage.SetStageShader(make_shared<Shader>(Config::Get()->GetValue<string>("toneMapShader")));
 
 		m_tonemappingStage.SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 
