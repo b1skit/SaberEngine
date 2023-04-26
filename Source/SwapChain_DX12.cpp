@@ -42,7 +42,7 @@ namespace
 		{
 			// Target set:
 			swapChainParams->m_backbufferTargetSets[backbufferIdx] =
-				std::make_shared<re::TextureTargetSet>(std::string("Backbuffer_%s", backbufferIdx));
+				std::make_shared<re::TextureTargetSet>("Backbuffer " + std::to_string(backbufferIdx));
 
 			ComPtr<ID3D12Resource> backbufferResource;
 			HRESULT hr = swapChainParams->m_swapChain->GetBuffer(backbufferIdx, IID_PPV_ARGS(&backbufferResource));

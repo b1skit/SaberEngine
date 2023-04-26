@@ -87,7 +87,7 @@ namespace re
 	/******************/
 	// TextureTargetSet
 	/******************/
-	TextureTargetSet::TextureTargetSet(string name)
+	TextureTargetSet::TextureTargetSet(string const& name)
 		: NamedObject(name)
 		, m_colorTargetStateDirty(true)
 		, m_hasColorTarget(false)

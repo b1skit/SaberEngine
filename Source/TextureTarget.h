@@ -132,7 +132,7 @@ namespace re
 
 
 	public:
-		explicit TextureTargetSet(std::string name);
+		explicit TextureTargetSet(std::string const& name);
 		TextureTargetSet(TextureTargetSet const& rhs, std::string const& newName);
 		TextureTargetSet(TextureTargetSet&&) = default;
 		TextureTargetSet& operator=(TextureTargetSet const&);
