@@ -18,8 +18,8 @@ namespace re
 
 		void Destroy();
 
-		std::vector<re::RenderStage*>::iterator AppendRenderStage(re::RenderStage& renderStage);
-		std::vector<re::RenderStage>::iterator AppendSingleFrameRenderStage(re::RenderStage& renderStage);
+		std::vector<re::RenderStage*>::iterator AppendRenderStage(re::RenderStage* renderStage);
+		std::vector<re::RenderStage>::iterator AppendSingleFrameRenderStage(re::RenderStage const& renderStage);
 
 		size_t GetNumberOfStages() const { return m_stagePipeline.size(); }
 

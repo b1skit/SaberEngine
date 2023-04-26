@@ -78,7 +78,7 @@ namespace gr
 
 		m_tonemappingStage.AddPermanentParameterBlock(tonemappingPB);
 
-		pipeline.AppendRenderStage(m_tonemappingStage);
+		pipeline.AppendRenderStage(&m_tonemappingStage);
 	}
 
 

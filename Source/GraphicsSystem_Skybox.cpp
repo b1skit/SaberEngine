@@ -76,7 +76,7 @@ namespace gr
 		m_skyboxStage.GetTextureTargetSet()->SetDepthStencilTarget(
 			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget());
 
-		pipeline.AppendRenderStage(m_skyboxStage);
+		pipeline.AppendRenderStage(&m_skyboxStage);
 	}
 
 

@@ -25,6 +25,7 @@ namespace re
 		, m_writesColor(true) // Reasonable assumption; Updated when we set the pipeline state
 		, m_batchFilterMask(0) // Accept all batches by default
 	{
+		SEAssert("", GetName() != "");
 		m_textureTargetSet = std::make_shared<re::TextureTargetSet>(name + " target");
 	}
 
@@ -95,6 +96,9 @@ namespace re
 
 	void RenderStage::AddBatch(re::Batch const& batch)
 	{
+		SEAssert("Either the batch or the stage must have a shader", 
+			m_stageShader || batch.GetBatchShader());
+
 		if (m_batchFilterMask & batch.GetBatchFilterMask() || !m_batchFilterMask) // Accept all batches by default
 		{
 			m_stageBatches.emplace_back(batch);

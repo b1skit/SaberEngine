@@ -112,7 +112,7 @@ namespace gr
 
 				m_directionalShadowStage.SetStagePipelineState(shadowStageParams);
 
-				pipeline.AppendRenderStage(m_directionalShadowStage);
+				pipeline.AppendRenderStage(&m_directionalShadowStage);
 			}
 		}
 		
@@ -150,7 +150,7 @@ namespace gr
 				shadowStage->AddPermanentParameterBlock(cubemapShadowPB);
 				// TODO: The cubemap shadows param block should be created/maintained by the shadow map object, or the shadow camera
 
-				pipeline.AppendRenderStage(*shadowStage);
+				pipeline.AppendRenderStage(shadowStage);
 			}
 			else
 			{

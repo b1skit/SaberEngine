@@ -57,7 +57,7 @@ namespace gr
 
 		m_emissiveBlitStage.SetTextureTargetSet(deferredLightGS->GetFinalTextureTargetSet());
 		
-		pipeline.AppendRenderStage(m_emissiveBlitStage);
+		pipeline.AppendRenderStage(&m_emissiveBlitStage);
 
 
 		// Bloom stages:
@@ -116,7 +116,7 @@ namespace gr
 				m_downResStages[i].SetStageShader(blitShader);
 			}
 
-			pipeline.AppendRenderStage(m_downResStages[i]);
+			pipeline.AppendRenderStage(&m_downResStages[i]);
 
 			// Don't halve the resolution on the last iteration:
 			if (i < (numScalingStages - 1))
@@ -166,7 +166,7 @@ namespace gr
 				m_blurStages.back().SetStageShader(verticalBlurShader);
 			}
 
-			pipeline.AppendRenderStage(m_blurStages[i]);
+			pipeline.AppendRenderStage(&m_blurStages[i]);
 		}
 
 		// Up-res stages:
@@ -203,7 +203,7 @@ namespace gr
 				m_upResStages.back().SetStagePipelineState(bloomStageParams);
 			}
 
-			pipeline.AppendRenderStage(m_upResStages[i]);
+			pipeline.AppendRenderStage(&m_upResStages[i]);
 
 			// Don't halve the resolution on the last iteration:
 			if (i < (numScalingStages - 1))

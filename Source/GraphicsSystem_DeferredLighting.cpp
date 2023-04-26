@@ -428,7 +428,7 @@ namespace gr
 		m_ambientStage.AddPermanentParameterBlock(ambientLightPB);
 
 		// If we made it this far, append the ambient stage:
-		pipeline.AppendRenderStage(m_ambientStage);
+		pipeline.AppendRenderStage(&m_ambientStage);
 		
 
 		// Key light stage:
@@ -452,7 +452,7 @@ namespace gr
 
 			m_keylightStage.AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 
-			pipeline.AppendRenderStage(m_keylightStage);
+			pipeline.AppendRenderStage(&m_keylightStage);
 		}
 
 
@@ -487,7 +487,7 @@ namespace gr
 			m_pointlightStage.SetStageShader(
 				make_shared<Shader>(Config::Get()->GetValue<string>("deferredPointLightShaderName")));
 
-			pipeline.AppendRenderStage(m_pointlightStage);
+			pipeline.AppendRenderStage(&m_pointlightStage);
 
 			// Create a sphere mesh for each pointlights:
 			for (shared_ptr<Light> pointlight : pointLights)

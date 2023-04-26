@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "DebugConfiguration.h"
 
 
 namespace en
@@ -44,6 +45,8 @@ namespace en
 
 	NamedObject::NamedObject(std::string const& name)
 	{
+		SEAssert("Empty name strings are not allowed", !name.empty());
+
 		SetName(name);
 		ComputeUniqueID();
 	}

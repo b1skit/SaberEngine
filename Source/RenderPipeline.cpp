@@ -6,36 +6,22 @@
 using re::RenderStage;
 using std::vector;
 
-namespace
-{
-	inline void SanityCheckRenderStage(RenderStage const& renderStage)
-	{
-		SEAssert("RenderStage not fully configured",
-			renderStage.GetName() != "" &&
-			renderStage.GetStageShader() != nullptr
-			// TODO: Add more conditions
-		);
-		// Note: Null stage geometry, camera allowed
-	}
-}
 
 namespace re
 {
 	/******************************************** StagePipeline********************************************/
 
-	std::vector<re::RenderStage*>::iterator StagePipeline::AppendRenderStage(RenderStage& renderStage)
+	std::vector<re::RenderStage*>::iterator StagePipeline::AppendRenderStage(RenderStage* renderStage)
 	{
-		SanityCheckRenderStage(renderStage);
+		SEAssert("Cannot append a null RenderStage", renderStage);
 		
-		m_stagePipeline.emplace_back(&renderStage);
+		m_stagePipeline.emplace_back(renderStage);
 		return m_stagePipeline.end();
 	}
 
 
-	std::vector<re::RenderStage>::iterator StagePipeline::AppendSingleFrameRenderStage(RenderStage& renderStage)
-	{
-		SanityCheckRenderStage(renderStage);
-		
+	std::vector<re::RenderStage>::iterator StagePipeline::AppendSingleFrameRenderStage(RenderStage const& renderStage)
+	{	
 		m_singleFrameStagePipeline.emplace_back(renderStage);
 		return m_singleFrameStagePipeline.end();
 	}

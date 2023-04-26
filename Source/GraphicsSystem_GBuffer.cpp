@@ -99,7 +99,7 @@ namespace gr
 		m_gBufferStage.SetStagePipelineState(gBufferStageParams);
 
 		// Finally, append the render stage to the pipeline:
-		pipeline.AppendRenderStage(m_gBufferStage);
+		pipeline.AppendRenderStage(&m_gBufferStage);
 	}
 
 
