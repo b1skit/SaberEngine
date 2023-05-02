@@ -54,15 +54,15 @@ namespace gr
 	void TonemappingGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
 		gr::PipelineState tonemappingStageParam;
-		tonemappingStageParam.m_targetClearMode	= gr::PipelineState::ClearTarget::None;
-		tonemappingStageParam.m_faceCullingMode	= gr::PipelineState::FaceCullingMode::Back;
-		tonemappingStageParam.m_srcBlendMode	= gr::PipelineState::BlendMode::One;
-		tonemappingStageParam.m_dstBlendMode	= gr::PipelineState::BlendMode::Zero;
-		tonemappingStageParam.m_depthTestMode	= gr::PipelineState::DepthTestMode::Always;
+		tonemappingStageParam.SetClearTarget(gr::PipelineState::ClearTarget::None);
+		tonemappingStageParam.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
+		tonemappingStageParam.SetSrcBlendMode(gr::PipelineState::BlendMode::One);
+		tonemappingStageParam.SetDstBlendMode(gr::PipelineState::BlendMode::Zero);
+		tonemappingStageParam.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
 
 		m_tonemappingStage.SetStagePipelineState(tonemappingStageParam);
 
-		m_tonemappingStage.SetStageShader(make_shared<Shader>(Config::Get()->GetValue<string>("toneMapShader")));
+		m_tonemappingStage.SetStageShader(re::Shader::Create(Config::Get()->GetValue<string>("toneMapShader")));
 
 		m_tonemappingStage.SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 

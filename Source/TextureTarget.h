@@ -2,6 +2,7 @@
 #pragma once
 
 #include "DebugConfiguration.h"
+#include "HashedDataObject.h"
 #include "IPlatformParams.h"
 #include "Texture.h"
 #include "NamedObject.h"
@@ -110,7 +111,7 @@ namespace re
 
 
 	// Collection of render target textures
-	class TextureTargetSet final : public virtual en::NamedObject
+	class TextureTargetSet final : public en::NamedObject, public en::HashedDataObject
 	{
 	public:
 		struct PlatformParams : public IPlatformParams
@@ -151,7 +152,7 @@ namespace re
 		bool HasColorTarget();
 		bool HasDepthTarget();
 
-		uint8_t GetNumColorTargets() const;
+		uint8_t GetNumColorTargets();
 
 		inline re::Viewport& Viewport() { return m_viewport; }
 		inline re::Viewport const& Viewport() const { return m_viewport; }
@@ -164,17 +165,22 @@ namespace re
 		
 		std::shared_ptr<re::ParameterBlock> GetTargetParameterBlock();
 
+		uint64_t GetTargetSetSignature(); // Use this instead of HashedDataObject::GetDataHash
 
-	private:
-		void UpdateTargetParameterBlock();
+	private: // Internal state tracking:
+		void RecomputeInternalState();
+
+		void RecomputeNumColorTargets();
+		void RecomputeTargetParameterBlock();
+		void ComputeDataHash() override; // HashedDataObject interface
 
 
 	private:
 		std::vector<re::TextureTarget> m_colorTargets;
 		re::TextureTarget m_depthStencilTarget;
 
-		bool m_hasColorTarget;
-		bool m_colorTargetStateDirty;
+		uint8_t m_numColorTargets;
+		bool m_targetStateDirty;
 
 		re::Viewport m_viewport;
 		re::ScissorRect m_scissorRect; // TODO: Use this in OpenGL
@@ -182,7 +188,6 @@ namespace re
 		std::shared_ptr<PlatformParams> m_platformParams;
 
 		std::shared_ptr<re::ParameterBlock> m_targetParameterBlock;
-		bool m_targetParamsDirty; // Do we need to recompute the target parameter block?
 
 
 	private:

@@ -72,8 +72,11 @@ namespace
 			dx12::TextureTargetSet::CreateDepthStencilTarget(*swapChainParams->m_backbufferTargetSets[backbufferIdx]);
 
 			// Set default viewports and scissor rects. Note: This is NOT required, just included for clarity
-			swapChainParams->m_backbufferTargetSets[backbufferIdx]->Viewport() = re::Viewport(); // Defaults = 0, 0, xRes, yRes
-			swapChainParams->m_backbufferTargetSets[backbufferIdx]->ScissorRect() = re::ScissorRect(); // Defaults = 0, 0, long::max, long::max
+			swapChainParams->m_backbufferTargetSets[backbufferIdx]->Viewport() = 
+				re::Viewport(); // Defaults = 0, 0, xRes, yRes
+
+			swapChainParams->m_backbufferTargetSets[backbufferIdx]->ScissorRect() = 
+				re::ScissorRect(); // Defaults = 0, 0, long::max, long::max
 		}		
 	}
 }

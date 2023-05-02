@@ -78,10 +78,10 @@ namespace re
 		m_pipelineState = params;
 
 		m_writesColor =
-			m_pipelineState.m_colorWriteMode.R == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
-			m_pipelineState.m_colorWriteMode.G == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
-			m_pipelineState.m_colorWriteMode.B == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
-			m_pipelineState.m_colorWriteMode.A == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? true : false;
+			m_pipelineState.GetColorWriteMode().R == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
+			m_pipelineState.GetColorWriteMode().G == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
+			m_pipelineState.GetColorWriteMode().B == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
+			m_pipelineState.GetColorWriteMode().A == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? true : false;
 	}
 
 

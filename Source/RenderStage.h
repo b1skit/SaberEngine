@@ -44,6 +44,7 @@ namespace re
 
 		void SetStagePipelineState(gr::PipelineState const& params);
 		inline gr::PipelineState const& GetStagePipelineState() const { return m_pipelineState; }
+		inline gr::PipelineState& GetStagePipelineState() { return m_pipelineState; } // Note: Do not modify. Use SetStagePipelineState instead
 
 		void SetStageShader(std::shared_ptr<re::Shader>);
 		std::shared_ptr<re::Shader> const GetStageShader() const;

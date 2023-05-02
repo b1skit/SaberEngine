@@ -37,5 +37,6 @@ namespace platform
 	}
 
 
+	void (*platform::Shader::Create)(re::Shader&) = nullptr;
 	void (*platform::Shader::Destroy)(re::Shader&) = nullptr;
 }

@@ -43,9 +43,12 @@ namespace dx12
 
 			uint64_t m_frameFenceValues[dx12::RenderManager::k_numFrames]; // Fence values for signalling the command queue
 			
-			// TODO: Precompute a library of all pipeline states needed at startup. For now, we just have a single PSO
-			std::shared_ptr<dx12::PipelineState> m_pipelineState;
-
+			// Access the PSO library via dx12::Context::GetPipelineStateObject
+			std::unordered_map<uint64_t, // re::Shader::GetName()
+				std::unordered_map<uint64_t, // gr::PipelineState::GetPipelineStateDataHash()
+					std::unordered_map<uint64_t, // re::TextureTargetSet::GetTargetSetSignature()
+						std::shared_ptr<dx12::PipelineState>>>> m_PSOLibrary;
+			
 			std::vector<dx12::CPUDescriptorHeapManager> m_cpuDescriptorHeapMgrs; // CPUDescriptorHeapType_Count
 
 			// Imgui descriptor heap: A single, CPU and GPU-visible SRV descriptor for the internal font texture
@@ -58,14 +61,20 @@ namespace dx12
 		static void Destroy(re::Context& context);
 		static void Present(re::Context const& context);
 		static std::shared_ptr<dx12::PipelineState> CreateAddPipelineState(
-			gr::PipelineState const&, re::Shader const&, re::TextureTargetSet const&);
+			re::Shader const&, gr::PipelineState&, re::TextureTargetSet&);
+		
+		// TODO: Move these to the system info layer:
 		static uint8_t GetMaxTextureInputs();
 		static uint8_t GetMaxColorTargets();
 
 
 		// DX12-specific interface:
 		static dx12::CommandQueue& GetCommandQueue(CommandList::CommandListType type);
-
+		
+		static std::shared_ptr<dx12::PipelineState> GetPipelineStateObject(
+			re::Shader const& shader,
+			gr::PipelineState& grPipelineState,
+			re::TextureTargetSet* targetSet); // Null targetSet is valid (indicates the backbuffer)
 
 		// TODO:
 		// Add a helper wrapper to get:

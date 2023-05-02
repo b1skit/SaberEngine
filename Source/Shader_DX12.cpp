@@ -12,6 +12,11 @@ namespace dx12
 {
 	void Shader::Create(re::Shader& shader)
 	{
+		dx12::Shader::PlatformParams* params = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
+
+		SEAssert("Shader has already been created", !params->m_isCreated);
+		params->m_isCreated = true;
+
 		// Our DX12 Shaders have a naming pattern of <name>_<V/G/P/C>Shader.hlsl
 		// e.g. Some_VShader.hlsl, Some_GShader.hlsl, Some_PShader.hlsl, Some_CShader.hlsl
 		// Compiled Shader Objects (CSO) are pre-compiled by Visual Studio, we attempt to load them here
@@ -27,8 +32,6 @@ namespace dx12
 
 		// Assemble root shader dir, as a wide string
 		std::wstring const& shaderRootWStr = en::Config::Get()->GetValueAsWString("shaderDirectory");
-
-		dx12::Shader::PlatformParams* params = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 
 		for (size_t i = 0; i < nameSuffix.size(); i++)
 		{

@@ -41,15 +41,15 @@ namespace gr
 
 		Camera* sceneCam = SceneManager::GetSceneData()->GetMainCamera().get();
 
-		shared_ptr<Shader> blitShader = make_shared<Shader>(Config::Get()->GetValue<string>("blitShaderName"));
+		shared_ptr<Shader> blitShader = re::Shader::Create(Config::Get()->GetValue<string>("blitShaderName"));
 
 		// Emissive blit stage:
 		gr::PipelineState emissiveStageParams;
-		emissiveStageParams.m_targetClearMode	= gr::PipelineState::ClearTarget::None;
-		emissiveStageParams.m_faceCullingMode	= gr::PipelineState::FaceCullingMode::Back;
-		emissiveStageParams.m_srcBlendMode		= gr::PipelineState::BlendMode::One;
-		emissiveStageParams.m_dstBlendMode		= gr::PipelineState::BlendMode::One;
-		emissiveStageParams.m_depthTestMode		= gr::PipelineState::DepthTestMode::Always;
+		emissiveStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
+		emissiveStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
+		emissiveStageParams.SetSrcBlendMode(gr::PipelineState::BlendMode::One);
+		emissiveStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::One);
+		emissiveStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
 
 		m_emissiveBlitStage.SetStagePipelineState(emissiveStageParams);
 		m_emissiveBlitStage.SetStageShader(blitShader);
@@ -62,11 +62,11 @@ namespace gr
 
 		// Bloom stages:
 		gr::PipelineState bloomStageParams;
-		bloomStageParams.m_targetClearMode	= gr::PipelineState::ClearTarget::None;
-		bloomStageParams.m_faceCullingMode	= gr::PipelineState::FaceCullingMode::Back;
-		bloomStageParams.m_srcBlendMode		= gr::PipelineState::BlendMode::One;
-		bloomStageParams.m_dstBlendMode		= gr::PipelineState::BlendMode::Zero;
-		bloomStageParams.m_depthTestMode	= gr::PipelineState::DepthTestMode::Always;
+		bloomStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
+		bloomStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
+		bloomStageParams.SetSrcBlendMode(gr::PipelineState::BlendMode::One);
+		bloomStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::Zero);
+		bloomStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
 		
 		const uint32_t numScalingStages = m_numDownSamplePasses;
 		m_downResStages.reserve(numScalingStages); // MUST reserve so our pointers won't change
@@ -85,7 +85,7 @@ namespace gr
 		resScaleParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		resScaleParams.m_useMIPs = false;
 
-		shared_ptr<Shader> luminanceThresholdShader = make_shared<Shader>(
+		shared_ptr<Shader> luminanceThresholdShader = re::Shader::Create(
 			Config::Get()->GetValue<string>("blurShaderName"));
 		luminanceThresholdShader->ShaderKeywords().emplace_back("BLUR_SHADER_LUMINANCE_THRESHOLD");
 
@@ -127,10 +127,10 @@ namespace gr
 		}
 
 		// Blur stages:
-		shared_ptr<Shader> horizontalBlurShader = make_shared<Shader>(Config::Get()->GetValue<string>("blurShaderName"));
+		shared_ptr<Shader> horizontalBlurShader = re::Shader::Create(Config::Get()->GetValue<string>("blurShaderName"));
 		horizontalBlurShader->ShaderKeywords().emplace_back("BLUR_SHADER_HORIZONTAL");
 
-		shared_ptr<Shader> verticalBlurShader = make_shared<Shader>(Config::Get()->GetValue<string>("blurShaderName"));
+		shared_ptr<Shader> verticalBlurShader = re::Shader::Create(Config::Get()->GetValue<string>("blurShaderName"));
 		verticalBlurShader->ShaderKeywords().emplace_back("BLUR_SHADER_VERTICAL");
 
 		Texture::TextureParams blurParams(resScaleParams);
@@ -189,9 +189,9 @@ namespace gr
 				m_upResStages.back().SetTextureTargetSet(deferredLightGS->GetFinalTextureTargetSet());
 
 				gr::PipelineState addStageParams(bloomStageParams);
-				addStageParams.m_targetClearMode	= gr::PipelineState::ClearTarget::None;
-				addStageParams.m_srcBlendMode		= gr::PipelineState::BlendMode::One;
-				addStageParams.m_dstBlendMode		= gr::PipelineState::BlendMode::One;
+				addStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
+				addStageParams.SetSrcBlendMode(gr::PipelineState::BlendMode::One);
+				addStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::One);
 
 				m_upResStages.back().SetStagePipelineState(addStageParams);
 			}

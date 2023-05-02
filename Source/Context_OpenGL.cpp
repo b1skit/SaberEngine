@@ -361,12 +361,12 @@ namespace opengl
 
 	void Context::SetPipelineState(re::Context const& context, gr::PipelineState const& pipelineState)
 	{
-		opengl::Context::SetCullingMode(pipelineState.m_faceCullingMode);
-		opengl::Context::SetBlendMode(pipelineState.m_srcBlendMode, pipelineState.m_dstBlendMode);
-		opengl::Context::SetDepthTestMode(pipelineState.m_depthTestMode);
-		opengl::Context::SetDepthWriteMode(pipelineState.m_depthWriteMode);
-		opengl::Context::SetColorWriteMode(pipelineState.m_colorWriteMode);
-		opengl::Context::ClearTargets(pipelineState.m_targetClearMode); // Clear AFTER setting color/depth modes
+		opengl::Context::SetCullingMode(pipelineState.GetFaceCullingMode());
+		opengl::Context::SetBlendMode(pipelineState.GetSrcBlendMode(), pipelineState.GetDstBlendMode());
+		opengl::Context::SetDepthTestMode(pipelineState.GetDepthTestMode());
+		opengl::Context::SetDepthWriteMode(pipelineState.GetDepthWriteMode());
+		opengl::Context::SetColorWriteMode(pipelineState.GetColorWriteMode());
+		opengl::Context::ClearTargets(pipelineState.GetClearTarget()); // Clear AFTER setting color/depth modes
 	}
 
 

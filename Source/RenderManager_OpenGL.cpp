@@ -55,10 +55,12 @@ namespace opengl
 		// Add graphics systems, in order of execution:
 		renderManager.m_graphicsSystems.emplace_back(make_shared<GBufferGraphicsSystem>("GBuffer Graphics System"));
 		renderManager.m_graphicsSystems.emplace_back(make_shared<ShadowsGraphicsSystem>("Shadows Graphics System"));
-		renderManager.m_graphicsSystems.emplace_back(make_shared<DeferredLightingGraphicsSystem>("Deferred Lighting Graphics System"));
+		renderManager.m_graphicsSystems.emplace_back(
+			make_shared<DeferredLightingGraphicsSystem>("Deferred Lighting Graphics System"));
 		renderManager.m_graphicsSystems.emplace_back(make_shared<SkyboxGraphicsSystem>("Skybox Graphics System"));
 		renderManager.m_graphicsSystems.emplace_back(make_shared<BloomGraphicsSystem>("Bloom Graphics System"));
-		renderManager.m_graphicsSystems.emplace_back(make_shared<TonemappingGraphicsSystem>("Tonemapping Graphics System"));
+		renderManager.m_graphicsSystems.emplace_back(
+			make_shared<TonemappingGraphicsSystem>("Tonemapping Graphics System"));
 	}
 
 
@@ -66,7 +68,6 @@ namespace opengl
 	{
 		// TODO: Add an assert somewhere that checks if any possible shader uniform isn't set
 		// -> Catch bugs where we forget to upload a common param
-
 
 		// Render each stage:
 		for (StagePipeline& stagePipeline : renderManager.m_pipeline.GetPipeline())
@@ -99,8 +100,8 @@ namespace opengl
 				}
 
 				opengl::TextureTargetSet::AttachColorTargets(*stageTargets,
-					stagePipelineParams.m_textureTargetSetConfig.m_targetFace,
-					stagePipelineParams.m_textureTargetSetConfig.m_targetMip);
+					stagePipelineParams.GetTextureTargetSetConfig().m_targetFace,
+					stagePipelineParams.GetTextureTargetSetConfig().m_targetMip);
 				opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
 				
 				// Configure the pipeline state:
@@ -221,5 +222,20 @@ namespace opengl
 
 	void RenderManager::Shutdown(re::RenderManager& renderManager)
 	{
+	}
+
+
+	void RenderManager::CreateAPIResources(re::RenderManager& renderManager)
+	{
+		// Shaders:
+		if (!renderManager.m_newShaders.empty())
+		{
+			std::lock_guard<std::mutex> lock(renderManager.m_newShadersMutex);
+			for (auto& shader : renderManager.m_newShaders)
+			{
+				opengl::Shader::Create(*shader.second);
+			}
+			renderManager.m_newShaders.clear();
+		}
 	}
 }

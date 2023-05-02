@@ -43,19 +43,19 @@ namespace gr
 	void SkyboxGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
 		// Create a skybox shader, now that we have some sort of image loaded:
-		m_skyboxStage.SetStageShader(make_shared<Shader>(Config::Get()->GetValue<string>("skyboxShaderName")));
+		m_skyboxStage.SetStageShader(re::Shader::Create(Config::Get()->GetValue<string>("skyboxShaderName")));
 
 		// Load the HDR image:
 		m_skyTexture = SceneManager::GetSceneData()->GetIBLTexture();
 		m_skyTextureShaderName = "Tex0";
 
 		gr::PipelineState skyboxStageParams;
-		skyboxStageParams.m_targetClearMode = gr::PipelineState::ClearTarget::None;
-		skyboxStageParams.m_faceCullingMode = gr::PipelineState::FaceCullingMode::Back;
-		skyboxStageParams.m_srcBlendMode	= gr::PipelineState::BlendMode::Disabled; // Render on top of the frame
-		skyboxStageParams.m_dstBlendMode	= gr::PipelineState::BlendMode::Disabled;
-		skyboxStageParams.m_depthTestMode	= gr::PipelineState::DepthTestMode::LEqual;
-		skyboxStageParams.m_depthWriteMode	= gr::PipelineState::DepthWriteMode::Disabled;
+		skyboxStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
+		skyboxStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
+		skyboxStageParams.SetSrcBlendMode(gr::PipelineState::BlendMode::Disabled); // Render on top of the frame
+		skyboxStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::Disabled);
+		skyboxStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::LEqual);
+		skyboxStageParams.SetDepthWriteMode(gr::PipelineState::DepthWriteMode::Disabled);
 
 		m_skyboxStage.SetStagePipelineState(skyboxStageParams);
 

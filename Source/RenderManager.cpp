@@ -143,6 +143,8 @@ namespace re
 
 		m_context.GetParameterBlockAllocator().ClosePermanentPBRegistrationPeriod();
 
+		CreateAPIResources();
+
 		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
 	}
 
@@ -170,6 +172,9 @@ namespace re
 
 		// Update/buffer param blocks:
 		m_context.GetParameterBlockAllocator().BufferParamBlocks();
+
+		// Create any new resources that have been loaded since the last frame:
+		CreateAPIResources();
 
 		// API-specific rendering loop:
 		platform::RenderManager::Render(*this);
@@ -210,6 +215,8 @@ namespace re
 		m_pipeline.Destroy();
 		m_graphicsSystems.clear();
 
+		m_newShaders.clear();
+
 		// Need to do this here so the CoreEngine's Window can be destroyed
 		m_context.Destroy();
 	}
@@ -243,6 +250,27 @@ namespace re
 			break;
 			}
 		}
+	}
+
+
+	void RenderManager::RegisterShaderForCreate(std::shared_ptr<re::Shader> newShader)
+	{
+		const size_t newShaderNameID = newShader->GetNameID();
+
+		std::lock_guard<std::mutex> lock(m_newShadersMutex);
+
+		SEAssert("Found a shader with the same name, but a different raw pointer. This suggests a duplicate Shader, "
+			"which should not be possible", 
+			m_newShaders.find(newShaderNameID) == m_newShaders.end() || 
+				m_newShaders.at(newShaderNameID).get() == newShader.get());
+
+		m_newShaders.insert({ newShader->GetNameID(), newShader });
+	}
+
+
+	void RenderManager::CreateAPIResources()
+	{
+		platform::RenderManager::CreateAPIResources(*this);
 	}
 }
 

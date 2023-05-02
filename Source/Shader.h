@@ -19,13 +19,15 @@ namespace re
 		struct PlatformParams : public IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
-
 			bool m_isCreated = false;
 		};
 
 
+	public: // Object factory: Gets a Shader if it already exists, or creates it if it doesn't
+		static std::shared_ptr<re::Shader> Create(std::string const& extensionlessShaderFilename);
+
+
 	public:
-		explicit Shader(std::string const& extensionlessShaderFilename);
 		~Shader() { Destroy(); }
 
 		inline bool IsCreated() const;
@@ -38,6 +40,8 @@ namespace re
 
 
 	private:
+		explicit Shader(std::string const& extensionlessShaderFilename);
+
 		void Destroy();
 
 

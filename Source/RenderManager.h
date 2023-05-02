@@ -62,6 +62,10 @@ namespace re
 		void HandleEvents() override;
 
 
+	public: // Deferred API-object creation queues
+		void RegisterShaderForCreate(std::shared_ptr<re::Shader>);
+		void CreateAPIResources();
+
 	private:
 		// EngineComponent interface:
 		void Update(uint64_t frameNum, double stepTimeMs) override;
@@ -84,6 +88,12 @@ namespace re
 		std::queue<std::shared_ptr<en::Command>> m_imGuiCommands;
 
 		bool m_vsyncEnabled;
+
+
+	private:
+		std::unordered_map<size_t, std::shared_ptr<re::Shader>> m_newShaders;
+		std::mutex m_newShadersMutex;
+
 
 	private: // Friends		
 		friend class opengl::RenderManager;

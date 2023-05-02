@@ -5,6 +5,7 @@
 namespace re
 {
 	class RenderManager;
+	class Shader;
 }
 
 namespace platform
@@ -16,5 +17,7 @@ namespace platform
 		static void (*Render)(re::RenderManager&);
 		static void (*RenderImGui)(re::RenderManager&);
 		static void (*Shutdown)(re::RenderManager&);
+
+		static void (*CreateAPIResources)(re::RenderManager&);
 	};
 }

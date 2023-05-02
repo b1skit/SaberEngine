@@ -89,10 +89,9 @@ namespace re
 	/******************/
 	TextureTargetSet::TextureTargetSet(string const& name)
 		: NamedObject(name)
-		, m_colorTargetStateDirty(true)
-		, m_hasColorTarget(false)
+		, m_targetStateDirty(true)
+		, m_numColorTargets(0)
 		, m_targetParameterBlock(nullptr)
-		, m_targetParamsDirty(true)
 	{
 		platform::TextureTargetSet::CreatePlatformParams(*this);
 	
@@ -109,12 +108,11 @@ namespace re
 		: NamedObject(newName)
 		, m_colorTargets(rhs.m_colorTargets)
 		, m_depthStencilTarget(rhs.m_depthStencilTarget)
-		, m_colorTargetStateDirty(true)
-		, m_hasColorTarget(rhs.m_hasColorTarget)
+		, m_targetStateDirty(true)
+		, m_numColorTargets(rhs.m_numColorTargets)
 		, m_viewport(rhs.m_viewport)
 		, m_platformParams(nullptr) // Targets are copied, but the target set must be created
 		, m_targetParameterBlock(rhs.m_targetParameterBlock)
-		, m_targetParamsDirty(rhs.m_targetParamsDirty)
 	{
 		platform::TextureTargetSet::CreatePlatformParams(*this);
 
@@ -136,12 +134,11 @@ namespace re
 
 		m_colorTargets = rhs.m_colorTargets;
 		m_depthStencilTarget = rhs.m_depthStencilTarget;
-		m_colorTargetStateDirty = rhs.m_colorTargetStateDirty;
-		m_hasColorTarget = rhs.m_hasColorTarget;
+		m_targetStateDirty = rhs.m_targetStateDirty;
+		m_numColorTargets = rhs.m_numColorTargets;
 		m_viewport = rhs.m_viewport;
 		m_platformParams = rhs.m_platformParams;
 		m_targetParameterBlock = rhs.m_targetParameterBlock;
-		m_targetParamsDirty = rhs.m_targetParamsDirty;
 
 		return *this;
 	}
@@ -156,11 +153,10 @@ namespace re
 		m_depthStencilTarget = nullptr;
 		m_platformParams = nullptr;
 
-		m_colorTargetStateDirty = true;
-		m_hasColorTarget = false;
+		m_targetStateDirty = true;
+		m_numColorTargets = 0;
 
 		m_targetParameterBlock = nullptr;
-		m_targetParamsDirty = true;
 	}
 
 
@@ -174,30 +170,28 @@ namespace re
 	void TextureTargetSet::SetColorTarget(uint8_t slot, re::TextureTarget texTarget)
 	{
 		m_colorTargets[slot] = texTarget;
-		m_colorTargetStateDirty = true;
-		m_targetParamsDirty = true;
+		m_targetStateDirty = true;
 	}
 
 
 	void TextureTargetSet::SetColorTarget(uint8_t slot, std::shared_ptr<re::Texture> texTarget)
 	{
 		m_colorTargets[slot] = texTarget;
-		m_colorTargetStateDirty = true;
-		m_targetParamsDirty = true;
+		m_targetStateDirty = true;
 	}
 
 
 	void TextureTargetSet::SetDepthStencilTarget(re::TextureTarget const& depthStencilTarget)
 	{
 		m_depthStencilTarget = depthStencilTarget;
-		m_targetParamsDirty = true;
+		m_targetStateDirty = true;
 	}
 
 
 	void TextureTargetSet::SetDepthStencilTarget(std::shared_ptr<re::Texture> depthStencilTarget)
 	{
 		m_depthStencilTarget = depthStencilTarget;
-		m_targetParamsDirty = true;
+		m_targetStateDirty = true;
 	}
 
 
@@ -209,24 +203,8 @@ namespace re
 
 	bool TextureTargetSet::HasColorTarget()
 	{
-		if (!m_colorTargetStateDirty)
-		{
-			return m_hasColorTarget;
-		}
-
-		// If the state is dirty, we need to recheck:
-		m_hasColorTarget = false;
-		for (uint8_t slot = 0; slot < m_colorTargets.size(); slot++)
-		{
-			if (m_colorTargets[slot].GetTexture() != nullptr)
-			{
-				m_hasColorTarget = true;
-				break;
-			}
-		}
-		m_colorTargetStateDirty = false;
-
-		return m_hasColorTarget;
+		RecomputeInternalState();
+		return m_numColorTargets > 0;
 	}
 
 
@@ -236,83 +214,122 @@ namespace re
 	}
 
 
-	uint8_t TextureTargetSet::GetNumColorTargets() const
+	uint8_t TextureTargetSet::GetNumColorTargets()
 	{
-		// TODO: Optimize this. We should track/update the state with the dirty flag. For now, just count.
-
-		uint8_t numTargets = 0;
-		for (re::TextureTarget const& target : m_colorTargets)
-		{
-			if (target.HasTexture())
-			{
-				numTargets++;
-			}
-		}
-		return numTargets;
+		RecomputeInternalState();
+		return m_numColorTargets;
 	}
 
 
 	std::shared_ptr<re::ParameterBlock> TextureTargetSet::GetTargetParameterBlock()
 	{
-		UpdateTargetParameterBlock();
+		RecomputeInternalState();
 		return m_targetParameterBlock;
 	}
 
 
-	void TextureTargetSet::UpdateTargetParameterBlock()
+	void TextureTargetSet::RecomputeTargetParameterBlock()
 	{
-		if (m_targetParamsDirty)
+		glm::vec4 targetDimensions(0.f, 0.f, 0.f, 0.f);
+		bool foundDimensions = false;
+
+		// Default framebuffer has no texture targets
+		if (!HasTargets())
 		{
-			glm::vec4 targetDimensions;
-			bool foundDimensions = false;
+			const uint32_t xRes = (uint32_t)Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
+			const uint32_t yRes = (uint32_t)Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
 
-			// Default framebuffer has no texture targets
-			if (!HasTargets())
+			targetDimensions.x = (float)xRes;
+			targetDimensions.y = (float)yRes;
+			targetDimensions.z = 1.0f / xRes;
+			targetDimensions.w = 1.0f / yRes;
+
+			foundDimensions = true;
+		}
+
+		// Find a single target we can get the resolution details from; This assumes all targets are the same dimensions
+		if (!foundDimensions && HasDepthTarget())
+		{
+			std::shared_ptr<re::Texture> depthTarget = m_depthStencilTarget.GetTexture();
+			if (depthTarget)
 			{
-				const uint32_t xRes = (uint32_t)Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
-				const uint32_t yRes = (uint32_t)Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
-
-				targetDimensions.x = (float)xRes;
-				targetDimensions.y = (float)yRes;
-				targetDimensions.z = 1.0f / xRes;
-				targetDimensions.w = 1.0f / yRes;
-
+				targetDimensions = depthTarget->GetTextureDimenions();
 				foundDimensions = true;
 			}
-
-			// Find a single target we can get the resolution details from; This assumes all targets are the same dimensions
-			if (!foundDimensions && HasDepthTarget())
-			{
-				std::shared_ptr<re::Texture> depthTarget = m_depthStencilTarget.GetTexture();
-				if (depthTarget)
-				{
-					targetDimensions = depthTarget->GetTextureDimenions();
-					foundDimensions = true;
-				}
-			}
-
-			if (!foundDimensions && HasColorTarget())
-			{
-				for (uint8_t slot = 0; slot < m_colorTargets.size(); slot++)
-				{
-					std::shared_ptr<re::Texture> texTarget = m_colorTargets[slot].GetTexture();
-					if (texTarget)
-					{
-						targetDimensions = texTarget->GetTextureDimenions();
-						foundDimensions = true;
-						break;
-					}
-				}
-			}
-
-			SEAssert("Cannot create parameter block with no texture dimensions", foundDimensions);
-
-			RenderTargetParams targetParams;
-			targetParams.g_targetResolution = targetDimensions;
-
-			m_targetParameterBlock->Commit(targetParams);
-
-			m_targetParamsDirty = false;
 		}
+
+		if (!foundDimensions && HasColorTarget())
+		{
+			for (uint8_t slot = 0; slot < m_colorTargets.size(); slot++)
+			{
+				std::shared_ptr<re::Texture> texTarget = m_colorTargets[slot].GetTexture();
+				if (texTarget)
+				{
+					targetDimensions = texTarget->GetTextureDimenions();
+					foundDimensions = true;
+					break;
+				}
+			}
+		}
+
+		SEAssert("Cannot create parameter block with no texture dimensions", foundDimensions);
+
+		RenderTargetParams targetParams;
+		targetParams.g_targetResolution = targetDimensions;
+
+		m_targetParameterBlock->Commit(targetParams);
+	}
+
+
+	void TextureTargetSet::RecomputeNumColorTargets()
+	{
+		// Walk through and check each color target:
+		m_numColorTargets = 0;
+		for (uint8_t slot = 0; slot < m_colorTargets.size(); slot++)
+		{
+			if (m_colorTargets[slot].HasTexture())
+			{
+				m_numColorTargets++;
+			}
+		}
+	}
+
+
+	void TextureTargetSet::RecomputeInternalState()
+	{
+		if (!m_targetStateDirty)
+		{
+			return;
+		}
+		m_targetStateDirty = false;
+
+		RecomputeNumColorTargets();
+		RecomputeTargetParameterBlock(); // Must happen after recounting the targets
+		ComputeDataHash();
+	}
+
+
+	void TextureTargetSet::ComputeDataHash()
+	{
+		ResetDataHash();
+		
+		for (uint8_t slot = 0; slot < m_colorTargets.size(); slot++)
+		{
+			if (m_colorTargets[slot].HasTexture())
+			{
+				AddDataBytesToHash(m_colorTargets[slot].GetTexture()->GetTextureParams().m_format);
+			}
+		}
+		if (HasDepthTarget())
+		{
+			AddDataBytesToHash(m_depthStencilTarget.GetTexture()->GetTextureParams().m_format);
+		}		
+	}
+
+
+	uint64_t TextureTargetSet::GetTargetSetSignature()
+	{
+		RecomputeInternalState();
+		return GetDataHash();
 	}
 }

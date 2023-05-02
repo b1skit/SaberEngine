@@ -9,7 +9,7 @@
 
 namespace gr
 {
-	struct PipelineState;
+	class PipelineState;
 }
 
 namespace re
@@ -20,7 +20,7 @@ namespace re
 
 namespace dx12
 {
-	class PipelineState final : public en::HashedDataObject
+	class PipelineState
 	{
 	public:
 		PipelineState();
@@ -29,15 +29,11 @@ namespace dx12
 
 		void Destroy();
 
-		void Create(gr::PipelineState const&, re::Shader const&, re::TextureTargetSet const&);
+		void Create(re::Shader const&, gr::PipelineState const&, re::TextureTargetSet const&);
 		
 		ID3D12PipelineState* GetD3DPipelineState() const;
 
 		dx12::RootSignature const& GetRootSignature() const;
-
-
-	private:
-		void ComputeDataHash() override;
 
 
 	private:

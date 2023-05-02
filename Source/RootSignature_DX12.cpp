@@ -300,10 +300,4 @@ namespace dx12
 		
 		return result->second;
 	}
-
-
-	void RootSignature::ComputeDataHash()
-	{
-		AddDataBytesToHash(&m_rootSigDescription, sizeof(m_rootSigDescription));
-	}
 }

@@ -44,7 +44,7 @@ namespace gr
 	{
 		// Shader:
 		std::shared_ptr<Shader> gBufferShader = 
-			std::make_shared<Shader>(Config::Get()->GetValue<string>("gBufferFillShaderName"));
+			re::Shader::Create(Config::Get()->GetValue<string>("gBufferFillShaderName"));
 
 		m_gBufferStage.SetStageShader(gBufferShader);
 
@@ -89,12 +89,12 @@ namespace gr
 
 		// Set the stage params:
 		gr::PipelineState gBufferStageParams;
-		gBufferStageParams.m_targetClearMode = gr::PipelineState::ClearTarget::ColorDepth;
+		gBufferStageParams.SetClearTarget(gr::PipelineState::ClearTarget::ColorDepth);
 
-		gBufferStageParams.m_faceCullingMode	= gr::PipelineState::FaceCullingMode::Back;
-		gBufferStageParams.m_srcBlendMode		= gr::PipelineState::BlendMode::Disabled;
-		gBufferStageParams.m_dstBlendMode		= gr::PipelineState::BlendMode::Disabled;
-		gBufferStageParams.m_depthTestMode		= gr::PipelineState::DepthTestMode::Less;
+		gBufferStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
+		gBufferStageParams.SetSrcBlendMode(gr::PipelineState::BlendMode::Disabled);
+		gBufferStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::Disabled);
+		gBufferStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Less);
 
 		m_gBufferStage.SetStagePipelineState(gBufferStageParams);
 

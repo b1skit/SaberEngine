@@ -122,7 +122,7 @@ namespace
 		D3D12_RASTERIZER_DESC rasterizerDesc{};
 
 		// Polygon fill mode:
-		switch (grPipelineState.m_fillMode)
+		switch (grPipelineState.GetFillMode())
 		{
 		case gr::PipelineState::FillMode::Wireframe:
 			rasterizerDesc.FillMode = D3D12_FILL_MODE::D3D12_FILL_MODE_WIREFRAME; break;
@@ -134,7 +134,7 @@ namespace
 		}
 
 		// Face culling mode:
-		switch (grPipelineState.m_faceCullingMode)
+		switch (grPipelineState.GetFaceCullingMode())
 		{
 		case gr::PipelineState::FaceCullingMode::Disabled:
 			rasterizerDesc.CullMode = D3D12_CULL_MODE::D3D12_CULL_MODE_NONE; break;
@@ -148,7 +148,7 @@ namespace
 		}
 
 		// Winding order:
-		switch (grPipelineState.m_windingOrder)
+		switch (grPipelineState.GetWindingOrder())
 		{
 		case gr::PipelineState::WindingOrder::CCW:
 			rasterizerDesc.FrontCounterClockwise = true; break;
@@ -180,7 +180,7 @@ namespace
 		depthStencilDesc.DepthEnable = true; // TODO: Support toggling this via the gr::PipelineState
 
 		// Depth testing:
-		switch (grPipelineState.m_depthTestMode)
+		switch (grPipelineState.GetDepthTestMode())
 		{
 		case gr::PipelineState::DepthTestMode::Default: // Less
 			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS; break;
@@ -206,7 +206,7 @@ namespace
 		}
 
 		// Depth write mode:
-		switch (grPipelineState.m_depthWriteMode)
+		switch (grPipelineState.GetDepthWriteMode())
 		{
 		case gr::PipelineState::DepthWriteMode::Enabled:
 			depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL; break;
@@ -244,12 +244,12 @@ namespace
 		D3D12_RENDER_TARGET_BLEND_DESC rtBlendDesc{};
 
 		// Source blending:
-		switch (grPipelineState.m_srcBlendMode)
+		switch (grPipelineState.GetSrcBlendMode())
 		{
 		case gr::PipelineState::BlendMode::Disabled:
 		{
 			SEAssert("Must disable blending for both source and destination",
-				grPipelineState.m_srcBlendMode == grPipelineState.m_dstBlendMode);
+				grPipelineState.GetSrcBlendMode() == grPipelineState.GetDstBlendMode());
 
 			rtBlendDesc.BlendEnable = false;
 			rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ZERO;
@@ -283,12 +283,12 @@ namespace
 		}
 
 		// Destination blending:
-		switch (grPipelineState.m_dstBlendMode)
+		switch (grPipelineState.GetDstBlendMode())
 		{
 		case gr::PipelineState::BlendMode::Disabled:
 		{
 			SEAssert("Must disable blending for both source and destination",
-				grPipelineState.m_srcBlendMode == grPipelineState.m_dstBlendMode);
+				grPipelineState.GetSrcBlendMode() == grPipelineState.GetDstBlendMode());
 
 			rtBlendDesc.BlendEnable = false;
 			rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ZERO;
@@ -331,10 +331,10 @@ namespace
 
 		// Color write modes:
 		rtBlendDesc.RenderTargetWriteMask = 
-			(grPipelineState.m_colorWriteMode.R == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_RED : 0) |
-			(grPipelineState.m_colorWriteMode.G == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_GREEN : 0) |
-			(grPipelineState.m_colorWriteMode.B == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_BLUE : 0) |
-			(grPipelineState.m_colorWriteMode.A == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_ALPHA : 0);
+			(grPipelineState.GetColorWriteMode().R == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_RED : 0) |
+			(grPipelineState.GetColorWriteMode().G == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_GREEN : 0) |
+			(grPipelineState.GetColorWriteMode().B == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_BLUE : 0) |
+			(grPipelineState.GetColorWriteMode().A == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_ALPHA : 0);
 
 		// TODO: This should be per-target (i.e. for MRT), but currently it's per stage
 		blendDesc.RenderTarget[0] = rtBlendDesc;
@@ -353,8 +353,8 @@ namespace dx12
 
 
 	void PipelineState::Create(
-		gr::PipelineState const& grPipelineState,
 		re::Shader const& shader,
+		gr::PipelineState const& grPipelineState,
 		re::TextureTargetSet const& targetSet)
 	{
 		m_rootSignature.Create(shader);
@@ -380,10 +380,10 @@ namespace dx12
 			pipelineStateStream.pShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[dx12::Shader::Pixel].Get());
 
 			// Target formats:
-			dx12::TextureTargetSet::PlatformParams* swapChainTargetSetPlatParams =
+			dx12::TextureTargetSet::PlatformParams* targetSetPlatParams =
 				targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
-			pipelineStateStream.RTVFormats = swapChainTargetSetPlatParams->m_renderTargetFormats;
-			pipelineStateStream.DSVFormat = swapChainTargetSetPlatParams->m_depthTargetFormat;
+			pipelineStateStream.RTVFormats = targetSetPlatParams->m_renderTargetFormats;
+			pipelineStateStream.DSVFormat = targetSetPlatParams->m_depthTargetFormat;
 
 			// Rasterizer description:
 			const D3D12_RASTERIZER_DESC rasterizerDesc = BuildRasterizerDesc(grPipelineState);
@@ -416,41 +416,6 @@ namespace dx12
 			SEAssertF("Found a Shader object without a vertex shader. TODO: Support this (e.g. compute shaders)");
 		}
 
-		// Finally, compute the data hash, appending the inputs here while we have them:
-
-		//if (shaderParams->m_shaderBlobs[dx12::Shader::Vertex] != nullptr)
-		//{
-		//	AddDataBytesToHash(
-		//		shaderParams->m_shaderBlobs[dx12::Shader::Vertex].Get()->GetBufferPointer(),
-		//		shaderParams->m_shaderBlobs[dx12::Shader::Vertex].Get()->GetBufferSize());
-		//}
-		//if (shaderParams->m_shaderBlobs[dx12::Shader::Geometry] != nullptr)
-		//{
-		//	AddDataBytesToHash(
-		//		shaderParams->m_shaderBlobs[dx12::Shader::Geometry].Get()->GetBufferPointer(),
-		//		shaderParams->m_shaderBlobs[dx12::Shader::Geometry].Get()->GetBufferSize());
-		//}
-		//if (shaderParams->m_shaderBlobs[dx12::Shader::Pixel] != nullptr)
-		//{
-		//	AddDataBytesToHash(
-		//		shaderParams->m_shaderBlobs[dx12::Shader::Pixel].Get()->GetBufferPointer(),
-		//		shaderParams->m_shaderBlobs[dx12::Shader::Pixel].Get()->GetBufferSize());
-		//}
-		//if (shaderParams->m_shaderBlobs[dx12::Shader::Compute] != nullptr)
-		//{
-		//	AddDataBytesToHash(
-		//		shaderParams->m_shaderBlobs[dx12::Shader::Compute].Get()->GetBufferPointer(),
-		//		shaderParams->m_shaderBlobs[dx12::Shader::Compute].Get()->GetBufferSize());
-		//}
-		// TODO: It's currently possible that shaders might be duplicated (they're not stored in the SceneData
-		// inventory). For now, just append the name and keywords:
-		AddDataBytesToHash(shader.GetName());
-		AddDataBytesToHash(shader.ShaderKeywords());
-
-		// The gr::PipelineState is used to compute the DX12 pipeline state, and does not contain any pointers
-		AddDataBytesToHash(&grPipelineState, sizeof(gr::PipelineState));
-
-		ComputeDataHash();
 	}
 
 
@@ -470,11 +435,5 @@ namespace dx12
 	dx12::RootSignature const& PipelineState::GetRootSignature() const
 	{
 		return m_rootSignature;
-	}
-
-
-	void PipelineState::ComputeDataHash()
-	{
-		AddDataBytesToHash(m_rootSignature.GetDataHash());
 	}
 }

@@ -18,6 +18,11 @@ namespace opengl
 	class SceneData;
 }
 
+namespace re
+{
+	class Shader;
+}
+
 namespace fr
 {
 	class SceneNode;
@@ -70,9 +75,11 @@ namespace fr
 		// Materials:
 		void AddUniqueMaterial(std::shared_ptr<gr::Material>& newMaterial);
 		std::shared_ptr<gr::Material> GetMaterial(std::string const& materialName) const;
-		inline bool MaterialExists(std::string const& matName) const;
+		bool MaterialExists(std::string const& matName) const;
 
-		// TODO: We should maintain a list of Shader objects to avoid duplication
+		void AddUniqueShader(std::shared_ptr<re::Shader>& newShader);
+		std::shared_ptr<re::Shader> GetShader(std::string const& extensionlessShaderFilename) const;
+		bool ShaderExists(std::string const& extensionlessShaderFilename) const;
 
 		// SceneData bounds:
 		gr::Bounds const& GetWorldSpaceSceneBounds() const;
@@ -97,6 +104,9 @@ namespace fr
 
 		std::unordered_map<size_t, std::shared_ptr<gr::Material>> m_materials;
 		mutable std::shared_mutex m_materialsMutex;
+
+		std::unordered_map<size_t, std::shared_ptr<re::Shader>> m_shaders;
+		mutable std::shared_mutex m_shadersMutex;
 
 		std::shared_ptr<gr::Light> m_ambientLight;
 		std::mutex m_ambientLightMutex;

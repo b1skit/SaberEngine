@@ -17,7 +17,7 @@ namespace dx12
 	constexpr uint8_t k_invalidRootSigIndex = std::numeric_limits<uint8_t>::max();
 	constexpr uint8_t k_invalidRegisterVal = std::numeric_limits<uint8_t>::max();
 
-	class RootSignature final : public en::HashedDataObject
+	class RootSignature final
 	{
 	public:
 		static constexpr uint32_t k_totalRootSigDescriptorTableIndices = 32;
@@ -64,10 +64,6 @@ namespace dx12
 		D3D12_ROOT_SIGNATURE_DESC1 const& GetD3DRootSignatureDesc() const;
 
 		RootEntry const& GetResourceRegisterBindPoint(std::string const& resourceName) const;
-
-
-	private:
-		void ComputeDataHash() override;
 
 
 	private:

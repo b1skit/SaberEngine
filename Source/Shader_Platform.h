@@ -15,6 +15,7 @@ namespace platform
 		static void CreatePlatformParams(re::Shader& shader);
 		
 	public: // Api-specific functionality
+		static void (*Create)(re::Shader&);
 		static void (*Destroy)(re::Shader&);
 	};
 }	

@@ -228,25 +228,23 @@ namespace dx12
 
 
 	std::shared_ptr<dx12::PipelineState> Context::CreateAddPipelineState(
-		gr::PipelineState const& grPipelineState, 
-		re::Shader const& shader, 
-		re::TextureTargetSet const& targetSet)
+		re::Shader const& shader,
+		gr::PipelineState& grPipelineState,	
+		re::TextureTargetSet& targetSet)
 	{
 		dx12::Context::PlatformParams* ctxPlatParams =
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
-		// TEMP HAX: For now, we just have a single PSO, so just hard-code it. TODO: Create a library of pre-computed
-		// PSOs at startup
-		LOG_ERROR("TODO: Implement dx12::Context::CreateAddPipelineState correctly");
+		std::shared_ptr<dx12::PipelineState> newPSO = std::make_shared<dx12::PipelineState>();
+		newPSO->Create(shader, grPipelineState, targetSet);
 
-		// TODO: We need to be able to pre-compute the dx12::PipelineState data hash, so we can check if it exists
-		// before we attempt to create it. Currently, the hash is computed during construction...
-		ctxPlatParams->m_pipelineState = std::make_shared<dx12::PipelineState>();
-		ctxPlatParams->m_pipelineState->Create(
-			grPipelineState,
-			shader,
-			targetSet);
-		return ctxPlatParams->m_pipelineState;
+		// TODO: We should combine all the keys into a single value instead of nesting hash tables
+		const uint64_t shaderKey = shader.GetNameID();
+		const uint64_t pipelineKey = grPipelineState.GetPipelineStateDataHash();
+		const uint64_t targetSetKey = targetSet.GetTargetSetSignature();
+		ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey][targetSetKey] = newPSO;
+
+		return newPSO;
 	}
 
 
@@ -263,11 +261,32 @@ namespace dx12
 	}
 
 
-	CommandQueue& GetCommandQueue(CommandList::CommandListType type)
+	CommandQueue& Context::GetCommandQueue(CommandList::CommandListType type)
 	{
 		dx12::Context::PlatformParams* ctxPlatParams = 
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		return ctxPlatParams->m_commandQueues[type];
+	}
+
+
+	std::shared_ptr<dx12::PipelineState> Context::GetPipelineStateObject(
+		re::Shader const& shader,
+		gr::PipelineState& grPipelineState,
+		re::TextureTargetSet* targetSet)
+	{
+		dx12::Context::PlatformParams* ctxPlatParams =
+			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+		
+		const uint64_t shaderKey = shader.GetNameID();
+		const uint64_t pipelineKey = grPipelineState.GetPipelineStateDataHash();
+		const uint64_t targetSetKey = targetSet ? targetSet->GetTargetSetSignature() : 0;
+
+		SEAssert("Could not find matching PSO", 
+			ctxPlatParams->m_PSOLibrary.contains(shaderKey) && 
+			ctxPlatParams->m_PSOLibrary[shaderKey].contains(pipelineKey) &&
+			ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey].contains(targetSetKey));
+
+		return ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey][targetSetKey];
 	}
 }

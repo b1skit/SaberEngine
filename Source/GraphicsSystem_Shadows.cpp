@@ -72,23 +72,23 @@ namespace gr
 	void ShadowsGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
 		gr::PipelineState shadowStageParams;
-		shadowStageParams.m_targetClearMode = gr::PipelineState::ClearTarget::Depth;
+		shadowStageParams.SetClearTarget(gr::PipelineState::ClearTarget::Depth);
 		
 		// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
 		// want to be able to place lights inside of geometry (eg. emissive spheres). For now, enable backface culling.
 		// In future, we need to support tagging assets to not cast shadows
-		shadowStageParams.m_faceCullingMode = gr::PipelineState::FaceCullingMode::Back;
+		shadowStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
 
-		shadowStageParams.m_srcBlendMode	= gr::PipelineState::BlendMode::Disabled;
-		shadowStageParams.m_dstBlendMode	= gr::PipelineState::BlendMode::Disabled;
-		shadowStageParams.m_depthTestMode	= gr::PipelineState::DepthTestMode::Less;
-		shadowStageParams.m_colorWriteMode	= 
+		shadowStageParams.SetSrcBlendMode(gr::PipelineState::BlendMode::Disabled);
+		shadowStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::Disabled);
+		shadowStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Less);
+		shadowStageParams.SetColorWriteMode(
 		{ 
 			gr::PipelineState::ColorWriteMode::ChannelMode::Disabled,
 			gr::PipelineState::ColorWriteMode::ChannelMode::Disabled,
 			gr::PipelineState::ColorWriteMode::ChannelMode::Disabled,
 			gr::PipelineState::ColorWriteMode::ChannelMode::Disabled
-		};
+		});
 
 		// Directional light shadow:		
 		shared_ptr<Light> directionalLight = SceneManager::GetSceneData()->GetKeyLight();
@@ -104,7 +104,7 @@ namespace gr
 
 				// Shader:
 				m_directionalShadowStage.SetStageShader(
-					make_shared<Shader>(Config::Get()->GetValue<string>("depthShaderName")));
+					re::Shader::Create(Config::Get()->GetValue<string>("depthShaderName")));
 
 				m_directionalShadowStage.SetTextureTargetSet(directionalLight->GetShadowMap()->GetTextureTargetSet());
 				// TODO: Target set should be a member of the stage, instead of the shadow map?
@@ -134,7 +134,7 @@ namespace gr
 
 				// Shader:
 				shadowStage->SetStageShader(
-					make_shared<Shader>(Config::Get()->GetValue<string>("cubeDepthShaderName")));
+					re::Shader::Create(Config::Get()->GetValue<string>("cubeDepthShaderName")));
 
 				shadowStage->SetTextureTargetSet(curLight->GetShadowMap()->GetTextureTargetSet());
 

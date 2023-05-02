@@ -15,7 +15,13 @@ namespace gr
 
 	void TempDebugGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		
+		m_tempDebugStage.SetTextureTargetSet(nullptr); // Render directly to the backbuffer
+
+		// NOTE: An identical default PipelineState is currently hard-coded in the DX12 RenderManager!
+		gr::PipelineState defaultPipelineState;
+		m_tempDebugStage.SetStagePipelineState(defaultPipelineState);
+
+		pipeline.AppendRenderStage(&m_tempDebugStage);
 	}
 
 

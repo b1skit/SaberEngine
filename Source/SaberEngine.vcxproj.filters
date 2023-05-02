@@ -389,6 +389,9 @@
     <ClCompile Include="SysInfo_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
+    <ClCompile Include="PipelineState.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">

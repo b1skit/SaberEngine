@@ -1,17 +1,36 @@
+// © 2023 Adam Badke. All rights reserved.
 #pragma once
+#include "HashedDataObject.h"
 
 
 namespace gr
 {
-	struct PipelineState
+	class PipelineState : public en::HashedDataObject
 	{
+	public:
+		PipelineState();
+		
+		PipelineState(PipelineState const&) = default;
+		PipelineState(PipelineState&&) = default;
+		PipelineState& operator=(PipelineState const&) = default;
+		~PipelineState() = default;
+		
+
+		uint64_t GetPipelineStateDataHash(); // Note: Use this instead of HashedDataObject::GetDataHash()
+
+	private:
+		void ComputeDataHash() override;
+		
+
+	public:
 		enum class FillMode
 		{
 			Wireframe, // TODO: Implement support for this
 			Solid,
 			FillMode_Count
-		} m_fillMode = FillMode::Solid;
-
+		};
+		FillMode GetFillMode() const;
+		void SetFillMode(FillMode);
 
 		enum class FaceCullingMode
 		{
@@ -19,16 +38,18 @@ namespace gr
 			Front,
 			Back,
 			FaceCullingMode_Count
-		} m_faceCullingMode = FaceCullingMode::Back;
-
+		};
+		FaceCullingMode GetFaceCullingMode() const;
+		void SetFaceCullingMode(FaceCullingMode);
 
 		enum class WindingOrder // To determine a front-facing polygon
 		{
 			CCW,
 			CW,
 			WindingOrder_Count
-		} m_windingOrder = WindingOrder::CCW;
-
+		};
+		WindingOrder GetWindingOrder() const;
+		void SetWindingOrder(WindingOrder);
 
 		enum class DepthTestMode
 		{
@@ -42,18 +63,21 @@ namespace gr
 			GEqual,		// >=
 			Always,		// Always pass: Disables depth testing
 			DepthTestMode_Count
-		} m_depthTestMode = DepthTestMode::Default;
-
+		};
+		DepthTestMode GetDepthTestMode() const;
+		void SetDepthTestMode(DepthTestMode);
 
 		enum class DepthWriteMode
 		{
 			Enabled,
 			Disabled,
 			DepthWriteMode_Count
-		} m_depthWriteMode = DepthWriteMode::Enabled;
-
+		};
+		DepthWriteMode GetDepthWriteMode() const;
+		void SetDepthWriteMode(DepthWriteMode);
 
 		// TODO: These should be per-target, to allow different outputs when using MRTs
+		// TODO: We should support alpha blend modes, in addition to the color blend modes here
 		enum class BlendMode
 		{
 			Disabled,
@@ -69,14 +93,15 @@ namespace gr
 			DstAlpha,
 			OneMinusDstAlpha,
 			BlendMode_Count
-		} m_srcBlendMode = BlendMode::One, m_dstBlendMode = BlendMode::One;
-		// TODO: We should support alpha blend modes, in addition to the color blend modes here
-
+		};
+		BlendMode GetSrcBlendMode() const;
+		void SetSrcBlendMode(BlendMode);
+		BlendMode GetDstBlendMode() const;
+		void SetDstBlendMode(BlendMode);
 
 		// TODO: Support blend operations (add/subtract/min/max etc) for both color and alpha channels
 
 		// TODO: Support logical operations (AND/OR/XOR etc)
-
 
 		// TODO: These should be per-target, to allow different outputs when using MRTs
 		struct ColorWriteMode
@@ -91,14 +116,9 @@ namespace gr
 			ChannelMode G = ChannelMode::Enabled;
 			ChannelMode B = ChannelMode::Enabled;
 			ChannelMode A = ChannelMode::Enabled;
-		} m_colorWriteMode =
-		{
-			ColorWriteMode::ChannelMode::Enabled, // R
-			ColorWriteMode::ChannelMode::Enabled, // G
-			ColorWriteMode::ChannelMode::Enabled, // B
-			ColorWriteMode::ChannelMode::Enabled  // A
 		};
-
+		ColorWriteMode const& GetColorWriteMode() const;
+		void SetColorWriteMode(ColorWriteMode const&);
 
 		// TODO: These should be per-target, to allow different outputs when using MRTs
 		enum class ClearTarget
@@ -108,14 +128,31 @@ namespace gr
 			ColorDepth,
 			None,
 			ClearTarget_Count
-		} m_targetClearMode = ClearTarget::None;
-
+		};
+		ClearTarget GetClearTarget() const;
+		void SetClearTarget(ClearTarget);
 
 		// TODO: We should be able to target individual target sub-resources, instead of specifying this here
-		struct
+		struct TextureTargetSetConfig
 		{
-			uint32_t m_targetFace = 0;
-			uint32_t m_targetMip = 0;
-		} m_textureTargetSetConfig;
+			uint32_t m_targetFace;
+			uint32_t m_targetMip;
+		};
+		TextureTargetSetConfig const& GetTextureTargetSetConfig() const;
+		void SetTextureTargetSetConfig(TextureTargetSetConfig const&);
+
+	private:
+		bool m_isDirty;
+
+		FillMode m_fillMode;
+		FaceCullingMode m_faceCullingMode;
+		WindingOrder m_windingOrder;
+		DepthTestMode m_depthTestMode;
+		DepthWriteMode m_depthWriteMode;
+		BlendMode m_srcBlendMode;
+		BlendMode m_dstBlendMode;
+		ColorWriteMode m_colorWriteMode;
+		ClearTarget m_targetClearMode;
+		TextureTargetSetConfig m_textureTargetSetConfig;
 	};
 }

@@ -37,18 +37,13 @@ namespace
 {
 	using dx12::CheckHResult;
 
-
 	// TODO: Move this to GraphicsSystem_TempDebug, and push it through as a batch
 	static std::shared_ptr<re::MeshPrimitive> s_helloTriangle = nullptr;
 
 
-	// TODO: Make this a platform function, and call it for all APIs during startup
-	bool CreateAPIResources()
+	bool CreateDebugAPIResources()
 	{
-		re::Context const& context = re::RenderManager::Get()->GetContext();
-		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-
-		dx12::CommandQueue& copyQueue = ctxPlatParams->m_commandQueues[dx12::CommandList::Copy];
+		dx12::CommandQueue& copyQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Copy);
 
 		std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue.GetCreateCommandList();
 
@@ -66,55 +61,92 @@ namespace
 
 		// TODO: We should destroy the vertex stream intermediate HEAP_TYPE_UPLOAD resources now that the copy is done
 
-		std::shared_ptr<re::Shader> k_helloShader = std::make_shared<re::Shader>("HelloTriangle");
-		dx12::Shader::Create(*k_helloShader);
+		// TODO: Move this to the debug GS
+		std::shared_ptr<re::Shader> helloShader = re::Shader::Create("HelloTriangle");
 
-		s_helloTriangle->GetMeshMaterial()->SetShader(k_helloShader);
-
-
-		dx12::SwapChain::PlatformParams const* swapChainParams = 
-			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
-
-
-		// Create a pipeline state:
-		// TODO: We should be creating a library of these at startup
-		gr::PipelineState defaultGrPipelineState{}; // Temp hax: Use a default gr::PipelineState
-
-		dx12::Context::CreateAddPipelineState(
-			defaultGrPipelineState,
-			*k_helloShader, 
-			*swapChainParams->m_backbufferTargetSets[0]);
+		s_helloTriangle->GetMeshMaterial()->SetShader(helloShader);
 
 		return true;
 	}
 }
 
 
-
 namespace dx12
 {
+	void RenderManager::CreateAPIResources(re::RenderManager& renderManager)
+	{
+		re::Context const& context = renderManager.GetContext();
+		dx12::SwapChain::PlatformParams const* swapChainParams =
+			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+
+		// Shaders:
+		if (!renderManager.m_newShaders.empty())
+		{
+			SEAssert("TEMP HAX: WE'RE ASSUMING OUR ONE DEBUG SHADER IS BEING CREATED HERE", 
+				renderManager.m_newShaders.size() == 1); 
+
+
+			SEAssert("Creating PSO's for DX12 Shaders requires a re::PipelineState from a RenderStage, but the "
+				"pipeline is empty", 
+				!renderManager.m_pipeline.GetPipeline().empty());
+
+			std::lock_guard<std::mutex> lock(renderManager.m_newShadersMutex);
+			for (auto& shader : renderManager.m_newShaders)
+			{
+				// Create the Shader object:
+				dx12::Shader::Create(*shader.second);
+
+				// Create any necessary PSO's for the Shader:
+				for (re::StagePipeline& stagePipeline : renderManager.m_pipeline.GetPipeline())
+				{
+					std::vector<re::RenderStage*> const& renderStages = stagePipeline.GetRenderStages();
+					for (re::RenderStage* renderStage : renderStages)
+					{
+						// We assume either a RenderStage has a shader, or all batches rendered on a RenderStage will
+						// have their own shader. So, we must create a PSO per Shader for each RenderStage with a null
+						// Shader (as any Shader might be used there), or if the Shader is used by the RenderStage
+						if (renderStage->GetStageShader() == nullptr ||
+							renderStage->GetStageShader()->GetNameID() == shader.second->GetNameID())
+						{
+							std::shared_ptr<re::TextureTargetSet> stageTargets = renderStage->GetTextureTargetSet();
+							if (!stageTargets)
+							{
+								// We (currently) assume a null TextureTargetSet indicates the backbuffer is the target
+								stageTargets = swapChainParams->m_backbufferTargetSets[0];
+							}
+
+							dx12::Context::CreateAddPipelineState(
+								*shader.second,
+								renderStage->GetStagePipelineState(),								
+								*stageTargets);
+						}
+					}
+				}
+			}
+			renderManager.m_newShaders.clear();
+		}
+	}
+
+
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
-		// TEMP DEBUG CODE: Need to have this created before CreateAPIResources
-		s_helloTriangle = meshfactory::CreateHelloTriangle(10.f, -10.f);
-
-
-
-		CreateAPIResources();
 
 		renderManager.m_graphicsSystems.emplace_back(
 			make_shared<gr::TempDebugGraphicsSystem>("DX12 Temp Debug Graphics System"));
 
+		// TODO: TEMP DEBUG CODE - This shouldn't be a member of RenderManager::Initialize()!
+		s_helloTriangle = meshfactory::CreateHelloTriangle(10.f, -10.f); // Must be created before CreateDebugAPIResources
+
+		CreateDebugAPIResources();
 	}
 
 
 	void RenderManager::Render(re::RenderManager& renderManager)
 	{
 		re::Context const& context = re::RenderManager::Get()->GetContext();
-
 		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
-		dx12::CommandQueue& directQueue = ctxPlatParams->m_commandQueues[dx12::CommandList::Direct];
+		dx12::CommandQueue& directQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Direct);
 
 		// Note: Our command lists and associated command allocators are already closed/reset
 		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
@@ -166,10 +198,18 @@ namespace dx12
 		// Bind our render target(s) to the output merger (OM):
 		commandList->SetRenderTargets(1, &rtvHandle, false, &dsvDescriptor);
 
-
+		// TODO: Switch to stages, use the pipeline state actually set in a stage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		gr::PipelineState tempDebugHaxDefaultPipelineState;
+		
 		// Set the pipeline state and root signature first:
-		commandList->SetPipelineState(*ctxPlatParams->m_pipelineState);
-		commandList->SetGraphicsRootSignature(ctxPlatParams->m_pipelineState->GetRootSignature());
+		std::shared_ptr<dx12::PipelineState> pso = dx12::Context::GetPipelineStateObject(
+				*s_helloTriangle->GetMeshMaterial()->GetShader(),
+				tempDebugHaxDefaultPipelineState,
+				swapChainParams->m_backbufferTargetSets[backbufferIdx].get());
+
+		commandList->SetPipelineState(*pso);
+
+		commandList->SetGraphicsRootSignature(pso->GetRootSignature());
 
 		// TODO: Command list should have a SetViewport/SetScissorRect function that takes a TextureTargetSet. We should
 		// not be passing command lists around
@@ -253,7 +293,7 @@ namespace dx12
 		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 		dx12::SwapChain::PlatformParams const* swapChainParams =
 			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
-		dx12::CommandQueue& directQueue = ctxPlatParams->m_commandQueues[dx12::CommandList::Direct];
+		dx12::CommandQueue& directQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Direct);
 
 		// Configure the render target:
 		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
@@ -294,8 +334,8 @@ namespace dx12
 
 		// TODO: We should be able to iterate over all of these, but some of them aren't initialized
 		// TODO: We also flush these in the context as well... But it's necessary here, since we delete objects next
-		ctxPlatParams->m_commandQueues[CommandList::CommandListType::Direct].Flush();
-		ctxPlatParams->m_commandQueues[CommandList::CommandListType::Copy].Flush();
+		Context::GetCommandQueue(dx12::CommandList::CommandListType::Copy).Flush();
+		Context::GetCommandQueue(dx12::CommandList::CommandListType::Direct).Flush();
 
 		// TEMP DEBUG CODE:
 		s_helloTriangle = nullptr;

@@ -15,30 +15,32 @@ namespace en
 		HashedDataObject() : m_dataHash(0) {}
 
 	public:
-		inline uint64_t GetDataHash() const;
+		uint64_t GetDataHash() const;
 
-		inline void AddDataBytesToHash(void const* const data, size_t numBytes);
+		void AddDataBytesToHash(void const* const data, size_t numBytes);
 
-		inline void AddDataBytesToHash(std::string const& str);
-
-		template<typename T>
-		inline void AddDataBytesToHash(T const& data);
+		void AddDataBytesToHash(std::string const& str);
 
 		template<typename T>
-		inline void AddDataBytesToHash(std::vector<T> const& dataVec);
+		void AddDataBytesToHash(T const& data);
+
+		template<typename T>
+		void AddDataBytesToHash(std::vector<T> const& dataVec);
+
+		void ResetDataHash();
 
 	private:
 		uint64_t m_dataHash;
 	};
 
 
-	uint64_t HashedDataObject::GetDataHash() const
+	inline uint64_t HashedDataObject::GetDataHash() const
 	{
 		return m_dataHash;
 	}
 
 
-	void HashedDataObject::AddDataBytesToHash(void const* const data, size_t numBytes)
+	inline void HashedDataObject::AddDataBytesToHash(void const* const data, size_t numBytes)
 	{
 		SEAssert("Invalid data for hash", data != nullptr && numBytes > 0);
 
@@ -59,7 +61,7 @@ namespace en
 
 
 	template<typename T>
-	void HashedDataObject::AddDataBytesToHash(T const& data)
+	inline void HashedDataObject::AddDataBytesToHash(T const& data)
 	{
 		AddDataBytesToHash(&data, sizeof(T));
 	}
@@ -72,5 +74,11 @@ namespace en
 		{
 			AddDataBytesToHash(t);
 		}
+	}
+
+
+	inline void HashedDataObject::ResetDataHash()
+	{
+		m_dataHash = 0;
 	}
 }

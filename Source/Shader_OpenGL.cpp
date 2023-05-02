@@ -142,15 +142,9 @@ namespace opengl
 	{
 		opengl::Shader::PlatformParams* params = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams*>();
 
-		if (params->m_isCreated)
-		{
-			return;
-		}
-		else
-		{
-			params->m_isCreated = true;
-		}
-
+		SEAssert("Shader has already been created", !params->m_isCreated);
+		params->m_isCreated = true;
+		
 		opengl::Shader::LoadShaderTexts(shader);
 
 		string const& shaderFileName = shader.GetName();
@@ -382,6 +376,11 @@ namespace opengl
 	void Shader::Destroy(re::Shader& shader)
 	{
 		PlatformParams* params = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams*>();
+		if (!params->m_isCreated)
+		{
+			return;
+		}
+		params->m_isCreated = false;
 
 		glDeleteProgram(params->m_shaderReference);
 		params->m_shaderReference = 0;
@@ -391,9 +390,6 @@ namespace opengl
 
 	void Shader::Bind(re::Shader& shader)
 	{
-		// Ensure the shader is created
-		opengl::Shader::Create(shader);
-
 		opengl::Shader::PlatformParams const* params = 
 			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
 
@@ -408,10 +404,8 @@ namespace opengl
 		opengl::Shader::UniformType const type, 
 		int const count)
 	{
-		// Ensure the shader is created
-		opengl::Shader::Create(shader);
-
 		PlatformParams const* params = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
+		SEAssert("Shader has not been created yet", params->m_isCreated == true);
 
 		// Track if the current shader is bound or not, so we can set values without breaking the current state
 		GLint currentProgram = 0;
@@ -502,13 +496,12 @@ namespace opengl
 
 	void Shader::SetParameterBlock(re::Shader& shader, re::ParameterBlock& paramBlock)
 	{
-		// Ensure the shader is created
-		opengl::Shader::Create(shader);
-
 		// TODO: Handle non-permanent parameter blocks. For now, just bind without considering if the data has changed
 
 		opengl::Shader::PlatformParams const* shaderPlatformParams = 
 			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
+
+		SEAssert("Shader has not been created yet", shaderPlatformParams->m_isCreated == true);
 
 		// Track if the current shader is bound or not, so we can set values without breaking the current state
 		GLint currentProgram = 0;

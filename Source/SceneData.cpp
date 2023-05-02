@@ -21,6 +21,7 @@
 #include "PerformanceTimer.h"
 #include "SceneData.h"
 #include "SceneNode.h"
+#include "Shader.h"
 #include "ShadowMap.h"
 #include "ThreadPool.h"
 #include "Transform.h"
@@ -1454,6 +1455,10 @@ namespace fr
 			m_materials.clear();
 		}
 		{
+			std::lock_guard<std::shared_mutex> lock(m_shadersMutex);
+			m_shaders.clear();
+		}
+		{
 			std::lock_guard<std::mutex> lock(m_ambientLightMutex);
 			m_ambientLight = nullptr;
 		}
@@ -1804,5 +1809,49 @@ namespace fr
 		std::shared_lock<std::shared_mutex> readLock(m_materialsMutex);
 
 		return m_materials.find(nameID) != m_materials.end();
+	}
+
+
+	void SceneData::AddUniqueShader(std::shared_ptr<re::Shader>& newShader)
+	{
+		SEAssert("Cannot add null shader to shader table", newShader != nullptr);
+
+		std::unique_lock<std::shared_mutex> writeLock(m_shadersMutex);
+
+		// Note: Materials are uniquely identified by name, regardless of the MaterialDefinition they might use
+		unordered_map<size_t, shared_ptr<re::Shader>>::const_iterator shaderPosition =
+			m_shaders.find(newShader->GetNameID());
+		if (shaderPosition != m_shaders.end()) // Found existing
+		{
+			newShader = shaderPosition->second;
+		}
+		else // Add new
+		{
+			m_shaders[newShader->GetNameID()] = newShader;
+			LOG("Shader \"%s\" registered with scene", newShader->GetName().c_str());
+		}
+	}
+
+
+	std::shared_ptr<re::Shader> SceneData::GetShader(std::string const& extensionlessShaderFilename) const
+	{
+		const size_t filenameID = NamedObject::ComputeIDFromName(extensionlessShaderFilename);
+
+		std::shared_lock<std::shared_mutex> readLock(m_shadersMutex);
+		unordered_map<size_t, shared_ptr<re::Shader>>::const_iterator shaderPos = m_shaders.find(filenameID);
+
+		SEAssert("Could not find shader", shaderPos != m_shaders.end());
+
+		return shaderPos->second;
+	}
+
+
+	bool SceneData::ShaderExists(std::string const& extensionlessShaderFilename) const
+	{
+		const size_t filenameID = NamedObject::ComputeIDFromName(extensionlessShaderFilename);
+
+		std::shared_lock<std::shared_mutex> readLock(m_shadersMutex);
+
+		return m_materials.find(filenameID) != m_materials.end();
 	}
 }
