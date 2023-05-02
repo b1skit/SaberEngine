@@ -10,9 +10,8 @@ using std::make_shared;
 
 namespace re
 {
-	// Pseudo-private CTOR: private ParameterBlock::Accessor forces access via one of the Create factories
-	ParameterBlock::ParameterBlock(
-		ParameterBlock::Accessor, size_t typeIDHashCode, std::string const& pbName, PBType pbType)
+	// Private CTOR: Use one of the Create factories instead
+	ParameterBlock::ParameterBlock(size_t typeIDHashCode, std::string const& pbName, PBType pbType)
 		: NamedObject(pbName)
 		, m_typeIDHash(typeIDHashCode)
 		, m_pbType(pbType)

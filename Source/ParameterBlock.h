@@ -53,6 +53,8 @@ namespace re
 		static std::shared_ptr<re::ParameterBlock> CreateFromArray(
 			std::string const& pbName, T const* dataArray, size_t dataByteSize, size_t numElements, PBType pbType);
 
+		~ParameterBlock() { Destroy(); };
+
 
 	public:
 		template <typename T>
@@ -74,14 +76,8 @@ namespace re
 		
 
 	private:
-		struct Accessor { explicit Accessor() = default; }; // Prevents direct access to the CTOR
-	public:
-		ParameterBlock(Accessor, size_t typeIDHashCode, std::string const& pbName, PBType pbType);
+		ParameterBlock(size_t typeIDHashCode, std::string const& pbName, PBType pbType); // Use factory method instead
 
-		~ParameterBlock() { Destroy(); };
-
-
-	private:
 		static void RegisterAndCommit(
 			std::shared_ptr<re::ParameterBlock> newPB, void const* data, size_t numBytes, uint64_t typeIDHash);
 		void CommitInternal(void const* data, uint64_t typeIDHash);
@@ -101,8 +97,8 @@ namespace re
 	template<typename T>
 	std::shared_ptr<re::ParameterBlock> ParameterBlock::Create(std::string const& pbName, T const& data, PBType pbType)
 	{
-		std::shared_ptr<re::ParameterBlock> newPB =
-			make_shared<re::ParameterBlock>(Accessor(), typeid(T).hash_code(), pbName, pbType);
+		std::shared_ptr<re::ParameterBlock> newPB;
+		newPB.reset(new re::ParameterBlock(typeid(T).hash_code(), pbName, pbType));
 
 		RegisterAndCommit(newPB, &data, sizeof(T), typeid(T).hash_code());
 
@@ -115,8 +111,8 @@ namespace re
 	static std::shared_ptr<re::ParameterBlock> ParameterBlock::CreateFromArray(
 		std::string const& pbName, T const* dataArray, size_t dataByteSize, size_t numElements, PBType pbType)
 	{
-		std::shared_ptr<re::ParameterBlock> newPB =
-			make_shared<ParameterBlock>(Accessor(), typeid(T).hash_code(), pbName, pbType);
+		std::shared_ptr<re::ParameterBlock> newPB;
+		newPB.reset(new ParameterBlock(typeid(T).hash_code(), pbName, pbType));
 
 		RegisterAndCommit(newPB, dataArray, dataByteSize * numElements, typeid(T).hash_code());
 
