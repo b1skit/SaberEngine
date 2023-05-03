@@ -294,7 +294,7 @@ namespace gr
 
 	void BloomGraphicsSystem::CreateBatches()
 	{
-		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
+		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
 
 		m_emissiveBlitStage.AddBatch(fullscreenQuadBatch);
 

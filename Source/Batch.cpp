@@ -22,9 +22,9 @@ namespace
 
 namespace re
 {
-	Batch::Batch(re::MeshPrimitive* meshPrimitive, gr::Material* material, re::Shader* shader)
+	Batch::Batch(re::MeshPrimitive* meshPrimitive, gr::Material* material)
 		: m_batchMeshPrimitive(meshPrimitive)
-		, m_batchShader(shader)
+		, m_batchShader(nullptr)
 		, m_batchGeometryMode(GeometryMode::Indexed)
 		, m_batchFilterMask(0)
 		, m_numInstances(1)
@@ -33,27 +33,36 @@ namespace re
 
 		if (material)
 		{
+			m_batchShader = material->GetShader();
+
 			// Material textures/samplers:
 			for (size_t i = 0; i < material->GetTexureSlotDescs().size(); i++)
 			{
-				AddBatchTextureAndSamplerInput(
-					material->GetTexureSlotDescs()[i].m_shaderSamplerName, 
-					material->GetTexureSlotDescs()[i].m_texture, 
-					material->GetTexureSlotDescs()[i].m_samplerObject);
+				if (material->GetTexureSlotDescs()[i].m_texture && material->GetTexureSlotDescs()[i].m_samplerObject)
+				{
+					AddBatchTextureAndSamplerInput(
+						material->GetTexureSlotDescs()[i].m_shaderSamplerName,
+						material->GetTexureSlotDescs()[i].m_texture,
+						material->GetTexureSlotDescs()[i].m_samplerObject);
+				}				
 			}
 
 			// Material params:
-			m_batchParamBlocks.emplace_back(material->GetParameterBlock());
+			std::shared_ptr<re::ParameterBlock> materialParams = material->GetParameterBlock();
+			if (materialParams)
+			{
+				m_batchParamBlocks.emplace_back();
+			}			
 		}
 		
 		ComputeDataHash();
 	}
 
 
-	Batch::Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material* material, re::Shader* shader)
-		: Batch(mesh->GetMeshPrimitives()[0].get(), material, shader)
+	Batch::Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material* material)
+		: Batch(mesh->GetMeshPrimitives()[0].get(), material)
 	{
-			SEAssert("Currently only support Mesh with a single MeshPrimitve. TODO: Support > 1 MeshPrimitve", 
+			SEAssert("Currently only support Mesh with a single MeshPrimitive. TODO: Support > 1 MeshPrimitve", 
 			mesh->GetMeshPrimitives().size() == 1);
 	}
 

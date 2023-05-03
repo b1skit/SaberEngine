@@ -64,6 +64,31 @@ namespace opengl
 	}
 
 
+	void RenderManager::CreateAPIResources(re::RenderManager& renderManager)
+	{
+		// Shaders:
+		if (!renderManager.m_newShaders.m_newObjects.empty())
+		{
+			std::lock_guard<std::mutex> lock(renderManager.m_newShaders.m_mutex);
+			for (auto& newObject : renderManager.m_newShaders.m_newObjects)
+			{
+				opengl::Shader::Create(*newObject.second);
+			}
+			renderManager.m_newShaders.m_newObjects.clear();
+		}
+		// Mesh Primitives:
+		if (!renderManager.m_newMeshPrimitives.m_newObjects.empty())
+		{
+			std::lock_guard<std::mutex> lock(renderManager.m_newMeshPrimitives.m_mutex);
+			for (auto& newObject : renderManager.m_newMeshPrimitives.m_newObjects)
+			{
+				opengl::MeshPrimitive::Create(*newObject.second);
+			}
+			renderManager.m_newMeshPrimitives.m_newObjects.clear();
+		}
+	}
+
+
 	void RenderManager::Render(re::RenderManager& renderManager)
 	{
 		// TODO: Add an assert somewhere that checks if any possible shader uniform isn't set
@@ -111,7 +136,7 @@ namespace opengl
 				std::shared_ptr<re::Shader> stageShader = renderStage->GetStageShader();
 				opengl::Shader::Bind(*stageShader);
 				// TODO: Handle shaders set by stages/materials/batches
-				// Priority order: Stage, batch/material?
+				// Priority order: Stage, material (where material shaders are attached to the batch)?
 
 				// Set stage param blocks:
 				opengl::Shader::SetParameterBlock(*stageShader, *stageTargets->GetTargetParameterBlock().get());
@@ -222,30 +247,5 @@ namespace opengl
 
 	void RenderManager::Shutdown(re::RenderManager& renderManager)
 	{
-	}
-
-
-	void RenderManager::CreateAPIResources(re::RenderManager& renderManager)
-	{
-		// Shaders:
-		if (!renderManager.m_newShaders.m_newObjects.empty())
-		{
-			std::lock_guard<std::mutex> lock(renderManager.m_newShaders.m_mutex);
-			for (auto& newObject : renderManager.m_newShaders.m_newObjects)
-			{
-				opengl::Shader::Create(*newObject.second);
-			}
-			renderManager.m_newShaders.m_newObjects.clear();
-		}
-		// Mesh Primitives:
-		if (!renderManager.m_newMeshPrimitives.m_newObjects.empty())
-		{
-			std::lock_guard<std::mutex> lock(renderManager.m_newMeshPrimitives.m_mutex);
-			for (auto& newObject : renderManager.m_newMeshPrimitives.m_newObjects)
-			{
-				opengl::MeshPrimitive::Create(*newObject.second);
-			}
-			renderManager.m_newMeshPrimitives.m_newObjects.clear();
-		}
 	}
 }

@@ -128,8 +128,7 @@ namespace en
 				unmergedBatches.emplace_back(std::pair<Batch, Transform*>(
 					{
 						meshPrimitive.get(),
-						meshPrimitive->GetMeshMaterial(),
-						meshPrimitive->GetMeshMaterial()->GetShader()
+						meshPrimitive->GetMeshMaterial()
 					},
 					mesh->GetTransform()));
 			}

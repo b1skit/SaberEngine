@@ -53,8 +53,8 @@ namespace re
 
 
 	public:
-		Batch(re::MeshPrimitive* meshPrimitive, gr::Material* material, re::Shader* shader);
-		Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material* material, re::Shader* shader);
+		Batch(re::MeshPrimitive* meshPrimitive, gr::Material* material);
+		Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material* material);
 
 		~Batch() = default;
 		Batch(Batch const&) = default;

@@ -1,6 +1,8 @@
 // © 2023 Adam Badke. All rights reserved.
-
+#include "Batch.h"
 #include "GraphicsSystem_TempDebug.h"
+
+using re::Batch;
 
 
 namespace gr
@@ -9,15 +11,23 @@ namespace gr
 		: GraphicsSystem(name)
 		, NamedObject(name)
 		, m_tempDebugStage("DX12 temp debug stage")
+		, m_helloTriangle(nullptr)
 	{
 	}
 
 
 	void TempDebugGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
+		// Debug mesh:
+		m_helloTriangle = meshfactory::CreateHelloTriangle(10.f, -10.f);
+
+		// Attach a shader:
+		std::shared_ptr<re::Shader> helloShader = re::Shader::Create("HelloTriangle");
+		m_helloTriangle->GetMeshMaterial()->SetShader(helloShader);
+
+		// "Set" the targets:
 		m_tempDebugStage.SetTextureTargetSet(nullptr); // Render directly to the backbuffer
 
-		// NOTE: An identical default PipelineState is currently hard-coded in the DX12 RenderManager!
 		gr::PipelineState defaultPipelineState;
 		m_tempDebugStage.SetStagePipelineState(defaultPipelineState);
 
@@ -39,6 +49,7 @@ namespace gr
 
 	void TempDebugGraphicsSystem::CreateBatches()
 	{
-		
+		const Batch debugBatch = Batch(m_helloTriangle.get(), m_helloTriangle->GetMeshMaterial());
+		m_tempDebugStage.AddBatch(debugBatch);
 	}
 }

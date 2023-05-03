@@ -255,7 +255,7 @@ namespace gr
 
 			brdfStage.SetStagePipelineState(brdfStageParams);
 
-			Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
+			Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
 			brdfStage.AddBatch(fullscreenQuadBatch);
 
 			pipeline.AppendSingleFrameRenderStage(brdfStage);
@@ -294,7 +294,7 @@ namespace gr
 		cubemapCamParams.g_cameraWPos = vec3(0.f, 0.f, 0.f); // Unused
 
 		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
-		Batch cubeMeshBatch = Batch(m_cubeMeshPrimitive.get(), nullptr, nullptr);
+		Batch cubeMeshBatch = Batch(m_cubeMeshPrimitive.get(), nullptr);
 
 		const string equilinearToCubemapShaderName =
 			Config::Get()->GetValue<string>("equilinearToCubemapBlitShaderName");
@@ -588,14 +588,14 @@ namespace gr
 		// Note: Culling is not (currently) supported. For now, we attempt to draw everything
 		
 		// Ambient stage batches:
-		const Batch ambeintFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
+		const Batch ambeintFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
 		m_ambientStage.AddBatch(ambeintFullscreenQuadBatch);
 
 		// Keylight stage batches:
 		shared_ptr<Light> const keyLight = SceneManager::GetSceneData()->GetKeyLight();
 		if (keyLight)
 		{
-			Batch keylightFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
+			Batch keylightFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
 
 			LightParams keylightParams = GetLightParamData(keyLight);
 			shared_ptr<re::ParameterBlock> keylightPB = re::ParameterBlock::Create(
@@ -612,7 +612,7 @@ namespace gr
 		vector<shared_ptr<Light>> const& pointLights = SceneManager::GetSceneData()->GetPointLights();
 		for (size_t i = 0; i < pointLights.size(); i++)
 		{
-			Batch pointlightBatch = Batch(m_sphereMeshes[i], nullptr, nullptr);
+			Batch pointlightBatch = Batch(m_sphereMeshes[i], nullptr);
 
 			// Point light params:
 			LightParams pointlightParams = GetLightParamData(pointLights[i]);

@@ -25,5 +25,7 @@ namespace gr
 
 	private:
 		re::RenderStage m_tempDebugStage;
+
+		std::shared_ptr<re::MeshPrimitive> m_helloTriangle;
 	};
 }

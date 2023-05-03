@@ -103,7 +103,7 @@ namespace gr
 
 	void SkyboxGraphicsSystem::CreateBatches()
 	{
-		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr, nullptr);
+		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
 		m_skyboxStage.AddBatch(fullscreenQuadBatch);
 	}
 }
