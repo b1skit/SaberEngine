@@ -227,7 +227,7 @@ namespace dx12
 	}
 
 
-	std::shared_ptr<dx12::PipelineState> Context::CreateAddPipelineState(
+	void Context::CreateAddPipelineState(
 		re::Shader const& shader,
 		gr::PipelineState& grPipelineState,	
 		re::TextureTargetSet& targetSet)
@@ -235,16 +235,21 @@ namespace dx12
 		dx12::Context::PlatformParams* ctxPlatParams =
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
-		std::shared_ptr<dx12::PipelineState> newPSO = std::make_shared<dx12::PipelineState>();
-		newPSO->Create(shader, grPipelineState, targetSet);
-
 		// TODO: We should combine all the keys into a single value instead of nesting hash tables
 		const uint64_t shaderKey = shader.GetNameID();
 		const uint64_t pipelineKey = grPipelineState.GetPipelineStateDataHash();
 		const uint64_t targetSetKey = targetSet.GetTargetSetSignature();
-		ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey][targetSetKey] = newPSO;
 
-		return newPSO;
+		SEAssert("PSO already exists! This is not a bug: This assert is to validate the system works. If you hit this, "
+			"delete the assert and give yourself a high-five",
+			!ctxPlatParams->m_PSOLibrary.contains(shaderKey) ||
+			!ctxPlatParams->m_PSOLibrary[shaderKey].contains(pipelineKey) ||
+			!ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey].contains(targetSetKey));
+
+		std::shared_ptr<dx12::PipelineState> newPSO = std::make_shared<dx12::PipelineState>();
+		newPSO->Create(shader, grPipelineState, targetSet);
+		
+		ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey][targetSetKey] = newPSO;
 	}
 
 

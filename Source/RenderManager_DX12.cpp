@@ -7,6 +7,7 @@
 
 #include "Context_DX12.h"
 #include "DebugConfiguration.h"
+#include "Debug_DX12.h"
 #include "ParameterBlock_DX12.h"
 #include "RenderManager_DX12.h"
 #include "SwapChain_DX12.h"
@@ -22,13 +23,10 @@ using std::shared_ptr;
 // TEMP DEBUG CODE:
 #include "MeshPrimitive_DX12.h"
 #include "VertexStream_DX12.h"
-#include "Debug_DX12.h"
 #include "Shader_DX12.h"
 #include "TextureTarget_DX12.h"
 #include "SceneManager.h"
 #include "Camera.h"
-#include "CPUDescriptorHeapManager_DX12.h"
-#include "MathUtils.h"
 #include "GraphicsSystem_TempDebug.h"
 
 
@@ -43,7 +41,10 @@ namespace
 
 	bool CreateDebugAPIResources()
 	{
-		// TODO: Move this to the debug GS
+		// TODO: Move all of this to the debug GS
+
+		s_helloTriangle = meshfactory::CreateHelloTriangle(10.f, -10.f); // Must be created before CreateDebugAPIResources
+
 		std::shared_ptr<re::Shader> helloShader = re::Shader::Create("HelloTriangle");
 
 		s_helloTriangle->GetMeshMaterial()->SetShader(helloShader);
@@ -153,13 +154,10 @@ namespace dx12
 
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
-
 		renderManager.m_graphicsSystems.emplace_back(
 			make_shared<gr::TempDebugGraphicsSystem>("DX12 Temp Debug Graphics System"));
 
-		// TODO: TEMP DEBUG CODE - This shouldn't be a member of RenderManager::Initialize()!
-		s_helloTriangle = meshfactory::CreateHelloTriangle(10.f, -10.f); // Must be created before CreateDebugAPIResources
-
+		// TODO: Remove this from RenderManager::Initialize
 		CreateDebugAPIResources();
 	}
 
@@ -221,9 +219,11 @@ namespace dx12
 		// Bind our render target(s) to the output merger (OM):
 		commandList->SetRenderTargets(1, &rtvHandle, false, &dsvDescriptor);
 
+
 		// TODO: Switch to stages, use the pipeline state actually set in a stage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		gr::PipelineState tempDebugHaxDefaultPipelineState;
 		
+
 		// Set the pipeline state and root signature first:
 		std::shared_ptr<dx12::PipelineState> pso = dx12::Context::GetPipelineStateObject(
 				*s_helloTriangle->GetMeshMaterial()->GetShader(),
@@ -359,6 +359,7 @@ namespace dx12
 		// TODO: We also flush these in the context as well... But it's necessary here, since we delete objects next
 		Context::GetCommandQueue(dx12::CommandList::CommandListType::Copy).Flush();
 		Context::GetCommandQueue(dx12::CommandList::CommandListType::Direct).Flush();
+
 
 		// TEMP DEBUG CODE:
 		s_helloTriangle = nullptr;

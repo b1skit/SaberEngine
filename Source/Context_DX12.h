@@ -60,8 +60,7 @@ namespace dx12
 		static void Create(re::Context& context);
 		static void Destroy(re::Context& context);
 		static void Present(re::Context const& context);
-		static std::shared_ptr<dx12::PipelineState> CreateAddPipelineState(
-			re::Shader const&, gr::PipelineState&, re::TextureTargetSet&);
+		static void CreateAddPipelineState(re::Shader const&, gr::PipelineState&, re::TextureTargetSet&);
 		
 		// TODO: Move these to the system info layer:
 		static uint8_t GetMaxTextureInputs();
