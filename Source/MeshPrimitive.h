@@ -71,7 +71,8 @@ namespace re
 
 
 	public:
-		MeshPrimitive(std::string const& name,
+		static std::shared_ptr<MeshPrimitive> Create(
+			std::string const& name,
 			std::vector<uint32_t>& indices,
 			std::vector<float>& positions,
 			glm::vec3 const& positionMinXYZ, // Pass gr::Bounds::k_invalidMinXYZ to compute bounds manually
@@ -79,7 +80,7 @@ namespace re
 			std::vector<float>& normals,
 			std::vector<float>& tangents,
 			std::vector<float>& uv0,
-			std::vector<float>& colors,	
+			std::vector<float>& colors,
 			std::vector<uint8_t> joints,
 			std::vector<float> weights,
 			std::shared_ptr<gr::Material> material,
@@ -120,6 +121,23 @@ namespace re
 		gr::Bounds m_localBounds; // MeshPrimitive bounds, in local space		
 
 		void ComputeDataHash() override;
+
+
+	private: // Private ctor: Use the Create factory instead
+		MeshPrimitive(std::string const& name,
+			std::vector<uint32_t>& indices,
+			std::vector<float>& positions,
+			glm::vec3 const& positionMinXYZ, // Pass gr::Bounds::k_invalidMinXYZ to compute bounds manually
+			glm::vec3 const& positionMaxXYZ, // Pass gr::Bounds::k_invalidMaxXYZ to compute bounds manually
+			std::vector<float>& normals,
+			std::vector<float>& tangents,
+			std::vector<float>& uv0,
+			std::vector<float>& colors,
+			std::vector<uint8_t> joints,
+			std::vector<float> weights,
+			std::shared_ptr<gr::Material> material,
+			re::MeshPrimitive::MeshPrimitiveParams const& meshParams);
+
 
 	private:
 		// No copying allowed

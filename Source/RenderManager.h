@@ -63,8 +63,22 @@ namespace re
 
 
 	public: // Deferred API-object creation queues
-		void RegisterShaderForCreate(std::shared_ptr<re::Shader>);
+		template<typename T>
+		void RegisterForCreate(std::shared_ptr<T>);
+
+
+	private:
 		void CreateAPIResources();
+
+		template <typename T>
+		struct NewAPIObjects
+		{
+			std::unordered_map<size_t, std::shared_ptr<T>> m_newObjects;
+			std::mutex m_mutex;
+		};
+		NewAPIObjects<re::Shader> m_newShaders;
+		NewAPIObjects<re::MeshPrimitive> m_newMeshPrimitives;
+
 
 	private:
 		// EngineComponent interface:
@@ -88,11 +102,6 @@ namespace re
 		std::queue<std::shared_ptr<en::Command>> m_imGuiCommands;
 
 		bool m_vsyncEnabled;
-
-
-	private:
-		std::unordered_map<size_t, std::shared_ptr<re::Shader>> m_newShaders;
-		std::mutex m_newShadersMutex;
 
 
 	private: // Friends		

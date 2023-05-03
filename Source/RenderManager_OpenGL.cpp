@@ -228,14 +228,24 @@ namespace opengl
 	void RenderManager::CreateAPIResources(re::RenderManager& renderManager)
 	{
 		// Shaders:
-		if (!renderManager.m_newShaders.empty())
+		if (!renderManager.m_newShaders.m_newObjects.empty())
 		{
-			std::lock_guard<std::mutex> lock(renderManager.m_newShadersMutex);
-			for (auto& shader : renderManager.m_newShaders)
+			std::lock_guard<std::mutex> lock(renderManager.m_newShaders.m_mutex);
+			for (auto& newObject : renderManager.m_newShaders.m_newObjects)
 			{
-				opengl::Shader::Create(*shader.second);
+				opengl::Shader::Create(*newObject.second);
 			}
-			renderManager.m_newShaders.clear();
+			renderManager.m_newShaders.m_newObjects.clear();
+		}
+		// Mesh Primitives:
+		if (!renderManager.m_newMeshPrimitives.m_newObjects.empty())
+		{
+			std::lock_guard<std::mutex> lock(renderManager.m_newMeshPrimitives.m_mutex);
+			for (auto& newObject : renderManager.m_newMeshPrimitives.m_newObjects)
+			{
+				opengl::MeshPrimitive::Create(*newObject.second);
+			}
+			renderManager.m_newMeshPrimitives.m_newObjects.clear();
 		}
 	}
 }

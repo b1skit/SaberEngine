@@ -2,6 +2,8 @@
 #include "Config.h"
 #include "MeshPrimitive.h"
 #include "MeshPrimitive_Platform.h"
+#include "RenderManager.h"
+#include "SceneManager.h"
 #include "Transform.h"
 #include "VertexStreamBuilder.h"
 
@@ -22,6 +24,43 @@ using std::shared_ptr;
 
 namespace re
 {
+	std::shared_ptr<MeshPrimitive> MeshPrimitive::Create(
+		std::string const& name,
+		std::vector<uint32_t>& indices,
+		std::vector<float>& positions,
+		glm::vec3 const& positionMinXYZ, // Pass gr::Bounds::k_invalidMinXYZ to compute bounds manually
+		glm::vec3 const& positionMaxXYZ, // Pass gr::Bounds::k_invalidMaxXYZ to compute bounds manually
+		std::vector<float>& normals,
+		std::vector<float>& tangents,
+		std::vector<float>& uv0,
+		std::vector<float>& colors,
+		std::vector<uint8_t> joints,
+		std::vector<float> weights,
+		std::shared_ptr<gr::Material> material,
+		re::MeshPrimitive::MeshPrimitiveParams const& meshParams)
+	{
+		shared_ptr<MeshPrimitive> newMeshPrimitive;
+		newMeshPrimitive.reset(new MeshPrimitive(
+			name,
+			indices,
+			positions,
+			positionMinXYZ,
+			positionMaxXYZ,
+			normals,
+			tangents,
+			uv0,
+			colors,
+			joints,
+			weights,
+			material,
+			meshParams));
+
+		re::RenderManager::Get()->RegisterForCreate(newMeshPrimitive);
+
+		return newMeshPrimitive;
+	}
+
+
 	MeshPrimitive::MeshPrimitive(
 		string const& name,
 		vector<uint32_t>& indices,
@@ -329,7 +368,7 @@ namespace meshfactory
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
-		return std::make_shared<MeshPrimitive>(
+		return MeshPrimitive::Create(
 			meshName,
 			cubeIndices,
 			*reinterpret_cast<vector<float>*>(&assembledPositions),	// Cast our vector<vec3> to vector<float>
@@ -401,7 +440,7 @@ namespace meshfactory
 		};
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
-		return std::make_shared<MeshPrimitive>(
+		return MeshPrimitive::Create(
 			"optimizedFullscreenQuad",
 			triIndices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
@@ -468,7 +507,7 @@ namespace meshfactory
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// It's easier to reason about geometry in vecN types; cast to float now we're done
-		return std::make_shared<MeshPrimitive>(
+		return MeshPrimitive::Create(
 			meshName,
 			quadIndices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
@@ -662,7 +701,7 @@ namespace meshfactory
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
-		return make_shared<MeshPrimitive>(
+		return MeshPrimitive::Create(
 			meshName,
 			indices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
@@ -737,7 +776,7 @@ namespace meshfactory
 			gr::Material::GetMaterialDefinition("pbrMetallicRoughness"));
 
 		// It's easier to reason about geometry in vecN types; cast to float now we're done
-		return std::make_shared<MeshPrimitive>(
+		return MeshPrimitive::Create(
 			meshName,
 			indices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>

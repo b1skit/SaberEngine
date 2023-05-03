@@ -34,7 +34,7 @@ namespace re
 		en::SceneManager::GetSceneData()->AddUniqueShader(sharedShaderPtr);
 
 		// Register the Shader with the RenderManager, so its API-level object can be created before use
-		re::RenderManager::Get()->RegisterShaderForCreate(sharedShaderPtr);
+		re::RenderManager::Get()->RegisterForCreate(sharedShaderPtr);
 
 		return sharedShaderPtr;
 	}

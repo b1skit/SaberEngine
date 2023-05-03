@@ -1218,7 +1218,7 @@ namespace
 			}
 
 			// Attach the MeshPrimitive to the Mesh:
-			newMesh->AddMeshPrimitive(make_shared<MeshPrimitive>(
+			newMesh->AddMeshPrimitive(MeshPrimitive::Create(
 				meshName,
 				indices,
 				positions,

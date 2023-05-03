@@ -63,10 +63,7 @@ namespace opengl
 		opengl::MeshPrimitive::PlatformParams* meshPlatformParams = 
 			meshPrimitive.GetPlatformParams()->As<opengl::MeshPrimitive::PlatformParams*>();
 
-		if (meshPlatformParams->m_meshVAO != 0)
-		{
-			return; // Already created
-		}
+		SEAssert("Mesh primitive already created", meshPlatformParams->m_meshVAO == 0);
 
 		// Create a Vertex Array Object:
 		glGenVertexArrays(1, &meshPlatformParams->m_meshVAO);
@@ -94,9 +91,6 @@ namespace opengl
 
 	void opengl::MeshPrimitive::Bind(re::MeshPrimitive& meshPrimitive)
 	{
-		// Ensure the mesh is created
-		opengl::MeshPrimitive::Create(meshPrimitive);
-
 		opengl::MeshPrimitive::PlatformParams const* glMeshParams = 
 			meshPrimitive.GetPlatformParams()->As<opengl::MeshPrimitive::PlatformParams const*>();
 

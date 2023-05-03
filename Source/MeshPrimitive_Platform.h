@@ -11,7 +11,6 @@ namespace platform
 	public:
 		static void CreatePlatformParams(re::MeshPrimitive& meshPrimitive);
 
-
 		static void (*Destroy)(re::MeshPrimitive& meshPrimitive);
 	};
 }

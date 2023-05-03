@@ -150,7 +150,6 @@ namespace dx12
 
 	VertexStream::PlatformParams::PlatformParams(re::VertexStream const& stream, re::VertexStream::StreamType type)
 		: m_type(type)
-		, m_intermediateBufferResource(nullptr)
 		, m_bufferResource(nullptr)
 	{
 		m_format = GetStreamFormat(stream);
@@ -174,7 +173,10 @@ namespace dx12
 	/******************************************************************************************************************/
 
 
-	void VertexStream::Create(re::VertexStream& stream, ComPtr<ID3D12GraphicsCommandList2> commandList)
+	void VertexStream::Create(
+		re::VertexStream& stream, 
+		ComPtr<ID3D12GraphicsCommandList2> commandList, 
+		std::vector<ComPtr<ID3D12Resource>>& intermediateResources)
 	{
 		dx12::VertexStream::PlatformParams* streamPlatformParams =
 			stream.GetPlatformParams()->As<dx12::VertexStream::PlatformParams*>();
@@ -201,19 +203,20 @@ namespace dx12
 
 		streamPlatformParams->m_bufferResource->SetName(L"Vertex stream destination buffer");
 
-		// Create an committed resource for the CPU-side upload:
+		// Create an intermediate upload heap:
 		const CD3DX12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 		const CD3DX12_RESOURCE_DESC committedresourceDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
 
+		ComPtr<ID3D12Resource> itermediateBufferResource = nullptr;
 		hr = device->CreateCommittedResource(
 			&uploadHeapProperties,
 			D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
 			&committedresourceDesc,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
-			IID_PPV_ARGS(&streamPlatformParams->m_intermediateBufferResource));
+			IID_PPV_ARGS(&itermediateBufferResource));
 
-		streamPlatformParams->m_intermediateBufferResource->SetName(L"Vertex stream intermediate buffer");
+		itermediateBufferResource->SetName(L"Vertex stream intermediate buffer");
 
 		// Populate the subresource:
 		D3D12_SUBRESOURCE_DATA subresourceData = {};
@@ -223,8 +226,8 @@ namespace dx12
 
 		::UpdateSubresources(
 			commandList.Get(),
-			streamPlatformParams->m_bufferResource.Get(),				// Destination resource
-			streamPlatformParams->m_intermediateBufferResource.Get(),	// Intermediate resource
+			streamPlatformParams->m_bufferResource.Get(),	// Destination resource
+			itermediateBufferResource.Get(),				// Intermediate resource
 			0,								// Index of 1st subresource in the resource
 			0,								// Number of subresources in the resource.
 			1,								// Required byte size for the update
@@ -260,7 +263,8 @@ namespace dx12
 		}
 		}
 
-		// TODO: We should destroy the vertex stream intermediate HEAP_TYPE_UPLOAD resources once the copy is done
+		// This will be released once the copy is done
+		intermediateResources.emplace_back(itermediateBufferResource);
 	}
 
 
@@ -289,7 +293,6 @@ namespace dx12
 		}
 
 		streamPlatformParams->m_type = re::VertexStream::StreamType::StreamType_Count;
-		streamPlatformParams->m_intermediateBufferResource = nullptr;
 		streamPlatformParams->m_bufferResource = nullptr;
 		streamPlatformParams->m_format = DXGI_FORMAT::DXGI_FORMAT_FORCE_UINT;
 	}

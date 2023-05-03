@@ -215,7 +215,15 @@ namespace re
 		m_pipeline.Destroy();
 		m_graphicsSystems.clear();
 
-		m_newShaders.clear();
+		// Clear the new object queues:
+		{
+			std::lock_guard<std::mutex> lock(m_newShaders.m_mutex);
+			m_newShaders.m_newObjects.clear();
+		}
+		{
+			std::lock_guard<std::mutex> lock(m_newMeshPrimitives.m_mutex);
+			m_newMeshPrimitives.m_newObjects.clear();
+		}
 
 		// Need to do this here so the CoreEngine's Window can be destroyed
 		m_context.Destroy();
@@ -252,19 +260,34 @@ namespace re
 		}
 	}
 
-
-	void RenderManager::RegisterShaderForCreate(std::shared_ptr<re::Shader> newShader)
+	template<>
+	void RenderManager::RegisterForCreate(std::shared_ptr<re::Shader> newObject)
 	{
-		const size_t newShaderNameID = newShader->GetNameID();
+		const size_t nameID = newObject->GetNameID();
 
-		std::lock_guard<std::mutex> lock(m_newShadersMutex);
+		std::lock_guard<std::mutex> lock(m_newShaders.m_mutex);
 
 		SEAssert("Found a shader with the same name, but a different raw pointer. This suggests a duplicate Shader, "
-			"which should not be possible", 
-			m_newShaders.find(newShaderNameID) == m_newShaders.end() || 
-				m_newShaders.at(newShaderNameID).get() == newShader.get());
+			"which should not be possible",
+			m_newShaders.m_newObjects.find(nameID) == m_newShaders.m_newObjects.end() ||
+			m_newShaders.m_newObjects.at(nameID).get() == newObject.get());
 
-		m_newShaders.insert({ newShader->GetNameID(), newShader });
+		m_newShaders.m_newObjects.insert({ nameID, newObject });
+	}
+
+
+	template<>
+	void RenderManager::RegisterForCreate(std::shared_ptr<re::MeshPrimitive> newObject)
+	{
+		const size_t nameID = newObject->GetUniqueID();
+
+		std::lock_guard<std::mutex> lock(m_newMeshPrimitives.m_mutex);
+
+		SEAssert("Found an object with the same unique ID. This suggests an object has been added twice, which should "
+			"not happen",
+			m_newMeshPrimitives.m_newObjects.find(nameID) == m_newMeshPrimitives.m_newObjects.end());
+
+		m_newMeshPrimitives.m_newObjects.insert({ nameID, newObject });
 	}
 
 

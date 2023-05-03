@@ -21,7 +21,6 @@ namespace dx12
 
 			re::VertexStream::StreamType m_type;
 
-			Microsoft::WRL::ComPtr<ID3D12Resource> m_intermediateBufferResource;
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_bufferResource;
 
 			DXGI_FORMAT m_format;
@@ -51,7 +50,10 @@ namespace dx12
 		static void Destroy(re::VertexStream&);
 
 		// DX12-specific functionality
-		static void Create(re::VertexStream&, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2>);
+		static void Create(
+			re::VertexStream&, 
+			Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2>, 
+			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>&);
 	};
 
 

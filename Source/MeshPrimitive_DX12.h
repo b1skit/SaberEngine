@@ -23,6 +23,7 @@ namespace dx12
 		static void Destroy(re::MeshPrimitive&);
 
 		// DX12-specific functionality:
-		static void Create(re::MeshPrimitive&, ID3D12GraphicsCommandList2*);
+		static void Create(
+			re::MeshPrimitive&, ID3D12GraphicsCommandList2*, std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>&);
 	};
 }

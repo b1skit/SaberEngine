@@ -43,24 +43,6 @@ namespace
 
 	bool CreateDebugAPIResources()
 	{
-		dx12::CommandQueue& copyQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Copy);
-
-		std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue.GetCreateCommandList();
-
-		// Note: This internally create all of the vertex stream resources
-		dx12::MeshPrimitive::Create(*s_helloTriangle, copyCommandList->GetD3DCommandList()); 
-
-		// Execute command queue, and wait for it to be done (blocking)
-		std::shared_ptr<dx12::CommandList> commandLists[] =
-		{
-			copyCommandList
-		};
-
-		uint64_t copyQueueFenceVal = copyQueue.Execute(1, commandLists);
-		copyQueue.CPUWait(copyQueueFenceVal);
-
-		// TODO: We should destroy the vertex stream intermediate HEAP_TYPE_UPLOAD resources now that the copy is done
-
 		// TODO: Move this to the debug GS
 		std::shared_ptr<re::Shader> helloShader = re::Shader::Create("HelloTriangle");
 
@@ -80,18 +62,21 @@ namespace dx12
 			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
 		// Shaders:
-		if (!renderManager.m_newShaders.empty())
+		if (!renderManager.m_newShaders.m_newObjects.empty())
 		{
-			SEAssert("TEMP HAX: WE'RE ASSUMING OUR ONE DEBUG SHADER IS BEING CREATED HERE", 
-				renderManager.m_newShaders.size() == 1); 
-
-
 			SEAssert("Creating PSO's for DX12 Shaders requires a re::PipelineState from a RenderStage, but the "
-				"pipeline is empty", 
+				"pipeline is empty",
 				!renderManager.m_pipeline.GetPipeline().empty());
 
-			std::lock_guard<std::mutex> lock(renderManager.m_newShadersMutex);
-			for (auto& shader : renderManager.m_newShaders)
+
+
+			SEAssert("TEMP HAX: WE'RE ASSUMING OUR ONE DEBUG SHADER IS BEING CREATED HERE", 
+				renderManager.m_newShaders.m_newObjects.size() == 1); 
+
+			
+
+			std::lock_guard<std::mutex> lock(renderManager.m_newShaders.m_mutex);
+			for (auto& shader : renderManager.m_newShaders.m_newObjects)
 			{
 				// Create the Shader object:
 				dx12::Shader::Create(*shader.second);
@@ -123,7 +108,45 @@ namespace dx12
 					}
 				}
 			}
-			renderManager.m_newShaders.clear();
+			renderManager.m_newShaders.m_newObjects.clear();
+		}
+
+		const bool hasDataToCopy = !renderManager.m_newMeshPrimitives.m_newObjects.empty();
+
+		// Handle anything that requires a copy queue:
+		if (hasDataToCopy)
+		{
+			// TODO: Get multiple command lists, and record on multiple threads:
+			dx12::CommandQueue& copyQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Copy);
+			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue.GetCreateCommandList();
+
+			std::vector<ComPtr<ID3D12Resource>> intermediateResources;
+
+			// Mesh Primitives:
+			if (!renderManager.m_newMeshPrimitives.m_newObjects.empty())
+			{
+				std::lock_guard<std::mutex> lock(renderManager.m_newMeshPrimitives.m_mutex);
+				for (auto& newObject : renderManager.m_newMeshPrimitives.m_newObjects)
+				{
+					dx12::MeshPrimitive::Create(
+						*newObject.second, copyCommandList->GetD3DCommandList(), intermediateResources);
+				}
+				renderManager.m_newMeshPrimitives.m_newObjects.clear();
+			}
+
+
+			// Execute command queue, and wait for it to be done (blocking)
+			std::shared_ptr<dx12::CommandList> commandLists[] =
+			{
+				copyCommandList
+			};
+			uint64_t copyQueueFenceVal = copyQueue.Execute(1, commandLists);
+			copyQueue.CPUWait(copyQueueFenceVal);
+
+			// The copy is done: Free the intermediate HEAP_TYPE_UPLOAD resources
+			intermediateResources.clear();
+
+			// TODO: We should clear the intermediateResources at the end of the frame, and GPUWait on the copy instead
 		}
 	}
 
