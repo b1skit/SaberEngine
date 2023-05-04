@@ -51,7 +51,7 @@ namespace re
 			std::shared_ptr<re::ParameterBlock> materialParams = material->GetParameterBlock();
 			if (materialParams)
 			{
-				m_batchParamBlocks.emplace_back();
+				m_batchParamBlocks.emplace_back(materialParams);
 			}			
 		}
 		
