@@ -202,7 +202,17 @@ namespace dx12
 			(swapChainPlatParams->m_tearingSupported && !vsyncEnabled) ? DXGI_PRESENT_ALLOW_TEARING : 0;
 
 		HRESULT hr = swapChainPlatParams->m_swapChain->Present(syncInterval, presentFlags);
-		CheckHResult(hr, "Failed to present");
+		if (hr == DXGI_STATUS_OCCLUDED)
+		{
+			// TODO: Handle this.
+			// The window content is not visible. When receiving this status, an application can stop rendering and use
+			// DXGI_PRESENT_TEST to determine when to resume rendering. You will not receive DXGI_STATUS_OCCLUDED if
+			// you're using a flip model swap chain.
+		}
+		else
+		{
+			CheckHResult(hr, "Failed to present");
+		}
 
 		// Insert a signal into the command queue: Once this is reached, we know the work for the current frame is done
 		ctxPlatParams->m_frameFenceValues[currentFrameBackbufferIdx] = 

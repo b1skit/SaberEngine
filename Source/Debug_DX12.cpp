@@ -21,7 +21,7 @@ namespace dx12
 		}
 		break;
 		case S_FALSE:
-		case DXGI_STATUS_OCCLUDED:
+		case DXGI_STATUS_OCCLUDED: // 0x087a0001
 		{
 			SEAssertF(
 				"Checked HRESULT of a success code. Use the SUCCEEDED or FAILED macros instead of calling this function");
