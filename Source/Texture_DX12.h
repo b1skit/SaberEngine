@@ -31,8 +31,6 @@ namespace dx12
 
 	public:
 		static void Create(re::Texture&);
-		static void CreateFromExistingResource(
-			re::Texture&, Microsoft::WRL::ComPtr<ID3D12Resource>, CD3DX12_CPU_DESCRIPTOR_HANDLE const&); // For creating backbuffer target textures
 		static void Destroy(re::Texture&);
 		static void GenerateMipMaps(re::Texture&);
 	};

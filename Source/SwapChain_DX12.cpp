@@ -17,70 +17,6 @@
 using Microsoft::WRL::ComPtr;
 
 
-namespace
-{
-	using dx12::CheckHResult;
-
-
-	void CreateSwapChainTargetSet(
-		dx12::SwapChain::PlatformParams* swapChainParams, 
-		re::Texture::TextureParams const& colorParams,
-		re::Texture::TextureParams const& depthParams)
-	{
-		dx12::Context::PlatformParams* ctxPlatParams = 
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-
-		// The swapchain requires contiguous descriptors allocated in the same heap
-		swapChainParams->m_backbufferRTVDescriptors = 
-			std::move(ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::RTV].Allocate(3));
-
-		CD3DX12_CPU_DESCRIPTOR_HANDLE backbufferRTVDescriptorsHandle(
-			swapChainParams->m_backbufferRTVDescriptors.GetBaseDescriptor());
-
-
-		for (uint8_t backbufferIdx = 0; backbufferIdx < dx12::RenderManager::k_numFrames; backbufferIdx++)
-		{
-			// Target set:
-			swapChainParams->m_backbufferTargetSets[backbufferIdx] =
-				std::make_shared<re::TextureTargetSet>("Backbuffer " + std::to_string(backbufferIdx));
-
-			ComPtr<ID3D12Resource> backbufferResource;
-			HRESULT hr = swapChainParams->m_swapChain->GetBuffer(backbufferIdx, IID_PPV_ARGS(&backbufferResource));
-			CheckHResult(hr, "Failed to get backbuffer");
-
-			// Color target:
-			std::shared_ptr<re::Texture> colorTargetTex = 
-				std::make_shared<re::Texture>("SwapChainColorTarget", colorParams, false);
-
-			dx12::Texture::CreateFromExistingResource(
-				*colorTargetTex, backbufferResource, backbufferRTVDescriptorsHandle);
-
-			// Stride to the next descriptor for the next iteration:
-			backbufferRTVDescriptorsHandle.Offset(swapChainParams->m_backbufferRTVDescriptors.GetDescriptorSize()); 
-
-			// Create the color target:
-			swapChainParams->m_backbufferTargetSets[backbufferIdx]->SetColorTarget(0, colorTargetTex);
-			dx12::TextureTargetSet::CreateColorTargets(*swapChainParams->m_backbufferTargetSets[backbufferIdx]);	
-
-			// Depth target:
-			std::shared_ptr<re::Texture> depthTargetTex = 
-				std::make_shared<re::Texture>("SwapChainDepthTarget", depthParams, false);
-			dx12::Texture::Create(*depthTargetTex);
-
-			swapChainParams->m_backbufferTargetSets[backbufferIdx]->SetDepthStencilTarget(depthTargetTex);
-			
-			dx12::TextureTargetSet::CreateDepthStencilTarget(*swapChainParams->m_backbufferTargetSets[backbufferIdx]);
-
-			// Set default viewports and scissor rects. Note: This is NOT required, just included for clarity
-			swapChainParams->m_backbufferTargetSets[backbufferIdx]->Viewport() = 
-				re::Viewport(); // Defaults = 0, 0, xRes, yRes
-
-			swapChainParams->m_backbufferTargetSets[backbufferIdx]->ScissorRect() = 
-				re::ScissorRect(); // Defaults = 0, 0, long::max, long::max
-		}		
-	}
-}
-
 namespace dx12
 {
 	void SwapChain::Create(re::SwapChain& swapChain)
@@ -110,7 +46,6 @@ namespace dx12
 		const int width = en::Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
 		const int height = en::Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
 
-
 		re::Texture::TextureParams colorParams;
 		colorParams.m_width = width;
 		colorParams.m_height = height;
@@ -121,7 +56,6 @@ namespace dx12
 		colorParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		colorParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		colorParams.m_useMIPs = false;
-
 
 		// Ensure our format here matches the one that our texture will be created with:
 		const DXGI_FORMAT colorBufferFormat = dx12::Texture::GetTextureFormat(colorParams);
@@ -166,6 +100,32 @@ namespace dx12
 		swapChainParams->m_backBufferIdx = swapChainParams->m_swapChain->GetCurrentBackBufferIndex();
 
 
+		// Create a target set to hold our backbuffer targets:
+		swapChainParams->m_backbufferTargetSet = std::make_shared<re::TextureTargetSet>("Backbuffer");
+
+		// Create color target textures, attach them to our target set, & copy the backbuffer resource into their
+		// platform params:
+		for (uint8_t backbufferIdx = 0; backbufferIdx < dx12::RenderManager::k_numFrames; backbufferIdx++)
+		{
+			// Get the pre-existing backbuffer resource from the swapchain:
+			ComPtr<ID3D12Resource> backbufferResource;
+			HRESULT hr = swapChainParams->m_swapChain->GetBuffer(backbufferIdx, IID_PPV_ARGS(&backbufferResource));
+			CheckHResult(hr, "Failed to get backbuffer");
+
+			// Create a color target texture:
+			std::shared_ptr<re::Texture> colorTargetTex =
+				std::make_shared<re::Texture>("SwapChainColorTarget_" + std::to_string(backbufferIdx), colorParams, false);
+
+			swapChainParams->m_backbufferTargetSet->SetColorTarget(backbufferIdx, colorTargetTex);
+
+			// Copy the backbuffer resource to the texture's platform params:
+			dx12::Texture::PlatformParams* texPlatParams =
+				colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+
+			texPlatParams->m_textureResource = backbufferResource;
+		}
+
+		// Create the depth target texture:
 		re::Texture::TextureParams depthParams;
 		depthParams.m_width = width;
 		depthParams.m_height = height;
@@ -176,9 +136,19 @@ namespace dx12
 		depthParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		depthParams.m_clearColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		depthParams.m_useMIPs = false;
+		
+		std::shared_ptr<re::Texture> depthTargetTex =
+			std::make_shared<re::Texture>("SwapChainDepthTarget", depthParams, false);
 
-		// Create our target set textures:
-		CreateSwapChainTargetSet(swapChainParams, colorParams, depthParams);
+		swapChainParams->m_backbufferTargetSet->SetDepthStencilTarget(depthTargetTex);
+
+		// Create the targets:
+		dx12::TextureTargetSet::CreateColorTargets(*swapChainParams->m_backbufferTargetSet);
+		dx12::TextureTargetSet::CreateDepthStencilTarget(*swapChainParams->m_backbufferTargetSet);
+
+		// Set default viewports and scissor rects. Note: This is NOT required, just included for clarity
+		swapChainParams->m_backbufferTargetSet->Viewport() = re::Viewport(); // Defaults = 0, 0, xRes, yRes
+		swapChainParams->m_backbufferTargetSet->ScissorRect() = re::ScissorRect(); // Defaults = 0, 0, long::max, long::max
 	}
 
 
@@ -196,7 +166,7 @@ namespace dx12
 
 		for (uint8_t backbuffer = 0; backbuffer < dx12::RenderManager::k_numFrames; backbuffer++)
 		{
-			swapChainParams->m_backbufferTargetSets[backbuffer] = nullptr;
+			swapChainParams->m_backbufferTargetSet = nullptr;
 		}
 	}
 
@@ -244,7 +214,7 @@ namespace dx12
 			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
 		dx12::Texture::PlatformParams const* backbufferColorTexPlatParams = 
-			swapChainPlatParams->m_backbufferTargetSets[swapChainPlatParams->m_backBufferIdx]->GetColorTarget(0).
+			swapChainPlatParams->m_backbufferTargetSet->GetColorTarget(swapChainPlatParams->m_backBufferIdx).
 				GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		return backbufferColorTexPlatParams->m_textureResource;

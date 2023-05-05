@@ -2,10 +2,15 @@
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
 #include "CommandList_DX12.h"
+#include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "ParameterBlock.h"
 #include "ParameterBlock_DX12.h"
+#include "RenderManager.h"
 #include "RootSignature_DX12.h"
+#include "SwapChain_DX12.h"
+#include "TextureTarget.h"
+#include "TextureTarget_DX12.h"
 #include "VertexStream.h"
 #include "VertexStream_DX12.h"
 
@@ -168,25 +173,155 @@ namespace dx12
 	}
 
 
-	void CommandList::ClearRTV(CD3DX12_CPU_DESCRIPTOR_HANDLE const& rtv, glm::vec4 const& clearColor)
+	void CommandList::ClearDepthTarget(re::TextureTarget const& depthTarget) const
 	{
+		ClearDepthTarget(depthTarget, depthTarget.GetTexture()->GetTextureParams().m_clearColor.r);
+	}
+
+
+	void CommandList::ClearDepthTarget(re::TextureTarget const& depthTarget, float clearColor) const
+	{
+		SEAssert("Target texture must be a color target",
+			depthTarget.HasTexture() &&
+			depthTarget.GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::DepthTarget);
+
+		dx12::TextureTarget::PlatformParams* depthPlatParams =
+			depthTarget.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+
+		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = depthPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
+
+		m_commandList->ClearDepthStencilView(
+			dsvDescriptor,
+			D3D12_CLEAR_FLAG_DEPTH,
+			clearColor,
+			0,
+			0,
+			nullptr);
+	}
+
+
+	void CommandList::ClearColorTarget(re::TextureTarget const& colorTarget) const
+	{
+		ClearColorTarget(colorTarget, colorTarget.GetTexture()->GetTextureParams().m_clearColor);
+	}
+
+
+	void CommandList::ClearColorTarget(re::TextureTarget const& colorTarget, glm::vec4 clearColor) const
+	{
+		SEAssert("Target texture must be a color target", 
+			colorTarget.HasTexture() && 
+			colorTarget.GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::ColorTarget);
+
+		dx12::TextureTarget::PlatformParams* targetParams =
+			colorTarget.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+
 		m_commandList->ClearRenderTargetView(
-			rtv,
+			targetParams->m_rtvDsvDescriptor.GetBaseDescriptor(),
 			&clearColor.r,
 			0,			// Number of rectangles in the proceeding D3D12_RECT ptr
 			nullptr);	// Ptr to an array of rectangles to clear in the resource view. Clears entire view if null
 	}
 
 
-	void CommandList::ClearDepth(D3D12_CPU_DESCRIPTOR_HANDLE const& dsv, float clearColor)
+	void CommandList::SetRenderTargets(re::TextureTargetSet const& targetSet) const
 	{
-		m_commandList->ClearDepthStencilView(
-			dsv,
-			D3D12_CLEAR_FLAG_DEPTH,
-			clearColor,
-			0,
-			0,
-			nullptr);
+		SEAssertF("NOTE: This is untested. It's probably fine, but asserting to save some future head scratching...");
+
+		uint32_t numColorTargets = 0;
+		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> colorTargetDescriptors;
+		colorTargetDescriptors.reserve(targetSet.GetColorTargets().size());
+
+		for (uint8_t i = 0; i < targetSet.GetColorTargets().size(); i++)
+		{
+			if (targetSet.GetColorTarget(i).HasTexture())
+			{
+				dx12::TextureTarget::PlatformParams* targetPlatParams =
+					targetSet.GetColorTarget(i).GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+
+				colorTargetDescriptors.emplace_back(targetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor());
+				numColorTargets++;
+			}
+		}
+
+		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor{};
+		if (targetSet.GetDepthStencilTarget().HasTexture())
+		{
+			dx12::TextureTarget::PlatformParams* depthPlatParams =
+				targetSet.GetDepthStencilTarget().GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+			dsvDescriptor = depthPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
+		}
+		
+		// NOTE: isSingleHandleToDescRange == true specifies that the rtvs are contiguous in memory, thus N rtv 
+		// descriptors will be found by offsetting from rtvs[0]. Otherwise, it is assumed rtvs is an array of descriptor
+		// pointers
+		m_commandList->OMSetRenderTargets(numColorTargets, &colorTargetDescriptors[0], false, &dsvDescriptor);
+	}
+
+
+	void CommandList::SetBackbufferRenderTarget() const
+	{
+		re::Context const& context = re::RenderManager::Get()->GetContext();
+
+		dx12::SwapChain::PlatformParams* swapChainParams =
+			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+
+		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
+
+		dx12::TextureTarget::PlatformParams* swapChainColorTargetPlatParams =
+			swapChainParams->m_backbufferTargetSet->GetColorTarget(backbufferIdx).GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+		const D3D12_CPU_DESCRIPTOR_HANDLE colorDescHandle = 
+			swapChainColorTargetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
+
+		dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
+			swapChainParams->m_backbufferTargetSet->GetDepthStencilTarget().GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+		const D3D12_CPU_DESCRIPTOR_HANDLE depthDescHandle = 
+			depthTargetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
+
+		m_commandList->OMSetRenderTargets(
+			1, 
+			&colorDescHandle,
+			false, 
+			&depthDescHandle);
+	}
+
+
+	void CommandList::SetViewport(re::TextureTargetSet const& targetSet) const
+	{
+		dx12::TextureTargetSet::PlatformParams* targetSetParams =
+			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
+
+		re::Viewport const& viewport = targetSet.Viewport();
+
+		// TODO: We should only update this if it has changed!
+		// TODO: OpenGL expects ints, DX12 expects floats. We should support both via the Viewport interface (eg. Union)
+		targetSetParams->m_viewport = CD3DX12_VIEWPORT(
+			static_cast<float>(viewport.xMin()),
+			static_cast<float>(viewport.yMin()),
+			static_cast<float>(viewport.Width()),
+			static_cast<float>(viewport.Height()));
+
+		m_commandList->RSSetViewports(1, &targetSetParams->m_viewport);
+
+		// TODO: It is possible to have more than 1 viewport (eg. Geometry shaders), we should handle this (i.e. a 
+		// viewport per target?)
+	}
+
+
+	void CommandList::SetScissorRect(re::TextureTargetSet const& targetSet) const
+	{
+		dx12::TextureTargetSet::PlatformParams* targetSetParams =
+			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
+
+		re::ScissorRect const& scissorRect = targetSet.ScissorRect();
+
+		// TODO: We should only update this if it has changed!
+		targetSetParams->m_scissorRect = CD3DX12_RECT(
+			scissorRect.Left(),
+			scissorRect.Top(),
+			scissorRect.Right(),
+			scissorRect.Bottom());
+
+		m_commandList->RSSetScissorRects(1, &targetSetParams->m_scissorRect);
 	}
 
 

@@ -3,6 +3,7 @@
 #include <d3d12.h>
 #include <wrl.h>
 
+#include "CPUDescriptorHeapManager_DX12.h"
 #include "TextureTarget.h"
 #include "TextureTarget_Platform.h"
 
@@ -14,7 +15,7 @@ class TextureTarget
 public:
 	struct PlatformParams final : public re::TextureTarget::PlatformParams
 	{
-
+		dx12::DescriptorAllocation m_rtvDsvDescriptor;
 	};
 
 };
@@ -38,10 +39,6 @@ public:
 public:
 
 	static void CreateColorTargets(re::TextureTargetSet& targetSet);
-
 	static void CreateDepthStencilTarget(re::TextureTargetSet& targetSet);
-
-	static void SetViewport(re::TextureTargetSet const& targetSet, ID3D12GraphicsCommandList2* commandList);
-	static void SetScissorRect(re::TextureTargetSet const& targetSet, ID3D12GraphicsCommandList2* commandList);
 };
 }

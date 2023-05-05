@@ -16,6 +16,8 @@ namespace re
 {
 	class ParameterBlock;
 	class VertexStream;
+	class TextureTarget;
+	class TextureTargetSet;
 }
 
 namespace dx12
@@ -71,16 +73,23 @@ namespace dx12
 		
 		void SetIndexBuffer(D3D12_INDEX_BUFFER_VIEW*) const;
 
-		void SetRenderTargets(
-			uint32_t count, D3D12_CPU_DESCRIPTOR_HANDLE* rtvs, bool isSingleHandleToDescRange, D3D12_CPU_DESCRIPTOR_HANDLE* dsv) const;
-		void ClearRTV(CD3DX12_CPU_DESCRIPTOR_HANDLE const& rtv, glm::vec4 const& clearColor);
-		void ClearDepth(D3D12_CPU_DESCRIPTOR_HANDLE const& dsv, float clearColor);
+		void ClearDepthTarget(re::TextureTarget const&) const; // Uses target texture's R clear color
+		void ClearDepthTarget(re::TextureTarget const&, float clearColor) const;
+
+		void ClearColorTarget(re::TextureTarget const&) const;
+		void ClearColorTarget(re::TextureTarget const&, glm::vec4 clearColor) const;
+
+		void SetRenderTargets(re::TextureTargetSet const&) const;
+		void SetBackbufferRenderTarget() const;
+
+		void SetViewport(re::TextureTargetSet const&) const;
+		void SetScissorRect(re::TextureTargetSet const&) const;
 
 		void SetGraphicsRoot32BitConstants(
 			uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;
 
 		void DrawIndexedInstanced(
-			uint32_t numIndexes, uint32_t numInstances, uint32_t idxStartOffset, int32_t baseVertexOffset, uint32_t instanceOffset) const;
+			uint32_t numIndexes, uint32_t numInstances, uint32_t idxStartOffset, int32_t baseVertexOffset, uint32_t instanceOffset);
 
 		void TransitionResource(ID3D12Resource* resources, D3D12_RESOURCE_STATES from, D3D12_RESOURCE_STATES to) const;
 
@@ -187,16 +196,6 @@ namespace dx12
 	}
 
 
-	inline void CommandList::SetRenderTargets(
-		uint32_t count, D3D12_CPU_DESCRIPTOR_HANDLE* rtvs, bool isSingleHandleToDescRange, D3D12_CPU_DESCRIPTOR_HANDLE* dsv) const
-	{
-		// NOTE: isSingleHandleToDescRange == true specifies that the rtvs are contiguous in memory, thus count rtv descriptors
-		// will be found by offsetting from rtvs[0]. Otherwise, it is assumed rtvs is an array of descriptor pointers
-
-		m_commandList->OMSetRenderTargets(count, rtvs, isSingleHandleToDescRange, dsv);
-	}
-
-
 	inline void CommandList::SetGraphicsRoot32BitConstants(
 		uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const
 	{
@@ -211,8 +210,10 @@ namespace dx12
 
 
 	inline void CommandList::DrawIndexedInstanced(
-		uint32_t numIndexes, uint32_t numInstances, uint32_t idxStartOffset, int32_t baseVertexOffset, uint32_t instanceOffset) const
+		uint32_t numIndexes, uint32_t numInstances, uint32_t idxStartOffset, int32_t baseVertexOffset, uint32_t instanceOffset)
 	{
+		CommitGPUDescriptors();
+
 		m_commandList->DrawIndexedInstanced(
 			numIndexes,			// Index count, per instance
 			numInstances,		// Instance count

@@ -95,7 +95,7 @@ namespace dx12
 			en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 		dx12::TextureTargetSet::PlatformParams* swapChainTargetSetParams = 
-			swapChainParams->m_backbufferTargetSets[0]->GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
+			swapChainParams->m_backbufferTargetSet->GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 
 		// Setup our ImGui context
 		IMGUI_CHECKVERSION();

@@ -98,7 +98,7 @@ namespace dx12
 							if (!stageTargets)
 							{
 								// We (currently) assume a null TextureTargetSet indicates the backbuffer is the target
-								stageTargets = swapChainParams->m_backbufferTargetSets[0];
+								stageTargets = swapChainParams->m_backbufferTargetSet;
 							}
 
 							dx12::Context::CreateAddPipelineState(
@@ -165,14 +165,12 @@ namespace dx12
 	void RenderManager::Render(re::RenderManager& renderManager)
 	{
 		re::Context const& context = re::RenderManager::Get()->GetContext();
-		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-
 		dx12::CommandQueue& directQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Direct);
 
 		// Note: Our command lists and associated command allocators are already closed/reset
 		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
-		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
+		
 		
 		// Transition the backbuffer to the render target state:
 		Microsoft::WRL::ComPtr<ID3D12Resource> backbufferResource =
@@ -187,37 +185,28 @@ namespace dx12
 		// Clear the render targets:
 		dx12::SwapChain::PlatformParams* swapChainParams =
 			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
-		
-		// The swapchain requires contiguous RTV descriptors allocated in the same heap; compute the current one:
-		// TODO: Stage CPU descriptor handles into GPU-visible descriptor heap, and pack into descriptor tables
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(swapChainParams->m_backbufferRTVDescriptors.GetBaseDescriptor());
-		rtvHandle.Offset(swapChainParams->m_backbufferRTVDescriptors.GetDescriptorSize() * backbufferIdx); // TODO: The CD3DX12_CPU_DESCRIPTOR_HANDLE copy ctor does the offset automatically????
+
+		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
 
 		// Debug: Vary the clear color to easily verify things are working
 		auto now = std::chrono::system_clock::now().time_since_epoch();
 		size_t seconds = std::chrono::duration_cast<std::chrono::seconds>(now).count();
 		const float scale = static_cast<float>((glm::sin(seconds) + 1.0) / 2.0);
-
 		const vec4 clearColor = vec4(0.38f, 0.36f, 0.1f, 1.0f) * scale;
 
-		dx12::Texture::PlatformParams* renderTargetPlatParams =
-			swapChainParams->m_backbufferTargetSets[backbufferIdx]->GetColorTarget(0).GetTexture()
-				->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+		commandList->ClearColorTarget(
+			swapChainParams->m_backbufferTargetSet->GetColorTarget(backbufferIdx),
+			clearColor);
+		commandList->ClearDepthTarget(swapChainParams->m_backbufferTargetSet->GetDepthStencilTarget());
 
-		commandList->ClearRTV(rtvHandle, clearColor); // TODO: This should just take the Target object
 
-		// Clear depth target:
-		dx12::Texture::PlatformParams* depthPlatParams =
-			swapChainParams->m_backbufferTargetSets[backbufferIdx]->GetDepthStencilTarget().GetTexture()
-				->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-
-		// TODO: Stage CPU descriptor handles into GPU-visible descriptor heap, and pack into descriptor tables
-		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = depthPlatParams->m_descriptor.GetBaseDescriptor();
-		commandList->ClearDepth(dsvDescriptor, 1.f); // TODO: This should just take the Target object
-
-		
 		// Bind our render target(s) to the output merger (OM):
-		commandList->SetRenderTargets(1, &rtvHandle, false, &dsvDescriptor);
+		commandList->SetBackbufferRenderTarget();
+		commandList->SetViewport(*swapChainParams->m_backbufferTargetSet);
+		commandList->SetScissorRect(*swapChainParams->m_backbufferTargetSet);
+		// TODO: Handle setting non-backbuffer target sets
+		// TODO: Should the viewport and scissor rects be set while we're setting the targets?
+
 
 
 		// TODO: Switch to stages, use the pipeline state actually set in a stage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -228,47 +217,29 @@ namespace dx12
 		std::shared_ptr<dx12::PipelineState> pso = dx12::Context::GetPipelineStateObject(
 				*s_helloTriangle->GetMeshMaterial()->GetShader(),
 				tempDebugHaxDefaultPipelineState,
-				swapChainParams->m_backbufferTargetSets[backbufferIdx].get());
+				swapChainParams->m_backbufferTargetSet.get());
 
 		commandList->SetPipelineState(*pso);
-
 		commandList->SetGraphicsRootSignature(pso->GetRootSignature());
 
-		// TODO: Command list should have a SetViewport/SetScissorRect function that takes a TextureTargetSet. We should
-		// not be passing command lists around
-		dx12::TextureTargetSet::SetViewport(
-			*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList->GetD3DCommandList());
-		dx12::TextureTargetSet::SetScissorRect(
-			*swapChainParams->m_backbufferTargetSets[backbufferIdx], commandList->GetD3DCommandList());
 
-
+		// Set the geometry for the draw:
 		dx12::MeshPrimitive::PlatformParams* meshPrimPlatParams = 
 			s_helloTriangle->GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
 
 		// TODO: Batches should contain the draw mode, instead of carrying around a MeshPrimitive
 		commandList->SetPrimitiveType(meshPrimPlatParams->m_drawMode);
-		
 		commandList->SetVertexBuffers(s_helloTriangle->GetVertexStreams());
-
 
 		dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
 			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
-
 		commandList->SetIndexBuffer(&indexPlatformParams->m_indexBufferView);
-
-
-
 
 		// Bind parameter blocks:
 		std::shared_ptr<gr::Camera> mainCam = en::SceneManager::GetSceneData()->GetMainCamera();
-		
 		commandList->SetParameterBlock(mainCam->GetCameraParams().get());
 
-		commandList->CommitGPUDescriptors(); // Must be done before the draw command
-
-
-		// TODO: Command list should have a wrapper for draw calls
-		// -> Internally, call GetGPUDescriptorHeap()->Commit() etc
+		// Record the draw:
 		commandList->DrawIndexedInstanced(
 			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
 			1,	// Instance count
@@ -281,10 +252,7 @@ namespace dx12
 		{
 			commandList
 		};
-
-		// Record our last fence value, so we can add a GPU wait before transitioning the backbuffer for presentation
 		directQueue.Execute(1, commandLists);
-		// TODO: Should this value be tracked by the command queue?
 	}
 
 
@@ -316,17 +284,11 @@ namespace dx12
 		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 		dx12::SwapChain::PlatformParams const* swapChainParams =
 			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+
 		dx12::CommandQueue& directQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Direct);
-
-		// Configure the render target:
-		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
-
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(swapChainParams->m_backbufferRTVDescriptors.GetBaseDescriptor());
-		rtvHandle.Offset(swapChainParams->m_backbufferRTVDescriptors.GetDescriptorSize() * backbufferIdx);
-
 		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
-		commandList->SetRenderTargets(1, &rtvHandle, false, nullptr);
+		commandList->SetBackbufferRenderTarget();
 
 		// Configure the descriptor heap:
 		ID3D12GraphicsCommandList2* d3dCommandList = commandList->GetD3DCommandList();
@@ -342,7 +304,6 @@ namespace dx12
 		{
 			commandList
 		};
-
 		directQueue.Execute(1, commandLists);
 	}
 

@@ -22,13 +22,10 @@ namespace dx12
 			// Pointers to our backbuffer resources
 			uint8_t m_backBufferIdx;
 
-			std::array<std::shared_ptr<re::TextureTargetSet>, dx12::RenderManager::k_numFrames> m_backbufferTargetSets;
+			std::shared_ptr<re::TextureTargetSet> m_backbufferTargetSet;
 
 			bool m_vsyncEnabled = false; // Disabled if tearing is enabled (ie. using a variable refresh display)
 			bool m_tearingSupported = false; // Always allow tearing if supported. Required for variable refresh dispays (eg. G-Sync/FreeSync)
-
-			// The swapchain requires contiguous RTV descriptors allocated in the same heap
-			dx12::DescriptorAllocation m_backbufferRTVDescriptors;
 		};
 
 
