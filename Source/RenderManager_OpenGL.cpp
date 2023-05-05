@@ -26,17 +26,17 @@
 #include "TextureTarget_OpenGL.h"
 #include "SceneManager.h"
 
-using re::RenderStage;
-using gr::Camera;
-using gr::Transform;
-using gr::GraphicsSystem;
-using gr::GBufferGraphicsSystem;
-using gr::ShadowsGraphicsSystem;
-using gr::DeferredLightingGraphicsSystem;
-using gr::SkyboxGraphicsSystem;
 using gr::BloomGraphicsSystem;
-using gr::TonemappingGraphicsSystem;
+using gr::Camera;
+using gr::DeferredLightingGraphicsSystem;
+using gr::GBufferGraphicsSystem;
+using gr::GraphicsSystem;
+using re::RenderStage;
+using gr::ShadowsGraphicsSystem;
+using gr::SkyboxGraphicsSystem;
 using re::StagePipeline;
+using gr::TonemappingGraphicsSystem;
+using gr::Transform;
 using std::shared_ptr;
 using std::make_unique;
 using std::make_shared;
