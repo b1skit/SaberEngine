@@ -8,54 +8,32 @@
 #include "Context_DX12.h"
 #include "DebugConfiguration.h"
 #include "Debug_DX12.h"
+#include "GraphicsSystem_TempDebug.h"
+#include "MeshPrimitive_DX12.h"
 #include "ParameterBlock_DX12.h"
 #include "RenderManager_DX12.h"
 #include "SwapChain_DX12.h"
 #include "Texture_DX12.h"
+#include "VertexStream_DX12.h"
 
-
+using re::RenderStage;
+using re::StagePipeline;
 using Microsoft::WRL::ComPtr;
 using glm::vec4;
 using std::make_shared;
 using std::shared_ptr;
-
-
-// TEMP DEBUG CODE:
-#include "MeshPrimitive_DX12.h"
-#include "VertexStream_DX12.h"
-#include "Shader_DX12.h"
-#include "TextureTarget_DX12.h"
-#include "SceneManager.h"
-#include "Camera.h"
-#include "GraphicsSystem_TempDebug.h"
-
-
-// TEMP DEBUG CODE:
-namespace
-{
-	using dx12::CheckHResult;
-
-	// TODO: Move this to GraphicsSystem_TempDebug, and push it through as a batch
-	static std::shared_ptr<re::MeshPrimitive> s_helloTriangle = nullptr;
-
-
-	bool CreateDebugAPIResources()
-	{
-		// TODO: Move all of this to the debug GS
-
-		s_helloTriangle = meshfactory::CreateHelloTriangle(10.f, -10.f); // Must be created before CreateDebugAPIResources
-
-		std::shared_ptr<re::Shader> helloShader = re::Shader::Create("HelloTriangle");
-
-		s_helloTriangle->GetMeshMaterial()->SetShader(helloShader);
-
-		return true;
-	}
-}
+using std::vector;
 
 
 namespace dx12
 {
+	void RenderManager::Initialize(re::RenderManager& renderManager)
+	{
+		renderManager.m_graphicsSystems.emplace_back(
+			make_shared<gr::TempDebugGraphicsSystem>("DX12 Temp Debug Graphics System"));
+	}
+
+
 	void RenderManager::CreateAPIResources(re::RenderManager& renderManager)
 	{
 		re::Context const& context = renderManager.GetContext();
@@ -152,107 +130,176 @@ namespace dx12
 	}
 
 
-	void RenderManager::Initialize(re::RenderManager& renderManager)
-	{
-		renderManager.m_graphicsSystems.emplace_back(
-			make_shared<gr::TempDebugGraphicsSystem>("DX12 Temp Debug Graphics System"));
-
-		// TODO: Remove this from RenderManager::Initialize
-		CreateDebugAPIResources();
-	}
-
-
 	void RenderManager::Render(re::RenderManager& renderManager)
 	{
 		re::Context const& context = re::RenderManager::Get()->GetContext();
 		dx12::CommandQueue& directQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Direct);
 
-		// Note: Our command lists and associated command allocators are already closed/reset
-		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
-		
-		
-		// Transition the backbuffer to the render target state:
-		Microsoft::WRL::ComPtr<ID3D12Resource> backbufferResource =
-			dx12::SwapChain::GetBackBufferResource(context.GetSwapChain());
-
-		commandList->TransitionResource(			
-			backbufferResource.Get(),
-			D3D12_RESOURCE_STATE_PRESENT,
-			D3D12_RESOURCE_STATE_RENDER_TARGET);
+		std::vector<std::shared_ptr<dx12::CommandList>> commandLists;
+		commandLists.reserve(renderManager.m_pipeline.GetPipeline().size());
 
 
-		// Clear the render targets:
-		dx12::SwapChain::PlatformParams* swapChainParams =
-			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
-
-		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
-
-		// Debug: Vary the clear color to easily verify things are working
-		auto now = std::chrono::system_clock::now().time_since_epoch();
-		size_t seconds = std::chrono::duration_cast<std::chrono::seconds>(now).count();
-		const float scale = static_cast<float>((glm::sin(seconds) + 1.0) / 2.0);
-		const vec4 clearColor = vec4(0.38f, 0.36f, 0.1f, 1.0f) * scale;
-
-		commandList->ClearColorTarget(
-			swapChainParams->m_backbufferTargetSet->GetColorTarget(backbufferIdx),
-			clearColor);
-		commandList->ClearDepthTarget(swapChainParams->m_backbufferTargetSet->GetDepthStencilTarget());
-
-
-		// Bind our render target(s) to the output merger (OM):
-		commandList->SetBackbufferRenderTarget();
-		commandList->SetViewport(*swapChainParams->m_backbufferTargetSet);
-		commandList->SetScissorRect(*swapChainParams->m_backbufferTargetSet);
-		// TODO: Handle setting non-backbuffer target sets
-		// TODO: Should the viewport and scissor rects be set while we're setting the targets?
-
-
-
-		// TODO: Switch to stages, use the pipeline state actually set in a stage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		gr::PipelineState tempDebugHaxDefaultPipelineState;
-		
-
-		// Set the pipeline state and root signature first:
-		std::shared_ptr<dx12::PipelineState> pso = dx12::Context::GetPipelineStateObject(
-				*s_helloTriangle->GetMeshMaterial()->GetShader(),
-				tempDebugHaxDefaultPipelineState,
-				swapChainParams->m_backbufferTargetSet.get());
-
-		commandList->SetPipelineState(*pso);
-		commandList->SetGraphicsRootSignature(pso->GetRootSignature());
-
-
-		// Set the geometry for the draw:
-		dx12::MeshPrimitive::PlatformParams* meshPrimPlatParams = 
-			s_helloTriangle->GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
-
-		// TODO: Batches should contain the draw mode, instead of carrying around a MeshPrimitive
-		commandList->SetPrimitiveType(meshPrimPlatParams->m_drawMode);
-		commandList->SetVertexBuffers(s_helloTriangle->GetVertexStreams());
-
-		dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
-			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
-		commandList->SetIndexBuffer(&indexPlatformParams->m_indexBufferView);
-
-		// Bind parameter blocks:
-		std::shared_ptr<gr::Camera> mainCam = en::SceneManager::GetSceneData()->GetMainCamera();
-		commandList->SetParameterBlock(mainCam->GetCameraParams().get());
-
-		// Record the draw:
-		commandList->DrawIndexedInstanced(
-			s_helloTriangle->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
-			1,	// Instance count
-			0,	// Start index location
-			0,	// Base vertex location
-			0);	// Start instance location
-
-
-		std::shared_ptr<dx12::CommandList> commandLists[] =
+		// Render each stage:
+		for (StagePipeline& stagePipeline : renderManager.m_pipeline.GetPipeline())
 		{
-			commandList
-		};
-		directQueue.Execute(1, commandLists);
+			// Note: Our command lists and associated command allocators are already closed/reset
+			std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
+
+
+			// Generic lambda: Process stages from various pipelines
+			auto ProcessRenderStage = [&](RenderStage* renderStage)
+			{
+				// TODO: Why CAN'T this be a const& ?
+				gr::PipelineState& stagePipelineParams = renderStage->GetStagePipelineState();
+
+				// Attach the stage targets:
+				std::shared_ptr<re::TextureTargetSet> stageTargets = renderStage->GetTextureTargetSet();
+				bool isBackbufferTarget = false;
+				if (!stageTargets)
+				{
+					dx12::SwapChain::PlatformParams* swapChainParams =
+						renderManager.GetContext().GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+					SEAssert("Swap chain params and backbuffer cannot be null",
+						swapChainParams && swapChainParams->m_backbufferTargetSet);
+
+					stageTargets = swapChainParams->m_backbufferTargetSet; // Draw directly to the swapchain backbuffer
+					isBackbufferTarget = true;
+				}
+
+
+				// TEMP HAX: Transition the backbuffer to the render target state:
+				Microsoft::WRL::ComPtr<ID3D12Resource> backbufferResource =
+					dx12::SwapChain::GetBackBufferResource(context.GetSwapChain());
+
+				commandList->TransitionResource(
+					backbufferResource.Get(),
+					D3D12_RESOURCE_STATE_PRESENT,
+					D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+
+				// Clear the render targets:
+				if (isBackbufferTarget)
+				{
+					const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
+					commandList->ClearColorTarget(stageTargets->GetColorTarget(backbufferIdx));
+				}
+				else
+				{
+					commandList->ClearColorTargets(*stageTargets);
+				}
+				commandList->ClearDepthTarget(stageTargets->GetDepthStencilTarget());
+				// TODO: We should track the clear mode (color, depth) for the current stage, and only clear if necessary
+
+				// Bind our render target(s) to the output merger (OM):
+				if (isBackbufferTarget)
+				{
+					commandList->SetBackbufferRenderTarget();
+				}
+				else
+				{
+					SEAssertF("TODO: Handle binding non-backbuffer targets to the OM");
+				}
+
+				// Set the viewport and scissor rectangles:
+				commandList->SetViewport(*stageTargets);
+				commandList->SetScissorRect(*stageTargets);
+				// TODO: Should the viewport and scissor rects be set while we're setting the targets?
+
+
+				// Lambda: Bind parameter blocks (This must happen AFTER the root signature has been set)
+				auto SetParameterBlocks = [renderStage, &commandList]()
+				{
+					for (std::shared_ptr<re::ParameterBlock> permanentPB : renderStage->GetPermanentParameterBlocks())
+					{
+						commandList->SetParameterBlock(permanentPB.get());
+					}
+					for (std::shared_ptr<re::ParameterBlock> perFramePB : renderStage->GetPerFrameParameterBlocks())
+					{
+						commandList->SetParameterBlock(perFramePB.get());
+					}
+				};
+
+
+				std::shared_ptr<re::Shader> stageShader = renderStage->GetStageShader(); // TODO: THIS SHOULD RETURN A RAW PTR
+				const bool hasStageShader = stageShader != nullptr;
+				if (hasStageShader)
+				{
+					SEAssertF("TODO: Handle per-stage shaders");
+
+					// Set the pipeline state and root signature first:
+					std::shared_ptr<dx12::PipelineState> pso = dx12::Context::GetPipelineStateObject(
+						*stageShader,
+						stagePipelineParams,
+						stageTargets.get());
+					commandList->SetPipelineState(*pso);
+					commandList->SetGraphicsRootSignature(pso->GetRootSignature());
+
+					SetParameterBlocks();
+				}
+
+
+				// Render stage batches:
+				std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
+				for (re::Batch const& batch : batches)
+				{
+					if (!hasStageShader)
+					{
+						// Set the pipeline state and root signature for the batch shader:
+						std::shared_ptr<dx12::PipelineState> pso = dx12::Context::GetPipelineStateObject(
+							*batch.GetBatchMesh()->GetMeshMaterial()->GetShader(),
+							stagePipelineParams,
+							stageTargets.get());
+						commandList->SetPipelineState(*pso);
+						commandList->SetGraphicsRootSignature(pso->GetRootSignature());
+
+						SetParameterBlocks();
+					}
+
+					// Set the geometry for the draw:
+					dx12::MeshPrimitive::PlatformParams* meshPrimPlatParams =
+						batch.GetBatchMesh()->GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
+					
+					// TODO: Batches should contain the draw mode, instead of carrying around a MeshPrimitive
+					commandList->SetPrimitiveType(meshPrimPlatParams->m_drawMode);
+					commandList->SetVertexBuffers(batch.GetBatchMesh()->GetVertexStreams());
+
+					dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
+						batch.GetBatchMesh()->GetVertexStream(re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
+					commandList->SetIndexBuffer(&indexPlatformParams->m_indexBufferView);
+
+					// Record the draw:
+					commandList->DrawIndexedInstanced(
+						batch.GetBatchMesh()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
+						1,	// Instance count
+						0,	// Start index location
+						0,	// Base vertex location
+						0);	// Start instance location
+				}
+			};
+
+
+			// Single frame render stages:
+			vector<RenderStage>& singleFrameRenderStages = stagePipeline.GetSingleFrameRenderStages();
+			for (RenderStage& renderStage : singleFrameRenderStages)
+			{
+				ProcessRenderStage(&renderStage);
+			}
+
+			// Render stages:
+			vector<RenderStage*> const& renderStages = stagePipeline.GetRenderStages();
+			for (RenderStage* renderStage : renderStages)
+			{
+				ProcessRenderStage(renderStage);
+			}
+
+			// We're done: We have a command list for everything that happened on the current StagePipeline
+			commandLists.emplace_back(commandList);
+		}
+
+		// Execute the command list
+		// TODO: Submit multiple command lists at once? Will need to sync with fences between
+		directQueue.Execute(1, &commandLists[0]);
 	}
 
 
@@ -320,9 +367,5 @@ namespace dx12
 		// TODO: We also flush these in the context as well... But it's necessary here, since we delete objects next
 		Context::GetCommandQueue(dx12::CommandList::CommandListType::Copy).Flush();
 		Context::GetCommandQueue(dx12::CommandList::CommandListType::Direct).Flush();
-
-
-		// TEMP DEBUG CODE:
-		s_helloTriangle = nullptr;
 	}
 }

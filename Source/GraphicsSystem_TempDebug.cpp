@@ -1,8 +1,10 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "GraphicsSystem_TempDebug.h"
+#include "SceneManager.h"
 
 using re::Batch;
+using en::SceneManager;
 
 
 namespace gr
@@ -30,6 +32,10 @@ namespace gr
 
 		gr::PipelineState defaultPipelineState;
 		m_tempDebugStage.SetStagePipelineState(defaultPipelineState);
+
+		// Add param blocks:
+		m_tempDebugStage.AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());
+		// TODO: Batch transform PB?
 
 		pipeline.AppendRenderStage(&m_tempDebugStage);
 	}

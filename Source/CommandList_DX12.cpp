@@ -223,6 +223,15 @@ namespace dx12
 	}
 
 
+	void CommandList::ClearColorTargets(re::TextureTargetSet const& targetSet) const
+	{
+		for (re::TextureTarget const& target : targetSet.GetColorTargets())
+		{
+			ClearColorTarget(target);
+		}
+	}
+
+
 	void CommandList::SetRenderTargets(re::TextureTargetSet const& targetSet) const
 	{
 		SEAssertF("NOTE: This is untested. It's probably fine, but asserting to save some future head scratching...");
