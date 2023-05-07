@@ -133,7 +133,7 @@ namespace opengl
 				opengl::Context::SetPipelineState(renderManager.m_context, stagePipelineParams);
 
 				// Bind the shader now that the pipeline state is set:
-				std::shared_ptr<re::Shader> stageShader = renderStage->GetStageShader();
+				re::Shader* stageShader = renderStage->GetStageShader();
 				opengl::Shader::Bind(*stageShader);
 				// TODO: Handle shaders set by stages/materials/batches
 				// Priority order: Stage, material (where material shaders are attached to the batch)?

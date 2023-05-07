@@ -19,6 +19,7 @@
 #include "MeshPrimitive.h"
 #include "ParameterBlock.h"
 #include "PerformanceTimer.h"
+#include "RenderManager.h"
 #include "SceneData.h"
 #include "SceneNode.h"
 #include "Shader.h"
@@ -26,7 +27,6 @@
 #include "ThreadPool.h"
 #include "Transform.h"
 #include "VertexStreamBuilder.h"
-
 
 using fr::SceneData;
 using gr::Camera;
@@ -1560,28 +1560,45 @@ namespace fr
 		{
 			std::lock_guard<std::mutex> lock(m_meshesAndMeshPrimitivesMutex);
 
+#if defined(_DEBUG)
 			for (size_t i = 0; i < mesh->GetMeshPrimitives().size(); i++)
 			{
 				const uint64_t meshPrimitiveDataHash = mesh->GetMeshPrimitives()[i]->GetDataHash();
-				auto const& result = m_meshPrimitives.find(meshPrimitiveDataHash);
-				if (result != m_meshPrimitives.end())
-				{
-					LOG("Mesh \"%s\" has a primitive with the same data hash as an existing mesh primitive. It will be "
-						"replaced with a shared copy", mesh->GetName().c_str());
 
-					// Already have a mesh primitive with the same data hash; replace the MeshPrimitive
-					mesh->ReplaceMeshPrimitive(i, result->second);
-				}
-				else
-				{
-					m_meshPrimitives.insert({ meshPrimitiveDataHash, mesh->GetMeshPrimitives()[i] });
-				}
+				SEAssert("We expect the MeshPrimitives have already been registered",
+					m_meshPrimitives.find(meshPrimitiveDataHash) != m_meshPrimitives.end());
 			}
+#endif
 
 			m_meshes.emplace_back(mesh); // Add the mesh to our tracking list
 		}
-
 		UpdateSceneBounds(mesh);
+	}
+
+
+	bool SceneData::AddUniqueMeshPrimitive(std::shared_ptr<re::MeshPrimitive>& meshPrimitive)
+	{
+		const uint64_t meshPrimitiveDataHash = meshPrimitive->GetDataHash();
+		bool replacedIncomingPtr = false;
+		{
+			std::lock_guard<std::mutex> lock(m_meshesAndMeshPrimitivesMutex);
+
+			auto const& result = m_meshPrimitives.find(meshPrimitiveDataHash);
+			if (result != m_meshPrimitives.end())
+			{
+				LOG("MeshPrimitive \"%s\" has the same data hash as an existing MeshPrimitive. It will be replaced "
+					"with a shared copy",
+					meshPrimitive->GetName().c_str());
+
+				meshPrimitive = result->second;
+				replacedIncomingPtr = true;
+			}
+			else
+			{
+				m_meshPrimitives.insert({ meshPrimitiveDataHash, meshPrimitive });
+			}
+		}
+		return replacedIncomingPtr;
 	}
 
 

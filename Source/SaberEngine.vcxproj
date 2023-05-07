@@ -422,6 +422,9 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="SaberEngine.licenseheader" />
+    <None Include="Shaders\DX12\SaberCommon.hlsli">
+      <FileType>Document</FileType>
+    </None>
     <None Include="Shaders\glsl\blitShader.frag" />
     <None Include="Shaders\glsl\blitShader.vert" />
     <None Include="Shaders\glsl\blurShader.frag" />

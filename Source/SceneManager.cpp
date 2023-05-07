@@ -160,23 +160,26 @@ namespace en
 			const size_t numInstances = unmergedIdx - instanceStartIdx;
 
 			// Get the first model matrix:
-			std::vector<mat4> modelMatrices;
-			modelMatrices.reserve(numInstances);
-			modelMatrices.emplace_back(unmergedBatches[instanceStartIdx].second->GetGlobalMatrix(Transform::TRS));
+			std::vector<re::Batch::InstancedMeshParams> instancedMeshPBData;
+			instancedMeshPBData.reserve(numInstances);
+			instancedMeshPBData.emplace_back(re::Batch::InstancedMeshParams
+				{ 
+					.g_model{unmergedBatches[instanceStartIdx].second->GetGlobalMatrix(Transform::TRS)}
+				});
 
 			// Append the remaining batches in the sequence:
 			for (size_t instanceIdx = instanceStartIdx + 1; instanceIdx < unmergedIdx; instanceIdx++)
 			{
 				m_sceneBatches.back().IncrementBatchInstanceCount();
 
-				modelMatrices.emplace_back(unmergedBatches[instanceIdx].second->GetGlobalMatrix(Transform::TRS));
+				instancedMeshPBData.emplace_back(unmergedBatches[instanceIdx].second->GetGlobalMatrix(Transform::TRS));
 			}
 
 			// Construct PB of model transform matrices:
 			shared_ptr<ParameterBlock> instancedMeshParams = ParameterBlock::CreateFromArray(
 				re::Batch::InstancedMeshParams::s_shaderName,
-				modelMatrices.data(),
-				sizeof(mat4),
+				instancedMeshPBData.data(),
+				sizeof(re::Batch::InstancedMeshParams),
 				numInstances,
 				ParameterBlock::PBType::SingleFrame);
 			// TODO: We're currently creating/destroying these parameter blocks each frame. This is expensive. Instead,

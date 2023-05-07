@@ -47,7 +47,7 @@ namespace re
 		inline gr::PipelineState& GetStagePipelineState() { return m_pipelineState; } // Note: Do not modify. Use SetStagePipelineState instead
 
 		void SetStageShader(std::shared_ptr<re::Shader>);
-		std::shared_ptr<re::Shader> const GetStageShader() const;
+		re::Shader* GetStageShader() const;
 
 		inline std::shared_ptr<re::TextureTargetSet> GetTextureTargetSet() const { return m_textureTargetSet; }
 		void SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet);
@@ -100,8 +100,8 @@ namespace re
 	}
 
 
-	inline std::shared_ptr<re::Shader> const RenderStage::GetStageShader() const
+	inline re::Shader* RenderStage::GetStageShader() const
 	{
-		return m_stageShader;
+		return m_stageShader.get();
 	}
 }

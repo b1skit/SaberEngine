@@ -23,15 +23,6 @@ namespace re
 	class ParameterBlock : public virtual en::NamedObject
 	{
 	public:
-		struct PlatformParams : public IPlatformParams
-		{
-			virtual ~PlatformParams() = 0;
-
-			bool m_isCreated = false;
-		};
-
-
-	public:
 		enum class PBType
 		{
 			Mutable,		// Permanent, can be updated
@@ -39,6 +30,26 @@ namespace re
 			SingleFrame,	// Single frame, immutable once committed
 
 			PBType_Count
+		};
+
+		enum class PBDataType
+		{
+			SingleElement,
+			Array,
+
+			PBDataType_Count
+		};
+
+
+	public:
+		struct PlatformParams : public IPlatformParams
+		{
+			virtual ~PlatformParams() = 0;
+
+			bool m_isCreated = false;
+
+			PBDataType m_dataType = PBDataType::PBDataType_Count;
+			uint32_t m_numElements = 0;
 		};
 
 
@@ -76,7 +87,8 @@ namespace re
 		
 
 	private:
-		ParameterBlock(size_t typeIDHashCode, std::string const& pbName, PBType pbType); // Use factory method instead
+		// Use the factory Create() method instead
+		ParameterBlock(size_t typeIDHashCode, std::string const& pbName, PBType, PBDataType, uint32_t numElements); 
 
 		static void RegisterAndCommit(
 			std::shared_ptr<re::ParameterBlock> newPB, void const* data, size_t numBytes, uint64_t typeIDHash);
@@ -98,7 +110,7 @@ namespace re
 	std::shared_ptr<re::ParameterBlock> ParameterBlock::Create(std::string const& pbName, T const& data, PBType pbType)
 	{
 		std::shared_ptr<re::ParameterBlock> newPB;
-		newPB.reset(new re::ParameterBlock(typeid(T).hash_code(), pbName, pbType));
+		newPB.reset(new re::ParameterBlock(typeid(T).hash_code(), pbName, pbType, PBDataType::SingleElement, 1));
 
 		RegisterAndCommit(newPB, &data, sizeof(T), typeid(T).hash_code());
 
@@ -112,7 +124,8 @@ namespace re
 		std::string const& pbName, T const* dataArray, size_t dataByteSize, size_t numElements, PBType pbType)
 	{
 		std::shared_ptr<re::ParameterBlock> newPB;
-		newPB.reset(new ParameterBlock(typeid(T).hash_code(), pbName, pbType));
+		newPB.reset(new ParameterBlock(typeid(T).hash_code(), pbName, pbType, PBDataType::Array, static_cast<uint32_t>(numElements)));
+		// TODO: numElements should be a uint32_t
 
 		RegisterAndCommit(newPB, dataArray, dataByteSize * numElements, typeid(T).hash_code());
 

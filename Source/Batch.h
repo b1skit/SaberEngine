@@ -27,6 +27,7 @@ namespace re
 	public:
 		struct InstancedMeshParams
 		{
+			glm::mat4 g_model;
 			static constexpr char const* const s_shaderName = "InstancedMeshParams"; // Not counted towards size of struct
 		};
 

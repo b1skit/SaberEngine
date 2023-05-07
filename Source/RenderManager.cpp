@@ -263,7 +263,7 @@ namespace re
 	template<>
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::Shader> newObject)
 	{
-		const size_t nameID = newObject->GetNameID();
+		const size_t nameID = newObject->GetNameID(); // Shaders are required to have unique names
 
 		std::lock_guard<std::mutex> lock(m_newShaders.m_mutex);
 
@@ -279,20 +279,21 @@ namespace re
 	template<>
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::MeshPrimitive> newObject)
 	{
-		const size_t nameID = newObject->GetUniqueID();
+		const size_t dataHash = newObject->GetDataHash(); // MeshPrimitives can have duplicate names
 
 		std::lock_guard<std::mutex> lock(m_newMeshPrimitives.m_mutex);
 
-		SEAssert("Found an object with the same unique ID. This suggests an object has been added twice, which should "
-			"not happen",
-			m_newMeshPrimitives.m_newObjects.find(nameID) == m_newMeshPrimitives.m_newObjects.end());
+		SEAssert("Found an object with the same data hash. This suggests a duplicate object exists and has not been "
+			"detected, or an object is being added twice, which should not happen",
+			m_newMeshPrimitives.m_newObjects.find(dataHash) == m_newMeshPrimitives.m_newObjects.end());
 
-		m_newMeshPrimitives.m_newObjects.insert({ nameID, newObject });
+		m_newMeshPrimitives.m_newObjects.insert({ dataHash, newObject });
 	}
 
 
 	void RenderManager::CreateAPIResources()
 	{
+		fr::SceneData* sceneDataDebug = en::SceneManager::GetSceneData();
 		platform::RenderManager::CreateAPIResources(*this);
 	}
 }

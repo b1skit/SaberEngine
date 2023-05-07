@@ -8,5 +8,5 @@
 
 void main()
 {
-    gl_Position = g_model[gl_InstanceID] * vec4(in_position.xyz, 1.0);
+    gl_Position = g_instancedMeshParams[gl_InstanceID].g_model * vec4(in_position.xyz, 1.0);
 }

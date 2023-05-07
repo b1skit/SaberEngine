@@ -66,7 +66,6 @@ namespace re
 		template<typename T>
 		void RegisterForCreate(std::shared_ptr<T>);
 
-
 	private:
 		void CreateAPIResources();
 
@@ -97,7 +96,7 @@ namespace re
 		std::vector<std::shared_ptr<gr::GraphicsSystem>> m_graphicsSystems;
 		re::RenderPipeline m_pipeline;
 
-		std::vector<re::Batch> m_renderBatches; // Union of all batches created by all systems. Populated in CopyFrameData
+		std::vector<re::Batch> m_renderBatches; // Union of all batches created by all systems. Populated in PreUpdate
 
 		std::queue<std::shared_ptr<en::Command>> m_imGuiCommands;
 

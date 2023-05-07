@@ -11,13 +11,22 @@ using std::make_shared;
 namespace re
 {
 	// Private CTOR: Use one of the Create factories instead
-	ParameterBlock::ParameterBlock(size_t typeIDHashCode, std::string const& pbName, PBType pbType)
+	ParameterBlock::ParameterBlock(
+		size_t typeIDHashCode, std::string const& pbName, PBType pbType, PBDataType dataType, uint32_t numElements)
 		: NamedObject(pbName)
 		, m_typeIDHash(typeIDHashCode)
 		, m_pbType(pbType)
 		, m_platformParams(nullptr)
 	{
 		platform::ParameterBlock::CreatePlatformParams(*this);
+
+		SEAssert("Invalid PBDataType", dataType != PBDataType::PBDataType_Count);
+		m_platformParams->m_dataType = dataType;
+
+		SEAssert("Invalid number of elements", 
+			(numElements == 1 && dataType == PBDataType::SingleElement) || 
+			(numElements >= 1 && dataType == PBDataType::Array));
+		m_platformParams->m_numElements = numElements;
 	}
 
 

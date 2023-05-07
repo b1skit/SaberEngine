@@ -160,9 +160,14 @@ layout(std430, binding=3) readonly buffer AmbientLightParams
 };
 
 
+// TODO: Wrap other buffer contents in a struct
+struct InstancedMeshParamsCB
+{
+	mat4 g_model;
+};
 layout(std430, binding=4) readonly buffer InstancedMeshParams
 {
-	mat4 g_model[]; // Variable-sized array: Must be the bottom-most variable in the block
+	InstancedMeshParamsCB g_instancedMeshParams[]; // Variable-sized array: Must be the bottom-most variable in the block
 };
 
 

@@ -153,10 +153,12 @@ namespace dx12
 				// TODO: Why CAN'T this be a const& ?
 				gr::PipelineState& stagePipelineParams = renderStage->GetStagePipelineState();
 
+				Microsoft::WRL::ComPtr<ID3D12Resource> renderTargetResource = nullptr;
+
 				// Attach the stage targets:
 				std::shared_ptr<re::TextureTargetSet> stageTargets = renderStage->GetTextureTargetSet();
-				bool isBackbufferTarget = false;
-				if (!stageTargets)
+				const bool isBackbufferTarget = stageTargets == nullptr;
+				if (isBackbufferTarget)
 				{
 					dx12::SwapChain::PlatformParams* swapChainParams =
 						renderManager.GetContext().GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
@@ -164,18 +166,23 @@ namespace dx12
 						swapChainParams && swapChainParams->m_backbufferTargetSet);
 
 					stageTargets = swapChainParams->m_backbufferTargetSet; // Draw directly to the swapchain backbuffer
-					isBackbufferTarget = true;
+
+					renderTargetResource = dx12::SwapChain::GetBackBufferResource(context.GetSwapChain());
+				}
+				else
+				{
+					SEAssertF("TODO: Handle the render target resource transition for non-backbuffer targets");
+
+					//renderTargetResource = ;
 				}
 
 
-				// TEMP HAX: Transition the backbuffer to the render target state:
-				Microsoft::WRL::ComPtr<ID3D12Resource> backbufferResource =
-					dx12::SwapChain::GetBackBufferResource(context.GetSwapChain());
-
+				// Transition the resource state:
 				commandList->TransitionResource(
-					backbufferResource.Get(),
+					renderTargetResource.Get(),
 					D3D12_RESOURCE_STATE_PRESENT,
 					D3D12_RESOURCE_STATE_RENDER_TARGET);
+				// TODO: Handle this correctly
 
 
 				// Clear the render targets:
@@ -221,12 +228,10 @@ namespace dx12
 				};
 
 
-				std::shared_ptr<re::Shader> stageShader = renderStage->GetStageShader(); // TODO: THIS SHOULD RETURN A RAW PTR
+				re::Shader* stageShader = renderStage->GetStageShader();
 				const bool hasStageShader = stageShader != nullptr;
 				if (hasStageShader)
 				{
-					SEAssertF("TODO: Handle per-stage shaders");
-
 					// Set the pipeline state and root signature first:
 					std::shared_ptr<dx12::PipelineState> pso = dx12::Context::GetPipelineStateObject(
 						*stageShader,
@@ -243,6 +248,7 @@ namespace dx12
 				std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
 				for (re::Batch const& batch : batches)
 				{
+					// TODO: Verify batch sorting to ensure we're not constantly context rolling here
 					if (!hasStageShader)
 					{
 						// Set the pipeline state and root signature for the batch shader:
@@ -254,6 +260,13 @@ namespace dx12
 						commandList->SetGraphicsRootSignature(pso->GetRootSignature());
 
 						SetParameterBlocks();
+					}
+
+					// Batch parameter blocks:
+					vector<shared_ptr<re::ParameterBlock>> const& batchPBs = batch.GetBatchParameterBlocks();
+					for (shared_ptr<re::ParameterBlock> batchPB : batchPBs)
+					{
+						commandList->SetParameterBlock(batchPB.get());
 					}
 
 					// Set the geometry for the draw:
@@ -271,7 +284,7 @@ namespace dx12
 					// Record the draw:
 					commandList->DrawIndexedInstanced(
 						batch.GetBatchMesh()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
-						1,	// Instance count
+						static_cast<uint32_t>(batch.GetInstanceCount()),	// Instance count
 						0,	// Start index location
 						0,	// Base vertex location
 						0);	// Start instance location

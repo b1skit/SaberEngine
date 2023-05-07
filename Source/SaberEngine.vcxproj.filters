@@ -821,6 +821,9 @@
     </None>
     <None Include="SaberEngine.licenseheader" />
     <None Include="packages.config" />
+    <None Include="Shaders\DX12\SaberCommon.hlsli">
+      <Filter>Source Files\Shaders\DX12</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DX12\HelloTriangle_PShader.hlsl">

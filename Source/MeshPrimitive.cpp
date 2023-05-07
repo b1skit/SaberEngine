@@ -55,7 +55,12 @@ namespace re
 			material,
 			meshParams));
 
-		re::RenderManager::Get()->RegisterForCreate(newMeshPrimitive);
+		// This call will replace the newMeshPrimitive pointer if a duplicate MeshPrimitive already exists
+		bool duplicateExists = en::SceneManager::GetSceneData()->AddUniqueMeshPrimitive(newMeshPrimitive);
+		if (!duplicateExists)
+		{
+			re::RenderManager::Get()->RegisterForCreate(newMeshPrimitive);
+		}
 
 		return newMeshPrimitive;
 	}

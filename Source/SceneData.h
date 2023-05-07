@@ -31,6 +31,9 @@ namespace fr
 	class SceneData final : public virtual en::NamedObject
 	{
 	public:
+		typedef uint64_t DataHash;
+
+	public:
 		explicit SceneData(std::string const& sceneName);
 		~SceneData() { Destroy(); }
 
@@ -62,6 +65,7 @@ namespace fr
 		// Meshes:
 		void AddMesh(std::shared_ptr<gr::Mesh> mesh);
 		std::vector <std::shared_ptr<gr::Mesh>> const& GetMeshes() const;
+		bool AddUniqueMeshPrimitive(std::shared_ptr<re::MeshPrimitive>&); // Returns true if incoming ptr is modified
 
 		// Textures:
 		void AddUniqueTexture(std::shared_ptr<re::Texture>& newTexture); // Note: newTexture may be modified
@@ -96,7 +100,7 @@ namespace fr
 		std::mutex m_sceneNodesMutex;
 
 		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;
-		std::unordered_map<uint64_t, std::shared_ptr<re::MeshPrimitive>> m_meshPrimitives;
+		std::unordered_map<DataHash, std::shared_ptr<re::MeshPrimitive>> m_meshPrimitives;
 		std::mutex m_meshesAndMeshPrimitivesMutex;		
 
 		std::unordered_map<size_t, std::shared_ptr<re::Texture>> m_textures;

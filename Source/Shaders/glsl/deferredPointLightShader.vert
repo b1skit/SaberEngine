@@ -8,6 +8,6 @@
 
 void main()
 {
-	gl_Position	= g_viewProjection * g_model[gl_InstanceID] * vec4(in_position, 1.0);
-	vOut.worldPos = (g_model[gl_InstanceID] * vec4(in_position, 1.0f)).xyz;
+	gl_Position	= g_viewProjection * g_instancedMeshParams[gl_InstanceID].g_model * vec4(in_position, 1.0);
+	vOut.worldPos = (g_instancedMeshParams[gl_InstanceID].g_model * vec4(in_position, 1.0f)).xyz;
 }
