@@ -109,7 +109,7 @@ namespace en
 	template<typename... Args>
 	inline static void LogManager::LogInternal(char const* tagPrefix, char const* msg, Args&&... args)
 	{
-		constexpr uint32_t bufferSize = 256;
+		constexpr uint32_t bufferSize = 1024;
 		std::array<char, bufferSize> assembledMsg;
 
 		AssembleStringFromVariadicArgs(assembledMsg.data(), bufferSize, msg, args...);
