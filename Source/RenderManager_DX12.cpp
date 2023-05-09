@@ -312,7 +312,12 @@ namespace dx12
 
 		// Execute the command list
 		// TODO: Submit multiple command lists at once? Will need to sync with fences between
-		directQueue.Execute(1, &commandLists[0]);
+		//directQueue.Execute(1, &commandLists[0]);
+
+
+		// DEBUG: FORCE A CPU WAIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		uint64_t hackFence = directQueue.Execute(1, &commandLists[0]);
+		directQueue.CPUWait(hackFence);
 	}
 
 

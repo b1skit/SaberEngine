@@ -104,6 +104,12 @@ namespace
 				break;
 			}
 
+			// Skip System Value semantics:
+			if (strcmp(paramDesc.SemanticName, "SV_InstanceID") == 0)
+			{
+				continue;
+			}
+
 			inputLayout.emplace_back(D3D12_INPUT_ELEMENT_DESC(
 				paramDesc.SemanticName,									// Semantic name
 				paramDesc.SemanticIndex,								// Semantic idx: Only needed when >1 element of same semantic

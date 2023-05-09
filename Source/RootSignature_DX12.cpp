@@ -12,6 +12,11 @@
 using Microsoft::WRL::ComPtr;
 
 
+namespace
+{
+	constexpr uint8_t k_invalidIdx = std::numeric_limits<uint8_t>::max();
+}
+
 namespace dx12
 {
 	RootSignature::RootSignature()
@@ -59,17 +64,19 @@ namespace dx12
 		memset(m_numDescriptorsPerTableEntry, 0, sizeof(m_numDescriptorsPerTableEntry));
 
 		/* Root signature layout: We tightly pack entries in the following order:
-		* Constant buffer root descriptors
-		* Structured buffer descriptor tables
+		* Constant buffer root descriptors (CBV)
+		* Structured buffer root descriptors (SRV)
 		* SRV descriptor tables
 		* UAV descriptor tables
 		* Sampler descriptor tables
 		*
 		* Note: MS recommends binding the most frequently changing elements at the start of the root signature.
-		* For SaberEngine, that's probably CBVs
+		* For SaberEngine, that's probably parameter blocks: CBVs and SRVs
 		*/
-		uint32_t numCBVs = 0;
+		
+		uint32_t numCBVs = 0; // D3D12_SHADER_DESC::ConstantBuffers is per-stage; We count the total across all stages
 		uint32_t numSRVs = 0;
+		// TODO: Count more resource types
 
 		// Parse the shader reflection:
 		ComPtr<ID3D12ShaderReflection> shaderReflection;
@@ -92,14 +99,50 @@ namespace dx12
 			hr = shaderReflection->GetDesc(&shaderDesc);
 			CheckHResult(hr, "Failed to get shader description");
 
-			constexpr uint8_t k_invalidIdx = std::numeric_limits<uint8_t>::max();
-
 			// Parse the resource bindings for the current shader stage:
 			D3D12_SHADER_INPUT_BIND_DESC inputBindingDesc;
 			for (uint32_t currentResource = 0; currentResource < shaderDesc.BoundResources; currentResource++)
 			{
 				hr = shaderReflection->GetResourceBindingDesc(currentResource, &inputBindingDesc);
 				CheckHResult(hr, "Failed to get resource binding description");
+
+				RootSigEntry rootEntry{};
+				rootEntry.m_baseRegister = inputBindingDesc.BindPoint;
+				rootEntry.m_registerSpace = inputBindingDesc.Space;
+
+				// Fix these up later once we've counted everything
+				rootEntry.m_type = EntryType::EntryType_Invalid;
+				rootEntry.m_rootSigIndex = k_invalidIdx;
+				rootEntry.m_offset = 0;
+				rootEntry.m_count = 1;
+				
+				// Shader visibility:
+				switch (shaderIdx)
+				{
+				case Shader::ShaderType::Vertex:
+				{
+					rootEntry.m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_VERTEX;
+				}
+				break;
+				case Shader::ShaderType::Geometry:
+				{
+					rootEntry.m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_GEOMETRY;
+				}
+				break;
+				case Shader::ShaderType::Pixel:
+				{
+					rootEntry.m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL;
+				}
+				break;
+				case Shader::ShaderType::Compute:
+				{
+					// Compute queue always uses D3D12_SHADER_VISIBILITY_ALL because it has only 1 active stage
+					rootEntry.m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
+				}
+				break;
+				default:
+					SEAssertF("Invalid shader type");
+				}
 
 				// Parse the current binding description:
 				switch (inputBindingDesc.Type)
@@ -108,50 +151,10 @@ namespace dx12
 				{
 					SEAssert("TODO: Handle root constants", 
 						strcmp(inputBindingDesc.Name, "$Globals") != 0);
-
-					// We currently bind all constant buffers as root descriptors (but we don't necessarily have to)
-					RootEntry rootEntry;
-					rootEntry.m_type = EntryType::RootDescriptor;
-					rootEntry.m_rootSigIndex = k_invalidIdx; // Fix these up later once we've counted everything
-					rootEntry.m_baseRegister = inputBindingDesc.BindPoint;
-					rootEntry.m_registerSpace = inputBindingDesc.Space;
-
-					switch (shaderIdx)
-					{
-					case Shader::ShaderType::Vertex:
-					{
-						rootEntry.m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_VERTEX;
-					}
-					break;
-					case Shader::ShaderType::Geometry:
-					{
-						rootEntry.m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_GEOMETRY;
-					}
-					break;
-					case Shader::ShaderType::Pixel:
-					{
-						rootEntry.m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL;
-					}
-					break;
-					case Shader::ShaderType::Compute:
-					{
-						// Compute queue always uses D3D12_SHADER_VISIBILITY_ALL because it has only 1 active stage
-						rootEntry.m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
-					}
-					break;
-					default:
-						SEAssertF("Invalid shader type");
-					}
-
-					auto const& insertResult = 
-						m_namesToRootEntries.insert({ inputBindingDesc.Name, rootEntry });
-
-					// If the element already exists, update the visibility
-					if (insertResult.second == false)
-					{
-						insertResult.first->second.m_shaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-					}
-					else
+					
+					rootEntry.m_type = EntryType::RootCBV;
+					
+					if (m_namesToRootEntries.contains(inputBindingDesc.Name) == false)
 					{
 						numCBVs++; // Only increment if we've inserted a new entry
 					}
@@ -159,56 +162,12 @@ namespace dx12
 				break;
 				case D3D_SHADER_INPUT_TYPE::D3D_SIT_STRUCTURED:
 				{
-					SEAssertF("TODO: Handle structuredbuffers");
-
-					// TODO: THIS IS JUST A COPY/PASTE OF ABOVE FOR NOW: CLEAN THIS UP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-					RootEntry rootEntry;
-					rootEntry.m_type = EntryType::DescriptorTable;
-					rootEntry.m_rootSigIndex = k_invalidIdx; // Fix these up later once we've counted everything
-					rootEntry.m_baseRegister = inputBindingDesc.BindPoint;
-					rootEntry.m_registerSpace = inputBindingDesc.Space;
-
-					// inputBindingDesc.NumSamples; // <- Structured buffer: the stride of the type (in bytes)
-
-
-
-					switch (shaderIdx)
-					{
-					case Shader::ShaderType::Vertex:
-					{
-						rootEntry.m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_VERTEX;
-					}
-					break;
-					case Shader::ShaderType::Geometry:
-					{
-						rootEntry.m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_GEOMETRY;
-					}
-					break;
-					case Shader::ShaderType::Pixel:
-					{
-						rootEntry.m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL;
-					}
-					break;
-					case Shader::ShaderType::Compute:
-					{
-						// Compute queue always uses D3D12_SHADER_VISIBILITY_ALL because it has only 1 active stage
-						rootEntry.m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
-					}
-					break;
-					default:
-						SEAssertF("Invalid shader type");
-					}
+					rootEntry.m_type = EntryType::RootSRV;
 
 					auto const& insertResult =
 						m_namesToRootEntries.insert({ inputBindingDesc.Name, rootEntry });
 
-					// If the element already exists, update the visibility
-					if (insertResult.second == false)
-					{
-						insertResult.first->second.m_shaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-					}
-					else
+					if (m_namesToRootEntries.contains(inputBindingDesc.Name) == false)
 					{
 						numSRVs++; // Only increment if we've inserted a new entry
 					}
@@ -217,6 +176,17 @@ namespace dx12
 				default:
 					SEAssertF("TODO: Handle other resource types");
 					continue;
+				}
+
+				// Record the entry:
+				auto const& insertResult =
+					m_namesToRootEntries.insert({ inputBindingDesc.Name, rootEntry });
+
+				// If the element already exists, update the visibility flag
+				// TODO: Handle this in a more sophisticated way than just falling back to global visiblity
+				if (insertResult.second == false)
+				{
+					insertResult.first->second.m_shaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 				}
 			}
 		}
@@ -244,7 +214,7 @@ namespace dx12
 				SEAssertF("TODO: Handle root constants");
 			}
 			break;
-			case EntryType::RootDescriptor:
+			case EntryType::RootCBV:
 			{
 				rootEntry.second.m_rootSigIndex = currentCBVIdx++;
 
@@ -253,27 +223,28 @@ namespace dx12
 					rootEntry.second.m_baseRegister,										// Shader register
 					rootEntry.second.m_registerSpace,										// Register space
 					D3D12_ROOT_DESCRIPTOR_FLAGS::D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,	// Flags. TODO: Is volatile always appropriate?
-					rootEntry.second.m_shaderVisibility										// Shader visibility
-				);
+					rootEntry.second.m_shaderVisibility);									// Shader visibility
 			}
 			break;
-			case EntryType::DescriptorTable:
+			case EntryType::RootSRV:
 			{
-				SEAssertF("TODO: Handle DescriptorTable"); // This is all just a nasty hack for now
-
 				rootEntry.second.m_rootSigIndex = currentSRVIdx++;
-				
+
 				rootParameters[rootEntry.second.m_rootSigIndex].InitAsShaderResourceView(
 					rootEntry.second.m_baseRegister,										// Shader register
 					rootEntry.second.m_registerSpace,										// Register space
 					D3D12_ROOT_DESCRIPTOR_FLAGS::D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,	// Flags. TODO: Is volatile always appropriate?
-					rootEntry.second.m_shaderVisibility										// Shader visibility
-				);
+					rootEntry.second.m_shaderVisibility);									// Shader visibility
+			}
+			break;
+			case EntryType::DescriptorTable:
+			{
+				SEAssertF("TODO: Handle descriptor tables");
 
-				// Set the root sig descriptor table bitmasks, so our CommandLists's GPUDescriptorHeap can parse the
-				// RootSignature later on
-				m_descriptorTableIdxBitmask = (1 << rootEntry.second.m_rootSigIndex);
-				m_numDescriptorsPerTableEntry[rootEntry.second.m_rootSigIndex] = k_invalidRootSigIndex; // ????????????????????????????? SIGNAL UNBOUNDED???????????????
+				//// Set the root sig descriptor table bitmasks, so our CommandLists's GPUDescriptorHeap can parse the
+				//// RootSignature later on
+				//m_descriptorTableIdxBitmask = (1 << rootEntry.second.m_rootSigIndex);
+				//m_numDescriptorsPerTableEntry[rootEntry.second.m_rootSigIndex] = 1; // TODO: Support arrays/unbounded arrays
 			}
 			break;
 			default:
@@ -294,7 +265,7 @@ namespace dx12
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-		// TODO: Figure out a way to dynamically choose the appropriate flags
+		// TODO: Dynamically choose the appropriate flags
 
 		// Create the root signature description from our array of root parameters:
 		D3D12_ROOT_PARAMETER1 const* rootParamsPtr = rootParameters.empty() ? nullptr : &rootParameters[0];
@@ -365,7 +336,7 @@ namespace dx12
 	}
 
 
-	RootSignature::RootEntry const& RootSignature::GetResourceRegisterBindPoint(std::string const& resourceName) const
+	RootSignature::RootSigEntry const& RootSignature::GetResourceRegisterBindPoint(std::string const& resourceName) const
 	{
 		auto const& result = m_namesToRootEntries.find(resourceName);
 		SEAssert("Root signature does not contain a parameter with that name", result != m_namesToRootEntries.end());

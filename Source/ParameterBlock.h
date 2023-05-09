@@ -72,7 +72,8 @@ namespace re
 		void Commit(T const& data); // Commit *updated* data
 	
 		void GetDataAndSize(void const*& out_data, size_t& out_numBytes) const;
-		size_t GetSize() const;
+		size_t GetSize() const; // TODO: Size (etc) of a PB should be an uint32_t
+		size_t GetStride() const;
 		inline PBType GetType() const { return m_pbType; }
 
 		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }

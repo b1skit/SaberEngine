@@ -356,7 +356,12 @@ namespace en
 		markDirty = TrySetValue(k_windowXResValueName,		1920,				SettingType::Common);
 		markDirty = TrySetValue(k_windowYResValueName,		1080,				SettingType::Common);
 
+		// System config:
 		markDirty = TrySetValue("vsync",					true,				SettingType::Common);
+
+		// Texture dimensions:
+		markDirty = TrySetValue("defaultShadowMapRes",		2048u,				SettingType::Common);
+		markDirty = TrySetValue("defaultShadowCubeMapRes",	512u,				SettingType::Common);
 
 		// Camera defaults:
 		markDirty = TrySetValue("defaultyFOV",				1.570796f,			SettingType::Common);
@@ -443,11 +448,6 @@ namespace en
 			// Shadow map defaults:
 			TryInsertDefault("defaultMinShadowBias",	0.01f);
 			TryInsertDefault("defaultMaxShadowBias",	0.05f);
-
-			// Texture dimensions:
-			TryInsertDefault("defaultShadowMapRes",		(uint32_t)2048);
-			TryInsertDefault("defaultShadowCubeMapRes",	(uint32_t)512);
-
 		}
 		break;
 		case platform::RenderingAPI::DX12:

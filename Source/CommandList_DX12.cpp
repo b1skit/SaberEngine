@@ -105,13 +105,30 @@ namespace dx12
 		dx12::ParameterBlock::PlatformParams const* pbPlatParams =
 			parameterBlock->GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
 
-		// We (currently) bind our CBVs as root descriptors:
+
 		const uint32_t rootSigSlot =
 			m_currentGraphicsRootSignature->GetResourceRegisterBindPoint(parameterBlock->GetName()).m_rootSigIndex;
 
-		m_gpuDescriptorHeaps->SetInlineCBV(
-			rootSigSlot,						// Root signature index 
-			pbPlatParams->m_resource.Get());	// Resource
+
+		switch (parameterBlock->GetPlatformParams()->m_dataType)
+		{
+		case re::ParameterBlock::PBDataType::SingleElement:
+		{
+			m_gpuDescriptorHeaps->SetInlineCBV(
+				rootSigSlot,						// Root signature index 
+				pbPlatParams->m_resource.Get());	// Resource
+		}
+		break;
+		case re::ParameterBlock::PBDataType::Array:
+		{
+			m_gpuDescriptorHeaps->SetInlineSRV(
+				rootSigSlot,						// Root signature index 
+				pbPlatParams->m_resource.Get());	// Resource
+		}
+		break;
+		default:
+			SEAssertF("Invalid PBDataType");
+		}
 	}
 
 

@@ -170,11 +170,11 @@ namespace re
 	{
 		HandleEvents();
 
-		// Update/buffer param blocks:
-		m_context.GetParameterBlockAllocator().BufferParamBlocks();
-
 		// Create any new resources that have been loaded since the last frame:
 		CreateAPIResources();
+
+		// Update/buffer param blocks:
+		m_context.GetParameterBlockAllocator().BufferParamBlocks();
 
 		// API-specific rendering loop:
 		platform::RenderManager::Render(*this);

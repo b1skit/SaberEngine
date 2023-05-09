@@ -47,7 +47,11 @@ namespace opengl
 		size_t numBytes;
 		paramBlock.GetDataAndSize(data, numBytes);
 
-		glNamedBufferSubData(params->m_ssbo, 0, (GLsizeiptr)numBytes, data);
+		glNamedBufferSubData(
+			params->m_ssbo,			// Target
+			0,						// Offset
+			(GLsizeiptr)numBytes,	// Size
+			data);					// Data
 	}
 
 

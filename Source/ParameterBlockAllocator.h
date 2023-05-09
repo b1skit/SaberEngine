@@ -56,7 +56,7 @@ namespace re
 		struct SingleFrameAllocation
 		{
 			std::array<std::vector<uint8_t>, k_numBuffers> m_committed;
-			std::array< std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>>, k_numBuffers> m_handleToPtr;
+			std::array<std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>>, k_numBuffers> m_handleToPtr;
 			mutable std::recursive_mutex m_mutex;
 		} m_singleFrameAllocations;
 
@@ -66,8 +66,8 @@ namespace re
 
 	private:
 		uint64_t m_readFrameNum; // Read frame # is always 1 behind the write frame
-		uint64_t GetReadIdx() const { return m_readFrameNum % 2; }
-		uint64_t GetWriteIdx() const { return (m_readFrameNum + 1 ) % 2; }
+		uint64_t GetReadIdx() const { return m_readFrameNum % k_numBuffers; }
+		uint64_t GetWriteIdx() const { return (m_readFrameNum + 1 ) % k_numBuffers; }
 		
 
 	private:

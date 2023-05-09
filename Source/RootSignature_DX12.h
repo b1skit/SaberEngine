@@ -27,13 +27,15 @@ namespace dx12
 		enum class EntryType
 		{
 			RootConstant,
-			RootDescriptor,
+			RootCBV,
+			RootSRV,
+			// TODO: More Root__ types
 			DescriptorTable,
 
 			EntryType_Count,
 			EntryType_Invalid = EntryType_Count
 		};
-		struct RootEntry
+		struct RootSigEntry
 		{
 			EntryType m_type		= EntryType::EntryType_Invalid;
 			uint8_t m_rootSigIndex	= k_invalidRootSigIndex;
@@ -63,7 +65,7 @@ namespace dx12
 
 		D3D12_ROOT_SIGNATURE_DESC1 const& GetD3DRootSignatureDesc() const;
 
-		RootEntry const& GetResourceRegisterBindPoint(std::string const& resourceName) const;
+		RootSigEntry const& GetResourceRegisterBindPoint(std::string const& resourceName) const;
 
 
 	private:
@@ -77,6 +79,6 @@ namespace dx12
 
 
 	private:
-		std::unordered_map<std::string, RootEntry> m_namesToRootEntries;
+		std::unordered_map<std::string, RootSigEntry> m_namesToRootEntries;
 	};
 }

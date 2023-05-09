@@ -10,6 +10,8 @@ struct VertexIn
 	float4 Tangent : TANGENT0;
 	float2 UV0 : TEXCOORD0;
 	float4 Color : COLOR0;
+	
+	uint InstanceID : SV_InstanceID;
 };
 
 
@@ -25,6 +27,8 @@ struct PixelIn
 	float4 Color : COLOR;
 };
 
+
+// Note: Aim for StructuredBuffers with sizes divisible by 128 bits = 16 bytes = sizeof(float4)
 
 struct InstancedMeshParamsCB
 {

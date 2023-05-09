@@ -69,6 +69,13 @@ namespace re
 	}
 
 
+	size_t ParameterBlock::GetStride() const
+	{
+		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetContext().GetParameterBlockAllocator();
+		return pbm.GetSize(GetUniqueID()) / m_platformParams->m_numElements;
+	}
+
+
 	void ParameterBlock::Destroy()
 	{
 		re::ParameterBlock::PlatformParams* params = GetPlatformParams()->As<re::ParameterBlock::PlatformParams*>();

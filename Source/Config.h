@@ -127,6 +127,7 @@ namespace en
 		}
 		else
 		{
+			LOG_ERROR("Invalid type requested from Config");
 			throw std::runtime_error("Config key does not exist");
 		}
 

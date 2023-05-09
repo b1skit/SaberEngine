@@ -53,6 +53,7 @@ namespace dx12
 		{
 			m_dirtyInlineDescriptorIdxBitmask[inlineBitmaskIdx] = 0;
 		}
+		// TODO: Just memset this whole array
 
 
 		// Create our GPU-visible descriptor heap:

@@ -74,7 +74,8 @@ namespace re
 	}
 
 
-	void ParameterBlockAllocator::RegisterAndAllocateParameterBlock(std::shared_ptr<re::ParameterBlock> pb, size_t numBytes)
+	void ParameterBlockAllocator::RegisterAndAllocateParameterBlock(
+		std::shared_ptr<re::ParameterBlock> pb, size_t numBytes)
 	{
 		SEAssert("Permanent parameter blocks can only be registered at startup, before the 1st render frame", 
 			pb->GetType() == ParameterBlock::PBType::SingleFrame || !m_allocationPeriodEnded);
@@ -276,7 +277,7 @@ namespace re
 			startIdx = result->second.m_startIndex;
 		}
 
-		const size_t readIdx = GetReadIdx(); // Get() is called when binding PBs to shaders
+		const size_t readIdx = GetReadIdx(); // This function is typically called when binding PB data to shaders
 
 		switch (pbType)
 		{
@@ -418,19 +419,22 @@ namespace re
 
 	void ParameterBlockAllocator::EndOfFrame()
 	{
-		const size_t readIdx = GetReadIdx();
-
-		std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
-
-		// This is compiled out in Release
-		for (auto const& it : m_singleFrameAllocations.m_handleToPtr[readIdx])
+		// Clear single-frame allocations:
 		{
-			SEAssert("Trying to deallocate a single frame parameter block, but there is still a live shared_ptr. Is "
-				"something holding onto a single frame parameter block beyond the frame lifetime?", 
-				it.second.use_count() == 1);
-		}
+			const size_t readIdx = GetReadIdx();
 
-		m_singleFrameAllocations.m_handleToPtr[readIdx].clear(); // PB destructors call Deallocate(), so destroy shared_ptrs 1st
-		m_singleFrameAllocations.m_committed[readIdx].clear();
+			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
+
+			// This is compiled out in Release
+			for (auto const& it : m_singleFrameAllocations.m_handleToPtr[readIdx])
+			{
+				SEAssert("Trying to deallocate a single frame parameter block, but there is still a live shared_ptr. Is "
+					"something holding onto a single frame parameter block beyond the frame lifetime?",
+					it.second.use_count() == 1);
+			}
+
+			m_singleFrameAllocations.m_handleToPtr[readIdx].clear(); // PB destructors call Deallocate(), so destroy shared_ptrs 1st
+			m_singleFrameAllocations.m_committed[readIdx].clear();
+		}
 	}
 }

@@ -58,7 +58,23 @@ namespace gr
 
 	void TempDebugGraphicsSystem::CreateBatches()
 	{
-		const Batch debugBatch = Batch(m_helloTriangle.get(), m_helloTriangle->GetMeshMaterial());
+		Batch debugBatch = Batch(m_helloTriangle.get(), m_helloTriangle->GetMeshMaterial());
+
+		std::vector<re::Batch::InstancedMeshParams> instancedMeshPBData;
+		instancedMeshPBData.reserve(1);
+		instancedMeshPBData.emplace_back(re::Batch::InstancedMeshParams
+			{
+				.g_model{glm::identity<glm::mat4>()}
+			});
+
+		std::shared_ptr<re::ParameterBlock> instancedMeshParams = re::ParameterBlock::CreateFromArray(
+			re::Batch::InstancedMeshParams::s_shaderName,
+			instancedMeshPBData.data(),
+			sizeof(re::Batch::InstancedMeshParams),
+			1,
+			re::ParameterBlock::PBType::SingleFrame); // TODO: SingleFrame PB destruction needs to be deferred
+		debugBatch.AddBatchParameterBlock(instancedMeshParams);
+
 		m_tempDebugStage.AddBatch(debugBatch);
 
 		m_tempDebugStage.AddBatches(re::RenderManager::Get()->GetSceneBatches());

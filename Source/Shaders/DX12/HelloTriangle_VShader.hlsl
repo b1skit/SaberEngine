@@ -6,12 +6,11 @@ VertexOut VShader(VertexIn In)
 {
 	VertexOut Out;
 
-	//const float4 worldPos = mul(InstancedMeshParams[0].g_model, float4(In.Position, 1.0f));
-	//Out.Position = mul(CameraParams.g_viewProjection, worldPos);
-	//Out.Color = max(float4(1.f, 1.f, 1.f, 1.f), PBRMetallicRoughnessParams.g_baseColorFactor) * In.Color;
+	const float4 worldPos = mul(InstancedMeshParams[In.InstanceID].g_model, float4(In.Position, 1.0f));
+	Out.Position = mul(CameraParams.g_viewProjection, worldPos);
 	
-	Out.Position = mul(CameraParams.g_viewProjection, float4(In.Position, 1.0f));
-	Out.Color = In.Color;
-
+	// TEMP HAX: PBRMetallicRoughnessParams is not initialized, force a non-zero value
+	Out.Color = max(float4(1.f, 1.f, 1.f, 1.f), PBRMetallicRoughnessParams.g_baseColorFactor) * In.Color;
+	
 	return Out;
 }
