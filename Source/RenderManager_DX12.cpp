@@ -315,7 +315,7 @@ namespace dx12
 		//directQueue.Execute(1, &commandLists[0]);
 
 
-		// DEBUG: FORCE A CPU WAIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		// TODO: Move SingleFrame ParameterBlock destruction to a deferred queue, and remove this wait hack
 		uint64_t hackFence = directQueue.Execute(1, &commandLists[0]);
 		directQueue.CPUWait(hackFence);
 	}
