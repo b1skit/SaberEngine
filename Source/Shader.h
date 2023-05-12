@@ -16,7 +16,7 @@ namespace re
 	class Shader final : public virtual en::NamedObject
 	{
 	public:
-		struct PlatformParams : public IPlatformParams
+		struct PlatformParams : public re::IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
 			bool m_isCreated = false;

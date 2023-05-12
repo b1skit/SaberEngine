@@ -2,37 +2,40 @@
 #pragma once
 
 
-struct IPlatformParams
+namespace re
 {
-	IPlatformParams() = default;
-	virtual ~IPlatformParams() = 0;
+	struct IPlatformParams
+	{
+		IPlatformParams() = default;
+		IPlatformParams(IPlatformParams&&) = default;
+		virtual ~IPlatformParams() = 0;
+
+		template<typename T>
+		T As();
+
+		template<typename T>
+		T const As() const;
+
+		// No copying allowed:
+		IPlatformParams(IPlatformParams const&) = delete;
+		IPlatformParams const& operator=(IPlatformParams const&) = delete;
+	};
+
 
 	template<typename T>
-	T As();
+	inline T IPlatformParams::As()
+	{
+		return static_cast<T>(this);
+	}
+
 
 	template<typename T>
-	T const As() const;
-
-	// No copying allowed:
-	IPlatformParams(IPlatformParams const&) = delete;
-	IPlatformParams(IPlatformParams&&) = delete;
-	IPlatformParams const& operator=(IPlatformParams const&) = delete;
-};
+	inline T const IPlatformParams::As() const
+	{
+		return static_cast<T const>(this);
+	}
 
 
-template<typename T>
-inline T IPlatformParams::As()
-{
-	return static_cast<T>(this);
+	// We need to provide a destructor implementation since it's pure virtual
+	inline IPlatformParams::~IPlatformParams() {}
 }
-
-
-template<typename T>
-inline T const IPlatformParams::As() const
-{
-	return static_cast<T const>(this);
-}
-
-
-// We need to provide a destructor implementation since it's pure virtual
-inline IPlatformParams::~IPlatformParams() {}

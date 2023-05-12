@@ -16,7 +16,7 @@ namespace re
 	class Sampler final : public virtual en::NamedObject
 	{
 	public:
-		struct PlatformParams : public IPlatformParams
+		struct PlatformParams : public re::IPlatformParams
 		{
 			// Params contain unique GPU bindings that should not be arbitrarily copied/duplicated
 			PlatformParams() = default;

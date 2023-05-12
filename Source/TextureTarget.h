@@ -15,7 +15,7 @@ namespace re
 	class TextureTarget
 	{
 	public:
-		struct PlatformParams : public IPlatformParams
+		struct PlatformParams : public re::IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
 		};
@@ -114,7 +114,7 @@ namespace re
 	class TextureTargetSet final : public en::NamedObject, public en::HashedDataObject
 	{
 	public:
-		struct PlatformParams : public IPlatformParams
+		struct PlatformParams : public re::IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
 

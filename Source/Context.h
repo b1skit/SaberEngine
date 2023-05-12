@@ -16,7 +16,7 @@ namespace re
 	class Context
 	{
 	public:
-		struct PlatformParams : public IPlatformParams
+		struct PlatformParams : public re::IPlatformParams
 		{
 			PlatformParams() = default;
 			virtual ~PlatformParams() = 0;

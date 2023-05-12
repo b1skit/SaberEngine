@@ -19,7 +19,7 @@ namespace re
 	class MeshPrimitive final : public virtual en::NamedObject, public virtual en::HashedDataObject
 	{
 	public:
-		struct PlatformParams : public IPlatformParams
+		struct PlatformParams : public re::IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
 		};

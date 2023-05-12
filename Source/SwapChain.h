@@ -9,7 +9,7 @@ namespace re
 	class SwapChain
 	{
 	public:
-		struct PlatformParams : public IPlatformParams
+		struct PlatformParams : public re::IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
 		};

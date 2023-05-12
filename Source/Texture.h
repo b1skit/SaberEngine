@@ -10,7 +10,7 @@ namespace re
 	class Texture final : public virtual en::NamedObject
 	{
 	public:
-		struct PlatformParams : public IPlatformParams
+		struct PlatformParams : public re::IPlatformParams
 		{
 			PlatformParams() = default;
 
