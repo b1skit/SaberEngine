@@ -6,7 +6,6 @@
 using re::ParameterBlock;
 using std::shared_ptr;
 using std::unordered_map;
-using std::shared_ptr;
 
 
 namespace re
@@ -352,8 +351,6 @@ namespace re
 
 			// We zero out the allocation here. This isn't actually necessary (since we clear all single frame 
 			// allocations during EndOfFrame()), but is intended to simplify debugging
-			const size_t singleFrameIdx = static_cast<size_t>(ParameterBlock::PBType::SingleFrame);
-
 			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
 			memset(&m_singleFrameAllocations.m_committed[readIdx][startIdx], 0, numBytes);
 		}
