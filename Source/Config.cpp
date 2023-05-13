@@ -359,8 +359,8 @@ namespace en
 		markDirty |= TrySetValue("vsync",					true,				SettingType::Common);
 
 		// Texture dimensions:
-		markDirty |= TrySetValue("defaultShadowMapRes",		2048u,				SettingType::Common);
-		markDirty |= TrySetValue("defaultShadowCubeMapRes",	512u,				SettingType::Common);
+		markDirty |= TrySetValue("defaultShadowMapRes",		2048,				SettingType::Common);
+		markDirty |= TrySetValue("defaultShadowCubeMapRes",	512,				SettingType::Common);
 
 		// Camera defaults:
 		markDirty |= TrySetValue("defaultyFOV",				1.570796f,			SettingType::Common);
@@ -588,13 +588,6 @@ namespace en
 					.m_key = currentElement.first,
 					.m_value = PropertyToConfigString(any_cast<int>(currentElement.second.first)) });
 			}
-			else if (currentElement.second.first.type() == typeid(uint32_t))
-			{
-				configEntries.emplace_back(ConfigEntry{
-					.m_cmdPrefix = SET_CMD,
-					.m_key = currentElement.first,
-					.m_value = PropertyToConfigString(any_cast<uint32_t>(currentElement.second.first)) });
-			}
 			else if (currentElement.second.first.type() == typeid(bool))
 			{
 				configEntries.emplace_back(ConfigEntry{
@@ -681,12 +674,6 @@ namespace en
 
 
 	inline std::string Config::PropertyToConfigString(int property)
-	{
-		return " " + std::to_string(property) + "\n";
-	}
-
-
-	inline std::string Config::PropertyToConfigString(uint32_t property)
 	{
 		return " " + std::to_string(property) + "\n";
 	}

@@ -103,7 +103,6 @@ namespace en
 		std::string PropertyToConfigString(char const* property);
 		std::string PropertyToConfigString(float property);
 		std::string PropertyToConfigString(int property);
-		std::string PropertyToConfigString(uint32_t property);
 		std::string PropertyToConfigString(char property);
 		std::string PropertyToConfigString(bool property);
 	};
@@ -123,7 +122,7 @@ namespace en
 			}
 			catch (const std::bad_any_cast& e)
 			{
-				LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what());
+				SEAssertF("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what());
 			}
 		}
 		else

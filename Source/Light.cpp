@@ -67,7 +67,7 @@ namespace gr
 		{
 			if (hasShadow)
 			{
-				const uint32_t shadowMapRes = Config::Get()->GetValue<uint32_t>("defaultShadowMapRes");
+				const uint32_t shadowMapRes = Config::Get()->GetValue<int>("defaultShadowMapRes");
 				m_shadowMap = make_unique<ShadowMap>(
 					GetName(),
 					shadowMapRes,
@@ -100,7 +100,7 @@ namespace gr
 				shadowCamConfig.m_aspectRatio		= 1.0f;
 				shadowCamConfig.m_projectionType	= Camera::CameraConfig::ProjectionType::Perspective;
 			
-				const uint32_t cubeMapRes = Config::Get()->GetValue<uint32_t>("defaultShadowCubeMapRes");
+				const uint32_t cubeMapRes = Config::Get()->GetValue<int>("defaultShadowCubeMapRes");
 
 				m_shadowMap = make_unique<ShadowMap>(
 					GetName(),
