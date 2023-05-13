@@ -8,6 +8,7 @@ namespace re
 	{
 		IPlatformParams() = default;
 		IPlatformParams(IPlatformParams&&) = default;
+		IPlatformParams& operator=(IPlatformParams&&) = default;
 		virtual ~IPlatformParams() = 0;
 
 		template<typename T>
