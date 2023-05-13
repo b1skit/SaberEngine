@@ -61,6 +61,7 @@ namespace re
 		// EventListener interface:
 		void HandleEvents() override;
 
+		uint64_t GetCurrentRenderFrameNum() const;
 
 	public: // Deferred API-object creation queues
 		template<typename T>
@@ -101,6 +102,8 @@ namespace re
 		std::queue<std::shared_ptr<en::Command>> m_imGuiCommands;
 
 		bool m_vsyncEnabled;
+		
+		uint64_t m_renderFrameNum;
 
 
 	private: // Friends		
@@ -128,6 +131,12 @@ namespace re
 
 		SEAssertF("Graphics system not found");
 		return nullptr;
+	}
+
+
+	inline uint64_t RenderManager::GetCurrentRenderFrameNum() const
+	{
+		return m_renderFrameNum;
 	}
 }
 

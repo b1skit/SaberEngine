@@ -19,7 +19,7 @@ namespace re
 
 		void ClosePermanentPBRegistrationPeriod(); // Called once after all permanent PBs are created
 
-		void SwapBuffers(uint64_t renderFrameNum);
+		void SwapBuffers(uint64_t renderFrameNum); // renderFrameNum is always 1 behind the front end thread
 		void EndOfFrame(); // Clears single-frame PBs
 
 
@@ -29,6 +29,9 @@ namespace re
 	
 	private:
 		typedef uint64_t Handle; // == NamedObject::UniqueID()
+
+		static constexpr size_t k_numBuffers = 2;
+		static constexpr size_t k_fixedAllocationByteSize = 16 * 1024 * 1024; // Arbitrary; Increase as necessary
 
 		struct CommitMetadata
 		{
@@ -44,7 +47,7 @@ namespace re
 			mutable std::recursive_mutex m_mutex;
 		} m_immutableAllocations;
 
-		static constexpr size_t k_numBuffers = 2;
+		
 
 		struct MutableAllocation
 		{
@@ -55,9 +58,13 @@ namespace re
 
 		struct SingleFrameAllocation
 		{
-			std::array<std::vector<uint8_t>, k_numBuffers> m_committed;
+			// Single frame allocations are stack allocated from a fixed-size, double-buffered array
+			std::array<std::array<uint8_t, k_fixedAllocationByteSize>, k_numBuffers> m_committed;
+			std::array<std::size_t, k_numBuffers> m_baseIdx;
 			std::array<std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>>, k_numBuffers> m_handleToPtr;
 			mutable std::recursive_mutex m_mutex;
+			// TODO: We can probably remove this mutex and switch to lockless using atomics
+
 		} m_singleFrameAllocations;
 
 		std::unordered_map<Handle, CommitMetadata> m_uniqueIDToTypeAndByteIndex;
@@ -65,7 +72,14 @@ namespace re
 
 
 	private:
-		uint64_t m_readFrameNum; // Read frame # is always 1 behind the write frame
+		void ClearDeferredDeletions(uint64_t frameNum);
+		void AddToDeferredDeletions(uint64_t frameNum, std::shared_ptr<re::ParameterBlock>);
+		std::queue<std::pair<uint64_t, std::shared_ptr<re::ParameterBlock>>> m_deferredDeleteQueue;
+		std::mutex m_deferredDeleteQueueMutex;
+
+	private:
+		uint64_t m_readFrameNum; // Render thread read frame # is always 1 behind the front end thread write frame
+
 		uint64_t GetReadIdx() const { return m_readFrameNum % k_numBuffers; }
 		uint64_t GetWriteIdx() const { return (m_readFrameNum + 1 ) % k_numBuffers; }
 		

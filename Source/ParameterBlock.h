@@ -64,7 +64,9 @@ namespace re
 		static std::shared_ptr<re::ParameterBlock> CreateFromArray(
 			std::string const& pbName, T const* dataArray, size_t dataByteSize, size_t numElements, PBType pbType);
 
-		~ParameterBlock() { Destroy(); };
+		~ParameterBlock();
+
+		void Destroy();
 
 
 	public:
@@ -94,8 +96,6 @@ namespace re
 		static void RegisterAndCommit(
 			std::shared_ptr<re::ParameterBlock> newPB, void const* data, size_t numBytes, uint64_t typeIDHash);
 		void CommitInternal(void const* data, uint64_t typeIDHash);
-
-		void Destroy();
 
 
 	private:

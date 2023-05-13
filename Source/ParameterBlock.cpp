@@ -76,19 +76,20 @@ namespace re
 	}
 
 
+	ParameterBlock::~ParameterBlock()
+	{
+		re::ParameterBlock::PlatformParams* params = GetPlatformParams()->As<re::ParameterBlock::PlatformParams*>();
+		SEAssert("Parameter block destructor called, but parameter block is still marked as created. Did a parameter "
+			"block go out of scope without Destroy() being called?", !params->m_isCreated);
+	}
+
+
 	void ParameterBlock::Destroy()
 	{
 		re::ParameterBlock::PlatformParams* params = GetPlatformParams()->As<re::ParameterBlock::PlatformParams*>();
-		if (params->m_isCreated)
-		{
-			platform::ParameterBlock::Destroy(*this);
-
-			re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetContext().GetParameterBlockAllocator();
-			pbm.Deallocate(GetUniqueID());
-		}
-		else
-		{
-			LOG_ERROR("ParameterBlock::Destroy called for a parameter block that was not created");
-		}
+		SEAssert("Parameter block has not been created, or has already been destroyed", params->m_isCreated);
+		
+		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetContext().GetParameterBlockAllocator();
+		pbm.Deallocate(GetUniqueID()); // Internally makes a (deferred) call to platform::ParameterBlock::Destroy
 	}
 }

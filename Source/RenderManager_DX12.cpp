@@ -312,12 +312,7 @@ namespace dx12
 
 		// Execute the command list
 		// TODO: Submit multiple command lists at once? Will need to sync with fences between
-		//directQueue.Execute(1, &commandLists[0]);
-
-
-		// TODO: Move SingleFrame ParameterBlock destruction to a deferred queue, and remove this wait hack
-		uint64_t hackFence = directQueue.Execute(1, &commandLists[0]);
-		directQueue.CPUWait(hackFence);
+		directQueue.Execute(1, &commandLists[0]);
 	}
 
 
@@ -377,9 +372,6 @@ namespace dx12
 	{
 		#pragma message("TODO: Implement dx12::RenderManager::Shutdown")
 		LOG_ERROR("TODO: Implement dx12::RenderManager::Shutdown");
-
-		re::Context const& context = re::RenderManager::Get()->GetContext();
-		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		// TODO: We should be able to iterate over all of these, but some of them aren't initialized
 		// TODO: We also flush these in the context as well... But it's necessary here, since we delete objects next

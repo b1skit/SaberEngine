@@ -58,14 +58,10 @@ namespace opengl
 	void ParameterBlock::Destroy(re::ParameterBlock& paramBlock)
 	{
 		PlatformParams* params = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
-		if (!params->m_isCreated)
-		{
-			return;
-		}
+		SEAssert("Attempting to destroy a ParameterBlock that has not been created", params->m_isCreated);
 
 		glDeleteBuffers(1, &params->m_ssbo);
 		params->m_ssbo = 0;
-
 		params->m_isCreated = false;
 	}
 

@@ -2,11 +2,17 @@
 #include "ParameterBlockAllocator.h"
 #include "DebugConfiguration.h"
 #include "ParameterBlock_Platform.h"
+#include "RenderManager.h"
 
 using re::ParameterBlock;
 using std::shared_ptr;
 using std::unordered_map;
 
+
+namespace
+{
+	constexpr uint64_t k_deferredDeleteNumFrames = 2; // How many frames-worth of padding before API deletion
+}
 
 namespace re
 {
@@ -14,8 +20,14 @@ namespace re
 		: m_allocationPeriodEnded(false)
 		, m_permanentPBsHaveBeenBuffered(false)
 		, m_isValid(true)
-		, m_readFrameNum(1) // Start at 1 so GetWriteIdx() == 0 for 1st commits
+		, m_readFrameNum(std::numeric_limits<uint64_t>::max()) // Odd 1st number (18,446,744,073,709,551,615), then wrap
 	{
+		// Initialize the single frame stack allocations:
+		for (uint8_t i = 0; i < k_numBuffers; i++)
+		{
+			m_singleFrameAllocations.m_baseIdx[i] = 0;
+			memset(&m_singleFrameAllocations.m_committed[i][0], 0, k_fixedAllocationByteSize); // Not actually necessary
+		}
 	}
 
 
@@ -35,21 +47,48 @@ namespace re
 			m_singleFrameAllocations.m_mutex);
 
 		// Must clear the parameter blocks shared_ptrs before clearing the committed memory
-		m_immutableAllocations.m_handleToPtr.clear();
-		m_mutableAllocations.m_handleToPtrAndDirty.clear();
-		
 
-		// Clear the committed memory
+		auto immutableItr = m_immutableAllocations.m_handleToPtr.begin();
+		while (immutableItr != m_immutableAllocations.m_handleToPtr.end())
+		{
+			// Destroy() removes the ParameterBlock from our unordered_map; we must advance our iterators first
+			re::ParameterBlock* curPB = immutableItr->second.get();
+			immutableItr++;
+			curPB->Destroy(); 
+		}
+		m_immutableAllocations.m_handleToPtr.clear();
 		m_immutableAllocations.m_committed.clear();
+
+		auto mutableItr = m_mutableAllocations.m_handleToPtrAndDirty.begin();
+		while (mutableItr != m_mutableAllocations.m_handleToPtrAndDirty.end())
+		{
+			re::ParameterBlock* curPB = mutableItr->second.first.get();
+			mutableItr++;
+			curPB->Destroy();
+		}
+		m_mutableAllocations.m_handleToPtrAndDirty.clear();		
+
 		for (size_t i = 0; i < k_numBuffers; i++)
 		{
 			m_mutableAllocations.m_committed[i].clear();
-			m_singleFrameAllocations.m_committed[i].clear();
+
+			auto singleFrameItr = m_singleFrameAllocations.m_handleToPtr[i].begin();
+			while (singleFrameItr != m_singleFrameAllocations.m_handleToPtr[i].end())
+			{
+				re::ParameterBlock* curPB = singleFrameItr->second.get();
+				singleFrameItr++;
+				curPB->Destroy();
+			}
+			m_singleFrameAllocations.m_baseIdx[i] = 0;
 			m_singleFrameAllocations.m_handleToPtr[i].clear();
 		}
 
 		// Clear the handle -> commit map
 		m_uniqueIDToTypeAndByteIndex.clear();
+
+		// The platform::RenderManager has already flushed all outstanding work; Force our deferred deletions to be
+		// immediately cleared
+		ClearDeferredDeletions(std::numeric_limits<uint64_t>::max());
 
 		m_isValid = false;
 	}
@@ -144,12 +183,13 @@ namespace re
 		{
 			const size_t writeIdx = GetWriteIdx();
 
+			SEAssert("Allocation will be out of bounds. Increase the fixed allocation size",
+				m_singleFrameAllocations.m_baseIdx[writeIdx] + numBytes <= k_fixedAllocationByteSize);
+
 			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
 
-			dataIndex = m_singleFrameAllocations.m_committed[writeIdx].size();
-			
-			const size_t resizeAmt = m_singleFrameAllocations.m_committed[writeIdx].size() + numBytes;
-			m_singleFrameAllocations.m_committed[writeIdx].resize(resizeAmt, 0);
+			dataIndex = m_singleFrameAllocations.m_baseIdx[writeIdx];
+			m_singleFrameAllocations.m_baseIdx[writeIdx] += numBytes;
 		}
 		break;
 		case ParameterBlock::PBType::Immutable:
@@ -336,23 +376,34 @@ namespace re
 			numBytes = pb->second.m_numBytes;
 		}
 
+		const uint64_t currentRenderFrameNum = re::RenderManager::Get()->GetCurrentRenderFrameNum();
+
 		switch (pbType)
 		{
-		case ParameterBlock::PBType::Immutable:
-		case ParameterBlock::PBType::Mutable:
+		case ParameterBlock::PBType::Immutable: // Should only deallocate at shutdown
 		{
-			// Do nothing: Permanent PBs are held for the lifetime of the program
+			AddToDeferredDeletions(currentRenderFrameNum, m_immutableAllocations.m_handleToPtr.at(uniqueID));
+
+			std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
+			m_immutableAllocations.m_handleToPtr.erase(uniqueID);
+		}
+		break;
+		case ParameterBlock::PBType::Mutable: // Should only deallocate at shutdown
+		{
+			AddToDeferredDeletions(currentRenderFrameNum, m_mutableAllocations.m_handleToPtrAndDirty.at(uniqueID).first);
+
+			std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
+			m_mutableAllocations.m_handleToPtrAndDirty.erase(uniqueID);
 		}
 		break;		
 		case ParameterBlock::PBType::SingleFrame:
 		{
 			// Deallocation uses the read index, as PBs are typically destroyed right before we clear them
 			const size_t readIdx = GetReadIdx();
+			AddToDeferredDeletions(currentRenderFrameNum, m_singleFrameAllocations.m_handleToPtr[readIdx].at(uniqueID));
 
-			// We zero out the allocation here. This isn't actually necessary (since we clear all single frame 
-			// allocations during EndOfFrame()), but is intended to simplify debugging
 			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
-			memset(&m_singleFrameAllocations.m_committed[readIdx][startIdx], 0, numBytes);
+			m_singleFrameAllocations.m_handleToPtr[readIdx].erase(uniqueID);
 		}
 		break;
 		default:
@@ -428,10 +479,35 @@ namespace re
 				SEAssert("Trying to deallocate a single frame parameter block, but there is still a live shared_ptr. Is "
 					"something holding onto a single frame parameter block beyond the frame lifetime?",
 					it.second.use_count() == 1);
+
+				const uint64_t currentRenderFrameNum = re::RenderManager::Get()->GetCurrentRenderFrameNum();
+				AddToDeferredDeletions(currentRenderFrameNum, it.second);
 			}
 
-			m_singleFrameAllocations.m_handleToPtr[readIdx].clear(); // PB destructors call Deallocate(), so destroy shared_ptrs 1st
-			m_singleFrameAllocations.m_committed[readIdx].clear();
+			m_singleFrameAllocations.m_handleToPtr[readIdx].clear();
+			m_singleFrameAllocations.m_baseIdx[readIdx] = 0;
 		}
+
+		ClearDeferredDeletions(m_readFrameNum);
+	}
+
+
+	void ParameterBlockAllocator::ClearDeferredDeletions(uint64_t frameNum)
+	{
+		std::lock_guard<std::mutex> lock (m_deferredDeleteQueueMutex);
+
+		while (!m_deferredDeleteQueue.empty() && m_deferredDeleteQueue.front().first + k_deferredDeleteNumFrames < frameNum)
+		{
+			platform::ParameterBlock::Destroy(*m_deferredDeleteQueue.front().second);
+			m_deferredDeleteQueue.pop();
+		}
+	}
+
+
+	void ParameterBlockAllocator::AddToDeferredDeletions(uint64_t frameNum, std::shared_ptr<re::ParameterBlock> pb)
+	{
+		std::lock_guard<std::mutex> lock(m_deferredDeleteQueueMutex);
+
+		m_deferredDeleteQueue.emplace(std::pair<uint64_t, std::shared_ptr<re::ParameterBlock>>{frameNum, pb});
 	}
 }

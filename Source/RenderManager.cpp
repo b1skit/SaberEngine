@@ -45,6 +45,7 @@ namespace re
 
 	RenderManager::RenderManager()
 		: m_pipeline("Main pipeline")
+		, m_renderFrameNum(0)
 	{
 		m_vsyncEnabled = en::Config::Get()->GetValue<bool>("vsync");
 	}
@@ -63,7 +64,7 @@ namespace re
 		m_initializeLatch[static_cast<size_t>(SyncType::ReleaseCommander)].arrive_and_wait();
 
 
-		EngineThread::ThreadUpdateParams updateParams;
+		EngineThread::ThreadUpdateParams updateParams{};
 
 		m_isRunning = true;
 		while (m_isRunning)
@@ -74,12 +75,13 @@ namespace re
 			{
 				break;
 			}
+			m_renderFrameNum = updateParams.m_frameNum;
 
 			// Copy stage: Blocks other threads until complete
-			PreUpdate(updateParams.m_frameNum);
+			PreUpdate(m_renderFrameNum);
 			const std::barrier<>::arrival_token& copyArrive = copyBarrier->arrive();
 
-			Update(updateParams.m_frameNum, updateParams.m_elapsed);
+			Update(m_renderFrameNum, updateParams.m_elapsed);
 		}
 
 		// Synchronized shutdown: Blocks main thread until complete

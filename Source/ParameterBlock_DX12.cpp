@@ -81,7 +81,32 @@ namespace dx12
 		CheckHResult(hr, "Failed to create committed resource");
 		// Note: No need to initialize the heap; We created with D3D12_HEAP_FLAG_NONE so the buffer was zeroed
 
-		params->m_resource->SetName(paramBlock.GetWName().c_str());
+		// Debug names:
+		switch (paramBlock.GetType())
+		{
+		case re::ParameterBlock::PBType::Mutable:
+		{
+			const std::wstring debugName = paramBlock.GetWName() + L"_Mutable";
+			params->m_resource->SetName(debugName.c_str());
+		}
+		break;
+		case re::ParameterBlock::PBType::Immutable:
+		{
+			const std::wstring debugName = paramBlock.GetWName() + L"_Immutable";
+			params->m_resource->SetName(debugName.c_str());
+		}
+		break;
+		case re::ParameterBlock::PBType::SingleFrame:
+		{
+			const std::wstring debugName(
+				paramBlock.GetWName() + L"_SingleFrame#" + std::to_wstring(re::RenderManager::Get()->GetCurrentRenderFrameNum()));
+			params->m_resource->SetName(debugName.c_str());
+		}
+		break;
+		default:
+			SEAssertF("Invalid parameter block type");
+		}
+		
 
 		// Create the appropriate resource view:
 		switch (params->m_dataType)
@@ -204,16 +229,12 @@ namespace dx12
 	{
 		dx12::ParameterBlock::PlatformParams* params =
 			paramBlock.GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
-
-		if (!params->m_isCreated)
-		{
-			return;
-		}
+		SEAssert("Attempting to destroy a ParameterBlock that has not been created", params->m_isCreated);
 
 		params->m_cpuDescAllocation.Free(0);
 		params->m_resource = nullptr;
-		params->m_isCreated = false;
 		params->m_dataType = re::ParameterBlock::PBDataType::PBDataType_Count;
 		params->m_numElements = 0;
+		params->m_isCreated = false;
 	}
 }
