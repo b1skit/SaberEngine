@@ -47,7 +47,7 @@ namespace en
 	char const* const Config::k_sceneFilePathValueName				= "sceneFilePath";
 	char const* const Config::k_windowXResValueName					= "windowXRes";
 	char const* const Config::k_windowYResValueName					= "windowYRes";
-
+	// TODO: Move these to a .h file
 
 	Config* Config::Get()
 	{
@@ -163,12 +163,12 @@ namespace en
 		file.open((m_configDir + m_configFilename).c_str());
 
 		// If no config is found, create one:
-		if (!file.is_open())
+		const bool foundExistingConfig = file.is_open();
+		if (!foundExistingConfig)
 		{
 			LOG_WARNING("No config.cfg file found! Attempting to create a default version");
-
-			SaveConfigFile();
 			m_isDirty = true;
+			SaveConfigFile();
 		}
 
 		// Process the config file:
@@ -329,7 +329,7 @@ namespace en
 		}
 
 		// We don't count existing config.cfg entries as dirtying the config
-		m_isDirty = false;
+		m_isDirty = !foundExistingConfig;
 
 		// Now the config has been loaded, populate any remaining entries with default values
 		InitializeDefaultValues();
@@ -350,55 +350,51 @@ namespace en
 			m_renderingAPI = platform::RenderingAPI::OpenGL; // OpenGL by default for now, as it is the most complete
 			TrySetValue(k_platformCmdLineArg, "opengl", SettingType::Runtime);
 		}
-
 		
-		markDirty = TrySetValue("windowTitle",				"Saber Engine",		SettingType::Common);
-		markDirty = TrySetValue(k_windowXResValueName,		1920,				SettingType::Common);
-		markDirty = TrySetValue(k_windowYResValueName,		1080,				SettingType::Common);
+		markDirty |= TrySetValue("windowTitle",				std::string("Saber Engine"),	SettingType::Common);
+		markDirty |= TrySetValue(k_windowXResValueName,		1920,				SettingType::Common);
+		markDirty |= TrySetValue(k_windowYResValueName,		1080,				SettingType::Common);
 
 		// System config:
-		markDirty = TrySetValue("vsync",					true,				SettingType::Common);
+		markDirty |= TrySetValue("vsync",					true,				SettingType::Common);
 
 		// Texture dimensions:
-		markDirty = TrySetValue("defaultShadowMapRes",		2048u,				SettingType::Common);
-		markDirty = TrySetValue("defaultShadowCubeMapRes",	512u,				SettingType::Common);
+		markDirty |= TrySetValue("defaultShadowMapRes",		2048u,				SettingType::Common);
+		markDirty |= TrySetValue("defaultShadowCubeMapRes",	512u,				SettingType::Common);
 
 		// Camera defaults:
-		markDirty = TrySetValue("defaultyFOV",				1.570796f,			SettingType::Common);
-		markDirty = TrySetValue("defaultNear",				1.0f,				SettingType::Common);
-		markDirty = TrySetValue("defaultFar",				100.0f,				SettingType::Common);
-		markDirty = TrySetValue("defaultExposure",			1.0f,				SettingType::Common);
+		markDirty |= TrySetValue("defaultyFOV",				1.570796f,			SettingType::Common);
+		markDirty |= TrySetValue("defaultNear",				1.0f,				SettingType::Common);
+		markDirty |= TrySetValue("defaultFar",				100.0f,				SettingType::Common);
+		markDirty |= TrySetValue("defaultExposure",			1.0f,				SettingType::Common);
 
 		// Input parameters:
-		markDirty = TrySetValue("mousePitchSensitivity",	0.5f,				SettingType::Common);
-		markDirty = TrySetValue("mouseYawSensitivity",		0.5f,				SettingType::Common);
-		markDirty = TrySetValue("sprintSpeedModifier",		2.0f,				SettingType::Common);
+		markDirty |= TrySetValue("mousePitchSensitivity",	0.5f,				SettingType::Common);
+		markDirty |= TrySetValue("mouseYawSensitivity",		0.5f,				SettingType::Common);
+		markDirty |= TrySetValue("sprintSpeedModifier",		2.0f,				SettingType::Common);
 
 		// Scene data:
-		markDirty = TrySetValue("defaultIBLPath",			"Assets\\DefaultIBL\\ibl.hdr",	SettingType::Common);
+		markDirty |= TrySetValue("defaultIBLPath",			std::string("Assets\\DefaultIBL\\ibl.hdr"),	SettingType::Common);
 
 		// Key bindings:
 		//--------------
-		markDirty = TrySetValue(ENUM_TO_STR(InputButton_Forward),	'w',			SettingType::Common);
-		markDirty = TrySetValue(ENUM_TO_STR(InputButton_Backward),	's',			SettingType::Common);
-		markDirty = TrySetValue(ENUM_TO_STR(InputButton_Left),		'a',			SettingType::Common);
-		markDirty = TrySetValue(ENUM_TO_STR(InputButton_Right),		'd',			SettingType::Common);
-		markDirty = TrySetValue(ENUM_TO_STR(InputButton_Up),		"Space",		SettingType::Common);
-		markDirty = TrySetValue(ENUM_TO_STR(InputButton_Down),		"Left Shift",	SettingType::Common);
-		markDirty = TrySetValue(ENUM_TO_STR(InputButton_Sprint),	"Left Ctrl",	SettingType::Common);
+		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Forward),	'w',			SettingType::Common);
+		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Backward),	's',			SettingType::Common);
+		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Left),		'a',			SettingType::Common);
+		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Right),	'd',			SettingType::Common);
+		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Up),		"Space",		SettingType::Common);
+		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Down),		"Left Shift",	SettingType::Common);
+		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Sprint),	"Left Ctrl",	SettingType::Common);
 
-		markDirty = TrySetValue(ENUM_TO_STR(InputButton_Console),	"Grave",		SettingType::Common); // The "grave accent"/tilde key: `
-		markDirty = TrySetValue(ENUM_TO_STR(InputButton_VSync),		'v',			SettingType::Common);
-		markDirty = TrySetValue(ENUM_TO_STR(InputButton_Quit),		"Escape",		SettingType::Common);
+		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Console),	"Grave",		SettingType::Common); // The "grave accent"/tilde key: `
+		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_VSync),	'v',			SettingType::Common);
+		markDirty |= TrySetValue(ENUM_TO_STR(InputButton_Quit),		"Escape",		SettingType::Common);
 
 		// Mouse bindings:
-		markDirty = TrySetValue(ENUM_TO_STR(InputMouse_Left),	ENUM_TO_STR(InputMouse_Left),	SettingType::Common);
-		markDirty = TrySetValue(ENUM_TO_STR(InputMouse_Right),	ENUM_TO_STR(InputMouse_Right),	SettingType::Common);
+		markDirty |= TrySetValue(ENUM_TO_STR(InputMouse_Left),	ENUM_TO_STR(InputMouse_Left),	SettingType::Common);
+		markDirty |= TrySetValue(ENUM_TO_STR(InputMouse_Right),	ENUM_TO_STR(InputMouse_Right),	SettingType::Common);
 
-		if (markDirty)
-		{
-			m_isDirty = markDirty;
-		}		
+		m_isDirty |= markDirty;
 	}
 
 
@@ -546,12 +542,16 @@ namespace en
 			std::filesystem::create_directory(configPath);
 		}
 
-		// Write our config to disk:
-		std::ofstream config_ofstream(m_configDir + m_configFilename);
-		config_ofstream << "# SaberEngine config.cfg file:\n";
+		// Build a list of the strings we plan to write, so we can sort them
+		struct ConfigEntry
+		{
+			std::string m_cmdPrefix; // SET_CMD, BIND_CMD
+			std::string m_key;
+			std::string m_value;
+		};
+		std::vector<ConfigEntry> configEntries;
+		configEntries.reserve(m_configValues.size());
 
-
-		// Output each value, by type:
 		for (std::pair<string, std::pair<any, SettingType>> currentElement : m_configValues)
 		{
 			if (currentElement.second.second == SettingType::APISpecific || 
@@ -562,42 +562,91 @@ namespace en
 
 			if (currentElement.second.first.type() == typeid(string) && currentElement.first.find("Input") == string::npos)
 			{
-				config_ofstream << SET_CMD << " " << currentElement.first << PropertyToConfigString(any_cast<string>(currentElement.second.first));
+				configEntries.emplace_back(ConfigEntry{
+					.m_cmdPrefix = SET_CMD,
+					.m_key = currentElement.first,
+					.m_value = PropertyToConfigString(any_cast<string>(currentElement.second.first))});
 			}
 			else if (currentElement.second.first.type() == typeid(char const*) && currentElement.first.find("Input") == string::npos)
 			{
-				config_ofstream << SET_CMD << " " << currentElement.first << PropertyToConfigString(any_cast<char const*>(currentElement.second.first));
+				configEntries.emplace_back(ConfigEntry{
+					.m_cmdPrefix = SET_CMD,
+					.m_key = currentElement.first,
+					.m_value = PropertyToConfigString(any_cast<char const*>(currentElement.second.first)) });
 			}
 			else if (currentElement.second.first.type() == typeid(float))
 			{
-				config_ofstream << SET_CMD << " " << currentElement.first << PropertyToConfigString(any_cast<float>(currentElement.second.first));
+				configEntries.emplace_back(ConfigEntry{
+					.m_cmdPrefix = SET_CMD,
+					.m_key = currentElement.first,
+					.m_value = PropertyToConfigString(any_cast<float>(currentElement.second.first)) });
 			}
 			else if (currentElement.second.first.type() == typeid(int))
 			{
-				config_ofstream << SET_CMD << " " << currentElement.first << PropertyToConfigString(any_cast<int>(currentElement.second.first));
+				configEntries.emplace_back(ConfigEntry{
+					.m_cmdPrefix = SET_CMD,
+					.m_key = currentElement.first,
+					.m_value = PropertyToConfigString(any_cast<int>(currentElement.second.first)) });
+			}
+			else if (currentElement.second.first.type() == typeid(uint32_t))
+			{
+				configEntries.emplace_back(ConfigEntry{
+					.m_cmdPrefix = SET_CMD,
+					.m_key = currentElement.first,
+					.m_value = PropertyToConfigString(any_cast<uint32_t>(currentElement.second.first)) });
 			}
 			else if (currentElement.second.first.type() == typeid(bool))
 			{
-				config_ofstream << SET_CMD << " " << currentElement.first << PropertyToConfigString(any_cast<bool>(currentElement.second.first));
+				configEntries.emplace_back(ConfigEntry{
+					.m_cmdPrefix = SET_CMD,
+					.m_key = currentElement.first,
+					.m_value = PropertyToConfigString(any_cast<bool>(currentElement.second.first)) });
 			}
 			else if (currentElement.second.first.type() == typeid(char))
 			{
-				config_ofstream << BIND_CMD << " " << currentElement.first << PropertyToConfigString(any_cast<char>(currentElement.second.first));
+				configEntries.emplace_back(ConfigEntry{
+					.m_cmdPrefix = BIND_CMD,
+					.m_key = currentElement.first,
+					.m_value = PropertyToConfigString(any_cast<char>(currentElement.second.first)) });
 			}
 			else if (currentElement.second.first.type() == typeid(string) && currentElement.first.find("Input") != string::npos)
 			{
-				config_ofstream << BIND_CMD << " " << currentElement.first << PropertyToConfigString(any_cast<string>(currentElement.second.first));
+				configEntries.emplace_back(ConfigEntry{
+					.m_cmdPrefix = BIND_CMD,
+					.m_key = currentElement.first,
+					.m_value = PropertyToConfigString(any_cast<string>(currentElement.second.first)) });
 			}
 			else if (currentElement.second.first.type() == typeid(char const*) && currentElement.first.find("Input") != string::npos)
 			{
-				config_ofstream << BIND_CMD << " " << currentElement.first << PropertyToConfigString(any_cast<char const*>(currentElement.second.first));
+				configEntries.emplace_back(ConfigEntry{
+					.m_cmdPrefix = BIND_CMD,
+					.m_key = currentElement.first,
+					.m_value = PropertyToConfigString(any_cast<char const*>(currentElement.second.first)) });
 			}
 			else
 			{
 				LOG_ERROR("Cannot write unsupported type to config");
 			}
 		}
-		
+
+		// Sort the results:
+		std::sort(configEntries.begin(), configEntries.end(), [](ConfigEntry const& a, ConfigEntry const& b) {
+			int cmpResult = strcmp(a.m_cmdPrefix.c_str(), b.m_cmdPrefix.c_str()); // Compare command types
+			if (cmpResult == 0)
+			{
+				cmpResult = strcmp(a.m_key.c_str(), b.m_key.c_str()); // Tie breaker: Compare keys
+			}
+			return cmpResult < 0;});
+
+		// Write our config to disk:
+		std::ofstream config_ofstream(m_configDir + m_configFilename);
+		config_ofstream << "# SaberEngine config.cfg file:\n";
+
+		for (ConfigEntry const& currentEntry : configEntries)
+		{
+			config_ofstream << currentEntry.m_cmdPrefix << " " << currentEntry.m_key << currentEntry.m_value;
+		}
+
 		m_isDirty = false;
 	}
 
@@ -637,6 +686,12 @@ namespace en
 	}
 
 
+	inline std::string Config::PropertyToConfigString(uint32_t property)
+	{
+		return " " + std::to_string(property) + "\n";
+	}
+
+
 	inline std::string Config::PropertyToConfigString(char property)
 	{
 		return std::string(" ") + property + std::string("\n");
@@ -645,6 +700,6 @@ namespace en
 
 	inline string Config::PropertyToConfigString(bool property)
 	{
-		return string(" ") + (property == true ? TRUE_STRING : FALSE_STRING) + string("\n");
+		return string(" ") + (property ? TRUE_STRING : FALSE_STRING) + string("\n");
 	}
 }

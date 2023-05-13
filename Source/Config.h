@@ -103,6 +103,7 @@ namespace en
 		std::string PropertyToConfigString(char const* property);
 		std::string PropertyToConfigString(float property);
 		std::string PropertyToConfigString(int property);
+		std::string PropertyToConfigString(uint32_t property);
 		std::string PropertyToConfigString(char property);
 		std::string PropertyToConfigString(bool property);
 	};
