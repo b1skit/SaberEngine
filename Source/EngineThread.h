@@ -33,8 +33,8 @@ namespace en
 	public:
 		struct ThreadUpdateParams
 		{
-			uint64_t m_frameNum;
-			double m_elapsed;
+			uint64_t m_frameNum = 0;
+			double m_elapsed = 0.0;
 		};
 		void EnqueueUpdate(ThreadUpdateParams const& update);
 

@@ -10,6 +10,7 @@ namespace re
 	using std::make_shared;
 
 	Context::Context()
+		: m_platformParams(nullptr)
 	{
 		platform::Context::CreatePlatformParams(*this);
 	}
