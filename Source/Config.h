@@ -122,7 +122,9 @@ namespace en
 			}
 			catch (const std::bad_any_cast& e)
 			{
-				SEAssertF("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what());
+				// TODO: The SEAssertF macro should take variadic args
+				LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what());
+				SEAssertF("bad_any_cast exception thrown: Invalid type requested from Config\n");
 			}
 		}
 		else
