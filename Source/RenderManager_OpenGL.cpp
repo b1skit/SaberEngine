@@ -24,6 +24,7 @@
 #include "TextureTarget.h"
 #include "Transform.h"
 #include "TextureTarget_OpenGL.h"
+#include "Texture_OpenGL.h"
 #include "SceneManager.h"
 
 using gr::BloomGraphicsSystem;
@@ -66,6 +67,16 @@ namespace opengl
 
 	void RenderManager::CreateAPIResources(re::RenderManager& renderManager)
 	{
+		// Textures:
+		if (!renderManager.m_newTextures.m_newObjects.empty())
+		{
+			std::lock_guard<std::mutex> lock(renderManager.m_newTextures.m_mutex);
+			for (auto& newObject : renderManager.m_newTextures.m_newObjects)
+			{
+				opengl::Texture::Create(*newObject.second);
+			}
+			renderManager.m_newTextures.m_newObjects.clear();
+		}
 		// Shaders:
 		if (!renderManager.m_newShaders.m_newObjects.empty())
 		{

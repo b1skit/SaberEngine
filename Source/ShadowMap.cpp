@@ -44,6 +44,7 @@ namespace gr
 		shadowParams.m_colorSpace = Texture::ColorSpace::Linear;
 		shadowParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		shadowParams.m_useMIPs = false;
+		shadowParams.m_addToSceneData = false;
 
 		// TODO: Enable mipmaps + anisotropic filtering for shadows
 		// http://www.joshbarczak.com/blog/?p=396
@@ -58,7 +59,7 @@ namespace gr
 			shadowParams.m_faces = 6;
 			const string texName = lightName + "_CubeShadowMap";
 
-			depthTexture = std::make_shared<re::Texture>(texName, shadowParams, false);
+			depthTexture = re::Texture::Create(texName, shadowParams, false);
 		}
 		else // Single texture shadowmap setup:
 		{
@@ -66,7 +67,7 @@ namespace gr
 			shadowParams.m_faces = 1;
 			const string texName = lightName + "_SingleShadowMap";
 			
-			depthTexture = std::make_shared<re::Texture>(texName, shadowParams, false);
+			depthTexture = re::Texture::Create(texName, shadowParams, false);
 		}
 
 		m_shadowTargetSet->SetDepthStencilTarget(depthTexture);

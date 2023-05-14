@@ -6,6 +6,7 @@
 #include "Debug_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"
 #include "PipelineState_DX12.h"
+#include "ResourceStateTracker_DX12.h"
 
 // TODO: Just take our SE wrapper objects
 struct CD3DX12_CPU_DESCRIPTOR_HANDLE;
@@ -80,7 +81,7 @@ namespace dx12
 		void ClearColorTarget(re::TextureTarget const&, glm::vec4 clearColor) const;
 		void ClearColorTargets(re::TextureTargetSet const&) const;
 
-		void SetRenderTargets(re::TextureTargetSet const&) const;
+		void SetRenderTargets(re::TextureTargetSet&) const;
 		void SetBackbufferRenderTarget() const;
 
 		void SetViewport(re::TextureTargetSet const&) const;
@@ -108,7 +109,7 @@ namespace dx12
 
 	private:
 		std::unique_ptr<dx12::GPUDescriptorHeap> m_gpuDescriptorHeaps;
-
+		dx12::ResourceStateTracker m_resourceStates;
 
 	private:
 		dx12::RootSignature const* m_currentGraphicsRootSignature;

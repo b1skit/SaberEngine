@@ -58,7 +58,7 @@ namespace gr
 		gBufferTexParams.m_format = re::Texture::Format::RGBA32F; // Using 4 channels for future flexibility
 		gBufferTexParams.m_colorSpace = re::Texture::ColorSpace::sRGB;
 		gBufferTexParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-
+		gBufferTexParams.m_addToSceneData = false;
 
 		gBufferTexParams.m_useMIPs = false;
 		// TODO: Currently, our GBuffer doesn't use mipmapping, but it should.
@@ -72,7 +72,7 @@ namespace gr
 		for (uint8_t i = GBufferTexIdx::GBufferAlbedo; i <= GBufferTexIdx::GBufferMatProp0; i++)
 		{
 			gBufferTargets->SetColorTarget(
-				i, std::make_shared<re::Texture>(GBufferTexNames[i], gBufferTexParams, false));
+				i, re::Texture::Create(GBufferTexNames[i], gBufferTexParams, false));
 		}
 
 		// Create GBuffer depth target:
@@ -82,7 +82,7 @@ namespace gr
 		depthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 				
 		gBufferTargets->SetDepthStencilTarget(
-			std::make_shared<re::Texture>(GBufferTexNames[GBufferTexIdx::GBufferDepth], depthTexParams, false));
+			re::Texture::Create(GBufferTexNames[GBufferTexIdx::GBufferDepth], depthTexParams, false));
 
 		// Camera:
 		m_gBufferStage.AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());

@@ -50,12 +50,13 @@ namespace dx12
 		colorParams.m_width = width;
 		colorParams.m_height = height;
 		colorParams.m_faces = 1;
-		colorParams.m_usage = re::Texture::Usage::ColorTarget;
+		colorParams.m_usage = re::Texture::Usage::SwapchainColorProxy;
 		colorParams.m_dimension = re::Texture::Dimension::Texture2D;
 		colorParams.m_format = re::Texture::Format::RGBA8;
 		colorParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		colorParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		colorParams.m_useMIPs = false;
+		colorParams.m_addToSceneData = false;
 
 		// Ensure our format here matches the one that our texture will be created with:
 		const DXGI_FORMAT colorBufferFormat = dx12::Texture::GetTextureFormat(colorParams);
@@ -113,16 +114,13 @@ namespace dx12
 			CheckHResult(hr, "Failed to get backbuffer");
 
 			// Create a color target texture:
-			std::shared_ptr<re::Texture> colorTargetTex =
-				std::make_shared<re::Texture>("SwapChainColorTarget_" + std::to_string(backbufferIdx), colorParams, false);
+			std::shared_ptr<re::Texture> colorTargetTex = dx12::Texture::CreateFromExistingResource(
+				"SwapChainColorTarget_" + std::to_string(backbufferIdx), 
+				colorParams, 
+				false, 
+				backbufferResource);
 
 			swapChainParams->m_backbufferTargetSet->SetColorTarget(backbufferIdx, colorTargetTex);
-
-			// Copy the backbuffer resource to the texture's platform params:
-			dx12::Texture::PlatformParams* texPlatParams =
-				colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-
-			texPlatParams->m_textureResource = backbufferResource;
 		}
 
 		// Create the depth target texture:
@@ -136,15 +134,11 @@ namespace dx12
 		depthParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		depthParams.m_clearColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		depthParams.m_useMIPs = false;
-		
-		std::shared_ptr<re::Texture> depthTargetTex =
-			std::make_shared<re::Texture>("SwapChainDepthTarget", depthParams, false);
+		depthParams.m_addToSceneData = false;
+
+		std::shared_ptr<re::Texture> depthTargetTex = re::Texture::Create("SwapChainDepthTarget", depthParams, false);
 
 		swapChainParams->m_backbufferTargetSet->SetDepthStencilTarget(depthTargetTex);
-
-		// Create the targets:
-		dx12::TextureTargetSet::CreateColorTargets(*swapChainParams->m_backbufferTargetSet);
-		dx12::TextureTargetSet::CreateDepthStencilTarget(*swapChainParams->m_backbufferTargetSet);
 
 		// Set default viewports and scissor rects. Note: This is NOT required, just included for clarity
 		swapChainParams->m_backbufferTargetSet->Viewport() = re::Viewport(); // Defaults = 0, 0, xRes, yRes

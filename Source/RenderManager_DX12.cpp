@@ -40,6 +40,20 @@ namespace dx12
 		dx12::SwapChain::PlatformParams const* swapChainParams =
 			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
+
+		// TODO: Textures will likely have data to copy!!!!! For now, we're only handling backbuffer target textures...
+		// -> Need to create these before the PSO, incase the Texture happens to be used by a Target...
+		if (!renderManager.m_newTextures.m_newObjects.empty())
+		{
+			std::lock_guard<std::mutex> lock(renderManager.m_newTextures.m_mutex);
+			for (auto& texture : renderManager.m_newTextures.m_newObjects)
+			{
+				dx12::Texture::Create(*texture.second);
+			}
+			renderManager.m_newTextures.m_newObjects.clear();
+		}
+
+
 		// Shaders:
 		if (!renderManager.m_newShaders.m_newObjects.empty())
 		{

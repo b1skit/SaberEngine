@@ -227,7 +227,8 @@ namespace dx12
 	{
 		SEAssert("Target texture must be a color target", 
 			colorTarget.HasTexture() && 
-			colorTarget.GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::ColorTarget);
+			colorTarget.GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::ColorTarget ||
+			colorTarget.GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::SwapchainColorProxy);
 
 		dx12::TextureTarget::PlatformParams* targetParams =
 			colorTarget.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
@@ -249,14 +250,14 @@ namespace dx12
 	}
 
 
-	void CommandList::SetRenderTargets(re::TextureTargetSet const& targetSet) const
+	void CommandList::SetRenderTargets(re::TextureTargetSet& targetSet) const
 	{
 		SEAssertF("NOTE: This is untested. It's probably fine, but asserting to save some future head scratching...");
 
-		uint32_t numColorTargets = 0;
 		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> colorTargetDescriptors;
 		colorTargetDescriptors.reserve(targetSet.GetColorTargets().size());
 
+		uint32_t numColorTargets = 0;
 		for (uint8_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
 			if (targetSet.GetColorTarget(i).HasTexture())
@@ -286,6 +287,10 @@ namespace dx12
 
 	void CommandList::SetBackbufferRenderTarget() const
 	{
+		// TODO: The backbuffer should maintain multiple target sets (sharing a depth target texture). When we want to
+		// set the backbuffer rendertarget, we should just call the standard SetRenderTargets function, and pass in the
+		// appropriate target set. We should not have this separate SetBackbufferRenderTarget function
+
 		re::Context const& context = re::RenderManager::Get()->GetContext();
 
 		dx12::SwapChain::PlatformParams* swapChainParams =
@@ -295,6 +300,7 @@ namespace dx12
 
 		dx12::TextureTarget::PlatformParams* swapChainColorTargetPlatParams =
 			swapChainParams->m_backbufferTargetSet->GetColorTarget(backbufferIdx).GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+
 		const D3D12_CPU_DESCRIPTOR_HANDLE colorDescHandle = 
 			swapChainColorTargetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
 

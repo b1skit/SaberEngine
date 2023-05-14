@@ -94,7 +94,8 @@ namespace opengl
 
 				re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
 				SEAssert("Attempting to bind a color target with a different texture use parameter",
-					textureParams.m_usage == re::Texture::Usage::ColorTarget);
+					textureParams.m_usage == re::Texture::Usage::ColorTarget ||
+					textureParams.m_usage == re::Texture::Usage::SwapchainColorProxy); // Not currently used
 
 				// Validate the texture:
 				if (!foundTarget)
@@ -158,7 +159,6 @@ namespace opengl
 		}
 		else if (!targetSet.GetDepthStencilTarget().HasTexture())
 		{
-			
 			LOG_WARNING("Texture target set \"%s\" has no color/depth targets. Assuming it is the default color framebuffer", 
 				targetSet.GetName().c_str());
 			targetSetParams->m_frameBufferObject = 0;
@@ -193,9 +193,7 @@ namespace opengl
 			if (targetSet.GetColorTarget(i).HasTexture())
 			{
 				std::shared_ptr<re::Texture> texture = targetSet.GetColorTarget(i).GetTexture();
-				
-				// Ensure the texture is created before we access its platform params
-				opengl::Texture::Create(*texture);
+				SEAssert("Texture is not created", texture->GetPlatformParams()->m_isCreated);
 
 				re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
 				opengl::Texture::PlatformParams const* texPlatformParams =
@@ -204,7 +202,8 @@ namespace opengl
 					targetSet.GetColorTarget(i).GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
 
 				SEAssert("Attempting to bind a color target with a different texture use parameter", 
-					textureParams.m_usage == re::Texture::Usage::ColorTarget);
+					textureParams.m_usage == re::Texture::Usage::ColorTarget ||
+					textureParams.m_usage == re::Texture::Usage::SwapchainColorProxy);
 
 				GLenum texTarget = texPlatformParams->m_texTarget;
 				if (textureParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
@@ -353,8 +352,7 @@ namespace opengl
 
 		if (depthStencilTex != nullptr)
 		{
-			// Ensure the texture is created before we access its platform params
-			opengl::Texture::Create(*depthStencilTex);
+			SEAssert("Texture is not created", depthStencilTex->GetPlatformParams()->m_isCreated);
 
 			re::Texture::TextureParams const& textureParams = depthStencilTex->GetTextureParams();
 			SEAssert("Attempting to bind a depth target with a different texture use parameter",

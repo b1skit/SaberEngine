@@ -285,6 +285,15 @@ namespace dx12
 	}
 
 
+	dx12::GlobalResourceStateTracker& Context::GetGlobalResourceStateTracker()
+	{
+		dx12::Context::PlatformParams* ctxPlatParams =
+			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+
+		return ctxPlatParams->m_globalResourceStates;
+	}
+
+
 	std::shared_ptr<dx12::PipelineState> Context::GetPipelineStateObject(
 		re::Shader const& shader,
 		gr::PipelineState& grPipelineState,

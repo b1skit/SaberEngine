@@ -1,13 +1,47 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "DebugConfiguration.h"
+#include "RenderManager.h"
+#include "SceneData.h"
+#include "SceneManager.h"
 #include "Texture.h"
 #include "Texture_Platform.h"
+
+using glm::vec4;
+using std::string;
 
 
 namespace re
 {
-	using glm::vec4;
-	using std::string;
+	std::shared_ptr<re::Texture> Texture::Create(std::string const& name, TextureParams const& params, bool doClear)
+	{
+		SEAssert("Invalid color space", params.m_colorSpace != re::Texture::ColorSpace::Unknown);
+
+		// If the Texture already exists, return it. Otherwise, create the Texture 
+		if (params.m_addToSceneData && en::SceneManager::GetSceneData()->TextureExists(name))
+		{
+			return en::SceneManager::GetSceneData()->GetTexture(name);
+		}
+		// Note: It's possible that 2 threads might simultaneously fail to find a Texture in the SceneData, and create
+		// it. But that's OK, the SceneData will only allow 1 instance to be added
+
+		std::shared_ptr<re::Texture> newTexture;
+		newTexture.reset(new re::Texture(name, params, doClear));
+
+		// If requested, register the Texture with the SceneData object for lifetime management:
+		bool foundExistingTexture = false;
+		if (params.m_addToSceneData)
+		{
+			foundExistingTexture = en::SceneManager::GetSceneData()->AddUniqueTexture(newTexture);
+		}
+		
+		// Register new Textures with the RenderManager, so their API-level objects are created before use
+		if (!foundExistingTexture)
+		{
+			re::RenderManager::Get()->RegisterForCreate(newTexture);
+		}
+
+		return newTexture;
+	}
 
 
 	Texture::Texture(string const& name, TextureParams const& params, bool doClear)
@@ -47,13 +81,6 @@ namespace re
 	void Texture::SetPlatformParams(std::unique_ptr<re::Texture::PlatformParams> platformParams)
 	{ 
 		m_platformParams = std::move(platformParams);
-	}
-
-
-	void Texture::SetTextureParams(re::Texture::TextureParams const& params) 
-	{ 
-		m_texParams = params; 
-		m_platformParams->m_isDirty = true;
 	}
 
 

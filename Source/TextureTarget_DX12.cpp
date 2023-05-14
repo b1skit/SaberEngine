@@ -19,17 +19,17 @@ namespace dx12
 		
 		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
 
-		dx12::TextureTargetSet::PlatformParams* targetSetParams =
+		dx12::TextureTargetSet::PlatformParams* texTargetSetPlatParams =
 			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 
-		SEAssert("Color target is already created", !targetSetParams->m_colorIsCreated);
-		targetSetParams->m_colorIsCreated = true;
+		SEAssert("Color target is already created", !texTargetSetPlatParams->m_colorIsCreated);
+		texTargetSetPlatParams->m_colorIsCreated = true;
 
 		const uint8_t numColorTargets = targetSet.GetNumColorTargets();
-		SEAssert("", numColorTargets > 0 && numColorTargets <= 8);
+		SEAssert("Invalid number of color targets", numColorTargets > 0 && numColorTargets <= 8);
 
-		targetSetParams->m_renderTargetFormats = {}; // Contains an array of 8 DXGI_FORMAT enums
-		targetSetParams->m_renderTargetFormats.NumRenderTargets = numColorTargets;
+		texTargetSetPlatParams->m_renderTargetFormats = {}; // Contains an array of 8 DXGI_FORMAT enums
+		texTargetSetPlatParams->m_renderTargetFormats.NumRenderTargets = numColorTargets;
 
 		// Note: We pack our structure with contiguous DXGI_FORMAT's, regardless of their packing
 		// in the re::TextureTargetSet slots
@@ -40,17 +40,16 @@ namespace dx12
 			{
 				re::Texture::TextureParams const& texParams = colorTarget.GetTexture()->GetTextureParams();
 				SEAssert("Texture has the wrong usage set", 
-					texParams.m_usage == re::Texture::Usage::ColorTarget);
+					texParams.m_usage == re::Texture::Usage::ColorTarget || 
+					texParams.m_usage == re::Texture::Usage::SwapchainColorProxy);
 
-				targetSetParams->m_renderTargetFormats.RTFormats[formatSlot++] = 
+				texTargetSetPlatParams->m_renderTargetFormats.RTFormats[formatSlot++] = 
 					dx12::Texture::GetTextureFormat(texParams);
 
 				dx12::Texture::PlatformParams* texPlatParams =
 					colorTarget.GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 				
-				SEAssert("Texture is already created. This might not necessarily be a problem, but asserting for now "
-					"since it's currently not expected", texPlatParams->m_isCreated == false);
-				texPlatParams->m_isCreated = true;
+				SEAssert("Texture is not created", texPlatParams->m_isCreated && texPlatParams->m_textureResource);
 
 				dx12::TextureTarget::PlatformParams* targetPlatParams = 
 					colorTarget.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
@@ -58,9 +57,6 @@ namespace dx12
 				// Create the descriptor and RTV:
 				targetPlatParams->m_rtvDsvDescriptor = std::move(
 					ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::RTV].Allocate(1));
-
-				SEAssert("Texture resource has not been created yet. This isn't a bug, it's just not implemented. This "
-					"assert is to save some head scratching", texPlatParams->m_textureResource);
 
 				device->CreateRenderTargetView(
 					texPlatParams->m_textureResource.Get(), // Pointer to the resource containing the render target texture
@@ -89,53 +85,21 @@ namespace dx12
 
 		std::shared_ptr<re::Texture> depthTargetTex = targetSet.GetDepthStencilTarget().GetTexture();
 
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+		// Cache our DXGI_FORMAT. Note: We fetch the same dx12::Texture::GetTextureFormat during dx12::Texture::Create,
+		// but re::Texture::TextureParams are const so it should be impossible to get a different result
+		targetSetParams->m_depthTargetFormat = dx12::Texture::GetTextureFormat(depthTargetTex->GetTextureParams());
+		// TODO: SHould the format be a member of the texture?
 
-		re::Texture::TextureParams const& texParams = depthTargetTex->GetTextureParams();
-
-		// Cache our DXGI_FORMAT:
-		targetSetParams->m_depthTargetFormat = dx12::Texture::GetTextureFormat(texParams);
-
-		// Clear values:
-		D3D12_CLEAR_VALUE optimizedClearValue = {};
-		optimizedClearValue.Format = targetSetParams->m_depthTargetFormat;
-		optimizedClearValue.DepthStencil = { 1.0f, 0 }; // Float depth, uint8_t stencil
-
-		// Depth resource description:
-		const int width = en::Config::Get()->GetValue<int>("windowXRes");
-		const int height = en::Config::Get()->GetValue<int>("windowYRes");
-		SEAssert("Invalid dimensions", width >= 1 && height >= 1);
-
-		CD3DX12_RESOURCE_DESC depthResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-			targetSetParams->m_depthTargetFormat,
-			width,
-			height,
-			1,
-			0,
-			1,
-			0,
-			D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-
-		// Depth committed heap resources:
-		dx12::Texture::PlatformParams* texPlatParams = 
+		dx12::Texture::PlatformParams* texPlatParams =
 			depthTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
-		CD3DX12_HEAP_PROPERTIES depthHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-
-		HRESULT hr = device->CreateCommittedResource(
-			&depthHeapProperties,
-			D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
-			&depthResourceDesc,
-			D3D12_RESOURCE_STATE_DEPTH_WRITE,
-			&optimizedClearValue,
-			IID_PPV_ARGS(&texPlatParams->m_textureResource)
-		);
-		texPlatParams->m_textureResource->SetName(depthTargetTex->GetWName().c_str());
+		SEAssert("Depth texture has not been created", texPlatParams->m_isCreated && texPlatParams->m_textureResource);
 
 		dx12::TextureTarget::PlatformParams* targetPlatParams =
 			targetSet.GetDepthStencilTarget().GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+
+		dx12::Context::PlatformParams* ctxPlatParams =
+			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		// Create the depth-stencil descriptor and view:
 		targetPlatParams->m_rtvDsvDescriptor = std::move(
@@ -148,6 +112,7 @@ namespace dx12
 		dsv.Texture2D.MipSlice = 0;
 		dsv.Flags = D3D12_DSV_FLAG_NONE;
 
+		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
 		device->CreateDepthStencilView(
 			texPlatParams->m_textureResource.Get(),
 			&dsv,

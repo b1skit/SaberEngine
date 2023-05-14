@@ -361,7 +361,7 @@ namespace dx12
 	void PipelineState::Create(
 		re::Shader const& shader,
 		gr::PipelineState const& grPipelineState,
-		re::TextureTargetSet const& targetSet)
+		re::TextureTargetSet& targetSet)
 	{
 		m_rootSignature.Create(shader);
 
@@ -384,6 +384,17 @@ namespace dx12
 			pipelineStateStream.primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 			pipelineStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[dx12::Shader::Vertex].Get());
 			pipelineStateStream.pShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[dx12::Shader::Pixel].Get());
+
+			// Ensure the targets are created:
+			if (!targetSet.GetPlatformParams()->m_colorIsCreated)
+			{
+				dx12::TextureTargetSet::CreateColorTargets(targetSet);
+			}
+			if (!targetSet.GetPlatformParams()->m_depthIsCreated)
+			{
+				dx12::TextureTargetSet::CreateDepthStencilTarget(targetSet);
+			}
+			// TODO: Should we add TextureTargetSets to the API layer creation queue?
 
 			// Target formats:
 			dx12::TextureTargetSet::PlatformParams* targetSetPlatParams =

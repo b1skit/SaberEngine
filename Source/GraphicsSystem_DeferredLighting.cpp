@@ -192,8 +192,9 @@ namespace gr
 		lightTargetParams.m_format = Texture::Format::RGBA32F;
 		lightTargetParams.m_colorSpace = Texture::ColorSpace::Linear;
 		lightTargetParams.m_clearColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		lightTargetParams.m_addToSceneData = false;
 
-		std::shared_ptr<Texture> outputTexture = make_shared<Texture>("DeferredLightTarget", lightTargetParams, false);
+		std::shared_ptr<Texture> outputTexture = re::Texture::Create("DeferredLightTarget", lightTargetParams, false);
 
 		std::shared_ptr<TextureTargetSet> deferredLightingTargetSet =
 			make_shared<TextureTargetSet>("Deferred lighting target");
@@ -237,8 +238,9 @@ namespace gr
 			brdfParams.m_colorSpace = Texture::ColorSpace::Linear;
 			brdfParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 			brdfParams.m_useMIPs = false;
+			brdfParams.m_addToSceneData = false;
 
-			m_BRDF_integrationMap = std::make_shared<re::Texture>("BRDFIntegrationMap", brdfParams, false);
+			m_BRDF_integrationMap = re::Texture::Create("BRDFIntegrationMap", brdfParams, false);
 
 			brdfStage.GetTextureTargetSet()->SetColorTarget(0, m_BRDF_integrationMap);
 			brdfStage.GetTextureTargetSet()->Viewport() =
@@ -271,6 +273,7 @@ namespace gr
 		cubeParams.m_dimension = Texture::Dimension::TextureCubeMap;
 		cubeParams.m_format = Texture::Format::RGB16F;
 		cubeParams.m_colorSpace = Texture::ColorSpace::Linear;
+		cubeParams.m_addToSceneData = false;
 
 		// Common IBL texture generation stage params:
 		gr::PipelineState iblStageParams;
@@ -309,7 +312,7 @@ namespace gr
 
 			// IEM-specific texture params:
 			cubeParams.m_useMIPs = false;
-			m_IEMTex = make_shared<Texture>("IEMTexture", cubeParams, false);
+			m_IEMTex = re::Texture::Create("IEMTexture", cubeParams, false);
 
 			for (uint32_t face = 0; face < 6; face++)
 			{
@@ -356,7 +359,7 @@ namespace gr
 
 			// PMREM-specific texture params:
 			cubeParams.m_useMIPs = true;
-			m_PMREMTex = make_shared<Texture>("PMREMTexture", cubeParams, false);
+			m_PMREMTex = re::Texture::Create("PMREMTexture", cubeParams, false);
 
 			std::shared_ptr<TextureTargetSet> pmremTargetSet = 
 				std::make_shared<TextureTargetSet>("PMREM texture targets");

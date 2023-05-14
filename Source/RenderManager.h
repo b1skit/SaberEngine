@@ -78,6 +78,7 @@ namespace re
 		};
 		NewAPIObjects<re::Shader> m_newShaders;
 		NewAPIObjects<re::MeshPrimitive> m_newMeshPrimitives;
+		NewAPIObjects<re::Texture> m_newTextures;
 
 
 	private:

@@ -11,6 +11,7 @@
 #include "Device_DX12.h"
 #include "PipelineState_DX12.h"
 #include "RenderManager_DX12.h"
+#include "ResourceStateTracker_DX12.h"
 
 
 namespace dx12
@@ -41,9 +42,11 @@ namespace dx12
 			// TODO: We should template the CommandQueue types, to allow specific helper functions on each type
 			std::array<dx12::CommandQueue, CommandList::CommandListType::CommandListType_Count> m_commandQueues;
 
+			dx12::GlobalResourceStateTracker m_globalResourceStates;
+
 			uint64_t m_frameFenceValues[dx12::RenderManager::k_numFrames]; // Fence values for signalling the command queue
 			
-			// Access the PSO library via dx12::Context::GetPipelineStateObject
+			// Access the PSO library via dx12::Context::GetPipelineStateObject():
 			std::unordered_map<uint64_t, // re::Shader::GetName()
 				std::unordered_map<uint64_t, // gr::PipelineState::GetPipelineStateDataHash()
 					std::unordered_map<uint64_t, // re::TextureTargetSet::GetTargetSetSignature()
@@ -69,15 +72,14 @@ namespace dx12
 
 		// DX12-specific interface:
 		static dx12::CommandQueue& GetCommandQueue(CommandList::CommandListType type);
+
+		static dx12::GlobalResourceStateTracker& GetGlobalResourceStateTracker();
 		
 		static std::shared_ptr<dx12::PipelineState> GetPipelineStateObject(
 			re::Shader const& shader,
 			gr::PipelineState& grPipelineState,
 			re::TextureTargetSet* targetSet); // Null targetSet is valid (indicates the backbuffer)
 
-		// TODO:
-		// Add a helper wrapper to get:
-		// - The current backbuffer index from the swapchain: dx12::SwapChain::GetBackBufferIdx
-		// - The swapchain backbuffer resource: dx12::SwapChain::GetBackBufferResource
+		
 	};
 }

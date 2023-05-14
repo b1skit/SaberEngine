@@ -68,13 +68,10 @@ namespace fr
 		bool AddUniqueMeshPrimitive(std::shared_ptr<re::MeshPrimitive>&); // Returns true if incoming ptr is modified
 
 		// Textures:
-		void AddUniqueTexture(std::shared_ptr<re::Texture>& newTexture); // Note: newTexture may be modified
+		bool AddUniqueTexture(std::shared_ptr<re::Texture>& newTexture); // Returns true if incoming ptr is modified
 		std::shared_ptr<re::Texture> GetTexture(std::string const& texName) const;
 		std::shared_ptr<re::Texture> TryGetTexture(std::string const& texName) const;
 		bool TextureExists(std::string const& textureName) const;
-
-		// Gets already-loaded textures, or loads if it's unseen. Returns nullptr if texture file doesn't exist
-		std::shared_ptr<re::Texture> GetLoadTextureByPath(std::vector<std::string> const& texturePaths, bool returnErrorTex);
 
 		// Materials:
 		void AddUniqueMaterial(std::shared_ptr<gr::Material>& newMaterial);

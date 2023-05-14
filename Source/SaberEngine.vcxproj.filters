@@ -392,6 +392,9 @@
     <ClCompile Include="PipelineState.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
+    <ClCompile Include="ResourceStateTracker_DX12.cpp">
+      <Filter>Source Files\re\DX12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -737,6 +740,9 @@
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
     <ClInclude Include="RootSignature_DX12.h">
+      <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceStateTracker_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
   </ItemGroup>

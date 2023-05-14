@@ -92,7 +92,10 @@ namespace
 
 
 	std::shared_ptr<re::Texture> LoadTextureFromFilePath(
-		vector<string> texturePaths, bool returnErrorTex, glm::vec4 const& errorTexFillColor)
+		vector<string> texturePaths, 
+		bool returnErrorTex, 
+		glm::vec4 const& errorTexFillColor, 
+		Texture::ColorSpace colorSpace)
 	{
 		SEAssert("Can load single faces or cubemaps only", texturePaths.size() == 1 || texturePaths.size() == 6);
 		SEAssert("Invalid number of texture paths", texturePaths.size() == 1 || texturePaths.size() == 6);
@@ -113,7 +116,7 @@ namespace
 		texParams.m_dimension = totalFaces == 1 ?
 			re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCubeMap;
 		texParams.m_format = re::Texture::Format::RGBA8;
-		texParams.m_colorSpace = Texture::ColorSpace::Unknown;
+		texParams.m_colorSpace = colorSpace;
 		texParams.m_clearColor = errorTexFillColor;
 
 		// Load the texture, face-by-face:
@@ -197,7 +200,7 @@ namespace
 					texParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
 
 					// Create the texture now the params are configured:
-					texture = std::make_shared<re::Texture>(texturePaths[0], texParams, false);
+					texture = re::Texture::Create(texturePaths[0], texParams, false);
 				}
 				else // texture already exists: Ensure the face has the same dimensions
 				{
@@ -235,7 +238,7 @@ namespace
 					texParams.m_clearColor = errorTexFillColor;
 					texParams.m_useMIPs = true;
 				}
-				texture = std::make_shared<re::Texture>(texturePaths[0], texParams, true);
+				texture = re::Texture::Create(texturePaths[0], texParams, true);
 			}
 			else
 			{
@@ -345,7 +348,7 @@ namespace
 			texParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
 
 			// Create the texture now the params are configured:
-			texture = std::make_shared<re::Texture>(texName, texParams, false);
+			texture = re::Texture::Create(texName, texParams, false);
 
 			// Copy the data to our texture's texel vector:
 			CopyImageData(
@@ -493,15 +496,19 @@ namespace
 						tex = LoadTextureFromMemory(
 							texNameStr, static_cast<unsigned char const*>(data), static_cast<uint32_t>(size));
 					}
-					
-					scene.AddUniqueTexture(tex);
 				}
 			}
 			else if (texture->image->uri) // uri is a filename (e.g. "myImage.png")
 			{
-				// Load texture data from disk
-				tex = scene.GetLoadTextureByPath({ sceneRootPath + texture->image->uri }, false);
-				// TODO: Make pattern of loading/adding textures within these if/else blocks consistent
+				const std::string texNameStr = sceneRootPath + texture->image->uri;
+				if (scene.TextureExists(texNameStr))
+				{
+					tex = scene.GetTexture(texNameStr);
+				}
+				else
+				{
+					tex = LoadTextureFromFilePath({ texNameStr }, false, k_errorTextureColor, colorSpace);
+				}
 			}
 			else if (texture->image->buffer_view) // texture data is already loaded in memory
 			{
@@ -513,21 +520,15 @@ namespace
 				}
 				else
 				{
-					unsigned char const* texSrc =
-						static_cast<unsigned char const*>(texture->image->buffer_view->buffer->data) + texture->image->buffer_view->offset;
-					uint32_t texSrcNumBytes = static_cast<uint32_t>(texture->image->buffer_view->size);
+					unsigned char const* texSrc = static_cast<unsigned char const*>(
+						texture->image->buffer_view->buffer->data) + texture->image->buffer_view->offset;
 
+					const uint32_t texSrcNumBytes = static_cast<uint32_t>(texture->image->buffer_view->size);
 					tex = LoadTextureFromMemory(texNameStr, texSrc, texSrcNumBytes);
-
-					scene.AddUniqueTexture(tex);
 				}
 			}
 
 			SEAssert("Failed to load texture: Does the asset exist?", tex != nullptr);
-
-			Texture::TextureParams texParams = tex->GetTextureParams();
-			texParams.m_colorSpace = colorSpace;
-			tex->SetTextureParams(texParams);
 		}
 		else
 		{
@@ -547,8 +548,7 @@ namespace
 			}
 			else
 			{
-				tex = make_shared<Texture>(fallbackName, colorTexParams, true);
-				scene.AddUniqueTexture(tex);
+				tex = re::Texture::Create(fallbackName, colorTexParams, true);
 			}			
 		}
 
@@ -571,42 +571,30 @@ namespace
 
 		// MatAlbedo
 		std::shared_ptr<re::Texture> errorAlbedo = 
-			LoadTextureFromFilePath({ missingAlbedoTexName }, true, k_errorTextureColor);
+			LoadTextureFromFilePath({ missingAlbedoTexName }, true, k_errorTextureColor, re::Texture::ColorSpace::sRGB);
 		re::Texture::TextureParams srgbParams = errorAlbedo->GetTextureParams();
-		srgbParams.m_colorSpace = re::Texture::ColorSpace::sRGB;
-		errorAlbedo->SetTextureParams(srgbParams);
 		errorMat->GetTexture(0) = errorAlbedo;
-		scene.AddUniqueTexture(errorAlbedo);
 
 		// MatMetallicRoughness
-		std::shared_ptr<re::Texture> errorMetallicRoughness =
-			LoadTextureFromFilePath({ missingMetallicRoughnessTexName }, true, glm::vec4(0.f, 1.f, 0.f, 0.f));
+		std::shared_ptr<re::Texture> errorMetallicRoughness = LoadTextureFromFilePath(
+			{ missingMetallicRoughnessTexName }, true, glm::vec4(0.f, 1.f, 0.f, 0.f), re::Texture::ColorSpace::Linear);
 		re::Texture::TextureParams linearParams = errorMetallicRoughness->GetTextureParams();
-		linearParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		errorMetallicRoughness->SetTextureParams(linearParams);
 		errorMat->GetTexture(1) = errorMetallicRoughness;
-		scene.AddUniqueTexture(errorMetallicRoughness);
 
 		// MatNormal
-		std::shared_ptr<re::Texture> errorNormal = 
-			LoadTextureFromFilePath({ missingNormalTexName }, true, glm::vec4(0.5f, 0.5f, 1.0f, 0.0f));
-		errorNormal->SetTextureParams(linearParams);
+		std::shared_ptr<re::Texture> errorNormal = LoadTextureFromFilePath(
+			{ missingNormalTexName }, true, glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), re::Texture::ColorSpace::Linear);
 		errorMat->GetTexture(2) = errorNormal;
-		scene.AddUniqueTexture(errorNormal);
 
 		// MatOcclusion
-		std::shared_ptr<re::Texture> errorOcclusion =
-			LoadTextureFromFilePath({ missingOcclusionTexName }, true, glm::vec4(1.f));
-		errorOcclusion->SetTextureParams(linearParams);
+		std::shared_ptr<re::Texture> errorOcclusion = LoadTextureFromFilePath(
+			{ missingOcclusionTexName }, true, glm::vec4(1.f), re::Texture::ColorSpace::Linear);
 		errorMat->GetTexture(3) = errorOcclusion;
-		scene.AddUniqueTexture(errorOcclusion);
 
 		// MatEmissive
-		std::shared_ptr<re::Texture> errorEmissive =
-			LoadTextureFromFilePath({ missingEmissiveTexName }, true, k_errorTextureColor);
-		errorEmissive->SetTextureParams(srgbParams);
+		std::shared_ptr<re::Texture> errorEmissive = LoadTextureFromFilePath(
+			{ missingEmissiveTexName }, true, k_errorTextureColor, re::Texture::ColorSpace::sRGB);
 		errorMat->GetTexture(4) = errorEmissive;
-		scene.AddUniqueTexture(errorEmissive);
 
 		// Construct a default permanent parameter block for the material params:
 		Material::PBRMetallicRoughnessParams matParams;
@@ -925,25 +913,30 @@ namespace
 		// If that fails, we fall back to a default HDRI
 		shared_ptr<Texture> iblTexture = nullptr;
 
+		auto TryLoadIBL = [&scene](std::string const& IBLPath, std::shared_ptr<re::Texture>& iblTexture) {
+			if (scene.TextureExists(IBLPath))
+			{
+				iblTexture = scene.GetTexture(IBLPath);
+			}
+			else
+			{
+				iblTexture = LoadTextureFromFilePath({ IBLPath }, false, k_errorTextureColor, re::Texture::ColorSpace::Linear);
+			}
+		};
+
 		string IBLPath;
 		if (Config::Get()->TryGetValue<string>("sceneIBLPath", IBLPath))
 		{
-			scene.GetLoadTextureByPath({ IBLPath }, false);
+			TryLoadIBL(IBLPath, iblTexture);
 		}		
 		
 		if (!iblTexture)
 		{
 			IBLPath = Config::Get()->GetValue<string>("defaultIBLPath");
-			iblTexture = scene.GetLoadTextureByPath({ IBLPath }, true);
+			TryLoadIBL(IBLPath, iblTexture);
 		}
 		SEAssert("Missing IBL texture. Per scene IBLs must be placed at <sceneRoot>\\IBL\\ibl.hdr; A default fallback "
 			"must exist at Assets\\DefaultIBL\\ibl.hdr", iblTexture != nullptr);
-
-		Texture::TextureParams iblParams = iblTexture->GetTextureParams();
-		iblParams.m_colorSpace = Texture::ColorSpace::Linear;
-		iblTexture->SetTextureParams(iblParams);
-
-		scene.AddUniqueTexture(iblTexture);
 	}
 
 
@@ -1708,7 +1701,7 @@ namespace fr
 	}
 
 
-	void SceneData::AddUniqueTexture(shared_ptr<re::Texture>& newTexture)
+	bool SceneData::AddUniqueTexture(shared_ptr<re::Texture>& newTexture)
 	{
 		SEAssert("Adding data is not thread safe once loading is complete", !m_finishedLoading);
 		SEAssert("Cannot add null texture to textures table", newTexture != nullptr);
@@ -1718,16 +1711,20 @@ namespace fr
 		unordered_map<size_t, shared_ptr<re::Texture>>::const_iterator texturePosition =
 			m_textures.find(newTexture->GetNameID());
 
+		bool foundExisting = false;
 		if (texturePosition != m_textures.end()) // Found existing
 		{
 			LOG("Texture \"%s\" has alredy been registed with scene", newTexture->GetName().c_str());
 			newTexture = texturePosition->second;
+			foundExisting = true;
 		}
 		else  // Add new
 		{
 			m_textures[newTexture->GetNameID()] = newTexture;
 			LOG("Texture \"%s\" registered with scene", newTexture->GetName().c_str());
 		}
+
+		return foundExisting;
 	}
 
 
@@ -1761,26 +1758,6 @@ namespace fr
 
 		std::shared_lock<std::shared_mutex> readLock(m_texturesMutex);
 		return m_textures.find(nameID) != m_textures.end();
-	}
-
-
-	shared_ptr<Texture> SceneData::GetLoadTextureByPath(vector<string> const& texturePaths, bool returnErrorTex)
-	{
-		SEAssert("Expected either 1 or 6 texture paths", texturePaths.size() == 1 || texturePaths.size() == 6);
-
-		if (TextureExists(texturePaths[0]))
-		{
-			LOG("Texture(s) at \"%s\" has already been loaded", texturePaths[0].c_str());
-			return GetTexture(texturePaths[0]);
-		}
-
-		shared_ptr<re::Texture> result = 
-			LoadTextureFromFilePath(vector<string>(texturePaths), returnErrorTex, k_errorTextureColor);
-		if (result)
-		{
-			AddUniqueTexture(result);
-		}
-		return result;
 	}
 
 

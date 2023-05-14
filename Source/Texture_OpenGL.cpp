@@ -166,8 +166,6 @@ namespace opengl
 		// TODO: Is there a way to avoid needing to pass textureUnit?
 		// textureUnit is a target, ie. GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, etc
 
-		opengl::Texture::Create(texture); // Ensure the texture is created before we attempt to bind
-
 		opengl::Texture::PlatformParams const* params =
 			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
@@ -180,14 +178,7 @@ namespace opengl
 
 	void opengl::Texture::Create(re::Texture& texture)
 	{
-		if (!texture.GetPlatformParams()->m_isCreated)
-		{
-			platform::Texture::CreatePlatformParams(texture);
-		}
-		else
-		{
-			return; // Note: Textures are shared, so duplicate Create() calls can/do happen. We just abort here if so
-		}
+		SEAssert("Texture is already created", !texture.GetPlatformParams()->m_isCreated);
 
 		LOG("Creating & buffering texture: \"%s\"", texture.GetName().c_str());
 

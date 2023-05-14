@@ -32,6 +32,8 @@ namespace re
 			/*	StencilTarget,
 			DepthStencilTarget,	*/
 
+			SwapchainColorProxy, // Wrapper for an existing API-specific resource (i.e. backbuffer texture target)
+
 			Invalid,
 			TextureUse_Count = Invalid
 		};
@@ -95,11 +97,13 @@ namespace re
 
 			glm::vec4 m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f); // Also used as initial fill color
 			bool m_useMIPs = true; // Should MIPs be created for this texture?
+			bool m_addToSceneData = true; // Typically false if the texture is a target
 		};
 
 
 	public:
-		explicit Texture(std::string const& name, TextureParams const& params, bool doClear);
+		static std::shared_ptr<re::Texture> Create(std::string const& name, TextureParams const& params, bool doClear);
+
 		~Texture() { Destroy();	}
 
 		glm::vec4 GetTextureDimenions() const;	// .xyzw = width, height, 1/width, 1/height
@@ -119,7 +123,6 @@ namespace re
 		re::Texture::PlatformParams const* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<re::Texture::PlatformParams> platformParams);
 
-		void SetTextureParams(re::Texture::TextureParams const& params);
 		TextureParams const& GetTextureParams() const { return m_texParams; }
 
 
@@ -130,6 +133,7 @@ namespace re
 
 
 	private:
+		explicit Texture(std::string const& name, TextureParams const& params, bool doClear);
 		void Destroy();
 
 		void Fill(glm::vec4 solidColor);	// Fill texture with a solid color
@@ -139,7 +143,7 @@ namespace re
 
 
 	private:
-		TextureParams m_texParams;
+		const TextureParams m_texParams;
 		std::unique_ptr<re::Texture::PlatformParams> m_platformParams;
 
 		std::vector<uint8_t> m_texels;

@@ -15,19 +15,18 @@
 
 namespace re
 {
-	using re::TextureTargetSet;
-	using gr::GBufferGraphicsSystem;
+	using en::Config;
+	using en::SceneManager;
+	using gr::BloomGraphicsSystem;
 	using gr::DeferredLightingGraphicsSystem;
+	using gr::GBufferGraphicsSystem;
 	using gr::GraphicsSystem;
 	using gr::ShadowsGraphicsSystem;
 	using gr::SkyboxGraphicsSystem;
-	using gr::BloomGraphicsSystem;
 	using gr::TonemappingGraphicsSystem;
 	using gr::Transform;
-	using re::MeshPrimitive;
 	using re::Batch;
-	using en::Config;
-	using en::SceneManager;
+	using re::MeshPrimitive;
 	using util::PerformanceTimer;
 	using std::shared_ptr;
 	using std::make_shared;
@@ -293,9 +292,23 @@ namespace re
 	}
 
 
+	template<>
+	void RenderManager::RegisterForCreate(std::shared_ptr<re::Texture> newObject)
+	{
+		const size_t nameID = newObject->GetNameID(); // Textures are required to have unique names
+
+		std::lock_guard<std::mutex> lock(m_newTextures.m_mutex);
+
+		SEAssert("Found an object with the same data hash. This suggests a duplicate object exists and has not been "
+			"detected, or an object is being added twice, which should not happen",
+			m_newTextures.m_newObjects.find(nameID) == m_newTextures.m_newObjects.end());
+
+		m_newTextures.m_newObjects.insert({ nameID, newObject });
+	}
+
+
 	void RenderManager::CreateAPIResources()
 	{
-		fr::SceneData* sceneDataDebug = en::SceneManager::GetSceneData();
 		platform::RenderManager::CreateAPIResources(*this);
 	}
 }

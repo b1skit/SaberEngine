@@ -84,6 +84,7 @@ namespace gr
 		resScaleParams.m_colorSpace = Texture::ColorSpace::Linear;
 		resScaleParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		resScaleParams.m_useMIPs = false;
+		resScaleParams.m_addToSceneData = false;
 
 		shared_ptr<Shader> luminanceThresholdShader = re::Shader::Create(
 			Config::Get()->GetValue<string>("blurShaderName"));
@@ -102,7 +103,7 @@ namespace gr
 			const string texPath = "ScaledResolution_" + to_string(currentXRes) + "x" + to_string(currentYRes);
 
 			m_downResStages.back().GetTextureTargetSet()->SetColorTarget(0, 
-				std::make_shared<re::Texture>(texPath, resScaleParams, false));
+				re::Texture::Create(texPath, resScaleParams, false));
 
 			m_downResStages.back().SetStagePipelineState(bloomStageParams);
 			m_downResStages.back().AddPermanentParameterBlock(sceneCam->GetCameraParams());
@@ -138,7 +139,7 @@ namespace gr
 		blurParams.m_height = currentYRes;
 		const string texName = "BlurPingPong_" + to_string(currentXRes) + "x" + to_string(currentYRes);
 		
-		shared_ptr<Texture> blurPingPongTexture = make_shared<re::Texture>(texName, blurParams, false);
+		shared_ptr<Texture> blurPingPongTexture = re::Texture::Create(texName, blurParams, false);
 
 		uint32_t totalBlurPasses = m_numBlurPasses * 2; // x2 for horizontal + blur separation
 		m_blurStages.reserve(totalBlurPasses);  // MUST reserve so our pointers won't change
