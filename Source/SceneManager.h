@@ -18,6 +18,8 @@ namespace en
 
 	public:
 		SceneManager();
+		SceneManager(SceneManager&&) = default;
+		SceneManager& operator=(SceneManager&&) = default;
 		~SceneManager() = default;
 
 		// EngineComponent interface:
@@ -38,7 +40,6 @@ namespace en
 
 	private:
 		SceneManager(SceneManager const&) = delete;
-		SceneManager(SceneManager&&) = delete;
 		void operator=(SceneManager const&) = delete;
 	};
 }

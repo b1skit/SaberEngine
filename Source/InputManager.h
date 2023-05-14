@@ -17,6 +17,8 @@ namespace en
 
 	public:
 		InputManager();
+		InputManager(InputManager&&) = default;
+		InputManager& operator=(InputManager&&) = default;
 		~InputManager() = default;
 
 		// Static member functions:
@@ -54,7 +56,6 @@ namespace en
 
 	private:
 		InputManager(InputManager const&) = delete; // Disallow copying of our Singleton
-		InputManager(InputManager&&) = delete;
 		void operator=(InputManager const&) = delete;
 	};
 }

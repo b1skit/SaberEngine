@@ -45,6 +45,8 @@ namespace re
 	public:
 		VertexStream(
 			StreamType type, uint32_t numComponents, DataType dataType, Normalize doNormalize, std::vector<uint8_t>&& data);
+		VertexStream(VertexStream&&) = default;
+		VertexStream& operator=(VertexStream&&) = default;
 		~VertexStream() { Destroy(); };
 
 		void* GetData();
@@ -83,7 +85,6 @@ namespace re
 	private:
 		// Share via pointers; no copying allowed
 		VertexStream(VertexStream const&) = delete;
-		VertexStream(VertexStream&&) = delete;
 		VertexStream& operator=(VertexStream const&) = delete;
 	};
 

@@ -64,6 +64,8 @@ namespace re
 		static std::shared_ptr<re::ParameterBlock> CreateFromArray(
 			std::string const& pbName, T const* dataArray, size_t dataByteSize, size_t numElements, PBType pbType);
 
+		ParameterBlock(ParameterBlock&&) = default;
+		ParameterBlock& operator=(ParameterBlock&&) = default;
 		~ParameterBlock();
 
 		void Destroy();
@@ -101,7 +103,6 @@ namespace re
 	private:
 		ParameterBlock() = delete;
 		ParameterBlock(ParameterBlock const&) = delete;
-		ParameterBlock(ParameterBlock&&) = delete;
 		ParameterBlock& operator=(ParameterBlock const&) = delete;
 	};
 

@@ -10,6 +10,8 @@ namespace re
 	{
 	public:
 		ParameterBlockAllocator();
+		ParameterBlockAllocator(ParameterBlockAllocator&&) = default;
+		ParameterBlockAllocator& operator=(ParameterBlockAllocator&&) = default;
 		~ParameterBlockAllocator();
 
 		void Destroy();
@@ -101,7 +103,6 @@ namespace re
 
 	private:
 		ParameterBlockAllocator(ParameterBlockAllocator const&) = delete;
-		ParameterBlockAllocator(ParameterBlockAllocator&&) = delete;
 		ParameterBlockAllocator& operator=(ParameterBlockAllocator const&) = delete;
 
 		friend class re::ParameterBlock;

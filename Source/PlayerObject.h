@@ -22,12 +22,9 @@ namespace fr
 	{
 	public:
 		explicit PlayerObject(std::shared_ptr<gr::Camera> playerCam);
+		PlayerObject(PlayerObject&&) = default;
+		PlayerObject& operator=(PlayerObject&&) = default;
 		~PlayerObject() = default;
-
-		PlayerObject() = delete;
-		PlayerObject(PlayerObject const&) = delete;
-		PlayerObject(PlayerObject&&) = delete;
-		PlayerObject& operator=(PlayerObject const&) = delete;
 
 		// NamedObject interface:
 		void Update(const double stepTimeMs) override;
@@ -51,6 +48,12 @@ namespace fr
 		// Saved location:
 		glm::vec3 m_savedPosition;
 		glm::vec3 m_savedEulerRotation;
+
+
+	private:
+		PlayerObject() = delete;
+		PlayerObject(PlayerObject const&) = delete;
+		PlayerObject& operator=(PlayerObject const&) = delete;
 	};
 
 }

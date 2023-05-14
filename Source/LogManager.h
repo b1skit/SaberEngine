@@ -35,12 +35,9 @@ namespace en
 
 	public:
 		LogManager();
+		LogManager(LogManager&&) = default;
+		LogManager& operator=(LogManager&&) = default;
 		~LogManager() = default;
-
-		// Disallow copying of our Singleton
-		LogManager(LogManager const&) = delete; 
-		LogManager(LogManager&&) = delete;
-		void operator=(LogManager const&) = delete;
 
 		// EngineComponent interface:
 		void Startup() override;
@@ -76,6 +73,10 @@ namespace en
 
 		static std::string FormatStringForLog(char const* prefix, char const* tag, char const* assembledMsg);
 		static std::wstring FormatStringForLog(wchar_t const* prefix, wchar_t const* tag, wchar_t const* assembledMsg);
+
+	private: // Disallow copying of our Singleton
+		LogManager(LogManager const&) = delete;
+		void operator=(LogManager const&) = delete;
 	};
 
 

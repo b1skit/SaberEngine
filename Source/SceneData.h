@@ -35,6 +35,8 @@ namespace fr
 
 	public:
 		explicit SceneData(std::string const& sceneName);
+		SceneData(SceneData&&) = default;
+		SceneData& operator=(SceneData&&) = default;
 		~SceneData() { Destroy(); }
 
 		void Destroy();
@@ -131,7 +133,6 @@ namespace fr
 	private:
 		SceneData() = delete;
 		SceneData(SceneData const&) = delete;
-		SceneData(SceneData&&) = delete;
 		SceneData& operator=(SceneData const&) = delete;
 
 		// Friends:

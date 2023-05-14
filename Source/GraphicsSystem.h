@@ -13,6 +13,8 @@ namespace gr
 	{
 	public:
 		explicit GraphicsSystem(std::string const& name);
+		GraphicsSystem(GraphicsSystem&&) = default;
+		GraphicsSystem& operator=(GraphicsSystem&&) = default;
 
 		// GraphicsSystem interface:
 		virtual void Create(re::StagePipeline& pipeline) = 0; // Initial Graphics System setup
@@ -28,7 +30,6 @@ namespace gr
 	private: // No copying allowed
 		GraphicsSystem() = delete;
 		GraphicsSystem(GraphicsSystem const&) = delete;
-		GraphicsSystem(GraphicsSystem&&) = delete;
 		GraphicsSystem& operator=(GraphicsSystem const&) = delete;
 	};
 }

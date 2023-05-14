@@ -18,6 +18,8 @@ namespace en
 
 	public:
 		CoreEngine();
+		CoreEngine(CoreEngine&&) = default;
+		CoreEngine& operator=(CoreEngine&&) = default;
 		~CoreEngine() = default;
 
 		// Lifetime flow:
@@ -56,7 +58,6 @@ namespace en
 
 	private:
 		CoreEngine(CoreEngine const&) = delete;
-		CoreEngine(CoreEngine&&) = delete;
 		CoreEngine& operator=(CoreEngine const&) = delete;
 	};
 }

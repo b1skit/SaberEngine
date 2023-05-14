@@ -8,6 +8,8 @@ namespace en
 	{
 	public:
 		ThreadPool();
+		ThreadPool(ThreadPool&&) = default;
+		ThreadPool& operator=(ThreadPool&&) = default;
 		~ThreadPool() = default;
 
 		void Startup();
@@ -34,8 +36,6 @@ namespace en
 	private:
 		// No moving or copying allowed
 		ThreadPool(ThreadPool const&) = delete;
-		ThreadPool(ThreadPool&&) = delete;
-		ThreadPool& operator=(ThreadPool const&) = delete;
-		ThreadPool& operator=(ThreadPool&&) = delete;
+		ThreadPool& operator=(ThreadPool const&) = delete;		
 	};
 }

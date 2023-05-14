@@ -70,6 +70,8 @@ namespace en
 
 	public:
 		EventManager();
+		EventManager(EventManager&&) = default;
+		EventManager& operator=(EventManager&&) = default;
 		~EventManager() = default;
 		
 		// EngineComponent interface:
@@ -89,7 +91,6 @@ namespace en
 
 	private:
 		EventManager(EventManager const&) = delete;
-		EventManager(EventManager&&) = delete;
 		void operator=(EventManager const&) = delete;
 	};
 

@@ -46,6 +46,8 @@ namespace re
 	{
 	public:	
 		RenderPipeline(std::string const& name) : NamedObject(name) {}
+		RenderPipeline(RenderPipeline&&) = default;
+		RenderPipeline& operator=(RenderPipeline&&) = default;
 		~RenderPipeline() { Destroy(); };
 
 		void Destroy();
@@ -73,7 +75,6 @@ namespace re
 	private:
 		RenderPipeline() = delete;
 		RenderPipeline(RenderPipeline const&) = delete;
-		RenderPipeline(RenderPipeline&&) = delete;
 		RenderPipeline& operator=(RenderPipeline const&) = delete;
 	};
 }

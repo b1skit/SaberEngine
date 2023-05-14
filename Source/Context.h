@@ -19,11 +19,12 @@ namespace re
 		struct PlatformParams : public re::IPlatformParams
 		{
 			PlatformParams() = default;
+			PlatformParams(PlatformParams&&) = default;
+			PlatformParams& operator=(PlatformParams&&) = default;
 			virtual ~PlatformParams() = 0;
 
 			// Copying not allowed
 			PlatformParams(PlatformParams const&) = delete;
-			PlatformParams(PlatformParams&&) = delete;
 			PlatformParams& operator=(PlatformParams const&) = delete;			
 		};
 

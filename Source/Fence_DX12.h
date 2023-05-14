@@ -12,6 +12,8 @@ namespace dx12
 	{
 	public:
 		Fence();
+		Fence(Fence&&) = default;
+		Fence& operator=(Fence&&) = default;
 		~Fence() { Destroy(); };
 
 		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, char const* eventName);
@@ -32,7 +34,6 @@ namespace dx12
 	private:
 		// Copying not allowed:
 		Fence(Fence const&) = delete;
-		Fence(Fence&&) = delete;
 		Fence& operator=(Fence const&) = delete;
 	};
 

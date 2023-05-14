@@ -18,13 +18,6 @@ namespace re
 	public:
 		struct PlatformParams : public re::IPlatformParams
 		{
-			// Params contain unique GPU bindings that should not be arbitrarily copied/duplicated
-			PlatformParams() = default;
-			PlatformParams(PlatformParams&) = delete;
-			PlatformParams(PlatformParams&&) = delete;
-			PlatformParams& operator=(PlatformParams&) = delete;
-			PlatformParams& operator=(PlatformParams&&) = delete;
-
 			// API-specific GPU bindings should be destroyed here
 			virtual ~PlatformParams() = 0;
 

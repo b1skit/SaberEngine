@@ -15,6 +15,8 @@ namespace dx12
 	{
 	public:
 		CommandQueue();
+		CommandQueue(CommandQueue&&) = default;
+		CommandQueue& operator=(CommandQueue&&) = default;
 		~CommandQueue() { Destroy(); };
 
 		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, CommandList::CommandListType type);
@@ -52,7 +54,6 @@ namespace dx12
 
 	private: // No copying allowed
 		CommandQueue(CommandQueue const&) = delete;
-		CommandQueue(CommandQueue&&) = delete;
 		CommandQueue& operator=(CommandQueue const&) = delete;
 	};
 }

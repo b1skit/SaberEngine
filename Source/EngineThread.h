@@ -18,6 +18,8 @@ namespace en
 
 	public:
 		EngineThread();
+		EngineThread(EngineThread&&) = default;
+		EngineThread& operator=(EngineThread&&) = default;
 		~EngineThread() = default;
 
 
@@ -57,7 +59,6 @@ namespace en
 
 	private:
 		EngineThread(EngineThread const&) = delete;
-		EngineThread(EngineThread&&) = delete;
 		EngineThread& operator=(EngineThread const&) = delete;
 	};
 }

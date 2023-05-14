@@ -47,6 +47,8 @@ namespace dx12
 
 	public:
 		CommandList(ID3D12Device2*, D3D12_COMMAND_LIST_TYPE);
+		CommandList(CommandList&&) = default;
+		CommandList& operator=(CommandList&&) = default;
 		~CommandList() { Destroy(); }
 
 		void Destroy();
@@ -119,7 +121,6 @@ namespace dx12
 	private: // No copying allowed
 		CommandList() = delete;
 		CommandList(CommandList const&) = delete;
-		CommandList(CommandList&&) = delete;
 		CommandList& operator=(CommandList const&) = delete;
 	};
 

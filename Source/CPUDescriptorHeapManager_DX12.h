@@ -96,6 +96,8 @@ namespace dx12
 	{
 	public:
 		AllocationPage(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t elementSize, uint32_t totalElements);
+		AllocationPage(AllocationPage&&) = default;
+		AllocationPage& operator=(AllocationPage&&) = default;
 		~AllocationPage();
 
 		DescriptorAllocation Allocate(uint32_t descriptorCount);
@@ -152,7 +154,6 @@ namespace dx12
 	private: // No copying allowed
 		AllocationPage() = delete;
 		AllocationPage(AllocationPage const&) = delete;
-		AllocationPage(AllocationPage&&) = delete;
 		AllocationPage& operator=(AllocationPage const&) = delete;
 	};
 }

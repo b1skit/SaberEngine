@@ -28,6 +28,8 @@ namespace re
 
 
 	public:
+		Shader(Shader&&) = default;
+		Shader& operator=(Shader&&) = default;
 		~Shader() { Destroy(); }
 
 		inline bool IsCreated() const;
@@ -53,7 +55,6 @@ namespace re
 	private:
 		Shader() = delete;
 		Shader(Shader const&) = delete;
-		Shader(Shader&&) = delete;
 		Shader& operator=(Shader&) = delete;
 	};
 

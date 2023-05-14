@@ -14,6 +14,8 @@ namespace dx12
 	{
 	public:
 		Device();
+		Device(Device&&) = default;
+		Device& operator=(Device&&) = default;
 		~Device() { Destroy(); };
 
 		void Create();
@@ -30,7 +32,6 @@ namespace dx12
 	private:
 		// Copying not allowed:
 		Device(Device const&) = delete;
-		Device(Device&&) = delete;
 		Device& operator=(Device const&) = delete;
 	};
 }

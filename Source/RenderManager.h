@@ -42,6 +42,8 @@ namespace re
 
 	public:
 		RenderManager();
+		RenderManager(RenderManager&&) = default;
+		RenderManager& operator=(RenderManager&&) = default;
 		~RenderManager() = default;
 
 		// EngineThread interface:
@@ -113,7 +115,6 @@ namespace re
 
 	private:
 		RenderManager(RenderManager const&) = delete;
-		RenderManager(RenderManager&&) = delete;
 		void operator=(RenderManager const&) = delete;
 	};
 

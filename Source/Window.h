@@ -17,7 +17,8 @@ namespace en
 
 	public:
 		Window();
-		
+		Window(Window&&) = default;
+		Window& operator=(Window&&) = default;
 		~Window() { Destroy(); };
 
 		void SetFocusState(bool hasFocus); // To be called by event handlers only
@@ -37,10 +38,8 @@ namespace en
 		std::unique_ptr<Window::PlatformParams> m_platformParams;
 		bool m_hasFocus;
 
-	private:
-		// Copying not allowed
+	private: // Copying not allowed
 		Window(Window const&) = delete;
-		Window(Window&&) = delete;
 		Window& operator=(Window const&) = delete;
 	};
 
