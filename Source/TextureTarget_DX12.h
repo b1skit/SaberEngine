@@ -10,35 +10,34 @@
 
 namespace dx12
 {
-class TextureTarget
-{
-public:
-	struct PlatformParams final : public re::TextureTarget::PlatformParams
+	class TextureTarget
 	{
-		dx12::DescriptorAllocation m_rtvDsvDescriptor;
-	};
-
-};
-
-
-class TextureTargetSet
-{
-public:
-	struct PlatformParams final : public re::TextureTargetSet::PlatformParams
-	{
-		// Target formats (cached during CreateColorTargets/CreateDepthStencilTarget):
-		D3D12_RT_FORMAT_ARRAY m_renderTargetFormats;
-		DXGI_FORMAT m_depthTargetFormat;
-
-		// Other target params:
-		D3D12_VIEWPORT m_viewport;
-		D3D12_RECT m_scissorRect;
+	public:
+		struct PlatformParams final : public re::TextureTarget::PlatformParams
+		{
+			dx12::DescriptorAllocation m_rtvDsvDescriptor;
+		};
 	};
 
 
-public:
+	class TextureTargetSet
+	{
+	public:
+		struct PlatformParams final : public re::TextureTargetSet::PlatformParams
+		{
+			// Target formats (cached during CreateColorTargets/CreateDepthStencilTarget):
+			D3D12_RT_FORMAT_ARRAY m_renderTargetFormats;
+			DXGI_FORMAT m_depthTargetFormat;
 
-	static void CreateColorTargets(re::TextureTargetSet& targetSet);
-	static void CreateDepthStencilTarget(re::TextureTargetSet& targetSet);
-};
+			// Other target params:
+			D3D12_VIEWPORT m_viewport;
+			D3D12_RECT m_scissorRect;
+		};
+
+
+	public:
+
+		static void CreateColorTargets(re::TextureTargetSet& targetSet);
+		static void CreateDepthStencilTarget(re::TextureTargetSet& targetSet);
+	};
 }
