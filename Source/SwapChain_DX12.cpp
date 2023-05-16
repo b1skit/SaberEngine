@@ -121,6 +121,9 @@ namespace dx12
 				backbufferResource);
 
 			swapChainParams->m_backbufferTargetSet->SetColorTarget(backbufferIdx, colorTargetTex);
+
+			SEAssert("Unexpected texture format selected", 
+				colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format == colorBufferFormat);
 		}
 
 		// Create the depth target texture:

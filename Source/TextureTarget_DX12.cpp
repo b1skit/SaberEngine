@@ -28,12 +28,6 @@ namespace dx12
 		const uint8_t numColorTargets = targetSet.GetNumColorTargets();
 		SEAssert("Invalid number of color targets", numColorTargets > 0 && numColorTargets <= 8);
 
-		texTargetSetPlatParams->m_renderTargetFormats = {}; // Contains an array of 8 DXGI_FORMAT enums
-		texTargetSetPlatParams->m_renderTargetFormats.NumRenderTargets = numColorTargets;
-
-		// Note: We pack our structure with contiguous DXGI_FORMAT's, regardless of their packing
-		// in the re::TextureTargetSet slots
-		uint8_t formatSlot = 0;
 		for (re::TextureTarget const& colorTarget : targetSet.GetColorTargets())
 		{
 			if (colorTarget.HasTexture())
@@ -42,9 +36,6 @@ namespace dx12
 				SEAssert("Texture has the wrong usage set", 
 					texParams.m_usage == re::Texture::Usage::ColorTarget || 
 					texParams.m_usage == re::Texture::Usage::SwapchainColorProxy);
-
-				texTargetSetPlatParams->m_renderTargetFormats.RTFormats[formatSlot++] = 
-					dx12::Texture::GetTextureFormat(texParams);
 
 				dx12::Texture::PlatformParams* texPlatParams =
 					colorTarget.GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
@@ -64,8 +55,6 @@ namespace dx12
 					targetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor()); // Descriptor destination
 			}			
 		}
-		SEAssert("NumRenderTargets/numColorTargets must equal the number of format slots set", 
-			formatSlot == numColorTargets);
 	}
 
 
@@ -85,15 +74,11 @@ namespace dx12
 
 		std::shared_ptr<re::Texture> depthTargetTex = targetSet.GetDepthStencilTarget().GetTexture();
 
-		// Cache our DXGI_FORMAT. Note: We fetch the same dx12::Texture::GetTextureFormat during dx12::Texture::Create,
-		// but re::Texture::TextureParams are const so it should be impossible to get a different result
-		targetSetParams->m_depthTargetFormat = dx12::Texture::GetTextureFormat(depthTargetTex->GetTextureParams());
-		// TODO: SHould the format be a member of the texture?
-
-		dx12::Texture::PlatformParams* texPlatParams =
+		dx12::Texture::PlatformParams* depthTexPlatParams =
 			depthTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
-		SEAssert("Depth texture has not been created", texPlatParams->m_isCreated && texPlatParams->m_textureResource);
+		SEAssert("Depth texture has not been created", 
+			depthTexPlatParams->m_isCreated && depthTexPlatParams->m_textureResource);
 
 		dx12::TextureTarget::PlatformParams* targetPlatParams =
 			targetSet.GetDepthStencilTarget().GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
@@ -107,15 +92,42 @@ namespace dx12
 		SEAssert("DSV descriptor is not valid", targetPlatParams->m_rtvDsvDescriptor.IsValid());
 
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-		dsv.Format = targetSetParams->m_depthTargetFormat;
+		dsv.Format = depthTexPlatParams->m_format;
 		dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 		dsv.Texture2D.MipSlice = 0;
 		dsv.Flags = D3D12_DSV_FLAG_NONE;
 
 		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
 		device->CreateDepthStencilView(
-			texPlatParams->m_textureResource.Get(),
+			depthTexPlatParams->m_textureResource.Get(),
 			&dsv,
 			targetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor());
+	}
+
+
+	D3D12_RT_FORMAT_ARRAY TextureTargetSet::GetColorTargetFormats(re::TextureTargetSet const& targetSet)
+	{
+		// Note: We pack our structure with contiguous DXGI_FORMAT's, regardless of their packing in the 
+		// re::TextureTargetSet slots
+		D3D12_RT_FORMAT_ARRAY colorTargetFormats{};
+		uint32_t numTargets = 0;
+		for (uint8_t i = 0; i < targetSet.GetColorTargets().size(); i++)
+		{
+			
+			if (!targetSet.GetColorTarget(i).HasTexture())
+			{
+				break;
+			}
+
+			dx12::Texture::PlatformParams const* targetTexPlatParams =
+				targetSet.GetColorTarget(i).GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+
+			colorTargetFormats.RTFormats[i] = targetTexPlatParams->m_format;
+			numTargets++;
+		}
+		SEAssert("No color targets found", numTargets > 0);
+		colorTargetFormats.NumRenderTargets = numTargets;
+
+		return colorTargetFormats;
 	}
 }

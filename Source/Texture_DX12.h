@@ -24,6 +24,7 @@ namespace dx12
 
 			~PlatformParams() override;
 
+			DXGI_FORMAT m_format;
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_textureResource;
 			dx12::DescriptorAllocation m_descriptor; // TODO: Implement this. Currently unused...
 		};

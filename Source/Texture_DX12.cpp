@@ -73,8 +73,13 @@ namespace dx12
 				return DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT;
 			}
 			break;
+			case re::Texture::Format::RGB8:
+			{
+				LOG_WARNING("Unsupported RGB8 Texture format requested, selecting R11G11B10 instead");
+				return DXGI_FORMAT::DXGI_FORMAT_R11G11B10_FLOAT; // No matching DXGI_FORMAT, choose something ~similar
+			}
+			break;
 			case re::Texture::Format::RGB16F: // No matching DXGI_FORMAT
-			case re::Texture::Format::RGB8: // No matching DXGI_FORMAT
 			case re::Texture::Format::Invalid:
 			default:
 			{
@@ -87,14 +92,15 @@ namespace dx12
 
 	Texture::PlatformParams::PlatformParams(re::Texture::TextureParams const& texParams)
 	{
-		#pragma message("TODO: Implement dx12::Texture::PlatformParams::PlatformParams")
-		LOG_ERROR("TODO: Implement dx12::Texture::PlatformParams::PlatformParams");
+		m_format = GetTextureFormat(texParams);
 	}
+
 
 	Texture::PlatformParams::~PlatformParams()
 	{
-		#pragma message("TODO: Implement dx12::Texture::PlatformParams::~PlatformParams")
-		LOG_ERROR("TODO: Implement dx12::Texture::PlatformParams::PlatformParams");
+		m_format = DXGI_FORMAT_UNKNOWN;
+		m_textureResource = nullptr;
+		m_descriptor.Free(0);
 	}
 
 

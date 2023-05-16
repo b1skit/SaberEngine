@@ -25,11 +25,7 @@ namespace dx12
 	public:
 		struct PlatformParams final : public re::TextureTargetSet::PlatformParams
 		{
-			// Target formats (cached during CreateColorTargets/CreateDepthStencilTarget):
-			D3D12_RT_FORMAT_ARRAY m_renderTargetFormats;
-			DXGI_FORMAT m_depthTargetFormat;
-
-			// Other target params:
+			// Target params:
 			D3D12_VIEWPORT m_viewport;
 			D3D12_RECT m_scissorRect;
 		};
@@ -39,5 +35,7 @@ namespace dx12
 
 		static void CreateColorTargets(re::TextureTargetSet& targetSet);
 		static void CreateDepthStencilTarget(re::TextureTargetSet& targetSet);
+
+		static D3D12_RT_FORMAT_ARRAY GetColorTargetFormats(re::TextureTargetSet const& targetSet);
 	};
 }

@@ -11,6 +11,7 @@
 #include "PipelineState_DX12.h"
 #include "Shader.h"
 #include "Shader_DX12.h"
+#include "Texture_DX12.h"
 #include "TextureTarget.h"
 #include "TextureTarget_DX12.h"
 
@@ -395,12 +396,14 @@ namespace dx12
 				dx12::TextureTargetSet::CreateDepthStencilTarget(targetSet);
 			}
 			// TODO: Should we add TextureTargetSets to the API layer creation queue?
+			// TODO: We're currently assuming target sets have both color and depth targets... This is not always true!
 
 			// Target formats:
 			dx12::TextureTargetSet::PlatformParams* targetSetPlatParams =
 				targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
-			pipelineStateStream.RTVFormats = targetSetPlatParams->m_renderTargetFormats;
-			pipelineStateStream.DSVFormat = targetSetPlatParams->m_depthTargetFormat;
+			pipelineStateStream.RTVFormats = TextureTargetSet::GetColorTargetFormats(targetSet);
+			pipelineStateStream.DSVFormat = 
+				targetSet.GetDepthStencilTarget().GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format;
 
 			// Rasterizer description:
 			const D3D12_RASTERIZER_DESC rasterizerDesc = BuildRasterizerDesc(grPipelineState);

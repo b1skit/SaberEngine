@@ -118,13 +118,17 @@ namespace dx12
 		HRESULT hr = device->CreateDescriptorHeap(
 			&descriptorHeapDesc, IID_PPV_ARGS(&ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap));
 		CheckHResult(hr, "Failed to create single element descriptor heap for ImGui SRV");
+		
+		dx12::Texture::PlatformParams* backbufferColorTarget0PlatParams =
+			swapChainParams->m_backbufferTargetSet->GetColorTarget(0).GetTexture()
+				->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		// Setup ImGui platform/Renderer backends:
 		ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
 		ImGui_ImplDX12_Init(
 			ctxPlatParams->m_device.GetD3DDisplayDevice(),
 			dx12::RenderManager::k_numFrames, // Number of frames in flight
-			swapChainTargetSetParams->m_renderTargetFormats.RTFormats[0],
+			backbufferColorTarget0PlatParams->m_format,
 			ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap.Get(),
 			ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 			ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
