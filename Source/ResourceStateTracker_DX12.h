@@ -8,22 +8,24 @@ namespace dx12
 	class ResourceState
 	{
 	public:
-		ResourceState(D3D12_RESOURCE_STATES);
+		ResourceState(D3D12_RESOURCE_STATES, uint32_t subresourceIdx);
+
 		ResourceState(ResourceState const&) = default;
 		ResourceState(ResourceState&&) = default;
 		ResourceState& operator=(ResourceState const&) = default;
 		ResourceState& operator=(ResourceState&&) = default;
 		~ResourceState() = default;
 		
-		
-		D3D12_RESOURCE_STATES GetState() const;
-		void SetState();
+		bool HasState(uint32_t subresourceIdx) const;
+
+		D3D12_RESOURCE_STATES GetState(uint32_t subresourceIdx) const;
+		std::map<uint32_t, D3D12_RESOURCE_STATES> const& GetStates() const;
+
+		void SetState(D3D12_RESOURCE_STATES, uint32_t subresourceIdx);
 
 
 	private:
-		std::map<uint32_t, D3D12_RESOURCE_STATES> m_subresourceState; // Per-subresource states
-		D3D12_RESOURCE_STATES m_resourceState; // State of the entire resource, if no subresource states are specified
-
+		std::map<uint32_t, D3D12_RESOURCE_STATES> m_states;
 
 	private:
 		ResourceState() = delete;
@@ -47,7 +49,10 @@ namespace dx12
 		// functions below this point:
 		std::mutex& GetGlobalStatesMutex();
 
+		ResourceState const& GetResourceState(ID3D12Resource*) const;
+		void SetResourceState(ID3D12Resource*, D3D12_RESOURCE_STATES, uint32_t subresourceIdx);
 
+		bool ResourceStateMatches(ID3D12Resource*, D3D12_RESOURCE_STATES, uint32_t subresourceIdx) const;
 
 	private:
 		std::unordered_map<ID3D12Resource*, ResourceState> m_globalStates;
@@ -61,15 +66,21 @@ namespace dx12
 
 
 	// Tracks local resource state within a command list
-	class ResourceStateTracker
+	class LocalResourceStateTracker
 	{
 	public:
-		ResourceStateTracker() = default;
-		ResourceStateTracker(ResourceStateTracker&&) = default;
-		ResourceStateTracker& operator=(ResourceStateTracker&&) = default;
-		~ResourceStateTracker() = default;
+		LocalResourceStateTracker() = default;
+		LocalResourceStateTracker(LocalResourceStateTracker&&) = default;
+		LocalResourceStateTracker& operator=(LocalResourceStateTracker&&) = default;
+		~LocalResourceStateTracker() = default;
+
+		bool HasResourceState(ID3D12Resource*, uint32_t subresourceIdx) const;
+		D3D12_RESOURCE_STATES GetResourceState(ID3D12Resource*, uint32_t subresourceIdx) const;
+		void SetResourceState(ID3D12Resource*, D3D12_RESOURCE_STATES, uint32_t subresourceIdx);
 
 		void Reset();
+
+		std::unordered_map<ID3D12Resource*, ResourceState> const& GetPendingResourceStates() const;
 
 
 	private:
@@ -78,7 +89,7 @@ namespace dx12
 
 
 	private: // No copying allowed
-		ResourceStateTracker(ResourceStateTracker const&) = delete;
-		ResourceStateTracker& operator=(ResourceStateTracker const&) = delete;
+		LocalResourceStateTracker(LocalResourceStateTracker const&) = delete;
+		LocalResourceStateTracker& operator=(LocalResourceStateTracker const&) = delete;
 	};
 }

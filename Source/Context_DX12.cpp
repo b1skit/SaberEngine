@@ -180,8 +180,8 @@ namespace dx12
 		// Transition our backbuffer resource back to the present state:
 		commandList->TransitionResource(
 			backbufferResource.Get(),
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_PRESENT);
+			D3D12_RESOURCE_STATE_PRESENT,
+			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
 		std::shared_ptr<dx12::CommandList> commandLists[] =
 		{

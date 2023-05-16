@@ -1,4 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
+#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
+
+#include "Context_DX12.h"
 #include "CommandQueue_DX12.h"
 #include "Debug_DX12.h"
 
@@ -92,32 +95,92 @@ namespace dx12
 	uint64_t CommandQueue::Execute(uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists)
 	{
 		// Extract our raw pointers so we can execute them in a single call
-		std::vector<ID3D12CommandList*> commandListPtrs;
-		commandListPtrs.reserve(numCmdLists);
+		
+
+		// Construct our transition barrier command lists:
+		std::vector<std::shared_ptr<dx12::CommandList>> finalCommandLists;
+		{
+			dx12::Context::PlatformParams* ctxPlatParams = 
+				re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+			
+			dx12::GlobalResourceStateTracker& globalResourceStates = ctxPlatParams->m_globalResourceStates;
+			
+			// Manually patch the barriers for each command list:
+			std::lock_guard<std::mutex> barrierLock(globalResourceStates.GetGlobalStatesMutex());
+
+			for (uint32_t i = 0; i < numCmdLists; i++)
+			{
+				uint32_t numBarriers = 0;
+				std::shared_ptr<dx12::CommandList> barrierCommandList = GetCreateCommandList();
+
+				LocalResourceStateTracker const& localResourceStates = cmdLists[i]->GetLocalResourceStates();
+
+				for (auto const& currentResourceEntry : localResourceStates.GetPendingResourceStates())
+				{
+					ID3D12Resource* resource = currentResourceEntry.first;
+					for (auto const& currentState : currentResourceEntry.second.GetStates())
+					{
+						const uint32_t subresourceIdx = currentState.first;
+						const D3D12_RESOURCE_STATES subresourceState = currentState.second;
+
+						if (!globalResourceStates.ResourceStateMatches(resource,
+							subresourceState,
+							subresourceIdx))
+						{
+							// Record a barrier, and update the global state:
+							CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+								resource,
+								globalResourceStates.GetResourceState(resource).GetState(subresourceIdx),
+								subresourceState,
+								subresourceIdx,
+								D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE);
+
+							// TODO: Support batching of multiple barriers
+							barrierCommandList->GetD3DCommandList()->ResourceBarrier(1, &barrier);
+
+							globalResourceStates.SetResourceState(resource, subresourceState, subresourceIdx);
+							numBarriers++;
+						}
+					}
+				}
+
+				// Prepend the transition barrier command list, if we actually made any transitions:
+				if (numBarriers > 0)
+				{
+					finalCommandLists.emplace_back(barrierCommandList);
+				}
+
+				// Add the original command list:
+				finalCommandLists.emplace_back(cmdLists[i]);
+				cmdLists[i] = nullptr; // We don't want the caller retaining access to a command list in our pool
+			}
+		}
 
 		// Get our raw command list pointers, and close them before they're executed
-		for (uint32_t i = 0; i < numCmdLists; i++)
+		std::vector<ID3D12CommandList*> commandListPtrs;
+		commandListPtrs.reserve(finalCommandLists.size());
+		for (uint32_t i = 0; i < finalCommandLists.size(); i++)
 		{
-			SEAssert("Command list type does not match command queue type", cmdLists[i]->GetType() == m_type);
+			SEAssert("Command list type does not match command queue type", finalCommandLists[i]->GetType() == m_type);
 
-			cmdLists[i]->Close(); 
-			commandListPtrs.emplace_back(cmdLists[i]->GetD3DCommandList());
+			finalCommandLists[i]->Close();
+			commandListPtrs.emplace_back(finalCommandLists[i]->GetD3DCommandList());
 		}
 
 		// Execute the command lists:
-		m_commandQueue->ExecuteCommandLists(numCmdLists, &commandListPtrs[0]);
+		m_commandQueue->ExecuteCommandLists(static_cast<uint32_t>(finalCommandLists.size()), &commandListPtrs[0]);
 
 		// Insert a fence for when the command list's internal command allocator will be available for reuse
 		const uint64_t fenceVal = GPUSignal();
 
 		// Return our command list(s) to the pool:
-		for (uint32_t i = 0; i < numCmdLists; i++)
+		for (uint32_t i = 0; i < finalCommandLists.size(); i++)
 		{
-			cmdLists[i]->SetFenceValue(fenceVal);
+			finalCommandLists[i]->SetFenceValue(fenceVal);
 
-			m_commandListPool.push(cmdLists[i]);
+			m_commandListPool.push(finalCommandLists[i]);
 
-			cmdLists[i] = nullptr; // We don't want the caller retaining access to a command list in our pool
+			finalCommandLists[i] = nullptr;
 		}
 
 		return fenceVal;

@@ -108,8 +108,9 @@ namespace dx12
 
 		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
 
-
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
+
+		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
 
 		switch (texParams.m_usage)
 		{
@@ -119,9 +120,13 @@ namespace dx12
 		}
 		break;
 		case re::Texture::Usage::ColorTarget:
-		case re::Texture::Usage::SwapchainColorProxy:
 		{
 			LOG_ERROR("dx12::Texture::Create: Texture is marked as a target, doing nothing...");
+		}
+		break;
+		case re::Texture::Usage::SwapchainColorProxy:
+		{
+			initialState = D3D12_RESOURCE_STATE_COMMON;
 		}
 		break;
 		case re::Texture::Usage::DepthTarget:
@@ -159,11 +164,13 @@ namespace dx12
 
 			CD3DX12_HEAP_PROPERTIES depthHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
+			initialState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+
 			HRESULT hr = device->CreateCommittedResource(
 				&depthHeapProperties,
 				D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
 				&depthResourceDesc,
-				D3D12_RESOURCE_STATE_DEPTH_WRITE,
+				initialState,
 				&optimizedClearValue,
 				IID_PPV_ARGS(&texPlatParams->m_textureResource));
 			texPlatParams->m_textureResource->SetName(texture.GetWName().c_str());
@@ -182,7 +189,7 @@ namespace dx12
 		// Register the resource with the global resource state tracker:
 		dx12::Context::GetGlobalResourceStateTracker().RegisterResource(
 			texPlatParams->m_textureResource.Get(),
-			D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON); // ????????????????????????????????????????????????????
+			initialState);
 	}
 
 

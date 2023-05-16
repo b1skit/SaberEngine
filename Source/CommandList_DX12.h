@@ -8,10 +8,6 @@
 #include "PipelineState_DX12.h"
 #include "ResourceStateTracker_DX12.h"
 
-// TODO: Just take our SE wrapper objects
-struct CD3DX12_CPU_DESCRIPTOR_HANDLE;
-struct D3D12_CPU_DESCRIPTOR_HANDLE;
-
 
 namespace re
 {
@@ -95,11 +91,12 @@ namespace dx12
 		void DrawIndexedInstanced(
 			uint32_t numIndexes, uint32_t numInstances, uint32_t idxStartOffset, int32_t baseVertexOffset, uint32_t instanceOffset);
 
-		void TransitionResource(ID3D12Resource* resources, D3D12_RESOURCE_STATES from, D3D12_RESOURCE_STATES to) const;
+		void TransitionResource(ID3D12Resource* resources, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
 
 		D3D12_COMMAND_LIST_TYPE GetType() const;
 		ID3D12GraphicsCommandList2* GetD3DCommandList() const;
 
+		LocalResourceStateTracker const& GetLocalResourceStates() const;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> m_commandList;
@@ -111,7 +108,7 @@ namespace dx12
 
 	private:
 		std::unique_ptr<dx12::GPUDescriptorHeap> m_gpuDescriptorHeaps;
-		dx12::ResourceStateTracker m_resourceStates;
+		dx12::LocalResourceStateTracker m_resourceStates;
 
 	private:
 		dx12::RootSignature const* m_currentGraphicsRootSignature;
@@ -145,6 +142,8 @@ namespace dx12
 		// Reset the command allocator BEFORE we reset the command list (to avoid leaking memory)
 		m_commandAllocator->Reset();
 
+		m_resourceStates.Reset();
+
 		// Note: pso is optional here; nullptr sets a dummy PSO
 		HRESULT hr = m_commandList->Reset(m_commandAllocator.Get(), nullptr);   
 		CheckHResult(hr, "Failed to reset command list");
@@ -153,9 +152,6 @@ namespace dx12
 		if (m_type != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY)
 		{
 			// TODO: Handle sampler descriptor heaps
-
-			// TODO: Is this correct? What happens when I want to switch shaders (different root sigs) on the current
-			// command list?
 
 			ID3D12DescriptorHeap* descriptorHeaps[1] = { m_gpuDescriptorHeaps->GetD3DDescriptorHeap() };
 			m_commandList->SetDescriptorHeaps(1, descriptorHeaps);

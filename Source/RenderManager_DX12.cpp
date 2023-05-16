@@ -191,12 +191,10 @@ namespace dx12
 				}
 
 
-				// Transition the resource state:
 				commandList->TransitionResource(
 					renderTargetResource.Get(),
-					D3D12_RESOURCE_STATE_PRESENT,
-					D3D12_RESOURCE_STATE_RENDER_TARGET);
-				// TODO: Handle this correctly
+					D3D12_RESOURCE_STATE_RENDER_TARGET,
+					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
 
 				// Clear the render targets:

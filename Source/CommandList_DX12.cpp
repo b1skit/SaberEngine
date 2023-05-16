@@ -358,14 +358,30 @@ namespace dx12
 
 
 	void CommandList::TransitionResource(
-		ID3D12Resource* resource, D3D12_RESOURCE_STATES from, D3D12_RESOURCE_STATES to) const
+		ID3D12Resource* resource, D3D12_RESOURCE_STATES toState, uint32_t subresourceIdx)
 	{
-		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-			resource,
-			from,
-			to);
+		if (m_resourceStates.HasResourceState(resource, subresourceIdx))
+		{
+			// If we've already seen this resource before, we can record the transition now (as we'll prepend any
+			// initial transitions when submitting the command list)			
+			CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+				resource,
+				m_resourceStates.GetResourceState(resource, subresourceIdx),
+				toState,
+				subresourceIdx,
+				D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE);
 
-		// TODO: Support batching of multiple barriers
-		m_commandList->ResourceBarrier(1, &barrier);
+			// TODO: Support batching of multiple barriers
+			m_commandList->ResourceBarrier(1, &barrier);
+		}
+
+		// Record the new state after the transition:
+		m_resourceStates.SetResourceState(resource, toState, subresourceIdx);
+	}
+
+
+	LocalResourceStateTracker const& CommandList::GetLocalResourceStates() const
+	{
+		return m_resourceStates;
 	}
 }
