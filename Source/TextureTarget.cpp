@@ -169,6 +169,7 @@ namespace re
 
 	void TextureTargetSet::SetColorTarget(uint8_t slot, re::TextureTarget texTarget)
 	{
+		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_colorIsCreated);
 		m_colorTargets[slot] = texTarget;
 		m_targetStateDirty = true;
 	}
@@ -176,6 +177,7 @@ namespace re
 
 	void TextureTargetSet::SetColorTarget(uint8_t slot, std::shared_ptr<re::Texture> texTarget)
 	{
+		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_colorIsCreated);
 		m_colorTargets[slot] = texTarget;
 		m_targetStateDirty = true;
 	}
@@ -183,6 +185,7 @@ namespace re
 
 	void TextureTargetSet::SetDepthStencilTarget(re::TextureTarget const& depthStencilTarget)
 	{
+		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_depthIsCreated);
 		m_depthStencilTarget = depthStencilTarget;
 		m_targetStateDirty = true;
 	}
@@ -190,6 +193,7 @@ namespace re
 
 	void TextureTargetSet::SetDepthStencilTarget(std::shared_ptr<re::Texture> depthStencilTarget)
 	{
+		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_depthIsCreated);
 		m_depthStencilTarget = depthStencilTarget;
 		m_targetStateDirty = true;
 	}
