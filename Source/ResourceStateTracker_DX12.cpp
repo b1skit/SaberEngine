@@ -7,42 +7,62 @@ namespace dx12
 {
 	// ResourceState
 	/******************************************************************************************************************/
+
+	GlobalResourceState::GlobalResourceState(
+		D3D12_RESOURCE_STATES initialState, uint32_t subresourceIdx, uint32_t numSubresources)
+		: ResourceState(initialState, subresourceIdx)
+		, m_numSubresources(numSubresources)
+	{
+		SEAssert("Invalid number of subresources", numSubresources > 0);
+	}
+
+
+	void GlobalResourceState::SetState(D3D12_RESOURCE_STATES afterState, uint32_t subresourceIdx)
+	{
+		ResourceState::SetState(afterState, subresourceIdx, false);
+	}
+
+	uint32_t GlobalResourceState::GetNumSubresources() const
+	{
+		return m_numSubresources;
+	}
+
+
+	LocalResourceState::LocalResourceState(D3D12_RESOURCE_STATES initialState, uint32_t subresourceIdx)
+		: ResourceState(initialState, subresourceIdx)
+	{
+	}
+
+
 	ResourceState::ResourceState(D3D12_RESOURCE_STATES initialState, uint32_t subresourceIdx)
 	{
 		m_states[subresourceIdx] = initialState;
 	}
 
 
-	bool ResourceState::HasState(uint32_t subresourceIdx) const
+	ResourceState::~ResourceState()
 	{
-		return m_states.contains(subresourceIdx);
 	}
 
 
 	D3D12_RESOURCE_STATES ResourceState::GetState(uint32_t subresourceIdx) const
 	{
-		if (!HasState(subresourceIdx))
+		if (!HasSubresourceRecord(subresourceIdx))
 		{
 			SEAssert("ResourceState not recorded for the given subresource index, or for all subresources", 
-				HasState(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES));
+				HasSubresourceRecord(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES));
 
 			return m_states.at(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 		}
 		return m_states.at(subresourceIdx);
 	}
-	
 
-	std::map<uint32_t, D3D12_RESOURCE_STATES> const& ResourceState::GetStates() const
+
+	void ResourceState::SetState(D3D12_RESOURCE_STATES state, uint32_t subresourceIdx, bool isPendingState)
 	{
-		return m_states;
-	}
-
-
-	void ResourceState::SetState(D3D12_RESOURCE_STATES state, uint32_t subresourceIdx)
-	{
-		if (subresourceIdx == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
+		if (subresourceIdx == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES && !isPendingState)
 		{
-			m_states.clear();
+			m_states.clear(); // We don't clear pending transitions: We need to keep any earlier subresource states
 		}
 		m_states[subresourceIdx] = state;
 	}
@@ -52,7 +72,8 @@ namespace dx12
 	/******************************************************************************************************************/
 
 
-	void GlobalResourceStateTracker::RegisterResource(ID3D12Resource* newResource, D3D12_RESOURCE_STATES initialState)
+	void GlobalResourceStateTracker::RegisterResource(
+		ID3D12Resource* newResource, D3D12_RESOURCE_STATES initialState, uint32_t numSubresources)
 	{
 		// TEMP HAX!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		if (newResource == nullptr)
@@ -64,8 +85,11 @@ namespace dx12
 
 		SEAssert("Resource cannot be null", newResource);
 		SEAssert("Resource is already registered", !m_globalStates.contains(newResource));
+		SEAssert("Invalid number of subresources", numSubresources > 0);
 
-		m_globalStates.emplace(newResource, dx12::ResourceState(initialState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES));
+		std::lock_guard<std::mutex> lock(m_globalStatesMutex);
+		m_globalStates.emplace(newResource, 
+			dx12::GlobalResourceState(initialState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, numSubresources));
 	}
 
 
@@ -82,18 +106,12 @@ namespace dx12
 		SEAssert("Resource cannot be null", existingResource);
 		SEAssert("Resource is not registered", m_globalStates.contains(existingResource));
 
+		std::lock_guard<std::mutex> lock(m_globalStatesMutex);
 		m_globalStates.erase(existingResource);
 	}
 
 
-	std::mutex& GlobalResourceStateTracker::GetGlobalStatesMutex()
-	{
-		return m_globalStatesMutex;
-	}
-
-
-	ResourceState const& GlobalResourceStateTracker::GetResourceState(
-		ID3D12Resource* resource) const
+	GlobalResourceState const& GlobalResourceStateTracker::GetResourceState(ID3D12Resource* resource) const
 	{
 		SEAssert("Resource not found, was it registered?", m_globalStates.contains(resource));
 		return m_globalStates.at(resource);
@@ -108,24 +126,9 @@ namespace dx12
 	}
 
 
-	bool GlobalResourceStateTracker::ResourceStateMatches(
-		ID3D12Resource* resource, D3D12_RESOURCE_STATES state, uint32_t subresourceIdx) const
-	{
-		SEAssert("Resource not found, was it registered?", m_globalStates.contains(resource));
-
-		auto const& globalState = m_globalStates.find(resource);
-		return globalState->second.HasState(subresourceIdx) &&
-			globalState->second.GetState(subresourceIdx) == state;
-	}
-
-
-	// LocalResourceStateTracker
-	/******************************************************************************************************************/
-
-
 	bool LocalResourceStateTracker::HasResourceState(ID3D12Resource* resource, uint32_t subresourceIdx) const
 	{
-		return m_knownStates.contains(resource) && m_knownStates.at(resource).HasState(subresourceIdx);
+		return m_knownStates.contains(resource) && m_knownStates.at(resource).HasSubresourceRecord(subresourceIdx);
 	}
 
 
@@ -134,13 +137,20 @@ namespace dx12
 	{
 		if (!m_knownStates.contains(resource)) // New resource:
 		{
-			const ResourceState afterState = ResourceState(stateAfter, subresourceIdx);
+			const LocalResourceState afterState = LocalResourceState(stateAfter, subresourceIdx);
 			m_pendingStates.emplace(resource, afterState);
 			m_knownStates.emplace(resource, afterState);
 		}
 		else // Existing resource:
 		{
-			m_knownStates.at(resource).SetState(stateAfter, subresourceIdx);
+			SEAssert("Pending states tracker should contain this resource", m_pendingStates.contains(resource));
+
+			// If we've never seen the subresource, we need to store this transition in the pending list
+			if (m_pendingStates.at(resource).HasSubresourceRecord(subresourceIdx) == false)
+			{
+				m_pendingStates.at(resource).SetState(stateAfter, subresourceIdx, true);
+			}
+			m_knownStates.at(resource).SetState(stateAfter, subresourceIdx, false);
 		}
 	}
 
@@ -148,7 +158,8 @@ namespace dx12
 	D3D12_RESOURCE_STATES LocalResourceStateTracker::GetResourceState(
 		ID3D12Resource* resource, uint32_t subresourceIdx) const
 	{
-		SEAssert("Trying to get the state of a resource that has not been seen before", m_knownStates.contains(resource));
+		SEAssert("Trying to get the state of a resource that has not been seen before", 
+			m_knownStates.contains(resource));
 		return m_knownStates.at(resource).GetState(subresourceIdx);
 	}
 
@@ -157,11 +168,5 @@ namespace dx12
 	{
 		m_pendingStates.clear();
 		m_knownStates.clear();
-	}
-
-
-	std::unordered_map<ID3D12Resource*, ResourceState> const& LocalResourceStateTracker::GetPendingResourceStates() const
-	{
-		return m_pendingStates;
 	}
 }

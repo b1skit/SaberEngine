@@ -117,6 +117,7 @@ namespace dx12
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 
 		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
+		uint32_t numSubresources = 0;
 
 		switch (texParams.m_usage)
 		{
@@ -133,6 +134,7 @@ namespace dx12
 		case re::Texture::Usage::SwapchainColorProxy:
 		{
 			initialState = D3D12_RESOURCE_STATE_COMMON;
+			numSubresources = 1;
 		}
 		break;
 		case re::Texture::Usage::DepthTarget:
@@ -171,6 +173,7 @@ namespace dx12
 			CD3DX12_HEAP_PROPERTIES depthHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
 			initialState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+			numSubresources = 1;
 
 			HRESULT hr = device->CreateCommittedResource(
 				&depthHeapProperties,
@@ -195,7 +198,8 @@ namespace dx12
 		// Register the resource with the global resource state tracker:
 		dx12::Context::GetGlobalResourceStateTracker().RegisterResource(
 			texPlatParams->m_textureResource.Get(),
-			initialState);
+			initialState,
+			numSubresources);
 	}
 
 
