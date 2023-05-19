@@ -18,8 +18,9 @@ namespace re
 	public:
 		struct PlatformParams : public re::IPlatformParams
 		{
-			// API-specific GPU bindings should be destroyed here
 			virtual ~PlatformParams() = 0;
+
+			glm::vec4 m_borderColor = glm::vec4(0.f, 0.f, 0.f, 0.f);
 
 			bool m_isCreated = false;
 		};

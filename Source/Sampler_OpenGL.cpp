@@ -125,6 +125,8 @@ namespace opengl
 
 		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MIN_FILTER, params->m_textureMinFilter);
 		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MAG_FILTER, params->m_textureMaxFilter);
+		
+		glSamplerParameterfv(params->m_samplerID, GL_TEXTURE_BORDER_COLOR, &params->m_borderColor.x);
 
 		// Finally, update the platform state:
 		params->m_isCreated = true;
