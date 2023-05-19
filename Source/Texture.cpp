@@ -24,7 +24,7 @@ namespace re
 		// Note: It's possible that 2 threads might simultaneously fail to find a Texture in the SceneData, and create
 		// it. But that's OK, the SceneData will only allow 1 instance to be added
 
-		std::shared_ptr<re::Texture> newTexture;
+		std::shared_ptr<re::Texture> newTexture = nullptr;
 		newTexture.reset(new re::Texture(name, params, doClear));
 
 		// If requested, register the Texture with the SceneData object for lifetime management:

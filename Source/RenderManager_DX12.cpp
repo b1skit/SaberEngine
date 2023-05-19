@@ -12,6 +12,7 @@
 #include "MeshPrimitive_DX12.h"
 #include "ParameterBlock_DX12.h"
 #include "RenderManager_DX12.h"
+#include "Sampler_DX12.h"
 #include "SwapChain_DX12.h"
 #include "Texture_DX12.h"
 #include "VertexStream_DX12.h"
@@ -41,6 +42,7 @@ namespace dx12
 			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
 
+		// Textures:
 		// TODO: Textures will likely have data to copy!!!!! For now, we're only handling backbuffer target textures...
 		// -> Need to create these before the PSO, incase the Texture happens to be used by a Target...
 		if (!renderManager.m_newTextures.m_newObjects.empty())
@@ -52,8 +54,16 @@ namespace dx12
 			}
 			renderManager.m_newTextures.m_newObjects.clear();
 		}
-
-
+		// Samplers:
+		if (!renderManager.m_newSamplers.m_newObjects.empty())
+		{
+			std::lock_guard<std::mutex> lock(renderManager.m_newSamplers.m_mutex);
+			for (auto& newObject : renderManager.m_newSamplers.m_newObjects)
+			{
+				dx12::Sampler::Create(*newObject.second);
+			}
+			renderManager.m_newSamplers.m_newObjects.clear();
+		}
 		// Shaders:
 		if (!renderManager.m_newShaders.m_newObjects.empty())
 		{

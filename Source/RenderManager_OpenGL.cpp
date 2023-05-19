@@ -18,6 +18,7 @@
 #include "RenderManager_OpenGL.h"
 #include "RenderManager.h"
 #include "RenderStage.h"
+#include "Sampler_OpenGL.h"
 #include "Shader.h"
 #include "Shader_OpenGL.h"
 #include "SwapChain_OpenGL.h"
@@ -76,6 +77,16 @@ namespace opengl
 				opengl::Texture::Create(*newObject.second);
 			}
 			renderManager.m_newTextures.m_newObjects.clear();
+		}
+		// Samplers:
+		if (!renderManager.m_newSamplers.m_newObjects.empty())
+		{
+			std::lock_guard<std::mutex> lock(renderManager.m_newSamplers.m_mutex);
+			for (auto& newObject : renderManager.m_newSamplers.m_newObjects)
+			{
+				opengl::Sampler::Create(*newObject.second);
+			}
+			renderManager.m_newSamplers.m_newObjects.clear();
 		}
 		// Shaders:
 		if (!renderManager.m_newShaders.m_newObjects.empty())

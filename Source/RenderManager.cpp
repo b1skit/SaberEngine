@@ -307,6 +307,22 @@ namespace re
 	}
 
 
+	template<>
+	void RenderManager::RegisterForCreate(std::shared_ptr<re::Sampler> newObject)
+	{
+		// Samplers are (currently) required to have unique names (e.g. "WrapLinearLinear")
+		const size_t nameID = newObject->GetNameID();
+
+		std::lock_guard<std::mutex> lock(m_newSamplers.m_mutex);
+
+		SEAssert("Found an object with the same data hash. This suggests a duplicate object exists and has not been "
+			"detected, or an object is being added twice, which should not happen",
+			m_newSamplers.m_newObjects.find(nameID) == m_newSamplers.m_newObjects.end());
+
+		m_newSamplers.m_newObjects.insert({ nameID, newObject });
+	}
+
+
 	void RenderManager::CreateAPIResources()
 	{
 		platform::RenderManager::CreateAPIResources(*this);

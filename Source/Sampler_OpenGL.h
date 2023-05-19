@@ -15,7 +15,6 @@ namespace opengl
 		struct PlatformParams final : public re::Sampler::PlatformParams
 		{
 			PlatformParams(re::Sampler::SamplerParams const& samplerParams);
-			~PlatformParams() override;
 
 			GLuint m_samplerID;		// Name of a sampler
 

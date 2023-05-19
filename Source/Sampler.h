@@ -21,7 +21,6 @@ namespace re
 			virtual ~PlatformParams() = 0;
 
 			glm::vec4 m_borderColor = glm::vec4(0.f, 0.f, 0.f, 0.f);
-
 			bool m_isCreated = false;
 		};
 
@@ -86,7 +85,7 @@ namespace re
 
 
 	public:
-		explicit Sampler(std::string const& name, SamplerParams params);
+		static std::shared_ptr<re::Sampler> Create(std::string const& name, SamplerParams params);
 		~Sampler() { Destroy(); }
 
 		SamplerParams const& GetSamplerParams() const { return m_samplerParams; }
@@ -96,6 +95,7 @@ namespace re
 
 
 	private:
+		explicit Sampler(std::string const& name, SamplerParams params);
 		void Destroy();
 
 

@@ -2,6 +2,7 @@
 #pragma once
 
 #include "DebugConfiguration.h"
+#include "RenderManager.h"
 #include "Sampler.h"
 #include "Sampler_Platform.h"
 
@@ -22,6 +23,7 @@ namespace re
 		ENUM_TO_STR(WrapAndFilterMode::ClampLinearMipMapLinearLinear),
 		ENUM_TO_STR(WrapAndFilterMode::WrapLinearMipMapLinearLinear),
 	};
+	// Note: Sampler names must be unique
 
 	// Static members:
 	std::unique_ptr<std::unordered_map<Sampler::WrapAndFilterMode, std::shared_ptr<re::Sampler>>> Sampler::m_samplerLibrary = 
@@ -48,7 +50,7 @@ namespace re
 				Sampler::MaxFilter::Linear
 			};
 			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::WrapLinearLinear,
-				make_shared<re::Sampler>(
+				re::Sampler::Create(
 					SamplerTypeLibraryNames[(size_t)Sampler::WrapAndFilterMode::WrapLinearLinear],
 					WrapLinearLinearParams));
 
@@ -59,7 +61,7 @@ namespace re
 				Sampler::MaxFilter::Linear
 			};
 			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::ClampLinearLinear,
-				make_shared<re::Sampler>(
+				re::Sampler::Create(
 					SamplerTypeLibraryNames[(size_t)Sampler::WrapAndFilterMode::ClampLinearLinear],
 					ClampLinearLinearParams));
 
@@ -70,7 +72,7 @@ namespace re
 				Sampler::MaxFilter::Nearest
 			};
 			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::ClampNearestNearest, 
-				make_shared<re::Sampler>(
+				re::Sampler::Create(
 					SamplerTypeLibraryNames[(size_t)Sampler::WrapAndFilterMode::ClampNearestNearest],
 					ClampNearestNearestParams));
 
@@ -81,7 +83,7 @@ namespace re
 				Sampler::MaxFilter::Linear
 			};
 			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear,
-				make_shared<re::Sampler>(
+				re::Sampler::Create(
 					SamplerTypeLibraryNames[(size_t)Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear],
 					ClampLinearMipMapLinearLinearParams));
 
@@ -92,7 +94,7 @@ namespace re
 				Sampler::MaxFilter::Linear
 			};
 			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::WrapLinearMipMapLinearLinear,  
-				make_shared<re::Sampler>(
+				re::Sampler::Create(
 					SamplerTypeLibraryNames[(size_t)Sampler::WrapAndFilterMode::WrapLinearMipMapLinearLinear],
 					WrapLinearMipMapLinearLinearParams));
 		}
@@ -112,6 +114,21 @@ namespace re
 	}
 
 
+	std::shared_ptr<re::Sampler> Sampler::Create(std::string const& name, SamplerParams params)
+	{
+		// TODO: Get rid of the sampler library, and create samplers on demand as they're requested
+		// -> Nested unordered maps of Mode/MinFilter/MaxFilter
+
+		std::shared_ptr<re::Sampler> newSampler = nullptr;
+		newSampler.reset(new re::Sampler(name, params));
+
+		// Register new Samplers with the RenderManager, so their API-level objects are created before use
+		re::RenderManager::Get()->RegisterForCreate(newSampler);
+
+		return newSampler;
+	}
+
+
 	Sampler::Sampler(string const& name, SamplerParams params) : en::NamedObject(name),
 		m_samplerParams{params}
 	{
@@ -121,6 +138,8 @@ namespace re
 
 	void Sampler::Destroy()
 	{
+		SEAssert("Sampler has not been created", m_platformParams->m_isCreated);
+		platform::Sampler::Destroy(*this);
 		m_platformParams = nullptr;
 		m_samplerParams = {};
 	}
