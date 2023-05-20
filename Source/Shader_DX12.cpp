@@ -31,11 +31,11 @@ namespace dx12
 		};
 
 		// Assemble root shader dir, as a wide string
-		std::wstring const& shaderRootWStr = en::Config::Get()->GetValueAsWString("shaderDirectory");
+		std::wstring const& shaderRootWStr = en::Config::Get()->GetValueAsWString("shaderDirectory") + shaderBaseName;
 
 		for (size_t i = 0; i < nameSuffix.size(); i++)
 		{
-			const std::wstring shaderName = shaderRootWStr + shaderBaseName + nameSuffix[i];
+			const std::wstring shaderName = shaderRootWStr + nameSuffix[i];
 
 			ComPtr<ID3DBlob> shaderBlob = nullptr;
 			HRESULT hr = D3DReadFileToBlob(shaderName.c_str(), &shaderBlob);
