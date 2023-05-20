@@ -18,7 +18,7 @@ namespace gr
 
 		void PreRender(re::StagePipeline& pipeline) override;
 
-		std::shared_ptr<re::TextureTargetSet> GetFinalTextureTargetSet() const override { return m_emissiveBlitStage.GetTextureTargetSet(); }
+		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 
 
 	private:
@@ -35,4 +35,10 @@ namespace gr
 		const uint32_t m_numDownSamplePasses	= 2; // Scaling factor: # times we half the frame size
 		const uint32_t m_numBlurPasses			= 3; // How many pairs of horizontal + vertical blur passes to perform
 	};
+
+
+	inline std::shared_ptr<re::TextureTargetSet const> BloomGraphicsSystem::GetFinalTextureTargetSet() const
+	{
+		return m_emissiveBlitStage.GetTextureTargetSet();
+	}
 }

@@ -49,7 +49,7 @@ namespace re
 		void SetStageShader(std::shared_ptr<re::Shader>);
 		re::Shader* GetStageShader() const;
 
-		inline std::shared_ptr<re::TextureTargetSet> GetTextureTargetSet() const { return m_textureTargetSet; }
+		std::shared_ptr<re::TextureTargetSet const> GetTextureTargetSet() const;
 		void SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet);
 
 		// Per-frame values must be re-set every frame
@@ -103,5 +103,11 @@ namespace re
 	inline re::Shader* RenderStage::GetStageShader() const
 	{
 		return m_stageShader.get();
+	}
+
+
+	inline std::shared_ptr<re::TextureTargetSet const> RenderStage::GetTextureTargetSet() const
+	{
+		return m_textureTargetSet;
 	}
 }

@@ -244,7 +244,7 @@ namespace dx12
 	void Context::CreateAddPipelineState(
 		re::Shader const& shader,
 		gr::PipelineState& grPipelineState,	
-		re::TextureTargetSet& targetSet)
+		re::TextureTargetSet const& targetSet)
 	{
 		dx12::Context::PlatformParams* ctxPlatParams =
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
@@ -301,7 +301,7 @@ namespace dx12
 	std::shared_ptr<dx12::PipelineState> Context::GetPipelineStateObject(
 		re::Shader const& shader,
 		gr::PipelineState& grPipelineState,
-		re::TextureTargetSet* targetSet)
+		re::TextureTargetSet const* targetSet)
 	{
 		dx12::Context::PlatformParams* ctxPlatParams =
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();

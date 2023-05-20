@@ -25,8 +25,7 @@ namespace re
 		, m_writesColor(true) // Reasonable assumption; Updated when we set the pipeline state
 		, m_batchFilterMask(0) // Accept all batches by default
 	{
-		SEAssert("", GetName() != "");
-		m_textureTargetSet = std::make_shared<re::TextureTargetSet>(name + " target");
+		SEAssert("Invalid RenderStage name", !GetName().empty());
 	}
 
 

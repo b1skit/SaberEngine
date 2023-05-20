@@ -81,7 +81,7 @@ namespace gr
 	}
 
 
-	std::shared_ptr<re::TextureTargetSet> TempDebugGraphicsSystem::GetFinalTextureTargetSet() const
+	std::shared_ptr<re::TextureTargetSet const> TempDebugGraphicsSystem::GetFinalTextureTargetSet() const
 	{
 		return m_tempDebugStage.GetTextureTargetSet();
 	}

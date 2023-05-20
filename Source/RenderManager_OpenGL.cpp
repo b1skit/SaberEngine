@@ -88,6 +88,17 @@ namespace opengl
 			}
 			renderManager.m_newSamplers.m_newObjects.clear();
 		}
+		// Texture Target Sets:
+		if (!renderManager.m_newTargetSets.m_newObjects.empty())
+		{
+			std::lock_guard<std::mutex> lock(renderManager.m_newTargetSets.m_mutex);
+			for (auto& newObject : renderManager.m_newTargetSets.m_newObjects)
+			{
+				opengl::TextureTargetSet::CreateColorTargets(*newObject.second);
+				opengl::TextureTargetSet::CreateDepthStencilTarget(*newObject.second);
+			}
+			renderManager.m_newTargetSets.m_newObjects.clear();
+		}
 		// Shaders:
 		if (!renderManager.m_newShaders.m_newObjects.empty())
 		{
@@ -135,7 +146,7 @@ namespace opengl
 				gr::PipelineState const& stagePipelineParams = renderStage->GetStagePipelineState();
 
 				// Attach the stage targets:
-				std::shared_ptr<re::TextureTargetSet> stageTargets = renderStage->GetTextureTargetSet();
+				std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
 				if (!stageTargets)
 				{
 					opengl::SwapChain::PlatformParams* swapChainParams = 

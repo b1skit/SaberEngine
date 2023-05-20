@@ -133,8 +133,9 @@ namespace re
 
 
 	public:
-		explicit TextureTargetSet(std::string const& name);
-		TextureTargetSet(TextureTargetSet const& rhs, std::string const& newName);
+		static std::shared_ptr<re::TextureTargetSet> Create(std::string const& name);
+		static std::shared_ptr<re::TextureTargetSet> Create(TextureTargetSet const&, std::string const& name);
+
 		TextureTargetSet(TextureTargetSet&&) = default;
 		TextureTargetSet& operator=(TextureTargetSet const&);
 		~TextureTargetSet();
@@ -164,10 +165,17 @@ namespace re
 		void SetPlatformParams(std::shared_ptr<PlatformParams> params) { m_platformParams = params; }
 		
 		std::shared_ptr<re::ParameterBlock> GetTargetParameterBlock();
+		std::shared_ptr<re::ParameterBlock> GetTargetParameterBlock() const;
 
 		uint64_t GetTargetSetSignature(); // Use this instead of HashedDataObject::GetDataHash
+		uint64_t GetTargetSetSignature() const;
 
-	private: // Internal state tracking:
+	private: // Use the object Create factories instead
+		explicit TextureTargetSet(std::string const& name);
+		TextureTargetSet(TextureTargetSet const& rhs, std::string const& newName);
+
+
+	private: // Internal state tracking. TODO: TargetSets are immutable after Create, just call these once during API creation
 		void RecomputeInternalState();
 
 		void RecomputeNumColorTargets();

@@ -87,6 +87,29 @@ namespace re
 	/******************/
 	// TextureTargetSet
 	/******************/
+
+	std::shared_ptr<re::TextureTargetSet> TextureTargetSet::Create(std::string const& name)
+	{
+		std::shared_ptr<re::TextureTargetSet> newTextureTargetSet = nullptr;
+		newTextureTargetSet.reset(new re::TextureTargetSet(name));
+
+		re::RenderManager::Get()->RegisterForCreate(newTextureTargetSet);
+
+		return newTextureTargetSet;
+	}
+
+
+	std::shared_ptr<re::TextureTargetSet> TextureTargetSet::Create(TextureTargetSet const& rhs, std::string const& name)
+	{
+		std::shared_ptr<re::TextureTargetSet> newTextureTargetSet = nullptr;
+		newTextureTargetSet.reset(new re::TextureTargetSet(rhs, name));
+
+		re::RenderManager::Get()->RegisterForCreate(newTextureTargetSet);
+
+		return newTextureTargetSet;
+	}
+
+
 	TextureTargetSet::TextureTargetSet(string const& name)
 		: NamedObject(name)
 		, m_targetStateDirty(true)
@@ -232,6 +255,13 @@ namespace re
 	}
 
 
+	std::shared_ptr<re::ParameterBlock> TextureTargetSet::GetTargetParameterBlock() const
+	{
+		SEAssert("Trying to get a target param block, but the target state is dirty", !m_targetStateDirty);
+		return m_targetParameterBlock;
+	}
+
+
 	void TextureTargetSet::RecomputeTargetParameterBlock()
 	{
 		glm::vec4 targetDimensions(0.f, 0.f, 0.f, 0.f);
@@ -334,6 +364,13 @@ namespace re
 	uint64_t TextureTargetSet::GetTargetSetSignature()
 	{
 		RecomputeInternalState();
+		return GetDataHash();
+	}
+
+
+	uint64_t TextureTargetSet::GetTargetSetSignature() const
+	{
+		SEAssert("Trying to get the signature, but the target state is dirty", !m_targetStateDirty);
 		return GetDataHash();
 	}
 }

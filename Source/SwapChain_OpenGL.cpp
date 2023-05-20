@@ -16,7 +16,7 @@ namespace opengl
 
 		// Default target set:
 		LOG("Creating default texure target set");
-		swapChainParams->m_backbufferTargetSet = std::make_shared<re::TextureTargetSet>("Backbuffer");
+		swapChainParams->m_backbufferTargetSet = re::TextureTargetSet::Create("Backbuffer");
 		swapChainParams->m_backbufferTargetSet->Viewport() =
 		{
 			0,

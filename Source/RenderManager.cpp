@@ -323,6 +323,23 @@ namespace re
 	}
 
 
+	template<>
+	void RenderManager::RegisterForCreate(std::shared_ptr<re::TextureTargetSet> newObject)
+	{
+		// Target sets can have identical names, and are usually identified by their unique target configuration (via a
+		// data hash). It's possible we might have 2 identical target configurations so we use the uniqueID here instead
+		const size_t uniqueID = newObject->GetUniqueID();
+
+		std::lock_guard<std::mutex> lock(m_newTargetSets.m_mutex);
+
+		SEAssert("Found an object with the same data hash. This suggests a duplicate object exists and has not been "
+			"detected, or an object is being added twice, which should not happen",
+			m_newTargetSets.m_newObjects.find(uniqueID) == m_newTargetSets.m_newObjects.end());
+
+		m_newTargetSets.m_newObjects.insert({ uniqueID, newObject });
+	}
+
+
 	void RenderManager::CreateAPIResources()
 	{
 		platform::RenderManager::CreateAPIResources(*this);

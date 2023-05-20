@@ -178,8 +178,7 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		shared_ptr<GBufferGraphicsSystem> gBufferGS = std::dynamic_pointer_cast<GBufferGraphicsSystem>(
-			RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>());
+		GBufferGraphicsSystem* gBufferGS = RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>();
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
 		
 		// Create a shared lighting stage texture target:
@@ -197,7 +196,7 @@ namespace gr
 		std::shared_ptr<Texture> outputTexture = re::Texture::Create("DeferredLightTarget", lightTargetParams, false);
 
 		std::shared_ptr<TextureTargetSet> deferredLightingTargetSet =
-			make_shared<TextureTargetSet>("Deferred lighting target");
+			re::TextureTargetSet::Create("Deferred lighting target");
 		deferredLightingTargetSet->SetColorTarget(0, outputTexture);
 		deferredLightingTargetSet->SetDepthStencilTarget(gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget());
 
@@ -242,9 +241,13 @@ namespace gr
 
 			m_BRDF_integrationMap = re::Texture::Create("BRDFIntegrationMap", brdfParams, false);
 
-			brdfStage.GetTextureTargetSet()->SetColorTarget(0, m_BRDF_integrationMap);
-			brdfStage.GetTextureTargetSet()->Viewport() =
+			std::shared_ptr<re::TextureTargetSet> brdfStageTargets = re::TextureTargetSet::Create("BRDF Stage Targets");
+
+			brdfStageTargets->SetColorTarget(0, m_BRDF_integrationMap);
+			brdfStageTargets->Viewport() =
 				re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
+
+			brdfStage.SetTextureTargetSet(brdfStageTargets);
 
 			// Stage params:
 			gr::PipelineState brdfStageParams;
@@ -339,9 +342,12 @@ namespace gr
 					re::ParameterBlock::PBType::SingleFrame);
 				iemStage.AddPermanentParameterBlock(pb);
 
-				iemStage.GetTextureTargetSet()->SetColorTarget(0, m_IEMTex);
-				iemStage.GetTextureTargetSet()->Viewport() = 
-					re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
+				std::shared_ptr<re::TextureTargetSet> iemTargets = re::TextureTargetSet::Create("IEM Stage Targets");
+
+				iemTargets->SetColorTarget(0, m_IEMTex);
+				iemTargets->Viewport() = re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
+
+				iemStage.SetTextureTargetSet(iemTargets);
 
 				iblStageParams.SetTextureTargetSetConfig({ face, 0});
 				iemStage.SetStagePipelineState(iblStageParams);
@@ -361,8 +367,7 @@ namespace gr
 			cubeParams.m_useMIPs = true;
 			m_PMREMTex = re::Texture::Create("PMREMTexture", cubeParams, false);
 
-			std::shared_ptr<TextureTargetSet> pmremTargetSet = 
-				std::make_shared<TextureTargetSet>("PMREM texture targets");
+			std::shared_ptr<TextureTargetSet> pmremTargetSet = re::TextureTargetSet::Create("PMREM texture targets");
 			pmremTargetSet->SetColorTarget(0, m_PMREMTex);
 			pmremTargetSet->Viewport() = re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
 
@@ -509,8 +514,7 @@ namespace gr
 		vector<shared_ptr<Light>> const& pointLights = SceneManager::GetSceneData()->GetPointLights();
 
 		// Add GBuffer textures as stage inputs:		
-		shared_ptr<GBufferGraphicsSystem> gBufferGS = std::dynamic_pointer_cast<GBufferGraphicsSystem>(
-			RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>());
+		GBufferGraphicsSystem* gBufferGS = RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>();
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
 
 		for (uint8_t slot = 0; slot < (GBufferGraphicsSystem::GBufferTexNames.size() - 1); slot++) // -1, since we handle depth @end
@@ -654,7 +658,7 @@ namespace gr
 	}
 
 
-	std::shared_ptr<re::TextureTargetSet> DeferredLightingGraphicsSystem::GetFinalTextureTargetSet() const
+	std::shared_ptr<re::TextureTargetSet const> DeferredLightingGraphicsSystem::GetFinalTextureTargetSet() const
 	{
 		return m_ambientStage.GetTextureTargetSet();
 	}

@@ -14,6 +14,7 @@
 #include "RenderManager_DX12.h"
 #include "Sampler_DX12.h"
 #include "SwapChain_DX12.h"
+#include "TextureTarget_DX12.h"
 #include "Texture_DX12.h"
 #include "VertexStream_DX12.h"
 
@@ -64,6 +65,17 @@ namespace dx12
 			}
 			renderManager.m_newSamplers.m_newObjects.clear();
 		}
+		// Texture Target Sets:
+		if (!renderManager.m_newTargetSets.m_newObjects.empty())
+		{
+			std::lock_guard<std::mutex> lock(renderManager.m_newTargetSets.m_mutex);
+			for (auto& newObject : renderManager.m_newTargetSets.m_newObjects)
+			{
+				dx12::TextureTargetSet::CreateColorTargets(*newObject.second);
+				dx12::TextureTargetSet::CreateDepthStencilTarget(*newObject.second);
+			}
+			renderManager.m_newTargetSets.m_newObjects.clear();
+		}
 		// Shaders:
 		if (!renderManager.m_newShaders.m_newObjects.empty())
 		{
@@ -96,7 +108,7 @@ namespace dx12
 						if (renderStage->GetStageShader() == nullptr ||
 							renderStage->GetStageShader()->GetNameID() == shader.second->GetNameID())
 						{
-							std::shared_ptr<re::TextureTargetSet> stageTargets = renderStage->GetTextureTargetSet();
+							std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
 							if (!stageTargets)
 							{
 								// We (currently) assume a null TextureTargetSet indicates the backbuffer is the target
@@ -180,7 +192,7 @@ namespace dx12
 				Microsoft::WRL::ComPtr<ID3D12Resource> renderTargetResource = nullptr;
 
 				// Attach the stage targets:
-				std::shared_ptr<re::TextureTargetSet> stageTargets = renderStage->GetTextureTargetSet();
+				std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
 				const bool isBackbufferTarget = stageTargets == nullptr;
 				if (isBackbufferTarget)
 				{

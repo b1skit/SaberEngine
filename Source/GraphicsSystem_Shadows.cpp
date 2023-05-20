@@ -197,7 +197,7 @@ namespace gr
 	}
 
 
-	std::shared_ptr<re::TextureTargetSet> ShadowsGraphicsSystem::GetFinalTextureTargetSet() const
+	std::shared_ptr<re::TextureTargetSet const> ShadowsGraphicsSystem::GetFinalTextureTargetSet() const
 	{
 		return m_directionalShadowStage.GetTextureTargetSet();
 	}

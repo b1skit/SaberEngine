@@ -36,8 +36,8 @@ namespace gr
 
 	void BloomGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		shared_ptr<DeferredLightingGraphicsSystem> deferredLightGS = dynamic_pointer_cast<DeferredLightingGraphicsSystem>(
-			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>());
+		DeferredLightingGraphicsSystem* deferredLightGS = 
+			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
 
 		Camera* sceneCam = SceneManager::GetSceneData()->GetMainCamera().get();
 
@@ -55,7 +55,8 @@ namespace gr
 		m_emissiveBlitStage.SetStageShader(blitShader);
 		m_emissiveBlitStage.AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
-		m_emissiveBlitStage.SetTextureTargetSet(deferredLightGS->GetFinalTextureTargetSet());
+		m_emissiveBlitStage.SetTextureTargetSet(
+			re::TextureTargetSet::Create(*deferredLightGS->GetFinalTextureTargetSet(), "Emissive Blit Target Set"));
 		
 		pipeline.AppendRenderStage(&m_emissiveBlitStage);
 
@@ -93,17 +94,21 @@ namespace gr
 		// Downsampling stages (w/luminance threshold in 1st pass):
 		for (uint32_t i = 0; i < numScalingStages; i++)
 		{
-			m_downResStages.emplace_back("Down-res stage " + to_string(i + 1) + " / " + to_string(numScalingStages));
+			const string name = "Down-res stage " + to_string(i + 1) + " / " + to_string(numScalingStages);
+			m_downResStages.emplace_back(name);
 
-			m_downResStages.back().GetTextureTargetSet()->Viewport().Width() = currentXRes;
-			m_downResStages.back().GetTextureTargetSet()->Viewport().Height() = currentYRes;
+			std::shared_ptr<re::TextureTargetSet> downResTargets = re::TextureTargetSet::Create(name + " targets");
+
+			downResTargets->Viewport().Width() = currentXRes;
+			downResTargets->Viewport().Height() = currentYRes;
 
 			resScaleParams.m_width = currentXRes;
 			resScaleParams.m_height = currentYRes;
 			const string texPath = "ScaledResolution_" + to_string(currentXRes) + "x" + to_string(currentYRes);
 
-			m_downResStages.back().GetTextureTargetSet()->SetColorTarget(0, 
-				re::Texture::Create(texPath, resScaleParams, false));
+			downResTargets->SetColorTarget(0, re::Texture::Create(texPath, resScaleParams, false));
+
+			m_downResStages.back().SetTextureTargetSet(downResTargets);
 
 			m_downResStages.back().SetStagePipelineState(bloomStageParams);
 			m_downResStages.back().AddPermanentParameterBlock(sceneCam->GetCameraParams());
@@ -146,26 +151,28 @@ namespace gr
 		for (size_t i = 0; i < totalBlurPasses; i++)
 		{
 			const string stagePrefix = (i % 2 == 0) ? "Horizontal " : "Vertical ";
-			m_blurStages.emplace_back(
-				stagePrefix + "blur stage " + to_string((i+2)/2) + " / " + to_string(m_numBlurPasses));
+			const string name = stagePrefix + "blur stage " + to_string((i + 2) / 2) + " / " + to_string(m_numBlurPasses);
+			m_blurStages.emplace_back(name);
 
-			m_blurStages.back().GetTextureTargetSet()->Viewport().Width() = currentXRes;
-			m_blurStages.back().GetTextureTargetSet()->Viewport().Height() = currentYRes;
+			std::shared_ptr<re::TextureTargetSet> blurTargets = re::TextureTargetSet::Create(name + " targets");
+
+			blurTargets->Viewport().Width() = currentXRes;
+			blurTargets->Viewport().Height() = currentYRes;
 
 			m_blurStages.back().SetStagePipelineState(bloomStageParams);
 			m_blurStages.back().AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
 			if (i % 2 == 0)
 			{
-				m_blurStages.back().GetTextureTargetSet()->SetColorTarget(0, blurPingPongTexture);
+				blurTargets->SetColorTarget(0, blurPingPongTexture);
 				m_blurStages.back().SetStageShader(horizontalBlurShader);
 			}
 			else
 			{
-				m_blurStages.back().GetTextureTargetSet()->SetColorTarget(0,
-					m_downResStages.back().GetTextureTargetSet()->GetColorTarget(0));
+				blurTargets->SetColorTarget(0, m_downResStages.back().GetTextureTargetSet()->GetColorTarget(0));
 				m_blurStages.back().SetStageShader(verticalBlurShader);
 			}
+			m_blurStages.back().SetTextureTargetSet(blurTargets);
 
 			pipeline.AppendRenderStage(&m_blurStages[i]);
 		}
@@ -177,17 +184,21 @@ namespace gr
 			currentXRes *= 2;
 			currentYRes *= 2;
 
-			m_upResStages.emplace_back("Up-res stage " + to_string(i + 1) + " / " + to_string(numScalingStages));
+			const string name = "Up-res stage " + to_string(i + 1) + " / " + to_string(numScalingStages);
+			m_upResStages.emplace_back(name);
 
-			m_upResStages.back().GetTextureTargetSet()->Viewport().Width() = currentXRes;
-			m_upResStages.back().GetTextureTargetSet()->Viewport().Height() = currentYRes;
+			std::shared_ptr<re::TextureTargetSet> upResTargets = re::TextureTargetSet::Create(name + " targets");
+
+			upResTargets->Viewport().Width() = currentXRes;
+			upResTargets->Viewport().Height() = currentYRes;
 	
 			m_upResStages.back().AddPermanentParameterBlock(sceneCam->GetCameraParams());
 			m_upResStages[i].SetStageShader(blitShader);
 
 			if (i == (numScalingStages - 1)) // Last iteration: Additive blit back to the src gs
 			{
-				m_upResStages.back().SetTextureTargetSet(deferredLightGS->GetFinalTextureTargetSet());
+				m_upResStages.back().SetTextureTargetSet(
+					re::TextureTargetSet::Create(*deferredLightGS->GetFinalTextureTargetSet(), name + " targets"));
 
 				gr::PipelineState addStageParams(bloomStageParams);
 				addStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
@@ -198,11 +209,13 @@ namespace gr
 			}
 			else
 			{
-				m_upResStages.back().GetTextureTargetSet()->SetColorTarget(0,
+				upResTargets->SetColorTarget(0,
 					m_downResStages[m_downResStages.size() - (i + 2)].GetTextureTargetSet()->GetColorTarget(0));
 
 				m_upResStages.back().SetStagePipelineState(bloomStageParams);
 			}
+
+			m_upResStages.back().SetTextureTargetSet(upResTargets);
 
 			pipeline.AppendRenderStage(&m_upResStages[i]);
 
@@ -220,12 +233,10 @@ namespace gr
 	{
 		CreateBatches();
 
-		shared_ptr<GBufferGraphicsSystem> gbufferGS = dynamic_pointer_cast<GBufferGraphicsSystem>(
-			RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>());
+		GBufferGraphicsSystem* gbufferGS = RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>();
 
-		shared_ptr<DeferredLightingGraphicsSystem> deferredLightGS =
-			dynamic_pointer_cast<DeferredLightingGraphicsSystem>(
-				RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>());
+		DeferredLightingGraphicsSystem* deferredLightGS = 
+			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
 
 		shared_ptr<Sampler> const bloomStageSampler = Sampler::GetSampler(Sampler::WrapAndFilterMode::ClampLinearLinear);
 

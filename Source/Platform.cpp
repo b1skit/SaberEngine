@@ -103,11 +103,11 @@ namespace platform
 			platform::ParameterBlock::Destroy	= &opengl::ParameterBlock::Destroy;
 
 			// Render manager:
-			platform::RenderManager::Initialize					= &opengl::RenderManager::Initialize;
-			platform::RenderManager::Render						= &opengl::RenderManager::Render;
-			platform::RenderManager::RenderImGui				= &opengl::RenderManager::RenderImGui;
-			platform::RenderManager::Shutdown					= &opengl::RenderManager::Shutdown;
-			platform::RenderManager::CreateAPIResources		= &opengl::RenderManager::CreateAPIResources;
+			platform::RenderManager::Initialize			= &opengl::RenderManager::Initialize;
+			platform::RenderManager::Render				= &opengl::RenderManager::Render;
+			platform::RenderManager::RenderImGui		= &opengl::RenderManager::RenderImGui;
+			platform::RenderManager::Shutdown			= &opengl::RenderManager::Shutdown;
+			platform::RenderManager::CreateAPIResources	= &opengl::RenderManager::CreateAPIResources;
 
 			// Shader:
 			platform::Shader::Create			= &opengl::Shader::Create;
@@ -152,11 +152,11 @@ namespace platform
 			platform::ParameterBlock::Destroy	= &dx12::ParameterBlock::Destroy;
 			
 			// Render manager:
-			platform::RenderManager::Initialize					= &dx12::RenderManager::Initialize;
-			platform::RenderManager::Render						= &dx12::RenderManager::Render;
-			platform::RenderManager::RenderImGui				= &dx12::RenderManager::RenderImGui;
-			platform::RenderManager::Shutdown					= &dx12::RenderManager::Shutdown;
-			platform::RenderManager::CreateAPIResources		= &dx12::RenderManager::CreateAPIResources;
+			platform::RenderManager::Initialize			= &dx12::RenderManager::Initialize;
+			platform::RenderManager::Render				= &dx12::RenderManager::Render;
+			platform::RenderManager::RenderImGui		= &dx12::RenderManager::RenderImGui;
+			platform::RenderManager::Shutdown			= &dx12::RenderManager::Shutdown;
+			platform::RenderManager::CreateAPIResources	= &dx12::RenderManager::CreateAPIResources;
 
 			// Shader:
 			platform::Shader::Create			= &dx12::Shader::Create;
@@ -171,6 +171,10 @@ namespace platform
 			platform::Texture::Create			= &dx12::Texture::Create;
 			platform::Texture::Destroy			= &dx12::Texture::Destroy;
 			platform::Texture::GenerateMipMaps	= &dx12::Texture::GenerateMipMaps;
+
+			// Texture Samplers:
+			platform::Sampler::Create	= &dx12::Sampler::Create;
+			platform::Sampler::Destroy	= &dx12::Sampler::Destroy;
 
 			// Vertex stream:
 			platform::VertexStream::CreatePlatformParams	= &dx12::VertexStream::CreatePlatformParams;

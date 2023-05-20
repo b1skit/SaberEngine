@@ -54,7 +54,7 @@ namespace re
 		re::Context const& GetContext() const { return m_context; }
 
 		template <typename T>
-		std::shared_ptr<gr::GraphicsSystem> GetGraphicsSystem();
+		T* GetGraphicsSystem();
 
 		inline std::vector<re::Batch> const& GetSceneBatches() { return m_renderBatches; }
 
@@ -82,6 +82,7 @@ namespace re
 		NewAPIObjects<re::MeshPrimitive> m_newMeshPrimitives;
 		NewAPIObjects<re::Texture> m_newTextures;
 		NewAPIObjects<re::Sampler> m_newSamplers;
+		NewAPIObjects<re::TextureTargetSet> m_newTargetSets;
 
 
 	private:
@@ -121,14 +122,15 @@ namespace re
 
 
 	template <typename T>
-	std::shared_ptr<gr::GraphicsSystem> RenderManager::GetGraphicsSystem()
+	T* RenderManager::GetGraphicsSystem()
 	{
 		// TODO: A linear search isn't optimal here, but there aren't many graphics systems in practice so ok for now
 		for (size_t i = 0; i < m_graphicsSystems.size(); i++)
 		{
-			if (dynamic_cast<T*>(m_graphicsSystems[i].get()) != nullptr)
+			T* result = dynamic_cast<T*>(m_graphicsSystems[i].get());
+			if (result != nullptr)
 			{
-				return m_graphicsSystems[i];
+				return result;
 			}
 		}
 

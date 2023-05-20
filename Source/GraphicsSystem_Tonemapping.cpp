@@ -83,7 +83,7 @@ namespace gr
 	{
 		CreateBatches();
 
-		std::shared_ptr<TextureTargetSet> deferredLightTextureTargetSet =
+		std::shared_ptr<TextureTargetSet const> deferredLightTextureTargetSet =
 			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
 
 		m_tonemappingStage.SetPerFrameTextureInput(
@@ -100,7 +100,7 @@ namespace gr
 	}
 
 
-	std::shared_ptr<re::TextureTargetSet> TonemappingGraphicsSystem::GetFinalTextureTargetSet() const 
+	std::shared_ptr<re::TextureTargetSet const> TonemappingGraphicsSystem::GetFinalTextureTargetSet() const 
 	{
 		return m_tonemappingStage.GetTextureTargetSet();
 	}

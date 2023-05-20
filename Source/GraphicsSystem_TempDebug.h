@@ -18,7 +18,7 @@ namespace gr
 
 		void PreRender(re::StagePipeline& pipeline) override;
 
-		std::shared_ptr<re::TextureTargetSet> GetFinalTextureTargetSet() const override;
+		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 
 	private:
 		void CreateBatches() override;

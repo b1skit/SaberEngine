@@ -61,20 +61,19 @@ namespace gr
 
 		m_skyboxStage.AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());
 
-		shared_ptr<DeferredLightingGraphicsSystem> deferredLightGS = dynamic_pointer_cast<DeferredLightingGraphicsSystem>(
-			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>());
+		DeferredLightingGraphicsSystem* deferredLightGS = 
+			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
 
-		// Need to create a new texture target set, so we can write to the deferred lighting color targets, but use the
-		// GBuffer depth buffer for HW depth testing
-		m_skyboxStage.SetTextureTargetSet(std::make_shared<re::TextureTargetSet>(
-			*deferredLightGS->GetFinalTextureTargetSet(), 
-			"Skybox Target Set"));
+		// Create a new texture target set so we can write to the deferred lighting color targets, but attach the
+		// GBuffer depth for HW depth testing
+		std::shared_ptr<re::TextureTargetSet> skyboxTargets = 
+			re::TextureTargetSet::Create(*deferredLightGS->GetFinalTextureTargetSet(),"Skybox Targets");
 
-		shared_ptr<GBufferGraphicsSystem> gBufferGS = std::dynamic_pointer_cast<GBufferGraphicsSystem>(
-			RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>());
-		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
-		m_skyboxStage.GetTextureTargetSet()->SetDepthStencilTarget(
-			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget());
+		GBufferGraphicsSystem* gBufferGS = RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>();
+
+		skyboxTargets->SetDepthStencilTarget(gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget());
+
+		m_skyboxStage.SetTextureTargetSet(skyboxTargets);
 
 		pipeline.AppendRenderStage(&m_skyboxStage);
 	}
@@ -90,12 +89,11 @@ namespace gr
 			m_skyTexture,
 			Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 
-		shared_ptr<GBufferGraphicsSystem> gBufferGS = dynamic_pointer_cast<GBufferGraphicsSystem>(
-			RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>());
+		GBufferGraphicsSystem* gBufferGS = RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>();
 	}
 
 
-	std::shared_ptr<re::TextureTargetSet> SkyboxGraphicsSystem::GetFinalTextureTargetSet() const
+	std::shared_ptr<re::TextureTargetSet const> SkyboxGraphicsSystem::GetFinalTextureTargetSet() const
 	{
 		return m_skyboxStage.GetTextureTargetSet();
 	}

@@ -71,12 +71,8 @@ namespace opengl
 			return;
 		}
 
-		if (targetSetParams->m_colorIsCreated)
-		{
-			return;
-		}
+		SEAssert("Targets have already been created", !targetSetParams->m_colorIsCreated);
 		targetSetParams->m_colorIsCreated = true;
-
 
 		// Configure the framebuffer and each texture target:
 		uint32_t attachmentPointOffset = 0; // TODO: Attach to the array index, rather than the offset?
@@ -159,7 +155,7 @@ namespace opengl
 		}
 		else if (!targetSet.GetDepthStencilTarget().HasTexture())
 		{
-			LOG_WARNING("Texture target set \"%s\" has no color/depth targets. Assuming it is the default color framebuffer", 
+			LOG_WARNING("Texture target set \"%s\" has no color/depth targets. Assuming it is the default COLOR framebuffer", 
 				targetSet.GetName().c_str());
 			targetSetParams->m_frameBufferObject = 0;
 		}
@@ -171,12 +167,8 @@ namespace opengl
 
 
 	void TextureTargetSet::AttachColorTargets(
-		re::TextureTargetSet& targetSet, uint32_t face, uint32_t mipLevel)
+		re::TextureTargetSet const& targetSet, uint32_t face, uint32_t mipLevel)
 	{
-		// Ensure the targets are created before we try and attach them
-		opengl::TextureTargetSet::CreateColorTargets(targetSet);
-
-		// Binding:
 		opengl::TextureTargetSet::PlatformParams const* targetSetParams =
 			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
 
@@ -280,10 +272,7 @@ namespace opengl
 		opengl::TextureTargetSet::PlatformParams* targetSetParams =
 			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams*>();
 
-		if (targetSetParams->m_depthIsCreated)
-		{
-			return;
-		}
+		SEAssert("Targets have already been created", !targetSetParams->m_depthIsCreated);
 		targetSetParams->m_depthIsCreated = true;
 
 		std::shared_ptr<re::Texture const> depthStencilTex = targetSet.GetDepthStencilTarget().GetTexture();
@@ -326,7 +315,7 @@ namespace opengl
 		}
 		else if (!targetSet.HasTargets())
 		{
-			LOG_WARNING("Texture target set \"%s\" has no color or depth targets. Assuming it is the default depth framebuffer",
+			LOG_WARNING("Texture target set \"%s\" has no color/depth targets. Assuming it is the default DEPTH framebuffer",
 				targetSet.GetName().c_str());
 			targetSetParams->m_frameBufferObject = 0;
 		}
@@ -337,12 +326,8 @@ namespace opengl
 	}
 
 
-	void TextureTargetSet::AttachDepthStencilTarget(re::TextureTargetSet& targetSet)
+	void TextureTargetSet::AttachDepthStencilTarget(re::TextureTargetSet const& targetSet)
 	{
-		// Ensure the target is created before we try and attach it
-		opengl::TextureTargetSet::CreateDepthStencilTarget(targetSet);
-
-		// Binding:
 		opengl::TextureTargetSet::PlatformParams const* targetSetParams =
 			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
 

@@ -68,12 +68,13 @@ namespace gr
 		// -> We'll also need to trigger mip generation after laying down the GBuffer
 
 
-		std::shared_ptr<re::TextureTargetSet> gBufferTargets = m_gBufferStage.GetTextureTargetSet();
+		std::shared_ptr<re::TextureTargetSet> gBufferTargets = re::TextureTargetSet::Create("GBuffer Target Set");
 		for (uint8_t i = GBufferTexIdx::GBufferAlbedo; i <= GBufferTexIdx::GBufferMatProp0; i++)
 		{
 			gBufferTargets->SetColorTarget(
 				i, re::Texture::Create(GBufferTexNames[i], gBufferTexParams, false));
 		}
+		m_gBufferStage.SetTextureTargetSet(gBufferTargets);
 
 		// Create GBuffer depth target:
 		re::Texture::TextureParams depthTexParams(gBufferTexParams);
@@ -119,7 +120,7 @@ namespace gr
 	}
 
 
-	std::shared_ptr<re::TextureTargetSet> GBufferGraphicsSystem::GetFinalTextureTargetSet() const
+	std::shared_ptr<re::TextureTargetSet const> GBufferGraphicsSystem::GetFinalTextureTargetSet() const
 	{
 		return m_gBufferStage.GetTextureTargetSet();
 	}

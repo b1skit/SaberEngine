@@ -20,7 +20,7 @@ namespace gr
 		virtual void Create(re::StagePipeline& pipeline) = 0; // Initial Graphics System setup
 		virtual void PreRender(re::StagePipeline& pipeline) = 0; // Called every frame
 
-		virtual std::shared_ptr<re::TextureTargetSet> GetFinalTextureTargetSet() const = 0;
+		virtual std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const = 0;
 
 
 	private:

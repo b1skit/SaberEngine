@@ -102,7 +102,7 @@ namespace dx12
 
 
 		// Create a target set to hold our backbuffer targets:
-		swapChainParams->m_backbufferTargetSet = std::make_shared<re::TextureTargetSet>("Backbuffer");
+		swapChainParams->m_backbufferTargetSet = re::TextureTargetSet::Create("Backbuffer");
 
 		// Create color target textures, attach them to our target set, & copy the backbuffer resource into their
 		// platform params:
