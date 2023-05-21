@@ -8,8 +8,6 @@
 #include "SaberLighting.glsl"
 
 
-#if defined AMBIENT_IBL
-
 void main()
 {	
 	// Note: All PBR calculations are performed in linear space
@@ -62,17 +60,3 @@ void main()
 
 	FragColor = vec4((linearAlbedo.rgb * irradiance * k_d + specular) * exposure, 1.0); // Note: Omitted the "/ PI" factor here
 }
-
-
-#else
-// AMBIENT_COLOR: No IBL found, fallback to using an ambient color
-
-void main()
-{	
-	float AO = texture(GBufferRMAO, vOut.uv0.xy).b;
-
-	// Phong ambient contribution:
-	FragColor = texture(GBufferAlbedo, vOut.uv0.xy) * vec4(lightColor, 1) * AO;
-}
-
-#endif

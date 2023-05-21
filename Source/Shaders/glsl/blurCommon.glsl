@@ -1,16 +1,8 @@
-#version 460 core
-
-#define SABER_FRAGMENT_SHADER
-#define SABER_VEC4_OUTPUT
-
-#include "SaberCommon.glsl"
-#include "SaberGlobals.glsl"
-
+// © 2023 Adam Badke. All rights reserved.
 
 #if !defined(BLUR_SHADER_LUMINANCE_THRESHOLD)
 	
 	
-
 	// 5-tap Gaussian filter:
 //	#define NUM_TAPS 5
 //	#define TEXEL_OFFSET 2
@@ -50,8 +42,6 @@
 		scale = scale / (scale + 1.0);
 
 		FragColor = vec4(fragRGB * scale, 1.0);
-
-
 	}
 
 
@@ -92,15 +82,6 @@
 		}
 
 		FragColor = vec4(total, 1);
-	} 
-
-
-// Error:
-#else
-
-	void main()
-	{	
-		FragColor = vec4(1.0f, 0.0f, 1.0f, 1.0f); // Hot pink
-	} 
+	}
 
 #endif

@@ -25,31 +25,24 @@ namespace re
 
 	public: // Object factory: Gets a Shader if it already exists, or creates it if it doesn't
 		static std::shared_ptr<re::Shader> Create(std::string const& extensionlessShaderFilename);
-
-
-	public:
-		Shader(Shader&&) = default;
-		Shader& operator=(Shader&&) = default;
 		~Shader() { Destroy(); }
 
+		Shader(Shader&&) = default;
+		Shader& operator=(Shader&&) = default;
+		
 		inline bool IsCreated() const;
 			
 		inline PlatformParams* GetPlatformParams() const;
 		inline void SetPlatformParams(std::unique_ptr<PlatformParams> params);
 
-		inline std::vector<std::string>& ShaderKeywords();
-		inline std::vector<std::string> const& ShaderKeywords() const;
-
 
 	private:
 		explicit Shader(std::string const& extensionlessShaderFilename);
-
 		void Destroy();
 
 
 	private:
 		std::unique_ptr<PlatformParams> m_platformParams;
-		std::vector<std::string> m_shaderKeywords;
 		
 
 	private:
@@ -74,18 +67,6 @@ namespace re
 	void Shader::SetPlatformParams(std::unique_ptr<PlatformParams> params)
 	{
 		m_platformParams = std::move(params);
-	}
-
-
-	std::vector<std::string>& Shader::ShaderKeywords() 
-	{ 
-		return m_shaderKeywords; 
-	}
-
-
-	std::vector<std::string> const& Shader::ShaderKeywords() const 
-	{ 
-		return m_shaderKeywords; 
 	}
 
 

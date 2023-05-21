@@ -302,16 +302,11 @@ namespace gr
 		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
 		Batch cubeMeshBatch = Batch(m_cubeMeshPrimitive.get(), nullptr);
 
-		const string equilinearToCubemapShaderName =
-			Config::Get()->GetValue<string>("equilinearToCubemapBlitShaderName");
-
 		// TODO: We should use equirectangular images, instead of bothering to convert to cubemaps for IEM/PMREM
-
 
 		// 1st frame: Generate an IEM (Irradiance Environment Map) cubemap texture for diffuse irradiance
 		{
-			shared_ptr<Shader> iemShader = re::Shader::Create(equilinearToCubemapShaderName);
-			iemShader->ShaderKeywords().emplace_back("BLIT_IEM");
+			shared_ptr<Shader> iemShader = re::Shader::Create(Config::Get()->GetValue<string>("blitIEMShaderName"));
 
 			// IEM-specific texture params:
 			cubeParams.m_useMIPs = false;
@@ -360,8 +355,7 @@ namespace gr
 
 		// 1st frame: Generate PMREM (Pre-filtered Mip-mapped Radiance Environment Map) cubemap for specular reflections
 		{
-			shared_ptr<Shader> pmremShader = re::Shader::Create(equilinearToCubemapShaderName);
-			pmremShader->ShaderKeywords().emplace_back("BLIT_PMREM");
+			shared_ptr<Shader> pmremShader = re::Shader::Create(Config::Get()->GetValue<string>("blitPMREMShaderName"));
 
 			// PMREM-specific texture params:
 			cubeParams.m_useMIPs = true;
@@ -417,9 +411,8 @@ namespace gr
 
 		
 		// Ambient light stage:
-		m_ambientStage.SetStageShader(re::Shader::Create(
-			Config::Get()->GetValue<string>("deferredAmbientLightShaderName")));
-		m_ambientStage.GetStageShader()->ShaderKeywords().emplace_back("AMBIENT_IBL");
+		m_ambientStage.SetStageShader(
+			re::Shader::Create(Config::Get()->GetValue<string>("deferredAmbientLightShaderName")));
 
 		m_ambientStage.AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 		m_ambientStage.SetStagePipelineState(ambientStageParams);

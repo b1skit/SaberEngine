@@ -60,7 +60,6 @@ namespace gr
 		
 		pipeline.AppendRenderStage(&m_emissiveBlitStage);
 
-
 		// Bloom stages:
 		gr::PipelineState bloomStageParams;
 		bloomStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
@@ -87,9 +86,8 @@ namespace gr
 		resScaleParams.m_useMIPs = false;
 		resScaleParams.m_addToSceneData = false;
 
-		shared_ptr<Shader> luminanceThresholdShader = re::Shader::Create(
-			Config::Get()->GetValue<string>("blurShaderName"));
-		luminanceThresholdShader->ShaderKeywords().emplace_back("BLUR_SHADER_LUMINANCE_THRESHOLD");
+		shared_ptr<Shader> luminanceThresholdShader =
+			re::Shader::Create(Config::Get()->GetValue<string>("luminanceThresholdShaderName"));
 
 		// Downsampling stages (w/luminance threshold in 1st pass):
 		for (uint32_t i = 0; i < numScalingStages; i++)
@@ -133,11 +131,11 @@ namespace gr
 		}
 
 		// Blur stages:
-		shared_ptr<Shader> horizontalBlurShader = re::Shader::Create(Config::Get()->GetValue<string>("blurShaderName"));
-		horizontalBlurShader->ShaderKeywords().emplace_back("BLUR_SHADER_HORIZONTAL");
+		shared_ptr<Shader> horizontalBlurShader = 
+			re::Shader::Create(Config::Get()->GetValue<string>("blurShaderHorizontalShaderName"));
 
-		shared_ptr<Shader> verticalBlurShader = re::Shader::Create(Config::Get()->GetValue<string>("blurShaderName"));
-		verticalBlurShader->ShaderKeywords().emplace_back("BLUR_SHADER_VERTICAL");
+		shared_ptr<Shader> verticalBlurShader = 
+			re::Shader::Create(Config::Get()->GetValue<string>("blurShaderVerticalShaderName"));
 
 		Texture::TextureParams blurParams(resScaleParams);
 		blurParams.m_width = currentXRes;
@@ -197,8 +195,7 @@ namespace gr
 
 			if (i == (numScalingStages - 1)) // Last iteration: Additive blit back to the src gs
 			{
-				m_upResStages.back().SetTextureTargetSet(
-					re::TextureTargetSet::Create(*deferredLightGS->GetFinalTextureTargetSet(), name + " targets"));
+				upResTargets->SetColorTarget(0, deferredLightGS->GetFinalTextureTargetSet()->GetColorTarget(0));
 
 				gr::PipelineState addStageParams(bloomStageParams);
 				addStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
@@ -218,13 +215,6 @@ namespace gr
 			m_upResStages.back().SetTextureTargetSet(upResTargets);
 
 			pipeline.AppendRenderStage(&m_upResStages[i]);
-
-			// Don't halve the resolution on the last iteration:
-			if (i < (numScalingStages - 1))
-			{
-				currentXRes *= 2;
-				currentYRes *= 2;
-			}
 		}
 	}
 

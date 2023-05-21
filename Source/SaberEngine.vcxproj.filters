@@ -830,6 +830,9 @@
     <None Include="Shaders\DX12\SaberCommon.hlsli">
       <Filter>Source Files\Shaders\DX12</Filter>
     </None>
+    <None Include="Shaders\glsl\blurCommon.glsl">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DX12\HelloTriangle_PShader.hlsl">

@@ -1,13 +1,3 @@
-#version 460 core
-
-#define SABER_FRAGMENT_SHADER
-#define SABER_VEC4_OUTPUT
-
-#include "SaberCommon.glsl"
-#include "SaberGlobals.glsl"
-#include "SaberLighting.glsl"
-
-
 #ifdef BLIT_IEM
 
 // Remap from equirectangular to cubemap, performing IEM filtering (ie. for diffuse IBL)

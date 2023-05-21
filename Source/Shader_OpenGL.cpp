@@ -101,38 +101,6 @@ namespace
 			}
 		}
 	}
-
-
-	void InsertDefines(string& shaderText, vector<string> const* shaderKeywords)
-	{
-		if ((int)shaderText.length() <= 0 || shaderKeywords == nullptr || (int)shaderKeywords->size() <= 0)
-		{
-			return;
-		}
-
-		// Find the #version directive, and insert our keywords immediately after it
-
-		int foundIndex = (int)shaderText.find("#version", 0);
-		if (foundIndex == string::npos)
-		{
-			foundIndex = 0;
-		}
-		// Find the next newline character:
-		int endLine = (int)shaderText.find("\n", foundIndex + 1);
-
-		// Assemble our #define lines:
-		const string DEFINE_KEYWORD = "#define ";
-		string assembledKeywords = "";
-		for (int currentKeyword = 0; currentKeyword < (int)shaderKeywords->size(); currentKeyword++)
-		{
-			string defineLine = DEFINE_KEYWORD + shaderKeywords->at(currentKeyword) + "\n";
-
-			assembledKeywords += defineLine;
-		}
-
-		// Insert our #define lines:
-		shaderText.insert(endLine + 1, assembledKeywords);
-	}
 }
 
 
@@ -232,7 +200,6 @@ namespace opengl
 			numPreprocessed++;
 			en::CoreEngine::GetThreadPool()->EnqueueJob(
 				[&shaderFiles, &shader, i, &numPreprocessed]() {
-					InsertDefines(shaderFiles[i], &shader.ShaderKeywords());
 					InsertIncludedFiles(shaderFiles[i]);
 					numPreprocessed--;
 				}
