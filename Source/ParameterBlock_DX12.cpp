@@ -144,39 +144,43 @@ namespace dx12
 				params->m_resource.Get(),
 				&srvDesc,
 				params->m_cpuDescAllocation.GetBaseDescriptor());
-
-
-			// TODO: We currently map the PB array data here, because SingleFrame PBs don't ever get an Update() call
-			// -> PBs should register with the RenderManager API creation queue?
-			{
-				// Get a CPU pointer to the subresource (i.e subresource 0)
-				void* cpuVisibleData = nullptr;
-				CD3DX12_RANGE readRange(0, 0);    // We do not intend to read from this resource on the CPU (end <= begin)
-				HRESULT hr = params->m_resource->Map(
-					0,						// Subresource
-					&readRange,
-					&cpuVisibleData);
-				CheckHResult(hr, "ParameterBlock: Failed to map committed resource");
-
-				// Get the PB data:
-				void const* srcData = nullptr;
-				size_t srcSize = 0; // This will be <= the allocated size, as we rounded up when creating the resource
-				paramBlock.GetDataAndSize(srcData, srcSize);
-
-				// Set the data in the cpu-visible heap:
-				memcpy(cpuVisibleData, srcData, srcSize);
-
-				// Release the map
-				D3D12_RANGE writtenRange{ 0, srcSize };
-				params->m_resource->Unmap(
-					0,
-					&writtenRange); // Unmap range: The region the CPU may have modified. Nullptr = entire subresource
-			}
 		}
 		break;
 		case re::ParameterBlock::PBDataType::PBDataType_Count:
 		default:
 			SEAssertF("Invalid parameter block data type");
+		}
+
+
+		// TODO: We currently map the PB array data here, because Immutable//SingleFrame PBs don't ever get an
+			// Update() call 
+			// -> PBs should register with the RenderManager API creation queue
+		if (paramBlock.GetType() == re::ParameterBlock::PBType::Immutable || 
+			paramBlock.GetType() == re::ParameterBlock::PBType::SingleFrame)
+		{
+			// Get a CPU pointer to the subresource (i.e subresource 0)
+			void* cpuVisibleData = nullptr;
+			CD3DX12_RANGE readRange(0, 0);    // We do not intend to read from this resource on the CPU (end <= begin)
+			HRESULT hr = params->m_resource->Map(
+				0,						// Subresource
+				&readRange,
+				&cpuVisibleData);
+			CheckHResult(hr, "ParameterBlock: Failed to map committed resource");
+
+			// Get the PB data:
+			void const* srcData = nullptr;
+			size_t srcSize = 0;
+			paramBlock.GetDataAndSize(srcData, srcSize);
+			SEAssert("GetDataAndSize returned invalid results", srcData != nullptr && srcSize <= size);
+
+			// Set the data in the cpu-visible heap:
+			memcpy(cpuVisibleData, srcData, srcSize);
+
+			// Release the map
+			D3D12_RANGE writtenRange{ 0, srcSize };
+			params->m_resource->Unmap(
+				0,
+				&writtenRange); // Unmap range: The region the CPU may have modified. Nullptr = entire subresource
 		}
 	}
 

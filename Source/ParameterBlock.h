@@ -17,7 +17,7 @@ namespace re
 	* 2) Single frame:	Allocated and destroyed within a single frame
 	*					-> Single frame parameter blocks are immutable once they are committed
 	*
-	* The union of these properties give us Immutable, Mutable, and SingleFrame Parameter Block types
+	* The union of these gives us Permanent Mutable, Permanent Immutable, & SingleFrame Immutable Parameter Block types
 	*******************************************************************************************************************/
 
 	class ParameterBlock : public virtual en::NamedObject

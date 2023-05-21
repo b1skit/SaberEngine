@@ -230,7 +230,7 @@ namespace dx12
 					commandList->ClearColorTargets(*stageTargets);
 				}
 				commandList->ClearDepthTarget(stageTargets->GetDepthStencilTarget());
-				// TODO: We should track the clear mode (color, depth) for the current stage, and only clear if necessary
+				// TODO: We should track the clear mode (color, depth) requested per stage, and only clear if necessary
 
 				// Bind our render target(s) to the output merger (OM):
 				if (isBackbufferTarget)
@@ -249,7 +249,7 @@ namespace dx12
 
 
 				// Lambda: Bind parameter blocks (This must happen AFTER the root signature has been set)
-				auto SetParameterBlocks = [renderStage, &commandList]()
+				auto SetStageParameterBlocks = [renderStage, &commandList]()
 				{
 					for (std::shared_ptr<re::ParameterBlock> permanentPB : renderStage->GetPermanentParameterBlocks())
 					{
@@ -264,6 +264,8 @@ namespace dx12
 
 				re::Shader* stageShader = renderStage->GetStageShader();
 				const bool hasStageShader = stageShader != nullptr;
+
+				// If we have a stage shader, we can set the stage PBs once for all batches
 				if (hasStageShader)
 				{
 					// Set the pipeline state and root signature first:
@@ -274,7 +276,7 @@ namespace dx12
 					commandList->SetPipelineState(*pso);
 					commandList->SetGraphicsRootSignature(pso->GetRootSignature());
 
-					SetParameterBlocks();
+					SetStageParameterBlocks();
 				}
 
 
@@ -282,7 +284,7 @@ namespace dx12
 				std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
 				for (re::Batch const& batch : batches)
 				{
-					// TODO: Verify batch sorting to ensure we're not constantly context rolling here
+					// No stage shader: Must set stage PBs for each batch
 					if (!hasStageShader)
 					{
 						// Set the pipeline state and root signature for the batch shader:
@@ -293,7 +295,7 @@ namespace dx12
 						commandList->SetPipelineState(*pso);
 						commandList->SetGraphicsRootSignature(pso->GetRootSignature());
 
-						SetParameterBlocks();
+						SetStageParameterBlocks();
 					}
 
 					// Batch parameter blocks:

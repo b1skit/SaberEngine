@@ -33,7 +33,8 @@ namespace gr
 #else
 		m_helloTriangle->GetMeshMaterial()->SetShader(helloShader);
 #endif
-		
+		// Set a default-initialized PB
+		m_helloTriangle->GetMeshMaterial()->SetParameterBlock(gr::Material::PBRMetallicRoughnessParams{});
 
 		// "Set" the targets:
 		m_tempDebugStage.SetTextureTargetSet(nullptr); // Render directly to the backbuffer
@@ -77,6 +78,7 @@ namespace gr
 
 		m_tempDebugStage.AddBatch(debugBatch);
 
+		// Add the scene batches:
 		m_tempDebugStage.AddBatches(re::RenderManager::Get()->GetSceneBatches());
 	}
 
