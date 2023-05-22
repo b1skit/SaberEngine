@@ -125,6 +125,16 @@ namespace dx12
 			}
 			renderManager.m_newShaders.m_newObjects.clear();
 		}
+		// Parameter Blocks:
+		if (!renderManager.m_newParameterBlocks.m_newObjects.empty())
+		{
+			std::lock_guard<std::mutex> lock(renderManager.m_newParameterBlocks.m_mutex);
+			for (auto& newObject : renderManager.m_newParameterBlocks.m_newObjects)
+			{
+				dx12::ParameterBlock::Create(*newObject.second);
+			}
+			renderManager.m_newParameterBlocks.m_newObjects.clear();
+		}
 
 		const bool hasDataToCopy = !renderManager.m_newMeshPrimitives.m_newObjects.empty();
 

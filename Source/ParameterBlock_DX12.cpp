@@ -22,13 +22,7 @@ namespace dx12
 	{
 		dx12::ParameterBlock::PlatformParams* params =
 			paramBlock.GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
-
-		// TODO: ParameterBlock should self-register for API creation when it is first created, instead of checking this
-		// every time (it's already using an object factory!)
-		if (params->m_isCreated)
-		{
-			return;
-		}
+		SEAssert("Parameter block is already created", !params->m_isCreated);
 		params->m_isCreated = true;
 
 		re::Context const& context = re::RenderManager::Get()->GetContext();
@@ -44,9 +38,11 @@ namespace dx12
 			// We must allocate CBVs in multiples of 256B
 			size = util::RoundUpToNearestMultiple<size_t>(paramBlock.GetSize(), k_CBVSizeFactor);
 
+			SEAssert("TODO: Handle arrays of CBVs", params->m_numElements == 1);
+
 			// Allocate a cpu-visible descriptor to hold our view:
 			params->m_cpuDescAllocation = std::move(
-				ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(1));
+				ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(params->m_numElements));
 		}
 		break;
 		case re::ParameterBlock::PBDataType::Array:
@@ -54,10 +50,8 @@ namespace dx12
 			// We must allocate SRVs in multiples of 64KB
 			size = util::RoundUpToNearestMultiple<size_t>(paramBlock.GetSize(), k_StructuredBufferSizeFactor);
 
-			// Allocate a cpu-visible descriptor to hold our view:
 			params->m_cpuDescAllocation = std::move(
-				ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(
-					params->m_numElements));
+				ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(1));
 		}
 		break;
 		case re::ParameterBlock::PBDataType::PBDataType_Count:
@@ -74,8 +68,8 @@ namespace dx12
 		HRESULT hr = device->CreateCommittedResource(
 			&heapProperties,					// this heap will be used to upload the constant buffer data
 			D3D12_HEAP_FLAG_NONE,				// Flags
-			&resourceDesc,						// Size of the resource heap: Alignment must be a multiple of 64KB for single-textures and constant buffers
-			D3D12_RESOURCE_STATE_GENERIC_READ,	// Will be data that is read from: Keep it in the generic read state
+			&resourceDesc,						// Size of the resource heap
+			D3D12_RESOURCE_STATE_GENERIC_READ,	// The data will be read from: Keep resource in the generic read state
 			nullptr,							// Optimized clear value: None for constant buffers
 			IID_PPV_ARGS(&params->m_resource));
 		CheckHResult(hr, "Failed to create committed resource");
@@ -107,7 +101,6 @@ namespace dx12
 			SEAssertF("Invalid parameter block type");
 		}
 		
-
 		// Create the appropriate resource view:
 		switch (params->m_dataType)
 		{
@@ -151,81 +144,42 @@ namespace dx12
 			SEAssertF("Invalid parameter block data type");
 		}
 
-
-		// TODO: We currently map the PB array data here, because Immutable//SingleFrame PBs don't ever get an
-			// Update() call 
-			// -> PBs should register with the RenderManager API creation queue
-		if (paramBlock.GetType() == re::ParameterBlock::PBType::Immutable || 
-			paramBlock.GetType() == re::ParameterBlock::PBType::SingleFrame)
-		{
-			// Get a CPU pointer to the subresource (i.e subresource 0)
-			void* cpuVisibleData = nullptr;
-			CD3DX12_RANGE readRange(0, 0);    // We do not intend to read from this resource on the CPU (end <= begin)
-			HRESULT hr = params->m_resource->Map(
-				0,						// Subresource
-				&readRange,
-				&cpuVisibleData);
-			CheckHResult(hr, "ParameterBlock: Failed to map committed resource");
-
-			// Get the PB data:
-			void const* srcData = nullptr;
-			size_t srcSize = 0;
-			paramBlock.GetDataAndSize(srcData, srcSize);
-			SEAssert("GetDataAndSize returned invalid results", srcData != nullptr && srcSize <= size);
-
-			// Set the data in the cpu-visible heap:
-			memcpy(cpuVisibleData, srcData, srcSize);
-
-			// Release the map
-			D3D12_RANGE writtenRange{ 0, srcSize };
-			params->m_resource->Unmap(
-				0,
-				&writtenRange); // Unmap range: The region the CPU may have modified. Nullptr = entire subresource
-		}
+#if defined(_DEBUG)
+		void const* srcData = nullptr;
+		size_t srcSize = 0;
+		paramBlock.GetDataAndSize(srcData, srcSize);
+		SEAssert("GetDataAndSize returned invalid results", srcData != nullptr && srcSize <= size);
+#endif
 	}
 
 
 	void ParameterBlock::Update(re::ParameterBlock& paramBlock)
 	{
-		// Ensure the PB is created before we attempt to update it
-		dx12::ParameterBlock::Create(paramBlock);
-
 		dx12::ParameterBlock::PlatformParams* params =
 			paramBlock.GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
 
-		switch (params->m_dataType)
-		{
-		case re::ParameterBlock::PBDataType::SingleElement:
-		{
-			// Get a CPU pointer to the subresource (i.e subresource 0) in our constant buffer resource
-			void* cpuVisibleData = nullptr;
-			CD3DX12_RANGE readRange(0, 0);    // We do not intend to read from this resource on the CPU (end <= begin)
-			HRESULT hr = params->m_resource->Map(
-				0,						// Subresource
-				&readRange,
-				&cpuVisibleData);
-			CheckHResult(hr, "ParameterBlock: Failed to map committed resource");
+		// Get a CPU pointer to the subresource (i.e subresource 0)
+		void* cpuVisibleData = nullptr;
+		CD3DX12_RANGE readRange(0, 0);    // We do not intend to read from this resource on the CPU (end <= begin)
+		HRESULT hr = params->m_resource->Map(
+			0,						// Subresource
+			&readRange,
+			&cpuVisibleData);
+		CheckHResult(hr, "ParameterBlock::Update: Failed to map committed resource");
 
-			// Get the PB data:
-			void const* srcData = nullptr;
-			size_t srcSize = 0; // This will be <= the allocated size, as we rounded up when creating the resource
-			paramBlock.GetDataAndSize(srcData, srcSize);
+		// Get the PB data:
+		void const* srcData = nullptr;
+		size_t srcSize = 0;
+		paramBlock.GetDataAndSize(srcData, srcSize);
 
-			// Set the data in the cpu-visible heap:
-			memcpy(cpuVisibleData, srcData, srcSize);
+		// Set the data in the cpu-visible heap:
+		memcpy(cpuVisibleData, srcData, srcSize);
 
-			// Release the map
-			D3D12_RANGE writtenRange{ 0, srcSize };
-			params->m_resource->Unmap(
-				0,
-				&writtenRange); // Unmap range: The region the CPU may have modified. Nullptr = entire subresource
-		}
-		break;
-		case re::ParameterBlock::PBDataType::Array: // Currently, Array PB data is buffered during creation
-		case re::ParameterBlock::PBDataType::PBDataType_Count:
-		default:
-			SEAssertF("Invalid parameter block data type");
-		}
+		// Release the map
+		D3D12_RANGE writtenRange{ 0, srcSize };
+		params->m_resource->Unmap(
+			0,
+			&writtenRange); // Unmap range: The region the CPU may have modified. Nullptr = entire subresource
 	}
 
 

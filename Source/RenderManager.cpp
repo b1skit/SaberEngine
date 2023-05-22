@@ -340,6 +340,21 @@ namespace re
 	}
 
 
+	template<>
+	void RenderManager::RegisterForCreate(std::shared_ptr<re::ParameterBlock> newObject)
+	{
+		const size_t uniqueID = newObject->GetUniqueID(); // Handle
+
+		std::lock_guard<std::mutex> lock(m_newParameterBlocks.m_mutex);
+
+		SEAssert("Found an object with the same data hash. This suggests a duplicate object exists and has not been "
+			"detected, or an object is being added twice, which should not happen",
+			m_newParameterBlocks.m_newObjects.find(uniqueID) == m_newParameterBlocks.m_newObjects.end());
+
+		m_newParameterBlocks.m_newObjects.insert({ uniqueID, newObject });
+	}
+
+
 	void RenderManager::CreateAPIResources()
 	{
 		platform::RenderManager::CreateAPIResources(*this);

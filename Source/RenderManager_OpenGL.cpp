@@ -15,10 +15,12 @@
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "MeshPrimitive_OpenGL.h"
+#include "ParameterBlock_OpenGL.h"
 #include "RenderManager_OpenGL.h"
 #include "RenderManager.h"
 #include "RenderStage.h"
 #include "Sampler_OpenGL.h"
+#include "SceneManager.h"
 #include "Shader.h"
 #include "Shader_OpenGL.h"
 #include "SwapChain_OpenGL.h"
@@ -26,7 +28,6 @@
 #include "Transform.h"
 #include "TextureTarget_OpenGL.h"
 #include "Texture_OpenGL.h"
-#include "SceneManager.h"
 
 using gr::BloomGraphicsSystem;
 using gr::Camera;
@@ -118,6 +119,16 @@ namespace opengl
 				opengl::MeshPrimitive::Create(*newObject.second);
 			}
 			renderManager.m_newMeshPrimitives.m_newObjects.clear();
+		}
+		// Parameter Blocks:
+		if (!renderManager.m_newParameterBlocks.m_newObjects.empty())
+		{
+			std::lock_guard<std::mutex> lock(renderManager.m_newParameterBlocks.m_mutex);
+			for (auto& newObject : renderManager.m_newParameterBlocks.m_newObjects)
+			{
+				opengl::ParameterBlock::Create(*newObject.second);
+			}
+			renderManager.m_newParameterBlocks.m_newObjects.clear();
 		}
 	}
 

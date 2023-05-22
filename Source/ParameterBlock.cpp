@@ -33,7 +33,8 @@ namespace re
 	void ParameterBlock::RegisterAndCommit(
 		std::shared_ptr<re::ParameterBlock> newPB, void const* data, size_t numBytes, uint64_t typeIDHash)
 	{
-		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetContext().GetParameterBlockAllocator();
+		re::RenderManager* renderManager = RenderManager::Get();
+		re::ParameterBlockAllocator& pbm = renderManager->GetContext().GetParameterBlockAllocator();
 		pbm.RegisterAndAllocateParameterBlock(newPB, numBytes);
 
 		SEAssert("Invalid type detected. Can only set data of the original type",
@@ -41,6 +42,8 @@ namespace re
 
 		// Note: We commit via the PBM directly here, as we might be an immutable PB
 		pbm.Commit(newPB->GetUniqueID(), data);
+
+		renderManager->RegisterForCreate(newPB); // Enroll for deferred platform layer creation
 	}
 
 

@@ -42,35 +42,37 @@ namespace re
 			size_t m_numBytes;		// Total number of allocated bytes
 		};
 
-		struct ImmutableAllocation
+		struct ImmutableAllocation // Single buffered
 		{
 			std::vector<uint8_t> m_committed;
 			std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>> m_handleToPtr;
 			mutable std::recursive_mutex m_mutex;
 		} m_immutableAllocations;
 
-		
+		// TODO: Double-buffered allocations should have 2 mutexes (or a read/write mutex)
 
-		struct MutableAllocation
+		struct MutableAllocation // Double buffered
 		{
 			std::array<std::vector<uint8_t>, k_numBuffers> m_committed;
-			std::unordered_map<Handle, std::pair<std::shared_ptr<re::ParameterBlock>, bool>> m_handleToPtrAndDirty;
+			std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>> m_handleToPtr;
 			mutable std::recursive_mutex m_mutex;
 		} m_mutableAllocations;
 
-		struct SingleFrameAllocation
+		struct SingleFrameAllocation // Double buffered
 		{
 			// Single frame allocations are stack allocated from a fixed-size, double-buffered array
 			std::array<std::array<uint8_t, k_fixedAllocationByteSize>, k_numBuffers> m_committed;
 			std::array<std::size_t, k_numBuffers> m_baseIdx;
 			std::array<std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>>, k_numBuffers> m_handleToPtr;
 			mutable std::recursive_mutex m_mutex;
-			// TODO: We can probably remove this mutex and switch to lockless using atomics
 
 		} m_singleFrameAllocations;
 
 		std::unordered_map<Handle, CommitMetadata> m_uniqueIDToTypeAndByteIndex;
 		mutable std::recursive_mutex m_uniqueIDToTypeAndByteIndexMutex;
+
+		std::array<std::queue<Handle>, k_numBuffers> m_dirtyParameterBlocks;
+		std::mutex m_dirtyParameterBlocksMutex;
 
 
 	private:

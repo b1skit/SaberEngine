@@ -9,15 +9,13 @@ namespace opengl
 	void ParameterBlock::Create(re::ParameterBlock& paramBlock)
 	{
 		PlatformParams* params = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
-
-		if (params->m_isCreated)
-		{
-			return;
-		}
+		SEAssert("Parameter block is already created", !params->m_isCreated);
 		params->m_isCreated = true;
 
-		// Generate the buffer:
+		// Generate the buffer name:
 		glGenBuffers(1, &params->m_ssbo);
+
+		// Binding associates the buffer object with the buffer object name
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, params->m_ssbo);
 		SEAssert("Failed to generate buffer object", glIsBuffer(params->m_ssbo) == GL_TRUE);
 
@@ -28,19 +26,15 @@ namespace opengl
 		size_t numBytes;
 		paramBlock.GetDataAndSize(data, numBytes);
 
-		// Buffer the data:
-		glBufferData(GL_SHADER_STORAGE_BUFFER, 
+		glBufferData(GL_SHADER_STORAGE_BUFFER,
 			(GLsizeiptr)numBytes,
-			data,
+			nullptr, // NULL: Data store of the specified size is created, but remains uninitialized and thus undefined
 			GL_STATIC_DRAW);
 	}
 
 
 	void ParameterBlock::Update(re::ParameterBlock& paramBlock)
 	{
-		// Ensure the PB is created before we attempt to update it
-		opengl::ParameterBlock::Create(paramBlock);
-
 		PlatformParams* params = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
 
 		void const* data;
@@ -68,9 +62,6 @@ namespace opengl
 
 	void ParameterBlock::Bind(re::ParameterBlock& paramBlock, GLuint bindIndex)
 	{
-		// Ensure the PB is created before we attempt to bind it
-		opengl::ParameterBlock::Create(paramBlock);
-
 		PlatformParams* params = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
 		 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindIndex, params->m_ssbo);

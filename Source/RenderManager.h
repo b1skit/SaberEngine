@@ -83,6 +83,7 @@ namespace re
 		NewAPIObjects<re::Texture> m_newTextures;
 		NewAPIObjects<re::Sampler> m_newSamplers;
 		NewAPIObjects<re::TextureTargetSet> m_newTargetSets;
+		NewAPIObjects<re::ParameterBlock> m_newParameterBlocks;
 
 
 	private:

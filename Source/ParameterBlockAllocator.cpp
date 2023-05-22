@@ -44,7 +44,8 @@ namespace re
 			m_uniqueIDToTypeAndByteIndexMutex,
 			m_immutableAllocations.m_mutex, 
 			m_mutableAllocations.m_mutex,
-			m_singleFrameAllocations.m_mutex);
+			m_singleFrameAllocations.m_mutex,
+			m_dirtyParameterBlocksMutex);
 
 		// Must clear the parameter blocks shared_ptrs before clearing the committed memory
 
@@ -59,14 +60,14 @@ namespace re
 		m_immutableAllocations.m_handleToPtr.clear();
 		m_immutableAllocations.m_committed.clear();
 
-		auto mutableItr = m_mutableAllocations.m_handleToPtrAndDirty.begin();
-		while (mutableItr != m_mutableAllocations.m_handleToPtrAndDirty.end())
+		auto mutableItr = m_mutableAllocations.m_handleToPtr.begin();
+		while (mutableItr != m_mutableAllocations.m_handleToPtr.end())
 		{
-			re::ParameterBlock* curPB = mutableItr->second.first.get();
+			re::ParameterBlock* curPB = mutableItr->second.get();
 			mutableItr++;
 			curPB->Destroy();
 		}
-		m_mutableAllocations.m_handleToPtrAndDirty.clear();		
+		m_mutableAllocations.m_handleToPtr.clear();
 
 		for (size_t i = 0; i < k_numBuffers; i++)
 		{
@@ -146,10 +147,9 @@ namespace re
 			std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
 
 			SEAssert("Parameter block is already registered",
-				!m_mutableAllocations.m_handleToPtrAndDirty.contains(pb->GetUniqueID()));
+				!m_mutableAllocations.m_handleToPtr.contains(pb->GetUniqueID()));
 
-			m_mutableAllocations.m_handleToPtrAndDirty[pb->GetUniqueID()] = 
-				std::pair<std::shared_ptr<ParameterBlock>, bool>{ pb, true };
+			m_mutableAllocations.m_handleToPtr[pb->GetUniqueID()] = pb;
 		}
 		break;
 		default:
@@ -275,7 +275,6 @@ namespace re
 			std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
 			dest = &m_mutableAllocations.m_committed[writeIdx][startIdx];
 			memcpy(dest, data, numBytes);
-			m_mutableAllocations.m_handleToPtrAndDirty[uniqueID].second = true; // Mark dirty
 		}
 		break;
 		default:
@@ -283,7 +282,6 @@ namespace re
 			SEAssertF("Invalid Parameter Block type");
 		}
 		}
-
 
 		// If this is the 1st commit, we need to also copy the data to the other side of the mutables double buffer,
 		// incase it doesn't get a an update the next frame
@@ -294,6 +292,12 @@ namespace re
 			std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);			
 			dest = &m_mutableAllocations.m_committed[readIdx][startIdx];
 			memcpy(dest, data, numBytes);
+		}
+
+		// Add the committed PB to our dirty list, so we can buffer the data when required
+		{
+			std::lock_guard<std::mutex> dirtyLock(m_dirtyParameterBlocksMutex);
+			m_dirtyParameterBlocks[writeIdx].emplace(uniqueID);
 		}
 	}
 
@@ -390,10 +394,10 @@ namespace re
 		break;
 		case ParameterBlock::PBType::Mutable: // Should only deallocate at shutdown
 		{
-			AddToDeferredDeletions(currentRenderFrameNum, m_mutableAllocations.m_handleToPtrAndDirty.at(uniqueID).first);
+			AddToDeferredDeletions(currentRenderFrameNum, m_mutableAllocations.m_handleToPtr.at(uniqueID));
 
 			std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
-			m_mutableAllocations.m_handleToPtrAndDirty.erase(uniqueID);
+			m_mutableAllocations.m_handleToPtr.erase(uniqueID);
 		}
 		break;		
 		case ParameterBlock::PBType::SingleFrame:
@@ -420,47 +424,53 @@ namespace re
 	}
 
 
+	// Buffer dirty PB data
 	void ParameterBlockAllocator::BufferParamBlocks()
 	{
 		SEAssert("Cannot buffer param blocks until they're all allocated", m_allocationPeriodEnded);
 
-		// Create/buffer Mutable PBs, if they've been modified
+		const size_t readIdx = GetReadIdx();
+
+		std::lock_guard<std::mutex> dirtyLock(m_dirtyParameterBlocksMutex);
+
+		while (!m_dirtyParameterBlocks[readIdx].empty())
 		{
-			std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
+			const Handle currentHandle = m_dirtyParameterBlocks[readIdx].front();
 
-			for (auto& pb : m_mutableAllocations.m_handleToPtrAndDirty)
+			ParameterBlock::PBType type = ParameterBlock::PBType::PBType_Count;
 			{
-				if (pb.second.second == true)
-				{
-					platform::ParameterBlock::Update(*pb.second.first.get());
-					pb.second.second = false; // Mark clean
-				}
+				std::lock_guard<std::recursive_mutex> lock(m_uniqueIDToTypeAndByteIndexMutex);
+				type = m_uniqueIDToTypeAndByteIndex.find(currentHandle)->second.m_type;
 			}
-		}
 
-		// Create/buffer SingleFrame PBs 
-		{
-			const size_t readIdx = GetReadIdx();
-
-			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
-
-			for (auto const& pb : m_singleFrameAllocations.m_handleToPtr[readIdx])
+			re::ParameterBlock* currentPB = nullptr;
+			switch (type)
 			{
-				platform::ParameterBlock::Create(*pb.second.get());
-			}
-		}
-
-		// Create/buffer Immutable PBs once
-		if (!m_permanentPBsHaveBeenBuffered)
-		{
-			m_permanentPBsHaveBeenBuffered = true;
-
-			std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
-
-			for (auto const& pb : m_immutableAllocations.m_handleToPtr)
+			case ParameterBlock::PBType::Mutable:
 			{
-				platform::ParameterBlock::Create(*pb.second.get());
+				std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
+				currentPB = m_mutableAllocations.m_handleToPtr[currentHandle].get();
 			}
+			break;
+			case ParameterBlock::PBType::Immutable:
+			{
+				std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
+				currentPB = m_immutableAllocations.m_handleToPtr[currentHandle].get();
+			}
+			break;
+			case ParameterBlock::PBType::SingleFrame:
+			{
+				std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
+				currentPB = m_singleFrameAllocations.m_handleToPtr[readIdx][currentHandle].get();
+			}
+			break;
+			default:
+				SEAssertF("Invalid PBType");
+			}
+
+			platform::ParameterBlock::Update(*currentPB);
+
+			m_dirtyParameterBlocks[readIdx].pop();
 		}
 	}
 
