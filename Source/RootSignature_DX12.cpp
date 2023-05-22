@@ -147,6 +147,16 @@ namespace dx12
 				// Parse the current binding description:
 				switch (inputBindingDesc.Type)
 				{
+				case D3D_SHADER_INPUT_TYPE::D3D_SIT_RTACCELERATIONSTRUCTURE:
+				{
+					SEAssertF("TODO: Handle this resource type");
+				}
+				break;
+				case D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_FEEDBACKTEXTURE:
+				{
+					SEAssertF("TODO: Handle this resource type");
+				}
+				break;
 				case D3D_SHADER_INPUT_TYPE::D3D10_SIT_CBUFFER:
 				{
 					SEAssert("TODO: Handle root constants", 
@@ -160,21 +170,68 @@ namespace dx12
 					}
 				}
 				break;
+				case D3D_SHADER_INPUT_TYPE::D3D10_SIT_TBUFFER:
+				{
+					SEAssertF("TODO: Handle this resource type");
+				}
+				break;
+				case D3D_SHADER_INPUT_TYPE::D3D_SIT_TEXTURE:
+				{
+					SEAssertF("TODO: Handle this resource type");
+				}
+				break;
+				case D3D_SHADER_INPUT_TYPE::D3D10_SIT_SAMPLER:
+				{
+					SEAssertF("TODO: Handle this resource type");
+				}
+				break;
+				case D3D_SHADER_INPUT_TYPE::D3D11_SIT_UAV_RWTYPED:
+				{
+					SEAssertF("TODO: Handle this resource type");
+				}
+				break;
 				case D3D_SHADER_INPUT_TYPE::D3D_SIT_STRUCTURED:
 				{
 					rootEntry.m_type = EntryType::RootSRV;
-
-					auto const& insertResult =
-						m_namesToRootEntries.insert({ inputBindingDesc.Name, rootEntry });
-
+					auto const& insertResult = m_namesToRootEntries.insert({ inputBindingDesc.Name, rootEntry });
 					if (m_namesToRootEntries.contains(inputBindingDesc.Name) == false)
 					{
 						numSRVs++; // Only increment if we've inserted a new entry
 					}
 				}
 				break;
+				case D3D_SHADER_INPUT_TYPE::D3D11_SIT_UAV_RWSTRUCTURED:
+				{
+					SEAssertF("TODO: Handle this resource type");
+				}
+				break;
+				case D3D_SHADER_INPUT_TYPE::D3D11_SIT_BYTEADDRESS:
+				{
+					SEAssertF("TODO: Handle this resource type");
+				}
+				break;
+				case D3D_SHADER_INPUT_TYPE::D3D11_SIT_UAV_RWBYTEADDRESS:
+				{
+					SEAssertF("TODO: Handle this resource type");
+				}
+				break;
+				case D3D_SHADER_INPUT_TYPE::D3D11_SIT_UAV_APPEND_STRUCTURED:
+				{
+					SEAssertF("TODO: Handle this resource type");
+				}
+				break;
+				case D3D_SHADER_INPUT_TYPE::D3D11_SIT_UAV_CONSUME_STRUCTURED:
+				{
+					SEAssertF("TODO: Handle this resource type");
+				}
+				break;
+				case D3D_SHADER_INPUT_TYPE::D3D11_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
+				{
+					SEAssertF("TODO: Handle this resource type");
+				}
+				break;
 				default:
-					SEAssertF("TODO: Handle other resource types");
+					SEAssertF("Invalid resource type");
 					continue;
 				}
 
