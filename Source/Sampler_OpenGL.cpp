@@ -59,23 +59,23 @@ namespace opengl
 
 		// Sampler mode:
 		/***************/
-		switch (samplerParams.m_texSamplerMode)
+		switch (samplerParams.m_addressMode)
 		{
-		case re::Sampler::Mode::Wrap:
+		case re::Sampler::AddressMode::Wrap:
 		{
 			m_textureWrapS = GL_REPEAT;
 			m_textureWrapT = GL_REPEAT;
 			m_textureWrapR = GL_REPEAT;
 		}
 		break;
-		case re::Sampler::Mode::Mirrored:
+		case re::Sampler::AddressMode::Mirror:
 		{
 			m_textureWrapS = GL_MIRRORED_REPEAT;
 			m_textureWrapT = GL_MIRRORED_REPEAT;
 			m_textureWrapR = GL_MIRRORED_REPEAT;
 		}
 		break;
-		case re::Sampler::Mode::Clamp:
+		case re::Sampler::AddressMode::Clamp:
 		{
 			m_textureWrapS = GL_CLAMP_TO_EDGE;
 			m_textureWrapT = GL_CLAMP_TO_EDGE;
@@ -117,8 +117,8 @@ namespace opengl
 		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MIN_FILTER, params->m_textureMinFilter);
 		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_MAG_FILTER, params->m_textureMaxFilter);
 		
-		glSamplerParameterfv(params->m_samplerID, GL_TEXTURE_BORDER_COLOR, &params->m_borderColor.x);
-
+		glSamplerParameterfv(params->m_samplerID, GL_TEXTURE_BORDER_COLOR, &sampler.GetSamplerParams().m_borderColor.x);
+		
 		// Finally, update the platform state:
 		params->m_isCreated = true;
 

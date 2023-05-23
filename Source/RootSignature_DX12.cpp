@@ -6,6 +6,8 @@
 #include "Debug_DX12.h"
 #include "SysInfo_DX12.h"
 #include "RootSignature_DX12.h"
+#include "Sampler.h"
+#include "Sampler_DX12.h"
 #include "Shader.h"
 #include "Shader_DX12.h"
 
@@ -144,6 +146,7 @@ namespace dx12
 					SEAssertF("Invalid shader type");
 				}
 
+
 				// Parse the current binding description:
 				switch (inputBindingDesc.Type)
 				{
@@ -162,11 +165,10 @@ namespace dx12
 					SEAssert("TODO: Handle root constants", 
 						strcmp(inputBindingDesc.Name, "$Globals") != 0);
 					
-					rootEntry.m_type = EntryType::RootCBV;
-					
+					rootEntry.m_type = EntryType::RootCBV;					
 					if (m_namesToRootEntries.contains(inputBindingDesc.Name) == false)
 					{
-						numCBVs++; // Only increment if we've inserted a new entry
+						numCBVs++; // Only increment if we're about to insert a new entry
 					}
 				}
 				break;
@@ -193,10 +195,9 @@ namespace dx12
 				case D3D_SHADER_INPUT_TYPE::D3D_SIT_STRUCTURED:
 				{
 					rootEntry.m_type = EntryType::RootSRV;
-					auto const& insertResult = m_namesToRootEntries.insert({ inputBindingDesc.Name, rootEntry });
 					if (m_namesToRootEntries.contains(inputBindingDesc.Name) == false)
 					{
-						numSRVs++; // Only increment if we've inserted a new entry
+						numSRVs++; // Only increment if we're about to insert a new entry
 					}
 				}
 				break;
@@ -302,6 +303,16 @@ namespace dx12
 				//// RootSignature later on
 				//m_descriptorTableIdxBitmask = (1 << rootEntry.second.m_rootSigIndex);
 				//m_numDescriptorsPerTableEntry[rootEntry.second.m_rootSigIndex] = 1; // TODO: Support arrays/unbounded arrays
+			}
+			break;
+			case EntryType::Sampler:
+			{
+				SEAssertF("TODO: Handle this resource type");
+			}
+			break;
+			case EntryType::StaticSampler:
+			{
+				SEAssertF("TODO: Handle this resource type");
 			}
 			break;
 			default:

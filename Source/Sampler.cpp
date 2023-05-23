@@ -17,11 +17,11 @@ namespace re
 {
 	const std::vector<std::string> Sampler::SamplerTypeLibraryNames
 	{
-		ENUM_TO_STR(WrapAndFilterMode::WrapLinearLinear),
-		ENUM_TO_STR(WrapAndFilterMode::ClampLinearLinear),
-		ENUM_TO_STR(WrapAndFilterMode::ClampNearestNearest),
-		ENUM_TO_STR(WrapAndFilterMode::ClampLinearMipMapLinearLinear),
-		ENUM_TO_STR(WrapAndFilterMode::WrapLinearMipMapLinearLinear),
+		ENUM_TO_STR(WrapLinearLinear),
+		ENUM_TO_STR(ClampLinearLinear),
+		ENUM_TO_STR(ClampNearestNearest),
+		ENUM_TO_STR(ClampLinearMipMapLinearLinear),
+		ENUM_TO_STR(WrapLinearMipMapLinearLinear),
 	};
 	// Note: Sampler names must be unique
 
@@ -30,6 +30,20 @@ namespace re
 		nullptr;
 	std::mutex Sampler::m_samplerLibraryMutex;
 
+
+	std::shared_ptr<re::Sampler> const Sampler::GetSampler(std::string const& samplerTypeLibraryname)
+	{
+		static unordered_map<std::string, Sampler::WrapAndFilterMode> k_nameToSamplerLibraryIdx = {
+			{ENUM_TO_STR(WrapLinearLinear),				WrapAndFilterMode::WrapLinearLinear},
+			{ENUM_TO_STR(ClampLinearLinear),			WrapAndFilterMode::ClampLinearLinear},
+			{ENUM_TO_STR(ClampNearestNearest),			WrapAndFilterMode::ClampNearestNearest},
+			{ENUM_TO_STR(ClampLinearMipMapLinearLinear),WrapAndFilterMode::ClampLinearMipMapLinearLinear},
+			{ENUM_TO_STR(WrapLinearMipMapLinearLinear), WrapAndFilterMode::WrapLinearMipMapLinearLinear},
+		};
+		SEAssert("Array size mismatch", re::Sampler::SamplerTypeLibraryNames.size() == k_nameToSamplerLibraryIdx.size());
+
+		return GetSampler(k_nameToSamplerLibraryIdx[samplerTypeLibraryname]);
+	}
 
 	std::shared_ptr<re::Sampler> const Sampler::GetSampler(Sampler::WrapAndFilterMode type)
 	{
@@ -45,9 +59,12 @@ namespace re
 			
 			// WrapWrapLinear: Reading/writing to the GBuffer
 			const Sampler::SamplerParams WrapLinearLinearParams = {
-				Sampler::Mode::Wrap,
-				Sampler::MinFilter::Linear,
-				Sampler::MaxFilter::Linear
+				.m_addressMode = Sampler::AddressMode::Wrap,
+				.m_borderColor = glm::vec4(0.f, 0.f, 0.f, 0.f),
+				.m_texMinMode = Sampler::MinFilter::Linear,
+				.m_texMaxMode = Sampler::MaxFilter::Linear,
+				.m_mipLODBias = 0.f,
+				.m_maxAnisotropy = 16
 			};
 			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::WrapLinearLinear,
 				re::Sampler::Create(
@@ -56,9 +73,12 @@ namespace re
 
 			// ClampLinearLinear: Depth maps
 			const Sampler::SamplerParams ClampLinearLinearParams = {
-				Sampler::Mode::Clamp ,
-				Sampler::MinFilter::Linear,
-				Sampler::MaxFilter::Linear
+				.m_addressMode = Sampler::AddressMode::Clamp,
+				.m_borderColor = glm::vec4(0.f, 0.f, 0.f, 0.f),
+				.m_texMinMode = Sampler::MinFilter::Linear,
+				.m_texMaxMode = Sampler::MaxFilter::Linear,
+				.m_mipLODBias = 0.f,
+				.m_maxAnisotropy = 16
 			};
 			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::ClampLinearLinear,
 				re::Sampler::Create(
@@ -67,9 +87,11 @@ namespace re
 
 			// ClampNearestNearest: BRDF pre-integration map
 			const Sampler::SamplerParams ClampNearestNearestParams = {
-				Sampler::Mode::Clamp,
-				Sampler::MinFilter::Nearest,
-				Sampler::MaxFilter::Nearest
+				.m_addressMode = Sampler::AddressMode::Clamp,
+				.m_borderColor = glm::vec4(0.f, 0.f, 0.f, 0.f),
+				.m_texMinMode = Sampler::MinFilter::Nearest,
+				.m_texMaxMode = Sampler::MaxFilter::Nearest,
+				.m_mipLODBias = 0.f,
 			};
 			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::ClampNearestNearest, 
 				re::Sampler::Create(
@@ -78,9 +100,12 @@ namespace re
 
 			// Clamp, LinearMipMapLinear, Linear: HDR input images for IBL
 			const Sampler::SamplerParams ClampLinearMipMapLinearLinearParams = {
-				Sampler::Mode::Clamp ,
-				Sampler::MinFilter::LinearMipMapLinear,
-				Sampler::MaxFilter::Linear
+				.m_addressMode = Sampler::AddressMode::Clamp,
+				.m_borderColor = glm::vec4(0.f, 0.f, 0.f, 0.f),
+				.m_texMinMode = Sampler::MinFilter::LinearMipMapLinear,
+				.m_texMaxMode = Sampler::MaxFilter::Linear,
+				.m_mipLODBias = 0.f,
+				.m_maxAnisotropy = 16
 			};
 			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear,
 				re::Sampler::Create(
@@ -89,9 +114,12 @@ namespace re
 
 			// Wrap, LinearMipMapLinear, Linear: Skybox/IBL cubemaps
 			const Sampler::SamplerParams WrapLinearMipMapLinearLinearParams = {
-				Sampler::Mode::Wrap,
-				Sampler::MinFilter::LinearMipMapLinear,
-				Sampler::MaxFilter::Linear
+				.m_addressMode = Sampler::AddressMode::Wrap,
+				.m_borderColor = glm::vec4(0.f, 0.f, 0.f, 0.f),
+				.m_texMinMode = Sampler::MinFilter::LinearMipMapLinear,
+				.m_texMaxMode = Sampler::MaxFilter::Linear,
+				.m_mipLODBias = 0.f,
+				.m_maxAnisotropy = 16
 			};
 			Sampler::m_samplerLibrary->emplace(Sampler::WrapAndFilterMode::WrapLinearMipMapLinearLinear,  
 				re::Sampler::Create(
@@ -117,7 +145,7 @@ namespace re
 	std::shared_ptr<re::Sampler> Sampler::Create(std::string const& name, SamplerParams params)
 	{
 		// TODO: Get rid of the sampler library, and create samplers on demand as they're requested
-		// -> Nested unordered maps of Mode/MinFilter/MaxFilter
+		// -> Nested unordered maps of AddressMode/MinFilter/MaxFilter
 
 		std::shared_ptr<re::Sampler> newSampler = nullptr;
 		newSampler.reset(new re::Sampler(name, params));

@@ -32,6 +32,9 @@ namespace dx12
 			// TODO: More Root__ types
 			DescriptorTable,
 
+			Sampler,
+			StaticSampler,
+
 			EntryType_Count,
 			EntryType_Invalid = EntryType_Count
 		};

@@ -100,7 +100,7 @@ namespace dx12
 	{
 		m_format = DXGI_FORMAT_UNKNOWN;
 		m_textureResource = nullptr;
-		m_descriptor.Free(0);
+		m_cpuDescAllocation.Free(0);
 	}
 
 
@@ -241,7 +241,7 @@ namespace dx12
 		}
 
 		texPlatParams->m_textureResource = nullptr;
-		texPlatParams->m_descriptor.Free(0);
+		texPlatParams->m_cpuDescAllocation.Free(0);
 
 		texPlatParams->m_isCreated = false;
 		texPlatParams->m_isDirty = true;
