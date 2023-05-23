@@ -210,7 +210,7 @@ namespace
 				// Copy the data to our texture's texel vector:
 				const size_t firstTexelIndex = face * width * height;
 				CopyImageData(
-					texture->Texels(), 
+					texture->GetTexels(), 
 					static_cast<uint8_t const*>(imageData), 
 					width, 
 					height, 
@@ -352,7 +352,7 @@ namespace
 
 			// Copy the data to our texture's texel vector:
 			CopyImageData(
-				texture->Texels(),
+				texture->GetTexels(),
 				static_cast<uint8_t const*>(imageData),
 				width,
 				height,

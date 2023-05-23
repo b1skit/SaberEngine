@@ -104,31 +104,120 @@ namespace dx12
 	}
 
 
-	void Texture::Create(re::Texture& texture)
+	void Texture::Create(
+		re::Texture& texture,
+		ComPtr<ID3D12GraphicsCommandList2> commandList, 
+		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources)
 	{
 		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 		SEAssert("Texture is already created", texPlatParams->m_isCreated == false);
+		texPlatParams->m_isCreated = true;
 
 		dx12::Context::PlatformParams* ctxPlatParams =
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
 
-		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
-
+		// D3D12 Initial resource states:
+		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/using-resource-barriers-to-synchronize-resource-states-in-direct3d-12#initial-states-for-resources
 		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
+
 		uint32_t numSubresources = 0;
 
+		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 		switch (texParams.m_usage)
 		{
 		case re::Texture::Usage::Color:
 		{
-			LOG_ERROR("TODO: Support color textures: %s is not actually created", texture.GetName().c_str());
+			//initialState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COPY_DEST; // We need to buffer the texture data
+			//numSubresources = 1; // TODO: Support mips
+
+			//re::Texture::TextureParams const& texParams = texture.GetTextureParams();	
+			//
+			//D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE;
+
+			//// Resource description:
+			//CD3DX12_RESOURCE_DESC colorResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+			//	texPlatParams->m_format,
+			//	texParams.m_width,
+			//	texParams.m_height,
+			//	1,			// arraySize
+			//	0,			// mipLevels. TODO: Support mips
+			//	1,			// sampleCount TODO: Support MSAA
+			//	0,			// sampleQuality
+			//	flags);
+
+			//CD3DX12_HEAP_PROPERTIES colorHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+
+			//HRESULT hr = device->CreateCommittedResource(
+			//	&colorHeapProperties,
+			//	D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
+			//	&colorResourceDesc,
+			//	initialState,
+			//	nullptr, // Optimized clear value: Must be NULL except for buffers, render, or depth-stencil targets
+			//	IID_PPV_ARGS(&texPlatParams->m_textureResource));
+			//texPlatParams->m_textureResource->SetName(texture.GetWName().c_str());
+
+
+
+			//// Create an intermediate upload heap:
+
+			//const size_t numBytes =
+			//	texParams.m_faces * texParams.m_width * texParams.m_height * re::Texture::GetNumBytesPerTexel(texParams.m_format);
+			//SEAssert("Color target must have data to buffer", texture.GetTexels().size() == numBytes);
+
+			//
+
+			//const CD3DX12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+			//const CD3DX12_RESOURCE_DESC committedresourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+			//	texPlatParams->m_format,
+			//	texParams.m_width,
+			//	texParams.m_height,
+			//	texParams.m_faces,
+			//	0, // TODO: Support mips
+			//	1, // Sample count. TODO: Support MSAA
+			//	0, // Sample quality
+			//	flags);
+
+			//ComPtr<ID3D12Resource> itermediateBufferResource = nullptr;
+
+			//hr = device->CreateCommittedResource(
+			//	&uploadHeapProperties,
+			//	D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
+			//	&committedresourceDesc,
+			//	D3D12_RESOURCE_STATE_GENERIC_READ,
+			//	nullptr,
+			//	IID_PPV_ARGS(&itermediateBufferResource));
+			//CheckHResult(hr, "Failed to create intermediate texture buffer resource");
+
+			//itermediateBufferResource->SetName(L"Color texture intermediate buffer");
+
+			//// Populate the subresource:
+			//D3D12_SUBRESOURCE_DATA subresourceData = {};
+			//subresourceData.pData = &texture.GetTexels()[0];
+			//subresourceData.RowPitch = numBytes; // ??????????????????????????????????????????????
+			//subresourceData.SlicePitch = numBytes; // ????????????????????????????????????????????
+
+			//::UpdateSubresources(
+			//	commandList.Get(),
+			//	texPlatParams->m_textureResource.Get(),		// Destination resource
+			//	itermediateBufferResource.Get(),			// Intermediate resource
+			//	0,								// Index of 1st subresource in the resource
+			//	0,								// Number of subresources in the resource.
+			//	1,								// Required byte size for the update
+			//	&subresourceData);
+
+
+
+
+			//// Released once the copy is done
+			//intermediateResources.emplace_back(itermediateBufferResource);
 		}
 		break;
 		case re::Texture::Usage::ColorTarget:
 		{
-			LOG_ERROR("dx12::Texture::Create: Texture is marked as a target, doing nothing...");
+			// TODO: ColorTargets are textures too
+			LOG_ERROR("dx12::Texture::Create(): Texture is marked as a target, doing nothing...");
 		}
 		break;
 		case re::Texture::Usage::SwapchainColorProxy:
@@ -139,41 +228,31 @@ namespace dx12
 		break;
 		case re::Texture::Usage::DepthTarget:
 		{
+			initialState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_DEPTH_WRITE;
+			numSubresources = 1;
+
 			re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 
-			// Note: We get/cache this value in the target during dx12::TextureTargetSet::CreateDepthStencilTarget, 
-			// but re::Texture::TextureParams are const so it should be impossible to get a different result 
-			const DXGI_FORMAT depthFormat = dx12::Texture::GetTextureFormat(texParams);
-			// TODO: SHould the format be a member of the texture?
+			D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+			// Depth resource description:
+			CD3DX12_RESOURCE_DESC depthResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+				texPlatParams->m_format,
+				texParams.m_width,
+				texParams.m_height,
+				1,			// arraySize
+				0,			// mipLevels
+				1,			// sampleCount
+				0,			// sampleQuality
+				flags);
+
+			// Depth committed heap resources:
+			CD3DX12_HEAP_PROPERTIES depthHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
 			// Clear values:
 			D3D12_CLEAR_VALUE optimizedClearValue = {};
-			optimizedClearValue.Format = depthFormat; 
+			optimizedClearValue.Format = texPlatParams->m_format;
 			optimizedClearValue.DepthStencil = { 1.0f, 0 }; // Float depth, uint8_t stencil
-
-			// Depth resource description:
-			const int width = en::Config::Get()->GetValue<int>("windowXRes");
-			const int height = en::Config::Get()->GetValue<int>("windowYRes");
-			SEAssert("Invalid dimensions", width >= 1 && height >= 1);
-
-			CD3DX12_RESOURCE_DESC depthResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-				depthFormat,
-				width,
-				height,
-				1,
-				0,
-				1,
-				0,
-				D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-
-			// Depth committed heap resources:
-			dx12::Texture::PlatformParams* texPlatParams = 
-				texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-
-			CD3DX12_HEAP_PROPERTIES depthHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-
-			initialState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-			numSubresources = 1;
 
 			HRESULT hr = device->CreateCommittedResource(
 				&depthHeapProperties,
@@ -183,6 +262,8 @@ namespace dx12
 				&optimizedClearValue,
 				IID_PPV_ARGS(&texPlatParams->m_textureResource));
 			texPlatParams->m_textureResource->SetName(texture.GetWName().c_str());
+
+			// TODO: Combine common code outside of this switch!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		}
 		break;
 		case re::Texture::Usage::Invalid:
@@ -192,7 +273,6 @@ namespace dx12
 		}
 		}
 
-		texPlatParams->m_isCreated = true;
 		texPlatParams->m_isDirty = true;
 
 		// Register the resource with the global resource state tracker:

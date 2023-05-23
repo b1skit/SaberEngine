@@ -14,7 +14,6 @@ namespace platform
 
 		// API-specific function bindings:
 		/*********************************/
-		static void (*Create)(re::Texture&);
 		static void (*Destroy)(re::Texture&);
 		static void (*GenerateMipMaps)(re::Texture&);
 	};

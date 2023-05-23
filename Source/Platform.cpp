@@ -119,7 +119,6 @@ namespace platform
 			platform::SwapChain::SetVSyncMode	= &opengl::SwapChain::SetVSyncMode;
 
 			// Texture:
-			platform::Texture::Create			= &opengl::Texture::Create;
 			platform::Texture::Destroy			= &opengl::Texture::Destroy;
 			platform::Texture::GenerateMipMaps	= &opengl::Texture::GenerateMipMaps;
 
@@ -168,7 +167,6 @@ namespace platform
 			platform::SwapChain::SetVSyncMode	= &dx12::SwapChain::SetVSyncMode;
 
 			// Texture:
-			platform::Texture::Create			= &dx12::Texture::Create;
 			platform::Texture::Destroy			= &dx12::Texture::Destroy;
 			platform::Texture::GenerateMipMaps	= &dx12::Texture::GenerateMipMaps;
 

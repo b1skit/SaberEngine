@@ -113,8 +113,8 @@ namespace re
 		uint8_t const* GetTexel(uint32_t u, uint32_t v, uint32_t faceIdx) const; // u == x == col, v == y == row
 		uint8_t const* GetTexel(uint32_t index) const;
 
-		std::vector<uint8_t> const& Texels() const { return m_texels; }
-		std::vector<uint8_t>& Texels();
+		std::vector<uint8_t> const& GetTexels() const { return m_texels; }
+		std::vector<uint8_t>& GetTexels();
 
 		uint32_t GetNumMips() const;
 		uint32_t GetMipDimension(uint32_t mipLevel) const;

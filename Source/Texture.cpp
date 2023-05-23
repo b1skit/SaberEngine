@@ -84,7 +84,7 @@ namespace re
 	}
 
 
-	std::vector<uint8_t>& Texture::Texels() 
+	std::vector<uint8_t>& Texture::GetTexels() 
 	{ 
 		m_platformParams->m_isDirty = true; 
 		return m_texels; 

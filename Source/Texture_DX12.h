@@ -30,7 +30,9 @@ namespace dx12
 
 
 	public:
-		static void Create(re::Texture&);
+		static void Create(re::Texture&, 
+			Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2>,
+			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources);
 		static std::shared_ptr<re::Texture> CreateFromExistingResource(
 			std::string const& name, re::Texture::TextureParams const&, bool doClear, Microsoft::WRL::ComPtr<ID3D12Resource>);
 		static void Destroy(re::Texture&);

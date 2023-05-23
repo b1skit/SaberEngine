@@ -37,7 +37,6 @@ namespace platform
 
 	// platform::Texture static members:
 	/***********************************/
-	void (*platform::Texture::Create)(re::Texture&) = nullptr;
 	void (*platform::Texture::Destroy)(re::Texture&) = nullptr;
 	void (*platform::Texture::GenerateMipMaps)(re::Texture&) = nullptr;
 }

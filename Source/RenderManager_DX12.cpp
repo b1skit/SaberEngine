@@ -43,18 +43,57 @@ namespace dx12
 			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
 
-		// Textures:
-		// TODO: Textures will likely have data to copy!!!!! For now, we're only handling backbuffer target textures...
-		// -> Need to create these before the PSO, incase the Texture happens to be used by a Target...
-		if (!renderManager.m_newTextures.m_newObjects.empty())
+		const bool hasDataToCopy = !renderManager.m_newMeshPrimitives.m_newObjects.empty() ||
+			!renderManager.m_newTextures.m_newObjects.empty();
+
+		// Handle anything that requires a copy queue:
+		if (hasDataToCopy)
 		{
-			std::lock_guard<std::mutex> lock(renderManager.m_newTextures.m_mutex);
-			for (auto& texture : renderManager.m_newTextures.m_newObjects)
+			// TODO: Get multiple command lists, and record on multiple threads:
+			dx12::CommandQueue& copyQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Copy);
+			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue.GetCreateCommandList();
+
+			std::vector<ComPtr<ID3D12Resource>> intermediateResources;
+
+			// Mesh Primitives:
+			if (!renderManager.m_newMeshPrimitives.m_newObjects.empty())
 			{
-				dx12::Texture::Create(*texture.second);
+				std::lock_guard<std::mutex> lock(renderManager.m_newMeshPrimitives.m_mutex);
+				for (auto& newObject : renderManager.m_newMeshPrimitives.m_newObjects)
+				{
+					dx12::MeshPrimitive::Create(
+						*newObject.second, copyCommandList->GetD3DCommandList(), intermediateResources);
+				}
+				renderManager.m_newMeshPrimitives.m_newObjects.clear();
 			}
-			renderManager.m_newTextures.m_newObjects.clear();
+
+			// Textures:
+			if (!renderManager.m_newTextures.m_newObjects.empty())
+			{
+				std::lock_guard<std::mutex> lock(renderManager.m_newTextures.m_mutex);
+				for (auto& texture : renderManager.m_newTextures.m_newObjects)
+				{
+					dx12::Texture::Create(*texture.second, copyCommandList->GetD3DCommandList(), intermediateResources);
+				}
+				renderManager.m_newTextures.m_newObjects.clear();
+			}
+
+
+			// Execute command queue, and wait for it to be done (blocking)
+			std::shared_ptr<dx12::CommandList> commandLists[] =
+			{
+				copyCommandList
+			};
+			uint64_t copyQueueFenceVal = copyQueue.Execute(1, commandLists);
+			copyQueue.CPUWait(copyQueueFenceVal);
+
+			// The copy is done: Free the intermediate HEAP_TYPE_UPLOAD resources
+			intermediateResources.clear();
+
+			// TODO: We should clear the intermediateResources at the end of the frame, and GPUWait on the copy instead
+			// -> We should also progress further in the resource creation instead of waiting here
 		}
+
 		// Samplers:
 		if (!renderManager.m_newSamplers.m_newObjects.empty())
 		{
@@ -136,43 +175,44 @@ namespace dx12
 			renderManager.m_newParameterBlocks.m_newObjects.clear();
 		}
 
-		const bool hasDataToCopy = !renderManager.m_newMeshPrimitives.m_newObjects.empty();
+		//const bool hasDataToCopy = !renderManager.m_newMeshPrimitives.m_newObjects.empty() || 
+		//	!renderManager.m_newTextures.m_newObjects.empty();
 
-		// Handle anything that requires a copy queue:
-		if (hasDataToCopy)
-		{
-			// TODO: Get multiple command lists, and record on multiple threads:
-			dx12::CommandQueue& copyQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Copy);
-			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue.GetCreateCommandList();
+		//// Handle anything that requires a copy queue:
+		//if (hasDataToCopy)
+		//{
+		//	// TODO: Get multiple command lists, and record on multiple threads:
+		//	dx12::CommandQueue& copyQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Copy);
+		//	std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue.GetCreateCommandList();
 
-			std::vector<ComPtr<ID3D12Resource>> intermediateResources;
+		//	std::vector<ComPtr<ID3D12Resource>> intermediateResources;
 
-			// Mesh Primitives:
-			if (!renderManager.m_newMeshPrimitives.m_newObjects.empty())
-			{
-				std::lock_guard<std::mutex> lock(renderManager.m_newMeshPrimitives.m_mutex);
-				for (auto& newObject : renderManager.m_newMeshPrimitives.m_newObjects)
-				{
-					dx12::MeshPrimitive::Create(
-						*newObject.second, copyCommandList->GetD3DCommandList(), intermediateResources);
-				}
-				renderManager.m_newMeshPrimitives.m_newObjects.clear();
-			}
+		//	// Mesh Primitives:
+		//	if (!renderManager.m_newMeshPrimitives.m_newObjects.empty())
+		//	{
+		//		std::lock_guard<std::mutex> lock(renderManager.m_newMeshPrimitives.m_mutex);
+		//		for (auto& newObject : renderManager.m_newMeshPrimitives.m_newObjects)
+		//		{
+		//			dx12::MeshPrimitive::Create(
+		//				*newObject.second, copyCommandList->GetD3DCommandList(), intermediateResources);
+		//		}
+		//		renderManager.m_newMeshPrimitives.m_newObjects.clear();
+		//	}
 
 
-			// Execute command queue, and wait for it to be done (blocking)
-			std::shared_ptr<dx12::CommandList> commandLists[] =
-			{
-				copyCommandList
-			};
-			uint64_t copyQueueFenceVal = copyQueue.Execute(1, commandLists);
-			copyQueue.CPUWait(copyQueueFenceVal);
+		//	// Execute command queue, and wait for it to be done (blocking)
+		//	std::shared_ptr<dx12::CommandList> commandLists[] =
+		//	{
+		//		copyCommandList
+		//	};
+		//	uint64_t copyQueueFenceVal = copyQueue.Execute(1, commandLists);
+		//	copyQueue.CPUWait(copyQueueFenceVal);
 
-			// The copy is done: Free the intermediate HEAP_TYPE_UPLOAD resources
-			intermediateResources.clear();
+		//	// The copy is done: Free the intermediate HEAP_TYPE_UPLOAD resources
+		//	intermediateResources.clear();
 
-			// TODO: We should clear the intermediateResources at the end of the frame, and GPUWait on the copy instead
-		}
+		//	// TODO: We should clear the intermediateResources at the end of the frame, and GPUWait on the copy instead
+		//}
 	}
 
 

@@ -214,7 +214,7 @@ namespace opengl
 			if (texParams.m_usage == re::Texture::Usage::Color)
 			{
 				SEAssert("Color target must have data to buffer", 
-					texture.Texels().size() == 
+					texture.GetTexels().size() == 
 					(texParams.m_faces * texParams.m_width * texParams.m_height * re::Texture::GetNumBytesPerTexel(texParams.m_format)));
 
 				data = (void*)texture.GetTexel(0, 0, i);
