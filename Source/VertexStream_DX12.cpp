@@ -200,6 +200,7 @@ namespace dx12
 			D3D12_RESOURCE_STATE_COPY_DEST,		// Initial resource state
 			nullptr,							// Clear value: nullptr as these are not texture resources
 			IID_PPV_ARGS(&streamPlatformParams->m_bufferResource));	// RefIID and interface pointer
+		CheckHResult(hr, "Failed to create vertex buffer resource");
 
 		streamPlatformParams->m_bufferResource->SetName(L"Vertex stream destination buffer");
 
@@ -215,6 +216,7 @@ namespace dx12
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
 			IID_PPV_ARGS(&itermediateBufferResource));
+		CheckHResult(hr, "Failed to create intermediate vertex buffer resource");
 
 		itermediateBufferResource->SetName(L"Vertex stream intermediate buffer");
 
