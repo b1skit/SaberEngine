@@ -33,7 +33,7 @@ namespace re
 
 	std::shared_ptr<re::Sampler> const Sampler::GetSampler(std::string const& samplerTypeLibraryname)
 	{
-		static unordered_map<std::string, Sampler::WrapAndFilterMode> k_nameToSamplerLibraryIdx = {
+		static const unordered_map<std::string, Sampler::WrapAndFilterMode> k_nameToSamplerLibraryIdx = {
 			{ENUM_TO_STR(WrapLinearLinear),				WrapAndFilterMode::WrapLinearLinear},
 			{ENUM_TO_STR(ClampLinearLinear),			WrapAndFilterMode::ClampLinearLinear},
 			{ENUM_TO_STR(ClampNearestNearest),			WrapAndFilterMode::ClampNearestNearest},
@@ -42,7 +42,7 @@ namespace re
 		};
 		SEAssert("Array size mismatch", re::Sampler::SamplerTypeLibraryNames.size() == k_nameToSamplerLibraryIdx.size());
 
-		return GetSampler(k_nameToSamplerLibraryIdx[samplerTypeLibraryname]);
+		return GetSampler(k_nameToSamplerLibraryIdx.at(samplerTypeLibraryname));
 	}
 
 	std::shared_ptr<re::Sampler> const Sampler::GetSampler(Sampler::WrapAndFilterMode type)
