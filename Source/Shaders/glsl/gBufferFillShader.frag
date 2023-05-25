@@ -23,6 +23,12 @@ void main()
 	// g_baseColorFactor and vOut.vertexColor are factored into the albedo as per the GLTF 2.0 specifications
 	gBuffer_out_albedo = texture(MatAlbedo, vOut.uv0.xy) * g_baseColorFactor * vOut.vertexColor;
 
+	// Alpha clipping:
+	if (gBuffer_out_albedo.a < ALPHA_CUTOFF)
+	{
+		discard;
+	}
+
 	const vec3 texNormal = texture(MatNormal, vOut.uv0.xy).xyz;
 	const vec3 worldNormal = WorldNormalFromTextureNormal(texNormal, vOut.TBN) * vec3(g_normalScale, g_normalScale, 1.0f);
 	gBuffer_out_worldNormal = vec4(worldNormal, 0.0f);

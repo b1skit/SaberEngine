@@ -22,11 +22,6 @@ namespace dx12
 				return DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT;
 			}
 			break;
-			case re::Texture::Format::RGB32F:
-			{
-				return DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT;
-			}
-			break;
 			case re::Texture::Format::RG32F:
 			{
 				return DXGI_FORMAT::DXGI_FORMAT_R32G32_FLOAT;
@@ -73,13 +68,6 @@ namespace dx12
 				return DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT;
 			}
 			break;
-			case re::Texture::Format::RGB8:
-			{
-				LOG_WARNING("Unsupported RGB8 Texture format requested, selecting R11G11B10 instead");
-				return DXGI_FORMAT::DXGI_FORMAT_R11G11B10_FLOAT; // No matching DXGI_FORMAT, choose something ~similar
-			}
-			break;
-			case re::Texture::Format::RGB16F: // No matching DXGI_FORMAT
 			case re::Texture::Format::Invalid:
 			default:
 			{

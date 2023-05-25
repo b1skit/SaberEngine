@@ -49,13 +49,6 @@ namespace opengl
 			m_type = GL_FLOAT;
 		}
 		break;
-		case re::Texture::Format::RGB32F:
-		{
-			m_format = GL_RGB;
-			m_internalFormat = GL_RGB32F;
-			m_type = GL_FLOAT;
-		}
-		break;
 		case re::Texture::Format::RG32F:
 		{
 			m_format = GL_RG;
@@ -74,13 +67,6 @@ namespace opengl
 		{
 			m_format = GL_RGBA;
 			m_internalFormat = GL_RGBA16F;
-			m_type = GL_HALF_FLOAT;
-		}
-		break;
-		case re::Texture::Format::RGB16F:
-		{
-			m_format = GL_RGB;
-			m_internalFormat = GL_RGB16F;
 			m_type = GL_HALF_FLOAT;
 		}
 		break;
@@ -104,14 +90,6 @@ namespace opengl
 			m_internalFormat = 
 				texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
 			// Note: Alpha in GL_SRGB8_ALPHA8 is stored in linear color space, RGB are in sRGB color space
-			m_type = GL_UNSIGNED_BYTE;
-		}
-		break;
-		case re::Texture::Format::RGB8:
-		{
-			m_format = GL_RGB;
-			m_internalFormat = 
-				texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? GL_SRGB8 : GL_RGB8;		
 			m_type = GL_UNSIGNED_BYTE;
 		}
 		break;

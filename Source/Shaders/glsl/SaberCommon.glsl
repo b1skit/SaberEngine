@@ -4,6 +4,8 @@
 // Saber Engine Shader Common
 // Defines variables and structures common to all shaders
 
+#define ALPHA_CUTOFF 0.1f
+
 // Vertex shader specific properties:
 //-----------------------------------
 
