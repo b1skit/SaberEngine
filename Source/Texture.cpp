@@ -156,6 +156,11 @@ namespace re
 			*static_cast<glm::vec4*>(pixelPtr) = *static_cast<glm::vec4*>(valuePtr);
 		}
 		break;
+		case re::Texture::Format::RGB32F:
+		{
+			*static_cast<glm::vec3*>(pixelPtr) = *static_cast<glm::vec3*>(valuePtr);
+		}
+		break;
 		case re::Texture::Format::RG32F:
 		{
 			*static_cast<glm::vec2*>(pixelPtr) = *static_cast<glm::vec2*>(valuePtr);
@@ -173,6 +178,16 @@ namespace re
 			{
 				*(static_cast<uint8_t*>(pixelPtr) + numBytes) = 0;
 			}
+		}
+		break;
+		case re::Texture::Format::RGB16F:
+		{
+			// TODO: Support half-precision floats. For now, just fill with black
+			for (size_t numBytes = 0; numBytes < 6; numBytes++)
+			{
+				*(static_cast<uint8_t*>(pixelPtr) + numBytes) = 0;
+			}
+			
 		}
 		break;
 		case re::Texture::Format::RG16F:
@@ -196,6 +211,15 @@ namespace re
 		case re::Texture::Format::RGBA8:
 		{
 			for (uint8_t i = 0; i < 4; i++)
+			{
+				const uint8_t channelValue = (uint8_t)(value[i] * 255.0f);
+				*(static_cast<uint8_t*>(pixelPtr) + i) = channelValue;
+			}
+		}
+		break;
+		case re::Texture::Format::RGB8:
+		{
+			for (uint8_t i = 0; i < 3; i++)
 			{
 				const uint8_t channelValue = (uint8_t)(value[i] * 255.0f);
 				*(static_cast<uint8_t*>(pixelPtr) + i) = channelValue;
@@ -305,10 +329,20 @@ namespace re
 			return 16;
 		}
 		break;
+		case re::Texture::Format::RGB32F:
+		{
+			return 12;
+		}
+		break;
 		case re::Texture::Format::RG32F:
 		case re::Texture::Format::RGBA16F:
 		{
 			return 8;
+		}
+		break;
+		case re::Texture::Format::RGB16F:
+		{
+			return 6;
 		}
 		break;
 		case re::Texture::Format::R32F:
@@ -316,6 +350,11 @@ namespace re
 		case re::Texture::Format::RGBA8:
 		{
 			return 4;
+		}
+		break;
+		case re::Texture::Format::RGB8:
+		{
+			return 3;
 		}
 		break;
 		case re::Texture::Format::R16F:
@@ -350,6 +389,13 @@ namespace re
 		case re::Texture::Format::RGBA8:
 		{
 			return 4;
+		}
+		break;
+		case re::Texture::Format::RGB32F:
+		case re::Texture::Format::RGB16F:
+		case re::Texture::Format::RGB8:
+		{
+			return 3;
 		}
 		break;
 		case re::Texture::Format::RG32F:
