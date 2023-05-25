@@ -14,8 +14,6 @@ namespace re
 {
 	std::shared_ptr<re::Texture> Texture::Create(std::string const& name, TextureParams const& params, bool doClear)
 	{
-		SEAssert("Invalid color space", params.m_colorSpace != re::Texture::ColorSpace::Unknown);
-
 		// If the Texture already exists, return it. Otherwise, create the Texture 
 		if (params.m_addToSceneData && en::SceneManager::GetSceneData()->TextureExists(name))
 		{
@@ -49,6 +47,8 @@ namespace re
 		, m_texParams{ params }
 		, m_platformParams{ nullptr }
 	{
+		SEAssert("Invalid color space", m_texParams.m_colorSpace != Texture::ColorSpace::Unknown);
+
 		platform::Texture::CreatePlatformParams(*this);
 
 		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);

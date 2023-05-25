@@ -23,11 +23,8 @@ namespace opengl
 
 			GLenum m_texTarget;
 
-			// NOTE: Currently, SaberEngine assumes all textures contain 4-channel vec4's (except for depth).
-			// If format != GL_RGBA, buffer will be packed with the wrong stride
-			GLenum m_format;
-
-			GLenum m_internalFormat;
+			GLenum m_format; // Pixel data format: R, RG, RGBA, etc
+			GLenum m_internalFormat; // Number of color components
 			GLenum m_type;
 
 			glm::vec4 m_clearColor;

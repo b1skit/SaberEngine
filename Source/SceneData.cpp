@@ -154,7 +154,7 @@ namespace
 			if (imageData)
 			{
 				LOG("Texture \"%s\" is %dx%d, %d-bit, %d channels",
-					texturePaths[face].c_str(), width, height, bitDepth, numChannels);
+					texturePaths[face].c_str(), width, height, bitDepth, desiredChannels);
 
 				if (texture == nullptr) // i.e. We're processing the 1st face
 				{
@@ -305,7 +305,7 @@ namespace
 		if (imageData)
 		{
 			LOG("Texture \"%s\" is %dx%d, %d-bit, %d channels", 
-				texName.c_str(), width, height, bitDepth, numChannels);
+				texName.c_str(), width, height, bitDepth, desiredChannels);
 
 			// Update the texture parameters:
 			texParams.m_width = width;
