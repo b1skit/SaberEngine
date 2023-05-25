@@ -24,7 +24,7 @@ namespace opengl
 			(uint32_t)en::Config::Get()->GetValue<int>(en::Config::k_windowXResValueName),
 			(uint32_t)en::Config::Get()->GetValue<int>(en::Config::k_windowYResValueName)
 		};
-		// Note: Default framebuffer has no texture targets
+		// Note: OpenGL framebuffer has no texture targets
 	}
 
 
