@@ -16,8 +16,7 @@ namespace opengl
 		m_texTarget(GL_TEXTURE_2D),
 		m_format(GL_RGBA),
 		m_internalFormat(GL_RGBA32F),
-		m_type(GL_FLOAT),
-		m_clearColor(0, 0, 0, 1)
+		m_type(GL_FLOAT)
 	{
 		// Dimension:
 		/************/

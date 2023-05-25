@@ -47,14 +47,16 @@ namespace re
 		, m_texParams{ params }
 		, m_platformParams{ nullptr }
 	{
-		SEAssert("Invalid color space", m_texParams.m_colorSpace != Texture::ColorSpace::Unknown);
+		SEAssert("Invalid usage", m_texParams.m_usage != Texture::Usage::Invalid);
+		SEAssert("Invalid dimension", m_texParams.m_dimension != Texture::Dimension::Invalid);
+		SEAssert("Invalid format", m_texParams.m_format != Texture::Format::Invalid);
+		SEAssert("Invalid color space", m_texParams.m_colorSpace != Texture::ColorSpace::Invalid);
 
 		platform::Texture::CreatePlatformParams(*this);
 
-		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
-
 		if (m_texParams.m_usage == Usage::Color) // Optimization: Only allocate texels for non-target types
 		{
+			const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
 			m_texels.resize(params.m_faces * params.m_width * params.m_height * bytesPerPixel, 0);
 
 			if (doClear) // Optimization: Only fill the texture if necessary
@@ -159,7 +161,6 @@ namespace re
 			*static_cast<glm::vec2*>(pixelPtr) = *static_cast<glm::vec2*>(valuePtr);
 		}
 		break;
-		case re::Texture::Format::Depth32F:
 		case re::Texture::Format::R32F:
 		{
 			*static_cast<float*>(pixelPtr) = *static_cast<float*>(valuePtr);
@@ -216,6 +217,7 @@ namespace re
 			*(static_cast<uint8_t*>(pixelPtr)) = channelValue;
 		}
 		break;
+		case re::Texture::Format::Depth32F:
 		case re::Texture::Format::Invalid:
 		default:
 		{
@@ -312,7 +314,6 @@ namespace re
 		case re::Texture::Format::R32F:
 		case re::Texture::Format::RG16F:
 		case re::Texture::Format::RGBA8:
-		case re::Texture::Format::Depth32F:
 		{
 			return 4;
 		}
@@ -329,6 +330,7 @@ namespace re
 		}
 		break;
 		break;
+		case re::Texture::Format::Depth32F:
 		case re::Texture::Format::Invalid:
 		default:
 		{
@@ -360,10 +362,10 @@ namespace re
 		case re::Texture::Format::R32F:
 		case re::Texture::Format::R16F:
 		case re::Texture::Format::R8:
-		case re::Texture::Format::Depth32F:
 		{
 			return 1;
 		}
+		case re::Texture::Format::Depth32F:
 		case re::Texture::Format::Invalid:
 		default:
 		{

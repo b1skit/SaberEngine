@@ -111,13 +111,18 @@ namespace
 		const uint32_t totalFaces = (uint32_t)texturePaths.size();
 
 		// Modify default TextureParams to be suitable for a generic error texture:
-		Texture::TextureParams texParams;
-		texParams.m_faces = totalFaces;
-		texParams.m_dimension = totalFaces == 1 ?
-			re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCubeMap;
-		texParams.m_format = re::Texture::Format::RGBA8;
-		texParams.m_colorSpace = colorSpace;
-		texParams.m_clearColor = errorTexFillColor;
+		Texture::TextureParams texParams
+		{
+			.m_faces = totalFaces,
+
+			.m_usage = re::Texture::Usage::Color,
+			.m_dimension = (totalFaces == 1 ?
+				re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCubeMap),
+			.m_format = re::Texture::Format::RGBA8,
+			.m_colorSpace = colorSpace,
+			.m_clearColor = errorTexFillColor,
+		};
+		
 
 		// Load the texture, face-by-face:
 		shared_ptr<Texture> texture(nullptr);
@@ -233,7 +238,7 @@ namespace
 					texParams.m_dimension = totalFaces == 1 ?
 						re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCubeMap;
 					texParams.m_format = re::Texture::Format::RGBA8;
-					texParams.m_colorSpace = Texture::ColorSpace::Unknown;
+					texParams.m_colorSpace = Texture::ColorSpace::sRGB;
 
 					texParams.m_clearColor = errorTexFillColor;
 					texParams.m_useMIPs = true;
@@ -257,7 +262,10 @@ namespace
 
 
 	std::shared_ptr<re::Texture> LoadTextureFromMemory(
-		std::string const& texName, unsigned char const* texSrc, uint32_t texSrcNumBytes)
+		std::string const& texName,
+		unsigned char const* texSrc,
+		uint32_t texSrcNumBytes,
+		Texture::ColorSpace colorSpace)
 	{
 		SEAssert("Invalid texture memory allocation", texSrc != nullptr && texSrcNumBytes > 0);
 		
@@ -269,10 +277,14 @@ namespace
 		stbi_set_flip_vertically_on_load(false);
 
 		// Modify default TextureParams to be suitable for a generic error texture:
-		Texture::TextureParams texParams;
-		texParams.m_format = re::Texture::Format::RGBA8;
-		texParams.m_colorSpace = Texture::ColorSpace::Unknown;
-		texParams.m_clearColor = k_errorTextureColor;
+		Texture::TextureParams texParams
+		{
+			.m_usage = re::Texture::Usage::Color,
+			.m_dimension = re::Texture::Dimension::Texture2D,
+			.m_format = re::Texture::Format::RGBA8,
+			.m_colorSpace = colorSpace,
+			.m_clearColor = k_errorTextureColor
+		};
 
 		// Get the image data:
 		int width = 0;
@@ -456,8 +468,12 @@ namespace
 
 
 	shared_ptr<re::Texture> LoadTextureOrColor(
-		SceneData& scene, string const& sceneRootPath, cgltf_texture* texture, vec4 const& colorFallback, 
-		Texture::Format formatFallback, Texture::ColorSpace colorSpace)
+		SceneData& scene,
+		string const& sceneRootPath, 
+		cgltf_texture* texture, 
+		vec4 const& colorFallback, 
+		Texture::Format formatFallback, 
+		Texture::ColorSpace colorSpace)
 	{
 		SEAssert("Invalid fallback format",
 			formatFallback != Texture::Format::Depth32F && formatFallback != Texture::Format::Invalid);
@@ -495,7 +511,7 @@ namespace
 					else
 					{
 						tex = LoadTextureFromMemory(
-							texNameStr, static_cast<unsigned char const*>(data), static_cast<uint32_t>(size));
+							texNameStr, static_cast<unsigned char const*>(data), static_cast<uint32_t>(size), colorSpace);
 					}
 				}
 			}
@@ -525,7 +541,7 @@ namespace
 						texture->image->buffer_view->buffer->data) + texture->image->buffer_view->offset;
 
 					const uint32_t texSrcNumBytes = static_cast<uint32_t>(texture->image->buffer_view->size);
-					tex = LoadTextureFromMemory(texNameStr, texSrc, texSrcNumBytes);
+					tex = LoadTextureFromMemory(texNameStr, texSrc, texSrcNumBytes, colorSpace);
 				}
 			}
 
@@ -534,13 +550,16 @@ namespace
 		else
 		{
 			// Create a texture color fallback:
-			Texture::TextureParams colorTexParams;
-			colorTexParams.m_clearColor = colorFallback; // Clear color = initial fill color
-			colorTexParams.m_format = formatFallback;
-			colorTexParams.m_colorSpace = colorSpace;
+			Texture::TextureParams colorTexParams
+			{
+				.m_usage = re::Texture::Usage::Color,
+				.m_dimension = re::Texture::Dimension::Texture2D,
+				.m_format = formatFallback,
+				.m_colorSpace = colorSpace,
+				.m_clearColor = colorFallback
+			};			
 
 			const size_t numChannels = Texture::GetNumberOfChannels(formatFallback);
-
 			const string fallbackName = GenerateTextureColorFallbackName(colorFallback, numChannels, colorSpace);
 
 			if (scene.TextureExists(fallbackName))

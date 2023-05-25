@@ -26,8 +26,6 @@ namespace opengl
 			GLenum m_format; // Pixel data format: R, RG, RGBA, etc
 			GLenum m_internalFormat; // Number of color components
 			GLenum m_type;
-
-			glm::vec4 m_clearColor;
 		};
 
 

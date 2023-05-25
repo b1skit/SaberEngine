@@ -16,26 +16,25 @@ namespace re
 
 			virtual ~PlatformParams() = 0; // API-specific GPU bindings should be destroyed here
 
-			glm::vec4 m_clearColor = glm::vec4(0.f, 0.f, 0.f, 0.f);
-
 			bool m_isCreated = false;
 			bool m_isDirty = true; // Signal the platform layer that the texture data has been modified
 		};
 
 
 	public:
-		enum class Usage // Currently just used to assert correct/intended usage
+		enum class Usage
 		{
-			Color,
-			ColorTarget,
-			DepthTarget,
-			/*	StencilTarget,
-			DepthStencilTarget,	*/
+			Color				= 1 << 0,
+			ColorTarget			= 1 << 1,
+			DepthTarget			= 1 << 2,
 
-			SwapchainColorProxy, // Wrapper for an existing API-specific resource (i.e. backbuffer texture target)
+			// TODO: Implement support for these:
+			StencilTarget		= 1 << 3,
+			DepthStencilTarget	= 1 << 4,	
 
-			Invalid,
-			TextureUse_Count = Invalid
+			SwapchainColorProxy	= 1 << 5, // Pre-existing API-provided resource (i.e. backbuffer color target)
+
+			Invalid
 		};
 
 		enum class Dimension
@@ -46,8 +45,7 @@ namespace re
 			Texture3D,*/
 			TextureCubeMap,
 
-			Invalid,
-			TextureDimension_Count = Invalid
+			Invalid
 		};
 
 		enum class Format
@@ -64,20 +62,18 @@ namespace re
 			RG8,
 			R8,
 
+			// GPU-only formats:
 			Depth32F,
 
-			Invalid,
-			TextureFormat_Count = Invalid
+			Invalid
 		};
 
 		enum class ColorSpace
 		{
 			sRGB,
 			Linear,
-			Unknown,	// i.e. Texture loaded from disk
 
-			Invalid,
-			TextureSpace_Count = Invalid
+			Invalid
 		};
 
 
@@ -87,10 +83,10 @@ namespace re
 			uint32_t m_height = 2;
 			uint32_t m_faces = 1;
 
-			Usage m_usage = Usage::Color;
-			Dimension m_dimension = Dimension::Texture2D;
-			Format m_format = Format::RGBA8;
-			ColorSpace m_colorSpace = ColorSpace::sRGB;
+			Usage m_usage = Usage::Invalid;
+			Dimension m_dimension = Dimension::Invalid;
+			Format m_format = Format::Invalid;
+			ColorSpace m_colorSpace = ColorSpace::Invalid;
 
 			glm::vec4 m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f); // Also used as initial fill color
 			bool m_useMIPs = true; // Should MIPs be created for this texture?
