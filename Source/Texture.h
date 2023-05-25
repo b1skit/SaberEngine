@@ -51,17 +51,14 @@ namespace re
 		enum class Format
 		{
 			RGBA32F,	// 32 bits per channel x N channels
-			RGB32F,
 			RG32F,
 			R32F,
 
 			RGBA16F,	// 16 bits per channel x N channels
-			RGB16F,
 			RG16F,
 			R16F,
 
 			RGBA8,		// 8 bits per channel x N channels
-			RGB8,
 			RG8,
 			R8,
 

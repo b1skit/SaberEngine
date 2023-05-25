@@ -47,13 +47,6 @@ namespace opengl
 			m_type = GL_FLOAT;
 		}
 		break;
-		case re::Texture::Format::RGB32F:
-		{
-			m_format = GL_RGB;
-			m_internalFormat = GL_RGB32F;
-			m_type = GL_FLOAT;
-		}
-		break;
 		case re::Texture::Format::RG32F:
 		{
 			m_format = GL_RG;
@@ -72,13 +65,6 @@ namespace opengl
 		{
 			m_format = GL_RGBA;
 			m_internalFormat = GL_RGBA16F;
-			m_type = GL_HALF_FLOAT;
-		}
-		break;
-		case re::Texture::Format::RGB16F:
-		{
-			m_format = GL_RGB;
-			m_internalFormat = GL_RGB16F;
 			m_type = GL_HALF_FLOAT;
 		}
 		break;
@@ -113,29 +99,6 @@ namespace opengl
 			case re::Texture::Usage::SwapchainColorProxy:
 			{
 				m_internalFormat = texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
-			}
-			break;
-			default:
-				SEAssertF("Invalid usage");
-			}
-		}
-		break;
-		case re::Texture::Format::RGB8:
-		{
-			m_format = GL_RGB;
-			m_type = GL_UNSIGNED_BYTE;
-			switch (texParams.m_usage)
-			{
-			case re::Texture::Usage::Color:
-			{
-				m_internalFormat = texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ?
-					GL_COMPRESSED_SRGB_S3TC_DXT1_EXT : GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
-			}
-			break;
-			case re::Texture::Usage::ColorTarget:
-			case re::Texture::Usage::SwapchainColorProxy:
-			{
-				m_internalFormat = texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? GL_SRGB8 : GL_RGB8;
 			}
 			break;
 			default:
@@ -265,18 +228,18 @@ namespace opengl
 				target = params->m_texTarget;
 			}
 
-			// Compute the byte alignment for w.r.t to the image dimensions. Allows RGB8 textures (3x 1-byte channels)
-			// to be correctly buffered. Default alignment is 4.
-			GLint byteAlignment = 8;
-			while (texture.Width() % byteAlignment != 0)
-			{
-				byteAlignment /= 2; // 8, 4, 2, 1
-			}
-			SEAssert("Invalid byte alignment",
-				byteAlignment == 8 || byteAlignment == 4 || byteAlignment == 2 || byteAlignment == 1);
+			//// Compute the byte alignment for w.r.t to the image dimensions. Allows RGB8 textures (3x 1-byte channels)
+			//// to be correctly buffered. Default alignment is 4.
+			//GLint byteAlignment = 8;
+			//while (texture.Width() % byteAlignment != 0)
+			//{
+			//	byteAlignment /= 2; // 8, 4, 2, 1
+			//}
+			//SEAssert("Invalid byte alignment",
+			//	byteAlignment == 8 || byteAlignment == 4 || byteAlignment == 2 || byteAlignment == 1);
 
-			// Set the byte alignment for the start of each image row in memory:
-			glPixelStorei(GL_UNPACK_ALIGNMENT, byteAlignment);
+			//// Set the byte alignment for the start of each image row in memory:
+			//glPixelStorei(GL_UNPACK_ALIGNMENT, byteAlignment);
 
 			// Specify the texture:
 			glTexImage2D(					// Specifies a 2D texture

@@ -78,7 +78,7 @@ namespace
 		size_t firstTexelIndex) // firstTexelIndex is in units of # of pixels (NOT bytes)
 	{	
 		SEAssert("Invalid bit depth", bitDepth == 8 || bitDepth == 16 || bitDepth == 32);
-		SEAssert("Invalid number of channels", numChannels >= 1 && numChannels <= 4);
+		SEAssert("Invalid number of channels", numChannels == 1 || numChannels == 2 || numChannels == 4);
 
 		const uint8_t bytesPerPixel = (bitDepth * numChannels) / 8;
 		const size_t numBytes = width * height * bytesPerPixel;
@@ -129,30 +129,37 @@ namespace
 		for (size_t face = 0; face < totalFaces; face++)
 		{
 			// Get the image data:
-			int width, height, numChannels;
+			int width = 0;
+			int height = 0;
+			int numChannels = 0;			
+			stbi_info(texturePaths[face].c_str(), &width, &height, &numChannels);
+
+			// We don't support 3-channel textures, allow 1 or 2 channels, or force 4-channel instead
+			const int desiredChannels = numChannels == 3 ? 4 : numChannels;
+
 			uint8_t bitDepth = 0;
-			void* imageData = nullptr;			
+			void* imageData = nullptr;
 
 			if (stbi_is_hdr(texturePaths[face].c_str())) // HDR
 			{
-				imageData = stbi_loadf(texturePaths[face].c_str(), &width, &height, &numChannels, 0);
+				imageData = stbi_loadf(texturePaths[face].c_str(), &width, &height, &numChannels, desiredChannels);
 				bitDepth = 32;
 			}
 			else if (stbi_is_16_bit(texturePaths[face].c_str()))
 			{
-				imageData = stbi_load_16(texturePaths[face].c_str(), &width, &height, &numChannels, 0);
+				imageData = stbi_load_16(texturePaths[face].c_str(), &width, &height, &numChannels, desiredChannels);
 				bitDepth = 16;
 			}
 			else // Non-HDR
 			{
-				imageData = stbi_load(texturePaths[face].c_str(), &width, &height, &numChannels, 0);
+				imageData = stbi_load(texturePaths[face].c_str(), &width, &height, &numChannels, desiredChannels);
 				bitDepth = 8;
 			}
 
 			if (imageData)
 			{
 				LOG("Texture \"%s\" is %dx%d, %d-bit, %d channels",
-					texturePaths[face].c_str(), width, height, bitDepth, numChannels);
+					texturePaths[face].c_str(), width, height, bitDepth, desiredChannels);
 
 				if (texture == nullptr) // i.e. We're processing the 1st face
 				{
@@ -168,7 +175,7 @@ namespace
 						/*texParams.m_dimension = re::Texture::Dimension::Texture1D;*/
 					}
 
-					switch (numChannels)
+					switch (desiredChannels)
 					{
 					case 1:
 					{
@@ -182,13 +189,6 @@ namespace
 						if (bitDepth == 8) texParams.m_format = re::Texture::Format::RG8;
 						else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RG16F;
 						else texParams.m_format = re::Texture::Format::RG32F;
-					}
-					break;
-					case 3:
-					{
-						if (bitDepth == 8) texParams.m_format = re::Texture::Format::RGB8;
-						else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RGB16F;
-						else texParams.m_format = re::Texture::Format::RGB32F;
 					}
 					break;
 					case 4:
@@ -219,7 +219,7 @@ namespace
 					static_cast<uint8_t const*>(imageData), 
 					width, 
 					height, 
-					(int8_t)numChannels,
+					(int8_t)desiredChannels,
 					bitDepth, 
 					firstTexelIndex);
 
@@ -299,17 +299,17 @@ namespace
 		void* imageData = nullptr;
 		if (stbi_is_hdr_from_memory(texSrc, texSrcNumBytes))
 		{
-			imageData = stbi_loadf_from_memory(texSrc, texSrcNumBytes, &width, &height, &numChannels, 0);
+			imageData = stbi_loadf_from_memory(texSrc, texSrcNumBytes, &width, &height, &numChannels, desiredChannels);
 			bitDepth = 32;
 		}
 		else if (stbi_is_16_bit_from_memory(texSrc, texSrcNumBytes))
 		{
-			imageData = stbi_load_16_from_memory(texSrc, texSrcNumBytes, &width, &height, &numChannels, 0);
+			imageData = stbi_load_16_from_memory(texSrc, texSrcNumBytes, &width, &height, &numChannels, desiredChannels);
 			bitDepth = 16;
 		}
 		else // Non-HDR
 		{
-			imageData = stbi_load_from_memory(texSrc, texSrcNumBytes, &width, &height, &numChannels, 0);
+			imageData = stbi_load_from_memory(texSrc, texSrcNumBytes, &width, &height, &numChannels, desiredChannels);
 			bitDepth = 8;
 		}
 
@@ -331,7 +331,7 @@ namespace
 				/*texParams.m_dimension = re::Texture::Dimension::Texture1D;*/
 			}
 
-			switch (numChannels)
+			switch (desiredChannels)
 			{
 			case 1:
 			{
@@ -345,13 +345,6 @@ namespace
 				if (bitDepth == 8) texParams.m_format = re::Texture::Format::RG8;
 				else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RG16F;
 				else texParams.m_format = re::Texture::Format::RG32F;
-			}
-			break;
-			case 3:
-			{
-				if (bitDepth == 8) texParams.m_format = re::Texture::Format::RGB8;
-				else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RGB16F;
-				else texParams.m_format = re::Texture::Format::RGB32F;
 			}
 			break;
 			case 4:
@@ -376,7 +369,7 @@ namespace
 				static_cast<uint8_t const*>(imageData),
 				width,
 				height,
-				(int8_t)numChannels,
+				(int8_t)desiredChannels,
 				bitDepth,
 				0); // 1st texel index
 		}
@@ -685,7 +678,7 @@ namespace
 						sceneRootPath,
 						material->pbr_metallic_roughness.base_color_texture.texture,
 						missingTextureColor,
-						Texture::Format::RGB8,
+						Texture::Format::RGBA8,
 						Texture::ColorSpace::sRGB);
 					numTexLoads--;
 					});
@@ -699,7 +692,7 @@ namespace
 						sceneRootPath,
 						material->pbr_metallic_roughness.metallic_roughness_texture.texture,
 						missingTextureColor,
-						Texture::Format::RGB8,
+						Texture::Format::RGBA8,
 						Texture::ColorSpace::Linear);
 					numTexLoads--;
 					});
@@ -713,7 +706,7 @@ namespace
 						sceneRootPath,
 						material->normal_texture.texture,
 						vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
-						Texture::Format::RGB8,
+						Texture::Format::RGBA8,
 						Texture::ColorSpace::Linear);
 					numTexLoads--;
 					});
@@ -727,7 +720,7 @@ namespace
 						sceneRootPath,
 						material->occlusion_texture.texture,
 						missingTextureColor,	// Completely unoccluded
-						Texture::Format::RGB8,
+						Texture::Format::RGBA8,
 						Texture::ColorSpace::Linear);
 					numTexLoads--;
 					});
@@ -741,7 +734,7 @@ namespace
 						sceneRootPath,
 						material->emissive_texture.texture,
 						missingTextureColor,
-						Texture::Format::RGB8,
+						Texture::Format::RGBA8,
 						Texture::ColorSpace::sRGB); // GLTF convention: Must be converted to linear before use
 					numTexLoads--;
 					});

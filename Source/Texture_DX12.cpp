@@ -22,11 +22,6 @@ namespace dx12
 				return DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT;
 			}
 			break;
-			case re::Texture::Format::RGB32F:
-			{
-				return DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT;
-			}
-			break;
 			case re::Texture::Format::RG32F:
 			{
 				return DXGI_FORMAT::DXGI_FORMAT_R32G32_FLOAT;
@@ -40,11 +35,6 @@ namespace dx12
 			case re::Texture::Format::RGBA16F: // 16 bits per channel x N channels
 			{
 				return DXGI_FORMAT::DXGI_FORMAT_R16G16B16A16_FLOAT;
-			}
-			break;
-			case re::Texture::Format::RGB16F:
-			{
-				SEAssertF("TODO: Figure out the most appropraite DXGI format to use in this case");
 			}
 			break;
 			case re::Texture::Format::RG16F:
@@ -76,13 +66,6 @@ namespace dx12
 			case re::Texture::Format::Depth32F:
 			{
 				return DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT;
-			}
-			break;
-			case re::Texture::Format::RGB8:
-			{
-				// TODO: THIS DOESN'T WORK - TEXTURES ARE CORRUPTED (BUT AT LEAST THE COPY WORKS...)
-				return texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ?
-					DXGI_FORMAT::DXGI_FORMAT_BC7_UNORM_SRGB : DXGI_FORMAT::DXGI_FORMAT_BC7_UNORM;
 			}
 			break;
 			case re::Texture::Format::Invalid:
@@ -118,10 +101,6 @@ namespace dx12
 		SEAssert("Texture is already created", texPlatParams->m_isCreated == false);
 		texPlatParams->m_isCreated = true;
 
-		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
-
-		texPlatParams->m_format = GetTextureFormat(texParams);
-
 		dx12::Context::PlatformParams* ctxPlatParams =
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
@@ -132,7 +111,8 @@ namespace dx12
 		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
 
 		uint32_t numSubresources = 0;
-		
+
+		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 		switch (texParams.m_usage)
 		{
 		case re::Texture::Usage::Color:

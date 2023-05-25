@@ -274,7 +274,7 @@ namespace gr
 		cubeParams.m_faces = 6;
 		cubeParams.m_usage = Texture::Usage::ColorTarget;
 		cubeParams.m_dimension = Texture::Dimension::TextureCubeMap;
-		cubeParams.m_format = Texture::Format::RGB16F;
+		cubeParams.m_format = Texture::Format::RGBA16F;
 		cubeParams.m_colorSpace = Texture::ColorSpace::Linear;
 		cubeParams.m_addToSceneData = false;
 
