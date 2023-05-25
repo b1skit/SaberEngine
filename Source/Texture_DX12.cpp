@@ -80,6 +80,7 @@ namespace dx12
 			break;
 			case re::Texture::Format::RGB8:
 			{
+				// TODO: THIS DOESN'T WORK - TEXTURES ARE CORRUPTED (BUT AT LEAST THE COPY WORKS...)
 				return texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ?
 					DXGI_FORMAT::DXGI_FORMAT_BC7_UNORM_SRGB : DXGI_FORMAT::DXGI_FORMAT_BC7_UNORM;
 			}
@@ -136,89 +137,94 @@ namespace dx12
 		{
 		case re::Texture::Usage::Color:
 		{
-			//initialState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COPY_DEST; // We need to buffer the texture data
-			//numSubresources = 1; // TODO: Support mips
+			const uint32_t numMips = 1; // TODO: Support mips
 
-			//re::Texture::TextureParams const& texParams = texture.GetTextureParams();	
-			//
-			//D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE;
+			// Resources can be implicitely promoted to COPY/SOURCE/COPY_DEST from COMMON, and decay to COMMON after
+			// being accessed on a copy queue. So we just set the initial state as COMMON here, and not bother tracking
+			// it until it's used on a non-copy queue for the first time
+			initialState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
 
-			//// Resource description:
-			//CD3DX12_RESOURCE_DESC colorResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-			//	texPlatParams->m_format,
-			//	texParams.m_width,
-			//	texParams.m_height,
-			//	1,			// arraySize
-			//	0,			// mipLevels. TODO: Support mips
-			//	1,			// sampleCount TODO: Support MSAA
-			//	0,			// sampleQuality
-			//	flags);
+			numSubresources = numMips;
 
-			//CD3DX12_HEAP_PROPERTIES colorHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+			re::Texture::TextureParams const& texParams = texture.GetTextureParams();	
+			
+			// TODO: use D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS for color textures (unless MSAA enabled)?
+			const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE; 
 
-			//HRESULT hr = device->CreateCommittedResource(
-			//	&colorHeapProperties,
-			//	D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
-			//	&colorResourceDesc,
-			//	initialState,
-			//	nullptr, // Optimized clear value: Must be NULL except for buffers, render, or depth-stencil targets
-			//	IID_PPV_ARGS(&texPlatParams->m_textureResource));
-			//texPlatParams->m_textureResource->SetName(texture.GetWName().c_str());
+			// Resource description:
+			const D3D12_RESOURCE_DESC colorResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+				texPlatParams->m_format,
+				texParams.m_width,
+				texParams.m_height,
+				texParams.m_faces,
+				numMips,	// mipLevels. 0 == maximimum supported. TODO: Support mips
+				1,			// sampleCount TODO: Support MSAA
+				0,			// sampleQuality
+				flags);
 
+			const D3D12_HEAP_PROPERTIES colorHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
+			HRESULT hr = device->CreateCommittedResource(
+				&colorHeapProperties,
+				D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
+				&colorResourceDesc,
+				initialState,
+				nullptr, // Optimized clear value: Must be NULL except for buffers, render, or depth-stencil targets
+				IID_PPV_ARGS(&texPlatParams->m_textureResource));
+			CheckHResult(hr, "Failed to create color texture committed resource");
 
-			//// Create an intermediate upload heap:
-
-			//const size_t numBytes =
-			//	texParams.m_faces * texParams.m_width * texParams.m_height * re::Texture::GetNumBytesPerTexel(texParams.m_format);
-			//SEAssert("Color target must have data to buffer", texture.GetTexels().size() == numBytes);
-
-			//
-
-			//const CD3DX12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-			//const CD3DX12_RESOURCE_DESC committedresourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-			//	texPlatParams->m_format,
-			//	texParams.m_width,
-			//	texParams.m_height,
-			//	texParams.m_faces,
-			//	0, // TODO: Support mips
-			//	1, // Sample count. TODO: Support MSAA
-			//	0, // Sample quality
-			//	flags);
-
-			//ComPtr<ID3D12Resource> itermediateBufferResource = nullptr;
-
-			//hr = device->CreateCommittedResource(
-			//	&uploadHeapProperties,
-			//	D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
-			//	&committedresourceDesc,
-			//	D3D12_RESOURCE_STATE_GENERIC_READ,
-			//	nullptr,
-			//	IID_PPV_ARGS(&itermediateBufferResource));
-			//CheckHResult(hr, "Failed to create intermediate texture buffer resource");
-
-			//itermediateBufferResource->SetName(L"Color texture intermediate buffer");
-
-			//// Populate the subresource:
-			//D3D12_SUBRESOURCE_DATA subresourceData = {};
-			//subresourceData.pData = &texture.GetTexels()[0];
-			//subresourceData.RowPitch = numBytes; // ??????????????????????????????????????????????
-			//subresourceData.SlicePitch = numBytes; // ????????????????????????????????????????????
-
-			//::UpdateSubresources(
-			//	commandList.Get(),
-			//	texPlatParams->m_textureResource.Get(),		// Destination resource
-			//	itermediateBufferResource.Get(),			// Intermediate resource
-			//	0,								// Index of 1st subresource in the resource
-			//	0,								// Number of subresources in the resource.
-			//	1,								// Required byte size for the update
-			//	&subresourceData);
+			texPlatParams->m_textureResource->SetName(texture.GetWName().c_str());
 
 
+			// Assemble the subresource data:
+			const uint8_t bytesPerTexel = re::Texture::GetNumBytesPerTexel(texParams.m_format);
+			const uint32_t numBytes = texParams.m_faces * texParams.m_width * texParams.m_height * bytesPerTexel;
+			SEAssert("Color target must have data to buffer", texture.GetTexels().size() == numBytes);
 
+			std::vector<D3D12_SUBRESOURCE_DATA> subresourceData;
+			subresourceData.reserve(numSubresources);
 
-			//// Released once the copy is done
-			//intermediateResources.emplace_back(itermediateBufferResource);
+			subresourceData.emplace_back(D3D12_SUBRESOURCE_DATA{
+				.pData = &texture.GetTexels()[0],
+				
+				// https://github.com/microsoft/DirectXTex/wiki/ComputePitch
+				// Row pitch: The number of bytes in a scanline of pixels: bytes-per-pixel * width-of-image
+				// - Can be larger than the number of valid pixels due to alignment padding
+				.RowPitch = bytesPerTexel * texParams.m_width,
+
+				// Slice pitch: The number of bytes in each depth slice
+				// - 1D/2D images: The total size of the image, including alignment padding
+				.SlicePitch = numBytes
+				});
+			
+			// Create an intermediate upload heap:
+			const D3D12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+			const D3D12_RESOURCE_DESC intermediateBufferResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(numBytes);
+
+			ComPtr<ID3D12Resource> itermediateBufferResource = nullptr;
+
+			hr = device->CreateCommittedResource(
+				&uploadHeapProperties,
+				D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
+				&intermediateBufferResourceDesc,
+				D3D12_RESOURCE_STATE_GENERIC_READ,
+				nullptr,
+				IID_PPV_ARGS(&itermediateBufferResource));
+			CheckHResult(hr, "Failed to create intermediate texture buffer resource");
+
+			itermediateBufferResource->SetName(L"Color texture intermediate buffer");
+
+			::UpdateSubresources(
+				commandList.Get(),
+				texPlatParams->m_textureResource.Get(),		// Destination resource
+				itermediateBufferResource.Get(),			// Intermediate resource
+				0,											// Intermediate offset
+				0,											// Index of 1st subresource in the resource
+				numMips,									// Number of subresources in the resource.
+				&subresourceData[0]);
+
+			// Released once the copy is done
+			intermediateResources.emplace_back(itermediateBufferResource);
 		}
 		break;
 		case re::Texture::Usage::ColorTarget:

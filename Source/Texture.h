@@ -82,8 +82,8 @@ namespace re
 
 		struct TextureParams
 		{
-			uint32_t m_width = 2;
-			uint32_t m_height = 2;
+			uint32_t m_width = 4; // Must be a minimum of 4x4 for block compressed formats
+			uint32_t m_height = 4;
 			uint32_t m_faces = 1;
 
 			Usage m_usage = Usage::Invalid;

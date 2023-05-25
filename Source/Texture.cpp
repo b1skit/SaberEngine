@@ -51,6 +51,8 @@ namespace re
 		SEAssert("Invalid dimension", m_texParams.m_dimension != Texture::Dimension::Invalid);
 		SEAssert("Invalid format", m_texParams.m_format != Texture::Format::Invalid);
 		SEAssert("Invalid color space", m_texParams.m_colorSpace != Texture::ColorSpace::Invalid);
+		SEAssert("Invalid dimensions: Textures must be a minimum of 4x4 to support block compression", 
+			m_texParams.m_width >= 4 && m_texParams.m_height >= 4);
 
 		platform::Texture::CreatePlatformParams(*this);
 
