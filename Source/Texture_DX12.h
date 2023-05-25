@@ -12,10 +12,6 @@ namespace dx12
 	class Texture
 	{
 	public:
-		static DXGI_FORMAT GetTextureFormat(re::Texture::TextureParams const&);
-
-
-	public:
 		struct PlatformParams final : public re::Texture::PlatformParams
 		{
 			PlatformParams(re::Texture::TextureParams const& texParams);
@@ -30,11 +26,18 @@ namespace dx12
 
 
 	public:
+		// DX12-specific functionality:
 		static void Create(re::Texture&, 
 			Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2>,
 			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources);
+		
 		static std::shared_ptr<re::Texture> CreateFromExistingResource(
 			std::string const& name, re::Texture::TextureParams const&, bool doClear, Microsoft::WRL::ComPtr<ID3D12Resource>);
+
+		static DXGI_FORMAT GetTextureFormat(re::Texture::TextureParams const&);
+
+
+		// Platform functionality:
 		static void Destroy(re::Texture&);
 		static void GenerateMipMaps(re::Texture&);
 	};
