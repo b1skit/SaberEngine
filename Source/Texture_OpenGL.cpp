@@ -10,7 +10,6 @@
 
 namespace opengl
 {
-	// Ctor: Maps SaberEngine -> OpenGL texture params:
 	Texture::PlatformParams::PlatformParams(re::Texture::TextureParams const& texParams) :
 		m_textureID(0),
 		m_texTarget(GL_TEXTURE_2D),
@@ -85,11 +84,26 @@ namespace opengl
 		break;
 		case re::Texture::Format::RGBA8:
 		{
-			m_format = GL_RGBA;
-			m_internalFormat = 
-				texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
 			// Note: Alpha in GL_SRGB8_ALPHA8 is stored in linear color space, RGB are in sRGB color space
+			m_format = GL_RGBA;
 			m_type = GL_UNSIGNED_BYTE;
+			switch (texParams.m_usage)
+			{
+			case re::Texture::Usage::Color:
+			{
+				m_internalFormat = texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? 
+					GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM : GL_COMPRESSED_RGBA_BPTC_UNORM;
+			}
+			break;
+			case re::Texture::Usage::ColorTarget:
+			case re::Texture::Usage::SwapchainColorProxy:
+			{
+				m_internalFormat = texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
+			}
+			break;
+			default:
+				SEAssertF("Invalid usage");
+			}
 		}
 		break;
 		case re::Texture::Format::RG8:
@@ -155,13 +169,12 @@ namespace opengl
 
 	void opengl::Texture::Create(re::Texture& texture)
 	{
-		SEAssert("Texture is already created", !texture.GetPlatformParams()->m_isCreated);
-
-		LOG("Creating & buffering texture: \"%s\"", texture.GetName().c_str());
-
-		PlatformParams* params = texture.GetPlatformParams()->As<opengl::Texture::PlatformParams*>();
+		opengl::Texture::PlatformParams* params = texture.GetPlatformParams()->As<opengl::Texture::PlatformParams*>();
 		SEAssert("Attempting to create a texture that already exists", 
 			!glIsTexture(params->m_textureID) && !params->m_isCreated);
+		params->m_isCreated = true;
+
+		LOG("Creating & buffering texture: \"%s\"", texture.GetName().c_str());
 
 		// Generate textureID names. Note: We must call glBindTexture immediately after to associate the name with 
 		// a texture. It will not have the correct dimensionality until this is done
@@ -215,18 +228,20 @@ namespace opengl
 				target = params->m_texTarget;
 			}
 
-			// Compute the byte alignment for w.r.t to the image dimensions. Allows RGB8 textures (3x 1-byte channels)
-			// to be correctly buffered. Default alignment is 4.
-			GLint byteAlignment = 8;
-			while (texture.Width() % byteAlignment != 0)
-			{
-				byteAlignment /= 2; // 8, 4, 2, 1
-			}
-			SEAssert("Invalid byte alignment",
-				byteAlignment == 8 || byteAlignment == 4 || byteAlignment == 2 || byteAlignment == 1);
+			//// Compute the byte alignment for w.r.t to the image dimensions. Allows RGB8 textures (3x 1-byte channels)
+			//// to be correctly buffered. Default alignment is 4.
+			//GLint byteAlignment = 8;
+			//while (texture.Width() % byteAlignment != 0)
+			//{
+			//	byteAlignment /= 2; // 8, 4, 2, 1
+			//}
+			//SEAssert("Invalid byte alignment",
+			//	byteAlignment == 8 || byteAlignment == 4 || byteAlignment == 2 || byteAlignment == 1);
 
-			// Set the byte alignment for the start of each image row in memory:
-			glPixelStorei(GL_UNPACK_ALIGNMENT, byteAlignment);
+			//// Set the byte alignment for the start of each image row in memory:
+			//glPixelStorei(GL_UNPACK_ALIGNMENT, byteAlignment);
+
+
 
 			// Specify the texture:
 			glTexImage2D(					// Specifies a 2D texture
@@ -239,13 +254,38 @@ namespace opengl
 				params->m_format,			// format
 				params->m_type,				// type
 				data);						// void* data. Nullptr for render targets
+
+
+			//if (params->m_internalFormat == GL_COMPRESSED_SRGB_ALPHA || params->m_internalFormat == GL_COMPRESSED_RGBA)
+			//{
+			//	glCompressedTexImage2D(
+			//		target + (GLenum)i,			// target: GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP_POSITIVE_X, etc
+			//		0,							// mip level
+			//		params->m_internalFormat,	// internal format
+			//		width,						// width
+			//		height,						// height
+			//		0,							// border
+			//		static_cast<GLsizei>(texture.GetTexels().size()),
+			//		data);						// void* data. Nullptr for render targets
+			//}
+			//else
+			//{
+			//	glTexImage2D(					// Specifies a 2D texture
+			//		target + (GLenum)i,			// target: GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP_POSITIVE_X, etc
+			//		0,							// mip level
+			//		params->m_internalFormat,	// internal format
+			//		width,						// width
+			//		height,						// height
+			//		0,							// border
+			//		params->m_format,			// format
+			//		params->m_type,				// type
+			//		data);						// void* data. Nullptr for render targets
+			//}
 		}
 
 		// Create mips:
 		opengl::Texture::GenerateMipMaps(texture);
 
-		// Finally, update the platform params state:
-		params->m_isCreated = true;
 		params->m_isDirty = false;
 
 		// Note: We leave the texture and samplers bound
