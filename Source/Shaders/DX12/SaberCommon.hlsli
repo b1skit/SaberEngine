@@ -17,14 +17,9 @@ struct VertexIn
 
 struct VertexOut
 {
-	float4 Color : COLOR;
 	float4 Position : SV_Position;
-};
-
-
-struct PixelIn
-{
-	float4 Color : COLOR;
+	float2 UV0		: TEXCOORD0;
+	float4 Color	: COLOR0;
 };
 
 
@@ -66,6 +61,5 @@ struct CameraParamsCB
 };
 ConstantBuffer<CameraParamsCB> CameraParams;
 // TODO: Replace this with a structure buffer?
-
 
 #endif // SABER_COMMON_HLSL
