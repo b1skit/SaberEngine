@@ -1,14 +1,17 @@
 // © 2022 Adam Badke. All rights reserved.
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
-#include "CommandList_DX12.h"
+#include "Config.h"
 #include "Context_DX12.h"
+#include "CommandList_DX12.h"
 #include "Debug_DX12.h"
 #include "ParameterBlock.h"
 #include "ParameterBlock_DX12.h"
 #include "RenderManager.h"
 #include "RootSignature_DX12.h"
 #include "SwapChain_DX12.h"
+#include "Texture.h"
+#include "Texture_DX12.h"
 #include "TextureTarget.h"
 #include "TextureTarget_DX12.h"
 #include "VertexStream.h"
@@ -41,12 +44,17 @@ namespace
 
 namespace dx12
 {
+	size_t CommandList::s_commandListNumber = 0;
+
+
 	CommandList::CommandList(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type)
 		: m_commandList(nullptr)
 		, m_type(type)
 		, m_commandAllocator(nullptr)
 		, m_fenceValue(0)
-		, m_gpuDescriptorHeaps(nullptr)
+		, k_commandListNumber(s_commandListNumber++)
+		, m_gpuCbvSrvUavDescriptorHeaps(nullptr)
+		, m_gpuSamplerDescriptorHeaps(nullptr)
 		, m_currentGraphicsRootSignature(nullptr)
 		, m_currentPSO(nullptr)
 		
@@ -58,22 +66,29 @@ namespace dx12
 
 		HRESULT hr = device->CreateCommandList(
 			deviceNodeMask,
-			m_type,						// Direct draw/compute/copy/etc
-			m_commandAllocator.Get(),	// The command allocator the command lists will be created on
-			nullptr,					// Optional: Command list initial pipeline state
-			IID_PPV_ARGS(&m_commandList)); // IID_PPV_ARGS: RIID & destination for the populated command list
+			m_type,							// Direct draw/compute/copy/etc
+			m_commandAllocator.Get(),		// The command allocator the command lists will be created on
+			nullptr,						// Optional: Command list initial pipeline state
+			IID_PPV_ARGS(&m_commandList));	// IID_PPV_ARGS: RIID & destination for the populated command list
 		CheckHResult(hr, "Failed to create command list");
+
+		// Name the command list with a monotonically-increasing index
+		const std::wstring commandListname = L"CommandList_#" + std::to_wstring(k_commandListNumber);
+		m_commandList->SetName(commandListname.c_str());
 
 		// Set the descriptor heaps (unless we're a copy command list):
 		if (m_type != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY)
 		{
 			// Create our GPU-visible descriptor heaps:
-			m_gpuDescriptorHeaps = std::make_unique<GPUDescriptorHeap>(
+			m_gpuCbvSrvUavDescriptorHeaps = std::make_unique<GPUDescriptorHeap>(
 				m_commandList.Get(),
 				m_type,
 				D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-			// TODO: Handle Sampler descriptor heaps
+			m_gpuSamplerDescriptorHeaps = std::make_unique<GPUDescriptorHeap>(
+				m_commandList.Get(),
+				m_type,
+				D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 		}
 
 		// Note: Command lists are created in the recording state by default. The render loop resets the command 
@@ -90,9 +105,50 @@ namespace dx12
 		m_type = D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_NONE;
 		m_commandAllocator = nullptr;
 		m_fenceValue = 0;
-		m_gpuDescriptorHeaps = nullptr;
+		m_gpuCbvSrvUavDescriptorHeaps = nullptr;
+		m_gpuSamplerDescriptorHeaps = nullptr;
 		m_currentGraphicsRootSignature = nullptr;
 		m_currentPSO = nullptr;
+	}
+
+
+	void CommandList::Reset()
+	{
+		m_currentGraphicsRootSignature = nullptr;
+		m_currentPSO = nullptr;
+
+		// Reset the command allocator BEFORE we reset the command list (to avoid leaking memory)
+		m_commandAllocator->Reset();
+
+		m_resourceStates.Reset();
+
+		// Note: pso is optional here; nullptr sets a dummy PSO
+		HRESULT hr = m_commandList->Reset(m_commandAllocator.Get(), nullptr);
+		CheckHResult(hr, "Failed to reset command list");
+
+		// Re-bind the descriptor heaps (unless we're a copy command list):
+		if (m_type != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY)
+		{
+			// Reset the GPU descriptor heap managers:
+			m_gpuCbvSrvUavDescriptorHeaps->Reset();
+			m_gpuSamplerDescriptorHeaps->Reset();
+
+			constexpr uint8_t k_numHeaps = 2;
+			ID3D12DescriptorHeap* descriptorHeaps[k_numHeaps] = {
+				m_gpuCbvSrvUavDescriptorHeaps->GetD3DDescriptorHeap(),
+				m_gpuSamplerDescriptorHeaps->GetD3DDescriptorHeap() };
+			m_commandList->SetDescriptorHeaps(k_numHeaps, descriptorHeaps);
+		}
+	}
+
+
+	void CommandList::SetGraphicsRootSignature(dx12::RootSignature const& rootSig)
+	{
+		m_currentGraphicsRootSignature = &rootSig;
+
+		m_gpuCbvSrvUavDescriptorHeaps->ParseRootSignatureDescriptorTables(rootSig);
+
+		m_commandList->SetGraphicsRootSignature(rootSig.GetD3DRootSignature());
 	}
 
 
@@ -107,21 +163,21 @@ namespace dx12
 
 
 		const uint32_t rootSigSlot =
-			m_currentGraphicsRootSignature->GetResourceRegisterBindPoint(parameterBlock->GetName()).m_rootSigIndex;
+			m_currentGraphicsRootSignature->GetRootSignatureEntry(parameterBlock->GetName()).m_rootSigIndex;
 
 
 		switch (parameterBlock->GetPlatformParams()->m_dataType)
 		{
 		case re::ParameterBlock::PBDataType::SingleElement:
 		{
-			m_gpuDescriptorHeaps->SetInlineCBV(
+			m_gpuCbvSrvUavDescriptorHeaps->SetInlineCBV(
 				rootSigSlot,						// Root signature index 
 				pbPlatParams->m_resource.Get());	// Resource
 		}
 		break;
 		case re::ParameterBlock::PBDataType::Array:
 		{
-			m_gpuDescriptorHeaps->SetInlineSRV(
+			m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
 				rootSigSlot,						// Root signature index 
 				pbPlatParams->m_resource.Get());	// Resource
 		}
@@ -357,16 +413,49 @@ namespace dx12
 	}
 
 
+	void CommandList::SetTexture(std::string const& shaderName, std::shared_ptr<re::Texture> texture)
+	{
+		dx12::Texture::PlatformParams* texPlatParams = 
+			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+
+		// TODO: Handle this more intelligently
+		TransitionResource(texPlatParams->m_textureResource.Get(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+
+		SEAssert("Pipeline is not currently set", m_currentPSO);
+		
+		if (m_currentPSO->GetRootSignature().HasResource(shaderName) || 
+			en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == false)
+		{
+			RootSignature::RootSigEntry const& rootSigEntry =
+				m_currentPSO->GetRootSignature().GetRootSignatureEntry(shaderName);
+
+			m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
+				rootSigEntry.m_rootSigIndex,
+				texPlatParams->m_cpuDescAllocation.GetBaseDescriptor(),
+				rootSigEntry.m_offset,
+				rootSigEntry.m_count);
+		}
+	}
+
+
 	void CommandList::TransitionResource(
 		ID3D12Resource* resource, D3D12_RESOURCE_STATES toState, uint32_t subresourceIdx)
 	{
 		if (m_resourceStates.HasResourceState(resource, subresourceIdx))
 		{
+			const D3D12_RESOURCE_STATES currentState = m_resourceStates.GetResourceState(resource, subresourceIdx);
+			if (currentState == toState)
+			{
+				return; // Before and after states must be different
+			}
+
 			// If we've already seen this resource before, we can record the transition now (as we'll prepend any
 			// initial transitions when submitting the command list)			
 			CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 				resource,
-				m_resourceStates.GetResourceState(resource, subresourceIdx),
+				currentState,
 				toState,
 				subresourceIdx,
 				D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE);

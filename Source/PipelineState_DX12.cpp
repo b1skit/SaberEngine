@@ -99,7 +99,6 @@ namespace
 		{
 			D3D12_SIGNATURE_PARAMETER_DESC paramDesc;
 			hr = shaderReflection->GetInputParameterDesc(paramIndex, &paramDesc);
-
 			if (hr != S_OK)
 			{
 				break;
@@ -407,7 +406,7 @@ namespace dx12
 			const D3D12_BLEND_DESC blendDesc = BuildBlendDesc(targetSet, grPipelineState);
 			pipelineStateStream.blend = CD3DX12_BLEND_DESC(blendDesc);
 
-			D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc =
+			const D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc =
 			{
 				sizeof(PipelineStateStream),
 				&pipelineStateStream

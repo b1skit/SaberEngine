@@ -29,6 +29,12 @@ namespace
 			D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE
 			)
 		{
+			// TODO: This check is duplicated in CommandList::TransitionResource
+			// All barriers should be set in a single place
+			if (beforeState == afterState)
+			{
+				return;
+			}
 			barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::Transition(
 				resource,
 				beforeState,
@@ -48,6 +54,7 @@ namespace
 		// Manually patch the barriers for each command list:
 		std::lock_guard<std::mutex> barrierLock(globalResourceStates.GetGlobalStatesMutex());
 
+		// TODO: Feels like this logic should be a part of the GlobalResourceState?
 		for (uint32_t cmdListIdx = 0; cmdListIdx < numCmdLists; cmdListIdx++)
 		{
 			std::vector<CD3DX12_RESOURCE_BARRIER> barriers;
@@ -141,7 +148,7 @@ namespace dx12
 {
 	CommandQueue::CommandQueue()
 		: m_commandQueue(nullptr)
-		, m_type(CommandList::D3DCommandListType(CommandList::CommandListType::CommandListType_Count))
+		, m_type(CommandList::GetD3DCommandListType(CommandList::CommandListType::CommandListType_Count))
 		, m_deviceCache(nullptr)
 		, m_fenceValue(0)
 	{
@@ -150,7 +157,7 @@ namespace dx12
 
 	void CommandQueue::Create(ComPtr<ID3D12Device2> displayDevice, CommandList::CommandListType type)
 	{
-		m_type = CommandList::D3DCommandListType(type);
+		m_type = CommandList::GetD3DCommandListType(type);
 		m_deviceCache = displayDevice; // Store a local copy, for convenience
 
 		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs

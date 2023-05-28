@@ -15,6 +15,10 @@
       "Command": "-console"
     },
     {
+      "Id": "35be5c82-80fa-421b-ad5d-05df0d9477bd",
+      "Command": "-relaxedshaderbinding"
+    },
+    {
       "Id": "6dd1fc69-ed79-4d85-b912-fcc514e395a2",
       "Command": "-scene MetalRoughSpheresNoTextures\\glTF\\MetalRoughSpheresNoTextures.gltf"
     },

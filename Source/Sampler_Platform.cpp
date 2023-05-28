@@ -26,7 +26,7 @@ namespace platform
 		break;
 		case RenderingAPI::DX12:
 		{
-			sampler.SetPlatformParams(std::make_unique<dx12::Sampler::PlatformParams>(sampler.GetSamplerParams()));
+			sampler.SetPlatformParams(std::make_unique<dx12::Sampler::PlatformParams>());
 		}
 		break;
 		default:

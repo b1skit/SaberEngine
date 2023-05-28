@@ -38,7 +38,7 @@ namespace re
 			SamplerType_Count
 		};
 		static std::shared_ptr<re::Sampler> const GetSampler(WrapAndFilterMode type);
-		static std::shared_ptr<re::Sampler> const GetSampler(std::string const& samplerTypeLibraryname);
+		static std::shared_ptr<re::Sampler> const GetSampler(std::string const& samplerTypeLibraryName);
 		static void DestroySamplerLibrary();
 
 	private:

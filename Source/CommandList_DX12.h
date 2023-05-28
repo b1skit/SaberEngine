@@ -13,6 +13,7 @@ namespace re
 {
 	class ParameterBlock;
 	class VertexStream;
+	class Texture;
 	class TextureTarget;
 	class TextureTargetSet;
 }
@@ -37,8 +38,9 @@ namespace dx12
 
 			CommandListType_Count
 		};
+		static constexpr D3D12_COMMAND_LIST_TYPE GetD3DCommandListType(dx12::CommandList::CommandListType type);
 
-		static constexpr D3D12_COMMAND_LIST_TYPE D3DCommandListType(dx12::CommandList::CommandListType type);
+		static size_t s_commandListNumber; // Monotonically-increasing numeric ID for naming command lists
 
 
 	public:
@@ -88,6 +90,8 @@ namespace dx12
 		void SetGraphicsRoot32BitConstants(
 			uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;
 
+		void SetTexture(std::string const& shaderName, std::shared_ptr<re::Texture>);
+
 		void DrawIndexedInstanced(
 			uint32_t numIndexes, uint32_t numInstances, uint32_t idxStartOffset, int32_t baseVertexOffset, uint32_t instanceOffset);
 
@@ -105,9 +109,11 @@ namespace dx12
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator;
 		uint64_t m_fenceValue; // When the command allocator can be reused
 
+		const size_t k_commandListNumber;
 
 	private:
-		std::unique_ptr<dx12::GPUDescriptorHeap> m_gpuDescriptorHeaps;
+		std::unique_ptr<dx12::GPUDescriptorHeap> m_gpuCbvSrvUavDescriptorHeaps;
+		std::unique_ptr<dx12::GPUDescriptorHeap> m_gpuSamplerDescriptorHeaps; // TODO: Finish implementation & use this
 		dx12::LocalResourceStateTracker m_resourceStates;
 
 	private:
@@ -134,30 +140,6 @@ namespace dx12
 	}
 
 
-	inline void CommandList::Reset()
-	{
-		m_currentGraphicsRootSignature = nullptr;
-		m_currentPSO = nullptr;
-
-		// Reset the command allocator BEFORE we reset the command list (to avoid leaking memory)
-		m_commandAllocator->Reset();
-
-		m_resourceStates.Reset();
-
-		// Note: pso is optional here; nullptr sets a dummy PSO
-		HRESULT hr = m_commandList->Reset(m_commandAllocator.Get(), nullptr);   
-		CheckHResult(hr, "Failed to reset command list");
-
-		// Re-bind the descriptor heaps (unless we're a copy command list):
-		if (m_type != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY)
-		{
-			// TODO: Handle sampler descriptor heaps
-
-			ID3D12DescriptorHeap* descriptorHeaps[1] = { m_gpuDescriptorHeaps->GetD3DDescriptorHeap() };
-			m_commandList->SetDescriptorHeaps(1, descriptorHeaps);
-		}
-	}
-
 	inline void CommandList::Close() const
 	{
 		HRESULT hr = m_commandList->Close();
@@ -170,16 +152,6 @@ namespace dx12
 		m_currentPSO = &pso;
 
 		m_commandList->SetPipelineState(pso.GetD3DPipelineState());
-	}
-
-
-	inline void CommandList::SetGraphicsRootSignature(dx12::RootSignature const& rootSig)
-	{
-		m_currentGraphicsRootSignature = &rootSig;
-
-		m_gpuDescriptorHeaps->ParseRootSignatureDescriptorTables(rootSig);
-
-		m_commandList->SetGraphicsRootSignature(rootSig.GetD3DRootSignature());
 	}
 
 
@@ -234,7 +206,7 @@ namespace dx12
 	}
 
 
-	constexpr D3D12_COMMAND_LIST_TYPE CommandList::D3DCommandListType(dx12::CommandList::CommandListType type)
+	constexpr D3D12_COMMAND_LIST_TYPE CommandList::GetD3DCommandListType(dx12::CommandList::CommandListType type)
 	{
 		switch (type)
 		{
@@ -263,6 +235,7 @@ namespace dx12
 
 	inline void CommandList::CommitGPUDescriptors()
 	{
-		m_gpuDescriptorHeaps->Commit();
+		m_gpuCbvSrvUavDescriptorHeaps->Commit();
+		m_gpuSamplerDescriptorHeaps->Commit(); // TODO: Actually use these...
 	}
 }

@@ -31,7 +31,7 @@ namespace re
 	std::mutex Sampler::m_samplerLibraryMutex;
 
 
-	std::shared_ptr<re::Sampler> const Sampler::GetSampler(std::string const& samplerTypeLibraryname)
+	std::shared_ptr<re::Sampler> const Sampler::GetSampler(std::string const& samplerTypeLibraryName)
 	{
 		static const unordered_map<std::string, Sampler::WrapAndFilterMode> k_nameToSamplerLibraryIdx = {
 			{ENUM_TO_STR(WrapLinearLinear),				WrapAndFilterMode::WrapLinearLinear},
@@ -42,7 +42,7 @@ namespace re
 		};
 		SEAssert("Array size mismatch", re::Sampler::SamplerTypeLibraryNames.size() == k_nameToSamplerLibraryIdx.size());
 
-		return GetSampler(k_nameToSamplerLibraryIdx.at(samplerTypeLibraryname));
+		return GetSampler(k_nameToSamplerLibraryIdx.at(samplerTypeLibraryName));
 	}
 
 	std::shared_ptr<re::Sampler> const Sampler::GetSampler(Sampler::WrapAndFilterMode type)

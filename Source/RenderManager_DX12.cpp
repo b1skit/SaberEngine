@@ -174,45 +174,6 @@ namespace dx12
 			}
 			renderManager.m_newParameterBlocks.m_newObjects.clear();
 		}
-
-		//const bool hasDataToCopy = !renderManager.m_newMeshPrimitives.m_newObjects.empty() || 
-		//	!renderManager.m_newTextures.m_newObjects.empty();
-
-		//// Handle anything that requires a copy queue:
-		//if (hasDataToCopy)
-		//{
-		//	// TODO: Get multiple command lists, and record on multiple threads:
-		//	dx12::CommandQueue& copyQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Copy);
-		//	std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue.GetCreateCommandList();
-
-		//	std::vector<ComPtr<ID3D12Resource>> intermediateResources;
-
-		//	// Mesh Primitives:
-		//	if (!renderManager.m_newMeshPrimitives.m_newObjects.empty())
-		//	{
-		//		std::lock_guard<std::mutex> lock(renderManager.m_newMeshPrimitives.m_mutex);
-		//		for (auto& newObject : renderManager.m_newMeshPrimitives.m_newObjects)
-		//		{
-		//			dx12::MeshPrimitive::Create(
-		//				*newObject.second, copyCommandList->GetD3DCommandList(), intermediateResources);
-		//		}
-		//		renderManager.m_newMeshPrimitives.m_newObjects.clear();
-		//	}
-
-
-		//	// Execute command queue, and wait for it to be done (blocking)
-		//	std::shared_ptr<dx12::CommandList> commandLists[] =
-		//	{
-		//		copyCommandList
-		//	};
-		//	uint64_t copyQueueFenceVal = copyQueue.Execute(1, commandLists);
-		//	copyQueue.CPUWait(copyQueueFenceVal);
-
-		//	// The copy is done: Free the intermediate HEAP_TYPE_UPLOAD resources
-		//	intermediateResources.clear();
-
-		//	// TODO: We should clear the intermediateResources at the end of the frame, and GPUWait on the copy instead
-		//}
 	}
 
 
@@ -355,6 +316,19 @@ namespace dx12
 						commandList->SetParameterBlock(batchPB.get());
 					}
 
+					// Batch Texture / Sampler inputs :
+					if (renderStage->WritesColor())
+					{
+						for (auto const& texSamplerInput : batch.GetBatchTextureAndSamplerInputs())
+						{
+							commandList->SetTexture(
+								std::get<0>(texSamplerInput),	// Shader name
+								std::get<1>(texSamplerInput));	// Texture
+
+							// Note: Static samplers have already been set during root signature creation
+						}
+					}					
+
 					// Set the geometry for the draw:
 					dx12::MeshPrimitive::PlatformParams* meshPrimPlatParams =
 						batch.GetBatchMesh()->GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
@@ -396,8 +370,10 @@ namespace dx12
 			commandLists.emplace_back(commandList);
 		}
 
-		// Execute the command list
-		// TODO: Submit multiple command lists at once? Will need to sync with fences between
+		SEAssert("TODO: Handle submitting multiple command lists at once. May need to sync with fences between", 
+			commandLists.size() == 1);
+
+		// Execute the command lists
 		directQueue.Execute(1, &commandLists[0]);
 	}
 

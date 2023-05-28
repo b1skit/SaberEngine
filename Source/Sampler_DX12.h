@@ -14,11 +14,7 @@ namespace dx12
 	public:
 		struct PlatformParams final : public re::Sampler::PlatformParams
 		{
-			PlatformParams(re::Sampler::SamplerParams const& samplerParams);
-			
-			//DescriptorAllocation m_cpuDescAllocation;
-
-			//D3D12_STATIC_SAMPLER_DESC m_staticSamplerDesc;
+			D3D12_STATIC_SAMPLER_DESC m_staticSamplerDesc;
 		};
 
 

@@ -203,6 +203,24 @@ namespace dx12
 				numMips,									// Number of subresources in the resource.
 				&subresourceData[0]);
 
+			// Allocate a descriptor and create an SRV:
+			{
+				texPlatParams->m_cpuDescAllocation = std::move(
+					ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(1));
+
+				D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+				srvDesc.Format = texPlatParams->m_format;
+				srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+				srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+				srvDesc.Texture2D.MipLevels = numMips; // TODO: Fully populate D3D12_TEX2D_SRV
+
+				device->CreateShaderResourceView(
+					texPlatParams->m_textureResource.Get(),
+					&srvDesc,
+					texPlatParams->m_cpuDescAllocation.GetBaseDescriptor());
+			}
+
 			// Released once the copy is done
 			intermediateResources.emplace_back(itermediateBufferResource);
 		}

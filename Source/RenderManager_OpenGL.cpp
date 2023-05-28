@@ -216,8 +216,6 @@ namespace opengl
 					// Batch Texture/Sampler inputs:
 					if (renderStage->WritesColor())
 					{
-						// TODO: Reconsider this WritesColor() check once alpha clipping/blending is implemented
-
 						for (auto const& texSamplerInput : batch.GetBatchTextureAndSamplerInputs())
 						{
 							opengl::Shader::SetTextureAndSampler(

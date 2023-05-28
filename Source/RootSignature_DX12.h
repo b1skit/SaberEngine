@@ -14,13 +14,14 @@ namespace re
 
 namespace dx12
 {
-	constexpr uint8_t k_invalidRootSigIndex = std::numeric_limits<uint8_t>::max();
-	constexpr uint8_t k_invalidRegisterVal = std::numeric_limits<uint8_t>::max();
-
 	class RootSignature final
 	{
 	public:
 		static constexpr uint32_t k_totalRootSigDescriptorTableIndices = 32;
+
+		static constexpr uint8_t k_invalidRootSigIndex = std::numeric_limits<uint8_t>::max();
+		static constexpr uint8_t k_invalidRegisterVal = std::numeric_limits<uint8_t>::max();
+		static constexpr uint32_t k_invalidOffset = std::numeric_limits<uint32_t>::max();
 
 
 	public: // Shader reflection metadata		
@@ -30,10 +31,10 @@ namespace dx12
 			RootCBV,
 			RootSRV,
 			// TODO: More Root__ types
-			DescriptorTable,
+
+			TextureSRV, // Packed into descriptor tables
 
 			Sampler,
-			StaticSampler,
 
 			EntryType_Count,
 			EntryType_Invalid = EntryType_Count
@@ -46,8 +47,8 @@ namespace dx12
 			uint8_t m_baseRegister	= k_invalidRegisterVal;
 			uint8_t m_registerSpace = k_invalidRegisterVal;
 
-			uint32_t m_offset		= 0; // Descriptor tables only: Offset into table
-			uint32_t m_count		= 1; // Root constants: No. of 32-bit values. Descriptor tables: No. of descriptors
+			uint32_t m_offset		= k_invalidOffset; // Descriptor tables only: Offset into table
+			uint32_t m_count		= 0; // Root constants/Descriptor tables: No. of 32-bit values/No. of descriptors
 
 			D3D12_SHADER_VISIBILITY m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
 		};
@@ -68,8 +69,8 @@ namespace dx12
 
 		D3D12_ROOT_SIGNATURE_DESC1 const& GetD3DRootSignatureDesc() const;
 
-		RootSigEntry const& GetResourceRegisterBindPoint(std::string const& resourceName) const;
-
+		RootSigEntry const& GetRootSignatureEntry(std::string const& resourceName) const;
+		bool HasResource(std::string const& resourceName) const;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
@@ -77,9 +78,9 @@ namespace dx12
 
 	
 	private: // Track which root sig indexes contain descriptor tables, and how many entries they have
-		uint32_t m_descriptorTableIdxBitmask; 
-		uint32_t m_numDescriptorsPerTableEntry[k_totalRootSigDescriptorTableIndices];
-
+		uint32_t m_rootSigDescriptorTableIdxBitmask; 
+		uint32_t m_numDescriptorsPerTable[k_totalRootSigDescriptorTableIndices];
+		static_assert(k_totalRootSigDescriptorTableIndices == (sizeof(m_rootSigDescriptorTableIdxBitmask) * 8));
 
 	private:
 		std::unordered_map<std::string, RootSigEntry> m_namesToRootEntries;

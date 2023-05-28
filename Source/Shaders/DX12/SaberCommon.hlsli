@@ -62,4 +62,7 @@ struct CameraParamsCB
 ConstantBuffer<CameraParamsCB> CameraParams;
 // TODO: Replace this with a structure buffer?
 
+SamplerState WrapLinearLinear;
+Texture2D<float4> MatAlbedo; // TODO: Add a g_ prefix to texture names
+
 #endif // SABER_COMMON_HLSL

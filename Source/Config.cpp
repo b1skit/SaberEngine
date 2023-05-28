@@ -40,6 +40,7 @@ namespace en
 	// Config keys:
 	char const* const Config::k_showSystemConsoleWindowCmdLineArg	= "console";
 	char const* const Config::k_platformCmdLineArg					= "platform";
+	char const* const Config::k_relaxedShaderBindingCmdLineArg		= "relaxedshaderbinding";
 
 	char const* const Config::k_commandLineArgsValueName			= "commandLineArgs";
 
@@ -67,29 +68,50 @@ namespace en
 	{
 		// NOTE: This is one of the first functions run at startup; We cannot use the LogManager yet
 
+		constexpr char k_tokenKeyDelimiter = '-'; // Signifies a -key (e.g. -scene mySceneName)
+
 		string argString; // The full list of all command line args received
-		bool nextTokenIsValue = false; // If we've peeked ahead, and already consumed the next token
+
+		// TODO: Pre-parse the keys/values into a hash table, instead of doing string comparisons for every arg
+
 		for (int i = 1; i < argc; i++)
 		{
-			const int nextArg = i + 1;
-			const bool hasNextToken = i < (argc - 1); // Are we in bounds if we peek ahead by 1?
-
 			const string currentArg(argv[i]); // The raw token, including any delimiters. eg. "-string"
+			const uint32_t nextArgIdx = i + 1;
 
-			argString += currentArg + (hasNextToken ? " " : ""); // Pad with spaces
 
-			if (nextTokenIsValue)
+			auto HasNextToken = [&]()
 			{
-				nextTokenIsValue = false;
-				continue;
-			}
+				return i < (argc - 1); // Are we in bounds if we peek ahead by 1?
+			};
+			auto NextTokenIsValue = [&]()
+			{
+				const bool hasNextToken = i < (argc - 1); // Are we in bounds if we peek ahead by 1?
+				const bool nextTokenIsKey = currentArg.find_first_of(k_tokenKeyDelimiter) == std::string::npos;
+				return hasNextToken && !nextTokenIsKey;
+			};
+			auto CurrentTokenIsKey = [&]()
+			{
+				return currentArg.find_first_of(k_tokenKeyDelimiter) != std::string::npos;
+			};
+			auto ConsumeNextToken = [&]()
+			{
+				if (CurrentTokenIsKey() && NextTokenIsValue())
+				{
+					argString += argv[nextArgIdx] + std::string(HasNextToken() ? " " : "");
+				}
+				i++;
+			};
+
+
+			argString += currentArg + (HasNextToken() ? " " : ""); // Pad with spaces
 
 			// TODO: Write a token/value parser. For now, just match the commands
 			if (currentArg.find("scene") != string::npos)
 			{
-				if (hasNextToken)
+				if (NextTokenIsValue())
 				{
-					const string sceneNameParam(argv[nextArg]);
+					const string sceneNameParam(argv[nextArgIdx]);
 
 					// From param of the form "Scene\Folder\Names\sceneFile.extension", we extract:
 
@@ -112,7 +134,7 @@ namespace en
 					const string sceneIBLPath = sceneRootPath + "IBL\\ibl.hdr";
 					SetValue("sceneIBLPath", sceneIBLPath, Config::SettingType::Runtime);
 
-					nextTokenIsValue = true;
+					ConsumeNextToken();
 				}
 			}
 			else if (currentArg.find(k_showSystemConsoleWindowCmdLineArg) != string::npos)
@@ -121,9 +143,9 @@ namespace en
 			}
 			else if (currentArg.find(k_platformCmdLineArg) != string::npos)
 			{
-				if (hasNextToken)
+				if (NextTokenIsValue())
 				{
-					const string platformParam(argv[nextArg]);
+					const string platformParam(argv[nextArgIdx]);
 
 					bool platformValueIsValid = false;
 					if (platformParam.find("opengl") != string::npos)
@@ -142,8 +164,12 @@ namespace en
 						SetValue(k_platformCmdLineArg, platformParam, SettingType::APISpecific);
 					}
 
-					nextTokenIsValue = true;
+					ConsumeNextToken();
 				}
+			}
+			else if (currentArg.find(k_relaxedShaderBindingCmdLineArg))
+			{
+				SetValue(k_relaxedShaderBindingCmdLineArg, true, Config::SettingType::Runtime);
 			}
 		}
 

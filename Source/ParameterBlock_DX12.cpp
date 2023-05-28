@@ -38,6 +38,7 @@ namespace dx12
 			// We must allocate CBVs in multiples of 256B
 			size = util::RoundUpToNearestMultiple<size_t>(paramBlock.GetSize(), k_CBVSizeFactor);
 
+			// NOTE: dx12::CommandList::SetParameterBlock will need to be updated when we solve the PB CBV/SRV issue
 			SEAssert("TODO: Handle arrays of CBVs", params->m_numElements == 1);
 
 			// Allocate a cpu-visible descriptor to hold our view:

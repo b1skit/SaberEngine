@@ -427,12 +427,13 @@ namespace opengl
 		case opengl::Shader::UniformType::Texture:
 		{
 			auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
+			if (bindingUnit == params->m_samplerUnits.end())
+			{
+				SEAssert("Texture name is invalid, and relaxed shader binding is not enabled",
+					en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
+				return;
+			}
 
-#if defined(STRICT_SHADER_BINDING)
-			SEAssert("Invalid texture name", bindingUnit != params->m_samplerUnits.end());
-#else
-			if (bindingUnit == params->m_samplerUnits.end()) return;
-#endif
 			opengl::Texture::Bind(*static_cast<re::Texture*>(value), bindingUnit->second);
 		}
 		break;
@@ -440,11 +441,12 @@ namespace opengl
 		{
 			auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
 
-#if defined(STRICT_SHADER_BINDING)
-			SEAssert("Invalid sampler name", bindingUnit != params->m_samplerUnits.end());
-#else
-			if (bindingUnit == params->m_samplerUnits.end()) return;
-#endif
+			if (bindingUnit == params->m_samplerUnits.end())
+			{
+				SEAssert("Sampler name is invalid, and relaxed shader binding is not enabled",
+					en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
+				return;
+			}
 
 			opengl::Sampler::Bind(*static_cast<re::Sampler*>(value), bindingUnit->second);
 		}

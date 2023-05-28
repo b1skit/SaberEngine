@@ -31,6 +31,9 @@ Scene loading: -scene Folder\Name\filename.extension
 
 Display log messages in a system console window: -console  
 
+Disable strict shader binding checks: -relaxedshaderbinding  
+	- Skip (helpful, but occasionally annoying) asserts if textures/parameters aren't found in a shader
+
 
 ----------------------
 Runtime Configuration:

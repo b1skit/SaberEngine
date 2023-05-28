@@ -6,7 +6,6 @@
 
 // Optional checks in debug mode:
 #if defined(_DEBUG)
-	#define STRICT_SHADER_BINDING // Assert if textures/PBs aren't found at bind time. Helpful, but can be annoying
 	//#define DEBUG_LOG_OPENGL_NOTIFICATIONS // Enable non-essential OpenGL notification logging
 #endif
 
