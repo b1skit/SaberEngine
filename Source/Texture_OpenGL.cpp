@@ -248,7 +248,7 @@ namespace opengl
 				params->m_internalFormat,	// internal format
 				width,						// width
 				height,						// height
-				0,							// border
+				0,							// border: Must be 0
 				params->m_format,			// format
 				params->m_type,				// type
 				data);						// void* data. Nullptr for render targets

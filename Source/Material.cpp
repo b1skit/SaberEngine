@@ -93,13 +93,7 @@ namespace gr
 	}
 
 
-	std::shared_ptr<re::Texture>& Material::GetTexture(std::string const& samplerName)
-	{
-		return const_cast<std::shared_ptr<re::Texture>&>(const_cast<const Material*>(this)->GetTexture(samplerName));
-	}
-
-
-	std::shared_ptr<re::Texture> const& Material::GetTexture(std::string const& samplerName) const
+	std::shared_ptr<re::Texture> const Material::GetTexture(std::string const& samplerName) const
 	{
 		auto const& index = m_namesToSlotIndex.find(samplerName);
 

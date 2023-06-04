@@ -54,43 +54,45 @@ namespace re
 
 
 	public:
-		Batch(re::MeshPrimitive* meshPrimitive, gr::Material* material);
-		Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material* material);
+		Batch(re::MeshPrimitive const* meshPrimitive, gr::Material const* materialOverride);
+		Batch(std::shared_ptr<gr::Mesh const> const mesh, gr::Material const* materialOverride);
 
 		~Batch() = default;
 		Batch(Batch const&) = default;
 		Batch(Batch&&) = default;
 		Batch& operator=(Batch const&) = default;
 		
-		inline re::MeshPrimitive* GetBatchMesh() const { return m_batchMeshPrimitive; }
-		inline re::Shader* GetBatchShader() const { return m_batchShader; }
+		re::MeshPrimitive const* GetMeshPrimitive() const;
+		
+		re::Shader const* GetShader() const;
+		void SetShader(re::Shader*);
 
-		inline size_t GetInstanceCount() const { return m_numInstances; }
+		size_t GetInstanceCount() const;
 
-		inline void AddBatchParameterBlock(std::shared_ptr<re::ParameterBlock> paramBlock) 
-			{ m_batchParamBlocks.emplace_back(paramBlock); }
-		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetBatchParameterBlocks() const 
-			{ return m_batchParamBlocks; }
+		std::vector<std::shared_ptr<re::ParameterBlock>> const& GetParameterBlocks() const;
+		void SetParameterBlock(std::shared_ptr<re::ParameterBlock> paramBlock);
 
-		void AddBatchTextureAndSamplerInput(
-			std::string const& shaderName, std::shared_ptr<re::Texture> texture, std::shared_ptr<re::Sampler> sampler);
-		inline BatchTextureAndSamplerInput const& GetBatchTextureAndSamplerInputs() const { return m_batchTextureSamplerInputs; }
+		void AddTextureAndSamplerInput(
+			std::string const& shaderName, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>);
+		BatchTextureAndSamplerInput const& GetTextureAndSamplerInputs() const;
 
-		inline uint32_t GetBatchFilterMask() const { return m_batchFilterMask; }
-		void SetBatchFilterMaskBit(re::Batch::Filter filterBit);
+		uint32_t GetBatchFilterMask() const;
+		void SetFilterMaskBit(re::Batch::Filter filterBit);
 
 		void IncrementBatchInstanceCount();
 
+
 	private:
 		void ComputeDataHash() override;
+
 
 	private:
 		// TODO: Split this into vertex streams
 		// -> TRICKY: OpenGL encapsulates state with VAOs, but we only need one VAO per mesh
 		// -> Also need to pack the mesh draw mode on the batch (points/lines/triangles/etc)
-		re::MeshPrimitive* m_batchMeshPrimitive;
+		re::MeshPrimitive const* m_batchMeshPrimitive;
 
-		re::Shader* m_batchShader;
+		re::Shader const* m_batchShader;
 
 		std::vector<std::shared_ptr<re::ParameterBlock>> m_batchParamBlocks;
 
@@ -105,4 +107,53 @@ namespace re
 	private:
 		Batch() = delete;
 	};
+
+
+	inline re::MeshPrimitive const* Batch::GetMeshPrimitive() const
+	{
+		return m_batchMeshPrimitive;
+	}
+
+
+	inline re::Shader const* Batch::GetShader() const
+	{
+		return m_batchShader;
+	}
+
+
+	inline void Batch::SetShader(re::Shader* shader)
+	{
+		SEAssert("Batch already has a shader. This is unexpected", m_batchShader == nullptr);
+		m_batchShader = shader;
+	}
+
+	inline size_t Batch::GetInstanceCount() const
+	{
+		return m_numInstances;
+	}
+
+
+	inline std::vector<std::shared_ptr<re::ParameterBlock>> const& Batch::GetParameterBlocks() const
+	{
+		return m_batchParamBlocks;
+	}
+
+
+	inline void Batch::SetParameterBlock(std::shared_ptr<re::ParameterBlock> paramBlock)
+	{
+		SEAssert("Cannot set a null parameter block", paramBlock != nullptr);
+		m_batchParamBlocks.emplace_back(paramBlock);
+	}
+
+
+	inline Batch::BatchTextureAndSamplerInput const& Batch::GetTextureAndSamplerInputs() const
+	{
+		return m_batchTextureSamplerInputs;
+	}
+
+
+	inline uint32_t Batch::GetBatchFilterMask() const
+	{
+		return m_batchFilterMask;
+	}
 }

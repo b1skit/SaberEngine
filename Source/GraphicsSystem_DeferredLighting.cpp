@@ -603,7 +603,7 @@ namespace gr
 				keylightParams,
 				re::ParameterBlock::PBType::SingleFrame);
 
-			keylightFullscreenQuadBatch.AddBatchParameterBlock(keylightPB);
+			keylightFullscreenQuadBatch.SetParameterBlock(keylightPB);
 
 			m_keylightStage.AddBatch(keylightFullscreenQuadBatch);
 		}
@@ -621,7 +621,7 @@ namespace gr
 				pointlightParams, 
 				re::ParameterBlock::PBType::SingleFrame);
 
-			pointlightBatch.AddBatchParameterBlock(pointlightPB);
+			pointlightBatch.SetParameterBlock(pointlightPB);
 
 			// Point light mesh params:
 			shared_ptr<ParameterBlock> pointlightMeshParams = ParameterBlock::Create(
@@ -629,7 +629,7 @@ namespace gr
 				m_sphereMeshes[i]->GetTransform()->GetGlobalMatrix(Transform::TRS),
 				ParameterBlock::PBType::SingleFrame);
 
-			pointlightBatch.AddBatchParameterBlock(pointlightMeshParams);
+			pointlightBatch.SetParameterBlock(pointlightMeshParams);
 
 			// Batch textures/samplers:
 			ShadowMap* const shadowMap = pointLights[i]->GetShadowMap();
@@ -642,7 +642,7 @@ namespace gr
 				std::shared_ptr<re::Sampler> const sampler = 
 					std::const_pointer_cast<re::Sampler>(Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 
-				pointlightBatch.AddBatchTextureAndSamplerInput("CubeMap0", depthTexture, sampler);
+				pointlightBatch.AddTextureAndSamplerInput("CubeMap0", depthTexture, sampler);
 			}			
 
 			// Finally, add the completed batch:

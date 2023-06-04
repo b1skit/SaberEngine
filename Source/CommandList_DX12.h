@@ -151,7 +151,10 @@ namespace dx12
 	{
 		m_currentPSO = &pso;
 
-		m_commandList->SetPipelineState(pso.GetD3DPipelineState());
+		ID3D12PipelineState* pipelineState = pso.GetD3DPipelineState();
+		SEAssert("Pipeline state is null. This is unexpected", pipelineState);
+
+		m_commandList->SetPipelineState(pipelineState);
 	}
 
 

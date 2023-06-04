@@ -185,7 +185,7 @@ namespace en
 			// TODO: We're currently creating/destroying these parameter blocks each frame. This is expensive. Instead,
 			// we should create a pool of PBs, and reuse by re-buffering data each frame
 
-			m_sceneBatches.back().AddBatchParameterBlock(instancedMeshParams);
+			m_sceneBatches.back().SetParameterBlock(instancedMeshParams);
 		} while (unmergedIdx < unmergedBatches.size());
 	}
 }

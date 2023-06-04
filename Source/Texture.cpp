@@ -199,6 +199,8 @@ namespace re
 		{
 			for (uint8_t i = 0; i < 4; i++)
 			{
+				SEAssert("Expected a normalized float", value[i] >= 0 && value[i] <= 1.f);
+
 				const uint8_t channelValue = (uint8_t)(value[i] * 255.0f);
 				*(static_cast<uint8_t*>(pixelPtr) + i) = channelValue;
 			}

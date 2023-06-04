@@ -107,7 +107,9 @@ namespace dx12
 	{
 		// Note: m_allocationPagesIndexesMutex has been locked already
 
-		m_allocationPages.emplace_back(std::make_unique<AllocationPage>(m_type, m_elementSize, k_numDescriptorsPerPage));
+		const uint32_t pageIdx = static_cast<uint32_t>(m_allocationPages.size());
+		m_allocationPages.emplace_back(
+			std::make_unique<AllocationPage>(m_type, m_elementSize, k_numDescriptorsPerPage, pageIdx));
 
 		// The new page currently has 0 allocations, so we can safely add it to our free page index list
 		m_freePageIndexes.insert(m_allocationPages.size() - 1);
@@ -119,7 +121,8 @@ namespace dx12
 	/******************************************************************************************************************/
 
 
-	AllocationPage::AllocationPage(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t elementSize, uint32_t numElementsPerPage)
+	AllocationPage::AllocationPage(
+		D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t elementSize, uint32_t numElementsPerPage, uint32_t pageIdx)
 		: m_type(type)
 		, m_descriptorElementSize(elementSize)
 		, m_totalElements(numElementsPerPage)
@@ -143,7 +146,11 @@ namespace dx12
 			&heapDescriptor, 
 			IID_PPV_ARGS(&m_descriptorHeap));
 		CheckHResult(hr, "Failed to create CPU-visible descriptor heap");
+
+		const std::wstring pageName = L"AllocationPage_index#" + std::to_wstring(pageIdx);
+		m_descriptorHeap->SetName(pageName.c_str());
 		
+
 		m_baseDescriptor = m_descriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
 		// Initialize our tracking with a single block of all descriptors:

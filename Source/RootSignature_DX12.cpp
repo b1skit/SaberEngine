@@ -3,6 +3,7 @@
 #include <d3dcompiler.h> // Supports SM 2 - 5.1.
 
 #include "Context_DX12.h"
+#include "Config.h"
 #include "Debug_DX12.h"
 #include "SysInfo_DX12.h"
 #include "RootSignature_DX12.h"
@@ -458,12 +459,16 @@ namespace dx12
 	}
 
 
-	RootSignature::RootSigEntry const& RootSignature::GetRootSignatureEntry(std::string const& resourceName) const
+	RootSignature::RootSigEntry const* RootSignature::GetRootSignatureEntry(std::string const& resourceName) const
 	{
 		auto const& result = m_namesToRootEntries.find(resourceName);
-		SEAssert("Root signature does not contain a parameter with that name", result != m_namesToRootEntries.end());
+		const bool hasResource = result != m_namesToRootEntries.end();
 
-		return result->second;
+		SEAssert("Root signature does not contain a parameter with that name", 
+			hasResource || 
+			en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
+
+		return hasResource ? &result->second : nullptr;
 	}
 
 

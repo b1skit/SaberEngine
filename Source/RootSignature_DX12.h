@@ -51,6 +51,16 @@ namespace dx12
 			uint32_t m_count		= 0; // Root constants/Descriptor tables: No. of 32-bit values/No. of descriptors
 
 			D3D12_SHADER_VISIBILITY m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
+
+			bool IsValid() const
+			{ 
+				return m_type != EntryType::EntryType_Invalid &&
+					m_rootSigIndex != k_invalidRootSigIndex &&
+					m_baseRegister != k_invalidRegisterVal &&
+					m_registerSpace != k_invalidRegisterVal &&
+					m_offset != k_invalidOffset &&
+					m_count != 0;
+			};
 		};
 
 
@@ -69,7 +79,7 @@ namespace dx12
 
 		D3D12_ROOT_SIGNATURE_DESC1 const& GetD3DRootSignatureDesc() const;
 
-		RootSigEntry const& GetRootSignatureEntry(std::string const& resourceName) const;
+		RootSigEntry const* GetRootSignatureEntry(std::string const& resourceName) const;
 		bool HasResource(std::string const& resourceName) const;
 
 	private:

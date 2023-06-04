@@ -52,6 +52,17 @@ namespace dx12
 		HRESULT hr = device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&m_gpuDescriptorTableHeap));
 		CheckHResult(hr, "Failed to create descriptor heap");
 
+		// Name our descriptor heap. We extract the command list's debug name to ensure consistency
+		constexpr uint32_t k_nameLength = 1024;
+		uint32_t nameLength = k_nameLength;
+		wchar_t extractedname[k_nameLength];
+		m_owningCommandList->GetPrivateData(WKPDID_D3DDebugObjectNameW, &nameLength, &extractedname);
+		SEAssert("Invalid name length retrieved", nameLength > 0);
+
+		const std::wstring descriptorTableHeapName = std::wstring(extractedname) + L"_GPUDescriptorHeap";
+		m_gpuDescriptorTableHeap->SetName(descriptorTableHeapName.c_str());
+
+		// Initialize everything:
 		Reset();
 	}
 

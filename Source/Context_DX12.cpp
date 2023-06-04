@@ -254,11 +254,13 @@ namespace dx12
 		const uint64_t pipelineKey = grPipelineState.GetPipelineStateDataHash();
 		const uint64_t targetSetKey = targetSet.GetTargetSetSignature();
 
-		SEAssert("PSO already exists! This is not a bug: This assert is to validate the system works. If you hit this, "
-			"delete the assert and give yourself a high-five",
-			!ctxPlatParams->m_PSOLibrary.contains(shaderKey) ||
-			!ctxPlatParams->m_PSOLibrary[shaderKey].contains(pipelineKey) ||
-			!ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey].contains(targetSetKey));
+		const bool psoExists = ctxPlatParams->m_PSOLibrary.contains(shaderKey) &&
+			ctxPlatParams->m_PSOLibrary[shaderKey].contains(pipelineKey) &&
+			ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey].contains(targetSetKey);
+		if (psoExists)
+		{
+			return;
+		}
 
 		std::shared_ptr<dx12::PipelineState> newPSO = std::make_shared<dx12::PipelineState>();
 		newPSO->Create(shader, grPipelineState, targetSet);

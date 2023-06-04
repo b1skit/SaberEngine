@@ -230,6 +230,7 @@ namespace dx12
 
 	uint64_t CommandQueue::Execute(uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists)
 	{
+		// Prepend pending resource barrier command lists to the list of command lists we're executing
 		std::vector<std::shared_ptr<dx12::CommandList>> finalCommandLists = 
 			std::move(InsertPendingBarrierCommandLists(numCmdLists, cmdLists, *this));
 

@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "GraphicsSystem_TempDebug.h"
+#include "Material.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
 
@@ -24,17 +25,21 @@ namespace gr
 		// Debug mesh:
 		m_helloTriangle = meshfactory::CreateHelloTriangle(10.f, -10.f);
 
-		// Attach a shader:
-		std::shared_ptr<re::Shader> debugShader = re::Shader::Create("HelloTriangle");
+		std::shared_ptr<re::Shader> helloTriangleShader = re::Shader::Create("HelloTriangle");
 
-#define TEST_STAGE_SHADER
+		m_helloTriangleMaterial = en::SceneManager::GetSceneData()->GetMaterial("MissingMaterial");
+		m_helloTriangleMaterial->SetShader(helloTriangleShader);
+
+		m_helloTriangle->SetMeshMaterial(m_helloTriangleMaterial);
+
+
+		std::shared_ptr<re::Shader> debugShader = re::Shader::Create("Debug");
+
+
+//#define TEST_STAGE_SHADER // Forces EVERYTHING to use the same shader. 
 #ifdef TEST_STAGE_SHADER
 		m_tempDebugStage.SetStageShader(debugShader);
-#else
-		m_helloTriangle->GetMeshMaterial()->SetShader(helloShader);
 #endif
-		// Set a default-initialized PB
-		m_helloTriangle->GetMeshMaterial()->SetParameterBlock(gr::Material::PBRMetallicRoughnessParams{});
 
 		// "Set" the targets:
 		m_tempDebugStage.SetTextureTargetSet(nullptr); // Render directly to the backbuffer
@@ -44,8 +49,6 @@ namespace gr
 
 		// Add param blocks:
 		m_tempDebugStage.AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());
-		// TODO: Batch transform PB?
-
 
 		pipeline.AppendRenderStage(&m_tempDebugStage);
 	}
@@ -59,7 +62,8 @@ namespace gr
 
 	void TempDebugGraphicsSystem::CreateBatches()
 	{
-		Batch debugBatch = Batch(m_helloTriangle.get(), m_helloTriangle->GetMeshMaterial());
+		// Hello triangle batch:
+		Batch helloTriangleBatch = Batch(m_helloTriangle.get(), m_helloTriangle->GetMeshMaterial());
 
 		std::vector<re::Batch::InstancedMeshParams> instancedMeshPBData;
 		instancedMeshPBData.reserve(1);
@@ -74,12 +78,24 @@ namespace gr
 			sizeof(re::Batch::InstancedMeshParams),
 			1,
 			re::ParameterBlock::PBType::SingleFrame); // TODO: SingleFrame PB destruction needs to be deferred
-		debugBatch.AddBatchParameterBlock(instancedMeshParams);
+		helloTriangleBatch.SetParameterBlock(instancedMeshParams);
 
-		m_tempDebugStage.AddBatch(debugBatch);
+		m_tempDebugStage.AddBatch(helloTriangleBatch);
 
-		// Add the scene batches:
-		m_tempDebugStage.AddBatches(re::RenderManager::Get()->GetSceneBatches());
+
+		// Copy the scene batches, and attach a shader:
+		std::vector<re::Batch> const& sceneBatches = re::RenderManager::Get()->GetSceneBatches();
+
+		std::shared_ptr<re::Shader> debugShader = en::SceneManager::GetSceneData()->GetShader("Debug");
+
+		for (re::Batch const& batch : sceneBatches)
+		{
+			// Debug: We copy the batch to make sure all of the PBs are copied as well (E.g. instanced mesh params)
+			// Then, we set a shader (as the incoming material doesn't have one)
+			re::Batch batchCopy = Batch(batch);
+			batchCopy.SetShader(debugShader.get());
+			m_tempDebugStage.AddBatch(batchCopy);
+		}
 	}
 
 

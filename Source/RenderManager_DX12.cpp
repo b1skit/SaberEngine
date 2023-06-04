@@ -52,6 +52,7 @@ namespace dx12
 			// TODO: Get multiple command lists, and record on multiple threads:
 			dx12::CommandQueue& copyQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Copy);
 			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue.GetCreateCommandList();
+			ID3D12GraphicsCommandList2* copyCommandListD3D = copyCommandList->GetD3DCommandList();
 
 			std::vector<ComPtr<ID3D12Resource>> intermediateResources;
 
@@ -59,10 +60,9 @@ namespace dx12
 			if (!renderManager.m_newMeshPrimitives.m_newObjects.empty())
 			{
 				std::lock_guard<std::mutex> lock(renderManager.m_newMeshPrimitives.m_mutex);
-				for (auto& newObject : renderManager.m_newMeshPrimitives.m_newObjects)
+				for (auto& newMeshPrimitive : renderManager.m_newMeshPrimitives.m_newObjects)
 				{
-					dx12::MeshPrimitive::Create(
-						*newObject.second, copyCommandList->GetD3DCommandList(), intermediateResources);
+					dx12::MeshPrimitive::Create(*newMeshPrimitive.second, copyCommandListD3D, intermediateResources);
 				}
 				renderManager.m_newMeshPrimitives.m_newObjects.clear();
 			}
@@ -73,7 +73,7 @@ namespace dx12
 				std::lock_guard<std::mutex> lock(renderManager.m_newTextures.m_mutex);
 				for (auto& texture : renderManager.m_newTextures.m_newObjects)
 				{
-					dx12::Texture::Create(*texture.second, copyCommandList->GetD3DCommandList(), intermediateResources);
+					dx12::Texture::Create(*texture.second, copyCommandListD3D, intermediateResources);
 				}
 				renderManager.m_newTextures.m_newObjects.clear();
 			}
@@ -121,13 +121,6 @@ namespace dx12
 			SEAssert("Creating PSO's for DX12 Shaders requires a re::PipelineState from a RenderStage, but the "
 				"pipeline is empty",
 				!renderManager.m_pipeline.GetPipeline().empty());
-
-
-
-			SEAssert("TEMP HAX: WE'RE ASSUMING OUR ONE DEBUG SHADER IS BEING CREATED HERE", 
-				renderManager.m_newShaders.m_newObjects.size() == 1); 
-
-			
 
 			std::lock_guard<std::mutex> lock(renderManager.m_newShaders.m_mutex);
 			for (auto& shader : renderManager.m_newShaders.m_newObjects)
@@ -260,7 +253,7 @@ namespace dx12
 
 
 				// Lambda: Bind parameter blocks (This must happen AFTER the root signature has been set)
-				auto SetStageParameterBlocks = [renderStage, &commandList]()
+				auto SetStageParameterBlocks = [renderStage, &commandList, &stageTargets]()
 				{
 					for (std::shared_ptr<re::ParameterBlock> permanentPB : renderStage->GetPermanentParameterBlocks())
 					{
@@ -271,7 +264,6 @@ namespace dx12
 						commandList->SetParameterBlock(perFramePB.get());
 					}
 				};
-
 
 				re::Shader* stageShader = renderStage->GetStageShader();
 				const bool hasStageShader = stageShader != nullptr;
@@ -286,6 +278,8 @@ namespace dx12
 						stageTargets.get());
 					commandList->SetPipelineState(*pso);
 					commandList->SetGraphicsRootSignature(pso->GetRootSignature());
+					// TODO: Remove this duplicated code; combine it with the logic below. Track PSO and root signature
+					// changes
 
 					SetStageParameterBlocks();
 				}
@@ -298,9 +292,12 @@ namespace dx12
 					// No stage shader: Must set stage PBs for each batch
 					if (!hasStageShader)
 					{
+						SEAssert("Batch must have a shader if the stage does not have a shader", 
+							batch.GetShader() != nullptr);
+
 						// Set the pipeline state and root signature for the batch shader:
 						std::shared_ptr<dx12::PipelineState> pso = dx12::Context::GetPipelineStateObject(
-							*batch.GetBatchMesh()->GetMeshMaterial()->GetShader(),
+							*batch.GetShader(),
 							stagePipelineParams,
 							stageTargets.get());
 						commandList->SetPipelineState(*pso);
@@ -310,7 +307,7 @@ namespace dx12
 					}
 
 					// Batch parameter blocks:
-					vector<shared_ptr<re::ParameterBlock>> const& batchPBs = batch.GetBatchParameterBlocks();
+					vector<shared_ptr<re::ParameterBlock>> const& batchPBs = batch.GetParameterBlocks();
 					for (shared_ptr<re::ParameterBlock> batchPB : batchPBs)
 					{
 						commandList->SetParameterBlock(batchPB.get());
@@ -319,7 +316,7 @@ namespace dx12
 					// Batch Texture / Sampler inputs :
 					if (renderStage->WritesColor())
 					{
-						for (auto const& texSamplerInput : batch.GetBatchTextureAndSamplerInputs())
+						for (auto const& texSamplerInput : batch.GetTextureAndSamplerInputs())
 						{
 							commandList->SetTexture(
 								std::get<0>(texSamplerInput),	// Shader name
@@ -331,19 +328,20 @@ namespace dx12
 
 					// Set the geometry for the draw:
 					dx12::MeshPrimitive::PlatformParams* meshPrimPlatParams =
-						batch.GetBatchMesh()->GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
+						batch.GetMeshPrimitive()->GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
 					
 					// TODO: Batches should contain the draw mode, instead of carrying around a MeshPrimitive
 					commandList->SetPrimitiveType(meshPrimPlatParams->m_drawMode);
-					commandList->SetVertexBuffers(batch.GetBatchMesh()->GetVertexStreams());
+					commandList->SetVertexBuffers(batch.GetMeshPrimitive()->GetVertexStreams());
 
 					dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
-						batch.GetBatchMesh()->GetVertexStream(re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
+						batch.GetMeshPrimitive()->GetVertexStream(
+							re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
 					commandList->SetIndexBuffer(&indexPlatformParams->m_indexBufferView);
 
 					// Record the draw:
 					commandList->DrawIndexedInstanced(
-						batch.GetBatchMesh()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
+						batch.GetMeshPrimitive()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
 						static_cast<uint32_t>(batch.GetInstanceCount()),	// Instance count
 						0,	// Start index location
 						0,	// Base vertex location

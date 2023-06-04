@@ -365,7 +365,6 @@ namespace dx12
 	{
 		m_rootSignature.Create(shader);
 
-
 		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 
 		SEAssert("Shader doesn't have a pixel and vertex shader blob. TODO: Support this",
@@ -419,6 +418,10 @@ namespace dx12
 
 			HRESULT hr = device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
 			CheckHResult(hr, "Failed to create pipeline state");
+
+			// Name our PSO:
+			const std::wstring pipelineStateName = shader.GetWName() + L"_" + targetSet.GetWName() + L"_PSO";
+			m_pipelineState->SetName(pipelineStateName.c_str());
 		}
 		else
 		{

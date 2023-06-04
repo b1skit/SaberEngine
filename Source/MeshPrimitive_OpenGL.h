@@ -26,6 +26,6 @@ namespace opengl
 		static void Destroy(re::MeshPrimitive& meshPrimitive);
 
 		// OpenGL-specific functionality:
-		static void Bind(re::MeshPrimitive& meshPrimitive);
+		static void Bind(re::MeshPrimitive const& meshPrimitive);
 	};
 }

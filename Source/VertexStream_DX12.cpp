@@ -197,7 +197,7 @@ namespace dx12
 			&defaultHeapProperties,				// Heap properties
 			D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Heap flags
 			&resourceDesc,						// Resource description
-			D3D12_RESOURCE_STATE_COPY_DEST,		// Initial resource state
+			D3D12_RESOURCE_STATE_COMMON,		// Initial resource state
 			nullptr,							// Clear value: nullptr as these are not texture resources
 			IID_PPV_ARGS(&streamPlatformParams->m_bufferResource));	// RefIID and interface pointer
 		CheckHResult(hr, "Failed to create vertex buffer resource");

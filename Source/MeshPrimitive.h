@@ -90,19 +90,20 @@ namespace re
 		
 		
 		// Getters/Setters:
-		inline MeshPrimitiveParams const& GetMeshParams() const { return m_params; }
+		MeshPrimitiveParams const& GetMeshParams() const;
 
-		inline gr::Material* GetMeshMaterial() const { return m_meshMaterial.get(); }
+		gr::Material* GetMeshMaterial() const;
+		void SetMeshMaterial(std::shared_ptr<gr::Material> material);
 
-		inline gr::Bounds& GetBounds() { return m_localBounds; }
-		inline gr::Bounds const& GetBounds() const { return m_localBounds; }
+		gr::Bounds& GetBounds();
+		gr::Bounds const& GetBounds() const;
 		void UpdateBounds(gr::Transform* transform); // TODO: Currently this assumes the MeshPrimitive is not skinned
 		
 		re::VertexStream* GetVertexStream(Slot slot) const;
 		std::vector<std::shared_ptr<re::VertexStream>> const& GetVertexStreams() const;
 
-		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
-		inline void SetPlatformParams(std::unique_ptr<re::MeshPrimitive::PlatformParams> params) { m_platformParams = std::move(params); }
+		PlatformParams* GetPlatformParams() const;
+		void SetPlatformParams(std::unique_ptr<re::MeshPrimitive::PlatformParams> params);
 
 	private:
 		void Destroy();
@@ -147,6 +148,48 @@ namespace re
 		MeshPrimitive& operator=(MeshPrimitive const& rhs) = delete;
 		MeshPrimitive& operator=(MeshPrimitive&& rhs) = delete;
 	};
+
+
+	inline MeshPrimitive::MeshPrimitiveParams const& MeshPrimitive::GetMeshParams() const
+	{
+		return m_params;
+	}
+
+
+	inline gr::Material* MeshPrimitive::GetMeshMaterial() const
+	{
+		return m_meshMaterial.get();
+	}
+	
+	
+	inline void MeshPrimitive::SetMeshMaterial(std::shared_ptr<gr::Material> material)
+	{
+		m_meshMaterial = material;
+	};
+
+
+	inline gr::Bounds& MeshPrimitive::GetBounds()
+	{
+		return m_localBounds;
+	}
+
+
+	inline gr::Bounds const& MeshPrimitive::GetBounds() const
+	{
+		return m_localBounds;
+	}
+
+
+	inline MeshPrimitive::PlatformParams* MeshPrimitive::GetPlatformParams() const
+	{
+		return m_platformParams.get();
+	}
+
+
+	inline void MeshPrimitive::SetPlatformParams(std::unique_ptr<re::MeshPrimitive::PlatformParams> params)
+	{
+		m_platformParams = std::move(params);
+	}
 
 
 	// We need to provide a destructor implementation since it's pure virtual

@@ -76,18 +76,16 @@ namespace gr
 		Material& operator=(Material const&) = default;
 
 		// Getters/Setters:	
-		inline void SetShader(std::shared_ptr<re::Shader> shader) { m_shader = shader; }
-		inline re::Shader* GetShader() const { return m_shader.get(); }
+		void SetShader(std::shared_ptr<re::Shader> shader);
+		re::Shader* GetShader() const;
 
 		void SetParameterBlock(PBRMetallicRoughnessParams const& params);
-		inline std::shared_ptr<re::ParameterBlock> const GetParameterBlock() const { return m_matParams; }
+		std::shared_ptr<re::ParameterBlock> const GetParameterBlock() const;
 
-		inline std::shared_ptr<re::Texture>& GetTexture(uint32_t slotIndex) { return m_texSlots[slotIndex].m_texture; }
-		inline std::shared_ptr<re::Texture> const GetTexture(uint32_t slotIndex) const { return m_texSlots[slotIndex].m_texture; }
-
-		std::shared_ptr<re::Texture>& GetTexture(std::string const& samplerName);
-		std::shared_ptr<re::Texture> const& GetTexture(std::string const& samplerName) const;
-		std::vector<TextureSlotDesc> const& GetTexureSlotDescs() { return m_texSlots; }
+		void SetTexture(uint32_t slotIndex, std::shared_ptr<re::Texture>);
+		std::shared_ptr<re::Texture> const GetTexture(uint32_t slotIndex) const;
+		std::shared_ptr<re::Texture> const GetTexture(std::string const& samplerName) const;
+		std::vector<TextureSlotDesc> const& GetTexureSlotDescs() const;
 
 
 	private:
@@ -96,9 +94,47 @@ namespace gr
 		std::shared_ptr<re::Shader> m_shader;
 		std::shared_ptr<re::ParameterBlock> m_matParams;
 
+
 	private:
 		Material() = delete;
 	};
+
+
+	inline void Material::SetShader(std::shared_ptr<re::Shader> shader)
+	{
+		m_shader = shader;
+	}
+
+
+	inline re::Shader* Material::GetShader() const
+	{
+		return m_shader.get();
+	}
+
+
+	inline std::shared_ptr<re::ParameterBlock> const Material::GetParameterBlock() const
+	{
+		return m_matParams;
+	}
+
+
+	inline void Material::SetTexture(uint32_t slotIndex, std::shared_ptr<re::Texture> texture)
+	{
+		SEAssert("Out of bounds slot index", slotIndex < m_texSlots.size());
+		m_texSlots[slotIndex].m_texture = texture;
+	}
+
+
+	inline std::shared_ptr<re::Texture> const Material::GetTexture(uint32_t slotIndex) const
+	{
+		return m_texSlots[slotIndex].m_texture;
+	}
+
+
+	inline std::vector<Material::TextureSlotDesc> const& Material::GetTexureSlotDescs() const
+	{
+		return m_texSlots;
+	}
 }
 
 

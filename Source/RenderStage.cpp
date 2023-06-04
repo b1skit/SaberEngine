@@ -96,7 +96,7 @@ namespace re
 	void RenderStage::AddBatch(re::Batch const& batch)
 	{
 		SEAssert("Either the batch or the stage must have a shader", 
-			m_stageShader || batch.GetBatchShader());
+			m_stageShader || batch.GetShader());
 
 		if (m_batchFilterMask & batch.GetBatchFilterMask() || !m_batchFilterMask) // Accept all batches by default
 		{

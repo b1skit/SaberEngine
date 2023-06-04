@@ -45,8 +45,6 @@ namespace dx12
 				params->m_shaderBlobs[i] = shaderBlob;
 			}
 		}
-
-		params->m_isCreated = true;
 	}
 
 

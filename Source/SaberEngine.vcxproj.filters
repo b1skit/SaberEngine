@@ -841,5 +841,11 @@
     <FxCompile Include="Shaders\DX12\HelloTriangle_VShader.hlsl">
       <Filter>Source Files\Shaders\DX12</Filter>
     </FxCompile>
+    <FxCompile Include="Shaders\DX12\Debug_PShader.hlsl">
+      <Filter>Source Files\Shaders\DX12</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\DX12\Debug_VShader.hlsl">
+      <Filter>Source Files\Shaders\DX12</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

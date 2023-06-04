@@ -89,7 +89,7 @@ namespace opengl
 	}
 
 
-	void opengl::MeshPrimitive::Bind(re::MeshPrimitive& meshPrimitive)
+	void opengl::MeshPrimitive::Bind(re::MeshPrimitive const& meshPrimitive)
 	{
 		opengl::MeshPrimitive::PlatformParams const* glMeshParams = 
 			meshPrimitive.GetPlatformParams()->As<opengl::MeshPrimitive::PlatformParams const*>();

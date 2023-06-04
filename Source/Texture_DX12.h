@@ -28,7 +28,7 @@ namespace dx12
 	public:
 		// DX12-specific functionality:
 		static void Create(re::Texture&, 
-			Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2>,
+			ID3D12GraphicsCommandList2*,
 			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources);
 		
 		static std::shared_ptr<re::Texture> CreateFromExistingResource(

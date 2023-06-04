@@ -592,29 +592,27 @@ namespace
 		// MatAlbedo
 		std::shared_ptr<re::Texture> errorAlbedo = 
 			LoadTextureFromFilePath({ missingAlbedoTexName }, true, k_errorTextureColor, re::Texture::ColorSpace::sRGB);
-		re::Texture::TextureParams srgbParams = errorAlbedo->GetTextureParams();
-		errorMat->GetTexture(0) = errorAlbedo;
+		errorMat->SetTexture(0, errorAlbedo);
 
 		// MatMetallicRoughness
 		std::shared_ptr<re::Texture> errorMetallicRoughness = LoadTextureFromFilePath(
 			{ missingMetallicRoughnessTexName }, true, glm::vec4(0.f, 1.f, 0.f, 0.f), re::Texture::ColorSpace::Linear);
-		re::Texture::TextureParams linearParams = errorMetallicRoughness->GetTextureParams();
-		errorMat->GetTexture(1) = errorMetallicRoughness;
+		errorMat->SetTexture(1, errorMetallicRoughness);
 
 		// MatNormal
 		std::shared_ptr<re::Texture> errorNormal = LoadTextureFromFilePath(
 			{ missingNormalTexName }, true, glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), re::Texture::ColorSpace::Linear);
-		errorMat->GetTexture(2) = errorNormal;
+		errorMat->SetTexture(2, errorNormal);
 
 		// MatOcclusion
 		std::shared_ptr<re::Texture> errorOcclusion = LoadTextureFromFilePath(
 			{ missingOcclusionTexName }, true, glm::vec4(1.f), re::Texture::ColorSpace::Linear);
-		errorMat->GetTexture(3) = errorOcclusion;
+		errorMat->SetTexture(3, errorOcclusion);
 
 		// MatEmissive
 		std::shared_ptr<re::Texture> errorEmissive = LoadTextureFromFilePath(
 			{ missingEmissiveTexName }, true, k_errorTextureColor, re::Texture::ColorSpace::sRGB);
-		errorMat->GetTexture(4) = errorEmissive;
+		errorMat->SetTexture(4, errorEmissive);
 
 		// Construct a default permanent parameter block for the material params:
 		Material::PBRMetallicRoughnessParams matParams;
@@ -673,13 +671,13 @@ namespace
 				numTexLoads++;
 				en::CoreEngine::GetThreadPool()->EnqueueJob(
 					[newMat, &missingTextureColor, &scene, &sceneRootPath, material, &numTexLoads]() {
-					newMat->GetTexture(0) = LoadTextureOrColor(
+					newMat->SetTexture(0, LoadTextureOrColor(
 						scene,
 						sceneRootPath,
 						material->pbr_metallic_roughness.base_color_texture.texture,
 						missingTextureColor,
 						Texture::Format::RGBA8,
-						Texture::ColorSpace::sRGB);
+						Texture::ColorSpace::sRGB));
 					numTexLoads--;
 					});
 
@@ -687,13 +685,13 @@ namespace
 				numTexLoads++;
 				en::CoreEngine::GetThreadPool()->EnqueueJob(
 					[newMat, &missingTextureColor, &scene, &sceneRootPath, material, &numTexLoads]() {
-					newMat->GetTexture(1) = LoadTextureOrColor(
+					newMat->SetTexture(1, LoadTextureOrColor(
 						scene,
 						sceneRootPath,
 						material->pbr_metallic_roughness.metallic_roughness_texture.texture,
 						missingTextureColor,
 						Texture::Format::RGBA8,
-						Texture::ColorSpace::Linear);
+						Texture::ColorSpace::Linear));
 					numTexLoads--;
 					});
 
@@ -701,13 +699,13 @@ namespace
 				numTexLoads++;
 				en::CoreEngine::GetThreadPool()->EnqueueJob(
 					[newMat, &missingTextureColor, &scene, &sceneRootPath, material, &numTexLoads]() {
-					newMat->GetTexture(2) = LoadTextureOrColor(
+					newMat->SetTexture(2, LoadTextureOrColor(
 						scene,
 						sceneRootPath,
 						material->normal_texture.texture,
 						vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
 						Texture::Format::RGBA8,
-						Texture::ColorSpace::Linear);
+						Texture::ColorSpace::Linear));
 					numTexLoads--;
 					});
 
@@ -715,13 +713,13 @@ namespace
 				numTexLoads++;
 				en::CoreEngine::GetThreadPool()->EnqueueJob(
 					[newMat, &missingTextureColor, &scene, &sceneRootPath, material, &numTexLoads]() {
-					newMat->GetTexture(3) = LoadTextureOrColor(
+					newMat->SetTexture(3, LoadTextureOrColor(
 						scene,
 						sceneRootPath,
 						material->occlusion_texture.texture,
 						missingTextureColor,	// Completely unoccluded
 						Texture::Format::RGBA8,
-						Texture::ColorSpace::Linear);
+						Texture::ColorSpace::Linear));
 					numTexLoads--;
 					});
 
@@ -729,13 +727,13 @@ namespace
 				numTexLoads++;
 				en::CoreEngine::GetThreadPool()->EnqueueJob(
 					[newMat, &missingTextureColor, &scene, &sceneRootPath, material, &numTexLoads]() {
-					newMat->GetTexture(4) = LoadTextureOrColor(
+					newMat->SetTexture(4, LoadTextureOrColor(
 						scene,
 						sceneRootPath,
 						material->emissive_texture.texture,
 						missingTextureColor,
 						Texture::Format::RGBA8,
-						Texture::ColorSpace::sRGB); // GLTF convention: Must be converted to linear before use
+						Texture::ColorSpace::sRGB)); // GLTF convention: Must be converted to linear before use
 					numTexLoads--;
 					});
 

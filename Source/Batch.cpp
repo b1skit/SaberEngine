@@ -22,7 +22,7 @@ namespace
 
 namespace re
 {
-	Batch::Batch(re::MeshPrimitive* meshPrimitive, gr::Material* material)
+	Batch::Batch(re::MeshPrimitive const* meshPrimitive, gr::Material const* materialOverride)
 		: m_batchMeshPrimitive(meshPrimitive)
 		, m_batchShader(nullptr)
 		, m_batchGeometryMode(GeometryMode::Indexed)
@@ -31,6 +31,7 @@ namespace re
 	{
 		m_batchParamBlocks.reserve(k_batchParamBlockIDsReserveAmount);
 
+		gr::Material const* material = materialOverride ? materialOverride : meshPrimitive->GetMeshMaterial();
 		if (material)
 		{
 			m_batchShader = material->GetShader();
@@ -40,7 +41,7 @@ namespace re
 			{
 				if (material->GetTexureSlotDescs()[i].m_texture && material->GetTexureSlotDescs()[i].m_samplerObject)
 				{
-					AddBatchTextureAndSamplerInput(
+					AddTextureAndSamplerInput(
 						material->GetTexureSlotDescs()[i].m_shaderSamplerName,
 						material->GetTexureSlotDescs()[i].m_texture,
 						material->GetTexureSlotDescs()[i].m_samplerObject);
@@ -59,8 +60,8 @@ namespace re
 	}
 
 
-	Batch::Batch(std::shared_ptr<gr::Mesh> const mesh, gr::Material* material)
-		: Batch(mesh->GetMeshPrimitives()[0].get(), material)
+	Batch::Batch(std::shared_ptr<gr::Mesh const> const mesh, gr::Material const* materialOverride)
+		: Batch(mesh->GetMeshPrimitives()[0].get(), materialOverride)
 	{
 			SEAssert("Currently only support Mesh with a single MeshPrimitive. TODO: Support > 1 MeshPrimitve", 
 			mesh->GetMeshPrimitives().size() == 1);
@@ -110,13 +111,13 @@ namespace re
 	}
 
 
-	void Batch::SetBatchFilterMaskBit(Filter filterBit)
+	void Batch::SetFilterMaskBit(Filter filterBit)
 	{
 		m_batchFilterMask |= (1 << (uint32_t)filterBit);
 	}
 
 
-	void Batch::AddBatchTextureAndSamplerInput(
+	void Batch::AddTextureAndSamplerInput(
 		std::string const& shaderName, std::shared_ptr<re::Texture> texture, std::shared_ptr<re::Sampler> sampler)
 	{
 		SEAssert("Invalid shader sampler name", !shaderName.empty());

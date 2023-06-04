@@ -4,6 +4,7 @@
 #include "Config.h"
 #include "Context_DX12.h"
 #include "DebugConfiguration.h"
+#include "MathUtils.h"
 #include "RenderManager_DX12.h"
 #include "SwapChain_DX12.h"
 #include "Texture_DX12.h"
@@ -94,7 +95,7 @@ namespace dx12
 
 	void Texture::Create(
 		re::Texture& texture,
-		ComPtr<ID3D12GraphicsCommandList2> commandList, 
+		ID3D12GraphicsCommandList2* commandList, 
 		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources)
 	{
 		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
@@ -155,11 +156,12 @@ namespace dx12
 
 			texPlatParams->m_textureResource->SetName(texture.GetWName().c_str());
 
-
 			// Assemble the subresource data:
 			const uint8_t bytesPerTexel = re::Texture::GetNumBytesPerTexel(texParams.m_format);
-			const uint32_t numBytes = texParams.m_faces * texParams.m_width * texParams.m_height * bytesPerTexel;
-			SEAssert("Color target must have data to buffer", texture.GetTexels().size() == numBytes);
+			const uint32_t numBytes = static_cast<uint32_t>(texture.GetTexels().size());
+			SEAssert("Color target must have data to buffer", 
+				numBytes > 0 &&
+				numBytes == texParams.m_faces * texParams.m_width * texParams.m_height * bytesPerTexel);
 
 			std::vector<D3D12_SUBRESOURCE_DATA> subresourceData;
 			subresourceData.reserve(numSubresources);
@@ -178,8 +180,36 @@ namespace dx12
 				});
 			
 			// Create an intermediate upload heap:
+			// Note: If we don't request an intermediate buffer large enough, the UpdateSubresources call will return 0
+			// and no update is actually recorded on the command list.
+			// Buffers have the same size on all adapters: The smallest multiple of 64KB >= the buffer width
+			// See remarks here:
+			// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getresourceallocationinfo(uint_uint_constd3d12_resource_desc)
+			// D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 64KB, as per:
+			// https://learn.microsoft.com/en-us/windows/win32/direct3d12/constants
+			
+			const uint32_t intermediateBufferWidth = 
+				util::RoundUpToNearestMultiple(numBytes, static_cast<uint32_t>(D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT));
+
+			const D3D12_RESOURCE_DESC intermediateBufferResourceDesc =
+			{
+				.Dimension = D3D12_RESOURCE_DIMENSION::D3D12_RESOURCE_DIMENSION_BUFFER,
+				.Alignment = 0, // 0 == default, i.e. D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 64KB
+				.Width = intermediateBufferWidth,
+				.Height = 1,			// Mandatory for buffers
+				.DepthOrArraySize = 1,	// Mandatory for buffers
+				.MipLevels = 1,			// Mandatory for buffers
+				.Format = DXGI_FORMAT::DXGI_FORMAT_UNKNOWN, // Mandatory for buffers
+				.SampleDesc
+				{
+					.Count = 1,		// Mandatory for buffers
+					.Quality = 0	// Mandatory for buffers
+				},
+				.Layout = D3D12_TEXTURE_LAYOUT::D3D12_TEXTURE_LAYOUT_ROW_MAJOR, // Mandatory for buffers
+				.Flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE
+			};
+
 			const D3D12_HEAP_PROPERTIES uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-			const D3D12_RESOURCE_DESC intermediateBufferResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(numBytes);
 
 			ComPtr<ID3D12Resource> itermediateBufferResource = nullptr;
 
@@ -192,16 +222,18 @@ namespace dx12
 				IID_PPV_ARGS(&itermediateBufferResource));
 			CheckHResult(hr, "Failed to create intermediate texture buffer resource");
 
-			itermediateBufferResource->SetName(L"Color texture intermediate buffer");
+			const std::wstring intermediateName = texture.GetWName() + L" intermediate buffer";
+			itermediateBufferResource->SetName(intermediateName.c_str());
 
-			::UpdateSubresources(
-				commandList.Get(),
-				texPlatParams->m_textureResource.Get(),		// Destination resource
-				itermediateBufferResource.Get(),			// Intermediate resource
-				0,											// Intermediate offset
-				0,											// Index of 1st subresource in the resource
-				numMips,									// Number of subresources in the resource.
+			const uint64_t bufferSizeResult = ::UpdateSubresources(
+				commandList,
+				texPlatParams->m_textureResource.Get(),	// Destination resource
+				itermediateBufferResource.Get(),		// Intermediate resource
+				0,										// Intermediate offset
+				0,										// Index of 1st subresource in the resource
+				numMips,								// Number of subresources in the resource.
 				&subresourceData[0]);
+			SEAssert("UpdateSubresources returned 0 bytes. This is unexpected", bufferSizeResult > 0);
 
 			// Allocate a descriptor and create an SRV:
 			{

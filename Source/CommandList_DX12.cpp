@@ -148,7 +148,10 @@ namespace dx12
 
 		m_gpuCbvSrvUavDescriptorHeaps->ParseRootSignatureDescriptorTables(rootSig);
 
-		m_commandList->SetGraphicsRootSignature(rootSig.GetD3DRootSignature());
+		ID3D12RootSignature* rootSignature = rootSig.GetD3DRootSignature();
+		SEAssert("Root signature is null. This is unexpected", rootSignature);
+
+		m_commandList->SetGraphicsRootSignature(rootSignature);
 	}
 
 
@@ -161,29 +164,35 @@ namespace dx12
 		dx12::ParameterBlock::PlatformParams const* pbPlatParams =
 			parameterBlock->GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
 
+		RootSignature::RootSigEntry const* rootSigEntry = 
+			m_currentGraphicsRootSignature->GetRootSignatureEntry(parameterBlock->GetName());
+		SEAssert("Invalid root signature entry", 
+			rootSigEntry ||
+			en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
 
-		const uint32_t rootSigSlot =
-			m_currentGraphicsRootSignature->GetRootSignatureEntry(parameterBlock->GetName()).m_rootSigIndex;
+		if (rootSigEntry)
+		{
+			const uint32_t rootSigSlot = rootSigEntry->m_rootSigIndex;
 
-
-		switch (parameterBlock->GetPlatformParams()->m_dataType)
-		{
-		case re::ParameterBlock::PBDataType::SingleElement:
-		{
-			m_gpuCbvSrvUavDescriptorHeaps->SetInlineCBV(
-				rootSigSlot,						// Root signature index 
-				pbPlatParams->m_resource.Get());	// Resource
-		}
-		break;
-		case re::ParameterBlock::PBDataType::Array:
-		{
-			m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
-				rootSigSlot,						// Root signature index 
-				pbPlatParams->m_resource.Get());	// Resource
-		}
-		break;
-		default:
-			SEAssertF("Invalid PBDataType");
+			switch (parameterBlock->GetPlatformParams()->m_dataType)
+			{
+			case re::ParameterBlock::PBDataType::SingleElement:
+			{
+				m_gpuCbvSrvUavDescriptorHeaps->SetInlineCBV(
+					rootSigSlot,						// Root signature index 
+					pbPlatParams->m_resource.Get());	// Resource
+			}
+			break;
+			case re::ParameterBlock::PBDataType::Array:
+			{
+				m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
+					rootSigSlot,						// Root signature index 
+					pbPlatParams->m_resource.Get());	// Resource
+			}
+			break;
+			default:
+				SEAssertF("Invalid PBDataType");
+			}
 		}
 	}
 
@@ -425,17 +434,19 @@ namespace dx12
 
 		SEAssert("Pipeline is not currently set", m_currentPSO);
 		
-		if (m_currentPSO->GetRootSignature().HasResource(shaderName) || 
-			en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == false)
-		{
-			RootSignature::RootSigEntry const& rootSigEntry =
-				m_currentPSO->GetRootSignature().GetRootSignatureEntry(shaderName);
+		RootSignature::RootSigEntry const* rootSigEntry =
+			m_currentPSO->GetRootSignature().GetRootSignatureEntry(shaderName);
+		SEAssert("Invalid root signature entry",
+			rootSigEntry ||
+			en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
 
+		if (rootSigEntry)
+		{
 			m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
-				rootSigEntry.m_rootSigIndex,
+				rootSigEntry->m_rootSigIndex,
 				texPlatParams->m_cpuDescAllocation.GetBaseDescriptor(),
-				rootSigEntry.m_offset,
-				rootSigEntry.m_count);
+				rootSigEntry->m_offset,
+				rootSigEntry->m_count);
 		}
 	}
 

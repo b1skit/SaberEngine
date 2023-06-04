@@ -95,7 +95,7 @@ namespace dx12
 	class AllocationPage
 	{
 	public:
-		AllocationPage(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t elementSize, uint32_t totalElements);
+		AllocationPage(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t elementSize, uint32_t totalElements, uint32_t pageIdx);
 		AllocationPage(AllocationPage&&) = default;
 		AllocationPage& operator=(AllocationPage&&) = default;
 		~AllocationPage();

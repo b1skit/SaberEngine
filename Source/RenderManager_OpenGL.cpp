@@ -209,14 +209,14 @@ namespace opengl
 				for (re::Batch const& batch : batches)
 				{
 					opengl::MeshPrimitive::PlatformParams const* meshPlatParams = 
-						batch.GetBatchMesh()->GetPlatformParams()->As<opengl::MeshPrimitive::PlatformParams const*>();
+						batch.GetMeshPrimitive()->GetPlatformParams()->As<opengl::MeshPrimitive::PlatformParams const*>();
 
-					opengl::MeshPrimitive::Bind(*batch.GetBatchMesh());
+					opengl::MeshPrimitive::Bind(*batch.GetMeshPrimitive());
 
-					// Batch Texture/Sampler inputs:
+					// Set Batch Texture/Sampler inputs:
 					if (renderStage->WritesColor())
 					{
-						for (auto const& texSamplerInput : batch.GetBatchTextureAndSamplerInputs())
+						for (auto const& texSamplerInput : batch.GetTextureAndSamplerInputs())
 						{
 							opengl::Shader::SetTextureAndSampler(
 								*stageShader,
@@ -227,7 +227,7 @@ namespace opengl
 					}
 
 					// Batch parameter blocks:
-					vector<shared_ptr<re::ParameterBlock>> const& batchPBs = batch.GetBatchParameterBlocks();
+					vector<shared_ptr<re::ParameterBlock>> const& batchPBs = batch.GetParameterBlocks();
 					for (shared_ptr<re::ParameterBlock> batchPB : batchPBs)
 					{
 						opengl::Shader::SetParameterBlock(*stageShader, *batchPB.get());
@@ -236,7 +236,7 @@ namespace opengl
 					// Draw!
 					glDrawElementsInstanced(
 						meshPlatParams->m_drawMode,						// GLenum mode
-						(GLsizei)batch.GetBatchMesh()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),	// GLsizei count
+						(GLsizei)batch.GetMeshPrimitive()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),	// GLsizei count
 						GL_UNSIGNED_INT,								// GLenum type. TODO: Store type in parameters, instead of assuming uints
 						0,												// Byte offset (into bound index buffer)
 						(GLsizei)batch.GetInstanceCount());				// Instance count
