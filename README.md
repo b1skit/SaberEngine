@@ -2,22 +2,18 @@
 
 "Ideally, a Jedi took many months to construct a single perfect weapon that he or she would keep and use for a lifetime. Once you build it, the lightsaber will become your constant companion, your tool, and a ready means of defense." - Luke Skywalker
 
---------------
-Project goals:
---------------
-- Progressive gpu forward path tracer  
-	-> GPU implementation of PBRT  
-- Fork of Blaze Engine, but highly modernized  
-	-> Multi-threaded  
-	-> Supports animation, GPU instancing  
-- Modern API: DX12/Vulkan
+-----------------
+Project Overview:
+-----------------
+Saber Engine is a multi-API, multi-threaded, real-time rendering R&D framework, with the architecture of a game engine.
 
 
 --------
 Details:
 --------
-- Supported graphics APIs:
+- Currently supported graphics APIs:
 	- OpenGL 4.6
+	- DirectX 12
 - Renders GLTF 2.0 scenes/assets
 - Implemented with C++ 20
 
@@ -67,7 +63,7 @@ Shaders:
 --------
 For simplicity, naming patterns are used to associate Shaders.  
 - OpenGL: Shaders sharing common names (with .vert/.geom/.frag suffixes) will be concatenated and compiled at runtime  
-- DX12: Compiled Shader Objects (.cso) sharing a common name prefix are differentiated by a "_<?>Shader.hlsl" suffix (e.g. Some_VShader.hlsl, Some_GShader.hlsl, Some_PShader.hlsl), and associated at runtime  
+- DX12: Compiled Shader Objects (.cso) sharing a common name prefix are differentiated by a "<ShaderName>_<?>Shader.hlsl" suffix (e.g. Some_VShader.hlsl, Some_GShader.hlsl, Some_PShader.hlsl), and associated at runtime  
 
 
 -------------
