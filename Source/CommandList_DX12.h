@@ -63,8 +63,13 @@ namespace dx12
 		// TODO: void SetComputeRootSignature(dx12::RootSignature const& rootSig);
 
 		// GPU descriptors:
-		void SetParameterBlock(re::ParameterBlock const*);
 		void CommitGPUDescriptors(); // Must be called before issuing draw commands
+		void SetParameterBlock(re::ParameterBlock const*);
+
+		void SetGraphicsRoot32BitConstants(
+			uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;
+
+		void SetTexture(std::string const& shaderName, std::shared_ptr<re::Texture>);
 
 		// TODO: Write a helper that takes a MeshPrimitive; make these private
 		void SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY) const;
@@ -87,10 +92,7 @@ namespace dx12
 		void SetViewport(re::TextureTargetSet const&) const;
 		void SetScissorRect(re::TextureTargetSet const&) const;
 
-		void SetGraphicsRoot32BitConstants(
-			uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;
-
-		void SetTexture(std::string const& shaderName, std::shared_ptr<re::Texture>);
+		
 
 		void DrawIndexedInstanced(
 			uint32_t numIndexes, uint32_t numInstances, uint32_t idxStartOffset, int32_t baseVertexOffset, uint32_t instanceOffset);
@@ -113,7 +115,6 @@ namespace dx12
 
 	private:
 		std::unique_ptr<dx12::GPUDescriptorHeap> m_gpuCbvSrvUavDescriptorHeaps;
-		std::unique_ptr<dx12::GPUDescriptorHeap> m_gpuSamplerDescriptorHeaps; // TODO: Finish implementation & use this
 		dx12::LocalResourceStateTracker m_resourceStates;
 
 	private:
@@ -144,17 +145,6 @@ namespace dx12
 	{
 		HRESULT hr = m_commandList->Close();
 		CheckHResult(hr, "Failed to close command list");
-	}
-
-
-	inline void CommandList::SetPipelineState(dx12::PipelineState const& pso)
-	{
-		m_currentPSO = &pso;
-
-		ID3D12PipelineState* pipelineState = pso.GetD3DPipelineState();
-		SEAssert("Pipeline state is null. This is unexpected", pipelineState);
-
-		m_commandList->SetPipelineState(pipelineState);
 	}
 
 
@@ -239,6 +229,5 @@ namespace dx12
 	inline void CommandList::CommitGPUDescriptors()
 	{
 		m_gpuCbvSrvUavDescriptorHeaps->Commit();
-		m_gpuSamplerDescriptorHeaps->Commit(); // TODO: Actually use these...
 	}
 }

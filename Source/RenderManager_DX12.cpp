@@ -287,17 +287,18 @@ namespace dx12
 
 				// Render stage batches:
 				std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
-				for (re::Batch const& batch : batches)
+				for (size_t batchIdx = 0; batchIdx < batches.size(); batchIdx++)
 				{
 					// No stage shader: Must set stage PBs for each batch
 					if (!hasStageShader)
 					{
+						re::Shader const* batchShader = batches[batchIdx].GetShader();
 						SEAssert("Batch must have a shader if the stage does not have a shader", 
-							batch.GetShader() != nullptr);
+							batchShader != nullptr);
 
 						// Set the pipeline state and root signature for the batch shader:
 						std::shared_ptr<dx12::PipelineState> pso = dx12::Context::GetPipelineStateObject(
-							*batch.GetShader(),
+							*batchShader,
 							stagePipelineParams,
 							stageTargets.get());
 						commandList->SetPipelineState(*pso);
@@ -307,7 +308,7 @@ namespace dx12
 					}
 
 					// Batch parameter blocks:
-					vector<shared_ptr<re::ParameterBlock>> const& batchPBs = batch.GetParameterBlocks();
+					vector<shared_ptr<re::ParameterBlock>> const& batchPBs = batches[batchIdx].GetParameterBlocks();
 					for (shared_ptr<re::ParameterBlock> batchPB : batchPBs)
 					{
 						commandList->SetParameterBlock(batchPB.get());
@@ -316,7 +317,7 @@ namespace dx12
 					// Batch Texture / Sampler inputs :
 					if (renderStage->WritesColor())
 					{
-						for (auto const& texSamplerInput : batch.GetTextureAndSamplerInputs())
+						for (auto const& texSamplerInput : batches[batchIdx].GetTextureAndSamplerInputs())
 						{
 							commandList->SetTexture(
 								std::get<0>(texSamplerInput),	// Shader name
@@ -328,21 +329,21 @@ namespace dx12
 
 					// Set the geometry for the draw:
 					dx12::MeshPrimitive::PlatformParams* meshPrimPlatParams =
-						batch.GetMeshPrimitive()->GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
+						batches[batchIdx].GetMeshPrimitive()->GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
 					
 					// TODO: Batches should contain the draw mode, instead of carrying around a MeshPrimitive
 					commandList->SetPrimitiveType(meshPrimPlatParams->m_drawMode);
-					commandList->SetVertexBuffers(batch.GetMeshPrimitive()->GetVertexStreams());
+					commandList->SetVertexBuffers(batches[batchIdx].GetMeshPrimitive()->GetVertexStreams());
 
 					dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
-						batch.GetMeshPrimitive()->GetVertexStream(
+						batches[batchIdx].GetMeshPrimitive()->GetVertexStream(
 							re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
 					commandList->SetIndexBuffer(&indexPlatformParams->m_indexBufferView);
 
 					// Record the draw:
 					commandList->DrawIndexedInstanced(
-						batch.GetMeshPrimitive()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
-						static_cast<uint32_t>(batch.GetInstanceCount()),	// Instance count
+						batches[batchIdx].GetMeshPrimitive()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
+						static_cast<uint32_t>(batches[batchIdx].GetInstanceCount()),	// Instance count
 						0,	// Start index location
 						0,	// Base vertex location
 						0);	// Start instance location

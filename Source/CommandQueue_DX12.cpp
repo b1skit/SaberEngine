@@ -204,8 +204,13 @@ namespace dx12
 	void CommandQueue::Destroy()
 	{
 		m_fence.Destroy();
+		m_fenceValue = 0;
 		m_commandQueue = nullptr;
 		m_deviceCache = nullptr;
+		
+		// Swap our queue with an empty version to clear it
+		std::queue<std::shared_ptr<dx12::CommandList>> emptyCommandListPool;
+		std::swap(m_commandListPool, emptyCommandListPool);
 	}
 
 

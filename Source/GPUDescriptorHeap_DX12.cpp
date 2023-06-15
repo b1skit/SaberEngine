@@ -1,5 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
+#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
+
 #include "Context_DX12.h"
+#include "CPUDescriptorHeapManager_DX12.h"
 #include "DebugConfiguration.h"
 #include "Debug_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"
@@ -24,6 +27,7 @@ namespace dx12
 		, m_cpuDescriptorTableCacheLocations{0}
 		, m_rootSigDescriptorTableIdxBitmask(0)
 		, m_dirtyDescriptorTableIdxBitmask(0)
+		, m_unsetInlineDescriptors(0)
 	{
 		SEAssert("Invalid command list", m_owningCommandList != nullptr);
 
@@ -69,7 +73,7 @@ namespace dx12
 
 	GPUDescriptorHeap::~GPUDescriptorHeap()
 	{
-		m_gpuDescriptorTableHeap = nullptr;		
+		m_gpuDescriptorTableHeap = nullptr;
 	}
 
 
@@ -91,25 +95,98 @@ namespace dx12
 			memset(m_inlineDescriptors[i], 0, k_totalRootSigDescriptorTableIndices * sizeof(D3D12_GPU_VIRTUAL_ADDRESS));
 		}
 		memset(m_dirtyInlineDescriptorIdxBitmask, 0, InlineRootType_Count * sizeof(uint32_t));
+
+		m_unsetInlineDescriptors = std::numeric_limits<uint32_t>::max(); // Nothing has been set
+	}
+
+
+	void GPUDescriptorHeap::SetNullDescriptors(dx12::RootSignature const& rootSig)
+	{
+		std::unordered_map<std::string, RootSignature::RootParameter> const& rootParams =
+			rootSig.GetRootSignatureEntries();
+
+		// Note: Root descriptors cannot be set to null:
+		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/descriptors-overview#null-descriptors
+		// Instead, we mark all inline descriptors we encounter in a bitmask, and remove the bits when the
+		// descriptors are set for the first time. This allows us to assert that at least *something* has been
+		// set in each position when we got to commit our descriptors. No point setting dummy entries as we
+		// found our root params via shader reflection: we KNOW they're going to be accessed by the GPU
+		// (which is guaranteed to result in undefined behavior) so something MUST be set
+		m_unsetInlineDescriptors = 0;
+
+		for (auto const& rootParam : rootParams)
+		{
+			const uint8_t rootIdx = rootParam.second.m_index;
+			switch (rootParam.second.m_type)
+			{
+			case RootSignature::RootParameter::Type::DescriptorTable:
+			{
+				// Do nothing...
+			}
+			break;
+			case RootSignature::RootParameter::Type::Constant:
+			case RootSignature::RootParameter::Type::CBV:
+			case RootSignature::RootParameter::Type::SRV:
+			case RootSignature::RootParameter::Type::UAV:
+			{
+				m_unsetInlineDescriptors |= 1 << rootIdx;
+			}
+			break;
+			default:
+				SEAssertF("Invalid parameter type");
+			}
+		}
+
+		// Parse the descriptor table metadata, and set null descriptors:
+		std::vector<dx12::RootSignature::DescriptorTable> const& descriptorTableMetadata = 
+			rootSig.GetDescriptorTableMetadata();
+
+		for (RootSignature::DescriptorTable const& descriptorTable : descriptorTableMetadata)
+		{
+			for (size_t rangeType = 0; rangeType < RootSignature::Range::Type::Type_Count; rangeType++)
+			{
+				for (size_t rangeEntry = 0; rangeEntry < descriptorTable.m_ranges[rangeType].size(); rangeEntry++)
+				{
+					switch (rangeType)
+					{
+					case RootSignature::Range::Type::SRV:
+					{
+						SetDescriptorTable(
+							descriptorTable.m_index, 
+							dx12::Context::GetNullSRVDescriptor(
+								descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_viewDimension,
+								descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_format),
+							static_cast<uint32_t>(rangeEntry),
+							1);						
+					}
+					break;
+					case RootSignature::Range::Type::UAV:
+					case RootSignature::Range::Type::CBV:
+					{
+						SEAssertF("TODO: Handle this type");
+					}
+					break;
+					default:
+						SEAssertF("Invalid range type");
+					}
+				}
+			}			
+		}
 	}
 
 
 	void GPUDescriptorHeap::ParseRootSignatureDescriptorTables(dx12::RootSignature const& rootSig)
 	{
-		// TODO: Insert null descriptors into empty slots (unless strict shader binding is enabled?)
-		// -> Gives well defined "nothing" bindings (except in root descriptors, which would be a page fault)
+		const uint32_t numParams = static_cast<uint32_t>(rootSig.GetRootSignatureEntries().size());
 
-		// TODO: Handle parsing when the heap is a Sampler type
-
-		D3D12_ROOT_SIGNATURE_DESC1 const& rootSigDesc = rootSig.GetD3DRootSignatureDesc();
-		
 		// Get our descriptor table bitmask: Bits map to root signature indexes containing a descriptor table
 		m_rootSigDescriptorTableIdxBitmask = rootSig.GetDescriptorTableIdxBitmask();
+		// TODO: Just parse the bitmask here, rather than relying on the root sig object to parse it for us
 
 		uint32_t offset = 0;
 		uint32_t rootIdxBit = 0; // Updated immediately...
 		uint32_t descriptorTableIdxBitmask = m_rootSigDescriptorTableIdxBitmask;
-		for (uint32_t rootIdx = 0; rootIdx < k_totalRootSigDescriptorTableIndices && rootIdx < rootSigDesc.NumParameters; rootIdx++)
+		for (uint32_t rootIdx = 0; rootIdx < k_totalRootSigDescriptorTableIndices && rootIdx < numParams; rootIdx++)
 		{
 			if (descriptorTableIdxBitmask == 0)
 			{
@@ -135,30 +212,33 @@ namespace dx12
 
 		// Remove all dirty flags: We'll need to call Set___() in order to mark any descriptors for copying
 		m_dirtyDescriptorTableIdxBitmask = 0;
+
+		SetNullDescriptors(rootSig);
 	}
 
 
 	void GPUDescriptorHeap::SetDescriptorTable(
-		uint32_t rootParamIdx, const D3D12_CPU_DESCRIPTOR_HANDLE src, uint32_t offset, uint32_t count)
+		uint32_t rootParamIdx, dx12::DescriptorAllocation const& src, uint32_t offset, uint32_t count)
 	{
 		SEAssert("Invalid root parameter index", rootParamIdx < k_totalRootSigDescriptorTableIndices);
-		SEAssert("Source cannot be null", src.ptr != 0);
+		SEAssert("Source cannot be null", src.GetBaseDescriptor().ptr != 0);
 		SEAssert("Invalid offset", offset < k_totalDescriptors);
 		SEAssert("Too many descriptors", count < k_totalDescriptors);
 
 		// TODO: Handle this for Sampler heap type
 
-		CPUDescriptorTableCacheMetadata& destDescriptorTable = m_cpuDescriptorTableCacheLocations[rootParamIdx];
+		CPUDescriptorTableCacheMetadata& destCPUDescriptorTable = m_cpuDescriptorTableCacheLocations[rootParamIdx];
 
 		SEAssert("Writing too many descriptors from the given offset", 
-			offset + count <= destDescriptorTable.m_numElements);
+			offset + count <= destCPUDescriptorTable.m_numElements);
 
-		// Make a local copy of the source descriptor data:
-		D3D12_CPU_DESCRIPTOR_HANDLE* destDescriptorHandle = destDescriptorTable.m_baseDescriptor + offset;
+		// Make a local copy of the source descriptor(s):
+		D3D12_CPU_DESCRIPTOR_HANDLE* destDescriptorHandle = destCPUDescriptorTable.m_baseDescriptor + offset;
 		for (uint32_t currentDescriptor = 0; currentDescriptor < count; currentDescriptor++)
 		{
-			const size_t baseOffset = currentDescriptor * m_elementSize;
-			destDescriptorHandle[currentDescriptor] = D3D12_CPU_DESCRIPTOR_HANDLE(src.ptr + baseOffset);
+			const size_t srcBaseOffset = currentDescriptor * m_elementSize;
+			destDescriptorHandle[currentDescriptor] = 
+				D3D12_CPU_DESCRIPTOR_HANDLE(src.GetBaseDescriptor().ptr + srcBaseOffset);
 		}
 
 		// Mark our root parameter index as dirty:
@@ -176,6 +256,13 @@ namespace dx12
 		
 		// Mark our root parameter index as dirty:
 		m_dirtyInlineDescriptorIdxBitmask[CBV] |= (1 << rootParamIdx);
+
+		const uint32_t rootParamIdxBitmask = 1 << rootParamIdx;
+		if (m_unsetInlineDescriptors & rootParamIdxBitmask)
+		{
+			// The inline root parameter at this index has been set at least once: Remove the unset flag
+			m_unsetInlineDescriptors ^= 1 << rootParamIdx;
+		}
 	}
 
 
@@ -189,6 +276,13 @@ namespace dx12
 
 		// Mark our root parameter index as dirty:
 		m_dirtyInlineDescriptorIdxBitmask[SRV] |= (1 << rootParamIdx);
+
+		const uint32_t rootParamIdxBitmask = 1 << rootParamIdx;
+		if (m_unsetInlineDescriptors & rootParamIdxBitmask)
+		{
+			// The inline root parameter at this index has been set at least once: Remove the unset flag
+			m_unsetInlineDescriptors ^= 1 << rootParamIdx;
+		}
 	}
 
 
@@ -202,11 +296,19 @@ namespace dx12
 
 		// Mark our root parameter index as dirty:
 		m_dirtyInlineDescriptorIdxBitmask[UAV] |= (1 << rootParamIdx);
+
+		const uint32_t rootParamIdxBitmask = 1 << rootParamIdx;
+		if (m_unsetInlineDescriptors & rootParamIdxBitmask)
+		{
+			// The inline root parameter at this index has been set at least once: Remove the unset flag
+			m_unsetInlineDescriptors ^= 1 << rootParamIdx;
+		}
 	}
 
 
 	void GPUDescriptorHeap::Commit()
 	{
+		// TODO: Wrap this in an increased debug level command-line
 #if defined(_DEBUG)
 		// Assert all of our root index bitmasks are unique:
 		for (uint8_t i = 0; i < InlineRootType_Count; i++)
@@ -392,11 +494,6 @@ namespace dx12
 					}
 				}
 				break;
-				case GPUDescriptorHeap::InlineDescriptorType::Sampler:
-				{
-					SEAssertF("TODO: Handle this");
-				}
-				break;
 				default:
 					SEAssertF("Invalid inline type");
 				}
@@ -410,6 +507,9 @@ namespace dx12
 	
 	void GPUDescriptorHeap::CommitInlineDescriptors()
 	{
+		SEAssert("An inline descriptor has not been set. Shader access will result in undefined behavior", 
+			m_unsetInlineDescriptors == 0);
+
 		for (uint8_t inlineRootType = 0; inlineRootType < static_cast<uint8_t>(InlineRootType_Count); inlineRootType++)
 		{
 			CommitInlineDescriptorsHelper(

@@ -31,8 +31,7 @@ namespace dx12
 			CBV,
 			SRV,
 			UAV,
-
-			Sampler, // TODO: Handle samplers <--------------- TODO: JUST REMOVE THIS??????????????????????????????????????????
+			// Note: We do not maintain a Sampler descriptor heap
 
 			InlineRootType_Count
 		};
@@ -51,7 +50,7 @@ namespace dx12
 		// Each descriptor table/range entry = 1 DWORD each.
 		// Note: offset & count can be used to set individual descriptors within a table located at a given rootParamIdx
 		void SetDescriptorTable(
-			uint32_t rootParamIdx, const D3D12_CPU_DESCRIPTOR_HANDLE src, uint32_t offset, uint32_t count);
+			uint32_t rootParamIdx, dx12::DescriptorAllocation const& src, uint32_t offset, uint32_t count);
 
 		// Set resource views directly in the GPU-visible descriptor heap:
 		void SetInlineCBV(uint32_t rootParamIdx, ID3D12Resource*); // = 1 DWORD each
@@ -106,6 +105,13 @@ namespace dx12
 		// 1 array entry each for CBVs, SRVs, UAVs, Samplers:
 		D3D12_GPU_VIRTUAL_ADDRESS m_inlineDescriptors[InlineRootType_Count][k_totalRootSigDescriptorTableIndices];
 		uint32_t m_dirtyInlineDescriptorIdxBitmask[InlineRootType_Count]; // Marked during SetInlineCBV/SRV/UAV() calls
+
+
+	private: // Debugging and null descriptor table initialization
+		void SetNullDescriptors(dx12::RootSignature const& rootSig);
+
+		// Debug: Track inline descriptors seen while parsing the root sig, so we can assert *something* is set for them
+		uint32_t m_unsetInlineDescriptors;
 	};
 
 

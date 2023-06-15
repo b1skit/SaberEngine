@@ -7,6 +7,8 @@
 #include "Shader_DX12.h"
 
 
+//struct CD3DX12_ROOT_PARAMETER1;
+
 namespace re
 {
 	class Shader;
@@ -17,50 +19,93 @@ namespace dx12
 	class RootSignature final
 	{
 	public:
-		static constexpr uint32_t k_totalRootSigDescriptorTableIndices = 32;
+		static constexpr uint32_t k_totalRootSigDescriptorTableIndices = 32u;
 
-		static constexpr uint8_t k_invalidRootSigIndex = std::numeric_limits<uint8_t>::max();
-		static constexpr uint8_t k_invalidRegisterVal = std::numeric_limits<uint8_t>::max();
-		static constexpr uint32_t k_invalidOffset = std::numeric_limits<uint32_t>::max();
+		static constexpr uint8_t k_invalidRootSigIndex	= std::numeric_limits<uint8_t>::max();
+		static constexpr uint8_t k_invalidOffset		= std::numeric_limits<uint8_t>::max();
+		static constexpr uint8_t k_invalidCount			= std::numeric_limits<uint8_t>::max();
+
+		static constexpr uint8_t k_invalidRegisterVal	= std::numeric_limits<uint8_t>::max();
 
 
-	public: // Shader reflection metadata		
-		enum class EntryType
+	public: // Binding metadata:
+
+		struct RootConstant
 		{
-			RootConstant,
-			RootCBV,
-			RootSRV,
-			// TODO: More Root__ types
-
-			TextureSRV, // Packed into descriptor tables
-
-			Sampler,
-
-			EntryType_Count,
-			EntryType_Invalid = EntryType_Count
+			uint8_t m_num32BitValues = k_invalidCount;
+			uint8_t m_destOffsetIn32BitValues = k_invalidOffset; // TODO: Is this needed/used?
 		};
-		struct RootSigEntry
+		struct TableEntry
 		{
-			EntryType m_type		= EntryType::EntryType_Invalid;
-			uint8_t m_rootSigIndex	= k_invalidRootSigIndex;
+			uint8_t m_offset = k_invalidOffset;
+		};
+		struct RootParameter
+		{
+			uint8_t m_index = k_invalidRootSigIndex;
 
-			uint8_t m_baseRegister	= k_invalidRegisterVal;
-			uint8_t m_registerSpace = k_invalidRegisterVal;
+			enum class Type
+			{
+				Constant,
+				CBV,
+				SRV,
+				UAV,
+				DescriptorTable,
 
-			uint32_t m_offset		= k_invalidOffset; // Descriptor tables only: Offset into table
-			uint32_t m_count		= 0; // Root constants/Descriptor tables: No. of 32-bit values/No. of descriptors
+				Type_Count,
+				Type_Invalid = Type_Count
+			} m_type = Type::Type_Invalid;
 
-			D3D12_SHADER_VISIBILITY m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
-
-			bool IsValid() const
-			{ 
-				return m_type != EntryType::EntryType_Invalid &&
-					m_rootSigIndex != k_invalidRootSigIndex &&
-					m_baseRegister != k_invalidRegisterVal &&
-					m_registerSpace != k_invalidRegisterVal &&
-					m_offset != k_invalidOffset &&
-					m_count != 0;
+			union
+			{
+				RootConstant m_rootConstant;
+				TableEntry m_tableEntry;
 			};
+		};
+
+
+	public: // Descriptor table metadata:
+		struct RangeEntry
+		{
+			union
+			{
+				struct
+				{
+					uint32_t m_sizeInBytes;
+				} m_cbvDesc;
+				struct
+				{
+					DXGI_FORMAT m_format;
+					D3D12_SRV_DIMENSION m_viewDimension;
+				} m_srvDesc;
+				struct
+				{
+					DXGI_FORMAT m_format;
+					D3D12_UAV_DIMENSION m_viewDimension;
+				} m_uavDesc;
+			};
+		};
+		struct Range
+		{
+			enum Type
+			{
+				SRV,
+				UAV,
+				CBV,
+				// Note: Sampler type is omitted
+
+				Type_Count,
+				Type_Invalid = Type_Count
+			} m_type = Type::Type_Invalid;
+
+			// TODO: Just use a 
+			std::vector<RangeEntry> m_rangeEntries;
+		};
+		struct DescriptorTable
+		{
+			uint8_t m_index = k_invalidRootSigIndex;
+			std::vector<std::vector<RangeEntry>> m_ranges;
+
+			DescriptorTable() { m_ranges.resize(Range::Type::Type_Count); }
 		};
 
 
@@ -77,22 +122,36 @@ namespace dx12
 
 		ID3D12RootSignature* GetD3DRootSignature() const;
 
-		D3D12_ROOT_SIGNATURE_DESC1 const& GetD3DRootSignatureDesc() const;
-
-		RootSigEntry const* GetRootSignatureEntry(std::string const& resourceName) const;
+		std::unordered_map<std::string, RootParameter> const& GetRootSignatureEntries() const;
+		RootParameter const* GetRootSignatureEntry(std::string const& resourceName) const;
 		bool HasResource(std::string const& resourceName) const;
+
+
+		std::vector<DescriptorTable> const& GetDescriptorTableMetadata() const;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
-		D3D12_VERSIONED_ROOT_SIGNATURE_DESC m_rootSigDescription;
 
-	
+
 	private: // Track which root sig indexes contain descriptor tables, and how many entries they have
 		uint32_t m_rootSigDescriptorTableIdxBitmask; 
 		uint32_t m_numDescriptorsPerTable[k_totalRootSigDescriptorTableIndices];
 		static_assert(k_totalRootSigDescriptorTableIndices == (sizeof(m_rootSigDescriptorTableIdxBitmask) * 8));
 
 	private:
-		std::unordered_map<std::string, RootSigEntry> m_namesToRootEntries;
+		std::unordered_map<std::string, RootParameter> m_namesToRootEntries; // Binding metadata
+		std::vector<DescriptorTable> m_descriptorTables; // For null descriptor initialization
 	};
+
+
+	inline std::unordered_map<std::string, RootSignature::RootParameter> const& RootSignature::GetRootSignatureEntries() const
+	{
+		return m_namesToRootEntries;
+	}
+
+
+	inline std::vector<RootSignature::DescriptorTable> const& RootSignature::GetDescriptorTableMetadata() const
+	{
+		return m_descriptorTables;
+	}
 }

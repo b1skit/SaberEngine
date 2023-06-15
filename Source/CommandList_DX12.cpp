@@ -54,7 +54,6 @@ namespace dx12
 		, m_fenceValue(0)
 		, k_commandListNumber(s_commandListNumber++)
 		, m_gpuCbvSrvUavDescriptorHeaps(nullptr)
-		, m_gpuSamplerDescriptorHeaps(nullptr)
 		, m_currentGraphicsRootSignature(nullptr)
 		, m_currentPSO(nullptr)
 		
@@ -84,11 +83,6 @@ namespace dx12
 				m_commandList.Get(),
 				m_type,
 				D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-			m_gpuSamplerDescriptorHeaps = std::make_unique<GPUDescriptorHeap>(
-				m_commandList.Get(),
-				m_type,
-				D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 		}
 
 		// Note: Command lists are created in the recording state by default. The render loop resets the command 
@@ -106,7 +100,6 @@ namespace dx12
 		m_commandAllocator = nullptr;
 		m_fenceValue = 0;
 		m_gpuCbvSrvUavDescriptorHeaps = nullptr;
-		m_gpuSamplerDescriptorHeaps = nullptr;
 		m_currentGraphicsRootSignature = nullptr;
 		m_currentPSO = nullptr;
 	}
@@ -131,19 +124,39 @@ namespace dx12
 		{
 			// Reset the GPU descriptor heap managers:
 			m_gpuCbvSrvUavDescriptorHeaps->Reset();
-			m_gpuSamplerDescriptorHeaps->Reset();
 
-			constexpr uint8_t k_numHeaps = 2;
+			constexpr uint8_t k_numHeaps = 1;
 			ID3D12DescriptorHeap* descriptorHeaps[k_numHeaps] = {
-				m_gpuCbvSrvUavDescriptorHeaps->GetD3DDescriptorHeap(),
-				m_gpuSamplerDescriptorHeaps->GetD3DDescriptorHeap() };
+				m_gpuCbvSrvUavDescriptorHeaps->GetD3DDescriptorHeap()
+			};
 			m_commandList->SetDescriptorHeaps(k_numHeaps, descriptorHeaps);
 		}
 	}
 
 
+	void CommandList::SetPipelineState(dx12::PipelineState const& pso)
+	{
+		if (m_currentPSO == &pso)
+		{
+			return;
+		}
+
+		m_currentPSO = &pso;
+
+		ID3D12PipelineState* pipelineState = pso.GetD3DPipelineState();
+		SEAssert("Pipeline state is null. This is unexpected", pipelineState);
+
+		m_commandList->SetPipelineState(pipelineState);
+	}
+
+
 	void CommandList::SetGraphicsRootSignature(dx12::RootSignature const& rootSig)
 	{
+		if (m_currentGraphicsRootSignature == &rootSig)
+		{
+			return;
+		}
+
 		m_currentGraphicsRootSignature = &rootSig;
 
 		m_gpuCbvSrvUavDescriptorHeaps->ParseRootSignatureDescriptorTables(rootSig);
@@ -164,7 +177,7 @@ namespace dx12
 		dx12::ParameterBlock::PlatformParams const* pbPlatParams =
 			parameterBlock->GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
 
-		RootSignature::RootSigEntry const* rootSigEntry = 
+		RootSignature::RootParameter const* rootSigEntry = 
 			m_currentGraphicsRootSignature->GetRootSignatureEntry(parameterBlock->GetName());
 		SEAssert("Invalid root signature entry", 
 			rootSigEntry ||
@@ -172,21 +185,21 @@ namespace dx12
 
 		if (rootSigEntry)
 		{
-			const uint32_t rootSigSlot = rootSigEntry->m_rootSigIndex;
+			const uint32_t rootSigIdx = rootSigEntry->m_index;
 
 			switch (parameterBlock->GetPlatformParams()->m_dataType)
 			{
 			case re::ParameterBlock::PBDataType::SingleElement:
 			{
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineCBV(
-					rootSigSlot,						// Root signature index 
+					rootSigIdx,							// Root signature index 
 					pbPlatParams->m_resource.Get());	// Resource
 			}
 			break;
 			case re::ParameterBlock::PBDataType::Array:
 			{
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
-					rootSigSlot,						// Root signature index 
+					rootSigIdx,							// Root signature index 
 					pbPlatParams->m_resource.Get());	// Resource
 			}
 			break;
@@ -434,7 +447,7 @@ namespace dx12
 
 		SEAssert("Pipeline is not currently set", m_currentPSO);
 		
-		RootSignature::RootSigEntry const* rootSigEntry =
+		RootSignature::RootParameter const* rootSigEntry =
 			m_currentPSO->GetRootSignature().GetRootSignatureEntry(shaderName);
 		SEAssert("Invalid root signature entry",
 			rootSigEntry ||
@@ -442,11 +455,14 @@ namespace dx12
 
 		if (rootSigEntry)
 		{
+			SEAssert("We currently assume all textures belong to descriptor tables",
+				rootSigEntry->m_type == RootSignature::RootParameter::Type::DescriptorTable);
+
 			m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
-				rootSigEntry->m_rootSigIndex,
-				texPlatParams->m_cpuDescAllocation.GetBaseDescriptor(),
-				rootSigEntry->m_offset,
-				rootSigEntry->m_count);
+				rootSigEntry->m_index,
+				texPlatParams->m_cpuDescAllocation,
+				rootSigEntry->m_tableEntry.m_offset,
+				1);
 		}
 	}
 

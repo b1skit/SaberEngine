@@ -21,7 +21,7 @@ namespace dx12
 			DXGI_FORMAT m_format;
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_textureResource;
 
-			dx12::DescriptorAllocation m_cpuDescAllocation; // TODO: Currently unused...
+			dx12::DescriptorAllocation m_cpuDescAllocation;
 		};
 
 

@@ -15,10 +15,16 @@
 #include "Texture_DX12.h"
 #include "Window_Win32.h"
 
+using Microsoft::WRL::ComPtr;
+
 
 namespace dx12
 {
-	using Microsoft::WRL::ComPtr;
+	std::unordered_map<D3D12_SRV_DIMENSION, std::unordered_map<DXGI_FORMAT, DescriptorAllocation>> Context::s_nullSRVLibrary;
+	std::mutex Context::s_nullSRVLibraryMutex;
+
+	std::unordered_map<D3D12_UAV_DIMENSION, std::unordered_map<DXGI_FORMAT, DescriptorAllocation>> Context::s_nullUAVLibrary;
+	std::mutex Context::s_nullUAVLibraryMutex;
 
 
 	Context::PlatformParams::PlatformParams()
@@ -49,11 +55,6 @@ namespace dx12
 			case CPUDescriptorHeapType::CBV_SRV_UAV:
 			{
 				ctxPlatParams->m_cpuDescriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-			}
-			break;
-			case CPUDescriptorHeapType::Sampler:
-			{
-				ctxPlatParams->m_cpuDescriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 			}
 			break;
 			case CPUDescriptorHeapType::RTV:
@@ -160,6 +161,16 @@ namespace dx12
 		// NOTE: We must destroy anything that holds a parameter block before the ParameterBlockAllocator is destroyed, 
 		// as parameter blocks call the ParameterBlockAllocator in their destructor
 		context.GetParameterBlockAllocator().Destroy();
+
+		// Clear the null descriptor libraries:
+		{
+			std::unique_lock<std::mutex> srvLock(s_nullSRVLibraryMutex);
+			s_nullSRVLibrary.clear();
+		}
+		{
+			std::unique_lock<std::mutex> srvLock(s_nullUAVLibraryMutex);
+			s_nullUAVLibrary.clear();
+		}
 
 		// DX12 parameter blocks contain cpu descriptors, so we must destroy the cpu descriptor heap manager after the
 		// parameter block allocator
@@ -318,5 +329,144 @@ namespace dx12
 			ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey].contains(targetSetKey));
 
 		return ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey][targetSetKey];
+	}
+
+
+	DescriptorAllocation const& Context::GetNullSRVDescriptor(D3D12_SRV_DIMENSION dimension, DXGI_FORMAT format)
+	{
+		std::unique_lock<std::mutex> lock(s_nullSRVLibraryMutex);
+
+		auto dimensionResult = s_nullSRVLibrary.find(dimension);
+		if (dimensionResult == s_nullSRVLibrary.end())
+		{
+			dimensionResult = 
+				s_nullSRVLibrary.emplace(dimension, std::unordered_map<DXGI_FORMAT, DescriptorAllocation>()).first;
+		}
+
+		auto formatResult = dimensionResult->second.find(format);
+		if (formatResult == dimensionResult->second.end())
+		{
+			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+			srvDesc.Format = format;
+			srvDesc.ViewDimension = dimension;
+			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+			switch (dimension)
+			{
+			case D3D12_SRV_DIMENSION_UNKNOWN:
+			case D3D12_SRV_DIMENSION_BUFFER:
+			case D3D12_SRV_DIMENSION_TEXTURE1D:
+			case D3D12_SRV_DIMENSION_TEXTURE1DARRAY:
+			{
+				SEAssertF("TODO: Handle this type");
+			}
+			break;
+			case D3D12_SRV_DIMENSION_TEXTURE2D:
+			{
+				srvDesc.Texture2D.MostDetailedMip = 0;
+				srvDesc.Texture2D.MipLevels = 1;
+				srvDesc.Texture2D.PlaneSlice = 0;
+				srvDesc.Texture2D.ResourceMinLODClamp = 0;
+			}
+			break;
+			case D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
+			case D3D12_SRV_DIMENSION_TEXTURE2DMS:
+			case D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY:
+			case D3D12_SRV_DIMENSION_TEXTURE3D:
+			case D3D12_SRV_DIMENSION_TEXTURECUBE:
+			case D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:
+			case D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE:
+			{
+				SEAssertF("TODO: Handle this type");
+			}
+			break;
+			default:
+				SEAssertF("Invalid dimension");
+			}
+
+			dx12::Context::PlatformParams* ctxPlatParams =
+				re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+
+			DescriptorAllocation descriptor =
+				std::move(ctxPlatParams->m_cpuDescriptorHeapMgrs[Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(1));
+
+			ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+
+			device->CreateShaderResourceView(
+				nullptr,
+				&srvDesc,
+				descriptor.GetBaseDescriptor());
+
+			formatResult = dimensionResult->second.emplace(format, std::move(descriptor)).first;
+		}
+
+		return formatResult->second;
+	}
+
+
+	DescriptorAllocation const& Context::GetNullUAVDescriptor(D3D12_UAV_DIMENSION dimension, DXGI_FORMAT format)
+	{
+		std::unique_lock<std::mutex> lock(s_nullUAVLibraryMutex);
+
+		auto dimensionResult = s_nullUAVLibrary.find(dimension);
+		if (dimensionResult == s_nullUAVLibrary.end())
+		{
+			dimensionResult = 
+				s_nullUAVLibrary.emplace(dimension, std::unordered_map<DXGI_FORMAT, DescriptorAllocation>()).first;
+		}
+
+		auto formatResult = dimensionResult->second.find(format);
+		if (formatResult == dimensionResult->second.end())
+		{
+			D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+			uavDesc.Format = format;
+			uavDesc.ViewDimension = dimension;
+
+			switch (dimension)
+			{
+			case D3D12_UAV_DIMENSION_UNKNOWN:
+			case D3D12_UAV_DIMENSION_BUFFER:
+			case D3D12_UAV_DIMENSION_TEXTURE1D:
+			case D3D12_UAV_DIMENSION_TEXTURE1DARRAY:
+			{
+				SEAssertF("TODO: Handle this type");
+			}
+			break;
+			case D3D12_UAV_DIMENSION_TEXTURE2D:
+			{
+				uavDesc.Texture2D.MipSlice = 0;
+				uavDesc.Texture2D.PlaneSlice = 0;
+			}
+			break;
+			case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
+			case D3D12_UAV_DIMENSION_TEXTURE2DMS:
+			case D3D12_UAV_DIMENSION_TEXTURE2DMSARRAY:
+			case D3D12_UAV_DIMENSION_TEXTURE3D:
+			{
+				SEAssertF("TODO: Handle this type");
+			}
+			break;
+			default:
+				SEAssertF("Invalid dimension");
+			}
+
+			dx12::Context::PlatformParams* ctxPlatParams =
+				re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+
+			DescriptorAllocation descriptor =
+				std::move(ctxPlatParams->m_cpuDescriptorHeapMgrs[Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(1));
+
+			ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+
+			device->CreateUnorderedAccessView(
+				nullptr,
+				nullptr,
+				&uavDesc,
+				descriptor.GetBaseDescriptor());
+
+			formatResult = dimensionResult->second.emplace(format, std::move(descriptor)).first;
+		}
+
+		return formatResult->second;
 	}
 }

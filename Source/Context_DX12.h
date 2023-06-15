@@ -22,7 +22,7 @@ namespace dx12
 		enum CPUDescriptorHeapType
 		{
 			CBV_SRV_UAV,
-			Sampler,
+			// Note: We do not maintain a Sampler descriptor heap
 
 			// These types cannot be used with D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
 			RTV,
@@ -80,6 +80,18 @@ namespace dx12
 			gr::PipelineState& grPipelineState,
 			re::TextureTargetSet const* targetSet); // Null targetSet is valid (indicates the backbuffer)
 
+
 		
+		// Static null descriptor library
+		// TODO: Store these objects in the Context platform params, and just have static accessor functions
+		static constexpr D3D12_CONSTANT_BUFFER_VIEW_DESC m_nullCBV = { .BufferLocation = 0, .SizeInBytes = 32 }; // Arbitrary
+
+		static DescriptorAllocation const& GetNullSRVDescriptor(D3D12_SRV_DIMENSION, DXGI_FORMAT);
+		static std::unordered_map<D3D12_SRV_DIMENSION, std::unordered_map<DXGI_FORMAT, DescriptorAllocation>> s_nullSRVLibrary;
+		static std::mutex s_nullSRVLibraryMutex;
+
+		static DescriptorAllocation const& GetNullUAVDescriptor(D3D12_UAV_DIMENSION, DXGI_FORMAT);
+		static std::unordered_map<D3D12_UAV_DIMENSION, std::unordered_map<DXGI_FORMAT, DescriptorAllocation>> s_nullUAVLibrary;
+		static std::mutex s_nullUAVLibraryMutex;
 	};
 }
