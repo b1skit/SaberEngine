@@ -331,6 +331,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClInclude Include="GPUDescriptorHeap_DX12.h" />
     <ClInclude Include="GraphicsSystem_TempDebug.h" />
     <ClInclude Include="HashedDataObject.h" />
+    <ClInclude Include="HashUtils.h" />
     <ClInclude Include="InputManager_Platform.h" />
     <ClInclude Include="InputManager_Win32.h" />
     <ClInclude Include="IPlatformParams.h" />

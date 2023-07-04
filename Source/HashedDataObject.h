@@ -2,6 +2,7 @@
 #pragma once
 
 #include "DebugConfiguration.h"
+#include "HashUtils.h"
 
 
 namespace en
@@ -44,13 +45,14 @@ namespace en
 	{
 		SEAssert("Invalid data for hash", data != nullptr && numBytes > 0);
 
-		std::hash<uint8_t> hasher;
 		uint8_t const* dataPtr = (uint8_t const*)data;
-		for (size_t curByte = 0; curByte < numBytes; curByte++) // Lifted from Boost hash_combine:
+		for (size_t curByte = 0; curByte < numBytes; curByte++)
 		{
-			m_dataHash ^= hasher(*dataPtr) + 0x9e3779b9 + (m_dataHash << 6) + (m_dataHash >> 2);
+			util::AddDataToHash(m_dataHash, *dataPtr);
 			dataPtr++;
 		}
+		// TODO: This could be done more efficiently by stepping through the data in 64-bit chunks (and handling any
+		// remaining bytes at the end)
 	}
 
 
