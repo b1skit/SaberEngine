@@ -51,6 +51,9 @@ namespace dx12
 				std::unordered_map<uint64_t, // gr::PipelineState::GetPipelineStateDataHash()
 					std::unordered_map<uint64_t, // re::TextureTargetSet::GetTargetSetSignature()
 						std::shared_ptr<dx12::PipelineState>>>> m_PSOLibrary;
+
+			// Hashed D3D12_VERSIONED_ROOT_SIGNATURE_DESC -> Root sig object
+			std::unordered_map<uint64_t, std::shared_ptr<dx12::RootSignature>> m_rootSigLibrary;
 			
 			std::vector<dx12::CPUDescriptorHeapManager> m_cpuDescriptorHeapMgrs; // CPUDescriptorHeapType_Count
 
@@ -80,7 +83,9 @@ namespace dx12
 			gr::PipelineState& grPipelineState,
 			re::TextureTargetSet const* targetSet); // Null targetSet is valid (indicates the backbuffer)
 
-
+		static bool HasRootSignature(uint64_t rootSigDescHash);
+		static std::shared_ptr<dx12::RootSignature> GetRootSignature(uint64_t rootSigDescHash);
+		static void AddRootSignature(std::shared_ptr<dx12::RootSignature>);
 		
 		// Static null descriptor library
 		// TODO: Store these objects in the Context platform params, and just have static accessor functions

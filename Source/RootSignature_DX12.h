@@ -120,6 +120,8 @@ namespace dx12
 
 		ID3D12RootSignature* GetD3DRootSignature() const;
 
+		uint64_t GetRootSigDescHash() const;
+
 		std::unordered_map<std::string, RootParameter> const& GetRootSignatureEntries() const;
 		RootParameter const* GetRootSignatureEntry(std::string const& resourceName) const;
 		bool HasResource(std::string const& resourceName) const;
@@ -135,6 +137,8 @@ namespace dx12
 	private:
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
 
+		uint64_t m_rootSigDescHash;
+
 
 	private: // Track which root sig indexes contain descriptor tables, and how many entries they have
 		uint32_t m_rootSigDescriptorTableIdxBitmask; 
@@ -145,6 +149,12 @@ namespace dx12
 		std::unordered_map<std::string, RootParameter> m_namesToRootEntries; // Binding metadata
 		std::vector<DescriptorTable> m_descriptorTables; // For null descriptor initialization
 	};
+
+
+	inline uint64_t RootSignature::GetRootSigDescHash() const
+	{
+		return m_rootSigDescHash;
+	}
 
 
 	inline std::unordered_map<std::string, RootSignature::RootParameter> const& RootSignature::GetRootSignatureEntries() const

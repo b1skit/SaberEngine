@@ -5,12 +5,13 @@
 #include "Context_DX12.h"
 #include "Config.h"
 #include "Debug_DX12.h"
-#include "SysInfo_DX12.h"
+#include "HashUtils.h"
 #include "RootSignature_DX12.h"
 #include "Sampler.h"
 #include "Sampler_DX12.h"
 #include "Shader.h"
 #include "Shader_DX12.h"
+#include "SysInfo_DX12.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -69,6 +70,7 @@ namespace
 		return D3D12_SRV_DIMENSION_UNKNOWN;
 	}
 
+
 	DXGI_FORMAT GetFormatFromReturnType(D3D_RESOURCE_RETURN_TYPE returnType)
 	{
 		switch (returnType)
@@ -86,12 +88,109 @@ namespace
 		}
 		return DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
 	}
+
+
+	uint64_t HashRootSigDesc(D3D12_VERSIONED_ROOT_SIGNATURE_DESC const& rootSigDesc)
+	{
+		uint64_t hash = 0;
+
+		switch (rootSigDesc.Version)
+		{
+		case D3D_ROOT_SIGNATURE_VERSION::D3D_ROOT_SIGNATURE_VERSION_1_0:
+		{
+			SEAssertF("TODO: Support this");
+		}
+		break;
+		case D3D_ROOT_SIGNATURE_VERSION::D3D_ROOT_SIGNATURE_VERSION_1_1:
+		{
+			// Parameters:
+			util::AddDataToHash(hash, rootSigDesc.Desc_1_1.NumParameters);
+			for (uint32_t paramIdx = 0; paramIdx < rootSigDesc.Desc_1_1.NumParameters; paramIdx++)
+			{
+				util::AddDataToHash(hash, rootSigDesc.Desc_1_1.pParameters[paramIdx].ParameterType);
+				switch (rootSigDesc.Desc_1_1.pParameters[paramIdx].ParameterType)
+				{
+				case D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE:
+				{
+					D3D12_ROOT_DESCRIPTOR_TABLE1 const& descriptorTable = 
+						rootSigDesc.Desc_1_1.pParameters[paramIdx].DescriptorTable;
+					for (uint32_t rangeIdx = 0; rangeIdx < descriptorTable.NumDescriptorRanges; rangeIdx++)
+					{
+						util::AddDataToHash(hash, descriptorTable.pDescriptorRanges[rangeIdx].RangeType);
+						util::AddDataToHash(hash, descriptorTable.pDescriptorRanges[rangeIdx].NumDescriptors);
+						util::AddDataToHash(hash, descriptorTable.pDescriptorRanges[rangeIdx].BaseShaderRegister);
+						util::AddDataToHash(hash, descriptorTable.pDescriptorRanges[rangeIdx].RegisterSpace);
+						util::AddDataToHash(hash, descriptorTable.pDescriptorRanges[rangeIdx].OffsetInDescriptorsFromTableStart);
+					}
+				}
+				break;
+				case D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS:
+				{
+					D3D12_ROOT_CONSTANTS const& rootConstant = rootSigDesc.Desc_1_1.pParameters[paramIdx].Constants;
+					util::AddDataToHash(hash, rootConstant.ShaderRegister);
+					util::AddDataToHash(hash, rootConstant.RegisterSpace);
+					util::AddDataToHash(hash, rootConstant.Num32BitValues);
+				}
+				break;
+				case D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV:
+				case D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_SRV:
+				case D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_UAV:
+				{
+					D3D12_ROOT_DESCRIPTOR1 const& rootDescriptor = rootSigDesc.Desc_1_1.pParameters[paramIdx].Descriptor;
+					util::AddDataToHash(hash, rootDescriptor.ShaderRegister);
+					util::AddDataToHash(hash, rootDescriptor.RegisterSpace);
+					util::AddDataToHash(hash, rootDescriptor.Flags);
+				}
+				break;
+				default:
+					SEAssertF("Invalid parameter type");
+				}
+
+				util::AddDataToHash(hash, rootSigDesc.Desc_1_1.pParameters[paramIdx].ShaderVisibility);
+			}
+
+			// Samplers:
+			util::AddDataToHash(hash, rootSigDesc.Desc_1_1.NumStaticSamplers);
+			for (uint32_t samplerIdx = 0; samplerIdx < rootSigDesc.Desc_1_1.NumStaticSamplers; samplerIdx++)
+			{
+				D3D12_STATIC_SAMPLER_DESC const& samplerDesc = rootSigDesc.Desc_1_1.pStaticSamplers[samplerIdx];
+				util::AddDataToHash(hash, samplerDesc.Filter);
+				util::AddDataToHash(hash, samplerDesc.AddressU);
+				util::AddDataToHash(hash, samplerDesc.AddressV);
+				util::AddDataToHash(hash, samplerDesc.AddressW);
+
+				// Hack: Interpret the float binary layout as a uint32_t
+				util::AddDataToHash(hash, *reinterpret_cast<uint32_t const*>(&samplerDesc.MipLODBias));
+
+				util::AddDataToHash(hash, samplerDesc.MaxAnisotropy);
+				util::AddDataToHash(hash, samplerDesc.ComparisonFunc);
+				util::AddDataToHash(hash, samplerDesc.BorderColor);
+
+				util::AddDataToHash(hash, *reinterpret_cast<uint32_t const*>(&samplerDesc.MinLOD));
+				util::AddDataToHash(hash, *reinterpret_cast<uint32_t const*>(&samplerDesc.MaxLOD));
+
+				util::AddDataToHash(hash, samplerDesc.ShaderRegister);
+				util::AddDataToHash(hash, samplerDesc.RegisterSpace);
+				util::AddDataToHash(hash, samplerDesc.ShaderVisibility);
+			}
+
+			// Flags:
+			util::AddDataToHash(hash, rootSigDesc.Desc_1_1.Flags);
+		}
+		break;
+		default:
+			SEAssertF("Invalid root signature version");
+		}
+
+		return hash;
+	}
 }
 
 namespace dx12
 {
 	RootSignature::RootSignature()
 		: m_rootSignature(nullptr)
+		, m_rootSigDescHash(0)
 		, m_rootSigDescriptorTableIdxBitmask(0)
 	{
 		memset(m_numDescriptorsPerTable, 0, sizeof(m_numDescriptorsPerTable));
@@ -529,32 +628,50 @@ namespace dx12
 			staticSamplersPtr,								// const D3D12_STATIC_SAMPLER_DESC*
 			rootSignatureFlags);							// D3D12_ROOT_SIGNATURE_FLAGS
 
-		// Serialize the root signature:
-		ComPtr<ID3DBlob> rootSignatureBlob = nullptr;
-		ComPtr<ID3DBlob> errorBlob = nullptr;
-		HRESULT hr = D3DX12SerializeVersionedRootSignature(
-			&rootSignatureDescription,
-			SysInfo::GetHighestSupportedRootSignatureVersion(),
-			&rootSignatureBlob,
-			&errorBlob);
-		CheckHResult(hr, "Failed to serialize versioned root signature");
+		// Before we create a root signature, check if one with the same layout already exists:
+		const uint64_t rootSigDescHash = HashRootSigDesc(rootSignatureDescription);
+		if (dx12::Context::HasRootSignature(rootSigDescHash))
+		{
+			newRootSig = dx12::Context::GetRootSignature(rootSigDescHash);
+
+			SEAssertF("This is not an error: Just a test to ensure the root signature library is functioning correctly."
+				" If you hit this assert and have 2 shaders with the same root signature it is good news! Delete it, "
+				"give yourself a high-five, and move on");
+		}
+		else
+		{
+			newRootSig->m_rootSigDescHash = rootSigDescHash;
+
+			// Serialize the root signature:
+			ComPtr<ID3DBlob> rootSignatureBlob = nullptr;
+			ComPtr<ID3DBlob> errorBlob = nullptr;
+			HRESULT hr = D3DX12SerializeVersionedRootSignature(
+				&rootSignatureDescription,
+				SysInfo::GetHighestSupportedRootSignatureVersion(),
+				&rootSignatureBlob,
+				&errorBlob);
+			CheckHResult(hr, "Failed to serialize versioned root signature");
 
 
-		// Create the root signature:
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+			// Create the root signature:
+			dx12::Context::PlatformParams* ctxPlatParams =
+				re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+			ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
 
-		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
-		hr = device->CreateRootSignature(
-			deviceNodeMask,
-			rootSignatureBlob->GetBufferPointer(),
-			rootSignatureBlob->GetBufferSize(),
-			IID_PPV_ARGS(&newRootSig->m_rootSignature));
-		CheckHResult(hr, "Failed to create root signature");
+			constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
+			hr = device->CreateRootSignature(
+				deviceNodeMask,
+				rootSignatureBlob->GetBufferPointer(),
+				rootSignatureBlob->GetBufferSize(),
+				IID_PPV_ARGS(&newRootSig->m_rootSignature));
+			CheckHResult(hr, "Failed to create root signature");
 
-		const std::wstring rootSigName = shader.GetWName() + L"_RootSig";
-		newRootSig->m_rootSignature->SetName(rootSigName.c_str());
+			const std::wstring rootSigName = shader.GetWName() + L"_RootSig";
+			newRootSig->m_rootSignature->SetName(rootSigName.c_str());
+
+			// Add the new root sig to the library:
+			dx12::Context::AddRootSignature(newRootSig);
+		}
 
 		return newRootSig;
 	}

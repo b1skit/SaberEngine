@@ -39,6 +39,6 @@ namespace dx12
 	private:
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineState;
 
-		std::shared_ptr<dx12::RootSignature> m_rootSignature;
+		dx12::RootSignature* m_rootSignature;
 	};
 }

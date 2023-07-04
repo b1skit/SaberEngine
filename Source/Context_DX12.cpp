@@ -176,6 +176,9 @@ namespace dx12
 		// parameter block allocator
 		ctxPlatParams->m_cpuDescriptorHeapMgrs.clear();
 
+		ctxPlatParams->m_PSOLibrary.clear();
+		ctxPlatParams->m_rootSigLibrary.clear();
+
 		ctxPlatParams->m_device.Destroy();
 	}
 
@@ -329,6 +332,36 @@ namespace dx12
 			ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey].contains(targetSetKey));
 
 		return ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey][targetSetKey];
+	}
+
+
+	bool Context::HasRootSignature(uint64_t rootSigDescHash)
+	{
+		dx12::Context::PlatformParams* ctxPlatParams =
+			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+		
+		return ctxPlatParams->m_rootSigLibrary.contains(rootSigDescHash);
+	}
+
+
+	std::shared_ptr<dx12::RootSignature> Context::GetRootSignature(uint64_t rootSigDescHash)
+	{
+		dx12::Context::PlatformParams* ctxPlatParams =
+			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+
+		SEAssert("Root signature has not been added", HasRootSignature(rootSigDescHash));
+
+		return ctxPlatParams->m_rootSigLibrary[rootSigDescHash];
+	}
+
+
+	void Context::AddRootSignature(std::shared_ptr<dx12::RootSignature> rootSig)
+	{
+		dx12::Context::PlatformParams* ctxPlatParams =
+			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+
+		auto result = ctxPlatParams->m_rootSigLibrary.insert({ rootSig->GetRootSigDescHash(), rootSig });
+		SEAssert("Root signature has already been added", result.second);
 	}
 
 

@@ -364,7 +364,7 @@ namespace dx12
 		gr::PipelineState const& grPipelineState,
 		re::TextureTargetSet const& targetSet)
 	{
-		m_rootSignature = dx12::RootSignature::Create(shader);
+		m_rootSignature = dx12::RootSignature::Create(shader).get();
 
 		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 
@@ -447,6 +447,6 @@ namespace dx12
 
 	dx12::RootSignature const* PipelineState::GetRootSignature() const
 	{
-		return m_rootSignature.get();
+		return m_rootSignature;
 	}
 }
