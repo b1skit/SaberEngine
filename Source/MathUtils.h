@@ -18,6 +18,7 @@ namespace util
 		return val + multiple - remainder;
 	}
 
+
 	template<typename T>
 	bool IsPowerOfTwo(T v)
 	{
