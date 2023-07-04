@@ -44,7 +44,7 @@ namespace dx12
 
 		void Reset();
 
-		void ParseRootSignatureDescriptorTables(dx12::RootSignature const&);
+		void ParseRootSignatureDescriptorTables(dx12::RootSignature const*);
 
 		// Register a set of CPU descriptors for copy to a GPU-visible heap when CommitDescriptorTables() is called
 		// Each descriptor table/range entry = 1 DWORD each.
@@ -108,7 +108,7 @@ namespace dx12
 
 
 	private: // Debugging and null descriptor table initialization
-		void SetNullDescriptors(dx12::RootSignature const& rootSig);
+		void SetNullDescriptors(dx12::RootSignature const* rootSig);
 
 		// Debug: Track inline descriptors seen while parsing the root sig, so we can assert *something* is set for them
 		uint32_t m_unsetInlineDescriptors;

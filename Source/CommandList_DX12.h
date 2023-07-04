@@ -59,7 +59,7 @@ namespace dx12
 
 		// The pipeline state and root signature must be set before subsequent interactions with the command list
 		void SetPipelineState(dx12::PipelineState const&);
-		void SetGraphicsRootSignature(dx12::RootSignature const& rootSig); // Makes all descriptors stale
+		void SetGraphicsRootSignature(dx12::RootSignature const* rootSig); // Makes all descriptors stale
 		// TODO: void SetComputeRootSignature(dx12::RootSignature const& rootSig);
 
 		// GPU descriptors:

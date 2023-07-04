@@ -110,12 +110,10 @@ namespace dx12
 
 
 	public:
-		RootSignature();
+		static std::shared_ptr<dx12::RootSignature> Create(re::Shader const&);
+
 		~RootSignature();
 		void Destroy();
-
-		// TODO: This should be an object factory, that returns a (possibly pre-existing) root signature object
-		void Create(re::Shader const&);
 
 		uint32_t GetDescriptorTableIdxBitmask() const;
 		uint32_t GetNumDescriptorsInTable(uint8_t rootIndex) const;
@@ -128,6 +126,11 @@ namespace dx12
 
 
 		std::vector<DescriptorTable> const& GetDescriptorTableMetadata() const;
+
+
+	private:
+		RootSignature();
+
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;

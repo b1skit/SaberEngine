@@ -100,10 +100,10 @@ namespace dx12
 	}
 
 
-	void GPUDescriptorHeap::SetNullDescriptors(dx12::RootSignature const& rootSig)
+	void GPUDescriptorHeap::SetNullDescriptors(dx12::RootSignature const* rootSig)
 	{
 		std::unordered_map<std::string, RootSignature::RootParameter> const& rootParams =
-			rootSig.GetRootSignatureEntries();
+			rootSig->GetRootSignatureEntries();
 
 		// Note: Root descriptors cannot be set to null:
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/descriptors-overview#null-descriptors
@@ -139,7 +139,7 @@ namespace dx12
 
 		// Parse the descriptor table metadata, and set null descriptors:
 		std::vector<dx12::RootSignature::DescriptorTable> const& descriptorTableMetadata = 
-			rootSig.GetDescriptorTableMetadata();
+			rootSig->GetDescriptorTableMetadata();
 
 		for (RootSignature::DescriptorTable const& descriptorTable : descriptorTableMetadata)
 		{
@@ -175,12 +175,12 @@ namespace dx12
 	}
 
 
-	void GPUDescriptorHeap::ParseRootSignatureDescriptorTables(dx12::RootSignature const& rootSig)
+	void GPUDescriptorHeap::ParseRootSignatureDescriptorTables(dx12::RootSignature const* rootSig)
 	{
-		const uint32_t numParams = static_cast<uint32_t>(rootSig.GetRootSignatureEntries().size());
+		const uint32_t numParams = static_cast<uint32_t>(rootSig->GetRootSignatureEntries().size());
 
 		// Get our descriptor table bitmask: Bits map to root signature indexes containing a descriptor table
-		m_rootSigDescriptorTableIdxBitmask = rootSig.GetDescriptorTableIdxBitmask();
+		m_rootSigDescriptorTableIdxBitmask = rootSig->GetDescriptorTableIdxBitmask();
 		// TODO: Just parse the bitmask here, rather than relying on the root sig object to parse it for us
 
 		uint32_t offset = 0;
@@ -197,7 +197,7 @@ namespace dx12
 
 			if (descriptorTableIdxBitmask & rootIdxBit)
 			{
-				const uint32_t numDescriptors = rootSig.GetNumDescriptorsInTable(rootIdx);
+				const uint32_t numDescriptors = rootSig->GetNumDescriptorsInTable(rootIdx);
 
 				// Update our cache:
 				m_cpuDescriptorTableCacheLocations[rootIdx].m_baseDescriptor = &m_cpuDescriptorTableHeapCache[offset];

@@ -117,7 +117,7 @@ namespace dx12
 	}
 
 
-	void RootSignature::Create(re::Shader const& shader)
+	std::shared_ptr<dx12::RootSignature> RootSignature::Create(re::Shader const& shader)
 	{
 		// Note: We currently only support SM 5.1 here... TODO: Support SM 6+
 
@@ -129,10 +129,13 @@ namespace dx12
 			"shader (e.g. compute)",
 			shaderParams->m_shaderBlobs[dx12::Shader::ShaderType::Vertex] != nullptr);
 
+		std::shared_ptr<dx12::RootSignature> newRootSig = nullptr;
+		newRootSig.reset(new dx12::RootSignature());
+
 		// Zero our descriptor table entry counters: For each root sig. index containing a descriptor table, this tracks
 		// how many descriptors are in that table
-		memset(m_numDescriptorsPerTable, 0, sizeof(m_numDescriptorsPerTable));
-		m_rootSigDescriptorTableIdxBitmask = 0; 
+		memset(newRootSig->m_numDescriptorsPerTable, 0, sizeof(newRootSig->m_numDescriptorsPerTable));
+		newRootSig->m_rootSigDescriptorTableIdxBitmask = 0;
 
 
 		// We record details of descriptors we want to place into descriptor tables, and then build the tables later
@@ -205,7 +208,7 @@ namespace dx12
 				{
 					SEAssert("TODO: Handle root constants", strcmp(inputBindingDesc.Name, "$Globals") != 0);
 					
-					if (!m_namesToRootEntries.contains(inputBindingDesc.Name))
+					if (!newRootSig->m_namesToRootEntries.contains(inputBindingDesc.Name))
 					{
 						const uint8_t rootIdx = static_cast<uint8_t>(rootParameters.size());
 						rootParameters.emplace_back();
@@ -216,7 +219,7 @@ namespace dx12
 							D3D12_ROOT_DESCRIPTOR_FLAGS::D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,	// Flags. TODO: Is volatile always appropriate?
 							GetShaderVisibilityFlagFromShaderType(static_cast<dx12::Shader::ShaderType>(shaderIdx)));	// Shader visibility
 
-						m_namesToRootEntries.emplace(inputBindingDesc.Name,
+						newRootSig->m_namesToRootEntries.emplace(inputBindingDesc.Name,
 							RootParameter{
 								.m_index = rootIdx,
 								.m_type = RootParameter::Type::CBV
@@ -228,7 +231,7 @@ namespace dx12
 					}
 					else
 					{
-						rootParameters[m_namesToRootEntries.at(inputBindingDesc.Name).m_index].ShaderVisibility = 
+						rootParameters[newRootSig->m_namesToRootEntries.at(inputBindingDesc.Name).m_index].ShaderVisibility =
 							D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
 					}
 				}
@@ -320,7 +323,7 @@ namespace dx12
 				break;
 				case D3D_SHADER_INPUT_TYPE::D3D_SIT_STRUCTURED:
 				{
-					if (!m_namesToRootEntries.contains(inputBindingDesc.Name))
+					if (!newRootSig->m_namesToRootEntries.contains(inputBindingDesc.Name))
 					{
 						const uint8_t rootIdx = static_cast<uint8_t>(rootParameters.size());
 						rootParameters.emplace_back();
@@ -331,7 +334,7 @@ namespace dx12
 							D3D12_ROOT_DESCRIPTOR_FLAGS::D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,	// Flags. TODO: Is volatile always appropriate?
 							GetShaderVisibilityFlagFromShaderType(static_cast<dx12::Shader::ShaderType>(shaderIdx)));	// Shader visibility
 
-						m_namesToRootEntries.emplace(inputBindingDesc.Name,
+						newRootSig->m_namesToRootEntries.emplace(inputBindingDesc.Name,
 							RootParameter{
 								.m_index = rootIdx,
 								.m_type = RootParameter::Type::SRV,
@@ -340,7 +343,7 @@ namespace dx12
 					}
 					else
 					{
-						rootParameters[m_namesToRootEntries.at(inputBindingDesc.Name).m_index].ShaderVisibility = 
+						rootParameters[newRootSig->m_namesToRootEntries.at(inputBindingDesc.Name).m_index].ShaderVisibility =
 							D3D12_SHADER_VISIBILITY_ALL;
 					}
 				}
@@ -398,8 +401,8 @@ namespace dx12
 			rootParameters.emplace_back();
 
 			// Create a new descriptor table record, and populate the metadata as we go:
-			m_descriptorTables.emplace_back();
-			m_descriptorTables.back().m_index = rootIdx;
+			newRootSig->m_descriptorTables.emplace_back();
+			newRootSig->m_descriptorTables.back().m_index = rootIdx;
 			
 			// Walk through the sorted descriptors, and build ranges from contiguous blocks:
 			size_t rangeStart = 0;
@@ -455,7 +458,7 @@ namespace dx12
 							GetFormatFromReturnType(rangeInputs[rangeType][rangeIdx].m_returnType);
 						newRangeEntry.m_srvDesc.m_viewDimension = d3d12SrvDimension;
 
-						m_descriptorTables.back().m_ranges[Range::Type::SRV].emplace_back(newRangeEntry);
+						newRootSig->m_descriptorTables.back().m_ranges[Range::Type::SRV].emplace_back(newRangeEntry);
 					}
 					break;
 					case Range::Type::UAV:
@@ -489,7 +492,7 @@ namespace dx12
 			// Populate the binding metadata:
 			for (uint8_t offset = 0; offset < namesInRange.size(); offset++)
 			{
-				m_namesToRootEntries.emplace(namesInRange[offset],
+				newRootSig->m_namesToRootEntries.emplace(namesInRange[offset],
 					RootParameter{
 						.m_index = rootIdx,
 						.m_type = RootParameter::Type::DescriptorTable,
@@ -498,10 +501,10 @@ namespace dx12
 			}
 
 			// Mark the bitmasks. TODO: THE GPU DESCRIPTOR HEAP SHOULD PARSE THIS?
-			m_numDescriptorsPerTable[rootIdx] = numDescriptorsInTable;
+			newRootSig->m_numDescriptorsPerTable[rootIdx] = numDescriptorsInTable;
 
 			const uint32_t descriptorTableBitmask = (1 << rootIdx);
-			m_rootSigDescriptorTableIdxBitmask |= descriptorTableBitmask;
+			newRootSig->m_rootSigDescriptorTableIdxBitmask |= descriptorTableBitmask;
 
 		} // End Range::Type loop
 
@@ -547,11 +550,13 @@ namespace dx12
 			deviceNodeMask,
 			rootSignatureBlob->GetBufferPointer(),
 			rootSignatureBlob->GetBufferSize(),
-			IID_PPV_ARGS(&m_rootSignature));
+			IID_PPV_ARGS(&newRootSig->m_rootSignature));
 		CheckHResult(hr, "Failed to create root signature");
 
 		const std::wstring rootSigName = shader.GetWName() + L"_RootSig";
-		m_rootSignature->SetName(rootSigName.c_str());
+		newRootSig->m_rootSignature->SetName(rootSigName.c_str());
+
+		return newRootSig;
 	}
 
 

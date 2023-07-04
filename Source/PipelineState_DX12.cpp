@@ -354,6 +354,7 @@ namespace dx12
 {
 	PipelineState::PipelineState()
 		: m_pipelineState(nullptr)
+		, m_rootSignature(nullptr)
 	{
 	}
 
@@ -363,7 +364,7 @@ namespace dx12
 		gr::PipelineState const& grPipelineState,
 		re::TextureTargetSet const& targetSet)
 	{
-		m_rootSignature.Create(shader);
+		m_rootSignature = dx12::RootSignature::Create(shader);
 
 		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 
@@ -378,7 +379,7 @@ namespace dx12
 
 			// Build pipeline descriptions:
 			PipelineStateStream pipelineStateStream;
-			pipelineStateStream.rootSignature = m_rootSignature.GetD3DRootSignature();
+			pipelineStateStream.rootSignature = m_rootSignature->GetD3DRootSignature();
 			pipelineStateStream.inputLayout = { &inputLayout[0], static_cast<uint32_t>(inputLayout.size()) };
 			pipelineStateStream.primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 			pipelineStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[dx12::Shader::Vertex].Get());
@@ -433,7 +434,7 @@ namespace dx12
 
 	void PipelineState::Destroy()
 	{
-		m_rootSignature.Destroy();
+		m_rootSignature = nullptr;
 		m_pipelineState = nullptr;		
 	}
 
@@ -444,8 +445,8 @@ namespace dx12
 	}
 
 
-	dx12::RootSignature const& PipelineState::GetRootSignature() const
+	dx12::RootSignature const* PipelineState::GetRootSignature() const
 	{
-		return m_rootSignature;
+		return m_rootSignature.get();
 	}
 }

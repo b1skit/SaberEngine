@@ -150,18 +150,18 @@ namespace dx12
 	}
 
 
-	void CommandList::SetGraphicsRootSignature(dx12::RootSignature const& rootSig)
+	void CommandList::SetGraphicsRootSignature(dx12::RootSignature const* rootSig)
 	{
-		if (m_currentGraphicsRootSignature == &rootSig)
+		if (m_currentGraphicsRootSignature == rootSig)
 		{
 			return;
 		}
 
-		m_currentGraphicsRootSignature = &rootSig;
+		m_currentGraphicsRootSignature = rootSig;
 
 		m_gpuCbvSrvUavDescriptorHeaps->ParseRootSignatureDescriptorTables(rootSig);
 
-		ID3D12RootSignature* rootSignature = rootSig.GetD3DRootSignature();
+		ID3D12RootSignature* rootSignature = rootSig->GetD3DRootSignature();
 		SEAssert("Root signature is null. This is unexpected", rootSignature);
 
 		m_commandList->SetGraphicsRootSignature(rootSignature);
@@ -448,7 +448,7 @@ namespace dx12
 		SEAssert("Pipeline is not currently set", m_currentPSO);
 		
 		RootSignature::RootParameter const* rootSigEntry =
-			m_currentPSO->GetRootSignature().GetRootSignatureEntry(shaderName);
+			m_currentPSO->GetRootSignature()->GetRootSignatureEntry(shaderName);
 		SEAssert("Invalid root signature entry",
 			rootSigEntry ||
 			en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
