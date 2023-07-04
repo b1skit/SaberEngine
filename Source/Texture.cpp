@@ -69,7 +69,7 @@ namespace re
 	}
 
 
-	void Texture::Destroy()
+	Texture::~Texture()
 	{
 		if (m_texels.size() > 0)
 		{

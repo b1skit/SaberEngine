@@ -97,7 +97,7 @@ namespace re
 	public:
 		static std::shared_ptr<re::Texture> Create(std::string const& name, TextureParams const& params, bool doClear);
 
-		~Texture() { Destroy();	}
+		~Texture();
 
 		glm::vec4 GetTextureDimenions() const;	// .xyzw = width, height, 1/width, 1/height
 		inline uint32_t const& Width() const { return m_texParams.m_width; }
@@ -127,7 +127,6 @@ namespace re
 
 	private:
 		explicit Texture(std::string const& name, TextureParams const& params, bool doClear);
-		void Destroy();
 
 		void Fill(glm::vec4 solidColor);	// Fill texture with a solid color
 		void Fill(glm::vec4 tl, glm::vec4 bl, glm::vec4 tr, glm::vec4 br); // Fill texture with a color gradient
