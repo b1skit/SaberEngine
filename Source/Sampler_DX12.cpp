@@ -126,6 +126,7 @@ namespace
 		default:
 			SEAssertF("Invalid MinFilterType");
 		}
+		return D3D12_FILTER_MIN_MAG_MIP_LINEAR; // Return a reasonable default to suppress compiler warning
 	}
 }
 

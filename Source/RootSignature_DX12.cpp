@@ -33,6 +33,7 @@ namespace
 		default:
 			SEAssertF("Invalid shader type");
 		}
+		return D3D12_SHADER_VISIBILITY_ALL; // Return a reasonable default to suppress compiler warning
 	}
 
 
@@ -46,6 +47,7 @@ namespace
 		default:
 			SEAssertF("Invalid range type");
 		}
+		return D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_CBV; // Suppress compiler warning
 	}
 
 
