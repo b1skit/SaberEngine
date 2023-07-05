@@ -34,7 +34,7 @@ Enable graphics API debugging: -debuglevel [0, 2]
 	- 0: Default (disabled)  
 	- 1: Basic debug output (OpenGL, DX12)  
 	- 2: Level 1 + GPU-based validation (DX12 only)  
-
+	- 3: Level 2 + DRED breadcrumbs (DX12 only)  
 
 ----------------------
 Runtime Configuration:

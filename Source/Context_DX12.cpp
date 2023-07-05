@@ -41,7 +41,7 @@ namespace dx12
 		dx12::Context::PlatformParams* ctxPlatParams =
 			context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
-		EnableDebugLayer();
+		EnableDebugLayer(); // Before we create a device
 
 		ctxPlatParams->m_device.Create();
 

@@ -27,6 +27,10 @@
       "Command": "-debuglevel 2"
     },
     {
+      "Id": "92c7d117-c425-4d8d-b0b3-085e9385337b",
+      "Command": "-debuglevel 3"
+    },
+    {
       "Id": "6dd1fc69-ed79-4d85-b912-fcc514e395a2",
       "Command": "-scene MetalRoughSpheresNoTextures\\glTF\\MetalRoughSpheresNoTextures.gltf"
     },

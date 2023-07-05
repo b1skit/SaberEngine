@@ -3,15 +3,40 @@
 #include <wrl.h>
 
 #include "Config.h"
+#include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "DebugConfiguration.h"
 
+using Microsoft::WRL::ComPtr;
+
+
+namespace
+{
+	void HandleDRED()
+	{
+		dx12::Context::PlatformParams* ctxPlatParams =
+			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+
+		ComPtr<ID3D12DeviceRemovedExtendedData> pDred;
+		SEAssert("Failed to get DRED query interface", 
+			SUCCEEDED(ctxPlatParams->m_device.GetD3DDisplayDevice()->QueryInterface(IID_PPV_ARGS(&pDred))));
+
+		D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT DredAutoBreadcrumbsOutput;
+		SEAssert("Failed to get DRED auto breadcrumbs output", 
+			SUCCEEDED(pDred->GetAutoBreadcrumbsOutput(&DredAutoBreadcrumbsOutput)));
+		
+		D3D12_DRED_PAGE_FAULT_OUTPUT DredPageFaultOutput;
+		SEAssert("Failed to get DRED page fault allocation output",
+			SUCCEEDED(pDred->GetPageFaultAllocationOutput(&DredPageFaultOutput)));
+		
+		// WIP: Easier to do this when I encounter a DRED
+		// https://devblogs.microsoft.com/directx/dred/
+		SEAssertF("TODO: Process/output DRED data here");
+	}
+}
 
 namespace dx12
 {
-	using Microsoft::WRL::ComPtr;
-
-
 	bool CheckHResult(HRESULT hr, char const* msg)
 	{
 		switch (hr)
@@ -46,6 +71,13 @@ namespace dx12
 		}
 		}
 
+		// DRED reporting:
+		if (hr == DXGI_ERROR_DEVICE_REMOVED && 
+			en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) >= 3)
+		{
+			HandleDRED();
+		}
+
 #if defined(_DEBUG)
 		SEAssertF(msg);
 #else
@@ -61,7 +93,7 @@ namespace dx12
 		ComPtr<ID3D12Debug> debugInterface;
 
 		// Enable the debug layer for debuglevel 1 and above:
-		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) > 0)
+		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) >= 1)
 		{
 			HRESULT hr = D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface));
 			dx12::CheckHResult(hr, "Failed to get debug interface");
@@ -69,12 +101,23 @@ namespace dx12
 		}
 
 		// Enable GPU-based validation for -debuglevel 2 and above:
-		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) > 1)
+		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) >= 2)
 		{
 			ComPtr<ID3D12Debug1> debugInterface1;
 			HRESULT hr = debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface1));
 			CheckHResult(hr, "Failed to get query interface");
 			debugInterface1->SetEnableGPUBasedValidation(true);
+		}
+
+		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) >= 3)
+		{
+			ComPtr<ID3D12DeviceRemovedExtendedDataSettings> dredSettings;
+			HRESULT hr = D3D12GetDebugInterface(IID_PPV_ARGS(&dredSettings));
+			CheckHResult(hr, "Failed to get DRED interface");
+
+			// Turn on AutoBreadcrumbs and Page Fault reporting
+			dredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+			dredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 		}
 	}
 }
