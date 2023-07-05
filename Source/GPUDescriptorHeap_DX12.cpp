@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
+#include "Config.h"
 #include "Context_DX12.h"
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "DebugConfiguration.h"
@@ -308,20 +309,22 @@ namespace dx12
 
 	void GPUDescriptorHeap::Commit()
 	{
-		// TODO: Wrap this in an increased debug level command-line
 #if defined(_DEBUG)
-		// Assert all of our root index bitmasks are unique:
-		for (uint8_t i = 0; i < InlineRootType_Count; i++)
+		// Debug: Assert all of our root index bitmasks are unique
+		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) > 0)
 		{
-			SEAssert("Inline descriptor index and descriptor table index overlap",
-				(m_dirtyInlineDescriptorIdxBitmask[i] & m_rootSigDescriptorTableIdxBitmask) == 0);
-
-			for (uint8_t j = 0; j < InlineRootType_Count; j++)
+			for (uint8_t i = 0; i < InlineRootType_Count; i++)
 			{
-				if (i != j)
+				SEAssert("Inline descriptor index and descriptor table index overlap",
+					(m_dirtyInlineDescriptorIdxBitmask[i] & m_rootSigDescriptorTableIdxBitmask) == 0);
+
+				for (uint8_t j = 0; j < InlineRootType_Count; j++)
 				{
-					SEAssert("Inline descriptor indexes overlap",
-						(m_dirtyInlineDescriptorIdxBitmask[i] & m_dirtyInlineDescriptorIdxBitmask[j]) == 0);
+					if (i != j)
+					{
+						SEAssert("Inline descriptor indexes overlap",
+							(m_dirtyInlineDescriptorIdxBitmask[i] & m_dirtyInlineDescriptorIdxBitmask[j]) == 0);
+					}
 				}
 			}
 		}

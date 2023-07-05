@@ -15,8 +15,10 @@ namespace en
 
 
 		// Config keys:
+		static char const* const k_sceneCmdLineArg;						// "scene"
 		static char const* const k_showSystemConsoleWindowCmdLineArg;	// "console"
 		static char const* const k_platformCmdLineArg;					// "platform"
+		static char const* const k_debugLevelCmdLineArg;				// "debuglevel"
 		static char const* const k_relaxedShaderBindingCmdLineArg;		// "relaxedshaderbinding"
 
 		static char const* const k_commandLineArgsValueName;	// "commandLineArgs": Gets the command line arg string

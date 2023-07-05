@@ -108,8 +108,6 @@ namespace
 
 namespace opengl
 {
-	// OpenGL error message helper function: (Enable/disable via BuildConfiguration.h)
-#if defined(_DEBUG)
 	void GLAPIENTRY GLMessageCallback
 	(
 			GLenum source,
@@ -203,7 +201,6 @@ namespace opengl
 			SEAssertF("High severity GL error!");
 		}		
 	}
-#endif
 
 
 	void Context::Create(re::Context& context)
@@ -292,13 +289,14 @@ namespace opengl
 		const GLenum glStatus = glewInit();
 		SEAssert("glewInit failed", glStatus == GLEW_OK);
 
-		
-#if defined(_DEBUG)
-		// Configure OpenGL logging:
-		::glEnable(GL_DEBUG_OUTPUT);
-		::glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);	// Make the error callback immediately
-		::glDebugMessageCallback(GLMessageCallback, 0);
-#endif
+		// Debugging:
+		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) > 0)
+		{
+			// Configure OpenGL logging:
+			::glEnable(GL_DEBUG_OUTPUT);
+			::glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);	// Make the error callback immediately
+			::glDebugMessageCallback(GLMessageCallback, 0);
+		}
 
 		// Global OpenGL settings:
 		::glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);

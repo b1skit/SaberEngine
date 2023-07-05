@@ -38,8 +38,10 @@ namespace en
 	char const* Config::k_scenesDirName		= "Scenes\\";
 
 	// Config keys:
+	char const* const Config::k_sceneCmdLineArg						= "scene";
 	char const* const Config::k_showSystemConsoleWindowCmdLineArg	= "console";
 	char const* const Config::k_platformCmdLineArg					= "platform";
+	char const* const Config::k_debugLevelCmdLineArg				= "debuglevel";
 	char const* const Config::k_relaxedShaderBindingCmdLineArg		= "relaxedshaderbinding";
 
 	char const* const Config::k_commandLineArgsValueName			= "commandLineArgs";
@@ -107,7 +109,7 @@ namespace en
 			argString += currentArg + (HasNextToken() ? " " : ""); // Pad with spaces
 
 			// TODO: Write a token/value parser. For now, just match the commands
-			if (currentArg.find("scene") != string::npos)
+			if (currentArg.find(k_sceneCmdLineArg) != string::npos)
 			{
 				if (NextTokenIsValue())
 				{
@@ -163,6 +165,17 @@ namespace en
 					{
 						SetValue(k_platformCmdLineArg, platformParam, SettingType::APISpecific);
 					}
+
+					ConsumeNextToken();
+				}
+			}
+			else if (currentArg.find(k_debugLevelCmdLineArg) != string::npos)
+			{
+				if (NextTokenIsValue())
+				{
+					const int debugLevelVal = std::stoul(argv[nextArgIdx]);
+
+					SetValue(k_debugLevelCmdLineArg, debugLevelVal, Config::SettingType::Runtime);
 
 					ConsumeNextToken();
 				}
@@ -376,7 +389,11 @@ namespace en
 			m_renderingAPI = platform::RenderingAPI::OpenGL; // OpenGL by default for now, as it is the most complete
 			TrySetValue(k_platformCmdLineArg, "opengl", SettingType::Runtime);
 		}
+
+		// Debug:
+		TrySetValue(k_debugLevelCmdLineArg,					0,					SettingType::Runtime);
 		
+		// Window:
 		markDirty |= TrySetValue("windowTitle",				std::string("Saber Engine"),	SettingType::Common);
 		markDirty |= TrySetValue(k_windowXResValueName,		1920,				SettingType::Common);
 		markDirty |= TrySetValue(k_windowYResValueName,		1080,				SettingType::Common);

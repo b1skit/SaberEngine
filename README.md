@@ -30,6 +30,11 @@ Display log messages in a system console window: -console
 Disable strict shader binding checks: -relaxedshaderbinding  
 	- Skip (helpful, but occasionally annoying) asserts if textures/parameters aren't found in a shader
 
+Enable graphics API debugging: -debuglevel [0, 2]  
+	- 0: Default (disabled)  
+	- 1: Basic debug output (OpenGL, DX12)  
+	- 2: Level 1 + GPU-based validation (DX12 only)  
+
 
 ----------------------
 Runtime Configuration:

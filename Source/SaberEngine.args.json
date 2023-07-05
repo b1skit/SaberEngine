@@ -19,6 +19,14 @@
       "Command": "-relaxedshaderbinding"
     },
     {
+      "Id": "ee6cfa04-f68a-453d-aa3f-ed525a0218e7",
+      "Command": "-debuglevel 1"
+    },
+    {
+      "Id": "a3d6d72f-27b4-4bb0-b01e-f6c0f8616f5a",
+      "Command": "-debuglevel 2"
+    },
+    {
       "Id": "6dd1fc69-ed79-4d85-b912-fcc514e395a2",
       "Command": "-scene MetalRoughSpheresNoTextures\\glTF\\MetalRoughSpheresNoTextures.gltf"
     },

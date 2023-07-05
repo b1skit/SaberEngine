@@ -2,6 +2,7 @@
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 #include <wrl.h>
 
+#include "Config.h"
 #include "Debug_DX12.h"
 #include "DebugConfiguration.h"
 
@@ -57,23 +58,23 @@ namespace dx12
 
 	void EnableDebugLayer()
 	{
-		// Enable the debug layer in debug build configuration to catch any errors generated while creating DX12 objects
-#if defined(_DEBUG)
 		ComPtr<ID3D12Debug> debugInterface;
-		HRESULT hr = D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface));
-		dx12::CheckHResult(hr, "Failed to get debug interface");
-		debugInterface->EnableDebugLayer();
 
-		// TODO: Enable/disable this via a command line arg
-//#define GPU_BASED_VALIDATION
-#if defined(GPU_BASED_VALIDATION)
-		// Enable GPU-based validation:
-		ComPtr<ID3D12Debug1> debugInterface1;
-		hr = debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface1));
-		CheckHResult(hr, "Failed to get query interface");
-		debugInterface1->SetEnableGPUBasedValidation(true);
-#endif
+		// Enable the debug layer for debuglevel 1 and above:
+		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) > 0)
+		{
+			HRESULT hr = D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface));
+			dx12::CheckHResult(hr, "Failed to get debug interface");
+			debugInterface->EnableDebugLayer();
+		}
 
-#endif
+		// Enable GPU-based validation for -debuglevel 2 and above:
+		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) > 1)
+		{
+			ComPtr<ID3D12Debug1> debugInterface1;
+			HRESULT hr = debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface1));
+			CheckHResult(hr, "Failed to get query interface");
+			debugInterface1->SetEnableGPUBasedValidation(true);
+		}
 	}
 }

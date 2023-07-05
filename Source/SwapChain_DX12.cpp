@@ -32,7 +32,10 @@ namespace dx12
 		UINT createFactoryFlags = 0;
 #if defined(_DEBUG)
 		// Catch errors during device creation. Should not be used in release builds
-		createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
+		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) > 0)
+		{
+			createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
+		}
 #endif
 
 		ComPtr<IDXGIFactory4> dxgiFactory4;

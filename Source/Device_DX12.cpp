@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 
+#include "Config.h"
 #include "Debug_DX12.h"
 #include "DebugConfiguration.h"
 #include "Device_DX12.h"
@@ -19,7 +20,10 @@ namespace
 		ComPtr<IDXGIFactory4> dxgiFactory;
 		uint32_t createFactoryFlags = 0;
 #if defined(_DEBUG)
-		createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
+		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) > 0)
+		{
+			createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
+		}
 #endif
 
 		HRESULT hr = CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory));
@@ -60,43 +64,44 @@ namespace
 		HRESULT hr = D3D12CreateDevice(adapter.Get(), dx12::RenderManager::k_targetFeatureLevel, IID_PPV_ARGS(&d3d12Device2));
 		CheckHResult(hr, "Failed to create device");
 
-#if defined(_DEBUG)
-		ComPtr<ID3D12InfoQueue> infoQueue;
-		if (SUCCEEDED(d3d12Device2.As(&infoQueue)))
+		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) > 0)
 		{
-			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
-
-			// Suppress message categories
-			//D3D12_MESSAGE_CATEGORY Categories[] = {};
-
-			// Suppress messages by severity level
-			D3D12_MESSAGE_SEVERITY severities[] =
+			ComPtr<ID3D12InfoQueue> infoQueue;
+			if (SUCCEEDED(d3d12Device2.As(&infoQueue)))
 			{
-				D3D12_MESSAGE_SEVERITY_INFO
-			};
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
 
-			// Suppress individual messages by ID
-			D3D12_MESSAGE_ID denyIds[] =
-			{
-				D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,	// No idea how to avoid this message yet
-				D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,		// Occurs when using capture frame while graphics debugging
-				D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,	// Occurs when using capture frame while graphics debugging
-			};
+				// Suppress message categories
+				//D3D12_MESSAGE_CATEGORY Categories[] = {};
 
-			D3D12_INFO_QUEUE_FILTER newFilter = {};
-			//NewFilter.DenyList.NumCategories = _countof(Categories);
-			//NewFilter.DenyList.pCategoryList = Categories;
-			newFilter.DenyList.NumSeverities = _countof(severities);
-			newFilter.DenyList.pSeverityList = severities;
-			newFilter.DenyList.NumIDs = _countof(denyIds);
-			newFilter.DenyList.pIDList = denyIds;
+				// Suppress messages by severity level
+				D3D12_MESSAGE_SEVERITY severities[] =
+				{
+					D3D12_MESSAGE_SEVERITY_INFO
+				};
 
-			hr = infoQueue->PushStorageFilter(&newFilter);
-			CheckHResult(hr, "Failed to push storage filter");
+				// Suppress individual messages by ID
+				D3D12_MESSAGE_ID denyIds[] =
+				{
+					D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,	// No idea how to avoid this message yet
+					D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,		// Occurs when using capture frame while graphics debugging
+					D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,	// Occurs when using capture frame while graphics debugging
+				};
+
+				D3D12_INFO_QUEUE_FILTER newFilter = {};
+				//NewFilter.DenyList.NumCategories = _countof(Categories);
+				//NewFilter.DenyList.pCategoryList = Categories;
+				newFilter.DenyList.NumSeverities = _countof(severities);
+				newFilter.DenyList.pSeverityList = severities;
+				newFilter.DenyList.NumIDs = _countof(denyIds);
+				newFilter.DenyList.pIDList = denyIds;
+
+				hr = infoQueue->PushStorageFilter(&newFilter);
+				CheckHResult(hr, "Failed to push storage filter");
+			}
 		}
-#endif
 
 		return d3d12Device2;
 	}
