@@ -137,6 +137,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <FxCompile>
       <ShaderModel>5.1</ShaderModel>
       <AdditionalIncludeDirectories>D:\Projects\Game Development\SaberEngine\Source\Shaders\DX12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -191,6 +192,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <FxCompile>
       <ShaderModel>5.1</ShaderModel>
       <AdditionalIncludeDirectories>D:\Projects\Game Development\SaberEngine\Source\Shaders\DX12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
