@@ -77,30 +77,28 @@ namespace dx12
 		// Note: No need to initialize the heap; We created with D3D12_HEAP_FLAG_NONE so the buffer was zeroed
 
 		// Debug names:
+		std::wstring debugName = paramBlock.GetWName();
 		switch (paramBlock.GetType())
 		{
 		case re::ParameterBlock::PBType::Mutable:
 		{
-			const std::wstring debugName = paramBlock.GetWName() + L"_Mutable";
-			params->m_resource->SetName(debugName.c_str());
+			debugName += L"_Mutable";
 		}
 		break;
 		case re::ParameterBlock::PBType::Immutable:
 		{
-			const std::wstring debugName = paramBlock.GetWName() + L"_Immutable";
-			params->m_resource->SetName(debugName.c_str());
+			debugName += L"_Immutable";
 		}
 		break;
 		case re::ParameterBlock::PBType::SingleFrame:
 		{
-			const std::wstring debugName(
-				paramBlock.GetWName() + L"_SingleFrame#" + std::to_wstring(re::RenderManager::Get()->GetCurrentRenderFrameNum()));
-			params->m_resource->SetName(debugName.c_str());
+			debugName += L"_SingleFrame#" + std::to_wstring(re::RenderManager::Get()->GetCurrentRenderFrameNum());
 		}
 		break;
 		default:
 			SEAssertF("Invalid parameter block type");
 		}
+		params->m_resource->SetName(debugName.c_str());
 		
 		// Create the appropriate resource view:
 		switch (params->m_dataType)
