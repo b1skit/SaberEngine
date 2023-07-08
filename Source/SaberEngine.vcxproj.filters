@@ -727,9 +727,6 @@
     <ClInclude Include="GPUDescriptorHeap_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="MathUtils.h">
-      <Filter>Source Files\util</Filter>
-    </ClInclude>
     <ClInclude Include="GraphicsSystem_TempDebug.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
@@ -745,8 +742,11 @@
     <ClInclude Include="ResourceStateTracker_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
+    <ClInclude Include="MathUtils.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
     <ClInclude Include="HashUtils.h">
-      <Filter>Source Files\util</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
