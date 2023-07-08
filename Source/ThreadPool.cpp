@@ -5,6 +5,13 @@
 
 namespace en
 {
+	FunctionWrapper& FunctionWrapper::operator=(FunctionWrapper&& other)
+	{
+		m_impl = std::move(other.m_impl);
+		return *this;
+	}
+
+
 	ThreadPool::ThreadPool()
 		: m_maxThreads(0)
 		, m_isRunning(false)
@@ -48,16 +55,6 @@ namespace en
 	}
 
 
-	void ThreadPool::EnqueueJob(std::function<void()> const& job)
-	{
-		{
-			std::unique_lock<std::mutex> waitingLock(m_jobQueueMutex);
-			m_jobQueue.emplace(job);
-		}
-		m_jobQueueCV.notify_one();
-	}
-
-
 	void ThreadPool::ExecuteJobs()
 	{
 		while (m_isRunning)
@@ -73,7 +70,7 @@ namespace en
 			}
 
 			// Get the job from the queue:
-			std::function<void()> currentJob = m_jobQueue.front();
+			FunctionWrapper currentJob = std::move(m_jobQueue.front());
 			m_jobQueue.pop();
 
 			waitingLock.unlock();

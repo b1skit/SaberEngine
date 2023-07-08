@@ -194,22 +194,19 @@ namespace opengl
 		params->m_shaderTexts.clear(); // Remove the empty strings
 
 		// Pre-process the shader text:
-		std::atomic<uint8_t> numPreprocessed = 0;
+		std::vector<std::future<void>> taskFutures;
 		for (size_t i = 0; i < shaderFiles.size(); i++)
 		{
-			numPreprocessed++;
-			en::CoreEngine::GetThreadPool()->EnqueueJob(
-				[&shaderFiles, &shader, i, &numPreprocessed]() {
+			taskFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+				[&shaderFiles, &shader, i](){
 					InsertIncludedFiles(shaderFiles[i]);
-					numPreprocessed--;
 				}
-			);			
+			));
 		}
-
-		// TODO: Replace this with a condition variable
-		while (numPreprocessed > 0)
+		// Wait for our tasks to be done:
+		for (std::future<void> const& taskFuture : taskFutures)
 		{
-			std::this_thread::yield();
+			taskFuture.wait();
 		}
 
 		// Create an empty shader program object:
@@ -546,23 +543,20 @@ namespace opengl
 		};
 
 		shaderTexts.resize(numShaderTypes);
-		std::atomic<uint8_t> numShadersLoaded;
+		std::vector<std::future<void>> taskFutures;
 		for (size_t i = 0; i < numShaderTypes; i++)
 		{
 			std::string assembledName = shader.GetName() + shaderFileExtensions[i];
-			numShadersLoaded++;
-			en::CoreEngine::GetThreadPool()->EnqueueJob(
-				[&shaderTexts, assembledName, i, &numShadersLoaded]()
+			taskFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+				[&shaderTexts, assembledName, i]()
 				{
 					shaderTexts[i] = std::move((LoadShaderText(assembledName)));
-					numShadersLoaded--;
-				});
+				}));
 		}
 
-		// TODO: Use a condition variable
-		while (numShadersLoaded > 0)
+		for (std::future<void> const& taskFuture : taskFutures)
 		{
-			std::this_thread::yield();
+			taskFuture.wait();
 		}
 	}
 }

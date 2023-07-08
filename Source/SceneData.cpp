@@ -1680,12 +1680,12 @@ namespace fr
 
 		// Walk down our Transform hierarchy, recomputing each Transform in turn (just for efficiency). This also has
 		// the benefit that our Transforms will be up to date when we copy them for the Render thread
-		std::atomic<uint32_t> numJobs = 0;
+		std::vector<std::future<void>> taskFutures;
+		taskFutures.reserve(m_sceneNodes.size());
 		for (shared_ptr<fr::SceneNode> root : m_sceneNodes)
 		{
-			numJobs++;
-			en::CoreEngine::GetThreadPool()->EnqueueJob(
-				[root, &numJobs]() 
+			taskFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+				[root]() 
 				{
 					std::stack<gr::Transform*> transforms;
 					transforms.push(root->GetTransform());
@@ -1700,12 +1700,11 @@ namespace fr
 							transforms.push(child);
 						}
 					}
-					numJobs--;
-				});
+				}));
 		}
-		while (numJobs > 0)
+		for (std::future<void> const& taskFuture : taskFutures)
 		{
-			std::this_thread::yield();
+			taskFuture.wait();
 		}
 
 		// Now all of our transforms are clean, update the scene bounds:

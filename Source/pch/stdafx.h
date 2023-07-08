@@ -25,6 +25,7 @@
 #include <format>
 #include <fstream>
 #include <functional>
+#include <future>
 #include <iostream>
 #include <latch>
 #include <map>
