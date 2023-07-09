@@ -601,8 +601,8 @@ namespace gr
 		// Note: Culling is not (currently) supported. For now, we attempt to draw everything
 		
 		// Ambient stage batches:
-		const Batch ambeintFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
-		m_ambientStage.AddBatch(ambeintFullscreenQuadBatch);
+		const Batch ambientFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
+		m_ambientStage.AddBatch(ambientFullscreenQuadBatch);
 
 		// Keylight stage batches:
 		shared_ptr<Light> const keyLight = SceneManager::GetSceneData()->GetKeyLight();
