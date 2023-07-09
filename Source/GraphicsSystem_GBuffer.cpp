@@ -57,7 +57,6 @@ namespace gr
 		gBufferTexParams.m_dimension = re::Texture::Dimension::Texture2D;
 		gBufferTexParams.m_format = re::Texture::Format::RGBA32F; // Using 4 channels for future flexibility
 		gBufferTexParams.m_colorSpace = re::Texture::ColorSpace::sRGB;
-		gBufferTexParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		gBufferTexParams.m_addToSceneData = false;
 
 		gBufferTexParams.m_useMIPs = false;
@@ -68,6 +67,7 @@ namespace gr
 		// -> We'll also need to trigger mip generation after laying down the GBuffer
 
 		re::TextureTarget::TargetParams targetParams;
+		targetParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		std::shared_ptr<re::TextureTargetSet> gBufferTargets = re::TextureTargetSet::Create("GBuffer Target Set");
 		for (uint8_t i = GBufferTexIdx::GBufferAlbedo; i <= GBufferTexIdx::GBufferMatProp0; i++)

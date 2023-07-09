@@ -12,7 +12,8 @@ using std::string;
 
 namespace re
 {
-	std::shared_ptr<re::Texture> Texture::Create(std::string const& name, TextureParams const& params, bool doClear)
+	std::shared_ptr<re::Texture> Texture::Create(
+		std::string const& name, TextureParams const& params, bool doFill, glm::vec4 fillColor /*= glm::vec4(0.f, 0.f, 0.f, 1.f)*/)
 	{
 		// If the Texture already exists, return it. Otherwise, create the Texture 
 		if (params.m_addToSceneData && en::SceneManager::GetSceneData()->TextureExists(name))
@@ -23,7 +24,7 @@ namespace re
 		// it. But that's OK, the SceneData will only allow 1 instance to be added
 
 		std::shared_ptr<re::Texture> newTexture = nullptr;
-		newTexture.reset(new re::Texture(name, params, doClear));
+		newTexture.reset(new re::Texture(name, params, doFill, fillColor));
 
 		// If requested, register the Texture with the SceneData object for lifetime management:
 		bool foundExistingTexture = false;
@@ -42,7 +43,7 @@ namespace re
 	}
 
 
-	Texture::Texture(string const& name, TextureParams const& params, bool doClear)
+	Texture::Texture(string const& name, TextureParams const& params, bool doFill, glm::vec4 const& fillColor)
 		: NamedObject(name)
 		, m_texParams{ params }
 		, m_platformParams{ nullptr }
@@ -61,9 +62,9 @@ namespace re
 			const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
 			m_texels.resize(params.m_faces * params.m_width * params.m_height * bytesPerPixel, 0);
 
-			if (doClear) // Optimization: Only fill the texture if necessary
+			if (doFill) // Optimization: Only fill the texture if necessary
 			{
-				Fill(params.m_clearColor);
+				Fill(fillColor);
 			}
 		}
 	}

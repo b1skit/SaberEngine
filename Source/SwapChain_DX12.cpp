@@ -57,7 +57,6 @@ namespace dx12
 		colorParams.m_dimension = re::Texture::Dimension::Texture2D;
 		colorParams.m_format = re::Texture::Format::RGBA8;
 		colorParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		colorParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		colorParams.m_useMIPs = false;
 		colorParams.m_addToSceneData = false;
 
@@ -124,6 +123,7 @@ namespace dx12
 				backbufferResource);
 
 			re::TextureTarget::TargetParams targetParams;
+			targetParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 			swapChainParams->m_backbufferTargetSet->SetColorTarget(backbufferIdx, colorTargetTex, targetParams);
 
@@ -140,13 +140,13 @@ namespace dx12
 		depthParams.m_dimension = re::Texture::Dimension::Texture2D;
 		depthParams.m_format = re::Texture::Format::Depth32F;
 		depthParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		depthParams.m_clearColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		depthParams.m_useMIPs = false;
 		depthParams.m_addToSceneData = false;
 
 		std::shared_ptr<re::Texture> depthTargetTex = re::Texture::Create("SwapChainDepthTarget", depthParams, false);
 
 		re::TextureTarget::TargetParams depthTargetParams;
+		depthTargetParams.m_clearColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 		swapChainParams->m_backbufferTargetSet->SetDepthStencilTarget(depthTargetTex, depthTargetParams);
 

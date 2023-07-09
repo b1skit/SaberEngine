@@ -88,17 +88,14 @@ namespace re
 			Format m_format = Format::Invalid;
 			ColorSpace m_colorSpace = ColorSpace::Invalid;
 
-			// TODO: Clear color should be a property of a TextureTarget, not a texture. Fill color should be explicitely
-			// provided if/when it is needed
-			glm::vec4 m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-
 			bool m_useMIPs = true; // Should MIPs be created for this texture?
 			bool m_addToSceneData = true; // Typically false if the texture is a target
 		};
 
 
 	public:
-		static std::shared_ptr<re::Texture> Create(std::string const& name, TextureParams const& params, bool doClear);
+		static std::shared_ptr<re::Texture> Create(
+			std::string const& name, TextureParams const& params, bool doFill, glm::vec4 fillColor = glm::vec4(0.f, 0.f, 0.f, 1.f));
 
 		~Texture();
 
@@ -129,7 +126,7 @@ namespace re
 
 
 	private:
-		explicit Texture(std::string const& name, TextureParams const& params, bool doClear);
+		explicit Texture(std::string const& name, TextureParams const& params, bool doFill, glm::vec4 const& fillColor);
 
 		void Fill(glm::vec4 solidColor);	// Fill texture with a solid color
 		void Fill(glm::vec4 tl, glm::vec4 bl, glm::vec4 tr, glm::vec4 br); // Fill texture with a color gradient

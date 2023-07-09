@@ -271,7 +271,7 @@ namespace dx12
 	void CommandList::ClearDepthTarget(re::TextureTarget const* depthTarget) const
 	{
 		SEAssert("Target texture cannot be null", depthTarget);
-		ClearDepthTarget(depthTarget, depthTarget->GetTexture()->GetTextureParams().m_clearColor.r);
+		ClearDepthTarget(depthTarget, depthTarget->GetTargetParams().m_clearColor.r);
 	}
 
 
@@ -299,7 +299,7 @@ namespace dx12
 	void CommandList::ClearColorTarget(re::TextureTarget const* colorTarget) const
 	{
 		SEAssert("Target texture cannot be null", colorTarget);
-		ClearColorTarget(colorTarget, colorTarget->GetTexture()->GetTextureParams().m_clearColor);
+		ClearColorTarget(colorTarget, colorTarget->GetTargetParams().m_clearColor);
 	}
 
 

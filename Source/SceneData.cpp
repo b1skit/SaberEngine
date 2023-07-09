@@ -120,9 +120,9 @@ namespace
 			.m_dimension = (totalFaces == 1 ?
 				re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCubeMap),
 			.m_format = re::Texture::Format::RGBA8,
-			.m_colorSpace = colorSpace,
-			.m_clearColor = errorTexFillColor,
+			.m_colorSpace = colorSpace
 		};
+		glm::vec4 fillColor = errorTexFillColor;
 		
 
 		// Load the texture, face-by-face:
@@ -203,7 +203,7 @@ namespace
 						SEAssertF("Invalid number of channels");
 					}
 					
-					texParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
+					fillColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
 
 					// Create the texture now the params are configured:
 					texture = re::Texture::Create(texturePaths[0], texParams, false);
@@ -240,11 +240,11 @@ namespace
 						re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCubeMap;
 					texParams.m_format = re::Texture::Format::RGBA8;
 					texParams.m_colorSpace = Texture::ColorSpace::sRGB;
-
-					texParams.m_clearColor = errorTexFillColor;
 					texParams.m_useMIPs = true;
+					
+					fillColor = errorTexFillColor;
 				}
-				texture = re::Texture::Create(texturePaths[0], texParams, true);
+				texture = re::Texture::Create(texturePaths[0], texParams, true, fillColor);
 			}
 			else
 			{
@@ -283,9 +283,9 @@ namespace
 			.m_usage = re::Texture::Usage::Color,
 			.m_dimension = re::Texture::Dimension::Texture2D,
 			.m_format = re::Texture::Format::RGBA8,
-			.m_colorSpace = colorSpace,
-			.m_clearColor = k_errorTextureColor
+			.m_colorSpace = colorSpace
 		};
+		glm::vec4 fillColor = k_errorTextureColor;
 
 		// Get the image data:
 		int width = 0;
@@ -359,10 +359,10 @@ namespace
 				SEAssertF("Invalid number of channels");
 			}
 
-			texParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
+			fillColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
 
 			// Create the texture now the params are configured:
-			texture = re::Texture::Create(texName, texParams, false);
+			texture = re::Texture::Create(texName, texParams, false, fillColor);
 
 			// Copy the data to our texture's texel vector:
 			CopyImageData(
@@ -556,9 +556,8 @@ namespace
 				.m_usage = re::Texture::Usage::Color,
 				.m_dimension = re::Texture::Dimension::Texture2D,
 				.m_format = formatFallback,
-				.m_colorSpace = colorSpace,
-				.m_clearColor = colorFallback
-			};			
+				.m_colorSpace = colorSpace
+			};
 
 			const size_t numChannels = Texture::GetNumberOfChannels(formatFallback);
 			const string fallbackName = GenerateTextureColorFallbackName(colorFallback, numChannels, colorSpace);
@@ -569,7 +568,7 @@ namespace
 			}
 			else
 			{
-				tex = re::Texture::Create(fallbackName, colorTexParams, true);
+				tex = re::Texture::Create(fallbackName, colorTexParams, true, colorFallback);
 			}			
 		}
 

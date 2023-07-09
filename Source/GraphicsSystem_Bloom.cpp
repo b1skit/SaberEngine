@@ -82,11 +82,11 @@ namespace gr
 		resScaleParams.m_dimension = Texture::Dimension::Texture2D;
 		resScaleParams.m_format = Texture::Format::RGBA32F;
 		resScaleParams.m_colorSpace = Texture::ColorSpace::Linear;
-		resScaleParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		resScaleParams.m_useMIPs = false;
 		resScaleParams.m_addToSceneData = false;
 
 		re::TextureTarget::TargetParams targetParams;
+		targetParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		shared_ptr<Shader> luminanceThresholdShader =
 			re::Shader::Create(Config::Get()->GetValue<string>("luminanceThresholdShaderName"));

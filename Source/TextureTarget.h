@@ -23,6 +23,8 @@ namespace re
 	public:
 		struct TargetParams
 		{
+			glm::vec4 m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
 			// Subresource info:
 			uint32_t m_targetFace = 0;
 			uint32_t m_targetMip = 0;

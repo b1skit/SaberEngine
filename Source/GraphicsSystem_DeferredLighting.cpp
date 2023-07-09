@@ -190,12 +190,12 @@ namespace gr
 		lightTargetParams.m_dimension = Texture::Dimension::Texture2D;
 		lightTargetParams.m_format = Texture::Format::RGBA32F;
 		lightTargetParams.m_colorSpace = Texture::ColorSpace::Linear;
-		lightTargetParams.m_clearColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 		lightTargetParams.m_addToSceneData = false;
 
 		std::shared_ptr<Texture> outputTexture = re::Texture::Create("DeferredLightTarget", lightTargetParams, false);
 
 		re::TextureTarget::TargetParams targetParams;
+		targetParams.m_clearColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		std::shared_ptr<TextureTargetSet> deferredLightingTargetSet =
 			re::TextureTargetSet::Create("Deferred lighting target");
@@ -237,7 +237,6 @@ namespace gr
 			brdfParams.m_dimension = Texture::Dimension::Texture2D;
 			brdfParams.m_format = Texture::Format::RG16F; // Epic recommends 2 channel, 16-bit floats
 			brdfParams.m_colorSpace = Texture::ColorSpace::Linear;
-			brdfParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 			brdfParams.m_useMIPs = false;
 			brdfParams.m_addToSceneData = false;
 
@@ -246,6 +245,7 @@ namespace gr
 			std::shared_ptr<re::TextureTargetSet> brdfStageTargets = re::TextureTargetSet::Create("BRDF Stage Targets");
 
 			re::TextureTarget::TargetParams targetParams;
+			targetParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 			brdfStageTargets->SetColorTarget(0, m_BRDF_integrationMap, targetParams);
 			brdfStageTargets->Viewport() =
