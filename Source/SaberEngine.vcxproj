@@ -311,6 +311,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClInclude Include="TextureTarget_DX12.h" />
     <ClInclude Include="Texture_DX12.h" />
     <ClInclude Include="ThreadPool.h" />
+    <ClInclude Include="ThreadSafeVector.h" />
     <ClInclude Include="Updateable.h" />
     <ClInclude Include="VertexStream.h" />
     <ClInclude Include="VertexStreamBuilder.h" />

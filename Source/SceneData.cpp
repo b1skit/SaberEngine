@@ -25,6 +25,7 @@
 #include "Shader.h"
 #include "ShadowMap.h"
 #include "ThreadPool.h"
+#include "ThreadSafeVector.h"
 #include "Transform.h"
 #include "VertexStreamBuilder.h"
 
@@ -629,20 +630,19 @@ namespace
 		const size_t numMaterials = data->materials_count;
 		LOG("Loading %d scene materials", numMaterials);
 
-		// Note: We need to wait for both the materials AND textures to be completely loaded
-		std::atomic<uint32_t> numTexLoads(0);
-		std::atomic<uint32_t> numMatLoads(0);
-
-		numMatLoads++;
-		en::CoreEngine::GetThreadPool()->EnqueueJob([&scene, &numMatLoads]() {
-			GenerateErrorMaterial(scene);
-			numMatLoads--;
-			});
+		// We assign each material to a thread; These threads will spawn new threads to load each texture. We need to 
+		// wait on the future of each material to know when we can begin waiting on the futures for its textures
+		std::vector<std::future<util::ThreadSafeVector<std::future<void>>>> matFutures;
+		matFutures.reserve(numMaterials);
 
 		for (size_t cur = 0; cur < numMaterials; cur++)
 		{
-			numMatLoads++;
-			en::CoreEngine::GetThreadPool()->EnqueueJob([data, cur, &scene, &sceneRootPath, &numTexLoads, &numMatLoads]() {
+			matFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+				[data, cur, &scene, &sceneRootPath]() 
+					-> util::ThreadSafeVector<std::future<void>> {
+
+				util::ThreadSafeVector<std::future<void>> textureFutures;
+				textureFutures.reserve(5); // Albedo, met/rough, normal, occlusion, emissive
 
 				cgltf_material const* const material = &data->materials[cur];
 
@@ -650,7 +650,7 @@ namespace
 				if (scene.MaterialExists(matName))
 				{
 					SEAssertF("We expect all materials in the incoming scene data are unique");
-					return;
+					return textureFutures;
 				}
 
 				LOG("Loading material \"%s\"", matName.c_str());
@@ -668,9 +668,8 @@ namespace
 				constexpr vec4 missingTextureColor(1.f, 1.f, 1.f, 1.f);
 
 				// MatAlbedo
-				numTexLoads++;
-				en::CoreEngine::GetThreadPool()->EnqueueJob(
-					[newMat, &missingTextureColor, &scene, &sceneRootPath, material, &numTexLoads]() {
+				textureFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+					[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
 					newMat->SetTexture(0, LoadTextureOrColor(
 						scene,
 						sceneRootPath,
@@ -678,13 +677,11 @@ namespace
 						missingTextureColor,
 						Texture::Format::RGBA8,
 						Texture::ColorSpace::sRGB));
-					numTexLoads--;
-					});
+					}));
 
 				// MatMetallicRoughness
-				numTexLoads++;
-				en::CoreEngine::GetThreadPool()->EnqueueJob(
-					[newMat, &missingTextureColor, &scene, &sceneRootPath, material, &numTexLoads]() {
+				textureFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+					[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
 					newMat->SetTexture(1, LoadTextureOrColor(
 						scene,
 						sceneRootPath,
@@ -692,13 +689,11 @@ namespace
 						missingTextureColor,
 						Texture::Format::RGBA8,
 						Texture::ColorSpace::Linear));
-					numTexLoads--;
-					});
+					}));
 
 				// MatNormal
-				numTexLoads++;
-				en::CoreEngine::GetThreadPool()->EnqueueJob(
-					[newMat, &missingTextureColor, &scene, &sceneRootPath, material, &numTexLoads]() {
+				textureFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+					[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
 					newMat->SetTexture(2, LoadTextureOrColor(
 						scene,
 						sceneRootPath,
@@ -706,13 +701,11 @@ namespace
 						vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
 						Texture::Format::RGBA8,
 						Texture::ColorSpace::Linear));
-					numTexLoads--;
-					});
+					}));
 
 				// MatOcclusion
-				numTexLoads++;
-				en::CoreEngine::GetThreadPool()->EnqueueJob(
-					[newMat, &missingTextureColor, &scene, &sceneRootPath, material, &numTexLoads]() {
+				textureFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+					[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
 					newMat->SetTexture(3, LoadTextureOrColor(
 						scene,
 						sceneRootPath,
@@ -720,13 +713,11 @@ namespace
 						missingTextureColor,	// Completely unoccluded
 						Texture::Format::RGBA8,
 						Texture::ColorSpace::Linear));
-					numTexLoads--;
-					});
+					}));
 
 				// MatEmissive
-				numTexLoads++;
-				en::CoreEngine::GetThreadPool()->EnqueueJob(
-					[newMat, &missingTextureColor, &scene, &sceneRootPath, material, &numTexLoads]() {
+				textureFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+					[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
 					newMat->SetTexture(4, LoadTextureOrColor(
 						scene,
 						sceneRootPath,
@@ -734,8 +725,7 @@ namespace
 						missingTextureColor,
 						Texture::Format::RGBA8,
 						Texture::ColorSpace::sRGB)); // GLTF convention: Must be converted to linear before use
-					numTexLoads--;
-					});
+					}));
 
 
 				// Construct a permanent parameter block for the material params:
@@ -752,14 +742,20 @@ namespace
 				newMat->SetParameterBlock(matParams);
 
 				scene.AddUniqueMaterial(newMat);
-				numMatLoads--;
-			}); // EnqueueJob
+
+				return textureFutures;
+			}));
 		}
 
-		// Wait until all of the textures are loaded:	
-		while (numTexLoads > 0 || numMatLoads > 0)
+		// Wait until all of the materials and textures are loaded:
+		for (size_t matFutureIdx = 0; matFutureIdx < matFutures.size(); matFutureIdx++)
 		{
-			std::this_thread::yield();
+			util::ThreadSafeVector<std::future<void>> const& textureFutures = matFutures[matFutureIdx].get();
+			
+			for (size_t textureFutureIdx = 0; textureFutureIdx < textureFutures.size(); textureFutureIdx++)
+			{
+				textureFutures[textureFutureIdx].wait();
+			}
 		}
 	}
 
@@ -1250,10 +1246,13 @@ namespace
 	}
 
 
-	// Depth-first traversal
 	void LoadObjectHierarchyRecursiveHelper(
-		string const& sceneRootPath, SceneData& scene, cgltf_data* data, cgltf_node* current, 
-		shared_ptr<SceneNode> parent, std::atomic<uint32_t>& numLoadJobs)
+		string const& sceneRootPath, 
+		SceneData& scene, 
+		cgltf_data* data, 
+		cgltf_node* current, 
+		shared_ptr<SceneNode> parent, 
+		std::vector<std::future<void>>& loadTasks)
 	{
 		if (current == nullptr)
 		{
@@ -1265,63 +1264,47 @@ namespace
 			current->light == nullptr || current->mesh == nullptr);
 		// TODO: Seems we never hit this... Does GLTF support multiple attachments per node?
 
-		if (current->children_count > 0)
+		if (current->children_count > 0) // Depth-first traversal
 		{
 			for (size_t i = 0; i < current->children_count; i++)
 			{
-				numLoadJobs++;
-				CoreEngine::GetThreadPool()->EnqueueJob(
-					[current, i, parent, &sceneRootPath, &scene, data, &numLoadJobs]()
-				{
-					shared_ptr<SceneNode> childNode = make_shared<SceneNode>(parent->GetTransform());
-					
-					LoadObjectHierarchyRecursiveHelper(
-						sceneRootPath, scene, data, current->children[i], childNode, numLoadJobs);
-				});
+				shared_ptr<SceneNode> childNode = make_shared<SceneNode>(parent->GetTransform());
+
+				LoadObjectHierarchyRecursiveHelper(
+					sceneRootPath, scene, data, current->children[i], childNode, loadTasks);
 			}
 		}
 
 		// Set the SceneNode transform:
-		numLoadJobs++;
-		CoreEngine::GetThreadPool()->EnqueueJob([current, parent, &numLoadJobs]()
+		loadTasks.emplace_back(CoreEngine::GetThreadPool()->EnqueueJob([current, parent]()
 		{
 			SetTransformValues(current, parent->GetTransform());
-			numLoadJobs--;
-		});
+		}));
 		
-
 		// Process node attachments:
-		if (current->mesh != nullptr)
+		if (current->mesh)
 		{
-			numLoadJobs++;
-			CoreEngine::GetThreadPool()->EnqueueJob([&sceneRootPath, &scene, current, parent, &numLoadJobs]()
+			loadTasks.emplace_back(CoreEngine::GetThreadPool()->EnqueueJob([&sceneRootPath, &scene, current, parent]()
 			{
 				LoadMeshGeometry(sceneRootPath, scene, current, parent);
-				numLoadJobs--;
-			});
+			}));
 		}
 		if (current->light)
 		{
-			numLoadJobs++;
-			CoreEngine::GetThreadPool()->EnqueueJob([&scene, current, parent, &numLoadJobs]()
+			loadTasks.emplace_back(CoreEngine::GetThreadPool()->EnqueueJob([&scene, current, parent]()
 			{
 				LoadAddLight(scene, current, parent);
-				numLoadJobs--;
-			});
+			}));
 		}
 		if (current->camera)
 		{
-			numLoadJobs++;
-			CoreEngine::GetThreadPool()->EnqueueJob([&scene, current, parent, &numLoadJobs]()
+			loadTasks.emplace_back(CoreEngine::GetThreadPool()->EnqueueJob([&scene, current, parent]()
 			{
 				LoadAddCamera(scene, parent, current);
-				numLoadJobs--;
-			});
+			}));
 		}
 
 		scene.AddSceneNode(parent);
-
-		numLoadJobs--;
 	}
 
 
@@ -1332,9 +1315,9 @@ namespace
 
 		SEAssert("Loading > 1 scene is currently unsupported", data->scenes_count == 1);
 
-		// Each node is the root in a transformation hierarchy:
-		std::atomic<uint32_t> numLoadJobs = 0;
+		std::vector<std::future<void>> loadTasks; // Task enqueuing is single-threaded
 
+		// Each node is the root in a transformation hierarchy:
 		for (size_t node = 0; node < data->scenes->nodes_count; node++)
 		{
 			SEAssert("Error: Node is not a root", data->scenes->nodes[node]->parent == nullptr);
@@ -1343,14 +1326,14 @@ namespace
 
 			shared_ptr<SceneNode> currentNode = make_shared<SceneNode>(nullptr); // Root node has no parent
 
-			numLoadJobs++;
 			LoadObjectHierarchyRecursiveHelper(
-				sceneRootPath, scene, data, data->scenes->nodes[node], currentNode, numLoadJobs);
+				sceneRootPath, scene, data, data->scenes->nodes[node], currentNode, loadTasks);
 		}
 		
-		while (numLoadJobs > 0)
+		// Wait for all of the tasks to be done:
+		for (size_t loadTask = 0; loadTask < loadTasks.size(); loadTask++)
 		{
-			std::this_thread::yield();
+			loadTasks[loadTask].wait();
 		}
 	}
 } // namespace
@@ -1365,6 +1348,12 @@ namespace fr
 {
 	bool SceneData::Load(string const& sceneFilePath)
 	{
+		std::future<void> errorMatTaskFuture = 
+			en::CoreEngine::GetThreadPool()->EnqueueJob([this]() {
+				GenerateErrorMaterial(*this);
+			});
+
+
 		string sceneRootPath;
 		Config::Get()->TryGetValue<string>("sceneRootPath", sceneRootPath);
 
@@ -1422,6 +1411,8 @@ namespace fr
 		{
 			LoadAddCamera(*this, nullptr, nullptr);
 		}
+
+		errorMatTaskFuture.wait();
 
 		return true;
 	}

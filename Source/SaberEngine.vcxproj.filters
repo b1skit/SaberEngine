@@ -748,6 +748,9 @@
     <ClInclude Include="HashUtils.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
+    <ClInclude Include="ThreadSafeVector.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\glsl\blitShader.frag">
