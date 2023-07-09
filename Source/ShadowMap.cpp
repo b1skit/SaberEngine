@@ -70,7 +70,9 @@ namespace gr
 			depthTexture = re::Texture::Create(texName, shadowParams, false);
 		}
 
-		m_shadowTargetSet->SetDepthStencilTarget(depthTexture);
+		re::TextureTarget::TargetParams depthTargetParams;
+
+		m_shadowTargetSet->SetDepthStencilTarget(depthTexture, depthTargetParams);
 		m_shadowTargetSet->Viewport() = re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height());
 	}
 }

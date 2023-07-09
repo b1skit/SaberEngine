@@ -20,10 +20,24 @@ namespace re
 			virtual ~PlatformParams() = 0;
 		};
 
+	public:
+		struct TargetParams
+		{
+			// Subresource info:
+			uint32_t m_targetFace = 0;
+			uint32_t m_targetMip = 0;
+
+			// TODO: Support additional target/sub-resource parameters:
+			// - Array index (or first index, and offset from that)
+			// - Array size
+			// - Texture view mode: linear, sRGB
+
+			// - Read/write flags: depth, stencil, RGBA ?
+			// - Clear mode, clear color/values?
+		};
 
 	public:
-		TextureTarget();
-		explicit TextureTarget(std::shared_ptr<re::Texture> texture);
+		explicit TextureTarget(std::shared_ptr<re::Texture> texture, TargetParams const&);
 		
 		~TextureTarget();
 
@@ -31,12 +45,10 @@ namespace re
 		TextureTarget(TextureTarget&&) = default;
 		TextureTarget& operator=(TextureTarget const&) = default;
 
-		TextureTarget& operator=(std::shared_ptr<re::Texture> texture);
-
-		inline bool HasTexture() const { return m_texture != nullptr; }
-
 		std::shared_ptr<re::Texture>& GetTexture() { return m_texture; }
 		std::shared_ptr<re::Texture> const& GetTexture() const { return m_texture; }
+
+		TargetParams const& GetTargetParams() const { return m_targetParams; }
 
 		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::shared_ptr<PlatformParams> params) { m_platformParams = params; }
@@ -44,6 +56,11 @@ namespace re
 	private:
 		std::shared_ptr<re::Texture> m_texture;
 		std::shared_ptr<PlatformParams> m_platformParams;
+
+		TargetParams m_targetParams;
+
+	private:
+		TextureTarget() = delete;
 	};
 
 
@@ -140,14 +157,14 @@ namespace re
 		TextureTargetSet& operator=(TextureTargetSet const&);
 		~TextureTargetSet();
 
-		inline std::vector<re::TextureTarget> const& GetColorTargets() const { return m_colorTargets; }
-		re::TextureTarget const& GetColorTarget(uint8_t slot) const;
-		void SetColorTarget(uint8_t slot, re::TextureTarget texTarget);
-		void SetColorTarget(uint8_t slot, std::shared_ptr<re::Texture> texTarget);
+		inline std::vector<std::unique_ptr<re::TextureTarget>> const& GetColorTargets() const { return m_colorTargets; }
+		re::TextureTarget const* GetColorTarget(uint8_t slot) const;
+		void SetColorTarget(uint8_t slot, re::TextureTarget const* texTarget);
+		void SetColorTarget(uint8_t slot, std::shared_ptr<re::Texture> texTarget, TextureTarget::TargetParams const&);
 
-		inline re::TextureTarget const& GetDepthStencilTarget() const { return m_depthStencilTarget; }
-		void SetDepthStencilTarget(re::TextureTarget const& depthStencilTarget);
-		void SetDepthStencilTarget(std::shared_ptr<re::Texture> depthStencilTarget);
+		re::TextureTarget const* GetDepthStencilTarget() const;
+		void SetDepthStencilTarget(re::TextureTarget const* depthStencilTarget);
+		void SetDepthStencilTarget(std::shared_ptr<re::Texture> depthStencilTarget, re::TextureTarget::TargetParams const&);
 
 		bool HasTargets();
 		bool HasColorTarget();
@@ -184,8 +201,8 @@ namespace re
 
 
 	private:
-		std::vector<re::TextureTarget> m_colorTargets;
-		re::TextureTarget m_depthStencilTarget;
+		std::vector<std::unique_ptr<re::TextureTarget>> m_colorTargets;
+		std::unique_ptr<re::TextureTarget> m_depthStencilTarget;
 
 		uint8_t m_numColorTargets;
 		bool m_targetStateDirty;

@@ -268,20 +268,21 @@ namespace dx12
 	}
 
 
-	void CommandList::ClearDepthTarget(re::TextureTarget const& depthTarget) const
+	void CommandList::ClearDepthTarget(re::TextureTarget const* depthTarget) const
 	{
-		ClearDepthTarget(depthTarget, depthTarget.GetTexture()->GetTextureParams().m_clearColor.r);
+		SEAssert("Target texture cannot be null", depthTarget);
+		ClearDepthTarget(depthTarget, depthTarget->GetTexture()->GetTextureParams().m_clearColor.r);
 	}
 
 
-	void CommandList::ClearDepthTarget(re::TextureTarget const& depthTarget, float clearColor) const
+	void CommandList::ClearDepthTarget(re::TextureTarget const* depthTarget, float clearColor) const
 	{
-		SEAssert("Target texture must be a color target",
-			depthTarget.HasTexture() &&
-			depthTarget.GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::DepthTarget);
+		SEAssert("Target texture must be a depth target",
+			depthTarget &&
+			depthTarget->GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::DepthTarget);
 
 		dx12::TextureTarget::PlatformParams* depthPlatParams =
-			depthTarget.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+			depthTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
 		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = depthPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
 
@@ -295,21 +296,22 @@ namespace dx12
 	}
 
 
-	void CommandList::ClearColorTarget(re::TextureTarget const& colorTarget) const
+	void CommandList::ClearColorTarget(re::TextureTarget const* colorTarget) const
 	{
-		ClearColorTarget(colorTarget, colorTarget.GetTexture()->GetTextureParams().m_clearColor);
+		SEAssert("Target texture cannot be null", colorTarget);
+		ClearColorTarget(colorTarget, colorTarget->GetTexture()->GetTextureParams().m_clearColor);
 	}
 
 
-	void CommandList::ClearColorTarget(re::TextureTarget const& colorTarget, glm::vec4 clearColor) const
+	void CommandList::ClearColorTarget(re::TextureTarget const* colorTarget, glm::vec4 clearColor) const
 	{
 		SEAssert("Target texture must be a color target", 
-			colorTarget.HasTexture() && 
-			colorTarget.GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::ColorTarget ||
-			colorTarget.GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::SwapchainColorProxy);
+			colorTarget && 
+			colorTarget->GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::ColorTarget ||
+			colorTarget->GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::SwapchainColorProxy);
 
 		dx12::TextureTarget::PlatformParams* targetParams =
-			colorTarget.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+			colorTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
 		m_commandList->ClearRenderTargetView(
 			targetParams->m_rtvDsvDescriptor.GetBaseDescriptor(),
@@ -321,9 +323,9 @@ namespace dx12
 
 	void CommandList::ClearColorTargets(re::TextureTargetSet const& targetSet) const
 	{
-		for (re::TextureTarget const& target : targetSet.GetColorTargets())
+		for (std::unique_ptr<re::TextureTarget> const& target : targetSet.GetColorTargets())
 		{
-			ClearColorTarget(target);
+			ClearColorTarget(target.get());
 		}
 	}
 
@@ -338,10 +340,10 @@ namespace dx12
 		uint32_t numColorTargets = 0;
 		for (uint8_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
-			if (targetSet.GetColorTarget(i).HasTexture())
+			if (targetSet.GetColorTarget(i))
 			{
 				dx12::TextureTarget::PlatformParams* targetPlatParams =
-					targetSet.GetColorTarget(i).GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+					targetSet.GetColorTarget(i)->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
 				colorTargetDescriptors.emplace_back(targetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor());
 				numColorTargets++;
@@ -349,10 +351,11 @@ namespace dx12
 		}
 
 		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor{};
-		if (targetSet.GetDepthStencilTarget().HasTexture())
+		re::TextureTarget const* depthStencilTarget = targetSet.GetDepthStencilTarget();
+		if (depthStencilTarget)
 		{
 			dx12::TextureTarget::PlatformParams* depthPlatParams =
-				targetSet.GetDepthStencilTarget().GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+				depthStencilTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 			dsvDescriptor = depthPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
 		}
 		
@@ -377,13 +380,13 @@ namespace dx12
 		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
 
 		dx12::TextureTarget::PlatformParams* swapChainColorTargetPlatParams =
-			swapChainParams->m_backbufferTargetSet->GetColorTarget(backbufferIdx).GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+			swapChainParams->m_backbufferTargetSet->GetColorTarget(backbufferIdx)->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
 		const D3D12_CPU_DESCRIPTOR_HANDLE colorDescHandle = 
 			swapChainColorTargetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
 
 		dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
-			swapChainParams->m_backbufferTargetSet->GetDepthStencilTarget().GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+			swapChainParams->m_backbufferTargetSet->GetDepthStencilTarget()->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 		const D3D12_CPU_DESCRIPTOR_HANDLE depthDescHandle = 
 			depthTargetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
 

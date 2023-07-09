@@ -268,13 +268,14 @@ namespace opengl
 		opengl::Texture::PlatformParams const* params =
 			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
-		if (texture.GetTextureParams().m_useMIPs == false)
+		if (texture.GetTextureParams().m_useMIPs)
+		{
+			glGenerateTextureMipmap(params->m_textureID);
+		}
+		else
 		{
 			const GLint maxLevel = GL_TEXTURE_MAX_LEVEL;
 			glTextureParameteriv(params->m_textureID, GL_TEXTURE_MAX_LEVEL, &maxLevel);
-			return;
 		}
-
-		glGenerateTextureMipmap(params->m_textureID);
 	}
 }

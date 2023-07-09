@@ -123,7 +123,9 @@ namespace dx12
 				false, 
 				backbufferResource);
 
-			swapChainParams->m_backbufferTargetSet->SetColorTarget(backbufferIdx, colorTargetTex);
+			re::TextureTarget::TargetParams targetParams;
+
+			swapChainParams->m_backbufferTargetSet->SetColorTarget(backbufferIdx, colorTargetTex, targetParams);
 
 			SEAssert("Unexpected texture format selected", 
 				colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format == colorBufferFormat);
@@ -144,7 +146,9 @@ namespace dx12
 
 		std::shared_ptr<re::Texture> depthTargetTex = re::Texture::Create("SwapChainDepthTarget", depthParams, false);
 
-		swapChainParams->m_backbufferTargetSet->SetDepthStencilTarget(depthTargetTex);
+		re::TextureTarget::TargetParams depthTargetParams;
+
+		swapChainParams->m_backbufferTargetSet->SetDepthStencilTarget(depthTargetTex, depthTargetParams);
 
 		// Set default viewports and scissor rects. Note: This is NOT required, just included for clarity
 		swapChainParams->m_backbufferTargetSet->Viewport() = re::Viewport(); // Defaults = 0, 0, xRes, yRes
@@ -214,7 +218,7 @@ namespace dx12
 			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
 		dx12::Texture::PlatformParams const* backbufferColorTexPlatParams = 
-			swapChainPlatParams->m_backbufferTargetSet->GetColorTarget(swapChainPlatParams->m_backBufferIdx).
+			swapChainPlatParams->m_backbufferTargetSet->GetColorTarget(swapChainPlatParams->m_backBufferIdx)->
 				GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		return backbufferColorTexPlatParams->m_textureResource;

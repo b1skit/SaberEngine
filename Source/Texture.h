@@ -88,7 +88,10 @@ namespace re
 			Format m_format = Format::Invalid;
 			ColorSpace m_colorSpace = ColorSpace::Invalid;
 
-			glm::vec4 m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f); // Also used as initial fill color
+			// TODO: Clear color should be a property of a TextureTarget, not a texture. Fill color should be explicitely
+			// provided if/when it is needed
+			glm::vec4 m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
 			bool m_useMIPs = true; // Should MIPs be created for this texture?
 			bool m_addToSceneData = true; // Typically false if the texture is a target
 		};

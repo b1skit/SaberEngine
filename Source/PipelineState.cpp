@@ -19,7 +19,6 @@ namespace gr
 			ColorWriteMode::ChannelMode::Enabled, // B
 			ColorWriteMode::ChannelMode::Enabled} // A
 		, m_targetClearMode(ClearTarget::None)
-		, m_textureTargetSetConfig({0, 0})
 	{
 	}
 
@@ -37,7 +36,6 @@ namespace gr
 		AddDataBytesToHash(m_dstBlendMode);
 		AddDataBytesToHash(&m_colorWriteMode, sizeof(m_colorWriteMode));
 		AddDataBytesToHash(m_targetClearMode);
-		AddDataBytesToHash(&m_textureTargetSetConfig, sizeof(m_textureTargetSetConfig));
 	}
 
 
@@ -164,19 +162,6 @@ namespace gr
 	void PipelineState::SetClearTarget(PipelineState::ClearTarget targetClearMode)
 	{
 		m_targetClearMode = targetClearMode;
-		m_isDirty = true;
-	}
-
-
-	PipelineState::TextureTargetSetConfig const& PipelineState::GetTextureTargetSetConfig() const
-	{
-		return m_textureTargetSetConfig;
-	}
-
-
-	void PipelineState::SetTextureTargetSetConfig(PipelineState::TextureTargetSetConfig const& textureTargetSetConfig)
-	{
-		m_textureTargetSetConfig = textureTargetSetConfig;
 		m_isDirty = true;
 	}
 }

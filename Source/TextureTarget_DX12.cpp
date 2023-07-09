@@ -28,22 +28,22 @@ namespace dx12
 		const uint8_t numColorTargets = targetSet.GetNumColorTargets();
 		SEAssert("Invalid number of color targets", numColorTargets > 0 && numColorTargets <= 8);
 
-		for (re::TextureTarget const& colorTarget : targetSet.GetColorTargets())
+		for (std::unique_ptr<re::TextureTarget> const& colorTarget : targetSet.GetColorTargets())
 		{
-			if (colorTarget.HasTexture())
+			if (colorTarget)
 			{
-				re::Texture::TextureParams const& texParams = colorTarget.GetTexture()->GetTextureParams();
+				re::Texture::TextureParams const& texParams = colorTarget->GetTexture()->GetTextureParams();
 				SEAssert("Texture has the wrong usage set", 
 					texParams.m_usage == re::Texture::Usage::ColorTarget || 
 					texParams.m_usage == re::Texture::Usage::SwapchainColorProxy);
 
 				dx12::Texture::PlatformParams* texPlatParams =
-					colorTarget.GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+					colorTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 				
 				SEAssert("Texture is not created", texPlatParams->m_isCreated && texPlatParams->m_textureResource);
 
 				dx12::TextureTarget::PlatformParams* targetPlatParams = 
-					colorTarget.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+					colorTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
 				// Create the descriptor and RTV:
 				targetPlatParams->m_rtvDsvDescriptor = std::move(
@@ -70,9 +70,9 @@ namespace dx12
 		targetSetParams->m_depthIsCreated = true;
 
 		SEAssert("Target has the wrong usage type", 
-			targetSet.GetDepthStencilTarget().GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::DepthTarget);
+			targetSet.GetDepthStencilTarget()->GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::DepthTarget);
 
-		std::shared_ptr<re::Texture> depthTargetTex = targetSet.GetDepthStencilTarget().GetTexture();
+		std::shared_ptr<re::Texture> depthTargetTex = targetSet.GetDepthStencilTarget()->GetTexture();
 
 		dx12::Texture::PlatformParams* depthTexPlatParams =
 			depthTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
@@ -81,7 +81,7 @@ namespace dx12
 			depthTexPlatParams->m_isCreated && depthTexPlatParams->m_textureResource);
 
 		dx12::TextureTarget::PlatformParams* targetPlatParams =
-			targetSet.GetDepthStencilTarget().GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+			targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
 		dx12::Context::PlatformParams* ctxPlatParams =
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
@@ -114,13 +114,13 @@ namespace dx12
 		for (uint8_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
 			
-			if (!targetSet.GetColorTarget(i).HasTexture())
+			if (!targetSet.GetColorTarget(i))
 			{
 				break;
 			}
 
 			dx12::Texture::PlatformParams const* targetTexPlatParams =
-				targetSet.GetColorTarget(i).GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+				targetSet.GetColorTarget(i)->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 			colorTargetFormats.RTFormats[i] = targetTexPlatParams->m_format;
 			numTargets++;

@@ -70,11 +70,14 @@ namespace gr
 		enum class DepthWriteMode
 		{
 			Enabled,
-			Disabled,
-			DepthWriteMode_Count
+			Disabled
 		};
 		DepthWriteMode GetDepthWriteMode() const;
 		void SetDepthWriteMode(DepthWriteMode);
+
+		// TODO: Support blend operations (add/subtract/min/max etc) for both color and alpha channels
+
+		// TODO: Support logical operations (AND/OR/XOR etc)
 
 		// TODO: These should be per-target, to allow different outputs when using MRTs
 		// TODO: We should support alpha blend modes, in addition to the color blend modes here
@@ -99,10 +102,6 @@ namespace gr
 		BlendMode GetDstBlendMode() const;
 		void SetDstBlendMode(BlendMode);
 
-		// TODO: Support blend operations (add/subtract/min/max etc) for both color and alpha channels
-
-		// TODO: Support logical operations (AND/OR/XOR etc)
-
 		// TODO: These should be per-target, to allow different outputs when using MRTs
 		struct ColorWriteMode
 		{
@@ -126,20 +125,11 @@ namespace gr
 			Color,
 			Depth,
 			ColorDepth,
-			None,
-			ClearTarget_Count
+			None
 		};
 		ClearTarget GetClearTarget() const;
 		void SetClearTarget(ClearTarget);
 
-		// TODO: We should be able to target individual target sub-resources, instead of specifying this here
-		struct TextureTargetSetConfig
-		{
-			uint32_t m_targetFace;
-			uint32_t m_targetMip;
-		};
-		TextureTargetSetConfig const& GetTextureTargetSetConfig() const;
-		void SetTextureTargetSetConfig(TextureTargetSetConfig const&);
 
 	private:
 		bool m_isDirty;
@@ -153,6 +143,5 @@ namespace gr
 		BlendMode m_dstBlendMode;
 		ColorWriteMode m_colorWriteMode;
 		ClearTarget m_targetClearMode;
-		TextureTargetSetConfig m_textureTargetSetConfig;
 	};
 }

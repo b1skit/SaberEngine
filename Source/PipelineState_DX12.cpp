@@ -183,7 +183,7 @@ namespace
 	{
 		D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
 
-		depthStencilDesc.DepthEnable = true; // TODO: Support toggling this via the gr::PipelineState
+		depthStencilDesc.DepthEnable = grPipelineState.GetDepthWriteMode() == gr::PipelineState::DepthWriteMode::Enabled;
 
 		// Depth testing:
 		switch (grPipelineState.GetDepthTestMode())
@@ -392,7 +392,7 @@ namespace dx12
 				targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 			pipelineStateStream.RTVFormats = TextureTargetSet::GetColorTargetFormats(targetSet);
 			pipelineStateStream.DSVFormat = 
-				targetSet.GetDepthStencilTarget().GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format;
+				targetSet.GetDepthStencilTarget()->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format;
 
 			// Rasterizer description:
 			const D3D12_RASTERIZER_DESC rasterizerDesc = BuildRasterizerDesc(grPipelineState);

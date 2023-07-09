@@ -67,12 +67,13 @@ namespace gr
 		// https://www.reedbeta.com/blog/deferred-texturing/
 		// -> We'll also need to trigger mip generation after laying down the GBuffer
 
+		re::TextureTarget::TargetParams targetParams;
 
 		std::shared_ptr<re::TextureTargetSet> gBufferTargets = re::TextureTargetSet::Create("GBuffer Target Set");
 		for (uint8_t i = GBufferTexIdx::GBufferAlbedo; i <= GBufferTexIdx::GBufferMatProp0; i++)
 		{
 			gBufferTargets->SetColorTarget(
-				i, re::Texture::Create(GBufferTexNames[i], gBufferTexParams, false));
+				i, re::Texture::Create(GBufferTexNames[i], gBufferTexParams, false), targetParams);
 		}
 		m_gBufferStage.SetTextureTargetSet(gBufferTargets);
 
@@ -81,9 +82,12 @@ namespace gr
 		depthTexParams.m_usage = re::Texture::Usage::DepthTarget;
 		depthTexParams.m_format = re::Texture::Format::Depth32F;
 		depthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-				
+		
+		re::TextureTarget::TargetParams depthTargetParams;
+
 		gBufferTargets->SetDepthStencilTarget(
-			re::Texture::Create(GBufferTexNames[GBufferTexIdx::GBufferDepth], depthTexParams, false));
+			re::Texture::Create(GBufferTexNames[GBufferTexIdx::GBufferDepth], depthTexParams, false),
+			depthTargetParams);
 
 		// Camera:
 		m_gBufferStage.AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());

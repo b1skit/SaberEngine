@@ -121,7 +121,7 @@ namespace dx12
 		CheckHResult(hr, "Failed to create single element descriptor heap for ImGui SRV");
 		
 		dx12::Texture::PlatformParams* backbufferColorTarget0PlatParams =
-			swapChainParams->m_backbufferTargetSet->GetColorTarget(0).GetTexture()
+			swapChainParams->m_backbufferTargetSet->GetColorTarget(0)->GetTexture()
 				->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		// Setup ImGui platform/Renderer backends:

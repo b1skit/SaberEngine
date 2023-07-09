@@ -38,7 +38,7 @@ namespace opengl
 
 		// Static members:
 		static void CreateColorTargets(re::TextureTargetSet& targetSet);
-		static void AttachColorTargets(re::TextureTargetSet const& targetSet, uint32_t face, uint32_t mipLevel);
+		static void AttachColorTargets(re::TextureTargetSet const& targetSet);
 
 		static void CreateDepthStencilTarget(re::TextureTargetSet& targetSet);
 		static void AttachDepthStencilTarget(re::TextureTargetSet const& targetSet);

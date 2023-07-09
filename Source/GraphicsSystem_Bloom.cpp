@@ -86,6 +86,8 @@ namespace gr
 		resScaleParams.m_useMIPs = false;
 		resScaleParams.m_addToSceneData = false;
 
+		re::TextureTarget::TargetParams targetParams;
+
 		shared_ptr<Shader> luminanceThresholdShader =
 			re::Shader::Create(Config::Get()->GetValue<string>("luminanceThresholdShaderName"));
 
@@ -104,7 +106,7 @@ namespace gr
 			resScaleParams.m_height = currentYRes;
 			const string texPath = "ScaledResolution_" + to_string(currentXRes) + "x" + to_string(currentYRes);
 
-			downResTargets->SetColorTarget(0, re::Texture::Create(texPath, resScaleParams, false));
+			downResTargets->SetColorTarget(0, re::Texture::Create(texPath, resScaleParams, false), targetParams);
 
 			m_downResStages.back().SetTextureTargetSet(downResTargets);
 
@@ -162,7 +164,7 @@ namespace gr
 
 			if (i % 2 == 0)
 			{
-				blurTargets->SetColorTarget(0, blurPingPongTexture);
+				blurTargets->SetColorTarget(0, blurPingPongTexture, targetParams);
 				m_blurStages.back().SetStageShader(horizontalBlurShader);
 			}
 			else
@@ -235,7 +237,7 @@ namespace gr
 		const size_t gBufferEmissiveTextureIndex = 3; 
 		m_emissiveBlitStage.SetPerFrameTextureInput(
 			"GBufferAlbedo",
-			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(gBufferEmissiveTextureIndex).GetTexture(),
+			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(gBufferEmissiveTextureIndex)->GetTexture(),
 			bloomStageSampler);
 
 		for (size_t i = 0; i < m_downResStages.size(); i++)
@@ -244,14 +246,14 @@ namespace gr
 			{
 				m_downResStages[i].SetPerFrameTextureInput(
 					"GBufferAlbedo", 
-					m_emissiveBlitStage.GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
+					m_emissiveBlitStage.GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
 				m_downResStages[i].SetPerFrameTextureInput(
 					"GBufferAlbedo",
-					m_downResStages[i - 1].GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
+					m_downResStages[i - 1].GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
 					bloomStageSampler);
 			}
 		}
@@ -262,14 +264,14 @@ namespace gr
 			{
 				m_blurStages[i].SetPerFrameTextureInput(
 					"GBufferAlbedo",
-					m_downResStages.back().GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
+					m_downResStages.back().GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
 				m_blurStages[i].SetPerFrameTextureInput(
 					"GBufferAlbedo",
-					m_blurStages[i-1].GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
+					m_blurStages[i-1].GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
 					bloomStageSampler);
 			}
 		}
@@ -280,14 +282,14 @@ namespace gr
 			{
 				m_upResStages[i].SetPerFrameTextureInput(
 					"GBufferAlbedo",
-					m_blurStages.back().GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
+					m_blurStages.back().GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
 				m_upResStages[i].SetPerFrameTextureInput(
 					"GBufferAlbedo",
-					m_upResStages[i-1].GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
+					m_upResStages[i-1].GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
 					bloomStageSampler);
 			}
 		}

@@ -168,9 +168,7 @@ namespace opengl
 					stageTargets = swapChainParams->m_backbufferTargetSet; // Draw directly to the swapchain backbuffer
 				}
 
-				opengl::TextureTargetSet::AttachColorTargets(*stageTargets,
-					stagePipelineParams.GetTextureTargetSetConfig().m_targetFace,
-					stagePipelineParams.GetTextureTargetSetConfig().m_targetMip);
+				opengl::TextureTargetSet::AttachColorTargets(*stageTargets);
 				opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
 				
 				// Configure the pipeline state:
