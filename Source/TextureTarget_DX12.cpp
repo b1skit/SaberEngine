@@ -4,6 +4,7 @@
 #include "Config.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
+#include "SysInfo_DX12.h"
 #include "TextureTarget_DX12.h"
 #include "Texture_DX12.h"
 
@@ -26,7 +27,8 @@ namespace dx12
 		texTargetSetPlatParams->m_colorIsCreated = true;
 
 		const uint8_t numColorTargets = targetSet.GetNumColorTargets();
-		SEAssert("Invalid number of color targets", numColorTargets > 0 && numColorTargets <= 8);
+		SEAssert("Invalid number of color targets", 
+			numColorTargets > 0 && numColorTargets <= dx12::SysInfo::GetMaxRenderTargets());
 
 		for (std::unique_ptr<re::TextureTarget> const& colorTarget : targetSet.GetColorTargets())
 		{

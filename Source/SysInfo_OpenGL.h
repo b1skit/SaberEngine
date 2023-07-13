@@ -1,17 +1,12 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include <d3d12.h>
 
 
-namespace dx12
+namespace opengl
 {
 	class SysInfo
 	{
 	public: // Common platform:
 		static uint8_t GetMaxRenderTargets();
-
-
-	public: // DX12-specific:		
-		static D3D_ROOT_SIGNATURE_VERSION GetHighestSupportedRootSignatureVersion();
 	};
 }

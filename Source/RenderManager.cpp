@@ -43,7 +43,7 @@ namespace re
 
 
 	RenderManager::RenderManager()
-		: m_pipeline("Main pipeline")
+		: m_renderPipeline("Main pipeline")
 		, m_renderFrameNum(0)
 	{
 		m_vsyncEnabled = en::Config::Get()->GetValue<bool>("vsync");
@@ -108,39 +108,13 @@ namespace re
 		platform::RenderManager::Initialize(*this);
 
 		// Create each graphics system in turn:
+		vector<shared_ptr<GraphicsSystem>>::iterator gsIt;
+		for (gsIt = m_graphicsSystems.begin(); gsIt != m_graphicsSystems.end(); gsIt++)
 		{
-			vector<shared_ptr<GraphicsSystem>>::iterator gsIt;
-			for (gsIt = m_graphicsSystems.begin(); gsIt != m_graphicsSystems.end(); gsIt++)
-			{
-				(*gsIt)->Create(m_pipeline.AddNewStagePipeline((*gsIt)->GetName()));
-
-				// Remove GS if it didn't attach any render stages (Ensuring indexes of m_pipeline & m_graphicsSystems match)
-				if (m_pipeline.GetPipeline().back().GetNumberOfStages() == 0)
-				{
-					m_pipeline.GetPipeline().pop_back();
-					vector<shared_ptr<GraphicsSystem>>::iterator deleteIt = gsIt;
-					
-					// Handle the case where the 1st GS didn't append anything
-					const bool isFirstGS = gsIt == m_graphicsSystems.begin();
-					if (isFirstGS == false)
-					{
-						gsIt--;		
-					}
-
-					m_graphicsSystems.erase(deleteIt);
-
-					// Iterators at/after the erase point are invalidated: Reset our iterator to the start
-					if (isFirstGS)
-					{
-						if (m_graphicsSystems.empty())
-						{
-							break;
-						}
-						gsIt = m_graphicsSystems.begin();
-					}
-				}
-			}
+			(*gsIt)->Create(m_renderPipeline.AddNewStagePipeline((*gsIt)->GetName()));
 		}
+		SEAssert("Render pipeline should contian an entry for each graphics system", 
+			m_renderPipeline.GetNumberGraphicsSystems() == m_graphicsSystems.size());
 
 		m_context.GetParameterBlockAllocator().ClosePermanentPBRegistrationPeriod();
 
@@ -160,7 +134,7 @@ namespace re
 		// Update the graphics systems:
 		for (size_t gs = 0; gs < m_graphicsSystems.size(); gs++)
 		{
-			m_graphicsSystems[gs]->PreRender(m_pipeline.GetPipeline()[gs]);
+			m_graphicsSystems[gs]->PreRender(m_renderPipeline.GetStagePipeline()[gs]);
 		}
 
 		m_context.GetParameterBlockAllocator().SwapBuffers(frameNum);
@@ -192,7 +166,7 @@ namespace re
 	{
 		m_renderBatches.clear();
 
-		for (StagePipeline& stagePipeline : m_pipeline.GetPipeline())
+		for (StagePipeline& stagePipeline : m_renderPipeline.GetStagePipeline())
 		{
 			stagePipeline.EndOfFrame();
 		}
@@ -213,7 +187,7 @@ namespace re
 		gr::Material::DestroyMaterialLibrary();
 		re::Sampler::DestroySamplerLibrary();
 
-		m_pipeline.Destroy();
+		m_renderPipeline.Destroy();
 		m_graphicsSystems.clear();
 
 		// Clear the new object queues:

@@ -101,7 +101,7 @@ namespace re
 	private:	
 		re::Context m_context;
 		std::vector<std::shared_ptr<gr::GraphicsSystem>> m_graphicsSystems;
-		re::RenderPipeline m_pipeline;
+		re::RenderPipeline m_renderPipeline;
 
 		std::vector<re::Batch> m_renderBatches; // Union of all batches created by all systems. Populated in PreUpdate
 

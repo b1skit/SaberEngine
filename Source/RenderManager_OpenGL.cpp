@@ -139,7 +139,7 @@ namespace opengl
 		// -> Catch bugs where we forget to upload a common param
 
 		// Render each stage:
-		for (StagePipeline& stagePipeline : renderManager.m_pipeline.GetPipeline())
+		for (StagePipeline& stagePipeline : renderManager.m_renderPipeline.GetStagePipeline())
 		{
 			// RenderDoc markers: Graphics system group name
 			glPushDebugGroup(

@@ -395,6 +395,15 @@
     <ClCompile Include="ResourceStateTracker_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicsSystem_ComputeMips.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="SysInfo_Platform.cpp">
+      <Filter>Source Files\re\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="SysInfo_OpenGL.cpp">
+      <Filter>Source Files\re\OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -750,6 +759,15 @@
     </ClInclude>
     <ClInclude Include="ThreadSafeVector.h">
       <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsSystem_ComputeMips.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="SysInfo_Platform.h">
+      <Filter>Header Files\re\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="SysInfo_OpenGL.h">
+      <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

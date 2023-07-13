@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Config.h"
+#include "SysInfo_Platform.h"
 #include "TextureTarget.h"
 #include "TextureTarget_Platform.h"
 #include "RenderManager.h"
@@ -106,7 +107,7 @@ namespace re
 	{
 		platform::TextureTargetSet::CreatePlatformParams(*this);
 	
-		for (size_t i = 0; i < platform::Context::GetMaxColorTargets(); i++)
+		for (size_t i = 0; i < platform::SysInfo::GetMaxRenderTargets(); i++)
 		{
 			m_colorTargets.emplace_back(nullptr); // Can't use w/unique_ptr as std::vector::resize wants a copy ctor
 		}
@@ -129,7 +130,7 @@ namespace re
 	{
 		platform::TextureTargetSet::CreatePlatformParams(*this);
 
-		for (size_t i = 0; i < platform::Context::GetMaxColorTargets(); i++)
+		for (size_t i = 0; i < platform::SysInfo::GetMaxRenderTargets(); i++)
 		{
 			m_colorTargets.emplace_back(nullptr); // Can't use w/unique_ptr as std::vector::resize wants a copy ctor
 
@@ -157,7 +158,7 @@ namespace re
 		SetName(rhs.GetName());
 
 		m_colorTargets.clear();
-		for (size_t i = 0; i < platform::Context::GetMaxColorTargets(); i++)
+		for (size_t i = 0; i < platform::SysInfo::GetMaxRenderTargets(); i++)
 		{
 			m_colorTargets.emplace_back(nullptr); // Can't use w/unique_ptr as std::vector::resize wants a copy ctor
 			if (rhs.m_colorTargets[i])
@@ -231,7 +232,6 @@ namespace re
 		}
 		return nullptr;
 	}
-
 
 
 	void TextureTargetSet::SetDepthStencilTarget(re::TextureTarget const* depthStencilTarget)

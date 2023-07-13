@@ -290,12 +290,6 @@ namespace dx12
 	}
 
 
-	uint8_t Context::GetMaxColorTargets() // TODO: This should be a member of SysInfo
-	{
-		return D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT;
-	}
-
-
 	CommandQueue& Context::GetCommandQueue(CommandList::CommandListType type)
 	{
 		dx12::Context::PlatformParams* ctxPlatParams = 

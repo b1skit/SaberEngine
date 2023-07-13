@@ -15,23 +15,23 @@ namespace re
 	{
 		SEAssert("Cannot append a null RenderStage", renderStage);
 		
-		m_stagePipeline.emplace_back(renderStage);
-		return m_stagePipeline.end();
+		m_renderStages.emplace_back(renderStage);
+		return m_renderStages.end();
 	}
 
 
 	std::vector<re::RenderStage>::iterator StagePipeline::AppendSingleFrameRenderStage(RenderStage const& renderStage)
 	{	
-		m_singleFrameStagePipeline.emplace_back(renderStage);
-		return m_singleFrameStagePipeline.end();
+		m_singleFrameRenderStages.emplace_back(renderStage);
+		return m_singleFrameRenderStages.end();
 	}
 
 
 	void StagePipeline::EndOfFrame()
 	{
-		m_singleFrameStagePipeline.clear();
+		m_singleFrameRenderStages.clear();
 
-		for (RenderStage* renderStage : m_stagePipeline)
+		for (RenderStage* renderStage : m_renderStages)
 		{
 			renderStage->EndOfFrame();
 		}
@@ -40,8 +40,8 @@ namespace re
 
 	void StagePipeline::Destroy()
 	{
-		m_stagePipeline.clear();
-		m_singleFrameStagePipeline.clear();
+		m_renderStages.clear();
+		m_singleFrameRenderStages.clear();
 	}
 
 
@@ -49,13 +49,13 @@ namespace re
 
 	StagePipeline& RenderPipeline::AddNewStagePipeline(std::string stagePipelineName)
 	{ 
-		m_pipeline.emplace_back(stagePipelineName); 
-		return m_pipeline.back();
+		m_stagePipeline.emplace_back(stagePipelineName);
+		return m_stagePipeline.back();
 	}
 
 
 	void RenderPipeline::Destroy()
 	{
-		m_pipeline.clear();
+		m_stagePipeline.clear();
 	}
 }

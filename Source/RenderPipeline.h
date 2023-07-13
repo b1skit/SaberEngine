@@ -18,22 +18,23 @@ namespace re
 
 		void Destroy();
 
+		// TODO: This should include an iterator as an argument, to allow stages to be inserted at arbitrary locations
 		std::vector<re::RenderStage*>::iterator AppendRenderStage(re::RenderStage* renderStage);
 		std::vector<re::RenderStage>::iterator AppendSingleFrameRenderStage(re::RenderStage const& renderStage);
 
-		size_t GetNumberOfStages() const { return m_stagePipeline.size(); }
+		size_t GetNumberOfStages() const { return m_renderStages.size(); }
 
-		inline std::vector<re::RenderStage*>& GetRenderStages() { return m_stagePipeline; }
-		inline std::vector<re::RenderStage*> const& GetRenderStages() const { return m_stagePipeline; }
+		inline std::vector<re::RenderStage*>& GetRenderStages() { return m_renderStages; }
+		inline std::vector<re::RenderStage*> const& GetRenderStages() const { return m_renderStages; }
 
-		inline std::vector<re::RenderStage>& GetSingleFrameRenderStages() { return m_singleFrameStagePipeline; }
-		inline std::vector<re::RenderStage> const& GetSingleFrameRenderStages() const { return m_singleFrameStagePipeline; }
+		inline std::vector<re::RenderStage>& GetSingleFrameRenderStages() { return m_singleFrameRenderStages; }
+		inline std::vector<re::RenderStage> const& GetSingleFrameRenderStages() const { return m_singleFrameRenderStages; }
 
 		void EndOfFrame(); // Clear m_singleFrameStagePipeline etc
 
 	private:
-		std::vector<re::RenderStage*> m_stagePipeline;
-		std::vector<re::RenderStage> m_singleFrameStagePipeline;
+		std::vector<re::RenderStage*> m_renderStages;
+		std::vector<re::RenderStage> m_singleFrameRenderStages;
 
 	private:
 		StagePipeline() = delete;
@@ -54,10 +55,10 @@ namespace re
 
 		StagePipeline& AddNewStagePipeline(std::string stagePipelineName);
 
-		std::vector<StagePipeline>& GetPipeline() { return m_pipeline; }
-		std::vector<StagePipeline> const& GetPipeline() const { return m_pipeline; }
+		std::vector<StagePipeline>& GetStagePipeline() { return m_stagePipeline; }
+		std::vector<StagePipeline> const& GetStagePipeline() const { return m_stagePipeline; }
 
-		inline size_t GetNumberGraphicsSystems() const { return m_pipeline.size(); }
+		inline size_t GetNumberGraphicsSystems() const { return m_stagePipeline.size(); }
 
 
 	private:
@@ -69,7 +70,7 @@ namespace re
 		//   *   *
 		//   |
 		//   *
-		std::vector<StagePipeline> m_pipeline;
+		std::vector<StagePipeline> m_stagePipeline;
 
 
 	private:

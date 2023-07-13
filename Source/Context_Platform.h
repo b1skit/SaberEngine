@@ -19,6 +19,5 @@ namespace platform
 		static void (*Destroy)(re::Context& context);
 		static void (*Present)(re::Context const& context);
 		static uint8_t(*GetMaxTextureInputs)();
-		static uint8_t(*GetMaxColorTargets)();
 	};
 }

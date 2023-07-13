@@ -6,6 +6,12 @@
 
 namespace dx12
 {
+	uint8_t SysInfo::GetMaxRenderTargets()
+	{
+		return D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT;
+	}
+
+
 	D3D_ROOT_SIGNATURE_VERSION SysInfo::GetHighestSupportedRootSignatureVersion()
 	{
 		static D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData{};

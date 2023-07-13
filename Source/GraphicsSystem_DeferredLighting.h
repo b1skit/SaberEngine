@@ -21,7 +21,6 @@ namespace gr
 	public:
 		explicit DeferredLightingGraphicsSystem(std::string name);
 
-		DeferredLightingGraphicsSystem() = delete;
 		~DeferredLightingGraphicsSystem() override {}
 
 		void Create(re::StagePipeline& pipeline) override;

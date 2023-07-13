@@ -35,7 +35,6 @@ namespace opengl
 		static void Present(re::Context const& context);
 		static void SetPipelineState(re::Context const& context, gr::PipelineState const& pipelineState);
 		static uint8_t GetMaxTextureInputs();
-		static uint8_t GetMaxColorTargets();
 
 		// OpenGL-specific interface:
 		static void SetCullingMode(gr::PipelineState::FaceCullingMode const& mode);

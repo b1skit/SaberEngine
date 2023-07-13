@@ -168,6 +168,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClCompile Include="Fence_DX12.cpp" />
     <ClCompile Include="GameplayManager.cpp" />
     <ClCompile Include="GPUDescriptorHeap_DX12.cpp" />
+    <ClCompile Include="GraphicsSystem_ComputeMips.cpp" />
     <ClCompile Include="GraphicsSystem_TempDebug.cpp" />
     <ClCompile Include="InputManager_Platform.cpp" />
     <ClCompile Include="InputManager_Win32.cpp" />
@@ -196,6 +197,8 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClCompile Include="SwapChain_DX12.cpp" />
     <ClCompile Include="SwapChain_OpenGL.cpp" />
     <ClCompile Include="SwapChain_Platform.cpp" />
+    <ClCompile Include="SysInfo_OpenGL.cpp" />
+    <ClCompile Include="SysInfo_Platform.cpp" />
     <ClCompile Include="TextureTarget_DX12.cpp" />
     <ClCompile Include="Texture_DX12.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
@@ -280,6 +283,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClInclude Include="Fence_DX12.h" />
     <ClInclude Include="GameplayManager.h" />
     <ClInclude Include="GPUDescriptorHeap_DX12.h" />
+    <ClInclude Include="GraphicsSystem_ComputeMips.h" />
     <ClInclude Include="GraphicsSystem_TempDebug.h" />
     <ClInclude Include="HashedDataObject.h" />
     <ClInclude Include="HashUtils.h" />
@@ -307,6 +311,8 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <ClInclude Include="SwapChain_DX12.h" />
     <ClInclude Include="SwapChain_OpenGL.h" />
     <ClInclude Include="SwapChain_Platform.h" />
+    <ClInclude Include="SysInfo_OpenGL.h" />
+    <ClInclude Include="SysInfo_Platform.h" />
     <ClInclude Include="TextUtils.h" />
     <ClInclude Include="TextureTarget_DX12.h" />
     <ClInclude Include="Texture_DX12.h" />

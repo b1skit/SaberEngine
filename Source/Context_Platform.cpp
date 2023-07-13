@@ -40,5 +40,4 @@ namespace platform
 	void (*platform::Context::Destroy)(re::Context& context) = nullptr;
 	void (*platform::Context::Present)(re::Context const& context) = nullptr;
 	uint8_t (*platform::Context::GetMaxTextureInputs)() = nullptr;
-	uint8_t (*platform::Context::GetMaxColorTargets)() = nullptr;
 }

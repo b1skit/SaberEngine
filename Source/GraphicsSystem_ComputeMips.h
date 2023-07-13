@@ -1,0 +1,33 @@
+// © 2023 Adam Badke. All rights reserved.
+#pragma once
+#include "GraphicsSystem.h"
+
+
+namespace gr
+{
+	class ComputeMipsGraphicsSystem final : public virtual GraphicsSystem
+	{
+	public:
+		explicit ComputeMipsGraphicsSystem(std::string name);
+
+		~ComputeMipsGraphicsSystem() override {}
+
+		void Create(re::StagePipeline& pipeline) override;
+
+		void PreRender(re::StagePipeline& pipeline) override;
+
+		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
+
+		// Add newly created textures; Mips will be generated in the next frame via a single-frame render stage
+		void AddTexture(std::shared_ptr<re::Texture>);
+
+
+	private:
+		void CreateBatches() override;
+
+
+	private:
+		std::vector<std::shared_ptr<re::Texture>> m_textures;
+
+	};
+}

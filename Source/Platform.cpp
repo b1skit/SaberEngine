@@ -37,6 +37,10 @@
 #include "SwapChain_Platform.h"
 #include "SwapChain_OpenGL.h"
 
+#include "SysInfo_DX12.h"
+#include "SysInfo_Platform.h"
+#include "SysInfo_OpenGL.h"
+
 #include "Texture_DX12.h"
 #include "Texture_Platform.h"
 #include "Texture_OpenGL.h"
@@ -92,7 +96,6 @@ namespace platform
 			platform::Context::Destroy				= &opengl::Context::Destroy;
 			platform::Context::Present				= &opengl::Context::Present;
 			platform::Context::GetMaxTextureInputs	= &opengl::Context::GetMaxTextureInputs;
-			platform::Context::GetMaxColorTargets	= &opengl::Context::GetMaxColorTargets;
 			
 			// MeshPrimitive:
 			platform::MeshPrimitive::Destroy	= &opengl::MeshPrimitive::Destroy;
@@ -112,6 +115,9 @@ namespace platform
 			// Shader:
 			platform::Shader::Create			= &opengl::Shader::Create;
 			platform::Shader::Destroy			= &opengl::Shader::Destroy;
+
+			// SysInfo:
+			platform::SysInfo::GetMaxRenderTargets = &opengl::SysInfo::GetMaxRenderTargets;
 
 			// Swap chain:
 			platform::SwapChain::Create			= &opengl::SwapChain::Create;
@@ -140,7 +146,6 @@ namespace platform
 			platform::Context::Destroy				= &dx12::Context::Destroy;
 			platform::Context::Present				= &dx12::Context::Present;
 			platform::Context::GetMaxTextureInputs	= &dx12::Context::GetMaxTextureInputs;
-			platform::Context::GetMaxColorTargets	= &dx12::Context::GetMaxColorTargets;
 
 			// MeshPrimitive:
 			platform::MeshPrimitive::Destroy	= &dx12::MeshPrimitive::Destroy;
@@ -160,6 +165,9 @@ namespace platform
 			// Shader:
 			platform::Shader::Create			= &dx12::Shader::Create;
 			platform::Shader::Destroy			= &dx12::Shader::Destroy;
+
+			// SysInfo:
+			platform::SysInfo::GetMaxRenderTargets = &dx12::SysInfo::GetMaxRenderTargets;
 
 			// Swap chain:
 			platform::SwapChain::Create			= &dx12::SwapChain::Create;

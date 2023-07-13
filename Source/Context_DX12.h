@@ -70,7 +70,6 @@ namespace dx12
 		
 		// TODO: Move these to the system info layer:
 		static uint8_t GetMaxTextureInputs();
-		static uint8_t GetMaxColorTargets();
 
 
 		// DX12-specific interface:

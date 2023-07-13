@@ -50,7 +50,7 @@ namespace re
 		
 		// Platform wrappers:
 		uint8_t GetMaxTextureInputs() const;
-		uint8_t GetMaxColorTargets() const;
+
 
 	private:
 		re::SwapChain m_swapChain;

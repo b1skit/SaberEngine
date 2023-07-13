@@ -8,6 +8,7 @@
 #include "Context_DX12.h"
 #include "DebugConfiguration.h"
 #include "Debug_DX12.h"
+#include "GraphicsSystem_ComputeMips.h"
 #include "GraphicsSystem_TempDebug.h"
 #include "MeshPrimitive_DX12.h"
 #include "ParameterBlock_DX12.h"
@@ -31,6 +32,8 @@ namespace dx12
 {
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
+		renderManager.m_graphicsSystems.emplace_back(
+			make_shared<gr::ComputeMipsGraphicsSystem>("DX12 Compute Mips Graphics System"));
 		renderManager.m_graphicsSystems.emplace_back(
 			make_shared<gr::TempDebugGraphicsSystem>("DX12 Temp Debug Graphics System"));
 	}
@@ -70,10 +73,18 @@ namespace dx12
 			// Textures:
 			if (!renderManager.m_newTextures.m_newObjects.empty())
 			{
+				gr::ComputeMipsGraphicsSystem* computeMipsGS = 
+					renderManager.GetGraphicsSystem<gr::ComputeMipsGraphicsSystem>();
+
 				std::lock_guard<std::mutex> lock(renderManager.m_newTextures.m_mutex);
 				for (auto& texture : renderManager.m_newTextures.m_newObjects)
 				{
 					dx12::Texture::Create(*texture.second, copyCommandListD3D, intermediateResources);
+
+					if (texture.second->GetTextureParams().m_useMIPs)
+					{
+						computeMipsGS->AddTexture(texture.second);
+					}
 				}
 				renderManager.m_newTextures.m_newObjects.clear();
 			}
@@ -120,7 +131,7 @@ namespace dx12
 		{
 			SEAssert("Creating PSO's for DX12 Shaders requires a re::PipelineState from a RenderStage, but the "
 				"pipeline is empty",
-				!renderManager.m_pipeline.GetPipeline().empty());
+				!renderManager.m_renderPipeline.GetStagePipeline().empty());
 
 			std::lock_guard<std::mutex> lock(renderManager.m_newShaders.m_mutex);
 			for (auto& shader : renderManager.m_newShaders.m_newObjects)
@@ -129,7 +140,7 @@ namespace dx12
 				dx12::Shader::Create(*shader.second);
 
 				// Create any necessary PSO's for the Shader:
-				for (re::StagePipeline& stagePipeline : renderManager.m_pipeline.GetPipeline())
+				for (re::StagePipeline& stagePipeline : renderManager.m_renderPipeline.GetStagePipeline())
 				{
 					std::vector<re::RenderStage*> const& renderStages = stagePipeline.GetRenderStages();
 					for (re::RenderStage* renderStage : renderStages)
@@ -177,11 +188,11 @@ namespace dx12
 
 
 		std::vector<std::shared_ptr<dx12::CommandList>> commandLists;
-		commandLists.reserve(renderManager.m_pipeline.GetPipeline().size());
+		commandLists.reserve(renderManager.m_renderPipeline.GetStagePipeline().size());
 
 
 		// Render each stage:
-		for (StagePipeline& stagePipeline : renderManager.m_pipeline.GetPipeline())
+		for (StagePipeline& stagePipeline : renderManager.m_renderPipeline.GetStagePipeline())
 		{
 			// Note: Our command lists and associated command allocators are already closed/reset
 			std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
@@ -369,11 +380,10 @@ namespace dx12
 			commandLists.emplace_back(commandList);
 		}
 
-		SEAssert("TODO: Handle submitting multiple command lists at once. May need to sync with fences between", 
-			commandLists.size() == 1);
+		// TODO: Do we need to insert fences between our command lists to syncronize them here?
 
 		// Execute the command lists
-		directQueue.Execute(1, &commandLists[0]);
+		directQueue.Execute(static_cast<uint32_t>(commandLists.size()), commandLists.data());
 	}
 
 

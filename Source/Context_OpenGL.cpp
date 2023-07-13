@@ -612,12 +612,4 @@ namespace opengl
 		SEAssert("GL_MAX_TEXTURE_IMAGE_UNITS query failed", maxTexInputs > 0);
 		return (uint32_t)maxTexInputs;
 	}
-
-
-	uint8_t opengl::Context::GetMaxColorTargets()
-	{
-		GLint maxColorAttachments = 0;
-		glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAttachments);
-		return maxColorAttachments;
-	}
 }
