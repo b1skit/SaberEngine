@@ -494,7 +494,7 @@ namespace en
 		break;
 		case platform::RenderingAPI::DX12:
 		{
-			TryInsertDefault("shaderDirectory", std::string(".\\Shaders\\DX12\\"));
+			TryInsertDefault("shaderDirectory", std::string(".\\Shaders\\HLSL\\"));
 		}
 		break;
 		default:
