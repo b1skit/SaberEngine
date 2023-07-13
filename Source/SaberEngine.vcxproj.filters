@@ -777,12 +777,6 @@
     <None Include="Shaders\glsl\blitShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
-    <None Include="Shaders\glsl\blurShader.frag">
-      <Filter>Source Files\Shaders\OpenGL</Filter>
-    </None>
-    <None Include="Shaders\glsl\blurShader.vert">
-      <Filter>Source Files\Shaders\OpenGL</Filter>
-    </None>
     <None Include="Shaders\glsl\BRDFIntegrationMapShader.frag">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
@@ -814,12 +808,6 @@
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
     <None Include="Shaders\glsl\depthShader.vert">
-      <Filter>Source Files\Shaders\OpenGL</Filter>
-    </None>
-    <None Include="Shaders\glsl\equilinearToCubemapBlitShader.frag">
-      <Filter>Source Files\Shaders\OpenGL</Filter>
-    </None>
-    <None Include="Shaders\glsl\equilinearToCubemapBlitShader.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
     <None Include="Shaders\glsl\gBufferFillShader.frag">
@@ -855,6 +843,39 @@
       <Filter>Source Files\Shaders\DX12</Filter>
     </None>
     <None Include="Shaders\glsl\blurCommon.glsl">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\glsl\blitIEMShader.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\glsl\blitIEMShader.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\glsl\blitPMREMShader.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\glsl\blitPMREMShader.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\glsl\blurShaderHorizontal.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\glsl\blurShaderHorizontal.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\glsl\blurShaderVertical.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\glsl\blurShaderVertical.vert">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\glsl\IEMPMREMCommon.glsl">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\glsl\luminanceThreshold.frag">
+      <Filter>Source Files\Shaders\OpenGL</Filter>
+    </None>
+    <None Include="Shaders\glsl\luminanceThreshold.vert">
       <Filter>Source Files\Shaders\OpenGL</Filter>
     </None>
   </ItemGroup>

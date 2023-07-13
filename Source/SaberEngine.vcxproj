@@ -386,11 +386,17 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <None Include="Shaders\DX12\SaberCommon.hlsli">
       <FileType>Document</FileType>
     </None>
+    <None Include="Shaders\glsl\blitIEMShader.frag" />
+    <None Include="Shaders\glsl\blitIEMShader.vert" />
+    <None Include="Shaders\glsl\blitPMREMShader.frag" />
+    <None Include="Shaders\glsl\blitPMREMShader.vert" />
     <None Include="Shaders\glsl\blitShader.frag" />
     <None Include="Shaders\glsl\blitShader.vert" />
     <None Include="Shaders\glsl\blurCommon.glsl" />
-    <None Include="Shaders\glsl\blurShader.frag" />
-    <None Include="Shaders\glsl\blurShader.vert" />
+    <None Include="Shaders\glsl\blurShaderHorizontal.frag" />
+    <None Include="Shaders\glsl\blurShaderHorizontal.vert" />
+    <None Include="Shaders\glsl\blurShaderVertical.frag" />
+    <None Include="Shaders\glsl\blurShaderVertical.vert" />
     <None Include="Shaders\glsl\BRDFIntegrationMapShader.frag" />
     <None Include="Shaders\glsl\BRDFIntegrationMapShader.vert" />
     <None Include="Shaders\glsl\cubeDepthShader.geom" />
@@ -402,10 +408,11 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\DX12\"</Command>
     <None Include="Shaders\glsl\deferredPointLightShader.frag" />
     <None Include="Shaders\glsl\deferredPointLightShader.vert" />
     <None Include="Shaders\glsl\depthShader.vert" />
-    <None Include="Shaders\glsl\equilinearToCubemapBlitShader.frag" />
-    <None Include="Shaders\glsl\equilinearToCubemapBlitShader.vert" />
     <None Include="Shaders\glsl\gBufferFillShader.frag" />
     <None Include="Shaders\glsl\gBufferFillShader.vert" />
+    <None Include="Shaders\glsl\IEMPMREMCommon.glsl" />
+    <None Include="Shaders\glsl\luminanceThreshold.frag" />
+    <None Include="Shaders\glsl\luminanceThreshold.vert" />
     <None Include="Shaders\glsl\SaberCommon.glsl" />
     <None Include="Shaders\glsl\SaberGlobals.glsl" />
     <None Include="Shaders\glsl\SaberLighting.glsl" />
