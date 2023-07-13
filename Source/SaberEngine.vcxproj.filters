@@ -839,9 +839,6 @@
     </None>
     <None Include="SaberEngine.licenseheader" />
     <None Include="packages.config" />
-    <None Include="Shaders\DX12\SaberCommon.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
-    </None>
     <None Include="Shaders\glsl\blurCommon.glsl">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
@@ -878,18 +875,21 @@
     <None Include="Shaders\glsl\luminanceThreshold.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
+    <None Include="Shaders\HLSL\SaberCommon.hlsli">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Shaders\DX12\HelloTriangle_PShader.hlsl">
+    <FxCompile Include="Shaders\HLSL\HelloTriangle_VShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\DX12\HelloTriangle_VShader.hlsl">
+    <FxCompile Include="Shaders\HLSL\HelloTriangle_PShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\DX12\Debug_PShader.hlsl">
+    <FxCompile Include="Shaders\HLSL\Debug_VShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\DX12\Debug_VShader.hlsl">
+    <FxCompile Include="Shaders\HLSL\Debug_PShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
   </ItemGroup>
