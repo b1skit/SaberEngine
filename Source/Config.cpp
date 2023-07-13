@@ -459,7 +459,7 @@ namespace en
 		case platform::RenderingAPI::OpenGL:
 		{
 			// Shader:
-			TryInsertDefault("shaderDirectory",						std::string(".\\Shaders\\glsl\\"));
+			TryInsertDefault("shaderDirectory",						std::string(".\\Shaders\\GLSL\\"));
 
 			// Depth map rendering:
 			TryInsertDefault("depthShaderName",						std::string("depthShader"));
