@@ -13,7 +13,7 @@ layout(origin_upper_left) in vec4 gl_FragCoord;
 void main()
 {	
 	vec4 ndcPosition;
-	ndcPosition.xy	= ((2.0 * gl_FragCoord.xy) / g_targetResolution.xy) - 1.0;
+	ndcPosition.xy	= ((2.0 * gl_FragCoord.xy) / g_skyboxTargetResolution.xy) - 1.0;
 	ndcPosition.z	= 1.0;
 	ndcPosition.w	= 1.0;
 	

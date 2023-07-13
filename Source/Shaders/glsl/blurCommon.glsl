@@ -52,13 +52,13 @@
 	{
 		vec3 total = vec3(0,0,0);
 		vec2 uvs = vOut.uv0.xy;
-		uvs.x -= g_targetResolution.z * TEXEL_OFFSET;	// Offset to the left
+		uvs.x -= g_bloomTargetResolution.z * TEXEL_OFFSET;	// Offset to the left
 
 		for (int i = 0; i < NUM_TAPS; i++)
 		{
 			total += texture(GBufferAlbedo, uvs).rgb * weights[i];
 
-			uvs.x += g_targetResolution.z; // Move the sample right by 1 pixel
+			uvs.x += g_bloomTargetResolution.z; // Move the sample right by 1 pixel
 		}
 
 		FragColor = vec4(total, 1.0);
@@ -72,13 +72,13 @@
 	{	
 		vec3 total = vec3(0,0,0);
 		vec2 uvs = vOut.uv0.xy;
-		uvs.y += g_targetResolution.w * TEXEL_OFFSET;	// Offset
+		uvs.y += g_bloomTargetResolution.w * TEXEL_OFFSET;	// Offset
 
 		for (int i = 0; i < NUM_TAPS; i++)
 		{
 			total += texture(GBufferAlbedo, uvs).rgb * weights[i];
 
-			uvs.y -= g_targetResolution.w; // Move the sample down by 1 pixel
+			uvs.y -= g_bloomTargetResolution.w; // Move the sample down by 1 pixel
 		}
 
 		FragColor = vec4(total, 1);

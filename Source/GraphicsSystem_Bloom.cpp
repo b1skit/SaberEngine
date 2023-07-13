@@ -7,26 +7,43 @@
 #include "SceneManager.h"
 #include "RenderManager.h"
 
+using gr::DeferredLightingGraphicsSystem;
+using en::Config;
+using en::SceneManager;
+using re::RenderManager;
+using re::RenderStage;
+using re::Sampler;
+using re::Shader;
+using re::Batch;
+using re::Texture;
+using std::shared_ptr;
+using std::make_shared;
+using std::string;
+using std::to_string;
+using glm::vec3;
+using glm::vec4;
+
+
+namespace
+{
+	struct BloomParams
+	{
+		glm::vec4 g_bloomTargetResolution;
+
+		static constexpr char const* const s_shaderName = "BloomParams";
+	};
+
+
+	BloomParams CreateBloomParamsData(std::shared_ptr<re::TextureTargetSet const> targetSet)
+	{
+		BloomParams bloomParams;
+		bloomParams.g_bloomTargetResolution = targetSet->GetTargetDimensions();
+		return bloomParams;
+	}
+}
 
 namespace gr
 {
-	using gr::DeferredLightingGraphicsSystem;
-	using en::Config;
-	using en::SceneManager;
-	using re::RenderManager;
-	using re::RenderStage;
-	using re::Sampler;
-	using re::Shader;
-	using re::Batch;
-	using re::Texture;
-	using std::shared_ptr;
-	using std::make_shared;
-	using std::string;
-	using std::to_string;
-	using glm::vec3;
-	using glm::vec4;
-
-
 	BloomGraphicsSystem::BloomGraphicsSystem(std::string name) : GraphicsSystem(name), NamedObject(name),
 		m_emissiveBlitStage("Emissive blit stage")
 	{
@@ -173,6 +190,11 @@ namespace gr
 				m_blurStages.back().SetStageShader(verticalBlurShader);
 			}
 			m_blurStages.back().SetTextureTargetSet(blurTargets);
+
+			m_blurStages.back().AddPermanentParameterBlock(re::ParameterBlock::Create(
+				BloomParams::s_shaderName,
+				CreateBloomParamsData(blurTargets),
+				re::ParameterBlock::PBType::Immutable));
 
 			pipeline.AppendRenderStage(&m_blurStages[i]);
 		}

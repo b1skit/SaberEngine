@@ -37,15 +37,7 @@ namespace gr
 				re::RenderStage mipGenerationStage(newTexture->GetName() + " MIP generation stage");
 
 				const std::string targetSetName = newTexture->GetName() + " MIP generation stage targets";
-				/*std::shared_ptr<re::TextureTargetSet> mipGenTargets = re::TextureTargetSet::Create(targetSetName);*/
-
-				// CURRENT PROBLEM: 
-				// - Texture target sets create a permanent PB, but we expect these to be created before the 1st frame
-				//	-> SingleFrame PBs are committed at creation, and cannot be updated (e.g. as we add/change targets)
-				//		-> Also, creating a PB will enroll it for creation with the RenderManager... But that won't
-				//			happen until next frame
-				// SOLUTION:
-				// - Remove PBs from target set
+				//std::shared_ptr<re::TextureTargetSet> mipGenTargets = re::TextureTargetSet::Create(targetSetName);
 
 				re::TextureTarget::TargetParams targetParams;
 				targetParams.m_targetFace = faceIdx;

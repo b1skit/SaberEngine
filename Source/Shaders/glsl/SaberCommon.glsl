@@ -152,6 +152,7 @@ layout(std430, binding=2) readonly buffer LightParams
 	vec2 g_shadowCamNearFar;
 	vec2 g_shadowBiasMinMax; // .xy = min, max shadow bias
 	mat4 g_shadowCam_VP;
+	vec4 g_renderTargetResolution;
 };
 
 
@@ -184,23 +185,30 @@ layout(std430, binding=5) readonly buffer CubemapShadowRenderParams
 };
 
 
-// TextureTarget.cpp
-layout(std430, binding=6) readonly buffer RenderTargetParams
-{
-	vec4 g_targetResolution; // .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
-};
-
-
 // GraphicsSystem_Tonemapping.cpp
-layout(std430, binding=7) readonly buffer TonemappingParams
+layout(std430, binding=6) readonly buffer TonemappingParams
 {
 	vec4 g_exposure; // .x = exposure, .yzw = unused
 };
 
 
 // GraphicsSystem_DeferredLighting.cpp
-layout(std430, binding=8) readonly buffer IEMPMREMGenerationParams
+layout(std430, binding=7) readonly buffer IEMPMREMGenerationParams
 {
 	vec4 g_numSamplesRoughness; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness
+};
+
+
+// GraphicsSystem_Bloom.cpp
+layout(std430, binding=8) readonly buffer BloomParams
+{
+	vec4 g_bloomTargetResolution; // .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
+};
+
+
+// GraphicsSystem_Skybox.cpp
+layout(std430, binding=9) readonly buffer SkyboxParams
+{
+	vec4 g_skyboxTargetResolution; // .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
 };
 #endif

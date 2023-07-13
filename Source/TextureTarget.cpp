@@ -103,7 +103,6 @@ namespace re
 		: NamedObject(name)
 		, m_targetStateDirty(true)
 		, m_numColorTargets(0)
-		, m_targetParameterBlock(nullptr)
 	{
 		platform::TextureTargetSet::CreatePlatformParams(*this);
 	
@@ -112,11 +111,6 @@ namespace re
 			m_colorTargets.emplace_back(nullptr); // Can't use w/unique_ptr as std::vector::resize wants a copy ctor
 		}
 		m_depthStencilTarget = nullptr;
-
-		m_targetParameterBlock = re::ParameterBlock::Create(
-			RenderTargetParams::s_shaderName,
-			RenderTargetParams(), // Defaults for now
-			re::ParameterBlock::PBType::Mutable);
 	}
 
 
@@ -126,7 +120,6 @@ namespace re
 		, m_numColorTargets(rhs.m_numColorTargets)
 		, m_viewport(rhs.m_viewport)
 		, m_platformParams(nullptr) // Targets are copied, but the target set must be created
-		, m_targetParameterBlock(rhs.m_targetParameterBlock)
 	{
 		platform::TextureTargetSet::CreatePlatformParams(*this);
 
@@ -140,11 +133,6 @@ namespace re
 			}
 		}
 		m_depthStencilTarget = std::make_unique<re::TextureTarget>(*rhs.m_depthStencilTarget);
-
-		m_targetParameterBlock = re::ParameterBlock::Create(
-			RenderTargetParams::s_shaderName,
-			RenderTargetParams(), // Defaults for now
-			re::ParameterBlock::PBType::Mutable);
 	}
 
 
@@ -172,7 +160,6 @@ namespace re
 		m_numColorTargets = rhs.m_numColorTargets;
 		m_viewport = rhs.m_viewport;
 		m_platformParams = rhs.m_platformParams;
-		m_targetParameterBlock = rhs.m_targetParameterBlock;
 
 		return *this;
 	}
@@ -186,8 +173,6 @@ namespace re
 
 		m_targetStateDirty = true;
 		m_numColorTargets = 0;
-
-		m_targetParameterBlock = nullptr;
 	}
 
 
@@ -278,48 +263,20 @@ namespace re
 	}
 
 
-	std::shared_ptr<re::ParameterBlock> TextureTargetSet::GetTargetParameterBlock()
+	glm::vec4 TextureTargetSet::GetTargetDimensions() const
 	{
-		RecomputeInternalState();
-		return m_targetParameterBlock;
-	}
+		glm::vec4 targetDimensions(0.f);
 
-
-	std::shared_ptr<re::ParameterBlock> TextureTargetSet::GetTargetParameterBlock() const
-	{
-		SEAssert("Trying to get a target param block, but the target state is dirty", !m_targetStateDirty);
-		return m_targetParameterBlock;
-	}
-
-
-	void TextureTargetSet::RecomputeTargetParameterBlock()
-	{
-		glm::vec4 targetDimensions(0.f, 0.f, 0.f, 0.f);
 		bool foundDimensions = false;
 
-		// Default framebuffer has no texture targets
-		if (!HasTargets())
-		{
-			const uint32_t xRes = (uint32_t)Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
-			const uint32_t yRes = (uint32_t)Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
-
-			targetDimensions.x = (float)xRes;
-			targetDimensions.y = (float)yRes;
-			targetDimensions.z = 1.0f / xRes;
-			targetDimensions.w = 1.0f / yRes;
-
-			foundDimensions = true;
-		}
-
 		// Find a single target we can get the resolution details from; This assumes all targets are the same dimensions
-		if (!foundDimensions && HasDepthTarget())
+		if (m_depthStencilTarget)
 		{
 			std::shared_ptr<re::Texture> depthTarget = m_depthStencilTarget->GetTexture();
 			targetDimensions = depthTarget->GetTextureDimenions();
 			foundDimensions = true;
 		}
-
-		if (!foundDimensions && HasColorTarget())
+		else
 		{
 			for (uint8_t slot = 0; slot < m_colorTargets.size(); slot++)
 			{
@@ -333,12 +290,23 @@ namespace re
 			}
 		}
 
-		SEAssert("Cannot create parameter block with no texture dimensions", foundDimensions);
+		// Default framebuffer has no texture targets
+		// TODO: A default framebuffer target set should be identified by a flag; We shouldn't be implying it by emptiness
+		// -> OR: A target has a flag (and just no texture resource, for OpenGL)?
+		if (!foundDimensions)
+		{
+			const uint32_t xRes = (uint32_t)Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
+			const uint32_t yRes = (uint32_t)Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
 
-		RenderTargetParams targetParams;
-		targetParams.g_targetResolution = targetDimensions;
+			targetDimensions.x = (float)xRes;
+			targetDimensions.y = (float)yRes;
+			targetDimensions.z = 1.0f / xRes;
+			targetDimensions.w = 1.0f / yRes;
 
-		m_targetParameterBlock->Commit(targetParams);
+			foundDimensions = true;
+		}
+
+		return targetDimensions;
 	}
 
 
@@ -365,7 +333,6 @@ namespace re
 		m_targetStateDirty = false;
 
 		RecomputeNumColorTargets();
-		RecomputeTargetParameterBlock(); // Must happen after recounting the targets
 		ComputeDataHash();
 	}
 

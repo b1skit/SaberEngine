@@ -14,7 +14,9 @@ in vec4 gl_FragCoord;
 void main()
 {	
 	// [0, xRes/yRes] -> [0,1]
-	const vec2 screenUVs = vec2(gl_FragCoord.x / g_targetResolution.x, gl_FragCoord.y / g_targetResolution.y); 
+	const vec2 screenUVs = vec2(
+		gl_FragCoord.x / g_renderTargetResolution.x, 
+		gl_FragCoord.y / g_renderTargetResolution.y); 
 	
 	// Sample textures once inside the main shader flow, and pass the values as required:
 	const vec4 linearAlbedo = texture(GBufferAlbedo, screenUVs);

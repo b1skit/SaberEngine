@@ -28,6 +28,24 @@ using glm::vec4;
 using glm::mat4;
 
 
+namespace
+{
+	struct SkyboxParams
+	{
+		glm::vec4 g_skyboxTargetResolution;
+
+		static constexpr char const* const s_shaderName = "SkyboxParams";
+	};
+
+
+	SkyboxParams CreateSkyboxParamsData(std::shared_ptr<re::TextureTargetSet const> targetSet)
+	{
+		SkyboxParams skyboxParams;
+		skyboxParams.g_skyboxTargetResolution = targetSet->GetTargetDimensions();
+		return skyboxParams;
+	}
+}
+
 namespace gr
 {
 	SkyboxGraphicsSystem::SkyboxGraphicsSystem(std::string name)
@@ -68,6 +86,11 @@ namespace gr
 		// GBuffer depth for HW depth testing
 		std::shared_ptr<re::TextureTargetSet> skyboxTargets = 
 			re::TextureTargetSet::Create(*deferredLightGS->GetFinalTextureTargetSet(),"Skybox Targets");
+
+		m_skyboxStage.AddPermanentParameterBlock(re::ParameterBlock::Create(
+			SkyboxParams::s_shaderName,
+			CreateSkyboxParamsData(skyboxTargets),
+			re::ParameterBlock::PBType::Immutable));
 
 		GBufferGraphicsSystem* gBufferGS = RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>();
 

@@ -51,6 +51,7 @@ namespace dx12
 				std::unordered_map<uint64_t, // gr::PipelineState::GetPipelineStateDataHash()
 					std::unordered_map<uint64_t, // re::TextureTargetSet::GetTargetSetSignature()
 						std::shared_ptr<dx12::PipelineState>>>> m_PSOLibrary;
+			// TODO: Combine hashes, instead of nesting hash tables
 
 			// Hashed D3D12_VERSIONED_ROOT_SIGNATURE_DESC -> Root sig object
 			std::unordered_map<uint64_t, std::shared_ptr<dx12::RootSignature>> m_rootSigLibrary;

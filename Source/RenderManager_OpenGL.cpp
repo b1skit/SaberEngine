@@ -181,8 +181,6 @@ namespace opengl
 				// Priority order: Stage, material (where material shaders are attached to the batch)?
 
 				// Set stage param blocks:
-				opengl::Shader::SetParameterBlock(*stageShader, *stageTargets->GetTargetParameterBlock().get());
-
 				for (std::shared_ptr<re::ParameterBlock> permanentPB : renderStage->GetPermanentParameterBlocks())
 				{
 					opengl::Shader::SetParameterBlock(*stageShader, *permanentPB.get());

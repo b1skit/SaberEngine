@@ -143,15 +143,6 @@ namespace re
 
 
 	public:
-		struct RenderTargetParams
-		{
-			glm::vec4 g_targetResolution = glm::vec4(0.f);
-
-			static constexpr char const* const s_shaderName = "RenderTargetParams"; // Not counted towards size of struct
-		};
-
-
-	public:
 		static std::shared_ptr<re::TextureTargetSet> Create(std::string const& name);
 		static std::shared_ptr<re::TextureTargetSet> Create(TextureTargetSet const&, std::string const& name);
 
@@ -173,6 +164,7 @@ namespace re
 		bool HasDepthTarget();
 
 		uint8_t GetNumColorTargets();
+		glm::vec4 GetTargetDimensions() const;
 
 		inline re::Viewport& Viewport() { return m_viewport; }
 		inline re::Viewport const& Viewport() const { return m_viewport; }
@@ -183,9 +175,6 @@ namespace re
 		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::shared_ptr<PlatformParams> params) { m_platformParams = params; }
 		
-		std::shared_ptr<re::ParameterBlock> GetTargetParameterBlock();
-		std::shared_ptr<re::ParameterBlock> GetTargetParameterBlock() const;
-
 		uint64_t GetTargetSetSignature(); // Use this instead of HashedDataObject::GetDataHash
 		uint64_t GetTargetSetSignature() const;
 
@@ -198,7 +187,6 @@ namespace re
 		void RecomputeInternalState();
 
 		void RecomputeNumColorTargets();
-		void RecomputeTargetParameterBlock();
 		void ComputeDataHash() override; // HashedDataObject interface
 
 
@@ -213,8 +201,6 @@ namespace re
 		re::ScissorRect m_scissorRect; // TODO: Use this in OpenGL
 
 		std::shared_ptr<PlatformParams> m_platformParams;
-
-		std::shared_ptr<re::ParameterBlock> m_targetParameterBlock;
 
 
 	private:

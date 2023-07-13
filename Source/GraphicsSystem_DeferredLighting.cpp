@@ -12,33 +12,31 @@
 #include "RenderManager.h"
 #include "RenderStage.h"
 
+using gr::Light;
+using re::Texture;
+using gr::ShadowMap;
+using re::RenderManager;
+using re::ParameterBlock;
+using re::Batch;
+using re::RenderStage;
+using re::TextureTargetSet;
+using re::Sampler;
+using re::Shader;
+using en::Config;
+using en::SceneManager;
+using std::string;
+using std::shared_ptr;
+using std::make_shared;
+using std::vector;
+using std::to_string;
+using glm::vec3;
+using glm::vec4;
+using glm::mat4;
+
 
 namespace
 {
-	using gr::Light;
-	using re::Texture;
-	using gr::ShadowMap;
-	using re::RenderManager;
-	using re::ParameterBlock;
-	using re::Batch;
-	using re::RenderStage;
-	using re::TextureTargetSet;
-	using re::Sampler;
-	using re::Shader;
-	using en::Config;
-	using en::SceneManager;
-	using std::string;
-	using std::shared_ptr;
-	using std::make_shared;
-	using std::vector;
-	using std::to_string;
-	using glm::vec3;
-	using glm::vec4;
-	using glm::mat4;
-
-
 	constexpr uint32_t k_generatedAmbientIBLTexRes = 1024; // TODO: Make this user-controllable via the config
-
 
 	struct IEMPMREMGenerationParams
 	{
@@ -97,11 +95,13 @@ namespace
 
 		glm::mat4 g_shadowCam_VP;
 
+		glm::vec4 g_renderTargetResolution;
+
 		static constexpr char const* const s_shaderName = "LightParams"; // Not counted towards size of struct
 	};
 
 
-	LightParams GetLightParamData(shared_ptr<Light> const light)
+	LightParams GetLightParamData(shared_ptr<Light> const light, std::shared_ptr<re::TextureTargetSet const> targetSet)
 	{
 		LightParams lightParams;
 		memset(&lightParams, 0, sizeof(LightParams)); // Ensure unused elements are zeroed
@@ -153,6 +153,9 @@ namespace
 				SEAssertF("Light shadow type does not use this param block");
 			}
 		}
+
+		lightParams.g_renderTargetResolution = targetSet->GetTargetDimensions();
+
 		return lightParams;
 	}
 }
@@ -610,7 +613,7 @@ namespace gr
 		{
 			Batch keylightFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
 
-			LightParams keylightParams = GetLightParamData(keyLight);
+			LightParams keylightParams = GetLightParamData(keyLight, m_keylightStage.GetTextureTargetSet());
 			shared_ptr<re::ParameterBlock> keylightPB = re::ParameterBlock::Create(
 				LightParams::s_shaderName,
 				keylightParams,
@@ -628,7 +631,7 @@ namespace gr
 			Batch pointlightBatch = Batch(m_sphereMeshes[i], nullptr);
 
 			// Point light params:
-			LightParams pointlightParams = GetLightParamData(pointLights[i]);
+			LightParams pointlightParams = GetLightParamData(pointLights[i], m_pointlightStage.GetTextureTargetSet());
 			shared_ptr<re::ParameterBlock> pointlightPB = re::ParameterBlock::Create(
 				LightParams::s_shaderName,
 				pointlightParams, 
