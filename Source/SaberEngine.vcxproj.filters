@@ -892,5 +892,8 @@
     <FxCompile Include="Shaders\HLSL\Debug_PShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
+    <FxCompile Include="GenerateMipMaps_CShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

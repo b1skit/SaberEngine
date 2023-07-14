@@ -162,11 +162,20 @@ namespace dx12
 					}
 					break;
 					case RootSignature::Range::Type::UAV:
+					{
+						SetDescriptorTable(
+							descriptorTable.m_index,
+							dx12::Context::GetNullUAVDescriptor(
+								descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_viewDimension,
+								descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_format),
+							static_cast<uint32_t>(rangeEntry),
+						1);
+					}
+					break;
 					case RootSignature::Range::Type::CBV:
 					{
 						SEAssertF("TODO: Handle this type");
 					}
-					break;
 					default:
 						SEAssertF("Invalid range type");
 					}

@@ -53,23 +53,18 @@ namespace
 
 	D3D12_SRV_DIMENSION GetD3D12SRVDimension(D3D_SRV_DIMENSION srvDimension)
 	{
-		switch (srvDimension)
-		{
-		case D3D_SRV_DIMENSION_UNKNOWN: return D3D12_SRV_DIMENSION_UNKNOWN;
-		case D3D_SRV_DIMENSION_BUFFER: return D3D12_SRV_DIMENSION_BUFFER;
-		case D3D_SRV_DIMENSION_TEXTURE1D: return D3D12_SRV_DIMENSION_TEXTURE1D;
-		case D3D_SRV_DIMENSION_TEXTURE1DARRAY: return D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
-		case D3D_SRV_DIMENSION_TEXTURE2D: return D3D12_SRV_DIMENSION_TEXTURE2D;
-		case D3D_SRV_DIMENSION_TEXTURE2DARRAY: return D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-		case D3D_SRV_DIMENSION_TEXTURE2DMS: return D3D12_SRV_DIMENSION_TEXTURE2DMS;
-		case D3D_SRV_DIMENSION_TEXTURE2DMSARRAY: return D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
-		case D3D_SRV_DIMENSION_TEXTURE3D: return D3D12_SRV_DIMENSION_TEXTURE3D;
-		case D3D_SRV_DIMENSION_TEXTURECUBE: return D3D12_SRV_DIMENSION_TEXTURECUBE;
-		case D3D_SRV_DIMENSION_TEXTURECUBEARRAY: return D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-		default:
-			SEAssertF("D3D_SRV_DIMENSION does not have a (known) D3D12_SRV_DIMENSION equivalent");
-		}
-		return D3D12_SRV_DIMENSION_UNKNOWN;
+		// D3D_SRV_DIMENSION::D3D_SRV_DIMENSION_BUFFEREX (== 11, raw buffer resource) is handled differently in D3D12
+		SEAssert("D3D_SRV_DIMENSION does not have a (known) D3D12_SRV_DIMENSION equivalent", 
+			srvDimension >= D3D_SRV_DIMENSION_UNKNOWN && srvDimension <= D3D_SRV_DIMENSION_TEXTURECUBEARRAY);
+		return static_cast<D3D12_SRV_DIMENSION>(srvDimension);
+	}
+
+
+	D3D12_UAV_DIMENSION GetD3D12UAVDimension(D3D_SRV_DIMENSION uavDimension)
+	{
+		SEAssert("D3D_SRV_DIMENSION does not have a (known) D3D12_UAV_DIMENSION equivalent",
+			uavDimension >= D3D_SRV_DIMENSION_UNKNOWN && uavDimension <= D3D_SRV_DIMENSION_TEXTURE3D);
+		return static_cast<D3D12_UAV_DIMENSION>(uavDimension);
 	}
 
 
@@ -226,9 +221,9 @@ namespace dx12
 
 		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 
-		SEAssert("No vertex shader found. TODO: Support root signatures for pipeline configurations without a vertex "
-			"shader (e.g. compute)",
-			shaderParams->m_shaderBlobs[dx12::Shader::ShaderType::Vertex] != nullptr);
+		SEAssert("No valid shader blobs found",
+			shaderParams->m_shaderBlobs[dx12::Shader::ShaderType::Vertex] != nullptr ||
+			shaderParams->m_shaderBlobs[dx12::Shader::ShaderType::Compute] != nullptr);
 
 		std::shared_ptr<dx12::RootSignature> newRootSig = nullptr;
 		newRootSig.reset(new dx12::RootSignature());
@@ -249,11 +244,11 @@ namespace dx12
 			
 			D3D12_SHADER_VISIBILITY m_shaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
 
-			D3D_SHADER_INPUT_TYPE m_shaderInputType;		// Type: Type of resource (e.g. texture, cbuffer, etc.)
-			uint32_t m_bindCount = 0;						// BindCount: Number of contiguous bind points (for arrays)
-			D3D_RESOURCE_RETURN_TYPE m_returnType;			// ReturnType (Textures only)
-			D3D_SRV_DIMENSION m_srvDimension;				// Dimension (Textures only)
-			uint32_t m_numSamples = 0;						// NumSamples: Number of samples (0 if not MS texture)	
+			D3D_SHADER_INPUT_TYPE m_shaderInputType;	// Type: Type of resource (e.g. texture, cbuffer, etc.)
+			uint32_t m_bindCount = 0;					// BindCount: Number of contiguous bind points (for arrays)
+			D3D_RESOURCE_RETURN_TYPE m_returnType;		// ReturnType (Textures/UAVs)
+			D3D_SRV_DIMENSION m_dimension;				// Dimension (Textures/UAVs)
+			uint32_t m_numSamples = 0;					// NumSamples: Number of samples (0 if not MS texture)	
 		};
 		std::array<std::vector<RangeInput>, Range::Type::Type_Count> rangeInputs;
 
@@ -288,6 +283,15 @@ namespace dx12
 
 			// Parse the resource bindings for the current shader stage:
 			D3D12_SHADER_INPUT_BIND_DESC inputBindingDesc;
+
+			auto RangeHasMatchingName = [&inputBindingDesc](RangeInput const& a)
+			{
+				// TODO: We're currently assuming that all textures will be defined once in a common location, and
+				// included in each different shader type (and thus will have the same index... but is this even
+				// true?). This might not always be the case - We should fix this, it's brittle and stupid
+				return strcmp(a.m_name.c_str(), inputBindingDesc.Name) == 0;
+			};			
+
 			for (uint32_t currentResource = 0; currentResource < shaderDesc.BoundResources; currentResource++)
 			{
 				hr = shaderReflection->GetResourceBindingDesc(currentResource, &inputBindingDesc);
@@ -346,15 +350,10 @@ namespace dx12
 				{
 					// Check to see if our texture has already been added (e.g. if it's referenced in multiple shader
 					// stages). We do a linear search, but in practice the no. of elements is likely very small
-					auto HasTexture = [&inputBindingDesc](RangeInput const& a)
-					{
-						return a.m_name == inputBindingDesc.Name;
-					};
-
 					auto result = std::find_if(
 						rangeInputs[Range::Type::SRV].begin(),
 						rangeInputs[Range::Type::SRV].end(),
-						HasTexture);
+						RangeHasMatchingName);
 
 					if (result == rangeInputs[Range::Type::SRV].end())
 					{
@@ -366,11 +365,10 @@ namespace dx12
 								.m_registerSpace = static_cast<uint8_t>(inputBindingDesc.Space),
 								.m_shaderVisibility =
 									GetShaderVisibilityFlagFromShaderType(static_cast<dx12::Shader::ShaderType>(shaderIdx)),
-
 								.m_shaderInputType = inputBindingDesc.Type,
 								.m_bindCount = inputBindingDesc.BindCount,
 								.m_returnType = inputBindingDesc.ReturnType,
-								.m_srvDimension = inputBindingDesc.Dimension,
+								.m_dimension = inputBindingDesc.Dimension,
 								.m_numSamples = inputBindingDesc.NumSamples
 							});
 					}
@@ -419,7 +417,33 @@ namespace dx12
 				break;
 				case D3D_SHADER_INPUT_TYPE::D3D11_SIT_UAV_RWTYPED:
 				{
-					SEAssertF("TODO: Handle this resource type");
+					auto result = std::find_if(
+						rangeInputs[Range::Type::UAV].begin(),
+						rangeInputs[Range::Type::UAV].end(),
+						RangeHasMatchingName);
+
+					if (result == rangeInputs[Range::Type::UAV].end())
+					{
+						rangeInputs[Range::Type::UAV].emplace_back(
+							RangeInput
+							{
+								.m_name = inputBindingDesc.Name,
+								.m_baseRegister = static_cast<uint8_t>(inputBindingDesc.BindPoint),
+								.m_registerSpace = static_cast<uint8_t>(inputBindingDesc.Space),
+								.m_shaderVisibility =
+									GetShaderVisibilityFlagFromShaderType(static_cast<dx12::Shader::ShaderType>(shaderIdx)),
+								.m_shaderInputType = inputBindingDesc.Type,
+								.m_bindCount = inputBindingDesc.BindCount,
+								.m_returnType = inputBindingDesc.ReturnType,
+								.m_dimension = inputBindingDesc.Dimension,
+								.m_numSamples = inputBindingDesc.NumSamples
+							});
+					}
+					else
+					{
+						SEAssert("Compute resource visibility should always be D3D12_SHADER_VISIBILITY_ALL",
+							result->m_shaderVisibility == D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL);
+					}
 				}
 				break;
 				case D3D_SHADER_INPUT_TYPE::D3D_SIT_STRUCTURED:
@@ -552,19 +576,27 @@ namespace dx12
 					case Range::Type::SRV:
 					{
 						const D3D12_SRV_DIMENSION d3d12SrvDimension =
-								GetD3D12SRVDimension(rangeInputs[rangeType][rangeIdx].m_srvDimension);
+								GetD3D12SRVDimension(rangeInputs[rangeType][rangeIdx].m_dimension);
 
-						RangeEntry newRangeEntry;
-						newRangeEntry.m_srvDesc.m_format = 
+						RangeEntry newSrvRangeEntry;
+						newSrvRangeEntry.m_srvDesc.m_format =
 							GetFormatFromReturnType(rangeInputs[rangeType][rangeIdx].m_returnType);
-						newRangeEntry.m_srvDesc.m_viewDimension = d3d12SrvDimension;
+						newSrvRangeEntry.m_srvDesc.m_viewDimension = d3d12SrvDimension;
 
-						newRootSig->m_descriptorTables.back().m_ranges[Range::Type::SRV].emplace_back(newRangeEntry);
+						newRootSig->m_descriptorTables.back().m_ranges[Range::Type::SRV].emplace_back(newSrvRangeEntry);
 					}
 					break;
 					case Range::Type::UAV:
 					{
-						SEAssertF("TODO: Handle this type");
+						const D3D12_UAV_DIMENSION d3d12UavDimension =
+							GetD3D12UAVDimension(rangeInputs[rangeType][rangeIdx].m_dimension);
+
+						RangeEntry newUavRangeEntry;
+						newUavRangeEntry.m_uavDesc.m_format =
+							GetFormatFromReturnType(rangeInputs[rangeType][rangeIdx].m_returnType);
+						newUavRangeEntry.m_uavDesc.m_viewDimension = d3d12UavDimension;
+
+						newRootSig->m_descriptorTables.back().m_ranges[Range::Type::UAV].emplace_back(newUavRangeEntry);
 					}
 					break;
 					case Range::Type::CBV:

@@ -22,7 +22,7 @@ namespace
 	using dx12::CheckHResult;
 	
 	
-	struct PipelineStateStream
+	struct GraphicsPipelineStateStream
 	{
 		CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE rootSignature;
 		CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT inputLayout;
@@ -34,6 +34,13 @@ namespace
 		CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER rasterizer;
 		CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL depthStencil;
 		CD3DX12_PIPELINE_STATE_STREAM_BLEND_DESC blend;
+	};
+
+
+	struct ComputePipelineStateStream
+	{
+		CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE rootSignature;
+		CD3DX12_PIPELINE_STATE_STREAM_CS cShader;
 	};
 
 
@@ -366,24 +373,27 @@ namespace dx12
 	{
 		m_rootSignature = dx12::RootSignature::Create(shader).get();
 
+		dx12::Context::PlatformParams* ctxPlatParams =
+			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+
+		// Generate the PSO:
 		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 
-		SEAssert("Shader doesn't have a pixel and vertex shader blob. TODO: Support this",
-			shaderParams->m_shaderBlobs[dx12::Shader::Vertex] && shaderParams->m_shaderBlobs[dx12::Shader::Pixel]);
-
-		if (shaderParams->m_shaderBlobs[dx12::Shader::Vertex] != nullptr)
+		if (shaderParams->m_shaderBlobs[dx12::Shader::Vertex] && 
+			shaderParams->m_shaderBlobs[dx12::Shader::Pixel])
 		{
 			// Build the vertex stream input layout:
 			std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
 			BuildInputLayout(shaderParams, inputLayout);
 
-			// Build pipeline descriptions:
-			PipelineStateStream pipelineStateStream;
+			// Build graphics pipeline description:
+			GraphicsPipelineStateStream pipelineStateStream;
 			pipelineStateStream.rootSignature = m_rootSignature->GetD3DRootSignature();
 			pipelineStateStream.inputLayout = { &inputLayout[0], static_cast<uint32_t>(inputLayout.size()) };
 			pipelineStateStream.primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-			pipelineStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[dx12::Shader::Vertex].Get());
-			pipelineStateStream.pShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[dx12::Shader::Pixel].Get());
+			pipelineStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Vertex].Get());
+			pipelineStateStream.pShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Pixel].Get());
 
 			// TODO: We're currently assuming target sets have both color and depth targets... This is not always true!
 
@@ -391,7 +401,7 @@ namespace dx12
 			dx12::TextureTargetSet::PlatformParams* targetSetPlatParams =
 				targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 			pipelineStateStream.RTVFormats = TextureTargetSet::GetColorTargetFormats(targetSet);
-			pipelineStateStream.DSVFormat = 
+			pipelineStateStream.DSVFormat =
 				targetSet.GetDepthStencilTarget()->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format;
 
 			// Rasterizer description:
@@ -406,29 +416,45 @@ namespace dx12
 			const D3D12_BLEND_DESC blendDesc = BuildBlendDesc(targetSet, grPipelineState);
 			pipelineStateStream.blend = CD3DX12_BLEND_DESC(blendDesc);
 
-			const D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc =
+			const D3D12_PIPELINE_STATE_STREAM_DESC graphicsPipelineStateStreamDesc =
 			{
-				sizeof(PipelineStateStream),
+				sizeof(GraphicsPipelineStateStream),
 				&pipelineStateStream
 			};
 
-			// Generate the PSO:
-			dx12::Context::PlatformParams* ctxPlatParams =
-				re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-			ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
-
-			HRESULT hr = device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
-			CheckHResult(hr, "Failed to create pipeline state");
+			// CreatePipelineState can create both graphics & compute pipelines from a D3D12_PIPELINE_STATE_STREAM_DESC
+			HRESULT hr = device->CreatePipelineState(&graphicsPipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
+			CheckHResult(hr, "Failed to create graphics pipeline state");
 
 			// Name our PSO:
-			const std::wstring pipelineStateName = shader.GetWName() + L"_" + targetSet.GetWName() + L"_PSO";
+			const std::wstring graphicsPipelineStateName = shader.GetWName() + L"_" + targetSet.GetWName() + L"_PSO";
+			m_pipelineState->SetName(graphicsPipelineStateName.c_str());
+		}
+		else if (shaderParams->m_shaderBlobs[dx12::Shader::Compute])
+		{
+			// Build compute pipeline description:
+			ComputePipelineStateStream computePipelineStateStream;
+			computePipelineStateStream.rootSignature = m_rootSignature->GetD3DRootSignature();
+			computePipelineStateStream.cShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Compute].Get());
+
+			const D3D12_PIPELINE_STATE_STREAM_DESC computePipelineStateStreamDesc
+			{
+				sizeof(ComputePipelineStateStream),
+				&computePipelineStateStream
+			};
+
+			// CreatePipelineState can create both graphics & compute pipelines from a D3D12_PIPELINE_STATE_STREAM_DESC
+			HRESULT hr = device->CreatePipelineState(&computePipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
+			CheckHResult(hr, "Failed to create compute pipeline state");
+
+			// Name our PSO:
+			const std::wstring pipelineStateName = shader.GetWName() + L"_Compute_PSO";
 			m_pipelineState->SetName(pipelineStateName.c_str());
 		}
 		else
 		{
-			SEAssertF("Found a Shader object without a vertex shader. TODO: Support this (e.g. compute shaders)");
+			SEAssertF("Shader doesn't have a supported combination of shader blobs. TODO: Support this");
 		}
-
 	}
 
 

@@ -27,6 +27,7 @@ namespace gr
 
 
 	private:
+		std::shared_ptr<re::Shader> m_mipMapGenerationShader;
 		std::vector<std::shared_ptr<re::Texture>> m_textures;
 
 	};

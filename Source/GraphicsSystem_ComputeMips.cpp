@@ -7,14 +7,14 @@ namespace gr
 	ComputeMipsGraphicsSystem::ComputeMipsGraphicsSystem(std::string name)
 		: GraphicsSystem(name)
 		, NamedObject(name)
+		, m_mipMapGenerationShader(nullptr)
 	{
 	}
 
 
 	void ComputeMipsGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		// TODO: 
-		// Create and cache shader
+		m_mipMapGenerationShader = re::Shader::Create("GenerateMipMaps");
 	}
 
 
@@ -49,7 +49,7 @@ namespace gr
 				//mipGenerationStage.SetTextureTargetSet(mipGenTargets);
 				
 
-				//mipGenerationStage.SetStageShader();
+				mipGenerationStage.SetStageShader(m_mipMapGenerationShader);
 
 				pipeline.AppendSingleFrameRenderStage(mipGenerationStage);
 			}			
