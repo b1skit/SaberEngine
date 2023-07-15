@@ -65,8 +65,8 @@ namespace gr
 		: GraphicsSystem(name), NamedObject(name)
 		, m_hasDirectionalLight(false)
 	{
-		re::RenderStage::RenderStageParams renderStageParams;
-		m_directionalShadowStage = re::RenderStage::Create("Keylight shadow", renderStageParams);
+		re::RenderStage::GraphicsStageParams gfxStageParams;
+		m_directionalShadowStage = re::RenderStage::CreateGraphicsStage("Keylight shadow", gfxStageParams);
 	}
 
 
@@ -122,9 +122,9 @@ namespace gr
 		m_pointLightShadowStageCams.reserve(deferredLights.size());
 		for (shared_ptr<Light> curLight : deferredLights)
 		{
-			re::RenderStage::RenderStageParams renderStageParams;
+			re::RenderStage::GraphicsStageParams gfxStageParams;
 			m_pointLightShadowStages.emplace_back(
-				re::RenderStage::Create(curLight->GetName() + " shadow", renderStageParams));
+				re::RenderStage::CreateGraphicsStage(curLight->GetName() + " shadow", gfxStageParams));
 
 			std::shared_ptr<re::RenderStage> shadowStage = m_pointLightShadowStages.back();
 			

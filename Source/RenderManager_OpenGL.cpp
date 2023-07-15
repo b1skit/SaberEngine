@@ -210,7 +210,7 @@ namespace opengl
 					opengl::MeshPrimitive::Bind(*batch.GetMeshPrimitive());
 
 					// Set Batch Texture/Sampler inputs:
-					if (renderStage->WritesColor())
+					if (renderStage->GetStagePipelineState().WritesColor())
 					{
 						for (auto const& texSamplerInput : batch.GetTextureAndSamplerInputs())
 						{

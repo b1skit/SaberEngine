@@ -15,7 +15,9 @@
 
 namespace re
 {
-	class RenderStage final : public virtual en::NamedObject
+	class ComputeStage;
+
+	class RenderStage : public virtual en::NamedObject
 	{
 	public:
 		enum class RenderStageType
@@ -25,24 +27,30 @@ namespace re
 
 			// TODO: Add specialist types: Fullscreen, etc
 		};
-
-		typedef std::vector<std::tuple<std::string, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>>> RenderStageTextureAndSamplerInput;
-
-
-		struct RenderStageParams
+		struct IStageParams
+		{
+			virtual ~IStageParams() = 0;
+		};
+		struct GraphicsStageParams final : public virtual IStageParams
 		{
 			// TODO: Populate this
 			// Assert values are set when they're received to catch any GS's that need to be updated
 		};
+		struct ComputeStageParams final : public virtual IStageParams
+		{
+			// TODO: Populate this
+		};
+
+		typedef std::vector<std::tuple<std::string, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>>> RenderStageTextureAndSamplerInput;
+
 
 	public:
-		static std::shared_ptr<RenderStage> Create(std::string const& name, RenderStageParams const& params);
+		static std::shared_ptr<RenderStage> CreateGraphicsStage(std::string const& name, GraphicsStageParams const&);
+		static std::shared_ptr<RenderStage> CreateComputeStage(std::string const& name, ComputeStageParams const&);
 
 		~RenderStage() = default;
 
 		void EndOfFrame(); // Clears per-frame data. Called by the owning RenderPipeline
-
-		bool WritesColor() const { return m_writesColor; }; // Are any of the params.m_colorWriteMode channels enabled?
 
 		void SetStagePipelineState(gr::PipelineState const& params);
 		inline gr::PipelineState const& GetStagePipelineState() const { return m_pipelineState; }
@@ -75,19 +83,19 @@ namespace re
 		inline uint32_t GetBatchFilterMask() const { return m_batchFilterMask; }
 		void SetBatchFilterMaskBit(re::Batch::Filter filterBit);
 
-	private:
-		explicit RenderStage(std::string const& name, RenderStageParams const&, RenderStageType);
+	protected:
+		explicit RenderStage(std::string const& name, std::unique_ptr<IStageParams>&&, RenderStageType);
 
 
 	private:
 		const RenderStageType m_type;
-		const RenderStageParams m_stageParams;
+		std::unique_ptr<IStageParams> m_stageParams;
 
 		std::shared_ptr<re::Shader> m_stageShader;
 		std::shared_ptr<re::TextureTargetSet> m_textureTargetSet;
 		
 		gr::PipelineState m_pipelineState;
-		bool m_writesColor;
+		bool m_writesColor; // TODO: This should be a member of the gr::PipelineState
 
 		// Per-frame members are cleared every frame
 		RenderStageTextureAndSamplerInput m_perFrameTextureSamplerInputs;
@@ -107,6 +115,18 @@ namespace re
 	};
 
 
+	class ComputeStage final : public virtual RenderStage
+	{
+	public:
+		
+
+
+	private:
+		ComputeStage(std::string const& name, std::unique_ptr<ComputeStageParams>&&);
+		friend class RenderStage;
+	};
+
+
 	inline void RenderStage::SetStageShader(std::shared_ptr<re::Shader> shader)
 	{
 		m_stageShader = shader;
@@ -123,4 +143,8 @@ namespace re
 	{
 		return m_textureTargetSet;
 	}
+
+
+	// We need to provide a destructor implementation since it's pure virtual
+	inline RenderStage::IStageParams::~IStageParams() {}
 }

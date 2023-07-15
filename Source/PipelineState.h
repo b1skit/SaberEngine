@@ -118,6 +118,7 @@ namespace gr
 		};
 		ColorWriteMode const& GetColorWriteMode() const;
 		void SetColorWriteMode(ColorWriteMode const&);
+		bool WritesColor() const;
 
 		// TODO: These should be per-target, to allow different outputs when using MRTs
 		enum class ClearTarget
@@ -142,6 +143,7 @@ namespace gr
 		BlendMode m_srcBlendMode;
 		BlendMode m_dstBlendMode;
 		ColorWriteMode m_colorWriteMode;
+		bool m_writesColor;
 		ClearTarget m_targetClearMode;
 	};
 }

@@ -36,8 +36,8 @@ namespace gr
 		: NamedObject(name)
 		, GraphicsSystem(name)	
 	{
-		re::RenderStage::RenderStageParams renderStageParams;
-		m_gBufferStage = re::RenderStage::Create("GBuffer Stage", renderStageParams);
+		re::RenderStage::GraphicsStageParams gfxStageParams;
+		m_gBufferStage = re::RenderStage::CreateGraphicsStage("GBuffer Stage", gfxStageParams);
 	}
 
 

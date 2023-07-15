@@ -53,8 +53,8 @@ namespace gr
 		, NamedObject(name)
 		, m_skyTexture(nullptr)
 	{
-		re::RenderStage::RenderStageParams renderStageParams;
-		m_skyboxStage = re::RenderStage::Create("Skybox stage", renderStageParams);
+		re::RenderStage::GraphicsStageParams gfxStageParams;
+		m_skyboxStage = re::RenderStage::CreateGraphicsStage("Skybox stage", gfxStageParams);
 
 		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Far);
 	}

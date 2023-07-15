@@ -168,10 +168,10 @@ namespace gr
 		, NamedObject(name)
 		, m_BRDF_integrationMap(nullptr)
 	{
-		re::RenderStage::RenderStageParams renderStageParams;
-		m_ambientStage = re::RenderStage::Create("Ambient light stage", renderStageParams);
-		m_keylightStage = re::RenderStage::Create("Keylight stage", renderStageParams);
-		m_pointlightStage = re::RenderStage::Create("Pointlight stage", renderStageParams);
+		re::RenderStage::GraphicsStageParams gfxStageParams;
+		m_ambientStage = re::RenderStage::CreateGraphicsStage("Ambient light stage", gfxStageParams);
+		m_keylightStage = re::RenderStage::CreateGraphicsStage("Keylight stage", gfxStageParams);
+		m_pointlightStage = re::RenderStage::CreateGraphicsStage("Pointlight stage", gfxStageParams);
 
 		// Create a fullscreen quad, for reuse when building batches:
 		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Near);
@@ -228,9 +228,9 @@ namespace gr
 
 		// 1st frame: Generate the pre-integrated BRDF LUT via a single-frame render stage:
 		{
-			re::RenderStage::RenderStageParams renderStageParams;
+			re::RenderStage::GraphicsStageParams gfxStageParams;
 			std::shared_ptr<re::RenderStage> brdfStage = 
-				re::RenderStage::Create("BRDF pre-integration stage", renderStageParams);
+				re::RenderStage::CreateGraphicsStage("BRDF pre-integration stage", gfxStageParams);
 
 			brdfStage->SetStageShader(
 				re::Shader::Create(Config::Get()->GetValue<string>("BRDFIntegrationMapShaderName")));
@@ -325,9 +325,9 @@ namespace gr
 
 			for (uint32_t face = 0; face < 6; face++)
 			{
-				re::RenderStage::RenderStageParams renderStageParams;
+				re::RenderStage::GraphicsStageParams gfxStageParams;
 				std::shared_ptr<re::RenderStage> iemStage = 
-					re::RenderStage::Create("IEM generation: Face " + to_string(face + 1) + "/6", renderStageParams);
+					re::RenderStage::CreateGraphicsStage("IEM generation: Face " + to_string(face + 1) + "/6", gfxStageParams);
 
 				iemStage->SetStageShader(iemShader);
 				iemStage->SetPerFrameTextureInput(
@@ -386,9 +386,9 @@ namespace gr
 					const string postFix = to_string(face + 1) + "/6, MIP " +
 						to_string(currentMipLevel + 1) + "/" + to_string(numMipLevels);
 
-					re::RenderStage::RenderStageParams renderStageParams;
+					re::RenderStage::GraphicsStageParams gfxStageParams;
 					std::shared_ptr<re::RenderStage> pmremStage = 
-						re::RenderStage::Create("PMREM generation: Face " + postFix, renderStageParams);
+						re::RenderStage::CreateGraphicsStage("PMREM generation: Face " + postFix, gfxStageParams);
 
 					pmremStage->SetStageShader(pmremShader);
 					pmremStage->SetPerFrameTextureInput(

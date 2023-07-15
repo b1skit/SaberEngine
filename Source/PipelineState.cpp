@@ -18,6 +18,7 @@ namespace gr
 			ColorWriteMode::ChannelMode::Enabled, // G
 			ColorWriteMode::ChannelMode::Enabled, // B
 			ColorWriteMode::ChannelMode::Enabled} // A
+		, m_writesColor(true)
 		, m_targetClearMode(ClearTarget::None)
 	{
 	}
@@ -149,7 +150,20 @@ namespace gr
 	void PipelineState::SetColorWriteMode(PipelineState::ColorWriteMode const& colorWriteMode)
 	{
 		m_colorWriteMode = colorWriteMode;
+
+		m_writesColor = 
+			m_colorWriteMode.R == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
+			m_colorWriteMode.G == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
+			m_colorWriteMode.B == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
+			m_colorWriteMode.A == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled; // TODO: Should .A be counted here?
+
 		m_isDirty = true;
+	}
+
+
+	bool PipelineState::WritesColor() const
+	{
+		return m_writesColor;
 	}
 
 

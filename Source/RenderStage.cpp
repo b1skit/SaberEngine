@@ -17,24 +17,49 @@ using glm::vec4;
 
 namespace re
 {
-	std::shared_ptr<RenderStage> RenderStage::Create(std::string const& name, RenderStageParams const& stageParams)
+	std::shared_ptr<RenderStage> RenderStage::CreateGraphicsStage(
+		std::string const& name, GraphicsStageParams const& stageParams)
 	{
-		std::shared_ptr<RenderStage> newRenderStage;
-		newRenderStage.reset(new RenderStage(name, stageParams, RenderStage::RenderStageType::Graphics));
-		return newRenderStage;
+		std::shared_ptr<RenderStage> newGFXStage;
+		newGFXStage.reset(new RenderStage(
+			name, 
+			std::make_unique<GraphicsStageParams>(stageParams), 
+			RenderStage::RenderStageType::Graphics));
+		return newGFXStage;
 	}
 
 
-	RenderStage::RenderStage(std::string const& name, RenderStageParams const& stageParams, RenderStageType stageType)
+	std::shared_ptr<RenderStage> RenderStage::CreateComputeStage(
+		std::string const& name, ComputeStageParams const& stageParams)
+	{
+		std::shared_ptr<RenderStage> newComputeStage;
+		newComputeStage.reset(new ComputeStage(
+			name, 
+			std::make_unique<ComputeStageParams>(stageParams)));
+		return newComputeStage;
+	}
+
+
+	RenderStage::RenderStage(
+		std::string const& name, std::unique_ptr<IStageParams>&& stageParams, RenderStageType stageType)
 		: NamedObject(name)
 		, m_type(stageType)
-		, m_stageParams(stageParams)
+		, m_stageParams(nullptr)
 		, m_stageShader(nullptr)
 		, m_textureTargetSet(nullptr)
-		, m_writesColor(true) // Reasonable assumption; Updated when we set the pipeline state
-		, m_batchFilterMask(0) // Accept all batches by default
+		, m_writesColor(true)	// Reasonable assumption; Updated when we set the pipeline state
+		, m_batchFilterMask(0)	// Accept all batches by default
 	{
 		SEAssert("Invalid RenderStage name", !GetName().empty());
+
+		m_stageParams = std::move(stageParams);
+	}
+
+
+	ComputeStage::ComputeStage(std::string const& name, std::unique_ptr<ComputeStageParams>&& stageParams)
+		: NamedObject(name)
+		, RenderStage(name, std::move(stageParams), RenderStageType::Compute)
+	{
 	}
 
 

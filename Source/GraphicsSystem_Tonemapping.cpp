@@ -48,8 +48,8 @@ namespace gr
 		: GraphicsSystem(name)
 		, NamedObject(name)
 	{
-		re::RenderStage::RenderStageParams renderStageParams;
-		m_tonemappingStage = re::RenderStage::Create("Tonemapping stage", renderStageParams);
+		re::RenderStage::GraphicsStageParams gfxStageParams;
+		m_tonemappingStage = re::RenderStage::CreateGraphicsStage("Tonemapping stage", gfxStageParams);
 
 		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Near);
 	}

@@ -34,9 +34,10 @@ namespace gr
 				// TODO: We want to compute several levels of MIPs for a block of texels in a single dispatch
 				uint32_t targetMIP = 1;
 				
-				std::shared_ptr<re::RenderStage> mipGenerationStage = 
-					re::RenderStage::Create(newTexture->GetName() + " MIP generation stage", 
-						re::RenderStage::RenderStageParams());
+				re::RenderStage::ComputeStageParams computeStageParams;
+				std::shared_ptr<re::RenderStage> mipGenerationStage = re::RenderStage::CreateComputeStage(
+					newTexture->GetName() + " MIP generation stage", 
+					computeStageParams);
 
 				const std::string targetSetName = newTexture->GetName() + " MIP generation stage targets";
 				//std::shared_ptr<re::TextureTargetSet> mipGenTargets = re::TextureTargetSet::Create(targetSetName);

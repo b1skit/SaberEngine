@@ -48,8 +48,8 @@ namespace gr
 		: GraphicsSystem(name)
 		, NamedObject(name)
 	{
-		re::RenderStage::RenderStageParams renderStageParams;
-		m_emissiveBlitStage = re::RenderStage::Create("Emissive blit stage", renderStageParams);
+		re::RenderStage::GraphicsStageParams gfxStageParams;
+		m_emissiveBlitStage = re::RenderStage::CreateGraphicsStage("Emissive blit stage", gfxStageParams);
 
 		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Near);
 	}
@@ -116,8 +116,8 @@ namespace gr
 		for (uint32_t i = 0; i < numScalingStages; i++)
 		{
 			const string name = "Down-res stage " + to_string(i + 1) + " / " + to_string(numScalingStages);
-			re::RenderStage::RenderStageParams renderStageParams;
-			m_downResStages.emplace_back(re::RenderStage::Create(name, renderStageParams));
+			re::RenderStage::GraphicsStageParams gfxStageParams;
+			m_downResStages.emplace_back(re::RenderStage::CreateGraphicsStage(name, gfxStageParams));
 
 			std::shared_ptr<re::TextureTargetSet> downResTargets = re::TextureTargetSet::Create(name + " targets");
 
@@ -174,8 +174,8 @@ namespace gr
 		{
 			const string stagePrefix = (i % 2 == 0) ? "Horizontal " : "Vertical ";
 			const string name = stagePrefix + "blur stage " + to_string((i + 2) / 2) + " / " + to_string(m_numBlurPasses);
-			re::RenderStage::RenderStageParams renderStageParams;
-			m_blurStages.emplace_back(re::RenderStage::Create(name, renderStageParams));
+			re::RenderStage::GraphicsStageParams gfxStageParams;
+			m_blurStages.emplace_back(re::RenderStage::CreateGraphicsStage(name, gfxStageParams));
 
 			std::shared_ptr<re::TextureTargetSet> blurTargets = re::TextureTargetSet::Create(name + " targets");
 
@@ -213,8 +213,8 @@ namespace gr
 			currentYRes *= 2;
 
 			const string name = "Up-res stage " + to_string(i + 1) + " / " + to_string(numScalingStages);
-			re::RenderStage::RenderStageParams renderStageParams;
-			m_upResStages.emplace_back(re::RenderStage::Create(name, renderStageParams));
+			re::RenderStage::GraphicsStageParams gfxStageParams;
+			m_upResStages.emplace_back(re::RenderStage::CreateGraphicsStage(name, gfxStageParams));
 
 			std::shared_ptr<re::TextureTargetSet> upResTargets = re::TextureTargetSet::Create(name + " targets");
 

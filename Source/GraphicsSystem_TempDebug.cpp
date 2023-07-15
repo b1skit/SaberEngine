@@ -16,7 +16,8 @@ namespace gr
 		, NamedObject(name)
 		, m_helloTriangle(nullptr)
 	{
-		m_tempDebugStage = re::RenderStage::Create("DX12 temp debug stage", re::RenderStage::RenderStageParams());
+		re::RenderStage::GraphicsStageParams gfxStageParams;
+		m_tempDebugStage = re::RenderStage::CreateGraphicsStage("DX12 temp debug stage", gfxStageParams);
 	}
 
 
