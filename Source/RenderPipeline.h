@@ -19,22 +19,19 @@ namespace re
 		void Destroy();
 
 		// TODO: This should include an iterator as an argument, to allow stages to be inserted at arbitrary locations
-		std::vector<re::RenderStage*>::iterator AppendRenderStage(re::RenderStage* renderStage);
-		std::vector<re::RenderStage>::iterator AppendSingleFrameRenderStage(re::RenderStage const& renderStage);
+		std::vector<std::shared_ptr<re::RenderStage>>::iterator AppendRenderStage(std::shared_ptr<re::RenderStage>);
+		std::vector<std::shared_ptr<re::RenderStage>>::iterator AppendSingleFrameRenderStage(std::shared_ptr<re::RenderStage>&&);
 
 		size_t GetNumberOfStages() const { return m_renderStages.size(); }
 
-		inline std::vector<re::RenderStage*>& GetRenderStages() { return m_renderStages; }
-		inline std::vector<re::RenderStage*> const& GetRenderStages() const { return m_renderStages; }
-
-		inline std::vector<re::RenderStage>& GetSingleFrameRenderStages() { return m_singleFrameRenderStages; }
-		inline std::vector<re::RenderStage> const& GetSingleFrameRenderStages() const { return m_singleFrameRenderStages; }
+		inline std::vector<std::shared_ptr<re::RenderStage>> const& GetRenderStages() const { return m_renderStages; }
+		inline std::vector<std::shared_ptr<re::RenderStage>> const& GetSingleFrameRenderStages() const { return m_singleFrameRenderStages; }
 
 		void EndOfFrame(); // Clear m_singleFrameStagePipeline etc
 
 	private:
-		std::vector<re::RenderStage*> m_renderStages;
-		std::vector<re::RenderStage> m_singleFrameRenderStages;
+		std::vector<std::shared_ptr<re::RenderStage>> m_renderStages;
+		std::vector<std::shared_ptr<re::RenderStage>> m_singleFrameRenderStages;
 
 	private:
 		StagePipeline() = delete;

@@ -24,7 +24,7 @@ namespace gr
 		void CreateBatches() override;
 
 	private:
-		re::RenderStage m_directionalShadowStage;
+		std::shared_ptr<re::RenderStage> m_directionalShadowStage;
 		bool m_hasDirectionalLight;
 		std::vector<std::shared_ptr<re::RenderStage>> m_pointLightShadowStages; // 1 stage per light
 		std::vector<gr::Camera*> m_pointLightShadowStageCams; // 1 cam per stage

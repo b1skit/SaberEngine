@@ -32,7 +32,7 @@ namespace gr
 
 
 	private:
-		re::RenderStage m_ambientStage;
+		std::shared_ptr<re::RenderStage> m_ambientStage;
 
 		std::shared_ptr<re::MeshPrimitive> m_screenAlignedQuad;
 		std::shared_ptr<re::MeshPrimitive> m_cubeMeshPrimitive; // For rendering into a cube map. TODO: We only use this in the 1st frame, should probably clean it up
@@ -42,9 +42,9 @@ namespace gr
 		std::shared_ptr<re::Texture> m_IEMTex;
 		std::shared_ptr<re::Texture> m_PMREMTex;
 
-		re::RenderStage m_keylightStage;
+		std::shared_ptr<re::RenderStage> m_keylightStage;
 
-		re::RenderStage m_pointlightStage;
+		std::shared_ptr<re::RenderStage> m_pointlightStage;
 		std::vector<std::shared_ptr<re::MeshPrimitive>> m_pointlightInstanceMesh;
 
 

@@ -142,8 +142,8 @@ namespace dx12
 				// Create any necessary PSO's for the Shader:
 				for (re::StagePipeline& stagePipeline : renderManager.m_renderPipeline.GetStagePipeline())
 				{
-					std::vector<re::RenderStage*> const& renderStages = stagePipeline.GetRenderStages();
-					for (re::RenderStage* renderStage : renderStages)
+					std::vector<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
+					for (std::shared_ptr<re::RenderStage> const renderStage : renderStages)
 					{
 						// We assume either a RenderStage has a shader, or all batches rendered on a RenderStage will
 						// have their own shader. So, we must create a PSO per Shader for each RenderStage with a null
@@ -199,7 +199,7 @@ namespace dx12
 
 
 			// Generic lambda: Process stages from various pipelines
-			auto ProcessRenderStage = [&](RenderStage* renderStage)
+			auto ProcessRenderStage = [&](std::shared_ptr<re::RenderStage> renderStage)
 			{
 				// TODO: Why CAN'T this be a const& ?
 				gr::PipelineState& stagePipelineParams = renderStage->GetStagePipelineState();
@@ -363,15 +363,16 @@ namespace dx12
 
 
 			// Single frame render stages:
-			vector<RenderStage>& singleFrameRenderStages = stagePipeline.GetSingleFrameRenderStages();
-			for (RenderStage& renderStage : singleFrameRenderStages)
+			vector<std::shared_ptr<re::RenderStage>> const& singleFrameRenderStages = 
+				stagePipeline.GetSingleFrameRenderStages();
+			for (std::shared_ptr<re::RenderStage> renderStage : singleFrameRenderStages)
 			{
-				ProcessRenderStage(&renderStage);
+				ProcessRenderStage(renderStage);
 			}
 
 			// Render stages:
-			vector<RenderStage*> const& renderStages = stagePipeline.GetRenderStages();
-			for (RenderStage* renderStage : renderStages)
+			vector<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
+			for (std::shared_ptr<re::RenderStage> renderStage : renderStages)
 			{
 				ProcessRenderStage(renderStage);
 			}

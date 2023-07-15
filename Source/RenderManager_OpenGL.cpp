@@ -149,7 +149,7 @@ namespace opengl
 				stagePipeline.GetName().c_str());
 
 			// Generic lambda: Process stages from various pipelines
-			auto ProcessRenderStage = [&](RenderStage* renderStage)
+			auto ProcessRenderStage = [&](std::shared_ptr<re::RenderStage> renderStage)
 			{
 				// RenderDoc makers: Render stage name
 				glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderStage->GetName().c_str());
@@ -243,15 +243,15 @@ namespace opengl
 
 
 			// Single frame render stages:
-			vector<RenderStage>& singleFrameRenderStages = stagePipeline.GetSingleFrameRenderStages();
-			for (RenderStage& renderStage : singleFrameRenderStages)
+			vector<std::shared_ptr<re::RenderStage>> const& singleFrameRenderStages = stagePipeline.GetSingleFrameRenderStages();
+			for (std::shared_ptr<re::RenderStage>renderStage : singleFrameRenderStages)
 			{
-				ProcessRenderStage(&renderStage);
+				ProcessRenderStage(renderStage);
 			}
 
 			// Render stages:
-			vector<RenderStage*> const& renderStages = stagePipeline.GetRenderStages();
-			for (RenderStage* renderStage : renderStages)
+			vector<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
+			for (std::shared_ptr<re::RenderStage> renderStage : renderStages)
 			{			
 				ProcessRenderStage(renderStage);
 			}

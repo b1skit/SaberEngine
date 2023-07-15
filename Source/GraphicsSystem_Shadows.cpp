@@ -63,9 +63,10 @@ namespace gr
 
 	ShadowsGraphicsSystem::ShadowsGraphicsSystem(std::string name) 
 		: GraphicsSystem(name), NamedObject(name)
-		, m_directionalShadowStage("Keylight shadow")
 		, m_hasDirectionalLight(false)
 	{
+		re::RenderStage::RenderStageParams renderStageParams;
+		m_directionalShadowStage = re::RenderStage::Create("Keylight shadow", renderStageParams);
 	}
 
 
@@ -99,20 +100,20 @@ namespace gr
 			ShadowMap* const directionalShadow = directionalLight->GetShadowMap();
 			if (directionalShadow)
 			{
-				m_directionalShadowStage.AddPermanentParameterBlock(
+				m_directionalShadowStage->AddPermanentParameterBlock(
 					directionalShadow->ShadowCamera()->GetCameraParams());
 
 				// Shader:
-				m_directionalShadowStage.SetStageShader(
+				m_directionalShadowStage->SetStageShader(
 					re::Shader::Create(Config::Get()->GetValue<string>("depthShaderName")));
 
-				m_directionalShadowStage.SetTextureTargetSet(directionalLight->GetShadowMap()->GetTextureTargetSet());
+				m_directionalShadowStage->SetTextureTargetSet(directionalLight->GetShadowMap()->GetTextureTargetSet());
 				// TODO: Target set should be a member of the stage, instead of the shadow map?
 				// -> HARD: The stages are already created, we don't know what lights are associated with each stage
 
-				m_directionalShadowStage.SetStagePipelineState(shadowStageParams);
+				m_directionalShadowStage->SetStagePipelineState(shadowStageParams);
 
-				pipeline.AppendRenderStage(&m_directionalShadowStage);
+				pipeline.AppendRenderStage(m_directionalShadowStage);
 			}
 		}
 		
@@ -121,9 +122,11 @@ namespace gr
 		m_pointLightShadowStageCams.reserve(deferredLights.size());
 		for (shared_ptr<Light> curLight : deferredLights)
 		{
-			m_pointLightShadowStages.emplace_back(make_shared<RenderStage>(curLight->GetName() + " shadow"));
+			re::RenderStage::RenderStageParams renderStageParams;
+			m_pointLightShadowStages.emplace_back(
+				re::RenderStage::Create(curLight->GetName() + " shadow", renderStageParams));
 
-			RenderStage* shadowStage = m_pointLightShadowStages.back().get();
+			std::shared_ptr<re::RenderStage> shadowStage = m_pointLightShadowStages.back();
 			
 			ShadowMap* const lightShadow = curLight->GetShadowMap();
 			if (lightShadow)
@@ -187,7 +190,7 @@ namespace gr
 	{
 		if (m_hasDirectionalLight)
 		{
-			m_directionalShadowStage.AddBatches(RenderManager::Get()->GetSceneBatches());
+			m_directionalShadowStage->AddBatches(RenderManager::Get()->GetSceneBatches());
 		}
 
 		for (shared_ptr<RenderStage> pointShadowStage : m_pointLightShadowStages)
@@ -199,6 +202,6 @@ namespace gr
 
 	std::shared_ptr<re::TextureTargetSet const> ShadowsGraphicsSystem::GetFinalTextureTargetSet() const
 	{
-		return m_directionalShadowStage.GetTextureTargetSet();
+		return m_directionalShadowStage->GetTextureTargetSet();
 	}
 }

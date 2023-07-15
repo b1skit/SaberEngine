@@ -34,9 +34,10 @@ namespace gr
 
 	GBufferGraphicsSystem::GBufferGraphicsSystem(std::string name)
 		: NamedObject(name)
-		, GraphicsSystem(name)
-		, m_gBufferStage("GBuffer Stage")		
+		, GraphicsSystem(name)	
 	{
+		re::RenderStage::RenderStageParams renderStageParams;
+		m_gBufferStage = re::RenderStage::Create("GBuffer Stage", renderStageParams);
 	}
 
 
@@ -46,7 +47,7 @@ namespace gr
 		std::shared_ptr<Shader> gBufferShader = 
 			re::Shader::Create(Config::Get()->GetValue<string>("gBufferFillShaderName"));
 
-		m_gBufferStage.SetStageShader(gBufferShader);
+		m_gBufferStage->SetStageShader(gBufferShader);
 
 		// Create GBuffer color targets:
 		Texture::TextureParams gBufferTexParams;
@@ -75,7 +76,7 @@ namespace gr
 			gBufferTargets->SetColorTarget(
 				i, re::Texture::Create(GBufferTexNames[i], gBufferTexParams, false), targetParams);
 		}
-		m_gBufferStage.SetTextureTargetSet(gBufferTargets);
+		m_gBufferStage->SetTextureTargetSet(gBufferTargets);
 
 		// Create GBuffer depth target:
 		re::Texture::TextureParams depthTexParams(gBufferTexParams);
@@ -90,7 +91,7 @@ namespace gr
 			depthTargetParams);
 
 		// Camera:
-		m_gBufferStage.AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());
+		m_gBufferStage->AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());
 
 		// Set the stage params:
 		gr::PipelineState gBufferStageParams;
@@ -101,10 +102,10 @@ namespace gr
 		gBufferStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::Disabled);
 		gBufferStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Less);
 
-		m_gBufferStage.SetStagePipelineState(gBufferStageParams);
+		m_gBufferStage->SetStagePipelineState(gBufferStageParams);
 
 		// Finally, append the render stage to the pipeline:
-		pipeline.AppendRenderStage(&m_gBufferStage);
+		pipeline.AppendRenderStage(m_gBufferStage);
 	}
 
 
@@ -120,12 +121,12 @@ namespace gr
 
 	void GBufferGraphicsSystem::CreateBatches()
 	{
-		m_gBufferStage.AddBatches(RenderManager::Get()->GetSceneBatches());
+		m_gBufferStage->AddBatches(RenderManager::Get()->GetSceneBatches());
 	}
 
 
 	std::shared_ptr<re::TextureTargetSet const> GBufferGraphicsSystem::GetFinalTextureTargetSet() const
 	{
-		return m_gBufferStage.GetTextureTargetSet();
+		return m_gBufferStage->GetTextureTargetSet();
 	}
 }

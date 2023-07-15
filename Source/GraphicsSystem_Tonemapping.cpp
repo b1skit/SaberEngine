@@ -44,9 +44,13 @@ namespace
 
 namespace gr
 {
-	TonemappingGraphicsSystem::TonemappingGraphicsSystem(std::string name) : GraphicsSystem(name), NamedObject(name),
-		m_tonemappingStage("Tonemapping stage")
+	TonemappingGraphicsSystem::TonemappingGraphicsSystem(std::string name)
+		: GraphicsSystem(name)
+		, NamedObject(name)
 	{
+		re::RenderStage::RenderStageParams renderStageParams;
+		m_tonemappingStage = re::RenderStage::Create("Tonemapping stage", renderStageParams);
+
 		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Near);
 	}
 
@@ -60,11 +64,11 @@ namespace gr
 		tonemappingStageParam.SetDstBlendMode(gr::PipelineState::BlendMode::Zero);
 		tonemappingStageParam.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
 
-		m_tonemappingStage.SetStagePipelineState(tonemappingStageParam);
+		m_tonemappingStage->SetStagePipelineState(tonemappingStageParam);
 
-		m_tonemappingStage.SetStageShader(re::Shader::Create(Config::Get()->GetValue<string>("toneMapShader")));
+		m_tonemappingStage->SetStageShader(re::Shader::Create(Config::Get()->GetValue<string>("toneMapShader")));
 
-		m_tonemappingStage.SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
+		m_tonemappingStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 
 		// Tonemapping param block:
 		TonemappingParams tonemappingParams = CreateTonemappingParamsData();
@@ -73,9 +77,9 @@ namespace gr
 			tonemappingParams,
 			re::ParameterBlock::PBType::Immutable);
 
-		m_tonemappingStage.AddPermanentParameterBlock(tonemappingPB);
+		m_tonemappingStage->AddPermanentParameterBlock(tonemappingPB);
 
-		pipeline.AppendRenderStage(&m_tonemappingStage);
+		pipeline.AppendRenderStage(m_tonemappingStage);
 	}
 
 
@@ -86,7 +90,7 @@ namespace gr
 		std::shared_ptr<TextureTargetSet const> deferredLightTextureTargetSet =
 			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
 
-		m_tonemappingStage.SetPerFrameTextureInput(
+		m_tonemappingStage->SetPerFrameTextureInput(
 			"GBufferAlbedo",
 			deferredLightTextureTargetSet->GetColorTarget(0)->GetTexture(),
 			Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
@@ -96,12 +100,12 @@ namespace gr
 	void TonemappingGraphicsSystem::CreateBatches()
 	{
 		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
-		m_tonemappingStage.AddBatch(fullscreenQuadBatch);
+		m_tonemappingStage->AddBatch(fullscreenQuadBatch);
 	}
 
 
 	std::shared_ptr<re::TextureTargetSet const> TonemappingGraphicsSystem::GetFinalTextureTargetSet() const 
 	{
-		return m_tonemappingStage.GetTextureTargetSet();
+		return m_tonemappingStage->GetTextureTargetSet();
 	}
 }

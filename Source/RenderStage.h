@@ -20,23 +20,25 @@ namespace re
 	public:
 		enum class RenderStageType
 		{
-			ColorOnly,
-			DepthOnly,
-			ColorAndDepth,
+			Graphics,
+			Compute,
 
-			RenderStageType_Count
+			// TODO: Add specialist types: Fullscreen, etc
 		};
 
 		typedef std::vector<std::tuple<std::string, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>>> RenderStageTextureAndSamplerInput;
 
 
+		struct RenderStageParams
+		{
+			// TODO: Populate this
+			// Assert values are set when they're received to catch any GS's that need to be updated
+		};
+
 	public:
-		explicit RenderStage(std::string const& name);
-				
-		RenderStage(RenderStage const&);
+		static std::shared_ptr<RenderStage> Create(std::string const& name, RenderStageParams const& params);
 
 		~RenderStage() = default;
-		RenderStage(RenderStage&&) = default;
 
 		void EndOfFrame(); // Clears per-frame data. Called by the owning RenderPipeline
 
@@ -44,6 +46,8 @@ namespace re
 
 		void SetStagePipelineState(gr::PipelineState const& params);
 		inline gr::PipelineState const& GetStagePipelineState() const { return m_pipelineState; }
+
+		// TODO: Get rid of this non-const accessor
 		inline gr::PipelineState& GetStagePipelineState() { return m_pipelineState; } // Note: Do not modify. Use SetStagePipelineState instead
 
 		void SetStageShader(std::shared_ptr<re::Shader>);
@@ -72,6 +76,13 @@ namespace re
 		void SetBatchFilterMaskBit(re::Batch::Filter filterBit);
 
 	private:
+		explicit RenderStage(std::string const& name, RenderStageParams const&, RenderStageType);
+
+
+	private:
+		const RenderStageType m_type;
+		const RenderStageParams m_stageParams;
+
 		std::shared_ptr<re::Shader> m_stageShader;
 		std::shared_ptr<re::TextureTargetSet> m_textureTargetSet;
 		
@@ -90,6 +101,8 @@ namespace re
 		
 	private:
 		RenderStage() = delete;
+		RenderStage(RenderStage const&) = delete;
+		RenderStage(RenderStage&&) = delete;
 		RenderStage& operator=(RenderStage const&) = delete;
 	};
 

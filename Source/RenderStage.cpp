@@ -3,46 +3,38 @@
 
 #include "RenderStage.h"
 
+using re::Sampler;
+using re::Texture;
+using std::string;
+using std::shared_ptr;
+using std::make_shared;
+using std::vector;
+using glm::mat4;
+using glm::mat3;
+using glm::vec3;
+using glm::vec4;
+
 
 namespace re
 {
-	using re::Sampler;
-	using re::Texture;
-	using std::string;
-	using std::shared_ptr;
-	using std::make_shared;
-	using std::vector;
-	using glm::mat4;
-	using glm::mat3;
-	using glm::vec3;
-	using glm::vec4;
+	std::shared_ptr<RenderStage> RenderStage::Create(std::string const& name, RenderStageParams const& stageParams)
+	{
+		std::shared_ptr<RenderStage> newRenderStage;
+		newRenderStage.reset(new RenderStage(name, stageParams, RenderStage::RenderStageType::Graphics));
+		return newRenderStage;
+	}
 
 
-	RenderStage::RenderStage(std::string const& name)
+	RenderStage::RenderStage(std::string const& name, RenderStageParams const& stageParams, RenderStageType stageType)
 		: NamedObject(name)
+		, m_type(stageType)
+		, m_stageParams(stageParams)
 		, m_stageShader(nullptr)
 		, m_textureTargetSet(nullptr)
 		, m_writesColor(true) // Reasonable assumption; Updated when we set the pipeline state
 		, m_batchFilterMask(0) // Accept all batches by default
 	{
 		SEAssert("Invalid RenderStage name", !GetName().empty());
-	}
-
-
-	RenderStage::RenderStage(RenderStage const& rhs) 
-		: RenderStage(rhs.GetName())
-	{
-		m_stageShader = rhs.m_stageShader;
-		m_textureTargetSet = rhs.m_textureTargetSet;
-		m_pipelineState = rhs.m_pipelineState;
-		m_writesColor = rhs.m_writesColor;
-
-		m_perFrameTextureSamplerInputs = rhs.m_perFrameTextureSamplerInputs;
-		m_perFrameParamBlocks = rhs.m_perFrameParamBlocks;
-
-		m_permanentParamBlocks = rhs.m_permanentParamBlocks;
-
-		m_stageBatches = rhs.m_stageBatches;
 	}
 
 

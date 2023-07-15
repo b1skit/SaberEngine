@@ -25,7 +25,7 @@ namespace gr
 
 
 	private:
-		re::RenderStage m_skyboxStage;
+		std::shared_ptr<re::RenderStage> m_skyboxStage;
 		std::shared_ptr<re::Texture> m_skyTexture;
 		std::string m_skyTextureShaderName;
 		std::shared_ptr<re::MeshPrimitive> m_screenAlignedQuad;

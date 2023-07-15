@@ -24,7 +24,7 @@ namespace gr
 		void CreateBatches() override;
 
 	private:
-		re::RenderStage m_tempDebugStage;
+		std::shared_ptr<re::RenderStage> m_tempDebugStage;
 
 		std::shared_ptr<re::MeshPrimitive> m_helloTriangle;
 		std::shared_ptr<gr::Material> m_helloTriangleMaterial;

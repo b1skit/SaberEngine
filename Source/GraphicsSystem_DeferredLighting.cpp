@@ -166,11 +166,13 @@ namespace gr
 	DeferredLightingGraphicsSystem::DeferredLightingGraphicsSystem(string name)
 		: GraphicsSystem(name)
 		, NamedObject(name)
-		, m_ambientStage("Ambient light stage")
-		, m_keylightStage("Keylight stage")
-		, m_pointlightStage("Pointlight stage")
 		, m_BRDF_integrationMap(nullptr)
 	{
+		re::RenderStage::RenderStageParams renderStageParams;
+		m_ambientStage = re::RenderStage::Create("Ambient light stage", renderStageParams);
+		m_keylightStage = re::RenderStage::Create("Keylight stage", renderStageParams);
+		m_pointlightStage = re::RenderStage::Create("Pointlight stage", renderStageParams);
+
 		// Create a fullscreen quad, for reuse when building batches:
 		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Near);
 
@@ -209,9 +211,9 @@ namespace gr
 
 		
 		// Set the target sets, even if the stages aren't actually used (to ensure they're still valid)
-		m_ambientStage.SetTextureTargetSet(deferredLightingTargetSet);
-		m_keylightStage.SetTextureTargetSet(deferredLightingTargetSet);
-		m_pointlightStage.SetTextureTargetSet(deferredLightingTargetSet);
+		m_ambientStage->SetTextureTargetSet(deferredLightingTargetSet);
+		m_keylightStage->SetTextureTargetSet(deferredLightingTargetSet);
+		m_pointlightStage->SetTextureTargetSet(deferredLightingTargetSet);
 	
 		
 		gr::PipelineState ambientStageParams;
@@ -226,9 +228,11 @@ namespace gr
 
 		// 1st frame: Generate the pre-integrated BRDF LUT via a single-frame render stage:
 		{
-			RenderStage brdfStage("BRDF pre-integration stage");
+			re::RenderStage::RenderStageParams renderStageParams;
+			std::shared_ptr<re::RenderStage> brdfStage = 
+				re::RenderStage::Create("BRDF pre-integration stage", renderStageParams);
 
-			brdfStage.SetStageShader(
+			brdfStage->SetStageShader(
 				re::Shader::Create(Config::Get()->GetValue<string>("BRDFIntegrationMapShaderName")));
 
 			// Create a render target texture:			
@@ -254,7 +258,7 @@ namespace gr
 			brdfStageTargets->Viewport() =
 				re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
 
-			brdfStage.SetTextureTargetSet(brdfStageTargets);
+			brdfStage->SetTextureTargetSet(brdfStageTargets);
 
 			// Stage params:
 			gr::PipelineState brdfStageParams;
@@ -265,12 +269,12 @@ namespace gr
 			brdfStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
 			brdfStageParams.SetDepthWriteMode(gr::PipelineState::DepthWriteMode::Disabled);
 
-			brdfStage.SetStagePipelineState(brdfStageParams);
+			brdfStage->SetStagePipelineState(brdfStageParams);
 
 			Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
-			brdfStage.AddBatch(fullscreenQuadBatch);
+			brdfStage->AddBatch(fullscreenQuadBatch);
 
-			pipeline.AppendSingleFrameRenderStage(brdfStage);
+			pipeline.AppendSingleFrameRenderStage(std::move(brdfStage));
 		}
 
 
@@ -321,10 +325,12 @@ namespace gr
 
 			for (uint32_t face = 0; face < 6; face++)
 			{
-				RenderStage iemStage("IEM generation: Face " + to_string(face + 1) + "/6");
+				re::RenderStage::RenderStageParams renderStageParams;
+				std::shared_ptr<re::RenderStage> iemStage = 
+					re::RenderStage::Create("IEM generation: Face " + to_string(face + 1) + "/6", renderStageParams);
 
-				iemStage.SetStageShader(iemShader);
-				iemStage.SetPerFrameTextureInput(
+				iemStage->SetStageShader(iemShader);
+				iemStage->SetPerFrameTextureInput(
 					"MatAlbedo",
 					iblTexture,
 					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
@@ -334,7 +340,7 @@ namespace gr
 					IEMPMREMGenerationParams::s_shaderName,
 					iemGenerationParams,
 					re::ParameterBlock::PBType::SingleFrame);
-				iemStage.AddPermanentParameterBlock(iemGenerationPB);
+				iemStage->AddPermanentParameterBlock(iemGenerationPB);
 				
 				// Construct a camera param block to draw into our cubemap rendering targets:
 				cubemapCamParams.g_view = cubemapViews[face];
@@ -342,7 +348,7 @@ namespace gr
 					gr::Camera::CameraParams::s_shaderName,
 					cubemapCamParams,
 					re::ParameterBlock::PBType::SingleFrame);
-				iemStage.AddPermanentParameterBlock(pb);
+				iemStage->AddPermanentParameterBlock(pb);
 
 				std::shared_ptr<re::TextureTargetSet> iemTargets = re::TextureTargetSet::Create("IEM Stage Targets");
 
@@ -353,13 +359,13 @@ namespace gr
 				iemTargets->SetColorTarget(0, m_IEMTex, targetParams);
 				iemTargets->Viewport() = re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
 
-				iemStage.SetTextureTargetSet(iemTargets);
+				iemStage->SetTextureTargetSet(iemTargets);
 
-				iemStage.SetStagePipelineState(iblStageParams);
+				iemStage->SetStagePipelineState(iblStageParams);
 
-				iemStage.AddBatch(cubeMeshBatch);
+				iemStage->AddBatch(cubeMeshBatch);
 
-				pipeline.AppendSingleFrameRenderStage(iemStage);
+				pipeline.AppendSingleFrameRenderStage(std::move(iemStage));
 			}
 		}
 
@@ -380,10 +386,12 @@ namespace gr
 					const string postFix = to_string(face + 1) + "/6, MIP " +
 						to_string(currentMipLevel + 1) + "/" + to_string(numMipLevels);
 
-					RenderStage pmremStage("PMREM generation: Face " + postFix);
+					re::RenderStage::RenderStageParams renderStageParams;
+					std::shared_ptr<re::RenderStage> pmremStage = 
+						re::RenderStage::Create("PMREM generation: Face " + postFix, renderStageParams);
 
-					pmremStage.SetStageShader(pmremShader);
-					pmremStage.SetPerFrameTextureInput(
+					pmremStage->SetStageShader(pmremShader);
+					pmremStage->SetPerFrameTextureInput(
 						"MatAlbedo",
 						iblTexture,
 						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
@@ -394,7 +402,7 @@ namespace gr
 						gr::Camera::CameraParams::s_shaderName,
 						cubemapCamParams,
 						re::ParameterBlock::PBType::SingleFrame);
-					pmremStage.AddPermanentParameterBlock(pb);
+					pmremStage->AddPermanentParameterBlock(pb);
 
 					IEMPMREMGenerationParams pmremGenerationParams = 
 						GetIEMPMREMGenerationParamsData(currentMipLevel, numMipLevels);
@@ -402,7 +410,7 @@ namespace gr
 						IEMPMREMGenerationParams::s_shaderName,
 						pmremGenerationParams,
 						re::ParameterBlock::PBType::SingleFrame);
-					pmremStage.AddPermanentParameterBlock(pmremGenerationPB);
+					pmremStage->AddPermanentParameterBlock(pmremGenerationPB);
 
 					re::TextureTarget::TargetParams targetParams;
 					targetParams.m_targetFace = face;
@@ -414,24 +422,24 @@ namespace gr
 					pmremTargetSet->SetColorTarget(0, m_PMREMTex, targetParams);
 					pmremTargetSet->Viewport() = re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
 
-					pmremStage.SetTextureTargetSet(pmremTargetSet);
+					pmremStage->SetTextureTargetSet(pmremTargetSet);
 
-					pmremStage.SetStagePipelineState(iblStageParams);
+					pmremStage->SetStagePipelineState(iblStageParams);
 
-					pmremStage.AddBatch(cubeMeshBatch);
+					pmremStage->AddBatch(cubeMeshBatch);
 
-					pipeline.AppendSingleFrameRenderStage(pmremStage);
+					pipeline.AppendSingleFrameRenderStage(std::move(pmremStage));
 				}
 			}
 		}
 
 		
 		// Ambient light stage:
-		m_ambientStage.SetStageShader(
+		m_ambientStage->SetStageShader(
 			re::Shader::Create(Config::Get()->GetValue<string>("deferredAmbientLightShaderName")));
 
-		m_ambientStage.AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
-		m_ambientStage.SetStagePipelineState(ambientStageParams);
+		m_ambientStage->AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
+		m_ambientStage->SetStagePipelineState(ambientStageParams);
 
 		// Ambient parameters:		
 		AmbientLightParams ambientLightParams = GetAmbientLightParamData();
@@ -440,10 +448,10 @@ namespace gr
 			ambientLightParams,
 			re::ParameterBlock::PBType::Immutable);
 
-		m_ambientStage.AddPermanentParameterBlock(ambientLightPB);
+		m_ambientStage->AddPermanentParameterBlock(ambientLightPB);
 
 		// If we made it this far, append the ambient stage:
-		pipeline.AppendRenderStage(&m_ambientStage);
+		pipeline.AppendRenderStage(m_ambientStage);
 		
 
 		// Key light stage:
@@ -460,14 +468,14 @@ namespace gr
 			{
 				keylightStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
 			}
-			m_keylightStage.SetStagePipelineState(keylightStageParams);
+			m_keylightStage->SetStagePipelineState(keylightStageParams);
 
-			m_keylightStage.SetStageShader(
+			m_keylightStage->SetStageShader(
 				re::Shader::Create(Config::Get()->GetValue<string>("deferredKeylightShaderName")));
 
-			m_keylightStage.AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
+			m_keylightStage->AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 
-			pipeline.AppendRenderStage(&m_keylightStage);
+			pipeline.AppendRenderStage(m_keylightStage);
 		}
 
 
@@ -475,7 +483,7 @@ namespace gr
 		vector<shared_ptr<Light>> const& pointLights = SceneManager::GetSceneData()->GetPointLights();
 		if (pointLights.size() > 0)
 		{
-			m_pointlightStage.AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
+			m_pointlightStage->AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 
 			gr::PipelineState pointlightStageParams(keylightStageParams);
 
@@ -497,12 +505,12 @@ namespace gr
 			}
 
 			pointlightStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Front); // Cull front faces of light volumes
-			m_pointlightStage.SetStagePipelineState(pointlightStageParams);
+			m_pointlightStage->SetStagePipelineState(pointlightStageParams);
 
-			m_pointlightStage.SetStageShader(
+			m_pointlightStage->SetStageShader(
 				re::Shader::Create(Config::Get()->GetValue<string>("deferredPointLightShaderName")));
 
-			pipeline.AppendRenderStage(&m_pointlightStage);
+			pipeline.AppendRenderStage(m_pointlightStage);
 
 			// Create a sphere mesh for each pointlights:
 			for (shared_ptr<Light> pointlight : pointLights)
@@ -538,21 +546,21 @@ namespace gr
 
 			if (AmbientIsValid())
 			{
-				m_ambientStage.SetPerFrameTextureInput(
+				m_ambientStage->SetPerFrameTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[slot],
 					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot)->GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 			if (keyLight)
 			{
-				m_keylightStage.SetPerFrameTextureInput(
+				m_keylightStage->SetPerFrameTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[slot],
 					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot)->GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 			if (!pointLights.empty())
 			{
-				m_pointlightStage.SetPerFrameTextureInput(
+				m_pointlightStage->SetPerFrameTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[slot],
 					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot)->GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
@@ -562,19 +570,19 @@ namespace gr
 		if (AmbientIsValid())
 		{
 			// Add IBL texture inputs for ambient stage:
-			m_ambientStage.SetPerFrameTextureInput(
+			m_ambientStage->SetPerFrameTextureInput(
 				"CubeMap0",
 				m_IEMTex,
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear)
 			);
 
-			m_ambientStage.SetPerFrameTextureInput(
+			m_ambientStage->SetPerFrameTextureInput(
 				"CubeMap1",
 				m_PMREMTex,
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearMipMapLinearLinear)
 			);
 
-			m_ambientStage.SetPerFrameTextureInput(
+			m_ambientStage->SetPerFrameTextureInput(
 				"Tex7",
 				m_BRDF_integrationMap,
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::ClampNearestNearest)
@@ -590,7 +598,7 @@ namespace gr
 				// Set the key light shadow map:
 				shared_ptr<Texture> keylightDepthTex =
 					keyLightShadowMap->GetTextureTargetSet()->GetDepthStencilTarget()->GetTexture();
-				m_keylightStage.SetPerFrameTextureInput(
+				m_keylightStage->SetPerFrameTextureInput(
 					"Depth0",
 					keylightDepthTex,
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
@@ -605,7 +613,7 @@ namespace gr
 		
 		// Ambient stage batches:
 		const Batch ambientFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
-		m_ambientStage.AddBatch(ambientFullscreenQuadBatch);
+		m_ambientStage->AddBatch(ambientFullscreenQuadBatch);
 
 		// Keylight stage batches:
 		shared_ptr<Light> const keyLight = SceneManager::GetSceneData()->GetKeyLight();
@@ -613,7 +621,7 @@ namespace gr
 		{
 			Batch keylightFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
 
-			LightParams keylightParams = GetLightParamData(keyLight, m_keylightStage.GetTextureTargetSet());
+			LightParams keylightParams = GetLightParamData(keyLight, m_keylightStage->GetTextureTargetSet());
 			shared_ptr<re::ParameterBlock> keylightPB = re::ParameterBlock::Create(
 				LightParams::s_shaderName,
 				keylightParams,
@@ -621,7 +629,7 @@ namespace gr
 
 			keylightFullscreenQuadBatch.SetParameterBlock(keylightPB);
 
-			m_keylightStage.AddBatch(keylightFullscreenQuadBatch);
+			m_keylightStage->AddBatch(keylightFullscreenQuadBatch);
 		}
 
 		// Pointlight stage batches:
@@ -631,7 +639,7 @@ namespace gr
 			Batch pointlightBatch = Batch(m_sphereMeshes[i], nullptr);
 
 			// Point light params:
-			LightParams pointlightParams = GetLightParamData(pointLights[i], m_pointlightStage.GetTextureTargetSet());
+			LightParams pointlightParams = GetLightParamData(pointLights[i], m_pointlightStage->GetTextureTargetSet());
 			shared_ptr<re::ParameterBlock> pointlightPB = re::ParameterBlock::Create(
 				LightParams::s_shaderName,
 				pointlightParams, 
@@ -662,13 +670,13 @@ namespace gr
 			}			
 
 			// Finally, add the completed batch:
-			m_pointlightStage.AddBatch(pointlightBatch);
+			m_pointlightStage->AddBatch(pointlightBatch);
 		}
 	}
 
 
 	std::shared_ptr<re::TextureTargetSet const> DeferredLightingGraphicsSystem::GetFinalTextureTargetSet() const
 	{
-		return m_ambientStage.GetTextureTargetSet();
+		return m_ambientStage->GetTextureTargetSet();
 	}
 }

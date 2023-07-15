@@ -34,7 +34,9 @@ namespace gr
 				// TODO: We want to compute several levels of MIPs for a block of texels in a single dispatch
 				uint32_t targetMIP = 1;
 				
-				re::RenderStage mipGenerationStage(newTexture->GetName() + " MIP generation stage");
+				std::shared_ptr<re::RenderStage> mipGenerationStage = 
+					re::RenderStage::Create(newTexture->GetName() + " MIP generation stage", 
+						re::RenderStage::RenderStageParams());
 
 				const std::string targetSetName = newTexture->GetName() + " MIP generation stage targets";
 				//std::shared_ptr<re::TextureTargetSet> mipGenTargets = re::TextureTargetSet::Create(targetSetName);
@@ -46,12 +48,12 @@ namespace gr
 				// TODO: Create multiple targets for the subresources we'll be writing to
 				// -> Is it valid to have targets of different sizes?
 
-				//mipGenerationStage.SetTextureTargetSet(mipGenTargets);
+				//mipGenerationStage->SetTextureTargetSet(mipGenTargets);
 				
 
-				mipGenerationStage.SetStageShader(m_mipMapGenerationShader);
+				mipGenerationStage->SetStageShader(m_mipMapGenerationShader);
 
-				pipeline.AppendSingleFrameRenderStage(mipGenerationStage);
+				pipeline.AppendSingleFrameRenderStage(std::move(mipGenerationStage));
 			}			
 		}
 		m_textures.clear();

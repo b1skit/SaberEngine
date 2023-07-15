@@ -11,7 +11,7 @@ namespace re
 {
 	/******************************************** StagePipeline********************************************/
 
-	std::vector<re::RenderStage*>::iterator StagePipeline::AppendRenderStage(RenderStage* renderStage)
+	std::vector<std::shared_ptr<re::RenderStage>>::iterator StagePipeline::AppendRenderStage(std::shared_ptr<re::RenderStage> renderStage)
 	{
 		SEAssert("Cannot append a null RenderStage", renderStage);
 		
@@ -20,9 +20,9 @@ namespace re
 	}
 
 
-	std::vector<re::RenderStage>::iterator StagePipeline::AppendSingleFrameRenderStage(RenderStage const& renderStage)
+	std::vector<std::shared_ptr<re::RenderStage>>::iterator StagePipeline::AppendSingleFrameRenderStage(std::shared_ptr<re::RenderStage>&& renderStage)
 	{	
-		m_singleFrameRenderStages.emplace_back(renderStage);
+		m_singleFrameRenderStages.emplace_back(std::move(renderStage));
 		return m_singleFrameRenderStages.end();
 	}
 
@@ -31,7 +31,7 @@ namespace re
 	{
 		m_singleFrameRenderStages.clear();
 
-		for (RenderStage* renderStage : m_renderStages)
+		for (std::shared_ptr<re::RenderStage> renderStage : m_renderStages)
 		{
 			renderStage->EndOfFrame();
 		}

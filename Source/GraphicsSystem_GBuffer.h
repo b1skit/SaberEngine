@@ -44,7 +44,7 @@ namespace gr
 		void CreateBatches() override;
 
 	private:
-		re::RenderStage m_gBufferStage;
+		std::shared_ptr<re::RenderStage> m_gBufferStage;
 
 	};
 }

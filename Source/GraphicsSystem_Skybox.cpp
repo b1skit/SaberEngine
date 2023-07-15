@@ -51,9 +51,11 @@ namespace gr
 	SkyboxGraphicsSystem::SkyboxGraphicsSystem(std::string name)
 		: GraphicsSystem(name)
 		, NamedObject(name)
-		, m_skyboxStage("Skybox stage")
 		, m_skyTexture(nullptr)
 	{
+		re::RenderStage::RenderStageParams renderStageParams;
+		m_skyboxStage = re::RenderStage::Create("Skybox stage", renderStageParams);
+
 		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Far);
 	}
 
@@ -61,7 +63,7 @@ namespace gr
 	void SkyboxGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
 		// Create a skybox shader, now that we have some sort of image loaded:
-		m_skyboxStage.SetStageShader(re::Shader::Create(Config::Get()->GetValue<string>("skyboxShaderName")));
+		m_skyboxStage->SetStageShader(re::Shader::Create(Config::Get()->GetValue<string>("skyboxShaderName")));
 
 		// Load the HDR image:
 		m_skyTexture = SceneManager::GetSceneData()->GetIBLTexture();
@@ -75,9 +77,9 @@ namespace gr
 		skyboxStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::LEqual);
 		skyboxStageParams.SetDepthWriteMode(gr::PipelineState::DepthWriteMode::Disabled);
 
-		m_skyboxStage.SetStagePipelineState(skyboxStageParams);
+		m_skyboxStage->SetStagePipelineState(skyboxStageParams);
 
-		m_skyboxStage.AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());
+		m_skyboxStage->AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());
 
 		DeferredLightingGraphicsSystem* deferredLightGS = 
 			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
@@ -87,7 +89,7 @@ namespace gr
 		std::shared_ptr<re::TextureTargetSet> skyboxTargets = 
 			re::TextureTargetSet::Create(*deferredLightGS->GetFinalTextureTargetSet(),"Skybox Targets");
 
-		m_skyboxStage.AddPermanentParameterBlock(re::ParameterBlock::Create(
+		m_skyboxStage->AddPermanentParameterBlock(re::ParameterBlock::Create(
 			SkyboxParams::s_shaderName,
 			CreateSkyboxParamsData(skyboxTargets),
 			re::ParameterBlock::PBType::Immutable));
@@ -96,9 +98,9 @@ namespace gr
 
 		skyboxTargets->SetDepthStencilTarget(gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget());
 
-		m_skyboxStage.SetTextureTargetSet(skyboxTargets);
+		m_skyboxStage->SetTextureTargetSet(skyboxTargets);
 
-		pipeline.AppendRenderStage(&m_skyboxStage);
+		pipeline.AppendRenderStage(m_skyboxStage);
 	}
 
 
@@ -107,7 +109,7 @@ namespace gr
 		CreateBatches();
 
 		// Skybox texture can be null if we didn't load anything, but this GS should have been removed
-		m_skyboxStage.SetPerFrameTextureInput(
+		m_skyboxStage->SetPerFrameTextureInput(
 			m_skyTextureShaderName,
 			m_skyTexture,
 			Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
@@ -118,13 +120,13 @@ namespace gr
 
 	std::shared_ptr<re::TextureTargetSet const> SkyboxGraphicsSystem::GetFinalTextureTargetSet() const
 	{
-		return m_skyboxStage.GetTextureTargetSet();
+		return m_skyboxStage->GetTextureTargetSet();
 	}
 
 
 	void SkyboxGraphicsSystem::CreateBatches()
 	{
 		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
-		m_skyboxStage.AddBatch(fullscreenQuadBatch);
+		m_skyboxStage->AddBatch(fullscreenQuadBatch);
 	}
 }

@@ -44,9 +44,13 @@ namespace
 
 namespace gr
 {
-	BloomGraphicsSystem::BloomGraphicsSystem(std::string name) : GraphicsSystem(name), NamedObject(name),
-		m_emissiveBlitStage("Emissive blit stage")
+	BloomGraphicsSystem::BloomGraphicsSystem(std::string name)
+		: GraphicsSystem(name)
+		, NamedObject(name)
 	{
+		re::RenderStage::RenderStageParams renderStageParams;
+		m_emissiveBlitStage = re::RenderStage::Create("Emissive blit stage", renderStageParams);
+
 		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Near);
 	}
 
@@ -68,14 +72,14 @@ namespace gr
 		emissiveStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::One);
 		emissiveStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
 
-		m_emissiveBlitStage.SetStagePipelineState(emissiveStageParams);
-		m_emissiveBlitStage.SetStageShader(blitShader);
-		m_emissiveBlitStage.AddPermanentParameterBlock(sceneCam->GetCameraParams());
+		m_emissiveBlitStage->SetStagePipelineState(emissiveStageParams);
+		m_emissiveBlitStage->SetStageShader(blitShader);
+		m_emissiveBlitStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
-		m_emissiveBlitStage.SetTextureTargetSet(
+		m_emissiveBlitStage->SetTextureTargetSet(
 			re::TextureTargetSet::Create(*deferredLightGS->GetFinalTextureTargetSet(), "Emissive Blit Target Set"));
 		
-		pipeline.AppendRenderStage(&m_emissiveBlitStage);
+		pipeline.AppendRenderStage(m_emissiveBlitStage);
 
 		// Bloom stages:
 		gr::PipelineState bloomStageParams;
@@ -112,7 +116,8 @@ namespace gr
 		for (uint32_t i = 0; i < numScalingStages; i++)
 		{
 			const string name = "Down-res stage " + to_string(i + 1) + " / " + to_string(numScalingStages);
-			m_downResStages.emplace_back(name);
+			re::RenderStage::RenderStageParams renderStageParams;
+			m_downResStages.emplace_back(re::RenderStage::Create(name, renderStageParams));
 
 			std::shared_ptr<re::TextureTargetSet> downResTargets = re::TextureTargetSet::Create(name + " targets");
 
@@ -125,21 +130,21 @@ namespace gr
 
 			downResTargets->SetColorTarget(0, re::Texture::Create(texPath, resScaleParams, false), targetParams);
 
-			m_downResStages.back().SetTextureTargetSet(downResTargets);
+			m_downResStages.back()->SetTextureTargetSet(downResTargets);
 
-			m_downResStages.back().SetStagePipelineState(bloomStageParams);
-			m_downResStages.back().AddPermanentParameterBlock(sceneCam->GetCameraParams());
+			m_downResStages.back()->SetStagePipelineState(bloomStageParams);
+			m_downResStages.back()->AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
 			if (i == 0)
 			{
-				m_downResStages[i].SetStageShader(luminanceThresholdShader);
+				m_downResStages[i]->SetStageShader(luminanceThresholdShader);
 			}
 			else
 			{
-				m_downResStages[i].SetStageShader(blitShader);
+				m_downResStages[i]->SetStageShader(blitShader);
 			}
 
-			pipeline.AppendRenderStage(&m_downResStages[i]);
+			pipeline.AppendRenderStage(m_downResStages[i]);
 
 			// Don't halve the resolution on the last iteration:
 			if (i < (numScalingStages - 1))
@@ -169,34 +174,35 @@ namespace gr
 		{
 			const string stagePrefix = (i % 2 == 0) ? "Horizontal " : "Vertical ";
 			const string name = stagePrefix + "blur stage " + to_string((i + 2) / 2) + " / " + to_string(m_numBlurPasses);
-			m_blurStages.emplace_back(name);
+			re::RenderStage::RenderStageParams renderStageParams;
+			m_blurStages.emplace_back(re::RenderStage::Create(name, renderStageParams));
 
 			std::shared_ptr<re::TextureTargetSet> blurTargets = re::TextureTargetSet::Create(name + " targets");
 
 			blurTargets->Viewport().Width() = currentXRes;
 			blurTargets->Viewport().Height() = currentYRes;
 
-			m_blurStages.back().SetStagePipelineState(bloomStageParams);
-			m_blurStages.back().AddPermanentParameterBlock(sceneCam->GetCameraParams());
+			m_blurStages.back()->SetStagePipelineState(bloomStageParams);
+			m_blurStages.back()->AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
 			if (i % 2 == 0)
 			{
 				blurTargets->SetColorTarget(0, blurPingPongTexture, targetParams);
-				m_blurStages.back().SetStageShader(horizontalBlurShader);
+				m_blurStages.back()->SetStageShader(horizontalBlurShader);
 			}
 			else
 			{
-				blurTargets->SetColorTarget(0, m_downResStages.back().GetTextureTargetSet()->GetColorTarget(0));
-				m_blurStages.back().SetStageShader(verticalBlurShader);
+				blurTargets->SetColorTarget(0, m_downResStages.back()->GetTextureTargetSet()->GetColorTarget(0));
+				m_blurStages.back()->SetStageShader(verticalBlurShader);
 			}
-			m_blurStages.back().SetTextureTargetSet(blurTargets);
+			m_blurStages.back()->SetTextureTargetSet(blurTargets);
 
-			m_blurStages.back().AddPermanentParameterBlock(re::ParameterBlock::Create(
+			m_blurStages.back()->AddPermanentParameterBlock(re::ParameterBlock::Create(
 				BloomParams::s_shaderName,
 				CreateBloomParamsData(blurTargets),
 				re::ParameterBlock::PBType::Immutable));
 
-			pipeline.AppendRenderStage(&m_blurStages[i]);
+			pipeline.AppendRenderStage(m_blurStages[i]);
 		}
 
 		// Up-res stages:
@@ -207,15 +213,16 @@ namespace gr
 			currentYRes *= 2;
 
 			const string name = "Up-res stage " + to_string(i + 1) + " / " + to_string(numScalingStages);
-			m_upResStages.emplace_back(name);
+			re::RenderStage::RenderStageParams renderStageParams;
+			m_upResStages.emplace_back(re::RenderStage::Create(name, renderStageParams));
 
 			std::shared_ptr<re::TextureTargetSet> upResTargets = re::TextureTargetSet::Create(name + " targets");
 
 			upResTargets->Viewport().Width() = currentXRes;
 			upResTargets->Viewport().Height() = currentYRes;
 	
-			m_upResStages.back().AddPermanentParameterBlock(sceneCam->GetCameraParams());
-			m_upResStages[i].SetStageShader(blitShader);
+			m_upResStages.back()->AddPermanentParameterBlock(sceneCam->GetCameraParams());
+			m_upResStages[i]->SetStageShader(blitShader);
 
 			if (i == (numScalingStages - 1)) // Last iteration: Additive blit back to the src gs
 			{
@@ -226,19 +233,19 @@ namespace gr
 				addStageParams.SetSrcBlendMode(gr::PipelineState::BlendMode::One);
 				addStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::One);
 
-				m_upResStages.back().SetStagePipelineState(addStageParams);
+				m_upResStages.back()->SetStagePipelineState(addStageParams);
 			}
 			else
 			{
 				upResTargets->SetColorTarget(0,
-					m_downResStages[m_downResStages.size() - (i + 2)].GetTextureTargetSet()->GetColorTarget(0));
+					m_downResStages[m_downResStages.size() - (i + 2)]->GetTextureTargetSet()->GetColorTarget(0));
 
-				m_upResStages.back().SetStagePipelineState(bloomStageParams);
+				m_upResStages.back()->SetStagePipelineState(bloomStageParams);
 			}
 
-			m_upResStages.back().SetTextureTargetSet(upResTargets);
+			m_upResStages.back()->SetTextureTargetSet(upResTargets);
 
-			pipeline.AppendRenderStage(&m_upResStages[i]);
+			pipeline.AppendRenderStage(m_upResStages[i]);
 		}
 	}
 
@@ -257,7 +264,7 @@ namespace gr
 		// This index corresponds with the GBuffer texture layout bindings in SaberCommon.glsl
 		// TODO: Have a less brittle way of handling this.
 		const size_t gBufferEmissiveTextureIndex = 3; 
-		m_emissiveBlitStage.SetPerFrameTextureInput(
+		m_emissiveBlitStage->SetPerFrameTextureInput(
 			"GBufferAlbedo",
 			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(gBufferEmissiveTextureIndex)->GetTexture(),
 			bloomStageSampler);
@@ -266,16 +273,16 @@ namespace gr
 		{
 			if (i == 0)
 			{
-				m_downResStages[i].SetPerFrameTextureInput(
+				m_downResStages[i]->SetPerFrameTextureInput(
 					"GBufferAlbedo", 
-					m_emissiveBlitStage.GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
+					m_emissiveBlitStage->GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
-				m_downResStages[i].SetPerFrameTextureInput(
+				m_downResStages[i]->SetPerFrameTextureInput(
 					"GBufferAlbedo",
-					m_downResStages[i - 1].GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
+					m_downResStages[i - 1]->GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
 					bloomStageSampler);
 			}
 		}
@@ -284,16 +291,16 @@ namespace gr
 		{
 			if (i == 0)
 			{
-				m_blurStages[i].SetPerFrameTextureInput(
+				m_blurStages[i]->SetPerFrameTextureInput(
 					"GBufferAlbedo",
-					m_downResStages.back().GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
+					m_downResStages.back()->GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
-				m_blurStages[i].SetPerFrameTextureInput(
+				m_blurStages[i]->SetPerFrameTextureInput(
 					"GBufferAlbedo",
-					m_blurStages[i-1].GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
+					m_blurStages[i-1]->GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
 					bloomStageSampler);
 			}
 		}
@@ -302,16 +309,16 @@ namespace gr
 		{
 			if (i == 0)
 			{
-				m_upResStages[i].SetPerFrameTextureInput(
+				m_upResStages[i]->SetPerFrameTextureInput(
 					"GBufferAlbedo",
-					m_blurStages.back().GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
+					m_blurStages.back()->GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
-				m_upResStages[i].SetPerFrameTextureInput(
+				m_upResStages[i]->SetPerFrameTextureInput(
 					"GBufferAlbedo",
-					m_upResStages[i-1].GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
+					m_upResStages[i-1]->GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
 					bloomStageSampler);
 			}
 		}
@@ -322,19 +329,19 @@ namespace gr
 	{
 		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
 
-		m_emissiveBlitStage.AddBatch(fullscreenQuadBatch);
+		m_emissiveBlitStage->AddBatch(fullscreenQuadBatch);
 
 		for (size_t i = 0; i < m_downResStages.size(); i++)
 		{
-			m_downResStages[i].AddBatch(fullscreenQuadBatch);
+			m_downResStages[i]->AddBatch(fullscreenQuadBatch);
 		}
 		for (size_t i = 0; i < m_blurStages.size(); i++)
 		{
-			m_blurStages[i].AddBatch(fullscreenQuadBatch);
+			m_blurStages[i]->AddBatch(fullscreenQuadBatch);
 		}
 		for (size_t i = 0; i < m_upResStages.size(); i++)
 		{
-			m_upResStages[i].AddBatch(fullscreenQuadBatch);
+			m_upResStages[i]->AddBatch(fullscreenQuadBatch);
 		}
 	}
 }

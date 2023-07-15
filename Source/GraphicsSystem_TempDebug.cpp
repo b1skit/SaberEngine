@@ -14,9 +14,9 @@ namespace gr
 	TempDebugGraphicsSystem::TempDebugGraphicsSystem(std::string name)
 		: GraphicsSystem(name)
 		, NamedObject(name)
-		, m_tempDebugStage("DX12 temp debug stage")
 		, m_helloTriangle(nullptr)
 	{
+		m_tempDebugStage = re::RenderStage::Create("DX12 temp debug stage", re::RenderStage::RenderStageParams());
 	}
 
 
@@ -38,19 +38,19 @@ namespace gr
 
 //#define TEST_STAGE_SHADER // Forces EVERYTHING to use the same shader. 
 #ifdef TEST_STAGE_SHADER
-		m_tempDebugStage.SetStageShader(debugShader);
+		m_tempDebugStage->SetStageShader(debugShader);
 #endif
 
 		// "Set" the targets:
-		m_tempDebugStage.SetTextureTargetSet(nullptr); // Render directly to the backbuffer
+		m_tempDebugStage->SetTextureTargetSet(nullptr); // Render directly to the backbuffer
 
 		gr::PipelineState defaultPipelineState;
-		m_tempDebugStage.SetStagePipelineState(defaultPipelineState);
+		m_tempDebugStage->SetStagePipelineState(defaultPipelineState);
 
 		// Add param blocks:
-		m_tempDebugStage.AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());
+		m_tempDebugStage->AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());
 
-		pipeline.AppendRenderStage(&m_tempDebugStage);
+		pipeline.AppendRenderStage(m_tempDebugStage);
 	}
 
 
@@ -80,7 +80,7 @@ namespace gr
 			re::ParameterBlock::PBType::SingleFrame); // TODO: SingleFrame PB destruction needs to be deferred
 		helloTriangleBatch.SetParameterBlock(instancedMeshParams);
 
-		m_tempDebugStage.AddBatch(helloTriangleBatch);
+		m_tempDebugStage->AddBatch(helloTriangleBatch);
 
 
 		// Copy the scene batches, and attach a shader:
@@ -94,13 +94,13 @@ namespace gr
 			// Then, we set a shader (as the incoming material doesn't have one)
 			re::Batch batchCopy = Batch(batch);
 			batchCopy.SetShader(debugShader.get());
-			m_tempDebugStage.AddBatch(batchCopy);
+			m_tempDebugStage->AddBatch(batchCopy);
 		}
 	}
 
 
 	std::shared_ptr<re::TextureTargetSet const> TempDebugGraphicsSystem::GetFinalTextureTargetSet() const
 	{
-		return m_tempDebugStage.GetTextureTargetSet();
+		return m_tempDebugStage->GetTextureTargetSet();
 	}
 }

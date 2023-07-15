@@ -27,10 +27,10 @@ namespace gr
 	private:
 		std::shared_ptr<re::MeshPrimitive> m_screenAlignedQuad;
 
-		re::RenderStage m_emissiveBlitStage;
-		std::vector<re::RenderStage> m_downResStages;
-		std::vector<re::RenderStage> m_blurStages;
-		std::vector<re::RenderStage> m_upResStages;
+		std::shared_ptr<re::RenderStage> m_emissiveBlitStage;
+		std::vector<std::shared_ptr<re::RenderStage>> m_downResStages;
+		std::vector<std::shared_ptr<re::RenderStage>> m_blurStages;
+		std::vector<std::shared_ptr<re::RenderStage>> m_upResStages;
 
 		const uint32_t m_numDownSamplePasses	= 2; // Scaling factor: # times we half the frame size
 		const uint32_t m_numBlurPasses			= 3; // How many pairs of horizontal + vertical blur passes to perform
@@ -39,6 +39,6 @@ namespace gr
 
 	inline std::shared_ptr<re::TextureTargetSet const> BloomGraphicsSystem::GetFinalTextureTargetSet() const
 	{
-		return m_emissiveBlitStage.GetTextureTargetSet();
+		return m_emissiveBlitStage->GetTextureTargetSet();
 	}
 }
