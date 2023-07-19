@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
+#include <d3d12.h>
 #include <wrl.h>
 
 #include "Config.h"
@@ -119,5 +120,27 @@ namespace dx12
 			dredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 			dredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 		}
+	}
+
+
+	std::wstring GetWDebugName(ID3D12Object* object)
+	{
+		// Name our descriptor heap. We extract the command list's debug name to ensure consistency
+		constexpr uint32_t k_nameLength = 1024;
+		uint32_t nameLength = k_nameLength;
+		wchar_t extractedname[k_nameLength];
+		object->GetPrivateData(WKPDID_D3DDebugObjectNameW, &nameLength, &extractedname);
+		SEAssert("Invalid name length retrieved", nameLength > 0);
+
+		extractedname[k_nameLength - 1] = '\0'; // Suppress warning C6054
+
+		return std::wstring(extractedname);
+	}
+
+
+	std::string GetDebugName(ID3D12Object* object)
+	{
+		std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+		return converter.to_bytes(GetWDebugName(object));
 	}
 }
