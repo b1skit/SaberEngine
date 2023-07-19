@@ -380,9 +380,6 @@
     <ClCompile Include="GPUDescriptorHeap_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
-    <ClCompile Include="RootSignature_DX12.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="GraphicsSystem_TempDebug.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
@@ -403,6 +400,9 @@
     </ClCompile>
     <ClCompile Include="SysInfo_OpenGL.cpp">
       <Filter>Source Files\re\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="RootSignature_DX12.cpp">
+      <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -739,9 +739,6 @@
     <ClInclude Include="GraphicsSystem_TempDebug.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
-    <ClInclude Include="TextUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SysInfo_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
@@ -768,6 +765,9 @@
     </ClInclude>
     <ClInclude Include="SysInfo_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="TextUtils.h">
+      <Filter>Header Files\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
