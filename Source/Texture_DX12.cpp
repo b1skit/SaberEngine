@@ -758,7 +758,7 @@ namespace dx12
 		Microsoft::WRL::ComPtr<ID3D12Resource> textureResource)
 	{
 		SEAssert("Invalid/unexpected texture format. For now, this function is used to create a backbuffer color target",
-			params.m_usage == re::Texture::Usage::SwapchainColorProxy);
+			(params.m_usage & re::Texture::Usage::SwapchainColorProxy));
 
 		// Note: re::Texture::Create will enroll the texture in API object creation, and eventually call the standard 
 		// dx12::Texture::Create above

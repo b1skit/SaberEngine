@@ -91,8 +91,8 @@ namespace dx12
 		void ClearColorTarget(re::TextureTarget const*, glm::vec4 clearColor) const;
 		void ClearColorTargets(re::TextureTargetSet const&) const;
 
-		void SetRenderTargets(re::TextureTargetSet const&) const;
-		void SetBackbufferRenderTarget() const;
+		void SetRenderTargets(re::TextureTargetSet const&);
+		void SetBackbufferRenderTarget();
 
 		void SetComputeTargets(re::TextureTargetSet const&);
 

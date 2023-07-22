@@ -57,7 +57,7 @@ namespace re
 
 		platform::Texture::CreatePlatformParams(*this);
 
-		if (m_texParams.m_usage == Usage::Color) // Optimization: Only allocate texels for non-target types
+		if (m_texParams.m_usage & Usage::Color) // Optimization: Only allocate texels for non-target types
 		{
 			const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
 			m_texels.resize(params.m_faces * params.m_width * params.m_height * bytesPerPixel, 0);

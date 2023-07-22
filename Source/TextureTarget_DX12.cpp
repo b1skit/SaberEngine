@@ -41,8 +41,8 @@ namespace dx12
 			{
 				re::Texture::TextureParams const& texParams = colorTarget->GetTexture()->GetTextureParams();
 				SEAssert("Texture has the wrong usage set", 
-					(texParams.m_usage == re::Texture::Usage::ColorTarget || texParams.m_useMIPs) || // TODO: This sucks. We shouldn't need to differentiate between color targets, and textures that need mips
-					texParams.m_usage == re::Texture::Usage::SwapchainColorProxy);
+					((texParams.m_usage & re::Texture::Usage::ColorTarget) || texParams.m_useMIPs) || // TODO: This sucks. We shouldn't need to differentiate between color targets, and textures that need mips
+					(texParams.m_usage & re::Texture::Usage::SwapchainColorProxy));
 
 				dx12::Texture::PlatformParams* texPlatParams =
 					colorTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
@@ -95,7 +95,7 @@ namespace dx12
 		targetSetParams->m_depthIsCreated = true;
 
 		SEAssert("Target has the wrong usage type", 
-			targetSet.GetDepthStencilTarget()->GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::DepthTarget);
+			(targetSet.GetDepthStencilTarget()->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget));
 
 		std::shared_ptr<re::Texture> depthTargetTex = targetSet.GetDepthStencilTarget()->GetTexture();
 

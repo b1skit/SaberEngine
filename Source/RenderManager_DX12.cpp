@@ -231,7 +231,6 @@ namespace dx12
 					SEAssertF("Invalid stage type");
 				}
 
-
 				// TODO: Why can't this be a const& ?
 				gr::PipelineState& pipelineState = renderStage->GetStagePipelineState();
 
@@ -249,117 +248,8 @@ namespace dx12
 						swapChainParams && swapChainParams->m_backbufferTargetSet);
 
 					stageTargets = swapChainParams->m_backbufferTargetSet; // Draw directly to the swapchain backbuffer
-
-					// TODO: Move resource transitions inside of the command list, when we set the render targets
-					currentCommandList->TransitionResource(
-						dx12::SwapChain::GetBackBufferResource(context.GetSwapChain()).Get(),
-						D3D12_RESOURCE_STATE_RENDER_TARGET,
-						D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 				}
-				else
-				{
-					for (size_t i = 0; i < stageTargets->GetColorTargets().size(); i++)
-					{
-						if (stageTargets->GetColorTargets()[i])
-						{
-							re::Texture* texture = stageTargets->GetColorTargets()[i]->GetTexture().get();
-							dx12::Texture::PlatformParams* texPlatParams =
-								texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-							
-							
-
-							switch (renderStage->GetStageType())
-							{
-							case re::RenderStage::RenderStageType::Graphics:
-							{
-								// TODO: Move resource transitions inside of the command list, when we set the render targets
-								currentCommandList->TransitionResource(
-									texPlatParams->m_textureResource.Get(),
-									D3D12_RESOURCE_STATE_RENDER_TARGET,
-									stageTargets->GetColorTargets()[i]->GetTargetParams().m_targetSubesource);
-							}
-							break;
-							case re::RenderStage::RenderStageType::Compute:
-							{
-								// TODO: Move resource transitions inside of the command list, when we set the render targets
-								// TODO: We shouldn't be assuming a compute target needs to be in a UAV state
-
-
-								currentCommandList->TransitionResource(
-									texPlatParams->m_textureResource.Get(),
-									D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-									stageTargets->GetColorTargets()[i]->GetTargetParams().m_targetSubesource);
-							}
-							break;
-							default:
-								SEAssertF("Invalid stage type");
-							}
-						}						
-					}
-
-					re::TextureTarget const* depthTarget = stageTargets->GetDepthStencilTarget();
-					if (depthTarget)
-					{
-						SEAssert("TODO: Handle depth bound to compute", 
-							renderStage->GetStageType() != re::RenderStage::RenderStageType::Compute);
-
-						re::Texture* depthTexture = depthTarget->GetTexture().get();
-						dx12::Texture::PlatformParams* depthTexPlatParams =
-							depthTexture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-						
-						// TODO: Move resource transitions inside of the command list, when we set the render targets
-						currentCommandList->TransitionResource(
-							depthTexPlatParams->m_textureResource.Get(),
-							D3D12_RESOURCE_STATE_RENDER_TARGET,
-							depthTarget->GetTargetParams().m_targetSubesource);
-					}
-				}
-
-				// Bind our graphics stage render target(s) to the output merger (OM):
-				if (renderStage->GetStageType() == re::RenderStage::RenderStageType::Graphics)
-				{
-					if (isBackbufferTarget)
-					{
-						currentCommandList->SetBackbufferRenderTarget();
-					}
-					else
-					{
-						currentCommandList->SetRenderTargets(*stageTargets);
-					}
-
-					// Set the viewport and scissor rectangles:
-					currentCommandList->SetViewport(*stageTargets);
-					currentCommandList->SetScissorRect(*stageTargets);
-					// TODO: Should the viewport and scissor rects be set while we're setting the targets?
-				}
-
-
-
-				// Clear the render targets:
-				// TODO: These should be per-target, to allow different outputs when using MRTs
-				const gr::PipelineState::ClearTarget clearTargetMode = pipelineState.GetClearTarget();
-				if (clearTargetMode == gr::PipelineState::ClearTarget::Color ||
-					clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
-				{
-					if (isBackbufferTarget)
-					{
-						const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
-						currentCommandList->ClearColorTarget(stageTargets->GetColorTarget(backbufferIdx));
-					}
-					else
-					{
-						currentCommandList->ClearColorTargets(*stageTargets);
-					}
-				}
-				if (clearTargetMode == gr::PipelineState::ClearTarget::Depth ||
-					clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
-				{
-					currentCommandList->ClearDepthTarget(stageTargets->GetDepthStencilTarget());
-				}
-
 				
-
-
 				auto SetDrawState = [&renderStage](
 					re::Shader const* shader, 
 					gr::PipelineState& grPipelineState,
@@ -373,7 +263,6 @@ namespace dx12
 						targetSet);
 					commandList->SetPipelineState(*pso);
 					
-
 					switch (renderStage->GetStageType())
 					{
 					case re::RenderStage::RenderStageType::Graphics:
@@ -410,13 +299,57 @@ namespace dx12
 					SetDrawState(stageShader, pipelineState, stageTargets.get(), currentCommandList);
 				}
 
-				// Set compute targets, now that the pipeline is set
-				// TODO: Merge this in with other "set targets" logic 
-				if (renderStage->GetStageType() == re::RenderStage::RenderStageType::Compute)
+				// Set targets, now that the pipeline is set
+				switch (renderStage->GetStageType())
+				{
+				case re::RenderStage::RenderStageType::Compute:
 				{
 					currentCommandList->SetComputeTargets(*stageTargets);
 				}
+				break;
+				case re::RenderStage::RenderStageType::Graphics:
+				{
+					// Bind our graphics stage render target(s) to the output merger (OM):
+					if (isBackbufferTarget)
+					{
+						currentCommandList->SetBackbufferRenderTarget();
+					}
+					else
+					{
+						currentCommandList->SetRenderTargets(*stageTargets);
+					}
 
+					// Set the viewport and scissor rectangles:
+					currentCommandList->SetViewport(*stageTargets);
+					currentCommandList->SetScissorRect(*stageTargets);
+					// TODO: Should the viewport and scissor rects be set while we're setting the targets?
+				}
+				break;
+				default:
+					SEAssertF("Invalid stage type");
+				}
+
+				// Clear the render targets:
+				// TODO: These should be per-target, to allow different outputs when using MRTs
+				const gr::PipelineState::ClearTarget clearTargetMode = pipelineState.GetClearTarget();
+				if (clearTargetMode == gr::PipelineState::ClearTarget::Color ||
+					clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
+				{
+					if (isBackbufferTarget)
+					{
+						const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
+						currentCommandList->ClearColorTarget(stageTargets->GetColorTarget(backbufferIdx));
+					}
+					else
+					{
+						currentCommandList->ClearColorTargets(*stageTargets);
+					}
+				}
+				if (clearTargetMode == gr::PipelineState::ClearTarget::Depth ||
+					clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
+				{
+					currentCommandList->ClearDepthTarget(stageTargets->GetDepthStencilTarget());
+				}
 
 				// Render stage batches:
 				std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
@@ -513,10 +446,7 @@ namespace dx12
 			{
 				directCommandLists.emplace_back(directCommandList);
 			}
-
 		}
-
-		// TODO: We need to insert fences between our command lists to syncronize them here!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		
 		// Execute the command lists
 		if (!computeCommandLists.empty())

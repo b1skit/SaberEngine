@@ -342,7 +342,7 @@ namespace dx12
 	{
 		SEAssert("Target texture must be a depth target",
 			depthTarget &&
-			depthTarget->GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::DepthTarget);
+			(depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget));
 
 		dx12::TextureTarget::PlatformParams* depthPlatParams =
 			depthTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
@@ -370,8 +370,8 @@ namespace dx12
 	{
 		SEAssert("Target texture must be a color target", 
 			colorTarget && 
-			colorTarget->GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::ColorTarget ||
-			colorTarget->GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::SwapchainColorProxy);
+			(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) ||
+			(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::SwapchainColorProxy));
 
 		dx12::TextureTarget::PlatformParams* targetParams =
 			colorTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
@@ -393,7 +393,7 @@ namespace dx12
 	}
 
 
-	void CommandList::SetRenderTargets(re::TextureTargetSet const& targetSet) const
+	void CommandList::SetRenderTargets(re::TextureTargetSet const& targetSet)
 	{
 		SEAssert("This method is not valid for compute or copy command lists", 
 			m_type != CommandListType::Compute && m_type != CommandListType::Copy);
@@ -404,8 +404,18 @@ namespace dx12
 		uint32_t numColorTargets = 0;
 		for (uint8_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
-			if (targetSet.GetColorTarget(i))
+			re::TextureTarget const* target = targetSet.GetColorTarget(i);
+			if (target)
 			{
+				dx12::Texture::PlatformParams* texPlatParams = 
+					target->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+
+				// Insert our resource transition:
+				TransitionResource(
+					texPlatParams->m_textureResource.Get(),
+					D3D12_RESOURCE_STATE_RENDER_TARGET,
+					target->GetTargetParams().m_targetSubesource);
+
 				dx12::TextureTarget::PlatformParams* targetPlatParams =
 					targetSet.GetColorTarget(i)->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
@@ -418,9 +428,19 @@ namespace dx12
 		re::TextureTarget const* depthStencilTarget = targetSet.GetDepthStencilTarget();
 		if (depthStencilTarget)
 		{
-			dx12::TextureTarget::PlatformParams* depthPlatParams =
+			re::Texture* depthTexture = depthStencilTarget->GetTexture().get();
+			dx12::Texture::PlatformParams* depthTexPlatParams =
+				depthTexture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+
+			// Insert our resource transition:
+			TransitionResource(
+				depthTexPlatParams->m_textureResource.Get(),
+				D3D12_RESOURCE_STATE_RENDER_TARGET,
+				depthStencilTarget->GetTargetParams().m_targetSubesource);
+
+			dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
 				depthStencilTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
-			dsvDescriptor = depthPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
+			dsvDescriptor = depthTargetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
 		}
 		
 		// NOTE: isSingleHandleToDescRange == true specifies that the rtvs are contiguous in memory, thus N rtv 
@@ -434,13 +454,19 @@ namespace dx12
 	}
 
 
-	void CommandList::SetBackbufferRenderTarget() const
+	void CommandList::SetBackbufferRenderTarget()
 	{
 		// TODO: The backbuffer should maintain multiple target sets (sharing a depth target texture). When we want to
 		// set the backbuffer rendertarget, we should just call the standard SetRenderTargets function, and pass in the
 		// appropriate target set. We should not have this separate SetBackbufferRenderTarget function
 
 		re::Context const& context = re::RenderManager::Get()->GetContext();
+
+		// Insert our resource transition:
+		TransitionResource(
+			dx12::SwapChain::GetBackBufferResource(context.GetSwapChain()).Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
 		dx12::SwapChain::PlatformParams* swapChainParams =
 			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
@@ -485,6 +511,17 @@ namespace dx12
 
 			dx12::Texture::PlatformParams* texPlatParams =
 				texTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+
+			// Insert our resource transition:
+			TransitionResource(
+				texPlatParams->m_textureResource.Get(),
+				D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+				texTarget->GetTargetParams().m_targetSubesource);
+			// TODO: We shouldn't be assuming a compute target needs to be in a UAV state
+
+			SEAssert("TODO: Handle depth bound to compute", 
+				(texTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0);
+
 
 
 			// TEMP HAX: Hard code a name

@@ -90,8 +90,8 @@ namespace opengl
 
 				re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
 				SEAssert("Attempting to bind a color target with a different texture use parameter",
-					textureParams.m_usage == re::Texture::Usage::ColorTarget ||
-					textureParams.m_usage == re::Texture::Usage::SwapchainColorProxy); // Not currently used
+					(textureParams.m_usage & re::Texture::Usage::ColorTarget) ||
+					(textureParams.m_usage & re::Texture::Usage::SwapchainColorProxy)); // Not currently used
 
 				// Validate the texture:
 				if (!foundTarget)
@@ -194,8 +194,8 @@ namespace opengl
 					targetSet.GetColorTarget(i)->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
 
 				SEAssert("Attempting to bind a color target with a different texture use parameter", 
-					textureParams.m_usage == re::Texture::Usage::ColorTarget ||
-					textureParams.m_usage == re::Texture::Usage::SwapchainColorProxy);
+					(textureParams.m_usage & re::Texture::Usage::ColorTarget) ||
+					(textureParams.m_usage & re::Texture::Usage::SwapchainColorProxy));
 
 				GLenum texTarget = texPlatformParams->m_texTarget;
 				re::TextureTarget::TargetParams const& targetParams = targetSet.GetColorTarget(i)->GetTargetParams();
@@ -284,7 +284,7 @@ namespace opengl
 			// Create framebuffer:
 			re::Texture::TextureParams const& depthTextureParams = depthStencilTex->GetTextureParams();
 			SEAssert("Attempting to bind a depth target with a different texture use parameter",
-				depthTextureParams.m_usage == re::Texture::Usage::DepthTarget);
+				(depthTextureParams.m_usage & re::Texture::Usage::DepthTarget));
 
 			if (!glIsFramebuffer(targetSetParams->m_frameBufferObject))
 			{
@@ -342,7 +342,7 @@ namespace opengl
 
 			re::Texture::TextureParams const& textureParams = depthStencilTex->GetTextureParams();
 			SEAssert("Attempting to bind a depth target with a different texture use parameter",
-				textureParams.m_usage == re::Texture::Usage::DepthTarget);
+				(textureParams.m_usage & re::Texture::Usage::DepthTarget));
 
 			opengl::Texture::PlatformParams const* depthPlatformParams =
 				depthStencilTex->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();

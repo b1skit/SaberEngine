@@ -201,7 +201,7 @@ namespace opengl
 		{
 			// Get the image data pointer; for render targets, this is nullptr
 			void* data = nullptr;
-			if (texParams.m_usage == re::Texture::Usage::Color)
+			if ((texParams.m_usage & re::Texture::Usage::Color))
 			{
 				SEAssert("Color target must have data to buffer", 
 					texture.GetTexels().size() == 
