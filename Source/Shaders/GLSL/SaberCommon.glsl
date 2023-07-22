@@ -28,11 +28,11 @@
 
 #if defined(SABER_FRAGMENT_SHADER)
 	#if defined(SABER_VEC2_OUTPUT)
-		out vec2 FragColor;
+		layout (location = 0) out vec2 FragColor;
 	#elif defined(SABER_VEC3_OUTPUT)
-		out vec3 FragColor;
+		layout (location = 0) out vec3 FragColor;
 	#elif defined(SABER_VEC4_OUTPUT)
-		out vec4 FragColor;
+		layout (location = 0) out vec4 FragColor;
 	#endif
 #endif
 
