@@ -8,6 +8,9 @@
 
 namespace dx12
 {
+	class RootSignature;
+	
+
 	class Shader
 	{
 	public:
@@ -31,6 +34,8 @@ namespace dx12
 		struct PlatformParams final : public re::Shader::PlatformParams
 		{
 			std::array<Microsoft::WRL::ComPtr<ID3DBlob>, ShaderType_Count> m_shaderBlobs = {0};
+			
+			dx12::RootSignature* m_rootSignature; // Lifetime managed by a shared_ptr held by the Context
 		};
 
 		// TODO: Handle copying of d3dcompiler_47.dll into the same folder as the compiled Saber Engine .exe 
@@ -38,5 +43,6 @@ namespace dx12
 	public:
 		static void Create(re::Shader& shader);
 		static void Destroy(re::Shader& shader);
+		static dx12::RootSignature* GetRootSignature(re::Shader const& shader);
 	};
 }

@@ -33,12 +33,7 @@ namespace dx12
 		
 		ID3D12PipelineState* GetD3DPipelineState() const;
 
-		dx12::RootSignature const* GetRootSignature() const;
-
-
 	private:
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineState;
-
-		dx12::RootSignature* m_rootSignature;
 	};
 }

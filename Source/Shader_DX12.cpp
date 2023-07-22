@@ -3,6 +3,7 @@
 
 #include "Config.h"
 #include "DebugConfiguration.h"
+#include "RootSignature_DX12.h"
 #include "Shader_DX12.h"
 
 using Microsoft::WRL::ComPtr;
@@ -12,10 +13,10 @@ namespace dx12
 {
 	void Shader::Create(re::Shader& shader)
 	{
-		dx12::Shader::PlatformParams* params = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
+		dx12::Shader::PlatformParams* platformParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 
-		SEAssert("Shader has already been created", !params->m_isCreated);
-		params->m_isCreated = true;
+		SEAssert("Shader has already been created", !platformParams->m_isCreated);
+		platformParams->m_isCreated = true;
 
 		// Our DX12 Shaders have a naming pattern of <name>_<V/G/P/C>Shader.hlsl
 		// e.g. Some_VShader.hlsl, Some_GShader.hlsl, Some_PShader.hlsl, Some_CShader.hlsl
@@ -33,6 +34,7 @@ namespace dx12
 		// Assemble root shader dir, as a wide string
 		std::wstring const& shaderRootWStr = en::Config::Get()->GetValueAsWString("shaderDirectory") + shaderBaseName;
 
+		// Load the shader blobs:
 		for (size_t i = 0; i < nameSuffix.size(); i++)
 		{
 			const std::wstring shaderName = shaderRootWStr + nameSuffix[i];
@@ -42,9 +44,12 @@ namespace dx12
 
 			if (SUCCEEDED(hr))
 			{
-				params->m_shaderBlobs[i] = shaderBlob;
+				platformParams->m_shaderBlobs[i] = shaderBlob;
 			}
 		}
+
+		// Now the shader blobs have been loaded, we can create the root signature:
+		platformParams->m_rootSignature = dx12::RootSignature::Create(shader).get();
 	}
 
 
@@ -59,5 +64,14 @@ namespace dx12
 
 		params->m_shaderBlobs = { 0 };
 		params->m_isCreated = false;
+	}
+
+
+	dx12::RootSignature* Shader::GetRootSignature(re::Shader const& shader)
+	{
+		dx12::Shader::PlatformParams* platformParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
+		SEAssert("Shader has not been created", platformParams->m_isCreated);
+
+		return platformParams->m_rootSignature;
 	}
 }

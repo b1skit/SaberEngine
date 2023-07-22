@@ -492,7 +492,7 @@ namespace dx12
 	
 
 			RootSignature::RootParameter const* rootSigEntry =
-				m_currentPSO->GetRootSignature()->GetRootSignatureEntry(shaderName);
+				m_currentRootSignature->GetRootSignatureEntry(shaderName);
 			SEAssert("Invalid root signature entry",
 				rootSigEntry || en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
 
@@ -601,7 +601,7 @@ namespace dx12
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		RootSignature::RootParameter const* rootSigEntry =
-			m_currentPSO->GetRootSignature()->GetRootSignatureEntry(shaderName);
+			m_currentRootSignature->GetRootSignatureEntry(shaderName);
 		SEAssert("Invalid root signature entry",
 			rootSigEntry ||
 			en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);

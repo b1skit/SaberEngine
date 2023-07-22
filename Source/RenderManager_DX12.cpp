@@ -378,12 +378,12 @@ namespace dx12
 					{
 					case re::RenderStage::RenderStageType::Graphics:
 					{
-						commandList->SetGraphicsRootSignature(pso->GetRootSignature());
+						commandList->SetGraphicsRootSignature(dx12::Shader::GetRootSignature(*shader));
 					}
 					break;
 					case re::RenderStage::RenderStageType::Compute:
 					{
-						commandList->SetComputeRootSignature(pso->GetRootSignature());
+						commandList->SetComputeRootSignature(dx12::Shader::GetRootSignature(*shader));
 					}
 					break;
 					default:

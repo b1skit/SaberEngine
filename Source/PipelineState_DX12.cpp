@@ -361,7 +361,6 @@ namespace dx12
 {
 	PipelineState::PipelineState()
 		: m_pipelineState(nullptr)
-		, m_rootSignature(nullptr)
 	{
 	}
 
@@ -371,8 +370,6 @@ namespace dx12
 		gr::PipelineState const& grPipelineState,
 		re::TextureTargetSet const& targetSet)
 	{
-		m_rootSignature = dx12::RootSignature::Create(shader).get();
-
 		dx12::Context::PlatformParams* ctxPlatParams =
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
@@ -389,7 +386,7 @@ namespace dx12
 
 			// Build graphics pipeline description:
 			GraphicsPipelineStateStream pipelineStateStream;
-			pipelineStateStream.rootSignature = m_rootSignature->GetD3DRootSignature();
+			pipelineStateStream.rootSignature = shaderParams->m_rootSignature->GetD3DRootSignature();
 			pipelineStateStream.inputLayout = { &inputLayout[0], static_cast<uint32_t>(inputLayout.size()) };
 			pipelineStateStream.primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 			pipelineStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Vertex].Get());
@@ -434,7 +431,7 @@ namespace dx12
 		{
 			// Build compute pipeline description:
 			ComputePipelineStateStream computePipelineStateStream;
-			computePipelineStateStream.rootSignature = m_rootSignature->GetD3DRootSignature();
+			computePipelineStateStream.rootSignature = shaderParams->m_rootSignature->GetD3DRootSignature();
 			computePipelineStateStream.cShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Compute].Get());
 
 			const D3D12_PIPELINE_STATE_STREAM_DESC computePipelineStateStreamDesc
@@ -460,7 +457,6 @@ namespace dx12
 
 	void PipelineState::Destroy()
 	{
-		m_rootSignature = nullptr;
 		m_pipelineState = nullptr;		
 	}
 
@@ -468,11 +464,5 @@ namespace dx12
 	ID3D12PipelineState* PipelineState::GetD3DPipelineState() const
 	{
 		return m_pipelineState.Get();
-	}
-
-
-	dx12::RootSignature const* PipelineState::GetRootSignature() const
-	{
-		return m_rootSignature;
 	}
 }
