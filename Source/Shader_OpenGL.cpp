@@ -362,7 +362,7 @@ namespace opengl
 
 
 	void Shader::SetUniform(
-		re::Shader& shader,
+		re::Shader const& shader,
 		string const& uniformName,
 		void* value, 
 		opengl::Shader::UniformType const type, 
@@ -460,7 +460,7 @@ namespace opengl
 	}
 
 
-	void Shader::SetParameterBlock(re::Shader& shader, re::ParameterBlock& paramBlock)
+	void Shader::SetParameterBlock(re::Shader const& shader, re::ParameterBlock const& paramBlock)
 	{
 		// TODO: Handle non-permanent parameter blocks. For now, just bind without considering if the data has changed
 
@@ -520,7 +520,10 @@ namespace opengl
 
 
 	void Shader::SetTextureAndSampler(
-		re::Shader& shader, std::string const& uniformName, std::shared_ptr<re::Texture> texture, std::shared_ptr<re::Sampler>sampler)
+		re::Shader const& shader,
+		std::string const& uniformName, 
+		std::shared_ptr<re::Texture> texture,
+		std::shared_ptr<re::Sampler>sampler)
 	{
 		opengl::Shader::SetUniform(shader, uniformName, texture.get(), opengl::Shader::UniformType::Texture, 1);
 		opengl::Shader::SetUniform(shader, uniformName, sampler.get(), opengl::Shader::UniformType::Sampler, 1);

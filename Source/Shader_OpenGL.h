@@ -51,12 +51,12 @@ namespace opengl
 		// OpenGL-specific functions:
 		static void Bind(re::Shader& shader);
 		static void SetUniform(
-			re::Shader& shader, 
+			re::Shader const& shader,
 			std::string const& uniformName, 
-			void* value, 
+			void * value, 
 			opengl::Shader::UniformType const type, 
 			int const count);
-		static void SetTextureAndSampler(re::Shader&, std::string const& uniformName, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>);
-		static void SetParameterBlock(re::Shader&, re::ParameterBlock&); // TODO: This Shader& can probably be const
+		static void SetTextureAndSampler(re::Shader const&, std::string const& uniformName, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>);
+		static void SetParameterBlock(re::Shader const&, re::ParameterBlock const&);
 	};
 }

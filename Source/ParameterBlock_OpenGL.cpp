@@ -60,7 +60,7 @@ namespace opengl
 	}
 
 
-	void ParameterBlock::Bind(re::ParameterBlock& paramBlock, GLuint bindIndex)
+	void ParameterBlock::Bind(re::ParameterBlock const& paramBlock, GLuint bindIndex)
 	{
 		PlatformParams* params = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
 		 

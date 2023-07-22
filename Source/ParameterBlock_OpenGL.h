@@ -30,6 +30,6 @@ namespace opengl
 
 	public:
 		// OpenGL-specific functionality:
-		static void Bind(re::ParameterBlock& paramBlock, GLuint uniformBlockIdx);
+		static void Bind(re::ParameterBlock const& paramBlock, GLuint uniformBlockIdx);
 	};
 }
