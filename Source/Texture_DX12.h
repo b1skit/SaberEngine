@@ -12,6 +12,14 @@ namespace dx12
 	class Texture
 	{
 	public:
+		enum View
+		{
+			SRV,
+			UAV,
+
+			View_Count
+		};
+
 		struct PlatformParams final : public re::Texture::PlatformParams
 		{
 			PlatformParams(re::Texture::TextureParams const& texParams);
@@ -21,7 +29,8 @@ namespace dx12
 			DXGI_FORMAT m_format;
 			Microsoft::WRL::ComPtr<ID3D12Resource> m_textureResource;
 
-			dx12::DescriptorAllocation m_cpuDescAllocation;
+			// Each view type can have a view for each mip level
+			std::array<std::vector<dx12::DescriptorAllocation>, View_Count> m_viewCpuDescAllocations;
 		};
 
 

@@ -22,7 +22,7 @@ namespace re
 
 
 	public:
-		enum class Usage
+		enum Usage
 		{
 			Color				= 1 << 0,
 			ColorTarget			= 1 << 1,

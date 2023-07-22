@@ -15,6 +15,11 @@ namespace dx12
 {
 	void TextureTargetSet::CreateColorTargets(re::TextureTargetSet& targetSet)
 	{
+		if (!targetSet.HasColorTarget())
+		{
+			return;
+		}
+
 		dx12::Context::PlatformParams* ctxPlatParams =
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 		
@@ -36,7 +41,7 @@ namespace dx12
 			{
 				re::Texture::TextureParams const& texParams = colorTarget->GetTexture()->GetTextureParams();
 				SEAssert("Texture has the wrong usage set", 
-					texParams.m_usage == re::Texture::Usage::ColorTarget || 
+					(texParams.m_usage == re::Texture::Usage::ColorTarget || texParams.m_useMIPs) || // TODO: This sucks. We shouldn't need to differentiate between color targets, and textures that need mips
 					texParams.m_usage == re::Texture::Usage::SwapchainColorProxy);
 
 				dx12::Texture::PlatformParams* texPlatParams =
@@ -44,16 +49,31 @@ namespace dx12
 				
 				SEAssert("Texture is not created", texPlatParams->m_isCreated && texPlatParams->m_textureResource);
 
+				re::TextureTarget::TargetParams targetParams = colorTarget->GetTargetParams();
 				dx12::TextureTarget::PlatformParams* targetPlatParams = 
 					colorTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
-				// Create the descriptor and RTV:
+				// Allocate a descriptor for our view:
 				targetPlatParams->m_rtvDsvDescriptor = std::move(
 					ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::RTV].Allocate(1));
 
+				// Create the RTV:
+				D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
+				renderTargetViewDesc.Format = texPlatParams->m_format;
+				
+				SEAssert("TODO: Support render targets of different dimensions",
+					texParams.m_dimension == re::Texture::Dimension::Texture2D && texParams.m_faces == 1);
+
+				renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2D;
+				renderTargetViewDesc.Texture2D = D3D12_TEX2D_RTV
+				{
+					.MipSlice = targetParams.m_targetSubesource,
+					.PlaneSlice = targetParams.m_targetFace
+				};
+
 				device->CreateRenderTargetView(
 					texPlatParams->m_textureResource.Get(), // Pointer to the resource containing the render target texture
-					nullptr,  // Pointer to a render target view descriptor. nullptr = default
+					&renderTargetViewDesc,
 					targetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor()); // Descriptor destination
 			}			
 		}
@@ -62,7 +82,10 @@ namespace dx12
 
 	void TextureTargetSet::CreateDepthStencilTarget(re::TextureTargetSet& targetSet)
 	{
-		SEAssert("Cannot create depth stencil if target set has no depth target", targetSet.HasDepthTarget());
+		if (!targetSet.HasDepthTarget())
+		{
+			return;
+		}
 
 		dx12::TextureTargetSet::PlatformParams* targetSetParams = 
 			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();

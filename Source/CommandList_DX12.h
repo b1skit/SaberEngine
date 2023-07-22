@@ -36,9 +36,13 @@ namespace dx12
 			VideoProcess,
 			VideoEncode,
 
-			CommandListType_Count
+			CommandListType_Count,
+			CommandListType_Invalid = CommandListType_Count
 		};
-		static constexpr D3D12_COMMAND_LIST_TYPE GetD3DCommandListType(dx12::CommandList::CommandListType type);
+		static constexpr wchar_t const* const GetCommandListTypeName(dx12::CommandList::CommandListType);
+		static constexpr D3D12_COMMAND_LIST_TYPE GetD3DCommandListType(dx12::CommandList::CommandListType);
+		static constexpr CommandListType TranslateCommandListType(D3D12_COMMAND_LIST_TYPE);
+		// TODO: Make usage of D3D and SE enums more consistent here
 
 		static size_t s_commandListNumber; // Monotonically-increasing numeric ID for naming command lists
 
@@ -59,8 +63,9 @@ namespace dx12
 
 		// The pipeline state and root signature must be set before subsequent interactions with the command list
 		void SetPipelineState(dx12::PipelineState const&);
+
 		void SetGraphicsRootSignature(dx12::RootSignature const* rootSig); // Makes all descriptors stale
-		// TODO: void SetComputeRootSignature(dx12::RootSignature const& rootSig);
+		void SetComputeRootSignature(dx12::RootSignature const* rootSig); // Makes all descriptors stale
 
 		// GPU descriptors:
 		void CommitGPUDescriptors(); // Must be called before issuing draw commands
@@ -86,23 +91,29 @@ namespace dx12
 		void ClearColorTarget(re::TextureTarget const*, glm::vec4 clearColor) const;
 		void ClearColorTargets(re::TextureTargetSet const&) const;
 
-		void SetRenderTargets(re::TextureTargetSet&) const;
+		void SetRenderTargets(re::TextureTargetSet const&) const;
 		void SetBackbufferRenderTarget() const;
+
+		void SetComputeTargets(re::TextureTargetSet const&);
 
 		void SetViewport(re::TextureTargetSet const&) const;
 		void SetScissorRect(re::TextureTargetSet const&) const;
 
-		
-
 		void DrawIndexedInstanced(
 			uint32_t numIndexes, uint32_t numInstances, uint32_t idxStartOffset, int32_t baseVertexOffset, uint32_t instanceOffset);
 
-		void TransitionResource(ID3D12Resource* resources, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
+		void Dispatch(glm::uvec3 const& numThreads);
+
+		void TransitionResource(ID3D12Resource* resource, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
+		void TransitionUAV(ID3D12Resource* resource, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
 
 		D3D12_COMMAND_LIST_TYPE GetType() const;
 		ID3D12GraphicsCommandList2* GetD3DCommandList() const;
 
 		LocalResourceStateTracker const& GetLocalResourceStates() const;
+
+		void DebugPrintResourceStates() const;
+
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> m_commandList;
@@ -118,7 +129,11 @@ namespace dx12
 		dx12::LocalResourceStateTracker m_resourceStates;
 
 	private:
-		dx12::RootSignature const* m_currentGraphicsRootSignature;
+		dx12::RootSignature const* m_currentRootSignature;
+		// TODO: Direct/graphics command lists can have 2 root signatures (graphics + compute), as well as a graphics
+		// pso, and gpu descriptor heap for each root signature.
+		// A compute command list has a root sig and gpu descriptor heap only.
+
 		dx12::PipelineState const* m_currentPSO;
 
 
@@ -184,6 +199,19 @@ namespace dx12
 			idxStartOffset,		// Start index location
 			baseVertexOffset,	// Base vertex location
 			instanceOffset);	// Start instance location
+	}
+
+
+	inline void CommandList::Dispatch(glm::uvec3 const& numThreads)
+	{
+		SEAssert("Invalid dispatch dimensions",
+			numThreads.x < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION &&
+			numThreads.y < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION &&
+			numThreads.z < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION);
+
+		CommitGPUDescriptors();
+
+		m_commandList->Dispatch(numThreads.x, numThreads.y, numThreads.z);
 	}
 
 

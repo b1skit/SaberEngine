@@ -354,7 +354,7 @@ namespace gr
 
 				re::TextureTarget::TargetParams targetParams;
 				targetParams.m_targetFace = face;
-				targetParams.m_targetMip = 0;
+				targetParams.m_targetSubesource = 0;
 
 				iemTargets->SetColorTarget(0, m_IEMTex, targetParams);
 				iemTargets->Viewport() = re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
@@ -414,7 +414,7 @@ namespace gr
 
 					re::TextureTarget::TargetParams targetParams;
 					targetParams.m_targetFace = face;
-					targetParams.m_targetMip = currentMipLevel;
+					targetParams.m_targetSubesource = currentMipLevel;
 
 					std::shared_ptr<TextureTargetSet> pmremTargetSet = 
 						re::TextureTargetSet::Create("PMREM texture targets: Face " + postFix);

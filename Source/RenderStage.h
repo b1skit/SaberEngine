@@ -52,6 +52,9 @@ namespace re
 
 		void EndOfFrame(); // Clears per-frame data. Called by the owning RenderPipeline
 
+		RenderStageType GetStageType() const;
+		IStageParams const* GetStageParams() const;
+
 		void SetStagePipelineState(gr::PipelineState const& params);
 		inline gr::PipelineState const& GetStagePipelineState() const { return m_pipelineState; }
 
@@ -82,6 +85,7 @@ namespace re
 
 		inline uint32_t GetBatchFilterMask() const { return m_batchFilterMask; }
 		void SetBatchFilterMaskBit(re::Batch::Filter filterBit);
+
 
 	protected:
 		explicit RenderStage(std::string const& name, std::unique_ptr<IStageParams>&&, RenderStageType);
@@ -125,6 +129,18 @@ namespace re
 		ComputeStage(std::string const& name, std::unique_ptr<ComputeStageParams>&&);
 		friend class RenderStage;
 	};
+
+
+	inline RenderStage::RenderStageType RenderStage::GetStageType() const
+	{
+		return m_type;
+	}
+
+
+	inline RenderStage::IStageParams const* RenderStage::GetStageParams() const
+	{
+		return m_stageParams.get();
+	}
 
 
 	inline void RenderStage::SetStageShader(std::shared_ptr<re::Shader> shader)

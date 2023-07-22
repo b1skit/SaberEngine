@@ -80,6 +80,9 @@ namespace dx12
 		ctxPlatParams->m_commandQueues[CommandList::CommandListType::Direct].Create(
 			device, CommandList::CommandListType::Direct);
 
+		ctxPlatParams->m_commandQueues[CommandList::CommandListType::Compute].Create(
+			device, CommandList::CommandListType::Compute);
+
 		ctxPlatParams->m_commandQueues[CommandList::CommandListType::Copy].Create(
 			device, CommandList::CommandListType::Copy);
 
@@ -255,7 +258,7 @@ namespace dx12
 	}
 
 
-	void Context::CreateAddPipelineState(
+	std::shared_ptr<dx12::PipelineState> Context::CreateAddPipelineState(
 		re::Shader const& shader,
 		gr::PipelineState& grPipelineState,	
 		re::TextureTargetSet const& targetSet)
@@ -273,13 +276,15 @@ namespace dx12
 			ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey].contains(targetSetKey);
 		if (psoExists)
 		{
-			return;
+			return ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey][targetSetKey];
 		}
 
 		std::shared_ptr<dx12::PipelineState> newPSO = std::make_shared<dx12::PipelineState>();
 		newPSO->Create(shader, grPipelineState, targetSet);
 		
 		ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey][targetSetKey] = newPSO;
+
+		return newPSO;
 	}
 
 
@@ -320,12 +325,20 @@ namespace dx12
 		const uint64_t pipelineKey = grPipelineState.GetPipelineStateDataHash();
 		const uint64_t targetSetKey = targetSet ? targetSet->GetTargetSetSignature() : 0;
 
-		SEAssert("Could not find matching PSO", 
-			ctxPlatParams->m_PSOLibrary.contains(shaderKey) && 
+		const bool psoExists = ctxPlatParams->m_PSOLibrary.contains(shaderKey) &&
 			ctxPlatParams->m_PSOLibrary[shaderKey].contains(pipelineKey) &&
-			ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey].contains(targetSetKey));
+			ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey].contains(targetSetKey);
+		if (psoExists)
+		{
+			return ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey][targetSetKey];
+		}
+		else
+		{
+			LOG_WARNING("DX12 PSO for Shader \"%s\", TextureTargetSet \"%s\" does not exist and must be created "
+				"immediately", shader.GetName().c_str(), targetSet->GetName().c_str());
 
-		return ctxPlatParams->m_PSOLibrary[shaderKey][pipelineKey][targetSetKey];
+			return CreateAddPipelineState(shader, grPipelineState, *targetSet);
+		}
 	}
 
 

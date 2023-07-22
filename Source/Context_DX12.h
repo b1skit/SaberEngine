@@ -67,7 +67,8 @@ namespace dx12
 		static void Create(re::Context& context);
 		static void Destroy(re::Context& context);
 		static void Present(re::Context const& context);
-		static void CreateAddPipelineState(re::Shader const&, gr::PipelineState&, re::TextureTargetSet const&);
+		static std::shared_ptr<dx12::PipelineState> CreateAddPipelineState(
+			re::Shader const&, gr::PipelineState&, re::TextureTargetSet const&);
 		
 		// TODO: Move these to the system info layer:
 		static uint8_t GetMaxTextureInputs();
@@ -88,7 +89,7 @@ namespace dx12
 		static void AddRootSignature(std::shared_ptr<dx12::RootSignature>);
 		
 		// Static null descriptor library
-		// TODO: Store these objects in the Context platform params, and just have static accessor functions
+		// TODO: Switch to inheritance and move these inside of the dx12::Context object
 		static constexpr D3D12_CONSTANT_BUFFER_VIEW_DESC m_nullCBV = { .BufferLocation = 0, .SizeInBytes = 32 }; // Arbitrary
 
 		static DescriptorAllocation const& GetNullSRVDescriptor(D3D12_SRV_DIMENSION, DXGI_FORMAT);

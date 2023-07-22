@@ -250,7 +250,7 @@ namespace re
 	}
 
 
-	bool TextureTargetSet::HasDepthTarget()
+	bool TextureTargetSet::HasDepthTarget() const
 	{
 		return GetDepthStencilTarget() != nullptr;
 	}

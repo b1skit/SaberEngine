@@ -28,8 +28,53 @@ namespace dx12
 		static constexpr uint8_t k_invalidRegisterVal	= std::numeric_limits<uint8_t>::max();
 
 
-	public: // Binding metadata:
+	public: // Descriptor table metadata:
+		struct RangeEntry
+		{
+			union
+			{
+				struct
+				{
+					uint32_t m_sizeInBytes;
+				} m_cbvDesc;
+				struct
+				{
+					DXGI_FORMAT m_format;
+					D3D12_SRV_DIMENSION m_viewDimension;
+				} m_srvDesc;
+				struct
+				{
+					DXGI_FORMAT m_format;
+					D3D12_UAV_DIMENSION m_viewDimension;
+				} m_uavDesc;
+			};
+		};
+		enum RangeType
+		{
+			SRV,
+			UAV,
+			CBV,
+			// Note: Sampler type is omitted
 
+			Type_Count,
+			Type_Invalid = Type_Count
+		};
+		struct Range
+		{
+			RangeType m_type = RangeType::Type_Invalid;
+
+			std::vector<RangeEntry> m_rangeEntries;
+		};
+		struct DescriptorTable
+		{
+			uint8_t m_index = k_invalidRootSigIndex;
+			std::vector<std::vector<RangeEntry>> m_ranges;
+
+			DescriptorTable() { m_ranges.resize(RangeType::Type_Count); }
+		};
+
+
+	public: // Binding metadata:
 		struct RootConstant
 		{
 			uint8_t m_num32BitValues = k_invalidCount;
@@ -37,6 +82,7 @@ namespace dx12
 		};
 		struct TableEntry
 		{
+			RangeType m_type = RangeType::Type_Invalid;
 			uint8_t m_offset = k_invalidOffset;
 		};
 		struct RootParameter
@@ -60,52 +106,6 @@ namespace dx12
 				RootConstant m_rootConstant;
 				TableEntry m_tableEntry;
 			};
-		};
-
-
-	public: // Descriptor table metadata:
-		struct RangeEntry
-		{
-			union
-			{
-				struct
-				{
-					uint32_t m_sizeInBytes;
-				} m_cbvDesc;
-				struct
-				{
-					DXGI_FORMAT m_format;
-					D3D12_SRV_DIMENSION m_viewDimension;
-				} m_srvDesc;
-				struct
-				{
-					DXGI_FORMAT m_format;
-					D3D12_UAV_DIMENSION m_viewDimension;
-				} m_uavDesc;
-			};
-		};
-		struct Range
-		{
-			enum Type
-			{
-				SRV,
-				UAV,
-				CBV,
-				// Note: Sampler type is omitted
-
-				Type_Count,
-				Type_Invalid = Type_Count
-			} m_type = Type::Type_Invalid;
-
-			// TODO: Just use a 
-			std::vector<RangeEntry> m_rangeEntries;
-		};
-		struct DescriptorTable
-		{
-			uint8_t m_index = k_invalidRootSigIndex;
-			std::vector<std::vector<RangeEntry>> m_ranges;
-
-			DescriptorTable() { m_ranges.resize(Range::Type::Type_Count); }
 		};
 
 

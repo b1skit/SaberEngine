@@ -7,11 +7,28 @@
 
 using Microsoft::WRL::ComPtr;
 
+//#define DEBUG_RESOURCE_STATES
 
 namespace
 {
 	using dx12::LocalResourceStateTracker;
 	using dx12::GlobalResourceState;
+
+
+#if defined(DEBUG_RESOURCE_STATES)
+	void DebugPrintBarrier(
+		ID3D12Resource* resource, 
+		D3D12_RESOURCE_STATES beforeState,
+		D3D12_RESOURCE_STATES afterState, 
+		uint32_t subresourceIdx)
+	{
+		LOG("BARRIER: Resource \"%s\"\n\tSubresource #%s: From: %s To: %s",
+			dx12::GetDebugName(resource).c_str(),
+			(subresourceIdx == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES ? "ALL" : std::to_string(subresourceIdx).c_str()),
+			dx12::GetResourceStateAsStr(beforeState),
+			dx12::GetResourceStateAsStr(afterState));
+	}
+#endif
 
 
 	std::vector<std::shared_ptr<dx12::CommandList>> InsertPendingBarrierCommandLists(
@@ -20,14 +37,13 @@ namespace
 		constexpr uint32_t k_allSubresources = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
 		// Extract our raw pointers so we can execute them in a single call
-		auto AddBarrier = [](
+		auto AddTransitionBarrier = [](
 			ID3D12Resource* resource,
 			D3D12_RESOURCE_STATES beforeState,
 			D3D12_RESOURCE_STATES afterState,
 			uint32_t subresourceIdx,
-			std::vector<CD3DX12_RESOURCE_BARRIER>& barriers,
-			D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE
-			)
+			std::vector<D3D12_RESOURCE_BARRIER>& barriers,
+			D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE)
 		{
 			// TODO: This check is duplicated in CommandList::TransitionResource
 			// All barriers should be set in a single place
@@ -35,12 +51,18 @@ namespace
 			{
 				return;
 			}
-			barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::Transition(
-				resource,
-				beforeState,
-				afterState,
-				subresourceIdx,
-				flags));
+			barriers.emplace_back(D3D12_RESOURCE_BARRIER{
+				.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+				.Flags = flags,
+				.Transition = D3D12_RESOURCE_TRANSITION_BARRIER{
+					.pResource = resource,
+					.Subresource = subresourceIdx,
+					.StateBefore = beforeState,
+					.StateAfter = afterState}
+				});
+#if defined(DEBUG_RESOURCE_STATES)
+			DebugPrintBarrier(resource, beforeState, afterState, subresourceIdx);
+#endif
 		};
 
 		// Construct our transition barrier command lists:
@@ -53,74 +75,93 @@ namespace
 
 		// Manually patch the barriers for each command list:
 		std::lock_guard<std::mutex> barrierLock(globalResourceStates.GetGlobalStatesMutex());
+		// TODO: This logic should be a part of the GlobalResourceState
+		// -> Should be responsible for locking/unlocking it's own mutex
 
-		// TODO: Feels like this logic should be a part of the GlobalResourceState?
+
+#if defined(DEBUG_RESOURCE_STATES)
+		LOG("---------- InsertPendingBarrierCommandLists ----------");
+		globalResourceStates.DebugPrintResourceStates();
+#endif
+
 		for (uint32_t cmdListIdx = 0; cmdListIdx < numCmdLists; cmdListIdx++)
 		{
-			std::vector<CD3DX12_RESOURCE_BARRIER> barriers;
+			std::vector<D3D12_RESOURCE_BARRIER> barriers;
 
 			LocalResourceStateTracker const& localResourceTracker = cmdLists[cmdListIdx]->GetLocalResourceStates();
+
+#if defined(DEBUG_RESOURCE_STATES)
+			cmdLists[cmdListIdx]->DebugPrintResourceStates();;
+#endif
 
 			// Handle pending transitions for the current command list:
 			for (auto const& currentPending : localResourceTracker.GetPendingResourceStates())
 			{
 				ID3D12Resource* resource = currentPending.first;
-				GlobalResourceState const& globalStates = globalResourceStates.GetResourceState(resource);
 				dx12::LocalResourceState const& pendingStates = currentPending.second;
+				GlobalResourceState const& globalState = globalResourceStates.GetResourceState(resource);
 
-				// 1) Handle pending "ALL" transitions: Must transition each subresource from its (potentially) 
-				// unique before state
+				for (auto const& pendingState : pendingStates.GetStates())
+				{
+					const uint32_t subresourceIdx = pendingState.first;
+					if (subresourceIdx == k_allSubresources)
+					{
+						continue; // We'll handle the ALL state last
+					}
+
+					const D3D12_RESOURCE_STATES beforeState = globalState.GetState(subresourceIdx);
+					const D3D12_RESOURCE_STATES afterState = pendingState.second;
+					if (beforeState != afterState)
+					{
+						AddTransitionBarrier(resource, beforeState, afterState, subresourceIdx, barriers);
+						globalResourceStates.SetResourceState(resource, afterState, subresourceIdx);
+					}
+				}
+
 				if (pendingStates.HasSubresourceRecord(k_allSubresources))
 				{
 					const D3D12_RESOURCE_STATES afterState = pendingStates.GetState(k_allSubresources);
-
-					// We only have a single before/after state for all subresources:
-					if (pendingStates.GetStates().size() == 1 && globalStates.GetStates().size() == 1)
+					bool insertedTransition = false;
+					for (uint32_t subresourceIdx = 0; subresourceIdx < globalState.GetNumSubresources(); subresourceIdx++)
 					{
-						SEAssert("Global state with a single entry should have an all subresources entry",
-							globalStates.HasSubresourceRecord(k_allSubresources));
-						const D3D12_RESOURCE_STATES beforeState = globalStates.GetState(k_allSubresources);
-
-						AddBarrier(resource, beforeState, afterState, k_allSubresources, barriers);
-					}
-					else // We have multiple before/after subresource states:
-					{
-						for (uint32_t subresourceIdx = 0; subresourceIdx < globalStates.GetNumSubresources(); subresourceIdx++)
+						const D3D12_RESOURCE_STATES beforeState = globalState.GetState(subresourceIdx);
+						if (beforeState != afterState)
 						{
-							const D3D12_RESOURCE_STATES beforeState = globalStates.GetState(subresourceIdx);
-							if (beforeState != afterState)
-							{
-								AddBarrier(resource, beforeState, afterState, subresourceIdx, barriers);
-							}
+							AddTransitionBarrier(resource, beforeState, afterState, subresourceIdx, barriers);
+							insertedTransition = true;
 						}
 					}
-
-					// Finally, update the global resource state. TODO: This may be inefficient, as we're
-					// potentially doing an uncessary transition to the ALL state for some subresources that had
-					// a pending individual transition written before the ALL state was written
+					if (!insertedTransition)
+					{
+						AddTransitionBarrier(resource, globalState.GetState(k_allSubresources), afterState, k_allSubresources, barriers);
+					}
 					globalResourceStates.SetResourceState(resource, afterState, k_allSubresources);
 				}
+			}
 
-				// 2) Handle any per-subresource pending transitions:
-				for (auto const& localSRState : pendingStates.GetStates())
+			// Finally, update the global state from the known final local states:
+			for (auto const& currentknown : localResourceTracker.GetKnownResourceStates())
+			{
+				ID3D12Resource* resource = currentknown.first;
+				dx12::LocalResourceState const& knownStates = currentknown.second;
+				GlobalResourceState const& globalState = globalResourceStates.GetResourceState(resource);
+
+				// Set the ALL state first:
+				if (knownStates.HasSubresourceRecord(k_allSubresources))
 				{
-					const uint32_t subresourceIdx = localSRState.first;
+					globalResourceStates.SetResourceState(
+						resource, knownStates.GetState(k_allSubresources), k_allSubresources);
+				}
+
+				for (auto const& knownState : currentknown.second.GetStates())
+				{
+					const uint32_t subresourceIdx = knownState.first;
 					if (subresourceIdx == k_allSubresources)
 					{
-						continue; // Already handled above
+						continue; // We handled the ALL state fisrt
 					}
 
-					const D3D12_RESOURCE_STATES beforeState = globalStates.GetState(subresourceIdx);
-					const D3D12_RESOURCE_STATES afterState = localSRState.second;
-					if (beforeState == afterState)
-					{
-						continue; // No transition needed
-					}
-
-					AddBarrier(resource, beforeState, afterState, subresourceIdx, barriers);
-
-					// Update the global state:
-					globalResourceStates.SetResourceState(resource, afterState, subresourceIdx);
+					globalResourceStates.SetResourceState(resource, knownStates.GetState(subresourceIdx), subresourceIdx);
 				}
 			}
 
@@ -141,14 +182,22 @@ namespace
 			cmdLists[cmdListIdx] = nullptr; // We don't want the caller retaining access to a command list in our pool
 		}
 
+
+#if defined(DEBUG_RESOURCE_STATES)
+		globalResourceStates.DebugPrintResourceStates();
+		LOG("--------------end--------------");
+#endif
+
 		return finalCommandLists;
 	}
 }
+
+
 namespace dx12
 {
 	CommandQueue::CommandQueue()
 		: m_commandQueue(nullptr)
-		, m_type(CommandList::GetD3DCommandListType(CommandList::CommandListType::CommandListType_Count))
+		, m_type(CommandList::GetD3DCommandListType(CommandList::CommandListType::CommandListType_Invalid))
 		, m_deviceCache(nullptr)
 		, m_fenceValue(0)
 	{
@@ -182,8 +231,12 @@ namespace dx12
 			fenceEventName = "Copy queue fence event";
 		}
 		break;
-		case CommandList::CommandListType::Compute: // TODO: Implement more command queue/list types
-		case CommandList::CommandListType::Bundle:
+		case CommandList::CommandListType::Compute: 
+		{
+			fenceEventName = "Compute queue fence event";
+		}
+		break;
+		case CommandList::CommandListType::Bundle: // TODO: Implement more command queue/list types
 		case CommandList::CommandListType::VideoDecode:
 		case CommandList::CommandListType::VideoProcess:
 		case CommandList::CommandListType::VideoEncode:
@@ -251,7 +304,7 @@ namespace dx12
 		}
 
 		// Execute the command lists:
-		m_commandQueue->ExecuteCommandLists(static_cast<uint32_t>(finalCommandLists.size()), &commandListPtrs[0]);
+		m_commandQueue->ExecuteCommandLists(static_cast<uint32_t>(commandListPtrs.size()), commandListPtrs.data());
 
 		// Insert a fence for when the command list's internal command allocator will be available for reuse
 		const uint64_t fenceVal = GPUSignal();

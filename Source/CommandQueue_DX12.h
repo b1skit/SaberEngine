@@ -37,7 +37,8 @@ namespace dx12
 
 		std::shared_ptr<dx12::CommandList> GetCreateCommandList();
 		
-		ID3D12CommandQueue* GetD3DCommandQueue() { return m_commandQueue.Get(); }
+		ID3D12CommandQueue* GetD3DCommandQueue() const;
+		D3D12_COMMAND_LIST_TYPE GetD3DCommandListType() const;
 
 
 	private:
@@ -56,4 +57,15 @@ namespace dx12
 		CommandQueue(CommandQueue const&) = delete;
 		CommandQueue& operator=(CommandQueue const&) = delete;
 	};
+
+
+	inline ID3D12CommandQueue* CommandQueue::GetD3DCommandQueue() const
+	{
+		return m_commandQueue.Get();
+	}
+
+	inline D3D12_COMMAND_LIST_TYPE CommandQueue::GetD3DCommandListType() const
+	{
+		return m_type;
+	}
 }

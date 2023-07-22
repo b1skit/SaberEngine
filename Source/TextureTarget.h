@@ -27,7 +27,7 @@ namespace re
 
 			// Subresource info:
 			uint32_t m_targetFace = 0;
-			uint32_t m_targetMip = 0;
+			uint32_t m_targetSubesource = 0;
 
 			// TODO: Support additional target/sub-resource parameters:
 			// - Array index (or first index, and offset from that)
@@ -159,9 +159,10 @@ namespace re
 		void SetDepthStencilTarget(re::TextureTarget const* depthStencilTarget);
 		void SetDepthStencilTarget(std::shared_ptr<re::Texture> depthStencilTarget, re::TextureTarget::TargetParams const&);
 
+		// TODO: These should be const
 		bool HasTargets();
 		bool HasColorTarget();
-		bool HasDepthTarget();
+		bool HasDepthTarget() const;
 
 		uint8_t GetNumColorTargets();
 		glm::vec4 GetTargetDimensions() const;
@@ -191,6 +192,7 @@ namespace re
 
 
 	private:
+		// TODO: m_colorTargets always has a fixed size; No need for a vector. Use an array instead
 		std::vector<std::unique_ptr<re::TextureTarget>> m_colorTargets;
 		std::unique_ptr<re::TextureTarget> m_depthStencilTarget;
 

@@ -37,13 +37,13 @@ namespace
 	}
 
 
-	D3D12_DESCRIPTOR_RANGE_TYPE GetD3DRangeType(dx12::RootSignature::Range::Type rangeType)
+	D3D12_DESCRIPTOR_RANGE_TYPE GetD3DRangeType(dx12::RootSignature::RangeType rangeType)
 	{
 		switch (rangeType)
 		{
-		case dx12::RootSignature::Range::Type::SRV: return D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		case dx12::RootSignature::Range::Type::UAV: return D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-		case dx12::RootSignature::Range::Type::CBV: return D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+		case dx12::RootSignature::RangeType::SRV: return D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		case dx12::RootSignature::RangeType::UAV: return D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+		case dx12::RootSignature::RangeType::CBV: return D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 		default:
 			SEAssertF("Invalid range type");
 		}
@@ -250,7 +250,7 @@ namespace dx12
 			D3D_SRV_DIMENSION m_dimension;				// Dimension (Textures/UAVs)
 			uint32_t m_numSamples = 0;					// NumSamples: Number of samples (0 if not MS texture)	
 		};
-		std::array<std::vector<RangeInput>, Range::Type::Type_Count> rangeInputs;
+		std::array<std::vector<RangeInput>, RangeType::Type_Count> rangeInputs;
 
 		constexpr size_t k_expectedNumberOfSamplers = 16; // Resource tier 1
 		std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
@@ -351,13 +351,13 @@ namespace dx12
 					// Check to see if our texture has already been added (e.g. if it's referenced in multiple shader
 					// stages). We do a linear search, but in practice the no. of elements is likely very small
 					auto result = std::find_if(
-						rangeInputs[Range::Type::SRV].begin(),
-						rangeInputs[Range::Type::SRV].end(),
+						rangeInputs[RangeType::SRV].begin(),
+						rangeInputs[RangeType::SRV].end(),
 						RangeHasMatchingName);
 
-					if (result == rangeInputs[Range::Type::SRV].end())
+					if (result == rangeInputs[RangeType::SRV].end())
 					{
-						rangeInputs[Range::Type::SRV].emplace_back(
+						rangeInputs[RangeType::SRV].emplace_back(
 							RangeInput
 							{
 								.m_name = inputBindingDesc.Name,
@@ -418,13 +418,13 @@ namespace dx12
 				case D3D_SHADER_INPUT_TYPE::D3D11_SIT_UAV_RWTYPED:
 				{
 					auto result = std::find_if(
-						rangeInputs[Range::Type::UAV].begin(),
-						rangeInputs[Range::Type::UAV].end(),
+						rangeInputs[RangeType::UAV].begin(),
+						rangeInputs[RangeType::UAV].end(),
 						RangeHasMatchingName);
 
-					if (result == rangeInputs[Range::Type::UAV].end())
+					if (result == rangeInputs[RangeType::UAV].end())
 					{
-						rangeInputs[Range::Type::UAV].emplace_back(
+						rangeInputs[RangeType::UAV].emplace_back(
 							RangeInput
 							{
 								.m_name = inputBindingDesc.Name,
@@ -498,19 +498,21 @@ namespace dx12
 
 		// Build our descriptor tables, and insert them into the root parameters.
 		std::vector<std::vector<CD3DX12_DESCRIPTOR_RANGE1>> tableRanges;
-		tableRanges.resize(Range::Type::Type_Count);
+		tableRanges.resize(RangeType::Type_Count);
 
-		for (size_t rangeType = 0; rangeType < Range::Type::Type_Count; rangeType++)
+		for (size_t rangeTypeIdx = 0; rangeTypeIdx < RangeType::Type_Count; rangeTypeIdx++)
 		{
-			if (rangeInputs[rangeType].size() == 0)
+			if (rangeInputs[rangeTypeIdx].size() == 0)
 			{
 				continue;
 			}
 
+			const RangeType rangeType = static_cast<RangeType>(rangeTypeIdx);
+
 			// Sort the descriptors by register value, so they can be packed contiguously
 			std::sort(
-				rangeInputs[rangeType].begin(),
-				rangeInputs[rangeType].end(),
+				rangeInputs[rangeTypeIdx].begin(),
+				rangeInputs[rangeTypeIdx].end(),
 				[](RangeInput const& a, RangeInput const& b)
 				{
 					if (a.m_baseRegister == b.m_baseRegister)
@@ -533,22 +535,22 @@ namespace dx12
 			size_t rangeStart = 0;
 			size_t rangeEnd = 1;
 			std::vector<std::string> namesInRange;
-			D3D12_SHADER_VISIBILITY tableVisibility = rangeInputs[rangeType][rangeStart].m_shaderVisibility;
-			while (rangeStart < rangeInputs[rangeType].size())
+			D3D12_SHADER_VISIBILITY tableVisibility = rangeInputs[rangeTypeIdx][rangeStart].m_shaderVisibility;
+			while (rangeStart < rangeInputs[rangeTypeIdx].size())
 			{
-				uint8_t expectedNextRegister = rangeInputs[rangeType][rangeStart].m_baseRegister + 1;
+				uint8_t expectedNextRegister = rangeInputs[rangeTypeIdx][rangeStart].m_baseRegister + 1;
 
 				// Store the names in order so we can update the binding metadata later:
-				namesInRange.emplace_back(rangeInputs[rangeType][rangeStart].m_name);
+				namesInRange.emplace_back(rangeInputs[rangeTypeIdx][rangeStart].m_name);
 
 				// Find the end of the current contiguous range:
-				while (rangeEnd < rangeInputs[rangeType].size() &&
-					rangeInputs[rangeType][rangeEnd].m_baseRegister == expectedNextRegister &&
-					rangeInputs[rangeType][rangeEnd].m_registerSpace == rangeInputs[rangeType][rangeStart].m_registerSpace)
+				while (rangeEnd < rangeInputs[rangeTypeIdx].size() &&
+					rangeInputs[rangeTypeIdx][rangeEnd].m_baseRegister == expectedNextRegister &&
+					rangeInputs[rangeTypeIdx][rangeEnd].m_registerSpace == rangeInputs[rangeTypeIdx][rangeStart].m_registerSpace)
 				{
-					namesInRange.emplace_back(rangeInputs[rangeType][rangeEnd].m_name);
+					namesInRange.emplace_back(rangeInputs[rangeTypeIdx][rangeEnd].m_name);
 
-					if (rangeInputs[rangeType][rangeEnd].m_shaderVisibility != tableVisibility)
+					if (rangeInputs[rangeTypeIdx][rangeEnd].m_shaderVisibility != tableVisibility)
 					{
 						tableVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
 					}
@@ -559,47 +561,47 @@ namespace dx12
 
 				// Initialize the descriptor range:
 				const uint32_t numDescriptorsInRange = static_cast<uint32_t>(rangeEnd - rangeStart);
-				tableRanges[rangeType].emplace_back();
+				tableRanges[rangeTypeIdx].emplace_back();
 
-				tableRanges[rangeType].back().Init(
-					GetD3DRangeType(static_cast<Range::Type>(rangeType)),
+				tableRanges[rangeTypeIdx].back().Init(
+					GetD3DRangeType(rangeType),
 					numDescriptorsInRange,
-					rangeInputs[rangeType][rangeStart].m_baseRegister,
-					rangeInputs[rangeType][rangeStart].m_registerSpace,
+					rangeInputs[rangeTypeIdx][rangeStart].m_baseRegister,
+					rangeInputs[rangeTypeIdx][rangeStart].m_registerSpace,
 					D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); //  TODO: Is this flag appropriate?
 
 				// Populate the descriptor metadata:
 				for (size_t rangeIdx = rangeStart; rangeIdx < rangeEnd; rangeIdx++)
 				{
-					switch (static_cast<Range::Type>(rangeType))
+					switch (rangeType)
 					{
-					case Range::Type::SRV:
+					case RangeType::SRV:
 					{
 						const D3D12_SRV_DIMENSION d3d12SrvDimension =
-								GetD3D12SRVDimension(rangeInputs[rangeType][rangeIdx].m_dimension);
+								GetD3D12SRVDimension(rangeInputs[rangeTypeIdx][rangeIdx].m_dimension);
 
 						RangeEntry newSrvRangeEntry;
 						newSrvRangeEntry.m_srvDesc.m_format =
-							GetFormatFromReturnType(rangeInputs[rangeType][rangeIdx].m_returnType);
+							GetFormatFromReturnType(rangeInputs[rangeTypeIdx][rangeIdx].m_returnType);
 						newSrvRangeEntry.m_srvDesc.m_viewDimension = d3d12SrvDimension;
 
-						newRootSig->m_descriptorTables.back().m_ranges[Range::Type::SRV].emplace_back(newSrvRangeEntry);
+						newRootSig->m_descriptorTables.back().m_ranges[RangeType::SRV].emplace_back(newSrvRangeEntry);
 					}
 					break;
-					case Range::Type::UAV:
+					case RangeType::UAV:
 					{
 						const D3D12_UAV_DIMENSION d3d12UavDimension =
-							GetD3D12UAVDimension(rangeInputs[rangeType][rangeIdx].m_dimension);
+							GetD3D12UAVDimension(rangeInputs[rangeTypeIdx][rangeIdx].m_dimension);
 
 						RangeEntry newUavRangeEntry;
 						newUavRangeEntry.m_uavDesc.m_format =
-							GetFormatFromReturnType(rangeInputs[rangeType][rangeIdx].m_returnType);
+							GetFormatFromReturnType(rangeInputs[rangeTypeIdx][rangeIdx].m_returnType);
 						newUavRangeEntry.m_uavDesc.m_viewDimension = d3d12UavDimension;
 
-						newRootSig->m_descriptorTables.back().m_ranges[Range::Type::UAV].emplace_back(newUavRangeEntry);
+						newRootSig->m_descriptorTables.back().m_ranges[RangeType::UAV].emplace_back(newUavRangeEntry);
 					}
 					break;
-					case Range::Type::CBV:
+					case RangeType::CBV:
 					{
 						SEAssertF("TODO: Handle this type");
 					}
@@ -614,12 +616,12 @@ namespace dx12
 				rangeEnd++;
 			}
 
-			const uint32_t numDescriptorsInTable = static_cast<uint32_t>(tableRanges[rangeType].size());
+			const uint32_t numDescriptorsInTable = static_cast<uint32_t>(tableRanges[rangeTypeIdx].size());
 
 			// Initialize the root parameter as a descriptor table built from our ranges:
 			rootParameters[rootIdx].InitAsDescriptorTable(
 				numDescriptorsInTable,
-				tableRanges[rangeType].data(),
+				tableRanges[rangeTypeIdx].data(),
 				tableVisibility);
 
 			// Populate the binding metadata:
@@ -629,7 +631,9 @@ namespace dx12
 					RootParameter{
 						.m_index = rootIdx,
 						.m_type = RootParameter::Type::DescriptorTable,
-						.m_tableEntry = RootSignature::TableEntry{ .m_offset = offset }
+						.m_tableEntry = RootSignature::TableEntry{ 
+							.m_type = rangeType,
+							.m_offset = offset }
 					});
 			}
 
@@ -639,7 +643,7 @@ namespace dx12
 			const uint32_t descriptorTableBitmask = (1 << rootIdx);
 			newRootSig->m_rootSigDescriptorTableIdxBitmask |= descriptorTableBitmask;
 
-		} // End Range::Type loop
+		} // End RangeType loop
 
 		// Allow input layout and deny unnecessary access to certain pipeline stages
 		D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
@@ -667,10 +671,6 @@ namespace dx12
 		if (dx12::Context::HasRootSignature(rootSigDescHash))
 		{
 			newRootSig = dx12::Context::GetRootSignature(rootSigDescHash);
-
-			SEAssertF("This is not an error: Just a test to ensure the root signature library is functioning correctly."
-				" If you hit this assert and have 2 shaders with the same root signature it is good news! Delete it, "
-				"give yourself a high-five, and move on");
 		}
 		else
 		{

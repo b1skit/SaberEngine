@@ -211,12 +211,12 @@ namespace opengl
 					targetPlatformParams->m_attachmentPoint,
 					texTarget,
 					texPlatformParams->m_textureID,
-					targetParams.m_targetMip);
+					targetParams.m_targetSubesource);
 
 				if (firstTarget == nullptr)
 				{
 					firstTarget = texture;
-					firstTargetMipLevel = targetParams.m_targetMip;
+					firstTargetMipLevel = targetParams.m_targetSubesource;
 				}
 				else
 				{

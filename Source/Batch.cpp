@@ -23,11 +23,13 @@ namespace
 namespace re
 {
 	Batch::Batch(re::MeshPrimitive const* meshPrimitive, gr::Material const* materialOverride)
-		: m_batchMeshPrimitive(meshPrimitive)
+		: m_type(BatchType::Graphics)
+		, m_graphicsParams{
+			.m_batchMeshPrimitive = meshPrimitive,
+			.m_batchGeometryMode = GeometryMode::Indexed,
+			.m_numInstances = 1}
 		, m_batchShader(nullptr)
-		, m_batchGeometryMode(GeometryMode::Indexed)
 		, m_batchFilterMask(0)
-		, m_numInstances(1)
 	{
 		m_batchParamBlocks.reserve(k_batchParamBlockIDsReserveAmount);
 
@@ -68,21 +70,32 @@ namespace re
 	}
 
 
+	Batch::Batch(ComputeParams const& computeParams)
+		: m_type(BatchType::Compute)
+		, m_computeParams(computeParams)
+		, m_batchShader(nullptr)
+		, m_batchFilterMask(0)
+	{
+	}
+
+
 	void Batch::IncrementBatchInstanceCount()
 	{
+		SEAssert("Invalid type", m_type == BatchType::Graphics);
+
 		// Update the batch draw mode to be an indexed type:
-		switch (m_batchGeometryMode)
+		switch (m_graphicsParams.m_batchGeometryMode)
 		{
 		case GeometryMode::Indexed:
 		{
-			m_batchGeometryMode = GeometryMode::IndexedInstanced;
+			m_graphicsParams.m_batchGeometryMode = GeometryMode::IndexedInstanced;
 		}
 		break;
 		default:
 			break;
 		}
 
-		m_numInstances++;
+		m_graphicsParams.m_numInstances++;
 	}
 
 
@@ -91,9 +104,23 @@ namespace re
 		// Batch filter mask bit:
 		AddDataBytesToHash(m_batchFilterMask);
 
-		// MeshPrimitive data:
-		SEAssert("Batch must have a valid MeshPrimitive", m_batchMeshPrimitive);
-		AddDataBytesToHash(m_batchMeshPrimitive->GetDataHash());
+		switch (m_type)
+		{
+		case BatchType::Graphics:
+		{
+			// MeshPrimitive data:
+			SEAssert("Batch must have a valid MeshPrimitive", m_graphicsParams.m_batchMeshPrimitive);
+			AddDataBytesToHash(m_graphicsParams.m_batchMeshPrimitive->GetDataHash());
+		}
+		break;
+		case BatchType::Compute:
+		{
+			AddDataBytesToHash(m_computeParams.m_threadGroupCount);
+		}
+		break;
+		default:
+			SEAssertF("Invalid type");
+		}
 
 		// Shader:
 		if (m_batchShader)

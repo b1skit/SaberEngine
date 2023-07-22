@@ -1,25 +1,27 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "DebugConfiguration.h"
+#include "Debug_DX12.h"
 #include "ResourceStateTracker_DX12.h"
 
 
 namespace dx12
 {
-	// ResourceState
+	/******************************************************************************************************************/
+	// Resource States
 	/******************************************************************************************************************/
 
 	GlobalResourceState::GlobalResourceState(
-		D3D12_RESOURCE_STATES initialState, uint32_t subresourceIdx, uint32_t numSubresources)
-		: ResourceState(initialState, subresourceIdx)
+		D3D12_RESOURCE_STATES initialState, uint32_t numSubresources)
+		: IResourceState(initialState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
 		, m_numSubresources(numSubresources)
 	{
 		SEAssert("Invalid number of subresources", numSubresources > 0);
 	}
 
 
-	void GlobalResourceState::SetState(D3D12_RESOURCE_STATES afterState, uint32_t subresourceIdx)
+	void GlobalResourceState::SetState(D3D12_RESOURCE_STATES afterState, SubresourceIdx subresourceIdx)
 	{
-		ResourceState::SetState(afterState, subresourceIdx, false);
+		IResourceState::SetState(afterState, subresourceIdx, false);
 	}
 
 	uint32_t GlobalResourceState::GetNumSubresources() const
@@ -29,23 +31,23 @@ namespace dx12
 
 
 	LocalResourceState::LocalResourceState(D3D12_RESOURCE_STATES initialState, uint32_t subresourceIdx)
-		: ResourceState(initialState, subresourceIdx)
+		: IResourceState(initialState, subresourceIdx)
 	{
 	}
 
 
-	ResourceState::ResourceState(D3D12_RESOURCE_STATES initialState, uint32_t subresourceIdx)
+	IResourceState::IResourceState(D3D12_RESOURCE_STATES initialState, SubresourceIdx subresourceIdx)
 	{
 		m_states[subresourceIdx] = initialState;
 	}
 
 
-	ResourceState::~ResourceState()
+	IResourceState::~IResourceState()
 	{
 	}
 
 
-	D3D12_RESOURCE_STATES ResourceState::GetState(uint32_t subresourceIdx) const
+	D3D12_RESOURCE_STATES IResourceState::GetState(SubresourceIdx subresourceIdx) const
 	{
 		if (!HasSubresourceRecord(subresourceIdx))
 		{
@@ -58,7 +60,7 @@ namespace dx12
 	}
 
 
-	void ResourceState::SetState(D3D12_RESOURCE_STATES state, uint32_t subresourceIdx, bool isPendingState)
+	void IResourceState::SetState(D3D12_RESOURCE_STATES state, SubresourceIdx subresourceIdx, bool isPendingState)
 	{
 		if (subresourceIdx == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES && !isPendingState)
 		{
@@ -68,6 +70,22 @@ namespace dx12
 	}
 
 
+	void IResourceState::DebugPrintResourceStates() const
+	{
+		std::string stateStr;
+		for (auto const& state : m_states)
+		{
+			const std::string prefix = state.first > 1 ? "\tSubresource " : "Subresource ";
+			stateStr += prefix + 
+				(state.first == 4294967295 ? "ALL" : ("#" + std::to_string(state.first))) +
+				": " + 
+				GetResourceStateAsStr(state.second) + "\n";
+		}
+		LOG(stateStr.c_str());
+	}
+
+
+	/******************************************************************************************************************/
 	// GlobalResourceStateTracker
 	/******************************************************************************************************************/
 
@@ -75,34 +93,18 @@ namespace dx12
 	void GlobalResourceStateTracker::RegisterResource(
 		ID3D12Resource* newResource, D3D12_RESOURCE_STATES initialState, uint32_t numSubresources)
 	{
-		// TEMP HAX!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		if (newResource == nullptr)
-		{
-			LOG_ERROR("SKIPPING NULL TEXTURE REGISTRATION");
-			return;
-		}
-
-
 		SEAssert("Resource cannot be null", newResource);
 		SEAssert("Resource is already registered", !m_globalStates.contains(newResource));
 		SEAssert("Invalid number of subresources", numSubresources > 0);
 
 		std::lock_guard<std::mutex> lock(m_globalStatesMutex);
 		m_globalStates.emplace(newResource, 
-			dx12::GlobalResourceState(initialState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, numSubresources));
+			dx12::GlobalResourceState(initialState, numSubresources));
 	}
 
 
 	void GlobalResourceStateTracker::UnregisterResource(ID3D12Resource* existingResource)
 	{
-		// TEMP HAX!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		if (existingResource == nullptr)
-		{
-			LOG_ERROR("SKIPPING NULL TEXTURE UNREGISTRATION");
-			return;
-		}
-
-
 		SEAssert("Resource cannot be null", existingResource);
 		SEAssert("Resource is not registered", m_globalStates.contains(existingResource));
 
@@ -119,27 +121,55 @@ namespace dx12
 
 
 	void GlobalResourceStateTracker::SetResourceState(
-		ID3D12Resource* resource, D3D12_RESOURCE_STATES newState, uint32_t subresourceIdx)
+		ID3D12Resource* resource, D3D12_RESOURCE_STATES newState, SubresourceIdx subresourceIdx)
 	{
 		SEAssert("Resource not found, was it registered?", m_globalStates.contains(resource));
 		m_globalStates.at(resource).SetState(newState, subresourceIdx);
 	}
 
 
+	void GlobalResourceStateTracker::DebugPrintResourceStates() const
+	{
+		LOG("\n---Global States (%s resources)---", m_globalStates.empty() ? "<empty>" : std::to_string(m_globalStates.size()).c_str());
+		for (auto const& resource : m_globalStates)
+		{
+			LOG("Resource \"%s\", has (%d) subresource%s:", 
+				GetDebugName(resource.first).c_str(), 
+				resource.second.GetNumSubresources(),
+				(resource.second.GetNumSubresources() > 1 ? "s" : ""));
+			resource.second.DebugPrintResourceStates();
+		}
+	}
+
+
+	/******************************************************************************************************************/
+	// LocalResourceStateTracker
+	/******************************************************************************************************************/
+
+
 	bool LocalResourceStateTracker::HasResourceState(ID3D12Resource* resource, uint32_t subresourceIdx) const
 	{
-		return m_knownStates.contains(resource) && m_knownStates.at(resource).HasSubresourceRecord(subresourceIdx);
+		/*return m_knownStates.contains(resource) && m_knownStates.at(resource).HasSubresourceRecord(subresourceIdx);*/
+
+		return m_knownStates.contains(resource) && 
+			(m_knownStates.at(resource).HasSubresourceRecord(subresourceIdx) || 
+			m_knownStates.at(resource).HasSubresourceRecord(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES));
 	}
 
 
 	void LocalResourceStateTracker::SetResourceState(
-		ID3D12Resource* resource, D3D12_RESOURCE_STATES stateAfter, uint32_t subresourceIdx)
+		ID3D12Resource* resource, D3D12_RESOURCE_STATES stateAfter, SubresourceIdx subresourceIdx)
 	{
-		if (!m_knownStates.contains(resource)) // New resource:
+		// New resource/subresource state:
+		if (!m_knownStates.contains(resource))
 		{
 			const LocalResourceState afterState = LocalResourceState(stateAfter, subresourceIdx);
-			m_pendingStates.emplace(resource, afterState);
-			m_knownStates.emplace(resource, afterState);
+			
+			auto const& emplacePendingResult = m_pendingStates.emplace(resource, afterState);
+			SEAssert("Emplace failed. Does the object already exist?", emplacePendingResult.second == true);
+			
+			auto const& emplaceKnownResult = m_knownStates.emplace(resource, afterState);
+			SEAssert("Emplace failed. Does the object already exist?", emplaceKnownResult.second == true);
 		}
 		else // Existing resource:
 		{
@@ -156,7 +186,7 @@ namespace dx12
 
 
 	D3D12_RESOURCE_STATES LocalResourceStateTracker::GetResourceState(
-		ID3D12Resource* resource, uint32_t subresourceIdx) const
+		ID3D12Resource* resource, SubresourceIdx subresourceIdx) const
 	{
 		SEAssert("Trying to get the state of a resource that has not been seen before", 
 			m_knownStates.contains(resource));
@@ -168,5 +198,22 @@ namespace dx12
 	{
 		m_pendingStates.clear();
 		m_knownStates.clear();
+	}
+
+
+	void LocalResourceStateTracker::DebugPrintResourceStates() const
+	{
+		LOG("\n---Pending transitions (%s)---", m_pendingStates.empty() ? "<empty>" : std::to_string(m_pendingStates.size()).c_str());
+		for (auto const& resource : m_pendingStates)
+		{
+			LOG("Resource \"%s\":", GetDebugName(resource.first).c_str());
+			resource.second.DebugPrintResourceStates();
+		}
+		LOG("---Known states (%s)---", m_knownStates.empty() ? "<empty>" : std::to_string(m_knownStates.size()).c_str());
+		for (auto const& resource : m_knownStates)
+		{
+			LOG("Resource \"%s\":", GetDebugName(resource.first).c_str());
+			resource.second.DebugPrintResourceStates();
+		}
 	}
 }

@@ -31,30 +31,37 @@ namespace gr
 
 			for (uint32_t faceIdx = 0; faceIdx < textureParams.m_faces; faceIdx++)
 			{
-				// TODO: We want to compute several levels of MIPs for a block of texels in a single dispatch
-				uint32_t targetMIP = 1;
-				
-				re::RenderStage::ComputeStageParams computeStageParams;
-				std::shared_ptr<re::RenderStage> mipGenerationStage = re::RenderStage::CreateComputeStage(
-					newTexture->GetName() + " MIP generation stage", 
-					computeStageParams);
+				for (uint32_t currentMip = 1; currentMip < totalMips; currentMip++)
+				{
+					// TODO: We want to compute several levels of MIPs for a 8x8 block of texels in a single dispatch
 
-				const std::string targetSetName = newTexture->GetName() + " MIP generation stage targets";
-				//std::shared_ptr<re::TextureTargetSet> mipGenTargets = re::TextureTargetSet::Create(targetSetName);
+					re::RenderStage::ComputeStageParams computeStageParams;
 
-				re::TextureTarget::TargetParams targetParams;
-				targetParams.m_targetFace = faceIdx;
-				targetParams.m_targetMip = targetMIP;
+					std::shared_ptr<re::RenderStage> mipGenerationStage = re::RenderStage::CreateComputeStage(
+						newTexture->GetName() + " MIP generation stage",
+						computeStageParams);
 
-				// TODO: Create multiple targets for the subresources we'll be writing to
-				// -> Is it valid to have targets of different sizes?
+					const std::string targetSetName = newTexture->GetName() + " MIP generation stage targets";
+					std::shared_ptr<re::TextureTargetSet> mipGenTargets = re::TextureTargetSet::Create(targetSetName);
 
-				//mipGenerationStage->SetTextureTargetSet(mipGenTargets);
-				
+					re::TextureTarget::TargetParams targetParams;
+					targetParams.m_targetFace = faceIdx;
+					targetParams.m_targetSubesource = currentMip;
 
-				mipGenerationStage->SetStageShader(m_mipMapGenerationShader);
+					mipGenTargets->SetColorTarget(0, newTexture, targetParams);
 
-				pipeline.AppendSingleFrameRenderStage(std::move(mipGenerationStage));
+					mipGenerationStage->SetTextureTargetSet(mipGenTargets);
+
+					mipGenerationStage->SetStageShader(m_mipMapGenerationShader);
+
+					// Add our dispatch information to a compute batch:
+					re::Batch computeBatch = re::Batch(re::Batch::ComputeParams{ 
+						.m_threadGroupCount = glm::uvec3(newTexture->Width(), newTexture->Height(), 1) 
+						});
+					mipGenerationStage->AddBatch(computeBatch);
+
+					pipeline.AppendSingleFrameRenderStage(std::move(mipGenerationStage));
+				}
 			}			
 		}
 		m_textures.clear();

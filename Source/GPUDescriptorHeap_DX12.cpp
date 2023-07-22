@@ -58,13 +58,9 @@ namespace dx12
 		CheckHResult(hr, "Failed to create descriptor heap");
 
 		// Name our descriptor heap. We extract the command list's debug name to ensure consistency
-		constexpr uint32_t k_nameLength = 1024;
-		uint32_t nameLength = k_nameLength;
-		wchar_t extractedname[k_nameLength];
-		m_owningCommandList->GetPrivateData(WKPDID_D3DDebugObjectNameW, &nameLength, &extractedname);
-		SEAssert("Invalid name length retrieved", nameLength > 0);
+		const std::wstring extractedName = dx12::GetWDebugName(m_owningCommandList);
 
-		const std::wstring descriptorTableHeapName = std::wstring(extractedname) + L"_GPUDescriptorHeap";
+		const std::wstring descriptorTableHeapName = extractedName + L"_GPUDescriptorHeap";
 		m_gpuDescriptorTableHeap->SetName(descriptorTableHeapName.c_str());
 
 		// Initialize everything:
@@ -144,13 +140,13 @@ namespace dx12
 
 		for (RootSignature::DescriptorTable const& descriptorTable : descriptorTableMetadata)
 		{
-			for (size_t rangeType = 0; rangeType < RootSignature::Range::Type::Type_Count; rangeType++)
+			for (size_t rangeType = 0; rangeType < RootSignature::RangeType::Type_Count; rangeType++)
 			{
 				for (size_t rangeEntry = 0; rangeEntry < descriptorTable.m_ranges[rangeType].size(); rangeEntry++)
 				{
 					switch (rangeType)
 					{
-					case RootSignature::Range::Type::SRV:
+					case RootSignature::RangeType::SRV:
 					{
 						SetDescriptorTable(
 							descriptorTable.m_index, 
@@ -161,7 +157,7 @@ namespace dx12
 							1);						
 					}
 					break;
-					case RootSignature::Range::Type::UAV:
+					case RootSignature::RangeType::UAV:
 					{
 						SetDescriptorTable(
 							descriptorTable.m_index,
@@ -172,7 +168,7 @@ namespace dx12
 						1);
 					}
 					break;
-					case RootSignature::Range::Type::CBV:
+					case RootSignature::RangeType::CBV:
 					{
 						SEAssertF("TODO: Handle this type");
 					}

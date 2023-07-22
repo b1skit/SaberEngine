@@ -27,6 +27,8 @@ namespace
 
 	ComPtr<ID3D12CommandAllocator> CreateCommandAllocator(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type)
 	{
+		SEAssert("Device cannot be null", device);
+
 		ComPtr<ID3D12CommandAllocator> commandAllocator = nullptr;
 
 		HRESULT hr = device->CreateCommandAllocator(
@@ -47,6 +49,42 @@ namespace dx12
 	size_t CommandList::s_commandListNumber = 0;
 
 
+	constexpr wchar_t const* const CommandList::GetCommandListTypeName(dx12::CommandList::CommandListType type)
+	{
+		switch (type)
+		{
+		case CommandList::CommandListType::Direct: return L"Direct";
+		case CommandList::CommandListType::Bundle: return L"Bundle";
+		case CommandList::CommandListType::Compute: L"Compute";
+		case CommandList::CommandListType::Copy: return L"Copy";
+		case CommandList::CommandListType::VideoDecode: return L"VideoDecode";
+		case CommandList::CommandListType::VideoProcess: return L"VideoProcess";
+		case CommandList::CommandListType::VideoEncode: return L"VideoEncode";
+		default:
+			SEAssertF("Invalid command list type");
+		}
+		return L"InvalidType";
+	};
+
+
+	constexpr CommandList::CommandListType CommandList::TranslateCommandListType(D3D12_COMMAND_LIST_TYPE type)
+	{
+		switch (type)
+		{
+		case D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT: return CommandListType::Direct;
+		case D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_BUNDLE: return CommandListType::Bundle;
+		case D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE: return CommandListType::Compute;
+		case D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY: return CommandListType::Copy;
+		case D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE: return CommandListType::VideoDecode;
+		case D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS: return CommandListType::VideoProcess;
+		case D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE: return CommandListType::VideoEncode;
+		default:
+			SEAssertF("Invalid command list type");
+		}
+		return CommandListType::CommandListType_Invalid;
+	}
+
+
 	CommandList::CommandList(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type)
 		: m_commandList(nullptr)
 		, m_type(type)
@@ -54,10 +92,12 @@ namespace dx12
 		, m_fenceValue(0)
 		, k_commandListNumber(s_commandListNumber++)
 		, m_gpuCbvSrvUavDescriptorHeaps(nullptr)
-		, m_currentGraphicsRootSignature(nullptr)
+		, m_currentRootSignature(nullptr)
 		, m_currentPSO(nullptr)
 		
 	{
+		SEAssert("Device cannot be null", device);
+
 		m_commandAllocator = CreateCommandAllocator(device, type);
 
 		// Create the command list:
@@ -71,8 +111,9 @@ namespace dx12
 			IID_PPV_ARGS(&m_commandList));	// IID_PPV_ARGS: RIID & destination for the populated command list
 		CheckHResult(hr, "Failed to create command list");
 
-		// Name the command list with a monotonically-increasing index
-		const std::wstring commandListname = L"CommandList_#" + std::to_wstring(k_commandListNumber);
+		// Name the command list with a monotonically-increasing index to make it easier to identify
+		const std::wstring commandListname = 
+			std::wstring(GetCommandListTypeName(TranslateCommandListType(type))) + L"_CommandList_#" + std::to_wstring(k_commandListNumber);
 		m_commandList->SetName(commandListname.c_str());
 
 		// Set the descriptor heaps (unless we're a copy command list):
@@ -100,14 +141,14 @@ namespace dx12
 		m_commandAllocator = nullptr;
 		m_fenceValue = 0;
 		m_gpuCbvSrvUavDescriptorHeaps = nullptr;
-		m_currentGraphicsRootSignature = nullptr;
+		m_currentRootSignature = nullptr;
 		m_currentPSO = nullptr;
 	}
 
 
 	void CommandList::Reset()
 	{
-		m_currentGraphicsRootSignature = nullptr;
+		m_currentRootSignature = nullptr;
 		m_currentPSO = nullptr;
 
 		// Reset the command allocator BEFORE we reset the command list (to avoid leaking memory)
@@ -140,7 +181,6 @@ namespace dx12
 		{
 			return;
 		}
-
 		m_currentPSO = &pso;
 
 		ID3D12PipelineState* pipelineState = pso.GetD3DPipelineState();
@@ -152,12 +192,14 @@ namespace dx12
 
 	void CommandList::SetGraphicsRootSignature(dx12::RootSignature const* rootSig)
 	{
-		if (m_currentGraphicsRootSignature == rootSig)
+		SEAssert("Only graphics command lists can have a graphics/direct root signature",
+			m_type == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+		if (m_currentRootSignature == rootSig)
 		{
 			return;
 		}
-
-		m_currentGraphicsRootSignature = rootSig;
+		m_currentRootSignature = rootSig;
 
 		m_gpuCbvSrvUavDescriptorHeaps->ParseRootSignatureDescriptorTables(rootSig);
 
@@ -168,17 +210,38 @@ namespace dx12
 	}
 
 
+	void CommandList::SetComputeRootSignature(dx12::RootSignature const* rootSig)
+	{
+		SEAssert("Only graphics or compute command lists can have a compute root signature", 
+			m_type == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT || 
+			m_type == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE);
+
+		if (m_currentRootSignature == rootSig)
+		{
+			return;
+		}
+		m_currentRootSignature = rootSig;
+
+		m_gpuCbvSrvUavDescriptorHeaps->ParseRootSignatureDescriptorTables(rootSig);
+
+		ID3D12RootSignature* rootSignature = rootSig->GetD3DRootSignature();
+		SEAssert("Root signature is null. This is unexpected", rootSignature);
+
+		m_commandList->SetComputeRootSignature(rootSignature);
+	}
+
+
 	void CommandList::SetParameterBlock(re::ParameterBlock const* parameterBlock)
 	{
 		// TODO: Handle setting parameter blocks for different root signature types (e.g. compute)
 		// -> Can probably just assume only 1 single root signature type will be set, and the other will be null?
-		SEAssert("Root signature has not been set", m_currentGraphicsRootSignature != nullptr);
+		SEAssert("Root signature has not been set", m_currentRootSignature != nullptr);
 
 		dx12::ParameterBlock::PlatformParams const* pbPlatParams =
 			parameterBlock->GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
 
 		RootSignature::RootParameter const* rootSigEntry = 
-			m_currentGraphicsRootSignature->GetRootSignatureEntry(parameterBlock->GetName());
+			m_currentRootSignature->GetRootSignatureEntry(parameterBlock->GetName());
 		SEAssert("Invalid root signature entry", 
 			rootSigEntry ||
 			en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
@@ -330,9 +393,10 @@ namespace dx12
 	}
 
 
-	void CommandList::SetRenderTargets(re::TextureTargetSet& targetSet) const
+	void CommandList::SetRenderTargets(re::TextureTargetSet const& targetSet) const
 	{
-		SEAssertF("NOTE: This is untested. It's probably fine, but asserting to save some future head scratching...");
+		SEAssert("This method is not valid for compute or copy command lists", 
+			m_type != CommandListType::Compute && m_type != CommandListType::Copy);
 
 		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> colorTargetDescriptors;
 		colorTargetDescriptors.reserve(targetSet.GetColorTargets().size());
@@ -362,7 +426,11 @@ namespace dx12
 		// NOTE: isSingleHandleToDescRange == true specifies that the rtvs are contiguous in memory, thus N rtv 
 		// descriptors will be found by offsetting from rtvs[0]. Otherwise, it is assumed rtvs is an array of descriptor
 		// pointers
-		m_commandList->OMSetRenderTargets(numColorTargets, &colorTargetDescriptors[0], false, &dsvDescriptor);
+		m_commandList->OMSetRenderTargets(
+			numColorTargets, 
+			colorTargetDescriptors.data(),
+			false,			// TODO: Are our render target descriptors ever contiguous? Can they be made to be?
+			dsvDescriptor.ptr == 0 ? nullptr : &dsvDescriptor);
 	}
 
 
@@ -398,8 +466,95 @@ namespace dx12
 	}
 
 
+	void CommandList::SetComputeTargets(re::TextureTargetSet const& textureTargetSet)
+	{
+		SEAssert("TODO: Handle texture target sets with a depth buffer attached", 
+			textureTargetSet.GetDepthStencilTarget() == nullptr);
+
+		SEAssert("This function should only be called from compute command lists", m_type == CommandListType::Compute);
+		SEAssert("Pipeline is not currently set", m_currentPSO);
+
+		std::vector<std::unique_ptr<re::TextureTarget>> const& texTargets = textureTargetSet.GetColorTargets();
+		for (size_t i = 0; i < texTargets.size(); i++)
+		{
+			if (!texTargets[i])
+			{
+				continue;
+			}
+			re::TextureTarget* texTarget = texTargets[i].get();
+
+			dx12::Texture::PlatformParams* texPlatParams =
+				texTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+
+
+			// TEMP HAX: Hard code a name
+			std::string const& shaderName = "output"; // TODO: Bind targets by texture target set index
+	
+
+			RootSignature::RootParameter const* rootSigEntry =
+				m_currentPSO->GetRootSignature()->GetRootSignatureEntry(shaderName);
+			SEAssert("Invalid root signature entry",
+				rootSigEntry || en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
+
+			if (rootSigEntry)
+			{
+				SEAssert("We currently assume all textures belong to descriptor tables",
+					rootSigEntry->m_type == RootSignature::RootParameter::Type::DescriptorTable);
+
+				re::TextureTarget::TargetParams const& targetParams = texTarget->GetTargetParams();
+
+				dx12::DescriptorAllocation const* descriptorAllocation = nullptr;
+				switch (rootSigEntry->m_tableEntry.m_type)
+				{
+				case dx12::RootSignature::RangeType::SRV:
+				{
+					SEAssert("TODO: Handle texture input resources with > 1 SRV",
+						texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV].size() == 1);
+
+					TransitionResource(texPlatParams->m_textureResource.Get(),
+						D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+						targetParams.m_targetSubesource);
+
+					descriptorAllocation = &texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV][0];
+				}
+				break;
+				case dx12::RootSignature::RangeType::UAV:
+				{
+					TransitionResource(texPlatParams->m_textureResource.Get(),
+						D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+						targetParams.m_targetSubesource);
+
+					// TODO: Should we also insert a D3D12_RESOURCE_UAV_BARRIER?
+					// Not needed between 2 draw/dispatch calls that only read a UAV
+					// Not needed between 2 draw/dispatch calls that write to a UAV IFF the writes can be executed in any order
+					// -> Only needed to ensure write ordering
+
+					SEAssert("Not enought view desciptors", 
+						targetParams.m_targetSubesource < texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV].size());
+
+					descriptorAllocation = 
+						&texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV][targetParams.m_targetSubesource];
+				}
+				break;
+				default:
+					SEAssertF("Invalid range type");
+				}
+
+				m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
+					rootSigEntry->m_index,
+					*descriptorAllocation,
+					rootSigEntry->m_tableEntry.m_offset,
+					1);
+			}
+		}
+	}
+
+
 	void CommandList::SetViewport(re::TextureTargetSet const& targetSet) const
 	{
+		SEAssert("This method is not valid for compute or copy command lists",
+			m_type != CommandListType::Compute && m_type != CommandListType::Copy);
+
 		dx12::TextureTargetSet::PlatformParams* targetSetParams =
 			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 
@@ -440,16 +595,11 @@ namespace dx12
 
 	void CommandList::SetTexture(std::string const& shaderName, std::shared_ptr<re::Texture> texture)
 	{
+		SEAssert("Pipeline is not currently set", m_currentPSO);
+
 		dx12::Texture::PlatformParams* texPlatParams = 
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
-		// TODO: Handle this more intelligently
-		TransitionResource(texPlatParams->m_textureResource.Get(),
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-
-		SEAssert("Pipeline is not currently set", m_currentPSO);
-		
 		RootSignature::RootParameter const* rootSigEntry =
 			m_currentPSO->GetRootSignature()->GetRootSignatureEntry(shaderName);
 		SEAssert("Invalid root signature entry",
@@ -461,9 +611,36 @@ namespace dx12
 			SEAssert("We currently assume all textures belong to descriptor tables",
 				rootSigEntry->m_type == RootSignature::RootParameter::Type::DescriptorTable);
 
+			dx12::DescriptorAllocation const* descriptorAllocation = nullptr;
+			switch (rootSigEntry->m_tableEntry.m_type)
+			{
+			case dx12::RootSignature::RangeType::SRV:
+			{
+				SEAssert("TODO: Handle texture input resources with > 1 SRV", 
+					texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV].size() == 1);
+
+				TransitionResource(texPlatParams->m_textureResource.Get(),
+					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+
+				descriptorAllocation = &texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV][0];
+			}
+			break;
+			case dx12::RootSignature::RangeType::UAV:
+			{
+				// This is for UAV *inputs*
+				SEAssertF("TODO: Implement this. Need to figure out how to specify the appropriate mip level/subresource index");
+
+				//descriptorAllocation = &texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV];
+			}
+			break;
+			default:
+				SEAssertF("Invalid range type");
+			}
+
 			m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 				rootSigEntry->m_index,
-				texPlatParams->m_cpuDescAllocation,
+				*descriptorAllocation,
 				rootSigEntry->m_tableEntry.m_offset,
 				1);
 		}
@@ -473,6 +650,44 @@ namespace dx12
 	void CommandList::TransitionResource(
 		ID3D12Resource* resource, D3D12_RESOURCE_STATES toState, uint32_t subresourceIdx)
 	{
+		// If we've already seen this resource before, we can record the transition now (as we prepend any initial
+		// transitions when submitting the command list)	
+		if (m_resourceStates.HasResourceState(resource, subresourceIdx)) // Is the subresource idx (or ALL) in our known states list?
+		{
+			const D3D12_RESOURCE_STATES currentKnownState = m_resourceStates.GetResourceState(resource, subresourceIdx);
+			if (currentKnownState == toState)
+			{
+				return; // Before and after states must be different
+			}
+					
+			const D3D12_RESOURCE_BARRIER barrier{
+				.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+				.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE, 
+				.Transition = D3D12_RESOURCE_TRANSITION_BARRIER{
+					.pResource = resource,
+					.Subresource = subresourceIdx,
+					.StateBefore = currentKnownState,
+					.StateAfter = toState}
+			};
+
+			// TODO: Support batching of multiple barriers
+			m_commandList->ResourceBarrier(1, &barrier);
+		}
+
+		// Record the new state after the transition:
+		m_resourceStates.SetResourceState(resource, toState, subresourceIdx);
+	}
+
+
+	void CommandList::TransitionUAV(ID3D12Resource* resource, D3D12_RESOURCE_STATES toState, uint32_t subresourceIdx)
+	{
+		// TODO: SHOULD THIS FUNCTION *ALSO* INSERT UAV BARRIERS (NOT JUST TRANSITIONS?)
+		// -> SHOULD WE JUST USE THE TransitionResource FOR ALL TRANSITIONS????????????????????????????
+
+		SEAssertF("TODO: FIGURE OUT WHAT TO DO WITH THIS FUNCTION");
+
+		// If we've already seen this UAV before, we can record the transition now (as we prepend any initial
+		// transitions when submitting the command list)	
 		if (m_resourceStates.HasResourceState(resource, subresourceIdx))
 		{
 			const D3D12_RESOURCE_STATES currentState = m_resourceStates.GetResourceState(resource, subresourceIdx);
@@ -480,15 +695,13 @@ namespace dx12
 			{
 				return; // Before and after states must be different
 			}
-
-			// If we've already seen this resource before, we can record the transition now (as we'll prepend any
-			// initial transitions when submitting the command list)			
-			CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-				resource,
-				currentState,
-				toState,
-				subresourceIdx,
-				D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE);
+		
+			const D3D12_RESOURCE_BARRIER barrier{
+				.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV,
+				.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE,
+				.UAV = D3D12_RESOURCE_UAV_BARRIER{
+					.pResource = resource}
+			};
 
 			// TODO: Support batching of multiple barriers
 			m_commandList->ResourceBarrier(1, &barrier);
@@ -502,5 +715,12 @@ namespace dx12
 	LocalResourceStateTracker const& CommandList::GetLocalResourceStates() const
 	{
 		return m_resourceStates;
+	}
+
+
+	void CommandList::DebugPrintResourceStates() const
+	{
+		LOG("-------------------\n\tCommandList \"%s\"\n\t-------------------", GetDebugName(m_commandList.Get()).c_str());
+		m_resourceStates.DebugPrintResourceStates();
 	}
 }

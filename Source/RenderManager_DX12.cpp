@@ -186,31 +186,63 @@ namespace dx12
 		re::Context const& context = re::RenderManager::Get()->GetContext();
 		dx12::CommandQueue& directQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Direct);
 
+		std::vector<std::shared_ptr<dx12::CommandList>> directCommandLists;
+		directCommandLists.reserve(renderManager.m_renderPipeline.GetStagePipeline().size());
 
-		std::vector<std::shared_ptr<dx12::CommandList>> commandLists;
-		commandLists.reserve(renderManager.m_renderPipeline.GetStagePipeline().size());
+		dx12::CommandQueue& computeQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Compute);
+
+		std::vector<std::shared_ptr<dx12::CommandList>> computeCommandLists;
+		computeCommandLists.reserve(renderManager.m_renderPipeline.GetStagePipeline().size());
 
 
 		// Render each stage:
 		for (StagePipeline& stagePipeline : renderManager.m_renderPipeline.GetStagePipeline())
 		{
 			// Note: Our command lists and associated command allocators are already closed/reset
-			std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
-
+			std::shared_ptr<dx12::CommandList> directCommandList = nullptr;
+			std::shared_ptr<dx12::CommandList> computeCommandList = nullptr;
+			
 
 			// Generic lambda: Process stages from various pipelines
 			auto ProcessRenderStage = [&](std::shared_ptr<re::RenderStage> renderStage)
 			{
-				// TODO: Why CAN'T this be a const& ?
-				gr::PipelineState& stagePipelineParams = renderStage->GetStagePipelineState();
+				dx12::CommandList* currentCommandList = nullptr;
+				switch (renderStage->GetStageType())
+				{
+				case re::RenderStage::RenderStageType::Graphics:
+				{
+					if (directCommandList == nullptr)
+					{
+						directCommandList = directQueue.GetCreateCommandList();
+					}
+					currentCommandList = directCommandList.get();
+				}
+				break;
+				case re::RenderStage::RenderStageType::Compute:
+				{
+					if (computeCommandList == nullptr)
+					{
+						computeCommandList = computeQueue.GetCreateCommandList();
+					}
+					currentCommandList = computeCommandList.get();
+				}
+				break;
+				default:
+					SEAssertF("Invalid stage type");
+				}
 
-				Microsoft::WRL::ComPtr<ID3D12Resource> renderTargetResource = nullptr;
 
-				// Attach the stage targets:
+				// TODO: Why can't this be a const& ?
+				gr::PipelineState& pipelineState = renderStage->GetStagePipelineState();
+
+				// Attach the stage targets, and transition the resources:
 				std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
 				const bool isBackbufferTarget = stageTargets == nullptr;
 				if (isBackbufferTarget)
 				{
+					SEAssert("Only the graphics queue/command lists can render to the backbuffer", 
+						renderStage->GetStageType() == re::RenderStage::RenderStageType::Graphics);
+
 					dx12::SwapChain::PlatformParams* swapChainParams =
 						renderManager.GetContext().GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 					SEAssert("Swap chain params and backbuffer cannot be null",
@@ -218,54 +250,147 @@ namespace dx12
 
 					stageTargets = swapChainParams->m_backbufferTargetSet; // Draw directly to the swapchain backbuffer
 
-					renderTargetResource = dx12::SwapChain::GetBackBufferResource(context.GetSwapChain());
+					// TODO: Move resource transitions inside of the command list, when we set the render targets
+					currentCommandList->TransitionResource(
+						dx12::SwapChain::GetBackBufferResource(context.GetSwapChain()).Get(),
+						D3D12_RESOURCE_STATE_RENDER_TARGET,
+						D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 				}
 				else
 				{
-					SEAssertF("TODO: Handle the render target resource transition for non-backbuffer targets");
+					for (size_t i = 0; i < stageTargets->GetColorTargets().size(); i++)
+					{
+						if (stageTargets->GetColorTargets()[i])
+						{
+							re::Texture* texture = stageTargets->GetColorTargets()[i]->GetTexture().get();
+							dx12::Texture::PlatformParams* texPlatParams =
+								texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+							
+							
 
-					//renderTargetResource = ;
+							switch (renderStage->GetStageType())
+							{
+							case re::RenderStage::RenderStageType::Graphics:
+							{
+								// TODO: Move resource transitions inside of the command list, when we set the render targets
+								currentCommandList->TransitionResource(
+									texPlatParams->m_textureResource.Get(),
+									D3D12_RESOURCE_STATE_RENDER_TARGET,
+									stageTargets->GetColorTargets()[i]->GetTargetParams().m_targetSubesource);
+							}
+							break;
+							case re::RenderStage::RenderStageType::Compute:
+							{
+								// TODO: Move resource transitions inside of the command list, when we set the render targets
+								// TODO: We shouldn't be assuming a compute target needs to be in a UAV state
+
+
+								currentCommandList->TransitionResource(
+									texPlatParams->m_textureResource.Get(),
+									D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+									stageTargets->GetColorTargets()[i]->GetTargetParams().m_targetSubesource);
+							}
+							break;
+							default:
+								SEAssertF("Invalid stage type");
+							}
+						}						
+					}
+
+					re::TextureTarget const* depthTarget = stageTargets->GetDepthStencilTarget();
+					if (depthTarget)
+					{
+						SEAssert("TODO: Handle depth bound to compute", 
+							renderStage->GetStageType() != re::RenderStage::RenderStageType::Compute);
+
+						re::Texture* depthTexture = depthTarget->GetTexture().get();
+						dx12::Texture::PlatformParams* depthTexPlatParams =
+							depthTexture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+						
+						// TODO: Move resource transitions inside of the command list, when we set the render targets
+						currentCommandList->TransitionResource(
+							depthTexPlatParams->m_textureResource.Get(),
+							D3D12_RESOURCE_STATE_RENDER_TARGET,
+							depthTarget->GetTargetParams().m_targetSubesource);
+					}
 				}
 
+				// Bind our graphics stage render target(s) to the output merger (OM):
+				if (renderStage->GetStageType() == re::RenderStage::RenderStageType::Graphics)
+				{
+					if (isBackbufferTarget)
+					{
+						currentCommandList->SetBackbufferRenderTarget();
+					}
+					else
+					{
+						currentCommandList->SetRenderTargets(*stageTargets);
+					}
 
-				commandList->TransitionResource(
-					renderTargetResource.Get(),
-					D3D12_RESOURCE_STATE_RENDER_TARGET,
-					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+					// Set the viewport and scissor rectangles:
+					currentCommandList->SetViewport(*stageTargets);
+					currentCommandList->SetScissorRect(*stageTargets);
+					// TODO: Should the viewport and scissor rects be set while we're setting the targets?
+				}
+
 
 
 				// Clear the render targets:
-				if (isBackbufferTarget)
+				// TODO: These should be per-target, to allow different outputs when using MRTs
+				const gr::PipelineState::ClearTarget clearTargetMode = pipelineState.GetClearTarget();
+				if (clearTargetMode == gr::PipelineState::ClearTarget::Color ||
+					clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
 				{
-					const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
-					commandList->ClearColorTarget(stageTargets->GetColorTarget(backbufferIdx));
+					if (isBackbufferTarget)
+					{
+						const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
+						currentCommandList->ClearColorTarget(stageTargets->GetColorTarget(backbufferIdx));
+					}
+					else
+					{
+						currentCommandList->ClearColorTargets(*stageTargets);
+					}
 				}
-				else
+				if (clearTargetMode == gr::PipelineState::ClearTarget::Depth ||
+					clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
 				{
-					commandList->ClearColorTargets(*stageTargets);
+					currentCommandList->ClearDepthTarget(stageTargets->GetDepthStencilTarget());
 				}
-				commandList->ClearDepthTarget(stageTargets->GetDepthStencilTarget());
-				// TODO: We should track the clear mode (color, depth) requested per stage, and only clear if necessary
 
-				// Bind our render target(s) to the output merger (OM):
-				if (isBackbufferTarget)
-				{
-					commandList->SetBackbufferRenderTarget();
-				}
-				else
-				{
-					SEAssertF("TODO: Handle binding non-backbuffer targets to the OM");
-				}
-
-				// Set the viewport and scissor rectangles:
-				commandList->SetViewport(*stageTargets);
-				commandList->SetScissorRect(*stageTargets);
-				// TODO: Should the viewport and scissor rects be set while we're setting the targets?
+				
 
 
-				// Lambda: Bind parameter blocks (This must happen AFTER the root signature has been set)
-				auto SetStageParameterBlocks = [renderStage, &commandList, &stageTargets]()
+				auto SetDrawState = [&renderStage](
+					re::Shader const* shader, 
+					gr::PipelineState& grPipelineState,
+					re::TextureTargetSet const* targetSet,
+					dx12::CommandList* commandList)
 				{
+					// Set the pipeline state and root signature first:
+					std::shared_ptr<dx12::PipelineState> pso = dx12::Context::GetPipelineStateObject(
+						*shader,
+						grPipelineState,
+						targetSet);
+					commandList->SetPipelineState(*pso);
+					
+
+					switch (renderStage->GetStageType())
+					{
+					case re::RenderStage::RenderStageType::Graphics:
+					{
+						commandList->SetGraphicsRootSignature(pso->GetRootSignature());
+					}
+					break;
+					case re::RenderStage::RenderStageType::Compute:
+					{
+						commandList->SetComputeRootSignature(pso->GetRootSignature());
+					}
+					break;
+					default:
+						SEAssertF("Invalid render stage type");
+					}
+
+					// Set parameter blocks (Must happen after the root signature is set):
 					for (std::shared_ptr<re::ParameterBlock> permanentPB : renderStage->GetPermanentParameterBlocks())
 					{
 						commandList->SetParameterBlock(permanentPB.get());
@@ -282,17 +407,14 @@ namespace dx12
 				// If we have a stage shader, we can set the stage PBs once for all batches
 				if (hasStageShader)
 				{
-					// Set the pipeline state and root signature first:
-					std::shared_ptr<dx12::PipelineState> pso = dx12::Context::GetPipelineStateObject(
-						*stageShader,
-						stagePipelineParams,
-						stageTargets.get());
-					commandList->SetPipelineState(*pso);
-					commandList->SetGraphicsRootSignature(pso->GetRootSignature());
-					// TODO: Remove this duplicated code; combine it with the logic below. Track PSO and root signature
-					// changes
+					SetDrawState(stageShader, pipelineState, stageTargets.get(), currentCommandList);
+				}
 
-					SetStageParameterBlocks();
+				// Set compute targets, now that the pipeline is set
+				// TODO: Merge this in with other "set targets" logic 
+				if (renderStage->GetStageType() == re::RenderStage::RenderStageType::Compute)
+				{
+					currentCommandList->SetComputeTargets(*stageTargets);
 				}
 
 
@@ -307,22 +429,14 @@ namespace dx12
 						SEAssert("Batch must have a shader if the stage does not have a shader", 
 							batchShader != nullptr);
 
-						// Set the pipeline state and root signature for the batch shader:
-						std::shared_ptr<dx12::PipelineState> pso = dx12::Context::GetPipelineStateObject(
-							*batchShader,
-							stagePipelineParams,
-							stageTargets.get());
-						commandList->SetPipelineState(*pso);
-						commandList->SetGraphicsRootSignature(pso->GetRootSignature());
-
-						SetStageParameterBlocks();
+						SetDrawState(batchShader, pipelineState, stageTargets.get(), currentCommandList);
 					}
 
 					// Batch parameter blocks:
 					vector<shared_ptr<re::ParameterBlock>> const& batchPBs = batches[batchIdx].GetParameterBlocks();
 					for (shared_ptr<re::ParameterBlock> batchPB : batchPBs)
 					{
-						commandList->SetParameterBlock(batchPB.get());
+						currentCommandList->SetParameterBlock(batchPB.get());
 					}
 
 					// Batch Texture / Sampler inputs :
@@ -330,61 +444,89 @@ namespace dx12
 					{
 						for (auto const& texSamplerInput : batches[batchIdx].GetTextureAndSamplerInputs())
 						{
-							commandList->SetTexture(
+							currentCommandList->SetTexture(
 								std::get<0>(texSamplerInput),	// Shader name
 								std::get<1>(texSamplerInput));	// Texture
-
 							// Note: Static samplers have already been set during root signature creation
 						}
-					}					
+					}
 
-					// Set the geometry for the draw:
-					dx12::MeshPrimitive::PlatformParams* meshPrimPlatParams =
-						batches[batchIdx].GetMeshPrimitive()->GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
-					
-					// TODO: Batches should contain the draw mode, instead of carrying around a MeshPrimitive
-					commandList->SetPrimitiveType(meshPrimPlatParams->m_drawMode);
-					commandList->SetVertexBuffers(batches[batchIdx].GetMeshPrimitive()->GetVertexStreams());
+					switch (renderStage->GetStageType())
+					{
+					case re::RenderStage::RenderStageType::Graphics:
+					{
+						// Set the geometry for the draw:
+						dx12::MeshPrimitive::PlatformParams* meshPrimPlatParams =
+							batches[batchIdx].GetMeshPrimitive()->GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
 
-					dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
-						batches[batchIdx].GetMeshPrimitive()->GetVertexStream(
-							re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
-					commandList->SetIndexBuffer(&indexPlatformParams->m_indexBufferView);
+						// TODO: Batches should contain the draw mode, instead of carrying around a MeshPrimitive
+						currentCommandList->SetPrimitiveType(meshPrimPlatParams->m_drawMode);
+						currentCommandList->SetVertexBuffers(batches[batchIdx].GetMeshPrimitive()->GetVertexStreams());
 
-					// Record the draw:
-					commandList->DrawIndexedInstanced(
-						batches[batchIdx].GetMeshPrimitive()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
-						static_cast<uint32_t>(batches[batchIdx].GetInstanceCount()),	// Instance count
-						0,	// Start index location
-						0,	// Base vertex location
-						0);	// Start instance location
+						dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
+							batches[batchIdx].GetMeshPrimitive()->GetVertexStream(
+								re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
+						currentCommandList->SetIndexBuffer(&indexPlatformParams->m_indexBufferView);
+
+						// Record the draw:
+						currentCommandList->DrawIndexedInstanced(
+							batches[batchIdx].GetMeshPrimitive()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
+							static_cast<uint32_t>(batches[batchIdx].GetInstanceCount()),	// Instance count
+							0,	// Start index location
+							0,	// Base vertex location
+							0);	// Start instance location
+					}
+					break;
+					case re::RenderStage::RenderStageType::Compute:
+					{
+						currentCommandList->Dispatch(batches[batchIdx].GetComputeParams().m_threadGroupCount);
+					}
+					break;
+					default:
+						SEAssertF("Invalid render stage type");
+					}
 				}
-			};
+			}; // ProcessRenderStage
 
 
 			// Single frame render stages:
 			vector<std::shared_ptr<re::RenderStage>> const& singleFrameRenderStages = 
 				stagePipeline.GetSingleFrameRenderStages();
-			for (std::shared_ptr<re::RenderStage> renderStage : singleFrameRenderStages)
+			for (size_t stageIdx = 0; stageIdx < singleFrameRenderStages.size(); stageIdx++)
 			{
-				ProcessRenderStage(renderStage);
+				ProcessRenderStage(singleFrameRenderStages[stageIdx]);
 			}
 
 			// Render stages:
 			vector<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
-			for (std::shared_ptr<re::RenderStage> renderStage : renderStages)
+			for (size_t stageIdx = 0; stageIdx < renderStages.size(); stageIdx++)
 			{
-				ProcessRenderStage(renderStage);
+				ProcessRenderStage(renderStages[stageIdx]);
 			}
 
 			// We're done: We have a command list for everything that happened on the current StagePipeline
-			commandLists.emplace_back(commandList);
+			if (computeCommandList != nullptr)
+			{
+				computeCommandLists.emplace_back(computeCommandList);
+			}
+			if (directCommandList != nullptr)
+			{
+				directCommandLists.emplace_back(directCommandList);
+			}
+
 		}
 
-		// TODO: Do we need to insert fences between our command lists to syncronize them here?
-
+		// TODO: We need to insert fences between our command lists to syncronize them here!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		
 		// Execute the command lists
-		directQueue.Execute(static_cast<uint32_t>(commandLists.size()), commandLists.data());
+		if (!computeCommandLists.empty())
+		{
+			computeQueue.Execute(static_cast<uint32_t>(computeCommandLists.size()), computeCommandLists.data());
+		}
+		if (!directCommandLists.empty())
+		{
+			directQueue.Execute(static_cast<uint32_t>(directCommandLists.size()), directCommandLists.data());
+		}
 	}
 
 

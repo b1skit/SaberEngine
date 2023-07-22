@@ -45,8 +45,9 @@ namespace gr
 		// "Set" the targets:
 		m_tempDebugStage->SetTextureTargetSet(nullptr); // Render directly to the backbuffer
 
-		gr::PipelineState defaultPipelineState;
-		m_tempDebugStage->SetStagePipelineState(defaultPipelineState);
+		gr::PipelineState debugPipelineState;
+		debugPipelineState.SetClearTarget(gr::PipelineState::ClearTarget::ColorDepth);
+		m_tempDebugStage->SetStagePipelineState(debugPipelineState);
 
 		// Add param blocks:
 		m_tempDebugStage->AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());

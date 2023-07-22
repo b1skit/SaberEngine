@@ -32,6 +32,12 @@ namespace re
 		};
 
 	public:
+		enum class BatchType
+		{
+			Graphics,
+			Compute
+		};
+
 		enum class GeometryMode
 		{
 			Indexed,
@@ -53,14 +59,36 @@ namespace re
 		typedef std::vector<std::tuple<std::string, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>>> BatchTextureAndSamplerInput;
 
 
+		struct GraphicsParams
+		{
+			// TODO: Split this into vertex streams
+			// -> TRICKY: OpenGL encapsulates state with VAOs, but we only need one VAO per mesh
+			// -> Also need to pack the mesh draw mode on the batch (points/lines/triangles/etc)
+			re::MeshPrimitive const* m_batchMeshPrimitive;
+			
+			GeometryMode m_batchGeometryMode;
+
+			size_t m_numInstances;
+		};
+		struct ComputeParams
+		{
+			glm::uvec3 m_threadGroupCount = glm::uvec3(std::numeric_limits<uint32_t>::max());
+		};
+
 	public:
+		// TODO: Switch batches to an object creation factory. We want them tightly packed in memory, so will need some
+		// sort of allocation/memory management system
+
 		Batch(re::MeshPrimitive const* meshPrimitive, gr::Material const* materialOverride);
 		Batch(std::shared_ptr<gr::Mesh const> const mesh, gr::Material const* materialOverride);
+
+		Batch(ComputeParams const& computeParams); // For compute batches
 
 		~Batch() = default;
 		Batch(Batch const&) = default;
 		Batch(Batch&&) = default;
 		Batch& operator=(Batch const&) = default;
+		Batch& operator=(Batch&&) = default;
 		
 		re::MeshPrimitive const* GetMeshPrimitive() const;
 		
@@ -81,28 +109,31 @@ namespace re
 
 		void IncrementBatchInstanceCount();
 
+		GraphicsParams const& GetGraphicsParams() const;
+		ComputeParams const& GetComputeParams() const;
+
 
 	private:
 		void ComputeDataHash() override;
 
 
 	private:
-		// TODO: Split this into vertex streams
-		// -> TRICKY: OpenGL encapsulates state with VAOs, but we only need one VAO per mesh
-		// -> Also need to pack the mesh draw mode on the batch (points/lines/triangles/etc)
-		re::MeshPrimitive const* m_batchMeshPrimitive;
-
+		BatchType m_type;
+		union
+		{
+			GraphicsParams m_graphicsParams;
+			ComputeParams m_computeParams;
+		};
+		
+		// TODO: Can any more of these be moved into graphics params?
 		re::Shader const* m_batchShader;
 
 		std::vector<std::shared_ptr<re::ParameterBlock>> m_batchParamBlocks;
 
 		BatchTextureAndSamplerInput m_batchTextureSamplerInputs;
 
-		GeometryMode m_batchGeometryMode;
-
 		uint32_t m_batchFilterMask;
 
-		size_t m_numInstances;
 
 	private:
 		Batch() = delete;
@@ -111,7 +142,8 @@ namespace re
 
 	inline re::MeshPrimitive const* Batch::GetMeshPrimitive() const
 	{
-		return m_batchMeshPrimitive;
+		SEAssert("Invalid type", m_type == BatchType::Graphics);
+		return m_graphicsParams.m_batchMeshPrimitive;
 	}
 
 
@@ -129,7 +161,8 @@ namespace re
 
 	inline size_t Batch::GetInstanceCount() const
 	{
-		return m_numInstances;
+		SEAssert("Invalid type", m_type == BatchType::Graphics);
+		return m_graphicsParams.m_numInstances;
 	}
 
 
@@ -155,5 +188,19 @@ namespace re
 	inline uint32_t Batch::GetBatchFilterMask() const
 	{
 		return m_batchFilterMask;
+	}
+
+
+	inline Batch::GraphicsParams const& Batch::GetGraphicsParams() const
+	{
+		SEAssert("Invalid type", m_type == BatchType::Graphics);
+		return m_graphicsParams;
+	}
+
+
+	inline Batch::ComputeParams const& Batch::GetComputeParams() const
+	{
+		SEAssert("Invalid type", m_type == BatchType::Compute);
+		return m_computeParams;
 	}
 }
