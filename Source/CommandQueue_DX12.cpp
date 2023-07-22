@@ -101,6 +101,9 @@ namespace
 				dx12::LocalResourceState const& pendingStates = currentPending.second;
 				GlobalResourceState const& globalState = globalResourceStates.GetResourceState(resource);
 
+				const uint32_t numSubresources = globalState.GetNumSubresources();
+
+				uint32_t numSubresourcesTransitioned = 0;
 				for (auto const& pendingState : pendingStates.GetStates())
 				{
 					const uint32_t subresourceIdx = pendingState.first;
@@ -115,14 +118,26 @@ namespace
 					{
 						AddTransitionBarrier(resource, beforeState, afterState, subresourceIdx, barriers);
 						globalResourceStates.SetResourceState(resource, afterState, subresourceIdx);
+						numSubresourcesTransitioned++;
 					}
 				}
 
-				if (pendingStates.HasSubresourceRecord(k_allSubresources))
+				// Note: There is an edge case where we could individually add each subresource to the pending list, and
+				// then add an "ALL" transition which would be (incorrectly) added to the pending list. So, we handle
+				// that here (as it makes the bookkeeping much simpler)
+				const bool alreadyTransitionedAllSubresources = numSubresourcesTransitioned == numSubresources;
+				SEAssert("Transitioned too many subresources", numSubresourcesTransitioned <= numSubresources);
+
+				SEAssert("If you hit this assert, delete it and check everything works (i.e. the debug layer doesn't "
+					"complain about anything). If everything is ok, give yourself a high-five and move on.", 
+					alreadyTransitionedAllSubresources == false);
+
+				if (!alreadyTransitionedAllSubresources &&
+					pendingStates.HasSubresourceRecord(k_allSubresources))
 				{
 					const D3D12_RESOURCE_STATES afterState = pendingStates.GetState(k_allSubresources);
 					bool insertedTransition = false;
-					for (uint32_t subresourceIdx = 0; subresourceIdx < globalState.GetNumSubresources(); subresourceIdx++)
+					for (uint32_t subresourceIdx = 0; subresourceIdx < numSubresources; subresourceIdx++)
 					{
 						const D3D12_RESOURCE_STATES beforeState = globalState.GetState(subresourceIdx);
 						if (beforeState != afterState)

@@ -149,8 +149,6 @@ namespace dx12
 
 	bool LocalResourceStateTracker::HasResourceState(ID3D12Resource* resource, uint32_t subresourceIdx) const
 	{
-		/*return m_knownStates.contains(resource) && m_knownStates.at(resource).HasSubresourceRecord(subresourceIdx);*/
-
 		return m_knownStates.contains(resource) && 
 			(m_knownStates.at(resource).HasSubresourceRecord(subresourceIdx) || 
 			m_knownStates.at(resource).HasSubresourceRecord(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES));
@@ -179,6 +177,9 @@ namespace dx12
 			if (m_pendingStates.at(resource).HasSubresourceRecord(subresourceIdx) == false)
 			{
 				m_pendingStates.at(resource).SetState(stateAfter, subresourceIdx, true);
+
+				// Note: There is an edge case here where we could set every single subresource index, then set an "ALL"
+				// state and it would be (incorrectly) added to the pending list. This is handled during the fixup stage.
 			}
 			m_knownStates.at(resource).SetState(stateAfter, subresourceIdx, false);
 		}
