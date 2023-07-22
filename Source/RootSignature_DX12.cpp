@@ -190,7 +190,7 @@ namespace dx12
 		, m_rootSigDescHash(0)
 		, m_rootSigDescriptorTableIdxBitmask(0)
 	{
-		memset(m_numDescriptorsPerTable, 0, sizeof(m_numDescriptorsPerTable));
+		memset(&m_numDescriptorsPerTable, 0, sizeof(m_numDescriptorsPerTable));
 	}
 
 
@@ -205,7 +205,7 @@ namespace dx12
 		m_rootSignature = nullptr;
 
 		// Zero our descriptor table entry counters:
-		memset(m_numDescriptorsPerTable, 0, sizeof(m_numDescriptorsPerTable));
+		memset(&m_numDescriptorsPerTable, 0, sizeof(m_numDescriptorsPerTable));
 		m_rootSigDescriptorTableIdxBitmask = 0;
 
 		m_namesToRootEntries.clear();
@@ -230,7 +230,7 @@ namespace dx12
 
 		// Zero our descriptor table entry counters: For each root sig. index containing a descriptor table, this tracks
 		// how many descriptors are in that table
-		memset(newRootSig->m_numDescriptorsPerTable, 0, sizeof(newRootSig->m_numDescriptorsPerTable));
+		memset(&newRootSig->m_numDescriptorsPerTable, 0, sizeof(newRootSig->m_numDescriptorsPerTable));
 		newRootSig->m_rootSigDescriptorTableIdxBitmask = 0;
 
 
@@ -430,8 +430,8 @@ namespace dx12
 								.m_name = inputBindingDesc.Name,
 								.m_baseRegister = static_cast<uint8_t>(inputBindingDesc.BindPoint),
 								.m_registerSpace = static_cast<uint8_t>(inputBindingDesc.Space),
-								.m_shaderVisibility =
-									GetShaderVisibilityFlagFromShaderType(static_cast<dx12::Shader::ShaderType>(shaderIdx)),
+								.m_shaderVisibility = GetShaderVisibilityFlagFromShaderType(
+									static_cast<dx12::Shader::ShaderType>(shaderIdx)),
 								.m_shaderInputType = inputBindingDesc.Type,
 								.m_bindCount = inputBindingDesc.BindCount,
 								.m_returnType = inputBindingDesc.ReturnType,

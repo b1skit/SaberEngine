@@ -7,8 +7,6 @@
 #include "Shader_DX12.h"
 
 
-//struct CD3DX12_ROOT_PARAMETER1;
-
 namespace re
 {
 	class Shader;
@@ -67,10 +65,10 @@ namespace dx12
 		};
 		struct DescriptorTable
 		{
+			DescriptorTable() { m_ranges.resize(RangeType::Type_Count); }
+			
 			uint8_t m_index = k_invalidRootSigIndex;
 			std::vector<std::vector<RangeEntry>> m_ranges;
-
-			DescriptorTable() { m_ranges.resize(RangeType::Type_Count); }
 		};
 
 
