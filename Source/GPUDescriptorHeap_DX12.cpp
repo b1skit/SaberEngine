@@ -214,7 +214,8 @@ namespace dx12
 				descriptorTableIdxBitmask ^= rootIdxBit;
 			}
 		}
-		SEAssert("Offset is out of bounds. There are not enough descriptors allocated", offset < k_totalDescriptors);
+		SEAssert("Offset is out of bounds, not enough descriptors allocated. Consider increasing k_totalDescriptors", 
+			offset < k_totalDescriptors);
 
 		// Remove all dirty flags: We'll need to call Set___() in order to mark any descriptors for copying
 		m_dirtyDescriptorTableIdxBitmask = 0;
@@ -372,11 +373,11 @@ namespace dx12
 
 					const size_t tableSize = numTableDescriptors * m_elementSize;
 
-					SEAssert("Out of bounds CPU destination", 
+					SEAssert("Out of bounds CPU destination. Consider increasing k_totalDescriptors", 
 						m_gpuDescriptorTableHeapCPUBase.ptr + tableSize <=
 							m_gpuDescriptorTableHeap->GetCPUDescriptorHandleForHeapStart().ptr + (k_totalDescriptors * m_elementSize));
 
-					SEAssert("Out of bounds GPU destination",
+					SEAssert("Out of bounds GPU destination. Consider increasing k_totalDescriptors",
 						m_gpuDescriptorTableHeapGPUBase.ptr + tableSize <=
 							m_gpuDescriptorTableHeap->GetGPUDescriptorHandleForHeapStart().ptr + (k_totalDescriptors * m_elementSize));
 
