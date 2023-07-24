@@ -25,13 +25,19 @@ namespace dx12
 		// Note: shared_ptrs in cmdLists will be null after this call
 		uint64_t Execute(uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists);
 
+		dx12::Fence& GetFence();
+		dx12::Fence const& GetFence() const;
+
 		// ID3D12Fence wrappers: CPU-side fence syncronization
 		uint64_t CPUSignal(); // Updates the fence value from the CPU side
 		void CPUWait(uint64_t fenceValue) const; // Blocks the CPU until the fence reaches the given value
 
 		// ID3D12CommandQueue wrappers: GPU-side fence syncronization
-		uint64_t GPUSignal(); // Updates the fence value from the GPU side
+		uint64_t GPUSignal(); // Updates the fence to ++m_fence value from the GPU side
+		void GPUSignal(uint64_t fenceValue); // Updates the fence to the given value from the GPU side
+
 		void GPUWait(uint64_t fenceValue) const; // Blocks the GPU until the fence reaches the given value
+		void GPUWait(dx12::Fence&, uint64_t fenceValue) const; // Blocks the GPU on a fence from another command queue
 
 		void Flush();
 
@@ -48,7 +54,8 @@ namespace dx12
 		Microsoft::WRL::ComPtr<ID3D12Device2> m_deviceCache;
 
 		Fence m_fence;
-		uint64_t m_fenceValue; // Monotonically increasing: Most recently signalled value
+		uint64_t m_fenceValue; // Monotonically increasing: Most recent signalled value. Note: Pre-assigned to cmd lists
+		uint64_t m_typeFenceBitMask; // Upper 3 bits indicate the fence type
 
 		std::queue<std::shared_ptr<dx12::CommandList>> m_commandListPool;
 
@@ -57,6 +64,18 @@ namespace dx12
 		CommandQueue(CommandQueue const&) = delete;
 		CommandQueue& operator=(CommandQueue const&) = delete;
 	};
+
+
+	inline dx12::Fence& CommandQueue::GetFence()
+	{
+		return m_fence;
+	}
+
+
+	inline dx12::Fence const& CommandQueue::GetFence() const
+	{
+		return m_fence;
+	}
 
 
 	inline ID3D12CommandQueue* CommandQueue::GetD3DCommandQueue() const

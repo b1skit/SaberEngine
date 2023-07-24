@@ -19,10 +19,8 @@ namespace dx12
 		{
 			Microsoft::WRL::ComPtr<IDXGISwapChain4> m_swapChain = nullptr;
 
-			// Pointers to our backbuffer resources
-			uint8_t m_backBufferIdx;
-
-			std::shared_ptr<re::TextureTargetSet> m_backbufferTargetSet;
+			std::array<std::shared_ptr<re::TextureTargetSet>, dx12::RenderManager::k_numFrames> m_backbufferTargetSets;
+			uint8_t m_backBufferIdx; // Which backbuffer target set to use
 
 			bool m_vsyncEnabled = false; // Disabled if tearing is enabled (ie. using a variable refresh display)
 			bool m_tearingSupported = false; // Always allow tearing if supported. Required for variable refresh dispays (eg. G-Sync/FreeSync)
@@ -35,9 +33,7 @@ namespace dx12
 		static void SetVSyncMode(re::SwapChain const& swapChain, bool enabled);
 
 		// DX12-specific functionality:
-		static bool CheckTearingSupport(); // Variable refresh rate dispays (eg. G-Sync/FreeSync) require tearing enabled
-
 		static uint8_t GetBackBufferIdx(re::SwapChain const& swapChain);
-		static Microsoft::WRL::ComPtr<ID3D12Resource> GetBackBufferResource(re::SwapChain const& swapChain);
+		static std::shared_ptr<re::TextureTargetSet> GetBackBufferTargetSet(re::SwapChain const& swapChain);
 	};
 }

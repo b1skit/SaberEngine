@@ -3,6 +3,7 @@
 #include <wrl.h>
 #include <d3d12.h>
 
+#include "CommandList_DX12.h"
 #include "RenderManager_DX12.h"
 
 
@@ -10,6 +11,12 @@ namespace dx12
 {
 	class Fence
 	{
+	public:
+		static uint64_t GetCommandListTypeFenceMaskBits(dx12::CommandList::CommandListType commandListType);
+		static dx12::CommandList::CommandListType GetCommandListTypeFromFenceValue(uint64_t fenceVal);
+		static uint64_t GetRawFenceValue(uint64_t);
+
+
 	public:
 		Fence();
 		Fence(Fence&&) = default;
@@ -31,8 +38,7 @@ namespace dx12
 		HANDLE m_fenceEvent; // OS event object: Receives notifications when a fence reaches a specific value
 
 
-	private:
-		// Copying not allowed:
+	private: // No copying allowed:
 		Fence(Fence const&) = delete;
 		Fence& operator=(Fence const&) = delete;
 	};

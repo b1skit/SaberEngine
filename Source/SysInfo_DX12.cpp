@@ -3,6 +3,8 @@
 #include "SysInfo_DX12.h"
 #include "RenderManager.h"
 
+using Microsoft::WRL::ComPtr;
+
 
 namespace dx12
 {
@@ -31,5 +33,24 @@ namespace dx12
 			}
 		}
 		return featureData.HighestVersion;		
+	}
+
+
+	bool SysInfo::CheckTearingSupport()
+	{
+		int allowTearing = 0;
+
+		ComPtr<IDXGIFactory5> factory5;
+
+		HRESULT hr = CreateDXGIFactory(IID_PPV_ARGS(&factory5));
+		CheckHResult(hr, "Failed to create DXGI Factory");
+
+		hr = factory5->CheckFeatureSupport(
+			DXGI_FEATURE_PRESENT_ALLOW_TEARING,
+			&allowTearing,
+			sizeof(allowTearing));
+		CheckHResult(hr, "Failed to check feature support");
+
+		return allowTearing > 0;
 	}
 }

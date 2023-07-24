@@ -5,10 +5,12 @@
 
 #include "RootSignature_DX12.h"
 
+// TODO: Figure out how (if?) we're handling sampler descriptors
+
 
 namespace dx12
 {
-	// TODO: Figure out how we're handling sampler descriptors
+	class DescriptorAllocation;
 
 
 	class GPUDescriptorHeap

@@ -128,10 +128,6 @@ namespace
 				const bool alreadyTransitionedAllSubresources = numSubresourcesTransitioned == numSubresources;
 				SEAssert("Transitioned too many subresources", numSubresourcesTransitioned <= numSubresources);
 
-				SEAssert("If you hit this assert, delete it and check everything works (i.e. the debug layer doesn't "
-					"complain about anything). If everything is ok, give yourself a high-five and move on.", 
-					alreadyTransitionedAllSubresources == false);
-
 				if (!alreadyTransitionedAllSubresources &&
 					pendingStates.HasSubresourceRecord(k_allSubresources))
 				{
@@ -215,6 +211,7 @@ namespace dx12
 		, m_type(CommandList::GetD3DCommandListType(CommandList::CommandListType::CommandListType_Invalid))
 		, m_deviceCache(nullptr)
 		, m_fenceValue(0)
+		, m_typeFenceBitMask(0)
 	{
 	}
 
@@ -266,6 +263,8 @@ namespace dx12
 		CheckHResult(hr, "Failed to create command queue");
 
 		m_fence.Create(m_deviceCache, fenceEventName.c_str());
+		m_typeFenceBitMask = dx12::Fence::GetCommandListTypeFenceMaskBits(type);
+		m_fenceValue = m_typeFenceBitMask; // Fence value effectively starts at 0, with the type bits set
 	}
 
 
@@ -285,7 +284,7 @@ namespace dx12
 	std::shared_ptr<dx12::CommandList> CommandQueue::GetCreateCommandList()
 	{
 		std::shared_ptr<dx12::CommandList> commandList = nullptr;
-		if (!m_commandListPool.empty() && m_fence.IsFenceComplete(m_commandListPool.front()->GetFenceValue()))
+		if (!m_commandListPool.empty() && m_fence.IsFenceComplete(m_commandListPool.front()->GetReuseFenceValue()))
 		{
 			commandList = m_commandListPool.front();
 			m_commandListPool.pop();
@@ -297,6 +296,9 @@ namespace dx12
 
 		commandList->Reset();
 
+		// Pre-assign a fence value:
+		commandList->SetReuseFenceValue(++m_fenceValue);
+
 		return commandList;
 	}
 
@@ -307,6 +309,8 @@ namespace dx12
 		std::vector<std::shared_ptr<dx12::CommandList>> finalCommandLists = 
 			std::move(InsertPendingBarrierCommandLists(numCmdLists, cmdLists, *this));
 
+		uint64_t maxCommandListReuseFenceVal = 0;
+
 		// Get our raw command list pointers, and close them before they're executed
 		std::vector<ID3D12CommandList*> commandListPtrs;
 		commandListPtrs.reserve(finalCommandLists.size());
@@ -316,38 +320,56 @@ namespace dx12
 
 			finalCommandLists[i]->Close();
 			commandListPtrs.emplace_back(finalCommandLists[i]->GetD3DCommandList());
+
+			// Our commmand list reuse fence values are pre-issued, so may not be in monotonically-increasing order
+			maxCommandListReuseFenceVal = std::max(maxCommandListReuseFenceVal, finalCommandLists[i]->GetReuseFenceValue());
+		}
+
+		// Return our command list(s) to the pool:
+		for (uint32_t i = 0; i < finalCommandLists.size(); i++)
+		{
+			m_commandListPool.push(finalCommandLists[i]);
+
+			// If any resource was modified on a different queue, we must wait on it to be sure the work is finished
+			for (size_t typeIdx = 0; typeIdx < dx12::CommandList::CommandListType::CommandListType_Count; typeIdx++)
+			{
+				const dx12::CommandList::CommandListType cmdListType = static_cast<dx12::CommandList::CommandListType>(typeIdx);
+
+				const uint64_t maxModificationFenceVal = 
+					finalCommandLists[i]->GetMaxResourceModificationFenceValue(cmdListType);
+
+				// Wait on any queues that modified a resource seen by one of the command lists submitted here
+				if (cmdListType != m_type && maxModificationFenceVal > 0)
+				{
+					// TODO: This is wasteful. We're waiting on queues that probably finished many frames ago
+					// We need to reset the modification fence values held on resources somehow
+					GPUWait(dx12::Context::GetCommandQueue(cmdListType).GetFence(), maxModificationFenceVal);
+				}
+			}
 		}
 
 		// Execute the command lists:
 		m_commandQueue->ExecuteCommandLists(static_cast<uint32_t>(commandListPtrs.size()), commandListPtrs.data());
 
-		// Insert a fence for when the command list's internal command allocator will be available for reuse
-		const uint64_t fenceVal = GPUSignal();
+		// Our command lists may have been submitted in non-monotonically increasing fence value order, because we
+		// pre-pend barrier fixup command lists. So, just signal the highest value we saw as a catch-all
+		GPUSignal(maxCommandListReuseFenceVal);
 
-		// Return our command list(s) to the pool:
-		for (uint32_t i = 0; i < finalCommandLists.size(); i++)
-		{
-			finalCommandLists[i]->SetFenceValue(fenceVal);
-
-			m_commandListPool.push(finalCommandLists[i]);
-		}
-
-		return fenceVal;
+		return maxCommandListReuseFenceVal;
 	}
 
 
 	uint64_t CommandQueue::CPUSignal()
 	{
 		// Updates the fence to the specified value from the CPU side
-		m_fence.CPUSignal(++m_fenceValue); // Note: First fenceValueForSignal == 1
+		m_fence.CPUSignal(++m_fenceValue); // Note: First (raw) value actually signaled == 1
 		return m_fenceValue;
 	}
 
 
 	void CommandQueue::CPUWait(uint64_t fenceValue) const
 	{
-		// CPU waits until fence is set to the given value
-		m_fence.CPUWait(fenceValue);
+		m_fence.CPUWait(fenceValue); // CPU waits until fence is set to the given value
 	}
 
 
@@ -360,11 +382,15 @@ namespace dx12
 
 	uint64_t CommandQueue::GPUSignal()
 	{
-		// Update the fence value from the GPU side
-		HRESULT hr = m_commandQueue->Signal(m_fence.GetD3DFence(), ++m_fenceValue);
-		CheckHResult(hr, "Command queue failed to issue GPU signal");
-
+		GPUSignal(++m_fenceValue);
 		return m_fenceValue;
+	}
+
+
+	void CommandQueue::GPUSignal(uint64_t fenceValue)
+	{
+		HRESULT hr = m_commandQueue->Signal(m_fence.GetD3DFence(), fenceValue);
+		CheckHResult(hr, "Command queue failed to issue GPU signal");
 	}
 
 
@@ -373,5 +399,13 @@ namespace dx12
 		// Queue a GPU wait (GPU waits until the specified fence reaches/exceeds the fenceValue), and returns immediately
 		HRESULT hr = m_commandQueue->Wait(m_fence.GetD3DFence(), fenceValue);
 		CheckHResult(hr, "Command queue failed to issue GPU wait");
+	}
+
+
+	void CommandQueue::GPUWait(dx12::Fence& fence, uint64_t fenceValue) const
+	{
+		// Queue a GPU wait (GPU waits until the specified fence reaches/exceeds the fenceValue), and returns immediately
+		HRESULT hr = m_commandQueue->Wait(fence.GetD3DFence(), fenceValue);
+		CheckHResult(hr, "Command queue failed to issue GPU wait on externally provided fence");
 	}
 }

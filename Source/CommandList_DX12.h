@@ -39,6 +39,8 @@ namespace dx12
 			CommandListType_Count,
 			CommandListType_Invalid = CommandListType_Count
 		};
+		static_assert(CommandListType_Count == 7); // We pack command list type into the upper bits of fence values
+
 		static constexpr wchar_t const* const GetCommandListTypeName(dx12::CommandList::CommandListType);
 		static constexpr D3D12_COMMAND_LIST_TYPE GetD3DCommandListType(dx12::CommandList::CommandListType);
 		static constexpr CommandListType TranslateCommandListType(D3D12_COMMAND_LIST_TYPE);
@@ -55,8 +57,9 @@ namespace dx12
 
 		void Destroy();
 
-		uint64_t GetFenceValue() const;
-		void SetFenceValue(uint64_t);
+		// The reuse fence tracks if the the last work the command list recorded/submitted been completed
+		uint64_t GetReuseFenceValue() const;
+		void SetReuseFenceValue(uint64_t);
 
 		void Reset();
 		void Close() const;
@@ -92,8 +95,6 @@ namespace dx12
 		void ClearColorTargets(re::TextureTargetSet const&) const;
 
 		void SetRenderTargets(re::TextureTargetSet const&);
-		void SetBackbufferRenderTarget();
-
 		void SetComputeTargets(re::TextureTargetSet const&);
 
 		void SetViewport(re::TextureTargetSet const&) const;
@@ -104,13 +105,16 @@ namespace dx12
 
 		void Dispatch(glm::uvec3 const& numThreads);
 
-		void TransitionResource(ID3D12Resource* resource, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
-		void TransitionUAV(ID3D12Resource* resource, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
+		// TODO: Implement a "resource" interface if/when we need to transition more than just Textures
+		void TransitionResource(std::shared_ptr<re::Texture>, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
+		void TransitionUAV(std::shared_ptr<re::Texture>, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
 
 		D3D12_COMMAND_LIST_TYPE GetType() const;
 		ID3D12GraphicsCommandList2* GetD3DCommandList() const;
 
 		LocalResourceStateTracker const& GetLocalResourceStates() const;
+
+		uint64_t GetMaxResourceModificationFenceValue(dx12::CommandList::CommandListType) const;
 
 		void DebugPrintResourceStates() const;
 
@@ -120,9 +124,12 @@ namespace dx12
 		D3D12_COMMAND_LIST_TYPE m_type;
 
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator;
-		uint64_t m_fenceValue; // When the command allocator can be reused
+		uint64_t m_reuseFenceValue; // When the command allocator can be reused
 
-		const size_t k_commandListNumber;
+		// Highest resource modification fence values seen for each command queue type while recording
+		std::array<uint64_t, CommandListType_Count> m_maxResourceLastModifiedFenceValues;
+
+		const size_t k_commandListNumber; // Monotonically increasing identifier assigned at creation
 
 	private:
 		std::unique_ptr<dx12::GPUDescriptorHeap> m_gpuCbvSrvUavDescriptorHeaps;
@@ -144,15 +151,15 @@ namespace dx12
 	};
 
 
-	inline uint64_t CommandList::GetFenceValue() const
+	inline uint64_t CommandList::GetReuseFenceValue() const
 	{
-		return m_fenceValue;
+		return m_reuseFenceValue;
 	}
 
 
-	inline void CommandList::SetFenceValue(uint64_t fenceValue)
+	inline void CommandList::SetReuseFenceValue(uint64_t fenceValue)
 	{
-		m_fenceValue = fenceValue;
+		m_reuseFenceValue = fenceValue;
 	}
 
 
@@ -257,5 +264,11 @@ namespace dx12
 	inline void CommandList::CommitGPUDescriptors()
 	{
 		m_gpuCbvSrvUavDescriptorHeaps->Commit();
+	}
+
+
+	inline uint64_t CommandList::GetMaxResourceModificationFenceValue(dx12::CommandList::CommandListType type) const
+	{
+		return m_maxResourceLastModifiedFenceValues[type];
 	}
 }

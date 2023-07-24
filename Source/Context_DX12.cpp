@@ -9,6 +9,7 @@
 #include "CoreEngine.h"
 #include "Debug_DX12.h"
 #include "DebugConfiguration.h"
+#include "Fence_DX12.h"
 #include "RenderManager_DX12.h"
 #include "SwapChain_DX12.h"
 #include "TextureTarget_DX12.h"
@@ -86,56 +87,52 @@ namespace dx12
 		ctxPlatParams->m_commandQueues[CommandList::CommandListType::Copy].Create(
 			device, CommandList::CommandListType::Copy);
 
-
-		// NOTE: Currently, this call retrieves m_commandQueue from the Context platform params
-		// TODO: Clean this up, it's gross.
-		context.GetSwapChain().Create();
+		// NOTE: Must create the swapchain after our command queues. This is because the DX12 swapchain creation
+		// requires a direct command queue; dx12::SwapChain::Create recursively gets it from the Context platform params
+		re::SwapChain& swapChain = context.GetSwapChain();
+		swapChain.Create(); 
 		
-		dx12::SwapChain::PlatformParams* swapChainParams = 
-			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
-
-		SEAssert("Window pointer cannot be null", en::CoreEngine::Get()->GetWindow());
-		win32::Window::PlatformParams* windowPlatParams = 
-			en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
-
-		dx12::TextureTargetSet::PlatformParams* swapChainTargetSetParams = 
-			swapChainParams->m_backbufferTargetSet->GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
-
+		
 		// Setup our ImGui context
-		IMGUI_CHECKVERSION();
-		ImGui::CreateContext();
-		ImGuiIO& io = ImGui::GetIO();
-		io.IniFilename = re::k_imguiIniPath;
+		{
+			IMGUI_CHECKVERSION();
+			ImGui::CreateContext();
+			ImGuiIO& io = ImGui::GetIO();
+			io.IniFilename = re::k_imguiIniPath;
 
-		// Setup Dear ImGui style
-		ImGui::StyleColorsDark();
+			// Setup Dear ImGui style
+			ImGui::StyleColorsDark();
 
-		// Imgui descriptor heap: Holds a single, CPU and GPU-visible SRV descriptor for the internal font texture
-		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
+			// Imgui descriptor heap: Holds a single, CPU and GPU-visible SRV descriptor for the internal font texture
+			constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
 
-		D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
-		descriptorHeapDesc.Type				= D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-		descriptorHeapDesc.NumDescriptors	= 1;
-		descriptorHeapDesc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-		descriptorHeapDesc.NodeMask			= deviceNodeMask;
+			D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
+			descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+			descriptorHeapDesc.NumDescriptors = 1;
+			descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+			descriptorHeapDesc.NodeMask = deviceNodeMask;
 
-		HRESULT hr = device->CreateDescriptorHeap(
-			&descriptorHeapDesc, IID_PPV_ARGS(&ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap));
-		CheckHResult(hr, "Failed to create single element descriptor heap for ImGui SRV");
-		
-		dx12::Texture::PlatformParams* backbufferColorTarget0PlatParams =
-			swapChainParams->m_backbufferTargetSet->GetColorTarget(0)->GetTexture()
-				->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+			HRESULT hr = device->CreateDescriptorHeap(
+				&descriptorHeapDesc, IID_PPV_ARGS(&ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap));
+			CheckHResult(hr, "Failed to create single element descriptor heap for ImGui SRV");
 
-		// Setup ImGui platform/Renderer backends:
-		ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
-		ImGui_ImplDX12_Init(
-			ctxPlatParams->m_device.GetD3DDisplayDevice(),
-			dx12::RenderManager::k_numFrames, // Number of frames in flight
-			backbufferColorTarget0PlatParams->m_format,
-			ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap.Get(),
-			ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-			ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+			SEAssert("Window pointer cannot be null", en::CoreEngine::Get()->GetWindow());
+			win32::Window::PlatformParams* windowPlatParams =
+				en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
+
+			dx12::Texture::PlatformParams const* backbufferColorTarget0PlatParams =
+				dx12::SwapChain::GetBackBufferTargetSet(swapChain)->GetColorTarget(0)->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+
+			// Setup ImGui platform/Renderer backends:
+			ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
+			ImGui_ImplDX12_Init(
+				ctxPlatParams->m_device.GetD3DDisplayDevice(),
+				dx12::RenderManager::k_numFrames, // Number of frames in flight
+				backbufferColorTarget0PlatParams->m_format,
+				ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap.Get(),
+				ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+				ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		}
 	}
 
 
@@ -195,26 +192,25 @@ namespace dx12
 
 		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
-		Microsoft::WRL::ComPtr<ID3D12Resource> backbufferResource =
-			dx12::SwapChain::GetBackBufferResource(context.GetSwapChain());
+		re::SwapChain const& swapChain = context.GetSwapChain();
+
+		std::shared_ptr<re::TextureTargetSet> swapChainTargetSet = 
+			SwapChain::GetBackBufferTargetSet(context.GetSwapChain());
+		
+		dx12::Texture::PlatformParams const* backbufferColorTexPlatParams =
+			swapChainTargetSet->GetColorTarget(0)->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		// Transition our backbuffer resource back to the present state:
 		commandList->TransitionResource(
-			backbufferResource.Get(),
+			swapChainTargetSet->GetColorTarget(0)->GetTexture(),
 			D3D12_RESOURCE_STATE_PRESENT,
 			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
-		std::shared_ptr<dx12::CommandList> commandLists[] =
-		{
-			commandList
-		};
-		directQueue.Execute(1, commandLists);
+		directQueue.Execute(1, &commandList);
 
 		// Present:
 		dx12::SwapChain::PlatformParams* swapChainPlatParams = 
-			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
-
-		const uint8_t currentFrameBackbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
+			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
 		// Present the backbuffer:
 		const bool vsyncEnabled = swapChainPlatParams->m_vsyncEnabled;
@@ -236,6 +232,7 @@ namespace dx12
 		}
 
 		// Insert a signal into the command queue: Once this is reached, we know the work for the current frame is done
+		const uint8_t currentFrameBackbufferIdx = dx12::SwapChain::GetBackBufferIdx(swapChain);
 		ctxPlatParams->m_frameFenceValues[currentFrameBackbufferIdx] = 
 			ctxPlatParams->m_commandQueues[CommandList::Direct].GPUSignal();
 
@@ -301,6 +298,13 @@ namespace dx12
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		return ctxPlatParams->m_commandQueues[type];
+	}
+
+
+	dx12::CommandQueue& Context::GetCommandQueue(uint64_t fenceValue)
+	{
+		const dx12::CommandList::CommandListType cmdListType = dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue);
+		return GetCommandQueue(cmdListType);
 	}
 
 

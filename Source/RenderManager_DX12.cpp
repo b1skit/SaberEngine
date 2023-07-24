@@ -50,14 +50,16 @@ namespace dx12
 			!renderManager.m_newTextures.m_newObjects.empty();
 
 		// Handle anything that requires a copy queue:
+		uint64_t copyQueueFenceVal = 0;
+		std::vector<ComPtr<ID3D12Resource>> intermediateResources;
+		dx12::CommandQueue* copyQueue = nullptr;
 		if (hasDataToCopy)
 		{
-			// TODO: Get multiple command lists, and record on multiple threads:
-			dx12::CommandQueue& copyQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Copy);
-			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue.GetCreateCommandList();
-			ID3D12GraphicsCommandList2* copyCommandListD3D = copyCommandList->GetD3DCommandList();
+			copyQueue = &dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Copy);
 
-			std::vector<ComPtr<ID3D12Resource>> intermediateResources;
+			// TODO: Get multiple command lists, and record on multiple threads:
+			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
+			ID3D12GraphicsCommandList2* copyCommandListD3D = copyCommandList->GetD3DCommandList();
 
 			// Mesh Primitives:
 			if (!renderManager.m_newMeshPrimitives.m_newObjects.empty())
@@ -89,20 +91,8 @@ namespace dx12
 				renderManager.m_newTextures.m_newObjects.clear();
 			}
 
-
-			// Execute command queue, and wait for it to be done (blocking)
-			std::shared_ptr<dx12::CommandList> commandLists[] =
-			{
-				copyCommandList
-			};
-			uint64_t copyQueueFenceVal = copyQueue.Execute(1, commandLists);
-			copyQueue.CPUWait(copyQueueFenceVal);
-
-			// The copy is done: Free the intermediate HEAP_TYPE_UPLOAD resources
-			intermediateResources.clear();
-
-			// TODO: We should clear the intermediateResources at the end of the frame, and GPUWait on the copy instead
-			// -> We should also progress further in the resource creation instead of waiting here
+			// Execute the copy before moving on
+			copyQueueFenceVal = copyQueue->Execute(1, &copyCommandList);
 		}
 
 		// Samplers:
@@ -154,8 +144,7 @@ namespace dx12
 							std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
 							if (!stageTargets)
 							{
-								// We (currently) assume a null TextureTargetSet indicates the backbuffer is the target
-								stageTargets = swapChainParams->m_backbufferTargetSet;
+								stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context.GetSwapChain());
 							}
 
 							dx12::Context::CreateAddPipelineState(
@@ -178,6 +167,15 @@ namespace dx12
 			}
 			renderManager.m_newParameterBlocks.m_newObjects.clear();
 		}
+
+		// If we added anything to the copy queue, and wait for it to be done (blocking)
+		// TODO: We should use the resource modification fence instead of waiting here. This would allow us to clear the
+		// intermediateResources at the end of the frame/start of the next, and GPUWait on the copy instead
+		if (copyQueue)
+		{
+			copyQueue->CPUWait(copyQueueFenceVal);
+			intermediateResources.clear(); // The copy is done: Free the intermediate HEAP_TYPE_UPLOAD resources
+		}
 	}
 
 
@@ -193,7 +191,6 @@ namespace dx12
 
 		std::vector<std::shared_ptr<dx12::CommandList>> computeCommandLists;
 		computeCommandLists.reserve(renderManager.m_renderPipeline.GetStagePipeline().size());
-
 
 		// Render each stage:
 		for (StagePipeline& stagePipeline : renderManager.m_renderPipeline.GetStagePipeline())
@@ -236,18 +233,12 @@ namespace dx12
 
 				// Attach the stage targets, and transition the resources:
 				std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
-				const bool isBackbufferTarget = stageTargets == nullptr;
-				if (isBackbufferTarget)
+				if (stageTargets == nullptr)
 				{
 					SEAssert("Only the graphics queue/command lists can render to the backbuffer", 
 						renderStage->GetStageType() == re::RenderStage::RenderStageType::Graphics);
 
-					dx12::SwapChain::PlatformParams* swapChainParams =
-						renderManager.GetContext().GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
-					SEAssert("Swap chain params and backbuffer cannot be null",
-						swapChainParams && swapChainParams->m_backbufferTargetSet);
-
-					stageTargets = swapChainParams->m_backbufferTargetSet; // Draw directly to the swapchain backbuffer
+					stageTargets = dx12::SwapChain::GetBackBufferTargetSet(renderManager.GetContext().GetSwapChain());
 				}
 				
 				auto SetDrawState = [&renderStage](
@@ -310,19 +301,7 @@ namespace dx12
 				case re::RenderStage::RenderStageType::Graphics:
 				{
 					// Bind our graphics stage render target(s) to the output merger (OM):
-					if (isBackbufferTarget)
-					{
-						currentCommandList->SetBackbufferRenderTarget();
-					}
-					else
-					{
-						currentCommandList->SetRenderTargets(*stageTargets);
-					}
-
-					// Set the viewport and scissor rectangles:
-					currentCommandList->SetViewport(*stageTargets);
-					currentCommandList->SetScissorRect(*stageTargets);
-					// TODO: Should the viewport and scissor rects be set while we're setting the targets?
+					currentCommandList->SetRenderTargets(*stageTargets);
 				}
 				break;
 				default:
@@ -335,15 +314,7 @@ namespace dx12
 				if (clearTargetMode == gr::PipelineState::ClearTarget::Color ||
 					clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
 				{
-					if (isBackbufferTarget)
-					{
-						const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
-						currentCommandList->ClearColorTarget(stageTargets->GetColorTarget(backbufferIdx));
-					}
-					else
-					{
-						currentCommandList->ClearColorTargets(*stageTargets);
-					}
+					currentCommandList->ClearColorTargets(*stageTargets);
 				}
 				if (clearTargetMode == gr::PipelineState::ClearTarget::Depth ||
 					clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
@@ -448,7 +419,7 @@ namespace dx12
 			}
 		}
 		
-		// Execute the command lists
+		// Execute the command lists:
 		if (!computeCommandLists.empty())
 		{
 			computeQueue.Execute(static_cast<uint32_t>(computeCommandLists.size()), computeCommandLists.data());
@@ -486,13 +457,13 @@ namespace dx12
 		// Get our SE rendering objects:
 		re::Context const& context = re::RenderManager::Get()->GetContext();
 		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-		dx12::SwapChain::PlatformParams const* swapChainParams =
-			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
 		dx12::CommandQueue& directQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Direct);
 		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
-		commandList->SetBackbufferRenderTarget();
+		// Draw directly to the swapchain backbuffer
+		re::SwapChain const& swapChain = context.GetSwapChain();
+		commandList->SetRenderTargets(*dx12::SwapChain::GetBackBufferTargetSet(swapChain));
 
 		// Configure the descriptor heap:
 		ID3D12GraphicsCommandList2* d3dCommandList = commandList->GetD3DCommandList();

@@ -76,6 +76,7 @@ namespace dx12
 
 		// DX12-specific interface:
 		static dx12::CommandQueue& GetCommandQueue(CommandList::CommandListType type);
+		static dx12::CommandQueue& GetCommandQueue(uint64_t fenceValue); // Get the command queue that produced a fence value
 
 		static dx12::GlobalResourceStateTracker& GetGlobalResourceStateTracker();
 		

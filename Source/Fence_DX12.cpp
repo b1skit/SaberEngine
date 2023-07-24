@@ -7,6 +7,34 @@ using Microsoft::WRL::ComPtr;
 
 namespace dx12
 {
+	constexpr uint64_t k_reservedBits = 3; // We reserved the upper 3 bits for values [0,7]
+	constexpr uint64_t k_bitShiftWidth = 64 - k_reservedBits;
+	constexpr uint64_t k_commandListTypeBitmask = 7ull << k_bitShiftWidth;
+
+
+	uint64_t Fence::GetCommandListTypeFenceMaskBits(dx12::CommandList::CommandListType commandListType)
+	{
+		const uint64_t typeBits = static_cast<uint64_t>(commandListType);
+		SEAssert("Unexpected command list cast results", typeBits < 7);
+
+		return typeBits << k_bitShiftWidth;
+	}
+
+
+	dx12::CommandList::CommandListType Fence::GetCommandListTypeFromFenceValue(uint64_t fenceVal)
+	{
+		const uint64_t isolatedTypeBits = fenceVal & k_commandListTypeBitmask;
+		const uint64_t shiftedBits = isolatedTypeBits >> k_bitShiftWidth;
+		return static_cast<dx12::CommandList::CommandListType>(shiftedBits);
+	}
+
+
+	uint64_t Fence::GetRawFenceValue(uint64_t fenceVal)
+	{
+		return (fenceVal << k_reservedBits) >> k_reservedBits;
+	}
+
+
 	Fence::Fence()
 		: m_fence(nullptr)
 		, m_fenceEvent(nullptr)

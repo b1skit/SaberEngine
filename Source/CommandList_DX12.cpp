@@ -41,6 +41,26 @@ namespace
 
 		return commandAllocator;
 	}
+
+
+	constexpr bool IsWriteableState(D3D12_RESOURCE_STATES state)
+	{
+		switch (state)
+		{
+		case D3D12_RESOURCE_STATE_RENDER_TARGET:
+		case D3D12_RESOURCE_STATE_UNORDERED_ACCESS:
+		case D3D12_RESOURCE_STATE_DEPTH_WRITE:
+		case D3D12_RESOURCE_STATE_STREAM_OUT:
+		case D3D12_RESOURCE_STATE_COPY_DEST:
+		case D3D12_RESOURCE_STATE_RESOLVE_DEST:
+		case D3D12_RESOURCE_STATE_VIDEO_DECODE_WRITE:
+		case D3D12_RESOURCE_STATE_VIDEO_PROCESS_WRITE:
+		case D3D12_RESOURCE_STATE_VIDEO_ENCODE_WRITE:
+			return true;
+		default:
+			return false;
+		}
+	}
 }
 
 
@@ -89,12 +109,11 @@ namespace dx12
 		: m_commandList(nullptr)
 		, m_type(type)
 		, m_commandAllocator(nullptr)
-		, m_fenceValue(0)
+		, m_reuseFenceValue(0)
 		, k_commandListNumber(s_commandListNumber++)
 		, m_gpuCbvSrvUavDescriptorHeaps(nullptr)
 		, m_currentRootSignature(nullptr)
 		, m_currentPSO(nullptr)
-		
 	{
 		SEAssert("Device cannot be null", device);
 
@@ -131,6 +150,8 @@ namespace dx12
 		// to be reset before recording
 		hr = m_commandList->Close();
 		CheckHResult(hr, "Failed to close command list");
+
+		memset(&m_maxResourceLastModifiedFenceValues, 0, CommandListType_Count * sizeof(uint64_t));
 	}
 
 
@@ -139,10 +160,12 @@ namespace dx12
 		m_commandList = nullptr;
 		m_type = D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_NONE;
 		m_commandAllocator = nullptr;
-		m_fenceValue = 0;
+		m_reuseFenceValue = 0;
 		m_gpuCbvSrvUavDescriptorHeaps = nullptr;
 		m_currentRootSignature = nullptr;
 		m_currentPSO = nullptr;
+
+		memset(&m_maxResourceLastModifiedFenceValues, 0, CommandListType_Count * sizeof(uint64_t));
 	}
 
 
@@ -172,6 +195,9 @@ namespace dx12
 			};
 			m_commandList->SetDescriptorHeaps(k_numHeaps, descriptorHeaps);
 		}
+
+		m_reuseFenceValue = 0;
+		memset(&m_maxResourceLastModifiedFenceValues, 0, CommandListType_Count * sizeof(uint64_t));
 	}
 
 
@@ -388,14 +414,18 @@ namespace dx12
 	{
 		for (std::unique_ptr<re::TextureTarget> const& target : targetSet.GetColorTargets())
 		{
-			ClearColorTarget(target.get());
+			re::TextureTarget const* texTarget = target.get();
+			if (texTarget)
+			{
+				ClearColorTarget(texTarget);
+			}
 		}
 	}
 
 
 	void CommandList::SetRenderTargets(re::TextureTargetSet const& targetSet)
 	{
-		SEAssert("This method is not valid for compute or copy command lists", 
+		SEAssert("This method is not valid for compute or copy command lists",
 			m_type != CommandListType::Compute && m_type != CommandListType::Copy);
 
 		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> colorTargetDescriptors;
@@ -407,12 +437,12 @@ namespace dx12
 			re::TextureTarget const* target = targetSet.GetColorTarget(i);
 			if (target)
 			{
-				dx12::Texture::PlatformParams* texPlatParams = 
+				dx12::Texture::PlatformParams* texPlatParams =
 					target->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 				// Insert our resource transition:
 				TransitionResource(
-					texPlatParams->m_textureResource.Get(),
+					target->GetTexture(),
 					D3D12_RESOURCE_STATE_RENDER_TARGET,
 					target->GetTargetParams().m_targetSubesource);
 
@@ -428,73 +458,38 @@ namespace dx12
 		re::TextureTarget const* depthStencilTarget = targetSet.GetDepthStencilTarget();
 		if (depthStencilTarget)
 		{
-			re::Texture* depthTexture = depthStencilTarget->GetTexture().get();
 			dx12::Texture::PlatformParams* depthTexPlatParams =
-				depthTexture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+				depthStencilTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 			// Insert our resource transition:
 			TransitionResource(
-				depthTexPlatParams->m_textureResource.Get(),
-				D3D12_RESOURCE_STATE_RENDER_TARGET,
+				depthStencilTarget->GetTexture(),
+				D3D12_RESOURCE_STATE_DEPTH_WRITE,
 				depthStencilTarget->GetTargetParams().m_targetSubesource);
 
 			dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
 				depthStencilTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 			dsvDescriptor = depthTargetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
 		}
-		
+
 		// NOTE: isSingleHandleToDescRange == true specifies that the rtvs are contiguous in memory, thus N rtv 
 		// descriptors will be found by offsetting from rtvs[0]. Otherwise, it is assumed rtvs is an array of descriptor
 		// pointers
 		m_commandList->OMSetRenderTargets(
-			numColorTargets, 
+			numColorTargets,
 			colorTargetDescriptors.data(),
-			false,			// TODO: Are our render target descriptors ever contiguous? Can they be made to be?
+			false,			// TODO: Are our render target descriptors ever a contiguous range? Can they be made to be?
 			dsvDescriptor.ptr == 0 ? nullptr : &dsvDescriptor);
-	}
 
-
-	void CommandList::SetBackbufferRenderTarget()
-	{
-		// TODO: The backbuffer should maintain multiple target sets (sharing a depth target texture). When we want to
-		// set the backbuffer rendertarget, we should just call the standard SetRenderTargets function, and pass in the
-		// appropriate target set. We should not have this separate SetBackbufferRenderTarget function
-
-		re::Context const& context = re::RenderManager::Get()->GetContext();
-
-		// Insert our resource transition:
-		TransitionResource(
-			dx12::SwapChain::GetBackBufferResource(context.GetSwapChain()).Get(),
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-
-		dx12::SwapChain::PlatformParams* swapChainParams =
-			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
-
-		const uint8_t backbufferIdx = dx12::SwapChain::GetBackBufferIdx(context.GetSwapChain());
-
-		dx12::TextureTarget::PlatformParams* swapChainColorTargetPlatParams =
-			swapChainParams->m_backbufferTargetSet->GetColorTarget(backbufferIdx)->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
-
-		const D3D12_CPU_DESCRIPTOR_HANDLE colorDescHandle = 
-			swapChainColorTargetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
-
-		dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
-			swapChainParams->m_backbufferTargetSet->GetDepthStencilTarget()->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
-		const D3D12_CPU_DESCRIPTOR_HANDLE depthDescHandle = 
-			depthTargetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
-
-		m_commandList->OMSetRenderTargets(
-			1, 
-			&colorDescHandle,
-			false, 
-			&depthDescHandle);
+		// Set the viewport and scissor rectangles:
+		SetViewport(targetSet);
+		SetScissorRect(targetSet);
 	}
 
 
 	void CommandList::SetComputeTargets(re::TextureTargetSet const& textureTargetSet)
 	{
-		SEAssert("TODO: Handle texture target sets with a depth buffer attached", 
+		SEAssert("It is not possible to attach a depth buffer as a target to a compute shader", 
 			textureTargetSet.GetDepthStencilTarget() == nullptr);
 
 		SEAssert("This function should only be called from compute command lists", m_type == CommandListType::Compute);
@@ -509,17 +504,7 @@ namespace dx12
 			}
 			re::TextureTarget* texTarget = texTargets[i].get();
 
-			dx12::Texture::PlatformParams* texPlatParams =
-				texTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-
-			// Insert our resource transition:
-			TransitionResource(
-				texPlatParams->m_textureResource.Get(),
-				D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-				texTarget->GetTargetParams().m_targetSubesource);
-			// TODO: We shouldn't be assuming a compute target needs to be in a UAV state
-
-			SEAssert("TODO: Handle depth bound to compute", 
+			SEAssert("It is unexpected that we're trying to attach a texture with DepthTarget usage to a compute shader",
 				(texTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0);
 
 
@@ -527,6 +512,7 @@ namespace dx12
 			// TEMP HAX: Hard code a name
 			std::string const& shaderName = "output"; // TODO: Bind targets by texture target set index
 	
+
 
 			RootSignature::RootParameter const* rootSigEntry =
 				m_currentRootSignature->GetRootSignatureEntry(shaderName);
@@ -538,50 +524,37 @@ namespace dx12
 				SEAssert("We currently assume all textures belong to descriptor tables",
 					rootSigEntry->m_type == RootSignature::RootParameter::Type::DescriptorTable);
 
+				SEAssert("Compute shaders can only write to UAVs",
+					rootSigEntry->m_tableEntry.m_type == dx12::RootSignature::RangeType::UAV);
+
+
 				re::TextureTarget::TargetParams const& targetParams = texTarget->GetTargetParams();
+				
+				dx12::Texture::PlatformParams* texPlatParams =
+					texTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
-				dx12::DescriptorAllocation const* descriptorAllocation = nullptr;
-				switch (rootSigEntry->m_tableEntry.m_type)
-				{
-				case dx12::RootSignature::RangeType::SRV:
-				{
-					SEAssert("TODO: Handle texture input resources with > 1 SRV",
-						texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV].size() == 1);
+				SEAssert("Not enought view desciptors",
+					targetParams.m_targetSubesource < texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV].size());
 
-					TransitionResource(texPlatParams->m_textureResource.Get(),
-						D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-						targetParams.m_targetSubesource);
-
-					descriptorAllocation = &texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV][0];
-				}
-				break;
-				case dx12::RootSignature::RangeType::UAV:
-				{
-					TransitionResource(texPlatParams->m_textureResource.Get(),
-						D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-						targetParams.m_targetSubesource);
-
-					// TODO: Should we also insert a D3D12_RESOURCE_UAV_BARRIER?
-					// Not needed between 2 draw/dispatch calls that only read a UAV
-					// Not needed between 2 draw/dispatch calls that write to a UAV IFF the writes can be executed in any order
-					// -> Only needed to ensure write ordering
-
-					SEAssert("Not enought view desciptors", 
-						targetParams.m_targetSubesource < texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV].size());
-
-					descriptorAllocation = 
-						&texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV][targetParams.m_targetSubesource];
-				}
-				break;
-				default:
-					SEAssertF("Invalid range type");
-				}
+				dx12::DescriptorAllocation const* descriptorAllocation =
+					&texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV][targetParams.m_targetSubesource];
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 					rootSigEntry->m_index,
 					*descriptorAllocation,
 					rootSigEntry->m_tableEntry.m_offset,
 					1);
+
+				// Insert our resource transition:
+				TransitionResource(
+					texTarget->GetTexture(),
+					D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+					texTarget->GetTargetParams().m_targetSubesource);
+
+				// TODO: Should we also insert a D3D12_RESOURCE_UAV_BARRIER?
+				// Not needed between 2 draw/dispatch calls that only read a UAV
+				// Not needed between 2 draw/dispatch calls that write to a UAV IFF the writes can be executed in any order
+				// -> Only needed to ensure write ordering
 			}
 		}
 	}
@@ -656,7 +629,7 @@ namespace dx12
 				SEAssert("TODO: Handle texture input resources with > 1 SRV", 
 					texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV].size() == 1);
 
-				TransitionResource(texPlatParams->m_textureResource.Get(),
+				TransitionResource(texture,
 					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
@@ -667,6 +640,9 @@ namespace dx12
 			{
 				// This is for UAV *inputs*
 				SEAssertF("TODO: Implement this. Need to figure out how to specify the appropriate mip level/subresource index");
+
+				// Note: We don't (shouldn't?) need to record a modification fence value to the texture resource here, 
+				// since it's being used as an input
 
 				//descriptorAllocation = &texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV];
 			}
@@ -680,13 +656,33 @@ namespace dx12
 				*descriptorAllocation,
 				rootSigEntry->m_tableEntry.m_offset,
 				1);
+
+			// Update our modification fence value; We'll wait on the most recently modified resource before executing
+			// this command list			
+			const dx12::CommandList::CommandListType commandListType = 
+				Fence::GetCommandListTypeFromFenceValue(texPlatParams->m_modificationFence);
+
+			m_maxResourceLastModifiedFenceValues[commandListType] = 
+				std::max(m_maxResourceLastModifiedFenceValues[commandListType], texPlatParams->m_modificationFence);
 		}
 	}
 
 
 	void CommandList::TransitionResource(
-		ID3D12Resource* resource, D3D12_RESOURCE_STATES toState, uint32_t subresourceIdx)
+		std::shared_ptr<re::Texture> texture, D3D12_RESOURCE_STATES toState, uint32_t subresourceIdx)
 	{
+		dx12::Texture::PlatformParams* texPlatParams =
+			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+
+		// Store the modification fence value in the texture
+		if (IsWriteableState(toState))
+		{
+			texPlatParams->m_modificationFence = GetReuseFenceValue();
+		}
+
+		// Handle the resource transition:
+		ID3D12Resource* resource = texPlatParams->m_textureResource.Get();		
+
 		// If we've already seen this resource before, we can record the transition now (as we prepend any initial
 		// transitions when submitting the command list)	
 		if (m_resourceStates.HasResourceState(resource, subresourceIdx)) // Is the subresource idx (or ALL) in our known states list?
@@ -716,12 +712,15 @@ namespace dx12
 	}
 
 
-	void CommandList::TransitionUAV(ID3D12Resource* resource, D3D12_RESOURCE_STATES toState, uint32_t subresourceIdx)
+	void CommandList::TransitionUAV(
+		std::shared_ptr<re::Texture> texture, D3D12_RESOURCE_STATES toState, uint32_t subresourceIdx)
 	{
-		// TODO: SHOULD THIS FUNCTION *ALSO* INSERT UAV BARRIERS (NOT JUST TRANSITIONS?)
-		// -> SHOULD WE JUST USE THE TransitionResource FOR ALL TRANSITIONS????????????????????????????
+		ID3D12Resource* resource =
+			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_textureResource.Get();
 
-		SEAssertF("TODO: FIGURE OUT WHAT TO DO WITH THIS FUNCTION");
+		// TODO: Should we use this to insert UAV barriers (separately from our transitions barriers)?
+		// Reminder: If we go this route, we need to update the resource's modification fence value
+		SEAssertF("TODO: Figure out what to do with this function");
 
 		// If we've already seen this UAV before, we can record the transition now (as we prepend any initial
 		// transitions when submitting the command list)	

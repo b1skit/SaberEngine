@@ -31,6 +31,11 @@ namespace dx12
 
 			// Each view type can have a view for each mip level
 			std::array<std::vector<dx12::DescriptorAllocation>, View_Count> m_viewCpuDescAllocations;
+
+
+			// TODO: Modifying this will result in a race condition when command lists are recorded on multiple threads
+			// TODO: We'll do lots of unnecessary GPU waits once this value is set for the 1st time
+			uint64_t m_modificationFence = 0; // Fence value the last time this resource was in a writeable state
 		};
 
 
