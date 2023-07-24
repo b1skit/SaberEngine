@@ -42,9 +42,13 @@ namespace
 			const size_t vram = dxgiAdapterDesc1.DedicatedVideoMemory / (1024u * 1024u);
 			LOG(L"Querying adapter %d: %s, %ju MB VRAM", dxgiAdapterDesc1.DeviceId, dxgiAdapterDesc1.Description, vram);
 
+			const D3D_FEATURE_LEVEL targetFeatureLevel = dx12::RenderManager::GetTargetFeatureLevel();
+
 			if ((dxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
 				SUCCEEDED(D3D12CreateDevice(
-						dxgiAdapter1.Get(), dx12::RenderManager::k_targetFeatureLevel, __uuidof(ID3D12Device), nullptr)) &&
+					dxgiAdapter1.Get(), 
+					targetFeatureLevel,
+					__uuidof(ID3D12Device), nullptr)) &&
 				dxgiAdapterDesc1.DedicatedVideoMemory > maxVRAM)
 			{
 				maxVRAM = dxgiAdapterDesc1.DedicatedVideoMemory;
@@ -61,7 +65,7 @@ namespace
 	ComPtr<ID3D12Device2> CreateDevice(ComPtr<IDXGIAdapter4> adapter)
 	{
 		ComPtr<ID3D12Device2> d3d12Device2;
-		HRESULT hr = D3D12CreateDevice(adapter.Get(), dx12::RenderManager::k_targetFeatureLevel, IID_PPV_ARGS(&d3d12Device2));
+		HRESULT hr = D3D12CreateDevice(adapter.Get(), dx12::RenderManager::GetTargetFeatureLevel(), IID_PPV_ARGS(&d3d12Device2));
 		CheckHResult(hr, "Failed to create device");
 
 		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) > 0)

@@ -9,36 +9,64 @@
 #include "GraphicsSystem_Tonemapping.h"
 #include "PerformanceTimer.h"
 #include "RenderManager.h"
+#include "RenderManager_DX12.h"
 #include "RenderManager_Platform.h"
+#include "RenderManager_OpenGL.h"
+
 #include "SceneManager.h"
+
+using en::Config;
+using en::SceneManager;
+using gr::BloomGraphicsSystem;
+using gr::DeferredLightingGraphicsSystem;
+using gr::GBufferGraphicsSystem;
+using gr::GraphicsSystem;
+using gr::ShadowsGraphicsSystem;
+using gr::SkyboxGraphicsSystem;
+using gr::TonemappingGraphicsSystem;
+using gr::Transform;
+using re::Batch;
+using re::MeshPrimitive;
+using util::PerformanceTimer;
+using std::shared_ptr;
+using std::make_shared;
+using std::string;
+using std::vector;
+using glm::mat4;
 
 
 namespace re
 {
-	using en::Config;
-	using en::SceneManager;
-	using gr::BloomGraphicsSystem;
-	using gr::DeferredLightingGraphicsSystem;
-	using gr::GBufferGraphicsSystem;
-	using gr::GraphicsSystem;
-	using gr::ShadowsGraphicsSystem;
-	using gr::SkyboxGraphicsSystem;
-	using gr::TonemappingGraphicsSystem;
-	using gr::Transform;
-	using re::Batch;
-	using re::MeshPrimitive;
-	using util::PerformanceTimer;
-	using std::shared_ptr;
-	using std::make_shared;
-	using std::string;
-	using std::vector;
-	using glm::mat4;
-
-
 	RenderManager* RenderManager::Get()
 	{
-		static std::unique_ptr<re::RenderManager> instance = std::make_unique<re::RenderManager>();
+		static std::unique_ptr<re::RenderManager> instance = std::move(re::RenderManager::Create());
 		return instance.get();
+	}
+
+
+	std::unique_ptr<re::RenderManager> RenderManager::Create()
+	{
+		std::unique_ptr<re::RenderManager> newRenderManager = nullptr;
+		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
+		switch (api)
+		{
+		case platform::RenderingAPI::OpenGL:
+		{
+			newRenderManager.reset(new opengl::RenderManager());
+		}
+		break;
+		case platform::RenderingAPI::DX12:
+		{
+			newRenderManager.reset(new dx12::RenderManager());
+		}
+		break;
+		default:
+		{
+			SEAssertF("Invalid rendering API argument received");
+		}
+		}
+		
+		return newRenderManager;
 	}
 
 
@@ -151,9 +179,9 @@ namespace re
 		// Update/buffer param blocks:
 		m_context.GetParameterBlockAllocator().BufferParamBlocks();
 
-		// API-specific rendering loop:
-		platform::RenderManager::Render(*this);
-		platform::RenderManager::RenderImGui(*this);
+		// API-specific rendering loop virtual implementations:
+		Render();
+		RenderImGui();
 
 		// Present the final frame:
 		m_context.Present();
@@ -326,12 +354,6 @@ namespace re
 			m_newParameterBlocks.m_newObjects.find(uniqueID) == m_newParameterBlocks.m_newObjects.end());
 
 		m_newParameterBlocks.m_newObjects.insert({ uniqueID, newObject });
-	}
-
-
-	void RenderManager::CreateAPIResources()
-	{
-		platform::RenderManager::CreateAPIResources(*this);
 	}
 }
 

@@ -30,7 +30,7 @@ namespace dx12
 
 	Context::PlatformParams::PlatformParams()
 	{
-		for (uint32_t i = 0; i < dx12::RenderManager::k_numFrames; i++)
+		for (uint32_t i = 0; i < dx12::RenderManager::GetNumFrames(); i++)
 		{
 			m_frameFenceValues[i] = 0;
 		}
@@ -127,7 +127,7 @@ namespace dx12
 			ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
 			ImGui_ImplDX12_Init(
 				ctxPlatParams->m_device.GetD3DDisplayDevice(),
-				dx12::RenderManager::k_numFrames, // Number of frames in flight
+				dx12::RenderManager::GetNumFrames(), // Number of frames in flight
 				backbufferColorTarget0PlatParams->m_format,
 				ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap.Get(),
 				ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),

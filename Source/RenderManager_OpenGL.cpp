@@ -67,79 +67,79 @@ namespace opengl
 	}
 
 
-	void RenderManager::CreateAPIResources(re::RenderManager& renderManager)
+	void RenderManager::CreateAPIResources()
 	{
 		// Textures:
-		if (!renderManager.m_newTextures.m_newObjects.empty())
+		if (!m_newTextures.m_newObjects.empty())
 		{
-			std::lock_guard<std::mutex> lock(renderManager.m_newTextures.m_mutex);
-			for (auto& newObject : renderManager.m_newTextures.m_newObjects)
+			std::lock_guard<std::mutex> lock(m_newTextures.m_mutex);
+			for (auto& newObject : m_newTextures.m_newObjects)
 			{
 				opengl::Texture::Create(*newObject.second);
 			}
-			renderManager.m_newTextures.m_newObjects.clear();
+			m_newTextures.m_newObjects.clear();
 		}
 		// Samplers:
-		if (!renderManager.m_newSamplers.m_newObjects.empty())
+		if (!m_newSamplers.m_newObjects.empty())
 		{
-			std::lock_guard<std::mutex> lock(renderManager.m_newSamplers.m_mutex);
-			for (auto& newObject : renderManager.m_newSamplers.m_newObjects)
+			std::lock_guard<std::mutex> lock(m_newSamplers.m_mutex);
+			for (auto& newObject : m_newSamplers.m_newObjects)
 			{
 				opengl::Sampler::Create(*newObject.second);
 			}
-			renderManager.m_newSamplers.m_newObjects.clear();
+			m_newSamplers.m_newObjects.clear();
 		}
 		// Texture Target Sets:
-		if (!renderManager.m_newTargetSets.m_newObjects.empty())
+		if (!m_newTargetSets.m_newObjects.empty())
 		{
-			std::lock_guard<std::mutex> lock(renderManager.m_newTargetSets.m_mutex);
-			for (auto& newObject : renderManager.m_newTargetSets.m_newObjects)
+			std::lock_guard<std::mutex> lock(m_newTargetSets.m_mutex);
+			for (auto& newObject : m_newTargetSets.m_newObjects)
 			{
 				opengl::TextureTargetSet::CreateColorTargets(*newObject.second);
 				opengl::TextureTargetSet::CreateDepthStencilTarget(*newObject.second);
 			}
-			renderManager.m_newTargetSets.m_newObjects.clear();
+			m_newTargetSets.m_newObjects.clear();
 		}
 		// Shaders:
-		if (!renderManager.m_newShaders.m_newObjects.empty())
+		if (!m_newShaders.m_newObjects.empty())
 		{
-			std::lock_guard<std::mutex> lock(renderManager.m_newShaders.m_mutex);
-			for (auto& newObject : renderManager.m_newShaders.m_newObjects)
+			std::lock_guard<std::mutex> lock(m_newShaders.m_mutex);
+			for (auto& newObject : m_newShaders.m_newObjects)
 			{
 				opengl::Shader::Create(*newObject.second);
 			}
-			renderManager.m_newShaders.m_newObjects.clear();
+			m_newShaders.m_newObjects.clear();
 		}
 		// Mesh Primitives:
-		if (!renderManager.m_newMeshPrimitives.m_newObjects.empty())
+		if (!m_newMeshPrimitives.m_newObjects.empty())
 		{
-			std::lock_guard<std::mutex> lock(renderManager.m_newMeshPrimitives.m_mutex);
-			for (auto& newObject : renderManager.m_newMeshPrimitives.m_newObjects)
+			std::lock_guard<std::mutex> lock(m_newMeshPrimitives.m_mutex);
+			for (auto& newObject : m_newMeshPrimitives.m_newObjects)
 			{
 				opengl::MeshPrimitive::Create(*newObject.second);
 			}
-			renderManager.m_newMeshPrimitives.m_newObjects.clear();
+			m_newMeshPrimitives.m_newObjects.clear();
 		}
 		// Parameter Blocks:
-		if (!renderManager.m_newParameterBlocks.m_newObjects.empty())
+		if (!m_newParameterBlocks.m_newObjects.empty())
 		{
-			std::lock_guard<std::mutex> lock(renderManager.m_newParameterBlocks.m_mutex);
-			for (auto& newObject : renderManager.m_newParameterBlocks.m_newObjects)
+			std::lock_guard<std::mutex> lock(m_newParameterBlocks.m_mutex);
+			for (auto& newObject : m_newParameterBlocks.m_newObjects)
 			{
 				opengl::ParameterBlock::Create(*newObject.second);
 			}
-			renderManager.m_newParameterBlocks.m_newObjects.clear();
+			m_newParameterBlocks.m_newObjects.clear();
 		}
 	}
 
 
-	void RenderManager::Render(re::RenderManager& renderManager)
+	void RenderManager::Render()
 	{
 		// TODO: Add an assert somewhere that checks if any possible shader uniform isn't set
 		// -> Catch bugs where we forget to upload a common param
 
 		// Render each stage:
-		for (StagePipeline& stagePipeline : renderManager.m_renderPipeline.GetStagePipeline())
+		for (StagePipeline& stagePipeline : m_renderPipeline.GetStagePipeline())
 		{
 			// RenderDoc markers: Graphics system group name
 			glPushDebugGroup(
@@ -161,7 +161,7 @@ namespace opengl
 				if (!stageTargets)
 				{
 					opengl::SwapChain::PlatformParams* swapChainParams = 
-						renderManager.GetContext().GetSwapChain().GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
+						GetContext().GetSwapChain().GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
 					SEAssert("Swap chain params and backbuffer cannot be null", 
 						swapChainParams && swapChainParams->m_backbufferTargetSet);
 
@@ -172,7 +172,7 @@ namespace opengl
 				opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
 				
 				// Configure the pipeline state:
-				opengl::Context::SetPipelineState(renderManager.m_context, stagePipelineParams);
+				opengl::Context::SetPipelineState(m_context, stagePipelineParams);
 
 				// Bind the shader now that the pipeline state is set:
 				re::Shader* stageShader = renderStage->GetStageShader();
@@ -261,7 +261,7 @@ namespace opengl
 	}	
 
 
-	void RenderManager::RenderImGui(re::RenderManager& renderManager)
+	void RenderManager::RenderImGui()
 	{
 		// Start the Dear ImGui frame
 		ImGui_ImplOpenGL3_NewFrame();
@@ -269,10 +269,10 @@ namespace opengl
 		ImGui::NewFrame();
 
 		// Process the queue of commands for the current frame:
-		while (!renderManager.m_imGuiCommands.empty())
+		while (!m_imGuiCommands.empty())
 		{
-			renderManager.m_imGuiCommands.front()->Execute();
-			renderManager.m_imGuiCommands.pop();
+			m_imGuiCommands.front()->Execute();
+			m_imGuiCommands.pop();
 		}
 
 		// Composite Imgui rendering on top of the finished frame:

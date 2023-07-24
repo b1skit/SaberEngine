@@ -34,17 +34,14 @@ namespace re
 
 namespace re
 {
-	class RenderManager final 
+	class RenderManager
 		: public virtual en::EngineComponent, public virtual en::EngineThread, public virtual en::EventListener
 	{
 	public:
 		static RenderManager* Get(); // Singleton functionality
 
 	public:
-		RenderManager();
-		RenderManager(RenderManager&&) = default;
-		RenderManager& operator=(RenderManager&&) = default;
-		~RenderManager() = default;
+		virtual ~RenderManager() = default;
 
 		// EngineThread interface:
 		void Lifetime(std::barrier<>* copyBarrier) override;
@@ -65,12 +62,14 @@ namespace re
 
 		uint64_t GetCurrentRenderFrameNum() const;
 
+
 	public: // Deferred API-object creation queues
 		template<typename T>
 		void RegisterForCreate(std::shared_ptr<T>);
 
+
 	private:
-		void CreateAPIResources();
+		virtual void CreateAPIResources() = 0;
 
 		template <typename T>
 		struct NewAPIObjects
@@ -94,6 +93,10 @@ namespace re
 		
 		// Member functions:
 		void Initialize();
+
+		virtual void Render() = 0;
+		virtual void RenderImGui() = 0;
+
 		void PreUpdate(uint64_t frameNum); // Synchronization step: Copies data, swaps buffers etc
 		void EndOfFrame();
 
@@ -112,13 +115,21 @@ namespace re
 		uint64_t m_renderFrameNum;
 
 
+	private:
+		RenderManager(); // Use the RenderManager::Get() singleton getter instead
+		static std::unique_ptr<re::RenderManager> Create();
+
+
 	private: // Friends		
 		friend class opengl::RenderManager;
 		friend class dx12::RenderManager;
 
+
 	private:
 		RenderManager(RenderManager const&) = delete;
+		RenderManager(RenderManager&&) = delete;
 		void operator=(RenderManager const&) = delete;
+		RenderManager& operator=(RenderManager&&) = delete;
 	};
 
 

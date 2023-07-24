@@ -12,12 +12,8 @@ namespace platform
 {
 	class RenderManager
 	{
-	public:
+	public: // Platform PIMPL:
 		static void (*Initialize)(re::RenderManager&);
-		static void (*Render)(re::RenderManager&);
-		static void (*RenderImGui)(re::RenderManager&);
 		static void (*Shutdown)(re::RenderManager&);
-
-		static void (*CreateAPIResources)(re::RenderManager&);
 	};
 }

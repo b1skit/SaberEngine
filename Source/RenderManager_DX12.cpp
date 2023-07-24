@@ -30,6 +30,10 @@ using std::vector;
 
 namespace dx12
 {
+	// TODO: Figure out why creation fails for D3D_FEATURE_LEVEL_12_2
+	const D3D_FEATURE_LEVEL RenderManager::k_targetFeatureLevel = D3D_FEATURE_LEVEL_12_1;
+
+
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
 		renderManager.m_graphicsSystems.emplace_back(
@@ -39,15 +43,15 @@ namespace dx12
 	}
 
 
-	void RenderManager::CreateAPIResources(re::RenderManager& renderManager)
+	void RenderManager::CreateAPIResources()
 	{
-		re::Context const& context = renderManager.GetContext();
+		re::Context const& context = GetContext();
 		dx12::SwapChain::PlatformParams const* swapChainParams =
 			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
 
-		const bool hasDataToCopy = !renderManager.m_newMeshPrimitives.m_newObjects.empty() ||
-			!renderManager.m_newTextures.m_newObjects.empty();
+		const bool hasDataToCopy = !m_newMeshPrimitives.m_newObjects.empty() ||
+			!m_newTextures.m_newObjects.empty();
 
 		// Handle anything that requires a copy queue:
 		uint64_t copyQueueFenceVal = 0;
@@ -62,24 +66,24 @@ namespace dx12
 			ID3D12GraphicsCommandList2* copyCommandListD3D = copyCommandList->GetD3DCommandList();
 
 			// Mesh Primitives:
-			if (!renderManager.m_newMeshPrimitives.m_newObjects.empty())
+			if (!m_newMeshPrimitives.m_newObjects.empty())
 			{
-				std::lock_guard<std::mutex> lock(renderManager.m_newMeshPrimitives.m_mutex);
-				for (auto& newMeshPrimitive : renderManager.m_newMeshPrimitives.m_newObjects)
+				std::lock_guard<std::mutex> lock(m_newMeshPrimitives.m_mutex);
+				for (auto& newMeshPrimitive : m_newMeshPrimitives.m_newObjects)
 				{
 					dx12::MeshPrimitive::Create(*newMeshPrimitive.second, copyCommandListD3D, intermediateResources);
 				}
-				renderManager.m_newMeshPrimitives.m_newObjects.clear();
+				m_newMeshPrimitives.m_newObjects.clear();
 			}
 
 			// Textures:
-			if (!renderManager.m_newTextures.m_newObjects.empty())
+			if (!m_newTextures.m_newObjects.empty())
 			{
 				gr::ComputeMipsGraphicsSystem* computeMipsGS = 
-					renderManager.GetGraphicsSystem<gr::ComputeMipsGraphicsSystem>();
+					GetGraphicsSystem<gr::ComputeMipsGraphicsSystem>();
 
-				std::lock_guard<std::mutex> lock(renderManager.m_newTextures.m_mutex);
-				for (auto& texture : renderManager.m_newTextures.m_newObjects)
+				std::lock_guard<std::mutex> lock(m_newTextures.m_mutex);
+				for (auto& texture : m_newTextures.m_newObjects)
 				{
 					dx12::Texture::Create(*texture.second, copyCommandListD3D, intermediateResources);
 
@@ -88,7 +92,7 @@ namespace dx12
 						computeMipsGS->AddTexture(texture.second);
 					}
 				}
-				renderManager.m_newTextures.m_newObjects.clear();
+				m_newTextures.m_newObjects.clear();
 			}
 
 			// Execute the copy before moving on
@@ -96,41 +100,41 @@ namespace dx12
 		}
 
 		// Samplers:
-		if (!renderManager.m_newSamplers.m_newObjects.empty())
+		if (!m_newSamplers.m_newObjects.empty())
 		{
-			std::lock_guard<std::mutex> lock(renderManager.m_newSamplers.m_mutex);
-			for (auto& newObject : renderManager.m_newSamplers.m_newObjects)
+			std::lock_guard<std::mutex> lock(m_newSamplers.m_mutex);
+			for (auto& newObject : m_newSamplers.m_newObjects)
 			{
 				dx12::Sampler::Create(*newObject.second);
 			}
-			renderManager.m_newSamplers.m_newObjects.clear();
+			m_newSamplers.m_newObjects.clear();
 		}
 		// Texture Target Sets:
-		if (!renderManager.m_newTargetSets.m_newObjects.empty())
+		if (!m_newTargetSets.m_newObjects.empty())
 		{
-			std::lock_guard<std::mutex> lock(renderManager.m_newTargetSets.m_mutex);
-			for (auto& newObject : renderManager.m_newTargetSets.m_newObjects)
+			std::lock_guard<std::mutex> lock(m_newTargetSets.m_mutex);
+			for (auto& newObject : m_newTargetSets.m_newObjects)
 			{
 				dx12::TextureTargetSet::CreateColorTargets(*newObject.second);
 				dx12::TextureTargetSet::CreateDepthStencilTarget(*newObject.second);
 			}
-			renderManager.m_newTargetSets.m_newObjects.clear();
+			m_newTargetSets.m_newObjects.clear();
 		}
 		// Shaders:
-		if (!renderManager.m_newShaders.m_newObjects.empty())
+		if (!m_newShaders.m_newObjects.empty())
 		{
 			SEAssert("Creating PSO's for DX12 Shaders requires a re::PipelineState from a RenderStage, but the "
 				"pipeline is empty",
-				!renderManager.m_renderPipeline.GetStagePipeline().empty());
+				!m_renderPipeline.GetStagePipeline().empty());
 
-			std::lock_guard<std::mutex> lock(renderManager.m_newShaders.m_mutex);
-			for (auto& shader : renderManager.m_newShaders.m_newObjects)
+			std::lock_guard<std::mutex> lock(m_newShaders.m_mutex);
+			for (auto& shader : m_newShaders.m_newObjects)
 			{
 				// Create the Shader object:
 				dx12::Shader::Create(*shader.second);
 
 				// Create any necessary PSO's for the Shader:
-				for (re::StagePipeline& stagePipeline : renderManager.m_renderPipeline.GetStagePipeline())
+				for (re::StagePipeline& stagePipeline : m_renderPipeline.GetStagePipeline())
 				{
 					std::vector<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
 					for (std::shared_ptr<re::RenderStage> const renderStage : renderStages)
@@ -155,17 +159,17 @@ namespace dx12
 					}
 				}
 			}
-			renderManager.m_newShaders.m_newObjects.clear();
+			m_newShaders.m_newObjects.clear();
 		}
 		// Parameter Blocks:
-		if (!renderManager.m_newParameterBlocks.m_newObjects.empty())
+		if (!m_newParameterBlocks.m_newObjects.empty())
 		{
-			std::lock_guard<std::mutex> lock(renderManager.m_newParameterBlocks.m_mutex);
-			for (auto& newObject : renderManager.m_newParameterBlocks.m_newObjects)
+			std::lock_guard<std::mutex> lock(m_newParameterBlocks.m_mutex);
+			for (auto& newObject : m_newParameterBlocks.m_newObjects)
 			{
 				dx12::ParameterBlock::Create(*newObject.second);
 			}
-			renderManager.m_newParameterBlocks.m_newObjects.clear();
+			m_newParameterBlocks.m_newObjects.clear();
 		}
 
 		// If we added anything to the copy queue, and wait for it to be done (blocking)
@@ -179,21 +183,21 @@ namespace dx12
 	}
 
 
-	void RenderManager::Render(re::RenderManager& renderManager)
+	void RenderManager::Render()
 	{
 		re::Context const& context = re::RenderManager::Get()->GetContext();
 		dx12::CommandQueue& directQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Direct);
 
 		std::vector<std::shared_ptr<dx12::CommandList>> directCommandLists;
-		directCommandLists.reserve(renderManager.m_renderPipeline.GetStagePipeline().size());
+		directCommandLists.reserve(m_renderPipeline.GetStagePipeline().size());
 
 		dx12::CommandQueue& computeQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Compute);
 
 		std::vector<std::shared_ptr<dx12::CommandList>> computeCommandLists;
-		computeCommandLists.reserve(renderManager.m_renderPipeline.GetStagePipeline().size());
+		computeCommandLists.reserve(m_renderPipeline.GetStagePipeline().size());
 
 		// Render each stage:
-		for (StagePipeline& stagePipeline : renderManager.m_renderPipeline.GetStagePipeline())
+		for (StagePipeline& stagePipeline : m_renderPipeline.GetStagePipeline())
 		{
 			// Note: Our command lists and associated command allocators are already closed/reset
 			std::shared_ptr<dx12::CommandList> directCommandList = nullptr;
@@ -238,7 +242,7 @@ namespace dx12
 					SEAssert("Only the graphics queue/command lists can render to the backbuffer", 
 						renderStage->GetStageType() == re::RenderStage::RenderStageType::Graphics);
 
-					stageTargets = dx12::SwapChain::GetBackBufferTargetSet(renderManager.GetContext().GetSwapChain());
+					stageTargets = dx12::SwapChain::GetBackBufferTargetSet(GetContext().GetSwapChain());
 				}
 				
 				auto SetDrawState = [&renderStage](
@@ -431,10 +435,10 @@ namespace dx12
 	}
 
 
-	void RenderManager::RenderImGui(re::RenderManager& renderManager)
+	void RenderManager::RenderImGui()
 	{
 		// Early out if there is nothing to draw:
-		if (renderManager.m_imGuiCommands.empty())
+		if (m_imGuiCommands.empty())
 		{
 			return;
 		}
@@ -445,10 +449,10 @@ namespace dx12
 		ImGui::NewFrame();
 
 		// Process the queue of commands for the current frame:
-		while (!renderManager.m_imGuiCommands.empty())
+		while (!m_imGuiCommands.empty())
 		{
-			renderManager.m_imGuiCommands.front()->Execute();
-			renderManager.m_imGuiCommands.pop();
+			m_imGuiCommands.front()->Execute();
+			m_imGuiCommands.pop();
 		}
 
 		// ImGui internal rendering

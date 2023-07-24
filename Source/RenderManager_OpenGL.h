@@ -1,22 +1,24 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-
-namespace re
-{
-	class RenderManager;
-}
+#include "RenderManager.h"
 
 namespace opengl
 {
-	class RenderManager
+	class RenderManager : public virtual re::RenderManager
 	{
 	public:
+		~RenderManager() override = default;
+
+
+	public: // Platform PIMPL:
 		static void Initialize(re::RenderManager&);
-		static void Render(re::RenderManager&);		
-		static void RenderImGui(re::RenderManager&);
 		static void Shutdown(re::RenderManager&);
 
-		static void CreateAPIResources(re::RenderManager&);
+
+	private: // re::RenderManager interface:
+		void Render() override;
+		void RenderImGui() override;
+		void CreateAPIResources() override;
 	};
 }
