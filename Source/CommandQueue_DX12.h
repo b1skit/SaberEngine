@@ -19,7 +19,7 @@ namespace dx12
 		CommandQueue& operator=(CommandQueue&&) = default;
 		~CommandQueue() { Destroy(); };
 
-		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, CommandList::CommandListType type);
+		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, dx12::CommandListType type);
 		void Destroy();
 
 		// Note: shared_ptrs in cmdLists will be null after this call

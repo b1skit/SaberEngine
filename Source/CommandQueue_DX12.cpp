@@ -190,7 +190,6 @@ namespace
 
 			// Add the original command list:
 			finalCommandLists.emplace_back(cmdLists[cmdListIdx]);
-			cmdLists[cmdListIdx] = nullptr; // We don't want the caller retaining access to a command list in our pool
 		}
 
 
@@ -208,7 +207,7 @@ namespace dx12
 {
 	CommandQueue::CommandQueue()
 		: m_commandQueue(nullptr)
-		, m_type(CommandList::GetD3DCommandListType(CommandList::CommandListType::CommandListType_Invalid))
+		, m_type(CommandList::TranslateToD3DCommandListType(CommandListType::CommandListType_Invalid))
 		, m_deviceCache(nullptr)
 		, m_fenceValue(0)
 		, m_typeFenceBitMask(0)
@@ -216,9 +215,9 @@ namespace dx12
 	}
 
 
-	void CommandQueue::Create(ComPtr<ID3D12Device2> displayDevice, CommandList::CommandListType type)
+	void CommandQueue::Create(ComPtr<ID3D12Device2> displayDevice, dx12::CommandListType type)
 	{
-		m_type = CommandList::GetD3DCommandListType(type);
+		m_type = CommandList::TranslateToD3DCommandListType(type);
 		m_deviceCache = displayDevice; // Store a local copy, for convenience
 
 		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
@@ -233,25 +232,25 @@ namespace dx12
 
 		switch (type)
 		{
-		case CommandList::CommandListType::Direct:
+		case CommandListType::Direct:
 		{
 			fenceEventName = "Direct queue fence event";
 		}
 		break;
-		case CommandList::CommandListType::Copy:
+		case CommandListType::Copy:
 		{
 			fenceEventName = "Copy queue fence event";
 		}
 		break;
-		case CommandList::CommandListType::Compute: 
+		case CommandListType::Compute: 
 		{
 			fenceEventName = "Compute queue fence event";
 		}
 		break;
-		case CommandList::CommandListType::Bundle: // TODO: Implement more command queue/list types
-		case CommandList::CommandListType::VideoDecode:
-		case CommandList::CommandListType::VideoProcess:
-		case CommandList::CommandListType::VideoEncode:
+		case CommandListType::Bundle: // TODO: Implement more command queue/list types
+		case CommandListType::VideoDecode:
+		case CommandListType::VideoProcess:
+		case CommandListType::VideoEncode:
 		default:
 		{
 			SEAssertF("Invalid or (currently) unsupported command list type");
@@ -265,6 +264,9 @@ namespace dx12
 		m_fence.Create(m_deviceCache, fenceEventName.c_str());
 		m_typeFenceBitMask = dx12::Fence::GetCommandListTypeFenceMaskBits(type);
 		m_fenceValue = m_typeFenceBitMask; // Fence value effectively starts at 0, with the type bits set
+
+		SEAssert("The fence value should be 0 after removing the command queue type bits", 
+			dx12::Fence::GetRawFenceValue(m_fenceValue) == 0);
 	}
 
 
@@ -296,9 +298,6 @@ namespace dx12
 
 		commandList->Reset();
 
-		// Pre-assign a fence value:
-		commandList->SetReuseFenceValue(++m_fenceValue);
-
 		return commandList;
 	}
 
@@ -309,53 +308,74 @@ namespace dx12
 		std::vector<std::shared_ptr<dx12::CommandList>> finalCommandLists = 
 			std::move(InsertPendingBarrierCommandLists(numCmdLists, cmdLists, *this));
 
-		uint64_t maxCommandListReuseFenceVal = 0;
-
 		// Get our raw command list pointers, and close them before they're executed
 		std::vector<ID3D12CommandList*> commandListPtrs;
 		commandListPtrs.reserve(finalCommandLists.size());
 		for (uint32_t i = 0; i < finalCommandLists.size(); i++)
 		{
-			SEAssert("Command list type does not match command queue type", finalCommandLists[i]->GetType() == m_type);
-
 			finalCommandLists[i]->Close();
 			commandListPtrs.emplace_back(finalCommandLists[i]->GetD3DCommandList());
 
-			// Our commmand list reuse fence values are pre-issued, so may not be in monotonically-increasing order
-			maxCommandListReuseFenceVal = std::max(maxCommandListReuseFenceVal, finalCommandLists[i]->GetReuseFenceValue());
+			SEAssert("We currently only support submitting command lists of the same type to a command queue. "
+				"TODO: Support this (e.g. allow submitting compute command lists on a direct queue)",
+				finalCommandLists[i]->GetD3DCommandListType() == GetD3DCommandListType());
 		}
+		
+		const uint64_t nextFenceVal = m_fenceValue + 1;
 
-		// Return our command list(s) to the pool:
-		for (uint32_t i = 0; i < finalCommandLists.size(); i++)
+		const dx12::CommandListType thisCmdListType = 
+			dx12::Fence::GetCommandListTypeFromFenceValue(m_typeFenceBitMask);
+
+		// Insert GPU waits on any resources that might have been modified (no need to check the pre-pended transition 
+		// command lists)
+		for (uint32_t cmdListIdx = 0; cmdListIdx < numCmdLists; cmdListIdx++)
 		{
-			m_commandListPool.push(finalCommandLists[i]);
-
-			// If any resource was modified on a different queue, we must wait on it to be sure the work is finished
-			for (size_t typeIdx = 0; typeIdx < dx12::CommandList::CommandListType::CommandListType_Count; typeIdx++)
+			std::vector<CommandList::AccessedResource> const& accessedResources = 
+				cmdLists[cmdListIdx]->GetAccessedResources();
+			
+			for (size_t i = 0; i < accessedResources.size(); i++)
 			{
-				const dx12::CommandList::CommandListType cmdListType = static_cast<dx12::CommandList::CommandListType>(typeIdx);
+				CommandList::AccessedResource const& accessedResource = accessedResources[i];
 
-				const uint64_t maxModificationFenceVal = 
-					finalCommandLists[i]->GetMaxResourceModificationFenceValue(cmdListType);
+				const dx12::CommandListType cmdListType =
+					dx12::Fence::GetCommandListTypeFromFenceValue(*accessedResource.m_modificationFenceValue);
 
-				// Wait on any queues that modified a resource seen by one of the command lists submitted here
-				if (cmdListType != m_type && maxModificationFenceVal > 0)
+				dx12::CommandQueue& commandQueue = dx12::Context::GetCommandQueue(cmdListType);
+
+				// Insert a GPU wait if the resource is still in flight on another command queue/list:
+				if (cmdListType != thisCmdListType &&
+					*accessedResource.m_modificationFenceValue > 0 &&
+					!commandQueue.GetFence().IsFenceComplete(*accessedResource.m_modificationFenceValue))
 				{
-					// TODO: This is wasteful. We're waiting on queues that probably finished many frames ago
-					// We need to reset the modification fence values held on resources somehow
-					GPUWait(dx12::Context::GetCommandQueue(cmdListType).GetFence(), maxModificationFenceVal);
+					GPUWait(commandQueue.GetFence(), *accessedResource.m_modificationFenceValue);
+				}
+
+				// Store the command list's submission fence in the resource, so other command queues/lists can wait
+				// on the work to be done. We submit our command queues on the main render thread, so we can be sure of
+				// the order we'remodifying resources in while we're here
+				if (accessedResource.m_didModify)
+				{
+					*accessedResource.m_modificationFenceValue = nextFenceVal;
 				}
 			}
+			
+			cmdLists[cmdListIdx] = nullptr; // Don't let the caller retain access to a command list in our pool
 		}
 
 		// Execute the command lists:
 		m_commandQueue->ExecuteCommandLists(static_cast<uint32_t>(commandListPtrs.size()), commandListPtrs.data());
 
-		// Our command lists may have been submitted in non-monotonically increasing fence value order, because we
-		// pre-pend barrier fixup command lists. So, just signal the highest value we saw as a catch-all
-		GPUSignal(maxCommandListReuseFenceVal);
+		const uint64_t fenceVal = GPUSignal();
+		SEAssert("Predicted fence value doesn't match the actual fence value", fenceVal == nextFenceVal);
 
-		return maxCommandListReuseFenceVal;
+		// Return our command list(s) to the pool:
+		for (uint32_t i = 0; i < finalCommandLists.size(); i++)
+		{
+			finalCommandLists[i]->SetReuseFenceValue(fenceVal);
+			m_commandListPool.push(finalCommandLists[i]);
+		}
+
+		return fenceVal;
 	}
 
 

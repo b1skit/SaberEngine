@@ -12,7 +12,7 @@ namespace dx12
 	constexpr uint64_t k_commandListTypeBitmask = 7ull << k_bitShiftWidth;
 
 
-	uint64_t Fence::GetCommandListTypeFenceMaskBits(dx12::CommandList::CommandListType commandListType)
+	uint64_t Fence::GetCommandListTypeFenceMaskBits(dx12::CommandListType commandListType)
 	{
 		const uint64_t typeBits = static_cast<uint64_t>(commandListType);
 		SEAssert("Unexpected command list cast results", typeBits < 7);
@@ -21,11 +21,11 @@ namespace dx12
 	}
 
 
-	dx12::CommandList::CommandListType Fence::GetCommandListTypeFromFenceValue(uint64_t fenceVal)
+	dx12::CommandListType Fence::GetCommandListTypeFromFenceValue(uint64_t fenceVal)
 	{
 		const uint64_t isolatedTypeBits = fenceVal & k_commandListTypeBitmask;
 		const uint64_t shiftedBits = isolatedTypeBits >> k_bitShiftWidth;
-		return static_cast<dx12::CommandList::CommandListType>(shiftedBits);
+		return static_cast<dx12::CommandListType>(shiftedBits);
 	}
 
 
@@ -94,6 +94,7 @@ namespace dx12
 
 	bool Fence::IsFenceComplete(uint64_t fenceValue) const
 	{
-		return m_fence->GetCompletedValue() >= fenceValue;
+		const uint64_t completedValue = m_fence->GetCompletedValue();
+		return completedValue >= fenceValue;
 	}
 }

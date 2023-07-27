@@ -40,7 +40,7 @@ namespace dx12
 			dx12::Device m_device;
 
 			// TODO: We should template the CommandQueue types, to allow specific helper functions on each type
-			std::array<dx12::CommandQueue, CommandList::CommandListType::CommandListType_Count> m_commandQueues;
+			std::array<dx12::CommandQueue, CommandListType::CommandListType_Count> m_commandQueues;
 
 			dx12::GlobalResourceStateTracker m_globalResourceStates;
 
@@ -75,7 +75,7 @@ namespace dx12
 
 
 		// DX12-specific interface:
-		static dx12::CommandQueue& GetCommandQueue(CommandList::CommandListType type);
+		static dx12::CommandQueue& GetCommandQueue(dx12::CommandListType type);
 		static dx12::CommandQueue& GetCommandQueue(uint64_t fenceValue); // Get the command queue that produced a fence value
 
 		static dx12::GlobalResourceStateTracker& GetGlobalResourceStateTracker();

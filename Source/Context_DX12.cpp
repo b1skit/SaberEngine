@@ -78,14 +78,14 @@ namespace dx12
 		// TODO: Create/support more command queue types
 		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
 
-		ctxPlatParams->m_commandQueues[CommandList::CommandListType::Direct].Create(
-			device, CommandList::CommandListType::Direct);
+		ctxPlatParams->m_commandQueues[CommandListType::Direct].Create(
+			device, CommandListType::Direct);
 
-		ctxPlatParams->m_commandQueues[CommandList::CommandListType::Compute].Create(
-			device, CommandList::CommandListType::Compute);
+		ctxPlatParams->m_commandQueues[CommandListType::Compute].Create(
+			device, CommandListType::Compute);
 
-		ctxPlatParams->m_commandQueues[CommandList::CommandListType::Copy].Create(
-			device, CommandList::CommandListType::Copy);
+		ctxPlatParams->m_commandQueues[CommandListType::Copy].Create(
+			device, CommandListType::Copy);
 
 		// NOTE: Must create the swapchain after our command queues. This is because the DX12 swapchain creation
 		// requires a direct command queue; dx12::SwapChain::Create recursively gets it from the Context platform params
@@ -150,11 +150,11 @@ namespace dx12
 		ImGui::DestroyContext();		
 
 		// Make sure our command queues have finished all commands before closing.
-		ctxPlatParams->m_commandQueues[CommandList::Copy].Flush();
-		ctxPlatParams->m_commandQueues[CommandList::Copy].Destroy();
+		ctxPlatParams->m_commandQueues[dx12::CommandListType::Copy].Flush();
+		ctxPlatParams->m_commandQueues[dx12::CommandListType::Copy].Destroy();
 		
-		ctxPlatParams->m_commandQueues[CommandList::Direct].Flush();
-		ctxPlatParams->m_commandQueues[CommandList::Direct].Destroy();
+		ctxPlatParams->m_commandQueues[dx12::CommandListType::Direct].Flush();
+		ctxPlatParams->m_commandQueues[dx12::CommandListType::Direct].Destroy();
 
 		context.GetSwapChain().Destroy();
 
@@ -188,7 +188,7 @@ namespace dx12
 		// Create a command list to transition the backbuffer to the presentation state
 		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
-		dx12::CommandQueue& directQueue = ctxPlatParams->m_commandQueues[dx12::CommandList::Direct];
+		dx12::CommandQueue& directQueue = ctxPlatParams->m_commandQueues[dx12::CommandListType::Direct];
 
 		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
@@ -234,7 +234,7 @@ namespace dx12
 		// Insert a signal into the command queue: Once this is reached, we know the work for the current frame is done
 		const uint8_t currentFrameBackbufferIdx = dx12::SwapChain::GetBackBufferIdx(swapChain);
 		ctxPlatParams->m_frameFenceValues[currentFrameBackbufferIdx] = 
-			ctxPlatParams->m_commandQueues[CommandList::Direct].GPUSignal();
+			ctxPlatParams->m_commandQueues[dx12::CommandListType::Direct].GPUSignal();
 
 		// Get the next backbuffer index (Note: Backbuffer indices are not guaranteed to be sequential if we're using 
 		// DXGI_SWAP_EFFECT_FLIP_DISCARD)
@@ -243,7 +243,7 @@ namespace dx12
 		swapChainPlatParams->m_backBufferIdx = nextFrameBackbufferIdx;
 		
 		// Block the CPU on the fence for our new backbuffer, to ensure all of its work is done
-		ctxPlatParams->m_commandQueues[CommandList::Direct].CPUWait(
+		ctxPlatParams->m_commandQueues[dx12::CommandListType::Direct].CPUWait(
 			ctxPlatParams->m_frameFenceValues[nextFrameBackbufferIdx]);
 
 		// Free the descriptors used on the next backbuffer now that we know the fence has been reached:
@@ -292,7 +292,7 @@ namespace dx12
 	}
 
 
-	CommandQueue& Context::GetCommandQueue(CommandList::CommandListType type)
+	CommandQueue& Context::GetCommandQueue(dx12::CommandListType type)
 	{
 		dx12::Context::PlatformParams* ctxPlatParams = 
 			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
@@ -303,7 +303,7 @@ namespace dx12
 
 	dx12::CommandQueue& Context::GetCommandQueue(uint64_t fenceValue)
 	{
-		const dx12::CommandList::CommandListType cmdListType = dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue);
+		const dx12::CommandListType cmdListType = dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue);
 		return GetCommandQueue(cmdListType);
 	}
 

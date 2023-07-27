@@ -59,7 +59,7 @@ namespace dx12
 		dx12::CommandQueue* copyQueue = nullptr;
 		if (hasDataToCopy)
 		{
-			copyQueue = &dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Copy);
+			copyQueue = &dx12::Context::GetCommandQueue(dx12::CommandListType::Copy);
 
 			// TODO: Get multiple command lists, and record on multiple threads:
 			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
@@ -186,27 +186,21 @@ namespace dx12
 	void RenderManager::Render()
 	{
 		re::Context const& context = re::RenderManager::Get()->GetContext();
-		dx12::CommandQueue& directQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Direct);
+		dx12::CommandQueue& directQueue = dx12::Context::GetCommandQueue(dx12::CommandListType::Direct);
+		dx12::CommandQueue& computeQueue = dx12::Context::GetCommandQueue(dx12::CommandListType::Compute);
 
-		std::vector<std::shared_ptr<dx12::CommandList>> directCommandLists;
-		directCommandLists.reserve(m_renderPipeline.GetStagePipeline().size());
-
-		dx12::CommandQueue& computeQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Compute);
-
-		std::vector<std::shared_ptr<dx12::CommandList>> computeCommandLists;
-		computeCommandLists.reserve(m_renderPipeline.GetStagePipeline().size());
+		std::vector<std::shared_ptr<dx12::CommandList>> commandLists;
 
 		// Render each stage:
 		for (StagePipeline& stagePipeline : m_renderPipeline.GetStagePipeline())
 		{
-			// Note: Our command lists and associated command allocators are already closed/reset
-			std::shared_ptr<dx12::CommandList> directCommandList = nullptr;
-			std::shared_ptr<dx12::CommandList> computeCommandList = nullptr;
-			
-
 			// Generic lambda: Process stages from various pipelines
 			auto ProcessRenderStage = [&](std::shared_ptr<re::RenderStage> renderStage)
 			{
+				// Note: Our command lists and associated command allocators are already closed/reset
+				std::shared_ptr<dx12::CommandList> directCommandList = nullptr;
+				std::shared_ptr<dx12::CommandList> computeCommandList = nullptr;
+
 				dx12::CommandList* currentCommandList = nullptr;
 				switch (renderStage->GetStageType())
 				{
@@ -394,6 +388,16 @@ namespace dx12
 						SEAssertF("Invalid render stage type");
 					}
 				}
+
+				// We're done: We have a command list for everything that happened on the current StagePipeline
+				if (computeCommandList != nullptr)
+				{
+					commandLists.emplace_back(computeCommandList);
+				}
+				if (directCommandList != nullptr)
+				{
+					commandLists.emplace_back(directCommandList);
+				}
 			}; // ProcessRenderStage
 
 
@@ -410,27 +414,61 @@ namespace dx12
 			for (size_t stageIdx = 0; stageIdx < renderStages.size(); stageIdx++)
 			{
 				ProcessRenderStage(renderStages[stageIdx]);
+			}	
+		}
+
+		// Command lists must be submitted on a single thread, and in the same order as the render stages they're
+		// generated from to ensure modification fences and GPU waits are are handled correctly
+		size_t startIdx = 0;
+		while (startIdx < commandLists.size())
+		{
+			// TODO: Use the SE enums where possible, to make future porting/code reuse easier
+			const D3D12_COMMAND_LIST_TYPE cmdListType = commandLists[startIdx]->GetD3DCommandListType();
+
+			// Find the index of the last command list of the same type:
+			size_t endIdx = startIdx + 1;
+			while (endIdx < commandLists.size() &&
+				commandLists[endIdx]->GetD3DCommandListType() == cmdListType)
+			{
+				endIdx++;
 			}
 
-			// We're done: We have a command list for everything that happened on the current StagePipeline
-			if (computeCommandList != nullptr)
+			const size_t numCmdLists = endIdx - startIdx;
+
+			switch (cmdListType)
 			{
-				computeCommandLists.emplace_back(computeCommandList);
-			}
-			if (directCommandList != nullptr)
+			case D3D12_COMMAND_LIST_TYPE_DIRECT:
 			{
-				directCommandLists.emplace_back(directCommandList);
+				directQueue.Execute(static_cast<uint32_t>(numCmdLists), &commandLists[startIdx]);
 			}
-		}
-		
-		// Execute the command lists:
-		if (!computeCommandLists.empty())
-		{
-			computeQueue.Execute(static_cast<uint32_t>(computeCommandLists.size()), computeCommandLists.data());
-		}
-		if (!directCommandLists.empty())
-		{
-			directQueue.Execute(static_cast<uint32_t>(directCommandLists.size()), directCommandLists.data());
+			break;
+			case D3D12_COMMAND_LIST_TYPE_BUNDLE:
+			{
+				SEAssertF("TODO: Support this type");
+			}
+			break;
+			case D3D12_COMMAND_LIST_TYPE_COMPUTE:
+			{
+				computeQueue.Execute(static_cast<uint32_t>(numCmdLists), &commandLists[startIdx]);
+			}
+			break;
+			case D3D12_COMMAND_LIST_TYPE_COPY:
+			{
+				SEAssertF("Currently not expecting to find a copy queue genereted from a render stage");
+			}
+			case D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE:
+			case D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS:
+			case D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE:
+			case D3D12_COMMAND_LIST_TYPE_NONE:
+			{
+				SEAssertF("TODO: Support this type");
+			}
+			break;
+			default:
+				SEAssertF("Invalid command list type");
+			}
+
+			startIdx = endIdx;
 		}
 	}
 
@@ -462,7 +500,7 @@ namespace dx12
 		re::Context const& context = re::RenderManager::Get()->GetContext();
 		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
-		dx12::CommandQueue& directQueue = dx12::Context::GetCommandQueue(dx12::CommandList::CommandListType::Direct);
+		dx12::CommandQueue& directQueue = dx12::Context::GetCommandQueue(dx12::CommandListType::Direct);
 		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
 		// Draw directly to the swapchain backbuffer
@@ -494,7 +532,7 @@ namespace dx12
 
 		// TODO: We should be able to iterate over all of these, but some of them aren't initialized
 		// TODO: We also flush these in the context as well... But it's necessary here, since we delete objects next
-		Context::GetCommandQueue(dx12::CommandList::CommandListType::Copy).Flush();
-		Context::GetCommandQueue(dx12::CommandList::CommandListType::Direct).Flush();
+		Context::GetCommandQueue(dx12::CommandListType::Copy).Flush();
+		Context::GetCommandQueue(dx12::CommandListType::Direct).Flush();
 	}
 }

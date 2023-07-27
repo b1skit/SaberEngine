@@ -69,17 +69,17 @@ namespace dx12
 	size_t CommandList::s_commandListNumber = 0;
 
 
-	constexpr wchar_t const* const CommandList::GetCommandListTypeName(dx12::CommandList::CommandListType type)
+	constexpr wchar_t const* const CommandList::GetCommandListTypeName(dx12::CommandListType type)
 	{
 		switch (type)
 		{
-		case CommandList::CommandListType::Direct: return L"Direct";
-		case CommandList::CommandListType::Bundle: return L"Bundle";
-		case CommandList::CommandListType::Compute: L"Compute";
-		case CommandList::CommandListType::Copy: return L"Copy";
-		case CommandList::CommandListType::VideoDecode: return L"VideoDecode";
-		case CommandList::CommandListType::VideoProcess: return L"VideoProcess";
-		case CommandList::CommandListType::VideoEncode: return L"VideoEncode";
+		case CommandListType::Direct: return L"Direct";
+		case CommandListType::Bundle: return L"Bundle";
+		case CommandListType::Compute: L"Compute";
+		case CommandListType::Copy: return L"Copy";
+		case CommandListType::VideoDecode: return L"VideoDecode";
+		case CommandListType::VideoProcess: return L"VideoProcess";
+		case CommandListType::VideoEncode: return L"VideoEncode";
 		default:
 			SEAssertF("Invalid command list type");
 		}
@@ -87,7 +87,7 @@ namespace dx12
 	};
 
 
-	constexpr CommandList::CommandListType CommandList::TranslateCommandListType(D3D12_COMMAND_LIST_TYPE type)
+	constexpr CommandListType CommandList::TranslateToSECommandListType(D3D12_COMMAND_LIST_TYPE type)
 	{
 		switch (type)
 		{
@@ -131,8 +131,9 @@ namespace dx12
 		CheckHResult(hr, "Failed to create command list");
 
 		// Name the command list with a monotonically-increasing index to make it easier to identify
-		const std::wstring commandListname = 
-			std::wstring(GetCommandListTypeName(TranslateCommandListType(type))) + L"_CommandList_#" + std::to_wstring(k_commandListNumber);
+		const std::wstring commandListname = std::wstring(
+			GetCommandListTypeName(TranslateToSECommandListType(type))) + 
+			L"_CommandList_#" + std::to_wstring(k_commandListNumber);
 		m_commandList->SetName(commandListname.c_str());
 
 		// Set the descriptor heaps (unless we're a copy command list):
@@ -150,8 +151,6 @@ namespace dx12
 		// to be reset before recording
 		hr = m_commandList->Close();
 		CheckHResult(hr, "Failed to close command list");
-
-		memset(&m_maxResourceLastModifiedFenceValues, 0, CommandListType_Count * sizeof(uint64_t));
 	}
 
 
@@ -164,8 +163,6 @@ namespace dx12
 		m_gpuCbvSrvUavDescriptorHeaps = nullptr;
 		m_currentRootSignature = nullptr;
 		m_currentPSO = nullptr;
-
-		memset(&m_maxResourceLastModifiedFenceValues, 0, CommandListType_Count * sizeof(uint64_t));
 	}
 
 
@@ -197,7 +194,7 @@ namespace dx12
 		}
 
 		m_reuseFenceValue = 0;
-		memset(&m_maxResourceLastModifiedFenceValues, 0, CommandListType_Count * sizeof(uint64_t));
+		m_accessedResources.clear();
 	}
 
 
@@ -657,13 +654,6 @@ namespace dx12
 				rootSigEntry->m_tableEntry.m_offset,
 				1);
 
-			// Update our modification fence value; We'll wait on the most recently modified resource before executing
-			// this command list			
-			const dx12::CommandList::CommandListType commandListType = 
-				Fence::GetCommandListTypeFromFenceValue(texPlatParams->m_modificationFence);
-
-			m_maxResourceLastModifiedFenceValues[commandListType] = 
-				std::max(m_maxResourceLastModifiedFenceValues[commandListType], texPlatParams->m_modificationFence);
 		}
 	}
 
@@ -674,11 +664,9 @@ namespace dx12
 		dx12::Texture::PlatformParams* texPlatParams =
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
-		// Store the modification fence value in the texture
-		if (IsWriteableState(toState))
-		{
-			texPlatParams->m_modificationFence = GetReuseFenceValue();
-		}
+		m_accessedResources.emplace_back(AccessedResource{
+			&texPlatParams->m_modificationFence, 
+			IsWriteableState(toState) });
 
 		// Handle the resource transition:
 		ID3D12Resource* resource = texPlatParams->m_textureResource.Get();		

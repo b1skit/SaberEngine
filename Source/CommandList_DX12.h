@@ -23,27 +23,29 @@ namespace dx12
 	class RootSignature;
 	class PipelineState;
 
+	enum CommandListType
+	{
+		Direct,
+		Bundle,
+		Compute,
+		Copy,
+		VideoDecode,
+		VideoProcess,
+		VideoEncode,
+
+		CommandListType_Count,
+		CommandListType_Invalid = CommandListType_Count
+	};
+	static_assert(CommandListType_Count == 7); // We pack command list type into the upper bits of fence values
+
 	class CommandList
 	{
 	public:
-		enum CommandListType
-		{
-			Direct,
-			Bundle,
-			Compute,
-			Copy,
-			VideoDecode,
-			VideoProcess,
-			VideoEncode,
+		
 
-			CommandListType_Count,
-			CommandListType_Invalid = CommandListType_Count
-		};
-		static_assert(CommandListType_Count == 7); // We pack command list type into the upper bits of fence values
-
-		static constexpr wchar_t const* const GetCommandListTypeName(dx12::CommandList::CommandListType);
-		static constexpr D3D12_COMMAND_LIST_TYPE GetD3DCommandListType(dx12::CommandList::CommandListType);
-		static constexpr CommandListType TranslateCommandListType(D3D12_COMMAND_LIST_TYPE);
+		static constexpr wchar_t const* const GetCommandListTypeName(dx12::CommandListType);
+		static constexpr D3D12_COMMAND_LIST_TYPE TranslateToD3DCommandListType(dx12::CommandListType);
+		static constexpr CommandListType TranslateToSECommandListType(D3D12_COMMAND_LIST_TYPE);
 		// TODO: Make usage of D3D and SE enums more consistent here
 
 		static size_t s_commandListNumber; // Monotonically-increasing numeric ID for naming command lists
@@ -109,12 +111,18 @@ namespace dx12
 		void TransitionResource(std::shared_ptr<re::Texture>, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
 		void TransitionUAV(std::shared_ptr<re::Texture>, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
 
-		D3D12_COMMAND_LIST_TYPE GetType() const;
+		D3D12_COMMAND_LIST_TYPE GetD3DCommandListType() const;
 		ID3D12GraphicsCommandList2* GetD3DCommandList() const;
 
 		LocalResourceStateTracker const& GetLocalResourceStates() const;
 
-		uint64_t GetMaxResourceModificationFenceValue(dx12::CommandList::CommandListType) const;
+		struct AccessedResource
+		{
+			uint64_t* m_modificationFenceValue = nullptr;
+			bool m_didModify = false;
+		};
+		std::vector<AccessedResource> const& GetAccessedResources() const;
+
 
 		void DebugPrintResourceStates() const;
 
@@ -126,8 +134,7 @@ namespace dx12
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator;
 		uint64_t m_reuseFenceValue; // When the command allocator can be reused
 
-		// Highest resource modification fence values seen for each command queue type while recording
-		std::array<uint64_t, CommandListType_Count> m_maxResourceLastModifiedFenceValues;
+		std::vector<CommandList::AccessedResource> m_accessedResources;
 
 		const size_t k_commandListNumber; // Monotonically increasing identifier assigned at creation
 
@@ -222,7 +229,7 @@ namespace dx12
 	}
 
 
-	inline D3D12_COMMAND_LIST_TYPE CommandList::GetType() const
+	inline D3D12_COMMAND_LIST_TYPE CommandList::GetD3DCommandListType() const
 	{
 		return m_type;
 	}
@@ -234,25 +241,25 @@ namespace dx12
 	}
 
 
-	constexpr D3D12_COMMAND_LIST_TYPE CommandList::GetD3DCommandListType(dx12::CommandList::CommandListType type)
+	constexpr D3D12_COMMAND_LIST_TYPE CommandList::TranslateToD3DCommandListType(dx12::CommandListType type)
 	{
 		switch (type)
 		{
-		case dx12::CommandList::CommandListType::Direct:
+		case dx12::CommandListType::Direct:
 			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT;
-		case dx12::CommandList::CommandListType::Bundle:
+		case dx12::CommandListType::Bundle:
 			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_BUNDLE;
-		case dx12::CommandList::CommandListType::Compute:
+		case dx12::CommandListType::Compute:
 			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE;
-		case dx12::CommandList::CommandListType::Copy:
+		case dx12::CommandListType::Copy:
 			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY;
-		case dx12::CommandList::CommandListType::VideoDecode:
+		case dx12::CommandListType::VideoDecode:
 			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE;
-		case dx12::CommandList::CommandListType::VideoProcess:
+		case dx12::CommandListType::VideoProcess:
 			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS;
-		case dx12::CommandList::CommandListType::VideoEncode:
+		case dx12::CommandListType::VideoEncode:
 			return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE;
-		case dx12::CommandList::CommandListType::CommandListType_Count:
+		case dx12::CommandListType::CommandListType_Count:
 		default:
 			static_assert("Invalid type");
 		}
@@ -267,8 +274,8 @@ namespace dx12
 	}
 
 
-	inline uint64_t CommandList::GetMaxResourceModificationFenceValue(dx12::CommandList::CommandListType type) const
+	inline std::vector<CommandList::AccessedResource> const& CommandList::GetAccessedResources() const
 	{
-		return m_maxResourceLastModifiedFenceValues[type];
+		return m_accessedResources;
 	}
 }

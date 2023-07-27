@@ -12,8 +12,8 @@ namespace dx12
 	class Fence
 	{
 	public:
-		static uint64_t GetCommandListTypeFenceMaskBits(dx12::CommandList::CommandListType commandListType);
-		static dx12::CommandList::CommandListType GetCommandListTypeFromFenceValue(uint64_t fenceVal);
+		static uint64_t GetCommandListTypeFenceMaskBits(dx12::CommandListType commandListType);
+		static dx12::CommandListType GetCommandListTypeFromFenceValue(uint64_t fenceVal);
 		static uint64_t GetRawFenceValue(uint64_t);
 
 
