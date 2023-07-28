@@ -123,7 +123,6 @@ namespace platform
 
 			// Texture:
 			platform::Texture::Destroy			= &opengl::Texture::Destroy;
-			platform::Texture::GenerateMipMaps	= &opengl::Texture::GenerateMipMaps;
 
 			// Texture Samplers:
 			platform::Sampler::Create	= &opengl::Sampler::Create;
@@ -170,7 +169,6 @@ namespace platform
 
 			// Texture:
 			platform::Texture::Destroy			= &dx12::Texture::Destroy;
-			platform::Texture::GenerateMipMaps	= &dx12::Texture::GenerateMipMaps;
 
 			// Texture Samplers:
 			platform::Sampler::Create	= &dx12::Sampler::Create;

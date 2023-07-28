@@ -800,11 +800,4 @@ namespace dx12
 		texPlatParams->m_isCreated = false;
 		texPlatParams->m_isDirty = true;
 	}
-	
-	
-	void Texture::GenerateMipMaps(re::Texture& texture)
-	{
-		#pragma message("TODO: Implement dx12::Texture::GenerateMipMaps")
-		SEAssertF("TODO: Implement this");
-	}
 }

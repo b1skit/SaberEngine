@@ -50,6 +50,5 @@ namespace dx12
 
 		// Platform functionality:
 		static void Destroy(re::Texture&);
-		static void GenerateMipMaps(re::Texture&);
 	};
 }
