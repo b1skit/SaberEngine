@@ -14,7 +14,7 @@ namespace gr
 
 	void ComputeMipsGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		m_mipMapGenerationShader = re::Shader::Create("GenerateMipMaps");
+		m_mipMapGenerationShader = re::Shader::Create("GenerateMipMaps_BoxFilter");
 	}
 
 
