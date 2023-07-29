@@ -326,8 +326,10 @@ namespace dx12
 		const dx12::CommandListType thisCmdListType = 
 			dx12::Fence::GetCommandListTypeFromFenceValue(m_typeFenceBitMask);
 
-		// Insert GPU waits on any resources that might have been modified (no need to check the pre-pended transition 
-		// command lists)
+		// We'll store the highest modification fence values seen for resources accessed by the submitted command lists
+		std::array<uint64_t, dx12::CommandListType::CommandListType_Count> maxModificationFences;
+		memset(&maxModificationFences, 0, sizeof(uint64_t) * dx12::CommandListType::CommandListType_Count);
+
 		for (uint32_t cmdListIdx = 0; cmdListIdx < numCmdLists; cmdListIdx++)
 		{
 			std::vector<CommandList::AccessedResource> const& accessedResources = 
@@ -340,19 +342,13 @@ namespace dx12
 				const dx12::CommandListType cmdListType =
 					dx12::Fence::GetCommandListTypeFromFenceValue(*accessedResource.m_modificationFenceValue);
 
-				dx12::CommandQueue& commandQueue = dx12::Context::GetCommandQueue(cmdListType);
-
-				// Insert a GPU wait if the resource is still in flight on another command queue/list:
-				if (cmdListType != thisCmdListType &&
-					*accessedResource.m_modificationFenceValue > 0 &&
-					!commandQueue.GetFence().IsFenceComplete(*accessedResource.m_modificationFenceValue))
-				{
-					GPUWait(commandQueue.GetFence(), *accessedResource.m_modificationFenceValue);
-				}
+				// Cache the current modification value: We'll GPU wait on the most recent modification fence
+				maxModificationFences[cmdListType] = 
+					std::max(*accessedResource.m_modificationFenceValue, maxModificationFences[cmdListType]);
 
 				// Store the command list's submission fence in the resource, so other command queues/lists can wait
 				// on the work to be done. We submit our command queues on the main render thread, so we can be sure of
-				// the order we'remodifying resources in while we're here
+				// the order we're modifying resources in while we're here
 				if (accessedResource.m_didModify)
 				{
 					*accessedResource.m_modificationFenceValue = nextFenceVal;
@@ -360,6 +356,26 @@ namespace dx12
 			}
 			
 			cmdLists[cmdListIdx] = nullptr; // Don't let the caller retain access to a command list in our pool
+		}
+
+		// Insert a GPU wait for any incomplete fences for resources modified on other queues:
+		for (uint8_t queueIdx = 0; queueIdx < dx12::CommandListType::CommandListType_Count; queueIdx++)
+		{
+			const uint64_t currentModificationFence = maxModificationFences[queueIdx];
+			if (currentModificationFence > 0)
+			{
+				const dx12::CommandListType cmdListType =
+					dx12::Fence::GetCommandListTypeFromFenceValue(currentModificationFence);
+
+				if (cmdListType != thisCmdListType) // Don't wait on resources this queue is about to modify
+				{
+					dx12::CommandQueue& commandQueue = dx12::Context::GetCommandQueue(cmdListType);
+					if (!commandQueue.GetFence().IsFenceComplete(currentModificationFence))
+					{
+						GPUWait(commandQueue.GetFence(), currentModificationFence);
+					}
+				}
+			}
 		}
 
 		// Execute the command lists:
