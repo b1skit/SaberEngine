@@ -560,12 +560,12 @@ namespace dx12
 				}
 
 				// Initialize the descriptor range:
-				const uint32_t numDescriptorsInRange = static_cast<uint32_t>(rangeEnd - rangeStart);
+				const uint32_t numDescriptors = static_cast<uint32_t>(rangeEnd - rangeStart);
 				tableRanges[rangeTypeIdx].emplace_back();
 
 				tableRanges[rangeTypeIdx].back().Init(
 					GetD3DRangeType(rangeType),
-					numDescriptorsInRange,
+					numDescriptors,
 					rangeInputs[rangeTypeIdx][rangeStart].m_baseRegister,
 					rangeInputs[rangeTypeIdx][rangeStart].m_registerSpace,
 					D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE); //  TODO: Is this flag appropriate?
@@ -616,11 +616,12 @@ namespace dx12
 				rangeEnd++;
 			}
 
-			const uint32_t numDescriptorsInTable = static_cast<uint32_t>(tableRanges[rangeTypeIdx].size());
+			// How many individual descriptor tables we're creating:
+			const uint32_t numDescriptorRanges = static_cast<uint32_t>(tableRanges[rangeTypeIdx].size());
 
 			// Initialize the root parameter as a descriptor table built from our ranges:
 			rootParameters[rootIdx].InitAsDescriptorTable(
-				numDescriptorsInTable,
+				numDescriptorRanges,
 				tableRanges[rangeTypeIdx].data(),
 				tableVisibility);
 
@@ -636,9 +637,9 @@ namespace dx12
 							.m_offset = offset }
 					});
 			}
-
-			// Mark the bitmasks. TODO: THE GPU DESCRIPTOR HEAP SHOULD PARSE THIS?
-			newRootSig->m_numDescriptorsPerTable[rootIdx] = numDescriptorsInTable;
+			
+			// How many descriptors are in the table stored at the given root sig index:
+			newRootSig->m_numDescriptorsPerTable[rootIdx] = static_cast<uint32_t>(rangeInputs[rangeTypeIdx].size());
 
 			const uint32_t descriptorTableBitmask = (1 << rootIdx);
 			newRootSig->m_rootSigDescriptorTableIdxBitmask |= descriptorTableBitmask;
