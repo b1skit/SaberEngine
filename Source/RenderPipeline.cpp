@@ -13,7 +13,7 @@ namespace re
 
 	std::vector<std::shared_ptr<re::RenderStage>>::iterator StagePipeline::AppendRenderStage(std::shared_ptr<re::RenderStage> renderStage)
 	{
-		SEAssert("Cannot append a null RenderStage", renderStage);
+		SEAssert("Cannot append a null RenderStage", renderStage != nullptr);
 		
 		m_renderStages.emplace_back(renderStage);
 		return m_renderStages.end();

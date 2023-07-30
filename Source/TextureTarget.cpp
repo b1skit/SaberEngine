@@ -182,7 +182,7 @@ namespace re
 		if (m_colorTargets[slot])
 		{
 			SEAssert("Slot contains a target, but not a texture. This should not be possible", 
-				m_colorTargets[slot]->GetTexture());
+				m_colorTargets[slot]->GetTexture() != nullptr);
 			return m_colorTargets[slot].get();
 		}
 		return nullptr;
@@ -212,7 +212,7 @@ namespace re
 		if (m_depthStencilTarget)
 		{
 			SEAssert("Depth stencil target exists, but does not contain a texture. This should not be possible",
-				m_depthStencilTarget->GetTexture());
+				m_depthStencilTarget->GetTexture() != nullptr);
 			return m_depthStencilTarget.get();
 		}
 		return nullptr;
