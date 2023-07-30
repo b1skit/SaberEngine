@@ -302,6 +302,18 @@ namespace re
 	}
 
 
+	bool Texture::IsPowerOfTwo() const
+	{
+		const uint32_t width = Width();
+		const uint32_t height = Height();
+		SEAssert("Invalid texture dimensions", width > 0 && height > 0);
+
+		// A power-of-two value will only have a single bit set to 1 in its binary representation; Use a logical AND
+		// to check if this is the case for both texture dimensions
+		return ((width & (width - 1)) == 0) && ((height & (height - 1)) == 0);
+	}
+
+
 	uint8_t Texture::GetNumBytesPerTexel(const Format texFormat)
 	{
 		switch (texFormat)
