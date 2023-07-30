@@ -31,32 +31,40 @@ namespace gr
 
 			for (uint32_t faceIdx = 0; faceIdx < textureParams.m_faces; faceIdx++)
 			{
-				for (uint32_t currentMip = 1; currentMip < totalMips; currentMip++)
+				const uint32_t numTargetsPerStage = 4;
+				uint32_t currentMip = 1;
+				while (currentMip < totalMips)
 				{
-					// TODO: We want to compute several levels of MIPs for a 8x8 block of texels in a single dispatch
-
 					re::RenderStage::ComputeStageParams computeStageParams;
 
 					std::shared_ptr<re::RenderStage> mipGenerationStage = re::RenderStage::CreateComputeStage(
 						newTexture->GetName() + " MIP generation stage",
 						computeStageParams);
 
-					const std::string targetSetName = newTexture->GetName() + " MIP generation stage targets";
+					mipGenerationStage->SetStageShader(m_mipMapGenerationShader);
+
+					const uint32_t numStageTargets =
+						currentMip + numTargetsPerStage < totalMips ? numTargetsPerStage : (totalMips - currentMip);
+
+					const std::string targetSetName = newTexture->GetName() + 
+						std::format(" MIP {} - {} generation stage targets", currentMip, currentMip + numStageTargets - 1);
+
 					std::shared_ptr<re::TextureTargetSet> mipGenTargets = re::TextureTargetSet::Create(targetSetName);
 
-					re::TextureTarget::TargetParams targetParams;
-					targetParams.m_targetFace = faceIdx;
-					targetParams.m_targetSubesource = currentMip;
+					for (uint32_t currentTargetIdx = 0; currentTargetIdx < numStageTargets; currentTargetIdx++)
+					{
+						re::TextureTarget::TargetParams mipTargetParams;
+						mipTargetParams.m_targetFace = faceIdx;
+						mipTargetParams.m_targetSubesource = currentMip++;
 
-					mipGenTargets->SetColorTarget(0, newTexture, targetParams);
+						mipGenTargets->SetColorTarget(currentTargetIdx, newTexture, mipTargetParams);
+					}
 
 					mipGenerationStage->SetTextureTargetSet(mipGenTargets);
 
-					mipGenerationStage->SetStageShader(m_mipMapGenerationShader);
-
 					// Add our dispatch information to a compute batch:
-					re::Batch computeBatch = re::Batch(re::Batch::ComputeParams{ 
-						.m_threadGroupCount = glm::uvec3(newTexture->Width(), newTexture->Height(), 1) 
+					re::Batch computeBatch = re::Batch(re::Batch::ComputeParams{
+						.m_threadGroupCount = glm::uvec3(newTexture->Width(), newTexture->Height(), 1)
 						});
 					mipGenerationStage->AddBatch(computeBatch);
 
