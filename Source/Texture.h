@@ -112,6 +112,7 @@ namespace re
 		uint32_t GetNumMips() const;
 		uint32_t GetMipDimension(uint32_t mipLevel) const;
 		bool IsPowerOfTwo() const;
+		bool IsSRGB() const;
 
 		re::Texture::PlatformParams* GetPlatformParams() { return m_platformParams.get(); }
 		re::Texture::PlatformParams const* GetPlatformParams() const { return m_platformParams.get(); }

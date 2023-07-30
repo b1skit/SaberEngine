@@ -314,6 +314,12 @@ namespace re
 	}
 
 
+	bool Texture::IsSRGB() const
+	{
+		return m_texParams.m_colorSpace == ColorSpace::sRGB;
+	}
+
+
 	uint8_t Texture::GetNumBytesPerTexel(const Format texFormat)
 	{
 		switch (texFormat)
