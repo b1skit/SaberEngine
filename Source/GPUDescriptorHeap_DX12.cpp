@@ -99,8 +99,7 @@ namespace dx12
 
 	void GPUDescriptorHeap::SetNullDescriptors(dx12::RootSignature const* rootSig)
 	{
-		std::unordered_map<std::string, RootSignature::RootParameter> const& rootParams =
-			rootSig->GetRootSignatureEntries();
+		std::vector<RootSignature::RootParameter> const& rootParams = rootSig->GetRootSignatureEntries();
 
 		// Note: Root descriptors cannot be set to null:
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/descriptors-overview#null-descriptors
@@ -113,8 +112,8 @@ namespace dx12
 
 		for (auto const& rootParam : rootParams)
 		{
-			const uint8_t rootIdx = rootParam.second.m_index;
-			switch (rootParam.second.m_type)
+			const uint8_t rootIdx = rootParam.m_index;
+			switch (rootParam.m_type)
 			{
 			case RootSignature::RootParameter::Type::DescriptorTable:
 			{

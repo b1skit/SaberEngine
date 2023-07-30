@@ -120,7 +120,7 @@ namespace dx12
 
 		uint64_t GetRootSigDescHash() const;
 
-		std::unordered_map<std::string, RootParameter> const& GetRootSignatureEntries() const;
+		std::vector<RootParameter> const& GetRootSignatureEntries() const;
 		RootParameter const* GetRootSignatureEntry(std::string const& resourceName) const;
 		bool HasResource(std::string const& resourceName) const;
 
@@ -143,8 +143,12 @@ namespace dx12
 		uint32_t m_numDescriptorsPerTable[k_totalRootSigDescriptorTableIndices];
 		static_assert(k_totalRootSigDescriptorTableIndices == (sizeof(m_rootSigDescriptorTableIdxBitmask) * 8));
 
-	private:
-		std::unordered_map<std::string, RootParameter> m_namesToRootEntries; // Binding metadata
+	private: // Binding metadata
+		void InsertNewRootParameMetadata(char const* name, RootParameter&&);
+
+		std::vector<RootParameter> m_rootParams; // 1 entry for each descriptor, regardless of its root/table location
+		std::unordered_map<std::string, size_t> m_namesToRootParamsIdx; 
+
 		std::vector<DescriptorTable> m_descriptorTables; // For null descriptor initialization
 	};
 
@@ -155,9 +159,9 @@ namespace dx12
 	}
 
 
-	inline std::unordered_map<std::string, RootSignature::RootParameter> const& RootSignature::GetRootSignatureEntries() const
+	inline std::vector<RootSignature::RootParameter> const& RootSignature::GetRootSignatureEntries() const
 	{
-		return m_namesToRootEntries;
+		return m_rootParams;
 	}
 
 

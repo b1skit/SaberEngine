@@ -208,8 +208,21 @@ namespace dx12
 		memset(&m_numDescriptorsPerTable, 0, sizeof(m_numDescriptorsPerTable));
 		m_rootSigDescriptorTableIdxBitmask = 0;
 
-		m_namesToRootEntries.clear();
+		m_rootParams.clear();
+		m_namesToRootParamsIdx.clear();
+
 		m_descriptorTables.clear();
+	}
+
+
+	void RootSignature::InsertNewRootParameMetadata(char const* name, RootParameter&& rootParam)
+	{
+		const size_t metadataIdx = m_rootParams.size();
+
+		m_rootParams.emplace_back(std::move(rootParam));
+		auto const& insertResult = m_namesToRootParamsIdx.emplace(name, metadataIdx);
+
+		SEAssert("Root parameter metadata already exists", insertResult.second == true);
 	}
 
 
@@ -313,7 +326,7 @@ namespace dx12
 				{
 					SEAssert("TODO: Handle root constants", strcmp(inputBindingDesc.Name, "$Globals") != 0);
 					
-					if (!newRootSig->m_namesToRootEntries.contains(inputBindingDesc.Name))
+					if (!newRootSig->m_namesToRootParamsIdx.contains(inputBindingDesc.Name))
 					{
 						const uint8_t rootIdx = static_cast<uint8_t>(rootParameters.size());
 						rootParameters.emplace_back();
@@ -324,11 +337,10 @@ namespace dx12
 							D3D12_ROOT_DESCRIPTOR_FLAGS::D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,	// Flags. TODO: Is volatile always appropriate?
 							GetShaderVisibilityFlagFromShaderType(static_cast<dx12::Shader::ShaderType>(shaderIdx)));	// Shader visibility
 
-						newRootSig->m_namesToRootEntries.emplace(inputBindingDesc.Name,
+						newRootSig->InsertNewRootParameMetadata(inputBindingDesc.Name,
 							RootParameter{
 								.m_index = rootIdx,
-								.m_type = RootParameter::Type::CBV
-							});
+								.m_type = RootParameter::Type::CBV});
 
 						// TODO: Test this
 						SEAssert("TODO: Is this how we can tell if there is an array of CBVs? Need to test this",
@@ -336,7 +348,8 @@ namespace dx12
 					}
 					else
 					{
-						rootParameters[newRootSig->m_namesToRootEntries.at(inputBindingDesc.Name).m_index].ShaderVisibility =
+						const size_t metadataIdx = newRootSig->m_namesToRootParamsIdx[inputBindingDesc.Name];
+						rootParameters[newRootSig->m_rootParams[metadataIdx].m_index].ShaderVisibility =
 							D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
 					}
 				}
@@ -448,7 +461,7 @@ namespace dx12
 				break;
 				case D3D_SHADER_INPUT_TYPE::D3D_SIT_STRUCTURED:
 				{
-					if (!newRootSig->m_namesToRootEntries.contains(inputBindingDesc.Name))
+					if (!newRootSig->m_namesToRootParamsIdx.contains(inputBindingDesc.Name))
 					{
 						const uint8_t rootIdx = static_cast<uint8_t>(rootParameters.size());
 						rootParameters.emplace_back();
@@ -459,17 +472,16 @@ namespace dx12
 							D3D12_ROOT_DESCRIPTOR_FLAGS::D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE,	// Flags. TODO: Is volatile always appropriate?
 							GetShaderVisibilityFlagFromShaderType(static_cast<dx12::Shader::ShaderType>(shaderIdx)));	// Shader visibility
 
-						newRootSig->m_namesToRootEntries.emplace(inputBindingDesc.Name,
+						newRootSig->InsertNewRootParameMetadata(inputBindingDesc.Name,
 							RootParameter{
 								.m_index = rootIdx,
-								.m_type = RootParameter::Type::SRV,
-							}
-						);
+								.m_type = RootParameter::Type::SRV});
 					}
 					else
 					{
-						rootParameters[newRootSig->m_namesToRootEntries.at(inputBindingDesc.Name).m_index].ShaderVisibility =
-							D3D12_SHADER_VISIBILITY_ALL;
+						const size_t metadataIdx = newRootSig->m_namesToRootParamsIdx[inputBindingDesc.Name];
+						rootParameters[newRootSig->m_rootParams[metadataIdx].m_index].ShaderVisibility =
+							D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL;
 					}
 				}
 				break;
@@ -616,7 +628,7 @@ namespace dx12
 				rangeEnd++;
 			}
 
-			// How many individual descriptor tables we're creating:
+			// How many individual descriptor tables we're creating for the current range type:
 			const uint32_t numDescriptorRanges = static_cast<uint32_t>(tableRanges[rangeTypeIdx].size());
 
 			// Initialize the root parameter as a descriptor table built from our ranges:
@@ -628,7 +640,8 @@ namespace dx12
 			// Populate the binding metadata:
 			for (uint8_t offset = 0; offset < namesInRange.size(); offset++)
 			{
-				newRootSig->m_namesToRootEntries.emplace(namesInRange[offset],
+				newRootSig->InsertNewRootParameMetadata(
+					namesInRange[offset].c_str(),
 					RootParameter{
 						.m_index = rootIdx,
 						.m_type = RootParameter::Type::DescriptorTable,
@@ -644,7 +657,8 @@ namespace dx12
 			const uint32_t descriptorTableBitmask = (1 << rootIdx);
 			newRootSig->m_rootSigDescriptorTableIdxBitmask |= descriptorTableBitmask;
 
-		} // End RangeType loop
+		} // End descriptor table RangeType loop
+
 
 		// Allow input layout and deny unnecessary access to certain pipeline stages
 		D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
@@ -732,19 +746,19 @@ namespace dx12
 
 	RootSignature::RootParameter const* RootSignature::GetRootSignatureEntry(std::string const& resourceName) const
 	{
-		auto const& result = m_namesToRootEntries.find(resourceName);
-		const bool hasResource = result != m_namesToRootEntries.end();
+		auto const& result = m_namesToRootParamsIdx.find(resourceName);
+		const bool hasResource = result != m_namesToRootParamsIdx.end();
 
 		SEAssert("Root signature does not contain a parameter with that name", 
 			hasResource || 
 			en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
 
-		return hasResource ? &result->second : nullptr;
+		return hasResource ? &m_rootParams[result->second] : nullptr;
 	}
 
 
 	bool RootSignature::HasResource(std::string const& resourceName) const
 	{
-		return m_namesToRootEntries.contains(resourceName);
+		return m_namesToRootParamsIdx.contains(resourceName);
 	}
 }
