@@ -504,15 +504,11 @@ namespace dx12
 			SEAssert("It is unexpected that we're trying to attach a texture with DepthTarget usage to a compute shader",
 				(texTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0);
 
+			// We bind our UAV targets by mapping TextureTargetSet index to register/bind point values
+			RootSignature::RootParameter const* rootSigEntry = m_currentRootSignature->GetRootSignatureEntry(
+					RootSignature::DescriptorType::UAV,
+					static_cast<uint8_t>(i));
 
-
-			// TEMP HAX: Hard code a name
-			std::string const& shaderName = "output"; // TODO: Bind targets by texture target set index
-	
-
-
-			RootSignature::RootParameter const* rootSigEntry =
-				m_currentRootSignature->GetRootSignatureEntry(shaderName);
 			SEAssert("Invalid root signature entry",
 				rootSigEntry || en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
 
@@ -522,7 +518,7 @@ namespace dx12
 					rootSigEntry->m_type == RootSignature::RootParameter::Type::DescriptorTable);
 
 				SEAssert("Compute shaders can only write to UAVs",
-					rootSigEntry->m_tableEntry.m_type == dx12::RootSignature::RangeType::UAV);
+					rootSigEntry->m_tableEntry.m_type == dx12::RootSignature::DescriptorType::UAV);
 
 
 				re::TextureTarget::TargetParams const& targetParams = texTarget->GetTargetParams();
@@ -621,7 +617,7 @@ namespace dx12
 			dx12::DescriptorAllocation const* descriptorAllocation = nullptr;
 			switch (rootSigEntry->m_tableEntry.m_type)
 			{
-			case dx12::RootSignature::RangeType::SRV:
+			case dx12::RootSignature::DescriptorType::SRV:
 			{
 				SEAssert("TODO: Handle texture input resources with > 1 SRV", 
 					texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV].size() == 1);
@@ -633,7 +629,7 @@ namespace dx12
 				descriptorAllocation = &texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV][0];
 			}
 			break;
-			case dx12::RootSignature::RangeType::UAV:
+			case dx12::RootSignature::DescriptorType::UAV:
 			{
 				// This is for UAV *inputs*
 				SEAssertF("TODO: Implement this. Need to figure out how to specify the appropriate mip level/subresource index");

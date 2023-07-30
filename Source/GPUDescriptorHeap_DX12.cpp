@@ -139,13 +139,13 @@ namespace dx12
 
 		for (RootSignature::DescriptorTable const& descriptorTable : descriptorTableMetadata)
 		{
-			for (size_t rangeType = 0; rangeType < RootSignature::RangeType::Type_Count; rangeType++)
+			for (size_t rangeType = 0; rangeType < RootSignature::DescriptorType::Type_Count; rangeType++)
 			{
 				for (size_t rangeEntry = 0; rangeEntry < descriptorTable.m_ranges[rangeType].size(); rangeEntry++)
 				{
 					switch (rangeType)
 					{
-					case RootSignature::RangeType::SRV:
+					case RootSignature::DescriptorType::SRV:
 					{
 						SetDescriptorTable(
 							descriptorTable.m_index, 
@@ -156,7 +156,7 @@ namespace dx12
 							1);						
 					}
 					break;
-					case RootSignature::RangeType::UAV:
+					case RootSignature::DescriptorType::UAV:
 					{
 						SetDescriptorTable(
 							descriptorTable.m_index,
@@ -167,7 +167,7 @@ namespace dx12
 						1);
 					}
 					break;
-					case RootSignature::RangeType::CBV:
+					case RootSignature::DescriptorType::CBV:
 					{
 						SEAssertF("TODO: Handle this type");
 					}

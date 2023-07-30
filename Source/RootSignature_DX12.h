@@ -47,7 +47,7 @@ namespace dx12
 				} m_uavDesc;
 			};
 		};
-		enum RangeType
+		enum DescriptorType
 		{
 			SRV,
 			UAV,
@@ -59,13 +59,13 @@ namespace dx12
 		};
 		struct Range
 		{
-			RangeType m_type = RangeType::Type_Invalid;
+			DescriptorType m_type = DescriptorType::Type_Invalid;
 
 			std::vector<RangeEntry> m_rangeEntries;
 		};
 		struct DescriptorTable
 		{
-			DescriptorTable() { m_ranges.resize(RangeType::Type_Count); }
+			DescriptorTable() { m_ranges.resize(DescriptorType::Type_Count); }
 			
 			uint8_t m_index = k_invalidRootSigIndex;
 			std::vector<std::vector<RangeEntry>> m_ranges;
@@ -80,7 +80,7 @@ namespace dx12
 		};
 		struct TableEntry
 		{
-			RangeType m_type = RangeType::Type_Invalid;
+			DescriptorType m_type = DescriptorType::Type_Invalid;
 			uint8_t m_offset = k_invalidOffset;
 		};
 		struct RootParameter
@@ -98,6 +98,9 @@ namespace dx12
 				Type_Count,
 				Type_Invalid = Type_Count
 			} m_type = Type::Type_Invalid;
+
+			uint8_t m_registerBindPoint = k_invalidRegisterVal;
+			uint8_t m_registerSpace = k_invalidRegisterVal;
 
 			union
 			{
@@ -121,7 +124,10 @@ namespace dx12
 		uint64_t GetRootSigDescHash() const;
 
 		std::vector<RootParameter> const& GetRootSignatureEntries() const;
+
 		RootParameter const* GetRootSignatureEntry(std::string const& resourceName) const;
+		RootParameter const* GetRootSignatureEntry(DescriptorType, uint8_t registerBindPoint) const;
+
 		bool HasResource(std::string const& resourceName) const;
 
 
@@ -144,10 +150,11 @@ namespace dx12
 		static_assert(k_totalRootSigDescriptorTableIndices == (sizeof(m_rootSigDescriptorTableIdxBitmask) * 8));
 
 	private: // Binding metadata
-		void InsertNewRootParameMetadata(char const* name, RootParameter&&);
+		void InsertNewRootParamMetadata(char const* name, RootParameter&&);
 
 		std::vector<RootParameter> m_rootParams; // 1 entry for each descriptor, regardless of its root/table location
-		std::unordered_map<std::string, size_t> m_namesToRootParamsIdx; 
+		std::unordered_map<std::string, size_t> m_namesToRootParamsIdx;
+		std::array<std::unordered_map<uint8_t, size_t>, DescriptorType::Type_Count> m_registerToRootParamIdx;
 
 		std::vector<DescriptorTable> m_descriptorTables; // For null descriptor initialization
 	};
