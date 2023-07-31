@@ -384,6 +384,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="SaberEngine.licenseheader" />
+    <None Include="SaberGlobals.hlsli" />
     <None Include="Shaders\HLSL\SaberCommon.hlsli">
       <FileType>Document</FileType>
     </None>

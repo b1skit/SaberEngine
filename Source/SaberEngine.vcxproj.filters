@@ -881,6 +881,9 @@
     <None Include="Shaders\HLSL\SaberCommon.hlsli">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </None>
+    <None Include="SaberGlobals.hlsli">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\HelloTriangle_VShader.hlsl">
