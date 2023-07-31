@@ -8,6 +8,8 @@
 using re::Batch;
 using en::SceneManager;
 
+//#define TEST_STAGE_SHADER // Forces EVERYTHING to use the same shader. 
+//#define HELLO_TRIANGLE // Show the hello triangle
 
 namespace gr
 {
@@ -24,6 +26,7 @@ namespace gr
 	void TempDebugGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
 		// Debug mesh:
+#if defined(HELLO_TRIANGLE)
 		m_helloTriangle = meshfactory::CreateHelloTriangle(10.f, -10.f);
 
 		std::shared_ptr<re::Shader> helloTriangleShader = re::Shader::Create("HelloTriangle");
@@ -32,12 +35,10 @@ namespace gr
 		m_helloTriangleMaterial->SetShader(helloTriangleShader);
 
 		m_helloTriangle->SetMeshMaterial(m_helloTriangleMaterial);
-
+#endif
 
 		std::shared_ptr<re::Shader> debugShader = re::Shader::Create("Debug");
 
-
-//#define TEST_STAGE_SHADER // Forces EVERYTHING to use the same shader. 
 #ifdef TEST_STAGE_SHADER
 		m_tempDebugStage->SetStageShader(debugShader);
 #endif
@@ -64,6 +65,7 @@ namespace gr
 
 	void TempDebugGraphicsSystem::CreateBatches()
 	{
+#if defined(HELLO_TRIANGLE)
 		// Hello triangle batch:
 		Batch helloTriangleBatch = Batch(m_helloTriangle.get(), m_helloTriangle->GetMeshMaterial());
 
@@ -83,7 +85,7 @@ namespace gr
 		helloTriangleBatch.SetParameterBlock(instancedMeshParams);
 
 		m_tempDebugStage->AddBatch(helloTriangleBatch);
-
+#endif
 
 		// Copy the scene batches, and attach a shader:
 		std::vector<re::Batch> const& sceneBatches = re::RenderManager::Get()->GetSceneBatches();
