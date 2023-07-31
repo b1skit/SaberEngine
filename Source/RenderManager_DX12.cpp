@@ -277,6 +277,15 @@ namespace dx12
 					{
 						commandList->SetParameterBlock(perFramePB.get());
 					}
+
+					// Set per-frame stage textures/sampler inputs:
+					for (auto const& texSamplerInput : renderStage->GetPerFrameTextureInputs())
+					{
+						commandList->SetTexture(
+							std::get<0>(texSamplerInput),	// Shader name
+							std::get<1>(texSamplerInput));	// Texture
+						// Note: Static samplers have already been set during root signature creation
+					}
 				};
 
 				re::Shader* stageShader = renderStage->GetStageShader();
