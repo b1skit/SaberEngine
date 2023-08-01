@@ -41,7 +41,15 @@ namespace re
 			// TODO: Populate this
 		};
 
-		typedef std::vector<std::tuple<std::string, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>>> RenderStageTextureAndSamplerInput;
+		static constexpr uint32_t k_allSubresources = std::numeric_limits<uint32_t>::max();
+		struct RenderStageTextureAndSamplerInput
+		{
+			std::string m_shaderName;
+			std::shared_ptr<Texture> m_texture;
+			std::shared_ptr<Sampler> m_sampler;
+
+			uint32_t m_subresource = k_allSubresources;
+		};
 
 
 	public:
@@ -69,8 +77,8 @@ namespace re
 
 		// Per-frame values must be re-set every frame
 		void SetPerFrameTextureInput(
-			std::string const& shaderName, std::shared_ptr<re::Texture> tex, std::shared_ptr<re::Sampler> sampler);
-		inline RenderStageTextureAndSamplerInput const& GetPerFrameTextureInputs() const { return m_perFrameTextureSamplerInputs; }
+			std::string const& shaderName, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>, uint32_t subresource = k_allSubresources);
+		std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& GetPerFrameTextureInputs() const;
 
 		void AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb);
 		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetPermanentParameterBlocks() const { return m_permanentParamBlocks; }
@@ -102,7 +110,7 @@ namespace re
 		bool m_writesColor; // TODO: This should be a member of the gr::PipelineState
 
 		// Per-frame members are cleared every frame
-		RenderStageTextureAndSamplerInput m_perFrameTextureSamplerInputs;
+		std::vector<RenderStageTextureAndSamplerInput> m_perFrameTextureSamplerInputs;
 		std::vector<std::shared_ptr<re::ParameterBlock>> m_perFrameParamBlocks;
 
 		std::vector<std::shared_ptr<re::ParameterBlock >> m_permanentParamBlocks;
@@ -158,6 +166,12 @@ namespace re
 	inline std::shared_ptr<re::TextureTargetSet const> RenderStage::GetTextureTargetSet() const
 	{
 		return m_textureTargetSet;
+	}
+
+
+	inline std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& RenderStage::GetPerFrameTextureInputs() const
+	{
+		return m_perFrameTextureSamplerInputs;
 	}
 
 

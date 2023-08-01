@@ -56,6 +56,7 @@ namespace re
 		};
 		static_assert((uint32_t)re::Batch::Filter::Filter_Count <= 32);
 
+		// TODO: Switch to a struct, pack an optional subresource index (combine with RenderStage::RenderStageTextureAndSamplerInput ?)
 		typedef std::vector<std::tuple<std::string, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>>> BatchTextureAndSamplerInput;
 
 

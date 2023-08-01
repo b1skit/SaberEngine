@@ -523,8 +523,11 @@ namespace opengl
 		re::Shader const& shader,
 		std::string const& uniformName, 
 		std::shared_ptr<re::Texture> texture,
-		std::shared_ptr<re::Sampler>sampler)
+		std::shared_ptr<re::Sampler>sampler,
+		uint32_t subresource)
 	{
+		SEAssert("TODO: Support binding individual mips", subresource == std::numeric_limits<uint32_t>::max());
+
 		opengl::Shader::SetUniform(shader, uniformName, texture.get(), opengl::Shader::UniformType::Texture, 1);
 		opengl::Shader::SetUniform(shader, uniformName, sampler.get(), opengl::Shader::UniformType::Sampler, 1);
 	}

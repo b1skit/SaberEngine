@@ -79,7 +79,7 @@ namespace dx12
 		void SetGraphicsRoot32BitConstants(
 			uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;
 
-		void SetTexture(std::string const& shaderName, std::shared_ptr<re::Texture>);
+		void SetTexture(std::string const& shaderName, std::shared_ptr<re::Texture>, uint32_t subresource);
 
 		// TODO: Write a helper that takes a MeshPrimitive; make these private
 		void SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY) const;

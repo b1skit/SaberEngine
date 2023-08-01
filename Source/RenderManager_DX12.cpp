@@ -282,8 +282,7 @@ namespace dx12
 					for (auto const& texSamplerInput : renderStage->GetPerFrameTextureInputs())
 					{
 						commandList->SetTexture(
-							std::get<0>(texSamplerInput),	// Shader name
-							std::get<1>(texSamplerInput));	// Texture
+							texSamplerInput.m_shaderName, texSamplerInput.m_texture, texSamplerInput.m_subresource);
 						// Note: Static samplers have already been set during root signature creation
 					}
 				};
@@ -357,7 +356,8 @@ namespace dx12
 						{
 							currentCommandList->SetTexture(
 								std::get<0>(texSamplerInput),	// Shader name
-								std::get<1>(texSamplerInput));	// Texture
+								std::get<1>(texSamplerInput),	// Texture
+								std::numeric_limits<uint32_t>::max());
 							// Note: Static samplers have already been set during root signature creation
 						}
 					}

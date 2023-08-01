@@ -70,14 +70,14 @@ namespace re
 
 
 	void RenderStage::SetPerFrameTextureInput(
-		string const& shaderName, shared_ptr<Texture> tex, shared_ptr<Sampler> sampler)
+		string const& shaderName, shared_ptr<Texture> tex, shared_ptr<Sampler> sampler, uint32_t subresource /*= k_allSubresources*/)
 	{
 		SEAssert("Stage shader is null. Set the stage shader before this call", m_stageShader != nullptr);
 		SEAssert("Invalid shader sampler name", !shaderName.empty());
 		SEAssert("Invalid texture", tex != nullptr);
 		SEAssert("Invalid sampler", sampler != nullptr);
 
-		m_perFrameTextureSamplerInputs.emplace_back(shaderName, tex, sampler);
+		m_perFrameTextureSamplerInputs.emplace_back(RenderStageTextureAndSamplerInput{ shaderName, tex, sampler, subresource });
 	}
 	
 

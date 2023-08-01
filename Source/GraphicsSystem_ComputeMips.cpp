@@ -2,6 +2,27 @@
 #include "GraphicsSystem_ComputeMips.h"
 
 
+namespace
+{
+	struct MipGenerationParams
+	{
+		glm::vec4 g_textureDimensions; // .xyzw = width, height, 1/width, 1/height
+		glm::uvec4 g_mipParams;
+		bool g_isSRGB;
+	};
+
+	MipGenerationParams CreateMipGenerationParamsData(
+		std::shared_ptr<re::Texture> tex, uint32_t srcMipLevel, uint32_t numMips)
+	{
+		MipGenerationParams mipGenerationParams{};
+		mipGenerationParams.g_textureDimensions = tex->GetTextureDimenions();
+		mipGenerationParams.g_mipParams = glm::uvec4(srcMipLevel, numMips, 0, 0);
+		mipGenerationParams.g_isSRGB = tex->IsSRGB();
+		return mipGenerationParams;
+	}
+}
+
+
 namespace gr
 {
 	ComputeMipsGraphicsSystem::ComputeMipsGraphicsSystem(std::string name)
@@ -43,15 +64,25 @@ namespace gr
 
 					mipGenerationStage->SetStageShader(m_mipMapGenerationShader);
 
-					const uint32_t numStageTargets =
+					std::shared_ptr<re::Sampler> const mipSampler =
+						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearLinear);
+
+					mipGenerationStage->SetPerFrameTextureInput("SrcTex", newTexture, mipSampler, 0);
+
+					const uint32_t numMipStages =
 						currentMip + numTargetsPerStage < totalMips ? numTargetsPerStage : (totalMips - currentMip);
 
+					mipGenerationStage->AddSingleFrameParameterBlock(re::ParameterBlock::Create(
+						"MipGenerationParams", 
+						CreateMipGenerationParamsData(newTexture, currentMip, numMipStages),
+						re::ParameterBlock::PBType::SingleFrame));
+
 					const std::string targetSetName = newTexture->GetName() + 
-						std::format(" MIP {} - {} generation stage targets", currentMip, currentMip + numStageTargets - 1);
+						std::format(" MIP {} - {} generation stage targets", currentMip, currentMip + numMipStages - 1);
 
 					std::shared_ptr<re::TextureTargetSet> mipGenTargets = re::TextureTargetSet::Create(targetSetName);
 
-					for (uint32_t currentTargetIdx = 0; currentTargetIdx < numStageTargets; currentTargetIdx++)
+					for (uint32_t currentTargetIdx = 0; currentTargetIdx < numMipStages; currentTargetIdx++)
 					{
 						re::TextureTarget::TargetParams mipTargetParams;
 						mipTargetParams.m_targetFace = faceIdx;
@@ -59,12 +90,16 @@ namespace gr
 
 						mipGenTargets->SetColorTarget(currentTargetIdx, newTexture, mipTargetParams);
 					}
-
 					mipGenerationStage->SetTextureTargetSet(mipGenTargets);
+
+					constexpr uint32_t k_computeBlockSize = 2; // Handle 2x2 blocks (skipping mip 0)
 
 					// Add our dispatch information to a compute batch:
 					re::Batch computeBatch = re::Batch(re::Batch::ComputeParams{
-						.m_threadGroupCount = glm::uvec3(newTexture->Width(), newTexture->Height(), 1)
+						.m_threadGroupCount = glm::uvec3(
+							newTexture->Width() / k_computeBlockSize, 
+							newTexture->Height() / k_computeBlockSize, 
+							1)
 						});
 					mipGenerationStage->AddBatch(computeBatch);
 

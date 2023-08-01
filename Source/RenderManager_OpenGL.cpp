@@ -194,10 +194,11 @@ namespace opengl
 				for (auto const& texSamplerInput : renderStage->GetPerFrameTextureInputs())
 				{
 					opengl::Shader::SetTextureAndSampler(
-						*stageShader, 
-						std::get<0>(texSamplerInput), // uniform name
-						std::get<1>(texSamplerInput), // texture
-						std::get<2>(texSamplerInput)); // sampler
+						*stageShader,
+						texSamplerInput.m_shaderName, // uniform name
+						texSamplerInput.m_texture,
+						texSamplerInput.m_sampler,
+						texSamplerInput.m_subresource);
 				}
 
 				// Render stage batches:
@@ -218,7 +219,8 @@ namespace opengl
 								*stageShader,
 								std::get<0>(texSamplerInput), // uniform name
 								std::get<1>(texSamplerInput), // texture
-								std::get<2>(texSamplerInput)); // sampler
+								std::get<2>(texSamplerInput), // sampler
+								std::numeric_limits<uint32_t>::max()); // TODO: Pass a variable subresource index
 						}
 					}
 

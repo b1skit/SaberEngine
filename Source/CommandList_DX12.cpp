@@ -596,7 +596,7 @@ namespace dx12
 	}
 
 
-	void CommandList::SetTexture(std::string const& shaderName, std::shared_ptr<re::Texture> texture)
+	void CommandList::SetTexture(std::string const& shaderName, std::shared_ptr<re::Texture> texture, uint32_t subresource)
 	{
 		SEAssert("Pipeline is not currently set", m_currentPSO);
 
@@ -614,6 +614,11 @@ namespace dx12
 			SEAssert("We currently assume all textures belong to descriptor tables",
 				rootSigEntry->m_type == RootSignature::RootParameter::Type::DescriptorTable);
 
+			if (subresource > texture->GetNumMips())
+			{
+				subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+			}
+
 			dx12::DescriptorAllocation const* descriptorAllocation = nullptr;
 			switch (rootSigEntry->m_tableEntry.m_type)
 			{
@@ -622,9 +627,18 @@ namespace dx12
 				SEAssert("TODO: Handle texture input resources with > 1 SRV", 
 					texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV].size() == 1);
 
+				SEAssert("Unexpected command list type",
+					m_type == D3D12_COMMAND_LIST_TYPE_COMPUTE || m_type == D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+				D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+				if (m_type != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE)
+				{
+					toState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+				}
+				
 				TransitionResource(texture,
-					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-					D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+					toState,
+					subresource);
 
 				descriptorAllocation = &texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV][0];
 			}
