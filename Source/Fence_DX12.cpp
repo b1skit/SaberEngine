@@ -38,6 +38,7 @@ namespace dx12
 	Fence::Fence()
 		: m_fence(nullptr)
 		, m_fenceEvent(nullptr)
+		, m_mostRecentlyConfirmedFence(0)
 	{
 	}
 
@@ -70,11 +71,12 @@ namespace dx12
 	}
 
 
-	void Fence::CPUSignal(uint64_t fenceValue) const
+	void Fence::CPUSignal(uint64_t fenceValue)
 	{
 		// Updates the fence to the specified value from the CPU side
 		HRESULT hr = m_fence->Signal(fenceValue);
 		CheckHResult(hr, "Failed to signal fence");
+		m_mostRecentlyConfirmedFence = fenceValue;
 	}
 
 
@@ -94,7 +96,10 @@ namespace dx12
 
 	bool Fence::IsFenceComplete(uint64_t fenceValue) const
 	{
-		const uint64_t completedValue = m_fence->GetCompletedValue();
-		return completedValue >= fenceValue;
+		if (fenceValue > m_mostRecentlyConfirmedFence)
+		{
+			m_mostRecentlyConfirmedFence = m_fence->GetCompletedValue();
+		}
+		return m_mostRecentlyConfirmedFence >= fenceValue;
 	}
 }

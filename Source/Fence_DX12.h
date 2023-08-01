@@ -26,7 +26,7 @@ namespace dx12
 		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, char const* eventName);
 		void Destroy();
 
-		void CPUSignal(uint64_t fenceValue) const; // Updates the fence to the given value from the CPU side
+		void CPUSignal(uint64_t fenceValue); // Updates the fence to the given value from the CPU side
 		void CPUWait(uint64_t fenceValue) const; // Blocks the CPU until the fence reaches the given value
 		
 		bool IsFenceComplete(uint64_t fenceValue) const;
@@ -37,6 +37,9 @@ namespace dx12
 		Microsoft::WRL::ComPtr<ID3D12Fence> m_fence;
 		HANDLE m_fenceEvent; // OS event object: Receives notifications when a fence reaches a specific value
 
+		// Not necessarily the most recent fence value: But the most recently confirmed value seen during calls to
+		// CPUSignal(), IsFenceComplete(). Cached to minimize calls to GetCompletedValue()
+		mutable uint64_t m_mostRecentlyConfirmedFence; 
 
 	private: // No copying allowed:
 		Fence(Fence const&) = delete;
