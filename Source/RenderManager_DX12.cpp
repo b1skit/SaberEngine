@@ -302,30 +302,32 @@ namespace dx12
 				case re::RenderStage::RenderStageType::Compute:
 				{
 					currentCommandList->SetComputeTargets(*stageTargets);
+					
+					// TODO: Support compute target clearing (tricky: Need a copy of descriptors in the GPU-visible heap)
 				}
 				break;
 				case re::RenderStage::RenderStageType::Graphics:
 				{
 					// Bind our graphics stage render target(s) to the output merger (OM):
 					currentCommandList->SetRenderTargets(*stageTargets);
+
+					// Clear the render targets:
+					// TODO: These should be per-target, to allow different outputs when using MRTs
+					const gr::PipelineState::ClearTarget clearTargetMode = pipelineState.GetClearTarget();
+					if (clearTargetMode == gr::PipelineState::ClearTarget::Color ||
+						clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
+					{
+						currentCommandList->ClearColorTargets(*stageTargets);
+					}
+					if (clearTargetMode == gr::PipelineState::ClearTarget::Depth ||
+						clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
+					{
+						currentCommandList->ClearDepthTarget(stageTargets->GetDepthStencilTarget());
+					}
 				}
 				break;
 				default:
 					SEAssertF("Invalid stage type");
-				}
-
-				// Clear the render targets:
-				// TODO: These should be per-target, to allow different outputs when using MRTs
-				const gr::PipelineState::ClearTarget clearTargetMode = pipelineState.GetClearTarget();
-				if (clearTargetMode == gr::PipelineState::ClearTarget::Color ||
-					clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
-				{
-					currentCommandList->ClearColorTargets(*stageTargets);
-				}
-				if (clearTargetMode == gr::PipelineState::ClearTarget::Depth ||
-					clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
-				{
-					currentCommandList->ClearDepthTarget(stageTargets->GetDepthStencilTarget());
 				}
 
 				// Render stage batches:
