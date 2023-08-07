@@ -370,7 +370,7 @@ namespace dx12
 			CheckHResult(hr, "Failed to get shader description");
 
 			// Parse the resource bindings for the current shader stage:
-			D3D12_SHADER_INPUT_BIND_DESC inputBindingDesc;
+			D3D12_SHADER_INPUT_BIND_DESC inputBindingDesc{};
 
 			auto RangeHasMatchingName = [&inputBindingDesc](RangeInput const& a)
 			{

@@ -294,11 +294,11 @@ namespace re
 	}
 
 
-	uint32_t Texture::GetMipDimension(uint32_t mipLevel) const
+	glm::vec4 Texture::GetSubresourceDimensions(uint32_t mipLevel) const
 	{
-		// No reason we can't support non-square textures, but until we need to just assert
-		SEAssert("Dimensions mismatch but (currently) assuming square texture", Width() == Height());
-		return (uint32_t)(Width() / glm::pow(2.0f, mipLevel));
+		const float widthDims = Width() / glm::pow(2.0f, mipLevel);
+		const float heightDims = Height() / glm::pow(2.0f, mipLevel);
+		return glm::vec4(widthDims, heightDims, 1.f / widthDims, 1.f / heightDims);
 	}
 
 

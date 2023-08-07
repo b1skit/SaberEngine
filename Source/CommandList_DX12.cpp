@@ -624,9 +624,6 @@ namespace dx12
 			{
 			case dx12::RootSignature::DescriptorType::SRV:
 			{
-				SEAssert("TODO: Handle texture input resources with > 1 SRV", 
-					texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV].size() == 1);
-
 				SEAssert("Unexpected command list type",
 					m_type == D3D12_COMMAND_LIST_TYPE_COMPUTE || m_type == D3D12_COMMAND_LIST_TYPE_DIRECT);
 
@@ -639,6 +636,9 @@ namespace dx12
 				TransitionResource(texture,
 					toState,
 					subresource);
+
+				SEAssert("TODO: It's currently unexpected a texture resources has > 1 SRV",
+					texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV].size() == 1);
 
 				descriptorAllocation = &texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV][0];
 			}

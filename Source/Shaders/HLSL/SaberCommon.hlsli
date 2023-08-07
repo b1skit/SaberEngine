@@ -63,6 +63,11 @@ ConstantBuffer<CameraParamsCB> CameraParams;
 
 
 SamplerState WrapLinearLinear;
+
 Texture2D<float4> MatAlbedo; // TODO: Add a g_ prefix to texture names
+Texture2D<float4> MatMetallicRoughness;
+Texture2D<float4> MatNormal;
+Texture2D<float4> MatOcclusion;
+Texture2D<float4> MatEmissive;
 
 #endif // SABER_COMMON_HLSL

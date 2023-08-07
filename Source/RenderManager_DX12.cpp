@@ -354,6 +354,7 @@ namespace dx12
 					{
 						for (auto const& texSamplerInput : batches[batchIdx].GetTextureAndSamplerInputs())
 						{
+							// TODO: Support batch textures of any subresource/mip
 							currentCommandList->SetTexture(
 								std::get<0>(texSamplerInput),	// Shader name
 								std::get<1>(texSamplerInput),	// Texture

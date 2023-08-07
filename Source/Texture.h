@@ -110,7 +110,7 @@ namespace re
 		std::vector<uint8_t>& GetTexels();
 
 		uint32_t GetNumMips() const;
-		uint32_t GetMipDimension(uint32_t mipLevel) const;
+		glm::vec4 GetSubresourceDimensions(uint32_t mipLevel) const; // .xyzw = subresource width, height, 1/width, 1/height
 		bool IsPowerOfTwo() const;
 		bool IsSRGB() const;
 

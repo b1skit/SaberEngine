@@ -233,12 +233,12 @@ namespace opengl
 		const bool hasTarget = firstTarget != nullptr;
 		if (hasTarget && firstTarget->GetNumMips() > 1 && firstTargetMipLevel > 0)
 		{
-			uint32_t mipSize = firstTarget->GetMipDimension(firstTargetMipLevel);
+			const glm::vec4 mipDimensions = firstTarget->GetSubresourceDimensions(firstTargetMipLevel);
 			glViewport(
 				0,
 				0,
-				mipSize,
-				mipSize);
+				static_cast<GLsizei>(mipDimensions.x),
+				static_cast<GLsizei>(mipDimensions.y));
 		}
 		else
 		{
