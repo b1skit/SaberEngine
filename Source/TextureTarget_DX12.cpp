@@ -138,7 +138,6 @@ namespace dx12
 		uint32_t numTargets = 0;
 		for (uint8_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
-			
 			if (!targetSet.GetColorTarget(i))
 			{
 				break;

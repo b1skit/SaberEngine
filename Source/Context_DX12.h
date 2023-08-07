@@ -47,11 +47,7 @@ namespace dx12
 			uint64_t m_frameFenceValues[dx12::RenderManager::GetNumFrames()]; // Fence values for signalling the command queue
 			
 			// Access the PSO library via dx12::Context::GetPipelineStateObject():
-			std::unordered_map<uint64_t, // re::Shader::GetName()
-				std::unordered_map<uint64_t, // gr::PipelineState::GetPipelineStateDataHash()
-					std::unordered_map<uint64_t, // re::TextureTargetSet::GetTargetSetSignature()
-						std::shared_ptr<dx12::PipelineState>>>> m_PSOLibrary;
-			// TODO: Combine hashes, instead of nesting hash tables
+			std::unordered_map<uint64_t, std::shared_ptr<dx12::PipelineState>> m_PSOLibrary;
 
 			// Hashed D3D12_VERSIONED_ROOT_SIGNATURE_DESC -> Root sig object
 			std::unordered_map<uint64_t, std::shared_ptr<dx12::RootSignature>> m_rootSigLibrary;
