@@ -296,8 +296,8 @@ namespace re
 
 	glm::vec4 Texture::GetSubresourceDimensions(uint32_t mipLevel) const
 	{
-		const float widthDims = Width() / glm::pow(2.0f, mipLevel);
-		const float heightDims = Height() / glm::pow(2.0f, mipLevel);
+		const float widthDims = Width() / static_cast<float>(glm::pow(2.0f, mipLevel));
+		const float heightDims = Height() / static_cast<float>(glm::pow(2.0f, mipLevel));
 		return glm::vec4(widthDims, heightDims, 1.f / widthDims, 1.f / heightDims);
 	}
 
