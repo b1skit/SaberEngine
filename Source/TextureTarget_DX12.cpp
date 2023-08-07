@@ -35,27 +35,33 @@ namespace dx12
 		SEAssert("Invalid number of color targets", 
 			numColorTargets > 0 && numColorTargets <= dx12::SysInfo::GetMaxRenderTargets());
 
+		
 		for (std::unique_ptr<re::TextureTarget> const& colorTarget : targetSet.GetColorTargets())
 		{
-			if (colorTarget)
+			if (colorTarget == nullptr)
 			{
-				re::Texture::TextureParams const& texParams = colorTarget->GetTexture()->GetTextureParams();
-				SEAssert("Texture has the wrong usage set", 
-					((texParams.m_usage & re::Texture::Usage::ColorTarget) || texParams.m_useMIPs) || // TODO: This sucks. We shouldn't need to differentiate between color targets, and textures that need mips
-					(texParams.m_usage & re::Texture::Usage::SwapchainColorProxy));
+				continue;
+			}
 
+			re::Texture::TextureParams const& texParams = colorTarget->GetTexture()->GetTextureParams();
+
+			// Create RTVs:
+			if ((texParams.m_usage & re::Texture::Usage::ColorTarget) || 
+				(texParams.m_usage & re::Texture::Usage::SwapchainColorProxy))
+			{				
 				dx12::Texture::PlatformParams* texPlatParams =
 					colorTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 				
 				SEAssert("Texture is not created", texPlatParams->m_isCreated && texPlatParams->m_textureResource);
 
-				re::TextureTarget::TargetParams targetParams = colorTarget->GetTargetParams();
 				dx12::TextureTarget::PlatformParams* targetPlatParams = 
 					colorTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
 				// Allocate a descriptor for our view:
 				targetPlatParams->m_rtvDsvDescriptor = std::move(
 					ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::RTV].Allocate(1));
+
+				re::TextureTarget::TargetParams targetParams = colorTarget->GetTargetParams();
 
 				// Create the RTV:
 				D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
@@ -75,7 +81,7 @@ namespace dx12
 					texPlatParams->m_textureResource.Get(), // Pointer to the resource containing the render target texture
 					&renderTargetViewDesc,
 					targetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor()); // Descriptor destination
-			}			
+			}
 		}
 	}
 
@@ -90,15 +96,13 @@ namespace dx12
 		dx12::TextureTargetSet::PlatformParams* targetSetParams = 
 			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 
-		// Note: We handle this differently in OpenGL; Putting this here to help with debugging for now
+		SEAssert("Target does not have the depth target usage type",
+			(targetSet.GetDepthStencilTarget()->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget));
+
 		SEAssert("Depth target is already created", !targetSetParams->m_depthIsCreated);
 		targetSetParams->m_depthIsCreated = true;
 
-		SEAssert("Target has the wrong usage type", 
-			(targetSet.GetDepthStencilTarget()->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget));
-
 		std::shared_ptr<re::Texture> depthTargetTex = targetSet.GetDepthStencilTarget()->GetTexture();
-
 		dx12::Texture::PlatformParams* depthTexPlatParams =
 			depthTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 

@@ -334,6 +334,7 @@ namespace
 			}
 		}
 		
+		// We generate MIPs in DX12 via a compute shader
 		const bool usesMips = texParams.m_useMIPs;
 		if (!usesMips)
 		{
@@ -487,10 +488,6 @@ namespace dx12
 
 			// TODO: use D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS for color textures (unless MSAA enabled)?
 			D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE;
-			if (numMips > 1)
-			{
-				flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-			}
 			if (needsUAV)
 			{
 				flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
