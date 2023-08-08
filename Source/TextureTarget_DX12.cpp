@@ -67,7 +67,7 @@ namespace dx12
 				D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
 				renderTargetViewDesc.Format = texPlatParams->m_format;
 				
-				SEAssert("TODO: Support render targets of different dimensions",
+				SEAssert("TODO: Support render targets of dimensions other than 2D",
 					texParams.m_dimension == re::Texture::Dimension::Texture2D && texParams.m_faces == 1);
 
 				renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2D;

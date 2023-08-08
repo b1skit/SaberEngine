@@ -52,7 +52,6 @@ namespace
 				bool foundComment = false;
 				while (checkIndex >= 0 && shaderText[checkIndex] != '\n')
 				{
-					// TODO: Search from the beginning of the line
 					// -> If we hit a "#include" substring first, we've got an include
 					// -> Seach until the end of the line, to strip out any trailing //comments
 					if (shaderText[checkIndex] == '/' && checkIndex > 0 && shaderText[checkIndex - 1] == '/')
@@ -526,6 +525,7 @@ namespace opengl
 		std::shared_ptr<re::Sampler>sampler,
 		uint32_t subresource)
 	{
+		// Tricky: glBindImageTexture doesn't support sRGB internal formats
 		SEAssert("TODO: Support binding individual mips", subresource == std::numeric_limits<uint32_t>::max());
 
 		opengl::Shader::SetUniform(shader, uniformName, texture.get(), opengl::Shader::UniformType::Texture, 1);

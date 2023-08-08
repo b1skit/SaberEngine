@@ -43,10 +43,6 @@ namespace dx12
 		HRESULT hr = CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory4));
 		CheckHResult(hr, "Failed to create DXGIFactory2");
 
-		// TODO: The context (currently) calls this function. We shouldn't be calling the context from here
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-
 		const int width = en::Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
 		const int height = en::Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
 
@@ -82,6 +78,10 @@ namespace dx12
 		SEAssert("Window cannot be null", en::CoreEngine::Get()->GetWindow());
 		win32::Window::PlatformParams* windowPlatParams =
 			en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
+
+		// Note: The context (currently) calls this function. This is dicey...
+		dx12::Context::PlatformParams* ctxPlatParams =
+			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 		// Create the swap chain:
 		ComPtr<IDXGISwapChain1> swapChain1;

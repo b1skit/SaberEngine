@@ -58,7 +58,6 @@ namespace re
 			// - Texture view mode: linear, sRGB
 
 			// - Read/write flags: depth, stencil, RGBA ?
-			// - Clear mode, clear color/values?
 		};
 
 	public:
