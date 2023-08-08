@@ -56,8 +56,16 @@ namespace re
 		};
 		static_assert((uint32_t)re::Batch::Filter::Filter_Count <= 32);
 
-		// TODO: Switch to a struct, pack an optional subresource index (combine with RenderStage::RenderStageTextureAndSamplerInput ?)
-		typedef std::vector<std::tuple<std::string, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>>> BatchTextureAndSamplerInput;
+		// TODO: Combine with RenderStage::RenderStageTextureAndSamplerInput struct?
+		static constexpr uint32_t k_allSubresources = std::numeric_limits<uint32_t>::max();
+		struct BatchTextureAndSamplerInput
+		{
+			std::string m_shaderName;
+			std::shared_ptr<re::Texture> m_texture;
+			std::shared_ptr<re::Sampler> m_sampler;
+
+			uint32_t m_subresource = k_allSubresources;
+		};
 
 
 		struct GraphicsParams
@@ -102,8 +110,11 @@ namespace re
 		void SetParameterBlock(std::shared_ptr<re::ParameterBlock> paramBlock);
 
 		void AddTextureAndSamplerInput(
-			std::string const& shaderName, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>);
-		BatchTextureAndSamplerInput const& GetTextureAndSamplerInputs() const;
+			std::string const& shaderName, 
+			std::shared_ptr<re::Texture>, 
+			std::shared_ptr<re::Sampler>, 
+			uint32_t subresource = k_allSubresources);
+		std::vector<BatchTextureAndSamplerInput> const& GetTextureAndSamplerInputs() const;
 
 		uint32_t GetBatchFilterMask() const;
 		void SetFilterMaskBit(re::Batch::Filter filterBit);
@@ -131,7 +142,7 @@ namespace re
 
 		std::vector<std::shared_ptr<re::ParameterBlock>> m_batchParamBlocks;
 
-		BatchTextureAndSamplerInput m_batchTextureSamplerInputs;
+		std::vector<BatchTextureAndSamplerInput> m_batchTextureSamplerInputs;
 
 		uint32_t m_batchFilterMask;
 
@@ -180,7 +191,7 @@ namespace re
 	}
 
 
-	inline Batch::BatchTextureAndSamplerInput const& Batch::GetTextureAndSamplerInputs() const
+	inline std::vector<re::Batch::BatchTextureAndSamplerInput> const& Batch::GetTextureAndSamplerInputs() const
 	{
 		return m_batchTextureSamplerInputs;
 	}

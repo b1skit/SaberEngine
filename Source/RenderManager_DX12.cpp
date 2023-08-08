@@ -357,11 +357,10 @@ namespace dx12
 					{
 						for (auto const& texSamplerInput : batches[batchIdx].GetTextureAndSamplerInputs())
 						{
-							// TODO: Support batch textures of any subresource/mip
 							currentCommandList->SetTexture(
-								std::get<0>(texSamplerInput),	// Shader name
-								std::get<1>(texSamplerInput),	// Texture
-								std::numeric_limits<uint32_t>::max());
+								texSamplerInput.m_shaderName,
+								texSamplerInput.m_texture,
+								texSamplerInput.m_subresource);
 							// Note: Static samplers have already been set during root signature creation
 						}
 					}

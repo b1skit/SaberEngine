@@ -218,10 +218,10 @@ namespace opengl
 						{
 							opengl::Shader::SetTextureAndSampler(
 								*stageShader,
-								std::get<0>(texSamplerInput), // uniform name
-								std::get<1>(texSamplerInput), // texture
-								std::get<2>(texSamplerInput), // sampler
-								std::numeric_limits<uint32_t>::max()); // TODO: Pass a variable subresource index
+								texSamplerInput.m_shaderName,
+								texSamplerInput.m_texture,
+								texSamplerInput.m_sampler,
+								texSamplerInput.m_subresource);
 						}
 					}
 
