@@ -597,6 +597,9 @@ namespace dx12
 				subresourceData.data());						// Array of subresource data structs
 			SEAssert("UpdateSubresources returned 0 bytes. This is unexpected", bufferSizeResult > 0);
 
+			SEAssert("TODO: Support SRVs/UAVs for textures of different dimensions",
+				texParams.m_dimension == re::Texture::Dimension::Texture2D && texParams.m_faces == 1);
+
 			// Allocate a descriptor and create an SRV:
 			{
 				SEAssert("An SRV has already been created. This is unexpected", 
@@ -610,9 +613,6 @@ namespace dx12
 
 				D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc {};
 				srvDesc.Format = texPlatParams->m_format;
-
-				SEAssert("TODO: Support textures of different dimensions",
-					texParams.m_dimension == re::Texture::Dimension::Texture2D && texParams.m_faces == 1);
 
 				srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D; // TODO: Support different texture dimensions
 
@@ -652,7 +652,7 @@ namespace dx12
 
 					D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc{
 						.Format = uavCompatibleFormat,
-						.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D, // TODO: Support different UAV dimensions
+						.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D,
 						.Texture2D = D3D12_TEX2D_UAV{
 							.MipSlice = static_cast<uint32_t>(mipIdx),
 							.PlaneSlice = 0}

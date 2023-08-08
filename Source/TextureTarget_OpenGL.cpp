@@ -172,12 +172,14 @@ namespace opengl
 			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
 
 		SEAssert("Cannot bind nonexistant framebuffer",
-			(glIsFramebuffer(targetSetParams->m_frameBufferObject) || 
-				targetSetParams->m_frameBufferObject == 0));
+			targetSetParams->m_frameBufferObject == 0 ||
+				glIsFramebuffer(targetSetParams->m_frameBufferObject));
 
 		glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
 
-		uint32_t attachmentPointOffset = 0;
+		std::vector<GLenum> buffers;
+		buffers.reserve(targetSet.GetColorTargets().size());
+
 		std::shared_ptr<re::Texture> firstTarget = nullptr;
 		uint32_t firstTargetMipLevel = 0;
 		for (uint32_t i = 0; i < targetSet.GetColorTargets().size(); i++)
@@ -197,65 +199,72 @@ namespace opengl
 					(textureParams.m_usage & re::Texture::Usage::ColorTarget) ||
 					(textureParams.m_usage & re::Texture::Usage::SwapchainColorProxy));
 
-				GLenum texTarget = texPlatformParams->m_texTarget;
 				re::TextureTarget::TargetParams const& targetParams = targetSet.GetColorTarget(i)->GetTargetParams();
-				if (textureParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
-				{
-					SEAssert("Invalid cubemap face index", targetParams.m_targetFace <= 5);
-					texTarget = GL_TEXTURE_CUBE_MAP_POSITIVE_X + targetParams.m_targetFace;
-				}
 
 				// Attach a texture object to the bound framebuffer:
-				glFramebufferTexture2D(
-					GL_FRAMEBUFFER,
-					targetPlatformParams->m_attachmentPoint,
-					texTarget,
-					texPlatformParams->m_textureID,
-					targetParams.m_targetSubesource);
+				if (textureParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
+				{
+					glFramebufferTexture2D(
+						GL_FRAMEBUFFER,
+						targetPlatformParams->m_attachmentPoint,
+						GL_TEXTURE_CUBE_MAP_POSITIVE_X + targetParams.m_targetFace,
+						texPlatformParams->m_textureID,
+						targetParams.m_targetSubesource);
+				}
+				else
+				{
+					glNamedFramebufferTexture(
+						targetSetParams->m_frameBufferObject,
+						targetPlatformParams->m_attachmentPoint,
+						texPlatformParams->m_textureID,
+						targetParams.m_targetSubesource);
+				}
+
+				// Record the attachment point so we can set the draw buffers later on:
+				buffers.emplace_back(targetPlatformParams->m_attachmentPoint);
+
+				SEAssert("All framebuffer textures must have the same dimension",
+					firstTarget == nullptr ||
+					(texture->Width() == firstTarget->Width() &&
+						texture->Height() == firstTarget->Height()));
 
 				if (firstTarget == nullptr)
 				{
 					firstTarget = texture;
 					firstTargetMipLevel = targetParams.m_targetSubesource;
 				}
-				else
-				{
-					SEAssert("All framebuffer textures must have the same dimension",
-					texture->Width() == firstTarget->Width() &&
-					texture->Height() == firstTarget->Height());
-				}
-
-				// Prepare for next iteration:
-				attachmentPointOffset++;
 			}
 		}
 
-		const bool hasTarget = firstTarget != nullptr;
-		if (hasTarget && firstTarget->GetNumMips() > 1 && firstTargetMipLevel > 0)
+		if (!buffers.empty())
 		{
-			const glm::vec4 mipDimensions = firstTarget->GetSubresourceDimensions(firstTargetMipLevel);
-			glViewport(
-				0,
-				0,
-				static_cast<GLsizei>(mipDimensions.x),
-				static_cast<GLsizei>(mipDimensions.y));
-		}
-		else
-		{
-			glViewport(
-				targetSet.Viewport().xMin(),
-				targetSet.Viewport().yMin(),
-				targetSet.Viewport().Width(),
-				targetSet.Viewport().Height());
-		}
+			glNamedFramebufferDrawBuffers(
+				targetSetParams->m_frameBufferObject,
+				static_cast<GLsizei>(buffers.size()),
+				buffers.data());
 
-		// Verify the framebuffer (if we actually had any color textures to attach)		
-		bool result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
-		if (!result && hasTarget)
-		{
-			const string errorMsg = 
-				"Framebuffer is not complete: " + std::to_string(glCheckFramebufferStatus(GL_FRAMEBUFFER));
-			SEAssertF(errorMsg);
+			SEAssert("First target cannot be null", firstTarget != nullptr);
+			if (firstTarget->GetNumMips() > 1 && firstTargetMipLevel > 0)
+			{
+				const glm::vec4 mipDimensions = firstTarget->GetSubresourceDimensions(firstTargetMipLevel);
+				glViewport(
+					0,
+					0,
+					static_cast<GLsizei>(mipDimensions.x),
+					static_cast<GLsizei>(mipDimensions.y));
+			}
+			else
+			{
+				glViewport(
+					targetSet.Viewport().xMin(),
+					targetSet.Viewport().yMin(),
+					targetSet.Viewport().Width(),
+					targetSet.Viewport().Height());
+			}
+
+			// Verify the framebuffer (as we actually had color textures to attach)
+			const GLenum result = glCheckNamedFramebufferStatus(targetSetParams->m_frameBufferObject, GL_FRAMEBUFFER);
+			SEAssert("Framebuffer is not complete", result == GL_FRAMEBUFFER_COMPLETE);
 		}
 	}
 
@@ -350,6 +359,10 @@ namespace opengl
 			opengl::TextureTarget::PlatformParams const* depthTargetParams =
 				targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
 
+			SEAssert("It is unexpected that a depth target has mipmaps",
+				targetSet.GetDepthStencilTarget()->GetTexture()->GetNumMips() == 1 && 
+				targetSet.GetDepthStencilTarget()->GetTargetParams().m_targetSubesource == 0);
+
 			// Attach a texture object to the bound framebuffer:
 			if (textureParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
 			{
@@ -358,7 +371,7 @@ namespace opengl
 					GL_FRAMEBUFFER,							// target
 					depthTargetParams->m_attachmentPoint,	// attachment
 					depthPlatformParams->m_textureID,		// texure
-					0);
+					targetSet.GetDepthStencilTarget()->GetTargetParams().m_targetSubesource);
 			}
 			else
 			{
@@ -368,21 +381,13 @@ namespace opengl
 					depthTargetParams->m_attachmentPoint,
 					depthPlatformParams->m_texTarget,
 					depthPlatformParams->m_textureID,
-					0);										// mip level
+					targetSet.GetDepthStencilTarget()->GetTargetParams().m_targetSubesource);
 			}
 
-			// Verify the framebuffer:
-			bool result = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
-			if (!result)
-			{
-				SEAssertF("Framebuffer is not complete: " + std::to_string(glCheckFramebufferStatus(GL_FRAMEBUFFER)));
-			}
+			// Verify the framebuffer (as we actually had color textures to attach)
+			const GLenum result = glCheckNamedFramebufferStatus(targetSetParams->m_frameBufferObject, GL_FRAMEBUFFER);
+			SEAssert("Framebuffer is not complete", result == GL_FRAMEBUFFER_COMPLETE);
 
-			SEAssert("TODO: Implement support for correctly setting the viewport dimensions for depth textures with "
-				"mip maps. See the color target attach function for an example", 
-				targetSet.GetDepthStencilTarget()->GetTexture()->GetNumMips() == 1);
-			// TODO: We currently just assume the depth buffer is full resolution, but it doesn't have to be. Leaving
-			// this assert to save debugging time at a later date...
 			glViewport(
 				targetSet.Viewport().xMin(),
 				targetSet.Viewport().yMin(),

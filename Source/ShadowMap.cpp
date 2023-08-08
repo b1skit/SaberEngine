@@ -32,7 +32,7 @@ namespace gr
 		: m_shadowCam(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent)
 		, m_minMaxShadowBias(0.005f, 0.0005f)
 	{
-		m_shadowTargetSet = re::TextureTargetSet::Create(lightName + " target");
+		m_shadowTargetSet = re::TextureTargetSet::Create(lightName + " shadow target");
 		m_shadowCam.GetTransform()->SetLocalTranslation(shadowCamPosition);
 
 		// Texture params are mostly the same between a single shadow map, or a cube map

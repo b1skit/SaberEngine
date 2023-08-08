@@ -154,8 +154,7 @@ namespace opengl
 
 	void opengl::Texture::Bind(re::Texture& texture, uint32_t textureUnit)
 	{
-		// TODO: Is there a way to avoid needing to pass textureUnit?
-		// textureUnit is a target, ie. GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, etc
+		// Note: textureUnit is a binding point
 
 		opengl::Texture::PlatformParams const* params =
 			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
@@ -176,82 +175,71 @@ namespace opengl
 
 		LOG("Creating & buffering texture: \"%s\"", texture.GetName().c_str());
 
-		// Generate textureID names. Note: We must call glBindTexture immediately after to associate the name with 
-		// a texture. It will not have the correct dimensionality until this is done
-		glGenTextures(1, &params->m_textureID);
-		glBindTexture(params->m_texTarget, params->m_textureID);
-
-		// RenderDoc object name:
-		glObjectLabel(GL_TEXTURE, params->m_textureID, -1, texture.GetName().c_str());
-
-		SEAssert("OpenGL failed to generate new texture name. Texture buffering failed", 
-			glIsTexture(params->m_textureID) == GL_TRUE);
-
 		// Ensure our texture is correctly configured:
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 		SEAssert("Texture has a bad configuration", texParams.m_faces == 1 ||
 			(texParams.m_faces == 6 && texParams.m_dimension == re::Texture::Dimension::TextureCubeMap));
 
-		// Buffer the texture data:
+		// Generate textureID names. Note: We must call glBindTexture immediately after to associate the name with 
+		// a texture. It will not have the correct dimensionality until this is done
+		glGenTextures(1, &params->m_textureID);
+		glBindTexture(params->m_texTarget, params->m_textureID);
+		SEAssert("OpenGL failed to generate new texture name", glIsTexture(params->m_textureID) == GL_TRUE);
+
+		// RenderDoc object name:
+		glObjectLabel(GL_TEXTURE, params->m_textureID, -1, texture.GetName().c_str());
+
+		// Specify the texture storage:
 		const uint32_t width = texture.Width();
 		const uint32_t height = texture.Height();
 
+		glTextureStorage2D(
+			params->m_textureID,
+			texture.GetNumMips(),
+			params->m_internalFormat,
+			width,
+			height);
+
 		// Upload data (if any) to the GPU:
-		for (uint32_t i = 0; i < texParams.m_faces; i++)
+		if ((texParams.m_usage & re::Texture::Usage::Color))
 		{
-			// Get the image data pointer; for render targets, this is nullptr
-			void* data = nullptr;
-			if ((texParams.m_usage & re::Texture::Usage::Color))
+			for (uint32_t i = 0; i < texParams.m_faces; i++)
 			{
-				SEAssert("Color target must have data to buffer", 
-					texture.GetTexels().size() == 
+				SEAssert("Color target must have data to buffer",
+					texture.GetTexels().size() ==
 					(texParams.m_faces * texParams.m_width * texParams.m_height * re::Texture::GetNumBytesPerTexel(texParams.m_format)));
 
-				data = (void*)texture.GetTexel(0, 0, i);
+				void* data = (void*)texture.GetTexel(0, 0, i);
+
+				if (texParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
+				{
+					glTextureSubImage3D(
+						params->m_textureID,
+						0, // Level: Mip level
+						0, // xoffset
+						0, // yoffset
+						i, // zoffset: Target face
+						width,
+						height,
+						texParams.m_faces,	// depth
+						params->m_format,	// format
+						params->m_type,		// type
+						data);				// void* data. Nullptr for render targets
+				}
+				else
+				{
+					glTextureSubImage2D(
+						params->m_textureID,
+						0, // Level: Mip level
+						0, // xoffset
+						0, // yoffset
+						width,
+						height,
+						params->m_format,	// format
+						params->m_type,		// type
+						data);				// void* data. Nullptr for render targets
+				}
 			}
-
-			GLenum target;
-			if (texParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
-			{
-				target = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-				// TODO: Switch to a generic specification/buffering functionality, using GL_TEXTURE_CUBE_MAP for 
-				// m_texTarget instead of GL_TEXTURE_CUBE_MAP_POSITIVE_X
-				// // -> Doing a similar thing in TextureTargetSet
-				// -> Currently fails if we use GL_TEXTURE_CUBE_MAP...
-
-				// https://www.reddit.com/r/opengl/comments/556zac/how_to_create_cubemap_with_direct_state_access/
-				// Specify storage with glTextureStorage2D: https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
-				// Buffer each face with glTextureSubImage3D
-			}
-			else
-			{
-				target = params->m_texTarget;
-			}
-
-			//// Compute the byte alignment for w.r.t to the image dimensions. Allows RGB8 textures (3x 1-byte channels)
-			//// to be correctly buffered. Default alignment is 4.
-			//GLint byteAlignment = 8;
-			//while (texture.Width() % byteAlignment != 0)
-			//{
-			//	byteAlignment /= 2; // 8, 4, 2, 1
-			//}
-			//SEAssert("Invalid byte alignment",
-			//	byteAlignment == 8 || byteAlignment == 4 || byteAlignment == 2 || byteAlignment == 1);
-
-			//// Set the byte alignment for the start of each image row in memory:
-			//glPixelStorei(GL_UNPACK_ALIGNMENT, byteAlignment);
-
-			// Specify the texture:
-			glTexImage2D(					// Specifies a 2D texture
-				target + (GLenum)i,			// target: GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP_POSITIVE_X, etc
-				0,							// mip level
-				params->m_internalFormat,	// internal format
-				width,						// width
-				height,						// height
-				0,							// border: Must be 0
-				params->m_format,			// format
-				params->m_type,				// type
-				data);						// void* data. Nullptr for render targets
 		}
 
 		// Create mips:
