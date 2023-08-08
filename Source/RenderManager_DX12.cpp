@@ -369,26 +369,7 @@ namespace dx12
 					{
 					case re::RenderStage::RenderStageType::Graphics:
 					{
-						// Set the geometry for the draw:
-						dx12::MeshPrimitive::PlatformParams* meshPrimPlatParams =
-							batches[batchIdx].GetMeshPrimitive()->GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
-
-						// TODO: Batches should contain the draw mode, instead of carrying around a MeshPrimitive
-						currentCommandList->SetPrimitiveType(meshPrimPlatParams->m_drawMode);
-						currentCommandList->SetVertexBuffers(batches[batchIdx].GetMeshPrimitive()->GetVertexStreams());
-
-						dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
-							batches[batchIdx].GetMeshPrimitive()->GetVertexStream(
-								re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
-						currentCommandList->SetIndexBuffer(&indexPlatformParams->m_indexBufferView);
-
-						// Record the draw:
-						currentCommandList->DrawIndexedInstanced(
-							batches[batchIdx].GetMeshPrimitive()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
-							static_cast<uint32_t>(batches[batchIdx].GetInstanceCount()),	// Instance count
-							0,	// Start index location
-							0,	// Base vertex location
-							0);	// Start instance location
+						currentCommandList->DrawBatchGeometry(batches[batchIdx]);
 					}
 					break;
 					case re::RenderStage::RenderStageType::Compute:
@@ -434,13 +415,12 @@ namespace dx12
 		size_t startIdx = 0;
 		while (startIdx < commandLists.size())
 		{
-			// TODO: Use the SE enums where possible, to make future porting/code reuse easier
-			const D3D12_COMMAND_LIST_TYPE cmdListType = commandLists[startIdx]->GetD3DCommandListType();
+			const CommandListType cmdListType = commandLists[startIdx]->GetCommandListType();
 
 			// Find the index of the last command list of the same type:
 			size_t endIdx = startIdx + 1;
 			while (endIdx < commandLists.size() &&
-				commandLists[endIdx]->GetD3DCommandListType() == cmdListType)
+				commandLists[endIdx]->GetCommandListType() == cmdListType)
 			{
 				endIdx++;
 			}
@@ -449,33 +429,33 @@ namespace dx12
 
 			switch (cmdListType)
 			{
-			case D3D12_COMMAND_LIST_TYPE_DIRECT:
+			case CommandListType::Direct:
 			{
 				directQueue.Execute(static_cast<uint32_t>(numCmdLists), &commandLists[startIdx]);
 			}
 			break;
-			case D3D12_COMMAND_LIST_TYPE_BUNDLE:
+			case CommandListType::Bundle:
 			{
 				SEAssertF("TODO: Support this type");
 			}
 			break;
-			case D3D12_COMMAND_LIST_TYPE_COMPUTE:
+			case CommandListType::Compute:
 			{
 				computeQueue.Execute(static_cast<uint32_t>(numCmdLists), &commandLists[startIdx]);
 			}
 			break;
-			case D3D12_COMMAND_LIST_TYPE_COPY:
+			case CommandListType::Copy:
 			{
 				SEAssertF("Currently not expecting to find a copy queue genereted from a render stage");
 			}
-			case D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE:
-			case D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS:
-			case D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE:
-			case D3D12_COMMAND_LIST_TYPE_NONE:
+			case CommandListType::VideoDecode:
+			case CommandListType::VideoProcess:
+			case CommandListType::VideoEncode:
 			{
 				SEAssertF("TODO: Support this type");
 			}
 			break;
+			case CommandListType::CommandListType_Invalid:
 			default:
 				SEAssertF("Invalid command list type");
 			}

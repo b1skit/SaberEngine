@@ -1,10 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
+#include "Batch.h"
 #include "Config.h"
 #include "Context_DX12.h"
 #include "CommandList_DX12.h"
 #include "Debug_DX12.h"
+#include "MeshPrimitive_DX12.h"
 #include "ParameterBlock.h"
 #include "ParameterBlock_DX12.h"
 #include "RenderManager.h"
@@ -105,9 +107,10 @@ namespace dx12
 	}
 
 
-	CommandList::CommandList(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type)
+	CommandList::CommandList(ID3D12Device2* device, CommandListType type)
 		: m_commandList(nullptr)
 		, m_type(type)
+		, m_d3dType(TranslateToD3DCommandListType(type))
 		, m_commandAllocator(nullptr)
 		, m_reuseFenceValue(0)
 		, k_commandListNumber(s_commandListNumber++)
@@ -117,14 +120,14 @@ namespace dx12
 	{
 		SEAssert("Device cannot be null", device);
 
-		m_commandAllocator = CreateCommandAllocator(device, type);
+		m_commandAllocator = CreateCommandAllocator(device, m_d3dType);
 
 		// Create the command list:
 		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
 
 		HRESULT hr = device->CreateCommandList(
 			deviceNodeMask,
-			m_type,							// Direct draw/compute/copy/etc
+			m_d3dType,							// Direct draw/compute/copy/etc
 			m_commandAllocator.Get(),		// The command allocator the command lists will be created on
 			nullptr,						// Optional: Command list initial pipeline state
 			IID_PPV_ARGS(&m_commandList));	// IID_PPV_ARGS: RIID & destination for the populated command list
@@ -132,17 +135,17 @@ namespace dx12
 
 		// Name the command list with a monotonically-increasing index to make it easier to identify
 		const std::wstring commandListname = std::wstring(
-			GetCommandListTypeName(TranslateToSECommandListType(type))) + 
+			GetCommandListTypeName(type)) + 
 			L"_CommandList_#" + std::to_wstring(k_commandListNumber);
 		m_commandList->SetName(commandListname.c_str());
 
 		// Set the descriptor heaps (unless we're a copy command list):
-		if (m_type != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY)
+		if (m_d3dType != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY)
 		{
 			// Create our GPU-visible descriptor heaps:
 			m_gpuCbvSrvUavDescriptorHeaps = std::make_unique<GPUDescriptorHeap>(
 				m_commandList.Get(),
-				m_type,
+				m_d3dType,
 				D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		}
 
@@ -157,7 +160,8 @@ namespace dx12
 	void CommandList::Destroy()
 	{
 		m_commandList = nullptr;
-		m_type = D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_NONE;
+		m_type = CommandListType_Invalid;
+		m_d3dType = D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_NONE;
 		m_commandAllocator = nullptr;
 		m_reuseFenceValue = 0;
 		m_gpuCbvSrvUavDescriptorHeaps = nullptr;
@@ -181,7 +185,7 @@ namespace dx12
 		CheckHResult(hr, "Failed to reset command list");
 
 		// Re-bind the descriptor heaps (unless we're a copy command list):
-		if (m_type != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY)
+		if (m_d3dType != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COPY)
 		{
 			// Reset the GPU descriptor heap managers:
 			m_gpuCbvSrvUavDescriptorHeaps->Reset();
@@ -216,7 +220,7 @@ namespace dx12
 	void CommandList::SetGraphicsRootSignature(dx12::RootSignature const* rootSig)
 	{
 		SEAssert("Only graphics command lists can have a graphics/direct root signature",
-			m_type == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT);
+			m_d3dType == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT);
 
 		if (m_currentRootSignature == rootSig)
 		{
@@ -236,8 +240,8 @@ namespace dx12
 	void CommandList::SetComputeRootSignature(dx12::RootSignature const* rootSig)
 	{
 		SEAssert("Only graphics or compute command lists can have a compute root signature", 
-			m_type == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT || 
-			m_type == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE);
+			m_d3dType == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT || 
+			m_d3dType == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE);
 
 		if (m_currentRootSignature == rootSig)
 		{
@@ -293,6 +297,31 @@ namespace dx12
 				SEAssertF("Invalid PBDataType");
 			}
 		}
+	}
+
+
+	void CommandList::DrawBatchGeometry(re::Batch const& batch)
+	{
+		// Set the geometry for the draw:
+		dx12::MeshPrimitive::PlatformParams* meshPrimPlatParams =
+			batch.GetMeshPrimitive()->GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
+
+		// TODO: Batches should contain the draw mode, instead of carrying around a MeshPrimitive
+		SetPrimitiveType(meshPrimPlatParams->m_drawMode);
+		SetVertexBuffers(batch.GetMeshPrimitive()->GetVertexStreams());
+
+		dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
+			batch.GetMeshPrimitive()->GetVertexStream(
+				re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
+		SetIndexBuffer(&indexPlatformParams->m_indexBufferView);
+
+		// Record the draw:
+		DrawIndexedInstanced(
+			batch.GetMeshPrimitive()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
+			static_cast<uint32_t>(batch.GetInstanceCount()),	// Instance count
+			0,													// Start index location
+			0,													// Base vertex location
+			0);													// Start instance location
 	}
 
 
@@ -474,7 +503,7 @@ namespace dx12
 		m_commandList->OMSetRenderTargets(
 			numColorTargets,
 			colorTargetDescriptors.data(),
-			false,			// TODO: Are our render target descriptors ever a contiguous range? Can they be made to be?
+			false,			// Our render target descriptors (currently) aren't guaranteed to be in a contiguous range
 			dsvDescriptor.ptr == 0 ? nullptr : &dsvDescriptor);
 
 		// Set the viewport and scissor rectangles:
@@ -562,7 +591,6 @@ namespace dx12
 
 		re::Viewport const& viewport = targetSet.Viewport();
 
-		// TODO: We should only update this if it has changed!
 		// TODO: OpenGL expects ints, DX12 expects floats. We should support both via the Viewport interface (eg. Union)
 		targetSetParams->m_viewport = CD3DX12_VIEWPORT(
 			static_cast<float>(viewport.xMin()),
@@ -585,7 +613,6 @@ namespace dx12
 
 		re::ScissorRect const& scissorRect = targetSet.ScissorRect();
 
-		// TODO: We should only update this if it has changed!
 		targetSetParams->m_scissorRect = CD3DX12_RECT(
 			scissorRect.Left(),
 			scissorRect.Top(),
@@ -626,10 +653,10 @@ namespace dx12
 			case dx12::RootSignature::DescriptorType::SRV:
 			{
 				SEAssert("Unexpected command list type",
-					m_type == D3D12_COMMAND_LIST_TYPE_COMPUTE || m_type == D3D12_COMMAND_LIST_TYPE_DIRECT);
+					m_d3dType == D3D12_COMMAND_LIST_TYPE_COMPUTE || m_d3dType == D3D12_COMMAND_LIST_TYPE_DIRECT);
 
 				D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-				if (m_type != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE)
+				if (m_d3dType != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE)
 				{
 					toState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 				}

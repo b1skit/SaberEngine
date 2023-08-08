@@ -207,7 +207,8 @@ namespace dx12
 {
 	CommandQueue::CommandQueue()
 		: m_commandQueue(nullptr)
-		, m_type(CommandList::TranslateToD3DCommandListType(CommandListType::CommandListType_Invalid))
+		, m_type(CommandListType::CommandListType_Invalid)
+		, m_d3dType(D3D12_COMMAND_LIST_TYPE_NONE)
 		, m_deviceCache(nullptr)
 		, m_fenceValue(0)
 		, m_typeFenceBitMask(0)
@@ -217,7 +218,8 @@ namespace dx12
 
 	void CommandQueue::Create(ComPtr<ID3D12Device2> displayDevice, dx12::CommandListType type)
 	{
-		m_type = CommandList::TranslateToD3DCommandListType(type);
+		m_type = type;
+		m_d3dType = CommandList::TranslateToD3DCommandListType(type);
 		m_deviceCache = displayDevice; // Store a local copy, for convenience
 
 		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
@@ -225,7 +227,7 @@ namespace dx12
 		std::string fenceEventName;
 
 		D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
-		cmdQueueDesc.Type		= m_type;
+		cmdQueueDesc.Type		= m_d3dType;
 		cmdQueueDesc.Priority	= D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
 		cmdQueueDesc.Flags		= D3D12_COMMAND_QUEUE_FLAG_NONE; // None, or Disable Timeout
 		cmdQueueDesc.NodeMask	= deviceNodeMask;
@@ -318,7 +320,7 @@ namespace dx12
 
 			SEAssert("We currently only support submitting command lists of the same type to a command queue. "
 				"TODO: Support this (e.g. allow submitting compute command lists on a direct queue)",
-				finalCommandLists[i]->GetD3DCommandListType() == GetD3DCommandListType());
+				finalCommandLists[i]->GetCommandListType() == GetCommandListType());
 		}
 		
 		const uint64_t nextFenceVal = m_fenceValue + 1;

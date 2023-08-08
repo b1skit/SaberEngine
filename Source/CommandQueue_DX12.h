@@ -44,12 +44,14 @@ namespace dx12
 		std::shared_ptr<dx12::CommandList> GetCreateCommandList();
 		
 		ID3D12CommandQueue* GetD3DCommandQueue() const;
-		D3D12_COMMAND_LIST_TYPE GetD3DCommandListType() const;
+
+		CommandListType GetCommandListType() const;
 
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_commandQueue;
-		D3D12_COMMAND_LIST_TYPE m_type;
+		CommandListType m_type;
+		D3D12_COMMAND_LIST_TYPE m_d3dType;
 
 		Microsoft::WRL::ComPtr<ID3D12Device2> m_deviceCache;
 
@@ -83,7 +85,8 @@ namespace dx12
 		return m_commandQueue.Get();
 	}
 
-	inline D3D12_COMMAND_LIST_TYPE CommandQueue::GetD3DCommandListType() const
+
+	inline CommandListType CommandQueue::GetCommandListType() const
 	{
 		return m_type;
 	}

@@ -31,7 +31,7 @@ namespace gr
 			glm::vec4 m_orthoLeftRightBotTop = glm::vec4(-5.f, 5.f, -5.f, 5.f);
 
 			// Image properties:
-			float m_exposure = 1.0f; // TODO: Should this be stored here?
+			float m_exposure = 1.0f;
 		};
 
 	public:

@@ -137,13 +137,9 @@ namespace re
 			ComputeParams m_computeParams;
 		};
 		
-		// TODO: Can any more of these be moved into graphics params?
 		re::Shader const* m_batchShader;
-
 		std::vector<std::shared_ptr<re::ParameterBlock>> m_batchParamBlocks;
-
 		std::vector<BatchTextureAndSamplerInput> m_batchTextureSamplerInputs;
-
 		uint32_t m_batchFilterMask;
 
 

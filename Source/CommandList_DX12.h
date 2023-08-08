@@ -11,6 +11,7 @@
 
 namespace re
 {
+	class Batch;
 	class ParameterBlock;
 	class VertexStream;
 	class Texture;
@@ -41,18 +42,15 @@ namespace dx12
 	class CommandList
 	{
 	public:
-		
-
 		static constexpr wchar_t const* const GetCommandListTypeName(dx12::CommandListType);
 		static constexpr D3D12_COMMAND_LIST_TYPE TranslateToD3DCommandListType(dx12::CommandListType);
 		static constexpr CommandListType TranslateToSECommandListType(D3D12_COMMAND_LIST_TYPE);
-		// TODO: Make usage of D3D and SE enums more consistent here
 
 		static size_t s_commandListNumber; // Monotonically-increasing numeric ID for naming command lists
 
 
 	public:
-		CommandList(ID3D12Device2*, D3D12_COMMAND_LIST_TYPE);
+		CommandList(ID3D12Device2*, CommandListType);
 		CommandList(CommandList&&) = default;
 		CommandList& operator=(CommandList&&) = default;
 		~CommandList() { Destroy(); }
@@ -81,13 +79,7 @@ namespace dx12
 
 		void SetTexture(std::string const& shaderName, std::shared_ptr<re::Texture>, uint32_t subresource);
 
-		// TODO: Write a helper that takes a MeshPrimitive; make these private
-		void SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY) const;
-		
-		void SetVertexBuffer(uint32_t slot, re::VertexStream const*) const;
-		void SetVertexBuffers(std::vector<std::shared_ptr<re::VertexStream>> const&) const;
-		
-		void SetIndexBuffer(D3D12_INDEX_BUFFER_VIEW*) const;
+		void DrawBatchGeometry(re::Batch const&);
 
 		void ClearDepthTarget(re::TextureTarget const*) const; // Uses target texture's R clear color
 		void ClearDepthTarget(re::TextureTarget const*, float clearColor) const;
@@ -111,7 +103,7 @@ namespace dx12
 		void TransitionResource(std::shared_ptr<re::Texture>, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
 		void TransitionUAV(std::shared_ptr<re::Texture>, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
 
-		D3D12_COMMAND_LIST_TYPE GetD3DCommandListType() const;
+		CommandListType GetCommandListType() const;
 		ID3D12GraphicsCommandList2* GetD3DCommandList() const;
 
 		LocalResourceStateTracker const& GetLocalResourceStates() const;
@@ -128,8 +120,19 @@ namespace dx12
 
 
 	private:
+		void SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY) const;
+
+		void SetVertexBuffer(uint32_t slot, re::VertexStream const*) const;
+		void SetVertexBuffers(std::vector<std::shared_ptr<re::VertexStream>> const&) const;
+
+		void SetIndexBuffer(D3D12_INDEX_BUFFER_VIEW*) const;
+
+
+	private:
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> m_commandList;
-		D3D12_COMMAND_LIST_TYPE m_type;
+
+		CommandListType m_type;
+		D3D12_COMMAND_LIST_TYPE m_d3dType;
 
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator;
 		uint64_t m_reuseFenceValue; // When the command allocator can be reused
@@ -229,7 +232,7 @@ namespace dx12
 	}
 
 
-	inline D3D12_COMMAND_LIST_TYPE CommandList::GetD3DCommandListType() const
+	inline CommandListType CommandList::GetCommandListType() const
 	{
 		return m_type;
 	}
@@ -264,7 +267,7 @@ namespace dx12
 			static_assert("Invalid type");
 		}
 
-		return D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT;
+		return static_cast<D3D12_COMMAND_LIST_TYPE>(-1); // D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_NONE
 	}
 
 
