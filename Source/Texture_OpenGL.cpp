@@ -12,30 +12,10 @@ namespace opengl
 {
 	Texture::PlatformParams::PlatformParams(re::Texture::TextureParams const& texParams) :
 		m_textureID(0),
-		m_texTarget(GL_TEXTURE_2D),
 		m_format(GL_RGBA),
 		m_internalFormat(GL_RGBA32F),
 		m_type(GL_FLOAT)
 	{
-		// Dimension:
-		/************/
-		switch (texParams.m_dimension)
-		{
-		case re::Texture::Dimension::Texture2D:
-		{
-			m_texTarget = GL_TEXTURE_2D;
-		}
-		break;
-		case re::Texture::Dimension::TextureCubeMap:
-		{
-			m_texTarget = GL_TEXTURE_CUBE_MAP;
-		}
-		break;
-		default:
-			SEAssertF("Invalid/unsupported texture dimension");
-		}
-
-
 		// Format:
 		/****************/
 		switch (texParams.m_format)
@@ -183,7 +163,21 @@ namespace opengl
 		// Generate textureID names. Note: We must call glBindTexture immediately after to associate the name with 
 		// a texture. It will not have the correct dimensionality until this is done
 		glGenTextures(1, &params->m_textureID);
-		glBindTexture(params->m_texTarget, params->m_textureID);
+		switch (texParams.m_dimension)
+		{
+		case re::Texture::Dimension::Texture2D:
+		{
+			glBindTexture(GL_TEXTURE_2D, params->m_textureID);
+		}
+		break;
+		case re::Texture::Dimension::TextureCubeMap:
+		{
+			glBindTexture(GL_TEXTURE_CUBE_MAP, params->m_textureID);
+		}
+		break;
+		default:
+			SEAssertF("Invalid texture dimension");
+		}
 		SEAssert("OpenGL failed to generate new texture name", glIsTexture(params->m_textureID) == GL_TRUE);
 
 		// RenderDoc object name:

@@ -21,8 +21,6 @@ namespace opengl
 			// OpenGL-specific parameters:
 			GLuint m_textureID;
 
-			GLenum m_texTarget;
-
 			GLenum m_format; // Pixel data format: R, RG, RGBA, etc
 			GLenum m_internalFormat; // Number of color components
 			GLenum m_type;

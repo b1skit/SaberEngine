@@ -376,10 +376,9 @@ namespace opengl
 			else
 			{
 				// Attach a texture to a framebuffer object:
-				glFramebufferTexture2D(
-					GL_FRAMEBUFFER,
+				glNamedFramebufferTexture(
+					targetSetParams->m_frameBufferObject,
 					depthTargetParams->m_attachmentPoint,
-					depthPlatformParams->m_texTarget,
 					depthPlatformParams->m_textureID,
 					targetSet.GetDepthStencilTarget()->GetTargetParams().m_targetSubesource);
 			}
