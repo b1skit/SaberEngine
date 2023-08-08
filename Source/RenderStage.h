@@ -107,7 +107,6 @@ namespace re
 		std::shared_ptr<re::TextureTargetSet> m_textureTargetSet;
 		
 		gr::PipelineState m_pipelineState;
-		bool m_writesColor; // TODO: This should be a member of the gr::PipelineState
 
 		// Per-frame members are cleared every frame
 		std::vector<RenderStageTextureAndSamplerInput> m_perFrameTextureSamplerInputs;

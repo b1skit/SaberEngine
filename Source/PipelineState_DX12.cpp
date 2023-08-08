@@ -343,13 +343,15 @@ namespace
 			rtBlendDesc.BlendOpAlpha = D3D12_BLEND_OP::D3D12_BLEND_OP_ADD;
 			rtBlendDesc.LogicOp = D3D12_LOGIC_OP::D3D12_LOGIC_OP_NOOP;
 
-			// Color write modes:
+			// Build a bitmask for our color write modes:
+			re::TextureTarget::TargetParams::ColorWriteMode const& colorWriteMode =
+				targetSet.GetColorTarget(i).GetColorWriteMode();
+
 			rtBlendDesc.RenderTargetWriteMask =
-				(grPipelineState.GetColorWriteMode().R == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_RED : 0) |
-				(grPipelineState.GetColorWriteMode().G == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_GREEN : 0) |
-				(grPipelineState.GetColorWriteMode().B == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_BLUE : 0) |
-				(grPipelineState.GetColorWriteMode().A == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_ALPHA : 0);
-			// TODO: RenderTargetWriteMask should be per-target (i.e. for MRT), but currently it's per stage
+				(colorWriteMode.R == re::TextureTarget::TargetParams::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_RED : 0) |
+				(colorWriteMode.G == re::TextureTarget::TargetParams::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_GREEN : 0) |
+				(colorWriteMode.B == re::TextureTarget::TargetParams::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_BLUE : 0) |
+				(colorWriteMode.A == re::TextureTarget::TargetParams::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_ALPHA : 0);
 
 			blendDesc.RenderTarget[i] = rtBlendDesc;
 		}

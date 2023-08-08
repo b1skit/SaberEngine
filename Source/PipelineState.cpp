@@ -11,12 +11,6 @@ namespace gr
 		, m_windingOrder(WindingOrder::CCW)
 		, m_depthTestMode(DepthTestMode::Default)
 		, m_depthWriteMode(DepthWriteMode::Enabled)
-		, m_colorWriteMode{
-			ColorWriteMode::ChannelMode::Enabled, // R
-			ColorWriteMode::ChannelMode::Enabled, // G
-			ColorWriteMode::ChannelMode::Enabled, // B
-			ColorWriteMode::ChannelMode::Enabled} // A
-		, m_writesColor(true)
 		, m_targetClearMode(ClearTarget::None)
 	{
 	}
@@ -31,7 +25,6 @@ namespace gr
 		AddDataBytesToHash(m_windingOrder);
 		AddDataBytesToHash(m_depthTestMode);
 		AddDataBytesToHash(m_depthWriteMode);
-		AddDataBytesToHash(&m_colorWriteMode, sizeof(m_colorWriteMode));
 		AddDataBytesToHash(m_targetClearMode);
 	}
 
@@ -108,32 +101,6 @@ namespace gr
 	{
 		m_depthWriteMode = depthWriteMode;
 		m_isDirty = true;
-	}
-
-
-	PipelineState::ColorWriteMode const& PipelineState::GetColorWriteMode() const
-	{
-		return m_colorWriteMode;
-	}
-
-
-	void PipelineState::SetColorWriteMode(PipelineState::ColorWriteMode const& colorWriteMode)
-	{
-		m_colorWriteMode = colorWriteMode;
-
-		m_writesColor = 
-			m_colorWriteMode.R == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
-			m_colorWriteMode.G == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
-			m_colorWriteMode.B == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
-			m_colorWriteMode.A == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled; // TODO: Should .A be counted here?
-
-		m_isDirty = true;
-	}
-
-
-	bool PipelineState::WritesColor() const
-	{
-		return m_writesColor;
 	}
 
 

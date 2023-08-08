@@ -81,13 +81,6 @@ namespace gr
 		shadowStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
 
 		shadowStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Less);
-		shadowStageParams.SetColorWriteMode(
-		{ 
-			gr::PipelineState::ColorWriteMode::ChannelMode::Disabled,
-			gr::PipelineState::ColorWriteMode::ChannelMode::Disabled,
-			gr::PipelineState::ColorWriteMode::ChannelMode::Disabled,
-			gr::PipelineState::ColorWriteMode::ChannelMode::Disabled
-		});
 
 		// Directional light shadow:		
 		shared_ptr<Light> directionalLight = SceneManager::GetSceneData()->GetKeyLight();
@@ -108,12 +101,15 @@ namespace gr
 				std::shared_ptr<re::TextureTargetSet> directionalShadowTargetSet = 
 					directionalLight->GetShadowMap()->GetTextureTargetSet();
 
-				const re::TextureTarget::TargetParams::BlendModes directionalBlendModes
-				{
+				directionalShadowTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
 					re::TextureTarget::TargetParams::BlendMode::Disabled,
-					re::TextureTarget::TargetParams::BlendMode::Disabled
-				};
-				directionalShadowTargetSet->SetColorTargetBlendModes(1, &directionalBlendModes);
+					re::TextureTarget::TargetParams::BlendMode::Disabled});
+
+				directionalShadowTargetSet->SetAllColorWriteModes(re::TextureTarget::TargetParams::ColorWriteMode{
+					re::TextureTarget::TargetParams::ColorWriteMode::ChannelMode::Disabled,
+					re::TextureTarget::TargetParams::ColorWriteMode::ChannelMode::Disabled,
+					re::TextureTarget::TargetParams::ColorWriteMode::ChannelMode::Disabled,
+					re::TextureTarget::TargetParams::ColorWriteMode::ChannelMode::Disabled });
 
 				m_directionalShadowStage->SetTextureTargetSet(directionalShadowTargetSet);
 				// TODO: Target set should be a member of the stage, instead of the shadow map?

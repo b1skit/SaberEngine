@@ -96,6 +96,20 @@ namespace
 
 		glBlendFunci(drawBufferIndex, sFactor, dFactor);
 	}
+
+
+	void SetColorWriteMode(re::TextureTarget const& textureTarget, uint32_t drawBufferIndex)
+	{
+		re::TextureTarget::TargetParams::ColorWriteMode const& channelModes = 
+			textureTarget.GetTargetParams().m_colorWriteMode;
+
+		glColorMaski(
+			drawBufferIndex,
+			channelModes.R == re::TextureTarget::TargetParams::ColorWriteMode::Enabled ? GL_TRUE : GL_FALSE,
+			channelModes.G == re::TextureTarget::TargetParams::ColorWriteMode::Enabled ? GL_TRUE : GL_FALSE,
+			channelModes.B == re::TextureTarget::TargetParams::ColorWriteMode::Enabled ? GL_TRUE : GL_FALSE,
+			channelModes.A == re::TextureTarget::TargetParams::ColorWriteMode::Enabled ? GL_TRUE : GL_FALSE);
+	}
 }
 
 namespace opengl
@@ -361,6 +375,7 @@ namespace opengl
 		for (uint32_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
 			SetBlendMode(targetSet.GetColorTarget(i), i);
+			SetColorWriteMode(targetSet.GetColorTarget(i), i);
 		}
 	}
 

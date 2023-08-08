@@ -29,7 +29,11 @@ namespace re
 			uint32_t m_targetFace = 0;
 			uint32_t m_targetSubesource = 0;
 
+			// TODO: Support blend operations (add/subtract/min/max etc) for both color and alpha channels
+
 			// TODO: We should support alpha blend modes, in addition to the color blend modes here
+
+			// TODO: Support logical operations (AND/OR/XOR etc)
 
 			enum class BlendMode
 			{
@@ -51,6 +55,26 @@ namespace re
 				TargetParams::BlendMode m_srcBlendMode = BlendMode::One;
 				TargetParams::BlendMode m_dstBlendMode = BlendMode::Zero;
 			} m_blendModes;
+
+			struct ColorWriteMode
+			{
+				enum ChannelMode
+				{
+					Disabled = 0,
+					Enabled = 1
+				};
+				ChannelMode R = ChannelMode::Enabled;
+				ChannelMode G = ChannelMode::Enabled;
+				ChannelMode B = ChannelMode::Enabled;
+				ChannelMode A = ChannelMode::Enabled;
+			} m_colorWriteMode = {
+				ColorWriteMode::ChannelMode::Enabled, // R
+				ColorWriteMode::ChannelMode::Enabled, // G
+				ColorWriteMode::ChannelMode::Enabled, // B
+				ColorWriteMode::ChannelMode::Enabled  // A
+			}; 
+
+
 
 			// TODO: Support additional target/sub-resource parameters:
 			// - Array index (or first index, and offset from that)
@@ -80,6 +104,11 @@ namespace re
 
 		void SetBlendMode(TargetParams::BlendModes const&);
 		TargetParams::BlendModes const& GetBlendMode() const;
+
+		void SetColorWriteMode(TargetParams::ColorWriteMode const&);
+		TargetParams::ColorWriteMode const& GetColorWriteMode() const;
+		bool WritesColor() const;
+
 
 		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::shared_ptr<PlatformParams> params) { m_platformParams = params; }
@@ -187,6 +216,9 @@ namespace re
 		bool HasTargets() const;
 		bool HasColorTarget() const;
 		bool HasDepthTarget() const;
+
+		void SetAllColorWriteModes(TextureTarget::TargetParams::ColorWriteMode const&);
+		bool WritesColor() const;
 
 		uint8_t GetNumColorTargets() const;
 		glm::vec4 GetTargetDimensions() const;

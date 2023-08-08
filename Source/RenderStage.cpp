@@ -47,7 +47,6 @@ namespace re
 		, m_stageParams(nullptr)
 		, m_stageShader(nullptr)
 		, m_textureTargetSet(nullptr)
-		, m_writesColor(true)	// Reasonable assumption; Updated when we set the pipeline state
 		, m_batchFilterMask(0)	// Accept all batches by default
 	{
 		SEAssert("Invalid RenderStage name", !GetName().empty());
@@ -92,12 +91,6 @@ namespace re
 	void RenderStage::SetStagePipelineState(gr::PipelineState const& params)
 	{
 		m_pipelineState = params;
-
-		m_writesColor =
-			m_pipelineState.GetColorWriteMode().R == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
-			m_pipelineState.GetColorWriteMode().G == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
-			m_pipelineState.GetColorWriteMode().B == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ||
-			m_pipelineState.GetColorWriteMode().A == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? true : false;
 	}
 
 

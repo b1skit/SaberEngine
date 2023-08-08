@@ -41,6 +41,5 @@ namespace opengl
 		static void ClearTargets(gr::PipelineState::ClearTarget const& clearTarget);
 		static void SetDepthTestMode(gr::PipelineState::DepthTestMode const& mode);
 		static void SetDepthWriteMode(gr::PipelineState::DepthWriteMode const& mode);
-		static void SetColorWriteMode(gr::PipelineState::ColorWriteMode const& channelModes);
 	};
 }

@@ -367,7 +367,6 @@ namespace opengl
 		opengl::Context::SetCullingMode(pipelineState.GetFaceCullingMode());
 		opengl::Context::SetDepthTestMode(pipelineState.GetDepthTestMode());
 		opengl::Context::SetDepthWriteMode(pipelineState.GetDepthWriteMode());
-		opengl::Context::SetColorWriteMode(pipelineState.GetColorWriteMode());
 		opengl::Context::ClearTargets(pipelineState.GetClearTarget()); // Clear AFTER setting color/depth modes
 	}
 
@@ -505,17 +504,6 @@ namespace opengl
 			SEAssertF("Invalid depth write mode");
 		}
 		}
-	}
-
-
-	void opengl::Context::SetColorWriteMode(gr::PipelineState::ColorWriteMode const& channelModes)
-	{
-		GLboolean r = channelModes.R == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
-		GLboolean g = channelModes.G == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
-		GLboolean b = channelModes.B == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
-		GLboolean a = channelModes.A == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? GL_TRUE : GL_FALSE;
-
-		glColorMask(r, g, b, a);
 	}
 
 

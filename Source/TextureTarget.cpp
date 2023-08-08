@@ -43,6 +43,27 @@ namespace re
 		return m_targetParams.m_blendModes;
 	}
 
+
+	void TextureTarget::SetColorWriteMode(TargetParams::ColorWriteMode const& colorWriteMode)
+	{
+		m_targetParams.m_colorWriteMode = colorWriteMode;
+	}
+
+
+	TextureTarget::TargetParams::ColorWriteMode const& TextureTarget::GetColorWriteMode() const
+	{
+		return m_targetParams.m_colorWriteMode;
+	};
+
+
+	bool TextureTarget::WritesColor() const
+	{
+		return m_targetParams.m_colorWriteMode.R ||
+			m_targetParams.m_colorWriteMode.G ||
+			m_targetParams.m_colorWriteMode.B ||
+			m_targetParams.m_colorWriteMode.A;
+	}
+
 	
 	/**********/
 	// Viewport
@@ -213,6 +234,28 @@ namespace re
 	{
 		return GetDepthStencilTarget() != nullptr;
 	}
+	
+
+	void TextureTargetSet::SetAllColorWriteModes(TextureTarget::TargetParams::ColorWriteMode const& colorWriteMode)
+	{
+		for (size_t i = 0; i < m_colorTargets.size(); i++)
+		{
+			m_colorTargets[i].SetColorWriteMode(colorWriteMode);
+		}
+	}
+
+
+	bool TextureTargetSet::WritesColor() const
+	{
+		for (size_t i = 0; i < m_colorTargets.size(); i++)
+		{
+			if (m_colorTargets[i].WritesColor())
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 
 
 	uint8_t TextureTargetSet::GetNumColorTargets() const
@@ -328,6 +371,8 @@ namespace re
 			if (m_colorTargets[slot].HasTexture())
 			{
 				AddDataBytesToHash(m_colorTargets[slot].GetTexture()->GetTextureParams().m_format);
+				AddDataBytesToHash(m_colorTargets[slot].GetBlendMode());
+				AddDataBytesToHash(m_colorTargets[slot].GetColorWriteMode());
 			}
 		}
 		if (HasDepthTarget())

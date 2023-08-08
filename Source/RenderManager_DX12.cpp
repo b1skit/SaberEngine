@@ -353,7 +353,7 @@ namespace dx12
 					}
 
 					// Batch Texture / Sampler inputs :
-					if (renderStage->GetStagePipelineState().WritesColor())
+					if (stageTargets->WritesColor())
 					{
 						for (auto const& texSamplerInput : batches[batchIdx].GetTextureAndSamplerInputs())
 						{

@@ -75,29 +75,8 @@ namespace gr
 		DepthWriteMode GetDepthWriteMode() const;
 		void SetDepthWriteMode(DepthWriteMode);
 
-		// TODO: Support blend operations (add/subtract/min/max etc) for both color and alpha channels
 
-		// TODO: Support logical operations (AND/OR/XOR etc)
-
-		// TODO: These should be per-target, to allow different outputs when using MRTs
-		struct ColorWriteMode
-		{
-			enum class ChannelMode
-			{
-				Enabled,
-				Disabled,
-				ChannelMode_Count
-			};
-			ChannelMode R = ChannelMode::Enabled;
-			ChannelMode G = ChannelMode::Enabled;
-			ChannelMode B = ChannelMode::Enabled;
-			ChannelMode A = ChannelMode::Enabled;
-		};
-		ColorWriteMode const& GetColorWriteMode() const;
-		void SetColorWriteMode(ColorWriteMode const&);
-		bool WritesColor() const;
-
-		// TODO: These should be per-target, to allow different outputs when using MRTs
+		// TODO: These should be per-target (for the stage), to allow different behavior when using MRTs
 		enum class ClearTarget
 		{
 			Color,
@@ -117,8 +96,6 @@ namespace gr
 		WindingOrder m_windingOrder;
 		DepthTestMode m_depthTestMode;
 		DepthWriteMode m_depthWriteMode;
-		ColorWriteMode m_colorWriteMode;
-		bool m_writesColor;
 		ClearTarget m_targetClearMode;
 	};
 }
