@@ -74,6 +74,9 @@ namespace dx12
 
 	void MeshPrimitive::Destroy(re::MeshPrimitive& meshPrimitive)
 	{
-		#pragma message("TODO: Implement dx12::MeshPrimitive::Destroy")
+		dx12::MeshPrimitive::PlatformParams* meshPlatParams = 
+			meshPrimitive.GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
+
+		meshPlatParams->m_drawMode = D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 	}
 }

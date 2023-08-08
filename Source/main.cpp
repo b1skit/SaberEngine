@@ -51,7 +51,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	LOG("\nWelcome to the Saber Engine!\n");
 
-	en::CoreEngine m_coreEngine; // TODO: Implement command line config file path passing
+	en::CoreEngine m_coreEngine;
 
 	m_coreEngine.Startup();
 	m_coreEngine.Run();

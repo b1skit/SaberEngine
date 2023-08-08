@@ -274,9 +274,6 @@ namespace
 		PerformanceTimer timer;
 		timer.Start();
 
-		// TODO: We shouldn't set/reset this on every call
-		stbi_set_flip_vertically_on_load(false);
-
 		// Modify default TextureParams to be suitable for a generic error texture:
 		Texture::TextureParams texParams
 		{
@@ -1347,6 +1344,8 @@ namespace fr
 {
 	bool SceneData::Load(string const& sceneFilePath)
 	{
+		stbi_set_flip_vertically_on_load(false); // Set this once
+
 		std::future<void> errorMatTaskFuture = 
 			en::CoreEngine::GetThreadPool()->EnqueueJob([this]() {
 				GenerateErrorMaterial(*this);

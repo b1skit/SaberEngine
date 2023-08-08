@@ -64,7 +64,7 @@ namespace dx12
 		static void Destroy(re::Context& context);
 		static void Present(re::Context const& context);
 		static std::shared_ptr<dx12::PipelineState> CreateAddPipelineState(
-			re::Shader const&, gr::PipelineState&, re::TextureTargetSet const&);
+			re::Shader const&, gr::PipelineState const&, re::TextureTargetSet const&);
 		
 		// TODO: Move these to the system info layer:
 		static uint8_t GetMaxTextureInputs();
@@ -78,7 +78,7 @@ namespace dx12
 		
 		static std::shared_ptr<dx12::PipelineState> GetPipelineStateObject(
 			re::Shader const& shader,
-			gr::PipelineState& grPipelineState,
+			gr::PipelineState const& grPipelineState,
 			re::TextureTargetSet const* targetSet); // Null targetSet is valid (indicates the backbuffer)
 
 		static bool HasRootSignature(uint64_t rootSigDescHash);

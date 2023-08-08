@@ -22,6 +22,8 @@ namespace dx12
 		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, dx12::CommandListType type);
 		void Destroy();
 
+		bool IsCreated() const;
+
 		// Note: shared_ptrs in cmdLists will be null after this call
 		uint64_t Execute(uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists);
 
@@ -61,11 +63,19 @@ namespace dx12
 
 		std::queue<std::shared_ptr<dx12::CommandList>> m_commandListPool;
 
+		bool m_isCreated;
+
 
 	private: // No copying allowed
 		CommandQueue(CommandQueue const&) = delete;
 		CommandQueue& operator=(CommandQueue const&) = delete;
 	};
+
+
+	inline bool CommandQueue::IsCreated() const
+	{
+		return m_isCreated;
+	}
 
 
 	inline dx12::Fence& CommandQueue::GetFence()

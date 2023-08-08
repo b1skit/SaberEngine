@@ -16,7 +16,7 @@ namespace gr
 		~PipelineState() = default;
 		
 
-		uint64_t GetPipelineStateDataHash(); // Note: Use this instead of HashedDataObject::GetDataHash()
+		uint64_t GetPipelineStateDataHash() const; // Note: Use this instead of HashedDataObject::GetDataHash()
 
 	private:
 		void ComputeDataHash() override;

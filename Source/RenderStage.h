@@ -64,10 +64,7 @@ namespace re
 		IStageParams const* GetStageParams() const;
 
 		void SetStagePipelineState(gr::PipelineState const& params);
-		inline gr::PipelineState const& GetStagePipelineState() const { return m_pipelineState; }
-
-		// TODO: Get rid of this non-const accessor
-		inline gr::PipelineState& GetStagePipelineState() { return m_pipelineState; } // Note: Do not modify. Use SetStagePipelineState instead
+		inline gr::PipelineState const& GetStagePipelineState() const  { return m_pipelineState; }
 
 		void SetStageShader(std::shared_ptr<re::Shader>);
 		re::Shader* GetStageShader() const;

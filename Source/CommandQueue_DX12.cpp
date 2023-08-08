@@ -212,6 +212,7 @@ namespace dx12
 		, m_deviceCache(nullptr)
 		, m_fenceValue(0)
 		, m_typeFenceBitMask(0)
+		, m_isCreated(false)
 	{
 	}
 
@@ -269,11 +270,19 @@ namespace dx12
 
 		SEAssert("The fence value should be 0 after removing the command queue type bits", 
 			dx12::Fence::GetRawFenceValue(m_fenceValue) == 0);
+
+		m_isCreated = true;
 	}
 
 
 	void CommandQueue::Destroy()
 	{
+		if (!m_isCreated)
+		{
+			return;
+		}
+		m_isCreated = false;
+
 		m_fence.Destroy();
 		m_fenceValue = 0;
 		m_commandQueue = nullptr;

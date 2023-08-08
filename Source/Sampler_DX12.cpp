@@ -158,7 +158,7 @@ namespace dx12
 		// TODO: Support comparison functions
 		samplerPlatParams->m_staticSamplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 
-		// TODO: Support varialbe colors?
+		// TODO: Support variable colors?
 		samplerPlatParams->m_staticSamplerDesc.BorderColor 
 			= D3D12_STATIC_BORDER_COLOR::D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
 

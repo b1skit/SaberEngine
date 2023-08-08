@@ -31,4 +31,12 @@ namespace util
 	{
 		return std::wstring(str.begin(), str.end());
 	}
+
+
+	inline std::string FromWideString(std::wstring const& wstr)
+	{
+		// Note: This is function is deprecated (we squash the warning in the pch) TODO: Handle this correctly
+		std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> wstringConverter;
+		return wstringConverter.to_bytes(wstr);
+	}
 }

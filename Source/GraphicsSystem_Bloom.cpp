@@ -267,7 +267,6 @@ namespace gr
 		shared_ptr<Sampler> const bloomStageSampler = Sampler::GetSampler(Sampler::WrapAndFilterMode::ClampLinearLinear);
 
 		// This index corresponds with the GBuffer texture layout bindings in SaberCommon.glsl
-		// TODO: Have a less brittle way of handling this.
 		const size_t gBufferEmissiveTextureIndex = 3; 
 		m_emissiveBlitStage->SetPerFrameTextureInput(
 			"GBufferAlbedo",

@@ -24,7 +24,7 @@ namespace
 {
 	uint64_t ComputePSOKey(
 		re::Shader const& shader, 
-		gr::PipelineState& grPipelineState, 
+		gr::PipelineState const& grPipelineState, 
 		re::TextureTargetSet const* targetSet)
 	{
 		const uint64_t shaderKey = shader.GetNameID();
@@ -278,7 +278,7 @@ namespace dx12
 
 	std::shared_ptr<dx12::PipelineState> Context::CreateAddPipelineState(
 		re::Shader const& shader,
-		gr::PipelineState& grPipelineState,	
+		gr::PipelineState const& grPipelineState,	
 		re::TextureTargetSet const& targetSet)
 	{
 		dx12::Context::PlatformParams* ctxPlatParams =
@@ -336,7 +336,7 @@ namespace dx12
 
 	std::shared_ptr<dx12::PipelineState> Context::GetPipelineStateObject(
 		re::Shader const& shader,
-		gr::PipelineState& grPipelineState,
+		gr::PipelineState const& grPipelineState,
 		re::TextureTargetSet const* targetSet)
 	{
 		dx12::Context::PlatformParams* ctxPlatParams =

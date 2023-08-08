@@ -13,35 +13,36 @@ namespace gr
 		, m_depthWriteMode(DepthWriteMode::Enabled)
 		, m_targetClearMode(ClearTarget::None)
 	{
+		ComputeDataHash();
 	}
 
 
 	void PipelineState::ComputeDataHash()
 	{
 		SEAssert("PipelineState data is not dirty", m_isDirty);
+		m_isDirty = false;
+
+		ResetDataHash();
 
 		AddDataBytesToHash(m_fillMode);
 		AddDataBytesToHash(m_faceCullingMode);
 		AddDataBytesToHash(m_windingOrder);
 		AddDataBytesToHash(m_depthTestMode);
 		AddDataBytesToHash(m_depthWriteMode);
-		AddDataBytesToHash(m_targetClearMode);
+		AddDataBytesToHash(m_targetClearMode);		
 	}
 
 
-	uint64_t PipelineState::GetPipelineStateDataHash()
+	uint64_t PipelineState::GetPipelineStateDataHash() const
 	{
-		if (m_isDirty)
-		{
-			ComputeDataHash();
-			m_isDirty = false;
-		}
+		SEAssert("Trying to get the data hash from a dirty pipeline state", !m_isDirty);
 		return GetDataHash();
 	}
 
 
 	PipelineState::FillMode PipelineState::GetFillMode() const
 	{
+		SEAssert("PipelineState is dirty", !m_isDirty);
 		return m_fillMode;
 	}
 
@@ -49,11 +50,13 @@ namespace gr
 	{
 		m_fillMode = fillMode;
 		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
 	PipelineState::FaceCullingMode PipelineState::GetFaceCullingMode() const
 	{
+		SEAssert("PipelineState is dirty", !m_isDirty);
 		return m_faceCullingMode;
 	}
 
@@ -62,11 +65,13 @@ namespace gr
 	{
 		m_faceCullingMode = faceCullingMode;
 		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
 	PipelineState::WindingOrder PipelineState::GetWindingOrder() const
 	{
+		SEAssert("PipelineState is dirty", !m_isDirty);
 		return m_windingOrder;
 	}
 
@@ -75,11 +80,13 @@ namespace gr
 	{
 		m_windingOrder = windingOrder;
 		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
 	PipelineState::DepthTestMode PipelineState::GetDepthTestMode() const
 	{
+		SEAssert("PipelineState is dirty", !m_isDirty);
 		return m_depthTestMode;
 	}
 
@@ -88,11 +95,13 @@ namespace gr
 	{
 		m_depthTestMode = depthTestMode;
 		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
 	PipelineState::DepthWriteMode PipelineState::GetDepthWriteMode() const
 	{
+		SEAssert("PipelineState is dirty", !m_isDirty);
 		return m_depthWriteMode;
 	}
 
@@ -101,11 +110,13 @@ namespace gr
 	{
 		m_depthWriteMode = depthWriteMode;
 		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 
 	PipelineState::ClearTarget PipelineState::GetClearTarget() const
 	{
+		SEAssert("PipelineState is dirty", !m_isDirty);
 		return m_targetClearMode;
 	}
 
@@ -114,5 +125,6 @@ namespace gr
 	{
 		m_targetClearMode = targetClearMode;
 		m_isDirty = true;
+		ComputeDataHash();
 	}
 }

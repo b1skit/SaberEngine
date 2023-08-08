@@ -3,6 +3,7 @@
 
 #include "EventListener.h"
 #include "EngineComponent.h"
+#include "TextUtils.h"
 
 
 namespace
@@ -156,11 +157,7 @@ namespace en
 			formattedStr = FormatStringForLog(nullptr, tagPrefix, assembledMsg.data());
 		}
 
-		// Convert wstring -> string. Note: This is deprecated. TODO: Handle this correctly
-		std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> wstringConverter;
-		std::string convertedStr = wstringConverter.to_bytes(formattedStr);
-
-		LogManager::Get()->AddMessage(std::move(convertedStr));
+		LogManager::Get()->AddMessage(std::move(util::FromWideString(formattedStr)));
 	}
 }
 

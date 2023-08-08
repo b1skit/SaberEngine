@@ -227,8 +227,7 @@ namespace dx12
 					SEAssertF("Invalid stage type");
 				}
 
-				// TODO: Why can't this be a const& ?
-				gr::PipelineState& pipelineState = renderStage->GetStagePipelineState();
+				gr::PipelineState const& pipelineState = renderStage->GetStagePipelineState();
 
 				// Attach the stage targets, and transition the resources:
 				std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
@@ -242,7 +241,7 @@ namespace dx12
 				
 				auto SetDrawState = [&renderStage](
 					re::Shader const* shader, 
-					gr::PipelineState& grPipelineState,
+					gr::PipelineState const& grPipelineState,
 					re::TextureTargetSet const* targetSet,
 					dx12::CommandList* commandList)
 				{
@@ -519,12 +518,13 @@ namespace dx12
 
 	void RenderManager::Shutdown(re::RenderManager& renderManager)
 	{
-		#pragma message("TODO: Implement dx12::RenderManager::Shutdown")
-		LOG_ERROR("TODO: Implement dx12::RenderManager::Shutdown");
-
-		// TODO: We should be able to iterate over all of these, but some of them aren't initialized
-		// TODO: We also flush these in the context as well... But it's necessary here, since we delete objects next
-		Context::GetCommandQueue(dx12::CommandListType::Copy).Flush();
-		Context::GetCommandQueue(dx12::CommandListType::Direct).Flush();
+		for (size_t i = 0; i < dx12::CommandListType_Count; i++)
+		{
+			CommandQueue& commandQueue = Context::GetCommandQueue(static_cast<dx12::CommandListType>(i));
+			if (commandQueue.IsCreated())
+			{
+				Context::GetCommandQueue(static_cast<dx12::CommandListType>(i)).Flush();
+			}
+		}
 	}
 }

@@ -396,14 +396,18 @@ namespace dx12
 			pipelineStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Vertex].Get());
 			pipelineStateStream.pShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Pixel].Get());
 
-			// TODO: We're currently assuming target sets have both color and depth targets... This is not always true!
-
 			// Target formats:
 			dx12::TextureTargetSet::PlatformParams* targetSetPlatParams =
 				targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
-			pipelineStateStream.RTVFormats = TextureTargetSet::GetColorTargetFormats(targetSet);
-			pipelineStateStream.DSVFormat =
-				targetSet.GetDepthStencilTarget()->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format;
+			if (targetSet.HasColorTarget())
+			{
+				pipelineStateStream.RTVFormats = TextureTargetSet::GetColorTargetFormats(targetSet);
+			}
+			if (targetSet.HasDepthTarget())
+			{
+				pipelineStateStream.DSVFormat =
+					targetSet.GetDepthStencilTarget()->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format;
+			}			
 
 			// Rasterizer description:
 			const D3D12_RASTERIZER_DESC rasterizerDesc = BuildRasterizerDesc(grPipelineState);
