@@ -409,12 +409,11 @@ namespace dx12
 
 	void CommandList::ClearColorTargets(re::TextureTargetSet const& targetSet) const
 	{
-		for (std::unique_ptr<re::TextureTarget> const& target : targetSet.GetColorTargets())
+		for (re::TextureTarget const& target : targetSet.GetColorTargets())
 		{
-			re::TextureTarget const* texTarget = target.get();
-			if (texTarget)
+			if (target.HasTexture())
 			{
-				ClearColorTarget(texTarget);
+				ClearColorTarget(&target);
 			}
 		}
 	}
@@ -492,14 +491,14 @@ namespace dx12
 		SEAssert("This function should only be called from compute command lists", m_type == CommandListType::Compute);
 		SEAssert("Pipeline is not currently set", m_currentPSO);
 
-		std::vector<std::unique_ptr<re::TextureTarget>> const& texTargets = textureTargetSet.GetColorTargets();
+		std::vector<re::TextureTarget> const& texTargets = textureTargetSet.GetColorTargets();
 		for (size_t i = 0; i < texTargets.size(); i++)
 		{
-			if (!texTargets[i])
+			if (!texTargets[i].HasTexture())
 			{
 				continue;
 			}
-			re::TextureTarget* texTarget = texTargets[i].get();
+			re::TextureTarget const* texTarget = &texTargets[i];
 
 			SEAssert("It is unexpected that we're trying to attach a texture with DepthTarget usage to a compute shader",
 				(texTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0);

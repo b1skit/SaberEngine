@@ -36,32 +36,32 @@ namespace dx12
 			numColorTargets > 0 && numColorTargets <= dx12::SysInfo::GetMaxRenderTargets());
 
 		
-		for (std::unique_ptr<re::TextureTarget> const& colorTarget : targetSet.GetColorTargets())
+		for (re::TextureTarget const& colorTarget : targetSet.GetColorTargets())
 		{
-			if (colorTarget == nullptr)
+			if (!colorTarget.HasTexture())
 			{
 				continue;
 			}
 
-			re::Texture::TextureParams const& texParams = colorTarget->GetTexture()->GetTextureParams();
+			re::Texture::TextureParams const& texParams = colorTarget.GetTexture()->GetTextureParams();
 
 			// Create RTVs:
 			if ((texParams.m_usage & re::Texture::Usage::ColorTarget) || 
 				(texParams.m_usage & re::Texture::Usage::SwapchainColorProxy))
 			{				
 				dx12::Texture::PlatformParams* texPlatParams =
-					colorTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+					colorTarget.GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 				
 				SEAssert("Texture is not created", texPlatParams->m_isCreated && texPlatParams->m_textureResource);
 
 				dx12::TextureTarget::PlatformParams* targetPlatParams = 
-					colorTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+					colorTarget.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
 				// Allocate a descriptor for our view:
 				targetPlatParams->m_rtvDsvDescriptor = std::move(
 					ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::RTV].Allocate(1));
 
-				re::TextureTarget::TargetParams targetParams = colorTarget->GetTargetParams();
+				re::TextureTarget::TargetParams targetParams = colorTarget.GetTargetParams();
 
 				// Create the RTV:
 				D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};

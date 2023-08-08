@@ -39,6 +39,7 @@ namespace re
 		};
 
 	public:
+		TextureTarget() = default;
 		explicit TextureTarget(std::shared_ptr<re::Texture> texture, TargetParams const&);
 		
 		~TextureTarget();
@@ -47,9 +48,12 @@ namespace re
 		TextureTarget(TextureTarget&&) = default;
 		TextureTarget& operator=(TextureTarget const&) = default;
 
+		inline bool HasTexture() const { return m_texture != nullptr; }
+
 		std::shared_ptr<re::Texture>& GetTexture() { return m_texture; }
 		std::shared_ptr<re::Texture> const& GetTexture() const { return m_texture; }
 
+		void SetTargetParams(TargetParams const& targetParams) { m_targetParams = targetParams; }
 		TargetParams const& GetTargetParams() const { return m_targetParams; }
 
 		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
@@ -60,9 +64,6 @@ namespace re
 		std::shared_ptr<PlatformParams> m_platformParams;
 
 		TargetParams m_targetParams;
-
-	private:
-		TextureTarget() = delete;
 	};
 
 
@@ -149,7 +150,7 @@ namespace re
 
 		void Commit(); // Target sets are immutable after Commit: Called once during API creation
 
-		inline std::vector<std::unique_ptr<re::TextureTarget>> const& GetColorTargets() const { return m_colorTargets; }
+		inline std::vector<re::TextureTarget> const& GetColorTargets() const { return m_colorTargets; }
 		re::TextureTarget const* GetColorTarget(uint8_t slot) const;
 		void SetColorTarget(uint8_t slot, re::TextureTarget const* texTarget);
 		void SetColorTarget(uint8_t slot, std::shared_ptr<re::Texture> texTarget, TextureTarget::TargetParams const&);
@@ -188,8 +189,8 @@ namespace re
 
 
 	private:
-		std::vector<std::unique_ptr<re::TextureTarget>> m_colorTargets; // == SysInfo::GetMaxRenderTargets() elements
-		std::unique_ptr<re::TextureTarget> m_depthStencilTarget;
+		std::vector<re::TextureTarget> m_colorTargets; // == SysInfo::GetMaxRenderTargets() elements
+		re::TextureTarget m_depthStencilTarget;
 
 		uint8_t m_numColorTargets;
 

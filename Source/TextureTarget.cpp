@@ -105,11 +105,7 @@ namespace re
 	{
 		platform::TextureTargetSet::CreatePlatformParams(*this);
 	
-		for (size_t i = 0; i < platform::SysInfo::GetMaxRenderTargets(); i++)
-		{
-			m_colorTargets.emplace_back(nullptr); // Can't resize w/unique_ptr as std::vector::resize wants a copy ctor
-		}
-		m_depthStencilTarget = nullptr;
+		m_colorTargets.resize(platform::SysInfo::GetMaxRenderTargets());
 	}
 
 
@@ -121,23 +117,20 @@ namespace re
 	{
 		platform::TextureTargetSet::CreatePlatformParams(*this);
 
+		m_colorTargets.resize(platform::SysInfo::GetMaxRenderTargets());
+
 		for (size_t i = 0; i < platform::SysInfo::GetMaxRenderTargets(); i++)
 		{
-			m_colorTargets.emplace_back(nullptr); // Can't resize w/unique_ptr as std::vector::resize wants a copy ctor
-
-			if (rhs.m_colorTargets[i])
-			{
-				m_colorTargets[i] = std::make_unique<re::TextureTarget>(*rhs.m_colorTargets[i]);
-			}
+			m_colorTargets[i] = rhs.m_colorTargets[i];
 		}
-		m_depthStencilTarget = std::make_unique<re::TextureTarget>(*rhs.m_depthStencilTarget);
+		m_depthStencilTarget = rhs.m_depthStencilTarget;
 	}
 
 
 	TextureTargetSet::~TextureTargetSet()
 	{
 		m_colorTargets.clear();
-		m_depthStencilTarget = nullptr;
+		m_depthStencilTarget = re::TextureTarget();
 		m_platformParams = nullptr;
 
 		m_numColorTargets = 0;
@@ -147,11 +140,9 @@ namespace re
 	re::TextureTarget const* TextureTargetSet::GetColorTarget(uint8_t slot) const
 	{
 		SEAssert("OOB index", slot < m_colorTargets.size()); 
-		if (m_colorTargets[slot])
+		if (m_colorTargets[slot].HasTexture())
 		{
-			SEAssert("Slot contains a target, but not a texture. This should not be possible", 
-				m_colorTargets[slot]->GetTexture() != nullptr);
-			return m_colorTargets[slot].get();
+			return &m_colorTargets[slot];
 		}
 		return nullptr;
 	}
@@ -161,7 +152,7 @@ namespace re
 	{
 		SEAssert("Cannot set a null target", texTarget);
 		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_colorIsCreated);
-		m_colorTargets[slot] = std::make_unique<re::TextureTarget>(*texTarget);
+		m_colorTargets[slot] = *texTarget;
 	}
 
 
@@ -169,17 +160,15 @@ namespace re
 		uint8_t slot, std::shared_ptr<re::Texture> texture, TextureTarget::TargetParams const& targetParams)
 	{
 		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_colorIsCreated);
-		m_colorTargets[slot] = std::make_unique<re::TextureTarget>(texture, targetParams);
+		m_colorTargets[slot] = re::TextureTarget(texture, targetParams);
 	}
 
 
 	re::TextureTarget const* TextureTargetSet::GetDepthStencilTarget() const
 	{
-		if (m_depthStencilTarget)
+		if (m_depthStencilTarget.HasTexture())
 		{
-			SEAssert("Depth stencil target exists, but does not contain a texture. This should not be possible",
-				m_depthStencilTarget->GetTexture() != nullptr);
-			return m_depthStencilTarget.get();
+			return &m_depthStencilTarget;
 		}
 		return nullptr;
 	}
@@ -189,7 +178,7 @@ namespace re
 	{
 		SEAssert("Cannot set a null target", depthStencilTarget);
 		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_depthIsCreated);
-		m_depthStencilTarget = std::make_unique<re::TextureTarget>(*depthStencilTarget);
+		m_depthStencilTarget = re::TextureTarget(*depthStencilTarget);
 	}
 
 
@@ -197,7 +186,7 @@ namespace re
 		std::shared_ptr<re::Texture> depthStencilTarget, re::TextureTarget::TargetParams const& targetParams)
 	{
 		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_depthIsCreated);
-		m_depthStencilTarget = std::make_unique<re::TextureTarget>(depthStencilTarget, targetParams);
+		m_depthStencilTarget = re::TextureTarget(depthStencilTarget, targetParams);
 	}
 
 
@@ -232,20 +221,20 @@ namespace re
 		bool foundDimensions = false;
 
 		// Find a single target we can get the resolution details from; This assumes all targets are the same dimensions
-		if (m_depthStencilTarget)
+		if (m_depthStencilTarget.HasTexture())
 		{
-			std::shared_ptr<re::Texture> depthTarget = m_depthStencilTarget->GetTexture();
-			targetDimensions = depthTarget->GetTextureDimenions();
+			std::shared_ptr<re::Texture> depthTargetTex = m_depthStencilTarget.GetTexture();
+			targetDimensions = depthTargetTex->GetTextureDimenions();
 			foundDimensions = true;
 		}
 		else
 		{
 			for (uint8_t slot = 0; slot < m_colorTargets.size(); slot++)
 			{
-				if (m_colorTargets[slot])
+				if (m_colorTargets[slot].HasTexture())
 				{
-					std::shared_ptr<re::Texture> texTarget = m_colorTargets[slot]->GetTexture();
-					targetDimensions = texTarget->GetTextureDimenions();
+					std::shared_ptr<re::Texture> colorTargetTex = m_colorTargets[slot].GetTexture();
+					targetDimensions = colorTargetTex->GetTextureDimenions();
 					foundDimensions = true;
 					break;
 				}
@@ -280,7 +269,7 @@ namespace re
 		m_numColorTargets = 0;
 		for (uint8_t slot = 0; slot < m_colorTargets.size(); slot++)
 		{
-			if (m_colorTargets[slot])
+			if (m_colorTargets[slot].HasTexture())
 			{
 				m_numColorTargets++;
 			}
@@ -304,14 +293,14 @@ namespace re
 		
 		for (uint8_t slot = 0; slot < m_colorTargets.size(); slot++)
 		{
-			if (m_colorTargets[slot])
+			if (m_colorTargets[slot].HasTexture())
 			{
-				AddDataBytesToHash(m_colorTargets[slot]->GetTexture()->GetTextureParams().m_format);
+				AddDataBytesToHash(m_colorTargets[slot].GetTexture()->GetTextureParams().m_format);
 			}
 		}
 		if (HasDepthTarget())
 		{
-			AddDataBytesToHash(m_depthStencilTarget->GetTexture()->GetTextureParams().m_format);
+			AddDataBytesToHash(m_depthStencilTarget.GetTexture()->GetTextureParams().m_format);
 		}		
 	}
 
