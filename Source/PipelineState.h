@@ -80,29 +80,6 @@ namespace gr
 		// TODO: Support logical operations (AND/OR/XOR etc)
 
 		// TODO: These should be per-target, to allow different outputs when using MRTs
-		// TODO: We should support alpha blend modes, in addition to the color blend modes here
-		enum class BlendMode
-		{
-			Disabled,
-			Default, // Src one, Dst zero
-			Zero,
-			One,
-			SrcColor,
-			OneMinusSrcColor,
-			DstColor,
-			OneMinusDstColor,
-			SrcAlpha,
-			OneMinusSrcAlpha,
-			DstAlpha,
-			OneMinusDstAlpha,
-			BlendMode_Count
-		};
-		BlendMode GetSrcBlendMode() const;
-		void SetSrcBlendMode(BlendMode);
-		BlendMode GetDstBlendMode() const;
-		void SetDstBlendMode(BlendMode);
-
-		// TODO: These should be per-target, to allow different outputs when using MRTs
 		struct ColorWriteMode
 		{
 			enum class ChannelMode
@@ -140,8 +117,6 @@ namespace gr
 		WindingOrder m_windingOrder;
 		DepthTestMode m_depthTestMode;
 		DepthWriteMode m_depthWriteMode;
-		BlendMode m_srcBlendMode;
-		BlendMode m_dstBlendMode;
 		ColorWriteMode m_colorWriteMode;
 		bool m_writesColor;
 		ClearTarget m_targetClearMode;

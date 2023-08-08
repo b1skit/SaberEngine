@@ -11,8 +11,6 @@ namespace gr
 		, m_windingOrder(WindingOrder::CCW)
 		, m_depthTestMode(DepthTestMode::Default)
 		, m_depthWriteMode(DepthWriteMode::Enabled)
-		, m_srcBlendMode(BlendMode::One)
-		, m_dstBlendMode(BlendMode::One)
 		, m_colorWriteMode{
 			ColorWriteMode::ChannelMode::Enabled, // R
 			ColorWriteMode::ChannelMode::Enabled, // G
@@ -33,8 +31,6 @@ namespace gr
 		AddDataBytesToHash(m_windingOrder);
 		AddDataBytesToHash(m_depthTestMode);
 		AddDataBytesToHash(m_depthWriteMode);
-		AddDataBytesToHash(m_srcBlendMode);
-		AddDataBytesToHash(m_dstBlendMode);
 		AddDataBytesToHash(&m_colorWriteMode, sizeof(m_colorWriteMode));
 		AddDataBytesToHash(m_targetClearMode);
 	}
@@ -111,32 +107,6 @@ namespace gr
 	void PipelineState::SetDepthWriteMode(PipelineState::DepthWriteMode depthWriteMode)
 	{
 		m_depthWriteMode = depthWriteMode;
-		m_isDirty = true;
-	}
-
-
-	PipelineState::BlendMode PipelineState::GetSrcBlendMode() const
-	{
-		return m_srcBlendMode;
-	}
-
-
-	void PipelineState::SetSrcBlendMode(PipelineState::BlendMode srcBlendMode)
-	{
-		m_srcBlendMode = srcBlendMode;
-		m_isDirty = true;
-	}
-
-
-	PipelineState::BlendMode PipelineState::GetDstBlendMode() const
-	{
-		return m_dstBlendMode;
-	}
-
-
-	void PipelineState::SetDstBlendMode(PipelineState::BlendMode dstBlendMode)
-	{
-		m_dstBlendMode = dstBlendMode;
 		m_isDirty = true;
 	}
 

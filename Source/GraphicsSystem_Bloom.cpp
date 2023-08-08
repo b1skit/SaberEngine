@@ -68,16 +68,19 @@ namespace gr
 		gr::PipelineState emissiveStageParams;
 		emissiveStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
 		emissiveStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
-		emissiveStageParams.SetSrcBlendMode(gr::PipelineState::BlendMode::One);
-		emissiveStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::One);
 		emissiveStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
 
 		m_emissiveBlitStage->SetStagePipelineState(emissiveStageParams);
 		m_emissiveBlitStage->SetStageShader(blitShader);
 		m_emissiveBlitStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
-		m_emissiveBlitStage->SetTextureTargetSet(
-			re::TextureTargetSet::Create(*deferredLightGS->GetFinalTextureTargetSet(), "Emissive Blit Target Set"));
+		std::shared_ptr<re::TextureTargetSet> emissiveTargetSet =
+			re::TextureTargetSet::Create(*deferredLightGS->GetFinalTextureTargetSet(), "Emissive Blit Target Set");
+
+		emissiveTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
+			re::TextureTarget::TargetParams::BlendMode::One, re::TextureTarget::TargetParams::BlendMode::One});
+
+		m_emissiveBlitStage->SetTextureTargetSet(emissiveTargetSet);
 		
 		pipeline.AppendRenderStage(m_emissiveBlitStage);
 
@@ -85,8 +88,6 @@ namespace gr
 		gr::PipelineState bloomStageParams;
 		bloomStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
 		bloomStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
-		bloomStageParams.SetSrcBlendMode(gr::PipelineState::BlendMode::One);
-		bloomStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::Zero);
 		bloomStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
 		
 		const uint32_t numScalingStages = m_numDownSamplePasses;
@@ -120,6 +121,8 @@ namespace gr
 			m_downResStages.emplace_back(re::RenderStage::CreateGraphicsStage(name, gfxStageParams));
 
 			std::shared_ptr<re::TextureTargetSet> downResTargets = re::TextureTargetSet::Create(name + " targets");
+			downResTargets->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
+				re::TextureTarget::TargetParams::BlendMode::One,re::TextureTarget::TargetParams::BlendMode::Zero});
 
 			downResTargets->Viewport().Width() = currentXRes;
 			downResTargets->Viewport().Height() = currentYRes;
@@ -220,7 +223,7 @@ namespace gr
 
 			upResTargets->Viewport().Width() = currentXRes;
 			upResTargets->Viewport().Height() = currentYRes;
-	
+
 			m_upResStages.back()->AddPermanentParameterBlock(sceneCam->GetCameraParams());
 			m_upResStages[i]->SetStageShader(blitShader);
 
@@ -230,8 +233,6 @@ namespace gr
 
 				gr::PipelineState addStageParams(bloomStageParams);
 				addStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
-				addStageParams.SetSrcBlendMode(gr::PipelineState::BlendMode::One);
-				addStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::One);
 
 				m_upResStages.back()->SetStagePipelineState(addStageParams);
 			}
@@ -242,6 +243,10 @@ namespace gr
 
 				m_upResStages.back()->SetStagePipelineState(bloomStageParams);
 			}
+
+			// Set this after we've copied any existing targets (and their blend modes...)
+			upResTargets->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
+					re::TextureTarget::TargetParams::BlendMode::One, re::TextureTarget::TargetParams::BlendMode::One});
 
 			m_upResStages.back()->SetTextureTargetSet(upResTargets);
 
@@ -266,7 +271,7 @@ namespace gr
 		const size_t gBufferEmissiveTextureIndex = 3; 
 		m_emissiveBlitStage->SetPerFrameTextureInput(
 			"GBufferAlbedo",
-			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(gBufferEmissiveTextureIndex)->GetTexture(),
+			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(gBufferEmissiveTextureIndex).GetTexture(),
 			bloomStageSampler);
 
 		for (size_t i = 0; i < m_downResStages.size(); i++)
@@ -275,14 +280,14 @@ namespace gr
 			{
 				m_downResStages[i]->SetPerFrameTextureInput(
 					"GBufferAlbedo", 
-					m_emissiveBlitStage->GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
+					m_emissiveBlitStage->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
 				m_downResStages[i]->SetPerFrameTextureInput(
 					"GBufferAlbedo",
-					m_downResStages[i - 1]->GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
+					m_downResStages[i - 1]->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 		}
@@ -293,14 +298,14 @@ namespace gr
 			{
 				m_blurStages[i]->SetPerFrameTextureInput(
 					"GBufferAlbedo",
-					m_downResStages.back()->GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
+					m_downResStages.back()->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
 				m_blurStages[i]->SetPerFrameTextureInput(
 					"GBufferAlbedo",
-					m_blurStages[i-1]->GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
+					m_blurStages[i-1]->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 		}
@@ -311,14 +316,14 @@ namespace gr
 			{
 				m_upResStages[i]->SetPerFrameTextureInput(
 					"GBufferAlbedo",
-					m_blurStages.back()->GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
+					m_blurStages.back()->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
 				m_upResStages[i]->SetPerFrameTextureInput(
 					"GBufferAlbedo",
-					m_upResStages[i-1]->GetTextureTargetSet()->GetColorTarget(0)->GetTexture(),
+					m_upResStages[i-1]->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 		}

@@ -32,6 +32,18 @@ namespace re
 	}
 
 	
+	void TextureTarget::SetBlendMode(TargetParams::BlendModes const& blendModes)
+	{
+		m_targetParams.m_blendModes = blendModes;
+	}
+
+
+	re::TextureTarget::TargetParams::BlendModes const& TextureTarget::GetBlendMode() const
+	{
+		return m_targetParams.m_blendModes;
+	}
+
+	
 	/**********/
 	// Viewport
 	/**********/
@@ -137,22 +149,17 @@ namespace re
 	}
 
 
-	re::TextureTarget const* TextureTargetSet::GetColorTarget(uint8_t slot) const
+	re::TextureTarget const& TextureTargetSet::GetColorTarget(uint8_t slot) const
 	{
 		SEAssert("OOB index", slot < m_colorTargets.size()); 
-		if (m_colorTargets[slot].HasTexture())
-		{
-			return &m_colorTargets[slot];
-		}
-		return nullptr;
+		return m_colorTargets[slot];
 	}
 
 
-	void TextureTargetSet::SetColorTarget(uint8_t slot, re::TextureTarget const* texTarget)
+	void TextureTargetSet::SetColorTarget(uint8_t slot, re::TextureTarget const& texTarget)
 	{
-		SEAssert("Cannot set a null target", texTarget);
 		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_colorIsCreated);
-		m_colorTargets[slot] = *texTarget;
+		m_colorTargets[slot] = texTarget;
 	}
 
 
@@ -258,6 +265,31 @@ namespace re
 		}
 
 		return targetDimensions;
+	}
+
+
+	void TextureTargetSet::SetColorTargetBlendModes(
+		size_t numTargets, 
+		re::TextureTarget::TargetParams::BlendModes const* blendModesArray)
+	{
+		SEAssert("Array cannot be null", blendModesArray);
+		SEAssert("Too many blend modes supplied", numTargets < m_colorTargets.size());
+
+		for (size_t i = 0; i < numTargets; i++)
+		{
+			// Note: It's valid to set a blend mode even if a Target does not have a Texture
+			m_colorTargets[i].SetBlendMode(blendModesArray[i]);
+		}
+	}
+
+
+	void TextureTargetSet::SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes const& blendModes)
+	{
+		for (size_t i = 0; i < m_colorTargets.size(); i++)
+		{
+			// Note: It's valid to set a blend mode even if a Target does not have a Texture
+			m_colorTargets[i].SetBlendMode(blendModes);
+		}
 	}
 
 

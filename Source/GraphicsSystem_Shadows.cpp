@@ -80,8 +80,6 @@ namespace gr
 		// In future, we need to support tagging assets to not cast shadows
 		shadowStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
 
-		shadowStageParams.SetSrcBlendMode(gr::PipelineState::BlendMode::Disabled);
-		shadowStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::Disabled);
 		shadowStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Less);
 		shadowStageParams.SetColorWriteMode(
 		{ 
@@ -107,7 +105,17 @@ namespace gr
 				m_directionalShadowStage->SetStageShader(
 					re::Shader::Create(Config::Get()->GetValue<string>("depthShaderName")));
 
-				m_directionalShadowStage->SetTextureTargetSet(directionalLight->GetShadowMap()->GetTextureTargetSet());
+				std::shared_ptr<re::TextureTargetSet> directionalShadowTargetSet = 
+					directionalLight->GetShadowMap()->GetTextureTargetSet();
+
+				const re::TextureTarget::TargetParams::BlendModes directionalBlendModes
+				{
+					re::TextureTarget::TargetParams::BlendMode::Disabled,
+					re::TextureTarget::TargetParams::BlendMode::Disabled
+				};
+				directionalShadowTargetSet->SetColorTargetBlendModes(1, &directionalBlendModes);
+
+				m_directionalShadowStage->SetTextureTargetSet(directionalShadowTargetSet);
 				// TODO: Target set should be a member of the stage, instead of the shadow map?
 				// -> HARD: The stages are already created, we don't know what lights are associated with each stage
 

@@ -29,6 +29,29 @@ namespace re
 			uint32_t m_targetFace = 0;
 			uint32_t m_targetSubesource = 0;
 
+			// TODO: We should support alpha blend modes, in addition to the color blend modes here
+
+			enum class BlendMode
+			{
+				Disabled,
+				Zero,
+				One,
+				SrcColor,
+				OneMinusSrcColor,
+				DstColor,
+				OneMinusDstColor,
+				SrcAlpha,
+				OneMinusSrcAlpha,
+				DstAlpha,
+				OneMinusDstAlpha,
+				BlendMode_Count
+			};
+			struct BlendModes
+			{
+				TargetParams::BlendMode m_srcBlendMode = BlendMode::One;
+				TargetParams::BlendMode m_dstBlendMode = BlendMode::Zero;
+			} m_blendModes;
+
 			// TODO: Support additional target/sub-resource parameters:
 			// - Array index (or first index, and offset from that)
 			// - Array size
@@ -55,6 +78,9 @@ namespace re
 
 		void SetTargetParams(TargetParams const& targetParams) { m_targetParams = targetParams; }
 		TargetParams const& GetTargetParams() const { return m_targetParams; }
+
+		void SetBlendMode(TargetParams::BlendModes const&);
+		TargetParams::BlendModes const& GetBlendMode() const;
 
 		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::shared_ptr<PlatformParams> params) { m_platformParams = params; }
@@ -151,8 +177,8 @@ namespace re
 		void Commit(); // Target sets are immutable after Commit: Called once during API creation
 
 		inline std::vector<re::TextureTarget> const& GetColorTargets() const { return m_colorTargets; }
-		re::TextureTarget const* GetColorTarget(uint8_t slot) const;
-		void SetColorTarget(uint8_t slot, re::TextureTarget const* texTarget);
+		re::TextureTarget const& GetColorTarget(uint8_t slot) const;
+		void SetColorTarget(uint8_t slot, re::TextureTarget const& texTarget);
 		void SetColorTarget(uint8_t slot, std::shared_ptr<re::Texture> texTarget, TextureTarget::TargetParams const&);
 
 		re::TextureTarget const* GetDepthStencilTarget() const;
@@ -165,6 +191,9 @@ namespace re
 
 		uint8_t GetNumColorTargets() const;
 		glm::vec4 GetTargetDimensions() const;
+
+		void SetColorTargetBlendModes(size_t numTargets, re::TextureTarget::TargetParams::BlendModes const* blendModesArray);
+		void SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes const&);
 
 		inline re::Viewport& Viewport() { return m_viewport; }
 		inline re::Viewport const& Viewport() const { return m_viewport; }

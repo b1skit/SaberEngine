@@ -11,6 +11,93 @@
 using std::string;
 
 
+namespace
+{
+	void SetBlendMode(re::TextureTarget const& textureTarget, uint32_t drawBufferIndex)
+	{
+		const re::TextureTarget::TargetParams::BlendModes blendModes = textureTarget.GetBlendMode();
+		if (blendModes.m_srcBlendMode == re::TextureTarget::TargetParams::BlendMode::Disabled)
+		{
+			SEAssert("Must disable blending for both source and destination", 
+				blendModes.m_srcBlendMode == blendModes.m_dstBlendMode);
+
+			glDisable(GL_BLEND);
+			return;
+		}
+
+		glEnable(GL_BLEND);
+
+		GLenum sFactor = GL_ONE;
+		GLenum dFactor = GL_ZERO;
+
+		auto SetGLBlendFactor = [](
+			re::TextureTarget::TargetParams::BlendMode const& platformBlendMode,
+			GLenum& blendFactor,
+			bool isSrc
+			)
+		{
+			switch (platformBlendMode)
+			{
+			case re::TextureTarget::TargetParams::BlendMode::Zero:
+			{
+				blendFactor = GL_ZERO;
+			}
+			break;
+			case re::TextureTarget::TargetParams::BlendMode::One:
+			{
+				blendFactor = GL_ONE;
+			}
+			break;
+			case re::TextureTarget::TargetParams::BlendMode::SrcColor:
+			{
+				blendFactor = GL_SRC_COLOR;
+			}
+			break;
+			case re::TextureTarget::TargetParams::BlendMode::OneMinusSrcColor:
+			{
+				blendFactor = GL_ONE_MINUS_SRC_COLOR;
+			}
+			break;
+			case re::TextureTarget::TargetParams::BlendMode::DstColor:
+			{
+				blendFactor = GL_DST_COLOR;
+			}
+			break;
+			case re::TextureTarget::TargetParams::BlendMode::OneMinusDstColor:
+			{
+				blendFactor = GL_ONE_MINUS_DST_COLOR;
+			}
+			case re::TextureTarget::TargetParams::BlendMode::SrcAlpha:
+			{
+				blendFactor = GL_SRC_ALPHA;
+			}
+			case re::TextureTarget::TargetParams::BlendMode::OneMinusSrcAlpha:
+			{
+				blendFactor = GL_ONE_MINUS_SRC_ALPHA;
+			}
+			case re::TextureTarget::TargetParams::BlendMode::DstAlpha:
+			{
+				blendFactor = GL_DST_ALPHA;
+			}
+			case re::TextureTarget::TargetParams::BlendMode::OneMinusDstAlpha:
+			{
+				blendFactor = GL_ONE_MINUS_DST_ALPHA;
+			}
+			break;
+			default:
+			{
+				SEAssertF("Invalid blend mode");
+			}
+			}
+		};
+
+		SetGLBlendFactor(blendModes.m_srcBlendMode, sFactor, true);
+		SetGLBlendFactor(blendModes.m_dstBlendMode, dFactor, false);
+
+		glBlendFunci(drawBufferIndex, sFactor, dFactor);
+	}
+}
+
 namespace opengl
 {
 	/*******************************/
@@ -82,10 +169,10 @@ namespace opengl
 		uint32_t insertIdx = 0;
 		for (uint32_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
-			if (targetSet.GetColorTarget(i))
+			if (targetSet.GetColorTarget(i).HasTexture())
 			{
 				// Create/bind the texture:
-				std::shared_ptr<re::Texture> const& texture = targetSet.GetColorTarget(i)->GetTexture();
+				std::shared_ptr<re::Texture> const& texture = targetSet.GetColorTarget(i).GetTexture();
 
 				re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
 				SEAssert("Attempting to bind a color target with a different texture use parameter",
@@ -109,7 +196,7 @@ namespace opengl
 				 
 				// Configure the target parameters:
 				opengl::TextureTarget::PlatformParams* targetParams =
-					targetSet.GetColorTarget(i)->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
+					targetSet.GetColorTarget(i).GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
 
 				// Note: We attach to the same slot/binding index as the texuture has in the target set
 				targetParams->m_attachmentPoint = GL_COLOR_ATTACHMENT0 + i;
@@ -179,22 +266,22 @@ namespace opengl
 		uint32_t firstTargetMipLevel = 0;
 		for (uint32_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
-			if (targetSet.GetColorTarget(i))
+			if (targetSet.GetColorTarget(i).HasTexture())
 			{
-				std::shared_ptr<re::Texture> texture = targetSet.GetColorTarget(i)->GetTexture();
+				std::shared_ptr<re::Texture> texture = targetSet.GetColorTarget(i).GetTexture();
 				SEAssert("Texture is not created", texture->GetPlatformParams()->m_isCreated);
 
 				re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
 				opengl::Texture::PlatformParams const* texPlatformParams =
 					texture->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 				opengl::TextureTarget::PlatformParams const* targetPlatformParams =
-					targetSet.GetColorTarget(i)->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
+					targetSet.GetColorTarget(i).GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
 
 				SEAssert("Attempting to bind a color target with a different texture use parameter", 
 					(textureParams.m_usage & re::Texture::Usage::ColorTarget) ||
 					(textureParams.m_usage & re::Texture::Usage::SwapchainColorProxy));
 
-				re::TextureTarget::TargetParams const& targetParams = targetSet.GetColorTarget(i)->GetTargetParams();
+				re::TextureTarget::TargetParams const& targetParams = targetSet.GetColorTarget(i).GetTargetParams();
 
 				// Attach a texture object to the bound framebuffer:
 				if (textureParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
@@ -268,6 +355,12 @@ namespace opengl
 				scissorRect.Top(),		// Upper-left corner coordinates: Y
 				scissorRect.Right(),	// Width
 				scissorRect.Bottom());	// Height
+		}
+
+		// Set the blend modes. Note, we set these even if the targets don't contain textures
+		for (uint32_t i = 0; i < targetSet.GetColorTargets().size(); i++)
+		{
+			SetBlendMode(targetSet.GetColorTarget(i), i);
 		}
 	}
 

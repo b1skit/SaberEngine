@@ -39,7 +39,6 @@ namespace opengl
 		// OpenGL-specific interface:
 		static void SetCullingMode(gr::PipelineState::FaceCullingMode const& mode);
 		static void ClearTargets(gr::PipelineState::ClearTarget const& clearTarget);
-		static void SetBlendMode(gr::PipelineState::BlendMode const& src, gr::PipelineState::BlendMode const& dst);
 		static void SetDepthTestMode(gr::PipelineState::DepthTestMode const& mode);
 		static void SetDepthWriteMode(gr::PipelineState::DepthWriteMode const& mode);
 		static void SetColorWriteMode(gr::PipelineState::ColorWriteMode const& channelModes);

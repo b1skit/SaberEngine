@@ -14,6 +14,7 @@
 #include "Config.h"
 #include "CoreEngine.h"
 #include "DebugConfiguration.h"
+#include "SysInfo_OpenGL.h"
 
 
 namespace
@@ -317,6 +318,10 @@ namespace opengl
 
 		const string imguiGLSLVersionString = "#version 130";
 		::ImGui_ImplOpenGL3_Init(imguiGLSLVersionString.c_str());
+
+
+		// Call our opengl::SysInfo members while we're on the main thread to cache their values:
+		opengl::SysInfo::GetMaxRenderTargets();
 	}
 
 
@@ -360,7 +365,6 @@ namespace opengl
 	void Context::SetPipelineState(re::Context const& context, gr::PipelineState const& pipelineState)
 	{
 		opengl::Context::SetCullingMode(pipelineState.GetFaceCullingMode());
-		opengl::Context::SetBlendMode(pipelineState.GetSrcBlendMode(), pipelineState.GetDstBlendMode());
 		opengl::Context::SetDepthTestMode(pipelineState.GetDepthTestMode());
 		opengl::Context::SetDepthWriteMode(pipelineState.GetDepthWriteMode());
 		opengl::Context::SetColorWriteMode(pipelineState.GetColorWriteMode());
@@ -425,96 +429,6 @@ namespace opengl
 		default:
 			SEAssertF("Invalid face clear target");
 		}
-	}
-	
-
-	void Context::SetBlendMode(gr::PipelineState::BlendMode const& src, gr::PipelineState::BlendMode const& dst)
-	{
-		if (src == gr::PipelineState::BlendMode::Disabled)
-		{
-			SEAssert("Must disable blending for both source and destination", src == dst);
-
-			glDisable(GL_BLEND);
-			return;
-		}
-
-		glEnable(GL_BLEND);
-
-		GLenum sFactor = GL_ONE;
-		GLenum dFactor = GL_ZERO;
-
-		auto SetGLBlendFactor = [](
-			gr::PipelineState::BlendMode const& platformBlendMode,
-			GLenum& blendFactor,
-			bool isSrc
-			)
-		{
-			switch (platformBlendMode)
-			{
-			case gr::PipelineState::BlendMode::Zero:
-			{
-				blendFactor = GL_ZERO;
-			}
-			break;
-			case gr::PipelineState::BlendMode::One:
-			{
-				blendFactor = GL_ONE;
-			}
-			break;
-			case gr::PipelineState::BlendMode::SrcColor:
-			{
-				blendFactor = GL_SRC_COLOR;
-			}
-			break;
-			case gr::PipelineState::BlendMode::OneMinusSrcColor:
-			{
-				blendFactor = GL_ONE_MINUS_SRC_COLOR;
-			}
-			break;
-			case gr::PipelineState::BlendMode::DstColor:
-			{
-				blendFactor = GL_DST_COLOR;
-			}
-			break;
-			case gr::PipelineState::BlendMode::OneMinusDstColor:
-			{
-				blendFactor = GL_ONE_MINUS_DST_COLOR;
-			}
-			case gr::PipelineState::BlendMode::SrcAlpha:
-			{
-				blendFactor = GL_SRC_ALPHA;
-			}
-			case gr::PipelineState::BlendMode::OneMinusSrcAlpha:
-			{
-				blendFactor = GL_ONE_MINUS_SRC_ALPHA;
-			}
-			case gr::PipelineState::BlendMode::DstAlpha:
-			{
-				blendFactor = GL_DST_ALPHA;
-			}
-			case gr::PipelineState::BlendMode::OneMinusDstAlpha:
-			{
-				blendFactor = GL_ONE_MINUS_DST_ALPHA;
-			}
-			break;
-			default:
-			{
-				SEAssertF("Invalid blend mode");
-			}
-			}
-		};
-
-		if (src != gr::PipelineState::BlendMode::Default)
-		{
-			SetGLBlendFactor(src, sFactor, true);
-		}
-
-		if (dst != gr::PipelineState::BlendMode::Default)
-		{
-			SetGLBlendFactor(dst, dFactor, false);
-		}
-
-		glBlendFunc(sFactor, dFactor);
 	}
 
 

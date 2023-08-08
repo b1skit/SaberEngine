@@ -430,20 +430,20 @@ namespace dx12
 		uint32_t numColorTargets = 0;
 		for (uint8_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
-			re::TextureTarget const* target = targetSet.GetColorTarget(i);
-			if (target)
+			re::TextureTarget const& target = targetSet.GetColorTarget(i);
+			if (target.HasTexture())
 			{
 				dx12::Texture::PlatformParams* texPlatParams =
-					target->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+					target.GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 				// Insert our resource transition:
 				TransitionResource(
-					target->GetTexture(),
+					target.GetTexture(),
 					D3D12_RESOURCE_STATE_RENDER_TARGET,
-					target->GetTargetParams().m_targetSubesource);
+					target.GetTargetParams().m_targetSubesource);
 
 				dx12::TextureTarget::PlatformParams* targetPlatParams =
-					targetSet.GetColorTarget(i)->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+					targetSet.GetColorTarget(i).GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
 				colorTargetDescriptors.emplace_back(targetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor());
 				numColorTargets++;

@@ -174,7 +174,7 @@ namespace gr
 		m_pointlightStage = re::RenderStage::CreateGraphicsStage("Pointlight stage", gfxStageParams);
 
 		// Create a fullscreen quad, for reuse when building batches:
-		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Near);
+		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Far);
 
 		// Cube mesh, for rendering of IBL cubemaps
 		m_cubeMeshPrimitive = meshfactory::CreateCube();
@@ -202,10 +202,18 @@ namespace gr
 		re::TextureTarget::TargetParams targetParams;
 		targetParams.m_clearColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-		std::shared_ptr<TextureTargetSet> deferredLightingTargetSet =
-			re::TextureTargetSet::Create("Deferred lighting target");
+		std::shared_ptr<TextureTargetSet> deferredLightingTargetSet = 
+			re::TextureTargetSet::Create("Deferred light targets");
 		deferredLightingTargetSet->SetColorTarget(0, outputTexture, targetParams);
 		deferredLightingTargetSet->SetDepthStencilTarget(gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget());
+		
+		// All deferred lighting is additive
+		re::TextureTarget::TargetParams::BlendModes deferredBlendModes
+		{
+			re::TextureTarget::TargetParams::BlendMode::One,
+			re::TextureTarget::TargetParams::BlendMode::One,
+		};
+		deferredLightingTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
 
 		Camera* deferredLightingCam = SceneManager::GetSceneData()->GetMainCamera().get();
 
@@ -214,15 +222,7 @@ namespace gr
 		m_ambientStage->SetTextureTargetSet(deferredLightingTargetSet);
 		m_keylightStage->SetTextureTargetSet(deferredLightingTargetSet);
 		m_pointlightStage->SetTextureTargetSet(deferredLightingTargetSet);
-	
-		
-		gr::PipelineState ambientStageParams;
-		ambientStageParams.SetClearTarget(gr::PipelineState::ClearTarget::Color);
-		ambientStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back); // Ambient and directional lights (currently) use back face culling
-		ambientStageParams.SetSrcBlendMode(gr::PipelineState::BlendMode::One); // All deferred lighting is additive
-		ambientStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::One);
-		ambientStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::LEqual); // Ambient & directional
-		ambientStageParams.SetDepthWriteMode(gr::PipelineState::DepthWriteMode::Disabled);
+
 
 		shared_ptr<Texture> iblTexture = SceneManager::GetSceneData()->GetIBLTexture();
 
@@ -258,14 +258,19 @@ namespace gr
 			brdfStageTargets->Viewport() =
 				re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
 
+			re::TextureTarget::TargetParams::BlendModes brdfBlendModes
+			{
+				re::TextureTarget::TargetParams::BlendMode::One,
+				re::TextureTarget::TargetParams::BlendMode::Zero,
+			};
+			brdfStageTargets->SetColorTargetBlendModes(1, &brdfBlendModes);
+
 			brdfStage->SetTextureTargetSet(brdfStageTargets);
 
 			// Stage params:
 			gr::PipelineState brdfStageParams;
 			brdfStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
 			brdfStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Disabled);
-			brdfStageParams.SetSrcBlendMode(gr::PipelineState::BlendMode::One);
-			brdfStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::Zero);
 			brdfStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
 			brdfStageParams.SetDepthWriteMode(gr::PipelineState::DepthWriteMode::Disabled);
 
@@ -293,8 +298,6 @@ namespace gr
 		gr::PipelineState iblStageParams;
 		iblStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
 		iblStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Disabled);
-		iblStageParams.SetSrcBlendMode(gr::PipelineState::BlendMode::One);
-		iblStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::Zero);
 		iblStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
 		iblStageParams.SetDepthWriteMode(gr::PipelineState::DepthWriteMode::Disabled);
 
@@ -351,6 +354,13 @@ namespace gr
 				iemStage->AddPermanentParameterBlock(pb);
 
 				std::shared_ptr<re::TextureTargetSet> iemTargets = re::TextureTargetSet::Create("IEM Stage Targets");
+
+				re::TextureTarget::TargetParams::BlendModes iemBlendModes
+				{
+					re::TextureTarget::TargetParams::BlendMode::One,
+					re::TextureTarget::TargetParams::BlendMode::Zero,
+				};
+				iemTargets->SetColorTargetBlendModes(1, &iemBlendModes);
 
 				re::TextureTarget::TargetParams targetParams;
 				targetParams.m_targetFace = face;
@@ -422,6 +432,13 @@ namespace gr
 					pmremTargetSet->SetColorTarget(0, m_PMREMTex, targetParams);
 					pmremTargetSet->Viewport() = re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
 
+					re::TextureTarget::TargetParams::BlendModes pmremBlendModes
+					{
+						re::TextureTarget::TargetParams::BlendMode::One,
+						re::TextureTarget::TargetParams::BlendMode::Zero,
+					};
+					pmremTargetSet->SetColorTargetBlendModes(1, &pmremBlendModes);
+
 					pmremStage->SetTextureTargetSet(pmremTargetSet);
 
 					pmremStage->SetStagePipelineState(iblStageParams);
@@ -433,6 +450,17 @@ namespace gr
 			}
 		}
 
+
+		gr::PipelineState ambientStageParams;
+		ambientStageParams.SetClearTarget(gr::PipelineState::ClearTarget::Color);
+
+		// Ambient/directional lights use back face culling, as they're fullscreen quads
+		ambientStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back); 
+
+		// Our fullscreen quad is on the far plane; We only want to light something if the quad is behind the geo (i.e.
+		// the quad's depth is greater than what is in the depth buffer)
+		ambientStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Greater);
+		ambientStageParams.SetDepthWriteMode(gr::PipelineState::DepthWriteMode::Disabled);
 		
 		// Ambient light stage:
 		m_ambientStage->SetStageShader(
@@ -548,21 +576,21 @@ namespace gr
 			{
 				m_ambientStage->SetPerFrameTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[slot],
-					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot)->GetTexture(),
+					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 			if (keyLight)
 			{
 				m_keylightStage->SetPerFrameTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[slot],
-					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot)->GetTexture(),
+					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 			if (!pointLights.empty())
 			{
 				m_pointlightStage->SetPerFrameTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[slot],
-					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot)->GetTexture(),
+					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 		}

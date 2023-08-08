@@ -3,15 +3,22 @@
 #include <GL/wglew.h> // Windows-specific GL functions and macros
 #include <GL/GL.h> // Must follow glew.h
 
+#include "DebugConfiguration.h"
 #include "SysInfo_OpenGL.h"
 
-
+// Note: Most of these functions can likely only be called from the main thread. Follow the pattern of caching the
+// result in a static variable and priming it from the main thread during startup by calling from the opengl::Context
 namespace opengl
 {
 	uint8_t SysInfo::GetMaxRenderTargets()
 	{
-		GLint maxColorAttachments = 0;
-		glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAttachments);
-		return maxColorAttachments;
+		// NOTE: This can only be called from the main thread, so we cache the result in a static variable and call this
+		// during opengl::Context initialization
+		static GLint s_maxColorAttachments = 0;
+		if (s_maxColorAttachments == 0)
+		{
+			glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &s_maxColorAttachments);
+		}
+		return s_maxColorAttachments;
 	}
 }

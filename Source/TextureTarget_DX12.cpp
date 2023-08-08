@@ -142,13 +142,13 @@ namespace dx12
 		uint32_t numTargets = 0;
 		for (uint8_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
-			if (!targetSet.GetColorTarget(i))
+			if (!targetSet.GetColorTarget(i).HasTexture())
 			{
 				break;
 			}
 
 			dx12::Texture::PlatformParams const* targetTexPlatParams =
-				targetSet.GetColorTarget(i)->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+				targetSet.GetColorTarget(i).GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 			colorTargetFormats.RTFormats[i] = targetTexPlatParams->m_format;
 			numTargets++;

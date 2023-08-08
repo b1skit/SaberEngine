@@ -11,6 +11,7 @@
 #include "PipelineState_DX12.h"
 #include "Shader.h"
 #include "Shader_DX12.h"
+#include "SysInfo_DX12.h"
 #include "Texture_DX12.h"
 #include "TextureTarget.h"
 #include "TextureTarget_DX12.h"
@@ -249,108 +250,109 @@ namespace
 	{
 		D3D12_BLEND_DESC blendDesc{};
 
-		// TODO: Support these via the gr::PipelineState
+		// TODO: Support these
 		blendDesc.AlphaToCoverageEnable = false;
 		blendDesc.IndependentBlendEnable = false;
 
-		// Configure the target blending:
-		D3D12_RENDER_TARGET_BLEND_DESC rtBlendDesc{};
-
-		// Source blending:
-		switch (grPipelineState.GetSrcBlendMode())
+		// Configure the blend mode for each target:
+		for (uint32_t i = 0; i < dx12::SysInfo::GetMaxRenderTargets(); i++)
 		{
-		case gr::PipelineState::BlendMode::Disabled:
-		{
-			SEAssert("Must disable blending for both source and destination",
-				grPipelineState.GetSrcBlendMode() == grPipelineState.GetDstBlendMode());
+			D3D12_RENDER_TARGET_BLEND_DESC rtBlendDesc{};
 
-			rtBlendDesc.BlendEnable = false;
-			rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ZERO;
+			re::TextureTarget::TargetParams::BlendModes const& blendModes = targetSet.GetColorTarget(i).GetBlendMode();
+
+			// Source blending:
+			switch (blendModes.m_srcBlendMode)
+			{
+			case re::TextureTarget::TargetParams::BlendMode::Disabled:
+			{
+				SEAssert("Must disable blending for both source and destination",
+					blendModes.m_srcBlendMode == blendModes.m_dstBlendMode);
+
+				rtBlendDesc.BlendEnable = false;
+				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ZERO;
+			}
+			break;
+			case re::TextureTarget::TargetParams::BlendMode::Zero:
+				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ZERO; break;
+			case re::TextureTarget::TargetParams::BlendMode::One:
+				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ONE; break;
+			case re::TextureTarget::TargetParams::BlendMode::SrcColor:
+				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_SRC_COLOR; break;
+			case re::TextureTarget::TargetParams::BlendMode::OneMinusSrcColor:
+				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_INV_SRC_COLOR; break;
+			case re::TextureTarget::TargetParams::BlendMode::DstColor:
+				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_DEST_COLOR; break;
+			case re::TextureTarget::TargetParams::BlendMode::OneMinusDstColor:
+				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_INV_DEST_COLOR; break;
+			case re::TextureTarget::TargetParams::BlendMode::SrcAlpha:
+				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_SRC_ALPHA; break;
+			case re::TextureTarget::TargetParams::BlendMode::OneMinusSrcAlpha:
+				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_INV_SRC_ALPHA; break;
+			case re::TextureTarget::TargetParams::BlendMode::DstAlpha:
+				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_DEST_ALPHA; break;
+			case re::TextureTarget::TargetParams::BlendMode::OneMinusDstAlpha:
+				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_INV_DEST_ALPHA; break;
+			default:
+				SEAssertF("Invalid source blend mode");
+				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ONE;
+			}
+
+			// Destination blending:
+			switch (blendModes.m_dstBlendMode)
+			{
+			case re::TextureTarget::TargetParams::BlendMode::Disabled:
+			{
+				SEAssert("Must disable blending for both source and destination",
+					blendModes.m_srcBlendMode == blendModes.m_dstBlendMode);
+
+				rtBlendDesc.BlendEnable = false;
+				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ZERO;
+			}
+			break;
+			case re::TextureTarget::TargetParams::BlendMode::Zero:
+				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ZERO; break;
+			case re::TextureTarget::TargetParams::BlendMode::One:
+				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ONE; break;
+			case re::TextureTarget::TargetParams::BlendMode::SrcColor:
+				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_SRC_COLOR; break;
+			case re::TextureTarget::TargetParams::BlendMode::OneMinusSrcColor:
+				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_INV_SRC_COLOR; break;
+			case re::TextureTarget::TargetParams::BlendMode::DstColor:
+				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_DEST_COLOR; break;
+			case re::TextureTarget::TargetParams::BlendMode::OneMinusDstColor:
+				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_INV_DEST_COLOR; break;
+			case re::TextureTarget::TargetParams::BlendMode::SrcAlpha:
+				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_SRC_ALPHA; break;
+			case re::TextureTarget::TargetParams::BlendMode::OneMinusSrcAlpha:
+				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_INV_SRC_ALPHA; break;
+			case re::TextureTarget::TargetParams::BlendMode::DstAlpha:
+				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_DEST_ALPHA; break;
+			case re::TextureTarget::TargetParams::BlendMode::OneMinusDstAlpha:
+				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_INV_DEST_ALPHA; break;
+			default:
+				SEAssertF("Invalid dest blend mode");
+				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ZERO;
+			}
+
+			// TODO: Support these
+			rtBlendDesc.LogicOpEnable = false;
+			rtBlendDesc.BlendOp = D3D12_BLEND_OP::D3D12_BLEND_OP_ADD;
+			rtBlendDesc.SrcBlendAlpha = D3D12_BLEND::D3D12_BLEND_ONE;
+			rtBlendDesc.DestBlendAlpha = D3D12_BLEND::D3D12_BLEND_ZERO;
+			rtBlendDesc.BlendOpAlpha = D3D12_BLEND_OP::D3D12_BLEND_OP_ADD;
+			rtBlendDesc.LogicOp = D3D12_LOGIC_OP::D3D12_LOGIC_OP_NOOP;
+
+			// Color write modes:
+			rtBlendDesc.RenderTargetWriteMask =
+				(grPipelineState.GetColorWriteMode().R == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_RED : 0) |
+				(grPipelineState.GetColorWriteMode().G == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_GREEN : 0) |
+				(grPipelineState.GetColorWriteMode().B == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_BLUE : 0) |
+				(grPipelineState.GetColorWriteMode().A == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_ALPHA : 0);
+			// TODO: RenderTargetWriteMask should be per-target (i.e. for MRT), but currently it's per stage
+
+			blendDesc.RenderTarget[i] = rtBlendDesc;
 		}
-		break;
-		case gr::PipelineState::BlendMode::Default: // Src one, Dst zero
-			rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ONE; break;
-		case gr::PipelineState::BlendMode::Zero:
-			rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ZERO; break;
-		case gr::PipelineState::BlendMode::One:
-			rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ONE; break;
-		case gr::PipelineState::BlendMode::SrcColor:
-			rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_SRC_COLOR; break;
-		case gr::PipelineState::BlendMode::OneMinusSrcColor:
-			rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_INV_SRC_COLOR; break;
-		case gr::PipelineState::BlendMode::DstColor:
-			rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_DEST_COLOR; break;
-		case gr::PipelineState::BlendMode::OneMinusDstColor:
-			rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_INV_DEST_COLOR; break;
-		case gr::PipelineState::BlendMode::SrcAlpha:
-			rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_SRC_ALPHA; break;
-		case gr::PipelineState::BlendMode::OneMinusSrcAlpha:
-			rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_INV_SRC_ALPHA; break;
-		case gr::PipelineState::BlendMode::DstAlpha:
-			rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_DEST_ALPHA; break;
-		case gr::PipelineState::BlendMode::OneMinusDstAlpha:
-			rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_INV_DEST_ALPHA; break;
-		default:
-			SEAssertF("Invalid source blend mode");
-			rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ONE;
-		}
-
-		// Destination blending:
-		switch (grPipelineState.GetDstBlendMode())
-		{
-		case gr::PipelineState::BlendMode::Disabled:
-		{
-			SEAssert("Must disable blending for both source and destination",
-				grPipelineState.GetSrcBlendMode() == grPipelineState.GetDstBlendMode());
-
-			rtBlendDesc.BlendEnable = false;
-			rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ZERO;
-		}
-		break;
-		case gr::PipelineState::BlendMode::Default: // Src one, Dst zero
-			rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ZERO; break;
-		case gr::PipelineState::BlendMode::Zero:
-			rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ZERO; break;
-		case gr::PipelineState::BlendMode::One:
-			rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ONE; break;
-		case gr::PipelineState::BlendMode::SrcColor:
-			rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_SRC_COLOR; break;
-		case gr::PipelineState::BlendMode::OneMinusSrcColor:
-			rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_INV_SRC_COLOR; break;
-		case gr::PipelineState::BlendMode::DstColor:
-			rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_DEST_COLOR; break;
-		case gr::PipelineState::BlendMode::OneMinusDstColor:
-			rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_INV_DEST_COLOR; break;
-		case gr::PipelineState::BlendMode::SrcAlpha:
-			rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_SRC_ALPHA; break;
-		case gr::PipelineState::BlendMode::OneMinusSrcAlpha:
-			rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_INV_SRC_ALPHA; break;
-		case gr::PipelineState::BlendMode::DstAlpha:
-			rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_DEST_ALPHA; break;
-		case gr::PipelineState::BlendMode::OneMinusDstAlpha:
-			rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_INV_DEST_ALPHA; break;
-		default:
-			SEAssertF("Invalid dest blend mode");
-			rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ZERO;
-		}
-
-		// TODO: Support these via the gr::PipelineState
-		rtBlendDesc.LogicOpEnable = false;
-		rtBlendDesc.BlendOp = D3D12_BLEND_OP::D3D12_BLEND_OP_ADD;
-		rtBlendDesc.SrcBlendAlpha = D3D12_BLEND::D3D12_BLEND_ONE;
-		rtBlendDesc.DestBlendAlpha = D3D12_BLEND::D3D12_BLEND_ZERO;
-		rtBlendDesc.BlendOpAlpha = D3D12_BLEND_OP::D3D12_BLEND_OP_ADD;
-		rtBlendDesc.LogicOp = D3D12_LOGIC_OP::D3D12_LOGIC_OP_NOOP;
-
-		// Color write modes:
-		rtBlendDesc.RenderTargetWriteMask = 
-			(grPipelineState.GetColorWriteMode().R == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_RED : 0) |
-			(grPipelineState.GetColorWriteMode().G == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_GREEN : 0) |
-			(grPipelineState.GetColorWriteMode().B == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_BLUE : 0) |
-			(grPipelineState.GetColorWriteMode().A == gr::PipelineState::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_ALPHA : 0);
-
-		// TODO: This should be per-target (i.e. for MRT), but currently it's per stage
-		blendDesc.RenderTarget[0] = rtBlendDesc;
 
 		return blendDesc;
 	}

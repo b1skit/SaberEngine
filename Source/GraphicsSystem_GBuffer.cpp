@@ -76,8 +76,7 @@ namespace gr
 			gBufferTargets->SetColorTarget(
 				i, re::Texture::Create(GBufferTexNames[i], gBufferTexParams, false), targetParams);
 		}
-		m_gBufferStage->SetTextureTargetSet(gBufferTargets);
-
+		
 		// Create GBuffer depth target:
 		re::Texture::TextureParams depthTexParams(gBufferTexParams);
 		depthTexParams.m_usage = re::Texture::Usage::DepthTarget;
@@ -90,6 +89,15 @@ namespace gr
 			re::Texture::Create(GBufferTexNames[GBufferTexIdx::GBufferDepth], depthTexParams, false),
 			depthTargetParams);
 
+		const re::TextureTarget::TargetParams::BlendModes gbufferBlendModes
+		{
+			re::TextureTarget::TargetParams::BlendMode::Disabled,
+			re::TextureTarget::TargetParams::BlendMode::Disabled
+		};
+		gBufferTargets->SetColorTargetBlendModes(1, &gbufferBlendModes);
+
+		m_gBufferStage->SetTextureTargetSet(gBufferTargets);
+
 		// Camera:
 		m_gBufferStage->AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());
 
@@ -98,8 +106,6 @@ namespace gr
 		gBufferStageParams.SetClearTarget(gr::PipelineState::ClearTarget::ColorDepth);
 
 		gBufferStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
-		gBufferStageParams.SetSrcBlendMode(gr::PipelineState::BlendMode::Disabled);
-		gBufferStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::Disabled);
 		gBufferStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Less);
 
 		m_gBufferStage->SetStagePipelineState(gBufferStageParams);

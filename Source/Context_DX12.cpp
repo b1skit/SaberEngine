@@ -142,7 +142,7 @@ namespace dx12
 				en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 			dx12::Texture::PlatformParams const* backbufferColorTarget0PlatParams =
-				dx12::SwapChain::GetBackBufferTargetSet(swapChain)->GetColorTarget(0)->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+				dx12::SwapChain::GetBackBufferTargetSet(swapChain)->GetColorTarget(0).GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 			// Setup ImGui platform/Renderer backends:
 			ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
@@ -219,11 +219,11 @@ namespace dx12
 			SwapChain::GetBackBufferTargetSet(context.GetSwapChain());
 		
 		dx12::Texture::PlatformParams const* backbufferColorTexPlatParams =
-			swapChainTargetSet->GetColorTarget(0)->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+			swapChainTargetSet->GetColorTarget(0).GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		// Transition our backbuffer resource back to the present state:
 		commandList->TransitionResource(
-			swapChainTargetSet->GetColorTarget(0)->GetTexture(),
+			swapChainTargetSet->GetColorTarget(0).GetTexture(),
 			D3D12_RESOURCE_STATE_PRESENT,
 			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 

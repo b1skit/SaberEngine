@@ -17,6 +17,14 @@ namespace opengl
 		// Default target set:
 		LOG("Creating default texure target set");
 		swapChainParams->m_backbufferTargetSet = re::TextureTargetSet::Create("Backbuffer");
+
+		const re::TextureTarget::TargetParams::BlendModes backbufferBlendModes
+		{
+			re::TextureTarget::TargetParams::BlendMode::One,
+			re::TextureTarget::TargetParams::BlendMode::Zero
+		};
+		swapChainParams->m_backbufferTargetSet->SetColorTargetBlendModes(1, &backbufferBlendModes);
+
 		swapChainParams->m_backbufferTargetSet->Viewport() =
 		{
 			0,

@@ -72,8 +72,6 @@ namespace gr
 		gr::PipelineState skyboxStageParams;
 		skyboxStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
 		skyboxStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
-		skyboxStageParams.SetSrcBlendMode(gr::PipelineState::BlendMode::Disabled); // Render on top of the frame
-		skyboxStageParams.SetDstBlendMode(gr::PipelineState::BlendMode::Disabled);
 		skyboxStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::LEqual);
 		skyboxStageParams.SetDepthWriteMode(gr::PipelineState::DepthWriteMode::Disabled);
 
@@ -87,18 +85,25 @@ namespace gr
 		// Create a new texture target set so we can write to the deferred lighting color targets, but attach the
 		// GBuffer depth for HW depth testing
 		std::shared_ptr<re::TextureTargetSet> skyboxTargets = 
-			re::TextureTargetSet::Create(*deferredLightGS->GetFinalTextureTargetSet(),"Skybox Targets");
+			re::TextureTargetSet::Create(*deferredLightGS->GetFinalTextureTargetSet(), "Skybox Targets");
+
+		GBufferGraphicsSystem* gBufferGS = RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>();
+		skyboxTargets->SetDepthStencilTarget(gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget());
+
+		// Render on top of the frame
+		const re::TextureTarget::TargetParams::BlendModes skyboxBlendModes
+		{
+			re::TextureTarget::TargetParams::BlendMode::One,
+			re::TextureTarget::TargetParams::BlendMode::Zero
+		};
+		skyboxTargets->SetColorTargetBlendModes(1, &skyboxBlendModes);
+
+		m_skyboxStage->SetTextureTargetSet(skyboxTargets);
 
 		m_skyboxStage->AddPermanentParameterBlock(re::ParameterBlock::Create(
 			SkyboxParams::s_shaderName,
 			CreateSkyboxParamsData(skyboxTargets),
 			re::ParameterBlock::PBType::Immutable));
-
-		GBufferGraphicsSystem* gBufferGS = RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>();
-
-		skyboxTargets->SetDepthStencilTarget(gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget());
-
-		m_skyboxStage->SetTextureTargetSet(skyboxTargets);
 
 		pipeline.AppendRenderStage(m_skyboxStage);
 	}

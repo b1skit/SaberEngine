@@ -60,8 +60,6 @@ namespace gr
 		gr::PipelineState tonemappingStageParam;
 		tonemappingStageParam.SetClearTarget(gr::PipelineState::ClearTarget::None);
 		tonemappingStageParam.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
-		tonemappingStageParam.SetSrcBlendMode(gr::PipelineState::BlendMode::One);
-		tonemappingStageParam.SetDstBlendMode(gr::PipelineState::BlendMode::Zero);
 		tonemappingStageParam.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
 
 		m_tonemappingStage->SetStagePipelineState(tonemappingStageParam);
@@ -92,7 +90,7 @@ namespace gr
 
 		m_tonemappingStage->SetPerFrameTextureInput(
 			"GBufferAlbedo",
-			deferredLightTextureTargetSet->GetColorTarget(0)->GetTexture(),
+			deferredLightTextureTargetSet->GetColorTarget(0).GetTexture(),
 			Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 	}
 
