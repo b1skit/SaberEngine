@@ -836,7 +836,7 @@ namespace dx12
 
 		SEAssert("Root signature does not contain a parameter with that name", 
 			hasResource || 
-			en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
+			en::Config::Get()->ValueExists(en::ConfigKeys::k_relaxedShaderBindingCmdLineArg) == true);
 
 		return hasResource ? &m_rootParams[result->second] : nullptr;
 	}
@@ -852,7 +852,7 @@ namespace dx12
 
 		SEAssert("Root signature does not contain a parameter with that register/bind point",
 			hasResource ||
-			en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
+			en::Config::Get()->ValueExists(en::ConfigKeys::k_relaxedShaderBindingCmdLineArg) == true);
 
 		return hasResource ? &m_rootParams[result->second] : nullptr;
 	}

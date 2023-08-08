@@ -71,8 +71,8 @@ namespace re
 	Viewport::Viewport() :
 		m_xMin(0),
 		m_yMin(0),
-		m_width(Config::Get()->GetValue<int>(en::Config::k_windowXResValueName)),
-		m_height(Config::Get()->GetValue<int>(en::Config::k_windowYResValueName))
+		m_width(Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName)),
+		m_height(Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName))
 	{
 	}
 
@@ -296,8 +296,8 @@ namespace re
 		// -> OR: A target has a flag (and just no texture resource, for OpenGL)?
 		if (!foundDimensions)
 		{
-			const uint32_t xRes = (uint32_t)Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
-			const uint32_t yRes = (uint32_t)Config::Get()->GetValue<int>(en::Config::k_windowYResValueName);
+			const uint32_t xRes = (uint32_t)Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
+			const uint32_t yRes = (uint32_t)Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName);
 
 			targetDimensions.x = (float)xRes;
 			targetDimensions.y = (float)yRes;

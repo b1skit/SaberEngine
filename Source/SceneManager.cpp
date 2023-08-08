@@ -48,7 +48,7 @@ namespace en
 
 		// Load the scene:
 		string sceneName;
-		if (Config::Get()->TryGetValue<string>(Config::k_sceneNameValueName, sceneName))
+		if (Config::Get()->TryGetValue<string>(en::ConfigKeys::k_sceneNameValueName, sceneName))
 		{
 			m_sceneData = std::make_shared<SceneData>(sceneName);
 		}
@@ -59,7 +59,7 @@ namespace en
 		}
 
 		string sceneFilePath;
-		Config::Get()->TryGetValue<string>(Config::k_sceneFilePathValueName, sceneFilePath);
+		Config::Get()->TryGetValue<string>(en::ConfigKeys::k_sceneFilePathValueName, sceneFilePath);
 
 		const bool loadResult = m_sceneData->Load(sceneFilePath);
 		if (!loadResult)

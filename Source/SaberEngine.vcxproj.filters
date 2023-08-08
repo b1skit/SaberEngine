@@ -772,6 +772,9 @@
     <ClInclude Include="CastUtils.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
+    <ClInclude Include="ConfigKeys.h">
+      <Filter>Header Files\en</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\glsl\blitShader.frag">

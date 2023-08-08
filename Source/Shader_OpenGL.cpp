@@ -426,7 +426,7 @@ namespace opengl
 			if (bindingUnit == params->m_samplerUnits.end())
 			{
 				SEAssert("Texture name is invalid, and relaxed shader binding is not enabled",
-					en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
+					en::Config::Get()->ValueExists(en::ConfigKeys::k_relaxedShaderBindingCmdLineArg) == true);
 				return;
 			}
 
@@ -440,7 +440,7 @@ namespace opengl
 			if (bindingUnit == params->m_samplerUnits.end())
 			{
 				SEAssert("Sampler name is invalid, and relaxed shader binding is not enabled",
-					en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
+					en::Config::Get()->ValueExists(en::ConfigKeys::k_relaxedShaderBindingCmdLineArg) == true);
 				return;
 			}
 

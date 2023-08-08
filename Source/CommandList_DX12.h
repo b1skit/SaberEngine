@@ -195,8 +195,6 @@ namespace dx12
 	inline void CommandList::SetGraphicsRoot32BitConstants(
 		uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const
 	{
-		// TODO: Add an assert: Is the root param index free?
-
 		m_commandList->SetGraphicsRoot32BitConstants(
 			rootParamIdx,	// RootParameterIndex (As set in our CD3DX12_ROOT_PARAMETER1)
 			count,			// Num32BitValuesToSet

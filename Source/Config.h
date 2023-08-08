@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
+#include "ConfigKeys.h"
 #include "Platform.h"
 #include "DebugConfiguration.h"
 
@@ -10,23 +11,7 @@ namespace en
 	class Config
 	{
 	public:
-		// Configuration constants:
-		static char const* k_scenesDirName;	// "Scenes\\"
-
-
-		// Config keys:
-		static char const* const k_sceneCmdLineArg;						// "scene"
-		static char const* const k_showSystemConsoleWindowCmdLineArg;	// "console"
-		static char const* const k_platformCmdLineArg;					// "platform"
-		static char const* const k_debugLevelCmdLineArg;				// "debuglevel"
-		static char const* const k_relaxedShaderBindingCmdLineArg;		// "relaxedshaderbinding"
-
-		static char const* const k_commandLineArgsValueName;	// "commandLineArgs": Gets the command line arg string
-
-		static char const* const k_sceneNameValueName;			// "sceneName"
-		static char const* const k_sceneFilePathValueName;		// "sceneFilePath"
-		static char const* const k_windowXResValueName;			// "windowXRes"
-		static char const* const k_windowYResValueName;			// windowYRes"
+		
 				
 
 	public: 

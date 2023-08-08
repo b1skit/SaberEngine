@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Config.h"
+#include "ConfigKeys.h"
 #include "KeyConfiguration.h"
 #include "TextUtils.h"
 
@@ -34,24 +35,6 @@ namespace
 
 namespace en
 {
-	// Configuration constants:
-	char const* Config::k_scenesDirName		= "Scenes\\";
-
-	// Config keys:
-	char const* const Config::k_sceneCmdLineArg						= "scene";
-	char const* const Config::k_showSystemConsoleWindowCmdLineArg	= "console";
-	char const* const Config::k_platformCmdLineArg					= "platform";
-	char const* const Config::k_debugLevelCmdLineArg				= "debuglevel";
-	char const* const Config::k_relaxedShaderBindingCmdLineArg		= "relaxedshaderbinding";
-
-	char const* const Config::k_commandLineArgsValueName			= "commandLineArgs";
-
-	char const* const Config::k_sceneNameValueName					= "sceneName";
-	char const* const Config::k_sceneFilePathValueName				= "sceneFilePath";
-	char const* const Config::k_windowXResValueName					= "windowXRes";
-	char const* const Config::k_windowYResValueName					= "windowYRes";
-	// TODO: Move these to a .h file
-
 	Config* Config::Get()
 	{
 		static std::unique_ptr<en::Config> instance = std::make_unique<en::Config>();
@@ -109,7 +92,7 @@ namespace en
 			argString += currentArg + (HasNextToken() ? " " : ""); // Pad with spaces
 
 			// TODO: Write a token/value parser. For now, just match the commands
-			if (currentArg.find(k_sceneCmdLineArg) != string::npos)
+			if (currentArg.find(ConfigKeys::k_sceneCmdLineArg) != string::npos)
 			{
 				if (NextTokenIsValue())
 				{
@@ -118,7 +101,7 @@ namespace en
 					// From param of the form "Scene\Folder\Names\sceneFile.extension", we extract:
 
 					// sceneFilePath == ".\Scenes\Scene\Folder\Names\sceneFile.extension":
-					const string sceneFilePath = k_scenesDirName + sceneNameParam; // k_scenesDirName = ".\Scenes\"
+					const string sceneFilePath = ConfigKeys::k_scenesDirName + sceneNameParam; // k_scenesDirName = ".\Scenes\"
 					SetValue("sceneFilePath", sceneFilePath, Config::SettingType::Runtime);
 
 					// sceneRootPath == ".\Scenes\Scene\Folder\Names\":
@@ -130,7 +113,7 @@ namespace en
 					const string filenameAndExt = sceneFilePath.substr(lastSlash + 1, sceneFilePath.size() - lastSlash);
 					const size_t extensionPeriod = filenameAndExt.find_last_of(".");
 					const string sceneName = filenameAndExt.substr(0, extensionPeriod);
-					SetValue(Config::k_sceneNameValueName, sceneName, Config::SettingType::Runtime);
+					SetValue(ConfigKeys::k_sceneNameValueName, sceneName, Config::SettingType::Runtime);
 
 					// sceneIBLPath == ".\Scenes\SceneFolderName\IBL\ibl.hdr"
 					const string sceneIBLPath = sceneRootPath + "IBL\\ibl.hdr";
@@ -139,11 +122,11 @@ namespace en
 					ConsumeNextToken();
 				}
 			}
-			else if (currentArg.find(k_showSystemConsoleWindowCmdLineArg) != string::npos)
+			else if (currentArg.find(ConfigKeys::k_showSystemConsoleWindowCmdLineArg) != string::npos)
 			{
-				SetValue(k_showSystemConsoleWindowCmdLineArg, true, Config::SettingType::Runtime);
+				SetValue(ConfigKeys::k_showSystemConsoleWindowCmdLineArg, true, Config::SettingType::Runtime);
 			}
-			else if (currentArg.find(k_platformCmdLineArg) != string::npos)
+			else if (currentArg.find(ConfigKeys::k_platformCmdLineArg) != string::npos)
 			{
 				if (NextTokenIsValue())
 				{
@@ -163,31 +146,31 @@ namespace en
 
 					if (platformValueIsValid)
 					{
-						SetValue(k_platformCmdLineArg, platformParam, SettingType::APISpecific);
+						SetValue(ConfigKeys::k_platformCmdLineArg, platformParam, SettingType::APISpecific);
 					}
 
 					ConsumeNextToken();
 				}
 			}
-			else if (currentArg.find(k_debugLevelCmdLineArg) != string::npos)
+			else if (currentArg.find(ConfigKeys::k_debugLevelCmdLineArg) != string::npos)
 			{
 				if (NextTokenIsValue())
 				{
 					const int debugLevelVal = std::stoul(argv[nextArgIdx]);
 
-					SetValue(k_debugLevelCmdLineArg, debugLevelVal, Config::SettingType::Runtime);
+					SetValue(ConfigKeys::k_debugLevelCmdLineArg, debugLevelVal, Config::SettingType::Runtime);
 
 					ConsumeNextToken();
 				}
 			}
-			else if (currentArg.find(k_relaxedShaderBindingCmdLineArg))
+			else if (currentArg.find(ConfigKeys::k_relaxedShaderBindingCmdLineArg))
 			{
-				SetValue(k_relaxedShaderBindingCmdLineArg, true, Config::SettingType::Runtime);
+				SetValue(ConfigKeys::k_relaxedShaderBindingCmdLineArg, true, Config::SettingType::Runtime);
 			}
 		}
 
 		// Store the received command line string
-		SetValue(k_commandLineArgsValueName, argString, Config::SettingType::Runtime);
+		SetValue(ConfigKeys::k_commandLineArgsValueName, argString, Config::SettingType::Runtime);
 
 		// We don't count command line arg entries as dirtying the config
 		m_isDirty = false;
@@ -387,16 +370,16 @@ namespace en
 		if (m_renderingAPI == platform::RenderingAPI::RenderingAPI_Count)
 		{
 			m_renderingAPI = platform::RenderingAPI::OpenGL; // OpenGL by default for now, as it is the most complete
-			TrySetValue(k_platformCmdLineArg, "opengl", SettingType::Runtime);
+			TrySetValue(ConfigKeys::k_platformCmdLineArg, "opengl", SettingType::Runtime);
 		}
 
 		// Debug:
-		TrySetValue(k_debugLevelCmdLineArg,					0,					SettingType::Runtime);
+		TrySetValue(ConfigKeys::k_debugLevelCmdLineArg,		0,					SettingType::Runtime);
 		
 		// Window:
 		markDirty |= TrySetValue("windowTitle",				std::string("Saber Engine"),	SettingType::Common);
-		markDirty |= TrySetValue(k_windowXResValueName,		1920,				SettingType::Common);
-		markDirty |= TrySetValue(k_windowYResValueName,		1080,				SettingType::Common);
+		markDirty |= TrySetValue(ConfigKeys::k_windowXResValueName,		1920,	SettingType::Common);
+		markDirty |= TrySetValue(ConfigKeys::k_windowYResValueName,		1080,	SettingType::Common);
 
 		// System config:
 		markDirty |= TrySetValue("vsync",					true,				SettingType::Common);

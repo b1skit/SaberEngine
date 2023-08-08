@@ -271,7 +271,7 @@ namespace dx12
 			m_currentRootSignature->GetRootSignatureEntry(parameterBlock->GetName());
 		SEAssert("Invalid root signature entry", 
 			rootSigEntry ||
-			en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
+			en::Config::Get()->ValueExists(en::ConfigKeys::k_relaxedShaderBindingCmdLineArg) == true);
 
 		if (rootSigEntry)
 		{
@@ -538,7 +538,7 @@ namespace dx12
 					static_cast<uint8_t>(i));
 
 			SEAssert("Invalid root signature entry",
-				rootSigEntry || en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
+				rootSigEntry || en::Config::Get()->ValueExists(en::ConfigKeys::k_relaxedShaderBindingCmdLineArg) == true);
 
 			if (rootSigEntry)
 			{
@@ -635,7 +635,7 @@ namespace dx12
 			m_currentRootSignature->GetRootSignatureEntry(shaderName);
 		SEAssert("Invalid root signature entry",
 			rootSigEntry ||
-			en::Config::Get()->ValueExists(en::Config::k_relaxedShaderBindingCmdLineArg) == true);
+			en::Config::Get()->ValueExists(en::ConfigKeys::k_relaxedShaderBindingCmdLineArg) == true);
 
 		if (rootSigEntry)
 		{

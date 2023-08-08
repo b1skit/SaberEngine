@@ -20,7 +20,7 @@ namespace
 		ComPtr<IDXGIFactory4> dxgiFactory;
 		uint32_t createFactoryFlags = 0;
 #if defined(_DEBUG)
-		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) > 0)
+		if (en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) > 0)
 		{
 			createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
 		}
@@ -68,7 +68,7 @@ namespace
 		HRESULT hr = D3D12CreateDevice(adapter.Get(), dx12::RenderManager::GetTargetFeatureLevel(), IID_PPV_ARGS(&d3d12Device2));
 		CheckHResult(hr, "Failed to create device");
 
-		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) > 0)
+		if (en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) > 0)
 		{
 			ComPtr<ID3D12InfoQueue> infoQueue;
 			if (SUCCEEDED(d3d12Device2.As(&infoQueue)))

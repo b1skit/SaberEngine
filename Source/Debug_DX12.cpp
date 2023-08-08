@@ -74,7 +74,7 @@ namespace dx12
 
 		// DRED reporting:
 		if (hr == DXGI_ERROR_DEVICE_REMOVED && 
-			en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) >= 3)
+			en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) >= 3)
 		{
 			HandleDRED();
 		}
@@ -94,7 +94,7 @@ namespace dx12
 		ComPtr<ID3D12Debug> debugInterface;
 
 		// Enable the debug layer for debuglevel 1 and above:
-		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) >= 1)
+		if (en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) >= 1)
 		{
 			HRESULT hr = D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface));
 			dx12::CheckHResult(hr, "Failed to get debug interface");
@@ -102,7 +102,7 @@ namespace dx12
 		}
 
 		// Enable GPU-based validation for -debuglevel 2 and above:
-		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) >= 2)
+		if (en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) >= 2)
 		{
 			ComPtr<ID3D12Debug1> debugInterface1;
 			HRESULT hr = debugInterface->QueryInterface(IID_PPV_ARGS(&debugInterface1));
@@ -110,7 +110,7 @@ namespace dx12
 			debugInterface1->SetEnableGPUBasedValidation(true);
 		}
 
-		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) >= 3)
+		if (en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) >= 3)
 		{
 			ComPtr<ID3D12DeviceRemovedExtendedDataSettings> dredSettings;
 			HRESULT hr = D3D12GetDebugInterface(IID_PPV_ARGS(&dredSettings));

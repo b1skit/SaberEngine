@@ -169,8 +169,8 @@ namespace
 
 		void Execute() override
 		{
-			const int consoleWindowWidth = en::Config::Get()->GetValue<int>(en::Config::k_windowXResValueName);
-			const int consoleWindowHeight = en::Config::Get()->GetValue<int>(en::Config::k_windowYResValueName) / 2;
+			const int consoleWindowWidth = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
+			const int consoleWindowHeight = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName) / 2;
 
 			// For the demo: add a debug button _BEFORE_ the normal log window contents
 			// We take advantage of a rarely used feature: multiple calls to Begin()/End() are appending to the _same_ window.

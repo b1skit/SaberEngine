@@ -291,7 +291,7 @@ namespace opengl
 		SEAssert("glewInit failed", glStatus == GLEW_OK);
 
 		// Debugging:
-		if (en::Config::Get()->GetValue<int>(en::Config::k_debugLevelCmdLineArg) >= 1)
+		if (en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) >= 1)
 		{
 			// Configure OpenGL logging:
 			::glEnable(GL_DEBUG_OUTPUT);
