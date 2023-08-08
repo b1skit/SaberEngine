@@ -119,13 +119,11 @@ namespace re
 		long& Bottom() { return m_bottom; }
 		long Bottom() const { return m_bottom; }
 
-	private:
+	private: // ScissorRect bounds, in pixel coordinates: 
 		long m_left;
 		long m_top;
 		long m_right;
 		long m_bottom;
-
-		// TODO: For some reason, D3D12 doesn't render if right/bottom are not std::numeric_limits<long>::max(). Why?
 	};
 
 
@@ -192,15 +190,14 @@ namespace re
 
 
 	private:
-		// TODO: m_colorTargets always has a fixed size; No need for a vector. Use an array instead
-		std::vector<std::unique_ptr<re::TextureTarget>> m_colorTargets;
+		std::vector<std::unique_ptr<re::TextureTarget>> m_colorTargets; // == SysInfo::GetMaxRenderTargets() elements
 		std::unique_ptr<re::TextureTarget> m_depthStencilTarget;
 
 		uint8_t m_numColorTargets;
 		bool m_targetStateDirty;
 
 		re::Viewport m_viewport;
-		re::ScissorRect m_scissorRect; // TODO: Use this in OpenGL
+		re::ScissorRect m_scissorRect;
 
 		std::shared_ptr<PlatformParams> m_platformParams;
 

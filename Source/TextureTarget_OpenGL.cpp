@@ -75,7 +75,6 @@ namespace opengl
 		targetSetParams->m_colorIsCreated = true;
 
 		// Configure the framebuffer and each texture target:
-		uint32_t attachmentPointOffset = 0; // TODO: Attach to the array index, rather than the offset?
 		bool foundTarget = false;
 		uint32_t width = 0;
 		uint32_t height = 0;
@@ -112,17 +111,13 @@ namespace opengl
 				opengl::TextureTarget::PlatformParams* targetParams =
 					targetSet.GetColorTarget(i)->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
 
-				targetParams->m_attachmentPoint = GL_COLOR_ATTACHMENT0 + attachmentPointOffset;
-				targetParams->m_drawBuffer		= GL_COLOR_ATTACHMENT0 + attachmentPointOffset;
-				//targetPlatformParams->m_readBuffer		= GL_COLOR_ATTACHMENT0 + attachmentPointOffset; // Not needed...
+				// Note: We attach to the same slot/binding index as the texuture has in the target set
+				targetParams->m_attachmentPoint = GL_COLOR_ATTACHMENT0 + i;
+				targetParams->m_drawBuffer		= GL_COLOR_ATTACHMENT0 + i;
+				//targetPlatformParams->m_readBuffer		= GL_COLOR_ATTACHMENT0 + i; // Not needed...
 
 				// Record the texture in our drawbuffers array:
 				drawBuffers[insertIdx++] = targetParams->m_attachmentPoint;
-
-				// TODO: Use renderbuffers for depth/stencil stuff
-
-				// Prepare for next iteration:
-				attachmentPointOffset++;
 			}
 		}
 
@@ -265,6 +260,14 @@ namespace opengl
 			// Verify the framebuffer (as we actually had color textures to attach)
 			const GLenum result = glCheckNamedFramebufferStatus(targetSetParams->m_frameBufferObject, GL_FRAMEBUFFER);
 			SEAssert("Framebuffer is not complete", result == GL_FRAMEBUFFER_COMPLETE);
+
+			// Set the scissor rect:
+			re::ScissorRect const& scissorRect = targetSet.ScissorRect();
+			glScissor(
+				scissorRect.Left(),		// Upper-left corner coordinates: X
+				scissorRect.Top(),		// Upper-left corner coordinates: Y
+				scissorRect.Right(),	// Width
+				scissorRect.Bottom());	// Height
 		}
 	}
 

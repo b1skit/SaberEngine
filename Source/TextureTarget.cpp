@@ -58,8 +58,8 @@ namespace re
 	ScissorRect::ScissorRect()
 		: m_left(0)
 		, m_top(0)
-		, m_right(std::numeric_limits<long>::max())
-		, m_bottom(std::numeric_limits<long>::max())
+		, m_right(en::Config::Get()->GetValue<int>("windowXRes"))
+		, m_bottom(en::Config::Get()->GetValue<int>("windowYRes"))
 	{
 	}
 
@@ -108,7 +108,7 @@ namespace re
 	
 		for (size_t i = 0; i < platform::SysInfo::GetMaxRenderTargets(); i++)
 		{
-			m_colorTargets.emplace_back(nullptr); // Can't use w/unique_ptr as std::vector::resize wants a copy ctor
+			m_colorTargets.emplace_back(nullptr); // Can't resize w/unique_ptr as std::vector::resize wants a copy ctor
 		}
 		m_depthStencilTarget = nullptr;
 	}
@@ -125,7 +125,7 @@ namespace re
 
 		for (size_t i = 0; i < platform::SysInfo::GetMaxRenderTargets(); i++)
 		{
-			m_colorTargets.emplace_back(nullptr); // Can't use w/unique_ptr as std::vector::resize wants a copy ctor
+			m_colorTargets.emplace_back(nullptr); // Can't resize w/unique_ptr as std::vector::resize wants a copy ctor
 
 			if (rhs.m_colorTargets[i])
 			{

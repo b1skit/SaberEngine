@@ -301,7 +301,7 @@ namespace opengl
 		// Global OpenGL settings:
 		::glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 		::glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE);
-
+		::glEnable(GL_SCISSOR_TEST);
 
 		// Setup our ImGui context
 		IMGUI_CHECKVERSION();

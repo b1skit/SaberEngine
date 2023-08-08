@@ -571,7 +571,8 @@ namespace dx12
 			static_cast<float>(viewport.Width()),
 			static_cast<float>(viewport.Height()));
 
-		m_commandList->RSSetViewports(1, &targetSetParams->m_viewport);
+		const uint32_t numViewports = 1;
+		m_commandList->RSSetViewports(numViewports, &targetSetParams->m_viewport);
 
 		// TODO: It is possible to have more than 1 viewport (eg. Geometry shaders), we should handle this (i.e. a 
 		// viewport per target?)
@@ -592,7 +593,8 @@ namespace dx12
 			scissorRect.Right(),
 			scissorRect.Bottom());
 
-		m_commandList->RSSetScissorRects(1, &targetSetParams->m_scissorRect);
+		const uint32_t numScissorRects = 1; // 1 per viewport, in an array of viewports
+		m_commandList->RSSetScissorRects(numScissorRects, &targetSetParams->m_scissorRect);
 	}
 
 
