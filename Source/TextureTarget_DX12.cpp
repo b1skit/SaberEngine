@@ -13,7 +13,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace dx12
 {
-	void TextureTargetSet::CreateColorTargets(re::TextureTargetSet& targetSet)
+	void TextureTargetSet::CreateColorTargets(re::TextureTargetSet const& targetSet)
 	{
 		if (!targetSet.HasColorTarget())
 		{
@@ -86,7 +86,7 @@ namespace dx12
 	}
 
 
-	void TextureTargetSet::CreateDepthStencilTarget(re::TextureTargetSet& targetSet)
+	void TextureTargetSet::CreateDepthStencilTarget(re::TextureTargetSet const& targetSet)
 	{
 		if (!targetSet.HasDepthTarget())
 		{

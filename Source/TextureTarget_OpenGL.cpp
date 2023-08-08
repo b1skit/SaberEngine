@@ -57,7 +57,7 @@ namespace opengl
 	// Target Set
 	/************/
 
-	void TextureTargetSet::CreateColorTargets(re::TextureTargetSet& targetSet)
+	void TextureTargetSet::CreateColorTargets(re::TextureTargetSet const& targetSet)
 	{
 		opengl::TextureTargetSet::PlatformParams* targetSetParams =
 			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams*>();
@@ -272,7 +272,7 @@ namespace opengl
 	}
 
 
-	void TextureTargetSet::CreateDepthStencilTarget(re::TextureTargetSet& targetSet)
+	void TextureTargetSet::CreateDepthStencilTarget(re::TextureTargetSet const& targetSet)
 	{
 		// This is a bit of a hack: If we have a depth target, we create it. If we have neither a color nor depth
 		// target, we assume this is the default framebuffer and create the depth target here now well. This might not

@@ -33,8 +33,8 @@ namespace dx12
 
 	public:
 
-		static void CreateColorTargets(re::TextureTargetSet& targetSet);
-		static void CreateDepthStencilTarget(re::TextureTargetSet& targetSet);
+		static void CreateColorTargets(re::TextureTargetSet const& targetSet);
+		static void CreateDepthStencilTarget(re::TextureTargetSet const& targetSet);
 
 		static D3D12_RT_FORMAT_ARRAY GetColorTargetFormats(re::TextureTargetSet const& targetSet);
 	};

@@ -135,6 +135,7 @@ namespace re
 		{
 			virtual ~PlatformParams() = 0;
 
+			// Target sets are immutable after Commit
 			bool m_colorIsCreated = false;
 			bool m_depthIsCreated = false;
 		};
@@ -144,9 +145,9 @@ namespace re
 		static std::shared_ptr<re::TextureTargetSet> Create(std::string const& name);
 		static std::shared_ptr<re::TextureTargetSet> Create(TextureTargetSet const&, std::string const& name);
 
-		TextureTargetSet(TextureTargetSet&&) = default;
-		TextureTargetSet& operator=(TextureTargetSet const&);
 		~TextureTargetSet();
+
+		void Commit(); // Target sets are immutable after Commit: Called once during API creation
 
 		inline std::vector<std::unique_ptr<re::TextureTarget>> const& GetColorTargets() const { return m_colorTargets; }
 		re::TextureTarget const* GetColorTarget(uint8_t slot) const;
@@ -157,12 +158,11 @@ namespace re
 		void SetDepthStencilTarget(re::TextureTarget const* depthStencilTarget);
 		void SetDepthStencilTarget(std::shared_ptr<re::Texture> depthStencilTarget, re::TextureTarget::TargetParams const&);
 
-		// TODO: These should be const
-		bool HasTargets();
-		bool HasColorTarget();
+		bool HasTargets() const;
+		bool HasColorTarget() const;
 		bool HasDepthTarget() const;
 
-		uint8_t GetNumColorTargets();
+		uint8_t GetNumColorTargets() const;
 		glm::vec4 GetTargetDimensions() const;
 
 		inline re::Viewport& Viewport() { return m_viewport; }
@@ -182,9 +182,7 @@ namespace re
 		TextureTargetSet(TextureTargetSet const& rhs, std::string const& newName);
 
 
-	private: // Internal state tracking. TODO: TargetSets are immutable after Create, just call these once during API creation
-		void RecomputeInternalState();
-
+	private:
 		void RecomputeNumColorTargets();
 		void ComputeDataHash() override; // HashedDataObject interface
 
@@ -194,7 +192,6 @@ namespace re
 		std::unique_ptr<re::TextureTarget> m_depthStencilTarget;
 
 		uint8_t m_numColorTargets;
-		bool m_targetStateDirty;
 
 		re::Viewport m_viewport;
 		re::ScissorRect m_scissorRect;
@@ -205,6 +202,9 @@ namespace re
 	private:
 		TextureTargetSet() = delete;
 		TextureTargetSet(TextureTargetSet const&) = delete;
+		TextureTargetSet(TextureTargetSet&&) = delete;
+		TextureTargetSet& operator=(TextureTargetSet const&) = delete;
+		TextureTargetSet& operator=(TextureTargetSet&&) = delete;
 	};
 
 

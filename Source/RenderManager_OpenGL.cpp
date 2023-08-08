@@ -95,6 +95,7 @@ namespace opengl
 			std::lock_guard<std::mutex> lock(m_newTargetSets.m_mutex);
 			for (auto& newObject : m_newTargetSets.m_newObjects)
 			{
+				newObject.second->Commit();
 				opengl::TextureTargetSet::CreateColorTargets(*newObject.second);
 				opengl::TextureTargetSet::CreateDepthStencilTarget(*newObject.second);
 			}

@@ -101,7 +101,6 @@ namespace re
 
 	TextureTargetSet::TextureTargetSet(string const& name)
 		: NamedObject(name)
-		, m_targetStateDirty(true)
 		, m_numColorTargets(0)
 	{
 		platform::TextureTargetSet::CreatePlatformParams(*this);
@@ -116,7 +115,6 @@ namespace re
 
 	TextureTargetSet::TextureTargetSet(TextureTargetSet const& rhs, std::string const& newName)
 		: NamedObject(newName)
-		, m_targetStateDirty(true)
 		, m_numColorTargets(rhs.m_numColorTargets)
 		, m_viewport(rhs.m_viewport)
 		, m_platformParams(nullptr) // Targets are copied, but the target set must be created
@@ -136,42 +134,12 @@ namespace re
 	}
 
 
-	TextureTargetSet& TextureTargetSet::operator=(TextureTargetSet const& rhs)
-	{
-		if (this == &rhs)
-		{
-			return *this;
-		}
-
-		SetName(rhs.GetName());
-
-		m_colorTargets.clear();
-		for (size_t i = 0; i < platform::SysInfo::GetMaxRenderTargets(); i++)
-		{
-			m_colorTargets.emplace_back(nullptr); // Can't use w/unique_ptr as std::vector::resize wants a copy ctor
-			if (rhs.m_colorTargets[i])
-			{
-				m_colorTargets[i] = std::make_unique<re::TextureTarget>(*rhs.m_colorTargets[i]);
-			}
-		}
-		m_depthStencilTarget = std::make_unique<re::TextureTarget>(*rhs.m_depthStencilTarget);
-
-		m_targetStateDirty = rhs.m_targetStateDirty;
-		m_numColorTargets = rhs.m_numColorTargets;
-		m_viewport = rhs.m_viewport;
-		m_platformParams = rhs.m_platformParams;
-
-		return *this;
-	}
-
-
 	TextureTargetSet::~TextureTargetSet()
 	{
 		m_colorTargets.clear();
 		m_depthStencilTarget = nullptr;
 		m_platformParams = nullptr;
 
-		m_targetStateDirty = true;
 		m_numColorTargets = 0;
 	}
 
@@ -194,7 +162,6 @@ namespace re
 		SEAssert("Cannot set a null target", texTarget);
 		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_colorIsCreated);
 		m_colorTargets[slot] = std::make_unique<re::TextureTarget>(*texTarget);
-		m_targetStateDirty = true;
 	}
 
 
@@ -203,7 +170,6 @@ namespace re
 	{
 		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_colorIsCreated);
 		m_colorTargets[slot] = std::make_unique<re::TextureTarget>(texture, targetParams);
-		m_targetStateDirty = true;
 	}
 
 
@@ -224,7 +190,6 @@ namespace re
 		SEAssert("Cannot set a null target", depthStencilTarget);
 		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_depthIsCreated);
 		m_depthStencilTarget = std::make_unique<re::TextureTarget>(*depthStencilTarget);
-		m_targetStateDirty = true;
 	}
 
 
@@ -233,19 +198,17 @@ namespace re
 	{
 		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_depthIsCreated);
 		m_depthStencilTarget = std::make_unique<re::TextureTarget>(depthStencilTarget, targetParams);
-		m_targetStateDirty = true;
 	}
 
 
-	bool TextureTargetSet::HasTargets()
+	bool TextureTargetSet::HasTargets() const
 	{
 		return (HasDepthTarget() || HasColorTarget());
 	}
 
 
-	bool TextureTargetSet::HasColorTarget()
+	bool TextureTargetSet::HasColorTarget() const
 	{
-		RecomputeInternalState();
 		return m_numColorTargets > 0;
 	}
 
@@ -256,9 +219,8 @@ namespace re
 	}
 
 
-	uint8_t TextureTargetSet::GetNumColorTargets()
+	uint8_t TextureTargetSet::GetNumColorTargets() const
 	{
-		RecomputeInternalState();
 		return m_numColorTargets;
 	}
 
@@ -312,6 +274,8 @@ namespace re
 
 	void TextureTargetSet::RecomputeNumColorTargets()
 	{
+		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_colorIsCreated);
+
 		// Walk through and check each color target:
 		m_numColorTargets = 0;
 		for (uint8_t slot = 0; slot < m_colorTargets.size(); slot++)
@@ -324,13 +288,10 @@ namespace re
 	}
 
 
-	void TextureTargetSet::RecomputeInternalState()
+	void TextureTargetSet::Commit()
 	{
-		if (!m_targetStateDirty)
-		{
-			return;
-		}
-		m_targetStateDirty = false;
+		SEAssert("Target sets are immutable after they've been created", 
+			!m_platformParams->m_colorIsCreated && !m_platformParams->m_depthIsCreated);
 
 		RecomputeNumColorTargets();
 		ComputeDataHash();
@@ -357,14 +318,18 @@ namespace re
 
 	uint64_t TextureTargetSet::GetTargetSetSignature()
 	{
-		RecomputeInternalState();
+		Commit();
 		return GetDataHash();
 	}
 
 
 	uint64_t TextureTargetSet::GetTargetSetSignature() const
 	{
-		SEAssert("Trying to get the signature, but the target state is dirty", !m_targetStateDirty);
+		SEAssert("Trying to get the signature, but the targets haven't been created",
+			HasTargets() &&
+			(m_platformParams->m_colorIsCreated || !HasColorTarget()) &&
+			(m_platformParams->m_depthIsCreated || !HasDepthTarget()));
+
 		return GetDataHash();
 	}
 }
