@@ -766,11 +766,13 @@ namespace dx12
 			staticSamplersPtr,									// const D3D12_STATIC_SAMPLER_DESC*
 			rootSignatureFlags);								// D3D12_ROOT_SIGNATURE_FLAGS
 
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+
 		// Before we create a root signature, check if one with the same layout already exists:
 		const uint64_t rootSigDescHash = HashRootSigDesc(rootSignatureDescription);
-		if (dx12::Context::HasRootSignature(rootSigDescHash))
+		if (context->HasRootSignature(rootSigDescHash))
 		{
-			newRootSig = dx12::Context::GetRootSignature(rootSigDescHash);
+			newRootSig = context->GetRootSignature(rootSigDescHash);
 		}
 		else
 		{
@@ -788,9 +790,7 @@ namespace dx12
 
 
 			// Create the root signature:
-			dx12::Context::PlatformParams* ctxPlatParams =
-				re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-			ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+			ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
 
 			constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
 			hr = device->CreateRootSignature(
@@ -804,7 +804,7 @@ namespace dx12
 			newRootSig->m_rootSignature->SetName(rootSigName.c_str());
 
 			// Add the new root sig to the library:
-			dx12::Context::AddRootSignature(newRootSig);
+			context->AddRootSignature(newRootSig);
 		}
 
 		return newRootSig;

@@ -1,24 +1,47 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Config.h"
 #include "Context.h"
+#include "Context_DX12.h"
+#include "Context_OpenGL.h"
 #include "Context_Platform.h"
 #include "DebugConfiguration.h"
+#include "SysInfo_Platform.h"
+
+using std::make_shared;
 
 
 namespace re
 {
-	using std::make_shared;
-
-	Context::Context()
-		: m_platformParams(nullptr)
+	Context* Context::Get()
 	{
-		platform::Context::CreatePlatformParams(*this);
+		static std::unique_ptr<re::Context> instance = std::move(re::Context::CreateSingleton());
+		return instance.get();
 	}
 
 
-	void Context::Create()
+	std::unique_ptr<re::Context> Context::CreateSingleton()
 	{
-		platform::Context::Create(*this);
+		std::unique_ptr<re::Context> newContext = nullptr;
+		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
+		switch (api)
+		{
+		case platform::RenderingAPI::OpenGL:
+		{
+			newContext.reset(new opengl::Context());
+		}
+		break;
+		case platform::RenderingAPI::DX12:
+		{
+			newContext.reset(new dx12::Context());
+		}
+		break;
+		default:
+		{
+			SEAssertF("Invalid rendering API argument received");
+		}
+		}
+
+		return newContext;
 	}
 
 
@@ -26,18 +49,5 @@ namespace re
 	{
 		m_swapChain.Destroy();
 		platform::Context::Destroy(*this);
-		m_platformParams = nullptr;
-	}
-
-
-	void Context::Present() const
-	{
-		platform::Context::Present(*this);
-	}
-
-
-	uint8_t Context::GetMaxTextureInputs() const
-	{
-		return platform::Context::GetMaxTextureInputs();
 	}
 }

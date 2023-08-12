@@ -19,8 +19,8 @@ namespace dx12
 		: m_owningCommandList(owningCommandList)
 		, m_owningCommandListType(owningCmdListType)
 		, m_heapType(heapType)
-		, m_elementSize(re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>()
-			->m_device.GetD3DDisplayDevice()->GetDescriptorHandleIncrementSize(heapType))
+		, m_elementSize(re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()
+			->GetDescriptorHandleIncrementSize(heapType))
 		, m_gpuDescriptorTableHeap(nullptr)
 		, m_gpuDescriptorTableHeapCPUBase{0}
 		, m_gpuDescriptorTableHeapGPUBase{0}
@@ -41,10 +41,7 @@ namespace dx12
 			heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
 		// Create our GPU-visible descriptor heap:
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-
-		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
 
 		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
 
@@ -137,6 +134,8 @@ namespace dx12
 		std::vector<dx12::RootSignature::DescriptorTable> const& descriptorTableMetadata = 
 			rootSig->GetDescriptorTableMetadata();
 
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+
 		for (RootSignature::DescriptorTable const& descriptorTable : descriptorTableMetadata)
 		{
 			for (size_t rangeType = 0; rangeType < RootSignature::DescriptorType::Type_Count; rangeType++)
@@ -149,7 +148,7 @@ namespace dx12
 					{
 						SetDescriptorTable(
 							descriptorTable.m_index, 
-							dx12::Context::GetNullSRVDescriptor(
+							context->GetNullSRVDescriptor(
 								descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_viewDimension,
 								descriptorTable.m_ranges[rangeType][rangeEntry].m_srvDesc.m_format),
 							static_cast<uint32_t>(rangeEntry),
@@ -160,7 +159,7 @@ namespace dx12
 					{
 						SetDescriptorTable(
 							descriptorTable.m_index,
-							dx12::Context::GetNullUAVDescriptor(
+							context->GetNullUAVDescriptor(
 								descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_viewDimension,
 								descriptorTable.m_ranges[rangeType][rangeEntry].m_uavDesc.m_format),
 							static_cast<uint32_t>(rangeEntry),
@@ -348,10 +347,7 @@ namespace dx12
 		{
 			SEAssert("Invalid descriptor heap", m_gpuDescriptorTableHeap != nullptr);
 
-			dx12::Context::PlatformParams* ctxPlatParams =
-				re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-
-			ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+			ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
 
 			uint32_t rootIdxBit = 0; // Updated immediately...
 			for (uint32_t rootIdx = 0; rootIdx < k_totalRootSigDescriptorTableIndices; rootIdx++)

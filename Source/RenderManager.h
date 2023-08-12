@@ -46,10 +46,6 @@ namespace re
 		// EngineThread interface:
 		void Lifetime(std::barrier<>* copyBarrier) override;
 
-		// Member functions:
-		re::Context& GetContext() { return m_context; }
-		re::Context const& GetContext() const { return m_context; }
-
 		template <typename T>
 		T* GetGraphicsSystem();
 
@@ -102,7 +98,6 @@ namespace re
 
 
 	private:	
-		re::Context m_context;
 		std::vector<std::shared_ptr<gr::GraphicsSystem>> m_graphicsSystems;
 		re::RenderPipeline m_renderPipeline;
 

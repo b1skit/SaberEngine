@@ -8,56 +8,57 @@
 #include "SwapChain.h"
 
 
+namespace opengl
+{
+	class Context;
+}
+
+namespace dx12
+{
+	class Context;
+}
+
 namespace re
 {
-	static constexpr char k_imguiIniPath[] = "config\\imgui.ini";
+	static constexpr char const* k_imguiIniPath = "config\\imgui.ini";
 
 
 	class Context
 	{
-	public:
-		struct PlatformParams : public re::IPlatformParams
-		{
-			PlatformParams() = default;
-			PlatformParams(PlatformParams&&) = default;
-			PlatformParams& operator=(PlatformParams&&) = default;
-			virtual ~PlatformParams() = 0;
-
-			// Copying not allowed
-			PlatformParams(PlatformParams const&) = delete;
-			PlatformParams& operator=(PlatformParams const&) = delete;			
-		};
+	public: // Singleton functionality
+		static Context* Get(); 
+		
+		template <typename T>
+		static T GetAs();
 
 
 	public:
-		Context();
-		~Context() { Destroy(); }
+		virtual ~Context() = 0;
+
+		// Context interface:
+		virtual void Create() = 0;
+		virtual void Present() = 0;
+
+		// Platform wrappers:
+		void Destroy();
+
 
 		re::SwapChain& GetSwapChain() { return m_swapChain; }
 		re::SwapChain const& GetSwapChain() const { return m_swapChain; }
 
-		Context::PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
-		void SetPlatformParams(std::unique_ptr<Context::PlatformParams> params) { m_platformParams = std::move(params); }
-
-		inline re::ParameterBlockAllocator& GetParameterBlockAllocator();
-		inline re::ParameterBlockAllocator const& GetParameterBlockAllocator() const;
-
-		// Platform wrappers:
-		void Create();
-		void Destroy();
-
-		void Present() const;
-		
-		// Platform wrappers:
-		uint8_t GetMaxTextureInputs() const;
+		re::ParameterBlockAllocator& GetParameterBlockAllocator();
+		re::ParameterBlockAllocator const& GetParameterBlockAllocator() const;
 
 
 	private:
-		re::SwapChain m_swapChain;
+		static std::unique_ptr<re::Context> CreateSingleton();
 
+	protected:
+		Context() = default;
+
+	private:
+		re::SwapChain m_swapChain;
 		re::ParameterBlockAllocator m_paramBlockAllocator;
-		
-		std::unique_ptr<Context::PlatformParams> m_platformParams;
 	};
 
 
@@ -75,6 +76,13 @@ namespace re
 	}
 
 
+	template <typename T>
+	inline T Context::GetAs()
+	{
+		return dynamic_cast<T>(re::Context::Get());
+	}
+
+
 	// We need to provide a destructor implementation since it's pure virtual
-	inline Context::PlatformParams::~PlatformParams() {};
+	inline Context::~Context() {};
 }

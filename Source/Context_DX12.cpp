@@ -42,77 +42,32 @@ namespace
 
 namespace dx12
 {
-	std::unordered_map<D3D12_SRV_DIMENSION, std::unordered_map<DXGI_FORMAT, DescriptorAllocation>> Context::s_nullSRVLibrary;
-	std::mutex Context::s_nullSRVLibraryMutex;
-
-	std::unordered_map<D3D12_UAV_DIMENSION, std::unordered_map<DXGI_FORMAT, DescriptorAllocation>> Context::s_nullUAVLibrary;
-	std::mutex Context::s_nullUAVLibraryMutex;
-
-
-	Context::PlatformParams::PlatformParams()
+	void Context::Create()
 	{
-		for (uint32_t i = 0; i < dx12::RenderManager::GetNumFrames(); i++)
-		{
-			m_frameFenceValues[i] = 0;
-		}
-	}
-
-
-	void Context::Create(re::Context& context)
-	{
-		dx12::Context::PlatformParams* ctxPlatParams =
-			context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+		memset(m_frameFenceValues, 0, sizeof(uint64_t) * dx12::RenderManager::GetNumFrames());
 
 		EnableDebugLayer(); // Before we create a device
 
-		ctxPlatParams->m_device.Create();
-
+		m_device.Create();
 
 		// Descriptor heap managers:
-		ctxPlatParams->m_cpuDescriptorHeapMgrs.reserve(static_cast<size_t>(CPUDescriptorHeapType_Count));
-		for (size_t i = 0; i < CPUDescriptorHeapType_Count; i++)
-		{
-			switch (static_cast<CPUDescriptorHeapType>(i))
-			{
-			case CPUDescriptorHeapType::CBV_SRV_UAV:
-			{
-				ctxPlatParams->m_cpuDescriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-			}
-			break;
-			case CPUDescriptorHeapType::RTV:
-			{
-				ctxPlatParams->m_cpuDescriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-			}
-			break;
-			case CPUDescriptorHeapType::DSV:
-			{
-				ctxPlatParams->m_cpuDescriptorHeapMgrs.emplace_back(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-			}
-			break;
-			default:
-				SEAssertF("Invalid descriptor heap type");
-			}
-		}
+		m_cpuDescriptorHeapMgrs.reserve(static_cast<size_t>(CPUDescriptorHeapManager::HeapType_Count));
 
+		m_cpuDescriptorHeapMgrs.emplace_back(CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV);
+		m_cpuDescriptorHeapMgrs.emplace_back(CPUDescriptorHeapManager::HeapType::RTV);
+		m_cpuDescriptorHeapMgrs.emplace_back(CPUDescriptorHeapManager::HeapType::DSV);
 
 		// Command Queues:
-		// TODO: Create/support more command queue types
-		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+		ID3D12Device2* device = m_device.GetD3DDisplayDevice();
 
-		ctxPlatParams->m_commandQueues[CommandListType::Direct].Create(
-			device, CommandListType::Direct);
-
-		ctxPlatParams->m_commandQueues[CommandListType::Compute].Create(
-			device, CommandListType::Compute);
-
-		ctxPlatParams->m_commandQueues[CommandListType::Copy].Create(
-			device, CommandListType::Copy);
+		m_commandQueues[CommandListType::Direct].Create(device, CommandListType::Direct);
+		m_commandQueues[CommandListType::Compute].Create(device, CommandListType::Compute);
+		m_commandQueues[CommandListType::Copy].Create(device, CommandListType::Copy);
 
 		// NOTE: Must create the swapchain after our command queues. This is because the DX12 swapchain creation
 		// requires a direct command queue; dx12::SwapChain::Create recursively gets it from the Context platform params
-		re::SwapChain& swapChain = context.GetSwapChain();
+		re::SwapChain& swapChain = GetSwapChain();
 		swapChain.Create(); 
-		
 		
 		// Setup our ImGui context
 		{
@@ -134,7 +89,7 @@ namespace dx12
 			descriptorHeapDesc.NodeMask = deviceNodeMask;
 
 			HRESULT hr = device->CreateDescriptorHeap(
-				&descriptorHeapDesc, IID_PPV_ARGS(&ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap));
+				&descriptorHeapDesc, IID_PPV_ARGS(&m_imGuiGPUVisibleSRVDescriptorHeap));
 			CheckHResult(hr, "Failed to create single element descriptor heap for ImGui SRV");
 
 			SEAssert("Window pointer cannot be null", en::CoreEngine::Get()->GetWindow());
@@ -147,23 +102,19 @@ namespace dx12
 			// Setup ImGui platform/Renderer backends:
 			ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
 			ImGui_ImplDX12_Init(
-				ctxPlatParams->m_device.GetD3DDisplayDevice(),
+				m_device.GetD3DDisplayDevice(),
 				dx12::RenderManager::GetNumFrames(), // Number of frames in flight
 				backbufferColorTarget0PlatParams->m_format,
-				ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap.Get(),
-				ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-				ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+				m_imGuiGPUVisibleSRVDescriptorHeap.Get(),
+				m_imGuiGPUVisibleSRVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+				m_imGuiGPUVisibleSRVDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		}
 	}
 
 
 	void Context::Destroy(re::Context& context)
 	{
-		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-		if (!ctxPlatParams)
-		{
-			return;
-		}
+		dx12::Context& dx12Context = dynamic_cast<dx12::Context&>(context);
 
 		// ImGui Cleanup:
 		ImGui_ImplDX12_Shutdown();
@@ -171,52 +122,50 @@ namespace dx12
 		ImGui::DestroyContext();		
 
 		// Make sure our command queues have finished all commands before closing.
-		ctxPlatParams->m_commandQueues[dx12::CommandListType::Copy].Flush();
-		ctxPlatParams->m_commandQueues[dx12::CommandListType::Copy].Destroy();
+		dx12Context.m_commandQueues[dx12::CommandListType::Copy].Flush();
+		dx12Context.m_commandQueues[dx12::CommandListType::Copy].Destroy();
 		
-		ctxPlatParams->m_commandQueues[dx12::CommandListType::Direct].Flush();
-		ctxPlatParams->m_commandQueues[dx12::CommandListType::Direct].Destroy();
+		dx12Context.m_commandQueues[dx12::CommandListType::Direct].Flush();
+		dx12Context.m_commandQueues[dx12::CommandListType::Direct].Destroy();
 
-		context.GetSwapChain().Destroy();
+		dx12Context.GetSwapChain().Destroy();
 
 		// NOTE: We must destroy anything that holds a parameter block before the ParameterBlockAllocator is destroyed, 
 		// as parameter blocks call the ParameterBlockAllocator in their destructor
-		context.GetParameterBlockAllocator().Destroy();
+		dx12Context.GetParameterBlockAllocator().Destroy();
 
 		// Clear the null descriptor libraries:
 		{
-			std::unique_lock<std::mutex> srvLock(s_nullSRVLibraryMutex);
-			s_nullSRVLibrary.clear();
+			std::unique_lock<std::mutex> srvLock(dx12Context.s_nullSRVLibraryMutex);
+			dx12Context.s_nullSRVLibrary.clear();
 		}
 		{
-			std::unique_lock<std::mutex> srvLock(s_nullUAVLibraryMutex);
-			s_nullUAVLibrary.clear();
+			std::unique_lock<std::mutex> srvLock(dx12Context.s_nullUAVLibraryMutex);
+			dx12Context.s_nullUAVLibrary.clear();
 		}
 
 		// DX12 parameter blocks contain cpu descriptors, so we must destroy the cpu descriptor heap manager after the
 		// parameter block allocator
-		ctxPlatParams->m_cpuDescriptorHeapMgrs.clear();
+		dx12Context.m_cpuDescriptorHeapMgrs.clear();
 
-		ctxPlatParams->m_PSOLibrary.clear();
-		ctxPlatParams->m_rootSigLibrary.clear();
+		dx12Context.m_PSOLibrary.clear();
+		dx12Context.m_rootSigLibrary.clear();
 
-		ctxPlatParams->m_device.Destroy();
+		dx12Context.m_device.Destroy();
 	}
 
 
-	void Context::Present(re::Context const& context)
+	void Context::Present()
 	{
 		// Create a command list to transition the backbuffer to the presentation state
-		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-
-		dx12::CommandQueue& directQueue = ctxPlatParams->m_commandQueues[dx12::CommandListType::Direct];
+		dx12::CommandQueue& directQueue = m_commandQueues[dx12::CommandListType::Direct];
 
 		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
-		re::SwapChain const& swapChain = context.GetSwapChain();
+		re::SwapChain const& swapChain = GetSwapChain();
 
 		std::shared_ptr<re::TextureTargetSet> swapChainTargetSet = 
-			SwapChain::GetBackBufferTargetSet(context.GetSwapChain());
+			SwapChain::GetBackBufferTargetSet(GetSwapChain());
 		
 		dx12::Texture::PlatformParams const* backbufferColorTexPlatParams =
 			swapChainTargetSet->GetColorTarget(0).GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
@@ -254,8 +203,7 @@ namespace dx12
 
 		// Insert a signal into the command queue: Once this is reached, we know the work for the current frame is done
 		const uint8_t currentFrameBackbufferIdx = dx12::SwapChain::GetBackBufferIdx(swapChain);
-		ctxPlatParams->m_frameFenceValues[currentFrameBackbufferIdx] = 
-			ctxPlatParams->m_commandQueues[dx12::CommandListType::Direct].GPUSignal();
+		m_frameFenceValues[currentFrameBackbufferIdx] = m_commandQueues[dx12::CommandListType::Direct].GPUSignal();
 
 		// Get the next backbuffer index (Note: Backbuffer indices are not guaranteed to be sequential if we're using 
 		// DXGI_SWAP_EFFECT_FLIP_DISCARD)
@@ -264,14 +212,13 @@ namespace dx12
 		swapChainPlatParams->m_backBufferIdx = nextFrameBackbufferIdx;
 		
 		// Block the CPU on the fence for our new backbuffer, to ensure all of its work is done
-		ctxPlatParams->m_commandQueues[dx12::CommandListType::Direct].CPUWait(
-			ctxPlatParams->m_frameFenceValues[nextFrameBackbufferIdx]);
+		m_commandQueues[dx12::CommandListType::Direct].CPUWait(m_frameFenceValues[nextFrameBackbufferIdx]);
 
 		// Free the descriptors used on the next backbuffer now that we know the fence has been reached:
-		for (size_t i = 0; i < CPUDescriptorHeapType_Count; i++)
+		for (size_t i = 0; i < CPUDescriptorHeapManager::HeapType_Count; i++)
 		{
-			ctxPlatParams->m_cpuDescriptorHeapMgrs[static_cast<CPUDescriptorHeapType>(i)].ReleaseFreedAllocations(
-				ctxPlatParams->m_frameFenceValues[nextFrameBackbufferIdx]);
+			m_cpuDescriptorHeapMgrs[static_cast<CPUDescriptorHeapManager::HeapType>(i)].ReleaseFreedAllocations(
+				m_frameFenceValues[nextFrameBackbufferIdx]);
 		}	
 	}
 
@@ -281,40 +228,27 @@ namespace dx12
 		gr::PipelineState const& grPipelineState,	
 		re::TextureTargetSet const& targetSet)
 	{
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-
 		std::shared_ptr<dx12::PipelineState> pso = nullptr;
 
 		const uint64_t psoKey = ComputePSOKey(shader, grPipelineState, &targetSet);
-		if (ctxPlatParams->m_PSOLibrary.contains(psoKey))
+		if (m_PSOLibrary.contains(psoKey))
 		{
-			pso = ctxPlatParams->m_PSOLibrary[psoKey];
+			pso = m_PSOLibrary[psoKey];
 		}
 		else
 		{
 			pso = std::make_shared<dx12::PipelineState>();
 			pso->Create(shader, grPipelineState, targetSet);
 
-			ctxPlatParams->m_PSOLibrary[psoKey] = pso;
+			m_PSOLibrary[psoKey] = pso;
 		}
 		return pso;
 	}
 
 
-	uint8_t Context::GetMaxTextureInputs() // TODO: This should be a member of SysInfo
-	{
-		SEAssertF("TODO: Implement this"); 
-		return 0;
-	}
-
-
 	CommandQueue& Context::GetCommandQueue(dx12::CommandListType type)
 	{
-		dx12::Context::PlatformParams* ctxPlatParams = 
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-
-		return ctxPlatParams->m_commandQueues[type];
+		return m_commandQueues[type];
 	}
 
 
@@ -325,27 +259,15 @@ namespace dx12
 	}
 
 
-	dx12::GlobalResourceStateTracker& Context::GetGlobalResourceStateTracker()
-	{
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-
-		return ctxPlatParams->m_globalResourceStates;
-	}
-
-
 	std::shared_ptr<dx12::PipelineState> Context::GetPipelineStateObject(
 		re::Shader const& shader,
 		gr::PipelineState const& grPipelineState,
 		re::TextureTargetSet const* targetSet)
 	{
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-		
 		const uint64_t psoKey = ComputePSOKey(shader, grPipelineState, targetSet);
-		if (ctxPlatParams->m_PSOLibrary.contains(psoKey))
+		if (m_PSOLibrary.contains(psoKey))
 		{
-			return ctxPlatParams->m_PSOLibrary[psoKey];
+			return m_PSOLibrary[psoKey];
 		}
 		else
 		{
@@ -359,30 +281,21 @@ namespace dx12
 
 	bool Context::HasRootSignature(uint64_t rootSigDescHash)
 	{
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-		
-		return ctxPlatParams->m_rootSigLibrary.contains(rootSigDescHash);
+		return m_rootSigLibrary.contains(rootSigDescHash);
 	}
 
 
 	std::shared_ptr<dx12::RootSignature> Context::GetRootSignature(uint64_t rootSigDescHash)
 	{
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-
 		SEAssert("Root signature has not been added", HasRootSignature(rootSigDescHash));
 
-		return ctxPlatParams->m_rootSigLibrary[rootSigDescHash];
+		return m_rootSigLibrary[rootSigDescHash];
 	}
 
 
 	void Context::AddRootSignature(std::shared_ptr<dx12::RootSignature> rootSig)
 	{
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-
-		auto result = ctxPlatParams->m_rootSigLibrary.insert({ rootSig->GetRootSigDescHash(), rootSig });
+		auto result = m_rootSigLibrary.insert({ rootSig->GetRootSigDescHash(), rootSig });
 		SEAssert("Root signature has already been added", result.second);
 	}
 
@@ -439,13 +352,11 @@ namespace dx12
 				SEAssertF("Invalid dimension");
 			}
 
-			dx12::Context::PlatformParams* ctxPlatParams =
-				re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 			DescriptorAllocation descriptor =
-				std::move(ctxPlatParams->m_cpuDescriptorHeapMgrs[Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(1));
+				std::move(m_cpuDescriptorHeapMgrs[CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV].Allocate(1));
 
-			ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+			ID3D12Device2* device = m_device.GetD3DDisplayDevice();
 
 			device->CreateShaderResourceView(
 				nullptr,
@@ -505,13 +416,11 @@ namespace dx12
 				SEAssertF("Invalid dimension");
 			}
 
-			dx12::Context::PlatformParams* ctxPlatParams =
-				re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
 			DescriptorAllocation descriptor =
-				std::move(ctxPlatParams->m_cpuDescriptorHeapMgrs[Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(1));
+				std::move(m_cpuDescriptorHeapMgrs[CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV].Allocate(1));
 
-			ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+			ID3D12Device2* device = m_device.GetD3DDisplayDevice();
 
 			device->CreateUnorderedAccessView(
 				nullptr,

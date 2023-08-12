@@ -92,10 +92,7 @@ namespace platform
 		case RenderingAPI::OpenGL:
 		{
 			// Context:
-			platform::Context::Create				= &opengl::Context::Create;
 			platform::Context::Destroy				= &opengl::Context::Destroy;
-			platform::Context::Present				= &opengl::Context::Present;
-			platform::Context::GetMaxTextureInputs	= &opengl::Context::GetMaxTextureInputs;
 			
 			// MeshPrimitive:
 			platform::MeshPrimitive::Destroy	= &opengl::MeshPrimitive::Destroy;
@@ -138,10 +135,7 @@ namespace platform
 		case RenderingAPI::DX12:
 		{
 			// Context:
-			platform::Context::Create				= &dx12::Context::Create;
 			platform::Context::Destroy				= &dx12::Context::Destroy;
-			platform::Context::Present				= &dx12::Context::Present;
-			platform::Context::GetMaxTextureInputs	= &dx12::Context::GetMaxTextureInputs;
 
 			// MeshPrimitive:
 			platform::MeshPrimitive::Destroy	= &dx12::MeshPrimitive::Destroy;

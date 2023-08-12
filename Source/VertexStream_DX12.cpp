@@ -181,9 +181,7 @@ namespace dx12
 		dx12::VertexStream::PlatformParams* streamPlatformParams =
 			stream.GetPlatformParams()->As<dx12::VertexStream::PlatformParams*>();
 
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-		Microsoft::WRL::ComPtr<ID3D12Device2> device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
 
 
 		const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;

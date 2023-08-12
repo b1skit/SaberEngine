@@ -19,11 +19,8 @@ namespace dx12
 		{
 			return;
 		}
-
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-		
-		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
 
 		dx12::TextureTargetSet::PlatformParams* texTargetSetPlatParams =
 			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
@@ -59,7 +56,7 @@ namespace dx12
 
 				// Allocate a descriptor for our view:
 				targetPlatParams->m_rtvDsvDescriptor = std::move(
-					ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::RTV].Allocate(1));
+					context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::RTV).Allocate(1));
 
 				re::TextureTarget::TargetParams targetParams = colorTarget.GetTargetParams();
 
@@ -112,12 +109,11 @@ namespace dx12
 		dx12::TextureTarget::PlatformParams* targetPlatParams =
 			targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		
 		// Create the depth-stencil descriptor and view:
 		targetPlatParams->m_rtvDsvDescriptor = std::move(
-			ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::DSV].Allocate(1));
+			context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::DSV).Allocate(1));
 		SEAssert("DSV descriptor is not valid", targetPlatParams->m_rtvDsvDescriptor.IsValid());
 
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
@@ -126,7 +122,7 @@ namespace dx12
 		dsv.Texture2D.MipSlice = 0;
 		dsv.Flags = D3D12_DSV_FLAG_NONE;
 
-		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
 		device->CreateDepthStencilView(
 			depthTexPlatParams->m_textureResource.Get(),
 			&dsv,

@@ -25,9 +25,7 @@ namespace dx12
 		SEAssert("Parameter block is already created", !params->m_isCreated);
 		params->m_isCreated = true;
 
-		re::Context const& context = re::RenderManager::Get()->GetContext();
-		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
 
 		size_t size = 0;
 
@@ -43,7 +41,7 @@ namespace dx12
 
 			// Allocate a cpu-visible descriptor to hold our view:
 			params->m_cpuDescAllocation = std::move(
-				ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(params->m_numElements));
+				re::Context::GetAs<dx12::Context*>()->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV).Allocate(params->m_numElements));
 		}
 		break;
 		case re::ParameterBlock::PBDataType::Array:
@@ -52,7 +50,7 @@ namespace dx12
 			size = util::RoundUpToNearestMultiple<size_t>(paramBlock.GetSize(), k_StructuredBufferSizeFactor);
 
 			params->m_cpuDescAllocation = std::move(
-				ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(1));
+				re::Context::GetAs<dx12::Context*>()->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV).Allocate(1));
 		}
 		break;
 		case re::ParameterBlock::PBDataType::PBDataType_Count:

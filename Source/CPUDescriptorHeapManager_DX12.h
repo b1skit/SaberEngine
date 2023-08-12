@@ -11,10 +11,25 @@ namespace dx12
 	class CPUDescriptorHeapManager
 	{
 	public:
+		enum HeapType
+		{
+			CBV_SRV_UAV,
+			// Note: We do not maintain a Sampler descriptor heap
+
+			// These types cannot be used with D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE:
+			RTV,
+			DSV,
+
+			HeapType_Count
+		};
+		static constexpr D3D12_DESCRIPTOR_HEAP_TYPE TranslateHeapTypeToD3DHeapType(HeapType);
+
+
+	public:
 		static constexpr uint32_t k_numDescriptorsPerPage = 256;
 
 	public:
-		CPUDescriptorHeapManager(D3D12_DESCRIPTOR_HEAP_TYPE);
+		CPUDescriptorHeapManager(HeapType);
 		CPUDescriptorHeapManager(CPUDescriptorHeapManager&&) noexcept;
 
 		~CPUDescriptorHeapManager();
@@ -32,7 +47,8 @@ namespace dx12
 
 
 	private:
-		const D3D12_DESCRIPTOR_HEAP_TYPE m_type;
+		const HeapType m_type;
+		const D3D12_DESCRIPTOR_HEAP_TYPE m_d3dType;
 		const uint32_t m_elementSize;
 
 		std::vector<std::unique_ptr<AllocationPage>> m_allocationPages;
@@ -95,7 +111,8 @@ namespace dx12
 	class AllocationPage
 	{
 	public:
-		AllocationPage(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t elementSize, uint32_t totalElements, uint32_t pageIdx);
+		AllocationPage(
+			CPUDescriptorHeapManager::HeapType type, uint32_t elementSize, uint32_t totalElements, uint32_t pageIdx);
 		AllocationPage(AllocationPage&&) = default;
 		AllocationPage& operator=(AllocationPage&&) = default;
 		~AllocationPage();
@@ -116,7 +133,8 @@ namespace dx12
 	private:
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_descriptorHeap;
 		D3D12_CPU_DESCRIPTOR_HANDLE m_baseDescriptor;
-		const D3D12_DESCRIPTOR_HEAP_TYPE m_type;
+		const CPUDescriptorHeapManager::HeapType m_type;
+		const D3D12_DESCRIPTOR_HEAP_TYPE m_d3dType;
 		const uint32_t m_descriptorElementSize;
 		const uint32_t m_totalElements;
 

@@ -139,6 +139,8 @@ namespace opengl
 		// TODO: Add an assert somewhere that checks if any possible shader uniform isn't set
 		// -> Catch bugs where we forget to upload a common param
 
+		opengl::Context* context = re::Context::GetAs<opengl::Context*>();
+
 		// Render each stage:
 		for (StagePipeline& stagePipeline : m_renderPipeline.GetStagePipeline())
 		{
@@ -162,7 +164,7 @@ namespace opengl
 				if (!stageTargets)
 				{
 					opengl::SwapChain::PlatformParams* swapChainParams = 
-						GetContext().GetSwapChain().GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
+						context->GetSwapChain().GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
 					SEAssert("Swap chain params and backbuffer cannot be null", 
 						swapChainParams && swapChainParams->m_backbufferTargetSet);
 
@@ -173,7 +175,7 @@ namespace opengl
 				opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
 				
 				// Configure the pipeline state:
-				opengl::Context::SetPipelineState(m_context, stagePipelineParams);
+				context->SetPipelineState(stagePipelineParams);
 
 				// Bind the shader now that the pipeline state is set:
 				re::Shader* stageShader = renderStage->GetStageShader();

@@ -294,10 +294,7 @@ namespace
 			return true;
 		}
 
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-
-		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
 
 		D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport;
 		formatSupport.Format = format;
@@ -454,10 +451,10 @@ namespace dx12
 		SEAssert("Texture is already created", texPlatParams->m_isCreated == false);
 		texPlatParams->m_isCreated = true;
 
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
-		ID3D12Device2* device = ctxPlatParams->m_device.GetD3DDisplayDevice();
+
+		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
 
 		// D3D12 Initial resource states:
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/using-resource-barriers-to-synchronize-resource-states-in-direct3d-12#initial-states-for-resources
@@ -606,7 +603,7 @@ namespace dx12
 					texPlatParams->m_viewCpuDescAllocations[View::SRV].empty());
 
 				texPlatParams->m_viewCpuDescAllocations[View::SRV].emplace_back(std::move(
-					ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(1)));
+					context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV).Allocate(1)));
 
 				dx12::DescriptorAllocation& srvDescriptorAllocation = 
 					texPlatParams->m_viewCpuDescAllocations[View::SRV].back();
@@ -642,7 +639,7 @@ namespace dx12
 				for (size_t mipIdx = 0; mipIdx < numMips; mipIdx++)
 				{
 					texPlatParams->m_viewCpuDescAllocations[View::UAV].emplace_back(std::move(
-						ctxPlatParams->m_cpuDescriptorHeapMgrs[dx12::Context::CPUDescriptorHeapType::CBV_SRV_UAV].Allocate(1)));
+						context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV).Allocate(1)));
 
 					dx12::DescriptorAllocation const& uavDescriptorAllocation =
 						texPlatParams->m_viewCpuDescAllocations[View::UAV].back();
@@ -739,7 +736,7 @@ namespace dx12
 		texPlatParams->m_isDirty = true;
 
 		// Register the resource with the global resource state tracker:
-		dx12::Context::GetGlobalResourceStateTracker().RegisterResource(
+		context->GetGlobalResourceStates().RegisterResource(
 			texPlatParams->m_textureResource.Get(),
 			initialState,
 			numSubresources);
@@ -784,7 +781,8 @@ namespace dx12
 		// never created (e.g. a duplicate was detected after loading)
 		if (texPlatParams->m_textureResource)
 		{
-			dx12::Context::GetGlobalResourceStateTracker().UnregisterResource(texPlatParams->m_textureResource.Get());
+			re::Context::GetAs<dx12::Context*>()->GetGlobalResourceStates().UnregisterResource(
+				texPlatParams->m_textureResource.Get());
 		}
 
 		texPlatParams->m_textureResource = nullptr;

@@ -33,8 +33,7 @@ namespace re
 	void ParameterBlock::RegisterAndCommit(
 		std::shared_ptr<re::ParameterBlock> newPB, void const* data, size_t numBytes, uint64_t typeIDHash)
 	{
-		re::RenderManager* renderManager = RenderManager::Get();
-		re::ParameterBlockAllocator& pbm = renderManager->GetContext().GetParameterBlockAllocator();
+		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
 		pbm.RegisterAndAllocateParameterBlock(newPB, numBytes);
 
 		SEAssert("Invalid type detected. Can only set data of the original type",
@@ -43,7 +42,7 @@ namespace re
 		// Note: We commit via the PBM directly here, as we might be an immutable PB
 		pbm.Commit(newPB->GetUniqueID(), data);
 
-		renderManager->RegisterForCreate(newPB); // Enroll for deferred platform layer creation
+		RenderManager::Get()->RegisterForCreate(newPB); // Enroll for deferred platform layer creation
 	}
 
 
@@ -53,28 +52,28 @@ namespace re
 			typeIDHash == m_typeIDHash);
 		SEAssert("Cannot set data of an immutable param block", m_pbType == PBType::Mutable);
 
-		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetContext().GetParameterBlockAllocator();
+		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
 		pbm.Commit(GetUniqueID(), data);
 	}
 
 
 	void ParameterBlock::GetDataAndSize(void const*& out_data, size_t& out_numBytes) const
 	{
-		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetContext().GetParameterBlockAllocator();
+		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
 		pbm.GetDataAndSize(GetUniqueID(), out_data, out_numBytes);
 	}
 
 
 	size_t ParameterBlock::GetSize() const
 	{
-		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetContext().GetParameterBlockAllocator();
+		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
 		return pbm.GetSize(GetUniqueID());
 	}
 
 
 	size_t ParameterBlock::GetStride() const
 	{
-		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetContext().GetParameterBlockAllocator();
+		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
 		return pbm.GetSize(GetUniqueID()) / m_platformParams->m_numElements;
 	}
 
@@ -92,7 +91,7 @@ namespace re
 		re::ParameterBlock::PlatformParams* params = GetPlatformParams()->As<re::ParameterBlock::PlatformParams*>();
 		SEAssert("Parameter block has not been created, or has already been destroyed", params->m_isCreated);
 		
-		re::ParameterBlockAllocator& pbm = RenderManager::Get()->GetContext().GetParameterBlockAllocator();
+		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
 		pbm.Deallocate(GetUniqueID()); // Internally makes a (deferred) call to platform::ParameterBlock::Destroy
 	}
 }

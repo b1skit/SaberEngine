@@ -45,10 +45,10 @@ namespace dx12
 
 	void RenderManager::CreateAPIResources()
 	{
-		re::Context const& context = GetContext();
-		dx12::SwapChain::PlatformParams const* swapChainParams =
-			context.GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
+		dx12::SwapChain::PlatformParams const* swapChainParams =
+			context->GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
 		const bool hasDataToCopy = !m_newMeshPrimitives.m_newObjects.empty() ||
 			!m_newTextures.m_newObjects.empty();
@@ -59,7 +59,7 @@ namespace dx12
 		dx12::CommandQueue* copyQueue = nullptr;
 		if (hasDataToCopy)
 		{
-			copyQueue = &dx12::Context::GetCommandQueue(dx12::CommandListType::Copy);
+			copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
 
 			// TODO: Get multiple command lists, and record on multiple threads:
 			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
@@ -149,10 +149,10 @@ namespace dx12
 							std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
 							if (!stageTargets)
 							{
-								stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context.GetSwapChain());
+								stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain());
 							}
 
-							dx12::Context::CreateAddPipelineState(
+							context->CreateAddPipelineState(
 								*shader.second,
 								renderStage->GetStagePipelineState(),								
 								*stageTargets);
@@ -186,9 +186,10 @@ namespace dx12
 
 	void RenderManager::Render()
 	{
-		re::Context const& context = re::RenderManager::Get()->GetContext();
-		dx12::CommandQueue& directQueue = dx12::Context::GetCommandQueue(dx12::CommandListType::Direct);
-		dx12::CommandQueue& computeQueue = dx12::Context::GetCommandQueue(dx12::CommandListType::Compute);
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+
+		dx12::CommandQueue& directQueue = context->GetCommandQueue(dx12::CommandListType::Direct);
+		dx12::CommandQueue& computeQueue = context->GetCommandQueue(dx12::CommandListType::Compute);
 
 		std::vector<std::shared_ptr<dx12::CommandList>> commandLists;
 
@@ -236,17 +237,17 @@ namespace dx12
 					SEAssert("Only the graphics queue/command lists can render to the backbuffer", 
 						renderStage->GetStageType() == re::RenderStage::RenderStageType::Graphics);
 
-					stageTargets = dx12::SwapChain::GetBackBufferTargetSet(GetContext().GetSwapChain());
+					stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain());
 				}
 				
-				auto SetDrawState = [&renderStage](
+				auto SetDrawState = [&renderStage, &context](
 					re::Shader const* shader, 
 					gr::PipelineState const& grPipelineState,
 					re::TextureTargetSet const* targetSet,
 					dx12::CommandList* commandList)
 				{
 					// Set the pipeline state and root signature first:
-					std::shared_ptr<dx12::PipelineState> pso = dx12::Context::GetPipelineStateObject(
+					std::shared_ptr<dx12::PipelineState> pso = context->GetPipelineStateObject(
 						*shader,
 						grPipelineState,
 						targetSet);
@@ -488,20 +489,18 @@ namespace dx12
 		ImGui::Render(); // Note: Does not touch the GPU/graphics API
 
 		// Get our SE rendering objects:
-		re::Context const& context = re::RenderManager::Get()->GetContext();
-		dx12::Context::PlatformParams* ctxPlatParams = context.GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-
-		dx12::CommandQueue& directQueue = dx12::Context::GetCommandQueue(dx12::CommandListType::Direct);
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::CommandQueue& directQueue = context->GetCommandQueue(dx12::CommandListType::Direct);
 		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
 		// Draw directly to the swapchain backbuffer
-		re::SwapChain const& swapChain = context.GetSwapChain();
+		re::SwapChain const& swapChain = context->GetSwapChain();
 		commandList->SetRenderTargets(*dx12::SwapChain::GetBackBufferTargetSet(swapChain));
 
 		// Configure the descriptor heap:
 		ID3D12GraphicsCommandList2* d3dCommandList = commandList->GetD3DCommandList();
 
-		ID3D12DescriptorHeap* descriptorHeaps[1] = { ctxPlatParams->m_imGuiGPUVisibleSRVDescriptorHeap.Get() };
+		ID3D12DescriptorHeap* descriptorHeaps[1] = { context->GetImGuiGPUVisibleDescriptorHeap()};
 		d3dCommandList->SetDescriptorHeaps(1, descriptorHeaps);
 		
 		// Record our ImGui draws:
@@ -518,12 +517,14 @@ namespace dx12
 
 	void RenderManager::Shutdown(re::RenderManager& renderManager)
 	{
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		
 		for (size_t i = 0; i < dx12::CommandListType_Count; i++)
 		{
-			CommandQueue& commandQueue = Context::GetCommandQueue(static_cast<dx12::CommandListType>(i));
+			CommandQueue& commandQueue = context->GetCommandQueue(static_cast<dx12::CommandListType>(i));
 			if (commandQueue.IsCreated())
 			{
-				Context::GetCommandQueue(static_cast<dx12::CommandListType>(i)).Flush();
+				context->GetCommandQueue(static_cast<dx12::CommandListType>(i)).Flush();
 			}
 		}
 	}

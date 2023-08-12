@@ -16,18 +16,17 @@
 #include "DebugConfiguration.h"
 #include "SysInfo_OpenGL.h"
 
+using en::Config;
+using std::string;
+using std::to_string;
 
-namespace
+
+namespace opengl
 {
-	using en::Config;
-	using std::string;
-	using std::to_string;
-
-
 	// The function used to get WGL extensions is an extension itself, thus it needs an OpenGL context. Thus, we create
 	// a temp window and context, retrieve and store our function pointers, and then destroy the temp objects
 	// More info: https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL)
-	void GetOpenGLExtensionProcessAddresses(re::Context& context)
+	void Context::GetOpenGLExtensionProcessAddresses()
 	{
 		const wchar_t* const tempWindowID = L"SaberEngineOpenGLTempWindow";
 
@@ -89,14 +88,10 @@ namespace
 			SEAssertF("Failed to activate dummy OpenGL rendering context");
 		}
 
-		opengl::Context::PlatformParams* platformParams = 
-			context.GetPlatformParams()->As<opengl::Context::PlatformParams*>();
-
-
-		platformParams->wglCreateContextAttribsARBFn =
-			(opengl::Context::PlatformParams::wglCreateContextAttribsARB_type*)::wglGetProcAddress("wglCreateContextAttribsARB");
-		platformParams->wglChoosePixelFormatARBFn =
-			(opengl::Context::PlatformParams::wglChoosePixelFormatARB_type*)::wglGetProcAddress("wglChoosePixelFormatARB");
+		wglCreateContextAttribsARBFn =
+			(opengl::Context::wglCreateContextAttribsARB_type*)::wglGetProcAddress("wglCreateContextAttribsARB");
+		wglChoosePixelFormatARBFn =
+			(opengl::Context::wglChoosePixelFormatARB_type*)::wglGetProcAddress("wglChoosePixelFormatARB");
 
 		// Cleanup:
 		::wglMakeCurrent(tempDeviceContext, 0);
@@ -104,11 +99,9 @@ namespace
 		::ReleaseDC(tempWindow, tempDeviceContext);
 		::DestroyWindow(tempWindow);
 	}
-}
 
 
-namespace opengl
-{
+
 	void GLAPIENTRY GLMessageCallback
 	(
 			GLenum source,
@@ -204,9 +197,18 @@ namespace opengl
 	}
 
 
-	void Context::Create(re::Context& context)
+	Context::Context()
+		: m_glRenderContext(nullptr)
+		, m_hDeviceContext(nullptr)
+		, wglCreateContextAttribsARBFn(nullptr)
+		, wglChoosePixelFormatARBFn(nullptr)
 	{
-		GetOpenGLExtensionProcessAddresses(context);
+	}
+
+
+	void Context::Create()
+	{
+		GetOpenGLExtensionProcessAddresses();
 
 		en::Window* window = en::CoreEngine::Get()->GetWindow();
 		SEAssert("Window pointer cannot be null", window);
@@ -214,11 +216,8 @@ namespace opengl
 		win32::Window::PlatformParams* windowPlatParams = 
 			window->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
-		opengl::Context::PlatformParams* contextPlatParams =
-			context.GetPlatformParams()->As<opengl::Context::PlatformParams*>();
-
 		// Get the Device Context Handle
-		contextPlatParams->m_hDeviceContext = GetDC(windowPlatParams->m_hWindow); 
+		m_hDeviceContext = GetDC(windowPlatParams->m_hWindow);
 
 		// Now we can choose a pixel format using wglChoosePixelFormatARB:
 		int pixel_format_attribs[] = {
@@ -235,16 +234,15 @@ namespace opengl
 
 		int pixel_format;
 		UINT num_formats;
-		contextPlatParams->wglChoosePixelFormatARBFn(
-			contextPlatParams->m_hDeviceContext, pixel_format_attribs, 0, 1, &pixel_format, &num_formats);
+		wglChoosePixelFormatARBFn(m_hDeviceContext, pixel_format_attribs, 0, 1, &pixel_format, &num_formats);
 		if (!num_formats)
 		{
 			SEAssertF("Failed to set the OpenGL pixel format");
 		}
 
 		PIXELFORMATDESCRIPTOR pfd;
-		DescribePixelFormat(contextPlatParams->m_hDeviceContext, pixel_format, sizeof(pfd), &pfd);
-		if (!SetPixelFormat(contextPlatParams->m_hDeviceContext, pixel_format, &pfd))
+		DescribePixelFormat(m_hDeviceContext, pixel_format, sizeof(pfd), &pfd);
+		if (!SetPixelFormat(m_hDeviceContext, pixel_format, &pfd))
 		{
 			SEAssertF("Failed to set the OpenGL pixel format");
 		}
@@ -259,11 +257,10 @@ namespace opengl
 			0,
 		};
 
-		contextPlatParams->m_glRenderContext = 
-			contextPlatParams->wglCreateContextAttribsARBFn(contextPlatParams->m_hDeviceContext, 0, glAttribs);
-		SEAssert("Failed to create OpenGL context", contextPlatParams->m_glRenderContext);
+		m_glRenderContext = wglCreateContextAttribsARBFn(m_hDeviceContext, 0, glAttribs);
+		SEAssert("Failed to create OpenGL context", m_glRenderContext);
 
-		if (!wglMakeCurrent(contextPlatParams->m_hDeviceContext, contextPlatParams->m_glRenderContext))
+		if (!wglMakeCurrent(m_hDeviceContext, m_glRenderContext))
 		{
 			SEAssertF("Failed to activate OpenGL rendering context");
 		}
@@ -279,10 +276,10 @@ namespace opengl
 
 		LOG("Using OpenGL version %d.%d", glMajorVersionCheck, glMinorVersionCheck);
 
-		context.GetSwapChain().SetVSyncMode(Config::Get()->GetValue<bool>("vsync"));
+		GetSwapChain().SetVSyncMode(Config::Get()->GetValue<bool>("vsync"));
 
 		// Create the (implied) swap chain
-		context.GetSwapChain().Create();
+		GetSwapChain().Create();
 		
 
 		// Initialize glew:
@@ -325,14 +322,9 @@ namespace opengl
 	}
 
 
-	void Context::Destroy(re::Context& context)
+	void Context::Destroy(re::Context& reContext)
 	{
-		opengl::Context::PlatformParams* contextPlatformParams =
-			context.GetPlatformParams()->As<opengl::Context::PlatformParams*>();
-		if (!contextPlatformParams)
-		{
-			return;
-		}
+		opengl::Context& context = dynamic_cast<opengl::Context&>(reContext);
 
 		// Imgui cleanup
 		::ImGui_ImplOpenGL3_Shutdown();
@@ -344,8 +336,8 @@ namespace opengl
 		win32::Window::PlatformParams* windowPlatformParams = 
 			en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
-		::ReleaseDC(windowPlatformParams->m_hWindow, contextPlatformParams->m_hDeviceContext); // Release device context
-		::wglDeleteContext(contextPlatformParams->m_glRenderContext); // Delete the rendering context
+		::ReleaseDC(windowPlatformParams->m_hWindow, context.m_hDeviceContext); // Release device context
+		::wglDeleteContext(context.m_glRenderContext); // Delete the rendering context
 
 		// NOTE: We must destroy anything that holds a parameter block before the ParameterBlockAllocator is destroyed, 
 		// as parameter blocks call the ParameterBlockAllocator in their destructor
@@ -353,21 +345,18 @@ namespace opengl
 	}
 
 
-	void Context::Present(re::Context const& context)
+	void Context::Present()
 	{
-		opengl::Context::PlatformParams* platformParams =
-			context.GetPlatformParams()->As<opengl::Context::PlatformParams*>();
-
-		::SwapBuffers(platformParams->m_hDeviceContext);
+		::SwapBuffers(m_hDeviceContext);
 	}
 
 
-	void Context::SetPipelineState(re::Context const& context, gr::PipelineState const& pipelineState)
+	void Context::SetPipelineState(gr::PipelineState const& pipelineState)
 	{
-		opengl::Context::SetCullingMode(pipelineState.GetFaceCullingMode());
-		opengl::Context::SetDepthTestMode(pipelineState.GetDepthTestMode());
-		opengl::Context::SetDepthWriteMode(pipelineState.GetDepthWriteMode());
-		opengl::Context::ClearTargets(pipelineState.GetClearTarget()); // Clear AFTER setting color/depth modes
+		SetCullingMode(pipelineState.GetFaceCullingMode());
+		SetDepthTestMode(pipelineState.GetDepthTestMode());
+		SetDepthWriteMode(pipelineState.GetDepthWriteMode());
+		ClearTargets(pipelineState.GetClearTarget()); // Clear AFTER setting color/depth modes
 	}
 
 
@@ -504,14 +493,5 @@ namespace opengl
 			SEAssertF("Invalid depth write mode");
 		}
 		}
-	}
-
-
-	uint8_t opengl::Context::GetMaxTextureInputs()
-	{
-		int maxTexInputs;
-		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTexInputs);
-		SEAssert("GL_MAX_TEXTURE_IMAGE_UNITS query failed", maxTexInputs > 0);
-		return (uint32_t)maxTexInputs;
 	}
 }

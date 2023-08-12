@@ -121,7 +121,7 @@ namespace re
 	void RenderManager::Startup()
 	{
 		LOG("RenderManager starting...");
-		m_context.Create();
+		re::Context::Get()->Create();
 		en::EventManager::Get()->Subscribe(en::EventManager::InputToggleVSync, this);
 	}
 	
@@ -144,7 +144,7 @@ namespace re
 		SEAssert("Render pipeline should contian an entry for each graphics system", 
 			m_renderPipeline.GetNumberGraphicsSystems() == m_graphicsSystems.size());
 
-		m_context.GetParameterBlockAllocator().ClosePermanentPBRegistrationPeriod();
+		re::Context::Get()->GetParameterBlockAllocator().ClosePermanentPBRegistrationPeriod();
 
 		CreateAPIResources();
 
@@ -165,7 +165,7 @@ namespace re
 			m_graphicsSystems[gs]->PreRender(m_renderPipeline.GetStagePipeline()[gs]);
 		}
 
-		m_context.GetParameterBlockAllocator().SwapBuffers(frameNum);
+		re::Context::Get()->GetParameterBlockAllocator().SwapBuffers(frameNum);
 	}
 
 
@@ -177,14 +177,14 @@ namespace re
 		CreateAPIResources();
 
 		// Update/buffer param blocks:
-		m_context.GetParameterBlockAllocator().BufferParamBlocks();
+		re::Context::Get()->GetParameterBlockAllocator().BufferParamBlocks();
 
 		// API-specific rendering loop virtual implementations:
 		Render();
 		RenderImGui();
 
 		// Present the final frame:
-		m_context.Present();
+		re::Context::Get()->Present();
 
 		EndOfFrame(); // Clear batches, process pipeline and parameter block allocator EndOfFrames
 	}
@@ -199,7 +199,7 @@ namespace re
 			stagePipeline.EndOfFrame();
 		}
 		
-		m_context.GetParameterBlockAllocator().EndOfFrame();
+		re::Context::Get()->GetParameterBlockAllocator().EndOfFrame();
 	}
 
 
@@ -229,7 +229,7 @@ namespace re
 		}
 
 		// Need to do this here so the CoreEngine's Window can be destroyed
-		m_context.Destroy();
+		re::Context::Get()->Destroy();
 	}
 
 
@@ -250,7 +250,7 @@ namespace re
 			case en::EventManager::EventType::InputToggleVSync:
 			{
 				m_vsyncEnabled = !m_vsyncEnabled;
-				m_context.GetSwapChain().SetVSyncMode(m_vsyncEnabled);
+				re::Context::Get()->GetSwapChain().SetVSyncMode(m_vsyncEnabled);
 				LOG("VSync %s", m_vsyncEnabled ? "enabled" : "disabled");
 			}
 			break;

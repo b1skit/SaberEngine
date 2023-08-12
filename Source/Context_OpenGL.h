@@ -1,45 +1,57 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
+#include "Context.h"
 #include "Context_Platform.h"
 
 
-namespace re
-{
-	class Context;
-}
 
 
 namespace opengl
 {
-	class Context
+	class Context final : public virtual re::Context
 	{
 	public:
-		struct PlatformParams final : public re::Context::PlatformParams
-		{
-			HGLRC m_glRenderContext;
-			HDC m_hDeviceContext;
+		void Create() override;
+		~Context() override = default;
 
-			typedef HGLRC WINAPI wglCreateContextAttribsARB_type(HDC hdc, HGLRC hShareContext, const int* attribList);
-			wglCreateContextAttribsARB_type* wglCreateContextAttribsARBFn = nullptr;
-
-			typedef BOOL WINAPI wglChoosePixelFormatARB_type(HDC hdc, const int* piAttribIList,
-				const FLOAT* pfAttribFList, UINT nMaxFormats, int* piFormats, UINT* nNumFormats);
-			wglChoosePixelFormatARB_type* wglChoosePixelFormatARBFn = nullptr;
-		};
-
-
-	public:
-		static void Create(re::Context& context);
+		// Platform implementations:
 		static void Destroy(re::Context& context);
-		static void Present(re::Context const& context);
-		static void SetPipelineState(re::Context const& context, gr::PipelineState const& pipelineState);
-		static uint8_t GetMaxTextureInputs();
+
+		// Context interface:
+		void Present() override;
 
 		// OpenGL-specific interface:
-		static void SetCullingMode(gr::PipelineState::FaceCullingMode const& mode);
-		static void ClearTargets(gr::PipelineState::ClearTarget const& clearTarget);
-		static void SetDepthTestMode(gr::PipelineState::DepthTestMode const& mode);
-		static void SetDepthWriteMode(gr::PipelineState::DepthWriteMode const& mode);
+		void SetPipelineState(gr::PipelineState const& pipelineState);
+
+
+	protected:
+		Context();
+		friend class re::Context;
+
+	private:
+		void SetCullingMode(gr::PipelineState::FaceCullingMode const& mode);
+		void ClearTargets(gr::PipelineState::ClearTarget const& clearTarget);
+		void SetDepthTestMode(gr::PipelineState::DepthTestMode const& mode);
+		void SetDepthWriteMode(gr::PipelineState::DepthWriteMode const& mode);
+
+		void GetOpenGLExtensionProcessAddresses();
+
+
+	private:
+		HGLRC m_glRenderContext;
+		HDC m_hDeviceContext;
+
+		typedef HGLRC WINAPI wglCreateContextAttribsARB_type(HDC hdc, HGLRC hShareContext, const int* attribList);
+		wglCreateContextAttribsARB_type* wglCreateContextAttribsARBFn;
+
+		typedef BOOL WINAPI wglChoosePixelFormatARB_type(
+			HDC hdc, 
+			const int* piAttribIList, 
+			const FLOAT* pfAttribFList, 
+			UINT nMaxFormats, 
+			int* piFormats, 
+			UINT* nNumFormats);
+		wglChoosePixelFormatARB_type* wglChoosePixelFormatARBFn;
 	};
 }

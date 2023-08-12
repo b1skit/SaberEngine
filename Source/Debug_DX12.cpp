@@ -15,12 +15,10 @@ namespace
 {
 	void HandleDRED()
 	{
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
-
 		ComPtr<ID3D12DeviceRemovedExtendedData> pDred;
 		SEAssert("Failed to get DRED query interface", 
-			SUCCEEDED(ctxPlatParams->m_device.GetD3DDisplayDevice()->QueryInterface(IID_PPV_ARGS(&pDred))));
+			SUCCEEDED(re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()
+				->QueryInterface(IID_PPV_ARGS(&pDred))));
 
 		D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT DredAutoBreadcrumbsOutput;
 		SEAssert("Failed to get DRED auto breadcrumbs output", 

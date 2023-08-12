@@ -80,13 +80,12 @@ namespace dx12
 			en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
 		// Note: The context (currently) calls this function. This is dicey...
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
 		// Create the swap chain:
 		ComPtr<IDXGISwapChain1> swapChain1;
 		hr = dxgiFactory4->CreateSwapChainForHwnd(
-			ctxPlatParams->m_commandQueues[dx12::CommandListType::Direct].GetD3DCommandQueue(),
+			context->GetCommandQueue(dx12::CommandListType::Direct).GetD3DCommandQueue(),
 			windowPlatParams->m_hWindow, // Window handle associated with the swap chain
 			&swapChainDesc, // Swap chain descriptor
 			nullptr, // Full-screen swap chain descriptor. Creates a window swap chain if null

@@ -8,16 +8,33 @@
 
 namespace dx12
 {
-	CPUDescriptorHeapManager::CPUDescriptorHeapManager(D3D12_DESCRIPTOR_HEAP_TYPE type)
+	constexpr D3D12_DESCRIPTOR_HEAP_TYPE CPUDescriptorHeapManager::TranslateHeapTypeToD3DHeapType(HeapType heapType)
+	{
+		switch (heapType)
+		{
+		case HeapType::CBV_SRV_UAV: return D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		case HeapType::RTV: return D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+		case HeapType::DSV: return D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+		case HeapType::HeapType_Count:
+		default:
+			SEAssertF("Invalid heap type");
+		}
+		return D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; // Error
+	}
+
+
+	CPUDescriptorHeapManager::CPUDescriptorHeapManager(HeapType type)
 		: m_type(type)
-		, m_elementSize(re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>()
-			->m_device.GetD3DDisplayDevice()->GetDescriptorHandleIncrementSize(type))
+		, m_d3dType(TranslateHeapTypeToD3DHeapType(type))
+		, m_elementSize(re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()
+			->GetDescriptorHandleIncrementSize(TranslateHeapTypeToD3DHeapType(type)))
 	{
 	}
 
 
 	CPUDescriptorHeapManager::CPUDescriptorHeapManager(CPUDescriptorHeapManager&& rhs) noexcept
 		: m_type(rhs.m_type)
+		, m_d3dType(rhs.m_d3dType)
 		, m_elementSize(rhs.m_elementSize)
 	{
 		std::lock_guard<std::mutex> rhsAllocationLock(rhs.m_allocationPagesIndexesMutex);
@@ -122,27 +139,25 @@ namespace dx12
 
 
 	AllocationPage::AllocationPage(
-		D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t elementSize, uint32_t numElementsPerPage, uint32_t pageIdx)
+		CPUDescriptorHeapManager::HeapType type, uint32_t elementSize, uint32_t numElementsPerPage, uint32_t pageIdx)
 		: m_type(type)
+		, m_d3dType(CPUDescriptorHeapManager::TranslateHeapTypeToD3DHeapType(type))
 		, m_descriptorElementSize(elementSize)
 		, m_totalElements(numElementsPerPage)
 		, m_numFreeElements(0) // Updated when we make our 1st FreeRange() call
 	{
 		std::lock_guard<std::mutex> pageLock(m_pageMutex);
-
-		dx12::Context::PlatformParams* ctxPlatParams = 
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 		
 		// Create our CPU-visible descriptor heap:
 		D3D12_DESCRIPTOR_HEAP_DESC heapDescriptor;
-		heapDescriptor.Type = m_type;
+		heapDescriptor.Type = m_d3dType;
 		heapDescriptor.NumDescriptors = m_totalElements;
 		heapDescriptor.NodeMask = 0; // We only support a single GPU
 
 		// Note: CBV/SRV/UAV and sampler descriptors will NOT be shader visible with this flag:
 		heapDescriptor.Flags = D3D12_DESCRIPTOR_HEAP_FLAGS::D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-		HRESULT hr = ctxPlatParams->m_device.GetD3DDisplayDevice()->CreateDescriptorHeap(
+		HRESULT hr = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()->CreateDescriptorHeap(
 			&heapDescriptor, 
 			IID_PPV_ARGS(&m_descriptorHeap));
 		CheckHResult(hr, "Failed to create CPU-visible descriptor heap");

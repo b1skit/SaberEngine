@@ -67,11 +67,9 @@ namespace
 
 		// Construct our transition barrier command lists:
 		std::vector<std::shared_ptr<dx12::CommandList>> finalCommandLists;
-		
-		dx12::Context::PlatformParams* ctxPlatParams =
-			re::RenderManager::Get()->GetContext().GetPlatformParams()->As<dx12::Context::PlatformParams*>();
 
-		dx12::GlobalResourceStateTracker& globalResourceStates = ctxPlatParams->m_globalResourceStates;
+		dx12::GlobalResourceStateTracker& globalResourceStates = 
+			re::Context::GetAs<dx12::Context*>()->GetGlobalResourceStates();
 
 		// Manually patch the barriers for each command list:
 		std::lock_guard<std::mutex> barrierLock(globalResourceStates.GetGlobalStatesMutex());
@@ -370,6 +368,7 @@ namespace dx12
 		}
 
 		// Insert a GPU wait for any incomplete fences for resources modified on other queues:
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		for (uint8_t queueIdx = 0; queueIdx < dx12::CommandListType::CommandListType_Count; queueIdx++)
 		{
 			const uint64_t currentModificationFence = maxModificationFences[queueIdx];
@@ -380,7 +379,7 @@ namespace dx12
 
 				if (cmdListType != thisCmdListType) // Don't wait on resources this queue is about to modify
 				{
-					dx12::CommandQueue& commandQueue = dx12::Context::GetCommandQueue(cmdListType);
+					dx12::CommandQueue& commandQueue = context->GetCommandQueue(cmdListType);
 					if (!commandQueue.GetFence().IsFenceComplete(currentModificationFence))
 					{
 						GPUWait(commandQueue.GetFence(), currentModificationFence);
