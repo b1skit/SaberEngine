@@ -67,7 +67,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;D:\Projects\Game Development\SaberEngine\Dependencies\DirectX-Headers\include;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\cgltf\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;D:\Projects\Game Development\SaberEngine\Dependencies\DirectX-Headers\include;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -111,7 +111,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;D:\Projects\Game Development\SaberEngine\Dependencies\DirectX-Headers\include;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\cgltf\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;D:\Projects\Game Development\SaberEngine\Dependencies\DirectX-Headers\include;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>

@@ -79,19 +79,19 @@ Dependencies are included via Git Subtrees. Configuration details are included b
 
 Imgui: https://github.com/ocornut/imgui/
 -----------------------------------------
-- Current version: v1.89.9
-- <project root>\Source\Dependencies\imgui\
+- Current version: v1.89.9  
+- <project root>\Source\Dependencies\imgui\  
 - "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\imgui\"  
-- All of the .h and .cpp files in the .\Source\Dependencies\imgui\ directory are added to the Visual Studio project (under the "imgui" filter)
-- The dx12, opengl3, and win32 imgui_impl_* .h and .cpp files in the .\Source\Dependencies\imgui\backends\are added to the Visual Studio project (under the "imgui\backends" filter)
+- All of the .h and .cpp files in the .\Source\Dependencies\imgui\ directory are added to the Visual Studio project (under the "imgui" filter)  
+- The dx12, opengl3, and win32 imgui_impl_* .h and .cpp files in the .\Source\Dependencies\imgui\backends\are added to the Visual Studio project (under the "imgui\backends" filter)  
 
 
 CGLTF: https://github.com/jkuhlmann/cgltf
 -----------------------------------------
-- Current version: cgltf-1.13
-- Unzip to <project root>\Dependencies\cgltf\
-- Add "$(ProjectDir)..\Dependencies\cgltf\" to "Project properties -> C/C++ -> Additional Include Directories"
-- Sample assets: https://github.com/KhronosGroup/glTF-Sample-Models
+- Current version: cgltf-1.13  
+- <project root>\Source\Dependencies\cgltf\  
+- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)..\Dependencies\cgltf\"  
+- Sample GLTF assets compatible with Saber Engine can be found here: https://github.com/KhronosGroup/glTF-Sample-Models  
 
 
 MikkTSpace: https://github.com/mmikk/MikkTSpace
