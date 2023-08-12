@@ -117,10 +117,10 @@ Direct-X Headers: https://github.com/microsoft/DirectX-Headers
 
 Glew: https://github.com/nigels-com/glew/releases
 -------------------------------------------------
-- Current version: glew-2.2.0-win32 (pre-compiled)
-- Unzip to <project root>\Dependencies\glew\
-- Add "$(ProjectDir)..\Dependencies\glew\include" to "Project properties -> C/C++ -> Additional Include Directories" for all configurations
-- Add "$(ProjectDir)..\Dependencies\glew\lib\x64\" to "project properties -> Linker -> General -> Additional Library Directories" for all build configurations
+- Current version: glew-2.2.0-win32 (Note: The pre-compiled library is used, the Glew dependency is not added via a Subtree)
+- <project root>\Source\Dependencies\glew\
+- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)..\Dependencies\glew\include"  
+- "Project properties -> Linker -> General -> Additional Library Directories" -> "$(ProjectDir)..\Dependencies\glew\lib\x64\"  
 - Ensure the "Project properties -> Build Events -> Post-Build Event" copies glew\bin\Release\x64\glew32.dll to the <Project Root>\SaberEngine\ directory
 
 

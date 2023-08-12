@@ -67,7 +67,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\cgltf\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(ProjectDir)Dependencies\DirectX-Headers\include\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\cgltf\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(ProjectDir)Dependencies\DirectX-Headers\include\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -77,7 +77,7 @@
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(ProjectDir)..\Dependencies\glm\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(ProjectDir)..\Dependencies\glm\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <PerUserRedirection>true</PerUserRedirection>
@@ -89,7 +89,7 @@
       </Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine"
+      <Command>copy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine"
 copy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\"
 copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
     </PostBuildEvent>
@@ -111,7 +111,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\cgltf\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(ProjectDir)Dependencies\DirectX-Headers\include\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)Dependencies\cgltf\;$(ProjectDir)Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;$(ProjectDir)Dependencies\DirectX-Headers\include\;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
@@ -121,7 +121,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\Dependencies\glew\lib\Release\x64\;$(ProjectDir)..\Dependencies\glm\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)Dependencies\glew\lib\Release\x64\;$(ProjectDir)..\Dependencies\glm\;$(WindowsSDK_LibraryPath_x64);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32.lib;opengl32.lib;glu32.lib;$(WindowsSDK_LibraryPath)\x64\d3d12.lib;$(WindowsSDK_LibraryPath)\x64\dxgi.lib;$(WindowsSDK_LibraryPath)\x64\dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
     </Link>
@@ -132,7 +132,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
       </Message>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine"
+      <Command>copy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine"
 copy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\"
 copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
       <Message>Copy dependencies to project directory</Message>
