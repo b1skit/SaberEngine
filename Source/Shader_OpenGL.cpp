@@ -486,12 +486,10 @@ namespace opengl
 
 		SEAssert("Failed to get resource index", resourceIdx != GL_INVALID_ENUM);
 
-#define ASSERT_ON_MISSING_RESOURCE_NAME
-#if defined(ASSERT_ON_MISSING_RESOURCE_NAME)
 		// GL_INVALID_INDEX is returned if name is not the name of a resource within the shader program
 		SEAssert("Failed to find the resource in the shader. This is is not an error, but a useful debugging helper", 
-			resourceIdx != GL_INVALID_INDEX);
-#endif
+			resourceIdx != GL_INVALID_INDEX || 
+			en::Config::Get()->ValueExists(en::ConfigKeys::k_relaxedShaderBindingCmdLineArg) == true);
 
 		if (resourceIdx != GL_INVALID_INDEX)
 		{
