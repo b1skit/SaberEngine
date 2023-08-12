@@ -91,7 +91,7 @@
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine"
 copy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\"
-copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
+copy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copy dependencies to project directory</Message>
@@ -134,7 +134,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
     <PostBuildEvent>
       <Command>copy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine"
 copy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\"
-copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
+copy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
     <FxCompile>
