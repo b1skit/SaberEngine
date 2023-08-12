@@ -35,7 +35,6 @@
 *.app
 
 # Project dependencies
-/Dependencies/*
 /SaberEngine/glew32.dll
 /SaberEngine/Shaders/*
 

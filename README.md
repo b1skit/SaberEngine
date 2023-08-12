@@ -132,11 +132,10 @@ GLM: https://github.com/g-truc/glm/releases
 - "Project properties -> Linker -> General -> Additional Library Directories" -> "$(ProjectDir)..\Dependencies\glm\"  
 
 
-stb_image.h: https://github.com/nothings/stb/blob/master/stb_image.h
+stb (stb_image.h): https://github.com/nothings/stb/blob/master/
 --------------------------------------------------------------------
-- Current version: v2.27 
-- Add stb_image.h to <project root>\Dependencies\stb\
-- Add "$(ProjectDir)..\Dependencies\stb\" to "Project properties -> C/C++ -> Additional Include Directories" for all configurations
+- Current version: Jan 29, 2023
+- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\stb\"  
 
 
 --------------------------------------------------
