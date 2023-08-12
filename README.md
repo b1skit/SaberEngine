@@ -110,7 +110,8 @@ MikkTSpace Welder: https://github.com/mmikk/Welder
 
 Direct-X Headers: https://github.com/microsoft/DirectX-Headers
 --------------------------------------------------------------
-- Add ".\include\directx\" to "Project properties -> C/C++ -> General -> Additional Include Directories"  
+- Current version: 1.610.0
+- "Project properties -> C/C++ -> General -> Additional Include Directories" -> "$(ProjectDir)Dependencies\DirectX-Headers\include\"  
 - Add "$(WindowsSDK_LibraryPath)\x64\d3d12.lib" and "$(WindowsSDK_LibraryPath)\x64\dxgi.lib" to "Project properties -> Linker -> Input -> Additional Dependencies"  
 
 
