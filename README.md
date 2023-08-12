@@ -18,6 +18,12 @@ Details:
 - Implemented with C++ 20
 
 
+----------------------------------
+User-Specific Visual Studio Setup:
+----------------------------------
+"Project -> Properties -> Configuration Properties -> Debugging -> Working Directory" -> "$(SolutionDir)SaberEngine"  
+
+
 -----------------------
 Command line arguments:
 -----------------------
