@@ -119,17 +119,17 @@ Glew: https://github.com/nigels-com/glew/releases
 -------------------------------------------------
 - Current version: glew-2.2.0-win32 (Note: The pre-compiled library is used, the Glew dependency is not added via a Subtree)
 - <project root>\Source\Dependencies\glew\
-- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)..\Dependencies\glew\include"  
-- "Project properties -> Linker -> General -> Additional Library Directories" -> "$(ProjectDir)..\Dependencies\glew\lib\x64\"  
+- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\glew\include"  
+- "Project properties -> Linker -> General -> Additional Library Directories" -> "$(ProjectDir)Dependencies\glew\lib\x64\"  
 - Ensure the "Project properties -> Build Events -> Post-Build Event" copies glew\bin\Release\x64\glew32.dll to the <Project Root>\SaberEngine\ directory
 
 
 GLM: https://github.com/g-truc/glm/releases
 -------------------------------------------
 - Current version: GLM 0.9.9.8
-- Unzip to <project root>\Dependencies\glm\
-- Add "$(ProjectDir)..\Dependencies\glm\" to "Project properties -> C/C++ -> Additional Include Directories" for all configurations
-- Add "$(ProjectDir)..\Dependencies\glm\" to "project properties -> Linker -> General -> Additional Library Directories"
+- <project root>\Source\Dependencies\glm\
+- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\glm\"  
+- "Project properties -> Linker -> General -> Additional Library Directories" -> "$(ProjectDir)..\Dependencies\glm\"  
 
 
 stb_image.h: https://github.com/nothings/stb/blob/master/stb_image.h
