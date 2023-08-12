@@ -96,9 +96,9 @@ CGLTF: https://github.com/jkuhlmann/cgltf
 
 MikkTSpace: https://github.com/mmikk/MikkTSpace
 -----------------------------------------------
-- Current version: "Github last modified Mar 25, 2020""
-- Unzip to <project root>\Dependencies\MikkTSpace
-- Add "$(ProjectDir)..\Dependencies\MikkTSpace\" to "Project properties -> C/C++ -> Additional Include Directories"
+- Current version: "Mar 25, 2020"  
+- <project root>\Source\Dependencies\MikkTSpace\  
+- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\MikkTSpace\"  
 
 
 MikkTSpace Welder: https://github.com/mmikk/Welder
