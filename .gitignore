@@ -41,8 +41,9 @@
 # Force-include glew, as it's currently added as a pre-compiled library
 !Source/Dependencies/glew/**
 
-# Scene data
+# Don't include scene data, but do create a directory for it
 /SaberEngine/Scenes/*
+/SaberEngine/Scenes/!*.gitkeep
 
 # Personal
 /notes/*
