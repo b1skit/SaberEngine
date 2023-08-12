@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Debug_DX12.h"
 #include "Fence_DX12.h"
+#include "TextUtils.h"
 
 using Microsoft::WRL::ComPtr;
 
@@ -60,6 +61,8 @@ namespace dx12
 			eventName);	// Event object name: Unnamed if null
 
 		SEAssert("Failed to create fence event", m_fenceEvent);
+
+		m_fence->SetName(util::ToWideString(eventName).c_str());
 	}
 
 

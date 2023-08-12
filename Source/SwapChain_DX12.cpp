@@ -137,7 +137,7 @@ namespace dx12
 			HRESULT hr = swapChainParams->m_swapChain->GetBuffer(backbufferIdx, IID_PPV_ARGS(&backbufferResource));
 			CheckHResult(hr, "Failed to get backbuffer");
 
-			// Create a color target texture:
+			// Create (and name) a color target texture:
 			std::shared_ptr<re::Texture> colorTargetTex = dx12::Texture::CreateFromExistingResource(
 				"SwapChainColorTarget_" + std::to_string(backbufferIdx), 
 				colorParams, 

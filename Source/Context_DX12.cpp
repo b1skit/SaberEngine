@@ -108,6 +108,8 @@ namespace dx12
 				m_imGuiGPUVisibleSRVDescriptorHeap.Get(),
 				m_imGuiGPUVisibleSRVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 				m_imGuiGPUVisibleSRVDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+
+			m_imGuiGPUVisibleSRVDescriptorHeap->SetName(L"Imgui descriptor heap");
 		}
 	}
 
