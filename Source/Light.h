@@ -25,7 +25,7 @@ namespace gr
 	class Light final : public virtual en::NamedObject, public virtual en::Updateable
 	{
 	public:
-		enum LightType
+		enum LightType : uint8_t
 		{
 			AmbientIBL,
 			Directional,

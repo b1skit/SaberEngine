@@ -22,7 +22,7 @@ namespace re
 
 
 	public:
-		enum Usage
+		enum Usage : uint8_t
 		{
 			Color				= 1 << 0,
 			ColorTarget			= 1 << 1,

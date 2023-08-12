@@ -24,7 +24,7 @@ namespace gr
 		***************************************************************************************************************/
 
 	public:
-		enum TransformComponent
+		enum TransformComponent : uint8_t
 		{
 			Translation,
 			Rotation,

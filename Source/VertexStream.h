@@ -16,7 +16,7 @@ namespace re
 
 
 	public:
-		enum Normalize
+		enum Normalize : bool
 		{
 			False = 0,
 			True = 1

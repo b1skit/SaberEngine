@@ -13,7 +13,7 @@ namespace en
 
 	// Buttons for specific functionality/controls (eg. forward, sprint, quit, etc)
 	// These enums are also converted to strings by a pre-processor macro, and mapped to buttons in the config.cfg
-	enum KeyboardInputButton
+	enum KeyboardInputButton : uint8_t
 	{
 		InputButton_Forward,
 		InputButton_Backward,
@@ -48,7 +48,7 @@ namespace en
 		ENUM_TO_STR(InputButton_Quit),
 	};
 
-	enum MouseInputButton
+	enum MouseInputButton : uint8_t
 	{
 		InputMouse_Left,
 		InputMouse_Middle,
@@ -67,7 +67,7 @@ namespace en
 	};
 
 	// Analogue controls (eg. mouse movement): Enums index mouseAxisStates array elements
-	enum MouseInputAxis
+	enum MouseInputAxis : uint8_t
 	{
 		Input_MouseX,
 		Input_MouseY,
@@ -181,6 +181,7 @@ namespace en
 		SEK_UNKNOWN,
 		SaberEngineKeycodes_Count = SEK_UNKNOWN
 	};
+	static_assert(SaberEngineKeycodes_Count < 256);
 
 	
 

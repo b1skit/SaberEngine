@@ -28,7 +28,7 @@ namespace dx12
 
 
 	public:
-		enum InlineDescriptorType
+		enum InlineDescriptorType : uint8_t
 		{
 			CBV,
 			SRV,

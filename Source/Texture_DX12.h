@@ -12,7 +12,7 @@ namespace dx12
 	class Texture
 	{
 	public:
-		enum View
+		enum View : uint8_t
 		{
 			SRV,
 			UAV,

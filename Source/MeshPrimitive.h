@@ -26,7 +26,7 @@ namespace re
 
 
 	public:
-		enum class DrawMode
+		enum class DrawMode : uint8_t
 		{
 			Points,
 			Lines,
@@ -44,7 +44,7 @@ namespace re
 		};
 
 		// TODO: We'd prefer to have the Tangent and Bitangent/Binormal and reconstruct the Normal
-		enum Slot // Binding index
+		enum Slot : uint8_t // Binding index
 		{
 			Position	= 0, // vec3
 			Normal		= 1, // vec3
@@ -201,7 +201,7 @@ namespace meshfactory
 {
 	extern std::shared_ptr<re::MeshPrimitive> CreateCube();
 
-	enum class ZLocation
+	enum class ZLocation : uint8_t
 	{
 		Near,
 		Far

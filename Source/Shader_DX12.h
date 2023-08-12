@@ -16,7 +16,7 @@ namespace dx12
 	public:
 		// TODO: Support more shader types
 		// TODO: Should this be a member of re::Shader?
-		enum ShaderType 
+		enum ShaderType : uint8_t
 		{
 			Vertex,
 			Geometry,

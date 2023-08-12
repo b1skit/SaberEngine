@@ -47,7 +47,7 @@ namespace dx12
 				} m_uavDesc;
 			};
 		};
-		enum DescriptorType
+		enum DescriptorType : uint8_t
 		{
 			SRV,
 			UAV,

@@ -19,7 +19,7 @@ namespace en
 	class EventManager final : public virtual en::EngineComponent
 	{
 	public:
-		enum EventType
+		enum EventType : uint8_t
 		{
 			// Generic events: These will likely have packed data that needs to be interpreted
 			KeyEvent,

@@ -18,7 +18,7 @@ namespace opengl
 	class Shader
 	{
 	public:
-		enum UniformType
+		enum UniformType : uint8_t
 		{
 			Matrix4x4f,
 			Matrix3x3f,

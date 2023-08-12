@@ -58,7 +58,7 @@ namespace re
 
 			struct ColorWriteMode
 			{
-				enum ChannelMode
+				enum ChannelMode : bool
 				{
 					Disabled = 0,
 					Enabled = 1

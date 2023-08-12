@@ -11,7 +11,7 @@ namespace dx12
 	class CPUDescriptorHeapManager
 	{
 	public:
-		enum HeapType
+		enum HeapType : uint8_t
 		{
 			CBV_SRV_UAV,
 			// Note: We do not maintain a Sampler descriptor heap

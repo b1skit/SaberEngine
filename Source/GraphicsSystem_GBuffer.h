@@ -11,7 +11,7 @@ namespace gr
 	{
 	public:
 		// These enums are converted to strings, & must align with the layout binding indexes defined in SaberCommon.glsl
-		enum GBufferTexIdx
+		enum GBufferTexIdx : uint8_t
 		{
 			GBufferAlbedo	= 0,
 			GBufferWNormal	= 1,
