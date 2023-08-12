@@ -79,11 +79,11 @@ Dependencies are included via Git Subtrees. Configuration details are included b
 
 Imgui: https://github.com/ocornut/imgui/
 -----------------------------------------
-- Current version: v1.88
-- Unzip to <project root>\Dependencies\imgui\
-- Add "$(ProjectDir)..\Dependencies\imgui\" to "Project properties -> C/C++ -> Additional Include Directories"
-- Add the \Dependencies\imgui\.h/.cpp files to the Visual Studio project (i.e. under the "imgui" filter in the project view)
-- Add the \Dependencies\imgui\backends\imgui_impl_ .h/.cpp files for dx12, opengl3, sdl to the Visual Studio project (i.e. under the "imgui\backends" filter in the project view)
+- Current version: v1.89.9
+- <project root>\Source\Dependencies\imgui\
+- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\imgui\"  
+- All of the .h and .cpp files in the .\Source\Dependencies\imgui\ directory are added to the Visual Studio project (under the "imgui" filter)
+- The dx12, opengl3, and win32 imgui_impl_* .h and .cpp files in the .\Source\Dependencies\imgui\backends\are added to the Visual Studio project (under the "imgui\backends" filter)
 
 
 CGLTF: https://github.com/jkuhlmann/cgltf

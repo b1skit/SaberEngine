@@ -67,7 +67,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)..\Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;D:\Projects\Game Development\SaberEngine\Dependencies\DirectX-Headers\include;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;D:\Projects\Game Development\SaberEngine\Dependencies\DirectX-Headers\include;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -111,7 +111,7 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)..\Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;D:\Projects\Game Development\SaberEngine\Dependencies\DirectX-Headers\include;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)pch;$(ProjectDir)Dependencies\imgui\;$(ProjectDir)Dependencies\Welder\;$(ProjectDir)Dependencies\MikkTSpace\;$(ProjectDir)..\Dependencies\cgltf\;$(ProjectDir)..\Dependencies\glew\include\;$(ProjectDir)..\Dependencies\glm\;$(ProjectDir)..\Dependencies\stb\;D:\Projects\Game Development\SaberEngine\Dependencies\DirectX-Headers\include;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
@@ -145,14 +145,6 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_dx12.cpp" />
-    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_opengl3.cpp" />
-    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_win32.cpp" />
-    <ClCompile Include="..\Dependencies\imgui\imgui.cpp" />
-    <ClCompile Include="..\Dependencies\imgui\imgui_demo.cpp" />
-    <ClCompile Include="..\Dependencies\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\Dependencies\imgui\imgui_tables.cpp" />
-    <ClCompile Include="..\Dependencies\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Batch.cpp" />
     <ClCompile Include="Bounds.cpp" />
     <ClCompile Include="Camera.cpp" />
@@ -161,6 +153,14 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
     <ClCompile Include="Context_DX12.cpp" />
     <ClCompile Include="CPUDescriptorHeapManager_DX12.cpp" />
     <ClCompile Include="Debug_DX12.cpp" />
+    <ClCompile Include="Dependencies\imgui\backends\imgui_impl_dx12.cpp" />
+    <ClCompile Include="Dependencies\imgui\backends\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="Dependencies\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="Dependencies\imgui\imgui.cpp" />
+    <ClCompile Include="Dependencies\imgui\imgui_demo.cpp" />
+    <ClCompile Include="Dependencies\imgui\imgui_draw.cpp" />
+    <ClCompile Include="Dependencies\imgui\imgui_tables.cpp" />
+    <ClCompile Include="Dependencies\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Device_DX12.cpp" />
     <ClCompile Include="EngineThread.cpp" />
     <ClCompile Include="EventManager_Platform.cpp" />
@@ -258,16 +258,6 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
     <ClCompile Include="Window_Platform.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_dx12.h" />
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_opengl3.h" />
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_opengl3_loader.h" />
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_win32.h" />
-    <ClInclude Include="..\Dependencies\imgui\imconfig.h" />
-    <ClInclude Include="..\Dependencies\imgui\imgui.h" />
-    <ClInclude Include="..\Dependencies\imgui\imgui_internal.h" />
-    <ClInclude Include="..\Dependencies\imgui\imstb_rectpack.h" />
-    <ClInclude Include="..\Dependencies\imgui\imstb_textedit.h" />
-    <ClInclude Include="..\Dependencies\imgui\imstb_truetype.h" />
     <ClInclude Include="CastUtils.h" />
     <ClInclude Include="ConfigKeys.h" />
     <ClInclude Include="CPUDescriptorHeapManager_DX12.h" />
@@ -278,6 +268,15 @@ copy "$(OutDir)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\"</Command>
     <ClInclude Include="CommandQueue_DX12.h" />
     <ClInclude Include="Context_DX12.h" />
     <ClInclude Include="Debug_DX12.h" />
+    <ClInclude Include="Dependencies\imgui\backends\imgui_impl_dx12.h" />
+    <ClInclude Include="Dependencies\imgui\backends\imgui_impl_opengl3.h" />
+    <ClInclude Include="Dependencies\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="Dependencies\imgui\imconfig.h" />
+    <ClInclude Include="Dependencies\imgui\imgui.h" />
+    <ClInclude Include="Dependencies\imgui\imgui_internal.h" />
+    <ClInclude Include="Dependencies\imgui\imstb_rectpack.h" />
+    <ClInclude Include="Dependencies\imgui\imstb_textedit.h" />
+    <ClInclude Include="Dependencies\imgui\imstb_truetype.h" />
     <ClInclude Include="Device_DX12.h" />
     <ClInclude Include="EngineThread.h" />
     <ClInclude Include="EventManager_Platform.h" />

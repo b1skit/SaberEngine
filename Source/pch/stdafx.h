@@ -5,6 +5,7 @@
 // Supress error C4996 ("This function or variable may be unsafe"), e.g. 'sscanf', 'strcpy', 'strcat', 'sscanf'
 // Note: This block needs to come before the std includes
 #define _CRT_SECURE_NO_WARNINGS
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"
 #undef _CRT_SECURE_NO_WARNINGS
 

@@ -51,12 +51,6 @@
     <Filter Include="Source Files\util">
       <UniqueIdentifier>{d9d7149e-7017-4446-8ea2-4a29d5e8b8a8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="imgui">
-      <UniqueIdentifier>{cdf95df2-bf7d-41b9-85df-7b7018f5fd81}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="imgui\backends">
-      <UniqueIdentifier>{111822b3-fd88-44ec-9a63-11bcf5725bcd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\en\Platform">
       <UniqueIdentifier>{600b373f-06b3-4495-a7f5-42d65e9fed88}</UniqueIdentifier>
     </Filter>
@@ -83,6 +77,15 @@
     </Filter>
     <Filter Include="Source Files\Shaders\GLSL">
       <UniqueIdentifier>{02f62867-9e8f-497d-86ca-be1b7ddfa9bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Dependencies">
+      <UniqueIdentifier>{3cea7139-d8f4-49c9-b1aa-0090f4e6ea8c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Dependencies\imgui">
+      <UniqueIdentifier>{4d7dd9b2-3721-42cd-92d9-2db28f4c8445}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Dependencies\imgui\backends">
+      <UniqueIdentifier>{80a77a0d-b510-4d99-bab9-8b5f54e0eec7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -200,27 +203,6 @@
     <ClCompile Include="Bounds.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\imgui.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\imgui_demo.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\imgui_draw.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\imgui_tables.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\imgui_widgets.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_dx12.cpp">
-      <Filter>imgui\backends</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_opengl3.cpp">
-      <Filter>imgui\backends</Filter>
-    </ClCompile>
     <ClCompile Include="PerformanceTimer.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
@@ -277,9 +259,6 @@
     </ClCompile>
     <ClCompile Include="pch\stdafx.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Dependencies\imgui\backends\imgui_impl_win32.cpp">
-      <Filter>imgui\backends</Filter>
     </ClCompile>
     <ClCompile Include="EventManager_Win32.cpp">
       <Filter>Source Files\en\win32</Filter>
@@ -403,6 +382,30 @@
     </ClCompile>
     <ClCompile Include="RootSignature_DX12.cpp">
       <Filter>Source Files\re\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="Dependencies\imgui\imgui.cpp">
+      <Filter>Source Files\Dependencies\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Dependencies\imgui\imgui_draw.cpp">
+      <Filter>Source Files\Dependencies\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Dependencies\imgui\imgui_tables.cpp">
+      <Filter>Source Files\Dependencies\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Dependencies\imgui\imgui_widgets.cpp">
+      <Filter>Source Files\Dependencies\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Dependencies\imgui\backends\imgui_impl_dx12.cpp">
+      <Filter>Source Files\Dependencies\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="Dependencies\imgui\backends\imgui_impl_opengl3.cpp">
+      <Filter>Source Files\Dependencies\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="Dependencies\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>Source Files\Dependencies\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="Dependencies\imgui\imgui_demo.cpp">
+      <Filter>Source Files\Dependencies\imgui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -538,33 +541,6 @@
     <ClInclude Include="Bounds.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\imconfig.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\imgui.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\imgui_internal.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\imstb_rectpack.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\imstb_textedit.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\imstb_truetype.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_dx12.h">
-      <Filter>imgui\backends</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_opengl3.h">
-      <Filter>imgui\backends</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_opengl3_loader.h">
-      <Filter>imgui\backends</Filter>
-    </ClInclude>
     <ClInclude Include="PerformanceTimer.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
@@ -630,9 +606,6 @@
     </ClInclude>
     <ClInclude Include="Platform.h">
       <Filter>Header Files\en\Platform</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Dependencies\imgui\backends\imgui_impl_win32.h">
-      <Filter>imgui\backends</Filter>
     </ClInclude>
     <ClInclude Include="EventManager_Win32.h">
       <Filter>Header Files\en\win32</Filter>
@@ -774,6 +747,33 @@
     </ClInclude>
     <ClInclude Include="ConfigKeys.h">
       <Filter>Header Files\en</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\imgui\imgui.h">
+      <Filter>Source Files\Dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\imgui\imconfig.h">
+      <Filter>Source Files\Dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\imgui\imgui_internal.h">
+      <Filter>Source Files\Dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\imgui\imstb_rectpack.h">
+      <Filter>Source Files\Dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\imgui\imstb_textedit.h">
+      <Filter>Source Files\Dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\imgui\imstb_truetype.h">
+      <Filter>Source Files\Dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\imgui\backends\imgui_impl_dx12.h">
+      <Filter>Source Files\Dependencies\imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\imgui\backends\imgui_impl_opengl3.h">
+      <Filter>Source Files\Dependencies\imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\imgui\backends\imgui_impl_win32.h">
+      <Filter>Source Files\Dependencies\imgui\backends</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
