@@ -34,9 +34,12 @@
 *.out
 *.app
 
-# Project dependencies
+# Project assets
 /SaberEngine/glew32.dll
 /SaberEngine/Shaders/*
+
+# Force-include glew, as it's currently added as a pre-compiled library
+!Source/Dependencies/glew/**
 
 # Scene data
 /SaberEngine/Scenes/*
