@@ -74,7 +74,7 @@ For simplicity, naming patterns are used to associate Shaders.
 -------------
 Dependencies:
 -------------
-Dependencies have already been configured, and will just need to be downloaded and placed in the listed locations. The configuration instructions are included for reference.  
+Dependencies are included via Git Subtrees. Configuration details are included below for reference.  
 
 
 Imgui: https://github.com/ocornut/imgui/
@@ -103,9 +103,9 @@ MikkTSpace: https://github.com/mmikk/MikkTSpace
 
 MikkTSpace Welder: https://github.com/mmikk/Welder
 --------------------------------------------------
-- Current version: "Github last modified Mar 25, 2020""
-- Unzip to <project root>\Dependencies\Welder
-- Add "$(ProjectDir)..\Dependencies\Welder\" to "Project properties -> C/C++ -> Additional Include Directories"
+- Current version: "Mar 25, 2020""
+- <project root>\Source\Dependencies\Welder\
+- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\Welder\"  
 
 
 Direct-X Headers: https://github.com/microsoft/DirectX-Headers
