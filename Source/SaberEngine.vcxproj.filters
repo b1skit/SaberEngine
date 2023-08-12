@@ -78,13 +78,13 @@
     <Filter Include="Source Files\Shaders\GLSL">
       <UniqueIdentifier>{02f62867-9e8f-497d-86ca-be1b7ddfa9bb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Dependencies">
+    <Filter Include="Dependencies">
       <UniqueIdentifier>{3cea7139-d8f4-49c9-b1aa-0090f4e6ea8c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Dependencies\imgui">
+    <Filter Include="Dependencies\imgui">
       <UniqueIdentifier>{4d7dd9b2-3721-42cd-92d9-2db28f4c8445}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Dependencies\imgui\backends">
+    <Filter Include="Dependencies\imgui\backends">
       <UniqueIdentifier>{80a77a0d-b510-4d99-bab9-8b5f54e0eec7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -384,28 +384,28 @@
       <Filter>Source Files\re\DX12</Filter>
     </ClCompile>
     <ClCompile Include="Dependencies\imgui\imgui.cpp">
-      <Filter>Source Files\Dependencies\imgui</Filter>
+      <Filter>Dependencies\imgui</Filter>
     </ClCompile>
     <ClCompile Include="Dependencies\imgui\imgui_draw.cpp">
-      <Filter>Source Files\Dependencies\imgui</Filter>
+      <Filter>Dependencies\imgui</Filter>
     </ClCompile>
     <ClCompile Include="Dependencies\imgui\imgui_tables.cpp">
-      <Filter>Source Files\Dependencies\imgui</Filter>
+      <Filter>Dependencies\imgui</Filter>
     </ClCompile>
     <ClCompile Include="Dependencies\imgui\imgui_widgets.cpp">
-      <Filter>Source Files\Dependencies\imgui</Filter>
+      <Filter>Dependencies\imgui</Filter>
     </ClCompile>
     <ClCompile Include="Dependencies\imgui\backends\imgui_impl_dx12.cpp">
-      <Filter>Source Files\Dependencies\imgui\backends</Filter>
+      <Filter>Dependencies\imgui\backends</Filter>
     </ClCompile>
     <ClCompile Include="Dependencies\imgui\backends\imgui_impl_opengl3.cpp">
-      <Filter>Source Files\Dependencies\imgui\backends</Filter>
+      <Filter>Dependencies\imgui\backends</Filter>
     </ClCompile>
     <ClCompile Include="Dependencies\imgui\backends\imgui_impl_win32.cpp">
-      <Filter>Source Files\Dependencies\imgui\backends</Filter>
+      <Filter>Dependencies\imgui\backends</Filter>
     </ClCompile>
     <ClCompile Include="Dependencies\imgui\imgui_demo.cpp">
-      <Filter>Source Files\Dependencies\imgui</Filter>
+      <Filter>Dependencies\imgui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -749,31 +749,31 @@
       <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\imgui\imgui.h">
-      <Filter>Source Files\Dependencies\imgui</Filter>
+      <Filter>Dependencies\imgui</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\imgui\imconfig.h">
-      <Filter>Source Files\Dependencies\imgui</Filter>
+      <Filter>Dependencies\imgui</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\imgui\imgui_internal.h">
-      <Filter>Source Files\Dependencies\imgui</Filter>
+      <Filter>Dependencies\imgui</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\imgui\imstb_rectpack.h">
-      <Filter>Source Files\Dependencies\imgui</Filter>
+      <Filter>Dependencies\imgui</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\imgui\imstb_textedit.h">
-      <Filter>Source Files\Dependencies\imgui</Filter>
+      <Filter>Dependencies\imgui</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\imgui\imstb_truetype.h">
-      <Filter>Source Files\Dependencies\imgui</Filter>
+      <Filter>Dependencies\imgui</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\imgui\backends\imgui_impl_dx12.h">
-      <Filter>Source Files\Dependencies\imgui\backends</Filter>
+      <Filter>Dependencies\imgui\backends</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\imgui\backends\imgui_impl_opengl3.h">
-      <Filter>Source Files\Dependencies\imgui\backends</Filter>
+      <Filter>Dependencies\imgui\backends</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\imgui\backends\imgui_impl_win32.h">
-      <Filter>Source Files\Dependencies\imgui\backends</Filter>
+      <Filter>Dependencies\imgui\backends</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
