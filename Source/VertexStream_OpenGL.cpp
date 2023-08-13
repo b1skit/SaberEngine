@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+﻿// © 2022 Adam Badke. All rights reserved.
 #include "DebugConfiguration.h"
 #include "MeshPrimitive.h"
 #include "VertexStream_OpenGL.h"
@@ -53,44 +53,42 @@ namespace opengl
 
 		if (platformParams->m_VBO != 0)
 		{
-			return; // Already created
+			SEAssertF("VertexStream has already been created");
+			return;
 		}
 
-		// Generate buffer name:
+		// Generate our buffer name, and bind it
 		glGenBuffers(1, &platformParams->m_VBO);
 		
-		switch (slot)
-		{
-		case re::MeshPrimitive::Slot::Indexes:
-		{
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, platformParams->m_VBO);
-		}
-		break;
-		default:
-		{
-			glBindBuffer(GL_ARRAY_BUFFER, platformParams->m_VBO);
+		opengl::VertexStream::Bind(vertexStream, slot);
 
-			glVertexAttribPointer(						// Define array of vertex attribute data: 
-				slot,									// index
-				vertexStream.GetNumComponents(),		// 1/2/3/4
-				GLDataType(vertexStream.GetDataType()),
-				vertexStream.DoNormalize(),
-				0,										// Stride
-				0);
-		}
+		// Define our vertex layout:
+		if (slot != re::MeshPrimitive::Slot::Indexes)
+		{
+			glVertexAttribFormat(
+				slot,									// Attribute index
+				vertexStream.GetNumComponents(),		// size: 1/2/3/4 
+				GLDataType(vertexStream.GetDataType()),	// Data type
+				vertexStream.DoNormalize(),				// Should the data be normalized?
+				0);										// relativeOffset: Distance between buffer elements
+
+			glVertexAttribBinding(
+				slot,		// Attribue index: The actual vertex attribute index = [0, GL_MAX_VERTEX_ATTRIBS​ - 1]
+				slot);		// Binding index: NOT a vertex attribute [0, GL_MAX_VERTEX_ATTRIB_BINDINGS - 1]
 		}
 
+		// Buffer and label the data:
 		glNamedBufferData(
 			platformParams->m_VBO,						// Buffer "name"
 			vertexStream.GetTotalDataByteSize(),
 			vertexStream.GetData(),
-			GL_DYNAMIC_DRAW);
+			GL_STATIC_DRAW);
 
 		glObjectLabel(
 			GL_BUFFER,
 			platformParams->m_VBO,
 			-1,
-			re::MeshPrimitive::GetSlotDebugName(re::MeshPrimitive::Position).c_str());
+			re::MeshPrimitive::GetSlotDebugName(slot).c_str());
 	}
 
 
@@ -111,8 +109,6 @@ namespace opengl
 
 	void VertexStream::Bind(re::VertexStream& vertexStream, re::MeshPrimitive::Slot slot)
 	{
-		Create(vertexStream, slot); // Ensure the stream is created
-
 		opengl::VertexStream::PlatformParams* platformParams =
 			vertexStream.GetPlatformParams()->As<opengl::VertexStream::PlatformParams*>();
 
