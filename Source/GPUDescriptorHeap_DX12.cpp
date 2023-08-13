@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
+#include "CommandList_DX12.h"
 #include "Config.h"
 #include "Context_DX12.h"
 #include "CPUDescriptorHeapManager_DX12.h"
@@ -13,14 +14,12 @@
 namespace dx12
 {
 	GPUDescriptorHeap::GPUDescriptorHeap(
-		ID3D12GraphicsCommandList* owningCommandList, 
-		D3D12_COMMAND_LIST_TYPE owningCmdListType, 
-		D3D12_DESCRIPTOR_HEAP_TYPE heapType)
-		: m_owningCommandList(owningCommandList)
-		, m_owningCommandListType(owningCmdListType)
-		, m_heapType(heapType)
+		dx12::CommandListType owningCmdListType, ID3D12GraphicsCommandList* owningCommandList)
+		: m_owningCommandListType(owningCmdListType)
+		, m_owningCommandList(owningCommandList)
+		, m_heapType(D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) // For now, this is all we ever need
 		, m_elementSize(re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()
-			->GetDescriptorHandleIncrementSize(heapType))
+			->GetDescriptorHandleIncrementSize(m_heapType))
 		, m_gpuDescriptorTableHeap(nullptr)
 		, m_gpuDescriptorTableHeapCPUBase{0}
 		, m_gpuDescriptorTableHeapGPUBase{0}
@@ -37,8 +36,9 @@ namespace dx12
 			owningCmdListType == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE);
 
 		SEAssert("Descriptor heap must have a type that is not bound directly to a command list", 
-			heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV ||
-			heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+			m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV ||
+			m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+		SEAssert("Invalid element size", m_elementSize > 0);
 
 		// Create our GPU-visible descriptor heap:
 		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
@@ -388,12 +388,12 @@ namespace dx12
 
 					switch (m_owningCommandListType)
 					{
-					case D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT:
+					case dx12::CommandListType::Direct:
 					{
 						m_owningCommandList->SetGraphicsRootDescriptorTable(rootIdx, m_gpuDescriptorTableHeapGPUBase);
 					}
 					break;
-					case D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE:
+					case dx12::CommandListType::Compute:
 					{
 						m_owningCommandList->SetComputeRootDescriptorTable(rootIdx, m_gpuDescriptorTableHeapGPUBase);
 					}
@@ -416,7 +416,7 @@ namespace dx12
 
 	void CommitInlineDescriptorsHelper(
 		ID3D12GraphicsCommandList* commandList, 
-		D3D12_COMMAND_LIST_TYPE commandListType,
+		dx12::CommandListType commandListType,
 		GPUDescriptorHeap::InlineDescriptorType inlineType,
 		uint32_t& dirtyIdxBitmask, 
 		D3D12_GPU_VIRTUAL_ADDRESS* inlineDescriptors)
@@ -445,12 +445,12 @@ namespace dx12
 				{
 					switch (commandListType)
 					{
-					case D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT:
+					case dx12::CommandListType::Direct:
 					{
 						commandList->SetGraphicsRootConstantBufferView(rootIdx, inlineDescriptors[rootIdx]);
 					}
 					break;
-					case D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE:
+					case dx12::CommandListType::Compute:
 					{
 						commandList->SetComputeRootConstantBufferView(rootIdx, inlineDescriptors[rootIdx]);
 					}
@@ -464,12 +464,12 @@ namespace dx12
 				{
 					switch (commandListType)
 					{
-					case D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT:
+					case dx12::CommandListType::Direct:
 					{
 						commandList->SetGraphicsRootShaderResourceView(rootIdx, inlineDescriptors[rootIdx]);
 					}
 					break;
-					case D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE:
+					case dx12::CommandListType::Compute:
 					{
 						commandList->SetComputeRootShaderResourceView(rootIdx, inlineDescriptors[rootIdx]);
 					}
@@ -483,12 +483,12 @@ namespace dx12
 				{
 					switch (commandListType)
 					{
-					case D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT:
+					case dx12::CommandListType::Direct:
 					{
 						commandList->SetGraphicsRootUnorderedAccessView(rootIdx, inlineDescriptors[rootIdx]);
 					}
 					break;
-					case D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE:
+					case dx12::CommandListType::Compute:
 					{
 						commandList->SetComputeRootUnorderedAccessView(rootIdx, inlineDescriptors[rootIdx]);
 					}

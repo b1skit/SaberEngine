@@ -10,8 +10,9 @@
 
 namespace dx12
 {
+	enum CommandListType;
 	class DescriptorAllocation;
-
+	
 
 	class GPUDescriptorHeap
 	{
@@ -38,8 +39,9 @@ namespace dx12
 			InlineRootType_Count
 		};
 
-	public:
-		GPUDescriptorHeap(ID3D12GraphicsCommandList*, D3D12_COMMAND_LIST_TYPE, D3D12_DESCRIPTOR_HEAP_TYPE);
+	public:		
+		GPUDescriptorHeap(dx12::CommandListType, ID3D12GraphicsCommandList*);
+
 		~GPUDescriptorHeap();
 
 		ID3D12DescriptorHeap* GetD3DDescriptorHeap() const;
@@ -70,9 +72,9 @@ namespace dx12
 
 		
 	private:
+		const CommandListType m_owningCommandListType;
 		ID3D12GraphicsCommandList* const m_owningCommandList;
-		const D3D12_COMMAND_LIST_TYPE m_owningCommandListType;
-
+		
 		const D3D12_DESCRIPTOR_HEAP_TYPE m_heapType;
 		const size_t m_elementSize; 
 
