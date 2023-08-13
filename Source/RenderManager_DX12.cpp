@@ -2,6 +2,8 @@
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 #include <wrl.h>
 
+#include <pix3.h>
+
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx12.h"
 
@@ -60,6 +62,11 @@ namespace dx12
 		if (hasDataToCopy)
 		{
 			copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
+
+			PIXBeginEvent(
+				copyQueue->GetD3DCommandQueue(), 
+				PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CopyQueue), 
+				"Copy Queue: Create API Resources");
 
 			// TODO: Get multiple command lists, and record on multiple threads:
 			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
@@ -180,6 +187,8 @@ namespace dx12
 		{
 			copyQueue->CPUWait(copyQueueFenceVal);
 			intermediateResources.clear(); // The copy is done: Free the intermediate HEAP_TYPE_UPLOAD resources
+
+			PIXEndEvent(copyQueue->GetD3DCommandQueue());
 		}
 	}
 
@@ -213,6 +222,10 @@ namespace dx12
 						directCommandList = directQueue.GetCreateCommandList();
 					}
 					currentCommandList = directCommandList.get();
+					PIXBeginEvent(
+						currentCommandList->GetD3DCommandList(), 
+						PIX_COLOR_INDEX(PIX_FORMAT_COLOR::GraphicsCommandList), 
+						renderStage->GetName().c_str());
 				}
 				break;
 				case re::RenderStage::RenderStageType::Compute:
@@ -222,6 +235,10 @@ namespace dx12
 						computeCommandList = computeQueue.GetCreateCommandList();
 					}
 					currentCommandList = computeCommandList.get();
+					PIXBeginEvent(
+						currentCommandList->GetD3DCommandList(),
+						PIX_COLOR_INDEX(PIX_FORMAT_COLOR::ComputeCommandList),
+						renderStage->GetName().c_str());
 				}
 				break;
 				default:
@@ -386,10 +403,12 @@ namespace dx12
 				if (computeCommandList != nullptr)
 				{
 					commandLists.emplace_back(computeCommandList);
+					PIXEndEvent(computeCommandList->GetD3DCommandList());
 				}
 				if (directCommandList != nullptr)
 				{
 					commandLists.emplace_back(directCommandList);
+					PIXEndEvent(directCommandList->GetD3DCommandList());
 				}
 			}; // ProcessRenderStage
 
@@ -431,7 +450,13 @@ namespace dx12
 			{
 			case CommandListType::Direct:
 			{
+				PIXBeginEvent(directQueue.GetD3DCommandQueue(),
+					PIX_COLOR_INDEX(PIX_FORMAT_COLOR::GraphicsQueue),
+					"Direct command queue");
+				
 				directQueue.Execute(static_cast<uint32_t>(numCmdLists), &commandLists[startIdx]);
+
+				PIXEndEvent(directQueue.GetD3DCommandQueue());
 			}
 			break;
 			case CommandListType::Bundle:
@@ -441,7 +466,13 @@ namespace dx12
 			break;
 			case CommandListType::Compute:
 			{
+				PIXBeginEvent(computeQueue.GetD3DCommandQueue(),
+					PIX_COLOR_INDEX(PIX_FORMAT_COLOR::ComputeQueue),
+					"Compute command queue");
+
 				computeQueue.Execute(static_cast<uint32_t>(numCmdLists), &commandLists[startIdx]);
+
+				PIXEndEvent(computeQueue.GetD3DCommandQueue());
 			}
 			break;
 			case CommandListType::Copy:

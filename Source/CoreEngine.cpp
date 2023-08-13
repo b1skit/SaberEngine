@@ -1,4 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
+#include <pix3.h>
+
 #include "CoreEngine.h"
 #include "Config.h"
 #include "DebugConfiguration.h"
@@ -47,6 +49,8 @@ namespace en
 
 	void CoreEngine::Startup()
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::CoreEngine::Startup");
+
 		LOG("CoreEngine starting...");
 
 		m_threadPool.Startup();
@@ -82,6 +86,8 @@ namespace en
 		GameplayManager::Get()->Startup();
 
 		m_isRunning = true;
+
+		PIXEndEvent();
 	}
 
 
@@ -104,37 +110,65 @@ namespace en
 
 		while (m_isRunning)
 		{
+			PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::CoreEngine::Run frame outer loop");
+
 			outerLoopTimer.Start();
 
+			PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::CoreEngine::Update");
 			CoreEngine::Update(m_frameNum, lastOuterFrameTime);
+			PIXEndEvent();
+
+			PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::LogManager::Update");
 			LogManager::Get()->Update(m_frameNum, lastOuterFrameTime);
+			PIXEndEvent();
 
 			// Update components until enough time has passed to trigger a render.
 			// Or, continue rendering frames until it's time to update again
 			elapsed += lastOuterFrameTime;
 			while (elapsed >= m_fixedTimeStep)
 			{	
+				PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::CoreEngine::Run frame inner loop");
+
 				elapsed -= m_fixedTimeStep;
 
 				// Pump our events/input:
+				PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::EventManager::Update");
 				EventManager::Get()->Update(m_frameNum, lastOuterFrameTime);
+				PIXEndEvent();
+
+				PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::InputManager::Update");
 				InputManager::Get()->Update(m_frameNum, lastOuterFrameTime);
+				PIXEndEvent();
 
 				// Pump systems that rely on events/input:
+				PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::GameplayManager::Update");
 				GameplayManager::Get()->Update(m_frameNum, m_fixedTimeStep);
+				PIXEndEvent();
+
+				PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::SceneManager::Update");
 				SceneManager::Get()->Update(m_frameNum, m_fixedTimeStep); // Updates all of the scene objects
+				PIXEndEvent();
+
 				// AI, physics, etc should also be pumped here (eventually)
+
+				PIXEndEvent();
 			}
 
+			PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::SceneManager::FinalUpdate");
 			SceneManager::Get()->FinalUpdate(); // Builds batches, ready for RenderManager to consume
+			PIXEndEvent();
 
 			// Pump the render thread, and wait for it to signal copying is complete:
+			PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::CoreEngine::Run Wait on copy barrier");
 			RenderManager::Get()->EnqueueUpdate({m_frameNum, lastOuterFrameTime});
 			m_copyBarrier->arrive_and_wait();
+			PIXEndEvent();
 
 			++m_frameNum;
 
 			lastOuterFrameTime = outerLoopTimer.StopMs();
+
+			PIXEndEvent();
 		}
 	}
 
@@ -147,6 +181,8 @@ namespace en
 
 	void CoreEngine::Shutdown()
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::CoreEngine::Shutdown");
+
 		LOG("CoreEngine shutting down...");
 
 		Config::Get()->SaveConfigFile();
@@ -164,17 +200,25 @@ namespace en
 		m_window->Destroy();
 
 		m_threadPool.Stop();
+
+		PIXEndEvent();
 	}
 
 	
 	void CoreEngine::Update(uint64_t frameNum, double stepTimeMs)
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::CoreEngine::Update");
+
 		HandleEvents();
+
+		PIXEndEvent();
 	}
 
 
 	void CoreEngine::HandleEvents()
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::CoreEngine::HandleEvents");
+
 		while (HasEvents())
 		{
 			en::EventManager::EventInfo eventInfo = GetEvent();
@@ -190,5 +234,7 @@ namespace en
 				break;
 			}
 		}
+
+		PIXEndEvent();
 	}
 }

@@ -1,4 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
+#include <pix3.h>
+
 #include "Batch.h"
 #include "Config.h"
 #include "GraphicsSystem_GBuffer.h"
@@ -12,7 +14,6 @@
 #include "RenderManager_DX12.h"
 #include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
-
 #include "SceneManager.h"
 
 using en::Config;
@@ -120,20 +121,28 @@ namespace re
 
 	void RenderManager::Startup()
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::Startup");
+
 		LOG("RenderManager starting...");
 		re::Context::Get()->Create();
 		en::EventManager::Get()->Subscribe(en::EventManager::InputToggleVSync, this);
+
+		PIXEndEvent();
 	}
 	
 	
 	void RenderManager::Initialize()
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::Initialize");
+
 		LOG("RenderManager Initializing...");
 		PerformanceTimer timer;
 		timer.Start();
 
 		// Build our platform-specific graphics systems:
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "platform::RenderManager::Initialize");
 		platform::RenderManager::Initialize(*this);
+		PIXEndEvent();
 
 		// Create each graphics system in turn:
 		vector<shared_ptr<GraphicsSystem>>::iterator gsIt;
@@ -146,14 +155,20 @@ namespace re
 
 		re::Context::Get()->GetParameterBlockAllocator().ClosePermanentPBRegistrationPeriod();
 
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "platform::RenderManager::CreateAPIResources");
 		CreateAPIResources();
+		PIXEndEvent();
 
 		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
+
+		PIXEndEvent();
 	}
 
 
 	void RenderManager::PreUpdate(uint64_t frameNum)
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::PreUpdate");
+
 		// Copy frame data:
 		SEAssert("Render batches should be empty", m_renderBatches.empty());
 		m_renderBatches = std::move(SceneManager::Get()->GetSceneBatches());
@@ -166,11 +181,15 @@ namespace re
 		}
 
 		re::Context::Get()->GetParameterBlockAllocator().SwapBuffers(frameNum);
+
+		PIXEndEvent();
 	}
 
 
 	void RenderManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::Update");
+
 		HandleEvents();
 
 		// Create any new resources that have been loaded since the last frame:
@@ -180,18 +199,29 @@ namespace re
 		re::Context::Get()->GetParameterBlockAllocator().BufferParamBlocks();
 
 		// API-specific rendering loop virtual implementations:
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "platform::RenderManager::Render");
 		Render();
+		PIXEndEvent();
+
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "platform::RenderManager::RenderImGui");
 		RenderImGui();
+		PIXEndEvent();
 
 		// Present the final frame:
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::Context::Present");
 		re::Context::Get()->Present();
+		PIXEndEvent();
 
 		EndOfFrame(); // Clear batches, process pipeline and parameter block allocator EndOfFrames
+
+		PIXEndEvent();
 	}
 
 
 	void RenderManager::EndOfFrame()
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::EndOfFrame");
+
 		m_renderBatches.clear();
 
 		for (StagePipeline& stagePipeline : m_renderPipeline.GetStagePipeline())
@@ -200,11 +230,15 @@ namespace re
 		}
 		
 		re::Context::Get()->GetParameterBlockAllocator().EndOfFrame();
+
+		PIXEndEvent();
 	}
 
 
 	void RenderManager::Shutdown()
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::Shutdown");
+
 		LOG("Render manager shutting down...");
 		
 		// API-specific destruction:
@@ -230,6 +264,8 @@ namespace re
 
 		// Need to do this here so the CoreEngine's Window can be destroyed
 		re::Context::Get()->Destroy();
+
+		PIXEndEvent();
 	}
 
 
@@ -241,6 +277,8 @@ namespace re
 
 	void RenderManager::HandleEvents()
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::HandleEvents");
+
 		while (HasEvents())
 		{
 			en::EventManager::EventInfo eventInfo = GetEvent();
@@ -261,6 +299,8 @@ namespace re
 			break;
 			}
 		}
+
+		PIXEndEvent();
 	}
 
 	template<>

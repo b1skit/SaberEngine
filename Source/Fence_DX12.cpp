@@ -1,4 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
+#include <pix3.h>
+
 #include "Debug_DX12.h"
 #include "Fence_DX12.h"
 #include "TextUtils.h"
@@ -93,6 +95,9 @@ namespace dx12
 
 			constexpr std::chrono::milliseconds duration = std::chrono::milliseconds::max();
 			::WaitForSingleObject(m_fenceEvent, static_cast<DWORD>(duration.count()));
+
+			// Once we get to this point, the event has been successfully signaled so we notify PIX
+			PIXNotifyWakeFromFenceSignal(m_fenceEvent);
 		}
 	}
 

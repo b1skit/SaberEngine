@@ -24,6 +24,13 @@ User-Specific Visual Studio Setup:
 "Project -> Properties -> Configuration Properties -> Debugging -> Working Directory" -> "$(SolutionDir)SaberEngine"  
 
 
+---------------------------
+Enabling PIX Functionality:
+---------------------------
+Microsoft PIX requires the "[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Appx]" key to exist in the local Windows registry. This can be enabled by executing the following command from a command prompt launched with administrator priviledges:  
+reg add HKLM\SOFTWARE\Policies\Microsoft\Windows\Appx  
+
+
 -----------------------
 Command line arguments:
 -----------------------
@@ -41,6 +48,7 @@ Enable graphics API debugging: -debuglevel [0, 2]
 	- 1: Basic debug output (OpenGL, DX12)  
 	- 2: Level 1 + GPU-based validation (DX12 only)  
 	- 3: Level 2 + DRED breadcrumbs (DX12 only)  
+
 
 ----------------------
 Runtime Configuration:
