@@ -58,10 +58,11 @@ namespace re
 
 	bool TextureTarget::WritesColor() const
 	{
-		return m_targetParams.m_colorWriteMode.R ||
-			m_targetParams.m_colorWriteMode.G ||
-			m_targetParams.m_colorWriteMode.B ||
-			m_targetParams.m_colorWriteMode.A;
+		return m_texture != nullptr &&
+			(m_targetParams.m_colorWriteMode.R ||
+				m_targetParams.m_colorWriteMode.G ||
+				m_targetParams.m_colorWriteMode.B ||
+				m_targetParams.m_colorWriteMode.A);
 	}
 
 	
