@@ -175,7 +175,7 @@ namespace dx12
 
 	void VertexStream::Create(
 		re::VertexStream& stream, 
-		ComPtr<ID3D12GraphicsCommandList2> commandList, 
+		ComPtr<ID3D12GraphicsCommandList2> copyCommandList, 
 		std::vector<ComPtr<ID3D12Resource>>& intermediateResources)
 	{
 		dx12::VertexStream::PlatformParams* streamPlatformParams =
@@ -224,14 +224,15 @@ namespace dx12
 		subresourceData.RowPitch = bufferSize;
 		subresourceData.SlicePitch = subresourceData.RowPitch;
 
-		::UpdateSubresources(
-			commandList.Get(),
+		const uint64_t bufferSizeResult = ::UpdateSubresources(
+			copyCommandList.Get(),
 			streamPlatformParams->m_bufferResource.Get(),	// Destination resource
 			itermediateBufferResource.Get(),				// Intermediate resource
 			0,								// Index of 1st subresource in the resource
 			0,								// Number of subresources in the resource.
 			1,								// Required byte size for the update
 			&subresourceData);
+		SEAssert("UpdateSubresources returned 0 bytes. This is unexpected", bufferSizeResult > 0);
 
 		// Create the resource view:
 		switch (streamPlatformParams->m_type)

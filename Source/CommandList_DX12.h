@@ -135,22 +135,21 @@ namespace dx12
 		D3D12_COMMAND_LIST_TYPE m_d3dType;
 
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator;
-		uint64_t m_reuseFenceValue; // When the command allocator can be reused
+		uint64_t m_commandAllocatorReuseFenceValue; // When the command allocator can be reused
 
 		std::vector<CommandList::AccessedResource> m_accessedResources;
 
 		const size_t k_commandListNumber; // Monotonically increasing identifier assigned at creation
 
 	private:
+		// The D3D docs recommend using a single GPU-visible heap of each type (CBV/SRV/UAV or SAMPLER), and setting it
+		// once per frame, as changing descriptor heaps can cause pipeline flushes on some hardware
 		std::unique_ptr<dx12::GPUDescriptorHeap> m_gpuCbvSrvUavDescriptorHeaps;
 		dx12::LocalResourceStateTracker m_resourceStates;
 
 	private:
+		// Note: These cached pointers could be graphics OR compute-specific
 		dx12::RootSignature const* m_currentRootSignature;
-		// TODO: Direct/graphics command lists can have 2 root signatures (graphics + compute), as well as a graphics
-		// pso, and gpu descriptor heap for each root signature.
-		// A compute command list has a root sig and gpu descriptor heap only.
-
 		dx12::PipelineState const* m_currentPSO;
 
 
@@ -163,13 +162,13 @@ namespace dx12
 
 	inline uint64_t CommandList::GetReuseFenceValue() const
 	{
-		return m_reuseFenceValue;
+		return m_commandAllocatorReuseFenceValue;
 	}
 
 
 	inline void CommandList::SetReuseFenceValue(uint64_t fenceValue)
 	{
-		m_reuseFenceValue = fenceValue;
+		m_commandAllocatorReuseFenceValue = fenceValue;
 	}
 
 

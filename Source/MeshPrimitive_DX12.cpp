@@ -57,7 +57,7 @@ namespace dx12
 
 	void MeshPrimitive::Create(
 		re::MeshPrimitive& meshPrimitive, 
-		ID3D12GraphicsCommandList2* commandList, 
+		ID3D12GraphicsCommandList2* copyCommandList, 
 		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources)
 	{
 		// Create and enable our vertex buffers
@@ -66,7 +66,7 @@ namespace dx12
 			const re::MeshPrimitive::Slot slot = static_cast<re::MeshPrimitive::Slot>(i);
 			if (meshPrimitive.GetVertexStream(slot))
 			{
-				dx12::VertexStream::Create(*meshPrimitive.GetVertexStream(slot), commandList, intermediateResources);
+				dx12::VertexStream::Create(*meshPrimitive.GetVertexStream(slot), copyCommandList, intermediateResources);
 			}
 		}
 	}

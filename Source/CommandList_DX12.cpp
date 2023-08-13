@@ -112,7 +112,7 @@ namespace dx12
 		, m_type(type)
 		, m_d3dType(TranslateToD3DCommandListType(type))
 		, m_commandAllocator(nullptr)
-		, m_reuseFenceValue(0)
+		, m_commandAllocatorReuseFenceValue(0)
 		, k_commandListNumber(s_commandListNumber++)
 		, m_gpuCbvSrvUavDescriptorHeaps(nullptr)
 		, m_currentRootSignature(nullptr)
@@ -163,7 +163,7 @@ namespace dx12
 		m_type = CommandListType_Invalid;
 		m_d3dType = D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_NONE;
 		m_commandAllocator = nullptr;
-		m_reuseFenceValue = 0;
+		m_commandAllocatorReuseFenceValue = 0;
 		m_gpuCbvSrvUavDescriptorHeaps = nullptr;
 		m_currentRootSignature = nullptr;
 		m_currentPSO = nullptr;
@@ -197,7 +197,7 @@ namespace dx12
 			m_commandList->SetDescriptorHeaps(k_numHeaps, descriptorHeaps);
 		}
 
-		m_reuseFenceValue = 0;
+		m_commandAllocatorReuseFenceValue = 0;
 		m_accessedResources.clear();
 	}
 

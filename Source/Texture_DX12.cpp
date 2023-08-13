@@ -444,7 +444,7 @@ namespace dx12
 
 	void Texture::Create(
 		re::Texture& texture,
-		ID3D12GraphicsCommandList2* commandList, 
+		ID3D12GraphicsCommandList2* copyCommandList, 
 		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources)
 	{
 		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
@@ -585,7 +585,7 @@ namespace dx12
 			itermediateBufferResource->SetName(intermediateName.c_str());
 
 			const uint64_t bufferSizeResult = ::UpdateSubresources(
-				commandList,
+				copyCommandList,
 				texPlatParams->m_textureResource.Get(),			// Destination resource
 				itermediateBufferResource.Get(),				// Intermediate resource
 				0,												// Intermediate offset
