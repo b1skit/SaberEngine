@@ -166,8 +166,7 @@ namespace re
 
 	void Sampler::Destroy()
 	{
-		#pragma message("TODO: Reeanble the assert in re::Sampler::Destroy")
-		//SEAssert("Sampler has not been created", m_platformParams->m_isCreated);
+		SEAssert("Sampler has not been created", m_platformParams->m_isCreated);
 		platform::Sampler::Destroy(*this);
 		m_platformParams = nullptr;
 		m_samplerParams = {};
