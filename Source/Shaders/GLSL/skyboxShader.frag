@@ -7,20 +7,15 @@
 #include "SaberGlobals.glsl"
 
 
-// Make our fragment coordinates ([0,xRes], [0,yRes]) match our uv (0,0) = top-left convention
-layout(origin_upper_left) in vec4 gl_FragCoord;
-
 void main()
 {	
-	vec4 ndcPosition;
-	ndcPosition.xy	= ((2.0 * gl_FragCoord.xy) / g_skyboxTargetResolution.xy) - 1.0;
-	ndcPosition.z	= 1.0;
-	ndcPosition.w	= 1.0;
-	
-	const vec4 worldPos	= g_invViewProjection * ndcPosition;
+	vec2 screenUV = GetScreenUV(gl_FragCoord.xy, g_skyboxTargetResolution.xy);
 
-	// Sample our equirectangular skybox projection:
-	const vec3 sampleDir = worldPos.xyz;
+	const float sampleDepth = 0.f; // Avoids distortion from the inverse view projection matrix
+	const vec4 worldPos	= GetWorldPos(screenUV, sampleDepth, g_invViewProjection);
+	
+	const vec3 sampleDir = worldPos.xyz - g_cameraWPos.xyz; // The skybox is centered about the camera
+
 	const vec2 sphericalUVs = WorldDirToSphericalUV(sampleDir); // Normalizes incoming sampleDir
 
 	FragColor = texture(Tex0, sphericalUVs);

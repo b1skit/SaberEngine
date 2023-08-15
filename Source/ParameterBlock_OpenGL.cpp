@@ -29,7 +29,7 @@ namespace opengl
 		glBufferData(GL_SHADER_STORAGE_BUFFER,
 			(GLsizeiptr)numBytes,
 			nullptr, // NULL: Data store of the specified size is created, but remains uninitialized and thus undefined
-			GL_STATIC_DRAW);
+			paramBlock.GetType() == re::ParameterBlock::PBType::Mutable ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 	}
 
 

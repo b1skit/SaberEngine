@@ -7,16 +7,10 @@
 #include "SaberGlobals.glsl"
 #include "SaberLighting.glsl"
 
-// NOTE: We'd typically use "layout(origin_upper_left) in vec4 gl_FragCoord;" to make our frag coordinates match our
-// uv (0,0) = top-left convention. However, this would also require flipping screenUVs.y, so we don't bother here
-in vec4 gl_FragCoord;
 
 void main()
 {	
-	// [0, xRes/yRes] -> [0,1]
-	const vec2 screenUVs = vec2(
-		gl_FragCoord.x / g_renderTargetResolution.x, 
-		gl_FragCoord.y / g_renderTargetResolution.y); 
+	const vec2 screenUVs = GetScreenUV(gl_FragCoord.xy, g_renderTargetResolution.xy);
 	
 	// Sample textures once inside the main shader flow, and pass the values as required:
 	const vec4 linearAlbedo = texture(GBufferAlbedo, screenUVs);

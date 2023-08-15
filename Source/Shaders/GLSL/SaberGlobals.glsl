@@ -9,7 +9,7 @@
 
 // Global defines:
 //----------------
-#define M_PI	3.1415926535897932384626433832795	// pi
+#define M_PI		3.1415926535897932384626433832795	// pi
 #define M_2PI       6.28318530717958647693		// 2pi
 #define M_4PI       12.5663706143591729539		// 4pi
 #define M_PI_2      1.57079632679489661923		// pi/2
@@ -79,15 +79,36 @@ vec3 Gamma(vec3 linearColor)
 }
 
 
-// Convert a world-space direction to spherical (latitude-longitude) map [0,1] UVs.
-vec2 WorldDirToSphericalUV(vec3 direction)
+/* 
+* Convert a world-space direction to spherical (latitude-longitude) map [0,1] UVs.
+* The lat/long map is centered about the -Z axis, wrapping clockwise (left to right)
+* Note:
+* atan(y, x) is the angle between the positive x axis of a plane, and the point (x, y) on it
+* - y is the numerator, x is the denominator ->  atan(y/x)
+* - The angle is in [-pi, pi]
+* - Result is Postive when y > 0 (i.e. the point is above the x axis), and negative when y < 0 (lower half plane)
+* 	
+* Thus: 
+* uv.x = atan(p.x, -p.z) * M_1_2PI + 0.5f;
+* - Gives us the angle of a point (p.x, -p.z) on a plane laying on the X and Z axis
+* - The result is positive when x > 0, negative when x < 0
+* - The " * M_1_2PI + 0.5f" terms normalize the angle result from [-pi, pi] -> [-0.5, 0.5] -> [0, 1] == UV.x
+* 	
+* uv.y = acos(p.y) * M_1_PI;
+* - Gives us the angle on [pi, 0], w.r.t the y coordinate [-1, 1] of our direction
+* - The M_1_PI term normalizes this to [1, 0]
+* 	-> y = -1 -> Looking straight down -> UV.y = 1 -> Bottom of the texture
+*/
+vec2 WorldDirToSphericalUV(vec3 unnormalizedDirection)
 {
-	const vec3 p = normalize(direction);
+	const vec3 dir = normalize(unnormalizedDirection);
 
 	vec2 uv;
-	// Note: atan2 in HLSL
-	uv.x = atan(p.x, -p.z) * M_1_2PI + 0.5f; // Note: Reverse atan variables to change env. map orientation about y
-	uv.y = acos(p.y) * M_1_PI; // Note: Use -p.y for (0,0) bottom left UVs, +p.y for (0,0) top left UVs
+
+	// Note: Reverse atan variables to change env. map orientation about y
+	uv.x = atan(dir.x, -dir.z) * M_1_2PI + 0.5f; // atan == atan2 in HLSL
+
+	uv.y = acos(dir.y) * M_1_PI; // Note: Use -p.y for (0,0) bottom left UVs, +p.y for (0,0) top left UVs
 
 	return uv;
 }
@@ -122,6 +143,7 @@ float ConvertNonLinearDepthToLinear(const float near, const float far, const flo
 	return cubemapDepth_linear;
 }
 
+
 // Convert a linear depth in [near, far] (eye space) to a non-linear depth buffer value in [0,1]
 float ConvertLinearDepthToNonLinear(const float near, const float far, const float depthLinear)
 {
@@ -129,6 +151,27 @@ float ConvertLinearDepthToNonLinear(const float near, const float far, const flo
 	const float depthNonLinear = (depthNDC + 1.0) / 2.0;
 
 	return depthNonLinear;
+}
+
+
+vec2 GetScreenUV(vec2 pixelXY, vec2 screenWidthHeight)
+{
+	vec2 screenUV = pixelXY / screenWidthHeight;
+	screenUV.y = 1.f - screenUV.y;
+	return screenUV;
+}
+
+
+vec4 GetWorldPos(vec2 screenUV, float nonLinearDepth, mat4 invViewProjection)
+{
+	// Flip the Y coordinate so we can get back to the NDC that GLSL expects
+	screenUV.y = 1.f - screenUV.y;
+
+	const vec2 ndcXY = (screenUV * 2.f) - vec2(1.f, 1.f); // [0,1] -> [-1, 1]
+
+	const vec4 ndcPos = vec4(ndcXY.xy, nonLinearDepth, 1.f);
+
+	return invViewProjection * ndcPos;
 }
 
 #endif // SABER_GLOBALS

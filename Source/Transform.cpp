@@ -2,21 +2,22 @@
 #include "DebugConfiguration.h"
 #include "Transform.h"
 
+using glm::vec3;
+using glm::vec4;
+using glm::quat;
+using glm::mat4;
+using glm::normalize;
+using glm::rotate;
+using glm::fmod;
+using glm::abs;
+using glm::two_pi;
+using glm::sign;
+using std::vector;
+using std::find;
+
 
 namespace gr
 {
-	using glm::vec3;
-	using glm::vec4;
-	using glm::quat;
-	using glm::mat4;
-	using glm::normalize;
-	using glm::rotate;
-	using glm::fmod;
-	using glm::abs;
-	using glm::two_pi;
-	using glm::sign;
-	using std::vector;
-	using std::find;
 
 
 	// Static members:

@@ -1344,7 +1344,7 @@ namespace fr
 {
 	bool SceneData::Load(string const& sceneFilePath)
 	{
-		stbi_set_flip_vertically_on_load(false); // Set this once
+		stbi_set_flip_vertically_on_load(false); // Set this once. Note: It is NOT thread safe, and must be consistent
 
 		std::future<void> errorMatTaskFuture = 
 			en::CoreEngine::GetThreadPool()->EnqueueJob([this]() {
