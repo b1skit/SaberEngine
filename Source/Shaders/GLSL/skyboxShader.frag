@@ -11,10 +11,11 @@ void main()
 {	
 	vec2 screenUV = GetScreenUV(gl_FragCoord.xy, g_skyboxTargetResolution.xy);
 
-	const float sampleDepth = 0.f; // Avoids distortion from the inverse view projection matrix
-	const vec4 worldPos	= GetWorldPos(screenUV, sampleDepth, g_invViewProjection);
+	const float sampleDepth = 0.f; // Arbitrary
+
+	const vec3 worldPos = GetWorldPos(screenUV, sampleDepth, g_invViewProjection);
 	
-	const vec3 sampleDir = worldPos.xyz - g_cameraWPos.xyz; // The skybox is centered about the camera
+	const vec3 sampleDir = worldPos - g_cameraWPos.xyz; // The skybox is centered about the camera
 
 	const vec2 sphericalUVs = WorldDirToSphericalUV(sampleDir); // Normalizes incoming sampleDir
 

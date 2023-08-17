@@ -162,16 +162,19 @@ vec2 GetScreenUV(vec2 pixelXY, vec2 screenWidthHeight)
 }
 
 
-vec4 GetWorldPos(vec2 screenUV, float nonLinearDepth, mat4 invViewProjection)
+vec3 GetWorldPos(vec2 screenUV, float nonLinearDepth, mat4 invViewProjection)
 {
-	// Flip the Y coordinate so we can get back to the NDC that GLSL expects
-	screenUV.y = 1.f - screenUV.y;
+	vec2 ndcXY = (screenUV * 2.f) - vec2(1.f, 1.f); // [0,1] -> [-1, 1]
 
-	const vec2 ndcXY = (screenUV * 2.f) - vec2(1.f, 1.f); // [0,1] -> [-1, 1]
+	// Flip the Y coordinate so we can get back to the NDC that GLSL expects.
+	// OpenGL uses a RHCS in view space, but LHCS in NDC. Flipping the Y coordinate here effectively reverses the Z axis
+	// to account for this change of handedness.
+	ndcXY.y *= -1;
 
 	const vec4 ndcPos = vec4(ndcXY.xy, nonLinearDepth, 1.f);
 
-	return invViewProjection * ndcPos;
+	vec4 result = invViewProjection * ndcPos;
+	return result.xyz / result.w; // Apply the perspective division
 }
 
 #endif // SABER_GLOBALS
