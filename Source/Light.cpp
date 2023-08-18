@@ -147,5 +147,11 @@ namespace gr
 			}
 		}
 	}
+
+
+	void Light::ShowImGuiWindow()
+	{
+		ImGui::Text("Name: \"%s\"", GetName().c_str());
+	}
 }
 

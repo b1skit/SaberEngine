@@ -74,6 +74,7 @@ namespace re
 	RenderManager::RenderManager()
 		: m_renderPipeline("Main pipeline")
 		, m_renderFrameNum(0)
+		, m_imguiMenuVisible(false)
 	{
 		m_vsyncEnabled = en::Config::Get()->GetValue<bool>("vsync");
 	}
@@ -126,6 +127,7 @@ namespace re
 		LOG("RenderManager starting...");
 		re::Context::Get()->Create();
 		en::EventManager::Get()->Subscribe(en::EventManager::InputToggleVSync, this);
+		en::EventManager::Get()->Subscribe(en::EventManager::InputToggleConsole, this);
 
 		PIXEndEvent();
 	}
@@ -218,6 +220,136 @@ namespace re
 	}
 
 
+	void RenderManager::RenderImGui()
+	{
+		static bool s_showConsoleLog = false;
+		static bool s_showScenePanel = false;
+		static bool s_showImguiDemo = false;
+
+		// Early out if we can:
+		if (!m_imguiMenuVisible && !s_showConsoleLog && !s_showScenePanel && !s_showImguiDemo)
+		{
+			return;
+		}
+
+
+		platform::RenderManager::StartImGuiFrame();
+
+
+		const int windowWidth = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
+		const int windowHeight =
+			(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName));
+
+		// Menu bar:
+		ImVec2 menuBarSize = { 0, 0 }; // Record the size of the menu bar so we can align things absolutely underneath it
+		uint32_t menuDepth = 0; // Ensure windows don't overlap when they're first opened
+		if (m_imguiMenuVisible)
+		{
+			ImGui::BeginMainMenuBar();
+			{
+				menuBarSize = ImGui::GetWindowSize();
+
+				if (ImGui::BeginMenu("Scene"))
+				{
+					// TODO...
+					ImGui::TextDisabled("Load Scene");
+					ImGui::TextDisabled("Reload Scene");
+					ImGui::TextDisabled("Reload Shaders");
+					ImGui::TextDisabled("Reload Materials");
+					ImGui::TextDisabled("Quit");
+
+					ImGui::EndMenu();
+				}
+
+				if (ImGui::BeginMenu("Window"))
+				{
+					// Console debug log window:
+					ImGui::MenuItem("Show console log", "", &s_showConsoleLog);
+
+					// Scene objects window:
+					ImGui::MenuItem("Show Scene Objects Panel", "", &s_showScenePanel);
+
+					ImGui::TextDisabled("Performance statistics");
+
+					
+#if defined(_DEBUG) // ImGui demo window
+					ImGui::Separator();
+					ImGui::MenuItem("Show ImGui demo", "", &s_showImguiDemo);
+#endif
+
+					ImGui::EndMenu();
+				}
+
+				if (ImGui::BeginMenu("Display"))
+				{
+					// TODO...
+					ImGui::TextDisabled("Wireframe mode");
+					ImGui::TextDisabled("Show bounding boxes");
+					ImGui::TextDisabled("View texture/buffer");
+
+					ImGui::EndMenu();
+				}
+
+				if (ImGui::BeginMenu("Config"))
+				{
+					// TODO...
+					ImGui::TextDisabled("Adjust input settings");
+
+					ImGui::EndMenu();
+				}
+
+				if (ImGui::BeginMenu("Output"))
+				{
+					// TODO...
+					ImGui::TextDisabled("Save screenshot");
+
+					ImGui::EndMenu();
+				}
+			}
+			ImGui::EndMainMenuBar();
+		}
+
+		// Console log window:
+		menuDepth++;
+		if (s_showConsoleLog)
+		{
+			ImGui::SetNextWindowSize(ImVec2(
+				static_cast<float>(windowWidth),
+				static_cast<float>(windowHeight * 0.5f)),
+				ImGuiCond_Once);
+			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
+
+			en::LogManager::Get()->ShowImGuiWindow(&s_showConsoleLog);
+		}
+
+		// Scene objects panel:
+		menuDepth++;
+		if (s_showScenePanel)
+		{
+			ImGui::SetNextWindowSize(ImVec2(
+				static_cast<float>(windowWidth) * 0.25f,
+				static_cast<float>(windowHeight * 0.75f)),
+				ImGuiCond_Once);
+			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
+
+			en::SceneManager::Get()->ShowImGuiWindow(&s_showScenePanel);
+		}
+
+		// Show the ImGui demo window for debugging reference
+#if defined(_DEBUG)
+		menuDepth++;
+		if (s_showImguiDemo)
+		{
+			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
+			ImGui::ShowDemoWindow(&s_showImguiDemo);
+		}
+#endif
+
+
+		platform::RenderManager::RenderImGui();
+	}
+
+
 	void RenderManager::EndOfFrame()
 	{
 		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::EndOfFrame");
@@ -269,12 +401,6 @@ namespace re
 	}
 
 
-	void RenderManager::EnqueueImGuiCommand(std::shared_ptr<en::Command> command)
-	{
-		m_imGuiCommands.emplace(command);
-	}
-
-
 	void RenderManager::HandleEvents()
 	{
 		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::HandleEvents");
@@ -287,9 +413,20 @@ namespace re
 			{
 			case en::EventManager::EventType::InputToggleVSync:
 			{
-				m_vsyncEnabled = !m_vsyncEnabled;
-				re::Context::Get()->GetSwapChain().SetVSyncMode(m_vsyncEnabled);
-				LOG("VSync %s", m_vsyncEnabled ? "enabled" : "disabled");
+				if (eventInfo.m_data0.m_dataB == true)
+				{
+					m_vsyncEnabled = !m_vsyncEnabled;
+					re::Context::Get()->GetSwapChain().SetVSyncMode(m_vsyncEnabled);
+					LOG("VSync %s", m_vsyncEnabled ? "enabled" : "disabled");
+				}				
+			}
+			break;
+			case en::EventManager::EventType::InputToggleConsole:
+			{
+				if (eventInfo.m_data0.m_dataB == true)
+				{
+					m_imguiMenuVisible = !m_imguiMenuVisible;
+				}
 			}
 			break;
 			default:
@@ -302,6 +439,7 @@ namespace re
 
 		PIXEndEvent();
 	}
+
 
 	template<>
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::Shader> newObject)

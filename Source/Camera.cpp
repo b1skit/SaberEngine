@@ -20,9 +20,10 @@ namespace gr
 		: NamedObject(cameraName)
 		, Transformable(parent)
 		, m_cameraConfig(camConfig)
+		, m_isDirty(true)
 	{
 		m_cubeView.reserve(6);
-		Initialize();
+		UpdateCameraParamBlockData();
 	}
 
 
@@ -34,6 +35,8 @@ namespace gr
 
 	void Camera::UpdateCameraParamBlockData()
 	{
+		ComputeParameters();
+
 		SEAssert("Camera parameter block has not been initialized yet", m_cameraParamBlock != nullptr);
 
 		m_cameraPBData.g_view = GetViewMatrix();
@@ -60,8 +63,14 @@ namespace gr
 	}
 
 
-	void Camera::Initialize()
+	void Camera::ComputeParameters()
 	{
+		if (!m_isDirty)
+		{
+			return;
+		}
+		m_isDirty = false;
+
 		if (m_cameraConfig.m_projectionType == CameraConfig::ProjectionType::Orthographic)
 		{
 			m_cameraConfig.m_yFOV = 0.0f;
@@ -97,8 +106,6 @@ namespace gr
 				m_cameraPBData, // Initialize with a default struct: Updated in UpdateCameraParamBlockData()
 				re::ParameterBlock::PBType::Mutable);
 		}
-
-		UpdateCameraParamBlockData();
 	}
 
 
@@ -166,7 +173,56 @@ namespace gr
 	void Camera::SetCameraConfig(CameraConfig const& newConfig)
 	{
 		m_cameraConfig = newConfig;
-		Initialize();
+		ComputeParameters();
+	}
+
+
+	void Camera::ShowImGuiWindow()
+	{
+		ImGui::Text("Name: \"%s\"", GetName().c_str());
+		m_isDirty |= ImGui::SliderFloat("Near plane distance", &m_cameraConfig.m_near , 0.f, 10.0f, "near = %.3f");
+		m_isDirty |= ImGui::SliderFloat("Far plane distance", &m_cameraConfig.m_far, 0.f, 1000.0f, "far = %.3f");
+		ImGui::Text("1/far = %f", 1.f / m_cameraConfig.m_far);
+		m_isDirty |= ImGui::SliderFloat("Exposure", &m_cameraConfig.m_exposure, 0, 10.0f, "exposure = %.3f");
+
+
+		auto ShowMat4x4 = [](char const* label, glm::mat4x4 const& matrix)
+		{
+			if (ImGui::TreeNode(label))
+			{
+				if (ImGui::BeginTable("table1", 4))
+				{
+					for (int row = 0; row < 4; row++)
+					{
+						ImGui::TableNextRow();
+						for (int column = 0; column < 4; column++)
+						{
+							ImGui::TableSetColumnIndex(column);
+							ImGui::Text("%f", matrix[row][column]);
+						}
+					}
+					ImGui::EndTable();
+				}
+				ImGui::TreePop();
+			}
+		};
+
+
+		ShowMat4x4("View Matrix:", GetViewMatrix());
+
+		const glm::mat4x4 invView = GetInverseViewMatrix();
+		ShowMat4x4("Inverse View Matrix:", invView);
+
+		ShowMat4x4("Projection Matrix:", m_projection);
+
+		const glm::mat4x4 invProj = GetInverseProjectionMatrix();
+		ShowMat4x4("Inverse Projection Matrix:", invProj);		
+
+		const glm::mat4x4 viewProj = GetViewProjectionMatrix();
+		ShowMat4x4("View Projection Matrix:", viewProj);
+
+		const glm::mat4x4 invViewProj = GetInverseViewProjectionMatrix();
+		ShowMat4x4("Inverse View Projection Matrix:", invViewProj);
 	}
 }
 

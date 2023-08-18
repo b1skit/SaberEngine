@@ -830,25 +830,25 @@ namespace
 			Camera::CameraConfig::ProjectionType::Orthographic : Camera::CameraConfig::ProjectionType::Perspective;
 		if (camConfig.m_projectionType == Camera::CameraConfig::ProjectionType::Orthographic)
 		{
-			camConfig.m_yFOV					= 0;
-			camConfig.m_near					= camera->data.orthographic.znear;
-			camConfig.m_far						= camera->data.orthographic.zfar;
-			camConfig.m_orthoLeftRightBotTop.x	= -camera->data.orthographic.xmag / 2.0f;
-			camConfig.m_orthoLeftRightBotTop.y	= camera->data.orthographic.xmag / 2.0f;
-			camConfig.m_orthoLeftRightBotTop.z	= -camera->data.orthographic.ymag / 2.0f;
-			camConfig.m_orthoLeftRightBotTop.w	= camera->data.orthographic.ymag / 2.0f;
+			camConfig.m_yFOV = 0;
+			camConfig.m_near = camera->data.orthographic.znear;
+			camConfig.m_far = camera->data.orthographic.zfar;
+			camConfig.m_orthoLeftRightBotTop.x = -camera->data.orthographic.xmag / 2.0f;
+			camConfig.m_orthoLeftRightBotTop.y = camera->data.orthographic.xmag / 2.0f;
+			camConfig.m_orthoLeftRightBotTop.z = -camera->data.orthographic.ymag / 2.0f;
+			camConfig.m_orthoLeftRightBotTop.w = camera->data.orthographic.ymag / 2.0f;
 		}
 		else
 		{
-			camConfig.m_yFOV					= camera->data.perspective.yfov;
-			camConfig.m_near					= camera->data.perspective.znear;
-			camConfig.m_far						= camera->data.perspective.zfar;
-			camConfig.m_aspectRatio				= camera->data.perspective.has_aspect_ratio ?
-				camera->data.perspective.aspect_ratio : 1.0f;
-			camConfig.m_orthoLeftRightBotTop.x	= 0.f;
-			camConfig.m_orthoLeftRightBotTop.y	= 0.f;
-			camConfig.m_orthoLeftRightBotTop.z	= 0.f;
-			camConfig.m_orthoLeftRightBotTop.w	= 0.f;
+			camConfig.m_yFOV = camera->data.perspective.yfov;
+			camConfig.m_near = camera->data.perspective.znear;
+			camConfig.m_far = camera->data.perspective.zfar;
+			camConfig.m_aspectRatio	= 
+				camera->data.perspective.has_aspect_ratio ? camera->data.perspective.aspect_ratio : 1.0f;
+			camConfig.m_orthoLeftRightBotTop.x = 0.f;
+			camConfig.m_orthoLeftRightBotTop.y = 0.f;
+			camConfig.m_orthoLeftRightBotTop.z = 0.f;
+			camConfig.m_orthoLeftRightBotTop.w = 0.f;
 		}
 
 		// Create the camera and set the transform values on the parent object:
@@ -1809,6 +1809,13 @@ namespace fr
 		std::shared_lock<std::shared_mutex> readLock(m_materialsMutex);
 
 		return m_materials.find(nameID) != m_materials.end();
+	}
+
+
+	std::unordered_map<size_t, std::shared_ptr<gr::Material>> const& SceneData::GetMaterials() const
+	{
+		SEAssert("Accessing this data is not thread safe during loading", m_finishedLoading);
+		return m_materials;
 	}
 
 

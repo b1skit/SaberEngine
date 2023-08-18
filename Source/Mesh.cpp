@@ -61,4 +61,11 @@ namespace gr
 				meshPrimitive->GetBounds().GetTransformedAABBBounds(GetTransform()->GetGlobalMatrix(Transform::TRS)));
 		}
 	}
+
+
+	void Mesh::ShowImGuiWindow()
+	{
+		ImGui::Text("Name: \"%s\"", GetName().c_str());
+		// TODO...
+	}
 }

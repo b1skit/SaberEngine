@@ -50,6 +50,12 @@ Enable graphics API debugging: -debuglevel [0, 2]
 	- 3: Level 2 + DRED breadcrumbs (DX12 only)  
 
 
+--------------  
+Menu and logs:  
+--------------  
+Press the ` (tilde/grave) key to show/hide the ImGui menu bar  
+
+
 ----------------------
 Runtime Configuration:
 ----------------------

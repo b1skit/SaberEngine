@@ -49,17 +49,13 @@ namespace en
 		void HandleEvents() override;
 
 
+		void ShowImGuiWindow(bool* show);
+
+
 	private:
 		void AddMessage(std::string&& msg);
 		std::unique_ptr<ImGuiLogWindow> m_imGuiLogWindow; // Internally contains a mutex
 
-
-	private:
-		struct
-		{
-			bool m_consoleRequested;
-			bool m_consoleReady;
-		} m_consoleState;
 
 	private:
 		// Static helpers:

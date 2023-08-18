@@ -15,6 +15,7 @@ namespace en
 		Command(Command&&) = default;
 		Command& operator=(Command const&) = default;
 		Command& operator=(Command&&) = default;
-		~Command() = default;
+		
+		virtual ~Command() = default;
 	};
 }

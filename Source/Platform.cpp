@@ -103,8 +103,10 @@ namespace platform
 			platform::ParameterBlock::Destroy	= &opengl::ParameterBlock::Destroy;
 
 			// Render manager:
-			platform::RenderManager::Initialize	= &opengl::RenderManager::Initialize;
-			platform::RenderManager::Shutdown	= &opengl::RenderManager::Shutdown;
+			platform::RenderManager::Initialize			= &opengl::RenderManager::Initialize;
+			platform::RenderManager::Shutdown			= &opengl::RenderManager::Shutdown;
+			platform::RenderManager::StartImGuiFrame	= &opengl::RenderManager::StartImGuiFrame;
+			platform::RenderManager::RenderImGui		= &opengl::RenderManager::RenderImGui;
 
 			// Shader:
 			platform::Shader::Create			= &opengl::Shader::Create;
@@ -146,8 +148,10 @@ namespace platform
 			platform::ParameterBlock::Destroy	= &dx12::ParameterBlock::Destroy;
 			
 			// Render manager:
-			platform::RenderManager::Initialize	= &dx12::RenderManager::Initialize;
-			platform::RenderManager::Shutdown	= &dx12::RenderManager::Shutdown;
+			platform::RenderManager::Initialize			= &dx12::RenderManager::Initialize;
+			platform::RenderManager::Shutdown			= &dx12::RenderManager::Shutdown;
+			platform::RenderManager::StartImGuiFrame	= &dx12::RenderManager::StartImGuiFrame;
+			platform::RenderManager::RenderImGui		= &dx12::RenderManager::RenderImGui;
 
 			// Shader:
 			platform::Shader::Create			= &dx12::Shader::Create;

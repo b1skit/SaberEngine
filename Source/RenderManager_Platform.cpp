@@ -7,4 +7,7 @@ namespace platform
 {
 	void (*RenderManager::Initialize)(re::RenderManager&) = nullptr;
 	void (*RenderManager::Shutdown)(re::RenderManager&) = nullptr;
+
+	void (*RenderManager::StartImGuiFrame)() = nullptr;
+	void (*RenderManager::RenderImGui)() = nullptr;
 }

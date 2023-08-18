@@ -31,6 +31,10 @@ namespace en
 
 		void FinalUpdate(); // Called once after final Update call in main game loop
 
+
+		void ShowImGuiWindow(bool* show);
+
+
 	private:
 		void BuildSceneBatches();
 		std::vector<re::Batch> m_sceneBatches;

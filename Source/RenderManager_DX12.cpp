@@ -496,26 +496,16 @@ namespace dx12
 	}
 
 
-	void RenderManager::RenderImGui()
+	void RenderManager::StartImGuiFrame()
 	{
-		// Early out if there is nothing to draw:
-		if (m_imGuiCommands.empty())
-		{
-			return;
-		}
-
-		// Start a new ImGui frame
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
+	}
 
-		// Process the queue of commands for the current frame:
-		while (!m_imGuiCommands.empty())
-		{
-			m_imGuiCommands.front()->Execute();
-			m_imGuiCommands.pop();
-		}
 
+	void RenderManager::RenderImGui()
+	{
 		// ImGui internal rendering
 		ImGui::Render(); // Note: Does not touch the GPU/graphics API
 
@@ -531,9 +521,9 @@ namespace dx12
 		// Configure the descriptor heap:
 		ID3D12GraphicsCommandList2* d3dCommandList = commandList->GetD3DCommandList();
 
-		ID3D12DescriptorHeap* descriptorHeaps[1] = { context->GetImGuiGPUVisibleDescriptorHeap()};
+		ID3D12DescriptorHeap* descriptorHeaps[1] = { context->GetImGuiGPUVisibleDescriptorHeap() };
 		d3dCommandList->SetDescriptorHeaps(1, descriptorHeaps);
-		
+
 		// Record our ImGui draws:
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), d3dCommandList);
 

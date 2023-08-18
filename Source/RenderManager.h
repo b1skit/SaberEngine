@@ -51,8 +51,6 @@ namespace re
 
 		inline std::vector<re::Batch> const& GetSceneBatches() { return m_renderBatches; }
 
-		void EnqueueImGuiCommand(std::shared_ptr<en::Command> command);
-
 		// EventListener interface:
 		void HandleEvents() override;
 
@@ -89,9 +87,9 @@ namespace re
 		
 		// Member functions:
 		void Initialize();
+		void RenderImGui();
 
 		virtual void Render() = 0;
-		virtual void RenderImGui() = 0;
 
 		void PreUpdate(uint64_t frameNum); // Synchronization step: Copies data, swaps buffers etc
 		void EndOfFrame();
@@ -103,11 +101,11 @@ namespace re
 
 		std::vector<re::Batch> m_renderBatches; // Union of all batches created by all systems. Populated in PreUpdate
 
-		std::queue<std::shared_ptr<en::Command>> m_imGuiCommands;
-
 		bool m_vsyncEnabled;
 		
 		uint64_t m_renderFrameNum;
+
+		bool m_imguiMenuVisible;
 
 
 	private:

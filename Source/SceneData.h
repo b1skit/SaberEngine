@@ -78,6 +78,7 @@ namespace fr
 		// Materials:
 		void AddUniqueMaterial(std::shared_ptr<gr::Material>& newMaterial);
 		std::shared_ptr<gr::Material> GetMaterial(std::string const& materialName) const;
+		std::unordered_map<size_t, std::shared_ptr<gr::Material>> const& GetMaterials() const;
 		bool MaterialExists(std::string const& matName) const;
 
 		void AddUniqueShader(std::shared_ptr<re::Shader>& newShader);

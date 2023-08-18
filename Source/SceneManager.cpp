@@ -1,9 +1,22 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Camera.h"
 #include "Config.h"
+#include "Light.h"
 #include "ParameterBlock.h"
 #include "PerformanceTimer.h"
 #include "SceneManager.h"
 #include "Transform.h"
+
+using fr::SceneData;
+using en::Config;
+using re::Batch;
+using re::ParameterBlock;
+using gr::Transform;
+using util::PerformanceTimer;
+using std::shared_ptr;
+using std::make_shared;
+using std::string;
+using glm::mat4;
 
 
 namespace
@@ -13,18 +26,6 @@ namespace
 
 namespace en
 {
-	using fr::SceneData;
-	using en::Config;
-	using re::Batch;
-	using re::ParameterBlock;
-	using gr::Transform;
-	using util::PerformanceTimer;
-	using std::shared_ptr;
-	using std::make_shared;
-	using std::string;
-	using glm::mat4;
-
-
 	SceneManager* SceneManager::Get()
 	{
 		static std::unique_ptr<en::SceneManager> instance = std::make_unique<en::SceneManager>();
@@ -98,6 +99,84 @@ namespace en
 	void SceneManager::FinalUpdate()
 	{
 		BuildSceneBatches();
+	}
+
+
+	void SceneManager::ShowImGuiWindow(bool* show)
+	{
+		constexpr char const* scenePanelWindowTitle = "Scene Objects";
+		ImGui::Begin(scenePanelWindowTitle, show);
+	
+		if (ImGui::TreeNode("Cameras:"))
+		{
+			std::vector<std::shared_ptr<gr::Camera>> const& cameras = m_sceneData->GetCameras();
+			for (auto const& camera : cameras)
+			{
+				camera->ShowImGuiWindow();
+				ImGui::Separator();
+			}
+
+			ImGui::TreePop();
+		}
+		 
+		if (ImGui::TreeNode("Meshes:"))
+		{
+			std::vector<std::shared_ptr<gr::Mesh>> const& meshes = m_sceneData->GetMeshes();
+			for (auto const& mesh : meshes)
+			{
+				mesh->ShowImGuiWindow();
+				ImGui::Separator();
+			}
+
+			ImGui::TreePop();
+		}
+
+		if (ImGui::TreeNode("Materials:"))
+		{
+			std::unordered_map<size_t, std::shared_ptr<gr::Material>> const& materials = m_sceneData->GetMaterials();
+			for (auto const& materialEntry : materials)
+			{
+				materialEntry.second->ShowImGuiWindow();
+				ImGui::Separator();
+			}
+
+			ImGui::TreePop();
+		}
+
+		if (ImGui::TreeNode("Ambient Light:"))
+		{
+			std::shared_ptr<gr::Light> const ambientLight = m_sceneData->GetAmbientLight();
+			if (ambientLight)
+			{
+				ambientLight->ShowImGuiWindow();
+			}
+
+			ImGui::TreePop();
+		}
+
+		if (ImGui::TreeNode("Directional Light:"))
+		{
+			std::shared_ptr<gr::Light> const directionalLight = m_sceneData->GetKeyLight();
+			if (directionalLight)
+			{
+				directionalLight->ShowImGuiWindow();
+			}
+
+			ImGui::TreePop();
+		}
+
+		if (ImGui::TreeNode("Point Lights:"))
+		{
+			std::vector<std::shared_ptr<gr::Light>> const& pointLights = m_sceneData->GetPointLights();
+			for (auto const& light : pointLights)
+			{
+				light->ShowImGuiWindow();
+			}
+
+			ImGui::TreePop();
+		}
+
+		ImGui::End();
 	}
 
 

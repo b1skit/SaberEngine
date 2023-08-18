@@ -1,13 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "LogManager.h"
-#include "EventManager.h"
 #include "DebugConfiguration.h"
-#include "Command.h"
-#include "RenderManager.h"
-#include "Config.h"
+#include "EventManager.h"
+#include "LogManager.h"
 
 using en::EventManager;
-using std::make_shared;
 
 
 namespace
@@ -157,44 +153,6 @@ namespace
 			ImGui::End();
 		}
 	};
-
-
-	class DisplayConsoleCommand final : public virtual en::Command
-	{
-	public:
-		DisplayConsoleCommand(bool* consoleOpen, ImGuiLogWindow* imGuiLogWindow) 
-			: m_consoleOpen(consoleOpen)
-			, m_imGuiLogWindow(imGuiLogWindow)
-		{}
-
-		void Execute() override
-		{
-			const int consoleWindowWidth = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
-			const int consoleWindowHeight = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName) / 2;
-
-			// For the demo: add a debug button _BEFORE_ the normal log window contents
-			// We take advantage of a rarely used feature: multiple calls to Begin()/End() are appending to the _same_ window.
-			// Most of the contents of the window will be added by the log.Draw() call.
-			ImGui::SetNextWindowSize(ImVec2(
-				static_cast<float>(consoleWindowWidth), static_cast<float>(consoleWindowHeight)), ImGuiCond_Always);
-			ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always, ImVec2(0, 0));
-			
-			constexpr char logWindowTitle[] = "Saber Engine Log";
-
-			ImGui::Begin(logWindowTitle, m_consoleOpen);
-			ImGui::End();
-
-			// Actually call in the regular Log helper (which will Begin() into the same window as we just did)
-			m_imGuiLogWindow->Draw(logWindowTitle, m_consoleOpen);
-
-			// Show the ImGui demo window immediately below the log. This is useful for debugging ImGui as I add features
-			ImGui::ShowDemoWindow(m_consoleOpen);
-		}
-
-	private:
-		bool* m_consoleOpen;
-		ImGuiLogWindow* m_imGuiLogWindow;
-	};
 }
 
 
@@ -208,7 +166,6 @@ namespace en
 
 
 	LogManager::LogManager()
-		: m_consoleState{false, true} // Starting state = "not requested" and "ready"
 	{
 		m_imGuiLogWindow = std::make_unique<ImGuiLogWindow>();
 	}
@@ -217,9 +174,6 @@ namespace en
 	void LogManager::Startup() 
 	{
 		LOG("Log manager starting...");
-
-		// Event subscriptions:
-		EventManager::Get()->Subscribe(EventManager::InputToggleConsole, this);
 	}
 
 
@@ -232,27 +186,6 @@ namespace en
 	void LogManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
 		HandleEvents();
-
-		// Users can open the console by pressing a key, but can close it by pressing the same key again, or by clicking
-		// the [x] button to close it. We track the m_consoleRequested status (which toggles each time the users taps
-		// the console key) to determine if we're in an open/closed console state. We track the m_consoleReady state
-		// to catch when a user clicks [x] to close the window
-		if (m_consoleState.m_consoleRequested == true && m_consoleState.m_consoleReady == true)
-		{
-			re::RenderManager::Get()->EnqueueImGuiCommand(
-				make_shared<DisplayConsoleCommand>(&m_consoleState.m_consoleReady, m_imGuiLogWindow.get()));
-		}
-		else if (m_consoleState.m_consoleRequested == true && m_consoleState.m_consoleReady == false)
-		{
-			EventManager::EventInfo logClosedEvent;
-			logClosedEvent.m_type = EventManager::EventType::InputToggleConsole;
-			logClosedEvent.m_data0.m_dataB = false;
-
-			EventManager::Get()->Notify(EventManager::EventInfo(logClosedEvent));
-
-			m_consoleState.m_consoleRequested = !m_consoleState.m_consoleRequested;
-			m_consoleState.m_consoleReady = true;
-		}
 	}
 
 
@@ -260,13 +193,22 @@ namespace en
 	{
 		while (HasEvents())
 		{
-			en::EventManager::EventInfo const& eventInfo = GetEvent();
-
-			if (eventInfo.m_type == EventManager::EventType::InputToggleConsole && eventInfo.m_data0.m_dataB == true)
-			{
-				m_consoleState.m_consoleRequested = !m_consoleState.m_consoleRequested;
-			}
+			SEAssertF("We don't have any subscriptions, this is unexpected");
 		}	
+	}
+
+
+	void LogManager::ShowImGuiWindow(bool* show)
+	{
+		if (*show)
+		{
+			constexpr char const* logWindowTitle = "Saber Engine Log";
+			ImGui::Begin(logWindowTitle, show);
+			ImGui::End();
+
+			// Actually call in the regular Log helper (which will Begin() into the same window as we just did)
+			m_imGuiLogWindow->Draw(logWindowTitle, show);
+		}
 	}
 
 

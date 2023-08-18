@@ -132,6 +132,7 @@ namespace en
 	float InputManager::m_mousePitchSensitivity	= -0.00005f;
 	float InputManager::m_mouseYawSensitivity	= -0.00005f;
 
+
 	InputManager* InputManager::Get()
 	{
 		static std::unique_ptr<en::InputManager> instance = std::make_unique<en::InputManager>();
@@ -233,7 +234,7 @@ namespace en
 
 		while (HasEvents())
 		{
-			en::EventManager::EventInfo eventInfo = GetEvent();
+			en::EventManager::EventInfo const& eventInfo = GetEvent();
 
 			// Transform key/mouse events into SaberEngine functionality events (eg. "w" -> "move forward")
 			// NOTE: We may receive more than 1 of each type of event between calls to Update() from input with high
@@ -319,6 +320,17 @@ namespace en
 							if (keystate == true)
 							{
 								m_consoleTriggered = !m_consoleTriggered;
+																
+								// Disable ImGui mouse listening if the console is not active: Prevents UI elements
+								// flashing as the hidden mouse cursor passes by
+								if (m_consoleTriggered)
+								{
+									io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
+								}
+								else
+								{
+									io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
+								}
 							}
 						}
 						break;

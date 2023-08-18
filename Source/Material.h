@@ -87,6 +87,8 @@ namespace gr
 		std::shared_ptr<re::Texture> const GetTexture(std::string const& samplerName) const;
 		std::vector<TextureSlotDesc> const& GetTexureSlotDescs() const;
 
+		void ShowImGuiWindow();
+
 
 	private:
 		std::vector<TextureSlotDesc> m_texSlots;

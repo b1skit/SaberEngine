@@ -263,23 +263,19 @@ namespace opengl
 
 			glPopDebugGroup();
 		}
-	}	
+	}
+
+
+	void RenderManager::StartImGuiFrame()
+	{
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+	}
 
 
 	void RenderManager::RenderImGui()
 	{
-		// Start the Dear ImGui frame
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
-
-		// Process the queue of commands for the current frame:
-		while (!m_imGuiCommands.empty())
-		{
-			m_imGuiCommands.front()->Execute();
-			m_imGuiCommands.pop();
-		}
-
 		// Composite Imgui rendering on top of the finished frame:
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "ImGui stage");
 		ImGui::Render();

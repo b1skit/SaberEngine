@@ -49,8 +49,6 @@ namespace en
 		static float m_mousePitchSensitivity;
 		static float m_mouseYawSensitivity;
 
-		re::Context const* m_context;
-
 		bool m_consoleTriggered; // Is the console menu currently holding focus?
 		bool m_prevConsoleTriggeredState;
 

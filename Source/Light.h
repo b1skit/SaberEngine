@@ -65,6 +65,9 @@ namespace gr
 
 		inline gr::ShadowMap* GetShadowMap() const { return m_shadowMap.get(); }
 
+		void ShowImGuiWindow();
+
+
 	private:
 		gr::Transform* m_ownerTransform;
 

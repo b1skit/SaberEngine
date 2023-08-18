@@ -33,6 +33,9 @@ namespace gr
 		std::vector<std::shared_ptr<re::MeshPrimitive>> const& GetMeshPrimitives() const;
 		void ReplaceMeshPrimitive(size_t index, std::shared_ptr<re::MeshPrimitive> replacement);
 
+		void ShowImGuiWindow();
+
+
 	private:
 		std::vector<std::shared_ptr<re::MeshPrimitive>> m_meshPrimitives;
 

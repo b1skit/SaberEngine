@@ -91,6 +91,8 @@ namespace gr
 
 		inline std::shared_ptr<re::ParameterBlock> GetCameraParams() const;
 
+		void ShowImGuiWindow();
+
 
 	public: 
 		// Static members:
@@ -99,15 +101,17 @@ namespace gr
 
 	private:
 		// Helper function: Configures the camera based on the cameraConfig. MUST be called at least once during setup
-		void Initialize();
+		void ComputeParameters();
 		void UpdateCameraParamBlockData();
 
 		
 
 	private:
 		CameraConfig m_cameraConfig;
+		bool m_isDirty;
 
-		glm::mat4 m_view;
+		// TODO: Cache matrices, update them when they're dirty
+
 		glm::mat4 m_projection;
 
 		std::vector<glm::mat4> m_cubeView;
