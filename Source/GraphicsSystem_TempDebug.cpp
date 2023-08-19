@@ -51,7 +51,7 @@ namespace gr
 		m_tempDebugStage->SetStagePipelineState(debugPipelineState);
 
 		// Add param blocks:
-		m_tempDebugStage->AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());
+		m_tempDebugStage->AddPermanentParameterBlock(SceneManager::Get()->GetMainCamera()->GetCameraParams());
 
 		pipeline.AppendRenderStage(m_tempDebugStage);
 	}

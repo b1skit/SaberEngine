@@ -26,13 +26,13 @@ namespace fr
 	{
 		LOG("GameplayManager starting...");
 
-		fr::SceneData* sceneData = en::SceneManager::GetSceneData();
+		std::shared_ptr<gr::Camera> mainCam = en::SceneManager::Get()->GetMainCamera();
 
 		// Add a player object to the scene:
-		shared_ptr<fr::PlayerObject> player = make_shared<fr::PlayerObject>(sceneData->GetMainCamera());
+		shared_ptr<fr::PlayerObject> player = make_shared<fr::PlayerObject>(mainCam);
 
 		m_updateables.emplace_back(player);
-		LOG("Created PlayerObject using \"%s\"", sceneData->GetMainCamera()->GetName().c_str());
+		LOG("Created PlayerObject using \"%s\"", mainCam->GetName().c_str());
 	}
 
 

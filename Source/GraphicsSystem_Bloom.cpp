@@ -60,7 +60,7 @@ namespace gr
 		DeferredLightingGraphicsSystem* deferredLightGS = 
 			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
 
-		Camera* sceneCam = SceneManager::GetSceneData()->GetMainCamera().get();
+		Camera* sceneCam = SceneManager::Get()->GetMainCamera().get();
 
 		shared_ptr<Shader> blitShader = re::Shader::Create(Config::Get()->GetValue<string>("blitShaderName"));
 
@@ -124,8 +124,7 @@ namespace gr
 			downResTargets->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
 				re::TextureTarget::TargetParams::BlendMode::One,re::TextureTarget::TargetParams::BlendMode::Zero});
 
-			downResTargets->Viewport().Width() = currentXRes;
-			downResTargets->Viewport().Height() = currentYRes;
+			downResTargets->SetViewport(re::Viewport(0, 0, currentXRes, currentYRes));
 
 			resScaleParams.m_width = currentXRes;
 			resScaleParams.m_height = currentYRes;
@@ -182,8 +181,7 @@ namespace gr
 
 			std::shared_ptr<re::TextureTargetSet> blurTargets = re::TextureTargetSet::Create(name + " targets");
 
-			blurTargets->Viewport().Width() = currentXRes;
-			blurTargets->Viewport().Height() = currentYRes;
+			blurTargets->SetViewport(re::Viewport(0, 0, currentXRes, currentYRes));
 
 			m_blurStages.back()->SetStagePipelineState(bloomStageParams);
 			m_blurStages.back()->AddPermanentParameterBlock(sceneCam->GetCameraParams());
@@ -221,8 +219,7 @@ namespace gr
 
 			std::shared_ptr<re::TextureTargetSet> upResTargets = re::TextureTargetSet::Create(name + " targets");
 
-			upResTargets->Viewport().Width() = currentXRes;
-			upResTargets->Viewport().Height() = currentYRes;
+			upResTargets->SetViewport(re::Viewport(0, 0, currentXRes, currentYRes));
 
 			m_upResStages.back()->AddPermanentParameterBlock(sceneCam->GetCameraParams());
 			m_upResStages[i]->SetStageShader(blitShader);

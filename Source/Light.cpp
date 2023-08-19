@@ -78,6 +78,10 @@ namespace gr
 					ShadowMap::ShadowType::Single);
 				// Note: We'll compute the camera config from the scene bounds during the first call to Update(); so
 				// here we just pass a default camera config
+
+				m_shadowMap->SetMinMaxShadowBias(glm::vec2(
+					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias),
+					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias)));
 			}
 		}
 		break;
@@ -111,9 +115,9 @@ namespace gr
 					vec3(0.0f, 0.0f, 0.0f),	// shadowCamPosition: No offset
 					ShadowMap::ShadowType::CubeMap);
 
-				m_shadowMap->MinMaxShadowBias() = glm::vec2( 
-					Config::Get()->GetValue<float>("defaultMinShadowBias"),
-					Config::Get()->GetValue<float>("defaultMaxShadowBias"));
+				m_shadowMap->SetMinMaxShadowBias(glm::vec2( 
+					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBias),
+					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMaxShadowBias)));
 			}
 		}
 		break;
@@ -138,8 +142,9 @@ namespace gr
 		if (m_type == LightType::Directional) // Update shadow cam bounds
 		{
 			gr::Bounds sceneWorldBounds = SceneManager::GetSceneData()->GetWorldSpaceSceneBounds();
-			Camera::CameraConfig shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
-				m_ownerTransform, sceneWorldBounds);
+
+			Camera::CameraConfig shadowCamConfig = 
+				ComputeDirectionalShadowCameraConfigFromSceneBounds(m_ownerTransform, sceneWorldBounds);
 
 			if (m_shadowMap)
 			{
@@ -152,6 +157,21 @@ namespace gr
 	void Light::ShowImGuiWindow()
 	{
 		ImGui::Text("Name: \"%s\"", GetName().c_str());
+
+		if (ImGui::TreeNode("Shadow Map:"))
+		{
+			if (m_shadowMap)
+			{
+				ImGui::Text("Shadow map: \"%s\"", GetName().c_str());
+				m_shadowMap->ShowImGuiWindow();
+			}
+			else
+			{
+				ImGui::Text("<No Shadow>");
+			}
+
+			ImGui::TreePop();
+		}		
 	}
 }
 

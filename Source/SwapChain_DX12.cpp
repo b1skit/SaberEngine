@@ -153,11 +153,11 @@ namespace dx12
 				colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format == colorBufferFormat);
 
 			// Set default viewports and scissor rects. Note: This is NOT required, just included for clarity
-			swapChainParams->m_backbufferTargetSets[backbufferIdx]->Viewport() = 
-				re::Viewport(); // Defaults = 0, 0, xRes, yRes
+			swapChainParams->m_backbufferTargetSets[backbufferIdx]->SetViewport(
+				re::Viewport()); // Defaults = 0, 0, xRes, yRes
 			
-			swapChainParams->m_backbufferTargetSets[backbufferIdx]->ScissorRect() = 
-				re::ScissorRect(); // Defaults = 0, 0, long::max, long::max
+			swapChainParams->m_backbufferTargetSets[backbufferIdx]->SetScissorRect(
+				re::ScissorRect()); // Defaults = 0, 0, long::max, long::max
 		}
 	}
 

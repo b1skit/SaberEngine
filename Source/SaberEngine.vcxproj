@@ -288,6 +288,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="GraphicsSystem_TempDebug.h" />
     <ClInclude Include="HashedDataObject.h" />
     <ClInclude Include="HashUtils.h" />
+    <ClInclude Include="ImGuiUtils.h" />
     <ClInclude Include="InputManager_Platform.h" />
     <ClInclude Include="InputManager_Win32.h" />
     <ClInclude Include="IPlatformParams.h" />

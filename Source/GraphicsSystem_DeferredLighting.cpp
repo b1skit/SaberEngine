@@ -131,7 +131,7 @@ namespace
 			lightParams.g_shadowMapTexelSize =
 				shadowMap->GetTextureTargetSet()->GetDepthStencilTarget()->GetTexture()->GetTextureDimenions();
 
-			lightParams.g_shadowBiasMinMax = shadowMap->MinMaxShadowBias();
+			lightParams.g_shadowBiasMinMax = shadowMap->GetMinMaxShadowBias();
 
 			gr::Camera* const shadowCam = shadowMap->ShadowCamera();
 			lightParams.g_shadowCamNearFar = shadowCam->NearFar();
@@ -215,7 +215,7 @@ namespace gr
 		};
 		deferredLightingTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
 
-		Camera* deferredLightingCam = SceneManager::GetSceneData()->GetMainCamera().get();
+		Camera* deferredLightingCam = SceneManager::Get()->GetMainCamera().get();
 
 		
 		// Set the target sets, even if the stages aren't actually used (to ensure they're still valid)
@@ -255,8 +255,7 @@ namespace gr
 			targetParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 			brdfStageTargets->SetColorTarget(0, m_BRDF_integrationMap, targetParams);
-			brdfStageTargets->Viewport() =
-				re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
+			brdfStageTargets->SetViewport(re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
 
 			re::TextureTarget::TargetParams::BlendModes brdfBlendModes
 			{
@@ -367,7 +366,7 @@ namespace gr
 				targetParams.m_targetSubesource = 0;
 
 				iemTargets->SetColorTarget(0, m_IEMTex, targetParams);
-				iemTargets->Viewport() = re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
+				iemTargets->SetViewport(re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
 
 				iemStage->SetTextureTargetSet(iemTargets);
 
@@ -430,7 +429,8 @@ namespace gr
 						re::TextureTargetSet::Create("PMREM texture targets: Face " + postFix);
 
 					pmremTargetSet->SetColorTarget(0, m_PMREMTex, targetParams);
-					pmremTargetSet->Viewport() = re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes);
+					pmremTargetSet->SetViewport(
+						re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
 
 					re::TextureTarget::TargetParams::BlendModes pmremBlendModes
 					{

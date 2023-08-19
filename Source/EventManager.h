@@ -41,6 +41,8 @@ namespace en
 			InputToggleConsole,
 			InputToggleVSync,
 
+			CameraSelectionChanged,
+
 			EngineQuit,
 
 			// Mouse functions:

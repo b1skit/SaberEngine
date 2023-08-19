@@ -246,8 +246,8 @@ namespace opengl
 
 			// For now, ensure the viewport dimensions match the texture target dimensions
 			SEAssert("Color textures are different dimension to the viewport",
-				width == targetSet.Viewport().Width() &&
-				height == targetSet.Viewport().Height());
+				width == targetSet.GetViewport().Width() &&
+				height == targetSet.GetViewport().Height());
 		}
 		else if (!targetSet.GetDepthStencilTarget())
 		{
@@ -348,27 +348,35 @@ namespace opengl
 					0,
 					static_cast<GLsizei>(mipDimensions.x),
 					static_cast<GLsizei>(mipDimensions.y));
+
+				glScissor(
+					0,										// Upper-left corner coordinates: X
+					0,										// Upper-left corner coordinates: Y
+					static_cast<GLsizei>(mipDimensions.x),	// Width
+					static_cast<GLsizei>(mipDimensions.y));	// Height
 			}
 			else
 			{
+				re::Viewport const& viewport = targetSet.GetViewport();
 				glViewport(
-					targetSet.Viewport().xMin(),
-					targetSet.Viewport().yMin(),
-					targetSet.Viewport().Width(),
-					targetSet.Viewport().Height());
+					viewport.xMin(),
+					viewport.yMin(),
+					viewport.Width(),
+					viewport.Height());
+
+				re::ScissorRect const& scissorRect = targetSet.GetScissorRect();
+				glScissor(
+					scissorRect.Left(),		// Upper-left corner coordinates: X
+					scissorRect.Top(),		// Upper-left corner coordinates: Y
+					scissorRect.Right(),	// Width
+					scissorRect.Bottom());	// Height
 			}
 
 			// Verify the framebuffer (as we actually had color textures to attach)
 			const GLenum result = glCheckNamedFramebufferStatus(targetSetParams->m_frameBufferObject, GL_FRAMEBUFFER);
 			SEAssert("Framebuffer is not complete", result == GL_FRAMEBUFFER_COMPLETE);
 
-			// Set the scissor rect:
-			re::ScissorRect const& scissorRect = targetSet.ScissorRect();
-			glScissor(
-				scissorRect.Left(),		// Upper-left corner coordinates: X
-				scissorRect.Top(),		// Upper-left corner coordinates: Y
-				scissorRect.Right(),	// Width
-				scissorRect.Bottom());	// Height
+			
 		}
 
 		// Set the blend modes. Note, we set these even if the targets don't contain textures
@@ -432,8 +440,8 @@ namespace opengl
 
 			// For now, ensure the viewport dimensions match the texture target dimensions
 			SEAssert("Depth texture is a different dimension to the viewport", 
-				depthStencilTex->Width() == targetSet.Viewport().Width() &&
-				depthStencilTex->Height() == targetSet.Viewport().Height());
+				depthStencilTex->Width() == targetSet.GetViewport().Width() &&
+				depthStencilTex->Height() == targetSet.GetViewport().Height());
 		}
 		else if (!targetSet.HasTargets())
 		{
@@ -498,11 +506,19 @@ namespace opengl
 			const GLenum result = glCheckNamedFramebufferStatus(targetSetParams->m_frameBufferObject, GL_FRAMEBUFFER);
 			SEAssert("Framebuffer is not complete", result == GL_FRAMEBUFFER_COMPLETE);
 
+			re::Viewport const& viewport = targetSet.GetViewport();
 			glViewport(
-				targetSet.Viewport().xMin(),
-				targetSet.Viewport().yMin(),
-				targetSet.Viewport().Width(),
-				targetSet.Viewport().Height());
+				viewport.xMin(),
+				viewport.yMin(),
+				viewport.Width(),
+				viewport.Height());
+
+			re::ScissorRect const& scissorRect = targetSet.GetScissorRect();
+			glScissor(
+				scissorRect.Left(),		// Upper-left corner coordinates: X
+				scissorRect.Top(),		// Upper-left corner coordinates: Y
+				scissorRect.Right(),	// Width
+				scissorRect.Bottom());	// Height
 		}
 	}
 }

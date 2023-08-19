@@ -6,34 +6,33 @@
 #include "ShadowMap.h"
 #include "Texture.h"
 
+using en::Config;
+using gr::Material;
+using re::Texture;
+using re::Shader;
+using gr::Camera;
+using gr::Transform;
+using std::shared_ptr;
+using std::make_shared;
+using std::string;
+using glm::vec3;
+
 
 namespace gr
 {
-	using en::Config;
-	using gr::Material;
-	using re::Texture;
-	using re::Shader;
-	using gr::Camera;
-	using gr::Transform;
-	using std::shared_ptr;
-	using std::make_shared;
-	using std::string;
-	using glm::vec3;
-
-
 	ShadowMap::ShadowMap(
-		string lightName, 
+		string const& lightName,
 		uint32_t xRes,
 		uint32_t yRes,
 		gr::Camera::CameraConfig shadowCamConfig, 
 		Transform* shadowCamParent, 
 		vec3 shadowCamPosition, 
 		ShadowType shadowType)
-		: m_shadowCam(lightName + "_ShadowMapCam", shadowCamConfig, shadowCamParent)
-		, m_minMaxShadowBias(0.005f, 0.0005f)
+		: NamedObject(lightName + "_Shadow")
+		, m_shadowCam(gr::Camera::Create(lightName + "_ShadowCam", shadowCamConfig, shadowCamParent))
 	{
-		m_shadowTargetSet = re::TextureTargetSet::Create(lightName + " shadow target");
-		m_shadowCam.GetTransform()->SetLocalTranslation(shadowCamPosition);
+		m_shadowTargetSet = re::TextureTargetSet::Create(lightName + "_ShadowTargetSet");
+		m_shadowCam->GetTransform()->SetLocalTranslation(shadowCamPosition);
 
 		// Texture params are mostly the same between a single shadow map, or a cube map
 		Texture::TextureParams shadowParams;
@@ -54,17 +53,25 @@ namespace gr
 		// Omni-directional (Cube map) shadowmap setup:
 		if (shadowType == ShadowType::CubeMap)
 		{
+			m_minMaxShadowBias = glm::vec2(
+				Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBias),
+				Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias));
+
 			shadowParams.m_dimension = Texture::Dimension::TextureCubeMap;
 			shadowParams.m_faces = 6;
-			const string texName = lightName + "_CubeShadowMap";
+			const string texName = lightName + "_CubeMapShadow";
 
 			depthTexture = re::Texture::Create(texName, shadowParams, false);
 		}
-		else // Single texture shadowmap setup:
+		else // 2D shadow map setup:
 		{
+			m_minMaxShadowBias = glm::vec2(
+				Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias),
+				Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias));
+
 			shadowParams.m_dimension = Texture::Dimension::Texture2D;
 			shadowParams.m_faces = 1;
-			const string texName = lightName + "_SingleShadowMap";
+			const string texName = lightName + "_Shadow";
 			
 			depthTexture = re::Texture::Create(texName, shadowParams, false);
 		}
@@ -73,7 +80,42 @@ namespace gr
 		depthTargetParams.m_clearColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 		m_shadowTargetSet->SetDepthStencilTarget(depthTexture, depthTargetParams);
-		m_shadowTargetSet->Viewport() = re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height());
+		m_shadowTargetSet->SetViewport(re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height()));
+		m_shadowTargetSet->SetScissorRect(
+			{0, 0, static_cast<long>(depthTexture->Width()), static_cast<long>(depthTexture->Height()) });
+	}
+
+
+	void ShadowMap::SetMinMaxShadowBias(glm::vec2 const& minMaxShadowBias)
+	{
+		m_minMaxShadowBias = minMaxShadowBias;
+	}
+
+
+	void ShadowMap::ShowImGuiWindow()
+	{
+		ImGui::Text("Name: \"%s\"", GetName().c_str());
+
+		const std::string minLabel = "Min shadow bias##" + GetName();
+		ImGui::SliderFloat(minLabel.c_str(), &m_minMaxShadowBias.x, 0, 0.1f, "Min shadow bias = %.5f");
+		
+		const std::string maxLabel = "Max shadow bias##" + GetName();
+		ImGui::SliderFloat(maxLabel.c_str(), &m_minMaxShadowBias.y, 0, 0.1f, "Max shadow bias = %.5f");
+
+		const std::string resetLabel = "Reset biases to defaults##" + GetName();
+		if (ImGui::Button(resetLabel.c_str()))
+		{
+			m_minMaxShadowBias = glm::vec2(
+				Config::Get()->GetValue<float>("defaultMinShadowBias"),
+				Config::Get()->GetValue<float>("defaultMaxShadowBias"));
+		}
+
+		if (ImGui::TreeNode("Shadow Map Camera:"))
+		{
+			m_shadowCam->ShowImGuiWindow();
+
+			ImGui::TreePop();
+		}		
 	}
 }
 

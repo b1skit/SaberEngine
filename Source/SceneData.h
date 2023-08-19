@@ -45,10 +45,15 @@ namespace fr
 		void PostLoadFinalize();
 
 		// Cameras:
-		void AddCamera(std::shared_ptr<gr::Camera> newCamera);
-		std::vector<std::shared_ptr<gr::Camera>> const& GetCameras() const;
-		std::shared_ptr<gr::Camera> GetMainCamera() const; // TODO: Maintain an active camera index, and allow camera switching cameras. For now, return 1st camera added
+	protected:
+		friend class gr::Camera;
+		size_t AddCamera(std::shared_ptr<gr::Camera> newCamera); // Returns the camera index
+	public:
 		
+		std::vector<std::shared_ptr<gr::Camera>> const& GetCameras() const;
+		
+
+	public:		
 		// Lights:
 		void AddLight(std::shared_ptr<gr::Light> newLight);
 		inline std::shared_ptr<gr::Light> const GetAmbientLight() const { return m_ambientLight; }

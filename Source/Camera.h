@@ -32,6 +32,23 @@ namespace gr
 
 			// Image properties:
 			float m_exposure = 1.0f;
+
+
+			bool operator==(CameraConfig const& rhs) const
+			{
+				return m_projectionType == rhs.m_projectionType &&
+					m_yFOV == rhs.m_yFOV &&
+					m_near == rhs.m_near &&
+					m_far == rhs.m_far &&
+					m_aspectRatio == rhs.m_aspectRatio &&
+					m_orthoLeftRightBotTop == rhs.m_orthoLeftRightBotTop &&
+					m_exposure == rhs.m_exposure;
+			}
+			
+			bool operator!=(CameraConfig const& rhs) const
+			{
+				return !operator==(rhs);
+			}
 		};
 
 	public:
@@ -58,11 +75,13 @@ namespace gr
 		};
 
 	public:
-		Camera(std::string const& cameraName, CameraConfig const& camConfig, gr::Transform* parent);
-	
-		Camera(Camera const&) = default;
+		static std::shared_ptr<gr::Camera> Create(
+			std::string const& cameraName, CameraConfig const& camConfig, gr::Transform* parent);
+
+		
 		Camera(Camera&&) = default;
-		Camera& operator=(Camera const&) = default;
+		Camera& operator=(Camera&&) = default;
+		
 		~Camera() { Destroy(); }
 
 		void Destroy();
@@ -74,7 +93,7 @@ namespace gr
 		inline float GetAspectRatio() const { return m_cameraConfig.m_aspectRatio; }
 
 		inline glm::mat4 GetViewMatrix() { return glm::inverse(m_transform.GetGlobalMatrix(Transform::TRS)); }
-		inline glm::mat4 GetInverseViewMatrix() { return m_transform.GetGlobalMatrix(Transform::TRS); }
+		inline glm::mat4 const& GetInverseViewMatrix() { return m_transform.GetGlobalMatrix(Transform::TRS); }
 
 		inline glm::mat4 const&	GetProjectionMatrix() const { return m_projection; }
 		inline glm::mat4 GetInverseProjectionMatrix() const { return glm::inverse(m_projection); }
@@ -91,6 +110,8 @@ namespace gr
 
 		inline std::shared_ptr<re::ParameterBlock> GetCameraParams() const;
 
+		void SetAsMainCamera() const;
+
 		void ShowImGuiWindow();
 
 
@@ -99,16 +120,19 @@ namespace gr
 		static std::vector<glm::mat4> GetCubeViewMatrix(glm::vec3 centerPos);
 
 
-	private:
-		// Helper function: Configures the camera based on the cameraConfig. MUST be called at least once during setup
-		void ComputeParameters();
-		void UpdateCameraParamBlockData();
-
+	private: // Use Create() instead
+		Camera(std::string const& cameraName, CameraConfig const& camConfig, gr::Transform* parent);
 		
 
 	private:
+		// Helper function: Configures the camera based on the cameraConfig. MUST be called at least once during setup
+		void RecomputeProjectionMatrices(); // Returns true if parameters were recomputed, false otherwise
+		void UpdateCameraParamBlockData();
+
+
+	private:
 		CameraConfig m_cameraConfig;
-		bool m_isDirty;
+		bool m_projectionMatricesDirty;
 
 		// TODO: Cache matrices, update them when they're dirty
 
@@ -120,8 +144,12 @@ namespace gr
 		std::shared_ptr<re::ParameterBlock> m_cameraParamBlock;
 		CameraParams m_cameraPBData;
 
+		size_t m_cameraIdx; // Index in the global camera list
+
 	private:
 		Camera() = delete;
+		Camera(Camera const&) = delete;
+		Camera& operator=(Camera const&) = delete;
 	};
 
 

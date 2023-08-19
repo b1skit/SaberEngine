@@ -35,7 +35,7 @@ namespace
 	{
 		TonemappingParams tonemappingParams;
 		tonemappingParams.g_exposure = 
-			glm::vec4(SceneManager::GetSceneData()->GetMainCamera()->GetExposure(), 0.f, 0.f, 0.f);
+			glm::vec4(SceneManager::Get()->GetMainCamera()->GetExposure(), 0.f, 0.f, 0.f);
 
 		return tonemappingParams;
 	}

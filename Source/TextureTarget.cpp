@@ -92,8 +92,8 @@ namespace re
 	ScissorRect::ScissorRect()
 		: m_left(0)
 		, m_top(0)
-		, m_right(en::Config::Get()->GetValue<int>("windowXRes"))
-		, m_bottom(en::Config::Get()->GetValue<int>("windowYRes"))
+		, m_right(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName))
+		, m_bottom(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName))
 	{
 	}
 
@@ -334,6 +334,18 @@ namespace re
 			// Note: It's valid to set a blend mode even if a Target does not have a Texture
 			m_colorTargets[i].SetBlendMode(blendModes);
 		}
+	}
+
+
+	void TextureTargetSet::SetViewport(re::Viewport const& viewport)
+	{
+		m_viewport = viewport;
+	}
+
+
+	void TextureTargetSet::SetScissorRect(re::ScissorRect const& scissorRect)
+	{
+		m_scissorRect = scissorRect;
 	}
 
 

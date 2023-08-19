@@ -25,13 +25,13 @@ namespace opengl
 		};
 		swapChainParams->m_backbufferTargetSet->SetColorTargetBlendModes(1, &backbufferBlendModes);
 
-		swapChainParams->m_backbufferTargetSet->Viewport() =
+		swapChainParams->m_backbufferTargetSet->SetViewport(
 		{
 			0,
 			0,
 			(uint32_t)en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName),
 			(uint32_t)en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName)
-		};
+		});
 		// Note: OpenGL framebuffer has no texture targets
 	}
 

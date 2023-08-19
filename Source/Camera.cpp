@@ -1,42 +1,61 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "DebugConfiguration.h"
 #include "Camera.h"
+#include "ImGuiUtils.h"
 #include "Texture.h"
 #include "Material.h"
+#include "SceneManager.h"
+
+using gr::Material;
+using re::Texture;
+using gr::Transform;
+using std::shared_ptr;
+using std::string;
+using std::make_shared;
+using glm::mat4;
 
 
 namespace gr
 {
-	using gr::Material;
-	using re::Texture;
-	using gr::Transform;
-	using std::shared_ptr;
-	using std::string;
-	using std::make_shared;
-	using glm::mat4;
+	std::shared_ptr<gr::Camera> Camera::Create(
+		std::string const& cameraName, CameraConfig const& camConfig, gr::Transform* parent)
+	{
+		std::shared_ptr<gr::Camera> newCamera = nullptr;
+		newCamera.reset(new gr::Camera(cameraName, camConfig, parent));
+
+		newCamera->m_cameraIdx = en::SceneManager::GetSceneData()->AddCamera(newCamera);
+
+		return newCamera;
+	}
 
 
 	Camera::Camera(string const& cameraName, CameraConfig const& camConfig, Transform* parent)
 		: NamedObject(cameraName)
 		, Transformable(parent)
 		, m_cameraConfig(camConfig)
-		, m_isDirty(true)
+		, m_projectionMatricesDirty(true)
 	{
+		m_cameraParamBlock = re::ParameterBlock::Create(
+			CameraParams::s_shaderName,
+			m_cameraPBData, // Initialize with a default struct: Updated later
+			re::ParameterBlock::PBType::Mutable);
+
 		m_cubeView.reserve(6);
+		RecomputeProjectionMatrices();
 		UpdateCameraParamBlockData();
 	}
 
 
 	void Camera::Update(const double stepTimeMs)
 	{
+		// Note: We move the camera by modify its Transform directly
+		RecomputeProjectionMatrices();
 		UpdateCameraParamBlockData();
 	}
 
 
 	void Camera::UpdateCameraParamBlockData()
 	{
-		ComputeParameters();
-
 		SEAssert("Camera parameter block has not been initialized yet", m_cameraParamBlock != nullptr);
 
 		m_cameraPBData.g_view = GetViewMatrix();
@@ -55,21 +74,16 @@ namespace gr
 		m_cameraPBData.g_cameraWPos = GetTransform()->GetGlobalPosition();
 
 		m_cameraParamBlock->Commit(m_cameraPBData);
-
-		// TODO: It's possible to update the camera params multiple times in a frame if SetCameraConfig is called by
-		// another object in the Updateable list.
-		// eg. Light::Update -> SetCameraConfig
-		// -> Need to switch to a scene graph representation so the update order each frame is determinate
 	}
 
 
-	void Camera::ComputeParameters()
+	void Camera::RecomputeProjectionMatrices()
 	{
-		if (!m_isDirty)
+		if (!m_projectionMatricesDirty)
 		{
 			return;
 		}
-		m_isDirty = false;
+		m_projectionMatricesDirty = false;
 
 		if (m_cameraConfig.m_projectionType == CameraConfig::ProjectionType::Orthographic)
 		{
@@ -97,15 +111,6 @@ namespace gr
 				m_cameraConfig.m_far
 			);
 		}
-
-		// Initialize the param block pointer first:
-		if (m_cameraParamBlock == nullptr)
-		{
-			m_cameraParamBlock = re::ParameterBlock::Create(
-				CameraParams::s_shaderName,
-				m_cameraPBData, // Initialize with a default struct: Updated in UpdateCameraParamBlockData()
-				re::ParameterBlock::PBType::Mutable);
-		}
 	}
 
 
@@ -123,7 +128,7 @@ namespace gr
 		cubeView.emplace_back(glm::lookAt( // X+
 			centerPos,							// eye
 			centerPos + Transform::WorldAxisX,	// center: Position the camera is looking at
-			-Transform::WorldAxisY));									// Normalized camera up vector
+			-Transform::WorldAxisY));			// Normalized camera up vector
 		cubeView.emplace_back(glm::lookAt( // X-
 			centerPos,
 			centerPos - Transform::WorldAxisX,
@@ -172,57 +177,50 @@ namespace gr
 
 	void Camera::SetCameraConfig(CameraConfig const& newConfig)
 	{
-		m_cameraConfig = newConfig;
-		ComputeParameters();
+		if (newConfig != m_cameraConfig)
+		{
+			m_cameraConfig = newConfig;
+			m_projectionMatricesDirty = true;
+		}		
 	}
 
 
 	void Camera::ShowImGuiWindow()
 	{
 		ImGui::Text("Name: \"%s\"", GetName().c_str());
-		m_isDirty |= ImGui::SliderFloat("Near plane distance", &m_cameraConfig.m_near , 0.f, 10.0f, "near = %.3f");
-		m_isDirty |= ImGui::SliderFloat("Far plane distance", &m_cameraConfig.m_far, 0.f, 1000.0f, "far = %.3f");
+
+		const string nearSliderLabel = "Near plane distance##" + GetName(); // Prevent ID collisions; "##" hides whatever follows
+		m_projectionMatricesDirty |= ImGui::SliderFloat(nearSliderLabel.c_str(), &m_cameraConfig.m_near , 0.f, 10.0f, "near = %.3f");
+
+		const string farSliderLabel = "Far plane distance##" + GetName(); // Prevent ID collisions; "##" hides whatever follows
+		m_projectionMatricesDirty |= ImGui::SliderFloat(farSliderLabel.c_str(), &m_cameraConfig.m_far, 0.f, 1000.0f, "far = %.3f");
+
 		ImGui::Text("1/far = %f", 1.f / m_cameraConfig.m_far);
-		m_isDirty |= ImGui::SliderFloat("Exposure", &m_cameraConfig.m_exposure, 0, 10.0f, "exposure = %.3f");
 
+		const string exposureLabel = "Exposure##" + GetName(); // Prevent ID collisions; "##" hides whatever follows
+		m_projectionMatricesDirty |= ImGui::SliderFloat(exposureLabel.c_str(), &m_cameraConfig.m_exposure, 0, 10.0f, "exposure = %.3f");
 
-		auto ShowMat4x4 = [](char const* label, glm::mat4x4 const& matrix)
-		{
-			if (ImGui::TreeNode(label))
-			{
-				if (ImGui::BeginTable("table1", 4))
-				{
-					for (int row = 0; row < 4; row++)
-					{
-						ImGui::TableNextRow();
-						for (int column = 0; column < 4; column++)
-						{
-							ImGui::TableSetColumnIndex(column);
-							ImGui::Text("%f", matrix[row][column]);
-						}
-					}
-					ImGui::EndTable();
-				}
-				ImGui::TreePop();
-			}
-		};
-
-
-		ShowMat4x4("View Matrix:", GetViewMatrix());
+		util::DisplayMat4x4("View Matrix:", GetViewMatrix());
 
 		const glm::mat4x4 invView = GetInverseViewMatrix();
-		ShowMat4x4("Inverse View Matrix:", invView);
+		util::DisplayMat4x4("Inverse View Matrix:", invView);
 
-		ShowMat4x4("Projection Matrix:", m_projection);
+		util::DisplayMat4x4("Projection Matrix:", m_projection);
 
 		const glm::mat4x4 invProj = GetInverseProjectionMatrix();
-		ShowMat4x4("Inverse Projection Matrix:", invProj);		
+		util::DisplayMat4x4("Inverse Projection Matrix:", invProj);
 
 		const glm::mat4x4 viewProj = GetViewProjectionMatrix();
-		ShowMat4x4("View Projection Matrix:", viewProj);
+		util::DisplayMat4x4("View Projection Matrix:", viewProj);
 
 		const glm::mat4x4 invViewProj = GetInverseViewProjectionMatrix();
-		ShowMat4x4("Inverse View Projection Matrix:", invViewProj);
+		util::DisplayMat4x4("Inverse View Projection Matrix:", invViewProj);
+	}
+
+
+	void Camera::SetAsMainCamera() const
+	{
+		en::SceneManager::Get()->SetMainCameraIdx(m_cameraIdx);
 	}
 }
 

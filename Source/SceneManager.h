@@ -31,6 +31,8 @@ namespace en
 
 		void FinalUpdate(); // Called once after final Update call in main game loop
 
+		void SetMainCameraIdx(size_t camIdx);
+		std::shared_ptr<gr::Camera> GetMainCamera() const;
 
 		void ShowImGuiWindow(bool* show);
 
@@ -40,6 +42,8 @@ namespace en
 		std::vector<re::Batch> m_sceneBatches;
 
 		std::shared_ptr<fr::SceneData> m_sceneData = nullptr;
+
+		size_t m_activeCameraIdx;
 
 
 	private:

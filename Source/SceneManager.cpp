@@ -35,6 +35,7 @@ namespace en
 
 	SceneManager::SceneManager() 
 		: m_sceneData(nullptr)
+		, m_activeCameraIdx(0)
 	{
 		m_sceneBatches.reserve(k_initialBatchReservations);
 	}
@@ -102,6 +103,24 @@ namespace en
 	}
 
 
+	void SceneManager::SetMainCameraIdx(size_t camIdx)
+	{
+		EventManager::Get()->Notify(EventManager::EventInfo{ EventManager::CameraSelectionChanged });
+
+		m_activeCameraIdx = camIdx;
+	}
+
+
+	std::shared_ptr<gr::Camera> SceneManager::GetMainCamera() const
+	{
+		// TODO: This camera is accessed multiple times before the first frame is rendered (e.g. PlayerObject, various
+		// graphics systems). Currently, this is fine as we currently join any loading threads before creating these
+		// objects, but it may not always be the case.
+
+		return m_sceneData->GetCameras()[m_activeCameraIdx];
+	}
+
+
 	void SceneManager::ShowImGuiWindow(bool* show)
 	{
 		constexpr char const* scenePanelWindowTitle = "Scene Objects";
@@ -110,9 +129,45 @@ namespace en
 		if (ImGui::TreeNode("Cameras:"))
 		{
 			std::vector<std::shared_ptr<gr::Camera>> const& cameras = m_sceneData->GetCameras();
-			for (auto const& camera : cameras)
+
+			// TODO: Currently, we set the camera parameters as a permanent PB via a shared_ptr from the main camera
+			// once in every GS. We need to be able to get/set the main camera's camera params PB every frame, in every
+			// GS. Camera selection works, but the GS's all render from the same camera. For now, just disable it.
+//#define CAMERA_SELECTION
+#if defined(CAMERA_SELECTION)
+			static int activeCamIdx = static_cast<int>(m_activeCameraIdx);
+			constexpr ImGuiComboFlags k_cameraSelectionflags = 0;
+			static int comboSelectedCamIdx = activeCamIdx; // Initialize with the index of the current main camera
+			const char* comboPreviewCamName = cameras[comboSelectedCamIdx]->GetName().c_str();
+			if (ImGui::BeginCombo("Active camera", comboPreviewCamName, k_cameraSelectionflags))
 			{
-				camera->ShowImGuiWindow();
+				for (size_t camIdx = 0; camIdx < cameras.size(); camIdx++)
+				{
+					const bool isSelected = (comboSelectedCamIdx == camIdx);
+					if (ImGui::Selectable(cameras[camIdx]->GetName().c_str(), isSelected))
+					{
+						comboSelectedCamIdx = static_cast<int>(camIdx);
+					}
+
+					if (isSelected) // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndCombo();
+
+				// Handle active camera changes:
+				if (comboSelectedCamIdx != activeCamIdx)
+				{
+					activeCamIdx = comboSelectedCamIdx;
+					SetMainCameraIdx(comboSelectedCamIdx);
+				}
+			}
+#endif
+			
+			for (size_t camIdx = 0; camIdx < cameras.size(); camIdx++)
+			{
+				cameras[camIdx]->ShowImGuiWindow();
 				ImGui::Separator();
 			}
 
@@ -149,6 +204,7 @@ namespace en
 			if (ambientLight)
 			{
 				ambientLight->ShowImGuiWindow();
+				ImGui::Separator();
 			}
 
 			ImGui::TreePop();
@@ -160,6 +216,7 @@ namespace en
 			if (directionalLight)
 			{
 				directionalLight->ShowImGuiWindow();
+				ImGui::Separator();
 			}
 
 			ImGui::TreePop();
@@ -171,6 +228,7 @@ namespace en
 			for (auto const& light : pointLights)
 			{
 				light->ShowImGuiWindow();
+				ImGui::Separator();
 			}
 
 			ImGui::TreePop();

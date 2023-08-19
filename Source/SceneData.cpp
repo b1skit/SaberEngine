@@ -802,6 +802,8 @@ namespace
 	// Creates a default camera if camera == nullptr, and no cameras exist in scene
 	void LoadAddCamera(SceneData& scene, shared_ptr<SceneNode> parent, cgltf_node* current)
 	{
+		std::shared_ptr<gr::Camera> newCam;
+
 		if (parent == nullptr && (current == nullptr || current->camera == nullptr))
 		{
 			LOG("Creating a default camera");
@@ -813,49 +815,49 @@ namespace
 			camConfig.m_far = Config::Get()->GetValue<float>("defaultFar");
 			camConfig.m_exposure = Config::Get()->GetValue<float>("defaultExposure");
 
-			scene.AddCamera(make_shared<Camera>("Default camera", camConfig, nullptr));
-
-			return;
-		}
-
-		cgltf_camera const* const camera = current->camera;
-
-		SEAssert("Must supply a parent and camera pointer", parent != nullptr && camera != nullptr);
-
-		const string camName = camera->name ? string(camera->name) : "Unnamed camera";
-		LOG("Loading camera \"%s\"", camName.c_str());
-
-		gr::Camera::CameraConfig camConfig;
-		camConfig.m_projectionType = camera->type == cgltf_camera_type_orthographic ? 
-			Camera::CameraConfig::ProjectionType::Orthographic : Camera::CameraConfig::ProjectionType::Perspective;
-		if (camConfig.m_projectionType == Camera::CameraConfig::ProjectionType::Orthographic)
-		{
-			camConfig.m_yFOV = 0;
-			camConfig.m_near = camera->data.orthographic.znear;
-			camConfig.m_far = camera->data.orthographic.zfar;
-			camConfig.m_orthoLeftRightBotTop.x = -camera->data.orthographic.xmag / 2.0f;
-			camConfig.m_orthoLeftRightBotTop.y = camera->data.orthographic.xmag / 2.0f;
-			camConfig.m_orthoLeftRightBotTop.z = -camera->data.orthographic.ymag / 2.0f;
-			camConfig.m_orthoLeftRightBotTop.w = camera->data.orthographic.ymag / 2.0f;
+			newCam = gr::Camera::Create("Default camera", camConfig, nullptr); // Internally calls SceneData::AddCamera
 		}
 		else
 		{
-			camConfig.m_yFOV = camera->data.perspective.yfov;
-			camConfig.m_near = camera->data.perspective.znear;
-			camConfig.m_far = camera->data.perspective.zfar;
-			camConfig.m_aspectRatio	= 
-				camera->data.perspective.has_aspect_ratio ? camera->data.perspective.aspect_ratio : 1.0f;
-			camConfig.m_orthoLeftRightBotTop.x = 0.f;
-			camConfig.m_orthoLeftRightBotTop.y = 0.f;
-			camConfig.m_orthoLeftRightBotTop.z = 0.f;
-			camConfig.m_orthoLeftRightBotTop.w = 0.f;
+			cgltf_camera const* const camera = current->camera;
+
+			SEAssert("Must supply a parent and camera pointer", parent != nullptr && camera != nullptr);
+
+			const string camName = camera->name ? string(camera->name) : "Unnamed camera";
+			LOG("Loading camera \"%s\"", camName.c_str());
+
+			gr::Camera::CameraConfig camConfig;
+			camConfig.m_projectionType = camera->type == cgltf_camera_type_orthographic ?
+				Camera::CameraConfig::ProjectionType::Orthographic : Camera::CameraConfig::ProjectionType::Perspective;
+			if (camConfig.m_projectionType == Camera::CameraConfig::ProjectionType::Orthographic)
+			{
+				camConfig.m_yFOV = 0;
+				camConfig.m_near = camera->data.orthographic.znear;
+				camConfig.m_far = camera->data.orthographic.zfar;
+				camConfig.m_orthoLeftRightBotTop.x = -camera->data.orthographic.xmag / 2.0f;
+				camConfig.m_orthoLeftRightBotTop.y = camera->data.orthographic.xmag / 2.0f;
+				camConfig.m_orthoLeftRightBotTop.z = -camera->data.orthographic.ymag / 2.0f;
+				camConfig.m_orthoLeftRightBotTop.w = camera->data.orthographic.ymag / 2.0f;
+			}
+			else
+			{
+				camConfig.m_yFOV = camera->data.perspective.yfov;
+				camConfig.m_near = camera->data.perspective.znear;
+				camConfig.m_far = camera->data.perspective.zfar;
+				camConfig.m_aspectRatio =
+					camera->data.perspective.has_aspect_ratio ? camera->data.perspective.aspect_ratio : 1.0f;
+				camConfig.m_orthoLeftRightBotTop.x = 0.f;
+				camConfig.m_orthoLeftRightBotTop.y = 0.f;
+				camConfig.m_orthoLeftRightBotTop.z = 0.f;
+				camConfig.m_orthoLeftRightBotTop.w = 0.f;
+			}
+
+			// Create the camera and set the transform values on the parent object:
+			newCam = gr::Camera::Create(camName, camConfig, parent->GetTransform()); // Internally calls SceneData::AddCamera
+			SetTransformValues(current, parent->GetTransform());
 		}
 
-		// Create the camera and set the transform values on the parent object:
-		shared_ptr<Camera> newCam = make_shared<Camera>(camName, camConfig, parent->GetTransform());
-		SetTransformValues(current, parent->GetTransform());
-		
-		scene.AddCamera(newCam);
+		newCam->SetAsMainCamera();
 	}
 
 
@@ -1481,15 +1483,19 @@ namespace fr
 	}
 
 
-	void SceneData::AddCamera(std::shared_ptr<gr::Camera> newCamera)
+	size_t SceneData::AddCamera(std::shared_ptr<gr::Camera> newCamera)
 	{
 		SEAssert("Cannot add a null camera", newCamera != nullptr);
+
+		size_t camIdx = m_cameras.size();
 		{
 			std::lock_guard<std::mutex> lock(m_camerasMutex);
 			m_cameras.emplace_back(newCamera);
 		}
 
 		AddUpdateable(newCamera);
+
+		return camIdx;
 	}
 
 
@@ -1613,17 +1619,6 @@ namespace fr
 	{
 		SEAssert("Accessing data container is not thread safe during loading", m_finishedLoading);
 		return m_cameras;
-	}
-
-
-	std::shared_ptr<gr::Camera> SceneData::GetMainCamera() const
-	{
-		// TODO: This camera is accessed multiple times before the first frame is rendered (e.g. PlayerObject, various
-		// graphics systems). Currently, this is fine as we currently join any loading threads before creating these
-		// objects, but it may not always be the case.
-
-		/*SEAssert("Accessing this data is not thread safe during loading", m_finishedLoading);*/
-		return m_cameras.at(0);
 	}
 
 	gr::Bounds const& SceneData::GetWorldSpaceSceneBounds() const 

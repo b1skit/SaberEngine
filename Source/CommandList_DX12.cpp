@@ -586,7 +586,7 @@ namespace dx12
 		dx12::TextureTargetSet::PlatformParams* targetSetParams =
 			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 
-		re::Viewport const& viewport = targetSet.Viewport();
+		re::Viewport const& viewport = targetSet.GetViewport();
 
 		// TODO: OpenGL expects ints, DX12 expects floats. We should support both via the Viewport interface (eg. Union)
 		targetSetParams->m_viewport = CD3DX12_VIEWPORT(
@@ -608,7 +608,7 @@ namespace dx12
 		dx12::TextureTargetSet::PlatformParams* targetSetParams =
 			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 
-		re::ScissorRect const& scissorRect = targetSet.ScissorRect();
+		re::ScissorRect const& scissorRect = targetSet.GetScissorRect();
 
 		targetSetParams->m_scissorRect = CD3DX12_RECT(
 			scissorRect.Left(),

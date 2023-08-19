@@ -4,17 +4,17 @@
 #include "EventManager.h"
 #include "InputManager.h"
 #include "PlayerObject.h"
+#include "SceneManager.h"
+
+using gr::Transform;
+using gr::Camera;
+using en::Config;
+using en::InputManager;
+using glm::vec3;
 
 
 namespace fr
 {
-	using gr::Transform;
-	using gr::Camera;
-	using en::Config;
-	using en::InputManager;
-	using glm::vec3;
-
-
 	PlayerObject::PlayerObject(std::shared_ptr<Camera> playerCam)
 		: en::NamedObject("Player Object")
 		, fr::Transformable(nullptr)
@@ -34,6 +34,7 @@ namespace fr
 
 		// Subscribe to events:
 		en::EventManager::Get()->Subscribe(en::EventManager::EventType::InputToggleConsole, this);
+		en::EventManager::Get()->Subscribe(en::EventManager::EventType::CameraSelectionChanged, this);
 	}
 
 
@@ -51,6 +52,18 @@ namespace fr
 				if (eventInfo.m_data0.m_dataB)
 				{
 					m_processInput = !m_processInput;
+				}
+			}
+			break;
+			case en::EventManager::EventType::CameraSelectionChanged:
+			{
+				std::shared_ptr<gr::Camera> mainCam = en::SceneManager::Get()->GetMainCamera();
+				if (mainCam != m_playerCam)
+				{
+					m_playerCam = mainCam;
+
+					m_transform.SetGlobalTranslation(m_playerCam->GetTransform()->GetGlobalPosition());
+					m_playerCam->GetTransform()->ReParent(&m_transform);
 				}
 			}
 			break;

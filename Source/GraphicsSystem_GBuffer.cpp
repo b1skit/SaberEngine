@@ -99,7 +99,7 @@ namespace gr
 		m_gBufferStage->SetTextureTargetSet(gBufferTargets);
 
 		// Camera:
-		m_gBufferStage->AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());
+		m_gBufferStage->AddPermanentParameterBlock(SceneManager::Get()->GetMainCamera()->GetCameraParams());
 
 		// Set the stage params:
 		gr::PipelineState gBufferStageParams;

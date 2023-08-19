@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Config.h"
-#include "ConfigKeys.h"
 #include "KeyConfiguration.h"
 #include "TextUtils.h"
 
@@ -378,8 +377,8 @@ namespace en
 		
 		// Window:
 		markDirty |= TrySetValue("windowTitle",				std::string("Saber Engine"),	SettingType::Common);
-		markDirty |= TrySetValue(ConfigKeys::k_windowXResValueName,		1920,	SettingType::Common);
-		markDirty |= TrySetValue(ConfigKeys::k_windowYResValueName,		1080,	SettingType::Common);
+		markDirty |= TrySetValue(ConfigKeys::k_windowXResValueName,	1920,		SettingType::Common);
+		markDirty |= TrySetValue(ConfigKeys::k_windowYResValueName,	1080,		SettingType::Common);
 
 		// System config:
 		markDirty |= TrySetValue("vsync",					true,				SettingType::Common);
@@ -471,8 +470,10 @@ namespace en
 			TryInsertDefault("numPMREMSamples",	4096);	// Number of samples to use when generating IBL PMREM texture
 
 			// Shadow map defaults:
-			TryInsertDefault("defaultMinShadowBias",	0.01f);
-			TryInsertDefault("defaultMaxShadowBias",	0.05f);
+			TryInsertDefault(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias,	0.001f);
+			TryInsertDefault(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias,	0.005f);
+			TryInsertDefault(en::ConfigKeys::k_defaultPointLightMinShadowBias,			0.01f);
+			TryInsertDefault(en::ConfigKeys::k_defaultPointLightMaxShadowBias,			0.05f);
 		}
 		break;
 		case platform::RenderingAPI::DX12:

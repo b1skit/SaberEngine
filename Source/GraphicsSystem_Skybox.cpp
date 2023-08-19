@@ -77,7 +77,7 @@ namespace gr
 
 		m_skyboxStage->SetStagePipelineState(skyboxStageParams);
 
-		m_skyboxStage->AddPermanentParameterBlock(SceneManager::GetSceneData()->GetMainCamera()->GetCameraParams());
+		m_skyboxStage->AddPermanentParameterBlock(SceneManager::Get()->GetMainCamera()->GetCameraParams());
 
 		DeferredLightingGraphicsSystem* deferredLightGS = 
 			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>();

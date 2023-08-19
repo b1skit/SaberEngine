@@ -175,10 +175,10 @@ namespace re
 		long Bottom() const { return m_bottom; }
 
 	private: // ScissorRect bounds, in pixel coordinates: 
-		long m_left;
-		long m_top;
-		long m_right;
-		long m_bottom;
+		long m_left;	// Upper-left corner coordinates: X
+		long m_top;		// Upper-left corner coordinates: Y
+		long m_right;	// Width
+		long m_bottom;	// Height
 	};
 
 
@@ -226,11 +226,11 @@ namespace re
 		void SetColorTargetBlendModes(size_t numTargets, re::TextureTarget::TargetParams::BlendModes const* blendModesArray);
 		void SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes const&);
 
-		inline re::Viewport& Viewport() { return m_viewport; }
-		inline re::Viewport const& Viewport() const { return m_viewport; }
+		void SetViewport(re::Viewport const&);
+		inline re::Viewport const& GetViewport() const { return m_viewport; }
 
-		inline re::ScissorRect& ScissorRect() { return m_scissorRect; }
-		inline re::ScissorRect const& ScissorRect() const { return m_scissorRect; }
+		void SetScissorRect(re::ScissorRect const&);
+		inline re::ScissorRect const& GetScissorRect() const { return m_scissorRect; }
 
 		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::shared_ptr<PlatformParams> params) { m_platformParams = params; }
