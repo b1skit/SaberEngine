@@ -193,7 +193,7 @@ namespace gr
 		lightTargetParams.m_faces = 1;
 		lightTargetParams.m_usage = Texture::Usage::ColorTarget;
 		lightTargetParams.m_dimension = Texture::Dimension::Texture2D;
-		lightTargetParams.m_format = Texture::Format::RGBA32F;
+		lightTargetParams.m_format = Texture::Format::RGBA16F;
 		lightTargetParams.m_colorSpace = Texture::ColorSpace::Linear;
 		lightTargetParams.m_addToSceneData = false;
 

@@ -22,6 +22,7 @@ namespace opengl
 		{
 		case re::Texture::Format::RGBA32F:
 		{
+			SEAssert("32-bit sRGB textures are not supported", texParams.m_colorSpace != re::Texture::ColorSpace::sRGB);
 			m_format = GL_RGBA;
 			m_internalFormat = GL_RGBA32F;
 			m_type = GL_FLOAT;
@@ -29,6 +30,7 @@ namespace opengl
 		break;
 		case re::Texture::Format::RG32F:
 		{
+			SEAssert("32-bit sRGB textures are not supported", texParams.m_colorSpace != re::Texture::ColorSpace::sRGB);
 			m_format = GL_RG;
 			m_internalFormat = GL_RG32F;
 			m_type = GL_FLOAT;
@@ -36,6 +38,7 @@ namespace opengl
 		break;
 		case re::Texture::Format::R32F:
 		{
+			SEAssert("32-bit sRGB textures are not supported", texParams.m_colorSpace != re::Texture::ColorSpace::sRGB);
 			m_format = GL_R;
 			m_internalFormat = GL_R32F;
 			m_type = GL_FLOAT;

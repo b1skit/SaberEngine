@@ -49,35 +49,46 @@ namespace gr
 		m_gBufferStage->SetStageShader(gBufferShader);
 
 		// Create GBuffer color targets:
-		Texture::TextureParams gBufferTexParams;
-		gBufferTexParams.m_width = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
-		gBufferTexParams.m_height = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName);
-		gBufferTexParams.m_faces = 1;
-		gBufferTexParams.m_usage = re::Texture::Usage::ColorTarget;
-		gBufferTexParams.m_dimension = re::Texture::Dimension::Texture2D;
-		gBufferTexParams.m_format = re::Texture::Format::RGBA32F; // Using 4 channels for future flexibility
-		gBufferTexParams.m_colorSpace = re::Texture::ColorSpace::sRGB;
-		gBufferTexParams.m_addToSceneData = false;
+		Texture::TextureParams gBufferColorParams;
+		gBufferColorParams.m_width = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
+		gBufferColorParams.m_height = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName);
+		gBufferColorParams.m_faces = 1;
+		gBufferColorParams.m_usage = re::Texture::Usage::ColorTarget;
+		gBufferColorParams.m_dimension = re::Texture::Dimension::Texture2D;
+		gBufferColorParams.m_format = re::Texture::Format::RGBA8;
+		gBufferColorParams.m_colorSpace = re::Texture::ColorSpace::Linear;
+		gBufferColorParams.m_addToSceneData = false;
 
-		gBufferTexParams.m_useMIPs = false;
+		gBufferColorParams.m_useMIPs = false;
 		// TODO: Currently, our GBuffer doesn't use mipmapping, but it should.
 		// We need to compute the appropriate mip level in the shader, by writing UV derivatives during the GBuffer
 		// pass, and using a stencil mask to ensure we're sampling the correct material at boundaries
 		// https://www.reedbeta.com/blog/deferred-texturing/
 		// -> We'll also need to trigger mip generation after laying down the GBuffer
 
-		re::TextureTarget::TargetParams targetParams;
-		targetParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		Texture::TextureParams gBufferWorldNormalParams = gBufferColorParams;
+		gBufferWorldNormalParams.m_format = re::Texture::Format::RGBA16F; // World normal may have negative components
+
+		re::TextureTarget::TargetParams gbufferTargetParams;
+		gbufferTargetParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		std::shared_ptr<re::TextureTargetSet> gBufferTargets = re::TextureTargetSet::Create("GBuffer Target Set");
 		for (uint8_t i = GBufferTexIdx::GBufferAlbedo; i <= GBufferTexIdx::GBufferMatProp0; i++)
 		{
-			gBufferTargets->SetColorTarget(
-				i, re::Texture::Create(GBufferTexNames[i], gBufferTexParams, false), targetParams);
+			if (i == GBufferWNormal)
+			{
+				gBufferTargets->SetColorTarget(
+					i, re::Texture::Create(GBufferTexNames[i], gBufferWorldNormalParams, false), gbufferTargetParams);
+			}
+			else
+			{
+				gBufferTargets->SetColorTarget(
+					i, re::Texture::Create(GBufferTexNames[i], gBufferColorParams, false), gbufferTargetParams);
+			}
 		}
 		
 		// Create GBuffer depth target:
-		re::Texture::TextureParams depthTexParams(gBufferTexParams);
+		re::Texture::TextureParams depthTexParams(gBufferColorParams);
 		depthTexParams.m_usage = re::Texture::Usage::DepthTarget;
 		depthTexParams.m_format = re::Texture::Format::Depth32F;
 		depthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
