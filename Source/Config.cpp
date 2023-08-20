@@ -391,7 +391,6 @@ namespace en
 		markDirty |= TrySetValue("defaultyFOV",				1.570796f,			SettingType::Common);
 		markDirty |= TrySetValue("defaultNear",				1.0f,				SettingType::Common);
 		markDirty |= TrySetValue("defaultFar",				100.0f,				SettingType::Common);
-		markDirty |= TrySetValue("defaultExposure",			1.0f,				SettingType::Common);
 
 		// Input parameters:
 		markDirty |= TrySetValue("mousePitchSensitivity",	0.5f,				SettingType::Common);

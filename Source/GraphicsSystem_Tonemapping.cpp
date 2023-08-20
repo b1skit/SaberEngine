@@ -22,26 +22,6 @@ using std::string;
 using glm::vec3;
 
 
-namespace
-{
-	struct TonemappingParams
-	{
-		glm::vec4 g_exposure; // .x = exposure, .yzw = unused
-
-		static constexpr char const* const s_shaderName = "TonemappingParams"; // Not counted towards size of struct
-	};
-
-	TonemappingParams CreateTonemappingParamsData()
-	{
-		TonemappingParams tonemappingParams;
-		tonemappingParams.g_exposure = 
-			glm::vec4(SceneManager::Get()->GetMainCamera()->GetExposure(), 0.f, 0.f, 0.f);
-
-		return tonemappingParams;
-	}
-}
-
-
 namespace gr
 {
 	TonemappingGraphicsSystem::TonemappingGraphicsSystem(std::string name)
@@ -68,14 +48,8 @@ namespace gr
 
 		m_tonemappingStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 
-		// Tonemapping param block:
-		TonemappingParams tonemappingParams = CreateTonemappingParamsData();
-		shared_ptr<re::ParameterBlock> tonemappingPB = re::ParameterBlock::Create(
-			TonemappingParams::s_shaderName,
-			tonemappingParams,
-			re::ParameterBlock::PBType::Immutable);
-
-		m_tonemappingStage->AddPermanentParameterBlock(tonemappingPB);
+		// Camera params:
+		m_tonemappingStage->AddPermanentParameterBlock(SceneManager::Get()->GetMainCamera()->GetCameraParams());
 
 		pipeline.AppendRenderStage(m_tonemappingStage);
 	}

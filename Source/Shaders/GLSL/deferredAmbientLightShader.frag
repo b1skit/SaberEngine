@@ -54,7 +54,7 @@ void main()
 	// FragColor = vec4((linearAlbedo.rgb * irradiance * k_d + specular), 1.0); // Note: Omitted the "/ PI" factor here
 	// OLD:	FragColor = vec4((FragColor.rgb * irradiance * k_d + specular) * AO / M_PI, 1.0); // Note: Omitted the "/ PI" factor here
 
-	const float ev100 = GetEV100FromExposureSettings(CAM_APERTURE, CAM_SHUTTERSPEED, CAM_SENSITIVITY);
+	const float ev100 = GetEV100FromExposureSettings(g_sensorProperties.x, g_sensorProperties.y, g_sensorProperties.z);
 	const float exposure = Exposure(ev100);
 	// TODO: Move this to a helper function (duplicated in gBufferFillShader.frag)
 

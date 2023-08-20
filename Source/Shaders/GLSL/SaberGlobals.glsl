@@ -31,14 +31,6 @@
 #define GAMMA vec3(0.45454545454545454545454545454545454545, 0.45454545454545454545454545454545454545, 0.45454545454545454545454545454545454545)
 
 
-// TODO: Make these camera params user-controllable
-
-// f/stops == focal length / diameter of aperture. Commonly 1.4, 2, 2.8, 4, 5.6, 8, 11, 16. Lower = more exposure.
-#define CAM_APERTURE 0.2 // == 5m / 25mm
-#define CAM_SHUTTERSPEED 0.01 // == 1.0/100.0
-#define CAM_SENSITIVITY 100.0 // ISO
-
-
 mat3 AssembleTBN(const vec3 faceNormal, const vec4 localTangent, const mat4 model)
 {
 	// To rotate normal vectors, we must the transpose of the inverse of the model matrix, incase we have a

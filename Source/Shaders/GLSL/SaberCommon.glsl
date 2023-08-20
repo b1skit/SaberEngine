@@ -139,6 +139,8 @@ layout(std430, binding=1) readonly buffer CameraParams
 	mat4 g_invViewProjection;	// [Projection * View]^-1
 
 	vec4 g_projectionParams;	// .x = 1 (unused), .y = near, .z = far, .w = 1/far
+
+	vec4 g_sensorProperties;
 	
 	vec3 g_cameraWPos;
 };
@@ -189,29 +191,22 @@ layout(std430, binding=5) readonly buffer CubemapShadowRenderParams
 };
 
 
-// GraphicsSystem_Tonemapping.cpp
-layout(std430, binding=6) readonly buffer TonemappingParams
-{
-	vec4 g_exposure; // .x = exposure, .yzw = unused
-};
-
-
 // GraphicsSystem_DeferredLighting.cpp
-layout(std430, binding=7) readonly buffer IEMPMREMGenerationParams
+layout(std430, binding=6) readonly buffer IEMPMREMGenerationParams
 {
 	vec4 g_numSamplesRoughness; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness
 };
 
 
 // GraphicsSystem_Bloom.cpp
-layout(std430, binding=8) readonly buffer BloomParams
+layout(std430, binding=7) readonly buffer BloomParams
 {
 	vec4 g_bloomTargetResolution; // .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
 };
 
 
 // GraphicsSystem_Skybox.cpp
-layout(std430, binding=9) readonly buffer SkyboxParams
+layout(std430, binding=8) readonly buffer SkyboxParams
 {
 	vec4 g_skyboxTargetResolution; // .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
 };

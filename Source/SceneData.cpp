@@ -813,7 +813,6 @@ namespace
 			camConfig.m_yFOV = Config::Get()->GetValue<float>("defaultyFOV");
 			camConfig.m_near = Config::Get()->GetValue<float>("defaultNear");
 			camConfig.m_far = Config::Get()->GetValue<float>("defaultFar");
-			camConfig.m_exposure = Config::Get()->GetValue<float>("defaultExposure");
 
 			newCam = gr::Camera::Create("Default camera", camConfig, nullptr); // Internally calls SceneData::AddCamera
 		}

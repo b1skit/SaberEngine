@@ -46,13 +46,13 @@ void main()
 	gBuffer_out_RMAO = vec4(roughMetal, occlusion, 1.0f);
 
 	// Exposure:
-	const float ev100 = GetEV100FromExposureSettings(CAM_APERTURE, CAM_SHUTTERSPEED, CAM_SENSITIVITY);
+	const float ev100 = GetEV100FromExposureSettings(g_sensorProperties.x, g_sensorProperties.y, g_sensorProperties.z);
 	const float exposure = Exposure(ev100);
 	// TODO: Move this to a helper function (duplicated in deferredAmbientLightShader.frag)
 
 	// Product of (emissiveTexture * emissiveFactor) is in cd/(m^2) (Candela per square meter)
 	const vec3 emissive = texture(MatEmissive, vOut.uv0.xy).rgb * g_emissiveFactor * g_emissiveStrength;
-	const float EC = 3.0; // EC == Exposure compensation. TODO: Make this user-controllable
+	const float EC = 3.0; // EC == Exposure compensation. TODO: Make this user-controllable via material properties
 
 	gBuffer_out_emissive = vec4(emissive * pow(2.0, ev100 + EC - 3.0) * exposure, 1.0f);
 

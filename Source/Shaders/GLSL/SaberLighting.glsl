@@ -168,7 +168,7 @@ vec4 ComputePBRLighting(
 
 //	return vec4(combinedContribution, linearAlbedo.a);
 
-	const float ev100 = GetEV100FromExposureSettings(CAM_APERTURE, CAM_SHUTTERSPEED, CAM_SENSITIVITY);
+	const float ev100 = GetEV100FromExposureSettings(g_sensorProperties.x, g_sensorProperties.y, g_sensorProperties.z);
 	const float exposure = Exposure(ev100);
 	// TODO: Move this to a helper function (duplicated in deferredAmbientLightShader.frag, gBufferFillShader.frag)
 

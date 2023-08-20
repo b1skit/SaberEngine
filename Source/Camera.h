@@ -30,9 +30,13 @@ namespace gr
 			// Orthographic properties:
 			glm::vec4 m_orthoLeftRightBotTop = glm::vec4(-5.f, 5.f, -5.f, 5.f);
 
-			// Image properties:
-			float m_exposure = 1.0f;
-
+			// Sensor properties:
+			// f/stops: == focal length / diameter of aperture (entrance pupil). Commonly 1.4, 2, 2.8, 4, 5.6, 8, 11, 16
+			float m_aperture = 0.2f; // f/stops
+			float m_shutterSpeed = 0.01f; // Seconds
+			float m_sensitivity = 250.f; // ISO
+			float m_exposureCompensation; // EC. TODO: Implement/use this
+			// TODO: Add a lens size, and compute the aperture from that
 
 			bool operator==(CameraConfig const& rhs) const
 			{
@@ -42,7 +46,10 @@ namespace gr
 					m_far == rhs.m_far &&
 					m_aspectRatio == rhs.m_aspectRatio &&
 					m_orthoLeftRightBotTop == rhs.m_orthoLeftRightBotTop &&
-					m_exposure == rhs.m_exposure;
+					m_aperture == rhs.m_aperture &&
+					m_shutterSpeed == rhs.m_shutterSpeed &&
+					m_sensitivity == rhs.m_sensitivity &&
+					m_exposureCompensation == rhs.m_exposureCompensation;
 			}
 			
 			bool operator!=(CameraConfig const& rhs) const
@@ -63,13 +70,10 @@ namespace gr
 
 			glm::vec4 g_projectionParams; // .x = 1 (unused), .y = near, .z = far, .w = 1/far
 
+			glm::vec4 g_sensorProperties; // .x = aperture, .y = shutter speed, .z = sensitivity, .w = unused
+
 			glm::vec3 g_cameraWPos;
 			float padding0;
-
-			// TODO: Implement exposure here
-			// -> Currently using an exposure defined in the config to do tonemapping, and another exposure value when 
-			// blooming...
-			/*float g_exposure;*/
 
 			static constexpr char const* const s_shaderName = "CameraParams"; // Not counted towards size of struct
 		};
@@ -103,8 +107,14 @@ namespace gr
 		
 		std::vector<glm::mat4> const& GetCubeViewProjectionMatrix();
 		
-		float& GetExposure() { return m_cameraConfig.m_exposure; }
-		float GetExposure() const { return m_cameraConfig.m_exposure; }
+		float GetAperture() const { return m_cameraConfig.m_aperture; }
+		void SetAperture(float aperture) { m_cameraConfig.m_aperture = aperture; }
+
+		float GetShutterSpeed() const { return m_cameraConfig.m_shutterSpeed; }
+		void SetShutterSpeed(float shutterSpeed) { m_cameraConfig.m_shutterSpeed = shutterSpeed; }
+
+		float GetSensitivity() const { return m_cameraConfig.m_sensitivity; }
+		void SetSensitivity(float sensitivity) { m_cameraConfig.m_sensitivity = sensitivity; }
 
 		void SetCameraConfig(CameraConfig const& newConfig);
 

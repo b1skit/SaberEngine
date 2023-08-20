@@ -71,6 +71,9 @@ namespace gr
 		m_cameraPBData.g_projectionParams = 
 			glm::vec4(1.f, m_cameraConfig.m_near, m_cameraConfig.m_far, 1.0f / m_cameraConfig.m_far);
 
+		m_cameraPBData.g_sensorProperties =
+			glm::vec4(m_cameraConfig.m_aperture, m_cameraConfig.m_shutterSpeed, m_cameraConfig.m_sensitivity, 0.f);
+
 		m_cameraPBData.g_cameraWPos = GetTransform()->GetGlobalPosition();
 
 		m_cameraParamBlock->Commit(m_cameraPBData);
@@ -197,8 +200,24 @@ namespace gr
 
 		ImGui::Text("1/far = %f", 1.f / m_cameraConfig.m_far);
 
-		const string exposureLabel = "Exposure##" + GetName(); // Prevent ID collisions; "##" hides whatever follows
-		m_projectionMatricesDirty |= ImGui::SliderFloat(exposureLabel.c_str(), &m_cameraConfig.m_exposure, 0, 10.0f, "exposure = %.3f");
+		ImGui::Text("Sensor Properties");
+
+		const string apertureLabel = "Aperture (f/stops)##" + GetName();
+		ImGui::SliderFloat(apertureLabel.c_str(), &m_cameraConfig.m_aperture, 0, 1.0f, "Aperture = %.3f");
+		ImGui::SetItemTooltip("Expressed in f-stops. Controls how open/closed the aperture is. f-stops indicate the\n"
+			"ratio of the lens' focal length to the diameter of the entrance pupil. High-values (f/16) indicate a\n"
+			"small aperture,small values (f/1.4) indicate a wide aperture. Controls exposition and the depth of field");
+		
+		const string shutterSpeedLabel = "Shutter Speed (seconds)##" + GetName();
+		ImGui::SliderFloat(shutterSpeedLabel.c_str(), &m_cameraConfig.m_shutterSpeed, 0, 0.2f, "Shutter speed = %.3f");
+		ImGui::SetItemTooltip("Expressed in seconds. Controls how long the aperture remains opened and the timing of\n"
+			"the sensor shutter(s)). Controls exposition and motion blur.");
+
+		const string sensitivityLabel = "Sensitivity (ISO)##" + GetName();
+		ImGui::SliderFloat(sensitivityLabel.c_str(), &m_cameraConfig.m_sensitivity, 0, 1000.0f, "Sensitivity = %.3f");
+		ImGui::SetItemTooltip("Expressed in ISO. Controls how the light reaching the sensor is quantized. Controls\N"
+			"exposition and the amount of noise.");
+		
 
 		util::DisplayMat4x4("View Matrix:", GetViewMatrix());
 
