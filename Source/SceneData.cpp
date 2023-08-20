@@ -1347,14 +1347,27 @@ namespace fr
 	{
 		stbi_set_flip_vertically_on_load(false); // Set this once. Note: It is NOT thread safe, and must be consistent
 
-		std::future<void> errorMatTaskFuture = 
-			en::CoreEngine::GetThreadPool()->EnqueueJob([this]() {
-				GenerateErrorMaterial(*this);
-			});
-
-
 		string sceneRootPath;
 		Config::Get()->TryGetValue<string>("sceneRootPath", sceneRootPath);
+
+		std::vector<std::future<void>> earlyLoadTasks;
+
+		earlyLoadTasks.emplace_back( 
+			en::CoreEngine::GetThreadPool()->EnqueueJob([this]() {
+				GenerateErrorMaterial(*this);
+			}));
+
+		// Add a default camera to start:
+		earlyLoadTasks.emplace_back(
+			en::CoreEngine::GetThreadPool()->EnqueueJob([this]() {
+				LoadAddCamera(*this, nullptr, nullptr);
+			}));
+
+		// Load the IBL/skybox HDRI:
+		earlyLoadTasks.emplace_back(
+			en::CoreEngine::GetThreadPool()->EnqueueJob([this, &sceneRootPath]() {
+				LoadIBL(sceneRootPath, *this);
+			}));
 
 		const bool gotSceneFilePath = !sceneFilePath.empty();
 		if (gotSceneFilePath)
@@ -1402,16 +1415,12 @@ namespace fr
 			// Cleanup:
 			cgltf_free(data);
 		}
-
-		// Load the IBL/skybox HDRI:
-		LoadIBL(sceneRootPath, *this); // TODO: Enqueue this onto a worker thread while we're loading other stuff
-
-		if (m_cameras.empty()) // Add a default camera if none were found during LoadSceneHierarchy()
+		
+		// Wait for all of the tasks we spawned here to be done:
+		for (size_t loadTask = 0; loadTask < earlyLoadTasks.size(); loadTask++)
 		{
-			LoadAddCamera(*this, nullptr, nullptr);
+			earlyLoadTasks[loadTask].wait();
 		}
-
-		errorMatTaskFuture.wait();
 
 		return true;
 	}
