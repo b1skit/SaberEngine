@@ -10,20 +10,25 @@
 
 void main()
 {	
+	const vec2 screenUV = vOut.uv0.xy; // Ambient is drawn with a fullscreen quad
+
 	// Note: All PBR calculations are performed in linear space
 	// However, we use sRGB-format textures, getting the sRGB->Linear transformation for free when writing our GBuffer
 	// for sRGB-format inputs (eg. MatAlbedo, ... and?) so no need to degamma MatAlbedo here
-	const vec4 linearAlbedo	= texture(GBufferAlbedo, vOut.uv0);
+	const vec4 linearAlbedo	= texture(GBufferAlbedo, screenUV);
 
-	const vec3 worldNormal = texture(GBufferWNormal, vOut.uv0).xyz;
-	const vec4 MatRMAO = texture(GBufferRMAO, vOut.uv0.xy);
-	const vec4 worldPosition = texture(GBufferWPos, vOut.uv0.xy);
-	const vec4 matProp0 = texture(GBufferMatProp0, vOut.uv0.xy); // .rgb = F0 (Surface response at 0 degrees)
+	const vec3 worldNormal = texture(GBufferWNormal, screenUV).xyz;
+	const vec4 MatRMAO = texture(GBufferRMAO, screenUV);
+	const vec4 matProp0 = texture(GBufferMatProp0, screenUV); // .rgb = F0 (Surface response at 0 degrees)
+
+	// Reconstruct the world position:
+	const float nonLinearDepth = texture(GBufferDepth, screenUV).r;
+	const vec4 worldPos = vec4(GetWorldPos(screenUV, nonLinearDepth, g_invViewProjection), 1.f);
 
 	const float AO = MatRMAO.b;
 	float metalness	= MatRMAO.y;
 
-	vec4 viewPosition = g_view * worldPosition; // View-space position
+	vec4 viewPosition = g_view * worldPos;
 	vec3 viewEyeDir	= normalize(-viewPosition.xyz);	// View-space eye/camera direction
 	vec3 viewNormal	= normalize(g_view * vec4(worldNormal, 0)).xyz; // View-space surface MatNormal
 
@@ -44,7 +49,7 @@ void main()
 
 	// Get the specular reflectance term:
 	// Note: We must flip the Y component of our reflected vector to compensate for our UV (0,0) top-left convention
-	const vec3 worldView = normalize(g_cameraWPos - worldPosition.xyz); // Direction = Point -> Eye
+	const vec3 worldView = normalize(g_cameraWPos - worldPos.xyz); // Direction = Point -> Eye
 	vec3 worldReflection = normalize(reflect(-worldView, worldNormal));
 	worldReflection.y *= -1;
 

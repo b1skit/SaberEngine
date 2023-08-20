@@ -7,14 +7,12 @@
 #include "SaberLighting.glsl"
 
 
-// Note: Locations must match the order defined in material.h
 layout (location = 0) out vec4 gBuffer_out_albedo;
 layout (location = 1) out vec4 gBuffer_out_worldNormal;
 layout (location = 2) out vec4 gBuffer_out_RMAO;
 layout (location = 3) out vec4 gBuffer_out_emissive;
-layout (location = 4) out vec4 gBuffer_out_wPos;
-layout (location = 5) out vec4 gBuffer_out_matProp0;
-layout (location = 6) out vec4 gBuffer_out_depth;
+layout (location = 4) out vec4 gBuffer_out_matProp0;
+layout (location = 5) out vec4 gBuffer_out_depth;
 
 
 void main()
@@ -55,8 +53,6 @@ void main()
 	const float EC = 3.0; // EC == Exposure compensation. TODO: Make this user-controllable via material properties
 
 	gBuffer_out_emissive = vec4(emissive * pow(2.0, ev100 + EC - 3.0) * exposure, 1.0f);
-
-	gBuffer_out_wPos = vec4(vOut.worldPos.xyz, 1);
 
 	// Material properties:
 	gBuffer_out_matProp0 = vec4(g_f0, 1.0f);

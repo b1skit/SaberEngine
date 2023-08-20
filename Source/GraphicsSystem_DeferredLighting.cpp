@@ -558,11 +558,13 @@ namespace gr
 		shared_ptr<Light> const keyLight = SceneManager::GetSceneData()->GetKeyLight();
 		vector<shared_ptr<Light>> const& pointLights = SceneManager::GetSceneData()->GetPointLights();
 
-		// Add GBuffer textures as stage inputs:		
 		GBufferGraphicsSystem* gBufferGS = RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>();
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
 
-		for (uint8_t slot = 0; slot < (GBufferGraphicsSystem::GBufferTexNames.size() - 1); slot++) // -1, since we handle depth @end
+		// Attach GBuffer color inputs:
+		constexpr uint8_t numGBufferColorInputs = 
+			static_cast<uint8_t>(GBufferGraphicsSystem::GBufferTexNames.size() - 1);
+		for (uint8_t slot = 0; slot < numGBufferColorInputs; slot++)
 		{
 			if (GBufferGraphicsSystem::GBufferTexNames[slot] == "GBufferEmissive")
 			{
@@ -595,9 +597,33 @@ namespace gr
 			}
 		}
 
+		// Attach the GBUffer depth input:
+		constexpr uint8_t depthBufferSlot = gr::GBufferGraphicsSystem::GBufferDepth;
 		if (AmbientIsValid())
 		{
-			// Add IBL texture inputs for ambient stage:
+			m_ambientStage->SetPerFrameTextureInput(
+				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
+				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
+				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+		}
+		if (keyLight)
+		{
+			m_keylightStage->SetPerFrameTextureInput(
+				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
+				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
+				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+		}
+		if (!pointLights.empty())
+		{
+			m_pointlightStage->SetPerFrameTextureInput(
+				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
+				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
+				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+		}
+		
+		// Add IBL texture inputs for ambient stage:
+		if (AmbientIsValid())
+		{
 			m_ambientStage->SetPerFrameTextureInput(
 				"CubeMap0",
 				m_IEMTex,
@@ -617,9 +643,9 @@ namespace gr
 			);
 		}
 		
+		// Keylight shadowmap:
 		if (keyLight)
 		{
-			// Keylight shadowmap:		
 			ShadowMap* const keyLightShadowMap = keyLight->GetShadowMap();
 			if (keyLightShadowMap)
 			{

@@ -91,9 +91,8 @@ layout(binding=0) uniform sampler2D GBufferAlbedo;
 layout(binding=1) uniform sampler2D GBufferWNormal;
 layout(binding=2) uniform sampler2D GBufferRMAO;
 layout(binding=3) uniform sampler2D GBufferEmissive;
-layout(binding=4) uniform sampler2D GBufferWPos;
-layout(binding=5) uniform sampler2D GBufferMatProp0;
-layout(binding=6) uniform sampler2D GBufferDepth;
+layout(binding=4) uniform sampler2D GBufferMatProp0;
+layout(binding=5) uniform sampler2D GBufferDepth;
 
 // Deferred light shadowmaps:
 layout(binding=10) uniform sampler2D Depth0;

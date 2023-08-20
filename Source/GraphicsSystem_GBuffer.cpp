@@ -24,9 +24,8 @@ namespace gr
 		ENUM_TO_STR(GBufferWNormal),	// 1
 		ENUM_TO_STR(GBufferRMAO),		// 2
 		ENUM_TO_STR(GBufferEmissive),	// 3
-		ENUM_TO_STR(GBufferWPos),		// 4
-		ENUM_TO_STR(GBufferMatProp0),	// 5
-		ENUM_TO_STR(GBufferDepth),		// 6
+		ENUM_TO_STR(GBufferMatProp0),	// 4
+		ENUM_TO_STR(GBufferDepth),		// 5
 	};
 	// TODO: Split this into 2 lists: color target names, and depth names
 	// -> Often need to loop over color, and treat depth differently

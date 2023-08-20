@@ -17,9 +17,8 @@ namespace gr
 			GBufferWNormal	= 1,
 			GBufferRMAO		= 2,
 			GBufferEmissive = 3,
-			GBufferWPos		= 4,
-			GBufferMatProp0 = 5,
-			GBufferDepth	= 6,
+			GBufferMatProp0 = 4,
+			GBufferDepth	= 5,
 
 			GBufferTexIdx_Count
 		};
