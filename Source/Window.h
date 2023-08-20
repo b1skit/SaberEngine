@@ -31,12 +31,13 @@ namespace en
 		// Platform wrappers:
 		bool Create(std::string const& title, uint32_t width, uint32_t height);
 		void Destroy();
-		void SetRelativeMouseMode(bool enabled) const; // Hides cursor and wraps movements around boundaries
+		void SetRelativeMouseMode(bool enabled); // Hides cursor and wraps movements around boundaries
 
 
 	private:
 		std::unique_ptr<Window::PlatformParams> m_platformParams;
 		bool m_hasFocus;
+		bool m_relativeMouseModeEnabled;
 
 	private: // Copying not allowed
 		Window(Window const&) = delete;

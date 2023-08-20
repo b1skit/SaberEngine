@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "DebugConfiguration.h"
 #include "Window.h"
 #include "Window_Platform.h"
 
@@ -6,6 +7,7 @@ namespace en
 {
 	Window::Window()
 		: m_hasFocus(false)
+		, m_relativeMouseModeEnabled(true)
 	{
 		platform::Window::CreatePlatformParams(*this);
 	}
@@ -26,6 +28,15 @@ namespace en
 	void Window::SetFocusState(bool hasFocus)
 	{
 		m_hasFocus = hasFocus;
+	
+		if (!m_hasFocus)
+		{
+			platform::Window::SetRelativeMouseMode(*this, false);
+		}
+		else
+		{
+			platform::Window::SetRelativeMouseMode(*this, m_relativeMouseModeEnabled);
+		}
 	}
 
 
@@ -35,8 +46,12 @@ namespace en
 	}
 
 
-	void Window::SetRelativeMouseMode(bool enabled) const
+	void Window::SetRelativeMouseMode(bool enabled)
 	{
-		platform::Window::SetRelativeMouseMode(*this, enabled);
+		if (enabled != m_relativeMouseModeEnabled)
+		{
+			platform::Window::SetRelativeMouseMode(*this, enabled);
+			m_relativeMouseModeEnabled = enabled;
+		}
 	}
 }

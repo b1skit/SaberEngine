@@ -67,6 +67,9 @@ namespace en
 		const bool windowCreated = m_window->Create(windowTitle, xRes, yRes);
 		SEAssert("Failed to create a window", windowCreated);
 
+		// Don't capture the mouse while we're loading
+		m_window->SetRelativeMouseMode(false);
+
 		// Render thread:
 		m_threadPool.EnqueueJob([&]() {RenderManager::Get()->Lifetime(m_copyBarrier.get()); });
 		RenderManager::Get()->ThreadStartup(); // Initializes context
@@ -87,6 +90,9 @@ namespace en
 
 		m_isRunning = true;
 
+		// We're done loading: Capture the mouse
+		m_window->SetRelativeMouseMode(true);
+
 		PIXEndEvent();
 	}
 
@@ -95,8 +101,6 @@ namespace en
 	void CoreEngine::Run()
 	{
 		LOG("\nCoreEngine: Starting main game loop\n");
-
-		m_window->SetRelativeMouseMode(true);
 
 		// Process any events that might have occurred during startup:
 		EventManager::Get()->Update(m_frameNum, 0.0);

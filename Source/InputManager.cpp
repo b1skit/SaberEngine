@@ -219,9 +219,22 @@ namespace en
 		if (m_consoleTriggered != m_prevConsoleTriggeredState)
 		{
 			m_prevConsoleTriggeredState = m_consoleTriggered;
-			
-			// True hides the mouse and locks it to the window
-			en::CoreEngine::Get()->GetWindow()->SetRelativeMouseMode(!m_consoleTriggered);
+
+			// If true, hide the mouse and lock it to the window
+			const bool captureMouse = !m_consoleTriggered;
+			en::CoreEngine::Get()->GetWindow()->SetRelativeMouseMode(captureMouse);
+
+			// Disable ImGui mouse listening if the console is not active: Prevents UI elements
+			// flashing as the hidden mouse cursor passes by
+			ImGuiIO& io = ImGui::GetIO();
+			if (m_consoleTriggered)
+			{
+				io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
+			}
+			else
+			{
+				io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
+			}
 		}
 	}
 
@@ -320,17 +333,6 @@ namespace en
 							if (keystate == true)
 							{
 								m_consoleTriggered = !m_consoleTriggered;
-																
-								// Disable ImGui mouse listening if the console is not active: Prevents UI elements
-								// flashing as the hidden mouse cursor passes by
-								if (m_consoleTriggered)
-								{
-									io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
-								}
-								else
-								{
-									io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
-								}
 							}
 						}
 						break;
