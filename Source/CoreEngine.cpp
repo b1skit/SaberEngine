@@ -71,19 +71,21 @@ namespace en
 		m_window->SetRelativeMouseMode(false);
 
 		// Render thread:
-		m_threadPool.EnqueueJob([&]() {RenderManager::Get()->Lifetime(m_copyBarrier.get()); });
-		RenderManager::Get()->ThreadStartup(); // Initializes context
+		re::RenderManager* renderManager = RenderManager::Get();
+		m_threadPool.EnqueueJob([&]() {renderManager->Lifetime(m_copyBarrier.get()); });
+		renderManager->ThreadStartup(); // Initializes context
 
 		// Start managers:
-		EventManager::Get()->Startup();
-		EventManager::Get()->Subscribe(en::EventManager::EngineQuit, this);
+		en::EventManager* eventManager = en::EventManager::Get();
+		eventManager->Startup();
+		eventManager->Subscribe(en::EventManager::EngineQuit, this);
 
 		LogManager::Get()->Startup();
 		InputManager::Get()->Startup(); // Now that the window is created
 
 		SceneManager::Get()->Startup(); // Load assets
 
-		RenderManager::Get()->ThreadInitialize(); // Create graphics systems, close PB registration
+		renderManager->ThreadInitialize(); // Create graphics systems, close PB registration
 
 		// Create gameplay objects now that the scene data is loaded
 		GameplayManager::Get()->Startup();
@@ -102,8 +104,15 @@ namespace en
 	{
 		LOG("\nCoreEngine: Starting main game loop\n");
 
+		en::EventManager* eventManager = EventManager::Get();
+		en::LogManager* logManager = LogManager::Get();
+		en::InputManager* inputManager = InputManager::Get();
+		fr::GameplayManager* gameplayManager = GameplayManager::Get();
+		en::SceneManager* sceneManager = SceneManager::Get();
+		re::RenderManager* renderManager = RenderManager::Get();
+
 		// Process any events that might have occurred during startup:
-		EventManager::Get()->Update(m_frameNum, 0.0);
+		eventManager->Update(m_frameNum, 0.0);
 
 		// Initialize game loop timing:
 		double elapsed = (double)m_fixedTimeStep; // Ensure we pump Updates once before the 1st render
@@ -123,7 +132,7 @@ namespace en
 			PIXEndEvent();
 
 			PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::LogManager::Update");
-			LogManager::Get()->Update(m_frameNum, lastOuterFrameTime);
+			logManager->Update(m_frameNum, lastOuterFrameTime);
 			PIXEndEvent();
 
 			// Update components until enough time has passed to trigger a render.
@@ -137,20 +146,20 @@ namespace en
 
 				// Pump our events/input:
 				PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::EventManager::Update");
-				EventManager::Get()->Update(m_frameNum, lastOuterFrameTime);
+				eventManager->Update(m_frameNum, lastOuterFrameTime);
 				PIXEndEvent();
 
 				PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::InputManager::Update");
-				InputManager::Get()->Update(m_frameNum, lastOuterFrameTime);
+				inputManager->Update(m_frameNum, lastOuterFrameTime);
 				PIXEndEvent();
 
 				// Pump systems that rely on events/input:
 				PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::GameplayManager::Update");
-				GameplayManager::Get()->Update(m_frameNum, m_fixedTimeStep);
+				gameplayManager->Update(m_frameNum, m_fixedTimeStep);
 				PIXEndEvent();
 
 				PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::SceneManager::Update");
-				SceneManager::Get()->Update(m_frameNum, m_fixedTimeStep); // Updates all of the scene objects
+				sceneManager->Update(m_frameNum, m_fixedTimeStep); // Updates all of the scene objects
 				PIXEndEvent();
 
 				// AI, physics, etc should also be pumped here (eventually)
@@ -159,12 +168,12 @@ namespace en
 			}
 
 			PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::SceneManager::FinalUpdate");
-			SceneManager::Get()->FinalUpdate(); // Builds batches, ready for RenderManager to consume
+			sceneManager->FinalUpdate(); // Builds batches, ready for RenderManager to consume
 			PIXEndEvent();
 
 			// Pump the render thread, and wait for it to signal copying is complete:
 			PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "en::CoreEngine::Run Wait on copy barrier");
-			RenderManager::Get()->EnqueueUpdate({m_frameNum, lastOuterFrameTime});
+			renderManager->EnqueueUpdate({m_frameNum, lastOuterFrameTime});
 			m_copyBarrier->arrive_and_wait();
 			PIXEndEvent();
 
