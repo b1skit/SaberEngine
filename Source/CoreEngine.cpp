@@ -200,11 +200,13 @@ namespace en
 
 		Config::Get()->SaveConfigFile();
 		
+		// We need to signal the render thread to shut down and wait on it to complete before we can start destroying
+		// anything it might be using
+		RenderManager::Get()->ThreadShutdown();
+
 		// Note: Shutdown order matters!
 		GameplayManager::Get()->Shutdown();
 		InputManager::Get()->Shutdown();
-
-		RenderManager::Get()->ThreadShutdown();
 
 		SceneManager::Get()->Shutdown();
 		EventManager::Get()->Shutdown();
