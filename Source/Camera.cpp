@@ -215,7 +215,7 @@ namespace gr
 
 		const string sensitivityLabel = "Sensitivity (ISO)##" + GetName();
 		ImGui::SliderFloat(sensitivityLabel.c_str(), &m_cameraConfig.m_sensitivity, 0, 1000.0f, "Sensitivity = %.3f");
-		ImGui::SetItemTooltip("Expressed in ISO. Controls how the light reaching the sensor is quantized. Controls\N"
+		ImGui::SetItemTooltip("Expressed in ISO. Controls how the light reaching the sensor is quantized. Controls\n"
 			"exposition and the amount of noise.");
 		
 
