@@ -57,17 +57,41 @@ vec3 WorldNormalFromTextureNormal(vec3 texNormal, mat3 TBN)
 }
 
 
-// Linearize an sRGB gamma curved color value
-vec3 Degamma(vec3 sRGB)
+vec3 sRGBToLinear(vec3 srgbColor)
 {
-	return pow(sRGB, vec3(2.2, 2.2, 2.2));
+	// https://en.wikipedia.org/wiki/SRGB#Computing_the_transfer_function
+	vec3 result = vec3(0, 0, 0);
+	for (int c = 0; c < 3; c++)
+	{
+		result[c] = srgbColor[c] <= 0.04045 ? (srgbColor[c] / 12.92f) : pow((srgbColor[c] + 0.055f) / 1.055f, 2.4f);
+	}
+	return result;
 }
 
 
-// Apply Gamma correction to a linear color value
-vec3 Gamma(vec3 linearColor)
+vec4 sRGBToLinear(vec4 srgbColorWithAlpha)
 {
-	return pow(linearColor, GAMMA);
+	return vec4(sRGBToLinear(srgbColorWithAlpha.rgb), srgbColorWithAlpha.a);
+}
+
+
+vec3 LinearToSRGB(vec3 linearColor)
+{
+	// https://en.wikipedia.org/wiki/SRGB#Computing_the_transfer_function
+	// Note: The 2 functions intersect at x = 0.0031308
+	vec3 result = vec3(0, 0, 0);
+	for (int c = 0; c < 3; c++)
+	{
+		result[c] = 
+			linearColor[c] <= 0.0031308 ? 12.92f * linearColor[c] : 1.055f * pow(abs(linearColor[c]), 1.f / 2.4f) - 0.055f;
+	}
+	return result;
+}
+
+
+vec4 LinearToSRGB(vec4 linearColorWithAlpha)
+{
+	return vec4(LinearToSRGB(linearColorWithAlpha.rgb), linearColorWithAlpha.a);
 }
 
 

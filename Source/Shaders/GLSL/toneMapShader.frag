@@ -21,7 +21,7 @@ void main()
 	vec3 toneMappedColor = vec3(1.0, 1.0, 1.0) - exp(-color.rgb * exposure);
 
 	// Apply Gamma correction:
-	toneMappedColor = Gamma(toneMappedColor);
+	toneMappedColor = LinearToSRGB(toneMappedColor);
 
 	FragColor = vec4(toneMappedColor, 1.0);
 } 
