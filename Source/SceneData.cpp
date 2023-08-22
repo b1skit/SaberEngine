@@ -69,27 +69,15 @@ namespace
 	/*****************************************************************************************************************/
 
 
-	void CopyImageData(
-		std::vector<uint8_t>& texels,
-		const uint8_t* imageData,
-		size_t width,
-		size_t height,
-		uint8_t numChannels,
-		uint8_t bitDepth,
-		size_t firstTexelIndex) // firstTexelIndex is in units of # of pixels (NOT bytes)
-	{	
-		SEAssert("Invalid bit depth", bitDepth == 8 || bitDepth == 16 || bitDepth == 32);
-		SEAssert("Invalid number of channels", numChannels == 1 || numChannels == 2 || numChannels == 4);
+	// Helper: Wrap a stb allocation in a unique_ptr:
+	re::Texture::ImageDataUniquePtr CreateImageDataUniquePtr(void* imageData)
+	{
+		re::Texture::ImageDataUniquePtr imageDataPtr(
+			imageData,
+			[](void* stbImageData) { stbi_image_free(stbImageData); });
 
-		const uint8_t bytesPerPixel = (bitDepth * numChannels) / 8;
-		const size_t numBytes = width * height * bytesPerPixel;
-
-		SEAssert("Texels is not correctly allocated", numBytes == texels.size());
-
-		const size_t firstByteIdx = firstTexelIndex * bytesPerPixel;
-
-		memcpy(&texels.at(firstByteIdx), imageData, numBytes);
-	}
+		return std::move(imageDataPtr);
+	};
 
 
 	std::shared_ptr<re::Texture> LoadTextureFromFilePath(
@@ -106,9 +94,6 @@ namespace
 		PerformanceTimer timer;
 		timer.Start();
 
-		// TODO: We shouldn't set/reset this on every call
-		stbi_set_flip_vertically_on_load(false);
-
 		const uint32_t totalFaces = (uint32_t)texturePaths.size();
 
 		// Modify default TextureParams to be suitable for a generic error texture:
@@ -124,9 +109,9 @@ namespace
 		};
 		glm::vec4 fillColor = errorTexFillColor;
 		
-
 		// Load the texture, face-by-face:
-		shared_ptr<Texture> texture(nullptr);
+		std::vector<re::Texture::ImageDataUniquePtr> initialData;
+		shared_ptr<Texture> texture = nullptr;
 		for (size_t face = 0; face < totalFaces; face++)
 		{
 			// Get the image data:
@@ -162,15 +147,16 @@ namespace
 				LOG("Texture \"%s\" is %dx%d, %d-bit, %d channels",
 					texturePaths[face].c_str(), width, height, bitDepth, desiredChannels);
 
-				if (texture == nullptr) // i.e. We're processing the 1st face
+				initialData.emplace_back(CreateImageDataUniquePtr(imageData));
+
+				if (face == 0) // 1st face: Update the texture parameters
 				{
-					// Update the texture parameters:
 					texParams.m_width = width;
 					texParams.m_height = height;
 
 					if ((width == 1 || height == 1) && (width != height))
 					{
-						LOG_WARNING("Found 1D texture, but 1D textures are currently not supported. Treating "
+						SEAssertF("Found 1D texture, but 1D textures are currently not supported. Treating "
 							"this texture as 2D");
 						texParams.m_dimension = re::Texture::Dimension::Texture2D; // TODO: Support 1D textures
 						/*texParams.m_dimension = re::Texture::Dimension::Texture1D;*/
@@ -204,34 +190,17 @@ namespace
 					}
 					
 					fillColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
-
-					// Create the texture now the params are configured:
-					texture = re::Texture::Create(texturePaths[0], texParams, false);
 				}
 				else // texture already exists: Ensure the face has the same dimensions
 				{
 					SEAssert("Parameter mismatch", texParams.m_width == width && texParams.m_height == height);
 				}
-
-				// Copy the data to our texture's texel vector:
-				const size_t firstTexelIndex = face * width * height;
-				CopyImageData(
-					texture->GetTexels(), 
-					static_cast<uint8_t const*>(imageData), 
-					width, 
-					height, 
-					(int8_t)desiredChannels,
-					bitDepth, 
-					firstTexelIndex);
-
-				// Cleanup:
-				stbi_image_free(imageData);
 			}
 			else if (returnErrorTex)
 			{
-				if (texture != nullptr)
+				if (!initialData.empty())
 				{
-					texture = nullptr;
+					initialData.clear();
 
 					// Reset texParams to be suitable for an error texture
 					texParams.m_width = 2;
@@ -244,7 +213,10 @@ namespace
 					
 					fillColor = errorTexFillColor;
 				}
+
+				// We'll populate the initial image data internally:
 				texture = re::Texture::Create(texturePaths[0], texParams, true, fillColor);
+				break;
 			}
 			else
 			{
@@ -253,6 +225,12 @@ namespace
 				timer.StopSec();
 				return nullptr;
 			}
+		}
+
+		if (!texture)
+		{
+			texture = re::Texture::Create(
+				texturePaths[0], texParams, false, glm::vec4(0.f, 0.f, 0.f, 1.f), std::move(initialData));
 		}
 
 		LOG("Loaded texture \"%s\" in %f seconds...", texturePaths[0].c_str(), timer.StopSec());
@@ -312,10 +290,13 @@ namespace
 		}
 
 		shared_ptr<Texture> texture(nullptr);
+		std::vector<re::Texture::ImageDataUniquePtr> initialData;
 		if (imageData)
 		{
 			LOG("Texture \"%s\" is %dx%d, %d-bit, %d channels", 
 				texName.c_str(), width, height, bitDepth, desiredChannels);
+
+			initialData.emplace_back(std::move(CreateImageDataUniquePtr(imageData)));
 
 			// Update the texture parameters:
 			texParams.m_width = width;
@@ -356,20 +337,11 @@ namespace
 				SEAssertF("Invalid number of channels");
 			}
 
+			// Create the texture now the params are configured:
+
 			fillColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
 
-			// Create the texture now the params are configured:
-			texture = re::Texture::Create(texName, texParams, false, fillColor);
-
-			// Copy the data to our texture's texel vector:
-			CopyImageData(
-				texture->GetTexels(),
-				static_cast<uint8_t const*>(imageData),
-				width,
-				height,
-				(int8_t)desiredChannels,
-				bitDepth,
-				0); // 1st texel index
+			texture = re::Texture::Create(texName, texParams, false, fillColor, std::move(initialData));
 		}
 		else
 		{

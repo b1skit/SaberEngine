@@ -202,11 +202,8 @@ namespace opengl
 		{
 			for (uint32_t i = 0; i < texParams.m_faces; i++)
 			{
-				SEAssert("Color target must have data to buffer",
-					texture.GetTexels().size() ==
-					(texParams.m_faces * texParams.m_width * texParams.m_height * re::Texture::GetNumBytesPerTexel(texParams.m_format)));
-
-				void* data = (void*)texture.GetTexel(0, 0, i);
+				void* data = texture.GetTexelData(i);
+				SEAssert("Color target must have data to buffer", data);				
 
 				if (texParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
 				{

@@ -13,7 +13,11 @@ using std::string;
 namespace re
 {
 	std::shared_ptr<re::Texture> Texture::Create(
-		std::string const& name, TextureParams const& params, bool doFill, glm::vec4 fillColor /*= glm::vec4(0.f, 0.f, 0.f, 1.f)*/)
+		std::string const& name, 
+		TextureParams const& params, 
+		bool doFill, 
+		glm::vec4 fillColor /*= glm::vec4(0.f, 0.f, 0.f, 1.f)*/,
+		std::vector<ImageDataUniquePtr> initialData /*= std::vector<ImageDataUniquePtr>()*/)
 	{
 		// If the Texture already exists, return it. Otherwise, create the Texture 
 		if (params.m_addToSceneData && en::SceneManager::GetSceneData()->TextureExists(name))
@@ -24,7 +28,7 @@ namespace re
 		// it. But that's OK, the SceneData will only allow 1 instance to be added
 
 		std::shared_ptr<re::Texture> newTexture = nullptr;
-		newTexture.reset(new re::Texture(name, params, doFill, fillColor));
+		newTexture.reset(new re::Texture(name, params, doFill, fillColor, std::move(initialData)));
 
 		// If requested, register the Texture with the SceneData object for lifetime management:
 		bool foundExistingTexture = false;
@@ -43,23 +47,41 @@ namespace re
 	}
 
 
-	Texture::Texture(string const& name, TextureParams const& params, bool doFill, glm::vec4 const& fillColor)
+	Texture::Texture(
+		string const& name, 
+		TextureParams const& params, 
+		bool doFill, 
+		glm::vec4 const& fillColor, 
+		std::vector<ImageDataUniquePtr> initialData /*= std::vector<ImageDataUniquePtr>()*/)
 		: NamedObject(name)
 		, m_texParams{ params }
 		, m_platformParams{ nullptr }
+		, m_initialData(std::move(initialData))
 	{
 		SEAssert("Invalid usage", m_texParams.m_usage != Texture::Usage::Invalid);
 		SEAssert("Invalid dimension", m_texParams.m_dimension != Texture::Dimension::Invalid);
 		SEAssert("Invalid format", m_texParams.m_format != Texture::Format::Invalid);
 		SEAssert("Invalid color space", m_texParams.m_colorSpace != Texture::ColorSpace::Invalid);
-		SEAssert("Invalid dimensions", m_texParams.m_width > 0 && m_texParams.m_height > 0); 
+		SEAssert("Invalid dimensions", m_texParams.m_width > 0 && m_texParams.m_height > 0);
 
 		platform::Texture::CreatePlatformParams(*this);
 
 		if (m_texParams.m_usage & Usage::Color) // Optimization: Only allocate texels for non-target types
 		{
-			const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
-			m_texels.resize(params.m_faces * params.m_width * params.m_height * bytesPerPixel, 0);
+			if (m_initialData.empty())
+			{
+				const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
+				const uint32_t totalBytesPerFace = params.m_width * params.m_height * bytesPerPixel;
+
+				m_initialData.resize(params.m_faces);
+
+				for (size_t faceIdx = 0; faceIdx < params.m_faces; faceIdx++)
+				{
+					m_initialData[faceIdx] = std::move(re::Texture::ImageDataUniquePtr(
+						new uint8_t[totalBytesPerFace],
+						[](void* imageData) { delete[] imageData; }));
+				}
+			}
 
 			if (doFill) // Optimization: Only fill the texture if necessary
 			{
@@ -71,10 +93,7 @@ namespace re
 
 	Texture::~Texture()
 	{
-		if (m_texels.size() > 0)
-		{
-			m_texels.clear();
-		}
+		m_initialData.clear();
 
 		platform::Texture::Destroy(*this);
 
@@ -88,50 +107,24 @@ namespace re
 	}
 
 
-	std::vector<uint8_t>& Texture::GetTexels() 
-	{ 
-		m_platformParams->m_isDirty = true; 
-		return m_texels; 
-	}
-
-
-	uint8_t const* Texture::GetTexel(uint32_t u, uint32_t v, uint32_t faceIdx) const
+	size_t Texture::GetTotalBytesPerFace() const
 	{
-		SEAssert("There are no texels. Texels are only allocated for non-target textures", m_texels.size() > 0);
-
-		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
-
-		SEAssert("OOB texel coordinates",
-			u >= 0 && 
-			u < m_texParams.m_width &&
-			v >= 0 && 
-			v < m_texParams.m_height &&
-			faceIdx < m_texParams.m_faces);
-
-		// Number of elements in v rows, + uth element in next row
-		return &m_texels[
-			((faceIdx * m_texParams.m_width * m_texParams.m_height) + (v * m_texParams.m_width) + u) * bytesPerPixel];
+		return m_texParams.m_width * m_texParams.m_height * GetNumBytesPerTexel(m_texParams.m_format);
 	}
 
 
-	uint8_t const* re::Texture::GetTexel(uint32_t index) const
+	void* Texture::GetTexelData(uint8_t faceIdx) const
 	{
-		SEAssert("There are no texels. Texels are only allocated for non-target textures", m_texels.size() > 0);
-
-		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
-
-		SEAssert("OOB texel coordinates", 
-			(index * bytesPerPixel) < (m_texParams.m_faces * m_texParams.m_width * m_texParams.m_height));
-
-		return &m_texels[index * bytesPerPixel];
+		return m_initialData[faceIdx].get();
 	}
 
 
-	void re::Texture::SetTexel(uint32_t u, uint32_t v, glm::vec4 value)
+	void re::Texture::SetTexel(uint32_t face, uint32_t u, uint32_t v, glm::vec4 value)
 	{
 		// Note: If texture has < 4 channels, the corresponding channels in value are ignored
 
-		SEAssert("There are no texels. Texels are only allocated for non-target textures", m_texels.size() > 0);
+		SEAssert("There are no texels. Texels are only allocated for non-target textures", 
+			!m_initialData.empty() && face < m_initialData.size());
 
 		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
 
@@ -148,9 +141,11 @@ namespace re
 			value.w >= 0.f && value.w <= 1.f
 		);
 
+		uint8_t* dataPtr = static_cast<uint8_t*>(GetTexelData(face));
+
 		// Reinterpret the value:
 		void* const valuePtr = &value.x;
-		void* const pixelPtr = &m_texels[((v * m_texParams.m_width) + u) * bytesPerPixel];
+		void* const pixelPtr = &dataPtr[((v * m_texParams.m_width) + u) * bytesPerPixel];
 		switch (m_texParams.m_format)
 		{
 		case re::Texture::Format::RGBA32F:
@@ -235,34 +230,16 @@ namespace re
 
 	void re::Texture::Fill(vec4 solidColor)
 	{
-		SEAssert("There are no texels. Texels are only allocated for non-target textures", m_texels.size() > 0);
+		SEAssert("There are no texels. Texels are only allocated for non-target textures", !m_initialData.empty());
 
-		for (uint32_t row = 0; row < m_texParams.m_height; row++)
+		for (uint32_t face = 0; face < m_texParams.m_faces; face++)
 		{
-			for (uint32_t col = 0; col < m_texParams.m_width; col++)
+			for (uint32_t row = 0; row < m_texParams.m_height; row++)
 			{
-				SetTexel(col, row, solidColor);
-			}
-		}
-		m_platformParams->m_isDirty = true;
-	}
-
-
-	void re::Texture::Fill(vec4 tl, vec4 tr, vec4 bl, vec4 br)
-	{
-		SEAssert("There are no texels. Texels are only allocated for non-target textures", m_texels.size() > 0);
-
-		for (unsigned int row = 0; row < m_texParams.m_height; row++)
-		{
-			float vertDelta = (float)((float)row / (float)m_texParams.m_height);
-			vec4 startCol = (vertDelta * bl) + ((1.0f - vertDelta) * tl);
-			vec4 endCol = (vertDelta * br) + ((1.0f - vertDelta) * tr);
-
-			for (unsigned int col = 0; col < m_texParams.m_width; col++)
-			{
-				float horDelta = (float)((float)col / (float)m_texParams.m_width);
-
-				SetTexel(col, row, (horDelta * endCol) + ((1.0f - horDelta) * startCol));
+				for (uint32_t col = 0; col < m_texParams.m_width; col++)
+				{
+					SetTexel(face, col, row, solidColor);
+				}
 			}
 		}
 		m_platformParams->m_isDirty = true;

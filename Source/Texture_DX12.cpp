@@ -516,7 +516,7 @@ namespace dx12
 
 			// Assemble the subresource data:
 			const uint8_t bytesPerTexel = re::Texture::GetNumBytesPerTexel(texParams.m_format);
-			const uint32_t numBytes = static_cast<uint32_t>(texture.GetTexels().size());
+			const uint32_t numBytes = static_cast<uint32_t>(texture.GetTotalBytesPerFace());
 			SEAssert("Color target must have data to buffer",
 				numBytes > 0 &&
 				numBytes == texParams.m_faces * texParams.m_width * texParams.m_height * bytesPerTexel);
@@ -524,9 +524,12 @@ namespace dx12
 			std::vector<D3D12_SUBRESOURCE_DATA> subresourceData;
 			subresourceData.reserve(numSubresources);
 
+			SEAssert("TODO: Support textures with multiple faces", texParams.m_faces);
+			const uint32_t faceIdx = 0;
+
 			// We don't have any MIP data yet, so we only need to describe MIP 0
 			subresourceData.emplace_back(D3D12_SUBRESOURCE_DATA{
-				.pData = texture.GetTexels().data(),
+				.pData = texture.GetTexelData(faceIdx),
 
 				// https://github.com/microsoft/DirectXTex/wiki/ComputePitch
 				// Row pitch: The number of bytes in a scanline of pixels: bytes-per-pixel * width-of-image
