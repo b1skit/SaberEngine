@@ -426,7 +426,7 @@ namespace opengl
 			if (bindingUnit == params->m_samplerUnits.end())
 			{
 				SEAssert("Texture name is invalid, and relaxed shader binding is not enabled",
-					en::Config::Get()->ValueExists(en::ConfigKeys::k_relaxedShaderBindingCmdLineArg) == true);
+					en::Config::Get()->ValueExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
 				return;
 			}
 
@@ -440,7 +440,7 @@ namespace opengl
 			if (bindingUnit == params->m_samplerUnits.end())
 			{
 				SEAssert("Sampler name is invalid, and relaxed shader binding is not enabled",
-					en::Config::Get()->ValueExists(en::ConfigKeys::k_relaxedShaderBindingCmdLineArg) == true);
+					en::Config::Get()->ValueExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
 				return;
 			}
 
@@ -489,7 +489,7 @@ namespace opengl
 		// GL_INVALID_INDEX is returned if name is not the name of a resource within the shader program
 		SEAssert("Failed to find the resource in the shader. This is is not an error, but a useful debugging helper", 
 			resourceIdx != GL_INVALID_INDEX || 
-			en::Config::Get()->ValueExists(en::ConfigKeys::k_relaxedShaderBindingCmdLineArg) == true);
+			en::Config::Get()->ValueExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
 
 		if (resourceIdx != GL_INVALID_INDEX)
 		{

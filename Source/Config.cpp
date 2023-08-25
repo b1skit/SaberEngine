@@ -162,9 +162,9 @@ namespace en
 					ConsumeNextToken();
 				}
 			}
-			else if (currentArg.find(ConfigKeys::k_relaxedShaderBindingCmdLineArg))
+			else if (currentArg.find(ConfigKeys::k_strictShaderBindingCmdLineArg))
 			{
-				SetValue(ConfigKeys::k_relaxedShaderBindingCmdLineArg, true, Config::SettingType::Runtime);
+				SetValue(ConfigKeys::k_strictShaderBindingCmdLineArg, true, Config::SettingType::Runtime);
 			}
 		}
 

@@ -16,7 +16,7 @@
     },
     {
       "Id": "35be5c82-80fa-421b-ad5d-05df0d9477bd",
-      "Command": "-relaxedshaderbinding"
+      "Command": "-strictshaderbinding"
     },
     {
       "Id": "ee6cfa04-f68a-453d-aa3f-ed525a0218e7",
