@@ -26,7 +26,7 @@ namespace
 		// EV_100	= log2((aperture^2)/shutterSpeed) - log2(sensitivity/100) 
 		//			= log2(((aperture^2)/shutterSpeed) / (sensitivity/100))
 		// We rearrange here to save a division:
-		return log2((aperture * aperture) / shutterSpeed * 100.0 / sensitivity) - exposureCompensation;
+		return log2((aperture * aperture) / shutterSpeed * 100.0f / sensitivity) - exposureCompensation;
 	}
 
 
@@ -36,7 +36,7 @@ namespace
 	float ComputeExposure(float ev100)
 	{
 		// Note: Denominator approaches 0 as ev100 -> -inf (and is practically 0 as ev100 -> -10)
-		return 1.0 / std::max((std::pow(2.0f, ev100) * 1.2f), FLT_MIN);
+		return 1.0f / std::max((std::pow(2.0f, ev100) * 1.2f), FLT_MIN);
 	}
 }
 
