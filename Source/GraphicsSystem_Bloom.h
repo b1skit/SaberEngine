@@ -20,6 +20,8 @@ namespace gr
 
 		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 
+		void ShowImGuiWindow() override;
+
 
 	private:
 		void CreateBatches() override;
@@ -34,6 +36,15 @@ namespace gr
 
 		const uint32_t m_numDownSamplePasses	= 2; // Scaling factor: # times we half the frame size
 		const uint32_t m_numBlurPasses			= 3; // How many pairs of horizontal + vertical blur passes to perform
+
+
+		struct BloomParams
+		{
+			glm::vec4 g_sigmoidParams = glm::vec4(30.f, 1.2f, 0.f, 0.f); // .x = Sigmoid ramp power, .y = Sigmoid speed, .zw = unused
+
+			static constexpr char const* const s_shaderName = "BloomParams";
+		} m_bloomParams;
+		std::shared_ptr<re::ParameterBlock> m_bloomParamBlock;
 	};
 
 

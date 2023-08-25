@@ -26,19 +26,19 @@ using glm::vec4;
 
 namespace
 {
-	struct BloomParams
+	struct BloomTargetParams
 	{
 		glm::vec4 g_bloomTargetResolution;
 
-		static constexpr char const* const s_shaderName = "BloomParams";
+		static constexpr char const* const s_shaderName = "BloomTargetParams";
 	};
 
 
-	BloomParams CreateBloomParamsData(std::shared_ptr<re::TextureTargetSet const> targetSet)
+	BloomTargetParams CreateBloomTargetParamsData(std::shared_ptr<re::TextureTargetSet const> targetSet)
 	{
-		BloomParams bloomParams;
-		bloomParams.g_bloomTargetResolution = targetSet->GetTargetDimensions();
-		return bloomParams;
+		BloomTargetParams bloomTargetParams;
+		bloomTargetParams.g_bloomTargetResolution = targetSet->GetTargetDimensions();
+		return bloomTargetParams;
 	}
 }
 
@@ -74,8 +74,10 @@ namespace gr
 		m_emissiveBlitStage->SetStageShader(blitShader);
 		m_emissiveBlitStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
+		std::shared_ptr<re::TextureTargetSet const> deferredLightGSTargetSet = 
+			deferredLightGS->GetFinalTextureTargetSet();
 		std::shared_ptr<re::TextureTargetSet> emissiveTargetSet =
-			re::TextureTargetSet::Create(*deferredLightGS->GetFinalTextureTargetSet(), "Emissive Blit Target Set");
+			re::TextureTargetSet::Create(*deferredLightGSTargetSet, "Emissive Blit Target Set");
 
 		emissiveTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
 			re::TextureTarget::TargetParams::BlendMode::One, re::TextureTarget::TargetParams::BlendMode::One});
@@ -96,22 +98,22 @@ namespace gr
 		int currentXRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName) / 2;
 		int currentYRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName) / 2;
 
-		Texture::TextureParams resScaleParams;
+		// We want the same format as the buffers in the deferred lighting target
+		Texture::TextureParams resScaleParams = 
+			deferredLightGSTargetSet->GetColorTarget(0).GetTexture()->GetTextureParams();
 		resScaleParams.m_width = currentXRes;
 		resScaleParams.m_height = currentYRes;
-		resScaleParams.m_faces = 1;
-		resScaleParams.m_usage = Texture::Usage::ColorTarget;
-		resScaleParams.m_dimension = Texture::Dimension::Texture2D;
-		resScaleParams.m_format = Texture::Format::RGBA32F;
-		resScaleParams.m_colorSpace = Texture::ColorSpace::Linear;
-		resScaleParams.m_useMIPs = false;
-		resScaleParams.m_addToSceneData = false;
 
 		re::TextureTarget::TargetParams targetParams;
 		targetParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		shared_ptr<Shader> luminanceThresholdShader =
 			re::Shader::Create(Config::Get()->GetValue<string>("luminanceThresholdShaderName"));
+
+		m_bloomParamBlock = re::ParameterBlock::Create(
+			BloomParams::s_shaderName,
+			m_bloomParams,
+			re::ParameterBlock::PBType::Mutable);
 
 		// Downsampling stages (w/luminance threshold in 1st pass):
 		for (uint32_t i = 0; i < numScalingStages; i++)
@@ -128,9 +130,9 @@ namespace gr
 
 			resScaleParams.m_width = currentXRes;
 			resScaleParams.m_height = currentYRes;
-			const string texPath = "ScaledResolution_" + to_string(currentXRes) + "x" + to_string(currentYRes);
+			const string texName = "ScaledResolution_" + to_string(currentXRes) + "x" + to_string(currentYRes);
 
-			downResTargets->SetColorTarget(0, re::Texture::Create(texPath, resScaleParams, false), targetParams);
+			downResTargets->SetColorTarget(0, re::Texture::Create(texName, resScaleParams, false), targetParams);
 
 			m_downResStages.back()->SetTextureTargetSet(downResTargets);
 
@@ -140,6 +142,8 @@ namespace gr
 			if (i == 0)
 			{
 				m_downResStages[i]->SetStageShader(luminanceThresholdShader);
+
+				m_downResStages[i]->AddPermanentParameterBlock(m_bloomParamBlock);
 			}
 			else
 			{
@@ -199,14 +203,19 @@ namespace gr
 			m_blurStages.back()->SetTextureTargetSet(blurTargets);
 
 			m_blurStages.back()->AddPermanentParameterBlock(re::ParameterBlock::Create(
-				BloomParams::s_shaderName,
-				CreateBloomParamsData(blurTargets),
+				BloomTargetParams::s_shaderName,
+				CreateBloomTargetParamsData(blurTargets),
 				re::ParameterBlock::PBType::Immutable));
 
 			pipeline.AppendRenderStage(m_blurStages[i]);
 		}
 
 		// Up-res stages:
+		gr::PipelineState upresStageParams;
+		upresStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
+		upresStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
+		upresStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
+
 		m_upResStages.reserve(numScalingStages); // MUST reserve so our pointers won't change
 		for (size_t i = 0; i < numScalingStages; i++)
 		{
@@ -228,7 +237,10 @@ namespace gr
 			{
 				upResTargets->SetColorTarget(0, deferredLightGS->GetFinalTextureTargetSet()->GetColorTarget(0));
 
-				gr::PipelineState addStageParams(bloomStageParams);
+				upResTargets->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
+					re::TextureTarget::TargetParams::BlendMode::One, re::TextureTarget::TargetParams::BlendMode::One });
+
+				gr::PipelineState addStageParams(upresStageParams);
 				addStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
 
 				m_upResStages.back()->SetStagePipelineState(addStageParams);
@@ -238,12 +250,11 @@ namespace gr
 				upResTargets->SetColorTarget(0,
 					m_downResStages[m_downResStages.size() - (i + 2)]->GetTextureTargetSet()->GetColorTarget(0));
 
-				m_upResStages.back()->SetStagePipelineState(bloomStageParams);
-			}
+				upResTargets->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
+					re::TextureTarget::TargetParams::BlendMode::One, re::TextureTarget::TargetParams::BlendMode::Zero});
 
-			// Set this after we've copied any existing targets (and their blend modes...)
-			upResTargets->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-					re::TextureTarget::TargetParams::BlendMode::One, re::TextureTarget::TargetParams::BlendMode::One});
+				m_upResStages.back()->SetStagePipelineState(upresStageParams);
+			}
 
 			m_upResStages.back()->SetTextureTargetSet(upResTargets);
 
@@ -323,6 +334,9 @@ namespace gr
 					bloomStageSampler);
 			}
 		}
+
+		// Update our bloom params:
+		m_bloomParamBlock->Commit(m_bloomParams);
 	}
 
 
@@ -343,6 +357,43 @@ namespace gr
 		for (size_t i = 0; i < m_upResStages.size(); i++)
 		{
 			m_upResStages[i]->AddBatch(fullscreenQuadBatch);
+		}
+	}
+
+
+	void BloomGraphicsSystem::ShowImGuiWindow()
+	{
+		if (ImGui::TreeNode(GetName().c_str()))
+		{
+			auto ShowTooltip = [&]() {
+				if (ImGui::BeginItemTooltip())
+				{
+					ImGui::Text("Luminance threshold sigmoid");
+					constexpr uint32_t k_numSamples = 20;
+					constexpr float k_sampleSpacing = 0.2f;
+					float samplePoints[k_numSamples];
+					const float sigmoidPower = m_bloomParams.g_sigmoidParams.x;
+					const float sigmoidSpeed = m_bloomParams.g_sigmoidParams.y;
+					for (size_t i = 0; i < k_numSamples; i++)
+					{
+						const float x = i * k_sampleSpacing;
+
+						const float commonTerm = std::pow((sigmoidSpeed * x), sigmoidPower);
+						samplePoints[i] = commonTerm / (commonTerm + 1);
+					}
+					ImGui::PlotLines("Curve", samplePoints, k_numSamples);
+
+					ImGui::EndTooltip();
+				}
+			};
+
+			ImGui::SliderFloat("Sigmoid ramp power", &m_bloomParams.g_sigmoidParams.x, 0, 15.0f, "Sigmoid ramp power = %.3f");
+			ShowTooltip();
+
+			ImGui::SliderFloat("Sigmoid ramp speed", &m_bloomParams.g_sigmoidParams.y, 0, 5.0f, "Sigmoid ramp speed = %.3f");
+			ShowTooltip();
+
+			ImGui::TreePop();
 		}
 	}
 }

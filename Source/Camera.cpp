@@ -1,4 +1,4 @@
-// � 2022 Adam Badke. All rights reserved.
+﻿// © 2022 Adam Badke. All rights reserved.
 #include "DebugConfiguration.h"
 #include "Camera.h"
 #include "ImGuiUtils.h"
@@ -14,6 +14,31 @@ using std::string;
 using std::make_shared;
 using glm::mat4;
 
+namespace
+{
+	// Computes the camera's EV100 from exposure settings
+	// aperture in f-stops
+	// shutterSpeed in seconds
+	// sensitivity in ISO
+	// From Google Filament: https://google.github.io/filament/Filament.md.html#listing_fragmentexposure
+	float ComputeEV100FromExposureSettings(float aperture, float shutterSpeed, float sensitivity, float exposureCompensation)
+	{
+		// EV_100	= log2((aperture^2)/shutterSpeed) - log2(sensitivity/100) 
+		//			= log2(((aperture^2)/shutterSpeed) / (sensitivity/100))
+		// We rearrange here to save a division:
+		return log2((aperture * aperture) / shutterSpeed * 100.0 / sensitivity) - exposureCompensation;
+	}
+
+
+	// Computes the exposure normalization factor from the camera's EV100
+	// ev100 computed via GetEV100FromExposureSettings
+	// Based on Google Filament: https://google.github.io/filament/Filament.md.html#listing_fragmentexposure
+	float ComputeExposure(float ev100)
+	{
+		// Note: Denominator approaches 0 as ev100 -> -inf (and is practically 0 as ev100 -> -10)
+		return 1.0 / std::max((std::pow(2.0f, ev100) * 1.2f), FLT_MIN);
+	}
+}
 
 namespace gr
 {
@@ -68,11 +93,24 @@ namespace gr
 		m_cameraPBData.g_invViewProjection = GetInverseViewProjectionMatrix();
 
 		// .x = 1 (unused), .y = near, .z = far, .w = 1/far
-		m_cameraPBData.g_projectionParams = 
-			glm::vec4(1.f, m_cameraConfig.m_near, m_cameraConfig.m_far, 1.0f / m_cameraConfig.m_far);
+		m_cameraPBData.g_projectionParams = glm::vec4(
+			1.f, 
+			m_cameraConfig.m_near, 
+			m_cameraConfig.m_far, 
+			1.0f / m_cameraConfig.m_far);
 
-		m_cameraPBData.g_sensorProperties =
-			glm::vec4(m_cameraConfig.m_aperture, m_cameraConfig.m_shutterSpeed, m_cameraConfig.m_sensitivity, 0.f);
+		const float ev100 = ComputeEV100FromExposureSettings(
+			m_cameraConfig.m_aperture, 
+			m_cameraConfig.m_shutterSpeed, 
+			m_cameraConfig.m_sensitivity, 
+			m_cameraConfig.m_exposureCompensation);
+
+		m_cameraPBData.g_exposureProperties = glm::vec4(
+			ComputeExposure(ev100),
+			ev100,
+			m_cameraConfig.m_bloomExposureCompensation,
+			0.f
+		);
 
 		m_cameraPBData.g_cameraWPos = GetTransform()->GetGlobalPosition();
 
@@ -190,50 +228,83 @@ namespace gr
 
 	void Camera::ShowImGuiWindow()
 	{
-		ImGui::Text("Name: \"%s\"", GetName().c_str());
+		if (ImGui::CollapsingHeader(GetName().c_str(), ImGuiTreeNodeFlags_None))
+		{
+			const string nearSliderLabel = "Near plane distance##" + GetName(); // Prevent ID collisions; "##" hides whatever follows
+			m_projectionMatricesDirty |= ImGui::SliderFloat(nearSliderLabel.c_str(), &m_cameraConfig.m_near, 0.f, 10.0f, "near = %.3f");
 
-		const string nearSliderLabel = "Near plane distance##" + GetName(); // Prevent ID collisions; "##" hides whatever follows
-		m_projectionMatricesDirty |= ImGui::SliderFloat(nearSliderLabel.c_str(), &m_cameraConfig.m_near , 0.f, 10.0f, "near = %.3f");
+			const string farSliderLabel = "Far plane distance##" + GetName(); // Prevent ID collisions; "##" hides whatever follows
+			m_projectionMatricesDirty |= ImGui::SliderFloat(farSliderLabel.c_str(), &m_cameraConfig.m_far, 0.f, 1000.0f, "far = %.3f");
 
-		const string farSliderLabel = "Far plane distance##" + GetName(); // Prevent ID collisions; "##" hides whatever follows
-		m_projectionMatricesDirty |= ImGui::SliderFloat(farSliderLabel.c_str(), &m_cameraConfig.m_far, 0.f, 1000.0f, "far = %.3f");
+			ImGui::Text("1/far = %f", 1.f / m_cameraConfig.m_far);
 
-		ImGui::Text("1/far = %f", 1.f / m_cameraConfig.m_far);
+			ImGui::Text("Sensor Properties");
 
-		ImGui::Text("Sensor Properties");
+			const string apertureLabel = "Aperture (f/stops)##" + GetName();
+			ImGui::SliderFloat(apertureLabel.c_str(), &m_cameraConfig.m_aperture, 0, 1.0f, "Aperture = %.3f");
+			ImGui::SetItemTooltip("Expressed in f-stops. Controls how open/closed the aperture is. f-stops indicate the\n"
+				"ratio of the lens' focal length to the diameter of the entrance pupil. High-values (f/16) indicate a\n"
+				"small aperture,small values (f/1.4) indicate a wide aperture. Controls exposition and the depth of field");
 
-		const string apertureLabel = "Aperture (f/stops)##" + GetName();
-		ImGui::SliderFloat(apertureLabel.c_str(), &m_cameraConfig.m_aperture, 0, 1.0f, "Aperture = %.3f");
-		ImGui::SetItemTooltip("Expressed in f-stops. Controls how open/closed the aperture is. f-stops indicate the\n"
-			"ratio of the lens' focal length to the diameter of the entrance pupil. High-values (f/16) indicate a\n"
-			"small aperture,small values (f/1.4) indicate a wide aperture. Controls exposition and the depth of field");
-		
-		const string shutterSpeedLabel = "Shutter Speed (seconds)##" + GetName();
-		ImGui::SliderFloat(shutterSpeedLabel.c_str(), &m_cameraConfig.m_shutterSpeed, 0, 0.2f, "Shutter speed = %.3f");
-		ImGui::SetItemTooltip("Expressed in seconds. Controls how long the aperture remains opened and the timing of\n"
-			"the sensor shutter(s)). Controls exposition and motion blur.");
+			const string shutterSpeedLabel = "Shutter Speed (seconds)##" + GetName();
+			ImGui::SliderFloat(shutterSpeedLabel.c_str(), &m_cameraConfig.m_shutterSpeed, 0, 0.2f, "Shutter speed = %.3f");
+			ImGui::SetItemTooltip("Expressed in seconds. Controls how long the aperture remains opened and the timing of\n"
+				"the sensor shutter(s)). Controls exposition and motion blur.");
 
-		const string sensitivityLabel = "Sensitivity (ISO)##" + GetName();
-		ImGui::SliderFloat(sensitivityLabel.c_str(), &m_cameraConfig.m_sensitivity, 0, 1000.0f, "Sensitivity = %.3f");
-		ImGui::SetItemTooltip("Expressed in ISO. Controls how the light reaching the sensor is quantized. Controls\n"
-			"exposition and the amount of noise.");
-		
+			const string sensitivityLabel = "Sensitivity (ISO)##" + GetName();
+			ImGui::SliderFloat(sensitivityLabel.c_str(), &m_cameraConfig.m_sensitivity, 0, 1000.0f, "Sensitivity = %.3f");
+			ImGui::SetItemTooltip("Expressed in ISO. Controls how the light reaching the sensor is quantized. Controls\n"
+				"exposition and the amount of noise.");
 
-		util::DisplayMat4x4("View Matrix:", GetViewMatrix());
+			const float ev = m_cameraConfig.m_exposureCompensation +
+				std::log2((m_cameraConfig.m_aperture * m_cameraConfig.m_aperture) / m_cameraConfig.m_shutterSpeed);
 
-		const glm::mat4x4 invView = GetInverseViewMatrix();
-		util::DisplayMat4x4("Inverse View Matrix:", invView);
+			ImGui::Text("Exposure (EV) = %f", ev);
+			ImGui::SetItemTooltip("EV is in a base-2 logarithmic scale, a difference of 1 EV is called a stop. One\n"
+				"positive stop (+1 EV) corresponds to a factor of two in luminance and one negative stop (-1 EV) \n"
+				"corresponds to a factor of half in luminance. EV = log_2((N^2)/t, N = aperture, t = shutter speed. This\n"
+				"definition is only a function of the aperture and shutter speed, but not the sensitivity. An exposure\n"
+				"value is by convention defined for ISO 100, or EV100");
 
-		util::DisplayMat4x4("Projection Matrix:", m_projection);
+			const float ev100 = m_cameraConfig.m_exposureCompensation +
+				ev - std::log2(m_cameraConfig.m_sensitivity / 100.f);
 
-		const glm::mat4x4 invProj = GetInverseProjectionMatrix();
-		util::DisplayMat4x4("Inverse Projection Matrix:", invProj);
+			ImGui::Text("Exposure (EV_100) = %f", ev100);
+			ImGui::SetItemTooltip("EV 100 is the exposure with respect to the convention of an ISO 100 sensitivity");
 
-		const glm::mat4x4 viewProj = GetViewProjectionMatrix();
-		util::DisplayMat4x4("View Projection Matrix:", viewProj);
+			const float evs = m_cameraConfig.m_exposureCompensation +
+				ev100 + std::log2(m_cameraConfig.m_sensitivity / 100.f);
+			ImGui::Text("Exposure (EV_s) = %f", evs);
+			ImGui::SetItemTooltip("EV_s is the exposure at the given sensitivity. By convention, exposure is defined for\n"
+				"an ISO 100 sensitivity only");
 
-		const glm::mat4x4 invViewProj = GetInverseViewProjectionMatrix();
-		util::DisplayMat4x4("Inverse View Projection Matrix:", invViewProj);
+			const string exposureCompensationLabel = "Exposure compensation (EC)##" + GetName();
+			ImGui::SliderFloat(exposureCompensationLabel.c_str(), &m_cameraConfig.m_exposureCompensation, -6.f, 6.0f, "EC = %.3f");
+			ImGui::SetItemTooltip("Exposure compensation can be used to over/under-expose an image, for artistic control\n"
+				"or to achieve proper exposure (e.g. snow can be exposed for as 18% middle-gray). EC is in f/stops:\n"
+				"Increasing the EV is akin to closing down the lens aperture, reducing shutter speed, or reducing\n"
+				"sensitivity. Higher EVs = darker images");
+
+			const string boolExposureCompensationLabel = "Bloom exposure compensation (Bloom EC)##" + GetName();
+			ImGui::SliderFloat(boolExposureCompensationLabel.c_str(), &m_cameraConfig.m_bloomExposureCompensation, -6.f, 6.0f, "Bloom EC = %.3f");
+			ImGui::SetItemTooltip("Force bloom for emissive surfaces");
+
+			util::DisplayMat4x4("View Matrix:", GetViewMatrix());
+
+			const glm::mat4x4 invView = GetInverseViewMatrix();
+			util::DisplayMat4x4("Inverse View Matrix:", invView);
+
+			util::DisplayMat4x4("Projection Matrix:", m_projection);
+
+			const glm::mat4x4 invProj = GetInverseProjectionMatrix();
+			util::DisplayMat4x4("Inverse Projection Matrix:", invProj);
+
+			const glm::mat4x4 viewProj = GetViewProjectionMatrix();
+			util::DisplayMat4x4("View Projection Matrix:", viewProj);
+
+			const glm::mat4x4 invViewProj = GetInverseViewProjectionMatrix();
+			util::DisplayMat4x4("Inverse View Projection Matrix:", invViewProj);
+		}
 	}
 
 

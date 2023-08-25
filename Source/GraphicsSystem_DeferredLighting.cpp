@@ -195,6 +195,7 @@ namespace gr
 		lightTargetParams.m_dimension = Texture::Dimension::Texture2D;
 		lightTargetParams.m_format = Texture::Format::RGBA16F;
 		lightTargetParams.m_colorSpace = Texture::ColorSpace::Linear;
+		lightTargetParams.m_useMIPs = false;
 		lightTargetParams.m_addToSceneData = false;
 
 		std::shared_ptr<Texture> outputTexture = re::Texture::Create("DeferredLightTarget", lightTargetParams, false);

@@ -22,6 +22,8 @@ namespace gr
 
 		virtual std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const = 0;
 
+		virtual void ShowImGuiWindow(); // Override this
+
 
 	private:
 		virtual void CreateBatches() = 0;

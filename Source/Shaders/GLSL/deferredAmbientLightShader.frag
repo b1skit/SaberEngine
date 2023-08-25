@@ -53,15 +53,14 @@ void main()
 	vec3 worldReflection = normalize(reflect(-worldView, worldNormal));
 	worldReflection.y *= -1;
 
-	vec2 BRDF = texture(Tex7, vec2(max(NoV, 0.0), MatRMAO.x) ).rg; // Sample our generated BRDF Integration map
+	const vec2 BRDF = texture(Tex7, vec2(max(NoV, 0.0), MatRMAO.x) ).rg; // Sample our generated BRDF Integration map
+
 	vec3 specular = textureLod(CubeMap1, worldReflection, MatRMAO.x * g_maxPMREMMip).xyz * ((fresnel_kS * BRDF.x) + BRDF.y);
 
-	// FragColor = vec4((linearAlbedo.rgb * irradiance * k_d + specular), 1.0); // Note: Omitted the "/ PI" factor here
-	// OLD:	FragColor = vec4((FragColor.rgb * irradiance * k_d + specular) * AO / M_PI, 1.0); // Note: Omitted the "/ PI" factor here
+	const vec3 combinedContribution = (linearAlbedo.rgb * irradiance * k_d + specular); // Note: Omitted the "/ PI"factor here
 
-	const float ev100 = GetEV100FromExposureSettings(g_sensorProperties.x, g_sensorProperties.y, g_sensorProperties.z);
-	const float exposure = Exposure(ev100);
-	// TODO: Move this to a helper function (duplicated in gBufferFillShader.frag)
+	// Apply exposure:
+	const vec3 exposedColor = ApplyExposure(combinedContribution, g_exposureProperties.x);
 
-	FragColor = vec4((linearAlbedo.rgb * irradiance * k_d + specular) * exposure, 1.0); // Note: Omitted the "/ PI" factor here
+	FragColor = vec4(exposedColor, 1.0); // Note: Omitted the "/ PI" factor here
 }

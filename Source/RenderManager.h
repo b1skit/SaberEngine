@@ -95,7 +95,11 @@ namespace re
 		void EndOfFrame();
 
 
-	private:	
+	private:
+		void ShowGraphicsSystemImGuiWindows(bool* show);
+
+
+	private:
 		std::vector<std::shared_ptr<gr::GraphicsSystem>> m_graphicsSystems;
 		re::RenderPipeline m_renderPipeline;
 

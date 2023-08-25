@@ -35,7 +35,8 @@ namespace gr
 			float m_aperture = 0.2f; // f/stops
 			float m_shutterSpeed = 0.01f; // Seconds
 			float m_sensitivity = 250.f; // ISO
-			float m_exposureCompensation; // EC. TODO: Implement/use this
+			float m_exposureCompensation = 0.f; // f/stops
+			float m_bloomExposureCompensation = 3.f; // Overdrive emissive
 			// TODO: Add a lens size, and compute the aperture from that
 
 			bool operator==(CameraConfig const& rhs) const
@@ -70,7 +71,7 @@ namespace gr
 
 			glm::vec4 g_projectionParams; // .x = 1 (unused), .y = near, .z = far, .w = 1/far
 
-			glm::vec4 g_sensorProperties; // .x = aperture, .y = shutter speed, .z = sensitivity, .w = unused
+			glm::vec4 g_exposureProperties; // .x = exposure, .y = ev100, .z = bloom exposure compensation
 
 			glm::vec3 g_cameraWPos;
 			float padding0;

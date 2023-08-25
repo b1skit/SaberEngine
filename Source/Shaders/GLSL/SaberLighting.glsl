@@ -94,22 +94,9 @@ vec3 HalfVector(vec3 light, vec3 view)
 }
 
 
-// Computes the camera's EV100 from exposure settings
-// aperture in f-stops
-// shutterSpeed in seconds
-// sensitivity in ISO
-// From Google Filament: https://google.github.io/filament/Filament.md.html#listing_fragmentexposure
-float GetEV100FromExposureSettings(float aperture, float shutterSpeed, float sensitivity)
+vec3 ApplyExposure(vec3 linearColor, float exposure)
 {
-	return log2((aperture * aperture) / shutterSpeed * 100.0 / sensitivity);
-}
-
-// Computes the exposure normalization factor from the camera's EV100
-// ev100 computed by calling GetEV100FromExposureSettings
-// Based on Google Filament: https://google.github.io/filament/Filament.md.html#listing_fragmentexposure
-float Exposure(float ev100)
-{
-	return 1.0 / (pow(2.0, ev100) * 1.2);
+	return linearColor * exposure;
 }
 
 
@@ -129,6 +116,8 @@ vec4 ComputePBRLighting(
 	const float shadowFactor,
 	const mat4 view)
 {
+	// TODO: The input for this should just be a single struct
+
 	// Note: All PBR calculations are performed in linear color space.
 	// However, we use sRGB-format textures, getting the sRGB->Linear transformation for free when writing our GBuffer
 	// for sRGB-format inputs (ie. MatAlbedo, MatEmissive) so no need to degamma albedo here
@@ -166,13 +155,10 @@ vec4 ComputePBRLighting(
 
 	const vec3 combinedContribution = (diffuseContribution + specularContribution) * lightColor * NoL * shadowFactor;
 
-//	return vec4(combinedContribution, linearAlbedo.a);
+	// Apply exposure:
+	const vec3 exposedColor = ApplyExposure(combinedContribution, g_exposureProperties.x);
 
-	const float ev100 = GetEV100FromExposureSettings(g_sensorProperties.x, g_sensorProperties.y, g_sensorProperties.z);
-	const float exposure = Exposure(ev100);
-	// TODO: Move this to a helper function (duplicated in deferredAmbientLightShader.frag, gBufferFillShader.frag)
-
-	return vec4(combinedContribution * exposure, linearAlbedo.a);
+	return vec4(exposedColor, linearAlbedo.a);
 }
 
 

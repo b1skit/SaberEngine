@@ -137,10 +137,10 @@ layout(std430, binding=1) readonly buffer CameraParams
 	mat4 g_viewProjection;		// Projection x View: World -> Projection
 	mat4 g_invViewProjection;	// [Projection * View]^-1
 
-	vec4 g_projectionParams;	// .x = 1 (unused), .y = near, .z = far, .w = 1/far
+	vec4 g_projectionParams; // .x = 1 (unused), .y = near, .z = far, .w = 1/far
 
-	vec4 g_sensorProperties;
-	
+	vec4 g_exposureProperties; // .x = exposure, .y = ev100, .z = bloom exposure compensation
+
 	vec3 g_cameraWPos;
 };
 
@@ -198,14 +198,19 @@ layout(std430, binding=6) readonly buffer IEMPMREMGenerationParams
 
 
 // GraphicsSystem_Bloom.cpp
-layout(std430, binding=7) readonly buffer BloomParams
+layout(std430, binding=7) readonly buffer BloomTargetParams
 {
 	vec4 g_bloomTargetResolution; // .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
 };
 
+layout(std430, binding=8) readonly buffer BloomParams
+{
+	vec4 g_sigmoidParams; // .x = Sigmoid ramp power, .y = Sigmoid speed, .zw = unused
+};
+
 
 // GraphicsSystem_Skybox.cpp
-layout(std430, binding=8) readonly buffer SkyboxParams
+layout(std430, binding=9) readonly buffer SkyboxParams
 {
 	vec4 g_skyboxTargetResolution; // .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
 };

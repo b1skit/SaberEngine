@@ -66,8 +66,9 @@ namespace gr
 		// https://www.reedbeta.com/blog/deferred-texturing/
 		// -> We'll also need to trigger mip generation after laying down the GBuffer
 
-		Texture::TextureParams gBufferWorldNormalParams = gBufferColorParams;
-		gBufferWorldNormalParams.m_format = re::Texture::Format::RGBA16F; // World normal may have negative components
+		// World normal may have negative components, emissive values may be > 1
+		Texture::TextureParams gbuffer16bitParams = gBufferColorParams;
+		gbuffer16bitParams.m_format = re::Texture::Format::RGBA16F; 
 
 		re::TextureTarget::TargetParams gbufferTargetParams;
 		gbufferTargetParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -75,10 +76,10 @@ namespace gr
 		std::shared_ptr<re::TextureTargetSet> gBufferTargets = re::TextureTargetSet::Create("GBuffer Target Set");
 		for (uint8_t i = GBufferTexIdx::GBufferAlbedo; i <= GBufferTexIdx::GBufferMatProp0; i++)
 		{
-			if (i == GBufferWNormal)
+			if (i == GBufferWNormal || i == GBufferEmissive)
 			{
 				gBufferTargets->SetColorTarget(
-					i, re::Texture::Create(GBufferTexNames[i], gBufferWorldNormalParams, false), gbufferTargetParams);
+					i, re::Texture::Create(GBufferTexNames[i], gbuffer16bitParams, false), gbufferTargetParams);
 			}
 			else
 			{

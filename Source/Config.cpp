@@ -461,9 +461,6 @@ namespace en
 			TryInsertDefault("blurShaderVerticalShaderName",		std::string("blurShaderVertical"));
 			TryInsertDefault("toneMapShader",						std::string("toneMapShader"));
 
-			// Multiplier used to scale [0,1] emissive values when writing to GBuffer, so they'll bloom
-			TryInsertDefault("defaultSceneEmissiveIntensity",		2.0f);
-
 			// Quality settings:
 			TryInsertDefault("numIEMSamples",	20000);	// Number of samples to use when generating IBL IEM texture
 			TryInsertDefault("numPMREMSamples",	4096);	// Number of samples to use when generating IBL PMREM texture

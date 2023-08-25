@@ -224,6 +224,7 @@ namespace re
 	{
 		static bool s_showConsoleLog = false;
 		static bool s_showScenePanel = false;
+		static bool s_showGraphicsSystemPanel = false;
 		static bool s_showImguiDemo = false;
 
 		// Early out if we can:
@@ -268,6 +269,9 @@ namespace re
 
 					// Scene objects window:
 					ImGui::MenuItem("Show Scene Objects Panel", "", &s_showScenePanel);
+
+					// Graphics systems window:
+					ImGui::MenuItem("Show Graphics Systems Panel", "", &s_showGraphicsSystemPanel);
 
 					ImGui::TextDisabled("Performance statistics");
 
@@ -335,6 +339,19 @@ namespace re
 			en::SceneManager::Get()->ShowImGuiWindow(&s_showScenePanel);
 		}
 
+		// Graphics Systems panel:
+		menuDepth++;
+		if (s_showGraphicsSystemPanel)
+		{
+			ImGui::SetNextWindowSize(ImVec2(
+				static_cast<float>(windowWidth) * 0.25f,
+				static_cast<float>(windowHeight * 0.75f)),
+				ImGuiCond_Once);
+			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
+
+			RenderManager::ShowGraphicsSystemImGuiWindows(&s_showGraphicsSystemPanel);
+		}
+
 		// Show the ImGui demo window for debugging reference
 #if defined(_DEBUG)
 		menuDepth++;
@@ -347,6 +364,19 @@ namespace re
 
 
 		platform::RenderManager::RenderImGui();
+	}
+
+
+	void RenderManager::ShowGraphicsSystemImGuiWindows(bool* show)
+	{
+		constexpr char const* graphicsSystemPanelTitle = "Graphics Systems";
+		ImGui::Begin(graphicsSystemPanelTitle, show);
+
+		for (std::shared_ptr<gr::GraphicsSystem> const& gs : m_graphicsSystems)
+		{
+			gs->ShowImGuiWindow();
+		}
+		ImGui::End();
 	}
 
 

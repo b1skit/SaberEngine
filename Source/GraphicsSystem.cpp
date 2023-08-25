@@ -9,4 +9,14 @@ namespace gr
 	{
 		LOG("Creating %s", name.c_str());
 	}
+
+
+	void GraphicsSystem::ShowImGuiWindow()
+	{
+		if (ImGui::TreeNode(GetName().c_str()))
+		{
+			ImGui::Text("...");
+			ImGui::TreePop();
+		}
+	}
 }

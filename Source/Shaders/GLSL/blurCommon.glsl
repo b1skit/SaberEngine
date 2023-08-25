@@ -20,28 +20,29 @@
 //	uniform float weights[NUM_TAPS] = float[] (	0.000229, 0.005977, 0.060598, 0.24173, 0.382925, 0.24173, 0.060598, 0.005977, 0.000229);	// Note: This is a 11-tap filter, but we ignore the outer 2 samples as they're only 0.000003
 
 
-
 #endif
 
 // Pass 0: Blur luminance threshold:
 #if defined(BLUR_SHADER_LUMINANCE_THRESHOLD)
 
-	#define RAMP_POWER 20.0
-	#define SPEED 1.0
-
 	void main()
 	{	
 		// Sigmoid function tuning: https://www.desmos.com/calculator/w3hrskwpyb
+		const float sigmoidRampPower = g_sigmoidParams.x;
+		const float sigmoidSpeed = g_sigmoidParams.y;
 
-		vec3 fragRGB	= texture(GBufferAlbedo, vOut.uv0.xy).rgb;
+		vec3 fragRGB = texture(GBufferAlbedo, vOut.uv0.xy).rgb;
 		
-		float maxChannel = max(fragRGB.x, max(fragRGB.y, fragRGB.z));
-		float scale		= pow(SPEED * maxChannel, RAMP_POWER);
+		const float maxChannel = max(fragRGB.x, max(fragRGB.y, fragRGB.z));
+		float scale = pow(sigmoidSpeed * maxChannel, sigmoidRampPower);
 
 		scale = isinf(scale) ? 10000.0 : scale; // Prevent NaNs from blowouts
+
 		scale = scale / (scale + 1.0);
 
-		FragColor = vec4(fragRGB * scale, 1.0);
+		fragRGB = fragRGB * scale;
+
+		FragColor = vec4(fragRGB, 1.0);
 	}
 
 
