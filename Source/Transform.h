@@ -87,6 +87,8 @@ namespace gr
 		glm::vec3 const& GetGlobalUp(); // World-space up (Y+) vector
 		
 
+		void ShowImGuiWindow();
+
 	private:
 		Transform* m_parent;
 		std::vector<Transform*> m_children;

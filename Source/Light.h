@@ -27,57 +27,124 @@ namespace gr
 	public:
 		enum LightType : uint8_t
 		{
+			// Note: Currently, these are all deferred types
 			AmbientIBL,
 			Directional,
 			Point,
-			Spot,
-			Area,
-			Tube,
+
+			//Spot,
+			//Area,
+			//Tube,
 
 			Light_Count
 		};
 
 	public:
-		Light(std::string const& name,
-			gr::Transform* ownerTransform,
-			LightType lightType, 
-			glm::vec3 colorIntensity,
-			bool hasShadow
-		);
+		static std::shared_ptr<Light> CreateAmbientLight(std::string const& name);
+
+		static std::shared_ptr<Light> CreateDirectionalLight(
+			std::string const& name, gr::Transform* ownerTransform, glm::vec3 colorIntensity, bool hasShadow);
+
+		static std::shared_ptr<Light> CreatePointLight(
+			std::string const& name, gr::Transform* ownerTransform, glm::vec3 colorIntensity, bool hasShadow);
 
 		~Light() { Destroy(); }
 
-		Light(Light const&) = default;
 		Light(Light&&) = default;
-		Light& operator=(Light const&) = default;
+		Light& operator=(Light&&) = default;
 
 		void Destroy();
 
 		void Update(const double stepTimeMs) override;
 
 		// Getters/Setters:
-		inline glm::vec3& GetColor() { return m_colorIntensity; }
-		inline glm::vec3 const& GetColor() const { return m_colorIntensity; }
+		glm::vec3 GetColor() const;
 	 
-		inline LightType const& Type() const { return m_type; }
+		LightType const& Type() const;
 														 
-		inline gr::Transform* GetTransform() { return m_ownerTransform; }	// Directional lights shine forward (Z+)
+		gr::Transform* GetTransform(); // Directional lights shine forward (Z+)
 
-		inline gr::ShadowMap* GetShadowMap() const { return m_shadowMap.get(); }
+		gr::ShadowMap* GetShadowMap() const;
 
 		void ShowImGuiWindow();
 
+	
+	public:
+		union LightTypeProperties
+		{
+			struct
+			{
+				std::shared_ptr<re::Texture> m_BRDF_integrationMap;
+				std::shared_ptr<re::Texture> m_IEMTex;
+				std::shared_ptr<re::Texture> m_PMREMTex;
+			} m_ambient;
+			struct
+			{
+				gr::Transform* m_ownerTransform;
+				glm::vec3 m_colorIntensity;
+				std::unique_ptr<gr::ShadowMap> m_shadowMap;
+			} m_directional;
+			struct
+			{
+				gr::Transform* m_ownerTransform;
+				glm::vec3 m_colorIntensity;
+				std::unique_ptr<gr::ShadowMap> m_cubeShadowMap;
+			} m_point;
+
+			LightTypeProperties() { memset(this, 0, sizeof(LightTypeProperties)); } // Need a default CTOR/DTOR
+			~LightTypeProperties() { memset(this, 0, sizeof(LightTypeProperties)); }
+		};
+		LightTypeProperties& AccessLightTypeProperties(LightType);
+
 
 	private:
-		gr::Transform* m_ownerTransform;
-
-		glm::vec3 m_colorIntensity;
-
 		LightType m_type;
+		LightTypeProperties m_typeProperties;
 
-		std::unique_ptr<gr::ShadowMap> m_shadowMap;
+
+	private: // Use one of the Create() factories
+		Light(std::string const& name,
+			gr::Transform* ownerTransform,
+			LightType lightType,
+			glm::vec3 colorIntensity,
+			bool hasShadow);
 
 	private:
 		Light() = delete;
+		Light(Light const&) = delete;
+		Light& operator=(Light const&) = delete;
 	};
+
+
+	inline Light::LightType const& Light::Type() const
+	{
+		return m_type;
+	}
+
+
+	inline gr::Transform* Light::GetTransform()
+	{
+		switch (m_type)
+		{
+		case LightType::AmbientIBL:
+		{
+			SEAssertF("Ambient lights do not have a transform");
+		}
+		break;
+		case LightType::Directional:
+		{
+			return m_typeProperties.m_directional.m_ownerTransform;
+		}
+		break;
+		case LightType::Point:
+		{
+			return m_typeProperties.m_point.m_ownerTransform;
+		}
+		break;
+		default:
+			SEAssertF("Invalid light type");
+		}
+
+		return nullptr;
+	}	// Directional lights shine forward (Z+)
 }

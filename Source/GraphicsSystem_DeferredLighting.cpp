@@ -166,7 +166,6 @@ namespace gr
 	DeferredLightingGraphicsSystem::DeferredLightingGraphicsSystem(string name)
 		: GraphicsSystem(name)
 		, NamedObject(name)
-		, m_BRDF_integrationMap(nullptr)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_ambientStage = re::RenderStage::CreateGraphicsStage("Ambient light stage", gfxStageParams);
@@ -224,9 +223,12 @@ namespace gr
 		m_keylightStage->SetTextureTargetSet(deferredLightingTargetSet);
 		m_pointlightStage->SetTextureTargetSet(deferredLightingTargetSet);
 
+		// We'll be creating the data we need to render the scene's ambient light:
+		gr::Light::LightTypeProperties& ambientProperties =
+			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(Light::AmbientIBL);
 
 		shared_ptr<Texture> iblTexture = SceneManager::GetSceneData()->GetIBLTexture();
-
+		
 		// 1st frame: Generate the pre-integrated BRDF LUT via a single-frame render stage:
 		{
 			re::RenderStage::GraphicsStageParams gfxStageParams;
@@ -248,14 +250,15 @@ namespace gr
 			brdfParams.m_useMIPs = false;
 			brdfParams.m_addToSceneData = false;
 
-			m_BRDF_integrationMap = re::Texture::Create("BRDFIntegrationMap", brdfParams, false);
+			ambientProperties.m_ambient.m_BRDF_integrationMap = 
+				re::Texture::Create("BRDFIntegrationMap", brdfParams, false);
 
 			std::shared_ptr<re::TextureTargetSet> brdfStageTargets = re::TextureTargetSet::Create("BRDF Stage Targets");
 
 			re::TextureTarget::TargetParams targetParams;
 			targetParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-			brdfStageTargets->SetColorTarget(0, m_BRDF_integrationMap, targetParams);
+			brdfStageTargets->SetColorTarget(0, ambientProperties.m_ambient.m_BRDF_integrationMap, targetParams);
 			brdfStageTargets->SetViewport(re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
 
 			re::TextureTarget::TargetParams::BlendModes brdfBlendModes
@@ -322,9 +325,11 @@ namespace gr
 		{
 			shared_ptr<Shader> iemShader = re::Shader::Create(Config::Get()->GetValue<string>("blitIEMShaderName"));
 
+			const string IEMTextureName = iblTexture->GetName() + "_IEMTexture";
+
 			// IEM-specific texture params:
 			cubeParams.m_useMIPs = false;
-			m_IEMTex = re::Texture::Create("IEMTexture", cubeParams, false);
+			ambientProperties.m_ambient.m_IEMTex = re::Texture::Create(IEMTextureName, cubeParams, false);
 
 			for (uint32_t face = 0; face < 6; face++)
 			{
@@ -366,7 +371,7 @@ namespace gr
 				targetParams.m_targetFace = face;
 				targetParams.m_targetSubesource = 0;
 
-				iemTargets->SetColorTarget(0, m_IEMTex, targetParams);
+				iemTargets->SetColorTarget(0, ambientProperties.m_ambient.m_IEMTex, targetParams);
 				iemTargets->SetViewport(re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
 
 				iemStage->SetTextureTargetSet(iemTargets);
@@ -384,10 +389,11 @@ namespace gr
 			shared_ptr<Shader> pmremShader = re::Shader::Create(Config::Get()->GetValue<string>("blitPMREMShaderName"));
 
 			// PMREM-specific texture params:
+			const string PMREMTextureName = iblTexture->GetName() + "_PMREMTexture";
 			cubeParams.m_useMIPs = true;
-			m_PMREMTex = re::Texture::Create("PMREMTexture", cubeParams, false);
+			ambientProperties.m_ambient.m_PMREMTex = re::Texture::Create(PMREMTextureName, cubeParams, false);
 
-			const uint32_t numMipLevels = m_PMREMTex->GetNumMips(); // # of mips we need to render
+			const uint32_t numMipLevels = ambientProperties.m_ambient.m_PMREMTex->GetNumMips(); // # of mips we need to render
 
 			for (uint32_t currentMipLevel = 0; currentMipLevel < numMipLevels; currentMipLevel++)
 			{
@@ -429,7 +435,7 @@ namespace gr
 					std::shared_ptr<TextureTargetSet> pmremTargetSet = 
 						re::TextureTargetSet::Create("PMREM texture targets: Face " + postFix);
 
-					pmremTargetSet->SetColorTarget(0, m_PMREMTex, targetParams);
+					pmremTargetSet->SetColorTarget(0, ambientProperties.m_ambient.m_PMREMTex, targetParams);
 					pmremTargetSet->SetViewport(
 						re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
 
@@ -451,6 +457,10 @@ namespace gr
 			}
 		}
 
+		const bool ambientIsValid =
+			ambientProperties.m_ambient.m_BRDF_integrationMap &&
+			ambientProperties.m_ambient.m_IEMTex &&
+			ambientProperties.m_ambient.m_PMREMTex;
 
 		gr::PipelineState ambientStageParams;
 		ambientStageParams.SetClearTarget(gr::PipelineState::ClearTarget::Color);
@@ -489,7 +499,7 @@ namespace gr
 		gr::PipelineState keylightStageParams(ambientStageParams);
 		if (keyLight)
 		{
-			if (!AmbientIsValid()) // Don't clear after 1st light
+			if (!ambientIsValid) // Don't clear after 1st light
 			{
 				keylightStageParams.SetClearTarget(gr::PipelineState::ClearTarget::Color);
 			}
@@ -516,7 +526,7 @@ namespace gr
 
 			gr::PipelineState pointlightStageParams(keylightStageParams);
 
-			if (!keyLight && !AmbientIsValid())
+			if (!keyLight && !ambientIsValid)
 			{
 				keylightStageParams.SetClearTarget(gr::PipelineState::ClearTarget::Color);
 			}
@@ -562,6 +572,13 @@ namespace gr
 		GBufferGraphicsSystem* gBufferGS = RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>();
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
 
+		gr::Light::LightTypeProperties& ambientProperties =
+			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(Light::AmbientIBL);
+		const bool ambientIsValid =
+			ambientProperties.m_ambient.m_BRDF_integrationMap &&
+			ambientProperties.m_ambient.m_IEMTex &&
+			ambientProperties.m_ambient.m_PMREMTex;
+
 		// Attach GBuffer color inputs:
 		constexpr uint8_t numGBufferColorInputs = 
 			static_cast<uint8_t>(GBufferGraphicsSystem::GBufferTexNames.size() - 1);
@@ -575,7 +592,7 @@ namespace gr
 				continue;
 			}
 
-			if (AmbientIsValid())
+			if (ambientIsValid)
 			{
 				m_ambientStage->SetPerFrameTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[slot],
@@ -598,22 +615,31 @@ namespace gr
 			}
 		}
 
+
 		// Attach the GBUffer depth input:
 		constexpr uint8_t depthBufferSlot = gr::GBufferGraphicsSystem::GBufferDepth;
-		if (AmbientIsValid())
-		{
-			m_ambientStage->SetPerFrameTextureInput(
-				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
-				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
-				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
-		}
+
 		if (keyLight)
 		{
 			m_keylightStage->SetPerFrameTextureInput(
 				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
 				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+
+			// Keylight shadowmap:
+			ShadowMap* const keyLightShadowMap = keyLight->GetShadowMap();
+			if (keyLightShadowMap)
+			{
+				// Set the key light shadow map:
+				shared_ptr<Texture> keylightShadowMapTex =
+					keyLightShadowMap->GetTextureTargetSet()->GetDepthStencilTarget()->GetTexture();
+				m_keylightStage->SetPerFrameTextureInput(
+					"Depth0",
+					keylightShadowMapTex,
+					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+			}
 		}
+
 		if (!pointLights.empty())
 		{
 			m_pointlightStage->SetPerFrameTextureInput(
@@ -621,43 +647,32 @@ namespace gr
 				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 		}
-		
-		// Add IBL texture inputs for ambient stage:
-		if (AmbientIsValid())
+
+		if (ambientIsValid)
 		{
 			m_ambientStage->SetPerFrameTextureInput(
+				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
+				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
+				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+
+			// Add IBL texture inputs for ambient stage:
+			m_ambientStage->SetPerFrameTextureInput(
 				"CubeMap0",
-				m_IEMTex,
+				ambientProperties.m_ambient.m_IEMTex,
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear)
 			);
 
 			m_ambientStage->SetPerFrameTextureInput(
 				"CubeMap1",
-				m_PMREMTex,
+				ambientProperties.m_ambient.m_PMREMTex,
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearMipMapLinearLinear)
 			);
 
 			m_ambientStage->SetPerFrameTextureInput(
 				"Tex7",
-				m_BRDF_integrationMap,
+				ambientProperties.m_ambient.m_BRDF_integrationMap,
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::ClampNearestNearest)
 			);
-		}
-		
-		// Keylight shadowmap:
-		if (keyLight)
-		{
-			ShadowMap* const keyLightShadowMap = keyLight->GetShadowMap();
-			if (keyLightShadowMap)
-			{
-				// Set the key light shadow map:
-				shared_ptr<Texture> keylightDepthTex =
-					keyLightShadowMap->GetTextureTargetSet()->GetDepthStencilTarget()->GetTexture();
-				m_keylightStage->SetPerFrameTextureInput(
-					"Depth0",
-					keylightDepthTex,
-					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
-			}
 		}
 	}
 

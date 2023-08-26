@@ -848,7 +848,7 @@ namespace
 
 		LOG("Found light \"%s\"", lightName.c_str());
 
-		Light::LightType lightType = Light::LightType::Directional;
+		Light::LightType lightType = Light::LightType::Light_Count;
 		switch (current->light->type)
 		{
 		case cgltf_light_type::cgltf_light_type_directional:
@@ -882,10 +882,28 @@ namespace
 			attachShadow = false; // No point rendering shadows for non-contributing lights
 		}
 		
-		shared_ptr<Light> newLight = 
-			make_shared<Light>(lightName, parent->GetTransform(), lightType, colorIntensity, attachShadow);
-
-		scene.AddLight(newLight);
+		// Note: Lights self-add themselves to the scene, no need to manually call scene.AddLight
+		shared_ptr<Light> newLight;
+		switch (lightType)
+		{
+		case gr::Light::LightType::AmbientIBL:
+		{
+			gr::Light::CreateAmbientLight(lightName);
+		}
+		break;
+		case gr::Light::LightType::Directional:
+		{
+			gr::Light::CreateDirectionalLight(lightName, parent->GetTransform(), colorIntensity, attachShadow);
+		}
+		break;
+		case gr::Light::LightType::Point:
+		{
+			gr::Light::CreatePointLight(lightName, parent->GetTransform(), colorIntensity, attachShadow);
+		}
+		break;
+		default:
+			LOG_WARNING("Invalid light type found. Ignoring!");
+		}
 	}
 
 
@@ -894,6 +912,7 @@ namespace
 		// Ambient lights are not supported by GLTF 2.0; Instead, we handle it manually.
 		// First, we check for a <sceneRoot>\IBL\ibl.hdr file for per-scene IBLs/skyboxes.
 		// If that fails, we fall back to a default HDRI
+		// Later, we'll use the IBL texture to generate the IEM and PMREM textures in a GraphicsSystem
 		shared_ptr<Texture> iblTexture = nullptr;
 
 		auto TryLoadIBL = [&scene](std::string const& IBLPath, std::shared_ptr<re::Texture>& iblTexture) {
@@ -920,6 +939,9 @@ namespace
 		}
 		SEAssert("Missing IBL texture. Per scene IBLs must be placed at <sceneRoot>\\IBL\\ibl.hdr; A default fallback "
 			"must exist at Assets\\DefaultIBL\\ibl.hdr", iblTexture != nullptr);
+
+		// Create the ambient light:
+		gr::Light::CreateAmbientLight("AmbientLight");
 	}
 
 
@@ -1506,9 +1528,9 @@ namespace fr
 			m_pointLights.emplace_back(newLight);
 		}
 		break;
-		case Light::Spot:
-		case Light::Area:
-		case Light::Tube:
+		//case Light::Spot:
+		//case Light::Area:
+		//case Light::Tube:
 		default:
 			LOG_ERROR("Ignorring unsupported light type");
 			break;

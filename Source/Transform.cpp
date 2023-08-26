@@ -509,5 +509,11 @@ namespace gr
 
 		MarkDirty();
 	}
+
+
+	void Transform::ShowImGuiWindow()
+	{
+		ImGui::Text("<TODO: Transform ImGui window>");
+	}
 }
 

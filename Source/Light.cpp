@@ -7,12 +7,19 @@
 #include "SceneManager.h"
 #include "Shader.h"
 
+using re::Shader;
+using gr::Transform;
+using en::Config;
+using en::SceneManager;
+using std::unique_ptr;
+using std::make_unique;
+using std::string;
+using glm::vec3;
+using re::ParameterBlock;
+
 
 namespace
 {
-	using gr::Transform;
-
-
 	gr::Camera::CameraConfig ComputeDirectionalShadowCameraConfigFromSceneBounds(
 		gr::Transform* lightTransform, gr::Bounds& sceneWorldBounds)
 	{
@@ -36,27 +43,39 @@ namespace
 
 namespace gr
 {
-	using re::Shader;
-	using gr::Transform;
-	using en::Config;
-	using en::SceneManager;
-	using std::unique_ptr;
-	using std::make_unique;
-	using std::string;
-	using glm::vec3;
-	using re::ParameterBlock;
+	std::shared_ptr<Light> Light::CreateAmbientLight(std::string const& name)
+	{
+		std::shared_ptr<gr::Light> newAmbientLight;
+		newAmbientLight.reset(new gr::Light(name, nullptr, Light::AmbientIBL, glm::vec3(1.f, 0.f, 1.f), false));
+		en::SceneManager::GetSceneData()->AddLight(newAmbientLight);
+		return newAmbientLight;
+	}
+
+
+	std::shared_ptr<Light> Light::CreateDirectionalLight(
+		std::string const& name, gr::Transform* ownerTransform, glm::vec3 colorIntensity, bool hasShadow)
+	{
+		std::shared_ptr<gr::Light> newDirectionalLight;
+		newDirectionalLight.reset(new gr::Light(name, ownerTransform, Light::Directional, colorIntensity, hasShadow));
+		en::SceneManager::GetSceneData()->AddLight(newDirectionalLight);
+		return newDirectionalLight;
+	}
+
+
+	std::shared_ptr<Light> Light::CreatePointLight(
+		std::string const& name, gr::Transform* ownerTransform, glm::vec3 colorIntensity, bool hasShadow)
+	{
+		std::shared_ptr<gr::Light> newPointLight;
+		newPointLight.reset(new gr::Light(name, ownerTransform, Light::Point, colorIntensity, hasShadow));
+		en::SceneManager::GetSceneData()->AddLight(newPointLight);
+		return newPointLight;
+	}
 
 
 	Light::Light(string const& name, Transform* ownerTransform, LightType lightType, vec3 colorIntensity, bool hasShadow)
 		: en::NamedObject(name)
-		, m_ownerTransform(ownerTransform)
 		, m_type(lightType)
-		, m_shadowMap(nullptr)
-	{		
-		m_colorIntensity = colorIntensity;
-
-		// Set up deferred light mesh:
-		string shaderName;
+	{
 		switch (lightType)
 		{
 		case AmbientIBL:
@@ -65,21 +84,25 @@ namespace gr
 		break;
 		case Directional:
 		{
+			m_typeProperties.m_directional.m_ownerTransform = ownerTransform;
+			m_typeProperties.m_directional.m_colorIntensity = colorIntensity;
+
+			m_typeProperties.m_directional.m_shadowMap = nullptr;
 			if (hasShadow)
 			{
 				const uint32_t shadowMapRes = Config::Get()->GetValue<int>("defaultShadowMapRes");
-				m_shadowMap = make_unique<ShadowMap>(
+				m_typeProperties.m_directional.m_shadowMap = make_unique<ShadowMap>(
 					GetName(),
 					shadowMapRes,
 					shadowMapRes,
 					Camera::CameraConfig(),
-					m_ownerTransform,
+					m_typeProperties.m_directional.m_ownerTransform,
 					glm::vec3(0.f, 0.f, 0.f),
 					ShadowMap::ShadowType::Single);
 				// Note: We'll compute the camera config from the scene bounds during the first call to Update(); so
 				// here we just pass a default camera config
 
-				m_shadowMap->SetMinMaxShadowBias(glm::vec2(
+				m_typeProperties.m_directional.m_shadowMap->SetMinMaxShadowBias(glm::vec2(
 					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias),
 					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias)));
 			}
@@ -87,43 +110,47 @@ namespace gr
 		break;
 		case Point:
 		{
+			m_typeProperties.m_point.m_ownerTransform = ownerTransform;
+			m_typeProperties.m_point.m_colorIntensity = colorIntensity;
+
 			// Compute the radius: 
 			const float cutoff = 0.05f; // Want the sphere mesh radius where light intensity will be close to zero
-			const float maxColor = glm::max(glm::max(m_colorIntensity.r, m_colorIntensity.g), m_colorIntensity.b);
+			const float maxColor = glm::max(glm::max(colorIntensity.r, colorIntensity.g), colorIntensity.b);
 			const float radius = glm::sqrt((maxColor / cutoff) - 1.0f);
-			
-			// Scale the owning transform such that a sphere created with a radius of 1 will be the correct size
-			m_ownerTransform->SetLocalScale(vec3(radius, radius, radius));
 
+			// Scale the owning transform such that a sphere created with a radius of 1 will be the correct size
+			m_typeProperties.m_point.m_ownerTransform->SetLocalScale(vec3(radius, radius, radius));
+
+			m_typeProperties.m_point.m_cubeShadowMap = nullptr;
 			if (hasShadow)
 			{
 				gr::Camera::CameraConfig shadowCamConfig;
-				shadowCamConfig.m_yFOV				= static_cast<float>(std::numbers::pi) / 2.0f;
-				shadowCamConfig.m_near				= 0.1f;
-				shadowCamConfig.m_far				= radius;
-				shadowCamConfig.m_aspectRatio		= 1.0f;
-				shadowCamConfig.m_projectionType	= Camera::CameraConfig::ProjectionType::Perspective;
-			
+				shadowCamConfig.m_yFOV = static_cast<float>(std::numbers::pi) / 2.0f;
+				shadowCamConfig.m_near = 0.1f;
+				shadowCamConfig.m_far = radius;
+				shadowCamConfig.m_aspectRatio = 1.0f;
+				shadowCamConfig.m_projectionType = Camera::CameraConfig::ProjectionType::Perspective;
+
 				const uint32_t cubeMapRes = Config::Get()->GetValue<int>("defaultShadowCubeMapRes");
 
-				m_shadowMap = make_unique<ShadowMap>(
+				m_typeProperties.m_point.m_cubeShadowMap = make_unique<ShadowMap>(
 					GetName(),
 					cubeMapRes,
 					cubeMapRes,
 					shadowCamConfig,
-					m_ownerTransform,
+					m_typeProperties.m_point.m_ownerTransform,
 					vec3(0.0f, 0.0f, 0.0f),	// shadowCamPosition: No offset
 					ShadowMap::ShadowType::CubeMap);
 
-				m_shadowMap->SetMinMaxShadowBias(glm::vec2( 
+				m_typeProperties.m_point.m_cubeShadowMap->SetMinMaxShadowBias(glm::vec2(
 					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBias),
 					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMaxShadowBias)));
 			}
 		}
 		break;
-		case Spot:
-		case Area:
-		case Tube:
+		//case Spot:
+		//case Area:
+		//case Tube:
 		default:
 			// TODO: Implement light meshes for additional light types
 			break;
@@ -133,45 +160,186 @@ namespace gr
 
 	void Light::Destroy()
 	{
-		m_shadowMap = nullptr;
+		switch (m_type)
+		{
+		case LightType::AmbientIBL:
+		{
+			m_typeProperties.m_ambient.m_BRDF_integrationMap = nullptr;
+			m_typeProperties.m_ambient.m_IEMTex = nullptr;
+			m_typeProperties.m_ambient.m_PMREMTex = nullptr;
+		}
+		break;
+		case LightType::Directional:
+		{
+			m_typeProperties.m_directional.m_shadowMap = nullptr;
+		}
+		break;
+		case LightType::Point:
+		{
+			m_typeProperties.m_point.m_cubeShadowMap = nullptr;
+		}
+		break;
+		default:
+			SEAssertF("Invalid light type");
+		}
 	}
 
 
 	void Light::Update(const double stepTimeMs)
 	{
-		if (m_type == LightType::Directional) // Update shadow cam bounds
+		switch (m_type)
 		{
+		case LightType::AmbientIBL:
+		{
+		}
+		break;
+		case LightType::Directional:
+		{
+			// Update shadow cam bounds:
 			gr::Bounds sceneWorldBounds = SceneManager::GetSceneData()->GetWorldSpaceSceneBounds();
 
-			Camera::CameraConfig shadowCamConfig = 
-				ComputeDirectionalShadowCameraConfigFromSceneBounds(m_ownerTransform, sceneWorldBounds);
+			Camera::CameraConfig const& shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
+				m_typeProperties.m_directional.m_ownerTransform, sceneWorldBounds);
 
-			if (m_shadowMap)
+			if (m_typeProperties.m_directional.m_shadowMap)
 			{
-				m_shadowMap->ShadowCamera()->SetCameraConfig(shadowCamConfig);
+				m_typeProperties.m_directional.m_shadowMap->ShadowCamera()->SetCameraConfig(shadowCamConfig);
 			}
 		}
+		break;
+		case LightType::Point:
+		{
+		}
+		break;
+		default:
+			SEAssertF("Invalid light type");
+		}
+	}
+
+
+	glm::vec3 Light::GetColor() const
+	{
+		switch (m_type)
+		{
+		case LightType::AmbientIBL:
+		{
+			SEAssertF("Ambient lights don't (current) have a color/intensity value");
+		}
+		break;
+		case LightType::Directional:
+		{
+			return m_typeProperties.m_directional.m_colorIntensity;
+		}
+		break;
+		case LightType::Point:
+		{
+			return m_typeProperties.m_point.m_colorIntensity;
+		}
+		break;
+		default:
+			SEAssertF("Invalid light type");
+		}
+		return glm::vec3(1.f, 0.f, 1.f); // Magenta error color
+	}
+
+
+	gr::ShadowMap* Light::GetShadowMap() const
+	{
+		switch (m_type)
+		{
+		case LightType::AmbientIBL:
+		{
+			SEAssertF("Ambient lights do not have a shadow map");
+		}
+		break;
+		case LightType::Directional:
+		{
+			return m_typeProperties.m_directional.m_shadowMap.get();
+		}
+		break;
+		case LightType::Point:
+		{
+			return m_typeProperties.m_point.m_cubeShadowMap.get();
+		}
+		break;
+		default:
+			SEAssertF("Invalid light type");
+		}
+		return nullptr;
+	}
+
+
+	Light::LightTypeProperties& Light::AccessLightTypeProperties(Light::LightType lightType)
+	{
+		SEAssert("Trying to access type properties for the wrong type", lightType == m_type);
+		return m_typeProperties;
 	}
 
 
 	void Light::ShowImGuiWindow()
 	{
-		ImGui::Text("Name: \"%s\"", GetName().c_str());
-
-		if (ImGui::TreeNode("Shadow Map:"))
+		auto ShowColorPicker = [](std::string const& lightName, glm::vec3& color)
 		{
-			if (m_shadowMap)
-			{
-				ImGui::Text("Shadow map: \"%s\"", GetName().c_str());
-				m_shadowMap->ShowImGuiWindow();
-			}
-			else
-			{
-				ImGui::Text("<No Shadow>");
-			}
+			ImGui::Text("Color:"); ImGui::SameLine();
+			ImGuiColorEditFlags flags = ImGuiColorEditFlags_HDR;
+			const string lightLabel = lightName + " Color";
+			ImGui::ColorEdit4(lightLabel.c_str(), &color.r, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | flags);
+		};
 
-			ImGui::TreePop();
-		}		
+		if (ImGui::CollapsingHeader(GetName().c_str(), ImGuiTreeNodeFlags_None))
+		{
+			switch (m_type)
+			{
+			case LightType::AmbientIBL:
+			{
+				ImGui::Text("BRDF Integration map: \"%s\"", 
+					m_typeProperties.m_ambient.m_BRDF_integrationMap->GetName().c_str());
+
+				ImGui::Text("IEM Texture: \"%s\"",
+					m_typeProperties.m_ambient.m_IEMTex->GetName().c_str());
+
+				ImGui::Text("PMREM Texture: \"%s\"",
+					m_typeProperties.m_ambient.m_PMREMTex->GetName().c_str());
+			}
+			break;
+			case LightType::Directional:
+			{
+				m_typeProperties.m_directional.m_ownerTransform->ShowImGuiWindow();
+
+				ShowColorPicker(GetName(), m_typeProperties.m_directional.m_colorIntensity);
+
+				if (m_typeProperties.m_directional.m_shadowMap)
+				{
+					ImGui::Text("Shadow map: \"%s\"", GetName().c_str());
+					m_typeProperties.m_directional.m_shadowMap->ShowImGuiWindow();
+				}
+				else
+				{
+					ImGui::Text("<No Shadow>");
+				}
+			}
+			break;
+			case LightType::Point:
+			{
+				m_typeProperties.m_point.m_ownerTransform->ShowImGuiWindow();
+
+				ShowColorPicker(GetName(), m_typeProperties.m_point.m_colorIntensity);
+
+				if (m_typeProperties.m_point.m_cubeShadowMap)
+				{
+					ImGui::Text("Cube Shadow map: \"%s\"", GetName().c_str());
+					m_typeProperties.m_point.m_cubeShadowMap->ShowImGuiWindow();
+				}
+				else
+				{
+					ImGui::Text("<No Shadow>");
+				}
+			}
+			break;
+			default:
+				SEAssertF("Invalid light type");
+			}
+		}	
 	}
 }
 
