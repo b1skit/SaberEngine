@@ -6,14 +6,29 @@
 #include "Device_DX12.h"
 #include "RenderManager_DX12.h"
 
+using Microsoft::WRL::ComPtr;
+using dx12::CheckHResult;
+
 
 namespace
 {
-	using Microsoft::WRL::ComPtr;
-	using dx12::CheckHResult;
+	constexpr D3D_FEATURE_LEVEL k_featureLevels[] =
+	{
+		D3D_FEATURE_LEVEL_12_2,
+		D3D_FEATURE_LEVEL_12_1,
+		D3D_FEATURE_LEVEL_12_0,
+		D3D_FEATURE_LEVEL_11_1,
+		D3D_FEATURE_LEVEL_11_0,
+		D3D_FEATURE_LEVEL_10_1,
+		D3D_FEATURE_LEVEL_10_0,
+		D3D_FEATURE_LEVEL_9_3,
+		D3D_FEATURE_LEVEL_9_2,
+		D3D_FEATURE_LEVEL_9_1,
+		D3D_FEATURE_LEVEL_1_0_CORE
+	};
 
 
-	// Find the display adapter with the most VRAM:
+	// Find the display adapter with the highest D3D feature level support, or most VRAM:
 	ComPtr<IDXGIAdapter4> GetBestDisplayAdapter()
 	{
 		// Create a DXGI factory object
@@ -32,31 +47,50 @@ namespace
 		ComPtr<IDXGIAdapter1> dxgiAdapter1;
 		ComPtr<IDXGIAdapter4> dxgiAdapter4;
 
-		// Query each of our HW adapters:
+		// Prioritize by highest D3D feature level support, then by amount of VRAM as a tie-breaker. Never choose a 
+		// software adapter:
+		uint32_t bestFeatureLevelSupportSeen = _countof(k_featureLevels) - 1;
 		size_t maxVRAM = 0;
-		for (uint32_t i = 0; dxgiFactory->EnumAdapters1(i, &dxgiAdapter1) != DXGI_ERROR_NOT_FOUND; ++i)
+		DXGI_ADAPTER_DESC1 bestAdapterDesc{};
+
+		// Query each of our HW adapters:		
+		for (uint32_t i = 0; dxgiFactory->EnumAdapters1(i, &dxgiAdapter1) != DXGI_ERROR_NOT_FOUND; i++)
 		{
-			DXGI_ADAPTER_DESC1 dxgiAdapterDesc1;
-			dxgiAdapter1->GetDesc1(&dxgiAdapterDesc1);
+			DXGI_ADAPTER_DESC1 dxgiAdapterDesc{};
+			dxgiAdapter1->GetDesc1(&dxgiAdapterDesc);
 
-			const size_t vram = dxgiAdapterDesc1.DedicatedVideoMemory / (1024u * 1024u);
-			LOG(L"Querying adapter %d: %s, %ju MB VRAM", dxgiAdapterDesc1.DeviceId, dxgiAdapterDesc1.Description, vram);
+			const size_t vram = dxgiAdapterDesc.DedicatedVideoMemory / (1024u * 1024u);
+			LOG(L"Querying adapter %d: %s, %ju MB VRAM", dxgiAdapterDesc.DeviceId, dxgiAdapterDesc.Description, vram);
 
-			const D3D_FEATURE_LEVEL targetFeatureLevel = dx12::RenderManager::GetTargetFeatureLevel();
-
-			if ((dxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
-				SUCCEEDED(D3D12CreateDevice(
-					dxgiAdapter1.Get(), 
-					targetFeatureLevel,
-					__uuidof(ID3D12Device), nullptr)) &&
-				dxgiAdapterDesc1.DedicatedVideoMemory > maxVRAM)
+			uint32_t currentFeatureLevelIdx = 0;
+			while (currentFeatureLevelIdx < _countof(k_featureLevels))
 			{
-				maxVRAM = dxgiAdapterDesc1.DedicatedVideoMemory;
+				const D3D_FEATURE_LEVEL targetFeatureLevel = k_featureLevels[currentFeatureLevelIdx];
 
-				hr = dxgiAdapter1.As(&dxgiAdapter4);
-				CheckHResult(hr, "Failed to cast selected dxgiAdapter4 to dxgiAdapter1");
+				if ((dxgiAdapterDesc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
+					SUCCEEDED(D3D12CreateDevice(dxgiAdapter1.Get(), targetFeatureLevel, __uuidof(ID3D12Device), nullptr)) &&
+					currentFeatureLevelIdx <= bestFeatureLevelSupportSeen &&
+					vram > maxVRAM)
+				{
+					bestFeatureLevelSupportSeen = currentFeatureLevelIdx;
+					maxVRAM = vram;
+					memcpy(&bestAdapterDesc, &dxgiAdapterDesc, sizeof(dxgiAdapterDesc));
+
+					hr = dxgiAdapter1.As(&dxgiAdapter4);
+					CheckHResult(hr, "Failed to cast selected dxgiAdapter4 to dxgiAdapter1");
+
+					break; // Stop checking after we've found the best feature level we can support
+				}
+
+				currentFeatureLevelIdx++;
 			}
 		}
+
+		LOG(L"Selected adapter %d: %s, %ju MB VRAM, %s", 
+			bestAdapterDesc.DeviceId, 
+			bestAdapterDesc.Description, 
+			maxVRAM, 
+			util::ToWideString(dx12::GetFeatureLevelAsCStr(k_featureLevels[bestFeatureLevelSupportSeen])).c_str());
 
 		return dxgiAdapter4;
 	}
@@ -64,50 +98,62 @@ namespace
 
 	ComPtr<ID3D12Device2> CreateDevice(ComPtr<IDXGIAdapter4> adapter)
 	{
-		ComPtr<ID3D12Device2> d3d12Device2;
-		HRESULT hr = D3D12CreateDevice(adapter.Get(), dx12::RenderManager::GetTargetFeatureLevel(), IID_PPV_ARGS(&d3d12Device2));
-		CheckHResult(hr, "Failed to create device");
+		ComPtr<ID3D12Device2> device;
 
-		if (en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) > 0)
+		uint32_t featureLevelIdx = 0;
+		while (featureLevelIdx < _countof(k_featureLevels))
 		{
-			ComPtr<ID3D12InfoQueue> infoQueue;
-			if (SUCCEEDED(d3d12Device2.As(&infoQueue)))
+			HRESULT hr = D3D12CreateDevice(nullptr, k_featureLevels[featureLevelIdx], IID_PPV_ARGS(&device));
+			if (SUCCEEDED(hr))
 			{
-				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
-
-				// Suppress message categories
-				//D3D12_MESSAGE_CATEGORY Categories[] = {};
-
-				// Suppress messages by severity level
-				D3D12_MESSAGE_SEVERITY severities[] =
-				{
-					D3D12_MESSAGE_SEVERITY_INFO
-				};
-
-				// Suppress individual messages by ID
-				D3D12_MESSAGE_ID denyIds[] =
-				{
-					D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,	// No idea how to avoid this message yet
-					D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,		// Occurs when using capture frame while graphics debugging
-					D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,	// Occurs when using capture frame while graphics debugging
-				};
-
-				D3D12_INFO_QUEUE_FILTER newFilter = {};
-				//NewFilter.DenyList.NumCategories = _countof(Categories);
-				//NewFilter.DenyList.pCategoryList = Categories;
-				newFilter.DenyList.NumSeverities = _countof(severities);
-				newFilter.DenyList.pSeverityList = severities;
-				newFilter.DenyList.NumIDs = _countof(denyIds);
-				newFilter.DenyList.pIDList = denyIds;
-
-				hr = infoQueue->PushStorageFilter(&newFilter);
-				CheckHResult(hr, "Failed to push storage filter");
+				LOG("Device created for maximum supported D3D feature level: %s", 
+					dx12::GetFeatureLevelAsCStr(k_featureLevels[featureLevelIdx]));
+				break; // feature level is supported by default adapter
 			}
+			featureLevelIdx++;
 		}
 
-		return d3d12Device2;
+		return device;
+	}
+
+
+	void ConfigureD3DInfoQueue(ComPtr<ID3D12Device> device)
+	{
+		ComPtr<ID3D12InfoQueue> infoQueue;
+		if (SUCCEEDED(device.As(&infoQueue)))
+		{
+			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+
+			// Suppress message categories
+			//D3D12_MESSAGE_CATEGORY Categories[] = {};
+
+			// Suppress messages by severity level
+			D3D12_MESSAGE_SEVERITY severities[] =
+			{
+				D3D12_MESSAGE_SEVERITY_INFO
+			};
+
+			// Suppress individual messages by ID
+			D3D12_MESSAGE_ID denyIds[] =
+			{
+				D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE, // Intentional usage
+				D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,		// Occurs when using capture frame while graphics debugging
+				D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,	// Occurs when using capture frame while graphics debugging
+			};
+
+			D3D12_INFO_QUEUE_FILTER newFilter = {};
+			//NewFilter.DenyList.NumCategories = _countof(Categories);
+			//NewFilter.DenyList.pCategoryList = Categories;
+			newFilter.DenyList.NumSeverities = _countof(severities);
+			newFilter.DenyList.pSeverityList = severities;
+			newFilter.DenyList.NumIDs = _countof(denyIds);
+			newFilter.DenyList.pIDList = denyIds;
+
+			HRESULT hr = infoQueue->PushStorageFilter(&newFilter);
+			CheckHResult(hr, "Failed to push storage filter");
+		}
 	}
 }
 
@@ -125,6 +171,11 @@ namespace dx12
 	{
 		m_dxgiAdapter4 = GetBestDisplayAdapter(); // Find the display adapter with the most VRAM
 		m_displayDevice = CreateDevice(m_dxgiAdapter4); // Create a device from the selected adapter
+
+		if (en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) > 0)
+		{
+			ConfigureD3DInfoQueue(m_displayDevice);
+		}
 	}
 
 

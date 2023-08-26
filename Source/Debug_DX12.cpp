@@ -143,7 +143,7 @@ namespace dx12
 	}
 
 
-	constexpr char const* GetResourceStateAsStr(D3D12_RESOURCE_STATES state)
+	constexpr char const* GetResourceStateAsCStr(D3D12_RESOURCE_STATES state)
 	{
 		switch (state)
 		{
@@ -176,5 +176,27 @@ namespace dx12
 			SEAssertF("Invalid state");
 		}
 		return "INVALID STATE";
+	}
+
+
+	constexpr char const* GetFeatureLevelAsCStr(D3D_FEATURE_LEVEL featureLevel)
+	{
+		switch (featureLevel)
+		{
+		case D3D_FEATURE_LEVEL_1_0_CORE: return "";
+		case D3D_FEATURE_LEVEL_9_1: return "D3D_FEATURE_LEVEL_9_1";
+		case D3D_FEATURE_LEVEL_9_2: return "D3D_FEATURE_LEVEL_9_2";
+		case D3D_FEATURE_LEVEL_9_3: return "D3D_FEATURE_LEVEL_9_3";
+		case D3D_FEATURE_LEVEL_10_0: return "D3D_FEATURE_LEVEL_10_0";
+		case D3D_FEATURE_LEVEL_10_1: return "D3D_FEATURE_LEVEL_10_1";
+		case D3D_FEATURE_LEVEL_11_0: return "D3D_FEATURE_LEVEL_11_0";
+		case D3D_FEATURE_LEVEL_11_1: return "D3D_FEATURE_LEVEL_11_1";
+		case D3D_FEATURE_LEVEL_12_0: return "D3D_FEATURE_LEVEL_12_0";
+		case D3D_FEATURE_LEVEL_12_1: return "D3D_FEATURE_LEVEL_12_1";
+		case D3D_FEATURE_LEVEL_12_2: return "D3D_FEATURE_LEVEL_12_2";
+		default:
+			SEAssertF("Invalid feature level");
+		}
+		return "Invalid D3D Feature Level";
 	}
 }

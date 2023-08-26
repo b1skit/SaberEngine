@@ -14,7 +14,6 @@ namespace dx12
 		~RenderManager() override = default;
 
 	public:
-		static constexpr D3D_FEATURE_LEVEL GetTargetFeatureLevel();
 		static constexpr uint8_t GetNumFrames(); // Number of frames in flight
 
 
@@ -32,15 +31,8 @@ namespace dx12
 
 
 	private:
-		static const D3D_FEATURE_LEVEL k_targetFeatureLevel;
 		static const uint8_t k_numFrames = 3; // Number of frames in flight/number of backbuffers
 	};
-
-
-	inline constexpr D3D_FEATURE_LEVEL RenderManager::GetTargetFeatureLevel()
-	{
-		return k_targetFeatureLevel;
-	}
 
 
 	inline constexpr uint8_t RenderManager::GetNumFrames()

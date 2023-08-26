@@ -25,8 +25,8 @@ namespace
 		LOG("BARRIER: Resource \"%s\"\n\tSubresource #%s: From: %s To: %s",
 			dx12::GetDebugName(resource).c_str(),
 			(subresourceIdx == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES ? "ALL" : std::to_string(subresourceIdx).c_str()),
-			dx12::GetResourceStateAsStr(beforeState),
-			dx12::GetResourceStateAsStr(afterState));
+			dx12::GetResourceStateAsCStr(beforeState),
+			dx12::GetResourceStateAsCStr(afterState));
 	}
 #endif
 

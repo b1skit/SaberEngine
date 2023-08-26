@@ -32,10 +32,6 @@ using std::vector;
 
 namespace dx12
 {
-	// TODO: Figure out why creation fails for D3D_FEATURE_LEVEL_12_2
-	const D3D_FEATURE_LEVEL RenderManager::k_targetFeatureLevel = D3D_FEATURE_LEVEL_12_1;
-
-
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
 		renderManager.m_graphicsSystems.emplace_back(

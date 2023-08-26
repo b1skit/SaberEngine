@@ -79,7 +79,7 @@ namespace dx12
 			stateStr += prefix + 
 				(state.first == 4294967295 ? "ALL" : ("#" + std::to_string(state.first))) +
 				": " + 
-				GetResourceStateAsStr(state.second) + "\n";
+				GetResourceStateAsCStr(state.second) + "\n";
 		}
 		LOG(stateStr.c_str());
 	}
