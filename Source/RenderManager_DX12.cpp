@@ -11,6 +11,7 @@
 #include "DebugConfiguration.h"
 #include "Debug_DX12.h"
 #include "GraphicsSystem_ComputeMips.h"
+#include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_TempDebug.h"
 #include "MeshPrimitive_DX12.h"
 #include "ParameterBlock_DX12.h"
@@ -19,7 +20,6 @@
 #include "SwapChain_DX12.h"
 #include "TextureTarget_DX12.h"
 #include "Texture_DX12.h"
-#include "VertexStream_DX12.h"
 
 using re::RenderStage;
 using re::StagePipeline;
@@ -36,8 +36,12 @@ namespace dx12
 	{
 		renderManager.m_graphicsSystems.emplace_back(
 			make_shared<gr::ComputeMipsGraphicsSystem>("DX12 Compute Mips Graphics System"));
+
 		renderManager.m_graphicsSystems.emplace_back(
 			make_shared<gr::TempDebugGraphicsSystem>("DX12 Temp Debug Graphics System"));
+
+		renderManager.m_graphicsSystems.emplace_back(
+			make_shared<gr::GBufferGraphicsSystem>("DX12 GBuffer Graphics System"));
 	}
 
 

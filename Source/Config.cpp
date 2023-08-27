@@ -447,7 +447,6 @@ namespace en
 			TryInsertDefault("cubeDepthShaderName",					std::string("cubeDepthShader"));
 
 			// Deferred rendering:
-			TryInsertDefault("gBufferFillShaderName",				std::string("gBufferFillShader"));
 			TryInsertDefault("deferredAmbientLightShaderName",		std::string("deferredAmbientLightShader"));
 			TryInsertDefault("deferredKeylightShaderName",			std::string("deferredKeyLightShader"));
 			TryInsertDefault("deferredPointLightShaderName",		std::string("deferredPointLightShader"));
@@ -475,6 +474,7 @@ namespace en
 		case platform::RenderingAPI::DX12:
 		{
 			TryInsertDefault("shaderDirectory", std::string(".\\Shaders\\HLSL\\"));
+
 		}
 		break;
 		default:

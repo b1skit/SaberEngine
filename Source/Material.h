@@ -45,15 +45,11 @@ namespace gr
 			float g_normalScale = 1.f;
 			float g_occlusionStrength = 1.f;
 
-			float g_emissiveStrength = 1.f; // KHR_materials_emissive_strength: Multiplies g_emissiveFactor
-			glm::vec3 padding0;
-
-			glm::vec3 g_emissiveFactor{ 0.f, 0.f, 0.f};
-			float padding1;
+			// KHR_materials_emissive_strength: Multiplies emissive factor
+			glm::vec4 g_emissiveFactorStrength{ 0.f, 0.f, 0.f, 0.f}; // .xyz = emissive factor, .w = emissive strength
 
 			// Non-GLTF properties:
-			glm::vec3 g_f0{ 0.f, 0.f, 0.f }; // For non-metals only
-			float padding2;
+			glm::vec4 g_f0{ 0.f, 0.f, 0.f, 0.f}; // .xyz = f0, .w = unused. For non-metals only
 
 			//float g_isDoubleSided;
 

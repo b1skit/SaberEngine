@@ -29,5 +29,11 @@ namespace en::ConfigKeys
 	constexpr char const* k_defaultDirectionalLightMaxShadowBias	= "defaultDirectionalLightMaxShadowBias";
 	constexpr char const* k_defaultPointLightMinShadowBias			= "defaultPointLightMinShadowBias";
 	constexpr char const* k_defaultPointLightMaxShadowBias			= "defaultPointLightMaxShadowBias";
+}
 
+namespace en::ShaderNames
+{
+	// Shader filename prefixes. Note: These are not config keys
+	constexpr char const* k_mipGenerationShaderName = "GenerateMipMaps_BoxFilter";
+	constexpr char const* k_gbufferShaderName = "GBuffer";
 }

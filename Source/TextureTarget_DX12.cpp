@@ -51,11 +51,8 @@ namespace dx12
 				
 				SEAssert("Texture is not created", texPlatParams->m_isCreated && texPlatParams->m_textureResource);
 
-				dx12::TextureTarget::PlatformParams* targetPlatParams = 
-					colorTarget.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
-
 				// Allocate a descriptor for our view:
-				targetPlatParams->m_rtvDsvDescriptor = std::move(
+				texPlatParams->m_rtvDsvDescriptor = std::move(
 					context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::RTV).Allocate(1));
 
 				re::TextureTarget::TargetParams targetParams = colorTarget.GetTargetParams();
@@ -77,7 +74,7 @@ namespace dx12
 				device->CreateRenderTargetView(
 					texPlatParams->m_textureResource.Get(), // Pointer to the resource containing the render target texture
 					&renderTargetViewDesc,
-					targetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor()); // Descriptor destination
+					texPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor()); // Descriptor destination
 			}
 		}
 	}
@@ -106,15 +103,12 @@ namespace dx12
 		SEAssert("Depth texture has not been created", 
 			depthTexPlatParams->m_isCreated && depthTexPlatParams->m_textureResource);
 
-		dx12::TextureTarget::PlatformParams* targetPlatParams =
-			targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
-
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		
 		// Create the depth-stencil descriptor and view:
-		targetPlatParams->m_rtvDsvDescriptor = std::move(
+		depthTexPlatParams->m_rtvDsvDescriptor = std::move(
 			context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::DSV).Allocate(1));
-		SEAssert("DSV descriptor is not valid", targetPlatParams->m_rtvDsvDescriptor.IsValid());
+		SEAssert("DSV descriptor is not valid", depthTexPlatParams->m_rtvDsvDescriptor.IsValid());
 
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
 		dsv.Format = depthTexPlatParams->m_format;
@@ -126,7 +120,7 @@ namespace dx12
 		device->CreateDepthStencilView(
 			depthTexPlatParams->m_textureResource.Get(),
 			&dsv,
-			targetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor());
+			depthTexPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor());
 	}
 
 

@@ -15,7 +15,7 @@ namespace dx12
 	public:
 		struct PlatformParams final : public re::TextureTarget::PlatformParams
 		{
-			dx12::DescriptorAllocation m_rtvDsvDescriptor;
+
 		};
 	};
 

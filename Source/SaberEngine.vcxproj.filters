@@ -819,10 +819,10 @@
     <None Include="Shaders\glsl\depthShader.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\gBufferFillShader.frag">
+    <None Include="Shaders\GLSL\GBuffer.frag">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\gBufferFillShader.vert">
+    <None Include="Shaders\GLSL\GBuffer.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\glsl\SaberCommon.glsl">
@@ -890,6 +890,9 @@
     <None Include="SaberGlobals.hlsli">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </None>
+    <None Include="Shaders\HLSL\NormalMapUtils.hlsli">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\HelloTriangle_VShader.hlsl">
@@ -905,6 +908,12 @@
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="GenerateMipMaps_BoxFilter_CShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GBuffer_PShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GBuffer_VShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
   </ItemGroup>

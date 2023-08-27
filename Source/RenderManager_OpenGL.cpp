@@ -56,14 +56,14 @@ namespace opengl
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
 		// Add graphics systems, in order of execution:
-		renderManager.m_graphicsSystems.emplace_back(make_shared<GBufferGraphicsSystem>("GBuffer Graphics System"));
-		renderManager.m_graphicsSystems.emplace_back(make_shared<ShadowsGraphicsSystem>("Shadows Graphics System"));
+		renderManager.m_graphicsSystems.emplace_back(make_shared<GBufferGraphicsSystem>("OpenGL GBuffer Graphics System"));
+		renderManager.m_graphicsSystems.emplace_back(make_shared<ShadowsGraphicsSystem>("OpenGL Shadows Graphics System"));
 		renderManager.m_graphicsSystems.emplace_back(
-			make_shared<DeferredLightingGraphicsSystem>("Deferred Lighting Graphics System"));
-		renderManager.m_graphicsSystems.emplace_back(make_shared<SkyboxGraphicsSystem>("Skybox Graphics System"));
-		renderManager.m_graphicsSystems.emplace_back(make_shared<BloomGraphicsSystem>("Bloom Graphics System"));
+			make_shared<DeferredLightingGraphicsSystem>("OpenGL Deferred Lighting Graphics System"));
+		renderManager.m_graphicsSystems.emplace_back(make_shared<SkyboxGraphicsSystem>("OpenGL Skybox Graphics System"));
+		renderManager.m_graphicsSystems.emplace_back(make_shared<BloomGraphicsSystem>("OpenGL Bloom Graphics System"));
 		renderManager.m_graphicsSystems.emplace_back(
-			make_shared<TonemappingGraphicsSystem>("Tonemapping Graphics System"));
+			make_shared<TonemappingGraphicsSystem>("OpenGL Tonemapping Graphics System"));
 	}
 
 

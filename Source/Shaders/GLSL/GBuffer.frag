@@ -44,7 +44,9 @@ void main()
 	gBuffer_out_RMAO = vec4(roughMetal, occlusion, 1.0f);
 
 	// Emissive:
-	vec3 emissive = texture(MatEmissive, vOut.uv0.xy).rgb * g_emissiveFactor * g_emissiveStrength;
+	const vec3 emissiveFactor = g_emissiveFactorStrength.rgb;
+	const float emissiveStrength = g_emissiveFactorStrength.w;
+	vec3 emissive = texture(MatEmissive, vOut.uv0.xy).rgb * emissiveFactor * emissiveStrength;
 
 	// Emissive is light: Apply exposure now:
 	const float ev100 = g_exposureProperties.y;
@@ -58,5 +60,5 @@ void main()
 	gBuffer_out_emissive = vec4(emissive, 1.0f);
 
 	// Material properties:
-	gBuffer_out_matProp0 = vec4(g_f0, 1.0f);
+	gBuffer_out_matProp0 = g_f0; // .xyz = f0, .w = unused
 }

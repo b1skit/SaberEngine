@@ -117,14 +117,36 @@ namespace
 	}
 
 
-	void ConfigureD3DInfoQueue(ComPtr<ID3D12Device> device)
+	void ConfigureD3DInfoQueue(ComPtr<ID3D12Device> device, uint32_t debugLevel)
 	{
 		ComPtr<ID3D12InfoQueue> infoQueue;
 		if (SUCCEEDED(device.As(&infoQueue)))
 		{
-			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+			switch (debugLevel)
+			{
+			case 1:
+			{
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+			}
+			break;
+			case 2:
+			{
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+			}
+			break;
+			case 3:
+			{
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+				infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+			}
+			break;
+			default: SEAssertF("Invalid debug level");
+			}
 
 			// Suppress message categories
 			//D3D12_MESSAGE_CATEGORY Categories[] = {};
@@ -144,8 +166,8 @@ namespace
 			};
 
 			D3D12_INFO_QUEUE_FILTER newFilter = {};
-			//NewFilter.DenyList.NumCategories = _countof(Categories);
-			//NewFilter.DenyList.pCategoryList = Categories;
+			//newFilter.DenyList.NumCategories = _countof(Categories);
+			//newFilter.DenyList.pCategoryList = Categories;
 			newFilter.DenyList.NumSeverities = _countof(severities);
 			newFilter.DenyList.pSeverityList = severities;
 			newFilter.DenyList.NumIDs = _countof(denyIds);
@@ -172,9 +194,10 @@ namespace dx12
 		m_dxgiAdapter4 = GetBestDisplayAdapter(); // Find the display adapter with the most VRAM
 		m_displayDevice = CreateDevice(m_dxgiAdapter4); // Create a device from the selected adapter
 
-		if (en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) > 0)
+		const uint32_t debugLevel = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg);
+		if (debugLevel > 0)
 		{
-			ConfigureD3DInfoQueue(m_displayDevice);
+			ConfigureD3DInfoQueue(m_displayDevice, debugLevel);
 		}
 	}
 

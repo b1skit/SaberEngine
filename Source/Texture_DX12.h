@@ -32,6 +32,9 @@ namespace dx12
 			// Each view type can have a view for each mip level
 			std::array<std::vector<dx12::DescriptorAllocation>, View_Count> m_viewCpuDescAllocations;
 
+			// RTV: Created if the texture has Texture::Usage ColorTarget or SwapchainColorProxy:
+			dx12::DescriptorAllocation m_rtvDsvDescriptor;
+
 			uint64_t m_modificationFence = 0; // Modified via a pointer when submitting command lists on a command queue
 		};
 

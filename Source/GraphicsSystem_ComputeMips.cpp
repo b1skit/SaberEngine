@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "ConfigKeys.h"
 #include "GraphicsSystem_ComputeMips.h"
 
 
@@ -50,7 +51,7 @@ namespace gr
 
 	void ComputeMipsGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		m_mipMapGenerationShader = re::Shader::Create("GenerateMipMaps_BoxFilter");
+		m_mipMapGenerationShader = re::Shader::Create(en::ShaderNames::k_mipGenerationShaderName);
 	}
 
 

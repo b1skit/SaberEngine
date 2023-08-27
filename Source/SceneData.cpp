@@ -585,7 +585,7 @@ namespace
 
 		// Construct a default permanent parameter block for the material params:
 		Material::PBRMetallicRoughnessParams matParams;
-		matParams.g_f0 = vec3(0.04f, 0.04f, 0.04f);
+		matParams.g_f0 = vec4(0.04f, 0.04f, 0.04f, 0.f); // .xyz = f0, .w = unused
 
 		errorMat->SetParameterBlock(matParams);
 
@@ -703,9 +703,12 @@ namespace
 				matParams.g_roughnessFactor = material->pbr_metallic_roughness.roughness_factor;
 				matParams.g_normalScale = material->normal_texture.texture ? material->normal_texture.scale : 1.0f;
 				matParams.g_occlusionStrength = material->occlusion_texture.texture ? material->occlusion_texture.scale : 1.0f;
-				matParams.g_emissiveStrength = material->has_emissive_strength ? material->emissive_strength.emissive_strength : 1.0f;
-				matParams.g_emissiveFactor = glm::make_vec3(material->emissive_factor);
-				matParams.g_f0 = vec3(0.04f, 0.04f, 0.04f);
+
+				const float emissiveStrength = material->has_emissive_strength ? material->emissive_strength.emissive_strength : 1.0f;
+				const glm::vec3 emissveFactor = glm::make_vec3(material->emissive_factor);
+				matParams.g_emissiveFactorStrength = glm::vec4(emissveFactor.xyz, emissiveStrength);
+
+				matParams.g_f0 = vec4(0.04f, 0.04f, 0.04f, 0.f); // .xyz = f0, .w = unused
 
 				newMat->SetParameterBlock(matParams);
 

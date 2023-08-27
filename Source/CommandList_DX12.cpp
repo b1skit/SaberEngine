@@ -393,10 +393,10 @@ namespace dx12
 			depthTarget &&
 			(depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget));
 
-		dx12::TextureTarget::PlatformParams* depthPlatParams =
-			depthTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+		dx12::Texture::PlatformParams* depthTexPlatParams =
+			depthTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
-		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = depthPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
+		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = depthTexPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
 
 		m_commandList->ClearDepthStencilView(
 			dsvDescriptor,
@@ -422,11 +422,11 @@ namespace dx12
 			(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) ||
 			(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::SwapchainColorProxy));
 
-		dx12::TextureTarget::PlatformParams* targetParams =
-			colorTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+		dx12::Texture::PlatformParams* texPlatParams = 
+			colorTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		m_commandList->ClearRenderTargetView(
-			targetParams->m_rtvDsvDescriptor.GetBaseDescriptor(),
+			texPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor(),
 			&clearColor.r,
 			0,			// Number of rectangles in the proceeding D3D12_RECT ptr
 			nullptr);	// Ptr to an array of rectangles to clear in the resource view. Clears entire view if null
@@ -468,10 +468,7 @@ namespace dx12
 					D3D12_RESOURCE_STATE_RENDER_TARGET,
 					target.GetTargetParams().m_targetSubesource);
 
-				dx12::TextureTarget::PlatformParams* targetPlatParams =
-					targetSet.GetColorTarget(i).GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
-
-				colorTargetDescriptors.emplace_back(targetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor());
+				colorTargetDescriptors.emplace_back(texPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor());
 				numColorTargets++;
 			}
 		}
@@ -489,9 +486,7 @@ namespace dx12
 				D3D12_RESOURCE_STATE_DEPTH_WRITE,
 				depthStencilTarget->GetTargetParams().m_targetSubesource);
 
-			dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
-				depthStencilTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
-			dsvDescriptor = depthTargetPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
+			dsvDescriptor = depthTexPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
 		}
 
 		// NOTE: isSingleHandleToDescRange == true specifies that the rtvs are contiguous in memory, thus N rtv 

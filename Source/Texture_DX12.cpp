@@ -342,6 +342,170 @@ namespace
 
 		return true;
 	}
+
+
+	void CreateUAV(re::Texture& texture)
+	{
+		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+
+		SEAssert("The texture resource has not been created yet", texPlatParams->m_textureResource != nullptr);
+		SEAssert("A UAV has already been created. This is unexpected",
+			texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV].empty());
+
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+
+		// We create a UAV for every MIP:
+		const uint32_t numSubresources = texture.GetNumMips();
+		texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV].reserve(numSubresources);
+
+		for (size_t mipIdx = 0; mipIdx < numSubresources; mipIdx++)
+		{
+			texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV].emplace_back(std::move(
+				context->GetCPUDescriptorHeapMgr(dx12::CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV).Allocate(1)));
+
+			dx12::DescriptorAllocation const& uavDescriptorAllocation =
+				texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV].back();
+
+			const DXGI_FORMAT uavCompatibleFormat = GetEquivalentUAVCompatibleFormat(texPlatParams->m_format);
+			SEAssert("Failed to find equivalent UAV-compatible format", uavCompatibleFormat != DXGI_FORMAT_UNKNOWN);
+
+			D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc{
+				.Format = uavCompatibleFormat,
+				.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D,
+				.Texture2D = D3D12_TEX2D_UAV{
+					.MipSlice = static_cast<uint32_t>(mipIdx),
+					.PlaneSlice = 0}
+			};
+
+			device->CreateUnorderedAccessView(
+				texPlatParams->m_textureResource.Get(),
+				nullptr,		// Counter resource
+				&uavDesc,
+				uavDescriptorAllocation.GetBaseDescriptor());
+		}
+	}
+
+
+	void CreateSRV(re::Texture& texture)
+	{
+		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+
+		SEAssert("The texture resource has not been created yet", texPlatParams->m_textureResource != nullptr);
+		SEAssert("An SRV has already been created. This is unexpected",
+			texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV].empty());
+
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+
+		texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV].emplace_back(std::move(
+			context->GetCPUDescriptorHeapMgr(dx12::CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV).Allocate(1)));
+
+		dx12::DescriptorAllocation& srvDescriptorAllocation =
+			texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV].back();
+
+		const uint32_t numSubresources = texture.GetNumMips();
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+		srvDesc.Format = texPlatParams->m_format;
+
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D; // TODO: Support different texture dimensions
+
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+		srvDesc.Texture2D = D3D12_TEX2D_SRV{
+			.MostDetailedMip = 0,
+			.MipLevels = numSubresources,
+			.PlaneSlice = 0,			// Index in a multi-plane format
+			.ResourceMinLODClamp = 0.0f // Allow access to all MIP levels
+		};
+
+		device->CreateShaderResourceView(
+			texPlatParams->m_textureResource.Get(),
+			&srvDesc,
+			srvDescriptorAllocation.GetBaseDescriptor());
+	}
+
+
+	// Returns the initial state
+	D3D12_RESOURCE_STATES CreateTextureCommittedResource(re::Texture& texture, bool needsUAV)
+	{
+		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+		SEAssert("Texture resource already created", texPlatParams->m_textureResource == nullptr);
+		
+		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
+		SEAssert("TODO: Support creating resources for textures with multiple faces", texParams.m_faces == 1);
+
+		const uint32_t numSubresources = texture.GetNumMips();
+
+		// We'll update these settings for each type of texture resource:	
+		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE;
+		if (needsUAV)
+		{
+			flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+		}
+		// TODO: use D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS for color textures (unless MSAA enabled)?
+
+		D3D12_CLEAR_VALUE optimizedClearValue = {};
+		optimizedClearValue.Format = texPlatParams->m_format;
+		optimizedClearValue.Color[0] = 0.f; // TODO: Support a custom clear color
+		optimizedClearValue.Color[1] = 0.f;
+		optimizedClearValue.Color[2] = 0.f;
+		optimizedClearValue.Color[3] = 0.f;
+		optimizedClearValue.DepthStencil = { 1.0f, 0 }; // Float depth, uint8_t stencil
+
+		D3D12_CLEAR_VALUE* optimizedClearValuePtr = &optimizedClearValue;
+		// Note: optimizedClearValuePtr must be null unless:
+		// - D3D12_RESOURCE_DESC::Dimension is D3D12_RESOURCE_DIMENSION_BUFFER,
+		// - D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET or D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL are set in flags
+		if ((texParams.m_usage & re::Texture::Usage::ColorTarget) == 0 &&
+			(texParams.m_usage & re::Texture::Usage::DepthTarget) == 0)
+		{
+			optimizedClearValuePtr = nullptr;
+		}
+
+		if (texParams.m_usage & re::Texture::Usage::ColorTarget)
+		{
+			flags |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+		}
+
+		if (texParams.m_usage & re::Texture::Usage::DepthTarget)
+		{
+			SEAssert("Depth target cannot have mips", numSubresources == 1);			
+			flags |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+		}
+
+		D3D12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+
+		D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+			texPlatParams->m_format,
+			texParams.m_width,
+			texParams.m_height,
+			texParams.m_faces,	// arraySize
+			numSubresources,	// mipLevels
+			1,					// sampleCount
+			0,					// sampleQuality
+			flags);
+
+		// Resources can be implicitely promoted to COPY/SOURCE/COPY_DEST from COMMON, and decay to COMMON after
+		// being accessed on a copy queue. For now, we just set the initial state as COMMON for everything until a more
+		// complex case arises
+		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
+
+		HRESULT hr = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()->CreateCommittedResource(
+			&heapProperties,
+			D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_CREATE_NOT_ZEROED, // TODO: Query support: Unsupported on older versions of Windows
+			&resourceDesc,
+			initialState,
+			optimizedClearValuePtr, // Optimized clear value: Must be NULL except for buffers, or render/depth-stencil targets
+			IID_PPV_ARGS(&texPlatParams->m_textureResource));
+		dx12::CheckHResult(hr, "Failed to create texture committed resource");
+
+		// Name our D3D resource:
+		texPlatParams->m_textureResource->SetName(texture.GetWName().c_str());
+
+		return initialState;
+	}
 }
 
 namespace dx12
@@ -452,69 +616,53 @@ namespace dx12
 		texPlatParams->m_isCreated = true;
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-
-
 		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
+
+		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
+
+		SEAssert("Invalid texture usage", 
+			texParams.m_usage > 0 && texParams.m_usage != re::Texture::Usage::Invalid);
+		
+		SEAssert("Invalid depth target usage pattern. A depth target can only be a depth target",
+			(texParams.m_usage & re::Texture::Usage::DepthTarget) == 0 ||
+			(texParams.m_usage ^ re::Texture::Usage::DepthTarget) == 0);
+
+		SEAssert("Invalid usage stencil target usage pattern. A stencil target can only be a stencil target",
+			(texParams.m_usage & re::Texture::Usage::StencilTarget) == 0 ||
+			(texParams.m_usage ^ re::Texture::Usage::StencilTarget) == 0);
+
+		SEAssert("Invalid depth stencil usage pattern. A depth stencil target can only be a depth stencil target",
+			(texParams.m_usage & re::Texture::Usage::DepthStencilTarget) == 0 ||
+			(texParams.m_usage ^ re::Texture::Usage::DepthStencilTarget) == 0);
+
+		SEAssert("TODO: Support depth stencil targets", (texParams.m_usage & re::Texture::Usage::DepthStencilTarget) == 0);
+		SEAssert("TODO: Support stencil targets", (texParams.m_usage & re::Texture::Usage::StencilTarget) == 0);
+		
+
+		const bool needsUAV = UAVIsNeeded(texParams, texPlatParams->m_format);
+		const uint32_t numSubresources = texture.GetNumMips();
+
+		SEAssert("Current texture usage type cannot have MIPs",
+			((texParams.m_usage & re::Texture::Usage::SwapchainColorProxy) == 0 &&
+			(texParams.m_usage & re::Texture::Usage::DepthTarget) == 0 &&
+			(texParams.m_usage & re::Texture::Usage::DepthStencilTarget) == 0 &&
+			(texParams.m_usage & re::Texture::Usage::StencilTarget) == 0) ||
+			numSubresources == 1);
+
 
 		// D3D12 Initial resource states:
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/using-resource-barriers-to-synchronize-resource-states-in-direct3d-12#initial-states-for-resources
 		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
 
-		uint32_t numSubresources = 0;
-
-		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
-
-		SEAssert("Invalid texture usage", texParams.m_usage > 0 && texParams.m_usage != re::Texture::Usage::Invalid);
-		
-		const bool needsUAV = UAVIsNeeded(texParams, texPlatParams->m_format);
+		// Create a committed resource:
+		if ((texParams.m_usage & re::Texture::Usage::SwapchainColorProxy) == 0)
+		{
+			initialState = CreateTextureCommittedResource(texture, needsUAV);
+		}
 
 		if (texParams.m_usage & re::Texture::Usage::Color)
 		{
-			const uint32_t numMips = texture.GetNumMips();
-
-			// Resources can be implicitely promoted to COPY/SOURCE/COPY_DEST from COMMON, and decay to COMMON after
-			// being accessed on a copy queue. So we just set the initial state as COMMON here, and not bother tracking
-			// it until it's used on a non-copy queue for the first time
-			initialState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
-
-			numSubresources = numMips;
-
-			re::Texture::TextureParams const& texParams = texture.GetTextureParams();
-
-			SEAssert("TODO: Support creating per-face views for textures with muliptle faces", texParams.m_faces == 1);
-
-			// TODO: use D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS for color textures (unless MSAA enabled)?
-			D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE;
-			if (needsUAV)
-			{
-				flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-			}			
-
-			// Resource description:
-			const D3D12_RESOURCE_DESC colorResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-				texPlatParams->m_format,
-				texParams.m_width,
-				texParams.m_height,
-				texParams.m_faces,
-				numMips,			// mipLevels. 0 == maximimum supported
-				1,					// sampleCount TODO: Support MSAA
-				0,					// sampleQuality
-				flags);
-
-			const D3D12_HEAP_PROPERTIES colorHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-
-			HRESULT hr = device->CreateCommittedResource(
-				&colorHeapProperties,
-				D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
-				&colorResourceDesc,
-				initialState,
-				nullptr, // Optimized clear value: Must be NULL except for buffers, render, or depth-stencil targets
-				IID_PPV_ARGS(&texPlatParams->m_textureResource));
-			CheckHResult(hr, "Failed to create color texture committed resource");
-
-			texPlatParams->m_textureResource->SetName(texture.GetWName().c_str());
-
-			// Assemble the subresource data:
+			// Create an intermediate upload heap:
 			const uint8_t bytesPerTexel = re::Texture::GetNumBytesPerTexel(texParams.m_format);
 			const uint32_t numBytes = static_cast<uint32_t>(texture.GetTotalBytesPerFace());
 			SEAssert("Color target must have data to buffer",
@@ -541,7 +689,6 @@ namespace dx12
 				.SlicePitch = numBytes
 				});
 
-			// Create an intermediate upload heap:
 			// Note: If we don't request an intermediate buffer large enough, the UpdateSubresources call will return 0
 			// and no update is actually recorded on the command list.
 			// Buffers have the same size on all adapters: The smallest multiple of 64KB >= the buffer width
@@ -575,7 +722,7 @@ namespace dx12
 
 			ComPtr<ID3D12Resource> itermediateBufferResource = nullptr;
 
-			hr = device->CreateCommittedResource(
+			HRESULT hr = device->CreateCommittedResource(
 				&uploadHeapProperties,
 				D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
 				&intermediateBufferResourceDesc,
@@ -600,141 +747,18 @@ namespace dx12
 			SEAssert("TODO: Support SRVs/UAVs for textures of different dimensions",
 				texParams.m_dimension == re::Texture::Dimension::Texture2D && texParams.m_faces == 1);
 
-			// Allocate a descriptor and create an SRV:
-			{
-				SEAssert("An SRV has already been created. This is unexpected", 
-					texPlatParams->m_viewCpuDescAllocations[View::SRV].empty());
-
-				texPlatParams->m_viewCpuDescAllocations[View::SRV].emplace_back(std::move(
-					context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV).Allocate(1)));
-
-				dx12::DescriptorAllocation& srvDescriptorAllocation = 
-					texPlatParams->m_viewCpuDescAllocations[View::SRV].back();
-
-				D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc {};
-				srvDesc.Format = texPlatParams->m_format;
-
-				srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D; // TODO: Support different texture dimensions
-
-				srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-
-				srvDesc.Texture2D = D3D12_TEX2D_SRV{
-					.MostDetailedMip = 0,
-					.MipLevels = numMips,
-					.PlaneSlice = 0,			// Index in a multi-plane format
-					.ResourceMinLODClamp = 0.0f // Allow access to all MIP levels
-				};
-
-				device->CreateShaderResourceView(
-					texPlatParams->m_textureResource.Get(),
-					&srvDesc,
-					srvDescriptorAllocation.GetBaseDescriptor());
-			}
-
-			if (needsUAV)
-			{
-				SEAssert("A UAV has already been created. This is unexpected",
-					texPlatParams->m_viewCpuDescAllocations[View::UAV].empty());
-
-				// We create a UAV for every MIP:
-				texPlatParams->m_viewCpuDescAllocations[View::UAV].reserve(numMips);
-
-				for (size_t mipIdx = 0; mipIdx < numMips; mipIdx++)
-				{
-					texPlatParams->m_viewCpuDescAllocations[View::UAV].emplace_back(std::move(
-						context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::CBV_SRV_UAV).Allocate(1)));
-
-					dx12::DescriptorAllocation const& uavDescriptorAllocation =
-						texPlatParams->m_viewCpuDescAllocations[View::UAV].back();
-
-					const DXGI_FORMAT uavCompatibleFormat = GetEquivalentUAVCompatibleFormat(texPlatParams->m_format);
-					SEAssert("Failed to find equivalent UAV-compatible format", uavCompatibleFormat != DXGI_FORMAT_UNKNOWN);
-
-					D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc{
-						.Format = uavCompatibleFormat,
-						.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D,
-						.Texture2D = D3D12_TEX2D_UAV{
-							.MipSlice = static_cast<uint32_t>(mipIdx),
-							.PlaneSlice = 0}
-					};
-
-					device->CreateUnorderedAccessView(
-						texPlatParams->m_textureResource.Get(),
-						nullptr,		// Counter resource
-						&uavDesc,
-						uavDescriptorAllocation.GetBaseDescriptor());
-				}
-			}
+			// Create our SRV:
+			CreateSRV(texture);
 
 			// Released once the copy is done
 			intermediateResources.emplace_back(itermediateBufferResource);
 		}
 
-		if (texParams.m_usage & re::Texture::Usage::ColorTarget)
+		// Create a UAV if it's needed:
+		if (needsUAV)
 		{
-			SEAssertF("TODO: Support this");
+			CreateUAV(texture);
 		}
-
-		if (texParams.m_usage & re::Texture::Usage::DepthTarget)
-		{
-			SEAssert("Invalid usage pattern", (texParams.m_usage ^ re::Texture::Usage::DepthTarget) == 0);
-
-			initialState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_DEPTH_WRITE;
-			numSubresources = 1;
-
-			re::Texture::TextureParams const& texParams = texture.GetTextureParams();
-
-			const D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-			// Depth resource description:
-			CD3DX12_RESOURCE_DESC depthResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-				texPlatParams->m_format,
-				texParams.m_width,
-				texParams.m_height,
-				1,			// arraySize
-				0,			// mipLevels
-				1,			// sampleCount
-				0,			// sampleQuality
-				flags);
-
-			// Depth committed heap resources:
-			CD3DX12_HEAP_PROPERTIES depthHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-
-			// Clear values:
-			D3D12_CLEAR_VALUE optimizedClearValue = {};
-			optimizedClearValue.Format = texPlatParams->m_format;
-			optimizedClearValue.DepthStencil = { 1.0f, 0 }; // Float depth, uint8_t stencil
-
-			HRESULT hr = device->CreateCommittedResource(
-				&depthHeapProperties,
-				D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,
-				&depthResourceDesc,
-				initialState,
-				&optimizedClearValue,
-				IID_PPV_ARGS(&texPlatParams->m_textureResource));
-			texPlatParams->m_textureResource->SetName(texture.GetWName().c_str());
-		}
-
-		if (texParams.m_usage & re::Texture::Usage::StencilTarget)
-		{
-			SEAssert("Invalid usage pattern", (texParams.m_usage ^ re::Texture::Usage::StencilTarget) == 0);
-
-			SEAssertF("TODO: Support this");
-		}
-
-		if (texParams.m_usage & re::Texture::Usage::DepthStencilTarget)
-		{
-			SEAssert("Invalid usage pattern", (texParams.m_usage ^ re::Texture::Usage::DepthStencilTarget) == 0);
-
-			SEAssertF("TODO: Support this");
-		}
-
-		if (texParams.m_usage & re::Texture::Usage::SwapchainColorProxy)
-		{
-			initialState = D3D12_RESOURCE_STATE_COMMON;
-			numSubresources = 1;
-		}
-
 
 		texPlatParams->m_isDirty = true;
 

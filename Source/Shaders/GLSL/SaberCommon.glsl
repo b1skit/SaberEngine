@@ -49,7 +49,7 @@
 #elif defined(SABER_FRAGMENT_SHADER)
 	layout(location = 9) in struct VtoF		// Fragment input
 #else
-	struct VtoF								// Default/geometry in/out. If geometry, in & out must be bound to the same location
+	struct VtoF	// Default/geometry in/out. If geometry, in & out must be bound to the same location
 #endif
 	{
 		vec4 vertexColor;
@@ -117,13 +117,17 @@ layout(binding=12) uniform samplerCube CubeMap1;
 layout(std430, binding=0) readonly buffer PBRMetallicRoughnessParams
 {
 	vec4 g_baseColorFactor;
+
 	float g_metallicFactor;
 	float g_roughnessFactor;
 	float g_normalScale;
 	float g_occlusionStrength;
-	float g_emissiveStrength;
-	vec3 g_emissiveFactor;
-	vec3 g_f0; // For non-metals only
+
+	// KHR_materials_emissive_strength: Multiplies emissive factor
+	vec4 g_emissiveFactorStrength; // .xyz = emissive factor, .w = emissive strength
+
+	// Non-GLTF properties:
+	vec4 g_f0; // .xyz = f0, .w = unused. For non-metals only
 };
 
 

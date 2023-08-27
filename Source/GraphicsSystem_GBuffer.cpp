@@ -42,9 +42,7 @@ namespace gr
 
 	void GBufferGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		// Shader:
-		std::shared_ptr<Shader> gBufferShader = 
-			re::Shader::Create(Config::Get()->GetValue<string>("gBufferFillShaderName"));
+		std::shared_ptr<Shader> gBufferShader = re::Shader::Create(en::ShaderNames::k_gbufferShaderName);
 
 		m_gBufferStage->SetStageShader(gBufferShader);
 
@@ -95,6 +93,7 @@ namespace gr
 		depthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		
 		re::TextureTarget::TargetParams depthTargetParams;
+		depthTargetParams.m_clearColor = glm::vec4(1.f); // Far plane
 
 		gBufferTargets->SetDepthStencilTarget(
 			re::Texture::Create(GBufferTexNames[GBufferTexIdx::GBufferDepth], depthTexParams, false),

@@ -386,6 +386,9 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <None Include="packages.config" />
     <None Include="SaberEngine.licenseheader" />
     <None Include="SaberGlobals.hlsli" />
+    <None Include="Shaders\HLSL\NormalMapUtils.hlsli">
+      <FileType>Document</FileType>
+    </None>
     <None Include="Shaders\HLSL\SaberCommon.hlsli">
       <FileType>Document</FileType>
     </None>
@@ -411,8 +414,8 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <None Include="Shaders\GLSL\deferredPointLightShader.frag" />
     <None Include="Shaders\GLSL\deferredPointLightShader.vert" />
     <None Include="Shaders\GLSL\depthShader.vert" />
-    <None Include="Shaders\GLSL\gBufferFillShader.frag" />
-    <None Include="Shaders\GLSL\gBufferFillShader.vert" />
+    <None Include="Shaders\GLSL\GBuffer.frag" />
+    <None Include="Shaders\GLSL\GBuffer.vert" />
     <None Include="Shaders\GLSL\IEMPMREMCommon.glsl" />
     <None Include="Shaders\GLSL\luminanceThreshold.frag" />
     <None Include="Shaders\GLSL\luminanceThreshold.vert" />
@@ -442,6 +445,18 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GBuffer_PShader.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">PShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GBuffer_VShader.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\HelloTriangle_PShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
