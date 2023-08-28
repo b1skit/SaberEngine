@@ -66,6 +66,34 @@ namespace gr
 	void Mesh::ShowImGuiWindow()
 	{
 		ImGui::Text("Name: \"%s\"", GetName().c_str());
-		// TODO...
+		
+		const std::string uniqueIDStr = std::to_string(GetUniqueID());
+
+		const std::string transformLabel = "Transform:##" + uniqueIDStr;
+		if (ImGui::TreeNode(transformLabel.c_str()))
+		{
+			m_ownerTransform->ShowImGuiWindow();
+
+			ImGui::TreePop();
+		}
+
+		const std::string boundsLabel = "Mesh Bounds:##" + uniqueIDStr;
+		if (ImGui::TreeNode(boundsLabel.c_str()))
+		{
+			m_localBounds.ShowImGuiWindow();
+
+			ImGui::TreePop();
+		}
+
+		const std::string meshPrimitivesLabel = 
+			std::format("Mesh Primitives ({}):##{}", m_meshPrimitives.size(), uniqueIDStr);
+		if (ImGui::TreeNode(meshPrimitivesLabel.c_str()))
+		{
+			for (size_t i = 0; i < m_meshPrimitives.size(); i++)
+			{
+				m_meshPrimitives[i]->ShowImGuiWindow();
+			}
+			ImGui::TreePop();
+		}
 	}
 }

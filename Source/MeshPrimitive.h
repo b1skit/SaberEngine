@@ -105,6 +105,9 @@ namespace re
 		PlatformParams* GetPlatformParams() const;
 		void SetPlatformParams(std::unique_ptr<re::MeshPrimitive::PlatformParams> params);
 
+		void ShowImGuiWindow();
+
+
 	private:
 		void Destroy();
 

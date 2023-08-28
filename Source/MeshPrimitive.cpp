@@ -22,6 +22,43 @@ using std::string;
 using std::shared_ptr;
 
 
+namespace
+{
+	constexpr char const* DrawModeToCStr(re::MeshPrimitive::DrawMode drawMode)
+	{
+		switch (drawMode)
+		{
+		case re::MeshPrimitive::DrawMode::Points: return "Points";
+		case re::MeshPrimitive::DrawMode::Lines: return "Lines";
+		case re::MeshPrimitive::DrawMode::LineStrip: return "LineStrip";
+		case re::MeshPrimitive::DrawMode::LineLoop: return "LineLoop";
+		case re::MeshPrimitive::DrawMode::Triangles: return "Triangles";
+		case re::MeshPrimitive::DrawMode::TriangleStrip: return "TriangleStrip";
+		case re::MeshPrimitive::DrawMode::TriangleFan: return "TriangleFan";
+		default: SEAssertF("Invalid draw mode");
+		}
+		return "INVALID DRAW MODE";
+	}
+
+
+	constexpr char const* SlotToCStr(re::MeshPrimitive::Slot slot)
+	{
+		switch (slot)
+		{
+		case re::MeshPrimitive::Slot::Position: return "Position";
+		case re::MeshPrimitive::Slot::Normal: return "Normal";
+		case re::MeshPrimitive::Slot::Tangent: return "Tangent";
+		case re::MeshPrimitive::Slot::UV0: return "UV0";
+		case re::MeshPrimitive::Slot::Color: return "Color";
+		case re::MeshPrimitive::Slot::Joints: return "Joints";
+		case re::MeshPrimitive::Slot::Weights: return "Weights";
+		case re::MeshPrimitive::Slot::Indexes: return "Indexes";
+		default:SEAssertF("Invalid slot index");
+		}
+		return "INVALID SLOT INDEX";
+	}
+}
+
 namespace re
 {
 	std::shared_ptr<MeshPrimitive> MeshPrimitive::Create(
@@ -271,6 +308,58 @@ namespace re
 		}
 
 		return "Invalid slot";
+	}
+
+
+	void MeshPrimitive::ShowImGuiWindow()
+	{
+		ImGui::Text("Name: \"%s\"", GetName().c_str());
+
+		const std::string uniqueIDStr = std::to_string(GetUniqueID());
+
+		const std::string meshParamsLabel = std::format("Mesh Primitive Params:##{}", uniqueIDStr);
+		if (ImGui::TreeNode(meshParamsLabel.c_str()))
+		{
+			ImGui::Text(std::format("Draw mode: {}", DrawModeToCStr(m_params.m_drawMode)).c_str());
+
+			ImGui::TreePop();
+		}
+
+		const std::string materialLabel = std::format("Material:##{}", uniqueIDStr);
+		if (ImGui::TreeNode(materialLabel.c_str()))
+		{
+			m_meshMaterial->ShowImGuiWindow();
+
+			ImGui::TreePop();
+		}
+
+		const std::string vertexStreamsLabel = std::format("Vertex streams ({}):##{}", m_vertexStreams.size(), uniqueIDStr);
+		if (ImGui::TreeNode(vertexStreamsLabel.c_str()))
+		{
+			for (size_t i = 0; i < m_vertexStreams.size(); i++)
+			{
+				ImGui::Text(std::format("{}: {}", i, SlotToCStr(static_cast<re::MeshPrimitive::Slot>(i))).c_str());
+				if (m_vertexStreams[i])
+				{
+					m_vertexStreams[i]->ShowImGuiWindow();
+				}
+				else
+				{
+					ImGui::Text("<Empty>");
+				}
+				ImGui::Separator();
+			}
+
+			ImGui::TreePop();
+		}
+
+		const std::string boundsLabel = std::format("Local bounds:##{}", uniqueIDStr);
+		if (ImGui::TreeNode(boundsLabel.c_str()))
+		{
+			m_localBounds.ShowImGuiWindow();
+
+			ImGui::TreePop();
+		}
 	}
 	
 } // re

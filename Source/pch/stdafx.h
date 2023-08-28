@@ -71,7 +71,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/common.hpp>	// fmod
 #include <glm/gtx/matrix_decompose.hpp>
-
+#include <glm/gtx/string_cast.hpp>
 
 // Macros:
 #define ENUM_TO_STR(x) #x

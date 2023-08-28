@@ -66,6 +66,7 @@ namespace gr
 		glm::vec3 const& GetLocalEulerXYZRotationRadians();
 		
 		// Local-space scale:
+		glm::vec3 const& GetLocalScale();
 		void SetLocalScale(glm::vec3 scale);
 
 
@@ -86,8 +87,8 @@ namespace gr
 		glm::vec3 const& GetGlobalRight(); // World-space right (X+) vector
 		glm::vec3 const& GetGlobalUp(); // World-space up (Y+) vector
 		
-
 		void ShowImGuiWindow();
+
 
 	private:
 		Transform* m_parent;

@@ -64,6 +64,19 @@ namespace
 		}
 		}
 	}
+
+
+	constexpr char const* DataTypeToCStr(re::VertexStream::DataType dataType)
+	{
+		switch (dataType)
+		{
+		case re::VertexStream::DataType::Float: return "Float";
+		case re::VertexStream::DataType::UInt: return "UInt";
+		case re::VertexStream::DataType::UByte: return "UByte";
+		default: SEAssertF("Invalid data type");
+		}
+		return "INVALID DATA TYPE";
+	}
 }
 
 
@@ -185,5 +198,17 @@ namespace re
 	VertexStream::Normalize VertexStream::DoNormalize() const
 	{
 		return m_doNormalize;
+	}
+
+
+	void VertexStream::ShowImGuiWindow()
+	{
+		ImGui::Text(std::format("Number of components: {}", m_numComponents).c_str());
+		ImGui::Text(std::format("Component byte size: {}", m_componentByteSize).c_str());
+		ImGui::Text(std::format("Total data byte size: {}", GetTotalDataByteSize()).c_str());
+		ImGui::Text(std::format("Number of elements: {}", GetNumElements()).c_str());
+		ImGui::Text(std::format("Element byte size: {}", GetElementByteSize()).c_str());
+		ImGui::Text(std::format("Normalized? {}", (m_doNormalize ? "true" : "false")).c_str());
+		ImGui::Text(std::format("Data type: {}", DataTypeToCStr(m_dataType)).c_str());
 	}
 }

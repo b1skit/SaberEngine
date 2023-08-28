@@ -176,4 +176,11 @@ namespace gr
 			zMin() -= k_bounds3DDepthBias;
 		}
 	}
+
+
+	void Bounds::ShowImGuiWindow()
+	{
+		ImGui::Text("Min XYZ = %s", glm::to_string(m_minXYZ).c_str());
+		ImGui::Text("Max XYZ = %s", glm::to_string(m_maxXYZ).c_str());
+	}
 }

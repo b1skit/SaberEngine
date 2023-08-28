@@ -299,6 +299,15 @@ namespace gr
 	}
 
 
+	glm::vec3 const& Transform::GetLocalScale()
+	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
+
+		RecomputeWorldTransforms();
+		return m_localScale;
+	}
+
+
 	void Transform::SetLocalScale(vec3 scale)
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
@@ -513,7 +522,89 @@ namespace gr
 
 	void Transform::ShowImGuiWindow()
 	{
-		ImGui::Text("<TODO: Transform ImGui window>");
+		// Recursively pre-traverse the parent hierarchy
+		if (m_parent != nullptr)
+		{
+			m_parent->ShowImGuiWindow();
+		}
+
+		const uint64_t transformPtr = reinterpret_cast<uint64_t>(&(*this)); // We don't have a uniqueID, use this instead
+		const std::string uniqueID = std::to_string(transformPtr);
+	
+		constexpr float k_buttonWidth = 75.f;
+
+		if (ImGui::TreeNode(std::format("{} children##{}", m_children.size(), uniqueID).c_str()))
+		{
+			// Helper: Displays sliders for a 3-component XYZ element of a transform
+			auto Display3ComponentTransform = [&uniqueID](std::string const& label, glm::vec3& copiedValue) -> bool
+			{
+				constexpr ImGuiSliderFlags flags = ImGuiSliderFlags_None;
+
+				bool isDirty = false;
+				ImGui::BeginGroup();
+				{
+					// Unique imgui IDs for each slider
+					const std::string XimguiID = std::format("##X{}{}", label, uniqueID);
+					const std::string YimguiID = std::format("##Y{}{}", label, uniqueID);
+					const std::string ZimguiID = std::format("##Z{}{}", label, uniqueID);
+
+					ImGui::Text(std::format("{} XYZ:", label).c_str()); // Row label
+					
+					ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
+					isDirty |= ImGui::DragFloat(XimguiID.c_str(), &copiedValue.x, 0.005f, -FLT_MAX, +FLT_MAX, "X %.3f", flags);
+
+					ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
+					isDirty |= ImGui::DragFloat(YimguiID.c_str(), &copiedValue.y, 0.005f, -FLT_MAX, +FLT_MAX, "Y %.3f", flags);
+
+					ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
+					isDirty |= ImGui::DragFloat(ZimguiID.c_str(), &copiedValue.z, 0.005f, -FLT_MAX, +FLT_MAX, "Z %.3f", flags);
+
+					ImGui::EndGroup();
+				}
+				return isDirty;
+			};
+
+			// Local translation:
+			glm::vec3 localPosition = GetLocalPosition();
+			bool localTranslationDirty = Display3ComponentTransform("Local Translation", localPosition);
+			if (localTranslationDirty)
+			{
+				SetLocalTranslation(localPosition);
+			}
+
+			// Local rotation:
+			glm::vec3 localEulerRotation = GetLocalEulerXYZRotationRadians();
+			bool localRotationDirty = Display3ComponentTransform("Local Euler Rotation", localEulerRotation);
+			if (localRotationDirty)
+			{
+				SetLocalRotation(localEulerRotation);
+			}
+			ImGui::Text(std::format("Local Quaternion: {}", glm::to_string(m_localRotationQuat).c_str()).c_str());
+
+			// Local scale:
+			glm::vec3 localScale = GetLocalScale();
+			bool localScaleDirty = Display3ComponentTransform("Local Scale", localScale);
+			if (localScaleDirty)
+			{
+				SetLocalScale(localScale);
+			}
+
+			// Global translation:
+			glm::vec3 globalTranslation = GetGlobalPosition();
+			bool globalTranslationDirty = Display3ComponentTransform("Global Translation", globalTranslation);
+			if (globalTranslationDirty)
+			{
+				SetGlobalTranslation(globalTranslation);
+			}
+
+			// Global rotation:
+			// TODO: Handle setting global rotations
+
+			// Global scale:
+			// TODO: Handle setting global scales
+			
+			ImGui::TreePop();
+		}
 	}
 }
 

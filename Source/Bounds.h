@@ -40,6 +40,8 @@ namespace gr
 		inline float zMin() const { return m_minXYZ.z; }
 		inline float zMax() const { return m_maxXYZ.z; }
 
+		void ShowImGuiWindow();
+
 
 	private:
 		void Make3Dimensional();

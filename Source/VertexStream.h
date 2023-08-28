@@ -66,6 +66,8 @@ namespace re
 		
 		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 
+		void ShowImGuiWindow();
+
 
 	private:
 		void Destroy();
