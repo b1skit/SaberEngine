@@ -79,23 +79,26 @@ namespace re
 	}
 
 
-	void Batch::IncrementBatchInstanceCount()
+	void Batch::SetInstanceCount(uint32_t numInstances)
 	{
 		SEAssert("Invalid type", m_type == BatchType::Graphics);
 
 		// Update the batch draw mode to be an indexed type:
-		switch (m_graphicsParams.m_batchGeometryMode)
+		if (numInstances > 1)
 		{
-		case GeometryMode::Indexed:
-		{
-			m_graphicsParams.m_batchGeometryMode = GeometryMode::IndexedInstanced;
-		}
-		break;
-		default:
+			switch (m_graphicsParams.m_batchGeometryMode)
+			{
+			case GeometryMode::Indexed:
+			{
+				m_graphicsParams.m_batchGeometryMode = GeometryMode::IndexedInstanced;
+			}
 			break;
+			default:
+				break;
+			}
 		}
 
-		m_graphicsParams.m_numInstances++;
+		m_graphicsParams.m_numInstances = numInstances;
 	}
 
 
@@ -141,6 +144,18 @@ namespace re
 	void Batch::SetFilterMaskBit(Filter filterBit)
 	{
 		m_batchFilterMask |= (1 << (uint32_t)filterBit);
+	}
+
+
+	void Batch::SetParameterBlock(std::shared_ptr<re::ParameterBlock> paramBlock)
+	{
+		SEAssert("Cannot set a null parameter block", paramBlock != nullptr);
+
+		SEAssert("Graphics batch number of instances does not match number of elements in the parameter block",
+			m_type != BatchType::Graphics ||
+			paramBlock->GetNumElements() == m_graphicsParams.m_numInstances);
+
+		m_batchParamBlocks.emplace_back(paramBlock);
 	}
 
 

@@ -112,7 +112,7 @@ namespace re
 		uint32_t GetBatchFilterMask() const;
 		void SetFilterMaskBit(re::Batch::Filter filterBit);
 
-		void IncrementBatchInstanceCount();
+		void SetInstanceCount(uint32_t numInstances);
 
 		GraphicsParams const& GetGraphicsParams() const;
 		ComputeParams const& GetComputeParams() const;
@@ -170,13 +170,6 @@ namespace re
 	inline std::vector<std::shared_ptr<re::ParameterBlock>> const& Batch::GetParameterBlocks() const
 	{
 		return m_batchParamBlocks;
-	}
-
-
-	inline void Batch::SetParameterBlock(std::shared_ptr<re::ParameterBlock> paramBlock)
-	{
-		SEAssert("Cannot set a null parameter block", paramBlock != nullptr);
-		m_batchParamBlocks.emplace_back(paramBlock);
 	}
 
 

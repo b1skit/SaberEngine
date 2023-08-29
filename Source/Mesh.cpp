@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Mesh.h"
 #include "MeshPrimitive.h"
+#include "ParameterBlock.h"
 #include "Transform.h"
 
 using gr::Transform;
@@ -11,6 +12,33 @@ using std::vector;
 
 namespace gr
 {
+	std::shared_ptr<re::ParameterBlock> Mesh::CreateInstancedMeshParamsData(
+		std::vector<gr::Transform*> const& transforms)
+	{
+		const size_t numInstances = transforms.size();
+
+		std::vector<gr::Mesh::InstancedMeshParams> instancedMeshPBData;
+		instancedMeshPBData.reserve(numInstances);
+
+		for (size_t transformIdx = 0; transformIdx < numInstances; transformIdx++)
+		{
+			instancedMeshPBData.emplace_back(InstancedMeshParams
+				{
+					.g_model = transforms[transformIdx]->GetGlobalMatrix(gr::Transform::TRS)
+				});
+		}
+
+		std::shared_ptr<re::ParameterBlock> instancedMeshParams = re::ParameterBlock::CreateFromArray(
+			gr::Mesh::InstancedMeshParams::s_shaderName,
+			instancedMeshPBData.data(),
+			sizeof(gr::Mesh::InstancedMeshParams),
+			numInstances,
+			re::ParameterBlock::PBType::SingleFrame);
+
+		return instancedMeshParams;
+	}
+
+
 	Mesh::Mesh(std::string const& name, gr::Transform* ownerTransform)
 		: NamedObject(name)
 		, m_ownerTransform(ownerTransform)

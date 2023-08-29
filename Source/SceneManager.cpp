@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Camera.h"
+#include "CastUtils.h"
 #include "Config.h"
 #include "Light.h"
 #include "Mesh.h"
@@ -295,31 +296,25 @@ namespace en
 			{
 				unmergedIdx++;
 			}
-			const size_t numInstances = unmergedIdx - instanceStartIdx;
 
-			// Get the first model matrix:
-			std::vector<gr::Mesh::InstancedMeshParams> instancedMeshPBData;
-			instancedMeshPBData.reserve(numInstances);
-			instancedMeshPBData.emplace_back(gr::Mesh::InstancedMeshParams
-				{ 
-					.g_model{unmergedBatches[instanceStartIdx].second->GetGlobalMatrix(Transform::TRS)}
-				});
+			// Compute and set the number of instances in the batch:
+			const uint32_t numInstances = util::CheckedCast<uint32_t, size_t>(unmergedIdx - instanceStartIdx);
 
-			// Append the remaining batches in the sequence:
-			for (size_t instanceIdx = instanceStartIdx + 1; instanceIdx < unmergedIdx; instanceIdx++)
+			m_sceneBatches.back().SetInstanceCount(numInstances);
+
+			// Now build the instanced PBs:
+			std::vector<gr::Transform*> instanceTransforms;
+			instanceTransforms.reserve(numInstances);
+
+			for (size_t instanceOffset = 0; instanceOffset < numInstances; instanceOffset++)
 			{
-				m_sceneBatches.back().IncrementBatchInstanceCount();
-
-				instancedMeshPBData.emplace_back(unmergedBatches[instanceIdx].second->GetGlobalMatrix(Transform::TRS));
+				// Add the Transform to our list
+				const size_t srcIdx = instanceStartIdx + instanceOffset;
+				instanceTransforms.emplace_back(unmergedBatches[srcIdx].second);
 			}
 
-			// Construct PB of model transform matrices:
-			shared_ptr<ParameterBlock> instancedMeshParams = ParameterBlock::CreateFromArray(
-				gr::Mesh::InstancedMeshParams::s_shaderName,
-				instancedMeshPBData.data(),
-				sizeof(gr::Mesh::InstancedMeshParams),
-				numInstances,
-				ParameterBlock::PBType::SingleFrame);
+			std::shared_ptr<re::ParameterBlock> instancedMeshParams = 
+				gr::Mesh::CreateInstancedMeshParamsData(instanceTransforms);
 			// TODO: We're currently creating/destroying these parameter blocks each frame. This is expensive. Instead,
 			// we should create a pool of PBs, and reuse by re-buffering data each frame
 

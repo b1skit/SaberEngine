@@ -1,11 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-#include "MeshPrimitive.h"
-#include "Transform.h"
-#include "NamedObject.h"
 #include "Bounds.h"
+#include "MeshPrimitive.h"
+#include "NamedObject.h"
+#include "Transform.h"
 
+namespace re
+{
+	class ParameterBlock;
+}
 
 namespace gr
 {	
@@ -17,6 +21,8 @@ namespace gr
 			glm::mat4 g_model;
 			static constexpr char const* const s_shaderName = "InstancedMeshParams"; // Not counted towards size of struct
 		};
+
+		static std::shared_ptr<re::ParameterBlock> CreateInstancedMeshParamsData(std::vector<gr::Transform*> const&);
 
 
 	public:

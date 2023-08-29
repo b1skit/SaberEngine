@@ -80,6 +80,8 @@ namespace re
 		size_t GetStride() const;
 		inline PBType GetType() const { return m_pbType; }
 
+		uint32_t GetNumElements() const; // Instanced ParameterBlocks: How many instances of data does the PB hold?
+
 		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
 

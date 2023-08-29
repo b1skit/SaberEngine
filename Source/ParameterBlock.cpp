@@ -78,9 +78,16 @@ namespace re
 	}
 
 
+	uint32_t ParameterBlock::GetNumElements() const
+	{
+		re::ParameterBlock::PlatformParams* params = GetPlatformParams();
+		return params->m_numElements;
+	}
+
+
 	ParameterBlock::~ParameterBlock()
 	{
-		re::ParameterBlock::PlatformParams* params = GetPlatformParams()->As<re::ParameterBlock::PlatformParams*>();
+		re::ParameterBlock::PlatformParams* params = GetPlatformParams();
 		SEAssert("Parameter block destructor called, but parameter block is still marked as created. Did a parameter "
 			"block go out of scope without Destroy() being called?", !params->m_isCreated);
 	}
@@ -88,7 +95,7 @@ namespace re
 
 	void ParameterBlock::Destroy()
 	{
-		re::ParameterBlock::PlatformParams* params = GetPlatformParams()->As<re::ParameterBlock::PlatformParams*>();
+		re::ParameterBlock::PlatformParams* params = GetPlatformParams();
 		SEAssert("Parameter block has not been created, or has already been destroyed", params->m_isCreated);
 		
 		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
