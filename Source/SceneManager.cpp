@@ -2,6 +2,7 @@
 #include "Camera.h"
 #include "Config.h"
 #include "Light.h"
+#include "Mesh.h"
 #include "ParameterBlock.h"
 #include "PerformanceTimer.h"
 #include "SceneManager.h"
@@ -297,9 +298,9 @@ namespace en
 			const size_t numInstances = unmergedIdx - instanceStartIdx;
 
 			// Get the first model matrix:
-			std::vector<re::Batch::InstancedMeshParams> instancedMeshPBData;
+			std::vector<gr::Mesh::InstancedMeshParams> instancedMeshPBData;
 			instancedMeshPBData.reserve(numInstances);
-			instancedMeshPBData.emplace_back(re::Batch::InstancedMeshParams
+			instancedMeshPBData.emplace_back(gr::Mesh::InstancedMeshParams
 				{ 
 					.g_model{unmergedBatches[instanceStartIdx].second->GetGlobalMatrix(Transform::TRS)}
 				});
@@ -314,9 +315,9 @@ namespace en
 
 			// Construct PB of model transform matrices:
 			shared_ptr<ParameterBlock> instancedMeshParams = ParameterBlock::CreateFromArray(
-				re::Batch::InstancedMeshParams::s_shaderName,
+				gr::Mesh::InstancedMeshParams::s_shaderName,
 				instancedMeshPBData.data(),
-				sizeof(re::Batch::InstancedMeshParams),
+				sizeof(gr::Mesh::InstancedMeshParams),
 				numInstances,
 				ParameterBlock::PBType::SingleFrame);
 			// TODO: We're currently creating/destroying these parameter blocks each frame. This is expensive. Instead,

@@ -12,6 +12,14 @@ namespace gr
 	class Mesh final : public virtual en::NamedObject
 	{
 	public:
+		struct InstancedMeshParams
+		{
+			glm::mat4 g_model;
+			static constexpr char const* const s_shaderName = "InstancedMeshParams"; // Not counted towards size of struct
+		};
+
+
+	public:
 		explicit Mesh(std::string const& name, gr::Transform* ownerTransform);
 		explicit Mesh(std::string const& name, gr::Transform* ownerTransform, std::shared_ptr<re::MeshPrimitive> meshPrimitive);
 

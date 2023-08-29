@@ -719,7 +719,7 @@ namespace gr
 
 			// Point light mesh params:
 			shared_ptr<ParameterBlock> pointlightMeshParams = ParameterBlock::Create(
-				re::Batch::InstancedMeshParams::s_shaderName,
+				gr::Mesh::InstancedMeshParams::s_shaderName,
 				m_sphereMeshes[i]->GetTransform()->GetGlobalMatrix(Transform::TRS),
 				ParameterBlock::PBType::SingleFrame);
 

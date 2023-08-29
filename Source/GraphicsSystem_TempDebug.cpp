@@ -69,17 +69,17 @@ namespace gr
 		// Hello triangle batch:
 		Batch helloTriangleBatch = Batch(m_helloTriangle.get(), m_helloTriangle->GetMeshMaterial());
 
-		std::vector<re::Batch::InstancedMeshParams> instancedMeshPBData;
+		std::vector<gr::Mesh::InstancedMeshParams> instancedMeshPBData;
 		instancedMeshPBData.reserve(1);
-		instancedMeshPBData.emplace_back(re::Batch::InstancedMeshParams
+		instancedMeshPBData.emplace_back(gr::Mesh::InstancedMeshParams
 			{
 				.g_model{glm::identity<glm::mat4>()}
 			});
 
 		std::shared_ptr<re::ParameterBlock> instancedMeshParams = re::ParameterBlock::CreateFromArray(
-			re::Batch::InstancedMeshParams::s_shaderName,
+			gr::Mesh::InstancedMeshParams::s_shaderName,
 			instancedMeshPBData.data(),
-			sizeof(re::Batch::InstancedMeshParams),
+			sizeof(gr::Mesh::InstancedMeshParams),
 			1,
 			re::ParameterBlock::PBType::SingleFrame); // TODO: SingleFrame PB destruction needs to be deferred
 		helloTriangleBatch.SetParameterBlock(instancedMeshParams);
