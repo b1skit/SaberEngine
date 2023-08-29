@@ -176,6 +176,7 @@ layout(std430, binding=3) readonly buffer AmbientLightParams
 struct InstancedMeshParamsCB
 {
 	mat4 g_model;
+	mat4 g_transposeInvModel;
 };
 layout(std430, binding=4) readonly buffer InstancedMeshParams
 {

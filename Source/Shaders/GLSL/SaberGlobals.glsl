@@ -31,21 +31,22 @@
 #define GAMMA vec3(0.45454545454545454545454545454545454545, 0.45454545454545454545454545454545454545, 0.45454545454545454545454545454545454545)
 
 
-mat3 AssembleTBN(const vec3 inFaceNormal, const vec4 inLocalTangent, const mat4 model)
+// When rotating normal vectors we use the transpose of the inverse of the model matrix, incase we have a
+// non-uniform scaling factor
+// https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/transforming-normals
+// This effectively isolates the inverse of the scale component (as the inverse and transpose of a rotation matrix
+// cancel each other)
+mat3 AssembleTBN(const vec3 inFaceNormal, const vec4 inLocalTangent, const mat4 transposeInvModel)
 {
 	const vec3 faceNormal = normalize(inFaceNormal);
 	const vec4 localTangent = vec4(normalize(inLocalTangent.xyz), inLocalTangent.w);
 
-	// To rotate normal vectors, we must the transpose of the inverse of the model matrix, incase we have a
-	// non-uniform scaling factor
-	// https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/transforming-normals
-	const mat3 rotationScale = mat3(model); // Ignore the translation
-	const mat3 transposeInverseRotationScale = transpose(inverse(rotationScale));
+	const mat3 invRotationScaleTranspose = mat3(transposeInvModel);
 
-	const vec3 worldFaceNormal = transposeInverseRotationScale * faceNormal;
+	const vec3 worldFaceNormal = invRotationScaleTranspose * faceNormal;
 
 	// Get the world-space tangent vector, and apply Gram-Schmidt re-orthogonalization:
-	vec3 worldTangent = transposeInverseRotationScale * localTangent.xyz;
+	vec3 worldTangent = invRotationScaleTranspose * localTangent.xyz;
 	worldTangent = normalize(worldTangent - dot(worldTangent, worldFaceNormal) * worldFaceNormal);
 
 	// Sign bit is packed into localTangent.w == 1.0 or -1.0

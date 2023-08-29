@@ -19,6 +19,7 @@ namespace gr
 		struct InstancedMeshParams
 		{
 			glm::mat4 g_model;
+			glm::mat4 g_transposeInvModel; // For constructing the normal map TBN matrix
 			static constexpr char const* const s_shaderName = "InstancedMeshParams"; // Not counted towards size of struct
 		};
 		static std::shared_ptr<re::ParameterBlock> CreateInstancedMeshParamsData(gr::Transform*);
