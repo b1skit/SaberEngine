@@ -718,10 +718,8 @@ namespace gr
 			pointlightBatch.SetParameterBlock(pointlightPB);
 
 			// Point light mesh params:
-			shared_ptr<ParameterBlock> pointlightMeshParams = ParameterBlock::Create(
-				gr::Mesh::InstancedMeshParams::s_shaderName,
-				m_sphereMeshes[i]->GetTransform()->GetGlobalMatrix(Transform::TRS),
-				ParameterBlock::PBType::SingleFrame);
+			shared_ptr<ParameterBlock> pointlightMeshParams = 
+				gr::Mesh::CreateInstancedMeshParamsData(m_sphereMeshes[i]->GetTransform());
 
 			pointlightBatch.SetParameterBlock(pointlightMeshParams);
 

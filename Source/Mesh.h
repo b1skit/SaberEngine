@@ -21,7 +21,7 @@ namespace gr
 			glm::mat4 g_model;
 			static constexpr char const* const s_shaderName = "InstancedMeshParams"; // Not counted towards size of struct
 		};
-
+		static std::shared_ptr<re::ParameterBlock> CreateInstancedMeshParamsData(gr::Transform*);
 		static std::shared_ptr<re::ParameterBlock> CreateInstancedMeshParamsData(std::vector<gr::Transform*> const&);
 
 

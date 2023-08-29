@@ -12,6 +12,13 @@ using std::vector;
 
 namespace gr
 {
+	std::shared_ptr<re::ParameterBlock> Mesh::CreateInstancedMeshParamsData(gr::Transform* transform)
+	{
+		std::vector<gr::Transform*> singleTransform(1, transform);
+		return CreateInstancedMeshParamsData(singleTransform);
+	}
+
+
 	std::shared_ptr<re::ParameterBlock> Mesh::CreateInstancedMeshParamsData(
 		std::vector<gr::Transform*> const& transforms)
 	{
