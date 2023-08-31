@@ -196,11 +196,11 @@ namespace gr
 		lightTargetParams.m_colorSpace = Texture::ColorSpace::Linear;
 		lightTargetParams.m_useMIPs = false;
 		lightTargetParams.m_addToSceneData = false;
+		lightTargetParams.m_clear.m_color = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		std::shared_ptr<Texture> outputTexture = re::Texture::Create("DeferredLightTarget", lightTargetParams, false);
 
 		re::TextureTarget::TargetParams targetParams;
-		targetParams.m_clearColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		std::shared_ptr<TextureTargetSet> deferredLightingTargetSet = 
 			re::TextureTargetSet::Create("Deferred light targets");
@@ -249,6 +249,7 @@ namespace gr
 			brdfParams.m_colorSpace = Texture::ColorSpace::Linear;
 			brdfParams.m_useMIPs = false;
 			brdfParams.m_addToSceneData = false;
+			brdfParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 			ambientProperties.m_ambient.m_BRDF_integrationMap = 
 				re::Texture::Create("BRDFIntegrationMap", brdfParams, false);
@@ -256,7 +257,6 @@ namespace gr
 			std::shared_ptr<re::TextureTargetSet> brdfStageTargets = re::TextureTargetSet::Create("BRDF Stage Targets");
 
 			re::TextureTarget::TargetParams targetParams;
-			targetParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 			brdfStageTargets->SetColorTarget(0, ambientProperties.m_ambient.m_BRDF_integrationMap, targetParams);
 			brdfStageTargets->SetViewport(re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));

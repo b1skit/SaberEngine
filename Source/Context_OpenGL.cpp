@@ -356,7 +356,6 @@ namespace opengl
 		SetCullingMode(pipelineState.GetFaceCullingMode());
 		SetDepthTestMode(pipelineState.GetDepthTestMode());
 		SetDepthWriteMode(pipelineState.GetDepthWriteMode());
-		ClearTargets(pipelineState.GetClearTarget()); // Clear AFTER setting color/depth modes
 	}
 
 
@@ -386,36 +385,6 @@ namespace opengl
 		break;
 		default:
 			SEAssertF("Invalid face culling mode");
-		}
-	}
-
-
-	void Context::ClearTargets(gr::PipelineState::ClearTarget const& clearTarget)
-	{
-		switch (clearTarget)
-		{
-		case gr::PipelineState::ClearTarget::Color:
-		{
-			glClear(GL_COLOR_BUFFER_BIT);
-		}
-		break;
-		case gr::PipelineState::ClearTarget::Depth:
-		{
-			glClear(GL_DEPTH_BUFFER_BIT);
-		}
-		break;
-		case gr::PipelineState::ClearTarget::ColorDepth:
-		{
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		}
-		break;
-		case gr::PipelineState::ClearTarget::None:
-		{
-			return;
-		}
-		break;
-		default:
-			SEAssertF("Invalid face clear target");
 		}
 	}
 

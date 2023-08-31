@@ -448,16 +448,12 @@ namespace
 
 		D3D12_CLEAR_VALUE optimizedClearValue = {};
 		optimizedClearValue.Format = texPlatParams->m_format;
-		optimizedClearValue.Color[0] = 0.f; // TODO: Support a custom clear color
-		optimizedClearValue.Color[1] = 0.f;
-		optimizedClearValue.Color[2] = 0.f;
-		optimizedClearValue.Color[3] = 0.f;
-		optimizedClearValue.DepthStencil = { 1.0f, 0 }; // Float depth, uint8_t stencil
 
 		D3D12_CLEAR_VALUE* optimizedClearValuePtr = &optimizedClearValue;
 		// Note: optimizedClearValuePtr must be null unless:
 		// - D3D12_RESOURCE_DESC::Dimension is D3D12_RESOURCE_DIMENSION_BUFFER,
 		// - D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET or D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL are set in flags
+
 		if ((texParams.m_usage & re::Texture::Usage::ColorTarget) == 0 &&
 			(texParams.m_usage & re::Texture::Usage::DepthTarget) == 0)
 		{
@@ -467,12 +463,20 @@ namespace
 		if (texParams.m_usage & re::Texture::Usage::ColorTarget)
 		{
 			flags |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+
+			optimizedClearValue.Color[0] = texParams.m_clear.m_color.r;
+			optimizedClearValue.Color[1] = texParams.m_clear.m_color.g;
+			optimizedClearValue.Color[2] = texParams.m_clear.m_color.b;
+			optimizedClearValue.Color[3] = texParams.m_clear.m_color.a;
 		}
 
 		if (texParams.m_usage & re::Texture::Usage::DepthTarget)
 		{
 			SEAssert("Depth target cannot have mips", numSubresources == 1);			
 			flags |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+			optimizedClearValue.DepthStencil.Depth = texParams.m_clear.m_depthStencil.m_depth;
+			optimizedClearValue.DepthStencil.Stencil = texParams.m_clear.m_depthStencil.m_stencil;
 		}
 
 		D3D12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);

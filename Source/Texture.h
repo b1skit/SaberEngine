@@ -94,6 +94,19 @@ namespace re
 
 			bool m_useMIPs = true; // Should MIPs be created for this texture?
 			bool m_addToSceneData = true; // Typically false if the texture is a target
+
+			union ClearValues
+			{
+				glm::vec4 m_color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+				struct
+				{
+					float m_depth = 1.f;
+					uint8_t m_stencil = 0;
+				} m_depthStencil;
+
+				ClearValues() { memset(this, 0, sizeof(ClearValues)); }
+			} m_clear;
 		};
 
 

@@ -177,6 +177,19 @@ namespace opengl
 				// Configure the pipeline state:
 				context->SetPipelineState(stagePipelineParams);
 
+				// Clear the targets AFTER setting color/depth write modes
+				const gr::PipelineState::ClearTarget clearTargetMode = stagePipelineParams.GetClearTarget();
+				if (clearTargetMode == gr::PipelineState::ClearTarget::Color ||
+					clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
+				{
+					opengl::TextureTargetSet::ClearColorTargets(*stageTargets);
+				}
+				if (clearTargetMode == gr::PipelineState::ClearTarget::Depth ||
+					clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
+				{
+					opengl::TextureTargetSet::ClearDepthStencilTarget(*stageTargets);
+				}
+
 				// Bind the shader now that the pipeline state is set:
 				re::Shader* stageShader = renderStage->GetStageShader();
 				opengl::Shader::Bind(*stageShader);

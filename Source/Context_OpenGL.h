@@ -31,7 +31,6 @@ namespace opengl
 
 	private:
 		void SetCullingMode(gr::PipelineState::FaceCullingMode const& mode);
-		void ClearTargets(gr::PipelineState::ClearTarget const& clearTarget);
 		void SetDepthTestMode(gr::PipelineState::DepthTestMode const& mode);
 		void SetDepthWriteMode(gr::PipelineState::DepthWriteMode const& mode);
 

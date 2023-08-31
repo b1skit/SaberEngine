@@ -2,7 +2,6 @@
 #include <GL/glew.h>
 
 #include "DebugConfiguration.h"
-
 #include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"
 #include "Texture_OpenGL.h"
@@ -519,6 +518,69 @@ namespace opengl
 				scissorRect.Top(),		// Upper-left corner coordinates: Y
 				scissorRect.Right(),	// Width
 				scissorRect.Bottom());	// Height
+		}
+	}
+
+
+	void TextureTargetSet::ClearColorTargets(re::TextureTargetSet const& targetSet)
+	{
+		opengl::TextureTargetSet::PlatformParams const* targetSetParams =
+			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
+
+		std::vector<re::TextureTarget> const& colorTargets = targetSet.GetColorTargets();
+		for (size_t i = 0; i < colorTargets.size(); i++)
+		{
+			if (colorTargets[i].HasTexture())
+			{
+				opengl::TextureTarget::PlatformParams* targetParams =
+					colorTargets[i].GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
+
+				glClearNamedFramebufferfv(
+					targetSetParams->m_frameBufferObject,	// framebuffer
+					GL_COLOR,								// buffer
+					static_cast<GLint>(i),					// drawbuffer
+					&colorTargets[i].GetTexture()->GetTextureParams().m_clear.m_color.r);	// value
+			}
+		}
+	}
+
+
+	void TextureTargetSet::ClearDepthStencilTarget(re::TextureTargetSet const& targetSet)
+	{
+		if (targetSet.HasDepthTarget())
+		{
+			opengl::TextureTargetSet::PlatformParams const* targetSetParams =
+				targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
+
+			std::shared_ptr<re::Texture> depthStencilTex = targetSet.GetDepthStencilTarget()->GetTexture();
+
+			opengl::TextureTarget::PlatformParams* depthTargetParams =
+				targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
+
+			SEAssert("Drawbuffer must be 0 for depth/stencil targets", depthTargetParams->m_drawBuffer == 0);
+
+			if ((depthStencilTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) != 0 ||
+				(depthStencilTex->GetTextureParams().m_usage & re::Texture::Usage::DepthStencilTarget) != 0)
+			{
+				glClearNamedFramebufferfv(
+					targetSetParams->m_frameBufferObject,	// framebuffer
+					GL_DEPTH,								// buffer
+					depthTargetParams->m_drawBuffer,		// drawbuffer: Must be 0 for GL_DEPTH
+					&targetSet.GetDepthStencilTarget()->GetTexture()->GetTextureParams().m_clear.m_depthStencil.m_depth);	// value
+			}
+
+			if ((depthStencilTex->GetTextureParams().m_usage & re::Texture::Usage::StencilTarget) != 0 ||
+				(depthStencilTex->GetTextureParams().m_usage & re::Texture::Usage::DepthStencilTarget) != 0)
+			{
+				const GLint stencilClearValue =
+					targetSet.GetDepthStencilTarget()->GetTexture()->GetTextureParams().m_clear.m_depthStencil.m_stencil;
+
+				glClearNamedFramebufferiv(
+					targetSetParams->m_frameBufferObject,	// framebuffer
+					GL_STENCIL,								// buffer
+					depthTargetParams->m_drawBuffer,		// drawbuffer: Must be 0 for GL_STENCIL
+					&stencilClearValue);
+			}
 		}
 	}
 }

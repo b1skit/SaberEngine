@@ -56,6 +56,7 @@ namespace dx12
 		colorParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		colorParams.m_useMIPs = false;
 		colorParams.m_addToSceneData = false;
+		colorParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		// Ensure our format here matches the one that our texture will be created with:
 		const DXGI_FORMAT colorBufferFormat = dx12::Texture::GetTextureFormat(colorParams);
@@ -114,12 +115,11 @@ namespace dx12
 		depthParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		depthParams.m_useMIPs = false;
 		depthParams.m_addToSceneData = false;
+		depthParams.m_clear.m_depthStencil.m_depth = 1.f; // Far plane
 
 		std::shared_ptr<re::Texture> depthTargetTex = re::Texture::Create("SwapChainDepthTarget", depthParams, false);
 
 		re::TextureTarget::TargetParams depthTargetParams;
-		depthTargetParams.m_clearColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-
 
 		// Create color target textures, attach them to our target set, & copy the backbuffer resource into their
 		// platform params:
@@ -145,7 +145,6 @@ namespace dx12
 				backbufferResource);
 
 			re::TextureTarget::TargetParams targetParams;
-			targetParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 			swapChainParams->m_backbufferTargetSets[backbufferIdx]->SetColorTarget(0, colorTargetTex, targetParams);
 

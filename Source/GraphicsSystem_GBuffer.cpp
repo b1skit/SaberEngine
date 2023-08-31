@@ -67,9 +67,9 @@ namespace gr
 		// World normal may have negative components, emissive values may be > 1
 		Texture::TextureParams gbuffer16bitParams = gBufferColorParams;
 		gbuffer16bitParams.m_format = re::Texture::Format::RGBA16F; 
+		gbuffer16bitParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		re::TextureTarget::TargetParams gbufferTargetParams;
-		gbufferTargetParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		std::shared_ptr<re::TextureTargetSet> gBufferTargets = re::TextureTargetSet::Create("GBuffer Target Set");
 		for (uint8_t i = GBufferTexIdx::GBufferAlbedo; i <= GBufferTexIdx::GBufferMatProp0; i++)
@@ -91,9 +91,9 @@ namespace gr
 		depthTexParams.m_usage = re::Texture::Usage::DepthTarget;
 		depthTexParams.m_format = re::Texture::Format::Depth32F;
 		depthTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		
+		depthTexParams.m_clear.m_depthStencil.m_depth = 1.f; // Far plane
+
 		re::TextureTarget::TargetParams depthTargetParams;
-		depthTargetParams.m_clearColor = glm::vec4(1.f); // Far plane
 
 		gBufferTargets->SetDepthStencilTarget(
 			re::Texture::Create(GBufferTexNames[GBufferTexIdx::GBufferDepth], depthTexParams, false),

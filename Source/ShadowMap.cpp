@@ -43,6 +43,7 @@ namespace gr
 		shadowParams.m_colorSpace = Texture::ColorSpace::Linear;
 		shadowParams.m_useMIPs = false;
 		shadowParams.m_addToSceneData = false;
+		shadowParams.m_clear.m_depthStencil.m_depth = 1.f;
 
 		// TODO: Enable mipmaps + anisotropic filtering for shadows
 		// http://www.joshbarczak.com/blog/?p=396
@@ -77,7 +78,6 @@ namespace gr
 		}
 
 		re::TextureTarget::TargetParams depthTargetParams;
-		depthTargetParams.m_clearColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 		m_shadowTargetSet->SetDepthStencilTarget(depthTexture, depthTargetParams);
 		m_shadowTargetSet->SetViewport(re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height()));

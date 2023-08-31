@@ -383,15 +383,9 @@ namespace dx12
 	void CommandList::ClearDepthTarget(re::TextureTarget const* depthTarget) const
 	{
 		SEAssert("Target texture cannot be null", depthTarget);
-		ClearDepthTarget(depthTarget, depthTarget->GetTargetParams().m_clearColor.r);
-	}
 
-
-	void CommandList::ClearDepthTarget(re::TextureTarget const* depthTarget, float clearColor) const
-	{
 		SEAssert("Target texture must be a depth target",
-			depthTarget &&
-			(depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget));
+			depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget);
 
 		dx12::Texture::PlatformParams* depthTexPlatParams =
 			depthTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
@@ -401,8 +395,8 @@ namespace dx12
 		m_commandList->ClearDepthStencilView(
 			dsvDescriptor,
 			D3D12_CLEAR_FLAG_DEPTH,
-			clearColor,
-			0,
+			depthTarget->GetTexture()->GetTextureParams().m_clear.m_depthStencil.m_depth,
+			depthTarget->GetTexture()->GetTextureParams().m_clear.m_depthStencil.m_stencil,
 			0,
 			nullptr);
 	}
@@ -411,14 +405,8 @@ namespace dx12
 	void CommandList::ClearColorTarget(re::TextureTarget const* colorTarget) const
 	{
 		SEAssert("Target texture cannot be null", colorTarget);
-		ClearColorTarget(colorTarget, colorTarget->GetTargetParams().m_clearColor);
-	}
 
-
-	void CommandList::ClearColorTarget(re::TextureTarget const* colorTarget, glm::vec4 clearColor) const
-	{
 		SEAssert("Target texture must be a color target", 
-			colorTarget && 
 			(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) ||
 			(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::SwapchainColorProxy));
 
@@ -427,7 +415,7 @@ namespace dx12
 
 		m_commandList->ClearRenderTargetView(
 			texPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor(),
-			&clearColor.r,
+			&colorTarget->GetTexture()->GetTextureParams().m_clear.m_color.r,
 			0,			// Number of rectangles in the proceeding D3D12_RECT ptr
 			nullptr);	// Ptr to an array of rectangles to clear in the resource view. Clears entire view if null
 	}

@@ -37,10 +37,13 @@ namespace opengl
 		};
 
 		// Static members:
-		static void CreateColorTargets(re::TextureTargetSet const& targetSet);
-		static void AttachColorTargets(re::TextureTargetSet const& targetSet);
+		static void CreateColorTargets(re::TextureTargetSet const&);
+		static void AttachColorTargets(re::TextureTargetSet const&);
 
-		static void CreateDepthStencilTarget(re::TextureTargetSet const& targetSet);
-		static void AttachDepthStencilTarget(re::TextureTargetSet const& targetSet);
+		static void CreateDepthStencilTarget(re::TextureTargetSet const&);
+		static void AttachDepthStencilTarget(re::TextureTargetSet const&);
+
+		static void ClearColorTargets(re::TextureTargetSet const&);
+		static void ClearDepthStencilTarget(re::TextureTargetSet const&);
 	};
 }

@@ -103,9 +103,9 @@ namespace gr
 			deferredLightGSTargetSet->GetColorTarget(0).GetTexture()->GetTextureParams();
 		resScaleParams.m_width = currentXRes;
 		resScaleParams.m_height = currentYRes;
+		resScaleParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		re::TextureTarget::TargetParams targetParams;
-		targetParams.m_clearColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		shared_ptr<Shader> luminanceThresholdShader =
 			re::Shader::Create(Config::Get()->GetValue<string>("luminanceThresholdShaderName"));

@@ -81,11 +81,9 @@ namespace dx12
 
 		void DrawBatchGeometry(re::Batch const&);
 
-		void ClearDepthTarget(re::TextureTarget const*) const; // Uses target texture's R clear color
-		void ClearDepthTarget(re::TextureTarget const*, float clearColor) const;
+		void ClearDepthTarget(re::TextureTarget const*) const;
 
 		void ClearColorTarget(re::TextureTarget const*) const;
-		void ClearColorTarget(re::TextureTarget const*, glm::vec4 clearColor) const;
 		void ClearColorTargets(re::TextureTargetSet const&) const;
 
 		void SetRenderTargets(re::TextureTargetSet const&);
