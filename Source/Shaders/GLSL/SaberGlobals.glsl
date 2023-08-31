@@ -28,6 +28,53 @@
 #define FLT_MIN		1.175494351e-38
 
 
+#if defined(READ_GBUFFER)
+struct GBuffer
+{
+	vec3 LinearAlbedo;
+	vec3 WorldNormal;
+
+	float Roughness;
+	float Metalness;
+	float AO;
+
+#if defined(GBUFFER_EMISSIVE)
+	vec3 Emissive;
+#endif
+	vec3 MatProp0; // .rgb = F0 (Surface response at 0 degrees)
+	float NonLinearDepth;
+};
+
+
+GBuffer UnpackGBuffer(vec2 screenUV)
+{
+	GBuffer gbuffer;
+
+	// Note: All PBR calculations are performed in linear space
+	// However, we use sRGB-format input textures, the sRGB->Linear transformation happens for free when writing the 
+	// GBuffer, so no need to do the sRGB -> linear conversion here
+	gbuffer.LinearAlbedo = texture(GBufferAlbedo, screenUV).rgb;
+
+	const vec3 normalScale = vec3(g_normalScale, g_normalScale, 1.f); // Scales the normal's X, Y directions
+	gbuffer.WorldNormal = texture(GBufferWNormal, screenUV).xyz * normalScale;
+
+	const vec3 RMAO = texture(GBufferRMAO, screenUV).rgb;
+	gbuffer.Roughness = RMAO.r;
+	gbuffer.Metalness = RMAO.g;
+	gbuffer.AO = RMAO.b;
+
+#if defined(GBUFFER_EMISSIVE)
+	gbuffer.Emissive = texture(GBufferEmissive, screenUV).rgb; // TODO: Update GS to use the "Tex0" input in the blit shader!!!!!!!!!
+#endif
+
+	gbuffer.MatProp0 = texture(GBufferMatProp0, screenUV).rgb;
+
+	gbuffer.NonLinearDepth = texture(GBufferDepth, screenUV).r;
+
+	return gbuffer;
+}
+#endif
+
 
 // When rotating normal vectors we use the transpose of the inverse of the model matrix, incase we have a
 // non-uniform scaling factor
@@ -53,11 +100,9 @@ mat3 BuildTBN(const vec3 inFaceNormal, const vec4 inLocalTangent, const mat4 tra
 }
 
 
-vec3 WorldNormalFromTextureNormal(vec3 texNormal, vec3 normalScale, mat3 TBN)
+vec3 WorldNormalFromTextureNormal(vec3 texNormal, mat3 TBN)
 {
-	vec3 normal = normalize((texNormal * 2.0) - 1.0); // Transform [0,1] -> [-1,1]
-
-	normal *= normalScale;
+	const vec3 normal = (texNormal * 2.f) - 1.f; // Transform [0,1] -> [-1,1]
 
 	return normalize(TBN * normal);
 }

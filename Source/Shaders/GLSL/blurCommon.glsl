@@ -31,7 +31,7 @@
 		const float sigmoidRampPower = g_sigmoidParams.x;
 		const float sigmoidSpeed = g_sigmoidParams.y;
 
-		vec3 fragRGB = texture(GBufferAlbedo, vOut.uv0.xy).rgb;
+		vec3 fragRGB = texture(Tex0, vOut.uv0.xy).rgb;
 		
 		const float maxChannel = max(fragRGB.x, max(fragRGB.y, fragRGB.z));
 		float scale = pow(sigmoidSpeed * maxChannel, sigmoidRampPower);
@@ -57,7 +57,7 @@
 
 		for (int i = 0; i < NUM_TAPS; i++)
 		{
-			total += texture(GBufferAlbedo, uvs).rgb * weights[i];
+			total += texture(Tex0, uvs).rgb * weights[i];
 
 			uvs.x += g_bloomTargetResolution.z; // Move the sample right by 1 pixel
 		}
@@ -77,7 +77,7 @@
 
 		for (int i = 0; i < NUM_TAPS; i++)
 		{
-			total += texture(GBufferAlbedo, uvs).rgb * weights[i];
+			total += texture(Tex0, uvs).rgb * weights[i];
 
 			uvs.y -= g_bloomTargetResolution.w; // Move the sample down by 1 pixel
 		}

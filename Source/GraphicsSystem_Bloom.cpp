@@ -275,10 +275,10 @@ namespace gr
 		shared_ptr<Sampler> const bloomStageSampler = Sampler::GetSampler(Sampler::WrapAndFilterMode::ClampLinearLinear);
 
 		// This index corresponds with the GBuffer texture layout bindings in SaberCommon.glsl
-		const size_t gBufferEmissiveTextureIndex = 3; 
+		const size_t gBufferEmissiveTextureSrcIndex = 3;
 		m_emissiveBlitStage->SetPerFrameTextureInput(
-			"GBufferAlbedo",
-			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(gBufferEmissiveTextureIndex).GetTexture(),
+			"Tex0",
+			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(gBufferEmissiveTextureSrcIndex).GetTexture(),
 			bloomStageSampler);
 
 		for (size_t i = 0; i < m_downResStages.size(); i++)
@@ -286,14 +286,14 @@ namespace gr
 			if (i == 0)
 			{
 				m_downResStages[i]->SetPerFrameTextureInput(
-					"GBufferAlbedo", 
+					"Tex0", 
 					m_emissiveBlitStage->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
 				m_downResStages[i]->SetPerFrameTextureInput(
-					"GBufferAlbedo",
+					"Tex0",
 					m_downResStages[i - 1]->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
@@ -304,14 +304,14 @@ namespace gr
 			if (i == 0)
 			{
 				m_blurStages[i]->SetPerFrameTextureInput(
-					"GBufferAlbedo",
+					"Tex0",
 					m_downResStages.back()->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
 				m_blurStages[i]->SetPerFrameTextureInput(
-					"GBufferAlbedo",
+					"Tex0",
 					m_blurStages[i-1]->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
@@ -322,14 +322,14 @@ namespace gr
 			if (i == 0)
 			{
 				m_upResStages[i]->SetPerFrameTextureInput(
-					"GBufferAlbedo",
+					"Tex0",
 					m_blurStages.back()->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
 				m_upResStages[i]->SetPerFrameTextureInput(
-					"GBufferAlbedo",
+					"Tex0",
 					m_upResStages[i-1]->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}

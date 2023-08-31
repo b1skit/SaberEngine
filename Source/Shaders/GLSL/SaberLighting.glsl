@@ -100,76 +100,81 @@ vec3 ApplyExposure(vec3 linearColor, float exposure)
 }
 
 
-// General PBR lighting: Called from specific deferred light shaders
-// linearAlbedo = Non-linearized RGB
-// lightWorldDir must be normalized
-// lightColor must have attenuation factored in
-vec4 ComputePBRLighting(
-	const vec4 linearAlbedo, 
-	const vec3 worldNormal, 
-	const vec4 MatRMAO, 
-	const vec4 worldPosition, 
-	const vec3 F0, 
-	const float NoL,
-	const vec3 lightWorldDir,
-	const vec3 lightColor, 
-	const float shadowFactor,
-	const mat4 view)
+// Calculate attenuation based on distance between fragment and light
+float LightAttenuation(vec3 fragWorldPosition, vec3 lightWorldPosition)
 {
-	// TODO: The input for this should just be a single struct
+	const float lightDist = length(lightWorldPosition - fragWorldPosition);
 
-	// Note: All PBR calculations are performed in linear color space.
-	// However, we use sRGB-format textures, getting the sRGB->Linear transformation for free when writing our GBuffer
-	// for sRGB-format inputs (ie. MatAlbedo, MatEmissive) so no need to degamma albedo here
+	const float attenuation = 1.0 / (1.0 + (lightDist * lightDist));
 
-	const vec4 viewPosition = view * worldPosition;	// View-space position
-	const vec3 viewEyeDir	= normalize(-viewPosition.xyz);	// View-space: Shaded point -> eye/camera direction
-	const vec3 viewNormal	= normalize(view * vec4(worldNormal, 0)).xyz; // View-space surface normal
+	return attenuation;
+}
 
-	const vec3 lightViewDir = (view * vec4(lightWorldDir, 0)).xyz;
+
+struct LightingParams
+{
+	vec3 LinearAlbedo;
+	vec3 WorldNormal;
+	float Roughness;
+	float Metalness;
+	float AO;
+	vec3 WorldPosition;
+	vec3 F0;
+	vec3 LightWorldPos; // == WorldPosition for directional lights, to ensure attenuation = 0
+	vec3 LightWorldDir;
+	vec3 LightColor;
+	float ShadowFactor;
+	mat4 View;
+};
+
+// General PBR lighting: Called from specific deferred light shaders
+vec3 ComputeLighting(const LightingParams lightingParams)
+{
+	const vec3 lightWorldDir = normalize(lightingParams.LightWorldDir);
+	const vec3 worldNormal = normalize(lightingParams.WorldNormal);
+
+	const vec4 viewPosition = lightingParams.View * vec4(lightingParams.WorldPosition, 1.f); // View-space position
+	const vec3 viewEyeDir = normalize(-viewPosition.xyz);	// View-space: Point -> eye/camera direction
+
+	const mat3 viewRotationScale = mat3(lightingParams.View);
+	const vec3 viewNormal = normalize(viewRotationScale * worldNormal); // View-space normal
+
+	const vec3 lightViewDir = viewRotationScale * lightWorldDir;
 	const vec3 halfVectorView	= HalfVector(lightViewDir, viewEyeDir);	// View-space half direction
 
 	const float NoV	= max(0.0, dot(viewNormal, viewEyeDir) );
+	const float NoL = max(0.0, dot(worldNormal, lightWorldDir));
 
-	const float roughness = MatRMAO.x;
-	const float metalness = MatRMAO.y;
-
-	// Fresnel-Schlick approximation is only defined for non-metals, so we blend it here:
-	const vec3 blendedF0 = mix(F0, linearAlbedo.rgb, metalness); // Lerp: Blends towards albedo for metals
+	// Fresnel-Schlick approximation is only defined for non-metals, so we blend it here. Lerp blends towards albedo for metals
+	const vec3 blendedF0 = mix(lightingParams.F0, lightingParams.LinearAlbedo, lightingParams.Metalness); 
 
 	const vec3 fresnel = FresnelSchlick(NoV, blendedF0);
 	
-	const float NDF = NDF(viewNormal, halfVectorView, roughness);
+	const float NDF = NDF(viewNormal, halfVectorView, lightingParams.Roughness);
 
-	const float remappedRoughness = RemapRoughnessDirect(roughness);
+	const float remappedRoughness = RemapRoughnessDirect(lightingParams.Roughness);
 	const float geometry = GeometrySmith(NoV, NoL, remappedRoughness);
 
 	// Specular:
-	const vec3 specularContribution = (NDF * fresnel * geometry) / max((4.0 * NoV * NoL), 0.0001);
+	const vec3 specularContribution = (NDF * fresnel * geometry) / max((4.0 * NoV * NoL), 0.0001f);
 	
 	// Diffuse:
 	vec3 k_d = vec3(1.0) - fresnel;
-	k_d = k_d * (1.0 - metalness); // Metallics absorb refracted light
-//	const vec3 diffuseContribution = k_d * linearAlbedo.rgb; // Note: Omitted the "/ M_PI" factor here
-	const vec3 diffuseContribution = k_d * linearAlbedo.rgb / M_PI;
+	k_d = k_d * (1.0 - lightingParams.Metalness); // Metallics absorb refracted light
+//	const vec3 diffuseContribution = k_d * lightingParams.LinearAlbedo.rgb; // Note: Omitted the "/ M_PI" factor here
+	const vec3 diffuseContribution = k_d * lightingParams.LinearAlbedo.rgb / M_PI;
 
-	const vec3 combinedContribution = (diffuseContribution + specularContribution) * lightColor * NoL * shadowFactor;
+	// Light attenuation:
+	const float lightAttenuation = LightAttenuation(lightingParams.WorldPosition, lightingParams.LightWorldPos);
+	const vec3 attenuatedLightColor = lightingParams.LightColor * lightAttenuation;
+
+	const vec3 combinedContribution = 
+		(diffuseContribution + specularContribution) * attenuatedLightColor * NoL * lightingParams.ShadowFactor;
 
 	// Apply exposure:
 	const vec3 exposedColor = ApplyExposure(combinedContribution, g_exposureProperties.x);
 
-	return vec4(exposedColor, linearAlbedo.a);
-}
-
-
-// Calculate attenuation based on distance between fragment and light
-float LightAttenuation(vec3 fragWorldPosition, vec3 lightWorldPosition)
-{
-	float lightDist = length(lightWorldPosition - fragWorldPosition);
-
-	float attenuation = 1.0 / (1.0 + (lightDist * lightDist));
-
-	return attenuation;
+	return exposedColor;
 }
 
 

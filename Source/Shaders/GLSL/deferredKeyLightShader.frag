@@ -3,6 +3,8 @@
 #define SABER_FRAGMENT_SHADER
 #define SABER_VEC4_OUTPUT
 
+#define READ_GBUFFER
+
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"
 #include "SaberLighting.glsl"
@@ -12,36 +14,31 @@ void main()
 {
 	const vec2 screenUV = vOut.uv0.xy; // Directional light is drawn with a fullscreen quad
 
-	// Sample textures once inside the main shader flow, and pass the values as required:
-	vec4 linearAlbedo = texture(GBufferAlbedo, screenUV); // PBR calculations are performed in linear space
-	vec3 worldNormal = texture(GBufferWNormal, screenUV).xyz;
-	vec4 MatRMAO = texture(GBufferRMAO, screenUV);
-	vec4 matProp0 = texture(GBufferMatProp0, screenUV); // .rgb = F0 (Surface response at 0 degrees)
+	const GBuffer gbuffer = UnpackGBuffer(screenUV);
 
-	// Reconstruct the world position:
-	const float nonLinearDepth = texture(GBufferDepth, screenUV).r;
-	const vec4 worldPos = vec4(GetWorldPos(screenUV, nonLinearDepth, g_invViewProjection), 1.f);
+	const vec3 worldPos = GetWorldPos(screenUV, gbuffer.NonLinearDepth, g_invViewProjection);
 
 	// Directional light direction is packed into the light position
 	const vec3 keylightWorldDir = g_lightWorldPos;
 
 	// Read from 2D shadow map:
-	float NoL = max(0.0, dot(worldNormal, keylightWorldDir));
+	const float NoL = max(0.0, dot(gbuffer.WorldNormal, keylightWorldDir));
+	const vec3 shadowPos = (g_shadowCam_VP * vec4(worldPos, 1.f)).xyz;
+	const float shadowFactor = GetShadowFactor(shadowPos, Depth0, NoL);
 
-	vec3 shadowPos = (g_shadowCam_VP * worldPos).xyz;
+	LightingParams lightingParams;
+	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
+	lightingParams.WorldNormal = gbuffer.WorldNormal;
+	lightingParams.Roughness = gbuffer.Roughness;
+	lightingParams.Metalness = gbuffer.Metalness;
+	lightingParams.AO = gbuffer.AO;
+	lightingParams.WorldPosition = worldPos;
+	lightingParams.F0 = gbuffer.MatProp0;
+	lightingParams.LightWorldPos = worldPos; // Ensure attenuation = 0 for directional lights
+	lightingParams.LightWorldDir = keylightWorldDir;
+	lightingParams.LightColor = g_lightColorIntensity;
+	lightingParams.ShadowFactor = shadowFactor;
+	lightingParams.View = g_view;
 
-	float shadowFactor = GetShadowFactor(shadowPos, Depth0, NoL);
-
-	// Note: Keylight doesn't have attenuation
-	FragColor = ComputePBRLighting(
-		linearAlbedo, 
-		worldNormal, 
-		MatRMAO, 
-		worldPos, 
-		matProp0.rgb, 
-		NoL, 
-		keylightWorldDir, 
-		g_lightColorIntensity, 
-		shadowFactor, 
-		g_view);
+	FragColor = vec4(ComputeLighting(lightingParams), 1.f);
 } 
