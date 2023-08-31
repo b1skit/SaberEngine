@@ -257,69 +257,7 @@ namespace en
 			return;
 		}
 
-		// Build batches from scene meshes:
-		// TODO: Build this by traversing the scene hierarchy once a scene graph is implemented
-		std::vector<std::pair<Batch, Transform*>> unmergedBatches;
-		for (shared_ptr<gr::Mesh> mesh : sceneMeshes)
-		{
-			for (shared_ptr<re::MeshPrimitive> const meshPrimitive : mesh->GetMeshPrimitives())
-			{
-				unmergedBatches.emplace_back(std::pair<Batch, Transform*>(
-					{
-						meshPrimitive.get(),
-						meshPrimitive->GetMeshMaterial()
-					},
-					mesh->GetTransform()));
-			}
-		}
-
-		// Sort the batches:
-		std::sort(
-			unmergedBatches.begin(),
-			unmergedBatches.end(),
-			[](std::pair<Batch, Transform*> const& a, std::pair<Batch, Transform*> const& b)
-			-> bool { return (a.first.GetDataHash() > b.first.GetDataHash()); }
-		);
-
-		// Assemble a list of merged batches:
-		size_t unmergedIdx = 0;
-		do
-		{
-			// Add the first batch in the sequence to our final list:
-			m_sceneBatches.emplace_back(unmergedBatches[unmergedIdx].first);
-			const uint64_t curBatchHash = m_sceneBatches.back().GetDataHash();
-
-			// Find the index of the last batch with a matching hash in the sequence:
-			const size_t instanceStartIdx = unmergedIdx++;
-			while (unmergedIdx < unmergedBatches.size() &&
-				unmergedBatches[unmergedIdx].first.GetDataHash() == curBatchHash)
-			{
-				unmergedIdx++;
-			}
-
-			// Compute and set the number of instances in the batch:
-			const uint32_t numInstances = util::CheckedCast<uint32_t, size_t>(unmergedIdx - instanceStartIdx);
-
-			m_sceneBatches.back().SetInstanceCount(numInstances);
-
-			// Now build the instanced PBs:
-			std::vector<gr::Transform*> instanceTransforms;
-			instanceTransforms.reserve(numInstances);
-
-			for (size_t instanceOffset = 0; instanceOffset < numInstances; instanceOffset++)
-			{
-				// Add the Transform to our list
-				const size_t srcIdx = instanceStartIdx + instanceOffset;
-				instanceTransforms.emplace_back(unmergedBatches[srcIdx].second);
-			}
-
-			std::shared_ptr<re::ParameterBlock> instancedMeshParams = 
-				gr::Mesh::CreateInstancedMeshParamsData(instanceTransforms);
-			// TODO: We're currently creating/destroying these parameter blocks each frame. This is expensive. Instead,
-			// we should create a pool of PBs, and reuse by re-buffering data each frame
-
-			m_sceneBatches.back().SetParameterBlock(instancedMeshParams);
-		} while (unmergedIdx < unmergedBatches.size());
+		m_sceneBatches = std::move(re::Batch::BuildBatches(SceneManager::GetSceneData()->GetMeshes()));
 	}
 }
 

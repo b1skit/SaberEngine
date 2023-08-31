@@ -25,6 +25,10 @@ namespace re
 	class Batch final : public virtual en::HashedDataObject
 	{
 	public:
+		static std::vector<re::Batch> BuildBatches(std::vector<std::shared_ptr<gr::Mesh>> const&);
+
+
+	public:
 		enum class BatchType
 		{
 			Graphics,

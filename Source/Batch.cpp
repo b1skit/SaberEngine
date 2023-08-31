@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Batch.h"
+#include "CastUtils.h"
 #include "DebugConfiguration.h"
 #include "MeshPrimitive.h"
 #include "Material.h"
@@ -8,6 +9,7 @@
 #include "Sampler.h"
 #include "Shader.h"
 #include "Texture.h"
+#include "Transform.h"
 
 
 using std::string;
@@ -22,6 +24,77 @@ namespace
 
 namespace re
 {
+	std::vector<re::Batch> Batch::BuildBatches(std::vector<std::shared_ptr<gr::Mesh>> const& meshes)
+	{
+		std::vector<std::pair<Batch, gr::Transform*>> unmergedBatches;
+		unmergedBatches.reserve(meshes.size());
+		for (shared_ptr<gr::Mesh> mesh : meshes)
+		{
+			for (shared_ptr<re::MeshPrimitive> const meshPrimitive : mesh->GetMeshPrimitives())
+			{
+				unmergedBatches.emplace_back(std::pair<re::Batch, gr::Transform*>(
+					{
+						meshPrimitive.get(),
+						meshPrimitive->GetMeshMaterial()
+					},
+					mesh->GetTransform()));
+			}
+		}
+
+		// Sort the batches:
+		std::sort(
+			unmergedBatches.begin(),
+			unmergedBatches.end(),
+			[](std::pair<Batch, gr::Transform*> const& a, std::pair<Batch, gr::Transform*> const& b)
+			-> bool { return (a.first.GetDataHash() > b.first.GetDataHash()); }
+		);
+
+		// Assemble a list of merged batches:
+		std::vector<re::Batch> mergedBatches;
+		mergedBatches.reserve(meshes.size());
+		size_t unmergedIdx = 0;
+		do
+		{
+			// Add the first batch in the sequence to our final list:
+			mergedBatches.emplace_back(unmergedBatches[unmergedIdx].first);
+			const uint64_t curBatchHash = mergedBatches.back().GetDataHash();
+
+			// Find the index of the last batch with a matching hash in the sequence:
+			const size_t instanceStartIdx = unmergedIdx++;
+			while (unmergedIdx < unmergedBatches.size() &&
+				unmergedBatches[unmergedIdx].first.GetDataHash() == curBatchHash)
+			{
+				unmergedIdx++;
+			}
+
+			// Compute and set the number of instances in the batch:
+			const uint32_t numInstances = util::CheckedCast<uint32_t, size_t>(unmergedIdx - instanceStartIdx);
+
+			mergedBatches.back().SetInstanceCount(numInstances);
+
+			// Now build the instanced PBs:
+			std::vector<gr::Transform*> instanceTransforms;
+			instanceTransforms.reserve(numInstances);
+
+			for (size_t instanceOffset = 0; instanceOffset < numInstances; instanceOffset++)
+			{
+				// Add the Transform to our list
+				const size_t srcIdx = instanceStartIdx + instanceOffset;
+				instanceTransforms.emplace_back(unmergedBatches[srcIdx].second);
+			}
+
+			std::shared_ptr<re::ParameterBlock> instancedMeshParams =
+				gr::Mesh::CreateInstancedMeshParamsData(instanceTransforms);
+			// TODO: We're currently creating/destroying these parameter blocks each frame. This is expensive. Instead,
+			// we should create a pool of PBs, and reuse by re-buffering data each frame
+
+			mergedBatches.back().SetParameterBlock(instancedMeshParams);
+		} while (unmergedIdx < unmergedBatches.size());
+
+		return mergedBatches;
+	}
+
+
 	Batch::Batch(re::MeshPrimitive const* meshPrimitive, gr::Material const* materialOverride)
 		: m_type(BatchType::Graphics)
 		, m_graphicsParams{
