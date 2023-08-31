@@ -27,8 +27,13 @@ void main()
 		discard;
 	}
 
+	// World-space normal:
+	// Note: We normalize the normal after applying the TBN and writing to the GBuffer, we may need to post-apply this
+	const vec3 normalScale = vec3(g_normalScale, g_normalScale, 1.0f); // Scales the normal's X, Y directions
+	
 	const vec3 texNormal = texture(MatNormal, vOut.uv0.xy).xyz;
-	const vec3 worldNormal = WorldNormalFromTextureNormal(texNormal, vOut.TBN) * vec3(g_normalScale, g_normalScale, 1.0f);
+	
+	const vec3 worldNormal = WorldNormalFromTextureNormal(texNormal, normalScale, vOut.TBN);
 	gBuffer_out_worldNormal = vec4(worldNormal, 0.0f);
 	
 	// Unpack/scale metallic/roughness: .G = roughness, .B = metallness

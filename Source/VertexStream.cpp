@@ -16,15 +16,15 @@ namespace
 		}
 	}
 
-	template<typename T>
+	template<>
 	void Normalize(std::vector<glm::vec4>& data)
 	{
 		LOG_WARNING("Vertex stream is requesting to normalize a 4-component vector. Assuming it is a "
 			"3-component XYZ vector, with a packed value in .w");
 
-		for (T& element : data)
+		for (glm::vec4& element : data)
 		{
-			element.xyz = glm::normalize(element.xyz);
+			element.xyz = glm::normalize(static_cast<glm::vec3>(element.xyz));
 		}
 	}
 

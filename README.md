@@ -75,6 +75,9 @@ Conventions:
 - Right-handed coordinate system  
 - UV (0,0) = Top-left  
 - Depth near/far = [0,1]  
+- CPU-side matrices are stored in column-major order (GLM default)  
+- GLSL matrices constructed/consumed in column-major order (GLSL default)  
+- HLSL uniform matrices arrive in column-major order. Matrices declared in shader body are constructed in row-major order (HLSL defaults)  
 
 
 ---------------------

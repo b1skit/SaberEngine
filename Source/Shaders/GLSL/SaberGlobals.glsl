@@ -27,8 +27,6 @@
 #define FLT_MAX		3.402823466e+38
 #define FLT_MIN		1.175494351e-38
 
-// Gamma = 1.0 / 2.2:
-#define GAMMA vec3(0.45454545454545454545454545454545454545, 0.45454545454545454545454545454545454545, 0.45454545454545454545454545454545454545)
 
 
 // When rotating normal vectors we use the transpose of the inverse of the model matrix, incase we have a
@@ -36,30 +34,32 @@
 // https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/transforming-normals
 // This effectively isolates the inverse of the scale component (as the inverse and transpose of a rotation matrix
 // cancel each other)
-mat3 AssembleTBN(const vec3 inFaceNormal, const vec4 inLocalTangent, const mat4 transposeInvModel)
+mat3 BuildTBN(const vec3 inFaceNormal, const vec4 inLocalTangent, const mat4 transposeInvModel)
 {
-	const vec3 faceNormal = normalize(inFaceNormal);
-	const vec4 localTangent = vec4(normalize(inLocalTangent.xyz), inLocalTangent.w);
+	const mat3 transposeInvRotationScale = mat3(transposeInvModel);
 
-	const mat3 invRotationScaleTranspose = mat3(transposeInvModel);
+	const float signBit = inLocalTangent.w; // Sign bit is packed into localTangent.w == 1.0 or -1.0
 
-	const vec3 worldFaceNormal = invRotationScaleTranspose * faceNormal;
-
-	// Get the world-space tangent vector, and apply Gram-Schmidt re-orthogonalization:
-	vec3 worldTangent = invRotationScaleTranspose * localTangent.xyz;
-	worldTangent = normalize(worldTangent - dot(worldTangent, worldFaceNormal) * worldFaceNormal);
-
-	// Sign bit is packed into localTangent.w == 1.0 or -1.0
-	const vec3 worldBitangent = cross(worldFaceNormal.xyz, worldTangent.xyz) * localTangent.w;
+	const vec3 worldFaceNormal = normalize(transposeInvRotationScale * inFaceNormal);
+	vec3 worldTangent = normalize(transposeInvRotationScale * inLocalTangent.xyz);
 	
+	// Apply Gram-Schmidt re-orthogonalization to the Tangent:
+	worldTangent = normalize(worldTangent - (dot(worldTangent, worldFaceNormal) * worldFaceNormal));
+
+	const vec3 worldBitangent = normalize(cross(worldFaceNormal.xyz, worldTangent.xyz) * signBit);
+	
+	// Note: In GLSL, matrix components are constructed/consumed in column major order
 	return mat3(worldTangent, worldBitangent, worldFaceNormal);
 }
 
 
-vec3 WorldNormalFromTextureNormal(vec3 texNormal, mat3 TBN)
+vec3 WorldNormalFromTextureNormal(vec3 texNormal, vec3 normalScale, mat3 TBN)
 {
-	texNormal = normalize((texNormal * 2.0) - 1.0); // Transform [0,1] -> [-1,1]
-	return normalize(TBN * texNormal);
+	vec3 normal = normalize((texNormal * 2.0) - 1.0); // Transform [0,1] -> [-1,1]
+
+	normal *= normalScale;
+
+	return normalize(TBN * normal);
 }
 
 

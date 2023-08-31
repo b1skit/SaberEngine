@@ -23,8 +23,11 @@ GBufferOut PShader(VertexOut In)
 	output.Albedo = matAlbedo * PBRMetallicRoughnessParams.g_baseColorFactor * In.Color;
 
 	// World-space normal:
+	// Note: We normalize the normal after applying the TBN and writing to the GBuffer, we may need to post-apply this
+	const float3 normalScale = 
+		float3(PBRMetallicRoughnessParams.g_normalScale, PBRMetallicRoughnessParams.g_normalScale, 1.f);
 	const float3 texNormal = MatNormal.Sample(WrapLinearLinear, In.UV0).xyz;
-	output.WorldNormal = float4(WorldNormalFromTextureNormal(texNormal, In.TBN), 0.f);
+	output.WorldNormal = float4(WorldNormalFromTextureNormal(texNormal, normalScale, In.TBN), 0.f);
 	
 	// RMAO:
 	const float roughnessFactor = PBRMetallicRoughnessParams.g_roughnessFactor;

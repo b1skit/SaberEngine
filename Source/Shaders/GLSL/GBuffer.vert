@@ -12,5 +12,5 @@ void main()
 	
 	vOut.uv0 = in_uv0;
 	vOut.vertexColor = in_color;
-	vOut.TBN = AssembleTBN(in_normal, in_tangent, g_instancedMeshParams[gl_InstanceID].g_transposeInvModel);
+	vOut.TBN = BuildTBN(in_normal, in_tangent, g_instancedMeshParams[gl_InstanceID].g_transposeInvModel);
 }
