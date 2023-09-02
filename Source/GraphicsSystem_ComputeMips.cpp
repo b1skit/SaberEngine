@@ -89,7 +89,7 @@ namespace gr
 					mipGenerationStage->SetStageShader(m_mipMapGenerationShader);
 
 					const uint32_t sourceMip = targetMip - 1;
-					mipGenerationStage->SetPerFrameTextureInput("SrcTex", newTexture, mipSampler, sourceMip);
+					mipGenerationStage->AddTextureInput("SrcTex", newTexture, mipSampler, sourceMip);
 
 					const uint32_t numMipStages =
 						targetMip + numTargetsPerStage < totalMipLevels ? numTargetsPerStage : (totalMipLevels - targetMip);

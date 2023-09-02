@@ -207,7 +207,7 @@ namespace opengl
 				}
 
 				// Set per-frame stage textures/sampler inputs:
-				for (auto const& texSamplerInput : renderStage->GetPerFrameTextureInputs())
+				for (auto const& texSamplerInput : renderStage->GetTextureInputs())
 				{
 					opengl::Shader::SetTextureAndSampler(
 						*stageShader,

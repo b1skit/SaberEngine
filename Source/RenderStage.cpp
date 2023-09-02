@@ -24,7 +24,8 @@ namespace re
 		newGFXStage.reset(new RenderStage(
 			name, 
 			std::make_unique<GraphicsStageParams>(stageParams), 
-			RenderStage::RenderStageType::Graphics));
+			RenderStage::RenderStageType::Graphics,
+			RenderStage::RenderStageLifetime::Permanent));
 		return newGFXStage;
 	}
 
@@ -35,15 +36,43 @@ namespace re
 		std::shared_ptr<RenderStage> newComputeStage;
 		newComputeStage.reset(new ComputeStage(
 			name, 
-			std::make_unique<ComputeStageParams>(stageParams)));
+			std::make_unique<ComputeStageParams>(stageParams), RenderStageLifetime::Permanent));
+		return newComputeStage;
+	}
+
+
+	std::shared_ptr<RenderStage> RenderStage::CreateSingleFrameGraphicsStage(
+		std::string const& name, GraphicsStageParams const& stageParams)
+	{
+		std::shared_ptr<RenderStage> newGFXStage;
+		newGFXStage.reset(new RenderStage(
+			name,
+			std::make_unique<GraphicsStageParams>(stageParams),
+			RenderStage::RenderStageType::Graphics,
+			RenderStage::RenderStageLifetime::SingleFrame));
+		return newGFXStage;
+	}
+
+
+	std::shared_ptr<RenderStage> RenderStage::CreateSingleFrameComputeStage(
+		std::string const& name, ComputeStageParams const& stageParams)
+	{
+		std::shared_ptr<RenderStage> newComputeStage;
+		newComputeStage.reset(new ComputeStage(
+			name,
+			std::make_unique<ComputeStageParams>(stageParams), RenderStageLifetime::SingleFrame));
 		return newComputeStage;
 	}
 
 
 	RenderStage::RenderStage(
-		std::string const& name, std::unique_ptr<IStageParams>&& stageParams, RenderStageType stageType)
+		std::string const& name, 
+		std::unique_ptr<IStageParams>&& stageParams, 
+		RenderStageType stageType, 
+		RenderStageLifetime lifetime)
 		: NamedObject(name)
 		, m_type(stageType)
+		, m_lifetime(lifetime)
 		, m_stageParams(nullptr)
 		, m_stageShader(nullptr)
 		, m_textureTargetSet(nullptr)
@@ -55,9 +84,12 @@ namespace re
 	}
 
 
-	ComputeStage::ComputeStage(std::string const& name, std::unique_ptr<ComputeStageParams>&& stageParams)
+	ComputeStage::ComputeStage(
+		std::string const& name, 
+		std::unique_ptr<ComputeStageParams>&& stageParams, 
+		RenderStageLifetime lifetime)
 		: NamedObject(name)
-		, RenderStage(name, std::move(stageParams), RenderStageType::Compute)
+		, RenderStage(name, std::move(stageParams), RenderStageType::Compute, lifetime)
 	{
 	}
 
@@ -68,7 +100,7 @@ namespace re
 	}
 
 
-	void RenderStage::SetPerFrameTextureInput(
+	void RenderStage::AddTextureInput(
 		string const& shaderName, shared_ptr<Texture> tex, shared_ptr<Sampler> sampler, uint32_t subresource /*= k_allSubresources*/)
 	{
 		SEAssert("Stage shader is null. Set the stage shader before this call", m_stageShader != nullptr);
@@ -76,14 +108,13 @@ namespace re
 		SEAssert("Invalid texture", tex != nullptr);
 		SEAssert("Invalid sampler", sampler != nullptr);
 
-		m_perFrameTextureSamplerInputs.emplace_back(RenderStageTextureAndSamplerInput{ shaderName, tex, sampler, subresource });
+		m_textureSamplerInputs.emplace_back(RenderStageTextureAndSamplerInput{ shaderName, tex, sampler, subresource });
 	}
 	
 
 	void RenderStage::EndOfFrame()
 	{
-		m_perFrameTextureSamplerInputs.clear();
-		m_perFrameParamBlocks.clear();
+		m_singleFrameParamBlocks.clear();
 		m_stageBatches.clear();
 	}
 
@@ -123,12 +154,20 @@ namespace re
 
 	void RenderStage::AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb)
 	{
+		SEAssert("SingleFrame RenderStages can only add single frame parameter blocks", 
+			m_lifetime != RenderStage::RenderStageLifetime::SingleFrame);
+		SEAssert("Parameter block must have a permanent lifetime",
+			pb->GetType() == re::ParameterBlock::PBType::Mutable || 
+			pb->GetType() == re::ParameterBlock::PBType::Immutable);
+		
 		m_permanentParamBlocks.emplace_back(pb);
 	}
 
 
 	void RenderStage::AddSingleFrameParameterBlock(std::shared_ptr<re::ParameterBlock> pb)
 	{
-		m_perFrameParamBlocks.emplace_back(pb);
+		SEAssert("Parameter block must have a single frame lifetime", 
+			pb->GetType() == re::ParameterBlock::PBType::SingleFrame);
+		m_singleFrameParamBlocks.emplace_back(pb);
 	}
 }

@@ -338,7 +338,7 @@ namespace gr
 					re::RenderStage::CreateGraphicsStage("IEM generation: Face " + to_string(face + 1) + "/6", gfxStageParams);
 
 				iemStage->SetStageShader(iemShader);
-				iemStage->SetPerFrameTextureInput(
+				iemStage->AddTextureInput(
 					"MatAlbedo",
 					iblTexture,
 					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
@@ -348,7 +348,7 @@ namespace gr
 					IEMPMREMGenerationParams::s_shaderName,
 					iemGenerationParams,
 					re::ParameterBlock::PBType::SingleFrame);
-				iemStage->AddPermanentParameterBlock(iemGenerationPB);
+				iemStage->AddSingleFrameParameterBlock(iemGenerationPB);
 				
 				// Construct a camera param block to draw into our cubemap rendering targets:
 				cubemapCamParams.g_view = cubemapViews[face];
@@ -356,7 +356,7 @@ namespace gr
 					gr::Camera::CameraParams::s_shaderName,
 					cubemapCamParams,
 					re::ParameterBlock::PBType::SingleFrame);
-				iemStage->AddPermanentParameterBlock(pb);
+				iemStage->AddSingleFrameParameterBlock(pb);
 
 				std::shared_ptr<re::TextureTargetSet> iemTargets = re::TextureTargetSet::Create("IEM Stage Targets");
 
@@ -407,7 +407,7 @@ namespace gr
 						re::RenderStage::CreateGraphicsStage("PMREM generation: Face " + postFix, gfxStageParams);
 
 					pmremStage->SetStageShader(pmremShader);
-					pmremStage->SetPerFrameTextureInput(
+					pmremStage->AddTextureInput(
 						"MatAlbedo",
 						iblTexture,
 						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
@@ -418,7 +418,7 @@ namespace gr
 						gr::Camera::CameraParams::s_shaderName,
 						cubemapCamParams,
 						re::ParameterBlock::PBType::SingleFrame);
-					pmremStage->AddPermanentParameterBlock(pb);
+					pmremStage->AddSingleFrameParameterBlock(pb);
 
 					IEMPMREMGenerationParams pmremGenerationParams = 
 						GetIEMPMREMGenerationParamsData(currentMipLevel, numMipLevels);
@@ -426,7 +426,7 @@ namespace gr
 						IEMPMREMGenerationParams::s_shaderName,
 						pmremGenerationParams,
 						re::ParameterBlock::PBType::SingleFrame);
-					pmremStage->AddPermanentParameterBlock(pmremGenerationPB);
+					pmremStage->AddSingleFrameParameterBlock(pmremGenerationPB);
 
 					re::TextureTarget::TargetParams targetParams;
 					targetParams.m_targetFace = face;
@@ -558,29 +558,10 @@ namespace gr
 					"PointLightDeferredMesh", pointlight->GetTransform(), meshfactory::CreateSphere(1.0f)));
 			}
 		}
-	}
 
-
-	void DeferredLightingGraphicsSystem::PreRender(re::StagePipeline& pipeline)
-	{
-		CreateBatches();
-
-		// Light pointers:
-		shared_ptr<Light> const keyLight = SceneManager::GetSceneData()->GetKeyLight();
-		vector<shared_ptr<Light>> const& pointLights = SceneManager::GetSceneData()->GetPointLights();
-
-		GBufferGraphicsSystem* gBufferGS = RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>();
-		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
-
-		gr::Light::LightTypeProperties& ambientProperties =
-			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(Light::AmbientIBL);
-		const bool ambientIsValid =
-			ambientProperties.m_ambient.m_BRDF_integrationMap &&
-			ambientProperties.m_ambient.m_IEMTex &&
-			ambientProperties.m_ambient.m_PMREMTex;
 
 		// Attach GBuffer color inputs:
-		constexpr uint8_t numGBufferColorInputs = 
+		constexpr uint8_t numGBufferColorInputs =
 			static_cast<uint8_t>(GBufferGraphicsSystem::GBufferTexNames.size() - 1);
 		for (uint8_t slot = 0; slot < numGBufferColorInputs; slot++)
 		{
@@ -594,21 +575,21 @@ namespace gr
 
 			if (ambientIsValid)
 			{
-				m_ambientStage->SetPerFrameTextureInput(
+				m_ambientStage->AddTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[slot],
 					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 			if (keyLight)
 			{
-				m_keylightStage->SetPerFrameTextureInput(
+				m_keylightStage->AddTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[slot],
 					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 			}
 			if (!pointLights.empty())
 			{
-				m_pointlightStage->SetPerFrameTextureInput(
+				m_pointlightStage->AddTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[slot],
 					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
@@ -621,7 +602,7 @@ namespace gr
 
 		if (keyLight)
 		{
-			m_keylightStage->SetPerFrameTextureInput(
+			m_keylightStage->AddTextureInput(
 				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
 				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
@@ -633,7 +614,7 @@ namespace gr
 				// Set the key light shadow map:
 				shared_ptr<Texture> keylightShadowMapTex =
 					keyLightShadowMap->GetTextureTargetSet()->GetDepthStencilTarget()->GetTexture();
-				m_keylightStage->SetPerFrameTextureInput(
+				m_keylightStage->AddTextureInput(
 					"Depth0",
 					keylightShadowMapTex,
 					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
@@ -642,7 +623,7 @@ namespace gr
 
 		if (!pointLights.empty())
 		{
-			m_pointlightStage->SetPerFrameTextureInput(
+			m_pointlightStage->AddTextureInput(
 				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
 				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
@@ -650,30 +631,36 @@ namespace gr
 
 		if (ambientIsValid)
 		{
-			m_ambientStage->SetPerFrameTextureInput(
+			m_ambientStage->AddTextureInput(
 				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
 				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 
 			// Add IBL texture inputs for ambient stage:
-			m_ambientStage->SetPerFrameTextureInput(
+			m_ambientStage->AddTextureInput(
 				"CubeMap0",
 				ambientProperties.m_ambient.m_IEMTex,
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear)
 			);
 
-			m_ambientStage->SetPerFrameTextureInput(
+			m_ambientStage->AddTextureInput(
 				"CubeMap1",
 				ambientProperties.m_ambient.m_PMREMTex,
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearMipMapLinearLinear)
 			);
 
-			m_ambientStage->SetPerFrameTextureInput(
+			m_ambientStage->AddTextureInput(
 				"Tex7",
 				ambientProperties.m_ambient.m_BRDF_integrationMap,
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::ClampNearestNearest)
 			);
 		}
+	}
+
+
+	void DeferredLightingGraphicsSystem::PreRender(re::StagePipeline& pipeline)
+	{
+		CreateBatches();		
 	}
 
 

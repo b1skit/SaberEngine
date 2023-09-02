@@ -20,6 +20,11 @@ namespace re
 	class RenderStage : public virtual en::NamedObject
 	{
 	public:
+		enum class RenderStageLifetime
+		{
+			SingleFrame,
+			Permanent
+		};
 		enum class RenderStageType
 		{
 			Graphics,
@@ -56,6 +61,10 @@ namespace re
 		static std::shared_ptr<RenderStage> CreateGraphicsStage(std::string const& name, GraphicsStageParams const&);
 		static std::shared_ptr<RenderStage> CreateComputeStage(std::string const& name, ComputeStageParams const&);
 
+		static std::shared_ptr<RenderStage> CreateSingleFrameGraphicsStage(std::string const& name, GraphicsStageParams const&);
+		static std::shared_ptr<RenderStage> CreateSingleFrameComputeStage(std::string const& name, ComputeStageParams const&);
+
+
 		~RenderStage() = default;
 
 		void EndOfFrame(); // Clears per-frame data. Called by the owning RenderPipeline
@@ -73,15 +82,15 @@ namespace re
 		void SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet);
 
 		// Per-frame values must be re-set every frame
-		void SetPerFrameTextureInput(
+		void AddTextureInput(
 			std::string const& shaderName, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>, uint32_t subresource = k_allSubresources);
-		std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& GetPerFrameTextureInputs() const;
+		std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& GetTextureInputs() const;
 
 		void AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb);
 		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetPermanentParameterBlocks() const { return m_permanentParamBlocks; }
 		
 		void AddSingleFrameParameterBlock(std::shared_ptr<re::ParameterBlock> pb);
-		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetPerFrameParameterBlocks() const { return m_perFrameParamBlocks; }
+		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetPerFrameParameterBlocks() const { return m_singleFrameParamBlocks; }
 
 		// Stage Batches:
 		inline std::vector<re::Batch> const& GetStageBatches() const { return m_stageBatches; }
@@ -93,11 +102,12 @@ namespace re
 
 
 	protected:
-		explicit RenderStage(std::string const& name, std::unique_ptr<IStageParams>&&, RenderStageType);
+		explicit RenderStage(std::string const& name, std::unique_ptr<IStageParams>&&, RenderStageType, RenderStageLifetime);
 
 
 	private:
 		const RenderStageType m_type;
+		const RenderStageLifetime m_lifetime;
 		std::unique_ptr<IStageParams> m_stageParams;
 
 		std::shared_ptr<re::Shader> m_stageShader;
@@ -105,9 +115,9 @@ namespace re
 		
 		gr::PipelineState m_pipelineState;
 
-		// Per-frame members are cleared every frame
-		std::vector<RenderStageTextureAndSamplerInput> m_perFrameTextureSamplerInputs;
-		std::vector<std::shared_ptr<re::ParameterBlock>> m_perFrameParamBlocks;
+		std::vector<RenderStageTextureAndSamplerInput> m_textureSamplerInputs;
+
+		std::vector<std::shared_ptr<re::ParameterBlock>> m_singleFrameParamBlocks; // Cleared every frame
 
 		std::vector<std::shared_ptr<re::ParameterBlock >> m_permanentParamBlocks;
 
@@ -130,7 +140,7 @@ namespace re
 
 
 	private:
-		ComputeStage(std::string const& name, std::unique_ptr<ComputeStageParams>&&);
+		ComputeStage(std::string const& name, std::unique_ptr<ComputeStageParams>&&, RenderStageLifetime);
 		friend class RenderStage;
 	};
 
@@ -165,9 +175,9 @@ namespace re
 	}
 
 
-	inline std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& RenderStage::GetPerFrameTextureInputs() const
+	inline std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& RenderStage::GetTextureInputs() const
 	{
-		return m_perFrameTextureSamplerInputs;
+		return m_textureSamplerInputs;
 	}
 
 

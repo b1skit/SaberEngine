@@ -260,23 +260,15 @@ namespace gr
 
 			pipeline.AppendRenderStage(m_upResStages[i]);
 		}
-	}
 
-
-	void BloomGraphicsSystem::PreRender(re::StagePipeline& pipeline)
-	{
-		CreateBatches();
-
+		// Attach GBuffer inputs:
 		GBufferGraphicsSystem* gbufferGS = RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>();
-
-		DeferredLightingGraphicsSystem* deferredLightGS = 
-			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
 
 		shared_ptr<Sampler> const bloomStageSampler = Sampler::GetSampler(Sampler::WrapAndFilterMode::ClampLinearLinear);
 
 		// This index corresponds with the GBuffer texture layout bindings in SaberCommon.glsl
 		const size_t gBufferEmissiveTextureSrcIndex = 3;
-		m_emissiveBlitStage->SetPerFrameTextureInput(
+		m_emissiveBlitStage->AddTextureInput(
 			"Tex0",
 			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(gBufferEmissiveTextureSrcIndex).GetTexture(),
 			bloomStageSampler);
@@ -285,14 +277,14 @@ namespace gr
 		{
 			if (i == 0)
 			{
-				m_downResStages[i]->SetPerFrameTextureInput(
-					"Tex0", 
+				m_downResStages[i]->AddTextureInput(
+					"Tex0",
 					m_emissiveBlitStage->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
-				m_downResStages[i]->SetPerFrameTextureInput(
+				m_downResStages[i]->AddTextureInput(
 					"Tex0",
 					m_downResStages[i - 1]->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
@@ -303,16 +295,16 @@ namespace gr
 		{
 			if (i == 0)
 			{
-				m_blurStages[i]->SetPerFrameTextureInput(
+				m_blurStages[i]->AddTextureInput(
 					"Tex0",
 					m_downResStages.back()->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
-				m_blurStages[i]->SetPerFrameTextureInput(
+				m_blurStages[i]->AddTextureInput(
 					"Tex0",
-					m_blurStages[i-1]->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
+					m_blurStages[i - 1]->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 		}
@@ -321,19 +313,25 @@ namespace gr
 		{
 			if (i == 0)
 			{
-				m_upResStages[i]->SetPerFrameTextureInput(
+				m_upResStages[i]->AddTextureInput(
 					"Tex0",
 					m_blurStages.back()->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 			else
 			{
-				m_upResStages[i]->SetPerFrameTextureInput(
+				m_upResStages[i]->AddTextureInput(
 					"Tex0",
-					m_upResStages[i-1]->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
+					m_upResStages[i - 1]->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
 					bloomStageSampler);
 			}
 		}
+	}
+
+
+	void BloomGraphicsSystem::PreRender(re::StagePipeline& pipeline)
+	{
+		CreateBatches();
 
 		// Update our bloom params:
 		m_bloomParamBlock->Commit(m_bloomParams);

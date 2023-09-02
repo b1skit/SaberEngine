@@ -105,6 +105,11 @@ namespace gr
 			CreateSkyboxParamsData(skyboxTargets),
 			re::ParameterBlock::PBType::Immutable));
 
+		m_skyboxStage->AddTextureInput(
+			m_skyTextureShaderName,
+			m_skyTexture,
+			Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+
 		pipeline.AppendRenderStage(m_skyboxStage);
 	}
 
@@ -112,14 +117,6 @@ namespace gr
 	void SkyboxGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
 		CreateBatches();
-
-		// Skybox texture can be null if we didn't load anything, but this GS should have been removed
-		m_skyboxStage->SetPerFrameTextureInput(
-			m_skyTextureShaderName,
-			m_skyTexture,
-			Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
-
-		GBufferGraphicsSystem* gBufferGS = RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>();
 	}
 
 

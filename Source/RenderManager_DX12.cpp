@@ -297,7 +297,7 @@ namespace dx12
 					}
 
 					// Set per-frame stage textures/sampler inputs:
-					for (auto const& texSamplerInput : renderStage->GetPerFrameTextureInputs())
+					for (auto const& texSamplerInput : renderStage->GetTextureInputs())
 					{
 						commandList->SetTexture(
 							texSamplerInput.m_shaderName, texSamplerInput.m_texture, texSamplerInput.m_subresource);

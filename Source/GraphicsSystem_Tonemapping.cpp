@@ -51,6 +51,14 @@ namespace gr
 		// Camera params:
 		m_tonemappingStage->AddPermanentParameterBlock(SceneManager::Get()->GetMainCamera()->GetCameraParams());
 
+		std::shared_ptr<TextureTargetSet const> deferredLightTextureTargetSet =
+			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
+
+		m_tonemappingStage->AddTextureInput(
+			"GBufferAlbedo",
+			deferredLightTextureTargetSet->GetColorTarget(0).GetTexture(),
+			Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+
 		pipeline.AppendRenderStage(m_tonemappingStage);
 	}
 
@@ -58,14 +66,6 @@ namespace gr
 	void TonemappingGraphicsSystem::PreRender(re::StagePipeline& pipeline)
 	{
 		CreateBatches();
-
-		std::shared_ptr<TextureTargetSet const> deferredLightTextureTargetSet =
-			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
-
-		m_tonemappingStage->SetPerFrameTextureInput(
-			"GBufferAlbedo",
-			deferredLightTextureTargetSet->GetColorTarget(0).GetTexture(),
-			Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
 	}
 
 
