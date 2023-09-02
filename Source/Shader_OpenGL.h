@@ -49,7 +49,7 @@ namespace opengl
 		static void LoadShaderTexts(re::Shader&);
 
 		// OpenGL-specific functions:
-		static void Bind(re::Shader& shader);
+		static void Bind(re::Shader const& shader);
 		static void SetUniform(
 			re::Shader const& shader,
 			std::string const& uniformName, 

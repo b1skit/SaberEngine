@@ -136,9 +136,6 @@ namespace opengl
 
 	void RenderManager::Render()
 	{
-		// TODO: Add an assert somewhere that checks if any possible shader uniform isn't set
-		// -> Catch bugs where we forget to upload a common param
-
 		opengl::Context* context = re::Context::GetAs<opengl::Context*>();
 
 		// Render each stage:
@@ -159,7 +156,7 @@ namespace opengl
 
 				gr::PipelineState const& stagePipelineParams = renderStage->GetStagePipelineState();
 
-				// Attach the stage targets:
+				// Get the stage targets:
 				std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
 				if (!stageTargets)
 				{
@@ -171,60 +168,99 @@ namespace opengl
 					stageTargets = swapChainParams->m_backbufferTargetSet; // Draw directly to the swapchain backbuffer
 				}
 
-				opengl::TextureTargetSet::AttachColorTargets(*stageTargets);
-				opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
 				
-				// Configure the pipeline state:
-				context->SetPipelineState(stagePipelineParams);
+				auto SetDrawState = [&renderStage, &context](
+					re::Shader const* shader)
+				{
+					opengl::Shader::Bind(*shader);
 
-				// Clear the targets AFTER setting color/depth write modes
-				const gr::PipelineState::ClearTarget clearTargetMode = stagePipelineParams.GetClearTarget();
-				if (clearTargetMode == gr::PipelineState::ClearTarget::Color ||
-					clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
-				{
-					opengl::TextureTargetSet::ClearColorTargets(*stageTargets);
-				}
-				if (clearTargetMode == gr::PipelineState::ClearTarget::Depth ||
-					clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
-				{
-					opengl::TextureTargetSet::ClearDepthStencilTarget(*stageTargets);
-				}
+					// Set stage param blocks:
+					for (std::shared_ptr<re::ParameterBlock> permanentPB : renderStage->GetPermanentParameterBlocks())
+					{
+						opengl::Shader::SetParameterBlock(*shader, *permanentPB.get());
+					}
+					for (std::shared_ptr<re::ParameterBlock> perFramePB : renderStage->GetPerFrameParameterBlocks())
+					{
+						opengl::Shader::SetParameterBlock(*shader, *perFramePB.get());
+					}
+
+					// Set stage texture/sampler inputs:
+					for (auto const& texSamplerInput : renderStage->GetTextureInputs())
+					{
+						opengl::Shader::SetTextureAndSampler(
+							*shader,
+							texSamplerInput.m_shaderName, // uniform name
+							texSamplerInput.m_texture,
+							texSamplerInput.m_sampler,
+							texSamplerInput.m_subresource);
+					}
+				};
 
 				// Bind the shader now that the pipeline state is set:
 				re::Shader* stageShader = renderStage->GetStageShader();
-				opengl::Shader::Bind(*stageShader);
-				// TODO: Handle shaders set by stages/materials/batches
-				// Priority order: Stage, material (where material shaders are attached to the batch)?
-
-				// Set stage param blocks:
-				for (std::shared_ptr<re::ParameterBlock> permanentPB : renderStage->GetPermanentParameterBlocks())
+				const bool hasStageShader = stageShader != nullptr;
+				if (hasStageShader)
 				{
-					opengl::Shader::SetParameterBlock(*stageShader, *permanentPB.get());
-				}
-				for (std::shared_ptr<re::ParameterBlock> perFramePB : renderStage->GetPerFrameParameterBlocks())
-				{
-					opengl::Shader::SetParameterBlock(*stageShader, *perFramePB.get());
+					SetDrawState(stageShader);
 				}
 
-				// Set per-frame stage textures/sampler inputs:
-				for (auto const& texSamplerInput : renderStage->GetTextureInputs())
-				{
-					opengl::Shader::SetTextureAndSampler(
-						*stageShader,
-						texSamplerInput.m_shaderName, // uniform name
-						texSamplerInput.m_texture,
-						texSamplerInput.m_sampler,
-						texSamplerInput.m_subresource);
-				}
+				// Configure the pipeline state:
+				context->SetPipelineState(stagePipelineParams);
 
+				// Set targets:
+				switch (renderStage->GetStageType())
+				{
+				case re::RenderStage::RenderStageType::Compute:
+				{
+					SEAssertF("TODO: Support setting/clearing Compute targets");
+				}
+				break;
+				case re::RenderStage::RenderStageType::Graphics:
+				{
+					opengl::TextureTargetSet::AttachColorTargets(*stageTargets);
+					opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
+
+					// Clear the targets AFTER setting color/depth write modes
+					const gr::PipelineState::ClearTarget clearTargetMode = stagePipelineParams.GetClearTarget();
+					if (clearTargetMode == gr::PipelineState::ClearTarget::Color ||
+						clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
+					{
+						opengl::TextureTargetSet::ClearColorTargets(*stageTargets);
+					}
+					if (clearTargetMode == gr::PipelineState::ClearTarget::Depth ||
+						clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
+					{
+						opengl::TextureTargetSet::ClearDepthStencilTarget(*stageTargets);
+					}
+				}
+				break;
+				default:
+					SEAssertF("Invalid stage type");
+				}				
+				
 				// Render stage batches:
 				std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
 				for (re::Batch const& batch : batches)
 				{
+					// No stage shader: Must set stage PBs for each batch
+					if (!hasStageShader)
+					{
+						re::Shader const* batchShader = batch.GetShader();
+
+						SetDrawState(batchShader);
+					}
+
 					opengl::MeshPrimitive::PlatformParams const* meshPlatParams = 
 						batch.GetMeshPrimitive()->GetPlatformParams()->As<opengl::MeshPrimitive::PlatformParams const*>();
 
 					opengl::MeshPrimitive::Bind(*batch.GetMeshPrimitive());
+
+					// Batch parameter blocks:
+					vector<shared_ptr<re::ParameterBlock>> const& batchPBs = batch.GetParameterBlocks();
+					for (shared_ptr<re::ParameterBlock> batchPB : batchPBs)
+					{
+						opengl::Shader::SetParameterBlock(*stageShader, *batchPB.get());
+					}
 
 					// Set Batch Texture/Sampler inputs:
 					if (stageTargets->WritesColor())
@@ -240,24 +276,32 @@ namespace opengl
 						}
 					}
 
-					// Batch parameter blocks:
-					vector<shared_ptr<re::ParameterBlock>> const& batchPBs = batch.GetParameterBlocks();
-					for (shared_ptr<re::ParameterBlock> batchPB : batchPBs)
+					switch (renderStage->GetStageType())
 					{
-						opengl::Shader::SetParameterBlock(*stageShader, *batchPB.get());
+					case re::RenderStage::RenderStageType::Graphics:
+					{
+						glDrawElementsInstanced(
+							meshPlatParams->m_drawMode,			// GLenum mode
+							(GLsizei)batch.GetMeshPrimitive()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),	// GLsizei count
+							GL_UNSIGNED_INT,					// GLenum type. TODO: Store type in parameters, instead of assuming uints
+							0,									// Byte offset (into bound index buffer)
+							(GLsizei)batch.GetInstanceCount());	// Instance count
 					}
-
+					break;
+					case re::RenderStage::RenderStageType::Compute:
+					{
+						SEAssertF("TODO: Support Compute dispatching");
+					}
+					break;
+					default:
+						SEAssertF("Invalid render stage type");
+					}
 					// Draw!
-					glDrawElementsInstanced(
-						meshPlatParams->m_drawMode,						// GLenum mode
-						(GLsizei)batch.GetMeshPrimitive()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),	// GLsizei count
-						GL_UNSIGNED_INT,								// GLenum type. TODO: Store type in parameters, instead of assuming uints
-						0,												// Byte offset (into bound index buffer)
-						(GLsizei)batch.GetInstanceCount());				// Instance count
+					
 				} // batches
 
 				glPopDebugGroup();
-			};
+			}; // ProcessRenderStage
 
 
 			// Single frame render stages:

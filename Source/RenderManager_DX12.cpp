@@ -247,7 +247,7 @@ namespace dx12
 
 				gr::PipelineState const& pipelineState = renderStage->GetStagePipelineState();
 
-				// Attach the stage targets, and transition the resources:
+				// Get the stage targets:
 				std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
 				if (stageTargets == nullptr)
 				{
@@ -330,7 +330,6 @@ namespace dx12
 					currentCommandList->SetRenderTargets(*stageTargets);
 
 					// Clear the render targets:
-					// TODO: These should be per-target, to allow different outputs when using MRTs
 					const gr::PipelineState::ClearTarget clearTargetMode = pipelineState.GetClearTarget();
 					if (clearTargetMode == gr::PipelineState::ClearTarget::Color ||
 						clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)

@@ -351,7 +351,7 @@ namespace opengl
 	}
 
 
-	void Shader::Bind(re::Shader& shader)
+	void Shader::Bind(re::Shader const& shader)
 	{
 		opengl::Shader::PlatformParams const* params = 
 			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
