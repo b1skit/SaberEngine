@@ -18,6 +18,20 @@ namespace opengl
 	class Shader
 	{
 	public:
+		enum ShaderType : uint8_t
+		{
+			Vertex,
+			TesselationControl,
+			TesselationEvaluation,
+			Geometry,
+			Fragment,
+			Compute,
+
+			ShaderType_Count
+		};
+
+
+	public:
 		enum UniformType : uint8_t
 		{
 			Matrix4x4f,
@@ -34,7 +48,7 @@ namespace opengl
 	public:
 		struct PlatformParams final : public re::Shader::PlatformParams
 		{
-			std::vector<std::string> m_shaderTexts;
+			std::array<std::string, ShaderType_Count> m_shaderTexts;
 
 			uint32_t m_shaderReference = 0;
 
@@ -45,8 +59,6 @@ namespace opengl
 	public:
 		static void Create(re::Shader& shader);
 		static void Destroy(re::Shader& shader);
-
-		static void LoadShaderTexts(re::Shader&);
 
 		// OpenGL-specific functions:
 		static void Bind(re::Shader const& shader);

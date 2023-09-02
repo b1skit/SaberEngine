@@ -1,6 +1,3 @@
-#version 460 core
-
-#define SABER_FRAGMENT_SHADER
 #define SABER_VEC2_OUTPUT
 
 #include "SaberCommon.glsl"

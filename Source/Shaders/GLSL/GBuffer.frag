@@ -1,7 +1,3 @@
-#version 460 core
-
-#define SABER_FRAGMENT_SHADER
-
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"
 #include "SaberLighting.glsl"

@@ -1,7 +1,3 @@
-#version 460 core
-
-#define SABER_VERTEX_SHADER
-
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"
 
