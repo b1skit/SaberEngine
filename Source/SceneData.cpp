@@ -1390,7 +1390,7 @@ namespace fr
 			}));
 
 		// Start loading the GLTF file data:
-		if (gotSceneFilePath)
+		if (data)
 		{
 			cgltf_result bufferLoadResult = cgltf_load_buffers(&options, data, sceneFilePath.c_str());
 			if (bufferLoadResult != cgltf_result::cgltf_result_success)
