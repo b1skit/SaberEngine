@@ -130,9 +130,25 @@ namespace
 	bool InsertIncludeText(std::string const& shaderText, std::vector<std::string>& shaderTextStrings)
 	{
 		constexpr char const* k_includeKeyword = "#include";
+		constexpr char const* k_versionKeyword = "#version";
 
 		size_t blockStartIdx = 0;
-		size_t includeStartIdx = 0; // First index will be 0
+		size_t includeStartIdx = 0;
+
+		// Strip out any #version strings, we prepend our own. This allows us to suppress IDE warnings. 
+		// The version string must be the first statement, and may not be repeated
+		size_t versionIdx = shaderText.find(k_versionKeyword, 0);
+		if (versionIdx != std::string::npos)
+		{
+			size_t versionEndOfLineIdx = shaderText.find("\n", versionIdx + 1);
+			if (versionEndOfLineIdx != std::string::npos)
+			{
+				blockStartIdx = versionEndOfLineIdx;
+				includeStartIdx = versionEndOfLineIdx;
+			}
+		}
+
+		
 		do
 		{
 			includeStartIdx = shaderText.find(k_includeKeyword, blockStartIdx);
