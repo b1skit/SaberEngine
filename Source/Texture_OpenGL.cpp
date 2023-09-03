@@ -7,6 +7,65 @@
 #include "Texture_OpenGL.h"
 
 
+namespace
+{
+	bool GetFormatIsImageTextureCompatible(GLenum internalFormat)
+	{
+		// TODO: This list is not exhaustive, we should match the internal format with compatible formats:
+		// https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBindImageTexture.xhtml
+		// See also: glGetTextureParameter
+		// https://registry.khronos.org/OpenGL-Refpages/gl4/html/glGetTexParameter.xhtml
+
+		switch (internalFormat)
+		{
+			case GL_RGBA32F:
+			case GL_RGBA16F:
+			case GL_RG32F:
+			case GL_RG16F:
+			case GL_R11F_G11F_B10F:
+			case GL_R32F:
+			case GL_R16F:
+			case GL_RGBA32UI:
+			case GL_RGBA16UI:
+			case GL_RGB10_A2UI:
+			case GL_RGBA8UI:
+			case GL_RG32UI:
+			case GL_RG16UI:
+			case GL_RG8UI:
+			case GL_R32UI:
+			case GL_R16UI:
+			case GL_R8UI:
+			case GL_RGBA32I:
+			case GL_RGBA16I:
+			case GL_RGBA8I:
+			case GL_RG32I:
+			case GL_RG16I:
+			case GL_RG8I:
+			case GL_R32I:
+			case GL_R16I:
+			case GL_R8I:
+			case GL_RGBA16:
+			case GL_RGB10_A2:
+			case GL_RGBA8:
+			case GL_RG16:
+			case GL_RG8:
+			case GL_R16:
+			case GL_R8:
+			case GL_RGBA16_SNORM:
+			case GL_RGBA8_SNORM:
+			case GL_RG16_SNORM:
+			case GL_RG8_SNORM:
+			case GL_R16_SNORM:
+			case GL_R8_SNORM:
+				return true;
+			default: 
+			{
+				return false;
+			}
+		}
+		
+	}
+}
 
 namespace opengl
 {
@@ -109,6 +168,9 @@ namespace opengl
 		default:
 			SEAssertF("Invalid/unsupported texture format");
 		}
+
+		// Is this Texture compatible with compute workloads?
+		m_formatIsImageTextureCompatible = GetFormatIsImageTextureCompatible(m_internalFormat);
 	}
 
 
@@ -135,7 +197,7 @@ namespace opengl
 	}
 
 
-	void opengl::Texture::Bind(re::Texture& texture, uint32_t textureUnit)
+	void opengl::Texture::Bind(re::Texture const& texture, uint32_t textureUnit)
 	{
 		// Note: textureUnit is a binding point
 
@@ -146,6 +208,7 @@ namespace opengl
 		SEAssert("Texture has been modified, and needs to be rebuffered", params->m_isDirty == false);
 
 		glBindTextures(textureUnit, 1, &params->m_textureID);
+		// TODO: Support binding an entire target set in a single call
 	}
 
 
@@ -245,7 +308,7 @@ namespace opengl
 	}
 
 
-	void opengl::Texture::GenerateMipMaps(re::Texture& texture)
+	void opengl::Texture::GenerateMipMaps(re::Texture const& texture)
 	{
 		opengl::Texture::PlatformParams const* params =
 			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();

@@ -24,13 +24,15 @@ namespace opengl
 			GLenum m_format; // Pixel data format: R, RG, RGBA, etc
 			GLenum m_internalFormat; // Number of color components
 			GLenum m_type;
+
+			bool m_formatIsImageTextureCompatible;
 		};
 
 
 	public:
 		static void Create(re::Texture& texture);
 		static void Destroy(re::Texture& texture);
-		static void Bind(re::Texture& texture, uint32_t textureUnit);		
-		static void GenerateMipMaps(re::Texture& texture);
+		static void Bind(re::Texture const&, uint32_t textureUnit);
+		static void GenerateMipMaps(re::Texture const&);
 	};	
 }

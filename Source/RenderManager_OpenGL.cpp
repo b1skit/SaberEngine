@@ -207,12 +207,13 @@ namespace opengl
 				// Configure the pipeline state:
 				context->SetPipelineState(stagePipelineParams);
 
-				// Set targets:
 				switch (renderStage->GetStageType())
 				{
 				case re::RenderStage::RenderStageType::Compute:
 				{
-					SEAssertF("TODO: Support setting/clearing Compute targets");
+					opengl::TextureTargetSet::AttachTargetsAsImageTextures(*stageTargets, GL_WRITE_ONLY);
+
+					// TODO: Support compute target clearing
 				}
 				break;
 				case re::RenderStage::RenderStageType::Graphics:
@@ -235,9 +236,9 @@ namespace opengl
 				}
 				break;
 				default:
-					SEAssertF("Invalid stage type");
-				}				
-				
+					SEAssertF("Invalid render stage type");
+				}		
+
 				// Render stage batches:
 				std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
 				for (re::Batch const& batch : batches)
@@ -249,11 +250,6 @@ namespace opengl
 
 						SetDrawState(batchShader);
 					}
-
-					opengl::MeshPrimitive::PlatformParams const* meshPlatParams = 
-						batch.GetMeshPrimitive()->GetPlatformParams()->As<opengl::MeshPrimitive::PlatformParams const*>();
-
-					opengl::MeshPrimitive::Bind(*batch.GetMeshPrimitive());
 
 					// Batch parameter blocks:
 					vector<shared_ptr<re::ParameterBlock>> const& batchPBs = batch.GetParameterBlocks();
@@ -280,6 +276,11 @@ namespace opengl
 					{
 					case re::RenderStage::RenderStageType::Graphics:
 					{
+						opengl::MeshPrimitive::PlatformParams const* meshPlatParams =
+							batch.GetMeshPrimitive()->GetPlatformParams()->As<opengl::MeshPrimitive::PlatformParams const*>();
+
+						opengl::MeshPrimitive::Bind(*batch.GetMeshPrimitive());
+
 						glDrawElementsInstanced(
 							meshPlatParams->m_drawMode,			// GLenum mode
 							(GLsizei)batch.GetMeshPrimitive()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),	// GLsizei count
@@ -290,7 +291,12 @@ namespace opengl
 					break;
 					case re::RenderStage::RenderStageType::Compute:
 					{
-						SEAssertF("TODO: Support Compute dispatching");
+						glm::uvec3 const& threadGroupCount = batch.GetComputeParams().m_threadGroupCount;
+						glDispatchCompute(threadGroupCount.x, threadGroupCount.y, threadGroupCount.z);
+
+						// Barrier to prevent reading before texture writes have finished.
+						// TODO: Is this always necessry? Should we be using different barrier types at any point?
+						glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 					}
 					break;
 					default:

@@ -786,12 +786,6 @@
     <None Include="Shaders\glsl\blitShader.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\BRDFIntegrationMapShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
-    <None Include="Shaders\glsl\BRDFIntegrationMapShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
     <None Include="Shaders\glsl\cubeDepthShader.geom">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
@@ -892,6 +886,9 @@
     </None>
     <None Include="Shaders\HLSL\NormalMapUtils.hlsli">
       <Filter>Source Files\Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\GenerateBRDFIntegrationMap.comp">
+      <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

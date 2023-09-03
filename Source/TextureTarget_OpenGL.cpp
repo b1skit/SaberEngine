@@ -374,8 +374,6 @@ namespace opengl
 			// Verify the framebuffer (as we actually had color textures to attach)
 			const GLenum result = glCheckNamedFramebufferStatus(targetSetParams->m_frameBufferObject, GL_FRAMEBUFFER);
 			SEAssert("Framebuffer is not complete", result == GL_FRAMEBUFFER_COMPLETE);
-
-			
 		}
 
 		// Set the blend modes. Note, we set these even if the targets don't contain textures
@@ -581,6 +579,50 @@ namespace opengl
 					depthTargetParams->m_drawBuffer,		// drawbuffer: Must be 0 for GL_STENCIL
 					&stencilClearValue);
 			}
+		}
+	}
+
+
+	void TextureTargetSet::AttachTargetsAsImageTextures(re::TextureTargetSet const& targetSet, uint32_t accessMode)
+	{
+		SEAssert("Invalid access mode",
+			accessMode == GL_READ_ONLY ||
+			accessMode == GL_WRITE_ONLY ||
+			accessMode == GL_READ_WRITE);
+
+		SEAssert("It is not possible to attach a depth buffer as a target to a compute shader",
+			targetSet.GetDepthStencilTarget() == nullptr);
+
+		std::vector<re::TextureTarget> const& texTargets = targetSet.GetColorTargets();
+		for (uint32_t slot = 0; slot < texTargets.size(); slot++)
+		{
+			if (!texTargets[slot].HasTexture())
+			{
+				continue;
+			}
+
+			std::shared_ptr<re::Texture> texture = texTargets[slot].GetTexture();
+			SEAssert("Texture is not created", texture->GetPlatformParams()->m_isCreated);
+
+			SEAssert("Format is not compatible. Note: We currently don't check for non-exact but compatible formats, "
+				"but should. See Texture_OpenGL.cpp::GetFormatIsImageTextureCompatible", 
+				texture->GetPlatformParams()->As<opengl::Texture::PlatformParams*>()->m_formatIsImageTextureCompatible);
+
+			opengl::Texture::PlatformParams const* texPlatParams =
+				texture->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+
+			SEAssert("Invalid texture format", texPlatParams->m_formatIsImageTextureCompatible);
+
+			re::TextureTarget::TargetParams const& targetParams = texTargets[slot].GetTargetParams();
+
+			glBindImageTexture(
+				slot,								// unit: Index to bind to
+				texPlatParams->m_textureID,			// texture: Name of the texture being bound
+				targetParams.m_targetSubesource,	// level: Subresource index being bound
+				GL_TRUE,							// layered: Use layered binding? Binds the entire 1/2/3D array if true
+				0,									// layer: Layer to bind. Ignored if layered == GL_TRUE
+				accessMode,							// access: Type of access that will be performed
+				texPlatParams->m_internalFormat);	// format: Internal format	
 		}
 	}
 }

@@ -38,6 +38,23 @@ namespace
 {
 	constexpr uint32_t k_generatedAmbientIBLTexRes = 1024; // TODO: Make this user-controllable via the config
 
+	struct BRDFIntegrationParams
+	{
+		glm::uvec4 g_integrationTargetResolution;
+
+		static constexpr char const* const s_shaderName = "BRDFIntegrationParams";
+	};
+
+	BRDFIntegrationParams GetBRDFIntegrationParamsData()
+	{
+		BRDFIntegrationParams brdfIntegrationParams{
+			.g_integrationTargetResolution =
+				glm::uvec4(k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes, 0, 0)
+		};
+
+		return brdfIntegrationParams;
+	}
+
 	struct IEMPMREMGenerationParams
 	{
 		glm::vec4 g_numSamplesRoughness; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness
@@ -229,14 +246,13 @@ namespace gr
 
 		shared_ptr<Texture> iblTexture = SceneManager::GetSceneData()->GetIBLTexture();
 		
-		// 1st frame: Generate the pre-integrated BRDF LUT via a single-frame render stage:
+		// 1st frame: Generate the pre-integrated BRDF LUT via a single-frame compute stage:
 		{
-			re::RenderStage::GraphicsStageParams gfxStageParams;
+			re::RenderStage::ComputeStageParams computeStageParams;
 			std::shared_ptr<re::RenderStage> brdfStage =
-				re::RenderStage::CreateSingleFrameGraphicsStage("BRDF pre-integration stage", gfxStageParams);		
-
-			brdfStage->SetStageShader(
-				re::Shader::Create(Config::Get()->GetValue<string>("BRDFIntegrationMapShaderName")));
+				re::RenderStage::CreateSingleFrameComputeStage("BRDF pre-integration compute stage", computeStageParams);
+			
+			brdfStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_generateBRDFIntegrationMapShaderName));
 
 			// Create a render target texture:			
 			Texture::TextureParams brdfParams;
@@ -279,8 +295,18 @@ namespace gr
 
 			brdfStage->SetStagePipelineState(brdfStageParams);
 
-			Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
-			brdfStage->AddBatch(fullscreenQuadBatch);
+			BRDFIntegrationParams const& brdfIntegrationParams = GetBRDFIntegrationParamsData();
+			shared_ptr<re::ParameterBlock> brdfIntegrationPB = re::ParameterBlock::Create(
+				BRDFIntegrationParams::s_shaderName,
+				brdfIntegrationParams,
+				re::ParameterBlock::PBType::SingleFrame);
+			brdfStage->AddSingleFrameParameterBlock(brdfIntegrationPB);
+
+			// Add our dispatch information to a compute batch. Note: We use numthreads = (1,1,1)
+			re::Batch computeBatch = re::Batch(re::Batch::ComputeParams{
+				.m_threadGroupCount = glm::uvec3(k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes, 1u) });
+
+			brdfStage->AddBatch(computeBatch);
 
 			pipeline.AppendSingleFrameRenderStage(std::move(brdfStage));
 		}
@@ -343,7 +369,7 @@ namespace gr
 					iblTexture,
 					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
 
-				IEMPMREMGenerationParams iemGenerationParams = GetIEMPMREMGenerationParamsData(0, 1);
+				IEMPMREMGenerationParams const& iemGenerationParams = GetIEMPMREMGenerationParamsData(0, 1);
 				shared_ptr<re::ParameterBlock> iemGenerationPB = re::ParameterBlock::Create(
 					IEMPMREMGenerationParams::s_shaderName,
 					iemGenerationParams,
@@ -420,7 +446,7 @@ namespace gr
 						re::ParameterBlock::PBType::SingleFrame);
 					pmremStage->AddSingleFrameParameterBlock(pb);
 
-					IEMPMREMGenerationParams pmremGenerationParams = 
+					IEMPMREMGenerationParams const& pmremGenerationParams = 
 						GetIEMPMREMGenerationParamsData(currentMipLevel, numMipLevels);
 					shared_ptr<re::ParameterBlock> pmremGenerationPB = re::ParameterBlock::Create(
 						IEMPMREMGenerationParams::s_shaderName,

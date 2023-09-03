@@ -63,6 +63,8 @@
 
 #if defined(SABER_VERTEX_SHADER) || defined(SABER_FRAGMENT_SHADER) || defined(SABER_GEOMETRY_SHADER)
 	} vOut;
+#else
+	};
 #endif
 
 // Dynamic uniforms for instancing:

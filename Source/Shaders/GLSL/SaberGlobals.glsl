@@ -221,9 +221,9 @@ float ConvertLinearDepthToNonLinear(const float near, const float far, const flo
 }
 
 
-vec2 GetScreenUV(vec2 pixelXY, vec2 screenWidthHeight)
+vec2 PixelCoordsToUV(vec2 pixelXY, vec2 screenWidthHeight, vec2 offset = vec2(0.5f, 0.5f))
 {
-	vec2 screenUV = pixelXY / screenWidthHeight;
+	vec2 screenUV = (vec2(pixelXY) + offset) / screenWidthHeight;
 	screenUV.y = 1.f - screenUV.y;
 	return screenUV;
 }

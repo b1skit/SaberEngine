@@ -1,11 +1,11 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "ConfigKeys.h"
 #include "GraphicsSystem_ComputeMips.h"
+#include "MathUtils.h"
 
 
 namespace
 {
-
 	struct MipGenerationParams
 	{
 		glm::vec4 g_output0Dimensions; // .xyzw = width, height, 1/width, 1/height of the output0 texture
@@ -76,13 +76,13 @@ namespace gr
 
 			for (uint32_t faceIdx = 0; faceIdx < textureParams.m_faces; faceIdx++)
 			{
-				const uint32_t numTargetsPerStage = 4;
+				constexpr uint32_t k_maxTargetsPerStage = 4;
 				uint32_t targetMip = 1;
 				while (targetMip < totalMipLevels)
 				{
 					re::RenderStage::ComputeStageParams computeStageParams; // Defaults, for now...
 
-					std::shared_ptr<re::RenderStage> mipGenerationStage = re::RenderStage::CreateComputeStage(
+					std::shared_ptr<re::RenderStage> mipGenerationStage = re::RenderStage::CreateSingleFrameComputeStage(
 						newTexture->GetName() + " MIP generation stage",
 						computeStageParams);
 
@@ -92,7 +92,7 @@ namespace gr
 					mipGenerationStage->AddTextureInput("SrcTex", newTexture, mipSampler, sourceMip);
 
 					const uint32_t numMipStages =
-						targetMip + numTargetsPerStage < totalMipLevels ? numTargetsPerStage : (totalMipLevels - targetMip);
+						targetMip + k_maxTargetsPerStage < totalMipLevels ? k_maxTargetsPerStage : (totalMipLevels - targetMip);
 
 					mipGenerationStage->AddSingleFrameParameterBlock(re::ParameterBlock::Create(
 						"MipGenerationParams", 
@@ -114,16 +114,30 @@ namespace gr
 					}
 					mipGenerationStage->SetTextureTargetSet(mipGenTargets);
 
-					// We want to dispatch 1 thread per texel for our first downsampled mip level (as it will sample the
-					// 2x2 block above it)
-					const glm::vec2 firstDstMipDimensions = newTexture->GetSubresourceDimensions(sourceMip).xy * 0.5f;
+					// We (currently) use 8x8 thread group dimensions
+					constexpr uint32_t k_numThreadsX = 8;
+					constexpr uint32_t k_numThreadsY = 8;
+					
+					SEAssert("Dimensions must be integers",
+						glm::fmod(newTexture->GetSubresourceDimensions(sourceMip).x, 1.f) == 0.f &&
+						glm::fmod(newTexture->GetSubresourceDimensions(sourceMip).x, 1.f) == 0.f);
+
+					// NOTE: We're currently dispatching 2x as many threads as I think we need, but if we don't, we get
+					// corrupted pixels in mip 5 and onwwards. 
+					// TODO: Figure out why: I suspect it's a logic bug (or I'm just confused), or perhaps a race 
+					// condition: Need a UAV barrier to guarantee previous MIPs are rendered before sampling?
+					const glm::uvec2 srcMipDimensions = glm::uvec2(
+						newTexture->GetSubresourceDimensions(sourceMip).x,
+						newTexture->GetSubresourceDimensions(sourceMip).y);
+
+					const uint32_t roundedXDim = std::max(util::RoundUpToNearestMultiple<uint32_t>(
+						srcMipDimensions.x / k_numThreadsX, k_numThreadsX), 1u);
+					const uint32_t roundedYDim = std::max(util::RoundUpToNearestMultiple<uint32_t>(
+						srcMipDimensions.y / k_numThreadsY, k_numThreadsY), 1u);
 
 					// Add our dispatch information to a compute batch:
 					re::Batch computeBatch = re::Batch(re::Batch::ComputeParams{
-						.m_threadGroupCount = glm::uvec3(
-							firstDstMipDimensions.x,
-							firstDstMipDimensions.y,
-							1)});
+						.m_threadGroupCount = glm::uvec3(roundedXDim, roundedYDim, 1u) });
 
 					mipGenerationStage->AddBatch(computeBatch);
 

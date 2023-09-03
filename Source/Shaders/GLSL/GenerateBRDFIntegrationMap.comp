@@ -1,0 +1,66 @@
+#version 460 // Suppress IDE warnings; Stripped out at compile time
+
+#include "SaberGlobals.glsl"
+#include "SaberLighting.glsl"
+
+#define NUM_SAMPLES 1024
+
+layout(std430, binding=0) readonly buffer BRDFIntegrationParams
+{
+	uvec4 g_integrationTargetResolution;
+};
+
+layout(location=0) writeonly uniform image2D outColor;
+
+
+// Generate a BRDF Integration map LUT
+// Returns the BRDF Fresnel response, given the dot product of surface normal and incoming light direction, and the
+// surface roughness
+// uv.x == NoV, uv.y == roughness
+// Return: vec2(BRDF Fresnel response scale, BRDF Fresnel response bias)
+layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	vec2 screenUV = PixelCoordsToUV(gl_GlobalInvocationID.xy, g_integrationTargetResolution.xy);
+	screenUV.y = 1.f - screenUV.y; // TODO: This shouldn't be necessary
+
+	const ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+
+	const float NoV = screenUV.x;
+	const float NoV2 = NoV * NoV;
+	const float roughness = screenUV.y;
+
+	const vec3 V = vec3(sqrt(1.0f - NoV2), 0.0f, NoV);
+
+	const vec3 N = vec3(0.0, 0.0, 1.0);
+
+	float fresnelScale = 0.0;
+	float fresnelBias = 0.0;
+
+	for(uint i = 0; i < NUM_SAMPLES; i++)
+	{
+		const vec2 Xi = Hammersley2D(i, NUM_SAMPLES);
+		const vec3 H = ImportanceSampleGGX(Xi, N, roughness);
+		const vec3 L = normalize(2.0f * dot(V, H) * H - V);
+
+		const float NoL = max(L.z, 0.0f);
+		const float NoH = max(H.z, 0.0f);
+		const float VoH = max(dot(V, H), 0.0f);
+
+		if(NoL > 0.f)
+		{
+			const float G = GeometrySmith(NoV, NoL, roughness);
+			const float GVis = (G * VoH) / max((NoH * NoV), FLT_MIN); // Shouldn't be zero, but just in case
+			const float Fc = pow(1.0 - VoH, 5.0f);
+
+			fresnelScale += (1.0f - Fc) * GVis;
+			fresnelBias += Fc * GVis;
+		}
+	}
+
+	// Average the results:
+	fresnelScale /= float(NUM_SAMPLES);
+	fresnelBias /= float(NUM_SAMPLES);
+
+	imageStore(outColor, texelCoord, vec4(fresnelScale, fresnelBias, 0.f, 0.f));
+}

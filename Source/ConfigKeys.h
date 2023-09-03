@@ -36,4 +36,5 @@ namespace en::ShaderNames
 	// Shader filename prefixes. Note: These are not config keys
 	constexpr char const* k_mipGenerationShaderName = "GenerateMipMaps_BoxFilter";
 	constexpr char const* k_gbufferShaderName = "GBuffer";
+	constexpr char const* k_generateBRDFIntegrationMapShaderName = "GenerateBRDFIntegrationMap";
 }

@@ -386,6 +386,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <None Include="packages.config" />
     <None Include="SaberEngine.licenseheader" />
     <None Include="SaberGlobals.hlsli" />
+    <None Include="Shaders\GLSL\GenerateBRDFIntegrationMap.comp" />
     <None Include="Shaders\HLSL\NormalMapUtils.hlsli">
       <FileType>Document</FileType>
     </None>
@@ -403,8 +404,6 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <None Include="Shaders\GLSL\blurShaderHorizontal.vert" />
     <None Include="Shaders\GLSL\blurShaderVertical.frag" />
     <None Include="Shaders\GLSL\blurShaderVertical.vert" />
-    <None Include="Shaders\GLSL\BRDFIntegrationMapShader.frag" />
-    <None Include="Shaders\GLSL\BRDFIntegrationMapShader.vert" />
     <None Include="Shaders\GLSL\cubeDepthShader.geom" />
     <None Include="Shaders\GLSL\cubeDepthShader.vert" />
     <None Include="Shaders\GLSL\deferredAmbientLightShader.frag" />

@@ -6,7 +6,7 @@
 
 void main()
 {	
-	vec2 screenUV = GetScreenUV(gl_FragCoord.xy, g_skyboxTargetResolution.xy);
+	const vec2 screenUV = PixelCoordsToUV(gl_FragCoord.xy, g_skyboxTargetResolution.xy);
 
 	const float sampleDepth = 0.f; // Arbitrary
 
