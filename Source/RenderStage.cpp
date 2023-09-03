@@ -139,6 +139,10 @@ namespace re
 		SEAssert("Either the batch or the stage must have a shader", 
 			m_stageShader || batch.GetShader());
 
+		SEAssert("Incompatible batch type", 
+			(batch.GetType() == re::Batch::BatchType::Graphics && m_type == RenderStageType::Graphics) ||
+			(batch.GetType() == re::Batch::BatchType::Compute && m_type == RenderStageType::Compute));
+
 		if (m_batchFilterMask & batch.GetBatchFilterMask() || !m_batchFilterMask) // Accept all batches by default
 		{
 			m_stageBatches.emplace_back(batch);

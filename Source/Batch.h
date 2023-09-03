@@ -95,6 +95,8 @@ namespace re
 		Batch(Batch&&) = default;
 		Batch& operator=(Batch const&) = default;
 		Batch& operator=(Batch&&) = default;
+
+		BatchType GetType() const;
 		
 		re::MeshPrimitive const* GetMeshPrimitive() const;
 		
@@ -143,6 +145,12 @@ namespace re
 	private:
 		Batch() = delete;
 	};
+
+
+	inline re::Batch::BatchType Batch::GetType() const
+	{
+		return m_type;
+	}
 
 
 	inline re::MeshPrimitive const* Batch::GetMeshPrimitive() const
