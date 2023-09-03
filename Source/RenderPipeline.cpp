@@ -11,17 +11,25 @@ namespace re
 {
 	/******************************************** StagePipeline********************************************/
 
-	std::vector<std::shared_ptr<re::RenderStage>>::iterator StagePipeline::AppendRenderStage(std::shared_ptr<re::RenderStage> renderStage)
+	std::vector<std::shared_ptr<re::RenderStage>>::iterator StagePipeline::AppendRenderStage(
+		std::shared_ptr<re::RenderStage> renderStage)
 	{
 		SEAssert("Cannot append a null RenderStage", renderStage != nullptr);
+		SEAssert("Incorrect stage lifetime",
+			renderStage->GetStageLifetime() == re::RenderStage::RenderStageLifetime::Permanent);
 		
 		m_renderStages.emplace_back(renderStage);
 		return m_renderStages.end();
 	}
 
 
-	std::vector<std::shared_ptr<re::RenderStage>>::iterator StagePipeline::AppendSingleFrameRenderStage(std::shared_ptr<re::RenderStage>&& renderStage)
-	{	
+	std::vector<std::shared_ptr<re::RenderStage>>::iterator StagePipeline::AppendSingleFrameRenderStage(
+		std::shared_ptr<re::RenderStage>&& renderStage)
+	{
+		SEAssert("Cannot append a null RenderStage", renderStage != nullptr);
+		SEAssert("Incorrect stage lifetime", 
+			renderStage->GetStageLifetime() == re::RenderStage::RenderStageLifetime::SingleFrame);
+
 		m_singleFrameRenderStages.emplace_back(std::move(renderStage));
 		return m_singleFrameRenderStages.end();
 	}

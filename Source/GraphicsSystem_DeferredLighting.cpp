@@ -232,8 +232,8 @@ namespace gr
 		// 1st frame: Generate the pre-integrated BRDF LUT via a single-frame render stage:
 		{
 			re::RenderStage::GraphicsStageParams gfxStageParams;
-			std::shared_ptr<re::RenderStage> brdfStage = 
-				re::RenderStage::CreateGraphicsStage("BRDF pre-integration stage", gfxStageParams);
+			std::shared_ptr<re::RenderStage> brdfStage =
+				re::RenderStage::CreateSingleFrameGraphicsStage("BRDF pre-integration stage", gfxStageParams);		
 
 			brdfStage->SetStageShader(
 				re::Shader::Create(Config::Get()->GetValue<string>("BRDFIntegrationMapShaderName")));
@@ -334,8 +334,8 @@ namespace gr
 			for (uint32_t face = 0; face < 6; face++)
 			{
 				re::RenderStage::GraphicsStageParams gfxStageParams;
-				std::shared_ptr<re::RenderStage> iemStage = 
-					re::RenderStage::CreateGraphicsStage("IEM generation: Face " + to_string(face + 1) + "/6", gfxStageParams);
+				std::shared_ptr<re::RenderStage> iemStage = re::RenderStage::CreateSingleFrameGraphicsStage(
+					"IEM generation: Face " + to_string(face + 1) + "/6", gfxStageParams);
 
 				iemStage->SetStageShader(iemShader);
 				iemStage->AddTextureInput(
@@ -403,8 +403,8 @@ namespace gr
 						to_string(currentMipLevel + 1) + "/" + to_string(numMipLevels);
 
 					re::RenderStage::GraphicsStageParams gfxStageParams;
-					std::shared_ptr<re::RenderStage> pmremStage = 
-						re::RenderStage::CreateGraphicsStage("PMREM generation: Face " + postFix, gfxStageParams);
+					std::shared_ptr<re::RenderStage> pmremStage = re::RenderStage::CreateSingleFrameGraphicsStage(
+						"PMREM generation: Face " + postFix, gfxStageParams);
 
 					pmremStage->SetStageShader(pmremShader);
 					pmremStage->AddTextureInput(

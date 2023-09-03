@@ -70,6 +70,7 @@ namespace re
 		void EndOfFrame(); // Clears per-frame data. Called by the owning RenderPipeline
 
 		RenderStageType GetStageType() const;
+		RenderStageLifetime GetStageLifetime() const;
 		IStageParams const* GetStageParams() const;
 
 		void SetStagePipelineState(gr::PipelineState const& params);
@@ -148,6 +149,12 @@ namespace re
 	inline RenderStage::RenderStageType RenderStage::GetStageType() const
 	{
 		return m_type;
+	}
+
+
+	inline RenderStage::RenderStageLifetime RenderStage::GetStageLifetime() const
+	{
+		return m_lifetime;
 	}
 
 
