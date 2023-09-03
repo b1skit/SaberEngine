@@ -1344,6 +1344,29 @@ namespace fr
 	{
 		stbi_set_flip_vertically_on_load(false); // Set this once. Note: It is NOT thread safe, and must be consistent
 
+		// Start by parsing the the GLTF file metadata:
+		const bool gotSceneFilePath = !sceneFilePath.empty();
+		cgltf_options options = { (cgltf_file_type)0 };
+		cgltf_data* data = nullptr;
+		if (gotSceneFilePath)
+		{
+			cgltf_result parseResult = cgltf_parse_file(&options, sceneFilePath.c_str(), &data);
+			if (parseResult != cgltf_result::cgltf_result_success)
+			{
+				SEAssert("Failed to parse scene file \"" + sceneFilePath + "\"", parseResult == cgltf_result_success);
+				return false;
+			}
+		}
+
+		// Pre-reserve our vectors, now that we know what to expect:
+		constexpr size_t k_minReserveAmt = 10;
+		m_updateables.reserve(max(static_cast<size_t>(data->nodes_count), k_minReserveAmt));
+		m_meshes.reserve(max(static_cast<size_t>(data->meshes_count), k_minReserveAmt));
+		m_textures.reserve(max(static_cast<size_t>(data->textures_count), k_minReserveAmt));
+		m_materials.reserve(max(static_cast<size_t>(data->materials_count), k_minReserveAmt));
+		m_pointLights.reserve(max(static_cast<size_t>(data->lights_count), k_minReserveAmt)); // Probably an over-estimation
+		m_cameras.reserve(max(static_cast<size_t>(data->cameras_count), k_minReserveAmt));
+
 		string sceneRootPath;
 		Config::Get()->TryGetValue<string>("sceneRootPath", sceneRootPath);
 
@@ -1366,19 +1389,9 @@ namespace fr
 				LoadIBL(sceneRootPath, *this);
 			}));
 
-		const bool gotSceneFilePath = !sceneFilePath.empty();
+		// Start loading the GLTF file data:
 		if (gotSceneFilePath)
 		{
-			// Parse the GLTF file data:
-			cgltf_options options = { (cgltf_file_type)0 };
-			cgltf_data* data = NULL;
-			cgltf_result parseResult = cgltf_parse_file(&options, sceneFilePath.c_str(), &data);
-			if (parseResult != cgltf_result::cgltf_result_success)
-			{
-				SEAssert("Failed to parse scene file \"" + sceneFilePath + "\"", parseResult == cgltf_result_success);
-				return false;
-			}
-
 			cgltf_result bufferLoadResult = cgltf_load_buffers(&options, data, sceneFilePath.c_str());
 			if (bufferLoadResult != cgltf_result::cgltf_result_success)
 			{
@@ -1393,15 +1406,6 @@ namespace fr
 				SEAssert("GLTF file failed validation!", validationResult == cgltf_result_success);
 				return false;
 			}
-
-			// Pre-reserve our vectors:
-			m_updateables.reserve(max((int)data->nodes_count, 10));
-			m_meshes.reserve(max((int)data->meshes_count, 10));
-			m_textures.reserve(max((int)data->textures_count, 10));
-			m_materials.reserve(max((int)data->materials_count, 10));
-			m_pointLights.reserve(max((int)data->lights_count, 10)); // Probably an over-estimation
-			m_cameras.reserve(max((int)data->cameras_count, 5));
-
 			
 			// Load the materials first:
 			PreLoadMaterials(sceneRootPath, *this, data);
