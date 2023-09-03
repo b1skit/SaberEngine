@@ -140,11 +140,11 @@ namespace
 		size_t versionIdx = shaderText.find(k_versionKeyword, 0);
 		if (versionIdx != std::string::npos)
 		{
-			size_t versionEndOfLineIdx = shaderText.find("\n", versionIdx + 1);
+			const size_t versionEndOfLineIdx = shaderText.find("\n", versionIdx + 1);
 			if (versionEndOfLineIdx != std::string::npos)
 			{
-				blockStartIdx = versionEndOfLineIdx;
-				includeStartIdx = versionEndOfLineIdx;
+				blockStartIdx = versionEndOfLineIdx + 1;
+				includeStartIdx = versionEndOfLineIdx + 1;
 			}
 		}
 
@@ -170,7 +170,9 @@ namespace
 				}
 				if (foundComment)
 				{
-					blockStartIdx = includeStartIdx;
+					const size_t commentedIncludeEndIndex = shaderText.find("\n", includeStartIdx + 1);
+
+					blockStartIdx = commentedIncludeEndIndex;
 					continue;
 				}
 
