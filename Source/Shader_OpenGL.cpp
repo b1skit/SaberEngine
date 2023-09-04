@@ -53,11 +53,23 @@ namespace
 
 	constexpr char const* k_shaderPreambles[] // Per-shader-type preamble
 	{
+		// ShaderType::Vertex:
 		"#define SABER_VERTEX_SHADER\n",
+		
+		// ShaderType::TesselationControl:
 		"#define SABER_TESS_CONTROL_SHADER\n",
+
+		// ShaderType::TesselationEvaluation:
 		"#define SABER_TESS_EVALUATION_SHADER\n",
+
+		// ShaderType::Geometry:
 		"#define SABER_GEOMETRY_SHADER\n",
-		"#define SABER_FRAGMENT_SHADER\n",
+
+		// ShaderType::Fragment:
+		"#define SABER_FRAGMENT_SHADER\n"
+		"layout(origin_upper_left) in vec4 gl_FragCoord;\n", // Make fragment coords ([0,xRes], [0,yRes]) match our UV(0,0) = top-left convention
+
+		// ShaderType::Compute:
 		"#define SABER_COMPUTE_SHADER\n",
 	};
 	static_assert(_countof(k_shaderFileExtensions) == opengl::Shader::ShaderType_Count);

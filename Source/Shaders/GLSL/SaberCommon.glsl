@@ -34,11 +34,7 @@
 	#elif defined(SABER_VEC4_OUTPUT)
 		layout (location = 0) out vec4 FragColor;
 	#endif
-	
-	// Make our fragment coordinates ([0,xRes], [0,yRes]) match our uv (0,0) = top-left convention
-	layout(origin_upper_left) in vec4 gl_FragCoord;
 #endif
-
 
 
 // Common shader properties:

@@ -221,10 +221,19 @@ float ConvertLinearDepthToNonLinear(const float near, const float far, const flo
 }
 
 
-vec2 PixelCoordsToUV(vec2 pixelXY, vec2 screenWidthHeight, vec2 offset = vec2(0.5f, 0.5f))
+// Transform pixel coordintes ([0, xRes), [0, yRes)) to [0,1] screen-space UVs.
+// offset: Use this if your pixel coords are centered in the pixel. NOTE: By default, OpenGL pixel centers (e.g. as 
+//	found in gl_FragCoord) are located at half-pixel centers (e.g. (0.5, 0.5) is the top-left pixel in SaberEngine). 
+//	Thus if using gl_FragCoord, you'll likely want a vec2(0,0) offset
+// doFlip: Use true if reading from a flipped FBO (e.g. GBuffer), false if the image being sampled hsa the correct
+//	orientation
+vec2 PixelCoordsToUV(vec2 pixelXY, vec2 screenWidthHeight, vec2 offset = vec2(0.5f, 0.5f), bool doFlip = true)
 {
 	vec2 screenUV = (vec2(pixelXY) + offset) / screenWidthHeight;
-	screenUV.y = 1.f - screenUV.y;
+	if (doFlip)
+	{
+		screenUV.y = 1.f - screenUV.y;
+	}
 	return screenUV;
 }
 

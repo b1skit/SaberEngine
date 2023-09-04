@@ -21,8 +21,7 @@ layout(location=0) writeonly uniform image2D outColor;
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
-	vec2 screenUV = PixelCoordsToUV(gl_GlobalInvocationID.xy, g_integrationTargetResolution.xy);
-	screenUV.y = 1.f - screenUV.y; // TODO: This shouldn't be necessary
+	vec2 screenUV = PixelCoordsToUV(gl_GlobalInvocationID.xy, g_integrationTargetResolution.xy, vec2(0.5f, 0.5f), false);
 
 	const ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
 

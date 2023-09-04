@@ -9,7 +9,7 @@
 
 void main()
 {	
-	const vec2 screenUV = PixelCoordsToUV(gl_FragCoord.xy, g_renderTargetResolution.xy);
+	const vec2 screenUV = PixelCoordsToUV(gl_FragCoord.xy, g_renderTargetResolution.xy, vec2(0, 0), true);
 
 	const GBuffer gbuffer = UnpackGBuffer(screenUV);
 
