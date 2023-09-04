@@ -115,6 +115,7 @@ namespace dx12
 		LocalResourceStateTracker() = default;
 		~LocalResourceStateTracker() = default;
 
+		bool HasSeenSubresourceInState(ID3D12Resource*, D3D12_RESOURCE_STATES) const;
 		bool HasResourceState(ID3D12Resource*, uint32_t subresourceIdx) const;
 		D3D12_RESOURCE_STATES GetResourceState(ID3D12Resource*, SubresourceIdx subresourceIdx) const;
 		void SetResourceState(ID3D12Resource*, D3D12_RESOURCE_STATES, SubresourceIdx subresourceIdx);

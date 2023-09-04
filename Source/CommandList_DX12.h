@@ -99,7 +99,6 @@ namespace dx12
 
 		// TODO: Implement a "resource" interface if/when we need to transition more than just Textures
 		void TransitionResource(std::shared_ptr<re::Texture>, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
-		void TransitionUAV(std::shared_ptr<re::Texture>, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
 
 		CommandListType GetCommandListType() const;
 		ID3D12GraphicsCommandList2* GetD3DCommandList() const;
@@ -118,6 +117,8 @@ namespace dx12
 
 
 	private:
+		void InsertUAVBarrier(std::shared_ptr<re::Texture>);
+
 		void SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY) const;
 
 		void SetVertexBuffer(uint32_t slot, re::VertexStream const*) const;
@@ -139,11 +140,13 @@ namespace dx12
 
 		const size_t k_commandListNumber; // Monotonically increasing identifier assigned at creation
 
+
 	private:
 		// The D3D docs recommend using a single GPU-visible heap of each type (CBV/SRV/UAV or SAMPLER), and setting it
 		// once per frame, as changing descriptor heaps can cause pipeline flushes on some hardware
 		std::unique_ptr<dx12::GPUDescriptorHeap> m_gpuCbvSrvUavDescriptorHeaps;
 		dx12::LocalResourceStateTracker m_resourceStates;
+
 
 	private:
 		// Note: These cached pointers could be graphics OR compute-specific

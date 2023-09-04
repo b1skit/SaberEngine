@@ -147,6 +147,23 @@ namespace dx12
 	/******************************************************************************************************************/
 
 
+	bool LocalResourceStateTracker::HasSeenSubresourceInState(ID3D12Resource* resource, D3D12_RESOURCE_STATES state) const
+	{
+		if (m_knownStates.contains(resource)) // No need to check m_pendingStates, we insert to m_knownStates together
+		{
+			std::map<uint32_t, D3D12_RESOURCE_STATES> const& knownLocalStates = m_knownStates.at(resource).GetStates();
+			for (auto const& localResourceState : knownLocalStates)
+			{
+				if (localResourceState.second == state)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+
 	bool LocalResourceStateTracker::HasResourceState(ID3D12Resource* resource, uint32_t subresourceIdx) const
 	{
 		return m_knownStates.contains(resource) && 

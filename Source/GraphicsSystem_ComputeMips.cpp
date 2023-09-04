@@ -80,6 +80,9 @@ namespace gr
 				uint32_t targetMip = 1;
 				while (targetMip < totalMipLevels)
 				{
+					const uint32_t firstTargetMipIdx = targetMip;
+					const uint32_t sourceMip = targetMip - 1;
+
 					re::RenderStage::ComputeStageParams computeStageParams; // Defaults, for now...
 
 					std::shared_ptr<re::RenderStage> mipGenerationStage = re::RenderStage::CreateSingleFrameComputeStage(
@@ -87,8 +90,7 @@ namespace gr
 						computeStageParams);
 
 					mipGenerationStage->SetStageShader(m_mipMapGenerationShader);
-
-					const uint32_t sourceMip = targetMip - 1;
+					
 					mipGenerationStage->AddTextureInput("SrcTex", newTexture, mipSampler, sourceMip);
 
 					const uint32_t numMipStages =
@@ -119,21 +121,19 @@ namespace gr
 					constexpr uint32_t k_numThreadsY = 8;
 					
 					SEAssert("Dimensions must be integers",
-						glm::fmod(newTexture->GetSubresourceDimensions(sourceMip).x, 1.f) == 0.f &&
-						glm::fmod(newTexture->GetSubresourceDimensions(sourceMip).x, 1.f) == 0.f);
+						glm::fmod(newTexture->GetSubresourceDimensions(firstTargetMipIdx).x, 1.f) == 0.f &&
+						glm::fmod(newTexture->GetSubresourceDimensions(firstTargetMipIdx).x, 1.f) == 0.f);
 
-					// NOTE: We're currently dispatching 2x as many threads as I think we need, but if we don't, we get
-					// corrupted pixels in mip 5 and onwwards. 
-					// TODO: Figure out why: I suspect it's a logic bug (or I'm just confused), or perhaps a race 
-					// condition: Need a UAV barrier to guarantee previous MIPs are rendered before sampling?
-					const glm::uvec2 srcMipDimensions = glm::uvec2(
-						newTexture->GetSubresourceDimensions(sourceMip).x,
-						newTexture->GetSubresourceDimensions(sourceMip).y);
+					const glm::uvec2 firstTargetMipDimensions = glm::uvec2(
+						newTexture->GetSubresourceDimensions(firstTargetMipIdx).x,
+						newTexture->GetSubresourceDimensions(firstTargetMipIdx).y);
 
+					// We want to dispatch enough k_numThreadsX x k_numThreadsY threadgroups to cover every pixel in
+					// our 1st mip level (each thread samples a 2x2 block in the source level above the 1st mip target)
 					const uint32_t roundedXDim = std::max(util::RoundUpToNearestMultiple<uint32_t>(
-						srcMipDimensions.x / k_numThreadsX, k_numThreadsX), 1u);
+						firstTargetMipDimensions.x / k_numThreadsX, k_numThreadsX), 1u);
 					const uint32_t roundedYDim = std::max(util::RoundUpToNearestMultiple<uint32_t>(
-						srcMipDimensions.y / k_numThreadsY, k_numThreadsY), 1u);
+						firstTargetMipDimensions.y / k_numThreadsY, k_numThreadsY), 1u);
 
 					// Add our dispatch information to a compute batch:
 					re::Batch computeBatch = re::Batch(re::Batch::ComputeParams{

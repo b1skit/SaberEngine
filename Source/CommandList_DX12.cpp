@@ -500,17 +500,19 @@ namespace dx12
 		SEAssert("This function should only be called from compute command lists", m_type == CommandListType::Compute);
 		SEAssert("Pipeline is not currently set", m_currentPSO);
 
-		std::vector<re::TextureTarget> const& texTargets = textureTargetSet.GetColorTargets();
-		for (size_t i = 0; i < texTargets.size(); i++)
+		std::vector<re::TextureTarget> const& colorTargets = textureTargetSet.GetColorTargets();
+		for (size_t i = 0; i < colorTargets.size(); i++)
 		{
-			if (!texTargets[i].HasTexture())
+			if (!colorTargets[i].HasTexture())
 			{
 				continue;
 			}
-			re::TextureTarget const* texTarget = &texTargets[i];
+			re::TextureTarget const* colorTarget = &colorTargets[i];
+
+			std::shared_ptr<re::Texture> colorTex = colorTarget->GetTexture();
 
 			SEAssert("It is unexpected that we're trying to attach a texture with DepthTarget usage to a compute shader",
-				(texTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0);
+				(colorTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0);
 
 			// We bind our UAV targets by mapping TextureTargetSet index to register/bind point values
 			RootSignature::RootParameter const* rootSigEntry = m_currentRootSignature->GetRootSignatureEntry(
@@ -529,10 +531,10 @@ namespace dx12
 					rootSigEntry->m_tableEntry.m_type == dx12::RootSignature::DescriptorType::UAV);
 
 
-				re::TextureTarget::TargetParams const& targetParams = texTarget->GetTargetParams();
-				
+				re::TextureTarget::TargetParams const& targetParams = colorTarget->GetTargetParams();
+
 				dx12::Texture::PlatformParams* texPlatParams =
-					texTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+					colorTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 				SEAssert("Not enought view desciptors",
 					targetParams.m_targetSubesource < texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV].size());
@@ -546,16 +548,20 @@ namespace dx12
 					rootSigEntry->m_tableEntry.m_offset,
 					1);
 
+				// We're writing to a UAV, we may need a UAV barrier:
+				ID3D12Resource* resource = texPlatParams->m_textureResource.Get();
+				if (m_resourceStates.HasSeenSubresourceInState(resource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS))
+				{
+					// We've accessed this resource before on this command list, and it was transitioned to a UAV
+					// state. We must ensure any previous work was done before we access it again
+					InsertUAVBarrier(colorTex);
+				}
+
 				// Insert our resource transition:
 				TransitionResource(
-					texTarget->GetTexture(),
+					colorTarget->GetTexture(),
 					D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-					texTarget->GetTargetParams().m_targetSubesource);
-
-				// TODO: Should we also insert a D3D12_RESOURCE_UAV_BARRIER?
-				// Not needed between 2 draw/dispatch calls that only read a UAV
-				// Not needed between 2 draw/dispatch calls that write to a UAV IFF the writes can be executed in any order
-				// -> Only needed to ensure write ordering
+					colorTarget->GetTargetParams().m_targetSubesource);
 			}
 		}
 	}
@@ -687,7 +693,7 @@ namespace dx12
 			IsWriteableState(toState) });
 
 		// Handle the resource transition:
-		ID3D12Resource* resource = texPlatParams->m_textureResource.Get();		
+		ID3D12Resource* resource = texPlatParams->m_textureResource.Get();
 
 		// If we've already seen this resource before, we can record the transition now (as we prepend any initial
 		// transitions when submitting the command list)	
@@ -718,39 +724,32 @@ namespace dx12
 	}
 
 
-	void CommandList::TransitionUAV(
-		std::shared_ptr<re::Texture> texture, D3D12_RESOURCE_STATES toState, uint32_t subresourceIdx)
+	void CommandList::InsertUAVBarrier(
+		std::shared_ptr<re::Texture> texture)
 	{
+		/*
+		* Note: This barrier should be used in the scenario where 2 subsequent compute dispatches executed on the same
+		* command list access the same UAV, and the second dispatch needs to wait for the first to finish.
+		* UAV barriers are intended to ensure write ordering. They're NOT needed:
+		* - between 2 draw/dispatch calls that only read a UAV
+		* - between 2 draw/dispatch calls that write to a UAV IFF the writes can be executed in any order
+		* https://asawicki.info/news_1722_secrets_of_direct3d_12_copies_to_the_same_buffer
+		* 
+		* This function should only be called when we know we definitely need this barrier inserted.
+		*/
+
 		ID3D12Resource* resource =
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_textureResource.Get();
 
-		// TODO: Should we use this to insert UAV barriers (separately from our transitions barriers)?
-		// Reminder: If we go this route, we need to update the resource's modification fence value
-		SEAssertF("TODO: Figure out what to do with this function");
-
-		// If we've already seen this UAV before, we can record the transition now (as we prepend any initial
-		// transitions when submitting the command list)	
-		if (m_resourceStates.HasResourceState(resource, subresourceIdx))
-		{
-			const D3D12_RESOURCE_STATES currentState = m_resourceStates.GetResourceState(resource, subresourceIdx);
-			if (currentState == toState)
-			{
-				return; // Before and after states must be different
-			}
-		
-			const D3D12_RESOURCE_BARRIER barrier{
+		const D3D12_RESOURCE_BARRIER barrier{
 				.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV,
 				.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE,
 				.UAV = D3D12_RESOURCE_UAV_BARRIER{
 					.pResource = resource}
-			};
+		};
 
-			// TODO: Support batching of multiple barriers
-			m_commandList->ResourceBarrier(1, &barrier);
-		}
-
-		// Record the new state after the transition:
-		m_resourceStates.SetResourceState(resource, toState, subresourceIdx);
+		// TODO: Support batching of multiple barriers
+		m_commandList->ResourceBarrier(1, &barrier);
 	}
 
 
