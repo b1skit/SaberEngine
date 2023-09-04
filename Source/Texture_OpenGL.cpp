@@ -212,6 +212,34 @@ namespace opengl
 	}
 
 
+	void opengl::Texture::BindAsImageTexture(
+		re::Texture const& texture, uint32_t textureUnit, uint32_t subresourceIdx, uint32_t accessMode)
+	{
+		SEAssert("Invalid access mode",
+			accessMode == GL_READ_ONLY ||
+			accessMode == GL_WRITE_ONLY ||
+			accessMode == GL_READ_WRITE);
+
+		opengl::Texture::PlatformParams const* texPlatParams =
+			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
+
+		SEAssert("Texture is not created", texPlatParams->m_isCreated);
+
+		SEAssert("Format is not compatible. Note: We currently don't check for non-exact but compatible formats, "
+			"but should. See Texture_OpenGL.cpp::GetFormatIsImageTextureCompatible",
+			texPlatParams->m_formatIsImageTextureCompatible);
+
+		glBindImageTexture(
+			textureUnit,						// unit: Index to bind to
+			texPlatParams->m_textureID,			// texture: Name of the texture being bound
+			subresourceIdx,	// level: Subresource index being bound
+			GL_TRUE,							// layered: Use layered binding? Binds the entire 1/2/3D array if true
+			0,									// layer: Layer to bind. Ignored if layered == GL_TRUE
+			accessMode,							// access: Type of access that will be performed
+			texPlatParams->m_internalFormat);	// format: Internal format	
+	}
+
+
 	void opengl::Texture::Create(re::Texture& texture)
 	{
 		opengl::Texture::PlatformParams* params = texture.GetPlatformParams()->As<opengl::Texture::PlatformParams*>();

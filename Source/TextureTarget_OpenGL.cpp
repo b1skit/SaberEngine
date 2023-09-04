@@ -583,13 +583,8 @@ namespace opengl
 	}
 
 
-	void TextureTargetSet::AttachTargetsAsImageTextures(re::TextureTargetSet const& targetSet, uint32_t accessMode)
+	void TextureTargetSet::AttachTargetsAsImageTextures(re::TextureTargetSet const& targetSet)
 	{
-		SEAssert("Invalid access mode",
-			accessMode == GL_READ_ONLY ||
-			accessMode == GL_WRITE_ONLY ||
-			accessMode == GL_READ_WRITE);
-
 		SEAssert("It is not possible to attach a depth buffer as a target to a compute shader",
 			targetSet.GetDepthStencilTarget() == nullptr);
 
@@ -602,27 +597,9 @@ namespace opengl
 			}
 
 			std::shared_ptr<re::Texture> texture = texTargets[slot].GetTexture();
-			SEAssert("Texture is not created", texture->GetPlatformParams()->m_isCreated);
-
-			SEAssert("Format is not compatible. Note: We currently don't check for non-exact but compatible formats, "
-				"but should. See Texture_OpenGL.cpp::GetFormatIsImageTextureCompatible", 
-				texture->GetPlatformParams()->As<opengl::Texture::PlatformParams*>()->m_formatIsImageTextureCompatible);
-
-			opengl::Texture::PlatformParams const* texPlatParams =
-				texture->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
-
-			SEAssert("Invalid texture format", texPlatParams->m_formatIsImageTextureCompatible);
-
 			re::TextureTarget::TargetParams const& targetParams = texTargets[slot].GetTargetParams();
-
-			glBindImageTexture(
-				slot,								// unit: Index to bind to
-				texPlatParams->m_textureID,			// texture: Name of the texture being bound
-				targetParams.m_targetSubesource,	// level: Subresource index being bound
-				GL_TRUE,							// layered: Use layered binding? Binds the entire 1/2/3D array if true
-				0,									// layer: Layer to bind. Ignored if layered == GL_TRUE
-				accessMode,							// access: Type of access that will be performed
-				texPlatParams->m_internalFormat);	// format: Internal format	
+			
+			opengl::Texture::BindAsImageTexture(*texture, slot, targetParams.m_targetSubesource, GL_WRITE_ONLY);
 		}
 	}
 }

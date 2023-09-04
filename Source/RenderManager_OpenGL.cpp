@@ -211,7 +211,7 @@ namespace opengl
 				{
 				case re::RenderStage::RenderStageType::Compute:
 				{
-					opengl::TextureTargetSet::AttachTargetsAsImageTextures(*stageTargets, GL_WRITE_ONLY);
+					opengl::TextureTargetSet::AttachTargetsAsImageTextures(*stageTargets);
 
 					// TODO: Support compute target clearing
 				}
