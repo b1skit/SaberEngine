@@ -254,8 +254,8 @@ namespace opengl
 
 		// Ensure our texture is correctly configured:
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
-		SEAssert("Texture has a bad configuration", texParams.m_faces == 1 ||
-			(texParams.m_faces == 6 && texParams.m_dimension == re::Texture::Dimension::TextureCubeMap));
+		SEAssert("Texture has a bad configuration", 
+			texParams.m_dimension != re::Texture::Dimension::TextureCubeMap || texParams.m_faces == 6);
 
 		// Generate textureID names. Note: We must call glBindTexture immediately after to associate the name with 
 		// a texture. It will not have the correct dimensionality until this is done

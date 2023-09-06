@@ -435,7 +435,8 @@ namespace
 		}
 		else
 		{
-			SEAssert("We're currently expecting this to be a cubemap", texParams.m_faces == 6);
+			SEAssert("We're currently expecting this to be a cubemap",
+				texParams.m_faces == 6 && texParams.m_dimension == re::Texture::Dimension::TextureCubeMap);
 			
 			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 			
