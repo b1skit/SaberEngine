@@ -792,22 +792,22 @@
     <None Include="Shaders\glsl\cubeDepthShader.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\deferredAmbientLightShader.frag">
+    <None Include="Shaders\GLSL\DeferredAmbientLight.frag">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\deferredAmbientLightShader.vert">
+    <None Include="Shaders\GLSL\DeferredAmbientLight.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\deferredKeyLightShader.frag">
+    <None Include="Shaders\GLSL\DeferredDirectionalLight.frag">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\deferredKeyLightShader.vert">
+    <None Include="Shaders\GLSL\DeferredDirectionalLight.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\deferredPointLightShader.frag">
+    <None Include="Shaders\GLSL\DeferredPointLight.frag">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\deferredPointLightShader.vert">
+    <None Include="Shaders\GLSL\DeferredPointLight.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\glsl\depthShader.vert">
@@ -845,16 +845,16 @@
     <None Include="Shaders\glsl\blurCommon.glsl">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\blitIEMShader.frag">
+    <None Include="Shaders\GLSL\GenerateIEM.frag">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\blitIEMShader.vert">
+    <None Include="Shaders\GLSL\GenerateIEM.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\blitPMREMShader.frag">
+    <None Include="Shaders\GLSL\GeneratePMREM.frag">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\blitPMREMShader.vert">
+    <None Include="Shaders\GLSL\GeneratePMREM.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\glsl\blurShaderHorizontal.frag">
@@ -869,9 +869,6 @@
     <None Include="Shaders\glsl\blurShaderVertical.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\IEMPMREMCommon.glsl">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
     <None Include="Shaders\glsl\luminanceThreshold.frag">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
@@ -881,36 +878,66 @@
     <None Include="Shaders\HLSL\SaberCommon.hlsli">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </None>
-    <None Include="SaberGlobals.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
-    </None>
     <None Include="Shaders\HLSL\NormalMapUtils.hlsli">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GenerateBRDFIntegrationMap.comp">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
+    <None Include="Shaders\HLSL\SaberGlobals.hlsli">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\SaberComputeCommon.hlsli">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Shaders\HLSL\HelloTriangle_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\HelloTriangle_PShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
-    </FxCompile>
     <FxCompile Include="Shaders\HLSL\Debug_VShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Debug_PShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
-    <FxCompile Include="GenerateMipMaps_BoxFilter_CShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
-    </FxCompile>
     <FxCompile Include="Shaders\HLSL\GBuffer_PShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GBuffer_VShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GenerateMipMaps_BoxFilter_CShder.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GenerateBRDFIntegrationMap_CShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\DeferredAmbientLight_PShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\DeferredAmbientLight_VShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\DeferredDirectionalLight_PShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\DeferredDirectionalLight_VShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GenerateIEM_PShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GenerateIEM_VShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GeneratePMREM_PShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GeneratePMREM_VShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\DeferredPointLight_PShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\DeferredPointLight_VShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
   </ItemGroup>

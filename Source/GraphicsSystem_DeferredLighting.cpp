@@ -259,7 +259,7 @@ namespace gr
 			brdfParams.m_width = k_generatedAmbientIBLTexRes;
 			brdfParams.m_height = k_generatedAmbientIBLTexRes;
 			brdfParams.m_faces = 1;
-			brdfParams.m_usage = Texture::Usage::ColorTarget;
+			brdfParams.m_usage = static_cast<Texture::Usage>(Texture::Usage::ComputeTarget | Texture::Usage::Color);
 			brdfParams.m_dimension = Texture::Dimension::Texture2D;
 			brdfParams.m_format = Texture::Format::RG16F; // Epic recommends 2 channel, 16-bit floats
 			brdfParams.m_colorSpace = Texture::ColorSpace::Linear;
@@ -349,7 +349,7 @@ namespace gr
 
 		// 1st frame: Generate an IEM (Irradiance Environment Map) cubemap texture for diffuse irradiance
 		{
-			shared_ptr<Shader> iemShader = re::Shader::Create(Config::Get()->GetValue<string>("blitIEMShaderName"));
+			shared_ptr<Shader> iemShader = re::Shader::Create(en::ShaderNames::k_generateIEMShaderName);
 
 			const string IEMTextureName = iblTexture->GetName() + "_IEMTexture";
 
@@ -365,7 +365,7 @@ namespace gr
 
 				iemStage->SetStageShader(iemShader);
 				iemStage->AddTextureInput(
-					"MatAlbedo",
+					"Tex0",
 					iblTexture,
 					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
 
@@ -412,7 +412,7 @@ namespace gr
 
 		// 1st frame: Generate PMREM (Pre-filtered Mip-mapped Radiance Environment Map) cubemap for specular reflections
 		{
-			shared_ptr<Shader> pmremShader = re::Shader::Create(Config::Get()->GetValue<string>("blitPMREMShaderName"));
+			shared_ptr<Shader> pmremShader = re::Shader::Create(en::ShaderNames::k_generatePMREMShaderName);
 
 			// PMREM-specific texture params:
 			const string PMREMTextureName = iblTexture->GetName() + "_PMREMTexture";
@@ -434,7 +434,7 @@ namespace gr
 
 					pmremStage->SetStageShader(pmremShader);
 					pmremStage->AddTextureInput(
-						"MatAlbedo",
+						"Tex0",
 						iblTexture,
 						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
 					
@@ -500,8 +500,7 @@ namespace gr
 		ambientStageParams.SetDepthWriteMode(gr::PipelineState::DepthWriteMode::Disabled);
 		
 		// Ambient light stage:
-		m_ambientStage->SetStageShader(
-			re::Shader::Create(Config::Get()->GetValue<string>("deferredAmbientLightShaderName")));
+		m_ambientStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_deferredAmbientLightShaderName));
 
 		m_ambientStage->AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 		m_ambientStage->SetStagePipelineState(ambientStageParams);
@@ -535,8 +534,7 @@ namespace gr
 			}
 			m_keylightStage->SetStagePipelineState(keylightStageParams);
 
-			m_keylightStage->SetStageShader(
-				re::Shader::Create(Config::Get()->GetValue<string>("deferredKeylightShaderName")));
+			m_keylightStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_deferredDirectionalLightShaderName));
 
 			m_keylightStage->AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 
@@ -572,8 +570,7 @@ namespace gr
 			pointlightStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Front); // Cull front faces of light volumes
 			m_pointlightStage->SetStagePipelineState(pointlightStageParams);
 
-			m_pointlightStage->SetStageShader(
-				re::Shader::Create(Config::Get()->GetValue<string>("deferredPointLightShaderName")));
+			m_pointlightStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_deferredPointLightShaderName));
 
 			pipeline.AppendRenderStage(m_pointlightStage);
 

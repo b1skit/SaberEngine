@@ -390,7 +390,8 @@ namespace dx12
 		dx12::Texture::PlatformParams* depthTexPlatParams =
 			depthTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
-		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor = depthTexPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
+		D3D12_CPU_DESCRIPTOR_HANDLE const& dsvDescriptor = 
+			depthTexPlatParams->m_rtvDsvDescriptors[depthTarget->GetTargetParams().m_targetFace].GetBaseDescriptor();
 
 		m_commandList->ClearDepthStencilView(
 			dsvDescriptor,
@@ -414,7 +415,7 @@ namespace dx12
 			colorTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		m_commandList->ClearRenderTargetView(
-			texPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor(),
+			texPlatParams->m_rtvDsvDescriptors[colorTarget->GetTargetParams().m_targetFace].GetBaseDescriptor(),
 			&colorTarget->GetTexture()->GetTextureParams().m_clear.m_color.r,
 			0,			// Number of rectangles in the proceeding D3D12_RECT ptr
 			nullptr);	// Ptr to an array of rectangles to clear in the resource view. Clears entire view if null
@@ -450,13 +451,18 @@ namespace dx12
 				dx12::Texture::PlatformParams* texPlatParams =
 					target.GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
+				re::TextureTarget::TargetParams const& targetParams = target.GetTargetParams();
+
 				// Insert our resource transition:
 				TransitionResource(
 					target.GetTexture(),
 					D3D12_RESOURCE_STATE_RENDER_TARGET,
-					target.GetTargetParams().m_targetSubesource);
+					targetParams.m_targetSubesource);
 
-				colorTargetDescriptors.emplace_back(texPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor());
+				// Attach the RTV for the target face:
+				colorTargetDescriptors.emplace_back(
+					texPlatParams->m_rtvDsvDescriptors[targetParams.m_targetFace].GetBaseDescriptor());
+
 				numColorTargets++;
 			}
 		}
@@ -468,13 +474,15 @@ namespace dx12
 			dx12::Texture::PlatformParams* depthTexPlatParams =
 				depthStencilTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
+			re::TextureTarget::TargetParams const& depthTargetParams = depthStencilTarget->GetTargetParams();
+
 			// Insert our resource transition:
 			TransitionResource(
 				depthStencilTarget->GetTexture(),
 				D3D12_RESOURCE_STATE_DEPTH_WRITE,
-				depthStencilTarget->GetTargetParams().m_targetSubesource);
+				depthTargetParams.m_targetSubesource);
 
-			dsvDescriptor = depthTexPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor();
+			dsvDescriptor = depthTexPlatParams->m_rtvDsvDescriptors[depthTargetParams.m_targetFace].GetBaseDescriptor();
 		}
 
 		// NOTE: isSingleHandleToDescRange == true specifies that the rtvs are contiguous in memory, thus N rtv 
@@ -536,7 +544,7 @@ namespace dx12
 				dx12::Texture::PlatformParams* texPlatParams =
 					colorTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
-				SEAssert("Not enought view desciptors",
+				SEAssert("Not enough UAV descriptors",
 					targetParams.m_targetSubesource < texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV].size());
 
 				dx12::DescriptorAllocation const* descriptorAllocation =
@@ -651,7 +659,7 @@ namespace dx12
 					toState,
 					subresource);
 
-				SEAssert("TODO: It's currently unexpected a texture resources has > 1 SRV",
+				SEAssert("TODO: It's currently expected a texture resource has exactly 1 SRV",
 					texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV].size() == 1);
 
 				descriptorAllocation = &texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV][0];

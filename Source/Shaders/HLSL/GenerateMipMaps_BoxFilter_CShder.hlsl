@@ -1,18 +1,10 @@
 // © 2023 Adam Badke. All rights reserved.
-
-// Based on the technique demonstrated in the Microsoft DirectX Graphics Samples:
-// https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/GenerateMipsCS.hlsli
-
+#include "SaberComputeCommon.hlsli"
 #include "SaberGlobals.hlsli"
 
 
-struct ComputeIn
-{
-	uint3 GId	: SV_GroupID;			// Thread group index within the dispatch
-	uint3 GTId	: SV_GroupThreadID;		// Local thread ID within the thread group
-	uint3 DTId	: SV_DispatchThreadID;	// Global thread ID within the dispatch
-	uint GIdx	: SV_GroupIndex;		// Flattened local index within the thread group
-};
+// Based on the technique demonstrated in the Microsoft DirectX Graphics Samples:
+// https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/GenerateMipsCS.hlsli
 
 #define SRC_WIDTH_EVEN_HEIGHT_EVEN 0
 #define SRC_WIDTH_ODD_HEIGHT_EVEN 1
@@ -83,15 +75,15 @@ void main(ComputeIn In)
 	{
 		case SRC_WIDTH_EVEN_HEIGHT_EVEN: // 0
 		{
-			const float2 uvs = PixelCoordsToUV(output0WidthHeight, In.DTId.xy, float2(0.5, 0.5f));
+			const float2 uvs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.5f));
 			texSample0 = SrcTex.SampleLevel(ClampLinearLinear, uvs, srcMip);
 		}
 		break;
 		case SRC_WIDTH_ODD_HEIGHT_EVEN: // 1
 		{
 			// Width has an odd number of pixels. We blend 2 bilinear samples to prevent undersampling at lower mips
-			const float2 leftUVs = PixelCoordsToUV(output0WidthHeight, In.DTId.xy, float2(0.25f, 0.5f));
-			const float2 rightUVs = PixelCoordsToUV(output0WidthHeight, In.DTId.xy, float2(0.75f, 0.5f));
+			const float2 leftUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.25f, 0.5f));
+			const float2 rightUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.75f, 0.5f));
 
 			const float4 leftSample = SrcTex.SampleLevel(ClampLinearLinear, leftUVs, srcMip);
 			const float4 rightSample = SrcTex.SampleLevel(ClampLinearLinear, rightUVs, srcMip);
@@ -102,8 +94,8 @@ void main(ComputeIn In)
 		case SRC_WIDTH_EVEN_HEIGHT_ODD: // 2
 		{
 			// Height has an odd number of pixels. We blend 2 bilinear samples to prevent undersampling at lower mips
-			const float2 topUVs = PixelCoordsToUV(output0WidthHeight, In.DTId.xy, float2(0.5f, 0.25));
-			const float2 botUVs = PixelCoordsToUV(output0WidthHeight, In.DTId.xy, float2(0.5f, 0.75));
+			const float2 topUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.25));
+			const float2 botUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.75));
 			
 			const float4 topSample = SrcTex.SampleLevel(ClampLinearLinear, topUVs, srcMip);
 			const float4 botSample = SrcTex.SampleLevel(ClampLinearLinear, botUVs, srcMip);
@@ -114,10 +106,10 @@ void main(ComputeIn In)
 		case SRC_WIDTH_ODD_HEIGHT_ODD: // 3
 		{
 			// Both the width and height are odd. We blend 4 samples to prevent undersampling at lower mips
-			const float2 topLeftUVs = PixelCoordsToUV(output0WidthHeight, In.DTId.xy, float2(0.25f, 0.25f));
-			const float2 topRightUVs = PixelCoordsToUV(output0WidthHeight, In.DTId.xy, float2(0.75f, 0.25f));
-			const float2 botLeftUVs = PixelCoordsToUV(output0WidthHeight, In.DTId.xy, float2(0.25f, 0.75f));
-			const float2 botRightUVs = PixelCoordsToUV(output0WidthHeight, In.DTId.xy, float2(0.75f, 0.75f));
+			const float2 topLeftUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.25f, 0.25f));
+			const float2 topRightUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.75f, 0.25f));
+			const float2 botLeftUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.25f, 0.75f));
+			const float2 botRightUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.75f, 0.75f));
 			
 			const float4 topLeftSample = SrcTex.SampleLevel(ClampLinearLinear, topLeftUVs, srcMip);
 			const float4 topRightSample = SrcTex.SampleLevel(ClampLinearLinear, topRightUVs, srcMip);

@@ -33,7 +33,7 @@ namespace dx12
 			std::array<std::vector<dx12::DescriptorAllocation>, View_Count> m_viewCpuDescAllocations;
 
 			// RTV: Created if the texture has Texture::Usage ColorTarget or SwapchainColorProxy:
-			dx12::DescriptorAllocation m_rtvDsvDescriptor;
+			std::vector<dx12::DescriptorAllocation> m_rtvDsvDescriptors;
 
 			uint64_t m_modificationFence = 0; // Modified via a pointer when submitting command lists on a command queue
 		};

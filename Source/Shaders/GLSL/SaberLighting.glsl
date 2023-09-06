@@ -15,12 +15,12 @@
 // Trowbridge-Reitz GGX Normal Distribution Function: Approximate area of surface microfacets aligned with the halfway vector between the light and view dirs
 float NDF(vec3 MatNormal, vec3 halfVector, float roughness)
 {
-	float roughness2	= pow(roughness, 4.0);
+	float roughness2 = pow(roughness, 4.0);
 
-	float nDotH			= max(0.0, dot(MatNormal, halfVector));
-	float nDotH2		= nDotH * nDotH;
+	float nDotH = max(0.f, dot(MatNormal, halfVector));
+	float nDotH2 = nDotH * nDotH;
 
-	float denominator	= max((nDotH2 * (roughness2 - 1.0)) + 1.0, 0.0001);
+	float denominator = max((nDotH2 * (roughness2 - 1.f)) + 1.f, 0.0001);
 	
 	return roughness2 / (M_PI * denominator * denominator);
 }
@@ -31,7 +31,7 @@ float RemapRoughnessDirect(float roughness)
 {
 	// Non-linear remap [0,1] -> [0.125, 0.5] (https://www.desmos.com/calculator/mtb0ffbl82)
 
-	float numerator = (roughness + 1.0);
+	float numerator = (roughness + 1.f);
 	numerator *= numerator;
 
 	return numerator / 8.0;
@@ -45,15 +45,15 @@ float RemapRoughnessIBL(float roughness)
 
 	float roughness2	= roughness * roughness;
 
-	return roughness2 / 2.0;
+	return roughness2 / 2.f;
 }
 
 
 // Helper function for geometry function
 float GeometrySchlickGGX(float NoV, float remappedRoughness)
 {
-	float nom   = NoV;
-	float denom = (NoV * (1.0 - remappedRoughness)) + remappedRoughness;
+	const float nom = NoV;
+	const float denom = (NoV * (1.f - remappedRoughness)) + remappedRoughness;
 	
 	return nom / denom;
 }
@@ -72,15 +72,15 @@ float GeometrySmith(float NoV, float NoL, float remappedRoughness)
 // Schlick's Approximation: Contribution of Fresnel factor in specular reflection
 vec3 FresnelSchlick(float NoV, vec3 F0)
 {
-	return F0 + ((1.0 - F0) * pow(1.0 - NoV, 5.0));
+	return F0 + ((1.f - F0) * pow(1.f - NoV, 5.0));
 }
 
 
 // Schlick's Approximation, with an added roughness term (as per Sebastien Lagarde)
 vec3 FresnelSchlick_Roughness(float NoV, vec3 F0, float roughness)
 {
-	NoV = max(NoV, 0.0);
-	return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - NoV, 5.0);
+	NoV = max(NoV, 0.f);
+	return F0 + (max(vec3(1.f - roughness), F0) - F0) * pow(1.f - NoV, 5.0);
 }
 
 
@@ -105,7 +105,7 @@ float LightAttenuation(vec3 fragWorldPosition, vec3 lightWorldPosition)
 {
 	const float lightDist = length(lightWorldPosition - fragWorldPosition);
 
-	const float attenuation = 1.0 / (1.0 + (lightDist * lightDist));
+	const float attenuation = 1.f / (1.f + (lightDist * lightDist));
 
 	return attenuation;
 }
@@ -142,8 +142,8 @@ vec3 ComputeLighting(const LightingParams lightingParams)
 	const vec3 lightViewDir = viewRotationScale * lightWorldDir;
 	const vec3 halfVectorView	= HalfVector(lightViewDir, viewEyeDir);	// View-space half direction
 
-	const float NoV	= max(0.0, dot(viewNormal, viewEyeDir) );
-	const float NoL = max(0.0, dot(worldNormal, lightWorldDir));
+	const float NoV	= max(0.f, dot(viewNormal, viewEyeDir) );
+	const float NoL = max(0.f, dot(worldNormal, lightWorldDir));
 
 	// Fresnel-Schlick approximation is only defined for non-metals, so we blend it here. Lerp blends towards albedo for metals
 	const vec3 blendedF0 = mix(lightingParams.F0, lightingParams.LinearAlbedo, lightingParams.Metalness); 
@@ -159,8 +159,8 @@ vec3 ComputeLighting(const LightingParams lightingParams)
 	const vec3 specularContribution = (NDF * fresnel * geometry) / max((4.0 * NoV * NoL), 0.0001f);
 	
 	// Diffuse:
-	vec3 k_d = vec3(1.0) - fresnel;
-	k_d = k_d * (1.0 - lightingParams.Metalness); // Metallics absorb refracted light
+	vec3 k_d = vec3(1.f) - fresnel;
+	k_d = k_d * (1.f - lightingParams.Metalness); // Metallics absorb refracted light
 //	const vec3 diffuseContribution = k_d * lightingParams.LinearAlbedo.rgb; // Note: Omitted the "/ M_PI" factor here
 	const vec3 diffuseContribution = k_d * lightingParams.LinearAlbedo.rgb / M_PI;
 
@@ -184,7 +184,7 @@ vec3 ComputeLighting(const LightingParams lightingParams)
 // Compute a depth map bias value based on surface orientation
 float GetSlopeScaleBias(float NoL)
 {
-	return max(g_shadowBiasMinMax.x, g_shadowBiasMinMax.y * (1.0 - NoL));
+	return max(g_shadowBiasMinMax.x, g_shadowBiasMinMax.y * (1.f - NoL));
 }
 
 
@@ -203,7 +203,7 @@ float GetShadowFactor(vec3 shadowPos, sampler2D shadowMap, float NoL)
 	// Compute a block of samples around our fragment, starting at the top-left:
 	const int gridSize = 4; // MUST be a power of two TODO: Compute this on C++ side and allow for uploading of arbitrary samples (eg. odd, even)
 
-	const float offsetMultiplier = (float(gridSize) / 2.0) - 0.5;
+	const float offsetMultiplier = (float(gridSize) / 2.f) - 0.5;
 
 	shadowScreen.x -= offsetMultiplier * g_shadowMapTexelSize.z;
 	shadowScreen.y += offsetMultiplier * g_shadowMapTexelSize.w;
@@ -213,7 +213,7 @@ float GetShadowFactor(vec3 shadowPos, sampler2D shadowMap, float NoL)
 	{
 		for (int col = 0; col < gridSize; col++)
 		{
-			depthSum += (biasedDepth < texture(shadowMap, shadowScreen.xy).r ? 1.0 : 0.0);
+			depthSum += (biasedDepth < texture(shadowMap, shadowScreen.xy).r ? 1.f : 0.f);
 
 			shadowScreen.x += g_shadowMapTexelSize.z;
 		}
@@ -249,38 +249,38 @@ float GetShadowFactor(vec3 lightToFrag, samplerCube shadowMap, const float NoL)
 		ConvertLinearDepthToNonLinear(g_shadowCamNearFar.x, g_shadowCamNearFar.y, biasedEyeDepth);
 
 	// Compute a sample offset for PCF shadow samples:
-	const float sampleOffset = 2.0 / cubemapFaceResolution;
+	const float sampleOffset = 2.f / cubemapFaceResolution;
 
 	// Calculate offset vectors:
 	float offset = sampleOffset * eyeDepth;
-	float dxy = (maxXY > absLightToFrag.z) ? offset : 0.0;
-	float dx = (absLightToFrag.x > absLightToFrag.y) ? dxy : 0.0;
+	float dxy = (maxXY > absLightToFrag.z) ? offset : 0.f;
+	float dx = (absLightToFrag.x > absLightToFrag.y) ? dxy : 0.f;
 	vec2 oxy = vec2(offset - dx, dx);
 	vec2 oyz = vec2(offset - dxy, dxy);
 
 	vec3 limit = vec3(eyeDepth, eyeDepth, eyeDepth);
-	const float bias = 1.0 / 1024.0; // Epsilon = 1/1024.
+	const float bias = 1.f / 1024.0; // Epsilon = 1/1024.
 
 	limit.xy -= oxy * bias;
 	limit.yz -= oyz * bias;
 
 	// Get the center sample:
-	float light = texture(shadowMap, lightToFrag).r > nonLinearDepth ? 1.0 : 0.0;
+	float light = texture(shadowMap, lightToFrag).r > nonLinearDepth ? 1.f : 0.f;
 
 	// Get 4 extra samples at diagonal offsets:
 	lightToFrag.xy -= oxy;
 	lightToFrag.yz -= oyz;
 
-	light += texture(shadowMap, clamp(lightToFrag, -limit, limit)).r > nonLinearDepth ? 1.0 : 0.0;
-	lightToFrag.xy += oxy * 2.0;
+	light += texture(shadowMap, clamp(lightToFrag, -limit, limit)).r > nonLinearDepth ? 1.f : 0.f;
+	lightToFrag.xy += oxy * 2.f;
 
-	light += texture(shadowMap, clamp(lightToFrag, -limit, limit)).r > nonLinearDepth ? 1.0 : 0.0;
-	lightToFrag.yz += oyz * 2.0;
+	light += texture(shadowMap, clamp(lightToFrag, -limit, limit)).r > nonLinearDepth ? 1.f : 0.f;
+	lightToFrag.yz += oyz * 2.f;
 
-	light += texture(shadowMap, clamp(lightToFrag, -limit, limit)).r > nonLinearDepth ? 1.0 : 0.0;
-	lightToFrag.xy -= oxy * 2.0;
+	light += texture(shadowMap, clamp(lightToFrag, -limit, limit)).r > nonLinearDepth ? 1.f : 0.f;
+	lightToFrag.xy -= oxy * 2.f;
 
-	light += texture(shadowMap, clamp(lightToFrag, -limit, limit)).r > nonLinearDepth ? 1.0 : 0.0;
+	light += texture(shadowMap, clamp(lightToFrag, -limit, limit)).r > nonLinearDepth ? 1.f : 0.f;
 
 	return (light * 0.2);	// Return the average of our 5 samples
 }
@@ -315,9 +315,9 @@ vec2 Hammersley2D(uint i, uint N)
 // Based on:  http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 vec3 HemisphereSample_uniformDist(float u, float v)
 {
-	float phi	= v * 2.0 * M_PI;
-	float cosTheta	= 1.0 - u;
-	float sinTheta	= sqrt(1.0 - cosTheta * cosTheta);
+	float phi = v * M_2PI;
+	float cosTheta = 1.f - u;
+	float sinTheta = sqrt(1.f - cosTheta * cosTheta);
 
 	return vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
 }
@@ -327,9 +327,9 @@ vec3 HemisphereSample_uniformDist(float u, float v)
 // Based on:  http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 vec3 HemisphereSample_cosineDist(float u, float v)
 {
-	float phi	= v * 2.0 * M_PI;
-	float cosTheta	= sqrt(1.0 - u);
-	float sinTheta	= sqrt(1.0 - cosTheta * cosTheta);
+	float phi = v * M_2PI;
+	float cosTheta = sqrt(1.f - u);
+	float sinTheta = sqrt(1.f - cosTheta * cosTheta);
 
 	return vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
 }
@@ -340,9 +340,9 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
 {
 	float a = roughness * roughness;
 
-	float phi = 2.0 * M_PI * Xi.x;
-	float cosTheta = sqrt((1.0 - Xi.y) / (1.0 + (a * a - 1.0) * Xi.y));
-	float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+	float phi = M_2PI * Xi.x;
+	float cosTheta = sqrt((1.f - Xi.y) / (1.f + (a * a - 1.f) * Xi.y));
+	float sinTheta = sqrt(1.f - cosTheta * cosTheta);
 
 	// Convert spherical -> cartesian coordinates
 	vec3 H;
@@ -351,7 +351,7 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
 	H.z = cosTheta;
 
 	// from tangent-space vector to world-space sample vector
-	vec3 up = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+	vec3 up = abs(N.z) < 0.999f ? vec3(0.f, 0.f, 1.f) : vec3(1.f, 0.f, 0.f);
 	vec3 tangent = normalize(cross(up, N));
 	vec3 bitangent = cross(N, tangent);
 

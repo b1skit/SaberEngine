@@ -34,7 +34,13 @@ namespace en::ConfigKeys
 namespace en::ShaderNames
 {
 	// Shader filename prefixes. Note: These are not config keys
+	// TODO: Move these to their own file
 	constexpr char const* k_mipGenerationShaderName = "GenerateMipMaps_BoxFilter";
 	constexpr char const* k_gbufferShaderName = "GBuffer";
 	constexpr char const* k_generateBRDFIntegrationMapShaderName = "GenerateBRDFIntegrationMap";
+	constexpr char const* k_generateIEMShaderName = "GenerateIEM";
+	constexpr char const* k_generatePMREMShaderName = "GeneratePMREM";
+	constexpr char const* k_deferredAmbientLightShaderName = "DeferredAmbientLight";
+	constexpr char const* k_deferredDirectionalLightShaderName = "DeferredDirectionalLight";
+	constexpr char const* k_deferredPointLightShaderName = "DeferredPointLight";
 }

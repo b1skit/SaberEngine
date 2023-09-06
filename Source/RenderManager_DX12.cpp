@@ -11,6 +11,7 @@
 #include "DebugConfiguration.h"
 #include "Debug_DX12.h"
 #include "GraphicsSystem_ComputeMips.h"
+#include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_TempDebug.h"
 #include "MeshPrimitive_DX12.h"
@@ -38,10 +39,13 @@ namespace dx12
 			make_shared<gr::ComputeMipsGraphicsSystem>("DX12 Compute Mips Graphics System"));
 
 		renderManager.m_graphicsSystems.emplace_back(
-			make_shared<gr::TempDebugGraphicsSystem>("DX12 Temp Debug Graphics System"));
+			make_shared<gr::GBufferGraphicsSystem>("DX12 GBuffer Graphics System"));
+
+		/*renderManager.m_graphicsSystems.emplace_back(
+			make_shared<gr::DeferredLightingGraphicsSystem>("DX12 Deferred Lighting Graphics System"));*/
 
 		renderManager.m_graphicsSystems.emplace_back(
-			make_shared<gr::GBufferGraphicsSystem>("DX12 GBuffer Graphics System"));
+			make_shared<gr::TempDebugGraphicsSystem>("DX12 Temp Debug Graphics System"));
 	}
 
 

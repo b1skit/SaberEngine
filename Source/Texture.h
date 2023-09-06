@@ -30,13 +30,14 @@ namespace re
 		{
 			Color				= 1 << 0,
 			ColorTarget			= 1 << 1,
-			DepthTarget			= 1 << 2,
+			ComputeTarget		= 1 << 2,
+			DepthTarget			= 1 << 3,
 
 			// TODO: Implement support for these:
-			StencilTarget		= 1 << 3,
-			DepthStencilTarget	= 1 << 4,	
+			StencilTarget		= 1 << 4,
+			DepthStencilTarget	= 1 << 5,	
 
-			SwapchainColorProxy	= 1 << 5, // Pre-existing API-provided resource (i.e. backbuffer color target)
+			SwapchainColorProxy	= 1 << 6, // Pre-existing API-provided resource (i.e. backbuffer color target)
 
 			Invalid
 		};
@@ -87,7 +88,7 @@ namespace re
 			uint32_t m_height = 4;
 			uint32_t m_faces = 1;
 
-			Usage m_usage = Usage::Invalid;
+			Usage m_usage = Usage::Invalid; // TODO: This should be an uint8_t
 			Dimension m_dimension = Dimension::Invalid;
 			Format m_format = Format::Invalid;
 			ColorSpace m_colorSpace = ColorSpace::Invalid;

@@ -330,17 +330,26 @@ namespace
 				return false;
 			}
 		}
+
+		// By now, we know a UAV is possible. Return true for any case where it's actually needed
 		
+		const bool isComputeTarget = (texParams.m_usage & re::Texture::Usage::ComputeTarget) != 0;
+		if (isComputeTarget)
+		{
+			return true;
+		}
+
 		// We generate MIPs in DX12 via a compute shader
 		const bool usesMips = texParams.m_useMIPs;
-		if (!usesMips)
+		if (usesMips)
 		{
-			return false;
+			return true;
 		}
 
 		// TODO: We'll need to check multisampling is disabled here, once it's implemented
 
-		return true;
+		// We didn't hit a case where a UAV is explicitely needed
+		return false;
 	}
 
 
@@ -391,6 +400,8 @@ namespace
 	{
 		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
+		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
+
 		SEAssert("The texture resource has not been created yet", texPlatParams->m_textureResource != nullptr);
 		SEAssert("An SRV has already been created. This is unexpected",
 			texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV].empty());
@@ -408,17 +419,33 @@ namespace
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 		srvDesc.Format = texPlatParams->m_format;
-
-		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D; // TODO: Support different texture dimensions
-
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-		srvDesc.Texture2D = D3D12_TEX2D_SRV{
-			.MostDetailedMip = 0,
-			.MipLevels = numSubresources,
-			.PlaneSlice = 0,			// Index in a multi-plane format
-			.ResourceMinLODClamp = 0.0f // Allow access to all MIP levels
-		};
+		if (texParams.m_faces == 1)
+		{
+			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+
+			srvDesc.Texture2D = D3D12_TEX2D_SRV
+			{
+				.MostDetailedMip = 0,
+				.MipLevels = numSubresources,
+				.PlaneSlice = 0,			// Index in a multi-plane format
+				.ResourceMinLODClamp = 0.0f // Allow access to all MIP levels
+			};
+		}
+		else
+		{
+			SEAssert("We're currently expecting this to be a cubemap", texParams.m_faces == 6);
+			
+			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+			
+			srvDesc.TextureCube = D3D12_TEXCUBE_SRV
+			{
+				.MostDetailedMip = 0,
+				.MipLevels = numSubresources,
+				.ResourceMinLODClamp = 0.0f // Allow access to all MIP levels
+			};
+		}
 
 		device->CreateShaderResourceView(
 			texPlatParams->m_textureResource.Get(),
@@ -434,9 +461,6 @@ namespace
 		SEAssert("Texture resource already created", texPlatParams->m_textureResource == nullptr);
 		
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
-		SEAssert("TODO: Support creating resources for textures with multiple faces", texParams.m_faces == 1);
-
-		const uint32_t numSubresources = texture.GetNumMips();
 
 		// We'll update these settings for each type of texture resource:	
 		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE;
@@ -472,7 +496,7 @@ namespace
 
 		if (texParams.m_usage & re::Texture::Usage::DepthTarget)
 		{
-			SEAssert("Depth target cannot have mips", numSubresources == 1);			
+			SEAssert("Depth target cannot have mips", texture.GetNumMips() == 1);
 			flags |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
 			optimizedClearValue.DepthStencil.Depth = texParams.m_clear.m_depthStencil.m_depth;
@@ -485,10 +509,10 @@ namespace
 			texPlatParams->m_format,
 			texParams.m_width,
 			texParams.m_height,
-			texParams.m_faces,	// arraySize
-			numSubresources,	// mipLevels
-			1,					// sampleCount
-			0,					// sampleQuality
+			texParams.m_faces,		// arraySize
+			texture.GetNumMips(),	// mipLevels
+			1,						// sampleCount
+			0,						// sampleQuality
 			flags);
 
 		// Resources can be implicitely promoted to COPY/SOURCE/COPY_DEST from COMMON, and decay to COMMON after
@@ -595,6 +619,9 @@ namespace dx12
 				m_viewCpuDescAllocations[i].reserve(1);
 			}
 		}
+
+		// Allocate an RTV/DSV for each face:
+		m_rtvDsvDescriptors.resize(texParams.m_faces);
 	}
 
 
@@ -751,11 +778,15 @@ namespace dx12
 			SEAssert("TODO: Support SRVs/UAVs for textures of different dimensions",
 				texParams.m_dimension == re::Texture::Dimension::Texture2D && texParams.m_faces == 1);
 
-			// Create our SRV:
-			CreateSRV(texture);
-
 			// Released once the copy is done
 			intermediateResources.emplace_back(itermediateBufferResource);
+		}
+
+		// Create a SRV if it's needed:
+		if ((texParams.m_usage & re::Texture::Usage::Color) ||
+			(texParams.m_usage & re::Texture::Usage::ColorTarget)) // Assume we'll sample a color target at some point
+		{
+			CreateSRV(texture);
 		}
 
 		// Create a UAV if it's needed:
@@ -822,6 +853,8 @@ namespace dx12
 		{
 			texPlatParams->m_viewCpuDescAllocations[i].clear();
 		}
+
+		texPlatParams->m_rtvDsvDescriptors.clear();
 
 		texPlatParams->m_isCreated = false;
 		texPlatParams->m_isDirty = true;

@@ -52,29 +52,60 @@ namespace dx12
 				SEAssert("Texture is not created", texPlatParams->m_isCreated && texPlatParams->m_textureResource);
 
 				// Allocate a descriptor for our view:
-				texPlatParams->m_rtvDsvDescriptor = std::move(
-					context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::RTV).Allocate(1));
+				SEAssert("RTV allocations should match the number of faces", 
+					texPlatParams->m_rtvDsvDescriptors.size() == texParams.m_faces);
+
+				for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
+				{
+					texPlatParams->m_rtvDsvDescriptors[faceIdx] = std::move(
+						context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::RTV).Allocate(1));
+					SEAssert("RTV descriptor is not valid", texPlatParams->m_rtvDsvDescriptors[faceIdx].IsValid());
+				}				
 
 				re::TextureTarget::TargetParams targetParams = colorTarget.GetTargetParams();
 
 				// Create the RTV:
 				D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
 				renderTargetViewDesc.Format = texPlatParams->m_format;
-				
-				SEAssert("TODO: Support render targets of dimensions other than 2D",
-					texParams.m_dimension == re::Texture::Dimension::Texture2D && texParams.m_faces == 1);
 
-				renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2D;
-				renderTargetViewDesc.Texture2D = D3D12_TEX2D_RTV
+				if (texParams.m_faces == 1)
 				{
-					.MipSlice = targetParams.m_targetSubesource,
-					.PlaneSlice = targetParams.m_targetFace
-				};
+					renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2D;
+					renderTargetViewDesc.Texture2D = D3D12_TEX2D_RTV
+					{
+						.MipSlice = targetParams.m_targetSubesource,
+						.PlaneSlice = targetParams.m_targetFace
+					};
 
-				device->CreateRenderTargetView(
-					texPlatParams->m_textureResource.Get(), // Pointer to the resource containing the render target texture
-					&renderTargetViewDesc,
-					texPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor()); // Descriptor destination
+					device->CreateRenderTargetView(
+						texPlatParams->m_textureResource.Get(), // Pointer to the resource containing the render target texture
+						&renderTargetViewDesc,
+						texPlatParams->m_rtvDsvDescriptors[0].GetBaseDescriptor()); // Descriptor destination
+				}
+				else
+				{
+					renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+
+					for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
+					{
+						// Mip/array slices:
+						// https://learn.microsoft.com/en-us/windows/win32/direct3d12/subresources#mip-slice
+
+						renderTargetViewDesc.Texture2DArray = D3D12_TEX2D_ARRAY_RTV
+						{
+							//.MipSlice = targetParams.m_targetSubesource,
+							.MipSlice = 0, // Mip slices include 1 mip level for every texture in an array
+							.FirstArraySlice = faceIdx,
+							.ArraySize = 1, // Only view one element of our array
+							.PlaneSlice = 0 // "Only Plane Slice 0 is valid when creating a view on a non-planar format"
+						};
+
+						device->CreateRenderTargetView(
+							texPlatParams->m_textureResource.Get(),
+							&renderTargetViewDesc,
+							texPlatParams->m_rtvDsvDescriptors[faceIdx].GetBaseDescriptor());
+					}
+				}				
 			}
 		}
 	}
@@ -97,6 +128,7 @@ namespace dx12
 		targetSetParams->m_depthIsCreated = true;
 
 		std::shared_ptr<re::Texture> depthTargetTex = targetSet.GetDepthStencilTarget()->GetTexture();
+		re::Texture::TextureParams const& depthTexParams = depthTargetTex->GetTextureParams();
 		dx12::Texture::PlatformParams* depthTexPlatParams =
 			depthTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
@@ -104,11 +136,7 @@ namespace dx12
 			depthTexPlatParams->m_isCreated && depthTexPlatParams->m_textureResource);
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		
-		// Create the depth-stencil descriptor and view:
-		depthTexPlatParams->m_rtvDsvDescriptor = std::move(
-			context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::DSV).Allocate(1));
-		SEAssert("DSV descriptor is not valid", depthTexPlatParams->m_rtvDsvDescriptor.IsValid());
+		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
 
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
 		dsv.Format = depthTexPlatParams->m_format;
@@ -116,11 +144,18 @@ namespace dx12
 		dsv.Texture2D.MipSlice = 0;
 		dsv.Flags = D3D12_DSV_FLAG_NONE;
 
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
-		device->CreateDepthStencilView(
-			depthTexPlatParams->m_textureResource.Get(),
-			&dsv,
-			depthTexPlatParams->m_rtvDsvDescriptor.GetBaseDescriptor());
+		// Create the depth-stencil descriptor and view:
+		for (uint32_t faceIdx = 0; faceIdx < depthTexParams.m_faces; faceIdx++)
+		{
+			depthTexPlatParams->m_rtvDsvDescriptors[faceIdx] = std::move(
+				context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::DSV).Allocate(1));
+			SEAssert("DSV descriptor is not valid", depthTexPlatParams->m_rtvDsvDescriptors[faceIdx].IsValid());
+
+			device->CreateDepthStencilView(
+				depthTexPlatParams->m_textureResource.Get(),
+				&dsv,
+				depthTexPlatParams->m_rtvDsvDescriptors[faceIdx].GetBaseDescriptor());
+		}
 	}
 
 

@@ -432,7 +432,12 @@ namespace en
 		{
 			TrySetValue(key, value, SettingType::APISpecific);
 		};
-
+		
+		// API-agnostic defaults:
+		
+		// Quality settings:
+		TrySetValue("numIEMSamples", 20000, SettingType::Runtime); // # samples when generating IEM texture
+		TrySetValue("numPMREMSamples", 4096, SettingType::Runtime); // # samples when generating PMREM texture
 
 		platform::RenderingAPI const& api = GetRenderingAPI();
 		switch (api)
@@ -447,22 +452,13 @@ namespace en
 			TryInsertDefault("cubeDepthShaderName",					std::string("cubeDepthShader"));
 
 			// Deferred rendering:
-			TryInsertDefault("deferredAmbientLightShaderName",		std::string("deferredAmbientLightShader"));
-			TryInsertDefault("deferredKeylightShaderName",			std::string("deferredKeyLightShader"));
-			TryInsertDefault("deferredPointLightShaderName",		std::string("deferredPointLightShader"));
 			TryInsertDefault("skyboxShaderName",					std::string("skyboxShader"));
 			TryInsertDefault("BRDFIntegrationMapShaderName",		std::string("BRDFIntegrationMapShader"));
-			TryInsertDefault("blitIEMShaderName",					std::string("blitIEMShader"));
-			TryInsertDefault("blitPMREMShaderName",					std::string("blitPMREMShader"));
 			TryInsertDefault("blitShaderName",						std::string("blitShader"));
 			TryInsertDefault("luminanceThresholdShaderName",		std::string("luminanceThreshold"));
 			TryInsertDefault("blurShaderHorizontalShaderName",		std::string("blurShaderHorizontal"));
 			TryInsertDefault("blurShaderVerticalShaderName",		std::string("blurShaderVertical"));
 			TryInsertDefault("toneMapShader",						std::string("toneMapShader"));
-
-			// Quality settings:
-			TryInsertDefault("numIEMSamples",	20000);	// Number of samples to use when generating IBL IEM texture
-			TryInsertDefault("numPMREMSamples",	4096);	// Number of samples to use when generating IBL PMREM texture
 
 			// Shadow map defaults:
 			TryInsertDefault(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias,	0.001f);

@@ -225,6 +225,9 @@ namespace opengl
 
 		SEAssert("Texture is not created", texPlatParams->m_isCreated);
 
+		SEAssert("Texture is not marked for compute usage", 
+			(texture.GetTextureParams().m_usage & re::Texture::Usage::ComputeTarget))
+
 		SEAssert("Format is not compatible. Note: We currently don't check for non-exact but compatible formats, "
 			"but should. See Texture_OpenGL.cpp::GetFormatIsImageTextureCompatible",
 			texPlatParams->m_formatIsImageTextureCompatible);
