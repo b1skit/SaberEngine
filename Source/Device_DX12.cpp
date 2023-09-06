@@ -158,20 +158,27 @@ namespace
 			};
 
 			// Suppress individual messages by ID
-			D3D12_MESSAGE_ID denyIds[] =
+			std::vector<D3D12_MESSAGE_ID> denyIds =
 			{
 				D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE, // Intentional usage
-				D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,		// Occurs when using capture frame while graphics debugging
-				D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,	// Occurs when using capture frame while graphics debugging
+				D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE, // Occurs when using capture frame while graphics debugging
+				D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE, // Occurs when using capture frame while graphics debugging
 			};
+
+			if (en::Config::Get()->ValueExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false)
+			{
+				// Empty RTVs in final MIP generation stages
+				denyIds.emplace_back(D3D12_MESSAGE_ID_CREATEGRAPHICSPIPELINESTATE_RENDERTARGETVIEW_NOT_SET); 
+			}
 
 			D3D12_INFO_QUEUE_FILTER newFilter = {};
 			//newFilter.DenyList.NumCategories = _countof(Categories);
 			//newFilter.DenyList.pCategoryList = Categories;
 			newFilter.DenyList.NumSeverities = _countof(severities);
 			newFilter.DenyList.pSeverityList = severities;
-			newFilter.DenyList.NumIDs = _countof(denyIds);
-			newFilter.DenyList.pIDList = denyIds;
+			newFilter.DenyList.NumIDs = static_cast<uint32_t>(denyIds.size());
+			newFilter.DenyList.pIDList = denyIds.data();
+
 
 			HRESULT hr = infoQueue->PushStorageFilter(&newFilter);
 			CheckHResult(hr, "Failed to push storage filter");
