@@ -174,7 +174,7 @@ namespace re
 		// Copy frame data:
 		SEAssert("Render batches should be empty", m_renderBatches.empty());
 		m_renderBatches = std::move(SceneManager::Get()->GetSceneBatches());
-		// TODO: Create a BatchManager object (owned by the SceneManager) that can handle batch double-buffering
+		// TODO: Create a BatchManager object that can handle batch double-buffering
 
 		// Update the graphics systems:
 		for (size_t gs = 0; gs < m_graphicsSystems.size(); gs++)
@@ -217,166 +217,6 @@ namespace re
 		EndOfFrame(); // Clear batches, process pipeline and parameter block allocator EndOfFrames
 
 		PIXEndEvent();
-	}
-
-
-	void RenderManager::RenderImGui()
-	{
-		static bool s_showConsoleLog = false;
-		static bool s_showScenePanel = false;
-		static bool s_showGraphicsSystemPanel = false;
-		static bool s_showImguiDemo = false;
-
-		// Early out if we can:
-		if (!m_imguiMenuVisible && !s_showConsoleLog && !s_showScenePanel && !s_showImguiDemo)
-		{
-			return;
-		}
-
-
-		platform::RenderManager::StartImGuiFrame();
-
-
-		const int windowWidth = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
-		const int windowHeight =
-			(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName));
-
-		// Menu bar:
-		ImVec2 menuBarSize = { 0, 0 }; // Record the size of the menu bar so we can align things absolutely underneath it
-		uint32_t menuDepth = 0; // Ensure windows don't overlap when they're first opened
-		if (m_imguiMenuVisible)
-		{
-			ImGui::BeginMainMenuBar();
-			{
-				menuBarSize = ImGui::GetWindowSize();
-
-				if (ImGui::BeginMenu("Scene"))
-				{
-					// TODO...
-					ImGui::TextDisabled("Load Scene");
-					ImGui::TextDisabled("Reload Scene");
-					ImGui::TextDisabled("Reload Shaders");
-					ImGui::TextDisabled("Reload Materials");
-					ImGui::TextDisabled("Quit");
-
-					ImGui::EndMenu();
-				}
-
-				if (ImGui::BeginMenu("Window"))
-				{
-					// Console debug log window:
-					ImGui::MenuItem("Show console log", "", &s_showConsoleLog);
-
-					// Scene objects window:
-					ImGui::MenuItem("Show Scene Objects Panel", "", &s_showScenePanel);
-
-					// Graphics systems window:
-					ImGui::MenuItem("Show Graphics Systems Panel", "", &s_showGraphicsSystemPanel);
-
-					ImGui::TextDisabled("Performance statistics");
-
-					
-#if defined(_DEBUG) // ImGui demo window
-					ImGui::Separator();
-					ImGui::MenuItem("Show ImGui demo", "", &s_showImguiDemo);
-#endif
-
-					ImGui::EndMenu();
-				}
-
-				if (ImGui::BeginMenu("Display"))
-				{
-					// TODO...
-					ImGui::TextDisabled("Wireframe mode");
-					ImGui::TextDisabled("Show bounding boxes");
-					ImGui::TextDisabled("View texture/buffer");
-
-					ImGui::EndMenu();
-				}
-
-				if (ImGui::BeginMenu("Config"))
-				{
-					// TODO...
-					ImGui::TextDisabled("Adjust input settings");
-
-					ImGui::EndMenu();
-				}
-
-				if (ImGui::BeginMenu("Output"))
-				{
-					// TODO...
-					ImGui::TextDisabled("Save screenshot");
-
-					ImGui::EndMenu();
-				}
-			}
-			ImGui::EndMainMenuBar();
-		}
-
-		// Console log window:
-		menuDepth++;
-		if (s_showConsoleLog)
-		{
-			ImGui::SetNextWindowSize(ImVec2(
-				static_cast<float>(windowWidth),
-				static_cast<float>(windowHeight * 0.5f)),
-				ImGuiCond_Once);
-			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
-
-			en::LogManager::Get()->ShowImGuiWindow(&s_showConsoleLog);
-		}
-
-		// Scene objects panel:
-		menuDepth++;
-		if (s_showScenePanel)
-		{
-			ImGui::SetNextWindowSize(ImVec2(
-				static_cast<float>(windowWidth) * 0.25f,
-				static_cast<float>(windowHeight * 0.75f)),
-				ImGuiCond_Once);
-			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
-
-			en::SceneManager::Get()->ShowImGuiWindow(&s_showScenePanel);
-		}
-
-		// Graphics Systems panel:
-		menuDepth++;
-		if (s_showGraphicsSystemPanel)
-		{
-			ImGui::SetNextWindowSize(ImVec2(
-				static_cast<float>(windowWidth) * 0.25f,
-				static_cast<float>(windowHeight * 0.75f)),
-				ImGuiCond_Once);
-			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
-
-			RenderManager::ShowGraphicsSystemImGuiWindows(&s_showGraphicsSystemPanel);
-		}
-
-		// Show the ImGui demo window for debugging reference
-#if defined(_DEBUG)
-		menuDepth++;
-		if (s_showImguiDemo)
-		{
-			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
-			ImGui::ShowDemoWindow(&s_showImguiDemo);
-		}
-#endif
-
-
-		platform::RenderManager::RenderImGui();
-	}
-
-
-	void RenderManager::ShowGraphicsSystemImGuiWindows(bool* show)
-	{
-		constexpr char const* graphicsSystemPanelTitle = "Graphics Systems";
-		ImGui::Begin(graphicsSystemPanelTitle, show);
-
-		for (std::shared_ptr<gr::GraphicsSystem> const& gs : m_graphicsSystems)
-		{
-			gs->ShowImGuiWindow();
-		}
-		ImGui::End();
 	}
 
 
@@ -562,6 +402,166 @@ namespace re
 			m_newParameterBlocks.m_newObjects.find(uniqueID) == m_newParameterBlocks.m_newObjects.end());
 
 		m_newParameterBlocks.m_newObjects.insert({ uniqueID, newObject });
+	}
+
+
+	void RenderManager::ShowGraphicsSystemImGuiWindows(bool* show)
+	{
+		constexpr char const* graphicsSystemPanelTitle = "Graphics Systems";
+		ImGui::Begin(graphicsSystemPanelTitle, show);
+
+		for (std::shared_ptr<gr::GraphicsSystem> const& gs : m_graphicsSystems)
+		{
+			gs->ShowImGuiWindow();
+		}
+		ImGui::End();
+	}
+
+
+	void RenderManager::RenderImGui()
+	{
+		static bool s_showConsoleLog = false;
+		static bool s_showScenePanel = false;
+		static bool s_showGraphicsSystemPanel = false;
+		static bool s_showImguiDemo = false;
+
+		// Early out if we can:
+		if (!m_imguiMenuVisible && !s_showConsoleLog && !s_showScenePanel && !s_showImguiDemo)
+		{
+			return;
+		}
+
+
+		platform::RenderManager::StartImGuiFrame();
+
+
+		const int windowWidth = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
+		const int windowHeight =
+			(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName));
+
+		// Menu bar:
+		ImVec2 menuBarSize = { 0, 0 }; // Record the size of the menu bar so we can align things absolutely underneath it
+		uint32_t menuDepth = 0; // Ensure windows don't overlap when they're first opened
+		if (m_imguiMenuVisible)
+		{
+			ImGui::BeginMainMenuBar();
+			{
+				menuBarSize = ImGui::GetWindowSize();
+
+				if (ImGui::BeginMenu("Scene"))
+				{
+					// TODO...
+					ImGui::TextDisabled("Load Scene");
+					ImGui::TextDisabled("Reload Scene");
+					ImGui::TextDisabled("Reload Shaders");
+					ImGui::TextDisabled("Reload Materials");
+					ImGui::TextDisabled("Quit");
+
+					ImGui::EndMenu();
+				}
+
+				if (ImGui::BeginMenu("Window"))
+				{
+					// Console debug log window:
+					ImGui::MenuItem("Show console log", "", &s_showConsoleLog);
+
+					// Scene objects window:
+					ImGui::MenuItem("Show Scene Objects Panel", "", &s_showScenePanel);
+
+					// Graphics systems window:
+					ImGui::MenuItem("Show Graphics Systems Panel", "", &s_showGraphicsSystemPanel);
+
+					ImGui::TextDisabled("Performance statistics");
+
+
+#if defined(_DEBUG) // ImGui demo window
+					ImGui::Separator();
+					ImGui::MenuItem("Show ImGui demo", "", &s_showImguiDemo);
+#endif
+
+					ImGui::EndMenu();
+				}
+
+				if (ImGui::BeginMenu("Display"))
+				{
+					// TODO...
+					ImGui::TextDisabled("Wireframe mode");
+					ImGui::TextDisabled("Show bounding boxes");
+					ImGui::TextDisabled("View texture/buffer");
+
+					ImGui::EndMenu();
+				}
+
+				if (ImGui::BeginMenu("Config"))
+				{
+					// TODO...
+					ImGui::TextDisabled("Adjust input settings");
+
+					ImGui::EndMenu();
+				}
+
+				if (ImGui::BeginMenu("Output"))
+				{
+					// TODO...
+					ImGui::TextDisabled("Save screenshot");
+
+					ImGui::EndMenu();
+				}
+			}
+			ImGui::EndMainMenuBar();
+		}
+
+		// Console log window:
+		menuDepth++;
+		if (s_showConsoleLog)
+		{
+			ImGui::SetNextWindowSize(ImVec2(
+				static_cast<float>(windowWidth),
+				static_cast<float>(windowHeight * 0.5f)),
+				ImGuiCond_Once);
+			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
+
+			en::LogManager::Get()->ShowImGuiWindow(&s_showConsoleLog);
+		}
+
+		// Scene objects panel:
+		menuDepth++;
+		if (s_showScenePanel)
+		{
+			ImGui::SetNextWindowSize(ImVec2(
+				static_cast<float>(windowWidth) * 0.25f,
+				static_cast<float>(windowHeight * 0.75f)),
+				ImGuiCond_Once);
+			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
+
+			en::SceneManager::Get()->ShowImGuiWindow(&s_showScenePanel);
+		}
+
+		// Graphics Systems panel:
+		menuDepth++;
+		if (s_showGraphicsSystemPanel)
+		{
+			ImGui::SetNextWindowSize(ImVec2(
+				static_cast<float>(windowWidth) * 0.25f,
+				static_cast<float>(windowHeight * 0.75f)),
+				ImGuiCond_Once);
+			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
+
+			RenderManager::ShowGraphicsSystemImGuiWindows(&s_showGraphicsSystemPanel);
+		}
+
+		// Show the ImGui demo window for debugging reference
+#if defined(_DEBUG)
+		menuDepth++;
+		if (s_showImguiDemo)
+		{
+			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
+			ImGui::ShowDemoWindow(&s_showImguiDemo);
+		}
+#endif
+
+
+		platform::RenderManager::RenderImGui();
 	}
 }
 

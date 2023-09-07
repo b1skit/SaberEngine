@@ -10,28 +10,36 @@ namespace re
 	class StagePipeline final : public virtual en::NamedObject
 	{
 	public:
+		typedef std::list<std::shared_ptr<re::RenderStage>>::iterator StagePipelineItr;
+
+
+	public:
 		StagePipeline(std::string name) : NamedObject(name) {};
 
 		StagePipeline(StagePipeline&&) = default;
 
 		~StagePipeline() { Destroy(); };
-
 		void Destroy();
+	
 
-		// TODO: This should include an iterator as an argument, to allow stages to be inserted at arbitrary locations
-		std::vector<std::shared_ptr<re::RenderStage>>::iterator AppendRenderStage(std::shared_ptr<re::RenderStage>);
-		std::vector<std::shared_ptr<re::RenderStage>>::iterator AppendSingleFrameRenderStage(std::shared_ptr<re::RenderStage>&&);
+		StagePipelineItr AppendRenderStage(std::shared_ptr<re::RenderStage>);
+		StagePipelineItr AppendRenderStage(StagePipelineItr const& parent, std::shared_ptr<re::RenderStage>);
+
+		StagePipelineItr AppendSingleFrameRenderStage(std::shared_ptr<re::RenderStage>&&); // Append to end
+		StagePipelineItr AppendSingleFrameRenderStage(StagePipelineItr const& parent, std::shared_ptr<re::RenderStage>&&);
 
 		size_t GetNumberOfStages() const { return m_renderStages.size(); }
 
-		inline std::vector<std::shared_ptr<re::RenderStage>> const& GetRenderStages() const { return m_renderStages; }
-		inline std::vector<std::shared_ptr<re::RenderStage>> const& GetSingleFrameRenderStages() const { return m_singleFrameRenderStages; }
+		std::list<std::shared_ptr<re::RenderStage>> const& GetRenderStages() const;
 
-		void EndOfFrame(); // Clear m_singleFrameStagePipeline etc
+		void EndOfFrame(); // Calls RenderStage::EndOfFrame, clears single frame data etc
+
 
 	private:
-		std::vector<std::shared_ptr<re::RenderStage>> m_renderStages;
-		std::vector<std::shared_ptr<re::RenderStage>> m_singleFrameRenderStages;
+		std::list<std::shared_ptr<re::RenderStage>> m_renderStages;
+
+		std::vector<StagePipelineItr> m_singleFrameInsertionPoints;
+
 
 	private:
 		StagePipeline() = delete;
@@ -75,4 +83,10 @@ namespace re
 		RenderPipeline(RenderPipeline const&) = delete;
 		RenderPipeline& operator=(RenderPipeline const&) = delete;
 	};
+
+
+	inline std::list<std::shared_ptr<re::RenderStage>> const& StagePipeline::GetRenderStages() const
+	{
+		return m_renderStages;
+	}
 }

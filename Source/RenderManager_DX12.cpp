@@ -148,7 +148,7 @@ namespace dx12
 				// Create any necessary PSO's for the Shader:
 				for (re::StagePipeline& stagePipeline : m_renderPipeline.GetStagePipeline())
 				{
-					std::vector<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
+					std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
 					for (std::shared_ptr<re::RenderStage> const renderStage : renderStages)
 					{
 						// We assume either a RenderStage has a shader, or all batches rendered on a RenderStage will
@@ -212,6 +212,8 @@ namespace dx12
 			// Generic lambda: Process stages from various pipelines
 			auto ProcessRenderStage = [&](std::shared_ptr<re::RenderStage> renderStage)
 			{
+				// TODO: We should be creating a command list per stage pipeline, not per stage
+
 				// Note: Our command lists and associated command allocators are already closed/reset
 				std::shared_ptr<dx12::CommandList> directCommandList = nullptr;
 				std::shared_ptr<dx12::CommandList> computeCommandList = nullptr;
@@ -416,19 +418,14 @@ namespace dx12
 			}; // ProcessRenderStage
 
 
-			// Single frame render stages:
-			vector<std::shared_ptr<re::RenderStage>> const& singleFrameRenderStages = 
-				stagePipeline.GetSingleFrameRenderStages();
-			for (size_t stageIdx = 0; stageIdx < singleFrameRenderStages.size(); stageIdx++)
+			// Process RenderStages:
+			std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
+			for (std::shared_ptr<re::RenderStage> const& renderStage : stagePipeline.GetRenderStages())
 			{
-				ProcessRenderStage(singleFrameRenderStages[stageIdx]);
-			}
-
-			// Render stages:
-			vector<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
-			for (size_t stageIdx = 0; stageIdx < renderStages.size(); stageIdx++)
-			{
-				ProcessRenderStage(renderStages[stageIdx]);
+				if (!renderStage->GetStageBatches().empty())
+				{
+					ProcessRenderStage(renderStage);
+				}
 			}	
 		}
 

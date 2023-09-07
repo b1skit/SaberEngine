@@ -52,6 +52,11 @@ namespace gr
 	void ComputeMipsGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
 		m_mipMapGenerationShader = re::Shader::Create(en::ShaderNames::k_mipGenerationShaderName);
+
+		re::RenderStage::ComputeStageParams parentStageParams; // Defaults
+
+		m_parentStageItr = pipeline.AppendRenderStage(
+			re::RenderStage::CreateComputeStage("MIP Generation Parent stage", parentStageParams));
 	}
 
 
@@ -66,6 +71,8 @@ namespace gr
 
 		std::shared_ptr<re::Sampler> const mipSampler =
 			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearLinear);
+
+		re::StagePipeline::StagePipelineItr insertItr = m_parentStageItr;
 
 		for (std::shared_ptr<re::Texture> newTexture : m_textures)
 		{
@@ -96,9 +103,12 @@ namespace gr
 					const uint32_t numMipStages =
 						targetMip + k_maxTargetsPerStage < totalMipLevels ? k_maxTargetsPerStage : (totalMipLevels - targetMip);
 
+					MipGenerationParams const& mipGenerationParams =
+						CreateMipGenerationParamsData(newTexture, sourceMip, numMipStages);
+
 					mipGenerationStage->AddSingleFrameParameterBlock(re::ParameterBlock::Create(
 						"MipGenerationParams", 
-						CreateMipGenerationParamsData(newTexture, sourceMip, numMipStages),
+						mipGenerationParams,
 						re::ParameterBlock::PBType::SingleFrame));
 
 					const std::string targetSetName = newTexture->GetName() + 
@@ -120,13 +130,13 @@ namespace gr
 					constexpr uint32_t k_numThreadsX = 8;
 					constexpr uint32_t k_numThreadsY = 8;
 					
-					SEAssert("Dimensions must be integers",
-						glm::fmod(newTexture->GetSubresourceDimensions(firstTargetMipIdx).x, 1.f) == 0.f &&
-						glm::fmod(newTexture->GetSubresourceDimensions(firstTargetMipIdx).x, 1.f) == 0.f);
+					// Non-integer MIP dimensions are rounded down to the nearest integer
+					glm::vec2 subresourceDimensions = newTexture->GetSubresourceDimensions(firstTargetMipIdx).xy;
+					subresourceDimensions = glm::floor(subresourceDimensions);
 
 					const glm::uvec2 firstTargetMipDimensions = glm::uvec2(
-						newTexture->GetSubresourceDimensions(firstTargetMipIdx).x,
-						newTexture->GetSubresourceDimensions(firstTargetMipIdx).y);
+						subresourceDimensions.x,
+						subresourceDimensions.y);
 
 					// We want to dispatch enough k_numThreadsX x k_numThreadsY threadgroups to cover every pixel in
 					// our 1st mip level (each thread samples a 2x2 block in the source level above the 1st mip target)
@@ -141,7 +151,7 @@ namespace gr
 
 					mipGenerationStage->AddBatch(computeBatch);
 
-					pipeline.AppendSingleFrameRenderStage(std::move(mipGenerationStage));
+					insertItr = pipeline.AppendSingleFrameRenderStage(insertItr, std::move(mipGenerationStage));
 				}
 			}			
 		}

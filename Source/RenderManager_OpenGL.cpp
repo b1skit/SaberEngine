@@ -310,18 +310,14 @@ namespace opengl
 			}; // ProcessRenderStage
 
 
-			// Single frame render stages:
-			vector<std::shared_ptr<re::RenderStage>> const& singleFrameRenderStages = stagePipeline.GetSingleFrameRenderStages();
-			for (std::shared_ptr<re::RenderStage>renderStage : singleFrameRenderStages)
-			{
-				ProcessRenderStage(renderStage);
-			}
-
-			// Render stages:
-			vector<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
+			// Process RenderStages:
+			std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
 			for (std::shared_ptr<re::RenderStage> renderStage : renderStages)
 			{			
-				ProcessRenderStage(renderStage);
+				if (!renderStage->GetStageBatches().empty())
+				{
+					ProcessRenderStage(renderStage);
+				}
 			}
 
 			glPopDebugGroup();

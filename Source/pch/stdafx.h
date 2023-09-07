@@ -29,6 +29,7 @@
 #include <future>
 #include <iostream>
 #include <latch>
+#include <list>
 #include <map>
 #include <memory>
 #include <mutex>
