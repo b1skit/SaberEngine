@@ -18,7 +18,7 @@ namespace dx12
 	{
 	public:
 		// The total CPU-visible descriptors cached/Size of the GPU-visible descriptor heap
-		static constexpr uint32_t k_totalDescriptors = 1024; // TODO: Should this be dynamic?
+		static constexpr uint32_t k_totalDescriptors = 2048; // TODO: Should this be dynamic?
 	
 		static constexpr uint32_t k_totalRootSigDescriptorTableIndices = 32; // No. of root signature descriptor table indices
 		static_assert(k_totalRootSigDescriptorTableIndices == dx12::RootSignature::k_totalRootSigDescriptorTableIndices);

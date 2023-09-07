@@ -148,9 +148,16 @@ namespace opengl
 				-1, 
 				stagePipeline.GetName().c_str());
 
-			// Generic lambda: Process stages from various pipelines
-			auto ProcessRenderStage = [&](std::shared_ptr<re::RenderStage> renderStage)
+			// Process RenderStages:
+			std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
+			for (std::shared_ptr<re::RenderStage> renderStage : renderStages)
 			{
+				// Skip empty stages:
+				if (renderStage->GetStageBatches().empty())
+				{
+					continue;
+				}
+
 				// RenderDoc makers: Render stage name
 				glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderStage->GetName().c_str());
 
@@ -309,18 +316,7 @@ namespace opengl
 				glPopDebugGroup();
 			}; // ProcessRenderStage
 
-
-			// Process RenderStages:
-			std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
-			for (std::shared_ptr<re::RenderStage> renderStage : renderStages)
-			{			
-				if (!renderStage->GetStageBatches().empty())
-				{
-					ProcessRenderStage(renderStage);
-				}
-			}
-
-			glPopDebugGroup();
+			glPopDebugGroup(); // Graphics system group name
 		}
 	}
 

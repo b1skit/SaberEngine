@@ -209,15 +209,21 @@ namespace dx12
 		// Render each stage:
 		for (StagePipeline& stagePipeline : m_renderPipeline.GetStagePipeline())
 		{
-			// Generic lambda: Process stages from various pipelines
-			auto ProcessRenderStage = [&](std::shared_ptr<re::RenderStage> renderStage)
+			// Note: Our command lists and associated command allocators are already closed/reset
+			std::shared_ptr<dx12::CommandList> directCommandList = nullptr;
+			std::shared_ptr<dx12::CommandList> computeCommandList = nullptr;
+
+			// Process all of the RenderStages attached to the StagePipeline:
+			std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
+			for (std::shared_ptr<re::RenderStage> const& renderStage : stagePipeline.GetRenderStages())
 			{
-				// TODO: We should be creating a command list per stage pipeline, not per stage
+				// Skip empty stages:
+				if (renderStage->GetStageBatches().empty())
+				{
+					continue;
+				}
 
-				// Note: Our command lists and associated command allocators are already closed/reset
-				std::shared_ptr<dx12::CommandList> directCommandList = nullptr;
-				std::shared_ptr<dx12::CommandList> computeCommandList = nullptr;
-
+				// Get a CommandList for the current RenderStage:
 				dx12::CommandList* currentCommandList = nullptr;
 				switch (renderStage->GetStageType())
 				{
@@ -226,6 +232,11 @@ namespace dx12
 					if (directCommandList == nullptr)
 					{
 						directCommandList = directQueue.GetCreateCommandList();
+
+						PIXBeginEvent( // Add a PIX marker to wrap the StagePipeline:
+							directCommandList->GetD3DCommandList(),
+							PIX_COLOR_INDEX(PIX_FORMAT_COLOR::GraphicsCommandList),
+							stagePipeline.GetName().c_str());
 					}
 					currentCommandList = directCommandList.get();
 					PIXBeginEvent(
@@ -239,6 +250,11 @@ namespace dx12
 					if (computeCommandList == nullptr)
 					{
 						computeCommandList = computeQueue.GetCreateCommandList();
+
+						PIXBeginEvent( // Add a PIX marker to wrap the StagePipeline:
+							computeCommandList->GetD3DCommandList(),
+							PIX_COLOR_INDEX(PIX_FORMAT_COLOR::GraphicsCommandList),
+							stagePipeline.GetName().c_str());
 					}
 					currentCommandList = computeCommandList.get();
 					PIXBeginEvent(
@@ -404,30 +420,39 @@ namespace dx12
 					}
 				}
 
-				// We're done: We have a command list for everything that happened on the current StagePipeline
-				if (computeCommandList != nullptr)
+				// Close the PIX marker for the current stage:
+				switch (renderStage->GetStageType())
 				{
-					commandLists.emplace_back(computeCommandList);
+				case re::RenderStage::RenderStageType::Graphics:
+				{
+					PIXEndEvent(directCommandList->GetD3DCommandList());
+				}
+				break;
+				case re::RenderStage::RenderStageType::Compute:
+				{
 					PIXEndEvent(computeCommandList->GetD3DCommandList());
 				}
-				if (directCommandList != nullptr)
-				{
-					commandLists.emplace_back(directCommandList);
-					PIXEndEvent(directCommandList->GetD3DCommandList());
+				break;
+				default:
+					SEAssertF("Invalid stage type");
 				}
 			}; // ProcessRenderStage
 
 
-			// Process RenderStages:
-			std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
-			for (std::shared_ptr<re::RenderStage> const& renderStage : stagePipeline.GetRenderStages())
+			// We're done: We've recorded a command list for the current StagePipeline
+			if (computeCommandList != nullptr)
 			{
-				if (!renderStage->GetStageBatches().empty())
-				{
-					ProcessRenderStage(renderStage);
-				}
-			}	
-		}
+				commandLists.emplace_back(computeCommandList);
+				PIXEndEvent(computeCommandList->GetD3DCommandList());
+				
+			}
+			if (directCommandList != nullptr)
+			{
+				commandLists.emplace_back(directCommandList);
+				PIXEndEvent(directCommandList->GetD3DCommandList());
+			}
+		} // StagePipeline loop
+
 
 		// Command lists must be submitted on a single thread, and in the same order as the render stages they're
 		// generated from to ensure modification fences and GPU waits are are handled correctly
