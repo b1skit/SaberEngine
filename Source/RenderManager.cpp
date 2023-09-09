@@ -72,8 +72,7 @@ namespace re
 
 
 	RenderManager::RenderManager()
-		: m_renderPipeline("Main pipeline")
-		, m_renderFrameNum(0)
+		: m_renderFrameNum(0)
 		, m_imguiMenuVisible(false)
 	{
 		m_vsyncEnabled = en::Config::Get()->GetValue<bool>("vsync");
@@ -146,14 +145,11 @@ namespace re
 		platform::RenderManager::Initialize(*this);
 		PIXEndEvent();
 
-		// Create each graphics system in turn:
-		vector<shared_ptr<GraphicsSystem>>::iterator gsIt;
-		for (gsIt = m_graphicsSystems.begin(); gsIt != m_graphicsSystems.end(); gsIt++)
+		// Create each render system system in turn:
+		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
-			(*gsIt)->Create(m_renderPipeline.AddNewStagePipeline((*gsIt)->GetName()));
+			renderSystem->ExecuteCreatePipeline();
 		}
-		SEAssert("Render pipeline should contian an entry for each graphics system", 
-			m_renderPipeline.GetNumberGraphicsSystems() == m_graphicsSystems.size());
 
 		re::Context::Get()->GetParameterBlockAllocator().ClosePermanentPBRegistrationPeriod();
 
@@ -176,10 +172,10 @@ namespace re
 		m_renderBatches = std::move(SceneManager::Get()->GetSceneBatches());
 		// TODO: Create a BatchManager object that can handle batch double-buffering
 
-		// Update the graphics systems:
-		for (size_t gs = 0; gs < m_graphicsSystems.size(); gs++)
+		// Execute each RenderSystem's platform-specific update pipelines:
+		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
-			m_graphicsSystems[gs]->PreRender(m_renderPipeline.GetStagePipeline()[gs]);
+			renderSystem->ExecuteUpdatePipeline();
 		}
 
 		re::Context::Get()->GetParameterBlockAllocator().SwapBuffers(frameNum);
@@ -226,9 +222,13 @@ namespace re
 
 		m_renderBatches.clear();
 
-		for (StagePipeline& stagePipeline : m_renderPipeline.GetStagePipeline())
+		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
-			stagePipeline.EndOfFrame();
+			re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
+			for (StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
+			{
+				stagePipeline.EndOfFrame();
+			}
 		}
 		
 		re::Context::Get()->GetParameterBlockAllocator().EndOfFrame();
@@ -250,9 +250,12 @@ namespace re
 		en::SceneManager::GetSceneData()->Destroy();
 		gr::Material::DestroyMaterialLibrary();
 		re::Sampler::DestroySamplerLibrary();
-
-		m_renderPipeline.Destroy();
-		m_graphicsSystems.clear();
+		
+		// Destroy render systems:
+		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+		{
+			renderSystem->Destroy();
+		}
 
 		// Clear the new object queues:
 		{
@@ -262,6 +265,22 @@ namespace re
 		{
 			std::lock_guard<std::mutex> lock(m_newMeshPrimitives.m_mutex);
 			m_newMeshPrimitives.m_newObjects.clear();
+		}
+		{
+			std::lock_guard<std::mutex> lock(m_newTextures.m_mutex);
+			m_newTextures.m_newObjects.clear();
+		}
+		{
+			std::lock_guard<std::mutex> lock(m_newSamplers.m_mutex);
+			m_newSamplers.m_newObjects.clear();
+		}
+		{
+			std::lock_guard<std::mutex> lock(m_newTargetSets.m_mutex);
+			m_newTargetSets.m_newObjects.clear();
+		}
+		{
+			std::lock_guard<std::mutex> lock(m_newParameterBlocks.m_mutex);
+			m_newParameterBlocks.m_newObjects.clear();
 		}
 
 		// Need to do this here so the CoreEngine's Window can be destroyed
@@ -405,14 +424,17 @@ namespace re
 	}
 
 
-	void RenderManager::ShowGraphicsSystemImGuiWindows(bool* show)
+	void RenderManager::ShowRenderSystemImGuiWindows(bool* show)
 	{
-		constexpr char const* graphicsSystemPanelTitle = "Graphics Systems";
-		ImGui::Begin(graphicsSystemPanelTitle, show);
-
-		for (std::shared_ptr<gr::GraphicsSystem> const& gs : m_graphicsSystems)
+		constexpr char const* renderSystemsPanelTitle = "Render Systems";
+		ImGui::Begin(renderSystemsPanelTitle, show);
+		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
-			gs->ShowImGuiWindow();
+			if (ImGui::TreeNode(renderSystem->GetName().c_str()))
+			{
+				renderSystem->ShowImGuiWindow();
+				ImGui::TreePop();
+			}
 		}
 		ImGui::End();
 	}
@@ -469,7 +491,7 @@ namespace re
 					ImGui::MenuItem("Show Scene Objects Panel", "", &s_showScenePanel);
 
 					// Graphics systems window:
-					ImGui::MenuItem("Show Graphics Systems Panel", "", &s_showGraphicsSystemPanel);
+					ImGui::MenuItem("Show Render Systems Panel", "", &s_showGraphicsSystemPanel);
 
 					ImGui::TextDisabled("Performance statistics");
 
@@ -547,7 +569,7 @@ namespace re
 				ImGuiCond_Once);
 			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
 
-			RenderManager::ShowGraphicsSystemImGuiWindows(&s_showGraphicsSystemPanel);
+			RenderManager::ShowRenderSystemImGuiWindows(&s_showGraphicsSystemPanel);
 		}
 
 		// Show the ImGui demo window for debugging reference

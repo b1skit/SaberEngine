@@ -162,7 +162,7 @@ namespace gr
 	}
 
 
-	void ShadowsGraphicsSystem::PreRender(re::StagePipeline& pipeline)
+	void ShadowsGraphicsSystem::PreRender()
 	{
 		CreateBatches();
 		

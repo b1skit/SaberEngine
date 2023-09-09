@@ -19,6 +19,7 @@
 #include "RenderManager_OpenGL.h"
 #include "RenderManager.h"
 #include "RenderStage.h"
+#include "RenderSystem.h"
 #include "Sampler_OpenGL.h"
 #include "SceneManager.h"
 #include "Shader.h"
@@ -55,15 +56,70 @@ namespace opengl
 {
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
-		// Add graphics systems, in order of execution:
-		renderManager.m_graphicsSystems.emplace_back(make_shared<GBufferGraphicsSystem>("OpenGL GBuffer Graphics System"));
-		renderManager.m_graphicsSystems.emplace_back(make_shared<ShadowsGraphicsSystem>("OpenGL Shadows Graphics System"));
-		renderManager.m_graphicsSystems.emplace_back(
-			make_shared<DeferredLightingGraphicsSystem>("OpenGL Deferred Lighting Graphics System"));
-		renderManager.m_graphicsSystems.emplace_back(make_shared<SkyboxGraphicsSystem>("OpenGL Skybox Graphics System"));
-		renderManager.m_graphicsSystems.emplace_back(make_shared<BloomGraphicsSystem>("OpenGL Bloom Graphics System"));
-		renderManager.m_graphicsSystems.emplace_back(
-			make_shared<TonemappingGraphicsSystem>("OpenGL Tonemapping Graphics System"));
+		renderManager.m_renderSystems.emplace_back(re::RenderSystem::Create("Default OpenGL RenderSystem"));
+		re::RenderSystem* defaultRenderSystem = renderManager.m_renderSystems.back().get();	
+
+		// Build the create pipeline:
+		auto CreatePipeline = [](re::RenderSystem* renderSystem)
+		{
+			std::vector<std::shared_ptr<gr::GraphicsSystem>>& graphicsSystems = renderSystem->GetGraphicsSystems();
+
+			// Create and add graphics systems:
+			std::shared_ptr<gr::GBufferGraphicsSystem> gbufferGS = 
+				std::make_shared<gr::GBufferGraphicsSystem>("OpenGL GBuffer Graphics System");
+			graphicsSystems.emplace_back(gbufferGS);
+
+			std::shared_ptr<gr::ShadowsGraphicsSystem> shadowGS =
+				std::make_shared<gr::ShadowsGraphicsSystem>("OpenGL Shadows Graphics System");
+			graphicsSystems.emplace_back(shadowGS);
+
+			std::shared_ptr<gr::DeferredLightingGraphicsSystem> deferredLightingGS =
+				std::make_shared<gr::DeferredLightingGraphicsSystem>("OpenGL Deferred Lighting Graphics System");
+			graphicsSystems.emplace_back(deferredLightingGS);
+
+			std::shared_ptr<gr::SkyboxGraphicsSystem> skyboxGS =
+				std::make_shared<gr::SkyboxGraphicsSystem>("OpenGL Skybox Graphics System");
+			graphicsSystems.emplace_back(skyboxGS);
+
+			std::shared_ptr<gr::BloomGraphicsSystem> bloomGS =
+				std::make_shared<gr::BloomGraphicsSystem>("OpenGL Bloom Graphics System");
+			graphicsSystems.emplace_back(bloomGS);
+
+			std::shared_ptr<gr::TonemappingGraphicsSystem> tonemappingGS =
+				std::make_shared<gr::TonemappingGraphicsSystem>("OpenGL Tonemapping Graphics System");
+			graphicsSystems.emplace_back(tonemappingGS);
+
+			// Build the creation pipeline:
+			gbufferGS->Create(renderSystem->GetRenderPipeline().AddNewStagePipeline(gbufferGS->GetName()));
+			shadowGS->Create(renderSystem->GetRenderPipeline().AddNewStagePipeline(shadowGS->GetName()));
+			deferredLightingGS->Create(*renderSystem, renderSystem->GetRenderPipeline().AddNewStagePipeline(deferredLightingGS->GetName()));
+			skyboxGS->Create(*renderSystem, renderSystem->GetRenderPipeline().AddNewStagePipeline(skyboxGS->GetName()));
+			bloomGS->Create(*renderSystem, renderSystem->GetRenderPipeline().AddNewStagePipeline(bloomGS->GetName()));
+			tonemappingGS->Create(*renderSystem, renderSystem->GetRenderPipeline().AddNewStagePipeline(tonemappingGS->GetName()));
+		};
+		defaultRenderSystem->SetCreatePipeline(CreatePipeline);
+
+
+		// Build the update pipeline:
+		auto UpdatePipeline = [](re::RenderSystem* renderSystem)
+		{
+			// Get our GraphicsSystems:
+			gr::GBufferGraphicsSystem* gbufferGS = renderSystem->GetGraphicsSystem<gr::GBufferGraphicsSystem>();
+			gr::ShadowsGraphicsSystem* shadowGS = renderSystem->GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
+			gr::DeferredLightingGraphicsSystem* deferredLightingGS = renderSystem->GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
+			gr::SkyboxGraphicsSystem* skyboxGS = renderSystem->GetGraphicsSystem<gr::SkyboxGraphicsSystem>();
+			gr::BloomGraphicsSystem* bloomGS = renderSystem->GetGraphicsSystem<gr::BloomGraphicsSystem>();
+			gr::TonemappingGraphicsSystem* tonemappingGS = renderSystem->GetGraphicsSystem<gr::TonemappingGraphicsSystem>();
+
+			// Execute per-frame updates:
+			gbufferGS->PreRender();
+			shadowGS->PreRender();
+			deferredLightingGS->PreRender();
+			skyboxGS->PreRender();
+			bloomGS->PreRender();
+			tonemappingGS->PreRender();
+		};
+		defaultRenderSystem->SetUpdatePipeline(UpdatePipeline);
 	}
 
 
@@ -138,185 +194,190 @@ namespace opengl
 	{
 		opengl::Context* context = re::Context::GetAs<opengl::Context*>();
 
-		// Render each stage:
-		for (StagePipeline& stagePipeline : m_renderPipeline.GetStagePipeline())
+		// Render each RenderSystem in turn:
+		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
-			// RenderDoc markers: Graphics system group name
-			glPushDebugGroup(
-				GL_DEBUG_SOURCE_APPLICATION, 
-				0, 
-				-1, 
-				stagePipeline.GetName().c_str());
-
-			// Process RenderStages:
-			std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
-			for (std::shared_ptr<re::RenderStage> renderStage : renderStages)
+			// Render each stage in the RenderSystem's RenderPipeline:
+			re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
+			for (StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
 			{
-				// Skip empty stages:
-				if (renderStage->GetStageBatches().empty())
+				// RenderDoc markers: Graphics system group name
+				glPushDebugGroup(
+					GL_DEBUG_SOURCE_APPLICATION,
+					0,
+					-1,
+					stagePipeline.GetName().c_str());
+
+				// Process RenderStages:
+				std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
+				for (std::shared_ptr<re::RenderStage> renderStage : renderStages)
 				{
-					continue;
-				}
-
-				// RenderDoc makers: Render stage name
-				glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderStage->GetName().c_str());
-
-				gr::PipelineState const& stagePipelineParams = renderStage->GetStagePipelineState();
-
-				// Get the stage targets:
-				std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
-				if (!stageTargets)
-				{
-					opengl::SwapChain::PlatformParams* swapChainParams = 
-						context->GetSwapChain().GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
-					SEAssert("Swap chain params and backbuffer cannot be null", 
-						swapChainParams && swapChainParams->m_backbufferTargetSet);
-
-					stageTargets = swapChainParams->m_backbufferTargetSet; // Draw directly to the swapchain backbuffer
-				}
-
-				
-				auto SetDrawState = [&renderStage, &context](
-					re::Shader const* shader)
-				{
-					opengl::Shader::Bind(*shader);
-
-					// Set stage param blocks:
-					for (std::shared_ptr<re::ParameterBlock> permanentPB : renderStage->GetPermanentParameterBlocks())
+					// Skip empty stages:
+					if (renderStage->GetStageBatches().empty())
 					{
-						opengl::Shader::SetParameterBlock(*shader, *permanentPB.get());
-					}
-					for (std::shared_ptr<re::ParameterBlock> perFramePB : renderStage->GetPerFrameParameterBlocks())
-					{
-						opengl::Shader::SetParameterBlock(*shader, *perFramePB.get());
+						continue;
 					}
 
-					// Set stage texture/sampler inputs:
-					for (auto const& texSamplerInput : renderStage->GetTextureInputs())
+					// RenderDoc makers: Render stage name
+					glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderStage->GetName().c_str());
+
+					gr::PipelineState const& stagePipelineParams = renderStage->GetStagePipelineState();
+
+					// Get the stage targets:
+					std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
+					if (!stageTargets)
 					{
-						opengl::Shader::SetTextureAndSampler(
-							*shader,
-							texSamplerInput.m_shaderName, // uniform name
-							texSamplerInput.m_texture,
-							texSamplerInput.m_sampler,
-							texSamplerInput.m_subresource);
-					}
-				};
+						opengl::SwapChain::PlatformParams* swapChainParams =
+							context->GetSwapChain().GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
+						SEAssert("Swap chain params and backbuffer cannot be null",
+							swapChainParams && swapChainParams->m_backbufferTargetSet);
 
-				// Bind the shader now that the pipeline state is set:
-				re::Shader* stageShader = renderStage->GetStageShader();
-				const bool hasStageShader = stageShader != nullptr;
-				if (hasStageShader)
-				{
-					SetDrawState(stageShader);
-				}
-
-				// Configure the pipeline state:
-				context->SetPipelineState(stagePipelineParams);
-
-				switch (renderStage->GetStageType())
-				{
-				case re::RenderStage::RenderStageType::Compute:
-				{
-					opengl::TextureTargetSet::AttachTargetsAsImageTextures(*stageTargets);
-
-					// TODO: Support compute target clearing
-				}
-				break;
-				case re::RenderStage::RenderStageType::Graphics:
-				{
-					opengl::TextureTargetSet::AttachColorTargets(*stageTargets);
-					opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
-
-					// Clear the targets AFTER setting color/depth write modes
-					const gr::PipelineState::ClearTarget clearTargetMode = stagePipelineParams.GetClearTarget();
-					if (clearTargetMode == gr::PipelineState::ClearTarget::Color ||
-						clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
-					{
-						opengl::TextureTargetSet::ClearColorTargets(*stageTargets);
-					}
-					if (clearTargetMode == gr::PipelineState::ClearTarget::Depth ||
-						clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
-					{
-						opengl::TextureTargetSet::ClearDepthStencilTarget(*stageTargets);
-					}
-				}
-				break;
-				default:
-					SEAssertF("Invalid render stage type");
-				}		
-
-				// Render stage batches:
-				std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
-				for (re::Batch const& batch : batches)
-				{
-					// No stage shader: Must set stage PBs for each batch
-					if (!hasStageShader)
-					{
-						re::Shader const* batchShader = batch.GetShader();
-
-						SetDrawState(batchShader);
+						stageTargets = swapChainParams->m_backbufferTargetSet; // Draw directly to the swapchain backbuffer
 					}
 
-					// Batch parameter blocks:
-					vector<shared_ptr<re::ParameterBlock>> const& batchPBs = batch.GetParameterBlocks();
-					for (shared_ptr<re::ParameterBlock> batchPB : batchPBs)
-					{
-						opengl::Shader::SetParameterBlock(*stageShader, *batchPB.get());
-					}
 
-					// Set Batch Texture/Sampler inputs:
-					if (stageTargets->WritesColor())
+					auto SetDrawState = [&renderStage, &context](
+						re::Shader const* shader)
 					{
-						for (auto const& texSamplerInput : batch.GetTextureAndSamplerInputs())
+						opengl::Shader::Bind(*shader);
+
+						// Set stage param blocks:
+						for (std::shared_ptr<re::ParameterBlock> permanentPB : renderStage->GetPermanentParameterBlocks())
+						{
+							opengl::Shader::SetParameterBlock(*shader, *permanentPB.get());
+						}
+						for (std::shared_ptr<re::ParameterBlock> perFramePB : renderStage->GetPerFrameParameterBlocks())
+						{
+							opengl::Shader::SetParameterBlock(*shader, *perFramePB.get());
+						}
+
+						// Set stage texture/sampler inputs:
+						for (auto const& texSamplerInput : renderStage->GetTextureInputs())
 						{
 							opengl::Shader::SetTextureAndSampler(
-								*stageShader,
-								texSamplerInput.m_shaderName,
+								*shader,
+								texSamplerInput.m_shaderName, // uniform name
 								texSamplerInput.m_texture,
 								texSamplerInput.m_sampler,
 								texSamplerInput.m_subresource);
 						}
+					};
+
+					// Bind the shader now that the pipeline state is set:
+					re::Shader* stageShader = renderStage->GetStageShader();
+					const bool hasStageShader = stageShader != nullptr;
+					if (hasStageShader)
+					{
+						SetDrawState(stageShader);
 					}
+
+					// Configure the pipeline state:
+					context->SetPipelineState(stagePipelineParams);
 
 					switch (renderStage->GetStageType())
 					{
-					case re::RenderStage::RenderStageType::Graphics:
-					{
-						opengl::MeshPrimitive::PlatformParams const* meshPlatParams =
-							batch.GetMeshPrimitive()->GetPlatformParams()->As<opengl::MeshPrimitive::PlatformParams const*>();
-
-						opengl::MeshPrimitive::Bind(*batch.GetMeshPrimitive());
-
-						glDrawElementsInstanced(
-							meshPlatParams->m_drawMode,			// GLenum mode
-							(GLsizei)batch.GetMeshPrimitive()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),	// GLsizei count
-							GL_UNSIGNED_INT,					// GLenum type. TODO: Store type in parameters, instead of assuming uints
-							0,									// Byte offset (into bound index buffer)
-							(GLsizei)batch.GetInstanceCount());	// Instance count
-					}
-					break;
 					case re::RenderStage::RenderStageType::Compute:
 					{
-						glm::uvec3 const& threadGroupCount = batch.GetComputeParams().m_threadGroupCount;
-						glDispatchCompute(threadGroupCount.x, threadGroupCount.y, threadGroupCount.z);
+						opengl::TextureTargetSet::AttachTargetsAsImageTextures(*stageTargets);
 
-						// Barrier to prevent reading before texture writes have finished.
-						// TODO: Is this always necessry? Should we be using different barrier types at any point?
-						glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+						// TODO: Support compute target clearing
+					}
+					break;
+					case re::RenderStage::RenderStageType::Graphics:
+					{
+						opengl::TextureTargetSet::AttachColorTargets(*stageTargets);
+						opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
+
+						// Clear the targets AFTER setting color/depth write modes
+						const gr::PipelineState::ClearTarget clearTargetMode = stagePipelineParams.GetClearTarget();
+						if (clearTargetMode == gr::PipelineState::ClearTarget::Color ||
+							clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
+						{
+							opengl::TextureTargetSet::ClearColorTargets(*stageTargets);
+						}
+						if (clearTargetMode == gr::PipelineState::ClearTarget::Depth ||
+							clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
+						{
+							opengl::TextureTargetSet::ClearDepthStencilTarget(*stageTargets);
+						}
 					}
 					break;
 					default:
 						SEAssertF("Invalid render stage type");
 					}
-					// Draw!
-					
-				} // batches
 
-				glPopDebugGroup();
-			}; // ProcessRenderStage
+					// Render stage batches:
+					std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
+					for (re::Batch const& batch : batches)
+					{
+						// No stage shader: Must set stage PBs for each batch
+						if (!hasStageShader)
+						{
+							re::Shader const* batchShader = batch.GetShader();
 
-			glPopDebugGroup(); // Graphics system group name
+							SetDrawState(batchShader);
+						}
+
+						// Batch parameter blocks:
+						vector<shared_ptr<re::ParameterBlock>> const& batchPBs = batch.GetParameterBlocks();
+						for (shared_ptr<re::ParameterBlock> batchPB : batchPBs)
+						{
+							opengl::Shader::SetParameterBlock(*stageShader, *batchPB.get());
+						}
+
+						// Set Batch Texture/Sampler inputs:
+						if (stageTargets->WritesColor())
+						{
+							for (auto const& texSamplerInput : batch.GetTextureAndSamplerInputs())
+							{
+								opengl::Shader::SetTextureAndSampler(
+									*stageShader,
+									texSamplerInput.m_shaderName,
+									texSamplerInput.m_texture,
+									texSamplerInput.m_sampler,
+									texSamplerInput.m_subresource);
+							}
+						}
+
+						switch (renderStage->GetStageType())
+						{
+						case re::RenderStage::RenderStageType::Graphics:
+						{
+							opengl::MeshPrimitive::PlatformParams const* meshPlatParams =
+								batch.GetMeshPrimitive()->GetPlatformParams()->As<opengl::MeshPrimitive::PlatformParams const*>();
+
+							opengl::MeshPrimitive::Bind(*batch.GetMeshPrimitive());
+
+							glDrawElementsInstanced(
+								meshPlatParams->m_drawMode,			// GLenum mode
+								(GLsizei)batch.GetMeshPrimitive()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),	// GLsizei count
+								GL_UNSIGNED_INT,					// GLenum type. TODO: Store type in parameters, instead of assuming uints
+								0,									// Byte offset (into bound index buffer)
+								(GLsizei)batch.GetInstanceCount());	// Instance count
+						}
+						break;
+						case re::RenderStage::RenderStageType::Compute:
+						{
+							glm::uvec3 const& threadGroupCount = batch.GetComputeParams().m_threadGroupCount;
+							glDispatchCompute(threadGroupCount.x, threadGroupCount.y, threadGroupCount.z);
+
+							// Barrier to prevent reading before texture writes have finished.
+							// TODO: Is this always necessry? Should we be using different barrier types at any point?
+							glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+						}
+						break;
+						default:
+							SEAssertF("Invalid render stage type");
+						}
+						// Draw!
+
+					} // batches
+
+					glPopDebugGroup();
+				}; // ProcessRenderStage
+
+				glPopDebugGroup(); // Graphics system group name
+			}
 		}
 	}
 

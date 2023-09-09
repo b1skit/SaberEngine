@@ -125,7 +125,7 @@ namespace gr
 	}
 
 
-	void GBufferGraphicsSystem::PreRender(re::StagePipeline& pipeline)
+	void GBufferGraphicsSystem::PreRender()
 	{
 		CreateBatches();
 

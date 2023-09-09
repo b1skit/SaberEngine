@@ -407,6 +407,9 @@
     <ClCompile Include="Dependencies\imgui\imgui_demo.cpp">
       <Filter>Dependencies\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="RenderSystem.cpp">
+      <Filter>Source Files\re</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -777,6 +780,9 @@
     </ClInclude>
     <ClInclude Include="ImGuiUtils.h">
       <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem.h">
+      <Filter>Header Files\re</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -6,6 +6,10 @@
 #include "RenderPipeline.h"
 #include "NamedObject.h"
 
+namespace re
+{
+	class RenderSystem;
+}
 
 namespace gr
 {
@@ -13,13 +17,19 @@ namespace gr
 	{
 	public:
 		explicit GraphicsSystem(std::string const& name);
+
 		GraphicsSystem(GraphicsSystem&&) = default;
 		GraphicsSystem& operator=(GraphicsSystem&&) = default;
 
 		// GraphicsSystem interface:
-		virtual void Create(re::StagePipeline& pipeline) = 0; // Initial Graphics System setup
-		virtual void PreRender(re::StagePipeline& pipeline) = 0; // Called every frame
+		// -------------------------
+		// We don't enforce a strict virtual interface here to allow flexibility in graphics system creation & updates.
+		// Typically, a Graphics System will require 1 or more of the following functions:
+		// - Create(re::RenderSystem&, re::StagePipeline&) methods: Used to attach a sequence of RenderStages to a StagePipeline
+		// - PreRender() methods: Called every frame to update the GraphicsSystem before platform-level rendering
 
+
+		// TODO: We should have inputs and outputs, to allow data flow between GraphicsSystems to be configured externally
 		virtual std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const = 0;
 
 		virtual void ShowImGuiWindow(); // Override this

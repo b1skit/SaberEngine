@@ -66,8 +66,17 @@ namespace re
 		
 		// std::list::emplace inserts the element directly before the iterator, so we advance to the next 
 		const StagePipelineItr next = std::next(parentItr);
-		 
-		StagePipelineItr newSingleFrameStageItr = m_renderStages.emplace(next, std::move(renderStage));
+		
+		StagePipelineItr newSingleFrameStageItr;
+		if (next == m_renderStages.end())
+		{
+			m_renderStages.emplace_back(std::move(renderStage));
+			newSingleFrameStageItr = std::prev(m_renderStages.end());
+		}
+		else
+		{
+			newSingleFrameStageItr = m_renderStages.emplace(next, std::move(renderStage));
+		}
 
 		m_singleFrameInsertionPoints.emplace_back(newSingleFrameStageItr);
 
@@ -99,10 +108,24 @@ namespace re
 
 
 	/******************************************** RenderPipeline********************************************/
+	
+	constexpr size_t k_numReservedStages = 32;
 
-	StagePipeline& RenderPipeline::AddNewStagePipeline(std::string stagePipelineName)
+
+	RenderPipeline::RenderPipeline(std::string const& name)
+		: NamedObject(name)
+	{
+		m_stagePipeline.reserve(k_numReservedStages);
+	}
+
+
+	StagePipeline& RenderPipeline::AddNewStagePipeline(std::string const& stagePipelineName)
 	{ 
 		m_stagePipeline.emplace_back(stagePipelineName);
+
+		SEAssert("m_stagePipeline was resized, this invalidates all pointers/iterators. Increase k_numReservedStages",
+			m_stagePipeline.size() <= k_numReservedStages);
+
 		return m_stagePipeline.back();
 	}
 

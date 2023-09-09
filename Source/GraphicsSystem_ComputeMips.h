@@ -12,9 +12,9 @@ namespace gr
 
 		~ComputeMipsGraphicsSystem() override {}
 
-		void Create(re::StagePipeline& pipeline) override;
+		void Create(re::StagePipeline&);
 
-		void PreRender(re::StagePipeline& pipeline) override;
+		void PreRender();
 
 		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 
@@ -28,6 +28,7 @@ namespace gr
 
 	private:
 		re::StagePipeline::StagePipelineItr m_parentStageItr;
+		re::StagePipeline* m_stagePipeline;
 
 		std::shared_ptr<re::Shader> m_mipMapGenerationShader;
 		std::vector<std::shared_ptr<re::Texture>> m_textures;

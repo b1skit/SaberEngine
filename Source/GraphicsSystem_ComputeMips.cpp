@@ -45,6 +45,7 @@ namespace gr
 		: GraphicsSystem(name)
 		, NamedObject(name)
 		, m_mipMapGenerationShader(nullptr)
+		, m_stagePipeline(nullptr)
 	{
 	}
 
@@ -55,12 +56,14 @@ namespace gr
 
 		re::RenderStage::ComputeStageParams parentStageParams; // Defaults
 
-		m_parentStageItr = pipeline.AppendRenderStage(
+		m_stagePipeline = &pipeline;
+
+		m_parentStageItr = m_stagePipeline->AppendRenderStage(
 			re::RenderStage::CreateComputeStage("MIP Generation Parent stage", parentStageParams));
 	}
 
 
-	void ComputeMipsGraphicsSystem::PreRender(re::StagePipeline& pipeline)
+	void ComputeMipsGraphicsSystem::PreRender()
 	{
 		if (m_textures.empty())
 		{
@@ -151,7 +154,7 @@ namespace gr
 
 					mipGenerationStage->AddBatch(computeBatch);
 
-					insertItr = pipeline.AppendSingleFrameRenderStage(insertItr, std::move(mipGenerationStage));
+					insertItr = m_stagePipeline->AppendSingleFrameRenderStage(insertItr, std::move(mipGenerationStage));
 				}
 			}			
 		}

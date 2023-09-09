@@ -60,7 +60,7 @@ namespace gr
 	}
 
 
-	void SkyboxGraphicsSystem::Create(re::StagePipeline& pipeline)
+	void SkyboxGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
 	{
 		// Create a skybox shader, now that we have some sort of image loaded:
 		m_skyboxStage->SetStageShader(re::Shader::Create(Config::Get()->GetValue<string>("skyboxShaderName")));
@@ -80,14 +80,14 @@ namespace gr
 		m_skyboxStage->AddPermanentParameterBlock(SceneManager::Get()->GetMainCamera()->GetCameraParams());
 
 		DeferredLightingGraphicsSystem* deferredLightGS = 
-			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
+			renderSystem.GetGraphicsSystem<DeferredLightingGraphicsSystem>();
 
 		// Create a new texture target set so we can write to the deferred lighting color targets, but attach the
 		// GBuffer depth for HW depth testing
 		std::shared_ptr<re::TextureTargetSet> skyboxTargets = 
 			re::TextureTargetSet::Create(*deferredLightGS->GetFinalTextureTargetSet(), "Skybox Targets");
 
-		GBufferGraphicsSystem* gBufferGS = RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>();
+		GBufferGraphicsSystem* gBufferGS = renderSystem.GetGraphicsSystem<GBufferGraphicsSystem>();
 		skyboxTargets->SetDepthStencilTarget(gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget());
 
 		// Render on top of the frame
@@ -114,7 +114,7 @@ namespace gr
 	}
 
 
-	void SkyboxGraphicsSystem::PreRender(re::StagePipeline& pipeline)
+	void SkyboxGraphicsSystem::PreRender()
 	{
 		CreateBatches();
 	}

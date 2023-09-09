@@ -13,9 +13,9 @@ namespace gr
 
 		~SkyboxGraphicsSystem() override {}
 
-		void Create(re::StagePipeline& pipeline) override;
+		void Create(re::RenderSystem&, re::StagePipeline&);
 
-		void PreRender(re::StagePipeline& pipeline) override;
+		void PreRender();
 
 		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 

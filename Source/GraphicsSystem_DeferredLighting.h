@@ -23,9 +23,9 @@ namespace gr
 
 		~DeferredLightingGraphicsSystem() override {}
 
-		void Create(re::StagePipeline& pipeline) override;
+		void Create(re::RenderSystem&, re::StagePipeline&);
 
-		void PreRender(re::StagePipeline& pipeline) override;
+		void PreRender();
 
 		// Note: All light stages write to the same target
 		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;

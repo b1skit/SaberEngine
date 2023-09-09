@@ -7,6 +7,7 @@
 #include "EngineThread.h"
 #include "EventListener.h"
 #include "RenderPipeline.h"
+#include "RenderSystem.h"
 #include "TextureTarget.h"
 
 
@@ -45,9 +46,6 @@ namespace re
 
 		// EngineThread interface:
 		void Lifetime(std::barrier<>* copyBarrier) override;
-
-		template <typename T>
-		T* GetGraphicsSystem();
 
 		inline std::vector<re::Batch> const& GetSceneBatches() { return m_renderBatches; }
 
@@ -96,12 +94,11 @@ namespace re
 
 
 	private:
-		void ShowGraphicsSystemImGuiWindows(bool* show);
+		void ShowRenderSystemImGuiWindows(bool* show);
 
 
 	private:
-		std::vector<std::shared_ptr<gr::GraphicsSystem>> m_graphicsSystems;
-		re::RenderPipeline m_renderPipeline;
+		std::vector<std::unique_ptr<re::RenderSystem>> m_renderSystems;
 
 		std::vector<re::Batch> m_renderBatches; // Union of all batches created by all systems. Populated in PreUpdate
 
@@ -128,24 +125,6 @@ namespace re
 		void operator=(RenderManager const&) = delete;
 		RenderManager& operator=(RenderManager&&) = delete;
 	};
-
-
-	template <typename T>
-	T* RenderManager::GetGraphicsSystem()
-	{
-		// TODO: A linear search isn't optimal here, but there aren't many graphics systems in practice so ok for now
-		for (size_t i = 0; i < m_graphicsSystems.size(); i++)
-		{
-			T* result = dynamic_cast<T*>(m_graphicsSystems[i].get());
-			if (result != nullptr)
-			{
-				return result;
-			}
-		}
-
-		SEAssertF("Graphics system not found");
-		return nullptr;
-	}
 
 
 	inline uint64_t RenderManager::GetCurrentRenderFrameNum() const

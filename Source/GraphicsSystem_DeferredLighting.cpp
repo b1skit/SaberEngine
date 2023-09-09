@@ -197,9 +197,9 @@ namespace gr
 	}
 
 
-	void DeferredLightingGraphicsSystem::Create(re::StagePipeline& pipeline)
+	void DeferredLightingGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
 	{
-		GBufferGraphicsSystem* gBufferGS = RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>();
+		GBufferGraphicsSystem* gBufferGS = renderSystem.GetGraphicsSystem<GBufferGraphicsSystem>();
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
 		
 		// Create a shared lighting stage texture target:
@@ -681,7 +681,7 @@ namespace gr
 	}
 
 
-	void DeferredLightingGraphicsSystem::PreRender(re::StagePipeline& pipeline)
+	void DeferredLightingGraphicsSystem::PreRender()
 	{
 		CreateBatches();		
 	}

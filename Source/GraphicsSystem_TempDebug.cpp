@@ -44,7 +44,7 @@ namespace gr
 	}
 
 
-	void TempDebugGraphicsSystem::PreRender(re::StagePipeline& pipeline)
+	void TempDebugGraphicsSystem::PreRender()
 	{
 		CreateBatches();
 	}

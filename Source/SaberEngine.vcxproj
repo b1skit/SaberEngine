@@ -187,6 +187,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="PerformanceTimer.cpp" />
     <ClCompile Include="PipelineState.cpp" />
     <ClCompile Include="PipelineState_DX12.cpp" />
+    <ClCompile Include="RenderSystem.cpp" />
     <ClCompile Include="ResourceStateTracker_DX12.cpp" />
     <ClCompile Include="SysInfo_DX12.cpp" />
     <ClCompile Include="RenderManager_DX12.cpp" />
@@ -303,6 +304,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="PerformanceTimer.h" />
     <ClInclude Include="PipelineState.h" />
     <ClInclude Include="PipelineState_DX12.h" />
+    <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="ResourceStateTracker_DX12.h" />
     <ClInclude Include="SysInfo_DX12.h" />
     <ClInclude Include="RenderManager_DX12.h" />

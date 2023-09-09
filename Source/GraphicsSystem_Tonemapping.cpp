@@ -3,6 +3,7 @@
 #include "GraphicsSystem_Tonemapping.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "RenderManager.h"
+#include "RenderSystem.h"
 #include "Shader.h"
 #include "SceneManager.h"
 
@@ -35,7 +36,7 @@ namespace gr
 	}
 
 
-	void TonemappingGraphicsSystem::Create(re::StagePipeline& pipeline)
+	void TonemappingGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
 	{
 		gr::PipelineState tonemappingStageParam;
 		tonemappingStageParam.SetClearTarget(gr::PipelineState::ClearTarget::None);
@@ -52,7 +53,7 @@ namespace gr
 		m_tonemappingStage->AddPermanentParameterBlock(SceneManager::Get()->GetMainCamera()->GetCameraParams());
 
 		std::shared_ptr<TextureTargetSet const> deferredLightTextureTargetSet =
-			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
+			renderSystem.GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
 
 		m_tonemappingStage->AddTextureInput(
 			"GBufferAlbedo",
@@ -63,7 +64,7 @@ namespace gr
 	}
 
 
-	void TonemappingGraphicsSystem::PreRender(re::StagePipeline& pipeline)
+	void TonemappingGraphicsSystem::PreRender()
 	{
 		CreateBatches();
 	}

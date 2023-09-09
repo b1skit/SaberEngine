@@ -6,6 +6,7 @@
 #include "Config.h"
 #include "SceneManager.h"
 #include "RenderManager.h"
+#include "RenderSystem.h"
 
 using gr::DeferredLightingGraphicsSystem;
 using en::Config;
@@ -55,10 +56,10 @@ namespace gr
 	}
 
 
-	void BloomGraphicsSystem::Create(re::StagePipeline& pipeline)
+	void BloomGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
 	{
 		DeferredLightingGraphicsSystem* deferredLightGS = 
-			RenderManager::Get()->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
+			renderSystem.GetGraphicsSystem<DeferredLightingGraphicsSystem>();
 
 		Camera* sceneCam = SceneManager::Get()->GetMainCamera().get();
 
@@ -262,7 +263,7 @@ namespace gr
 		}
 
 		// Attach GBuffer inputs:
-		GBufferGraphicsSystem* gbufferGS = RenderManager::Get()->GetGraphicsSystem<GBufferGraphicsSystem>();
+		GBufferGraphicsSystem* gbufferGS = renderSystem.GetGraphicsSystem<GBufferGraphicsSystem>();
 
 		shared_ptr<Sampler> const bloomStageSampler = Sampler::GetSampler(Sampler::WrapAndFilterMode::ClampLinearLinear);
 
@@ -329,7 +330,7 @@ namespace gr
 	}
 
 
-	void BloomGraphicsSystem::PreRender(re::StagePipeline& pipeline)
+	void BloomGraphicsSystem::PreRender()
 	{
 		CreateBatches();
 

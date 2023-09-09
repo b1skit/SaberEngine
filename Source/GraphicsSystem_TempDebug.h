@@ -14,9 +14,9 @@ namespace gr
 		TempDebugGraphicsSystem() = delete;
 		~TempDebugGraphicsSystem() override {}
 
-		void Create(re::StagePipeline& pipeline) override;
+		void Create(re::StagePipeline&);
 
-		void PreRender(re::StagePipeline& pipeline) override;
+		void PreRender();
 
 		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 
