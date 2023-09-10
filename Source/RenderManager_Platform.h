@@ -15,6 +15,7 @@ namespace platform
 	public: // Platform PIMPL:
 		static void (*Initialize)(re::RenderManager&);
 		static void (*Shutdown)(re::RenderManager&);
+		static void (*CreateAPIResources)(re::RenderManager&);
 
 		// ImgGui:
 		static void (*StartImGuiFrame)();

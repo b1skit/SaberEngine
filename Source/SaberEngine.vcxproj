@@ -279,6 +279,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="Dependencies\imgui\imstb_textedit.h" />
     <ClInclude Include="Dependencies\imgui\imstb_truetype.h" />
     <ClInclude Include="Device_DX12.h" />
+    <ClInclude Include="DoubleBufferUnorderedMap.h" />
     <ClInclude Include="EngineThread.h" />
     <ClInclude Include="EventManager_Platform.h" />
     <ClInclude Include="EventManager_Win32.h" />

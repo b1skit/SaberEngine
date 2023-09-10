@@ -65,7 +65,6 @@ namespace re
 			std::array<std::size_t, k_numBuffers> m_baseIdx;
 			std::array<std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>>, k_numBuffers> m_handleToPtr;
 			mutable std::recursive_mutex m_mutex;
-
 		} m_singleFrameAllocations;
 
 		std::unordered_map<Handle, CommitMetadata> m_uniqueIDToTypeAndByteIndex;

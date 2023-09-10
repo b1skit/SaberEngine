@@ -92,7 +92,7 @@ namespace platform
 		case RenderingAPI::OpenGL:
 		{
 			// Context:
-			platform::Context::Destroy				= &opengl::Context::Destroy;
+			platform::Context::Destroy			= &opengl::Context::Destroy;
 			
 			// MeshPrimitive:
 			platform::MeshPrimitive::Destroy	= &opengl::MeshPrimitive::Destroy;
@@ -105,6 +105,7 @@ namespace platform
 			// Render manager:
 			platform::RenderManager::Initialize			= &opengl::RenderManager::Initialize;
 			platform::RenderManager::Shutdown			= &opengl::RenderManager::Shutdown;
+			platform::RenderManager::CreateAPIResources = &opengl::RenderManager::CreateAPIResources;
 			platform::RenderManager::StartImGuiFrame	= &opengl::RenderManager::StartImGuiFrame;
 			platform::RenderManager::RenderImGui		= &opengl::RenderManager::RenderImGui;
 
@@ -137,7 +138,7 @@ namespace platform
 		case RenderingAPI::DX12:
 		{
 			// Context:
-			platform::Context::Destroy				= &dx12::Context::Destroy;
+			platform::Context::Destroy			= &dx12::Context::Destroy;
 
 			// MeshPrimitive:
 			platform::MeshPrimitive::Destroy	= &dx12::MeshPrimitive::Destroy;
@@ -150,6 +151,7 @@ namespace platform
 			// Render manager:
 			platform::RenderManager::Initialize			= &dx12::RenderManager::Initialize;
 			platform::RenderManager::Shutdown			= &dx12::RenderManager::Shutdown;
+			platform::RenderManager::CreateAPIResources = &dx12::RenderManager::CreateAPIResources;
 			platform::RenderManager::StartImGuiFrame	= &dx12::RenderManager::StartImGuiFrame;
 			platform::RenderManager::RenderImGui		= &dx12::RenderManager::RenderImGui;
 

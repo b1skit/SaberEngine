@@ -86,7 +86,7 @@ namespace fr
 		std::unordered_map<size_t, std::shared_ptr<gr::Material>> const& GetMaterials() const;
 		bool MaterialExists(std::string const& matName) const;
 
-		void AddUniqueShader(std::shared_ptr<re::Shader>& newShader);
+		bool AddUniqueShader(std::shared_ptr<re::Shader>& newShader); // Returns true if new object was added
 		std::shared_ptr<re::Shader> GetShader(std::string const& extensionlessShaderFilename) const;
 		bool ShaderExists(std::string const& extensionlessShaderFilename) const;
 

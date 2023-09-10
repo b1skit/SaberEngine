@@ -1823,11 +1823,13 @@ namespace fr
 	}
 
 
-	void SceneData::AddUniqueShader(std::shared_ptr<re::Shader>& newShader)
+	bool SceneData::AddUniqueShader(std::shared_ptr<re::Shader>& newShader)
 	{
 		SEAssert("Cannot add null shader to shader table", newShader != nullptr);
 
 		std::unique_lock<std::shared_mutex> writeLock(m_shadersMutex);
+
+		bool addedNewShader = false;
 
 		// Note: Materials are uniquely identified by name, regardless of the MaterialDefinition they might use
 		unordered_map<size_t, shared_ptr<re::Shader>>::const_iterator shaderPosition =
@@ -1835,12 +1837,15 @@ namespace fr
 		if (shaderPosition != m_shaders.end()) // Found existing
 		{
 			newShader = shaderPosition->second;
+			addedNewShader = false;
 		}
 		else // Add new
 		{
 			m_shaders[newShader->GetNameID()] = newShader;
+			addedNewShader = true;
 			LOG("Shader \"%s\" registered with scene", newShader->GetName().c_str());
 		}
+		return addedNewShader;
 	}
 
 

@@ -74,6 +74,12 @@ namespace re
 	RenderManager::RenderManager()
 		: m_renderFrameNum(0)
 		, m_imguiMenuVisible(false)
+		, m_newShaders(k_newObjectReserveAmount)
+		, m_newMeshPrimitives(k_newObjectReserveAmount)
+		, m_newTextures(k_newObjectReserveAmount)
+		, m_newSamplers(k_newObjectReserveAmount)
+		, m_newTargetSets(k_newObjectReserveAmount)
+		, m_newParameterBlocks(k_newObjectReserveAmount)
 	{
 		m_vsyncEnabled = en::Config::Get()->GetValue<bool>("vsync");
 	}
@@ -110,6 +116,8 @@ namespace re
 			const std::barrier<>::arrival_token& copyArrive = copyBarrier->arrive();
 
 			Update(m_renderFrameNum, updateParams.m_elapsed);
+
+			EndOfFrame(); // Clear batches, process pipeline and parameter block allocator EndOfFrames
 		}
 
 		// Synchronized shutdown: Blocks main thread until complete
@@ -153,10 +161,10 @@ namespace re
 
 		re::Context::Get()->GetParameterBlockAllocator().ClosePermanentPBRegistrationPeriod();
 
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "platform::RenderManager::CreateAPIResources");
+		// Create/buffer new resources from our RenderSystems/GraphicsSystems
 		CreateAPIResources();
-		PIXEndEvent();
-
+		ClearNewResourceDoubleBuffers(); // Ensure we don't try and double-create any resources
+				
 		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
 
 		PIXEndEvent();
@@ -177,8 +185,12 @@ namespace re
 		{
 			renderSystem->ExecuteUpdatePipeline();
 		}
-
+	
+		// Swap our PB buffers, now that our render systems have written to them
 		re::Context::Get()->GetParameterBlockAllocator().SwapBuffers(frameNum);
+
+		// Create any new resources that have been loaded since the last frame:
+		CreateAPIResources();
 
 		PIXEndEvent();
 	}
@@ -189,9 +201,6 @@ namespace re
 		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::Update");
 
 		HandleEvents();
-
-		// Create any new resources that have been loaded since the last frame:
-		CreateAPIResources();
 
 		// Update/buffer param blocks:
 		re::Context::Get()->GetParameterBlockAllocator().BufferParamBlocks();
@@ -210,8 +219,6 @@ namespace re
 		re::Context::Get()->Present();
 		PIXEndEvent();
 
-		EndOfFrame(); // Clear batches, process pipeline and parameter block allocator EndOfFrames
-
 		PIXEndEvent();
 	}
 
@@ -220,7 +227,12 @@ namespace re
 	{
 		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::EndOfFrame");
 
+		// Need to clear the read data now, to make sure we're not holding on to any single frame PBs beyond the end
+		// of the current frame
+		ClearNewResourceDoubleBuffers();
+
 		m_renderBatches.clear();
+		m_createdTextures.clear();
 
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
@@ -230,8 +242,8 @@ namespace re
 				stagePipeline.EndOfFrame();
 			}
 		}
-		
-		re::Context::Get()->GetParameterBlockAllocator().EndOfFrame();
+
+		re::Context::Get()->GetParameterBlockAllocator().EndOfFrame(); 
 
 		PIXEndEvent();
 	}
@@ -258,30 +270,7 @@ namespace re
 		}
 
 		// Clear the new object queues:
-		{
-			std::lock_guard<std::mutex> lock(m_newShaders.m_mutex);
-			m_newShaders.m_newObjects.clear();
-		}
-		{
-			std::lock_guard<std::mutex> lock(m_newMeshPrimitives.m_mutex);
-			m_newMeshPrimitives.m_newObjects.clear();
-		}
-		{
-			std::lock_guard<std::mutex> lock(m_newTextures.m_mutex);
-			m_newTextures.m_newObjects.clear();
-		}
-		{
-			std::lock_guard<std::mutex> lock(m_newSamplers.m_mutex);
-			m_newSamplers.m_newObjects.clear();
-		}
-		{
-			std::lock_guard<std::mutex> lock(m_newTargetSets.m_mutex);
-			m_newTargetSets.m_newObjects.clear();
-		}
-		{
-			std::lock_guard<std::mutex> lock(m_newParameterBlocks.m_mutex);
-			m_newParameterBlocks.m_newObjects.clear();
-		}
+		DestroyNewResourceDoubleBuffers();
 
 		// Need to do this here so the CoreEngine's Window can be destroyed
 		re::Context::Get()->Destroy();
@@ -330,19 +319,89 @@ namespace re
 	}
 
 
+	void RenderManager::CreateAPIResources()
+	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "platform::RenderManager::CreateAPIResources");
+
+		// Make our write buffer the new read buffer:
+		SwapNewResourceDoubleBuffers();
+
+		// Aquire read locks:
+		m_newShaders.AquireReadLock();
+		m_newMeshPrimitives.AquireReadLock();
+		m_newTextures.AquireReadLock();
+		m_newSamplers.AquireReadLock();
+		m_newTargetSets.AquireReadLock();
+		m_newParameterBlocks.AquireReadLock();
+
+		// Record any newly created textures (we clear m_newTextures during Initialize, so we maintain a separate copy):
+		for (auto const& newTexture : m_newTextures.Get())
+		{
+			m_createdTextures.emplace_back(newTexture.second);
+		}
+
+		// Create the resources:
+		platform::RenderManager::CreateAPIResources(*this);
+
+		// Release read locks:
+		m_newShaders.ReleaseReadLock();
+		m_newMeshPrimitives.ReleaseReadLock();
+		m_newTextures.ReleaseReadLock();
+		m_newSamplers.ReleaseReadLock();
+		m_newTargetSets.ReleaseReadLock();
+		m_newParameterBlocks.ReleaseReadLock();
+
+		PIXEndEvent();
+	}
+
+
+	void RenderManager::SwapNewResourceDoubleBuffers()
+	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "RenderManager::SwapNewResourceDoubleBuffers");
+
+		// Swap our new resource double buffers:
+		m_newShaders.Swap();
+		m_newMeshPrimitives.Swap();
+		m_newTextures.Swap();
+		m_newSamplers.Swap();
+		m_newTargetSets.Swap();
+		m_newParameterBlocks.Swap();
+
+		PIXEndEvent();
+	}
+
+
+	void RenderManager::ClearNewResourceDoubleBuffers()
+	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "RenderManager::ClearNewResourceDoubleBuffers");
+
+		m_newShaders.EndOfFrame();
+		m_newMeshPrimitives.EndOfFrame();
+		m_newTextures.EndOfFrame();
+		m_newSamplers.EndOfFrame();
+		m_newTargetSets.EndOfFrame();
+		m_newParameterBlocks.EndOfFrame();
+
+		PIXEndEvent();
+	}
+
+
+	void RenderManager::DestroyNewResourceDoubleBuffers()
+	{
+		m_newShaders.Destroy();
+		m_newMeshPrimitives.Destroy();
+		m_newTextures.Destroy();
+		m_newSamplers.Destroy();
+		m_newTargetSets.Destroy();
+		m_newParameterBlocks.Destroy();
+	}
+
+
 	template<>
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::Shader> newObject)
 	{
 		const size_t nameID = newObject->GetNameID(); // Shaders are required to have unique names
-
-		std::lock_guard<std::mutex> lock(m_newShaders.m_mutex);
-
-		SEAssert("Found a shader with the same name, but a different raw pointer. This suggests a duplicate Shader, "
-			"which should not be possible",
-			m_newShaders.m_newObjects.find(nameID) == m_newShaders.m_newObjects.end() ||
-			m_newShaders.m_newObjects.at(nameID).get() == newObject.get());
-
-		m_newShaders.m_newObjects.insert({ nameID, newObject });
+		m_newShaders.Set(nameID, std::move(newObject));
 	}
 
 
@@ -350,14 +409,7 @@ namespace re
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::MeshPrimitive> newObject)
 	{
 		const size_t dataHash = newObject->GetDataHash(); // MeshPrimitives can have duplicate names
-
-		std::lock_guard<std::mutex> lock(m_newMeshPrimitives.m_mutex);
-
-		SEAssert("Found an object with the same data hash. This suggests a duplicate object exists and has not been "
-			"detected, or an object is being added twice, which should not happen",
-			m_newMeshPrimitives.m_newObjects.find(dataHash) == m_newMeshPrimitives.m_newObjects.end());
-
-		m_newMeshPrimitives.m_newObjects.insert({ dataHash, newObject });
+		m_newMeshPrimitives.Set(dataHash, std::move(newObject));
 	}
 
 
@@ -365,14 +417,7 @@ namespace re
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::Texture> newObject)
 	{
 		const size_t nameID = newObject->GetNameID(); // Textures are required to have unique names
-
-		std::lock_guard<std::mutex> lock(m_newTextures.m_mutex);
-
-		SEAssert("Found an object with the same data hash. This suggests a duplicate object exists and has not been "
-			"detected, or an object is being added twice, which should not happen",
-			m_newTextures.m_newObjects.find(nameID) == m_newTextures.m_newObjects.end());
-
-		m_newTextures.m_newObjects.insert({ nameID, newObject });
+		m_newTextures.Set(nameID, std::move(newObject));
 	}
 
 
@@ -381,14 +426,7 @@ namespace re
 	{
 		// Samplers are (currently) required to have unique names (e.g. "WrapLinearLinear")
 		const size_t nameID = newObject->GetNameID();
-
-		std::lock_guard<std::mutex> lock(m_newSamplers.m_mutex);
-
-		SEAssert("Found an object with the same data hash. This suggests a duplicate object exists and has not been "
-			"detected, or an object is being added twice, which should not happen",
-			m_newSamplers.m_newObjects.find(nameID) == m_newSamplers.m_newObjects.end());
-
-		m_newSamplers.m_newObjects.insert({ nameID, newObject });
+		m_newSamplers.Set(nameID, std::move(newObject));
 	}
 
 
@@ -398,14 +436,7 @@ namespace re
 		// Target sets can have identical names, and are usually identified by their unique target configuration (via a
 		// data hash). It's possible we might have 2 identical target configurations so we use the uniqueID here instead
 		const size_t uniqueID = newObject->GetUniqueID();
-
-		std::lock_guard<std::mutex> lock(m_newTargetSets.m_mutex);
-
-		SEAssert("Found an object with the same data hash. This suggests a duplicate object exists and has not been "
-			"detected, or an object is being added twice, which should not happen",
-			m_newTargetSets.m_newObjects.find(uniqueID) == m_newTargetSets.m_newObjects.end());
-
-		m_newTargetSets.m_newObjects.insert({ uniqueID, newObject });
+		m_newTargetSets.Set(uniqueID, std::move(newObject));
 	}
 
 
@@ -413,14 +444,7 @@ namespace re
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::ParameterBlock> newObject)
 	{
 		const size_t uniqueID = newObject->GetUniqueID(); // Handle
-
-		std::lock_guard<std::mutex> lock(m_newParameterBlocks.m_mutex);
-
-		SEAssert("Found an object with the same data hash. This suggests a duplicate object exists and has not been "
-			"detected, or an object is being added twice, which should not happen",
-			m_newParameterBlocks.m_newObjects.find(uniqueID) == m_newParameterBlocks.m_newObjects.end());
-
-		m_newParameterBlocks.m_newObjects.insert({ uniqueID, newObject });
+		m_newParameterBlocks.Set(uniqueID, std::move(newObject));
 	}
 
 

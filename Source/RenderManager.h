@@ -3,6 +3,7 @@
 
 #include "Command.h"
 #include "Context.h"
+#include "DoubleBufferUnorderedMap.h"
 #include "EngineComponent.h"
 #include "EngineThread.h"
 #include "EventListener.h"
@@ -59,22 +60,27 @@ namespace re
 		template<typename T>
 		void RegisterForCreate(std::shared_ptr<T>);
 
+		// Textures seen during CreateAPIResources() for the current frame:
+		std::vector<std::shared_ptr<re::Texture>> const& GetNewlyCreatedTextures() const;
 
-	private:
-		virtual void CreateAPIResources() = 0;
 
-		template <typename T>
-		struct NewAPIObjects
-		{
-			std::unordered_map<size_t, std::shared_ptr<T>> m_newObjects;
-			std::mutex m_mutex;
-		};
-		NewAPIObjects<re::Shader> m_newShaders;
-		NewAPIObjects<re::MeshPrimitive> m_newMeshPrimitives;
-		NewAPIObjects<re::Texture> m_newTextures;
-		NewAPIObjects<re::Sampler> m_newSamplers;
-		NewAPIObjects<re::TextureTargetSet> m_newTargetSets;
-		NewAPIObjects<re::ParameterBlock> m_newParameterBlocks;
+	private: // API resource management:
+		void CreateAPIResources();
+
+		void SwapNewResourceDoubleBuffers();
+		void ClearNewResourceDoubleBuffers();
+		void DestroyNewResourceDoubleBuffers();
+
+		static constexpr size_t k_newObjectReserveAmount = 128;
+		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::Shader>> m_newShaders;
+		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::MeshPrimitive>> m_newMeshPrimitives;
+		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::Texture>> m_newTextures;
+		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::Sampler>> m_newSamplers;
+		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::TextureTargetSet>> m_newTargetSets;
+		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::ParameterBlock>> m_newParameterBlocks;
+
+		// All textures seen during CreateAPIResources(). We can't use m_newTextures, as it's cleared during Initialize()
+		std::vector<std::shared_ptr<re::Texture>> m_createdTextures;
 
 
 	private:
@@ -130,6 +136,12 @@ namespace re
 	inline uint64_t RenderManager::GetCurrentRenderFrameNum() const
 	{
 		return m_renderFrameNum;
+	}
+
+
+	inline std::vector<std::shared_ptr<re::Texture>> const& RenderManager::GetNewlyCreatedTextures() const
+	{
+		return m_createdTextures;
 	}
 }
 

@@ -24,17 +24,19 @@ namespace re
 			return en::SceneManager::GetSceneData()->GetShader(extensionlessShaderFilename);
 		}
 		// Note: It's possible that 2 threads might simultaneously fail to find a Shader in the SceneData, and create
-		// it. But that's OK, the SceneData will only allow 1 instance to be added
+		// it. But that's OK, the SceneData will tell us if this shader was actually added
 
 		// Our ctor is private; We must manually create the Shader, and then pass the ownership to a shared_ptr
 		shared_ptr<re::Shader> sharedShaderPtr;
 		sharedShaderPtr.reset(new re::Shader(extensionlessShaderFilename));
 
 		// Register the Shader with the SceneData object for lifetime management:
-		en::SceneManager::GetSceneData()->AddUniqueShader(sharedShaderPtr);
-
-		// Register the Shader with the RenderManager, so its API-level object can be created before use
-		re::RenderManager::Get()->RegisterForCreate(sharedShaderPtr);
+		const bool addedNewShader = en::SceneManager::GetSceneData()->AddUniqueShader(sharedShaderPtr);
+		if (addedNewShader)
+		{
+			// Register the Shader with the RenderManager (once only), so its API-level object can be created before use
+			re::RenderManager::Get()->RegisterForCreate(sharedShaderPtr);
+		}
 
 		return sharedShaderPtr;
 	}

@@ -37,39 +37,8 @@ namespace dx12
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
 		// Create and add our RenderSystems:
-		renderManager.m_renderSystems.emplace_back(re::RenderSystem::Create("DX12 Resource Creation RenderSystem"));
-		re::RenderSystem* resourceCreationRenderSystem = renderManager.m_renderSystems.back().get();
-
 		renderManager.m_renderSystems.emplace_back(re::RenderSystem::Create("Default DX12 RenderSystem"));
 		re::RenderSystem* defaultRenderSystem = renderManager.m_renderSystems.back().get();
-
-		// Build the resource creation render system create pipeline:
-		auto resourceCreationCreatePipeline = [](re::RenderSystem* resourceCreateRS)
-		{
-			std::vector<std::shared_ptr<gr::GraphicsSystem>>& graphicsSystems = 
-				resourceCreateRS->GetGraphicsSystems();
-
-			// Create and add graphics systems:
-			std::shared_ptr<gr::ComputeMipsGraphicsSystem> computeMipsGS =
-				std::make_shared<gr::ComputeMipsGraphicsSystem>("DX12 Compute Mips Graphics System");
-			graphicsSystems.emplace_back(computeMipsGS);
-
-			// Build the creation pipeline:
-			computeMipsGS->Create(resourceCreateRS->GetRenderPipeline().AddNewStagePipeline(computeMipsGS->GetName()));
-		};
-		resourceCreationRenderSystem->SetCreatePipeline(resourceCreationCreatePipeline);
-
-		// Build the resource creation update pipeline:
-		auto ResourceCreateUpdatePipeline = [](re::RenderSystem* resourceCreateRS)
-		{
-			// Get our GraphicsSystems:
-			gr::ComputeMipsGraphicsSystem* computeMipsGS = resourceCreateRS->GetGraphicsSystem<gr::ComputeMipsGraphicsSystem>();
-
-			// Execute per-frame updates:
-			computeMipsGS->PreRender();
-		};
-		resourceCreationRenderSystem->SetUpdatePipeline(ResourceCreateUpdatePipeline);
-
 
 		// Build the default render system create pipeline:
 		auto DefaultRenderSystemCreatePipeline = [](re::RenderSystem* defaultRS)
@@ -77,6 +46,10 @@ namespace dx12
 			std::vector<std::shared_ptr<gr::GraphicsSystem>>& graphicsSystems = defaultRS->GetGraphicsSystems();
 
 			// Create and add graphics systems:
+			std::shared_ptr<gr::ComputeMipsGraphicsSystem> computeMipsGS =
+				std::make_shared<gr::ComputeMipsGraphicsSystem>("DX12 Compute Mips Graphics System");
+			graphicsSystems.emplace_back(computeMipsGS);
+
 			std::shared_ptr<gr::GBufferGraphicsSystem> gbufferGS =
 				std::make_shared<gr::GBufferGraphicsSystem>("DX12 GBuffer Graphics System");
 			graphicsSystems.emplace_back(gbufferGS);
@@ -90,6 +63,7 @@ namespace dx12
 			graphicsSystems.emplace_back(tempDebugGS);
 
 			// Build the creation pipeline:
+			computeMipsGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(computeMipsGS->GetName()));
 			gbufferGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(gbufferGS->GetName()));
 			//deferredLightingGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(deferredLightingGS->GetName()));
 			tempDebugGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(tempDebugGS->GetName()));
@@ -101,11 +75,13 @@ namespace dx12
 		auto UpdatePipeline = [](re::RenderSystem* renderSystem)
 		{
 			// Get our GraphicsSystems:
+			gr::ComputeMipsGraphicsSystem* computeMipsGS = renderSystem->GetGraphicsSystem<gr::ComputeMipsGraphicsSystem>();
 			gr::GBufferGraphicsSystem* gbufferGS = renderSystem->GetGraphicsSystem<gr::GBufferGraphicsSystem>();
 			//gr::DeferredLightingGraphicsSystem* deferredLightingGS = renderSystem->GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
 			gr::TempDebugGraphicsSystem* tempDebugGS = renderSystem->GetGraphicsSystem<gr::TempDebugGraphicsSystem>();
 
 			// Execute per-frame updates:
+			computeMipsGS->PreRender();
 			gbufferGS->PreRender();
 			tempDebugGS->PreRender();
 		};
@@ -113,18 +89,18 @@ namespace dx12
 	}
 
 
-	void RenderManager::CreateAPIResources()
+	void RenderManager::CreateAPIResources(re::RenderManager& renderManager)
 	{
+		// Note: We've already obtained the read lock on all new resources by this point
+
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
 		dx12::SwapChain::PlatformParams const* swapChainParams =
 			context->GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
-		const bool hasDataToCopy = !m_newMeshPrimitives.m_newObjects.empty() ||
-			!m_newTextures.m_newObjects.empty();
-
-		// In DX12, we explicitely create the 1st RenderSystem to handle resource creation:
-		re::RenderSystem* resourceCreateRS = m_renderSystems[0].get();
+		const bool hasDataToCopy = 
+			renderManager.m_newMeshPrimitives.HasReadData() ||
+			renderManager.m_newTextures.HasReadData();
 
 		// Handle anything that requires a copy queue:
 		uint64_t copyQueueFenceVal = 0;
@@ -144,33 +120,21 @@ namespace dx12
 			ID3D12GraphicsCommandList2* copyCommandListD3D = copyCommandList->GetD3DCommandList();
 
 			// Mesh Primitives:
-			if (!m_newMeshPrimitives.m_newObjects.empty())
+			if (renderManager.m_newMeshPrimitives.HasReadData())
 			{
-				std::lock_guard<std::mutex> lock(m_newMeshPrimitives.m_mutex);
-				for (auto& newMeshPrimitive : m_newMeshPrimitives.m_newObjects)
+				for (auto& newMeshPrimitive : renderManager.m_newMeshPrimitives.Get())
 				{
 					dx12::MeshPrimitive::Create(*newMeshPrimitive.second, copyCommandListD3D, intermediateResources);
 				}
-				m_newMeshPrimitives.m_newObjects.clear();
 			}
 
 			// Textures:
-			if (!m_newTextures.m_newObjects.empty())
+			if (renderManager.m_newTextures.HasReadData())
 			{
-				gr::ComputeMipsGraphicsSystem* computeMipsGS = 
-					resourceCreateRS->GetGraphicsSystem<gr::ComputeMipsGraphicsSystem>();
-
-				std::lock_guard<std::mutex> lock(m_newTextures.m_mutex);
-				for (auto& texture : m_newTextures.m_newObjects)
+				for (auto& texture : renderManager.m_newTextures.Get())
 				{
 					dx12::Texture::Create(*texture.second, copyCommandListD3D, intermediateResources);
-
-					if (texture.second->GetTextureParams().m_useMIPs)
-					{
-						computeMipsGS->AddTexture(texture.second);
-					}
 				}
-				m_newTextures.m_newObjects.clear();
 			}
 
 			// Execute the copy before moving on
@@ -178,38 +142,33 @@ namespace dx12
 		}
 
 		// Samplers:
-		if (!m_newSamplers.m_newObjects.empty())
+		if (renderManager.m_newSamplers.HasReadData())
 		{
-			std::lock_guard<std::mutex> lock(m_newSamplers.m_mutex);
-			for (auto& newObject : m_newSamplers.m_newObjects)
+			for (auto& newObject : renderManager.m_newSamplers.Get())
 			{
 				dx12::Sampler::Create(*newObject.second);
 			}
-			m_newSamplers.m_newObjects.clear();
 		}
 		// Texture Target Sets:
-		if (!m_newTargetSets.m_newObjects.empty())
+		if (renderManager.m_newTargetSets.HasReadData())
 		{
-			std::lock_guard<std::mutex> lock(m_newTargetSets.m_mutex);
-			for (auto& newObject : m_newTargetSets.m_newObjects)
+			for (auto& newObject : renderManager.m_newTargetSets.Get())
 			{
 				newObject.second->Commit();
 				dx12::TextureTargetSet::CreateColorTargets(*newObject.second);
 				dx12::TextureTargetSet::CreateDepthStencilTarget(*newObject.second);
 			}
-			m_newTargetSets.m_newObjects.clear();
 		}
 		// Shaders:
-		if (!m_newShaders.m_newObjects.empty())
+		if (renderManager.m_newShaders.HasReadData())
 		{
-			std::lock_guard<std::mutex> lock(m_newShaders.m_mutex);
-			for (auto& shader : m_newShaders.m_newObjects)
+			for (auto& shader : renderManager.m_newShaders.Get())
 			{
 				// Create the Shader object:
 				dx12::Shader::Create(*shader.second);
 
 				// Create any necessary PSO's for the Shader:
-				for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+				for (std::unique_ptr<re::RenderSystem>& renderSystem : renderManager.m_renderSystems)
 				{
 					re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
 					for (StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
@@ -238,17 +197,14 @@ namespace dx12
 					}
 				}
 			}
-			m_newShaders.m_newObjects.clear();
 		}
 		// Parameter Blocks:
-		if (!m_newParameterBlocks.m_newObjects.empty())
+		if (renderManager.m_newParameterBlocks.HasReadData())
 		{
-			std::lock_guard<std::mutex> lock(m_newParameterBlocks.m_mutex);
-			for (auto& newObject : m_newParameterBlocks.m_newObjects)
+			for (auto& newObject : renderManager.m_newParameterBlocks.Get())
 			{
 				dx12::ParameterBlock::Create(*newObject.second);
 			}
-			m_newParameterBlocks.m_newObjects.clear();
 		}
 
 		// If we added anything to the copy queue, and wait for it to be done (blocking)

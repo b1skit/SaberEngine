@@ -123,69 +123,59 @@ namespace opengl
 	}
 
 
-	void RenderManager::CreateAPIResources()
+	void RenderManager::CreateAPIResources(re::RenderManager& renderManager)
 	{
+		// Note: We've already obtained the read lock on all new resources by this point
+
 		// Textures:
-		if (!m_newTextures.m_newObjects.empty())
+		if (renderManager.m_newTextures.HasReadData())
 		{
-			std::lock_guard<std::mutex> lock(m_newTextures.m_mutex);
-			for (auto& newObject : m_newTextures.m_newObjects)
+			for (auto& newObject : renderManager.m_newTextures.Get())
 			{
 				opengl::Texture::Create(*newObject.second);
 			}
-			m_newTextures.m_newObjects.clear();
 		}
 		// Samplers:
-		if (!m_newSamplers.m_newObjects.empty())
+		if (renderManager.m_newSamplers.HasReadData())
 		{
-			std::lock_guard<std::mutex> lock(m_newSamplers.m_mutex);
-			for (auto& newObject : m_newSamplers.m_newObjects)
+			for (auto& newObject : renderManager.m_newSamplers.Get())
 			{
 				opengl::Sampler::Create(*newObject.second);
 			}
-			m_newSamplers.m_newObjects.clear();
 		}
 		// Texture Target Sets:
-		if (!m_newTargetSets.m_newObjects.empty())
+		if (renderManager.m_newTargetSets.HasReadData())
 		{
-			std::lock_guard<std::mutex> lock(m_newTargetSets.m_mutex);
-			for (auto& newObject : m_newTargetSets.m_newObjects)
+			for (auto& newObject : renderManager.m_newTargetSets.Get())
 			{
 				newObject.second->Commit();
 				opengl::TextureTargetSet::CreateColorTargets(*newObject.second);
 				opengl::TextureTargetSet::CreateDepthStencilTarget(*newObject.second);
 			}
-			m_newTargetSets.m_newObjects.clear();
 		}
 		// Shaders:
-		if (!m_newShaders.m_newObjects.empty())
+		if (renderManager.m_newShaders.HasReadData())
 		{
-			std::lock_guard<std::mutex> lock(m_newShaders.m_mutex);
-			for (auto& newObject : m_newShaders.m_newObjects)
+			for (auto& newObject : renderManager.m_newShaders.Get())
 			{
 				opengl::Shader::Create(*newObject.second);
 			}
-			m_newShaders.m_newObjects.clear();
 		}
 		// Mesh Primitives:
-		if (!m_newMeshPrimitives.m_newObjects.empty())
+		if (renderManager.m_newMeshPrimitives.HasReadData())
 		{
-			std::lock_guard<std::mutex> lock(m_newMeshPrimitives.m_mutex);
-			for (auto& newObject : m_newMeshPrimitives.m_newObjects)
+			for (auto& newObject : renderManager.m_newMeshPrimitives.Get())
 			{
 				opengl::MeshPrimitive::Create(*newObject.second);
 			}
-			m_newMeshPrimitives.m_newObjects.clear();
 		}
 		// Parameter Blocks:
-		if (!m_newParameterBlocks.m_newObjects.empty())
+		if (renderManager.m_newParameterBlocks.HasReadData())
 		{
-			std::lock_guard<std::mutex> lock(m_newParameterBlocks.m_mutex);
-			for (auto& newObject : m_newParameterBlocks.m_newObjects)
+			for (auto& newObject : renderManager.m_newParameterBlocks.Get())
 			{
 				opengl::ParameterBlock::Create(*newObject.second);
 			}
-			m_newParameterBlocks.m_newObjects.clear();
 		}
 	}
 

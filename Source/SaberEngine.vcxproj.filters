@@ -784,6 +784,9 @@
     <ClInclude Include="RenderSystem.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
+    <ClInclude Include="DoubleBufferUnorderedMap.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\glsl\blitShader.frag">

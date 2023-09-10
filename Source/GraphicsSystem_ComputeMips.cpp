@@ -2,6 +2,7 @@
 #include "ConfigKeys.h"
 #include "GraphicsSystem_ComputeMips.h"
 #include "MathUtils.h"
+#include "RenderManager.h"
 
 
 namespace
@@ -65,7 +66,9 @@ namespace gr
 
 	void ComputeMipsGraphicsSystem::PreRender()
 	{
-		if (m_textures.empty())
+		std::vector<std::shared_ptr<re::Texture>> const& newTextures = 
+			re::RenderManager::Get()->GetNewlyCreatedTextures();
+		if (newTextures.empty())
 		{
 			return;
 		}
@@ -77,10 +80,13 @@ namespace gr
 
 		re::StagePipeline::StagePipelineItr insertItr = m_parentStageItr;
 
-		for (std::shared_ptr<re::Texture> newTexture : m_textures)
+		for (std::shared_ptr<re::Texture> newTexture : newTextures)
 		{
 			re::Texture::TextureParams const& textureParams = newTexture->GetTextureParams();
-			SEAssert("Trying to generate MIPs for a texture that does not use them", textureParams.m_useMIPs == true);
+			if (!textureParams.m_useMIPs)
+			{
+				continue;
+			}
 
 			const uint32_t totalMipLevels = newTexture->GetNumMips(); // Includes mip 0
 
@@ -158,7 +164,6 @@ namespace gr
 				}
 			}			
 		}
-		m_textures.clear();
 	}
 
 
@@ -172,11 +177,5 @@ namespace gr
 	{
 		// TODO: Is this required?
 		// -> Perhaps we should hide this as a no-op behind a "ComputeGraphicsSystem" interface?
-	}
-
-
-	void ComputeMipsGraphicsSystem::AddTexture(std::shared_ptr<re::Texture> texture)
-	{
-		m_textures.emplace_back(texture);
 	}
 }

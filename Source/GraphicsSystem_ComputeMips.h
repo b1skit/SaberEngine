@@ -18,9 +18,6 @@ namespace gr
 
 		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 
-		// Add newly created textures; Mips will be generated in the next frame via a single-frame render stage
-		void AddTexture(std::shared_ptr<re::Texture>);
-
 
 	private:
 		void CreateBatches() override;
@@ -31,6 +28,5 @@ namespace gr
 		re::StagePipeline* m_stagePipeline;
 
 		std::shared_ptr<re::Shader> m_mipMapGenerationShader;
-		std::vector<std::shared_ptr<re::Texture>> m_textures;
 	};
 }

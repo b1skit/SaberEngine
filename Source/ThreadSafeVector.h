@@ -9,7 +9,7 @@ namespace util
 	class ThreadSafeVector
 	{
 	public:
-		ThreadSafeVector();
+		ThreadSafeVector() = default;
 		ThreadSafeVector(ThreadSafeVector const&);
 		ThreadSafeVector(ThreadSafeVector&&);
 		
@@ -39,12 +39,6 @@ namespace util
 		std::vector<T> m_vector;
 		mutable std::mutex m_vectorMutex;
 	};
-
-
-	template<typename T>
-	inline ThreadSafeVector<T>::ThreadSafeVector()
-	{
-	}
 
 
 	template<typename T>

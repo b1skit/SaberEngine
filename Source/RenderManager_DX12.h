@@ -20,6 +20,7 @@ namespace dx12
 	public: // Platform PIMPL:
 		static void Initialize(re::RenderManager&);
 		static void Shutdown(re::RenderManager&);
+		static void CreateAPIResources(re::RenderManager&);
 
 		static void StartImGuiFrame();
 		static void RenderImGui();
@@ -27,7 +28,7 @@ namespace dx12
 
 	private: // re::RenderManager interface:
 		void Render() override;
-		void CreateAPIResources() override;
+		
 
 
 	private:
