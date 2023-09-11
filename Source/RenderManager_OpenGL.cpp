@@ -60,9 +60,9 @@ namespace opengl
 		re::RenderSystem* defaultRenderSystem = renderManager.m_renderSystems.back().get();	
 
 		// Build the create pipeline:
-		auto CreatePipeline = [](re::RenderSystem* renderSystem)
+		auto CreatePipeline = [](re::RenderSystem* defaultRS)
 		{
-			std::vector<std::shared_ptr<gr::GraphicsSystem>>& graphicsSystems = renderSystem->GetGraphicsSystems();
+			std::vector<std::shared_ptr<gr::GraphicsSystem>>& graphicsSystems = defaultRS->GetGraphicsSystems();
 
 			// Create and add graphics systems:
 			std::shared_ptr<gr::GBufferGraphicsSystem> gbufferGS = 
@@ -90,12 +90,14 @@ namespace opengl
 			graphicsSystems.emplace_back(tonemappingGS);
 
 			// Build the creation pipeline:
-			gbufferGS->Create(renderSystem->GetRenderPipeline().AddNewStagePipeline(gbufferGS->GetName()));
-			shadowGS->Create(renderSystem->GetRenderPipeline().AddNewStagePipeline(shadowGS->GetName()));
-			deferredLightingGS->Create(*renderSystem, renderSystem->GetRenderPipeline().AddNewStagePipeline(deferredLightingGS->GetName()));
-			skyboxGS->Create(*renderSystem, renderSystem->GetRenderPipeline().AddNewStagePipeline(skyboxGS->GetName()));
-			bloomGS->Create(*renderSystem, renderSystem->GetRenderPipeline().AddNewStagePipeline(bloomGS->GetName()));
-			tonemappingGS->Create(*renderSystem, renderSystem->GetRenderPipeline().AddNewStagePipeline(tonemappingGS->GetName()));
+			deferredLightingGS->CreateResourceGenerationStages(
+				defaultRS->GetRenderPipeline().AddNewStagePipeline("Deferred Lighting Resource Creation"));
+			gbufferGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(gbufferGS->GetName()));
+			shadowGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(shadowGS->GetName()));
+			deferredLightingGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(deferredLightingGS->GetName()));
+			skyboxGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(skyboxGS->GetName()));
+			bloomGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(bloomGS->GetName()));
+			tonemappingGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(tonemappingGS->GetName()));
 		};
 		defaultRenderSystem->SetCreatePipeline(CreatePipeline);
 

@@ -269,6 +269,9 @@ namespace re
 			renderSystem->Destroy();
 		}
 
+		m_createdTextures.clear();
+		m_renderBatches.clear();
+
 		// Clear the new object queues:
 		DestroyNewResourceDoubleBuffers();
 

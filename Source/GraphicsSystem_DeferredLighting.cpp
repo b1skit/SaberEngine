@@ -197,61 +197,19 @@ namespace gr
 	}
 
 
-	void DeferredLightingGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
+	void DeferredLightingGraphicsSystem::CreateResourceGenerationStages(re::StagePipeline& pipeline)
 	{
-		GBufferGraphicsSystem* gBufferGS = renderSystem.GetGraphicsSystem<GBufferGraphicsSystem>();
-		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
-		
-		// Create a shared lighting stage texture target:
-		Texture::TextureParams lightTargetParams;
-		lightTargetParams.m_width = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
-		lightTargetParams.m_height = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName);
-		lightTargetParams.m_faces = 1;
-		lightTargetParams.m_usage = Texture::Usage::ColorTarget;
-		lightTargetParams.m_dimension = Texture::Dimension::Texture2D;
-		lightTargetParams.m_format = Texture::Format::RGBA16F;
-		lightTargetParams.m_colorSpace = Texture::ColorSpace::Linear;
-		lightTargetParams.m_useMIPs = false;
-		lightTargetParams.m_addToSceneData = false;
-		lightTargetParams.m_clear.m_color = vec4(0.0f, 0.0f, 0.0f, 0.0f);
-
-		std::shared_ptr<Texture> outputTexture = re::Texture::Create("DeferredLightTarget", lightTargetParams, false);
-
-		re::TextureTarget::TargetParams targetParams;
-
-		std::shared_ptr<TextureTargetSet> deferredLightingTargetSet = 
-			re::TextureTargetSet::Create("Deferred light targets");
-		deferredLightingTargetSet->SetColorTarget(0, outputTexture, targetParams);
-		deferredLightingTargetSet->SetDepthStencilTarget(gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget());
-		
-		// All deferred lighting is additive
-		re::TextureTarget::TargetParams::BlendModes deferredBlendModes
-		{
-			re::TextureTarget::TargetParams::BlendMode::One,
-			re::TextureTarget::TargetParams::BlendMode::One,
-		};
-		deferredLightingTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
-
-		Camera* deferredLightingCam = SceneManager::Get()->GetMainCamera().get();
-
-		
-		// Set the target sets, even if the stages aren't actually used (to ensure they're still valid)
-		m_ambientStage->SetTextureTargetSet(deferredLightingTargetSet);
-		m_keylightStage->SetTextureTargetSet(deferredLightingTargetSet);
-		m_pointlightStage->SetTextureTargetSet(deferredLightingTargetSet);
-
-		// We'll be creating the data we need to render the scene's ambient light:
 		gr::Light::LightTypeProperties& ambientProperties =
 			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(Light::AmbientIBL);
 
 		shared_ptr<Texture> iblTexture = SceneManager::GetSceneData()->GetIBLTexture();
-		
+
 		// 1st frame: Generate the pre-integrated BRDF LUT via a single-frame compute stage:
 		{
 			re::RenderStage::ComputeStageParams computeStageParams;
 			std::shared_ptr<re::RenderStage> brdfStage =
 				re::RenderStage::CreateSingleFrameComputeStage("BRDF pre-integration compute stage", computeStageParams);
-			
+
 			brdfStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_generateBRDFIntegrationMapShaderName));
 
 			// Create a render target texture:			
@@ -267,7 +225,7 @@ namespace gr
 			brdfParams.m_addToSceneData = false;
 			brdfParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-			ambientProperties.m_ambient.m_BRDF_integrationMap = 
+			ambientProperties.m_ambient.m_BRDF_integrationMap =
 				re::Texture::Create("BRDFIntegrationMap", brdfParams, false);
 
 			std::shared_ptr<re::TextureTargetSet> brdfStageTargets = re::TextureTargetSet::Create("BRDF Stage Targets");
@@ -375,7 +333,7 @@ namespace gr
 					iemGenerationParams,
 					re::ParameterBlock::PBType::SingleFrame);
 				iemStage->AddSingleFrameParameterBlock(iemGenerationPB);
-				
+
 				// Construct a camera param block to draw into our cubemap rendering targets:
 				cubemapCamParams.g_view = cubemapViews[face];
 				shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
@@ -437,7 +395,7 @@ namespace gr
 						"Tex0",
 						iblTexture,
 						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
-					
+
 					// Construct a camera param block to draw into our cubemap rendering targets:
 					cubemapCamParams.g_view = cubemapViews[face];
 					shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
@@ -446,7 +404,7 @@ namespace gr
 						re::ParameterBlock::PBType::SingleFrame);
 					pmremStage->AddSingleFrameParameterBlock(pb);
 
-					IEMPMREMGenerationParams const& pmremGenerationParams = 
+					IEMPMREMGenerationParams const& pmremGenerationParams =
 						GetIEMPMREMGenerationParamsData(currentMipLevel, numMipLevels);
 					shared_ptr<re::ParameterBlock> pmremGenerationPB = re::ParameterBlock::Create(
 						IEMPMREMGenerationParams::s_shaderName,
@@ -458,7 +416,7 @@ namespace gr
 					targetParams.m_targetFace = face;
 					targetParams.m_targetSubesource = currentMipLevel;
 
-					std::shared_ptr<TextureTargetSet> pmremTargetSet = 
+					std::shared_ptr<TextureTargetSet> pmremTargetSet =
 						re::TextureTargetSet::Create("PMREM texture targets: Face " + postFix);
 
 					pmremTargetSet->SetColorTarget(0, ambientProperties.m_ambient.m_PMREMTex, targetParams);
@@ -482,6 +440,59 @@ namespace gr
 				}
 			}
 		}
+	}
+
+
+	void DeferredLightingGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
+	{
+		GBufferGraphicsSystem* gBufferGS = renderSystem.GetGraphicsSystem<GBufferGraphicsSystem>();
+		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
+		
+		// Create a shared lighting stage texture target:
+		Texture::TextureParams lightTargetParams;
+		lightTargetParams.m_width = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
+		lightTargetParams.m_height = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName);
+		lightTargetParams.m_faces = 1;
+		lightTargetParams.m_usage = Texture::Usage::ColorTarget;
+		lightTargetParams.m_dimension = Texture::Dimension::Texture2D;
+		lightTargetParams.m_format = Texture::Format::RGBA16F;
+		lightTargetParams.m_colorSpace = Texture::ColorSpace::Linear;
+		lightTargetParams.m_useMIPs = false;
+		lightTargetParams.m_addToSceneData = false;
+		lightTargetParams.m_clear.m_color = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+		std::shared_ptr<Texture> outputTexture = re::Texture::Create("DeferredLightTarget", lightTargetParams, false);
+
+		re::TextureTarget::TargetParams targetParams;
+
+		std::shared_ptr<TextureTargetSet> deferredLightingTargetSet = 
+			re::TextureTargetSet::Create("Deferred light targets");
+		deferredLightingTargetSet->SetColorTarget(0, outputTexture, targetParams);
+		deferredLightingTargetSet->SetDepthStencilTarget(gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget());
+		
+		// All deferred lighting is additive
+		re::TextureTarget::TargetParams::BlendModes deferredBlendModes
+		{
+			re::TextureTarget::TargetParams::BlendMode::One,
+			re::TextureTarget::TargetParams::BlendMode::One,
+		};
+		deferredLightingTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
+
+		Camera* deferredLightingCam = SceneManager::Get()->GetMainCamera().get();
+
+		
+		// Set the target sets, even if the stages aren't actually used (to ensure they're still valid)
+		m_ambientStage->SetTextureTargetSet(deferredLightingTargetSet);
+		m_keylightStage->SetTextureTargetSet(deferredLightingTargetSet);
+		m_pointlightStage->SetTextureTargetSet(deferredLightingTargetSet);
+
+		// We'll be creating the data we need to render the scene's ambient light:
+		gr::Light::LightTypeProperties& ambientProperties =
+			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(Light::AmbientIBL);
+
+		shared_ptr<Texture> iblTexture = SceneManager::GetSceneData()->GetIBLTexture();
+		
+		
 
 		const bool ambientIsValid =
 			ambientProperties.m_ambient.m_BRDF_integrationMap &&

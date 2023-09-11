@@ -23,6 +23,7 @@ namespace gr
 
 		~DeferredLightingGraphicsSystem() override {}
 
+		void CreateResourceGenerationStages(re::StagePipeline&);
 		void Create(re::RenderSystem&, re::StagePipeline&);
 
 		void PreRender();
