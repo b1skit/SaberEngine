@@ -563,9 +563,7 @@ namespace dx12
 			const uint64_t currentModificationFence = maxModificationFences[queueIdx];
 			if (dx12::Fence::GetRawFenceValue(currentModificationFence) > 0)
 			{
-				const dx12::CommandListType cmdListType =
-					dx12::Fence::GetCommandListTypeFromFenceValue(currentModificationFence);
-
+				const dx12::CommandListType cmdListType = static_cast<dx12::CommandListType>(queueIdx);
 				if (cmdListType != m_type) // Don't wait on resources this queue is about to modify
 				{
 					dx12::CommandQueue& commandQueue = context->GetCommandQueue(cmdListType);

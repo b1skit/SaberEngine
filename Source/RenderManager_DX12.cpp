@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
-#include <wrl.h>
 
 #include <pix3.h>
 
@@ -96,28 +95,31 @@ namespace dx12
 	{
 		// Note: We've already obtained the read lock on all new resources by this point
 
+		dx12::RenderManager& dx12RenderManager = dynamic_cast<dx12::RenderManager&>(renderManager);
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
-		dx12::SwapChain::PlatformParams const* swapChainParams =
-			context->GetSwapChain().GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+		dx12::CommandQueue* copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
+		PIXBeginEvent(
+			copyQueue->GetD3DCommandQueue(),
+			PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CopyQueue),
+			"Copy Queue: Create API Resources");
+
+		// Ensure any intermediate resources created on the previous frame are done. In practice this is not necessary,
+		// but we include this check as a precaution since we're about to clear the intermediate resources
+		if (!copyQueue->GetFence().IsFenceComplete(dx12RenderManager.m_intermediateResourceFenceVal))
+		{
+			copyQueue->CPUWait(dx12RenderManager.m_intermediateResourceFenceVal);
+		}
+		dx12RenderManager.m_intermediateResources.clear();	
 
 		const bool hasDataToCopy = 
 			renderManager.m_newMeshPrimitives.HasReadData() ||
 			renderManager.m_newTextures.HasReadData();
 
-		// Handle anything that requires a copy queue:
-		uint64_t copyQueueFenceVal = 0;
-		std::vector<ComPtr<ID3D12Resource>> intermediateResources;
-		dx12::CommandQueue* copyQueue = nullptr;
+		// Handle anything that requires a copy queue:		
+		std::vector<ComPtr<ID3D12Resource>>& intermediateResources = dx12RenderManager.m_intermediateResources;
 		if (hasDataToCopy)
 		{
-			copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
-
-			PIXBeginEvent(
-				copyQueue->GetD3DCommandQueue(), 
-				PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CopyQueue), 
-				"Copy Queue: Create API Resources");
-
 			// TODO: Get multiple command lists, and record on multiple threads:
 			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
 			ID3D12GraphicsCommandList2* copyCommandListD3D = copyCommandList->GetD3DCommandList();
@@ -141,7 +143,7 @@ namespace dx12
 			}
 
 			// Execute the copy before moving on
-			copyQueueFenceVal = copyQueue->Execute(1, &copyCommandList);
+			dx12RenderManager.m_intermediateResourceFenceVal = copyQueue->Execute(1, &copyCommandList);
 		}
 
 		// Samplers:
@@ -210,16 +212,7 @@ namespace dx12
 			}
 		}
 
-		// If we added anything to the copy queue, and wait for it to be done (blocking)
-		// TODO: We should use the resource modification fence instead of waiting here. This would allow us to clear the
-		// intermediateResources at the end of the frame/start of the next, and GPUWait on the copy instead
-		if (copyQueue)
-		{
-			copyQueue->CPUWait(copyQueueFenceVal);
-			intermediateResources.clear(); // The copy is done: Free the intermediate HEAP_TYPE_UPLOAD resources
-
-			PIXEndEvent(copyQueue->GetD3DCommandQueue());
-		}
+		PIXEndEvent(copyQueue->GetD3DCommandQueue());
 	}
 
 
@@ -535,6 +528,7 @@ namespace dx12
 			{
 				SEAssertF("Currently not expecting to find a copy queue genereted from a render stage");
 			}
+			break;
 			case CommandListType::VideoDecode:
 			case CommandListType::VideoProcess:
 			case CommandListType::VideoEncode:

@@ -1,5 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include <wrl.h>
+#include <d3d12.h>
 
 #include "RenderManager.h"
 
@@ -30,9 +32,11 @@ namespace dx12
 		void Render() override;
 		
 
-
 	private:
 		static const uint8_t k_numFrames = 3; // Number of frames in flight/number of backbuffers
+
+		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_intermediateResources; // From resources created in the previous frame
+		uint64_t m_intermediateResourceFenceVal;
 	};
 
 
