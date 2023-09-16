@@ -25,7 +25,7 @@ namespace re
 		{
 			// Subresource info:
 			uint32_t m_targetFace = 0;
-			uint32_t m_targetSubesource = 0;
+			uint32_t m_targetMip = 0;
 
 			// TODO: Support blend operations (add/subtract/min/max etc) for both color and alpha channels
 

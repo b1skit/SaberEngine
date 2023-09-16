@@ -1,28 +1,66 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "CommandList_DX12.h"
 #include "DebugConfiguration.h"
 #include "Debug_DX12.h"
+#include "Fence_DX12.h"
 #include "ResourceStateTracker_DX12.h"
+
+
+namespace
+{
+	constexpr bool IsWriteableState(D3D12_RESOURCE_STATES state)
+	{
+		switch (state)
+		{
+		case D3D12_RESOURCE_STATE_RENDER_TARGET:
+		case D3D12_RESOURCE_STATE_UNORDERED_ACCESS:
+		case D3D12_RESOURCE_STATE_DEPTH_WRITE:
+		case D3D12_RESOURCE_STATE_STREAM_OUT:
+		case D3D12_RESOURCE_STATE_COPY_DEST:
+		case D3D12_RESOURCE_STATE_RESOLVE_DEST:
+		case D3D12_RESOURCE_STATE_VIDEO_DECODE_WRITE:
+		case D3D12_RESOURCE_STATE_VIDEO_PROCESS_WRITE:
+		case D3D12_RESOURCE_STATE_VIDEO_ENCODE_WRITE:
+			return true;
+		default:
+			return false;
+		}
+	}
+}
 
 
 namespace dx12
 {
 	/******************************************************************************************************************/
-	// Resource States
+	// GlobalResourceState
 	/******************************************************************************************************************/
+
+	constexpr uint64_t k_invalidLastFence = std::numeric_limits<uint64_t>::max();
 
 	GlobalResourceState::GlobalResourceState(
 		D3D12_RESOURCE_STATES initialState, uint32_t numSubresources)
 		: IResourceState(initialState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
 		, m_numSubresources(numSubresources)
+		, m_lastFence(k_invalidLastFence) // Not yet used on a command list
+		, m_lastModificationFence(k_invalidLastFence)
 	{
 		SEAssert("Invalid number of subresources", numSubresources > 0);
 	}
 
 
-	void GlobalResourceState::SetState(D3D12_RESOURCE_STATES afterState, SubresourceIdx subresourceIdx)
+	void GlobalResourceState::SetState(
+		D3D12_RESOURCE_STATES afterState, SubresourceIdx subresourceIdx, uint64_t lastFence)
 	{
 		IResourceState::SetState(afterState, subresourceIdx, false);
+		
+		m_lastFence = lastFence;
+
+		if (IsWriteableState(afterState))
+		{
+			m_lastModificationFence = lastFence;
+		}
 	}
+
 
 	uint32_t GlobalResourceState::GetNumSubresources() const
 	{
@@ -30,10 +68,42 @@ namespace dx12
 	}
 
 
-	LocalResourceState::LocalResourceState(D3D12_RESOURCE_STATES initialState, uint32_t subresourceIdx)
+	dx12::CommandListType GlobalResourceState::GetLastCommandListType() const
+	{
+		if (m_lastFence == k_invalidLastFence)
+		{
+			return dx12::CommandListType::CommandListType_Invalid;
+		}
+		return dx12::Fence::GetCommandListTypeFromFenceValue(m_lastFence);
+	}
+
+
+	uint64_t GlobalResourceState::GetLastFenceValue() const
+	{
+		return m_lastFence;
+	}
+
+
+	uint64_t GlobalResourceState::GetLastModificationFenceValue() const
+	{
+		return m_lastModificationFence;
+	}
+
+
+	/******************************************************************************************************************/
+	// LocalResourceState
+	/******************************************************************************************************************/
+
+
+	LocalResourceState::LocalResourceState(D3D12_RESOURCE_STATES initialState, SubresourceIdx subresourceIdx)
 		: IResourceState(initialState, subresourceIdx)
 	{
 	}
+
+
+	/******************************************************************************************************************/
+	// IResourceState
+	/******************************************************************************************************************/
 
 
 	IResourceState::IResourceState(D3D12_RESOURCE_STATES initialState, SubresourceIdx subresourceIdx)
@@ -113,18 +183,24 @@ namespace dx12
 	}
 
 
+	// Note: Caller must have called GetGlobalStatesMutex() and locked it before using this function
 	GlobalResourceState const& GlobalResourceStateTracker::GetResourceState(ID3D12Resource* resource) const
 	{
+		// TODO: It's risky to return this value by reference: We should assert the calling thread holds the m_globalStatesMutex
+			
 		SEAssert("Resource not found, was it registered?", m_globalStates.contains(resource));
 		return m_globalStates.at(resource);
 	}
 
 
+	// Note: Caller must have called GetGlobalStatesMutex() and locked it before using this function
 	void GlobalResourceStateTracker::SetResourceState(
-		ID3D12Resource* resource, D3D12_RESOURCE_STATES newState, SubresourceIdx subresourceIdx)
+		ID3D12Resource* resource, D3D12_RESOURCE_STATES newState, SubresourceIdx subresourceIdx, uint64_t lastFence)
 	{
+		// TODO: We should assert the calling thread currently holds the m_globalStatesMutex
+
 		SEAssert("Resource not found, was it registered?", m_globalStates.contains(resource));
-		m_globalStates.at(resource).SetState(newState, subresourceIdx);
+		m_globalStates.at(resource).SetState(newState, subresourceIdx, lastFence);
 	}
 
 
@@ -164,7 +240,7 @@ namespace dx12
 	}
 
 
-	bool LocalResourceStateTracker::HasResourceState(ID3D12Resource* resource, uint32_t subresourceIdx) const
+	bool LocalResourceStateTracker::HasResourceState(ID3D12Resource* resource, SubresourceIdx subresourceIdx) const
 	{
 		return m_knownStates.contains(resource) && 
 			(m_knownStates.at(resource).HasSubresourceRecord(subresourceIdx) || 

@@ -1,5 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
-
+#ifndef SABERCOMPUTECOMMON_HLSLI
+#define SABERCOMPUTECOMMON_HLSLI
 
 struct ComputeIn
 {
@@ -9,3 +10,5 @@ struct ComputeIn
 	uint GIdx	: SV_GroupIndex;		// Flattened local index within the thread group
 };
 
+
+#endif // SABERCOMPUTECOMMON_HLSLI

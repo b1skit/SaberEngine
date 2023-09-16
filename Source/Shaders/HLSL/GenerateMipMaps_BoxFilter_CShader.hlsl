@@ -13,13 +13,13 @@
 struct MipGenerationParamsCB
 {
 	float4 g_output0Dimensions; // .xyzw = width, height, 1/width, 1/height of the output0 texture
-	uint4 g_mipParams; // .xyzw = srcMipLevel, numMips, srcDimensionMode, 0
+	uint4 g_mipParams; // .xyzw = srcMipLevel, numMips, srcDimensionMode, g_mipParams
 	bool g_isSRGB;
 };
 ConstantBuffer<MipGenerationParamsCB> MipGenerationParams;
 
 SamplerState ClampLinearLinear;
-Texture2D<float4> SrcTex;
+Texture2DArray<float4> SrcTex;
 
 // TODO: If we're using UNORM or SNORM types with UAVs, we need to declare the resource as unorm/snorm
 //	-> e.g. RWBuffer<unorm float> uav;
@@ -66,6 +66,7 @@ void main(ComputeIn In)
 	const uint srcMip = MipGenerationParams.g_mipParams.x;
 	const uint numMips = MipGenerationParams.g_mipParams.y;
 	const uint srcDimensionMode = MipGenerationParams.g_mipParams.z;
+	const uint faceIdx = MipGenerationParams.g_mipParams.w;
 	
 	const float2 output0WidthHeight = MipGenerationParams.g_output0Dimensions.xy;
 	const float2 output0TexelWidthHeight = MipGenerationParams.g_output0Dimensions.zw;
@@ -76,7 +77,7 @@ void main(ComputeIn In)
 		case SRC_WIDTH_EVEN_HEIGHT_EVEN: // 0
 		{
 			const float2 uvs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.5f));
-			texSample0 = SrcTex.SampleLevel(ClampLinearLinear, uvs, srcMip);
+			texSample0 = SrcTex.SampleLevel(ClampLinearLinear, float3(uvs.xy, faceIdx), srcMip);
 		}
 		break;
 		case SRC_WIDTH_ODD_HEIGHT_EVEN: // 1
@@ -85,8 +86,8 @@ void main(ComputeIn In)
 			const float2 leftUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.25f, 0.5f));
 			const float2 rightUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.75f, 0.5f));
 
-			const float4 leftSample = SrcTex.SampleLevel(ClampLinearLinear, leftUVs, srcMip);
-			const float4 rightSample = SrcTex.SampleLevel(ClampLinearLinear, rightUVs, srcMip);
+			const float4 leftSample = SrcTex.SampleLevel(ClampLinearLinear, float3(leftUVs, faceIdx), srcMip);
+			const float4 rightSample = SrcTex.SampleLevel(ClampLinearLinear, float3(rightUVs, faceIdx), srcMip);
 			
 			texSample0 = (leftSample + rightSample) * 0.5f;
 		}
@@ -97,8 +98,8 @@ void main(ComputeIn In)
 			const float2 topUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.25));
 			const float2 botUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.5f, 0.75));
 			
-			const float4 topSample = SrcTex.SampleLevel(ClampLinearLinear, topUVs, srcMip);
-			const float4 botSample = SrcTex.SampleLevel(ClampLinearLinear, botUVs, srcMip);
+			const float4 topSample = SrcTex.SampleLevel(ClampLinearLinear, float3(topUVs, faceIdx), srcMip);
+			const float4 botSample = SrcTex.SampleLevel(ClampLinearLinear, float3(botUVs, faceIdx), srcMip);
 			
 			texSample0 = (topSample + botSample) * 0.5f;
 		}
@@ -111,10 +112,10 @@ void main(ComputeIn In)
 			const float2 botLeftUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.25f, 0.75f));
 			const float2 botRightUVs = PixelCoordsToUV(In.DTId.xy, output0WidthHeight, float2(0.75f, 0.75f));
 			
-			const float4 topLeftSample = SrcTex.SampleLevel(ClampLinearLinear, topLeftUVs, srcMip);
-			const float4 topRightSample = SrcTex.SampleLevel(ClampLinearLinear, topRightUVs, srcMip);
-			const float4 botLeftSample = SrcTex.SampleLevel(ClampLinearLinear, botLeftUVs, srcMip);
-			const float4 botRightSample = SrcTex.SampleLevel(ClampLinearLinear, botRightUVs, srcMip);
+			const float4 topLeftSample = SrcTex.SampleLevel(ClampLinearLinear, float3(topLeftUVs, faceIdx), srcMip);
+			const float4 topRightSample = SrcTex.SampleLevel(ClampLinearLinear, float3(topRightUVs, faceIdx), srcMip);
+			const float4 botLeftSample = SrcTex.SampleLevel(ClampLinearLinear, float3(botLeftUVs, faceIdx), srcMip);
+			const float4 botRightSample = SrcTex.SampleLevel(ClampLinearLinear, float3(botRightUVs, faceIdx), srcMip);
 			
 			texSample0 = (topLeftSample + topRightSample + botLeftSample + botRightSample) * 0.25f;
 		}

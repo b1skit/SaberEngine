@@ -232,7 +232,8 @@ namespace dx12
 		SEAssert("Descriptor table union is not fully initialized",
 			rootParam.m_type != RootParameter::Type::DescriptorTable || 
 				(rootParam.m_tableEntry.m_type != DescriptorType::Type_Invalid &&
-				rootParam.m_tableEntry.m_offset != k_invalidOffset));
+					rootParam.m_tableEntry.m_offset != k_invalidOffset && 
+					rootParam.m_tableEntry.m_srvViewDimension != 0)); // It's a union, either member should be > 0
 
 		SEAssert("TODO: We currently assume all registers are specified in space 0. If this changes, we need to "
 			"update our logic here to support lookups via register AND register space", 
@@ -554,7 +555,11 @@ namespace dx12
 								.m_index = rootIdx,
 								.m_type = RootParameter::Type::SRV,
 								.m_registerBindPoint = util::CheckedCast<uint8_t>(inputBindingDesc.BindPoint),
-								.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space)});
+								.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space),
+								.m_rootSRV{
+									.m_viewDimension = GetD3D12SRVDimension(inputBindingDesc.Dimension)
+								}
+							});
 					}
 					else
 					{
@@ -671,9 +676,7 @@ namespace dx12
 				for (size_t rangeIdx = rangeStart; rangeIdx < rangeEnd; rangeIdx++)
 				{
 					// Populate the binding metadata for our individual descriptor table entries:
-					newRootSig->InsertNewRootParamMetadata(
-						namesInRange[rangeIdx].c_str(),
-						RootParameter{
+					RootParameter rootParameter = RootParameter{
 							.m_index = rootIdx,
 							.m_type = RootParameter::Type::DescriptorTable,
 							.m_registerBindPoint = util::CheckedCast<uint8_t>(baseRegister + baseRegisterOffset++),
@@ -681,7 +684,7 @@ namespace dx12
 							.m_tableEntry = RootSignature::TableEntry{
 								.m_type = rangeType,
 								.m_offset = util::CheckedCast<uint8_t>(rangeIdx)}
-						});
+					};
 
 					// Populate the descriptor table metadata:
 					switch (rangeType)
@@ -690,6 +693,8 @@ namespace dx12
 					{
 						const D3D12_SRV_DIMENSION d3d12SrvDimension =
 							GetD3D12SRVDimension(rangeInputs[rangeTypeIdx][rangeIdx].m_dimension);
+
+						rootParameter.m_tableEntry.m_srvViewDimension = d3d12SrvDimension;
 
 						RangeEntry newSrvRangeEntry;
 						newSrvRangeEntry.m_srvDesc.m_format =
@@ -703,6 +708,8 @@ namespace dx12
 					{
 						const D3D12_UAV_DIMENSION d3d12UavDimension =
 							GetD3D12UAVDimension(rangeInputs[rangeTypeIdx][rangeIdx].m_dimension);
+
+						rootParameter.m_tableEntry.m_uavViewDimension = d3d12UavDimension;
 
 						RangeEntry newUavRangeEntry;
 						newUavRangeEntry.m_uavDesc.m_format =
@@ -720,6 +727,10 @@ namespace dx12
 					default:
 						SEAssertF("Invalid range type");
 					}
+
+					newRootSig->InsertNewRootParamMetadata(
+						namesInRange[rangeIdx].c_str(),
+						std::move(rootParameter));
 				} // end rangeIdx loop
 
 				// Prepare for the next iteration:

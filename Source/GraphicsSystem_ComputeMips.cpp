@@ -10,12 +10,12 @@ namespace
 	struct MipGenerationParams
 	{
 		glm::vec4 g_output0Dimensions; // .xyzw = width, height, 1/width, 1/height of the output0 texture
-		glm::uvec4 g_mipParams; // .xyzw = srcMipLevel, numMips, srcDimensionMode, 0
+		glm::uvec4 g_mipParams; // .xyzw = srcMipLevel, numMips, srcDimensionMode, faceIdx
 		bool g_isSRGB;
 	};
 
 	MipGenerationParams CreateMipGenerationParamsData(
-		std::shared_ptr<re::Texture> tex, uint32_t srcMipLevel, uint32_t numMips)
+		std::shared_ptr<re::Texture> tex, uint32_t srcMipLevel, uint32_t numMips, uint32_t faceIdx)
 	{
 		const uint32_t output0MipLevel = srcMipLevel + 1;
 		const glm::vec4 output0Dimensions = tex->GetSubresourceDimensions(output0MipLevel);
@@ -99,21 +99,28 @@ namespace gr
 					const uint32_t firstTargetMipIdx = targetMip;
 					const uint32_t sourceMip = targetMip - 1;
 
+					const uint32_t numMipStages =
+						targetMip + k_maxTargetsPerStage < totalMipLevels ? k_maxTargetsPerStage : (totalMipLevels - targetMip);
+
 					re::RenderStage::ComputeStageParams computeStageParams; // Defaults, for now...
 
+					const std::string stageName = std::format("{}: Face {}/{}, MIP {}-{} generation", 
+						newTexture->GetName().c_str(),
+						faceIdx + 1,
+						textureParams.m_faces,
+						firstTargetMipIdx,
+						firstTargetMipIdx + numMipStages - 1);
+
 					std::shared_ptr<re::RenderStage> mipGenerationStage = re::RenderStage::CreateSingleFrameComputeStage(
-						newTexture->GetName() + " MIP generation stage",
+						stageName,
 						computeStageParams);
 
 					mipGenerationStage->SetStageShader(m_mipMapGenerationShader);
 					
 					mipGenerationStage->AddTextureInput("SrcTex", newTexture, mipSampler, sourceMip);
 
-					const uint32_t numMipStages =
-						targetMip + k_maxTargetsPerStage < totalMipLevels ? k_maxTargetsPerStage : (totalMipLevels - targetMip);
-
 					MipGenerationParams const& mipGenerationParams =
-						CreateMipGenerationParamsData(newTexture, sourceMip, numMipStages);
+						CreateMipGenerationParamsData(newTexture, sourceMip, numMipStages, faceIdx);
 
 					mipGenerationStage->AddSingleFrameParameterBlock(re::ParameterBlock::Create(
 						"MipGenerationParams", 
@@ -129,7 +136,7 @@ namespace gr
 					{
 						re::TextureTarget::TargetParams mipTargetParams;
 						mipTargetParams.m_targetFace = faceIdx;
-						mipTargetParams.m_targetSubesource = targetMip++;
+						mipTargetParams.m_targetMip = targetMip++;
 
 						mipGenTargets->SetColorTarget(currentTargetIdx, newTexture, mipTargetParams);
 					}

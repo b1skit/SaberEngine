@@ -54,6 +54,7 @@ namespace dx12
 				// Allocate a descriptor for our view:
 				SEAssert("RTV allocations should match the number of faces", 
 					texPlatParams->m_rtvDsvDescriptors.size() == texParams.m_faces);
+				// TODO: Shouldn't we have an RTV for every subresource? E.g. For rendering into a specific face/mip
 
 				for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
 				{
@@ -73,7 +74,7 @@ namespace dx12
 					renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2D;
 					renderTargetViewDesc.Texture2D = D3D12_TEX2D_RTV
 					{
-						.MipSlice = targetParams.m_targetSubesource,
+						.MipSlice = targetParams.m_targetMip,
 						.PlaneSlice = targetParams.m_targetFace
 					};
 
@@ -84,6 +85,9 @@ namespace dx12
 				}
 				else
 				{
+					SEAssert("We're currently expecting this to be a cubemap",
+						texParams.m_faces == 6 && texParams.m_dimension == re::Texture::Dimension::TextureCubeMap);
+
 					renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
 
 					for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
@@ -93,7 +97,6 @@ namespace dx12
 
 						renderTargetViewDesc.Texture2DArray = D3D12_TEX2D_ARRAY_RTV
 						{
-							//.MipSlice = targetParams.m_targetSubesource,
 							.MipSlice = 0, // Mip slices include 1 mip level for every texture in an array
 							.FirstArraySlice = faceIdx,
 							.ArraySize = 1, // Only view one element of our array

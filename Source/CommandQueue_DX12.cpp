@@ -31,173 +31,119 @@ namespace
 #endif
 
 
-	std::vector<std::shared_ptr<dx12::CommandList>> InsertPendingBarrierCommandLists(
-		uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists, dx12::CommandQueue& commandQueue)
+	constexpr bool NeedsCommonTransition(
+		D3D12_RESOURCE_STATES currentGlobalState, 
+		dx12::CommandListType srcCmdListType, 
+		dx12::CommandListType dstCmdListType)
 	{
-		constexpr uint32_t k_allSubresources = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		// This function is based on the information on these pages:
+		// https://microsoft.github.io/DirectX-Specs/d3d/D3D12EnhancedBarriers.html#command-queue-layout-compatibility
+		// https://microsoft.github.io/DirectX-Specs/d3d/CPUEfficiency.html#state-support-by-command-list-type
 
-		// Extract our raw pointers so we can execute them in a single call
-		auto AddTransitionBarrier = [](
-			ID3D12Resource* resource,
-			D3D12_RESOURCE_STATES beforeState,
-			D3D12_RESOURCE_STATES afterState,
-			uint32_t subresourceIdx,
-			std::vector<D3D12_RESOURCE_BARRIER>& barriers,
-			D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE)
+		SEAssert("Invalid state for transition", 
+			currentGlobalState != D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
+
+		SEAssert("We should genenerally avoid this state. See this page for more info: "
+			"https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_states", 
+			currentGlobalState != D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ);
+
+		// If the previous and current command list type are the same, we know they'll support the same transition
+		// types. No need to go to COMMON between them
+		if (srcCmdListType == dstCmdListType)
 		{
-			// TODO: This check is duplicated in CommandList::TransitionResource
-			// All barriers should be set in a single place
-			if (beforeState == afterState)
-			{
-				return;
-			}
-			barriers.emplace_back(D3D12_RESOURCE_BARRIER{
-				.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-				.Flags = flags,
-				.Transition = D3D12_RESOURCE_TRANSITION_BARRIER{
-					.pResource = resource,
-					.Subresource = subresourceIdx,
-					.StateBefore = beforeState,
-					.StateAfter = afterState}
-				});
-#if defined(DEBUG_RESOURCE_STATES)
-			DebugPrintBarrier(resource, beforeState, afterState, subresourceIdx);
-#endif
-		};
-
-		// Construct our transition barrier command lists:
-		std::vector<std::shared_ptr<dx12::CommandList>> finalCommandLists;
-
-		dx12::GlobalResourceStateTracker& globalResourceStates = 
-			re::Context::GetAs<dx12::Context*>()->GetGlobalResourceStates();
-
-		// Manually patch the barriers for each command list:
-		std::lock_guard<std::mutex> barrierLock(globalResourceStates.GetGlobalStatesMutex());
-		// TODO: This logic should be a part of the GlobalResourceState
-		// -> Should be responsible for locking/unlocking it's own mutex
-
-
-#if defined(DEBUG_RESOURCE_STATES)
-		LOG("---------- InsertPendingBarrierCommandLists ----------");
-		globalResourceStates.DebugPrintResourceStates();
-#endif
-
-		for (uint32_t cmdListIdx = 0; cmdListIdx < numCmdLists; cmdListIdx++)
-		{
-			std::vector<D3D12_RESOURCE_BARRIER> barriers;
-
-			LocalResourceStateTracker const& localResourceTracker = cmdLists[cmdListIdx]->GetLocalResourceStates();
-
-#if defined(DEBUG_RESOURCE_STATES)
-			cmdLists[cmdListIdx]->DebugPrintResourceStates();;
-#endif
-
-			// Handle pending transitions for the current command list:
-			for (auto const& currentPending : localResourceTracker.GetPendingResourceStates())
-			{
-				ID3D12Resource* resource = currentPending.first;
-				dx12::LocalResourceState const& pendingStates = currentPending.second;
-				GlobalResourceState const& globalState = globalResourceStates.GetResourceState(resource);
-
-				const uint32_t numSubresources = globalState.GetNumSubresources();
-
-				uint32_t numSubresourcesTransitioned = 0;
-				for (auto const& pendingState : pendingStates.GetStates())
-				{
-					const uint32_t subresourceIdx = pendingState.first;
-					if (subresourceIdx == k_allSubresources)
-					{
-						continue; // We'll handle the ALL state last
-					}
-
-					const D3D12_RESOURCE_STATES beforeState = globalState.GetState(subresourceIdx);
-					const D3D12_RESOURCE_STATES afterState = pendingState.second;
-					if (beforeState != afterState)
-					{
-						AddTransitionBarrier(resource, beforeState, afterState, subresourceIdx, barriers);
-						globalResourceStates.SetResourceState(resource, afterState, subresourceIdx);
-						numSubresourcesTransitioned++;
-					}
-				}
-
-				// Note: There is an edge case where we could individually add each subresource to the pending list, and
-				// then add an "ALL" transition which would be (incorrectly) added to the pending list. So, we handle
-				// that here (as it makes the bookkeeping much simpler)
-				const bool alreadyTransitionedAllSubresources = numSubresourcesTransitioned == numSubresources;
-				SEAssert("Transitioned too many subresources", numSubresourcesTransitioned <= numSubresources);
-
-				if (!alreadyTransitionedAllSubresources &&
-					pendingStates.HasSubresourceRecord(k_allSubresources))
-				{
-					const D3D12_RESOURCE_STATES afterState = pendingStates.GetState(k_allSubresources);
-					bool insertedTransition = false;
-					for (uint32_t subresourceIdx = 0; subresourceIdx < numSubresources; subresourceIdx++)
-					{
-						const D3D12_RESOURCE_STATES beforeState = globalState.GetState(subresourceIdx);
-						if (beforeState != afterState)
-						{
-							AddTransitionBarrier(resource, beforeState, afterState, subresourceIdx, barriers);
-							insertedTransition = true;
-						}
-					}
-					if (!insertedTransition)
-					{
-						AddTransitionBarrier(resource, globalState.GetState(k_allSubresources), afterState, k_allSubresources, barriers);
-					}
-					globalResourceStates.SetResourceState(resource, afterState, k_allSubresources);
-				}
-			}
-
-			// Finally, update the global state from the known final local states:
-			for (auto const& currentknown : localResourceTracker.GetKnownResourceStates())
-			{
-				ID3D12Resource* resource = currentknown.first;
-				dx12::LocalResourceState const& knownStates = currentknown.second;
-				GlobalResourceState const& globalState = globalResourceStates.GetResourceState(resource);
-
-				// Set the ALL state first:
-				if (knownStates.HasSubresourceRecord(k_allSubresources))
-				{
-					globalResourceStates.SetResourceState(
-						resource, knownStates.GetState(k_allSubresources), k_allSubresources);
-				}
-
-				for (auto const& knownState : currentknown.second.GetStates())
-				{
-					const uint32_t subresourceIdx = knownState.first;
-					if (subresourceIdx == k_allSubresources)
-					{
-						continue; // We handled the ALL state fisrt
-					}
-
-					globalResourceStates.SetResourceState(resource, knownStates.GetState(subresourceIdx), subresourceIdx);
-				}
-			}
-
-			// Add the transition barriers to a command list, if we actually made any:
-			if (!barriers.empty())
-			{
-				std::shared_ptr<dx12::CommandList> barrierCommandList = commandQueue.GetCreateCommandList();
-
-				barrierCommandList->GetD3DCommandList()->ResourceBarrier(
-					static_cast<uint32_t>(barriers.size()),
-					&barriers[0]);
-
-				finalCommandLists.emplace_back(barrierCommandList);
-			}
-
-			// Add the original command list:
-			finalCommandLists.emplace_back(cmdLists[cmdListIdx]);
+			return false;
 		}
 
-
-#if defined(DEBUG_RESOURCE_STATES)
-		globalResourceStates.DebugPrintResourceStates();
-		LOG("--------------end--------------");
-#endif
-
-		return finalCommandLists;
+		// Check if the destination command list supports the resource state type. If it does, no need to transition to
+		// common on another command queue/command list type.
+		// Note: COPY states are considered different for direct/compute vs copy queues, so we explicitely require a
+		// transition to COMMON here
+		switch (dstCmdListType)
+		{
+		case dx12::CommandListType::Direct:
+		{
+			switch (currentGlobalState)
+			{
+				// Already in these states? The direct queue can handle it, no need to go to COMMON
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON:
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER:
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_INDEX_BUFFER:
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET:
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_UNORDERED_ACCESS:
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_DEPTH_WRITE:
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_DEPTH_READ:
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE:
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE:
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_STREAM_OUT:
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT:
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RESOLVE_DEST:
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RESOLVE_SOURCE:
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE:
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE:
+				return false;
+			default: return true; // Everything else needs to be in COMMON first
+			}
+		}
+		break;
+		case dx12::CommandListType::Compute:
+		{
+			switch (currentGlobalState)
+			{
+				// Already in these states? The compute queue can handle it, no need to go to COMMON
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON:
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_UNORDERED_ACCESS:
+			case D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE:
+				return false; 
+			default: return true; // Everything else needs to be in COMMON first
+			}
+		}
+		break;
+		case dx12::CommandListType::Copy:
+		{
+			// The copy queue only supports the COPY_SOURCE and COPY_DEST states, and they're considered different to
+			// the COPY_SOURCE/COPY_DEST states on direct and compute queues. Thus, always require a resource is in the
+			// COMMON state before it's used on a copy queue for the first time
+			return true;
+		}
+		break;
+		case dx12::CommandListType::Bundle:
+		case dx12::CommandListType::VideoDecode:
+		case dx12::CommandListType::VideoProcess:
+		case dx12::CommandListType::VideoEncode:
+		default: SEAssertF("Invalid/currently unsupported command list type");
+		}
+		return true; // This should never happen
 	}
+
+
+	// Extract our raw pointers so we can execute them in a single call
+	void AddTransitionBarrier(
+		ID3D12Resource* resource,
+		D3D12_RESOURCE_STATES beforeState,
+		D3D12_RESOURCE_STATES afterState,
+		uint32_t subresourceIdx,
+		std::vector<D3D12_RESOURCE_BARRIER>& barriers,
+		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE)
+	{
+		// TODO: This check is duplicated in CommandList::TransitionResource
+		// All barriers should be set in a single place
+		if (beforeState == afterState)
+		{
+			return;
+		}
+		barriers.emplace_back(D3D12_RESOURCE_BARRIER{
+			.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+			.Flags = flags,
+			.Transition = D3D12_RESOURCE_TRANSITION_BARRIER{
+				.pResource = resource,
+				.Subresource = subresourceIdx,
+				.StateBefore = beforeState,
+				.StateAfter = afterState}
+			});
+#if defined(DEBUG_RESOURCE_STATES)
+		DebugPrintBarrier(resource, beforeState, afterState, subresourceIdx);
+#endif
+	};
 }
 
 
@@ -311,73 +257,316 @@ namespace dx12
 	}
 
 
-	uint64_t CommandQueue::Execute(uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists)
+	// Command lists can only transition resources to/from states compatible with their type. Thus, we must first 
+	// transition any resources in incompatible states back to common on the appropriate command queue type.
+	// Note: We're recording/submitting command lists to different command queue types here: This should be done 
+	// single-threaded, like all other command list submissions
+	void CommandQueue::TransitionIncompatibleResourceStatesToCommon(
+		uint32_t numCmdLists,
+		std::shared_ptr<dx12::CommandList>* cmdLists)
 	{
-		// Prepend pending resource barrier command lists to the list of command lists we're executing
-		std::vector<std::shared_ptr<dx12::CommandList>> finalCommandLists = 
-			std::move(InsertPendingBarrierCommandLists(numCmdLists, cmdLists, *this));
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
-		// Get our raw command list pointers, and close them before they're executed
-		std::vector<ID3D12CommandList*> commandListPtrs;
-		commandListPtrs.reserve(finalCommandLists.size());
-		for (uint32_t i = 0; i < finalCommandLists.size(); i++)
+		dx12::CommandQueue& directQueue = context->GetCommandQueue(dx12::CommandListType::Direct);
+		std::shared_ptr<dx12::CommandList> directCmdList = nullptr;
+		std::vector<D3D12_RESOURCE_BARRIER> directBarriers; // TODO: Set a reasonable reservation amount?
+
+		dx12::CommandQueue& computeQueue = context->GetCommandQueue(dx12::CommandListType::Compute);
+		std::shared_ptr<dx12::CommandList> computeCmdList = nullptr;
+		std::vector<D3D12_RESOURCE_BARRIER> computeBarriers; // TODO: Set a reasonable reservation amount?
+
+		dx12::CommandQueue& copyQueue = context->GetCommandQueue(dx12::CommandListType::Copy);
+		std::shared_ptr<dx12::CommandList> copyCmdList = nullptr;
+		std::vector<D3D12_RESOURCE_BARRIER> copyBarriers; // TODO: Set a reasonable reservation amount?
+
+		// Note: We're going to independently submit COMMON resource transitions on command lists executed by the same
+		// queue a resource was last used on. Thus, we don't need to fence on the previous work in these queues
+
+		// Check the global state of every *pending* resource in the command lists we're about to submit:
+		dx12::GlobalResourceStateTracker& globalResourceStates = context->GetGlobalResourceStates();
 		{
-			finalCommandLists[i]->Close();
-			commandListPtrs.emplace_back(finalCommandLists[i]->GetD3DCommandList());
+			std::lock_guard<std::mutex> barrierLock(globalResourceStates.GetGlobalStatesMutex());
 
-			SEAssert("We currently only support submitting command lists of the same type to a command queue. "
-				"TODO: Support this (e.g. allow submitting compute command lists on a direct queue)",
-				finalCommandLists[i]->GetCommandListType() == GetCommandListType());
+			for (uint32_t cmdListIdx = 0; cmdListIdx < numCmdLists; cmdListIdx++)
+			{
+				LocalResourceStateTracker const& localResourceTracker = cmdLists[cmdListIdx]->GetLocalResourceStates();
+
+				for (auto const& currentPending : localResourceTracker.GetPendingResourceStates())
+				{
+					ID3D12Resource* currentResource = currentPending.first;
+					dx12::GlobalResourceState const& globalResourceState =
+						globalResourceStates.GetResourceState(currentResource);
+					const dx12::CommandListType srcCmdListType = globalResourceState.GetLastCommandListType();
+
+					if (srcCmdListType == dx12::CommandListType::CommandListType_Invalid)
+					{
+						continue; // Resource not used yet
+					}
+
+					for (auto const& pendingState : currentPending.second.GetStates())
+					{
+						const uint32_t pendingSubresource = pendingState.first;
+						const D3D12_RESOURCE_STATES globalD3DState = globalResourceState.GetState(pendingSubresource);
+						if (NeedsCommonTransition(globalD3DState, srcCmdListType, m_type))
+						{
+							// Transition the resource from its current global state to common:
+							std::vector<D3D12_RESOURCE_BARRIER>* targetBarriers = nullptr;
+							uint64_t nextFenceValue = 0;
+							switch (srcCmdListType)
+							{
+							case dx12::CommandListType::Direct:
+							{
+								if (directCmdList == nullptr)
+								{
+									directCmdList = directQueue.GetCreateCommandList();
+								}
+								targetBarriers = &directBarriers;
+								nextFenceValue = directQueue.GetNextFenceValue();
+							}
+							break;
+							case dx12::CommandListType::Compute:
+							{
+								if (computeCmdList == nullptr)
+								{
+									computeCmdList = computeQueue.GetCreateCommandList();
+								}
+								targetBarriers = &computeBarriers;
+								nextFenceValue = computeQueue.GetNextFenceValue();
+							}
+							break;
+							case dx12::CommandListType::Copy:
+							{
+								if (copyCmdList == nullptr)
+								{
+									copyCmdList = copyQueue.GetCreateCommandList();
+								}
+								targetBarriers = &copyBarriers;
+								nextFenceValue = copyQueue.GetNextFenceValue();
+							}
+							break;
+							default:
+								SEAssertF("Invalid/unsupported command list type");
+							}
+
+							AddTransitionBarrier(
+								currentResource,
+								globalD3DState,
+								D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
+								pendingSubresource,
+								*targetBarriers);
+
+							globalResourceStates.SetResourceState(
+								currentResource,
+								D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON,
+								pendingSubresource,
+								nextFenceValue);
+						}
+					}
+				}
+			}
 		}
-		
-		const uint64_t nextFenceVal = m_fenceValue + 1;
 
-		const dx12::CommandListType thisCmdListType = 
-			dx12::Fence::GetCommandListTypeFromFenceValue(m_typeFenceBitMask);
+		// Execute our transitions to COMMON, and have our main command queue wait on GPU fences to ensure the 
+		// transitions are complete before proceeding
+		if (!directBarriers.empty())
+		{
+			directCmdList->GetD3DCommandList()->ResourceBarrier(
+				static_cast<uint32_t>(directBarriers.size()),
+				directBarriers.data());
 
-		// We'll store the highest modification fence values seen for resources accessed by the submitted command lists
+			const uint64_t directBarrierFence = directQueue.ExecuteInternal({ directCmdList }, 0);
+
+			GPUWait(directQueue.GetFence(), directBarrierFence);
+		}
+		if (!computeBarriers.empty())
+		{
+			computeCmdList->GetD3DCommandList()->ResourceBarrier(
+				static_cast<uint32_t>(computeBarriers.size()),
+				computeBarriers.data());
+
+			const uint64_t computeBarrierFence = computeQueue.ExecuteInternal({ computeCmdList }, 0);
+
+			GPUWait(computeQueue.GetFence(), computeBarrierFence);
+		}
+		if (!copyBarriers.empty())
+		{
+			copyCmdList->GetD3DCommandList()->ResourceBarrier(
+				static_cast<uint32_t>(copyBarriers.size()),
+				copyBarriers.data());
+
+			const uint64_t copyBarrierFence = copyQueue.ExecuteInternal({ copyCmdList }, 0);
+
+			GPUWait(copyQueue.GetFence(), copyBarrierFence);
+		}
+	}
+
+
+	std::vector<std::shared_ptr<dx12::CommandList>> CommandQueue::PrependBarrierCommandListsAndWaits(
+		uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists)
+	{
+		constexpr uint32_t k_allSubresources = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+		// Construct our transition barrier command lists:
+		std::vector<std::shared_ptr<dx12::CommandList>> finalCommandLists;
+
+		// We'll store the highest modification fence values seen for resources accessed by the submitted command lists,
+		// so we can insert GPU waits before executing our final batch of command lists
 		std::array<uint64_t, dx12::CommandListType::CommandListType_Count> maxModificationFences;
 		memset(&maxModificationFences, 0, sizeof(uint64_t) * dx12::CommandListType::CommandListType_Count);
 
-		for (uint32_t cmdListIdx = 0; cmdListIdx < numCmdLists; cmdListIdx++)
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		dx12::GlobalResourceStateTracker& globalResourceStates = context->GetGlobalResourceStates();
+
+		// Manually patch the barriers for each command list:
 		{
-			std::vector<CommandList::AccessedResource> const& accessedResources = 
-				cmdLists[cmdListIdx]->GetAccessedResources();
-			
-			for (size_t i = 0; i < accessedResources.size(); i++)
+			std::lock_guard<std::mutex> barrierLock(globalResourceStates.GetGlobalStatesMutex());
+			// TODO: This logic should be a part of the GlobalResourceState
+			// -> Should be responsible for locking/unlocking it's own mutex
+
+
+#if defined(DEBUG_RESOURCE_STATES)
+			LOG("---------- PrependBarrierCommandListsAndWaits ----------");
+			globalResourceStates.DebugPrintResourceStates();
+#endif
+
+			const uint64_t nextFenceVal = GetNextFenceValue();
+
+			for (uint32_t cmdListIdx = 0; cmdListIdx < numCmdLists; cmdListIdx++)
 			{
-				CommandList::AccessedResource const& accessedResource = accessedResources[i];
+				std::vector<D3D12_RESOURCE_BARRIER> barriers;
 
-				const dx12::CommandListType cmdListType =
-					dx12::Fence::GetCommandListTypeFromFenceValue(*accessedResource.m_modificationFenceValue);
+				LocalResourceStateTracker const& localResourceTracker = cmdLists[cmdListIdx]->GetLocalResourceStates();
 
-				// Cache the current modification value: We'll GPU wait on the most recent modification fence
-				maxModificationFences[cmdListType] = 
-					std::max(*accessedResource.m_modificationFenceValue, maxModificationFences[cmdListType]);
+#if defined(DEBUG_RESOURCE_STATES)
+				cmdLists[cmdListIdx]->DebugPrintResourceStates();;
+#endif
 
-				// Store the command list's submission fence in the resource, so other command queues/lists can wait
-				// on the work to be done. We submit our command queues on the main render thread, so we can be sure of
-				// the order we're modifying resources in while we're here
-				if (accessedResource.m_didModify)
+				// Handle pending transitions for the current command list:
+				for (auto const& currentPending : localResourceTracker.GetPendingResourceStates())
 				{
-					*accessedResource.m_modificationFenceValue = nextFenceVal;
+					ID3D12Resource* resource = currentPending.first;
+					dx12::LocalResourceState const& pendingStates = currentPending.second;
+					GlobalResourceState const& globalState = globalResourceStates.GetResourceState(resource);
+
+					// Cache the global modification value: We'll GPU wait on the most recent modification fence
+					const dx12::CommandListType lastGlobalCmdListType = globalState.GetLastCommandListType();
+					if (lastGlobalCmdListType != dx12::CommandListType::CommandListType_Count) // Has it ever been used on a command list?
+					{
+						maxModificationFences[lastGlobalCmdListType] = std::max(
+							globalState.GetLastModificationFenceValue(),
+							maxModificationFences[lastGlobalCmdListType]);
+					}
+
+					const uint32_t numSubresources = globalState.GetNumSubresources();
+
+					uint32_t numSubresourcesTransitioned = 0;
+					for (auto const& pendingState : pendingStates.GetStates())
+					{
+						const uint32_t subresourceIdx = pendingState.first;
+						if (subresourceIdx == k_allSubresources)
+						{
+							continue; // We'll handle the ALL state last
+						}
+
+						const D3D12_RESOURCE_STATES beforeState = globalState.GetState(subresourceIdx);
+						const D3D12_RESOURCE_STATES afterState = pendingState.second;
+						if (beforeState != afterState)
+						{
+							AddTransitionBarrier(resource, beforeState, afterState, subresourceIdx, barriers);
+							globalResourceStates.SetResourceState(resource, afterState, subresourceIdx, nextFenceVal);
+							numSubresourcesTransitioned++;
+						}
+					}
+
+					// Note: There is an edge case where we could individually add each subresource to the pending list, and
+					// then add an "ALL" transition which would be (incorrectly) added to the pending list. So, we handle
+					// that here (as it makes the bookkeeping much simpler)
+					const bool alreadyTransitionedAllSubresources = numSubresourcesTransitioned == numSubresources;
+					SEAssert("Transitioned too many subresources", numSubresourcesTransitioned <= numSubresources);
+
+					if (!alreadyTransitionedAllSubresources &&
+						pendingStates.HasSubresourceRecord(k_allSubresources))
+					{
+						const D3D12_RESOURCE_STATES afterState = pendingStates.GetState(k_allSubresources);
+						bool insertedTransition = false;
+						for (uint32_t subresourceIdx = 0; subresourceIdx < numSubresources; subresourceIdx++)
+						{
+							const D3D12_RESOURCE_STATES beforeState = globalState.GetState(subresourceIdx);
+							if (beforeState != afterState)
+							{
+								AddTransitionBarrier(resource, beforeState, afterState, subresourceIdx, barriers);
+								insertedTransition = true;
+							}
+						}
+						if (!insertedTransition)
+						{
+							AddTransitionBarrier(
+								resource, globalState.GetState(k_allSubresources), afterState, k_allSubresources, barriers);
+						}
+						globalResourceStates.SetResourceState(resource, afterState, k_allSubresources, nextFenceVal);
+					}
 				}
+
+				// Finally, update the global state from the known final local states:
+				for (auto const& currentknown : localResourceTracker.GetKnownResourceStates())
+				{
+					ID3D12Resource* resource = currentknown.first;
+					dx12::LocalResourceState const& knownStates = currentknown.second;
+					GlobalResourceState const& globalState = globalResourceStates.GetResourceState(resource);
+
+					// Set the ALL state first:
+					if (knownStates.HasSubresourceRecord(k_allSubresources))
+					{
+						globalResourceStates.SetResourceState(
+							resource, knownStates.GetState(k_allSubresources), k_allSubresources, nextFenceVal);
+					}
+
+					for (auto const& knownState : currentknown.second.GetStates())
+					{
+						const uint32_t subresourceIdx = knownState.first;
+						if (subresourceIdx == k_allSubresources)
+						{
+							continue; // We handled the ALL state fisrt
+						}
+
+						globalResourceStates.SetResourceState(
+							resource, knownStates.GetState(subresourceIdx), subresourceIdx, nextFenceVal);
+					}
+				}
+
+				// Add the transition barriers to a command list, if we actually made any:
+				if (!barriers.empty())
+				{
+					std::shared_ptr<dx12::CommandList> barrierCommandList = GetCreateCommandList();
+
+					barrierCommandList->GetD3DCommandList()->ResourceBarrier(
+						static_cast<uint32_t>(barriers.size()),
+						barriers.data());
+
+					finalCommandLists.emplace_back(barrierCommandList);
+				}
+
+				// Add the original command list:
+				finalCommandLists.emplace_back(cmdLists[cmdListIdx]);
 			}
-			
-			cmdLists[cmdListIdx] = nullptr; // Don't let the caller retain access to a command list in our pool
-		}
+
+#if defined(DEBUG_RESOURCE_STATES)
+			globalResourceStates.DebugPrintResourceStates();
+			LOG("--------------end--------------");
+#endif
+		} // End barrierLock
+
 
 		// Insert a GPU wait for any incomplete fences for resources modified on other queues:
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		for (uint8_t queueIdx = 0; queueIdx < dx12::CommandListType::CommandListType_Count; queueIdx++)
 		{
 			const uint64_t currentModificationFence = maxModificationFences[queueIdx];
-			if (currentModificationFence > 0)
+			if (dx12::Fence::GetRawFenceValue(currentModificationFence) > 0)
 			{
 				const dx12::CommandListType cmdListType =
 					dx12::Fence::GetCommandListTypeFromFenceValue(currentModificationFence);
 
-				if (cmdListType != thisCmdListType) // Don't wait on resources this queue is about to modify
+				if (cmdListType != m_type) // Don't wait on resources this queue is about to modify
 				{
 					dx12::CommandQueue& commandQueue = context->GetCommandQueue(cmdListType);
 					if (!commandQueue.GetFence().IsFenceComplete(currentModificationFence))
@@ -388,11 +577,63 @@ namespace dx12
 			}
 		}
 
+		return finalCommandLists;
+	}
+
+
+	uint64_t CommandQueue::Execute(uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists)
+	{
+		// Ensure any resources used on states only other queue types can manage are in the common state before we
+		// attempt to use them:
+		TransitionIncompatibleResourceStatesToCommon(numCmdLists, cmdLists);
+
+		// Prepend pending resource barrier command lists to the list of command lists we're executing. This function
+		// also records GPU waits on any incomplete fences encountered while parsing the global resource states
+		std::vector<std::shared_ptr<dx12::CommandList>> const& finalCommandLists =
+			PrependBarrierCommandListsAndWaits(numCmdLists, cmdLists);
+
+		const size_t firstNonBarrierCmdListIdx = finalCommandLists.size() - numCmdLists;
+
+		const uint64_t nextFenceVal = GetNextFenceValue();
+
+		// We'll store the highest modification fence values seen for resources accessed by the submitted command lists
+		std::array<uint64_t, dx12::CommandListType::CommandListType_Count> maxModificationFences;
+		memset(&maxModificationFences, 0, sizeof(uint64_t) * dx12::CommandListType::CommandListType_Count);
+
+		// Perform the actual execution, now that all of the fixups have happened:
+		const uint64_t fenceVal = ExecuteInternal(finalCommandLists, firstNonBarrierCmdListIdx);
+		SEAssert("Predicted fence value doesn't match the actual fence value", fenceVal == nextFenceVal);
+
+
+		// Don't let the caller retain access to a command list in our pool
+		for (size_t i = 0; i < numCmdLists; i++)
+		{
+			cmdLists[i] = nullptr;
+		}
+
+		return fenceVal;
+	}
+
+
+	uint64_t CommandQueue::ExecuteInternal(
+		std::vector<std::shared_ptr<dx12::CommandList>> const& finalCommandLists, size_t firstNonBarrierCmdListIdx)
+	{
+		// Get our raw command list pointers, and close them before they're executed
+		std::vector<ID3D12CommandList*> commandListPtrs;
+		commandListPtrs.reserve(finalCommandLists.size());
+		for (uint32_t i = 0; i < finalCommandLists.size(); i++)
+		{
+			finalCommandLists[i]->Close();
+			commandListPtrs.emplace_back(finalCommandLists[i]->GetD3DCommandList());
+
+			SEAssert("We currently only support submitting command lists of the same type to a command queue. "
+				"TODO: Support this (e.g. allow submitting compute command lists on a direct queue)",
+				finalCommandLists[i]->GetCommandListType() == m_type);
+		}
+
 		// Execute the command lists:
 		m_commandQueue->ExecuteCommandLists(static_cast<uint32_t>(commandListPtrs.size()), commandListPtrs.data());
-
-		const uint64_t fenceVal = GPUSignal();
-		SEAssert("Predicted fence value doesn't match the actual fence value", fenceVal == nextFenceVal);
+		const uint64_t fenceVal = GPUSignal();		
 
 		// Return our command list(s) to the pool:
 		for (uint32_t i = 0; i < finalCommandLists.size(); i++)

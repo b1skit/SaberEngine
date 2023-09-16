@@ -59,7 +59,7 @@ namespace re
 		, m_initialData(std::move(initialData))
 	{
 		SEAssert("Invalid usage", m_texParams.m_usage != Texture::Usage::Invalid);
-		SEAssert("Invalid dimension", m_texParams.m_dimension != Texture::Dimension::Invalid);
+		SEAssert("Invalid dimension", m_texParams.m_dimension != Texture::Dimension::Dimension_Invalid);
 		SEAssert("Invalid format", m_texParams.m_format != Texture::Format::Invalid);
 		SEAssert("Invalid color space", m_texParams.m_colorSpace != Texture::ColorSpace::Invalid);
 		SEAssert("Invalid dimensions", m_texParams.m_width > 0 && m_texParams.m_height > 0);
@@ -268,6 +268,12 @@ namespace re
 
 		const uint32_t largestDimension = glm::max(m_texParams.m_width, m_texParams.m_height);
 		return (uint32_t)glm::log2((float)largestDimension) + 1;
+	}
+
+
+	uint32_t Texture::GetTotalNumSubresources() const
+	{
+		return GetNumMips() * m_texParams.m_faces;
 	}
 
 

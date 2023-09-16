@@ -5,5 +5,5 @@
 float4 PShader(VertexOut In) : SV_Target
 {
 	// TODO: Populate this correctly:
-	return In.Color;
+	return float4(In.UV0.xy, 0.f, 1.f);
 }

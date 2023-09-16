@@ -5,13 +5,14 @@
 
 namespace dx12
 {
+	enum CommandListType; // CommandList_DX12.h
+
 	typedef uint32_t SubresourceIdx;
 
 
 	/******************************************************************************************************************/
-	// Resource States
+	// IResourceState
 	/******************************************************************************************************************/
-
 
 	class IResourceState
 	{
@@ -45,24 +46,54 @@ namespace dx12
 	};
 
 
+	/******************************************************************************************************************/
+	// GlobalResourceState
+	/******************************************************************************************************************/
+
+
 	struct GlobalResourceState final : public virtual IResourceState
 	{
 	public:
 		GlobalResourceState(D3D12_RESOURCE_STATES, uint32_t numSubresources);
 
-		void SetState(D3D12_RESOURCE_STATES, SubresourceIdx subresourceIdx);
+		void SetState(D3D12_RESOURCE_STATES, SubresourceIdx, uint64_t lastFence);
 		uint32_t GetNumSubresources() const;
+
+		// Returns dx12::CommandListType::CommandListType_Invalid if a resource has not been used yet
+		dx12::CommandListType GetLastCommandListType() const; 
+
+		// In DX12, COPY states are considered different for 3D/Compute vs Copy queues. Resources can only transition
+		// out of a COPY state on the same queue type that was used to enter it
+		// https://microsoft.github.io/DirectX-Specs/d3d/CPUEfficiency.html#state-support-by-command-list-type
+		// We track the last fence value here (which has the command list type packed into its upper bits) to handle
+		// this situation. This also allows us to schedule transitions back the COMMON state on the queue type that last
+		// used a resource.
+		// NOTE: This is not a modification fence; The resource could have been used for anything. This fence represents
+		// the last time a resource transition was recorded for any/all subresources.
+		uint64_t GetLastFenceValue() const;
+
+		// This fence value is the last time this resource was changed to a state in which it could be modified.
+		// Note: m_lastModificationFence <= m_lastFence
+		uint64_t GetLastModificationFenceValue() const;
 
 
 	private:
 		uint32_t m_numSubresources;
+
+		uint64_t m_lastFence; // std::numeric_limits<uint64_t>::max() if not yet used on a command list
+		uint64_t m_lastModificationFence; // std::numeric_limits<uint64_t>::max() if not yet used on a command list
 	};
+
+
+	/******************************************************************************************************************/
+	// LocalResourceState
+	/******************************************************************************************************************/
 
 
 	struct LocalResourceState final : public virtual IResourceState
 	{
 	public:
-		LocalResourceState(D3D12_RESOURCE_STATES, uint32_t subresourceIdx);
+		LocalResourceState(D3D12_RESOURCE_STATES, SubresourceIdx);
 	};
 
 
@@ -87,7 +118,7 @@ namespace dx12
 		std::mutex& GetGlobalStatesMutex();
 
 		GlobalResourceState const& GetResourceState(ID3D12Resource*) const;
-		void SetResourceState(ID3D12Resource*, D3D12_RESOURCE_STATES, SubresourceIdx subresourceIdx);
+		void SetResourceState(ID3D12Resource*, D3D12_RESOURCE_STATES, SubresourceIdx, uint64_t lastFence);
 
 		void DebugPrintResourceStates() const;
 
@@ -108,6 +139,7 @@ namespace dx12
 	// LocalResourceStateTracker
 	/******************************************************************************************************************/
 
+
 	// Tracks local resource state within a command list
 	class LocalResourceStateTracker
 	{
@@ -116,9 +148,9 @@ namespace dx12
 		~LocalResourceStateTracker() = default;
 
 		bool HasSeenSubresourceInState(ID3D12Resource*, D3D12_RESOURCE_STATES) const;
-		bool HasResourceState(ID3D12Resource*, uint32_t subresourceIdx) const;
-		D3D12_RESOURCE_STATES GetResourceState(ID3D12Resource*, SubresourceIdx subresourceIdx) const;
-		void SetResourceState(ID3D12Resource*, D3D12_RESOURCE_STATES, SubresourceIdx subresourceIdx);
+		bool HasResourceState(ID3D12Resource*, SubresourceIdx) const;
+		D3D12_RESOURCE_STATES GetResourceState(ID3D12Resource*, SubresourceIdx) const;
+		void SetResourceState(ID3D12Resource*, D3D12_RESOURCE_STATES, SubresourceIdx);
 
 		void Reset();
 

@@ -176,7 +176,7 @@ namespace dx12
 		commandList->TransitionResource(
 			swapChainTargetSet->GetColorTarget(0).GetTexture(),
 			D3D12_RESOURCE_STATE_PRESENT,
-			D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+			re::Texture::k_allMips);
 
 		directQueue.Execute(1, &commandList);
 
@@ -323,7 +323,6 @@ namespace dx12
 
 			switch (dimension)
 			{
-			case D3D12_SRV_DIMENSION_UNKNOWN:
 			case D3D12_SRV_DIMENSION_BUFFER:
 			case D3D12_SRV_DIMENSION_TEXTURE1D:
 			case D3D12_SRV_DIMENSION_TEXTURE1DARRAY:
@@ -340,16 +339,44 @@ namespace dx12
 			}
 			break;
 			case D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
+			{
+				srvDesc.Texture2DArray.MostDetailedMip = 0;
+				srvDesc.Texture2DArray.MipLevels = 1;
+				srvDesc.Texture2DArray.FirstArraySlice = 0;
+				srvDesc.Texture2DArray.ArraySize = 1;
+				srvDesc.Texture2DArray.PlaneSlice = 0;
+				srvDesc.Texture2DArray.ResourceMinLODClamp = 0.f;
+			}
+			break;
 			case D3D12_SRV_DIMENSION_TEXTURE2DMS:
 			case D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY:
 			case D3D12_SRV_DIMENSION_TEXTURE3D:
+			{
+				SEAssertF("TODO: Handle this type");
+			}
+			break;
 			case D3D12_SRV_DIMENSION_TEXTURECUBE:
+			{
+				srvDesc.TextureCube.MostDetailedMip = 0;
+				srvDesc.TextureCube.MipLevels = 1;
+				srvDesc.TextureCube.ResourceMinLODClamp = 0;
+			}
+			break;
 			case D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:
+			{
+				srvDesc.TextureCubeArray.MostDetailedMip = 0;
+				srvDesc.TextureCubeArray.MipLevels = 1;
+				srvDesc.TextureCubeArray.First2DArrayFace = 0;
+				srvDesc.TextureCubeArray.NumCubes = 1;
+				srvDesc.TextureCubeArray.ResourceMinLODClamp = 0.f;
+			}
+			break;
 			case D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE:
 			{
 				SEAssertF("TODO: Handle this type");
 			}
 			break;
+			case D3D12_SRV_DIMENSION_UNKNOWN:
 			default:
 				SEAssertF("Invalid dimension");
 			}

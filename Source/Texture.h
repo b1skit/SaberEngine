@@ -14,6 +14,10 @@ namespace re
 
 
 	public:
+		static constexpr uint32_t k_allMips = std::numeric_limits<uint32_t>::max(); // Mip sentinel value
+
+
+	public:
 		struct PlatformParams : public re::IPlatformParams
 		{
 			PlatformParams() = default;
@@ -42,15 +46,16 @@ namespace re
 			Invalid
 		};
 
-		enum class Dimension
+		enum Dimension : uint8_t
 		{
-			/*Texture1D,*/
+			//Texture1D,
 			Texture2D,
-			/*Texture2DArray,
-			Texture3D,*/
+			Texture2DArray,
+			//Texture3D,
 			TextureCubeMap,
 
-			Invalid
+			Dimension_Count,
+			Dimension_Invalid = Dimension_Count
 		};
 
 		enum class Format
@@ -89,7 +94,7 @@ namespace re
 			uint32_t m_faces = 1;
 
 			Usage m_usage = Usage::Invalid; // TODO: This should be an uint8_t
-			Dimension m_dimension = Dimension::Invalid;
+			Dimension m_dimension = Dimension::Dimension_Invalid;
 			Format m_format = Format::Invalid;
 			ColorSpace m_colorSpace = ColorSpace::Invalid;
 
@@ -129,6 +134,7 @@ namespace re
 		void* GetTexelData(uint8_t faceIdx) const;
 
 		uint32_t GetNumMips() const;
+		uint32_t GetTotalNumSubresources() const;
 		glm::vec4 GetSubresourceDimensions(uint32_t mipLevel) const; // .xyzw = subresource width, height, 1/width, 1/height
 		bool IsPowerOfTwo() const;
 		bool IsSRGB() const;

@@ -3,6 +3,7 @@
 
 #include "HashedDataObject.h"
 #include "Shader_Platform.h"
+#include "Texture.h"
 
 
 namespace gr
@@ -15,7 +16,6 @@ namespace re
 	class MeshPrimitive;
 	class ParameterBlock;
 	class Shader;
-	class Texture;
 	class Sampler;
 }
 
@@ -54,14 +54,13 @@ namespace re
 		static_assert((uint32_t)re::Batch::Filter::Filter_Count <= 32);
 
 		// TODO: Combine with RenderStage::RenderStageTextureAndSamplerInput struct?
-		static constexpr uint32_t k_allSubresources = std::numeric_limits<uint32_t>::max();
 		struct BatchTextureAndSamplerInput
 		{
 			std::string m_shaderName;
 			std::shared_ptr<re::Texture> m_texture;
 			std::shared_ptr<re::Sampler> m_sampler;
 
-			uint32_t m_subresource = k_allSubresources;
+			uint32_t m_srcMip = re::Texture::k_allMips;
 		};
 
 
@@ -112,7 +111,7 @@ namespace re
 			std::string const& shaderName, 
 			std::shared_ptr<re::Texture>, 
 			std::shared_ptr<re::Sampler>, 
-			uint32_t subresource = k_allSubresources);
+			uint32_t srcMip = re::Texture::k_allMips);
 		std::vector<BatchTextureAndSamplerInput> const& GetTextureAndSamplerInputs() const;
 
 		uint32_t GetBatchFilterMask() const;

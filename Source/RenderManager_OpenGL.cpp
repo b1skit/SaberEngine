@@ -251,7 +251,7 @@ namespace opengl
 								texSamplerInput.m_shaderName, // uniform name
 								texSamplerInput.m_texture,
 								texSamplerInput.m_sampler,
-								texSamplerInput.m_subresource);
+								texSamplerInput.m_srcMip);
 						}
 					};
 
@@ -327,7 +327,7 @@ namespace opengl
 									texSamplerInput.m_shaderName,
 									texSamplerInput.m_texture,
 									texSamplerInput.m_sampler,
-									texSamplerInput.m_subresource);
+									texSamplerInput.m_srcMip);
 							}
 						}
 

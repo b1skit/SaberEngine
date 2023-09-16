@@ -39,6 +39,7 @@ namespace dx12
 	};
 	static_assert(CommandListType_Count == 7); // We pack command list type into the upper bits of fence values
 
+
 	class CommandList
 	{
 	public:
@@ -77,7 +78,7 @@ namespace dx12
 		void SetGraphicsRoot32BitConstants(
 			uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;
 
-		void SetTexture(std::string const& shaderName, std::shared_ptr<re::Texture>, uint32_t subresource);
+		void SetTexture(std::string const& shaderName, std::shared_ptr<re::Texture>, uint32_t srcMip);
 
 		void DrawBatchGeometry(re::Batch const&);
 
@@ -98,20 +99,12 @@ namespace dx12
 		void Dispatch(glm::uvec3 const& numThreads);
 
 		// TODO: Implement a "resource" interface if/when we need to transition more than just Textures
-		void TransitionResource(std::shared_ptr<re::Texture>, D3D12_RESOURCE_STATES to, uint32_t subresourceIdx);
+		void TransitionResource(std::shared_ptr<re::Texture>, D3D12_RESOURCE_STATES to, uint32_t mipLevel);
 
 		CommandListType GetCommandListType() const;
 		ID3D12GraphicsCommandList2* GetD3DCommandList() const;
 
 		LocalResourceStateTracker const& GetLocalResourceStates() const;
-
-		struct AccessedResource
-		{
-			uint64_t* m_modificationFenceValue = nullptr;
-			bool m_didModify = false;
-		};
-		std::vector<AccessedResource> const& GetAccessedResources() const;
-
 
 		void DebugPrintResourceStates() const;
 
@@ -135,8 +128,6 @@ namespace dx12
 
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator;
 		uint64_t m_commandAllocatorReuseFenceValue; // When the command allocator can be reused
-
-		std::vector<CommandList::AccessedResource> m_accessedResources;
 
 		const size_t k_commandListNumber; // Monotonically increasing identifier assigned at creation
 
@@ -272,11 +263,5 @@ namespace dx12
 	inline void CommandList::CommitGPUDescriptors()
 	{
 		m_gpuCbvSrvUavDescriptorHeaps->Commit();
-	}
-
-
-	inline std::vector<CommandList::AccessedResource> const& CommandList::GetAccessedResources() const
-	{
-		return m_accessedResources;
 	}
 }

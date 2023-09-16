@@ -305,7 +305,7 @@ namespace opengl
 						targetPlatformParams->m_attachmentPoint,
 						GL_TEXTURE_CUBE_MAP_POSITIVE_X + targetParams.m_targetFace,
 						texPlatformParams->m_textureID,
-						targetParams.m_targetSubesource);
+						targetParams.m_targetMip);
 				}
 				else
 				{
@@ -313,7 +313,7 @@ namespace opengl
 						targetSetParams->m_frameBufferObject,
 						targetPlatformParams->m_attachmentPoint,
 						texPlatformParams->m_textureID,
-						targetParams.m_targetSubesource);
+						targetParams.m_targetMip);
 				}
 
 				// Record the attachment point so we can set the draw buffers later on:
@@ -327,7 +327,7 @@ namespace opengl
 				if (firstTarget == nullptr)
 				{
 					firstTarget = texture;
-					firstTargetMipLevel = targetParams.m_targetSubesource;
+					firstTargetMipLevel = targetParams.m_targetMip;
 				}
 			}
 		}
@@ -478,7 +478,7 @@ namespace opengl
 
 			SEAssert("It is unexpected that a depth target has mipmaps",
 				targetSet.GetDepthStencilTarget()->GetTexture()->GetNumMips() == 1 && 
-				targetSet.GetDepthStencilTarget()->GetTargetParams().m_targetSubesource == 0);
+				targetSet.GetDepthStencilTarget()->GetTargetParams().m_targetMip == 0);
 
 			// Attach a texture object to the bound framebuffer:
 			if (textureParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
@@ -488,7 +488,7 @@ namespace opengl
 					GL_FRAMEBUFFER,							// target
 					depthTargetParams->m_attachmentPoint,	// attachment
 					depthPlatformParams->m_textureID,		// texure
-					targetSet.GetDepthStencilTarget()->GetTargetParams().m_targetSubesource);
+					targetSet.GetDepthStencilTarget()->GetTargetParams().m_targetMip); // level
 			}
 			else
 			{
@@ -497,7 +497,7 @@ namespace opengl
 					targetSetParams->m_frameBufferObject,
 					depthTargetParams->m_attachmentPoint,
 					depthPlatformParams->m_textureID,
-					targetSet.GetDepthStencilTarget()->GetTargetParams().m_targetSubesource);
+					targetSet.GetDepthStencilTarget()->GetTargetParams().m_targetMip);
 			}
 
 			// Verify the framebuffer (as we actually had color textures to attach)
@@ -600,7 +600,7 @@ namespace opengl
 			std::shared_ptr<re::Texture> texture = texTargets[slot].GetTexture();
 			re::TextureTarget::TargetParams const& targetParams = texTargets[slot].GetTargetParams();
 			
-			opengl::Texture::BindAsImageTexture(*texture, slot, targetParams.m_targetSubesource, GL_WRITE_ONLY);
+			opengl::Texture::BindAsImageTexture(*texture, slot, targetParams.m_targetMip, GL_WRITE_ONLY);
 		}
 	}
 }

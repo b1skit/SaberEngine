@@ -36,8 +36,6 @@ namespace dx12
 {
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
-//#define DEBUG_DEFERRED_LIGHTING
-
 		// Create and add our RenderSystems:
 		renderManager.m_renderSystems.emplace_back(re::RenderSystem::Create("Default DX12 RenderSystem"));
 		re::RenderSystem* defaultRenderSystem = renderManager.m_renderSystems.back().get();
@@ -56,26 +54,20 @@ namespace dx12
 				std::make_shared<gr::GBufferGraphicsSystem>("DX12 GBuffer Graphics System");
 			graphicsSystems.emplace_back(gbufferGS);
 
-#if defined(DEBUG_DEFERRED_LIGHTING)
 			std::shared_ptr<gr::DeferredLightingGraphicsSystem> deferredLightingGS =
 				std::make_shared<gr::DeferredLightingGraphicsSystem>("DX12 Deferred Lighting Graphics System");
 			graphicsSystems.emplace_back(deferredLightingGS);
-#endif
 
 			std::shared_ptr<gr::TempDebugGraphicsSystem> tempDebugGS =
 				std::make_shared<gr::TempDebugGraphicsSystem>("DX12 Temp Debug Graphics System");
 			graphicsSystems.emplace_back(tempDebugGS);
 
 			// Build the creation pipeline:
-#if defined(DEBUG_DEFERRED_LIGHTING)
 			deferredLightingGS->CreateResourceGenerationStages(
 				defaultRS->GetRenderPipeline().AddNewStagePipeline("Deferred Lighting Resource Creation"));
-#endif
 			computeMipsGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(computeMipsGS->GetName()));
 			gbufferGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(gbufferGS->GetName()));
-#if defined(DEBUG_DEFERRED_LIGHTING)
 			deferredLightingGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(deferredLightingGS->GetName()));
-#endif
 			tempDebugGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(tempDebugGS->GetName()));
 		};
 		defaultRenderSystem->SetCreatePipeline(DefaultRenderSystemCreatePipeline);
@@ -87,12 +79,13 @@ namespace dx12
 			// Get our GraphicsSystems:
 			gr::ComputeMipsGraphicsSystem* computeMipsGS = renderSystem->GetGraphicsSystem<gr::ComputeMipsGraphicsSystem>();
 			gr::GBufferGraphicsSystem* gbufferGS = renderSystem->GetGraphicsSystem<gr::GBufferGraphicsSystem>();
-			//gr::DeferredLightingGraphicsSystem* deferredLightingGS = renderSystem->GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
+			gr::DeferredLightingGraphicsSystem* deferredLightingGS = renderSystem->GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
 			gr::TempDebugGraphicsSystem* tempDebugGS = renderSystem->GetGraphicsSystem<gr::TempDebugGraphicsSystem>();
 
 			// Execute per-frame updates:
 			computeMipsGS->PreRender();
 			gbufferGS->PreRender();
+			deferredLightingGS->PreRender();
 			tempDebugGS->PreRender();
 		};
 		defaultRenderSystem->SetUpdatePipeline(UpdatePipeline);
@@ -359,7 +352,7 @@ namespace dx12
 						for (auto const& texSamplerInput : renderStage->GetTextureInputs())
 						{
 							commandList->SetTexture(
-								texSamplerInput.m_shaderName, texSamplerInput.m_texture, texSamplerInput.m_subresource);
+								texSamplerInput.m_shaderName, texSamplerInput.m_texture, texSamplerInput.m_srcMip);
 							// Note: Static samplers have already been set during root signature creation
 						}
 					};
@@ -435,7 +428,7 @@ namespace dx12
 								currentCommandList->SetTexture(
 									texSamplerInput.m_shaderName,
 									texSamplerInput.m_texture,
-									texSamplerInput.m_subresource);
+									texSamplerInput.m_srcMip);
 								// Note: Static samplers have already been set during root signature creation
 							}
 						}

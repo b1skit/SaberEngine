@@ -47,7 +47,7 @@ namespace dx12
 				} m_uavDesc;
 			};
 		};
-		enum DescriptorType : uint8_t
+		enum DescriptorType : uint8_t // Entries stored in a descriptor table
 		{
 			SRV,
 			UAV,
@@ -78,16 +78,34 @@ namespace dx12
 			uint8_t m_num32BitValues = k_invalidCount;
 			uint8_t m_destOffsetIn32BitValues = k_invalidOffset; // TODO: Is this needed/used?
 		};
+		struct RootCBV
+		{
+			// TODO...
+		};
+		struct RootSRV
+		{
+			D3D12_SRV_DIMENSION m_viewDimension;
+		};
+		struct RootUAV
+		{
+			D3D12_UAV_DIMENSION m_viewDimension;
+		};
 		struct TableEntry
 		{
 			DescriptorType m_type = DescriptorType::Type_Invalid;
 			uint8_t m_offset = k_invalidOffset;
+
+			union
+			{
+				D3D12_SRV_DIMENSION m_srvViewDimension;
+				D3D12_UAV_DIMENSION m_uavViewDimension;
+			};
 		};
 		struct RootParameter
 		{
 			uint8_t m_index = k_invalidRootSigIndex;
 
-			enum class Type
+			enum class Type // Entries stored directly in the root signature
 			{
 				Constant,
 				CBV,
@@ -105,6 +123,9 @@ namespace dx12
 			union
 			{
 				RootConstant m_rootConstant;
+				RootCBV m_rootCBV;
+				RootSRV m_rootSRV;
+				RootUAV m_rootUAV;
 				TableEntry m_tableEntry;
 			};
 		};

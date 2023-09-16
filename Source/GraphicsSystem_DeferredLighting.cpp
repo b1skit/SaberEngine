@@ -269,18 +269,6 @@ namespace gr
 			pipeline.AppendSingleFrameRenderStage(std::move(brdfStage));
 		}
 
-
-		// Common IBL cubemap params:
-		Texture::TextureParams cubeParams;
-		cubeParams.m_width = k_generatedAmbientIBLTexRes;
-		cubeParams.m_height = k_generatedAmbientIBLTexRes;
-		cubeParams.m_faces = 6;
-		cubeParams.m_usage = Texture::Usage::ColorTarget;
-		cubeParams.m_dimension = Texture::Dimension::TextureCubeMap;
-		cubeParams.m_format = Texture::Format::RGBA16F;
-		cubeParams.m_colorSpace = Texture::ColorSpace::Linear;
-		cubeParams.m_addToSceneData = false;
-
 		// Common IBL texture generation stage params:
 		gr::PipelineState iblStageParams;
 		iblStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
@@ -305,15 +293,25 @@ namespace gr
 
 		// TODO: We should use equirectangular images, instead of bothering to convert to cubemaps for IEM/PMREM
 
+
 		// 1st frame: Generate an IEM (Irradiance Environment Map) cubemap texture for diffuse irradiance
 		{
+			// IEM-specific texture params:
+			Texture::TextureParams iemTexParams;
+			iemTexParams.m_width = k_generatedAmbientIBLTexRes;
+			iemTexParams.m_height = k_generatedAmbientIBLTexRes;
+			iemTexParams.m_faces = 6;
+			iemTexParams.m_usage = Texture::Usage::ColorTarget;
+			iemTexParams.m_dimension = Texture::Dimension::TextureCubeMap;
+			iemTexParams.m_format = Texture::Format::RGBA16F;
+			iemTexParams.m_colorSpace = Texture::ColorSpace::Linear;
+			iemTexParams.m_addToSceneData = false;
+			iemTexParams.m_useMIPs = false;
+
 			shared_ptr<Shader> iemShader = re::Shader::Create(en::ShaderNames::k_generateIEMShaderName);
 
 			const string IEMTextureName = iblTexture->GetName() + "_IEMTexture";
-
-			// IEM-specific texture params:
-			cubeParams.m_useMIPs = false;
-			ambientProperties.m_ambient.m_IEMTex = re::Texture::Create(IEMTextureName, cubeParams, false);
+			ambientProperties.m_ambient.m_IEMTex = re::Texture::Create(IEMTextureName, iemTexParams, false);
 
 			for (uint32_t face = 0; face < 6; face++)
 			{
@@ -336,11 +334,11 @@ namespace gr
 
 				// Construct a camera param block to draw into our cubemap rendering targets:
 				cubemapCamParams.g_view = cubemapViews[face];
-				shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
+				shared_ptr<re::ParameterBlock> cubemapCamParamsPB = re::ParameterBlock::Create(
 					gr::Camera::CameraParams::s_shaderName,
 					cubemapCamParams,
 					re::ParameterBlock::PBType::SingleFrame);
-				iemStage->AddSingleFrameParameterBlock(pb);
+				iemStage->AddSingleFrameParameterBlock(cubemapCamParamsPB);
 
 				std::shared_ptr<re::TextureTargetSet> iemTargets = re::TextureTargetSet::Create("IEM Stage Targets");
 
@@ -353,7 +351,7 @@ namespace gr
 
 				re::TextureTarget::TargetParams targetParams;
 				targetParams.m_targetFace = face;
-				targetParams.m_targetSubesource = 0;
+				targetParams.m_targetMip = 0;
 
 				iemTargets->SetColorTarget(0, ambientProperties.m_ambient.m_IEMTex, targetParams);
 				iemTargets->SetViewport(re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
@@ -370,12 +368,22 @@ namespace gr
 
 		// 1st frame: Generate PMREM (Pre-filtered Mip-mapped Radiance Environment Map) cubemap for specular reflections
 		{
+			// PMREM-specific texture params:
+			Texture::TextureParams pmremTexParams;
+			pmremTexParams.m_width = k_generatedAmbientIBLTexRes;
+			pmremTexParams.m_height = k_generatedAmbientIBLTexRes;
+			pmremTexParams.m_faces = 6;
+			pmremTexParams.m_usage = Texture::Usage::ColorTarget;
+			pmremTexParams.m_dimension = Texture::Dimension::TextureCubeMap;
+			pmremTexParams.m_format = Texture::Format::RGBA16F;
+			pmremTexParams.m_colorSpace = Texture::ColorSpace::Linear;
+			pmremTexParams.m_addToSceneData = false;
+			pmremTexParams.m_useMIPs = true;
+
 			shared_ptr<Shader> pmremShader = re::Shader::Create(en::ShaderNames::k_generatePMREMShaderName);
 
-			// PMREM-specific texture params:
 			const string PMREMTextureName = iblTexture->GetName() + "_PMREMTexture";
-			cubeParams.m_useMIPs = true;
-			ambientProperties.m_ambient.m_PMREMTex = re::Texture::Create(PMREMTextureName, cubeParams, false);
+			ambientProperties.m_ambient.m_PMREMTex = re::Texture::Create(PMREMTextureName, pmremTexParams, false);
 
 			const uint32_t numMipLevels = ambientProperties.m_ambient.m_PMREMTex->GetNumMips(); // # of mips we need to render
 
@@ -414,7 +422,7 @@ namespace gr
 
 					re::TextureTarget::TargetParams targetParams;
 					targetParams.m_targetFace = face;
-					targetParams.m_targetSubesource = currentMipLevel;
+					targetParams.m_targetMip = currentMipLevel;
 
 					std::shared_ptr<TextureTargetSet> pmremTargetSet =
 						re::TextureTargetSet::Create("PMREM texture targets: Face " + postFix);

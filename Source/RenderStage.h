@@ -10,6 +10,7 @@
 #include "PipelineState.h"
 #include "Shader.h"
 #include "Shader_Platform.h"
+#include "Texture.h"
 #include "TextureTarget.h"
 
 
@@ -46,14 +47,13 @@ namespace re
 			// TODO: Populate this
 		};
 
-		static constexpr uint32_t k_allSubresources = std::numeric_limits<uint32_t>::max();
 		struct RenderStageTextureAndSamplerInput
 		{
 			std::string m_shaderName;
 			std::shared_ptr<Texture> m_texture;
 			std::shared_ptr<Sampler> m_sampler;
 
-			uint32_t m_subresource = k_allSubresources;
+			uint32_t m_srcMip = re::Texture::k_allMips;
 		};
 
 
@@ -84,7 +84,10 @@ namespace re
 
 		// Per-frame values must be re-set every frame
 		void AddTextureInput(
-			std::string const& shaderName, std::shared_ptr<re::Texture>, std::shared_ptr<re::Sampler>, uint32_t subresource = k_allSubresources);
+			std::string const& shaderName, 
+			std::shared_ptr<re::Texture>, 
+			std::shared_ptr<re::Sampler>, 
+			uint32_t subresource = re::Texture::k_allMips);
 		std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& GetTextureInputs() const;
 
 		void AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb);

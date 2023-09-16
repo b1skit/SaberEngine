@@ -913,9 +913,6 @@
     <FxCompile Include="Shaders\HLSL\GBuffer_VShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\HLSL\GenerateMipMaps_BoxFilter_CShder.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
-    </FxCompile>
     <FxCompile Include="Shaders\HLSL\GenerateBRDFIntegrationMap_CShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
@@ -947,6 +944,9 @@
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\DeferredPointLight_VShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GenerateMipMaps_BoxFilter_CShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
   </ItemGroup>

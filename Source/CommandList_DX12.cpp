@@ -27,7 +27,8 @@ namespace
 	using dx12::CheckHResult;
 
 
-	ComPtr<ID3D12CommandAllocator> CreateCommandAllocator(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type)
+	ComPtr<ID3D12CommandAllocator> CreateCommandAllocator(
+		ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type, std::wstring const& name)
 	{
 		SEAssert("Device cannot be null", device);
 
@@ -38,30 +39,12 @@ namespace
 			IID_PPV_ARGS(&commandAllocator)); // IID_PPV_ARGS: RIID & interface pointer
 		CheckHResult(hr, "Failed to create command allocator");
 
+		commandAllocator->SetName(name.c_str());
+
 		hr = commandAllocator->Reset();
 		CheckHResult(hr, "Failed to reset command allocator");
 
 		return commandAllocator;
-	}
-
-
-	constexpr bool IsWriteableState(D3D12_RESOURCE_STATES state)
-	{
-		switch (state)
-		{
-		case D3D12_RESOURCE_STATE_RENDER_TARGET:
-		case D3D12_RESOURCE_STATE_UNORDERED_ACCESS:
-		case D3D12_RESOURCE_STATE_DEPTH_WRITE:
-		case D3D12_RESOURCE_STATE_STREAM_OUT:
-		case D3D12_RESOURCE_STATE_COPY_DEST:
-		case D3D12_RESOURCE_STATE_RESOLVE_DEST:
-		case D3D12_RESOURCE_STATE_VIDEO_DECODE_WRITE:
-		case D3D12_RESOURCE_STATE_VIDEO_PROCESS_WRITE:
-		case D3D12_RESOURCE_STATE_VIDEO_ENCODE_WRITE:
-			return true;
-		default:
-			return false;
-		}
 	}
 }
 
@@ -120,7 +103,12 @@ namespace dx12
 	{
 		SEAssert("Device cannot be null", device);
 
-		m_commandAllocator = CreateCommandAllocator(device, m_d3dType);
+		// Name the command list with a monotonically-increasing index to make it easier to identify
+		const std::wstring commandListname = std::wstring(
+			GetCommandListTypeName(type)) +
+			L"_CommandList_#" + std::to_wstring(k_commandListNumber);
+
+		m_commandAllocator = CreateCommandAllocator(device, m_d3dType, commandListname + L"_CommandAllocator");
 
 		// Create the command list:
 		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
@@ -133,10 +121,6 @@ namespace dx12
 			IID_PPV_ARGS(&m_commandList));	// IID_PPV_ARGS: RIID & destination for the populated command list
 		CheckHResult(hr, "Failed to create command list");
 
-		// Name the command list with a monotonically-increasing index to make it easier to identify
-		const std::wstring commandListname = std::wstring(
-			GetCommandListTypeName(type)) + 
-			L"_CommandList_#" + std::to_wstring(k_commandListNumber);
 		m_commandList->SetName(commandListname.c_str());
 
 		// Set the descriptor heaps (unless we're a copy command list):
@@ -195,7 +179,6 @@ namespace dx12
 		}
 
 		m_commandAllocatorReuseFenceValue = 0;
-		m_accessedResources.clear();
 	}
 
 
@@ -457,7 +440,7 @@ namespace dx12
 				TransitionResource(
 					target.GetTexture(),
 					D3D12_RESOURCE_STATE_RENDER_TARGET,
-					targetParams.m_targetSubesource);
+					targetParams.m_targetMip);
 
 				// Attach the RTV for the target face:
 				colorTargetDescriptors.emplace_back(
@@ -480,7 +463,7 @@ namespace dx12
 			TransitionResource(
 				depthStencilTarget->GetTexture(),
 				D3D12_RESOURCE_STATE_DEPTH_WRITE,
-				depthTargetParams.m_targetSubesource);
+				depthTargetParams.m_targetMip);
 
 			dsvDescriptor = depthTexPlatParams->m_rtvDsvDescriptors[depthTargetParams.m_targetFace].GetBaseDescriptor();
 		}
@@ -545,10 +528,10 @@ namespace dx12
 					colorTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 				SEAssert("Not enough UAV descriptors",
-					targetParams.m_targetSubesource < texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV].size());
+					targetParams.m_targetMip < texPlatParams->m_uavCpuDescAllocations.size());
 
 				dx12::DescriptorAllocation const* descriptorAllocation =
-					&texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV][targetParams.m_targetSubesource];
+					&texPlatParams->m_uavCpuDescAllocations[targetParams.m_targetMip];
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 					rootSigEntry->m_index,
@@ -569,7 +552,7 @@ namespace dx12
 				TransitionResource(
 					colorTarget->GetTexture(),
 					D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-					colorTarget->GetTargetParams().m_targetSubesource);
+					colorTarget->GetTargetParams().m_targetMip);
 			}
 		}
 	}
@@ -618,9 +601,14 @@ namespace dx12
 	}
 
 
-	void CommandList::SetTexture(std::string const& shaderName, std::shared_ptr<re::Texture> texture, uint32_t subresource)
+	void CommandList::SetTexture(
+		std::string const& shaderName, std::shared_ptr<re::Texture> texture, uint32_t srcMip)
 	{
 		SEAssert("Pipeline is not currently set", m_currentPSO);
+
+		SEAssert("Unexpected mip level",
+			srcMip < texture->GetNumMips() ||
+			srcMip == re::Texture::k_allMips);
 
 		dx12::Texture::PlatformParams* texPlatParams = 
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
@@ -636,11 +624,7 @@ namespace dx12
 			SEAssert("We currently assume all textures belong to descriptor tables",
 				rootSigEntry->m_type == RootSignature::RootParameter::Type::DescriptorTable);
 
-			if (subresource > texture->GetNumMips())
-			{
-				subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-			}
-
+			D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
 			dx12::DescriptorAllocation const* descriptorAllocation = nullptr;
 			switch (rootSigEntry->m_tableEntry.m_type)
 			{
@@ -649,20 +633,66 @@ namespace dx12
 				SEAssert("Unexpected command list type",
 					m_d3dType == D3D12_COMMAND_LIST_TYPE_COMPUTE || m_d3dType == D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-				D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+				toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 				if (m_d3dType != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE)
 				{
 					toState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+				}			
+
+				// Get the appropriate cpu-visible SRV:
+				switch (rootSigEntry->m_tableEntry.m_srvViewDimension)
+				{
+				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE1D:
+				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE1DARRAY:
+				{
+					SEAssertF("TODO: Support this dimension");
 				}
-				
-				TransitionResource(texture,
-					toState,
-					subresource);
-
-				SEAssert("TODO: It's currently expected a texture resource has exactly 1 SRV",
-					texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV].size() == 1);
-
-				descriptorAllocation = &texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::SRV][0];
+				break;
+				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2D:
+				{
+					descriptorAllocation = &texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::Texture2D];
+				}
+				break;
+				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
+				{
+					switch (texture->GetTextureParams().m_dimension)
+					{
+					case re::Texture::Dimension::Texture2D:
+					{
+						descriptorAllocation = &texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::Texture2D];
+					}
+					break;
+					case re::Texture::Dimension::TextureCubeMap:
+					{
+						descriptorAllocation = &texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::Texture2DArray];
+					}
+					break;
+					default: SEAssertF("Unexpected texture dimension");
+					}
+				}
+				break;
+				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DMS:
+				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY:
+				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE3D:
+				{
+					SEAssertF("TODO: Support this dimension");
+				}
+				break;
+				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURECUBE:
+				{
+					descriptorAllocation = &texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::TextureCubeMap];
+				}
+				break;
+				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:
+				{
+					SEAssertF("TODO: Support this dimension");
+				}
+				break;
+				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_UNKNOWN:
+				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_BUFFER:
+				case D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE:
+				default: SEAssertF("Invalid/unexpected table entry type");
+				}				
 			}
 			break;
 			case dx12::RootSignature::DescriptorType::UAV:
@@ -670,65 +700,88 @@ namespace dx12
 				// This is for UAV *inputs*
 				SEAssertF("TODO: Implement this. Need to figure out how to specify the appropriate mip level/subresource index");
 
+				//toState = ???;
+
 				// Note: We don't (shouldn't?) need to record a modification fence value to the texture resource here, 
 				// since it's being used as an input
 
-				//descriptorAllocation = &texPlatParams->m_viewCpuDescAllocations[dx12::Texture::View::UAV];
+				//descriptorAllocation = &texPlatParams->m_uavCpuDescAllocations;
 			}
 			break;
 			default:
 				SEAssertF("Invalid range type");
 			}
 
+			SEAssert("Descriptor is not valid", descriptorAllocation->IsValid());
+
+			TransitionResource(texture,
+				toState,
+				srcMip);
+
 			m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 				rootSigEntry->m_index,
 				*descriptorAllocation,
 				rootSigEntry->m_tableEntry.m_offset,
 				1);
-
 		}
 	}
 
 
 	void CommandList::TransitionResource(
-		std::shared_ptr<re::Texture> texture, D3D12_RESOURCE_STATES toState, uint32_t subresourceIdx)
+		std::shared_ptr<re::Texture> texture, D3D12_RESOURCE_STATES toState, uint32_t mipLevel)
 	{
 		dx12::Texture::PlatformParams* texPlatParams =
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
-		m_accessedResources.emplace_back(AccessedResource{
-			&texPlatParams->m_modificationFence, 
-			IsWriteableState(toState) });
-
 		// Handle the resource transition:
-		ID3D12Resource* resource = texPlatParams->m_textureResource.Get();
+		ID3D12Resource* const resource = texPlatParams->m_textureResource.Get();
 
-		// If we've already seen this resource before, we can record the transition now (as we prepend any initial
-		// transitions when submitting the command list)	
-		if (m_resourceStates.HasResourceState(resource, subresourceIdx)) // Is the subresource idx (or ALL) in our known states list?
+		auto InsertBarrier = [this, &resource, &toState](uint32_t subresourceIdx)
 		{
-			const D3D12_RESOURCE_STATES currentKnownState = m_resourceStates.GetResourceState(resource, subresourceIdx);
-			if (currentKnownState == toState)
+			// If we've already seen this resource before, we can record the transition now (as we prepend any initial
+			// transitions when submitting the command list)	
+			if (m_resourceStates.HasResourceState(resource, subresourceIdx)) // Is the subresource idx (or ALL) in our known states list?
 			{
-				return; // Before and after states must be different
+				const D3D12_RESOURCE_STATES currentKnownState = m_resourceStates.GetResourceState(resource, subresourceIdx);
+				if (currentKnownState == toState)
+				{
+					return; // Before and after states must be different
+				}
+
+				const D3D12_RESOURCE_BARRIER barrier{
+					.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+					.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE,
+					.Transition = D3D12_RESOURCE_TRANSITION_BARRIER{
+						.pResource = resource,
+						.Subresource = subresourceIdx,
+						.StateBefore = currentKnownState,
+						.StateAfter = toState}
+				};
+
+				// TODO: Support batching of multiple barriers
+				m_commandList->ResourceBarrier(1, &barrier);
 			}
-					
-			const D3D12_RESOURCE_BARRIER barrier{
-				.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-				.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE, 
-				.Transition = D3D12_RESOURCE_TRANSITION_BARRIER{
-					.pResource = resource,
-					.Subresource = subresourceIdx,
-					.StateBefore = currentKnownState,
-					.StateAfter = toState}
-			};
 
-			// TODO: Support batching of multiple barriers
-			m_commandList->ResourceBarrier(1, &barrier);
+			// Record the pending state if necessary, and new state after the transition:
+			m_resourceStates.SetResourceState(resource, toState, subresourceIdx);
+		};
+
+		// Transition the appropriate subresources:
+		if (mipLevel == re::Texture::k_allMips)
+		{
+			InsertBarrier(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 		}
+		else
+		{
+			re::Texture::TextureParams const& texParams = texture->GetTextureParams();
+			for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
+			{
+				// TODO: We should be able to batch multiple transitions into a single call
+				const uint32_t subresourceIdx = (faceIdx * texture->GetNumMips()) + mipLevel;
 
-		// Record the new state after the transition:
-		m_resourceStates.SetResourceState(resource, toState, subresourceIdx);
+				InsertBarrier(subresourceIdx);
+			}
+		}
 	}
 
 

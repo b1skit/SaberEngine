@@ -236,14 +236,14 @@ namespace re
 		std::string const& shaderName, 
 		std::shared_ptr<re::Texture> texture, 
 		std::shared_ptr<re::Sampler> sampler, 
-		uint32_t subresource /*= k_allSubresources*/)
+		uint32_t srcMip /*= re::Texture::k_allMips*/)
 	{
 		SEAssert("Invalid shader sampler name", !shaderName.empty());
 		SEAssert("Invalid texture", texture != nullptr);
 		SEAssert("Invalid sampler", sampler != nullptr);
 
 		m_batchTextureSamplerInputs.emplace_back(
-			BatchTextureAndSamplerInput{ shaderName, texture, sampler, subresource });
+			BatchTextureAndSamplerInput{ shaderName, texture, sampler, srcMip });
 
 		// Include textures/samplers in the batch hash:
 		AddDataBytesToHash(texture->GetUniqueID());

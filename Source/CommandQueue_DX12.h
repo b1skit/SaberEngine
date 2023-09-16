@@ -29,6 +29,7 @@ namespace dx12
 
 		dx12::Fence& GetFence();
 		dx12::Fence const& GetFence() const;
+		uint64_t GetNextFenceValue() const; // The next fence value that will be used to signal
 
 		// ID3D12Fence wrappers: CPU-side fence syncronization
 		uint64_t CPUSignal(); // Updates the fence value from the CPU side
@@ -48,6 +49,16 @@ namespace dx12
 		ID3D12CommandQueue* GetD3DCommandQueue() const;
 
 		CommandListType GetCommandListType() const;
+
+
+	private:
+		std::vector<std::shared_ptr<dx12::CommandList>> PrependBarrierCommandListsAndWaits(
+			uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists);
+
+		void TransitionIncompatibleResourceStatesToCommon(
+			uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists);
+
+		uint64_t ExecuteInternal(std::vector<std::shared_ptr<dx12::CommandList>> const&, size_t firstNonBarrierCmdListIdx);
 
 
 	private:
@@ -87,6 +98,12 @@ namespace dx12
 	inline dx12::Fence const& CommandQueue::GetFence() const
 	{
 		return m_fence;
+	}
+
+
+	inline uint64_t CommandQueue::GetNextFenceValue() const
+	{
+		return m_fenceValue + 1;
 	}
 
 
