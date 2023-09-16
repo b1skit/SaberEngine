@@ -1344,6 +1344,14 @@ namespace fr
 	{
 		stbi_set_flip_vertically_on_load(false); // Set this once. Note: It is NOT thread safe, and must be consistent
 
+		constexpr size_t k_minReserveAmt = 10;
+		size_t nodesCount = k_minReserveAmt;
+		size_t meshesCount = k_minReserveAmt;
+		size_t texturesCount = k_minReserveAmt;
+		size_t materialsCount = k_minReserveAmt;
+		size_t lightsCount = k_minReserveAmt;
+		size_t camerasCount = k_minReserveAmt;
+
 		// Start by parsing the the GLTF file metadata:
 		const bool gotSceneFilePath = !sceneFilePath.empty();
 		cgltf_options options = { (cgltf_file_type)0 };
@@ -1356,16 +1364,21 @@ namespace fr
 				SEAssert("Failed to parse scene file \"" + sceneFilePath + "\"", parseResult == cgltf_result_success);
 				return false;
 			}
+			nodesCount = static_cast<size_t>(data->nodes_count);
+			meshesCount = static_cast<size_t>(data->meshes_count);
+			texturesCount = static_cast<size_t>(data->textures_count);
+			materialsCount = static_cast<size_t>(data->materials_count);
+			lightsCount = static_cast<size_t>(data->lights_count);
+			camerasCount = static_cast<size_t>(data->cameras_count);
 		}
 
 		// Pre-reserve our vectors, now that we know what to expect:
-		constexpr size_t k_minReserveAmt = 10;
-		m_updateables.reserve(max(static_cast<size_t>(data->nodes_count), k_minReserveAmt));
-		m_meshes.reserve(max(static_cast<size_t>(data->meshes_count), k_minReserveAmt));
-		m_textures.reserve(max(static_cast<size_t>(data->textures_count), k_minReserveAmt));
-		m_materials.reserve(max(static_cast<size_t>(data->materials_count), k_minReserveAmt));
-		m_pointLights.reserve(max(static_cast<size_t>(data->lights_count), k_minReserveAmt)); // Probably an over-estimation
-		m_cameras.reserve(max(static_cast<size_t>(data->cameras_count), k_minReserveAmt));
+		m_updateables.reserve(max(nodesCount, k_minReserveAmt));
+		m_meshes.reserve(max(meshesCount, k_minReserveAmt));
+		m_textures.reserve(max(texturesCount, k_minReserveAmt));
+		m_materials.reserve(max(materialsCount, k_minReserveAmt));
+		m_pointLights.reserve(max(lightsCount, k_minReserveAmt)); // Probably an over-estimation
+		m_cameras.reserve(max(camerasCount, k_minReserveAmt));
 
 		string sceneRootPath;
 		Config::Get()->TryGetValue<string>("sceneRootPath", sceneRootPath);
