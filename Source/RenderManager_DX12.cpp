@@ -33,6 +33,12 @@ using std::vector;
 
 namespace dx12
 {
+	RenderManager::RenderManager()
+		: m_intermediateResourceFenceVal(0)
+	{
+	}
+
+
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
 		// Create and add our RenderSystems:

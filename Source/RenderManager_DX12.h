@@ -13,6 +13,7 @@ namespace dx12
 	class RenderManager : public virtual re::RenderManager
 	{
 	public:
+		RenderManager();
 		~RenderManager() override = default;
 
 	public:
