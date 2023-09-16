@@ -19,12 +19,12 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			texture.SetPlatformParams(std::make_unique<opengl::Texture::PlatformParams>(texture.GetTextureParams()));
+			texture.SetPlatformParams(std::make_unique<opengl::Texture::PlatformParams>(texture));
 		}
 		break;
 		case RenderingAPI::DX12:
 		{
-			texture.SetPlatformParams(std::make_unique<dx12::Texture::PlatformParams>(texture.GetTextureParams()));
+			texture.SetPlatformParams(std::make_unique<dx12::Texture::PlatformParams>(texture));
 		}
 		break;
 		default:

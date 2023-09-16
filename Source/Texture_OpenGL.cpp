@@ -69,12 +69,15 @@ namespace
 
 namespace opengl
 {
-	Texture::PlatformParams::PlatformParams(re::Texture::TextureParams const& texParams) :
-		m_textureID(0),
-		m_format(GL_RGBA),
-		m_internalFormat(GL_RGBA32F),
-		m_type(GL_FLOAT)
+	Texture::PlatformParams::PlatformParams(re::Texture const& texture)
+		: m_textureID(0)
+		, m_format(GL_RGBA)
+		, m_internalFormat(GL_RGBA32F)
+		, m_type(GL_FLOAT)
 	{
+
+		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
+
 		// Format:
 		/****************/
 		switch (texParams.m_format)
@@ -344,7 +347,7 @@ namespace opengl
 		opengl::Texture::PlatformParams const* params =
 			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
-		if (texture.GetTextureParams().m_useMIPs)
+		if (texture.GetTextureParams().m_mipMode == re::Texture::MipMode::AllocateGenerate)
 		{
 			glGenerateTextureMipmap(params->m_textureID);
 		}

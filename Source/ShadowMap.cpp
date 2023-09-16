@@ -41,7 +41,7 @@ namespace gr
 		shadowParams.m_usage = Texture::Usage::DepthTarget;
 		shadowParams.m_format = Texture::Format::Depth32F;
 		shadowParams.m_colorSpace = Texture::ColorSpace::Linear;
-		shadowParams.m_useMIPs = false;
+		shadowParams.m_mipMode = re::Texture::MipMode::None;
 		shadowParams.m_addToSceneData = false;
 		shadowParams.m_clear.m_depthStencil.m_depth = 1.f;
 

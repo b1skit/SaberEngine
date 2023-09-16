@@ -436,15 +436,23 @@ namespace dx12
 
 				re::TextureTarget::TargetParams const& targetParams = target.GetTargetParams();
 
+				std::shared_ptr<re::Texture> targetTexture = target.GetTexture();
+				
 				// Insert our resource transition:
 				TransitionResource(
-					target.GetTexture(),
+					targetTexture,
 					D3D12_RESOURCE_STATE_RENDER_TARGET,
 					targetParams.m_targetMip);
 
+				const uint32_t numMips = targetTexture->GetNumMips();
+				const uint32_t targetFace = targetParams.m_targetFace;
+				const uint32_t targetMip = targetParams.m_targetMip;
+
+				const uint32_t subresourceIdx = (targetFace * numMips) + targetMip;
+
 				// Attach the RTV for the target face:
 				colorTargetDescriptors.emplace_back(
-					texPlatParams->m_rtvDsvDescriptors[targetParams.m_targetFace].GetBaseDescriptor());
+					texPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor());
 
 				numColorTargets++;
 			}
@@ -465,7 +473,10 @@ namespace dx12
 				D3D12_RESOURCE_STATE_DEPTH_WRITE,
 				depthTargetParams.m_targetMip);
 
-			dsvDescriptor = depthTexPlatParams->m_rtvDsvDescriptors[depthTargetParams.m_targetFace].GetBaseDescriptor();
+			// We current assume a DSV only has a single descriptor per face
+			const uint32_t subresourceIdx = depthTargetParams.m_targetFace;
+
+			dsvDescriptor = depthTexPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor();
 		}
 
 		// NOTE: isSingleHandleToDescRange == true specifies that the rtvs are contiguous in memory, thus N rtv 

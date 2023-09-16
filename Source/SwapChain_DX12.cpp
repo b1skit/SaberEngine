@@ -54,7 +54,7 @@ namespace dx12
 		colorParams.m_dimension = re::Texture::Dimension::Texture2D;
 		colorParams.m_format = re::Texture::Format::RGBA8;
 		colorParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		colorParams.m_useMIPs = false;
+		colorParams.m_mipMode = re::Texture::MipMode::None;
 		colorParams.m_addToSceneData = false;
 		colorParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -113,7 +113,7 @@ namespace dx12
 		depthParams.m_dimension = re::Texture::Dimension::Texture2D;
 		depthParams.m_format = re::Texture::Format::Depth32F;
 		depthParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-		depthParams.m_useMIPs = false;
+		depthParams.m_mipMode = re::Texture::MipMode::None;
 		depthParams.m_addToSceneData = false;
 		depthParams.m_clear.m_depthStencil.m_depth = 1.f; // Far plane
 

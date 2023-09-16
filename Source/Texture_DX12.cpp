@@ -340,8 +340,7 @@ namespace
 		}
 
 		// We generate MIPs in DX12 via a compute shader
-		const bool usesMips = texParams.m_useMIPs;
-		if (usesMips)
+		if (texParams.m_mipMode == re::Texture::MipMode::AllocateGenerate)
 		{
 			return true;
 		}
@@ -682,22 +681,26 @@ namespace dx12
 	}
 
 
-	Texture::PlatformParams::PlatformParams(re::Texture::TextureParams const& texParams)
+	Texture::PlatformParams::PlatformParams(re::Texture const& texture)
 	{
+		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
+
 		m_format = GetTextureFormat(texParams);
 
-		if (texParams.m_useMIPs)
-		{
-			constexpr size_t k_expectedNumMips = 10; // Assume most textures will be 1024x1024	
-			m_uavCpuDescAllocations.reserve(texParams.m_faces * k_expectedNumMips);
-		}
-		else
+		const uint32_t numMips = texture.GetNumMips();
+		const uint32_t numSubresources = texParams.m_faces * numMips;
+
+		if (texParams.m_mipMode == re::Texture::MipMode::None)
 		{
 			m_uavCpuDescAllocations.reserve(1);
 		}
+		else
+		{
+			m_uavCpuDescAllocations.reserve(numSubresources);
+		}
 
-		// Allocate an RTV/DSV for each face:
-		m_rtvDsvDescriptors.resize(texParams.m_faces);
+		// Allocate an RTV/DSV for each face and mip:
+		m_rtvDsvDescriptors.resize(numSubresources);
 	}
 
 
@@ -706,7 +709,12 @@ namespace dx12
 		m_format = DXGI_FORMAT_UNKNOWN;
 		m_textureResource = nullptr;
 
+		for (uint8_t texDimension = 0; texDimension < re::Texture::Dimension::Dimension_Count; texDimension++)
+		{
+			m_srvCpuDescAllocations[texDimension].Free(0);
+		}
 		m_uavCpuDescAllocations.clear();
+		m_rtvDsvDescriptors.clear();
 	}
 
 
@@ -921,13 +929,7 @@ namespace dx12
 				texPlatParams->m_textureResource.Get());
 		}
 
-		texPlatParams->m_textureResource = nullptr;
-
-		texPlatParams->m_uavCpuDescAllocations.clear();
-
-		texPlatParams->m_rtvDsvDescriptors.clear();
-
-		texPlatParams->m_isCreated = false;
-		texPlatParams->m_isDirty = true;
+		// Null out the platform params, and let its destructor clean everything up
+		texture.SetPlatformParams(nullptr);
 	}
 }

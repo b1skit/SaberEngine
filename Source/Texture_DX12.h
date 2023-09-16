@@ -14,7 +14,7 @@ namespace dx12
 	public:
 		struct PlatformParams final : public re::Texture::PlatformParams
 		{
-			PlatformParams(re::Texture::TextureParams const& texParams);
+			PlatformParams(re::Texture const&);
 
 			~PlatformParams() override;
 

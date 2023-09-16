@@ -261,7 +261,7 @@ namespace re
 
 	uint32_t Texture::GetNumMips() const
 	{
-		if (!m_texParams.m_useMIPs)
+		if (m_texParams.m_mipMode == re::Texture::MipMode::None)
 		{
 			return 1;
 		}

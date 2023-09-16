@@ -86,6 +86,12 @@ namespace re
 			Invalid
 		};
 
+		enum class MipMode : uint8_t
+		{
+			None,				// Mips are disabled for this texture
+			Allocate,			// Mips will be allocated for this texture, but not generated
+			AllocateGenerate	// Mips will be both allocated and generated for this texture
+		};
 
 		struct TextureParams
 		{
@@ -98,7 +104,8 @@ namespace re
 			Format m_format = Format::Invalid;
 			ColorSpace m_colorSpace = ColorSpace::Invalid;
 
-			bool m_useMIPs = true; // Should MIPs be created for this texture?
+			MipMode m_mipMode = MipMode::AllocateGenerate;
+
 			bool m_addToSceneData = true; // Typically false if the texture is a target
 
 			union ClearValues

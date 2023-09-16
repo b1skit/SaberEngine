@@ -83,7 +83,7 @@ namespace gr
 		for (std::shared_ptr<re::Texture> newTexture : newTextures)
 		{
 			re::Texture::TextureParams const& textureParams = newTexture->GetTextureParams();
-			if (!textureParams.m_useMIPs)
+			if (textureParams.m_mipMode != re::Texture::MipMode::AllocateGenerate)
 			{
 				continue;
 			}

@@ -209,8 +209,8 @@ namespace
 						re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCubeMap;
 					texParams.m_format = re::Texture::Format::RGBA8;
 					texParams.m_colorSpace = Texture::ColorSpace::sRGB;
-					texParams.m_useMIPs = true;
-					
+					texParams.m_mipMode = re::Texture::MipMode::AllocateGenerate;
+
 					fillColor = errorTexFillColor;
 				}
 

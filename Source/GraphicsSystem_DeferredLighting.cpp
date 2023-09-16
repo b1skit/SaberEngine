@@ -221,7 +221,7 @@ namespace gr
 			brdfParams.m_dimension = Texture::Dimension::Texture2D;
 			brdfParams.m_format = Texture::Format::RG16F; // Epic recommends 2 channel, 16-bit floats
 			brdfParams.m_colorSpace = Texture::ColorSpace::Linear;
-			brdfParams.m_useMIPs = false;
+			brdfParams.m_mipMode = re::Texture::MipMode::None;
 			brdfParams.m_addToSceneData = false;
 			brdfParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -306,7 +306,7 @@ namespace gr
 			iemTexParams.m_format = Texture::Format::RGBA16F;
 			iemTexParams.m_colorSpace = Texture::ColorSpace::Linear;
 			iemTexParams.m_addToSceneData = false;
-			iemTexParams.m_useMIPs = false;
+			iemTexParams.m_mipMode = re::Texture::MipMode::None;
 
 			shared_ptr<Shader> iemShader = re::Shader::Create(en::ShaderNames::k_generateIEMShaderName);
 
@@ -378,7 +378,7 @@ namespace gr
 			pmremTexParams.m_format = Texture::Format::RGBA16F;
 			pmremTexParams.m_colorSpace = Texture::ColorSpace::Linear;
 			pmremTexParams.m_addToSceneData = false;
-			pmremTexParams.m_useMIPs = true;
+			pmremTexParams.m_mipMode = re::Texture::MipMode::Allocate;
 
 			shared_ptr<Shader> pmremShader = re::Shader::Create(en::ShaderNames::k_generatePMREMShaderName);
 
@@ -465,7 +465,7 @@ namespace gr
 		lightTargetParams.m_dimension = Texture::Dimension::Texture2D;
 		lightTargetParams.m_format = Texture::Format::RGBA16F;
 		lightTargetParams.m_colorSpace = Texture::ColorSpace::Linear;
-		lightTargetParams.m_useMIPs = false;
+		lightTargetParams.m_mipMode = re::Texture::MipMode::None;
 		lightTargetParams.m_addToSceneData = false;
 		lightTargetParams.m_clear.m_color = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 

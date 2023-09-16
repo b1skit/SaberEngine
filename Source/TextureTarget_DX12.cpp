@@ -51,64 +51,71 @@ namespace dx12
 				
 				SEAssert("Texture is not created", texPlatParams->m_isCreated && texPlatParams->m_textureResource);
 
-				// Allocate a descriptor for our view:
-				SEAssert("RTV allocations should match the number of faces", 
-					texPlatParams->m_rtvDsvDescriptors.size() == texParams.m_faces);
-				// TODO: Shouldn't we have an RTV for every subresource? E.g. For rendering into a specific face/mip
-
-				for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
-				{
-					texPlatParams->m_rtvDsvDescriptors[faceIdx] = std::move(
-						context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::RTV).Allocate(1));
-					SEAssert("RTV descriptor is not valid", texPlatParams->m_rtvDsvDescriptors[faceIdx].IsValid());
-				}				
-
 				re::TextureTarget::TargetParams targetParams = colorTarget.GetTargetParams();
 
-				// Create the RTV:
-				D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
-				renderTargetViewDesc.Format = texPlatParams->m_format;
+				// Allocate descriptors for our RTVs:
+				const uint32_t numFaces = texParams.m_faces;
+				const uint32_t numMips = colorTarget.GetTexture()->GetNumMips();
+				SEAssert("We're expecting an RTV per face, per mip", 
+					texPlatParams->m_rtvDsvDescriptors.size() == numFaces * numMips);
 
-				if (texParams.m_faces == 1)
+				for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
 				{
-					renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2D;
-					renderTargetViewDesc.Texture2D = D3D12_TEX2D_RTV
+					for (uint32_t mipIdx = 0; mipIdx < numMips; mipIdx++)
 					{
-						.MipSlice = targetParams.m_targetMip,
-						.PlaneSlice = targetParams.m_targetFace
-					};
+						const uint32_t subresourceIdx = (faceIdx * numMips) + mipIdx;
 
-					device->CreateRenderTargetView(
-						texPlatParams->m_textureResource.Get(), // Pointer to the resource containing the render target texture
-						&renderTargetViewDesc,
-						texPlatParams->m_rtvDsvDescriptors[0].GetBaseDescriptor()); // Descriptor destination
-				}
-				else
-				{
-					SEAssert("We're currently expecting this to be a cubemap",
-						texParams.m_faces == 6 && texParams.m_dimension == re::Texture::Dimension::TextureCubeMap);
+						texPlatParams->m_rtvDsvDescriptors[subresourceIdx] = std::move(
+							context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::RTV).Allocate(1));
+						SEAssert("RTV descriptor is not valid", texPlatParams->m_rtvDsvDescriptors[faceIdx].IsValid());
 
-					renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
 
-					for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
-					{
-						// Mip/array slices:
-						// https://learn.microsoft.com/en-us/windows/win32/direct3d12/subresources#mip-slice
+						// Create the RTV:
+						D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
+						renderTargetViewDesc.Format = texPlatParams->m_format;
 
-						renderTargetViewDesc.Texture2DArray = D3D12_TEX2D_ARRAY_RTV
+						switch (numFaces)
 						{
-							.MipSlice = 0, // Mip slices include 1 mip level for every texture in an array
-							.FirstArraySlice = faceIdx,
-							.ArraySize = 1, // Only view one element of our array
-							.PlaneSlice = 0 // "Only Plane Slice 0 is valid when creating a view on a non-planar format"
-						};
+						case 1:
+						{
+							renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2D;
+							renderTargetViewDesc.Texture2D = D3D12_TEX2D_RTV
+							{
+								.MipSlice = targetParams.m_targetMip,
+								.PlaneSlice = targetParams.m_targetFace
+							};
 
-						device->CreateRenderTargetView(
-							texPlatParams->m_textureResource.Get(),
-							&renderTargetViewDesc,
-							texPlatParams->m_rtvDsvDescriptors[faceIdx].GetBaseDescriptor());
-					}
-				}				
+							device->CreateRenderTargetView(
+								texPlatParams->m_textureResource.Get(), // Pointer to the resource containing the render target texture
+								&renderTargetViewDesc,
+								texPlatParams->m_rtvDsvDescriptors[0].GetBaseDescriptor()); // Descriptor destination
+						}
+						break;
+						case 6:
+						{
+							SEAssert("We're currently expecting this to be a cubemap, but it doesn't need to be",
+								numFaces == 6 && texParams.m_dimension == re::Texture::Dimension::TextureCubeMap);
+
+							renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+
+							renderTargetViewDesc.Texture2DArray = D3D12_TEX2D_ARRAY_RTV
+							{
+								.MipSlice = mipIdx,	// Mip slices include 1 mip level for every texture in an array
+								.FirstArraySlice = faceIdx,
+								.ArraySize = 1,		// Only view one element of our array
+								.PlaneSlice = 0		// "Only Plane Slice 0 is valid when creating a view on a non-planar format"
+							};
+
+							device->CreateRenderTargetView(
+								texPlatParams->m_textureResource.Get(),
+								&renderTargetViewDesc,
+								texPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor());
+						}
+						break;
+						default: SEAssertF("Unexpected number of faces");
+						}
+					}					
+				}			
 			}
 		}
 	}
