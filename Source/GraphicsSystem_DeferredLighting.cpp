@@ -237,6 +237,7 @@ namespace gr
 
 			brdfStageTargets->SetColorTarget(0, ambientProperties.m_ambient.m_BRDF_integrationMap, targetParams);
 			brdfStageTargets->SetViewport(re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
+			brdfStageTargets->SetScissorRect(re::ScissorRect(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
 
 			re::TextureTarget::TargetParams::BlendModes brdfBlendModes
 			{
@@ -358,6 +359,7 @@ namespace gr
 
 				iemTargets->SetColorTarget(0, ambientProperties.m_ambient.m_IEMTex, targetParams);
 				iemTargets->SetViewport(re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
+				iemTargets->SetScissorRect(re::ScissorRect(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
 
 				iemStage->SetTextureTargetSet(iemTargets);
 
@@ -433,6 +435,8 @@ namespace gr
 					pmremTargetSet->SetColorTarget(0, ambientProperties.m_ambient.m_PMREMTex, targetParams);
 					pmremTargetSet->SetViewport(
 						re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
+					pmremTargetSet->SetScissorRect(
+						re::ScissorRect(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
 
 					re::TextureTarget::TargetParams::BlendModes pmremBlendModes
 					{

@@ -153,6 +153,7 @@ namespace gr
 				re::TextureTarget::TargetParams::BlendMode::One,re::TextureTarget::TargetParams::BlendMode::Zero});
 
 			downResTargets->SetViewport(re::Viewport(0, 0, currentXRes, currentYRes));
+			downResTargets->SetScissorRect(re::ScissorRect(0, 0, currentXRes, currentYRes));
 
 			resScaleParams.m_width = currentXRes;
 			resScaleParams.m_height = currentYRes;
@@ -223,6 +224,7 @@ namespace gr
 
 			std::shared_ptr<re::TextureTargetSet> blurTargets = re::TextureTargetSet::Create(stageName + " targets");
 			blurTargets->SetViewport(re::Viewport(0, 0, currentXRes, currentYRes));
+			blurTargets->SetScissorRect(re::ScissorRect(0, 0, currentXRes, currentYRes));
 
 			newBlurStage->SetStagePipelineState(bloomStageParams);
 			newBlurStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
@@ -270,6 +272,7 @@ namespace gr
 			std::shared_ptr<re::TextureTargetSet> upResTargets = re::TextureTargetSet::Create(name + " targets");
 
 			upResTargets->SetViewport(re::Viewport(0, 0, currentXRes, currentYRes));
+			upResTargets->SetScissorRect(re::ScissorRect(0, 0, currentXRes, currentYRes));
 
 			upresStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
 			m_upResStages[i]->SetStageShader(blitShader);

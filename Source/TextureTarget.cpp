@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "CastUtils.h"
 #include "Config.h"
 #include "SysInfo_Platform.h"
 #include "TextureTarget.h"
@@ -345,6 +346,12 @@ namespace re
 
 	void TextureTargetSet::SetScissorRect(re::ScissorRect const& scissorRect)
 	{
+		SEAssert("Scissor rectangle is out of bounds of the viewport", 
+			util::CheckedCast<uint32_t>(scissorRect.Left()) >= m_viewport.xMin() &&
+			util::CheckedCast<uint32_t>(scissorRect.Top()) >= m_viewport.yMin() &&
+			util::CheckedCast<uint32_t>(scissorRect.Right()) <= m_viewport.Width()&&
+			util::CheckedCast<uint32_t>(scissorRect.Bottom()) <= m_viewport.Height());
+
 		m_scissorRect = scissorRect;
 	}
 

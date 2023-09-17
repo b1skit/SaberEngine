@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include <GL/glew.h>
 
+#include "CastUtils.h"
 #include "DebugConfiguration.h"
 #include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"
@@ -173,6 +174,12 @@ namespace opengl
 
 		SEAssert("Targets have already been created", !targetSetParams->m_colorIsCreated);
 		targetSetParams->m_colorIsCreated = true;
+
+		SEAssert("Scissor rectangle is out of bounds of the viewport",
+			util::CheckedCast<uint32_t>(targetSet.GetScissorRect().Left()) >= targetSet.GetViewport().xMin() &&
+			util::CheckedCast<uint32_t>(targetSet.GetScissorRect().Top()) >= targetSet.GetViewport().yMin() &&
+			util::CheckedCast<uint32_t>(targetSet.GetScissorRect().Right()) <= targetSet.GetViewport().Width() &&
+			util::CheckedCast<uint32_t>(targetSet.GetScissorRect().Bottom()) <= targetSet.GetViewport().Height());
 
 		// Configure the framebuffer and each texture target:
 		bool foundTarget = false;

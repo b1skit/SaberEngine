@@ -2,6 +2,7 @@
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
 #include "Batch.h"
+#include "CastUtils.h"
 #include "Config.h"
 #include "Context_DX12.h"
 #include "CommandList_DX12.h"
@@ -600,6 +601,12 @@ namespace dx12
 			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 
 		re::ScissorRect const& scissorRect = targetSet.GetScissorRect();
+
+		SEAssert("Scissor rectangle is out of bounds of the viewport",
+			util::CheckedCast<uint32_t>(scissorRect.Left()) >= targetSet.GetViewport().xMin() &&
+			util::CheckedCast<uint32_t>(scissorRect.Top()) >= targetSet.GetViewport().yMin() &&
+			util::CheckedCast<uint32_t>(scissorRect.Right()) <= targetSet.GetViewport().Width() &&
+			util::CheckedCast<uint32_t>(scissorRect.Bottom()) <= targetSet.GetViewport().Height());
 
 		targetSetParams->m_scissorRect = CD3DX12_RECT(
 			scissorRect.Left(),

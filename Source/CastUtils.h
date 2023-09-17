@@ -8,9 +8,10 @@ namespace util
     template<typename To, typename From>
     static inline To CheckedCast(From value)
     {
+        const To result = static_cast<To>(value);
         SEAssert("Casted value is out of range of the destination type", 
-            value >= std::numeric_limits<To>::min() && value <= std::numeric_limits<To>::max());
+            static_cast<From>(value) == value);
 
-        return static_cast<To>(value);
+        return result;
     }
 }

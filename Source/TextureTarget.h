@@ -173,8 +173,8 @@ namespace re
 		long Bottom() const { return m_bottom; }
 
 	private: // ScissorRect bounds, in pixel coordinates: 
-		long m_left;	// Upper-left corner coordinates: X
-		long m_top;		// Upper-left corner coordinates: Y
+		long m_left;	// Upper-left corner X coordinate
+		long m_top;		// Upper-left corner Y coordinate
 		long m_right;	// Width
 		long m_bottom;	// Height
 	};
