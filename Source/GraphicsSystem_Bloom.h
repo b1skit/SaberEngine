@@ -9,9 +9,8 @@ namespace gr
 	class BloomGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
-		explicit BloomGraphicsSystem(std::string name);
+		BloomGraphicsSystem();
 
-		BloomGraphicsSystem() = delete;
 		~BloomGraphicsSystem() override {}
 
 		void Create(re::RenderSystem&, re::StagePipeline& pipeline);

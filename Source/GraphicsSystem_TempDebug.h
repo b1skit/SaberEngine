@@ -9,9 +9,8 @@ namespace gr
 	class TempDebugGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
-		explicit TempDebugGraphicsSystem(std::string name);
+		TempDebugGraphicsSystem();
 
-		TempDebugGraphicsSystem() = delete;
 		~TempDebugGraphicsSystem() override {}
 
 		void Create(re::StagePipeline&);

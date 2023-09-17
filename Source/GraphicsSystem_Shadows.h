@@ -9,9 +9,8 @@ namespace gr
 	class ShadowsGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
-		explicit ShadowsGraphicsSystem(std::string name);
+		ShadowsGraphicsSystem();
 
-		ShadowsGraphicsSystem() = delete;
 		~ShadowsGraphicsSystem() override {}
 
 		void Create(re::StagePipeline&);

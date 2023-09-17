@@ -30,10 +30,12 @@ namespace gr
 	// TODO: Split this into 2 lists: color target names, and depth names
 	// -> Often need to loop over color, and treat depth differently
 	
+	constexpr char const* k_gsName = "GBuffer Graphics System";
 
-	GBufferGraphicsSystem::GBufferGraphicsSystem(std::string name)
-		: NamedObject(name)
-		, GraphicsSystem(name)	
+
+	GBufferGraphicsSystem::GBufferGraphicsSystem()
+		: NamedObject(k_gsName)
+		, GraphicsSystem(k_gsName)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_gBufferStage = re::RenderStage::CreateGraphicsStage("GBuffer Stage", gfxStageParams);

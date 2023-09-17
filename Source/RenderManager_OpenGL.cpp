@@ -65,28 +65,24 @@ namespace opengl
 			std::vector<std::shared_ptr<gr::GraphicsSystem>>& graphicsSystems = defaultRS->GetGraphicsSystems();
 
 			// Create and add graphics systems:
-			std::shared_ptr<gr::GBufferGraphicsSystem> gbufferGS = 
-				std::make_shared<gr::GBufferGraphicsSystem>("OpenGL GBuffer Graphics System");
+			std::shared_ptr<gr::GBufferGraphicsSystem> gbufferGS = std::make_shared<gr::GBufferGraphicsSystem>();
 			graphicsSystems.emplace_back(gbufferGS);
 
-			std::shared_ptr<gr::ShadowsGraphicsSystem> shadowGS =
-				std::make_shared<gr::ShadowsGraphicsSystem>("OpenGL Shadows Graphics System");
+			std::shared_ptr<gr::ShadowsGraphicsSystem> shadowGS = std::make_shared<gr::ShadowsGraphicsSystem>();
 			graphicsSystems.emplace_back(shadowGS);
 
 			std::shared_ptr<gr::DeferredLightingGraphicsSystem> deferredLightingGS =
-				std::make_shared<gr::DeferredLightingGraphicsSystem>("OpenGL Deferred Lighting Graphics System");
+				std::make_shared<gr::DeferredLightingGraphicsSystem>();
 			graphicsSystems.emplace_back(deferredLightingGS);
 
-			std::shared_ptr<gr::SkyboxGraphicsSystem> skyboxGS =
-				std::make_shared<gr::SkyboxGraphicsSystem>("OpenGL Skybox Graphics System");
+			std::shared_ptr<gr::SkyboxGraphicsSystem> skyboxGS = std::make_shared<gr::SkyboxGraphicsSystem>();
 			graphicsSystems.emplace_back(skyboxGS);
 
-			std::shared_ptr<gr::BloomGraphicsSystem> bloomGS =
-				std::make_shared<gr::BloomGraphicsSystem>("OpenGL Bloom Graphics System");
+			std::shared_ptr<gr::BloomGraphicsSystem> bloomGS = std::make_shared<gr::BloomGraphicsSystem>();
 			graphicsSystems.emplace_back(bloomGS);
 
-			std::shared_ptr<gr::TonemappingGraphicsSystem> tonemappingGS =
-				std::make_shared<gr::TonemappingGraphicsSystem>("OpenGL Tonemapping Graphics System");
+			std::shared_ptr<gr::TonemappingGraphicsSystem> tonemappingGS = 
+				std::make_shared<gr::TonemappingGraphicsSystem>();
 			graphicsSystems.emplace_back(tonemappingGS);
 
 			// Build the creation pipeline:

@@ -25,9 +25,12 @@ using glm::vec3;
 
 namespace gr
 {
-	TonemappingGraphicsSystem::TonemappingGraphicsSystem(std::string name)
-		: GraphicsSystem(name)
-		, NamedObject(name)
+	constexpr char const* k_gsName = "Tone Mapping Graphics System";
+
+
+	TonemappingGraphicsSystem::TonemappingGraphicsSystem()
+		: GraphicsSystem(k_gsName)
+		, NamedObject(k_gsName)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_tonemappingStage = re::RenderStage::CreateGraphicsStage("Tonemapping stage", gfxStageParams);

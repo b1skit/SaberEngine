@@ -54,32 +54,29 @@ namespace dx12
 			std::vector<std::shared_ptr<gr::GraphicsSystem>>& graphicsSystems = defaultRS->GetGraphicsSystems();
 
 			// Create and add graphics systems:
-			std::shared_ptr<gr::ComputeMipsGraphicsSystem> computeMipsGS =
-				std::make_shared<gr::ComputeMipsGraphicsSystem>("DX12 Compute Mips Graphics System");
+			std::shared_ptr<gr::ComputeMipsGraphicsSystem> computeMipsGS = 
+				std::make_shared<gr::ComputeMipsGraphicsSystem>();
 			graphicsSystems.emplace_back(computeMipsGS);
 
-			std::shared_ptr<gr::GBufferGraphicsSystem> gbufferGS =
-				std::make_shared<gr::GBufferGraphicsSystem>("DX12 GBuffer Graphics System");
+			std::shared_ptr<gr::GBufferGraphicsSystem> gbufferGS = std::make_shared<gr::GBufferGraphicsSystem>();
 			graphicsSystems.emplace_back(gbufferGS);
 
 			std::shared_ptr<gr::DeferredLightingGraphicsSystem> deferredLightingGS =
-				std::make_shared<gr::DeferredLightingGraphicsSystem>("DX12 Deferred Lighting Graphics System");
+				std::make_shared<gr::DeferredLightingGraphicsSystem>();
 			graphicsSystems.emplace_back(deferredLightingGS);
 
-			std::shared_ptr<gr::SkyboxGraphicsSystem> skyboxGS =
-				std::make_shared<gr::SkyboxGraphicsSystem>("DX12 Skybox Graphics System");
+			std::shared_ptr<gr::SkyboxGraphicsSystem> skyboxGS = std::make_shared<gr::SkyboxGraphicsSystem>();
 			graphicsSystems.emplace_back(skyboxGS);
 
-			std::shared_ptr<gr::BloomGraphicsSystem> bloomGS =
-				std::make_shared<gr::BloomGraphicsSystem>("DX12 Bloom Graphics System");
+			std::shared_ptr<gr::BloomGraphicsSystem> bloomGS = std::make_shared<gr::BloomGraphicsSystem>();
 			graphicsSystems.emplace_back(bloomGS);
 
 			std::shared_ptr<gr::TonemappingGraphicsSystem> tonemappingGS =
-				std::make_shared<gr::TonemappingGraphicsSystem>("DX12 Tonemapping Graphics System");
+				std::make_shared<gr::TonemappingGraphicsSystem>();
 			graphicsSystems.emplace_back(tonemappingGS);
 
 			std::shared_ptr<gr::TempDebugGraphicsSystem> tempDebugGS =
-				std::make_shared<gr::TempDebugGraphicsSystem>("DX12 Temp Debug Graphics System");
+				std::make_shared<gr::TempDebugGraphicsSystem>();
 			graphicsSystems.emplace_back(tempDebugGS);
 
 			// Build the creation pipeline:

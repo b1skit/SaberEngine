@@ -42,9 +42,12 @@ namespace
 
 namespace gr
 {
-	ComputeMipsGraphicsSystem::ComputeMipsGraphicsSystem(std::string name)
-		: GraphicsSystem(name)
-		, NamedObject(name)
+	constexpr char const* k_gsName = "Compute Mips Graphics System";
+
+
+	ComputeMipsGraphicsSystem::ComputeMipsGraphicsSystem()
+		: GraphicsSystem(k_gsName)
+		, NamedObject(k_gsName)
 		, m_mipMapGenerationShader(nullptr)
 		, m_stagePipeline(nullptr)
 	{

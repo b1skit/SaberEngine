@@ -48,9 +48,12 @@ namespace
 
 namespace gr
 {
-	SkyboxGraphicsSystem::SkyboxGraphicsSystem(std::string name)
-		: GraphicsSystem(name)
-		, NamedObject(name)
+	constexpr char const* k_gsName = "Skybox Graphics System";
+
+
+	SkyboxGraphicsSystem::SkyboxGraphicsSystem()
+		: GraphicsSystem(k_gsName)
+		, NamedObject(k_gsName)
 		, m_skyTexture(nullptr)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;

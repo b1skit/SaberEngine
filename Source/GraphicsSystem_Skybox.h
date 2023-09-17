@@ -9,7 +9,7 @@ namespace gr
 	class SkyboxGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
-		explicit SkyboxGraphicsSystem(std::string name);
+		SkyboxGraphicsSystem();
 
 		~SkyboxGraphicsSystem() override {}
 
@@ -29,9 +29,5 @@ namespace gr
 		std::shared_ptr<re::Texture> m_skyTexture;
 		std::string m_skyTextureShaderName;
 		std::shared_ptr<re::MeshPrimitive> m_screenAlignedQuad;
-
-
-	private:
-		SkyboxGraphicsSystem() = delete;
 	};
 }

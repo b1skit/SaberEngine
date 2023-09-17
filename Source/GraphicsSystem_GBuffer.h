@@ -26,9 +26,7 @@ namespace gr
 
 
 	public:
-		explicit GBufferGraphicsSystem(std::string name);
-
-		GBufferGraphicsSystem() = delete;
+		GBufferGraphicsSystem();
 
 		~GBufferGraphicsSystem() override {}
 

@@ -68,9 +68,12 @@ namespace
 
 namespace gr
 {
-	BloomGraphicsSystem::BloomGraphicsSystem(std::string name)
-		: GraphicsSystem(name)
-		, NamedObject(name)
+	constexpr char const* k_gsName = "Bloom Graphics System";
+
+
+	BloomGraphicsSystem::BloomGraphicsSystem()
+		: GraphicsSystem(k_gsName)
+		, NamedObject(k_gsName)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_emissiveBlitStage = re::RenderStage::CreateGraphicsStage("Emissive blit stage", gfxStageParams);

@@ -56,8 +56,12 @@ namespace
 
 namespace gr
 {
-	ShadowsGraphicsSystem::ShadowsGraphicsSystem(std::string name) 
-		: GraphicsSystem(name), NamedObject(name)
+	constexpr char const* k_gsName = "Shadows Graphics System";
+
+
+	ShadowsGraphicsSystem::ShadowsGraphicsSystem()
+		: GraphicsSystem(k_gsName)
+		, NamedObject(k_gsName)
 		, m_hasDirectionalLight(false)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;

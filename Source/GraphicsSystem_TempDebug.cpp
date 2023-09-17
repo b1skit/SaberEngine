@@ -12,9 +12,12 @@ using en::SceneManager;
 
 namespace gr
 {
-	TempDebugGraphicsSystem::TempDebugGraphicsSystem(std::string name)
-		: GraphicsSystem(name)
-		, NamedObject(name)
+	constexpr char const* k_gsName = "Temp Debug Graphics System";
+
+
+	TempDebugGraphicsSystem::TempDebugGraphicsSystem()
+		: GraphicsSystem(k_gsName)
+		, NamedObject(k_gsName)
 		, m_helloTriangle(nullptr)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;

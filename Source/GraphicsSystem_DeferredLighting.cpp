@@ -180,9 +180,12 @@ namespace
 
 namespace gr
 {
-	DeferredLightingGraphicsSystem::DeferredLightingGraphicsSystem(string name)
-		: GraphicsSystem(name)
-		, NamedObject(name)
+	constexpr char const* k_gsName = "Deferred Lighting Graphics System";
+
+
+	DeferredLightingGraphicsSystem::DeferredLightingGraphicsSystem()
+		: GraphicsSystem(k_gsName)
+		, NamedObject(k_gsName)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_ambientStage = re::RenderStage::CreateGraphicsStage("Ambient light stage", gfxStageParams);
