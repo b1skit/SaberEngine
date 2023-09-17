@@ -9,10 +9,13 @@
 #include "Context_DX12.h"
 #include "DebugConfiguration.h"
 #include "Debug_DX12.h"
+#include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_ComputeMips.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
+#include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_TempDebug.h"
+#include "GraphicsSystem_Tonemapping.h"
 #include "MeshPrimitive_DX12.h"
 #include "ParameterBlock_DX12.h"
 #include "RenderManager_DX12.h"
@@ -63,6 +66,18 @@ namespace dx12
 				std::make_shared<gr::DeferredLightingGraphicsSystem>("DX12 Deferred Lighting Graphics System");
 			graphicsSystems.emplace_back(deferredLightingGS);
 
+			std::shared_ptr<gr::SkyboxGraphicsSystem> skyboxGS =
+				std::make_shared<gr::SkyboxGraphicsSystem>("DX12 Skybox Graphics System");
+			graphicsSystems.emplace_back(skyboxGS);
+
+			std::shared_ptr<gr::BloomGraphicsSystem> bloomGS =
+				std::make_shared<gr::BloomGraphicsSystem>("DX12 Bloom Graphics System");
+			graphicsSystems.emplace_back(bloomGS);
+
+			std::shared_ptr<gr::TonemappingGraphicsSystem> tonemappingGS =
+				std::make_shared<gr::TonemappingGraphicsSystem>("DX12 Tonemapping Graphics System");
+			graphicsSystems.emplace_back(tonemappingGS);
+
 			std::shared_ptr<gr::TempDebugGraphicsSystem> tempDebugGS =
 				std::make_shared<gr::TempDebugGraphicsSystem>("DX12 Temp Debug Graphics System");
 			graphicsSystems.emplace_back(tempDebugGS);
@@ -73,6 +88,10 @@ namespace dx12
 			computeMipsGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(computeMipsGS->GetName()));
 			gbufferGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(gbufferGS->GetName()));
 			deferredLightingGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(deferredLightingGS->GetName()));
+			skyboxGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(skyboxGS->GetName()));
+			bloomGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(bloomGS->GetName()));
+			tonemappingGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(tonemappingGS->GetName()));
+
 			tempDebugGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(tempDebugGS->GetName()));
 		};
 		defaultRenderSystem->SetCreatePipeline(DefaultRenderSystemCreatePipeline);
@@ -85,12 +104,20 @@ namespace dx12
 			gr::ComputeMipsGraphicsSystem* computeMipsGS = renderSystem->GetGraphicsSystem<gr::ComputeMipsGraphicsSystem>();
 			gr::GBufferGraphicsSystem* gbufferGS = renderSystem->GetGraphicsSystem<gr::GBufferGraphicsSystem>();
 			gr::DeferredLightingGraphicsSystem* deferredLightingGS = renderSystem->GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
+			gr::SkyboxGraphicsSystem* skyboxGS = renderSystem->GetGraphicsSystem<gr::SkyboxGraphicsSystem>();
+			gr::BloomGraphicsSystem* bloomGS = renderSystem->GetGraphicsSystem<gr::BloomGraphicsSystem>();
+			gr::TonemappingGraphicsSystem* tonemappingGS = renderSystem->GetGraphicsSystem<gr::TonemappingGraphicsSystem>();
+			
 			gr::TempDebugGraphicsSystem* tempDebugGS = renderSystem->GetGraphicsSystem<gr::TempDebugGraphicsSystem>();
 
 			// Execute per-frame updates:
 			computeMipsGS->PreRender();
 			gbufferGS->PreRender();
 			deferredLightingGS->PreRender();
+			skyboxGS->PreRender();
+			bloomGS->PreRender();
+			tonemappingGS->PreRender();
+
 			tempDebugGS->PreRender();
 		};
 		defaultRenderSystem->SetUpdatePipeline(UpdatePipeline);

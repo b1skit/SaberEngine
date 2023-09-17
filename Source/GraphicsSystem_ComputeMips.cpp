@@ -53,7 +53,7 @@ namespace gr
 
 	void ComputeMipsGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		m_mipMapGenerationShader = re::Shader::Create(en::ShaderNames::k_mipGenerationShaderName);
+		m_mipMapGenerationShader = re::Shader::Create(en::ShaderNames::k_generateMipMapsShaderName);
 
 		re::RenderStage::ComputeStageParams parentStageParams; // Defaults
 
@@ -104,7 +104,7 @@ namespace gr
 
 					re::RenderStage::ComputeStageParams computeStageParams; // Defaults, for now...
 
-					const std::string stageName = std::format("{}: Face {}/{}, MIP {}-{} generation", 
+					const std::string stageName = std::format("{}: Face {}/{}, MIP {}-{}", 
 						newTexture->GetName().c_str(),
 						faceIdx + 1,
 						textureParams.m_faces,

@@ -91,7 +91,7 @@ namespace gr
 
 				// Shader:
 				m_directionalShadowStage->SetStageShader(
-					re::Shader::Create(Config::Get()->GetValue<string>("depthShaderName")));
+					re::Shader::Create(en::ShaderNames::k_depthShaderName));
 
 				std::shared_ptr<re::TextureTargetSet> directionalShadowTargetSet = 
 					directionalLight->GetShadowMap()->GetTextureTargetSet();
@@ -135,8 +135,7 @@ namespace gr
 				m_pointLightShadowStageCams.emplace_back(shadowCam);
 
 				// Shader:
-				shadowStage->SetStageShader(
-					re::Shader::Create(Config::Get()->GetValue<string>("cubeDepthShaderName")));
+				shadowStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_cubeDepthShaderName));
 
 				shadowStage->SetTextureTargetSet(curLight->GetShadowMap()->GetTextureTargetSet());
 

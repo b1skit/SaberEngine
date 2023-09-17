@@ -444,21 +444,8 @@ namespace en
 		{
 		case platform::RenderingAPI::OpenGL:
 		{
-			// Shader:
-			TryInsertDefault("shaderDirectory",						std::string(".\\Shaders\\GLSL\\"));
-
-			// Depth map rendering:
-			TryInsertDefault("depthShaderName",						std::string("depthShader"));
-			TryInsertDefault("cubeDepthShaderName",					std::string("cubeDepthShader"));
-
-			// Deferred rendering:
-			TryInsertDefault("skyboxShaderName",					std::string("skyboxShader"));
-			TryInsertDefault("BRDFIntegrationMapShaderName",		std::string("BRDFIntegrationMapShader"));
-			TryInsertDefault("blitShaderName",						std::string("blitShader"));
-			TryInsertDefault("luminanceThresholdShaderName",		std::string("luminanceThreshold"));
-			TryInsertDefault("blurShaderHorizontalShaderName",		std::string("blurShaderHorizontal"));
-			TryInsertDefault("blurShaderVerticalShaderName",		std::string("blurShaderVertical"));
-			TryInsertDefault("toneMapShader",						std::string("toneMapShader"));
+			// Shaders:
+			TryInsertDefault("shaderDirectory",	std::string(".\\Shaders\\GLSL\\"));
 
 			// Shadow map defaults:
 			TryInsertDefault(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias,	0.001f);

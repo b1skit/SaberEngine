@@ -45,7 +45,7 @@ namespace gr
 
 		m_tonemappingStage->SetStagePipelineState(tonemappingStageParam);
 
-		m_tonemappingStage->SetStageShader(re::Shader::Create(Config::Get()->GetValue<string>("toneMapShader")));
+		m_tonemappingStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_toneMapShaderName));
 
 		m_tonemappingStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 

@@ -63,7 +63,7 @@ namespace gr
 	void SkyboxGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
 	{
 		// Create a skybox shader, now that we have some sort of image loaded:
-		m_skyboxStage->SetStageShader(re::Shader::Create(Config::Get()->GetValue<string>("skyboxShaderName")));
+		m_skyboxStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_skyboxShaderName));
 
 		// Load the HDR image:
 		m_skyTexture = SceneManager::GetSceneData()->GetIBLTexture();

@@ -789,12 +789,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\glsl\blitShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
-    <None Include="Shaders\glsl\blitShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
     <None Include="Shaders\glsl\cubeDepthShader.geom">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
@@ -837,23 +831,8 @@
     <None Include="Shaders\glsl\SaberLighting.glsl">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\glsl\skyboxShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
-    <None Include="Shaders\glsl\skyboxShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
-    <None Include="Shaders\glsl\toneMapShader.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
-    <None Include="Shaders\glsl\toneMapShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
     <None Include="SaberEngine.licenseheader" />
     <None Include="packages.config" />
-    <None Include="Shaders\glsl\blurCommon.glsl">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
     <None Include="Shaders\GLSL\GenerateIEM.frag">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
@@ -864,24 +843,6 @@
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GeneratePMREM.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
-    <None Include="Shaders\glsl\blurShaderHorizontal.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
-    <None Include="Shaders\glsl\blurShaderHorizontal.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
-    <None Include="Shaders\glsl\blurShaderVertical.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
-    <None Include="Shaders\glsl\blurShaderVertical.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
-    <None Include="Shaders\glsl\luminanceThreshold.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
-    <None Include="Shaders\glsl\luminanceThreshold.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\HLSL\SaberCommon.hlsli">
@@ -898,6 +859,39 @@
     </None>
     <None Include="Shaders\HLSL\SaberComputeCommon.hlsli">
       <Filter>Source Files\Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\Skybox.frag">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\Skybox.vert">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\Blit.frag">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\Blit.vert">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\LuminanceThreshold.frag">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\LuminanceThreshold.vert">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\GaussianBlur.frag">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\GaussianBlur.vert">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\ToneMap.frag">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\ToneMap.vert">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\FullscreenQuadCommon.glsl">
+      <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -947,6 +941,36 @@
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\GenerateMipMaps_BoxFilter_CShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\Skybox_PShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\Skybox_VShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\Blit_PShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\Blit_VShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\LuminanceThreshold_PShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\LuminanceThreshold_VShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GaussianBlur_PShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\GaussianBlur_VShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\ToneMap_PShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\ToneMap_VShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
   </ItemGroup>

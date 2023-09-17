@@ -206,14 +206,19 @@ layout(std430, binding=7) readonly buffer BloomTargetParams
 	vec4 g_bloomTargetResolution; // .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
 };
 
-layout(std430, binding=8) readonly buffer BloomParams
+layout(std430, binding=8) readonly buffer LuminanceThresholdParams
 {
 	vec4 g_sigmoidParams; // .x = Sigmoid ramp power, .y = Sigmoid speed, .zw = unused
 };
 
+layout(std430, binding=9) readonly buffer GaussianBlurParams
+{
+	vec4 g_blurSettings; // .x = Blur direction (0 = horizontal, 1 = vertical), .yzw = unused
+};
+
 
 // GraphicsSystem_Skybox.cpp
-layout(std430, binding=9) readonly buffer SkyboxParams
+layout(std430, binding=10) readonly buffer SkyboxParams
 {
 	vec4 g_skyboxTargetResolution; // .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
 };

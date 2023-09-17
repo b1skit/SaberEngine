@@ -391,12 +391,12 @@ namespace gr
 			{
 				for (uint32_t face = 0; face < 6; face++)
 				{
-					const string postFix = to_string(face + 1) + "/6, MIP " +
-						to_string(currentMipLevel + 1) + "/" + to_string(numMipLevels);
+					std::string const& postFix = std::format("Face {}, Mip {}", face, currentMipLevel);
+					std::string const& stageName = std::format("PMREM generation: {}", postFix);
 
 					re::RenderStage::GraphicsStageParams gfxStageParams;
 					std::shared_ptr<re::RenderStage> pmremStage = re::RenderStage::CreateSingleFrameGraphicsStage(
-						"PMREM generation: Face " + postFix, gfxStageParams);
+						stageName, gfxStageParams);
 
 					pmremStage->SetStageShader(pmremShader);
 					pmremStage->AddTextureInput(
@@ -500,8 +500,6 @@ namespace gr
 
 		shared_ptr<Texture> iblTexture = SceneManager::GetSceneData()->GetIBLTexture();
 		
-		
-
 		const bool ambientIsValid =
 			ambientProperties.m_ambient.m_BRDF_integrationMap &&
 			ambientProperties.m_ambient.m_IEMTex &&

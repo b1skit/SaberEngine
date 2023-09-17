@@ -41,6 +41,29 @@ namespace
 		bloomTargetParams.g_bloomTargetResolution = targetSet->GetTargetDimensions();
 		return bloomTargetParams;
 	}
+
+
+	struct GaussianBlurParams
+	{
+		glm::vec4 g_blurSettings; // .x = Bloom direction (0 = horizontal, 1 = vertical), .yzw = unused
+
+		static constexpr char const* const s_shaderName = "GaussianBlurParams";
+	};
+
+	enum class BloomDirection
+	{
+		Horizontal = 0,
+		Vertical = 1
+	};
+
+	GaussianBlurParams CreateBloomParamsData(BloomDirection bloomDirection)
+	{
+		const float bloomDir = static_cast<float>(bloomDirection);
+
+		GaussianBlurParams bloomParams;
+		bloomParams.g_blurSettings = glm::vec4(bloomDir, 0.f, 0.f, 0.f);;
+		return bloomParams;
+	}
 }
 
 namespace gr
@@ -63,7 +86,7 @@ namespace gr
 
 		Camera* sceneCam = SceneManager::Get()->GetMainCamera().get();
 
-		shared_ptr<Shader> blitShader = re::Shader::Create(Config::Get()->GetValue<string>("blitShaderName"));
+		shared_ptr<Shader> blitShader = re::Shader::Create(en::ShaderNames::k_blitShaderName);
 
 		// Emissive blit stage:
 		gr::PipelineState emissiveStageParams;
@@ -93,9 +116,6 @@ namespace gr
 		bloomStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
 		bloomStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
 		
-		const uint32_t numScalingStages = m_numDownSamplePasses;
-		m_downResStages.reserve(numScalingStages); // MUST reserve so our pointers won't change
-
 		int currentXRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName) / 2;
 		int currentYRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName) / 2;
 
@@ -109,19 +129,21 @@ namespace gr
 		re::TextureTarget::TargetParams targetParams;
 
 		shared_ptr<Shader> luminanceThresholdShader =
-			re::Shader::Create(Config::Get()->GetValue<string>("luminanceThresholdShaderName"));
+			re::Shader::Create(en::ShaderNames::k_luminanceThresholdShaderName);
 
-		m_bloomParamBlock = re::ParameterBlock::Create(
-			BloomParams::s_shaderName,
-			m_bloomParams,
+		// Create our param blocks:
+		m_luminanceThresholdParamBlock = re::ParameterBlock::Create(
+			LuminanceThresholdParams::s_shaderName,
+			m_luminanceThresholdParams,
 			re::ParameterBlock::PBType::Mutable);
 
 		// Downsampling stages (w/luminance threshold in 1st pass):
-		for (uint32_t i = 0; i < numScalingStages; i++)
+		for (uint32_t i = 0; i < m_numDownSamplePasses; i++)
 		{
-			const string name = "Down-res stage " + to_string(i + 1) + " / " + to_string(numScalingStages);
+			const string name = "Down-res stage " + to_string(i + 1) + " / " + to_string(m_numDownSamplePasses);
 			re::RenderStage::GraphicsStageParams gfxStageParams;
-			m_downResStages.emplace_back(re::RenderStage::CreateGraphicsStage(name, gfxStageParams));
+			m_downResStages[i] = re::RenderStage::CreateGraphicsStage(name, gfxStageParams);
+			re::RenderStage* downResStage = m_downResStages[i].get();
 
 			std::shared_ptr<re::TextureTargetSet> downResTargets = re::TextureTargetSet::Create(name + " targets");
 			downResTargets->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
@@ -135,16 +157,16 @@ namespace gr
 
 			downResTargets->SetColorTarget(0, re::Texture::Create(texName, resScaleParams, false), targetParams);
 
-			m_downResStages.back()->SetTextureTargetSet(downResTargets);
+			downResStage->SetTextureTargetSet(downResTargets);
 
-			m_downResStages.back()->SetStagePipelineState(bloomStageParams);
-			m_downResStages.back()->AddPermanentParameterBlock(sceneCam->GetCameraParams());
+			downResStage->SetStagePipelineState(bloomStageParams);
+			downResStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
 			if (i == 0)
 			{
 				m_downResStages[i]->SetStageShader(luminanceThresholdShader);
 
-				m_downResStages[i]->AddPermanentParameterBlock(m_bloomParamBlock);
+				m_downResStages[i]->AddPermanentParameterBlock(m_luminanceThresholdParamBlock);
 			}
 			else
 			{
@@ -154,7 +176,7 @@ namespace gr
 			pipeline.AppendRenderStage(m_downResStages[i]);
 
 			// Don't halve the resolution on the last iteration:
-			if (i < (numScalingStages - 1))
+			if (i < (m_numDownSamplePasses - 1))
 			{
 				currentXRes /= 2;
 				currentYRes /= 2;
@@ -162,11 +184,19 @@ namespace gr
 		}
 
 		// Blur stages:
-		shared_ptr<Shader> horizontalBlurShader = 
-			re::Shader::Create(Config::Get()->GetValue<string>("blurShaderHorizontalShaderName"));
+		shared_ptr<Shader> gaussianBlurShader =
+			re::Shader::Create(en::ShaderNames::k_gaussianBlurShaderName);
 
-		shared_ptr<Shader> verticalBlurShader = 
-			re::Shader::Create(Config::Get()->GetValue<string>("blurShaderVerticalShaderName"));
+		// Create our param blocks:
+		m_horizontalBloomParams = re::ParameterBlock::Create(
+			GaussianBlurParams::s_shaderName,
+			CreateBloomParamsData(BloomDirection::Horizontal),
+			re::ParameterBlock::PBType::Immutable);
+
+		m_verticalBloomParams = re::ParameterBlock::Create(
+			GaussianBlurParams::s_shaderName,
+			CreateBloomParamsData(BloomDirection::Vertical),
+			re::ParameterBlock::PBType::Immutable);
 
 		Texture::TextureParams blurParams(resScaleParams);
 		blurParams.m_width = currentXRes;
@@ -175,35 +205,42 @@ namespace gr
 		
 		shared_ptr<Texture> blurPingPongTexture = re::Texture::Create(texName, blurParams, false);
 
-		uint32_t totalBlurPasses = m_numBlurPasses * 2; // x2 for horizontal + blur separation
-		m_blurStages.reserve(totalBlurPasses);  // MUST reserve so our pointers won't change
+		const uint32_t totalBlurPasses = m_numBlurPasses * 2; // x2 for horizontal/vertical separation
+
+		constexpr char const* blurStageNamePrefix[2] = { "Horizontal", "Vertical"};
+
 		for (size_t i = 0; i < totalBlurPasses; i++)
 		{
-			const string stagePrefix = (i % 2 == 0) ? "Horizontal " : "Vertical ";
-			const string name = stagePrefix + "blur stage " + to_string((i + 2) / 2) + " / " + to_string(m_numBlurPasses);
+			std::string const& stageName = 
+				std::format("{} blur stage {} / {}", blurStageNamePrefix[i % 2], (i + 2) / 2, m_numBlurPasses);
+
 			re::RenderStage::GraphicsStageParams gfxStageParams;
-			m_blurStages.emplace_back(re::RenderStage::CreateGraphicsStage(name, gfxStageParams));
+			m_blurStages[i] = re::RenderStage::CreateGraphicsStage(stageName, gfxStageParams);
+			re::RenderStage* newBlurStage = m_blurStages[i].get();
 
-			std::shared_ptr<re::TextureTargetSet> blurTargets = re::TextureTargetSet::Create(name + " targets");
-
+			std::shared_ptr<re::TextureTargetSet> blurTargets = re::TextureTargetSet::Create(stageName + " targets");
 			blurTargets->SetViewport(re::Viewport(0, 0, currentXRes, currentYRes));
 
-			m_blurStages.back()->SetStagePipelineState(bloomStageParams);
-			m_blurStages.back()->AddPermanentParameterBlock(sceneCam->GetCameraParams());
+			newBlurStage->SetStagePipelineState(bloomStageParams);
+			newBlurStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
 			if (i % 2 == 0)
 			{
 				blurTargets->SetColorTarget(0, blurPingPongTexture, targetParams);
-				m_blurStages.back()->SetStageShader(horizontalBlurShader);
+				newBlurStage->SetStageShader(gaussianBlurShader);
+
+				newBlurStage->AddPermanentParameterBlock(m_horizontalBloomParams);
 			}
 			else
 			{
 				blurTargets->SetColorTarget(0, m_downResStages.back()->GetTextureTargetSet()->GetColorTarget(0));
-				m_blurStages.back()->SetStageShader(verticalBlurShader);
-			}
-			m_blurStages.back()->SetTextureTargetSet(blurTargets);
+				newBlurStage->SetStageShader(gaussianBlurShader);
 
-			m_blurStages.back()->AddPermanentParameterBlock(re::ParameterBlock::Create(
+				newBlurStage->AddPermanentParameterBlock(m_verticalBloomParams);
+			}
+			newBlurStage->SetTextureTargetSet(blurTargets);
+
+			newBlurStage->AddPermanentParameterBlock(re::ParameterBlock::Create(
 				BloomTargetParams::s_shaderName,
 				CreateBloomTargetParamsData(blurTargets),
 				re::ParameterBlock::PBType::Immutable));
@@ -217,24 +254,24 @@ namespace gr
 		upresStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
 		upresStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
 
-		m_upResStages.reserve(numScalingStages); // MUST reserve so our pointers won't change
-		for (size_t i = 0; i < numScalingStages; i++)
+		for (size_t i = 0; i < m_numDownSamplePasses; i++)
 		{
 			currentXRes *= 2;
 			currentYRes *= 2;
 
-			const string name = "Up-res stage " + to_string(i + 1) + " / " + to_string(numScalingStages);
+			const string name = "Up-res stage " + to_string(i + 1) + " / " + to_string(m_numDownSamplePasses);
 			re::RenderStage::GraphicsStageParams gfxStageParams;
-			m_upResStages.emplace_back(re::RenderStage::CreateGraphicsStage(name, gfxStageParams));
+			m_upResStages[i] = re::RenderStage::CreateGraphicsStage(name, gfxStageParams);
+			re::RenderStage* upresStage = m_upResStages[i].get();
 
 			std::shared_ptr<re::TextureTargetSet> upResTargets = re::TextureTargetSet::Create(name + " targets");
 
 			upResTargets->SetViewport(re::Viewport(0, 0, currentXRes, currentYRes));
 
-			m_upResStages.back()->AddPermanentParameterBlock(sceneCam->GetCameraParams());
+			upresStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
 			m_upResStages[i]->SetStageShader(blitShader);
 
-			if (i == (numScalingStages - 1)) // Last iteration: Additive blit back to the src gs
+			if (i == (m_numDownSamplePasses - 1)) // Last iteration: Additive blit back to the src gs
 			{
 				upResTargets->SetColorTarget(0, deferredLightGS->GetFinalTextureTargetSet()->GetColorTarget(0));
 
@@ -244,7 +281,7 @@ namespace gr
 				gr::PipelineState addStageParams(upresStageParams);
 				addStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
 
-				m_upResStages.back()->SetStagePipelineState(addStageParams);
+				upresStage->SetStagePipelineState(addStageParams);
 			}
 			else
 			{
@@ -254,10 +291,10 @@ namespace gr
 				upResTargets->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
 					re::TextureTarget::TargetParams::BlendMode::One, re::TextureTarget::TargetParams::BlendMode::Zero});
 
-				m_upResStages.back()->SetStagePipelineState(upresStageParams);
+				upresStage->SetStagePipelineState(upresStageParams);
 			}
 
-			m_upResStages.back()->SetTextureTargetSet(upResTargets);
+			upresStage->SetTextureTargetSet(upResTargets);
 
 			pipeline.AppendRenderStage(m_upResStages[i]);
 		}
@@ -335,7 +372,7 @@ namespace gr
 		CreateBatches();
 
 		// Update our bloom params:
-		m_bloomParamBlock->Commit(m_bloomParams);
+		m_luminanceThresholdParamBlock->Commit(m_luminanceThresholdParams);
 	}
 
 
@@ -371,8 +408,8 @@ namespace gr
 					constexpr uint32_t k_numSamples = 20;
 					constexpr float k_sampleSpacing = 0.2f;
 					float samplePoints[k_numSamples];
-					const float sigmoidPower = m_bloomParams.g_sigmoidParams.x;
-					const float sigmoidSpeed = m_bloomParams.g_sigmoidParams.y;
+					const float sigmoidPower = m_luminanceThresholdParams.g_sigmoidParams.x;
+					const float sigmoidSpeed = m_luminanceThresholdParams.g_sigmoidParams.y;
 					for (size_t i = 0; i < k_numSamples; i++)
 					{
 						const float x = i * k_sampleSpacing;
@@ -386,10 +423,10 @@ namespace gr
 				}
 			};
 
-			ImGui::SliderFloat("Sigmoid ramp power", &m_bloomParams.g_sigmoidParams.x, 0, 15.0f, "Sigmoid ramp power = %.3f");
+			ImGui::SliderFloat("Sigmoid ramp power", &m_luminanceThresholdParams.g_sigmoidParams.x, 0, 15.0f, "Sigmoid ramp power = %.3f");
 			ShowTooltip();
 
-			ImGui::SliderFloat("Sigmoid ramp speed", &m_bloomParams.g_sigmoidParams.y, 0, 5.0f, "Sigmoid ramp speed = %.3f");
+			ImGui::SliderFloat("Sigmoid ramp speed", &m_luminanceThresholdParams.g_sigmoidParams.y, 0, 5.0f, "Sigmoid ramp speed = %.3f");
 			ShowTooltip();
 
 			ImGui::TreePop();
