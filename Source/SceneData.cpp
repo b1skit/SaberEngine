@@ -1552,7 +1552,7 @@ namespace fr
 		//case Light::Area:
 		//case Light::Tube:
 		default:
-			LOG_ERROR("Ignorring unsupported light type");
+			LOG_ERROR("Ignoring unsupported light type");
 			break;
 		}
 

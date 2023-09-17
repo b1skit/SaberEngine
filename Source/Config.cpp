@@ -355,6 +355,7 @@ namespace en
 		// Now the config has been loaded, populate any remaining entries with default values
 		InitializeDefaultValues();
 		SetAPIDefaults();
+		SetRuntimeDefaults();
 
 		SaveConfigFile(); // Write out the results immediately
 
@@ -371,9 +372,6 @@ namespace en
 			m_renderingAPI = platform::RenderingAPI::OpenGL; // OpenGL by default for now, as it is the most complete
 			TrySetValue(ConfigKeys::k_platformCmdLineArg, "opengl", SettingType::Runtime);
 		}
-
-		// Debug:
-		TrySetValue(ConfigKeys::k_debugLevelCmdLineArg,		0,					SettingType::Runtime);
 		
 		// Window:
 		markDirty |= TrySetValue("windowTitle",				std::string("Saber Engine"),	SettingType::Common);
@@ -431,13 +429,7 @@ namespace en
 		auto TryInsertDefault = [&](std::string const& key, auto const& value)
 		{
 			TrySetValue(key, value, SettingType::APISpecific);
-		};
-		
-		// API-agnostic defaults:
-		
-		// Quality settings:
-		TrySetValue("numIEMSamples", 20000, SettingType::Runtime); // # samples when generating IEM texture
-		TrySetValue("numPMREMSamples", 4096, SettingType::Runtime); // # samples when generating PMREM texture
+		};		
 
 		platform::RenderingAPI const& api = GetRenderingAPI();
 		switch (api)
@@ -446,18 +438,11 @@ namespace en
 		{
 			// Shaders:
 			TryInsertDefault("shaderDirectory",	std::string(".\\Shaders\\GLSL\\"));
-
-			// Shadow map defaults:
-			TryInsertDefault(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias,	0.001f);
-			TryInsertDefault(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias,	0.005f);
-			TryInsertDefault(en::ConfigKeys::k_defaultPointLightMinShadowBias,			0.01f);
-			TryInsertDefault(en::ConfigKeys::k_defaultPointLightMaxShadowBias,			0.05f);
 		}
 		break;
 		case platform::RenderingAPI::DX12:
 		{
 			TryInsertDefault("shaderDirectory", std::string(".\\Shaders\\HLSL\\"));
-
 		}
 		break;
 		default:
@@ -466,6 +451,28 @@ namespace en
 
 			throw std::runtime_error("Invalid Rendering API set, cannot set API defaults");
 		}
+	}
+
+
+	void Config::SetRuntimeDefaults()
+	{
+		auto TryInsertRuntimeValue = [&](std::string const& key, auto const& value)
+		{
+			TrySetValue(key, value, SettingType::Runtime);
+		};
+
+		// Debug:
+		TryInsertRuntimeValue(ConfigKeys::k_debugLevelCmdLineArg, 0);
+
+		// Quality settings:
+		TryInsertRuntimeValue("numIEMSamples",		20000);	// # samples when generating IEM texture
+		TryInsertRuntimeValue("numPMREMSamples",	4096);	// # samples when generating PMREM texture
+
+		// Shadow map defaults:
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias,	0.001f);
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias,	0.005f);
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMinShadowBias,			0.01f);
+		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMaxShadowBias,			0.05f);
 	}
 
 

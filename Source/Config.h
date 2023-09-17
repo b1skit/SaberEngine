@@ -72,8 +72,8 @@ namespace en
 
 	private:
 		void InitializeDefaultValues(); // Initialize any unpopulated configuration values with defaults
-
 		void SetAPIDefaults();
+		void SetRuntimeDefaults(); // Platform-agnostic defaults not loaded/saved to disk
 
 
 	private:
@@ -112,12 +112,13 @@ namespace en
 			{
 				// TODO: The SEAssertF macro should take variadic args
 				LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what());
-				SEAssertF("bad_any_cast exception thrown: Invalid type requested from Config\n");
+				SEAssertF("bad_any_cast exception thrown: Invalid type requested from Config");
 			}
 		}
 		else
 		{
 			LOG_ERROR("Invalid type requested from Config");
+			SEAssertF("Invalid type requested from Config");
 			throw std::runtime_error("Config key does not exist");
 		}
 
