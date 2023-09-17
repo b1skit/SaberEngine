@@ -138,7 +138,9 @@ namespace re
 		inline uint32_t const& Height() const { return m_texParams.m_height; }		
 
 		size_t GetTotalBytesPerFace() const;
-		void* GetTexelData(uint8_t faceIdx) const;
+
+		bool HasInitialData() const;
+		void* GetTexelData(uint8_t faceIdx) const; // Can be null
 
 		uint32_t GetNumMips() const;
 		uint32_t GetTotalNumSubresources() const;

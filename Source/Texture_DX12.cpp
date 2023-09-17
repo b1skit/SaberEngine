@@ -596,8 +596,6 @@ namespace
 			0,						// sampleQuality
 			flags);
 
-		
-
 		HRESULT hr = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()->CreateCommittedResource(
 			&heapProperties,
 			D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_CREATE_NOT_ZEROED, // TODO: Query support: Unsupported on older versions of Windows
@@ -750,7 +748,7 @@ namespace dx12
 		SEAssert("TODO: Support depth stencil targets", (texParams.m_usage & re::Texture::Usage::DepthStencilTarget) == 0);
 		SEAssert("TODO: Support stencil targets", (texParams.m_usage & re::Texture::Usage::StencilTarget) == 0);
 		
-
+		// Figure out our resource needs:
 		const bool needsUAV = UAVIsNeeded(texParams, texPlatParams->m_format);
 		const uint32_t numMips = texture.GetNumMips();
 		const uint32_t numSubresources = texture.GetTotalNumSubresources();
@@ -773,35 +771,20 @@ namespace dx12
 			initialState = CreateTextureCommittedResource(texture, needsUAV);
 		}
 
-		if (texParams.m_usage & re::Texture::Usage::Color)
+		// Upload initial data via an intermediate upload heap:
+		if ((texParams.m_usage & re::Texture::Usage::Color) && texture.HasInitialData())
 		{
-			// Create an intermediate upload heap:
+			SEAssert("TODO: Test/support buffering texture data for textures with multiple faces. Initial data for the "
+				" first mip of textures with multiple faces probably works, but has not been tested ",
+				texParams.m_dimension == re::Texture::Dimension::Texture2D && texParams.m_faces == 1);
+
 			const uint8_t bytesPerTexel = re::Texture::GetNumBytesPerTexel(texParams.m_format);
-			const uint32_t numBytes = static_cast<uint32_t>(texture.GetTotalBytesPerFace());
-			SEAssert("Color target must have data to buffer",
-				numBytes > 0 &&
-				numBytes == texParams.m_faces * texParams.m_width * texParams.m_height * bytesPerTexel);
-
-			std::vector<D3D12_SUBRESOURCE_DATA> mipData;
-			mipData.reserve(numMips);
-
-			SEAssert("TODO: Support textures with multiple faces", texParams.m_faces);
-			const uint32_t faceIdx = 0;
-
-			// We don't have any MIP data yet, so we only need to describe MIP 0
-			mipData.emplace_back(D3D12_SUBRESOURCE_DATA{
-				.pData = texture.GetTexelData(faceIdx),
-
-				// https://github.com/microsoft/DirectXTex/wiki/ComputePitch
-				// Row pitch: The number of bytes in a scanline of pixels: bytes-per-pixel * width-of-image
-				// - Can be larger than the number of valid pixels due to alignment padding
-				.RowPitch = bytesPerTexel * texParams.m_width,
-
-				// Slice pitch: The number of bytes in each depth slice
-				// - 1D/2D images: The total size of the image, including alignment padding
-				.SlicePitch = numBytes
-				});
-
+			const uint32_t numBytesPerFace = static_cast<uint32_t>(texture.GetTotalBytesPerFace());
+			const uint32_t totalBytes = numBytesPerFace * texParams.m_faces;
+			SEAssert("Texture sizes don't make sense",
+				totalBytes > 0 &&
+				totalBytes == texParams.m_faces * texParams.m_width * texParams.m_height * bytesPerTexel);
+			
 			// Note: If we don't request an intermediate buffer large enough, the UpdateSubresources call will return 0
 			// and no update is actually recorded on the command list.
 			// Buffers have the same size on all adapters: The smallest multiple of 64KB >= the buffer width
@@ -810,8 +793,9 @@ namespace dx12
 			// D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 64KB, as per:
 			// https://learn.microsoft.com/en-us/windows/win32/direct3d12/constants
 
-			const uint32_t intermediateBufferWidth =
-				util::RoundUpToNearestMultiple(numBytes, static_cast<uint32_t>(D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT));
+			const uint32_t intermediateBufferWidth = util::RoundUpToNearestMultiple(
+				totalBytes, 
+				static_cast<uint32_t>(D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT));
 
 			const D3D12_RESOURCE_DESC intermediateBufferResourceDesc =
 			{
@@ -847,18 +831,40 @@ namespace dx12
 			const std::wstring intermediateName = texture.GetWName() + L" intermediate buffer";
 			itermediateBufferResource->SetName(intermediateName.c_str());
 
-			const uint64_t bufferSizeResult = ::UpdateSubresources(
-				copyCommandList,
-				texPlatParams->m_textureResource.Get(),			// Destination resource
-				itermediateBufferResource.Get(),				// Intermediate resource
-				0,												// Intermediate offset
-				0,												// Index of 1st subresource in the resource
-				static_cast<uint32_t>(mipData.size()),	// Number of subresources in the subresources array
-				mipData.data());						// Array of subresource data structs
-			SEAssert("UpdateSubresources returned 0 bytes. This is unexpected", bufferSizeResult > 0);
 
-			SEAssert("TODO: Support SRVs/UAVs for textures of different dimensions",
-				texParams.m_dimension == re::Texture::Dimension::Texture2D && texParams.m_faces == 1);
+			// Populate our subresource data
+			// Note: We currently assume we only have data for the first mip of each face
+			std::vector<D3D12_SUBRESOURCE_DATA> subresourceData;
+			subresourceData.reserve(texParams.m_faces);
+
+			for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
+			{
+				void const* initialData = texture.GetTexelData(faceIdx);
+				SEAssert("Initial data cannot be null", initialData);
+
+				subresourceData.emplace_back(D3D12_SUBRESOURCE_DATA{
+					.pData = initialData,
+
+					// https://github.com/microsoft/DirectXTex/wiki/ComputePitch
+					// Row pitch: The number of bytes in a scanline of pixels: bytes-per-pixel * width-of-image
+					// - Can be larger than the number of valid pixels due to alignment padding
+					.RowPitch = bytesPerTexel * texParams.m_width,
+
+					// Slice pitch: The number of bytes in each depth slice
+					// - 1D/2D images: The total size of the image, including alignment padding
+					.SlicePitch = numBytesPerFace
+				});
+			}
+
+			const uint64_t bufferSizeResult = ::UpdateSubresources(
+				copyCommandList,						// Command list
+				texPlatParams->m_textureResource.Get(),	// Destination resource
+				itermediateBufferResource.Get(),		// Intermediate resource
+				0,										// Byte offset to the intermediate resource
+				0,										// Index of 1st subresource in the resource
+				static_cast<uint32_t>(subresourceData.size()),	// Number of subresources in the subresources array
+				subresourceData.data());						// Array of subresource data structs
+			SEAssert("UpdateSubresources returned 0 bytes. This is unexpected", bufferSizeResult > 0);
 
 			// Released once the copy is done
 			intermediateResources.emplace_back(itermediateBufferResource);

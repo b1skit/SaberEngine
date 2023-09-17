@@ -68,10 +68,12 @@ namespace re
 
 		platform::Texture::CreatePlatformParams(*this);
 
-		if (m_texParams.m_usage & Usage::Color) // Optimization: Only allocate texels for non-target types
+		if (m_texParams.m_usage & Usage::Color) // Optimization: Only fill cpu-side texels for non-target types
 		{
-			if (m_initialData.empty())
+			if (doFill) // Optimization: Only fill the texture if necessary
 			{
+				SEAssert("Why are we filling a new texture that also has initial data?", m_initialData.empty());
+				
 				const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
 				const uint32_t totalBytesPerFace = params.m_width * params.m_height * bytesPerPixel;
 
@@ -83,10 +85,8 @@ namespace re
 						new uint8_t[totalBytesPerFace],
 						[](void* imageData) { delete[] imageData; }));
 				}
-			}
 
-			if (doFill) // Optimization: Only fill the texture if necessary
-			{
+				// Fill our newly allocated pixels with color data:
 				Fill(fillColor);
 			}
 		}
@@ -115,8 +115,18 @@ namespace re
 	}
 
 
+	bool Texture::HasInitialData() const
+	{
+		return !m_initialData.empty();
+	}
+
+
 	void* Texture::GetTexelData(uint8_t faceIdx) const
 	{
+		if (m_initialData.empty())
+		{
+			return nullptr;
+		}
 		return m_initialData[faceIdx].get();
 	}
 

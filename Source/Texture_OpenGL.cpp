@@ -295,7 +295,7 @@ namespace opengl
 			height);
 
 		// Upload data (if any) to the GPU:
-		if ((texParams.m_usage & re::Texture::Usage::Color))
+		if ((texParams.m_usage & re::Texture::Usage::Color) && texture.HasInitialData())
 		{
 			for (uint32_t i = 0; i < texParams.m_faces; i++)
 			{
