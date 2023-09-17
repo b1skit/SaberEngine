@@ -101,6 +101,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
       <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\Shaders\HLSL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <EnableUnboundedDescriptorTables>true</EnableUnboundedDescriptorTables>
+      <AdditionalOptions>/Zss /Fd $(OutDir)</AdditionalOptions>
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

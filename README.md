@@ -24,11 +24,20 @@ User-Specific Visual Studio Setup:
 "Project -> Properties -> Configuration Properties -> Debugging -> Working Directory" -> "$(SolutionDir)SaberEngine"  
 
 
----------------------------
-Enabling PIX Functionality:
----------------------------
+------------------
+PIX Configuration:
+------------------
 Microsoft PIX requires the "[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Appx]" key to exist in the local Windows registry. This can be enabled by executing the following command from a command prompt launched with administrator priviledges:  
 reg add HKLM\SOFTWARE\Policies\Microsoft\Windows\Appx  
+
+
+----------------
+DX12 Shader PDBs
+----------------
+Shader PDBs are generated when SaberEngine's Debug build configuration is compiled. PDBs are output to .\Build\x64\Debug\  
+
+PIX configuration: Set the shader PDB path in the "Settings -> Symbol / PDB Options" menu  
+RenderDoc configuration: Set the shader PDB path in the "Tools -> Settings -> Core Shader debug search path" menu  
 
 
 -----------------------
@@ -53,7 +62,7 @@ Enable graphics API debugging: -debuglevel [0, 2]
 --------------  
 Menu and logs:  
 --------------  
-Press the ` (tilde/grave) key to show/hide the ImGui menu bar  
+Press the ` (tilde/grave) key to show/hide the ImGui overlay  
 
 
 ----------------------
