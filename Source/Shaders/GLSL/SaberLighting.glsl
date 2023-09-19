@@ -12,21 +12,25 @@
 // PBR Lighting:
 //--------------
 
-// Trowbridge-Reitz GGX Normal Distribution Function: Approximate area of surface microfacets aligned with the halfway vector between the light and view dirs
+// Trowbridge-Reitz GGX Normal Distribution Function: Approximate area of surface microfacets aligned with the halfway
+// vector between the light and view dirs
 float NDF(vec3 MatNormal, vec3 halfVector, float roughness)
 {
-	float roughness2 = pow(roughness, 4.0);
+	// Disney reparameterizes roughness as alpha = roughness^2. Then the GGX/Trowbridge-Reitz NDF requires alpha^2
+	const float alpha2 = pow(roughness, 4.f);
 
-	float nDotH = max(0.f, dot(MatNormal, halfVector));
-	float nDotH2 = nDotH * nDotH;
+	const float nDotH = clamp(dot(MatNormal, halfVector), 0.f, 1.f);
+	const float nDotH2 = nDotH * nDotH;
 
-	float denominator = max((nDotH2 * (roughness2 - 1.f)) + 1.f, 0.0001);
+	const float denominator = max((nDotH2 * (alpha2 - 1.f)) + 1.f, 0.0001);
 	
-	return roughness2 / (M_PI * denominator * denominator);
+	return alpha2 / (M_PI * denominator * denominator);
 }
 
 
-// Remap roughness for the geometry function, when computing direct lighting contributions
+// Remap roughness for the geometry function
+// This adjustment should only be used for analytic light sources. If applied to IBL, the results will be too dark
+// at glancing angles.
 float RemapRoughnessDirect(float roughness)
 {
 	// Non-linear remap [0,1] -> [0.125, 0.5] (https://www.desmos.com/calculator/mtb0ffbl82)
@@ -34,18 +38,14 @@ float RemapRoughnessDirect(float roughness)
 	float numerator = (roughness + 1.f);
 	numerator *= numerator;
 
-	return numerator / 8.0;
+	return numerator / 8.f;
 }
 
 
 // Remap roughness for the geometry function, when computing image-based lighting contributions
 float RemapRoughnessIBL(float roughness)
 {
-	// Non-linear remap [0, 1] -> [0, 0.5] (https://www.desmos.com/calculator/top4jswimr)
-
-	float roughness2	= roughness * roughness;
-
-	return roughness2 / 2.f;
+	return roughness * roughness;
 }
 
 
@@ -62,8 +62,8 @@ float GeometrySchlickGGX(float NoV, float remappedRoughness)
 // Geometry function: Compute the proportion of microfacets visible
 float GeometrySmith(float NoV, float NoL, float remappedRoughness)
 {
-	float ggx1	= GeometrySchlickGGX(NoV, remappedRoughness);
-	float ggx2	= GeometrySchlickGGX(NoL, remappedRoughness);
+	float ggx1 = GeometrySchlickGGX(NoV, remappedRoughness);
+	float ggx2 = GeometrySchlickGGX(NoL, remappedRoughness);
 	
 	return ggx1 * ggx2;
 }

@@ -57,9 +57,5 @@ void main()
 		}
 	}
 
-	// Average the results:
-	fresnelScale /= float(NUM_SAMPLES);
-	fresnelBias /= float(NUM_SAMPLES);
-
-	imageStore(outColor, texelCoord, vec4(fresnelScale, fresnelBias, 0.f, 0.f));
+	imageStore(outColor, texelCoord, vec4(fresnelScale, fresnelBias, 0.f, 0.f) / NUM_SAMPLES);
 }
