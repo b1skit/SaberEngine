@@ -1,5 +1,5 @@
+// © 2023 Adam Badke. All rights reserved.
 #define SABER_VEC4_OUTPUT
-
 #define READ_GBUFFER
 
 #include "SaberCommon.glsl"

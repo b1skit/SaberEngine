@@ -48,14 +48,21 @@
 	struct VtoF	// Default/geometry in/out. If geometry, in & out must be bound to the same location
 #endif
 	{
-		vec4 vertexColor;
-		vec3 vertexWorldNormal;
+		vec4 Color;
 		vec2 uv0;
-		vec3 localPos;	// Received in_position: Local-space position
-		vec3 worldPos;	// World-space position
-		vec3 shadowPos;	// Shadowmap projection-space position
 
-		mat3 TBN;		// Normal map change-of-basis matrix
+#ifdef VOUT_WORLD_NORMAL
+		vec3 WorldNormal;
+#endif
+#ifdef VOUT_LOCAL_POS
+		vec3 localPos; // Received in_position: Local-space position
+#endif
+#ifdef VOUT_WORLD_POS
+		vec3 worldPos; // World-space position
+#endif
+#ifdef VOUT_TBN
+		mat3 TBN; // Normal map change-of-basis matrix
+#endif
 
 #if defined(SABER_VERTEX_SHADER) || defined(SABER_FRAGMENT_SHADER) || defined(SABER_GEOMETRY_SHADER)
 	} vOut;
@@ -196,7 +203,8 @@ layout(std430, binding=5) readonly buffer CubemapShadowRenderParams
 // GraphicsSystem_DeferredLighting.cpp
 layout(std430, binding=6) readonly buffer IEMPMREMGenerationParams
 {
-	vec4 g_numSamplesRoughness; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness
+	// .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
+	vec4 g_numSamplesRoughnessFaceIdx; 
 };
 
 

@@ -64,7 +64,7 @@ GBuffer UnpackGBuffer(vec2 screenUV)
 	gbuffer.AO = RMAO.b;
 
 #if defined(GBUFFER_EMISSIVE)
-	gbuffer.Emissive = texture(GBufferEmissive, screenUV).rgb; // TODO: Update GS to use the "Tex0" input in the blit shader!!!!!!!!!
+	gbuffer.Emissive = texture(GBufferEmissive, screenUV).rgb;
 #endif
 
 	gbuffer.MatProp0 = texture(GBufferMatProp0, screenUV).rgb;

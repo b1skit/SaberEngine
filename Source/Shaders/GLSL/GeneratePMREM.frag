@@ -1,4 +1,6 @@
+// © 2023 Adam Badke. All rights reserved.
 #define SABER_VEC4_OUTPUT
+#define VOUT_LOCAL_POS
 
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"
@@ -14,8 +16,8 @@ void main()
 
 	float totalWeight = 0.0;
 	vec3 sampledColor = vec3(0.0);
-	const int numSamples = int(g_numSamplesRoughness.y); // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness
-	const float roughness = g_numSamplesRoughness.z;
+	const int numSamples = int(g_numSamplesRoughnessFaceIdx.y);
+	const float roughness = g_numSamplesRoughnessFaceIdx.z;
 	for(int i = 0; i < numSamples; i++)
 	{
 		vec2 Xi = Hammersley2D(i, numSamples);

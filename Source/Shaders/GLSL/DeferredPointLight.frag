@@ -1,6 +1,7 @@
+// © 2023 Adam Badke. All rights reserved.
 #define SABER_VEC4_OUTPUT
-
 #define READ_GBUFFER
+#define VOUT_WORLD_POS
 
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"

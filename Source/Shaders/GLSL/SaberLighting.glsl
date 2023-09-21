@@ -1,3 +1,4 @@
+// © 2023 Adam Badke. All rights reserved.
 #ifndef SABER_LIGHTING
 #define SABER_LIGHTING
 
@@ -315,21 +316,21 @@ vec2 Hammersley2D(uint i, uint N)
 // Based on:  http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 vec3 HemisphereSample_uniformDist(float u, float v)
 {
-	float phi = v * M_2PI;
-	float cosTheta = 1.f - u;
-	float sinTheta = sqrt(1.f - cosTheta * cosTheta);
+	const float phi = v * M_2PI;
+	const float cosTheta = 1.f - u;
+	const float sinTheta = sqrt(1.f - cosTheta * cosTheta);
 
 	return vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
 }
   
 
-// Create a cosine-distributed hemisphere direction (Z-up) from the Hammersley 2D point (ie. For diffuse lighting sampling)
+// Create a cosine-distributed hemisphere direction (Z-up) from the Hammersley 2D point (ie. For diffuse IBL sampling)
 // Based on:  http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 vec3 HemisphereSample_cosineDist(float u, float v)
 {
-	float phi = v * M_2PI;
-	float cosTheta = sqrt(1.f - u);
-	float sinTheta = sqrt(1.f - cosTheta * cosTheta);
+	const float phi = v * M_2PI;
+	const float cosTheta = sqrt(1.f - u);
+	const float sinTheta = sqrt(1.f - cosTheta * cosTheta);
 
 	return vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
 }
@@ -338,11 +339,11 @@ vec3 HemisphereSample_cosineDist(float u, float v)
 //  Get a sample vector near a microsurface's halfway vector, from input roughness and a the low-discrepancy sequence value
 vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
 {
-	float a = roughness * roughness;
+	const float a = roughness * roughness;
 
-	float phi = M_2PI * Xi.x;
-	float cosTheta = sqrt((1.f - Xi.y) / (1.f + (a * a - 1.f) * Xi.y));
-	float sinTheta = sqrt(1.f - cosTheta * cosTheta);
+	const float phi = M_2PI * Xi.x;
+	const float cosTheta = sqrt((1.f - Xi.y) / (1.f + (a * a - 1.f) * Xi.y));
+	const float sinTheta = sqrt(1.f - cosTheta * cosTheta);
 
 	// Convert spherical -> cartesian coordinates
 	vec3 H;
@@ -351,11 +352,11 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
 	H.z = cosTheta;
 
 	// from tangent-space vector to world-space sample vector
-	vec3 up = abs(N.z) < 0.999f ? vec3(0.f, 0.f, 1.f) : vec3(1.f, 0.f, 0.f);
-	vec3 tangent = normalize(cross(up, N));
-	vec3 bitangent = cross(N, tangent);
+	const vec3 up = abs(N.z) < 0.999f ? vec3(0.f, 0.f, 1.f) : vec3(1.f, 0.f, 0.f);
+	const vec3 tangent = normalize(cross(up, N));
+	const vec3 bitangent = cross(N, tangent);
 
-	vec3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
+	const vec3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
 
 	return normalize(sampleVec);
 }

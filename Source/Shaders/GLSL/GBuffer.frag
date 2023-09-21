@@ -1,3 +1,6 @@
+// © 2023 Adam Badke. All rights reserved.
+#define VOUT_TBN
+
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"
 #include "SaberLighting.glsl"
@@ -14,8 +17,8 @@ layout (location = 5) out vec4 gBuffer_out_depth;
 void main()
 {
 	// Albedo. Note: We use an sRGB-format texture, which converts this value from sRGB->linear space for free
-	// g_baseColorFactor and vOut.vertexColor are factored into the albedo as per the GLTF 2.0 specifications
-	gBuffer_out_albedo = texture(MatAlbedo, vOut.uv0.xy) * g_baseColorFactor * vOut.vertexColor;
+	// g_baseColorFactor and vOut.Color are factored into the albedo as per the GLTF 2.0 specifications
+	gBuffer_out_albedo = texture(MatAlbedo, vOut.uv0.xy) * g_baseColorFactor * vOut.Color;
 
 	// Alpha clipping:
 	if (gBuffer_out_albedo.a < ALPHA_CUTOFF)

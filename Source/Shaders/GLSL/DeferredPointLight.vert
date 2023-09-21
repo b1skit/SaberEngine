@@ -1,3 +1,6 @@
+// © 2023 Adam Badke. All rights reserved.
+#define VOUT_WORLD_POS
+
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"
 
