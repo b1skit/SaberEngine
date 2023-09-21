@@ -29,6 +29,14 @@ namespace en::ConfigKeys
 	constexpr char const* k_defaultDirectionalLightMaxShadowBias	= "defaultDirectionalLightMaxShadowBias";
 	constexpr char const* k_defaultPointLightMinShadowBias			= "defaultPointLightMinShadowBias";
 	constexpr char const* k_defaultPointLightMaxShadowBias			= "defaultPointLightMaxShadowBias";
+
+	// Quality:
+	constexpr char const* k_brdfLUTWidthHeight	= "brdfLUTWidthHeight";
+	constexpr char const* k_iemTexWidthHeight	= "iemWidthHeight";
+	constexpr char const* k_iemNumSamples		= "iemNumSamples";
+	constexpr char const* k_pmremTexWidthHeight = "pmremWidthHeight";
+	constexpr char const* k_pmremNumSamples		= "pmremNumSamples";
+
 }
 
 namespace en::ShaderNames

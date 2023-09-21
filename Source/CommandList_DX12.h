@@ -233,6 +233,24 @@ namespace dx12
 	}
 
 
+	constexpr wchar_t const* const CommandList::GetCommandListTypeName(dx12::CommandListType type)
+	{
+		switch (type)
+		{
+		case CommandListType::Direct: return L"Direct";
+		case CommandListType::Bundle: return L"Bundle";
+		case CommandListType::Compute: L"Compute";
+		case CommandListType::Copy: return L"Copy";
+		case CommandListType::VideoDecode: return L"VideoDecode";
+		case CommandListType::VideoProcess: return L"VideoProcess";
+		case CommandListType::VideoEncode: return L"VideoEncode";
+		default:
+			SEAssertF("Invalid command list type");
+		}
+		return L"InvalidType";
+	};
+
+
 	constexpr D3D12_COMMAND_LIST_TYPE CommandList::TranslateToD3DCommandListType(dx12::CommandListType type)
 	{
 		switch (type)

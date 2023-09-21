@@ -1,6 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "MathConstants.hlsli"
 #include "SaberComputeCommon.hlsli"
 #include "SaberGlobals.hlsli"
+#include "Sampling.hlsli"
+#include "UVUtils.hlsli"
 
 
 RWTexture2D<float2> output0 : register(u0);
@@ -14,29 +17,7 @@ ConstantBuffer<BRDFIntegrationParamsCB> BRDFIntegrationParams;
 #define NUM_SAMPLES 1024
 
 
-// Helper function: Compute the Van der Corput sequence via radical inverse
-// Based on:  http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html (As per Hacker's Delight)
-float RadicalInverse_VdC(uint bits)
-{
-	bits = (bits << 16u) | (bits >> 16u);
-	bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
-	bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
-	bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
-	bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
-
-	return float(bits) * 2.3283064365386963e-10; // / 0x100000000
-}
-
-
-// Compute the i'th Hammersley point, of N points
-// Based on:  http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
-float2 Hammersley2D(uint i, uint N)
-{
-	return float2(float(i) / float(N), RadicalInverse_VdC(i));
-}
-
-
-//  Get a sample vector near a microsurface's halfway vector, from input roughness and a low-discrepancy sequence value
+// Get a sample vector near a microsurface's halfway vector, from input roughness and a low-discrepancy sequence value
 float3 ImportanceSampleGGX(float2 Xi, float3 N, float roughness)
 {
 	const float a = roughness * roughness;
@@ -45,7 +26,7 @@ float3 ImportanceSampleGGX(float2 Xi, float3 N, float roughness)
 
 	// Need to guard against divide-by-0 or else we get NaNs
 	const float cosTheta = sqrt((1.f - Xi.y) / max(1.f + (a * a - 1.f) * Xi.y, FLT_MIN) );
-	const float sinTheta = sqrt(max(1.f - cosTheta * cosTheta, FLT_MIN));
+	const float sinTheta = sqrt(max(1.f - cosTheta * cosTheta, 0.f));
 	
 	// Convert spherical -> cartesian coordinates
 	const float3 H = float3(
@@ -87,11 +68,17 @@ float GeometrySmith(float NoV, float NoL, float remappedRoughness)
 [numthreads(1, 1, 1)]
 void main(ComputeIn In)
 {
+	// As per Karis, Microfacet BRDFs can be approximated by decomposing them into the product of 2 terms: LD, and DFG.
+	// These terms can be independently pre-computed.
+	// Here we precompute the DFG term as a 2D LUT, indexed by the view angle w.r.t a surface, and the surface roughness
+	
+	// TODO: Switch this to the DFG precomputation as per the Frostbite paper
+	
 	const uint2 targetResolution = BRDFIntegrationParams.g_integrationTargetResolution.xy;
 	
 	const uint2 texelCoord = In.DTId.xy;
 	
-	float2 screenUV = PixelCoordsToUV(texelCoord, targetResolution.xy);
+	float2 screenUV = PixelCoordsToUV(texelCoord, targetResolution.xy, float2(0.5f, 0.5f));
 	screenUV.y = 1.f - screenUV.y; // Need to flip Y
 	
 	const float NoV = screenUV.x;
@@ -111,16 +98,16 @@ void main(ComputeIn In)
 
 	for (uint i = 0; i < NUM_SAMPLES; i++)
 	{
-		const float2 Xi = Hammersley2D(i, NUM_SAMPLES);
-		const float3 H = ImportanceSampleGGX(Xi, N, roughness);	
-		const float3 L = 2.f * dot(V, H) * H - V;
+		const float2 Xi = Hammersley2D(i, NUM_SAMPLES); // eta: A random sample
+		const float3 H = ImportanceSampleGGX(Xi, N, roughness);	// Importance-sampled halfway vector
+		const float3 L = 2.f * dot(V, H) * H - V; // Light vector: Reflect about the halfway vector, & reverse direction
 
 		const float NoL = saturate(L.z);
-		const float NoH = saturate(H.z);
-		const float VoH = saturate(dot(V, H));
-
 		if (NoL > 0.f)
 		{
+			const float NoH = saturate(H.z);
+			const float VoH = saturate(dot(V, H));
+			
 			const float G = GeometrySmith(NoV, NoL, roughness);
 			const float GVis = (G * VoH) / max((NoH * NoV), FLT_MIN); // Shouldn't be zero, but just in case
 			const float Fc = pow(1.f - VoH, 5.f);

@@ -13,6 +13,10 @@ namespace gr
 	class Camera final : public virtual en::NamedObject, public virtual fr::Transformable, public virtual en::Updateable
 	{
 	public:
+		static std::vector<glm::mat4> BuildCubeViewMatrices(glm::vec3 centerPos);
+
+
+	public:
 		struct CameraConfig
 		{
 			enum class ProjectionType
@@ -124,11 +128,6 @@ namespace gr
 		void SetAsMainCamera() const;
 
 		void ShowImGuiWindow();
-
-
-	public: 
-		// Static members:
-		static std::vector<glm::mat4> GetCubeViewMatrix(glm::vec3 centerPos);
 
 
 	private: // Use Create() instead

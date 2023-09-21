@@ -2,12 +2,16 @@
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
 #include "Context_DX12.h"
+#include "CommandList_DX12.h"
 #include "CommandQueue_DX12.h"
 #include "Debug_DX12.h"
+#include "TextUtils.h"
 
 using Microsoft::WRL::ComPtr;
 
 //#define DEBUG_RESOURCE_STATES
+//#define DEBUG_FENCES
+
 
 namespace
 {
@@ -207,6 +211,10 @@ namespace dx12
 
 		HRESULT hr = m_deviceCache->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&m_commandQueue));
 		CheckHResult(hr, "Failed to create command queue");
+
+		const std::wstring cmdQueueName = 
+			std::wstring(dx12::CommandList::GetCommandListTypeName(m_type)) + L"_CommandQueue";
+		m_commandQueue->SetName(cmdQueueName.c_str());
 
 		m_fence.Create(m_deviceCache, fenceEventName.c_str());
 		m_typeFenceBitMask = dx12::Fence::GetCommandListTypeFenceMaskBits(type);
@@ -449,12 +457,15 @@ namespace dx12
 					GlobalResourceState const& globalState = globalResourceStates.GetResourceState(resource);
 
 					// Cache the global modification value: We'll GPU wait on the most recent modification fence
-					const dx12::CommandListType lastGlobalCmdListType = globalState.GetLastCommandListType();
-					if (lastGlobalCmdListType != dx12::CommandListType::CommandListType_Count) // Has it ever been used on a command list?
+					const dx12::CommandListType lastModificationCmdListType = 
+						globalState.GetLastModificationCommandListType();
+
+					// Has it ever been modified on a command list?
+					if (lastModificationCmdListType != dx12::CommandListType::CommandListType_Invalid)
 					{
-						maxModificationFences[lastGlobalCmdListType] = std::max(
+						maxModificationFences[lastModificationCmdListType] = std::max(
 							globalState.GetLastModificationFenceValue(),
-							maxModificationFences[lastGlobalCmdListType]);
+							maxModificationFences[lastModificationCmdListType]);
 					}
 
 					const uint32_t numSubresources = globalState.GetNumSubresources();
@@ -478,9 +489,9 @@ namespace dx12
 						}
 					}
 
-					// Note: There is an edge case where we could individually add each subresource to the pending list, and
-					// then add an "ALL" transition which would be (incorrectly) added to the pending list. So, we handle
-					// that here (as it makes the bookkeeping much simpler)
+					// Note: There is an edge case where we could individually add each subresource to the pending list,
+					// and then add an "ALL" transition which would be (incorrectly) added to the pending list. So, we
+					// handle that here (as it makes the bookkeeping much simpler)
 					const bool alreadyTransitionedAllSubresources = numSubresourcesTransitioned == numSubresources;
 					SEAssert("Transitioned too many subresources", numSubresourcesTransitioned <= numSubresources);
 
@@ -646,6 +657,13 @@ namespace dx12
 
 	uint64_t CommandQueue::CPUSignal()
 	{
+#if defined(DEBUG_FENCES)
+		LOG_WARNING("CommandQueue::CPUSignal: %s, %llu = %llu", 
+			dx12::GetDebugName(m_commandQueue.Get()).c_str(), 
+			m_fenceValue + 1,
+			dx12::Fence::GetRawFenceValue(m_fenceValue + 1));
+#endif
+
 		// Updates the fence to the specified value from the CPU side
 		m_fence.CPUSignal(++m_fenceValue); // Note: First (raw) value actually signaled == 1
 		return m_fenceValue;
@@ -654,6 +672,16 @@ namespace dx12
 
 	void CommandQueue::CPUWait(uint64_t fenceValue) const
 	{
+		SEAssert("Attempting to CPUWait on a fence from an invalid CommandListType",
+			dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid);
+
+#if defined(DEBUG_FENCES)
+		LOG_WARNING("CommandQueue::CPUWait: %s, %llu = %llu",
+			dx12::GetDebugName(m_commandQueue.Get()).c_str(),
+			fenceValue,
+			dx12::Fence::GetRawFenceValue(fenceValue));
+#endif
+
 		m_fence.CPUWait(fenceValue); // CPU waits until fence is set to the given value
 	}
 
@@ -674,6 +702,16 @@ namespace dx12
 
 	void CommandQueue::GPUSignal(uint64_t fenceValue)
 	{
+		SEAssert("Attempting to GPUSignal with a fence from an invalid CommandListType",
+			dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid);
+
+#if defined(DEBUG_FENCES)
+		LOG_WARNING("CommandQueue::GPUSignal: %s, %llu = %llu",
+			dx12::GetDebugName(m_commandQueue.Get()).c_str(),
+			fenceValue,
+			dx12::Fence::GetRawFenceValue(fenceValue));
+#endif
+
 		HRESULT hr = m_commandQueue->Signal(m_fence.GetD3DFence(), fenceValue);
 		CheckHResult(hr, "Command queue failed to issue GPU signal");
 	}
@@ -681,6 +719,16 @@ namespace dx12
 
 	void CommandQueue::GPUWait(uint64_t fenceValue) const
 	{
+		SEAssert("Attempting to GPUWait on a fence from an invalid CommandListType",
+			dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid);
+
+#if defined(DEBUG_FENCES)
+		LOG_WARNING("CommandQueue::GPUWait: %s, %llu = %llu",
+			dx12::GetDebugName(m_commandQueue.Get()).c_str(),
+			fenceValue,
+			dx12::Fence::GetRawFenceValue(fenceValue));
+#endif
+
 		// Queue a GPU wait (GPU waits until the specified fence reaches/exceeds the fenceValue), and returns immediately
 		HRESULT hr = m_commandQueue->Wait(m_fence.GetD3DFence(), fenceValue);
 		CheckHResult(hr, "Command queue failed to issue GPU wait");
@@ -689,6 +737,18 @@ namespace dx12
 
 	void CommandQueue::GPUWait(dx12::Fence& fence, uint64_t fenceValue) const
 	{
+		SEAssert("Attempting to GPUWait on a fence from an invalid CommandListType",
+			dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid);
+
+#if defined(DEBUG_FENCES)
+		LOG_WARNING("CommandQueue::GPUWait on another fence: %s, %s from queue %s, %llu = %llu",
+			dx12::GetDebugName(m_commandQueue.Get()).c_str(),
+			dx12::GetDebugName(fence.GetD3DFence()).c_str(),
+			dx12::CommandList::GetCommandListTypeName(dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue)),
+			fenceValue,
+			dx12::Fence::GetRawFenceValue(fenceValue));
+#endif
+
 		// Queue a GPU wait (GPU waits until the specified fence reaches/exceeds the fenceValue), and returns immediately
 		HRESULT hr = m_commandQueue->Wait(fence.GetD3DFence(), fenceValue);
 		CheckHResult(hr, "Command queue failed to issue GPU wait on externally provided fence");

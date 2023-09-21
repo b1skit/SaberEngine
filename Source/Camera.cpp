@@ -161,7 +161,7 @@ namespace gr
 	}
 
 
-	std::vector<glm::mat4> Camera::GetCubeViewMatrix(glm::vec3 centerPos)
+	std::vector<glm::mat4> Camera::BuildCubeViewMatrices(glm::vec3 centerPos)
 	{
 		std::vector<glm::mat4> cubeView;
 		cubeView.reserve(6);
@@ -203,7 +203,7 @@ namespace gr
 	{
 		m_cubeViewProjection.clear();
 
-		std::vector<glm::mat4> const& cubeViews = GetCubeViewMatrix(m_transform.GetGlobalPosition());
+		std::vector<glm::mat4> const& cubeViews = BuildCubeViewMatrices(m_transform.GetGlobalPosition());
 
 		m_cubeViewProjection.emplace_back(m_projection * cubeViews[0]);
 		m_cubeViewProjection.emplace_back(m_projection * cubeViews[1]);

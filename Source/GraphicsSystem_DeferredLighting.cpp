@@ -36,8 +36,6 @@ using glm::mat4;
 
 namespace
 {
-	constexpr uint32_t k_generatedAmbientIBLTexRes = 1024; // TODO: Make this user-controllable via the config
-
 	struct BRDFIntegrationParams
 	{
 		glm::uvec4 g_integrationTargetResolution;
@@ -47,9 +45,12 @@ namespace
 
 	BRDFIntegrationParams GetBRDFIntegrationParamsData()
 	{
+		const uint32_t brdfTexWidthHeight =
+			static_cast<uint32_t>(Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
+
 		BRDFIntegrationParams brdfIntegrationParams{
 			.g_integrationTargetResolution =
-				glm::uvec4(k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes, 0, 0)
+				glm::uvec4(brdfTexWidthHeight, brdfTexWidthHeight, 0, 0)
 		};
 
 		return brdfIntegrationParams;
@@ -57,25 +58,38 @@ namespace
 
 	struct IEMPMREMGenerationParams
 	{
-		glm::vec4 g_numSamplesRoughness; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness
+		// .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
+		glm::vec4 g_numSamplesRoughnessFaceIdx; 
 
 		static constexpr char const* const s_shaderName = "IEMPMREMGenerationParams"; // Not counted towards size of struct
 	};
 
-	IEMPMREMGenerationParams GetIEMPMREMGenerationParamsData(int currentMipLevel, int numMipLevels)
+	IEMPMREMGenerationParams GetIEMPMREMGenerationParamsData(int currentMipLevel, int numMipLevels, uint32_t faceIdx)
 	{
 		IEMPMREMGenerationParams generationParams;
 
 		SEAssert("Mip level params are invalid. These must be reasonable, even if they're not used (i.e. IEM generation)",
 			currentMipLevel >= 0 && numMipLevels >= 1);
-		const float roughness = static_cast<float>(currentMipLevel) / static_cast<float>(numMipLevels - 1);
 
-		generationParams.g_numSamplesRoughness = glm::vec4(
-			static_cast<float>(Config::Get()->GetValue<int>("numIEMSamples")),
-			static_cast<float>(Config::Get()->GetValue<int>("numPMREMSamples")),
+		float roughness;
+		if (numMipLevels > 1)
+		{
+			roughness = static_cast<float>(currentMipLevel) / static_cast<float>(numMipLevels - 1);
+		}
+		else
+		{
+			roughness = 0;
+		}
+
+		const int numIEMSamples = Config::Get()->GetValue<int>(en::ConfigKeys::k_iemNumSamples);
+		const int numPMREMSamples = Config::Get()->GetValue<int>(en::ConfigKeys::k_pmremNumSamples);
+
+		generationParams.g_numSamplesRoughnessFaceIdx = glm::vec4(
+			static_cast<float>(numIEMSamples),
+			static_cast<float>(numPMREMSamples),
 			roughness,
-			0.f
-		);
+			faceIdx);
+
 		return generationParams;
 	}
 
@@ -90,7 +104,8 @@ namespace
 	AmbientLightParams GetAmbientLightParamData()
 	{
 		AmbientLightParams ambientLightParams;
-		ambientLightParams.g_maxPMREMMip = (uint32_t)glm::log2((float)k_generatedAmbientIBLTexRes);
+		ambientLightParams.g_maxPMREMMip = 
+			(uint32_t)glm::log2(static_cast<float>(Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight)));
 
 		return ambientLightParams;
 	}
@@ -215,10 +230,13 @@ namespace gr
 
 			brdfStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_generateBRDFIntegrationMapShaderName));
 
+			const uint32_t brdfTexWidthHeight = 
+				static_cast<uint32_t>(Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
+
 			// Create a render target texture:			
 			Texture::TextureParams brdfParams;
-			brdfParams.m_width = k_generatedAmbientIBLTexRes;
-			brdfParams.m_height = k_generatedAmbientIBLTexRes;
+			brdfParams.m_width = brdfTexWidthHeight;
+			brdfParams.m_height = brdfTexWidthHeight;
 			brdfParams.m_faces = 1;
 			brdfParams.m_usage = static_cast<Texture::Usage>(Texture::Usage::ComputeTarget | Texture::Usage::Color);
 			brdfParams.m_dimension = Texture::Dimension::Texture2D;
@@ -236,8 +254,8 @@ namespace gr
 			re::TextureTarget::TargetParams targetParams;
 
 			brdfStageTargets->SetColorTarget(0, ambientProperties.m_ambient.m_BRDF_integrationMap, targetParams);
-			brdfStageTargets->SetViewport(re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
-			brdfStageTargets->SetScissorRect(re::ScissorRect(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
+			brdfStageTargets->SetViewport(re::Viewport(0, 0, brdfTexWidthHeight, brdfTexWidthHeight));
+			brdfStageTargets->SetScissorRect(re::ScissorRect(0, 0, brdfTexWidthHeight, brdfTexWidthHeight));
 
 			re::TextureTarget::TargetParams::BlendModes brdfBlendModes
 			{
@@ -266,7 +284,7 @@ namespace gr
 
 			// Add our dispatch information to a compute batch. Note: We use numthreads = (1,1,1)
 			re::Batch computeBatch = re::Batch(re::Batch::ComputeParams{
-				.m_threadGroupCount = glm::uvec3(k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes, 1u) });
+				.m_threadGroupCount = glm::uvec3(brdfTexWidthHeight, brdfTexWidthHeight, 1u) });
 
 			brdfStage->AddBatch(computeBatch);
 
@@ -280,13 +298,13 @@ namespace gr
 		iblStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
 		iblStageParams.SetDepthWriteMode(gr::PipelineState::DepthWriteMode::Disabled);
 
-		// TODO: Use a camera here; A GS should not be manually computing this
+		// Build some camera params for rendering the 6 faces of a cubemap
 		const mat4 cubeProjectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 
-		const std::vector<glm::mat4> cubemapViews = gr::Camera::GetCubeViewMatrix(vec3(0));
+		std::vector<glm::mat4> const& cubemapViews = gr::Camera::BuildCubeViewMatrices(vec3(0));
 
 		// Common cubemap camera rendering params; Just need to update g_view for each face/stage
-		Camera::CameraParams cubemapCamParams;
+		Camera::CameraParams cubemapCamParams{};
 		cubemapCamParams.g_projection = cubeProjectionMatrix;
 		cubemapCamParams.g_viewProjection = glm::mat4(1.f); // Identity; unused
 		cubemapCamParams.g_invViewProjection = glm::mat4(1.f); // Identity; unused
@@ -300,10 +318,13 @@ namespace gr
 
 		// 1st frame: Generate an IEM (Irradiance Environment Map) cubemap texture for diffuse irradiance
 		{
+			const uint32_t iemTexWidthHeight =
+				static_cast<uint32_t>(Config::Get()->GetValue<int>(en::ConfigKeys::k_iemTexWidthHeight));
+
 			// IEM-specific texture params:
 			Texture::TextureParams iemTexParams;
-			iemTexParams.m_width = k_generatedAmbientIBLTexRes;
-			iemTexParams.m_height = k_generatedAmbientIBLTexRes;
+			iemTexParams.m_width = iemTexWidthHeight;
+			iemTexParams.m_height = iemTexWidthHeight;
 			iemTexParams.m_faces = 6;
 			iemTexParams.m_usage = Texture::Usage::ColorTarget;
 			iemTexParams.m_dimension = Texture::Dimension::TextureCubeMap;
@@ -329,7 +350,7 @@ namespace gr
 					iblTexture,
 					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
 
-				IEMPMREMGenerationParams const& iemGenerationParams = GetIEMPMREMGenerationParamsData(0, 1);
+				IEMPMREMGenerationParams const& iemGenerationParams = GetIEMPMREMGenerationParamsData(0, 1, face);
 				shared_ptr<re::ParameterBlock> iemGenerationPB = re::ParameterBlock::Create(
 					IEMPMREMGenerationParams::s_shaderName,
 					iemGenerationParams,
@@ -358,8 +379,8 @@ namespace gr
 				targetParams.m_targetMip = 0;
 
 				iemTargets->SetColorTarget(0, ambientProperties.m_ambient.m_IEMTex, targetParams);
-				iemTargets->SetViewport(re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
-				iemTargets->SetScissorRect(re::ScissorRect(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
+				iemTargets->SetViewport(re::Viewport(0, 0, iemTexWidthHeight, iemTexWidthHeight));
+				iemTargets->SetScissorRect(re::ScissorRect(0, 0, iemTexWidthHeight, iemTexWidthHeight));
 
 				iemStage->SetTextureTargetSet(iemTargets);
 
@@ -373,10 +394,13 @@ namespace gr
 
 		// 1st frame: Generate PMREM (Pre-filtered Mip-mapped Radiance Environment Map) cubemap for specular reflections
 		{
+			const uint32_t pmremTexWidthHeight =
+				static_cast<uint32_t>(Config::Get()->GetValue<int>(en::ConfigKeys::k_iemTexWidthHeight));
+
 			// PMREM-specific texture params:
 			Texture::TextureParams pmremTexParams;
-			pmremTexParams.m_width = k_generatedAmbientIBLTexRes;
-			pmremTexParams.m_height = k_generatedAmbientIBLTexRes;
+			pmremTexParams.m_width = pmremTexWidthHeight;
+			pmremTexParams.m_height = pmremTexWidthHeight;
 			pmremTexParams.m_faces = 6;
 			pmremTexParams.m_usage = Texture::Usage::ColorTarget;
 			pmremTexParams.m_dimension = Texture::Dimension::TextureCubeMap;
@@ -418,7 +442,7 @@ namespace gr
 					pmremStage->AddSingleFrameParameterBlock(pb);
 
 					IEMPMREMGenerationParams const& pmremGenerationParams =
-						GetIEMPMREMGenerationParamsData(currentMipLevel, numMipLevels);
+						GetIEMPMREMGenerationParamsData(currentMipLevel, numMipLevels, face);
 					shared_ptr<re::ParameterBlock> pmremGenerationPB = re::ParameterBlock::Create(
 						IEMPMREMGenerationParams::s_shaderName,
 						pmremGenerationParams,
@@ -434,9 +458,9 @@ namespace gr
 
 					pmremTargetSet->SetColorTarget(0, ambientProperties.m_ambient.m_PMREMTex, targetParams);
 					pmremTargetSet->SetViewport(
-						re::Viewport(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
+						re::Viewport(0, 0, pmremTexWidthHeight, pmremTexWidthHeight));
 					pmremTargetSet->SetScissorRect(
-						re::ScissorRect(0, 0, k_generatedAmbientIBLTexRes, k_generatedAmbientIBLTexRes));
+						re::ScissorRect(0, 0, pmremTexWidthHeight, pmremTexWidthHeight));
 
 					re::TextureTarget::TargetParams::BlendModes pmremBlendModes
 					{

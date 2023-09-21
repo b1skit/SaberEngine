@@ -102,7 +102,7 @@ namespace dx12
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/descriptors-overview#null-descriptors
 		// Instead, we mark all inline descriptors we encounter in a bitmask, and remove the bits when the
 		// descriptors are set for the first time. This allows us to assert that at least *something* has been
-		// set in each position when we got to commit our descriptors. No point setting dummy entries as we
+		// set in each position when we go to commit our descriptors. No point setting dummy entries as we
 		// found our root params via shader reflection: we KNOW they're going to be accessed by the GPU
 		// (which is guaranteed to result in undefined behavior) so something MUST be set
 		m_unsetInlineDescriptors = 0;

@@ -37,6 +37,7 @@ namespace dx12
 
 	constexpr uint64_t k_invalidLastFence = std::numeric_limits<uint64_t>::max();
 
+
 	GlobalResourceState::GlobalResourceState(
 		D3D12_RESOURCE_STATES initialState, uint32_t numSubresources)
 		: IResourceState(initialState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
@@ -78,6 +79,16 @@ namespace dx12
 	}
 
 
+	dx12::CommandListType GlobalResourceState::GetLastModificationCommandListType() const
+	{
+		if (m_lastModificationFence == k_invalidLastFence)
+		{
+			return dx12::CommandListType::CommandListType_Invalid;
+		}
+		return dx12::Fence::GetCommandListTypeFromFenceValue(m_lastModificationFence);
+	}
+
+
 	uint64_t GlobalResourceState::GetLastFenceValue() const
 	{
 		return m_lastFence;
@@ -86,6 +97,10 @@ namespace dx12
 
 	uint64_t GlobalResourceState::GetLastModificationFenceValue() const
 	{
+		SEAssert("If a modification fence has been set, a last fence value must have also been set", 
+			m_lastModificationFence == k_invalidLastFence ||
+			(m_lastModificationFence != k_invalidLastFence && m_lastFence != k_invalidLastFence));
+		
 		return m_lastModificationFence;
 	}
 
@@ -158,6 +173,13 @@ namespace dx12
 	/******************************************************************************************************************/
 	// GlobalResourceStateTracker
 	/******************************************************************************************************************/
+
+
+	GlobalResourceStateTracker::GlobalResourceStateTracker()
+	{
+		SEAssert("Invalid fence value cannot map to a valid command list type", 
+			dx12::Fence::GetCommandListTypeFromFenceValue(k_invalidLastFence) == dx12::CommandListType::CommandListType_Invalid);
+	}
 
 
 	void GlobalResourceStateTracker::RegisterResource(

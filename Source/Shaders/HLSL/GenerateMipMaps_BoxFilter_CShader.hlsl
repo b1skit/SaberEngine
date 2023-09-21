@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "SaberComputeCommon.hlsli"
 #include "SaberGlobals.hlsli"
+#include "UVUtils.hlsli"
 
 
 // Based on the technique demonstrated in the Microsoft DirectX Graphics Samples:

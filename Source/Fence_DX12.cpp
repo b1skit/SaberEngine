@@ -78,6 +78,9 @@ namespace dx12
 
 	void Fence::CPUSignal(uint64_t fenceValue)
 	{
+		SEAssert("Attempting to CPUSignal with a fence from an invalid CommandListType",
+			dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid);
+
 		// Updates the fence to the specified value from the CPU side
 		HRESULT hr = m_fence->Signal(fenceValue);
 		CheckHResult(hr, "Failed to signal fence");
@@ -87,14 +90,17 @@ namespace dx12
 
 	void Fence::CPUWait(uint64_t fenceValue) const
 	{
+		SEAssert("Attempting to CPUWait on a fence from an invalid CommandListType",
+			dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid);
+
 		// Blocks the CPU until the fence reaches the given value
 		if (!IsFenceComplete(fenceValue))
 		{
 			HRESULT hr = m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent);
 			CheckHResult(hr, "Failed to set completion event");
 
-			constexpr std::chrono::milliseconds duration = std::chrono::milliseconds::max();
-			::WaitForSingleObject(m_fenceEvent, static_cast<DWORD>(duration.count()));
+			constexpr std::chrono::milliseconds k_duration = std::chrono::milliseconds::max();
+			::WaitForSingleObject(m_fenceEvent, static_cast<DWORD>(k_duration.count()));
 
 			// Once we get to this point, the event has been successfully signaled so we notify PIX
 			PIXNotifyWakeFromFenceSignal(m_fenceEvent);
@@ -104,6 +110,9 @@ namespace dx12
 
 	bool Fence::IsFenceComplete(uint64_t fenceValue) const
 	{
+		SEAssert("Trying to check completeness of a fence value from an invalid CommandListType",
+			dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid);
+
 		if (fenceValue > m_mostRecentlyConfirmedFence)
 		{
 			m_mostRecentlyConfirmedFence = m_fence->GetCompletedValue();

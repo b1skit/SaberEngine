@@ -61,6 +61,7 @@ namespace dx12
 
 		// Returns dx12::CommandListType::CommandListType_Invalid if a resource has not been used yet
 		dx12::CommandListType GetLastCommandListType() const; 
+		dx12::CommandListType GetLastModificationCommandListType() const;
 
 		// In DX12, COPY states are considered different for 3D/Compute vs Copy queues. Resources can only transition
 		// out of a COPY state on the same queue type that was used to enter it
@@ -106,7 +107,7 @@ namespace dx12
 	class GlobalResourceStateTracker
 	{
 	public:
-		GlobalResourceStateTracker() = default;
+		GlobalResourceStateTracker();
 		~GlobalResourceStateTracker() = default;
 
 		// Registration/deregistration: No external locking/unlocking required

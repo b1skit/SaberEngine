@@ -465,8 +465,11 @@ namespace en
 		TryInsertRuntimeValue(ConfigKeys::k_debugLevelCmdLineArg, 0);
 
 		// Quality settings:
-		TryInsertRuntimeValue("numIEMSamples",		20000);	// # samples when generating IEM texture
-		TryInsertRuntimeValue("numPMREMSamples",	4096);	// # samples when generating PMREM texture
+		TryInsertRuntimeValue(en::ConfigKeys::k_brdfLUTWidthHeight,		1024);
+		TryInsertRuntimeValue(en::ConfigKeys::k_iemTexWidthHeight,		512);
+		TryInsertRuntimeValue(en::ConfigKeys::k_iemNumSamples,			2048); // Timeout DREDs if we go much higher
+		TryInsertRuntimeValue(en::ConfigKeys::k_pmremTexWidthHeight,	1024);
+		TryInsertRuntimeValue(en::ConfigKeys::k_pmremNumSamples,		4096);
 
 		// Shadow map defaults:
 		TryInsertRuntimeValue(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias,	0.001f);

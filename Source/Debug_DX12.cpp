@@ -7,30 +7,162 @@
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
 #include "DebugConfiguration.h"
+#include "TextUtils.h"
+
 
 using Microsoft::WRL::ComPtr;
 
 
 namespace
 {
+	constexpr char const* D3D12_AUTO_BREADCRUMB_OP_ToCStr(D3D12_AUTO_BREADCRUMB_OP breadcrumbOp)
+	{
+		constexpr char const* k_breadcrumbOpNames[] = {
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_SETMARKER),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_BEGINEVENT),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_ENDEVENT),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_DRAWINSTANCED),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_DRAWINDEXEDINSTANCED),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_EXECUTEINDIRECT),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_DISPATCH),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_COPYBUFFERREGION),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_COPYTEXTUREREGION),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_COPYRESOURCE),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_COPYTILES ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCE ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_CLEARRENDERTARGETVIEW ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_CLEARUNORDEREDACCESSVIEW ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_CLEARDEPTHSTENCILVIEW ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_RESOURCEBARRIER ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_EXECUTEBUNDLE ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_PRESENT ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_RESOLVEQUERYDATA ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_BEGINSUBMISSION ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_ENDSUBMISSION ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_PROCESSFRAMES ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_ATOMICCOPYBUFFERUINT ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_ATOMICCOPYBUFFERUINT64 ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_RESOLVESUBRESOURCEREGION ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_WRITEBUFFERIMMEDIATE ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME1 ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_SETPROTECTEDRESOURCESESSION ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_DECODEFRAME2 ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_PROCESSFRAMES1 ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_BUILDRAYTRACINGACCELERATIONSTRUCTURE ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_EMITRAYTRACINGACCELERATIONSTRUCTUREPOSTBUILDINFO ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_COPYRAYTRACINGACCELERATIONSTRUCTURE ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_DISPATCHRAYS ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_INITIALIZEMETACOMMAND ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_EXECUTEMETACOMMAND ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_ESTIMATEMOTION ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_RESOLVEMOTIONVECTORHEAP ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_SETPIPELINESTATE1 ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_INITIALIZEEXTENSIONCOMMAND ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_EXECUTEEXTENSIONCOMMAND ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_DISPATCHMESH ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_ENCODEFRAME ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_RESOLVEENCODEROUTPUTMETADATA ),
+			ENUM_TO_STR(D3D12_AUTO_BREADCRUMB_OP_BARRIER)
+		};
+
+		return k_breadcrumbOpNames[breadcrumbOp];
+	}
+
+
+	constexpr char const* D3D12_DRED_ALLOCATION_TYPE_ToCStr(D3D12_DRED_ALLOCATION_TYPE allocationType)
+	{
+		constexpr char const* k_allocationTypeNames[] = {
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_COMMAND_QUEUE),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_COMMAND_ALLOCATOR),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_PIPELINE_STATE),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_COMMAND_LIST),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_FENCE),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_DESCRIPTOR_HEAP),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_HEAP),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_QUERY_HEAP),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_COMMAND_SIGNATURE),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_PIPELINE_LIBRARY),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_VIDEO_DECODER),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_VIDEO_PROCESSOR),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_RESOURCE),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_PASS),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_CRYPTOSESSION),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_CRYPTOSESSIONPOLICY),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_PROTECTEDRESOURCESESSION),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_VIDEO_DECODER_HEAP),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_COMMAND_POOL),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_COMMAND_RECORDER),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_STATE_OBJECT),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_METACOMMAND),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_SCHEDULINGGROUP),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_VIDEO_MOTION_ESTIMATOR),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_VIDEO_MOTION_VECTOR_HEAP),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_VIDEO_EXTENSION_COMMAND),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_VIDEO_ENCODER),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_VIDEO_ENCODER_HEAP),
+			ENUM_TO_STR(D3D12_DRED_ALLOCATION_TYPE_INVALID)
+		};
+		return k_allocationTypeNames[allocationType];
+	}
+
+
 	void HandleDRED()
 	{
-		ComPtr<ID3D12DeviceRemovedExtendedData> pDred;
-		SEAssert("Failed to get DRED query interface", 
-			SUCCEEDED(re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()
-				->QueryInterface(IID_PPV_ARGS(&pDred))));
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
-		D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT DredAutoBreadcrumbsOutput;
+		ComPtr<ID3D12DeviceRemovedExtendedData> dredQuery;
+		SEAssert("Failed to get DRED query interface", 
+			SUCCEEDED(context->GetDevice().GetD3DDisplayDevice()->QueryInterface(IID_PPV_ARGS(&dredQuery))));
+
+		D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT dredAutoBreadcrumbsOutput;
 		SEAssert("Failed to get DRED auto breadcrumbs output", 
-			SUCCEEDED(pDred->GetAutoBreadcrumbsOutput(&DredAutoBreadcrumbsOutput)));
+			SUCCEEDED(dredQuery->GetAutoBreadcrumbsOutput(&dredAutoBreadcrumbsOutput)));
+
+		// Breadcrumbs:
+		LOG_ERROR("DRED BREADCRUMBS:/n-----------------");
+		D3D12_AUTO_BREADCRUMB_NODE const* breadcrumbHead = dredAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
+		while (breadcrumbHead != nullptr)
+		{
+			LOG_ERROR("Command list: %s", util::FromWideString(breadcrumbHead->pCommandListDebugNameW).c_str());
+			LOG_ERROR("Command queue: %s", util::FromWideString(breadcrumbHead->pCommandQueueDebugNameW).c_str());
+			LOG_ERROR("Breadcrumb count: %d", breadcrumbHead->BreadcrumbCount);
+			LOG_ERROR("Last breadcrumb value: %d", *breadcrumbHead->pLastBreadcrumbValue);
+			LOG_ERROR("Command history: %s", D3D12_AUTO_BREADCRUMB_OP_ToCStr(*breadcrumbHead->pCommandHistory));
+
+			breadcrumbHead = breadcrumbHead->pNext;
+		}
 		
-		D3D12_DRED_PAGE_FAULT_OUTPUT DredPageFaultOutput;
+		// Page fault allocation output:
+		D3D12_DRED_PAGE_FAULT_OUTPUT dredPageFaultOutput;
 		SEAssert("Failed to get DRED page fault allocation output",
-			SUCCEEDED(pDred->GetPageFaultAllocationOutput(&DredPageFaultOutput)));
+			SUCCEEDED(dredQuery->GetPageFaultAllocationOutput(&dredPageFaultOutput)));
+
+		LOG_ERROR("DRED PAGE FAULT OUTPUT:\n-----------------------");
+		LOG_ERROR("Page fault virtual address: %llu\n", dredPageFaultOutput.PageFaultVA);
+
+		LOG_ERROR("Existing allocation nodes:\n--------------------------");
+		D3D12_DRED_ALLOCATION_NODE const* existingAllocationNode = dredPageFaultOutput.pHeadExistingAllocationNode;
+		while (existingAllocationNode != nullptr)
+		{
+			LOG_ERROR("Object name: %s\nAllocation type: %s", 
+				util::FromWideString(existingAllocationNode->ObjectNameW).c_str(),
+				D3D12_DRED_ALLOCATION_TYPE_ToCStr(existingAllocationNode->AllocationType));
+
+			existingAllocationNode = existingAllocationNode->pNext;
+		}
 		
-		// WIP: Easier to do this when I encounter a DRED
-		// https://devblogs.microsoft.com/directx/dred/
-		SEAssertF("TODO: Process/output DRED data here");
+
+		LOG_ERROR("Recently freed allocation nodes:\n--------------------------------");
+		D3D12_DRED_ALLOCATION_NODE const* recentFreedAllocationNode = dredPageFaultOutput.pHeadRecentFreedAllocationNode;
+		while (recentFreedAllocationNode != nullptr)
+		{
+			LOG_ERROR("Object name: %s\nAllocation type: %s",
+				util::FromWideString(recentFreedAllocationNode->ObjectNameW).c_str(),
+				D3D12_DRED_ALLOCATION_TYPE_ToCStr(recentFreedAllocationNode->AllocationType));
+
+			recentFreedAllocationNode = recentFreedAllocationNode->pNext;
+		}
 	}
 }
 
@@ -128,7 +260,7 @@ namespace dx12
 		uint32_t nameLength = k_nameLength;
 		wchar_t extractedname[k_nameLength];
 		object->GetPrivateData(WKPDID_D3DDebugObjectNameW, &nameLength, &extractedname);
-		SEAssert("Invalid name length retrieved", nameLength > 0);
+		SEAssert("Invalid name length retrieved. Was a debug name set on this object?", nameLength > 0);
 
 		extractedname[k_nameLength - 1] = '\0'; // Suppress warning C6054
 

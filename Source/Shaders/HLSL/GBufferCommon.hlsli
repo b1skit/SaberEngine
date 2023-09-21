@@ -1,0 +1,55 @@
+// © 2023 Adam Badke. All rights reserved.
+#ifndef GBUFFER_COMMON
+#define GBUFFER_COMMON
+
+#include "SaberCommon.hlsli"
+
+
+struct GBuffer
+{
+	float3 LinearAlbedo;
+	float3 WorldNormal;
+
+	float Roughness;
+	float Metalness;
+	float AO;
+
+#if defined(GBUFFER_EMISSIVE)
+	float3 Emissive;
+#endif
+	float3 MatProp0; // .rgb = F0 (Surface response at 0 degrees)
+	float NonLinearDepth;
+};
+
+
+GBuffer UnpackGBuffer(float2 screenUV)
+{
+	GBuffer gbuffer;
+
+	// Note: All PBR calculations are performed in linear space
+	// However, we use sRGB-format input textures, the sRGB->Linear transformation happens for free when writing the 
+	// GBuffer, so no need to do the sRGB -> linear conversion here
+	gbuffer.LinearAlbedo = GBufferAlbedo.Sample(WrapLinearLinear, screenUV).rgb;
+	
+	const float3 normalXYScale = 
+		float3(PBRMetallicRoughnessParams.g_normalScale, PBRMetallicRoughnessParams.g_normalScale, 1.f);
+	gbuffer.WorldNormal = GBufferWNormal.Sample(WrapLinearLinear, screenUV).xyz * normalXYScale;
+
+	const float3 RMAO = GBufferRMAO.Sample(WrapLinearLinear, screenUV).rgb;
+	gbuffer.Roughness = RMAO.r;
+	gbuffer.Metalness = RMAO.g;
+	gbuffer.AO = RMAO.b;
+
+#if defined(GBUFFER_EMISSIVE)
+	gbuffer.Emissive = GBufferEmissive.Sample(WrapLinearLinear, screenUV).rgb;
+#endif
+
+	gbuffer.MatProp0 = GBufferMatProp0.Sample(WrapLinearLinear, screenUV).rgb;
+
+	gbuffer.NonLinearDepth = GBufferDepth.Sample(WrapLinearLinear, screenUV).r;
+
+	return gbuffer;
+}
+
+
+#endif // GBUFFER_COMMON
