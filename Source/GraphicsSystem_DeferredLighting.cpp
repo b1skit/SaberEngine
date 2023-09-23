@@ -251,9 +251,9 @@ namespace gr
 
 			std::shared_ptr<re::TextureTargetSet> brdfStageTargets = re::TextureTargetSet::Create("BRDF Stage Targets");
 
-			re::TextureTarget::TargetParams targetParams;
+			re::TextureTarget::TargetParams colorTargetParams;
 
-			brdfStageTargets->SetColorTarget(0, ambientProperties.m_ambient.m_BRDF_integrationMap, targetParams);
+			brdfStageTargets->SetColorTarget(0, ambientProperties.m_ambient.m_BRDF_integrationMap, colorTargetParams);
 			brdfStageTargets->SetViewport(re::Viewport(0, 0, brdfTexWidthHeight, brdfTexWidthHeight));
 			brdfStageTargets->SetScissorRect(re::ScissorRect(0, 0, brdfTexWidthHeight, brdfTexWidthHeight));
 
@@ -271,7 +271,6 @@ namespace gr
 			brdfStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
 			brdfStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Disabled);
 			brdfStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
-			brdfStageParams.SetDepthWriteMode(gr::PipelineState::DepthWriteMode::Disabled);
 
 			brdfStage->SetStagePipelineState(brdfStageParams);
 
@@ -296,7 +295,6 @@ namespace gr
 		iblStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
 		iblStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Disabled);
 		iblStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
-		iblStageParams.SetDepthWriteMode(gr::PipelineState::DepthWriteMode::Disabled);
 
 		// Build some camera params for rendering the 6 faces of a cubemap
 		const mat4 cubeProjectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
@@ -502,12 +500,22 @@ namespace gr
 
 		std::shared_ptr<Texture> outputTexture = re::Texture::Create("DeferredLightTarget", lightTargetParams, false);
 
-		re::TextureTarget::TargetParams targetParams;
+		re::TextureTarget::TargetParams colorTargetParams;
 
 		std::shared_ptr<TextureTargetSet> deferredLightingTargetSet = 
 			re::TextureTargetSet::Create("Deferred light targets");
-		deferredLightingTargetSet->SetColorTarget(0, outputTexture, targetParams);
-		deferredLightingTargetSet->SetDepthStencilTarget(gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget());
+		deferredLightingTargetSet->SetColorTarget(0, outputTexture, colorTargetParams);
+
+		Texture::TextureParams lightDepthTargetParams(lightTargetParams);
+		lightDepthTargetParams.m_usage = Texture::Usage::DepthTarget;
+
+		// We need the depth buffer attached, but with depth writes disabled:
+		re::TextureTarget::TargetParams depthTargetParams;
+		depthTargetParams.m_channelWriteMode.R = re::TextureTarget::TargetParams::ChannelWrite::Disabled;
+
+		deferredLightingTargetSet->SetDepthStencilTarget(
+			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(), 
+			depthTargetParams);
 		
 		// All deferred lighting is additive
 		re::TextureTarget::TargetParams::BlendModes deferredBlendModes
@@ -545,7 +553,6 @@ namespace gr
 		// Our fullscreen quad is on the far plane; We only want to light something if the quad is behind the geo (i.e.
 		// the quad's depth is greater than what is in the depth buffer)
 		ambientStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Greater);
-		ambientStageParams.SetDepthWriteMode(gr::PipelineState::DepthWriteMode::Disabled);
 		
 		// Ambient light stage:
 		m_ambientStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_deferredAmbientLightShaderName));

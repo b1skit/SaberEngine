@@ -76,6 +76,7 @@ namespace re
 		, m_stageParams(nullptr)
 		, m_stageShader(nullptr)
 		, m_textureTargetSet(nullptr)
+		, m_depthTextureInputIdx(k_noDepthTexAsInputFlag)
 		, m_batchFilterMask(0)	// Accept all batches by default
 	{
 		SEAssert("Invalid RenderStage name", !GetName().empty());
@@ -97,6 +98,9 @@ namespace re
 	void RenderStage::SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet)
 	{
 		m_textureTargetSet = targetSet;
+		
+		m_depthTextureInputIdx = k_noDepthTexAsInputFlag; // Depth target may have changed
+		UpdateDepthTextureInputIndex();
 	}
 
 
@@ -112,6 +116,49 @@ namespace re
 		SEAssert("Invalid sampler", sampler != nullptr);
 
 		m_textureSamplerInputs.emplace_back(RenderStageTextureAndSamplerInput{ shaderName, tex, sampler, mipLevel });
+
+		UpdateDepthTextureInputIndex();
+	}
+
+
+	void RenderStage::UpdateDepthTextureInputIndex()
+	{
+		if (m_textureTargetSet == nullptr || m_depthTextureInputIdx != k_noDepthTexAsInputFlag)
+		{
+			return;
+		}
+
+		re::TextureTarget const* depthTarget = m_textureTargetSet->GetDepthStencilTarget();
+		if (depthTarget && depthTarget->HasTexture())
+		{
+			// Check each of our texture inputs against the depth texture:		
+			std::shared_ptr<re::Texture> depthTex = depthTarget->GetTexture();
+			for (uint32_t i = 0; i < m_textureSamplerInputs.size(); i++)
+			{
+				if (m_textureSamplerInputs[i].m_texture == depthTex)
+				{
+					m_depthTextureInputIdx = i;
+
+					SEAssert("Depth target has depth writes enabled. It cannot be bound as an input", 
+						depthTarget->GetTargetParams().m_channelWriteMode.R == 
+							re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled);
+
+					break;
+				}
+			}
+		}
+	}
+
+
+	bool RenderStage::DepthTargetIsAlsoTextureInput() const
+	{
+		return m_depthTextureInputIdx != k_noDepthTexAsInputFlag;
+	}
+
+
+	int RenderStage::GetDepthTargetTextureInputIdx() const
+	{
+		return m_depthTextureInputIdx;
 	}
 	
 

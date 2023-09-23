@@ -32,7 +32,6 @@ namespace opengl
 	private:
 		void SetCullingMode(gr::PipelineState::FaceCullingMode const& mode);
 		void SetDepthTestMode(gr::PipelineState::DepthTestMode const& mode);
-		void SetDepthWriteMode(gr::PipelineState::DepthWriteMode const& mode);
 
 		void GetOpenGLExtensionProcessAddresses();
 

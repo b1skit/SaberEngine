@@ -32,7 +32,18 @@ namespace re
 		m_targetParams = {};
 	}
 
-	
+
+	void TextureTarget::SetTargetParams(TargetParams const& targetParams)
+	{
+		SEAssert("There are more than 6 faces specified. This is unexpected",
+			targetParams.m_targetFace < 6);
+		SEAssert("It is invalid to target all mips, only a single mip level can be specified", 
+			targetParams.m_targetMip != re::Texture::k_allMips);
+
+		m_targetParams = targetParams;
+	}
+
+
 	void TextureTarget::SetBlendMode(TargetParams::BlendModes const& blendModes)
 	{
 		m_targetParams.m_blendModes = blendModes;
@@ -45,28 +56,45 @@ namespace re
 	}
 
 
-	void TextureTarget::SetColorWriteMode(TargetParams::ColorWriteMode const& colorWriteMode)
+	void TextureTarget::SetColorWriteMode(TargetParams::ChannelWrite const& colorWriteMode)
 	{
-		m_targetParams.m_colorWriteMode = colorWriteMode;
+		m_targetParams.m_channelWriteMode = colorWriteMode;
 	}
 
 
-	TextureTarget::TargetParams::ColorWriteMode const& TextureTarget::GetColorWriteMode() const
+	TextureTarget::TargetParams::ChannelWrite const& TextureTarget::GetColorWriteMode() const
 	{
-		return m_targetParams.m_colorWriteMode;
+		return m_targetParams.m_channelWriteMode;
 	};
 
 
 	bool TextureTarget::WritesColor() const
 	{
 		return m_texture != nullptr &&
-			(m_targetParams.m_colorWriteMode.R ||
-				m_targetParams.m_colorWriteMode.G ||
-				m_targetParams.m_colorWriteMode.B ||
-				m_targetParams.m_colorWriteMode.A);
+			(m_targetParams.m_channelWriteMode.R ||
+				m_targetParams.m_channelWriteMode.G ||
+				m_targetParams.m_channelWriteMode.B ||
+				m_targetParams.m_channelWriteMode.A);
 	}
 
-	
+
+	void TextureTarget::SetDepthWriteMode(TextureTarget::TargetParams::ChannelWrite::Mode depthWriteMode)
+	{
+		m_targetParams.m_channelWriteMode.R = depthWriteMode;
+
+		// Disable the other channels for this target:
+		m_targetParams.m_channelWriteMode.G = TextureTarget::TargetParams::ChannelWrite::Mode::Disabled;
+		m_targetParams.m_channelWriteMode.B = TextureTarget::TargetParams::ChannelWrite::Mode::Disabled;
+		m_targetParams.m_channelWriteMode.A = TextureTarget::TargetParams::ChannelWrite::Mode::Disabled;
+	}
+
+
+	TextureTarget::TargetParams::ChannelWrite::Mode TextureTarget::GetDepthWriteMode() const
+	{
+		return m_targetParams.m_channelWriteMode.R;
+	}
+
+
 	/**********/
 	// Viewport
 	/**********/
@@ -139,7 +167,7 @@ namespace re
 		, m_numColorTargets(0)
 	{
 		platform::TextureTargetSet::CreatePlatformParams(*this);
-	
+
 		m_colorTargets.resize(platform::SysInfo::GetMaxRenderTargets());
 	}
 
@@ -174,7 +202,7 @@ namespace re
 
 	re::TextureTarget const& TextureTargetSet::GetColorTarget(uint8_t slot) const
 	{
-		SEAssert("OOB index", slot < m_colorTargets.size()); 
+		SEAssert("OOB index", slot < m_colorTargets.size());
 		return m_colorTargets[slot];
 	}
 
@@ -182,6 +210,8 @@ namespace re
 	void TextureTargetSet::SetColorTarget(uint8_t slot, re::TextureTarget const& texTarget)
 	{
 		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_colorIsCreated);
+		SEAssert("Targets must be set in monotonically-increasing order", 
+			slot == 0 || m_colorTargets[slot - 1].HasTexture());
 		m_colorTargets[slot] = texTarget;
 	}
 
@@ -190,6 +220,8 @@ namespace re
 		uint8_t slot, std::shared_ptr<re::Texture> texture, TextureTarget::TargetParams const& targetParams)
 	{
 		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_colorIsCreated);
+		SEAssert("Targets must be set in monotonically-increasing order",
+			slot == 0 || m_colorTargets[slot - 1].HasTexture());
 		m_colorTargets[slot] = re::TextureTarget(texture, targetParams);
 	}
 
@@ -220,6 +252,12 @@ namespace re
 	}
 
 
+	void TextureTargetSet::SetDepthWriteMode(TextureTarget::TargetParams::ChannelWrite::Mode depthWriteMode)
+	{
+		m_depthStencilTarget.SetDepthWriteMode(depthWriteMode);
+	}
+
+
 	bool TextureTargetSet::HasTargets() const
 	{
 		return (HasDepthTarget() || HasColorTarget());
@@ -238,7 +276,7 @@ namespace re
 	}
 	
 
-	void TextureTargetSet::SetAllColorWriteModes(TextureTarget::TargetParams::ColorWriteMode const& colorWriteMode)
+	void TextureTargetSet::SetAllColorWriteModes(TextureTarget::TargetParams::ChannelWrite const& colorWriteMode)
 	{
 		for (size_t i = 0; i < m_colorTargets.size(); i++)
 		{
@@ -398,6 +436,7 @@ namespace re
 		if (HasDepthTarget())
 		{
 			AddDataBytesToHash(m_depthStencilTarget.GetTexture()->GetTextureParams().m_format);
+			AddDataBytesToHash(m_depthStencilTarget.GetDepthWriteMode());
 		}		
 	}
 

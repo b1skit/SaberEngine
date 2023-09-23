@@ -104,11 +104,14 @@ namespace gr
 					re::TextureTarget::TargetParams::BlendMode::Disabled,
 					re::TextureTarget::TargetParams::BlendMode::Disabled});
 
-				directionalShadowTargetSet->SetAllColorWriteModes(re::TextureTarget::TargetParams::ColorWriteMode{
-					re::TextureTarget::TargetParams::ColorWriteMode::ChannelMode::Disabled,
-					re::TextureTarget::TargetParams::ColorWriteMode::ChannelMode::Disabled,
-					re::TextureTarget::TargetParams::ColorWriteMode::ChannelMode::Disabled,
-					re::TextureTarget::TargetParams::ColorWriteMode::ChannelMode::Disabled });
+				directionalShadowTargetSet->SetAllColorWriteModes(re::TextureTarget::TargetParams::ChannelWrite{
+					re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+					re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+					re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+					re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled });
+					
+				directionalShadowTargetSet->SetDepthWriteMode(
+					re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled);
 
 				m_directionalShadowStage->SetTextureTargetSet(directionalShadowTargetSet);
 				// TODO: Target set should be a member of the stage, instead of the shadow map?

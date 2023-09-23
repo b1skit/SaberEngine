@@ -400,7 +400,7 @@ namespace dx12
 	}
 
 
-	void CommandList::SetRenderTargets(re::TextureTargetSet const& targetSet)
+	void CommandList::SetRenderTargets(re::TextureTargetSet const& targetSet, bool readOnlyDepth)
 	{
 		SEAssert("This method is not valid for compute or copy command lists",
 			m_type != CommandListType::Compute && m_type != CommandListType::Copy);
@@ -420,8 +420,7 @@ namespace dx12
 				re::TextureTarget::TargetParams const& targetParams = target.GetTargetParams();
 
 				std::shared_ptr<re::Texture> targetTexture = target.GetTexture();
-				
-				// Insert our resource transition:
+
 				TransitionResource(
 					targetTexture,
 					D3D12_RESOURCE_STATE_RENDER_TARGET,
@@ -445,21 +444,35 @@ namespace dx12
 		re::TextureTarget const* depthStencilTarget = targetSet.GetDepthStencilTarget();
 		if (depthStencilTarget)
 		{
-			dx12::Texture::PlatformParams* depthTexPlatParams =
-				depthStencilTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-
 			re::TextureTarget::TargetParams const& depthTargetParams = depthStencilTarget->GetTargetParams();
 
-			// Insert our resource transition:
-			TransitionResource(
-				depthStencilTarget->GetTexture(),
-				D3D12_RESOURCE_STATE_DEPTH_WRITE,
+			const bool depthWriteEnabled =
+				depthTargetParams.m_channelWriteMode.R == re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled && 
+				!readOnlyDepth;
+
+			const D3D12_RESOURCE_STATES depthState = depthWriteEnabled ?
+				D3D12_RESOURCE_STATE_DEPTH_WRITE :
+				(D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+			TransitionResource(depthStencilTarget->GetTexture(),
+				depthState,
 				depthTargetParams.m_targetMip);
+
+			dx12::Texture::PlatformParams* depthTexPlatParams =
+				depthStencilTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 			// We current assume a DSV only has a single descriptor per face
 			const uint32_t subresourceIdx = depthTargetParams.m_targetFace;
 
-			dsvDescriptor = depthTexPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor();
+			if (depthWriteEnabled)
+			{
+				dsvDescriptor = depthTexPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor();
+			}
+			else
+			{
+				// TODO: Select a DSV that is created with depth writes disabled
+				dsvDescriptor = depthTexPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor();
+			}
 		}
 
 		// NOTE: isSingleHandleToDescRange == true specifies that the rtvs are contiguous in memory, thus N rtv 
@@ -602,7 +615,7 @@ namespace dx12
 
 
 	void CommandList::SetTexture(
-		std::string const& shaderName, std::shared_ptr<re::Texture> texture, uint32_t srcMip)
+		std::string const& shaderName, std::shared_ptr<re::Texture> texture, uint32_t srcMip, bool skipTransition)
 	{
 		SEAssert("Pipeline is not currently set", m_currentPSO);
 
@@ -714,9 +727,14 @@ namespace dx12
 
 			SEAssert("Descriptor is not valid", descriptorAllocation->IsValid());
 
-			TransitionResource(texture,
-				toState,
-				srcMip);
+
+			// If a depth resource is used as both an input and target, we've already recorded the transitions
+			if (!skipTransition)
+			{
+				TransitionResource(texture,
+					toState,
+					srcMip);
+			}			
 
 			m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 				rootSigEntry->m_index,
@@ -733,7 +751,6 @@ namespace dx12
 		dx12::Texture::PlatformParams* texPlatParams =
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
-		// Handle the resource transition:
 		ID3D12Resource* const resource = texPlatParams->m_textureResource.Get();
 
 		auto InsertBarrier = [this, &resource, &toState](uint32_t subresourceIdx)
@@ -822,7 +839,7 @@ namespace dx12
 
 	void CommandList::DebugPrintResourceStates() const
 	{
-		LOG("-------------------\n\tCommandList \"%s\"\n\t-------------------", GetDebugName(m_commandList.Get()).c_str());
+		LOG("\n-------------------\n\tCommandList \"%s\"\n\t-------------------", GetDebugName(m_commandList.Get()).c_str());
 		m_resourceStates.DebugPrintResourceStates();
 	}
 }

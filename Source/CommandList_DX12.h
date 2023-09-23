@@ -78,20 +78,21 @@ namespace dx12
 		void SetGraphicsRoot32BitConstants(
 			uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;
 
-		void SetTexture(std::string const& shaderName, std::shared_ptr<re::Texture>, uint32_t srcMip);
+		void SetTexture(
+			std::string const& shaderName, std::shared_ptr<re::Texture>, uint32_t srcMip, bool skipTransition);
 
-		void DrawBatchGeometry(re::Batch const&);
+		void SetRenderTargets(re::TextureTargetSet const&, bool readOnlyDepth);
+		void SetComputeTargets(re::TextureTargetSet const&);
 
 		void ClearDepthTarget(re::TextureTarget const*) const;
 
 		void ClearColorTarget(re::TextureTarget const*) const;
 		void ClearColorTargets(re::TextureTargetSet const&) const;
 
-		void SetRenderTargets(re::TextureTargetSet const&);
-		void SetComputeTargets(re::TextureTargetSet const&);
-
 		void SetViewport(re::TextureTargetSet const&) const;
 		void SetScissorRect(re::TextureTargetSet const&) const;
+		
+		void DrawBatchGeometry(re::Batch const&);
 
 		void DrawIndexedInstanced(
 			uint32_t numIndexes, uint32_t numInstances, uint32_t idxStartOffset, int32_t baseVertexOffset, uint32_t instanceOffset);
@@ -239,7 +240,7 @@ namespace dx12
 		{
 		case CommandListType::Direct: return L"Direct";
 		case CommandListType::Bundle: return L"Bundle";
-		case CommandListType::Compute: L"Compute";
+		case CommandListType::Compute: return L"Compute";
 		case CommandListType::Copy: return L"Copy";
 		case CommandListType::VideoDecode: return L"VideoDecode";
 		case CommandListType::VideoProcess: return L"VideoProcess";

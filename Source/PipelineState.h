@@ -67,16 +67,7 @@ namespace gr
 		DepthTestMode GetDepthTestMode() const;
 		void SetDepthTestMode(DepthTestMode);
 
-		enum class DepthWriteMode
-		{
-			Enabled,
-			Disabled
-		};
-		DepthWriteMode GetDepthWriteMode() const;
-		void SetDepthWriteMode(DepthWriteMode);
-
-
-		// TODO: These should be per-target (for the stage), to allow different behavior when using MRTs
+		// TODO: These should be per-target (for each stage target set), to allow different behavior when using MRTs
 		enum class ClearTarget
 		{
 			Color,
@@ -95,7 +86,6 @@ namespace gr
 		FaceCullingMode m_faceCullingMode;
 		WindingOrder m_windingOrder;
 		DepthTestMode m_depthTestMode;
-		DepthWriteMode m_depthWriteMode;
 		ClearTarget m_targetClearMode;
 	};
 }

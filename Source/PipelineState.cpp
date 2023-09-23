@@ -10,7 +10,6 @@ namespace gr
 		, m_faceCullingMode(FaceCullingMode::Back)
 		, m_windingOrder(WindingOrder::CCW)
 		, m_depthTestMode(DepthTestMode::Default)
-		, m_depthWriteMode(DepthWriteMode::Enabled)
 		, m_targetClearMode(ClearTarget::None)
 	{
 		ComputeDataHash();
@@ -28,7 +27,6 @@ namespace gr
 		AddDataBytesToHash(m_faceCullingMode);
 		AddDataBytesToHash(m_windingOrder);
 		AddDataBytesToHash(m_depthTestMode);
-		AddDataBytesToHash(m_depthWriteMode);
 		AddDataBytesToHash(m_targetClearMode);		
 	}
 
@@ -94,21 +92,6 @@ namespace gr
 	void PipelineState::SetDepthTestMode(PipelineState::DepthTestMode depthTestMode)
 	{
 		m_depthTestMode = depthTestMode;
-		m_isDirty = true;
-		ComputeDataHash();
-	}
-
-
-	PipelineState::DepthWriteMode PipelineState::GetDepthWriteMode() const
-	{
-		SEAssert("PipelineState is dirty", !m_isDirty);
-		return m_depthWriteMode;
-	}
-
-
-	void PipelineState::SetDepthWriteMode(PipelineState::DepthWriteMode depthWriteMode)
-	{
-		m_depthWriteMode = depthWriteMode;
 		m_isDirty = true;
 		ComputeDataHash();
 	}

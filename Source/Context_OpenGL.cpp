@@ -355,7 +355,6 @@ namespace opengl
 	{
 		SetCullingMode(pipelineState.GetFaceCullingMode());
 		SetDepthTestMode(pipelineState.GetDepthTestMode());
-		SetDepthWriteMode(pipelineState.GetDepthWriteMode());
 	}
 
 
@@ -440,27 +439,5 @@ namespace opengl
 		}
 
 		glDepthFunc(depthMode);
-	}
-
-
-	void opengl::Context::SetDepthWriteMode(gr::PipelineState::DepthWriteMode const& mode)
-	{
-		switch (mode)
-		{
-		case gr::PipelineState::DepthWriteMode::Enabled:
-		{
-			glDepthMask(GL_TRUE);
-		}
-		break;
-		case gr::PipelineState::DepthWriteMode::Disabled:
-		{
-			glDepthMask(GL_FALSE);
-		}
-		break;
-		default:
-		{
-			SEAssertF("Invalid depth write mode");
-		}
-		}
 	}
 }

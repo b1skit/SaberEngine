@@ -100,15 +100,40 @@ namespace
 
 	void SetColorWriteMode(re::TextureTarget const& textureTarget, uint32_t drawBufferIndex)
 	{
-		re::TextureTarget::TargetParams::ColorWriteMode const& channelModes = 
-			textureTarget.GetTargetParams().m_colorWriteMode;
+		re::TextureTarget::TargetParams::ChannelWrite const& channelModes = 
+			textureTarget.GetTargetParams().m_channelWriteMode;
 
 		glColorMaski(
 			drawBufferIndex,
-			channelModes.R == re::TextureTarget::TargetParams::ColorWriteMode::Enabled ? GL_TRUE : GL_FALSE,
-			channelModes.G == re::TextureTarget::TargetParams::ColorWriteMode::Enabled ? GL_TRUE : GL_FALSE,
-			channelModes.B == re::TextureTarget::TargetParams::ColorWriteMode::Enabled ? GL_TRUE : GL_FALSE,
-			channelModes.A == re::TextureTarget::TargetParams::ColorWriteMode::Enabled ? GL_TRUE : GL_FALSE);
+			channelModes.R == re::TextureTarget::TargetParams::ChannelWrite::Enabled ? GL_TRUE : GL_FALSE,
+			channelModes.G == re::TextureTarget::TargetParams::ChannelWrite::Enabled ? GL_TRUE : GL_FALSE,
+			channelModes.B == re::TextureTarget::TargetParams::ChannelWrite::Enabled ? GL_TRUE : GL_FALSE,
+			channelModes.A == re::TextureTarget::TargetParams::ChannelWrite::Enabled ? GL_TRUE : GL_FALSE);
+	}
+
+
+	void SetDepthWriteMode(re::TextureTarget const& textureTarget)
+	{
+		re::TextureTarget::TargetParams::ChannelWrite::Mode const& depthWriteMode =
+			textureTarget.GetTargetParams().m_channelWriteMode.R;
+
+		switch (depthWriteMode)
+		{
+		case re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled:
+		{
+			glDepthMask(GL_TRUE);
+		}
+		break;
+		case re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled:
+		{
+			glDepthMask(GL_FALSE);
+		}
+		break;
+		default:
+		{
+			SEAssertF("Invalid depth write mode");
+		}
+		}
 	}
 }
 
@@ -524,6 +549,8 @@ namespace opengl
 				scissorRect.Top(),		// Upper-left corner coordinates: Y
 				scissorRect.Right(),	// Width
 				scissorRect.Bottom());	// Height
+
+			SetDepthWriteMode(*targetSet.GetDepthStencilTarget());
 		}
 	}
 

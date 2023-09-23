@@ -266,7 +266,7 @@ namespace dx12
 
 
 	// Command lists can only transition resources to/from states compatible with their type. Thus, we must first 
-	// transition any resources in incompatible states back to common on the appropriate command queue type.
+	// transition any resources in incompatible states back to common on a compatible command queue type.
 	// Note: We're recording/submitting command lists to different command queue types here: This should be done 
 	// single-threaded, like all other command list submissions
 	void CommandQueue::TransitionIncompatibleResourceStatesToCommon(

@@ -76,7 +76,6 @@ namespace gr
 		skyboxStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
 		skyboxStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
 		skyboxStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::LEqual);
-		skyboxStageParams.SetDepthWriteMode(gr::PipelineState::DepthWriteMode::Disabled);
 
 		m_skyboxStage->SetStagePipelineState(skyboxStageParams);
 
@@ -90,8 +89,13 @@ namespace gr
 		std::shared_ptr<re::TextureTargetSet> skyboxTargets = 
 			re::TextureTargetSet::Create(*deferredLightGS->GetFinalTextureTargetSet(), "Skybox Targets");
 
+		re::TextureTarget::TargetParams depthTargetParams;
+		depthTargetParams.m_channelWriteMode.R = re::TextureTarget::TargetParams::ChannelWrite::Disabled;
+
 		GBufferGraphicsSystem* gBufferGS = renderSystem.GetGraphicsSystem<GBufferGraphicsSystem>();
-		skyboxTargets->SetDepthStencilTarget(gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget());
+		skyboxTargets->SetDepthStencilTarget(
+			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
+			depthTargetParams);
 
 		// Render on top of the frame
 		const re::TextureTarget::TargetParams::BlendModes skyboxBlendModes

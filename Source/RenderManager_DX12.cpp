@@ -332,6 +332,7 @@ namespace dx12
 						stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain());
 					}
 
+
 					auto SetDrawState = [&renderStage, &context](
 						re::Shader const* shader,
 						gr::PipelineState const& grPipelineState,
@@ -372,10 +373,19 @@ namespace dx12
 						}
 
 						// Set per-frame stage textures/sampler inputs:
-						for (auto const& texSamplerInput : renderStage->GetTextureInputs())
+						std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& texInputs =
+							renderStage->GetTextureInputs();
+						for (size_t texIdx = 0; texIdx < texInputs.size(); texIdx++)
 						{
+							// If the depth target is read-only, and we've also used it as an input to the stage, we
+							// skip the resource transition (it's already handled when binding the depth target as read only)
+							const bool skipTransition = (texIdx == renderStage->GetDepthTargetTextureInputIdx());
+
 							commandList->SetTexture(
-								texSamplerInput.m_shaderName, texSamplerInput.m_texture, texSamplerInput.m_srcMip);
+								texInputs[texIdx].m_shaderName, 
+								texInputs[texIdx].m_texture, 
+								texInputs[texIdx].m_srcMip, 
+								skipTransition);
 							// Note: Static samplers have already been set during root signature creation
 						}
 					};
@@ -401,8 +411,9 @@ namespace dx12
 					break;
 					case re::RenderStage::RenderStageType::Graphics:
 					{
-						// Bind our graphics stage render target(s) to the output merger (OM):
-						currentCommandList->SetRenderTargets(*stageTargets);
+						const bool attachDepthAsReadOnly = renderStage->DepthTargetIsAlsoTextureInput();
+
+						currentCommandList->SetRenderTargets(*stageTargets, attachDepthAsReadOnly);
 
 						// Clear the render targets:
 						const gr::PipelineState::ClearTarget clearTargetMode = pipelineState.GetClearTarget();
@@ -448,10 +459,16 @@ namespace dx12
 						{
 							for (auto const& texSamplerInput : batches[batchIdx].GetTextureAndSamplerInputs())
 							{
+								SEAssert("We don't currently handle batches with the current depth buffer attached as "
+									"a texture input. We need to make sure the transitions are handled correctly", 
+									!stageTargets->HasDepthTarget() || 
+									texSamplerInput.m_texture != stageTargets->GetDepthStencilTarget()->GetTexture());
+
 								currentCommandList->SetTexture(
 									texSamplerInput.m_shaderName,
 									texSamplerInput.m_texture,
-									texSamplerInput.m_srcMip);
+									texSamplerInput.m_srcMip,
+									false);
 								// Note: Static samplers have already been set during root signature creation
 							}
 						}
@@ -596,7 +613,8 @@ namespace dx12
 
 		// Draw directly to the swapchain backbuffer
 		re::SwapChain const& swapChain = context->GetSwapChain();
-		commandList->SetRenderTargets(*dx12::SwapChain::GetBackBufferTargetSet(swapChain));
+		const bool attachDepthAsReadOnly = true;
+		commandList->SetRenderTargets(*dx12::SwapChain::GetBackBufferTargetSet(swapChain), attachDepthAsReadOnly);
 
 		// Configure the descriptor heap:
 		ID3D12GraphicsCommandList2* d3dCommandList = commandList->GetD3DCommandList();

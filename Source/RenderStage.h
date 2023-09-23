@@ -21,6 +21,8 @@ namespace re
 	class RenderStage : public virtual en::NamedObject
 	{
 	public:
+		static constexpr int k_noDepthTexAsInputFlag = -1;
+
 		enum class RenderStageLifetime
 		{
 			SingleFrame,
@@ -82,13 +84,15 @@ namespace re
 		std::shared_ptr<re::TextureTargetSet const> GetTextureTargetSet() const;
 		void SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet);
 
-		// Per-frame values must be re-set every frame
 		void AddTextureInput(
 			std::string const& shaderName, 
 			std::shared_ptr<re::Texture>, 
 			std::shared_ptr<re::Sampler>, 
 			uint32_t mipLevel = re::Texture::k_allMips);
 		std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& GetTextureInputs() const;
+
+		bool DepthTargetIsAlsoTextureInput() const;
+		int GetDepthTargetTextureInputIdx() const;
 
 		void AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb);
 		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetPermanentParameterBlocks() const { return m_permanentParamBlocks; }
@@ -110,16 +114,21 @@ namespace re
 
 
 	private:
+		void UpdateDepthTextureInputIndex();
+		
+
+	private:
 		const RenderStageType m_type;
 		const RenderStageLifetime m_lifetime;
 		std::unique_ptr<IStageParams> m_stageParams;
 
 		std::shared_ptr<re::Shader> m_stageShader;
-		std::shared_ptr<re::TextureTargetSet> m_textureTargetSet;
-		
+
 		gr::PipelineState m_pipelineState;
 
+		std::shared_ptr<re::TextureTargetSet> m_textureTargetSet;
 		std::vector<RenderStageTextureAndSamplerInput> m_textureSamplerInputs;
+		int m_depthTextureInputIdx; // k_noDepthTexAsInputFlag: Depth not attached as an input		
 
 		std::vector<std::shared_ptr<re::ParameterBlock>> m_singleFrameParamBlocks; // Cleared every frame
 

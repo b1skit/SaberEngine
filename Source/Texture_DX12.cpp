@@ -428,9 +428,23 @@ namespace
 	}
 
 
+	DXGI_FORMAT GetSRVFormat(re::Texture const& texture)
+	{
+		dx12::Texture::PlatformParams const* texPlatParams =
+			texture.GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+
+		switch (texPlatParams->m_format)
+		{
+		case DXGI_FORMAT_D32_FLOAT: return DXGI_FORMAT_R32_FLOAT;
+		default: return texPlatParams->m_format;
+		}
+	}
+
+
 	void CreateSRV(re::Texture& texture)
 	{
-		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+		dx12::Texture::PlatformParams* texPlatParams = 
+			texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 
@@ -445,12 +459,12 @@ namespace
 
 		const uint32_t numMips = texture.GetNumMips();
 
-		
+		const DXGI_FORMAT srvFormat = GetSRVFormat(texture);
 
 		if (texParams.m_faces == 1)
 		{
 			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-			srvDesc.Format = texPlatParams->m_format;
+			srvDesc.Format = srvFormat;
 			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
@@ -477,7 +491,7 @@ namespace
 				texParams.m_faces == 6 && texParams.m_dimension == re::Texture::Dimension::TextureCubeMap);
 
 			D3D12_SHADER_RESOURCE_VIEW_DESC cubemapSrvDesc{};
-			cubemapSrvDesc.Format = texPlatParams->m_format;
+			cubemapSrvDesc.Format = srvFormat;
 			cubemapSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		
 			cubemapSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
@@ -499,7 +513,7 @@ namespace
 
 			// Cubemaps are a special case of a texture array:
 			D3D12_SHADER_RESOURCE_VIEW_DESC cubeTexArraySrvDesc{};
-			cubeTexArraySrvDesc.Format = texPlatParams->m_format;
+			cubeTexArraySrvDesc.Format = srvFormat;
 			cubeTexArraySrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 			cubeTexArraySrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
@@ -872,7 +886,8 @@ namespace dx12
 
 		// Create a SRV if it's needed:
 		if ((texParams.m_usage & re::Texture::Usage::Color) ||
-			(texParams.m_usage & re::Texture::Usage::ColorTarget)) // Assume we'll sample a color target at some point
+			(texParams.m_usage & re::Texture::Usage::ColorTarget) || // Assume we'll sample a color target at some point
+			(texParams.m_usage & re::Texture::Usage::DepthTarget)) // Assume we'll sample depth (e.g. GBuffer)
 		{
 			CreateSRV(texture);
 		}

@@ -187,11 +187,21 @@ namespace
 	}
 
 
-	D3D12_DEPTH_STENCIL_DESC BuildDepthStencilDesc(gr::PipelineState const& grPipelineState)
+	D3D12_DEPTH_STENCIL_DESC BuildDepthStencilDesc(
+		re::TextureTarget const* depthTarget, gr::PipelineState const& grPipelineState)
 	{
+		// We make assumptions when recording resource transitions on our command lists that depth targets will 
+		// specifically have depth disabled (not just masked out) when the depth channel write mode is disabled
+		const bool depthEnabled = depthTarget &&
+			depthTarget->HasTexture() &&
+			depthTarget->GetDepthWriteMode() == re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled;
+
 		D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
 
-		depthStencilDesc.DepthEnable = grPipelineState.GetDepthWriteMode() == gr::PipelineState::DepthWriteMode::Enabled;
+		depthStencilDesc.DepthEnable = depthEnabled;
+
+		depthStencilDesc.DepthWriteMask = depthEnabled ?
+			D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ZERO;
 
 		// Depth testing:
 		switch (grPipelineState.GetDepthTestMode())
@@ -219,19 +229,11 @@ namespace
 			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
 		}
 
-		// Depth write mode:
-		switch (grPipelineState.GetDepthWriteMode())
-		{
-		case gr::PipelineState::DepthWriteMode::Enabled:
-			depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL; break;
-		case gr::PipelineState::DepthWriteMode::Disabled:
-			depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO; break;
-		default:
-			SEAssertF("Invalid depth write mode");
-			depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-		}
-
-		// TODO: Support these via the gr::PipelineState
+		// TODO: Support these
+		SEAssert("TODO: Support StencilTarget and DepthStencilTarget usages",
+			!depthTarget ||
+			!depthTarget->GetTexture() ||
+			depthTarget->GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::DepthTarget);
 		depthStencilDesc.StencilEnable = false;
 		depthStencilDesc.StencilReadMask = 0;
 		depthStencilDesc.StencilWriteMask = 0;
@@ -344,14 +346,14 @@ namespace
 			rtBlendDesc.LogicOp = D3D12_LOGIC_OP::D3D12_LOGIC_OP_NOOP;
 
 			// Build a bitmask for our color write modes:
-			re::TextureTarget::TargetParams::ColorWriteMode const& colorWriteMode =
+			re::TextureTarget::TargetParams::ChannelWrite const& colorWriteMode =
 				targetSet.GetColorTarget(i).GetColorWriteMode();
 
 			rtBlendDesc.RenderTargetWriteMask =
-				(colorWriteMode.R == re::TextureTarget::TargetParams::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_RED : 0) |
-				(colorWriteMode.G == re::TextureTarget::TargetParams::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_GREEN : 0) |
-				(colorWriteMode.B == re::TextureTarget::TargetParams::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_BLUE : 0) |
-				(colorWriteMode.A == re::TextureTarget::TargetParams::ColorWriteMode::ChannelMode::Enabled ? D3D12_COLOR_WRITE_ENABLE_ALPHA : 0);
+				(colorWriteMode.R == re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled ? D3D12_COLOR_WRITE_ENABLE_RED : 0) |
+				(colorWriteMode.G == re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled ? D3D12_COLOR_WRITE_ENABLE_GREEN : 0) |
+				(colorWriteMode.B == re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled ? D3D12_COLOR_WRITE_ENABLE_BLUE : 0) |
+				(colorWriteMode.A == re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled ? D3D12_COLOR_WRITE_ENABLE_ALPHA : 0);
 
 			blendDesc.RenderTarget[i] = rtBlendDesc;
 		}
@@ -412,7 +414,8 @@ namespace dx12
 			pipelineStateStream.rasterizer = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
 
 			// Depth stencil description:
-			const D3D12_DEPTH_STENCIL_DESC depthStencilDesc = BuildDepthStencilDesc(grPipelineState);
+			const D3D12_DEPTH_STENCIL_DESC depthStencilDesc = 
+				BuildDepthStencilDesc(targetSet.GetDepthStencilTarget(), grPipelineState);
 			pipelineStateStream.depthStencil = CD3DX12_DEPTH_STENCIL_DESC(depthStencilDesc);
 
 			// Blend description:

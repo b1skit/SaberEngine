@@ -54,24 +54,23 @@ namespace re
 				TargetParams::BlendMode m_dstBlendMode = BlendMode::Zero;
 			} m_blendModes;
 
-			struct ColorWriteMode
+			struct ChannelWrite
 			{
-				enum ChannelMode : bool
+				enum Mode : bool
 				{
 					Disabled = 0,
 					Enabled = 1
 				};
-				ChannelMode R = ChannelMode::Enabled;
-				ChannelMode G = ChannelMode::Enabled;
-				ChannelMode B = ChannelMode::Enabled;
-				ChannelMode A = ChannelMode::Enabled;
-			} m_colorWriteMode = {
-				ColorWriteMode::ChannelMode::Enabled, // R
-				ColorWriteMode::ChannelMode::Enabled, // G
-				ColorWriteMode::ChannelMode::Enabled, // B
-				ColorWriteMode::ChannelMode::Enabled  // A
+				Mode R = Mode::Enabled; // R = Color & Depth
+				Mode G = Mode::Enabled;
+				Mode B = Mode::Enabled;
+				Mode A = Mode::Enabled;
+			} m_channelWriteMode = {
+				ChannelWrite::Mode::Enabled, // R
+				ChannelWrite::Mode::Enabled, // G
+				ChannelWrite::Mode::Enabled, // B
+				ChannelWrite::Mode::Enabled  // A
 			}; 
-
 
 
 			// TODO: Support additional target/sub-resource parameters:
@@ -97,19 +96,22 @@ namespace re
 		std::shared_ptr<re::Texture>& GetTexture() { return m_texture; }
 		std::shared_ptr<re::Texture> const& GetTexture() const { return m_texture; }
 
-		void SetTargetParams(TargetParams const& targetParams) { m_targetParams = targetParams; }
+		void SetTargetParams(TargetParams const& targetParams);
 		TargetParams const& GetTargetParams() const { return m_targetParams; }
 
 		void SetBlendMode(TargetParams::BlendModes const&);
 		TargetParams::BlendModes const& GetBlendMode() const;
 
-		void SetColorWriteMode(TargetParams::ColorWriteMode const&);
-		TargetParams::ColorWriteMode const& GetColorWriteMode() const;
+		void SetColorWriteMode(TargetParams::ChannelWrite const&);
+		TargetParams::ChannelWrite const& GetColorWriteMode() const;
 		bool WritesColor() const;
 
+		void SetDepthWriteMode(TargetParams::ChannelWrite::Mode);
+		TargetParams::ChannelWrite::Mode GetDepthWriteMode() const; // m_channelWriteMode.R
 
 		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::shared_ptr<PlatformParams> params) { m_platformParams = params; }
+
 
 	private:
 		std::shared_ptr<re::Texture> m_texture;
@@ -204,18 +206,21 @@ namespace re
 
 		inline std::vector<re::TextureTarget> const& GetColorTargets() const { return m_colorTargets; }
 		re::TextureTarget const& GetColorTarget(uint8_t slot) const;
+
+		// Color targets must be set in monotonically-increasing order from 0
 		void SetColorTarget(uint8_t slot, re::TextureTarget const& texTarget);
 		void SetColorTarget(uint8_t slot, std::shared_ptr<re::Texture> texTarget, TextureTarget::TargetParams const&);
 
-		re::TextureTarget const* GetDepthStencilTarget() const;
-		void SetDepthStencilTarget(re::TextureTarget const* depthStencilTarget);
-		void SetDepthStencilTarget(std::shared_ptr<re::Texture> depthStencilTarget, re::TextureTarget::TargetParams const&);
+		re::TextureTarget const* GetDepthStencilTarget() const; // Returns nullptr if m_depthStencilTarget has no texture
+		void SetDepthStencilTarget(re::TextureTarget const*);
+		void SetDepthStencilTarget(std::shared_ptr<re::Texture>, re::TextureTarget::TargetParams const&);
+		void SetDepthWriteMode(TextureTarget::TargetParams::ChannelWrite::Mode);
 
 		bool HasTargets() const;
 		bool HasColorTarget() const;
 		bool HasDepthTarget() const;
 
-		void SetAllColorWriteModes(TextureTarget::TargetParams::ColorWriteMode const&);
+		void SetAllColorWriteModes(TextureTarget::TargetParams::ChannelWrite const&);
 		bool WritesColor() const;
 
 		uint8_t GetNumColorTargets() const;
