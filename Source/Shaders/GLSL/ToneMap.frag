@@ -77,8 +77,6 @@ void main()
 #else
 	vec3 toneMappedColor = ACESFitted(color);
 #endif
-	
-	
 
 	toneMappedColor = LinearToSRGB(toneMappedColor); // Apply gamma correction
 
