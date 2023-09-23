@@ -101,14 +101,17 @@ namespace re
 
 
 	void RenderStage::AddTextureInput(
-		string const& shaderName, shared_ptr<Texture> tex, shared_ptr<Sampler> sampler, uint32_t subresource /*= k_allSubresources*/)
+		string const& shaderName, 
+		shared_ptr<Texture> tex, 
+		shared_ptr<Sampler> sampler, 
+		uint32_t mipLevel /*= re::Texture::k_allMips*/)
 	{
 		SEAssert("Stage shader is null. Set the stage shader before this call", m_stageShader != nullptr);
 		SEAssert("Invalid shader sampler name", !shaderName.empty());
 		SEAssert("Invalid texture", tex != nullptr);
 		SEAssert("Invalid sampler", sampler != nullptr);
 
-		m_textureSamplerInputs.emplace_back(RenderStageTextureAndSamplerInput{ shaderName, tex, sampler, subresource });
+		m_textureSamplerInputs.emplace_back(RenderStageTextureAndSamplerInput{ shaderName, tex, sampler, mipLevel });
 	}
 	
 

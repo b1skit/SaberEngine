@@ -87,7 +87,7 @@ namespace re
 			std::string const& shaderName, 
 			std::shared_ptr<re::Texture>, 
 			std::shared_ptr<re::Sampler>, 
-			uint32_t subresource = re::Texture::k_allMips);
+			uint32_t mipLevel = re::Texture::k_allMips);
 		std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& GetTextureInputs() const;
 
 		void AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb);
