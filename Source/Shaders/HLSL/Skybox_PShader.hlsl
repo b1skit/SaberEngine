@@ -16,7 +16,7 @@ float4 PShader(VertexOut In) : SV_Target
 
 	const float2 sphericalUVs = WorldDirToSphericalUV(sampleDir); // Normalizes incoming sampleDir
 
-	float3 skyboxColor = Tex0.Sample(WrapLinearMipMapLinearLinear, sphericalUVs).rgb;
+	float3 skyboxColor = Tex0.Sample(Wrap_LinearMipMapLinear_Linear, sphericalUVs).rgb;
 	
 	return float4(skyboxColor, 1.f);
 }

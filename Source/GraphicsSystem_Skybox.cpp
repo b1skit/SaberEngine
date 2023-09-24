@@ -115,7 +115,7 @@ namespace gr
 		m_skyboxStage->AddTextureInput(
 			m_skyTextureShaderName,
 			m_skyTexture,
-			Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+			Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
 		pipeline.AppendRenderStage(m_skyboxStage);
 	}

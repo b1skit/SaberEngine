@@ -28,14 +28,14 @@ namespace re
 
 		enum class WrapAndFilterMode
 		{
-			// EdgeMode, MinFilter, MaxFilter
-			WrapLinearLinear,
-			ClampLinearLinear,
-			ClampNearestNearest,
-			ClampLinearMipMapLinearLinear,
-			WrapLinearMipMapLinearLinear,
+			// EdgeMode_MinFilter_MagFilter
+			Wrap_Linear_Linear,
+			Clamp_Linear_Linear,
+			Clamp_Nearest_Nearest,
+			Clamp_LinearMipMapLinear_Linear,
+			Wrap_LinearMipMapLinear_Linear,
 
-			SamplerType_Count
+			WrapAndFilterMode_Count
 		};
 		static std::shared_ptr<re::Sampler> const GetSampler(WrapAndFilterMode type);
 		static std::shared_ptr<re::Sampler> const GetSampler(std::string const& samplerTypeLibraryName);
@@ -58,7 +58,7 @@ namespace re
 			Mode_Count = Invalid
 		};
 
-		enum class MinFilter
+		enum class MinFilter // Downsampling: Sampling data at a higher frequency than needed
 		{
 			Nearest,				// Point sample
 			NearestMipMapLinear,	// Linear interpolation of point samples from 2 nearest mips
@@ -69,13 +69,13 @@ namespace re
 			MinFilter_Count = Invalid
 		};
 
-		enum class MaxFilter
+		enum class MagFilter // Upsampling: Reconstruct sparse data by interpolation
 		{
 			Nearest,	// Point sample
 			Linear,		// Bilinear interpolation of 4 closest texels
 
 			Invalid,
-			MaxFilter_Count = Invalid
+			MagFilter_Count = Invalid
 		};
 
 		struct SamplerParams
@@ -84,9 +84,9 @@ namespace re
 
 			glm::vec4 m_borderColor = glm::vec4(0.f, 0.f, 0.f, 0.f);
 
-			// TODO: Combine min/max filters into a single enum, ala D3D
+			// TODO: Combine min/mag filters into a single enum, ala D3D
 			MinFilter m_texMinMode = MinFilter::LinearMipMapLinear;
-			MaxFilter m_texMaxMode = MaxFilter::Linear;
+			MagFilter m_texMagMode = MagFilter::Linear;
 
 			// TODO: Support these in OpenGL:
 			float m_mipLODBias = 0.f; 

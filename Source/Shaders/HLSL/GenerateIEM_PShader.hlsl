@@ -44,7 +44,7 @@ float4 PShader(VertexOut In) : SV_Target
 		if (NoL > 0)
 		{
 			const float2 sphericalUV = WorldDirToSphericalUV(L);
-			result += Tex0.Sample(WrapLinearLinear, sphericalUV).rgb;
+			result += Tex0.Sample(Wrap_Linear_Linear, sphericalUV).rgb;
 		}
 	}
 	

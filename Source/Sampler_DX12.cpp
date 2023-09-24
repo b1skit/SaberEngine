@@ -43,7 +43,7 @@ namespace
 	}
 
 
-	D3D12_FILTER GetD3DMinFilterMode(re::Sampler::MinFilter minFilter, re::Sampler::MaxFilter maxFilter)
+	D3D12_FILTER GetD3DFilterMode(re::Sampler::MinFilter minFilter, re::Sampler::MagFilter maxFilter)
 	{
 		switch (minFilter)
 		{
@@ -51,18 +51,18 @@ namespace
 		{
 			switch (maxFilter)
 			{
-			case re::Sampler::MaxFilter::Nearest:
+			case re::Sampler::MagFilter::Nearest:
 			{
 				return D3D12_FILTER_MIN_MAG_MIP_POINT;
 			}
 			break;
-			case re::Sampler::MaxFilter::Linear:
+			case re::Sampler::MagFilter::Linear:
 			{
 				return D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
 			}
 			break;
 			default:
-				SEAssertF("Invalid MaxFilter type");
+				SEAssertF("Invalid MagFilter type");
 			}
 		}
 		break;
@@ -70,18 +70,18 @@ namespace
 		{
 			switch (maxFilter)
 			{
-			case re::Sampler::MaxFilter::Nearest:
+			case re::Sampler::MagFilter::Nearest:
 			{
 				return D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR;
 			}
 			break;
-			case re::Sampler::MaxFilter::Linear:
+			case re::Sampler::MagFilter::Linear:
 			{
 				return D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR;
 			}
 			break;
 			default:
-				SEAssertF("Invalid MaxFilter type");
+				SEAssertF("Invalid MagFilter type");
 			}
 		}
 		break;
@@ -89,18 +89,18 @@ namespace
 		{
 			switch (maxFilter)
 			{
-			case re::Sampler::MaxFilter::Nearest:
+			case re::Sampler::MagFilter::Nearest:
 			{
 				return D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT;
 			}
 			break;
-			case re::Sampler::MaxFilter::Linear:
+			case re::Sampler::MagFilter::Linear:
 			{
 				return D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
 			}
 			break;
 			default:
-				SEAssertF("Invalid MaxFilter type");
+				SEAssertF("Invalid MagFilter type");
 			}
 		}
 		break;
@@ -108,18 +108,18 @@ namespace
 		{
 			switch (maxFilter)
 			{
-			case re::Sampler::MaxFilter::Nearest:
+			case re::Sampler::MagFilter::Nearest:
 			{
 				return D3D12_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
 			}
 			break;
-			case re::Sampler::MaxFilter::Linear:
+			case re::Sampler::MagFilter::Linear:
 			{
 				return D3D12_FILTER_MIN_MAG_MIP_LINEAR;
 			}
 			break;
 			default:
-				SEAssertF("Invalid MaxFilter type");
+				SEAssertF("Invalid MagFilter type");
 			}
 		}
 		break;
@@ -145,7 +145,7 @@ namespace dx12
 
 		// We initialize a D3D12_STATIC_SAMPLER_DESC here for (re)use when creating root signatures
 		samplerPlatParams->m_staticSamplerDesc.Filter =
-			GetD3DMinFilterMode(samplerParams.m_texMinMode, samplerParams.m_texMaxMode);
+			GetD3DFilterMode(samplerParams.m_texMinMode, samplerParams.m_texMagMode);
 
 		// TODO: Support individual U/V/W address modes
 		samplerPlatParams->m_staticSamplerDesc.AddressU = GetD3DAddressMode(samplerParams.m_addressMode);

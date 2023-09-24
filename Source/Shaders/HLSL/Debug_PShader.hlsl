@@ -7,5 +7,5 @@
 
 float4 PShader(VertexOut In) : SV_Target
 {
-	return MatAlbedo.Sample(WrapLinearLinear, In.UV0) * In.Color;
+	return MatAlbedo.Sample(Wrap_Linear_Linear, In.UV0) * In.Color;
 }

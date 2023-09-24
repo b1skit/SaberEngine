@@ -40,14 +40,14 @@ namespace opengl
 
 		// Magnification filter:
 		/*********************/
-		switch (samplerParams.m_texMaxMode)
+		switch (samplerParams.m_texMagMode)
 		{
-		case re::Sampler::MaxFilter::Nearest: // Point sampling
+		case re::Sampler::MagFilter::Nearest: // Point sampling
 		{
 			m_textureMaxFilter = GL_NEAREST;
 		}
 		break;
-		case re::Sampler::MaxFilter::Linear: // Weighted linear blend
+		case re::Sampler::MagFilter::Linear: // Weighted linear blend
 		{
 			m_textureMaxFilter = GL_LINEAR;
 		}

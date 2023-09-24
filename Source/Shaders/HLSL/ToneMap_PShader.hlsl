@@ -69,7 +69,7 @@ float3 ACESFilm(float3 x)
 
 float4 PShader(VertexOut In) : SV_Target
 {
-	const float3 color = GBufferAlbedo.SampleLevel(WrapLinearLinear, In.UV0.xy, 0).rgb;
+	const float3 color = GBufferAlbedo.SampleLevel(Wrap_Linear_Linear, In.UV0.xy, 0).rgb;
 	
 #if defined(FAST_ACES)
 	float3 toneMappedColor = ACESFilm(color);

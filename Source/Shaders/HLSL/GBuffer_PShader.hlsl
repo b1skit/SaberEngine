@@ -20,7 +20,7 @@ GBufferOut PShader(VertexOut In)
 {
 	GBufferOut output;
 	
-	const float4 matAlbedo = MatAlbedo.Sample(WrapLinearLinear, In.UV0);
+	const float4 matAlbedo = MatAlbedo.Sample(Wrap_Linear_Linear, In.UV0);
 	clip(matAlbedo.a < ALPHA_CUTOFF ? -1 : 1); // Alpha clipping
 	
 	output.Albedo = matAlbedo * PBRMetallicRoughnessParams.g_baseColorFactor * In.Color;
@@ -29,7 +29,7 @@ GBufferOut PShader(VertexOut In)
 	// Note: We normalize the normal after applying the TBN and writing to the GBuffer, we may need to post-apply this
 	const float3 normalScale = 
 		float3(PBRMetallicRoughnessParams.g_normalScale, PBRMetallicRoughnessParams.g_normalScale, 1.f);
-	const float3 texNormal = MatNormal.Sample(WrapLinearLinear, In.UV0).xyz;
+	const float3 texNormal = MatNormal.Sample(Wrap_Linear_Linear, In.UV0).xyz;
 	output.WorldNormal = float4(WorldNormalFromTextureNormal(texNormal, normalScale, In.TBN), 0.f);
 	
 	// RMAO:
@@ -38,10 +38,10 @@ GBufferOut PShader(VertexOut In)
 	
 	// Unpack/scale metallic/roughness: .G = roughness, .B = metallness
 	const float2 roughnessMetalness = 
-		MatMetallicRoughness.Sample(WrapLinearLinear, In.UV0).gb * float2(roughnessFactor, metallicFactor);
+		MatMetallicRoughness.Sample(Wrap_Linear_Linear, In.UV0).gb * float2(roughnessFactor, metallicFactor);
 	
 	const float occlusionStrength = PBRMetallicRoughnessParams.g_occlusionStrength;
-	const float occlusion = MatOcclusion.Sample(WrapLinearLinear, In.UV0).r * occlusionStrength;
+	const float occlusion = MatOcclusion.Sample(Wrap_Linear_Linear, In.UV0).r * occlusionStrength;
 	
 	output.RMAO = float4(roughnessMetalness, occlusion, 1.f);
 	
@@ -49,7 +49,7 @@ GBufferOut PShader(VertexOut In)
 	const float3 emissiveFactor = PBRMetallicRoughnessParams.g_emissiveFactorStrength.rgb;
 	const float emissiveStrength = PBRMetallicRoughnessParams.g_emissiveFactorStrength.w;
 	
-	float3 emissive = MatEmissive.Sample(WrapLinearLinear, In.UV0).rgb * emissiveFactor * emissiveStrength;
+	float3 emissive = MatEmissive.Sample(Wrap_Linear_Linear, In.UV0).rgb * emissiveFactor * emissiveStrength;
 	
 	// Emissive is light: Apply exposure now:
 	const float exposure = CameraParams.g_exposureProperties.x;

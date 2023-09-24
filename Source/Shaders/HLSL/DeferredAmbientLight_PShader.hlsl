@@ -12,10 +12,10 @@ float3 GetDiffuseIBLContribution(float3 N, float3 V, float NoV, float roughness)
 {
 	const float3 dominantN = GetDiffuseDominantDir(N, V, NoV, roughness);
 	
-	const float3 diffuseLighting = CubeMap0.Sample(WrapLinearLinear, dominantN).rgb;
+	const float3 diffuseLighting = CubeMap0.Sample(Wrap_Linear_Linear, dominantN).rgb;
 	
 	//// NEED TO UPDATE DFG INTEGRATION SHADER
-	//const float DFG = Tex7.Sample(ClampLinearLinear, float2(NoV, gbuffer.Roughness)).z;
+	//const float DFG = Tex7.Sample(Clamp_Linear_Linear, float2(NoV, gbuffer.Roughness)).z;
 	
 	//return diffuseLighting * DFG;
 	

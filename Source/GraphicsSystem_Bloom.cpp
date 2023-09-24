@@ -308,7 +308,7 @@ namespace gr
 		// Attach GBuffer inputs:
 		GBufferGraphicsSystem* gbufferGS = renderSystem.GetGraphicsSystem<GBufferGraphicsSystem>();
 
-		shared_ptr<Sampler> const bloomStageSampler = Sampler::GetSampler(Sampler::WrapAndFilterMode::ClampLinearLinear);
+		shared_ptr<Sampler> const bloomStageSampler = Sampler::GetSampler(Sampler::WrapAndFilterMode::Clamp_Linear_Linear);
 
 		// This index corresponds with the GBuffer texture layout bindings in SaberCommon.glsl
 		const size_t gBufferEmissiveTextureSrcIndex = 3;

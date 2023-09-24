@@ -89,11 +89,11 @@ struct IEMPMREMGenerationParamsCB
 ConstantBuffer<IEMPMREMGenerationParamsCB> IEMPMREMGenerationParams;
 
 
-SamplerState WrapLinearLinear;
-SamplerState ClampLinearLinear;
-SamplerState ClampNearestNearest;
-SamplerState ClampLinearMipMapLinearLinear;
-SamplerState WrapLinearMipMapLinearLinear;
+SamplerState Wrap_Linear_Linear;
+SamplerState Clamp_Linear_Linear;
+SamplerState Clamp_Nearest_Nearest;
+SamplerState Clamp_LinearMipMapLinear_Linear;
+SamplerState Wrap_LinearMipMapLinear_Linear;
 
 Texture2D<float4> MatAlbedo;
 Texture2D<float4> MatNormal;

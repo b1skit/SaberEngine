@@ -427,7 +427,7 @@ namespace re
 	template<>
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::Sampler> newObject)
 	{
-		// Samplers are (currently) required to have unique names (e.g. "WrapLinearLinear")
+		// Samplers are (currently) required to have unique names (e.g. "Wrap_Linear_Linear")
 		const size_t nameID = newObject->GetNameID();
 		m_newSamplers.Set(nameID, std::move(newObject));
 	}

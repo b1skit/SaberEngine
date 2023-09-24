@@ -346,7 +346,7 @@ namespace gr
 				iemStage->AddTextureInput(
 					"Tex0",
 					iblTexture,
-					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
+					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
 
 				IEMPMREMGenerationParams const& iemGenerationParams = GetIEMPMREMGenerationParamsData(0, 1, face);
 				shared_ptr<re::ParameterBlock> iemGenerationPB = re::ParameterBlock::Create(
@@ -429,7 +429,7 @@ namespace gr
 					pmremStage->AddTextureInput(
 						"Tex0",
 						iblTexture,
-						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearMipMapLinearLinear));
+						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
 
 					// Construct a camera param block to draw into our cubemap rendering targets:
 					cubemapCamParams.g_view = cubemapViews[face];
@@ -656,21 +656,21 @@ namespace gr
 				m_ambientStage->AddTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[slot],
 					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
-					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+					Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 			}
 			if (keyLight)
 			{
 				m_keylightStage->AddTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[slot],
 					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
-					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+					Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 			}
 			if (!pointLights.empty())
 			{
 				m_pointlightStage->AddTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[slot],
 					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
-					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+					Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 			}
 		}
 
@@ -683,7 +683,7 @@ namespace gr
 			m_keylightStage->AddTextureInput(
 				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
 				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
-				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+				Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
 			// Keylight shadowmap:
 			ShadowMap* const keyLightShadowMap = keyLight->GetShadowMap();
@@ -695,7 +695,7 @@ namespace gr
 				m_keylightStage->AddTextureInput(
 					"Depth0",
 					keylightShadowMapTex,
-					Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+					Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 			}
 		}
 
@@ -704,7 +704,7 @@ namespace gr
 			m_pointlightStage->AddTextureInput(
 				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
 				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
-				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+				Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 		}
 
 		if (ambientIsValid)
@@ -712,25 +712,25 @@ namespace gr
 			m_ambientStage->AddTextureInput(
 				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
 				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
-				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+				Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
 			// Add IBL texture inputs for ambient stage:
 			m_ambientStage->AddTextureInput(
 				"CubeMap0",
 				ambientProperties.m_ambient.m_IEMTex,
-				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear)
+				Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear)
 			);
 
 			m_ambientStage->AddTextureInput(
 				"CubeMap1",
 				ambientProperties.m_ambient.m_PMREMTex,
-				Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearMipMapLinearLinear)
+				Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear)
 			);
 
 			m_ambientStage->AddTextureInput(
 				"Tex7",
 				ambientProperties.m_ambient.m_BRDF_integrationMap,
-				Sampler::GetSampler(Sampler::WrapAndFilterMode::ClampNearestNearest)
+				Sampler::GetSampler(Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest)
 			);
 		}
 	}
@@ -797,7 +797,7 @@ namespace gr
 
 				// Our template function expects a shared_ptr to a non-const type; cast it here even though it's gross
 				std::shared_ptr<re::Sampler> const sampler = 
-					std::const_pointer_cast<re::Sampler>(Sampler::GetSampler(Sampler::WrapAndFilterMode::WrapLinearLinear));
+					std::const_pointer_cast<re::Sampler>(Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
 				pointlightBatch.AddTextureAndSamplerInput("CubeMap0", depthTexture, sampler);
 			}			

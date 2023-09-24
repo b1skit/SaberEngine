@@ -29,24 +29,24 @@ GBuffer UnpackGBuffer(float2 screenUV)
 	// Note: All PBR calculations are performed in linear space
 	// However, we use sRGB-format input textures, the sRGB->Linear transformation happens for free when writing the 
 	// GBuffer, so no need to do the sRGB -> linear conversion here
-	gbuffer.LinearAlbedo = GBufferAlbedo.Sample(WrapLinearLinear, screenUV).rgb;
+	gbuffer.LinearAlbedo = GBufferAlbedo.Sample(Wrap_Linear_Linear, screenUV).rgb;
 	
 	const float3 normalXYScale = 
 		float3(PBRMetallicRoughnessParams.g_normalScale, PBRMetallicRoughnessParams.g_normalScale, 1.f);
-	gbuffer.WorldNormal = GBufferWNormal.Sample(WrapLinearLinear, screenUV).xyz * normalXYScale;
+	gbuffer.WorldNormal = GBufferWNormal.Sample(Wrap_Linear_Linear, screenUV).xyz * normalXYScale;
 
-	const float3 RMAO = GBufferRMAO.Sample(WrapLinearLinear, screenUV).rgb;
+	const float3 RMAO = GBufferRMAO.Sample(Wrap_Linear_Linear, screenUV).rgb;
 	gbuffer.Roughness = RMAO.r;
 	gbuffer.Metalness = RMAO.g;
 	gbuffer.AO = RMAO.b;
 
 #if defined(GBUFFER_EMISSIVE)
-	gbuffer.Emissive = GBufferEmissive.Sample(WrapLinearLinear, screenUV).rgb;
+	gbuffer.Emissive = GBufferEmissive.Sample(Wrap_Linear_Linear, screenUV).rgb;
 #endif
 
-	gbuffer.MatProp0 = GBufferMatProp0.Sample(WrapLinearLinear, screenUV).rgb;
+	gbuffer.MatProp0 = GBufferMatProp0.Sample(Wrap_Linear_Linear, screenUV).rgb;
 
-	gbuffer.NonLinearDepth = GBufferDepth.Sample(WrapLinearLinear, screenUV).r;
+	gbuffer.NonLinearDepth = GBufferDepth.Sample(Wrap_Linear_Linear, screenUV).r;
 
 	return gbuffer;
 }

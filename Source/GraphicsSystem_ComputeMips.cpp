@@ -79,7 +79,7 @@ namespace gr
 		//CreateBatches();
 
 		std::shared_ptr<re::Sampler> const mipSampler =
-			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::ClampLinearLinear);
+			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_Linear_Linear);
 
 		re::StagePipeline::StagePipelineItr insertItr = m_parentStageItr;
 
