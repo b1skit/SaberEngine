@@ -139,9 +139,9 @@ namespace
 
 namespace opengl
 {
-	/*******************************/
-	// TextureTarget Platform Params
-	/*******************************/
+	/***************/
+	// TextureTarget
+	/***************/
 	TextureTarget::PlatformParams::PlatformParams() :
 		m_attachmentPoint(GL_NONE),
 		m_drawBuffer(GL_NONE),
@@ -152,9 +152,11 @@ namespace opengl
 
 	TextureTarget::PlatformParams::~PlatformParams()
 	{
-		// Platform params are managed via shared_ptr, so we should deallocate OpenGL resources here
-		glDeleteRenderbuffers(1, &m_renderBufferObject);
-		m_renderBufferObject = 0;
+		if (m_renderBufferObject > 0)
+		{
+			glDeleteRenderbuffers(1, &m_renderBufferObject);
+			m_renderBufferObject = 0;
+		}		
 
 		m_attachmentPoint = GL_NONE;
 		m_drawBuffer = GL_NONE;
@@ -162,9 +164,9 @@ namespace opengl
 	}
 
 
-	/****************************/
-	// Target Set Platform Params
-	/****************************/
+	/************/
+	// Target Set
+	/************/
 	TextureTargetSet::PlatformParams::PlatformParams() :
 		m_frameBufferObject(0)
 	{
@@ -178,10 +180,6 @@ namespace opengl
 		m_frameBufferObject = GL_NONE;
 	}
 
-
-	/************/
-	// Target Set
-	/************/
 
 	void TextureTargetSet::CreateColorTargets(re::TextureTargetSet const& targetSet)
 	{
@@ -197,8 +195,7 @@ namespace opengl
 			return;
 		}
 
-		SEAssert("Targets have already been created", !targetSetParams->m_colorIsCreated);
-		targetSetParams->m_colorIsCreated = true;
+		SEAssert("Target set has not been committed", targetSetParams->m_isCommitted);
 
 		SEAssert("Scissor rectangle is out of bounds of the viewport",
 			util::CheckedCast<uint32_t>(targetSet.GetScissorRect().Left()) >= targetSet.GetViewport().xMin() &&
@@ -216,7 +213,12 @@ namespace opengl
 		{
 			if (targetSet.GetColorTarget(i).HasTexture())
 			{
-				// Create/bind the texture:
+				opengl::TextureTarget::PlatformParams* targetPlatParams =
+					targetSet.GetColorTarget(i).GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
+
+				SEAssert("Target has already been created", !targetPlatParams->m_isCreated);
+				targetPlatParams->m_isCreated = true;
+
 				std::shared_ptr<re::Texture> const& texture = targetSet.GetColorTarget(i).GetTexture();
 
 				re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
@@ -241,16 +243,13 @@ namespace opengl
 				}
 				 
 				// Configure the target parameters:
-				opengl::TextureTarget::PlatformParams* targetParams =
-					targetSet.GetColorTarget(i).GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
-
 				// Note: We attach to the same slot/binding index as the texuture has in the target set
-				targetParams->m_attachmentPoint = GL_COLOR_ATTACHMENT0 + i;
-				targetParams->m_drawBuffer		= GL_COLOR_ATTACHMENT0 + i;
+				targetPlatParams->m_attachmentPoint = GL_COLOR_ATTACHMENT0 + i;
+				targetPlatParams->m_drawBuffer		= GL_COLOR_ATTACHMENT0 + i;
 				//targetPlatformParams->m_readBuffer		= GL_COLOR_ATTACHMENT0 + i; // Not needed...
 
 				// Record the texture in our drawbuffers array:
-				drawBuffers[insertIdx++] = targetParams->m_attachmentPoint;
+				drawBuffers[insertIdx++] = targetPlatParams->m_attachmentPoint;
 			}
 		}
 
@@ -432,11 +431,16 @@ namespace opengl
 		opengl::TextureTargetSet::PlatformParams* targetSetParams =
 			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams*>();
 
-		SEAssert("Targets have already been created", !targetSetParams->m_depthIsCreated);
-		targetSetParams->m_depthIsCreated = true;
+		SEAssert("Target set has not been committed", targetSetParams->m_isCommitted);
 
 		if (targetSet.GetDepthStencilTarget())
 		{
+			opengl::TextureTarget::PlatformParams* depthTargetPlatParams =
+				targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
+			
+			SEAssert("Target has already been created", !depthTargetPlatParams->m_isCreated);
+			depthTargetPlatParams->m_isCreated = true;
+
 			std::shared_ptr<re::Texture const> depthStencilTex = targetSet.GetDepthStencilTarget()->GetTexture();
 
 			// Create framebuffer:
@@ -461,12 +465,9 @@ namespace opengl
 			}
 
 			// Configure the target parameters:
-			opengl::TextureTarget::PlatformParams* depthTargetParams =
-				targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
-
-			depthTargetParams->m_attachmentPoint = GL_DEPTH_ATTACHMENT;
-			depthTargetParams->m_drawBuffer = GL_NONE;
-			//depthTargetParams->m_readBuffer		 = GL_NONE; // Not needed...
+			depthTargetPlatParams->m_attachmentPoint = GL_DEPTH_ATTACHMENT;
+			depthTargetPlatParams->m_drawBuffer = GL_NONE;
+			//depthTargetPlatParams->m_readBuffer		 = GL_NONE; // Not needed...
 
 			// For now, ensure the viewport dimensions match the texture target dimensions
 			SEAssert("Depth texture is a different dimension to the viewport", 

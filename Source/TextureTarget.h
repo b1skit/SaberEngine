@@ -18,6 +18,8 @@ namespace re
 		struct PlatformParams : public re::IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
+
+			bool m_isCreated = false; // Targets are immutable after creation
 		};
 
 	public:
@@ -28,9 +30,7 @@ namespace re
 			uint32_t m_targetMip = 0;
 
 			// TODO: Support blend operations (add/subtract/min/max etc) for both color and alpha channels
-
 			// TODO: We should support alpha blend modes, in addition to the color blend modes here
-
 			// TODO: Support logical operations (AND/OR/XOR etc)
 
 			enum class BlendMode
@@ -87,9 +87,10 @@ namespace re
 		
 		~TextureTarget();
 
-		TextureTarget(TextureTarget const&) = default;
-		TextureTarget(TextureTarget&&) = default;
-		TextureTarget& operator=(TextureTarget const&) = default;
+		TextureTarget(TextureTarget const&);
+		TextureTarget& operator=(TextureTarget const&);
+
+		TextureTarget(TextureTarget&&) = default;		
 
 		inline bool HasTexture() const { return m_texture != nullptr; }
 
@@ -110,12 +111,12 @@ namespace re
 		TargetParams::ChannelWrite::Mode GetDepthWriteMode() const; // m_channelWriteMode.R
 
 		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
-		void SetPlatformParams(std::shared_ptr<PlatformParams> params) { m_platformParams = params; }
+		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
 
 
 	private:
 		std::shared_ptr<re::Texture> m_texture;
-		std::shared_ptr<PlatformParams> m_platformParams;
+		std::unique_ptr<PlatformParams> m_platformParams;
 
 		TargetParams m_targetParams;
 	};
@@ -190,9 +191,7 @@ namespace re
 		{
 			virtual ~PlatformParams() = 0;
 
-			// Target sets are immutable after Commit
-			bool m_colorIsCreated = false;
-			bool m_depthIsCreated = false;
+			bool m_isCommitted = false; // Target sets are immutable after commit
 		};
 
 
@@ -236,10 +235,11 @@ namespace re
 		inline re::ScissorRect const& GetScissorRect() const { return m_scissorRect; }
 
 		inline PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
-		void SetPlatformParams(std::shared_ptr<PlatformParams> params) { m_platformParams = params; }
+		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
 		
-		uint64_t GetTargetSetSignature(); // Use this instead of HashedDataObject::GetDataHash
-		uint64_t GetTargetSetSignature() const;
+		// Commits and make immutable, then computes the data hash. Use this instead of HashedDataObject::GetDataHash
+		uint64_t GetTargetSetSignature(); 
+		uint64_t GetTargetSetSignature() const; // Used 
 
 	private: // Use the object Create factories instead
 		explicit TextureTargetSet(std::string const& name);
@@ -260,7 +260,7 @@ namespace re
 		re::Viewport m_viewport;
 		re::ScissorRect m_scissorRect;
 
-		std::shared_ptr<PlatformParams> m_platformParams;
+		std::unique_ptr<PlatformParams> m_platformParams;
 
 
 	private:

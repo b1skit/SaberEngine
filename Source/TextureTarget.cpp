@@ -6,13 +6,12 @@
 #include "TextureTarget_Platform.h"
 #include "RenderManager.h"
 
+using en::Config;
+using std::string;
+
 
 namespace re
 {
-	using en::Config;
-	using std::string;
-
-
 	/**************/
 	//TextureTarget
 	/**************/
@@ -30,6 +29,27 @@ namespace re
 		m_texture = nullptr;
 		m_platformParams = nullptr;
 		m_targetParams = {};
+	}
+
+
+	TextureTarget::TextureTarget(TextureTarget const& rhs)
+	{
+		*this = rhs;
+	}
+
+
+	TextureTarget& TextureTarget::operator=(TextureTarget const& rhs)
+	{
+		if (&rhs == this)
+		{
+			return *this;
+		}
+
+		m_texture = rhs.m_texture;
+		platform::TextureTarget::CreatePlatformParams(*this);
+		m_targetParams = rhs.m_targetParams;
+
+		return *this;
 	}
 
 
@@ -209,7 +229,7 @@ namespace re
 
 	void TextureTargetSet::SetColorTarget(uint8_t slot, re::TextureTarget const& texTarget)
 	{
-		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_colorIsCreated);
+		SEAssert("Target sets are immutable after they've been committed", !m_platformParams->m_isCommitted);
 		SEAssert("Targets must be set in monotonically-increasing order", 
 			slot == 0 || m_colorTargets[slot - 1].HasTexture());
 		m_colorTargets[slot] = texTarget;
@@ -219,7 +239,7 @@ namespace re
 	void TextureTargetSet::SetColorTarget(
 		uint8_t slot, std::shared_ptr<re::Texture> texture, TextureTarget::TargetParams const& targetParams)
 	{
-		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_colorIsCreated);
+		SEAssert("Target sets are immutable after they've been committed", !m_platformParams->m_isCommitted);
 		SEAssert("Targets must be set in monotonically-increasing order",
 			slot == 0 || m_colorTargets[slot - 1].HasTexture());
 		m_colorTargets[slot] = re::TextureTarget(texture, targetParams);
@@ -239,7 +259,7 @@ namespace re
 	void TextureTargetSet::SetDepthStencilTarget(re::TextureTarget const* depthStencilTarget)
 	{
 		SEAssert("Cannot set a null target", depthStencilTarget);
-		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_depthIsCreated);
+		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_isCommitted);
 		m_depthStencilTarget = re::TextureTarget(*depthStencilTarget);
 	}
 
@@ -247,7 +267,7 @@ namespace re
 	void TextureTargetSet::SetDepthStencilTarget(
 		std::shared_ptr<re::Texture> depthStencilTarget, re::TextureTarget::TargetParams const& targetParams)
 	{
-		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_depthIsCreated);
+		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_isCommitted);
 		m_depthStencilTarget = re::TextureTarget(depthStencilTarget, targetParams);
 	}
 
@@ -396,7 +416,7 @@ namespace re
 
 	void TextureTargetSet::RecomputeNumColorTargets()
 	{
-		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_colorIsCreated);
+		SEAssert("Target sets are immutable after they've been committed", !m_platformParams->m_isCommitted);
 
 		// Walk through and check each color target:
 		m_numColorTargets = 0;
@@ -412,11 +432,13 @@ namespace re
 
 	void TextureTargetSet::Commit()
 	{
-		SEAssert("Target sets are immutable after they've been created", 
-			!m_platformParams->m_colorIsCreated && !m_platformParams->m_depthIsCreated);
+		SEAssert("Target sets are immutable after they've been committed", 
+			!m_platformParams->m_isCommitted);
 
 		RecomputeNumColorTargets();
 		ComputeDataHash();
+
+		m_platformParams->m_isCommitted = true;
 	}
 
 
@@ -450,10 +472,8 @@ namespace re
 
 	uint64_t TextureTargetSet::GetTargetSetSignature() const
 	{
-		SEAssert("Trying to get the signature, but the targets haven't been created",
-			HasTargets() &&
-			(m_platformParams->m_colorIsCreated || !HasColorTarget()) &&
-			(m_platformParams->m_depthIsCreated || !HasDepthTarget()));
+		SEAssert("Trying to get the signature, but the targets haven't been committed",
+			HasTargets() && m_platformParams->m_isCommitted);
 
 		return GetDataHash();
 	}

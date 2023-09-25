@@ -19,19 +19,12 @@ namespace dx12
 		{
 			return;
 		}
-		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
-		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
-
 		dx12::TextureTargetSet::PlatformParams* texTargetSetPlatParams =
 			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
+		SEAssert("Target set has not been committed", texTargetSetPlatParams->m_isCommitted);
 
-		SEAssert("Color target is already created", !texTargetSetPlatParams->m_colorIsCreated);
-		texTargetSetPlatParams->m_colorIsCreated = true;
-
-		const uint8_t numColorTargets = targetSet.GetNumColorTargets();
-		SEAssert("Invalid number of color targets", 
-			numColorTargets > 0 && numColorTargets <= dx12::SysInfo::GetMaxRenderTargets());
-
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
 		
 		for (re::TextureTarget const& colorTarget : targetSet.GetColorTargets())
 		{
@@ -39,6 +32,11 @@ namespace dx12
 			{
 				continue;
 			}
+
+			dx12::TextureTarget::PlatformParams* targetPlatParams =
+				colorTarget.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+			SEAssert("Target has already been created", !targetPlatParams->m_isCreated);
+			targetPlatParams->m_isCreated = true;
 
 			re::Texture::TextureParams const& texParams = colorTarget.GetTexture()->GetTextureParams();
 
@@ -51,7 +49,7 @@ namespace dx12
 				
 				SEAssert("Texture is not created", texPlatParams->m_isCreated && texPlatParams->m_textureResource);
 
-				re::TextureTarget::TargetParams targetParams = colorTarget.GetTargetParams();
+				re::TextureTarget::TargetParams const& targetParams = colorTarget.GetTargetParams();
 
 				// Allocate descriptors for our RTVs:
 				const uint32_t numFaces = texParams.m_faces;
@@ -64,6 +62,12 @@ namespace dx12
 					for (uint32_t mipIdx = 0; mipIdx < numMips; mipIdx++)
 					{
 						const uint32_t subresourceIdx = (faceIdx * numMips) + mipIdx;
+
+
+						// BUG HERE: We should move RTV ownership to the Target object
+						//SEAssert("A valid RTV already exists. This is unexpected", 
+						//	!texPlatParams->m_rtvDsvDescriptors[subresourceIdx].IsValid());
+						
 
 						texPlatParams->m_rtvDsvDescriptors[subresourceIdx] = std::move(
 							context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::RTV).Allocate(1));
@@ -130,18 +134,20 @@ namespace dx12
 
 		dx12::TextureTargetSet::PlatformParams* targetSetParams = 
 			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
+		SEAssert("Target set has not been committed", targetSetParams->m_isCommitted);
 
-		SEAssert("Target does not have the depth target usage type",
-			(targetSet.GetDepthStencilTarget()->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget));
-
-		SEAssert("Depth target is already created", !targetSetParams->m_depthIsCreated);
-		targetSetParams->m_depthIsCreated = true;
+		dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
+			targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+		SEAssert("Target has already been created", !depthTargetPlatParams->m_isCreated);
+		depthTargetPlatParams->m_isCreated = true;
 
 		std::shared_ptr<re::Texture> depthTargetTex = targetSet.GetDepthStencilTarget()->GetTexture();
 		re::Texture::TextureParams const& depthTexParams = depthTargetTex->GetTextureParams();
+		SEAssert("Target does not have the depth target usage type",
+			depthTexParams.m_usage & re::Texture::Usage::DepthTarget);
+
 		dx12::Texture::PlatformParams* depthTexPlatParams =
 			depthTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-
 		SEAssert("Depth texture has not been created", 
 			depthTexPlatParams->m_isCreated && depthTexPlatParams->m_textureResource);
 

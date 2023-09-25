@@ -20,12 +20,12 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			texTarget.SetPlatformParams(std::make_shared<opengl::TextureTarget::PlatformParams>());
+			texTarget.SetPlatformParams(std::make_unique<opengl::TextureTarget::PlatformParams>());
 		}
 		break;
 		case RenderingAPI::DX12:
 		{
-			texTarget.SetPlatformParams(std::make_shared<dx12::TextureTarget::PlatformParams>());
+			texTarget.SetPlatformParams(std::make_unique<dx12::TextureTarget::PlatformParams>());
 		}
 		break;
 		default:
@@ -44,12 +44,12 @@ namespace platform
 		{
 		case RenderingAPI::OpenGL:
 		{
-			texTarget.SetPlatformParams(std::make_shared<opengl::TextureTargetSet::PlatformParams>());
+			texTarget.SetPlatformParams(std::make_unique<opengl::TextureTargetSet::PlatformParams>());
 		}
 		break;
 		case RenderingAPI::DX12:
 		{
-			texTarget.SetPlatformParams(std::make_shared<dx12::TextureTargetSet::PlatformParams>());
+			texTarget.SetPlatformParams(std::make_unique<dx12::TextureTargetSet::PlatformParams>());
 		}
 		break;
 		default:
