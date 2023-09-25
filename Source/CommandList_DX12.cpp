@@ -22,6 +22,8 @@
 
 using Microsoft::WRL::ComPtr;
 
+//#define DEBUG_RESOURCE_TRANSITIONS
+
 
 namespace
 {
@@ -46,6 +48,39 @@ namespace
 		CheckHResult(hr, "Failed to reset command allocator");
 
 		return commandAllocator;
+	}
+
+
+	void DebugResourceTransitions(
+		dx12::CommandList const& cmdList, 
+		std::shared_ptr<re::Texture const> texture, 
+		D3D12_RESOURCE_STATES fromState,
+		D3D12_RESOURCE_STATES toState, 
+		uint32_t subresourceIdx,
+		bool isPending = false)
+	{
+		char const* fromStateCStr = isPending ? "PENDING" : dx12::GetResourceStateAsCStr(fromState);
+		const bool isSkipping = !isPending && (fromState == toState);
+
+		const std::string debugStr = std::format("{}: Texture \"{}\", mip {}\n{}{} -> {}", 
+			dx12::GetDebugName(cmdList.GetD3DCommandList()).c_str(),
+			texture->GetName().c_str(),
+			subresourceIdx,
+			(isSkipping ? "\t\tSkip: " : "\t"),
+			(isPending ? "PENDING" : dx12::GetResourceStateAsCStr(fromState)),
+			dx12::GetResourceStateAsCStr(toState)
+		);
+
+		LOG_WARNING(debugStr.c_str());
+	}
+
+	void DebugResourceTransitions(
+		dx12::CommandList const& cmdList,
+		std::shared_ptr<re::Texture const> texture,
+		D3D12_RESOURCE_STATES toState,
+		uint32_t subresourceIdx)
+	{
+		DebugResourceTransitions(cmdList, texture, toState, toState, subresourceIdx, true);
 	}
 }
 
@@ -753,19 +788,27 @@ namespace dx12
 
 		ID3D12Resource* const resource = texPlatParams->m_textureResource.Get();
 
-		auto InsertBarrier = [this, &resource, &toState](uint32_t subresourceIdx)
+		std::vector<D3D12_RESOURCE_BARRIER> barriers;
+		barriers.reserve(texture->GetTotalNumSubresources());
+
+		auto InsertBarrier = [this, &resource, &barriers, &toState, &texture](uint32_t subresourceIdx)
 		{
 			// If we've already seen this resource before, we can record the transition now (as we prepend any initial
 			// transitions when submitting the command list)	
 			if (m_resourceStates.HasResourceState(resource, subresourceIdx)) // Is the subresource idx (or ALL) in our known states list?
 			{
 				const D3D12_RESOURCE_STATES currentKnownState = m_resourceStates.GetResourceState(resource, subresourceIdx);
+
+#if defined(DEBUG_RESOURCE_TRANSITIONS)
+				DebugResourceTransitions(*this, texture, currentKnownState, toState, subresourceIdx);
+#endif
+
 				if (currentKnownState == toState)
 				{
 					return; // Before and after states must be different
 				}
 
-				const D3D12_RESOURCE_BARRIER barrier{
+				barriers.emplace_back(D3D12_RESOURCE_BARRIER{
 					.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
 					.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE,
 					.Transition = D3D12_RESOURCE_TRANSITION_BARRIER{
@@ -773,11 +816,14 @@ namespace dx12
 						.Subresource = subresourceIdx,
 						.StateBefore = currentKnownState,
 						.StateAfter = toState}
-				};
-
-				// TODO: Support batching of multiple barriers
-				m_commandList->ResourceBarrier(1, &barrier);
+					});
 			}
+#if defined(DEBUG_RESOURCE_TRANSITIONS)
+			else
+			{
+				DebugResourceTransitions(*this, texture, toState, toState, subresourceIdx, true); // PENDING
+			}
+#endif
 
 			// Record the pending state if necessary, and new state after the transition:
 			m_resourceStates.SetResourceState(resource, toState, subresourceIdx);
@@ -786,7 +832,70 @@ namespace dx12
 		// Transition the appropriate subresources:
 		if (mipLevel == re::Texture::k_allMips)
 		{
-			InsertBarrier(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+			// We can only transition ALL subresources in a single barrier if the before state is the same for all
+			// subresources. If we have any pending transitions for individual subresources, this is not the case: We
+			// must transition each pending subresource individually to ensure all subresources have the correct before
+			// and after state.
+
+			// We need to transition 1-by-1 if there are individual pending subresource states, and we've got an ALL transition
+			bool doTransitionAllSubresources = true;
+			if (m_resourceStates.GetPendingResourceStates().contains(resource))
+			{
+				auto const& pendingResourceStates = m_resourceStates.GetPendingResourceStates().at(resource);
+				const bool hasPendingAllSubresourcesRecord =
+					pendingResourceStates.HasSubresourceRecord(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+
+				const size_t numPendingTransitions = pendingResourceStates.GetStates().size();
+
+				const bool hasIndividualPendingSubresourceTransitions =
+					(!hasPendingAllSubresourcesRecord && numPendingTransitions > 0) ||
+					(hasPendingAllSubresourcesRecord && numPendingTransitions > 1);
+
+				if (hasIndividualPendingSubresourceTransitions)
+				{
+					doTransitionAllSubresources = false;
+
+					auto const& pendingStates = pendingResourceStates.GetStates();
+
+					for (auto const& pendingState : pendingStates)
+					{
+						if (pendingState.first == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
+						{
+							continue;
+						}
+
+						const D3D12_RESOURCE_STATES fromState = pendingState.second;
+						if (fromState == toState)
+						{
+							continue;
+						}
+
+						const uint32_t pendingSubresourceIdx = pendingState.first;
+
+						barriers.emplace_back(D3D12_RESOURCE_BARRIER{
+							.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+							.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE,
+							.Transition = D3D12_RESOURCE_TRANSITION_BARRIER{
+								.pResource = resource,
+								.Subresource = pendingSubresourceIdx,
+								.StateBefore = fromState,
+								.StateAfter = toState}
+							});
+
+						m_resourceStates.SetResourceState(resource, toState, pendingSubresourceIdx);
+
+#if defined(DEBUG_RESOURCE_TRANSITIONS)
+						DebugResourceTransitions(*this, texture, fromState, toState, pendingSubresourceIdx);
+#endif
+					}
+				}
+			}
+
+			// We didn't need to process our transitions one-by-one: Submit a single ALL transition:
+			if (doTransitionAllSubresources)
+			{
+				InsertBarrier(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+			}
 		}
 		else
 		{
@@ -799,6 +908,11 @@ namespace dx12
 				InsertBarrier(subresourceIdx);
 			}
 		}
+
+		// Submit all of our transitions in a single batch
+		m_commandList->ResourceBarrier(
+			static_cast<uint32_t>(barriers.size()),
+			barriers.data());
 	}
 
 

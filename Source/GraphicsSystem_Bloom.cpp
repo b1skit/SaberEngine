@@ -29,7 +29,7 @@ namespace
 {
 	struct BloomTargetParams
 	{
-		glm::vec4 g_bloomTargetResolution;
+		glm::vec4 g_bloomTargetResolution; // .x = width, .y = height, .z = 1/width, .w = 1/height
 
 		static constexpr char const* const s_shaderName = "BloomTargetParams";
 	};
@@ -211,14 +211,14 @@ namespace gr
 
 		const uint32_t totalBlurPasses = m_numBlurPasses * 2; // x2 for horizontal/vertical separation
 
-		constexpr char const* blurStageNamePrefix[2] = { "Horizontal", "Vertical"};
+		constexpr char const* k_blurStageNamePrefix[2] = { "Horizontal", "Vertical"};
 
 		for (size_t i = 0; i < totalBlurPasses; i++)
 		{
 			std::string const& stageName = 
-				std::format("{} blur stage {} / {}", blurStageNamePrefix[i % 2], (i + 2) / 2, m_numBlurPasses);
+				std::format("{} blur stage {} / {}", k_blurStageNamePrefix[i % 2], (i + 2) / 2, m_numBlurPasses);
 
-			re::RenderStage::GraphicsStageParams gfxStageParams;
+			re::RenderStage::GraphicsStageParams gfxStageParams{};
 			m_blurStages[i] = re::RenderStage::CreateGraphicsStage(stageName, gfxStageParams);
 			re::RenderStage* newBlurStage = m_blurStages[i].get();
 
@@ -229,17 +229,17 @@ namespace gr
 			newBlurStage->SetStagePipelineState(bloomStageParams);
 			newBlurStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
+			newBlurStage->SetStageShader(gaussianBlurShader);
+
 			if (i % 2 == 0)
 			{
 				blurTargets->SetColorTarget(0, blurPingPongTexture, targetParams);
-				newBlurStage->SetStageShader(gaussianBlurShader);
-
+				
 				newBlurStage->AddPermanentParameterBlock(m_horizontalBloomParams);
 			}
 			else
 			{
 				blurTargets->SetColorTarget(0, m_downResStages.back()->GetTextureTargetSet()->GetColorTarget(0));
-				newBlurStage->SetStageShader(gaussianBlurShader);
 
 				newBlurStage->AddPermanentParameterBlock(m_verticalBloomParams);
 			}

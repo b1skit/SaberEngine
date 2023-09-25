@@ -905,6 +905,9 @@
     <None Include="Shaders\HLSL\Transformations.hlsli">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </None>
+    <None Include="Shaders\HLSL\FullscreenQuadCommon.hlsli">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\Debug_VShader.hlsl">

@@ -89,6 +89,27 @@ struct IEMPMREMGenerationParamsCB
 ConstantBuffer<IEMPMREMGenerationParamsCB> IEMPMREMGenerationParams;
 
 
+struct BloomTargetParamsCB
+{
+	float4 g_bloomTargetResolution; // .x = width, .y = height, .z = 1/width, .w = 1/height
+};
+ConstantBuffer<BloomTargetParamsCB> BloomTargetParams;
+
+
+struct LuminanceThresholdParamsCB
+{
+	float4 g_sigmoidParams; // .x = Sigmoid ramp power, .y = Sigmoid speed, .zw = unused
+};
+ConstantBuffer<LuminanceThresholdParamsCB> LuminanceThresholdParams;
+
+
+struct GaussianBlurParamsCB
+{
+	float4 g_blurSettings; // .x = Bloom direction (0 = horizontal, 1 = vertical), .yzw = unused
+};
+ConstantBuffer<GaussianBlurParamsCB> GaussianBlurParams;
+
+
 SamplerState Wrap_Linear_Linear;
 SamplerState Clamp_Linear_Linear;
 SamplerState Clamp_Nearest_Nearest;
