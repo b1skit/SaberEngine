@@ -10,6 +10,21 @@ using glm::vec4;
 using std::string;
 
 
+namespace
+{
+	uint32_t ComputeNumMips(re::Texture::TextureParams const& params)
+	{
+		if (params.m_mipMode == re::Texture::MipMode::None)
+		{
+			return 1;
+		}
+
+		const uint32_t largestDimension = glm::max(params.m_width, params.m_height);
+		return (uint32_t)glm::log2((float)largestDimension) + 1;
+	}
+}
+
+
 namespace re
 {
 	std::shared_ptr<re::Texture> Texture::Create(
@@ -57,6 +72,8 @@ namespace re
 		, m_texParams{ params }
 		, m_platformParams{ nullptr }
 		, m_initialData(std::move(initialData))
+		, m_numMips(ComputeNumMips(params))
+		, m_numSubresources(m_numMips * params.m_faces)
 	{
 		SEAssert("Invalid usage", m_texParams.m_usage != Texture::Usage::Invalid);
 		SEAssert("Invalid dimension", m_texParams.m_dimension != Texture::Dimension::Dimension_Invalid);
@@ -266,24 +283,6 @@ namespace re
 			m_texParams.m_height,
 			1.0f / m_texParams.m_width, 
 			1.0f / m_texParams.m_height);
-	}
-
-
-	uint32_t Texture::GetNumMips() const
-	{
-		if (m_texParams.m_mipMode == re::Texture::MipMode::None)
-		{
-			return 1;
-		}
-
-		const uint32_t largestDimension = glm::max(m_texParams.m_width, m_texParams.m_height);
-		return (uint32_t)glm::log2((float)largestDimension) + 1;
-	}
-
-
-	uint32_t Texture::GetTotalNumSubresources() const
-	{
-		return GetNumMips() * m_texParams.m_faces;
 	}
 
 

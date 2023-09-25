@@ -180,6 +180,9 @@ namespace re
 
 		std::vector<ImageDataUniquePtr> m_initialData; // [1, 6] faces
 
+		const uint32_t m_numMips;
+		const uint32_t m_numSubresources;
+
 
 	private:
 		Texture() = delete;
@@ -191,6 +194,18 @@ namespace re
 
 	// We need to provide a destructor implementation since it's pure virtual
 	inline re::Texture::PlatformParams::~PlatformParams() {};
+
+
+	inline uint32_t Texture::GetNumMips() const
+	{
+		return m_numMips;
+	}
+
+
+	inline uint32_t Texture::GetTotalNumSubresources() const
+	{
+		return m_numSubresources;
+	}
 }
 
 
