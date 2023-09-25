@@ -6,7 +6,7 @@
 #include "UVUtils.hlsli"
 
 
-RWTexture2D<float2> output0 : register(u0);
+RWTexture2D<float4> output0 : register(u0);
 
 struct BRDFIntegrationParamsCB
 {
@@ -118,5 +118,5 @@ void main(ComputeIn In)
 	}
 
 	// Average the results:
-	output0[texelCoord] = float2(fresnelScale, fresnelBias) / NUM_SAMPLES;
+	output0[texelCoord] = float4(fresnelScale / NUM_SAMPLES, fresnelBias / NUM_SAMPLES, 0.f, 0.f);
 }

@@ -240,7 +240,7 @@ namespace gr
 			brdfParams.m_faces = 1;
 			brdfParams.m_usage = static_cast<Texture::Usage>(Texture::Usage::ComputeTarget | Texture::Usage::Color);
 			brdfParams.m_dimension = Texture::Dimension::Texture2D;
-			brdfParams.m_format = Texture::Format::RG16F; // Epic recommends 2 channel, 16-bit floats
+			brdfParams.m_format = Texture::Format::RGBA16F;
 			brdfParams.m_colorSpace = Texture::ColorSpace::Linear;
 			brdfParams.m_mipMode = re::Texture::MipMode::None;
 			brdfParams.m_addToSceneData = false;
