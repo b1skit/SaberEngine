@@ -30,7 +30,7 @@ float4 PShader(VertexOut In) : SV_Target
 	// Reconstruct the world position:
 	const float4 worldPos = float4(GetWorldPos(In.UV0, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection), 1.f);
 	
-	return float4(worldPos);
+	return float4(gbuffer.LinearAlbedo, 1.f);
 
 	//const float4 viewPosition = mul(CameraParams.g_view, worldPos);
 	//const float3 viewEyeDir = normalize(-viewPosition.xyz); // View-space eye/camera direction

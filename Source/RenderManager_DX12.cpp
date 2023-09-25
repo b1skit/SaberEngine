@@ -14,7 +14,6 @@
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_Skybox.h"
-#include "GraphicsSystem_TempDebug.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "MeshPrimitive_DX12.h"
 #include "ParameterBlock_DX12.h"
@@ -75,10 +74,6 @@ namespace dx12
 				std::make_shared<gr::TonemappingGraphicsSystem>();
 			graphicsSystems.emplace_back(tonemappingGS);
 
-			std::shared_ptr<gr::TempDebugGraphicsSystem> tempDebugGS =
-				std::make_shared<gr::TempDebugGraphicsSystem>();
-			graphicsSystems.emplace_back(tempDebugGS);
-
 			// Build the creation pipeline:
 			deferredLightingGS->CreateResourceGenerationStages(
 				defaultRS->GetRenderPipeline().AddNewStagePipeline("Deferred Lighting Resource Creation"));
@@ -88,8 +83,6 @@ namespace dx12
 			skyboxGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(skyboxGS->GetName()));
 			bloomGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(bloomGS->GetName()));
 			tonemappingGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(tonemappingGS->GetName()));
-
-			tempDebugGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(tempDebugGS->GetName()));
 		};
 		defaultRenderSystem->SetCreatePipeline(DefaultRenderSystemCreatePipeline);
 
@@ -104,8 +97,6 @@ namespace dx12
 			gr::SkyboxGraphicsSystem* skyboxGS = renderSystem->GetGraphicsSystem<gr::SkyboxGraphicsSystem>();
 			gr::BloomGraphicsSystem* bloomGS = renderSystem->GetGraphicsSystem<gr::BloomGraphicsSystem>();
 			gr::TonemappingGraphicsSystem* tonemappingGS = renderSystem->GetGraphicsSystem<gr::TonemappingGraphicsSystem>();
-			
-			gr::TempDebugGraphicsSystem* tempDebugGS = renderSystem->GetGraphicsSystem<gr::TempDebugGraphicsSystem>();
 
 			// Execute per-frame updates:
 			computeMipsGS->PreRender();
@@ -114,8 +105,6 @@ namespace dx12
 			skyboxGS->PreRender();
 			bloomGS->PreRender();
 			tonemappingGS->PreRender();
-
-			tempDebugGS->PreRender();
 		};
 		defaultRenderSystem->SetUpdatePipeline(UpdatePipeline);
 	}
