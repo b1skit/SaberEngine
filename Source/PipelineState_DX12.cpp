@@ -261,6 +261,7 @@ namespace
 		for (uint32_t i = 0; i < dx12::SysInfo::GetMaxRenderTargets(); i++)
 		{
 			D3D12_RENDER_TARGET_BLEND_DESC rtBlendDesc{};
+			rtBlendDesc.BlendEnable = true;
 
 			re::TextureTarget::TargetParams::BlendModes const& blendModes = targetSet.GetColorTarget(i).GetBlendMode();
 
