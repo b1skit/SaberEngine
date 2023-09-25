@@ -388,11 +388,11 @@ namespace dx12
 		SEAssert("Target texture must be a depth target",
 			depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget);
 
-		dx12::Texture::PlatformParams* depthTexPlatParams =
-			depthTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+		dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
+			depthTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
 		D3D12_CPU_DESCRIPTOR_HANDLE const& dsvDescriptor = 
-			depthTexPlatParams->m_rtvDsvDescriptors[depthTarget->GetTargetParams().m_targetFace].GetBaseDescriptor();
+			depthTargetPlatParams->m_rtvDsvDescriptors[depthTarget->GetTargetParams().m_targetFace].GetBaseDescriptor();
 
 		m_commandList->ClearDepthStencilView(
 			dsvDescriptor,
@@ -412,11 +412,11 @@ namespace dx12
 			(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) ||
 			(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::SwapchainColorProxy));
 
-		dx12::Texture::PlatformParams* texPlatParams = 
-			colorTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+		dx12::TextureTarget::PlatformParams* targetPlatParams =
+			colorTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
 		m_commandList->ClearRenderTargetView(
-			texPlatParams->m_rtvDsvDescriptors[colorTarget->GetTargetParams().m_targetFace].GetBaseDescriptor(),
+			targetPlatParams->m_rtvDsvDescriptors[colorTarget->GetTargetParams().m_targetFace].GetBaseDescriptor(),
 			&colorTarget->GetTexture()->GetTextureParams().m_clear.m_color.r,
 			0,			// Number of rectangles in the proceeding D3D12_RECT ptr
 			nullptr);	// Ptr to an array of rectangles to clear in the resource view. Clears entire view if null
@@ -467,9 +467,12 @@ namespace dx12
 
 				const uint32_t subresourceIdx = (targetFace * numMips) + targetMip;
 
+				dx12::TextureTarget::PlatformParams* targetPlatParams =
+					target.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+
 				// Attach the RTV for the target face:
 				colorTargetDescriptors.emplace_back(
-					texPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor());
+					targetPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor());
 
 				numColorTargets++;
 			}
@@ -493,20 +496,20 @@ namespace dx12
 				depthState,
 				depthTargetParams.m_targetMip);
 
-			dx12::Texture::PlatformParams* depthTexPlatParams =
-				depthStencilTarget->GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+			dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
+				depthStencilTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
 			// We current assume a DSV only has a single descriptor per face
 			const uint32_t subresourceIdx = depthTargetParams.m_targetFace;
 
 			if (depthWriteEnabled)
 			{
-				dsvDescriptor = depthTexPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor();
+				dsvDescriptor = depthTargetPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor();
 			}
 			else
 			{
 				// TODO: Select a DSV that is created with depth writes disabled
-				dsvDescriptor = depthTexPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor();
+				dsvDescriptor = depthTargetPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor();
 			}
 		}
 

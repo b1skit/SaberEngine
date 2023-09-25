@@ -15,7 +15,8 @@ namespace dx12
 	public:
 		struct PlatformParams final : public re::TextureTarget::PlatformParams
 		{
-
+			// RTV: Created if the texture has Texture::Usage ColorTarget or SwapchainColorProxy:
+			std::vector<dx12::DescriptorAllocation> m_rtvDsvDescriptors;
 		};
 	};
 

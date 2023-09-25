@@ -710,9 +710,6 @@ namespace dx12
 		{
 			m_uavCpuDescAllocations.reserve(numSubresources);
 		}
-
-		// Allocate an RTV/DSV for each face and mip:
-		m_rtvDsvDescriptors.resize(numSubresources);
 	}
 
 
@@ -726,7 +723,6 @@ namespace dx12
 			m_srvCpuDescAllocations[texDimension].Free(0);
 		}
 		m_uavCpuDescAllocations.clear();
-		m_rtvDsvDescriptors.clear();
 	}
 
 

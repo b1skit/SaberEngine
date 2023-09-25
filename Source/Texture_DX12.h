@@ -23,9 +23,6 @@ namespace dx12
 
 			std::array<dx12::DescriptorAllocation, re::Texture::Dimension::Dimension_Count> m_srvCpuDescAllocations;
 			std::vector<dx12::DescriptorAllocation> m_uavCpuDescAllocations;
-
-			// RTV: Created if the texture has Texture::Usage ColorTarget or SwapchainColorProxy:
-			std::vector<dx12::DescriptorAllocation> m_rtvDsvDescriptors;
 		};
 
 

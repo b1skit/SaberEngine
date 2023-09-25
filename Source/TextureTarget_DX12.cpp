@@ -51,11 +51,12 @@ namespace dx12
 
 				re::TextureTarget::TargetParams const& targetParams = colorTarget.GetTargetParams();
 
+				SEAssert("RTVs have already been allocated. This is unexpected",
+					targetPlatParams->m_rtvDsvDescriptors.empty());
+
 				// Allocate descriptors for our RTVs:
 				const uint32_t numFaces = texParams.m_faces;
 				const uint32_t numMips = colorTarget.GetTexture()->GetNumMips();
-				SEAssert("We're expecting an RTV per face, per mip", 
-					texPlatParams->m_rtvDsvDescriptors.size() == numFaces * numMips);
 
 				for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
 				{
@@ -63,16 +64,9 @@ namespace dx12
 					{
 						const uint32_t subresourceIdx = (faceIdx * numMips) + mipIdx;
 
-
-						// BUG HERE: We should move RTV ownership to the Target object
-						//SEAssert("A valid RTV already exists. This is unexpected", 
-						//	!texPlatParams->m_rtvDsvDescriptors[subresourceIdx].IsValid());
-						
-
-						texPlatParams->m_rtvDsvDescriptors[subresourceIdx] = std::move(
-							context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::RTV).Allocate(1));
-						SEAssert("RTV descriptor is not valid", texPlatParams->m_rtvDsvDescriptors[faceIdx].IsValid());
-
+						targetPlatParams->m_rtvDsvDescriptors.emplace_back(std::move(
+							context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::RTV).Allocate(1)));
+						SEAssert("RTV descriptor is not valid", targetPlatParams->m_rtvDsvDescriptors.back().IsValid());
 
 						// Create the RTV:
 						D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
@@ -92,7 +86,7 @@ namespace dx12
 							device->CreateRenderTargetView(
 								texPlatParams->m_textureResource.Get(), // Pointer to the resource containing the render target texture
 								&renderTargetViewDesc,
-								texPlatParams->m_rtvDsvDescriptors[0].GetBaseDescriptor()); // Descriptor destination
+								targetPlatParams->m_rtvDsvDescriptors.back().GetBaseDescriptor()); // Descriptor destination
 						}
 						break;
 						case 6:
@@ -113,7 +107,7 @@ namespace dx12
 							device->CreateRenderTargetView(
 								texPlatParams->m_textureResource.Get(),
 								&renderTargetViewDesc,
-								texPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor());
+								targetPlatParams->m_rtvDsvDescriptors.back().GetBaseDescriptor());
 						}
 						break;
 						default: SEAssertF("Unexpected number of faces");
@@ -160,17 +154,26 @@ namespace dx12
 		dsv.Texture2D.MipSlice = 0;
 		dsv.Flags = D3D12_DSV_FLAG_NONE;
 
-		// Create the depth-stencil descriptor and view:
-		for (uint32_t faceIdx = 0; faceIdx < depthTexParams.m_faces; faceIdx++)
-		{
-			depthTexPlatParams->m_rtvDsvDescriptors[faceIdx] = std::move(
-				context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::DSV).Allocate(1));
-			SEAssert("DSV descriptor is not valid", depthTexPlatParams->m_rtvDsvDescriptors[faceIdx].IsValid());
+		SEAssert("DSVs have already been allocated. This is unexpected",
+			depthTargetPlatParams->m_rtvDsvDescriptors.empty());
 
-			device->CreateDepthStencilView(
-				depthTexPlatParams->m_textureResource.Get(),
-				&dsv,
-				depthTexPlatParams->m_rtvDsvDescriptors[faceIdx].GetBaseDescriptor());
+		const uint32_t numFaces = depthTexParams.m_faces;
+		const uint32_t numMips = depthTargetTex->GetNumMips();
+
+		// Create the depth-stencil descriptor and view:
+		for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
+		{
+			for (uint32_t mipIdx = 0; mipIdx < numMips; mipIdx++)
+			{
+				depthTargetPlatParams->m_rtvDsvDescriptors.emplace_back(std::move(
+					context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::DSV).Allocate(1)));
+				SEAssert("DSV descriptor is not valid", depthTargetPlatParams->m_rtvDsvDescriptors.back().IsValid());
+
+				device->CreateDepthStencilView(
+					depthTexPlatParams->m_textureResource.Get(),
+					&dsv,
+					depthTargetPlatParams->m_rtvDsvDescriptors.back().GetBaseDescriptor());
+			}
 		}
 	}
 
