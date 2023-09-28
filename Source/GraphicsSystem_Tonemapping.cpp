@@ -59,7 +59,7 @@ namespace gr
 			renderSystem.GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
 
 		m_tonemappingStage->AddTextureInput(
-			"GBufferAlbedo",
+			"Tex0",
 			deferredLightTextureTargetSet->GetColorTarget(0).GetTexture(),
 			Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
