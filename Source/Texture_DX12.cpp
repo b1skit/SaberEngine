@@ -894,7 +894,7 @@ namespace dx12
 			CreateUAV(texture);
 		}
 
-		texPlatParams->m_isDirty = true;
+		texPlatParams->m_isDirty = false;
 
 		// Register the resource with the global resource state tracker:
 		context->GetGlobalResourceStates().RegisterResource(
