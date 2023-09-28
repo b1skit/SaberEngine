@@ -200,6 +200,18 @@ namespace re
 	}
 
 
+	inline bool RenderStage::DepthTargetIsAlsoTextureInput() const
+	{
+		return m_depthTextureInputIdx != k_noDepthTexAsInputFlag;
+	}
+
+
+	inline int RenderStage::GetDepthTargetTextureInputIdx() const
+	{
+		return m_depthTextureInputIdx;
+	}
+
+
 	// We need to provide a destructor implementation since it's pure virtual
 	inline RenderStage::IStageParams::~IStageParams() {}
 }

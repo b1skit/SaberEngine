@@ -148,18 +148,6 @@ namespace re
 			}
 		}
 	}
-
-
-	bool RenderStage::DepthTargetIsAlsoTextureInput() const
-	{
-		return m_depthTextureInputIdx != k_noDepthTexAsInputFlag;
-	}
-
-
-	int RenderStage::GetDepthTargetTextureInputIdx() const
-	{
-		return m_depthTextureInputIdx;
-	}
 	
 
 	void RenderStage::EndOfFrame()
