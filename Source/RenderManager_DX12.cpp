@@ -364,11 +364,12 @@ namespace dx12
 						// Set per-frame stage textures/sampler inputs:
 						std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& texInputs =
 							renderStage->GetTextureInputs();
+						const int depthTargetTexInputIdx = renderStage->GetDepthTargetTextureInputIdx();
 						for (size_t texIdx = 0; texIdx < texInputs.size(); texIdx++)
 						{
 							// If the depth target is read-only, and we've also used it as an input to the stage, we
-							// skip the resource transition (it's already handled when binding the depth target as read only)
-							const bool skipTransition = (texIdx == renderStage->GetDepthTargetTextureInputIdx());
+							// skip the resource transition (it's handled when binding the depth target as read only)
+							const bool skipTransition = (texIdx == depthTargetTexInputIdx);
 
 							commandList->SetTexture(
 								texInputs[texIdx].m_shaderName, 
