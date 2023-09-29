@@ -35,7 +35,7 @@ namespace dx12
 		{
 			std::array<Microsoft::WRL::ComPtr<ID3DBlob>, ShaderType_Count> m_shaderBlobs = {0};
 			
-			dx12::RootSignature* m_rootSignature; // Lifetime managed by a shared_ptr held by the Context
+			std::unique_ptr<dx12::RootSignature> m_rootSignature;
 		};
 
 		// TODO: Handle copying of d3dcompiler_47.dll into the same folder as the compiled Saber Engine .exe 

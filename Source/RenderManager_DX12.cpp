@@ -20,6 +20,7 @@
 #include "RenderManager_DX12.h"
 #include "RenderSystem.h"
 #include "Sampler_DX12.h"
+#include "Shader_DX12.h"
 #include "SwapChain_DX12.h"
 #include "TextureTarget_DX12.h"
 #include "Texture_DX12.h"

@@ -302,7 +302,7 @@ namespace dx12
 	}
 
 
-	std::shared_ptr<dx12::RootSignature> RootSignature::Create(re::Shader const& shader)
+	std::unique_ptr<dx12::RootSignature> RootSignature::Create(re::Shader const& shader)
 	{
 		// Note: We currently only support SM 5.1 here... TODO: Support SM 6+
 
@@ -314,7 +314,7 @@ namespace dx12
 			shaderParams->m_shaderBlobs[dx12::Shader::ShaderType::Vertex] != nullptr ||
 			shaderParams->m_shaderBlobs[dx12::Shader::ShaderType::Compute] != nullptr);
 
-		std::shared_ptr<dx12::RootSignature> newRootSig = nullptr;
+		std::unique_ptr<dx12::RootSignature> newRootSig = nullptr;
 		newRootSig.reset(new dx12::RootSignature());
 
 		// Zero our descriptor table entry counters: For each root sig. index containing a descriptor table, this tracks
@@ -780,15 +780,13 @@ namespace dx12
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
 		// Before we create a root signature, check if one with the same layout already exists:
-		const uint64_t rootSigDescHash = HashRootSigDesc(rootSignatureDescription);
-		if (context->HasRootSignature(rootSigDescHash))
+		newRootSig->m_rootSigDescHash = HashRootSigDesc(rootSignatureDescription);
+		if (context->HasRootSignature(newRootSig->m_rootSigDescHash))
 		{
-			newRootSig = context->GetRootSignature(rootSigDescHash);
+			newRootSig->m_rootSignature = context->GetRootSignature(newRootSig->m_rootSigDescHash);
 		}
 		else
 		{
-			newRootSig->m_rootSigDescHash = rootSigDescHash;
-
 			// Serialize the root signature:
 			ComPtr<ID3DBlob> rootSignatureBlob = nullptr;
 			ComPtr<ID3DBlob> errorBlob = nullptr;
@@ -798,7 +796,6 @@ namespace dx12
 				&rootSignatureBlob,
 				&errorBlob);
 			CheckHResult(hr, "Failed to serialize versioned root signature");
-
 
 			// Create the root signature:
 			ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
@@ -815,7 +812,7 @@ namespace dx12
 			newRootSig->m_rootSignature->SetName(rootSigName.c_str());
 
 			// Add the new root sig to the library:
-			context->AddRootSignature(newRootSig);
+			context->AddRootSignature(newRootSig->m_rootSigDescHash, newRootSig->m_rootSignature);
 		}
 
 		return newRootSig;

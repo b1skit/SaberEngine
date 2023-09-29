@@ -4,7 +4,6 @@
 #include <d3d12.h>
 
 #include "HashedDataObject.h"
-#include "Shader_DX12.h"
 
 
 namespace re
@@ -132,7 +131,7 @@ namespace dx12
 
 
 	public:
-		static std::shared_ptr<dx12::RootSignature> Create(re::Shader const&);
+		static std::unique_ptr<dx12::RootSignature> Create(re::Shader const&);
 
 		~RootSignature();
 		void Destroy();

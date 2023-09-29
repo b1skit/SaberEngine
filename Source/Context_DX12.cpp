@@ -287,7 +287,7 @@ namespace dx12
 	}
 
 
-	std::shared_ptr<dx12::RootSignature> Context::GetRootSignature(uint64_t rootSigDescHash)
+	Microsoft::WRL::ComPtr<ID3D12RootSignature> Context::GetRootSignature(uint64_t rootSigDescHash)
 	{
 		SEAssert("Root signature has not been added", HasRootSignature(rootSigDescHash));
 
@@ -295,9 +295,9 @@ namespace dx12
 	}
 
 
-	void Context::AddRootSignature(std::shared_ptr<dx12::RootSignature> rootSig)
+	void Context::AddRootSignature(uint64_t rootSigDescHash, Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSig)
 	{
-		auto result = m_rootSigLibrary.insert({ rootSig->GetRootSigDescHash(), rootSig });
+		auto result = m_rootSigLibrary.insert({ rootSigDescHash, rootSig });
 		SEAssert("Root signature has already been added", result.second);
 	}
 

@@ -49,7 +49,7 @@ namespace dx12
 		}
 
 		// Now the shader blobs have been loaded, we can create the root signature:
-		platformParams->m_rootSignature = dx12::RootSignature::Create(shader).get();
+		platformParams->m_rootSignature = std::move(dx12::RootSignature::Create(shader));
 	}
 
 
@@ -72,6 +72,6 @@ namespace dx12
 		dx12::Shader::PlatformParams* platformParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 		SEAssert("Shader has not been created", platformParams->m_isCreated);
 
-		return platformParams->m_rootSignature;
+		return platformParams->m_rootSignature.get();
 	}
 }

@@ -43,8 +43,8 @@ namespace dx12
 			re::TextureTargetSet const* targetSet); // A null targetSet is valid (it indicates the backbuffer)
 
 		bool HasRootSignature(uint64_t rootSigDescHash);
-		std::shared_ptr<dx12::RootSignature> GetRootSignature(uint64_t rootSigDescHash);
-		void AddRootSignature(std::shared_ptr<dx12::RootSignature>);
+		Microsoft::WRL::ComPtr<ID3D12RootSignature> GetRootSignature(uint64_t rootSigDescHash);
+		void AddRootSignature(uint64_t rootSigDescHash, Microsoft::WRL::ComPtr<ID3D12RootSignature>);
 		
 		dx12::CPUDescriptorHeapManager& GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType);
 
@@ -82,8 +82,9 @@ namespace dx12
 		// Access the PSO library via dx12::Context::GetPipelineStateObject():
 		std::unordered_map<uint64_t, std::shared_ptr<dx12::PipelineState>> m_PSOLibrary;
 
-		// Hashed D3D12_VERSIONED_ROOT_SIGNATURE_DESC -> Root sig object
-		std::unordered_map<uint64_t, std::shared_ptr<dx12::RootSignature>> m_rootSigLibrary;
+		// Hashed D3D12_VERSIONED_ROOT_SIGNATURE_DESC -> D3D Root sig ComPtr
+		std::unordered_map<uint64_t, Microsoft::WRL::ComPtr<ID3D12RootSignature>> m_rootSigLibrary;
+
 
 		std::vector<dx12::CPUDescriptorHeapManager> m_cpuDescriptorHeapMgrs; // HeapType_Count
 
