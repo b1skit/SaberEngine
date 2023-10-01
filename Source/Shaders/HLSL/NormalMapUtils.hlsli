@@ -22,7 +22,7 @@ float3x3 BuildTBN(float3 inFaceNormal, float4 inLocalTangent, float4x4 transpose
 	// Note: In HLSL matrices declared in a shader body do not get packed into constant registers (which is done with 
 	// column major ordering). Row-major/column-major packing order has no influence on the packing order of matrix
 	// constructors (which always follow row-major ordering)	
-	float3x3 transposeInvRotationScale =
+	const float3x3 transposeInvRotationScale =
 	{
 		transposeInvModel[0].xyz,
 		transposeInvModel[1].xyz,
