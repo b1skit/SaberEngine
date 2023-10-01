@@ -27,8 +27,10 @@ void main()
 	}
 
 	// World-space normal:
+	const vec3 normalScale = vec3(g_normalScale, g_normalScale, 1.f); // Scales the normal's X, Y directions
 	const vec3 texNormal = texture(MatNormal, vOut.uv0.xy).xyz;
-	const vec3 worldNormal = WorldNormalFromTextureNormal(texNormal, vOut.TBN);
+	const vec3 worldNormal = WorldNormalFromTextureNormal(texNormal, vOut.TBN) * normalScale;
+
 	gBuffer_out_worldNormal = vec4(worldNormal, 0.0f);
 	
 	// Unpack/scale metallic/roughness: .G = roughness, .B = metallness

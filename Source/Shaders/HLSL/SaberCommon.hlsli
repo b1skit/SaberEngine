@@ -83,8 +83,8 @@ ConstantBuffer<CameraParamsCB> CameraParams;
 
 struct IEMPMREMGenerationParamsCB
 {
-	// .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
-	float4 g_numSamplesRoughnessFaceIdx; 
+	float4 g_numSamplesRoughnessFaceIdx; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
+	float4 g_mipLevel; // .x = IEM mip level, .yzw = unused
 };
 ConstantBuffer<IEMPMREMGenerationParamsCB> IEMPMREMGenerationParams;
 

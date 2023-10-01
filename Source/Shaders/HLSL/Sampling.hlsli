@@ -28,21 +28,45 @@ float2 Hammersley2D(uint i, uint N)
 }
 
 
+// A referential RHCS, with N equivalent to Z
+struct Referential
+{
+	float3 N;			// Equivalent to Z in a RHCS
+	float3 TangentX;	// Equivalent to right/X in a RHCS
+	float3 BitangentY;	// Equivalent to up/Y in an RHCS
+};
+
+// Build a referential coordinate system with respect to a normal vector
+Referential BuildReferential(float3 N, float3 up)
+{
+	Referential referential;
+	referential.N = N;
+	
+	referential.TangentX = normalize(cross(up, N));
+	referential.BitangentY = cross(N, referential.TangentX);
+	
+	return referential;
+}
+
+
+// Constructs a best-guess up vector
+Referential BuildReferential(float3 N)
+{
+	const float3 up = abs(N.z) < 0.999f ? float3(0, 0, 1) : float3(1, 0, 0);
+	return BuildReferential(N, up);
+}
+
+
+// Compute a cosine-weighted sample direction
 // Based on listing A.2 (p.106) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al.
 // https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
 void ImportanceSampleCosDir(
 	in float2 u,
-	in float3 N,
-	in float3 up,
+	in Referential localReferential,
 	out float3 L,
 	out float NoL,
 	out float pdf)
 {
-	// Build a local referencial:
-	//const float3 up = abs(N.z) < 0.999f ? float3(0, 0, 1) : float3(1, 0, 0);
-	const float3 tangentX = normalize(cross(up, N));
-	const float3 tangentY = cross(N, tangentX);
-	
 	const float u1 = u.x;
 	const float u2 = u.y;
 
@@ -53,11 +77,11 @@ void ImportanceSampleCosDir(
 	L = float3(
 		r * cos(phi),
 		r * sin(phi),
-		sqrt(max(0.0f, 1.0f - u1)));
+		sqrt(max(0.0f, 1.f - u1)));
 	
-	L = normalize((tangentX * L.y) + (tangentY * L.x) + (N * L.z));
+	L = normalize((localReferential.TangentX * L.y) + (localReferential.BitangentY * L.x) + (localReferential.N * L.z));
 
-	NoL = dot(L, N);
+	NoL = dot(L, localReferential.N);
 
 	pdf = NoL * M_1_PI;
 }
@@ -69,12 +93,9 @@ void ImportanceSampleCosDir(
 	out float3 L,
 	out float NoL,
 	out float pdf)
-{
-	// Try and assemble an arbitrary up vector. Note: This tends to give artifacts when N is near +/-Z, it's better to
-	// supply a known valid up vector if possible
-	const float3 up = abs(N.z) < 0.999f ? float3(0, 0, 1) : float3(1, 0, 0);
-	
-	ImportanceSampleCosDir(u, N, up, L, NoL, pdf);
+{	
+	Referential localReferential = BuildReferential(N);
+	ImportanceSampleCosDir(u, localReferential, L, NoL, pdf);
 }
 
 #endif

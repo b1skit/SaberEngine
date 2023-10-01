@@ -30,10 +30,8 @@ GBuffer UnpackGBuffer(float2 screenUV)
 	// However, we use sRGB-format input textures, the sRGB->Linear transformation happens for free when writing the 
 	// GBuffer, so no need to do the sRGB -> linear conversion here
 	gbuffer.LinearAlbedo = GBufferAlbedo.Sample(Wrap_Linear_Linear, screenUV).rgb;
-	
-	const float3 normalXYScale = 
-		float3(PBRMetallicRoughnessParams.g_normalScale, PBRMetallicRoughnessParams.g_normalScale, 1.f);
-	gbuffer.WorldNormal = GBufferWNormal.Sample(Wrap_Linear_Linear, screenUV).xyz * normalXYScale;
+
+	gbuffer.WorldNormal = GBufferWNormal.Sample(Wrap_Linear_Linear, screenUV).xyz;
 
 	const float3 RMAO = GBufferRMAO.Sample(Wrap_Linear_Linear, screenUV).rgb;
 	gbuffer.Roughness = RMAO.r;

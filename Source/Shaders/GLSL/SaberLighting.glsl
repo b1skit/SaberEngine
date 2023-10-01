@@ -13,14 +13,15 @@
 // PBR Lighting:
 //--------------
 
+// Specular D: The normal distribution function (NDF)
 // Trowbridge-Reitz GGX Normal Distribution Function: Approximate area of surface microfacets aligned with the halfway
 // vector between the light and view dirs
-float NDF(vec3 MatNormal, vec3 halfVector, float roughness)
+float NDF(vec3 N, vec3 H, float roughness)
 {
 	// Disney reparameterizes roughness as alpha = roughness^2. Then the GGX/Trowbridge-Reitz NDF requires alpha^2
 	const float alpha2 = pow(roughness, 4.f);
 
-	const float nDotH = clamp(dot(MatNormal, halfVector), 0.f, 1.f);
+	const float nDotH = clamp(dot(N, H), 0.f, 1.f);
 	const float nDotH2 = nDotH * nDotH;
 
 	const float denominator = max((nDotH2 * (alpha2 - 1.f)) + 1.f, 0.0001);
@@ -60,8 +61,9 @@ float GeometrySchlickGGX(float NoV, float remappedRoughness)
 }
 
 
+// Specular G: 
 // Geometry function: Compute the proportion of microfacets visible
-float GeometrySmith(float NoV, float NoL, float remappedRoughness)
+float Geometry(float NoV, float NoL, float remappedRoughness)
 {
 	float ggx1 = GeometrySchlickGGX(NoV, remappedRoughness);
 	float ggx2 = GeometrySchlickGGX(NoL, remappedRoughness);
@@ -154,7 +156,7 @@ vec3 ComputeLighting(const LightingParams lightingParams)
 	const float NDF = NDF(viewNormal, halfVectorView, lightingParams.Roughness);
 
 	const float remappedRoughness = RemapRoughnessDirect(lightingParams.Roughness);
-	const float geometry = GeometrySmith(NoV, NoL, remappedRoughness);
+	const float geometry = Geometry(NoV, NoL, remappedRoughness);
 
 	// Specular:
 	const vec3 specularContribution = (NDF * fresnel * geometry) / max((4.0 * NoV * NoL), 0.0001f);

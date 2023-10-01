@@ -14,15 +14,16 @@ float2 PixelCoordsToUV(uint2 pixelCoords, uint2 texWidthHeight, float2 offset)
 }
 
 
+// Convert a world-space direction to spherical coordinates (i.e. latitude/longitude map UVs in [0, 1])
 float2 WorldDirToSphericalUV(float3 unnormalizedDirection)
 {
 	const float3 dir = normalize(unnormalizedDirection);
 
 	// Note: Reverse atan2 variables to change env. map orientation about y
-	float2 uv = float2(
+	const float2 uv = float2(
 		atan2(dir.x, -dir.z) * M_1_2PI + 0.5f,
 		acos(dir.y) * M_1_PI); // Note: Use -dir.y for (0,0) bottom left UVs, +dir.y for (0,0) top left UVs
-
+	
 	return uv;
 }
 

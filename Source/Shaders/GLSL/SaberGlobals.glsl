@@ -55,8 +55,7 @@ GBuffer UnpackGBuffer(vec2 screenUV)
 	// GBuffer, so no need to do the sRGB -> linear conversion here
 	gbuffer.LinearAlbedo = texture(GBufferAlbedo, screenUV).rgb;
 
-	const vec3 normalScale = vec3(g_normalScale, g_normalScale, 1.f); // Scales the normal's X, Y directions
-	gbuffer.WorldNormal = texture(GBufferWNormal, screenUV).xyz * normalScale;
+	gbuffer.WorldNormal = texture(GBufferWNormal, screenUV).xyz;
 
 	const vec3 RMAO = texture(GBufferRMAO, screenUV).rgb;
 	gbuffer.Roughness = RMAO.r;

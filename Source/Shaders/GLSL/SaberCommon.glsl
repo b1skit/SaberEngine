@@ -203,8 +203,8 @@ layout(std430, binding=5) readonly buffer CubemapShadowRenderParams
 // GraphicsSystem_DeferredLighting.cpp
 layout(std430, binding=6) readonly buffer IEMPMREMGenerationParams
 {
-	// .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
-	vec4 g_numSamplesRoughnessFaceIdx; 
+	vec4 g_numSamplesRoughnessFaceIdx; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
+	vec4 g_mipLevel; // .x = IEM mip level, .yzw = unused
 };
 
 

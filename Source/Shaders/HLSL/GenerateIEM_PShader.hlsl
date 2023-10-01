@@ -15,7 +15,7 @@ float4 PShader(VertexOut In) : SV_Target
 	// order to importance sample the hemisphere about it. Here, we choose up vectors for each face that guarantee we 
 	// won't try and compute cross(N, N) while constructing the referential (in ImportanceSampleCosDir)
 	// RHCS up vectors w.r.t each face
-	const float3 upDir[6] = {			// Face normal direction:
+	static const float3 upDir[6] = {
 		float3(0.f,		1.f,	0.f),	// X+
 		float3(0.f,		1.f,	0.f),	// X-
 		float3(0.f,		0.f,	-1.f),	// Y+
@@ -24,8 +24,9 @@ float4 PShader(VertexOut In) : SV_Target
 		float3(0.f,		1.f,	0.f)	// Z-
 	};
 	
-	const uint numSamples = IEMPMREMGenerationParams.g_numSamplesRoughnessFaceIdx.x;
-	const uint faceIdx = IEMPMREMGenerationParams.g_numSamplesRoughnessFaceIdx.w;
+	static const uint numSamples = IEMPMREMGenerationParams.g_numSamplesRoughnessFaceIdx.x;
+	static const uint faceIdx = IEMPMREMGenerationParams.g_numSamplesRoughnessFaceIdx.w;
+	static const float srcMip = IEMPMREMGenerationParams.g_mipLevel.x;
 	
 	// World-space direction from the center of the cube towards the current cubemap pixel
 	const float3 N = normalize(In.LocalPos);
@@ -36,15 +37,21 @@ float4 PShader(VertexOut In) : SV_Target
 	{
 		const float2 eta = Hammersley2D(i, numSamples);
 
+		const Referential localReferential = BuildReferential(N, upDir[faceIdx]);
+		
 		float3 L;
 		float NoL;
 		float pdf;
-		ImportanceSampleCosDir(eta, N, upDir[faceIdx], L, NoL, pdf);
-		
+		ImportanceSampleCosDir(eta, localReferential, L, NoL, pdf);
+
 		if (NoL > 0)
 		{
-			const float2 sphericalUV = WorldDirToSphericalUV(L);
-			result += Tex0.Sample(Wrap_Linear_Linear, sphericalUV).rgb;
+			// Flip the .y component to account for +Y being down in UV space, and +Y being up in world space
+			const float3 lightSampleDir = float3(L.x, -L.y, L.z);
+			
+			const float2 sphericalUV = WorldDirToSphericalUV(lightSampleDir);
+			
+			result += Tex0.SampleLevel(Wrap_LinearMipMapLinear_Linear, sphericalUV, srcMip).rgb;
 		}
 	}
 	

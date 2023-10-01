@@ -22,13 +22,13 @@ void main()
 
 	vec3 irradiance = vec3(0.0);
 	
-	// Hammerseley cosine-weighted sampling:
-	const int numSamples = int(g_numSamplesRoughnessFaceIdx.x); // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
+	const int numSamples = int(g_numSamplesRoughnessFaceIdx.x);
+	const float srcMip = g_mipLevel.x;
 	for (int i = 0; i < numSamples; i++)
 	{
 		const vec2 samplePoints = Hammersley2D(i, numSamples);
 
-		vec3 hemSample = HemisphereSample_cosineDist(samplePoints.x, samplePoints.y); // TODO: Make input arg a vec2
+		vec3 hemSample = HemisphereSample_cosineDist(samplePoints.x, samplePoints.y);
 
 		// Project: Tangent space (Z-up) -> World space:
 		hemSample = vec3(
@@ -38,7 +38,7 @@ void main()
 
 		// Sample the environment:
 		vec2 equirectangularUVs	= WorldDirToSphericalUV(hemSample);
-		irradiance += texture(Tex0, equirectangularUVs).rgb;
+		irradiance += texture(Tex0, equirectangularUVs, srcMip).rgb;
 	}
 
 	// Simple Monte Carlo approximation of the integral:

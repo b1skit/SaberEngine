@@ -59,12 +59,14 @@ namespace
 	struct IEMPMREMGenerationParams
 	{
 		// .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
-		glm::vec4 g_numSamplesRoughnessFaceIdx; 
+		glm::vec4 g_numSamplesRoughnessFaceIdx;
+		glm::vec4 g_mipLevel; // .x = IEM mip level, .yzw = unused
 
 		static constexpr char const* const s_shaderName = "IEMPMREMGenerationParams"; // Not counted towards size of struct
 	};
 
-	IEMPMREMGenerationParams GetIEMPMREMGenerationParamsData(int currentMipLevel, int numMipLevels, uint32_t faceIdx)
+	IEMPMREMGenerationParams GetIEMPMREMGenerationParamsData(
+		int currentMipLevel, int numMipLevels, uint32_t faceIdx, uint32_t srcWidth, uint32_t srcHeight)
 	{
 		IEMPMREMGenerationParams generationParams;
 
@@ -89,6 +91,17 @@ namespace
 			static_cast<float>(numPMREMSamples),
 			roughness,
 			faceIdx);
+
+		// We sample a lower mip level to approximate a Gaussian blur of the input image (i.e. low-pass filter), 
+		// significantly reducing the required number of samples required to get a noise free convolution.
+		// Empirical testing shows that for N = 4096 IEM samples per pixel, a 128x64 src image gives reasonable
+		// results.
+		// We assume our IBL inputs are roughly 2:1 in dimensions, and compute the src mip from the maximum dimension
+		const float maxDimension = static_cast<float>(std::max(srcWidth, srcHeight));
+		constexpr uint32_t k_targetMaxDimension = 128;
+		generationParams.g_mipLevel = glm::vec4(
+			glm::log2(maxDimension / k_targetMaxDimension), 
+			0, 0, 0);
 
 		return generationParams;
 	}
@@ -348,7 +361,8 @@ namespace gr
 					iblTexture,
 					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
 
-				IEMPMREMGenerationParams const& iemGenerationParams = GetIEMPMREMGenerationParamsData(0, 1, face);
+				IEMPMREMGenerationParams const& iemGenerationParams = 
+					GetIEMPMREMGenerationParamsData(0, 1, face, iblTexture->Width(), iblTexture->Height());
 				shared_ptr<re::ParameterBlock> iemGenerationPB = re::ParameterBlock::Create(
 					IEMPMREMGenerationParams::s_shaderName,
 					iemGenerationParams,
@@ -439,8 +453,8 @@ namespace gr
 						re::ParameterBlock::PBType::SingleFrame);
 					pmremStage->AddSingleFrameParameterBlock(pb);
 
-					IEMPMREMGenerationParams const& pmremGenerationParams =
-						GetIEMPMREMGenerationParamsData(currentMipLevel, numMipLevels, face);
+					IEMPMREMGenerationParams const& pmremGenerationParams = GetIEMPMREMGenerationParamsData(
+							currentMipLevel, numMipLevels, face, iblTexture->Width(), iblTexture->Height());
 					shared_ptr<re::ParameterBlock> pmremGenerationPB = re::ParameterBlock::Create(
 						IEMPMREMGenerationParams::s_shaderName,
 						pmremGenerationParams,
