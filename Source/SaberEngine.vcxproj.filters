@@ -902,6 +902,9 @@
     <None Include="Shaders\HLSL\FullscreenQuadCommon.hlsli">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </None>
+    <None Include="Shaders\HLSL\MathConstants.hlsli">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\GBuffer_PShader.hlsl">

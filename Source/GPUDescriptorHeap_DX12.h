@@ -116,6 +116,8 @@ namespace dx12
 
 		// Debug: Track inline descriptors seen while parsing the root sig, so we can assert *something* is set for them
 		uint32_t m_unsetInlineDescriptors;
+
+		dx12::RootSignature const* m_currentRootSig; // The most recently parsed root sig (for debugging purposes)
 	};
 
 

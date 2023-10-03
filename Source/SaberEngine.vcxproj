@@ -402,6 +402,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <None Include="Shaders\HLSL\FullscreenQuadCommon.hlsli" />
     <None Include="Shaders\HLSL\GBufferCommon.hlsli" />
     <None Include="Shaders\HLSL\Lighting.hlsli" />
+    <None Include="Shaders\HLSL\MathConstants.hlsli" />
     <None Include="Shaders\HLSL\NormalMapUtils.hlsli">
       <FileType>Document</FileType>
     </None>

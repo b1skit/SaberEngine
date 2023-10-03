@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
+#include "CastUtils.h"
 #include "Config.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
@@ -10,6 +11,39 @@
 
 using Microsoft::WRL::ComPtr;
 
+
+namespace
+{
+	void CreateViewportAndScissorRect(re::TextureTargetSet const& targetSet)
+	{
+		dx12::TextureTargetSet::PlatformParams* texTargetSetPlatParams =
+			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
+
+		// Configure the viewport:
+		re::Viewport const& viewport = targetSet.GetViewport();
+
+		texTargetSetPlatParams->m_viewport = CD3DX12_VIEWPORT(
+			static_cast<float>(viewport.xMin()),
+			static_cast<float>(viewport.yMin()),
+			static_cast<float>(viewport.Width()),
+			static_cast<float>(viewport.Height()));
+
+		// Configure the scissor rectangle:
+		re::ScissorRect const& scissorRect = targetSet.GetScissorRect();
+
+		SEAssert("Scissor rectangle is out of bounds of the viewport",
+			util::CheckedCast<uint32_t>(scissorRect.Left()) >= targetSet.GetViewport().xMin() &&
+			util::CheckedCast<uint32_t>(scissorRect.Top()) >= targetSet.GetViewport().yMin() &&
+			util::CheckedCast<uint32_t>(scissorRect.Right()) <= targetSet.GetViewport().Width() &&
+			util::CheckedCast<uint32_t>(scissorRect.Bottom()) <= targetSet.GetViewport().Height());
+
+		texTargetSetPlatParams->m_scissorRect = CD3DX12_RECT(
+			scissorRect.Left(),
+			scissorRect.Top(),
+			scissorRect.Right(),
+			scissorRect.Bottom());
+	}
+}
 
 namespace dx12
 {
@@ -116,6 +150,8 @@ namespace dx12
 				}			
 			}
 		}
+
+		CreateViewportAndScissorRect(targetSet);
 	}
 
 
@@ -144,6 +180,12 @@ namespace dx12
 			depthTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 		SEAssert("Depth texture has not been created", 
 			depthTexPlatParams->m_isCreated && depthTexPlatParams->m_textureResource);
+
+		// If we don't have any color targets, we must configure the viewport and scissor rect here instead
+		if (!targetSet.HasColorTarget())
+		{
+			CreateViewportAndScissorRect(targetSet);
+		}
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();

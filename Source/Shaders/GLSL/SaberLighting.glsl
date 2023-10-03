@@ -235,17 +235,15 @@ float GetShadowFactor(vec3 shadowPos, sampler2D shadowMap, float NoL)
 // Based on Lengyel's Foundations of Game Engine Development Volume 2: Rendering, p164, listing 8.8
 float GetShadowFactor(vec3 lightToFrag, samplerCube shadowMap, const float NoL)
 {
-	// Note: We negate the y component here to (partially) compensate for our use of the uv (0,0) = top-left convention
-	// when sampling our cubemaps
-	lightToFrag.y *= -1.f;
+	vec3 sampleDir = WorldToCubeSampleDir(lightToFrag);
 
 	const float cubemapFaceResolution = g_shadowMapTexelSize.x; // Assume our shadow cubemap has square faces...	
 
 	// Calculate non-linear, projected depth buffer depth from the light-to-fragment direction. The eye depth w.r.t
 	// our cubemap view is the value of the largest component of this direction. Also apply a slope-scale bias.
-	const vec3 absLightToFrag = abs(lightToFrag);
-	const float maxXY = max(absLightToFrag.x, absLightToFrag.y);
-	const float eyeDepth = max(maxXY, absLightToFrag.z);
+	const vec3 absSampleDir = abs(sampleDir);
+	const float maxXY = max(absSampleDir.x, absSampleDir.y);
+	const float eyeDepth = max(maxXY, absSampleDir.z);
 	const float biasedEyeDepth = eyeDepth - GetSlopeScaleBias(NoL);
 
 	const float nonLinearDepth = 
@@ -256,8 +254,8 @@ float GetShadowFactor(vec3 lightToFrag, samplerCube shadowMap, const float NoL)
 
 	// Calculate offset vectors:
 	float offset = sampleOffset * eyeDepth;
-	float dxy = (maxXY > absLightToFrag.z) ? offset : 0.f;
-	float dx = (absLightToFrag.x > absLightToFrag.y) ? dxy : 0.f;
+	float dxy = (maxXY > absSampleDir.z) ? offset : 0.f;
+	float dx = (absSampleDir.x > absSampleDir.y) ? dxy : 0.f;
 	vec2 oxy = vec2(offset - dx, dx);
 	vec2 oyz = vec2(offset - dxy, dxy);
 
@@ -268,22 +266,22 @@ float GetShadowFactor(vec3 lightToFrag, samplerCube shadowMap, const float NoL)
 	limit.yz -= oyz * bias;
 
 	// Get the center sample:
-	float light = texture(shadowMap, lightToFrag).r > nonLinearDepth ? 1.f : 0.f;
+	float light = texture(shadowMap, sampleDir).r > nonLinearDepth ? 1.f : 0.f;
 
 	// Get 4 extra samples at diagonal offsets:
-	lightToFrag.xy -= oxy;
-	lightToFrag.yz -= oyz;
+	sampleDir.xy -= oxy;
+	sampleDir.yz -= oyz;
 
-	light += texture(shadowMap, clamp(lightToFrag, -limit, limit)).r > nonLinearDepth ? 1.f : 0.f;
-	lightToFrag.xy += oxy * 2.f;
+	light += texture(shadowMap, clamp(sampleDir, -limit, limit)).r > nonLinearDepth ? 1.f : 0.f;
+	sampleDir.xy += oxy * 2.f;
 
-	light += texture(shadowMap, clamp(lightToFrag, -limit, limit)).r > nonLinearDepth ? 1.f : 0.f;
-	lightToFrag.yz += oyz * 2.f;
+	light += texture(shadowMap, clamp(sampleDir, -limit, limit)).r > nonLinearDepth ? 1.f : 0.f;
+	sampleDir.yz += oyz * 2.f;
 
-	light += texture(shadowMap, clamp(lightToFrag, -limit, limit)).r > nonLinearDepth ? 1.f : 0.f;
-	lightToFrag.xy -= oxy * 2.f;
+	light += texture(shadowMap, clamp(sampleDir, -limit, limit)).r > nonLinearDepth ? 1.f : 0.f;
+	sampleDir.xy -= oxy * 2.f;
 
-	light += texture(shadowMap, clamp(lightToFrag, -limit, limit)).r > nonLinearDepth ? 1.f : 0.f;
+	light += texture(shadowMap, clamp(sampleDir, -limit, limit)).r > nonLinearDepth ? 1.f : 0.f;
 
 	return (light * 0.2);	// Return the average of our 5 samples
 }
@@ -328,17 +326,17 @@ vec3 HemisphereSample_uniformDist(float u, float v)
 
 // Create a cosine-distributed hemisphere direction (Z-up) from the Hammersley 2D point (ie. For diffuse IBL sampling)
 // Based on:  http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
-vec3 HemisphereSample_cosineDist(float u, float v)
+vec3 HemisphereSample_cosineDist(vec2 u)
 {
-	const float phi = v * M_2PI;
-	const float cosTheta = sqrt(1.f - u);
+	const float phi = u.y * M_2PI;
+	const float cosTheta = sqrt(1.f - u.x);
 	const float sinTheta = sqrt(1.f - cosTheta * cosTheta);
 
 	return vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
 }
 
 
-//  Get a sample vector near a microsurface's halfway vector, from input roughness and a the low-discrepancy sequence value
+//  Get a sample vector near a microsurface's halfway vector, from input roughness and a low-discrepancy sequence value
 vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
 {
 	const float a = roughness * roughness;

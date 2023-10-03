@@ -58,9 +58,8 @@ namespace
 
 	struct IEMPMREMGenerationParams
 	{
-		// .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
-		glm::vec4 g_numSamplesRoughnessFaceIdx;
-		glm::vec4 g_mipLevel; // .x = IEM mip level, .yzw = unused
+		glm::vec4 g_numSamplesRoughnessFaceIdx; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
+		glm::vec4 g_mipLevelSrcWidthSrcHeightSrcNumMips; // .x = IEM mip level, .yz = src width/height, .w = num src mips
 
 		static constexpr char const* const s_shaderName = "IEMPMREMGenerationParams"; // Not counted towards size of struct
 	};
@@ -99,9 +98,11 @@ namespace
 		// We assume our IBL inputs are roughly 2:1 in dimensions, and compute the src mip from the maximum dimension
 		const float maxDimension = static_cast<float>(std::max(srcWidth, srcHeight));
 		constexpr uint32_t k_targetMaxDimension = 128;
-		generationParams.g_mipLevel = glm::vec4(
+		generationParams.g_mipLevelSrcWidthSrcHeightSrcNumMips = glm::vec4(
 			glm::log2(maxDimension / k_targetMaxDimension), 
-			0, 0, 0);
+			srcWidth, 
+			srcHeight, 
+			numMipLevels);
 
 		return generationParams;
 	}
@@ -407,7 +408,7 @@ namespace gr
 		// 1st frame: Generate PMREM (Pre-filtered Mip-mapped Radiance Environment Map) cubemap for specular reflections
 		{
 			const uint32_t pmremTexWidthHeight =
-				static_cast<uint32_t>(Config::Get()->GetValue<int>(en::ConfigKeys::k_iemTexWidthHeight));
+				static_cast<uint32_t>(Config::Get()->GetValue<int>(en::ConfigKeys::k_pmremTexWidthHeight));
 
 			// PMREM-specific texture params:
 			Texture::TextureParams pmremTexParams;
@@ -426,11 +427,11 @@ namespace gr
 			const string PMREMTextureName = iblTexture->GetName() + "_PMREMTexture";
 			ambientProperties.m_ambient.m_PMREMTex = re::Texture::Create(PMREMTextureName, pmremTexParams, false);
 
-			const uint32_t numMipLevels = ambientProperties.m_ambient.m_PMREMTex->GetNumMips(); // # of mips we need to render
+			const uint32_t totalMipLevels = ambientProperties.m_ambient.m_PMREMTex->GetNumMips();
 
-			for (uint32_t currentMipLevel = 0; currentMipLevel < numMipLevels; currentMipLevel++)
+			for (uint32_t face = 0; face < 6; face++)
 			{
-				for (uint32_t face = 0; face < 6; face++)
+				for (uint32_t currentMipLevel = 0; currentMipLevel < totalMipLevels; currentMipLevel++)
 				{
 					std::string const& postFix = std::format("Face {}, Mip {}", face, currentMipLevel);
 					std::string const& stageName = std::format("PMREM generation: {}", postFix);
@@ -454,7 +455,7 @@ namespace gr
 					pmremStage->AddSingleFrameParameterBlock(pb);
 
 					IEMPMREMGenerationParams const& pmremGenerationParams = GetIEMPMREMGenerationParamsData(
-							currentMipLevel, numMipLevels, face, iblTexture->Width(), iblTexture->Height());
+							currentMipLevel, totalMipLevels, face, iblTexture->Width(), iblTexture->Height());
 					shared_ptr<re::ParameterBlock> pmremGenerationPB = re::ParameterBlock::Create(
 						IEMPMREMGenerationParams::s_shaderName,
 						pmremGenerationParams,
@@ -469,10 +470,14 @@ namespace gr
 						re::TextureTargetSet::Create("PMREM texture targets: Face " + postFix);
 
 					pmremTargetSet->SetColorTarget(0, ambientProperties.m_ambient.m_PMREMTex, targetParams);
-					pmremTargetSet->SetViewport(
-						re::Viewport(0, 0, pmremTexWidthHeight, pmremTexWidthHeight));
-					pmremTargetSet->SetScissorRect(
-						re::ScissorRect(0, 0, pmremTexWidthHeight, pmremTexWidthHeight));
+
+					const glm::vec4 mipDimensions = 
+						ambientProperties.m_ambient.m_PMREMTex->GetSubresourceDimensions(currentMipLevel);
+					const uint32_t mipWidth = static_cast<uint32_t>(mipDimensions.x);
+					const uint32_t mipHeight = static_cast<uint32_t>(mipDimensions.y);
+
+					pmremTargetSet->SetViewport(re::Viewport(0, 0, mipWidth, mipHeight));
+					pmremTargetSet->SetScissorRect(re::ScissorRect(0, 0, mipWidth, mipHeight));
 
 					re::TextureTarget::TargetParams::BlendModes pmremBlendModes
 					{

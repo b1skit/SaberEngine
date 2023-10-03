@@ -204,7 +204,7 @@ layout(std430, binding=5) readonly buffer CubemapShadowRenderParams
 layout(std430, binding=6) readonly buffer IEMPMREMGenerationParams
 {
 	vec4 g_numSamplesRoughnessFaceIdx; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
-	vec4 g_mipLevel; // .x = IEM mip level, .yzw = unused
+	vec4 g_mipLevelSrcWidthSrcHeightSrcNumMips; // .x = IEM mip level, .yz = src width/height, .w = src num mips
 };
 
 

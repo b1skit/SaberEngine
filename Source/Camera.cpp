@@ -166,34 +166,37 @@ namespace gr
 		std::vector<glm::mat4> cubeView;
 		cubeView.reserve(6);
 
+
+
 		cubeView.emplace_back(glm::lookAt( // X+
 			centerPos,							// eye
 			centerPos + Transform::WorldAxisX,	// center: Position the camera is looking at
-			-Transform::WorldAxisY));			// Normalized camera up vector
+			Transform::WorldAxisY));			// Normalized camera up vector
 		cubeView.emplace_back(glm::lookAt( // X-
 			centerPos,
 			centerPos - Transform::WorldAxisX,
-			-Transform::WorldAxisY));
+			Transform::WorldAxisY));
 
-		// Note: The cubemap Y matrices generated here are flipped to (partially) compensate for our use of the  
-		// uv (0,0) = top-left convention we've forced in OpenGL
 		cubeView.emplace_back(glm::lookAt( // Y+
-			centerPos,
-			centerPos - Transform::WorldAxisY,
-			-Transform::WorldAxisZ));
-		cubeView.emplace_back(glm::lookAt( // Y-
 			centerPos,
 			centerPos + Transform::WorldAxisY,
 			Transform::WorldAxisZ));
+		cubeView.emplace_back(glm::lookAt( // Y-
+			centerPos,
+			centerPos - Transform::WorldAxisY,
+			-Transform::WorldAxisZ));
 
+		// In both OpenGL and DX12, cubemaps use a LHCS. SaberEngine uses a RHCS.
+		// Here, we supply our coordinates w.r.t a LHCS by multiplying the Z direction (i.e. the point we're looking at)
+		// by -1. In our shaders we must also transform our RHCS sample directions to LHCS.
 		cubeView.emplace_back(glm::lookAt( // Z+
 			centerPos,
-			centerPos + Transform::WorldAxisZ,
-			-Transform::WorldAxisY));
+			centerPos - Transform::WorldAxisZ, // * -1
+			Transform::WorldAxisY));
 		cubeView.emplace_back(glm::lookAt( // Z-
 			centerPos,
-			centerPos - Transform::WorldAxisZ,
-			-Transform::WorldAxisY));
+			centerPos + Transform::WorldAxisZ, // * -1
+			Transform::WorldAxisY));
 
 		return cubeView;
 	}

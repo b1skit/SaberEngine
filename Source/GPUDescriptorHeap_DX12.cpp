@@ -91,6 +91,8 @@ namespace dx12
 		memset(m_dirtyInlineDescriptorIdxBitmask, 0, InlineRootType_Count * sizeof(uint32_t));
 
 		m_unsetInlineDescriptors = std::numeric_limits<uint32_t>::max(); // Nothing has been set
+
+		m_currentRootSig = nullptr;
 	}
 
 
@@ -181,6 +183,8 @@ namespace dx12
 
 	void GPUDescriptorHeap::ParseRootSignatureDescriptorTables(dx12::RootSignature const* rootSig)
 	{
+		m_currentRootSig = rootSig;
+
 		const uint32_t numParams = static_cast<uint32_t>(rootSig->GetRootSignatureEntries().size());
 
 		// Get our descriptor table bitmask: Bits map to root signature indexes containing a descriptor table
@@ -232,7 +236,7 @@ namespace dx12
 
 		// TODO: Handle this for Sampler heap type
 
-		CPUDescriptorTableCacheMetadata& destCPUDescriptorTable = m_cpuDescriptorTableCacheLocations[rootParamIdx];
+		CPUDescriptorTableCacheMetadata const& destCPUDescriptorTable = m_cpuDescriptorTableCacheLocations[rootParamIdx];
 
 		SEAssert("Writing too many descriptors from the given offset", 
 			offset + count <= destCPUDescriptorTable.m_numElements);

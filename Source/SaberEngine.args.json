@@ -117,6 +117,10 @@
     {
       "Id": "241aa5df-00ed-4aef-b8a7-04d0f9ab5100",
       "Command": "-scene box\\Box.gltf"
+    },
+    {
+      "Id": "09ab3e01-2a8d-45c5-ba53-adc68afa5d56",
+      "Command": "-scene debug\\Duck.gltf"
     }
   ]
 }

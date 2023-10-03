@@ -154,6 +154,8 @@ namespace re
 		// Viewport dimensions. Full window resolution by default
 		uint32_t m_width;
 		uint32_t m_height;
+
+		// TODO: OpenGL expects ints, DX12 expects floats. We should support both (eg. via a union?)
 	};
 
 

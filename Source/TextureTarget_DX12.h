@@ -26,7 +26,6 @@ namespace dx12
 	public:
 		struct PlatformParams final : public re::TextureTargetSet::PlatformParams
 		{
-			// Target params:
 			D3D12_VIEWPORT m_viewport;
 			D3D12_RECT m_scissorRect;
 		};

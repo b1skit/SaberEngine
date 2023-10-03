@@ -6,15 +6,15 @@
 #include "UVUtils.hlsli"
 
 
-// Diffuse pre-integration. Based on listing 20 (p. 67) of "Moving Frostbite to Physically Based Rendering 3.0", 
-// Lagarde et al.
+// The IEM (Irradiance Environment Map) is the pre-integrated per-light-probe LD term of the diffuse portion of the
+// decomposed approximate microfacet BRDF.
+// Based on listing 20 (p. 67) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al.
 // https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
 float4 PShader(VertexOut In) : SV_Target
 {
 	// We need to build a referential coordinate system with respect to the current world-space sample direction in
 	// order to importance sample the hemisphere about it. Here, we choose up vectors for each face that guarantee we 
-	// won't try and compute cross(N, N) while constructing the referential (in ImportanceSampleCosDir)
-	// RHCS up vectors w.r.t each face
+	// won't try and compute cross(N, N) while constructing the referential basis
 	static const float3 upDir[6] = {
 		float3(0.f,		1.f,	0.f),	// X+
 		float3(0.f,		1.f,	0.f),	// X-
@@ -26,7 +26,7 @@ float4 PShader(VertexOut In) : SV_Target
 	
 	static const uint numSamples = IEMPMREMGenerationParams.g_numSamplesRoughnessFaceIdx.x;
 	static const uint faceIdx = IEMPMREMGenerationParams.g_numSamplesRoughnessFaceIdx.w;
-	static const float srcMip = IEMPMREMGenerationParams.g_mipLevel.x;
+	static const float srcMip = IEMPMREMGenerationParams.g_mipLevelSrcWidthSrcHeightSrcNumMips.x;
 	
 	// World-space direction from the center of the cube towards the current cubemap pixel
 	const float3 N = normalize(In.LocalPos);
@@ -46,10 +46,7 @@ float4 PShader(VertexOut In) : SV_Target
 
 		if (NoL > 0)
 		{
-			// Flip the .y component to account for +Y being down in UV space, and +Y being up in world space
-			const float3 lightSampleDir = float3(L.x, -L.y, L.z);
-			
-			const float2 sphericalUV = WorldDirToSphericalUV(lightSampleDir);
+			const float2 sphericalUV = WorldDirToSphericalUV(L);
 			
 			result += Tex0.SampleLevel(Wrap_LinearMipMapLinear_Linear, sphericalUV, srcMip).rgb;
 		}

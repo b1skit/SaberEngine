@@ -15,6 +15,8 @@ float2 PixelCoordsToUV(uint2 pixelCoords, uint2 texWidthHeight, float2 offset)
 
 
 // Convert a world-space direction to spherical coordinates (i.e. latitude/longitude map UVs in [0, 1])
+// The center of the texture is at -Z, with the left and right edges meeting at +Z.
+// i.e. dir(0, 0, -1) = UV(0.5, 0.5)
 float2 WorldDirToSphericalUV(float3 unnormalizedDirection)
 {
 	const float3 dir = normalize(unnormalizedDirection);
@@ -27,5 +29,11 @@ float2 WorldDirToSphericalUV(float3 unnormalizedDirection)
 	return uv;
 }
 
+
+// Converts a RHCS world-space direction to a LHCS cubemap sample direction.
+float3 WorldToCubeSampleDir(float3 worldDir)
+{
+	return float3(worldDir.x, worldDir.y, -worldDir.z);
+}
 
 #endif // SABER_UVUTILS

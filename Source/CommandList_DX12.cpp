@@ -611,15 +611,6 @@ namespace dx12
 		dx12::TextureTargetSet::PlatformParams* targetSetParams =
 			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
 
-		re::Viewport const& viewport = targetSet.GetViewport();
-
-		// TODO: OpenGL expects ints, DX12 expects floats. We should support both via the Viewport interface (eg. Union)
-		targetSetParams->m_viewport = CD3DX12_VIEWPORT(
-			static_cast<float>(viewport.xMin()),
-			static_cast<float>(viewport.yMin()),
-			static_cast<float>(viewport.Width()),
-			static_cast<float>(viewport.Height()));
-
 		const uint32_t numViewports = 1;
 		m_commandList->RSSetViewports(numViewports, &targetSetParams->m_viewport);
 
@@ -632,20 +623,6 @@ namespace dx12
 	{
 		dx12::TextureTargetSet::PlatformParams* targetSetParams =
 			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
-
-		re::ScissorRect const& scissorRect = targetSet.GetScissorRect();
-
-		SEAssert("Scissor rectangle is out of bounds of the viewport",
-			util::CheckedCast<uint32_t>(scissorRect.Left()) >= targetSet.GetViewport().xMin() &&
-			util::CheckedCast<uint32_t>(scissorRect.Top()) >= targetSet.GetViewport().yMin() &&
-			util::CheckedCast<uint32_t>(scissorRect.Right()) <= targetSet.GetViewport().Width() &&
-			util::CheckedCast<uint32_t>(scissorRect.Bottom()) <= targetSet.GetViewport().Height());
-
-		targetSetParams->m_scissorRect = CD3DX12_RECT(
-			scissorRect.Left(),
-			scissorRect.Top(),
-			scissorRect.Right(),
-			scissorRect.Bottom());
 
 		const uint32_t numScissorRects = 1; // 1 per viewport, in an array of viewports
 		m_commandList->RSSetScissorRects(numScissorRects, &targetSetParams->m_scissorRect);

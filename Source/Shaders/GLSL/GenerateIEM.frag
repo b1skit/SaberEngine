@@ -23,12 +23,12 @@ void main()
 	vec3 irradiance = vec3(0.0);
 	
 	const int numSamples = int(g_numSamplesRoughnessFaceIdx.x);
-	const float srcMip = g_mipLevel.x;
+	const float srcMip = g_mipLevelSrcWidthSrcHeightSrcNumMips.x;
 	for (int i = 0; i < numSamples; i++)
 	{
 		const vec2 samplePoints = Hammersley2D(i, numSamples);
 
-		vec3 hemSample = HemisphereSample_cosineDist(samplePoints.x, samplePoints.y);
+		vec3 hemSample = HemisphereSample_cosineDist(samplePoints);
 
 		// Project: Tangent space (Z-up) -> World space:
 		hemSample = vec3(

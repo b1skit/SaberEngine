@@ -2,16 +2,19 @@
 #ifndef SABER_LIGHTING
 #define SABER_LIGHTING
 
+#include "MathConstants.hlsli"
 
-// Compute the dominant direction for sampling a Disney diffuse retro-reflection lobe from the IEM probe. The 
-// Based on listing 23 (p.70) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al.
-float3 GetDiffuseDominantDir(float3 N, float3 V, float NoV, float roughness)
+
+// Specular D is the normal distribution function (NDF), which approximates the surface area of microfacets aligned with
+// the halfway vector between the light and view directions.
+// As per Disney this is the GGX/Trowbridge-Reitz NDF, with their roughness reparameterization of alpha = roughness^2
+float SpecularD(float roughness, float NoH)
 {
-	const float a = 1.02341f * roughness - 1.51174f;
-	const float b = -0.511705f * roughness + 0.755868f;
-	const float lerpFactor = saturate((NoV * a + b) * roughness);
+	const float alpha = roughness * roughness; // Disney reparameterization: alpha = roughness^2
+	const float alpha2 = alpha * alpha;
+	const float NoH2 = NoH * NoH;
 	
-	return lerp(N, V, lerpFactor); // Don't normalize as this vector is for sampling a cubemap
+	return alpha2 / max((M_PI * pow((NoH2 * (alpha2 - 1.f) + 1.f), 2.f)), FLT_MIN); // == 1/pi when roughness = 1
 }
 
 

@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#version 460
 #define SABER_VEC4_OUTPUT
 #define READ_GBUFFER
 
@@ -33,14 +34,11 @@ void main()
 	const vec3 k_d = 1.0 - fresnel_kS;	
 
 	// Sample the diffuse irradiance from our prefiltered irradiance environment map.
-	// Note: We must flip the Y component of our normal to compensate for our UV (0,0) top-left convention
-	const vec3 diffuseCubeSampleDir = vec3(gbuffer.WorldNormal.x, -gbuffer.WorldNormal.y, gbuffer.WorldNormal.z);
-	const vec3 irradiance = texture(CubeMap0, diffuseCubeSampleDir).xyz * gbuffer.AO;
+	const vec3 irradiance = texture(CubeMap0, WorldToCubeSampleDir(gbuffer.WorldNormal)).xyz * gbuffer.AO;
 
 	// Get the specular reflectance term:
-	const vec3 worldView = normalize(g_cameraWPos - worldPos.xyz); // Direction = Point -> Eye
-	vec3 worldReflection = normalize(reflect(-worldView, gbuffer.WorldNormal));
-	worldReflection.y *= -1; // Note: We flip Y here to compensate for our UV (0,0) top-left convention
+	const vec3 worldView = normalize(worldPos.xyz - g_cameraWPos); // Incident direction: camera -> point
+	vec3 worldReflection = normalize(reflect(worldView, gbuffer.WorldNormal));
 
 	const float roughness = gbuffer.Roughness;
 	const float remappedRoughness = RemapRoughnessIBL(roughness);
@@ -48,8 +46,10 @@ void main()
 	// Sample our generated BRDF Integration map using the non-remapped roughness
 	const vec2 BRDF = texture(Tex7, vec2(max(NoV, 0.0), roughness) ).rg; 
 
-	const vec3 specular = 
-		textureLod(CubeMap1, worldReflection, remappedRoughness * g_maxPMREMMip).xyz * ((fresnel_kS * BRDF.x) + BRDF.y);
+	const vec3 specular = textureLod(
+		CubeMap1, 
+		WorldToCubeSampleDir(worldReflection), 
+		remappedRoughness * g_maxPMREMMip).xyz * ((fresnel_kS * BRDF.x) + BRDF.y);
 
 	const vec3 combinedContribution = (gbuffer.LinearAlbedo * irradiance * k_d + specular); // Note: Omitted the "/ PI" factor here
 

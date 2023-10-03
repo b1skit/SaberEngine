@@ -200,6 +200,14 @@ vec3 SphericalUVToWorldDir(vec2 uv)
 }
 
 
+
+// Converts a RHCS world-space direction to a LHCS cubemap sample direction.
+vec3 WorldToCubeSampleDir(vec3 worldDir)
+{
+	return vec3(worldDir.x, worldDir.y, -worldDir.z);
+}
+
+
 // Convert a non-linear depth buffer value in [0,1] to a linear depth in [near, far] (eye space)
 float ConvertNonLinearDepthToLinear(const float near, const float far, const float nonLinearDepth)
 {

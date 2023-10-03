@@ -2,9 +2,10 @@
 #define VOUT_UV0
 
 #include "GBufferCommon.hlsli"
-#include "Lighting.hlsli"
+#include "Sampling.hlsli"
 #include "SaberCommon.hlsli"
 #include "Transformations.hlsli"
+#include "UVUtils.hlsli"
 
 
 // Image-based lights use luminance units, as per p.25 Moving Frostbite to Physically Based Rendering 3.0", 
@@ -15,7 +16,7 @@ float3 GetDiffuseIBLContribution(float3 N, float3 V, float NoV, float roughness)
 {
 	const float3 dominantN = GetDiffuseDominantDir(N, V, NoV, roughness);
 	
-	const float3 diffuseLighting = CubeMap0.Sample(Wrap_Linear_Linear, dominantN).rgb; // IEM
+	const float3 diffuseLighting = CubeMap0.Sample(Wrap_Linear_Linear, WorldToCubeSampleDir(dominantN)).rgb; // IEM
 	
 	const float DFG = Tex7.SampleLevel(Clamp_Linear_Linear, float2(NoV, roughness), 0).z;
 	

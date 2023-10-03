@@ -22,9 +22,9 @@ namespace gr
 
 	// Static members:
 	//----------------
-	const glm::vec3 Transform::WorldAxisX	= vec3(1.0f,	0.0f,	0.0f);
-	const glm::vec3 Transform::WorldAxisY	= vec3(0.0f,	1.0f,	0.0f);
-	const glm::vec3 Transform::WorldAxisZ	= vec3(0.0f,	0.0f,	1.0f); // Note: SaberEngine (currently) uses a RHCS
+	constexpr glm::vec3 Transform::WorldAxisX = vec3(1.0f,	0.0f,	0.0f);
+	constexpr glm::vec3 Transform::WorldAxisY = vec3(0.0f,	1.0f,	0.0f);
+	constexpr glm::vec3 Transform::WorldAxisZ = vec3(0.0f,	0.0f,	1.0f); // Note: SaberEngine uses a RHCS
 
 	
 	Transform::Transform(Transform* parent)

@@ -28,6 +28,18 @@ float2 Hammersley2D(uint i, uint N)
 }
 
 
+// Compute the dominant direction for sampling a Disney diffuse retro-reflection lobe from the IEM probe. The 
+// Based on listing 23 (p.70) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al.
+float3 GetDiffuseDominantDir(float3 N, float3 V, float NoV, float roughness)
+{
+	const float a = 1.02341f * roughness - 1.51174f;
+	const float b = -0.511705f * roughness + 0.755868f;
+	const float lerpFactor = saturate((NoV * a + b) * roughness);
+	
+	return lerp(N, V, lerpFactor); // Don't normalize as this vector is for sampling a cubemap
+}
+
+
 // A referential RHCS, with N equivalent to Z
 struct Referential
 {
@@ -96,6 +108,33 @@ void ImportanceSampleCosDir(
 {	
 	Referential localReferential = BuildReferential(N);
 	ImportanceSampleCosDir(u, localReferential, L, NoL, pdf);
+}
+
+
+void ImportanceSampleGGXDir(
+	in float2 u, in float roughness, in Referential localReferential, out float3 H)
+{
+	const float a = roughness * roughness;
+	
+	const float phi = M_2PI * u.x;
+	const float cosTheta = sqrt((1.f - u.y) / (1.f + (a * a - 1.f) * u.y));
+	const float sinTheta = sqrt(1.f - cosTheta * cosTheta);
+	
+	// Spherical to cartesian coordinates:
+	H = float3(
+		sinTheta * cos(phi),
+		sinTheta * sin(phi),
+		cosTheta);
+	
+	// Tangent-space to world-space:
+	H = normalize(localReferential.TangentX * H.x + localReferential.BitangentY * H.y + localReferential.N * H.z);
+}
+
+
+void ImportanceSampleGGXDir(in float2 u, in float roughness, in float3 N, out float3 H)
+{
+	Referential localReferential = BuildReferential(N);
+	ImportanceSampleGGXDir(u, roughness, localReferential, H);
 }
 
 #endif

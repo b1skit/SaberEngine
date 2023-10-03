@@ -1,7 +1,6 @@
 #define VOUT_LOCAL_POS
 
 #include "SaberCommon.glsl"
-#include "SaberGlobals.glsl"
 
 
 void main()
