@@ -84,6 +84,7 @@ namespace dx12
 
 		// Hashed D3D12_VERSIONED_ROOT_SIGNATURE_DESC -> D3D Root sig ComPtr
 		std::unordered_map<uint64_t, Microsoft::WRL::ComPtr<ID3D12RootSignature>> m_rootSigLibrary;
+		mutable std::mutex m_rootSigLibraryMutex;
 
 
 		std::vector<dx12::CPUDescriptorHeapManager> m_cpuDescriptorHeapMgrs; // HeapType_Count

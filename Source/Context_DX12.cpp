@@ -283,7 +283,10 @@ namespace dx12
 
 	bool Context::HasRootSignature(uint64_t rootSigDescHash)
 	{
-		return m_rootSigLibrary.contains(rootSigDescHash);
+		{
+			std::lock_guard<std::mutex> lock(m_rootSigLibraryMutex);
+			return m_rootSigLibrary.contains(rootSigDescHash);
+		}
 	}
 
 
@@ -291,14 +294,20 @@ namespace dx12
 	{
 		SEAssert("Root signature has not been added", HasRootSignature(rootSigDescHash));
 
-		return m_rootSigLibrary[rootSigDescHash];
+		{
+			std::lock_guard<std::mutex> lock(m_rootSigLibraryMutex);
+			return m_rootSigLibrary[rootSigDescHash];
+		}
 	}
 
 
 	void Context::AddRootSignature(uint64_t rootSigDescHash, Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSig)
 	{
-		auto result = m_rootSigLibrary.insert({ rootSigDescHash, rootSig });
-		SEAssert("Root signature has already been added", result.second);
+		{
+			std::lock_guard<std::mutex> lock(m_rootSigLibraryMutex);
+			auto result = m_rootSigLibrary.insert({ rootSigDescHash, rootSig });
+			SEAssert("Root signature has already been added", result.second);
+		}
 	}
 
 
