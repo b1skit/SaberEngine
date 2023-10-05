@@ -34,8 +34,8 @@ struct GBuffer
 	vec3 LinearAlbedo;
 	vec3 WorldNormal;
 
-	float Roughness;
-	float Metalness;
+	float LinearRoughness;
+	float LinearMetalness;
 	float AO;
 
 #if defined(GBUFFER_EMISSIVE)
@@ -58,8 +58,8 @@ GBuffer UnpackGBuffer(vec2 screenUV)
 	gbuffer.WorldNormal = texture(GBufferWNormal, screenUV).xyz;
 
 	const vec3 RMAO = texture(GBufferRMAO, screenUV).rgb;
-	gbuffer.Roughness = RMAO.r;
-	gbuffer.Metalness = RMAO.g;
+	gbuffer.LinearRoughness = RMAO.r;
+	gbuffer.LinearMetalness = RMAO.g;
 	gbuffer.AO = RMAO.b;
 
 #if defined(GBUFFER_EMISSIVE)

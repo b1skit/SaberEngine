@@ -173,7 +173,8 @@ layout(std430, binding=2) readonly buffer LightParams
 // GraphicsSystem_DeferredLighting.cpp
 layout(std430, binding=3) readonly buffer AmbientLightParams
 {
-	uint g_maxPMREMMip;
+	// .x = max PMREM mip level, .y = pre-integrated DFG texture width/height, .z diffuse scale, .w = specular scale
+	vec4 g_maxPMREMMipDFGResScaleDiffuseScaleSpec;
 };
 
 

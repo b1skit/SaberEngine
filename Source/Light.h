@@ -77,6 +77,9 @@ namespace gr
 				std::shared_ptr<re::Texture> m_BRDF_integrationMap;
 				std::shared_ptr<re::Texture> m_IEMTex;
 				std::shared_ptr<re::Texture> m_PMREMTex;
+				float m_ambientScale;
+				bool m_diffuseEnabled;
+				bool m_specularEnabled;
 			} m_ambient;
 			struct
 			{

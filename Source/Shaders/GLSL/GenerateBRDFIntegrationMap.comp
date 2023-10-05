@@ -48,7 +48,7 @@ void main()
 
 		if(NoL > 0.f)
 		{
-			const float G = Geometry(NoV, NoL, roughness);
+			const float G = GeometryG(NoV, NoL, roughness);
 			const float GVis = (G * VoH) / max((NoH * NoV), FLT_MIN); // Shouldn't be zero, but just in case
 			const float Fc = pow(1.0 - VoH, 5.0f);
 

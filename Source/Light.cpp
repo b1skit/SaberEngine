@@ -80,6 +80,9 @@ namespace gr
 		{
 		case AmbientIBL:
 		{
+			m_typeProperties.m_ambient.m_ambientScale = 1.f;
+			m_typeProperties.m_ambient.m_diffuseEnabled = true;
+			m_typeProperties.m_ambient.m_specularEnabled = true;
 		}
 		break;
 		case Directional:
@@ -286,12 +289,39 @@ namespace gr
 			ImGui::ColorEdit4(lightLabel.c_str(), &color.r, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | flags);
 		};
 
-		if (ImGui::CollapsingHeader(GetName().c_str(), ImGuiTreeNodeFlags_None))
+		const uint64_t uniqueID = GetUniqueID();
+
+		if (ImGui::CollapsingHeader(std::format("{}##{}", GetName(), uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			switch (m_type)
 			{
 			case LightType::AmbientIBL:
 			{
+				const bool currentIsEnabled = 
+					m_typeProperties.m_ambient.m_diffuseEnabled || m_typeProperties.m_ambient.m_specularEnabled;
+
+				bool newEnabled = currentIsEnabled;
+				ImGui::Checkbox("Enabled?", &newEnabled);
+				if (newEnabled != currentIsEnabled)
+				{
+					m_typeProperties.m_ambient.m_diffuseEnabled = newEnabled;
+					m_typeProperties.m_ambient.m_specularEnabled = newEnabled;
+				}
+				
+				ImGui::SliderFloat(
+					"Ambient scale", 
+					&m_typeProperties.m_ambient.m_ambientScale, 
+					0.0f, 
+					4.0f, 
+					"%.3f", 
+					ImGuiSliderFlags_None);
+
+				if (ImGui::CollapsingHeader(std::format("Debug:##{}{}", GetName(), uniqueID).c_str(), ImGuiTreeNodeFlags_None))
+				{
+					ImGui::Checkbox("Diffuse enabled", &m_typeProperties.m_ambient.m_diffuseEnabled);
+					ImGui::Checkbox("Specular enabled", &m_typeProperties.m_ambient.m_specularEnabled);
+				}
+
 				ImGui::Text("BRDF Integration map: \"%s\"", 
 					m_typeProperties.m_ambient.m_BRDF_integrationMap->GetName().c_str());
 

@@ -26,8 +26,8 @@ void main()
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
 	lightingParams.WorldNormal = gbuffer.WorldNormal;
-	lightingParams.Roughness = gbuffer.Roughness;
-	lightingParams.Metalness = gbuffer.Metalness;
+	lightingParams.LinearRoughness = gbuffer.LinearRoughness;
+	lightingParams.LinearMetalness = gbuffer.LinearMetalness;
 	lightingParams.AO = gbuffer.AO;
 	lightingParams.WorldPosition = worldPos;
 	lightingParams.F0 = gbuffer.MatProp0;

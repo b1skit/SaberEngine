@@ -10,8 +10,8 @@ struct GBuffer
 	float3 LinearAlbedo;
 	float3 WorldNormal;
 
-	float Roughness;
-	float Metalness;
+	float LinearRoughness;
+	float LinearMetalness;
 	float AO;
 
 #if defined(GBUFFER_EMISSIVE)
@@ -34,8 +34,8 @@ GBuffer UnpackGBuffer(float2 screenUV)
 	gbuffer.WorldNormal = GBufferWNormal.Sample(Wrap_Linear_Linear, screenUV).xyz;
 
 	const float3 RMAO = GBufferRMAO.Sample(Wrap_Linear_Linear, screenUV).rgb;
-	gbuffer.Roughness = RMAO.r;
-	gbuffer.Metalness = RMAO.g;
+	gbuffer.LinearRoughness = RMAO.r;
+	gbuffer.LinearMetalness = RMAO.g;
 	gbuffer.AO = RMAO.b;
 
 #if defined(GBUFFER_EMISSIVE)

@@ -56,6 +56,7 @@ namespace
 		return brdfIntegrationParams;
 	}
 
+
 	struct IEMPMREMGenerationParams
 	{
 		glm::vec4 g_numSamplesRoughnessFaceIdx; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
@@ -107,19 +108,30 @@ namespace
 		return generationParams;
 	}
 
+
 	struct AmbientLightParams
 	{
-		uint32_t g_maxPMREMMip;
+		// .x = max PMREM mip level, .y = pre-integrated DFG texture width/height, .z diffuse scale, .w = specular scale
+		glm::vec4 g_maxPMREMMipDFGResScaleDiffuseScaleSpec;
 
 		static constexpr char const* const s_shaderName = "AmbientLightParams"; // Not counted towards size of struct
 	};
 
 
-	AmbientLightParams GetAmbientLightParamData()
+	AmbientLightParams GetAmbientLightParamsData(uint32_t numPMREMMips, float diffuseScale, float specularScale)
 	{
 		AmbientLightParams ambientLightParams;
-		ambientLightParams.g_maxPMREMMip = 
-			(uint32_t)glm::log2(static_cast<float>(Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight)));
+
+		const uint32_t dfgTexWidthHeight = 
+			static_cast<uint32_t>(Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
+
+		const uint32_t maxPMREMMipLevel = numPMREMMips - 1;
+
+		ambientLightParams.g_maxPMREMMipDFGResScaleDiffuseScaleSpec = glm::vec4(
+			maxPMREMMipLevel,
+			dfgTexWidthHeight,
+			diffuseScale,
+			specularScale);
 
 		return ambientLightParams;
 	}
@@ -326,6 +338,7 @@ namespace gr
 		Batch cubeMeshBatch = Batch(m_cubeMeshPrimitive.get(), nullptr);
 
 		// TODO: We should use equirectangular images, instead of bothering to convert to cubemaps for IEM/PMREM
+		// -> Need to change the HLSL Get___DominantDir functions to ensure the result is normalized
 
 
 		// 1st frame: Generate an IEM (Irradiance Environment Map) cubemap texture for diffuse irradiance
@@ -579,14 +592,20 @@ namespace gr
 		m_ambientStage->AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 		m_ambientStage->SetStagePipelineState(ambientStageParams);
 
-		// Ambient parameters:		
-		AmbientLightParams ambientLightParams = GetAmbientLightParamData();
-		std::shared_ptr<re::ParameterBlock> ambientLightPB = re::ParameterBlock::Create(
+		// Ambient PB:
+		const uint32_t totalPMREMMipLevels = ambientProperties.m_ambient.m_PMREMTex->GetNumMips();
+		
+		const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
+			totalPMREMMipLevels,
+			ambientProperties.m_ambient.m_ambientScale * ambientProperties.m_ambient.m_diffuseEnabled,
+			ambientProperties.m_ambient.m_ambientScale * ambientProperties.m_ambient.m_specularEnabled);
+
+		m_ambientParams = re::ParameterBlock::Create(
 			AmbientLightParams::s_shaderName,
 			ambientLightParams,
-			re::ParameterBlock::PBType::Immutable);
+			re::ParameterBlock::PBType::Mutable);
 
-		m_ambientStage->AddPermanentParameterBlock(ambientLightPB);
+		m_ambientStage->AddPermanentParameterBlock(m_ambientParams);
 
 		// If we made it this far, append the ambient stage:
 		pipeline.AppendRenderStage(m_ambientStage);
@@ -757,7 +776,19 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::PreRender()
 	{
-		CreateBatches();		
+		CreateBatches();
+
+		gr::Light::LightTypeProperties& ambientProperties =
+			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(Light::AmbientIBL);
+
+		const uint32_t totalPMREMMipLevels = ambientProperties.m_ambient.m_PMREMTex->GetNumMips();
+
+		const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
+			totalPMREMMipLevels,
+			ambientProperties.m_ambient.m_ambientScale * ambientProperties.m_ambient.m_diffuseEnabled,
+			ambientProperties.m_ambient.m_ambientScale * ambientProperties.m_ambient.m_specularEnabled);
+
+		m_ambientParams->Commit(ambientLightParams);
 	}
 
 

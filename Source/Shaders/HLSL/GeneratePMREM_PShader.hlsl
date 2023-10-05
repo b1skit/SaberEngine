@@ -49,8 +49,7 @@ float4 PShader(VertexOut In) : SV_Target
 		
 		const Referential localReferential = BuildReferential(N, upDir[faceIdx]);
 		
-		float3 H;
-		ImportanceSampleGGXDir(eta, roughness, localReferential, H);
+		float3 H = ImportanceSampleGGXDir(eta, roughness, localReferential);
 		const float3 L = normalize(2.f * dot(V, H) * H - V);
 		
 		const float NoL = dot(N, L);

@@ -34,6 +34,7 @@ namespace gr
 
 	private:
 		std::shared_ptr<re::RenderStage> m_ambientStage;
+		std::shared_ptr<re::ParameterBlock> m_ambientParams;
 
 		std::shared_ptr<re::MeshPrimitive> m_screenAlignedQuad;
 		std::shared_ptr<re::MeshPrimitive> m_cubeMeshPrimitive; // For rendering into a cube map. TODO: We only use this in the 1st frame, should probably clean it up

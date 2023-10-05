@@ -63,7 +63,7 @@ float GeometrySchlickGGX(float NoV, float remappedRoughness)
 
 // Specular G: 
 // Geometry function: Compute the proportion of microfacets visible
-float Geometry(float NoV, float NoL, float remappedRoughness)
+float GeometryG(float NoV, float NoL, float remappedRoughness)
 {
 	float ggx1 = GeometrySchlickGGX(NoV, remappedRoughness);
 	float ggx2 = GeometrySchlickGGX(NoL, remappedRoughness);
@@ -118,8 +118,8 @@ struct LightingParams
 {
 	vec3 LinearAlbedo;
 	vec3 WorldNormal;
-	float Roughness;
-	float Metalness;
+	float LinearRoughness;
+	float LinearMetalness;
 	float AO;
 	vec3 WorldPosition;
 	vec3 F0;
@@ -143,27 +143,27 @@ vec3 ComputeLighting(const LightingParams lightingParams)
 	const vec3 viewNormal = normalize(viewRotationScale * worldNormal); // View-space normal
 
 	const vec3 lightViewDir = viewRotationScale * lightWorldDir;
-	const vec3 halfVectorView	= HalfVector(lightViewDir, viewEyeDir);	// View-space half direction
+	const vec3 halfVectorView = HalfVector(lightViewDir, viewEyeDir); // View-space half direction
 
 	const float NoV	= max(0.f, dot(viewNormal, viewEyeDir) );
 	const float NoL = max(0.f, dot(worldNormal, lightWorldDir));
 
 	// Fresnel-Schlick approximation is only defined for non-metals, so we blend it here. Lerp blends towards albedo for metals
-	const vec3 blendedF0 = mix(lightingParams.F0, lightingParams.LinearAlbedo, lightingParams.Metalness); 
+	const vec3 blendedF0 = mix(lightingParams.F0, lightingParams.LinearAlbedo, lightingParams.LinearMetalness); 
 
 	const vec3 fresnel = FresnelSchlick(NoV, blendedF0);
 	
-	const float NDF = NDF(viewNormal, halfVectorView, lightingParams.Roughness);
+	const float NDF = NDF(viewNormal, halfVectorView, lightingParams.LinearRoughness);
 
-	const float remappedRoughness = RemapRoughnessDirect(lightingParams.Roughness);
-	const float geometry = Geometry(NoV, NoL, remappedRoughness);
+	const float remappedRoughness = RemapRoughnessDirect(lightingParams.LinearRoughness);
+	const float geometry = GeometryG(NoV, NoL, remappedRoughness);
 
 	// Specular:
 	const vec3 specularContribution = (NDF * fresnel * geometry) / max((4.0 * NoV * NoL), 0.0001f);
 	
 	// Diffuse:
 	vec3 k_d = vec3(1.f) - fresnel;
-	k_d = k_d * (1.f - lightingParams.Metalness); // Metallics absorb refracted light
+	k_d = k_d * (1.f - lightingParams.LinearMetalness); // Metallics absorb refracted light
 //	const vec3 diffuseContribution = k_d * lightingParams.LinearAlbedo.rgb; // Note: Omitted the "/ M_PI" factor here
 	const vec3 diffuseContribution = k_d * lightingParams.LinearAlbedo.rgb / M_PI;
 

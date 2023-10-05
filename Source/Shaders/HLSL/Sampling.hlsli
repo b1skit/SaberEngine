@@ -28,18 +28,6 @@ float2 Hammersley2D(uint i, uint N)
 }
 
 
-// Compute the dominant direction for sampling a Disney diffuse retro-reflection lobe from the IEM probe. The 
-// Based on listing 23 (p.70) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al.
-float3 GetDiffuseDominantDir(float3 N, float3 V, float NoV, float roughness)
-{
-	const float a = 1.02341f * roughness - 1.51174f;
-	const float b = -0.511705f * roughness + 0.755868f;
-	const float lerpFactor = saturate((NoV * a + b) * roughness);
-	
-	return lerp(N, V, lerpFactor); // Don't normalize as this vector is for sampling a cubemap
-}
-
-
 // A referential RHCS, with N equivalent to Z
 struct Referential
 {
@@ -100,8 +88,8 @@ void ImportanceSampleCosDir(
 
 
 void ImportanceSampleCosDir(
-	in float2 u,
 	in float3 N,
+	in float2 u,
 	out float3 L,
 	out float NoL,
 	out float pdf)
@@ -111,30 +99,36 @@ void ImportanceSampleCosDir(
 }
 
 
-void ImportanceSampleGGXDir(
-	in float2 u, in float roughness, in Referential localReferential, out float3 H)
+// Get a sample vector near a microsurface's halfway vector, from input roughness and a low-discrepancy sequence value.
+// As per Karis, "Real Shading in Unreal Engine 4" (p.4)
+float3 ImportanceSampleGGXDir(in float2 u, in float roughness, in Referential localReferential)
 {
 	const float a = roughness * roughness;
 	
 	const float phi = M_2PI * u.x;
 	const float cosTheta = sqrt((1.f - u.y) / (1.f + (a * a - 1.f) * u.y));
-	const float sinTheta = sqrt(1.f - cosTheta * cosTheta);
+	const float sinTheta = sqrt(max(1.f - cosTheta * cosTheta, 0.f));
 	
 	// Spherical to cartesian coordinates:
-	H = float3(
+	float3 H = float3(
 		sinTheta * cos(phi),
 		sinTheta * sin(phi),
 		cosTheta);
 	
 	// Tangent-space to world-space:
-	H = normalize(localReferential.TangentX * H.x + localReferential.BitangentY * H.y + localReferential.N * H.z);
+	H = normalize(
+		localReferential.TangentX * H.x + 
+		localReferential.BitangentY * H.y + 
+		localReferential.N * H.z);
+	
+	return H;
 }
 
 
-void ImportanceSampleGGXDir(in float2 u, in float roughness, in float3 N, out float3 H)
+float3 ImportanceSampleGGXDir(in float3 N, in float2 u, in float roughness)
 {
 	Referential localReferential = BuildReferential(N);
-	ImportanceSampleGGXDir(u, roughness, localReferential, H);
+	return ImportanceSampleGGXDir(u, roughness, localReferential);
 }
 
 #endif
