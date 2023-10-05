@@ -139,21 +139,14 @@ namespace
 	
 	struct LightParams
 	{
-		glm::vec3 g_lightColorIntensity;
-		const float padding0 = 0.f;
-
-		// Directional lights: Normalized, world-space dir pointing towards source (ie. parallel)
-		glm::vec3 g_lightWorldPos;
-		const float padding1 = 0.f;
-
+		glm::vec4 g_lightColorIntensity;
+		glm::vec4 g_lightWorldPos; // Directional lights: Normalized, world-space point to source dir (ie. parallel)
 		glm::vec4 g_shadowMapTexelSize;	// .xyzw = width, height, 1/width, 1/height
-
-		glm::vec2 g_shadowCamNearFar;
-		glm::vec2 g_shadowBiasMinMax; // .xy = min, max shadow bias
+		glm::vec4 g_shadowCamNearFarBiasMinMax; // .xy = shadow cam near/far, .zw = min, max shadow bias
 
 		glm::mat4 g_shadowCam_VP;
-
 		glm::vec4 g_renderTargetResolution;
+		glm::vec4 g_intensityScale; // .xy = diffuse/specular intensity scale, .zw = unused
 
 		static constexpr char const* const s_shaderName = "LightParams"; // Not counted towards size of struct
 	};
@@ -161,22 +154,24 @@ namespace
 
 	LightParams GetLightParamData(shared_ptr<Light> const light, std::shared_ptr<re::TextureTargetSet const> targetSet)
 	{
+		Light::LightTypeProperties const& lightProperties = light->AccessLightTypeProperties(light->Type());
+
 		LightParams lightParams;
 		memset(&lightParams, 0, sizeof(LightParams)); // Ensure unused elements are zeroed
 
-		lightParams.g_lightColorIntensity = light->GetColor();
+		lightParams.g_lightColorIntensity = glm::vec4(light->GetColor(), 0.f);
 
 		// Type-specific params:
 		switch (light->Type())
 		{
 		case gr::Light::LightType::Directional:
 		{
-			lightParams.g_lightWorldPos = light->GetTransform()->GetGlobalForward(); // WorldPos == Light dir
+			lightParams.g_lightWorldPos = glm::vec4(light->GetTransform()->GetGlobalForward(), 0.f); // WorldPos == Light dir
 		}
 		break;
 		case gr::Light::LightType::Point:
 		{
-			lightParams.g_lightWorldPos = light->GetTransform()->GetGlobalPosition();
+			lightParams.g_lightWorldPos = glm::vec4(light->GetTransform()->GetGlobalPosition(), 0.f);
 		}
 		break;
 		default:
@@ -189,10 +184,10 @@ namespace
 			lightParams.g_shadowMapTexelSize =
 				shadowMap->GetTextureTargetSet()->GetDepthStencilTarget()->GetTexture()->GetTextureDimenions();
 
-			lightParams.g_shadowBiasMinMax = shadowMap->GetMinMaxShadowBias();
-
 			gr::Camera* const shadowCam = shadowMap->ShadowCamera();
-			lightParams.g_shadowCamNearFar = shadowCam->NearFar();
+			lightParams.g_shadowCamNearFarBiasMinMax = glm::vec4(
+				shadowCam->NearFar(),
+				shadowMap->GetMinMaxShadowBias());
 
 			// Type-specific shadow params:
 			switch (light->Type())
@@ -213,6 +208,12 @@ namespace
 		}
 
 		lightParams.g_renderTargetResolution = targetSet->GetTargetDimensions();
+		
+		lightParams.g_intensityScale = glm::vec4(
+			lightProperties.m_intensityScale * lightProperties.m_diffuseEnabled,
+			lightProperties.m_intensityScale * lightProperties.m_specularEnabled,
+			0.f,
+			0.f);
 
 		return lightParams;
 	}
@@ -597,8 +598,8 @@ namespace gr
 		
 		const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
 			totalPMREMMipLevels,
-			ambientProperties.m_ambient.m_ambientScale * ambientProperties.m_ambient.m_diffuseEnabled,
-			ambientProperties.m_ambient.m_ambientScale * ambientProperties.m_ambient.m_specularEnabled);
+			ambientProperties.m_intensityScale * ambientProperties.m_diffuseEnabled,
+			ambientProperties.m_intensityScale * ambientProperties.m_specularEnabled);
 
 		m_ambientParams = re::ParameterBlock::Create(
 			AmbientLightParams::s_shaderName,
@@ -785,8 +786,8 @@ namespace gr
 
 		const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
 			totalPMREMMipLevels,
-			ambientProperties.m_ambient.m_ambientScale * ambientProperties.m_ambient.m_diffuseEnabled,
-			ambientProperties.m_ambient.m_ambientScale * ambientProperties.m_ambient.m_specularEnabled);
+			ambientProperties.m_intensityScale * ambientProperties.m_diffuseEnabled,
+			ambientProperties.m_intensityScale * ambientProperties.m_specularEnabled);
 
 		m_ambientParams->Commit(ambientLightParams);
 	}
@@ -794,8 +795,6 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::CreateBatches()
 	{
-		// Note: Culling is not (currently) supported. For now, we attempt to draw everything
-		
 		// Ambient stage batches:
 		const Batch ambientFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
 		m_ambientStage->AddBatch(ambientFullscreenQuadBatch);
@@ -806,7 +805,7 @@ namespace gr
 		{
 			Batch keylightFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
 
-			LightParams keylightParams = GetLightParamData(keyLight, m_keylightStage->GetTextureTargetSet());
+			LightParams const& keylightParams = GetLightParamData(keyLight, m_keylightStage->GetTextureTargetSet());
 			shared_ptr<re::ParameterBlock> keylightPB = re::ParameterBlock::Create(
 				LightParams::s_shaderName,
 				keylightParams,
@@ -824,7 +823,7 @@ namespace gr
 			Batch pointlightBatch = Batch(m_sphereMeshes[i], nullptr);
 
 			// Point light params:
-			LightParams pointlightParams = GetLightParamData(pointLights[i], m_pointlightStage->GetTextureTargetSet());
+			LightParams const& pointlightParams = GetLightParamData(pointLights[i], m_pointlightStage->GetTextureTargetSet());
 			shared_ptr<re::ParameterBlock> pointlightPB = re::ParameterBlock::Create(
 				LightParams::s_shaderName,
 				pointlightParams, 

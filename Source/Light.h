@@ -57,7 +57,6 @@ namespace gr
 
 		void Update(const double stepTimeMs) override;
 
-		// Getters/Setters:
 		glm::vec3 GetColor() const;
 	 
 		LightType const& Type() const;
@@ -70,34 +69,47 @@ namespace gr
 
 	
 	public:
-		union LightTypeProperties
+		struct LightTypeProperties
 		{
-			struct
+			union
 			{
-				std::shared_ptr<re::Texture> m_BRDF_integrationMap;
-				std::shared_ptr<re::Texture> m_IEMTex;
-				std::shared_ptr<re::Texture> m_PMREMTex;
-				float m_ambientScale;
-				bool m_diffuseEnabled;
-				bool m_specularEnabled;
-			} m_ambient;
-			struct
-			{
-				gr::Transform* m_ownerTransform;
-				glm::vec3 m_colorIntensity;
-				std::unique_ptr<gr::ShadowMap> m_shadowMap;
-			} m_directional;
-			struct
-			{
-				gr::Transform* m_ownerTransform;
-				glm::vec3 m_colorIntensity;
-				std::unique_ptr<gr::ShadowMap> m_cubeShadowMap;
-			} m_point;
+				struct
+				{
+					std::shared_ptr<re::Texture> m_BRDF_integrationMap;
+					std::shared_ptr<re::Texture> m_IEMTex;
+					std::shared_ptr<re::Texture> m_PMREMTex;
+				} m_ambient;
+				struct
+				{
+					gr::Transform* m_ownerTransform;
+					glm::vec3 m_colorIntensity;
+					std::unique_ptr<gr::ShadowMap> m_shadowMap;
+				} m_directional;
+				struct
+				{
+					gr::Transform* m_ownerTransform;
+					glm::vec3 m_colorIntensity;
+					std::unique_ptr<gr::ShadowMap> m_cubeShadowMap;
+				} m_point;
+			};
 
-			LightTypeProperties() { memset(this, 0, sizeof(LightTypeProperties)); } // Need a default CTOR/DTOR
-			~LightTypeProperties() { memset(this, 0, sizeof(LightTypeProperties)); }
+			// Debug params:
+			float m_intensityScale;
+			bool m_diffuseEnabled;
+			bool m_specularEnabled;
+
+			LightTypeProperties()
+			{
+				memset(this, 0, sizeof(LightTypeProperties));
+				m_intensityScale = 1.f;
+				m_diffuseEnabled = true;
+				m_specularEnabled = true;
+			}
+
+			~LightTypeProperties() {};
 		};
 		LightTypeProperties& AccessLightTypeProperties(LightType);
+		LightTypeProperties const& AccessLightTypeProperties(LightType) const;
 
 
 	private:

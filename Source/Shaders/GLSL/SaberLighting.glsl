@@ -158,14 +158,17 @@ vec3 ComputeLighting(const LightingParams lightingParams)
 	const float remappedRoughness = RemapRoughnessDirect(lightingParams.LinearRoughness);
 	const float geometry = GeometryG(NoV, NoL, remappedRoughness);
 
+	const float diffuseScale = g_intensityScale.x;
+	const float specularScale = g_intensityScale.y;
+
 	// Specular:
-	const vec3 specularContribution = (NDF * fresnel * geometry) / max((4.0 * NoV * NoL), 0.0001f);
+	const vec3 specularContribution = specularScale * (NDF * fresnel * geometry) / max((4.0 * NoV * NoL), 0.0001f);
 	
 	// Diffuse:
 	vec3 k_d = vec3(1.f) - fresnel;
 	k_d = k_d * (1.f - lightingParams.LinearMetalness); // Metallics absorb refracted light
 //	const vec3 diffuseContribution = k_d * lightingParams.LinearAlbedo.rgb; // Note: Omitted the "/ M_PI" factor here
-	const vec3 diffuseContribution = k_d * lightingParams.LinearAlbedo.rgb / M_PI;
+	const vec3 diffuseContribution = diffuseScale * k_d * lightingParams.LinearAlbedo.rgb / M_PI;
 
 	// Light attenuation:
 	const float lightAttenuation = LightAttenuation(lightingParams.WorldPosition, lightingParams.LightWorldPos);
@@ -187,7 +190,7 @@ vec3 ComputeLighting(const LightingParams lightingParams)
 // Compute a depth map bias value based on surface orientation
 float GetSlopeScaleBias(float NoL)
 {
-	return max(g_shadowBiasMinMax.x, g_shadowBiasMinMax.y * (1.f - NoL));
+	return max(g_shadowCamNearFarBiasMinMax.z, g_shadowCamNearFarBiasMinMax.w * (1.f - NoL));
 }
 
 
@@ -247,7 +250,7 @@ float GetShadowFactor(vec3 lightToFrag, samplerCube shadowMap, const float NoL)
 	const float biasedEyeDepth = eyeDepth - GetSlopeScaleBias(NoL);
 
 	const float nonLinearDepth = 
-		ConvertLinearDepthToNonLinear(g_shadowCamNearFar.x, g_shadowCamNearFar.y, biasedEyeDepth);
+		ConvertLinearDepthToNonLinear(g_shadowCamNearFarBiasMinMax.x, g_shadowCamNearFarBiasMinMax.y, biasedEyeDepth);
 
 	// Compute a sample offset for PCF shadow samples:
 	const float sampleOffset = 2.f / cubemapFaceResolution;

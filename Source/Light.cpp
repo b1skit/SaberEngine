@@ -80,9 +80,6 @@ namespace gr
 		{
 		case AmbientIBL:
 		{
-			m_typeProperties.m_ambient.m_ambientScale = 1.f;
-			m_typeProperties.m_ambient.m_diffuseEnabled = true;
-			m_typeProperties.m_ambient.m_specularEnabled = true;
 		}
 		break;
 		case Directional:
@@ -279,48 +276,60 @@ namespace gr
 	}
 
 
+	Light::LightTypeProperties const& Light::AccessLightTypeProperties(LightType lightType) const
+	{
+		SEAssert("Trying to access type properties for the wrong type", lightType == m_type);
+		return m_typeProperties;
+	}
+
+
 	void Light::ShowImGuiWindow()
 	{
-		auto ShowColorPicker = [](std::string const& lightName, glm::vec3& color)
+		const uint64_t uniqueID = GetUniqueID();
+
+		auto ShowColorPicker = [&uniqueID](std::string const& lightName, glm::vec3& color)
 		{
 			ImGui::Text("Color:"); ImGui::SameLine();
 			ImGuiColorEditFlags flags = ImGuiColorEditFlags_HDR;
-			const string lightLabel = lightName + " Color";
-			ImGui::ColorEdit4(lightLabel.c_str(), &color.r, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | flags);
+			ImGui::ColorEdit4(
+				std::format("{} {}", lightName, "Color").c_str(), 
+				&color.r, 
+				ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | flags);
 		};
 
-		const uint64_t uniqueID = GetUniqueID();
+		auto ShowDebugOptions = [this, &uniqueID]()
+		{
+			const bool currentIsEnabled = m_typeProperties.m_diffuseEnabled || m_typeProperties.m_specularEnabled;
+
+			bool newEnabled = currentIsEnabled;
+			ImGui::Checkbox(std::format("Enabled?##{}", uniqueID).c_str(), &newEnabled);
+			if (newEnabled != currentIsEnabled)
+			{
+				m_typeProperties.m_diffuseEnabled = newEnabled;
+				m_typeProperties.m_specularEnabled = newEnabled;
+			}
+
+			if (ImGui::CollapsingHeader(std::format("Debug##{}{}", GetName(), uniqueID).c_str(), ImGuiTreeNodeFlags_None))
+			{
+				ImGui::Checkbox("Diffuse enabled", &m_typeProperties.m_diffuseEnabled);
+				ImGui::Checkbox("Specular enabled", &m_typeProperties.m_specularEnabled);
+			}
+		};
+		
 
 		if (ImGui::CollapsingHeader(std::format("{}##{}", GetName(), uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			switch (m_type)
 			{
 			case LightType::AmbientIBL:
-			{
-				const bool currentIsEnabled = 
-					m_typeProperties.m_ambient.m_diffuseEnabled || m_typeProperties.m_ambient.m_specularEnabled;
-
-				bool newEnabled = currentIsEnabled;
-				ImGui::Checkbox("Enabled?", &newEnabled);
-				if (newEnabled != currentIsEnabled)
-				{
-					m_typeProperties.m_ambient.m_diffuseEnabled = newEnabled;
-					m_typeProperties.m_ambient.m_specularEnabled = newEnabled;
-				}
-				
+			{				
 				ImGui::SliderFloat(
 					"Ambient scale", 
-					&m_typeProperties.m_ambient.m_ambientScale, 
+					&m_typeProperties.m_intensityScale,
 					0.0f, 
 					4.0f, 
 					"%.3f", 
 					ImGuiSliderFlags_None);
-
-				if (ImGui::CollapsingHeader(std::format("Debug:##{}{}", GetName(), uniqueID).c_str(), ImGuiTreeNodeFlags_None))
-				{
-					ImGui::Checkbox("Diffuse enabled", &m_typeProperties.m_ambient.m_diffuseEnabled);
-					ImGui::Checkbox("Specular enabled", &m_typeProperties.m_ambient.m_specularEnabled);
-				}
 
 				ImGui::Text("BRDF Integration map: \"%s\"", 
 					m_typeProperties.m_ambient.m_BRDF_integrationMap->GetName().c_str());
@@ -369,6 +378,8 @@ namespace gr
 			default:
 				SEAssertF("Invalid light type");
 			}
+
+			ShowDebugOptions();
 		}	
 	}
 }

@@ -15,11 +15,11 @@ void main()
 	const GBuffer gbuffer = UnpackGBuffer(screenUV);
 
 	const vec3 worldPos = GetWorldPos(screenUV, gbuffer.NonLinearDepth, g_invViewProjection);
-	const vec3 lightWorldDir = normalize(g_lightWorldPos - worldPos.xyz);
+	const vec3 lightWorldDir = normalize(g_lightWorldPos.xyz - worldPos.xyz);
 
 	// Cube-map shadows:
 	const float NoL = max(0.0, dot(gbuffer.WorldNormal, lightWorldDir));
-	const vec3 lightToFrag = worldPos - g_lightWorldPos; // Cubemap sampler dir length matters, so can't use -fragToLight
+	const vec3 lightToFrag = worldPos - g_lightWorldPos.xyz; // Cubemap sampler dir length matters, so can't use -fragToLight
 	const float shadowFactor = GetShadowFactor(lightToFrag, CubeMap0, NoL);
 
 	LightingParams lightingParams;
@@ -30,9 +30,9 @@ void main()
 	lightingParams.AO = gbuffer.AO;
 	lightingParams.WorldPosition = worldPos;
 	lightingParams.F0 = gbuffer.MatProp0;
-	lightingParams.LightWorldPos = g_lightWorldPos;
+	lightingParams.LightWorldPos = g_lightWorldPos.xyz;
 	lightingParams.LightWorldDir = lightWorldDir;
-	lightingParams.LightColor = g_lightColorIntensity;
+	lightingParams.LightColor = g_lightColorIntensity.rgb;
 	lightingParams.ShadowFactor = shadowFactor;
 	lightingParams.View = g_view;
 

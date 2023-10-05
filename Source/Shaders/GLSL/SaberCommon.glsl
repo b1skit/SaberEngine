@@ -157,16 +157,15 @@ layout(std430, binding=1) readonly buffer CameraParams
 // GraphicsSystem_DeferredLighting.cpp
 layout(std430, binding=2) readonly buffer LightParams
 {
-	vec3 g_lightColorIntensity;
-
-	// Directional lights: Normalized, world-space dir pointing towards source (ie. parallel)
-	vec3 g_lightWorldPos;
-
+	vec4 g_lightColorIntensity;
+	vec4 g_lightWorldPos; // Directional lights: Normalized, world-space point to source dir (ie. parallel)
 	vec4 g_shadowMapTexelSize;	// .xyzw = width, height, 1/width, 1/height
-	vec2 g_shadowCamNearFar;
-	vec2 g_shadowBiasMinMax; // .xy = min, max shadow bias
+	vec4 g_shadowCamNearFarBiasMinMax; // .xy = shadow cam near/far, .zw = min, max shadow bias
+
 	mat4 g_shadowCam_VP;
+
 	vec4 g_renderTargetResolution;
+	vec4 g_intensityScale; // .xy = diffuse/specular intensity scale, .zw = unused
 };
 
 
