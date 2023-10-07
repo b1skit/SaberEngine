@@ -40,6 +40,7 @@ void main(ComputeIn In)
 	const float NoV2 = NoV * NoV;
 	const float linearRoughness = screenUV.y;
 	const float remappedRoughness = RemapRoughness(linearRoughness);
+
 	
 	// When screenUV.x = 0, V = (1, 0, 0). When screenUV.x = 1, V = (0, 0, 1)
 	const float3 V = float3(
@@ -49,12 +50,12 @@ void main(ComputeIn In)
 
 	const float3 N = float3(0.f, 0.f, 1.f); // Satisfies NoV, given V above
 
-	float4 result = 0; // .x = ?, .y = ?, .z = ?, .w = unused
+	float4 result = 0;
 
 	for (uint i = 0; i < NUM_SAMPLES; i++)
 	{
 		const float2 Xi = Hammersley2D(i, NUM_SAMPLES); // eta: A random sample
-		const float3 H = ImportanceSampleGGXDir(N, Xi, remappedRoughness); // Importance-sampled halfway vector
+		const float3 H = ImportanceSampleGGXDir(N, Xi, linearRoughness); // Importance-sampled halfway vector
 		float3 L = 2.f * dot(V, H) * H - V; // Light vector: Reflect about the halfway vector, & reverse direction
 
 		float NoL = saturate(L.z);

@@ -876,7 +876,12 @@ namespace
 			SEAssertF("Invalid light type");
 		}
 
-		const vec3 colorIntensity = glm::make_vec3(current->light->color) * current->light->intensity;
+		const glm::vec4 colorIntensity = glm::vec4(
+			current->light->color[0],
+			current->light->color[1],
+			current->light->color[2],
+			current->light->intensity);
+
 		bool attachShadow = true;
 		if (colorIntensity.r + colorIntensity.g + colorIntensity.b == 0.f)
 		{

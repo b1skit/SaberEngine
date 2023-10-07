@@ -28,7 +28,8 @@ float4 PShader(VertexOut In) : SV_Target
 	};
 	
 	static const uint numSamples = IEMPMREMGenerationParams.g_numSamplesRoughnessFaceIdx.y;
-	static const float roughness = IEMPMREMGenerationParams.g_numSamplesRoughnessFaceIdx.z;
+	static const float linearRoughness = IEMPMREMGenerationParams.g_numSamplesRoughnessFaceIdx.z;
+	const float remappedRoughness = RemapRoughness(linearRoughness);
 	static const uint faceIdx = IEMPMREMGenerationParams.g_numSamplesRoughnessFaceIdx.w;
 	
 	static const float srcWidth = IEMPMREMGenerationParams.g_mipLevelSrcWidthSrcHeightSrcNumMips.y;
@@ -49,7 +50,7 @@ float4 PShader(VertexOut In) : SV_Target
 		
 		const Referential localReferential = BuildReferential(N, upDir[faceIdx]);
 		
-		float3 H = ImportanceSampleGGXDir(eta, roughness, localReferential);
+		float3 H = ImportanceSampleGGXDir(eta, linearRoughness, localReferential); 
 		const float3 L = normalize(2.f * dot(V, H) * H - V);
 		
 		const float NoL = dot(N, L);
@@ -75,9 +76,9 @@ float4 PShader(VertexOut In) : SV_Target
 			const float LoH = saturate(dot(L, H));
 
 			// We get undefined results (pdf = 0 and/or sampling artifacts) when roughness ~= 0. 
-			static const float minRoughness = 0.004f; // Empirically-chosen
+			static const float k_minRoughness = 0.004f; // Empirically-chosen
 			
-			const float finalRoughness = max(roughness, minRoughness);
+			const float finalRoughness = max(remappedRoughness, k_minRoughness);
 			
 			const float pdf = (SpecularD(finalRoughness, NoH) / M_PI) * (NoH / max((4.f * LoH), FLT_MIN));
 			

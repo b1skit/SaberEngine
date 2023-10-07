@@ -14,7 +14,6 @@ using en::SceneManager;
 using std::unique_ptr;
 using std::make_unique;
 using std::string;
-using glm::vec3;
 using re::ParameterBlock;
 
 
@@ -46,14 +45,14 @@ namespace gr
 	std::shared_ptr<Light> Light::CreateAmbientLight(std::string const& name)
 	{
 		std::shared_ptr<gr::Light> newAmbientLight;
-		newAmbientLight.reset(new gr::Light(name, nullptr, Light::AmbientIBL, glm::vec3(1.f, 0.f, 1.f), false));
+		newAmbientLight.reset(new gr::Light(name, nullptr, Light::AmbientIBL, glm::vec4(1.f, 0.f, 1.f, 1.f), false));
 		en::SceneManager::GetSceneData()->AddLight(newAmbientLight);
 		return newAmbientLight;
 	}
 
 
 	std::shared_ptr<Light> Light::CreateDirectionalLight(
-		std::string const& name, gr::Transform* ownerTransform, glm::vec3 colorIntensity, bool hasShadow)
+		std::string const& name, gr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow)
 	{
 		std::shared_ptr<gr::Light> newDirectionalLight;
 		newDirectionalLight.reset(new gr::Light(name, ownerTransform, Light::Directional, colorIntensity, hasShadow));
@@ -63,7 +62,7 @@ namespace gr
 
 
 	std::shared_ptr<Light> Light::CreatePointLight(
-		std::string const& name, gr::Transform* ownerTransform, glm::vec3 colorIntensity, bool hasShadow)
+		std::string const& name, gr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow)
 	{
 		std::shared_ptr<gr::Light> newPointLight;
 		newPointLight.reset(new gr::Light(name, ownerTransform, Light::Point, colorIntensity, hasShadow));
@@ -72,7 +71,7 @@ namespace gr
 	}
 
 
-	Light::Light(string const& name, Transform* ownerTransform, LightType lightType, vec3 colorIntensity, bool hasShadow)
+	Light::Light(string const& name, Transform* ownerTransform, LightType lightType, glm::vec4 colorIntensity, bool hasShadow)
 		: en::NamedObject(name)
 		, m_type(lightType)
 	{
@@ -97,7 +96,7 @@ namespace gr
 					shadowMapRes,
 					Camera::CameraConfig(),
 					m_typeProperties.m_directional.m_ownerTransform,
-					glm::vec3(0.f, 0.f, 0.f),
+					glm::vec3(0.f, 0.f, 0.f), // Shadow cam position
 					ShadowMap::ShadowType::Single);
 				// Note: We'll compute the camera config from the scene bounds during the first call to Update(); so
 				// here we just pass a default camera config
@@ -119,7 +118,7 @@ namespace gr
 			const float radius = glm::sqrt((maxColor / cutoff) - 1.0f);
 
 			// Scale the owning transform such that a sphere created with a radius of 1 will be the correct size
-			m_typeProperties.m_point.m_ownerTransform->SetLocalScale(vec3(radius, radius, radius));
+			m_typeProperties.m_point.m_ownerTransform->SetLocalScale(glm::vec3(radius, radius, radius));
 
 			m_typeProperties.m_point.m_cubeShadowMap = nullptr;
 			if (hasShadow)
@@ -139,7 +138,7 @@ namespace gr
 					cubeMapRes,
 					shadowCamConfig,
 					m_typeProperties.m_point.m_ownerTransform,
-					vec3(0.0f, 0.0f, 0.0f),	// shadowCamPosition: No offset
+					glm::vec3(0.0f, 0.0f, 0.0f),	// Shadow cam position: No offset
 					ShadowMap::ShadowType::CubeMap);
 
 				m_typeProperties.m_point.m_cubeShadowMap->SetMinMaxShadowBias(glm::vec2(
@@ -217,7 +216,7 @@ namespace gr
 	}
 
 
-	glm::vec3 Light::GetColor() const
+	glm::vec4 Light::GetColorIntensity() const
 	{
 		switch (m_type)
 		{
@@ -239,7 +238,7 @@ namespace gr
 		default:
 			SEAssertF("Invalid light type");
 		}
-		return glm::vec3(1.f, 0.f, 1.f); // Magenta error color
+		return glm::vec4(1.f, 0.f, 1.f, 1.f); // Magenta error color
 	}
 
 
@@ -287,7 +286,7 @@ namespace gr
 	{
 		const uint64_t uniqueID = GetUniqueID();
 
-		auto ShowColorPicker = [&uniqueID](std::string const& lightName, glm::vec3& color)
+		auto ShowColorPicker = [&uniqueID](std::string const& lightName, glm::vec4& color)
 		{
 			ImGui::Text("Color:"); ImGui::SameLine();
 			ImGuiColorEditFlags flags = ImGuiColorEditFlags_HDR;

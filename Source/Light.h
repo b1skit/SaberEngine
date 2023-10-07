@@ -43,10 +43,10 @@ namespace gr
 		static std::shared_ptr<Light> CreateAmbientLight(std::string const& name);
 
 		static std::shared_ptr<Light> CreateDirectionalLight(
-			std::string const& name, gr::Transform* ownerTransform, glm::vec3 colorIntensity, bool hasShadow);
+			std::string const& name, gr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow);
 
 		static std::shared_ptr<Light> CreatePointLight(
-			std::string const& name, gr::Transform* ownerTransform, glm::vec3 colorIntensity, bool hasShadow);
+			std::string const& name, gr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow);
 
 		~Light() { Destroy(); }
 
@@ -57,7 +57,7 @@ namespace gr
 
 		void Update(const double stepTimeMs) override;
 
-		glm::vec3 GetColor() const;
+		glm::vec4 GetColorIntensity() const;
 	 
 		LightType const& Type() const;
 														 
@@ -82,13 +82,13 @@ namespace gr
 				struct
 				{
 					gr::Transform* m_ownerTransform;
-					glm::vec3 m_colorIntensity;
+					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
 					std::unique_ptr<gr::ShadowMap> m_shadowMap;
 				} m_directional;
 				struct
 				{
 					gr::Transform* m_ownerTransform;
-					glm::vec3 m_colorIntensity;
+					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
 					std::unique_ptr<gr::ShadowMap> m_cubeShadowMap;
 				} m_point;
 			};
@@ -121,7 +121,7 @@ namespace gr
 		Light(std::string const& name,
 			gr::Transform* ownerTransform,
 			LightType lightType,
-			glm::vec3 colorIntensity,
+			glm::vec4 colorIntensity,
 			bool hasShadow);
 
 	private:
@@ -148,6 +148,7 @@ namespace gr
 		break;
 		case LightType::Directional:
 		{
+			// Note: Directional lights shine forward (Z+)
 			return m_typeProperties.m_directional.m_ownerTransform;
 		}
 		break;
@@ -161,5 +162,5 @@ namespace gr
 		}
 
 		return nullptr;
-	}	// Directional lights shine forward (Z+)
+	}
 }

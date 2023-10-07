@@ -33,7 +33,7 @@ void main()
 	lightingParams.F0 = gbuffer.MatProp0;
 	lightingParams.LightWorldPos = worldPos; // Ensure attenuation = 0 for directional lights
 	lightingParams.LightWorldDir = keylightWorldDir;
-	lightingParams.LightColor = g_lightColorIntensity.rgb;
+	lightingParams.LightColor = g_lightColorIntensity.rgb * g_lightColorIntensity.a;
 	lightingParams.ShadowFactor = shadowFactor;
 	lightingParams.View = g_view;
 

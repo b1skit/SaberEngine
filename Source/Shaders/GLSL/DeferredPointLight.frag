@@ -32,7 +32,7 @@ void main()
 	lightingParams.F0 = gbuffer.MatProp0;
 	lightingParams.LightWorldPos = g_lightWorldPos.xyz;
 	lightingParams.LightWorldDir = lightWorldDir;
-	lightingParams.LightColor = g_lightColorIntensity.rgb;
+	lightingParams.LightColor = g_lightColorIntensity.rgb * g_lightColorIntensity.a;
 	lightingParams.ShadowFactor = shadowFactor;
 	lightingParams.View = g_view;
 

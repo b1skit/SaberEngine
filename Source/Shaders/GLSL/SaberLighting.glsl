@@ -148,7 +148,7 @@ vec3 ComputeLighting(const LightingParams lightingParams)
 	const float NoV	= max(0.f, dot(viewNormal, viewEyeDir) );
 	const float NoL = max(0.f, dot(worldNormal, lightWorldDir));
 
-	// Fresnel-Schlick approximation is only defined for non-metals, so we blend it here. Lerp blends towards albedo for metals
+	// Fresnel-Schlick approximation is only defined for non-metals, so we blend it here. Blends towards albedo for metals
 	const vec3 blendedF0 = mix(lightingParams.F0, lightingParams.LinearAlbedo, lightingParams.LinearMetalness); 
 
 	const vec3 fresnel = FresnelSchlick(NoV, blendedF0);

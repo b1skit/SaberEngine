@@ -139,12 +139,13 @@ namespace
 	
 	struct LightParams
 	{
-		glm::vec4 g_lightColorIntensity;
+		glm::vec4 g_lightColorIntensity; // .rgb = hue, .a = intensity
 		glm::vec4 g_lightWorldPos; // Directional lights: Normalized, world-space point to source dir (ie. parallel)
 		glm::vec4 g_shadowMapTexelSize;	// .xyzw = width, height, 1/width, 1/height
 		glm::vec4 g_shadowCamNearFarBiasMinMax; // .xy = shadow cam near/far, .zw = min, max shadow bias
 
 		glm::mat4 g_shadowCam_VP;
+
 		glm::vec4 g_renderTargetResolution;
 		glm::vec4 g_intensityScale; // .xy = diffuse/specular intensity scale, .zw = unused
 
@@ -159,7 +160,7 @@ namespace
 		LightParams lightParams;
 		memset(&lightParams, 0, sizeof(LightParams)); // Ensure unused elements are zeroed
 
-		lightParams.g_lightColorIntensity = glm::vec4(light->GetColor(), 0.f);
+		lightParams.g_lightColorIntensity = light->GetColorIntensity();
 
 		// Type-specific params:
 		switch (light->Type())

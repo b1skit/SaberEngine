@@ -23,6 +23,7 @@ float ComputeDiffuseAO(float fineAO)
 	return fineAO;
 }
 
+
 // Compute the Frostbite specular AO factor
 // Based on listing 26 (p.77) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al.
 // fineAO = AO from texture maps
@@ -30,8 +31,8 @@ float ComputeSpecularAO(float NoV, float remappedRoughness, float fineAO)
 {
 	const float totalAO = fineAO;
 	return saturate(pow(NoV + totalAO, exp2(-16.f * remappedRoughness - 1.f)) - 1.f + fineAO);
-
 }
+
 
 // Compute a mip level for sampling the PMREM texture, using the remapped roughness
 // Based on listing 63 (p.68) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al.
@@ -49,23 +50,15 @@ float LinearRoughnessToMipLevel(float linearRoughness, float maxMipLevel)
 }
 
 
-// Compute the diffuse color. For smooth, shiny metals we blend towards black as the specular contribution increases.
-// Based on section B.3.5 "Metal BRDF and Dielectric BRDF" of the glTF 2.0 specifications
-// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metal-brdf-and-dielectric-brdf
-float3 ComputeDiffuseColor(float3 linearAlbedo, float3 f0, float metalness)
+// Compute the dominant direction for sampling a Disney diffuse retro-reflection lobe from the IEM probe.
+// Based on listing 23 (p.70) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al.
+float3 GetDiffuseDominantDir(float3 N, float3 V, float NoV, float remappedRoughness)
 {
-	return linearAlbedo * (1.f - f0) * (1.f - metalness); // As per the GLTF specs
-}
-
-
-// Compute the blended Fresnel reflectance at incident angles (i.e L == N).
-// The linearAlbedo defines the diffuse albedo for non-metallic surfaces, and the Fresnel reflectance at normal
-// incidence for metallic surfaces. Thus, the linearMetalness value is used to blend between these.
-// Based on section B.3.5 "Metal BRDF and Dielectric BRDF" of the glTF 2.0 specifications
-// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metal-brdf-and-dielectric-brdf
-float3 ComputeBlendedF0(float3 f0, float3 linearAlbedo, float3 linearMetalness)
-{
-	return lerp(f0, linearAlbedo, linearMetalness);
+	const float a = 1.02341f * remappedRoughness - 1.51174f;
+	const float b = -0.511705f * remappedRoughness + 0.755868f;
+	const float lerpFactor = saturate((NoV * a + b) * remappedRoughness);
+	
+	return lerp(N, V, lerpFactor); // Note: Not normalized, as we're (currently) sampling from a cubemap
 }
 
 
@@ -88,6 +81,32 @@ float3 GetDiffuseIBLContribution(float3 N, float3 V, float NoV, float remappedRo
 }
 
 
+// Compute the dominant direction for sampling the microfacet GGX-based specular lobe via the PMREM probe.
+// Based on listing 21 & 22 (p.70) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al.
+float3 GetSpecularDominantDir(float3 N, float3 R, float NoV, float remappedRoughness)
+{
+//#define GSMITH_CORRELATED
+//#define GSMITH_UNCORRELATED
+#if defined(GSMITH_CORRELATED)
+	const float lerpFactor = 
+		pow(1.f - NoV, 10.8649f) * (1.f - 0.298475f * log(39.4115f - 39.0029f * remappedRoughness)) + 
+		0.298475f * log(39.4115f - 39.0029f * remappedRoughness);
+	return lerp(N, R, lerpFactor);
+	
+#elif defined(GSMITH_UNCORRELATED)
+	const float lerpFactor = 
+		0.298475f * NoV * log(39.4115f - 39.0029f * remappedRoughness) + 
+		(0.385503f - 0.385503f * NoV) * log(13.1567f - 12.2848f * remappedRoughness);
+	return lerp (N, R, lerpFactor );
+#else
+	// Frostbite simple approximation
+	const float smoothness = saturate(1.f - remappedRoughness);
+	const float lerpFactor = smoothness * (sqrt(smoothness) + remappedRoughness);
+	return lerp(N, R, lerpFactor); // Note: Not normalized, as we're (currently) sampling from a cubemap
+#endif
+}
+
+
 // Based on listing 24 (p.70) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al.
 float3 GetSpecularIBLContribution(
 	float3 N, float3 R, float3 V, float NoV, float linearRoughness, float remappedRoughness, float3 blendedF0)
@@ -104,7 +123,7 @@ float3 GetSpecularIBLContribution(
 	
 	const float mipSampleLevel = LinearRoughnessToMipLevel(linearRoughness, maxPMREMMipLevel);
 
-	const float3 H = ComputeNormalizedH(-dominantR, V);
+	const float3 H = ComputeNormalizedH(dominantR, V);
 	const float LoH = saturate(dot(dominantR, H));
 	
 	const float f90 = ComputeF90(remappedRoughness, LoH);
@@ -119,7 +138,7 @@ float3 GetSpecularIBLContribution(
 	const float2 preIntegratedDFG = Tex7.SampleLevel(Clamp_Linear_Linear, float2(NoV, remappedRoughness), 0).xy;
 	
 	// LD * (f0 * GVis * (1.f - Fc) + GVis * Fc * f90)
-	return preIntegratedLD * (blendedF0 * preIntegratedDFG.r + blendedF0 * preIntegratedDFG.g) * specScale;
+	return preIntegratedLD * (blendedF0 * preIntegratedDFG.r + f90 * preIntegratedDFG.g) * specScale;
 }
 
 
@@ -138,7 +157,7 @@ float4 PShader(VertexOut In) : SV_Target
 	const float linearRoughness = gbuffer.LinearRoughness;
 	const float remappedRoughness = RemapRoughness(linearRoughness);
 		
-	const float3 diffuseContribution = GetDiffuseIBLContribution(N, V, NoV, remappedRoughness);
+	const float3 diffuseIlluminance = GetDiffuseIBLContribution(N, V, NoV, remappedRoughness);
 	const float diffuseAO = ComputeDiffuseAO(gbuffer.AO);
 	
 	const float3 dielectricSpecular = gbuffer.MatProp0.rgb;
@@ -148,11 +167,12 @@ float4 PShader(VertexOut In) : SV_Target
 	
 	const float3 R = reflect(-V, N);
 	
-	const float3 specularContribution = GetSpecularIBLContribution(N, R, V, NoV, linearRoughness, remappedRoughness, blendedF0);
+	const float3 specularIlluminance = 
+		GetSpecularIBLContribution(N, R, V, NoV, linearRoughness, remappedRoughness, blendedF0);
 	const float specularAO = ComputeSpecularAO(NoV, remappedRoughness, gbuffer.AO);
 	
 	const float3 combinedContribution = 
-		(diffuseColor * diffuseContribution * diffuseAO) + (specularContribution * specularAO);
+		(diffuseColor * diffuseIlluminance * diffuseAO) + (specularIlluminance * specularAO);
 	// Note: We're omitting the pi term in the albedo
 	
 	return float4(combinedContribution, 1.f);

@@ -21,5 +21,7 @@
 #define FLT_MAX		3.402823466e+38
 #define FLT_MIN		1.175494351e-38
 
+#define FLT_EPSILON 1.0e-5f
+
 
 #endif // SABER_MATHCONSTANTS
