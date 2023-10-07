@@ -4,7 +4,6 @@
 #include "Mesh.h"
 #include "NamedObject.h"
 #include "ParameterBlock.h"
-#include "ShadowMap.h"
 #include "Transform.h"
 #include "Updateable.h"
 
@@ -13,15 +12,9 @@ namespace gr
 {
 	class Camera;
 	class MeshPrimitive;
-}
+	class ShadowMap;
 
-namespace re
-{
-	class Shader;
-}
 
-namespace gr
-{
 	class Light final : public virtual en::NamedObject, public virtual en::Updateable
 	{
 	public:

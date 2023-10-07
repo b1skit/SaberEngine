@@ -10,6 +10,8 @@
 namespace gr
 {
 	class Transform;
+	class Light;
+
 
 	class ShadowMap : public virtual en::NamedObject
 	{
@@ -30,7 +32,7 @@ namespace gr
 			gr::Camera::CameraConfig shadowCamConfig,
 			gr::Transform* shadowCamParent,
 			glm::vec3 shadowCamPosition,
-			ShadowType shadowType);
+			gr::Light* owningLight);
 
 		~ShadowMap() = default;
 		ShadowMap(ShadowMap const&) = default;
@@ -49,6 +51,7 @@ namespace gr
 
 
 	private:
+		gr::Light* m_owningLight;
 		std::shared_ptr<gr::Camera> m_shadowCam;
 		std::shared_ptr<re::TextureTargetSet> m_shadowTargetSet;
 

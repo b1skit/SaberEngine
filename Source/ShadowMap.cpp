@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Camera.h"
 #include "Config.h"
+#include "Light.h"
 #include "Material.h"
 #include "SceneData.h"
 #include "ShadowMap.h"
@@ -18,6 +19,22 @@ using std::string;
 using glm::vec3;
 
 
+namespace
+{
+	gr::ShadowMap::ShadowType GetShadowTypeFromLightType(gr::Light::LightType lightType)
+	{
+		switch (lightType)
+		{
+		case gr::Light::LightType::Directional: return gr::ShadowMap::ShadowType::Single;
+		case gr::Light::LightType::Point: return gr::ShadowMap::ShadowType::CubeMap;
+		case gr::Light::LightType::AmbientIBL:
+		default:
+			SEAssertF("Invalid or unsupported light type for shadow map");
+		}
+		return gr::ShadowMap::ShadowType::ShadowType_Count;
+	}	
+}
+
 namespace gr
 {
 	ShadowMap::ShadowMap(
@@ -27,10 +44,13 @@ namespace gr
 		gr::Camera::CameraConfig shadowCamConfig, 
 		Transform* shadowCamParent, 
 		vec3 shadowCamPosition, 
-		ShadowType shadowType)
+		gr::Light* owningLight)
 		: NamedObject(lightName + "_Shadow")
+		, m_owningLight(owningLight)
 		, m_shadowCam(gr::Camera::Create(lightName + "_ShadowCam", shadowCamConfig, shadowCamParent))
 	{
+		SEAssert("Owning light cannot be null", owningLight);
+
 		m_shadowTargetSet = re::TextureTargetSet::Create(lightName + "_ShadowTargetSet");
 		m_shadowCam->GetTransform()->SetLocalTranslation(shadowCamPosition);
 
@@ -50,6 +70,8 @@ namespace gr
 		// https://www.khronos.org/opengl/wiki/Sampler_Object#Anisotropic_filtering
 
 		std::shared_ptr<re::Texture> depthTexture;
+
+		const ShadowType shadowType = GetShadowTypeFromLightType(owningLight->Type());
 
 		// Omni-directional (Cube map) shadowmap setup:
 		if (shadowType == ShadowType::CubeMap)
@@ -105,9 +127,24 @@ namespace gr
 		const std::string resetLabel = "Reset biases to defaults##" + GetName();
 		if (ImGui::Button(resetLabel.c_str()))
 		{
-			m_minMaxShadowBias = glm::vec2(
-				Config::Get()->GetValue<float>("defaultMinShadowBias"),
-				Config::Get()->GetValue<float>("defaultMaxShadowBias"));
+			switch (m_owningLight->Type())
+			{
+			case gr::Light::LightType::Directional:
+			{
+				m_minMaxShadowBias = glm::vec2(
+					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias),
+					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias));
+			}
+			break;
+			case gr::Light::LightType::Point:
+			{
+				m_minMaxShadowBias = glm::vec2(
+					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBias),
+					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMaxShadowBias));
+			}
+			break;
+			default: SEAssertF("Invalid/unsupported light type")
+			}
 		}
 
 		if (ImGui::TreeNode("Shadow Map Camera:"))
