@@ -16,20 +16,19 @@ float RemapRoughness(float linearRoughness)
 	return linearRoughness * linearRoughness;
 }
 
-// Specular D: The normal distribution function (NDF)
-// Trowbridge-Reitz GGX Normal Distribution Function: Approximate area of surface microfacets aligned with the halfway
-// vector between the light and view dirs
-float NDF(vec3 N, vec3 H, float roughness)
+
+// Compute the half-direction vector: The normal of the microsurface that scatters light from an incident direction to
+// an outgoing direction
+// Based on section 4.1 (p.4) of "Microfacet Models for Refraction through Rough Surfaces", Walter et al., and 
+// p.8 of "A Reflectance Model For Computer Graphics", Cook, Torrance.
+vec3 ComputeH(vec3 L, vec3 V)
 {
-	// Disney reparameterizes roughness as alpha = roughness^2. Then the GGX/Trowbridge-Reitz NDF requires alpha^2
-	const float alpha2 = pow(roughness, 4.f);
+	return L + V;
+}
 
-	const float nDotH = clamp(dot(N, H), 0.f, 1.f);
-	const float nDotH2 = nDotH * nDotH;
-
-	const float denominator = max((nDotH2 * (alpha2 - 1.f)) + 1.f, 0.0001);
-	
-	return alpha2 / (M_PI * denominator * denominator);
+vec3 ComputeNormalizedH(vec3 L, vec3 V)
+{
+	return normalize(ComputeH(L, V));
 }
 
 
@@ -106,21 +105,6 @@ vec3 FresnelSchlickF(in vec3 f0, in float f90, in float u)
 }
 
 
-// Schlick's Approximation, with an added roughness term (as per Sebastien Lagarde)
-vec3 FresnelSchlick_Roughness(float NoV, vec3 F0, float roughness)
-{
-	NoV = clamp(NoV, 0.f, 1.f);
-	return F0 + (max(vec3(1.f - roughness), F0) - F0) * pow(1.f - NoV, 5.0);
-}
-
-
-// Compute the halfway vector between light and view dirs
-vec3 HalfVector(vec3 light, vec3 view)
-{
-	return normalize(light + view);
-}
-
-
 vec3 ApplyExposure(vec3 linearColor, float exposure)
 {
 	return linearColor * exposure;
@@ -179,19 +163,18 @@ struct LightingParams
 vec3 ComputeLighting(const LightingParams lightingParams)
 {
 	const vec3 N = normalize(lightingParams.WorldNormal);
-
-	// World-space point -> camera direction
-	const vec3 V = normalize(lightingParams.CameraWorldPos - lightingParams.WorldPosition); 
-	const float NoV	= clamp(dot(N, V), FLT_EPSILON, 1.f); // Prevent NaNs at glancing angles
+	
+	const vec3 V = normalize(lightingParams.CameraWorldPos - lightingParams.WorldPosition); // point -> camera
+	const float NoV = clamp(max(dot(N, V), FLT_EPSILON), 0.f, 1.f); // Prevent NaNs at glancing angles
 
 	const vec3 L = normalize(lightingParams.LightWorldDir);
-	const float NoL = clamp(dot(N, L), FLT_EPSILON, 1.f); // Prevent NaNs at glancing angles
-
-	const vec3 H = normalize(HalfVector(L, V));
+	const float NoL = clamp(max(dot(N, L), FLT_EPSILON), 0.f, 1.f); // Prevent NaNs at glancing angles
+	
+	const vec3 H = ComputeNormalizedH(L, V);
 	const float LoH = clamp(dot(L, H), 0.f, 1.f);
-
+	
 	const float diffuseResponse = FrostbiteDisneyDiffuse(NoV, NoL, LoH, lightingParams.LinearRoughness);
-
+	
 	const vec3 sunHue = lightingParams.LightColor;
 	const float sunIlluminanceLux = lightingParams.LightIntensity;
 	
@@ -205,15 +188,15 @@ vec3 ComputeLighting(const LightingParams lightingParams)
 		lightingParams.LinearAlbedo, 
 		blendedF0, 
 		lightingParams.LinearMetalness) * diffuseResponse * lightingParams.DiffuseScale;
-
+	
 	const float f90 = ComputeF90(lightingParams.LinearRoughness, LoH);
 	const vec3 fresnelF = FresnelSchlickF(blendedF0, f90, LoH);
-
+	
 	const float geometryG = GeometryG(NoV, NoL, lightingParams.RemappedRoughness);
-
+	
 	const float NoH = clamp(dot(N, H), 0.f, 1.f);
 	const float specularD = SpecularD(lightingParams.RemappedRoughness, NoH);
-
+	
 	const vec3 specularReflectance = fresnelF * geometryG * specularD * lightingParams.SpecularScale;
 	
 	const vec3 combinedContribution = (diffuseReflectance + specularReflectance) * illuminance;
@@ -221,8 +204,55 @@ vec3 ComputeLighting(const LightingParams lightingParams)
 	
 	// Apply exposure:
 	const vec3 exposedColor = ApplyExposure(combinedContribution, lightingParams.Exposure);
-
+	
 	return exposedColor;
+
+
+//	const vec3 N = normalize(lightingParams.WorldNormal);
+//
+//	// World-space point -> camera direction
+//	const vec3 V = normalize(lightingParams.CameraWorldPos - lightingParams.WorldPosition); 
+//	const float NoV	= clamp(dot(N, V), FLT_EPSILON, 1.f); // Prevent NaNs at glancing angles
+//
+//	const vec3 L = normalize(lightingParams.LightWorldDir);
+//	const float NoL = clamp(dot(N, L), FLT_EPSILON, 1.f); // Prevent NaNs at glancing angles
+//
+//	const vec3 H = normalize(ComputeNormalizedH(L, V));
+//	const float LoH = clamp(dot(L, H), 0.f, 1.f);
+//
+//	const float diffuseResponse = FrostbiteDisneyDiffuse(NoV, NoL, LoH, lightingParams.LinearRoughness);
+//
+//	const vec3 sunHue = lightingParams.LightColor;
+//	const float sunIlluminanceLux = lightingParams.LightIntensity;
+//	
+//	const vec3 illuminance = 
+//		sunIlluminanceLux * sunHue * NoL * lightingParams.LightAttenuationFactor * lightingParams.ShadowFactor;
+//
+//	const vec3 dielectricSpecular = lightingParams.F0;
+//	const vec3 blendedF0 =
+//		ComputeBlendedF0(dielectricSpecular, lightingParams.LinearAlbedo, lightingParams.LinearMetalness);
+//	const vec3 diffuseReflectance = ComputeDiffuseColor(
+//		lightingParams.LinearAlbedo, 
+//		blendedF0, 
+//		lightingParams.LinearMetalness) * diffuseResponse * lightingParams.DiffuseScale;
+//
+//	const float f90 = ComputeF90(lightingParams.LinearRoughness, LoH);
+//	const vec3 fresnelF = FresnelSchlickF(blendedF0, f90, LoH);
+//
+//	const float geometryG = GeometryG(NoV, NoL, lightingParams.RemappedRoughness);
+//
+//	const float NoH = clamp(dot(N, H), 0.f, 1.f);
+//	const float specularD = SpecularD(lightingParams.RemappedRoughness, NoH);
+//
+//	const vec3 specularReflectance = fresnelF * geometryG * specularD * lightingParams.SpecularScale;
+//	
+//	const vec3 combinedContribution = (diffuseReflectance + specularReflectance) * illuminance;
+//	// Note: We're omitting the pi term in the albedo
+//	
+//	// Apply exposure:
+//	const vec3 exposedColor = ApplyExposure(combinedContribution, lightingParams.Exposure);
+//
+//	return exposedColor;
 }
 
 
@@ -357,53 +387,109 @@ vec2 Hammersley2D(uint i, uint N)
 }
 
 
-// Create a uniformly-distributed hemisphere direction (Z-up) from the Hammersley 2D point
-// Based on:  http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
-vec3 HemisphereSample_uniformDist(float u, float v)
+
+
+
+// A referential RHCS, with N equivalent to Z
+struct Referential
 {
-	const float phi = v * M_2PI;
-	const float cosTheta = 1.f - u;
-	const float sinTheta = sqrt(1.f - cosTheta * cosTheta);
+	vec3 N;				// Equivalent to Z in a RHCS
+	vec3 TangentX;		// Equivalent to right/X in a RHCS
+	vec3 BitangentY;	// Equivalent to up/Y in an RHCS
+};
 
-	return vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
-}
-  
-
-// Create a cosine-distributed hemisphere direction (Z-up) from the Hammersley 2D point (ie. For diffuse IBL sampling)
-// Based on:  http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
-vec3 HemisphereSample_cosineDist(vec2 u)
+// Build a referential coordinate system with respect to a normal vector
+Referential BuildReferential(vec3 N, vec3 up)
 {
-	const float phi = u.y * M_2PI;
-	const float cosTheta = sqrt(1.f - u.x);
-	const float sinTheta = sqrt(1.f - cosTheta * cosTheta);
-
-	return vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
+	Referential referential;
+	referential.N = N;
+	
+	referential.TangentX = normalize(cross(up, N));
+	referential.BitangentY = cross(N, referential.TangentX);
+	
+	return referential;
 }
 
 
-//  Get a sample vector near a microsurface's halfway vector, from input roughness and a low-discrepancy sequence value
-vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
+// Constructs a best-guess up vector
+Referential BuildReferential(vec3 N)
+{
+	const vec3 up = abs(N.z) < 0.999f ? vec3(0, 0, 1) : vec3(1, 0, 0);
+	return BuildReferential(N, up);
+}
+
+// Compute a cosine-weighted sample direction
+// Based on listing A.2 (p.106) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al.
+// https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
+void ImportanceSampleCosDir(
+	in vec2 u,
+	in Referential localReferential,
+	out vec3 L,
+	out float NoL,
+	out float pdf)
+{
+	const float u1 = u.x;
+	const float u2 = u.y;
+
+	const float r = sqrt(u1);
+
+	const float phi = u2 * M_2PI;
+
+	L = vec3(
+		r * cos(phi),
+		r * sin(phi),
+		sqrt(max(0.0f, 1.f - u1)));
+	
+	L = normalize((localReferential.TangentX * L.y) + (localReferential.BitangentY * L.x) + (localReferential.N * L.z));
+
+	NoL = dot(L, localReferential.N);
+
+	pdf = NoL * M_1_PI;
+}
+
+
+void ImportanceSampleCosDir(
+	in vec3 N,
+	in vec2 u,
+	out vec3 L,
+	out float NoL,
+	out float pdf)
+{	
+	Referential localReferential = BuildReferential(N);
+	ImportanceSampleCosDir(u, localReferential, L, NoL, pdf);
+}
+
+
+// Get a sample vector near a microsurface's halfway vector, from input roughness and a low-discrepancy sequence value.
+// As per Karis, "Real Shading in Unreal Engine 4" (p.4)
+vec3 ImportanceSampleGGXDir(in vec2 u, in float roughness, in Referential localReferential)
 {
 	const float a = roughness * roughness;
+	
+	const float phi = M_2PI * u.x;
+	const float cosTheta = sqrt((1.f - u.y) / (1.f + (a * a - 1.f) * u.y));
+	const float sinTheta = sqrt(max(1.f - cosTheta * cosTheta, 0.f));
+	
+	// Spherical to cartesian coordinates:
+	vec3 H = vec3(
+		sinTheta * cos(phi),
+		sinTheta * sin(phi),
+		cosTheta);
+	
+	// Tangent-space to world-space:
+	H = normalize(
+		localReferential.TangentX * H.x + 
+		localReferential.BitangentY * H.y + 
+		localReferential.N * H.z);
+	
+	return H;
+}
 
-	const float phi = M_2PI * Xi.x;
-	const float cosTheta = sqrt((1.f - Xi.y) / (1.f + (a * a - 1.f) * Xi.y));
-	const float sinTheta = sqrt(1.f - cosTheta * cosTheta);
 
-	// Convert spherical -> cartesian coordinates
-	vec3 H;
-	H.x = cos(phi) * sinTheta;
-	H.y = sin(phi) * sinTheta;
-	H.z = cosTheta;
-
-	// from tangent-space vector to world-space sample vector
-	const vec3 up = abs(N.z) < 0.999f ? vec3(0.f, 0.f, 1.f) : vec3(1.f, 0.f, 0.f);
-	const vec3 tangent = normalize(cross(up, N));
-	const vec3 bitangent = cross(N, tangent);
-
-	const vec3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
-
-	return normalize(sampleVec);
+vec3 ImportanceSampleGGXDir(in vec3 N, in vec2 u, in float roughness)
+{
+	Referential localReferential = BuildReferential(N);
+	return ImportanceSampleGGXDir(u, roughness, localReferential);
 }
 
 

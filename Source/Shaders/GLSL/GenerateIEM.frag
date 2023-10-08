@@ -8,41 +8,51 @@
 #include "SaberLighting.glsl"
 
 
-// Remap from equirectangular to cubemap, performing IEM filtering (ie. for diffuse IBL)
+// The IEM (Irradiance Environment Map) is the pre-integrated per-light-probe LD term of the diffuse portion of the
+// decomposed approximate microfacet BRDF.
+// Based on listing 20 (p. 67) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al.
+// https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
 void main()
-{	
-	// World-space direction from the center of the cube towards the current cubemap pixel
-	const vec3 pxWorldDir = normalize(vOut.localPos);
-
-	// Create an orthonormal basis, with pxWorldDir as our up vector.
-	// Add some values to the tangent to ensure we don't end up with cross(pxWorldDir, pxWorldDir)
-	const vec3 arbitraryVector = normalize(vec3(pxWorldDir.y + 1.0, pxWorldDir.z, pxWorldDir.x));
-	const vec3 bitangent = normalize(cross(arbitraryVector, pxWorldDir));
-	const vec3 tangent = normalize(cross(pxWorldDir, bitangent));
-
-	vec3 irradiance = vec3(0.0);
+{
+	// We need to build a referential coordinate system with respect to the current world-space sample direction in
+	// order to importance sample the hemisphere about it. Here, we choose up vectors for each face that guarantee we 
+	// won't try and compute cross(N, N) while constructing the referential basis
+	const vec3 upDir[6] = {
+		vec3(0.f,		1.f,	0.f),	// X+
+		vec3(0.f,		1.f,	0.f),	// X-
+		vec3(0.f,		0.f,	-1.f),	// Y+
+		vec3(0.f,		0.f,	1.f),	// Y-
+		vec3(0.f,		1.f,	0.f),	// Z+
+		vec3(0.f,		1.f,	0.f)	// Z-
+	};
 	
-	const int numSamples = int(g_numSamplesRoughnessFaceIdx.x);
+	const uint numSamples = uint(g_numSamplesRoughnessFaceIdx.x);
+	const uint faceIdx = uint(g_numSamplesRoughnessFaceIdx.w);
 	const float srcMip = g_mipLevelSrcWidthSrcHeightSrcNumMips.x;
-	for (int i = 0; i < numSamples; i++)
+	
+	// World-space direction from the center of the cube towards the current cubemap pixel
+	const vec3 N = normalize(vOut.LocalPos);
+	
+	vec3 result = vec3(0.f, 0.f, 0.f);
+	
+	for (uint i = 0; i < numSamples; i++)
 	{
-		const vec2 samplePoints = Hammersley2D(i, numSamples);
+		const vec2 eta = Hammersley2D(i, numSamples);
 
-		vec3 hemSample = HemisphereSample_cosineDist(samplePoints);
+		const Referential localReferential = BuildReferential(N, upDir[faceIdx]);
+		
+		vec3 L;
+		float NoL;
+		float pdf;
+		ImportanceSampleCosDir(eta, localReferential, L, NoL, pdf);
 
-		// Project: Tangent space (Z-up) -> World space:
-		hemSample = vec3(
-			dot(hemSample, vec3(tangent.x, bitangent.x, pxWorldDir.x)), 
-			dot(hemSample, vec3(tangent.y, bitangent.y, pxWorldDir.y)), 
-			dot(hemSample, vec3(tangent.z, bitangent.z, pxWorldDir.z)));
+		if (NoL > 0)
+		{
+			const vec2 sphericalUV = WorldDirToSphericalUV(L);
 
-		// Sample the environment:
-		vec2 equirectangularUVs	= WorldDirToSphericalUV(hemSample);
-		irradiance += texture(Tex0, equirectangularUVs, srcMip).rgb;
+			result += texture(Tex0, sphericalUV, srcMip).rgb;
+		}
 	}
-
-	// Simple Monte Carlo approximation of the integral:
-	irradiance = irradiance / float(numSamples);
-
-	FragColor = vec4(irradiance, 1.0);
+	
+	FragColor = vec4(result / numSamples, 1.f);
 }

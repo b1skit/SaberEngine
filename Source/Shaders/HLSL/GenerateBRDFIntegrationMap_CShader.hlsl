@@ -36,8 +36,8 @@ void main(ComputeIn In)
 	float2 screenUV = PixelCoordsToUV(texelCoord, targetResolution.xy, float2(0.5f, 0.5f));
 	
 	const float NoV = screenUV.x;
-	
 	const float NoV2 = NoV * NoV;
+	
 	const float linearRoughness = screenUV.y;
 	const float remappedRoughness = RemapRoughness(linearRoughness);
 
@@ -85,7 +85,6 @@ void main(ComputeIn In)
 
 			result.z += FrostbiteDisneyDiffuse(NoV, NoL, LoH, linearRoughness);
 		}
-		
 	}
 
 	// Average the results:

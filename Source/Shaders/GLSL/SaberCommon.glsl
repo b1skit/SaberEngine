@@ -55,7 +55,7 @@
 		vec3 WorldNormal;
 #endif
 #ifdef VOUT_LOCAL_POS
-		vec3 localPos; // Received in_position: Local-space position
+		vec3 LocalPos; // Received in_position: Local-space position
 #endif
 #ifdef VOUT_WORLD_POS
 		vec3 worldPos; // World-space position

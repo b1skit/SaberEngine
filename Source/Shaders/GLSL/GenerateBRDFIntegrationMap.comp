@@ -21,42 +21,61 @@ layout(location=0) writeonly uniform image2D outColor;
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
-	vec2 screenUV = PixelCoordsToUV(gl_GlobalInvocationID.xy, g_integrationTargetResolution.xy, vec2(0.5f, 0.5f), false);
+	const uvec2 targetResolution = g_integrationTargetResolution.xy;
 
 	const ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
 
+	vec2 screenUV = PixelCoordsToUV(gl_GlobalInvocationID.xy, g_integrationTargetResolution.xy, vec2(0.5f, 0.5f), false);
+
 	const float NoV = screenUV.x;
 	const float NoV2 = NoV * NoV;
+
 	const float linearRoughness = screenUV.y;
 	const float remappedRoughness = RemapRoughness(linearRoughness);
 
-	const vec3 V = vec3(sqrt(1.0f - NoV2), 0.0f, NoV);
+	const vec3 V = vec3(
+		sqrt(1.0f - NoV2), 
+		0.0f, 
+		NoV);
 
 	const vec3 N = vec3(0.0, 0.0, 1.0);
 
-	float fresnelScale = 0.0;
-	float fresnelBias = 0.0;
+	vec4 result = vec4(0.f, 0.f, 0.f, 0.f);
 
-	for(uint i = 0; i < NUM_SAMPLES; i++)
+	for (uint i = 0; i < NUM_SAMPLES; i++)
 	{
-		const vec2 Xi = Hammersley2D(i, NUM_SAMPLES);
-		const vec3 H = ImportanceSampleGGX(Xi, N, linearRoughness);
-		const vec3 L = normalize(2.0f * dot(V, H) * H - V);
+		const vec2 Xi = Hammersley2D(i, NUM_SAMPLES); // eta: A random sample
+		const vec3 H = ImportanceSampleGGXDir(N, Xi, linearRoughness); // Importance-sampled halfway vector
+		vec3 L = 2.f * dot(V, H) * H - V; // Light vector: Reflect about the halfway vector, & reverse direction
 
-		const float NoL = max(L.z, 0.0f);
-		const float NoH = max(H.z, 0.0f);
-		const float VoH = max(dot(V, H), 0.0f);
+		float NoL = clamp(L.z, 0.f, 1.f);
+		const float LoH = clamp(dot(L, H), 0.f, 1.f);
+		
+		const float G = GeometryG(NoV, NoL, remappedRoughness);
 
-		if(NoL > 0.f)
+		if (NoL > 0.f && G > 0.f)
 		{
-			const float G = GeometryG(NoV, NoL, remappedRoughness);
-			const float GVis = (G * VoH) / max((NoH * NoV), FLT_MIN); // Shouldn't be zero, but just in case
-			const float Fc = pow(1.0 - VoH, 5.0f);
+			const float NoH = clamp(H.z, 0.f, 1.f);
+			
+			const float GVis = (G * LoH) / max((NoH * NoV), FLT_MIN); // Shouldn't be zero, but just in case
+			
+			const float Fc = pow(1.f - LoH, 5.f);
 
-			fresnelScale += (1.0f - Fc) * GVis;
-			fresnelBias += Fc * GVis;
+			result.x += (1.f - Fc) * GVis;
+			result.y += Fc * GVis;
+		}
+		
+		// Disney diffuse pre-integration:
+		const vec2 XiFrac = fract(Xi + 0.5f);
+		float pdf; // Not used, as it cancels with other terms: 1/PI from the diffuse BRDF, & the NoL from Lambert's law
+		ImportanceSampleCosDir(N, XiFrac, L, NoL, pdf);
+		if (NoL > 0.f)
+		{
+			const float NoV = clamp(dot(N, V), 0.f, 1.f);
+
+			result.z += FrostbiteDisneyDiffuse(NoV, NoL, LoH, linearRoughness);
 		}
 	}
 
-	imageStore(outColor, texelCoord, vec4(fresnelScale, fresnelBias, 0.f, 0.f) / NUM_SAMPLES);
+	imageStore(outColor, texelCoord, result / NUM_SAMPLES);
 }
