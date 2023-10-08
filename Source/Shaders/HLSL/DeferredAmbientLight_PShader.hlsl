@@ -175,5 +175,8 @@ float4 PShader(VertexOut In) : SV_Target
 		(diffuseColor * diffuseIlluminance * diffuseAO) + (specularIlluminance * specularAO);
 	// Note: We're omitting the pi term in the albedo
 	
-	return float4(combinedContribution, 1.f);
+	// Apply exposure:
+	const float3 exposedColor = ApplyExposure(combinedContribution, CameraParams.g_exposureProperties.x);
+	
+	return float4(exposedColor, 0.f);
 }

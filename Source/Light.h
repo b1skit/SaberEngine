@@ -82,19 +82,20 @@ namespace gr
 				{
 					gr::Transform* m_ownerTransform;
 					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
+					float m_emitterRadius; // For non-singular attenuation function
+					float m_intensityCuttoff; // Intensity value at which we stop drawing the deferred mesh
 					std::unique_ptr<gr::ShadowMap> m_cubeShadowMap;
 				} m_point;
 			};
 
 			// Debug params:
-			float m_intensityScale;
 			bool m_diffuseEnabled;
 			bool m_specularEnabled;
 
 			LightTypeProperties()
 			{
 				memset(this, 0, sizeof(LightTypeProperties));
-				m_intensityScale = 1.f;
+
 				m_diffuseEnabled = true;
 				m_specularEnabled = true;
 			}

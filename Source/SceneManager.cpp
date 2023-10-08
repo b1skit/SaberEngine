@@ -128,7 +128,8 @@ namespace en
 		constexpr char const* scenePanelWindowTitle = "Scene Objects";
 		ImGui::Begin(scenePanelWindowTitle, show);
 	
-		if (ImGui::TreeNode("Cameras:"))
+		
+		if (ImGui::CollapsingHeader("Cameras:", ImGuiTreeNodeFlags_None))
 		{
 			std::vector<std::shared_ptr<gr::Camera>> const& cameras = m_sceneData->GetCameras();
 
@@ -172,11 +173,9 @@ namespace en
 				cameras[camIdx]->ShowImGuiWindow();
 				ImGui::Separator();
 			}
-
-			ImGui::TreePop();
 		}
-		 
-		if (ImGui::TreeNode("Meshes:"))
+		
+		if (ImGui::CollapsingHeader("Meshes:", ImGuiTreeNodeFlags_None))
 		{
 			std::vector<std::shared_ptr<gr::Mesh>> const& meshes = m_sceneData->GetMeshes();
 			for (auto const& mesh : meshes)
@@ -184,11 +183,9 @@ namespace en
 				mesh->ShowImGuiWindow();
 				ImGui::Separator();
 			}
-
-			ImGui::TreePop();
 		}
 
-		if (ImGui::TreeNode("Materials:"))
+		if (ImGui::CollapsingHeader("Materials:", ImGuiTreeNodeFlags_None))
 		{
 			std::unordered_map<size_t, std::shared_ptr<gr::Material>> const& materials = m_sceneData->GetMaterials();
 			for (auto const& materialEntry : materials)
@@ -196,11 +193,9 @@ namespace en
 				materialEntry.second->ShowImGuiWindow();
 				ImGui::Separator();
 			}
-
-			ImGui::TreePop();
 		}
 
-		if (ImGui::TreeNode("Ambient Light:"))
+		if (ImGui::CollapsingHeader("Lights:", ImGuiTreeNodeFlags_None))
 		{
 			std::shared_ptr<gr::Light> const ambientLight = m_sceneData->GetAmbientLight();
 			if (ambientLight)
@@ -209,11 +204,6 @@ namespace en
 				ImGui::Separator();
 			}
 
-			ImGui::TreePop();
-		}
-
-		if (ImGui::TreeNode("Directional Light:"))
-		{
 			std::shared_ptr<gr::Light> const directionalLight = m_sceneData->GetKeyLight();
 			if (directionalLight)
 			{
@@ -221,19 +211,15 @@ namespace en
 				ImGui::Separator();
 			}
 
-			ImGui::TreePop();
-		}
-
-		if (ImGui::TreeNode("Point Lights:"))
-		{
-			std::vector<std::shared_ptr<gr::Light>> const& pointLights = m_sceneData->GetPointLights();
-			for (auto const& light : pointLights)
+			if (ImGui::CollapsingHeader("Point Lights:", ImGuiTreeNodeFlags_None))
 			{
-				light->ShowImGuiWindow();
+				std::vector<std::shared_ptr<gr::Light>> const& pointLights = m_sceneData->GetPointLights();
+				for (auto const& light : pointLights)
+				{
+					light->ShowImGuiWindow();
+				}
 				ImGui::Separator();
 			}
-
-			ImGui::TreePop();
 		}
 
 		ImGui::End();

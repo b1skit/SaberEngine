@@ -16,7 +16,7 @@ void main()
 	const vec3 worldPos = GetWorldPos(screenUV, gbuffer.NonLinearDepth, g_invViewProjection);
 
 	// Directional light direction is packed into the light position
-	const vec3 keylightWorldDir = g_lightWorldPos.xyz;
+	const vec3 keylightWorldDir = g_lightWorldPosRadius.xyz;
 
 	// Read from 2D shadow map:
 	const float NoL = max(0.0, dot(gbuffer.WorldNormal, keylightWorldDir));
@@ -27,15 +27,22 @@ void main()
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
 	lightingParams.WorldNormal = gbuffer.WorldNormal;
 	lightingParams.LinearRoughness = gbuffer.LinearRoughness;
+	lightingParams.RemappedRoughness = RemapRoughness(gbuffer.LinearRoughness);
 	lightingParams.LinearMetalness = gbuffer.LinearMetalness;
-	lightingParams.AO = gbuffer.AO;
 	lightingParams.WorldPosition = worldPos;
 	lightingParams.F0 = gbuffer.MatProp0;
-	lightingParams.LightWorldPos = worldPos; // Ensure attenuation = 0 for directional lights
+	lightingParams.LightWorldPos = vec3(0.f, 0.f, 0.f); // Directional lights are at infinity
 	lightingParams.LightWorldDir = keylightWorldDir;
-	lightingParams.LightColor = g_lightColorIntensity.rgb * g_lightColorIntensity.a;
+	lightingParams.LightColor = g_lightColorIntensity.rgb;
+	lightingParams.LightIntensity = g_lightColorIntensity.a;
+	lightingParams.LightAttenuationFactor = 1.f;
 	lightingParams.ShadowFactor = shadowFactor;
-	lightingParams.View = g_view;
 
-	FragColor = vec4(ComputeLighting(lightingParams), 1.f);
+	lightingParams.CameraWorldPos = g_cameraWPos;
+	lightingParams.Exposure = g_exposureProperties.x;
+
+	lightingParams.DiffuseScale = g_intensityScale.x;
+	lightingParams.SpecularScale = g_intensityScale.y;
+
+	FragColor = vec4(ComputeLighting(lightingParams), 0.f);
 } 

@@ -10,42 +10,38 @@
 
 void main()
 {	
-	const vec2 screenUV = vOut.uv0.xy; // Ambient is drawn with a fullscreen quad
-
-	const GBuffer gbuffer = UnpackGBuffer(screenUV);
+	const GBuffer gbuffer = UnpackGBuffer(vOut.uv0.xy);
 
 	const float diffuseScale = g_maxPMREMMipDFGResScaleDiffuseScaleSpec.z;
 	const float specScale = g_maxPMREMMipDFGResScaleDiffuseScaleSpec.w;
 
 	// Reconstruct the world position:
-	const vec4 worldPos = vec4(GetWorldPos(screenUV, gbuffer.NonLinearDepth, g_invViewProjection), 1.f);
+	const vec3 worldPos = GetWorldPos(vOut.uv0.xy, gbuffer.NonLinearDepth, g_invViewProjection);
 
-	const vec4 viewPosition = g_view * worldPos;
-	const vec3 viewEyeDir = normalize(-viewPosition.xyz);	// View-space eye/camera direction
+	const vec3 N = normalize(gbuffer.WorldNormal.xyz);
+	const vec3 V = normalize(g_cameraWPos - worldPos); // World-space point -> camera direction
+	
+	const float NoV	= clamp(dot(N, V), FLT_EPSILON, 1.f); // Prevent NaNs at glancing angles
 
-	const mat3 viewRotationScale = mat3(g_view); // Ignore the translation
-	const vec3 viewNormal = normalize(viewRotationScale * gbuffer.WorldNormal); // View-space surface MatNormal
-
-	const float NoV = max(0.0, dot(viewNormal, viewEyeDir) );
+	const float linearRoughness = gbuffer.LinearRoughness;
+	const float remappedRoughness = RemapRoughness(linearRoughness);
 
 	vec3 F0	= gbuffer.MatProp0.rgb; // .rgb = F0 (Surface response at 0 degrees)
 	F0 = mix(F0, gbuffer.LinearAlbedo, gbuffer.LinearMetalness); 
 	// Linear interpolation: x, y, using t=[0,1]. Returns x when t=0 -> Blends towards MatAlbedo for metals
 
-//	vec3 fresnel_kS = FresnelSchlick(NoV, F0); // Doesn't quite look right: Use FresnelSchlick_Roughness() instead
+//	vec3 fresnel_kS = FresnelSchlickF(NoV, F0); // Doesn't quite look right: Use FresnelSchlick_Roughness() instead
 	const vec3 fresnel_kS = FresnelSchlick_Roughness(NoV, F0, gbuffer.LinearRoughness);
+	// TODO: Make this aligned with the DX12 version
+
 	const vec3 k_d = 1.0 - fresnel_kS;	
 
 	// Sample the diffuse irradiance from our prefiltered irradiance environment map.
 	const vec3 diffuse = 
 		texture(CubeMap0, WorldToCubeSampleDir(gbuffer.WorldNormal)).xyz * gbuffer.AO * diffuseScale;
 
-	// Get the specular reflectance term:
-	const vec3 worldView = normalize(worldPos.xyz - g_cameraWPos); // Incident direction: camera -> point
-	vec3 worldReflection = normalize(reflect(worldView, gbuffer.WorldNormal));
+	const vec3 R = reflect(-V, N);
 
-	const float linearRoughness = gbuffer.LinearRoughness;
-	const float remappedRoughness = RemapRoughnessIBL(linearRoughness);
 	const float maxPMREMMipLevel = g_maxPMREMMipDFGResScaleDiffuseScaleSpec.x;
 
 	// Sample our generated BRDF Integration map using the linear roughness
@@ -53,13 +49,14 @@ void main()
 
 	const vec3 specular = textureLod(
 		CubeMap1, 
-		WorldToCubeSampleDir(worldReflection), 
+		WorldToCubeSampleDir(R), 
 		remappedRoughness * maxPMREMMipLevel).xyz * ((fresnel_kS * BRDF.x) + BRDF.y) * specScale;
 
-	const vec3 combinedContribution = (gbuffer.LinearAlbedo * diffuse * k_d + specular); // Note: Omitted the "/ PI" factor here
+	const vec3 combinedContribution = (gbuffer.LinearAlbedo * diffuse * k_d + specular);
+	// Note: Omitted the "/ PI" factor here
 
 	// Apply exposure:
 	const vec3 exposedColor = ApplyExposure(combinedContribution, g_exposureProperties.x);
 
-	FragColor = vec4(exposedColor, 1.0); // Note: Omitted the "/ PI" factor here
+	FragColor = vec4(exposedColor, 0.f);
 }

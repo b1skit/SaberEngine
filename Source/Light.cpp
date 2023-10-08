@@ -38,6 +38,56 @@ namespace
 
 		return shadowCamConfig;
 	}
+
+
+	float ComputePointLightMeshRadiusScaleFromIntensity(float luminousPower, float emitterRadius, float intensityCutoff)
+	{
+		// As per equation 15 (p.29) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al, we can 
+		// convert a point light's luminous power I (lm) (a.k.a luminous flux: The *perceived* power of a light, with 
+		// respect to the sensitivity of the human eye) to luminous intensity (phi) (the quantity of light emitted in
+		// unit time per unit solid angle) using phi = 4pi * I. 
+		// Intuitively, this conversion is taking the perceived intensity of a ray arriving at the eye, and adjusting
+		// it with respect to all of the rays emitted by a spherical emitter.
+		// However, for our point light approximation we're evaluating the luminous power arriving from a signel ray
+		// (not integrated over a spherical emitter) so we normalize it over the solid angle by dividing by 4pi. Thus,
+		// the 4pi's cancel and we can ignore them here
+		const float luminousIntensity = luminousPower;
+
+		// In our point light shaders, we use Cem Yuksel's nonsingular point light attenuation function:
+		// // http://www.cemyuksel.com/research/pointlightattenuation/
+		// In the limit over the distance d, it converges to 0 as per the standard 1/d^2 attenuation; In practice it
+		// approaches 1/d^2 very quickly. So, we use the simpler 1/d^2 attenuation here to approximate the ideal
+		// spherical deffered poiint light mesh radius, as solving for d in Cem's formula has a complex solution
+
+		// See a desmos plot of these calculations here:
+		// https://www.desmos.com/calculator/1rtsuljvl4
+
+		const float equivalentConstantOffset = (emitterRadius * emitterRadius) * 0.5f;
+
+		const float minIntensityCutoff = std::max(intensityCutoff, 0.001f); // Guard against divide by 0
+
+		const float deferredMeshRadius = glm::sqrt((luminousIntensity / minIntensityCutoff) - equivalentConstantOffset);
+
+		return deferredMeshRadius;
+	}
+
+
+	void ConfigurePointLightMeshScale(gr::Light* pointLight)
+	{
+		SEAssert("Light is not a point light", pointLight->Type() == gr::Light::LightType::Point);
+
+		gr::Light::LightTypeProperties& lightProperties = 
+			pointLight->AccessLightTypeProperties(gr::Light::LightType::Point);
+
+		const float newDeferredMeshRadius = ComputePointLightMeshRadiusScaleFromIntensity(
+			lightProperties.m_point.m_colorIntensity.a,
+			lightProperties.m_point.m_emitterRadius,
+			lightProperties.m_point.m_intensityCuttoff);
+
+		// Scale the owning transform such that a sphere created with a radius of 1 will be the correct size
+		lightProperties.m_point.m_ownerTransform->SetLocalScale(
+			glm::vec3(newDeferredMeshRadius, newDeferredMeshRadius, newDeferredMeshRadius));
+	}
 }
 
 
@@ -113,13 +163,12 @@ namespace gr
 			m_typeProperties.m_point.m_ownerTransform = ownerTransform;
 			m_typeProperties.m_point.m_colorIntensity = colorIntensity;
 
-			// Compute the radius: 
-			const float cutoff = 0.05f; // Want the sphere mesh radius where light intensity will be close to zero
-			const float maxColor = glm::max(glm::max(colorIntensity.r, colorIntensity.g), colorIntensity.b);
-			const float radius = glm::sqrt((maxColor / cutoff) - 1.0f);
+			m_typeProperties.m_point.m_emitterRadius = 0.1f;
+			m_typeProperties.m_point.m_intensityCuttoff = 0.05f;
 
-			// Scale the owning transform such that a sphere created with a radius of 1 will be the correct size
-			m_typeProperties.m_point.m_ownerTransform->SetLocalScale(glm::vec3(radius, radius, radius));
+			ConfigurePointLightMeshScale(this);
+			
+			const float deferredMeshRadius = m_typeProperties.m_point.m_ownerTransform->GetLocalScale().x;
 
 			m_typeProperties.m_point.m_cubeShadowMap = nullptr;
 			if (hasShadow)
@@ -127,7 +176,7 @@ namespace gr
 				gr::Camera::CameraConfig shadowCamConfig;
 				shadowCamConfig.m_yFOV = static_cast<float>(std::numbers::pi) / 2.0f;
 				shadowCamConfig.m_near = 0.1f;
-				shadowCamConfig.m_far = radius;
+				shadowCamConfig.m_far = deferredMeshRadius;
 				shadowCamConfig.m_aspectRatio = 1.0f;
 				shadowCamConfig.m_projectionType = Camera::CameraConfig::ProjectionType::Perspective;
 
@@ -287,17 +336,26 @@ namespace gr
 	{
 		const uint64_t uniqueID = GetUniqueID();
 
-		auto ShowColorPicker = [&uniqueID](std::string const& lightName, glm::vec4& color)
+		auto ShowDebugOptions = [this, &uniqueID]()
+		{
+			if (ImGui::CollapsingHeader(std::format("Debug##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
+			{
+				ImGui::Checkbox(std::format("Diffuse enabled##{}", uniqueID).c_str(), &m_typeProperties.m_diffuseEnabled);
+				ImGui::Checkbox(std::format("Specular enabled##{}", uniqueID).c_str(), &m_typeProperties.m_specularEnabled);
+			}
+		};
+
+		auto ShowColorPicker = [this, &uniqueID](glm::vec4& color)
 		{
 			ImGui::Text("Color:"); ImGui::SameLine();
 			ImGuiColorEditFlags flags = ImGuiColorEditFlags_HDR;
 			ImGui::ColorEdit4(
-				std::format("{} {}", lightName, "Color").c_str(), 
-				&color.r, 
+				std::format("{} Color##{}", GetName(), uniqueID).c_str(),
+				&color.r,
 				ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | flags);
 		};
 
-		auto ShowDebugOptions = [this, &uniqueID]()
+		auto ShowCommonOptions = [this, &uniqueID, &ShowDebugOptions, &ShowColorPicker](glm::vec4* colorIntensity) -> bool
 		{
 			const bool currentIsEnabled = m_typeProperties.m_diffuseEnabled || m_typeProperties.m_specularEnabled;
 
@@ -309,77 +367,112 @@ namespace gr
 				m_typeProperties.m_specularEnabled = newEnabled;
 			}
 
-			if (ImGui::CollapsingHeader(std::format("Debug##{}{}", GetName(), uniqueID).c_str(), ImGuiTreeNodeFlags_None))
+			bool modifiedIntensity = false;
+			if (colorIntensity)
 			{
-				ImGui::Checkbox("Diffuse enabled", &m_typeProperties.m_diffuseEnabled);
-				ImGui::Checkbox("Specular enabled", &m_typeProperties.m_specularEnabled);
+				modifiedIntensity = ImGui::SliderFloat(
+					std::format("Luminous Power##{}", uniqueID).c_str(),
+					&colorIntensity->a,
+					0.00001f,
+					1000.0f,
+					"%.3f",
+					ImGuiSliderFlags_None);
+
+				ShowColorPicker(*colorIntensity);
+			}
+
+			ShowDebugOptions();
+
+			return modifiedIntensity;
+		};
+
+		auto ShowShadowMapMenu = [this, &uniqueID](gr::ShadowMap* shadowMap)
+		{
+			if (ImGui::CollapsingHeader(std::format("Shadow map##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
+			{
+				if (shadowMap)
+				{
+					shadowMap->ShowImGuiWindow();
+				}
+				else
+				{
+					ImGui::Text("<No Shadow>");
+				}
 			}
 		};
-		
+
+		auto ShowTransformMenu = [this, &uniqueID](gr::Transform* transform)
+		{
+			if (ImGui::CollapsingHeader(std::format("Transform##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
+			{
+				transform->ShowImGuiWindow();
+			}
+		};
 
 		if (ImGui::CollapsingHeader(std::format("{}##{}", GetName(), uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			switch (m_type)
 			{
 			case LightType::AmbientIBL:
-			{				
-				ImGui::SliderFloat(
-					"Ambient scale", 
-					&m_typeProperties.m_intensityScale,
-					0.0f, 
-					4.0f, 
-					"%.3f", 
-					ImGuiSliderFlags_None);
+			{
+				ShowCommonOptions(nullptr);
 
-				ImGui::Text("BRDF Integration map: \"%s\"", 
-					m_typeProperties.m_ambient.m_BRDF_integrationMap->GetName().c_str());
+				if (ImGui::CollapsingHeader(std::format("IBL Textures##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
+				{
+					ImGui::Text("BRDF Integration map: \"%s\"",
+						m_typeProperties.m_ambient.m_BRDF_integrationMap->GetName().c_str());
 
-				ImGui::Text("IEM Texture: \"%s\"",
-					m_typeProperties.m_ambient.m_IEMTex->GetName().c_str());
+					ImGui::Text("IEM Texture: \"%s\"",
+						m_typeProperties.m_ambient.m_IEMTex->GetName().c_str());
 
-				ImGui::Text("PMREM Texture: \"%s\"",
-					m_typeProperties.m_ambient.m_PMREMTex->GetName().c_str());
+					ImGui::Text("PMREM Texture: \"%s\"",
+						m_typeProperties.m_ambient.m_PMREMTex->GetName().c_str());
+				}
 			}
 			break;
 			case LightType::Directional:
 			{
-				m_typeProperties.m_directional.m_ownerTransform->ShowImGuiWindow();
+				ShowCommonOptions(&m_typeProperties.m_directional.m_colorIntensity);
 
-				ShowColorPicker(GetName(), m_typeProperties.m_directional.m_colorIntensity);
-
-				if (m_typeProperties.m_directional.m_shadowMap)
-				{
-					ImGui::Text("Shadow map: \"%s\"", GetName().c_str());
-					m_typeProperties.m_directional.m_shadowMap->ShowImGuiWindow();
-				}
-				else
-				{
-					ImGui::Text("<No Shadow>");
-				}
+				ShowShadowMapMenu(m_typeProperties.m_directional.m_shadowMap.get());
+				ShowTransformMenu(m_typeProperties.m_directional.m_ownerTransform);
 			}
 			break;
 			case LightType::Point:
 			{
-				m_typeProperties.m_point.m_ownerTransform->ShowImGuiWindow();
+				const bool modifiedIntensity = ShowCommonOptions(&m_typeProperties.m_point.m_colorIntensity);
 
-				ShowColorPicker(GetName(), m_typeProperties.m_point.m_colorIntensity);
+				const bool modifiedIntensityCutoff = ImGui::SliderFloat(
+					std::format("Intensity cutoff##{}", uniqueID).c_str(),
+					&m_typeProperties.m_point.m_intensityCuttoff, 0.0f, 1.f, "%.5f", ImGuiSliderFlags_None);
 
-				if (m_typeProperties.m_point.m_cubeShadowMap)
+				const bool modifiedEmitterRadius = ImGui::SliderFloat(
+					std::format("Emitter Radius##{}", uniqueID).c_str(),
+					&m_typeProperties.m_point.m_emitterRadius, 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_None);
+				ImGui::SameLine();
+				ImGui::TextDisabled("(?)");
+				if (ImGui::BeginItemTooltip())
 				{
-					ImGui::Text("Cube Shadow map: \"%s\"", GetName().c_str());
-					m_typeProperties.m_point.m_cubeShadowMap->ShowImGuiWindow();
+					ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+					ImGui::TextUnformatted("Simulated emitter radius for calculating non-singular point light attenuation");
+					ImGui::PopTextWrapPos();
+					ImGui::EndTooltip();
 				}
-				else
+
+				if (modifiedIntensity || modifiedIntensityCutoff || modifiedEmitterRadius)
 				{
-					ImGui::Text("<No Shadow>");
+					ConfigurePointLightMeshScale(this);
 				}
+				ImGui::Text(std::format("Deferred mesh radius: {}", 
+					m_typeProperties.m_point.m_ownerTransform->GetLocalScale().x).c_str());
+
+				ShowShadowMapMenu(m_typeProperties.m_point.m_cubeShadowMap.get());
+				ShowTransformMenu(m_typeProperties.m_point.m_ownerTransform);
 			}
 			break;
 			default:
 				SEAssertF("Invalid light type");
 			}
-
-			ShowDebugOptions();
 		}	
 	}
 }

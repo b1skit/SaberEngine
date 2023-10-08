@@ -5,6 +5,25 @@
 #include "MathConstants.hlsli"
 
 
+struct LightParamsCB
+{
+	float4 g_lightColorIntensity; // .rgb = hue, .a = intensity
+	
+	// .xyz = world pos (Directional lights: Normalized point -> source dir)
+	// .w = emitter radius (point lights)
+	float4 g_lightWorldPosRadius;
+	
+	float4 g_shadowMapTexelSize; // .xyzw = width, height, 1/width, 1/height
+	float4 g_shadowCamNearFarBiasMinMax; // .xy = shadow cam near/far, .zw = min, max shadow bias
+
+	float4x4 g_shadowCam_VP;
+	
+	float4 g_renderTargetResolution;
+	float4 g_intensityScale; // .xy = diffuse/specular intensity scale, .zw = unused
+};
+ConstantBuffer<LightParamsCB> LightParams;
+
+
 // Map linear roughness to "perceptually linear" roughness. 
 // Perceptually linear roughness results in a linear-appearing transition from smooth to rough surfaces.
 // As per p.13 of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al., we use the squared roughness
@@ -130,6 +149,12 @@ float3 ComputeDiffuseColor(float3 linearAlbedo, float3 f0, float metalness)
 }
 
 
+float3 ApplyExposure(float3 linearColor, float exposure)
+{
+	return linearColor * exposure;
+}
+
+
 struct LightingParams
 {
 	float3 LinearAlbedo;
@@ -139,12 +164,15 @@ struct LightingParams
 	float LinearMetalness;
 	float3 WorldPosition;
 	float3 F0;
-	float3 LightWorldPos; // == WorldPosition for directional lights, to ensure attenuation = 0
+	float3 LightWorldPos; // 0 for directional lights
 	float3 LightWorldDir; // From point towards light
 	float3 LightColor;
 	float LightIntensity;
+	float LightAttenuationFactor;
 	float ShadowFactor;
+	
 	float3 CameraWorldPos;
+	float Exposure;
 	
 	float DiffuseScale;
 	float SpecularScale;
@@ -153,9 +181,6 @@ struct LightingParams
 
 float3 ComputeLighting(LightingParams lightingParams)
 {
-	const float attenuation = 1.f; // TODO: Calculate this
-	
-	
 	const float3 N = normalize(lightingParams.WorldNormal);
 	
 	const float3 V = normalize(lightingParams.CameraWorldPos - lightingParams.WorldPosition); // point -> camera
@@ -172,7 +197,8 @@ float3 ComputeLighting(LightingParams lightingParams)
 	const float3 sunHue = lightingParams.LightColor;
 	const float sunIlluminanceLux = lightingParams.LightIntensity;
 	
-	const float3 illuminance = sunIlluminanceLux * sunHue * NoL;
+	const float3 illuminance = 
+		sunIlluminanceLux * sunHue * NoL * lightingParams.LightAttenuationFactor * lightingParams.ShadowFactor;
 
 	const float3 dielectricSpecular = lightingParams.F0;
 	const float3 blendedF0 =
@@ -195,7 +221,10 @@ float3 ComputeLighting(LightingParams lightingParams)
 	const float3 combinedContribution = (diffuseReflectance + specularReflectance) * illuminance;
 	// Note: We're omitting the pi term in the albedo
 	
-	return combinedContribution;
+	// Apply exposure:
+	const float3 exposedColor = ApplyExposure(combinedContribution, lightingParams.Exposure);
+	
+	return exposedColor;
 }
 
 

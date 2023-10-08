@@ -512,13 +512,13 @@ namespace re
 				if (ImGui::BeginMenu("Window"))
 				{
 					// Console debug log window:
-					ImGui::MenuItem("Show console log", "", &s_showConsoleLog);
+					ImGui::MenuItem("Console log", "", &s_showConsoleLog);
 
 					// Scene objects window:
-					ImGui::MenuItem("Show Scene Objects Panel", "", &s_showScenePanel);
+					ImGui::MenuItem("Scene Objects Panel", "", &s_showScenePanel);
 
 					// Graphics systems window:
-					ImGui::MenuItem("Show Render Systems Panel", "", &s_showGraphicsSystemPanel);
+					ImGui::MenuItem("Render Systems Panel", "", &s_showGraphicsSystemPanel);
 
 					ImGui::TextDisabled("Performance statistics");
 

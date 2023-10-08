@@ -158,7 +158,11 @@ layout(std430, binding=1) readonly buffer CameraParams
 layout(std430, binding=2) readonly buffer LightParams
 {
 	vec4 g_lightColorIntensity; // .rgb = hue, .a = intensity
-	vec4 g_lightWorldPos; // Directional lights: Normalized, world-space point to source dir (ie. parallel)
+
+	// .xyz = world pos (Directional lights: Normalized point -> source dir)
+	// .w = emitter radius (point lights)
+	vec4 g_lightWorldPosRadius;
+
 	vec4 g_shadowMapTexelSize;	// .xyzw = width, height, 1/width, 1/height
 	vec4 g_shadowCamNearFarBiasMinMax; // .xy = shadow cam near/far, .zw = min, max shadow bias
 

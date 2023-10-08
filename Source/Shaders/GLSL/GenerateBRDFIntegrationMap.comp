@@ -27,7 +27,8 @@ void main()
 
 	const float NoV = screenUV.x;
 	const float NoV2 = NoV * NoV;
-	const float roughness = screenUV.y;
+	const float linearRoughness = screenUV.y;
+	const float remappedRoughness = RemapRoughness(linearRoughness);
 
 	const vec3 V = vec3(sqrt(1.0f - NoV2), 0.0f, NoV);
 
@@ -39,7 +40,7 @@ void main()
 	for(uint i = 0; i < NUM_SAMPLES; i++)
 	{
 		const vec2 Xi = Hammersley2D(i, NUM_SAMPLES);
-		const vec3 H = ImportanceSampleGGX(Xi, N, roughness);
+		const vec3 H = ImportanceSampleGGX(Xi, N, linearRoughness);
 		const vec3 L = normalize(2.0f * dot(V, H) * H - V);
 
 		const float NoL = max(L.z, 0.0f);
@@ -48,7 +49,7 @@ void main()
 
 		if(NoL > 0.f)
 		{
-			const float G = GeometryG(NoV, NoL, roughness);
+			const float G = GeometryG(NoV, NoL, remappedRoughness);
 			const float GVis = (G * VoH) / max((NoH * NoV), FLT_MIN); // Shouldn't be zero, but just in case
 			const float Fc = pow(1.0 - VoH, 5.0f);
 

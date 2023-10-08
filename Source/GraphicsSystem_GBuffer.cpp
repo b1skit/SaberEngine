@@ -58,13 +58,7 @@ namespace gr
 		gBufferColorParams.m_format = re::Texture::Format::RGBA8;
 		gBufferColorParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		gBufferColorParams.m_addToSceneData = false;
-
 		gBufferColorParams.m_mipMode = re::Texture::MipMode::None;
-		// TODO: Currently, our GBuffer doesn't use mipmapping, but it should.
-		// We need to compute the appropriate mip level in the shader, by writing UV derivatives during the GBuffer
-		// pass, and using a stencil mask to ensure we're sampling the correct material at boundaries
-		// https://www.reedbeta.com/blog/deferred-texturing/
-		// -> We'll also need to trigger mip generation after laying down the GBuffer
 
 		// World normal may have negative components, emissive values may be > 1
 		Texture::TextureParams gbuffer16bitParams = gBufferColorParams;

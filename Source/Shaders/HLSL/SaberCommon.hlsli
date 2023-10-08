@@ -8,6 +8,8 @@
 
 struct VertexIn
 {
+	// TODO: Make these opt-in as we do for VertexOut
+	
 	float3 Position : POSITION0;
 	float3 Normal	: NORMAL0;
 	float4 Tangent	: TANGENT0;
@@ -30,9 +32,12 @@ struct VertexOut
 #endif	
 #ifdef VOUT_LOCAL_POS
 	float3 LocalPos : TEXCOORD1;
-#endif	
+#endif
+#ifdef VOUT_WORLD_POS
+	float3 WorldPos : TEXCOORD2;
+#endif
 #ifdef VOUT_TBN
-	float3x3 TBN	: TEXCOORD2;
+	float3x3 TBN	: TEXCOORD3;
 #endif
 };
 

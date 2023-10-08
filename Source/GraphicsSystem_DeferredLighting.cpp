@@ -140,13 +140,17 @@ namespace
 	struct LightParams
 	{
 		glm::vec4 g_lightColorIntensity; // .rgb = hue, .a = intensity
-		glm::vec4 g_lightWorldPos; // Directional lights: Normalized, world-space point to source dir (ie. parallel)
+
+		// .xyz = world pos (Directional lights: Normalized point -> source dir)
+		// .w = emitter radius (point lights)
+		glm::vec4 g_lightWorldPosRadius; 
+
 		glm::vec4 g_shadowMapTexelSize;	// .xyzw = width, height, 1/width, 1/height
 		glm::vec4 g_shadowCamNearFarBiasMinMax; // .xy = shadow cam near/far, .zw = min, max shadow bias
 
 		glm::mat4 g_shadowCam_VP;
 
-		glm::vec4 g_renderTargetResolution;
+		glm::vec4 g_renderTargetResolution; // .xy = xRes, yRes, .zw = 1/xRes 1/yRes
 		glm::vec4 g_intensityScale; // .xy = diffuse/specular intensity scale, .zw = unused
 
 		static constexpr char const* const s_shaderName = "LightParams"; // Not counted towards size of struct
@@ -167,12 +171,15 @@ namespace
 		{
 		case gr::Light::LightType::Directional:
 		{
-			lightParams.g_lightWorldPos = glm::vec4(light->GetTransform()->GetGlobalForward(), 0.f); // WorldPos == Light dir
+			lightParams.g_lightWorldPosRadius = 
+				glm::vec4(light->GetTransform()->GetGlobalForward(), 0.f); // WorldPos == Light dir
 		}
 		break;
 		case gr::Light::LightType::Point:
 		{
-			lightParams.g_lightWorldPos = glm::vec4(light->GetTransform()->GetGlobalPosition(), 0.f);
+			lightParams.g_lightWorldPosRadius = glm::vec4(
+				light->GetTransform()->GetGlobalPosition(), 
+				lightProperties.m_point.m_emitterRadius);
 		}
 		break;
 		default:
@@ -211,8 +218,8 @@ namespace
 		lightParams.g_renderTargetResolution = targetSet->GetTargetDimensions();
 		
 		lightParams.g_intensityScale = glm::vec4(
-			lightProperties.m_intensityScale * lightProperties.m_diffuseEnabled,
-			lightProperties.m_intensityScale * lightProperties.m_specularEnabled,
+			static_cast<float>(lightProperties.m_diffuseEnabled),
+			static_cast<float>(lightProperties.m_specularEnabled),
 			0.f,
 			0.f);
 
@@ -599,8 +606,8 @@ namespace gr
 		
 		const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
 			totalPMREMMipLevels,
-			ambientProperties.m_intensityScale * ambientProperties.m_diffuseEnabled,
-			ambientProperties.m_intensityScale * ambientProperties.m_specularEnabled);
+			static_cast<float>(ambientProperties.m_diffuseEnabled),
+			static_cast<float>(ambientProperties.m_specularEnabled));
 
 		m_ambientParams = re::ParameterBlock::Create(
 			AmbientLightParams::s_shaderName,
@@ -787,8 +794,8 @@ namespace gr
 
 		const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
 			totalPMREMMipLevels,
-			ambientProperties.m_intensityScale * ambientProperties.m_diffuseEnabled,
-			ambientProperties.m_intensityScale * ambientProperties.m_specularEnabled);
+			static_cast<float>(ambientProperties.m_diffuseEnabled),
+			static_cast<float>(ambientProperties.m_specularEnabled));
 
 		m_ambientParams->Commit(ambientLightParams);
 	}

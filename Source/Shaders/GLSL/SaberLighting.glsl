@@ -5,13 +5,16 @@
 #include "SaberGlobals.glsl"
 #include "SaberCommon.glsl"
 
-// Saber Engine Lighting Common
-// Defines lighting functions common to all shaders
 
 
-
-// PBR Lighting:
-//--------------
+// Map linear roughness to "perceptually linear" roughness. 
+// Perceptually linear roughness results in a linear-appearing transition from smooth to rough surfaces.
+// As per p.13 of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al., we use the squared roughness
+// remapping
+float RemapRoughness(float linearRoughness)
+{
+	return linearRoughness * linearRoughness;
+}
 
 // Specular D: The normal distribution function (NDF)
 // Trowbridge-Reitz GGX Normal Distribution Function: Approximate area of surface microfacets aligned with the halfway
@@ -30,34 +33,10 @@ float NDF(vec3 N, vec3 H, float roughness)
 }
 
 
-// Remap roughness for the geometry function
-// This adjustment should only be used for analytic light sources. If applied to IBL, the results will be too dark
-// at glancing angles.
-float RemapRoughnessDirect(float roughness)
-{
-	// Non-linear remap [0,1] -> [0.125, 0.5] (https://www.desmos.com/calculator/mtb0ffbl82)
-
-	float numerator = (roughness + 1.f);
-	numerator *= numerator;
-
-	return numerator / 8.f;
-}
-
-
-// Remap roughness for the geometry function, when computing image-based lighting contributions
-float RemapRoughnessIBL(float roughness)
-{
-	return roughness * roughness;
-}
-
-
 // Helper function for geometry function
 float GeometrySchlickGGX(float NoV, float remappedRoughness)
 {
-	const float nom = NoV;
-	const float denom = (NoV * (1.f - remappedRoughness)) + remappedRoughness;
-	
-	return nom / denom;
+	return NoV / ((NoV * (1.f - remappedRoughness)) + remappedRoughness);
 }
 
 
@@ -72,17 +51,65 @@ float GeometryG(float NoV, float NoL, float remappedRoughness)
 }
 
 
-// Schlick's Approximation: Contribution of Fresnel factor in specular reflection
-vec3 FresnelSchlick(float NoV, vec3 F0)
+// Specular D is the normal distribution function (NDF), which approximates the surface area of microfacets aligned with
+// the halfway vector between the light and view directions.
+// As per Disney this is the GGX/Trowbridge-Reitz NDF, with their roughness reparameterization of alpha = roughness^2
+float SpecularD(float remappedRoughness, float NoH)
+{	
+	// Note: Disney reparameterizes alpha = roughness^2. This is our remapping, so we pass it in here
+	const float alpha = remappedRoughness; 
+	const float alpha2 = alpha * alpha;
+	const float NoH2 = NoH * NoH;
+	
+	return alpha2 / max((M_PI * pow((NoH2 * (alpha2 - 1.f) + 1.f), 2.f)), FLT_MIN); // == 1/pi when roughness = 1
+}
+
+
+// Compute the blended Fresnel reflectance at incident angles (i.e L == N).
+// The linearAlbedo defines the diffuse albedo for non-metallic surfaces, and the Fresnel reflectance at normal
+// incidence for metallic surfaces. Thus, the linearMetalness value is used to blend between these.
+// Based on section B.3.5 "Metal BRDF and Dielectric BRDF" of the glTF 2.0 specifications
+// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metal-brdf-and-dielectric-brdf
+vec3 ComputeBlendedF0(vec3 f0, vec3 linearAlbedo, float linearMetalness)
 {
-	return F0 + ((1.f - F0) * pow(1.f - NoV, 5.0));
+	return mix(f0, linearAlbedo, linearMetalness);
+}
+
+
+// Compute the F_D90 term (i.e. reflectivity at grazing angles) for the Schlick Fresnel approximation used in our
+// Cook-Torrance microfacet specular BRDF. 
+//	theta_d = LoH, the cosine of the angle between the light vector, and the micronormal (aka. the half vector).
+// Based on equation 5 (p.9) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al; and 
+// section 5.3 (p.14) of "Physically Based Shading at Disney", Burley.
+float ComputeF90(float remappedRoughness, float LoH)
+{
+	return 0.5f + 2.f * remappedRoughness * LoH * LoH;
+}
+
+
+// Fresnel function F (Shlick approximation).
+// Describes the amount of light reflected from a (smooth) surface at the interface between 2 media.
+// f0 = Reflectance at normal incidence. 
+//	f0 = (n_1 - n_2)^2 / (n_1 + n_2)^2, with n_i = the material's index of refraction (IOR). 
+//	When one media is air, which has an IOR ~= 1, f0 = (n-1)^2 / (n+1)^2
+// f90 = Maximum reflectance (i.e. at grazing incidence, when the normal and ray are 90 degrees apart)
+// u = cosine of the angle between the surface normal N and the incident ray
+vec3 FresnelSchlickF(in vec3 f0, in float f90, in float u)
+{
+	// Schuler's solution for specular micro-occlusion.
+	// derived from f0 (which is itself derived from the diffuse color), based on the knowledge that no real material
+	// has a reflectance < 2%. Values of reflectance < 0.02 are assumed to be the result of pre-baked occlusion, and 
+	// used to smoothly decrease the Fresnel reflectance contribution
+	// f90 = saturate(50.0 * dot( f0 , 0.33f) );
+	
+	return f0 + (vec3(f90, f90, f90) - f0) * pow(1.f - u, 5.f);
 }
 
 
 // Schlick's Approximation, with an added roughness term (as per Sebastien Lagarde)
 vec3 FresnelSchlick_Roughness(float NoV, vec3 F0, float roughness)
 {
-	NoV = max(NoV, 0.f);
+	NoV = clamp(NoV, 0.f, 1.f);
 	return F0 + (max(vec3(1.f - roughness), F0) - F0) * pow(1.f - NoV, 5.0);
 }
 
@@ -90,10 +117,7 @@ vec3 FresnelSchlick_Roughness(float NoV, vec3 F0, float roughness)
 // Compute the halfway vector between light and view dirs
 vec3 HalfVector(vec3 light, vec3 view)
 {
-	vec3 halfVector = light + view;
-	halfVector = normalize(halfVector);
-
-	return halfVector;
+	return normalize(light + view);
 }
 
 
@@ -103,14 +127,28 @@ vec3 ApplyExposure(vec3 linearColor, float exposure)
 }
 
 
-// Calculate attenuation based on distance between fragment and light
-float LightAttenuation(vec3 fragWorldPosition, vec3 lightWorldPosition)
+// Note: The original Disney diffuse model is not energy conserving. This implementation from Frostbite is a 
+// modification that renormalizes it to make it _almost_ energy conserving
+// Based on listing 1 (p.10) "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al.
+float FrostbiteDisneyDiffuse(float NoV, float NoL, float LoH, float linearRoughness)
 {
-	const float lightDist = length(lightWorldPosition - fragWorldPosition);
+	const float energyBias		= mix(0.f, 0.5f, linearRoughness);
+	const float energyFactor	= mix(1.f, 1.f / 1.51f, linearRoughness);
+	const float fd90			= energyBias + 2.f * LoH * LoH * linearRoughness;
+	const vec3 f0				= vec3(1.f, 1.f, 1.f);
+	const float lightScatter	= FresnelSchlickF(f0, fd90, NoL).r;
+	const float viewScatter		= FresnelSchlickF(f0, fd90, NoV).r;
+	
+	return lightScatter * viewScatter * energyFactor;
+}
 
-	const float attenuation = 1.f / (1.f + (lightDist * lightDist));
 
-	return attenuation;
+// Compute the diffuse color. For smooth, shiny metals we blend towards black as the specular contribution increases.
+// Based on section B.3.5 "Metal BRDF and Dielectric BRDF" of the glTF 2.0 specifications
+// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metal-brdf-and-dielectric-brdf
+vec3 ComputeDiffuseColor(vec3 linearAlbedo, vec3 f0, float metalness)
+{
+	return linearAlbedo * (vec3(1.f, 1.f, 1.f) - f0) * (1.f - metalness); // As per the GLTF specs
 }
 
 
@@ -119,66 +157,70 @@ struct LightingParams
 	vec3 LinearAlbedo;
 	vec3 WorldNormal;
 	float LinearRoughness;
+	float RemappedRoughness;
 	float LinearMetalness;
-	float AO;
 	vec3 WorldPosition;
 	vec3 F0;
-	vec3 LightWorldPos; // == WorldPosition for directional lights, to ensure attenuation = 0
+	vec3 LightWorldPos; // 0 for directional lights
 	vec3 LightWorldDir;
 	vec3 LightColor;
+	float LightIntensity;
+	float LightAttenuationFactor;
 	float ShadowFactor;
-	mat4 View;
+	
+	vec3 CameraWorldPos;
+	float Exposure;
+
+	float DiffuseScale; 
+	float SpecularScale;
 };
 
-// General PBR lighting: Called from specific deferred light shaders
+
 vec3 ComputeLighting(const LightingParams lightingParams)
 {
-	const vec3 lightWorldDir = normalize(lightingParams.LightWorldDir);
-	const vec3 worldNormal = normalize(lightingParams.WorldNormal);
+	const vec3 N = normalize(lightingParams.WorldNormal);
 
-	const vec4 viewPosition = lightingParams.View * vec4(lightingParams.WorldPosition, 1.f); // View-space position
-	const vec3 viewEyeDir = normalize(-viewPosition.xyz);	// View-space: Point -> eye/camera direction
+	// World-space point -> camera direction
+	const vec3 V = normalize(lightingParams.CameraWorldPos - lightingParams.WorldPosition); 
+	const float NoV	= clamp(dot(N, V), FLT_EPSILON, 1.f); // Prevent NaNs at glancing angles
 
-	const mat3 viewRotationScale = mat3(lightingParams.View);
-	const vec3 viewNormal = normalize(viewRotationScale * worldNormal); // View-space normal
+	const vec3 L = normalize(lightingParams.LightWorldDir);
+	const float NoL = clamp(dot(N, L), FLT_EPSILON, 1.f); // Prevent NaNs at glancing angles
 
-	const vec3 lightViewDir = viewRotationScale * lightWorldDir;
-	const vec3 halfVectorView = HalfVector(lightViewDir, viewEyeDir); // View-space half direction
+	const vec3 H = normalize(HalfVector(L, V));
+	const float LoH = clamp(dot(L, H), 0.f, 1.f);
 
-	const float NoV	= max(0.f, dot(viewNormal, viewEyeDir) );
-	const float NoL = max(0.f, dot(worldNormal, lightWorldDir));
+	const float diffuseResponse = FrostbiteDisneyDiffuse(NoV, NoL, LoH, lightingParams.LinearRoughness);
 
-	// Fresnel-Schlick approximation is only defined for non-metals, so we blend it here. Blends towards albedo for metals
-	const vec3 blendedF0 = mix(lightingParams.F0, lightingParams.LinearAlbedo, lightingParams.LinearMetalness); 
-
-	const vec3 fresnel = FresnelSchlick(NoV, blendedF0);
+	const vec3 sunHue = lightingParams.LightColor;
+	const float sunIlluminanceLux = lightingParams.LightIntensity;
 	
-	const float NDF = NDF(viewNormal, halfVectorView, lightingParams.LinearRoughness);
+	const vec3 illuminance = 
+		sunIlluminanceLux * sunHue * NoL * lightingParams.LightAttenuationFactor * lightingParams.ShadowFactor;
 
-	const float remappedRoughness = RemapRoughnessDirect(lightingParams.LinearRoughness);
-	const float geometry = GeometryG(NoV, NoL, remappedRoughness);
+	const vec3 dielectricSpecular = lightingParams.F0;
+	const vec3 blendedF0 =
+		ComputeBlendedF0(dielectricSpecular, lightingParams.LinearAlbedo, lightingParams.LinearMetalness);
+	const vec3 diffuseReflectance = ComputeDiffuseColor(
+		lightingParams.LinearAlbedo, 
+		blendedF0, 
+		lightingParams.LinearMetalness) * diffuseResponse * lightingParams.DiffuseScale;
 
-	const float diffuseScale = g_intensityScale.x;
-	const float specularScale = g_intensityScale.y;
+	const float f90 = ComputeF90(lightingParams.LinearRoughness, LoH);
+	const vec3 fresnelF = FresnelSchlickF(blendedF0, f90, LoH);
 
-	// Specular:
-	const vec3 specularContribution = specularScale * (NDF * fresnel * geometry) / max((4.0 * NoV * NoL), 0.0001f);
+	const float geometryG = GeometryG(NoV, NoL, lightingParams.RemappedRoughness);
+
+	const float NoH = clamp(dot(N, H), 0.f, 1.f);
+	const float specularD = SpecularD(lightingParams.RemappedRoughness, NoH);
+
+	const vec3 specularReflectance = fresnelF * geometryG * specularD * lightingParams.SpecularScale;
 	
-	// Diffuse:
-	vec3 k_d = vec3(1.f) - fresnel;
-	k_d = k_d * (1.f - lightingParams.LinearMetalness); // Metallics absorb refracted light
-//	const vec3 diffuseContribution = k_d * lightingParams.LinearAlbedo.rgb; // Note: Omitted the "/ M_PI" factor here
-	const vec3 diffuseContribution = diffuseScale * k_d * lightingParams.LinearAlbedo.rgb / M_PI;
-
-	// Light attenuation:
-	const float lightAttenuation = LightAttenuation(lightingParams.WorldPosition, lightingParams.LightWorldPos);
-	const vec3 attenuatedLightColor = lightingParams.LightColor * lightAttenuation;
-
-	const vec3 combinedContribution = 
-		(diffuseContribution + specularContribution) * attenuatedLightColor * NoL * lightingParams.ShadowFactor;
-
+	const vec3 combinedContribution = (diffuseReflectance + specularReflectance) * illuminance;
+	// Note: We're omitting the pi term in the albedo
+	
 	// Apply exposure:
-	const vec3 exposedColor = ApplyExposure(combinedContribution, g_exposureProperties.x);
+	const vec3 exposedColor = ApplyExposure(combinedContribution, lightingParams.Exposure);
 
 	return exposedColor;
 }
