@@ -5,6 +5,7 @@
 #include "Lighting.hlsli"
 #include "MathConstants.hlsli"
 #include "SaberCommon.hlsli"
+#include "Shadows.hlsli"
 #include "Transformations.hlsli"
 
 
@@ -14,6 +15,12 @@ float4 PShader(VertexOut In) : SV_Target
 	
 	const float4 worldPos = float4(GetWorldPos(In.UV0, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection), 1.f);
 	
+	const float NoL = saturate(dot(gbuffer.WorldNormal, LightParams.g_lightWorldPosRadius.xyz));
+	const float2 minMaxShadowBias = LightParams.g_shadowCamNearFarBiasMinMax.zw;
+	const float2 invShadowMapWidthHeight = LightParams.g_shadowMapTexelSize.zw;
+	const float shadowFactor = 
+		Get2DShadowMapFactor(worldPos, LightParams.g_shadowCam_VP, NoL, minMaxShadowBias, invShadowMapWidthHeight);
+	
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
 	lightingParams.WorldNormal = gbuffer.WorldNormal;
@@ -22,12 +29,16 @@ float4 PShader(VertexOut In) : SV_Target
 	lightingParams.LinearMetalness = gbuffer.LinearMetalness;
 	lightingParams.WorldPosition = float3(0.f, 0.f, 0.f); // Directional lights are at infinity
 	lightingParams.F0 = gbuffer.MatProp0.rgb;
+	
+	lightingParams.NoL = NoL;
+	
 	lightingParams.LightWorldPos = worldPos.xyz; // Ensure attenuation = 0
 	lightingParams.LightWorldDir = LightParams.g_lightWorldPosRadius.xyz; 
 	lightingParams.LightColor = LightParams.g_lightColorIntensity.rgb;
 	lightingParams.LightIntensity = LightParams.g_lightColorIntensity.a;
 	lightingParams.LightAttenuationFactor = 1.f;
-	lightingParams.ShadowFactor = 1.f; // TODO: Compute this
+	
+	lightingParams.ShadowFactor = shadowFactor;
 	
 	lightingParams.CameraWorldPos = CameraParams.g_cameraWPos;
 	lightingParams.Exposure = CameraParams.g_exposureProperties.x;

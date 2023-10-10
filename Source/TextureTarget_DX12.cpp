@@ -96,8 +96,6 @@ namespace dx12
 				{
 					for (uint32_t mipIdx = 0; mipIdx < numMips; mipIdx++)
 					{
-						const uint32_t subresourceIdx = (faceIdx * numMips) + mipIdx;
-
 						targetPlatParams->m_rtvDsvDescriptors.emplace_back(std::move(
 							context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::RTV).Allocate(1)));
 						SEAssert("RTV descriptor is not valid", targetPlatParams->m_rtvDsvDescriptors.back().IsValid());
@@ -190,17 +188,13 @@ namespace dx12
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
 
-		D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-		dsv.Format = depthTexPlatParams->m_format;
-		dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-		dsv.Texture2D.MipSlice = 0;
-		dsv.Flags = D3D12_DSV_FLAG_NONE;
-
 		SEAssert("DSVs have already been allocated. This is unexpected",
 			depthTargetPlatParams->m_rtvDsvDescriptors.empty());
 
 		const uint32_t numFaces = depthTexParams.m_faces;
 		const uint32_t numMips = depthTargetTex->GetNumMips();
+
+		SEAssert("Depth texture has mips. This is unexpected", numMips == 1);
 
 		// Create the depth-stencil descriptor and view:
 		for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
@@ -211,11 +205,58 @@ namespace dx12
 					context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::DSV).Allocate(1)));
 				SEAssert("DSV descriptor is not valid", depthTargetPlatParams->m_rtvDsvDescriptors.back().IsValid());
 
+				D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
+				dsv.Format = depthTexPlatParams->m_format;
+				dsv.Flags = D3D12_DSV_FLAG_NONE;
+
+				switch (numFaces)
+				{
+				case 1:
+				{
+					dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+					dsv.Texture2D.MipSlice = 0;
+				}
+				break;
+				case 6:
+				{
+					SEAssert("We're currently expecting this to be a cubemap",
+						numFaces == 6 && depthTexParams.m_dimension == re::Texture::Dimension::TextureCubeMap);
+
+					dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+					dsv.Texture2DArray.MipSlice = mipIdx; // Mip slices include 1 mip level for every texture in an array
+					dsv.Texture2DArray.FirstArraySlice = faceIdx;	// Only view one element of our array
+					dsv.Texture2DArray.ArraySize = 1; // Only view one element of our array
+				}
+				break;
+				default: SEAssertF("Unexpected number of faces");
+				}
+
 				device->CreateDepthStencilView(
 					depthTexPlatParams->m_textureResource.Get(),
 					&dsv,
 					depthTargetPlatParams->m_rtvDsvDescriptors.back().GetBaseDescriptor());
 			}
+		}
+
+		// Create a DSV for all cube map faces at once
+		if (depthTexParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
+		{
+			depthTargetPlatParams->m_cubemapDescriptor = 
+				std::move(context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::DSV).Allocate(1));
+			SEAssert("Cube DSV descriptor is not valid", depthTargetPlatParams->m_cubemapDescriptor.IsValid());
+
+			D3D12_DEPTH_STENCIL_VIEW_DESC cubeDsv = {};
+			cubeDsv.Format = depthTexPlatParams->m_format;
+			cubeDsv.Flags = D3D12_DSV_FLAG_NONE;
+			cubeDsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+			cubeDsv.Texture2DArray.MipSlice = 0; // Mip slices include 1 mip level for every texture in an array
+			cubeDsv.Texture2DArray.FirstArraySlice = 0;	// Only view one element of our array
+			cubeDsv.Texture2DArray.ArraySize = 6; // Only view one element of our array
+
+			device->CreateDepthStencilView(
+				depthTexPlatParams->m_textureResource.Get(),
+				&cubeDsv,
+				depthTargetPlatParams->m_cubemapDescriptor.GetBaseDescriptor());
 		}
 	}
 

@@ -29,12 +29,8 @@ namespace
 	struct CubemapShadowRenderParams
 	{
 		glm::mat4 g_cubemapShadowCam_VP[6];
-
-		glm::vec2 g_cubemapShadowCamNearFar; // .xy = near, far
-		const glm::vec2 padding0 = { 0.f, 0.f };
-
-		glm::vec3 g_cubemapLightWorldPos;
-		const float padding1 = 0.f;
+		glm::vec4 g_cubemapShadowCamNearFar; // .xy = near, far. .zw = unused
+		glm::vec4 g_cubemapLightWorldPos; // .xyz = light word pos, .w = unused
 
 		static constexpr char const* const s_shaderName = "CubemapShadowRenderParams"; // Not counted towards size of struct
 	};
@@ -46,8 +42,9 @@ namespace
 		memcpy(&cubemapShadowParams.g_cubemapShadowCam_VP[0][0].x,
 			shadowCam->GetCubeViewProjectionMatrix().data(),
 			6 * sizeof(mat4));
-		cubemapShadowParams.g_cubemapShadowCamNearFar = shadowCam->NearFar();
-		cubemapShadowParams.g_cubemapLightWorldPos = shadowCam->GetTransform()->GetGlobalPosition();
+
+		cubemapShadowParams.g_cubemapShadowCamNearFar = glm::vec4(shadowCam->NearFar().xy, 0.f, 0.f);
+		cubemapShadowParams.g_cubemapLightWorldPos = glm::vec4(shadowCam->GetTransform()->GetGlobalPosition(), 0.f);
 
 		return cubemapShadowParams;
 	}

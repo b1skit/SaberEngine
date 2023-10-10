@@ -15,8 +15,11 @@ namespace dx12
 	public:
 		struct PlatformParams final : public re::TextureTarget::PlatformParams
 		{
-			// RTV: Created if the texture has Texture::Usage ColorTarget or SwapchainColorProxy:
+			// Subresource index = (targetFace * number of mips) + target mip
 			std::vector<dx12::DescriptorAllocation> m_rtvDsvDescriptors;
+
+			// Single descriptor for an array of cubemap faces. Used if m_targetFace == re::TextureTarget::k_allFaces
+			dx12::DescriptorAllocation m_cubemapDescriptor; 
 		};
 	};
 

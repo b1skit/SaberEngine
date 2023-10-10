@@ -22,6 +22,11 @@ namespace re
 			bool m_isCreated = false; // Targets are immutable after creation
 		};
 
+
+	public:
+		static constexpr uint32_t k_allFaces = std::numeric_limits<uint32_t>::max(); // m_targetFace: All cubemap faces
+
+
 	public:
 		struct TargetParams
 		{

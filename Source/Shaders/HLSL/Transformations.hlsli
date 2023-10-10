@@ -19,4 +19,14 @@ float3 GetWorldPos(float2 screenUV, float nonLinearDepth, float4x4 invViewProjec
 }
 
 
+// Convert linear depth in view space [near, far] to a non-linear depth buffer value in [0,1]
+float ConvertLinearDepthToNonLinear(float near, float far, float depthLinear)
+{
+	const float depthNDC = (((2.f * near * far) / depthLinear) - far - near) / (near - far);
+	const float depthNonLinear = (depthNDC + 1.f) / 2.f;
+
+	return depthNonLinear;
+}
+
+
 #endif // SABER_TRANSFORMATIONS

@@ -28,6 +28,10 @@ namespace dx12
 			L"_VShader.cso",
 			L"_GShader.cso",
 			L"_PShader.cso",
+			L"_HShader.cso",
+			L"_DShader.cso",
+			L"_MShader.cso",
+			L"_AShader.cso",
 			L"_CShader.cso"
 		};
 

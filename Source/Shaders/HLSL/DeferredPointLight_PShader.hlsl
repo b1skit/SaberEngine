@@ -3,8 +3,7 @@
 #include "GBufferCommon.hlsli"
 #include "Lighting.hlsli"
 #include "SaberCommon.hlsli"
-#include "Transformations.hlsli"
-#include "UVUtils.hlsli"
+#include "Shadows.hlsli"
 
 
 // As per Cem Yuksel's nonsingular point light attenuation function:
@@ -40,6 +39,13 @@ float4 PShader(VertexOut In) : SV_Target
 	const float emitterRadius = LightParams.g_lightWorldPosRadius.w;
 	const float attenuationFactor = ComputePointLightAttenuationFactor(worldPos, lightWorldPos, emitterRadius);
 	
+	const float NoL = saturate(dot(gbuffer.WorldNormal, lightWorldDir));
+	const float2 shadowCamNearFar = LightParams.g_shadowCamNearFarBiasMinMax.xy;
+	const float2 minMaxShadowBias = LightParams.g_shadowCamNearFarBiasMinMax.zw;
+	const float cubeFaceDimension = LightParams.g_shadowMapTexelSize.x; // Assume the cubemap width/height are the same
+	const float shadowFactor = 
+		GetCubeShadowMapFactor(worldPos, lightWorldPos, NoL, shadowCamNearFar, minMaxShadowBias, cubeFaceDimension);
+	
 	LightingParams lightingParams;
 	lightingParams.LinearAlbedo = gbuffer.LinearAlbedo;
 	lightingParams.WorldNormal = gbuffer.WorldNormal;
@@ -48,12 +54,16 @@ float4 PShader(VertexOut In) : SV_Target
 	lightingParams.LinearMetalness = gbuffer.LinearMetalness;
 	lightingParams.WorldPosition = worldPos;
 	lightingParams.F0 = gbuffer.MatProp0.rgb;
+	
+	lightingParams.NoL = NoL;
+	
 	lightingParams.LightWorldPos = lightWorldPos;
 	lightingParams.LightWorldDir = lightWorldDir;
 	lightingParams.LightColor = LightParams.g_lightColorIntensity.rgb;
 	lightingParams.LightIntensity = luminousIntensity;
 	lightingParams.LightAttenuationFactor = attenuationFactor;
-	lightingParams.ShadowFactor = 1.f; // TODO: Compute this
+	
+	lightingParams.ShadowFactor = shadowFactor;
 	
 	lightingParams.CameraWorldPos = CameraParams.g_cameraWPos;
 	lightingParams.Exposure = CameraParams.g_exposureProperties.x;

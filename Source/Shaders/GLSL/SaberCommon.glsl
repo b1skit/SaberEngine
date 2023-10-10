@@ -197,10 +197,8 @@ layout(std430, binding=4) readonly buffer InstancedMeshParams
 layout(std430, binding=5) readonly buffer CubemapShadowRenderParams
 {
 	mat4 g_cubemapShadowCam_VP[6];
-
-	vec2 g_cubemapShadowCamNearFar; // .xy = near, far
-
-	vec3 g_cubemapLightWorldPos;
+	vec4 g_cubemapShadowCamNearFar; // .xy = near, far. .zw = unused
+	vec4 g_cubemapLightWorldPos; // .xyz = light word pos, .w = unused
 };
 
 

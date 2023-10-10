@@ -206,53 +206,6 @@ vec3 ComputeLighting(const LightingParams lightingParams)
 	const vec3 exposedColor = ApplyExposure(combinedContribution, lightingParams.Exposure);
 	
 	return exposedColor;
-
-
-//	const vec3 N = normalize(lightingParams.WorldNormal);
-//
-//	// World-space point -> camera direction
-//	const vec3 V = normalize(lightingParams.CameraWorldPos - lightingParams.WorldPosition); 
-//	const float NoV	= clamp(dot(N, V), FLT_EPSILON, 1.f); // Prevent NaNs at glancing angles
-//
-//	const vec3 L = normalize(lightingParams.LightWorldDir);
-//	const float NoL = clamp(dot(N, L), FLT_EPSILON, 1.f); // Prevent NaNs at glancing angles
-//
-//	const vec3 H = normalize(ComputeNormalizedH(L, V));
-//	const float LoH = clamp(dot(L, H), 0.f, 1.f);
-//
-//	const float diffuseResponse = FrostbiteDisneyDiffuse(NoV, NoL, LoH, lightingParams.LinearRoughness);
-//
-//	const vec3 sunHue = lightingParams.LightColor;
-//	const float sunIlluminanceLux = lightingParams.LightIntensity;
-//	
-//	const vec3 illuminance = 
-//		sunIlluminanceLux * sunHue * NoL * lightingParams.LightAttenuationFactor * lightingParams.ShadowFactor;
-//
-//	const vec3 dielectricSpecular = lightingParams.F0;
-//	const vec3 blendedF0 =
-//		ComputeBlendedF0(dielectricSpecular, lightingParams.LinearAlbedo, lightingParams.LinearMetalness);
-//	const vec3 diffuseReflectance = ComputeDiffuseColor(
-//		lightingParams.LinearAlbedo, 
-//		blendedF0, 
-//		lightingParams.LinearMetalness) * diffuseResponse * lightingParams.DiffuseScale;
-//
-//	const float f90 = ComputeF90(lightingParams.LinearRoughness, LoH);
-//	const vec3 fresnelF = FresnelSchlickF(blendedF0, f90, LoH);
-//
-//	const float geometryG = GeometryG(NoV, NoL, lightingParams.RemappedRoughness);
-//
-//	const float NoH = clamp(dot(N, H), 0.f, 1.f);
-//	const float specularD = SpecularD(lightingParams.RemappedRoughness, NoH);
-//
-//	const vec3 specularReflectance = fresnelF * geometryG * specularD * lightingParams.SpecularScale;
-//	
-//	const vec3 combinedContribution = (diffuseReflectance + specularReflectance) * illuminance;
-//	// Note: We're omitting the pi term in the albedo
-//	
-//	// Apply exposure:
-//	const vec3 exposedColor = ApplyExposure(combinedContribution, lightingParams.Exposure);
-//
-//	return exposedColor;
 }
 
 
@@ -278,8 +231,9 @@ float GetShadowFactor(vec3 shadowPos, sampler2D shadowMap, float NoL)
 	// Compute a slope-scaled bias depth:
 	const float biasedDepth = shadowScreen.z - GetSlopeScaleBias(NoL);
 
-	// Compute a block of samples around our fragment, starting at the top-left:
-	const int gridSize = 4; // MUST be a power of two TODO: Compute this on C++ side and allow for uploading of arbitrary samples (eg. odd, even)
+	// Compute a block of samples around our fragment, starting at the top-left. Note: MUST be a power of two.
+	// TODO: Compute this on C++ side and allow for uploading of arbitrary samples (eg. odd, even)
+	const int gridSize = 4; 
 
 	const float offsetMultiplier = (float(gridSize) / 2.f) - 0.5;
 

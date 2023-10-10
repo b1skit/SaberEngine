@@ -20,6 +20,12 @@ struct VertexIn
 };
 
 
+struct VertexToGeometry
+{
+	float4 Position : POSITION0;
+};
+
+
 struct VertexOut
 {
 	float4 Position : SV_Position;
@@ -133,6 +139,8 @@ Texture2D<float4> GBufferRMAO;
 Texture2D<float4> GBufferEmissive;
 Texture2D<float4> GBufferMatProp0;
 Texture2D<float4> GBufferDepth;
+
+Texture2D<float> Depth0;
 
 Texture2D<float4> Tex0;
 Texture2D<float4> Tex1;

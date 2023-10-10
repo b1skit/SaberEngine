@@ -164,11 +164,15 @@ struct LightingParams
 	float LinearMetalness;
 	float3 WorldPosition;
 	float3 F0;
+	
+	float NoL;
+	
 	float3 LightWorldPos; // 0 for directional lights
-	float3 LightWorldDir; // From point towards light
+	float3 LightWorldDir; // From point to light
 	float3 LightColor;
 	float LightIntensity;
 	float LightAttenuationFactor;
+	
 	float ShadowFactor;
 	
 	float3 CameraWorldPos;
@@ -187,7 +191,7 @@ float3 ComputeLighting(LightingParams lightingParams)
 	const float NoV = saturate(max(dot(N, V), FLT_EPSILON)); // Prevent NaNs at glancing angles
 
 	const float3 L = normalize(lightingParams.LightWorldDir);
-	const float NoL = saturate(max(dot(N, L), FLT_EPSILON)); // Prevent NaNs at glancing angles
+	const float NoL = max(lightingParams.NoL, FLT_EPSILON); // Prevent NaNs at glancing angles
 	
 	const float3 H = ComputeNormalizedH(L, V);
 	const float LoH = saturate(dot(L, H));

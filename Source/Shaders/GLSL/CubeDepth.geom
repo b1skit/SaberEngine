@@ -1,3 +1,4 @@
+// © 2023 Adam Badke. All rights reserved.
 #define SABER_DEPTH
 #include "SaberCommon.glsl"
 

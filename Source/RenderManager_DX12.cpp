@@ -13,6 +13,7 @@
 #include "GraphicsSystem_ComputeMips.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
+#include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "MeshPrimitive_DX12.h"
@@ -61,6 +62,9 @@ namespace dx12
 			std::shared_ptr<gr::GBufferGraphicsSystem> gbufferGS = std::make_shared<gr::GBufferGraphicsSystem>();
 			graphicsSystems.emplace_back(gbufferGS);
 
+			std::shared_ptr<gr::ShadowsGraphicsSystem> shadowGS = std::make_shared<gr::ShadowsGraphicsSystem>();
+			graphicsSystems.emplace_back(shadowGS);
+
 			std::shared_ptr<gr::DeferredLightingGraphicsSystem> deferredLightingGS =
 				std::make_shared<gr::DeferredLightingGraphicsSystem>();
 			graphicsSystems.emplace_back(deferredLightingGS);
@@ -80,6 +84,7 @@ namespace dx12
 			deferredLightingGS->CreateResourceGenerationStages(
 				defaultRS->GetRenderPipeline().AddNewStagePipeline("Deferred Lighting Resource Creation"));
 			gbufferGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(gbufferGS->GetName()));
+			shadowGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(shadowGS->GetName()));
 			deferredLightingGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(deferredLightingGS->GetName()));
 			skyboxGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(skyboxGS->GetName()));
 			bloomGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(bloomGS->GetName()));
@@ -94,6 +99,7 @@ namespace dx12
 			// Get our GraphicsSystems:
 			gr::ComputeMipsGraphicsSystem* computeMipsGS = renderSystem->GetGraphicsSystem<gr::ComputeMipsGraphicsSystem>();
 			gr::GBufferGraphicsSystem* gbufferGS = renderSystem->GetGraphicsSystem<gr::GBufferGraphicsSystem>();
+			gr::ShadowsGraphicsSystem* shadowGS = renderSystem->GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
 			gr::DeferredLightingGraphicsSystem* deferredLightingGS = renderSystem->GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
 			gr::SkyboxGraphicsSystem* skyboxGS = renderSystem->GetGraphicsSystem<gr::SkyboxGraphicsSystem>();
 			gr::BloomGraphicsSystem* bloomGS = renderSystem->GetGraphicsSystem<gr::BloomGraphicsSystem>();
@@ -102,6 +108,7 @@ namespace dx12
 			// Execute per-frame updates:
 			computeMipsGS->PreRender();
 			gbufferGS->PreRender();
+			shadowGS->PreRender();
 			deferredLightingGS->PreRender();
 			skyboxGS->PreRender();
 			bloomGS->PreRender();

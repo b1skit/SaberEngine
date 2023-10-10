@@ -389,6 +389,9 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <None Include="SaberEngine.licenseheader" />
     <None Include="Shaders\GLSL\Blit.frag" />
     <None Include="Shaders\GLSL\Blit.vert" />
+    <None Include="Shaders\GLSL\CubeDepth.geom" />
+    <None Include="Shaders\GLSL\CubeDepth.vert" />
+    <None Include="Shaders\GLSL\Depth.vert" />
     <None Include="Shaders\GLSL\FullscreenQuadCommon.glsl" />
     <None Include="Shaders\GLSL\GaussianBlur.frag" />
     <None Include="Shaders\GLSL\GaussianBlur.vert" />
@@ -413,15 +416,12 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <None Include="Shaders\GLSL\GenerateIEM.vert" />
     <None Include="Shaders\GLSL\GeneratePMREM.frag" />
     <None Include="Shaders\GLSL\GeneratePMREM.vert" />
-    <None Include="Shaders\GLSL\cubeDepthShader.geom" />
-    <None Include="Shaders\GLSL\cubeDepthShader.vert" />
     <None Include="Shaders\GLSL\DeferredAmbientLight.frag" />
     <None Include="Shaders\GLSL\DeferredAmbientLight.vert" />
     <None Include="Shaders\GLSL\DeferredDirectionalLight.frag" />
     <None Include="Shaders\GLSL\DeferredDirectionalLight.vert" />
     <None Include="Shaders\GLSL\DeferredPointLight.frag" />
     <None Include="Shaders\GLSL\DeferredPointLight.vert" />
-    <None Include="Shaders\GLSL\depthShader.vert" />
     <None Include="Shaders\GLSL\GBuffer.frag" />
     <None Include="Shaders\GLSL\GBuffer.vert" />
     <None Include="Shaders\GLSL\SaberCommon.glsl" />
@@ -429,11 +429,30 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <None Include="Shaders\GLSL\SaberLighting.glsl" />
     <None Include="Shaders\HLSL\SaberComputeCommon.hlsli" />
     <None Include="Shaders\HLSL\SaberGlobals.hlsli" />
+    <FxCompile Include="Shaders\HLSL\CubeDepth_GShader.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">GShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Geometry</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">GShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Geometry</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\CubeDepth_VShader.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\Depth_VShader.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VShader</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
     <FxCompile Include="Shaders\HLSL\Sampling.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
+    <None Include="Shaders\HLSL\Shadows.hlsli" />
     <None Include="Shaders\HLSL\Transformations.hlsli" />
     <None Include="Shaders\HLSL\UVUtils.hlsli" />
   </ItemGroup>

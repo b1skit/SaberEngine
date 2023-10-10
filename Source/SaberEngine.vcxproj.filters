@@ -783,12 +783,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\glsl\cubeDepthShader.geom">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
-    <None Include="Shaders\glsl\cubeDepthShader.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
     <None Include="Shaders\GLSL\DeferredAmbientLight.frag">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
@@ -805,9 +799,6 @@
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\DeferredPointLight.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
-    <None Include="Shaders\glsl\depthShader.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GBuffer.frag">
@@ -905,6 +896,18 @@
     <None Include="Shaders\HLSL\MathConstants.hlsli">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </None>
+    <None Include="Shaders\GLSL\CubeDepth.geom">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\CubeDepth.vert">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\Depth.vert">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\Shadows.hlsli">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\GBuffer_PShader.hlsl">
@@ -980,6 +983,15 @@
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Sampling.hlsli">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\CubeDepth_GShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\CubeDepth_VShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\Depth_VShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
   </ItemGroup>

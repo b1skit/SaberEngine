@@ -29,6 +29,7 @@ namespace
 		CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT inputLayout;
 		CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY primitiveTopologyType;
 		CD3DX12_PIPELINE_STATE_STREAM_VS vShader;
+		CD3DX12_PIPELINE_STATE_STREAM_GS gShader;
 		CD3DX12_PIPELINE_STATE_STREAM_PS pShader;
 		CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT DSVFormat;
 		CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;
@@ -383,20 +384,34 @@ namespace dx12
 		// Generate the PSO:
 		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 
-		if (shaderParams->m_shaderBlobs[dx12::Shader::Vertex] && 
-			shaderParams->m_shaderBlobs[dx12::Shader::Pixel])
+		if (shaderParams->m_shaderBlobs[dx12::Shader::Vertex]) // Vertex shader is mandatory for graphics pipelines
 		{
 			// Build the vertex stream input layout:
 			std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
 			BuildInputLayout(shaderParams, inputLayout);
 
 			// Build graphics pipeline description:
-			GraphicsPipelineStateStream pipelineStateStream;
+			GraphicsPipelineStateStream pipelineStateStream {};
 			pipelineStateStream.rootSignature = shaderParams->m_rootSignature->GetD3DRootSignature();
-			pipelineStateStream.inputLayout = { &inputLayout[0], static_cast<uint32_t>(inputLayout.size()) };
+			pipelineStateStream.inputLayout = { inputLayout.data(), static_cast<uint32_t>(inputLayout.size())};
 			pipelineStateStream.primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 			pipelineStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Vertex].Get());
-			pipelineStateStream.pShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Pixel].Get());
+
+			if (shaderParams->m_shaderBlobs[dx12::Shader::Geometry])
+			{
+				pipelineStateStream.gShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Geometry].Get());
+			}
+			
+			if (shaderParams->m_shaderBlobs[dx12::Shader::Pixel])
+			{
+				pipelineStateStream.pShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Pixel].Get());
+			}
+
+			SEAssert("TODO: Support this shader type", 
+				!shaderParams->m_shaderBlobs[dx12::Shader::Hull] && 
+				!shaderParams->m_shaderBlobs[dx12::Shader::Domain] &&
+				!shaderParams->m_shaderBlobs[dx12::Shader::Mesh] &&
+				!shaderParams->m_shaderBlobs[dx12::Shader::Amplification]);
 
 			// Target formats:
 			dx12::TextureTargetSet::PlatformParams* targetSetPlatParams =

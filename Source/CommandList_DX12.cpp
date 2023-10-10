@@ -385,22 +385,50 @@ namespace dx12
 	{
 		SEAssert("Target texture cannot be null", depthTarget);
 
+		std::shared_ptr<re::Texture> depthTex = depthTarget->GetTexture();
+
+		re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
+
 		SEAssert("Target texture must be a depth target",
-			depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget);
+			(depthTexParams.m_usage & re::Texture::Usage::DepthTarget) != 0);
+
+		const uint32_t numDepthMips = depthTex->GetNumMips();
+		SEAssert("Depth target has mips. This is unexpected", numDepthMips == 1);
+
+		re::TextureTarget::TargetParams const& depthTargetParams = depthTarget->GetTargetParams();
 
 		dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
 			depthTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
-		D3D12_CPU_DESCRIPTOR_HANDLE const& dsvDescriptor = 
-			depthTargetPlatParams->m_rtvDsvDescriptors[depthTarget->GetTargetParams().m_targetFace].GetBaseDescriptor();
+		if (depthTargetParams.m_targetFace == re::TextureTarget::k_allFaces)
+		{
+			SEAssert("We're (currently) expecting the a cubemap", 
+				depthTexParams.m_dimension == re::Texture::Dimension::TextureCubeMap);
 
-		m_commandList->ClearDepthStencilView(
-			dsvDescriptor,
-			D3D12_CLEAR_FLAG_DEPTH,
-			depthTarget->GetTexture()->GetTextureParams().m_clear.m_depthStencil.m_depth,
-			depthTarget->GetTexture()->GetTextureParams().m_clear.m_depthStencil.m_stencil,
-			0,
-			nullptr);
+			D3D12_CPU_DESCRIPTOR_HANDLE const& dsvDescriptor =
+				depthTargetPlatParams->m_cubemapDescriptor.GetBaseDescriptor();
+
+			m_commandList->ClearDepthStencilView(
+				dsvDescriptor,
+				D3D12_CLEAR_FLAG_DEPTH,
+				depthTexParams.m_clear.m_depthStencil.m_depth,
+				depthTexParams.m_clear.m_depthStencil.m_stencil,
+				0,
+				nullptr);
+		}
+		else
+		{
+			D3D12_CPU_DESCRIPTOR_HANDLE const& dsvDescriptor =
+				depthTargetPlatParams->m_rtvDsvDescriptors[depthTarget->GetTargetParams().m_targetFace].GetBaseDescriptor();
+
+			m_commandList->ClearDepthStencilView(
+				dsvDescriptor,
+				D3D12_CLEAR_FLAG_DEPTH,
+				depthTexParams.m_clear.m_depthStencil.m_depth,
+				depthTexParams.m_clear.m_depthStencil.m_stencil,
+				0,
+				nullptr);
+		}
 	}
 
 
@@ -499,18 +527,36 @@ namespace dx12
 			dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
 				depthStencilTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
-			// We current assume a DSV only has a single descriptor per face
-			const uint32_t subresourceIdx = depthTargetParams.m_targetFace;
 
-			if (depthWriteEnabled)
+			if (depthTargetParams.m_targetFace == re::TextureTarget::k_allFaces)
 			{
-				dsvDescriptor = depthTargetPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor();
+				SEAssert("We're (currently) expecting the a cubemap",
+					depthStencilTarget->GetTexture()->GetTextureParams().m_dimension == re::Texture::Dimension::TextureCubeMap);
+
+				if (depthWriteEnabled)
+				{
+					dsvDescriptor = depthTargetPlatParams->m_cubemapDescriptor.GetBaseDescriptor();
+				}
+				else
+				{
+					// TODO: Select a cube DSV that is created with depth writes disabled
+					dsvDescriptor = depthTargetPlatParams->m_cubemapDescriptor.GetBaseDescriptor();
+				}
 			}
 			else
 			{
-				// TODO: Select a DSV that is created with depth writes disabled
-				dsvDescriptor = depthTargetPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor();
-			}
+				const uint32_t subresourceIdx = depthTargetParams.m_targetFace;
+
+				if (depthWriteEnabled)
+				{
+					dsvDescriptor = depthTargetPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor();
+				}
+				else
+				{
+					// TODO: Select a DSV that is created with depth writes disabled
+					dsvDescriptor = depthTargetPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor();
+				}
+			}			
 		}
 
 		// NOTE: isSingleHandleToDescRange == true specifies that the rtvs are contiguous in memory, thus N rtv 

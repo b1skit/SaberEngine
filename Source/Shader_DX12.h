@@ -14,13 +14,15 @@ namespace dx12
 	class Shader
 	{
 	public:
-		// TODO: Support more shader types
-		// TODO: Should this be a member of re::Shader?
 		enum ShaderType : uint8_t
 		{
 			Vertex,
 			Geometry,
 			Pixel,
+			Hull,
+			Domain,
+			Mesh,
+			Amplification,
 			Compute,
 
 			ShaderType_Count

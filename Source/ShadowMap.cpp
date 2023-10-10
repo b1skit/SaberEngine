@@ -73,7 +73,9 @@ namespace gr
 
 		const ShadowType shadowType = GetShadowTypeFromLightType(owningLight->Type());
 
-		// Omni-directional (Cube map) shadowmap setup:
+		re::TextureTarget::TargetParams depthTargetParams;
+
+		// Omni-directional (Cube map) shadow map setup:
 		if (shadowType == ShadowType::CubeMap)
 		{
 			m_minMaxShadowBias = glm::vec2(
@@ -85,6 +87,8 @@ namespace gr
 			const string texName = lightName + "_CubeMapShadow";
 
 			depthTexture = re::Texture::Create(texName, shadowParams, false);
+
+			depthTargetParams.m_targetFace = re::TextureTarget::k_allFaces;
 		}
 		else // 2D shadow map setup:
 		{
@@ -98,8 +102,6 @@ namespace gr
 			
 			depthTexture = re::Texture::Create(texName, shadowParams, false);
 		}
-
-		re::TextureTarget::TargetParams depthTargetParams;
 
 		m_shadowTargetSet->SetDepthStencilTarget(depthTexture, depthTargetParams);
 		m_shadowTargetSet->SetViewport(re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height()));
