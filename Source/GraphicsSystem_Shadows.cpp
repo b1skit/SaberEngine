@@ -91,7 +91,7 @@ namespace gr
 
 				// Shader:
 				m_directionalShadowStage->SetStageShader(
-					re::Shader::Create(en::ShaderNames::k_depthShaderName, shadowPipelineState));
+					re::Shader::GetOrCreate(en::ShaderNames::k_depthShaderName, shadowPipelineState));
 
 				std::shared_ptr<re::TextureTargetSet> directionalShadowTargetSet = 
 					directionalLight->GetShadowMap()->GetTextureTargetSet();
@@ -139,7 +139,7 @@ namespace gr
 
 				// Shader:
 				shadowStage->SetStageShader(
-					re::Shader::Create(en::ShaderNames::k_cubeDepthShaderName, shadowPipelineState));
+					re::Shader::GetOrCreate(en::ShaderNames::k_cubeDepthShaderName, shadowPipelineState));
 
 				std::shared_ptr<re::TextureTargetSet> pointShadowTargetSet = 
 					curLight->GetShadowMap()->GetTextureTargetSet();

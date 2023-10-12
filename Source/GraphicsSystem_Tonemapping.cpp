@@ -46,7 +46,7 @@ namespace gr
 		tonemappingPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
 		m_tonemappingStage->SetStageShader(
-			re::Shader::Create(en::ShaderNames::k_toneMapShaderName, tonemappingPipelineState));
+			re::Shader::GetOrCreate(en::ShaderNames::k_toneMapShaderName, tonemappingPipelineState));
 
 		m_tonemappingStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 

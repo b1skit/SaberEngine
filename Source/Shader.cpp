@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "DebugConfiguration.h"
+#include "HashUtils.h"
 #include "Material.h"
 #include "RenderManager.h"
 #include "SceneData.h"
@@ -16,23 +17,37 @@ using gr::Material;
 
 namespace re
 {
-	std::shared_ptr<re::Shader> Shader::Create(
+	uint64_t Shader::ComputeShaderIdentifier(
 		std::string const& extensionlessShaderFilename, re::PipelineState const& rePipelineState)
 	{
+		uint64_t hashResult = util::HashString(extensionlessShaderFilename);
+		util::CombineHash(hashResult, rePipelineState.GetDataHash());
+		return hashResult;
+	}
+
+
+	std::shared_ptr<re::Shader> Shader::GetOrCreate(
+		std::string const& extensionlessShaderFilename, re::PipelineState const& rePipelineState)
+	{
+		// We may reuse the same shader, but with a different pipeline state. So here, we compute a unique identifier
+		// to represent this particular configuration
+		const uint64_t shaderIdentifier = ComputeShaderIdentifier(extensionlessShaderFilename, rePipelineState);
+
 		// If the shader already exists, return it. Otherwise, create the shader. 
-		if (en::SceneManager::GetSceneData()->ShaderExists(extensionlessShaderFilename))
+		fr::SceneData* sceneData = en::SceneManager::GetSceneData();
+		if (sceneData->ShaderExists(shaderIdentifier))
 		{
-			return en::SceneManager::GetSceneData()->GetShader(extensionlessShaderFilename);
+			return sceneData->GetShader(shaderIdentifier);
 		}
 		// Note: It's possible that 2 threads might simultaneously fail to find a Shader in the SceneData, and create
 		// it. But that's OK, the SceneData will tell us if this shader was actually added
 
 		// Our ctor is private; We must manually create the Shader, and then pass the ownership to a shared_ptr
 		shared_ptr<re::Shader> sharedShaderPtr;
-		sharedShaderPtr.reset(new re::Shader(extensionlessShaderFilename, rePipelineState));
+		sharedShaderPtr.reset(new re::Shader(extensionlessShaderFilename, rePipelineState, shaderIdentifier));
 
 		// Register the Shader with the SceneData object for lifetime management:
-		const bool addedNewShader = en::SceneManager::GetSceneData()->AddUniqueShader(sharedShaderPtr);
+		const bool addedNewShader = sceneData->AddUniqueShader(sharedShaderPtr);
 		if (addedNewShader)
 		{
 			// Register the Shader with the RenderManager (once only), so its API-level object can be created before use
@@ -43,8 +58,10 @@ namespace re
 	}
 
 
-	Shader::Shader(string const& extensionlessShaderFilename, re::PipelineState const& rePipelineState)
+	Shader::Shader(
+		string const& extensionlessShaderFilename, re::PipelineState const& rePipelineState, uint64_t shaderIdentifier)
 		: NamedObject(extensionlessShaderFilename)
+		, m_shaderIdentifier(shaderIdentifier)
 		, m_pipelineState(rePipelineState)
 	{
 		platform::Shader::CreatePlatformParams(*this);

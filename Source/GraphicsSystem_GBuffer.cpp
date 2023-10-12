@@ -49,7 +49,7 @@ namespace gr
 		gBufferPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
 
 		std::shared_ptr<Shader> gBufferShader = 
-			re::Shader::Create(en::ShaderNames::k_gbufferShaderName, gBufferPipelineState);
+			re::Shader::GetOrCreate(en::ShaderNames::k_gbufferShaderName, gBufferPipelineState);
 
 		m_gBufferStage->SetStageShader(gBufferShader);
 

@@ -87,8 +87,8 @@ namespace fr
 		bool MaterialExists(std::string const& matName) const;
 
 		bool AddUniqueShader(std::shared_ptr<re::Shader>& newShader); // Returns true if new object was added
-		std::shared_ptr<re::Shader> GetShader(std::string const& extensionlessShaderFilename) const;
-		bool ShaderExists(std::string const& extensionlessShaderFilename) const;
+		std::shared_ptr<re::Shader> GetShader(uint64_t shaderIdentifier) const;
+		bool ShaderExists(uint64_t shaderIdentifier) const;
 
 		// SceneData bounds:
 		gr::Bounds const& GetWorldSpaceSceneBounds() const;

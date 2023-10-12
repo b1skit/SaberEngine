@@ -17,6 +17,10 @@ namespace re
 	class Shader final : public virtual en::NamedObject
 	{
 	public:
+		static uint64_t ComputeShaderIdentifier(std::string const& extensionlessShaderFilename, re::PipelineState const&);
+
+
+	public:
 		struct PlatformParams : public re::IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
@@ -25,13 +29,15 @@ namespace re
 
 
 	public: // Object factory: Gets a Shader if it already exists, or creates it if it doesn't
-		static std::shared_ptr<re::Shader> Create(
+		static std::shared_ptr<re::Shader> GetOrCreate(
 			std::string const& extensionlessShaderFilename, re::PipelineState const&);
 		~Shader() { Destroy(); }
 
 		Shader(Shader&&) = default;
 		Shader& operator=(Shader&&) = default;
 		
+		uint64_t GetShaderIdentifier() const;
+
 		inline bool IsCreated() const;
 
 		re::PipelineState const& GetPipelineState() const;
@@ -41,14 +47,16 @@ namespace re
 
 
 	private:
-		explicit Shader(std::string const& extensionlessShaderFilename, re::PipelineState const&);
+		explicit Shader(std::string const& extensionlessShaderFilename, re::PipelineState const&, uint64_t shaderIdentifier);
 		void Destroy();
 
 
 	private:
+		const uint64_t m_shaderIdentifier;
+
 		std::unique_ptr<PlatformParams> m_platformParams;
 
-		re::PipelineState m_pipelineState;
+		const re::PipelineState m_pipelineState;
 		
 
 	private:
@@ -56,6 +64,12 @@ namespace re
 		Shader(Shader const&) = delete;
 		Shader& operator=(Shader&) = delete;
 	};
+
+
+	inline uint64_t Shader::GetShaderIdentifier() const
+	{
+		return m_shaderIdentifier;
+	}
 
 
 	inline bool Shader::IsCreated() const

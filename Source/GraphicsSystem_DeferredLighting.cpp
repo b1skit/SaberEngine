@@ -268,7 +268,7 @@ namespace gr
 			brdfPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
 			brdfStage->SetStageShader(
-				re::Shader::Create(en::ShaderNames::k_generateBRDFIntegrationMapShaderName, brdfPipelineState));
+				re::Shader::GetOrCreate(en::ShaderNames::k_generateBRDFIntegrationMapShaderName, brdfPipelineState));
 
 			const uint32_t brdfTexWidthHeight = 
 				static_cast<uint32_t>(Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
@@ -363,7 +363,7 @@ namespace gr
 			iemTexParams.m_addToSceneData = false;
 			iemTexParams.m_mipMode = re::Texture::MipMode::None;
 
-			shared_ptr<Shader> iemShader = re::Shader::Create(en::ShaderNames::k_generateIEMShaderName, iblStageParams);
+			shared_ptr<Shader> iemShader = re::Shader::GetOrCreate(en::ShaderNames::k_generateIEMShaderName, iblStageParams);
 
 			const string IEMTextureName = iblTexture->GetName() + "_IEMTexture";
 			ambientProperties.m_ambient.m_IEMTex = re::Texture::Create(IEMTextureName, iemTexParams, false);
@@ -439,7 +439,7 @@ namespace gr
 			pmremTexParams.m_mipMode = re::Texture::MipMode::Allocate;
 
 			shared_ptr<Shader> pmremShader = 
-				re::Shader::Create(en::ShaderNames::k_generatePMREMShaderName, iblStageParams);
+				re::Shader::GetOrCreate(en::ShaderNames::k_generatePMREMShaderName, iblStageParams);
 
 			const string PMREMTextureName = iblTexture->GetName() + "_PMREMTexture";
 			ambientProperties.m_ambient.m_PMREMTex = re::Texture::Create(PMREMTextureName, pmremTexParams, false);
@@ -585,7 +585,7 @@ namespace gr
 		
 		// Ambient light stage:
 		m_ambientStage->SetStageShader(
-			re::Shader::Create(en::ShaderNames::k_deferredAmbientLightShaderName, ambientStageParams));
+			re::Shader::GetOrCreate(en::ShaderNames::k_deferredAmbientLightShaderName, ambientStageParams));
 
 		m_ambientStage->AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 
@@ -638,7 +638,7 @@ namespace gr
 			m_keylightStage->SetTextureTargetSet(keylightTargetSet);
 
 			m_keylightStage->SetStageShader(
-				re::Shader::Create(en::ShaderNames::k_deferredDirectionalLightShaderName, keylightStageParams));
+				re::Shader::GetOrCreate(en::ShaderNames::k_deferredDirectionalLightShaderName, keylightStageParams));
 
 			m_keylightStage->AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 
@@ -682,7 +682,7 @@ namespace gr
 			pointlightStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Front); // Cull front faces of light volumes
 
 			m_pointlightStage->SetStageShader(
-				re::Shader::Create(en::ShaderNames::k_deferredPointLightShaderName, pointlightStageParams));
+				re::Shader::GetOrCreate(en::ShaderNames::k_deferredPointLightShaderName, pointlightStageParams));
 
 			pipeline.AppendRenderStage(m_pointlightStage);
 

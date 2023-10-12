@@ -94,7 +94,7 @@ namespace gr
 		blitPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 		
 		shared_ptr<Shader> blitShader = 
-			re::Shader::Create(en::ShaderNames::k_blitShaderName, blitPipelineState);
+			re::Shader::GetOrCreate(en::ShaderNames::k_blitShaderName, blitPipelineState);
 
 		m_emissiveBlitStage->SetStageShader(blitShader);
 		m_emissiveBlitStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
@@ -130,7 +130,7 @@ namespace gr
 		re::TextureTarget::TargetParams targetParams;
 
 		shared_ptr<Shader> luminanceThresholdShader =
-			re::Shader::Create(en::ShaderNames::k_luminanceThresholdShaderName, bloomPipelineState);
+			re::Shader::GetOrCreate(en::ShaderNames::k_luminanceThresholdShaderName, bloomPipelineState);
 
 		// Create our param blocks:
 		m_luminanceThresholdParamBlock = re::ParameterBlock::Create(
@@ -186,7 +186,7 @@ namespace gr
 
 		// Blur stages:
 		shared_ptr<Shader> gaussianBlurShader =
-			re::Shader::Create(en::ShaderNames::k_gaussianBlurShaderName, bloomPipelineState);
+			re::Shader::GetOrCreate(en::ShaderNames::k_gaussianBlurShaderName, bloomPipelineState);
 
 		// Create our param blocks:
 		m_horizontalBloomParams = re::ParameterBlock::Create(

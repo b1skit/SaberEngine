@@ -14,7 +14,14 @@ namespace util
 
 	inline void AddDataToHash(uint64_t& currentHash, const uint64_t dataVal)
 	{
-		std::hash<uint64_t> hasher;
+		static const std::hash<uint64_t> hasher;
 		CombineHash(currentHash, hasher(dataVal));
+	}
+
+
+	inline uint64_t HashString(std::string const& str)
+	{
+		SEAssert("Cannot hash an empty string", !str.empty());
+		return std::hash<std::string>{}(str);
 	}
 }

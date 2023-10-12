@@ -69,7 +69,7 @@ namespace gr
 		skyboxPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
 		skyboxPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::LEqual);
 
-		m_skyboxStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_skyboxShaderName, skyboxPipelineState));
+		m_skyboxStage->SetStageShader(re::Shader::GetOrCreate(en::ShaderNames::k_skyboxShaderName, skyboxPipelineState));
 
 		// Load the HDR image:
 		m_skyTexture = SceneManager::GetSceneData()->GetIBLTexture();

@@ -1849,9 +1849,11 @@ namespace fr
 
 		bool addedNewShader = false;
 
+		const uint64_t shaderIdentifier = newShader->GetShaderIdentifier();
+
 		// Note: Materials are uniquely identified by name, regardless of the MaterialDefinition they might use
 		unordered_map<size_t, shared_ptr<re::Shader>>::const_iterator shaderPosition =
-			m_shaders.find(newShader->GetNameID());
+			m_shaders.find(shaderIdentifier);
 		if (shaderPosition != m_shaders.end()) // Found existing
 		{
 			newShader = shaderPosition->second;
@@ -1859,7 +1861,7 @@ namespace fr
 		}
 		else // Add new
 		{
-			m_shaders[newShader->GetNameID()] = newShader;
+			m_shaders[shaderIdentifier] = newShader;
 			addedNewShader = true;
 			LOG("Shader \"%s\" registered with scene", newShader->GetName().c_str());
 		}
@@ -1867,12 +1869,10 @@ namespace fr
 	}
 
 
-	std::shared_ptr<re::Shader> SceneData::GetShader(std::string const& extensionlessShaderFilename) const
+	std::shared_ptr<re::Shader> SceneData::GetShader(uint64_t shaderIdentifier) const
 	{
-		const size_t filenameID = NamedObject::ComputeIDFromName(extensionlessShaderFilename);
-
 		std::shared_lock<std::shared_mutex> readLock(m_shadersMutex);
-		unordered_map<size_t, shared_ptr<re::Shader>>::const_iterator shaderPos = m_shaders.find(filenameID);
+		unordered_map<size_t, shared_ptr<re::Shader>>::const_iterator shaderPos = m_shaders.find(shaderIdentifier);
 
 		SEAssert("Could not find shader", shaderPos != m_shaders.end());
 
@@ -1880,12 +1880,10 @@ namespace fr
 	}
 
 
-	bool SceneData::ShaderExists(std::string const& extensionlessShaderFilename) const
+	bool SceneData::ShaderExists(uint64_t shaderIdentifier) const
 	{
-		const size_t filenameID = NamedObject::ComputeIDFromName(extensionlessShaderFilename);
-
 		std::shared_lock<std::shared_mutex> readLock(m_shadersMutex);
 
-		return m_materials.find(filenameID) != m_materials.end();
+		return m_materials.find(shaderIdentifier) != m_materials.end();
 	}
 }

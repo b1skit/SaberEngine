@@ -67,7 +67,7 @@ namespace en
 
 	inline void HashedDataObject::AddDataBytesToHash(std::string const& str)
 	{
-		AddDataBytesToHash(str.c_str(), str.size());
+		AddDataBytesToHash(std::hash<std::string>{}(str));
 	}
 
 
