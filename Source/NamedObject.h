@@ -11,23 +11,26 @@ namespace en
 		virtual ~NamedObject() = 0;
 
 	public:
-		inline explicit NamedObject(std::string const& name);
+		explicit NamedObject(std::string const& name);
 
 		// m_name as supplied at construction
-		inline std::string const& GetName() const { return m_name; }
-		inline std::wstring const& GetWName() const { return m_wName; }
+		std::string const& GetName() const;
+		std::wstring const& GetWName() const;
 
 		// Integer identifier computed by hasing m_name. Any object with the same m_name will have the same NameID
-		inline uint64_t GetNameID() const { return m_nameID; }
+		uint64_t GetNameID() const;
 
 		// Unique integer identifier, hashed from m_name concatenated with a monotonically-increasing value
-		inline uint64_t GetUniqueID() const { return m_uniqueID; }
-
-		// Compute an integer identifier from a string equivalent to the GetNameID() of objects with the same name
-		inline static uint64_t ComputeIDFromName(std::string const& name);
+		uint64_t GetUniqueID() const;
 
 		// Update the name of an object. Does not modify the UniqueID assigned at creation
-		inline void SetName(std::string const& name);
+		void SetName(std::string const& name);
+
+
+	public:
+		// Compute an integer identifier from a string equivalent to the GetNameID() of objects with the same name
+		static uint64_t ComputeIDFromName(std::string const& name);
+		
 
 	private:
 		inline void ComputeUniqueID();
@@ -43,7 +46,7 @@ namespace en
 	};
 
 
-	NamedObject::NamedObject(std::string const& name)
+	inline NamedObject::NamedObject(std::string const& name)
 	{
 		SEAssert("Empty name strings are not allowed", !name.empty());
 
@@ -52,13 +55,37 @@ namespace en
 	}
 
 
-	uint64_t NamedObject::ComputeIDFromName(std::string const& name)
+	inline std::string const& NamedObject::GetName() const
+	{
+		return m_name;
+	}
+
+
+	inline std::wstring const& NamedObject::GetWName() const
+	{
+		return m_wName;
+	}
+
+
+	inline uint64_t NamedObject::GetNameID() const
+	{
+		return m_nameID;
+	}
+
+
+	inline uint64_t NamedObject::GetUniqueID() const
+	{
+		return m_uniqueID;
+	}
+
+
+	inline uint64_t NamedObject::ComputeIDFromName(std::string const& name)
 	{
 		return std::hash<std::string>{}(name);
 	}
 
 
-	void NamedObject::SetName(std::string const& name)
+	inline void NamedObject::SetName(std::string const& name)
 	{
 		m_name = name;
 		m_nameID = ComputeIDFromName(name);
