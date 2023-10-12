@@ -115,6 +115,18 @@ namespace re
 	}
 
 
+	void TextureTarget::SetClearMode(re::TextureTarget::TargetParams::ClearMode clearMode)
+	{
+		m_targetParams.m_clearMode = clearMode;
+	}
+
+
+	re::TextureTarget::TargetParams::ClearMode TextureTarget::GetClearMode() const
+	{
+		return m_targetParams.m_clearMode;
+	}
+
+
 	/**********/
 	// Viewport
 	/**********/
@@ -393,6 +405,35 @@ namespace re
 			// Note: It's valid to set a blend mode even if a Target does not have a Texture
 			m_colorTargets[i].SetBlendMode(blendModes);
 		}
+	}
+
+
+	void TextureTargetSet::SetColorTargetClearMode(size_t targetIdx, re::TextureTarget::TargetParams::ClearMode clearMode)
+	{
+		m_colorTargets[targetIdx].SetClearMode(clearMode);
+	}
+
+
+	void TextureTargetSet::SetAllColorTargetClearModes(re::TextureTarget::TargetParams::ClearMode clearMode)
+	{
+		for (size_t i = 0; i < m_colorTargets.size(); i++)
+		{
+			// Note: It's valid to set a clear mode even if a Target does not have a Texture
+			m_colorTargets[i].SetClearMode(clearMode);
+		}
+	}
+
+
+	void TextureTargetSet::SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode clearMode)
+	{
+		m_depthStencilTarget.SetClearMode(clearMode);
+	}
+
+
+	void TextureTargetSet::SetAllTargetClearModes(re::TextureTarget::TargetParams::ClearMode clearMode)
+	{
+		SetAllColorTargetClearModes(clearMode);
+		SetDepthTargetClearMode(clearMode);
 	}
 
 

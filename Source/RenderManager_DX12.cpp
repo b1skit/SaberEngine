@@ -220,10 +220,7 @@ namespace dx12
 									stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain());
 								}
 
-								context->CreateAddPipelineState(
-									*shader.second,
-									renderStage->GetStagePipelineState(),
-									*stageTargets);
+								context->CreateAddPipelineState(*shader.second, *stageTargets);
 							}
 						}
 					}
@@ -317,8 +314,6 @@ namespace dx12
 						SEAssertF("Invalid stage type");
 					}
 
-					re::PipelineState const& pipelineState = renderStage->GetStagePipelineState();
-
 					// Get the stage targets:
 					std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
 					if (stageTargets == nullptr)
@@ -332,15 +327,11 @@ namespace dx12
 
 					auto SetDrawState = [&renderStage, &context](
 						re::Shader const* shader,
-						re::PipelineState const& rePipelineState,
 						re::TextureTargetSet const* targetSet,
 						dx12::CommandList* commandList)
 					{
 						// Set the pipeline state and root signature first:
-						std::shared_ptr<dx12::PipelineState> pso = context->GetPipelineStateObject(
-							*shader,
-							rePipelineState,
-							targetSet);
+						std::shared_ptr<dx12::PipelineState> pso = context->GetPipelineStateObject(*shader, targetSet);
 						commandList->SetPipelineState(*pso);
 
 						switch (renderStage->GetStageType())
@@ -394,7 +385,7 @@ namespace dx12
 					// If we have a stage shader, we can set the stage PBs once for all batches
 					if (hasStageShader)
 					{
-						SetDrawState(stageShader, pipelineState, stageTargets.get(), currentCommandList);
+						SetDrawState(stageShader, stageTargets.get(), currentCommandList);
 					}
 
 					// Set targets, now that the pipeline is set
@@ -403,8 +394,6 @@ namespace dx12
 					case re::RenderStage::RenderStageType::Compute:
 					{
 						currentCommandList->SetComputeTargets(*stageTargets);
-
-						// TODO: Support compute target clearing (tricky: Need a copy of descriptors in the GPU-visible heap)
 					}
 					break;
 					case re::RenderStage::RenderStageType::Graphics:
@@ -413,18 +402,7 @@ namespace dx12
 
 						currentCommandList->SetRenderTargets(*stageTargets, attachDepthAsReadOnly);
 
-						// Clear the render targets:
-						const re::PipelineState::ClearTarget clearTargetMode = pipelineState.GetClearTarget();
-						if (clearTargetMode == re::PipelineState::ClearTarget::Color ||
-							clearTargetMode == re::PipelineState::ClearTarget::ColorDepth)
-						{
-							currentCommandList->ClearColorTargets(*stageTargets);
-						}
-						if (clearTargetMode == re::PipelineState::ClearTarget::Depth ||
-							clearTargetMode == re::PipelineState::ClearTarget::ColorDepth)
-						{
-							currentCommandList->ClearDepthTarget(stageTargets->GetDepthStencilTarget());
-						}
+						re::PipelineState const& rePipelineState = stageShader->GetPipelineState();
 					}
 					break;
 					default:
@@ -442,7 +420,7 @@ namespace dx12
 							SEAssert("Batch must have a shader if the stage does not have a shader",
 								batchShader != nullptr);
 
-							SetDrawState(batchShader, pipelineState, stageTargets.get(), currentCommandList);
+							SetDrawState(batchShader, stageTargets.get(), currentCommandList);
 						}
 
 						// Batch parameter blocks:

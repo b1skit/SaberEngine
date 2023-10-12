@@ -56,7 +56,7 @@ namespace gr
 
 	void ComputeMipsGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		m_mipMapGenerationShader = re::Shader::Create(en::ShaderNames::k_generateMipMapsShaderName);
+		m_mipMapGenerationShader = re::Shader::Create(en::ShaderNames::k_generateMipMapsShaderName, re::PipelineState());
 
 		re::RenderStage::ComputeStageParams parentStageParams; // Defaults
 

@@ -263,7 +263,12 @@ namespace gr
 			std::shared_ptr<re::RenderStage> brdfStage =
 				re::RenderStage::CreateSingleFrameComputeStage("BRDF pre-integration compute stage", computeStageParams);
 
-			brdfStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_generateBRDFIntegrationMapShaderName));
+			re::PipelineState brdfPipelineState;
+			brdfPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
+			brdfPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
+
+			brdfStage->SetStageShader(
+				re::Shader::Create(en::ShaderNames::k_generateBRDFIntegrationMapShaderName, brdfPipelineState));
 
 			const uint32_t brdfTexWidthHeight = 
 				static_cast<uint32_t>(Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
@@ -301,14 +306,6 @@ namespace gr
 
 			brdfStage->SetTextureTargetSet(brdfStageTargets);
 
-			// Stage params:
-			re::PipelineState brdfStageParams;
-			brdfStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
-			brdfStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
-			brdfStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
-
-			brdfStage->SetStagePipelineState(brdfStageParams);
-
 			BRDFIntegrationParams const& brdfIntegrationParams = GetBRDFIntegrationParamsData();
 			shared_ptr<re::ParameterBlock> brdfIntegrationPB = re::ParameterBlock::Create(
 				BRDFIntegrationParams::s_shaderName,
@@ -327,7 +324,6 @@ namespace gr
 
 		// Common IBL texture generation stage params:
 		re::PipelineState iblStageParams;
-		iblStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
 		iblStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
 		iblStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
@@ -367,7 +363,7 @@ namespace gr
 			iemTexParams.m_addToSceneData = false;
 			iemTexParams.m_mipMode = re::Texture::MipMode::None;
 
-			shared_ptr<Shader> iemShader = re::Shader::Create(en::ShaderNames::k_generateIEMShaderName);
+			shared_ptr<Shader> iemShader = re::Shader::Create(en::ShaderNames::k_generateIEMShaderName, iblStageParams);
 
 			const string IEMTextureName = iblTexture->GetName() + "_IEMTexture";
 			ambientProperties.m_ambient.m_IEMTex = re::Texture::Create(IEMTextureName, iemTexParams, false);
@@ -419,8 +415,6 @@ namespace gr
 
 				iemStage->SetTextureTargetSet(iemTargets);
 
-				iemStage->SetStagePipelineState(iblStageParams);
-
 				iemStage->AddBatch(cubeMeshBatch);
 
 				pipeline.AppendSingleFrameRenderStage(std::move(iemStage));
@@ -444,7 +438,8 @@ namespace gr
 			pmremTexParams.m_addToSceneData = false;
 			pmremTexParams.m_mipMode = re::Texture::MipMode::Allocate;
 
-			shared_ptr<Shader> pmremShader = re::Shader::Create(en::ShaderNames::k_generatePMREMShaderName);
+			shared_ptr<Shader> pmremShader = 
+				re::Shader::Create(en::ShaderNames::k_generatePMREMShaderName, iblStageParams);
 
 			const string PMREMTextureName = iblTexture->GetName() + "_PMREMTexture";
 			ambientProperties.m_ambient.m_PMREMTex = re::Texture::Create(PMREMTextureName, pmremTexParams, false);
@@ -510,8 +505,6 @@ namespace gr
 
 					pmremStage->SetTextureTargetSet(pmremTargetSet);
 
-					pmremStage->SetStagePipelineState(iblStageParams);
-
 					pmremStage->AddBatch(cubeMeshBatch);
 
 					pipeline.AppendSingleFrameRenderStage(std::move(pmremStage));
@@ -527,35 +520,34 @@ namespace gr
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
 		
 		// Create a shared lighting stage texture target:
-		Texture::TextureParams lightTargetParams;
-		lightTargetParams.m_width = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
-		lightTargetParams.m_height = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName);
-		lightTargetParams.m_faces = 1;
-		lightTargetParams.m_usage = Texture::Usage::ColorTarget;
-		lightTargetParams.m_dimension = Texture::Dimension::Texture2D;
-		lightTargetParams.m_format = Texture::Format::RGBA16F;
-		lightTargetParams.m_colorSpace = Texture::ColorSpace::Linear;
-		lightTargetParams.m_mipMode = re::Texture::MipMode::None;
-		lightTargetParams.m_addToSceneData = false;
-		lightTargetParams.m_clear.m_color = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		Texture::TextureParams lightTargetTexParams;
+		lightTargetTexParams.m_width = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
+		lightTargetTexParams.m_height = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName);
+		lightTargetTexParams.m_faces = 1;
+		lightTargetTexParams.m_usage = Texture::Usage::ColorTarget;
+		lightTargetTexParams.m_dimension = Texture::Dimension::Texture2D;
+		lightTargetTexParams.m_format = Texture::Format::RGBA16F;
+		lightTargetTexParams.m_colorSpace = Texture::ColorSpace::Linear;
+		lightTargetTexParams.m_mipMode = re::Texture::MipMode::None;
+		lightTargetTexParams.m_addToSceneData = false;
+		lightTargetTexParams.m_clear.m_color = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-		std::shared_ptr<Texture> outputTexture = re::Texture::Create("DeferredLightTarget", lightTargetParams, false);
+		std::shared_ptr<Texture> outputTexture = re::Texture::Create("DeferredLightTarget", lightTargetTexParams, false);
 
-		re::TextureTarget::TargetParams colorTargetParams;
+		re::TextureTarget::TargetParams ambientTargetParams{};
+		ambientTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
+		std::shared_ptr<TextureTargetSet> ambientTargetSet = re::TextureTargetSet::Create("Ambient light targets");
+		ambientTargetSet->SetColorTarget(0, outputTexture, ambientTargetParams);
 
-		std::shared_ptr<TextureTargetSet> deferredLightingTargetSet = 
-			re::TextureTargetSet::Create("Deferred light targets");
-		deferredLightingTargetSet->SetColorTarget(0, outputTexture, colorTargetParams);
-
-		Texture::TextureParams lightDepthTargetParams(lightTargetParams);
-		lightDepthTargetParams.m_usage = Texture::Usage::DepthTarget;
+		Texture::TextureParams lightDepthTargetTexParams(lightTargetTexParams);
+		lightDepthTargetTexParams.m_usage = Texture::Usage::DepthTarget;
 
 		// We need the depth buffer attached, but with depth writes disabled:
 		re::TextureTarget::TargetParams depthTargetParams;
 		depthTargetParams.m_channelWriteMode.R = re::TextureTarget::TargetParams::ChannelWrite::Disabled;
 
-		deferredLightingTargetSet->SetDepthStencilTarget(
-			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(), 
+		ambientTargetSet->SetDepthStencilTarget(
+			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
 			depthTargetParams);
 		
 		// All deferred lighting is additive
@@ -564,15 +556,12 @@ namespace gr
 			re::TextureTarget::TargetParams::BlendMode::One,
 			re::TextureTarget::TargetParams::BlendMode::One,
 		};
-		deferredLightingTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
+		ambientTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
 
 		Camera* deferredLightingCam = SceneManager::Get()->GetMainCamera().get();
 
-		
 		// Set the target sets, even if the stages aren't actually used (to ensure they're still valid)
-		m_ambientStage->SetTextureTargetSet(deferredLightingTargetSet);
-		m_keylightStage->SetTextureTargetSet(deferredLightingTargetSet);
-		m_pointlightStage->SetTextureTargetSet(deferredLightingTargetSet);
+		m_ambientStage->SetTextureTargetSet(ambientTargetSet);
 
 		// We'll be creating the data we need to render the scene's ambient light:
 		gr::Light::LightTypeProperties& ambientProperties =
@@ -586,7 +575,6 @@ namespace gr
 			ambientProperties.m_ambient.m_PMREMTex;
 
 		re::PipelineState ambientStageParams;
-		ambientStageParams.SetClearTarget(re::PipelineState::ClearTarget::Color);
 
 		// Ambient/directional lights use back face culling, as they're fullscreen quads
 		ambientStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back); 
@@ -596,10 +584,10 @@ namespace gr
 		ambientStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Greater);
 		
 		// Ambient light stage:
-		m_ambientStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_deferredAmbientLightShaderName));
+		m_ambientStage->SetStageShader(
+			re::Shader::Create(en::ShaderNames::k_deferredAmbientLightShaderName, ambientStageParams));
 
 		m_ambientStage->AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
-		m_ambientStage->SetStagePipelineState(ambientStageParams);
 
 		// Ambient PB:
 		const uint32_t totalPMREMMipLevels = ambientProperties.m_ambient.m_PMREMTex->GetNumMips();
@@ -626,17 +614,31 @@ namespace gr
 		re::PipelineState keylightStageParams(ambientStageParams);
 		if (keyLight)
 		{
+			re::TextureTarget::TargetParams keylightTargetParams;
+			keylightTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
+
 			if (!ambientIsValid) // Don't clear after 1st light
 			{
-				keylightStageParams.SetClearTarget(re::PipelineState::ClearTarget::Color);
+				keylightTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
 			}
 			else
 			{
-				keylightStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
+				keylightTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
 			}
-			m_keylightStage->SetStagePipelineState(keylightStageParams);
 
-			m_keylightStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_deferredDirectionalLightShaderName));
+			std::shared_ptr<TextureTargetSet> keylightTargetSet = re::TextureTargetSet::Create("Key light targets");
+			keylightTargetSet->SetColorTarget(0, outputTexture, keylightTargetParams);
+
+			keylightTargetSet->SetDepthStencilTarget(
+				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
+				depthTargetParams);
+
+			keylightTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
+
+			m_keylightStage->SetTextureTargetSet(keylightTargetSet);
+
+			m_keylightStage->SetStageShader(
+				re::Shader::Create(en::ShaderNames::k_deferredDirectionalLightShaderName, keylightStageParams));
 
 			m_keylightStage->AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 
@@ -650,29 +652,37 @@ namespace gr
 		{
 			m_pointlightStage->AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 
-			re::PipelineState pointlightStageParams(keylightStageParams);
-
+			re::TextureTarget::TargetParams pointlightTargetParams;
+			
 			if (!keyLight && !ambientIsValid)
 			{
-				keylightStageParams.SetClearTarget(re::PipelineState::ClearTarget::Color);
+				pointlightTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
 			}
+			else
+			{
+				pointlightTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
+			}
+
+			std::shared_ptr<TextureTargetSet> pointLightTargetSet = re::TextureTargetSet::Create("Point light targets");
+			pointLightTargetSet->SetColorTarget(0, outputTexture, pointlightTargetParams);
+
+			pointLightTargetSet->SetDepthStencilTarget(
+				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
+				depthTargetParams);
+
+			pointLightTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
+
+			m_pointlightStage->SetTextureTargetSet(pointLightTargetSet);
+
+			re::PipelineState pointlightStageParams(keylightStageParams);
 
 			// Pointlights only illuminate something if the sphere volume is behind it
 			pointlightStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::GEqual);
 
-			if (!iblTexture && !keyLight) // Don't clear after 1st light
-			{
-				pointlightStageParams.SetClearTarget(re::PipelineState::ClearTarget::Color);
-			}
-			else
-			{
-				pointlightStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
-			}
-
 			pointlightStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Front); // Cull front faces of light volumes
-			m_pointlightStage->SetStagePipelineState(pointlightStageParams);
 
-			m_pointlightStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_deferredPointLightShaderName));
+			m_pointlightStage->SetStageShader(
+				re::Shader::Create(en::ShaderNames::k_deferredPointLightShaderName, pointlightStageParams));
 
 			pipeline.AppendRenderStage(m_pointlightStage);
 

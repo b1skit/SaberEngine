@@ -44,7 +44,12 @@ namespace gr
 
 	void GBufferGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		std::shared_ptr<Shader> gBufferShader = re::Shader::Create(en::ShaderNames::k_gbufferShaderName);
+		re::PipelineState gBufferPipelineState;
+		gBufferPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
+		gBufferPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
+
+		std::shared_ptr<Shader> gBufferShader = 
+			re::Shader::Create(en::ShaderNames::k_gbufferShaderName, gBufferPipelineState);
 
 		m_gBufferStage->SetStageShader(gBufferShader);
 
@@ -66,6 +71,7 @@ namespace gr
 		gbuffer16bitParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 		re::TextureTarget::TargetParams gbufferTargetParams;
+		gbufferTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
 
 		std::shared_ptr<re::TextureTargetSet> gBufferTargets = re::TextureTargetSet::Create("GBuffer Target Set");
 		for (uint8_t i = GBufferTexIdx::GBufferAlbedo; i <= GBufferTexIdx::GBufferMatProp0; i++)
@@ -90,6 +96,7 @@ namespace gr
 		depthTexParams.m_clear.m_depthStencil.m_depth = 1.f; // Far plane
 
 		re::TextureTarget::TargetParams depthTargetParams;
+		depthTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
 
 		gBufferTargets->SetDepthStencilTarget(
 			re::Texture::Create(GBufferTexNames[GBufferTexIdx::GBufferDepth], depthTexParams, false),
@@ -106,15 +113,6 @@ namespace gr
 
 		// Camera:
 		m_gBufferStage->AddPermanentParameterBlock(SceneManager::Get()->GetMainCamera()->GetCameraParams());
-
-		// Set the stage params:
-		re::PipelineState gBufferStageParams;
-		gBufferStageParams.SetClearTarget(re::PipelineState::ClearTarget::ColorDepth);
-
-		gBufferStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
-		gBufferStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
-
-		m_gBufferStage->SetStagePipelineState(gBufferStageParams);
 
 		// Finally, append the render stage to the pipeline:
 		pipeline.AppendRenderStage(m_gBufferStage);

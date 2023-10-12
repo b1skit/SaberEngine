@@ -77,6 +77,13 @@ namespace re
 				ChannelWrite::Mode::Enabled  // A
 			}; 
 
+			// TODO: Update PipelineState_DX12.cpp::BuildBlendDesc to have D3D12_BLEND_DESC::IndependentBlendEnable = true
+			enum class ClearMode
+			{
+				Enabled,
+				Disabled
+			} m_clearMode = ClearMode::Disabled;
+
 
 			// TODO: Support additional target/sub-resource parameters:
 			// - Array index (or first index, and offset from that)
@@ -114,6 +121,9 @@ namespace re
 
 		void SetDepthWriteMode(TargetParams::ChannelWrite::Mode);
 		TargetParams::ChannelWrite::Mode GetDepthWriteMode() const; // m_channelWriteMode.R
+
+		void SetClearMode(re::TextureTarget::TargetParams::ClearMode);
+		re::TextureTarget::TargetParams::ClearMode GetClearMode() const;
 
 		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 		void SetPlatformParams(std::unique_ptr<PlatformParams> params) { m_platformParams = std::move(params); }
@@ -234,6 +244,11 @@ namespace re
 
 		void SetColorTargetBlendModes(size_t numTargets, re::TextureTarget::TargetParams::BlendModes const* blendModesArray);
 		void SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes const&);
+
+		void SetColorTargetClearMode(size_t targetIdx, re::TextureTarget::TargetParams::ClearMode);
+		void SetAllColorTargetClearModes(re::TextureTarget::TargetParams::ClearMode);
+		void SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode);
+		void SetAllTargetClearModes(re::TextureTarget::TargetParams::ClearMode);
 
 		void SetViewport(re::Viewport const&);
 		inline re::Viewport const& GetViewport() const { return m_viewport; }

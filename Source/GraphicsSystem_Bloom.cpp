@@ -89,15 +89,13 @@ namespace gr
 
 		Camera* sceneCam = SceneManager::Get()->GetMainCamera().get();
 
-		shared_ptr<Shader> blitShader = re::Shader::Create(en::ShaderNames::k_blitShaderName);
+		re::PipelineState blitPipelineState;
+		blitPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
+		blitPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
+		
+		shared_ptr<Shader> blitShader = 
+			re::Shader::Create(en::ShaderNames::k_blitShaderName, blitPipelineState);
 
-		// Emissive blit stage:
-		re::PipelineState emissiveStageParams;
-		emissiveStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
-		emissiveStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
-		emissiveStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
-
-		m_emissiveBlitStage->SetStagePipelineState(emissiveStageParams);
 		m_emissiveBlitStage->SetStageShader(blitShader);
 		m_emissiveBlitStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
@@ -108,16 +106,16 @@ namespace gr
 
 		emissiveTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
 			re::TextureTarget::TargetParams::BlendMode::One, re::TextureTarget::TargetParams::BlendMode::One});
+		emissiveTargetSet->SetAllTargetClearModes(re::TextureTarget::TargetParams::ClearMode::Disabled);
 
 		m_emissiveBlitStage->SetTextureTargetSet(emissiveTargetSet);
 		
 		pipeline.AppendRenderStage(m_emissiveBlitStage);
 
 		// Bloom stages:
-		re::PipelineState bloomStageParams;
-		bloomStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
-		bloomStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
-		bloomStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
+		re::PipelineState bloomPipelineState;
+		bloomPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
+		bloomPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 		
 		int currentXRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName) / 2;
 		int currentYRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName) / 2;
@@ -132,7 +130,7 @@ namespace gr
 		re::TextureTarget::TargetParams targetParams;
 
 		shared_ptr<Shader> luminanceThresholdShader =
-			re::Shader::Create(en::ShaderNames::k_luminanceThresholdShaderName);
+			re::Shader::Create(en::ShaderNames::k_luminanceThresholdShaderName, bloomPipelineState);
 
 		// Create our param blocks:
 		m_luminanceThresholdParamBlock = re::ParameterBlock::Create(
@@ -163,7 +161,6 @@ namespace gr
 
 			downResStage->SetTextureTargetSet(downResTargets);
 
-			downResStage->SetStagePipelineState(bloomStageParams);
 			downResStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
 			if (i == 0)
@@ -189,7 +186,7 @@ namespace gr
 
 		// Blur stages:
 		shared_ptr<Shader> gaussianBlurShader =
-			re::Shader::Create(en::ShaderNames::k_gaussianBlurShaderName);
+			re::Shader::Create(en::ShaderNames::k_gaussianBlurShaderName, bloomPipelineState);
 
 		// Create our param blocks:
 		m_horizontalBloomParams = re::ParameterBlock::Create(
@@ -226,7 +223,6 @@ namespace gr
 			blurTargets->SetViewport(re::Viewport(0, 0, currentXRes, currentYRes));
 			blurTargets->SetScissorRect(re::ScissorRect(0, 0, currentXRes, currentYRes));
 
-			newBlurStage->SetStagePipelineState(bloomStageParams);
 			newBlurStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
 
 			newBlurStage->SetStageShader(gaussianBlurShader);
@@ -253,11 +249,6 @@ namespace gr
 			pipeline.AppendRenderStage(m_blurStages[i]);
 		}
 
-		// Up-res stages:
-		re::PipelineState upresStageParams;
-		upresStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
-		upresStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
-		upresStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
 		for (size_t i = 0; i < m_numDownSamplePasses; i++)
 		{
@@ -282,12 +273,10 @@ namespace gr
 				upResTargets->SetColorTarget(0, deferredLightGS->GetFinalTextureTargetSet()->GetColorTarget(0));
 
 				upResTargets->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-					re::TextureTarget::TargetParams::BlendMode::One, re::TextureTarget::TargetParams::BlendMode::One });
+					re::TextureTarget::TargetParams::BlendMode::One, 
+					re::TextureTarget::TargetParams::BlendMode::One });
 
-				re::PipelineState addStageParams(upresStageParams);
-				addStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
-
-				upresStage->SetStagePipelineState(addStageParams);
+				upResTargets->SetAllTargetClearModes(re::TextureTarget::TargetParams::ClearMode::Disabled);
 			}
 			else
 			{
@@ -295,9 +284,8 @@ namespace gr
 					m_downResStages[m_downResStages.size() - (i + 2)]->GetTextureTargetSet()->GetColorTarget(0));
 
 				upResTargets->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-					re::TextureTarget::TargetParams::BlendMode::One, re::TextureTarget::TargetParams::BlendMode::Zero});
-
-				upresStage->SetStagePipelineState(upresStageParams);
+					re::TextureTarget::TargetParams::BlendMode::One, 
+					re::TextureTarget::TargetParams::BlendMode::Zero});
 			}
 
 			upresStage->SetTextureTargetSet(upResTargets);

@@ -157,12 +157,6 @@ namespace re
 	}
 
 
-	void RenderStage::SetStagePipelineState(re::PipelineState const& params)
-	{
-		m_pipelineState = params;
-	}
-
-
 	void RenderStage::AddBatches(std::vector<re::Batch> const& batches)
 	{
 		for (size_t i = 0; i < batches.size(); i++)

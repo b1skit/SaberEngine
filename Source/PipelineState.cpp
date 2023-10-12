@@ -10,7 +10,6 @@ namespace re
 		, m_faceCullingMode(FaceCullingMode::Back)
 		, m_windingOrder(WindingOrder::CCW)
 		, m_depthTestMode(DepthTestMode::Default)
-		, m_targetClearMode(ClearTarget::None)
 	{
 		ComputeDataHash();
 	}
@@ -27,7 +26,6 @@ namespace re
 		AddDataBytesToHash(m_faceCullingMode);
 		AddDataBytesToHash(m_windingOrder);
 		AddDataBytesToHash(m_depthTestMode);
-		AddDataBytesToHash(m_targetClearMode);		
 	}
 
 
@@ -92,21 +90,6 @@ namespace re
 	void PipelineState::SetDepthTestMode(PipelineState::DepthTestMode depthTestMode)
 	{
 		m_depthTestMode = depthTestMode;
-		m_isDirty = true;
-		ComputeDataHash();
-	}
-
-
-	PipelineState::ClearTarget PipelineState::GetClearTarget() const
-	{
-		SEAssert("PipelineState is dirty", !m_isDirty);
-		return m_targetClearMode;
-	}
-
-
-	void PipelineState::SetClearTarget(PipelineState::ClearTarget targetClearMode)
-	{
-		m_targetClearMode = targetClearMode;
 		m_isDirty = true;
 		ComputeDataHash();
 	}

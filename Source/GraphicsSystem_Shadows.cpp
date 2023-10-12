@@ -68,15 +68,14 @@ namespace gr
 
 	void ShadowsGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		re::PipelineState shadowStageParams;
-		shadowStageParams.SetClearTarget(re::PipelineState::ClearTarget::Depth);
+		re::PipelineState shadowPipelineState;
 		
 		// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
 		// want to be able to place lights inside of geometry (eg. emissive spheres). For now, enable backface culling.
 		// In future, we need to support tagging assets to not cast shadows
-		shadowStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
+		shadowPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
 
-		shadowStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
+		shadowPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
 
 		// Directional light shadow:		
 		shared_ptr<Light> directionalLight = SceneManager::GetSceneData()->GetKeyLight();
@@ -92,7 +91,7 @@ namespace gr
 
 				// Shader:
 				m_directionalShadowStage->SetStageShader(
-					re::Shader::Create(en::ShaderNames::k_depthShaderName));
+					re::Shader::Create(en::ShaderNames::k_depthShaderName, shadowPipelineState));
 
 				std::shared_ptr<re::TextureTargetSet> directionalShadowTargetSet = 
 					directionalLight->GetShadowMap()->GetTextureTargetSet();
@@ -110,11 +109,11 @@ namespace gr
 				directionalShadowTargetSet->SetDepthWriteMode(
 					re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled);
 
+				directionalShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode::Enabled);
+
 				m_directionalShadowStage->SetTextureTargetSet(directionalShadowTargetSet);
 				// TODO: Target set should be a member of the stage, instead of the shadow map?
 				// -> HARD: The stages are already created, we don't know what lights are associated with each stage
-
-				m_directionalShadowStage->SetStagePipelineState(shadowStageParams);
 
 				pipeline.AppendRenderStage(m_directionalShadowStage);
 			}
@@ -139,11 +138,15 @@ namespace gr
 				m_pointLightShadowStageCams.emplace_back(shadowCam);
 
 				// Shader:
-				shadowStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_cubeDepthShaderName));
+				shadowStage->SetStageShader(
+					re::Shader::Create(en::ShaderNames::k_cubeDepthShaderName, shadowPipelineState));
 
-				shadowStage->SetTextureTargetSet(curLight->GetShadowMap()->GetTextureTargetSet());
+				std::shared_ptr<re::TextureTargetSet> pointShadowTargetSet = 
+					curLight->GetShadowMap()->GetTextureTargetSet();
 
-				shadowStage->SetStagePipelineState(shadowStageParams);
+				pointShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode::Enabled);
+
+				shadowStage->SetTextureTargetSet(pointShadowTargetSet);
 
 				// Cubemap shadow param block:
 				CubemapShadowRenderParams cubemapShadowParams = GetCubemapShadowRenderParamsData(shadowCam);

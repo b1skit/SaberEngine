@@ -23,12 +23,11 @@ using Microsoft::WRL::ComPtr;
 namespace
 {
 	uint64_t ComputePSOKey(
-		re::Shader const& shader, 
-		re::PipelineState const& rePipelineState, 
+		re::Shader const& shader,
 		re::TextureTargetSet const* targetSet)
 	{
 		const uint64_t shaderKey = shader.GetNameID();
-		const uint64_t pipelineKey = rePipelineState.GetPipelineStateDataHash();
+		const uint64_t pipelineKey = shader.GetPipelineState().GetPipelineStateDataHash();
 		const uint64_t targetSetKey = targetSet ? targetSet->GetTargetSetSignature() : 0;
 
 		uint64_t psoKey = 0;
@@ -227,12 +226,11 @@ namespace dx12
 
 	std::shared_ptr<dx12::PipelineState> Context::CreateAddPipelineState(
 		re::Shader const& shader,
-		re::PipelineState const& rePipelineState,	
 		re::TextureTargetSet const& targetSet)
 	{
 		std::shared_ptr<dx12::PipelineState> pso = nullptr;
 
-		const uint64_t psoKey = ComputePSOKey(shader, rePipelineState, &targetSet);
+		const uint64_t psoKey = ComputePSOKey(shader, &targetSet);
 		if (m_PSOLibrary.contains(psoKey))
 		{
 			pso = m_PSOLibrary[psoKey];
@@ -240,7 +238,7 @@ namespace dx12
 		else
 		{
 			pso = std::make_shared<dx12::PipelineState>();
-			pso->Create(shader, rePipelineState, targetSet);
+			pso->Create(shader, targetSet);
 
 			m_PSOLibrary[psoKey] = pso;
 		}
@@ -262,11 +260,9 @@ namespace dx12
 
 
 	std::shared_ptr<dx12::PipelineState> Context::GetPipelineStateObject(
-		re::Shader const& shader,
-		re::PipelineState const& rePipelineState,
-		re::TextureTargetSet const* targetSet)
+		re::Shader const& shader, re::TextureTargetSet const* targetSet)
 	{
-		const uint64_t psoKey = ComputePSOKey(shader, rePipelineState, targetSet);
+		const uint64_t psoKey = ComputePSOKey(shader, targetSet);
 		if (m_PSOLibrary.contains(psoKey))
 		{
 			return m_PSOLibrary[psoKey];
@@ -276,7 +272,7 @@ namespace dx12
 			LOG_WARNING("DX12 PSO for Shader \"%s\", TextureTargetSet \"%s\" does not exist and must be created "
 				"immediately", shader.GetName().c_str(), targetSet->GetName().c_str());
 
-			return CreateAddPipelineState(shader, rePipelineState, *targetSet);
+			return CreateAddPipelineState(shader, *targetSet);
 		}
 	}
 

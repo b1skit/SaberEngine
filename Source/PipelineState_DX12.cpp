@@ -374,15 +374,14 @@ namespace dx12
 	}
 
 
-	void PipelineState::Create(
-		re::Shader const& shader,
-		re::PipelineState const& rePipelineState,
-		re::TextureTargetSet const& targetSet)
+	void PipelineState::Create(re::Shader const& shader, re::TextureTargetSet const& targetSet)
 	{
 		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
 
 		// Generate the PSO:
 		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
+
+		re::PipelineState const& rePipelineState = shader.GetPipelineState();
 
 		if (shaderParams->m_shaderBlobs[dx12::Shader::Vertex]) // Vertex shader is mandatory for graphics pipelines
 		{

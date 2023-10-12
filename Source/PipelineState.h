@@ -67,18 +67,6 @@ namespace re
 		DepthTestMode GetDepthTestMode() const;
 		void SetDepthTestMode(DepthTestMode);
 
-		// TODO: These should be per-target (for each stage target set), to allow different behavior when using MRTs
-		// -> Update PipelineState_DX12.cpp::BuildBlendDesc to have D3D12_BLEND_DESC::IndependentBlendEnable = true
-		enum class ClearTarget
-		{
-			Color,
-			Depth,
-			ColorDepth,
-			None
-		};
-		ClearTarget GetClearTarget() const;
-		void SetClearTarget(ClearTarget);
-
 
 	private:
 		bool m_isDirty;
@@ -87,6 +75,5 @@ namespace re
 		FaceCullingMode m_faceCullingMode;
 		WindingOrder m_windingOrder;
 		DepthTestMode m_depthTestMode;
-		ClearTarget m_targetClearMode;
 	};
 }

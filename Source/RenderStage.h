@@ -7,7 +7,6 @@
 #include "MeshPrimitive.h"
 #include "NamedObject.h"
 #include "ParameterBlock.h"
-#include "PipelineState.h"
 #include "Shader.h"
 #include "Shader_Platform.h"
 #include "Texture.h"
@@ -75,9 +74,6 @@ namespace re
 		RenderStageLifetime GetStageLifetime() const;
 		IStageParams const* GetStageParams() const;
 
-		void SetStagePipelineState(re::PipelineState const& params);
-		inline re::PipelineState const& GetStagePipelineState() const  { return m_pipelineState; }
-
 		void SetStageShader(std::shared_ptr<re::Shader>);
 		re::Shader* GetStageShader() const;
 
@@ -123,8 +119,6 @@ namespace re
 		std::unique_ptr<IStageParams> m_stageParams;
 
 		std::shared_ptr<re::Shader> m_stageShader;
-
-		re::PipelineState m_pipelineState;
 
 		std::shared_ptr<re::TextureTargetSet> m_textureTargetSet;
 		std::vector<RenderStageTextureAndSamplerInput> m_textureSamplerInputs;

@@ -16,7 +16,8 @@ using gr::Material;
 
 namespace re
 {
-	std::shared_ptr<re::Shader> Shader::Create(std::string const& extensionlessShaderFilename)
+	std::shared_ptr<re::Shader> Shader::Create(
+		std::string const& extensionlessShaderFilename, re::PipelineState const& rePipelineState)
 	{
 		// If the shader already exists, return it. Otherwise, create the shader. 
 		if (en::SceneManager::GetSceneData()->ShaderExists(extensionlessShaderFilename))
@@ -28,7 +29,7 @@ namespace re
 
 		// Our ctor is private; We must manually create the Shader, and then pass the ownership to a shared_ptr
 		shared_ptr<re::Shader> sharedShaderPtr;
-		sharedShaderPtr.reset(new re::Shader(extensionlessShaderFilename));
+		sharedShaderPtr.reset(new re::Shader(extensionlessShaderFilename, rePipelineState));
 
 		// Register the Shader with the SceneData object for lifetime management:
 		const bool addedNewShader = en::SceneManager::GetSceneData()->AddUniqueShader(sharedShaderPtr);
@@ -42,8 +43,9 @@ namespace re
 	}
 
 
-	Shader::Shader(string const& extensionlessShaderFilename)
+	Shader::Shader(string const& extensionlessShaderFilename, re::PipelineState const& rePipelineState)
 		: NamedObject(extensionlessShaderFilename)
+		, m_pipelineState(rePipelineState)
 	{
 		platform::Shader::CreatePlatformParams(*this);
 	}

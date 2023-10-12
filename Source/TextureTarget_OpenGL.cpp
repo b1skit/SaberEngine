@@ -367,6 +367,13 @@ namespace opengl
 			}
 		}
 
+		// Set the blend modes. Note, we set these even if the targets don't contain textures
+		for (uint32_t i = 0; i < targetSet.GetColorTargets().size(); i++)
+		{
+			SetBlendMode(targetSet.GetColorTarget(i), i);
+			SetColorWriteMode(targetSet.GetColorTarget(i), i);
+		}
+
 		if (!buffers.empty())
 		{
 			glNamedFramebufferDrawBuffers(
@@ -410,13 +417,9 @@ namespace opengl
 			// Verify the framebuffer (as we actually had color textures to attach)
 			const GLenum result = glCheckNamedFramebufferStatus(targetSetParams->m_frameBufferObject, GL_FRAMEBUFFER);
 			SEAssert("Framebuffer is not complete", result == GL_FRAMEBUFFER_COMPLETE);
-		}
 
-		// Set the blend modes. Note, we set these even if the targets don't contain textures
-		for (uint32_t i = 0; i < targetSet.GetColorTargets().size(); i++)
-		{
-			SetBlendMode(targetSet.GetColorTarget(i), i);
-			SetColorWriteMode(targetSet.GetColorTarget(i), i);
+			// Clear the targets AFTER setting color write modes
+			ClearColorTargets(targetSet);
 		}
 	}
 
@@ -556,6 +559,9 @@ namespace opengl
 				scissorRect.Bottom());	// Height
 
 			SetDepthWriteMode(*targetSet.GetDepthStencilTarget());
+
+			// Clear the targets AFTER setting depth write modes
+			ClearDepthStencilTarget(targetSet);
 		}
 	}
 
@@ -568,7 +574,8 @@ namespace opengl
 		std::vector<re::TextureTarget> const& colorTargets = targetSet.GetColorTargets();
 		for (size_t i = 0; i < colorTargets.size(); i++)
 		{
-			if (colorTargets[i].HasTexture())
+			if (colorTargets[i].GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled && 
+				colorTargets[i].HasTexture())
 			{
 				opengl::TextureTarget::PlatformParams* targetParams =
 					colorTargets[i].GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
@@ -585,7 +592,8 @@ namespace opengl
 
 	void TextureTargetSet::ClearDepthStencilTarget(re::TextureTargetSet const& targetSet)
 	{
-		if (targetSet.HasDepthTarget())
+		if (targetSet.GetDepthStencilTarget()->GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled &&
+			targetSet.HasDepthTarget())
 		{
 			opengl::TextureTargetSet::PlatformParams const* targetSetParams =
 				targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
@@ -641,5 +649,7 @@ namespace opengl
 			
 			opengl::Texture::BindAsImageTexture(*texture, slot, targetParams.m_targetMip, GL_WRITE_ONLY);
 		}
+
+		// TODO: Support compute target clearing
 	}
 }

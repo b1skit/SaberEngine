@@ -209,8 +209,6 @@ namespace opengl
 					// RenderDoc makers: Render stage name
 					glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderStage->GetName().c_str());
 
-					re::PipelineState const& stagePipelineParams = renderStage->GetStagePipelineState();
-
 					// Get the stage targets:
 					std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
 					if (!stageTargets)
@@ -223,9 +221,7 @@ namespace opengl
 						stageTargets = swapChainParams->m_backbufferTargetSet; // Draw directly to the swapchain backbuffer
 					}
 
-
-					auto SetDrawState = [&renderStage, &context](
-						re::Shader const* shader)
+					auto SetDrawState = [&renderStage, &context](re::Shader const* shader)
 					{
 						opengl::Shader::Bind(*shader);
 
@@ -249,9 +245,10 @@ namespace opengl
 								texSamplerInput.m_sampler,
 								texSamplerInput.m_srcMip);
 						}
+
+						context->SetPipelineState(shader->GetPipelineState());
 					};
 
-					// Bind the shader now that the pipeline state is set:
 					re::Shader* stageShader = renderStage->GetStageShader();
 					const bool hasStageShader = stageShader != nullptr;
 					if (hasStageShader)
@@ -259,35 +256,17 @@ namespace opengl
 						SetDrawState(stageShader);
 					}
 
-					// Configure the pipeline state:
-					context->SetPipelineState(stagePipelineParams);
-
 					switch (renderStage->GetStageType())
 					{
 					case re::RenderStage::RenderStageType::Compute:
 					{
 						opengl::TextureTargetSet::AttachTargetsAsImageTextures(*stageTargets);
-
-						// TODO: Support compute target clearing
 					}
 					break;
 					case re::RenderStage::RenderStageType::Graphics:
 					{
 						opengl::TextureTargetSet::AttachColorTargets(*stageTargets);
 						opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
-
-						// Clear the targets AFTER setting color/depth write modes
-						const re::PipelineState::ClearTarget clearTargetMode = stagePipelineParams.GetClearTarget();
-						if (clearTargetMode == re::PipelineState::ClearTarget::Color ||
-							clearTargetMode == re::PipelineState::ClearTarget::ColorDepth)
-						{
-							opengl::TextureTargetSet::ClearColorTargets(*stageTargets);
-						}
-						if (clearTargetMode == re::PipelineState::ClearTarget::Depth ||
-							clearTargetMode == re::PipelineState::ClearTarget::ColorDepth)
-						{
-							opengl::TextureTargetSet::ClearDepthStencilTarget(*stageTargets);
-						}
 					}
 					break;
 					default:

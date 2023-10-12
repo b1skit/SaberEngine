@@ -65,19 +65,15 @@ namespace gr
 
 	void SkyboxGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
 	{
-		// Create a skybox shader, now that we have some sort of image loaded:
-		m_skyboxStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_skyboxShaderName));
+		re::PipelineState skyboxPipelineState;
+		skyboxPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
+		skyboxPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::LEqual);
+
+		m_skyboxStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_skyboxShaderName, skyboxPipelineState));
 
 		// Load the HDR image:
 		m_skyTexture = SceneManager::GetSceneData()->GetIBLTexture();
 		m_skyTextureShaderName = "Tex0";
-
-		re::PipelineState skyboxStageParams;
-		skyboxStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
-		skyboxStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
-		skyboxStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::LEqual);
-
-		m_skyboxStage->SetStagePipelineState(skyboxStageParams);
 
 		m_skyboxStage->AddPermanentParameterBlock(SceneManager::Get()->GetMainCamera()->GetCameraParams());
 
@@ -88,6 +84,7 @@ namespace gr
 		// GBuffer depth for HW depth testing
 		std::shared_ptr<re::TextureTargetSet> skyboxTargets = 
 			re::TextureTargetSet::Create(*deferredLightGS->GetFinalTextureTargetSet(), "Skybox Targets");
+		skyboxTargets->SetAllTargetClearModes(re::TextureTarget::TargetParams::ClearMode::Disabled);
 
 		re::TextureTarget::TargetParams depthTargetParams;
 		depthTargetParams.m_channelWriteMode.R = re::TextureTarget::TargetParams::ChannelWrite::Disabled;

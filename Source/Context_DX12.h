@@ -34,13 +34,10 @@ namespace dx12
 		dx12::CommandQueue& GetCommandQueue(dx12::CommandListType type);
 		dx12::CommandQueue& GetCommandQueue(uint64_t fenceValue); // Get the command queue that produced a fence value
 
-		std::shared_ptr<dx12::PipelineState> CreateAddPipelineState(
-			re::Shader const&, re::PipelineState const&, re::TextureTargetSet const&);
+		std::shared_ptr<dx12::PipelineState> CreateAddPipelineState(re::Shader const&, re::TextureTargetSet const&);
 			
-		std::shared_ptr<dx12::PipelineState> GetPipelineStateObject(
-			re::Shader const& shader,
-			re::PipelineState const& rePipelineState,
-			re::TextureTargetSet const* targetSet); // A null targetSet is valid (it indicates the backbuffer)
+		// A null targetSet is valid (it indicates the backbuffer)
+		std::shared_ptr<dx12::PipelineState> GetPipelineStateObject(re::Shader const&, re::TextureTargetSet const*);
 
 		bool HasRootSignature(uint64_t rootSigDescHash);
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> GetRootSignature(uint64_t rootSigDescHash);

@@ -41,14 +41,12 @@ namespace gr
 
 	void TonemappingGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
 	{
-		re::PipelineState tonemappingStageParam;
-		tonemappingStageParam.SetClearTarget(re::PipelineState::ClearTarget::None);
-		tonemappingStageParam.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
-		tonemappingStageParam.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
+		re::PipelineState tonemappingPipelineState;
+		tonemappingPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
+		tonemappingPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
-		m_tonemappingStage->SetStagePipelineState(tonemappingStageParam);
-
-		m_tonemappingStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_toneMapShaderName));
+		m_tonemappingStage->SetStageShader(
+			re::Shader::Create(en::ShaderNames::k_toneMapShaderName, tonemappingPipelineState));
 
 		m_tonemappingStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 

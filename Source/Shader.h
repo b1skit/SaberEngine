@@ -3,6 +3,7 @@
 
 #include "IPlatformParams.h"
 #include "ParameterBlock.h"
+#include "PipelineState.h"
 #include "NamedObject.h"
 
 
@@ -24,25 +25,30 @@ namespace re
 
 
 	public: // Object factory: Gets a Shader if it already exists, or creates it if it doesn't
-		static std::shared_ptr<re::Shader> Create(std::string const& extensionlessShaderFilename);
+		static std::shared_ptr<re::Shader> Create(
+			std::string const& extensionlessShaderFilename, re::PipelineState const&);
 		~Shader() { Destroy(); }
 
 		Shader(Shader&&) = default;
 		Shader& operator=(Shader&&) = default;
 		
 		inline bool IsCreated() const;
+
+		re::PipelineState const& GetPipelineState() const;
 			
 		inline PlatformParams* GetPlatformParams() const;
 		inline void SetPlatformParams(std::unique_ptr<PlatformParams> params);
 
 
 	private:
-		explicit Shader(std::string const& extensionlessShaderFilename);
+		explicit Shader(std::string const& extensionlessShaderFilename, re::PipelineState const&);
 		void Destroy();
 
 
 	private:
 		std::unique_ptr<PlatformParams> m_platformParams;
+
+		re::PipelineState m_pipelineState;
 		
 
 	private:
@@ -52,19 +58,25 @@ namespace re
 	};
 
 
-	bool Shader::IsCreated() const
+	inline bool Shader::IsCreated() const
 	{
 		return m_platformParams->m_isCreated;
 	}
 
 
-	Shader::PlatformParams* Shader::GetPlatformParams() const
+	inline re::PipelineState const& Shader::GetPipelineState() const
+	{
+		return m_pipelineState;
+	}
+
+
+	inline Shader::PlatformParams* Shader::GetPlatformParams() const
 	{
 		return m_platformParams.get();
 	}
 
 
-	void Shader::SetPlatformParams(std::unique_ptr<PlatformParams> params)
+	inline void Shader::SetPlatformParams(std::unique_ptr<PlatformParams> params)
 	{
 		m_platformParams = std::move(params);
 	}

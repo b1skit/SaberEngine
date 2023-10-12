@@ -385,49 +385,52 @@ namespace dx12
 	{
 		SEAssert("Target texture cannot be null", depthTarget);
 
-		std::shared_ptr<re::Texture> depthTex = depthTarget->GetTexture();
-
-		re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
-
-		SEAssert("Target texture must be a depth target",
-			(depthTexParams.m_usage & re::Texture::Usage::DepthTarget) != 0);
-
-		const uint32_t numDepthMips = depthTex->GetNumMips();
-		SEAssert("Depth target has mips. This is unexpected", numDepthMips == 1);
-
-		re::TextureTarget::TargetParams const& depthTargetParams = depthTarget->GetTargetParams();
-
-		dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
-			depthTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
-
-		if (depthTargetParams.m_targetFace == re::TextureTarget::k_allFaces)
+		if (depthTarget->GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled)
 		{
-			SEAssert("We're (currently) expecting the a cubemap", 
-				depthTexParams.m_dimension == re::Texture::Dimension::TextureCubeMap);
+			std::shared_ptr<re::Texture> depthTex = depthTarget->GetTexture();
 
-			D3D12_CPU_DESCRIPTOR_HANDLE const& dsvDescriptor =
-				depthTargetPlatParams->m_cubemapDescriptor.GetBaseDescriptor();
+			re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
 
-			m_commandList->ClearDepthStencilView(
-				dsvDescriptor,
-				D3D12_CLEAR_FLAG_DEPTH,
-				depthTexParams.m_clear.m_depthStencil.m_depth,
-				depthTexParams.m_clear.m_depthStencil.m_stencil,
-				0,
-				nullptr);
-		}
-		else
-		{
-			D3D12_CPU_DESCRIPTOR_HANDLE const& dsvDescriptor =
-				depthTargetPlatParams->m_rtvDsvDescriptors[depthTarget->GetTargetParams().m_targetFace].GetBaseDescriptor();
+			SEAssert("Target texture must be a depth target",
+				(depthTexParams.m_usage & re::Texture::Usage::DepthTarget) != 0);
 
-			m_commandList->ClearDepthStencilView(
-				dsvDescriptor,
-				D3D12_CLEAR_FLAG_DEPTH,
-				depthTexParams.m_clear.m_depthStencil.m_depth,
-				depthTexParams.m_clear.m_depthStencil.m_stencil,
-				0,
-				nullptr);
+			const uint32_t numDepthMips = depthTex->GetNumMips();
+			SEAssert("Depth target has mips. This is unexpected", numDepthMips == 1);
+
+			re::TextureTarget::TargetParams const& depthTargetParams = depthTarget->GetTargetParams();
+
+			dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
+				depthTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+
+			if (depthTargetParams.m_targetFace == re::TextureTarget::k_allFaces)
+			{
+				SEAssert("We're (currently) expecting the a cubemap",
+					depthTexParams.m_dimension == re::Texture::Dimension::TextureCubeMap);
+
+				D3D12_CPU_DESCRIPTOR_HANDLE const& dsvDescriptor =
+					depthTargetPlatParams->m_cubemapDescriptor.GetBaseDescriptor();
+
+				m_commandList->ClearDepthStencilView(
+					dsvDescriptor,
+					D3D12_CLEAR_FLAG_DEPTH,
+					depthTexParams.m_clear.m_depthStencil.m_depth,
+					depthTexParams.m_clear.m_depthStencil.m_stencil,
+					0,
+					nullptr);
+			}
+			else
+			{
+				D3D12_CPU_DESCRIPTOR_HANDLE const& dsvDescriptor =
+					depthTargetPlatParams->m_rtvDsvDescriptors[depthTarget->GetTargetParams().m_targetFace].GetBaseDescriptor();
+
+				m_commandList->ClearDepthStencilView(
+					dsvDescriptor,
+					D3D12_CLEAR_FLAG_DEPTH,
+					depthTexParams.m_clear.m_depthStencil.m_depth,
+					depthTexParams.m_clear.m_depthStencil.m_stencil,
+					0,
+					nullptr);
+			}
 		}
 	}
 
@@ -440,14 +443,17 @@ namespace dx12
 			(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) ||
 			(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::SwapchainColorProxy));
 
-		dx12::TextureTarget::PlatformParams* targetPlatParams =
-			colorTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+		if (colorTarget->GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled)
+		{
+			dx12::TextureTarget::PlatformParams* targetPlatParams =
+				colorTarget->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
 
-		m_commandList->ClearRenderTargetView(
-			targetPlatParams->m_rtvDsvDescriptors[colorTarget->GetTargetParams().m_targetFace].GetBaseDescriptor(),
-			&colorTarget->GetTexture()->GetTextureParams().m_clear.m_color.r,
-			0,			// Number of rectangles in the proceeding D3D12_RECT ptr
-			nullptr);	// Ptr to an array of rectangles to clear in the resource view. Clears entire view if null
+			m_commandList->ClearRenderTargetView(
+				targetPlatParams->m_rtvDsvDescriptors[colorTarget->GetTargetParams().m_targetFace].GetBaseDescriptor(),
+				&colorTarget->GetTexture()->GetTextureParams().m_clear.m_color.r,
+				0,			// Number of rectangles in the proceeding D3D12_RECT ptr
+				nullptr);	// Ptr to an array of rectangles to clear in the resource view. Clears entire view if null
+		}
 	}
 
 
@@ -556,7 +562,7 @@ namespace dx12
 					// TODO: Select a DSV that is created with depth writes disabled
 					dsvDescriptor = depthTargetPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor();
 				}
-			}			
+			}
 		}
 
 		// NOTE: isSingleHandleToDescRange == true specifies that the rtvs are contiguous in memory, thus N rtv 
@@ -571,6 +577,17 @@ namespace dx12
 		// Set the viewport and scissor rectangles:
 		SetViewport(targetSet);
 		SetScissorRect(targetSet);
+
+		// Clear the targets:
+		if (numColorTargets > 0)
+		{
+			ClearColorTargets(targetSet);
+		}
+		
+		if (depthStencilTarget)
+		{
+			ClearDepthTarget(targetSet.GetDepthStencilTarget());
+		}
 	}
 
 
@@ -646,6 +663,8 @@ namespace dx12
 					colorTarget->GetTargetParams().m_targetMip);
 			}
 		}
+
+		// TODO: Support compute target clearing (tricky: Need a copy of descriptors in the GPU-visible heap)
 	}
 
 

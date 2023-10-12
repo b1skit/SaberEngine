@@ -25,7 +25,7 @@ namespace dx12
 
 		void Destroy();
 
-		void Create(re::Shader const&, re::PipelineState const&, re::TextureTargetSet const&);
+		void Create(re::Shader const&, re::TextureTargetSet const&);
 		
 		ID3D12PipelineState* GetD3DPipelineState() const;
 
