@@ -72,10 +72,10 @@ namespace gr
 		m_skyTexture = SceneManager::GetSceneData()->GetIBLTexture();
 		m_skyTextureShaderName = "Tex0";
 
-		gr::PipelineState skyboxStageParams;
-		skyboxStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
-		skyboxStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
-		skyboxStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::LEqual);
+		re::PipelineState skyboxStageParams;
+		skyboxStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
+		skyboxStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
+		skyboxStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::LEqual);
 
 		m_skyboxStage->SetStagePipelineState(skyboxStageParams);
 

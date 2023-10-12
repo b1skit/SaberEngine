@@ -209,7 +209,7 @@ namespace opengl
 					// RenderDoc makers: Render stage name
 					glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderStage->GetName().c_str());
 
-					gr::PipelineState const& stagePipelineParams = renderStage->GetStagePipelineState();
+					re::PipelineState const& stagePipelineParams = renderStage->GetStagePipelineState();
 
 					// Get the stage targets:
 					std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
@@ -277,14 +277,14 @@ namespace opengl
 						opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
 
 						// Clear the targets AFTER setting color/depth write modes
-						const gr::PipelineState::ClearTarget clearTargetMode = stagePipelineParams.GetClearTarget();
-						if (clearTargetMode == gr::PipelineState::ClearTarget::Color ||
-							clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
+						const re::PipelineState::ClearTarget clearTargetMode = stagePipelineParams.GetClearTarget();
+						if (clearTargetMode == re::PipelineState::ClearTarget::Color ||
+							clearTargetMode == re::PipelineState::ClearTarget::ColorDepth)
 						{
 							opengl::TextureTargetSet::ClearColorTargets(*stageTargets);
 						}
-						if (clearTargetMode == gr::PipelineState::ClearTarget::Depth ||
-							clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
+						if (clearTargetMode == re::PipelineState::ClearTarget::Depth ||
+							clearTargetMode == re::PipelineState::ClearTarget::ColorDepth)
 						{
 							opengl::TextureTargetSet::ClearDepthStencilTarget(*stageTargets);
 						}

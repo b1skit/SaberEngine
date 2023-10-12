@@ -22,7 +22,7 @@ namespace
 	using Microsoft::WRL::ComPtr;
 	using dx12::CheckHResult;
 	
-	
+	// TODO: Use D3D12_GRAPHICS_PIPELINE_STATE_DESC instead?
 	struct GraphicsPipelineStateStream
 	{
 		CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE rootSignature;
@@ -132,16 +132,16 @@ namespace
 	}
 
 
-	D3D12_RASTERIZER_DESC BuildRasterizerDesc(gr::PipelineState const& grPipelineState)
+	D3D12_RASTERIZER_DESC BuildRasterizerDesc(re::PipelineState const& rePipelineState)
 	{
 		D3D12_RASTERIZER_DESC rasterizerDesc{};
 
 		// Polygon fill mode:
-		switch (grPipelineState.GetFillMode())
+		switch (rePipelineState.GetFillMode())
 		{
-		case gr::PipelineState::FillMode::Wireframe:
+		case re::PipelineState::FillMode::Wireframe:
 			rasterizerDesc.FillMode = D3D12_FILL_MODE::D3D12_FILL_MODE_WIREFRAME; break;
-		case gr::PipelineState::FillMode::Solid:
+		case re::PipelineState::FillMode::Solid:
 			rasterizerDesc.FillMode = D3D12_FILL_MODE::D3D12_FILL_MODE_SOLID; break;
 		default:
 			SEAssertF("Invalid fill mode");
@@ -149,13 +149,13 @@ namespace
 		}
 
 		// Face culling mode:
-		switch (grPipelineState.GetFaceCullingMode())
+		switch (rePipelineState.GetFaceCullingMode())
 		{
-		case gr::PipelineState::FaceCullingMode::Disabled:
+		case re::PipelineState::FaceCullingMode::Disabled:
 			rasterizerDesc.CullMode = D3D12_CULL_MODE::D3D12_CULL_MODE_NONE; break;
-		case gr::PipelineState::FaceCullingMode::Front:
+		case re::PipelineState::FaceCullingMode::Front:
 			rasterizerDesc.CullMode = D3D12_CULL_MODE::D3D12_CULL_MODE_FRONT; break;
-		case gr::PipelineState::FaceCullingMode::Back:
+		case re::PipelineState::FaceCullingMode::Back:
 			rasterizerDesc.CullMode = D3D12_CULL_MODE::D3D12_CULL_MODE_BACK; break;			
 		default:
 			SEAssertF("Invalid fill mode");
@@ -163,18 +163,18 @@ namespace
 		}
 
 		// Winding order:
-		switch (grPipelineState.GetWindingOrder())
+		switch (rePipelineState.GetWindingOrder())
 		{
-		case gr::PipelineState::WindingOrder::CCW:
+		case re::PipelineState::WindingOrder::CCW:
 			rasterizerDesc.FrontCounterClockwise = true; break;
-		case gr::PipelineState::WindingOrder::CW:
+		case re::PipelineState::WindingOrder::CW:
 			rasterizerDesc.FrontCounterClockwise = false; break;
 		default:
 			SEAssertF("Invalid winding order");
 			rasterizerDesc.FrontCounterClockwise = true;
 		}
 		
-		// TODO: Support these via the gr::PipelineState
+		// TODO: Support these via the re::PipelineState
 		rasterizerDesc.DepthBias = 0;
 		rasterizerDesc.DepthBiasClamp = 0.f;
 		rasterizerDesc.SlopeScaledDepthBias = 0.f;
@@ -189,7 +189,7 @@ namespace
 
 
 	D3D12_DEPTH_STENCIL_DESC BuildDepthStencilDesc(
-		re::TextureTarget const* depthTarget, gr::PipelineState const& grPipelineState)
+		re::TextureTarget const* depthTarget, re::PipelineState const& rePipelineState)
 	{
 		// We make assumptions when recording resource transitions on our command lists that depth targets will 
 		// specifically have depth disabled (not just masked out) when the depth channel write mode is disabled
@@ -206,25 +206,25 @@ namespace
 			D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ZERO;
 
 		// Depth testing:
-		switch (grPipelineState.GetDepthTestMode())
+		switch (rePipelineState.GetDepthTestMode())
 		{
-		case gr::PipelineState::DepthTestMode::Default: // Less
+		case re::PipelineState::DepthTestMode::Default: // Less
 			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS; break;
-		case gr::PipelineState::DepthTestMode::Never: // Never pass
+		case re::PipelineState::DepthTestMode::Never: // Never pass
 			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_NEVER; break;
-		case gr::PipelineState::DepthTestMode::Less:
+		case re::PipelineState::DepthTestMode::Less:
 			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS; break;
-		case gr::PipelineState::DepthTestMode::Equal:
+		case re::PipelineState::DepthTestMode::Equal:
 			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL; break;
-		case gr::PipelineState::DepthTestMode::LEqual:
+		case re::PipelineState::DepthTestMode::LEqual:
 			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL; break;
-		case gr::PipelineState::DepthTestMode::Greater:
+		case re::PipelineState::DepthTestMode::Greater:
 			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_GREATER; break;
-		case gr::PipelineState::DepthTestMode::NotEqual:
+		case re::PipelineState::DepthTestMode::NotEqual:
 			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_NOT_EQUAL; break;
-		case gr::PipelineState::DepthTestMode::GEqual:
+		case re::PipelineState::DepthTestMode::GEqual:
 			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_GREATER_EQUAL; break;
-		case gr::PipelineState::DepthTestMode::Always: // Always pass: Disables depth testing
+		case re::PipelineState::DepthTestMode::Always: // Always pass: Disables depth testing
 			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS; break;
 		default:
 			SEAssertF("Invalid depth test mode");
@@ -250,7 +250,7 @@ namespace
 	}
 
 
-	D3D12_BLEND_DESC BuildBlendDesc(re::TextureTargetSet const& targetSet, gr::PipelineState const& grPipelineState)
+	D3D12_BLEND_DESC BuildBlendDesc(re::TextureTargetSet const& targetSet, re::PipelineState const& rePipelineState)
 	{
 		D3D12_BLEND_DESC blendDesc{};
 
@@ -376,7 +376,7 @@ namespace dx12
 
 	void PipelineState::Create(
 		re::Shader const& shader,
-		gr::PipelineState const& grPipelineState,
+		re::PipelineState const& rePipelineState,
 		re::TextureTargetSet const& targetSet)
 	{
 		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
@@ -427,16 +427,16 @@ namespace dx12
 			}			
 
 			// Rasterizer description:
-			const D3D12_RASTERIZER_DESC rasterizerDesc = BuildRasterizerDesc(grPipelineState);
+			const D3D12_RASTERIZER_DESC rasterizerDesc = BuildRasterizerDesc(rePipelineState);
 			pipelineStateStream.rasterizer = CD3DX12_RASTERIZER_DESC(rasterizerDesc);
 
 			// Depth stencil description:
 			const D3D12_DEPTH_STENCIL_DESC depthStencilDesc = 
-				BuildDepthStencilDesc(targetSet.GetDepthStencilTarget(), grPipelineState);
+				BuildDepthStencilDesc(targetSet.GetDepthStencilTarget(), rePipelineState);
 			pipelineStateStream.depthStencil = CD3DX12_DEPTH_STENCIL_DESC(depthStencilDesc);
 
 			// Blend description:
-			const D3D12_BLEND_DESC blendDesc = BuildBlendDesc(targetSet, grPipelineState);
+			const D3D12_BLEND_DESC blendDesc = BuildBlendDesc(targetSet, rePipelineState);
 			pipelineStateStream.blend = CD3DX12_BLEND_DESC(blendDesc);
 
 			const D3D12_PIPELINE_STATE_STREAM_DESC graphicsPipelineStateStreamDesc =

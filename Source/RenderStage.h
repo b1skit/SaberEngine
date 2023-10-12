@@ -75,8 +75,8 @@ namespace re
 		RenderStageLifetime GetStageLifetime() const;
 		IStageParams const* GetStageParams() const;
 
-		void SetStagePipelineState(gr::PipelineState const& params);
-		inline gr::PipelineState const& GetStagePipelineState() const  { return m_pipelineState; }
+		void SetStagePipelineState(re::PipelineState const& params);
+		inline re::PipelineState const& GetStagePipelineState() const  { return m_pipelineState; }
 
 		void SetStageShader(std::shared_ptr<re::Shader>);
 		re::Shader* GetStageShader() const;
@@ -124,7 +124,7 @@ namespace re
 
 		std::shared_ptr<re::Shader> m_stageShader;
 
-		gr::PipelineState m_pipelineState;
+		re::PipelineState m_pipelineState;
 
 		std::shared_ptr<re::TextureTargetSet> m_textureTargetSet;
 		std::vector<RenderStageTextureAndSamplerInput> m_textureSamplerInputs;

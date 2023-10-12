@@ -2,7 +2,7 @@
 #include "PipelineState.h"
 
 
-namespace gr
+namespace re
 {
 	PipelineState::PipelineState()
 		: m_isDirty(true)

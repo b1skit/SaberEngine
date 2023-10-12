@@ -317,7 +317,7 @@ namespace dx12
 						SEAssertF("Invalid stage type");
 					}
 
-					gr::PipelineState const& pipelineState = renderStage->GetStagePipelineState();
+					re::PipelineState const& pipelineState = renderStage->GetStagePipelineState();
 
 					// Get the stage targets:
 					std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
@@ -332,14 +332,14 @@ namespace dx12
 
 					auto SetDrawState = [&renderStage, &context](
 						re::Shader const* shader,
-						gr::PipelineState const& grPipelineState,
+						re::PipelineState const& rePipelineState,
 						re::TextureTargetSet const* targetSet,
 						dx12::CommandList* commandList)
 					{
 						// Set the pipeline state and root signature first:
 						std::shared_ptr<dx12::PipelineState> pso = context->GetPipelineStateObject(
 							*shader,
-							grPipelineState,
+							rePipelineState,
 							targetSet);
 						commandList->SetPipelineState(*pso);
 
@@ -414,14 +414,14 @@ namespace dx12
 						currentCommandList->SetRenderTargets(*stageTargets, attachDepthAsReadOnly);
 
 						// Clear the render targets:
-						const gr::PipelineState::ClearTarget clearTargetMode = pipelineState.GetClearTarget();
-						if (clearTargetMode == gr::PipelineState::ClearTarget::Color ||
-							clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
+						const re::PipelineState::ClearTarget clearTargetMode = pipelineState.GetClearTarget();
+						if (clearTargetMode == re::PipelineState::ClearTarget::Color ||
+							clearTargetMode == re::PipelineState::ClearTarget::ColorDepth)
 						{
 							currentCommandList->ClearColorTargets(*stageTargets);
 						}
-						if (clearTargetMode == gr::PipelineState::ClearTarget::Depth ||
-							clearTargetMode == gr::PipelineState::ClearTarget::ColorDepth)
+						if (clearTargetMode == re::PipelineState::ClearTarget::Depth ||
+							clearTargetMode == re::PipelineState::ClearTarget::ColorDepth)
 						{
 							currentCommandList->ClearDepthTarget(stageTargets->GetDepthStencilTarget());
 						}

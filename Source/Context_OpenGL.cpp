@@ -351,33 +351,33 @@ namespace opengl
 	}
 
 
-	void Context::SetPipelineState(gr::PipelineState const& pipelineState)
+	void Context::SetPipelineState(re::PipelineState const& pipelineState)
 	{
 		SetCullingMode(pipelineState.GetFaceCullingMode());
 		SetDepthTestMode(pipelineState.GetDepthTestMode());
 	}
 
 
-	void Context::SetCullingMode(gr::PipelineState::FaceCullingMode const& mode)
+	void Context::SetCullingMode(re::PipelineState::FaceCullingMode const& mode)
 	{
-		if (mode != gr::PipelineState::FaceCullingMode::Disabled)
+		if (mode != re::PipelineState::FaceCullingMode::Disabled)
 		{
 			glEnable(GL_CULL_FACE);
 		}
 
 		switch (mode)
 		{
-		case gr::PipelineState::FaceCullingMode::Disabled:
+		case re::PipelineState::FaceCullingMode::Disabled:
 		{
 			glDisable(GL_CULL_FACE);
 		}
 		break;
-		case gr::PipelineState::FaceCullingMode::Front:
+		case re::PipelineState::FaceCullingMode::Front:
 		{
 			glCullFace(GL_FRONT);
 		}
 		break;
-		case gr::PipelineState::FaceCullingMode::Back:
+		case re::PipelineState::FaceCullingMode::Back:
 		{
 			glCullFace(GL_BACK);
 		}
@@ -388,9 +388,9 @@ namespace opengl
 	}
 
 
-	void Context::SetDepthTestMode(gr::PipelineState::DepthTestMode const& mode)
+	void Context::SetDepthTestMode(re::PipelineState::DepthTestMode const& mode)
 	{
-		if (mode == gr::PipelineState::DepthTestMode::Always)
+		if (mode == re::PipelineState::DepthTestMode::Always)
 		{
 			glDisable(GL_DEPTH_TEST);
 			return;
@@ -401,33 +401,33 @@ namespace opengl
 		GLenum depthMode = GL_LESS;
 		switch (mode)
 		{
-		case gr::PipelineState::DepthTestMode::Default:
-		case gr::PipelineState::DepthTestMode::Less:
+		case re::PipelineState::DepthTestMode::Default:
+		case re::PipelineState::DepthTestMode::Less:
 		{
 			depthMode = GL_LESS;
 		}
 		break;
-		case gr::PipelineState::DepthTestMode::Equal:
+		case re::PipelineState::DepthTestMode::Equal:
 		{
 			depthMode = GL_EQUAL;
 		}
 		break;
-		case gr::PipelineState::DepthTestMode::LEqual:
+		case re::PipelineState::DepthTestMode::LEqual:
 		{
 			depthMode = GL_LEQUAL;
 		}
 		break;
-		case gr::PipelineState::DepthTestMode::Greater:
+		case re::PipelineState::DepthTestMode::Greater:
 		{
 			depthMode = GL_GREATER;
 		}
 		break;
-		case gr::PipelineState::DepthTestMode::NotEqual:
+		case re::PipelineState::DepthTestMode::NotEqual:
 		{
 			depthMode = GL_NOTEQUAL;
 		}
 		break;
-		case gr::PipelineState::DepthTestMode::GEqual:
+		case re::PipelineState::DepthTestMode::GEqual:
 		{
 			depthMode = GL_GEQUAL;
 		}

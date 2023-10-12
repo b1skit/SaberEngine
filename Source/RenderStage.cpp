@@ -157,7 +157,7 @@ namespace re
 	}
 
 
-	void RenderStage::SetStagePipelineState(gr::PipelineState const& params)
+	void RenderStage::SetStagePipelineState(re::PipelineState const& params)
 	{
 		m_pipelineState = params;
 	}

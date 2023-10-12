@@ -108,11 +108,11 @@ namespace gr
 		m_gBufferStage->AddPermanentParameterBlock(SceneManager::Get()->GetMainCamera()->GetCameraParams());
 
 		// Set the stage params:
-		gr::PipelineState gBufferStageParams;
-		gBufferStageParams.SetClearTarget(gr::PipelineState::ClearTarget::ColorDepth);
+		re::PipelineState gBufferStageParams;
+		gBufferStageParams.SetClearTarget(re::PipelineState::ClearTarget::ColorDepth);
 
-		gBufferStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
-		gBufferStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Less);
+		gBufferStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
+		gBufferStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
 
 		m_gBufferStage->SetStagePipelineState(gBufferStageParams);
 

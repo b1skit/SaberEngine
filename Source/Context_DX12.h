@@ -35,11 +35,11 @@ namespace dx12
 		dx12::CommandQueue& GetCommandQueue(uint64_t fenceValue); // Get the command queue that produced a fence value
 
 		std::shared_ptr<dx12::PipelineState> CreateAddPipelineState(
-			re::Shader const&, gr::PipelineState const&, re::TextureTargetSet const&);
+			re::Shader const&, re::PipelineState const&, re::TextureTargetSet const&);
 			
 		std::shared_ptr<dx12::PipelineState> GetPipelineStateObject(
 			re::Shader const& shader,
-			gr::PipelineState const& grPipelineState,
+			re::PipelineState const& rePipelineState,
 			re::TextureTargetSet const* targetSet); // A null targetSet is valid (it indicates the backbuffer)
 
 		bool HasRootSignature(uint64_t rootSigDescHash);

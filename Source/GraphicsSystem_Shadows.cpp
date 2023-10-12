@@ -68,15 +68,15 @@ namespace gr
 
 	void ShadowsGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
-		gr::PipelineState shadowStageParams;
-		shadowStageParams.SetClearTarget(gr::PipelineState::ClearTarget::Depth);
+		re::PipelineState shadowStageParams;
+		shadowStageParams.SetClearTarget(re::PipelineState::ClearTarget::Depth);
 		
 		// TODO: FaceCullingMode::Disabled is better for minimizing peter-panning, but we need backface culling if we
 		// want to be able to place lights inside of geometry (eg. emissive spheres). For now, enable backface culling.
 		// In future, we need to support tagging assets to not cast shadows
-		shadowStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
+		shadowStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
 
-		shadowStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Less);
+		shadowStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
 
 		// Directional light shadow:		
 		shared_ptr<Light> directionalLight = SceneManager::GetSceneData()->GetKeyLight();

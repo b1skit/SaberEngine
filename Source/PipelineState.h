@@ -3,7 +3,7 @@
 #include "HashedDataObject.h"
 
 
-namespace gr
+namespace re
 {
 	class PipelineState : public en::HashedDataObject
 	{

@@ -22,7 +22,7 @@ namespace opengl
 		void Present() override;
 
 		// OpenGL-specific interface:
-		void SetPipelineState(gr::PipelineState const& pipelineState);
+		void SetPipelineState(re::PipelineState const& pipelineState);
 
 
 	protected:
@@ -30,8 +30,8 @@ namespace opengl
 		friend class re::Context;
 
 	private:
-		void SetCullingMode(gr::PipelineState::FaceCullingMode const& mode);
-		void SetDepthTestMode(gr::PipelineState::DepthTestMode const& mode);
+		void SetCullingMode(re::PipelineState::FaceCullingMode const& mode);
+		void SetDepthTestMode(re::PipelineState::DepthTestMode const& mode);
 
 		void GetOpenGLExtensionProcessAddresses();
 

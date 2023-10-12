@@ -7,13 +7,9 @@
 #include "RootSignature_DX12.h"
 
 
-namespace gr
-{
-	class PipelineState;
-}
-
 namespace re
 {
+	class PipelineState;
 	class Shader;
 	class TextureTargetSet;
 }
@@ -29,7 +25,7 @@ namespace dx12
 
 		void Destroy();
 
-		void Create(re::Shader const&, gr::PipelineState const&, re::TextureTargetSet const&);
+		void Create(re::Shader const&, re::PipelineState const&, re::TextureTargetSet const&);
 		
 		ID3D12PipelineState* GetD3DPipelineState() const;
 

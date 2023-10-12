@@ -41,10 +41,10 @@ namespace gr
 
 	void TonemappingGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
 	{
-		gr::PipelineState tonemappingStageParam;
-		tonemappingStageParam.SetClearTarget(gr::PipelineState::ClearTarget::None);
-		tonemappingStageParam.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
-		tonemappingStageParam.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
+		re::PipelineState tonemappingStageParam;
+		tonemappingStageParam.SetClearTarget(re::PipelineState::ClearTarget::None);
+		tonemappingStageParam.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
+		tonemappingStageParam.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
 		m_tonemappingStage->SetStagePipelineState(tonemappingStageParam);
 

@@ -7,7 +7,6 @@
 
 namespace opengl
 {
-	// Platform Params:
 	MeshPrimitive::PlatformParams::PlatformParams(re::MeshPrimitive& meshPrimitive)
 		: m_meshVAO(0)
 		, m_drawMode(GL_TRIANGLES)

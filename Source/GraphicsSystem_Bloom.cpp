@@ -92,10 +92,10 @@ namespace gr
 		shared_ptr<Shader> blitShader = re::Shader::Create(en::ShaderNames::k_blitShaderName);
 
 		// Emissive blit stage:
-		gr::PipelineState emissiveStageParams;
-		emissiveStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
-		emissiveStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
-		emissiveStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
+		re::PipelineState emissiveStageParams;
+		emissiveStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
+		emissiveStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
+		emissiveStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
 		m_emissiveBlitStage->SetStagePipelineState(emissiveStageParams);
 		m_emissiveBlitStage->SetStageShader(blitShader);
@@ -114,10 +114,10 @@ namespace gr
 		pipeline.AppendRenderStage(m_emissiveBlitStage);
 
 		// Bloom stages:
-		gr::PipelineState bloomStageParams;
-		bloomStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
-		bloomStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
-		bloomStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
+		re::PipelineState bloomStageParams;
+		bloomStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
+		bloomStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
+		bloomStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 		
 		int currentXRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName) / 2;
 		int currentYRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName) / 2;
@@ -254,10 +254,10 @@ namespace gr
 		}
 
 		// Up-res stages:
-		gr::PipelineState upresStageParams;
-		upresStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
-		upresStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back);
-		upresStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
+		re::PipelineState upresStageParams;
+		upresStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
+		upresStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
+		upresStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
 		for (size_t i = 0; i < m_numDownSamplePasses; i++)
 		{
@@ -284,8 +284,8 @@ namespace gr
 				upResTargets->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
 					re::TextureTarget::TargetParams::BlendMode::One, re::TextureTarget::TargetParams::BlendMode::One });
 
-				gr::PipelineState addStageParams(upresStageParams);
-				addStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
+				re::PipelineState addStageParams(upresStageParams);
+				addStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
 
 				upresStage->SetStagePipelineState(addStageParams);
 			}

@@ -302,10 +302,10 @@ namespace gr
 			brdfStage->SetTextureTargetSet(brdfStageTargets);
 
 			// Stage params:
-			gr::PipelineState brdfStageParams;
-			brdfStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
-			brdfStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Disabled);
-			brdfStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
+			re::PipelineState brdfStageParams;
+			brdfStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
+			brdfStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
+			brdfStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
 			brdfStage->SetStagePipelineState(brdfStageParams);
 
@@ -326,10 +326,10 @@ namespace gr
 		}
 
 		// Common IBL texture generation stage params:
-		gr::PipelineState iblStageParams;
-		iblStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
-		iblStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Disabled);
-		iblStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Always);
+		re::PipelineState iblStageParams;
+		iblStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
+		iblStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
+		iblStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
 		// Build some camera params for rendering the 6 faces of a cubemap
 		const mat4 cubeProjectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
@@ -585,15 +585,15 @@ namespace gr
 			ambientProperties.m_ambient.m_IEMTex &&
 			ambientProperties.m_ambient.m_PMREMTex;
 
-		gr::PipelineState ambientStageParams;
-		ambientStageParams.SetClearTarget(gr::PipelineState::ClearTarget::Color);
+		re::PipelineState ambientStageParams;
+		ambientStageParams.SetClearTarget(re::PipelineState::ClearTarget::Color);
 
 		// Ambient/directional lights use back face culling, as they're fullscreen quads
-		ambientStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Back); 
+		ambientStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back); 
 
 		// Our fullscreen quad is on the far plane; We only want to light something if the quad is behind the geo (i.e.
 		// the quad's depth is greater than what is in the depth buffer)
-		ambientStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::Greater);
+		ambientStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Greater);
 		
 		// Ambient light stage:
 		m_ambientStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_deferredAmbientLightShaderName));
@@ -623,16 +623,16 @@ namespace gr
 		// Key light stage:
 		shared_ptr<Light> keyLight = SceneManager::GetSceneData()->GetKeyLight();
 
-		gr::PipelineState keylightStageParams(ambientStageParams);
+		re::PipelineState keylightStageParams(ambientStageParams);
 		if (keyLight)
 		{
 			if (!ambientIsValid) // Don't clear after 1st light
 			{
-				keylightStageParams.SetClearTarget(gr::PipelineState::ClearTarget::Color);
+				keylightStageParams.SetClearTarget(re::PipelineState::ClearTarget::Color);
 			}
 			else
 			{
-				keylightStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
+				keylightStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
 			}
 			m_keylightStage->SetStagePipelineState(keylightStageParams);
 
@@ -650,26 +650,26 @@ namespace gr
 		{
 			m_pointlightStage->AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 
-			gr::PipelineState pointlightStageParams(keylightStageParams);
+			re::PipelineState pointlightStageParams(keylightStageParams);
 
 			if (!keyLight && !ambientIsValid)
 			{
-				keylightStageParams.SetClearTarget(gr::PipelineState::ClearTarget::Color);
+				keylightStageParams.SetClearTarget(re::PipelineState::ClearTarget::Color);
 			}
 
 			// Pointlights only illuminate something if the sphere volume is behind it
-			pointlightStageParams.SetDepthTestMode(gr::PipelineState::DepthTestMode::GEqual);
+			pointlightStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::GEqual);
 
 			if (!iblTexture && !keyLight) // Don't clear after 1st light
 			{
-				pointlightStageParams.SetClearTarget(gr::PipelineState::ClearTarget::Color);
+				pointlightStageParams.SetClearTarget(re::PipelineState::ClearTarget::Color);
 			}
 			else
 			{
-				pointlightStageParams.SetClearTarget(gr::PipelineState::ClearTarget::None);
+				pointlightStageParams.SetClearTarget(re::PipelineState::ClearTarget::None);
 			}
 
-			pointlightStageParams.SetFaceCullingMode(gr::PipelineState::FaceCullingMode::Front); // Cull front faces of light volumes
+			pointlightStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Front); // Cull front faces of light volumes
 			m_pointlightStage->SetStagePipelineState(pointlightStageParams);
 
 			m_pointlightStage->SetStageShader(re::Shader::Create(en::ShaderNames::k_deferredPointLightShaderName));
