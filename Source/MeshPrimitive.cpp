@@ -64,43 +64,6 @@ namespace
 
 namespace re
 {
-	bool MeshPrimitive::IsCompatibleTopologyModeAndType(
-		TopologyMode topologyMode, re::PipelineState::TopologyType topologyType)
-	{
-		switch (topologyType)
-		{
-		case re::PipelineState::TopologyType::Point:
-		{
-			return topologyMode == TopologyMode::PointList;
-		}
-		break;
-		case re::PipelineState::TopologyType::Line:
-		{
-			return topologyMode == TopologyMode::LineList || 
-				topologyMode == TopologyMode::LineStrip ||
-				topologyMode == TopologyMode::LineListAdjacency || 
-				topologyMode == TopologyMode::LineStripAdjacency;
-		}
-		break;
-		case re::PipelineState::TopologyType::Triangle:
-		{
-			return topologyMode == TopologyMode::TriangleList ||
-				topologyMode == TopologyMode::TriangleStrip ||
-				topologyMode == TopologyMode::TriangleListAdjacency ||
-				topologyMode == TopologyMode::TriangleStripAdjacency;
-		}
-		break;
-		case re::PipelineState::TopologyType::Patch:
-		{
-			SEAssertF("Patch topology is unsupported");
-		}
-		break;
-		default: SEAssertF("Invalid topology type");
-		}
-		return false;
-	}
-
-
 	std::shared_ptr<MeshPrimitive> MeshPrimitive::Create(
 		std::string const& name,
 		std::vector<uint32_t>& indices,

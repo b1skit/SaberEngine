@@ -6,7 +6,6 @@
 #include "HashedDataObject.h"
 #include "Material.h"
 #include "NamedObject.h"
-#include "PipelineState.h"
 #include "VertexStream.h"
 
 
@@ -19,11 +18,6 @@ namespace re
 {
 	class MeshPrimitive final : public virtual en::NamedObject, public virtual en::HashedDataObject
 	{
-	public:
-		enum class TopologyMode : uint8_t;
-		static bool IsCompatibleTopologyModeAndType(TopologyMode, re::PipelineState::TopologyType);
-
-
 	public:
 		struct PlatformParams : public re::IPlatformParams
 		{

@@ -3,6 +3,7 @@
 #include "GraphicsSystem_ComputeMips.h"
 #include "MathUtils.h"
 #include "RenderManager.h"
+#include "Sampler.h"
 
 
 namespace

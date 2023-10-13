@@ -1,7 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
+#include "Batch.h"
+#include "MeshPrimitive.h"
+#include "PipelineState.h"
 #include "RenderStage.h"
+
 
 using re::Sampler;
 using re::Texture;
@@ -13,6 +17,46 @@ using glm::mat4;
 using glm::mat3;
 using glm::vec3;
 using glm::vec4;
+
+
+namespace
+{
+	constexpr bool IsBatchAndShaderTopologyCompatible(
+		re::MeshPrimitive::TopologyMode topologyMode, re::PipelineState::TopologyType topologyType)
+	{
+		switch (topologyType)
+		{
+		case re::PipelineState::TopologyType::Point:
+		{
+			return topologyMode == re::MeshPrimitive::TopologyMode::PointList;
+		}
+		break;
+		case re::PipelineState::TopologyType::Line:
+		{
+			return topologyMode == re::MeshPrimitive::TopologyMode::LineList ||
+				topologyMode == re::MeshPrimitive::TopologyMode::LineStrip ||
+				topologyMode == re::MeshPrimitive::TopologyMode::LineListAdjacency ||
+				topologyMode == re::MeshPrimitive::TopologyMode::LineStripAdjacency;
+		}
+		break;
+		case re::PipelineState::TopologyType::Triangle:
+		{
+			return topologyMode == re::MeshPrimitive::TopologyMode::TriangleList ||
+				topologyMode == re::MeshPrimitive::TopologyMode::TriangleStrip ||
+				topologyMode == re::MeshPrimitive::TopologyMode::TriangleListAdjacency ||
+				topologyMode == re::MeshPrimitive::TopologyMode::TriangleStripAdjacency;
+		}
+		break;
+		case re::PipelineState::TopologyType::Patch:
+		{
+			SEAssertF("Patch topology is unsupported");
+		}
+		break;
+		default: SEAssertF("Invalid topology type");
+		}
+		return false;
+	}
+}
 
 
 namespace re
@@ -176,10 +220,10 @@ namespace re
 
 		SEAssert("Mesh topology mode is incompatible with shader pipeline state topology type",
 			m_type == RenderStageType::Compute ||
-			((!m_stageShader || re::MeshPrimitive::IsCompatibleTopologyModeAndType(
+			((!m_stageShader || IsBatchAndShaderTopologyCompatible(
 				batch.GetMeshPrimitive()->GetMeshParams().m_topologyMode,
 				m_stageShader->GetPipelineState().GetTopologyType()) ) &&
-			(!batch.GetShader() || re::MeshPrimitive::IsCompatibleTopologyModeAndType(
+			(!batch.GetShader() || IsBatchAndShaderTopologyCompatible(
 				batch.GetMeshPrimitive()->GetMeshParams().m_topologyMode,
 				batch.GetShader()->GetPipelineState().GetTopologyType())) ));
 

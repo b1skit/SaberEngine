@@ -4,7 +4,6 @@
 #include "Batch.h"
 #include "Camera.h"
 #include "Context_Platform.h"
-#include "MeshPrimitive.h"
 #include "NamedObject.h"
 #include "ParameterBlock.h"
 #include "Shader.h"
