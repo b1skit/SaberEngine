@@ -9,51 +9,60 @@ namespace opengl
 {
 	MeshPrimitive::PlatformParams::PlatformParams(re::MeshPrimitive& meshPrimitive)
 		: m_meshVAO(0)
-		, m_drawMode(GL_TRIANGLES)
+		, m_topologyMode(GL_TRIANGLES)
 	{	
-		SEAssert("TODO: Support more primitive types/draw modes!", 
-			meshPrimitive.GetMeshParams().m_drawMode == re::MeshPrimitive::DrawMode::Triangles);
+		// Note: SaberEngine does not support triangle fans or line loops, even though OpenGL does
 
-		switch (meshPrimitive.GetMeshParams().m_drawMode)
+		switch (meshPrimitive.GetMeshParams().m_topologyMode)
 		{
-			case re::MeshPrimitive::DrawMode::Points:
+			case re::MeshPrimitive::TopologyMode::PointList:
 			{
-				m_drawMode = GL_POINTS;
+				m_topologyMode = GL_POINTS;
 			}
 			break;
-			case re::MeshPrimitive::DrawMode::Lines:
+			case re::MeshPrimitive::TopologyMode::LineList:
 			{
-				m_drawMode = GL_LINES;
+				m_topologyMode = GL_LINES;
 			}
 			break;
-			case re::MeshPrimitive::DrawMode::LineStrip:
+			case re::MeshPrimitive::TopologyMode::LineStrip:
 			{
-				m_drawMode = GL_LINE_STRIP;
+				m_topologyMode = GL_LINE_STRIP;
 			}
 			break;
-			case re::MeshPrimitive::DrawMode::LineLoop:
+			case re::MeshPrimitive::TopologyMode::TriangleList:
 			{
-				m_drawMode = GL_LINE_LOOP;
+				m_topologyMode = GL_TRIANGLES;
 			}
 			break;
-			case re::MeshPrimitive::DrawMode::Triangles:
+			case re::MeshPrimitive::TopologyMode::TriangleStrip:
 			{
-				m_drawMode = GL_TRIANGLES;
+				m_topologyMode = GL_TRIANGLE_STRIP;
 			}
 			break;
-			case re::MeshPrimitive::DrawMode::TriangleStrip:
+			case re::MeshPrimitive::TopologyMode::LineListAdjacency:
 			{
-				m_drawMode = GL_TRIANGLE_STRIP;
+				m_topologyMode = GL_LINES_ADJACENCY;
 			}
 			break;
-			case re::MeshPrimitive::DrawMode::TriangleFan:
+			case re::MeshPrimitive::TopologyMode::LineStripAdjacency:
 			{
-				m_drawMode = GL_TRIANGLE_FAN;
+				m_topologyMode = GL_LINE_STRIP_ADJACENCY;
 			}
 			break;
-			case re::MeshPrimitive::DrawMode::DrawMode_Count:
+			case re::MeshPrimitive::TopologyMode::TriangleListAdjacency:
+			{
+				m_topologyMode = GL_TRIANGLES_ADJACENCY;
+			}
+			break;
+			case re::MeshPrimitive::TopologyMode::TriangleStripAdjacency:
+			{
+				m_topologyMode = GL_TRIANGLE_STRIP_ADJACENCY;
+			}
+			break;
 			default:
 				SEAssertF("Unsupported draw mode");
+				m_topologyMode = GL_TRIANGLES;
 		}
 	}
 

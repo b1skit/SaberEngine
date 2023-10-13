@@ -305,7 +305,7 @@ namespace dx12
 			batch.GetMeshPrimitive()->GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
 
 		// TODO: Batches should contain the draw mode, instead of carrying around a MeshPrimitive
-		SetPrimitiveType(meshPrimPlatParams->m_drawMode);
+		SetPrimitiveType(meshPrimPlatParams->m_primitiveTopology);
 		SetVertexBuffers(batch.GetMeshPrimitive()->GetVertexStreams());
 
 		dx12::VertexStream::PlatformParams_Index* indexPlatformParams =

@@ -316,7 +316,7 @@ namespace opengl
 							opengl::MeshPrimitive::Bind(*batch.GetMeshPrimitive());
 
 							glDrawElementsInstanced(
-								meshPlatParams->m_drawMode,			// GLenum mode
+								meshPlatParams->m_topologyMode,		// GLenum mode
 								(GLsizei)batch.GetMeshPrimitive()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),	// GLsizei count
 								GL_UNSIGNED_INT,					// GLenum type. TODO: Store type in parameters, instead of assuming uints
 								0,									// Byte offset (into bound index buffer)

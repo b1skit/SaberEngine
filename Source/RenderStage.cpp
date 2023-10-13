@@ -168,12 +168,20 @@ namespace re
 
 	void RenderStage::AddBatch(re::Batch const& batch)
 	{
-		SEAssert("Either the batch or the stage must have a shader", 
-			m_stageShader || batch.GetShader());
+		SEAssert("Either the batch or the stage must have a shader", m_stageShader || batch.GetShader());
 
 		SEAssert("Incompatible batch type", 
 			(batch.GetType() == re::Batch::BatchType::Graphics && m_type == RenderStageType::Graphics) ||
 			(batch.GetType() == re::Batch::BatchType::Compute && m_type == RenderStageType::Compute));
+
+		SEAssert("Mesh topology mode is incompatible with shader pipeline state topology type",
+			m_type == RenderStageType::Compute ||
+			((!m_stageShader || re::MeshPrimitive::IsCompatibleTopologyModeAndType(
+				batch.GetMeshPrimitive()->GetMeshParams().m_topologyMode,
+				m_stageShader->GetPipelineState().GetTopologyType()) ) &&
+			(!batch.GetShader() || re::MeshPrimitive::IsCompatibleTopologyModeAndType(
+				batch.GetMeshPrimitive()->GetMeshParams().m_topologyMode,
+				batch.GetShader()->GetPipelineState().GetTopologyType())) ));
 
 		if (m_batchFilterMask & batch.GetBatchFilterMask() || !m_batchFilterMask) // Accept all batches by default
 		{

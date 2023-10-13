@@ -17,7 +17,7 @@ namespace opengl
 			PlatformParams(re::MeshPrimitive& meshPrimitive);
 
 			GLuint m_meshVAO = 0; // Vertex array object
-			GLenum m_drawMode = GL_TRIANGLES;
+			GLenum m_topologyMode = GL_TRIANGLES;
 		};
 
 

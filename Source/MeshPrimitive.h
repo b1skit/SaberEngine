@@ -6,6 +6,7 @@
 #include "HashedDataObject.h"
 #include "Material.h"
 #include "NamedObject.h"
+#include "PipelineState.h"
 #include "VertexStream.h"
 
 
@@ -19,6 +20,11 @@ namespace re
 	class MeshPrimitive final : public virtual en::NamedObject, public virtual en::HashedDataObject
 	{
 	public:
+		enum class TopologyMode : uint8_t;
+		static bool IsCompatibleTopologyModeAndType(TopologyMode, re::PipelineState::TopologyType);
+
+
+	public:
 		struct PlatformParams : public re::IPlatformParams
 		{
 			virtual ~PlatformParams() = 0;
@@ -26,21 +32,22 @@ namespace re
 
 
 	public:
-		enum class DrawMode : uint8_t
+		enum class TopologyMode : uint8_t
 		{
-			Points,
-			Lines,
+			PointList,
+			LineList,
 			LineStrip,
-			LineLoop,
-			Triangles,
+			TriangleList,
 			TriangleStrip,
-			TriangleFan,
-			DrawMode_Count
+			LineListAdjacency,
+			LineStripAdjacency,
+			TriangleListAdjacency,
+			TriangleStripAdjacency
 		};
 
 		struct MeshPrimitiveParams
 		{
-			DrawMode m_drawMode = DrawMode::Triangles;
+			TopologyMode m_topologyMode = TopologyMode::TriangleList;
 		};
 
 		// TODO: We'd prefer to have the Tangent and Bitangent/Binormal and reconstruct the Normal

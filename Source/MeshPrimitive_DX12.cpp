@@ -8,49 +8,61 @@ namespace dx12
 {
 	MeshPrimitive::PlatformParams::PlatformParams(re::MeshPrimitive& meshPrimitive)
 	{
-		switch (meshPrimitive.GetMeshParams().m_drawMode)
+		// Note: SaberEngine does not support triangle fans or line loops (and neither does DX12)
+
+		switch (meshPrimitive.GetMeshParams().m_topologyMode)
 		{
-		case re::MeshPrimitive::DrawMode::Points:
+		case re::MeshPrimitive::TopologyMode::PointList:
 		{
-			m_drawMode = D3D_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_POINTLIST;
+			m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
 		}
 		break;
-		case re::MeshPrimitive::DrawMode::Lines:
+		case re::MeshPrimitive::TopologyMode::LineList:
 		{
-			m_drawMode = D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+			m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINELIST;
 		}
 		break;
-		case re::MeshPrimitive::DrawMode::LineStrip:
+		case re::MeshPrimitive::TopologyMode::LineStrip:
 		{
-			m_drawMode = D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
+			m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
 		}
 		break;
-		case re::MeshPrimitive::DrawMode::LineLoop:
+		case re::MeshPrimitive::TopologyMode::TriangleList:
 		{
-			m_drawMode = D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
-			SEAssertF("D3D12 does not support line loops. TODO: Handle this by appending extra vertices in D3D mode");
+			m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		}
 		break;
-		case re::MeshPrimitive::DrawMode::Triangles:
+		case re::MeshPrimitive::TopologyMode::TriangleStrip:
 		{
-			m_drawMode = D3D_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+			m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
 		}
 		break;
-		case re::MeshPrimitive::DrawMode::TriangleStrip:
+		case re::MeshPrimitive::TopologyMode::LineListAdjacency:
 		{
-			m_drawMode = D3D_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+			m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINELIST_ADJ;
+
 		}
 		break;
-		case re::MeshPrimitive::DrawMode::TriangleFan:
+		case re::MeshPrimitive::TopologyMode::LineStripAdjacency:
 		{
-			m_drawMode = D3D_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
-			SEAssertF("D3D does not support triangle fans since D3D10. TODO: Handle this by converting fans to strips "
-				"in D3D mode");
+			m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ;
+
 		}
 		break;
-		case re::MeshPrimitive::DrawMode::DrawMode_Count:
+		case re::MeshPrimitive::TopologyMode::TriangleListAdjacency:
+		{
+			m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST_ADJ;
+
+		}
+		break;
+		case re::MeshPrimitive::TopologyMode::TriangleStripAdjacency:
+		{
+			m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ;
+		}
+		break;
 		default:
 			SEAssertF("Invalid mesh draw mode");
+			m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		}
 	}
 
@@ -77,6 +89,6 @@ namespace dx12
 		dx12::MeshPrimitive::PlatformParams* meshPlatParams = 
 			meshPrimitive.GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
 
-		meshPlatParams->m_drawMode = D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+		meshPlatParams->m_primitiveTopology = D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 	}
 }

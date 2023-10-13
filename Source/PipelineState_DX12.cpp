@@ -208,8 +208,6 @@ namespace
 		// Depth testing:
 		switch (rePipelineState.GetDepthTestMode())
 		{
-		case re::PipelineState::DepthTestMode::Default: // Less
-			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS; break;
 		case re::PipelineState::DepthTestMode::Never: // Never pass
 			depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_NEVER; break;
 		case re::PipelineState::DepthTestMode::Less:
@@ -363,6 +361,21 @@ namespace
 
 		return blendDesc;
 	}
+
+	
+	constexpr D3D12_PRIMITIVE_TOPOLOGY_TYPE GetD3DTopologyType(re::PipelineState::TopologyType topologyType)
+	{
+		switch (topologyType)
+		{
+		case re::PipelineState::TopologyType::Point: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+		case re::PipelineState::TopologyType::Line: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+		case re::PipelineState::TopologyType::Triangle: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		case re::PipelineState::TopologyType::Patch: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
+		default:
+			SEAssertF("Invalid topology type");
+		}
+		return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+	}
 }
 
 
@@ -393,7 +406,7 @@ namespace dx12
 			GraphicsPipelineStateStream pipelineStateStream {};
 			pipelineStateStream.rootSignature = shaderParams->m_rootSignature->GetD3DRootSignature();
 			pipelineStateStream.inputLayout = { inputLayout.data(), static_cast<uint32_t>(inputLayout.size())};
-			pipelineStateStream.primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+			pipelineStateStream.primitiveTopologyType = GetD3DTopologyType(rePipelineState.GetTopologyType());
 			pipelineStateStream.vShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Vertex].Get());
 
 			if (shaderParams->m_shaderBlobs[dx12::Shader::Geometry])

@@ -15,7 +15,7 @@ namespace dx12
 		{
 			PlatformParams(re::MeshPrimitive& meshPrimitive);
 
-			D3D_PRIMITIVE_TOPOLOGY m_drawMode;
+			D3D_PRIMITIVE_TOPOLOGY m_primitiveTopology;
 		};
 
 

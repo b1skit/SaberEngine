@@ -973,52 +973,41 @@ namespace
 		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
 		for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
 		{
-			SEAssert(
-				"TODO: Support more primitive types/draw modes!",
-				current->mesh->primitives[primitive].type == cgltf_primitive_type::cgltf_primitive_type_triangles);
-
 			// Populate the mesh params:
 			MeshPrimitive::MeshPrimitiveParams meshPrimitiveParams;
 			switch (current->mesh->primitives[primitive].type)
 			{
 			case cgltf_primitive_type::cgltf_primitive_type_points:
 			{
-				meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::Points;
+				meshPrimitiveParams.m_topologyMode = MeshPrimitive::TopologyMode::PointList;
 			}
 			break;
 			case cgltf_primitive_type::cgltf_primitive_type_lines:
 			{
-				meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::Lines;
-			}
-			break;
-			case cgltf_primitive_type::cgltf_primitive_type_line_loop:
-			{
-				meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::LineLoop;
+				meshPrimitiveParams.m_topologyMode = MeshPrimitive::TopologyMode::LineList;
 			}
 			break;
 			case cgltf_primitive_type::cgltf_primitive_type_line_strip:
 			{
-				meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::LineStrip;
+				meshPrimitiveParams.m_topologyMode = MeshPrimitive::TopologyMode::LineStrip;
 			}
 			break;
 			case cgltf_primitive_type::cgltf_primitive_type_triangles:
 			{
-				meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::Triangles;
+				meshPrimitiveParams.m_topologyMode = MeshPrimitive::TopologyMode::TriangleList;
 			}
 			break;
 			case cgltf_primitive_type::cgltf_primitive_type_triangle_strip:
 			{
-				meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::TriangleStrip;
+				meshPrimitiveParams.m_topologyMode = MeshPrimitive::TopologyMode::TriangleStrip;
 			}
 			break;
 			case cgltf_primitive_type::cgltf_primitive_type_triangle_fan:
-			{
-				meshPrimitiveParams.m_drawMode = MeshPrimitive::DrawMode::TriangleFan;
-			}
-			break;
+			case cgltf_primitive_type::cgltf_primitive_type_line_loop:
 			case cgltf_primitive_type::cgltf_primitive_type_max_enum:
 			default:
-				SEAssertF("Unsupported primitive type/draw mode");
+				SEAssertF("Unsupported primitive type/draw mode. Saber Engine does not support line loops or triangle fans");
+				meshPrimitiveParams.m_topologyMode = MeshPrimitive::TopologyMode::TriangleList;
 			}
 
 			SEAssert("Mesh is missing indices", current->mesh->primitives[primitive].indices != nullptr);

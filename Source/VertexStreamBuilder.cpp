@@ -51,7 +51,7 @@ namespace util
 			meshData->m_meshParams && meshData->m_indices && meshData->m_positions && meshData->m_normals && 
 			meshData->m_tangents && meshData->m_UV0 && meshData->m_colors && meshData->m_joints && meshData->m_weights);
 
-		const bool isTriangleList = meshData->m_meshParams->m_drawMode == re::MeshPrimitive::DrawMode::Triangles;
+		const bool isTriangleList = meshData->m_meshParams->m_topologyMode == re::MeshPrimitive::TopologyMode::TriangleList;
 		SEAssert("Only indexed triangle lists are (currently) supported", isTriangleList);
 
 		const bool hasNormals = !meshData->m_normals->empty();
@@ -575,7 +575,7 @@ namespace util
 		MeshData* meshData = static_cast<MeshData*> (m_context->m_pUserData);
 
 		SEAssert("Only triangular faces are currently supported", 
-			meshData->m_meshParams->m_drawMode == re::MeshPrimitive::DrawMode::Triangles);
+			meshData->m_meshParams->m_topologyMode == re::MeshPrimitive::TopologyMode::TriangleList);
 		
 		return 3;
 	}

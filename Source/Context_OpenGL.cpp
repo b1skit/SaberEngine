@@ -401,7 +401,6 @@ namespace opengl
 		GLenum depthMode = GL_LESS;
 		switch (mode)
 		{
-		case re::PipelineState::DepthTestMode::Default:
 		case re::PipelineState::DepthTestMode::Less:
 		{
 			depthMode = GL_LESS;

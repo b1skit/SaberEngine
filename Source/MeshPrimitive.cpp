@@ -2,6 +2,7 @@
 #include "Config.h"
 #include "MeshPrimitive.h"
 #include "MeshPrimitive_Platform.h"
+#include "PipelineState.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
 #include "Transform.h"
@@ -24,17 +25,19 @@ using std::shared_ptr;
 
 namespace
 {
-	constexpr char const* DrawModeToCStr(re::MeshPrimitive::DrawMode drawMode)
+	constexpr char const* DrawModeToCStr(re::MeshPrimitive::TopologyMode drawMode)
 	{
 		switch (drawMode)
 		{
-		case re::MeshPrimitive::DrawMode::Points: return "Points";
-		case re::MeshPrimitive::DrawMode::Lines: return "Lines";
-		case re::MeshPrimitive::DrawMode::LineStrip: return "LineStrip";
-		case re::MeshPrimitive::DrawMode::LineLoop: return "LineLoop";
-		case re::MeshPrimitive::DrawMode::Triangles: return "Triangles";
-		case re::MeshPrimitive::DrawMode::TriangleStrip: return "TriangleStrip";
-		case re::MeshPrimitive::DrawMode::TriangleFan: return "TriangleFan";
+		case re::MeshPrimitive::TopologyMode::PointList: return "PointList";
+		case re::MeshPrimitive::TopologyMode::LineList: return "LineList";
+		case re::MeshPrimitive::TopologyMode::LineStrip: return "LineStrip";
+		case re::MeshPrimitive::TopologyMode::TriangleList: return "TriangleList";
+		case re::MeshPrimitive::TopologyMode::TriangleStrip: return "TriangleStrip";
+		case re::MeshPrimitive::TopologyMode::LineListAdjacency: return "LineListAdjacency";
+		case re::MeshPrimitive::TopologyMode::LineStripAdjacency: return "LineStripAdjacency";
+		case re::MeshPrimitive::TopologyMode::TriangleListAdjacency: return "TriangleListAdjacency";
+		case re::MeshPrimitive::TopologyMode::TriangleStripAdjacency: return "TriangleStripAdjacency";
 		default: SEAssertF("Invalid draw mode");
 		}
 		return "INVALID DRAW MODE";
@@ -61,6 +64,43 @@ namespace
 
 namespace re
 {
+	bool MeshPrimitive::IsCompatibleTopologyModeAndType(
+		TopologyMode topologyMode, re::PipelineState::TopologyType topologyType)
+	{
+		switch (topologyType)
+		{
+		case re::PipelineState::TopologyType::Point:
+		{
+			return topologyMode == TopologyMode::PointList;
+		}
+		break;
+		case re::PipelineState::TopologyType::Line:
+		{
+			return topologyMode == TopologyMode::LineList || 
+				topologyMode == TopologyMode::LineStrip ||
+				topologyMode == TopologyMode::LineListAdjacency || 
+				topologyMode == TopologyMode::LineStripAdjacency;
+		}
+		break;
+		case re::PipelineState::TopologyType::Triangle:
+		{
+			return topologyMode == TopologyMode::TriangleList ||
+				topologyMode == TopologyMode::TriangleStrip ||
+				topologyMode == TopologyMode::TriangleListAdjacency ||
+				topologyMode == TopologyMode::TriangleStripAdjacency;
+		}
+		break;
+		case re::PipelineState::TopologyType::Patch:
+		{
+			SEAssertF("Patch topology is unsupported");
+		}
+		break;
+		default: SEAssertF("Invalid topology type");
+		}
+		return false;
+	}
+
+
 	std::shared_ptr<MeshPrimitive> MeshPrimitive::Create(
 		std::string const& name,
 		std::vector<uint32_t>& indices,
@@ -320,7 +360,7 @@ namespace re
 		const std::string meshParamsLabel = std::format("Mesh Primitive Params:##{}", uniqueIDStr);
 		if (ImGui::TreeNode(meshParamsLabel.c_str()))
 		{
-			ImGui::Text(std::format("Draw mode: {}", DrawModeToCStr(m_params.m_drawMode)).c_str());
+			ImGui::Text(std::format("Draw mode: {}", DrawModeToCStr(m_params.m_topologyMode)).c_str());
 
 			ImGui::TreePop();
 		}

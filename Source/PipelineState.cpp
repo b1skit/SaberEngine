@@ -6,10 +6,11 @@ namespace re
 {
 	PipelineState::PipelineState()
 		: m_isDirty(true)
+		, m_topologyType(TopologyType::Triangle)
 		, m_fillMode(FillMode::Solid)
 		, m_faceCullingMode(FaceCullingMode::Back)
 		, m_windingOrder(WindingOrder::CCW)
-		, m_depthTestMode(DepthTestMode::Default)
+		, m_depthTestMode(DepthTestMode::Less)
 	{
 		ComputeDataHash();
 	}
@@ -22,6 +23,7 @@ namespace re
 
 		ResetDataHash();
 
+		AddDataBytesToHash(m_topologyType);
 		AddDataBytesToHash(m_fillMode);
 		AddDataBytesToHash(m_faceCullingMode);
 		AddDataBytesToHash(m_windingOrder);
@@ -33,6 +35,21 @@ namespace re
 	{
 		SEAssert("Trying to get the data hash from a dirty pipeline state", !m_isDirty);
 		return GetDataHash();
+	}
+
+
+	PipelineState::TopologyType PipelineState::GetTopologyType() const
+	{
+		SEAssert("PipelineState is dirty", !m_isDirty);
+		return m_topologyType;
+	}
+
+
+	void PipelineState::SetTopologyType(PipelineState::TopologyType topologyType)
+	{
+		m_topologyType = topologyType;
+		m_isDirty = true;
+		ComputeDataHash();
 	}
 
 

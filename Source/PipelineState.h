@@ -23,11 +23,20 @@ namespace re
 		
 
 	public:
+		enum class TopologyType : uint8_t
+		{
+			Point,
+			Line,
+			Triangle, // Default
+			Patch
+		};
+		TopologyType GetTopologyType() const;
+		void SetTopologyType(TopologyType);
+
 		enum class FillMode
 		{
 			Wireframe, // TODO: Implement support for this
-			Solid,
-			FillMode_Count
+			Solid,  // Default
 		};
 		FillMode GetFillMode() const;
 		void SetFillMode(FillMode);
@@ -36,15 +45,14 @@ namespace re
 		{
 			Disabled,
 			Front,
-			Back,
-			FaceCullingMode_Count
+			Back,  // Default
 		};
 		FaceCullingMode GetFaceCullingMode() const;
 		void SetFaceCullingMode(FaceCullingMode);
 
 		enum class WindingOrder // To determine a front-facing polygon
 		{
-			CCW,
+			CCW,  // Default
 			CW,
 			WindingOrder_Count
 		};
@@ -53,16 +61,14 @@ namespace re
 
 		enum class DepthTestMode
 		{
-			Default,	// Less
+			Less,		// < (Default)
 			Never,		// Never pass
-			Less,		// <
 			Equal,		// ==
 			LEqual,		// <=
 			Greater,	// >
 			NotEqual,	// !=
 			GEqual,		// >=
 			Always,		// Always pass: Disables depth testing
-			DepthTestMode_Count
 		};
 		DepthTestMode GetDepthTestMode() const;
 		void SetDepthTestMode(DepthTestMode);
@@ -71,6 +77,7 @@ namespace re
 	private:
 		bool m_isDirty;
 
+		TopologyType m_topologyType;
 		FillMode m_fillMode;
 		FaceCullingMode m_faceCullingMode;
 		WindingOrder m_windingOrder;
