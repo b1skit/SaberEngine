@@ -209,19 +209,24 @@ namespace re
 		{
 			for (auto const& texInput : m_textureSamplerInputs)
 			{
-				for (size_t i = 0; i < m_textureTargetSet->GetNumColorTargets(); i++)
+				for (uint8_t i = 0; i < m_textureTargetSet->GetNumColorTargets(); i++)
 				{
 					SEAssert("Detected a texture simultaneously used as both a color target and input",
 						m_textureTargetSet->GetColorTarget(i).GetTexture() != texInput.m_texture ||
-						m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_targetMip != texInput.m_srcMip);
+						((m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_targetMip != TextureTarget::k_allFaces &&
+							texInput.m_srcMip != TextureTarget::k_allFaces) &&
+						m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_targetMip != texInput.m_srcMip));
 				}
 
 				if (m_textureTargetSet->HasDepthTarget())
 				{
-					SEAssert("Detected a texture simultaneously used as both a depth target and input",
-						m_textureTargetSet->GetDepthStencilTarget()->GetTexture() != texInput.m_texture ||
-						m_textureTargetSet->GetDepthStencilTarget()->GetTargetParams().m_targetMip != texInput.m_srcMip
-					);
+					std::shared_ptr<re::Texture const> depthTargetTex = 
+						m_textureTargetSet->GetDepthStencilTarget()->GetTexture();
+
+					SEAssert("A depth target with depth writes enabled cannot also be bound as an input",
+						depthTargetTex != texInput.m_texture ||
+						m_textureTargetSet->GetDepthStencilTarget()->GetTargetParams().m_channelWriteMode.R ==
+						re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled);
 				}
 			}
 		}
