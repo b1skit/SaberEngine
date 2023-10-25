@@ -50,15 +50,6 @@ void main()
 	const float emissiveStrength = g_emissiveFactorStrength.w;
 	vec3 emissive = texture(MatEmissive, vOut.uv0.xy).rgb * emissiveFactor * emissiveStrength;
 
-	// Emissive is light: Apply exposure now:
-	const float ev100 = g_exposureProperties.y;
-
-	const float emissiveExposureCompensation = g_exposureProperties.z;
-	emissive *= pow(2.0, ev100 + emissiveExposureCompensation - 3.0f);
-
-	const float exposure = g_exposureProperties.x;
-	emissive *= exposure;
-
 	gBuffer_out_emissive = vec4(emissive, 1.0f);
 
 	// Material properties:

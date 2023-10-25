@@ -19,14 +19,20 @@ namespace
 			return 1;
 		}
 
-		const uint32_t largestDimension = glm::max(params.m_width, params.m_height);
-		return (uint32_t)glm::log2((float)largestDimension) + 1;
+		return re::Texture::ComputeMaxMips(params.m_width, params.m_height);
 	}
 }
 
 
 namespace re
 {
+	uint32_t Texture::ComputeMaxMips(uint32_t width, uint32_t height)
+	{
+		const uint32_t largestDimension = glm::max(width, height);
+		return (uint32_t)glm::log2((float)largestDimension) + 1;
+	}
+
+
 	std::shared_ptr<re::Texture> Texture::Create(
 		std::string const& name, 
 		TextureParams const& params, 
@@ -288,8 +294,8 @@ namespace re
 
 	glm::vec4 Texture::GetSubresourceDimensions(uint32_t mipLevel) const
 	{
-		const float widthDims = Width() / static_cast<float>(glm::pow(2.0f, mipLevel));
-		const float heightDims = Height() / static_cast<float>(glm::pow(2.0f, mipLevel));
+		const uint32_t widthDims = static_cast<uint32_t>(Width() / static_cast<float>(glm::pow(2.0f, mipLevel)));
+		const uint32_t heightDims = static_cast<uint32_t>(Height() / static_cast<float>(glm::pow(2.0f, mipLevel)));
 		return glm::vec4(widthDims, heightDims, 1.f / widthDims, 1.f / heightDims);
 	}
 

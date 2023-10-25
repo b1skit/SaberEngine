@@ -13,6 +13,8 @@ namespace
 		glm::vec4 g_output0Dimensions; // .xyzw = width, height, 1/width, 1/height of the output0 texture
 		glm::uvec4 g_mipParams; // .xyzw = srcMipLevel, numMips, srcDimensionMode, faceIdx
 		bool g_isSRGB;
+
+		static constexpr char const* const s_shaderName = "MipGenerationParams";
 	};
 
 	MipGenerationParams CreateMipGenerationParamsData(
@@ -127,7 +129,7 @@ namespace gr
 						CreateMipGenerationParamsData(newTexture, sourceMip, numMipStages, faceIdx);
 
 					mipGenerationStage->AddSingleFrameParameterBlock(re::ParameterBlock::Create(
-						"MipGenerationParams", 
+						MipGenerationParams::s_shaderName,
 						mipGenerationParams,
 						re::ParameterBlock::PBType::SingleFrame));
 

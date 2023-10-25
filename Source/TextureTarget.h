@@ -38,7 +38,7 @@ namespace re
 			// TODO: We should support alpha blend modes, in addition to the color blend modes here
 			// TODO: Support logical operations (AND/OR/XOR etc)
 
-			enum class BlendMode
+			enum class BlendMode // Graphics stages only
 			{
 				Disabled,
 				Zero,

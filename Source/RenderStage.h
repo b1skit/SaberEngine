@@ -31,6 +31,7 @@ namespace re
 			Graphics,
 			Compute,
 
+			Invalid
 			// TODO: Add specialist types: Fullscreen, etc
 		};
 		struct IStageParams
@@ -73,6 +74,7 @@ namespace re
 		RenderStageLifetime GetStageLifetime() const;
 		IStageParams const* GetStageParams() const;
 
+		// TODO: The stage shader should be a member of the GraphicsStageParams/ComputeStageParams
 		void SetStageShader(std::shared_ptr<re::Shader>);
 		re::Shader* GetStageShader() const;
 
@@ -96,7 +98,7 @@ namespace re
 		inline std::vector<std::shared_ptr<re::ParameterBlock>> const& GetPerFrameParameterBlocks() const { return m_singleFrameParamBlocks; }
 
 		// Stage Batches:
-		inline std::vector<re::Batch> const& GetStageBatches() const { return m_stageBatches; }
+		std::vector<re::Batch> const& GetStageBatches() const;
 		void AddBatches(std::vector<re::Batch> const& batches);
 		void AddBatch(re::Batch const& batch);
 
@@ -110,6 +112,7 @@ namespace re
 
 	private:
 		void UpdateDepthTextureInputIndex();
+		void ValidateTexturesAndTargets();
 		
 
 	private:
@@ -202,6 +205,12 @@ namespace re
 	inline int RenderStage::GetDepthTargetTextureInputIdx() const
 	{
 		return m_depthTextureInputIdx;
+	}
+
+
+	inline std::vector<re::Batch> const& RenderStage::GetStageBatches() const
+	{
+		return m_stageBatches;
 	}
 
 

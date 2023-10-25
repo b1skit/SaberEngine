@@ -149,7 +149,7 @@ float4 PShader(VertexOut In) : SV_Target
 	// Reconstruct the world position:
 	const float4 worldPos = float4(GetWorldPos(In.UV0, gbuffer.NonLinearDepth, CameraParams.g_invViewProjection), 1.f);
 
-	const float3 V = normalize(CameraParams.g_cameraWPos - worldPos.xyz); // point -> camera
+	const float3 V = normalize(CameraParams.g_cameraWPos.xyz - worldPos.xyz); // point -> camera
 	const float3 N = normalize(gbuffer.WorldNormal);
 	
 	const float NoV = saturate(dot(gbuffer.WorldNormal, V));
@@ -175,8 +175,5 @@ float4 PShader(VertexOut In) : SV_Target
 		(diffuseColor * diffuseIlluminance * diffuseAO) + (specularIlluminance * specularAO);
 	// Note: We're omitting the pi term in the albedo
 	
-	// Apply exposure:
-	const float3 exposedColor = ApplyExposure(combinedContribution, CameraParams.g_exposureProperties.x);
-	
-	return float4(exposedColor, 0.f);
+	return float4(combinedContribution, 0.f);
 }

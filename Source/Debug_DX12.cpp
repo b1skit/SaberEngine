@@ -120,15 +120,23 @@ namespace
 			SUCCEEDED(dredQuery->GetAutoBreadcrumbsOutput(&dredAutoBreadcrumbsOutput)));
 
 		// Breadcrumbs:
-		LOG_ERROR("DRED BREADCRUMBS:/n-----------------");
 		D3D12_AUTO_BREADCRUMB_NODE const* breadcrumbHead = dredAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
-		while (breadcrumbHead != nullptr)
+		const uint32_t numBreadcrumbs = 
+			breadcrumbHead ? dredAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode->BreadcrumbCount : 0;
+
+		LOG_ERROR("DRED BREADCRUMBS (%d):\n-----------------", numBreadcrumbs);
+		for (uint32_t curBreadcrumb = 0; breadcrumbHead != nullptr && curBreadcrumb < numBreadcrumbs; curBreadcrumb++)
 		{
-			LOG_ERROR("Command list: %s", util::FromWideString(breadcrumbHead->pCommandListDebugNameW).c_str());
-			LOG_ERROR("Command queue: %s", util::FromWideString(breadcrumbHead->pCommandQueueDebugNameW).c_str());
-			LOG_ERROR("Breadcrumb count: %d", breadcrumbHead->BreadcrumbCount);
-			LOG_ERROR("Last breadcrumb value: %d", *breadcrumbHead->pLastBreadcrumbValue);
-			LOG_ERROR("Command history: %s", D3D12_AUTO_BREADCRUMB_OP_ToCStr(*breadcrumbHead->pCommandHistory));
+			LOG_ERROR("Command list: %s", 
+				breadcrumbHead->pCommandListDebugNameW ? util::FromWideString(breadcrumbHead->pCommandListDebugNameW).c_str() : "<null pCommandListDebugNameW>");
+			LOG_ERROR("Command queue: %s", 
+				breadcrumbHead->pCommandQueueDebugNameW ? util::FromWideString(breadcrumbHead->pCommandQueueDebugNameW).c_str() : "<null pCommandQueueDebugNameW>");
+			LOG_ERROR("Breadcrumb count: %d", 
+				breadcrumbHead->BreadcrumbCount);
+			LOG_ERROR("Last breadcrumb value: %d", 
+				breadcrumbHead->pLastBreadcrumbValue ? *breadcrumbHead->pLastBreadcrumbValue : -1);
+			LOG_ERROR("Command history: %s", 
+				breadcrumbHead->pCommandHistory ? D3D12_AUTO_BREADCRUMB_OP_ToCStr(*breadcrumbHead->pCommandHistory) : "<null pCommandHistory>");
 
 			breadcrumbHead = breadcrumbHead->pNext;
 		}

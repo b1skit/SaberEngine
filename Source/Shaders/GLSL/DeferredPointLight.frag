@@ -56,7 +56,7 @@ void main()
 	lightingParams.LightAttenuationFactor = attenuationFactor;
 	lightingParams.ShadowFactor = shadowFactor;
 	
-	lightingParams.CameraWorldPos = g_cameraWPos;
+	lightingParams.CameraWorldPos = g_cameraWPos.xyz;
 	lightingParams.Exposure = g_exposureProperties.x;
 
 	lightingParams.DiffuseScale = g_intensityScale.x;

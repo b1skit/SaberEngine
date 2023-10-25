@@ -233,7 +233,8 @@ namespace
 		SEAssert("TODO: Support StencilTarget and DepthStencilTarget usages",
 			!depthTarget ||
 			!depthTarget->GetTexture() ||
-			depthTarget->GetTexture()->GetTextureParams().m_usage == re::Texture::Usage::DepthTarget);
+			!((depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::StencilTarget) ||
+				(depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthStencilTarget)));
 		depthStencilDesc.StencilEnable = false;
 		depthStencilDesc.StencilReadMask = 0;
 		depthStencilDesc.StencilWriteMask = 0;

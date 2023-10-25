@@ -40,8 +40,12 @@ namespace gr
 			float m_shutterSpeed = 0.01f; // Seconds
 			float m_sensitivity = 250.f; // ISO
 			float m_exposureCompensation = 0.f; // f/stops
-			float m_bloomExposureCompensation = 3.f; // Overdrive emissive
 			// TODO: Add a lens size, and compute the aperture from that
+
+			float m_bloomStrength = 0.2f;
+			glm::vec2 m_bloomRadius = glm::vec2(1.f, 1.f);
+			float m_bloomExposureCompensation = 0.f; // Overdrive bloom contribution
+			bool m_deflickerEnabled = true;
 
 			bool operator==(CameraConfig const& rhs) const
 			{
@@ -54,7 +58,11 @@ namespace gr
 					m_aperture == rhs.m_aperture &&
 					m_shutterSpeed == rhs.m_shutterSpeed &&
 					m_sensitivity == rhs.m_sensitivity &&
-					m_exposureCompensation == rhs.m_exposureCompensation;
+					m_exposureCompensation == rhs.m_exposureCompensation &&
+					m_bloomStrength == rhs.m_bloomStrength &&
+					m_bloomRadius == rhs.m_bloomRadius &&
+					m_bloomExposureCompensation == rhs.m_bloomExposureCompensation &&
+					m_deflickerEnabled == rhs.m_deflickerEnabled;
 			}
 			
 			bool operator!=(CameraConfig const& rhs) const
@@ -62,6 +70,7 @@ namespace gr
 				return !operator==(rhs);
 			}
 		};
+		static_assert(sizeof(CameraConfig) == 72); // Don't forget to update operator== if the properties change
 
 	public:
 		struct CameraParams // Shader parameter block
@@ -75,10 +84,10 @@ namespace gr
 
 			glm::vec4 g_projectionParams; // .x = 1 (unused), .y = near, .z = far, .w = 1/far
 
-			glm::vec4 g_exposureProperties; // .x = exposure, .y = ev100, .z = bloom exposure compensation
+			glm::vec4 g_exposureProperties; // .x = exposure, .y = ev100, .zw = unused 
+			glm::vec4 g_bloomSettings; // .x = strength, .yz = XY radius, .w = bloom exposure compensation
 
-			glm::vec3 g_cameraWPos;
-			float padding0;
+			glm::vec4 g_cameraWPos; // .xyz = world pos, .w = unused
 
 			static constexpr char const* const s_shaderName = "CameraParams"; // Not counted towards size of struct
 		};
@@ -121,6 +130,7 @@ namespace gr
 		float GetSensitivity() const { return m_cameraConfig.m_sensitivity; }
 		void SetSensitivity(float sensitivity) { m_cameraConfig.m_sensitivity = sensitivity; }
 
+		CameraConfig const& GetCameraConfig() const;
 		void SetCameraConfig(CameraConfig const& newConfig);
 
 		inline std::shared_ptr<re::ParameterBlock> GetCameraParams() const;
@@ -163,7 +173,13 @@ namespace gr
 	};
 
 
-	std::shared_ptr<re::ParameterBlock> Camera::GetCameraParams() const
+	inline Camera::CameraConfig const& Camera::GetCameraConfig() const
+	{
+		return m_cameraConfig;
+	}
+
+
+	inline std::shared_ptr<re::ParameterBlock> Camera::GetCameraParams() const
 	{
 		return m_cameraParamBlock;
 	}

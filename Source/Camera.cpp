@@ -108,11 +108,22 @@ namespace gr
 		m_cameraPBData.g_exposureProperties = glm::vec4(
 			ComputeExposure(ev100),
 			ev100,
-			m_cameraConfig.m_bloomExposureCompensation,
-			0.f
-		);
+			0.f,
+			0.f);
 
-		m_cameraPBData.g_cameraWPos = GetTransform()->GetGlobalPosition();
+		const float bloomEV100 = ComputeEV100FromExposureSettings(
+			m_cameraConfig.m_aperture,
+			m_cameraConfig.m_shutterSpeed,
+			m_cameraConfig.m_sensitivity,
+			m_cameraConfig.m_bloomExposureCompensation);
+
+		m_cameraPBData.g_bloomSettings = glm::vec4(
+			m_cameraConfig.m_bloomStrength,
+			m_cameraConfig.m_bloomRadius.x,
+			m_cameraConfig.m_bloomRadius.y,
+			ComputeExposure(bloomEV100));
+
+		m_cameraPBData.g_cameraWPos = glm::vec4(GetTransform()->GetGlobalPosition().xyz, 0.f);
 
 		m_cameraParamBlock->Commit(m_cameraPBData);
 	}
@@ -259,27 +270,30 @@ namespace gr
 			ImGui::SetItemTooltip("Expressed in ISO. Controls how the light reaching the sensor is quantized. Controls\n"
 				"exposition and the amount of noise.");
 
-			const float ev = m_cameraConfig.m_exposureCompensation +
-				std::log2((m_cameraConfig.m_aperture * m_cameraConfig.m_aperture) / m_cameraConfig.m_shutterSpeed);
-
-			ImGui::Text("Exposure (EV) = %f", ev);
-			ImGui::SetItemTooltip("EV is in a base-2 logarithmic scale, a difference of 1 EV is called a stop. One\n"
-				"positive stop (+1 EV) corresponds to a factor of two in luminance and one negative stop (-1 EV) \n"
-				"corresponds to a factor of half in luminance. EV = log_2((N^2)/t, N = aperture, t = shutter speed. This\n"
-				"definition is only a function of the aperture and shutter speed, but not the sensitivity. An exposure\n"
-				"value is by convention defined for ISO 100, or EV100");
-
-			const float ev100 = m_cameraConfig.m_exposureCompensation +
-				ev - std::log2(m_cameraConfig.m_sensitivity / 100.f);
+			// Effectively compute EV = log_2(N^2 / t)
+			const float ev100 = ComputeEV100FromExposureSettings(
+				m_cameraConfig.m_aperture, 
+				m_cameraConfig.m_shutterSpeed, 
+				100.f, // ISO 100 sensitivity. 
+				0.f); // No EC
 
 			ImGui::Text("Exposure (EV_100) = %f", ev100);
-			ImGui::SetItemTooltip("EV 100 is the exposure with respect to the convention of an ISO 100 sensitivity");
+			ImGui::SetItemTooltip("EV is in a base-2 logarithmic scale, a difference of 1 EV is called a stop. One\n"
+				"positive stop (+1 EV) corresponds to a factor of two in luminance and one negative stop (-1 EV) \n"
+				"corresponds to a factor of half in luminance. EV = log_2((N^2)/t, N = aperture, t = shutter speed.\n"
+				"Note: EV is only a function of the aperture and shutter speed, but not the sensitivity. By\n"
+				"convention, exposure values are defined for a sensitivity of ISO 100 (or EV_100), which is what we\n"
+				"show here (i.e. With a sensitivity of 100, EV == EV_100).");
 
-			const float evs = m_cameraConfig.m_exposureCompensation +
-				ev100 + std::log2(m_cameraConfig.m_sensitivity / 100.f);
+			const float evs = ComputeEV100FromExposureSettings(
+				m_cameraConfig.m_aperture,
+				m_cameraConfig.m_shutterSpeed,
+				m_cameraConfig.m_sensitivity,
+				0.f); // No EC
+
 			ImGui::Text("Exposure (EV_s) = %f", evs);
-			ImGui::SetItemTooltip("EV_s is the exposure at the given sensitivity. By convention, exposure is defined for\n"
-				"an ISO 100 sensitivity only");
+			ImGui::SetItemTooltip("EV_s is the exposure at a given sensitivity. By convention, exposure is defined\n"
+				"for an ISO 100 sensitivity only");
 
 			const string exposureCompensationLabel = "Exposure compensation (EC)##" + GetName();
 			ImGui::SliderFloat(exposureCompensationLabel.c_str(), &m_cameraConfig.m_exposureCompensation, -6.f, 6.0f, "EC = %.3f");
@@ -288,9 +302,29 @@ namespace gr
 				"Increasing the EV is akin to closing down the lens aperture, reducing shutter speed, or reducing\n"
 				"sensitivity. Higher EVs = darker images");
 
+			const string boolStrengthLabel = "Bloom strength##" + GetName();
+			ImGui::SliderFloat(boolStrengthLabel.c_str(), &m_cameraConfig.m_bloomStrength, 0.f, 1.f, "Bloom strength = %.3f");
+
+			
+			static bool s_useRoundBlurRadius = true;
+			ImGui::Checkbox(std::format("Round blur raduis?##{}", GetUniqueID()).c_str(), &s_useRoundBlurRadius);
+			if (!s_useRoundBlurRadius)
+			{
+				ImGui::SliderFloat("Bloom radius width", &m_cameraConfig.m_bloomRadius.x, 1.f, 10.f);
+				ImGui::SliderFloat("Bloom radius height", &m_cameraConfig.m_bloomRadius.y, 1.f, 10.f);
+			}
+			else
+			{
+				const string bloomRadiusLabel = std::format("Bloom radius##{}", GetUniqueID());
+				ImGui::SliderFloat(bloomRadiusLabel.c_str(), &m_cameraConfig.m_bloomRadius.x, 1.f, 10.f);
+				m_cameraConfig.m_bloomRadius.y = m_cameraConfig.m_bloomRadius.x;
+			}
+
 			const string boolExposureCompensationLabel = "Bloom exposure compensation (Bloom EC)##" + GetName();
 			ImGui::SliderFloat(boolExposureCompensationLabel.c_str(), &m_cameraConfig.m_bloomExposureCompensation, -6.f, 6.0f, "Bloom EC = %.3f");
-			ImGui::SetItemTooltip("Force bloom for emissive surfaces");
+			ImGui::SetItemTooltip("Independently expose the lens bloom contribution");
+
+			ImGui::Checkbox(std::format("Enable bloom deflicker##{}", GetUniqueID()).c_str(), &m_cameraConfig.m_deflickerEnabled);
 
 			util::DisplayMat4x4("View Matrix:", GetViewMatrix());
 

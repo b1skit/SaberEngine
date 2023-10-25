@@ -58,7 +58,7 @@ namespace gr
 		Texture::TextureParams shadowParams;
 		shadowParams.m_width = xRes;
 		shadowParams.m_height = yRes;
-		shadowParams.m_usage = Texture::Usage::DepthTarget;
+		shadowParams.m_usage = static_cast<Texture::Usage>(Texture::Usage::DepthTarget | Texture::Usage::Color);
 		shadowParams.m_format = Texture::Format::Depth32F;
 		shadowParams.m_colorSpace = Texture::ColorSpace::Linear;
 		shadowParams.m_mipMode = re::Texture::MipMode::None;

@@ -77,7 +77,7 @@ namespace
 	constexpr char const* k_globalPreamble = "#version 460 core\n"; // Note: MUST be terminated with "\n"
 
 
-	void AssertShaderIsValid(uint32_t const& shaderRef, uint32_t const& flag, bool const& isProgram)
+	void AssertShaderIsValid(std::string const& shaderName, uint32_t const& shaderRef, uint32_t const& flag, bool const& isProgram)
 	{
 		GLint success = 0;
 		GLchar errorMsg[1024] = { 0 }; // Error buffer
@@ -102,7 +102,7 @@ namespace
 				glGetShaderInfoLog(shaderRef, sizeof(errorMsg), nullptr, errorMsg);
 			}
 
-			SEAssertF(errorMsg);
+			SEAssertF(std::format("{}: {}", shaderName, errorMsg).c_str());
 		}
 	}
 
@@ -358,7 +358,7 @@ namespace opengl
 				shaderSourceStringLengths.data());
 			glCompileShader(shaderObject);
 
-			AssertShaderIsValid(shaderObject, GL_COMPILE_STATUS, false);
+			AssertShaderIsValid(shader.GetName(), shaderObject, GL_COMPILE_STATUS, false);
 
 			glAttachShader(params->m_shaderReference, shaderObject); // Attach our shaders to the shader program
 
@@ -368,11 +368,11 @@ namespace opengl
 
 		// Link our program object:
 		glLinkProgram(params->m_shaderReference);
-		AssertShaderIsValid(params->m_shaderReference, GL_LINK_STATUS, true);
+		AssertShaderIsValid(shader.GetName(), params->m_shaderReference, GL_LINK_STATUS, true);
 
 		// Validate our program objects can execute with our current OpenGL state:
 		glValidateProgram(params->m_shaderReference);
-		AssertShaderIsValid(params->m_shaderReference, GL_VALIDATE_STATUS, true);
+		AssertShaderIsValid(shader.GetName(), params->m_shaderReference, GL_VALIDATE_STATUS, true);
 
 		// Populate the uniform locations
 		// Get the number of active uniforms found in the shader:
@@ -439,8 +439,7 @@ namespace opengl
 				type == GL_INT_IMAGE_2D_MULTISAMPLE ||
 				type == GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY ||
 				type == GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE ||
-				type == GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY
-				)
+				type == GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY)
 			{
 				// Get the texture unit binding value:
 				GLint val;
@@ -550,7 +549,9 @@ namespace opengl
 			auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
 			if (bindingUnit == params->m_samplerUnits.end())
 			{
-				SEAssert("Texture name is invalid, and relaxed shader binding is not enabled",
+				SEAssert(std::format(
+						"Shader \"{}\" texture name \"{}\"is invalid, and strict shader binding is enabled", 
+						shader.GetName(), uniformName).c_str(),
 					en::Config::Get()->ValueExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
 				return;
 			}
@@ -564,7 +565,9 @@ namespace opengl
 
 			if (bindingUnit == params->m_samplerUnits.end())
 			{
-				SEAssert("Sampler name is invalid, and relaxed shader binding is not enabled",
+				SEAssert(std::format(
+						"Shader \"{}\" sampler name \"{}\"is invalid, and strict shader binding is enabled", 
+						shader.GetName(), uniformName).c_str(),
 					en::Config::Get()->ValueExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
 				return;
 			}
@@ -648,8 +651,7 @@ namespace opengl
 		std::shared_ptr<re::Sampler>sampler,
 		uint32_t subresource)
 	{
-		// Tricky: glBindImageTexture doesn't support sRGB internal formats
-		SEAssert("TODO: Support binding individual mips", subresource == std::numeric_limits<uint32_t>::max());
+		// Note: We don't currently use the subresource index here; OpenGL doesn't allow us to be so specific
 
 		opengl::Shader::SetUniform(shader, uniformName, texture.get(), opengl::Shader::UniformType::Texture, 1);
 		opengl::Shader::SetUniform(shader, uniformName, sampler.get(), opengl::Shader::UniformType::Sampler, 1);

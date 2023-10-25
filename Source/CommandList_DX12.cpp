@@ -258,8 +258,6 @@ namespace dx12
 
 	void CommandList::SetParameterBlock(re::ParameterBlock const* parameterBlock)
 	{
-		// TODO: Handle setting parameter blocks for different root signature types (e.g. compute)
-		// -> Can probably just assume only 1 single root signature type will be set, and the other will be null?
 		SEAssert("Root signature has not been set", m_currentRootSignature != nullptr);
 
 		dx12::ParameterBlock::PlatformParams const* pbPlatParams =
@@ -811,9 +809,7 @@ namespace dx12
 			// If a depth resource is used as both an input and target, we've already recorded the transitions
 			if (!skipTransition)
 			{
-				TransitionResource(texture,
-					toState,
-					srcMip);
+				TransitionResource(texture, toState, srcMip);
 			}			
 
 			m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
@@ -954,10 +950,14 @@ namespace dx12
 			}
 		}
 
-		// Submit all of our transitions in a single batch
-		m_commandList->ResourceBarrier(
-			static_cast<uint32_t>(barriers.size()),
-			barriers.data());
+		
+		if (!barriers.empty()) // Might not have recored a barrier if it's the 1st time we've seen a resource
+		{
+			// Submit all of our transitions in a single batch
+			ResourceBarrier(
+				static_cast<uint32_t>(barriers.size()),
+				barriers.data());
+		}
 	}
 
 
@@ -986,7 +986,15 @@ namespace dx12
 		};
 
 		// TODO: Support batching of multiple barriers
-		m_commandList->ResourceBarrier(1, &barrier);
+		ResourceBarrier(1, &barrier);
+	}
+
+
+	void CommandList::ResourceBarrier(uint32_t numBarriers, D3D12_RESOURCE_BARRIER const* barriers)
+	{
+		SEAssert("Attempting to submit 0 barriers", numBarriers > 0);
+
+		m_commandList->ResourceBarrier(numBarriers, barriers);
 	}
 
 
@@ -998,7 +1006,10 @@ namespace dx12
 
 	void CommandList::DebugPrintResourceStates() const
 	{
-		LOG("\n-------------------\n\tCommandList \"%s\"\n\t-------------------", GetDebugName(m_commandList.Get()).c_str());
+		LOG("\n------------------------------------\n"
+			"\tCommandList \"%s\"\n"
+			"\t------------------------------------", 
+			GetDebugName(m_commandList.Get()).c_str());
 		m_resourceStates.DebugPrintResourceStates();
 	}
 }

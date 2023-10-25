@@ -18,40 +18,34 @@ namespace gr
 		void PreRender();
 
 		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
-
-		void ShowImGuiWindow() override;
-
+	
 
 	private:
 		void CreateBatches() override;
 
-	private:
-		std::shared_ptr<re::MeshPrimitive> m_screenAlignedQuad;
 
+	private:
+		re::RenderSystem* m_owningRenderSystem;
+
+		// Emissive blit:
+		std::shared_ptr<re::MeshPrimitive> m_screenAlignedQuad;
 		std::shared_ptr<re::RenderStage> m_emissiveBlitStage;
 
-		static constexpr uint32_t m_numDownSamplePasses = 2; // Scaling factor: # times we half the frame size
-		static constexpr uint32_t m_numBlurPasses = 3; // How many pairs of horizontal + vertical blur passes to perform
+		// Bloom compute:
+		std::vector<std::shared_ptr<re::RenderStage>> m_bloomDownStages;
+		std::vector<std::shared_ptr<re::ParameterBlock>> m_bloomDownParameterBlocks;
 
-		std::array<std::shared_ptr<re::RenderStage>, m_numDownSamplePasses> m_downResStages;
-		std::array<std::shared_ptr<re::RenderStage>, m_numBlurPasses * 2>	m_blurStages;
-		std::array<std::shared_ptr<re::RenderStage>, m_numDownSamplePasses> m_upResStages;
+		std::vector<std::shared_ptr<re::RenderStage>> m_bloomUpStages;
+		std::vector<std::shared_ptr<re::ParameterBlock>> m_bloomUpParameterBlocks;
 
-		struct LuminanceThresholdParams
-		{
-			glm::vec4 g_sigmoidParams = glm::vec4(30.f, 1.2f, 0.f, 0.f); // .x = Sigmoid ramp power, .y = Sigmoid speed, .zw = unused
+		std::shared_ptr<re::Shader> m_bloomComputeShader;
 
-			static constexpr char const* const s_shaderName = "LuminanceThresholdParams";
-		} m_luminanceThresholdParams;
-		std::shared_ptr<re::ParameterBlock> m_luminanceThresholdParamBlock;
-
-		std::shared_ptr<re::ParameterBlock> m_horizontalBloomParams;
-		std::shared_ptr<re::ParameterBlock> m_verticalBloomParams;
+		uint32_t m_firstUpsampleSrcMipLevel; // == # of upsample stages
 	};
 
 
 	inline std::shared_ptr<re::TextureTargetSet const> BloomGraphicsSystem::GetFinalTextureTargetSet() const
 	{
-		return m_emissiveBlitStage->GetTextureTargetSet();
+		return m_bloomUpStages.back()->GetTextureTargetSet();
 	}
 }

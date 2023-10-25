@@ -839,9 +839,6 @@
     <None Include="Shaders\GLSL\GenerateBRDFIntegrationMap.comp">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="Shaders\HLSL\SaberGlobals.hlsli">
-      <Filter>Source Files\Shaders\HLSL</Filter>
-    </None>
     <None Include="Shaders\HLSL\SaberComputeCommon.hlsli">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </None>
@@ -855,12 +852,6 @@
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\Blit.vert">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
-    <None Include="Shaders\GLSL\LuminanceThreshold.frag">
-      <Filter>Source Files\Shaders\GLSL</Filter>
-    </None>
-    <None Include="Shaders\GLSL\LuminanceThreshold.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
     <None Include="Shaders\GLSL\GaussianBlur.frag">
@@ -907,6 +898,24 @@
     </None>
     <None Include="Shaders\HLSL\Shadows.hlsli">
       <Filter>Source Files\Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\BloomCommon.hlsli">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\BloomCommon.glsl">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\Bloom.comp">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\HLSL\Color.hlsli">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\Color.glsl">
+      <Filter>Source Files\Shaders\GLSL</Filter>
+    </None>
+    <None Include="Shaders\GLSL\MathConstants.glsl">
+      <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -964,12 +973,6 @@
     <FxCompile Include="Shaders\HLSL\Blit_VShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\HLSL\LuminanceThreshold_PShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\HLSL\LuminanceThreshold_VShader.hlsl">
-      <Filter>Source Files\Shaders\HLSL</Filter>
-    </FxCompile>
     <FxCompile Include="Shaders\HLSL\GaussianBlur_PShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
@@ -992,6 +995,9 @@
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\HLSL\Depth_VShader.hlsl">
+      <Filter>Source Files\Shaders\HLSL</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\HLSL\Bloom_CShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
   </ItemGroup>

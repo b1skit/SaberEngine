@@ -52,7 +52,8 @@ namespace dx12
 	void GlobalResourceState::SetState(
 		D3D12_RESOURCE_STATES afterState, SubresourceIdx subresourceIdx, uint64_t lastFence)
 	{
-		IResourceState::SetState(afterState, subresourceIdx, false);
+		const bool hasOnlyOneSubresource = m_numSubresources == 1;
+		IResourceState::SetState(afterState, subresourceIdx, false, hasOnlyOneSubresource);
 		
 		m_lastFence = lastFence;
 
@@ -145,9 +146,17 @@ namespace dx12
 	}
 
 
-	void IResourceState::SetState(D3D12_RESOURCE_STATES state, SubresourceIdx subresourceIdx, bool isPendingState)
+	void IResourceState::SetState(
+		D3D12_RESOURCE_STATES state, SubresourceIdx subresourceIdx, bool isPendingState, bool hasOnlyOneSubresource)
 	{
-		if (subresourceIdx == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES && !isPendingState)
+		// Force the global state to always track numeric subresources if only a single subresource exists
+		if (hasOnlyOneSubresource)
+		{
+			SEAssert("The hasOnlyOneSubresource flag is not valid for pending/local resource states", !isPendingState);
+			subresourceIdx = 0;
+		}
+
+		if ((subresourceIdx == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES && !isPendingState))
 		{
 			m_states.clear(); // We don't clear pending transitions: We need to keep any earlier subresource states
 		}
@@ -160,7 +169,7 @@ namespace dx12
 		std::string stateStr;
 		for (auto const& state : m_states)
 		{
-			const std::string prefix = state.first > 1 ? "\tSubresource " : "Subresource ";
+			const std::string prefix = state.first >= 1 ? "\tSubresource " : "Subresource ";
 			stateStr += prefix + 
 				(state.first == 4294967295 ? "ALL" : ("#" + std::to_string(state.first))) +
 				": " + 
@@ -228,7 +237,11 @@ namespace dx12
 
 	void GlobalResourceStateTracker::DebugPrintResourceStates() const
 	{
-		LOG("\n---Global States (%s resources)---", m_globalStates.empty() ? "<empty>" : std::to_string(m_globalStates.size()).c_str());
+		LOG("--------------\n"
+			"\tGlobal States:\n"
+			"\t(%s resources)\n"
+			"\t--------------", 
+			m_globalStates.empty() ? "<empty>" : std::to_string(m_globalStates.size()).c_str());
 		for (auto const& resource : m_globalStates)
 		{
 			LOG("Resource \"%s\", has (%d) subresource%s:", 
@@ -291,12 +304,12 @@ namespace dx12
 			// If we've never seen the subresource, we need to store this transition in the pending list
 			if (m_pendingStates.at(resource).HasSubresourceRecord(subresourceIdx) == false)
 			{
-				m_pendingStates.at(resource).SetState(stateAfter, subresourceIdx, true);
+				m_pendingStates.at(resource).SetState(stateAfter, subresourceIdx, true, false);
 
 				// Note: There is an edge case here where we could set every single subresource index, then set an "ALL"
 				// state and it would be (incorrectly) added to the pending list. This is handled during the fixup stage.
 			}
-			m_knownStates.at(resource).SetState(stateAfter, subresourceIdx, false);
+			m_knownStates.at(resource).SetState(stateAfter, subresourceIdx, false, false);
 		}
 	}
 
@@ -319,13 +332,19 @@ namespace dx12
 
 	void LocalResourceStateTracker::DebugPrintResourceStates() const
 	{
-		LOG("\n---Pending transitions (%s)---", m_pendingStates.empty() ? "<empty>" : std::to_string(m_pendingStates.size()).c_str());
+		LOG("-------------------------\n"
+			"\tPending transitions (%s):\n"
+			"\t-------------------------", 
+			m_pendingStates.empty() ? "<empty>" : std::to_string(m_pendingStates.size()).c_str());
 		for (auto const& resource : m_pendingStates)
 		{
 			LOG("Resource \"%s\":", GetDebugName(resource.first).c_str());
 			resource.second.DebugPrintResourceStates();
 		}
-		LOG("---Known states (%s)---", m_knownStates.empty() ? "<empty>" : std::to_string(m_knownStates.size()).c_str());
+		LOG("------------------\n"
+			"\tKnown states (%s):\n"
+			"\t------------------",
+			m_knownStates.empty() ? "<empty>" : std::to_string(m_knownStates.size()).c_str());
 		for (auto const& resource : m_knownStates)
 		{
 			LOG("Resource \"%s\":", GetDebugName(resource.first).c_str());

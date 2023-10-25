@@ -141,7 +141,7 @@ void main()
 	// Reconstruct the world position:
 	const vec4 worldPos = vec4(GetWorldPos(vOut.uv0.xy, gbuffer.NonLinearDepth, g_invViewProjection), 1.f);
 
-	const vec3 V = normalize(g_cameraWPos - worldPos.xyz); // point -> camera
+	const vec3 V = normalize(g_cameraWPos.xyz - worldPos.xyz); // point -> camera
 	const vec3 N = normalize(gbuffer.WorldNormal);
 	
 	const float NoV = clamp(dot(gbuffer.WorldNormal, V), 0.f, 1.f);
@@ -167,9 +167,5 @@ void main()
 		(diffuseColor * diffuseIlluminance * diffuseAO) + (specularIlluminance * specularAO);
 	// Note: We're omitting the pi term in the albedo
 	
-	// Apply exposure:
-	const float exposure = g_exposureProperties.x;
-	const vec3 exposedColor = ApplyExposure(combinedContribution, exposure);
-	
-	FragColor = vec4(exposedColor, 0.f);
+	FragColor = vec4(combinedContribution, 0.f);
 }

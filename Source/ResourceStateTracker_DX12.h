@@ -32,7 +32,7 @@ namespace dx12
 		D3D12_RESOURCE_STATES GetState(SubresourceIdx) const;
 		std::map<uint32_t, D3D12_RESOURCE_STATES> const& GetStates() const;
 
-		void SetState(D3D12_RESOURCE_STATES, SubresourceIdx, bool isPendingState);
+		void SetState(D3D12_RESOURCE_STATES, SubresourceIdx, bool isPendingState, bool hasOnlyOneSubresource);
 
 		void DebugPrintResourceStates() const;
 

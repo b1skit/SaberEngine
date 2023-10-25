@@ -1,5 +1,7 @@
+// © 2023 Adam Badke. All rights reserved.
+#version 460
 #define SABER_VEC4_OUTPUT
-
+#include "Color.glsl"
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"
 #include "SaberLighting.glsl"
@@ -71,14 +73,28 @@ void main()
 {	
 	// NOTE: uv0.y was flipped in toneMapShader.vert to account for SaberEngine's use of a (0,0) top-left uv convention
 	const vec3 color = texture(Tex0, vOut.uv0.xy).rgb;
+	const vec3 bloom = texture(Tex1, vOut.uv0.xy).rgb;
 
+	// Apply exposure:
+	const float bloomExposure = g_bloomSettings.w;
+	const vec3 exposedBloom = ApplyExposure(bloom, bloomExposure);	
+	
+	// TODO: Support auto exposure using the bottom mip of the bloom texture
+	const float exposure = g_exposureProperties.x;
+	const vec3 exposedColor = ApplyExposure(color, exposure);
+	
+	// Blend the exposed bloom and scene color:
+	const float bloomStrength = g_bloomSettings.x;
+	const vec3 blendedColor = mix(exposedColor, exposedBloom, bloomStrength);
+	
+	// Tone mapping:
 #if defined(FAST_ACES)
-	vec3 toneMappedColor = ACESFilm(color);
+	vec3 toneMappedColor = ACESFilm(blendedColor);
 #else
-	vec3 toneMappedColor = ACESFitted(color);
+	vec3 toneMappedColor = ACESFitted(blendedColor);
 #endif
 
-	toneMappedColor = LinearToSRGB(toneMappedColor); // Apply gamma correction
-
-	FragColor = vec4(toneMappedColor, 1.0);
+	const vec3 sRGBColor = LinearToSRGB(toneMappedColor);
+	
+	FragColor = vec4(sRGBColor, 1.f);
 } 

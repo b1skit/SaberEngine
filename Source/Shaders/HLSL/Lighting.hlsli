@@ -225,10 +225,7 @@ float3 ComputeLighting(LightingParams lightingParams)
 	const float3 combinedContribution = (diffuseReflectance + specularReflectance) * illuminance;
 	// Note: We're omitting the pi term in the albedo
 	
-	// Apply exposure:
-	const float3 exposedColor = ApplyExposure(combinedContribution, lightingParams.Exposure);
-	
-	return exposedColor;
+	return combinedContribution;
 }
 
 

@@ -3,6 +3,7 @@
 #define SABER_VEC4_OUTPUT
 #define VOUT_LOCAL_POS
 
+#include "MathConstants.glsl"
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"
 #include "SaberLighting.glsl"

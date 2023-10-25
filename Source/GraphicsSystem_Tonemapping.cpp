@@ -1,7 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Config.h"
-#include "GraphicsSystem_Tonemapping.h"
+#include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_DeferredLighting.h"
+#include "GraphicsSystem_Tonemapping.h"
 #include "RenderManager.h"
 #include "RenderSystem.h"
 #include "Shader.h"
@@ -41,6 +42,8 @@ namespace gr
 
 	void TonemappingGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
 	{
+		m_owningRenderSystem = &renderSystem;
+
 		re::PipelineState tonemappingPipelineState;
 		tonemappingPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
 		tonemappingPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
@@ -50,16 +53,26 @@ namespace gr
 
 		m_tonemappingStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 
-		// Camera params:
+		gr::BloomGraphicsSystem* bloomGS = renderSystem.GetGraphicsSystem<BloomGraphicsSystem>();
+
+		// Param blocks:
 		m_tonemappingStage->AddPermanentParameterBlock(SceneManager::Get()->GetMainCamera()->GetCameraParams());
 
+		// Texture inputs:
 		std::shared_ptr<TextureTargetSet const> deferredLightTextureTargetSet =
 			renderSystem.GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
 
 		m_tonemappingStage->AddTextureInput(
 			"Tex0",
 			deferredLightTextureTargetSet->GetColorTarget(0).GetTexture(),
-			Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+			Sampler::GetSampler(Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
+		
+		std::shared_ptr<TextureTargetSet const> bloomTextureTargetSet = bloomGS->GetFinalTextureTargetSet();
+
+		m_tonemappingStage->AddTextureInput(
+			"Tex1",
+			bloomTextureTargetSet->GetColorTarget(0).GetTexture(),
+			Sampler::GetSampler(Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
 
 		pipeline.AppendRenderStage(m_tonemappingStage);
 	}

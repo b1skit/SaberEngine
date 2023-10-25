@@ -27,42 +27,49 @@ using glm::vec4;
 
 namespace
 {
-	struct BloomTargetParams
+	struct BloomComputeParams
 	{
-		glm::vec4 g_bloomTargetResolution; // .x = width, .y = height, .z = 1/width, .w = 1/height
+		glm::vec4 g_srcTexDimensions;
+		glm::vec4 g_dstTexDimensions;
+		glm::vec4 g_srcMipDstMipFirstUpsampleSrcMipIsDownStage; // .xy = src/dst mip, .z = 1st upsample src mip, .w = isDownStage
+		glm::vec4 g_bloomRadiusWidthHeightLevelNumLevls; // .xy = bloom width/height, .z = level .w = current level
 
-		static constexpr char const* const s_shaderName = "BloomTargetParams";
+		glm::vec4 g_bloomDebug; // .x = Deflicker enabled
+
+		static constexpr char const* const s_shaderName = "BloomComputeParams";
 	};
 
-
-	BloomTargetParams CreateBloomTargetParamsData(std::shared_ptr<re::TextureTargetSet const> targetSet)
+	BloomComputeParams CreateBloomComputeParamsData(
+		std::shared_ptr<re::Texture> bloomSrcTex,
+		std::shared_ptr<re::Texture> bloomDstTex,
+		uint32_t srcMipLevel,
+		uint32_t dstMipLevel,
+		bool isDownStage,
+		uint32_t currentLevel,
+		uint32_t numLevels,
+		uint32_t firstUpsampleSrcMipLevel,
+		gr::Camera::CameraConfig const& cameraConfig)
 	{
-		BloomTargetParams bloomTargetParams;
-		bloomTargetParams.g_bloomTargetResolution = targetSet->GetTargetDimensions();
-		return bloomTargetParams;
-	}
+		BloomComputeParams bloomComputeParams{};
 
+		bloomComputeParams.g_srcTexDimensions = bloomSrcTex->GetSubresourceDimensions(srcMipLevel);
+		bloomComputeParams.g_dstTexDimensions = bloomDstTex->GetSubresourceDimensions(dstMipLevel);
+		
+		bloomComputeParams.g_srcMipDstMipFirstUpsampleSrcMipIsDownStage = glm::vec4(
+			srcMipLevel,
+			dstMipLevel,
+			firstUpsampleSrcMipLevel,
+			isDownStage);
 
-	struct GaussianBlurParams
-	{
-		glm::vec4 g_blurSettings; // .x = Bloom direction (0 = horizontal, 1 = vertical), .yzw = unused
+		bloomComputeParams.g_bloomRadiusWidthHeightLevelNumLevls = glm::vec4(
+			cameraConfig.m_bloomRadius.x,
+			cameraConfig.m_bloomRadius.y,
+			currentLevel,
+			numLevels);
+		
+		bloomComputeParams.g_bloomDebug = glm::vec4(cameraConfig.m_deflickerEnabled, 0.f, 0.f, 0.f);
 
-		static constexpr char const* const s_shaderName = "GaussianBlurParams";
-	};
-
-	enum class BloomDirection
-	{
-		Horizontal = 0,
-		Vertical = 1
-	};
-
-	GaussianBlurParams CreateBloomParamsData(BloomDirection bloomDirection)
-	{
-		const float bloomDir = static_cast<float>(bloomDirection);
-
-		GaussianBlurParams bloomParams;
-		bloomParams.g_blurSettings = glm::vec4(bloomDir, 0.f, 0.f, 0.f);;
-		return bloomParams;
+		return bloomComputeParams;
 	}
 }
 
@@ -74,289 +81,200 @@ namespace gr
 	BloomGraphicsSystem::BloomGraphicsSystem()
 		: GraphicsSystem(k_gsName)
 		, NamedObject(k_gsName)
+		, m_owningRenderSystem(nullptr)
 	{
-		re::RenderStage::GraphicsStageParams gfxStageParams;
-		m_emissiveBlitStage = re::RenderStage::CreateGraphicsStage("Emissive blit stage", gfxStageParams);
-
 		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Near);
+
+		m_firstUpsampleSrcMipLevel = 5; // == # of upsample stages
 	}
 
 
 	void BloomGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
 	{
-		DeferredLightingGraphicsSystem* deferredLightGS = 
+		m_owningRenderSystem = &renderSystem;
+
+		std::shared_ptr<re::Sampler> const bloomSampler =
+			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear);
+
+		GBufferGraphicsSystem* gbufferGS = renderSystem.GetGraphicsSystem<GBufferGraphicsSystem>();
+
+		DeferredLightingGraphicsSystem* deferredLightGS =
 			renderSystem.GetGraphicsSystem<DeferredLightingGraphicsSystem>();
 
-		Camera* sceneCam = SceneManager::Get()->GetMainCamera().get();
+		std::shared_ptr<re::TextureTargetSet const> deferredLightTargets = deferredLightGS->GetFinalTextureTargetSet();
 
+
+		// Emissive blit:
+		m_emissiveBlitStage =
+			re::RenderStage::CreateGraphicsStage("Emissive blit stage", re::RenderStage::GraphicsStageParams());
+
+		// Blit shader:
 		re::PipelineState blitPipelineState;
 		blitPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
 		blitPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 		
-		shared_ptr<Shader> blitShader = 
-			re::Shader::GetOrCreate(en::ShaderNames::k_blitShaderName, blitPipelineState);
+		m_emissiveBlitStage->SetStageShader(
+			re::Shader::GetOrCreate(en::ShaderNames::k_blitShaderName, blitPipelineState));
 
-		m_emissiveBlitStage->SetStageShader(blitShader);
-		m_emissiveBlitStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
+		// Emissive blit texture inputs:
+		m_emissiveBlitStage->AddTextureInput(
+			"Tex0",
+			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(GBufferGraphicsSystem::GBufferEmissive).GetTexture(),
+			bloomSampler);
 
-		std::shared_ptr<re::TextureTargetSet const> deferredLightGSTargetSet = 
-			deferredLightGS->GetFinalTextureTargetSet();
-		std::shared_ptr<re::TextureTargetSet> emissiveTargetSet =
-			re::TextureTargetSet::Create(*deferredLightGSTargetSet, "Emissive Blit Target Set");
+		// Additively blit the emissive values to the deferred lighting target:
+		std::shared_ptr<re::TextureTargetSet> emissiveTargetSet = re::TextureTargetSet::Create(
+			*deferredLightGS->GetFinalTextureTargetSet(),
+			"Emissive Blit Target Set");
 
 		emissiveTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-			re::TextureTarget::TargetParams::BlendMode::One, re::TextureTarget::TargetParams::BlendMode::One});
+			re::TextureTarget::TargetParams::BlendMode::One, re::TextureTarget::TargetParams::BlendMode::One });
 		emissiveTargetSet->SetAllTargetClearModes(re::TextureTarget::TargetParams::ClearMode::Disabled);
 
 		m_emissiveBlitStage->SetTextureTargetSet(emissiveTargetSet);
-		
+
+		// Append the emissive blit stage:
 		pipeline.AppendRenderStage(m_emissiveBlitStage);
 
-		// Bloom stages:
-		re::PipelineState bloomPipelineState;
-		bloomPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
-		bloomPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
+
+		// Bloom:
+		re::PipelineState bloomComputePipelineState; // Defaults
+		m_bloomComputeShader = re::Shader::GetOrCreate(en::ShaderNames::k_bloomShaderName, bloomComputePipelineState);
+
+		// Bloom target: We create a single texture, and render into its mips
+		std::shared_ptr<re::Texture> deferredLightTargetTex = deferredLightTargets->GetColorTarget(0).GetTexture();
+
+
+		const glm::uvec2 bloomTargetWidthHeight = 
+			glm::uvec2(deferredLightTargetTex->Width() / 2, deferredLightTargetTex->Height() / 2);
 		
-		int currentXRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName) / 2;
-		int currentYRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName) / 2;
+		Texture::TextureParams bloomTargetTexParams;
+		bloomTargetTexParams.m_width = bloomTargetWidthHeight.x;
+		bloomTargetTexParams.m_height = bloomTargetWidthHeight.y;
+		bloomTargetTexParams.m_usage = static_cast<Texture::Usage>(re::Texture::Usage::ComputeTarget | Texture::Usage::Color);
+		bloomTargetTexParams.m_dimension = re::Texture::Dimension::Texture2D;
+		bloomTargetTexParams.m_format = deferredLightTargetTex->GetTextureParams().m_format;
+		bloomTargetTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
+		bloomTargetTexParams.m_mipMode = re::Texture::MipMode::Allocate;
+		bloomTargetTexParams.m_addToSceneData = false;
 
-		// We want the same format as the buffers in the deferred lighting target
-		Texture::TextureParams resScaleParams = 
-			deferredLightGSTargetSet->GetColorTarget(0).GetTexture()->GetTextureParams();
-		resScaleParams.m_width = currentXRes;
-		resScaleParams.m_height = currentYRes;
-		resScaleParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		std::shared_ptr<re::Texture> bloomTargetTex = re::Texture::Create("Bloom Target", bloomTargetTexParams, false);
 
-		re::TextureTarget::TargetParams targetParams;
+		const uint32_t numBloomMips = bloomTargetTex->GetNumMips();
 
-		shared_ptr<Shader> luminanceThresholdShader =
-			re::Shader::GetOrCreate(en::ShaderNames::k_luminanceThresholdShaderName, bloomPipelineState);
+		gr::Camera::CameraConfig const& cameraConfig = en::SceneManager::Get()->GetMainCamera()->GetCameraConfig();
 
-		// Create our param blocks:
-		m_luminanceThresholdParamBlock = re::ParameterBlock::Create(
-			LuminanceThresholdParams::s_shaderName,
-			m_luminanceThresholdParams,
-			re::ParameterBlock::PBType::Mutable);
-
-		// Downsampling stages (w/luminance threshold in 1st pass):
-		for (uint32_t i = 0; i < m_numDownSamplePasses; i++)
+		// Downsample stages:
+		for (uint32_t level = 0; level < numBloomMips; level++)
 		{
-			const string name = "Down-res stage " + to_string(i + 1) + " / " + to_string(m_numDownSamplePasses);
-			re::RenderStage::GraphicsStageParams gfxStageParams;
-			m_downResStages[i] = re::RenderStage::CreateGraphicsStage(name, gfxStageParams);
-			re::RenderStage* downResStage = m_downResStages[i].get();
+			// Stage:
+			const std::string stageName = 
+				std::format("Bloom downsample stage {}/{}: MIP {}", (level + 1), numBloomMips, level);
+			std::shared_ptr<re::RenderStage> downStage = 
+				re::RenderStage::CreateComputeStage(stageName, re::RenderStage::ComputeStageParams());
 
-			std::shared_ptr<re::TextureTargetSet> downResTargets = re::TextureTargetSet::Create(name + " targets");
-			downResTargets->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-				re::TextureTarget::TargetParams::BlendMode::One,re::TextureTarget::TargetParams::BlendMode::Zero});
+			// Shader:
+			downStage->SetStageShader(m_bloomComputeShader);
 
-			downResTargets->SetViewport(re::Viewport(0, 0, currentXRes, currentYRes));
-			downResTargets->SetScissorRect(re::ScissorRect(0, 0, currentXRes, currentYRes));
+			const std::string targetName = std::format("Bloom {}/{} Target Set", (level + 1), numBloomMips);
+			std::shared_ptr<re::TextureTargetSet> bloomLevelTargets = re::TextureTargetSet::Create(targetName.c_str());
 
-			resScaleParams.m_width = currentXRes;
-			resScaleParams.m_height = currentYRes;
-			const string texName = "ScaledResolution_" + to_string(currentXRes) + "x" + to_string(currentYRes);
+			glm::vec4 const& targetMipDimensions = bloomTargetTex->GetSubresourceDimensions(level);
+			bloomLevelTargets->SetViewport(re::Viewport(
+				0, 0, static_cast<uint32_t>(targetMipDimensions.x), static_cast<uint32_t>(targetMipDimensions.y)));
+			bloomLevelTargets->SetScissorRect(re::ScissorRect(
+				0, 0, static_cast<long>(targetMipDimensions.x), static_cast<long>(targetMipDimensions.y)));
 
-			downResTargets->SetColorTarget(0, re::Texture::Create(texName, resScaleParams, false), targetParams);
-
-			downResStage->SetTextureTargetSet(downResTargets);
-
-			downResStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
-
-			if (i == 0)
+			// Input:
+			if (level == 0)
 			{
-				m_downResStages[i]->SetStageShader(luminanceThresholdShader);
-
-				m_downResStages[i]->AddPermanentParameterBlock(m_luminanceThresholdParamBlock);
+				downStage->AddTextureInput("Tex0", deferredLightTargetTex, bloomSampler);
 			}
 			else
 			{
-				m_downResStages[i]->SetStageShader(blitShader);
-			}
+				const uint32_t srcMipLevel = level - 1;
 
-			pipeline.AppendRenderStage(m_downResStages[i]);
-
-			// Don't halve the resolution on the last iteration:
-			if (i < (m_numDownSamplePasses - 1))
-			{
-				currentXRes /= 2;
-				currentYRes /= 2;
+				downStage->AddTextureInput("Tex0", bloomTargetTex, bloomSampler, srcMipLevel);	
 			}
+			
+			// Target:
+			re::TextureTarget::TargetParams bloomLevelTargetParams;
+			bloomLevelTargetParams.m_targetMip = level;
+			
+			bloomLevelTargets->SetColorTarget(
+				0, 
+				bloomTargetTex,
+				bloomLevelTargetParams);
+
+			downStage->SetTextureTargetSet(bloomLevelTargets);
+
+			// Parameter blocks:
+			std::shared_ptr<re::ParameterBlock> bloomDownPB = re::ParameterBlock::Create(
+				BloomComputeParams::s_shaderName,
+				BloomComputeParams{},
+				re::ParameterBlock::PBType::Mutable);
+			m_bloomDownParameterBlocks.emplace_back(bloomDownPB);
+			downStage->AddPermanentParameterBlock(bloomDownPB);
+
+			pipeline.AppendRenderStage(downStage);
+
+			m_bloomDownStages.emplace_back(downStage);
 		}
 
-		// Blur stages:
-		shared_ptr<Shader> gaussianBlurShader =
-			re::Shader::GetOrCreate(en::ShaderNames::k_gaussianBlurShaderName, bloomPipelineState);
+		// Upsample stages:
+		const uint32_t numUpsampleStages = m_firstUpsampleSrcMipLevel;
+		uint32_t upsampleSrcMip = m_firstUpsampleSrcMipLevel;
+		uint32_t upsampleNameLevel = 1;
 
-		// Create our param blocks:
-		m_horizontalBloomParams = re::ParameterBlock::Create(
-			GaussianBlurParams::s_shaderName,
-			CreateBloomParamsData(BloomDirection::Horizontal),
-			re::ParameterBlock::PBType::Immutable);
-
-		m_verticalBloomParams = re::ParameterBlock::Create(
-			GaussianBlurParams::s_shaderName,
-			CreateBloomParamsData(BloomDirection::Vertical),
-			re::ParameterBlock::PBType::Immutable);
-
-		Texture::TextureParams blurParams(resScaleParams);
-		blurParams.m_width = currentXRes;
-		blurParams.m_height = currentYRes;
-		const string texName = "BlurPingPong_" + to_string(currentXRes) + "x" + to_string(currentYRes);
-		
-		shared_ptr<Texture> blurPingPongTexture = re::Texture::Create(texName, blurParams, false);
-
-		const uint32_t totalBlurPasses = m_numBlurPasses * 2; // x2 for horizontal/vertical separation
-
-		constexpr char const* k_blurStageNamePrefix[2] = { "Horizontal", "Vertical"};
-
-		for (size_t i = 0; i < totalBlurPasses; i++)
+		for (uint32_t level = numUpsampleStages; level >= 1; level--)
 		{
-			std::string const& stageName = 
-				std::format("{} blur stage {} / {}", k_blurStageNamePrefix[i % 2], (i + 2) / 2, m_numBlurPasses);
+			const uint32_t upsampleDstMip = upsampleSrcMip - 1;
 
-			re::RenderStage::GraphicsStageParams gfxStageParams{};
-			m_blurStages[i] = re::RenderStage::CreateGraphicsStage(stageName, gfxStageParams);
-			re::RenderStage* newBlurStage = m_blurStages[i].get();
+			// Stage:
+			const std::string stageName = 
+				std::format("Bloom upsample stage {}/{}: MIP {}", upsampleNameLevel++, numUpsampleStages, upsampleDstMip);
+			std::shared_ptr<re::RenderStage> upStage =
+				re::RenderStage::CreateComputeStage(stageName, re::RenderStage::ComputeStageParams());
 
-			std::shared_ptr<re::TextureTargetSet> blurTargets = re::TextureTargetSet::Create(stageName + " targets");
-			blurTargets->SetViewport(re::Viewport(0, 0, currentXRes, currentYRes));
-			blurTargets->SetScissorRect(re::ScissorRect(0, 0, currentXRes, currentYRes));
+			// Shader:
+			upStage->SetStageShader(m_bloomComputeShader);
 
-			newBlurStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
+			const std::string targetName = std::format("Bloom {}/{} Target Set", (level + 1), numBloomMips);
+			std::shared_ptr<re::TextureTargetSet> bloomLevelTargets = re::TextureTargetSet::Create(targetName.c_str());
 
-			newBlurStage->SetStageShader(gaussianBlurShader);
+			glm::vec4 const& targetMipDimensions = bloomTargetTex->GetSubresourceDimensions(upsampleDstMip);
+			bloomLevelTargets->SetViewport(re::Viewport(
+				0, 0, static_cast<uint32_t>(targetMipDimensions.x), static_cast<uint32_t>(targetMipDimensions.y)));
+			bloomLevelTargets->SetScissorRect(re::ScissorRect(
+				0, 0, static_cast<long>(targetMipDimensions.x), static_cast<long>(targetMipDimensions.y)));
 
-			if (i % 2 == 0)
-			{
-				blurTargets->SetColorTarget(0, blurPingPongTexture, targetParams);
-				
-				newBlurStage->AddPermanentParameterBlock(m_horizontalBloomParams);
-			}
-			else
-			{
-				blurTargets->SetColorTarget(0, m_downResStages.back()->GetTextureTargetSet()->GetColorTarget(0));
+			// Input:
+			upStage->AddTextureInput("Tex0", bloomTargetTex, bloomSampler, upsampleSrcMip);
 
-				newBlurStage->AddPermanentParameterBlock(m_verticalBloomParams);
-			}
-			newBlurStage->SetTextureTargetSet(blurTargets);
+			// Targets:
+			re::TextureTarget::TargetParams bloomLevelTargetParams;
+			bloomLevelTargetParams.m_targetMip = upsampleDstMip;
 
-			newBlurStage->AddPermanentParameterBlock(re::ParameterBlock::Create(
-				BloomTargetParams::s_shaderName,
-				CreateBloomTargetParamsData(blurTargets),
-				re::ParameterBlock::PBType::Immutable));
+			bloomLevelTargets->SetColorTarget(
+				0,
+				bloomTargetTex,
+				bloomLevelTargetParams);
 
-			pipeline.AppendRenderStage(m_blurStages[i]);
-		}
+			upStage->SetTextureTargetSet(bloomLevelTargets);
 
+			// Parameter blocks:
+			std::shared_ptr<re::ParameterBlock> bloomUpPB = re::ParameterBlock::Create(
+				BloomComputeParams::s_shaderName,
+				BloomComputeParams{},
+				re::ParameterBlock::PBType::Mutable);
+			upStage->AddPermanentParameterBlock(bloomUpPB);
+			m_bloomUpParameterBlocks.emplace_back(bloomUpPB);
 
-		for (size_t i = 0; i < m_numDownSamplePasses; i++)
-		{
-			currentXRes *= 2;
-			currentYRes *= 2;
+			pipeline.AppendRenderStage(upStage);
 
-			const string name = "Up-res stage " + to_string(i + 1) + " / " + to_string(m_numDownSamplePasses);
-			re::RenderStage::GraphicsStageParams gfxStageParams;
-			m_upResStages[i] = re::RenderStage::CreateGraphicsStage(name, gfxStageParams);
-			re::RenderStage* upresStage = m_upResStages[i].get();
+			m_bloomUpStages.emplace_back(upStage);
 
-			std::shared_ptr<re::TextureTargetSet> upResTargets = re::TextureTargetSet::Create(name + " targets");
-
-			upResTargets->SetViewport(re::Viewport(0, 0, currentXRes, currentYRes));
-			upResTargets->SetScissorRect(re::ScissorRect(0, 0, currentXRes, currentYRes));
-
-			upresStage->AddPermanentParameterBlock(sceneCam->GetCameraParams());
-			m_upResStages[i]->SetStageShader(blitShader);
-
-			if (i == (m_numDownSamplePasses - 1)) // Last iteration: Additive blit back to the src gs
-			{
-				upResTargets->SetColorTarget(0, deferredLightGS->GetFinalTextureTargetSet()->GetColorTarget(0));
-
-				upResTargets->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-					re::TextureTarget::TargetParams::BlendMode::One, 
-					re::TextureTarget::TargetParams::BlendMode::One });
-
-				upResTargets->SetAllTargetClearModes(re::TextureTarget::TargetParams::ClearMode::Disabled);
-			}
-			else
-			{
-				upResTargets->SetColorTarget(0,
-					m_downResStages[m_downResStages.size() - (i + 2)]->GetTextureTargetSet()->GetColorTarget(0));
-
-				upResTargets->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-					re::TextureTarget::TargetParams::BlendMode::One, 
-					re::TextureTarget::TargetParams::BlendMode::Zero});
-			}
-
-			upresStage->SetTextureTargetSet(upResTargets);
-
-			pipeline.AppendRenderStage(m_upResStages[i]);
-		}
-
-		// Attach GBuffer inputs:
-		GBufferGraphicsSystem* gbufferGS = renderSystem.GetGraphicsSystem<GBufferGraphicsSystem>();
-
-		shared_ptr<Sampler> const bloomStageSampler = Sampler::GetSampler(Sampler::WrapAndFilterMode::Clamp_Linear_Linear);
-
-		// This index corresponds with the GBuffer texture layout bindings in SaberCommon.glsl
-		const size_t gBufferEmissiveTextureSrcIndex = 3;
-		m_emissiveBlitStage->AddTextureInput(
-			"Tex0",
-			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(gBufferEmissiveTextureSrcIndex).GetTexture(),
-			bloomStageSampler);
-
-		for (size_t i = 0; i < m_downResStages.size(); i++)
-		{
-			if (i == 0)
-			{
-				m_downResStages[i]->AddTextureInput(
-					"Tex0",
-					m_emissiveBlitStage->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
-					bloomStageSampler);
-			}
-			else
-			{
-				m_downResStages[i]->AddTextureInput(
-					"Tex0",
-					m_downResStages[i - 1]->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
-					bloomStageSampler);
-			}
-		}
-
-		for (size_t i = 0; i < m_blurStages.size(); i++)
-		{
-			if (i == 0)
-			{
-				m_blurStages[i]->AddTextureInput(
-					"Tex0",
-					m_downResStages.back()->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
-					bloomStageSampler);
-			}
-			else
-			{
-				m_blurStages[i]->AddTextureInput(
-					"Tex0",
-					m_blurStages[i - 1]->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
-					bloomStageSampler);
-			}
-		}
-
-		for (size_t i = 0; i < m_upResStages.size(); i++)
-		{
-			if (i == 0)
-			{
-				m_upResStages[i]->AddTextureInput(
-					"Tex0",
-					m_blurStages.back()->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
-					bloomStageSampler);
-			}
-			else
-			{
-				m_upResStages[i]->AddTextureInput(
-					"Tex0",
-					m_upResStages[i - 1]->GetTextureTargetSet()->GetColorTarget(0).GetTexture(),
-					bloomStageSampler);
-			}
+			upsampleSrcMip--;
 		}
 	}
 
@@ -365,8 +283,79 @@ namespace gr
 	{
 		CreateBatches();
 
-		// Update our bloom params:
-		m_luminanceThresholdParamBlock->Commit(m_luminanceThresholdParams);
+		DeferredLightingGraphicsSystem* deferredLightGS =
+			m_owningRenderSystem->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
+		std::shared_ptr<re::Texture> deferredLightTargetTex = 
+			deferredLightGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture();
+		std::shared_ptr<re::Texture> bloomTargetTex = GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture();
+
+		gr::Camera::CameraConfig const& cameraConfig = en::SceneManager::Get()->GetMainCamera()->GetCameraConfig();
+
+		// Parameter blocks:
+		const uint32_t numBloomMips = bloomTargetTex->GetNumMips();
+		for (uint32_t level = 0; level < numBloomMips; level++)
+		{
+			BloomComputeParams bloomComputeParams{};
+
+			if (level == 0)
+			{
+				const uint32_t srcMipLevel = 0; // First mip of lighting target
+				const uint32_t dstMipLevel = 0; // First mip of bloom target
+
+				bloomComputeParams = CreateBloomComputeParamsData(
+					deferredLightTargetTex,
+					bloomTargetTex,
+					srcMipLevel,
+					dstMipLevel,
+					true,
+					level,
+					numBloomMips,
+					m_firstUpsampleSrcMipLevel,
+					cameraConfig);
+			}
+			else
+			{
+				const uint32_t srcMipLevel = level - 1;
+				const uint32_t dstMipLevel = srcMipLevel + 1;
+
+				bloomComputeParams = CreateBloomComputeParamsData(
+					bloomTargetTex,
+					bloomTargetTex,
+					srcMipLevel,
+					dstMipLevel,
+					true,
+					level,
+					numBloomMips,
+					m_firstUpsampleSrcMipLevel, 
+					cameraConfig);
+			}
+
+			m_bloomDownParameterBlocks[level]->Commit(bloomComputeParams);
+		}
+
+
+		const uint32_t numUpsampleStages = m_firstUpsampleSrcMipLevel;
+		uint32_t level = m_firstUpsampleSrcMipLevel;
+		for (std::shared_ptr<re::ParameterBlock> bloomUpPB : m_bloomUpParameterBlocks)
+		{
+			const uint32_t upsampleSrcMip = level;
+			const uint32_t upsampleDstMip = upsampleSrcMip - 1;
+			
+			BloomComputeParams const& bloomComputeParams = CreateBloomComputeParamsData(
+				bloomTargetTex,
+				bloomTargetTex,
+				upsampleSrcMip,
+				upsampleDstMip,
+				false,
+				level,
+				numUpsampleStages,
+				m_firstUpsampleSrcMipLevel,
+				cameraConfig);
+
+			bloomUpPB->Commit(bloomComputeParams);
+
+			level--;
+		}
 	}
 
 
@@ -376,54 +365,29 @@ namespace gr
 
 		m_emissiveBlitStage->AddBatch(fullscreenQuadBatch);
 
-		for (size_t i = 0; i < m_downResStages.size(); i++)
+		std::shared_ptr<re::Texture> bloomTex = m_bloomDownStages[0]->GetTextureTargetSet()->GetColorTarget(0).GetTexture();
+		const uint32_t numBloomTexMips = bloomTex->GetNumMips();
+
+		uint32_t downsampleDstMipLevel = 0;
+		for (std::shared_ptr<re::RenderStage> downStage : m_bloomDownStages)
 		{
-			m_downResStages[i]->AddBatch(fullscreenQuadBatch);
+			glm::vec2 dstMipWidthHeight = bloomTex->GetSubresourceDimensions(downsampleDstMipLevel++).xy;
+
+			re::Batch computeBatch = re::Batch(re::Batch::ComputeParams{
+						.m_threadGroupCount = glm::uvec3(dstMipWidthHeight.x, dstMipWidthHeight.y, 1u) });
+
+			downStage->AddBatch(computeBatch);
 		}
-		for (size_t i = 0; i < m_blurStages.size(); i++)
+
+		uint32_t upsampleDstMipLevel = m_firstUpsampleSrcMipLevel - 1;
+		for (std::shared_ptr<re::RenderStage> upStage : m_bloomUpStages)
 		{
-			m_blurStages[i]->AddBatch(fullscreenQuadBatch);
-		}
-		for (size_t i = 0; i < m_upResStages.size(); i++)
-		{
-			m_upResStages[i]->AddBatch(fullscreenQuadBatch);
-		}
-	}
+			glm::vec2 dstMipWidthHeight = bloomTex->GetSubresourceDimensions(upsampleDstMipLevel--).xy;
 
+			re::Batch computeBatch = re::Batch(re::Batch::ComputeParams{
+						.m_threadGroupCount = glm::uvec3(dstMipWidthHeight.x, dstMipWidthHeight.y, 1u) });
 
-	void BloomGraphicsSystem::ShowImGuiWindow()
-	{
-		if (ImGui::TreeNode(GetName().c_str()))
-		{
-			auto ShowTooltip = [&]() {
-				if (ImGui::BeginItemTooltip())
-				{
-					ImGui::Text("Luminance threshold sigmoid");
-					constexpr uint32_t k_numSamples = 20;
-					constexpr float k_sampleSpacing = 0.2f;
-					float samplePoints[k_numSamples];
-					const float sigmoidPower = m_luminanceThresholdParams.g_sigmoidParams.x;
-					const float sigmoidSpeed = m_luminanceThresholdParams.g_sigmoidParams.y;
-					for (size_t i = 0; i < k_numSamples; i++)
-					{
-						const float x = i * k_sampleSpacing;
-
-						const float commonTerm = std::pow((sigmoidSpeed * x), sigmoidPower);
-						samplePoints[i] = commonTerm / (commonTerm + 1);
-					}
-					ImGui::PlotLines("Curve", samplePoints, k_numSamples);
-
-					ImGui::EndTooltip();
-				}
-			};
-
-			ImGui::SliderFloat("Sigmoid ramp power", &m_luminanceThresholdParams.g_sigmoidParams.x, 0, 15.0f, "Sigmoid ramp power = %.3f");
-			ShowTooltip();
-
-			ImGui::SliderFloat("Sigmoid ramp speed", &m_luminanceThresholdParams.g_sigmoidParams.y, 0, 5.0f, "Sigmoid ramp speed = %.3f");
-			ShowTooltip();
-
-			ImGui::TreePop();
+			upStage->AddBatch(computeBatch);
 		}
 	}
 }

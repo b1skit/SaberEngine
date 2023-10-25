@@ -309,6 +309,53 @@ namespace
 	}
 
 
+	bool SRVIsNeeded(re::Texture::TextureParams const& texParams)
+	{
+		return (texParams.m_usage & re::Texture::Usage::Color);
+	}
+
+
+	bool SimultaneousAccessIsNeeded(re::Texture::TextureParams const& texParams)
+	{
+		// Assume that if a resource is used as a target and anything else, it could be used simultaneously
+		const bool usedAsInputAndTArget = 
+			((texParams.m_usage & re::Texture::Usage::ColorTarget) &&
+			(texParams.m_usage ^ re::Texture::Usage::ColorTarget)) ||
+			((texParams.m_usage & re::Texture::Usage::ComputeTarget) &&
+				(texParams.m_usage ^ re::Texture::Usage::ComputeTarget));
+		if (!usedAsInputAndTArget)
+		{
+			return false;
+		}
+
+		// As per the documentation, simultaneous access cannot be used with buffers, MSAA textures, or when the
+		// D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL flag is used
+		// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_flags
+
+		const bool doesNotUseMSAA = (texParams.m_multisampleMode == re::Texture::MultisampleMode::Disabled);
+		if (!doesNotUseMSAA)
+		{
+			return false;
+		}
+
+		const bool isNotDepthStencil = !(texParams.m_usage & re::Texture::Usage::DepthTarget) && 
+			!(texParams.m_usage & re::Texture::Usage::StencilTarget) &&
+			!(texParams.m_usage & re::Texture::Usage::DepthStencilTarget);
+		if (!isNotDepthStencil)
+		{
+			return false;
+		}
+
+		const bool isNotSwapchain = !(texParams.m_usage & re::Texture::Usage::SwapchainColorProxy);
+		if (!isNotSwapchain)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+
 	bool UAVIsNeeded(re::Texture::TextureParams const& texParams, DXGI_FORMAT dxgiFormat)
 	{
 		const bool compatibleUsage = 
@@ -540,20 +587,23 @@ namespace
 
 
 	// Returns the initial state
-	D3D12_RESOURCE_STATES CreateTextureCommittedResource(re::Texture& texture, bool needsUAV)
+	D3D12_RESOURCE_STATES CreateTextureCommittedResource(re::Texture& texture, bool needsUAV, bool simultaneousAccess)
 	{
 		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 		SEAssert("Texture resource already created", texPlatParams->m_textureResource == nullptr);
 		
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 
-		// We'll update these settings for each type of texture resource:	
+		// We'll update these settings for each type of texture resource:
 		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE;
 		if (needsUAV)
 		{
 			flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 		}
-		// TODO: use D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS for color textures (unless MSAA enabled)?
+		if (simultaneousAccess)
+		{
+			flags |= D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS;
+		}
 
 		// Resources can be implicitely promoted to COPY/SOURCE/COPY_DEST from COMMON, and decay to COMMON after
 		// being accessed on a copy queue. For now, we (typically) set the initial state as COMMON for everything until
@@ -743,9 +793,10 @@ namespace dx12
 		SEAssert("Invalid texture usage", 
 			texParams.m_usage > 0 && texParams.m_usage != re::Texture::Usage::Invalid);
 		
-		SEAssert("Invalid depth target usage pattern. A depth target can only be a depth target",
+		SEAssert("Invalid depth target usage pattern. A depth target can only be a depth target or source texture",
 			(texParams.m_usage & re::Texture::Usage::DepthTarget) == 0 ||
-			(texParams.m_usage ^ re::Texture::Usage::DepthTarget) == 0);
+			(texParams.m_usage ^ re::Texture::Usage::DepthTarget) == 0 ||
+			(texParams.m_usage ^ (re::Texture::Usage::DepthTarget | re::Texture::Usage::Color)) == 0);
 
 		SEAssert("Invalid usage stencil target usage pattern. A stencil target can only be a stencil target",
 			(texParams.m_usage & re::Texture::Usage::StencilTarget) == 0 ||
@@ -758,6 +809,9 @@ namespace dx12
 		SEAssert("TODO: Support depth stencil targets", (texParams.m_usage & re::Texture::Usage::DepthStencilTarget) == 0);
 		SEAssert("TODO: Support stencil targets", (texParams.m_usage & re::Texture::Usage::StencilTarget) == 0);
 		
+		const bool needsSRV = SRVIsNeeded(texParams);
+		const bool needsSimultaneousAccess = SimultaneousAccessIsNeeded(texParams);
+
 		// Figure out our resource needs:
 		const bool needsUAV = UAVIsNeeded(texParams, texPlatParams->m_format);
 		const uint32_t numMips = texture.GetNumMips();
@@ -778,7 +832,7 @@ namespace dx12
 		// Create a committed resource:
 		if ((texParams.m_usage & re::Texture::Usage::SwapchainColorProxy) == 0)
 		{
-			initialState = CreateTextureCommittedResource(texture, needsUAV);
+			initialState = CreateTextureCommittedResource(texture, needsUAV, needsSimultaneousAccess);
 		}
 
 		// Upload initial data via an intermediate upload heap:
@@ -881,9 +935,7 @@ namespace dx12
 		}
 
 		// Create a SRV if it's needed:
-		if ((texParams.m_usage & re::Texture::Usage::Color) ||
-			(texParams.m_usage & re::Texture::Usage::ColorTarget) || // Assume we'll sample a color target at some point
-			(texParams.m_usage & re::Texture::Usage::DepthTarget)) // Assume we'll sample depth (e.g. GBuffer)
+		if (needsSRV)
 		{
 			CreateSRV(texture);
 		}

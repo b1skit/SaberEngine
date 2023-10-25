@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "SaberComputeCommon.hlsli"
-#include "SaberGlobals.hlsli"
+#include "Color.hlsli"
 #include "UVUtils.hlsli"
 
 
@@ -62,7 +62,7 @@ float4 ReadGroupSharedMemory(uint groupIdx)
 
 // NOTE: Our numthreads choice here is directly related to our group shared memory usage, and thread bitmasking logic
 [numthreads(8, 8, 1)]
-void main(ComputeIn In)
+void CShader(ComputeIn In)
 {
 	const uint srcMip = MipGenerationParams.g_mipParams.x;
 	const uint numMips = MipGenerationParams.g_mipParams.y;

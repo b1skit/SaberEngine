@@ -248,6 +248,25 @@ namespace dx12
 		dx12::CommandQueue& computeQueue = context->GetCommandQueue(dx12::CommandListType::Compute);
 
 		std::vector<std::shared_ptr<dx12::CommandList>> commandLists;
+		std::shared_ptr<dx12::CommandList> directCommandList = nullptr;
+		std::shared_ptr<dx12::CommandList> computeCommandList = nullptr;
+		
+		auto AppendCommandLists = [&]()
+		{
+			if (computeCommandList != nullptr)
+			{
+				commandLists.emplace_back(computeCommandList);
+				PIXEndEvent(computeCommandList->GetD3DCommandList()); // StagePipeline
+
+			}
+			if (directCommandList != nullptr)
+			{
+				commandLists.emplace_back(directCommandList);
+				PIXEndEvent(directCommandList->GetD3DCommandList()); // StagePipeline
+			}
+		};
+
+		RenderStage::RenderStageType prevRenderStageType = RenderStage::RenderStageType::Invalid;
 
 		// Render each RenderSystem in turn:
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
@@ -257,22 +276,35 @@ namespace dx12
 			for (StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
 			{
 				// Note: Our command lists and associated command allocators are already closed/reset
-				std::shared_ptr<dx12::CommandList> directCommandList = nullptr;
-				std::shared_ptr<dx12::CommandList> computeCommandList = nullptr;
+				directCommandList = nullptr;
+				computeCommandList = nullptr;
 
 				// Process all of the RenderStages attached to the StagePipeline:
 				std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
 				for (std::shared_ptr<re::RenderStage> const& renderStage : stagePipeline.GetRenderStages())
 				{
+					const RenderStage::RenderStageType curRenderStageType = renderStage->GetStageType();
+
 					// Skip empty stages:
 					if (renderStage->GetStageBatches().empty())
 					{
 						continue;
 					}
 
+					// If the new RenderStage type is different to the previous one, we need to end recording on it
+					// to ensure the work is correctly ordered between queues:
+					if (curRenderStageType != prevRenderStageType)
+					{
+						AppendCommandLists();
+
+						computeCommandList = nullptr;
+						directCommandList = nullptr;
+					}
+					prevRenderStageType = curRenderStageType;
+
 					// Get a CommandList for the current RenderStage:
 					dx12::CommandList* currentCommandList = nullptr;
-					switch (renderStage->GetStageType())
+					switch (curRenderStageType)
 					{
 					case re::RenderStage::RenderStageType::Graphics:
 					{
@@ -319,7 +351,7 @@ namespace dx12
 					if (stageTargets == nullptr)
 					{
 						SEAssert("Only the graphics queue/command lists can render to the backbuffer",
-							renderStage->GetStageType() == re::RenderStage::RenderStageType::Graphics);
+							curRenderStageType == re::RenderStage::RenderStageType::Graphics);
 
 						stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain());
 					}
@@ -389,7 +421,7 @@ namespace dx12
 					}
 
 					// Set targets, now that the pipeline is set
-					switch (renderStage->GetStageType())
+					switch (curRenderStageType)
 					{
 					case re::RenderStage::RenderStageType::Compute:
 					{
@@ -449,7 +481,7 @@ namespace dx12
 							}
 						}
 
-						switch (renderStage->GetStageType())
+						switch (curRenderStageType)
 						{
 						case re::RenderStage::RenderStageType::Graphics:
 						{
@@ -466,17 +498,16 @@ namespace dx12
 						}
 					}
 
-					// Close the PIX marker for the current stage:
-					switch (renderStage->GetStageType())
+					switch (curRenderStageType)
 					{
 					case re::RenderStage::RenderStageType::Graphics:
 					{
-						PIXEndEvent(directCommandList->GetD3DCommandList());
+						PIXEndEvent(directCommandList->GetD3DCommandList()); // RenderStage
 					}
 					break;
 					case re::RenderStage::RenderStageType::Compute:
 					{
-						PIXEndEvent(computeCommandList->GetD3DCommandList());
+						PIXEndEvent(computeCommandList->GetD3DCommandList()); // RenderStage
 					}
 					break;
 					default:
@@ -484,19 +515,9 @@ namespace dx12
 					}
 				}; // ProcessRenderStage
 
-
 				// We're done: We've recorded a command list for the current StagePipeline
-				if (computeCommandList != nullptr)
-				{
-					commandLists.emplace_back(computeCommandList);
-					PIXEndEvent(computeCommandList->GetD3DCommandList());
+				AppendCommandLists();
 
-				}
-				if (directCommandList != nullptr)
-				{
-					commandLists.emplace_back(directCommandList);
-					PIXEndEvent(directCommandList->GetD3DCommandList());
-				}
 			} // StagePipeline loop
 		}
 

@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
-#ifndef SABER_GLOBALS_HLSL
-#define SABER_GLOBALS_HLSL
+#ifndef COLOR_HLSL
+#define COLOR_HLSL
 #include "MathConstants.hlsli"
 
 
@@ -34,4 +34,10 @@ float4 LinearToSRGB(float4 linearColorWithAlpha)
 }
 
 
-#endif // SABER_GLOBALS_HLSL
+float sRGBToLuminance(float3 sRGB)
+{	
+	return dot(sRGB, float3(0.2126f, 0.7152f, 0.0722f));
+}
+
+
+#endif // COLOR_HLSL

@@ -132,23 +132,26 @@ namespace opengl
 			// Note: Alpha in GL_SRGB8_ALPHA8 is stored in linear color space, RGB are in sRGB color space
 			m_format = GL_RGBA;
 			m_type = GL_UNSIGNED_BYTE;
-			switch (texParams.m_usage)
-			{
-			case re::Texture::Usage::Color:
-			{
-				m_internalFormat = texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? 
-					GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM : GL_COMPRESSED_RGBA_BPTC_UNORM;
-			}
-			break;
-			case re::Texture::Usage::ColorTarget:
-			case re::Texture::Usage::SwapchainColorProxy:
-			{
-				m_internalFormat = texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
-			}
-			break;
-			default:
-				SEAssertF("Invalid usage");
-			}
+
+			m_internalFormat = texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
+
+			//switch (texParams.m_usage)
+			//{
+			//case re::Texture::Usage::Color:
+			//{
+			//	m_internalFormat = texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? 
+			//		GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM : GL_COMPRESSED_RGBA_BPTC_UNORM;
+			//}
+			//break;
+			//case re::Texture::Usage::ColorTarget:
+			//case re::Texture::Usage::SwapchainColorProxy:
+			//{
+			//	m_internalFormat = texParams.m_colorSpace == re::Texture::ColorSpace::sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
+			//}
+			//break;
+			//default:
+			//	SEAssertF("Invalid usage");
+			//}
 		}
 		break;
 		case re::Texture::Format::RG8:
@@ -211,7 +214,6 @@ namespace opengl
 		SEAssert("Texture has been modified, and needs to be rebuffered", params->m_isDirty == false);
 
 		glBindTextures(textureUnit, 1, &params->m_textureID);
-		// TODO: Support binding an entire target set in a single call
 	}
 
 
@@ -238,7 +240,7 @@ namespace opengl
 		glBindImageTexture(
 			textureUnit,						// unit: Index to bind to
 			texPlatParams->m_textureID,			// texture: Name of the texture being bound
-			subresourceIdx,	// level: Subresource index being bound
+			subresourceIdx,						// level: Subresource index being bound
 			GL_TRUE,							// layered: Use layered binding? Binds the entire 1/2/3D array if true
 			0,									// layer: Layer to bind. Ignored if layered == GL_TRUE
 			accessMode,							// access: Type of access that will be performed

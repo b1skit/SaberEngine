@@ -101,6 +101,7 @@ namespace dx12
 
 		// TODO: Implement a "resource" interface if/when we need to transition more than just Textures
 		void TransitionResource(std::shared_ptr<re::Texture>, D3D12_RESOURCE_STATES to, uint32_t mipLevel);
+		void ResourceBarrier(uint32_t numBarriers, D3D12_RESOURCE_BARRIER const* barriers);
 
 		CommandListType GetCommandListType() const;
 		ID3D12GraphicsCommandList2* GetD3DCommandList() const;

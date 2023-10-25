@@ -44,6 +44,7 @@ namespace en::ShaderNames
 	// Shader filename prefixes. Note: These are not config keys
 	// TODO: Move these to their own .h file
 	constexpr char const* k_blitShaderName = "Blit";
+	constexpr char const* k_bloomShaderName = "Bloom";
 	constexpr char const* k_cubeDepthShaderName = "CubeDepth";
 	constexpr char const* k_deferredAmbientLightShaderName = "DeferredAmbientLight";
 	constexpr char const* k_deferredDirectionalLightShaderName = "DeferredDirectionalLight";
@@ -55,7 +56,6 @@ namespace en::ShaderNames
 	constexpr char const* k_generateIEMShaderName = "GenerateIEM";
 	constexpr char const* k_generateMipMapsShaderName = "GenerateMipMaps_BoxFilter";
 	constexpr char const* k_generatePMREMShaderName = "GeneratePMREM";
-	constexpr char const* k_luminanceThresholdShaderName = "LuminanceThreshold";
 	constexpr char const* k_skyboxShaderName = "Skybox";
 	constexpr char const* k_toneMapShaderName = "ToneMap";
 }

@@ -18,6 +18,10 @@ namespace re
 
 
 	public:
+		static uint32_t ComputeMaxMips(uint32_t width, uint32_t height);
+
+
+	public:
 		struct PlatformParams : public re::IPlatformParams
 		{
 			PlatformParams() = default;
@@ -32,7 +36,7 @@ namespace re
 	public:
 		enum Usage : uint8_t
 		{
-			Color				= 1 << 0,
+			Color				= 1 << 0, // TODO: Rename this "Source" or "Input" or similar
 			ColorTarget			= 1 << 1,
 			ComputeTarget		= 1 << 2,
 			DepthTarget			= 1 << 3,
@@ -93,6 +97,12 @@ namespace re
 			AllocateGenerate	// Mips will be both allocated and generated for this texture
 		};
 
+		enum class MultisampleMode : bool
+		{
+			Disabled = false,
+			Enabled = true
+		};
+
 		struct TextureParams
 		{
 			uint32_t m_width = 4; // Must be a minimum of 4x4 for block compressed formats
@@ -105,6 +115,7 @@ namespace re
 			ColorSpace m_colorSpace = ColorSpace::Invalid;
 
 			MipMode m_mipMode = MipMode::AllocateGenerate;
+			MultisampleMode m_multisampleMode = MultisampleMode::Disabled;
 
 			bool m_addToSceneData = true; // Typically false if the texture is a target
 

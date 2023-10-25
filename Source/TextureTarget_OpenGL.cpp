@@ -647,7 +647,9 @@ namespace opengl
 			std::shared_ptr<re::Texture> texture = texTargets[slot].GetTexture();
 			re::TextureTarget::TargetParams const& targetParams = texTargets[slot].GetTargetParams();
 			
-			opengl::Texture::BindAsImageTexture(*texture, slot, targetParams.m_targetMip, GL_WRITE_ONLY);
+			constexpr uint32_t k_accessMode = GL_READ_WRITE;
+
+			opengl::Texture::BindAsImageTexture(*texture, slot, targetParams.m_targetMip, k_accessMode);
 		}
 
 		// TODO: Support compute target clearing

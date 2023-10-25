@@ -28,9 +28,13 @@ namespace
 
 		gr::Camera::CameraConfig shadowCamConfig;
 
+		shadowCamConfig.m_projectionType			= gr::Camera::CameraConfig::ProjectionType::Orthographic;
+		
+		shadowCamConfig.m_yFOV						= 0.f; // Orthographic
+
 		shadowCamConfig.m_near						= -transformedBounds.zMax();
 		shadowCamConfig.m_far						= -transformedBounds.zMin();
-		shadowCamConfig.m_projectionType			= gr::Camera::CameraConfig::ProjectionType::Orthographic;
+
 		shadowCamConfig.m_orthoLeftRightBotTop.x	= transformedBounds.xMin();
 		shadowCamConfig.m_orthoLeftRightBotTop.y	= transformedBounds.xMax();
 		shadowCamConfig.m_orthoLeftRightBotTop.z	= transformedBounds.yMin();

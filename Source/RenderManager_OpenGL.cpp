@@ -306,6 +306,7 @@ namespace opengl
 							}
 						}
 
+						// Draw!
 						switch (renderStage->GetStageType())
 						{
 						case re::RenderStage::RenderStageType::Graphics:
@@ -329,14 +330,13 @@ namespace opengl
 							glDispatchCompute(threadGroupCount.x, threadGroupCount.y, threadGroupCount.z);
 
 							// Barrier to prevent reading before texture writes have finished.
-							// TODO: Is this always necessry? Should we be using different barrier types at any point?
+							// TODO: Is this always necessary?
 							glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 						}
 						break;
 						default:
 							SEAssertF("Invalid render stage type");
 						}
-						// Draw!
 
 					} // batches
 

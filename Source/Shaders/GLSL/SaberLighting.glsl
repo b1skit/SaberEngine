@@ -2,6 +2,7 @@
 #ifndef SABER_LIGHTING
 #define SABER_LIGHTING
 
+#include "MathConstants.glsl"
 #include "SaberGlobals.glsl"
 #include "SaberCommon.glsl"
 
@@ -202,10 +203,7 @@ vec3 ComputeLighting(const LightingParams lightingParams)
 	const vec3 combinedContribution = (diffuseReflectance + specularReflectance) * illuminance;
 	// Note: We're omitting the pi term in the albedo
 	
-	// Apply exposure:
-	const vec3 exposedColor = ApplyExposure(combinedContribution, lightingParams.Exposure);
-	
-	return exposedColor;
+	return combinedContribution;
 }
 
 

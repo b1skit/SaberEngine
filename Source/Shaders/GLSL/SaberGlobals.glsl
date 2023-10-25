@@ -1,33 +1,7 @@
 #ifndef SABER_GLOBALS
 #define SABER_GLOBALS
 
-// Saber Engine Shader Globals
-// Defines functions common to all shaders
-//----------------------------------------
-
-
-
-// Global defines:
-//----------------
-#define M_PI		3.1415926535897932384626433832795	// pi
-#define M_2PI       6.28318530717958647693		// 2pi
-#define M_4PI       12.5663706143591729539		// 4pi
-#define M_PI_2      1.57079632679489661923		// pi/2
-#define M_PI_4      0.785398163397448309616		// pi/4
-#define M_1_PI      0.318309886183790671538		// 1/pi
-#define M_2_PI      0.636619772367581343076		// 2/pi
-#define M_4_PI      1.27323954473516268615		// 4/pi
-#define M_1_2PI     0.159154943091895335769		// 1/(2pi)
-#define M_1_4PI     0.079577471545947667884		// 1/(4pi)
-#define M_SQRTPI    1.77245385090551602730		// sqrt(pi)
-#define M_2_SQRTPI  1.12837916709551257390		// 2/sqrt(pi)
-#define M_SQRT2     1.41421356237309504880		// sqrt(2)
-#define M_1_SQRT2   0.707106781186547524401		// 1/sqrt(2)
-
-#define FLT_MAX		3.402823466e+38
-#define FLT_MIN		1.175494351e-38
-
-#define FLT_EPSILON 1.0e-5f
+#include "MathConstants.glsl"
 
 
 #if defined(READ_GBUFFER)
@@ -106,44 +80,6 @@ vec3 WorldNormalFromTextureNormal(vec3 texNormal, mat3 TBN)
 	const vec3 normal = (texNormal * 2.f) - 1.f; // Transform [0,1] -> [-1,1]
 
 	return normalize(TBN * normal);
-}
-
-
-vec3 sRGBToLinear(vec3 srgbColor)
-{
-	// https://en.wikipedia.org/wiki/SRGB#Computing_the_transfer_function
-	vec3 result = vec3(0, 0, 0);
-	for (int c = 0; c < 3; c++)
-	{
-		result[c] = srgbColor[c] <= 0.04045 ? (srgbColor[c] / 12.92f) : pow((srgbColor[c] + 0.055f) / 1.055f, 2.4f);
-	}
-	return result;
-}
-
-
-vec4 sRGBToLinear(vec4 srgbColorWithAlpha)
-{
-	return vec4(sRGBToLinear(srgbColorWithAlpha.rgb), srgbColorWithAlpha.a);
-}
-
-
-vec3 LinearToSRGB(vec3 linearColor)
-{
-	// https://en.wikipedia.org/wiki/SRGB#Computing_the_transfer_function
-	// Note: The 2 functions intersect at x = 0.0031308
-	vec3 result = vec3(0, 0, 0);
-	for (int c = 0; c < 3; c++)
-	{
-		result[c] = 
-			linearColor[c] <= 0.0031308 ? 12.92f * linearColor[c] : 1.055f * pow(abs(linearColor[c]), 1.f / 2.4f) - 0.055f;
-	}
-	return result;
-}
-
-
-vec4 LinearToSRGB(vec4 linearColorWithAlpha)
-{
-	return vec4(LinearToSRGB(linearColorWithAlpha.rgb), linearColorWithAlpha.a);
 }
 
 
@@ -231,11 +167,11 @@ float ConvertLinearDepthToNonLinear(const float near, const float far, const flo
 
 
 // Transform pixel coordintes ([0, xRes), [0, yRes)) to [0,1] screen-space UVs.
-// offset: Use this if your pixel coords are centered in the pixel. NOTE: By default, OpenGL pixel centers (e.g. as 
-//	found in gl_FragCoord) are located at half-pixel centers (e.g. (0.5, 0.5) is the top-left pixel in SaberEngine). 
-//	Thus if using gl_FragCoord, you'll likely want a vec2(0,0) offset
-// doFlip: Use true if reading from a flipped FBO (e.g. GBuffer), false if the image being sampled hsa the correct
-//	orientation
+//	offset: Use this if your pixel coords are centered in the pixel. NOTE: By default, OpenGL pixel centers (e.g. as 
+//		found in gl_FragCoord) are located at half-pixel centers (e.g. (0.5, 0.5) is the top-left pixel in SaberEngine). 
+//		Thus if using gl_FragCoord, you'll likely want a vec2(0,0) offset
+//	doFlip: Use true if reading from a flipped FBO (e.g. GBuffer), false if the image being sampled has the correct
+//		orientation
 vec2 PixelCoordsToUV(vec2 pixelXY, vec2 screenWidthHeight, vec2 offset = vec2(0.5f, 0.5f), bool doFlip = true)
 {
 	vec2 screenUV = (vec2(pixelXY) + offset) / screenWidthHeight;

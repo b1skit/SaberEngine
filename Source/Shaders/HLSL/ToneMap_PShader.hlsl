@@ -1,8 +1,11 @@
 // © 2023 Adam Badke. All rights reserved.
-#define VOUT_UV0
+#include "BloomCommon.hlsli"
 
+#define VOUT_UV0
 #include "SaberCommon.hlsli"
-#include "SaberGlobals.hlsli"
+
+#include "Color.hlsli"
+#include "Lighting.hlsli"
 
 
 // Attribution: 
@@ -69,15 +72,29 @@ float3 ACESFilm(float3 x)
 
 float4 PShader(VertexOut In) : SV_Target
 {
-	const float3 color = Tex0.SampleLevel(Wrap_Linear_Linear, In.UV0.xy, 0).rgb;
+	const float3 color = Tex0.SampleLevel(Clamp_LinearMipMapLinear_Linear, In.UV0.xy, 0).rgb;
+	const float3 bloom = Tex1.SampleLevel(Clamp_LinearMipMapLinear_Linear, In.UV0.xy, 0).rgb;
+
+	// Apply exposure:
+	const float bloomExposure = CameraParams.g_bloomSettings.w;
+	const float3 exposedBloom = ApplyExposure(bloom, bloomExposure);	
 	
+	// TODO: Support auto exposure using the bottom mip of the bloom texture
+	const float exposure = CameraParams.g_exposureProperties.x;
+	const float3 exposedColor = ApplyExposure(color, exposure);
+	
+	// Blend the exposed bloom and scene color:
+	const float bloomStrength = CameraParams.g_bloomSettings.x;
+	const float3 blendedColor = lerp(exposedColor, exposedBloom, bloomStrength);
+	
+	// Tone mapping:
 #if defined(FAST_ACES)
-	float3 toneMappedColor = ACESFilm(color);
+	float3 toneMappedColor = ACESFilm(blendedColor);
 #else
-	float3 toneMappedColor = ACESFitted(color);
+	float3 toneMappedColor = ACESFitted(blendedColor);
 #endif
 
-	toneMappedColor = LinearToSRGB(toneMappedColor);
+	const float3 sRGBColor = LinearToSRGB(toneMappedColor);
 	
-	return float4(toneMappedColor, 1.f);
+	return float4(sRGBColor, 1.f);
 }

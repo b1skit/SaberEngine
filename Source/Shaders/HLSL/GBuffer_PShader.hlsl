@@ -49,15 +49,8 @@ GBufferOut PShader(VertexOut In)
 	const float3 emissiveFactor = PBRMetallicRoughnessParams.g_emissiveFactorStrength.rgb;
 	const float emissiveStrength = PBRMetallicRoughnessParams.g_emissiveFactorStrength.w;
 	
-	float3 emissive = MatEmissive.Sample(Wrap_LinearMipMapLinear_Linear, In.UV0).rgb * emissiveFactor * emissiveStrength;
-	
-	// Emissive is light: Apply exposure now:
-	const float exposure = CameraParams.g_exposureProperties.x;
-	const float ev100 = CameraParams.g_exposureProperties.y;
-	const float emissiveExposureCompensation = CameraParams.g_exposureProperties.z;
-	
-	emissive *= pow(2.f, ev100 + emissiveExposureCompensation - 3.f);
-	emissive *= exposure;
+	const float3 emissive = 
+		MatEmissive.Sample(Wrap_LinearMipMapLinear_Linear, In.UV0).rgb * emissiveFactor * emissiveStrength;
 	
 	output.Emissive = float4(emissive, 1.f);
 	

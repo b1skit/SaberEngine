@@ -85,9 +85,10 @@ struct CameraParamsCB
 
 	float4 g_projectionParams; // .x = 1 (unused), .y = near, .z = far, .w = 1/far
 
-	float4 g_exposureProperties; // .x = exposure, .y = ev100, .z = bloom exposure compensation
-
-	float3 g_cameraWPos;
+	float4 g_exposureProperties; // .x = exposure, .y = ev100, .zw = unused 
+	float4 g_bloomSettings; // .x = strength, .yz = XY radius, .w = bloom exposure compensation
+	
+	float4 g_cameraWPos;
 };
 ConstantBuffer<CameraParamsCB> CameraParams;
 

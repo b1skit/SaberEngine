@@ -40,7 +40,7 @@ float4 PShader(VertexOut In) : SV_Target
 	
 	lightingParams.ShadowFactor = shadowFactor;
 	
-	lightingParams.CameraWorldPos = CameraParams.g_cameraWPos;
+	lightingParams.CameraWorldPos = CameraParams.g_cameraWPos.xyz;
 	lightingParams.Exposure = CameraParams.g_exposureProperties.x;
 	
 	lightingParams.DiffuseScale = LightParams.g_intensityScale.x;

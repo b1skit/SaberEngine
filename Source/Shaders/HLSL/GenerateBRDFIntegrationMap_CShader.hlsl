@@ -2,7 +2,7 @@
 #include "Lighting.hlsli"
 #include "MathConstants.hlsli"
 #include "SaberComputeCommon.hlsli"
-#include "SaberGlobals.hlsli"
+#include "Color.hlsli"
 #include "Sampling.hlsli"
 #include "UVUtils.hlsli"
 
@@ -21,7 +21,7 @@ ConstantBuffer<BRDFIntegrationParamsCB> BRDFIntegrationParams;
 
 
 [numthreads(1, 1, 1)]
-void main(ComputeIn In)
+void CShader(ComputeIn In)
 {
 	// As per Karis, Microfacet BRDFs can be approximated by decomposing them into the product of 2 terms: LD, and DFG.
 	// These terms can be independently pre-computed. LD must be precomputed per light probe, DFG can be precomputed

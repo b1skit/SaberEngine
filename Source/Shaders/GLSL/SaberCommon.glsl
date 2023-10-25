@@ -148,9 +148,10 @@ layout(std430, binding=1) readonly buffer CameraParams
 
 	vec4 g_projectionParams; // .x = 1 (unused), .y = near, .z = far, .w = 1/far
 
-	vec4 g_exposureProperties; // .x = exposure, .y = ev100, .z = bloom exposure compensation
+	vec4 g_exposureProperties; // .x = exposure, .y = ev100, .zw = unused 
+	vec4 g_bloomSettings; // .x = strength, .yz = XY radius, .w = bloom exposure compensation
 
-	vec3 g_cameraWPos;
+	vec4 g_cameraWPos; // .xyz = world pos, .w = unused
 };
 
 
@@ -211,24 +212,18 @@ layout(std430, binding=6) readonly buffer IEMPMREMGenerationParams
 
 
 // GraphicsSystem_Bloom.cpp
-layout(std430, binding=7) readonly buffer BloomTargetParams
+layout(std430, binding=7) readonly buffer BloomComputeParams
 {
-	vec4 g_bloomTargetResolution; // .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
-};
-
-layout(std430, binding=8) readonly buffer LuminanceThresholdParams
-{
-	vec4 g_sigmoidParams; // .x = Sigmoid ramp power, .y = Sigmoid speed, .zw = unused
-};
-
-layout(std430, binding=9) readonly buffer GaussianBlurParams
-{
-	vec4 g_blurSettings; // .x = Blur direction (0 = horizontal, 1 = vertical), .yzw = unused
+	vec4 g_srcTexDimensions;
+	vec4 g_dstTexDimensions;
+	vec4 g_srcMipDstMipFirstUpsampleSrcMipIsDownStage; // .xy = src/dst mip, .z = 1st upsample src mip, .w = isDownStage
+	vec4 g_bloomRadiusWidthHeightLevelNumLevls; // .xy = bloom width/height, .z = level .w = current level
+	vec4 g_bloomDebug; // .x = Deflicker enabled
 };
 
 
 // GraphicsSystem_Skybox.cpp
-layout(std430, binding=10) readonly buffer SkyboxParams
+layout(std430, binding=8) readonly buffer SkyboxParams
 {
 	vec4 g_skyboxTargetResolution; // .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
 };

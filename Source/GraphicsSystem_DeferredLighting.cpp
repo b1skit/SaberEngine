@@ -337,7 +337,7 @@ namespace gr
 		cubemapCamParams.g_projection = cubeProjectionMatrix;
 		cubemapCamParams.g_viewProjection = glm::mat4(1.f); // Identity; unused
 		cubemapCamParams.g_invViewProjection = glm::mat4(1.f); // Identity; unused
-		cubemapCamParams.g_cameraWPos = vec3(0.f, 0.f, 0.f); // Unused
+		cubemapCamParams.g_cameraWPos = vec4(0.f, 0.f, 0.f, 0.f); // Unused
 
 		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
 		Batch cubeMeshBatch = Batch(m_cubeMeshPrimitive.get(), nullptr);
@@ -356,7 +356,7 @@ namespace gr
 			iemTexParams.m_width = iemTexWidthHeight;
 			iemTexParams.m_height = iemTexWidthHeight;
 			iemTexParams.m_faces = 6;
-			iemTexParams.m_usage = Texture::Usage::ColorTarget;
+			iemTexParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
 			iemTexParams.m_dimension = Texture::Dimension::TextureCubeMap;
 			iemTexParams.m_format = Texture::Format::RGBA16F;
 			iemTexParams.m_colorSpace = Texture::ColorSpace::Linear;
@@ -431,7 +431,7 @@ namespace gr
 			pmremTexParams.m_width = pmremTexWidthHeight;
 			pmremTexParams.m_height = pmremTexWidthHeight;
 			pmremTexParams.m_faces = 6;
-			pmremTexParams.m_usage = Texture::Usage::ColorTarget;
+			pmremTexParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
 			pmremTexParams.m_dimension = Texture::Dimension::TextureCubeMap;
 			pmremTexParams.m_format = Texture::Format::RGBA16F;
 			pmremTexParams.m_colorSpace = Texture::ColorSpace::Linear;
@@ -524,7 +524,7 @@ namespace gr
 		lightTargetTexParams.m_width = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
 		lightTargetTexParams.m_height = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName);
 		lightTargetTexParams.m_faces = 1;
-		lightTargetTexParams.m_usage = Texture::Usage::ColorTarget;
+		lightTargetTexParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
 		lightTargetTexParams.m_dimension = Texture::Dimension::Texture2D;
 		lightTargetTexParams.m_format = Texture::Format::RGBA16F;
 		lightTargetTexParams.m_colorSpace = Texture::ColorSpace::Linear;
@@ -538,9 +538,6 @@ namespace gr
 		ambientTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
 		std::shared_ptr<TextureTargetSet> ambientTargetSet = re::TextureTargetSet::Create("Ambient light targets");
 		ambientTargetSet->SetColorTarget(0, outputTexture, ambientTargetParams);
-
-		Texture::TextureParams lightDepthTargetTexParams(lightTargetTexParams);
-		lightDepthTargetTexParams.m_usage = Texture::Usage::DepthTarget;
 
 		// We need the depth buffer attached, but with depth writes disabled:
 		re::TextureTarget::TargetParams depthTargetParams;

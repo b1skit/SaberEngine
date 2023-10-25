@@ -145,6 +145,8 @@ namespace re
 		
 		m_depthTextureInputIdx = k_noDepthTexAsInputFlag; // Depth target may have changed
 		UpdateDepthTextureInputIndex();
+
+		ValidateTexturesAndTargets();
 	}
 
 
@@ -159,9 +161,14 @@ namespace re
 		SEAssert("Invalid texture", tex != nullptr);
 		SEAssert("Invalid sampler", sampler != nullptr);
 
+		SEAssert("Attempting to add a Texture input that does not have an appropriate usage flag",
+			(tex->GetTextureParams().m_usage & re::Texture::Usage::Color));
+
 		m_textureSamplerInputs.emplace_back(RenderStageTextureAndSamplerInput{ shaderName, tex, sampler, mipLevel });
 
 		UpdateDepthTextureInputIndex();
+
+		ValidateTexturesAndTargets();
 	}
 
 
@@ -191,6 +198,34 @@ namespace re
 				}
 			}
 		}
+	}
+
+
+	void RenderStage::ValidateTexturesAndTargets()
+	{
+		// This is a debug sanity check to make sure we're not trying to bind the same subresources in different ways
+#if defined _DEBUG
+		if (m_textureTargetSet)
+		{
+			for (auto const& texInput : m_textureSamplerInputs)
+			{
+				for (size_t i = 0; i < m_textureTargetSet->GetNumColorTargets(); i++)
+				{
+					SEAssert("Detected a texture simultaneously used as both a color target and input",
+						m_textureTargetSet->GetColorTarget(i).GetTexture() != texInput.m_texture ||
+						m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_targetMip != texInput.m_srcMip);
+				}
+
+				if (m_textureTargetSet->HasDepthTarget())
+				{
+					SEAssert("Detected a texture simultaneously used as both a depth target and input",
+						m_textureTargetSet->GetDepthStencilTarget()->GetTexture() != texInput.m_texture ||
+						m_textureTargetSet->GetDepthStencilTarget()->GetTargetParams().m_targetMip != texInput.m_srcMip
+					);
+				}
+			}
+		}
+#endif
 	}
 	
 
