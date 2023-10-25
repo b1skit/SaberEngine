@@ -145,7 +145,7 @@ namespace gr
 					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMaxShadowBias));
 			}
 			break;
-			default: SEAssertF("Invalid/unsupported light type")
+			default: SEAssertF("Invalid/unsupported light type");
 			}
 		}
 
