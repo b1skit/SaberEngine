@@ -95,7 +95,7 @@ namespace re
 	}
 
 
-	Batch::Batch(re::MeshPrimitive const* meshPrimitive, gr::Material const* materialOverride)
+	Batch::Batch(re::MeshPrimitive const* meshPrimitive, gr::Material* materialOverride)
 		: m_type(BatchType::Graphics)
 		, m_graphicsParams{
 			.m_batchMeshPrimitive = meshPrimitive,
@@ -106,11 +106,9 @@ namespace re
 	{
 		m_batchParamBlocks.reserve(k_batchParamBlockIDsReserveAmount);
 
-		gr::Material const* material = materialOverride ? materialOverride : meshPrimitive->GetMeshMaterial();
+		gr::Material* material = materialOverride ? materialOverride : meshPrimitive->GetMeshMaterial();
 		if (material)
 		{
-			m_batchShader = material->GetShader();
-
 			// Material textures/samplers:
 			for (size_t i = 0; i < material->GetTexureSlotDescs().size(); i++)
 			{
@@ -135,7 +133,7 @@ namespace re
 	}
 
 
-	Batch::Batch(std::shared_ptr<gr::Mesh const> const mesh, gr::Material const* materialOverride)
+	Batch::Batch(std::shared_ptr<gr::Mesh const> const mesh, gr::Material* materialOverride)
 		: Batch(mesh->GetMeshPrimitives()[0].get(), materialOverride)
 	{
 			SEAssert("Currently only support Mesh with a single MeshPrimitive. TODO: Support > 1 MeshPrimitve", 

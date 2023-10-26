@@ -316,52 +316,36 @@ namespace re
 
 	void MeshPrimitive::ShowImGuiWindow()
 	{
-		ImGui::Text("Name: \"%s\"", GetName().c_str());
-
-		const std::string uniqueIDStr = std::to_string(GetUniqueID());
-
-		const std::string meshParamsLabel = std::format("Mesh Primitive Params:##{}", uniqueIDStr);
-		if (ImGui::TreeNode(meshParamsLabel.c_str()))
+		if (ImGui::CollapsingHeader(std::format("{}##{}", GetName(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Text(std::format("Draw mode: {}", DrawModeToCStr(m_params.m_topologyMode)).c_str());
 
-			ImGui::TreePop();
-		}
-
-		const std::string materialLabel = std::format("Material:##{}", uniqueIDStr);
-		if (ImGui::TreeNode(materialLabel.c_str()))
-		{
-			m_meshMaterial->ShowImGuiWindow();
-
-			ImGui::TreePop();
-		}
-
-		const std::string vertexStreamsLabel = std::format("Vertex streams ({}):##{}", m_vertexStreams.size(), uniqueIDStr);
-		if (ImGui::TreeNode(vertexStreamsLabel.c_str()))
-		{
-			for (size_t i = 0; i < m_vertexStreams.size(); i++)
+			if (ImGui::CollapsingHeader(std::format("Material##{}", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 			{
-				ImGui::Text(std::format("{}: {}", i, SlotToCStr(static_cast<re::MeshPrimitive::Slot>(i))).c_str());
-				if (m_vertexStreams[i])
-				{
-					m_vertexStreams[i]->ShowImGuiWindow();
-				}
-				else
-				{
-					ImGui::Text("<Empty>");
-				}
-				ImGui::Separator();
+				m_meshMaterial->ShowImGuiWindow();
 			}
 
-			ImGui::TreePop();
-		}
+			if (ImGui::CollapsingHeader(std::format("Vertex streams ({})##{}", m_vertexStreams.size(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+			{
+				for (size_t i = 0; i < m_vertexStreams.size(); i++)
+				{
+					ImGui::Text(std::format("{}: {}", i, SlotToCStr(static_cast<re::MeshPrimitive::Slot>(i))).c_str());
+					if (m_vertexStreams[i])
+					{
+						m_vertexStreams[i]->ShowImGuiWindow();
+					}
+					else
+					{
+						ImGui::Text("<Empty>");
+					}
+					ImGui::Separator();
+				}
+			}
 
-		const std::string boundsLabel = std::format("Local bounds:##{}", uniqueIDStr);
-		if (ImGui::TreeNode(boundsLabel.c_str()))
-		{
-			m_localBounds.ShowImGuiWindow();
-
-			ImGui::TreePop();
+			if (ImGui::CollapsingHeader(std::format("Local bounds##{}", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+			{
+				m_localBounds.ShowImGuiWindow();
+			}
 		}
 	}
 	
@@ -867,10 +851,8 @@ namespace meshfactory
 		};
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
-		// Create a Material with a null shader
-		std::shared_ptr<gr::Material> helloMaterial = std::make_shared<gr::Material>(
-			"HelloTriangleMaterial", 
-			gr::Material::GetMaterialDefinition("pbrMetallicRoughness"));
+		shared_ptr<gr::Material> helloMaterial =
+			gr::Material::Create("HelloTriangleMaterial", gr::Material::MaterialType::GLTF_PBRMetallicRoughness);
 
 		// It's easier to reason about geometry in vecN types; cast to float now we're done
 		return MeshPrimitive::Create(

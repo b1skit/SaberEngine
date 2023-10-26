@@ -15,10 +15,9 @@ namespace re
 
 namespace gr
 {
-	class Material final : public virtual en::NamedObject
+	class Material : public virtual en::NamedObject
 	{
 	public:
-		// Material definitions:
 		struct TextureSlotDesc
 		{
 			std::shared_ptr<re::Texture> m_texture = nullptr;
@@ -26,93 +25,89 @@ namespace gr
 			std::string m_shaderSamplerName;
 		};
 
-		struct MaterialDefinition
-		{
-			std::string m_definitionName = "uninitializeddMaterialDefinition";
-			std::vector<TextureSlotDesc> m_textureSlots; // Vector index == shader binding index
-			std::shared_ptr<re::Shader> m_shader = nullptr;
-		};
-		static std::shared_ptr<MaterialDefinition const> GetMaterialDefinition(std::string const& matName);
-		static void DestroyMaterialLibrary();
-
-		struct PBRMetallicRoughnessParams
-		{
-			// GLTF PBR material			
-			glm::vec4 g_baseColorFactor { 1.f, 1.f, 1.f, 1.f };
-
-			float g_metallicFactor = 1.f;
-			float g_roughnessFactor = 1.f;
-			float g_normalScale = 1.f;
-			float g_occlusionStrength = 1.f;
-
-			// KHR_materials_emissive_strength: Multiplies emissive factor
-			glm::vec4 g_emissiveFactorStrength{ 0.f, 0.f, 0.f, 0.f}; // .xyz = emissive factor, .w = emissive strength
-
-			// Non-GLTF properties:
-			glm::vec4 g_f0{ 0.f, 0.f, 0.f, 0.f}; // .xyz = f0, .w = unused. For non-metals only
-
-			//float g_isDoubleSided;
-
-			static constexpr char const* const s_shaderName = "PBRMetallicRoughnessParams"; // Not counted towards size of struct
-		};
-		// NOTE: OpenGL std430 rules requires padding on N/2N/4N float strides when buffering UBOs/SSBOs
-
-	private:
-		static std::unique_ptr<std::unordered_map<std::string, std::shared_ptr<Material::MaterialDefinition>>> m_materialLibrary;
-		static std::mutex m_matLibraryMutex;
 
 	public:
-		Material(std::string const& name, std::shared_ptr<MaterialDefinition const> matDefinition);
-		~Material() { Destroy(); }
-		
-		void Destroy();
+		enum class MaterialType
+		{
+			GLTF_PBRMetallicRoughness, // A metallic-roughness material model from PBR methodology
+		};
+		enum class AlphaMode
+		{
+			Opaque,
+			Clip,
+			AlphaBlended
+		};
+		enum class DoubleSidedMode
+		{
+			SingleSided,
+			DoubleSided
+		};
 
-		Material(Material const&) = default;
+
+	public:
+		static std::shared_ptr<gr::Material> Create(std::string const& name, MaterialType);
+
+		template <typename T>
+		T GetAs(); // Get the Material as a dynamic cast to a derrived type
+
 		Material(Material&&) = default;
-		Material& operator=(Material const&) = default;
+		Material& operator=(Material&&) = default;
 
-		// Getters/Setters:	
-		void SetShader(std::shared_ptr<re::Shader> shader);
-		re::Shader* GetShader() const;
-
-		void SetParameterBlock(PBRMetallicRoughnessParams const& params);
-		std::shared_ptr<re::ParameterBlock> const GetParameterBlock() const;
+		virtual ~Material() = 0;
 
 		void SetTexture(uint32_t slotIndex, std::shared_ptr<re::Texture>);
 		std::shared_ptr<re::Texture> const GetTexture(uint32_t slotIndex) const;
 		std::shared_ptr<re::Texture> const GetTexture(std::string const& samplerName) const;
 		std::vector<TextureSlotDesc> const& GetTexureSlotDescs() const;
 
-		void ShowImGuiWindow();
+		void SetAlphaMode(AlphaMode);
+		void SetAlphaCutoff(float alphaCutoff);
+		void SetDoubleSidedMode(DoubleSidedMode);
+
+		virtual std::shared_ptr<re::ParameterBlock> const GetParameterBlock() = 0;
+
+		virtual void ShowImGuiWindow();
 
 
 	private:
-		std::vector<TextureSlotDesc> m_texSlots;
+		virtual void CreateUpdateParameterBlock() = 0;
+
+
+	protected:
+		const MaterialType m_materialType;
+
+
+	protected: // Must be populated by the child class:
+		std::vector<TextureSlotDesc> m_texSlots; // Vector index == shader binding index
 		std::unordered_map<std::string, uint32_t> m_namesToSlotIndex;
-		std::shared_ptr<re::Shader> m_shader;
+
+
+	protected:
+		AlphaMode m_alphaMode = AlphaMode::Opaque;
+		float m_alphaCutoff = 0.5f;
+		DoubleSidedMode m_doubleSidedMode = DoubleSidedMode::SingleSided;
+
+
+	protected:
 		std::shared_ptr<re::ParameterBlock> m_matParams;
+		bool m_matParamsIsDirty;
+
+
+	protected:
+		Material(std::string const& name, MaterialType); // Use the CreateMaterial 
 
 
 	private:
 		Material() = delete;
+		Material(Material const&) = delete;
+		Material& operator=(Material const&) = delete;
 	};
 
 
-	inline void Material::SetShader(std::shared_ptr<re::Shader> shader)
+	template <typename T>
+	inline T Material::GetAs()
 	{
-		m_shader = shader;
-	}
-
-
-	inline re::Shader* Material::GetShader() const
-	{
-		return m_shader.get();
-	}
-
-
-	inline std::shared_ptr<re::ParameterBlock> const Material::GetParameterBlock() const
-	{
-		return m_matParams;
+		return dynamic_cast<T>(this);
 	}
 
 
@@ -133,6 +128,35 @@ namespace gr
 	{
 		return m_texSlots;
 	}
+
+
+	inline void Material::SetAlphaMode(AlphaMode alphaMode)
+	{
+		SEAssert("TODO: Support other alpha modes", alphaMode == AlphaMode::Opaque);
+
+		m_alphaMode = alphaMode;
+		m_matParamsIsDirty = true;
+	}
+
+
+	inline void Material::SetAlphaCutoff(float alphaCutoff)
+	{
+		m_alphaCutoff = alphaCutoff;
+		m_matParamsIsDirty = true;
+	}
+
+
+	inline void Material::SetDoubleSidedMode(DoubleSidedMode doubleSidedMode)
+	{
+		SEAssert("TODO: Support other sided modes", doubleSidedMode == DoubleSidedMode::SingleSided);
+
+		m_doubleSidedMode = doubleSidedMode;
+		m_matParamsIsDirty = true;
+	}
+
+
+	// We need to provide a destructor implementation since it's pure virtual
+	inline Material::~Material() {};
 }
 
 

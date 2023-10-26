@@ -15,6 +15,7 @@
 #include "DebugConfiguration.h"
 #include "Light.h"
 #include "Material.h"
+#include "Material_GLTF.h"
 #include "Mesh.h"
 #include "MeshPrimitive.h"
 #include "ParameterBlock.h"
@@ -555,8 +556,8 @@ namespace
 		constexpr char missingOcclusionTexName[]			= "MissingOcclusionTexture";
 		constexpr char missingEmissiveTexName[]				= "MissingEmissiveTexture";
 
-		std::shared_ptr<gr::Material> errorMat = 
-			std::make_shared<gr::Material>(k_missingMaterialName, Material::GetMaterialDefinition("pbrMetallicRoughness"));
+		shared_ptr<Material> errorMat =
+			gr::Material::Create(k_missingMaterialName, gr::Material::MaterialType::GLTF_PBRMetallicRoughness);
 
 		// MatAlbedo
 		std::shared_ptr<re::Texture> errorAlbedo = 
@@ -582,12 +583,6 @@ namespace
 		std::shared_ptr<re::Texture> errorEmissive = LoadTextureFromFilePath(
 			{ missingEmissiveTexName }, true, k_errorTextureColor, re::Texture::ColorSpace::sRGB);
 		errorMat->SetTexture(4, errorEmissive);
-
-		// Construct a default permanent parameter block for the material params:
-		Material::PBRMetallicRoughnessParams matParams;
-		matParams.g_f0 = vec4(0.04f, 0.04f, 0.04f, 0.f); // .xyz = f0, .w = unused
-
-		errorMat->SetParameterBlock(matParams);
 
 		scene.AddUniqueMaterial(errorMat);
 	}
@@ -626,10 +621,8 @@ namespace
 				SEAssert("We currently only support the PBR metallic/roughness material model",
 					material->has_pbr_metallic_roughness == 1);
 
-				shared_ptr<Material> newMat =
-					make_shared<Material>(matName, Material::GetMaterialDefinition("pbrMetallicRoughness"));
-
-				newMat->SetShader(nullptr); // Not required; just for clarity
+				shared_ptr<Material> newMat = 
+					gr::Material::Create(matName, gr::Material::MaterialType::GLTF_PBRMetallicRoughness);
 
 				// GLTF specifications: If a texture is not given, all respective texture components are assumed to be 1.f
 				// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
@@ -695,22 +688,17 @@ namespace
 						Texture::ColorSpace::sRGB)); // GLTF convention: Must be converted to linear before use
 					}));
 
+				gr::Material_GLTF* newGLTFMat = newMat->GetAs<gr::Material_GLTF*>();
 
-				// Construct a permanent parameter block for the material params:
-				Material::PBRMetallicRoughnessParams matParams;
-				matParams.g_baseColorFactor = glm::make_vec4(material->pbr_metallic_roughness.base_color_factor);
-				matParams.g_metallicFactor = material->pbr_metallic_roughness.metallic_factor;
-				matParams.g_roughnessFactor = material->pbr_metallic_roughness.roughness_factor;
-				matParams.g_normalScale = material->normal_texture.texture ? material->normal_texture.scale : 1.0f;
-				matParams.g_occlusionStrength = material->occlusion_texture.texture ? material->occlusion_texture.scale : 1.0f;
+				newGLTFMat->SetBaseColorFactor(glm::make_vec4(material->pbr_metallic_roughness.base_color_factor));
+				newGLTFMat->SetMetallicFactor(material->pbr_metallic_roughness.metallic_factor);
+				newGLTFMat->SetRoughnessFactor(material->pbr_metallic_roughness.roughness_factor);
+				newGLTFMat->SetNormalScale(material->normal_texture.texture ? material->normal_texture.scale : 1.0f);
+				newGLTFMat->SetOcclusionStrength(material->occlusion_texture.texture ? material->occlusion_texture.scale : 1.0f);
 
-				const float emissiveStrength = material->has_emissive_strength ? material->emissive_strength.emissive_strength : 1.0f;
-				const glm::vec3 emissveFactor = glm::make_vec3(material->emissive_factor);
-				matParams.g_emissiveFactorStrength = glm::vec4(emissveFactor.xyz, emissiveStrength);
-
-				matParams.g_f0 = vec4(0.04f, 0.04f, 0.04f, 0.f); // .xyz = f0, .w = unused
-
-				newMat->SetParameterBlock(matParams);
+				newGLTFMat->SetEmissiveFactor(glm::make_vec3(material->emissive_factor));
+				newGLTFMat->SetEmissiveStrength(
+					material->has_emissive_strength ? material->emissive_strength.emissive_strength : 1.0f);
 
 				scene.AddUniqueMaterial(newMat);
 

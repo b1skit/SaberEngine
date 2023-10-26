@@ -172,6 +172,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="GraphicsSystem_ComputeMips.cpp" />
     <ClCompile Include="InputManager_Platform.cpp" />
     <ClCompile Include="InputManager_Win32.cpp" />
+    <ClCompile Include="Material_GLTF.cpp" />
     <ClCompile Include="MeshPrimitive_DX12.cpp" />
     <ClCompile Include="ParameterBlock.cpp" />
     <ClCompile Include="ParameterBlockAllocator.cpp" />
@@ -293,6 +294,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="InputManager_Platform.h" />
     <ClInclude Include="InputManager_Win32.h" />
     <ClInclude Include="IPlatformParams.h" />
+    <ClInclude Include="Material_GLTF.h" />
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="MeshPrimitive_DX12.h" />
     <ClInclude Include="ParameterBlock.h" />

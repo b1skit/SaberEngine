@@ -1,95 +1,102 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "DebugConfiguration.h"
 #include "Material.h"
+#include "Material_GLTF.h"
 #include "ParameterBlock.h"
 #include "Shader_Platform.h"
 #include "Shader.h"
 #include "Texture.h"
 
+using re::Shader;
+using re::Texture;
+using re::Sampler;
+using re::ParameterBlock;
+
+using std::string;
+using std::shared_ptr;
+using std::unique_ptr;
+using std::vector;
+using std::unordered_map;
+using std::make_unique;
+using std::make_shared;
+using std::vector;
+using glm::vec4;
+using glm::vec3;
+
+
+namespace
+{
+	constexpr char const* MaterialTypeToCStr(gr::Material::MaterialType matType)
+	{
+		switch (matType)
+		{
+		case gr::Material::MaterialType::GLTF_PBRMetallicRoughness: return "GLTF_PBRMetallicRoughness";
+		default:
+		{
+			SEAssertF("Invalid material type");
+			return "INVALID MATERIAL TYPE";
+		}
+		}
+	}
+
+
+	constexpr char const* AlphaModeToCStr(gr::Material::AlphaMode alphaMode)
+	{
+		switch (alphaMode)
+		{
+		case gr::Material::AlphaMode::Opaque: return "Opaque";
+		case gr::Material::AlphaMode::Clip: return "Clip";
+		case gr::Material::AlphaMode::AlphaBlended: return "Alpha blended";
+		default:
+		{
+			SEAssertF("Invalid alpha mode type");
+			return "INVALID ALPHA MODE";
+		}
+		}
+	}
+
+
+	constexpr char const* DoubleSidedModeToCStr(gr::Material::DoubleSidedMode doubleSidedMode)
+	{
+		switch (doubleSidedMode)
+		{
+		case gr::Material::DoubleSidedMode::SingleSided: return "Single sided";
+		case gr::Material::DoubleSidedMode::DoubleSided: return "Double sided";
+		default:
+		{
+			SEAssertF("Invalid double sided mode");
+			return "INVALID DOUBLE SIDED MODE";
+		}
+		}
+	}
+}
 
 namespace gr
 {
-	using re::Shader;
-	using re::Texture;
-	using re::Sampler;
-	using re::ParameterBlock;
-
-	using std::string;
-	using std::shared_ptr;
-	using std::unique_ptr;
-	using std::vector;
-	using std::unordered_map;
-	using std::make_unique;
-	using std::make_shared;
-	using std::vector;
-	using glm::vec4;
-	using glm::vec3;
-
-
-	// Static members:
-	unique_ptr<unordered_map<string, shared_ptr<Material::MaterialDefinition>>> Material::m_materialLibrary = nullptr;
-	std::mutex Material::m_matLibraryMutex;
-
-
-	shared_ptr<Material::MaterialDefinition const> Material::GetMaterialDefinition(std::string const& matName)
+	std::shared_ptr<gr::Material> Material::Create(std::string const& name, MaterialType materialType)
 	{
-		std::unique_lock<std::mutex> samplerLock(m_matLibraryMutex);
+		std::shared_ptr<gr::Material> newMat;
 
-		if (Material::m_materialLibrary == nullptr)
+		switch (materialType)
 		{
-			// TODO: Materials should be described externally; for now, we hard code them
-			m_materialLibrary = make_unique<unordered_map<string, shared_ptr<Material::MaterialDefinition>>>();
-
-			// GLTF Metallic-Roughness PBR Material:
-			// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
-			//--------------------------------------
-			shared_ptr<MaterialDefinition> gltfPBRMat = make_shared<MaterialDefinition>();
-			gltfPBRMat->m_definitionName = "pbrMetallicRoughness";
-			gltfPBRMat->m_textureSlots =
-			{
-				{nullptr, Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear), "MatAlbedo" },
-				{nullptr, Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear), "MatMetallicRoughness" }, // G = roughness, B = metalness. R & A are unused.
-				{nullptr, Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear), "MatNormal" },
-				{nullptr, Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear), "MatOcclusion" },
-				{nullptr, Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear), "MatEmissive" },
-			};
-			gltfPBRMat->m_shader = nullptr; // No default shader; PBR materials are written directly to the GBuffer
-			m_materialLibrary->insert({ gltfPBRMat->m_definitionName, gltfPBRMat });
-		}
-
-		auto const& result = Material::m_materialLibrary->find(matName);
-
-		SEAssert("Invalid Material name", result != Material::m_materialLibrary->end());
-
-		return result->second;
-	}
-
-
-	void Material::DestroyMaterialLibrary()
-	{
-		std::unique_lock<std::mutex> samplerLock(m_matLibraryMutex);
-		m_materialLibrary = nullptr;
-	}
-
-
-	Material::Material(string const& name, shared_ptr<MaterialDefinition const> matDefinition)
-		: NamedObject(name),
-		m_texSlots(matDefinition->m_textureSlots),
-		m_shader(matDefinition->m_shader),
-		m_matParams(nullptr)
-	{
-		// Build a map from shader sampler name, to texture slot index:
-		for (size_t i = 0; i < m_texSlots.size(); i++)
+		case gr::Material::MaterialType::GLTF_PBRMetallicRoughness:
 		{
-			m_namesToSlotIndex.insert({ m_texSlots[i].m_shaderSamplerName, (uint32_t)i});
+			newMat.reset(new Material_GLTF(name));
 		}
+		break;
+		default:
+			SEAssertF("Invalid material type");
+		}
+		return newMat;
 	}
 
 
-	void Material::Destroy()
+	Material::Material(string const& name, MaterialType materialType)
+		: NamedObject(name)
+		, m_materialType(materialType)
+		, m_matParams(nullptr)
+		, m_matParamsIsDirty(true)
 	{
-		m_shader = nullptr;
-		m_texSlots.clear();
 	}
 
 
@@ -105,23 +112,36 @@ namespace gr
 	}
 
 
-	void Material::SetParameterBlock(PBRMetallicRoughnessParams const& params)
-	{
-		// TODO: Support multiple material types/parameter blocks besides PBRMetallicRoughnessParams
-		// Write a templated function that takes a struct of data, and packs it a struct with the appropriate padding
-
-		SEAssert("Material parameter block already set", m_matParams == nullptr);
-
-		m_matParams = ParameterBlock::Create(
-			PBRMetallicRoughnessParams::s_shaderName,
-			params,
-			ParameterBlock::PBType::Immutable);
-	}
-
-
 	void Material::ShowImGuiWindow()
 	{
 		ImGui::Text("Name: \"%s\"", GetName().c_str());
+		ImGui::Text("Type: %s", MaterialTypeToCStr(m_materialType));
+
+		if (ImGui::CollapsingHeader(std::format("Textures##{}\"", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+		{
+			for (uint8_t slotIdx = 0; slotIdx < static_cast<uint8_t>(m_texSlots.size()); slotIdx++)
+			{
+				if (ImGui::CollapsingHeader(std::format("Slot {}: \"{}\"##{}", 
+					slotIdx, 
+					m_texSlots[slotIdx].m_shaderSamplerName,
+					GetUniqueID()).c_str(), 
+					ImGuiTreeNodeFlags_None))
+				{
+					if (m_texSlots[slotIdx].m_texture)
+					{
+						m_texSlots[slotIdx].m_texture->ShowImGuiWindow();
+					}
+					else
+					{
+						ImGui::Text("<empty>");
+					}
+				}
+			}
+		}
+
+		ImGui::Text("Alpha mode: %s", AlphaModeToCStr(m_alphaMode));
+		m_matParamsIsDirty |= ImGui::SliderFloat("Alpha cutoff", &m_alphaCutoff, 0.f, 1.f, "%.4f");
+		ImGui::Text("Double sided mode: %s", DoubleSidedModeToCStr(m_doubleSidedMode));
 	}
 }
 

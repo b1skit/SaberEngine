@@ -175,6 +175,8 @@ namespace en
 			}
 		}
 		
+		ImGui::Separator();
+
 		if (ImGui::CollapsingHeader("Meshes:", ImGuiTreeNodeFlags_None))
 		{
 			std::vector<std::shared_ptr<gr::Mesh>> const& meshes = m_sceneData->GetMeshes();
@@ -185,6 +187,8 @@ namespace en
 			}
 		}
 
+		ImGui::Separator();
+
 		if (ImGui::CollapsingHeader("Materials:", ImGuiTreeNodeFlags_None))
 		{
 			std::unordered_map<size_t, std::shared_ptr<gr::Material>> const& materials = m_sceneData->GetMaterials();
@@ -194,6 +198,8 @@ namespace en
 				ImGui::Separator();
 			}
 		}
+
+		ImGui::Separator();
 
 		if (ImGui::CollapsingHeader("Lights:", ImGuiTreeNodeFlags_None))
 		{

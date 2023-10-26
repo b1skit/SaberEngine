@@ -260,7 +260,6 @@ namespace re
 
 		// NOTE: OpenGL objects must be destroyed on the render thread, so we trigger them here
 		en::SceneManager::GetSceneData()->Destroy();
-		gr::Material::DestroyMaterialLibrary();
 		re::Sampler::DestroySamplerLibrary();
 		
 		// Destroy render systems:

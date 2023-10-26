@@ -84,8 +84,8 @@ namespace re
 		// TODO: Switch batches to an object creation factory. We want them tightly packed in memory, so will need some
 		// sort of allocation/memory management system
 
-		Batch(re::MeshPrimitive const* meshPrimitive, gr::Material const* materialOverride);
-		Batch(std::shared_ptr<gr::Mesh const> const mesh, gr::Material const* materialOverride);
+		Batch(re::MeshPrimitive const* meshPrimitive, gr::Material* materialOverride);
+		Batch(std::shared_ptr<gr::Mesh const> const mesh, gr::Material* materialOverride);
 
 		Batch(ComputeParams const& computeParams); // For compute batches
 

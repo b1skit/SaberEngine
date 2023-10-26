@@ -396,6 +396,12 @@ namespace re
 		}
 		}
 	}
+
+
+	void Texture::ShowImGuiWindow()
+	{
+		ImGui::Text("Name: \"%s\"", GetName().c_str());
+	}
 }
 
 

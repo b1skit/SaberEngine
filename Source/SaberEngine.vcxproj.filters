@@ -87,6 +87,12 @@
     <Filter Include="Dependencies\imgui\backends">
       <UniqueIdentifier>{80a77a0d-b510-4d99-bab9-8b5f54e0eec7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\gr\Materials">
+      <UniqueIdentifier>{84b46aee-503c-4de5-b809-db7c71d5df82}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gr\Materials">
+      <UniqueIdentifier>{c9ce5ea3-8892-44d3-81cb-16c7dc44a505}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -103,9 +109,6 @@
     </ClCompile>
     <ClCompile Include="Context_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
-    </ClCompile>
-    <ClCompile Include="Material.cpp">
-      <Filter>Source Files\gr</Filter>
     </ClCompile>
     <ClCompile Include="Shader.cpp">
       <Filter>Source Files\gr</Filter>
@@ -407,6 +410,12 @@
     <ClCompile Include="RenderSystem.cpp">
       <Filter>Source Files\re</Filter>
     </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Source Files\gr\Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="Material_GLTF.cpp">
+      <Filter>Source Files\gr\Materials</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -420,9 +429,6 @@
     </ClInclude>
     <ClInclude Include="Context_Platform.h">
       <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="Material.h">
-      <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Header Files\gr</Filter>
@@ -780,6 +786,12 @@
     </ClInclude>
     <ClInclude Include="DoubleBufferUnorderedMap.h">
       <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Header Files\gr\Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="Material_GLTF.h">
+      <Filter>Header Files\gr\Materials</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

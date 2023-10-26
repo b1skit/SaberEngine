@@ -165,6 +165,8 @@ namespace re
 
 		TextureParams const& GetTextureParams() const { return m_texParams; }
 
+		void ShowImGuiWindow();
+
 
 	public:
 		// Static helpers:
