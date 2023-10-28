@@ -17,9 +17,6 @@ namespace util
 		~DoubleBufferUnorderedMap() = default;
 		void Destroy();
 
-		DoubleBufferUnorderedMap(DoubleBufferUnorderedMap&&) = default;
-		DoubleBufferUnorderedMap& operator=(DoubleBufferUnorderedMap&&) = default;
-
 		// Reads must be manually locked, as values are returned by reference. This guards against references being held
 		// after a call to Swap() has occured.
 		void AquireReadLock();
@@ -38,9 +35,9 @@ namespace util
 
 
 	private:
-		static constexpr uint8_t k_bufferSize = 2;
-		std::array<std::unordered_map<Key, Value>, k_bufferSize> m_unorderedMaps;
-		std::array<std::mutex, k_bufferSize> m_unorderedMapMutexes;
+		static constexpr uint8_t k_numBuffers = 2;
+		std::array<std::unordered_map<Key, Value>, k_numBuffers> m_unorderedMaps;
+		std::array<std::mutex, k_numBuffers> m_unorderedMapMutexes;
 		
 		std::atomic<std::thread::id> m_readingThread;
 
@@ -55,6 +52,9 @@ namespace util
 		DoubleBufferUnorderedMap(DoubleBufferUnorderedMap&) = delete;
 		DoubleBufferUnorderedMap& operator=(DoubleBufferUnorderedMap const&) = delete;
 		
+		// We could allow thread-safe moves, but don't need them for now so haven't bothered
+		DoubleBufferUnorderedMap(DoubleBufferUnorderedMap&&) = delete;
+		DoubleBufferUnorderedMap& operator=(DoubleBufferUnorderedMap&&) = delete;
 	};
 
 
