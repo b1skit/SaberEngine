@@ -149,11 +149,9 @@ namespace gr
 			}
 		}
 
-		if (ImGui::TreeNode("Shadow Map Camera:"))
+		if (ImGui::CollapsingHeader("Shadow Map Camera", ImGuiTreeNodeFlags_None))
 		{
 			m_shadowCam->ShowImGuiWindow();
-
-			ImGui::TreePop();
 		}		
 	}
 }

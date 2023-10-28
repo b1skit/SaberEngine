@@ -14,7 +14,7 @@ namespace gr
 	class Transform;
 }
 
-namespace re
+namespace gr
 {
 	class MeshPrimitive final : public virtual en::NamedObject, public virtual en::HashedDataObject
 	{
@@ -57,35 +57,31 @@ namespace re
 			Joints		= 5, // tvec4<uint8_t>
 			Weights		= 6, // vec4
 
-			Indexes		= 7, // uint32_t Note: NOT a valid binding location
-
 			Slot_Count,
-			Slot_CountNoIndices = (Slot_Count - 1),
 		};
 		static_assert(Slot::Position == 0); // Position MUST be first
-		static_assert(Slot::Indexes == Slot_Count - 1); // Indexes MUST be last
 		// Note: The order/indexing of this enum MUST match the vertex layout locations in SaberCommon.glsl, and be
 		// correctly mapped in PipelineState_DX12.cpp
 		
 	
-		static std::string GetSlotDebugName(Slot slot);
+		static char const* SlotDebugNameToCStr(Slot slot);
 
 
 	public:
 		static std::shared_ptr<MeshPrimitive> Create(
 			std::string const& name,
-			std::vector<uint32_t>& indices,
+			std::vector<uint32_t>* indices,
 			std::vector<float>& positions,
 			glm::vec3 const& positionMinXYZ, // Pass gr::Bounds::k_invalidMinXYZ to compute bounds manually
 			glm::vec3 const& positionMaxXYZ, // Pass gr::Bounds::k_invalidMaxXYZ to compute bounds manually
-			std::vector<float>& normals,
-			std::vector<float>& tangents,
-			std::vector<float>& uv0,
-			std::vector<float>& colors,
-			std::vector<uint8_t> joints,
-			std::vector<float> weights,
+			std::vector<float>* normals,
+			std::vector<float>* tangents,
+			std::vector<float>* uv0,
+			std::vector<float>* colors,
+			std::vector<uint8_t>* joints,
+			std::vector<float>* weights,
 			std::shared_ptr<gr::Material> material,
-			re::MeshPrimitive::MeshPrimitiveParams const& meshParams);
+			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
 		~MeshPrimitive(){ Destroy(); }
 		
@@ -100,11 +96,9 @@ namespace re
 		gr::Bounds const& GetBounds() const;
 		void UpdateBounds(gr::Transform* transform); // TODO: Currently this assumes the MeshPrimitive is not skinned
 		
-		re::VertexStream* GetVertexStream(Slot slot) const;
-		std::vector<std::shared_ptr<re::VertexStream>> const& GetVertexStreams() const;
-
-		PlatformParams* GetPlatformParams() const;
-		void SetPlatformParams(std::unique_ptr<re::MeshPrimitive::PlatformParams> params);
+		re::VertexStream const* GetIndexStream() const;
+		re::VertexStream const* GetVertexStream(Slot slot) const;
+		std::vector<re::VertexStream const*> GetVertexStreams() const;
 
 		void ShowImGuiWindow();
 
@@ -118,10 +112,8 @@ namespace re
 
 		std::shared_ptr<gr::Material> m_meshMaterial;
 
-		// API-specific mesh params:
-		std::unique_ptr<PlatformParams> m_platformParams;
-
-		std::vector<std::shared_ptr<re::VertexStream>> m_vertexStreams;
+		std::array<std::shared_ptr<re::VertexStream>, Slot_Count> m_vertexStreams;
+		std::shared_ptr<re::VertexStream> m_indexStream;
 
 		gr::Bounds m_localBounds; // MeshPrimitive bounds, in local space		
 
@@ -130,18 +122,18 @@ namespace re
 
 	private: // Private ctor: Use the Create factory instead
 		MeshPrimitive(std::string const& name,
-			std::vector<uint32_t>& indices,
+			std::vector<uint32_t>* indices,
 			std::vector<float>& positions,
 			glm::vec3 const& positionMinXYZ, // Pass gr::Bounds::k_invalidMinXYZ to compute bounds manually
 			glm::vec3 const& positionMaxXYZ, // Pass gr::Bounds::k_invalidMaxXYZ to compute bounds manually
-			std::vector<float>& normals,
-			std::vector<float>& tangents,
-			std::vector<float>& uv0,
-			std::vector<float>& colors,
-			std::vector<uint8_t> joints,
-			std::vector<float> weights,
+			std::vector<float>* normals,
+			std::vector<float>* tangents,
+			std::vector<float>* uv0,
+			std::vector<float>* colors,
+			std::vector<uint8_t>* joints,
+			std::vector<float>* weights,
 			std::shared_ptr<gr::Material> material,
-			re::MeshPrimitive::MeshPrimitiveParams const& meshParams);
+			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
 
 	private:
@@ -184,41 +176,41 @@ namespace re
 	}
 
 
-	inline MeshPrimitive::PlatformParams* MeshPrimitive::GetPlatformParams() const
+	inline re::VertexStream const* MeshPrimitive::GetIndexStream() const
 	{
-		return m_platformParams.get();
+		return m_indexStream.get();
 	}
 
 
-	inline void MeshPrimitive::SetPlatformParams(std::unique_ptr<re::MeshPrimitive::PlatformParams> params)
+	inline re::VertexStream const* MeshPrimitive::GetVertexStream(Slot slot) const
 	{
-		m_platformParams = std::move(params);
+		return m_vertexStreams[slot].get();
 	}
 
 
 	// We need to provide a destructor implementation since it's pure virtual
-	inline re::MeshPrimitive::PlatformParams::~PlatformParams() {};
+	inline gr::MeshPrimitive::PlatformParams::~PlatformParams() {};
 } // re
 
 
 namespace meshfactory
 {
-	extern std::shared_ptr<re::MeshPrimitive> CreateCube();
+	extern std::shared_ptr<gr::MeshPrimitive> CreateCube();
 
 	enum class ZLocation : uint8_t
 	{
 		Near,
 		Far
 	};
-	extern std::shared_ptr<re::MeshPrimitive> CreateFullscreenQuad(ZLocation zLocation);
+	extern std::shared_ptr<gr::MeshPrimitive> CreateFullscreenQuad(ZLocation zLocation);
 
-	extern std::shared_ptr<re::MeshPrimitive> CreateQuad(
+	extern std::shared_ptr<gr::MeshPrimitive> CreateQuad(
 		glm::vec3 tl /*= vec3(-0.5f, 0.5f, 0.0f)*/,
 		glm::vec3 tr /*= vec3(0.5f, 0.5f, 0.0f)*/,
 		glm::vec3 bl /*= vec3(-0.5f, -0.5f, 0.0f)*/,
 		glm::vec3 br /*= vec3(0.5f, -0.5f, 0.0f)*/);
 
-	extern std::shared_ptr<re::MeshPrimitive> CreateSphere(
+	extern std::shared_ptr<gr::MeshPrimitive> CreateSphere(
 		float radius = 0.5f,
 		size_t numLatSlices = 16,
 		size_t numLongSlices = 16);
@@ -227,5 +219,5 @@ namespace meshfactory
 	// Using the default arguments, the triangle will be in NDC.
 	// Override the defaults to simulate a world-space transform (Reminder: We use a RHCS. Use negative zDepths to push
 	// the triangle in front of the camera once a view-projection transformation is applied)
-	extern std::shared_ptr<re::MeshPrimitive> CreateHelloTriangle(float scale = 1.f, float zDepth = 0.5f);
+	extern std::shared_ptr<gr::MeshPrimitive> CreateHelloTriangle(float scale = 1.f, float zDepth = 0.5f);
 } // meshfactory

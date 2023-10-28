@@ -7,7 +7,7 @@
 #include "Context_DX12.h"
 #include "CommandList_DX12.h"
 #include "Debug_DX12.h"
-#include "MeshPrimitive_DX12.h"
+#include "MeshPrimitive.h"
 #include "ParameterBlock.h"
 #include "ParameterBlock_DX12.h"
 #include "RenderManager.h"
@@ -81,6 +81,26 @@ namespace
 		uint32_t subresourceIdx)
 	{
 		DebugResourceTransitions(cmdList, texture, toState, toState, subresourceIdx, true);
+	}
+
+
+	constexpr D3D_PRIMITIVE_TOPOLOGY TranslateToD3DPrimitiveTopology(gr::MeshPrimitive::TopologyMode topologyMode)
+	{
+		switch (topologyMode)
+		{
+		case gr::MeshPrimitive::TopologyMode::PointList: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+		case gr::MeshPrimitive::TopologyMode::LineList: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+		case gr::MeshPrimitive::TopologyMode::LineStrip: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
+		case gr::MeshPrimitive::TopologyMode::TriangleList: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		case gr::MeshPrimitive::TopologyMode::TriangleStrip: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+		case gr::MeshPrimitive::TopologyMode::LineListAdjacency: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINELIST_ADJ;
+		case gr::MeshPrimitive::TopologyMode::LineStripAdjacency: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ;
+		case gr::MeshPrimitive::TopologyMode::TriangleListAdjacency: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST_ADJ;
+		case gr::MeshPrimitive::TopologyMode::TriangleStripAdjacency: return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ;
+		default:
+			SEAssertF("Invalid topology mode");
+			return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		}
 	}
 }
 
@@ -298,22 +318,22 @@ namespace dx12
 
 	void CommandList::DrawBatchGeometry(re::Batch const& batch)
 	{
-		// Set the geometry for the draw:
-		dx12::MeshPrimitive::PlatformParams* meshPrimPlatParams =
-			batch.GetMeshPrimitive()->GetPlatformParams()->As<dx12::MeshPrimitive::PlatformParams*>();
+		// Set the geometry for the draw:		
+		re::Batch::GraphicsParams const& batchGraphicsParams = batch.GetGraphicsParams();
 
-		// TODO: Batches should contain the draw mode, instead of carrying around a MeshPrimitive
-		SetPrimitiveType(meshPrimPlatParams->m_primitiveTopology);
-		SetVertexBuffers(batch.GetMeshPrimitive()->GetVertexStreams());
+		SetPrimitiveType(TranslateToD3DPrimitiveTopology(batchGraphicsParams.m_batchTopologyMode));
+		SetVertexBuffers(
+			batchGraphicsParams.m_vertexStreams.data(),
+			static_cast<uint8_t>(batchGraphicsParams.m_vertexStreams.size()));
 
+		re::VertexStream const* indexStream = batchGraphicsParams.m_indexStream;
 		dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
-			batch.GetMeshPrimitive()->GetVertexStream(
-				re::MeshPrimitive::Indexes)->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
+			indexStream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
 		SetIndexBuffer(&indexPlatformParams->m_indexBufferView);
 
 		// Record the draw:
 		DrawIndexedInstanced(
-			batch.GetMeshPrimitive()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),
+			indexStream->GetNumElements(),
 			static_cast<uint32_t>(batch.GetInstanceCount()),	// Instance count
 			0,													// Start index location
 			0,													// Base vertex location
@@ -330,22 +350,17 @@ namespace dx12
 	}
 
 
-	void CommandList::SetVertexBuffers(std::vector<std::shared_ptr<re::VertexStream>> const& streams) const
+	void CommandList::SetVertexBuffers(re::VertexStream const* const* streams, uint8_t count) const
 	{
-		SEAssert("The position stream is mandatory", 
-			streams.size() > 0 && streams[re::MeshPrimitive::Slot::Position] != nullptr);
+		SEAssert("Invalid vertex streams received", streams && count > 0);
 
 		uint32_t currentStartSlot = 0;
 
 		std::vector<D3D12_VERTEX_BUFFER_VIEW> streamViews;
-		streamViews.reserve(streams.size());
+		streamViews.reserve(count);
 
-		for (uint32_t streamIdx = 0; streamIdx < static_cast<uint32_t>(streams.size()); streamIdx++)
+		for (uint32_t streamIdx = 0; streamIdx < count; streamIdx++)
 		{
-			if (streamIdx == static_cast<size_t>(re::MeshPrimitive::Slot::Indexes))
-			{
-				break;
-			}
 			if (streams[streamIdx] == nullptr)
 			{
 				// Submit the list we've built so far

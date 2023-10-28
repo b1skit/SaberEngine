@@ -13,10 +13,6 @@
 #include "InputManager_Platform.h"
 #include "InputManager_Win32.h"
 
-#include "MeshPrimitive_DX12.h"
-#include "MeshPrimitive_OpenGL.h"
-#include "MeshPrimitive_Platform.h"
-
 #include "ParameterBlock.h"
 #include "ParameterBlock_DX12.h"
 #include "ParameterBlock_OpenGL.h"
@@ -93,9 +89,6 @@ namespace platform
 		{
 			// Context:
 			platform::Context::Destroy			= &opengl::Context::Destroy;
-			
-			// MeshPrimitive:
-			platform::MeshPrimitive::Destroy	= &opengl::MeshPrimitive::Destroy;
 
 			// Parameter blocks:
 			platform::ParameterBlock::Create	= &opengl::ParameterBlock::Create;
@@ -139,9 +132,6 @@ namespace platform
 		{
 			// Context:
 			platform::Context::Destroy			= &dx12::Context::Destroy;
-
-			// MeshPrimitive:
-			platform::MeshPrimitive::Destroy	= &dx12::MeshPrimitive::Destroy;
 
 			// Parameter blocks:
 			platform::ParameterBlock::Create	= &dx12::ParameterBlock::Create;

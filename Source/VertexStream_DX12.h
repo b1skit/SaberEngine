@@ -47,11 +47,11 @@ namespace dx12
 			re::VertexStream const&, re::VertexStream::StreamType);
 
 	public:
-		static void Destroy(re::VertexStream&);
+		static void Destroy(re::VertexStream const&);
 
 		// DX12-specific functionality
 		static void Create(
-			re::VertexStream&, 
+			re::VertexStream const&, 
 			Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2>, 
 			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>&);
 	};

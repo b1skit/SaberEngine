@@ -1,11 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include <GL/glew.h>
 
 #include "Context.h"
 #include "Context_Platform.h"
 
 
-
+namespace re
+{
+	class VertexStream;
+}
 
 namespace opengl
 {
@@ -24,6 +28,10 @@ namespace opengl
 		// OpenGL-specific interface:
 		void SetPipelineState(re::PipelineState const& pipelineState);
 
+		static uint64_t ComputeVAOHash(re::VertexStream const* const*, uint8_t count, re::VertexStream const* indexStream);
+
+		GLuint GetCreateVAO(re::VertexStream const* const*, uint8_t count, re::VertexStream const* indexStream);
+		
 
 	protected:
 		Context();
@@ -51,5 +59,10 @@ namespace opengl
 			int* piFormats, 
 			UINT* nNumFormats);
 		wglChoosePixelFormatARB_type* wglChoosePixelFormatARBFn;
+
+
+	private:
+		std::unordered_map<uint64_t, GLuint> m_VAOLibrary; // Maps bitmasks of enabled vertex attribute indexes to VAO name
+		std::mutex m_VAOLibraryMutex;
 	};
 }

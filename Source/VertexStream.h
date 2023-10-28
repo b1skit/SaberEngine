@@ -1,12 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
+#include "HashedDataObject.h"
 #include "IPlatformParams.h"
 
 
 namespace re
 {
-	class VertexStream
+	class VertexStream : public virtual en::HashedDataObject
 	{
 	public:
 		struct PlatformParams : public re::IPlatformParams
@@ -30,24 +31,25 @@ namespace re
 
 			// NOTE: If adding more data types, check re::VertexStream::VertexStream() to see if we need to handle
 			// additional normalization cases
-
-			DataType_Count
 		};
 
 		enum class StreamType
 		{
 			Index,
-			Vertex,
-			StreamType_Count
+			Vertex
 		};
 
 
 	public:
-		VertexStream(
+		static std::shared_ptr<re::VertexStream> Create(
 			StreamType type, uint32_t numComponents, DataType dataType, Normalize doNormalize, std::vector<uint8_t>&& data);
+
 		VertexStream(VertexStream&&) = default;
 		VertexStream& operator=(VertexStream&&) = default;
+
 		~VertexStream() { Destroy(); };
+
+		StreamType GetStreamType() const;
 
 		void* GetData();
 		void const* GetData() const;
@@ -69,10 +71,16 @@ namespace re
 		void ShowImGuiWindow();
 
 
-	private:
-		void Destroy();
+	protected:
+		void ComputeDataHash() override;
+
 
 	private:
+		void Destroy();
+		
+
+	private:
+		const StreamType m_streamType;
 		uint8_t m_numComponents; 
 		uint8_t m_componentByteSize; // Size in bytes of a single component. eg. Float = 4 bytes, Float2 = 8 bytes, etc
 
@@ -84,11 +92,22 @@ namespace re
 		std::unique_ptr<PlatformParams> m_platformParams;
 
 
+	private: // Use the Create() factory instead
+		VertexStream(
+			StreamType type, uint32_t numComponents, DataType dataType, Normalize doNormalize, std::vector<uint8_t>&& data);
+
+
 	private:
 		// Share via pointers; no copying allowed
 		VertexStream(VertexStream const&) = delete;
 		VertexStream& operator=(VertexStream const&) = delete;
 	};
+
+
+	inline VertexStream::StreamType VertexStream::GetStreamType() const
+	{
+		return m_streamType;
+	}
 
 
 	// We need to provide a destructor implementation since it's pure virtual

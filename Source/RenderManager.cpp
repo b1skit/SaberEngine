@@ -27,7 +27,6 @@ using gr::SkyboxGraphicsSystem;
 using gr::TonemappingGraphicsSystem;
 using gr::Transform;
 using re::Batch;
-using re::MeshPrimitive;
 using util::PerformanceTimer;
 using std::shared_ptr;
 using std::make_shared;
@@ -75,7 +74,7 @@ namespace re
 		: m_renderFrameNum(0)
 		, m_imguiMenuVisible(false)
 		, m_newShaders(k_newObjectReserveAmount)
-		, m_newMeshPrimitives(k_newObjectReserveAmount)
+		, m_newVertexStreams(k_newObjectReserveAmount)
 		, m_newTextures(k_newObjectReserveAmount)
 		, m_newSamplers(k_newObjectReserveAmount)
 		, m_newTargetSets(k_newObjectReserveAmount)
@@ -330,7 +329,7 @@ namespace re
 
 		// Aquire read locks:
 		m_newShaders.AquireReadLock();
-		m_newMeshPrimitives.AquireReadLock();
+		m_newVertexStreams.AquireReadLock();
 		m_newTextures.AquireReadLock();
 		m_newSamplers.AquireReadLock();
 		m_newTargetSets.AquireReadLock();
@@ -347,7 +346,7 @@ namespace re
 
 		// Release read locks:
 		m_newShaders.ReleaseReadLock();
-		m_newMeshPrimitives.ReleaseReadLock();
+		m_newVertexStreams.ReleaseReadLock();
 		m_newTextures.ReleaseReadLock();
 		m_newSamplers.ReleaseReadLock();
 		m_newTargetSets.ReleaseReadLock();
@@ -363,7 +362,7 @@ namespace re
 
 		// Swap our new resource double buffers:
 		m_newShaders.Swap();
-		m_newMeshPrimitives.Swap();
+		m_newVertexStreams.Swap();
 		m_newTextures.Swap();
 		m_newSamplers.Swap();
 		m_newTargetSets.Swap();
@@ -378,7 +377,7 @@ namespace re
 		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "RenderManager::ClearNewResourceDoubleBuffers");
 
 		m_newShaders.EndOfFrame();
-		m_newMeshPrimitives.EndOfFrame();
+		m_newVertexStreams.EndOfFrame();
 		m_newTextures.EndOfFrame();
 		m_newSamplers.EndOfFrame();
 		m_newTargetSets.EndOfFrame();
@@ -391,7 +390,7 @@ namespace re
 	void RenderManager::DestroyNewResourceDoubleBuffers()
 	{
 		m_newShaders.Destroy();
-		m_newMeshPrimitives.Destroy();
+		m_newVertexStreams.Destroy();
 		m_newTextures.Destroy();
 		m_newSamplers.Destroy();
 		m_newTargetSets.Destroy();
@@ -408,10 +407,10 @@ namespace re
 
 
 	template<>
-	void RenderManager::RegisterForCreate(std::shared_ptr<re::MeshPrimitive> newObject)
+	void RenderManager::RegisterForCreate(std::shared_ptr<re::VertexStream> newObject)
 	{
-		const size_t dataHash = newObject->GetDataHash(); // MeshPrimitives can have duplicate names
-		m_newMeshPrimitives.Set(dataHash, std::move(newObject));
+		const size_t dataHash = newObject->GetDataHash(); // Vertex streams are not named
+		m_newVertexStreams.Set(dataHash, std::move(newObject));
 	}
 
 
@@ -456,10 +455,9 @@ namespace re
 		ImGui::Begin(renderSystemsPanelTitle, show);
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
-			if (ImGui::TreeNode(renderSystem->GetName().c_str()))
+			if (ImGui::CollapsingHeader(renderSystem->GetName().c_str(), ImGuiTreeNodeFlags_None))
 			{
 				renderSystem->ShowImGuiWindow();
-				ImGui::TreePop();
 			}
 		}
 		ImGui::End();

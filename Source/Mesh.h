@@ -28,7 +28,7 @@ namespace gr
 
 	public:
 		explicit Mesh(std::string const& name, gr::Transform* ownerTransform);
-		explicit Mesh(std::string const& name, gr::Transform* ownerTransform, std::shared_ptr<re::MeshPrimitive> meshPrimitive);
+		explicit Mesh(std::string const& name, gr::Transform* ownerTransform, std::shared_ptr<gr::MeshPrimitive> meshPrimitive);
 
 		Mesh(Mesh const&) = default;
 		Mesh(Mesh&&) = default;
@@ -44,15 +44,15 @@ namespace gr
 		inline gr::Bounds const& GetBounds() const { return m_localBounds; }
 		void UpdateBounds();
 
-		void AddMeshPrimitive(std::shared_ptr<re::MeshPrimitive> meshPrimitive);
-		std::vector<std::shared_ptr<re::MeshPrimitive>> const& GetMeshPrimitives() const;
-		void ReplaceMeshPrimitive(size_t index, std::shared_ptr<re::MeshPrimitive> replacement);
+		void AddMeshPrimitive(std::shared_ptr<gr::MeshPrimitive> meshPrimitive);
+		std::vector<std::shared_ptr<gr::MeshPrimitive>> const& GetMeshPrimitives() const;
+		void ReplaceMeshPrimitive(size_t index, std::shared_ptr<gr::MeshPrimitive> replacement);
 
 		void ShowImGuiWindow();
 
 
 	private:
-		std::vector<std::shared_ptr<re::MeshPrimitive>> m_meshPrimitives;
+		std::vector<std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
 
 		Transform* m_ownerTransform;
 

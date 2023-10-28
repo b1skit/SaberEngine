@@ -18,11 +18,13 @@ namespace opengl
 		};
 		static std::unique_ptr<re::VertexStream::PlatformParams> CreatePlatformParams(re::VertexStream const&, re::VertexStream::StreamType);
 		
+		static uint32_t GetGLDataType(re::VertexStream::DataType dataType);
+
 
 	public:
-		static void Create(re::VertexStream& vertexStream, re::MeshPrimitive::Slot);
-		static void Destroy(re::VertexStream&);
+		static void Create(re::VertexStream const& vertexStream);
+		static void Destroy(re::VertexStream const&);
 
-		static void Bind(re::VertexStream&, re::MeshPrimitive::Slot);
+		static void Bind(re::VertexStream const&, gr::MeshPrimitive::Slot);
 	};
 }

@@ -2,6 +2,7 @@
 #pragma once
 
 #include "HashedDataObject.h"
+#include "MeshPrimitive.h"
 #include "Shader_Platform.h"
 #include "Texture.h"
 
@@ -66,17 +67,18 @@ namespace re
 
 		struct GraphicsParams
 		{
-			// TODO: Split this into vertex streams
-			// -> TRICKY: OpenGL encapsulates state with VAOs, but we only need one VAO per mesh
-			// -> Also need to pack the mesh draw mode on the batch (points/lines/triangles/etc)
-			re::MeshPrimitive const* m_batchMeshPrimitive;
+			// Don't forget to update ComputeDataHash if modifying this
 			
 			GeometryMode m_batchGeometryMode;
-
 			size_t m_numInstances;
+			gr::MeshPrimitive::TopologyMode m_batchTopologyMode;
+			std::array<re::VertexStream const*, gr::MeshPrimitive::Slot_Count> m_vertexStreams;
+			re::VertexStream const* m_indexStream;
 		};
 		struct ComputeParams
 		{
+			// Don't forget to update ComputeDataHash if modifying this
+
 			glm::uvec3 m_threadGroupCount = glm::uvec3(std::numeric_limits<uint32_t>::max());
 		};
 
@@ -84,25 +86,24 @@ namespace re
 		// TODO: Switch batches to an object creation factory. We want them tightly packed in memory, so will need some
 		// sort of allocation/memory management system
 
-		Batch(re::MeshPrimitive const* meshPrimitive, gr::Material* materialOverride);
+		Batch(gr::MeshPrimitive const* meshPrimitive, gr::Material* materialOverride);
 		Batch(std::shared_ptr<gr::Mesh const> const mesh, gr::Material* materialOverride);
 
 		Batch(ComputeParams const& computeParams); // For compute batches
 
 		~Batch() = default;
 		Batch(Batch const&) = default;
-		Batch(Batch&&) = default;
 		Batch& operator=(Batch const&) = default;
+		Batch(Batch&&) = default;
 		Batch& operator=(Batch&&) = default;
 
 		BatchType GetType() const;
-		
-		re::MeshPrimitive const* GetMeshPrimitive() const;
-		
+			
 		re::Shader const* GetShader() const;
 		void SetShader(re::Shader*);
 
 		size_t GetInstanceCount() const;
+		void SetInstanceCount(uint32_t numInstances);
 
 		std::vector<std::shared_ptr<re::ParameterBlock>> const& GetParameterBlocks() const;
 		void SetParameterBlock(std::shared_ptr<re::ParameterBlock> paramBlock);
@@ -116,8 +117,6 @@ namespace re
 
 		uint32_t GetBatchFilterMask() const;
 		void SetFilterMaskBit(re::Batch::Filter filterBit);
-
-		void SetInstanceCount(uint32_t numInstances);
 
 		GraphicsParams const& GetGraphicsParams() const;
 		ComputeParams const& GetComputeParams() const;
@@ -138,7 +137,7 @@ namespace re
 		re::Shader const* m_batchShader;
 		std::vector<std::shared_ptr<re::ParameterBlock>> m_batchParamBlocks;
 		std::vector<BatchTextureAndSamplerInput> m_batchTextureSamplerInputs;
-		uint32_t m_batchFilterMask;
+		uint32_t m_batchFilterBitmask;
 
 
 	private:
@@ -149,13 +148,6 @@ namespace re
 	inline re::Batch::BatchType Batch::GetType() const
 	{
 		return m_type;
-	}
-
-
-	inline re::MeshPrimitive const* Batch::GetMeshPrimitive() const
-	{
-		SEAssert("Invalid type", m_type == BatchType::Graphics);
-		return m_graphicsParams.m_batchMeshPrimitive;
 	}
 
 
@@ -192,7 +184,7 @@ namespace re
 
 	inline uint32_t Batch::GetBatchFilterMask() const
 	{
-		return m_batchFilterMask;
+		return m_batchFilterBitmask;
 	}
 
 

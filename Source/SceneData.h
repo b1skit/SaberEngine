@@ -72,7 +72,9 @@ namespace fr
 		// Meshes:
 		void AddMesh(std::shared_ptr<gr::Mesh> mesh);
 		std::vector <std::shared_ptr<gr::Mesh>> const& GetMeshes() const;
-		bool AddUniqueMeshPrimitive(std::shared_ptr<re::MeshPrimitive>&); // Returns true if incoming ptr is modified
+		bool AddUniqueMeshPrimitive(std::shared_ptr<gr::MeshPrimitive>&); // Returns true if incoming ptr is modified
+
+		bool AddUniqueVertexStream(std::shared_ptr<re::VertexStream>&); // Returns true if incoming ptr is modified
 
 		// Textures:
 		bool AddUniqueTexture(std::shared_ptr<re::Texture>& newTexture); // Returns true if incoming ptr is modified
@@ -105,8 +107,11 @@ namespace fr
 		std::mutex m_sceneNodesMutex;
 
 		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;
-		std::unordered_map<DataHash, std::shared_ptr<re::MeshPrimitive>> m_meshPrimitives;
-		std::mutex m_meshesAndMeshPrimitivesMutex;		
+		std::unordered_map<DataHash, std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
+		std::mutex m_meshesAndMeshPrimitivesMutex;
+
+		std::unordered_map<DataHash, std::shared_ptr<re::VertexStream>> m_vertexStreams;
+		std::mutex m_vertexStreamsMutex;
 
 		std::unordered_map<size_t, std::shared_ptr<re::Texture>> m_textures;
 		mutable std::shared_mutex m_texturesMutex; // mutable, as we need to be able to modify it in const functions

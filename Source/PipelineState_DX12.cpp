@@ -60,7 +60,7 @@ namespace
 			{"BLENDINDICES",	DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UINT},
 			{"BLENDWEIGHT",		DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
 		};
-		SEAssert("Missing semantics", k_semanticToFormat.size() == re::MeshPrimitive::Slot_CountNoIndices);
+		SEAssert("Missing semantics", k_semanticToFormat.size() == gr::MeshPrimitive::Slot_Count);
 
 		auto const& result = k_semanticToFormat.find(semantic);
 		SEAssert("Invalid semantic name", result != k_semanticToFormat.end());
@@ -73,17 +73,17 @@ namespace
 	{
 		static const std::unordered_map<std::string, uint32_t> k_sematicToSlot =
 		{
-			{"POSITION0",		re::MeshPrimitive::Position},
-			{"NORMAL0",			re::MeshPrimitive::Normal},
-			//{"BINORMAL0",		re::MeshPrimitive::}, //
-			{"TANGENT0",		re::MeshPrimitive::Tangent},
-			{"TEXCOORD0",		re::MeshPrimitive::UV0},
-			{"COLOR0",			re::MeshPrimitive::Color},
+			{"POSITION0",		gr::MeshPrimitive::Position},
+			{"NORMAL0",			gr::MeshPrimitive::Normal},
+			//{"BINORMAL0",		gr::MeshPrimitive::}, //
+			{"TANGENT0",		gr::MeshPrimitive::Tangent},
+			{"TEXCOORD0",		gr::MeshPrimitive::UV0},
+			{"COLOR0",			gr::MeshPrimitive::Color},
 
-			{"BLENDINDICES0",	re::MeshPrimitive::Joints},
-			{"BLENDWEIGHT0",	re::MeshPrimitive::Weights},
+			{"BLENDINDICES0",	gr::MeshPrimitive::Joints},
+			{"BLENDWEIGHT0",	gr::MeshPrimitive::Weights},
 		};
-		SEAssert("Missing semantics", k_sematicToSlot.size() == re::MeshPrimitive::Slot_CountNoIndices);
+		SEAssert("Missing semantics", k_sematicToSlot.size() == gr::MeshPrimitive::Slot_Count);
 
 		const std::string semanticAndIndex = semantic + std::to_string(semanticIndex);
 

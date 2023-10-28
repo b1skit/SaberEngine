@@ -14,6 +14,6 @@ namespace platform
 
 
 	public:
-		static void (*Destroy)(re::VertexStream&);
+		static void (*Destroy)(re::VertexStream const&);
 	};
 }

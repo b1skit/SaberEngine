@@ -6,15 +6,17 @@
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_opengl3.h"
 
+#include "Config.h"
 #include "Context_OpenGL.h"
 #include "Context.h"
-
-#include "Window_Win32.h"
-
-#include "Config.h"
 #include "CoreEngine.h"
 #include "DebugConfiguration.h"
+#include "HashUtils.h"
+#include "MeshPrimitive.h"
 #include "SysInfo_OpenGL.h"
+#include "VertexStream.h"
+#include "VertexStream_OpenGL.h"
+#include "Window_Win32.h"
 
 using en::Config;
 using std::string;
@@ -101,17 +103,14 @@ namespace opengl
 	}
 
 
-
-	void GLAPIENTRY GLMessageCallback
-	(
-			GLenum source,
-			GLenum type,
-			GLuint id,
-			GLenum severity,
-			GLsizei length,
-			const GLchar* message,
-			const void* userParam
-	)
+	void GLAPIENTRY GLMessageCallback(
+		GLenum source,
+		GLenum type,
+		GLuint id,
+		GLenum severity,
+		GLsizei length,
+		const GLchar* message,
+		const void* userParam)
 	{
 		string srcMsg;
 		switch (source)
@@ -319,6 +318,7 @@ namespace opengl
 
 		// Call our opengl::SysInfo members while we're on the main thread to cache their values:
 		opengl::SysInfo::GetMaxRenderTargets();
+		opengl::SysInfo::GetMaxVertexAttributes();
 	}
 
 
@@ -342,6 +342,18 @@ namespace opengl
 		// NOTE: We must destroy anything that holds a parameter block before the ParameterBlockAllocator is destroyed, 
 		// as parameter blocks call the ParameterBlockAllocator in their destructor
 		context.GetParameterBlockAllocator().Destroy();
+
+		// Destroy VAO library:
+		{
+			std::lock_guard<std::mutex> lock(context.m_VAOLibraryMutex);
+
+			for (auto& vao : context.m_VAOLibrary)
+			{
+				glDeleteVertexArrays(1, &vao.second);
+				vao.second = 0;
+			}
+			context.m_VAOLibrary.clear();
+		}
 	}
 
 
@@ -438,5 +450,109 @@ namespace opengl
 		}
 
 		glDepthFunc(depthMode);
+	}
+
+
+	uint64_t Context::ComputeVAOHash(
+		re::VertexStream const* const* vertexStreams, uint8_t count, re::VertexStream const* indexStream)
+	{
+		SEAssert("Invalid vertex streams", vertexStreams && count > 0);
+		SEAssert("Received more vertex streams that defined slots. This is unexpected", 
+			count <= gr::MeshPrimitive::Slot_Count);
+
+		uint64_t vertexStreamHash = 0;
+
+		uint32_t bitmask = 0; // Likely only needs to be 16 bits wide, max
+		for (size_t slot = 0; slot < count; slot++)
+		{
+			if (vertexStreams[slot])
+			{
+				bitmask |= (1 << slot);
+
+				util::AddDataToHash(vertexStreamHash, vertexStreams[slot]->GetNumComponents()); // 1/2/3/4
+				util::AddDataToHash(
+					vertexStreamHash, opengl::VertexStream::GetGLDataType(vertexStreams[slot]->GetDataType()));
+				util::AddDataToHash(vertexStreamHash, vertexStreams[slot]->DoNormalize());
+				
+				// Note: We assume all vertex streams have a relative offset of 0, so we don't (currently) include it in
+				// the hash here
+			}
+		}
+
+		if (indexStream)
+		{
+			util::AddDataToHash(vertexStreamHash, indexStream->GetNumComponents()); // 1/2/3/4
+			util::AddDataToHash(
+				vertexStreamHash, opengl::VertexStream::GetGLDataType(indexStream->GetDataType()));
+			util::AddDataToHash(vertexStreamHash, indexStream->DoNormalize());
+		}
+
+		util::AddDataToHash(vertexStreamHash, bitmask);
+
+		return vertexStreamHash;
+	}
+
+
+	GLuint Context::GetCreateVAO(
+		re::VertexStream const* const* vertexStreams, uint8_t count, re::VertexStream const* indexStream)
+	{
+		const uint64_t vaoHash = ComputeVAOHash(vertexStreams, count, indexStream);
+
+		{
+			std::lock_guard<std::mutex> lock(m_VAOLibraryMutex);
+
+			if (!m_VAOLibrary.contains(vaoHash))
+			{
+				GLuint newVAO = 0;
+				glGenVertexArrays(1, &newVAO);
+				SEAssert("Failed to create VAO", newVAO != 0);
+
+				m_VAOLibrary.emplace(vaoHash, newVAO);
+
+				glBindVertexArray(newVAO);
+
+				// We use a bitmask as a debug name to visually identify our VAOs
+				char bitmaskCStr[gr::MeshPrimitive::Slot_Count + 1];
+				bitmaskCStr[gr::MeshPrimitive::Slot_Count] = '\0';
+
+				for (uint32_t slotIdx = 0; slotIdx < count; slotIdx++)
+				{
+					const gr::MeshPrimitive::Slot slot = static_cast<gr::MeshPrimitive::Slot>(slotIdx);
+
+					if (vertexStreams[slot] != nullptr)
+					{
+						glEnableVertexArrayAttrib(newVAO, slotIdx);
+
+						// Associate the vertex attribute and binding indexes for the VAO
+						glVertexArrayAttribBinding(
+							newVAO,
+							slotIdx, // Attribute index: The vertex attribute index = [0, GL_MAX_VERTEX_ATTRIBS - 1]
+							slotIdx); // Binding index (Not a vertex attribute) = [0, GL_MAX_VERTEX_ATTRIB_BINDINGS - 1]
+
+						// Note: If this is ever != 0, update opengl::Context::ComputeVAOHash to include the offset
+						constexpr uint32_t relativeOffset = 0;
+
+						// Define our vertex layout:
+						glVertexAttribFormat(
+							slotIdx,									// Attribute index
+							vertexStreams[slot]->GetNumComponents(),	// size: 1/2/3/4 
+							opengl::VertexStream::GetGLDataType(vertexStreams[slot]->GetDataType()),	// Data type
+							vertexStreams[slot]->DoNormalize(),			// Should the data be normalized?
+							relativeOffset);							// relativeOffset: Distance between buffer elements
+
+						bitmaskCStr[gr::MeshPrimitive::Slot_Count - 1 - slotIdx] = '1';
+					}
+					else
+					{
+						bitmaskCStr[gr::MeshPrimitive::Slot_Count - 1 - slotIdx] = '0';
+					}
+				}
+
+				// Renderdoc name for the VAO
+				glObjectLabel(GL_VERTEX_ARRAY, newVAO, -1, std::format("VAO bitmask {}", bitmaskCStr).c_str());
+				glBindVertexArray(0); // Cleanup
+			}
+		}
+		return m_VAOLibrary.at(vaoHash);
 	}
 }

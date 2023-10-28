@@ -170,10 +170,10 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="GameplayManager.cpp" />
     <ClCompile Include="GPUDescriptorHeap_DX12.cpp" />
     <ClCompile Include="GraphicsSystem_ComputeMips.cpp" />
+    <ClCompile Include="GraphicsSystem_Debug.cpp" />
     <ClCompile Include="InputManager_Platform.cpp" />
     <ClCompile Include="InputManager_Win32.cpp" />
     <ClCompile Include="Material_GLTF.cpp" />
-    <ClCompile Include="MeshPrimitive_DX12.cpp" />
     <ClCompile Include="ParameterBlock.cpp" />
     <ClCompile Include="ParameterBlockAllocator.cpp" />
     <ClCompile Include="ParameterBlock_DX12.cpp" />
@@ -237,8 +237,6 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="MeshPrimitive.cpp" />
     <ClCompile Include="Context_OpenGL.cpp" />
     <ClCompile Include="PlayerObject.cpp" />
-    <ClCompile Include="MeshPrimitive_OpenGL.cpp" />
-    <ClCompile Include="MeshPrimitive_Platform.cpp" />
     <ClCompile Include="Context.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="RenderManager.cpp" />
@@ -288,6 +286,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="GameplayManager.h" />
     <ClInclude Include="GPUDescriptorHeap_DX12.h" />
     <ClInclude Include="GraphicsSystem_ComputeMips.h" />
+    <ClInclude Include="GraphicsSystem_Debug.h" />
     <ClInclude Include="HashedDataObject.h" />
     <ClInclude Include="HashUtils.h" />
     <ClInclude Include="ImGuiUtils.h" />
@@ -296,7 +295,6 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="IPlatformParams.h" />
     <ClInclude Include="Material_GLTF.h" />
     <ClInclude Include="MathUtils.h" />
-    <ClInclude Include="MeshPrimitive_DX12.h" />
     <ClInclude Include="ParameterBlock.h" />
     <ClInclude Include="ParameterBlockAllocator.h" />
     <ClInclude Include="ParameterBlock_DX12.h" />
@@ -347,8 +345,6 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="Shader_Platform.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureTarget.h" />
-    <ClInclude Include="MeshPrimitive_OpenGL.h" />
-    <ClInclude Include="MeshPrimitive_Platform.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="Context_OpenGL.h" />
     <ClInclude Include="Context.h" />

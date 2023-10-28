@@ -10,5 +10,5 @@ namespace platform
 	std::unique_ptr<re::VertexStream::PlatformParams> (*VertexStream::CreatePlatformParams)(
 		re::VertexStream const&, re::VertexStream::StreamType type) = nullptr;
 
-	void (*VertexStream::Destroy)(re::VertexStream&) = nullptr;
+	void (*VertexStream::Destroy)(re::VertexStream const&) = nullptr;
 }

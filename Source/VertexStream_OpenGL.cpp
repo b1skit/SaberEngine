@@ -1,12 +1,13 @@
 ﻿// © 2022 Adam Badke. All rights reserved.
+#include "Context_OpenGL.h"
 #include "DebugConfiguration.h"
 #include "MeshPrimitive.h"
 #include "VertexStream_OpenGL.h"
 
 
-namespace
+namespace opengl
 {
-	static uint32_t GLDataType(re::VertexStream::DataType dataType)
+	uint32_t VertexStream::GetGLDataType(re::VertexStream::DataType dataType)
 	{
 		switch (dataType)
 		{
@@ -28,14 +29,10 @@ namespace
 		default:
 			SEAssertF("Invalid data type");
 		}
-
 		return GL_FLOAT;
 	}
-}
 
 
-namespace opengl
-{
 	std::unique_ptr<re::VertexStream::PlatformParams> VertexStream::CreatePlatformParams(
 		re::VertexStream const&, re::VertexStream::StreamType)
 	{
@@ -43,10 +40,9 @@ namespace opengl
 	}
 
 
-	void VertexStream::Create(re::VertexStream& vertexStream, re::MeshPrimitive::Slot slot)
+	void VertexStream::Create(re::VertexStream const& vertexStream)
 	{
 		SEAssert("Vertex stream has no data", vertexStream.GetData() && vertexStream.GetNumElements() > 0);
-		SEAssert("Invalid slot", slot != re::MeshPrimitive::Slot::Slot_Count);
 
 		opengl::VertexStream::PlatformParams* platformParams = 
 			vertexStream.GetPlatformParams()->As<opengl::VertexStream::PlatformParams*>();
@@ -57,29 +53,23 @@ namespace opengl
 			return;
 		}
 
+		// We're creating a single vertex stream, but we don't have knowledge of how it might be used at this point. We
+		// still need a VAO bound in order to create our VBOs, so we create a dummy VAO that will be used when creating
+		// all VBOs that match the configuration of the current vertex stream
+		opengl::Context* oglContext = re::Context::GetAs<opengl::Context*>();
+		re::VertexStream const* vertexStreamPtr = &vertexStream;
+		const GLuint tempVAO = oglContext->GetCreateVAO(&vertexStreamPtr, 1, nullptr);
+
+		glBindVertexArray(tempVAO);
+		
 		// Generate our buffer name, and bind it
 		glGenBuffers(1, &platformParams->m_VBO);
-		
-		opengl::VertexStream::Bind(vertexStream, slot);
 
-		// Define our vertex layout:
-		if (slot != re::MeshPrimitive::Slot::Indexes)
-		{
-			glVertexAttribFormat(
-				slot,									// Attribute index
-				vertexStream.GetNumComponents(),		// size: 1/2/3/4 
-				GLDataType(vertexStream.GetDataType()),	// Data type
-				vertexStream.DoNormalize(),				// Should the data be normalized?
-				0);										// relativeOffset: Distance between buffer elements
-
-			glVertexAttribBinding(
-				slot,		// Attribue index: The actual vertex attribute index = [0, GL_MAX_VERTEX_ATTRIBS​ - 1]
-				slot);		// Binding index: NOT a vertex attribute [0, GL_MAX_VERTEX_ATTRIB_BINDINGS - 1]
-		}
+		opengl::VertexStream::Bind(vertexStream, gr::MeshPrimitive::Slot::Position); // Use any arbitrary slot
 
 		// Buffer and label the data:
 		glNamedBufferData(
-			platformParams->m_VBO,						// Buffer "name"
+			platformParams->m_VBO,				// Buffer "name"
 			vertexStream.GetTotalDataByteSize(),
 			vertexStream.GetData(),
 			GL_STATIC_DRAW);
@@ -88,11 +78,14 @@ namespace opengl
 			GL_BUFFER,
 			platformParams->m_VBO,
 			-1,
-			re::MeshPrimitive::GetSlotDebugName(slot).c_str());
+			std::format("Vertex stream hash {}", vertexStream.GetDataHash()).c_str());
+
+		// Cleanup: Unbind our dummy VAO
+		glBindVertexArray(0);
 	}
 
 
-	void VertexStream::Destroy(re::VertexStream& vertexStream)
+	void VertexStream::Destroy(re::VertexStream const& vertexStream)
 	{
 		opengl::VertexStream::PlatformParams* platformParams =
 			vertexStream.GetPlatformParams()->As<opengl::VertexStream::PlatformParams*>();
@@ -107,26 +100,22 @@ namespace opengl
 	}
 
 
-	void VertexStream::Bind(re::VertexStream& vertexStream, re::MeshPrimitive::Slot slot)
+	void VertexStream::Bind(re::VertexStream const& vertexStream, gr::MeshPrimitive::Slot slot)
 	{
 		opengl::VertexStream::PlatformParams* platformParams =
 			vertexStream.GetPlatformParams()->As<opengl::VertexStream::PlatformParams*>();
 
-		switch (slot)
-		{
-		case re::MeshPrimitive::Slot::Indexes:
+		if (vertexStream.GetStreamType() == re::VertexStream::StreamType::Index)
 		{
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, platformParams->m_VBO);
 		}
-		break;
-		default:
+		else
 		{
 			glBindVertexBuffer(
 				slot,								// Binding index
 				platformParams->m_VBO,				// Buffer
 				0,									// Offset
 				vertexStream.GetElementByteSize()); // Stride
-		}
 		}
 	}
 }

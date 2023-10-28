@@ -28,7 +28,11 @@ namespace util
 
 
 	VertexStreamBuilder::VertexStreamBuilder()
-		: m_hasJoints(false)
+		: m_canBuildNormals(false)
+		, m_canBuildTangents(false)
+		, m_canBuildUVs(false)
+		, m_canBuildColors(false)
+		, m_hasJoints(false)
 		, m_hasWeights(false)
 	{
 		m_interface.m_getNumFaces			= GetNumFaces;
@@ -44,22 +48,31 @@ namespace util
 
 	void VertexStreamBuilder::ConstructMissingVertexAttributes(MeshData* meshData)
 	{
+		const bool isTriangleList = meshData->m_meshParams->m_topologyMode == gr::MeshPrimitive::TopologyMode::TriangleList;
+		SEAssert("Only indexed triangle lists are (currently) supported",
+			meshData->m_indices && meshData->m_positions && isTriangleList);
+
 		LOG("Processing mesh \"%s\" with %d vertices...", meshData->m_name.c_str(), meshData->m_positions->size());
 
-		SEAssert("Cannot pass null data (except for joints/weights). If an attribute does not exist, a vector of size "
-			"0 is expected.", 
-			meshData->m_meshParams && meshData->m_indices && meshData->m_positions && meshData->m_normals && 
-			meshData->m_tangents && meshData->m_UV0 && meshData->m_colors && meshData->m_joints && meshData->m_weights);
+		//SEAssert("Cannot pass null data (except for joints/weights). If an attribute does not exist, a vector of size "
+		//	"0 is expected.",
+		//	meshData->m_meshParams && meshData->m_indices && meshData->m_positions && meshData->m_normals &&
+		//	meshData->m_tangents && meshData->m_UV0 && meshData->m_colors && meshData->m_joints && meshData->m_weights);
 
-		const bool isTriangleList = meshData->m_meshParams->m_topologyMode == re::MeshPrimitive::TopologyMode::TriangleList;
-		SEAssert("Only indexed triangle lists are (currently) supported", isTriangleList);
+		m_canBuildNormals = meshData->m_normals != nullptr;
+		const bool hasNormals = m_canBuildNormals && !meshData->m_normals->empty();
+		
+		m_canBuildTangents = meshData->m_tangents != nullptr;
+		bool hasTangents = m_canBuildTangents && !meshData->m_tangents->empty();
 
-		const bool hasNormals = !meshData->m_normals->empty();
-		bool hasTangents = !meshData->m_tangents->empty();
-		const bool hasUVs = !meshData->m_UV0->empty();
-		const bool hasColors = !meshData->m_colors->empty();
-		m_hasJoints = !meshData->m_joints->empty();
-		m_hasWeights = !meshData->m_weights->empty();
+		m_canBuildUVs = meshData->m_UV0 != nullptr;
+		const bool hasUVs = m_canBuildUVs && !meshData->m_UV0->empty();
+
+		m_canBuildColors = meshData->m_colors != nullptr;
+		const bool hasColors = m_canBuildColors && !meshData->m_colors->empty();
+
+		m_hasJoints = meshData->m_joints && !meshData->m_joints->empty();
+		m_hasWeights = meshData->m_weights && !meshData->m_weights->empty();
 
 		// Ensure we have the mandatory minimum vertex attributes:
 		if (hasNormals && hasTangents && hasUVs && hasColors) // joints, weights are optional
@@ -71,11 +84,12 @@ namespace util
 		// Ensure that any valid indexes will not go out of bounds: Allocate enough space for any missing attributes:
 		const size_t maxElements = std::max(meshData->m_indices->size(), 
 			std::max(meshData->m_positions->size(), 
-				std::max(meshData->m_normals->size(), 
-					std::max(meshData->m_tangents->size(), 
-						std::max(meshData->m_UV0->size(), meshData->m_colors->size())))));
+				std::max(m_canBuildNormals ? meshData->m_normals->size() : 0,
+					std::max(m_canBuildTangents ? meshData->m_tangents->size() : 0,
+						std::max(m_canBuildUVs ? meshData->m_UV0->size() : 0, 
+							m_canBuildColors ? meshData->m_colors->size() : 0)))));
 
-		if (!hasNormals)
+		if (!hasNormals && m_canBuildNormals)
 		{
 			meshData->m_normals->resize(maxElements, vec3(0, 0, 0));
 
@@ -89,15 +103,15 @@ namespace util
 				hasTangents = false;
 			}
 		}
-		if (!hasTangents)
+		if (!hasTangents && m_canBuildTangents)
 		{
 			meshData->m_tangents->resize(maxElements, vec4(0, 0, 0, 0));
 		}
-		if (!hasUVs)
+		if (!hasUVs && m_canBuildUVs)
 		{
 			meshData->m_UV0->resize(maxElements, vec2(0, 0));
 		}
-		if (!hasColors)
+		if (!hasColors && m_canBuildColors)
 		{
 			meshData->m_colors->resize(maxElements, vec4(1.f, 1.f, 1.f, 1.f));
 		}
@@ -114,11 +128,11 @@ namespace util
 		RemoveDegenerateTriangles(meshData);
 
 		// Build any missing attributes:
-		if (!hasNormals)
+		if (!hasNormals && m_canBuildNormals)
 		{
 			BuildFlatNormals(meshData);
 		}
-		if (!hasTangents)
+		if (!hasTangents && m_canBuildTangents)
 		{
 			LOG("MeshPrimitive \"%s\" is missing tangents, they will be generated...", meshData->m_name.c_str());
 
@@ -126,7 +140,7 @@ namespace util
 			tbool result = genTangSpaceDefault(&this->m_context);
 			SEAssert("Failed to generate tangents", result);
 		}
-		if (!hasUVs)
+		if (!hasUVs && m_canBuildUVs)
 		{
 			BuildSimpleTriangleUVs(meshData);
 		}
@@ -146,10 +160,10 @@ namespace util
 	{
 		SEAssert("Expected a triangle list", meshData->m_indices->size() % 3 == 0);
 		SEAssert("Expected a triangle list", meshData->m_positions->size() >= meshData->m_indices->size());
-		SEAssert("Expected a triangle list", meshData->m_normals->size() >= meshData->m_indices->size());
-		SEAssert("Expected a triangle list", meshData->m_tangents->size() >= meshData->m_indices->size());
-		SEAssert("Expected a triangle list", meshData->m_UV0->size() >= meshData->m_indices->size());
-		SEAssert("Expected a triangle list", meshData->m_colors->size() >= meshData->m_indices->size());
+		SEAssert("Expected a triangle list", !m_canBuildNormals || meshData->m_normals->size() >= meshData->m_indices->size());
+		SEAssert("Expected a triangle list", !m_canBuildTangents || meshData->m_tangents->size() >= meshData->m_indices->size());
+		SEAssert("Expected a triangle list", !m_canBuildUVs || meshData->m_UV0->size() >= meshData->m_indices->size());
+		SEAssert("Expected a triangle list", !m_canBuildColors || meshData->m_colors->size() >= meshData->m_indices->size());
 		SEAssert("Expected a triangle list", (!m_hasJoints || meshData->m_joints->size() >= meshData->m_indices->size()));
 		SEAssert("Expected a triangle list", (!m_hasWeights || meshData->m_weights->size() >= meshData->m_indices->size()));
 
@@ -211,21 +225,33 @@ namespace util
 				newPositions.emplace_back(meshData->m_positions->at(meshData->m_indices->at(i + 1)));
 				newPositions.emplace_back(meshData->m_positions->at(meshData->m_indices->at(i + 2)));
 
-				newNormals.emplace_back(meshData->m_normals->at(meshData->m_indices->at(i)));
-				newNormals.emplace_back(meshData->m_normals->at(meshData->m_indices->at(i + 1)));
-				newNormals.emplace_back(meshData->m_normals->at(meshData->m_indices->at(i + 2)));
+				if (m_canBuildNormals)
+				{
+					newNormals.emplace_back(meshData->m_normals->at(meshData->m_indices->at(i)));
+					newNormals.emplace_back(meshData->m_normals->at(meshData->m_indices->at(i + 1)));
+					newNormals.emplace_back(meshData->m_normals->at(meshData->m_indices->at(i + 2)));
+				}
 
-				newTangents.emplace_back(meshData->m_tangents->at(meshData->m_indices->at(i)));
-				newTangents.emplace_back(meshData->m_tangents->at(meshData->m_indices->at(i + 1)));
-				newTangents.emplace_back(meshData->m_tangents->at(meshData->m_indices->at(i + 2)));
+				if (m_canBuildTangents)
+				{
+					newTangents.emplace_back(meshData->m_tangents->at(meshData->m_indices->at(i)));
+					newTangents.emplace_back(meshData->m_tangents->at(meshData->m_indices->at(i + 1)));
+					newTangents.emplace_back(meshData->m_tangents->at(meshData->m_indices->at(i + 2)));
+				}
 
-				newUVs.emplace_back(meshData->m_UV0->at(meshData->m_indices->at(i)));
-				newUVs.emplace_back(meshData->m_UV0->at(meshData->m_indices->at(i + 1)));
-				newUVs.emplace_back(meshData->m_UV0->at(meshData->m_indices->at(i + 2)));
+				if (m_canBuildUVs)
+				{
+					newUVs.emplace_back(meshData->m_UV0->at(meshData->m_indices->at(i)));
+					newUVs.emplace_back(meshData->m_UV0->at(meshData->m_indices->at(i + 1)));
+					newUVs.emplace_back(meshData->m_UV0->at(meshData->m_indices->at(i + 2)));
+				}
 
-				newColors.emplace_back(meshData->m_colors->at(meshData->m_indices->at(i)));
-				newColors.emplace_back(meshData->m_colors->at(meshData->m_indices->at(i + 1)));
-				newColors.emplace_back(meshData->m_colors->at(meshData->m_indices->at(i + 2)));
+				if (m_canBuildColors)
+				{
+					newColors.emplace_back(meshData->m_colors->at(meshData->m_indices->at(i)));
+					newColors.emplace_back(meshData->m_colors->at(meshData->m_indices->at(i + 1)));
+					newColors.emplace_back(meshData->m_colors->at(meshData->m_indices->at(i + 2)));
+				}
 
 				if (m_hasJoints)
 				{
@@ -248,10 +274,24 @@ namespace util
 
 		*meshData->m_indices = move(newIndices);
 		*meshData->m_positions = move(newPositions);
-		*meshData->m_normals = move(newNormals);
-		*meshData->m_tangents = move(newTangents);
-		*meshData->m_UV0 = move(newUVs);
-		*meshData->m_colors = move(newColors);
+
+		if (m_canBuildNormals)
+		{
+			*meshData->m_normals = move(newNormals);
+		}
+		if (m_canBuildTangents)
+		{
+			*meshData->m_tangents = move(newTangents);
+		}
+		if (m_canBuildUVs)
+		{
+			*meshData->m_UV0 = move(newUVs);
+		}
+		if (m_canBuildColors)
+		{
+			*meshData->m_colors = move(newColors);
+		}
+
 		if (m_hasJoints)
 		{
 			*meshData->m_joints = move(newJoints);
@@ -271,7 +311,9 @@ namespace util
 	void VertexStreamBuilder::BuildFlatNormals(MeshData* meshData)
 	{
 		SEAssert("Expected a triangle list and pre-allocated normals vector", 
-			meshData->m_indices->size() % 3 == 0 && meshData->m_normals->size() == meshData->m_indices->size());
+			m_canBuildNormals && 
+			meshData->m_indices->size() % 3 == 0 && 
+			meshData->m_normals->size() == meshData->m_indices->size());
 
 		LOG("MeshPrimitive \"%s\" is missing normals, generating flat normals...", meshData->m_name.c_str());
 
@@ -296,7 +338,9 @@ namespace util
 	void VertexStreamBuilder::BuildSimpleTriangleUVs(MeshData* meshData)
 	{
 		SEAssert("Expected a triangle list and pre-allocated UV0 vector",
-			meshData->m_indices->size() % 3 == 0 && meshData->m_UV0->size() == meshData->m_indices->size());
+			m_canBuildUVs && 
+			meshData->m_indices->size() % 3 == 0 && 
+			meshData->m_UV0->size() == meshData->m_indices->size());
 
 		LOG("MeshPrimitive \"%s\" is missing UVs, generating a simple set...", meshData->m_name.c_str());
 
@@ -348,10 +392,24 @@ namespace util
 		{
 			newIndices[i] = static_cast<uint32_t>(i);
 			newPositions[i] = meshData->m_positions->at(meshData->m_indices->at(i));
-			newNormals[i] = meshData->m_normals->at(meshData->m_indices->at(i));
-			newTangents[i] = meshData->m_tangents->at(meshData->m_indices->at(i));
-			newUVs[i] = meshData->m_UV0->at(meshData->m_indices->at(i));
-			newColors[i] = meshData->m_colors->at(meshData->m_indices->at(i));
+
+			if (m_canBuildNormals)
+			{
+				newNormals[i] = meshData->m_normals->at(meshData->m_indices->at(i));
+			}
+			if (m_canBuildTangents)
+			{
+				newTangents[i] = meshData->m_tangents->at(meshData->m_indices->at(i));
+			}
+			if (m_canBuildUVs)
+			{
+				newUVs[i] = meshData->m_UV0->at(meshData->m_indices->at(i));
+			}
+			if (m_canBuildColors)
+			{
+				newColors[i] = meshData->m_colors->at(meshData->m_indices->at(i));
+			}
+
 			if (m_hasJoints)
 			{
 				newJoints[i] = meshData->m_joints->at(meshData->m_indices->at(i));
@@ -364,10 +422,24 @@ namespace util
 
 		*meshData->m_indices	= move(newIndices);
 		*meshData->m_positions	= move(newPositions);
-		*meshData->m_normals	= move(newNormals);
-		*meshData->m_tangents	= move(newTangents);
-		*meshData->m_UV0		= move(newUVs);
-		*meshData->m_colors		= move(newColors);
+
+		if (m_canBuildNormals)
+		{
+			*meshData->m_normals = move(newNormals);
+		}
+		if (m_canBuildTangents)
+		{
+			*meshData->m_tangents = move(newTangents);
+		}
+		if (m_canBuildUVs)
+		{
+			*meshData->m_UV0 = move(newUVs);
+		}
+		if (m_canBuildColors)
+		{
+			*meshData->m_colors = move(newColors);
+		}
+
 		if (m_hasJoints)
 		{
 			*meshData->m_joints = move(newJoints);
@@ -408,17 +480,23 @@ namespace util
 		// Compute the total number of floats for all attributes per vertex:
 		const size_t floatsPerVertex = (
 			sizeof(vec3)										// position
-			+ sizeof(vec3)										// normal
-			+ sizeof(vec4)										// tangent
-			+ sizeof(vec2)										// uv0
-			+ sizeof(vec4)										// color
+			+ (m_canBuildNormals ? sizeof(vec3) : 0)			// normal
+			+ (m_canBuildTangents ? sizeof(vec4) : 0)			// tangent
+			+ (m_canBuildUVs ? sizeof(vec2) : 0)				// uv0
+			+ (m_canBuildColors ? sizeof(vec4) : 0)				// color
 			+ (m_hasJoints ? sizeof(glm::tvec4<uint8_t>) : 0)	// joints
 			+ (m_hasWeights ? sizeof(vec4) : 0)					// weights
 				) / sizeof(float);
 		
 		// Make sure we've counted for all non-index members in MeshData
 		SEAssert("Data size mismatch/miscalulation", 
-			floatsPerVertex == (3 + 3 + 4 + 2 + 4 + (m_hasJoints ? 1 : 0) + (m_hasWeights ? 4 : 0)));
+			floatsPerVertex == (3 + 
+				m_canBuildNormals * 3 +
+				m_canBuildTangents * 4 +
+				m_canBuildUVs * 2 +
+				m_canBuildColors * 4 +
+				m_hasJoints * 1 + 
+				m_hasWeights * 4));
 
 		// pfVertexDataOut: iNrVerticesIn * iFloatsPerVert * sizeof(float)
 		const size_t numElements = meshData->m_positions->size();
@@ -441,41 +519,53 @@ namespace util
 			sizeof(vec3));	// Position = vec3
 		byteOffset += sizeof(vec3);
 		
-		PackAttribute(
-			(float*)meshData->m_normals->data(),
-			packedVertexData.data(),
-			byteOffset,
-			vertexStrideBytes,
-			numElements,
-			sizeof(vec3));	// Normals = vec3
-		byteOffset += sizeof(vec3);
+		if (m_canBuildNormals)
+		{
+			PackAttribute(
+				(float*)meshData->m_normals->data(),
+				packedVertexData.data(),
+				byteOffset,
+				vertexStrideBytes,
+				numElements,
+				sizeof(vec3));	// Normals = vec3
+			byteOffset += sizeof(vec3);
+		}
 
-		PackAttribute(
-			(float*)meshData->m_tangents->data(),
-			packedVertexData.data(),
-			byteOffset,
-			vertexStrideBytes,
-			numElements,
-			sizeof(vec4));	// tangents = vec4
-		byteOffset += sizeof(vec4);
+		if (m_canBuildTangents)
+		{
+			PackAttribute(
+				(float*)meshData->m_tangents->data(),
+				packedVertexData.data(),
+				byteOffset,
+				vertexStrideBytes,
+				numElements,
+				sizeof(vec4));	// tangents = vec4
+			byteOffset += sizeof(vec4);
+		}
 
-		PackAttribute(
-			(float*)meshData->m_UV0->data(),
-			packedVertexData.data(),
-			byteOffset,
-			vertexStrideBytes,
-			numElements,
-			sizeof(vec2));	// UV0 = vec2
-		byteOffset += sizeof(vec2);
+		if (m_canBuildUVs)
+		{
+			PackAttribute(
+				(float*)meshData->m_UV0->data(),
+				packedVertexData.data(),
+				byteOffset,
+				vertexStrideBytes,
+				numElements,
+				sizeof(vec2));	// UV0 = vec2
+			byteOffset += sizeof(vec2);
+		}
 
-		PackAttribute(
-			(float*)meshData->m_colors->data(),
-			packedVertexData.data(),
-			byteOffset,
-			vertexStrideBytes,
-			numElements,
-			sizeof(vec4));	// colors = vec4
-		byteOffset += sizeof(vec4);
+		if (m_canBuildColors)
+		{
+			PackAttribute(
+				(float*)meshData->m_colors->data(),
+				packedVertexData.data(),
+				byteOffset,
+				vertexStrideBytes,
+				numElements,
+				sizeof(vec4));	// colors = vec4
+			byteOffset += sizeof(vec4);
+		}
 
 		if (m_hasJoints)
 		{
@@ -508,10 +598,23 @@ namespace util
 		// Repack existing data streams according to the updated indexes:
 		meshData->m_indices->resize(remapTable.size());
 		meshData->m_positions->resize(numUniqueVertsFound);
-		meshData->m_normals->resize(numUniqueVertsFound);
-		meshData->m_tangents->resize(numUniqueVertsFound);
-		meshData->m_UV0->resize(numUniqueVertsFound);
-		meshData->m_colors->resize(numUniqueVertsFound);
+
+		if (m_canBuildNormals)
+		{
+			meshData->m_normals->resize(numUniqueVertsFound);
+		}
+		if (m_canBuildTangents)
+		{
+			meshData->m_tangents->resize(numUniqueVertsFound);
+		}
+		if (m_canBuildUVs)
+		{
+			meshData->m_UV0->resize(numUniqueVertsFound);
+		}
+		if (m_canBuildColors)
+		{
+			meshData->m_colors->resize(numUniqueVertsFound);
+		}
 		if (m_hasJoints)
 		{
 			meshData->m_joints->resize(numUniqueVertsFound);
@@ -534,17 +637,26 @@ namespace util
 			memcpy(&meshData->m_positions->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec3));
 			packedVertByteOffset += sizeof(vec3);
 
-			memcpy(&meshData->m_normals->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec3));
-			packedVertByteOffset += sizeof(vec3);
-
-			memcpy(&meshData->m_tangents->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec4));
-			packedVertByteOffset += sizeof(vec4);
-
-			memcpy(&meshData->m_UV0->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec2));
-			packedVertByteOffset += sizeof(vec2);
-
-			memcpy(&meshData->m_colors->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec4));
-			packedVertByteOffset += sizeof(vec4);
+			if (m_canBuildNormals)
+			{
+				memcpy(&meshData->m_normals->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec3));
+				packedVertByteOffset += sizeof(vec3);
+			}
+			if (m_canBuildTangents)
+			{
+				memcpy(&meshData->m_tangents->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec4));
+				packedVertByteOffset += sizeof(vec4);
+			}
+			if (m_canBuildUVs)
+			{
+				memcpy(&meshData->m_UV0->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec2));
+				packedVertByteOffset += sizeof(vec2);
+			}
+			if (m_canBuildColors)
+			{
+				memcpy(&meshData->m_colors->at(vertexIndex).x, currentVertStart + packedVertByteOffset, sizeof(vec4));
+				packedVertByteOffset += sizeof(vec4);
+			}
 
 			if (m_hasJoints)
 			{
@@ -575,7 +687,7 @@ namespace util
 		MeshData* meshData = static_cast<MeshData*> (m_context->m_pUserData);
 
 		SEAssert("Only triangular faces are currently supported", 
-			meshData->m_meshParams->m_topologyMode == re::MeshPrimitive::TopologyMode::TriangleList);
+			meshData->m_meshParams->m_topologyMode == gr::MeshPrimitive::TopologyMode::TriangleList);
 		
 		return 3;
 	}

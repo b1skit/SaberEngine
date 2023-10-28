@@ -1,6 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "DebugConfiguration.h"
 #include "MeshPrimitive.h"
+#include "RenderManager.h"
+#include "SceneManager.h"
 #include "VertexStream.h"
 #include "VertexStream_Platform.h"
 
@@ -94,9 +96,31 @@ namespace
 
 namespace re
 {
+	std::shared_ptr<re::VertexStream> VertexStream::Create(
+		StreamType type, uint32_t numComponents, DataType dataType, Normalize doNormalize, std::vector<uint8_t>&& data)
+	{
+		std::shared_ptr<re::VertexStream> newVertexStream;
+		newVertexStream.reset(new VertexStream(
+			type,
+			numComponents,
+			dataType,
+			doNormalize,
+			std::move(data)));
+
+		bool duplicateExists = en::SceneManager::GetSceneData()->AddUniqueVertexStream(newVertexStream);
+		if (!duplicateExists)
+		{
+			re::RenderManager::Get()->RegisterForCreate(newVertexStream);
+		}
+
+		return newVertexStream;
+	}
+
+
 	VertexStream::VertexStream(
 		StreamType type, uint32_t numComponents, DataType dataType, Normalize doNormalize, std::vector<uint8_t>&& data)
-		: m_numComponents(numComponents)
+		: m_streamType(type)
+		, m_numComponents(numComponents)
 		, m_dataType(dataType)
 		, m_doNormalize(doNormalize)
 		, m_platformParams(nullptr)
@@ -136,10 +160,24 @@ namespace re
 			SEAssertF("Invalid data type");
 		}
 		SEAssert("Data and description don't match",
-			data.size() % ((static_cast<size_t>(numComponents) * m_componentByteSize)) == 0);
+			m_data.size() % ((static_cast<size_t>(m_numComponents) * m_componentByteSize)) == 0);
 
 
 		m_platformParams = std::move(platform::VertexStream::CreatePlatformParams(*this, type));
+
+		ComputeDataHash();
+	}
+
+
+	void VertexStream::ComputeDataHash()
+	{
+		AddDataBytesToHash(m_streamType);
+		AddDataBytesToHash(m_numComponents);
+		AddDataBytesToHash(m_componentByteSize);
+		AddDataBytesToHash(m_doNormalize);
+		AddDataBytesToHash(m_dataType);
+
+		AddDataBytesToHash(GetData(), GetTotalDataByteSize());
 	}
 
 

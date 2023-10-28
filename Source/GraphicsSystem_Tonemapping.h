@@ -23,9 +23,15 @@ namespace gr
 		void CreateBatches() override;
 
 	private:
-		std::shared_ptr<re::MeshPrimitive> m_screenAlignedQuad;
+		std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
 		std::shared_ptr<re::RenderStage> m_tonemappingStage;
 
 		re::RenderSystem* m_owningRenderSystem;
 	};
+
+
+	inline std::shared_ptr<re::TextureTargetSet const> TonemappingGraphicsSystem::GetFinalTextureTargetSet() const
+	{
+		return m_tonemappingStage->GetTextureTargetSet();
+	}
 }

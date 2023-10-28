@@ -8,13 +8,13 @@
 #include "Camera.h"
 #include "Context_OpenGL.h"
 #include "GraphicsSystem.h"
+#include "GraphicsSystem_Bloom.h"
+#include "GraphicsSystem_Debug.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystem_Skybox.h"
-#include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
-#include "MeshPrimitive_OpenGL.h"
 #include "ParameterBlock_OpenGL.h"
 #include "RenderManager_OpenGL.h"
 #include "RenderManager.h"
@@ -29,6 +29,7 @@
 #include "Transform.h"
 #include "TextureTarget_OpenGL.h"
 #include "Texture_OpenGL.h"
+#include "VertexStream_OpenGL.h"
 
 using gr::BloomGraphicsSystem;
 using gr::Camera;
@@ -51,6 +52,28 @@ using glm::vec4;
 using glm::mat3;
 using glm::mat4;
 
+
+namespace
+{
+	constexpr GLenum TranslateToOpenGLPrimitiveType(gr::MeshPrimitive::TopologyMode topologyMode)
+	{
+		switch (topologyMode)
+		{
+		case gr::MeshPrimitive::TopologyMode::PointList: return GL_POINTS;
+		case gr::MeshPrimitive::TopologyMode::LineList: return GL_LINES;
+		case gr::MeshPrimitive::TopologyMode::LineStrip: return GL_LINE_STRIP;
+		case gr::MeshPrimitive::TopologyMode::TriangleList: return GL_TRIANGLES;
+		case gr::MeshPrimitive::TopologyMode::TriangleStrip: return GL_TRIANGLE_STRIP;
+		case gr::MeshPrimitive::TopologyMode::LineListAdjacency: return GL_LINES_ADJACENCY;
+		case gr::MeshPrimitive::TopologyMode::LineStripAdjacency: return GL_LINE_STRIP_ADJACENCY;
+		case gr::MeshPrimitive::TopologyMode::TriangleListAdjacency: return GL_TRIANGLES_ADJACENCY;
+		case gr::MeshPrimitive::TopologyMode::TriangleStripAdjacency: return GL_TRIANGLE_STRIP_ADJACENCY;
+		default:
+			SEAssertF("Unsupported topology mode");
+			return GL_TRIANGLES;
+		}
+	}
+}
 
 namespace opengl
 {
@@ -85,6 +108,9 @@ namespace opengl
 				std::make_shared<gr::TonemappingGraphicsSystem>();
 			graphicsSystems.emplace_back(tonemappingGS);
 
+			std::shared_ptr<gr::DebugGraphicsSystem> debugGS = std::make_shared<gr::DebugGraphicsSystem>();
+			graphicsSystems.emplace_back(debugGS);
+
 			// Build the creation pipeline:
 			deferredLightingGS->CreateResourceGenerationStages(
 				defaultRS->GetRenderPipeline().AddNewStagePipeline("Deferred Lighting Resource Creation"));
@@ -94,6 +120,7 @@ namespace opengl
 			skyboxGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(skyboxGS->GetName()));
 			bloomGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(bloomGS->GetName()));
 			tonemappingGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(tonemappingGS->GetName()));
+			debugGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(debugGS->GetName()));
 		};
 		defaultRenderSystem->SetCreatePipeline(CreatePipeline);
 
@@ -108,6 +135,7 @@ namespace opengl
 			gr::SkyboxGraphicsSystem* skyboxGS = renderSystem->GetGraphicsSystem<gr::SkyboxGraphicsSystem>();
 			gr::BloomGraphicsSystem* bloomGS = renderSystem->GetGraphicsSystem<gr::BloomGraphicsSystem>();
 			gr::TonemappingGraphicsSystem* tonemappingGS = renderSystem->GetGraphicsSystem<gr::TonemappingGraphicsSystem>();
+			gr::DebugGraphicsSystem* debugGS = renderSystem->GetGraphicsSystem<gr::DebugGraphicsSystem>();
 
 			// Execute per-frame updates:
 			gbufferGS->PreRender();
@@ -116,6 +144,7 @@ namespace opengl
 			skyboxGS->PreRender();
 			bloomGS->PreRender();
 			tonemappingGS->PreRender();
+			debugGS->PreRender();
 		};
 		defaultRenderSystem->SetUpdatePipeline(UpdatePipeline);
 	}
@@ -159,14 +188,16 @@ namespace opengl
 				opengl::Shader::Create(*newObject.second);
 			}
 		}
-		// Mesh Primitives:
-		if (renderManager.m_newMeshPrimitives.HasReadData())
+		
+		// Vertex streams:
+		if (renderManager.m_newVertexStreams.HasReadData())
 		{
-			for (auto& newObject : renderManager.m_newMeshPrimitives.Get())
+			for (auto& newObject : renderManager.m_newVertexStreams.Get())
 			{
-				opengl::MeshPrimitive::Create(*newObject.second);
+				opengl::VertexStream::Create(*newObject.second);
 			}
 		}
+
 		// Parameter Blocks:
 		if (renderManager.m_newParameterBlocks.HasReadData())
 		{
@@ -273,6 +304,8 @@ namespace opengl
 						SEAssertF("Invalid render stage type");
 					}
 
+					GLuint currentVAO = 0;
+
 					// Render stage batches:
 					std::vector<re::Batch> const& batches = renderStage->GetStageBatches();
 					for (re::Batch const& batch : batches)
@@ -311,16 +344,46 @@ namespace opengl
 						{
 						case re::RenderStage::RenderStageType::Graphics:
 						{
-							opengl::MeshPrimitive::PlatformParams const* meshPlatParams =
-								batch.GetMeshPrimitive()->GetPlatformParams()->As<opengl::MeshPrimitive::PlatformParams const*>();
+							re::Batch::GraphicsParams const& batchGraphicsParams = batch.GetGraphicsParams();
 
-							opengl::MeshPrimitive::Bind(*batch.GetMeshPrimitive());
+							 const uint8_t vertexStreamCount = 
+								static_cast<uint8_t>(batchGraphicsParams.m_vertexStreams.size());
+
+							// Set the VAO:
+							// TODO: The VAO should be cached on the batch instead of re-hasing it for every single
+							// batch. Fix this once we have a batch allocator
+							const GLuint vertexStreamVAO = context->GetCreateVAO(
+								batchGraphicsParams.m_vertexStreams.data(), 
+								vertexStreamCount,
+								batchGraphicsParams.m_indexStream);
+							if (vertexStreamVAO != currentVAO)
+							{
+								glBindVertexArray(vertexStreamVAO);
+								currentVAO = vertexStreamVAO;
+							}
+
+							// Bind the vertex streams:
+							for (uint8_t slotIdx = 0; slotIdx < vertexStreamCount; slotIdx++)
+							{
+								if (batchGraphicsParams.m_vertexStreams[slotIdx])
+								{
+									opengl::VertexStream::Bind(
+										*batchGraphicsParams.m_vertexStreams[slotIdx],
+										static_cast<gr::MeshPrimitive::Slot>(slotIdx));
+								}
+							}
+							if (batchGraphicsParams.m_indexStream)
+							{
+								opengl::VertexStream::Bind(
+									*batchGraphicsParams.m_indexStream,
+									static_cast<gr::MeshPrimitive::Slot>(0)); // Arbitrary slot, not used for indexes
+							}
 
 							glDrawElementsInstanced(
-								meshPlatParams->m_topologyMode,		// GLenum mode
-								(GLsizei)batch.GetMeshPrimitive()->GetVertexStream(re::MeshPrimitive::Indexes)->GetNumElements(),	// GLsizei count
+								TranslateToOpenGLPrimitiveType(batchGraphicsParams.m_batchTopologyMode), // GLenum mode
+								(GLsizei)batchGraphicsParams.m_indexStream->GetNumElements(), // GLsizei count
 								GL_UNSIGNED_INT,					// GLenum type. TODO: Store type in parameters, instead of assuming uints
-								0,									// Byte offset (into bound index buffer)
+								0,									// Byte offset (into index buffer)
 								(GLsizei)batch.GetInstanceCount());	// Instance count
 						}
 						break;

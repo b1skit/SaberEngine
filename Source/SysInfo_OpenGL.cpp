@@ -21,4 +21,15 @@ namespace opengl
 		}
 		return s_maxColorAttachments;
 	}
+
+
+	uint8_t SysInfo::GetMaxVertexAttributes()
+	{
+		static GLint s_maxVertexAttributes = 0;
+		if (s_maxVertexAttributes == 0)
+		{
+			glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &s_maxVertexAttributes);
+		}
+		return s_maxVertexAttributes;
+	}
 }

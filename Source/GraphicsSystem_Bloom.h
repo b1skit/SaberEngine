@@ -28,7 +28,7 @@ namespace gr
 		re::RenderSystem* m_owningRenderSystem;
 
 		// Emissive blit:
-		std::shared_ptr<re::MeshPrimitive> m_screenAlignedQuad;
+		std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
 		std::shared_ptr<re::RenderStage> m_emissiveBlitStage;
 
 		// Bloom compute:

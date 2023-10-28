@@ -22,29 +22,29 @@ using glm::vec4;
 namespace
 {
 	constexpr bool IsBatchAndShaderTopologyCompatible(
-		re::MeshPrimitive::TopologyMode topologyMode, re::PipelineState::TopologyType topologyType)
+		gr::MeshPrimitive::TopologyMode topologyMode, re::PipelineState::TopologyType topologyType)
 	{
 		switch (topologyType)
 		{
 		case re::PipelineState::TopologyType::Point:
 		{
-			return topologyMode == re::MeshPrimitive::TopologyMode::PointList;
+			return topologyMode == gr::MeshPrimitive::TopologyMode::PointList;
 		}
 		break;
 		case re::PipelineState::TopologyType::Line:
 		{
-			return topologyMode == re::MeshPrimitive::TopologyMode::LineList ||
-				topologyMode == re::MeshPrimitive::TopologyMode::LineStrip ||
-				topologyMode == re::MeshPrimitive::TopologyMode::LineListAdjacency ||
-				topologyMode == re::MeshPrimitive::TopologyMode::LineStripAdjacency;
+			return topologyMode == gr::MeshPrimitive::TopologyMode::LineList ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::LineStrip ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::LineListAdjacency ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::LineStripAdjacency;
 		}
 		break;
 		case re::PipelineState::TopologyType::Triangle:
 		{
-			return topologyMode == re::MeshPrimitive::TopologyMode::TriangleList ||
-				topologyMode == re::MeshPrimitive::TopologyMode::TriangleStrip ||
-				topologyMode == re::MeshPrimitive::TopologyMode::TriangleListAdjacency ||
-				topologyMode == re::MeshPrimitive::TopologyMode::TriangleStripAdjacency;
+			return topologyMode == gr::MeshPrimitive::TopologyMode::TriangleList ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleStrip ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleListAdjacency ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleStripAdjacency;
 		}
 		break;
 		case re::PipelineState::TopologyType::Patch:
@@ -121,7 +121,7 @@ namespace re
 		, m_stageShader(nullptr)
 		, m_textureTargetSet(nullptr)
 		, m_depthTextureInputIdx(k_noDepthTexAsInputFlag)
-		, m_batchFilterMask(0)	// Accept all batches by default
+		, m_batchFilterBitmask(0)	// Accept all batches by default
 	{
 		SEAssert("Invalid RenderStage name", !GetName().empty());
 
@@ -261,13 +261,13 @@ namespace re
 		SEAssert("Mesh topology mode is incompatible with shader pipeline state topology type",
 			m_type == RenderStageType::Compute ||
 			((!m_stageShader || IsBatchAndShaderTopologyCompatible(
-				batch.GetMeshPrimitive()->GetMeshParams().m_topologyMode,
+				batch.GetGraphicsParams().m_batchTopologyMode,
 				m_stageShader->GetPipelineState().GetTopologyType()) ) &&
 			(!batch.GetShader() || IsBatchAndShaderTopologyCompatible(
-				batch.GetMeshPrimitive()->GetMeshParams().m_topologyMode,
+				batch.GetGraphicsParams().m_batchTopologyMode,
 				batch.GetShader()->GetPipelineState().GetTopologyType())) ));
-
-		if (m_batchFilterMask & batch.GetBatchFilterMask() || !m_batchFilterMask) // Accept all batches by default
+		
+		if (m_batchFilterBitmask & batch.GetBatchFilterMask() || !m_batchFilterBitmask) // Accept all batches by default
 		{
 			m_stageBatches.emplace_back(batch);
 		}
@@ -276,7 +276,7 @@ namespace re
 
 	void RenderStage::SetBatchFilterMaskBit(re::Batch::Filter filterBit)
 	{
-		m_batchFilterMask |= (1 << (uint32_t)filterBit);
+		m_batchFilterBitmask |= (1 << (uint32_t)filterBit);
 	}
 
 

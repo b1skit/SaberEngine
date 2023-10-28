@@ -17,7 +17,7 @@ namespace util
 		struct MeshData
 		{
 			std::string const& m_name; // For debug spew...
-			re::MeshPrimitive::MeshPrimitiveParams const* m_meshParams;
+			gr::MeshPrimitive::MeshPrimitiveParams const* m_meshParams;
 			std::vector<uint32_t>* m_indices;
 			std::vector<glm::vec3>* m_positions;
 			std::vector<glm::vec3>* m_normals;			// Created as face normals if empty
@@ -44,6 +44,11 @@ namespace util
 		void WeldTriangles(MeshData* meshData);
 
 		// Optional vertex attributes:
+		bool m_canBuildNormals;
+		bool m_canBuildTangents;
+		bool m_canBuildUVs;
+		bool m_canBuildColors;
+
 		bool m_hasJoints;
 		bool m_hasWeights;
 

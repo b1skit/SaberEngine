@@ -2,7 +2,6 @@
 #include "Batch.h"
 #include "CastUtils.h"
 #include "DebugConfiguration.h"
-#include "MeshPrimitive.h"
 #include "Material.h"
 #include "Mesh.h"
 #include "ParameterBlock.h"
@@ -11,16 +10,15 @@
 #include "Texture.h"
 #include "Transform.h"
 
-
 using std::string;
 using std::shared_ptr;
 using std::make_shared;
+
 
 namespace
 {
 	constexpr size_t k_batchParamBlockIDsReserveAmount = 10;
 }
-
 
 namespace re
 {
@@ -30,13 +28,17 @@ namespace re
 		unmergedBatches.reserve(meshes.size());
 		for (shared_ptr<gr::Mesh> mesh : meshes)
 		{
-			for (shared_ptr<re::MeshPrimitive> const meshPrimitive : mesh->GetMeshPrimitives())
+			for (shared_ptr<gr::MeshPrimitive> const meshPrimitive : mesh->GetMeshPrimitives())
 			{
 				unmergedBatches.emplace_back(std::pair<re::Batch, gr::Transform*>(
 					{
 						meshPrimitive.get(),
 						meshPrimitive->GetMeshMaterial()
 					},
+					mesh->GetTransform()));
+
+				unmergedBatches.emplace_back(std::pair<re::Batch, gr::Transform*>(
+					re::Batch(meshPrimitive.get(), meshPrimitive->GetMeshMaterial()),
 					mesh->GetTransform()));
 			}
 		}
@@ -45,8 +47,8 @@ namespace re
 		std::sort(
 			unmergedBatches.begin(),
 			unmergedBatches.end(),
-			[](std::pair<Batch, gr::Transform*> const& a, std::pair<Batch, gr::Transform*> const& b)
-			-> bool { return (a.first.GetDataHash() > b.first.GetDataHash()); }
+			[](std::pair<Batch, gr::Transform*> const& a, std::pair<Batch, gr::Transform*> const& b) -> bool 
+				{ return (a.first.GetDataHash() > b.first.GetDataHash()); }
 		);
 
 		// Assemble a list of merged batches:
@@ -56,7 +58,7 @@ namespace re
 		do
 		{
 			// Add the first batch in the sequence to our final list:
-			mergedBatches.emplace_back(unmergedBatches[unmergedIdx].first);
+			mergedBatches.emplace_back(std::move(unmergedBatches[unmergedIdx].first));
 			const uint64_t curBatchHash = mergedBatches.back().GetDataHash();
 
 			// Find the index of the last batch with a matching hash in the sequence:
@@ -95,16 +97,27 @@ namespace re
 	}
 
 
-	Batch::Batch(re::MeshPrimitive const* meshPrimitive, gr::Material* materialOverride)
+	Batch::Batch(gr::MeshPrimitive const* meshPrimitive, gr::Material* materialOverride)
 		: m_type(BatchType::Graphics)
-		, m_graphicsParams{
-			.m_batchMeshPrimitive = meshPrimitive,
-			.m_batchGeometryMode = GeometryMode::Indexed,
-			.m_numInstances = 1}
+		, m_graphicsParams{}
 		, m_batchShader(nullptr)
-		, m_batchFilterMask(0)
+		, m_batchFilterBitmask(0)
 	{
 		m_batchParamBlocks.reserve(k_batchParamBlockIDsReserveAmount);
+
+		m_graphicsParams = GraphicsParams{
+			.m_batchGeometryMode = GeometryMode::Indexed,
+			.m_numInstances = 1,
+			.m_batchTopologyMode = meshPrimitive->GetMeshParams().m_topologyMode,
+		};
+
+		std::vector<re::VertexStream const*> const& vertexStreams = meshPrimitive->GetVertexStreams();
+		memset(&m_graphicsParams.m_vertexStreams, 0, m_graphicsParams.m_vertexStreams.size() * sizeof(re::VertexStream const*));
+		for (uint8_t slotIdx = 0; slotIdx < static_cast<uint8_t>(vertexStreams.size()); slotIdx++)
+		{
+			m_graphicsParams.m_vertexStreams[slotIdx] = vertexStreams[slotIdx];
+		}
+		m_graphicsParams.m_indexStream = meshPrimitive->GetIndexStream();
 
 		gr::Material* material = materialOverride ? materialOverride : meshPrimitive->GetMeshMaterial();
 		if (material)
@@ -145,7 +158,7 @@ namespace re
 		: m_type(BatchType::Compute)
 		, m_computeParams(computeParams)
 		, m_batchShader(nullptr)
-		, m_batchFilterMask(0)
+		, m_batchFilterBitmask(0)
 	{
 	}
 
@@ -176,15 +189,21 @@ namespace re
 	void Batch::ComputeDataHash()
 	{
 		// Batch filter mask bit:
-		AddDataBytesToHash(m_batchFilterMask);
+		AddDataBytesToHash(m_batchFilterBitmask);
 
 		switch (m_type)
 		{
 		case BatchType::Graphics:
 		{
-			// MeshPrimitive data:
-			SEAssert("Batch must have a valid MeshPrimitive", m_graphicsParams.m_batchMeshPrimitive);
-			AddDataBytesToHash(m_graphicsParams.m_batchMeshPrimitive->GetDataHash());
+			AddDataBytesToHash(m_graphicsParams.m_batchTopologyMode);
+
+			for (re::VertexStream const* vertexStream : m_graphicsParams.m_vertexStreams)
+			{
+				if (vertexStream)
+				{
+					AddDataBytesToHash(vertexStream->GetDataHash());
+				}
+			}
 		}
 		break;
 		case BatchType::Compute:
@@ -214,7 +233,7 @@ namespace re
 
 	void Batch::SetFilterMaskBit(Filter filterBit)
 	{
-		m_batchFilterMask |= (1 << (uint32_t)filterBit);
+		m_batchFilterBitmask |= (1 << (uint32_t)filterBit);
 	}
 
 

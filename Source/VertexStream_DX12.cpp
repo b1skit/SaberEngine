@@ -174,7 +174,7 @@ namespace dx12
 
 
 	void VertexStream::Create(
-		re::VertexStream& stream, 
+		re::VertexStream const& stream, 
 		ComPtr<ID3D12GraphicsCommandList2> copyCommandList, 
 		std::vector<ComPtr<ID3D12Resource>>& intermediateResources)
 	{
@@ -269,7 +269,7 @@ namespace dx12
 	}
 
 
-	void VertexStream::Destroy(re::VertexStream& stream)
+	void VertexStream::Destroy(re::VertexStream const& stream)
 	{
 		dx12::VertexStream::PlatformParams* streamPlatformParams =
 			stream.GetPlatformParams()->As<dx12::VertexStream::PlatformParams*>();
@@ -293,7 +293,6 @@ namespace dx12
 		}
 		}
 
-		streamPlatformParams->m_type = re::VertexStream::StreamType::StreamType_Count;
 		streamPlatformParams->m_bufferResource = nullptr;
 		streamPlatformParams->m_format = DXGI_FORMAT::DXGI_FORMAT_FORCE_UINT;
 	}

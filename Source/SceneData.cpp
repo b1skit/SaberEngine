@@ -35,7 +35,7 @@ using gr::Camera;
 using gr::Light;
 using re::Texture;
 using gr::Material;
-using re::MeshPrimitive;
+using gr::MeshPrimitive;
 using gr::Bounds;
 using gr::Transform;
 using re::ParameterBlock;
@@ -1203,16 +1203,16 @@ namespace
 			// Attach the MeshPrimitive to the Mesh:
 			newMesh->AddMeshPrimitive(MeshPrimitive::Create(
 				meshName,
-				indices,
+				&indices,
 				positions,
 				positionsMinXYZ,
 				positionsMaxXYZ,
-				normals,
-				tangents,
-				uv0,
-				colors,
-				jointsAsUints,
-				weights,
+				&normals,
+				&tangents,
+				&uv0,
+				&colors,
+				&jointsAsUints,
+				&weights,
 				material,
 				meshPrimitiveParams));
 		}
@@ -1453,6 +1453,10 @@ namespace fr
 			m_meshes.clear();
 		}
 		{
+			std::lock_guard<std::mutex> lock(m_vertexStreamsMutex);
+			m_vertexStreams.clear();
+		}
+		{
 			std::lock_guard<std::shared_mutex> lock(m_texturesMutex);
 			m_textures.clear();
 		}
@@ -1586,7 +1590,7 @@ namespace fr
 	}
 
 
-	bool SceneData::AddUniqueMeshPrimitive(std::shared_ptr<re::MeshPrimitive>& meshPrimitive)
+	bool SceneData::AddUniqueMeshPrimitive(std::shared_ptr<gr::MeshPrimitive>& meshPrimitive)
 	{
 		const uint64_t meshPrimitiveDataHash = meshPrimitive->GetDataHash();
 		bool replacedIncomingPtr = false;
@@ -1606,6 +1610,31 @@ namespace fr
 			else
 			{
 				m_meshPrimitives.insert({ meshPrimitiveDataHash, meshPrimitive });
+			}
+		}
+		return replacedIncomingPtr;
+	}
+
+
+	bool SceneData::AddUniqueVertexStream(std::shared_ptr<re::VertexStream>& vertexStream)
+	{
+		const uint64_t vertexStreamDataHash = vertexStream->GetDataHash();
+		bool replacedIncomingPtr = false;
+		{
+			std::lock_guard<std::mutex> lock(m_vertexStreamsMutex);
+
+			auto const& result = m_vertexStreams.find(vertexStreamDataHash);
+			if (result != m_vertexStreams.end())
+			{
+				LOG(std::format("Vertex stream has the same data hash \"{}\" as an existing vertex stream. It will be "
+					"replaced with a shared copy", vertexStreamDataHash).c_str());
+
+				vertexStream = result->second;
+				replacedIncomingPtr = true;
+			}
+			else
+			{
+				m_vertexStreams.insert({ vertexStreamDataHash, vertexStream });
 			}
 		}
 		return replacedIncomingPtr;

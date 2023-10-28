@@ -13,10 +13,9 @@ namespace gr
 
 	void GraphicsSystem::ShowImGuiWindow()
 	{
-		if (ImGui::TreeNode(GetName().c_str()))
+		if (ImGui::CollapsingHeader(GetName().c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Text("...");
-			ImGui::TreePop();
 		}
 	}
 }

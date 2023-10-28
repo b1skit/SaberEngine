@@ -36,14 +36,14 @@ namespace gr
 		std::shared_ptr<re::RenderStage> m_ambientStage;
 		std::shared_ptr<re::ParameterBlock> m_ambientParams;
 
-		std::shared_ptr<re::MeshPrimitive> m_screenAlignedQuad;
-		std::shared_ptr<re::MeshPrimitive> m_cubeMeshPrimitive; // For rendering into a cube map. TODO: We only use this in the 1st frame, should probably clean it up
+		std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
+		std::shared_ptr<gr::MeshPrimitive> m_cubeMeshPrimitive; // For rendering into a cube map. TODO: We only use this in the 1st frame, should probably clean it up
 		std::vector<std::shared_ptr<gr::Mesh>> m_sphereMeshes; // Deferred point lights
 
 		std::shared_ptr<re::RenderStage> m_keylightStage;
 
 		std::shared_ptr<re::RenderStage> m_pointlightStage;
-		std::vector<std::shared_ptr<re::MeshPrimitive>> m_pointlightInstanceMesh;
+		std::vector<std::shared_ptr<gr::MeshPrimitive>> m_pointlightInstanceMesh;
 
 
 	private:

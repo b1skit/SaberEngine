@@ -11,8 +11,6 @@ namespace gr
 	public:
 		ShadowsGraphicsSystem();
 
-		~ShadowsGraphicsSystem() override {}
-
 		void Create(re::StagePipeline&);
 
 		void PreRender();

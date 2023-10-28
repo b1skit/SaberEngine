@@ -102,7 +102,7 @@ namespace re
 		void AddBatches(std::vector<re::Batch> const& batches);
 		void AddBatch(re::Batch const& batch);
 
-		inline uint32_t GetBatchFilterMask() const { return m_batchFilterMask; }
+		inline uint32_t GetBatchFilterMask() const { return m_batchFilterBitmask; }
 		void SetBatchFilterMaskBit(re::Batch::Filter filterBit);
 
 
@@ -131,7 +131,7 @@ namespace re
 		std::vector<std::shared_ptr<re::ParameterBlock >> m_permanentParamBlocks;
 
 		std::vector<re::Batch> m_stageBatches;
-		uint32_t m_batchFilterMask;
+		uint32_t m_batchFilterBitmask;
 
 		
 	private:

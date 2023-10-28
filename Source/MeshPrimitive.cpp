@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Config.h"
 #include "MeshPrimitive.h"
-#include "MeshPrimitive_Platform.h"
 #include "PipelineState.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
@@ -11,7 +10,7 @@
 using en::Config;
 using gr::Transform;
 using gr::Bounds;
-using re::MeshPrimitive;
+using gr::MeshPrimitive;
 using glm::pi;
 using glm::mat4;
 using glm::vec2;
@@ -25,59 +24,58 @@ using std::shared_ptr;
 
 namespace
 {
-	constexpr char const* DrawModeToCStr(re::MeshPrimitive::TopologyMode drawMode)
+	constexpr char const* DrawModeToCStr(gr::MeshPrimitive::TopologyMode drawMode)
 	{
 		switch (drawMode)
 		{
-		case re::MeshPrimitive::TopologyMode::PointList: return "PointList";
-		case re::MeshPrimitive::TopologyMode::LineList: return "LineList";
-		case re::MeshPrimitive::TopologyMode::LineStrip: return "LineStrip";
-		case re::MeshPrimitive::TopologyMode::TriangleList: return "TriangleList";
-		case re::MeshPrimitive::TopologyMode::TriangleStrip: return "TriangleStrip";
-		case re::MeshPrimitive::TopologyMode::LineListAdjacency: return "LineListAdjacency";
-		case re::MeshPrimitive::TopologyMode::LineStripAdjacency: return "LineStripAdjacency";
-		case re::MeshPrimitive::TopologyMode::TriangleListAdjacency: return "TriangleListAdjacency";
-		case re::MeshPrimitive::TopologyMode::TriangleStripAdjacency: return "TriangleStripAdjacency";
+		case gr::MeshPrimitive::TopologyMode::PointList: return "PointList";
+		case gr::MeshPrimitive::TopologyMode::LineList: return "LineList";
+		case gr::MeshPrimitive::TopologyMode::LineStrip: return "LineStrip";
+		case gr::MeshPrimitive::TopologyMode::TriangleList: return "TriangleList";
+		case gr::MeshPrimitive::TopologyMode::TriangleStrip: return "TriangleStrip";
+		case gr::MeshPrimitive::TopologyMode::LineListAdjacency: return "LineListAdjacency";
+		case gr::MeshPrimitive::TopologyMode::LineStripAdjacency: return "LineStripAdjacency";
+		case gr::MeshPrimitive::TopologyMode::TriangleListAdjacency: return "TriangleListAdjacency";
+		case gr::MeshPrimitive::TopologyMode::TriangleStripAdjacency: return "TriangleStripAdjacency";
 		default: SEAssertF("Invalid draw mode");
 		}
 		return "INVALID DRAW MODE";
 	}
 
 
-	constexpr char const* SlotToCStr(re::MeshPrimitive::Slot slot)
+	constexpr char const* SlotToCStr(gr::MeshPrimitive::Slot slot)
 	{
 		switch (slot)
 		{
-		case re::MeshPrimitive::Slot::Position: return "Position";
-		case re::MeshPrimitive::Slot::Normal: return "Normal";
-		case re::MeshPrimitive::Slot::Tangent: return "Tangent";
-		case re::MeshPrimitive::Slot::UV0: return "UV0";
-		case re::MeshPrimitive::Slot::Color: return "Color";
-		case re::MeshPrimitive::Slot::Joints: return "Joints";
-		case re::MeshPrimitive::Slot::Weights: return "Weights";
-		case re::MeshPrimitive::Slot::Indexes: return "Indexes";
+		case gr::MeshPrimitive::Slot::Position: return "Position";
+		case gr::MeshPrimitive::Slot::Normal: return "Normal";
+		case gr::MeshPrimitive::Slot::Tangent: return "Tangent";
+		case gr::MeshPrimitive::Slot::UV0: return "UV0";
+		case gr::MeshPrimitive::Slot::Color: return "Color";
+		case gr::MeshPrimitive::Slot::Joints: return "Joints";
+		case gr::MeshPrimitive::Slot::Weights: return "Weights";
 		default:SEAssertF("Invalid slot index");
 		}
 		return "INVALID SLOT INDEX";
 	}
 }
 
-namespace re
+namespace gr
 {
 	std::shared_ptr<MeshPrimitive> MeshPrimitive::Create(
 		std::string const& name,
-		std::vector<uint32_t>& indices,
+		std::vector<uint32_t>* indices,
 		std::vector<float>& positions,
 		glm::vec3 const& positionMinXYZ, // Pass gr::Bounds::k_invalidMinXYZ to compute bounds manually
 		glm::vec3 const& positionMaxXYZ, // Pass gr::Bounds::k_invalidMaxXYZ to compute bounds manually
-		std::vector<float>& normals,
-		std::vector<float>& tangents,
-		std::vector<float>& uv0,
-		std::vector<float>& colors,
-		std::vector<uint8_t> joints,
-		std::vector<float> weights,
+		std::vector<float>* normals,
+		std::vector<float>* tangents,
+		std::vector<float>* uv0,
+		std::vector<float>* colors,
+		std::vector<uint8_t>* joints,
+		std::vector<float>* weights,
 		std::shared_ptr<gr::Material> material,
-		re::MeshPrimitive::MeshPrimitiveParams const& meshParams)
+		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
 	{
 		shared_ptr<MeshPrimitive> newMeshPrimitive;
 		newMeshPrimitive.reset(new MeshPrimitive(
@@ -96,11 +94,7 @@ namespace re
 			meshParams));
 
 		// This call will replace the newMeshPrimitive pointer if a duplicate MeshPrimitive already exists
-		bool duplicateExists = en::SceneManager::GetSceneData()->AddUniqueMeshPrimitive(newMeshPrimitive);
-		if (!duplicateExists)
-		{
-			re::RenderManager::Get()->RegisterForCreate(newMeshPrimitive);
-		}
+		en::SceneManager::GetSceneData()->AddUniqueMeshPrimitive(newMeshPrimitive);
 
 		return newMeshPrimitive;
 	}
@@ -108,99 +102,94 @@ namespace re
 
 	MeshPrimitive::MeshPrimitive(
 		string const& name,
-		vector<uint32_t>& indices,
+		vector<uint32_t>* indices,
 		vector<float>& positions,
 		glm::vec3 const& positionMinXYZ,
 		glm::vec3 const& positionMaxXYZ,
-		vector<float>& normals,
-		vector<float>& tangents,
-		vector<float>& uv0,
-		vector<float>& colors,
-		vector<uint8_t> joints,
-		vector<float> weights,
+		vector<float>* normals,
+		vector<float>* tangents,
+		vector<float>* uv0,
+		vector<float>* colors,
+		vector<uint8_t>* joints,
+		vector<float>* weights,
 		shared_ptr<gr::Material> material,
 		MeshPrimitiveParams const& meshParams)
 		: NamedObject(name)
-		, m_platformParams(nullptr)
 		, m_meshMaterial(material)
 		, m_params(meshParams)
 	{
-		platform::MeshPrimitive::CreatePlatformParams(*this);
-
-		m_vertexStreams.resize(Slot::Slot_Count, nullptr);
-
-		m_vertexStreams[Slot::Indexes] = std::make_shared<re::VertexStream>(
-			VertexStream::StreamType::Index,
+		m_indexStream = re::VertexStream::Create(
+			re::VertexStream::StreamType::Index,
 			1, 
 			re::VertexStream::DataType::UInt,
 			re::VertexStream::Normalize::False,
-			std::move(reinterpret_cast<std::vector<uint8_t>&>(indices)));
+			std::move(reinterpret_cast<std::vector<uint8_t>&>(*indices)));
 
-		m_vertexStreams[Slot::Position] = std::make_shared<re::VertexStream>(
-			VertexStream::StreamType::Vertex,
+		m_vertexStreams[Slot::Position] = re::VertexStream::Create(
+			re::VertexStream::StreamType::Vertex,
 			3,
 			re::VertexStream::DataType::Float,
 			re::VertexStream::Normalize::False,
 			std::move(reinterpret_cast<std::vector<uint8_t>&>(positions)));
 
-		if (!normals.empty())
+		if (normals && !normals->empty())
 		{
-			m_vertexStreams[Slot::Normal] = std::make_shared<re::VertexStream>(
-				VertexStream::StreamType::Vertex,
+			m_vertexStreams[Slot::Normal] = re::VertexStream::Create(
+				re::VertexStream::StreamType::Vertex,
 				3,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::True,
-				std::move(reinterpret_cast<std::vector<uint8_t>&>(normals)));
+				std::move(reinterpret_cast<std::vector<uint8_t>&>(*normals)));
 		}
 
-		if (!colors.empty())
+		if (colors && !colors->empty())
 		{
-			m_vertexStreams[Slot::Color] = std::make_shared<re::VertexStream>(
-				VertexStream::StreamType::Vertex,
+			m_vertexStreams[Slot::Color] = re::VertexStream::Create(
+				re::VertexStream::StreamType::Vertex,
 				4,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::False,
-				std::move(reinterpret_cast<std::vector<uint8_t>&>(colors)));
+				std::move(reinterpret_cast<std::vector<uint8_t>&>(*colors)));
 		}
 
-		if (!uv0.empty())
+		if (uv0 && !uv0->empty())
 		{
-			m_vertexStreams[Slot::UV0] = std::make_shared<re::VertexStream>(
-				VertexStream::StreamType::Vertex,
+			m_vertexStreams[Slot::UV0] = re::VertexStream::Create(
+				re::VertexStream::StreamType::Vertex,
 				2,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::False,
-				std::move(reinterpret_cast<std::vector<uint8_t>&>(uv0)));
+				std::move(reinterpret_cast<std::vector<uint8_t>&>(*uv0)));
 		}
 
-		if (!tangents.empty())
+		if (tangents && !tangents->empty())
 		{
-			m_vertexStreams[Slot::Tangent] = std::make_shared<re::VertexStream>(
-				VertexStream::StreamType::Vertex,
+			m_vertexStreams[Slot::Tangent] = re::VertexStream::Create(
+				re::VertexStream::StreamType::Vertex,
 				4,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::True,
-				std::move(reinterpret_cast<std::vector<uint8_t>&>(tangents)));
+				std::move(reinterpret_cast<std::vector<uint8_t>&>(*tangents)));
 		}
 		
-		if (!joints.empty())
+		if (joints && !joints->empty())
 		{
-			m_vertexStreams[Slot::Joints] = std::make_shared<re::VertexStream>(
-				VertexStream::StreamType::Vertex, // TODO: Is this appropriate?
+			m_vertexStreams[Slot::Joints] = re::VertexStream::Create(
+				re::VertexStream::StreamType::Vertex, // TODO: Is this appropriate?
 				1,
 				re::VertexStream::DataType::UByte,
 				re::VertexStream::Normalize::False,
-				std::move(reinterpret_cast<std::vector<uint8_t>&>(joints)));
+				std::move(reinterpret_cast<std::vector<uint8_t>&>(*joints)));
 		}
 
-		if (!weights.empty())
+		if (weights && !weights->empty())
 		{
-			m_vertexStreams[Slot::Weights] = std::make_shared<re::VertexStream>(
-				VertexStream::StreamType::Vertex, // TODO: Is this appropriate?
+			m_vertexStreams[Slot::Weights] = re::VertexStream::Create(
+				re::VertexStream::StreamType::Vertex, // TODO: Is this appropriate?
 				1,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::False,
-				std::move(reinterpret_cast<std::vector<uint8_t>&>(weights)));
+				std::move(reinterpret_cast<std::vector<uint8_t>&>(*weights)));
 		}
 
 
@@ -221,10 +210,12 @@ namespace re
 
 	void MeshPrimitive::Destroy()
 	{
-		platform::MeshPrimitive::Destroy(*this); // Platform-specific destruction
-		m_vertexStreams.clear();
+		for (uint8_t slotIdx = 0; slotIdx < Slot_Count; slotIdx++)
+		{
+			m_vertexStreams[slotIdx] = nullptr;
+		}
+		
 		m_meshMaterial = nullptr;
-		m_platformParams = nullptr;
 	}
 
 
@@ -244,7 +235,7 @@ namespace re
 		{
 			if (m_vertexStreams[i])
 			{
-				AddDataBytesToHash(m_vertexStreams[i]->GetData(), m_vertexStreams[i]->GetTotalDataByteSize());
+				AddDataBytesToHash(m_vertexStreams[i]->GetDataHash());
 			}
 		}
 	}
@@ -256,60 +247,34 @@ namespace re
 	}
 
 
-	re::VertexStream* MeshPrimitive::GetVertexStream(Slot slot) const
+	std::vector<re::VertexStream const*> MeshPrimitive::GetVertexStreams() const
 	{
-		return m_vertexStreams[slot].get();
+		std::vector<re::VertexStream const*> vertexStreamPtrs;
+		vertexStreamPtrs.resize(Slot_Count, nullptr);
+
+		for (uint8_t i = 0; i < Slot_Count; i++)
+		{
+			vertexStreamPtrs[i] = m_vertexStreams[i].get();
+		}
+
+		return vertexStreamPtrs;
 	}
 
 
-	std::vector<std::shared_ptr<re::VertexStream>> const& MeshPrimitive::GetVertexStreams() const
-	{
-		return m_vertexStreams;
-	}
-
-
-	std::string MeshPrimitive::GetSlotDebugName(Slot slot)
+	char const* MeshPrimitive::SlotDebugNameToCStr(Slot slot)
 	{
 		switch (slot)
 		{
-		case Position:
-		{
-			return ENUM_TO_STR(Position);
-		}
-		case Normal:
-		{
-			return ENUM_TO_STR(Normal);
-		}
-		case Tangent:
-		{
-			return ENUM_TO_STR(Tangent);
-		}
-		case UV0:
-		{
-			return ENUM_TO_STR(Position);
-		}
-		case Color:
-		{
-			return ENUM_TO_STR(Color);
-		}
-		case Joints:
-		{
-			return ENUM_TO_STR(Joints);
-		}
-		case Weights:
-		{
-			return ENUM_TO_STR(Weights);
-		}
-		case Indexes:
-		{
-			return ENUM_TO_STR(Indexes);
-		}
+		case Position: return ENUM_TO_STR(Position);
+		case Normal: return ENUM_TO_STR(Normal);
+		case Tangent: return ENUM_TO_STR(Tangent);
+		case UV0: return ENUM_TO_STR(UV0);
+		case Color: return ENUM_TO_STR(Color);
+		case Joints: return ENUM_TO_STR(Joints);
+		case Weights: return ENUM_TO_STR(Weights);
 		default:
-		{
 			SEAssertF("Invalid slot");
 		}
-		}
-
 		return "Invalid slot";
 	}
 
@@ -329,7 +294,7 @@ namespace re
 			{
 				for (size_t i = 0; i < m_vertexStreams.size(); i++)
 				{
-					ImGui::Text(std::format("{}: {}", i, SlotToCStr(static_cast<re::MeshPrimitive::Slot>(i))).c_str());
+					ImGui::Text(std::format("{}: {}", i, SlotToCStr(static_cast<gr::MeshPrimitive::Slot>(i))).c_str());
 					if (m_vertexStreams[i])
 					{
 						m_vertexStreams[i]->ShowImGuiWindow();
@@ -423,13 +388,6 @@ namespace meshfactory
 			21, 22, 23,
 		};
 
-		// Construct any missing vertex attributes for the mesh:
-		vector<vec3> normals;
-		vector<vec4> tangents;
-		vector<vec4> colors;
-		std::vector<glm::tvec4<uint8_t>> jointsPlaceholder; // Optional: Will not be generated
-		std::vector<glm::vec4> weightsPlaceholder; // Optional: Will not be generated
-
 		constexpr char meshName[] = "cube";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
@@ -439,28 +397,27 @@ namespace meshfactory
 			&defaultMeshPrimitiveParams,
 			&cubeIndices,
 			&assembledPositions,
-			&normals,
-			&tangents,
+			nullptr,
+			nullptr,
 			&assembledUVs,
-			&colors,
-			&jointsPlaceholder,
-			&weightsPlaceholder
-		};
+			nullptr,
+			nullptr,
+			nullptr};
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
 		return MeshPrimitive::Create(
 			meshName,
-			cubeIndices,
+			&cubeIndices,
 			*reinterpret_cast<vector<float>*>(&assembledPositions),	// Cast our vector<vec3> to vector<float>
 			gr::Bounds::k_invalidMinXYZ,
 			gr::Bounds::k_invalidMaxXYZ,
-			*reinterpret_cast<vector<float>*>(&normals),
-			*reinterpret_cast<vector<float>*>(&tangents),
-			*reinterpret_cast<vector<float>*>(&assembledUVs),
-			*reinterpret_cast<vector<float>*>(&colors),
-			std::vector<uint8_t>(), // No joints
-			std::vector<float>(), // No weights
+			nullptr,
+			nullptr,
+			reinterpret_cast<vector<float>*>(&assembledUVs),
+			nullptr,
+			nullptr, // No joints
+			nullptr, // No weights
 			nullptr, // No material
 			defaultMeshPrimitiveParams);
 	}
@@ -494,14 +451,7 @@ namespace meshfactory
 
 		// Assemble geometry:
 		std::vector<vec3> positions = { tl, bl, br };
-		std::vector<vec4> colors(3, vec4(1, 0, 0, 1)); // Assign a bright red color by default
 		std::vector<uint32_t> triIndices{ 0, 1, 2 }; // Note: CCW winding
-
-		// Populate missing data:
-		std::vector<vec3> normals;
-		std::vector<vec4> tangents;
-		std::vector<glm::tvec4<uint8_t>> jointsPlaceholder;
-		std::vector<glm::vec4> weightsPlaceholder;
 
 		constexpr char meshName[] = "optimizedFullscreenQuad";
 
@@ -512,27 +462,27 @@ namespace meshfactory
 			&defaultMeshPrimitiveParams,
 			&triIndices,
 			&positions,
-			&normals,
-			&tangents,
+			nullptr,
+			nullptr,
 			&uvs,
-			&colors,
-			&jointsPlaceholder,
-			&weightsPlaceholder
+			nullptr,
+			nullptr,
+			nullptr
 		};
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		return MeshPrimitive::Create(
 			"optimizedFullscreenQuad",
-			triIndices,
+			&triIndices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
 			gr::Bounds::k_invalidMinXYZ,
 			gr::Bounds::k_invalidMaxXYZ,
-			*reinterpret_cast<vector<float>*>(&normals),
-			*reinterpret_cast<vector<float>*>(&tangents),
-			*reinterpret_cast<vector<float>*>(&uvs),
-			*reinterpret_cast<vector<float>*>(&colors),
-			std::vector<uint8_t>(), // No joints
-			std::vector<float>(), // No weights
+			nullptr,
+			nullptr,
+			reinterpret_cast<vector<float>*>(&uvs),
+			nullptr,
+			nullptr, // No joints
+			nullptr, // No weights
 			nullptr, // No material
 			defaultMeshPrimitiveParams);
 	}
@@ -563,12 +513,6 @@ namespace meshfactory
 
 		std::vector<vec4> colors(4, vec4(1, 0, 0, 1)); // Assign a bright red color by default...
 
-		// Populate missing data:		
-		std::vector<vec3> normals;		
-		std::vector<vec4> tangents;
-		std::vector<glm::tvec4<uint8_t>> jointsPlaceholder;
-		std::vector<glm::vec4> weightsPlaceholder;
-
 		constexpr char meshName[] = "quad";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
@@ -578,28 +522,27 @@ namespace meshfactory
 			&defaultMeshPrimitiveParams,
 			&quadIndices,
 			&positions,
-			&normals,
-			&tangents,
+			nullptr,
+			nullptr,
 			&uvs,
 			&colors,
-			&jointsPlaceholder,
-			&weightsPlaceholder
-		};
+			nullptr,
+			nullptr};
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// It's easier to reason about geometry in vecN types; cast to float now we're done
 		return MeshPrimitive::Create(
 			meshName,
-			quadIndices,
+			&quadIndices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
 			gr::Bounds::k_invalidMinXYZ,
 			gr::Bounds::k_invalidMaxXYZ,
-			*reinterpret_cast<vector<float>*>(&normals),
-			*reinterpret_cast<vector<float>*>(&tangents),
-			*reinterpret_cast<vector<float>*>(&uvs),
-			*reinterpret_cast<vector<float>*>(&colors),
-			std::vector<uint8_t>(), // No joints
-			std::vector<float>(), // No weights
+			nullptr,
+			nullptr,
+			reinterpret_cast<vector<float>*>(&uvs),
+			reinterpret_cast<vector<float>*>(&colors),
+			nullptr, // No joints
+			nullptr, // No weights
 			nullptr, // No material
 			MeshPrimitive::MeshPrimitiveParams());
 	}
@@ -757,12 +700,6 @@ namespace meshfactory
 		}
 		indices[currentIndex - 1] = (uint32_t)(numVerts - numLatSlices - 1); // Wrap the last edge back to the start
 
-		// Populate missing data:
-		vector<vec4> colors;
-		vector<vec4> tangents;
-		std::vector<glm::tvec4<uint8_t>> jointsPlaceholder;
-		std::vector<glm::vec4> weightsPlaceholder;
-
 		constexpr char meshName[] = "sphere";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
@@ -773,33 +710,32 @@ namespace meshfactory
 			&indices,
 			&positions,
 			&normals,
-			&tangents,
+			nullptr,
 			&uvs,
-			&colors,
-			&jointsPlaceholder,
-			&weightsPlaceholder
-		};
+			nullptr,
+			nullptr,
+			nullptr};
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 		// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast to float
 		return MeshPrimitive::Create(
 			meshName,
-			indices,
+			&indices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
 			gr::Bounds::k_invalidMinXYZ,
 			gr::Bounds::k_invalidMaxXYZ,
-			*reinterpret_cast<vector<float>*>(&normals),
-			*reinterpret_cast<vector<float>*>(&tangents),
-			*reinterpret_cast<vector<float>*>(&uvs),
-			*reinterpret_cast<vector<float>*>(&colors),
-			std::vector<uint8_t>(), // No joints
-			std::vector<float>(), // No weights
+			reinterpret_cast<vector<float>*>(&normals),
+			nullptr,
+			reinterpret_cast<vector<float>*>(&uvs),
+			nullptr,
+			nullptr, // No joints
+			nullptr, // No weights
 			nullptr, // No material
 			defaultMeshPrimitiveParams);
 	}
 
 
-	inline std::shared_ptr<re::MeshPrimitive> CreateHelloTriangle(float scale /*= 1.f*/, float zDepth /*= 0.5f*/)
+	inline std::shared_ptr<gr::MeshPrimitive> CreateHelloTriangle(float scale /*= 1.f*/, float zDepth /*= 0.5f*/)
 	{
 		std::vector<glm::vec3> positions // In clip space: bl near = [-1,-1, 0] , tr far = [1,1,1]
 		{
@@ -827,12 +763,6 @@ namespace meshfactory
 			vec4(0.f, 0.f, 1.f, 1.f), // br: Blue
 		};
 
-		// Populate missing data:		
-		std::vector<vec3> normals;
-		std::vector<vec4> tangents;
-		std::vector<glm::tvec4<uint8_t>> jointsPlaceholder;
-		std::vector<glm::vec4> weightsPlaceholder;
-
 		constexpr char meshName[] = "helloTriangle";
 
 		const MeshPrimitive::MeshPrimitiveParams defaultMeshPrimitiveParams;
@@ -842,12 +772,12 @@ namespace meshfactory
 			&defaultMeshPrimitiveParams,
 			&indices,
 			&positions,
-			&normals,
-			&tangents,
+			nullptr,
+			nullptr,
 			&uvs,
 			&colors,
-			&jointsPlaceholder,
-			&weightsPlaceholder
+			nullptr,
+			nullptr
 		};
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
@@ -857,16 +787,16 @@ namespace meshfactory
 		// It's easier to reason about geometry in vecN types; cast to float now we're done
 		return MeshPrimitive::Create(
 			meshName,
-			indices,
+			&indices,
 			*reinterpret_cast<vector<float>*>(&positions), // Cast our vector<vec3> to vector<float>
 			gr::Bounds::k_invalidMinXYZ,
 			gr::Bounds::k_invalidMaxXYZ,
-			*reinterpret_cast<vector<float>*>(&normals),
-			*reinterpret_cast<vector<float>*>(&tangents),
-			*reinterpret_cast<vector<float>*>(&uvs),
-			*reinterpret_cast<vector<float>*>(&colors),
-			std::vector<uint8_t>(), // No joints
-			std::vector<float>(), // No weights
+			nullptr,
+			nullptr,
+			reinterpret_cast<vector<float>*>(&uvs),
+			reinterpret_cast<vector<float>*>(&colors),
+			nullptr, // No joints
+			nullptr, // No weights
 			helloMaterial,
 			MeshPrimitive::MeshPrimitiveParams());
 	}

@@ -53,8 +53,6 @@ namespace gr
 
 		m_tonemappingStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 
-		gr::BloomGraphicsSystem* bloomGS = renderSystem.GetGraphicsSystem<BloomGraphicsSystem>();
-
 		// Param blocks:
 		m_tonemappingStage->AddPermanentParameterBlock(SceneManager::Get()->GetMainCamera()->GetCameraParams());
 
@@ -67,6 +65,7 @@ namespace gr
 			deferredLightTextureTargetSet->GetColorTarget(0).GetTexture(),
 			Sampler::GetSampler(Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
 		
+		gr::BloomGraphicsSystem* bloomGS = renderSystem.GetGraphicsSystem<BloomGraphicsSystem>();
 		std::shared_ptr<TextureTargetSet const> bloomTextureTargetSet = bloomGS->GetFinalTextureTargetSet();
 
 		m_tonemappingStage->AddTextureInput(
@@ -88,11 +87,5 @@ namespace gr
 	{
 		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
 		m_tonemappingStage->AddBatch(fullscreenQuadBatch);
-	}
-
-
-	std::shared_ptr<re::TextureTargetSet const> TonemappingGraphicsSystem::GetFinalTextureTargetSet() const 
-	{
-		return m_tonemappingStage->GetTextureTargetSet();
 	}
 }

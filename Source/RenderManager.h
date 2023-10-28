@@ -10,6 +10,7 @@
 #include "RenderPipeline.h"
 #include "RenderSystem.h"
 #include "TextureTarget.h"
+#include "VertexStream.h"
 
 
 namespace opengl
@@ -73,7 +74,7 @@ namespace re
 
 		static constexpr size_t k_newObjectReserveAmount = 128;
 		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::Shader>> m_newShaders;
-		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::MeshPrimitive>> m_newMeshPrimitives;
+		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::VertexStream>> m_newVertexStreams;
 		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::Texture>> m_newTextures;
 		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::Sampler>> m_newSamplers;
 		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::TextureTargetSet>> m_newTargetSets;

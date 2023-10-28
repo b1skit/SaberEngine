@@ -11,12 +11,12 @@
 #include "Debug_DX12.h"
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_ComputeMips.h"
+#include "GraphicsSystem_Debug.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_Shadows.h"
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_Tonemapping.h"
-#include "MeshPrimitive_DX12.h"
 #include "ParameterBlock_DX12.h"
 #include "RenderManager_DX12.h"
 #include "RenderSystem.h"
@@ -25,6 +25,7 @@
 #include "SwapChain_DX12.h"
 #include "TextureTarget_DX12.h"
 #include "Texture_DX12.h"
+#include "VertexStream_DX12.h"
 
 using re::RenderStage;
 using re::StagePipeline;
@@ -79,6 +80,9 @@ namespace dx12
 				std::make_shared<gr::TonemappingGraphicsSystem>();
 			graphicsSystems.emplace_back(tonemappingGS);
 
+			std::shared_ptr<gr::DebugGraphicsSystem> debugGS = std::make_shared<gr::DebugGraphicsSystem>();
+			graphicsSystems.emplace_back(debugGS);
+
 			// Build the creation pipeline:
 			computeMipsGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(computeMipsGS->GetName()));
 			deferredLightingGS->CreateResourceGenerationStages(
@@ -89,6 +93,7 @@ namespace dx12
 			skyboxGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(skyboxGS->GetName()));
 			bloomGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(bloomGS->GetName()));
 			tonemappingGS->Create(*defaultRS, defaultRS->GetRenderPipeline().AddNewStagePipeline(tonemappingGS->GetName()));
+			debugGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(debugGS->GetName()));
 		};
 		defaultRenderSystem->SetCreatePipeline(DefaultRenderSystemCreatePipeline);
 
@@ -104,6 +109,7 @@ namespace dx12
 			gr::SkyboxGraphicsSystem* skyboxGS = renderSystem->GetGraphicsSystem<gr::SkyboxGraphicsSystem>();
 			gr::BloomGraphicsSystem* bloomGS = renderSystem->GetGraphicsSystem<gr::BloomGraphicsSystem>();
 			gr::TonemappingGraphicsSystem* tonemappingGS = renderSystem->GetGraphicsSystem<gr::TonemappingGraphicsSystem>();
+			gr::DebugGraphicsSystem* debugGS = renderSystem->GetGraphicsSystem<gr::DebugGraphicsSystem>();
 
 			// Execute per-frame updates:
 			computeMipsGS->PreRender();
@@ -113,6 +119,7 @@ namespace dx12
 			skyboxGS->PreRender();
 			bloomGS->PreRender();
 			tonemappingGS->PreRender();
+			debugGS->PreRender();
 		};
 		defaultRenderSystem->SetUpdatePipeline(UpdatePipeline);
 	}
@@ -140,7 +147,7 @@ namespace dx12
 		dx12RenderManager.m_intermediateResources.clear();	
 
 		const bool hasDataToCopy = 
-			renderManager.m_newMeshPrimitives.HasReadData() ||
+			renderManager.m_newVertexStreams.HasReadData() ||
 			renderManager.m_newTextures.HasReadData();
 
 		// Handle anything that requires a copy queue:		
@@ -151,12 +158,12 @@ namespace dx12
 			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
 			ID3D12GraphicsCommandList2* copyCommandListD3D = copyCommandList->GetD3DCommandList();
 
-			// Mesh Primitives:
-			if (renderManager.m_newMeshPrimitives.HasReadData())
+			// Vertex streams:
+			if (renderManager.m_newVertexStreams.HasReadData())
 			{
-				for (auto& newMeshPrimitive : renderManager.m_newMeshPrimitives.Get())
+				for (auto& newVertexStream : renderManager.m_newVertexStreams.Get())
 				{
-					dx12::MeshPrimitive::Create(*newMeshPrimitive.second, copyCommandListD3D, intermediateResources);
+					dx12::VertexStream::Create(*newVertexStream.second, copyCommandListD3D, intermediateResources);
 				}
 			}
 

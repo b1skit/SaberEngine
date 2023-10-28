@@ -6,7 +6,7 @@
 
 using gr::Transform;
 using gr::Bounds;
-using re::MeshPrimitive;
+using gr::MeshPrimitive;
 using std::shared_ptr;
 using std::vector;
 
@@ -55,7 +55,7 @@ namespace gr
 	}
 
 
-	Mesh::Mesh(std::string const& name, Transform* ownerTransform, shared_ptr<re::MeshPrimitive> meshPrimitive)
+	Mesh::Mesh(std::string const& name, Transform* ownerTransform, shared_ptr<gr::MeshPrimitive> meshPrimitive)
 		: NamedObject(name)
 		, m_ownerTransform(ownerTransform)
 	{
@@ -63,7 +63,7 @@ namespace gr
 	}
 
 
-	void Mesh::AddMeshPrimitive(shared_ptr<re::MeshPrimitive> meshPrimitive)
+	void Mesh::AddMeshPrimitive(shared_ptr<gr::MeshPrimitive> meshPrimitive)
 	{
 		SEAssert("Cannot add a nullptr MeshPrimitive", meshPrimitive != nullptr);
 		m_meshPrimitives.push_back(meshPrimitive);
@@ -73,13 +73,13 @@ namespace gr
 	}
 
 
-	std::vector<std::shared_ptr<re::MeshPrimitive>> const& Mesh::GetMeshPrimitives() const
+	std::vector<std::shared_ptr<gr::MeshPrimitive>> const& Mesh::GetMeshPrimitives() const
 	{
 		return m_meshPrimitives;
 	}
 
 
-	void Mesh::ReplaceMeshPrimitive(size_t index, std::shared_ptr<re::MeshPrimitive> replacement)
+	void Mesh::ReplaceMeshPrimitive(size_t index, std::shared_ptr<gr::MeshPrimitive> replacement)
 	{
 		SEAssert("Cannot replace a MeshPrimitive with nullptr", replacement != nullptr);
 		SEAssert("Index is out of bounds", index < m_meshPrimitives.size());
@@ -92,7 +92,7 @@ namespace gr
 	void Mesh::UpdateBounds()
 	{
 		m_localBounds = Bounds();
-		for (shared_ptr<re::MeshPrimitive> meshPrimitive : m_meshPrimitives)
+		for (shared_ptr<gr::MeshPrimitive> meshPrimitive : m_meshPrimitives)
 		{
 			m_localBounds.ExpandBounds(
 				meshPrimitive->GetBounds().GetTransformedAABBBounds(GetTransform()->GetGlobalMatrix(Transform::TRS)));
