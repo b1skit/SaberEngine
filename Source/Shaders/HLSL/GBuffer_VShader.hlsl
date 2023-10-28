@@ -1,8 +1,11 @@
 // © 2023 Adam Badke. All rights reserved.
+#define VIN_NORMAL
+#define VIN_TANGENT
+#define VIN_UV0
+#define VIN_COLOR
 #define VOUT_UV0
 #define VOUT_TBN
 #define VOUT_COLOR
-
 #include "NormalMapUtils.hlsli"
 #include "SaberCommon.hlsli"
 

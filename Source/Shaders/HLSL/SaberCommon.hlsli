@@ -7,14 +7,20 @@
 
 
 struct VertexIn
-{
-	// TODO: Make these opt-in as we do for VertexOut
-	
+{	
 	float3 Position : POSITION0;
+#ifdef VIN_NORMAL
 	float3 Normal	: NORMAL0;
+#endif
+#ifdef VIN_TANGENT
 	float4 Tangent	: TANGENT0;
+#endif
+#ifdef VIN_UV0
 	float2 UV0		: TEXCOORD0;
+#endif
+#ifdef VIN_COLOR
 	float4 Color	: COLOR0;
+#endif
 	
 	uint InstanceID : SV_InstanceID;
 };
