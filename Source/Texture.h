@@ -152,6 +152,7 @@ namespace re
 
 		bool HasInitialData() const;
 		void* GetTexelData(uint8_t faceIdx) const; // Can be null
+		void ClearTexelData(); // Clear CPU-side texel data
 
 		uint32_t GetNumMips() const;
 		uint32_t GetTotalNumSubresources() const;

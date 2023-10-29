@@ -338,7 +338,8 @@ namespace re
 		m_newTargetSets.AquireReadLock();
 		m_newParameterBlocks.AquireReadLock();
 
-		// Record any newly created textures (we clear m_newTextures during Initialize, so we maintain a separate copy):
+		// Record any newly created textures (we clear m_newTextures during Initialize, so we maintain a separate copy)
+		// This allows us an easy way to create MIPs, and clear the initial data after buffering
 		for (auto const& newTexture : m_newTextures.GetReadData())
 		{
 			m_createdTextures.emplace_back(newTexture);
@@ -354,6 +355,12 @@ namespace re
 		m_newSamplers.ReleaseReadLock();
 		m_newTargetSets.ReleaseReadLock();
 		m_newParameterBlocks.ReleaseReadLock();
+
+		// Clear the initial data of our new textures now that they have been buffered
+		for (auto const& newTexture : m_createdTextures)
+		{
+			newTexture->ClearTexelData();
+		}
 
 		PIXEndEvent();
 	}

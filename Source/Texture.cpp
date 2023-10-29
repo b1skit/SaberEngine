@@ -154,7 +154,13 @@ namespace re
 	}
 
 
-	void re::Texture::SetTexel(uint32_t face, uint32_t u, uint32_t v, glm::vec4 value)
+	void Texture::ClearTexelData()
+	{
+		m_initialData.clear();
+	}
+
+
+	void Texture::SetTexel(uint32_t face, uint32_t u, uint32_t v, glm::vec4 value)
 	{
 		// Note: If texture has < 4 channels, the corresponding channels in value are ignored
 
