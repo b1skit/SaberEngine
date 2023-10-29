@@ -97,29 +97,48 @@ namespace
 namespace re
 {
 	std::shared_ptr<re::VertexStream> VertexStream::Create(
-		StreamType type, uint32_t numComponents, DataType dataType, Normalize doNormalize, std::vector<uint8_t>&& data)
+		Lifetime lifetime, 
+		StreamType type, 
+		uint32_t numComponents, 
+		DataType dataType, 
+		Normalize doNormalize, 
+		std::vector<uint8_t>&& data)
 	{
 		std::shared_ptr<re::VertexStream> newVertexStream;
 		newVertexStream.reset(new VertexStream(
+			lifetime,
 			type,
 			numComponents,
 			dataType,
 			doNormalize,
 			std::move(data)));
 
-		bool duplicateExists = en::SceneManager::GetSceneData()->AddUniqueVertexStream(newVertexStream);
-		if (!duplicateExists)
+		if (lifetime == Lifetime::SingleFrame)
 		{
-			re::RenderManager::Get()->RegisterForCreate(newVertexStream);
+			re::RenderManager::Get()->RegisterSingleFrameResource(newVertexStream);
 		}
-
+		else
+		{
+			bool duplicateExists = en::SceneManager::GetSceneData()->AddUniqueVertexStream(newVertexStream);
+			if (!duplicateExists)
+			{
+				re::RenderManager::Get()->RegisterForCreate(newVertexStream);
+			}
+		}
+		
 		return newVertexStream;
 	}
 
 
 	VertexStream::VertexStream(
-		StreamType type, uint32_t numComponents, DataType dataType, Normalize doNormalize, std::vector<uint8_t>&& data)
-		: m_streamType(type)
+		Lifetime lifetime, 
+		StreamType type, 
+		uint32_t numComponents, 
+		DataType dataType, 
+		Normalize doNormalize, 
+		std::vector<uint8_t>&& data)
+		: m_lifetime(lifetime)
+		, m_streamType(type)
 		, m_numComponents(numComponents)
 		, m_dataType(dataType)
 		, m_doNormalize(doNormalize)

@@ -781,6 +781,9 @@
     <ClInclude Include="MeshPrimitive.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
+    <ClInclude Include="DoubleBufferVector.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\GLSL\DeferredAmbientLight.frag">

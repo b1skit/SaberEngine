@@ -161,18 +161,18 @@ namespace dx12
 			// Vertex streams:
 			if (renderManager.m_newVertexStreams.HasReadData())
 			{
-				for (auto& newVertexStream : renderManager.m_newVertexStreams.Get())
+				for (auto& newVertexStream : renderManager.m_newVertexStreams.GetReadData())
 				{
-					dx12::VertexStream::Create(*newVertexStream.second, copyCommandListD3D, intermediateResources);
+					dx12::VertexStream::Create(*newVertexStream, copyCommandListD3D, intermediateResources);
 				}
 			}
 
 			// Textures:
 			if (renderManager.m_newTextures.HasReadData())
 			{
-				for (auto& texture : renderManager.m_newTextures.Get())
+				for (auto& texture : renderManager.m_newTextures.GetReadData())
 				{
-					dx12::Texture::Create(*texture.second, copyCommandListD3D, intermediateResources);
+					dx12::Texture::Create(*texture, copyCommandListD3D, intermediateResources);
 				}
 			}
 
@@ -183,28 +183,28 @@ namespace dx12
 		// Samplers:
 		if (renderManager.m_newSamplers.HasReadData())
 		{
-			for (auto& newObject : renderManager.m_newSamplers.Get())
+			for (auto& newObject : renderManager.m_newSamplers.GetReadData())
 			{
-				dx12::Sampler::Create(*newObject.second);
+				dx12::Sampler::Create(*newObject);
 			}
 		}
 		// Texture Target Sets:
 		if (renderManager.m_newTargetSets.HasReadData())
 		{
-			for (auto& newObject : renderManager.m_newTargetSets.Get())
+			for (auto& newObject : renderManager.m_newTargetSets.GetReadData())
 			{
-				newObject.second->Commit();
-				dx12::TextureTargetSet::CreateColorTargets(*newObject.second);
-				dx12::TextureTargetSet::CreateDepthStencilTarget(*newObject.second);
+				newObject->Commit();
+				dx12::TextureTargetSet::CreateColorTargets(*newObject);
+				dx12::TextureTargetSet::CreateDepthStencilTarget(*newObject);
 			}
 		}
 		// Shaders:
 		if (renderManager.m_newShaders.HasReadData())
 		{
-			for (auto& shader : renderManager.m_newShaders.Get())
+			for (auto& shader : renderManager.m_newShaders.GetReadData())
 			{
 				// Create the Shader object:
-				dx12::Shader::Create(*shader.second);
+				dx12::Shader::Create(*shader);
 
 				// Create any necessary PSO's for the Shader:
 				for (std::unique_ptr<re::RenderSystem>& renderSystem : renderManager.m_renderSystems)
@@ -219,7 +219,7 @@ namespace dx12
 							// have their own shader. So, we must create a PSO per Shader for each RenderStage with a null
 							// Shader (as any Shader might be used there), or if the Shader is used by the RenderStage
 							if (renderStage->GetStageShader() == nullptr ||
-								renderStage->GetStageShader()->GetNameID() == shader.second->GetNameID())
+								renderStage->GetStageShader()->GetNameID() == shader->GetNameID())
 							{
 								std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
 								if (!stageTargets)
@@ -227,7 +227,7 @@ namespace dx12
 									stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain());
 								}
 
-								context->CreateAddPipelineState(*shader.second, *stageTargets);
+								context->CreateAddPipelineState(*shader, *stageTargets);
 							}
 						}
 					}
@@ -237,9 +237,9 @@ namespace dx12
 		// Parameter Blocks:
 		if (renderManager.m_newParameterBlocks.HasReadData())
 		{
-			for (auto& newObject : renderManager.m_newParameterBlocks.Get())
+			for (auto& newObject : renderManager.m_newParameterBlocks.GetReadData())
 			{
-				dx12::ParameterBlock::Create(*newObject.second);
+				dx12::ParameterBlock::Create(*newObject);
 			}
 		}
 

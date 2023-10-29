@@ -119,6 +119,7 @@ namespace gr
 		, m_params(meshParams)
 	{
 		m_indexStream = re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
 			re::VertexStream::StreamType::Index,
 			1, 
 			re::VertexStream::DataType::UInt,
@@ -126,6 +127,7 @@ namespace gr
 			std::move(reinterpret_cast<std::vector<uint8_t>&>(*indices)));
 
 		m_vertexStreams[Slot::Position] = re::VertexStream::Create(
+			re::VertexStream::Lifetime::Permanent,
 			re::VertexStream::StreamType::Vertex,
 			3,
 			re::VertexStream::DataType::Float,
@@ -135,6 +137,7 @@ namespace gr
 		if (normals && !normals->empty())
 		{
 			m_vertexStreams[Slot::Normal] = re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
 				re::VertexStream::StreamType::Vertex,
 				3,
 				re::VertexStream::DataType::Float,
@@ -145,6 +148,7 @@ namespace gr
 		if (colors && !colors->empty())
 		{
 			m_vertexStreams[Slot::Color] = re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
 				re::VertexStream::StreamType::Vertex,
 				4,
 				re::VertexStream::DataType::Float,
@@ -155,6 +159,7 @@ namespace gr
 		if (uv0 && !uv0->empty())
 		{
 			m_vertexStreams[Slot::UV0] = re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
 				re::VertexStream::StreamType::Vertex,
 				2,
 				re::VertexStream::DataType::Float,
@@ -165,6 +170,7 @@ namespace gr
 		if (tangents && !tangents->empty())
 		{
 			m_vertexStreams[Slot::Tangent] = re::VertexStream::Create(
+				re::VertexStream::Lifetime::Permanent,
 				re::VertexStream::StreamType::Vertex,
 				4,
 				re::VertexStream::DataType::Float,
@@ -175,7 +181,8 @@ namespace gr
 		if (joints && !joints->empty())
 		{
 			m_vertexStreams[Slot::Joints] = re::VertexStream::Create(
-				re::VertexStream::StreamType::Vertex, // TODO: Is this appropriate?
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::StreamType::Vertex,
 				1,
 				re::VertexStream::DataType::UByte,
 				re::VertexStream::Normalize::False,
@@ -185,7 +192,8 @@ namespace gr
 		if (weights && !weights->empty())
 		{
 			m_vertexStreams[Slot::Weights] = re::VertexStream::Create(
-				re::VertexStream::StreamType::Vertex, // TODO: Is this appropriate?
+				re::VertexStream::Lifetime::Permanent,
+				re::VertexStream::StreamType::Vertex,
 				1,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::False,

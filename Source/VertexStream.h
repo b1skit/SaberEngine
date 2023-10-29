@@ -39,10 +39,16 @@ namespace re
 			Vertex
 		};
 
+		enum class Lifetime
+		{
+			SingleFrame,
+			Permanent
+		};
+
 
 	public:
 		static std::shared_ptr<re::VertexStream> Create(
-			StreamType type, uint32_t numComponents, DataType dataType, Normalize doNormalize, std::vector<uint8_t>&& data);
+			Lifetime, StreamType, uint32_t numComponents, DataType, Normalize, std::vector<uint8_t>&& data);
 
 		VertexStream(VertexStream&&) = default;
 		VertexStream& operator=(VertexStream&&) = default;
@@ -80,6 +86,7 @@ namespace re
 		
 
 	private:
+		const Lifetime m_lifetime;
 		const StreamType m_streamType;
 		uint8_t m_numComponents; 
 		uint8_t m_componentByteSize; // Size in bytes of a single component. eg. Float = 4 bytes, Float2 = 8 bytes, etc
@@ -93,8 +100,7 @@ namespace re
 
 
 	private: // Use the Create() factory instead
-		VertexStream(
-			StreamType type, uint32_t numComponents, DataType dataType, Normalize doNormalize, std::vector<uint8_t>&& data);
+		VertexStream(Lifetime, StreamType, uint32_t numComponents, DataType, Normalize, std::vector<uint8_t>&& data);
 
 
 	private:

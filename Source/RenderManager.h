@@ -7,6 +7,7 @@
 #include "EngineComponent.h"
 #include "EngineThread.h"
 #include "EventListener.h"
+#include "NBufferedVector.h"
 #include "RenderPipeline.h"
 #include "RenderSystem.h"
 #include "TextureTarget.h"
@@ -64,24 +65,31 @@ namespace re
 		// Textures seen during CreateAPIResources() for the current frame:
 		std::vector<std::shared_ptr<re::Texture>> const& GetNewlyCreatedTextures() const;
 
-
 	private: // API resource management:
 		void CreateAPIResources();
 
 		void SwapNewResourceDoubleBuffers();
-		void ClearNewResourceDoubleBuffers();
 		void DestroyNewResourceDoubleBuffers();
 
 		static constexpr size_t k_newObjectReserveAmount = 128;
-		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::Shader>> m_newShaders;
-		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::VertexStream>> m_newVertexStreams;
-		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::Texture>> m_newTextures;
-		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::Sampler>> m_newSamplers;
-		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::TextureTargetSet>> m_newTargetSets;
-		util::DoubleBufferUnorderedMap<size_t, std::shared_ptr<re::ParameterBlock>> m_newParameterBlocks;
+		util::NBufferedVector<std::shared_ptr<re::Shader>> m_newShaders;
+		util::NBufferedVector<std::shared_ptr<re::VertexStream>> m_newVertexStreams;
+		util::NBufferedVector<std::shared_ptr<re::Texture>> m_newTextures;
+		util::NBufferedVector<std::shared_ptr<re::Sampler>> m_newSamplers;
+		util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>> m_newTargetSets;
+		util::NBufferedVector<std::shared_ptr<re::ParameterBlock>> m_newParameterBlocks;
 
 		// All textures seen during CreateAPIResources(). We can't use m_newTextures, as it's cleared during Initialize()
+		// Used as a holding ground for operations that must be performed once after creation (E.g. mip generation)
 		std::vector<std::shared_ptr<re::Texture>> m_createdTextures;
+
+
+	public: // Ensure the lifetime of single-frame resources that are referenced by in-flight batches
+		template<typename T>
+		void RegisterSingleFrameResource(std::shared_ptr<T>);
+
+	private:
+		util::NBufferedVector<std::shared_ptr<re::VertexStream>> m_singleFrameVertexStreams;
 
 
 	private:

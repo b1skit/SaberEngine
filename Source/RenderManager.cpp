@@ -73,12 +73,13 @@ namespace re
 	RenderManager::RenderManager()
 		: m_renderFrameNum(0)
 		, m_imguiMenuVisible(false)
-		, m_newShaders(k_newObjectReserveAmount)
-		, m_newVertexStreams(k_newObjectReserveAmount)
-		, m_newTextures(k_newObjectReserveAmount)
-		, m_newSamplers(k_newObjectReserveAmount)
-		, m_newTargetSets(k_newObjectReserveAmount)
-		, m_newParameterBlocks(k_newObjectReserveAmount)
+		, m_newShaders(util::NBufferedVector<std::shared_ptr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newVertexStreams(util::NBufferedVector<std::shared_ptr<re::VertexStream>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newTextures(util::NBufferedVector<std::shared_ptr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newSamplers(util::NBufferedVector<std::shared_ptr<re::Sampler>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newTargetSets(util::NBufferedVector<std::shared_ptr<re::TextureTargetSet>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_newParameterBlocks(util::NBufferedVector<std::shared_ptr<re::ParameterBlock>>::BufferSize::Two, k_newObjectReserveAmount)
+		, m_singleFrameVertexStreams(util::NBufferedVector<std::shared_ptr<re::VertexStream>>::BufferSize::Three, k_newObjectReserveAmount)
 	{
 		m_vsyncEnabled = en::Config::Get()->GetValue<bool>("vsync");
 	}
@@ -162,7 +163,6 @@ namespace re
 
 		// Create/buffer new resources from our RenderSystems/GraphicsSystems
 		CreateAPIResources();
-		ClearNewResourceDoubleBuffers(); // Ensure we don't try and double-create any resources
 				
 		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
 
@@ -179,7 +179,7 @@ namespace re
 		m_renderBatches = std::move(SceneManager::Get()->GetSceneBatches());
 		// TODO: Create a BatchManager object that can handle batch double-buffering
 
-		// Execute each RenderSystem's platform-specific update pipelines:
+		// Execute each RenderSystem's platform-specific graphics system update pipelines:
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
 			renderSystem->ExecuteUpdatePipeline();
@@ -226,9 +226,9 @@ namespace re
 	{
 		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::EndOfFrame");
 
-		// Need to clear the read data now, to make sure we're not holding on to any single frame PBs beyond the end
-		// of the current frame
-		ClearNewResourceDoubleBuffers();
+		// Need to clear the PB read data now, to make sure we're not holding on to any single frame PBs beyond the
+		// end of the current frame
+		m_newParameterBlocks.ClearReadData();
 
 		m_renderBatches.clear();
 		m_createdTextures.clear();
@@ -242,7 +242,10 @@ namespace re
 			}
 		}
 
-		re::Context::Get()->GetParameterBlockAllocator().EndOfFrame(); 
+		// Swap the single-frame resource n-buffers:
+		m_singleFrameVertexStreams.Swap();
+
+		re::Context::Get()->GetParameterBlockAllocator().EndOfFrame();
 
 		PIXEndEvent();
 	}
@@ -336,9 +339,9 @@ namespace re
 		m_newParameterBlocks.AquireReadLock();
 
 		// Record any newly created textures (we clear m_newTextures during Initialize, so we maintain a separate copy):
-		for (auto const& newTexture : m_newTextures.Get())
+		for (auto const& newTexture : m_newTextures.GetReadData())
 		{
-			m_createdTextures.emplace_back(newTexture.second);
+			m_createdTextures.emplace_back(newTexture);
 		}
 
 		// Create the resources:
@@ -372,21 +375,6 @@ namespace re
 	}
 
 
-	void RenderManager::ClearNewResourceDoubleBuffers()
-	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "RenderManager::ClearNewResourceDoubleBuffers");
-
-		m_newShaders.EndOfFrame();
-		m_newVertexStreams.EndOfFrame();
-		m_newTextures.EndOfFrame();
-		m_newSamplers.EndOfFrame();
-		m_newTargetSets.EndOfFrame();
-		m_newParameterBlocks.EndOfFrame();
-
-		PIXEndEvent();
-	}
-
-
 	void RenderManager::DestroyNewResourceDoubleBuffers()
 	{
 		m_newShaders.Destroy();
@@ -401,51 +389,49 @@ namespace re
 	template<>
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::Shader> newObject)
 	{
-		const size_t nameID = newObject->GetNameID(); // Shaders are required to have unique names
-		m_newShaders.Set(nameID, std::move(newObject));
+		m_newShaders.EmplaceBack(std::move(newObject));
 	}
 
 
 	template<>
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::VertexStream> newObject)
 	{
-		const size_t dataHash = newObject->GetDataHash(); // Vertex streams are not named
-		m_newVertexStreams.Set(dataHash, std::move(newObject));
+		m_newVertexStreams.EmplaceBack(std::move(newObject));
 	}
 
 
 	template<>
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::Texture> newObject)
 	{
-		const size_t nameID = newObject->GetNameID(); // Textures are required to have unique names
-		m_newTextures.Set(nameID, std::move(newObject));
+		m_newTextures.EmplaceBack(std::move(newObject));
 	}
 
 
 	template<>
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::Sampler> newObject)
 	{
-		// Samplers are (currently) required to have unique names (e.g. "Wrap_Linear_Linear")
-		const size_t nameID = newObject->GetNameID();
-		m_newSamplers.Set(nameID, std::move(newObject));
+		m_newSamplers.EmplaceBack(std::move(newObject));
 	}
 
 
 	template<>
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::TextureTargetSet> newObject)
 	{
-		// Target sets can have identical names, and are usually identified by their unique target configuration (via a
-		// data hash). It's possible we might have 2 identical target configurations so we use the uniqueID here instead
-		const size_t uniqueID = newObject->GetUniqueID();
-		m_newTargetSets.Set(uniqueID, std::move(newObject));
+		m_newTargetSets.EmplaceBack(std::move(newObject));
 	}
 
 
 	template<>
 	void RenderManager::RegisterForCreate(std::shared_ptr<re::ParameterBlock> newObject)
 	{
-		const size_t uniqueID = newObject->GetUniqueID(); // Handle
-		m_newParameterBlocks.Set(uniqueID, std::move(newObject));
+		m_newParameterBlocks.EmplaceBack(std::move(newObject));
+	}
+
+
+	template<>
+	void RenderManager::RegisterSingleFrameResource(std::shared_ptr<re::VertexStream> singleFrameObject)
+	{
+		m_singleFrameVertexStreams.EmplaceBack(std::move(singleFrameObject));
 	}
 
 

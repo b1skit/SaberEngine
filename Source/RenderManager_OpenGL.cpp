@@ -157,53 +157,53 @@ namespace opengl
 		// Textures:
 		if (renderManager.m_newTextures.HasReadData())
 		{
-			for (auto& newObject : renderManager.m_newTextures.Get())
+			for (auto const& newObject : renderManager.m_newTextures.GetReadData())
 			{
-				opengl::Texture::Create(*newObject.second);
+				opengl::Texture::Create(*newObject);
 			}
 		}
 		// Samplers:
 		if (renderManager.m_newSamplers.HasReadData())
 		{
-			for (auto& newObject : renderManager.m_newSamplers.Get())
+			for (auto& newObject : renderManager.m_newSamplers.GetReadData())
 			{
-				opengl::Sampler::Create(*newObject.second);
+				opengl::Sampler::Create(*newObject);
 			}
 		}
 		// Texture Target Sets:
 		if (renderManager.m_newTargetSets.HasReadData())
 		{
-			for (auto& newObject : renderManager.m_newTargetSets.Get())
+			for (auto& newObject : renderManager.m_newTargetSets.GetReadData())
 			{
-				newObject.second->Commit();
-				opengl::TextureTargetSet::CreateColorTargets(*newObject.second);
-				opengl::TextureTargetSet::CreateDepthStencilTarget(*newObject.second);
+				newObject->Commit();
+				opengl::TextureTargetSet::CreateColorTargets(*newObject);
+				opengl::TextureTargetSet::CreateDepthStencilTarget(*newObject);
 			}
 		}
 		// Shaders:
 		if (renderManager.m_newShaders.HasReadData())
 		{
-			for (auto& newObject : renderManager.m_newShaders.Get())
+			for (auto& newObject : renderManager.m_newShaders.GetReadData())
 			{
-				opengl::Shader::Create(*newObject.second);
+				opengl::Shader::Create(*newObject);
 			}
 		}
 		
 		// Vertex streams:
 		if (renderManager.m_newVertexStreams.HasReadData())
 		{
-			for (auto& newObject : renderManager.m_newVertexStreams.Get())
+			for (auto& newObject : renderManager.m_newVertexStreams.GetReadData())
 			{
-				opengl::VertexStream::Create(*newObject.second);
+				opengl::VertexStream::Create(*newObject);
 			}
 		}
 
 		// Parameter Blocks:
 		if (renderManager.m_newParameterBlocks.HasReadData())
 		{
-			for (auto& newObject : renderManager.m_newParameterBlocks.Get())
+			for (auto& newObject : renderManager.m_newParameterBlocks.GetReadData())
 			{
-				opengl::ParameterBlock::Create(*newObject.second);
+				opengl::ParameterBlock::Create(*newObject);
 			}
 		}
 	}
