@@ -30,7 +30,8 @@ float ComputeDiffuseAO(float fineAO)
 float ComputeSpecularAO(float NoV, float remappedRoughness, float fineAO)
 {
 	const float totalAO = fineAO;
-	return saturate(pow(NoV + totalAO, exp2(-16.f * remappedRoughness - 1.f)) - 1.f + fineAO);
+	// Use pow(abs(f), e) to suppress warning X3571
+	return saturate(pow(abs(NoV + totalAO), exp2(-16.f * remappedRoughness - 1.f)) - 1.f + fineAO);
 }
 
 

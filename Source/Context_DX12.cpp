@@ -168,9 +168,6 @@ namespace dx12
 		std::shared_ptr<re::TextureTargetSet> swapChainTargetSet = 
 			SwapChain::GetBackBufferTargetSet(GetSwapChain());
 		
-		dx12::Texture::PlatformParams const* backbufferColorTexPlatParams =
-			swapChainTargetSet->GetColorTarget(0).GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-
 		// Transition our backbuffer resource back to the present state:
 		commandList->TransitionResource(
 			swapChainTargetSet->GetColorTarget(0).GetTexture(),

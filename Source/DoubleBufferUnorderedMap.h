@@ -28,7 +28,7 @@ namespace util
 		bool HasReadData() const;
 
 		// The Simultaneous writes are thread-safe.
-		void Set(Key const&, Value&&); // Emplace
+		void Set(Key const&, Value&&); // emplace
 
 		void Swap();
 		void EndOfFrame(); // Clear read buffers
