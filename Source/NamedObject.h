@@ -17,7 +17,7 @@ namespace en
 		std::string const& GetName() const;
 		std::wstring const& GetWName() const;
 
-		// Integer identifier computed by hasing m_name. Any object with the same m_name will have the same NameID
+		// Integer identifier computed by hashing m_name. Any object with the same m_name will have the same NameID
 		uint64_t GetNameID() const;
 
 		// Unique integer identifier, hashed from m_name concatenated with a monotonically-increasing value
