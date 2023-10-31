@@ -153,6 +153,7 @@ namespace dx12
 
 		std::vector<DescriptorTable> const& GetDescriptorTableMetadata() const;
 
+		std::string DebugGetNameFromRootParamIdx(uint8_t) const; // Debug only
 
 	private:
 		RootSignature();

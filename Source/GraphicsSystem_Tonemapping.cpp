@@ -3,6 +3,7 @@
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_Tonemapping.h"
+#include "MeshFactory.h"
 #include "RenderManager.h"
 #include "RenderSystem.h"
 #include "Shader.h"
@@ -36,7 +37,7 @@ namespace gr
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_tonemappingStage = re::RenderStage::CreateGraphicsStage("Tonemapping stage", gfxStageParams);
 
-		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Near);
+		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Near);
 	}
 
 
@@ -85,7 +86,7 @@ namespace gr
 
 	void TonemappingGraphicsSystem::CreateBatches()
 	{
-		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
+		const Batch fullscreenQuadBatch = Batch(re::Batch::Lifetime::SingleFrame, m_screenAlignedQuad.get(), nullptr);
 		m_tonemappingStage->AddBatch(fullscreenQuadBatch);
 	}
 }

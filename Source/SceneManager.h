@@ -4,8 +4,12 @@
 #include "EngineComponent.h"
 #include "EventListener.h"
 #include "SceneData.h"
-#include "Batch.h"
 
+
+namespace re
+{
+	class Batch;
+}
 
 namespace en
 {

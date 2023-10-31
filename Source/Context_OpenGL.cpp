@@ -367,10 +367,11 @@ namespace opengl
 	{
 		SetCullingMode(pipelineState.GetFaceCullingMode());
 		SetDepthTestMode(pipelineState.GetDepthTestMode());
+		SetFillMode(pipelineState);
 	}
 
 
-	void Context::SetCullingMode(re::PipelineState::FaceCullingMode const& mode)
+	void Context::SetCullingMode(re::PipelineState::FaceCullingMode mode)
 	{
 		if (mode != re::PipelineState::FaceCullingMode::Disabled)
 		{
@@ -400,7 +401,7 @@ namespace opengl
 	}
 
 
-	void Context::SetDepthTestMode(re::PipelineState::DepthTestMode const& mode)
+	void Context::SetDepthTestMode(re::PipelineState::DepthTestMode mode)
 	{
 		if (mode == re::PipelineState::DepthTestMode::Always)
 		{
@@ -450,6 +451,28 @@ namespace opengl
 		}
 
 		glDepthFunc(depthMode);
+	}
+
+
+	void Context::SetFillMode(re::PipelineState const& pipelineState)
+	{
+		GLenum fillMode = GL_FILL;
+		switch (pipelineState.GetFillMode())
+		{
+		case re::PipelineState::FillMode::Solid:
+		{
+			fillMode = GL_FILL;
+		}
+		break;
+		case re::PipelineState::FillMode::Wireframe:
+		{
+			fillMode = GL_LINE;
+		}
+		break;
+		default: SEAssertF("Invalid fill mode");
+		}
+
+		glPolygonMode(GL_FRONT_AND_BACK, fillMode);
 	}
 
 

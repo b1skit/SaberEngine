@@ -67,9 +67,10 @@ namespace
 		}
 		break;
 		case re::VertexStream::DataType::UInt:
+		case re::VertexStream::DataType::UShort:
 		case re::VertexStream::DataType::UByte:
 		{
-			SEAssertF("Only floating point types can be normalized");
+			SEAssertF("Only floating point types can (currently) be normalized");
 		}
 		break;
 		default:
@@ -86,6 +87,7 @@ namespace
 		{
 		case re::VertexStream::DataType::Float: return "Float";
 		case re::VertexStream::DataType::UInt: return "UInt";
+		case re::VertexStream::DataType::UShort: return "UShort";
 		case re::VertexStream::DataType::UByte: return "UByte";
 		default: SEAssertF("Invalid data type");
 		}
@@ -116,6 +118,7 @@ namespace re
 		if (lifetime == Lifetime::SingleFrame)
 		{
 			re::RenderManager::Get()->RegisterSingleFrameResource(newVertexStream);
+			re::RenderManager::Get()->RegisterForCreate(newVertexStream);
 		}
 		else
 		{
@@ -148,7 +151,7 @@ namespace re
 
 		m_data = std::move(data);
 
-		// D3D12 does not support GPU-normalization of 32 bit types. As a hail-mary, we attempt to pre-normalize here
+		// D3D12 does not support GPU-normalization of 32-bit types. As a hail-mary, we attempt to pre-normalize here
 		if (DoNormalize() && m_dataType == re::VertexStream::DataType::Float)
 		{
 			LOG_WARNING("Pre-normalizing vertex stream data as its format is incompatible with GPU-normalization");
@@ -168,6 +171,11 @@ namespace re
 		case DataType::UInt:
 		{
 			m_componentByteSize = sizeof(uint32_t); // TODO: Support variably-sized indices
+		}
+		break;
+		case DataType::UShort:
+		{
+			m_componentByteSize = sizeof(unsigned short);
 		}
 		break;
 		case DataType::UByte:

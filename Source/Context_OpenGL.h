@@ -38,8 +38,9 @@ namespace opengl
 		friend class re::Context;
 
 	private:
-		void SetCullingMode(re::PipelineState::FaceCullingMode const& mode);
-		void SetDepthTestMode(re::PipelineState::DepthTestMode const& mode);
+		void SetCullingMode(re::PipelineState::FaceCullingMode mode);
+		void SetDepthTestMode(re::PipelineState::DepthTestMode mode);
+		void SetFillMode(re::PipelineState const&);
 
 		void GetOpenGLExtensionProcessAddresses();
 

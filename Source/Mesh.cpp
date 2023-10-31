@@ -48,6 +48,23 @@ namespace gr
 	}
 
 
+	std::shared_ptr<re::ParameterBlock> Mesh::CreateInstancedMeshParamsData(
+		glm::mat4 const* model, glm::mat4* transposeInvModel)
+	{
+		gr::Mesh::InstancedMeshParams instancedMeshPBData;
+
+		instancedMeshPBData.g_model = model ? *model : glm::mat4(1.f);
+		instancedMeshPBData.g_transposeInvModel = transposeInvModel ? *transposeInvModel : glm::mat4(1.f);
+
+		return re::ParameterBlock::CreateFromArray(
+			gr::Mesh::InstancedMeshParams::s_shaderName,
+			&instancedMeshPBData,
+			sizeof(gr::Mesh::InstancedMeshParams),
+			1,
+			re::ParameterBlock::PBType::SingleFrame);
+	}
+
+
 	Mesh::Mesh(std::string const& name, gr::Transform* ownerTransform)
 		: NamedObject(name)
 		, m_ownerTransform(ownerTransform)

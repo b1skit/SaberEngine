@@ -5,6 +5,7 @@
 #include "MeshPrimitive.h"
 #include "Shader_Platform.h"
 #include "Texture.h"
+#include "VertexStream.h"
 
 
 namespace gr
@@ -26,10 +27,14 @@ namespace re
 	class Batch final : public virtual en::HashedDataObject
 	{
 	public:
-		static std::vector<re::Batch> BuildBatches(std::vector<std::shared_ptr<gr::Mesh>> const&);
+		enum class Lifetime : bool
+		{
+			SingleFrame,
+			Permanent			
+		};
+		static_assert(static_cast<bool>(Lifetime::SingleFrame) == static_cast<bool>(re::VertexStream::Lifetime::SingleFrame));
+		static_assert(static_cast<bool>(Lifetime::Permanent) == static_cast<bool>(re::VertexStream::Lifetime::Permanent));
 
-
-	public:
 		enum class BatchType
 		{
 			Graphics,
@@ -38,17 +43,16 @@ namespace re
 
 		enum class GeometryMode
 		{
-			Indexed,
+			// Note: All draws are instanced, even if an API supports non-instanced drawing
 			IndexedInstanced,
-			// TODO: Support other geometry draw modes
-
-			GeometryMode_Count
+			ArrayInstanced
 		};
 
-		enum class Filter
+		// Filter bits are exclusionary: A RenderStage will not draw a Batch if they have a matching filter bit
+		enum class Filter : uint32_t
 		{
-			GBuffer_DoNotWrite	= 1 << 0,
-			NoShadow			= 1 << 1,
+			AlphaBlended		= 1 << 0,	// 0001
+			NoShadow			= 1 << 1,	// 0010
 
 			Filter_Count
 		};
@@ -70,7 +74,7 @@ namespace re
 			// Don't forget to update ComputeDataHash if modifying this
 			
 			GeometryMode m_batchGeometryMode;
-			size_t m_numInstances;
+			uint32_t m_numInstances;
 			gr::MeshPrimitive::TopologyMode m_batchTopologyMode;
 			std::array<re::VertexStream const*, gr::MeshPrimitive::Slot_Count> m_vertexStreams;
 			re::VertexStream const* m_indexStream;
@@ -83,13 +87,16 @@ namespace re
 		};
 
 	public:
-		// TODO: Switch batches to an object creation factory. We want them tightly packed in memory, so will need some
-		// sort of allocation/memory management system
+		// TODO: Switch batches to an object creation factory that is allocated in tightly packed in memory managed by
+		// the BatchManager
 
-		Batch(gr::MeshPrimitive const* meshPrimitive, gr::Material* materialOverride);
-		Batch(std::shared_ptr<gr::Mesh const> const mesh, gr::Material* materialOverride);
+		// Graphics batches:
+		Batch(Lifetime, gr::MeshPrimitive const* meshPrimitive, gr::Material* materialOverride);
 
-		Batch(ComputeParams const& computeParams); // For compute batches
+		Batch(Lifetime, gr::Material*, GraphicsParams const&);
+
+		// Compute batches:
+		Batch(Lifetime, ComputeParams const& computeParams);
 
 		~Batch() = default;
 		Batch(Batch const&) = default;
@@ -127,6 +134,7 @@ namespace re
 
 
 	private:
+		Lifetime m_lifetime;
 		BatchType m_type;
 		union
 		{

@@ -1,4 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Batch.h"
+#include "BatchManager.h"
 #include "Camera.h"
 #include "CastUtils.h"
 #include "Config.h"
@@ -241,6 +243,9 @@ namespace en
 
 	void SceneManager::BuildSceneBatches()
 	{
+		// TODO: We're currently creating/destroying invariant parameter blocks each frame. This is expensive.
+		// Instead, we should create a pool of PBs, and reuse by re-buffering data each frame
+
 		SEAssert("Scene batches should be empty", m_sceneBatches.empty());
 
 		std::vector<shared_ptr<gr::Mesh>> const& sceneMeshes = SceneManager::GetSceneData()->GetMeshes();
@@ -249,7 +254,7 @@ namespace en
 			return;
 		}
 
-		m_sceneBatches = std::move(re::Batch::BuildBatches(SceneManager::GetSceneData()->GetMeshes()));
+		m_sceneBatches = std::move(re::BatchManager::BuildBatches(SceneManager::GetSceneData()->GetMeshes()));
 	}
 }
 

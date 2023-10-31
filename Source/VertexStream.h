@@ -23,10 +23,11 @@ namespace re
 			True = 1
 		};
 
-		enum class DataType // Of each component in a vertex. Eg. Color/Float4 == Float
+		enum class DataType // Of each component in a vertex stream element. Eg. Color/Float4 == Float
 		{
 			Float,	// 32-bit
 			UInt,	// 32-bit
+			UShort, // 16-bit
 			UByte,	// 8-bit
 
 			// NOTE: If adding more data types, check re::VertexStream::VertexStream() to see if we need to handle
@@ -39,12 +40,11 @@ namespace re
 			Vertex
 		};
 
-		enum class Lifetime
+		enum class Lifetime : bool
 		{
 			SingleFrame,
 			Permanent
 		};
-
 
 	public:
 		static std::shared_ptr<re::VertexStream> Create(
@@ -72,6 +72,8 @@ namespace re
 		DataType GetDataType() const; // What data type does each individual component have?
 		Normalize DoNormalize() const; // Should the data be normalized when it is accessed by the GPU?
 		
+		Lifetime GetLifetime() const;
+
 		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 
 		void ShowImGuiWindow();
@@ -113,6 +115,12 @@ namespace re
 	inline VertexStream::StreamType VertexStream::GetStreamType() const
 	{
 		return m_streamType;
+	}
+
+
+	inline VertexStream::Lifetime VertexStream::GetLifetime() const
+	{
+		return m_lifetime;
 	}
 
 

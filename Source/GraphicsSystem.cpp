@@ -13,9 +13,6 @@ namespace gr
 
 	void GraphicsSystem::ShowImGuiWindow()
 	{
-		if (ImGui::CollapsingHeader(GetName().c_str(), ImGuiTreeNodeFlags_None))
-		{
-			ImGui::Text("...");
-		}
+		ImGui::Text("...");
 	}
 }

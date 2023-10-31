@@ -322,22 +322,49 @@ namespace dx12
 		re::Batch::GraphicsParams const& batchGraphicsParams = batch.GetGraphicsParams();
 
 		SetPrimitiveType(TranslateToD3DPrimitiveTopology(batchGraphicsParams.m_batchTopologyMode));
+
 		SetVertexBuffers(
 			batchGraphicsParams.m_vertexStreams.data(),
 			static_cast<uint8_t>(batchGraphicsParams.m_vertexStreams.size()));
 
-		re::VertexStream const* indexStream = batchGraphicsParams.m_indexStream;
-		dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
-			indexStream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
-		SetIndexBuffer(&indexPlatformParams->m_indexBufferView);
-
 		// Record the draw:
-		DrawIndexedInstanced(
-			indexStream->GetNumElements(),
-			static_cast<uint32_t>(batch.GetInstanceCount()),	// Instance count
-			0,													// Start index location
-			0,													// Base vertex location
-			0);													// Start instance location
+		switch (batchGraphicsParams.m_batchGeometryMode)
+		{
+		case re::Batch::GeometryMode::IndexedInstanced:
+		{
+			re::VertexStream const* indexStream = batchGraphicsParams.m_indexStream;
+			SEAssert("Index stream cannot be null for indexed draws", indexStream);
+
+			dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
+				indexStream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
+			SetIndexBuffer(&indexPlatformParams->m_indexBufferView);
+
+			CommitGPUDescriptors();
+
+			m_commandList->DrawIndexedInstanced(
+				indexStream->GetNumElements(),					// Index count, per instance
+				static_cast<uint32_t>(batch.GetInstanceCount()),// Instance count
+				0,												// Start index location
+				0,												// Base vertex location
+				0);												// Start instance location
+		}
+		break;
+		case re::Batch::GeometryMode::ArrayInstanced:
+		{
+			re::VertexStream const* positionStream = batchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position];
+			SEAssert("Position stream cannot be null", positionStream);
+
+			CommitGPUDescriptors();
+
+			m_commandList->DrawInstanced(
+				positionStream->GetNumElements(),	// VertexCountPerInstance
+				batchGraphicsParams.m_numInstances, // InstanceCount
+				0,									// StartVertexLocation
+				0);									// StartInstanceLocation
+		}
+		break;
+		default: SEAssertF("Invalid batch geometry type");
+		}
 	}
 
 

@@ -168,7 +168,7 @@ namespace gr
 						firstTargetMipDimensions.y / k_numThreadsY, k_numThreadsY), 1u);
 
 					// Add our dispatch information to a compute batch:
-					re::Batch computeBatch = re::Batch(re::Batch::ComputeParams{
+					re::Batch computeBatch = re::Batch(re::Batch::Lifetime::SingleFrame, re::Batch::ComputeParams{
 						.m_threadGroupCount = glm::uvec3(roundedXDim, roundedYDim, 1u) });
 
 					mipGenerationStage->AddBatch(computeBatch);

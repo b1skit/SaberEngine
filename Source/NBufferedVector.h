@@ -49,6 +49,8 @@ namespace util
 		const uint8_t m_numBuffers;
 		std::unique_ptr<std::vector<T>[]> m_vectors; // N-buffer
 		std::array<std::shared_mutex, 2> m_vectorMutexes; // Only need 2 mutexes to synchronize reading/writing
+		static constexpr uint8_t s_readMutexIdx = 0;
+		static constexpr uint8_t s_writeMutexIdx = 1;
 
 		uint8_t m_readIdx;	// Starts at 0, progresses by (m_readIdx + 1) % m_numBuffers each time Swap() is called
 		uint8_t m_writeIdx; // Starts at 1, progresses by (m_writeIdx + 1) % m_numBuffers each time Swap() is called
@@ -84,7 +86,7 @@ namespace util
 		, m_writeIdx(1)
 	{
 		{
-			std::scoped_lock lock(m_vectorMutexes[0], m_vectorMutexes[1]);
+			std::scoped_lock lock(m_vectorMutexes[s_readMutexIdx], m_vectorMutexes[s_writeMutexIdx]);
 
 			m_vectors = std::make_unique<std::vector<T>[]>(m_numBuffers);
 
@@ -106,7 +108,7 @@ namespace util
 	template<typename T>
 	void NBufferedVector<T>::Destroy()
 	{
-		std::scoped_lock lock(m_vectorMutexes[0], m_vectorMutexes[1]);
+		std::scoped_lock lock(m_vectorMutexes[s_readMutexIdx], m_vectorMutexes[s_writeMutexIdx]);
 		m_vectors = nullptr;
 	}
 
@@ -115,7 +117,7 @@ namespace util
 	template<typename T>
 	void NBufferedVector<T>::Swap()
 	{
-		std::scoped_lock lock(m_vectorMutexes[0], m_vectorMutexes[1]);
+		std::scoped_lock lock(m_vectorMutexes[s_readMutexIdx], m_vectorMutexes[s_writeMutexIdx]);
 
 		// Advance the write index to the oldest buffer, and clear it
 		m_writeIdx = (m_writeIdx + 1) % m_numBuffers;
@@ -130,7 +132,7 @@ namespace util
 	void NBufferedVector<T>::ClearReadData()
 	{
 		{
-			std::lock_guard<std::shared_mutex>lock(m_vectorMutexes[m_readIdx]);
+			std::lock_guard<std::shared_mutex>lock(m_vectorMutexes[s_readMutexIdx]);
 			m_vectors[m_readIdx].clear();
 		}
 	}
@@ -139,7 +141,7 @@ namespace util
 	template<typename T>
 	inline void NBufferedVector<T>::AquireReadLock()
 	{
-		m_vectorMutexes[m_readIdx].lock_shared();
+		m_vectorMutexes[s_readMutexIdx].lock_shared();
 		RegisterReadingThread();
 	}
 
@@ -148,7 +150,7 @@ namespace util
 	inline void NBufferedVector<T>::ReleaseReadLock()
 	{
 		UnregisterReadingThread();
-		m_vectorMutexes[m_readIdx].unlock_shared();
+		m_vectorMutexes[s_readMutexIdx].unlock_shared();
 	}
 
 
@@ -182,7 +184,7 @@ namespace util
 	void NBufferedVector<T>::EmplaceBack(T&& value)
 	{
 		{
-			std::lock_guard<std::shared_mutex> lock(m_vectorMutexes[m_writeIdx]);
+			std::lock_guard<std::shared_mutex> lock(m_vectorMutexes[s_writeMutexIdx]);
 
 			m_vectors[m_writeIdx].emplace_back(std::move(value));
 		}
@@ -193,7 +195,7 @@ namespace util
 	void NBufferedVector<T>::EmplaceBack(T const& value)
 	{
 		{
-			std::lock_guard<std::mutex> lock(m_vectorMutexes[m_writeIdx]);
+			std::lock_guard<std::mutex> lock(m_vectorMutexes[s_writeMutexIdx]);
 
 			m_vectors[m_writeIdx].emplace_back(value);
 		}

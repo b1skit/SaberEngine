@@ -56,6 +56,7 @@ namespace en::ShaderNames
 	constexpr char const* k_generateIEMShaderName = "GenerateIEM";
 	constexpr char const* k_generateMipMapsShaderName = "GenerateMipMaps_BoxFilter";
 	constexpr char const* k_generatePMREMShaderName = "GeneratePMREM";
+	constexpr char const* k_lineShaderName = "Line";
 	constexpr char const* k_skyboxShaderName = "Skybox";
 	constexpr char const* k_toneMapShaderName = "ToneMap";
 }

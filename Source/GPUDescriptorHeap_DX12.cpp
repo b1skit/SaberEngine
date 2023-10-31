@@ -264,13 +264,14 @@ namespace dx12
 		m_inlineDescriptors[CBV][rootParamIdx] = buffer->GetGPUVirtualAddress();
 		
 		// Mark our root parameter index as dirty:
-		m_dirtyInlineDescriptorIdxBitmask[CBV] |= (1 << rootParamIdx);
-
 		const uint32_t rootParamIdxBitmask = 1 << rootParamIdx;
+
+		m_dirtyInlineDescriptorIdxBitmask[CBV] |= rootParamIdxBitmask;
+
 		if (m_unsetInlineDescriptors & rootParamIdxBitmask)
 		{
 			// The inline root parameter at this index has been set at least once: Remove the unset flag
-			m_unsetInlineDescriptors ^= 1 << rootParamIdx;
+			m_unsetInlineDescriptors ^= rootParamIdxBitmask;
 		}
 	}
 
@@ -284,13 +285,14 @@ namespace dx12
 		m_inlineDescriptors[SRV][rootParamIdx] = buffer->GetGPUVirtualAddress();
 
 		// Mark our root parameter index as dirty:
-		m_dirtyInlineDescriptorIdxBitmask[SRV] |= (1 << rootParamIdx);
-
 		const uint32_t rootParamIdxBitmask = 1 << rootParamIdx;
+		
+		m_dirtyInlineDescriptorIdxBitmask[SRV] |= rootParamIdxBitmask;
+
 		if (m_unsetInlineDescriptors & rootParamIdxBitmask)
 		{
 			// The inline root parameter at this index has been set at least once: Remove the unset flag
-			m_unsetInlineDescriptors ^= 1 << rootParamIdx;
+			m_unsetInlineDescriptors ^= rootParamIdxBitmask;
 		}
 	}
 
@@ -304,13 +306,14 @@ namespace dx12
 		m_inlineDescriptors[UAV][rootParamIdx] = buffer->GetGPUVirtualAddress();
 
 		// Mark our root parameter index as dirty:
-		m_dirtyInlineDescriptorIdxBitmask[UAV] |= (1 << rootParamIdx);
-
 		const uint32_t rootParamIdxBitmask = 1 << rootParamIdx;
+
+		m_dirtyInlineDescriptorIdxBitmask[UAV] |= rootParamIdxBitmask;
+		
 		if (m_unsetInlineDescriptors & rootParamIdxBitmask)
 		{
 			// The inline root parameter at this index has been set at least once: Remove the unset flag
-			m_unsetInlineDescriptors ^= 1 << rootParamIdx;
+			m_unsetInlineDescriptors ^= rootParamIdxBitmask;
 		}
 	}
 
@@ -515,8 +518,27 @@ namespace dx12
 	
 	void GPUDescriptorHeap::CommitInlineDescriptors()
 	{
-		SEAssert("An inline descriptor has not been set. Shader access will result in undefined behavior", 
-			m_unsetInlineDescriptors == 0);
+		// Debug: Catch unset descriptors
+		if (m_unsetInlineDescriptors != 0)
+		{
+			std::string unsetInlineDescriptorNames;
+
+			std::vector<RootSignature::RootParameter> const& rootParams = m_currentRootSig->GetRootSignatureEntries();
+
+			for (auto const& rootParam : rootParams)
+			{
+				if (m_unsetInlineDescriptors & (1 << rootParam.m_index))
+				{
+					unsetInlineDescriptorNames += m_currentRootSig->DebugGetNameFromRootParamIdx(rootParam.m_index) + " ";;
+				}
+			}
+			
+			SEAssertF(std::format("An inline descriptor has not been set. Shader access will result in undefined "
+				"behavior: {}",
+				unsetInlineDescriptorNames).c_str());
+		}
+
+
 
 		for (uint8_t inlineRootType = 0; inlineRootType < static_cast<uint8_t>(InlineRootType_Count); inlineRootType++)
 		{

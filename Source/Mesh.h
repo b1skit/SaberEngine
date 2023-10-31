@@ -24,6 +24,7 @@ namespace gr
 		};
 		static std::shared_ptr<re::ParameterBlock> CreateInstancedMeshParamsData(gr::Transform*);
 		static std::shared_ptr<re::ParameterBlock> CreateInstancedMeshParamsData(std::vector<gr::Transform*> const&);
+		static std::shared_ptr<re::ParameterBlock> CreateInstancedMeshParamsData(glm::mat4 const* model, glm::mat4* transposeInvModel);
 
 
 	public:

@@ -94,9 +94,6 @@ namespace dx12
 		
 		void DrawBatchGeometry(re::Batch const&);
 
-		void DrawIndexedInstanced(
-			uint32_t numIndexes, uint32_t numInstances, uint32_t idxStartOffset, int32_t baseVertexOffset, uint32_t instanceOffset);
-
 		void Dispatch(glm::uvec3 const& numThreads);
 
 		// TODO: Implement a "resource" interface if/when we need to transition more than just Textures
@@ -193,20 +190,6 @@ namespace dx12
 			count,			// Num32BitValuesToSet
 			srcData,		// pSrcData
 			dstOffset);
-	}
-
-
-	inline void CommandList::DrawIndexedInstanced(
-		uint32_t numIndexes, uint32_t numInstances, uint32_t idxStartOffset, int32_t baseVertexOffset, uint32_t instanceOffset)
-	{
-		CommitGPUDescriptors();
-
-		m_commandList->DrawIndexedInstanced(
-			numIndexes,			// Index count, per instance
-			numInstances,		// Instance count
-			idxStartOffset,		// Start index location
-			baseVertexOffset,	// Base vertex location
-			instanceOffset);	// Start instance location
 	}
 
 

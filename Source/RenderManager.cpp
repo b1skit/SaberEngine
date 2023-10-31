@@ -276,6 +276,9 @@ namespace re
 		// Clear the new object queues:
 		DestroyNewResourceDoubleBuffers();
 
+		// Clear single-frame resources:
+		m_singleFrameVertexStreams.Destroy();
+
 		// Need to do this here so the CoreEngine's Window can be destroyed
 		re::Context::Get()->Destroy();
 

@@ -39,6 +39,8 @@ namespace gr
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_gBufferStage = re::RenderStage::CreateGraphicsStage("GBuffer Stage", gfxStageParams);
+
+		m_gBufferStage->SetBatchFilterMaskBit(re::Batch::Filter::AlphaBlended);
 	}
 
 

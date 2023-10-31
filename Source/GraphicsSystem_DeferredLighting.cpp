@@ -1,10 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Batch.h"
+#include "BatchManager.h"
 #include "Config.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "Light.h"
-#include "MeshPrimitive.h"
+#include "MeshFactory.h"
 #include "ParameterBlock.h"
 #include "SceneManager.h"
 #include "SceneManager.h"
@@ -243,10 +243,10 @@ namespace gr
 		m_pointlightStage = re::RenderStage::CreateGraphicsStage("Pointlight stage", gfxStageParams);
 
 		// Create a fullscreen quad, for reuse when building batches:
-		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Far);
+		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
 
 		// Cube mesh, for rendering of IBL cubemaps
-		m_cubeMeshPrimitive = meshfactory::CreateCube();
+		m_cubeMeshPrimitive = gr::meshfactory::CreateCube();
 	}
 
 
@@ -314,7 +314,7 @@ namespace gr
 			brdfStage->AddSingleFrameParameterBlock(brdfIntegrationPB);
 
 			// Add our dispatch information to a compute batch. Note: We use numthreads = (1,1,1)
-			re::Batch computeBatch = re::Batch(re::Batch::ComputeParams{
+			re::Batch computeBatch = re::Batch(re::Batch::Lifetime::SingleFrame, re::Batch::ComputeParams{
 				.m_threadGroupCount = glm::uvec3(brdfTexWidthHeight, brdfTexWidthHeight, 1u) });
 
 			brdfStage->AddBatch(computeBatch);
@@ -340,7 +340,7 @@ namespace gr
 		cubemapCamParams.g_cameraWPos = vec4(0.f, 0.f, 0.f, 0.f); // Unused
 
 		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
-		Batch cubeMeshBatch = Batch(m_cubeMeshPrimitive.get(), nullptr);
+		Batch cubeMeshBatch = Batch(re::Batch::Lifetime::SingleFrame, m_cubeMeshPrimitive.get(), nullptr);
 
 		// TODO: We should use equirectangular images, instead of bothering to convert to cubemaps for IEM/PMREM
 		// -> Need to change the HLSL Get___DominantDir functions to ensure the result is normalized
@@ -687,7 +687,7 @@ namespace gr
 			for (shared_ptr<Light> pointlight : pointLights)
 			{
 				m_sphereMeshes.emplace_back(std::make_shared<gr::Mesh>(
-					"PointLightDeferredMesh", pointlight->GetTransform(), meshfactory::CreateSphere(1.0f)));
+					"PointLightDeferredMesh", pointlight->GetTransform(), gr::meshfactory::CreateSphere(1.0f)));
 			}
 		}
 
@@ -811,14 +811,16 @@ namespace gr
 	void DeferredLightingGraphicsSystem::CreateBatches()
 	{
 		// Ambient stage batches:
-		const Batch ambientFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
+		const Batch ambientFullscreenQuadBatch = 
+			Batch(re::Batch::Lifetime::SingleFrame, m_screenAlignedQuad.get(), nullptr);
 		m_ambientStage->AddBatch(ambientFullscreenQuadBatch);
 
 		// Keylight stage batches:
 		shared_ptr<Light> const keyLight = SceneManager::GetSceneData()->GetKeyLight();
 		if (keyLight)
 		{
-			Batch keylightFullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
+			Batch keylightFullscreenQuadBatch = 
+				Batch(re::Batch::Lifetime::SingleFrame, m_screenAlignedQuad.get(), nullptr);
 
 			LightParams const& keylightParams = GetLightParamData(keyLight, m_keylightStage->GetTextureTargetSet());
 			shared_ptr<re::ParameterBlock> keylightPB = re::ParameterBlock::Create(
@@ -835,10 +837,12 @@ namespace gr
 		vector<shared_ptr<Light>> const& pointLights = SceneManager::GetSceneData()->GetPointLights();
 		for (size_t i = 0; i < pointLights.size(); i++)
 		{
-			Batch pointlightBatch = Batch(m_sphereMeshes[i], nullptr);
+			re::Batch pointlightBatch = re::BatchManager::BuildBatches({ m_sphereMeshes[i] })[0];
 
 			// Point light params:
-			LightParams const& pointlightParams = GetLightParamData(pointLights[i], m_pointlightStage->GetTextureTargetSet());
+			LightParams const& pointlightParams = 
+				GetLightParamData(pointLights[i], m_pointlightStage->GetTextureTargetSet());
+
 			shared_ptr<re::ParameterBlock> pointlightPB = re::ParameterBlock::Create(
 				LightParams::s_shaderName,
 				pointlightParams, 

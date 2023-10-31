@@ -48,7 +48,10 @@ namespace re
 	{
 		for (std::shared_ptr<gr::GraphicsSystem> const& gs : m_graphicsSystems)
 		{
-			gs->ShowImGuiWindow();
+			if (ImGui::CollapsingHeader(std::format("{}##{}", gs->GetName(), gs->GetUniqueID()).c_str()))
+			{
+				gs->ShowImGuiWindow();
+			}
 		}
 	}
 }

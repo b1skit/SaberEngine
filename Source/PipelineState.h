@@ -25,27 +25,28 @@ namespace re
 	public:
 		enum class TopologyType : uint8_t
 		{
+			Triangle, // Default
 			Point,
 			Line,
-			Triangle, // Default
 			Patch
 		};
 		TopologyType GetTopologyType() const;
 		void SetTopologyType(TopologyType);
 
-		enum class FillMode
+		enum class FillMode : uint8_t
 		{
-			Wireframe, // TODO: Implement support for this
-			Solid,  // Default
+			Solid, // Default
+			Wireframe
+			// Note: Point fill modes are not supported, even if an API supports them
 		};
 		FillMode GetFillMode() const;
 		void SetFillMode(FillMode);
 
 		enum class FaceCullingMode
 		{
-			Disabled,
-			Front,
 			Back,  // Default
+			Front,
+			Disabled,
 		};
 		FaceCullingMode GetFaceCullingMode() const;
 		void SetFaceCullingMode(FaceCullingMode);

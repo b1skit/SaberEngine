@@ -22,83 +22,9 @@ namespace
 
 namespace re
 {
-	std::vector<re::Batch> Batch::BuildBatches(std::vector<std::shared_ptr<gr::Mesh>> const& meshes)
-	{
-		std::vector<std::pair<Batch, gr::Transform*>> unmergedBatches;
-		unmergedBatches.reserve(meshes.size());
-		for (shared_ptr<gr::Mesh> mesh : meshes)
-		{
-			for (shared_ptr<gr::MeshPrimitive> const meshPrimitive : mesh->GetMeshPrimitives())
-			{
-				unmergedBatches.emplace_back(std::pair<re::Batch, gr::Transform*>(
-					{
-						meshPrimitive.get(),
-						meshPrimitive->GetMeshMaterial()
-					},
-					mesh->GetTransform()));
-
-				unmergedBatches.emplace_back(std::pair<re::Batch, gr::Transform*>(
-					re::Batch(meshPrimitive.get(), meshPrimitive->GetMeshMaterial()),
-					mesh->GetTransform()));
-			}
-		}
-
-		// Sort the batches:
-		std::sort(
-			unmergedBatches.begin(),
-			unmergedBatches.end(),
-			[](std::pair<Batch, gr::Transform*> const& a, std::pair<Batch, gr::Transform*> const& b) -> bool 
-				{ return (a.first.GetDataHash() > b.first.GetDataHash()); }
-		);
-
-		// Assemble a list of merged batches:
-		std::vector<re::Batch> mergedBatches;
-		mergedBatches.reserve(meshes.size());
-		size_t unmergedIdx = 0;
-		do
-		{
-			// Add the first batch in the sequence to our final list:
-			mergedBatches.emplace_back(std::move(unmergedBatches[unmergedIdx].first));
-			const uint64_t curBatchHash = mergedBatches.back().GetDataHash();
-
-			// Find the index of the last batch with a matching hash in the sequence:
-			const size_t instanceStartIdx = unmergedIdx++;
-			while (unmergedIdx < unmergedBatches.size() &&
-				unmergedBatches[unmergedIdx].first.GetDataHash() == curBatchHash)
-			{
-				unmergedIdx++;
-			}
-
-			// Compute and set the number of instances in the batch:
-			const uint32_t numInstances = util::CheckedCast<uint32_t, size_t>(unmergedIdx - instanceStartIdx);
-
-			mergedBatches.back().SetInstanceCount(numInstances);
-
-			// Now build the instanced PBs:
-			std::vector<gr::Transform*> instanceTransforms;
-			instanceTransforms.reserve(numInstances);
-
-			for (size_t instanceOffset = 0; instanceOffset < numInstances; instanceOffset++)
-			{
-				// Add the Transform to our list
-				const size_t srcIdx = instanceStartIdx + instanceOffset;
-				instanceTransforms.emplace_back(unmergedBatches[srcIdx].second);
-			}
-
-			std::shared_ptr<re::ParameterBlock> instancedMeshParams =
-				gr::Mesh::CreateInstancedMeshParamsData(instanceTransforms);
-			// TODO: We're currently creating/destroying these parameter blocks each frame. This is expensive. Instead,
-			// we should create a pool of PBs, and reuse by re-buffering data each frame
-
-			mergedBatches.back().SetParameterBlock(instancedMeshParams);
-		} while (unmergedIdx < unmergedBatches.size());
-
-		return mergedBatches;
-	}
-
-
-	Batch::Batch(gr::MeshPrimitive const* meshPrimitive, gr::Material* materialOverride)
-		: m_type(BatchType::Graphics)
+	Batch::Batch(Lifetime lifetime, gr::MeshPrimitive const* meshPrimitive, gr::Material* materialOverride)
+		: m_lifetime(lifetime)
+		, m_type(BatchType::Graphics)
 		, m_graphicsParams{}
 		, m_batchShader(nullptr)
 		, m_batchFilterBitmask(0)
@@ -106,7 +32,7 @@ namespace re
 		m_batchParamBlocks.reserve(k_batchParamBlockIDsReserveAmount);
 
 		m_graphicsParams = GraphicsParams{
-			.m_batchGeometryMode = GeometryMode::Indexed,
+			.m_batchGeometryMode = GeometryMode::IndexedInstanced,
 			.m_numInstances = 1,
 			.m_batchTopologyMode = meshPrimitive->GetMeshParams().m_topologyMode,
 		};
@@ -115,7 +41,14 @@ namespace re
 		memset(&m_graphicsParams.m_vertexStreams, 0, m_graphicsParams.m_vertexStreams.size() * sizeof(re::VertexStream const*));
 		for (uint8_t slotIdx = 0; slotIdx < static_cast<uint8_t>(vertexStreams.size()); slotIdx++)
 		{
-			m_graphicsParams.m_vertexStreams[slotIdx] = vertexStreams[slotIdx];
+			if (vertexStreams[slotIdx])
+			{
+				SEAssert("Cannot add a vertex stream with a single frame lifetime to a permanent batch",
+					(m_lifetime == Lifetime::SingleFrame) ||
+					(vertexStreams[slotIdx]->GetLifetime() == re::VertexStream::Lifetime::Permanent && m_lifetime == Lifetime::Permanent));
+
+				m_graphicsParams.m_vertexStreams[slotIdx] = vertexStreams[slotIdx];
+			}
 		}
 		m_graphicsParams.m_indexStream = meshPrimitive->GetIndexStream();
 
@@ -146,16 +79,55 @@ namespace re
 	}
 
 
-	Batch::Batch(std::shared_ptr<gr::Mesh const> const mesh, gr::Material* materialOverride)
-		: Batch(mesh->GetMeshPrimitives()[0].get(), materialOverride)
+	Batch::Batch(Lifetime lifetime, gr::Material* material, GraphicsParams const& graphicsParams)
+		: m_lifetime(lifetime)
+		, m_type(BatchType::Graphics)
+		, m_graphicsParams{}
+		, m_batchShader(nullptr)
+		, m_batchFilterBitmask(0)
 	{
-			SEAssert("Currently only support Mesh with a single MeshPrimitive. TODO: Support > 1 MeshPrimitve", 
-			mesh->GetMeshPrimitives().size() == 1);
+		m_batchParamBlocks.reserve(k_batchParamBlockIDsReserveAmount);
+
+		m_graphicsParams = graphicsParams;
+
+#if defined(_DEBUG)
+		for (uint8_t slotIdx = 0; slotIdx < gr::MeshPrimitive::Slot_Count; slotIdx++)
+		{
+			SEAssert("Cannot add a vertex stream with a single frame lifetime to a permanent batch",
+				(m_lifetime == Lifetime::SingleFrame) ||
+				(m_graphicsParams.m_vertexStreams[slotIdx]->GetLifetime() == re::VertexStream::Lifetime::Permanent && m_lifetime == Lifetime::Permanent));
+		}
+#endif
+
+		if (material)
+		{
+			// Material textures/samplers:
+			for (size_t i = 0; i < material->GetTexureSlotDescs().size(); i++)
+			{
+				if (material->GetTexureSlotDescs()[i].m_texture && material->GetTexureSlotDescs()[i].m_samplerObject)
+				{
+					AddTextureAndSamplerInput(
+						material->GetTexureSlotDescs()[i].m_shaderSamplerName,
+						material->GetTexureSlotDescs()[i].m_texture,
+						material->GetTexureSlotDescs()[i].m_samplerObject);
+				}
+			}
+
+			// Material params:
+			std::shared_ptr<re::ParameterBlock> materialParams = material->GetParameterBlock();
+			if (materialParams)
+			{
+				m_batchParamBlocks.emplace_back(materialParams);
+			}
+		}
+
+		ComputeDataHash();
 	}
 
 
-	Batch::Batch(ComputeParams const& computeParams)
-		: m_type(BatchType::Compute)
+	Batch::Batch(Lifetime lifetime, ComputeParams const& computeParams)
+		: m_lifetime(lifetime)
+		, m_type(BatchType::Compute)
 		, m_computeParams(computeParams)
 		, m_batchShader(nullptr)
 		, m_batchFilterBitmask(0)
@@ -167,34 +139,21 @@ namespace re
 	{
 		SEAssert("Invalid type", m_type == BatchType::Graphics);
 
-		// Update the batch draw mode to be an indexed type:
-		if (numInstances > 1)
-		{
-			switch (m_graphicsParams.m_batchGeometryMode)
-			{
-			case GeometryMode::Indexed:
-			{
-				m_graphicsParams.m_batchGeometryMode = GeometryMode::IndexedInstanced;
-			}
-			break;
-			default:
-				break;
-			}
-		}
-
 		m_graphicsParams.m_numInstances = numInstances;
 	}
 
 
 	void Batch::ComputeDataHash()
-	{
-		// Batch filter mask bit:
+	{		
 		AddDataBytesToHash(m_batchFilterBitmask);
 
 		switch (m_type)
 		{
 		case BatchType::Graphics:
 		{
+			// Note: We assume the hash is used to evaluate batch equivalence when sorting, to enable instancing. Thus,
+			// we don't consider the m_batchGeometryMode or m_numInstances
+
 			AddDataBytesToHash(m_graphicsParams.m_batchTopologyMode);
 
 			for (re::VertexStream const* vertexStream : m_graphicsParams.m_vertexStreams)
@@ -204,10 +163,15 @@ namespace re
 					AddDataBytesToHash(vertexStream->GetDataHash());
 				}
 			}
+			if (m_graphicsParams.m_indexStream)
+			{
+				AddDataBytesToHash(m_graphicsParams.m_indexStream->GetDataHash());
+			}
 		}
 		break;
 		case BatchType::Compute:
 		{
+			// Instancing doesn't apply to compute shaders; m_threadGroupCount is included just as it's a differentiator
 			AddDataBytesToHash(m_computeParams.m_threadGroupCount);
 		}
 		break;
@@ -218,10 +182,12 @@ namespace re
 		// Shader:
 		if (m_batchShader)
 		{
-			AddDataBytesToHash(&m_batchShader->GetName()[0], m_batchShader->GetName().length() * sizeof(char));
+			AddDataBytesToHash(m_batchShader->GetNameID());
 		}
 
-		// Parameter blocks:
+		// Note: We must consider parameter blocks added before instancing has been calcualted, as they allow us to
+		// differentiate batches that are otherwise identical. We'll use the same, identical PB on the merged instanced 
+		// batches later
 		for (size_t i = 0; i < m_batchParamBlocks.size(); i++)
 		{
 			AddDataBytesToHash(m_batchParamBlocks[i]->GetUniqueID());

@@ -33,6 +33,11 @@ namespace
 				return DXGI_FORMAT_R32_UINT;
 			}
 			break;
+			case re::VertexStream::DataType::UShort:
+			{
+				return stream.DoNormalize() ? DXGI_FORMAT_R16_UNORM : DXGI_FORMAT_R16_UINT;
+			}
+			break;
 			case re::VertexStream::DataType::UByte:
 			{
 				return stream.DoNormalize() ? DXGI_FORMAT_R8_UNORM : DXGI_FORMAT_R8_UINT;
@@ -57,6 +62,11 @@ namespace
 			{
 				SEAssert("Normalized 32 bit uint types are not supported", !stream.DoNormalize());
 				return DXGI_FORMAT_R32G32_UINT;
+			}
+			break;
+			case re::VertexStream::DataType::UShort:
+			{
+				return stream.DoNormalize() ? DXGI_FORMAT_R16G16_UNORM : DXGI_FORMAT_R16G16_UINT;
 			}
 			break;
 			case re::VertexStream::DataType::UByte:
@@ -84,6 +94,11 @@ namespace
 				return DXGI_FORMAT_R32G32B32_UINT;
 			}
 			break;
+			case re::VertexStream::DataType::UShort:
+			{
+				SEAssertF("16-bit, 3-channel unsigned short types are not supported");
+			}
+			break;
 			case re::VertexStream::DataType::UByte:
 			{
 				SEAssertF("8-bit, 3-channel unsigned byte types are not supported");
@@ -108,6 +123,11 @@ namespace
 			{
 				SEAssert("Normalized 32 bit uint types are not supported", !stream.DoNormalize());
 				return DXGI_FORMAT_R32G32B32A32_UINT;
+			}
+			break;
+			case re::VertexStream::DataType::UShort:
+			{
+				return stream.DoNormalize() ? DXGI_FORMAT_R16G16B16A16_UNORM : DXGI_FORMAT_R16G16B16A16_UINT;
 			}
 			break;
 			case re::VertexStream::DataType::UByte:

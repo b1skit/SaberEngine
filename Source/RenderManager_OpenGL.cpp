@@ -73,6 +73,20 @@ namespace
 			return GL_TRIANGLES;
 		}
 	}
+
+
+	constexpr GLenum TranslateToOpenGLDataType(re::VertexStream::DataType dataType)
+	{
+		switch (dataType)
+		{
+		case re::VertexStream::DataType::Float: return GL_FLOAT;
+		case re::VertexStream::DataType::UInt: return GL_UNSIGNED_INT;
+		case re::VertexStream::DataType::UShort: return GL_SHORT;
+		case re::VertexStream::DataType::UByte: return GL_UNSIGNED_BYTE;
+		default: SEAssertF("Unsupported data type");
+			return GL_FLOAT;
+		}
+	}
 }
 
 namespace opengl
@@ -379,12 +393,30 @@ namespace opengl
 									static_cast<gr::MeshPrimitive::Slot>(0)); // Arbitrary slot, not used for indexes
 							}
 
-							glDrawElementsInstanced(
-								TranslateToOpenGLPrimitiveType(batchGraphicsParams.m_batchTopologyMode), // GLenum mode
-								(GLsizei)batchGraphicsParams.m_indexStream->GetNumElements(), // GLsizei count
-								GL_UNSIGNED_INT,					// GLenum type. TODO: Store type in parameters, instead of assuming uints
-								0,									// Byte offset (into index buffer)
-								(GLsizei)batch.GetInstanceCount());	// Instance count
+							// Draw!
+							switch (batchGraphicsParams.m_batchGeometryMode)
+							{
+							case re::Batch::GeometryMode::IndexedInstanced:
+							{
+								glDrawElementsInstanced(
+									TranslateToOpenGLPrimitiveType(batchGraphicsParams.m_batchTopologyMode),	// GLenum mode
+									(GLsizei)batchGraphicsParams.m_indexStream->GetNumElements(),				// GLsizei count
+									TranslateToOpenGLDataType(batchGraphicsParams.m_indexStream->GetDataType()),// GLenum type
+									0,									// Byte offset (into index buffer)
+									(GLsizei)batch.GetInstanceCount());	// Instance count
+							}
+							break;
+							case re::Batch::GeometryMode::ArrayInstanced:
+							{
+								glDrawArraysInstanced(
+									TranslateToOpenGLPrimitiveType(batchGraphicsParams.m_batchTopologyMode),
+									0,
+									(GLsizei)batchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position]->GetNumElements(),
+									(GLsizei)batch.GetInstanceCount());
+							}
+							break;
+							default: SEAssertF("Invalid batch geometry type");
+							}
 						}
 						break;
 						case re::RenderStage::RenderStageType::Compute:

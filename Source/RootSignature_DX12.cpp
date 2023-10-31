@@ -870,4 +870,18 @@ namespace dx12
 	{
 		return m_namesToRootParamsIdx.contains(resourceName);
 	}
+
+
+
+	std::string RootSignature::DebugGetNameFromRootParamIdx(uint8_t rootParamsIdx) const
+	{
+		for (auto const& entry : m_namesToRootParamsIdx)
+		{
+			if (entry.second == rootParamsIdx)
+			{
+				return entry.first;
+			}
+		}
+		return "Invalid root param index, no name found";
+	}
 }

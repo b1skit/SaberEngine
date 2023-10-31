@@ -267,7 +267,8 @@ namespace re
 				batch.GetGraphicsParams().m_batchTopologyMode,
 				batch.GetShader()->GetPipelineState().GetTopologyType())) ));
 		
-		if (m_batchFilterBitmask & batch.GetBatchFilterMask() || !m_batchFilterBitmask) // Accept all batches by default
+		// Filter bits are exclusionary: A RenderStage will not draw a Batch if they have a matching filter bit
+		if ((m_batchFilterBitmask & batch.GetBatchFilterMask()) == 0) // Accept all batches by default
 		{
 			m_stageBatches.emplace_back(batch);
 		}
@@ -276,7 +277,7 @@ namespace re
 
 	void RenderStage::SetBatchFilterMaskBit(re::Batch::Filter filterBit)
 	{
-		m_batchFilterBitmask |= (1 << (uint32_t)filterBit);
+		m_batchFilterBitmask |= static_cast<uint32_t>(filterBit);
 	}
 
 

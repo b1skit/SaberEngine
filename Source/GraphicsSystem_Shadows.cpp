@@ -63,6 +63,8 @@ namespace gr
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_directionalShadowStage = re::RenderStage::CreateGraphicsStage("Keylight shadow", gfxStageParams);
+
+		m_directionalShadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
 	}
 
 
@@ -129,6 +131,8 @@ namespace gr
 				re::RenderStage::CreateGraphicsStage(curLight->GetName() + " shadow", gfxStageParams));
 
 			std::shared_ptr<re::RenderStage> shadowStage = m_pointLightShadowStages.back();
+
+			shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
 			
 			ShadowMap* const lightShadow = curLight->GetShadowMap();
 			if (lightShadow)

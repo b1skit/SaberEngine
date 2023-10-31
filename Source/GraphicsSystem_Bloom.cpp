@@ -1,28 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Config.h"
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
-#include "Shader.h"
-#include "Config.h"
+#include "MeshFactory.h"
 #include "SceneManager.h"
 #include "RenderManager.h"
 #include "RenderSystem.h"
+#include "Shader.h"
 
-using gr::DeferredLightingGraphicsSystem;
-using en::Config;
-using en::SceneManager;
-using re::RenderManager;
-using re::RenderStage;
-using re::Sampler;
-using re::Shader;
-using re::Batch;
-using re::Texture;
-using std::shared_ptr;
-using std::make_shared;
-using std::string;
-using std::to_string;
-using glm::vec3;
-using glm::vec4;
+
 
 
 namespace
@@ -83,7 +70,7 @@ namespace gr
 		, NamedObject(k_gsName)
 		, m_owningRenderSystem(nullptr)
 	{
-		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Near);
+		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Near);
 
 		m_firstUpsampleSrcMipLevel = 5; // == # of upsample stages
 	}
@@ -148,10 +135,10 @@ namespace gr
 		const glm::uvec2 bloomTargetWidthHeight = 
 			glm::uvec2(deferredLightTargetTex->Width() / 2, deferredLightTargetTex->Height() / 2);
 		
-		Texture::TextureParams bloomTargetTexParams;
+		re::Texture::TextureParams bloomTargetTexParams;
 		bloomTargetTexParams.m_width = bloomTargetWidthHeight.x;
 		bloomTargetTexParams.m_height = bloomTargetWidthHeight.y;
-		bloomTargetTexParams.m_usage = static_cast<Texture::Usage>(re::Texture::Usage::ComputeTarget | Texture::Usage::Color);
+		bloomTargetTexParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ComputeTarget | re::Texture::Usage::Color);
 		bloomTargetTexParams.m_dimension = re::Texture::Dimension::Texture2D;
 		bloomTargetTexParams.m_format = deferredLightTargetTex->GetTextureParams().m_format;
 		bloomTargetTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
@@ -361,7 +348,7 @@ namespace gr
 
 	void BloomGraphicsSystem::CreateBatches()
 	{
-		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
+		const re::Batch fullscreenQuadBatch = re::Batch(re::Batch::Lifetime::SingleFrame, m_screenAlignedQuad.get(), nullptr);
 
 		m_emissiveBlitStage->AddBatch(fullscreenQuadBatch);
 
@@ -373,7 +360,7 @@ namespace gr
 		{
 			glm::vec2 dstMipWidthHeight = bloomTex->GetSubresourceDimensions(downsampleDstMipLevel++).xy;
 
-			re::Batch computeBatch = re::Batch(re::Batch::ComputeParams{
+			re::Batch computeBatch = re::Batch(re::Batch::Lifetime::SingleFrame, re::Batch::ComputeParams{
 						.m_threadGroupCount = glm::uvec3(dstMipWidthHeight.x, dstMipWidthHeight.y, 1u) });
 
 			downStage->AddBatch(computeBatch);
@@ -384,7 +371,7 @@ namespace gr
 		{
 			glm::vec2 dstMipWidthHeight = bloomTex->GetSubresourceDimensions(upsampleDstMipLevel--).xy;
 
-			re::Batch computeBatch = re::Batch(re::Batch::ComputeParams{
+			re::Batch computeBatch = re::Batch(re::Batch::Lifetime::SingleFrame, re::Batch::ComputeParams{
 						.m_threadGroupCount = glm::uvec3(dstMipWidthHeight.x, dstMipWidthHeight.y, 1u) });
 
 			upStage->AddBatch(computeBatch);

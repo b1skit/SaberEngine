@@ -3,29 +3,11 @@
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
+#include "MeshFactory.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
 #include "Texture.h"
 #include "TextureTarget.h"
-
-using en::Config;
-using en::SceneManager;
-using gr::DeferredLightingGraphicsSystem;
-using gr::GBufferGraphicsSystem;
-using re::RenderManager;
-using re::RenderStage;
-using re::Sampler;
-using re::Batch;
-using re::TextureTargetSet;
-using re::Texture;
-using re::Shader;
-using std::shared_ptr;
-using std::string;
-using std::vector;
-using std::filesystem::exists;
-using glm::vec3;
-using glm::vec4;
-using glm::mat4;
 
 
 namespace
@@ -59,7 +41,7 @@ namespace gr
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_skyboxStage = re::RenderStage::CreateGraphicsStage("Skybox stage", gfxStageParams);
 
-		m_screenAlignedQuad = meshfactory::CreateFullscreenQuad(meshfactory::ZLocation::Far);
+		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
 	}
 
 
@@ -72,10 +54,10 @@ namespace gr
 		m_skyboxStage->SetStageShader(re::Shader::GetOrCreate(en::ShaderNames::k_skyboxShaderName, skyboxPipelineState));
 
 		// Load the HDR image:
-		m_skyTexture = SceneManager::GetSceneData()->GetIBLTexture();
+		m_skyTexture = en::SceneManager::GetSceneData()->GetIBLTexture();
 		m_skyTextureShaderName = "Tex0";
 
-		m_skyboxStage->AddPermanentParameterBlock(SceneManager::Get()->GetMainCamera()->GetCameraParams());
+		m_skyboxStage->AddPermanentParameterBlock(en::SceneManager::Get()->GetMainCamera()->GetCameraParams());
 
 		DeferredLightingGraphicsSystem* deferredLightGS = 
 			renderSystem.GetGraphicsSystem<DeferredLightingGraphicsSystem>();
@@ -112,7 +94,7 @@ namespace gr
 		m_skyboxStage->AddTextureInput(
 			m_skyTextureShaderName,
 			m_skyTexture,
-			Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
 		pipeline.AppendRenderStage(m_skyboxStage);
 	}
@@ -132,7 +114,8 @@ namespace gr
 
 	void SkyboxGraphicsSystem::CreateBatches()
 	{
-		const Batch fullscreenQuadBatch = Batch(m_screenAlignedQuad.get(), nullptr);
+		const re::Batch fullscreenQuadBatch = 
+			re::Batch(re::Batch::Lifetime::SingleFrame, m_screenAlignedQuad.get(), nullptr);
 		m_skyboxStage->AddBatch(fullscreenQuadBatch);
 	}
 }
