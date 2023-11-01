@@ -31,7 +31,7 @@ namespace gr
 			PointList,
 			LineList,
 			LineStrip,
-			TriangleList,
+			TriangleList, // Default
 			TriangleStrip,
 			LineListAdjacency,
 			LineStripAdjacency,

@@ -24,6 +24,8 @@ namespace
 	constexpr bool IsBatchAndShaderTopologyCompatible(
 		gr::MeshPrimitive::TopologyMode topologyMode, re::PipelineState::TopologyType topologyType)
 	{
+		// Note: These rules are not complete. If you fail this assert, it's possible you're in a valid state. The goal
+		// is to catch unintended accidents
 		switch (topologyType)
 		{
 		case re::PipelineState::TopologyType::Point:
@@ -36,7 +38,11 @@ namespace
 			return topologyMode == gr::MeshPrimitive::TopologyMode::LineList ||
 				topologyMode == gr::MeshPrimitive::TopologyMode::LineStrip ||
 				topologyMode == gr::MeshPrimitive::TopologyMode::LineListAdjacency ||
-				topologyMode == gr::MeshPrimitive::TopologyMode::LineStripAdjacency;
+				topologyMode == gr::MeshPrimitive::TopologyMode::LineStripAdjacency || 
+				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleList ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleStrip ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleListAdjacency ||
+				topologyMode == gr::MeshPrimitive::TopologyMode::TriangleStripAdjacency;
 		}
 		break;
 		case re::PipelineState::TopologyType::Triangle:
@@ -49,7 +55,7 @@ namespace
 		break;
 		case re::PipelineState::TopologyType::Patch:
 		{
-			SEAssertF("Patch topology is unsupported");
+			SEAssertF("Patch topology is (currently) unsupported");
 		}
 		break;
 		default: SEAssertF("Invalid topology type");

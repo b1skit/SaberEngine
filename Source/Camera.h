@@ -106,29 +106,29 @@ namespace gr
 
 		void Update(const double stepTimeMs) override;
 
-		inline float const FieldOfViewYRad() const { return m_cameraConfig.m_yFOV; }
-		inline glm::vec2 NearFar() const { return glm::vec2(m_cameraConfig.m_near, m_cameraConfig.m_far); }
-		inline float GetAspectRatio() const { return m_cameraConfig.m_aspectRatio; }
+		float const FieldOfViewYRad() const;
+		glm::vec2 NearFar() const;
+		float GetAspectRatio() const;
 
-		inline glm::mat4 GetViewMatrix() { return glm::inverse(m_transform.GetGlobalMatrix(Transform::TRS)); }
-		inline glm::mat4 const& GetInverseViewMatrix() { return m_transform.GetGlobalMatrix(Transform::TRS); }
+		glm::mat4 GetViewMatrix();
+		glm::mat4 const& GetInverseViewMatrix();
 
-		inline glm::mat4 const&	GetProjectionMatrix() const { return m_projection; }
-		inline glm::mat4 GetInverseProjectionMatrix() const { return glm::inverse(m_projection); }
+		glm::mat4 const& GetProjectionMatrix() const;
+		glm::mat4 GetInverseProjectionMatrix() const;
 
-		inline glm::mat4 GetViewProjectionMatrix() { return m_projection * GetViewMatrix(); }
-		inline glm::mat4 GetInverseViewProjectionMatrix() { return glm::inverse(GetViewProjectionMatrix()); }
+		glm::mat4 GetViewProjectionMatrix();
+		glm::mat4 GetInverseViewProjectionMatrix();
 		
 		std::vector<glm::mat4> const& GetCubeViewProjectionMatrix();
 		
-		float GetAperture() const { return m_cameraConfig.m_aperture; }
-		void SetAperture(float aperture) { m_cameraConfig.m_aperture = aperture; }
+		float GetAperture() const;
+		void SetAperture(float aperture);
 
-		float GetShutterSpeed() const { return m_cameraConfig.m_shutterSpeed; }
-		void SetShutterSpeed(float shutterSpeed) { m_cameraConfig.m_shutterSpeed = shutterSpeed; }
+		float GetShutterSpeed() const;
+		void SetShutterSpeed(float shutterSpeed);
 
-		float GetSensitivity() const { return m_cameraConfig.m_sensitivity; }
-		void SetSensitivity(float sensitivity) { m_cameraConfig.m_sensitivity = sensitivity; }
+		float GetSensitivity() const;
+		void SetSensitivity(float sensitivity);
 
 		CameraConfig const& GetCameraConfig() const;
 		void SetCameraConfig(CameraConfig const& newConfig);
@@ -171,6 +171,94 @@ namespace gr
 		Camera(Camera const&) = delete;
 		Camera& operator=(Camera const&) = delete;
 	};
+
+
+	inline float const Camera::FieldOfViewYRad() const
+	{
+		return m_cameraConfig.m_yFOV;
+	}
+
+
+	inline glm::vec2 Camera::NearFar() const
+	{
+		return glm::vec2(m_cameraConfig.m_near, m_cameraConfig.m_far);
+	}
+
+
+	inline float Camera::GetAspectRatio() const
+	{
+		return m_cameraConfig.m_aspectRatio;
+	}
+
+
+	inline glm::mat4 Camera::GetViewMatrix()
+	{
+		return glm::inverse(m_transform.GetGlobalMatrix(Transform::TRS));
+	}
+
+
+	inline glm::mat4 const& Camera::GetInverseViewMatrix()
+	{
+		return m_transform.GetGlobalMatrix(Transform::TRS);
+	}
+
+
+	inline glm::mat4 const& Camera::GetProjectionMatrix() const
+	{
+		return m_projection;
+	}
+
+
+	inline glm::mat4 Camera::GetInverseProjectionMatrix() const
+	{
+		return glm::inverse(m_projection);
+	}
+
+	inline glm::mat4 Camera::GetViewProjectionMatrix()
+	{
+		return m_projection * GetViewMatrix();
+	}
+
+
+	inline glm::mat4 Camera::GetInverseViewProjectionMatrix()
+	{
+		return glm::inverse(GetViewProjectionMatrix());
+	}
+
+
+	inline float Camera::GetAperture() const
+	{
+		return m_cameraConfig.m_aperture;
+	}
+
+
+	inline void Camera::SetAperture(float aperture)
+	{
+		m_cameraConfig.m_aperture = aperture;
+	}
+
+	inline float Camera::GetShutterSpeed() const
+	{
+		return m_cameraConfig.m_shutterSpeed;
+	}
+
+
+	inline void Camera::SetShutterSpeed(float shutterSpeed)
+	{
+		m_cameraConfig.m_shutterSpeed = shutterSpeed;
+	}
+
+
+	inline float Camera::GetSensitivity() const
+	{
+		return m_cameraConfig.m_sensitivity;
+	}
+
+
+	inline void Camera::SetSensitivity(float sensitivity)
+	{
+		m_cameraConfig.m_sensitivity = sensitivity;
+	}
 
 
 	inline Camera::CameraConfig const& Camera::GetCameraConfig() const
