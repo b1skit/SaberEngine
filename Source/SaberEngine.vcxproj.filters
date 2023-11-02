@@ -932,6 +932,8 @@
     <None Include="Shaders\GLSL\MathConstants.glsl">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
+    <None Include="Shaders\GLSL\Line.frag" />
+    <None Include="Shaders\GLSL\Line.vert" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\GBuffer_PShader.hlsl">
@@ -1015,5 +1017,7 @@
     <FxCompile Include="Shaders\HLSL\Bloom_CShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
+    <FxCompile Include="Shaders\HLSL\Line_PShader.hlsl" />
+    <FxCompile Include="Shaders\HLSL\Line_VShader.hlsl" />
   </ItemGroup>
 </Project>
