@@ -85,8 +85,7 @@ namespace gr
 		SEAssert("Cannot add a nullptr MeshPrimitive", meshPrimitive != nullptr);
 		m_meshPrimitives.push_back(meshPrimitive);
 
-		m_localBounds.ExpandBounds(
-			meshPrimitive->GetBounds().GetTransformedAABBBounds(GetTransform()->GetGlobalMatrix(Transform::TRS)));
+		m_localBounds.ExpandBounds(meshPrimitive->GetBounds());
 	}
 
 
@@ -102,7 +101,7 @@ namespace gr
 		SEAssert("Index is out of bounds", index < m_meshPrimitives.size());
 		m_meshPrimitives[index] = replacement;
 
-		UpdateBounds();		
+		UpdateBounds();	
 	}
 
 
@@ -111,8 +110,7 @@ namespace gr
 		m_localBounds = Bounds();
 		for (shared_ptr<gr::MeshPrimitive> meshPrimitive : m_meshPrimitives)
 		{
-			m_localBounds.ExpandBounds(
-				meshPrimitive->GetBounds().GetTransformedAABBBounds(GetTransform()->GetGlobalMatrix(Transform::TRS)));
+			m_localBounds.ExpandBounds(meshPrimitive->GetBounds());
 		}
 	}
 

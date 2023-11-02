@@ -232,7 +232,7 @@ namespace gr
 
 		if (m_meshMaterial)
 		{
-			AddDataBytesToHash(&m_meshMaterial->GetName()[0], m_meshMaterial->GetName().length() * sizeof(char));
+			AddDataBytesToHash(m_meshMaterial->GetNameID());
 		}	
 
 		// Vertex data streams:

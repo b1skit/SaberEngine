@@ -375,14 +375,6 @@ namespace gr
 			{
 				std::shared_ptr<re::ParameterBlock> meshTransformPB =
 					gr::Mesh::CreateInstancedMeshParamsData(&mesh->GetTransform()->GetGlobalMatrix(gr::Transform::TRS), nullptr);
-
-				// Mesh:
-				if (m_showAllMeshBoundingBoxes)
-				{
-					re::Batch boundingBoxBatch = BuildBoundingBoxBatch(mesh->GetBounds(), m_meshBoundsColor);
-					boundingBoxBatch.SetParameterBlock(meshTransformPB);
-					m_debugStage->AddBatch(boundingBoxBatch);
-				}
 				
 				// MeshPrimitives:
 				if (m_showAllMeshPrimitiveBoundingBoxes || m_showAllVertexNormals || m_showAllWireframe)
@@ -413,6 +405,15 @@ namespace gr
 						}
 					}
 				}
+
+				// Mesh: Draw this 2nd so it's on top if the bounding box is the same as the MeshPrimitive
+				if (m_showAllMeshBoundingBoxes)
+				{
+					re::Batch boundingBoxBatch = BuildBoundingBoxBatch(mesh->GetBounds(), m_meshBoundsColor);
+					boundingBoxBatch.SetParameterBlock(meshTransformPB);
+					m_debugStage->AddBatch(boundingBoxBatch);
+				}
+
 				if (m_showMeshCoordinateAxis)
 				{
 					re::Batch meshCoordinateAxisBatch = 

@@ -2,17 +2,19 @@
 #include "Bounds.h"
 #include "Transform.h"
 
+using glm::vec3;
+using glm::vec4;
+using glm::mat4;
+using gr::Transform;
+
+
+namespace
+{
+	constexpr float k_bounds3DDepthBias = 0.01f; // Offset to ensure axis min != axis max
+}
 
 namespace gr
 {
-	using glm::vec3;
-	using glm::vec4;
-	using glm::mat4;
-	using gr::Transform;
-
-	constexpr float k_bounds3DDepthBias = 0.01f; // Offset to ensure axis min != axis max
-
-
 	Bounds::Bounds() :
 		m_minXYZ(k_invalidMinXYZ),
 		m_maxXYZ(k_invalidMaxXYZ) 
