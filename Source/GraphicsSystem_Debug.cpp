@@ -27,7 +27,7 @@ namespace
 			3, // numComponents per element
 			re::VertexStream::DataType::Float,
 			re::VertexStream::Normalize::False,
-			std::move(*reinterpret_cast<std::vector<uint8_t>*>(&axisPositions)));
+			std::move(axisPositions));
 
 		std::shared_ptr<re::VertexStream> axisColorStream = re::VertexStream::Create(
 			re::VertexStream::Lifetime::SingleFrame,
@@ -35,7 +35,7 @@ namespace
 			4, // numComponents per element
 			re::VertexStream::DataType::Float,
 			re::VertexStream::Normalize::False,
-			std::move(*reinterpret_cast<std::vector<uint8_t>*>(&axisColors)));
+			std::move(axisColors));
 
 		re::Batch::GraphicsParams axisBatchGraphicsParams{};
 		axisBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced;
@@ -105,7 +105,7 @@ namespace
 			3, // numComponents per element
 			re::VertexStream::DataType::Float,
 			re::VertexStream::Normalize::False,
-			std::move(*reinterpret_cast<std::vector<uint8_t>*>(&boxPositions)));
+			std::move(boxPositions));
 
 		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
 			re::VertexStream::Lifetime::SingleFrame,
@@ -113,7 +113,7 @@ namespace
 			4, // numComponents per element
 			re::VertexStream::DataType::Float,
 			re::VertexStream::Normalize::False,
-			std::move(*reinterpret_cast<std::vector<uint8_t>*>(&boxColors)));
+			std::move(boxColors));
 
 		std::shared_ptr<re::VertexStream> boxIndexStream = re::VertexStream::Create(
 			re::VertexStream::Lifetime::SingleFrame,
@@ -121,7 +121,7 @@ namespace
 			1, // numComponents per element
 			re::VertexStream::DataType::UInt,
 			re::VertexStream::Normalize::False,
-			std::move(*reinterpret_cast<std::vector<uint8_t>*>(&boxIndexes)));
+			std::move(boxIndexes));
 
 		re::Batch::GraphicsParams boundingBoxBatchGraphicsParams{};
 		boundingBoxBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
@@ -169,7 +169,7 @@ namespace
 			3, // numComponents per element
 			re::VertexStream::DataType::Float,
 			re::VertexStream::Normalize::False,
-			std::move(*reinterpret_cast<std::vector<uint8_t>*>(&linePositions)));
+			std::move(linePositions));
 
 		std::shared_ptr<re::VertexStream> boxColorStream = re::VertexStream::Create(
 			re::VertexStream::Lifetime::SingleFrame,
@@ -177,7 +177,7 @@ namespace
 			4, // numComponents per element
 			re::VertexStream::DataType::Float,
 			re::VertexStream::Normalize::False,
-			std::move(*reinterpret_cast<std::vector<uint8_t>*>(&normalColors)));
+			std::move(normalColors));
 
 		re::Batch::GraphicsParams boundingBoxBatchGraphicsParams{};
 		boundingBoxBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::ArrayInstanced;
@@ -246,7 +246,7 @@ namespace
 			3, // numComponents per element
 			re::VertexStream::DataType::Float,
 			re::VertexStream::Normalize::False,
-			std::move(*reinterpret_cast<std::vector<uint8_t>*>(&frustumPositions)));
+			std::move(frustumPositions));
 
 		std::shared_ptr<re::VertexStream> frustumColorStream = re::VertexStream::Create(
 			re::VertexStream::Lifetime::SingleFrame,
@@ -254,7 +254,7 @@ namespace
 			4, // numComponents per element
 			re::VertexStream::DataType::Float,
 			re::VertexStream::Normalize::False,
-			std::move(*reinterpret_cast<std::vector<uint8_t>*>(&frustumColors)));
+			std::move(frustumColors));
 
 		std::shared_ptr<re::VertexStream> frustumIndexStream = re::VertexStream::Create(
 			re::VertexStream::Lifetime::SingleFrame,
@@ -262,7 +262,7 @@ namespace
 			1, // numComponents per element
 			re::VertexStream::DataType::UInt,
 			re::VertexStream::Normalize::False,
-			std::move(*reinterpret_cast<std::vector<uint8_t>*>(&frustumIndexes)));
+			std::move(frustumIndexes));
 
 		re::Batch::GraphicsParams frustumBatchGraphicsParams{};
 		frustumBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;
@@ -292,7 +292,7 @@ namespace
 			4, // numComponents per element
 			re::VertexStream::DataType::Float,
 			re::VertexStream::Normalize::False,
-			std::move(*reinterpret_cast<std::vector<uint8_t>*>(&meshColors)));
+			std::move(meshColors));
 
 		re::Batch::GraphicsParams wireframeBatchGraphicsParams{};
 		wireframeBatchGraphicsParams.m_batchGeometryMode = re::Batch::GeometryMode::IndexedInstanced;

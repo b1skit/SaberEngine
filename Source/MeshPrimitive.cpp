@@ -123,7 +123,7 @@ namespace gr
 			1, 
 			re::VertexStream::DataType::UInt,
 			re::VertexStream::Normalize::False,
-			std::move(reinterpret_cast<std::vector<uint8_t>&>(*indices)));
+			std::move(*indices));
 
 		m_vertexStreams[Slot::Position] = re::VertexStream::Create(
 			re::VertexStream::Lifetime::Permanent,
@@ -131,7 +131,7 @@ namespace gr
 			3,
 			re::VertexStream::DataType::Float,
 			re::VertexStream::Normalize::False,
-			std::move(reinterpret_cast<std::vector<uint8_t>&>(positions)));
+			std::move(positions));
 
 		if (normals && !normals->empty())
 		{
@@ -141,7 +141,7 @@ namespace gr
 				3,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::True,
-				std::move(reinterpret_cast<std::vector<uint8_t>&>(*normals)));
+				std::move(*normals));
 		}
 
 		if (colors && !colors->empty())
@@ -152,7 +152,7 @@ namespace gr
 				4,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::False,
-				std::move(reinterpret_cast<std::vector<uint8_t>&>(*colors)));
+				std::move(*colors));
 		}
 
 		if (uv0 && !uv0->empty())
@@ -163,7 +163,7 @@ namespace gr
 				2,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::False,
-				std::move(reinterpret_cast<std::vector<uint8_t>&>(*uv0)));
+				std::move(*uv0));
 		}
 
 		if (tangents && !tangents->empty())
@@ -174,7 +174,7 @@ namespace gr
 				4,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::True,
-				std::move(reinterpret_cast<std::vector<uint8_t>&>(*tangents)));
+				std::move(*tangents));
 		}
 		
 		if (joints && !joints->empty())
@@ -185,7 +185,7 @@ namespace gr
 				1,
 				re::VertexStream::DataType::UByte,
 				re::VertexStream::Normalize::False,
-				std::move(reinterpret_cast<std::vector<uint8_t>&>(*joints)));
+				std::move(*joints));
 		}
 
 		if (weights && !weights->empty())
@@ -196,7 +196,7 @@ namespace gr
 				1,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::False,
-				std::move(reinterpret_cast<std::vector<uint8_t>&>(*weights)));
+				std::move(*weights));
 		}
 
 

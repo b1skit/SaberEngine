@@ -98,7 +98,7 @@ namespace
 
 namespace re
 {
-	std::shared_ptr<re::VertexStream> VertexStream::Create(
+	std::shared_ptr<re::VertexStream> VertexStream::CreateInternal(
 		Lifetime lifetime, 
 		StreamType type, 
 		uint32_t numComponents, 

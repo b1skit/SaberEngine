@@ -213,14 +213,13 @@ namespace dx12
 
 		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
 
-		std::string fenceEventName;
-
 		D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
 		cmdQueueDesc.Type		= m_d3dType;
 		cmdQueueDesc.Priority	= D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
 		cmdQueueDesc.Flags		= D3D12_COMMAND_QUEUE_FLAG_NONE; // None, or Disable Timeout
 		cmdQueueDesc.NodeMask	= deviceNodeMask;
 
+		std::string fenceEventName;
 		switch (type)
 		{
 		case CommandListType::Direct:

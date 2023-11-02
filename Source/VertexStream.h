@@ -47,8 +47,9 @@ namespace re
 		};
 
 	public:
+		template<typename T>
 		static std::shared_ptr<re::VertexStream> Create(
-			Lifetime, StreamType, uint32_t numComponents, DataType, Normalize, std::vector<uint8_t>&& data);
+			Lifetime, StreamType, uint32_t numComponents, DataType, Normalize, std::vector<T>&& data);
 
 		VertexStream(VertexStream&&) = default;
 		VertexStream& operator=(VertexStream&&) = default;
@@ -103,6 +104,8 @@ namespace re
 
 	private: // Use the Create() factory instead
 		VertexStream(Lifetime, StreamType, uint32_t numComponents, DataType, Normalize, std::vector<uint8_t>&& data);
+		static std::shared_ptr<re::VertexStream> CreateInternal(
+			Lifetime, StreamType, uint32_t numComponents, DataType, Normalize, std::vector<uint8_t>&& data);
 
 
 	private:
@@ -121,6 +124,25 @@ namespace re
 	inline VertexStream::Lifetime VertexStream::GetLifetime() const
 	{
 		return m_lifetime;
+	}
+
+
+	template<typename T>
+	std::shared_ptr<re::VertexStream> VertexStream::Create(
+		Lifetime lifetime,
+		StreamType type,
+		uint32_t numComponents,
+		DataType dataType,
+		Normalize doNormalize,
+		std::vector<T>&& data)
+	{
+		return CreateInternal(
+			lifetime,
+			type,
+			numComponents,
+			dataType,
+			doNormalize,
+			std::move(*reinterpret_cast<std::vector<uint8_t>*>(&data)) );
 	}
 
 
