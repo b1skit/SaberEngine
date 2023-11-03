@@ -13,7 +13,7 @@ namespace gr
 	class Camera final : public virtual en::NamedObject, public virtual fr::Transformable, public virtual en::Updateable
 	{
 	public:
-		static std::vector<glm::mat4> BuildCubeViewMatrices(glm::vec3 centerPos);
+		static std::vector<glm::mat4> BuildCubeViewMatrices(glm::vec3 const& centerPos);
 
 
 	public:

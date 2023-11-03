@@ -182,7 +182,7 @@ namespace gr
 			if (shadowCam)
 			{
 				// Update the param block data:
-				CubemapShadowRenderParams cubemapShadowParams = GetCubemapShadowRenderParamsData(shadowCam);
+				CubemapShadowRenderParams const& cubemapShadowParams = GetCubemapShadowRenderParamsData(shadowCam);
 
 				shared_ptr<re::ParameterBlock> cubemapShadowPB = re::ParameterBlock::Create(
 					CubemapShadowRenderParams::s_shaderName,

@@ -172,12 +172,10 @@ namespace gr
 	}
 
 
-	std::vector<glm::mat4> Camera::BuildCubeViewMatrices(glm::vec3 centerPos)
+	std::vector<glm::mat4> Camera::BuildCubeViewMatrices(glm::vec3 const& centerPos)
 	{
 		std::vector<glm::mat4> cubeView;
 		cubeView.reserve(6);
-
-
 
 		cubeView.emplace_back(glm::lookAt( // X+
 			centerPos,							// eye

@@ -1,4 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
+#include <pix3.h>
+
 #include "ParameterBlockAllocator.h"
 #include "DebugConfiguration.h"
 #include "ParameterBlock_Platform.h"
@@ -427,6 +429,8 @@ namespace re
 	// Buffer dirty PB data
 	void ParameterBlockAllocator::BufferParamBlocks()
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::ParameterBlockAllocator::BufferParamBlocks");
+
 		SEAssert("Cannot buffer param blocks until they're all allocated", m_allocationPeriodEnded);
 
 		const size_t readIdx = GetReadIdx();
@@ -472,11 +476,15 @@ namespace re
 
 			m_dirtyParameterBlocks[readIdx].pop();
 		}
+
+		PIXEndEvent();
 	}
 
 
 	void ParameterBlockAllocator::EndOfFrame()
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::ParameterBlockAllocator::EndOfFrame");
+
 		// Clear single-frame allocations:
 		{
 			const size_t readIdx = GetReadIdx();
@@ -499,11 +507,16 @@ namespace re
 		}
 
 		ClearDeferredDeletions(m_readFrameNum);
+
+		PIXEndEvent();
 	}
 
 
 	void ParameterBlockAllocator::ClearDeferredDeletions(uint64_t frameNum)
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), 
+			std::format("ParameterBlockAllocator::ClearDeferredDeletions ({})", m_deferredDeleteQueue.size()).c_str());
+
 		std::lock_guard<std::mutex> lock (m_deferredDeleteQueueMutex);
 
 		while (!m_deferredDeleteQueue.empty() && m_deferredDeleteQueue.front().first + k_deferredDeleteNumFrames < frameNum)
@@ -511,6 +524,8 @@ namespace re
 			platform::ParameterBlock::Destroy(*m_deferredDeleteQueue.front().second);
 			m_deferredDeleteQueue.pop();
 		}
+
+		PIXEndEvent();
 	}
 
 
