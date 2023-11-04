@@ -224,9 +224,9 @@ namespace gr
 		break;
 		case LightType::Directional:
 		{
-			if (m_typeProperties.m_directional.m_shadowMap)
+			if (m_typeProperties.m_directional.m_shadowMap && 
+				m_typeProperties.m_directional.m_ownerTransform->HasChanged())
 			{
-				// TODO: We should only do this if something has actually changed
 				m_typeProperties.m_directional.m_shadowMap->UpdateShadowCameraConfig();
 			}
 		}

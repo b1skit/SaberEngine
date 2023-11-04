@@ -73,6 +73,8 @@ namespace gr
 		// Global transformations: 
 		void Recompute() { RecomputeWorldTransforms(); }; // Explicitely recompute the global transforms
 
+		bool HasChanged() const;
+
 		glm::mat4 const& GetGlobalMatrix(TransformComponent component);
 
 		// World-space translation:
@@ -125,7 +127,7 @@ namespace gr
 		glm::vec3 m_globalForward;
 
 		bool m_isDirty;	// Do our local or combinedModel matrices need to be recomputed?
-
+		bool m_hasChanged; // Has the transform (or its parental heirarchy) changed since the last time this was false?
 
 	private:
 		void RecomputeWorldTransforms(); // Recomputes the the global matrices
@@ -164,6 +166,12 @@ namespace gr
 	private:
 		Transform() = delete;
 	};
+
+
+	inline bool Transform::HasChanged() const
+	{
+		return m_hasChanged;
+	}
 }
 
 

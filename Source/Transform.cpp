@@ -55,6 +55,7 @@ namespace gr
 		, m_globalForward(WorldAxisZ)
 
 		, m_isDirty(true)
+		, m_hasChanged(true)
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 		m_children.reserve(10);
@@ -457,9 +458,10 @@ namespace gr
 		if (!IsDirty())
 		{
 			ReleaseLockHierarchy();
-
+			m_hasChanged = false;
 			return;
 		}
+		m_hasChanged = true;
 
 		m_localMat = m_localTranslationMat * m_localRotationMat * m_localScaleMat;
 
