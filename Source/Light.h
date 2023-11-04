@@ -10,8 +10,6 @@
 
 namespace gr
 {
-	class Camera;
-	class MeshPrimitive;
 	class ShadowMap;
 
 

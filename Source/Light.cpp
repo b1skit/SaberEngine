@@ -20,30 +20,6 @@ using re::ParameterBlock;
 
 namespace
 {
-	gr::Camera::CameraConfig ComputeDirectionalShadowCameraConfigFromSceneBounds(
-		gr::Transform* lightTransform, gr::Bounds& sceneWorldBounds)
-	{
-		gr::Bounds const& transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
-			glm::inverse(lightTransform->GetGlobalMatrix(Transform::TRS)));
-
-		gr::Camera::CameraConfig shadowCamConfig;
-
-		shadowCamConfig.m_projectionType			= gr::Camera::CameraConfig::ProjectionType::Orthographic;
-		
-		shadowCamConfig.m_yFOV						= 0.f; // Orthographic
-
-		shadowCamConfig.m_near						= -transformedBounds.zMax();
-		shadowCamConfig.m_far						= -transformedBounds.zMin();
-
-		shadowCamConfig.m_orthoLeftRightBotTop.x	= transformedBounds.xMin();
-		shadowCamConfig.m_orthoLeftRightBotTop.y	= transformedBounds.xMax();
-		shadowCamConfig.m_orthoLeftRightBotTop.z	= transformedBounds.yMin();
-		shadowCamConfig.m_orthoLeftRightBotTop.w	= transformedBounds.yMax();
-
-		return shadowCamConfig;
-	}
-
-
 	float ComputePointLightMeshRadiusScaleFromIntensity(float luminousPower, float emitterRadius, float intensityCutoff)
 	{
 		// As per equation 15 (p.29) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al, we can 
@@ -248,15 +224,10 @@ namespace gr
 		break;
 		case LightType::Directional:
 		{
-			// Update shadow cam bounds:
-			gr::Bounds sceneWorldBounds = SceneManager::GetSceneData()->GetWorldSpaceSceneBounds();
-
-			Camera::CameraConfig const& shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
-				m_typeProperties.m_directional.m_ownerTransform, sceneWorldBounds);
-
 			if (m_typeProperties.m_directional.m_shadowMap)
 			{
-				m_typeProperties.m_directional.m_shadowMap->ShadowCamera()->SetCameraConfig(shadowCamConfig);
+				// TODO: We should only do this if something has actually changed
+				m_typeProperties.m_directional.m_shadowMap->UpdateShadowCameraConfig();
 			}
 		}
 		break;

@@ -79,6 +79,7 @@ namespace gr
 			glm::mat4 g_invView;
 			glm::mat4 g_projection;
 			glm::mat4 g_invProjection;
+
 			glm::mat4 g_viewProjection;
 			glm::mat4 g_invViewProjection;
 

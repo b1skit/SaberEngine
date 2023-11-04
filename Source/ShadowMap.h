@@ -18,10 +18,10 @@ namespace gr
 	public:
 		enum class ShadowType
 		{
-			Single,	// 2D
+			Orthographic, // Single 2D texture
 			CubeMap,
 
-			ShadowType_Count
+			Invalid
 		};
 
 	public:
@@ -42,6 +42,8 @@ namespace gr
 		gr::Camera* ShadowCamera();
 		gr::Camera const* ShadowCamera() const;
 
+		void UpdateShadowCameraConfig(); // Should be called any time the owning light has moved
+
 		void SetMinMaxShadowBias(glm::vec2 const&);
 		glm::vec2 const& GetMinMaxShadowBias() const;
 
@@ -51,6 +53,7 @@ namespace gr
 
 
 	private:
+		const ShadowType m_shadowType;
 		gr::Light* m_owningLight;
 		std::shared_ptr<gr::Camera> m_shadowCam;
 		std::shared_ptr<re::TextureTargetSet> m_shadowTargetSet;

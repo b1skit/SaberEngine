@@ -60,9 +60,11 @@ namespace gr
 		, m_cameraConfig(camConfig)
 		, m_projectionMatricesDirty(true)
 	{
+		m_cameraPBData = {}; // Initialize with a default struct: Updated later
+
 		m_cameraParamBlock = re::ParameterBlock::Create(
 			CameraParams::s_shaderName,
-			m_cameraPBData, // Initialize with a default struct: Updated later
+			m_cameraPBData, 
 			re::ParameterBlock::PBType::Mutable);
 
 		m_cubeView.reserve(6);

@@ -1425,6 +1425,27 @@ namespace fr
 	void SceneData::PostLoadFinalize()
 	{
 		m_finishedLoading = true;
+
+		// Execute any post-load callbacks to allow objects that require the scene to be fully loaded to finalize thier
+		// initialization:
+		{
+			std::lock_guard<std::mutex> lock(m_postLoadCallbacksMutex);
+			
+			for (auto const& Callback : m_postLoadCallbacks)
+			{
+				Callback();
+			}
+			m_postLoadCallbacks.clear();
+		}
+	}
+
+
+	void SceneData::RegisterForPostLoadCallback(std::function<void()> Callback)
+	{
+		{
+			std::lock_guard<std::mutex> lock(m_postLoadCallbacksMutex);
+			m_postLoadCallbacks.emplace_back(Callback);
+		}
 	}
 
 
@@ -1691,12 +1712,12 @@ namespace fr
 	}
 
 
-	void SceneData::RecomputeSceneBounds()
+	void SceneData::UpdateTransformsAndSceneBounds()
 	{
 		SEAssert("This function should be called during the main loop only", m_finishedLoading);
 
-		// Walk down our Transform hierarchy, recomputing each Transform in turn (just for efficiency). This also has
-		// the benefit that our Transforms will be up to date when we copy them for the Render thread
+		// DFS walk down our Transform hierarchy, recomputing each Transform in turn (just for efficiency). This also 
+		// has the benefit that our Transforms will be up to date when we copy them for the Render thread
 		std::vector<std::future<void>> taskFutures;
 		taskFutures.reserve(m_sceneNodes.size());
 		for (shared_ptr<fr::SceneNode> root : m_sceneNodes)

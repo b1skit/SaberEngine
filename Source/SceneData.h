@@ -42,7 +42,7 @@ namespace fr
 		void Destroy();
 
 		bool Load(std::string const& relativeFilePath); // Filename and path, relative to the ..\Scenes\ dir
-		void PostLoadFinalize();
+		void PostLoadFinalize(); // Executes post-load callbacks
 
 		// Cameras:
 	protected:
@@ -94,7 +94,12 @@ namespace fr
 
 		// SceneData bounds:
 		gr::Bounds const& GetWorldSpaceSceneBounds() const;
-		void RecomputeSceneBounds();
+		void UpdateTransformsAndSceneBounds();
+
+		// Post loading finalization callback: Allow objects that require the scene to be fully loaded to complete their
+		// initialization
+		void RegisterForPostLoadCallback(std::function<void()>);
+
 
 	private:
 		void UpdateSceneBounds(std::shared_ptr<gr::Mesh> mesh);
@@ -137,6 +142,10 @@ namespace fr
 		gr::Bounds m_sceneWorldSpaceBounds;
 		std::mutex m_sceneBoundsMutex;
 		
+		//std::vector<void(*)()> m_postLoadCallbacks;
+		std::vector<std::function<void()>> m_postLoadCallbacks;
+		std::mutex m_postLoadCallbacksMutex;
+
 
 		bool m_finishedLoading; // Used to assert scene data is not accessed while it might potentially be modified
 

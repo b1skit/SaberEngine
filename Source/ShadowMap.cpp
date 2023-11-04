@@ -4,6 +4,7 @@
 #include "Light.h"
 #include "Material.h"
 #include "SceneData.h"
+#include "SceneManager.h"
 #include "ShadowMap.h"
 #include "Texture.h"
 
@@ -25,14 +26,38 @@ namespace
 	{
 		switch (lightType)
 		{
-		case gr::Light::LightType::Directional: return gr::ShadowMap::ShadowType::Single;
+		case gr::Light::LightType::Directional: return gr::ShadowMap::ShadowType::Orthographic;
 		case gr::Light::LightType::Point: return gr::ShadowMap::ShadowType::CubeMap;
 		case gr::Light::LightType::AmbientIBL:
 		default:
 			SEAssertF("Invalid or unsupported light type for shadow map");
 		}
-		return gr::ShadowMap::ShadowType::ShadowType_Count;
-	}	
+		return gr::ShadowMap::ShadowType::Invalid;
+	}
+
+
+	gr::Camera::CameraConfig ComputeDirectionalShadowCameraConfigFromSceneBounds(
+		gr::Transform* lightTransform, gr::Bounds& sceneWorldBounds)
+	{
+		gr::Bounds const& transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
+			glm::inverse(lightTransform->GetGlobalMatrix(Transform::TRS)));
+
+		gr::Camera::CameraConfig shadowCamConfig;
+
+		shadowCamConfig.m_projectionType = gr::Camera::CameraConfig::ProjectionType::Orthographic;
+
+		shadowCamConfig.m_yFOV = 0.f; // Orthographic
+
+		shadowCamConfig.m_near = -transformedBounds.zMax();
+		shadowCamConfig.m_far = -transformedBounds.zMin();
+
+		shadowCamConfig.m_orthoLeftRightBotTop.x = transformedBounds.xMin();
+		shadowCamConfig.m_orthoLeftRightBotTop.y = transformedBounds.xMax();
+		shadowCamConfig.m_orthoLeftRightBotTop.z = transformedBounds.yMin();
+		shadowCamConfig.m_orthoLeftRightBotTop.w = transformedBounds.yMax();
+
+		return shadowCamConfig;
+	}
 }
 
 namespace gr
@@ -46,6 +71,7 @@ namespace gr
 		vec3 shadowCamPosition, 
 		gr::Light* owningLight)
 		: NamedObject(lightName + "_Shadow")
+		, m_shadowType(GetShadowTypeFromLightType(owningLight->Type()))
 		, m_owningLight(owningLight)
 		, m_shadowCam(gr::Camera::Create(lightName + "_ShadowCam", shadowCamConfig, shadowCamParent))
 	{
@@ -107,6 +133,36 @@ namespace gr
 		m_shadowTargetSet->SetViewport(re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height()));
 		m_shadowTargetSet->SetScissorRect(
 			{0, 0, static_cast<long>(depthTexture->Width()), static_cast<long>(depthTexture->Height()) });
+
+		// We need the scene bounds to be finalized before we can compute camera frustums; Register for a callback to
+		// ensure the scene is loaded before we try
+		en::SceneManager::GetSceneData()->RegisterForPostLoadCallback([&]() { UpdateShadowCameraConfig(); });
+	}
+
+
+	void ShadowMap::UpdateShadowCameraConfig()
+	{
+		switch (m_shadowType)
+		{
+		case gr::ShadowMap::ShadowType::Orthographic:
+		{
+			// Update shadow cam bounds:
+			gr::Bounds sceneWorldBounds = en::SceneManager::GetSceneData()->GetWorldSpaceSceneBounds();
+
+			Camera::CameraConfig const& shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
+				m_owningLight->GetTransform(), sceneWorldBounds);
+
+			m_shadowCam->SetCameraConfig(shadowCamConfig);
+
+		}
+		break;
+		case gr::ShadowMap::ShadowType::CubeMap:
+		{
+			// TODO...
+		}
+		break;
+		default: SEAssertF("Invalid shadow type");
+		}
 	}
 
 

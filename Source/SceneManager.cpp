@@ -96,8 +96,7 @@ namespace en
 			m_sceneData->GetUpdateables().at(i)->Update(stepTimeMs);
 		}
 
-		// Recompute Scene Bounds. This also recomputes all Transforms in a DFS ordering
-		m_sceneData->RecomputeSceneBounds();
+		m_sceneData->UpdateTransformsAndSceneBounds();
 	}
 
 
