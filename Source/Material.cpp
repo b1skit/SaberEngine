@@ -119,6 +119,7 @@ namespace gr
 
 		if (ImGui::CollapsingHeader(std::format("Textures##{}\"", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
+			ImGui::Indent();
 			for (uint8_t slotIdx = 0; slotIdx < static_cast<uint8_t>(m_texSlots.size()); slotIdx++)
 			{
 				if (ImGui::CollapsingHeader(std::format("Slot {}: \"{}\"##{}", 
@@ -137,6 +138,7 @@ namespace gr
 					}
 				}
 			}
+			ImGui::Unindent();
 		}
 
 		ImGui::Text("Alpha mode: %s", AlphaModeToCStr(m_alphaMode));

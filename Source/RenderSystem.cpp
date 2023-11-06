@@ -50,7 +50,9 @@ namespace re
 		{
 			if (ImGui::CollapsingHeader(std::format("{}##{}", gs->GetName(), gs->GetUniqueID()).c_str()))
 			{
+				ImGui::Indent();
 				gs->ShowImGuiWindow();
+				ImGui::Unindent();
 			}
 		}
 	}

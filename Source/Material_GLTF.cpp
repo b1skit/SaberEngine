@@ -104,6 +104,7 @@ namespace gr
 	{
 		if (ImGui::CollapsingHeader(std::format("{}##{}", GetName(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
+			ImGui::Indent();
 			Material::ShowImGuiWindow();
 
 			m_matParamsIsDirty |= ImGui::ColorEdit3(std::format("Base color factor##{}", "", GetUniqueID()).c_str(), &m_baseColorFactor.r, ImGuiColorEditFlags_Float);
@@ -117,6 +118,7 @@ namespace gr
 			m_matParamsIsDirty |= ImGui::SliderFloat(std::format("Emissive strength##{}", GetUniqueID()).c_str(), &m_emissiveStrength, 0.f, 1000.f, "%0.3f");
 
 			m_matParamsIsDirty |= ImGui::ColorEdit3(std::format("F0##{}", GetUniqueID()).c_str(), &m_f0.r, ImGuiColorEditFlags_Float);
+			ImGui::Unindent();
 		}
 	}
 }

@@ -132,6 +132,7 @@ namespace en
 		
 		if (ImGui::CollapsingHeader("Cameras:", ImGuiTreeNodeFlags_None))
 		{
+			ImGui::Indent();
 			std::vector<std::shared_ptr<gr::Camera>> const& cameras = m_sceneData->GetCameras();
 
 			// TODO: Currently, we set the camera parameters as a permanent PB via a shared_ptr from the main camera
@@ -174,59 +175,69 @@ namespace en
 				cameras[camIdx]->ShowImGuiWindow();
 				ImGui::Separator();
 			}
+			ImGui::Unindent();
 		}
 		
 		ImGui::Separator();
 
 		if (ImGui::CollapsingHeader("Meshes:", ImGuiTreeNodeFlags_None))
 		{
+			ImGui::Indent();
 			std::vector<std::shared_ptr<gr::Mesh>> const& meshes = m_sceneData->GetMeshes();
 			for (auto const& mesh : meshes)
 			{
 				mesh->ShowImGuiWindow();
 				ImGui::Separator();
 			}
+			ImGui::Unindent();
 		}
 
 		ImGui::Separator();
 
 		if (ImGui::CollapsingHeader("Materials:", ImGuiTreeNodeFlags_None))
 		{
+			ImGui::Indent();
 			std::unordered_map<size_t, std::shared_ptr<gr::Material>> const& materials = m_sceneData->GetMaterials();
 			for (auto const& materialEntry : materials)
 			{
 				materialEntry.second->ShowImGuiWindow();
 				ImGui::Separator();
 			}
+			ImGui::Unindent();
 		}
 
 		ImGui::Separator();
 
 		if (ImGui::CollapsingHeader("Lights:", ImGuiTreeNodeFlags_None))
 		{
+			ImGui::Indent();
 			std::shared_ptr<gr::Light> const ambientLight = m_sceneData->GetAmbientLight();
 			if (ambientLight)
 			{
+				ImGui::Indent();
 				ambientLight->ShowImGuiWindow();
-				ImGui::Separator();
+				ImGui::Unindent();
 			}
 
 			std::shared_ptr<gr::Light> const directionalLight = m_sceneData->GetKeyLight();
 			if (directionalLight)
 			{
+				ImGui::Indent();
 				directionalLight->ShowImGuiWindow();
-				ImGui::Separator();
+				ImGui::Unindent();
 			}
 
 			if (ImGui::CollapsingHeader("Point Lights:", ImGuiTreeNodeFlags_None))
 			{
+				ImGui::Indent();
 				std::vector<std::shared_ptr<gr::Light>> const& pointLights = m_sceneData->GetPointLights();
 				for (auto const& light : pointLights)
 				{
 					light->ShowImGuiWindow();
 				}
-				ImGui::Separator();
+				ImGui::Unindent();
 			}
+			ImGui::Unindent();
 		}
 
 		ImGui::End();

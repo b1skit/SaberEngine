@@ -473,6 +473,7 @@ namespace gr
 		
 		if (ImGui::CollapsingHeader(std::format("Debug camera frustums").c_str()))
 		{
+			ImGui::Indent();
 			m_showCameraFrustums = true;
 			std::vector<std::shared_ptr<gr::Camera>> const& sceneCams = en::SceneManager::GetSceneData()->GetCameras();
 			for (size_t camIdx = 0; camIdx < sceneCams.size(); camIdx++)
@@ -491,6 +492,7 @@ namespace gr
 				}
 			}
 			ImGui::SliderFloat("Camera coordinate axis scale", &m_cameraCoordinateAxisScale, 0.f, 20.f);
+			ImGui::Unindent();
 		}
 		else
 		{

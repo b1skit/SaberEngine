@@ -296,11 +296,14 @@ namespace gr
 
 			if (ImGui::CollapsingHeader(std::format("Material##{}", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 			{
+				ImGui::Indent();
 				m_meshMaterial->ShowImGuiWindow();
+				ImGui::Unindent();
 			}
 
 			if (ImGui::CollapsingHeader(std::format("Vertex streams ({})##{}", m_vertexStreams.size(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 			{
+				ImGui::Indent();
 				for (size_t i = 0; i < m_vertexStreams.size(); i++)
 				{
 					ImGui::Text(std::format("{}: {}", i, SlotToCStr(static_cast<gr::MeshPrimitive::Slot>(i))).c_str());
@@ -314,11 +317,14 @@ namespace gr
 					}
 					ImGui::Separator();
 				}
+				ImGui::Unindent();
 			}
 
 			if (ImGui::CollapsingHeader(std::format("Local bounds##{}", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 			{
+				ImGui::Indent();
 				m_localBounds.ShowImGuiWindow();
+				ImGui::Unindent();
 			}
 		}
 	}

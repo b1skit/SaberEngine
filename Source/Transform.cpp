@@ -482,19 +482,24 @@ namespace gr
 
 	void Transform::ShowImGuiWindow()
 	{
-		// Recursively pre-traverse the parent hierarchy
-		if (m_parent != nullptr)
-		{
-			m_parent->ShowImGuiWindow();
-		}
+		
 
 		const uint64_t transformPtr = reinterpret_cast<uint64_t>(&(*this)); // We don't have a uniqueID, use this instead
 		const std::string uniqueID = std::to_string(transformPtr);
 	
 		constexpr float k_buttonWidth = 75.f;
 
-		if (ImGui::TreeNode(std::format("{} children##{}", m_children.size(), uniqueID).c_str()))
+		if(ImGui::CollapsingHeader(std::format("{}##{}", GetName(), GetUniqueID()).c_str()))
 		{
+			// Recursively pre-traverse the parent hierarchy
+			if (m_parent != nullptr && ImGui::CollapsingHeader(std::format("Parents##{}", GetUniqueID()).c_str()))
+			{
+				ImGui::Indent();
+				m_parent->ShowImGuiWindow();
+				ImGui::Unindent();
+				ImGui::Separator();
+			}
+
 			// Helper: Displays sliders for a 3-component XYZ element of a transform
 			auto Display3ComponentTransform = [&uniqueID](std::string const& label, glm::vec3& copiedValue) -> bool
 			{
@@ -524,6 +529,22 @@ namespace gr
 				return isDirty;
 			};
 
+			ImGui::Separator();
+
+			// Print the transform data:
+			if (ImGui::CollapsingHeader(std::format("Show data##{}", GetUniqueID()).c_str()))
+			{
+				ImGui::Indent();
+				ImGui::Text(std::format("Local Position: {}", glm::to_string(m_localPosition)).c_str());
+				ImGui::Text(std::format("Local Quaternion: {}", glm::to_string(m_localRotationQuat)).c_str());
+				ImGui::Text(std::format("Local Euler XYZ Radians: {}", glm::to_string(GetLocalEulerXYZRotationRadians())).c_str());
+				ImGui::Text(std::format("Local Scale: {}", glm::to_string(m_localScale)).c_str());
+				ImGui::Text(std::format("Local Matrix: {}", glm::to_string(m_localMat)).c_str());
+				ImGui::Unindent();
+			}
+			
+			ImGui::Separator();
+
 			// Local translation:
 			glm::vec3 localPosition = GetLocalPosition();
 			bool localTranslationDirty = Display3ComponentTransform("Local Translation", localPosition);
@@ -532,6 +553,26 @@ namespace gr
 				SetLocalPosition(localPosition);
 			}
 
+			// Add/remove translation
+			static float s_translationAmt = 0.f;
+			ImGui::InputFloat(std::format("Add translation##{}", GetUniqueID()).c_str(), &s_translationAmt, 0.01f, 1.0f, "%.3f");
+			if (ImGui::Button(std::format("X##{}", GetUniqueID()).c_str()))
+			{
+				TranslateLocal(glm::vec3(s_translationAmt, 0.f, 0.f));
+			}
+			ImGui::SameLine();
+			if (ImGui::Button(std::format("Y##{}", GetUniqueID()).c_str()))
+			{
+				TranslateLocal(glm::vec3(0.f, s_translationAmt, 0.f));
+			}
+			ImGui::SameLine();
+			if (ImGui::Button(std::format("Z##{}", GetUniqueID()).c_str()))
+			{
+				TranslateLocal(glm::vec3(0.f, 0.f, s_translationAmt));
+			}
+
+			ImGui::Separator();
+
 			// Local rotation:
 			glm::vec3 localEulerRotation = GetLocalEulerXYZRotationRadians();
 			bool localRotationDirty = Display3ComponentTransform("Local Euler Rotation", localEulerRotation);
@@ -539,7 +580,8 @@ namespace gr
 			{
 				SetLocalRotation(localEulerRotation);
 			}
-			ImGui::Text(std::format("Local Quaternion: {}", glm::to_string(m_localRotationQuat).c_str()).c_str());
+			
+			ImGui::Separator();
 
 			// Local scale:
 			glm::vec3 localScale = GetLocalScale();
@@ -549,6 +591,8 @@ namespace gr
 				SetLocalScale(localScale);
 			}
 
+			ImGui::Separator();
+
 			// Global translation:
 			glm::vec3 globalTranslation = GetGlobalPosition();
 			bool globalTranslationDirty = Display3ComponentTransform("Global Translation", globalTranslation);
@@ -556,14 +600,6 @@ namespace gr
 			{
 				SetGlobalPosition(globalTranslation);
 			}
-
-			// Global rotation:
-			// TODO: Handle setting global rotations
-
-			// Global scale:
-			// TODO: Handle setting global scales
-			
-			ImGui::TreePop();
 		}
 	}
 }

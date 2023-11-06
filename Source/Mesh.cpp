@@ -119,25 +119,33 @@ namespace gr
 	{
 		if (ImGui::CollapsingHeader(std::format("{}##{}", GetName(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
+			ImGui::Indent();
 			const std::string uniqueIDStr = std::to_string(GetUniqueID());
 
 			if (ImGui::CollapsingHeader(std::format("Transform:##{}", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 			{
+				ImGui::Indent();
 				m_ownerTransform->ShowImGuiWindow();
+				ImGui::Unindent();
 			}
 
 			if (ImGui::CollapsingHeader(std::format("Mesh Bounds:##{}", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 			{
+				ImGui::Indent();
 				m_localBounds.ShowImGuiWindow();
+				ImGui::Unindent();
 			}
 
 			if (ImGui::CollapsingHeader(std::format("Mesh Primitives ({}):##{}", m_meshPrimitives.size(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 			{
+				ImGui::Indent();
 				for (size_t i = 0; i < m_meshPrimitives.size(); i++)
 				{
 					m_meshPrimitives[i]->ShowImGuiWindow();
 				}
+				ImGui::Unindent();
 			}
+			ImGui::Unindent();
 		}
 	}
 }

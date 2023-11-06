@@ -325,6 +325,8 @@ namespace gr
 	{
 		if (ImGui::CollapsingHeader(GetName().c_str(), ImGuiTreeNodeFlags_None))
 		{
+			ImGui::Indent();
+
 			const string nearSliderLabel = "Near plane distance##" + GetName(); // Prevent ID collisions; "##" hides whatever follows
 			m_matricesDirty |= ImGui::SliderFloat(nearSliderLabel.c_str(), &m_cameraConfig.m_near, 0.f, 2.0f, "near = %.3f");
 
@@ -430,6 +432,8 @@ namespace gr
 
 			const glm::mat4x4 invViewProj = GetInverseViewProjectionMatrix();
 			util::DisplayMat4x4("Inverse View Projection Matrix:", invViewProj);
+
+			ImGui::Unindent();
 		}
 	}
 
