@@ -8,17 +8,13 @@
 
 namespace fr
 {
-	class Transformable
+	class Transformable : public virtual en::NamedObject
 	{
 	public:
-		Transformable(gr::Transform* parent) : m_transform(parent) {}
-		Transformable(const Transformable& rhs) = default;
-		Transformable(Transformable&&) = default;
-		Transformable& operator=(Transformable const&) = default;
+		Transformable(std::string const& name, gr::Transform* parent);
 
 		virtual ~Transformable() = 0;
 
-		// Getters/Setters:
 		inline gr::Transform* GetTransform() { return &m_transform; }
 		inline gr::Transform const* GetTransform() const { return &m_transform; }
 
@@ -27,9 +23,22 @@ namespace fr
 		gr::Transform m_transform;
 
 	private:
+		void Deregister();
+
+	private:
 		Transformable() = delete;
+
+		// The SceneData holds a list of raw Transformable*, no moving/copying allowed
+		Transformable(const Transformable& rhs) = delete;
+		Transformable(Transformable&&) = delete;
+		Transformable& operator=(Transformable const&) = delete;
+		Transformable& operator=(Transformable&&) = delete;
 	};
 
+
 	// We need to provide a destructor implementation since it's pure virtual
-	inline Transformable::~Transformable() {}
+	inline Transformable::~Transformable()
+	{
+		Deregister();
+	}
 }

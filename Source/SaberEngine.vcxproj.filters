@@ -416,6 +416,9 @@
     <ClCompile Include="MeshFactory.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
+    <ClCompile Include="Transformable.cpp">
+      <Filter>Source Files\fr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">

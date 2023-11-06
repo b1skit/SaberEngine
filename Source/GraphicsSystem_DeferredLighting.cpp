@@ -327,17 +327,26 @@ namespace gr
 		iblStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
 		iblStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
-		// Build some camera params for rendering the 6 faces of a cubemap
-		const mat4 cubeProjectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+		// Build a camera that can render our 6 cubemap faces:
+		gr::Camera::Config cubemapCamConfig{};
+		cubemapCamConfig.m_projectionType = gr::Camera::Config::ProjectionType::PerspectiveCubemap;
+		cubemapCamConfig.m_yFOV = glm::radians(90.f);
+		cubemapCamConfig.m_aspectRatio = 1.f;
+		cubemapCamConfig.m_near = 0.1f;
+		cubemapCamConfig.m_far = 10.f;
 
-		std::vector<glm::mat4> const& cubemapViews = gr::Camera::BuildCubeViewMatrices(vec3(0));
+		std::shared_ptr<gr::Camera> cubemapRenderCam =
+			gr::Camera::Create("Deferred GS cubemap render cam", cubemapCamConfig, nullptr);
 
 		// Common cubemap camera rendering params; Just need to update g_view for each face/stage
 		Camera::CameraParams cubemapCamParams{};
-		cubemapCamParams.g_projection = cubeProjectionMatrix;
+		cubemapCamParams.g_projection = cubemapRenderCam->GetProjectionMatrix();
+
 		cubemapCamParams.g_viewProjection = glm::mat4(1.f); // Identity; unused
 		cubemapCamParams.g_invViewProjection = glm::mat4(1.f); // Identity; unused
 		cubemapCamParams.g_cameraWPos = vec4(0.f, 0.f, 0.f, 0.f); // Unused
+
+		std::vector<glm::mat4> const& cubemapViews = cubemapRenderCam->GetCubeViewMatrices();
 
 		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
 		Batch cubeMeshBatch = Batch(re::Batch::Lifetime::SingleFrame, m_cubeMeshPrimitive.get(), nullptr);
@@ -511,6 +520,8 @@ namespace gr
 				}
 			}
 		}
+
+		cubemapRenderCam->Destroy();
 	}
 
 

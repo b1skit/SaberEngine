@@ -739,7 +739,7 @@ namespace
 
 			targetTransform->SetLocalRotation(rotation);
 			targetTransform->SetLocalScale(scale);
-			targetTransform->SetLocalTranslation(translation);
+			targetTransform->SetLocalPosition(translation);
 		}
 		else
 		{
@@ -755,7 +755,7 @@ namespace
 			}
 			if (current->has_translation)
 			{
-				targetTransform->SetLocalTranslation(
+				targetTransform->SetLocalPosition(
 					glm::vec3(current->translation[0], current->translation[1], current->translation[2]));
 			}
 		}
@@ -771,7 +771,7 @@ namespace
 		{
 			LOG("Creating a default camera");
 
-			gr::Camera::CameraConfig camConfig;
+			gr::Camera::Config camConfig;
 			camConfig.m_aspectRatio = Config::Get()->GetWindowAspectRatio();
 			camConfig.m_yFOV = Config::Get()->GetValue<float>("defaultyFOV");
 			camConfig.m_near = Config::Get()->GetValue<float>("defaultNear");
@@ -788,10 +788,10 @@ namespace
 			const string camName = camera->name ? string(camera->name) : "Unnamed camera";
 			LOG("Loading camera \"%s\"", camName.c_str());
 
-			gr::Camera::CameraConfig camConfig;
+			gr::Camera::Config camConfig;
 			camConfig.m_projectionType = camera->type == cgltf_camera_type_orthographic ?
-				Camera::CameraConfig::ProjectionType::Orthographic : Camera::CameraConfig::ProjectionType::Perspective;
-			if (camConfig.m_projectionType == Camera::CameraConfig::ProjectionType::Orthographic)
+				Camera::Config::ProjectionType::Orthographic : Camera::Config::ProjectionType::Perspective;
+			if (camConfig.m_projectionType == Camera::Config::ProjectionType::Orthographic)
 			{
 				camConfig.m_yFOV = 0;
 				camConfig.m_near = camera->data.orthographic.znear;
@@ -1244,7 +1244,9 @@ namespace
 		{
 			for (size_t i = 0; i < current->children_count; i++)
 			{
-				shared_ptr<SceneNode> childNode = make_shared<SceneNode>(parent->GetTransform());
+				const std::string nodeName = current->name ? current->name : "Unnamed child node";
+
+				shared_ptr<SceneNode> childNode = make_shared<SceneNode>(nodeName.c_str(), parent->GetTransform());
 
 				LoadObjectHierarchyRecursiveHelper(
 					sceneRootPath, scene, data, current->children[i], childNode, loadTasks);
@@ -1298,9 +1300,13 @@ namespace
 		{
 			SEAssert("Error: Node is not a root", data->scenes->nodes[node]->parent == nullptr);
 
-			LOG("Loading root node %zu: \"%s\"", node, data->scenes->nodes[node]->name);
+			const std::string nodeName = 
+				data->scenes->nodes[node]->name ? data->scenes->nodes[node]->name : "Unnamed root node";
 
-			shared_ptr<SceneNode> currentNode = make_shared<SceneNode>(nullptr); // Root node has no parent
+			LOG("Loading root node %zu: \"%s\"", node, nodeName.c_str());
+
+			shared_ptr<SceneNode> currentNode = 
+				std::make_shared<SceneNode>(nodeName.c_str(), nullptr); // Root node has no parent
 
 			LoadObjectHierarchyRecursiveHelper(
 				sceneRootPath, scene, data, data->scenes->nodes[node], currentNode, loadTasks);
@@ -1426,6 +1432,8 @@ namespace fr
 	{
 		m_finishedLoading = true;
 
+		UpdateTransformsAndSceneBounds();
+
 		// Execute any post-load callbacks to allow objects that require the scene to be fully loaded to finalize thier
 		// initialization:
 		{
@@ -1458,12 +1466,29 @@ namespace fr
 	}
 
 
+	SceneData::~SceneData()
+	{
+		SEAssert("Did the SceneData go out of scope before Destroy was called?", m_finishedLoading == false);
+	}
+
+
 	void SceneData::Destroy()
 	{
+		// Destroy/unregister cameras. Cameras self-unregister themselves when destroyed
+		bool hasCameras = !m_cameras.empty();
+		while (hasCameras)
 		{
-			std::lock_guard<std::mutex> lock(m_updateablesMutex);
-			m_updateables.clear();
+			m_cameras.back()->Destroy();
+
+			std::lock_guard<std::mutex> lock(m_camerasMutex);
+			hasCameras = !m_cameras.empty();
 		}
+		{
+			std::lock_guard<std::mutex> lock(m_camerasMutex);
+			m_cameras.clear();
+		}
+
+		// 
 		{
 			std::lock_guard<std::mutex> lock(m_sceneNodesMutex);
 			m_sceneNodes.clear();
@@ -1502,29 +1527,55 @@ namespace fr
 			m_pointLights.clear();
 		}
 		{
-			std::lock_guard<std::mutex> lock(m_camerasMutex);
-			m_cameras.clear();
-		}
-		{
 			std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
 			m_sceneWorldSpaceBounds = Bounds();
 		}
+
+		// Destroy self-registered interfaces
+		// TODO: Ensure all of these objects self-remove themselves, and simply assert these lists are empty
+		{
+			std::lock_guard<std::mutex> lock(m_updateablesMutex);
+			m_updateables.clear();
+		}
+		{
+			std::lock_guard<std::mutex> lock(m_transformablesMutex);
+			m_transformables.clear();
+		}
+
+		m_finishedLoading = false; // Flag that Destroy has been called
 	}
 
 
-	size_t SceneData::AddCamera(std::shared_ptr<gr::Camera> newCamera)
+	void SceneData::AddCamera(std::shared_ptr<gr::Camera> newCamera)
 	{
 		SEAssert("Cannot add a null camera", newCamera != nullptr);
 
-		size_t camIdx = m_cameras.size();
 		{
 			std::lock_guard<std::mutex> lock(m_camerasMutex);
+
 			m_cameras.emplace_back(newCamera);
 		}
 
-		AddUpdateable(newCamera);
+		AddUpdateable(newCamera); // TODO: Updateable should self-register/self-remove themselvs
+	}
 
-		return camIdx;
+
+	void SceneData::RemoveCamera(uint64_t uniqueID)
+	{
+		std::lock_guard<std::mutex> lock(m_camerasMutex);
+
+		auto const& result = std::find_if(
+			m_cameras.begin(), 
+			m_cameras.end(), 
+			[&](std::shared_ptr<gr::Camera> const& cam) {return cam->GetUniqueID() == uniqueID; });
+
+		SEAssert("Camera not found", result != m_cameras.end());
+
+		// Must remove the camera from the Updateables list:
+		std::shared_ptr<gr::Camera> foundCam = *result;
+		RemoveUpdateable(foundCam);
+
+		m_cameras.erase(result);
 	}
 
 
@@ -1607,7 +1658,6 @@ namespace fr
 
 			m_meshes.emplace_back(mesh); // Add the mesh to our tracking list
 		}
-		UpdateSceneBounds(mesh);
 	}
 
 
@@ -1675,6 +1725,21 @@ namespace fr
 		return m_cameras;
 	}
 
+	std::shared_ptr<gr::Camera> SceneData::GetMainCamera(uint64_t uniqueID) const
+	{
+		std::lock_guard<std::mutex> lock(m_camerasMutex);
+
+		auto const& result = std::find_if(
+			m_cameras.begin(), 
+			m_cameras.end(), 
+			[&](std::shared_ptr<gr::Camera> const& cam) {return cam->GetUniqueID() == uniqueID; });
+
+		SEAssert("Camera not found", 
+			result != m_cameras.end());
+
+		return *result;
+	}
+
 	gr::Bounds const& SceneData::GetWorldSpaceSceneBounds() const 
 	{
 		SEAssert("Accessing this data is not thread safe during loading", m_finishedLoading);
@@ -1696,6 +1761,20 @@ namespace fr
 	}
 
 
+	void SceneData::RemoveUpdateable(std::shared_ptr<en::Updateable> updateable)
+	{
+		std::lock_guard<std::mutex> lock(m_updateablesMutex);
+
+		auto const& result = std::find_if(
+			m_updateables.begin(),
+			m_updateables.end(),
+			[&](std::shared_ptr<en::Updateable> const& curUpdateable) {return curUpdateable == updateable; });
+
+		SEAssert("Updateable not found", result != m_updateables.end());
+
+		m_updateables.erase(result);
+	}
+
 	void SceneData::AddSceneNode(std::shared_ptr<fr::SceneNode> sceneNode)
 	{
 		std::lock_guard<std::mutex> lock(m_sceneNodesMutex);
@@ -1703,12 +1782,36 @@ namespace fr
 	}
 
 
+	void SceneData::AddTransformable(fr::Transformable* transformable)
+	{
+		std::lock_guard<std::mutex> lock(m_transformablesMutex);
+		m_transformables.emplace_back(transformable);
+	}
+
+
+	void SceneData::RemoveTransformable(fr::Transformable* transformable)
+	{
+		std::lock_guard<std::mutex> lock(m_transformablesMutex);
+
+		auto const& result = std::find_if(
+			m_transformables.begin(),
+			m_transformables.end(),
+			[&](fr::Transformable* curTransformable) {return curTransformable == transformable; });
+
+		//SEAssert("Transformable not found", result != m_transformables.end());
+
+		if (result != m_transformables.end())
+		{
+			m_transformables.erase(result);
+		}		
+	}
+
 	void SceneData::UpdateSceneBounds(std::shared_ptr<gr::Mesh> mesh)
 	{
 		std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
 
 		m_sceneWorldSpaceBounds.ExpandBounds(
-			mesh->GetBounds().GetTransformedAABBBounds(mesh->GetTransform()->GetGlobalMatrix(Transform::TRS)));
+			mesh->GetBounds().GetTransformedAABBBounds(mesh->GetTransform()->GetGlobalMatrix()));
 	}
 
 
@@ -1716,33 +1819,50 @@ namespace fr
 	{
 		SEAssert("This function should be called during the main loop only", m_finishedLoading);
 
-		// DFS walk down our Transform hierarchy, recomputing each Transform in turn (just for efficiency). This also 
-		// has the benefit that our Transforms will be up to date when we copy them for the Render thread
-		std::vector<std::future<void>> taskFutures;
-		taskFutures.reserve(m_sceneNodes.size());
-		for (shared_ptr<fr::SceneNode> root : m_sceneNodes)
 		{
-			taskFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
-				[root]() 
+			std::lock_guard<std::mutex> lock(m_transformablesMutex);
+			// TODO: It's still hypothetically possible that another thread could modify a transform while this process
+			// happens. It could be worth locking all transforms in the entire hierarchy here first
+
+			std::vector<std::future<void>> taskFutures;
+			taskFutures.reserve(m_sceneNodes.size());
+			for (fr::Transformable* transformable : m_transformables)
+			{
+				// We're interested in root nodes only. We could cache these to avoid the search, but for now it's fine
+				Transform* currentTransform = transformable->GetTransform();
+				if (currentTransform->GetParent() == nullptr)
 				{
+					// DFS walk down our Transform hierarchy, recomputing each Transform in turn. The goal here is to
+					// minimize the (re)computation required when we copy Transforms for the Render thread
 					std::stack<gr::Transform*> transforms;
-					transforms.push(root->GetTransform());
+					transforms.push(currentTransform);
 
-					while (!transforms.empty())
-					{
-						transforms.top()->Recompute();
-						transforms.pop();
-
-						for (gr::Transform* child : root->GetTransform()->GetChildren())
+					taskFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+						[currentTransform]()
 						{
-							transforms.push(child);
-						}
-					}
-				}));
-		}
-		for (std::future<void> const& taskFuture : taskFutures)
-		{
-			taskFuture.wait();
+							std::stack<gr::Transform*> transforms;
+							transforms.push(currentTransform);
+
+							while (!transforms.empty())
+							{
+								gr::Transform* topTransform = transforms.top();
+								transforms.pop();
+
+								topTransform->ClearHasChangedFlag();
+								topTransform->Recompute();
+
+								for (gr::Transform* child : topTransform->GetChildren())
+								{
+									transforms.push(child);
+								}
+							}
+						}));
+				}
+			}
+			for (std::future<void> const& taskFuture : taskFutures)
+			{
+				taskFuture.wait();
+			}
 		}
 
 		// Now all of our transforms are clean, update the scene bounds:
@@ -1751,7 +1871,7 @@ namespace fr
 		for (shared_ptr<gr::Mesh> mesh : m_meshes)
 		{
 			m_sceneWorldSpaceBounds.ExpandBounds(
-				mesh->GetBounds().GetTransformedAABBBounds(mesh->GetTransform()->GetGlobalMatrix(Transform::TRS)));
+				mesh->GetBounds().GetTransformedAABBBounds(mesh->GetTransform()->GetGlobalMatrix()));
 		}
 	}
 

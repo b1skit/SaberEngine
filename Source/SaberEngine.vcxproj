@@ -270,6 +270,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="TextureTarget_DX12.cpp" />
     <ClCompile Include="Texture_DX12.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
+    <ClCompile Include="Transformable.cpp" />
     <ClCompile Include="VertexStream.cpp" />
     <ClCompile Include="VertexStreamBuilder.cpp" />
     <ClCompile Include="Context_Platform.cpp" />

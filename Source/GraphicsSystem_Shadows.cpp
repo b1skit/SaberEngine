@@ -38,9 +38,13 @@ namespace
 
 	CubemapShadowRenderParams GetCubemapShadowRenderParamsData(gr::Camera* shadowCam)
 	{
-		CubemapShadowRenderParams cubemapShadowParams;
+		SEAssert("Shadow camera is not configured for cubemap rendering", 
+			shadowCam->GetCameraConfig().m_projectionType == gr::Camera::Config::ProjectionType::PerspectiveCubemap);
+
+		CubemapShadowRenderParams cubemapShadowParams{};
+
 		memcpy(&cubemapShadowParams.g_cubemapShadowCam_VP[0][0].x,
-			shadowCam->GetCubeViewProjectionMatrix().data(),
+			shadowCam->GetCubeViewProjectionMatrices().data(),
 			6 * sizeof(mat4));
 
 		cubemapShadowParams.g_cubemapShadowCamNearFar = glm::vec4(shadowCam->NearFar().xy, 0.f, 0.f);

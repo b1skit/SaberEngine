@@ -191,17 +191,17 @@ namespace
 	}
 
 
-	re::Batch BuildCameraFrustumBatch(gr::Camera* camera, glm::vec3 const& frustumColor)
+	re::Batch BuildCameraFrustumBatch(gr::Camera const* camera, glm::vec3 const& frustumColor)
 	{
-		// Convert NDC coordinates to world-space points:
-		glm::vec4 farTL = camera->GetInverseViewProjectionMatrix() * glm::vec4(-1.f, 1.f, 1.f, 1.f);
-		glm::vec4 farBL = camera->GetInverseViewProjectionMatrix() * glm::vec4(-1.f, -1.f, 1.f, 1.f);
-		glm::vec4 farTR = camera->GetInverseViewProjectionMatrix() * glm::vec4(1.f, 1.f, 1.f, 1.f);
-		glm::vec4 farBR = camera->GetInverseViewProjectionMatrix() * glm::vec4(1.f, -1.f, 1.f, 1.f);
-		glm::vec4 nearTL = camera->GetInverseViewProjectionMatrix() * glm::vec4(-1.f, 1.f, 0.f, 1.f);
-		glm::vec4 nearBL = camera->GetInverseViewProjectionMatrix() * glm::vec4(-1.f, -1.f, 0.f, 1.f);
-		glm::vec4 nearTR = camera->GetInverseViewProjectionMatrix() * glm::vec4(1.f, 1.f, 0.f, 1.f);
-		glm::vec4 nearBR = camera->GetInverseViewProjectionMatrix() * glm::vec4(1.f, -1.f, 0.f, 1.f);
+		// Convert NDC coordinates to view space:
+		glm::vec4 farTL = camera->GetInverseProjectionMatrix() * glm::vec4(-1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBL = camera->GetInverseProjectionMatrix() * glm::vec4(-1.f, -1.f, 1.f, 1.f);
+		glm::vec4 farTR = camera->GetInverseProjectionMatrix() * glm::vec4(1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBR = camera->GetInverseProjectionMatrix() * glm::vec4(1.f, -1.f, 1.f, 1.f);
+		glm::vec4 nearTL = camera->GetInverseProjectionMatrix() * glm::vec4(-1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBL = camera->GetInverseProjectionMatrix() * glm::vec4(-1.f, -1.f, 0.f, 1.f);
+		glm::vec4 nearTR = camera->GetInverseProjectionMatrix() * glm::vec4(1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBR = camera->GetInverseProjectionMatrix() * glm::vec4(1.f, -1.f, 0.f, 1.f);
 
 		farTL /= farTL.w;
 		farBL /= farBL.w;
@@ -373,8 +373,10 @@ namespace gr
 		{
 			for (auto const& mesh : en::SceneManager::GetSceneData()->GetMeshes())
 			{
+				const glm::mat4 meshTRS = mesh->GetTransform()->GetGlobalMatrix();
+
 				std::shared_ptr<re::ParameterBlock> meshTransformPB =
-					gr::Mesh::CreateInstancedMeshParamsData(&mesh->GetTransform()->GetGlobalMatrix(gr::Transform::TRS), nullptr);
+					gr::Mesh::CreateInstancedMeshParamsData(&meshTRS, nullptr);
 				
 				// MeshPrimitives:
 				if (m_showAllMeshPrimitiveBoundingBoxes || m_showAllVertexNormals || m_showAllWireframe)
@@ -424,14 +426,15 @@ namespace gr
 			}
 		}
 
-		if (m_showAllCameraFrustums)
+		if (m_showCameraFrustums)
 		{
-			for (auto const& camera : en::SceneManager::GetSceneData()->GetCameras())
+			for (gr::Camera* debugCam : m_camerasToDebug)
 			{
-				re::Batch camFrustumBatch = BuildCameraFrustumBatch(camera.get(), m_cameraFrustumColor);
+				re::Batch camFrustumBatch = BuildCameraFrustumBatch(debugCam, m_cameraFrustumColor);
 
+				const glm::mat4 camTRS = debugCam->GetTransform()->GetGlobalMatrix();
 				std::shared_ptr<re::ParameterBlock> cameraTransformPB =
-					gr::Mesh::CreateInstancedMeshParamsData(&camera->GetTransform()->GetGlobalMatrix(gr::Transform::TRS), nullptr);
+					gr::Mesh::CreateInstancedMeshParamsData(&camTRS, nullptr);
 				camFrustumBatch.SetParameterBlock(cameraTransformPB);
 				m_debugStage->AddBatch(camFrustumBatch);
 
@@ -440,7 +443,7 @@ namespace gr
 					BuildAxisBatch(m_cameraCoordinateAxisScale, m_xAxisColor, m_yAxisColor, m_zAxisColor);
 				cameraCoordinateAxisBatch.SetParameterBlock(cameraTransformPB);
 				m_debugStage->AddBatch(cameraCoordinateAxisBatch);
-			}			
+			}		
 		}
 	}
 
@@ -467,11 +470,32 @@ namespace gr
 		{
 			ImGui::SliderFloat("Vertex normals scale", &m_vertexNormalsScale, 0.f, 20.f);
 		}
-
-		ImGui::Checkbox(std::format("Show all camera frustums").c_str(), &m_showAllCameraFrustums);
-		if (m_showAllCameraFrustums)
+		
+		if (ImGui::CollapsingHeader(std::format("Debug camera frustums").c_str()))
 		{
+			m_showCameraFrustums = true;
+			std::vector<std::shared_ptr<gr::Camera>> const& sceneCams = en::SceneManager::GetSceneData()->GetCameras();
+			for (size_t camIdx = 0; camIdx < sceneCams.size(); camIdx++)
+			{
+				gr::Camera* currentCam = sceneCams[camIdx].get();
+				const bool cameraAlreadyAdded = m_camerasToDebug.contains(currentCam);
+				bool cameraSelected = cameraAlreadyAdded;
+				if (ImGui::Checkbox(std::format("{}##", currentCam->GetName(), currentCam->GetUniqueID()).c_str(), &cameraSelected) &&
+					!cameraAlreadyAdded)
+				{
+					m_camerasToDebug.emplace(currentCam);
+				}
+				else if (cameraAlreadyAdded && !cameraSelected)
+				{
+					m_camerasToDebug.erase(currentCam);
+				}
+			}
 			ImGui::SliderFloat("Camera coordinate axis scale", &m_cameraCoordinateAxisScale, 0.f, 20.f);
+		}
+		else
+		{
+			m_showCameraFrustums = false;
+			m_camerasToDebug.clear();
 		}
 
 		ImGui::Checkbox(std::format("Show all mesh wireframes").c_str(), &m_showAllWireframe);

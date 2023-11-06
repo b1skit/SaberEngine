@@ -121,11 +121,10 @@ namespace gr
 			if (hasShadow)
 			{
 				const uint32_t shadowMapRes = Config::Get()->GetValue<int>("defaultShadowMapRes");
-				m_typeProperties.m_directional.m_shadowMap = make_unique<ShadowMap>(
+				m_typeProperties.m_directional.m_shadowMap = std::make_unique<ShadowMap>(
 					GetName(),
 					shadowMapRes,
 					shadowMapRes,
-					Camera::CameraConfig(),
 					m_typeProperties.m_directional.m_ownerTransform,
 					glm::vec3(0.f, 0.f, 0.f), // Shadow cam position
 					this);
@@ -153,23 +152,17 @@ namespace gr
 			m_typeProperties.m_point.m_cubeShadowMap = nullptr;
 			if (hasShadow)
 			{
-				gr::Camera::CameraConfig shadowCamConfig;
-				shadowCamConfig.m_yFOV = static_cast<float>(std::numbers::pi) / 2.0f;
-				shadowCamConfig.m_near = 0.1f;
-				shadowCamConfig.m_far = deferredMeshRadius;
-				shadowCamConfig.m_aspectRatio = 1.0f;
-				shadowCamConfig.m_projectionType = Camera::CameraConfig::ProjectionType::Perspective;
-
 				const uint32_t cubeMapRes = Config::Get()->GetValue<int>("defaultShadowCubeMapRes");
 
 				m_typeProperties.m_point.m_cubeShadowMap = make_unique<ShadowMap>(
 					GetName(),
 					cubeMapRes,
 					cubeMapRes,
-					shadowCamConfig,
 					m_typeProperties.m_point.m_ownerTransform,
 					glm::vec3(0.0f, 0.0f, 0.0f),	// Shadow cam position: No offset
 					this);
+
+				m_typeProperties.m_point.m_cubeShadowMap->ShadowCamera()->SetNearFar(glm::vec2(0.1f, deferredMeshRadius));
 
 				m_typeProperties.m_point.m_cubeShadowMap->SetMinMaxShadowBias(glm::vec2(
 					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBias),

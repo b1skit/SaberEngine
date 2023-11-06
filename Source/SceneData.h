@@ -37,21 +37,17 @@ namespace fr
 		explicit SceneData(std::string const& sceneName);
 		SceneData(SceneData&&) = default;
 		SceneData& operator=(SceneData&&) = default;
-		~SceneData() { Destroy(); }
-
+		
+		~SceneData();
 		void Destroy();
 
 		bool Load(std::string const& relativeFilePath); // Filename and path, relative to the ..\Scenes\ dir
 		void PostLoadFinalize(); // Executes post-load callbacks
 
-		// Cameras:
-	protected:
-		friend class gr::Camera;
-		size_t AddCamera(std::shared_ptr<gr::Camera> newCamera); // Returns the camera index
 	public:
-		
+		// Cameras:
 		std::vector<std::shared_ptr<gr::Camera>> const& GetCameras() const;
-		
+		std::shared_ptr<gr::Camera> GetMainCamera(uint64_t uniqueID) const;
 
 	public:		
 		// Lights:
@@ -63,7 +59,6 @@ namespace fr
 		std::shared_ptr<re::Texture> GetIBLTexture() const;
 
 		// Updateables:
-		void AddUpdateable(std::shared_ptr<en::Updateable> updateable);
 		std::vector<std::shared_ptr<en::Updateable>> const& GetUpdateables() const;
 
 		// Transformation hierarchy:
@@ -101,8 +96,26 @@ namespace fr
 		void RegisterForPostLoadCallback(std::function<void()>);
 
 
+		// Interfaces that self-register/self-remove themselves:
+	protected:
+		friend class gr::Camera; // Only Camera objects can register/unregister themselves
+		void AddCamera(std::shared_ptr<gr::Camera> newCamera); // Returns the camera index
+		void RemoveCamera(uint64_t uniqueID);
+
+		friend class fr::Transformable;
+		void AddTransformable(fr::Transformable*);
+		void RemoveTransformable(fr::Transformable*);
+
+
+	private:
+		// TODO: Updateables should self-register/self-remove
+		void AddUpdateable(std::shared_ptr<en::Updateable> updateable);
+		void RemoveUpdateable(std::shared_ptr<en::Updateable> updateable);
+
+
 	private:
 		void UpdateSceneBounds(std::shared_ptr<gr::Mesh> mesh);
+
 
 	private:
 		std::vector<std::shared_ptr<en::Updateable>> m_updateables;
@@ -137,15 +150,16 @@ namespace fr
 		std::mutex m_pointLightsMutex;
 
 		std::vector<std::shared_ptr<gr::Camera>> m_cameras;
-		std::mutex m_camerasMutex;
+		mutable std::mutex m_camerasMutex;
 
 		gr::Bounds m_sceneWorldSpaceBounds;
 		std::mutex m_sceneBoundsMutex;
 		
-		//std::vector<void(*)()> m_postLoadCallbacks;
+		std::vector<fr::Transformable*> m_transformables;
+		std::mutex m_transformablesMutex;
+
 		std::vector<std::function<void()>> m_postLoadCallbacks;
 		std::mutex m_postLoadCallbacksMutex;
-
 
 		bool m_finishedLoading; // Used to assert scene data is not accessed while it might potentially be modified
 

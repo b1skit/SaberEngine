@@ -146,7 +146,7 @@ layout(std430, binding=1) readonly buffer CameraParams
 	mat4 g_viewProjection;		// Projection x View: World -> Projection
 	mat4 g_invViewProjection;	// [Projection * View]^-1
 
-	vec4 g_projectionParams; // .x = 1 (unused), .y = near, .z = far, .w = 1/far
+	vec4 g_projectionParams; // .x = near, .y = far, .z = 1/near, .w = 1/far
 
 	vec4 g_exposureProperties; // .x = exposure, .y = ev100, .zw = unused 
 	vec4 g_bloomSettings; // .x = strength, .yz = XY radius, .w = bloom exposure compensation

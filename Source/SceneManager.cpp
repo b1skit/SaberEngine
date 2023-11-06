@@ -84,14 +84,14 @@ namespace en
 	{
 		LOG("Scene manager shutting down...");
 
-		m_sceneData = nullptr;
+		m_sceneData = nullptr; // SceneData::Destroy is called during RenderManager shutdown
 	}
 
 
 	void SceneManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
 		// Tick Updateables:
-		for (int i = 0; i < (int)m_sceneData->GetUpdateables().size(); i++)
+		for (size_t i = 0; i < m_sceneData->GetUpdateables().size(); i++)
 		{
 			m_sceneData->GetUpdateables().at(i)->Update(stepTimeMs);
 		}
@@ -120,7 +120,7 @@ namespace en
 		// graphics systems). Currently, this is fine as we currently join any loading threads before creating these
 		// objects, but it may not always be the case.
 
-		return m_sceneData->GetCameras()[m_activeCameraIdx];
+		return m_sceneData->GetMainCamera(m_activeCameraIdx);
 	}
 
 

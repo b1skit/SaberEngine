@@ -31,9 +31,9 @@ namespace gr
 		{
 			instancedMeshPBData.emplace_back(InstancedMeshParams
 				{
-					.g_model = transforms[transformIdx]->GetGlobalMatrix(gr::Transform::TRS),
+					.g_model = transforms[transformIdx]->GetGlobalMatrix(),
 					.g_transposeInvModel = 
-						glm::transpose(glm::inverse(transforms[transformIdx]->GetGlobalMatrix(gr::Transform::TRS)))
+						glm::transpose(glm::inverse(transforms[transformIdx]->GetGlobalMatrix()))
 				});
 		}
 

@@ -576,7 +576,7 @@ namespace dx12
 
 			if (depthTargetParams.m_targetFace == re::TextureTarget::k_allFaces)
 			{
-				SEAssert("We're (currently) expecting the a cubemap",
+				SEAssert("We're (currently) expecting a cubemap",
 					depthStencilTarget->GetTexture()->GetTextureParams().m_dimension == re::Texture::Dimension::TextureCubeMap);
 
 				if (depthWriteEnabled)

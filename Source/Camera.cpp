@@ -38,143 +38,9 @@ namespace
 		// Note: Denominator approaches 0 as ev100 -> -inf (and is practically 0 as ev100 -> -10)
 		return 1.0f / std::max((std::pow(2.0f, ev100) * 1.2f), FLT_MIN);
 	}
-}
-
-namespace gr
-{
-	std::shared_ptr<gr::Camera> Camera::Create(
-		std::string const& cameraName, CameraConfig const& camConfig, gr::Transform* parent)
-	{
-		std::shared_ptr<gr::Camera> newCamera = nullptr;
-		newCamera.reset(new gr::Camera(cameraName, camConfig, parent));
-
-		newCamera->m_cameraIdx = en::SceneManager::GetSceneData()->AddCamera(newCamera);
-
-		return newCamera;
-	}
 
 
-	Camera::Camera(string const& cameraName, CameraConfig const& camConfig, Transform* parent)
-		: NamedObject(cameraName)
-		, Transformable(parent)
-		, m_cameraConfig(camConfig)
-		, m_projectionMatricesDirty(true)
-	{
-		m_cameraPBData = {}; // Initialize with a default struct: Updated later
-
-		m_cameraParamBlock = re::ParameterBlock::Create(
-			CameraParams::s_shaderName,
-			m_cameraPBData, 
-			re::ParameterBlock::PBType::Mutable);
-
-		m_cubeView.reserve(6);
-		RecomputeProjectionMatrices();
-		UpdateCameraParamBlockData();
-	}
-
-
-	void Camera::Update(const double stepTimeMs)
-	{
-		// Note: We move the camera by modify its Transform directly
-		RecomputeProjectionMatrices();
-		UpdateCameraParamBlockData();
-	}
-
-
-	void Camera::UpdateCameraParamBlockData()
-	{
-		SEAssert("Camera parameter block has not been initialized yet", m_cameraParamBlock != nullptr);
-
-		m_cameraPBData.g_view = GetViewMatrix();
-		m_cameraPBData.g_invView = GetInverseViewMatrix();
-
-		m_cameraPBData.g_projection = GetProjectionMatrix();
-		m_cameraPBData.g_invProjection = GetInverseProjectionMatrix();
-
-		m_cameraPBData.g_viewProjection = GetViewProjectionMatrix();
-		m_cameraPBData.g_invViewProjection = GetInverseViewProjectionMatrix();
-
-		// .x = 1 (unused), .y = near, .z = far, .w = 1/far
-		m_cameraPBData.g_projectionParams = glm::vec4(
-			1.f, 
-			m_cameraConfig.m_near, 
-			m_cameraConfig.m_far, 
-			1.0f / m_cameraConfig.m_far);
-
-		const float ev100 = ComputeEV100FromExposureSettings(
-			m_cameraConfig.m_aperture, 
-			m_cameraConfig.m_shutterSpeed, 
-			m_cameraConfig.m_sensitivity, 
-			m_cameraConfig.m_exposureCompensation);
-
-		m_cameraPBData.g_exposureProperties = glm::vec4(
-			ComputeExposure(ev100),
-			ev100,
-			0.f,
-			0.f);
-
-		const float bloomEV100 = ComputeEV100FromExposureSettings(
-			m_cameraConfig.m_aperture,
-			m_cameraConfig.m_shutterSpeed,
-			m_cameraConfig.m_sensitivity,
-			m_cameraConfig.m_bloomExposureCompensation);
-
-		m_cameraPBData.g_bloomSettings = glm::vec4(
-			m_cameraConfig.m_bloomStrength,
-			m_cameraConfig.m_bloomRadius.x,
-			m_cameraConfig.m_bloomRadius.y,
-			ComputeExposure(bloomEV100));
-
-		m_cameraPBData.g_cameraWPos = glm::vec4(GetTransform()->GetGlobalPosition().xyz, 0.f);
-
-		m_cameraParamBlock->Commit(m_cameraPBData);
-	}
-
-
-	void Camera::RecomputeProjectionMatrices()
-	{
-		if (!m_projectionMatricesDirty)
-		{
-			return;
-		}
-		m_projectionMatricesDirty = false;
-
-		if (m_cameraConfig.m_projectionType == CameraConfig::ProjectionType::Orthographic)
-		{
-			m_cameraConfig.m_yFOV = 0.0f;
-
-			m_projection = glm::ortho
-			(
-				m_cameraConfig.m_orthoLeftRightBotTop.x,
-				m_cameraConfig.m_orthoLeftRightBotTop.y,
-				m_cameraConfig.m_orthoLeftRightBotTop.z,
-				m_cameraConfig.m_orthoLeftRightBotTop.w,
-				m_cameraConfig.m_near, 
-				m_cameraConfig.m_far
-			);
-		}
-		else
-		{
-			m_cameraConfig.m_orthoLeftRightBotTop = glm::vec4(0.f, 0.f, 0.f, 0.f);
-
-			m_projection = glm::perspective
-			(
-				m_cameraConfig.m_yFOV,
-				m_cameraConfig.m_aspectRatio, 
-				m_cameraConfig.m_near, 
-				m_cameraConfig.m_far
-			);
-		}
-	}
-
-
-	void Camera::Destroy()
-	{
-		m_cameraParamBlock = nullptr;
-	}
-
-
-	std::vector<glm::mat4> Camera::BuildCubeViewMatrices(glm::vec3 const& centerPos)
+	std::vector<glm::mat4> BuildCubeViewMatrices(glm::vec3 const& centerPos)
 	{
 		std::vector<glm::mat4> cubeView;
 		cubeView.reserve(6);
@@ -211,31 +77,246 @@ namespace gr
 
 		return cubeView;
 	}
+}
 
-
-	std::vector<glm::mat4> const& Camera::GetCubeViewProjectionMatrix()
+namespace gr
+{
+	std::shared_ptr<gr::Camera> Camera::Create(
+		std::string const& cameraName, Config const& camConfig, gr::Transform* parent)
 	{
-		m_cubeViewProjection.clear();
+		std::shared_ptr<gr::Camera> newCamera = nullptr;
+		
+		newCamera.reset(new gr::Camera(cameraName, camConfig, parent));
+		en::SceneManager::GetSceneData()->AddCamera(newCamera);
 
-		std::vector<glm::mat4> const& cubeViews = BuildCubeViewMatrices(m_transform.GetGlobalPosition());
-
-		m_cubeViewProjection.emplace_back(m_projection * cubeViews[0]);
-		m_cubeViewProjection.emplace_back(m_projection * cubeViews[1]);
-		m_cubeViewProjection.emplace_back(m_projection * cubeViews[2]);
-		m_cubeViewProjection.emplace_back(m_projection * cubeViews[3]);
-		m_cubeViewProjection.emplace_back(m_projection * cubeViews[4]);
-		m_cubeViewProjection.emplace_back(m_projection * cubeViews[5]);
-
-		return m_cubeViewProjection;
+		return newCamera;
 	}
 
 
-	void Camera::SetCameraConfig(CameraConfig const& newConfig)
+	Camera::Camera(string const& cameraName, Config const& camConfig, Transform* parent)
+		: NamedObject(cameraName)
+		, Transformable(cameraName, parent)
+		, m_cameraConfig(camConfig)
+		, m_matricesDirty(true)
+		, m_parameterBlockDirty(true)
+	{
+		m_cameraPBData = {}; // Initialize with a default struct: Updated later
+
+		m_cameraParamBlock = re::ParameterBlock::Create(
+			CameraParams::s_shaderName,
+			m_cameraPBData, 
+			re::ParameterBlock::PBType::Mutable);
+
+		switch (m_cameraConfig.m_projectionType)
+		{
+		case Config::ProjectionType::Perspective:
+		case Config::ProjectionType::Orthographic:
+		{
+			m_view.resize(1, glm::mat4(1.f));
+			m_invView.resize(1, glm::mat4(1.f));
+
+			m_projection = glm::mat4(1.f);
+			m_invProjection = glm::mat4(1.f);
+
+			m_viewProjection.resize(1, glm::mat4(1.f));
+			m_invViewProjection.resize(1, glm::mat4(1.f));
+		}
+		break;
+		case Config::ProjectionType::PerspectiveCubemap:
+		{
+			m_view.resize(6, glm::mat4(1.f));
+			m_invView.resize(6, glm::mat4(1.f));
+
+			m_projection = glm::mat4(1.f);
+			m_invProjection = glm::mat4(1.f);
+
+			m_viewProjection.resize(6, glm::mat4(1.f));
+			m_invViewProjection.resize(6, glm::mat4(1.f));
+		}
+		break;
+		default:
+			SEAssertF("Invalid projection type");
+		}
+	
+		RecomputeMatrices();
+		UpdateCameraParamBlockData();
+	}
+
+
+	void Camera::Update(const double stepTimeMs)
+	{
+		m_matricesDirty |= m_transform.HasChanged();
+		RecomputeMatrices();
+		UpdateCameraParamBlockData();
+	}
+
+
+	void Camera::RecomputeMatrices()
+	{
+		if (!m_matricesDirty)
+		{
+			return;
+		}
+		m_matricesDirty = false;
+		m_parameterBlockDirty = true;		
+
+		switch (m_cameraConfig.m_projectionType)
+		{
+		case Config::ProjectionType::Perspective:
+		{
+			m_cameraConfig.m_orthoLeftRightBotTop = glm::vec4(0.f, 0.f, 0.f, 0.f);
+
+			glm::mat4 const& globalMatrix = m_transform.GetGlobalMatrix();
+
+			m_view[0] = glm::inverse(globalMatrix);
+			m_invView[0] = globalMatrix;
+
+			m_projection = glm::perspective(
+				m_cameraConfig.m_yFOV,
+				m_cameraConfig.m_aspectRatio,
+				m_cameraConfig.m_near,
+				m_cameraConfig.m_far);
+
+			m_invProjection = glm::inverse(m_projection);
+
+			m_viewProjection[0] = m_projection * m_view[0];
+			m_invViewProjection[0] = glm::inverse(m_viewProjection[0]);
+		}
+		break;
+		case Config::ProjectionType::Orthographic:
+		{
+			m_cameraConfig.m_yFOV = 0.0f;
+
+			glm::mat4 const& globalMatrix = m_transform.GetGlobalMatrix();
+
+			m_view[0] = glm::inverse(globalMatrix);
+			m_invView[0] = globalMatrix;
+
+			m_projection = glm::ortho(
+				m_cameraConfig.m_orthoLeftRightBotTop.x,
+				m_cameraConfig.m_orthoLeftRightBotTop.y,
+				m_cameraConfig.m_orthoLeftRightBotTop.z,
+				m_cameraConfig.m_orthoLeftRightBotTop.w,
+				m_cameraConfig.m_near,
+				m_cameraConfig.m_far);
+
+			m_invProjection = glm::inverse(m_projection);
+
+			m_viewProjection[0] = m_projection * m_view[0];
+			m_invViewProjection[0] = glm::inverse(m_viewProjection[0]);
+		}
+		break;
+		case Config::ProjectionType::PerspectiveCubemap:
+		{
+			m_cameraConfig.m_orthoLeftRightBotTop = glm::vec4(0.f, 0.f, 0.f, 0.f);
+
+			m_projection = glm::perspective
+			(
+				m_cameraConfig.m_yFOV,
+				m_cameraConfig.m_aspectRatio,
+				m_cameraConfig.m_near,
+				m_cameraConfig.m_far
+			);
+
+			m_invProjection = glm::inverse(m_projection);
+
+			glm::vec3 const& worldPos = m_transform.GetGlobalPosition();
+
+			m_view = BuildCubeViewMatrices(worldPos);
+
+			for (uint8_t faceIdx = 0; faceIdx < 6; faceIdx++)
+			{
+				m_invView[faceIdx] = glm::inverse(m_view[faceIdx]);
+
+				m_viewProjection[faceIdx] = m_projection * m_view[faceIdx];
+				m_invViewProjection[faceIdx] = glm::inverse(m_viewProjection[faceIdx]);
+			}
+
+		}
+		break;
+		default:
+			SEAssertF("Invalid projection type");
+		}
+	}
+
+
+	void Camera::UpdateCameraParamBlockData()
+	{
+		SEAssert("Camera parameter block has not been initialized yet", m_cameraParamBlock != nullptr);
+
+		if (!m_parameterBlockDirty)
+		{
+			return;
+		}
+		m_parameterBlockDirty = false;
+
+		m_cameraPBData.g_view = GetViewMatrix();
+		m_cameraPBData.g_invView = GetInverseViewMatrix();
+
+		m_cameraPBData.g_projection = GetProjectionMatrix();
+		m_cameraPBData.g_invProjection = GetInverseProjectionMatrix();
+
+		m_cameraPBData.g_viewProjection = GetViewProjectionMatrix();
+		m_cameraPBData.g_invViewProjection = GetInverseViewProjectionMatrix();
+
+		// .x = near, .y = far, .z = 1/near, .w = 1/far
+		m_cameraPBData.g_projectionParams = glm::vec4(
+			m_cameraConfig.m_near, 
+			m_cameraConfig.m_far, 
+			1.f / m_cameraConfig.m_near,
+			1.f / m_cameraConfig.m_far);
+
+		const float ev100 = ComputeEV100FromExposureSettings(
+			m_cameraConfig.m_aperture, 
+			m_cameraConfig.m_shutterSpeed, 
+			m_cameraConfig.m_sensitivity, 
+			m_cameraConfig.m_exposureCompensation);
+
+		m_cameraPBData.g_exposureProperties = glm::vec4(
+			ComputeExposure(ev100),
+			ev100,
+			0.f,
+			0.f);
+
+		const float bloomEV100 = ComputeEV100FromExposureSettings(
+			m_cameraConfig.m_aperture,
+			m_cameraConfig.m_shutterSpeed,
+			m_cameraConfig.m_sensitivity,
+			m_cameraConfig.m_bloomExposureCompensation);
+
+		m_cameraPBData.g_bloomSettings = glm::vec4(
+			m_cameraConfig.m_bloomStrength,
+			m_cameraConfig.m_bloomRadius.x,
+			m_cameraConfig.m_bloomRadius.y,
+			ComputeExposure(bloomEV100));
+
+		m_cameraPBData.g_cameraWPos = glm::vec4(GetTransform()->GetGlobalPosition().xyz, 0.f);
+
+		m_cameraParamBlock->Commit(m_cameraPBData);
+	}
+
+
+	Camera::~Camera()
+	{
+		SEAssert("Camera parameter block is not null. Did a camera go out of scope before Destroy was called?", 
+			m_cameraParamBlock == nullptr);
+	}
+
+
+	void Camera::Destroy()
+	{
+		m_cameraParamBlock = nullptr;
+		en::SceneManager::GetSceneData()->RemoveCamera(GetUniqueID());
+	}
+
+
+	void Camera::SetCameraConfig(Config const& newConfig)
 	{
 		if (newConfig != m_cameraConfig)
 		{
 			m_cameraConfig = newConfig;
-			m_projectionMatricesDirty = true;
+			m_matricesDirty = true;
+			m_parameterBlockDirty = true;
 		}		
 	}
 
@@ -245,28 +326,30 @@ namespace gr
 		if (ImGui::CollapsingHeader(GetName().c_str(), ImGuiTreeNodeFlags_None))
 		{
 			const string nearSliderLabel = "Near plane distance##" + GetName(); // Prevent ID collisions; "##" hides whatever follows
-			m_projectionMatricesDirty |= ImGui::SliderFloat(nearSliderLabel.c_str(), &m_cameraConfig.m_near, 0.f, 2.0f, "near = %.3f");
+			m_matricesDirty |= ImGui::SliderFloat(nearSliderLabel.c_str(), &m_cameraConfig.m_near, 0.f, 2.0f, "near = %.3f");
 
 			const string farSliderLabel = "Far plane distance##" + GetName(); // Prevent ID collisions; "##" hides whatever follows
-			m_projectionMatricesDirty |= ImGui::SliderFloat(farSliderLabel.c_str(), &m_cameraConfig.m_far, 0.f, 1000.0f, "far = %.3f");
+			m_matricesDirty |= ImGui::SliderFloat(farSliderLabel.c_str(), &m_cameraConfig.m_far, 0.f, 1000.0f, "far = %.3f");
 
 			ImGui::Text("1/far = %f", 1.f / m_cameraConfig.m_far);
 
 			ImGui::Text("Sensor Properties");
 
 			const string apertureLabel = "Aperture (f/stops)##" + GetName();
-			ImGui::SliderFloat(apertureLabel.c_str(), &m_cameraConfig.m_aperture, 0, 1.0f, "Aperture = %.3f");
+			m_parameterBlockDirty |= ImGui::SliderFloat(apertureLabel.c_str(), &m_cameraConfig.m_aperture, 0, 1.0f, "Aperture = %.3f");
 			ImGui::SetItemTooltip("Expressed in f-stops. Controls how open/closed the aperture is. f-stops indicate the\n"
 				"ratio of the lens' focal length to the diameter of the entrance pupil. High-values (f/16) indicate a\n"
 				"small aperture,small values (f/1.4) indicate a wide aperture. Controls exposition and the depth of field");
 
 			const string shutterSpeedLabel = "Shutter Speed (seconds)##" + GetName();
-			ImGui::SliderFloat(shutterSpeedLabel.c_str(), &m_cameraConfig.m_shutterSpeed, 0, 0.2f, "Shutter speed = %.3f");
+			m_parameterBlockDirty |= ImGui::SliderFloat(
+				shutterSpeedLabel.c_str(), &m_cameraConfig.m_shutterSpeed, 0, 0.2f, "Shutter speed = %.3f");
 			ImGui::SetItemTooltip("Expressed in seconds. Controls how long the aperture remains opened and the timing of\n"
 				"the sensor shutter(s)). Controls exposition and motion blur.");
 
 			const string sensitivityLabel = "Sensitivity (ISO)##" + GetName();
-			ImGui::SliderFloat(sensitivityLabel.c_str(), &m_cameraConfig.m_sensitivity, 0, 1000.0f, "Sensitivity = %.3f");
+			m_parameterBlockDirty |= ImGui::SliderFloat(
+				sensitivityLabel.c_str(), &m_cameraConfig.m_sensitivity, 0, 1000.0f, "Sensitivity = %.3f");
 			ImGui::SetItemTooltip("Expressed in ISO. Controls how the light reaching the sensor is quantized. Controls\n"
 				"exposition and the amount of noise.");
 
@@ -296,35 +379,41 @@ namespace gr
 				"for an ISO 100 sensitivity only");
 
 			const string exposureCompensationLabel = "Exposure compensation (EC)##" + GetName();
-			ImGui::SliderFloat(exposureCompensationLabel.c_str(), &m_cameraConfig.m_exposureCompensation, -6.f, 6.0f, "EC = %.3f");
+			m_parameterBlockDirty |= ImGui::SliderFloat(
+				exposureCompensationLabel.c_str(), &m_cameraConfig.m_exposureCompensation, -6.f, 6.0f, "EC = %.3f");
 			ImGui::SetItemTooltip("Exposure compensation can be used to over/under-expose an image, for artistic control\n"
 				"or to achieve proper exposure (e.g. snow can be exposed for as 18% middle-gray). EC is in f/stops:\n"
 				"Increasing the EV is akin to closing down the lens aperture, reducing shutter speed, or reducing\n"
 				"sensitivity. Higher EVs = darker images");
 
 			const string boolStrengthLabel = "Bloom strength##" + GetName();
-			ImGui::SliderFloat(boolStrengthLabel.c_str(), &m_cameraConfig.m_bloomStrength, 0.f, 1.f, "Bloom strength = %.3f");
+			m_parameterBlockDirty |= ImGui::SliderFloat(boolStrengthLabel.c_str(), &m_cameraConfig.m_bloomStrength, 0.f, 1.f, "Bloom strength = %.3f");
 
 			
 			static bool s_useRoundBlurRadius = true;
-			ImGui::Checkbox(std::format("Round blur raduis?##{}", GetUniqueID()).c_str(), &s_useRoundBlurRadius);
+			m_parameterBlockDirty |= ImGui::Checkbox(
+				std::format("Round blur raduis?##{}", GetUniqueID()).c_str(), &s_useRoundBlurRadius);
 			if (!s_useRoundBlurRadius)
 			{
-				ImGui::SliderFloat("Bloom radius width", &m_cameraConfig.m_bloomRadius.x, 1.f, 10.f);
-				ImGui::SliderFloat("Bloom radius height", &m_cameraConfig.m_bloomRadius.y, 1.f, 10.f);
+				m_parameterBlockDirty |= ImGui::SliderFloat(
+					"Bloom radius width", &m_cameraConfig.m_bloomRadius.x, 1.f, 10.f);
+				m_parameterBlockDirty |= ImGui::SliderFloat(
+					"Bloom radius height", &m_cameraConfig.m_bloomRadius.y, 1.f, 10.f);
 			}
 			else
 			{
 				const string bloomRadiusLabel = std::format("Bloom radius##{}", GetUniqueID());
-				ImGui::SliderFloat(bloomRadiusLabel.c_str(), &m_cameraConfig.m_bloomRadius.x, 1.f, 10.f);
+				m_parameterBlockDirty |= ImGui::SliderFloat(
+					bloomRadiusLabel.c_str(), &m_cameraConfig.m_bloomRadius.x, 1.f, 10.f);
 				m_cameraConfig.m_bloomRadius.y = m_cameraConfig.m_bloomRadius.x;
 			}
 
 			const string boolExposureCompensationLabel = "Bloom exposure compensation (Bloom EC)##" + GetName();
-			ImGui::SliderFloat(boolExposureCompensationLabel.c_str(), &m_cameraConfig.m_bloomExposureCompensation, -6.f, 6.0f, "Bloom EC = %.3f");
+			m_parameterBlockDirty |= ImGui::SliderFloat(
+				boolExposureCompensationLabel.c_str(), &m_cameraConfig.m_bloomExposureCompensation, -6.f, 6.0f, "Bloom EC = %.3f");
 			ImGui::SetItemTooltip("Independently expose the lens bloom contribution");
 
-			ImGui::Checkbox(std::format("Enable bloom deflicker##{}", GetUniqueID()).c_str(), &m_cameraConfig.m_deflickerEnabled);
+			m_parameterBlockDirty |= ImGui::Checkbox(std::format("Enable bloom deflicker##{}", GetUniqueID()).c_str(), &m_cameraConfig.m_deflickerEnabled);
 
 			util::DisplayMat4x4("View Matrix:", GetViewMatrix());
 
@@ -347,7 +436,7 @@ namespace gr
 
 	void Camera::SetAsMainCamera() const
 	{
-		en::SceneManager::Get()->SetMainCameraIdx(m_cameraIdx);
+		en::SceneManager::Get()->SetMainCameraIdx(GetUniqueID());
 	}
 }
 

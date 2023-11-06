@@ -36,15 +36,15 @@ namespace
 	}
 
 
-	gr::Camera::CameraConfig ComputeDirectionalShadowCameraConfigFromSceneBounds(
+	gr::Camera::Config ComputeDirectionalShadowCameraConfigFromSceneBounds(
 		gr::Transform* lightTransform, gr::Bounds& sceneWorldBounds)
 	{
 		gr::Bounds const& transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
-			glm::inverse(lightTransform->GetGlobalMatrix(Transform::TRS)));
+			glm::inverse(lightTransform->GetGlobalMatrix()));
 
-		gr::Camera::CameraConfig shadowCamConfig;
+		gr::Camera::Config shadowCamConfig;
 
-		shadowCamConfig.m_projectionType = gr::Camera::CameraConfig::ProjectionType::Orthographic;
+		shadowCamConfig.m_projectionType = gr::Camera::Config::ProjectionType::Orthographic;
 
 		shadowCamConfig.m_yFOV = 0.f; // Orthographic
 
@@ -66,20 +66,16 @@ namespace gr
 		string const& lightName,
 		uint32_t xRes,
 		uint32_t yRes,
-		gr::Camera::CameraConfig shadowCamConfig, 
 		Transform* shadowCamParent, 
 		vec3 shadowCamPosition, 
 		gr::Light* owningLight)
 		: NamedObject(lightName + "_Shadow")
 		, m_shadowType(GetShadowTypeFromLightType(owningLight->Type()))
 		, m_owningLight(owningLight)
-		, m_shadowCam(gr::Camera::Create(lightName + "_ShadowCam", shadowCamConfig, shadowCamParent))
+		, m_shadowCam(nullptr)
 	{
 		SEAssert("Owning light cannot be null", owningLight);
-
-		m_shadowTargetSet = re::TextureTargetSet::Create(lightName + "_ShadowTargetSet");
-		m_shadowCam->GetTransform()->SetLocalTranslation(shadowCamPosition);
-
+		
 		// Texture params are mostly the same between a single shadow map, or a cube map
 		Texture::TextureParams shadowParams;
 		shadowParams.m_width = xRes;
@@ -96,13 +92,13 @@ namespace gr
 		// https://www.khronos.org/opengl/wiki/Sampler_Object#Anisotropic_filtering
 
 		std::shared_ptr<re::Texture> depthTexture;
-
-		const ShadowType shadowType = GetShadowTypeFromLightType(owningLight->Type());
-
 		re::TextureTarget::TargetParams depthTargetParams;
+		gr::Camera::Config shadowCamConfig{};
 
 		// Omni-directional (Cube map) shadow map setup:
-		if (shadowType == ShadowType::CubeMap)
+		switch (m_shadowType)
+		{
+		case ShadowType::CubeMap:
 		{
 			m_minMaxShadowBias = glm::vec2(
 				Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBias),
@@ -115,8 +111,15 @@ namespace gr
 			depthTexture = re::Texture::Create(texName, shadowParams, false);
 
 			depthTargetParams.m_targetFace = re::TextureTarget::k_allFaces;
+
+			shadowCamConfig.m_yFOV = static_cast<float>(std::numbers::pi) / 2.0f;
+			shadowCamConfig.m_near = 0.1f;
+			shadowCamConfig.m_far = 50.f;
+			shadowCamConfig.m_aspectRatio = 1.0f;
+			shadowCamConfig.m_projectionType = Camera::Config::ProjectionType::PerspectiveCubemap;
 		}
-		else // 2D shadow map setup:
+		break;
+		case ShadowType::Orthographic:
 		{
 			m_minMaxShadowBias = glm::vec2(
 				Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias),
@@ -125,14 +128,24 @@ namespace gr
 			shadowParams.m_dimension = Texture::Dimension::Texture2D;
 			shadowParams.m_faces = 1;
 			const string texName = lightName + "_Shadow";
-			
+
 			depthTexture = re::Texture::Create(texName, shadowParams, false);
 		}
+		break;
+		default: SEAssertF("Invalid ShadowType");
+		}
 
+		m_shadowTargetSet = re::TextureTargetSet::Create(lightName + "_ShadowTargetSet");
 		m_shadowTargetSet->SetDepthStencilTarget(depthTexture, depthTargetParams);
 		m_shadowTargetSet->SetViewport(re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height()));
 		m_shadowTargetSet->SetScissorRect(
 			{0, 0, static_cast<long>(depthTexture->Width()), static_cast<long>(depthTexture->Height()) });
+
+
+		// Shadow camera:
+		m_shadowCam = gr::Camera::Create(lightName + "_ShadowCam", shadowCamConfig, shadowCamParent);
+
+		m_shadowCam->GetTransform()->SetLocalPosition(shadowCamPosition);
 
 		// We need the scene bounds to be finalized before we can compute camera frustums; Register for a callback to
 		// ensure the scene is loaded before we try
@@ -149,7 +162,7 @@ namespace gr
 			// Update shadow cam bounds:
 			gr::Bounds sceneWorldBounds = en::SceneManager::GetSceneData()->GetWorldSpaceSceneBounds();
 
-			Camera::CameraConfig const& shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
+			Camera::Config const& shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
 				m_owningLight->GetTransform(), sceneWorldBounds);
 
 			m_shadowCam->SetCameraConfig(shadowCamConfig);

@@ -48,9 +48,10 @@ namespace gr
 		float m_vertexNormalsScale = 1.f;
 		glm::vec3 m_normalsColor = glm::vec3(0.f, 0.f, 1.f);
 
-		bool m_showAllCameraFrustums = false;
+		bool m_showCameraFrustums = false;
 		glm::vec3 m_cameraFrustumColor = glm::vec3(1.f, 1.f, 1.f);
 		float m_cameraCoordinateAxisScale = 1.f;
+		std::unordered_set<gr::Camera*> m_camerasToDebug;
 
 		bool m_showAllWireframe = false;
 		glm::vec3 m_wireframeColor = glm::vec3(152/255.f, 1.f, 166/255.f);

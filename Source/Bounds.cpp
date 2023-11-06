@@ -154,7 +154,7 @@ namespace gr
 
 	void Bounds::UpdateAABBBounds(Transform* transform)
 	{
-		*this = GetTransformedAABBBounds(transform->GetGlobalMatrix(Transform::TRS));
+		*this = GetTransformedAABBBounds(transform->GetGlobalMatrix());
 	}
 
 

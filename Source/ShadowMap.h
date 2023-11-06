@@ -29,7 +29,6 @@ namespace gr
 			std::string const& lightName,
 			uint32_t xRes,
 			uint32_t yRes,
-			gr::Camera::CameraConfig shadowCamConfig,
 			gr::Transform* shadowCamParent,
 			glm::vec3 shadowCamPosition,
 			gr::Light* owningLight);

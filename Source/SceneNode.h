@@ -3,7 +3,6 @@
 
 #include "Transformable.h"
 #include "Mesh.h"
-#include "NamedObject.h"
 #include "Updateable.h"
 
 
@@ -14,9 +13,9 @@ namespace fr
 	class SceneNode final : public virtual fr::Transformable
 	{
 	public:
-		explicit SceneNode(gr::Transform* parent);
+		explicit SceneNode(std::string const& name, gr::Transform* parent);
 
-		SceneNode(SceneNode const& sceneObject) = default;
+		SceneNode(SceneNode const& sceneObject);
 		SceneNode(SceneNode&&) = default;
 		SceneNode& operator=(SceneNode const&) = default;
 		SceneNode& operator=(SceneNode&&) = default;

@@ -13,11 +13,16 @@ using en::InputManager;
 using glm::vec3;
 
 
+namespace
+{
+	constexpr char const* k_playerObjectName = "Player Object";
+}
+
 namespace fr
 {
 	PlayerObject::PlayerObject(std::shared_ptr<Camera> playerCam)
-		: en::NamedObject("Player Object")
-		, fr::Transformable(nullptr)
+		: en::NamedObject(k_playerObjectName)
+		, fr::Transformable(k_playerObjectName, nullptr)
 		, m_playerCam(playerCam)
 		, m_processInput(true)
 		, m_movementSpeed(0.006f)
@@ -27,7 +32,7 @@ namespace fr
 		// The PlayerObject and Camera must be located at the same point. To avoid stomping imported Camera locations,
 		// we move the PlayerObject to the camera. Then, we re-parent the Camera's Transform, to maintain its global
 		// orientation but update its local orientation under the PlayerObject Transform
-		m_transform.SetGlobalTranslation(m_playerCam->GetTransform()->GetGlobalPosition());
+		m_transform.SetGlobalPosition(m_playerCam->GetTransform()->GetGlobalPosition());
 		m_playerCam->GetTransform()->ReParent(&m_transform);
 
 		m_sprintSpeedModifier = Config::Get()->GetValue<float>("sprintSpeedModifier");
@@ -62,7 +67,7 @@ namespace fr
 				{
 					m_playerCam = mainCam;
 
-					m_transform.SetGlobalTranslation(m_playerCam->GetTransform()->GetGlobalPosition());
+					m_transform.SetGlobalPosition(m_playerCam->GetTransform()->GetGlobalPosition());
 					m_playerCam->GetTransform()->ReParent(&m_transform);
 				}
 			}
@@ -86,7 +91,7 @@ namespace fr
 		// Reset the cam back to the saved position
 		if (InputManager::GetMouseInputState(en::InputMouse_Left))
 		{
-			m_transform.SetLocalTranslation(m_savedPosition);
+			m_transform.SetLocalPosition(m_savedPosition);
 			m_playerCam->GetTransform()->SetLocalRotation(vec3(m_savedEulerRotation.x, 0, 0));
 			m_transform.SetLocalRotation(vec3(0, m_savedEulerRotation.y, 0));
 

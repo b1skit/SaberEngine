@@ -13,16 +13,13 @@ namespace gr
 	class Camera final : public virtual en::NamedObject, public virtual fr::Transformable, public virtual en::Updateable
 	{
 	public:
-		static std::vector<glm::mat4> BuildCubeViewMatrices(glm::vec3 const& centerPos);
-
-
-	public:
-		struct CameraConfig
+		struct Config
 		{
 			enum class ProjectionType
 			{
 				Perspective,
-				Orthographic
+				Orthographic,
+				PerspectiveCubemap // For rendering cubemaps: Has 6 view matrices
 			} m_projectionType = ProjectionType::Perspective;
 			
 			float m_yFOV = static_cast<float>(std::numbers::pi) / 2.0f; // In radians; 0 if orthographic
@@ -47,7 +44,7 @@ namespace gr
 			float m_bloomExposureCompensation = 0.f; // Overdrive bloom contribution
 			bool m_deflickerEnabled = true;
 
-			bool operator==(CameraConfig const& rhs) const
+			bool operator==(Config const& rhs) const
 			{
 				return m_projectionType == rhs.m_projectionType &&
 					m_yFOV == rhs.m_yFOV &&
@@ -65,15 +62,15 @@ namespace gr
 					m_deflickerEnabled == rhs.m_deflickerEnabled;
 			}
 			
-			bool operator!=(CameraConfig const& rhs) const
+			bool operator!=(Config const& rhs) const
 			{
 				return !operator==(rhs);
 			}
 		};
-		static_assert(sizeof(CameraConfig) == 72); // Don't forget to update operator== if the properties change
+		static_assert(sizeof(Config) == 72); // Don't forget to update operator== if the properties change
 
-	public:
-		struct CameraParams // Shader parameter block
+	public: // Shader parameter blocks:
+		struct CameraParams 
 		{
 			glm::mat4 g_view;
 			glm::mat4 g_invView;
@@ -83,7 +80,7 @@ namespace gr
 			glm::mat4 g_viewProjection;
 			glm::mat4 g_invViewProjection;
 
-			glm::vec4 g_projectionParams; // .x = 1 (unused), .y = near, .z = far, .w = 1/far
+			glm::vec4 g_projectionParams; // .x = near, .y = far, .z = 1/near, .w = 1/far
 
 			glm::vec4 g_exposureProperties; // .x = exposure, .y = ev100, .zw = unused 
 			glm::vec4 g_bloomSettings; // .x = strength, .yz = XY radius, .w = bloom exposure compensation
@@ -93,34 +90,41 @@ namespace gr
 			static constexpr char const* const s_shaderName = "CameraParams"; // Not counted towards size of struct
 		};
 
+
 	public:
 		static std::shared_ptr<gr::Camera> Create(
-			std::string const& cameraName, CameraConfig const& camConfig, gr::Transform* parent);
+			std::string const& cameraName, Config const& camConfig, gr::Transform* parent);
 
 		
 		Camera(Camera&&) = default;
 		Camera& operator=(Camera&&) = default;
 		
-		~Camera() { Destroy(); }
+		~Camera();
 
 		void Destroy();
 
 		void Update(const double stepTimeMs) override;
 
 		float const FieldOfViewYRad() const;
-		glm::vec2 NearFar() const;
+
+		glm::vec2 NearFar() const; // TODO: RENAME "GetNearFar"
+		void SetNearFar(glm::vec2 const& nearFar);
+
 		float GetAspectRatio() const;
 
-		glm::mat4 GetViewMatrix();
-		glm::mat4 const& GetInverseViewMatrix();
+		glm::mat4 GetViewMatrix() const;
+		glm::mat4 const& GetInverseViewMatrix() const;
 
 		glm::mat4 const& GetProjectionMatrix() const;
 		glm::mat4 GetInverseProjectionMatrix() const;
 
-		glm::mat4 GetViewProjectionMatrix();
-		glm::mat4 GetInverseViewProjectionMatrix();
-		
-		std::vector<glm::mat4> const& GetCubeViewProjectionMatrix();
+		glm::mat4 GetViewProjectionMatrix() const;
+		glm::mat4 GetInverseViewProjectionMatrix() const;
+
+		std::vector<glm::mat4> const& GetCubeViewMatrices() const;
+		std::vector<glm::mat4> const& GetCubeInvViewMatrices() const;
+		std::vector<glm::mat4> const& GetCubeViewProjectionMatrices() const;
+		std::vector<glm::mat4> const& GetCubeInvViewProjectionMatrices() const;
 		
 		float GetAperture() const;
 		void SetAperture(float aperture);
@@ -131,10 +135,10 @@ namespace gr
 		float GetSensitivity() const;
 		void SetSensitivity(float sensitivity);
 
-		CameraConfig const& GetCameraConfig() const;
-		void SetCameraConfig(CameraConfig const& newConfig);
+		Config const& GetCameraConfig() const;
+		void SetCameraConfig(Config const& newConfig);
 
-		inline std::shared_ptr<re::ParameterBlock> GetCameraParams() const;
+		std::shared_ptr<re::ParameterBlock> GetCameraParams() const;
 
 		void SetAsMainCamera() const;
 
@@ -142,30 +146,32 @@ namespace gr
 
 
 	private: // Use Create() instead
-		Camera(std::string const& cameraName, CameraConfig const& camConfig, gr::Transform* parent);
+		Camera(std::string const& cameraName, Config const& camConfig, gr::Transform* parent);
 		
 
 	private:
 		// Helper function: Configures the camera based on the cameraConfig. MUST be called at least once during setup
-		void RecomputeProjectionMatrices(); // Returns true if parameters were recomputed, false otherwise
+		void RecomputeMatrices(); // Returns true if parameters were recomputed, false otherwise
 		void UpdateCameraParamBlockData();
 
 
 	private:
-		CameraConfig m_cameraConfig;
-		bool m_projectionMatricesDirty;
+		Config m_cameraConfig;
 
-		// TODO: Cache matrices, update them when they're dirty
+		std::vector<glm::mat4> m_view;
+		std::vector<glm::mat4> m_invView;
 
 		glm::mat4 m_projection;
+		glm::mat4 m_invProjection;
 
-		std::vector<glm::mat4> m_cubeView;
-		std::vector<glm::mat4> m_cubeViewProjection;
+		std::vector<glm::mat4> m_viewProjection;
+		std::vector<glm::mat4> m_invViewProjection;
+
+		bool m_matricesDirty;
+		bool m_parameterBlockDirty;
 
 		std::shared_ptr<re::ParameterBlock> m_cameraParamBlock;
 		CameraParams m_cameraPBData;
-
-		size_t m_cameraIdx; // Index in the global camera list
 
 	private:
 		Camera() = delete;
@@ -186,21 +192,28 @@ namespace gr
 	}
 
 
+	inline void Camera::SetNearFar(glm::vec2 const& nearFar)
+	{
+		m_cameraConfig.m_near = nearFar.x;
+		m_cameraConfig.m_far = nearFar.y;
+	}
+
+
 	inline float Camera::GetAspectRatio() const
 	{
 		return m_cameraConfig.m_aspectRatio;
 	}
 
 
-	inline glm::mat4 Camera::GetViewMatrix()
+	inline glm::mat4 Camera::GetViewMatrix() const
 	{
-		return glm::inverse(m_transform.GetGlobalMatrix(Transform::TRS));
+		return m_view[0];
 	}
 
 
-	inline glm::mat4 const& Camera::GetInverseViewMatrix()
+	inline glm::mat4 const& Camera::GetInverseViewMatrix() const
 	{
-		return m_transform.GetGlobalMatrix(Transform::TRS);
+		return m_invView[0];
 	}
 
 
@@ -212,18 +225,42 @@ namespace gr
 
 	inline glm::mat4 Camera::GetInverseProjectionMatrix() const
 	{
-		return glm::inverse(m_projection);
+		return m_invProjection;
 	}
 
-	inline glm::mat4 Camera::GetViewProjectionMatrix()
+	inline glm::mat4 Camera::GetViewProjectionMatrix() const
 	{
-		return m_projection * GetViewMatrix();
+		return m_viewProjection[0];
 	}
 
 
-	inline glm::mat4 Camera::GetInverseViewProjectionMatrix()
+	inline glm::mat4 Camera::GetInverseViewProjectionMatrix() const
 	{
-		return glm::inverse(GetViewProjectionMatrix());
+		return m_invViewProjection[0];
+	}
+
+
+	inline std::vector<glm::mat4> const& Camera::GetCubeViewMatrices() const
+	{
+		return m_view;
+	}
+
+
+	inline std::vector<glm::mat4> const& Camera::GetCubeInvViewMatrices() const
+	{
+		return m_invView;
+	}
+
+
+	inline std::vector<glm::mat4> const& Camera::GetCubeViewProjectionMatrices() const
+	{
+		return m_viewProjection;
+	}
+	
+
+	inline std::vector<glm::mat4> const& Camera::GetCubeInvViewProjectionMatrices() const
+	{
+		return m_invViewProjection;
 	}
 
 
@@ -262,7 +299,7 @@ namespace gr
 	}
 
 
-	inline Camera::CameraConfig const& Camera::GetCameraConfig() const
+	inline Camera::Config const& Camera::GetCameraConfig() const
 	{
 		return m_cameraConfig;
 	}

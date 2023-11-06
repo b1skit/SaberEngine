@@ -5,9 +5,18 @@
 
 namespace fr
 {
-	SceneNode::SceneNode(gr::Transform* parent)
-		: Transformable(parent)
+	SceneNode::SceneNode(std::string const& name, gr::Transform* parent)
+		: NamedObject(name + "_SceneNode")
+		, Transformable(name, parent)
 	{
+	}
+
+
+	SceneNode::SceneNode(SceneNode const& sceneObject)
+		: NamedObject(sceneObject.GetName())
+		, Transformable(sceneObject.GetName(), sceneObject.GetTransform()->GetParent())
+	{
+
 	}
 }
 
