@@ -37,6 +37,8 @@ namespace en::ConfigKeys
 	constexpr char const* k_pmremTexWidthHeight = "pmremWidthHeight";
 	constexpr char const* k_pmremNumSamples		= "pmremNumSamples";
 
+	// ImGui:
+	constexpr char const* k_imguiIniPath = "config\\imgui.ini";
 }
 
 namespace en::ShaderNames

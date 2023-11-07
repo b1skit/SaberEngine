@@ -608,7 +608,6 @@ namespace re
 
 		// Menu bar:
 		ImVec2 menuBarSize = { 0, 0 }; // Record the size of the menu bar so we can align things absolutely underneath it
-		uint32_t menuDepth = 0; // Ensure windows don't overlap when they're first opened
 		if (m_imguiMenuVisible)
 		{
 			ImGui::BeginMainMenuBar();
@@ -675,37 +674,35 @@ namespace re
 		}
 
 		// Console log window:
-		menuDepth++;
 		if (s_showConsoleLog)
 		{
 			ImGui::SetNextWindowSize(ImVec2(
 				static_cast<float>(windowWidth),
 				static_cast<float>(windowHeight * 0.5f)),
-				ImGuiCond_Once);
-			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
+				ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
 			en::LogManager::Get()->ShowImGuiWindow(&s_showConsoleLog);
 		}
 
 		// Scene objects panel:
-		menuDepth++;
 		if (s_showRenderDebug)
 		{
 			ImGui::SetNextWindowSize(ImVec2(
 				static_cast<float>(windowWidth) * 0.25f,
-				static_cast<float>(windowHeight * 0.75f)),
-				ImGuiCond_Once);
-			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
+				static_cast<float>(windowHeight - menuBarSize[1])),
+				ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
 			RenderManager::ShowRenderDebugImGuiWindows(&s_showRenderDebug);
 		}
 
 		// Show the ImGui demo window for debugging reference
 #if defined(_DEBUG)
-		menuDepth++;
 		if (s_showImguiDemo)
 		{
-			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
+			ImGui::SetNextWindowPos(
+				ImVec2(static_cast<float>(windowWidth) * 0.25f, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 			ImGui::ShowDemoWindow(&s_showImguiDemo);
 		}
 #endif

@@ -10,10 +10,6 @@ namespace en
 {
 	class Config
 	{
-	public:
-		
-				
-
 	public: 
 		enum class SettingType
 		{

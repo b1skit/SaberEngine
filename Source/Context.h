@@ -20,9 +20,6 @@ namespace dx12
 
 namespace re
 {
-	static constexpr char const* k_imguiIniPath = "config\\imgui.ini";
-
-
 	class Context
 	{
 	public: // Singleton functionality

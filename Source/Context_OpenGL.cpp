@@ -304,7 +304,7 @@ namespace opengl
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
-		io.IniFilename = re::k_imguiIniPath;
+		io.IniFilename = en::ConfigKeys::k_imguiIniPath;
 
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();
