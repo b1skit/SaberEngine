@@ -109,7 +109,7 @@ namespace re
 
 
 	private:
-		void ShowRenderSystemImGuiWindows(bool* show);
+		void ShowRenderDebugImGuiWindows(bool* show);
 
 
 	private:

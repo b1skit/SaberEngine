@@ -38,8 +38,6 @@ namespace en
 		void SetMainCameraIdx(size_t camIdx);
 		std::shared_ptr<gr::Camera> GetMainCamera() const;
 
-		void ShowImGuiWindow(bool* show);
-
 
 	private:
 		void BuildSceneBatches();

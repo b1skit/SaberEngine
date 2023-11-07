@@ -10,6 +10,7 @@
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "PerformanceTimer.h"
+#include "Light.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
 #include "RenderManager_Platform.h"
@@ -445,17 +446,142 @@ namespace re
 	}
 
 
-	void RenderManager::ShowRenderSystemImGuiWindows(bool* show)
+	void RenderManager::ShowRenderDebugImGuiWindows(bool* show)
 	{
-		constexpr char const* renderSystemsPanelTitle = "Render Systems";
+		constexpr char const* renderSystemsPanelTitle = "Render Debug";
 		ImGui::Begin(renderSystemsPanelTitle, show);
-		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+
+
+		if (ImGui::CollapsingHeader("Cameras:", ImGuiTreeNodeFlags_None))
 		{
-			if (ImGui::CollapsingHeader(renderSystem->GetName().c_str(), ImGuiTreeNodeFlags_None))
+			ImGui::Indent();
+			std::vector<std::shared_ptr<gr::Camera>> const& cameras = en::SceneManager::GetSceneData()->GetCameras();
+
+			// TODO: Currently, we set the camera parameters as a permanent PB via a shared_ptr from the main camera
+			// once in every GS. We need to be able to get/set the main camera's camera params PB every frame, in every
+			// GS. Camera selection works, but the GS's all render from the same camera. For now, just disable it.
+//#define CAMERA_SELECTION
+#if defined(CAMERA_SELECTION)
+			static int activeCamIdx = static_cast<int>(m_activeCameraIdx);
+			constexpr ImGuiComboFlags k_cameraSelectionflags = 0;
+			static int comboSelectedCamIdx = activeCamIdx; // Initialize with the index of the current main camera
+			const char* comboPreviewCamName = cameras[comboSelectedCamIdx]->GetName().c_str();
+			if (ImGui::BeginCombo("Active camera", comboPreviewCamName, k_cameraSelectionflags))
 			{
-				renderSystem->ShowImGuiWindow();
+				for (size_t camIdx = 0; camIdx < cameras.size(); camIdx++)
+				{
+					const bool isSelected = (comboSelectedCamIdx == camIdx);
+					if (ImGui::Selectable(cameras[camIdx]->GetName().c_str(), isSelected))
+					{
+						comboSelectedCamIdx = static_cast<int>(camIdx);
+					}
+
+					if (isSelected) // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndCombo();
+
+				// Handle active camera changes:
+				if (comboSelectedCamIdx != activeCamIdx)
+				{
+					activeCamIdx = comboSelectedCamIdx;
+					SetMainCameraIdx(comboSelectedCamIdx);
+				}
 			}
+#endif
+
+			for (size_t camIdx = 0; camIdx < cameras.size(); camIdx++)
+			{
+				cameras[camIdx]->ShowImGuiWindow();
+				ImGui::Separator();
+			}
+			ImGui::Unindent();
 		}
+
+		ImGui::Separator();
+
+		if (ImGui::CollapsingHeader("Meshes:", ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
+			std::vector<std::shared_ptr<gr::Mesh>> const& meshes = en::SceneManager::GetSceneData()->GetMeshes();
+			for (auto const& mesh : meshes)
+			{
+				mesh->ShowImGuiWindow();
+				ImGui::Separator();
+			}
+			ImGui::Unindent();
+		}
+
+		ImGui::Separator();
+
+		if (ImGui::CollapsingHeader("Materials:", ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
+			std::unordered_map<size_t, std::shared_ptr<gr::Material>> const& materials = 
+				en::SceneManager::GetSceneData()->GetMaterials();
+			for (auto const& materialEntry : materials)
+			{
+				materialEntry.second->ShowImGuiWindow();
+				ImGui::Separator();
+			}
+			ImGui::Unindent();
+		}
+
+		ImGui::Separator();
+
+		if (ImGui::CollapsingHeader("Lights:", ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
+			std::shared_ptr<gr::Light> const ambientLight = en::SceneManager::GetSceneData()->GetAmbientLight();
+			if (ambientLight)
+			{
+				ImGui::Indent();
+				ambientLight->ShowImGuiWindow();
+				ImGui::Unindent();
+			}
+
+			std::shared_ptr<gr::Light> const directionalLight = en::SceneManager::GetSceneData()->GetKeyLight();
+			if (directionalLight)
+			{
+				ImGui::Indent();
+				directionalLight->ShowImGuiWindow();
+				ImGui::Unindent();
+			}
+
+			if (ImGui::CollapsingHeader("Point Lights:", ImGuiTreeNodeFlags_None))
+			{
+				ImGui::Indent();
+				std::vector<std::shared_ptr<gr::Light>> const& pointLights = 
+					en::SceneManager::GetSceneData()->GetPointLights();
+				for (auto const& light : pointLights)
+				{
+					light->ShowImGuiWindow();
+				}
+				ImGui::Unindent();
+			}
+			ImGui::Unindent();
+		}
+
+		ImGui::Separator();
+
+		// Render systems:
+		if (ImGui::CollapsingHeader("Render Systems:", ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
+			for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+			{
+				if (ImGui::CollapsingHeader(renderSystem->GetName().c_str(), ImGuiTreeNodeFlags_None))
+				{
+					ImGui::Indent();
+					renderSystem->ShowImGuiWindow();
+					ImGui::Unindent();
+				}
+			}
+			ImGui::Unindent();
+		}
+		
 		ImGui::End();
 	}
 
@@ -463,12 +589,11 @@ namespace re
 	void RenderManager::RenderImGui()
 	{
 		static bool s_showConsoleLog = false;
-		static bool s_showScenePanel = false;
-		static bool s_showGraphicsSystemPanel = false;
+		static bool s_showRenderDebug = false;
 		static bool s_showImguiDemo = false;
 
 		// Early out if we can:
-		if (!m_imguiMenuVisible && !s_showConsoleLog && !s_showScenePanel && !s_showImguiDemo)
+		if (!m_imguiMenuVisible && !s_showConsoleLog && !s_showRenderDebug && !s_showImguiDemo)
 		{
 			return;
 		}
@@ -504,14 +629,10 @@ namespace re
 
 				if (ImGui::BeginMenu("Window"))
 				{
-					// Console debug log window:
-					ImGui::MenuItem("Console log", "", &s_showConsoleLog);
+					
+					ImGui::MenuItem("Console log", "", &s_showConsoleLog); // Console debug log window
 
-					// Scene objects window:
-					ImGui::MenuItem("Scene Objects Panel", "", &s_showScenePanel);
-
-					// Graphics systems window:
-					ImGui::MenuItem("Render Systems Panel", "", &s_showGraphicsSystemPanel);
+					ImGui::MenuItem("Render Debug", "", &s_showRenderDebug);
 
 					ImGui::TextDisabled("Performance statistics");
 
@@ -568,7 +689,7 @@ namespace re
 
 		// Scene objects panel:
 		menuDepth++;
-		if (s_showScenePanel)
+		if (s_showRenderDebug)
 		{
 			ImGui::SetNextWindowSize(ImVec2(
 				static_cast<float>(windowWidth) * 0.25f,
@@ -576,20 +697,7 @@ namespace re
 				ImGuiCond_Once);
 			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
 
-			en::SceneManager::Get()->ShowImGuiWindow(&s_showScenePanel);
-		}
-
-		// Graphics Systems panel:
-		menuDepth++;
-		if (s_showGraphicsSystemPanel)
-		{
-			ImGui::SetNextWindowSize(ImVec2(
-				static_cast<float>(windowWidth) * 0.25f,
-				static_cast<float>(windowHeight * 0.75f)),
-				ImGuiCond_Once);
-			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1] * menuDepth), ImGuiCond_Once, ImVec2(0, 0));
-
-			RenderManager::ShowRenderSystemImGuiWindows(&s_showGraphicsSystemPanel);
+			RenderManager::ShowRenderDebugImGuiWindows(&s_showRenderDebug);
 		}
 
 		// Show the ImGui demo window for debugging reference
