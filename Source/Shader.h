@@ -29,7 +29,7 @@ namespace re
 
 
 	public: // Object factory: Gets a Shader if it already exists, or creates it if it doesn't
-		static std::shared_ptr<re::Shader> GetOrCreate(
+		[[nodiscard]] static std::shared_ptr<re::Shader> GetOrCreate(
 			std::string const& extensionlessShaderFilename, re::PipelineState const&);
 		~Shader() { Destroy(); }
 

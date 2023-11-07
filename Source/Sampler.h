@@ -95,7 +95,7 @@ namespace re
 
 
 	public:
-		static std::shared_ptr<re::Sampler> Create(std::string const& name, SamplerParams params);
+		[[nodiscard]] static std::shared_ptr<re::Sampler> Create(std::string const& name, SamplerParams params);
 		~Sampler() { Destroy(); }
 
 		SamplerParams const& GetSamplerParams() const { return m_samplerParams; }

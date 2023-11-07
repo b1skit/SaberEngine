@@ -36,7 +36,7 @@ namespace re
 		virtual ~Context() = 0;
 
 		// Context interface:
-		virtual void Create() = 0;
+		[[nodiscard]] virtual void Create() = 0;
 		virtual void Present() = 0;
 
 		// Platform wrappers:

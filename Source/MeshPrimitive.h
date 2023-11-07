@@ -68,7 +68,7 @@ namespace gr
 
 
 	public:
-		static std::shared_ptr<MeshPrimitive> Create(
+		[[nodiscard]] static std::shared_ptr<MeshPrimitive> Create(
 			std::string const& name,
 			std::vector<uint32_t>* indices,
 			std::vector<float>& positions,

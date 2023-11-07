@@ -131,7 +131,7 @@ namespace dx12
 
 
 	public:
-		static std::unique_ptr<dx12::RootSignature> Create(re::Shader const&);
+		[[nodiscard]] static std::unique_ptr<dx12::RootSignature> Create(re::Shader const&);
 
 		~RootSignature();
 		void Destroy();

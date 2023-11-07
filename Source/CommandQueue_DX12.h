@@ -19,7 +19,7 @@ namespace dx12
 		CommandQueue& operator=(CommandQueue&&) = default;
 		~CommandQueue() { Destroy(); };
 
-		void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, dx12::CommandListType type);
+		[[nodiscard]] void Create(Microsoft::WRL::ComPtr<ID3D12Device2> displayDevice, dx12::CommandListType type);
 		void Destroy();
 
 		bool IsCreated() const;

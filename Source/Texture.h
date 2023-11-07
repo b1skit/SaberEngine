@@ -135,7 +135,7 @@ namespace re
 
 
 	public:
-		static std::shared_ptr<re::Texture> Create(
+		[[nodiscard]] static std::shared_ptr<re::Texture> Create(
 			std::string const& name, 
 			TextureParams const& params,
 			bool doFill, 

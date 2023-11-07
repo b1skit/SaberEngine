@@ -48,7 +48,7 @@ namespace re
 
 	public:
 		template<typename T>
-		static std::shared_ptr<re::VertexStream> Create(
+		[[nodiscard]] static std::shared_ptr<re::VertexStream> Create(
 			Lifetime, StreamType, uint32_t numComponents, DataType, Normalize, std::vector<T>&& data);
 
 		VertexStream(VertexStream&&) = default;

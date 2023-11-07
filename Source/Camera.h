@@ -92,7 +92,7 @@ namespace gr
 
 
 	public:
-		static std::shared_ptr<gr::Camera> Create(
+		[[nodiscard]] static std::shared_ptr<gr::Camera> Create(
 			std::string const& cameraName, Config const& camConfig, gr::Transform* parent);
 
 		

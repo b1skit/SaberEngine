@@ -57,7 +57,7 @@ namespace re
 
 		// Create a PB for a single data object (eg. stage parameter block)
 		template<typename T>
-		static std::shared_ptr<re::ParameterBlock> Create(std::string const& pbName, T const& data, PBType pbType);
+		[[nodiscard]] static std::shared_ptr<re::ParameterBlock> Create(std::string const& pbName, T const& data, PBType pbType);
 
 		// Create a PB for an array of several objects of the same type (eg. instanced mesh matrices)
 		template<typename T>

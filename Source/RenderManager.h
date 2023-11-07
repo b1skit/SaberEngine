@@ -126,7 +126,7 @@ namespace re
 
 	private:
 		RenderManager(); // Use the RenderManager::Get() singleton getter instead
-		static std::unique_ptr<re::RenderManager> Create();
+		[[nodiscard]] static std::unique_ptr<re::RenderManager> Create();
 
 
 	private: // Friends		

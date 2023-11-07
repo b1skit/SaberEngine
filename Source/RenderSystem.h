@@ -17,7 +17,7 @@ namespace re
 		};
 
 	public:
-		static std::unique_ptr<RenderSystem> Create(std::string const& name);
+		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(std::string const& name);
 		
 		void Destroy();
 

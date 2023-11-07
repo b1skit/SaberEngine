@@ -45,6 +45,6 @@ namespace dx12
 	public:
 		static void Create(re::Shader& shader);
 		static void Destroy(re::Shader& shader);
-		static dx12::RootSignature* GetRootSignature(re::Shader const& shader);
+		[[nodiscard]] static dx12::RootSignature* GetRootSignature(re::Shader const& shader);
 	};
 }

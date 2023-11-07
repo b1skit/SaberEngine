@@ -45,7 +45,7 @@ namespace gr
 
 
 	public:
-		static std::shared_ptr<gr::Material> Create(std::string const& name, MaterialType);
+		[[nodiscard]] static std::shared_ptr<gr::Material> Create(std::string const& name, MaterialType);
 
 		template <typename T>
 		T GetAs(); // Get the Material as a dynamic cast to a derrived type

@@ -213,8 +213,8 @@ namespace re
 
 
 	public:
-		static std::shared_ptr<re::TextureTargetSet> Create(std::string const& name);
-		static std::shared_ptr<re::TextureTargetSet> Create(TextureTargetSet const&, std::string const& name);
+		[[nodiscard]] static std::shared_ptr<re::TextureTargetSet> Create(std::string const& name);
+		[[nodiscard]] static std::shared_ptr<re::TextureTargetSet> Create(TextureTargetSet const&, std::string const& name);
 
 		~TextureTargetSet();
 

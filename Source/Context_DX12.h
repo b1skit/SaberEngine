@@ -21,7 +21,7 @@ namespace dx12
 	public:	
 		~Context() override = default;
 
-		void Create() override;
+		[[nodiscard]] void Create() override;
 
 		// Platform implementations:
 		static void Destroy(re::Context& context);
