@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "ConfigKeys.h"
 #include "GraphicsSystem_Debug.h"
+#include "Light.h"
 #include "SceneManager.h"
 
 
@@ -373,7 +374,7 @@ namespace gr
 		{
 			for (auto const& mesh : en::SceneManager::GetSceneData()->GetMeshes())
 			{
-				const glm::mat4 meshTRS = mesh->GetTransform()->GetGlobalMatrix();
+				glm::mat4 const& meshTRS = mesh->GetTransform()->GetGlobalMatrix();
 
 				std::shared_ptr<re::ParameterBlock> meshTransformPB =
 					gr::Mesh::CreateInstancedMeshParamsData(&meshTRS, nullptr);
@@ -432,7 +433,7 @@ namespace gr
 			{
 				re::Batch camFrustumBatch = BuildCameraFrustumBatch(debugCam, m_cameraFrustumColor);
 
-				const glm::mat4 camTRS = debugCam->GetTransform()->GetGlobalMatrix();
+				glm::mat4 const& camTRS = debugCam->GetTransform()->GetGlobalMatrix();
 				std::shared_ptr<re::ParameterBlock> cameraTransformPB =
 					gr::Mesh::CreateInstancedMeshParamsData(&camTRS, nullptr);
 				camFrustumBatch.SetParameterBlock(cameraTransformPB);
@@ -444,6 +445,29 @@ namespace gr
 				cameraCoordinateAxisBatch.SetParameterBlock(cameraTransformPB);
 				m_debugStage->AddBatch(cameraCoordinateAxisBatch);
 			}		
+		}
+
+		if (m_showDeferredLightWireframe)
+		{
+			std::vector<std::shared_ptr<gr::Light>> const& pointLights = 
+				en::SceneManager::GetSceneData()->GetPointLights();
+
+			for (auto const& pointLight : pointLights)
+			{
+				glm::mat4 const& lightTRS = pointLight->GetTransform()->GetGlobalMatrix();
+
+				std::shared_ptr<re::ParameterBlock> pointLightMeshTransformPB =
+					gr::Mesh::CreateInstancedMeshParamsData(&lightTRS, nullptr);
+
+				gr::Light::LightTypeProperties const& pointLightProperties =
+					pointLight->AccessLightTypeProperties(gr::Light::LightType::Point);
+
+				re::Batch pointLightWireframeBatch = BuildWireframeBatch(
+					pointLightProperties.m_point.m_sphereMesh->GetMeshPrimitives()[0].get(), 
+					m_deferredLightwireframeColor);
+				pointLightWireframeBatch.SetParameterBlock(pointLightMeshTransformPB);
+				m_debugStage->AddBatch(pointLightWireframeBatch);
+			}
 		}
 	}
 

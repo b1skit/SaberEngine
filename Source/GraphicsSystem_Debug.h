@@ -55,6 +55,9 @@ namespace gr
 
 		bool m_showAllWireframe = false;
 		glm::vec3 m_wireframeColor = glm::vec3(152/255.f, 1.f, 166/255.f);
+
+		bool m_showDeferredLightWireframe = false;
+		glm::vec3 m_deferredLightwireframeColor = glm::vec3(1.f, 1.f, 0.f);
 	};
 
 

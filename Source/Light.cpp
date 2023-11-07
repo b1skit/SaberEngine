@@ -3,6 +3,7 @@
 #include "Config.h"
 #include "DebugConfiguration.h"
 #include "Light.h"
+#include "MeshFactory.h"
 #include "MeshPrimitive.h"
 #include "SceneManager.h"
 #include "Shader.h"
@@ -110,12 +111,17 @@ namespace gr
 		{
 		case AmbientIBL:
 		{
+			m_typeProperties.m_ambient.m_screenAlignedQuad =
+				gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
 		}
 		break;
 		case Directional:
 		{
 			m_typeProperties.m_directional.m_ownerTransform = ownerTransform;
 			m_typeProperties.m_directional.m_colorIntensity = colorIntensity;
+
+			m_typeProperties.m_directional.m_screenAlignedQuad = 
+				gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
 
 			m_typeProperties.m_directional.m_shadowMap = nullptr;
 			if (hasShadow)
@@ -148,6 +154,11 @@ namespace gr
 			ConfigurePointLightMeshScale(this);
 			
 			const float deferredMeshRadius = m_typeProperties.m_point.m_ownerTransform->GetLocalScale().x;
+
+			m_typeProperties.m_point.m_sphereMesh = std::make_shared<gr::Mesh>(
+				std::format("{} mesh", name), 
+				m_typeProperties.m_point.m_ownerTransform, 
+				gr::meshfactory::CreateSphere(1.0f)); // Rely on the owning Transform to scale
 
 			m_typeProperties.m_point.m_cubeShadowMap = nullptr;
 			if (hasShadow)

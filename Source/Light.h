@@ -69,12 +69,14 @@ namespace gr
 					std::shared_ptr<re::Texture> m_BRDF_integrationMap;
 					std::shared_ptr<re::Texture> m_IEMTex;
 					std::shared_ptr<re::Texture> m_PMREMTex;
+					std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
 				} m_ambient;
 				struct
 				{
 					gr::Transform* m_ownerTransform;
 					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
 					std::unique_ptr<gr::ShadowMap> m_shadowMap;
+					std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
 				} m_directional;
 				struct
 				{
@@ -82,6 +84,7 @@ namespace gr
 					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
 					float m_emitterRadius; // For non-singular attenuation function
 					float m_intensityCuttoff; // Intensity value at which we stop drawing the deferred mesh
+					std::shared_ptr<gr::Mesh> m_sphereMesh;
 					std::unique_ptr<gr::ShadowMap> m_cubeShadowMap;
 				} m_point;
 			};

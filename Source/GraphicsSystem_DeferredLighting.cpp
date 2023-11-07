@@ -242,9 +242,6 @@ namespace gr
 		m_keylightStage = re::RenderStage::CreateGraphicsStage("Keylight stage", gfxStageParams);
 		m_pointlightStage = re::RenderStage::CreateGraphicsStage("Pointlight stage", gfxStageParams);
 
-		// Create a fullscreen quad, for reuse when building batches:
-		m_screenAlignedQuad = gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
-
 		// Cube mesh, for rendering of IBL cubemaps
 		m_cubeMeshPrimitive = gr::meshfactory::CreateCube();
 	}
@@ -693,13 +690,6 @@ namespace gr
 				re::Shader::GetOrCreate(en::ShaderNames::k_deferredPointLightShaderName, pointlightStageParams));
 
 			pipeline.AppendRenderStage(m_pointlightStage);
-
-			// Create a sphere mesh for each pointlights:
-			for (shared_ptr<Light> pointlight : pointLights)
-			{
-				m_sphereMeshes.emplace_back(std::make_shared<gr::Mesh>(
-					"PointLightDeferredMesh", pointlight->GetTransform(), gr::meshfactory::CreateSphere(1.0f)));
-			}
 		}
 
 
@@ -822,16 +812,25 @@ namespace gr
 	void DeferredLightingGraphicsSystem::CreateBatches()
 	{
 		// Ambient stage batches:
+		gr::Light::LightTypeProperties const& ambientLightProperties =
+			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(gr::Light::LightType::AmbientIBL);
+
 		const Batch ambientFullscreenQuadBatch = 
-			Batch(re::Batch::Lifetime::SingleFrame, m_screenAlignedQuad.get(), nullptr);
+			Batch(re::Batch::Lifetime::SingleFrame, ambientLightProperties.m_ambient.m_screenAlignedQuad.get(), nullptr);
+
 		m_ambientStage->AddBatch(ambientFullscreenQuadBatch);
 
 		// Keylight stage batches:
 		shared_ptr<Light> const keyLight = SceneManager::GetSceneData()->GetKeyLight();
 		if (keyLight)
 		{
-			Batch keylightFullscreenQuadBatch = 
-				Batch(re::Batch::Lifetime::SingleFrame, m_screenAlignedQuad.get(), nullptr);
+			gr::Light::LightTypeProperties const& keyLightProperties =
+				keyLight->AccessLightTypeProperties(gr::Light::LightType::Directional);
+
+			Batch keylightFullscreenQuadBatch = Batch(
+				re::Batch::Lifetime::SingleFrame, 
+				keyLightProperties.m_directional.m_screenAlignedQuad.get(), 
+				nullptr);
 
 			LightParams const& keylightParams = GetLightParamData(keyLight, m_keylightStage->GetTextureTargetSet());
 			shared_ptr<re::ParameterBlock> keylightPB = re::ParameterBlock::Create(
@@ -848,7 +847,10 @@ namespace gr
 		vector<shared_ptr<Light>> const& pointLights = SceneManager::GetSceneData()->GetPointLights();
 		for (size_t i = 0; i < pointLights.size(); i++)
 		{
-			re::Batch pointlightBatch = re::BatchManager::BuildBatches({ m_sphereMeshes[i] })[0];
+			gr::Light::LightTypeProperties const& pointLightProperties = 
+				pointLights[i]->AccessLightTypeProperties(gr::Light::LightType::Point);
+			
+			re::Batch pointlightBatch = re::BatchManager::BuildBatches({ pointLightProperties.m_point.m_sphereMesh })[0];
 
 			// Point light params:
 			LightParams const& pointlightParams = 
@@ -863,7 +865,7 @@ namespace gr
 
 			// Point light mesh params:
 			shared_ptr<ParameterBlock> pointlightMeshParams = 
-				gr::Mesh::CreateInstancedMeshParamsData(m_sphereMeshes[i]->GetTransform());
+				gr::Mesh::CreateInstancedMeshParamsData(pointLightProperties.m_point.m_sphereMesh->GetTransform());
 
 			pointlightBatch.SetParameterBlock(pointlightMeshParams);
 
