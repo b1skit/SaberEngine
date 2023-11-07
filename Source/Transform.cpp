@@ -545,7 +545,7 @@ namespace gr
 			
 			ImGui::Separator();
 
-			// Local translation:
+			// Dragable local translation:
 			glm::vec3 localPosition = GetLocalPosition();
 			bool localTranslationDirty = Display3ComponentTransform("Local Translation", localPosition);
 			if (localTranslationDirty)
@@ -553,24 +553,22 @@ namespace gr
 				SetLocalPosition(localPosition);
 			}
 
-			// Add/remove translation
-			static float s_translationAmt = 0.f;
-			ImGui::InputFloat(std::format("Add translation##{}", GetUniqueID()).c_str(), &s_translationAmt, 0.01f, 1.0f, "%.3f");
-			if (ImGui::Button(std::format("X##{}", GetUniqueID()).c_str()))
+			// Clickable local translation
+			static glm::vec3 s_translationAmt = glm::vec3(0.f);
+			if (ImGui::Button(std::format("[-]##{}", GetUniqueID()).c_str()))
 			{
-				TranslateLocal(glm::vec3(s_translationAmt, 0.f, 0.f));
+				TranslateLocal(-s_translationAmt);
 			}
 			ImGui::SameLine();
-			if (ImGui::Button(std::format("Y##{}", GetUniqueID()).c_str()))
+			if (ImGui::Button(std::format("[+]##{}", GetUniqueID()).c_str()))
 			{
-				TranslateLocal(glm::vec3(0.f, s_translationAmt, 0.f));
+				TranslateLocal(s_translationAmt);
 			}
 			ImGui::SameLine();
-			if (ImGui::Button(std::format("Z##{}", GetUniqueID()).c_str()))
-			{
-				TranslateLocal(glm::vec3(0.f, 0.f, s_translationAmt));
-			}
-
+			ImGui::PushItemWidth(130.f);
+			ImGui::DragFloat3(std::format("##{}", GetUniqueID()).c_str(), &s_translationAmt.x, 0.001f, -FLT_MAX, FLT_MAX);
+			ImGui::PopItemWidth();
+			
 			ImGui::Separator();
 
 			// Local rotation:
@@ -584,9 +582,22 @@ namespace gr
 			ImGui::Separator();
 
 			// Local scale:
+			static bool s_uniformScale = false;
+			ImGui::Checkbox(std::format("Uniform scale##{}", GetUniqueID()).c_str(), &s_uniformScale);
+			
 			glm::vec3 localScale = GetLocalScale();
-			bool localScaleDirty = Display3ComponentTransform("Local Scale", localScale);
-			if (localScaleDirty)
+			if (s_uniformScale)
+			{
+				static float s_uniformScaleAmount = 1.f;
+
+				ImGui::PushItemWidth(130.f);
+				if (ImGui::SliderFloat("Scale", &s_uniformScaleAmount, 0.f, 10.f))
+				{
+					SetLocalScale(glm::vec3(s_uniformScaleAmount));
+				}
+				ImGui::PopItemWidth();
+			}
+			else if (Display3ComponentTransform("Local Scale", localScale))
 			{
 				SetLocalScale(localScale);
 			}
