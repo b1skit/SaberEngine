@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "DebugConfiguration.h"
+#include "ImGuiUtils.h"
 #include "Transform.h"
 
 using glm::vec3;
@@ -539,7 +540,7 @@ namespace gr
 				ImGui::Text(std::format("Local Quaternion: {}", glm::to_string(m_localRotationQuat)).c_str());
 				ImGui::Text(std::format("Local Euler XYZ Radians: {}", glm::to_string(GetLocalEulerXYZRotationRadians())).c_str());
 				ImGui::Text(std::format("Local Scale: {}", glm::to_string(m_localScale)).c_str());
-				ImGui::Text(std::format("Local Matrix: {}", glm::to_string(m_localMat)).c_str());
+				util::DisplayMat4x4(std::format("Local Matrix:##{}", GetUniqueID()).c_str(), m_localMat);
 				ImGui::Unindent();
 			}
 			
