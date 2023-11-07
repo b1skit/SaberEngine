@@ -492,7 +492,7 @@ namespace gr
 		if(ImGui::CollapsingHeader(std::format("{}##{}", GetName(), GetUniqueID()).c_str()))
 		{
 			// Recursively pre-traverse the parent hierarchy
-			if (m_parent != nullptr && ImGui::CollapsingHeader(std::format("Parents##{}", GetUniqueID()).c_str()))
+			if (m_parent != nullptr && ImGui::CollapsingHeader(std::format("Parent##{}", GetUniqueID()).c_str()))
 			{
 				ImGui::Indent();
 				m_parent->ShowImGuiWindow();

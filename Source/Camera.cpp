@@ -433,6 +433,13 @@ namespace gr
 			const glm::mat4x4 invViewProj = GetInverseViewProjectionMatrix();
 			util::DisplayMat4x4("Inverse View Projection Matrix:", invViewProj);
 
+			if (ImGui::CollapsingHeader(std::format("Transform##{}", GetUniqueID()).c_str()))
+			{
+				ImGui::Indent();
+				GetTransform()->ShowImGuiWindow();
+				ImGui::Unindent();
+			}
+
 			ImGui::Unindent();
 		}
 	}
