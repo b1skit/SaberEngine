@@ -31,12 +31,12 @@ namespace gr
 		};
 
 	public:
-		[[nodiscard]] static std::shared_ptr<Light> CreateAmbientLight(std::string const& name);
+		static std::shared_ptr<Light> CreateAmbientLight(std::string const& name);
 
-		[[nodiscard]] static std::shared_ptr<Light> CreateDirectionalLight(
+		static std::shared_ptr<Light> CreateDirectionalLight(
 			std::string const& name, gr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow);
 
-		[[nodiscard]] static std::shared_ptr<Light> CreatePointLight(
+		static std::shared_ptr<Light> CreatePointLight(
 			std::string const& name, gr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow);
 
 		~Light() { Destroy(); }
