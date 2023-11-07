@@ -37,6 +37,7 @@
 # Project assets
 /SaberEngine/glew32.dll
 /SaberEngine/Shaders/*
+/SaberEngine/config/config.cfg
 /SaberEngine/config/imgui.ini
 
 # Force-include glew, as it's currently added as a pre-compiled library
