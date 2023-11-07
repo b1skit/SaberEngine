@@ -190,10 +190,10 @@ namespace gr
 		ImGui::Text("Name: \"%s\"", GetName().c_str());
 
 		const std::string minLabel = "Min shadow bias##" + GetName();
-		ImGui::SliderFloat(minLabel.c_str(), &m_minMaxShadowBias.x, 0, 0.1f, "Min shadow bias = %.5f");
+		ImGui::SliderFloat(minLabel.c_str(), &m_minMaxShadowBias.x, 0, 0.1f, "%.5f");
 		
 		const std::string maxLabel = "Max shadow bias##" + GetName();
-		ImGui::SliderFloat(maxLabel.c_str(), &m_minMaxShadowBias.y, 0, 0.1f, "Max shadow bias = %.5f");
+		ImGui::SliderFloat(maxLabel.c_str(), &m_minMaxShadowBias.y, 0, 0.1f, "%.5f");
 
 		const std::string resetLabel = "Reset biases to defaults##" + GetName();
 		if (ImGui::Button(resetLabel.c_str()))

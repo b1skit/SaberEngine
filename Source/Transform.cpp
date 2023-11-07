@@ -481,58 +481,61 @@ namespace gr
 	}
 
 
-	void Transform::ShowImGuiWindow()
+	void Transform::ShowImGuiWindow(bool markAsParent /*= false*/)
 	{
-		
-
-		const uint64_t transformPtr = reinterpret_cast<uint64_t>(&(*this)); // We don't have a uniqueID, use this instead
-		const std::string uniqueID = std::to_string(transformPtr);
-	
-		constexpr float k_buttonWidth = 75.f;
-
-		if(ImGui::CollapsingHeader(std::format("{}##{}", GetName(), GetUniqueID()).c_str()))
+		// Helper: Displays sliders for a 3-component XYZ element of a transform
+		auto Display3ComponentTransform = [&](std::string const& label, glm::vec3& copiedValue) -> bool
 		{
-			// Recursively pre-traverse the parent hierarchy
-			if (m_parent != nullptr && ImGui::CollapsingHeader(std::format("Parent##{}", GetUniqueID()).c_str()))
+			constexpr ImGuiSliderFlags flags = ImGuiSliderFlags_None;
+			constexpr float k_buttonWidth = 75.f;
+
+			bool isDirty = false;
+			ImGui::BeginGroup();
 			{
-				ImGui::Indent();
-				m_parent->ShowImGuiWindow();
-				ImGui::Unindent();
-				ImGui::Separator();
+				// Unique imgui IDs for each slider
+				const std::string XimguiID = std::format("##X{}{}", label, GetUniqueID());
+				const std::string YimguiID = std::format("##Y{}{}", label, GetUniqueID());
+				const std::string ZimguiID = std::format("##Z{}{}", label, GetUniqueID());
+
+				ImGui::Text(std::format("{} XYZ:", label).c_str()); // Row label
+
+				ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
+				isDirty |= ImGui::DragFloat(XimguiID.c_str(), &copiedValue.x, 0.005f, -FLT_MAX, +FLT_MAX, "X %.3f", flags);
+
+				ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
+				isDirty |= ImGui::DragFloat(YimguiID.c_str(), &copiedValue.y, 0.005f, -FLT_MAX, +FLT_MAX, "Y %.3f", flags);
+
+				ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
+				isDirty |= ImGui::DragFloat(ZimguiID.c_str(), &copiedValue.z, 0.005f, -FLT_MAX, +FLT_MAX, "Z %.3f", flags);
+
+				ImGui::EndGroup();
 			}
+			return isDirty;
+		};
 
-			// Helper: Displays sliders for a 3-component XYZ element of a transform
-			auto Display3ComponentTransform = [&uniqueID](std::string const& label, glm::vec3& copiedValue) -> bool
+
+		// Show the parent first
+		static bool s_showParent = false;
+
+		if (m_parent != nullptr)
+		{
+			s_showParent = ImGui::CollapsingHeader(std::format("Parent: {}##{}", m_parent->GetName(), GetUniqueID()).c_str());
+			if (s_showParent)
 			{
-				constexpr ImGuiSliderFlags flags = ImGuiSliderFlags_None;
+				m_parent->ShowImGuiWindow(true);
+			}
+		}
 
-				bool isDirty = false;
-				ImGui::BeginGroup();
-				{
-					// Unique imgui IDs for each slider
-					const std::string XimguiID = std::format("##X{}{}", label, uniqueID);
-					const std::string YimguiID = std::format("##Y{}{}", label, uniqueID);
-					const std::string ZimguiID = std::format("##Z{}{}", label, uniqueID);
+		if (s_showParent)
+		{
+			ImGui::Indent();
+		}
 
-					ImGui::Text(std::format("{} XYZ:", label).c_str()); // Row label
-					
-					ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
-					isDirty |= ImGui::DragFloat(XimguiID.c_str(), &copiedValue.x, 0.005f, -FLT_MAX, +FLT_MAX, "X %.3f", flags);
+		if(markAsParent || ImGui::CollapsingHeader(std::format("{}##{}", GetName(), GetUniqueID()).c_str()))
+		{
+			ImGui::Indent();
 
-					ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
-					isDirty |= ImGui::DragFloat(YimguiID.c_str(), &copiedValue.y, 0.005f, -FLT_MAX, +FLT_MAX, "Y %.3f", flags);
-
-					ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
-					isDirty |= ImGui::DragFloat(ZimguiID.c_str(), &copiedValue.z, 0.005f, -FLT_MAX, +FLT_MAX, "Z %.3f", flags);
-
-					ImGui::EndGroup();
-				}
-				return isDirty;
-			};
-
-			ImGui::Separator();
-
-			// Print the transform data:
+			// View Transform data:
 			if (ImGui::CollapsingHeader(std::format("Show data##{}", GetUniqueID()).c_str()))
 			{
 				ImGui::Indent();
@@ -544,74 +547,80 @@ namespace gr
 				ImGui::Unindent();
 			}
 			
-			ImGui::Separator();
 
-			// Dragable local translation:
-			glm::vec3 localPosition = GetLocalPosition();
-			bool localTranslationDirty = Display3ComponentTransform("Local Translation", localPosition);
-			if (localTranslationDirty)
+			// Modification controls:
+			if (ImGui::CollapsingHeader(std::format("Modify##{}", GetUniqueID()).c_str()))
 			{
-				SetLocalPosition(localPosition);
-			}
-
-			// Clickable local translation
-			static glm::vec3 s_translationAmt = glm::vec3(0.f);
-			if (ImGui::Button(std::format("[-]##{}", GetUniqueID()).c_str()))
-			{
-				TranslateLocal(-s_translationAmt);
-			}
-			ImGui::SameLine();
-			if (ImGui::Button(std::format("[+]##{}", GetUniqueID()).c_str()))
-			{
-				TranslateLocal(s_translationAmt);
-			}
-			ImGui::SameLine();
-			ImGui::PushItemWidth(130.f);
-			ImGui::DragFloat3(std::format("##{}", GetUniqueID()).c_str(), &s_translationAmt.x, 0.001f, -FLT_MAX, FLT_MAX);
-			ImGui::PopItemWidth();
-			
-			ImGui::Separator();
-
-			// Local rotation:
-			glm::vec3 localEulerRotation = GetLocalEulerXYZRotationRadians();
-			bool localRotationDirty = Display3ComponentTransform("Local Euler Rotation", localEulerRotation);
-			if (localRotationDirty)
-			{
-				SetLocalRotation(localEulerRotation);
-			}
-			
-			ImGui::Separator();
-
-			// Local scale:
-			static bool s_uniformScale = false;
-			ImGui::Checkbox(std::format("Uniform scale##{}", GetUniqueID()).c_str(), &s_uniformScale);
-			
-			glm::vec3 localScale = GetLocalScale();
-			if (s_uniformScale)
-			{
-				static float s_uniformScaleAmount = 1.f;
-
-				ImGui::PushItemWidth(130.f);
-				if (ImGui::SliderFloat("Scale", &s_uniformScaleAmount, 0.f, 10.f))
+				// Dragable local translation:
+				glm::vec3 localPosition = GetLocalPosition();
+				bool localTranslationDirty = Display3ComponentTransform("Local Translation", localPosition);
+				if (localTranslationDirty)
 				{
-					SetLocalScale(glm::vec3(s_uniformScaleAmount));
+					SetLocalPosition(localPosition);
 				}
+
+				// Clickable local translation
+				static glm::vec3 s_translationAmt = glm::vec3(0.f);
+				if (ImGui::Button(std::format("[-]##{}", GetUniqueID()).c_str()))
+				{
+					TranslateLocal(-s_translationAmt);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button(std::format("[+]##{}", GetUniqueID()).c_str()))
+				{
+					TranslateLocal(s_translationAmt);
+				}
+				ImGui::SameLine();
+				ImGui::PushItemWidth(130.f);
+				ImGui::DragFloat3(std::format("##{}", GetUniqueID()).c_str(), &s_translationAmt.x, 0.001f, -FLT_MAX, FLT_MAX);
 				ImGui::PopItemWidth();
-			}
-			else if (Display3ComponentTransform("Local Scale", localScale))
-			{
-				SetLocalScale(localScale);
+
+				// Local rotation:
+				glm::vec3 localEulerRotation = GetLocalEulerXYZRotationRadians();
+				bool localRotationDirty = Display3ComponentTransform("Local Euler Rotation", localEulerRotation);
+				if (localRotationDirty)
+				{
+					SetLocalRotation(localEulerRotation);
+				}
+
+				// Local scale:
+				static bool s_uniformScale = false;
+				ImGui::Checkbox(std::format("Uniform scale##{}", GetUniqueID()).c_str(), &s_uniformScale);
+
+				glm::vec3 localScale = GetLocalScale();
+				if (s_uniformScale)
+				{
+					static float s_uniformScaleAmount = 1.f;
+
+					ImGui::PushItemWidth(130.f);
+					if (ImGui::SliderFloat("Scale", &s_uniformScaleAmount, 0.f, 10.f))
+					{
+						SetLocalScale(glm::vec3(s_uniformScaleAmount));
+					}
+					ImGui::PopItemWidth();
+				}
+				else if (Display3ComponentTransform("Local Scale", localScale))
+				{
+					SetLocalScale(localScale);
+				}
+
+				// Global translation:
+				glm::vec3 globalTranslation = GetGlobalPosition();
+				bool globalTranslationDirty = Display3ComponentTransform("Global Translation", globalTranslation);
+				if (globalTranslationDirty)
+				{
+					SetGlobalPosition(globalTranslation);
+				}
 			}
 
-			ImGui::Separator();
+			
+			ImGui::Unindent();
+			
+		}
 
-			// Global translation:
-			glm::vec3 globalTranslation = GetGlobalPosition();
-			bool globalTranslationDirty = Display3ComponentTransform("Global Translation", globalTranslation);
-			if (globalTranslationDirty)
-			{
-				SetGlobalPosition(globalTranslation);
-			}
+		if (s_showParent)
+		{
+			ImGui::Unindent();
 		}
 	}
 }

@@ -500,8 +500,6 @@ namespace re
 			ImGui::Unindent();
 		}
 
-		ImGui::Separator();
-
 		if (ImGui::CollapsingHeader("Meshes:", ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
@@ -537,17 +535,13 @@ namespace re
 			std::shared_ptr<gr::Light> const ambientLight = en::SceneManager::GetSceneData()->GetAmbientLight();
 			if (ambientLight)
 			{
-				ImGui::Indent();
 				ambientLight->ShowImGuiWindow();
-				ImGui::Unindent();
 			}
 
 			std::shared_ptr<gr::Light> const directionalLight = en::SceneManager::GetSceneData()->GetKeyLight();
 			if (directionalLight)
 			{
-				ImGui::Indent();
 				directionalLight->ShowImGuiWindow();
-				ImGui::Unindent();
 			}
 
 			if (ImGui::CollapsingHeader("Point Lights:", ImGuiTreeNodeFlags_None))

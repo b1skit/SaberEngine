@@ -308,8 +308,10 @@ namespace gr
 		{
 			if (ImGui::CollapsingHeader(std::format("Debug##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 			{
+				ImGui::Indent();
 				ImGui::Checkbox(std::format("Diffuse enabled##{}", uniqueID).c_str(), &m_typeProperties.m_diffuseEnabled);
 				ImGui::Checkbox(std::format("Specular enabled##{}", uniqueID).c_str(), &m_typeProperties.m_specularEnabled);
+				ImGui::Unindent();
 			}
 		};
 
@@ -358,6 +360,7 @@ namespace gr
 		{
 			if (ImGui::CollapsingHeader(std::format("Shadow map##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 			{
+				ImGui::Indent();
 				if (shadowMap)
 				{
 					shadowMap->ShowImGuiWindow();
@@ -366,6 +369,7 @@ namespace gr
 				{
 					ImGui::Text("<No Shadow>");
 				}
+				ImGui::Unindent();
 			}
 		};
 
@@ -373,12 +377,15 @@ namespace gr
 		{
 			if (ImGui::CollapsingHeader(std::format("Transform##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 			{
+				ImGui::Indent();
 				transform->ShowImGuiWindow();
+				ImGui::Unindent();
 			}
 		};
 
 		if (ImGui::CollapsingHeader(std::format("{}##{}", GetName(), uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 		{
+			ImGui::Indent();
 			switch (m_type)
 			{
 			case LightType::AmbientIBL:
@@ -387,6 +394,7 @@ namespace gr
 
 				if (ImGui::CollapsingHeader(std::format("IBL Textures##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 				{
+					ImGui::Indent();
 					ImGui::Text("BRDF Integration map: \"%s\"",
 						m_typeProperties.m_ambient.m_BRDF_integrationMap->GetName().c_str());
 
@@ -395,6 +403,7 @@ namespace gr
 
 					ImGui::Text("PMREM Texture: \"%s\"",
 						m_typeProperties.m_ambient.m_PMREMTex->GetName().c_str());
+					ImGui::Unindent();
 				}
 			}
 			break;
@@ -441,6 +450,8 @@ namespace gr
 			default:
 				SEAssertF("Invalid light type");
 			}
+
+			ImGui::Unindent();
 		}	
 	}
 }
