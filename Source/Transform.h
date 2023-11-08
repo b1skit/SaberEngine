@@ -91,7 +91,7 @@ namespace gr
 		void ClearHasChangedFlag();
 		bool HasChanged() const;
 
-		void ShowImGuiWindow(bool markAsParent = false);
+		void ShowImGuiWindow(bool markAsParent = false, uint32_t depth = 0);
 
 
 	private:

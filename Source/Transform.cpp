@@ -481,7 +481,7 @@ namespace gr
 	}
 
 
-	void Transform::ShowImGuiWindow(bool markAsParent /*= false*/)
+	void Transform::ShowImGuiWindow(bool markAsParent /*= false*/, uint32_t depth /*= 0*/)
 	{
 		// Helper: Displays sliders for a 3-component XYZ element of a transform
 		auto Display3ComponentTransform = [&](std::string const& label, glm::vec3& copiedValue) -> bool
@@ -514,24 +514,27 @@ namespace gr
 		};
 
 
-		// Show the parent first
-		static bool s_showParent = false;
-
-		if (m_parent != nullptr)
+		if (markAsParent && m_parent)
 		{
-			s_showParent = ImGui::CollapsingHeader(std::format("Parent: {}##{}", m_parent->GetName(), GetUniqueID()).c_str());
-			if (s_showParent)
-			{
-				m_parent->ShowImGuiWindow(true);
-			}
+			m_parent->ShowImGuiWindow(true, depth + 1);
+		}
+		
+		if (markAsParent && !m_parent && !ImGui::CollapsingHeader(std::format("Root parent: {} (node {})##{}", GetName(), depth, GetUniqueID()).c_str()))
+		{
+			return;
+		}
+		else if (markAsParent && m_parent && !ImGui::CollapsingHeader(std::format("Parent: {} (node {})##{}", GetName(), depth, GetUniqueID()).c_str()))
+		{
+			return;
+		}
+		else if (!markAsParent && 
+			m_parent && 
+			ImGui::CollapsingHeader(std::format("Parent hierarchy##{}", depth, GetUniqueID()).c_str()))
+		{
+			m_parent->ShowImGuiWindow(true, depth + 1);
 		}
 
-		if (s_showParent)
-		{
-			ImGui::Indent();
-		}
-
-		if(markAsParent || ImGui::CollapsingHeader(std::format("{}##{}", GetName(), GetUniqueID()).c_str()))
+		if(markAsParent || ImGui::CollapsingHeader(std::format("{} (node {})##{}", GetName(), depth, GetUniqueID()).c_str()))
 		{
 			ImGui::Indent();
 
@@ -544,6 +547,7 @@ namespace gr
 				ImGui::Text(std::format("Local Euler XYZ Radians: {}", glm::to_string(GetLocalEulerXYZRotationRadians())).c_str());
 				ImGui::Text(std::format("Local Scale: {}", glm::to_string(m_localScale)).c_str());
 				util::DisplayMat4x4(std::format("Local Matrix:##{}", GetUniqueID()).c_str(), m_localMat);
+				util::DisplayMat4x4(std::format("Global Matrix:##{}", GetUniqueID()).c_str(), GetGlobalMatrix());
 				ImGui::Unindent();
 			}
 			
@@ -616,11 +620,6 @@ namespace gr
 			
 			ImGui::Unindent();
 			
-		}
-
-		if (s_showParent)
-		{
-			ImGui::Unindent();
 		}
 	}
 }
