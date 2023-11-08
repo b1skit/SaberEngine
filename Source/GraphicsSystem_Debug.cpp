@@ -194,15 +194,25 @@ namespace
 
 	re::Batch BuildCameraFrustumBatch(gr::Camera const* camera, glm::vec3 const& frustumColor)
 	{
+		//// Convert NDC coordinates to view space:
+		//glm::vec4 farTL = camera->GetInverseProjectionMatrix() * glm::vec4(-1.f, 1.f, 1.f, 1.f);
+		//glm::vec4 farBL = camera->GetInverseProjectionMatrix() * glm::vec4(-1.f, -1.f, 1.f, 1.f);
+		//glm::vec4 farTR = camera->GetInverseProjectionMatrix() * glm::vec4(1.f, 1.f, 1.f, 1.f);
+		//glm::vec4 farBR = camera->GetInverseProjectionMatrix() * glm::vec4(1.f, -1.f, 1.f, 1.f);
+		//glm::vec4 nearTL = camera->GetInverseProjectionMatrix() * glm::vec4(-1.f, 1.f, 0.f, 1.f);
+		//glm::vec4 nearBL = camera->GetInverseProjectionMatrix() * glm::vec4(-1.f, -1.f, 0.f, 1.f);
+		//glm::vec4 nearTR = camera->GetInverseProjectionMatrix() * glm::vec4(1.f, 1.f, 0.f, 1.f);
+		//glm::vec4 nearBR = camera->GetInverseProjectionMatrix() * glm::vec4(1.f, -1.f, 0.f, 1.f);
+
 		// Convert NDC coordinates to view space:
-		glm::vec4 farTL = camera->GetInverseProjectionMatrix() * glm::vec4(-1.f, 1.f, 1.f, 1.f);
-		glm::vec4 farBL = camera->GetInverseProjectionMatrix() * glm::vec4(-1.f, -1.f, 1.f, 1.f);
-		glm::vec4 farTR = camera->GetInverseProjectionMatrix() * glm::vec4(1.f, 1.f, 1.f, 1.f);
-		glm::vec4 farBR = camera->GetInverseProjectionMatrix() * glm::vec4(1.f, -1.f, 1.f, 1.f);
-		glm::vec4 nearTL = camera->GetInverseProjectionMatrix() * glm::vec4(-1.f, 1.f, 0.f, 1.f);
-		glm::vec4 nearBL = camera->GetInverseProjectionMatrix() * glm::vec4(-1.f, -1.f, 0.f, 1.f);
-		glm::vec4 nearTR = camera->GetInverseProjectionMatrix() * glm::vec4(1.f, 1.f, 0.f, 1.f);
-		glm::vec4 nearBR = camera->GetInverseProjectionMatrix() * glm::vec4(1.f, -1.f, 0.f, 1.f);
+		glm::vec4 farTL = camera->GetInverseViewProjectionMatrix() * glm::vec4(-1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBL = camera->GetInverseViewProjectionMatrix() * glm::vec4(-1.f, -1.f, 1.f, 1.f);
+		glm::vec4 farTR = camera->GetInverseViewProjectionMatrix() * glm::vec4(1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBR = camera->GetInverseViewProjectionMatrix() * glm::vec4(1.f, -1.f, 1.f, 1.f);
+		glm::vec4 nearTL = camera->GetInverseViewProjectionMatrix() * glm::vec4(-1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBL = camera->GetInverseViewProjectionMatrix() * glm::vec4(-1.f, -1.f, 0.f, 1.f);
+		glm::vec4 nearTR = camera->GetInverseViewProjectionMatrix() * glm::vec4(1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBR = camera->GetInverseViewProjectionMatrix() * glm::vec4(1.f, -1.f, 0.f, 1.f);
 
 		farTL /= farTL.w;
 		farBL /= farBL.w;

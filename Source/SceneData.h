@@ -51,9 +51,9 @@ namespace fr
 	public:		
 		// Lights:
 		void AddLight(std::shared_ptr<gr::Light> newLight);
-		inline std::shared_ptr<gr::Light> const GetAmbientLight() const { return m_ambientLight; }
-		inline std::shared_ptr<gr::Light> GetKeyLight() const { return m_keyLight; }
-		inline std::vector<std::shared_ptr<gr::Light>> const& GetPointLights() const { return m_pointLights; }
+		std::shared_ptr<gr::Light> const GetAmbientLight() const;
+		std::shared_ptr<gr::Light> GetKeyLight() const;
+		std::vector<std::shared_ptr<gr::Light>> const& GetPointLights() const;
 
 		std::shared_ptr<re::Texture> GetIBLTexture() const;
 
@@ -109,34 +109,34 @@ namespace fr
 
 		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;
 		std::unordered_map<DataHash, std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
-		std::mutex m_meshesAndMeshPrimitivesMutex;
+		mutable std::mutex m_meshesAndMeshPrimitivesMutex;
 
 		std::unordered_map<DataHash, std::shared_ptr<re::VertexStream>> m_vertexStreams;
 		std::mutex m_vertexStreamsMutex;
 
 		std::unordered_map<size_t, std::shared_ptr<re::Texture>> m_textures;
-		mutable std::shared_mutex m_texturesMutex; // mutable, as we need to be able to modify it in const functions
+		mutable std::shared_mutex m_texturesReadWriteMutex; // mutable, as we need to be able to modify it in const functions
 
 		std::unordered_map<size_t, std::shared_ptr<gr::Material>> m_materials;
-		mutable std::shared_mutex m_materialsMutex;
+		mutable std::shared_mutex m_materialsReadWriteMutex;
 
 		std::unordered_map<size_t, std::shared_ptr<re::Shader>> m_shaders;
-		mutable std::shared_mutex m_shadersMutex;
+		mutable std::shared_mutex m_shadersReadWriteMutex;
 
 		std::shared_ptr<gr::Light> m_ambientLight;
-		std::mutex m_ambientLightMutex;
+		std::shared_mutex m_ambientLightReadWriteMutex;
 
 		std::shared_ptr<gr::Light> m_keyLight;
-		std::mutex m_keyLightMutex;
+		std::shared_mutex m_keyLightReadWriteMutex;
 
 		std::vector<std::shared_ptr<gr::Light>> m_pointLights;
-		std::mutex m_pointLightsMutex;
+		std::shared_mutex m_pointLightsReadWriteMutex;
 
 		std::vector<std::shared_ptr<gr::Camera>> m_cameras;
-		mutable std::mutex m_camerasMutex;
+		mutable std::shared_mutex m_camerasReadWriteMutex;
 
 		gr::Bounds m_sceneWorldSpaceBounds;
-		std::mutex m_sceneBoundsMutex;
+		mutable std::mutex m_sceneBoundsMutex;
 
 		std::vector<std::function<void()>> m_postLoadCallbacks;
 		std::mutex m_postLoadCallbacksMutex;

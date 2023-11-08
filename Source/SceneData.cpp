@@ -1479,11 +1479,11 @@ namespace fr
 		{
 			m_cameras.back()->Destroy();
 
-			std::lock_guard<std::mutex> lock(m_camerasMutex);
+			std::unique_lock<std::shared_mutex> lock(m_camerasReadWriteMutex);
 			hasCameras = !m_cameras.empty();
 		}
 		{
-			std::lock_guard<std::mutex> lock(m_camerasMutex);
+			std::unique_lock<std::shared_mutex> lock(m_camerasReadWriteMutex);
 			m_cameras.clear();
 		}
 
@@ -1502,27 +1502,27 @@ namespace fr
 			m_vertexStreams.clear();
 		}
 		{
-			std::lock_guard<std::shared_mutex> lock(m_texturesMutex);
+			std::unique_lock<std::shared_mutex> writeLock(m_texturesReadWriteMutex);
 			m_textures.clear();
 		}
 		{
-			std::lock_guard<std::shared_mutex> lock(m_materialsMutex);
+			std::unique_lock<std::shared_mutex> writeLock(m_materialsReadWriteMutex);
 			m_materials.clear();
 		}
 		{
-			std::lock_guard<std::shared_mutex> lock(m_shadersMutex);
+			std::unique_lock<std::shared_mutex> writeLock(m_shadersReadWriteMutex);
 			m_shaders.clear();
 		}
 		{
-			std::lock_guard<std::mutex> lock(m_ambientLightMutex);
+			std::unique_lock<std::shared_mutex> writeLock(m_ambientLightReadWriteMutex);
 			m_ambientLight = nullptr;
 		}
 		{
-			std::lock_guard<std::mutex> lock(m_keyLightMutex);
+			std::unique_lock<std::shared_mutex> writeLock(m_keyLightReadWriteMutex);
 			m_keyLight = nullptr;
 		}
 		{
-			std::lock_guard<std::mutex> lock(m_pointLightsMutex);
+			std::unique_lock<std::shared_mutex> writeLock(m_pointLightsReadWriteMutex);
 			m_pointLights.clear();
 		}
 		{
@@ -1539,7 +1539,7 @@ namespace fr
 		SEAssert("Cannot add a null camera", newCamera != nullptr);
 
 		{
-			std::lock_guard<std::mutex> lock(m_camerasMutex);
+			std::unique_lock<std::shared_mutex> writeLock(m_camerasReadWriteMutex);
 
 			m_cameras.emplace_back(newCamera);
 		}
@@ -1548,16 +1548,18 @@ namespace fr
 
 	void SceneData::RemoveCamera(uint64_t uniqueID)
 	{
-		std::lock_guard<std::mutex> lock(m_camerasMutex);
+		{
+			std::unique_lock<std::shared_mutex> writeLock(m_camerasReadWriteMutex);
 
-		auto const& result = std::find_if(
-			m_cameras.begin(), 
-			m_cameras.end(), 
-			[&](std::shared_ptr<gr::Camera> const& cam) {return cam->GetUniqueID() == uniqueID; });
+			auto const& result = std::find_if(
+				m_cameras.begin(),
+				m_cameras.end(),
+				[&](std::shared_ptr<gr::Camera> const& cam) {return cam->GetUniqueID() == uniqueID; });
 
-		SEAssert("Camera not found", result != m_cameras.end());
+			SEAssert("Camera not found", result != m_cameras.end());
 
-		m_cameras.erase(result);
+			m_cameras.erase(result);
+		}
 	}
 
 
@@ -1570,21 +1572,21 @@ namespace fr
 		{
 		case Light::AmbientIBL:
 		{
-			std::lock_guard<std::mutex> lock(m_ambientLightMutex);
+			std::unique_lock<std::shared_mutex> writeLock(m_ambientLightReadWriteMutex);
 			SEAssert("Ambient light already exists, cannot have 2 ambient lights", m_ambientLight == nullptr);
 			m_ambientLight = newLight;
 		}
 		break;
 		case Light::Directional:
 		{
-			std::lock_guard<std::mutex> lock(m_keyLightMutex);
+			std::unique_lock<std::shared_mutex> writeLock(m_keyLightReadWriteMutex);
 			SEAssert("Direction light already exists, cannot have 2 directional lights", m_keyLight == nullptr);
 			m_keyLight = newLight;
 		}
 		break;
 		case Light::Point:
 		{
-			std::lock_guard<std::mutex> lock(m_pointLightsMutex);
+			std::unique_lock<std::shared_mutex> writeLock(m_pointLightsReadWriteMutex);
 			m_pointLights.emplace_back(newLight);
 		}
 		break;
@@ -1595,6 +1597,24 @@ namespace fr
 			LOG_ERROR("Ignoring unsupported light type");
 			break;
 		}
+	}
+
+
+	std::shared_ptr<gr::Light> const SceneData::GetAmbientLight() const
+	{
+		return m_ambientLight;
+	}
+
+
+	std::shared_ptr<gr::Light> SceneData::GetKeyLight() const
+	{
+		return m_keyLight;
+	}
+
+
+	std::vector<std::shared_ptr<gr::Light>> const& SceneData::GetPointLights() const
+	{
+		return m_pointLights;
 	}
 
 
@@ -1694,52 +1714,70 @@ namespace fr
 
 	std::vector<std::shared_ptr<gr::Mesh>> const& SceneData::GetMeshes() const
 	{
+		// Note: This function is very dangerous: We're returning a thread-shared object by reference. It's currently
+		// used for ImGui debug access, which should be fine
+
 		SEAssert("Accessing data container is not thread safe during loading", m_finishedLoading);
-		return m_meshes;
+		{
+			std::lock_guard<std::mutex> lock(m_meshesAndMeshPrimitivesMutex);
+			return m_meshes;
+		}
 	}
 
 
 	std::vector<std::shared_ptr<gr::Camera>> const& SceneData::GetCameras() const 
 	{
 		SEAssert("Accessing data container is not thread safe during loading", m_finishedLoading);
-		return m_cameras;
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_camerasReadWriteMutex);
+			return m_cameras;
+		}
 	}
 
 	std::shared_ptr<gr::Camera> SceneData::GetMainCamera(uint64_t uniqueID) const
 	{
-		std::lock_guard<std::mutex> lock(m_camerasMutex);
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_camerasReadWriteMutex);
 
-		auto const& result = std::find_if(
-			m_cameras.begin(), 
-			m_cameras.end(), 
-			[&](std::shared_ptr<gr::Camera> const& cam) {return cam->GetUniqueID() == uniqueID; });
+			auto const& result = std::find_if(
+				m_cameras.begin(),
+				m_cameras.end(),
+				[&](std::shared_ptr<gr::Camera> const& cam) {return cam->GetUniqueID() == uniqueID; });
 
-		SEAssert("Camera not found", 
-			result != m_cameras.end());
+			SEAssert("Camera not found",
+				result != m_cameras.end());
 
-		return *result;
+			return *result;
+		}
 	}
 
 	gr::Bounds const& SceneData::GetWorldSpaceSceneBounds() const 
 	{
 		SEAssert("Accessing this data is not thread safe during loading", m_finishedLoading);
-		return m_sceneWorldSpaceBounds;
+		{
+			std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
+			return m_sceneWorldSpaceBounds;
+		}
 	}
 
 
 	void SceneData::AddSceneNode(std::shared_ptr<fr::SceneNode> sceneNode)
 	{
-		std::lock_guard<std::mutex> lock(m_sceneNodesMutex);
-		m_sceneNodes.emplace_back(sceneNode);
+		{
+			std::lock_guard<std::mutex> lock(m_sceneNodesMutex);
+			m_sceneNodes.emplace_back(sceneNode);
+		}
 	}
 
 
 	void SceneData::UpdateSceneBounds(std::shared_ptr<gr::Mesh> mesh)
 	{
-		std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
+		{
+			std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
 
-		m_sceneWorldSpaceBounds.ExpandBounds(
-			mesh->GetBounds().GetTransformedAABBBounds(mesh->GetTransform()->GetGlobalMatrix()));
+			m_sceneWorldSpaceBounds.ExpandBounds(
+				mesh->GetBounds().GetTransformedAABBBounds(mesh->GetTransform()->GetGlobalMatrix()));
+		}
 	}
 
 
@@ -1748,12 +1786,15 @@ namespace fr
 		SEAssert("This function should be called during the main loop only", m_finishedLoading);
 
 		// By now all of our transforms are clean, update the scene bounds:
-		std::unique_lock<std::mutex> lock(m_sceneBoundsMutex);
-		m_sceneWorldSpaceBounds = gr::Bounds();
-		for (shared_ptr<gr::Mesh> mesh : m_meshes)
 		{
-			m_sceneWorldSpaceBounds.ExpandBounds(
-				mesh->GetBounds().GetTransformedAABBBounds(mesh->GetTransform()->GetGlobalMatrix()));
+			std::unique_lock<std::mutex> lock(m_sceneBoundsMutex);
+
+			m_sceneWorldSpaceBounds = gr::Bounds();
+			for (shared_ptr<gr::Mesh> mesh : m_meshes)
+			{
+				m_sceneWorldSpaceBounds.ExpandBounds(
+					mesh->GetBounds().GetTransformedAABBBounds(mesh->GetTransform()->GetGlobalMatrix()));
+			}
 		}
 	}
 
@@ -1763,58 +1804,64 @@ namespace fr
 		SEAssert("Adding data is not thread safe once loading is complete", !m_finishedLoading);
 		SEAssert("Cannot add null texture to textures table", newTexture != nullptr);
 
-		std::unique_lock<std::shared_mutex> writeLock(m_texturesMutex);
-
-		unordered_map<size_t, shared_ptr<re::Texture>>::const_iterator texturePosition =
-			m_textures.find(newTexture->GetNameID());
-
-		bool foundExisting = false;
-		if (texturePosition != m_textures.end()) // Found existing
 		{
-			LOG("Texture \"%s\" has alredy been registed with scene", newTexture->GetName().c_str());
-			newTexture = texturePosition->second;
-			foundExisting = true;
-		}
-		else  // Add new
-		{
-			m_textures[newTexture->GetNameID()] = newTexture;
-			LOG("Texture \"%s\" registered with scene", newTexture->GetName().c_str());
-		}
+			std::unique_lock<std::shared_mutex> writeLock(m_texturesReadWriteMutex);
 
-		return foundExisting;
+			unordered_map<size_t, shared_ptr<re::Texture>>::const_iterator texturePosition =
+				m_textures.find(newTexture->GetNameID());
+
+			bool foundExisting = false;
+			if (texturePosition != m_textures.end()) // Found existing
+			{
+				LOG("Texture \"%s\" has alredy been registed with scene", newTexture->GetName().c_str());
+				newTexture = texturePosition->second;
+				foundExisting = true;
+			}
+			else  // Add new
+			{
+				m_textures[newTexture->GetNameID()] = newTexture;
+				LOG("Texture \"%s\" registered with scene", newTexture->GetName().c_str());
+			}
+
+			return foundExisting;
+		}
 	}
 
 
 	std::shared_ptr<re::Texture> SceneData::GetTexture(std::string const& texName) const
 	{
 		const uint64_t nameID = en::NamedObject::ComputeIDFromName(texName);
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 
-		std::shared_lock<std::shared_mutex> readLock(m_texturesMutex);
-		auto result = m_textures.find(nameID);
+			auto result = m_textures.find(nameID);
 
-		SEAssert("Texture with that name does not exist", result != m_textures.end());
+			SEAssert("Texture with that name does not exist", result != m_textures.end());
 
-		return result->second;
+			return result->second;
+		}
 	}
 
 
 	std::shared_ptr<re::Texture> SceneData::TryGetTexture(std::string const& texName) const
 	{
 		const uint64_t nameID = en::NamedObject::ComputeIDFromName(texName);
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
 
-		std::shared_lock<std::shared_mutex> readLock(m_texturesMutex);
-		auto result = m_textures.find(nameID);
-
-		return result == m_textures.end() ? nullptr : result->second;
+			auto result = m_textures.find(nameID);
+			return result == m_textures.end() ? nullptr : result->second;
+		}
 	}
 
 
 	bool SceneData::TextureExists(std::string const& textureName) const
 	{
 		const uint64_t nameID = en::NamedObject::ComputeIDFromName(textureName);
-
-		std::shared_lock<std::shared_mutex> readLock(m_texturesMutex);
-		return m_textures.find(nameID) != m_textures.end();
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_texturesReadWriteMutex);
+			return m_textures.find(nameID) != m_textures.end();
+		}
 	}
 
 
@@ -1823,19 +1870,21 @@ namespace fr
 		SEAssert("Adding data is not thread safe once loading is complete", !m_finishedLoading);
 		SEAssert("Cannot add null material to material table", newMaterial != nullptr);
 
-		std::unique_lock<std::shared_mutex> writeLock(m_materialsMutex);
+		{
+			std::unique_lock<std::shared_mutex> writeLock(m_materialsReadWriteMutex);
 
-		// Note: Materials are uniquely identified by name, regardless of the MaterialDefinition they might use
-		unordered_map<size_t, shared_ptr<gr::Material>>::const_iterator matPosition =
-			m_materials.find(newMaterial->GetNameID());
-		if (matPosition != m_materials.end()) // Found existing
-		{
-			newMaterial = matPosition->second;
-		}
-		else // Add new
-		{
-			m_materials[newMaterial->GetNameID()] = newMaterial;
-			LOG("Material \"%s\" registered with scene", newMaterial->GetName().c_str());
+			// Note: Materials are uniquely identified by name, regardless of the MaterialDefinition they might use
+			unordered_map<size_t, shared_ptr<gr::Material>>::const_iterator matPosition =
+				m_materials.find(newMaterial->GetNameID());
+			if (matPosition != m_materials.end()) // Found existing
+			{
+				newMaterial = matPosition->second;
+			}
+			else // Add new
+			{
+				m_materials[newMaterial->GetNameID()] = newMaterial;
+				LOG("Material \"%s\" registered with scene", newMaterial->GetName().c_str());
+			}
 		}
 	}
 
@@ -1843,76 +1892,89 @@ namespace fr
 	std::shared_ptr<gr::Material> SceneData::GetMaterial(std::string const& materialName) const
 	{
 		const size_t nameID = NamedObject::ComputeIDFromName(materialName);
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
+			unordered_map<size_t, shared_ptr<gr::Material>>::const_iterator matPos = m_materials.find(nameID);
 
-		std::shared_lock<std::shared_mutex> readLock(m_materialsMutex);
-		unordered_map<size_t, shared_ptr<gr::Material>>::const_iterator matPos = m_materials.find(nameID);
+			SEAssert("Could not find material", matPos != m_materials.end());
 
-		SEAssert("Could not find material", matPos != m_materials.end());
-
-		return matPos->second;
+			return matPos->second;
+		}
 	}
 
 
 	bool SceneData::MaterialExists(std::string const& matName) const
 	{
 		const size_t nameID = NamedObject::ComputeIDFromName(matName);
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
 
-		std::shared_lock<std::shared_mutex> readLock(m_materialsMutex);
-
-		return m_materials.find(nameID) != m_materials.end();
+			return m_materials.find(nameID) != m_materials.end();
+		}
 	}
 
 
 	std::unordered_map<size_t, std::shared_ptr<gr::Material>> const& SceneData::GetMaterials() const
 	{
+		// Note: This function is very dangerous: We're returning a thread-shared object by reference. It's currently
+		// used for ImGui debug access, which should be fine
+
 		SEAssert("Accessing this data is not thread safe during loading", m_finishedLoading);
-		return m_materials;
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
+			return m_materials;
+		}
 	}
 
 
 	bool SceneData::AddUniqueShader(std::shared_ptr<re::Shader>& newShader)
 	{
 		SEAssert("Cannot add null shader to shader table", newShader != nullptr);
-
-		std::unique_lock<std::shared_mutex> writeLock(m_shadersMutex);
-
-		bool addedNewShader = false;
-
-		const uint64_t shaderIdentifier = newShader->GetShaderIdentifier();
-
-		// Note: Materials are uniquely identified by name, regardless of the MaterialDefinition they might use
-		unordered_map<size_t, shared_ptr<re::Shader>>::const_iterator shaderPosition =
-			m_shaders.find(shaderIdentifier);
-		if (shaderPosition != m_shaders.end()) // Found existing
 		{
-			newShader = shaderPosition->second;
-			addedNewShader = false;
+			std::unique_lock<std::shared_mutex> writeLock(m_shadersReadWriteMutex);
+
+			bool addedNewShader = false;
+
+			const uint64_t shaderIdentifier = newShader->GetShaderIdentifier();
+
+			// Note: Materials are uniquely identified by name, regardless of the MaterialDefinition they might use
+			unordered_map<size_t, shared_ptr<re::Shader>>::const_iterator shaderPosition =
+				m_shaders.find(shaderIdentifier);
+			if (shaderPosition != m_shaders.end()) // Found existing
+			{
+				newShader = shaderPosition->second;
+				addedNewShader = false;
+			}
+			else // Add new
+			{
+				m_shaders[shaderIdentifier] = newShader;
+				addedNewShader = true;
+				LOG("Shader \"%s\" registered with scene", newShader->GetName().c_str());
+			}
+			return addedNewShader;
 		}
-		else // Add new
-		{
-			m_shaders[shaderIdentifier] = newShader;
-			addedNewShader = true;
-			LOG("Shader \"%s\" registered with scene", newShader->GetName().c_str());
-		}
-		return addedNewShader;
 	}
 
 
 	std::shared_ptr<re::Shader> SceneData::GetShader(uint64_t shaderIdentifier) const
 	{
-		std::shared_lock<std::shared_mutex> readLock(m_shadersMutex);
-		unordered_map<size_t, shared_ptr<re::Shader>>::const_iterator shaderPos = m_shaders.find(shaderIdentifier);
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_shadersReadWriteMutex);
+			unordered_map<size_t, shared_ptr<re::Shader>>::const_iterator shaderPos = m_shaders.find(shaderIdentifier);
 
-		SEAssert("Could not find shader", shaderPos != m_shaders.end());
+			SEAssert("Could not find shader", shaderPos != m_shaders.end());
 
-		return shaderPos->second;
+			return shaderPos->second;
+		}
 	}
 
 
 	bool SceneData::ShaderExists(uint64_t shaderIdentifier) const
 	{
-		std::shared_lock<std::shared_mutex> readLock(m_shadersMutex);
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_shadersReadWriteMutex);
 
-		return m_materials.find(shaderIdentifier) != m_materials.end();
+			return m_materials.find(shaderIdentifier) != m_materials.end();
+		}
 	}
 }
