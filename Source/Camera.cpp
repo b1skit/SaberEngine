@@ -166,7 +166,8 @@ namespace gr
 		{
 			m_cameraConfig.m_orthoLeftRightBotTop = glm::vec4(0.f, 0.f, 0.f, 0.f);
 
-			glm::mat4 const& globalMatrix = m_transform.GetGlobalMatrix();
+			// For cameras, we omit the scale matrix 
+			glm::mat4 const& globalMatrix = m_transform.GetGlobalTranslationMat() * m_transform.GetGlobalRotationMat();
 
 			m_view[0] = glm::inverse(globalMatrix);
 			m_invView[0] = globalMatrix;
@@ -187,7 +188,8 @@ namespace gr
 		{
 			m_cameraConfig.m_yFOV = 0.0f;
 
-			glm::mat4 const& globalMatrix = m_transform.GetGlobalMatrix();
+			// For cameras, we omit the scale matrix 
+			glm::mat4 const& globalMatrix = m_transform.GetGlobalTranslationMat() * m_transform.GetGlobalRotationMat();
 
 			m_view[0] = glm::inverse(globalMatrix);
 			m_invView[0] = globalMatrix;

@@ -350,8 +350,6 @@ namespace gr
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
-		SEAssertF("TODO: Test this. If you hit this assert, it's the first time this function has been used");
-
 		glm::quat const& globalRotationQuat = GetGlobalRotation();
 		return glm::mat4_cast(globalRotationQuat);
 	}
