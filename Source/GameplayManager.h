@@ -7,19 +7,47 @@
 
 namespace fr
 {
+	class PlayerObject;
+	class Transformable;
+
+
 	class GameplayManager final : public virtual en::EngineComponent
 	{
 	public:
 		static GameplayManager* Get(); // Singleton functionality
 
-	public:
-		virtual void Update(uint64_t frameNum, double stepTimeMs) override;
 
-		virtual void Startup();
-		virtual void Shutdown();
+	public:
+		void Startup() override;
+		void Shutdown() override;
+
+		void Update(uint64_t frameNum, double stepTimeMs) override;
+
+
+	protected:
+		friend class en::Updateable;
+		void AddUpdateable(en::Updateable* updateable);
+		void RemoveUpdateable(en::Updateable const* updateable);
+
+
+	protected:
+		friend class fr::Transformable;
+		void AddTransformable(fr::Transformable*);
+		void RemoveTransformable(fr::Transformable const*);
 
 
 	private:
-		std::vector<std::shared_ptr<en::Updateable>> m_updateables;
+		void UpdateUpdateables(double stepTimeMs) const;
+		void UpdateTransformables() const;
+
+
+	private:
+		std::vector<en::Updateable*> m_updateables;
+		mutable std::mutex m_updateablesMutex;
+
+		std::vector<fr::Transformable*> m_transformables;
+		mutable std::mutex m_transformablesMutex;
+
+		std::shared_ptr<fr::PlayerObject> m_playerObject;
 	};
 }

@@ -90,13 +90,8 @@ namespace en
 
 	void SceneManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
-		// Tick Updateables:
-		for (size_t i = 0; i < m_sceneData->GetUpdateables().size(); i++)
-		{
-			m_sceneData->GetUpdateables().at(i)->Update(stepTimeMs);
-		}
-
-		m_sceneData->UpdateTransformsAndSceneBounds();
+		// Updateables have been ticked by the GameplayManager; Now we can update the Transforms and scene Bounds
+		m_sceneData->UpdateSceneBounds();
 	}
 
 

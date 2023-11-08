@@ -22,23 +22,18 @@ namespace fr
 	protected:
 		gr::Transform m_transform;
 
-	private:
-		void Deregister();
 
 	private:
-		Transformable() = delete;
+		void Register();
+		void Deregister() const;
 
-		// The SceneData holds a list of raw Transformable*, no moving/copying allowed
+
+	private:// The SceneData holds a list of raw Transformable*, no moving/copying allowed
 		Transformable(const Transformable& rhs) = delete;
 		Transformable(Transformable&&) = delete;
 		Transformable& operator=(Transformable const&) = delete;
 		Transformable& operator=(Transformable&&) = delete;
+
+		Transformable() = delete;
 	};
-
-
-	// We need to provide a destructor implementation since it's pure virtual
-	inline Transformable::~Transformable()
-	{
-		Deregister();
-	}
 }

@@ -1361,7 +1361,6 @@ namespace fr
 		}
 
 		// Pre-reserve our vectors, now that we know what to expect:
-		m_updateables.reserve(max(nodesCount, k_minReserveAmt));
 		m_meshes.reserve(max(meshesCount, k_minReserveAmt));
 		m_textures.reserve(max(texturesCount, k_minReserveAmt));
 		m_materials.reserve(max(materialsCount, k_minReserveAmt));
@@ -1432,7 +1431,7 @@ namespace fr
 	{
 		m_finishedLoading = true;
 
-		UpdateTransformsAndSceneBounds();
+		UpdateSceneBounds();
 
 		// Execute any post-load callbacks to allow objects that require the scene to be fully loaded to finalize thier
 		// initialization:
@@ -1531,17 +1530,6 @@ namespace fr
 			m_sceneWorldSpaceBounds = Bounds();
 		}
 
-		// Destroy self-registered interfaces
-		// TODO: Ensure all of these objects self-remove themselves, and simply assert these lists are empty
-		{
-			std::lock_guard<std::mutex> lock(m_updateablesMutex);
-			m_updateables.clear();
-		}
-		{
-			std::lock_guard<std::mutex> lock(m_transformablesMutex);
-			m_transformables.clear();
-		}
-
 		m_finishedLoading = false; // Flag that Destroy has been called
 	}
 
@@ -1555,8 +1543,6 @@ namespace fr
 
 			m_cameras.emplace_back(newCamera);
 		}
-
-		AddUpdateable(newCamera); // TODO: Updateable should self-register/self-remove themselvs
 	}
 
 
@@ -1570,10 +1556,6 @@ namespace fr
 			[&](std::shared_ptr<gr::Camera> const& cam) {return cam->GetUniqueID() == uniqueID; });
 
 		SEAssert("Camera not found", result != m_cameras.end());
-
-		// Must remove the camera from the Updateables list:
-		std::shared_ptr<gr::Camera> foundCam = *result;
-		RemoveUpdateable(foundCam);
 
 		m_cameras.erase(result);
 	}
@@ -1613,8 +1595,6 @@ namespace fr
 			LOG_ERROR("Ignoring unsupported light type");
 			break;
 		}
-
-		AddUpdateable(newLight); // Updateables get pumped every frame
 	}
 
 
@@ -1747,64 +1727,12 @@ namespace fr
 	}
 
 
-	std::vector<std::shared_ptr<en::Updateable>> const& SceneData::GetUpdateables() const
-	{
-		SEAssert("Accessing data container is not thread safe during loading", m_finishedLoading);
-		return m_updateables;
-	}
-
-
-	void SceneData::AddUpdateable(std::shared_ptr<en::Updateable> updateable)
-	{
-		std::lock_guard<std::mutex> lock(m_updateablesMutex);
-		m_updateables.emplace_back(updateable);
-	}
-
-
-	void SceneData::RemoveUpdateable(std::shared_ptr<en::Updateable> updateable)
-	{
-		std::lock_guard<std::mutex> lock(m_updateablesMutex);
-
-		auto const& result = std::find_if(
-			m_updateables.begin(),
-			m_updateables.end(),
-			[&](std::shared_ptr<en::Updateable> const& curUpdateable) {return curUpdateable == updateable; });
-
-		SEAssert("Updateable not found", result != m_updateables.end());
-
-		m_updateables.erase(result);
-	}
-
 	void SceneData::AddSceneNode(std::shared_ptr<fr::SceneNode> sceneNode)
 	{
 		std::lock_guard<std::mutex> lock(m_sceneNodesMutex);
 		m_sceneNodes.emplace_back(sceneNode);
 	}
 
-
-	void SceneData::AddTransformable(fr::Transformable* transformable)
-	{
-		std::lock_guard<std::mutex> lock(m_transformablesMutex);
-		m_transformables.emplace_back(transformable);
-	}
-
-
-	void SceneData::RemoveTransformable(fr::Transformable* transformable)
-	{
-		std::lock_guard<std::mutex> lock(m_transformablesMutex);
-
-		auto const& result = std::find_if(
-			m_transformables.begin(),
-			m_transformables.end(),
-			[&](fr::Transformable* curTransformable) {return curTransformable == transformable; });
-
-		//SEAssert("Transformable not found", result != m_transformables.end());
-
-		if (result != m_transformables.end())
-		{
-			m_transformables.erase(result);
-		}		
-	}
 
 	void SceneData::UpdateSceneBounds(std::shared_ptr<gr::Mesh> mesh)
 	{
@@ -1815,57 +1743,11 @@ namespace fr
 	}
 
 
-	void SceneData::UpdateTransformsAndSceneBounds()
+	void SceneData::UpdateSceneBounds()
 	{
 		SEAssert("This function should be called during the main loop only", m_finishedLoading);
 
-		{
-			std::lock_guard<std::mutex> lock(m_transformablesMutex);
-			// TODO: It's still hypothetically possible that another thread could modify a transform while this process
-			// happens. It could be worth locking all transforms in the entire hierarchy here first
-
-			std::vector<std::future<void>> taskFutures;
-			taskFutures.reserve(m_sceneNodes.size());
-			for (fr::Transformable* transformable : m_transformables)
-			{
-				// We're interested in root nodes only. We could cache these to avoid the search, but for now it's fine
-				Transform* currentTransform = transformable->GetTransform();
-				if (currentTransform->GetParent() == nullptr)
-				{
-					// DFS walk down our Transform hierarchy, recomputing each Transform in turn. The goal here is to
-					// minimize the (re)computation required when we copy Transforms for the Render thread
-					std::stack<gr::Transform*> transforms;
-					transforms.push(currentTransform);
-
-					taskFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
-						[currentTransform]()
-						{
-							std::stack<gr::Transform*> transforms;
-							transforms.push(currentTransform);
-
-							while (!transforms.empty())
-							{
-								gr::Transform* topTransform = transforms.top();
-								transforms.pop();
-
-								topTransform->ClearHasChangedFlag();
-								topTransform->Recompute();
-
-								for (gr::Transform* child : topTransform->GetChildren())
-								{
-									transforms.push(child);
-								}
-							}
-						}));
-				}
-			}
-			for (std::future<void> const& taskFuture : taskFutures)
-			{
-				taskFuture.wait();
-			}
-		}
-
-		// Now all of our transforms are clean, update the scene bounds:
+		// By now all of our transforms are clean, update the scene bounds:
 		std::unique_lock<std::mutex> lock(m_sceneBoundsMutex);
 		m_sceneWorldSpaceBounds = gr::Bounds();
 		for (shared_ptr<gr::Mesh> mesh : m_meshes)

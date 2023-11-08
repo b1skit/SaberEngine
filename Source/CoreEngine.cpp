@@ -205,10 +205,12 @@ namespace en
 		RenderManager::Get()->ThreadShutdown();
 
 		// Note: Shutdown order matters!
-		GameplayManager::Get()->Shutdown();
 		InputManager::Get()->Shutdown();
 
 		SceneManager::Get()->Shutdown();
+
+		GameplayManager::Get()->Shutdown();
+
 		EventManager::Get()->Shutdown();
 		LogManager::Get()->Shutdown();
 

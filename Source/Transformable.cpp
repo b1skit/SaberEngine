@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Transformable.h"
-#include "SceneManager.h"
+#include "GameplayManager.h"
 
 
 namespace fr
@@ -9,12 +9,24 @@ namespace fr
 		: en::NamedObject(name + "_Transformable")
 		, m_transform(name, parent)
 	{
-		en::SceneManager::GetSceneData()->AddTransformable(this);
+		Register();
 	}
 
 
-	void Transformable::Deregister()
+	Transformable::~Transformable()
 	{
-		en::SceneManager::GetSceneData()->RemoveTransformable(this);
+		Deregister();
+	}
+
+
+	void Transformable::Register()
+	{
+		fr::GameplayManager::Get()->AddTransformable(this);
+	}
+
+
+	void Transformable::Deregister() const
+	{
+		fr::GameplayManager::Get()->RemoveTransformable(this);
 	}
 }

@@ -419,6 +419,9 @@
     <ClCompile Include="Transformable.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
+    <ClCompile Include="Updateable.cpp">
+      <Filter>Source Files\en</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">

@@ -57,9 +57,11 @@ namespace gr
 	}
 
 
-	mat4 Transform::GetGlobalMatrix() const
+	mat4 Transform::GetGlobalMatrix()
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
+
+		Recompute();
 
 		if (m_parent)
 		{
@@ -148,7 +150,6 @@ namespace gr
 		}
 		
 		MarkDirty();
-		Recompute();
 	}
 
 
@@ -176,7 +177,6 @@ namespace gr
 		SetParent(newParent);
 
 		MarkDirty();
-		Recompute();
 	}
 
 
@@ -230,11 +230,11 @@ namespace gr
 			SetLocalPosition(glm::vec4(position, 0.f));
 		}
 
-		Recompute(); // Already marked dirty when we called SetLocalPosition
+		Recompute(); // Note: Already marked dirty when we called SetLocalPosition
 	}
 
 
-	glm::vec3 Transform::GetGlobalPosition() const
+	glm::vec3 Transform::GetGlobalPosition()
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 

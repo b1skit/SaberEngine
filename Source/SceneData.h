@@ -2,7 +2,6 @@
 #pragma once
 
 #include "Mesh.h"
-#include "Updateable.h"
 #include "Transformable.h"
 #include "NamedObject.h"
 
@@ -58,9 +57,6 @@ namespace fr
 
 		std::shared_ptr<re::Texture> GetIBLTexture() const;
 
-		// Updateables:
-		std::vector<std::shared_ptr<en::Updateable>> const& GetUpdateables() const;
-
 		// Transformation hierarchy:
 		void AddSceneNode(std::shared_ptr<fr::SceneNode> transformable);
 
@@ -89,7 +85,7 @@ namespace fr
 
 		// SceneData bounds:
 		gr::Bounds const& GetWorldSpaceSceneBounds() const;
-		void UpdateTransformsAndSceneBounds();
+		void UpdateSceneBounds();
 
 		// Post loading finalization callback: Allow objects that require the scene to be fully loaded to complete their
 		// initialization
@@ -102,25 +98,12 @@ namespace fr
 		void AddCamera(std::shared_ptr<gr::Camera> newCamera); // Returns the camera index
 		void RemoveCamera(uint64_t uniqueID);
 
-		friend class fr::Transformable;
-		void AddTransformable(fr::Transformable*);
-		void RemoveTransformable(fr::Transformable*);
-
-
-	private:
-		// TODO: Updateables should self-register/self-remove
-		void AddUpdateable(std::shared_ptr<en::Updateable> updateable);
-		void RemoveUpdateable(std::shared_ptr<en::Updateable> updateable);
-
 
 	private:
 		void UpdateSceneBounds(std::shared_ptr<gr::Mesh> mesh);
 
 
 	private:
-		std::vector<std::shared_ptr<en::Updateable>> m_updateables;
-		std::mutex m_updateablesMutex;
-
 		std::vector<std::shared_ptr<fr::SceneNode>> m_sceneNodes; // Transformation hierarchy
 		std::mutex m_sceneNodesMutex;
 
@@ -154,9 +137,6 @@ namespace fr
 
 		gr::Bounds m_sceneWorldSpaceBounds;
 		std::mutex m_sceneBoundsMutex;
-		
-		std::vector<fr::Transformable*> m_transformables;
-		std::mutex m_transformablesMutex;
 
 		std::vector<std::function<void()>> m_postLoadCallbacks;
 		std::mutex m_postLoadCallbacksMutex;

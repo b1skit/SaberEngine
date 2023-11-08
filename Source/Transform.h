@@ -53,7 +53,7 @@ namespace gr
 		glm::vec3 GetLocalPosition() const;
 		glm::mat4 GetLocalTranslationMat() const;
 		void SetGlobalPosition(glm::vec3 position);
-		glm::vec3 GetGlobalPosition() const; // World-space position
+		glm::vec3 GetGlobalPosition(); // World-space position
 		glm::mat4 GetGlobalTranslationMat() const;
 
 		// Rotation:
@@ -77,7 +77,7 @@ namespace gr
 		glm::mat4 GetGlobalScaleMat() const;
 		
 		// World-space transformations:
-		glm::mat4 GetGlobalMatrix() const;
+		glm::mat4 GetGlobalMatrix();
 
 		glm::vec3 GetGlobalForward() const; // World-space forward (Z+) vector
 		glm::vec3 GetGlobalRight() const; // World-space right (X+) vector

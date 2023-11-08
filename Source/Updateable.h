@@ -9,13 +9,21 @@ namespace en
 	class Updateable
 	{
 	public:
-		Updateable() = default;
-		Updateable(Updateable const&) = default;
-		Updateable(Updateable&&) = default;
-		Updateable& operator=(Updateable const&) = default;
-		~Updateable() = default;
-		
+		Updateable();
+		~Updateable();
+
 		// Updateable interface:
 		virtual void Update(const double stepTimeMs) = 0;
+
+
+	private:
+		void Register();
+		void Unregister() const;
+
+
+	private: // Updateables self-register raw ptrs of themselves to management systems, no copying/moving allowed
+		Updateable(Updateable const&) = delete;
+		Updateable(Updateable&&) = delete;
+		Updateable& operator=(Updateable const&) = delete;
 	};
 }
