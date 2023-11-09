@@ -13,23 +13,40 @@ namespace opengl
 		params->m_isCreated = true;
 
 		// Generate the buffer name:
-		glGenBuffers(1, &params->m_ssbo);
+		glGenBuffers(1, &params->m_bufferName);
+
+		GLenum bufferTarget = 0;
+		switch (params->m_dataType)
+		{
+		case re::ParameterBlock::PBDataType::SingleElement:
+		{
+			bufferTarget = GL_UNIFORM_BUFFER;
+		}
+		break;
+		case re::ParameterBlock::PBDataType::Array:
+		{
+			bufferTarget = GL_SHADER_STORAGE_BUFFER;
+		}
+		break;
+		default: SEAssertF("Invalid PBDataType");
+		}
 
 		// Binding associates the buffer object with the buffer object name
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, params->m_ssbo);
-		SEAssert("Failed to generate buffer object", glIsBuffer(params->m_ssbo) == GL_TRUE);
-
-		// RenderDoc label:
-		glObjectLabel(GL_BUFFER, params->m_ssbo, -1, paramBlock.GetName().c_str());
+		glBindBuffer(bufferTarget, params->m_bufferName);
+		SEAssert("Failed to generate buffer object", glIsBuffer(params->m_bufferName) == GL_TRUE);
 
 		void const* data;
 		size_t numBytes;
 		paramBlock.GetDataAndSize(data, numBytes);
 
-		glBufferData(GL_SHADER_STORAGE_BUFFER,
+		glBufferData(
+			bufferTarget,
 			(GLsizeiptr)numBytes,
 			nullptr, // NULL: Data store of the specified size is created, but remains uninitialized and thus undefined
-			paramBlock.GetType() == re::ParameterBlock::PBType::Mutable ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+			paramBlock.GetType() == re::ParameterBlock::PBType::Immutable ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW);
+
+		// RenderDoc label:
+		glObjectLabel(GL_BUFFER, params->m_bufferName, -1, paramBlock.GetName().c_str());
 	}
 
 
@@ -42,7 +59,7 @@ namespace opengl
 		paramBlock.GetDataAndSize(data, numBytes);
 
 		glNamedBufferSubData(
-			params->m_ssbo,			// Target
+			params->m_bufferName,	// Target
 			0,						// Offset
 			(GLsizeiptr)numBytes,	// Size
 			data);					// Data
@@ -54,8 +71,8 @@ namespace opengl
 		PlatformParams* params = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
 		SEAssert("Attempting to destroy a ParameterBlock that has not been created", params->m_isCreated);
 
-		glDeleteBuffers(1, &params->m_ssbo);
-		params->m_ssbo = 0;
+		glDeleteBuffers(1, &params->m_bufferName);
+		params->m_bufferName = 0;
 		params->m_isCreated = false;
 	}
 
@@ -64,6 +81,22 @@ namespace opengl
 	{
 		PlatformParams* params = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
 		 
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindIndex, params->m_ssbo);
+		GLenum bufferTarget = 0;
+		switch (params->m_dataType)
+		{
+		case re::ParameterBlock::PBDataType::SingleElement:
+		{
+			bufferTarget = GL_UNIFORM_BUFFER;
+		}
+		break;
+		case re::ParameterBlock::PBDataType::Array:
+		{
+			bufferTarget = GL_SHADER_STORAGE_BUFFER;
+		}
+		break;
+		default: SEAssertF("Invalid PBDataType");
+		}
+
+		glBindBufferBase(bufferTarget, bindIndex, params->m_bufferName);
 	}
 }

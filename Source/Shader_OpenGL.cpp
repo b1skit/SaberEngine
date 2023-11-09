@@ -74,7 +74,9 @@ namespace
 	};
 	static_assert(_countof(k_shaderFileExtensions) == opengl::Shader::ShaderType_Count);
 
-	constexpr char const* k_globalPreamble = "#version 460 core\n"; // Note: MUST be terminated with "\n"
+	constexpr char const* k_globalPreamble = "#version 460 core\n"
+		"#extension GL_NV_uniform_buffer_std430_layout : require\n" // Required for UBO std430 layouts
+		"\n"; // Note: MUST be terminated with "\n"
 
 
 	void AssertShaderIsValid(std::string const& shaderName, uint32_t const& shaderRef, uint32_t const& flag, bool const& isProgram)
@@ -446,7 +448,7 @@ namespace opengl
 				glGetUniformiv(params->m_shaderReference, (GLuint)i, &val);
 
 				// Populate the shader sampler unit map with unique entries:
-				string nameStr(name);
+				std::string nameStr(name);
 				SEAssert("Sampler unit already found! Does the shader have a unique binding layout qualifier?",
 					params->m_samplerUnits.find(nameStr) == params->m_samplerUnits.end());
 
@@ -589,8 +591,6 @@ namespace opengl
 
 	void Shader::SetParameterBlock(re::Shader const& shader, re::ParameterBlock const& paramBlock)
 	{
-		// TODO: Handle non-permanent parameter blocks. For now, just bind without considering if the data has changed
-
 		opengl::Shader::PlatformParams const* shaderPlatformParams = 
 			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
 
@@ -606,35 +606,79 @@ namespace opengl
 			isBound = false;
 		}
 		
-		// Find the buffer binding index via introspection
-		const GLint resourceIdx = glGetProgramResourceIndex(
+		GLint bindIndex = 0;
+
+		re::ParameterBlock::PlatformParams const* pbPlatformParams = paramBlock.GetPlatformParams();
+		switch (pbPlatformParams->m_dataType)
+		{
+		case re::ParameterBlock::PBDataType::SingleElement: // Bind our single-element PBs as UBOs
+		{
+			// Find the buffer binding index via introspection
+			const GLint uniformBlockIndex = glGetUniformBlockIndex(
+				shaderPlatformParams->m_shaderReference,	// program
+				paramBlock.GetName().c_str());				// Uniform block name
+
+			// GL_INVALID_INDEX is returned if the the uniform block name does not identify an active uniform block
+			SEAssert("Failed to find an active uniform block index. This is is not an error, but a useful debugging helper",
+				uniformBlockIndex != GL_INVALID_INDEX ||
+				en::Config::Get()->ValueExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
+
+			if (uniformBlockIndex != GL_INVALID_INDEX)
+			{
+				GLenum properties[1] = { GL_BUFFER_BINDING };
+				glGetProgramResourceiv(
+					shaderPlatformParams->m_shaderReference,		// program
+					GL_UNIFORM_BLOCK,
+					uniformBlockIndex,
+					1,
+					properties,
+					1,
+					NULL,
+					&bindIndex);
+
+				// Assign binding to to an active uniform block:
+				glUniformBlockBinding(
+					shaderPlatformParams->m_shaderReference,	// program
+					uniformBlockIndex,							// Uniform block index
+					bindIndex);									// Uniform block binding
+			}
+		}
+		break;
+		case re::ParameterBlock::PBDataType::Array: // Bind our array PBs as SSBOs, as they support dynamic indexing
+		{
+			// Find the buffer binding index via introspection
+			const GLint resourceIdx = glGetProgramResourceIndex(
 			shaderPlatformParams->m_shaderReference,	// program
 			GL_SHADER_STORAGE_BLOCK,					// programInterface
 			paramBlock.GetName().c_str());				// name
 
-		SEAssert("Failed to get resource index", resourceIdx != GL_INVALID_ENUM);
+			SEAssert("Failed to get resource index", resourceIdx != GL_INVALID_ENUM);
 
-		// GL_INVALID_INDEX is returned if name is not the name of a resource within the shader program
-		SEAssert("Failed to find the resource in the shader. This is is not an error, but a useful debugging helper", 
-			resourceIdx != GL_INVALID_INDEX || 
-			en::Config::Get()->ValueExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
+			// GL_INVALID_INDEX is returned if name is not the name of a resource within the shader program
+			SEAssert("Failed to find the resource in the shader. This is is not an error, but a useful debugging helper",
+				resourceIdx != GL_INVALID_INDEX ||
+				en::Config::Get()->ValueExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
 
-		if (resourceIdx != GL_INVALID_INDEX)
-		{
-			GLint bindIndex;
-			GLenum properties[1] = { GL_BUFFER_BINDING };
-			glGetProgramResourceiv(
-				shaderPlatformParams->m_shaderReference,
-				GL_SHADER_STORAGE_BLOCK,
-				resourceIdx,
-				1,
-				properties,
-				1,
-				NULL,
-				&bindIndex);
-
-			opengl::ParameterBlock::Bind(paramBlock, bindIndex);
+			if (resourceIdx != GL_INVALID_INDEX)
+			{
+				GLenum properties[1] = { GL_BUFFER_BINDING };
+				glGetProgramResourceiv(
+					shaderPlatformParams->m_shaderReference,
+					GL_SHADER_STORAGE_BLOCK,
+					resourceIdx,
+					1,
+					properties,
+					1,
+					NULL,
+					&bindIndex);
+			}
 		}
+		break;
+		default: SEAssertF("Invalid PBDataType");
+		}
+
+		// Bind our PB to the retrieved bind index:
+		opengl::ParameterBlock::Bind(paramBlock, bindIndex);
 
 		// Restore the state:
 		if (!isBound)

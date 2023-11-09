@@ -14,11 +14,7 @@ namespace opengl
 	public:
 		struct PlatformParams final : public re::ParameterBlock::PlatformParams
 		{
-			PlatformParams() = default;
-			~PlatformParams() override = default;
-
-			// OpenGL-specific parameters:
-			GLuint m_ssbo = 0; // Shader Storage Buffer Object (SSBO) handle
+			GLuint m_bufferName; // UBO or SSBO handle
 		};
 
 

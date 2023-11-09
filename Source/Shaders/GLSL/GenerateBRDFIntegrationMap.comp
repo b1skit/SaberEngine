@@ -5,7 +5,7 @@
 
 #define NUM_SAMPLES 1024
 
-layout(std430, binding=0) readonly buffer BRDFIntegrationParams
+layout(std430, binding=0) uniform BRDFIntegrationParams
 {
 	uvec4 g_integrationTargetResolution;
 };

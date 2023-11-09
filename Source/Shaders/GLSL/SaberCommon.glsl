@@ -119,7 +119,7 @@ layout(binding=12) uniform samplerCube CubeMap1;
 
 
 // Note: Must match the PBRMetallicRoughnessParams struct defined in Material.h, without any padding
-layout(std430, binding=0) readonly buffer PBRMetallicRoughnessParams
+layout(std430, binding=0) uniform PBRMetallicRoughnessParams
 {
 	vec4 g_baseColorFactor;
 
@@ -137,7 +137,7 @@ layout(std430, binding=0) readonly buffer PBRMetallicRoughnessParams
 
 
 // Camera.h::CameraParams
-layout(std430, binding=1) readonly buffer CameraParams
+layout(std430, binding=1) uniform CameraParams
 {
 	mat4 g_view;				// World -> View
 	mat4 g_invView;				// View -> World
@@ -156,7 +156,7 @@ layout(std430, binding=1) readonly buffer CameraParams
 
 
 // GraphicsSystem_DeferredLighting.cpp
-layout(std430, binding=2) readonly buffer LightParams
+layout(std430, binding=2) uniform LightParams
 {
 	vec4 g_lightColorIntensity; // .rgb = hue, .a = intensity
 
@@ -175,14 +175,14 @@ layout(std430, binding=2) readonly buffer LightParams
 
 
 // GraphicsSystem_DeferredLighting.cpp
-layout(std430, binding=3) readonly buffer AmbientLightParams
+layout(std430, binding=3) uniform AmbientLightParams
 {
 	// .x = max PMREM mip level, .y = pre-integrated DFG texture width/height, .z diffuse scale, .w = specular scale
 	vec4 g_maxPMREMMipDFGResScaleDiffuseScaleSpec;
 };
 
 
-// TODO: Wrap other buffer contents in a struct
+// UBOs can't have a dynamic length; We use a SSBO instead
 struct InstancedMeshParamsCB
 {
 	mat4 g_model;
@@ -195,7 +195,7 @@ layout(std430, binding=4) readonly buffer InstancedMeshParams
 
 
 // GraphicsSystem_Shadows.h
-layout(std430, binding=5) readonly buffer CubemapShadowRenderParams
+layout(std430, binding=5) uniform CubemapShadowRenderParams
 {
 	mat4 g_cubemapShadowCam_VP[6];
 	vec4 g_cubemapShadowCamNearFar; // .xy = near, far. .zw = unused
@@ -204,7 +204,7 @@ layout(std430, binding=5) readonly buffer CubemapShadowRenderParams
 
 
 // GraphicsSystem_DeferredLighting.cpp
-layout(std430, binding=6) readonly buffer IEMPMREMGenerationParams
+layout(std430, binding=6) uniform IEMPMREMGenerationParams
 {
 	vec4 g_numSamplesRoughnessFaceIdx; // .x = numIEMSamples, .y = numPMREMSamples, .z = roughness, .w = faceIdx
 	vec4 g_mipLevelSrcWidthSrcHeightSrcNumMips; // .x = IEM mip level, .yz = src width/height, .w = src num mips
@@ -212,7 +212,7 @@ layout(std430, binding=6) readonly buffer IEMPMREMGenerationParams
 
 
 // GraphicsSystem_Bloom.cpp
-layout(std430, binding=7) readonly buffer BloomComputeParams
+layout(std430, binding=7) uniform BloomComputeParams
 {
 	vec4 g_srcTexDimensions;
 	vec4 g_dstTexDimensions;
@@ -223,7 +223,7 @@ layout(std430, binding=7) readonly buffer BloomComputeParams
 
 
 // GraphicsSystem_Skybox.cpp
-layout(std430, binding=8) readonly buffer SkyboxParams
+layout(std430, binding=8) uniform SkyboxParams
 {
 	vec4 g_skyboxTargetResolution; // .x = xRes, .y = yRes, .z = 1/xRes, .w = 1/yRes
 };
