@@ -838,7 +838,6 @@
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
     <None Include="SaberEngine.licenseheader" />
-    <None Include="packages.config" />
     <None Include="Shaders\GLSL\GenerateIEM.frag">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
@@ -944,6 +943,7 @@
     <None Include="Shaders\GLSL\Line.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\GBuffer_PShader.hlsl">
