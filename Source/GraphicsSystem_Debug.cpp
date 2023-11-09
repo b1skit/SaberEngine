@@ -192,27 +192,17 @@ namespace
 	}
 
 
-	re::Batch BuildCameraFrustumBatch(gr::Camera const* camera, glm::vec3 const& frustumColor)
+	re::Batch BuildCameraFrustumBatch(gr::Camera const* camera, glm::vec3 const& frustumColor, uint8_t cubemapCamFaceIdx = 0)
 	{
-		//// Convert NDC coordinates to view space:
-		//glm::vec4 farTL = camera->GetInverseProjectionMatrix() * glm::vec4(-1.f, 1.f, 1.f, 1.f);
-		//glm::vec4 farBL = camera->GetInverseProjectionMatrix() * glm::vec4(-1.f, -1.f, 1.f, 1.f);
-		//glm::vec4 farTR = camera->GetInverseProjectionMatrix() * glm::vec4(1.f, 1.f, 1.f, 1.f);
-		//glm::vec4 farBR = camera->GetInverseProjectionMatrix() * glm::vec4(1.f, -1.f, 1.f, 1.f);
-		//glm::vec4 nearTL = camera->GetInverseProjectionMatrix() * glm::vec4(-1.f, 1.f, 0.f, 1.f);
-		//glm::vec4 nearBL = camera->GetInverseProjectionMatrix() * glm::vec4(-1.f, -1.f, 0.f, 1.f);
-		//glm::vec4 nearTR = camera->GetInverseProjectionMatrix() * glm::vec4(1.f, 1.f, 0.f, 1.f);
-		//glm::vec4 nearBR = camera->GetInverseProjectionMatrix() * glm::vec4(1.f, -1.f, 0.f, 1.f);
-
-		// Convert NDC coordinates to view space:
-		glm::vec4 farTL = camera->GetInverseViewProjectionMatrix() * glm::vec4(-1.f, 1.f, 1.f, 1.f);
-		glm::vec4 farBL = camera->GetInverseViewProjectionMatrix() * glm::vec4(-1.f, -1.f, 1.f, 1.f);
-		glm::vec4 farTR = camera->GetInverseViewProjectionMatrix() * glm::vec4(1.f, 1.f, 1.f, 1.f);
-		glm::vec4 farBR = camera->GetInverseViewProjectionMatrix() * glm::vec4(1.f, -1.f, 1.f, 1.f);
-		glm::vec4 nearTL = camera->GetInverseViewProjectionMatrix() * glm::vec4(-1.f, 1.f, 0.f, 1.f);
-		glm::vec4 nearBL = camera->GetInverseViewProjectionMatrix() * glm::vec4(-1.f, -1.f, 0.f, 1.f);
-		glm::vec4 nearTR = camera->GetInverseViewProjectionMatrix() * glm::vec4(1.f, 1.f, 0.f, 1.f);
-		glm::vec4 nearBR = camera->GetInverseViewProjectionMatrix() * glm::vec4(1.f, -1.f, 0.f, 1.f);
+		// Convert NDC coordinates to world space. Cubemap face index 0 = the same matrix as a non-cubemap camera
+		glm::vec4 farTL = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(-1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBL = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(-1.f, -1.f, 1.f, 1.f);
+		glm::vec4 farTR = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBR = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(1.f, -1.f, 1.f, 1.f);
+		glm::vec4 nearTL = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(-1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBL = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(-1.f, -1.f, 0.f, 1.f);
+		glm::vec4 nearTR = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBR = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(1.f, -1.f, 0.f, 1.f);
 
 		farTL /= farTL.w;
 		farBL /= farBL.w;
@@ -441,19 +431,32 @@ namespace gr
 		{
 			for (gr::Camera* debugCam : m_camerasToDebug)
 			{
-				re::Batch camFrustumBatch = BuildCameraFrustumBatch(debugCam, m_cameraFrustumColor);
-
-				glm::mat4 const& camTRS = debugCam->GetTransform()->GetGlobalMatrix();
+				// Use the inverse view matrix, as it omits any scale that might be present in the Transform hierarchy
+				glm::mat4 const& camWorldMatrix = debugCam->GetInverseViewMatrix();
 				std::shared_ptr<re::ParameterBlock> cameraTransformPB =
-					gr::Mesh::CreateInstancedMeshParamsData(&camTRS, nullptr);
-				camFrustumBatch.SetParameterBlock(cameraTransformPB);
-				m_debugStage->AddBatch(camFrustumBatch);
+					gr::Mesh::CreateInstancedMeshParamsData(&camWorldMatrix, nullptr);
 
 				// Coordinate axis at camera origin:
 				re::Batch cameraCoordinateAxisBatch =
 					BuildAxisBatch(m_cameraCoordinateAxisScale, m_xAxisColor, m_yAxisColor, m_zAxisColor);
 				cameraCoordinateAxisBatch.SetParameterBlock(cameraTransformPB);
 				m_debugStage->AddBatch(cameraCoordinateAxisBatch);
+
+				// Our frustum points are already in world-space
+				const glm::mat4 identityMat = glm::mat4(1.f);
+				std::shared_ptr<re::ParameterBlock> identityPB =
+					gr::Mesh::CreateInstancedMeshParamsData(&identityMat, nullptr);
+
+				const uint8_t numFrustums = 
+					debugCam->GetCameraConfig().m_projectionType == gr::Camera::Config::ProjectionType::PerspectiveCubemap ? 6 : 1;
+
+				for (uint8_t faceIdx = 0; faceIdx < numFrustums; faceIdx++)
+				{
+					re::Batch camFrustumBatch = BuildCameraFrustumBatch(debugCam, m_cameraFrustumColor, faceIdx);
+
+					camFrustumBatch.SetParameterBlock(identityPB);
+					m_debugStage->AddBatch(camFrustumBatch);
+				}
 			}		
 		}
 
