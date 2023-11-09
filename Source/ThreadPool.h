@@ -10,7 +10,7 @@ namespace en
 		template<typename Function>
 		FunctionWrapper(Function&& function) : m_impl(new ImplType<Function>(std::move(function))) {}
 	
-		FunctionWrapper(FunctionWrapper&& other) : m_impl(std::move(other.m_impl)) {}
+		FunctionWrapper(FunctionWrapper&& other) noexcept : m_impl(std::move(other.m_impl)) {}
 
 		FunctionWrapper& operator=(FunctionWrapper&& other);
 
@@ -58,6 +58,7 @@ namespace en
 		template<typename FunctionType>
 		std::future<typename std::invoke_result<FunctionType>::type> EnqueueJob(FunctionType job); // Producer
 
+		static void NameCurrentThread(wchar_t const* threadName);
 
 	private:
 		void ExecuteJobs(); // Consumer loop

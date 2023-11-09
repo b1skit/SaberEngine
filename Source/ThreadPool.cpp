@@ -34,6 +34,9 @@ namespace en
 		for (size_t i = 0; i < actualNumThreads; i++)
 		{
 			m_workerThreads.emplace_back(std::thread(&ThreadPool::ExecuteJobs, this));
+
+			// Set this as a default, it can be overriden at any point
+			NameCurrentThread(L"Worker Thread");
 		}
 	}
 
@@ -78,5 +81,15 @@ namespace en
 			// Finally, do the work:
 			currentJob();
 		}
+	}
+
+
+	void ThreadPool::NameCurrentThread(wchar_t const* threadName)
+	{
+		const HRESULT hr = ::SetThreadDescription(
+			::GetCurrentThread(),
+			threadName);
+
+		SEAssert("Failed to set thread name", hr >= 0);
 	}
 }

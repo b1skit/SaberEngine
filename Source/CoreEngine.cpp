@@ -44,6 +44,7 @@ namespace en
 	{
 		m_coreEngine = this;
 		m_copyBarrier = std::make_unique<std::barrier<>>(k_numSystemThreads);
+		en::ThreadPool::NameCurrentThread(L"Main Thread");
 	}
 
 
@@ -72,7 +73,11 @@ namespace en
 
 		// Render thread:
 		re::RenderManager* renderManager = RenderManager::Get();
-		m_threadPool.EnqueueJob([&]() {renderManager->Lifetime(m_copyBarrier.get()); });
+		m_threadPool.EnqueueJob([&]()
+			{
+				en::ThreadPool::NameCurrentThread(L"Render Thread");
+				renderManager->Lifetime(m_copyBarrier.get()); 
+			});
 		renderManager->ThreadStartup(); // Initializes context
 
 		// Start managers:
@@ -238,7 +243,7 @@ namespace en
 
 		while (HasEvents())
 		{
-			en::EventManager::EventInfo eventInfo = GetEvent();
+			en::EventManager::EventInfo const& eventInfo = GetEvent();
 
 			switch (eventInfo.m_type)
 			{

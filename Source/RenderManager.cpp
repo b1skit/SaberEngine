@@ -293,7 +293,7 @@ namespace re
 
 		while (HasEvents())
 		{
-			en::EventManager::EventInfo eventInfo = GetEvent();
+			en::EventManager::EventInfo const& eventInfo = GetEvent();
 
 			switch (eventInfo.m_type)
 			{
