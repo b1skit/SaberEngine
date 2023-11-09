@@ -491,7 +491,6 @@ namespace re
 
 			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
 
-			// This is compiled out in Release
 			for (auto const& it : m_singleFrameAllocations.m_handleToPtr[readIdx])
 			{
 				SEAssert("Trying to deallocate a single frame parameter block, but there is still a live shared_ptr. Is "
