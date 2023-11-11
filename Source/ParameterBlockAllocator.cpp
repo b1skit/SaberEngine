@@ -5,6 +5,7 @@
 #include "DebugConfiguration.h"
 #include "ParameterBlock_Platform.h"
 #include "RenderManager.h"
+#include "CastUtils.h"
 
 using re::ParameterBlock;
 using std::shared_ptr;
@@ -89,7 +90,7 @@ namespace re
 		}
 		m_mutableAllocations.m_handleToPtr.clear();
 
-		for (size_t i = 0; i < k_numBuffers; i++)
+		for (uint8_t i = 0; i < k_numBuffers; i++)
 		{
 			m_mutableAllocations.m_committed[i].clear();
 
@@ -216,7 +217,7 @@ namespace re
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
 
-			dataIndex = static_cast<uint32_t>(m_immutableAllocations.m_committed.size());
+			dataIndex = util::CheckedCast<uint32_t>(m_immutableAllocations.m_committed.size());
 			m_immutableAllocations.m_committed.resize(m_immutableAllocations.m_committed.size() + numBytes, 0);
 		}
 		break;
@@ -227,9 +228,9 @@ namespace re
 			SEAssert("Allocations are out of sync",
 				m_mutableAllocations.m_committed[0].size() == m_mutableAllocations.m_committed[1].size());
 
-			dataIndex = static_cast<uint32_t>(m_mutableAllocations.m_committed[0].size());
+			dataIndex = util::CheckedCast<uint32_t>(m_mutableAllocations.m_committed[0].size());
 
-			const size_t resizeAmt = m_mutableAllocations.m_committed[0].size() + numBytes;
+			const uint32_t resizeAmt = util::CheckedCast<uint32_t>(m_mutableAllocations.m_committed[0].size() + numBytes);
 			m_mutableAllocations.m_committed[0].resize(resizeAmt, 0);
 			m_mutableAllocations.m_committed[1].resize(resizeAmt, 0);
 		}
@@ -251,8 +252,8 @@ namespace re
 
 	void ParameterBlockAllocator::Commit(Handle uniqueID, void const* data)
 	{
-		size_t startIdx;
-		size_t numBytes;
+		uint32_t startIdx;
+		uint32_t numBytes;
 		ParameterBlock::PBType pbType;
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_uniqueIDToTypeAndByteIndexMutex);
@@ -325,7 +326,7 @@ namespace re
 	void ParameterBlockAllocator::GetDataAndSize(Handle uniqueID, void const*& out_data, uint32_t& out_numBytes) const
 	{
 		ParameterBlock::PBType pbType;
-		size_t startIdx;
+		uint32_t startIdx;
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_uniqueIDToTypeAndByteIndexMutex);
 
@@ -386,7 +387,7 @@ namespace re
 	void ParameterBlockAllocator::Deallocate(Handle uniqueID)
 	{
 		ParameterBlock::PBType pbType;
-		size_t startIdx;
+		uint32_t startIdx;
 		uint32_t numBytes;
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_uniqueIDToTypeAndByteIndexMutex);
@@ -521,7 +522,7 @@ namespace re
 
 			// Debug: Track the high-water mark for the max single-frame PB allocations
 			m_maxSingleFrameAllocations = 
-				std::max(m_maxSingleFrameAllocations, static_cast<uint32_t>(m_singleFrameAllocations.m_handleToPtr[readIdx].size()));
+				std::max(m_maxSingleFrameAllocations, util::CheckedCast<uint32_t>(m_singleFrameAllocations.m_handleToPtr[readIdx].size()));
 			m_maxSingleFrameAllocationByteSize = 
 				std::max(m_maxSingleFrameAllocationByteSize, m_singleFrameAllocations.m_baseIdx[readIdx]);
 
