@@ -143,7 +143,7 @@ namespace dx12
 
 #if defined(_DEBUG)
 		void const* srcData = nullptr;
-		size_t srcSize = 0;
+		uint32_t srcSize = 0;
 		paramBlock.GetDataAndSize(srcData, srcSize);
 		SEAssert("GetDataAndSize returned invalid results", srcData != nullptr && srcSize <= size);
 #endif
@@ -166,7 +166,7 @@ namespace dx12
 
 		// Get the PB data:
 		void const* srcData = nullptr;
-		size_t srcSize = 0;
+		uint32_t srcSize = 0;
 		paramBlock.GetDataAndSize(srcData, srcSize);
 
 		// Set the data in the cpu-visible heap:

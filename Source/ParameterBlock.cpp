@@ -31,7 +31,7 @@ namespace re
 
 
 	void ParameterBlock::RegisterAndCommit(
-		std::shared_ptr<re::ParameterBlock> newPB, void const* data, size_t numBytes, uint64_t typeIDHash)
+		std::shared_ptr<re::ParameterBlock> newPB, void const* data, uint32_t numBytes, uint64_t typeIDHash)
 	{
 		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
 		pbm.RegisterAndAllocateParameterBlock(newPB, numBytes);
@@ -57,21 +57,21 @@ namespace re
 	}
 
 
-	void ParameterBlock::GetDataAndSize(void const*& out_data, size_t& out_numBytes) const
+	void ParameterBlock::GetDataAndSize(void const*& out_data, uint32_t& out_numBytes) const
 	{
 		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
 		pbm.GetDataAndSize(GetUniqueID(), out_data, out_numBytes);
 	}
 
 
-	size_t ParameterBlock::GetSize() const
+	uint32_t ParameterBlock::GetSize() const
 	{
 		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
 		return pbm.GetSize(GetUniqueID());
 	}
 
 
-	size_t ParameterBlock::GetStride() const
+	uint32_t ParameterBlock::GetStride() const
 	{
 		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
 		return pbm.GetSize(GetUniqueID()) / m_platformParams->m_numElements;

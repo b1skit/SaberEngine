@@ -22,7 +22,7 @@ namespace gr
 	std::shared_ptr<re::ParameterBlock> Mesh::CreateInstancedMeshParamsData(
 		std::vector<gr::Transform*> const& transforms)
 	{
-		const size_t numInstances = transforms.size();
+		const uint32_t numInstances = static_cast<uint32_t>(transforms.size());
 
 		std::vector<gr::Mesh::InstancedMeshParams> instancedMeshPBData;
 		instancedMeshPBData.reserve(numInstances);

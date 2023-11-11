@@ -36,7 +36,7 @@ namespace opengl
 		SEAssert("Failed to generate buffer object", glIsBuffer(params->m_bufferName) == GL_TRUE);
 
 		void const* data;
-		size_t numBytes;
+		uint32_t numBytes;
 		paramBlock.GetDataAndSize(data, numBytes);
 
 		glBufferData(
@@ -55,7 +55,7 @@ namespace opengl
 		PlatformParams* params = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
 
 		void const* data;
-		size_t numBytes;
+		uint32_t numBytes;
 		paramBlock.GetDataAndSize(data, numBytes);
 
 		glNamedBufferSubData(

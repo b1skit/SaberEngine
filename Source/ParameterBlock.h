@@ -62,7 +62,7 @@ namespace re
 		// Create a PB for an array of several objects of the same type (eg. instanced mesh matrices)
 		template<typename T>
 		static std::shared_ptr<re::ParameterBlock> CreateFromArray(
-			std::string const& pbName, T const* dataArray, size_t dataByteSize, size_t numElements, PBType pbType);
+			std::string const& pbName, T const* dataArray, uint32_t dataByteSize, uint32_t numElements, PBType pbType);
 
 		ParameterBlock(ParameterBlock&&) = default;
 		ParameterBlock& operator=(ParameterBlock&&) = default;
@@ -75,9 +75,9 @@ namespace re
 		template <typename T>
 		void Commit(T const& data); // Commit *updated* data
 	
-		void GetDataAndSize(void const*& out_data, size_t& out_numBytes) const;
-		size_t GetSize() const; // TODO: Size (etc) of a PB should be an uint32_t
-		size_t GetStride() const;
+		void GetDataAndSize(void const*& out_data, uint32_t& out_numBytes) const;
+		uint32_t GetSize() const;
+		uint32_t GetStride() const;
 		inline PBType GetType() const { return m_pbType; }
 
 		uint32_t GetNumElements() const; // Instanced ParameterBlocks: How many instances of data does the PB hold?
@@ -98,7 +98,7 @@ namespace re
 		ParameterBlock(size_t typeIDHashCode, std::string const& pbName, PBType, PBDataType, uint32_t numElements); 
 
 		static void RegisterAndCommit(
-			std::shared_ptr<re::ParameterBlock> newPB, void const* data, size_t numBytes, uint64_t typeIDHash);
+			std::shared_ptr<re::ParameterBlock> newPB, void const* data, uint32_t numBytes, uint64_t typeIDHash);
 		void CommitInternal(void const* data, uint64_t typeIDHash);
 
 
@@ -125,11 +125,10 @@ namespace re
 	// Create a PB for an array of several objects of the same type (eg. instanced mesh matrices)
 	template<typename T>
 	static std::shared_ptr<re::ParameterBlock> ParameterBlock::CreateFromArray(
-		std::string const& pbName, T const* dataArray, size_t dataByteSize, size_t numElements, PBType pbType)
+		std::string const& pbName, T const* dataArray, uint32_t dataByteSize, uint32_t numElements, PBType pbType)
 	{
 		std::shared_ptr<re::ParameterBlock> newPB;
 		newPB.reset(new ParameterBlock(typeid(T).hash_code(), pbName, pbType, PBDataType::Array, static_cast<uint32_t>(numElements)));
-		// TODO: numElements should be a uint32_t
 
 		RegisterAndCommit(newPB, dataArray, dataByteSize * numElements, typeid(T).hash_code());
 

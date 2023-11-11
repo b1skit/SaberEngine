@@ -26,20 +26,20 @@ namespace re
 
 
 	private:
-		void RegisterAndAllocateParameterBlock(std::shared_ptr<re::ParameterBlock> pb, size_t numBytes);
+		void RegisterAndAllocateParameterBlock(std::shared_ptr<re::ParameterBlock> pb, uint32_t numBytes);
 
 	
 	private:
 		typedef uint64_t Handle; // == NamedObject::UniqueID()
 
-		static constexpr size_t k_numBuffers = 2;
-		static constexpr size_t k_fixedAllocationByteSize = 16 * 1024 * 1024; // Arbitrary; Increase as necessary
+		static constexpr uint8_t k_numBuffers = 2;
+		static constexpr uint32_t k_fixedAllocationByteSize = 16 * 1024 * 1024; // Arbitrary; Increase as necessary
 
 		struct CommitMetadata
 		{
 			ParameterBlock::PBType m_type;
-			size_t m_startIndex;	// Index of 1st byte
-			size_t m_numBytes;		// Total number of allocated bytes
+			uint32_t m_startIndex;	// Index of 1st byte
+			uint32_t m_numBytes;		// Total number of allocated bytes
 		};
 
 		struct ImmutableAllocation // Single buffered
@@ -62,13 +62,13 @@ namespace re
 		{
 			// Single frame allocations are stack allocated from a fixed-size, double-buffered array
 			std::array<std::array<uint8_t, k_fixedAllocationByteSize>, k_numBuffers> m_committed;
-			std::array<std::size_t, k_numBuffers> m_baseIdx;
+			std::array<std::uint32_t, k_numBuffers> m_baseIdx;
 			std::array<std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>>, k_numBuffers> m_handleToPtr;
 			mutable std::recursive_mutex m_mutex;
 		} m_singleFrameAllocations;
 
-		size_t m_maxSingleFrameAllocations; // Debug: Track the high-water mark for the max single-frame PB allocations
-		size_t m_maxSingleFrameAllocationByteSize;
+		uint32_t m_maxSingleFrameAllocations; // Debug: Track the high-water mark for the max single-frame PB allocations
+		uint32_t m_maxSingleFrameAllocationByteSize;
 
 		std::unordered_map<Handle, CommitMetadata> m_uniqueIDToTypeAndByteIndex;
 		mutable std::recursive_mutex m_uniqueIDToTypeAndByteIndexMutex;
@@ -96,11 +96,11 @@ namespace re
 		bool m_isValid;
 
 	private: // Interfaces for the ParameterBlock friend class:
-		void Allocate(Handle uniqueID, size_t numBytes, ParameterBlock::PBType pbType); // Called once at creation
+		void Allocate(Handle uniqueID, uint32_t numBytes, ParameterBlock::PBType pbType); // Called once at creation
 		void Commit(Handle uniqueID, void const* data);	// Update the parameter block data held by the allocator
 		
-		void GetDataAndSize(Handle uniqueID, void const*& out_data, size_t& out_numBytes) const; // Get PB metadata
-		size_t GetSize(Handle uniqueID) const;
+		void GetDataAndSize(Handle uniqueID, void const*& out_data, uint32_t& out_numBytes) const; // Get PB metadata
+		uint32_t GetSize(Handle uniqueID) const;
 
 		void Deallocate(Handle uniqueID);
 

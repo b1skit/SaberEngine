@@ -19,12 +19,15 @@ namespace
 namespace re
 {
 	ParameterBlockAllocator::ParameterBlockAllocator()
-		: m_allocationPeriodEnded(false)
+		: m_immutableAllocations{}
+		, m_mutableAllocations{}
+		, m_singleFrameAllocations{}
+		, m_maxSingleFrameAllocations(0) // Debug: Track the high-water mark for the max single-frame PB allocations
+		, m_maxSingleFrameAllocationByteSize(0)
+		, m_allocationPeriodEnded(false)
 		, m_permanentPBsHaveBeenBuffered(false)
 		, m_isValid(true)
 		, m_readFrameNum(std::numeric_limits<uint64_t>::max()) // Odd 1st number (18,446,744,073,709,551,615), then wrap
-		, m_maxSingleFrameAllocations(0) // Debug: Track the high-water mark for the max single-frame PB allocations
-		, m_maxSingleFrameAllocationByteSize(0)
 	{
 		// Initialize the single frame stack allocations:
 		for (uint8_t i = 0; i < k_numBuffers; i++)
@@ -131,7 +134,7 @@ namespace re
 
 
 	void ParameterBlockAllocator::RegisterAndAllocateParameterBlock(
-		std::shared_ptr<re::ParameterBlock> pb, size_t numBytes)
+		std::shared_ptr<re::ParameterBlock> pb, uint32_t numBytes)
 	{
 		SEAssert("Permanent parameter blocks can only be registered at startup, before the 1st render frame", 
 			pb->GetType() == ParameterBlock::PBType::SingleFrame || !m_allocationPeriodEnded);
@@ -180,7 +183,7 @@ namespace re
 	}
 
 
-	void ParameterBlockAllocator::Allocate(Handle uniqueID, size_t numBytes, ParameterBlock::PBType pbType)
+	void ParameterBlockAllocator::Allocate(Handle uniqueID, uint32_t numBytes, ParameterBlock::PBType pbType)
 	{
 		SEAssert("Permanent parameter blocks can only be allocated at startup, before the 1st render frame",
 			pbType == ParameterBlock::PBType::SingleFrame || !m_allocationPeriodEnded);
@@ -193,7 +196,7 @@ namespace re
 		}
 
 		// Get the index we'll be inserting the 1st byte of our data to, resize the vector, and initialize it with zeros
-		size_t dataIndex;
+		uint32_t dataIndex;
 		switch (pbType)
 		{
 		case ParameterBlock::PBType::SingleFrame:
@@ -213,7 +216,7 @@ namespace re
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
 
-			dataIndex = m_immutableAllocations.m_committed.size();
+			dataIndex = static_cast<uint32_t>(m_immutableAllocations.m_committed.size());
 			m_immutableAllocations.m_committed.resize(m_immutableAllocations.m_committed.size() + numBytes, 0);
 		}
 		break;
@@ -224,7 +227,7 @@ namespace re
 			SEAssert("Allocations are out of sync",
 				m_mutableAllocations.m_committed[0].size() == m_mutableAllocations.m_committed[1].size());
 
-			dataIndex = m_mutableAllocations.m_committed[0].size();
+			dataIndex = static_cast<uint32_t>(m_mutableAllocations.m_committed[0].size());
 
 			const size_t resizeAmt = m_mutableAllocations.m_committed[0].size() + numBytes;
 			m_mutableAllocations.m_committed[0].resize(resizeAmt, 0);
@@ -234,7 +237,7 @@ namespace re
 		default:
 		{
 			SEAssertF("Invalid Parameter Block type");
-			dataIndex = static_cast<size_t>(-1); // Make our insertion index obviously incorrect
+			dataIndex = -1; // Make our insertion index obviously incorrect
 		}
 		}
 
@@ -319,7 +322,7 @@ namespace re
 	}
 
 
-	void ParameterBlockAllocator::GetDataAndSize(Handle uniqueID, void const*& out_data, size_t& out_numBytes) const
+	void ParameterBlockAllocator::GetDataAndSize(Handle uniqueID, void const*& out_data, uint32_t& out_numBytes) const
 	{
 		ParameterBlock::PBType pbType;
 		size_t startIdx;
@@ -367,7 +370,7 @@ namespace re
 	}
 
 
-	size_t ParameterBlockAllocator::GetSize(Handle uniqueID) const
+	uint32_t ParameterBlockAllocator::GetSize(Handle uniqueID) const
 	{
 		std::lock_guard<std::recursive_mutex> lock(m_uniqueIDToTypeAndByteIndexMutex);
 
@@ -384,7 +387,7 @@ namespace re
 	{
 		ParameterBlock::PBType pbType;
 		size_t startIdx;
-		size_t numBytes;
+		uint32_t numBytes;
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_uniqueIDToTypeAndByteIndexMutex);
 
@@ -518,7 +521,7 @@ namespace re
 
 			// Debug: Track the high-water mark for the max single-frame PB allocations
 			m_maxSingleFrameAllocations = 
-				std::max(m_maxSingleFrameAllocations, m_singleFrameAllocations.m_handleToPtr[readIdx].size());
+				std::max(m_maxSingleFrameAllocations, static_cast<uint32_t>(m_singleFrameAllocations.m_handleToPtr[readIdx].size()));
 			m_maxSingleFrameAllocationByteSize = 
 				std::max(m_maxSingleFrameAllocationByteSize, m_singleFrameAllocations.m_baseIdx[readIdx]);
 
