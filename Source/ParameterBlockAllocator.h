@@ -67,6 +67,9 @@ namespace re
 			mutable std::recursive_mutex m_mutex;
 		} m_singleFrameAllocations;
 
+		size_t m_maxSingleFrameAllocations; // Debug: Track the high-water mark for the max single-frame PB allocations
+		size_t m_maxSingleFrameAllocationByteSize;
+
 		std::unordered_map<Handle, CommitMetadata> m_uniqueIDToTypeAndByteIndex;
 		mutable std::recursive_mutex m_uniqueIDToTypeAndByteIndexMutex;
 

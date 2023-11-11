@@ -23,6 +23,8 @@ namespace re
 		, m_permanentPBsHaveBeenBuffered(false)
 		, m_isValid(true)
 		, m_readFrameNum(std::numeric_limits<uint64_t>::max()) // Odd 1st number (18,446,744,073,709,551,615), then wrap
+		, m_maxSingleFrameAllocations(0) // Debug: Track the high-water mark for the max single-frame PB allocations
+		, m_maxSingleFrameAllocationByteSize(0)
 	{
 		// Initialize the single frame stack allocations:
 		for (uint8_t i = 0; i < k_numBuffers; i++)
@@ -48,6 +50,19 @@ namespace re
 			m_mutableAllocations.m_mutex,
 			m_singleFrameAllocations.m_mutex,
 			m_dirtyParameterBlocksMutex);
+
+		LOG(std::format("ParameterBlockAllocator shutting down. Session usage statistics:\n"
+			"\t{} Immutable permanent allocations: {} B\n"
+			"\t{} Mutable permanent allocations: {} B\n"
+			"\t{} max single-frame allocations, max {} B buffer usage seen from fixed {} B buffer",
+			m_immutableAllocations.m_handleToPtr.size(), 
+			m_immutableAllocations.m_committed.size(),
+			m_mutableAllocations.m_handleToPtr.size(),
+			m_mutableAllocations.m_committed[0].size(),
+			m_maxSingleFrameAllocations,
+			m_maxSingleFrameAllocationByteSize,
+			k_fixedAllocationByteSize
+		).c_str());
 
 		// Must clear the parameter blocks shared_ptrs before clearing the committed memory
 
@@ -500,6 +515,12 @@ namespace re
 				const uint64_t currentRenderFrameNum = re::RenderManager::Get()->GetCurrentRenderFrameNum();
 				AddToDeferredDeletions(currentRenderFrameNum, it.second);
 			}
+
+			// Debug: Track the high-water mark for the max single-frame PB allocations
+			m_maxSingleFrameAllocations = 
+				std::max(m_maxSingleFrameAllocations, m_singleFrameAllocations.m_handleToPtr[readIdx].size());
+			m_maxSingleFrameAllocationByteSize = 
+				std::max(m_maxSingleFrameAllocationByteSize, m_singleFrameAllocations.m_baseIdx[readIdx]);
 
 			m_singleFrameAllocations.m_handleToPtr[readIdx].clear();
 			m_singleFrameAllocations.m_baseIdx[readIdx] = 0;
