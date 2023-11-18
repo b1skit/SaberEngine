@@ -973,16 +973,6 @@ namespace re
 					ImGui::EndMenu();
 				}
 
-				//if (ImGui::BeginMenu("Display"))
-				//{
-				//	// TODO...
-				//	ImGui::TextDisabled("View texture/buffer");
-
-				//	ImGui::EndMenu();
-				//}
-
-
-
 				if (ImGui::BeginMenu("Capture"))
 				{
 					// TODO...
