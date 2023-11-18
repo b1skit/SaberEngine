@@ -558,7 +558,7 @@ namespace dx12
 				static_cast<uint32_t>(directBarriers.size()),
 				directBarriers.data());
 
-			const uint64_t directBarrierFence = directQueue.ExecuteInternal({ directCmdList }, 0);
+			const uint64_t directBarrierFence = directQueue.ExecuteInternal({ directCmdList });
 
 			GPUWait(directQueue.GetFence(), directBarrierFence);
 		}
@@ -568,7 +568,7 @@ namespace dx12
 				static_cast<uint32_t>(computeBarriers.size()),
 				computeBarriers.data());
 
-			const uint64_t computeBarrierFence = computeQueue.ExecuteInternal({ computeCmdList }, 0);
+			const uint64_t computeBarrierFence = computeQueue.ExecuteInternal({ computeCmdList });
 
 			GPUWait(computeQueue.GetFence(), computeBarrierFence);
 		}
@@ -578,7 +578,7 @@ namespace dx12
 				static_cast<uint32_t>(copyBarriers.size()),
 				copyBarriers.data());
 
-			const uint64_t copyBarrierFence = copyQueue.ExecuteInternal({ copyCmdList }, 0);
+			const uint64_t copyBarrierFence = copyQueue.ExecuteInternal({ copyCmdList });
 
 			GPUWait(copyQueue.GetFence(), copyBarrierFence);
 		}
@@ -624,7 +624,11 @@ namespace dx12
 				LocalResourceStateTracker const& localResourceTracker = cmdLists[cmdListIdx]->GetLocalResourceStates();
 
 #if defined(DEBUG_RESOURCE_TRANSITIONS)
-				cmdLists[cmdListIdx]->DebugPrintResourceStates();;
+				cmdLists[cmdListIdx]->DebugPrintResourceStates();
+
+				LOG("\n-------------------------\n"
+					"\tPrepended fixup barriers:\n"
+					"\t-------------------------");
 #endif
 
 				// Handle pending transitions for the current command list:
@@ -755,6 +759,12 @@ namespace dx12
 						barriers.data());
 
 					finalCommandLists.emplace_back(barrierCommandList);
+
+#if defined(DEBUG_RESOURCE_TRANSITIONS)
+					LOG("\nRecording %llu resource transition barriers to fixup command list \"%s\"...\n",
+						barriers.size(),
+						GetDebugName(barrierCommandList->GetD3DCommandList()).c_str());
+#endif
 				}
 
 				// Add the original command list:
@@ -801,8 +811,6 @@ namespace dx12
 		std::vector<std::shared_ptr<dx12::CommandList>> const& finalCommandLists =
 			PrependBarrierCommandListsAndWaits(numCmdLists, cmdLists);
 
-		const size_t firstNonBarrierCmdListIdx = finalCommandLists.size() - numCmdLists;
-
 		const uint64_t nextFenceVal = GetNextFenceValue();
 
 		// We'll store the highest modification fence values seen for resources accessed by the submitted command lists
@@ -810,7 +818,7 @@ namespace dx12
 		memset(&maxModificationFences, 0, sizeof(uint64_t) * dx12::CommandListType::CommandListType_Count);
 
 		// Perform the actual execution, now that all of the fixups have happened:
-		const uint64_t fenceVal = ExecuteInternal(finalCommandLists, firstNonBarrierCmdListIdx);
+		const uint64_t fenceVal = ExecuteInternal(finalCommandLists);
 		SEAssert("Predicted fence value doesn't match the actual fence value", fenceVal == nextFenceVal);
 
 
@@ -824,8 +832,7 @@ namespace dx12
 	}
 
 
-	uint64_t CommandQueue::ExecuteInternal(
-		std::vector<std::shared_ptr<dx12::CommandList>> const& finalCommandLists, size_t firstNonBarrierCmdListIdx)
+	uint64_t CommandQueue::ExecuteInternal(std::vector<std::shared_ptr<dx12::CommandList>> const& finalCommandLists)
 	{
 		// Get our raw command list pointers, and close them before they're executed
 		std::vector<ID3D12CommandList*> commandListPtrs;
