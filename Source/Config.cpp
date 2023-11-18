@@ -105,7 +105,7 @@ namespace en
 		}
 
 		// Store the received command line string
-		SetValue(ConfigKeys::k_commandLineArgsValueName, argString, Config::SettingType::Runtime);
+		SetValue(ConfigKeys::k_commandLineArgsValueKey, argString, Config::SettingType::Runtime);
 
 		// Process the key/value pairs:
 		for (size_t i = 0; i < keysValues.size(); i++)
@@ -142,7 +142,7 @@ namespace en
 			// From param of the form "Scene\Folder\Names\sceneFile.extension", we extract:
 
 			// sceneFilePath == ".\Scenes\Scene\Folder\Names\sceneFile.extension":
-			const string sceneFilePath = en::ConfigKeys::k_scenesDirName + sceneNameParam; // k_scenesDirName = ".\Scenes\"
+			const string sceneFilePath = en::ConfigKeys::k_scenesDirNameKey + sceneNameParam; // k_scenesDirNameKey = ".\Scenes\"
 			SetValue(en::ConfigKeys::k_sceneFilePathKey, sceneFilePath, Config::SettingType::Runtime);
 
 			// sceneRootPath == ".\Scenes\Scene\Folder\Names\":
@@ -384,7 +384,7 @@ namespace en
 		const std::string documentFolderPath = util::FromWideString(documentsFolderPathPtr);
 		CoTaskMemFree(static_cast<void*>(documentsFolderPathPtr));
 
-		SetValue(ConfigKeys::k_documentsFolderPathKey, documentFolderPath, SettingType::Runtime);
+		TrySetValue(ConfigKeys::k_documentsFolderPathKey, documentFolderPath, SettingType::Runtime);
 	}
 
 
@@ -400,8 +400,8 @@ namespace en
 		
 		// Window:
 		markDirty |= TrySetValue("windowTitle",				std::string("Saber Engine"),	SettingType::Common);
-		markDirty |= TrySetValue(ConfigKeys::k_windowXResValueName,	1920,		SettingType::Common);
-		markDirty |= TrySetValue(ConfigKeys::k_windowYResValueName,	1080,		SettingType::Common);
+		markDirty |= TrySetValue(ConfigKeys::k_windowWidthKey,	1920,		SettingType::Common);
+		markDirty |= TrySetValue(ConfigKeys::k_windowHeightKey,	1080,		SettingType::Common);
 
 		// System config:
 		markDirty |= TrySetValue("vsync",					true,				SettingType::Common);

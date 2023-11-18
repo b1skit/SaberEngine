@@ -43,6 +43,14 @@
       "Command": "-debuglevel 3"
     },
     {
+      "Id": "cc06814b-625d-4a6c-a7b1-7bd961bb16fb",
+      "Command": "-width 640"
+    },
+    {
+      "Id": "85e24446-3d31-40f3-a558-8e729b12a412",
+      "Command": "-height 480"
+    },
+    {
       "Id": "6dd1fc69-ed79-4d85-b912-fcc514e395a2",
       "Command": "-scene MetalRoughSpheresNoTextures\\glTF\\MetalRoughSpheresNoTextures.gltf"
     },

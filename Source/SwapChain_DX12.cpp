@@ -45,8 +45,8 @@ namespace dx12
 		HRESULT hr = CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory4));
 		CheckHResult(hr, "Failed to create DXGIFactory2");
 
-		const int width = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
-		const int height = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName);
+		const int width = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
+		const int height = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
 
 		re::Texture::TextureParams colorParams;
 		colorParams.m_width = width;

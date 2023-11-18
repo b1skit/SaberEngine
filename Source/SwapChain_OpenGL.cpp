@@ -29,8 +29,8 @@ namespace opengl
 		{
 			0,
 			0,
-			(uint32_t)en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName),
-			(uint32_t)en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName)
+			(uint32_t)en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey),
+			(uint32_t)en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey)
 		});
 		// Note: OpenGL framebuffer has no texture targets
 	}

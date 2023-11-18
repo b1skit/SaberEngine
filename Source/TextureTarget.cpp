@@ -133,8 +133,8 @@ namespace re
 	Viewport::Viewport() :
 		m_xMin(0),
 		m_yMin(0),
-		m_width(Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName)),
-		m_height(Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName))
+		m_width(Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey)),
+		m_height(Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey))
 	{
 	}
 
@@ -153,8 +153,8 @@ namespace re
 	ScissorRect::ScissorRect()
 		: m_left(0)
 		, m_top(0)
-		, m_right(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName))
-		, m_bottom(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName))
+		, m_right(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey))
+		, m_bottom(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey))
 	{
 	}
 
@@ -368,8 +368,8 @@ namespace re
 		// -> OR: A target has a flag (and just no texture resource, for OpenGL)?
 		if (!foundDimensions)
 		{
-			const uint32_t xRes = (uint32_t)Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
-			const uint32_t yRes = (uint32_t)Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName);
+			const uint32_t xRes = (uint32_t)Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
+			const uint32_t yRes = (uint32_t)Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
 
 			targetDimensions.x = (float)xRes;
 			targetDimensions.y = (float)yRes;

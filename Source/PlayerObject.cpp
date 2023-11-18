@@ -103,8 +103,8 @@ namespace fr
 		const float mousePxDeltaX = InputManager::GetRelativeMouseInput(en::Input_MouseX);
 		const float mousePxDeltaY = InputManager::GetRelativeMouseInput(en::Input_MouseY);
 		
-		const float xRes = static_cast<float>(Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName));
-		const float yRes = static_cast<float>(Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName));
+		const float xRes = static_cast<float>(Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey));
+		const float yRes = static_cast<float>(Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey));
 		
 		const float yFOV = m_playerCam->FieldOfViewYRad();
 		const float xFOV = (xRes * yFOV) / yRes;

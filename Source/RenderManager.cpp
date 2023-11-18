@@ -925,9 +925,9 @@ namespace re
 		platform::RenderManager::StartImGuiFrame();
 
 
-		const int windowWidth = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
+		const int windowWidth = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
 		const int windowHeight =
-			(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName));
+			(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey));
 
 		// Menu bar:
 		ImVec2 menuBarSize = { 0, 0 }; // Record the size of the menu bar so we can align things absolutely underneath it

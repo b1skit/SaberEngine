@@ -58,11 +58,11 @@ namespace en
 
 		// Create a window:
 		std::string commandLineArgs;
-		Config::Get()->TryGetValue<string>(en::ConfigKeys::k_commandLineArgsValueName, commandLineArgs);
+		Config::Get()->TryGetValue<string>(en::ConfigKeys::k_commandLineArgsValueKey, commandLineArgs);
 
 		const string windowTitle = Config::Get()->GetValue<string>("windowTitle") + " " + commandLineArgs;
-		const int xRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowXResValueName);
-		const int yRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowYResValueName);
+		const int xRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
+		const int yRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
 
 		m_window = std::make_unique<en::Window>(); // Ensure Window exists for first callbacks triggered by Create
 		const bool windowCreated = m_window->Create(windowTitle, xRes, yRes);
