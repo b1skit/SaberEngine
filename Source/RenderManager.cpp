@@ -170,7 +170,7 @@ namespace re
 		re::Context::Get()->GetParameterBlockAllocator().ClosePermanentPBRegistrationPeriod();
 
 		// Create/buffer new resources from our RenderSystems/GraphicsSystems
-		CreateAPIResources();
+		CreateAPIResources(); // Note: This writes to our api buffers, so we can't swap yet
 				
 		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
 
@@ -185,19 +185,27 @@ namespace re
 		// Copy frame data:
 		SEAssert("Render batches should be empty", m_renderBatches.empty());
 		m_renderBatches = std::move(SceneManager::Get()->GetSceneBatches());
-		// TODO: Create a BatchManager object that can handle batch double-buffering
+		// TODO: Batch creation should be done on the render thread, using simplistic renderer-side representations of
+		// scene objects updated via a render command queue
 
 		// Execute each RenderSystem's platform-specific graphics system update pipelines:
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
 			renderSystem->ExecuteUpdatePipeline();
 		}
-	
-		// Swap our PB buffers, now that our render systems have written to them
-		re::Context::Get()->GetParameterBlockAllocator().SwapBuffers(frameNum);
+
+		// "Swap" our CPU-side PB data buffers, now that our render systems have written to them
+		re::Context::Get()->GetParameterBlockAllocator().SwapCPUBuffers(frameNum);
 
 		// Create any new resources that have been loaded since the last frame:
 		CreateAPIResources();
+
+		// Swap our API buffers: We (currently) need to do this after this CreateAPIResources call, as we also call
+		// CreateAPIResources during Initialize(), which writes into our platform buffers. If we did this any sooner,
+		// we'd end up with the data written to the platform buffers during Initialize() being written to a different 
+		// buffer than the contents written during frame 0's PreUpdate.
+		// This is a temporary solution until we remove ParameterBlockAllocator CPU-side double-buffering altogether
+		re::Context::Get()->GetParameterBlockAllocator().SwapPlatformBuffers(frameNum);
 
 		PIXEndEvent();
 	}
@@ -209,7 +217,7 @@ namespace re
 
 		HandleEvents();
 
-		// Update/buffer param blocks:
+		// Update/buffer param blocks, now that the read/write indexes have been swapped
 		re::Context::Get()->GetParameterBlockAllocator().BufferParamBlocks();
 
 		// API-specific rendering loop virtual implementations:
@@ -253,7 +261,7 @@ namespace re
 		// Swap the single-frame resource n-buffers:
 		m_singleFrameVertexStreams.Swap();
 
-		re::Context::Get()->GetParameterBlockAllocator().EndOfFrame();
+		re::Context::Get()->GetParameterBlockAllocator().EndFrame();
 
 		PIXEndEvent();
 	}

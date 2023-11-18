@@ -13,41 +13,45 @@
 #include "InputManager_Platform.h"
 #include "InputManager_Win32.h"
 
-#include "ParameterBlock.h"
 #include "ParameterBlock_DX12.h"
 #include "ParameterBlock_OpenGL.h"
+#include "ParameterBlock_Platform.h"
 
-#include "RenderManager_Platform.h"
+#include "ParameterBlockAllocator_DX12.h"
+#include "ParameterBlockAllocator_OpenGL.h"
+#include "ParameterBlockAllocator_Platform.h"
+
 #include "RenderManager_DX12.h"
 #include "RenderManager_OpenGL.h"
+#include "RenderManager_Platform.h"
 
 #include "Sampler_DX12.h"
 #include "Sampler_OpenGL.h"
 #include "Sampler_Platform.h"
 
 #include "Shader_DX12.h"
-#include "Shader_Platform.h"
 #include "Shader_OpenGL.h"
+#include "Shader_Platform.h"
 
 #include "SwapChain_DX12.h"
-#include "SwapChain_Platform.h"
 #include "SwapChain_OpenGL.h"
+#include "SwapChain_Platform.h"
 
 #include "SysInfo_DX12.h"
-#include "SysInfo_Platform.h"
 #include "SysInfo_OpenGL.h"
+#include "SysInfo_Platform.h"
 
 #include "Texture_DX12.h"
-#include "Texture_Platform.h"
 #include "Texture_OpenGL.h"
+#include "Texture_Platform.h"
 
 #include "TextureTarget_DX12.h"
-#include "TextureTarget_Platform.h"
 #include "TextureTarget_OpenGL.h"
+#include "TextureTarget_Platform.h"
 
 #include "VertexStream_DX12.h"
-#include "VertexStream_Platform.h"
 #include "VertexStream_OpenGL.h"
+#include "VertexStream_Platform.h"
 
 #include "Window_Platform.h"
 #include "Window_Win32.h"
@@ -95,6 +99,10 @@ namespace platform
 			platform::ParameterBlock::Update			= &opengl::ParameterBlock::Update;
 			platform::ParameterBlock::Destroy			= &opengl::ParameterBlock::Destroy;
 
+			// Parameter block allocator:
+			platform::ParameterBlockAllocator::Create	= &opengl::ParameterBlockAllocator::Create;
+			platform::ParameterBlockAllocator::Destroy	= &opengl::ParameterBlockAllocator::Destroy;
+
 			// Render manager:
 			platform::RenderManager::Initialize			= &opengl::RenderManager::Initialize;
 			platform::RenderManager::Shutdown			= &opengl::RenderManager::Shutdown;
@@ -135,9 +143,13 @@ namespace platform
 			platform::Context::Destroy	= &dx12::Context::Destroy;
 
 			// Parameter blocks:
-			platform::ParameterBlock::Create	= &dx12::ParameterBlock::Create;
-			platform::ParameterBlock::Update	= &dx12::ParameterBlock::Update;
-			platform::ParameterBlock::Destroy	= &dx12::ParameterBlock::Destroy;
+			platform::ParameterBlock::Create			= &dx12::ParameterBlock::Create;
+			platform::ParameterBlock::Update			= &dx12::ParameterBlock::Update;
+			platform::ParameterBlock::Destroy			= &dx12::ParameterBlock::Destroy;
+
+			// Parameter block allocator:
+			platform::ParameterBlockAllocator::Create	= &dx12::ParameterBlockAllocator::Create;
+			platform::ParameterBlockAllocator::Destroy	= &dx12::ParameterBlockAllocator::Destroy;
 			
 			// Render manager:
 			platform::RenderManager::Initialize			= &dx12::RenderManager::Initialize;

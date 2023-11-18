@@ -45,11 +45,11 @@ namespace dx12
 
 		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
 
-		D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
-		descriptorHeapDesc.Type = m_heapType;
-		descriptorHeapDesc.NumDescriptors = k_totalDescriptors;
-		descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-		descriptorHeapDesc.NodeMask = deviceNodeMask;
+		const D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = D3D12_DESCRIPTOR_HEAP_DESC{
+			.Type = m_heapType,
+			.NumDescriptors = k_totalDescriptors,
+			.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+			.NodeMask = deviceNodeMask };
 
 		HRESULT hr = device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&m_gpuDescriptorTableHeap));
 		CheckHResult(hr, "Failed to create descriptor heap");
@@ -255,13 +255,14 @@ namespace dx12
 	}
 
 
-	void GPUDescriptorHeap::SetInlineCBV(uint32_t rootParamIdx, ID3D12Resource* buffer)
+	// https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html#using-descriptors-directly-in-the-root-arguments
+	void GPUDescriptorHeap::SetInlineCBV(uint32_t rootParamIdx, ID3D12Resource* buffer, uint64_t alignedByteOffset)
 	{
 		SEAssert("Invalid root parameter index", rootParamIdx < k_totalRootSigDescriptorTableIndices);
 		SEAssert("Invalid resource pointer", buffer != nullptr);
 		SEAssert("Wrong heap type", m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		m_inlineDescriptors[CBV][rootParamIdx] = buffer->GetGPUVirtualAddress();
+		m_inlineDescriptors[CBV][rootParamIdx] = buffer->GetGPUVirtualAddress() + alignedByteOffset;
 		
 		// Mark our root parameter index as dirty:
 		const uint32_t rootParamIdxBitmask = 1 << rootParamIdx;
@@ -276,13 +277,14 @@ namespace dx12
 	}
 
 
-	void GPUDescriptorHeap::SetInlineSRV(uint32_t rootParamIdx, ID3D12Resource* buffer)
+	// https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html#using-descriptors-directly-in-the-root-arguments
+	void GPUDescriptorHeap::SetInlineSRV(uint32_t rootParamIdx, ID3D12Resource* buffer, uint64_t alignedByteOffset)
 	{
 		SEAssert("Invalid root parameter index", rootParamIdx < k_totalRootSigDescriptorTableIndices);
 		SEAssert("Invalid resource pointer", buffer != nullptr);
 		SEAssert("Wrong heap type", m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		m_inlineDescriptors[SRV][rootParamIdx] = buffer->GetGPUVirtualAddress();
+		m_inlineDescriptors[SRV][rootParamIdx] = buffer->GetGPUVirtualAddress() + alignedByteOffset;
 
 		// Mark our root parameter index as dirty:
 		const uint32_t rootParamIdxBitmask = 1 << rootParamIdx;
@@ -297,13 +299,14 @@ namespace dx12
 	}
 
 
-	void GPUDescriptorHeap::SetInlineUAV(uint32_t rootParamIdx, ID3D12Resource* buffer)
+	// https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html#using-descriptors-directly-in-the-root-arguments
+	void GPUDescriptorHeap::SetInlineUAV(uint32_t rootParamIdx, ID3D12Resource* buffer, uint64_t alignedByteOffset)
 	{
 		SEAssert("Invalid root parameter index", rootParamIdx < k_totalRootSigDescriptorTableIndices);
 		SEAssert("Invalid resource pointer", buffer != nullptr);
 		SEAssert("Wrong heap type", m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		
-		m_inlineDescriptors[UAV][rootParamIdx] = buffer->GetGPUVirtualAddress();
+		m_inlineDescriptors[UAV][rootParamIdx] = buffer->GetGPUVirtualAddress() + alignedByteOffset;
 
 		// Mark our root parameter index as dirty:
 		const uint32_t rootParamIdxBitmask = 1 << rootParamIdx;

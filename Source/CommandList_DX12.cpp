@@ -298,15 +298,17 @@ namespace dx12
 			case re::ParameterBlock::PBDataType::SingleElement:
 			{
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineCBV(
-					rootSigIdx,							// Root signature index 
-					pbPlatParams->m_resource.Get());	// Resource
+					rootSigIdx,
+					pbPlatParams->m_resource.Get(),
+					pbPlatParams->m_heapByteOffset);
 			}
 			break;
 			case re::ParameterBlock::PBDataType::Array:
 			{
 				m_gpuCbvSrvUavDescriptorHeaps->SetInlineSRV(
-					rootSigIdx,							// Root signature index 
-					pbPlatParams->m_resource.Get());	// Resource
+					rootSigIdx,
+					pbPlatParams->m_resource.Get(),
+					pbPlatParams->m_heapByteOffset);
 			}
 			break;
 			default:
@@ -517,39 +519,34 @@ namespace dx12
 		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> colorTargetDescriptors;
 		colorTargetDescriptors.reserve(targetSet.GetColorTargets().size());
 
-		uint32_t numColorTargets = 0;
 		for (uint8_t i = 0; i < targetSet.GetColorTargets().size(); i++)
 		{
 			re::TextureTarget const& target = targetSet.GetColorTarget(i);
-			if (target.HasTexture())
+			if (!target.HasTexture())
 			{
-				dx12::Texture::PlatformParams* texPlatParams =
-					target.GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-
-				re::TextureTarget::TargetParams const& targetParams = target.GetTargetParams();
-
-				std::shared_ptr<re::Texture> targetTexture = target.GetTexture();
-
-				TransitionResource(
-					targetTexture,
-					D3D12_RESOURCE_STATE_RENDER_TARGET,
-					targetParams.m_targetMip);
-
-				const uint32_t numMips = targetTexture->GetNumMips();
-				const uint32_t targetFace = targetParams.m_targetFace;
-				const uint32_t targetMip = targetParams.m_targetMip;
-
-				const uint32_t subresourceIdx = (targetFace * numMips) + targetMip;
-
-				dx12::TextureTarget::PlatformParams* targetPlatParams =
-					target.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
-
-				// Attach the RTV for the target face:
-				colorTargetDescriptors.emplace_back(
-					targetPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor());
-
-				numColorTargets++;
+				break; // Targets must be bound in monotonically-increasing order from slot 0
 			}
+			std::shared_ptr<re::Texture> targetTexture = target.GetTexture();
+
+			dx12::Texture::PlatformParams* texPlatParams =
+				targetTexture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+
+			re::TextureTarget::TargetParams const& targetParams = target.GetTargetParams();
+
+			TransitionResource(
+				targetTexture,
+				D3D12_RESOURCE_STATE_RENDER_TARGET,
+				targetParams.m_targetMip);
+
+			const uint32_t numMips = targetTexture->GetNumMips();
+			const uint32_t subresourceIdx = (targetParams.m_targetFace * numMips) + targetParams.m_targetMip;
+
+			dx12::TextureTarget::PlatformParams* targetPlatParams =
+				target.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
+
+			// Attach the RTV for the target face:
+			colorTargetDescriptors.emplace_back(
+				targetPlatParams->m_rtvDsvDescriptors[subresourceIdx].GetBaseDescriptor());
 		}
 
 		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptor{};
@@ -605,6 +602,8 @@ namespace dx12
 			}
 		}
 
+		const uint32_t numColorTargets = targetSet.GetNumColorTargets();
+
 		// NOTE: isSingleHandleToDescRange == true specifies that the rtvs are contiguous in memory, thus N rtv 
 		// descriptors will be found by offsetting from rtvs[0]. Otherwise, it is assumed rtvs is an array of descriptor
 		// pointers
@@ -639,16 +638,34 @@ namespace dx12
 		SEAssert("This function should only be called from compute command lists", m_type == CommandListType::Compute);
 		SEAssert("Pipeline is not currently set", m_currentPSO);
 
+		// Track the D3D resources we've seen during this call, to help us decide whether to insert a UAV barrier or 
+		// not. We search in reverse order because it seems more natural that the same resource would be attached in
+		// sequence, but this is just an assumption. The search is likely to be very short either way
+		std::vector<ID3D12Resource*> seenResources;
+		seenResources.reserve(textureTargetSet.GetNumColorTargets());
+		auto ResourceWasTransitionedInThisCall = [&seenResources](ID3D12Resource const* newResource) -> bool
+		{
+			std::vector<ID3D12Resource*>::iterator itr = seenResources.end();
+			while (itr != seenResources.begin())
+			{
+				itr--; // .end() is invalid; Need to decrement first
+				if (newResource == *itr)
+				{
+					return true;
+				}
+			}
+			return false;
+		};
+
 		std::vector<re::TextureTarget> const& colorTargets = textureTargetSet.GetColorTargets();
 		for (size_t i = 0; i < colorTargets.size(); i++)
 		{
-			if (!colorTargets[i].HasTexture())
+			re::TextureTarget const& colorTarget = colorTargets[i];
+			if (!colorTarget.HasTexture())
 			{
-				continue;
-			}
-			re::TextureTarget const* colorTarget = &colorTargets[i];
-
-			std::shared_ptr<re::Texture> colorTex = colorTarget->GetTexture();
+				break; // Targets must be bound in monotonically-increasing order from slot 0
+			}			
+			std::shared_ptr<re::Texture> colorTex = colorTarget.GetTexture();
 
 			SEAssert("It is unexpected that we're trying to attach a texture with DepthTarget usage to a compute shader",
 				(colorTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0);
@@ -669,17 +686,18 @@ namespace dx12
 				SEAssert("Compute shaders can only write to UAVs",
 					rootSigEntry->m_tableEntry.m_type == dx12::RootSignature::DescriptorType::UAV);
 
-
-				re::TextureTarget::TargetParams const& targetParams = colorTarget->GetTargetParams();
+				re::TextureTarget::TargetParams const& targetParams = colorTarget.GetTargetParams();
 
 				dx12::Texture::PlatformParams* texPlatParams =
 					colorTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
+				const uint32_t targetMip = targetParams.m_targetMip;
+
 				SEAssert("Not enough UAV descriptors",
-					targetParams.m_targetMip < texPlatParams->m_uavCpuDescAllocations.size());
+					targetMip < texPlatParams->m_uavCpuDescAllocations.size());
 
 				dx12::DescriptorAllocation const* descriptorAllocation =
-					&texPlatParams->m_uavCpuDescAllocations[targetParams.m_targetMip];
+					&texPlatParams->m_uavCpuDescAllocations[targetMip];
 
 				m_gpuCbvSrvUavDescriptorHeaps->SetDescriptorTable(
 					rootSigEntry->m_index,
@@ -689,18 +707,23 @@ namespace dx12
 
 				// We're writing to a UAV, we may need a UAV barrier:
 				ID3D12Resource* resource = texPlatParams->m_textureResource.Get();
-				if (m_resourceStates.HasSeenSubresourceInState(resource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS))
+				if (m_resourceStates.HasSeenSubresourceInState(resource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS) &&
+					!ResourceWasTransitionedInThisCall(resource))
 				{
 					// We've accessed this resource before on this command list, and it was transitioned to a UAV
-					// state. We must ensure any previous work was done before we access it again
+					// state at some point before this call to SetComputeTargets. We must ensure any previous work was
+					// done before we access it again
+					// TODO: This could/should be handled on a per-subresource level. Currently, this results in UAV
+					// barriers even when it's a different subresource that was used in a UAV operation
 					InsertUAVBarrier(colorTex);
 				}
+				seenResources.emplace_back(resource);
 
 				// Insert our resource transition:
 				TransitionResource(
-					colorTarget->GetTexture(),
+					colorTex,
 					D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-					colorTarget->GetTargetParams().m_targetMip);
+					targetMip);
 			}
 		}
 

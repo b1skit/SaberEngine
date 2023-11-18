@@ -307,6 +307,9 @@ namespace opengl
 		opengl::SysInfo::GetUniformBufferOffsetAlignment();
 		opengl::SysInfo::GetShaderStorageBufferOffsetAlignment();
 
+		// Parameter Block Allocator:
+		m_paramBlockAllocator.Create();
+
 		// Setup our ImGui context
 		{
 			IMGUI_CHECKVERSION();

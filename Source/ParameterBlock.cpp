@@ -42,6 +42,7 @@ namespace re
 		// Note: We commit via the PBM directly here, as we might be an immutable PB
 		pbm.Commit(newPB->GetUniqueID(), data);
 
+		// TODO: We should handle this internally; No point passing around PBs to another system
 		RenderManager::Get()->RegisterForCreate(newPB); // Enroll for deferred platform layer creation
 	}
 

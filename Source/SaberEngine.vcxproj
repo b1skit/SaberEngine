@@ -156,6 +156,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
       <Command>xcopy "$(ProjectDir)Dependencies\glew\bin\Release\x64\glew32.dll" "$(SolutionDir)SaberEngine" /y
 xcopy "$(ProjectDir)Shaders\GLSL\*.*" "$(SolutionDir)SaberEngine\Shaders\GLSL\" /y
 xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y
+xcopy "$(OutDirFullPath)WinPixEventRuntime.dll" "$(SolutionDir)SaberEngine\" /y
 xcopy "$(OutDirFullPath)*.exe" "$(SolutionDir)SaberEngine\*.exe" /y /s</Command>
       <Message>Copy dependencies to project directory</Message>
     </PostBuildEvent>
@@ -241,6 +242,9 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="MeshFactory.cpp" />
     <ClCompile Include="ParameterBlock.cpp" />
     <ClCompile Include="ParameterBlockAllocator.cpp" />
+    <ClCompile Include="ParameterBlockAllocator_DX12.cpp" />
+    <ClCompile Include="ParameterBlockAllocator_OpenGL.cpp" />
+    <ClCompile Include="ParameterBlockAllocator_Platform.cpp" />
     <ClCompile Include="ParameterBlock_DX12.cpp" />
     <ClCompile Include="ParameterBlock_OpenGL.cpp" />
     <ClCompile Include="ParameterBlock_Platform.cpp" />
@@ -349,6 +353,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="Dependencies\imgui\imstb_truetype.h" />
     <ClInclude Include="Device_DX12.h" />
     <ClInclude Include="DoubleBufferUnorderedMap.h" />
+    <ClInclude Include="ParameterBlockAllocator_DX12.h" />
     <ClInclude Include="MeshFactory.h" />
     <ClInclude Include="NBufferedVector.h" />
     <ClInclude Include="EngineThread.h" />
@@ -369,6 +374,8 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="ParameterBlock.h" />
     <ClInclude Include="ParameterBlockAllocator.h" />
+    <ClInclude Include="ParameterBlockAllocator_OpenGL.h" />
+    <ClInclude Include="ParameterBlockAllocator_Platform.h" />
     <ClInclude Include="ParameterBlock_DX12.h" />
     <ClInclude Include="ParameterBlock_OpenGL.h" />
     <ClInclude Include="ParameterBlock_Platform.h" />

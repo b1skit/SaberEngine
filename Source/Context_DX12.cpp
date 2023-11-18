@@ -110,8 +110,11 @@ namespace dx12
 		// NOTE: Must create the swapchain after our command queues. This is because the DX12 swapchain creation
 		// requires a direct command queue; dx12::SwapChain::Create recursively gets it from the Context platform params
 		re::SwapChain& swapChain = GetSwapChain();
-		swapChain.Create(); 
-		
+		swapChain.Create();
+
+		// Parameter Block Allocator:
+		m_paramBlockAllocator.Create();
+
 		// Setup our ImGui context
 		{
 			IMGUI_CHECKVERSION();

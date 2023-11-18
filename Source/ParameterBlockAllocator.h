@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
+#include "IPlatformParams.h"
 #include "ParameterBlock.h"
 
 
@@ -9,20 +10,59 @@ namespace re
 	class ParameterBlockAllocator
 	{
 	public:
-		ParameterBlockAllocator();
-		ParameterBlockAllocator(ParameterBlockAllocator&&) = default;
-		ParameterBlockAllocator& operator=(ParameterBlockAllocator&&) = default;
-		~ParameterBlockAllocator();
+		static constexpr uint32_t k_fixedAllocationByteSize = 32 * 1024 * 1024; // Arbitrary: Increase as necessary
 
+
+	public:
+		struct PlatformParams : public re::IPlatformParams
+		{
+		public:
+			PlatformParams();
+			virtual ~PlatformParams() = 0;
+
+			// TODO: These should be a part of the ParameterBlockManager
+			void BeginFrame();
+			uint8_t GetWriteIndex() const;
+			uint32_t AdvanceBaseIdx(re::ParameterBlock::PBDataType, uint32_t alignedSize);
+			
+			const uint8_t m_numBuffers;
+
+
+		protected:
+			// For single-frame resources, to ensure resources are available throughout their lifetime we allocate one
+			// buffer in the upload heap, per each of the maximum number of frames in flight.
+			// 
+			// Single-frame resources are stack-allocated from these heaps, AND maintained for a fixed lifetime of N 
+			// frames. We only write into 1 array of each type at a time, thus only need 1 base index per PBDataType.
+			//
+			// We maintain the stack base indexes here, and let the API-layer figure out how to interpret/use it.
+			//
+			std::array<std::atomic<uint32_t>, re::ParameterBlock::PBDataType::PBDataType_Count> m_bufferBaseIndexes;
+
+		private:
+			uint8_t m_writeIdx;
+		};
+
+
+	public:
+		ParameterBlockAllocator();
+		void Create();
+
+		~ParameterBlockAllocator();
 		void Destroy();
+
 		bool IsValid() const; // Has Destroy() been called?
 
 		void BufferParamBlocks();
 
 		void ClosePermanentPBRegistrationPeriod(); // Called once after all permanent PBs are created
 
-		void SwapBuffers(uint64_t renderFrameNum); // renderFrameNum is always 1 behind the front end thread
-		void EndOfFrame(); // Clears single-frame PBs
+		void SwapPlatformBuffers(uint64_t renderFrameNum);
+		void SwapCPUBuffers(uint64_t renderFrameNum); // renderFrameNum is always 1 behind the front end thread
+		void EndFrame(); // Clears single-frame PBs
+
+		ParameterBlockAllocator::PlatformParams* GetPlatformParams() const;
+		void SetPlatformParams(std::unique_ptr<ParameterBlockAllocator::PlatformParams> params);
 
 
 	private:
@@ -33,7 +73,6 @@ namespace re
 		typedef uint64_t Handle; // == NamedObject::UniqueID()
 
 		static constexpr uint8_t k_numBuffers = 2;
-		static constexpr uint32_t k_fixedAllocationByteSize = 16 * 1024 * 1024; // Arbitrary; Increase as necessary
 
 		struct CommitMetadata
 		{
@@ -50,6 +89,7 @@ namespace re
 		} m_immutableAllocations;
 
 		// TODO: Double-buffered allocations should have 2 mutexes (or a read/write mutex)
+		// OR: Don't double-buffer on the CPU side: Write directly to device buffers
 
 		struct MutableAllocation // Double buffered
 		{
@@ -76,6 +116,8 @@ namespace re
 		std::array<std::queue<Handle>, k_numBuffers> m_dirtyParameterBlocks;
 		std::mutex m_dirtyParameterBlocksMutex;
 
+		std::unique_ptr<PlatformParams> m_platformParams;
+
 
 	private:
 		void ClearDeferredDeletions(uint64_t frameNum);
@@ -86,8 +128,8 @@ namespace re
 	private:
 		uint64_t m_readFrameNum; // Render thread read frame # is always 1 behind the front end thread write frame
 
-		uint64_t GetReadIdx() const { return m_readFrameNum % k_numBuffers; }
-		uint64_t GetWriteIdx() const { return (m_readFrameNum + 1 ) % k_numBuffers; }
+		uint64_t GetReadIdx() const;
+		uint64_t GetWriteIdx() const;
 		
 
 	private:
@@ -96,6 +138,8 @@ namespace re
 		bool m_isValid;
 
 	private: // Interfaces for the ParameterBlock friend class:
+		friend class re::ParameterBlock;
+
 		void Allocate(Handle uniqueID, uint32_t numBytes, ParameterBlock::PBType pbType); // Called once at creation
 		void Commit(Handle uniqueID, void const* data);	// Update the parameter block data held by the allocator
 		
@@ -107,8 +151,24 @@ namespace re
 
 	private:
 		ParameterBlockAllocator(ParameterBlockAllocator const&) = delete;
+		ParameterBlockAllocator(ParameterBlockAllocator&&) = delete;
 		ParameterBlockAllocator& operator=(ParameterBlockAllocator const&) = delete;
-
-		friend class re::ParameterBlock;
+		ParameterBlockAllocator& operator=(ParameterBlockAllocator&&) = delete;
 	};
+
+
+	inline uint64_t ParameterBlockAllocator::GetReadIdx() const
+	{
+		return m_readFrameNum % k_numBuffers;
+	}
+
+
+	inline uint64_t ParameterBlockAllocator::GetWriteIdx() const
+	{
+		return (m_readFrameNum + 1) % k_numBuffers;
+	}
+
+
+	// We need to provide a destructor implementation since it's pure virtual
+	inline ParameterBlockAllocator::PlatformParams::~PlatformParams() {};
 }

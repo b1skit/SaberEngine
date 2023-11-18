@@ -57,9 +57,9 @@ namespace dx12
 			uint32_t rootParamIdx, dx12::DescriptorAllocation const& src, uint32_t offset, uint32_t count);
 
 		// Set resource views directly in the GPU-visible descriptor heap:
-		void SetInlineCBV(uint32_t rootParamIdx, ID3D12Resource*); // = 1 DWORD each
-		void SetInlineSRV(uint32_t rootParamIdx, ID3D12Resource*); // = 2 DWORDS each
-		void SetInlineUAV(uint32_t rootParamIdx, ID3D12Resource*); // = 2 DWORDS each
+		void SetInlineCBV(uint32_t rootParamIdx, ID3D12Resource*, uint64_t alignedByteOffset); // = 1 DWORD each
+		void SetInlineSRV(uint32_t rootParamIdx, ID3D12Resource*, uint64_t alignedByteOffset); // = 2 DWORDS each
+		void SetInlineUAV(uint32_t rootParamIdx, ID3D12Resource*, uint64_t alignedByteOffset); // = 2 DWORDS each
 
 		void Commit(); // Copy all of our cached descriptors to our internal GPU-visible descriptor heap
 

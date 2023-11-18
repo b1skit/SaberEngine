@@ -32,7 +32,7 @@ namespace re
 			PBType_Count
 		};
 
-		enum class PBDataType
+		enum PBDataType : uint8_t
 		{
 			SingleElement,
 			Array,

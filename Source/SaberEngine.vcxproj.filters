@@ -814,6 +814,15 @@
     <ClInclude Include="NBufferedVector.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
+    <ClInclude Include="ParameterBlockAllocator_Platform.h">
+      <Filter>Header Files\re\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="ParameterBlockAllocator_OpenGL.h">
+      <Filter>Header Files\re\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="ParameterBlockAllocator_DX12.h">
+      <Filter>Header Files\re\DX12</Filter>
+    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>

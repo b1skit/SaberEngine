@@ -2,9 +2,11 @@
 #include <pix3.h>
 
 #include "ParameterBlockAllocator.h"
+#include "ParameterBlockAllocator_Platform.h"
 #include "DebugConfiguration.h"
 #include "ParameterBlock_Platform.h"
 #include "RenderManager.h"
+#include "RenderManager_Platform.h"
 #include "CastUtils.h"
 
 using re::ParameterBlock;
@@ -14,11 +16,74 @@ using std::unordered_map;
 
 namespace
 {
-	constexpr uint64_t k_deferredDeleteNumFrames = 2; // How many frames-worth of padding before API deletion
+	// How many frames-worth of padding before calling ParameterBlock::Destroy on deallocated PBs
+	constexpr uint64_t k_deferredDeleteNumFrames = 2;
 }
 
 namespace re
 {
+	// Parameter Block Platform Params:
+	//---------------------------------
+
+	ParameterBlockAllocator::PlatformParams::PlatformParams()
+		: m_numBuffers(platform::RenderManager::GetNumFrames())
+		, m_writeIdx(0)
+	{
+		// We maintain N stack base indexes for each PBDataType; Initialize them to 0
+		for (uint8_t pbDataType = 0; pbDataType < re::ParameterBlock::PBDataType::PBDataType_Count; pbDataType++)
+		{
+			m_bufferBaseIndexes[pbDataType].store(0);
+		}
+	}
+
+
+	void ParameterBlockAllocator::PlatformParams::BeginFrame()
+	{
+		// Increment the write index
+		m_writeIdx = (m_writeIdx + 1) % m_numBuffers;
+
+		// Reset the stack base index back to 0 for each type of shared PB buffer:
+		for (uint8_t pbDataType = 0; pbDataType < re::ParameterBlock::PBDataType::PBDataType_Count; pbDataType++)
+		{
+			m_bufferBaseIndexes[pbDataType].store(0);
+		}
+	}
+
+
+	uint32_t ParameterBlockAllocator::PlatformParams::AdvanceBaseIdx(
+		re::ParameterBlock::PBDataType pbDataType, uint32_t alignedSize)
+	{
+		// Atomically advance the stack base index for the next call, and return the base index for the current one
+		const uint32_t allocationBaseIdx = m_bufferBaseIndexes[pbDataType].fetch_add(alignedSize);
+
+		SEAssert("Allocation is out of bounds. Consider increasing k_singleFrameBufferSize", 
+			allocationBaseIdx + alignedSize <= k_fixedAllocationByteSize);
+
+		return allocationBaseIdx;
+	}
+
+
+	uint8_t ParameterBlockAllocator::PlatformParams::GetWriteIndex() const
+	{
+		return m_writeIdx;
+	}
+
+
+	// Parameter Block Allocator:
+	//---------------------------
+
+	ParameterBlockAllocator::PlatformParams* ParameterBlockAllocator::GetPlatformParams() const
+	{
+		return m_platformParams.get();
+	}
+
+
+	void ParameterBlockAllocator::SetPlatformParams(std::unique_ptr<ParameterBlockAllocator::PlatformParams> params)
+	{
+		m_platformParams = std::move(params);
+	}
+
+
 	ParameterBlockAllocator::ParameterBlockAllocator()
 		: m_immutableAllocations{}
 		, m_mutableAllocations{}
@@ -30,12 +95,20 @@ namespace re
 		, m_isValid(true)
 		, m_readFrameNum(std::numeric_limits<uint64_t>::max()) // Odd 1st number (18,446,744,073,709,551,615), then wrap
 	{
+		platform::ParameterBlockAllocator::CreatePlatformParams(*this);
+
 		// Initialize the single frame stack allocations:
 		for (uint8_t i = 0; i < k_numBuffers; i++)
 		{
 			m_singleFrameAllocations.m_baseIdx[i] = 0;
 			memset(&m_singleFrameAllocations.m_committed[i][0], 0, k_fixedAllocationByteSize); // Not actually necessary
 		}
+	}
+
+
+	void ParameterBlockAllocator::Create()
+	{
+		platform::ParameterBlockAllocator::Create(*this);
 	}
 
 
@@ -112,6 +185,8 @@ namespace re
 		// immediately cleared
 		ClearDeferredDeletions(std::numeric_limits<uint64_t>::max());
 
+		platform::ParameterBlockAllocator::Destroy(*this);
+
 		m_isValid = false;
 	}
 
@@ -125,12 +200,6 @@ namespace re
 	void ParameterBlockAllocator::ClosePermanentPBRegistrationPeriod()
 	{
 		m_allocationPeriodEnded = true;
-	}
-
-
-	void ParameterBlockAllocator::SwapBuffers(uint64_t renderFrameNum)
-	{
-		m_readFrameNum = renderFrameNum;
 	}
 
 
@@ -500,9 +569,21 @@ namespace re
 	}
 
 
-	void ParameterBlockAllocator::EndOfFrame()
+	void ParameterBlockAllocator::SwapPlatformBuffers(uint64_t renderFrameNum)
 	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::ParameterBlockAllocator::EndOfFrame");
+		m_platformParams->BeginFrame();
+	}
+
+
+	void ParameterBlockAllocator::SwapCPUBuffers(uint64_t renderFrameNum)
+	{
+		m_readFrameNum = renderFrameNum;
+	}
+
+
+	void ParameterBlockAllocator::EndFrame()
+	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::ParameterBlockAllocator::EndFrame");
 
 		// Clear single-frame allocations:
 		{
@@ -538,6 +619,9 @@ namespace re
 
 	void ParameterBlockAllocator::ClearDeferredDeletions(uint64_t frameNum)
 	{
+		SEAssert("Trying to clear before the first swap buffer call", 
+			m_readFrameNum != std::numeric_limits<uint64_t>::max());
+
 		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), 
 			std::format("ParameterBlockAllocator::ClearDeferredDeletions ({})", m_deferredDeleteQueue.size()).c_str());
 
