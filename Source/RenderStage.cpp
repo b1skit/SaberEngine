@@ -249,6 +249,8 @@ namespace re
 
 	void RenderStage::AddBatches(std::vector<re::Batch> const& batches)
 	{
+		m_stageBatches.reserve(batches.size());
+
 		for (size_t i = 0; i < batches.size(); i++)
 		{
 			AddBatch(batches[i]); // Checks filter mask bit before accepting the batch
