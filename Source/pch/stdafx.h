@@ -56,6 +56,7 @@
 #include <Windows.h>
 #include <shellapi.h>
 #include <hidusage.h>
+#include <comdef.h> // HRESULTs to error messages
 // TODO: Move these OS-specific out of the PCH and into platform-specific files that require them
 
 
