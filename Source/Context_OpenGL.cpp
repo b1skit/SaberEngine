@@ -300,25 +300,29 @@ namespace opengl
 		::glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE);
 		::glEnable(GL_SCISSOR_TEST);
 
-		// Setup our ImGui context
-		IMGUI_CHECKVERSION();
-		ImGui::CreateContext();
-		ImGuiIO& io = ImGui::GetIO();
-		io.IniFilename = en::ConfigKeys::k_imguiIniPath;
-
-		// Setup Dear ImGui style
-		ImGui::StyleColorsDark();
-
-		// Setup Platform/Renderer backends
-		::ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
-
-		const string imguiGLSLVersionString = "#version 130";
-		::ImGui_ImplOpenGL3_Init(imguiGLSLVersionString.c_str());
-
-
-		// Call our opengl::SysInfo members while we're on the main thread to cache their values:
+		// Call our opengl::SysInfo members while we're on the main thread to cache their values,
+		// before any systems that might use them
 		opengl::SysInfo::GetMaxRenderTargets();
 		opengl::SysInfo::GetMaxVertexAttributes();
+		opengl::SysInfo::GetUniformBufferOffsetAlignment();
+		opengl::SysInfo::GetShaderStorageBufferOffsetAlignment();
+
+		// Setup our ImGui context
+		{
+			IMGUI_CHECKVERSION();
+			ImGui::CreateContext();
+			ImGuiIO& io = ImGui::GetIO();
+			io.IniFilename = en::ConfigKeys::k_imguiIniPath;
+
+			// Setup Dear ImGui style
+			ImGui::StyleColorsDark();
+
+			// Setup Platform/Renderer backends
+			::ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
+
+			const string imguiGLSLVersionString = "#version 130";
+			::ImGui_ImplOpenGL3_Init(imguiGLSLVersionString.c_str());
+		}
 	}
 
 

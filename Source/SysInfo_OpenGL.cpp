@@ -32,4 +32,26 @@ namespace opengl
 		}
 		return s_maxVertexAttributes;
 	}
+
+
+	GLint SysInfo::GetUniformBufferOffsetAlignment()
+	{
+		static GLint s_uniformBufferOffsetAlignment = 0;
+		if (s_uniformBufferOffsetAlignment == 0)
+		{
+			glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &s_uniformBufferOffsetAlignment);
+		}
+		return s_uniformBufferOffsetAlignment;
+	}
+
+
+	GLint SysInfo::GetShaderStorageBufferOffsetAlignment()
+	{
+		static GLint s_shaderStorageBufferOffsetAlignment = 0;
+		if (s_shaderStorageBufferOffsetAlignment == 0)
+		{
+			glGetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &s_shaderStorageBufferOffsetAlignment);
+		}
+		return s_shaderStorageBufferOffsetAlignment;
+	}
 }
