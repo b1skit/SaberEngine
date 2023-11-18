@@ -93,6 +93,9 @@
     <Filter Include="Source Files\gr\Materials">
       <UniqueIdentifier>{c9ce5ea3-8892-44d3-81cb-16c7dc44a505}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Dependencies\Resources">
+      <UniqueIdentifier>{854894b8-5bdb-4614-9788-54a45736458b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -421,6 +424,15 @@
     </ClCompile>
     <ClCompile Include="Updateable.cpp">
       <Filter>Source Files\en</Filter>
+    </ClCompile>
+    <ClCompile Include="ParameterBlockAllocator_Platform.cpp">
+      <Filter>Source Files\re\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="ParameterBlockAllocator_DX12.cpp">
+      <Filter>Source Files\re\DX12</Filter>
+    </ClCompile>
+    <ClCompile Include="ParameterBlockAllocator_OpenGL.cpp">
+      <Filter>Source Files\re\OpenGL</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -793,14 +805,17 @@
     <ClInclude Include="MeshPrimitive.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
-    <ClInclude Include="NBufferedVector.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="BatchManager.h">
       <Filter>Header Files\re</Filter>
     </ClInclude>
     <ClInclude Include="MeshFactory.h">
       <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="NBufferedVector.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -837,7 +852,6 @@
     <None Include="Shaders\glsl\SaberLighting.glsl">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="SaberEngine.licenseheader" />
     <None Include="Shaders\GLSL\GenerateIEM.frag">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
@@ -943,7 +957,12 @@
     <None Include="Shaders\GLSL\Line.vert">
       <Filter>Source Files\Shaders\GLSL</Filter>
     </None>
-    <None Include="packages.config" />
+    <None Include="SaberEngine.licenseheader">
+      <Filter>Dependencies\Resources</Filter>
+    </None>
+    <None Include="packages.config">
+      <Filter>Dependencies\Resources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\HLSL\GBuffer_PShader.hlsl">
@@ -1033,5 +1052,15 @@
     <FxCompile Include="Shaders\HLSL\Line_VShader.hlsl">
       <Filter>Source Files\Shaders\HLSL</Filter>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Dependencies\Icon\SaberEngineApplicationIcon.ico">
+      <Filter>Dependencies\Resources</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="SaberEngine.rc">
+      <Filter>Dependencies\Resources</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>
