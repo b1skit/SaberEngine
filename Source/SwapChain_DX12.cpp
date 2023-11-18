@@ -25,6 +25,8 @@ namespace dx12
 		dx12::SwapChain::PlatformParams* swapChainParams =
 			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 		
+		swapChainParams->m_backbufferTargetSets.resize(dx12::RenderManager::GetNumFrames(), nullptr);
+
 		// Ideally, tearing should be enabled and vsync disabled (best for variable refresh displays), but we respect
 		// the config
 		swapChainParams->m_tearingSupported = SysInfo::CheckTearingSupport();

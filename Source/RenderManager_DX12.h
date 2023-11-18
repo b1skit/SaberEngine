@@ -17,7 +17,7 @@ namespace dx12
 		~RenderManager() override = default;
 
 	public:
-		static constexpr uint8_t GetNumFrames(); // Number of frames in flight
+		static uint8_t GetNumFrames(); // Number of frames in flight
 
 
 	public: // Platform PIMPL:
@@ -34,16 +34,15 @@ namespace dx12
 		
 
 	private:
-		static const uint8_t k_numFrames = 3; // Number of frames in flight/number of backbuffers
+		static const uint8_t k_numFrames = 3; // We (currently) always use triple buffering in DX12
 
 		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_intermediateResources; // From resources created in the previous frame
 		uint64_t m_intermediateResourceFenceVal;
 	};
 
 
-	inline constexpr uint8_t RenderManager::GetNumFrames()
+	inline uint8_t RenderManager::GetNumFrames()
 	{
 		return k_numFrames;
 	}
 }
-

@@ -44,6 +44,11 @@ namespace re
 	public:
 		static RenderManager* Get(); // Singleton functionality
 
+
+	public: // Platform wrappers:
+		static constexpr uint8_t GetNumFrames(); // Number of buffers/frames in flight
+
+
 	public:
 		virtual ~RenderManager() = default;
 

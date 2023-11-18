@@ -17,6 +17,8 @@ namespace platform
 		static void (*Shutdown)(re::RenderManager&);
 		static void (*CreateAPIResources)(re::RenderManager&);
 
+		static uint8_t (*GetNumFrames)();
+
 		// ImgGui:
 		static void (*StartImGuiFrame)();
 		static void (*RenderImGui)();

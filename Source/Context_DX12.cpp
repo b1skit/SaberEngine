@@ -87,7 +87,7 @@ namespace dx12
 			}
 		}
 
-		memset(m_frameFenceValues, 0, sizeof(uint64_t) * dx12::RenderManager::GetNumFrames());
+		m_frameFenceValues.resize(dx12::RenderManager::GetNumFrames(), 0);
 
 		EnableDebugLayer(); // Before we create a device
 

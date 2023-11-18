@@ -9,6 +9,9 @@ namespace platform
 	void (*RenderManager::Shutdown)(re::RenderManager&) = nullptr;
 	void (*RenderManager::CreateAPIResources)(re::RenderManager&) = nullptr;
 
+	uint8_t(*RenderManager::GetNumFrames)() = nullptr;
+
+	// ImGui:
 	void (*RenderManager::StartImGuiFrame)() = nullptr;
 	void (*RenderManager::RenderImGui)() = nullptr;
 }

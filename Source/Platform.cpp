@@ -79,7 +79,7 @@ namespace platform
 		platform::InputManager::ConvertToSEKeycode	= &win32::InputManager::ConvertToSEKeycode;
 
 		// Event manager:
-		platform::EventManager::ProcessMessages		= &win32::EventManager::ProcessMessages;
+		platform::EventManager::ProcessMessages	= &win32::EventManager::ProcessMessages;
 
 		// Rendering API-specific bindings:
 		/*********************************/
@@ -88,23 +88,24 @@ namespace platform
 		case RenderingAPI::OpenGL:
 		{
 			// Context:
-			platform::Context::Destroy			= &opengl::Context::Destroy;
+			platform::Context::Destroy	= &opengl::Context::Destroy;
 
 			// Parameter blocks:
-			platform::ParameterBlock::Create	= &opengl::ParameterBlock::Create;
-			platform::ParameterBlock::Update	= &opengl::ParameterBlock::Update;
-			platform::ParameterBlock::Destroy	= &opengl::ParameterBlock::Destroy;
+			platform::ParameterBlock::Create			= &opengl::ParameterBlock::Create;
+			platform::ParameterBlock::Update			= &opengl::ParameterBlock::Update;
+			platform::ParameterBlock::Destroy			= &opengl::ParameterBlock::Destroy;
 
 			// Render manager:
 			platform::RenderManager::Initialize			= &opengl::RenderManager::Initialize;
 			platform::RenderManager::Shutdown			= &opengl::RenderManager::Shutdown;
 			platform::RenderManager::CreateAPIResources = &opengl::RenderManager::CreateAPIResources;
+			platform::RenderManager::GetNumFrames		= &opengl::RenderManager::GetNumFrames;
 			platform::RenderManager::StartImGuiFrame	= &opengl::RenderManager::StartImGuiFrame;
 			platform::RenderManager::RenderImGui		= &opengl::RenderManager::RenderImGui;
 
 			// Shader:
-			platform::Shader::Create			= &opengl::Shader::Create;
-			platform::Shader::Destroy			= &opengl::Shader::Destroy;
+			platform::Shader::Create	= &opengl::Shader::Create;
+			platform::Shader::Destroy	= &opengl::Shader::Destroy;
 
 			// SysInfo:
 			platform::SysInfo::GetMaxRenderTargets = &opengl::SysInfo::GetMaxRenderTargets;
@@ -115,7 +116,7 @@ namespace platform
 			platform::SwapChain::SetVSyncMode	= &opengl::SwapChain::SetVSyncMode;
 
 			// Texture:
-			platform::Texture::Destroy			= &opengl::Texture::Destroy;
+			platform::Texture::Destroy	= &opengl::Texture::Destroy;
 
 			// Texture Samplers:
 			platform::Sampler::Create	= &opengl::Sampler::Create;
@@ -131,7 +132,7 @@ namespace platform
 		case RenderingAPI::DX12:
 		{
 			// Context:
-			platform::Context::Destroy			= &dx12::Context::Destroy;
+			platform::Context::Destroy	= &dx12::Context::Destroy;
 
 			// Parameter blocks:
 			platform::ParameterBlock::Create	= &dx12::ParameterBlock::Create;
@@ -142,12 +143,13 @@ namespace platform
 			platform::RenderManager::Initialize			= &dx12::RenderManager::Initialize;
 			platform::RenderManager::Shutdown			= &dx12::RenderManager::Shutdown;
 			platform::RenderManager::CreateAPIResources = &dx12::RenderManager::CreateAPIResources;
+			platform::RenderManager::GetNumFrames		= &dx12::RenderManager::GetNumFrames;
 			platform::RenderManager::StartImGuiFrame	= &dx12::RenderManager::StartImGuiFrame;
 			platform::RenderManager::RenderImGui		= &dx12::RenderManager::RenderImGui;
 
 			// Shader:
-			platform::Shader::Create			= &dx12::Shader::Create;
-			platform::Shader::Destroy			= &dx12::Shader::Destroy;
+			platform::Shader::Create	= &dx12::Shader::Create;
+			platform::Shader::Destroy	= &dx12::Shader::Destroy;
 
 			// SysInfo:
 			platform::SysInfo::GetMaxRenderTargets = &dx12::SysInfo::GetMaxRenderTargets;
@@ -158,7 +160,7 @@ namespace platform
 			platform::SwapChain::SetVSyncMode	= &dx12::SwapChain::SetVSyncMode;
 
 			// Texture:
-			platform::Texture::Destroy			= &dx12::Texture::Destroy;
+			platform::Texture::Destroy	= &dx12::Texture::Destroy;
 
 			// Texture Samplers:
 			platform::Sampler::Create	= &dx12::Sampler::Create;

@@ -72,7 +72,7 @@ namespace dx12
 
 		dx12::GlobalResourceStateTracker m_globalResourceStates;
 
-		uint64_t m_frameFenceValues[dx12::RenderManager::GetNumFrames()]; // Fence values for signalling the command queue
+		std::vector<uint64_t> m_frameFenceValues; // Fence values for signalling the command queue
 
 		// Access the PSO library via dx12::Context::GetPipelineStateObject():
 		std::unordered_map<uint64_t, std::shared_ptr<dx12::PipelineState>> m_PSOLibrary;

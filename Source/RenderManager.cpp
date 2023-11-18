@@ -46,6 +46,12 @@ namespace re
 	}
 
 
+	constexpr uint8_t RenderManager::GetNumFrames()
+	{
+		return platform::RenderManager::GetNumFrames();
+	}
+
+
 	std::unique_ptr<re::RenderManager> RenderManager::Create()
 	{
 		std::unique_ptr<re::RenderManager> newRenderManager = nullptr;
