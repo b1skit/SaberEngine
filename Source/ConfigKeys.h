@@ -5,16 +5,17 @@ namespace en::ConfigKeys
 {
 	// Configuration constants:
 	constexpr char const* k_scenesDirName = "Scenes\\";
-
+	constexpr char const* k_configDirName = "Config\\";
+	constexpr char const* k_configFileName = "config.cfg";
 
 	// Config keys:
 	/*************/
 	// Command line args:
-	constexpr char const* k_sceneCmdLineArg						= "scene";
-	constexpr char const* k_showSystemConsoleWindowCmdLineArg	= "console";
-	constexpr char const* k_platformCmdLineArg					= "platform";
-	constexpr char const* k_debugLevelCmdLineArg				= "debuglevel";
-	constexpr char const* k_strictShaderBindingCmdLineArg		= "strictshaderbinding";
+	constexpr char const* k_sceneCmdLineArg							= "scene";
+	constexpr char const* k_showSystemConsoleWindowCmdLineArg		= "console";
+	constexpr char const* k_platformCmdLineArg						= "platform";
+	constexpr char const* k_debugLevelCmdLineArg					= "debuglevel";
+	constexpr char const* k_strictShaderBindingCmdLineArg			= "strictshaderbinding";
 
 	constexpr char const* k_commandLineArgsValueName			= "commandLineArgs"; // Gets the command line arg string
 
@@ -44,7 +45,7 @@ namespace en::ConfigKeys
 namespace en::ShaderNames
 {
 	// Shader filename prefixes. Note: These are not config keys
-	// TODO: Move these to their own .h file
+	// TODO: Load these from a file at runtime
 	constexpr char const* k_blitShaderName = "Blit";
 	constexpr char const* k_bloomShaderName = "Bloom";
 	constexpr char const* k_cubeDepthShaderName = "CubeDepth";

@@ -78,9 +78,6 @@ namespace en
 
 		platform::RenderingAPI m_renderingAPI;
 
-		const std::string m_configDir = "config\\";
-		const std::string m_configFilename = "config.cfg";
-
 
 	private: // Helper functions:
 		std::string PropertyToConfigString(std::string property);

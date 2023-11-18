@@ -162,7 +162,7 @@ namespace en
 					ConsumeNextToken();
 				}
 			}
-			else if (currentArg.find(ConfigKeys::k_strictShaderBindingCmdLineArg))
+			else if (currentArg.find(ConfigKeys::k_strictShaderBindingCmdLineArg) != string::npos)
 			{
 				SetValue(ConfigKeys::k_strictShaderBindingCmdLineArg, true, Config::SettingType::Runtime);
 			}
@@ -178,10 +178,10 @@ namespace en
 
 	void Config::LoadConfigFile()
 	{
-		LOG("Loading %s...", m_configFilename.c_str());
+		LOG("Loading %s...", en::ConfigKeys::k_configFileName);
 
 		ifstream file;
-		file.open((m_configDir + m_configFilename).c_str());
+		file.open(std::format("{}{}", en::ConfigKeys::k_configDirName, en::ConfigKeys::k_configFileName).c_str());
 
 		// If no config is found, create one:
 		const bool foundExistingConfig = file.is_open();
@@ -553,7 +553,7 @@ namespace en
 		}
 
 		// Create the .\config\ directory, if none exists
-		std::filesystem::path configPath = m_configDir;
+		std::filesystem::path configPath = en::ConfigKeys::k_configDirName;
 		if (!std::filesystem::exists(configPath))
 		{
 			LOG("Creating .\\config\\ directory");
@@ -651,7 +651,8 @@ namespace en
 			return cmpResult < 0;});
 
 		// Write our config to disk:
-		std::ofstream config_ofstream(m_configDir + m_configFilename);
+		std::ofstream config_ofstream(
+			std::format("{}{}", en::ConfigKeys::k_configDirName, en::ConfigKeys::k_configFileName));
 		config_ofstream << "# SaberEngine config.cfg file:\n";
 
 		for (ConfigEntry const& currentEntry : configEntries)
