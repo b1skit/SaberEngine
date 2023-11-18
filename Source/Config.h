@@ -49,7 +49,7 @@ namespace en
 		float GetWindowAspectRatio() const; // Compute the aspect ratio: width / height
 
 		const platform::RenderingAPI GetRenderingAPI() const;
-
+		static constexpr char const* RenderingAPIToCStr(platform::RenderingAPI);
 
 	private:
 		template<typename T>
@@ -67,10 +67,11 @@ namespace en
 
 
 	private:
+		void InitializeOSValues(); // Values loaded from the OS. Not saved to disk.
 		void InitializeDefaultValues(); // Initialize any unpopulated configuration values with defaults
 		void SetAPIDefaults();
 		void SetRuntimeDefaults(); // Platform-agnostic defaults not loaded/saved to disk
-
+		
 
 	private:
 		std::unordered_map<std::string, std::pair<std::any, SettingType>> m_configValues;	// The config parameter/value map
@@ -166,6 +167,18 @@ namespace en
 	inline bool Config::TrySetValue(char const* valueName, T value, SettingType settingType /*= SettingType::Common*/)
 	{
 		return TrySetValue(std::string(valueName), value, settingType);
+	}
+
+
+	inline constexpr char const* Config::RenderingAPIToCStr(platform::RenderingAPI renderingAPI)
+	{
+		switch (renderingAPI)
+		{
+		case platform::RenderingAPI::OpenGL: return "OpenGL";
+		case platform::RenderingAPI::DX12: return "DX12";
+		default: SEAssertF("Invalid rendering API");
+			return "INVALID";
+		}
 	}
 }
 

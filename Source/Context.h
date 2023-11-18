@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "renderdoc_app.h"
 
 #include "IPlatformParams.h"
 #include "TextureTarget.h"
@@ -51,7 +52,7 @@ namespace re
 		static std::unique_ptr<re::Context> CreateSingleton();
 
 	protected:
-		Context() = default;
+		Context();
 
 
 	protected:
@@ -60,6 +61,14 @@ namespace re
 
 	private:
 		re::SwapChain m_swapChain;
+
+		
+	public: // RenderDoc debugging
+		typedef RENDERDOC_API_1_1_2 RenderDocAPI;
+		RenderDocAPI* GetRenderDocAPI() const;
+
+	private:
+		RenderDocAPI* m_renderDocApi;
 	};
 
 
@@ -81,6 +90,12 @@ namespace re
 	inline T Context::GetAs()
 	{
 		return dynamic_cast<T>(re::Context::Get());
+	}
+
+
+	inline Context::RenderDocAPI* Context::GetRenderDocAPI() const
+	{
+		return m_renderDocApi;
 	}
 
 

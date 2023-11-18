@@ -43,6 +43,9 @@
 # Force-include glew, as it's currently added as a pre-compiled library
 !Source/Dependencies/glew/**
 
+# Force-include the RenderDoc directory, to catch the .dll
+!Source/Dependencies/RenderDoc/**
+
 # Don't include scene data, but do create a directory for it
 /SaberEngine/Scenes/*
 /SaberEngine/Scenes/!*.gitkeep

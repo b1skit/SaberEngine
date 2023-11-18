@@ -17,6 +17,7 @@
 #include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
 #include "SceneManager.h"
+#include "TextUtils.h"
 
 using en::Config;
 using en::SceneManager;
@@ -592,6 +593,131 @@ namespace re
 		}
 
 		ImGui::Separator();
+
+		if (ImGui::CollapsingHeader("RenderDoc Captures"))
+		{
+			ImGui::Indent();
+
+			re::Context::RenderDocAPI* renderDocApi = re::Context::Get()->GetRenderDocAPI();
+
+			const bool renderDocCmdLineEnabled = 
+				en::Config::Get()->ValueExists(en::ConfigKeys::k_renderDocProgrammaticCapturesCmdLineArg) && 
+				renderDocApi != nullptr;
+
+			if (!renderDocCmdLineEnabled)
+			{
+				ImGui::Text(std::format("Launch with -{} to enable",
+					en::ConfigKeys::k_renderDocProgrammaticCapturesCmdLineArg).c_str());
+			}
+			else
+			{
+				int major, minor, patch;
+				renderDocApi->GetAPIVersion(&major, &minor, &patch);
+				ImGui::Text(std::format("Renderdoc API {}.{}.{}", major, minor, patch).c_str());
+
+				if (ImGui::CollapsingHeader("View capture options"))
+				{
+					ImGui::Indent();
+
+					ImGui::Text(std::format("Allow VSync: {}", 
+						renderDocApi->GetCaptureOptionU32(eRENDERDOC_Option_AllowVSync)).c_str());
+
+					ImGui::Text(std::format("Allow fullscreen: {}",
+						renderDocApi->GetCaptureOptionU32(eRENDERDOC_Option_AllowFullscreen)).c_str());
+
+					ImGui::Text(std::format("API validation: {}",
+						renderDocApi->GetCaptureOptionU32(eRENDERDOC_Option_APIValidation)).c_str());
+
+					ImGui::Text(std::format("Capture callstacks: {}",
+						renderDocApi->GetCaptureOptionU32(eRENDERDOC_Option_CaptureCallstacks)).c_str());
+
+					ImGui::Text(std::format("Only capture callstacks for actions: {}",
+						renderDocApi->GetCaptureOptionU32(eRENDERDOC_Option_CaptureCallstacksOnlyActions)).c_str());
+
+					ImGui::Text(std::format("Debugger attach delay: {}",
+						renderDocApi->GetCaptureOptionU32(eRENDERDOC_Option_DelayForDebugger)).c_str());
+
+					ImGui::Text(std::format("Verify buffer access: {}",
+						renderDocApi->GetCaptureOptionU32(eRENDERDOC_Option_VerifyBufferAccess)).c_str());
+
+					ImGui::Text(std::format("Hook into child processes: {}",
+						renderDocApi->GetCaptureOptionU32(eRENDERDOC_Option_HookIntoChildren)).c_str());
+
+					ImGui::Text(std::format("Reference all resources: {}",
+						renderDocApi->GetCaptureOptionU32(eRENDERDOC_Option_RefAllResources)).c_str());
+
+					ImGui::Text(std::format("Capture all command lists from start: {}",
+						renderDocApi->GetCaptureOptionU32(eRENDERDOC_Option_CaptureAllCmdLists)).c_str());
+
+					ImGui::Text(std::format("Mute API debugging output: {}",
+						renderDocApi->GetCaptureOptionU32(eRENDERDOC_Option_DebugOutputMute)).c_str());
+
+					ImGui::Text(std::format("Allow unsupported vendor extensions: {}",
+						renderDocApi->GetCaptureOptionU32(eRENDERDOC_Option_AllowUnsupportedVendorExtensions)).c_str());
+
+					ImGui::Text(std::format("Soft memory limit: {}",
+						renderDocApi->GetCaptureOptionU32(eRENDERDOC_Option_SoftMemoryLimit)).c_str());
+
+					ImGui::Unindent();
+				}
+				if (ImGui::CollapsingHeader("Configure overlay"))
+				{
+					ImGui::Indent();
+					const uint32_t overlayBits = renderDocApi->GetOverlayBits();
+
+					static bool s_overlayEnabled = (overlayBits & RENDERDOC_OverlayBits::eRENDERDOC_Overlay_Enabled);
+					ImGui::Checkbox("Display overlay?", &s_overlayEnabled);
+					
+					static bool s_overlayFramerate = (overlayBits & RENDERDOC_OverlayBits::eRENDERDOC_Overlay_FrameRate);
+					ImGui::Checkbox("Frame rate", &s_overlayFramerate);
+					
+					static bool s_overlayFrameNum = (overlayBits & RENDERDOC_OverlayBits::eRENDERDOC_Overlay_FrameNumber);
+					ImGui::Checkbox("Frame number", &s_overlayFrameNum);
+
+					static bool s_overlayCaptureList = (overlayBits & RENDERDOC_OverlayBits::eRENDERDOC_Overlay_CaptureList);
+					ImGui::Checkbox("Recent captures", &s_overlayCaptureList);
+					
+					renderDocApi->MaskOverlayBits(
+						0, 
+						(s_overlayEnabled ? eRENDERDOC_Overlay_Enabled : 0) |
+						(s_overlayFramerate ? eRENDERDOC_Overlay_FrameRate : 0) |
+						(s_overlayFrameNum ? eRENDERDOC_Overlay_FrameNumber : 0) |
+						(s_overlayCaptureList ? eRENDERDOC_Overlay_CaptureList : 0));
+
+					ImGui::Unindent();
+				}
+
+				static char s_renderDocCaptureFolder[256];
+				static bool s_loadedPath = false;
+				if (!s_loadedPath)
+				{
+					s_loadedPath = true;
+					memcpy(s_renderDocCaptureFolder, 
+						renderDocApi->GetCaptureFilePathTemplate(), 
+						strlen(renderDocApi->GetCaptureFilePathTemplate()) + 1);
+				}
+
+				if (ImGui::InputText("Output path & prefix", s_renderDocCaptureFolder, IM_ARRAYSIZE(s_renderDocCaptureFolder)))
+				{
+					renderDocApi->SetCaptureFilePathTemplate(s_renderDocCaptureFolder);
+				}
+
+				static int s_numRenderDocFrames = 1;
+				if (ImGui::Button("Capture RenderDoc Frame"))
+				{
+					renderDocApi->TriggerMultiFrameCapture(s_numRenderDocFrames);
+				}
+				ImGui::SliderInt("No. of frames", &s_numRenderDocFrames, 1, 10);
+			}
+			{
+				ImGui::BeginDisabled(!renderDocCmdLineEnabled);
+
+				ImGui::EndDisabled();
+			}
+			ImGui::Unindent();
+		}
+
+		ImGui::Separator();
 		
 		if (ImGui::CollapsingHeader("PIX Captures")) // https://devblogs.microsoft.com/pix/programmatic-capture/
 		{
@@ -605,20 +731,38 @@ namespace re
 
 			if (!pixGPUCaptureCmdLineEnabled && !pixCPUCaptureCmdLineEnabled)
 			{
-				ImGui::Text("Launch with -pixgpucapture or -pixcpucapture to enable.\n"
-					"Run PIX in administrator mode, and attach to the current process.");
+				ImGui::Text(std::format("Launch with -{} or -{} to enable.\n"
+					"Run PIX in administrator mode, and attach to the current process.", 
+					en::ConfigKeys::k_pixGPUProgrammaticCapturesCmdLineArg,
+					en::ConfigKeys::k_pixCPUProgrammaticCapturesCmdLineArg).c_str());
 			}
 
 			// GPU captures:
+			if (pixGPUCaptureCmdLineEnabled)
 			{
 				ImGui::BeginDisabled(!pixGPUCaptureCmdLineEnabled);
 
-				static char s_pixGPUCapturePath[256] = "C:\\SaberEngineGPUCapture.wpix";
+				static char s_pixGPUCapturePath[256];
+				static bool loadedPath = false;
+				if (!loadedPath)
+				{
+					loadedPath = true;
+					std::string const& pixFilePath = std::format("{}\\{}\\", 
+						en::Config::Get()->GetValueAsString(en::ConfigKeys::k_documentsFolderPathKey),
+						en::ConfigKeys::k_pixCaptureFolderName);
+					memcpy(s_pixGPUCapturePath, pixFilePath.c_str(), pixFilePath.length() + 1);
+				}
+				
 				static int s_numPixGPUCaptureFrames = 1;
 				static HRESULT s_gpuHRESULT = S_OK;
 				if (ImGui::Button("Capture PIX GPU Frame"))
 				{
-					s_gpuHRESULT = PIXGpuCaptureNextFrames(util::ToWideString(s_pixGPUCapturePath).c_str(), s_numPixGPUCaptureFrames);
+					std::wstring const& filepath = util::ToWideString(
+						std::format("{}\\{}GPUCapture_{}.wpix",
+							s_pixGPUCapturePath,
+							en::ConfigKeys::k_captureTitle,
+							util::GetTimeAndDateAsString()));
+					s_gpuHRESULT = PIXGpuCaptureNextFrames(filepath.c_str(), s_numPixGPUCaptureFrames);
 				}
 				ImGui::SetItemTooltip("PIX must be run in administrator mode, and already attached to the process");
 
@@ -626,7 +770,8 @@ namespace re
 				{
 					const _com_error comError(s_gpuHRESULT);
 					const std::string errorMessage = std::format("HRESULT error \"{}\" starting PIX GPU capture.\n"
-						"Is PIX running in administrator mode, and attached to the process?",
+						"Is PIX running in administrator mode, and attached to the process? Is only 1 command line "
+						"argument supplied?",
 						comError.ErrorMessage());
 
 					bool showErrorPopup = true;
@@ -637,8 +782,7 @@ namespace re
 					}
 				}
 
-				ImGui::InputText("Output file", s_pixGPUCapturePath, IM_ARRAYSIZE(s_pixGPUCapturePath));
-				ImGui::SetItemTooltip("Must include the .wpix file extension");
+				ImGui::InputText("Output path", s_pixGPUCapturePath, IM_ARRAYSIZE(s_pixGPUCapturePath));
 
 				ImGui::SliderInt("No. of frames", &s_numPixGPUCaptureFrames, 1, 10);
 
@@ -648,10 +792,21 @@ namespace re
 			ImGui::Separator();
 
 			// CPU timing captures:
+			if (pixCPUCaptureCmdLineEnabled)
 			{
 				ImGui::BeginDisabled(!pixCPUCaptureCmdLineEnabled);
 
-				static char s_pixCPUCapturePath[256] = "C:\\SaberEngineTimingCapture.wpix";
+				static char s_pixCPUCapturePath[256];
+				static bool loadedPath = false;
+				if (!loadedPath)
+				{
+					loadedPath = true;
+					std::string const& pixFilePath = std::format("{}\\{}\\",
+						en::Config::Get()->GetValueAsString(en::ConfigKeys::k_documentsFolderPathKey),
+						en::ConfigKeys::k_pixCaptureFolderName);
+					memcpy(s_pixCPUCapturePath, pixFilePath.c_str(), pixFilePath.length() + 1);
+				}
+
 				static bool s_captureGPUTimings = true;
 				static bool s_captureCallstacks = true;
 				static bool s_captureCpuSamples = true;
@@ -670,9 +825,15 @@ namespace re
 					// otherwise the function will return E_NOTIMPL
 					const DWORD captureFlags = PIX_CAPTURE_TIMING;
 
+					std::wstring const& filepath = util::ToWideString(
+						std::format("{}\\{}TimingCapture_{}.wpix",
+							s_pixCPUCapturePath,
+							en::ConfigKeys::k_captureTitle,
+							util::GetTimeAndDateAsString()));
+
 					PIXCaptureParameters pixCaptureParams = PIXCaptureParameters{
 						.TimingCaptureParameters{
-							.FileName = util::ToWideString(s_pixCPUCapturePath).c_str(),
+							.FileName = filepath.c_str(),
 
 							.MaximumToolingMemorySizeMb = 0, // Ignored on PIX for Windows
 							.CaptureStorage{}, // Ignored on PIX for Windows
@@ -699,7 +860,8 @@ namespace re
 				{
 					const _com_error comError(s_timingCaptureStartResult);
 					const std::string errorMessage = std::format("HRESULT error \"{}\" starting PIX timing capture.\n"
-						"Is PIX running in administrator mode, and attached to the process?",
+						"Is PIX running in administrator mode, and attached to the process? Is only 1 command line "
+						"argument supplied?",
 						comError.ErrorMessage());
 
 					bool showErrorPopup = true;
@@ -775,7 +937,7 @@ namespace re
 			{
 				menuBarSize = ImGui::GetWindowSize();
 
-				if (ImGui::BeginMenu("Scene"))
+				if (ImGui::BeginMenu("File"))
 				{
 					// TODO...
 					ImGui::TextDisabled("Load Scene");
@@ -783,34 +945,6 @@ namespace re
 					ImGui::TextDisabled("Reload Shaders");
 					ImGui::TextDisabled("Reload Materials");
 					ImGui::TextDisabled("Quit");
-
-					ImGui::EndMenu();
-				}
-
-				if (ImGui::BeginMenu("Window"))
-				{
-					
-					ImGui::MenuItem("Console log", "", &s_showConsoleLog); // Console debug log window
-
-					ImGui::MenuItem("Render Debug", "", &s_showRenderDebug);
-
-					ImGui::TextDisabled("Performance statistics");
-
-
-#if defined(_DEBUG) // ImGui demo window
-					ImGui::Separator();
-					ImGui::MenuItem("Show ImGui demo", "", &s_showImguiDemo);
-#endif
-
-					ImGui::EndMenu();
-				}
-
-				if (ImGui::BeginMenu("Display"))
-				{
-					// TODO...
-					ImGui::TextDisabled("Wireframe mode");
-					ImGui::TextDisabled("Show bounding boxes");
-					ImGui::TextDisabled("View texture/buffer");
 
 					ImGui::EndMenu();
 				}
@@ -823,7 +957,33 @@ namespace re
 					ImGui::EndMenu();
 				}
 
-				if (ImGui::BeginMenu("Output"))
+				if (ImGui::BeginMenu("Window"))
+				{
+					ImGui::MenuItem("Console log", "", &s_showConsoleLog); // Console debug log window
+
+					ImGui::TextDisabled("Performance statistics");
+
+					ImGui::MenuItem("Render Debug", "", &s_showRenderDebug);
+
+#if defined(_DEBUG) // ImGui demo window
+					ImGui::Separator();
+					ImGui::MenuItem("Show ImGui demo", "", &s_showImguiDemo);
+#endif
+
+					ImGui::EndMenu();
+				}
+
+				//if (ImGui::BeginMenu("Display"))
+				//{
+				//	// TODO...
+				//	ImGui::TextDisabled("View texture/buffer");
+
+				//	ImGui::EndMenu();
+				//}
+
+
+
+				if (ImGui::BeginMenu("Capture"))
 				{
 					// TODO...
 					ImGui::TextDisabled("Save screenshot");

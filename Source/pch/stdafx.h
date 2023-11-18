@@ -27,6 +27,7 @@
 #include <fstream>
 #include <functional>
 #include <future>
+#include <iomanip>
 #include <iostream>
 #include <latch>
 #include <list>
@@ -57,6 +58,7 @@
 #include <shellapi.h>
 #include <hidusage.h>
 #include <comdef.h> // HRESULTs to error messages
+#include <shlobj_core.h> // Windows shell
 // TODO: Move these OS-specific out of the PCH and into platform-specific files that require them
 
 

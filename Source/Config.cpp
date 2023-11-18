@@ -174,6 +174,10 @@ namespace en
 			{
 				SetValue(ConfigKeys::k_pixCPUProgrammaticCapturesCmdLineArg, true, Config::SettingType::Runtime);
 			}
+			else if (currentArg.find(ConfigKeys::k_renderDocProgrammaticCapturesCmdLineArg) != string::npos)
+			{
+				SetValue(ConfigKeys::k_renderDocProgrammaticCapturesCmdLineArg, true, Config::SettingType::Runtime);
+			}
 		}
 
 		// Store the received command line string
@@ -361,6 +365,7 @@ namespace en
 		m_isDirty = !foundExistingConfig;
 
 		// Now the config has been loaded, populate any remaining entries with default values
+		InitializeOSValues();
 		InitializeDefaultValues();
 		SetAPIDefaults();
 		SetRuntimeDefaults();
@@ -368,6 +373,18 @@ namespace en
 		SaveConfigFile(); // Write out the results immediately
 
 		LOG("Done!");
+	}
+
+
+	void Config::InitializeOSValues()
+	{
+		// The "My Documents" folder:
+		wchar_t* documentsFolderPathPtr = nullptr;
+		HRESULT hr = SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &documentsFolderPathPtr);
+		const std::string documentFolderPath = util::FromWideString(documentsFolderPathPtr);
+		CoTaskMemFree(static_cast<void*>(documentsFolderPathPtr));
+
+		SetValue(ConfigKeys::k_documentsFolderPathKey, documentFolderPath, SettingType::Runtime);
 	}
 
 
@@ -485,7 +502,7 @@ namespace en
 		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMinShadowBias,			0.01f);
 		TryInsertRuntimeValue(en::ConfigKeys::k_defaultPointLightMaxShadowBias,			0.05f);
 	}
-
+	
 
 	bool Config::ValueExists(std::string const& valueName) const
 	{
@@ -682,6 +699,7 @@ namespace en
 	{
 		return m_renderingAPI;
 	}
+
 
 	inline std::string Config::PropertyToConfigString(std::string property)
 	{

@@ -39,4 +39,15 @@ namespace util
 		std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> wstringConverter;
 		return wstringConverter.to_bytes(wstr);
 	}
+
+
+	inline std::string GetTimeAndDateAsString()
+	{
+		auto time = std::time(nullptr);
+		auto tm = *std::localtime(&time);
+
+		std::stringstream result;
+		result << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S");
+		return result.str();
+	}
 }

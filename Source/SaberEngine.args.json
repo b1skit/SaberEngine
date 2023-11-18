@@ -15,6 +15,10 @@
       "Command": "-console"
     },
     {
+      "Id": "a13f2a03-c265-43e2-8bf3-0937857f7f58",
+      "Command": "-renderdoc"
+    },
+    {
       "Id": "bd461554-1dff-424b-97b5-87b615be9133",
       "Command": "-pixcpucapture"
     },

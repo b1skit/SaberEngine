@@ -63,6 +63,9 @@ Enable PIX programmatic capture (DX12 only): -enablepixgpucapture , -enablepixcp
 	- Captures can be triggered via the render debug menu  
 	- More info on PIX programmatic captures here: https://devblogs.microsoft.com/pix/programmatic-capture/  
 
+Enable RenderDoc programmatic capture: -renderdoc
+	- This is only required for programmatic captures. RenderDoc can still launch/capture without this  
+
 
 --------------  
 Menu and logs:  
