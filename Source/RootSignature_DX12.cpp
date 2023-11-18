@@ -22,7 +22,7 @@ namespace
 	constexpr uint8_t k_invalidIdx = std::numeric_limits<uint8_t>::max();
 
 
-	D3D12_SHADER_VISIBILITY GetShaderVisibilityFlagFromShaderType(dx12::Shader::ShaderType shaderType)
+	constexpr D3D12_SHADER_VISIBILITY GetShaderVisibilityFlagFromShaderType(dx12::Shader::ShaderType shaderType)
 	{
 		switch (shaderType)
 		{
@@ -38,7 +38,7 @@ namespace
 	}
 
 
-	D3D12_DESCRIPTOR_RANGE_TYPE GetD3DRangeType(dx12::RootSignature::DescriptorType descType)
+	constexpr D3D12_DESCRIPTOR_RANGE_TYPE GetD3DRangeType(dx12::RootSignature::DescriptorType descType)
 	{
 		switch (descType)
 		{
@@ -52,7 +52,7 @@ namespace
 	}
 
 
-	D3D12_SRV_DIMENSION GetD3D12SRVDimension(D3D_SRV_DIMENSION srvDimension)
+	constexpr D3D12_SRV_DIMENSION GetD3D12SRVDimension(D3D_SRV_DIMENSION srvDimension)
 	{
 		// D3D_SRV_DIMENSION::D3D_SRV_DIMENSION_BUFFEREX (== 11, raw buffer resource) is handled differently in D3D12
 		SEAssert("D3D_SRV_DIMENSION does not have a (known) D3D12_SRV_DIMENSION equivalent", 
@@ -61,7 +61,7 @@ namespace
 	}
 
 
-	D3D12_UAV_DIMENSION GetD3D12UAVDimension(D3D_SRV_DIMENSION uavDimension)
+	constexpr D3D12_UAV_DIMENSION GetD3D12UAVDimension(D3D_SRV_DIMENSION uavDimension)
 	{
 		SEAssert("D3D_SRV_DIMENSION does not have a (known) D3D12_UAV_DIMENSION equivalent",
 			uavDimension >= D3D_SRV_DIMENSION_UNKNOWN && uavDimension <= D3D_SRV_DIMENSION_TEXTURE3D);
@@ -69,7 +69,7 @@ namespace
 	}
 
 
-	DXGI_FORMAT GetFormatFromReturnType(D3D_RESOURCE_RETURN_TYPE returnType)
+	constexpr DXGI_FORMAT GetFormatFromReturnType(D3D_RESOURCE_RETURN_TYPE returnType)
 	{
 		switch (returnType)
 		{

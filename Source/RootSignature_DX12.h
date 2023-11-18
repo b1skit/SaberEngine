@@ -56,12 +56,6 @@ namespace dx12
 			Type_Count,
 			Type_Invalid = Type_Count
 		};
-		struct Range
-		{
-			DescriptorType m_type = DescriptorType::Type_Invalid;
-
-			std::vector<RangeEntry> m_rangeEntries;
-		};
 		struct DescriptorTable
 		{
 			DescriptorTable() { m_ranges.resize(DescriptorType::Type_Count); }
@@ -102,7 +96,7 @@ namespace dx12
 		};
 		struct RootParameter
 		{
-			uint8_t m_index = k_invalidRootSigIndex;
+			uint8_t m_index = k_invalidRootSigIndex; // Root signature index. Table entries have the same index
 
 			enum class Type // Entries stored directly in the root signature
 			{
@@ -173,7 +167,9 @@ namespace dx12
 	private: // Binding metadata
 		void InsertNewRootParamMetadata(char const* name, RootParameter&&);
 
-		std::vector<RootParameter> m_rootParams; // 1 entry for each descriptor, regardless of its root/table location
+		// Flattened root parameter entries. 1 element per descriptor, regardless of its root/table location
+		std::vector<RootParameter> m_rootParams; 
+
 		std::unordered_map<std::string, size_t> m_namesToRootParamsIdx;
 		std::array<std::unordered_map<uint8_t, size_t>, DescriptorType::Type_Count> m_registerToRootParamIdx;
 
