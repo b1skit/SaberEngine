@@ -12,7 +12,7 @@ namespace
 	{
 		glm::vec4 g_output0Dimensions; // .xyzw = width, height, 1/width, 1/height of the output0 texture
 		glm::uvec4 g_mipParams; // .xyzw = srcMipLevel, numMips, srcDimensionMode, faceIdx
-		bool g_isSRGB;
+		glm::vec4 g_isSRGB; // .x = isSRGB, .yzw = unused
 
 		static constexpr char const* const s_shaderName = "MipGenerationParams";
 	};
@@ -33,10 +33,10 @@ namespace
 		uint32_t srcDimensionMode = (static_cast<uint32_t>(srcDimensions.x) % 2); // 1 if x is odd
 		srcDimensionMode |= ((static_cast<uint32_t>(srcDimensions.y) % 2) << 1); // |= (1 << 1) if y is odd (2 or 3)
 		
-		MipGenerationParams mipGenerationParams{};
-		mipGenerationParams.g_output0Dimensions = output0Dimensions;
-		mipGenerationParams.g_mipParams = glm::uvec4(srcMipLevel, numMips, srcDimensionMode, 0);
-		mipGenerationParams.g_isSRGB = tex->IsSRGB();
+		MipGenerationParams mipGenerationParams = MipGenerationParams{
+			.g_output0Dimensions = output0Dimensions,
+			.g_mipParams = glm::uvec4(srcMipLevel, numMips, srcDimensionMode, faceIdx),
+			.g_isSRGB = glm::vec4(tex->IsSRGB(), 0.f, 0.f, 0.f ) };
 
 		return mipGenerationParams;
 	}

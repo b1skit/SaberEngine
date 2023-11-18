@@ -15,7 +15,7 @@ struct MipGenerationParamsCB
 {
 	float4 g_output0Dimensions; // .xyzw = width, height, 1/width, 1/height of the output0 texture
 	uint4 g_mipParams; // .xyzw = srcMipLevel, numMips, srcDimensionMode, g_mipParams
-	bool g_isSRGB;
+	float4 g_isSRGB; // .x = isSRGB, .yzw = unused
 };
 ConstantBuffer<MipGenerationParamsCB> MipGenerationParams;
 
@@ -72,6 +72,8 @@ void CShader(ComputeIn In)
 	const float2 output0WidthHeight = MipGenerationParams.g_output0Dimensions.xy;
 	const float2 output0TexelWidthHeight = MipGenerationParams.g_output0Dimensions.zw;
 	
+	const bool isSRGB = MipGenerationParams.g_isSRGB.x > 0.5f;
+	
 	float4 texSample0 = float4(1.f, 0.f, 1.f, 1.f); // Error: Hot pink
 	switch (srcDimensionMode)
 	{
@@ -123,7 +125,7 @@ void CShader(ComputeIn In)
 		break;
 	}
 	
-	output0[In.DTId.xy] = MipGenerationParams.g_isSRGB ? LinearToSRGB(texSample0) : texSample0;
+	output0[In.DTId.xy] = isSRGB ? LinearToSRGB(texSample0) : texSample0;
 	
 	if (numMips == 1)
 	{
@@ -151,7 +153,7 @@ void CShader(ComputeIn In)
 		texSample0 *= 0.25f;
 		
 		const uint2 output1Coords = In.DTId.xy / 2;
-		output1[output1Coords] = MipGenerationParams.g_isSRGB ? LinearToSRGB(texSample0) : texSample0;
+		output1[output1Coords] = isSRGB ? LinearToSRGB(texSample0) : texSample0;
 		
 		WriteToGroupSharedMemory(In.GIdx, texSample0);
 	}
@@ -177,7 +179,7 @@ void CShader(ComputeIn In)
 		texSample0 *= 0.25f;
 
 		const uint2 output2Coords = In.DTId.xy / 4;
-		output2[output2Coords] = MipGenerationParams.g_isSRGB ? LinearToSRGB(texSample0) : texSample0;
+		output2[output2Coords] = isSRGB ? LinearToSRGB(texSample0) : texSample0;
 		
 		WriteToGroupSharedMemory(In.GIdx, texSample0);
 	}
@@ -199,6 +201,6 @@ void CShader(ComputeIn In)
 		texSample0 *= 0.25f;
 		
 		const uint2 output3Coords = In.DTId.xy / 8;
-		output3[output3Coords] = MipGenerationParams.g_isSRGB ? LinearToSRGB(texSample0) : texSample0;
+		output3[output3Coords] = isSRGB ? LinearToSRGB(texSample0) : texSample0;
 	}	
 }
