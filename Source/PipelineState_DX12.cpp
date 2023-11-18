@@ -394,11 +394,11 @@ namespace dx12
 
 		// Generate the PSO:
 		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
-
-		re::PipelineState const& rePipelineState = shader.GetPipelineState();
-
+		
 		if (shaderParams->m_shaderBlobs[dx12::Shader::Vertex]) // Vertex shader is mandatory for graphics pipelines
 		{
+			re::PipelineState const& rePipelineState = shader.GetPipelineState();
+
 			// Build the vertex stream input layout:
 			std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
 			BuildInputLayout(shaderParams, inputLayout);
@@ -461,10 +461,6 @@ namespace dx12
 			// CreatePipelineState can create both graphics & compute pipelines from a D3D12_PIPELINE_STATE_STREAM_DESC
 			HRESULT hr = device->CreatePipelineState(&graphicsPipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
 			CheckHResult(hr, "Failed to create graphics pipeline state");
-
-			// Name our PSO:
-			const std::wstring graphicsPipelineStateName = shader.GetWName() + L"_" + targetSet.GetWName() + L"_PSO";
-			m_pipelineState->SetName(graphicsPipelineStateName.c_str());
 		}
 		else if (shaderParams->m_shaderBlobs[dx12::Shader::Compute])
 		{
@@ -482,15 +478,15 @@ namespace dx12
 			// CreatePipelineState can create both graphics & compute pipelines from a D3D12_PIPELINE_STATE_STREAM_DESC
 			HRESULT hr = device->CreatePipelineState(&computePipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
 			CheckHResult(hr, "Failed to create compute pipeline state");
-
-			// Name our PSO:
-			const std::wstring pipelineStateName = shader.GetWName() + L"_Compute_PSO";
-			m_pipelineState->SetName(pipelineStateName.c_str());
 		}
 		else
 		{
 			SEAssertF("Shader doesn't have a supported combination of shader blobs. TODO: Support this");
 		}
+
+		// Name our PSO:
+		const std::wstring psoDebugName = shader.GetWName() + L"_" + targetSet.GetWName() + L"_PSO";
+		m_pipelineState->SetName(psoDebugName.c_str());
 	}
 
 

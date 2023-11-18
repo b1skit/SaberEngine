@@ -662,7 +662,7 @@ namespace
 
 		HRESULT hr = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice()->CreateCommittedResource(
 			&heapProperties,
-			D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_CREATE_NOT_ZEROED, // TODO: Query support: Unsupported on older versions of Windows
+			D3D12_HEAP_FLAG_CREATE_NOT_ZEROED, // TODO: Query support: Unsupported on older versions of Windows
 			&resourceDesc,
 			initialState,
 			optimizedClearValuePtr, // Optimized clear value: Must be NULL except for buffers, or render/depth-stencil targets
@@ -864,7 +864,7 @@ namespace dx12
 			const D3D12_RESOURCE_DESC intermediateBufferResourceDesc =
 			{
 				.Dimension = D3D12_RESOURCE_DIMENSION::D3D12_RESOURCE_DIMENSION_BUFFER,
-				.Alignment = 0, // 0 == default, i.e. D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 64KB
+				.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, // == 64KB, default
 				.Width = intermediateBufferWidth,
 				.Height = 1,			// Mandatory for buffers
 				.DepthOrArraySize = 1,	// Mandatory for buffers

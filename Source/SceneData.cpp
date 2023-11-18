@@ -550,38 +550,38 @@ namespace
 	{
 		LOG("Generating an error material \"%s\"...", k_missingMaterialName);
 
-		constexpr char missingAlbedoTexName[]				= "MissingAlbedoTexture";
-		constexpr char missingMetallicRoughnessTexName[]	= "MissingMetallicRoughnessTexture";
-		constexpr char missingNormalTexName[]				= "MissingNormalTexture";
-		constexpr char missingOcclusionTexName[]			= "MissingOcclusionTexture";
-		constexpr char missingEmissiveTexName[]				= "MissingEmissiveTexture";
+		constexpr char const* k_missingAlbedoTexName			= "MissingAlbedoTexture";
+		constexpr char const* k_missingMetallicRoughnessTexName	= "MissingMetallicRoughnessTexture";
+		constexpr char const* k_missingNormalTexName			= "MissingNormalTexture";
+		constexpr char const* k_missingOcclusionTexName			= "MissingOcclusionTexture";
+		constexpr char const* k_missingEmissiveTexName			= "MissingEmissiveTexture";
 
 		shared_ptr<Material> errorMat =
 			gr::Material::Create(k_missingMaterialName, gr::Material::MaterialType::GLTF_PBRMetallicRoughness);
 
 		// MatAlbedo
 		std::shared_ptr<re::Texture> errorAlbedo = 
-			LoadTextureFromFilePath({ missingAlbedoTexName }, true, k_errorTextureColor, re::Texture::ColorSpace::sRGB);
+			LoadTextureFromFilePath({ k_missingAlbedoTexName }, true, k_errorTextureColor, re::Texture::ColorSpace::sRGB);
 		errorMat->SetTexture(0, errorAlbedo);
 
 		// MatMetallicRoughness
 		std::shared_ptr<re::Texture> errorMetallicRoughness = LoadTextureFromFilePath(
-			{ missingMetallicRoughnessTexName }, true, glm::vec4(0.f, 1.f, 0.f, 0.f), re::Texture::ColorSpace::Linear);
+			{ k_missingMetallicRoughnessTexName }, true, glm::vec4(0.f, 1.f, 0.f, 0.f), re::Texture::ColorSpace::Linear);
 		errorMat->SetTexture(1, errorMetallicRoughness);
 
 		// MatNormal
 		std::shared_ptr<re::Texture> errorNormal = LoadTextureFromFilePath(
-			{ missingNormalTexName }, true, glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), re::Texture::ColorSpace::Linear);
+			{ k_missingNormalTexName }, true, glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), re::Texture::ColorSpace::Linear);
 		errorMat->SetTexture(2, errorNormal);
 
 		// MatOcclusion
 		std::shared_ptr<re::Texture> errorOcclusion = LoadTextureFromFilePath(
-			{ missingOcclusionTexName }, true, glm::vec4(1.f), re::Texture::ColorSpace::Linear);
+			{ k_missingOcclusionTexName }, true, glm::vec4(1.f), re::Texture::ColorSpace::Linear);
 		errorMat->SetTexture(3, errorOcclusion);
 
 		// MatEmissive
 		std::shared_ptr<re::Texture> errorEmissive = LoadTextureFromFilePath(
-			{ missingEmissiveTexName }, true, k_errorTextureColor, re::Texture::ColorSpace::sRGB);
+			{ k_missingEmissiveTexName }, true, k_errorTextureColor, re::Texture::ColorSpace::sRGB);
 		errorMat->SetTexture(4, errorEmissive);
 
 		scene.AddUniqueMaterial(errorMat);

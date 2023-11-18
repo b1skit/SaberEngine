@@ -53,9 +53,13 @@ namespace re
 	protected:
 		Context() = default;
 
+
+	protected:
+		re::ParameterBlockAllocator m_paramBlockAllocator;
+
+
 	private:
 		re::SwapChain m_swapChain;
-		re::ParameterBlockAllocator m_paramBlockAllocator;
 	};
 
 

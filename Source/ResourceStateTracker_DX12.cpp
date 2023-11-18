@@ -332,20 +332,20 @@ namespace dx12
 
 	void LocalResourceStateTracker::DebugPrintResourceStates() const
 	{
-		LOG("-------------------------\n"
-			"\tPending transitions (%s):\n"
-			"\t-------------------------", 
-			m_pendingStates.empty() ? "<empty>" : std::to_string(m_pendingStates.size()).c_str());
-		for (auto const& resource : m_pendingStates)
+		LOG("-----------------------\n"
+			"\tFinal known states (%s):\n"
+			"\t-----------------------",
+			m_knownStates.empty() ? "<empty>" : std::to_string(m_knownStates.size()).c_str());
+		for (auto const& resource : m_knownStates)
 		{
 			LOG("Resource \"%s\":", GetDebugName(resource.first).c_str());
 			resource.second.DebugPrintResourceStates();
 		}
-		LOG("------------------\n"
-			"\tKnown states (%s):\n"
-			"\t------------------",
-			m_knownStates.empty() ? "<empty>" : std::to_string(m_knownStates.size()).c_str());
-		for (auto const& resource : m_knownStates)
+		LOG("------------------------\n"
+			"\tPending transitions (%s):\n"
+			"\t------------------------", 
+			m_pendingStates.empty() ? "<empty>" : std::to_string(m_pendingStates.size()).c_str());
+		for (auto const& resource : m_pendingStates)
 		{
 			LOG("Resource \"%s\":", GetDebugName(resource.first).c_str());
 			resource.second.DebugPrintResourceStates();
