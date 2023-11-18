@@ -923,7 +923,7 @@ namespace
 		};
 
 		string IBLPath;
-		if (Config::Get()->TryGetValue<string>("sceneIBLPath", IBLPath))
+		if (Config::Get()->TryGetValue<string>(en::ConfigKeys::k_sceneIBLPathKey, IBLPath))
 		{
 			TryLoadIBL(IBLPath, iblTexture);
 		}		
@@ -1622,7 +1622,7 @@ namespace fr
 	{
 		shared_ptr<Texture> iblTexture = nullptr;
 		string sceneIBLPath;
-		bool result = Config::Get()->TryGetValue<string>("sceneIBLPath", sceneIBLPath);
+		bool result = Config::Get()->TryGetValue<string>(en::ConfigKeys::k_sceneIBLPathKey, sceneIBLPath);
 		if (result)
 		{
 			iblTexture = TryGetTexture(sceneIBLPath);

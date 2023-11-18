@@ -165,7 +165,7 @@ namespace
 				D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE, // Occurs when using capture frame while graphics debugging
 			};
 
-			if (en::Config::Get()->ValueExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false)
+			if (en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false)
 			{
 				// Empty RTVs in final MIP generation stages
 				denyIds.emplace_back(D3D12_MESSAGE_ID_CREATEGRAPHICSPIPELINESTATE_RENDERTARGETVIEW_NOT_SET); 

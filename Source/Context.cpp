@@ -49,7 +49,7 @@ namespace re
 		: m_renderDocApi(nullptr)
 	{
 		const bool enableRenderDocProgrammaticCaptures =
-			en::Config::Get()->ValueExists(en::ConfigKeys::k_renderDocProgrammaticCapturesCmdLineArg);
+			en::Config::Get()->KeyExists(en::ConfigKeys::k_renderDocProgrammaticCapturesCmdLineArg);
 
 		if(enableRenderDocProgrammaticCaptures)
 		{

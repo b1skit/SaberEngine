@@ -21,7 +21,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		en::Config::Get()->ProcessCommandLineArgs(argc, argv);
 	}	
 
-	const bool showConsole = en::Config::Get()->ValueExists(en::ConfigKeys::k_showSystemConsoleWindowCmdLineArg);
+	const bool showConsole = en::Config::Get()->KeyExists(en::ConfigKeys::k_showSystemConsoleWindowCmdLineArg);
 	if (showConsole)
 	{
 		AllocConsole();

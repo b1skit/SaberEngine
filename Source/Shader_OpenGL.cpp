@@ -554,7 +554,7 @@ namespace opengl
 				SEAssert(std::format(
 						"Shader \"{}\" texture name \"{}\"is invalid, and strict shader binding is enabled", 
 						shader.GetName(), uniformName).c_str(),
-					en::Config::Get()->ValueExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
+					en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
 				return;
 			}
 
@@ -570,7 +570,7 @@ namespace opengl
 				SEAssert(std::format(
 						"Shader \"{}\" sampler name \"{}\"is invalid, and strict shader binding is enabled", 
 						shader.GetName(), uniformName).c_str(),
-					en::Config::Get()->ValueExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
+					en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
 				return;
 			}
 
@@ -621,7 +621,7 @@ namespace opengl
 			// GL_INVALID_INDEX is returned if the the uniform block name does not identify an active uniform block
 			SEAssert("Failed to find an active uniform block index. This is is not an error, but a useful debugging helper",
 				uniformBlockIndex != GL_INVALID_INDEX ||
-				en::Config::Get()->ValueExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
+				en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
 
 			if (uniformBlockIndex != GL_INVALID_INDEX)
 			{
@@ -657,7 +657,7 @@ namespace opengl
 			// GL_INVALID_INDEX is returned if name is not the name of a resource within the shader program
 			SEAssert("Failed to find the resource in the shader. This is is not an error, but a useful debugging helper",
 				resourceIdx != GL_INVALID_INDEX ||
-				en::Config::Get()->ValueExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
+				en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
 
 			if (resourceIdx != GL_INVALID_INDEX)
 			{

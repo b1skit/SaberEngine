@@ -52,136 +52,136 @@ namespace en
 	{
 		// NOTE: This is one of the first functions run at startup; We cannot use the LogManager yet
 
-		constexpr char k_tokenKeyDelimiter = '-'; // Signifies a -key (e.g. -scene mySceneName)
+		constexpr char k_keyDelimiter = '-'; // Signifies a -key (e.g. -scene mySceneName)
+		auto StripKeyDelimiter = [](std::string const& key) -> char const*
+			{
+				const size_t keyStartIdx = key.find_first_not_of(k_keyDelimiter);
+				return &key.c_str()[keyStartIdx];
+			};
 
-		string argString; // The full list of all command line args received
+		struct KeyValue
+		{
+			const std::string m_key;
+			std::string m_value;
 
-		// TODO: Pre-parse the keys/values into a hash table, instead of doing string comparisons for every arg
+			bool HasValue() const { return !m_value.empty(); }
+		};
+		std::vector<KeyValue> keysValues;
+		keysValues.reserve(argc - 1);
 
+		// Pre-parse the args into key/value pairs:
+		string argString; // The full list of all command line args received		
 		for (int i = 1; i < argc; i++)
 		{
-			const string currentArg(argv[i]); // The raw token, including any delimiters. eg. "-string"
-			const uint32_t nextArgIdx = i + 1;
+			std::string currentToken = argv[i];
 
+			// Append the current token to our argument string:
+			argString += std::format("{}{}",
+				currentToken,
+				i + 1 < argc ? " " : ""); // Don't add a space if it's the last token
 
-			auto HasNextToken = [&]()
-			{
-				return i < (argc - 1); // Are we in bounds if we peek ahead by 1?
-			};
-			auto NextTokenIsValue = [&]()
-			{
-				const bool hasNextToken = i < (argc - 1); // Are we in bounds if we peek ahead by 1?
-				const bool nextTokenIsKey = currentArg.find_first_of(k_tokenKeyDelimiter) == std::string::npos;
-				return hasNextToken && !nextTokenIsKey;
-			};
 			auto CurrentTokenIsKey = [&]()
-			{
-				return currentArg.find_first_of(k_tokenKeyDelimiter) != std::string::npos;
-			};
-			auto ConsumeNextToken = [&]()
-			{
-				if (CurrentTokenIsKey() && NextTokenIsValue())
 				{
-					argString += argv[nextArgIdx] + std::string(HasNextToken() ? " " : "");
-				}
-				i++;
-			};
+					return currentToken.find_first_of(k_keyDelimiter) != std::string::npos;
+				};
 
-
-			argString += currentArg + (HasNextToken() ? " " : ""); // Pad with spaces
-
-			// TODO: Write a token/value parser. For now, just match the commands
-			if (currentArg.find(ConfigKeys::k_sceneCmdLineArg) != string::npos)
+			if (CurrentTokenIsKey())
 			{
-				if (NextTokenIsValue())
+				keysValues.emplace_back(KeyValue{
+				StripKeyDelimiter(argv[i]),
+				""}); // Empty, until we check the next token and see it's a value
+			}
+			else
+			{
+				if (!keysValues.back().m_value.empty())
 				{
-					const string sceneNameParam(argv[nextArgIdx]);
-
-					// From param of the form "Scene\Folder\Names\sceneFile.extension", we extract:
-
-					// sceneFilePath == ".\Scenes\Scene\Folder\Names\sceneFile.extension":
-					const string sceneFilePath = ConfigKeys::k_scenesDirName + sceneNameParam; // k_scenesDirName = ".\Scenes\"
-					SetValue("sceneFilePath", sceneFilePath, Config::SettingType::Runtime);
-
-					// sceneRootPath == ".\Scenes\Scene\Folder\Names\":
-					const size_t lastSlash = sceneFilePath.find_last_of("\\");
-					const string sceneRootPath = sceneFilePath.substr(0, lastSlash) + "\\";
-					SetValue("sceneRootPath", sceneRootPath, Config::SettingType::Runtime);
-
-					// sceneName == "sceneFile"
-					const string filenameAndExt = sceneFilePath.substr(lastSlash + 1, sceneFilePath.size() - lastSlash);
-					const size_t extensionPeriod = filenameAndExt.find_last_of(".");
-					const string sceneName = filenameAndExt.substr(0, extensionPeriod);
-					SetValue(ConfigKeys::k_sceneNameValueName, sceneName, Config::SettingType::Runtime);
-
-					// sceneIBLPath == ".\Scenes\SceneFolderName\IBL\ibl.hdr"
-					const string sceneIBLPath = sceneRootPath + "IBL\\ibl.hdr";
-					SetValue("sceneIBLPath", sceneIBLPath, Config::SettingType::Runtime);
-
-					ConsumeNextToken();
+					LOG_ERROR(std::format(
+						"Invalid command line argument key/value sequence: Value \"{}\" overridden with \"{}\"",
+						keysValues.back().m_value,
+						currentToken).c_str());
 				}
-			}
-			else if (currentArg.find(ConfigKeys::k_showSystemConsoleWindowCmdLineArg) != string::npos)
-			{
-				SetValue(ConfigKeys::k_showSystemConsoleWindowCmdLineArg, true, Config::SettingType::Runtime);
-			}
-			else if (currentArg.find(ConfigKeys::k_platformCmdLineArg) != string::npos)
-			{
-				if (NextTokenIsValue())
-				{
-					const string platformParam(argv[nextArgIdx]);
-
-					bool platformValueIsValid = false;
-					if (platformParam.find("opengl") != string::npos)
-					{
-						m_renderingAPI = platform::RenderingAPI::OpenGL;
-						platformValueIsValid = true;
-					}
-					else if (platformParam.find("dx12") != string::npos)
-					{
-						m_renderingAPI = platform::RenderingAPI::DX12;
-						platformValueIsValid = true;
-					}
-
-					if (platformValueIsValid)
-					{
-						SetValue(ConfigKeys::k_platformCmdLineArg, platformParam, SettingType::APISpecific);
-					}
-
-					ConsumeNextToken();
-				}
-			}
-			else if (currentArg.find(ConfigKeys::k_debugLevelCmdLineArg) != string::npos)
-			{
-				if (NextTokenIsValue())
-				{
-					const int debugLevelVal = std::stoul(argv[nextArgIdx]);
-
-					SetValue(ConfigKeys::k_debugLevelCmdLineArg, debugLevelVal, Config::SettingType::Runtime);
-
-					ConsumeNextToken();
-				}
-			}
-			else if (currentArg.find(ConfigKeys::k_strictShaderBindingCmdLineArg) != string::npos)
-			{
-				SetValue(ConfigKeys::k_strictShaderBindingCmdLineArg, true, Config::SettingType::Runtime);
-			}
-			else if (currentArg.find(ConfigKeys::k_pixGPUProgrammaticCapturesCmdLineArg) != string::npos)
-			{
-				SetValue(ConfigKeys::k_pixGPUProgrammaticCapturesCmdLineArg, true, Config::SettingType::Runtime);
-			}
-			else if (currentArg.find(ConfigKeys::k_pixCPUProgrammaticCapturesCmdLineArg) != string::npos)
-			{
-				SetValue(ConfigKeys::k_pixCPUProgrammaticCapturesCmdLineArg, true, Config::SettingType::Runtime);
-			}
-			else if (currentArg.find(ConfigKeys::k_renderDocProgrammaticCapturesCmdLineArg) != string::npos)
-			{
-				SetValue(ConfigKeys::k_renderDocProgrammaticCapturesCmdLineArg, true, Config::SettingType::Runtime);
+				keysValues.back().m_value = std::move(currentToken);
 			}
 		}
 
 		// Store the received command line string
 		SetValue(ConfigKeys::k_commandLineArgsValueName, argString, Config::SettingType::Runtime);
+
+		// Process the key/value pairs:
+		for (size_t i = 0; i < keysValues.size(); i++)
+		{
+			if (keysValues[i].HasValue())
+			{
+				bool isNumericValue = true;
+				try
+				{
+					int numericValue = std::stoi(keysValues[i].m_value);
+					SetValue(keysValues[i].m_key, numericValue, Config::SettingType::Runtime);
+				}
+				catch (std::invalid_argument)
+				{
+					isNumericValue = false;
+				}
+				if (!isNumericValue)
+				{
+					SetValue(keysValues[i].m_key, keysValues[i].m_value, Config::SettingType::Runtime);
+				}
+			}
+			else
+			{
+				// If no value was provided with a key, just set it as a boolean flag
+				SetValue(keysValues[i].m_key, true, Config::SettingType::Runtime);
+			}
+		}
+
+		// Post-processing:
+		if (KeyExists(en::ConfigKeys::k_sceneCmdLineArg))
+		{
+			std::string const& sceneNameParam = GetValue<std::string>(en::ConfigKeys::k_sceneCmdLineArg);
+
+			// From param of the form "Scene\Folder\Names\sceneFile.extension", we extract:
+
+			// sceneFilePath == ".\Scenes\Scene\Folder\Names\sceneFile.extension":
+			const string sceneFilePath = en::ConfigKeys::k_scenesDirName + sceneNameParam; // k_scenesDirName = ".\Scenes\"
+			SetValue(en::ConfigKeys::k_sceneFilePathKey, sceneFilePath, Config::SettingType::Runtime);
+
+			// sceneRootPath == ".\Scenes\Scene\Folder\Names\":
+			const size_t lastSlash = sceneFilePath.find_last_of("\\");
+			const string sceneRootPath = sceneFilePath.substr(0, lastSlash) + "\\";
+			SetValue(en::ConfigKeys::k_sceneRootPathKey, sceneRootPath, Config::SettingType::Runtime);
+
+			// sceneName == "sceneFile"
+			const string filenameAndExt = sceneFilePath.substr(lastSlash + 1, sceneFilePath.size() - lastSlash);
+			const size_t extensionPeriod = filenameAndExt.find_last_of(".");
+			const string sceneName = filenameAndExt.substr(0, extensionPeriod);
+			SetValue(en::ConfigKeys::k_sceneNameKey, sceneName, Config::SettingType::Runtime);
+
+			// sceneIBLPath == ".\Scenes\SceneFolderName\IBL\ibl.hdr"
+			const string sceneIBLPath = sceneRootPath + "IBL\\ibl.hdr";
+			SetValue(en::ConfigKeys::k_sceneIBLPathKey, sceneIBLPath, Config::SettingType::Runtime);
+		}
+
+		if (KeyExists(en::ConfigKeys::k_platformCmdLineArg))
+		{
+			std::string const& platformParam = GetValue<std::string>(en::ConfigKeys::k_platformCmdLineArg);
+
+			bool platformValueIsValid = false;
+			if (platformParam.find("opengl") != string::npos)
+			{
+				m_renderingAPI = platform::RenderingAPI::OpenGL;
+				platformValueIsValid = true;
+			}
+			else if (platformParam.find("dx12") != string::npos)
+			{
+				m_renderingAPI = platform::RenderingAPI::DX12;
+				platformValueIsValid = true;
+			}
+
+			if (platformValueIsValid)
+			{
+				SetValue(en::ConfigKeys::k_platformCmdLineArg, platformParam, SettingType::APISpecific);
+			}
+		}
 
 		// We don't count command line arg entries as dirtying the config
 		m_isDirty = false;
@@ -504,7 +504,7 @@ namespace en
 	}
 	
 
-	bool Config::ValueExists(std::string const& valueName) const
+	bool Config::KeyExists(std::string const& valueName) const
 	{
 		auto const& result = m_configValues.find(valueName);
 		return result != m_configValues.end();

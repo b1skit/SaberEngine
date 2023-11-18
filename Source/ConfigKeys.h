@@ -5,16 +5,18 @@ namespace en::ConfigKeys
 {
 	// TODO: Key names should have "key" post-fixed, and be pre-computed hash keys instead of C-strings
 
-	// Configuration constants:
-	constexpr char const* k_scenesDirName = "Scenes\\";
-	constexpr char const* k_configDirName = "Config\\";
-	constexpr char const* k_configFileName = "config.cfg";
+	// Configuration constants:									// From: "Scene\Folder\Names\sceneFile.extension"
+	constexpr char const* k_scenesDirName		= "Scenes\\";
+	constexpr char const* k_sceneFilePathKey	= "sceneFilePath";	// ".\Scenes\Scene\Folder\Names\sceneFile.extension"
+	constexpr char const* k_sceneNameKey		= "sceneName";		// "sceneFile"
+	constexpr char const* k_sceneRootPathKey	= "sceneRootPath";	// ".\Scenes\Scene\Folder\Names\"
+	constexpr char const* k_sceneIBLPathKey		= "sceneIBLPath";	// ".\Scenes\SceneFolderName\IBL\ibl.hdr"
+
+	constexpr char const* k_configDirName	= "Config\\";
+	constexpr char const* k_configFileName	= "config.cfg";
 
 	// OS:
 	constexpr char const* k_documentsFolderPathKey = "documentsFolderPath"; // e.g. "C:\Users\<username>\Documents"
-	constexpr char const* k_pixCaptureFolderName = "PIX Captures";
-	constexpr char const* k_renderDocCaptureFolderName = "RenderDoc Captures";
-	constexpr char const* k_captureTitle = "SaberEngine";
 
 	// Config keys:
 	/*************/
@@ -28,11 +30,9 @@ namespace en::ConfigKeys
 	constexpr char const* k_renderDocProgrammaticCapturesCmdLineArg = "renderdoc";
 	constexpr char const* k_strictShaderBindingCmdLineArg			= "strictshaderbinding";
 
-	constexpr char const* k_commandLineArgsValueName			= "commandLineArgs"; // Gets the command line arg string
+	constexpr char const* k_commandLineArgsValueName = "commandLineArgs"; // Gets the command line arg string
 
 	// System:
-	constexpr char const* k_sceneNameValueName		= "sceneName";
-	constexpr char const* k_sceneFilePathValueName	= "sceneFilePath";
 	constexpr char const* k_windowXResValueName		= "windowXRes";
 	constexpr char const* k_windowYResValueName		= "windowYRes";
 
@@ -51,6 +51,11 @@ namespace en::ConfigKeys
 
 	// ImGui:
 	constexpr char const* k_imguiIniPath = "config\\imgui.ini";
+
+	// Debug:
+	constexpr char const* k_pixCaptureFolderName = "PIX Captures";
+	constexpr char const* k_renderDocCaptureFolderName = "RenderDoc Captures";
+	constexpr char const* k_captureTitle = "SaberEngine";
 }
 
 namespace en::ShaderNames

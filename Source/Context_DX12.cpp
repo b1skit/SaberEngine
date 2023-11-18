@@ -54,9 +54,9 @@ namespace dx12
 	{
 		// PIX must be loaded before loading any D3D12 APIs
 		const bool enablePIXPGPUrogrammaticCaptures = 
-			en::Config::Get()->ValueExists(en::ConfigKeys::k_pixGPUProgrammaticCapturesCmdLineArg);
+			en::Config::Get()->KeyExists(en::ConfigKeys::k_pixGPUProgrammaticCapturesCmdLineArg);
 		const bool enablePIXPCPUProgrammaticCaptures =
-			en::Config::Get()->ValueExists(en::ConfigKeys::k_pixCPUProgrammaticCapturesCmdLineArg);
+			en::Config::Get()->KeyExists(en::ConfigKeys::k_pixCPUProgrammaticCapturesCmdLineArg);
 
 		if (enablePIXPGPUrogrammaticCaptures && enablePIXPCPUProgrammaticCaptures)
 		{

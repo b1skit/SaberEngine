@@ -601,7 +601,7 @@ namespace re
 			re::Context::RenderDocAPI* renderDocApi = re::Context::Get()->GetRenderDocAPI();
 
 			const bool renderDocCmdLineEnabled = 
-				en::Config::Get()->ValueExists(en::ConfigKeys::k_renderDocProgrammaticCapturesCmdLineArg) && 
+				en::Config::Get()->KeyExists(en::ConfigKeys::k_renderDocProgrammaticCapturesCmdLineArg) && 
 				renderDocApi != nullptr;
 
 			if (!renderDocCmdLineEnabled)
@@ -725,9 +725,9 @@ namespace re
 
 			const bool isDX12 = en::Config::Get()->GetRenderingAPI() == platform::RenderingAPI::DX12;
 			const bool pixGPUCaptureCmdLineEnabled = isDX12 &&
-				en::Config::Get()->ValueExists(en::ConfigKeys::k_pixGPUProgrammaticCapturesCmdLineArg);
+				en::Config::Get()->KeyExists(en::ConfigKeys::k_pixGPUProgrammaticCapturesCmdLineArg);
 			const bool pixCPUCaptureCmdLineEnabled = isDX12 &&
-				en::Config::Get()->ValueExists(en::ConfigKeys::k_pixCPUProgrammaticCapturesCmdLineArg);
+				en::Config::Get()->KeyExists(en::ConfigKeys::k_pixCPUProgrammaticCapturesCmdLineArg);
 
 			if (!pixGPUCaptureCmdLineEnabled && !pixCPUCaptureCmdLineEnabled)
 			{

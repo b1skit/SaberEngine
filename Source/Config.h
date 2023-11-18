@@ -34,15 +34,15 @@ namespace en
 		void SaveConfigFile(); // Save config.cfg to disk
 
 		template<typename T>
-		T GetValue(const std::string& valueName) const;
+		T GetValue(const std::string& key) const;
 
 		template<typename T>
-		bool TryGetValue(std::string const& valueName, T& value) const;
+		bool TryGetValue(std::string const& key, T& value) const;
 
-		bool ValueExists(std::string const& valueName) const;
+		bool KeyExists(std::string const& key) const;
 
-		std::string GetValueAsString(const std::string& valueName) const;
-		std::wstring GetValueAsWString(const std::string& valueName) const;
+		std::string GetValueAsString(const std::string& key) const;
+		std::wstring GetValueAsWString(const std::string& key) const;
 		
 		// Specific configuration retrieval:
 		/**********************************/
@@ -53,17 +53,17 @@ namespace en
 
 	private:
 		template<typename T>
-		void SetValue(const std::string& valueName, T value, SettingType settingType = SettingType::Common);
+		void SetValue(const std::string& key, T value, SettingType settingType = SettingType::Common);
 
 		template<typename T>
-		void SetValue(char const* valueName, T value, SettingType settingType = SettingType::Common);
+		void SetValue(char const* key, T value, SettingType settingType = SettingType::Common);
 
 		// Set a new config value, IFF it doesn't already exist. Returns true if the value was set
 		template<typename T>
-		bool TrySetValue(const std::string& valueName, T value, SettingType settingType = SettingType::Common);
+		bool TrySetValue(const std::string& key, T value, SettingType settingType = SettingType::Common);
 
 		template<typename T>
-		bool TrySetValue(char const* valueName, T value, SettingType settingType = SettingType::Common);
+		bool TrySetValue(char const* key, T value, SettingType settingType = SettingType::Common);
 
 
 	private:
@@ -92,9 +92,9 @@ namespace en
 
 	// Get a config value, by type
 	template<typename T>
-	T Config::GetValue(const std::string& valueName) const
+	T Config::GetValue(const std::string& key) const
 	{
-		auto const& result = m_configValues.find(valueName);
+		auto const& result = m_configValues.find(key);
 		T returnVal{};
 		if (result != m_configValues.end())
 		{
@@ -104,31 +104,26 @@ namespace en
 			}
 			catch (const std::bad_any_cast& e)
 			{
-				// TODO: The SEAssertF macro should take variadic args
 				LOG_ERROR("bad_any_cast exception thrown: Invalid type requested from Config\n%s", e.what());
-				SEAssertF("bad_any_cast exception thrown: Invalid type requested from Config");
 			}
 		}
 		else
 		{
-			LOG_ERROR("Invalid type requested from Config");
-			SEAssertF("Invalid type requested from Config");
-			throw std::runtime_error("Config key does not exist");
+			LOG_ERROR("Config::GetValue: Key does not exist");
 		}
-
 		return returnVal;
 	}
 
 
 	template<typename T>
-	bool Config::TryGetValue(std::string const& valueName, T& value) const
+	bool Config::TryGetValue(std::string const& key, T& value) const
 	{
-		if (!ValueExists(valueName))
+		if (!KeyExists(key))
 		{
 			return false;
 		}
 
-		value = GetValue<T>(valueName);
+		value = GetValue<T>(key);
 		return true;
 	}
 
@@ -136,9 +131,9 @@ namespace en
 	// Set a config value
 	// Note: Strings must be explicitely defined as a string("value")
 	template<typename T>
-	void Config::SetValue(const std::string& valueName, T value, SettingType settingType /*= SettingType::Common*/)
+	void Config::SetValue(const std::string& key, T value, SettingType settingType /*= SettingType::Common*/)
 	{
-		m_configValues[valueName] = { value, settingType };
+		m_configValues[key] = { value, settingType };
 		if (settingType == SettingType::Common)
 		{
 			m_isDirty = true;
@@ -146,27 +141,27 @@ namespace en
 	}
 
 	template<typename T>
-	inline void Config::SetValue(char const* valueName, T value, SettingType settingType /*= SettingType::Common*/)
+	inline void Config::SetValue(char const* key, T value, SettingType settingType /*= SettingType::Common*/)
 	{
-		SetValue(std::string(valueName), value, settingType);
+		SetValue(std::string(key), value, settingType);
 	}
 
 	template<typename T>
-	bool Config::TrySetValue(const std::string& valueName, T value, SettingType settingType /*= SettingType::Common*/)
+	bool Config::TrySetValue(const std::string& key, T value, SettingType settingType /*= SettingType::Common*/)
 	{
-		if (ValueExists(valueName))
+		if (KeyExists(key))
 		{
 			return false;
 		}
 		
-		SetValue(valueName, value, settingType);
+		SetValue(key, value, settingType);
 		return true;
 	}
 
 	template<typename T>
-	inline bool Config::TrySetValue(char const* valueName, T value, SettingType settingType /*= SettingType::Common*/)
+	inline bool Config::TrySetValue(char const* key, T value, SettingType settingType /*= SettingType::Common*/)
 	{
-		return TrySetValue(std::string(valueName), value, settingType);
+		return TrySetValue(std::string(key), value, settingType);
 	}
 
 
