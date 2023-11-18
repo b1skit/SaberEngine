@@ -9,6 +9,7 @@
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
+#include "ImGuiUtils.h"
 #include "PerformanceTimer.h"
 #include "Light.h"
 #include "RenderManager.h"
@@ -573,6 +574,158 @@ namespace re
 					ImGui::Unindent();
 				}
 			}
+			ImGui::Unindent();
+		}
+
+		ImGui::Separator();
+		
+		if (ImGui::CollapsingHeader("PIX Captures")) // https://devblogs.microsoft.com/pix/programmatic-capture/
+		{
+			ImGui::Indent();
+
+			const bool isDX12 = en::Config::Get()->GetRenderingAPI() == platform::RenderingAPI::DX12;
+			const bool pixGPUCaptureCmdLineEnabled = isDX12 &&
+				en::Config::Get()->ValueExists(en::ConfigKeys::k_pixGPUProgrammaticCapturesCmdLineArg);
+			const bool pixCPUCaptureCmdLineEnabled = isDX12 &&
+				en::Config::Get()->ValueExists(en::ConfigKeys::k_pixCPUProgrammaticCapturesCmdLineArg);
+
+			if (!pixGPUCaptureCmdLineEnabled && !pixCPUCaptureCmdLineEnabled)
+			{
+				ImGui::Text("Launch with -pixgpucapture or -pixcpucapture to enable.\n"
+					"Run PIX in administrator mode, and attach to the current process.");
+			}
+
+			// GPU captures:
+			{
+				ImGui::BeginDisabled(!pixGPUCaptureCmdLineEnabled);
+
+				static char s_pixGPUCapturePath[256] = "C:\\SaberEngineGPUCapture.wpix";
+				static int s_numPixGPUCaptureFrames = 1;
+				static HRESULT s_gpuHRESULT = S_OK;
+				if (ImGui::Button("Capture PIX GPU Frame"))
+				{
+					s_gpuHRESULT = PIXGpuCaptureNextFrames(util::ToWideString(s_pixGPUCapturePath).c_str(), s_numPixGPUCaptureFrames);
+				}
+				ImGui::SetItemTooltip("PIX must be run in administrator mode, and already attached to the process");
+
+				if (s_gpuHRESULT != S_OK)
+				{
+					const _com_error comError(s_gpuHRESULT);
+					const std::string errorMessage = std::format("HRESULT error \"{}\" starting PIX GPU capture.\n"
+						"Is PIX running in administrator mode, and attached to the process?",
+						comError.ErrorMessage());
+
+					bool showErrorPopup = true;
+					util::ShowErrorPopup("Failed to start PIX GPU capture", errorMessage.c_str(), showErrorPopup);
+					if (!showErrorPopup)
+					{
+						s_gpuHRESULT = S_OK;
+					}
+				}
+
+				ImGui::InputText("Output file", s_pixGPUCapturePath, IM_ARRAYSIZE(s_pixGPUCapturePath));
+				ImGui::SetItemTooltip("Must include the .wpix file extension");
+
+				ImGui::SliderInt("No. of frames", &s_numPixGPUCaptureFrames, 1, 10);
+
+				ImGui::EndDisabled();
+			}
+
+			ImGui::Separator();
+
+			// CPU timing captures:
+			{
+				ImGui::BeginDisabled(!pixCPUCaptureCmdLineEnabled);
+
+				static char s_pixCPUCapturePath[256] = "C:\\SaberEngineTimingCapture.wpix";
+				static bool s_captureGPUTimings = true;
+				static bool s_captureCallstacks = true;
+				static bool s_captureCpuSamples = true;
+				static const uint32_t s_cpuSamplesPerSecond[3] = {1000u, 4000u, 8000u};
+				static int s_cpuSamplesPerSecondSelectionIdx = 0;
+				static bool s_captureFileIO = false;
+				static bool s_captureVirtualAllocEvents = false;
+				static bool s_captureHeapAllocEvents = false;
+
+				static bool s_isCapturing = false;
+				static HRESULT s_timingCaptureStartResult = S_OK;
+				if (ImGui::Button("Capture PIX CPU Timings"))
+				{
+					s_isCapturing = true;
+					// For compatibility with Xbox, captureFlags must be set to PIX_CAPTURE_GPU or PIX_CAPTURE_TIMING 
+					// otherwise the function will return E_NOTIMPL
+					const DWORD captureFlags = PIX_CAPTURE_TIMING;
+
+					PIXCaptureParameters pixCaptureParams = PIXCaptureParameters{
+						.TimingCaptureParameters{
+							.FileName = util::ToWideString(s_pixCPUCapturePath).c_str(),
+
+							.MaximumToolingMemorySizeMb = 0, // Ignored on PIX for Windows
+							.CaptureStorage{}, // Ignored on PIX for Windows
+
+							.CaptureGpuTiming = s_captureGPUTimings,
+
+							.CaptureCallstacks = s_captureCallstacks,
+							.CaptureCpuSamples = s_captureCpuSamples,
+							.CpuSamplesPerSecond = s_cpuSamplesPerSecond[s_cpuSamplesPerSecondSelectionIdx],
+
+							.CaptureFileIO = s_captureFileIO,
+
+							.CaptureVirtualAllocEvents = s_captureVirtualAllocEvents,
+							.CaptureHeapAllocEvents = s_captureHeapAllocEvents,
+							.CaptureXMemEvents = false, // Xbox only
+							.CapturePixMemEvents = false // Xbox only
+						}
+					};
+
+					s_timingCaptureStartResult = PIXBeginCapture(captureFlags, &pixCaptureParams);
+				}
+
+				if (s_timingCaptureStartResult != S_OK)
+				{
+					const _com_error comError(s_timingCaptureStartResult);
+					const std::string errorMessage = std::format("HRESULT error \"{}\" starting PIX timing capture.\n"
+						"Is PIX running in administrator mode, and attached to the process?",
+						comError.ErrorMessage());
+
+					bool showErrorPopup = true;
+					util::ShowErrorPopup("Failed to start PIX timing capture", errorMessage.c_str(), showErrorPopup);
+					if (!showErrorPopup)
+					{
+						s_timingCaptureStartResult = S_OK;
+						s_isCapturing = false;
+					}
+				}
+
+				ImGui::BeginDisabled(!s_isCapturing);
+				if (ImGui::Button("End Capture"))
+				{
+					PIXEndCapture(false);
+					s_isCapturing = false;
+				}
+				ImGui::EndDisabled();
+
+				ImGui::Text("CPU");
+				{
+					ImGui::Checkbox("CPU samples", &s_captureCpuSamples);
+
+					ImGui::BeginDisabled(!s_captureCpuSamples);
+					ImGui::Combo("CPU sampling rate (/sec)", &s_cpuSamplesPerSecondSelectionIdx, 
+						"1000\0"
+						"4000\0"
+						"8000\0\0");
+					ImGui::EndDisabled();
+
+					ImGui::Checkbox("Callstacks on context switches", &s_captureCallstacks);
+				}
+				ImGui::Checkbox("File accesses", &s_captureFileIO);
+
+				ImGui::Checkbox("GPU timings", &s_captureGPUTimings);
+				
+
+				ImGui::EndDisabled();
+			}
+
 			ImGui::Unindent();
 		}
 		

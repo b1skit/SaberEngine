@@ -18,7 +18,7 @@ namespace dx12
 {
 	class Context final : public virtual re::Context
 	{
-	public:	
+	public:
 		~Context() override = default;
 
 		[[nodiscard]] void Create() override;
@@ -58,8 +58,6 @@ namespace dx12
 
 
 	private:
-		const D3D12_CONSTANT_BUFFER_VIEW_DESC m_nullCBV = { .BufferLocation = 0, .SizeInBytes = 32 }; // Arbitrary
-
 		std::unordered_map<D3D12_SRV_DIMENSION, std::unordered_map<DXGI_FORMAT, DescriptorAllocation>> s_nullSRVLibrary;
 		std::mutex s_nullSRVLibraryMutex;
 		
@@ -90,8 +88,13 @@ namespace dx12
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_imGuiGPUVisibleSRVDescriptorHeap;
 
 
+		// PIX programmatic capture models
+		HMODULE m_pixGPUCaptureModule;
+		HMODULE m_pixCPUCaptureModule;
+
+
 	protected:
-		Context() = default;
+		Context();
 		friend class re::Context;
 	};
 

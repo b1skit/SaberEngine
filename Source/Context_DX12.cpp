@@ -2,6 +2,8 @@
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx12.h"
 
+#include <pix3.h>
+
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
 #include "Config.h"
@@ -41,8 +43,50 @@ namespace
 
 namespace dx12
 {
+	Context::Context()
+		: m_pixGPUCaptureModule(nullptr)
+		, m_pixCPUCaptureModule(nullptr)
+	{
+	}
+
+
 	void Context::Create()
 	{
+		// PIX must be loaded before loading any D3D12 APIs
+		const bool enablePIXPGPUrogrammaticCaptures = 
+			en::Config::Get()->ValueExists(en::ConfigKeys::k_pixGPUProgrammaticCapturesCmdLineArg);
+		const bool enablePIXPCPUProgrammaticCaptures =
+			en::Config::Get()->ValueExists(en::ConfigKeys::k_pixCPUProgrammaticCapturesCmdLineArg);
+
+		if (enablePIXPGPUrogrammaticCaptures && enablePIXPCPUProgrammaticCaptures)
+		{
+			LOG_ERROR("Cannot have PIX CPU and GPU captures enabled at the same time. Default is GPU capture, CPU "
+				"capturing ignored");
+		}
+
+		if (enablePIXPGPUrogrammaticCaptures)
+		{
+			LOG("Loading DX12 PIX GPU programmatic capture module");
+			m_pixGPUCaptureModule = PIXLoadLatestWinPixGpuCapturerLibrary(); // This must be done before loading any D3D12 APIs
+
+			if (m_pixGPUCaptureModule == nullptr)
+			{
+				const HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+				CheckHResult(hr, "Failed to create PIX GPU capture module");
+			}
+		}
+		else if (enablePIXPCPUProgrammaticCaptures)
+		{
+			LOG("Loading DX12 PIX CPU programmatic capture module");
+			m_pixCPUCaptureModule = PIXLoadLatestWinPixTimingCapturerLibrary();
+
+			if (m_pixCPUCaptureModule == nullptr)
+			{
+				const HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+				CheckHResult(hr, "Failed to create PIX GPU capture module");
+			}
+		}
+
 		memset(m_frameFenceValues, 0, sizeof(uint64_t) * dx12::RenderManager::GetNumFrames());
 
 		EnableDebugLayer(); // Before we create a device
@@ -116,6 +160,17 @@ namespace dx12
 	void Context::Destroy(re::Context& context)
 	{
 		dx12::Context& dx12Context = dynamic_cast<dx12::Context&>(context);
+
+		if (dx12Context.m_pixGPUCaptureModule != nullptr)
+		{
+			LOG("Destroying PIX GPU programmatic capture module");
+			FreeLibrary(dx12Context.m_pixGPUCaptureModule);
+		}
+		if (dx12Context.m_pixCPUCaptureModule != nullptr)
+		{
+			LOG("Destroying PIX CPU programmatic capture module");
+			FreeLibrary(dx12Context.m_pixCPUCaptureModule);
+		}
 
 		// ImGui Cleanup:
 		ImGui_ImplDX12_Shutdown();

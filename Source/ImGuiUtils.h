@@ -28,4 +28,26 @@ namespace util
 			ImGui::TreePop();
 		}
 	}
+
+
+	inline void ShowErrorPopup(char const* title, char const* message, bool& doShow)
+	{
+		ImGui::OpenPopup(title);
+
+		// Center the popup:
+		const ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+		ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+		if (ImGui::BeginPopupModal(title, &doShow, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::Text(message);
+
+			if (ImGui::Button("OK", ImVec2(120, 0)))
+			{
+				doShow = false;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+	}
 }

@@ -58,6 +58,11 @@ Enable graphics API debugging: -debuglevel [0, 2]
 	- 2: Level 1 + GPU-based validation (DX12 only)  
 	- 3: Level 2 + DRED breadcrumbs (DX12 only)  
 
+Enable PIX programmatic capture (DX12 only): -enablepixgpucapture , -enablepixcpucapture
+	- This is only required for programmatic captures. It is not required for PIX markers  
+	- Captures can be triggered via the render debug menu  
+	- More info on PIX programmatic captures here: https://devblogs.microsoft.com/pix/programmatic-capture/  
+
 
 --------------  
 Menu and logs:  
@@ -168,6 +173,12 @@ stb (stb_image.h): https://github.com/nothings/stb/blob/master/
 --------------------------------------------------------------------
 - Current version: Jan 29, 2023
 - "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\stb\"  
+
+
+NuGet Packages:  
+---------------  
+The following packages are automatically included in the SaberEngine solution  
+- WinPixEventRuntime  
 
 
 --------------------------------------------------

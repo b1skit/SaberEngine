@@ -166,6 +166,14 @@ namespace en
 			{
 				SetValue(ConfigKeys::k_strictShaderBindingCmdLineArg, true, Config::SettingType::Runtime);
 			}
+			else if (currentArg.find(ConfigKeys::k_pixGPUProgrammaticCapturesCmdLineArg) != string::npos)
+			{
+				SetValue(ConfigKeys::k_pixGPUProgrammaticCapturesCmdLineArg, true, Config::SettingType::Runtime);
+			}
+			else if (currentArg.find(ConfigKeys::k_pixCPUProgrammaticCapturesCmdLineArg) != string::npos)
+			{
+				SetValue(ConfigKeys::k_pixCPUProgrammaticCapturesCmdLineArg, true, Config::SettingType::Runtime);
+			}
 		}
 
 		// Store the received command line string

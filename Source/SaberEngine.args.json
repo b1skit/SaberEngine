@@ -15,6 +15,14 @@
       "Command": "-console"
     },
     {
+      "Id": "bd461554-1dff-424b-97b5-87b615be9133",
+      "Command": "-pixcpucapture"
+    },
+    {
+      "Id": "95145834-d4a0-4aec-bc67-99dfef0a8efe",
+      "Command": "-pixgpucapture"
+    },
+    {
       "Id": "35be5c82-80fa-421b-ad5d-05df0d9477bd",
       "Command": "-strictshaderbinding"
     },

@@ -16,6 +16,8 @@ namespace en::ConfigKeys
 	constexpr char const* k_platformCmdLineArg						= "platform";
 	constexpr char const* k_debugLevelCmdLineArg					= "debuglevel";
 	constexpr char const* k_strictShaderBindingCmdLineArg			= "strictshaderbinding";
+	constexpr char const* k_pixGPUProgrammaticCapturesCmdLineArg	= "pixgpucapture";
+	constexpr char const* k_pixCPUProgrammaticCapturesCmdLineArg	= "pixcpucapture";
 
 	constexpr char const* k_commandLineArgsValueName			= "commandLineArgs"; // Gets the command line arg string
 
