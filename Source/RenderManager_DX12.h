@@ -33,8 +33,11 @@ namespace dx12
 		void Render() override;
 		
 
+	protected:
+		const uint8_t k_numFrames;
+
+
 	private:
-		static const uint8_t k_numFrames = 3; // We (currently) always use triple buffering in DX12
 
 		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_intermediateResources; // From resources created in the previous frame
 		uint64_t m_intermediateResourceFenceVal;
@@ -43,6 +46,7 @@ namespace dx12
 
 	inline uint8_t RenderManager::GetNumFrames()
 	{
+		static const uint8_t k_numFrames = dynamic_cast<dx12::RenderManager*>(re::RenderManager::Get())->k_numFrames;
 		return k_numFrames;
 	}
 }

@@ -462,12 +462,14 @@ namespace en
 		case platform::RenderingAPI::OpenGL:
 		{
 			// Shaders:
-			TryInsertDefault("shaderDirectory",	std::string(".\\Shaders\\GLSL\\"));
+			TryInsertDefault(en::ConfigKeys::k_shaderDirectoryKey,	std::string(".\\Shaders\\GLSL\\"));
+			// Note: OpenGL only supports double-buffering, so we don't add a k_numBackbuffersKey entry
 		}
 		break;
 		case platform::RenderingAPI::DX12:
 		{
-			TryInsertDefault("shaderDirectory", std::string(".\\Shaders\\HLSL\\"));
+			TryInsertDefault(en::ConfigKeys::k_shaderDirectoryKey, std::string(".\\Shaders\\HLSL\\"));
+			TryInsertDefault(en::ConfigKeys::k_numBackbuffersKey, 3);
 		}
 		break;
 		default:

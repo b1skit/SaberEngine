@@ -112,7 +112,7 @@ namespace
 	string LoadShaderText(string const& filename)
 	{
 		// Assemble the full shader file path:
-		string const& filepath = Config::Get()->GetValue<string>("shaderDirectory") + filename;
+		string const& filepath = Config::Get()->GetValue<string>(en::ConfigKeys::k_shaderDirectoryKey) + filename;
 
 		return util::LoadTextAsString(filepath);
 	}

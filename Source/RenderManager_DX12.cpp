@@ -39,7 +39,9 @@ namespace dx12
 {
 	RenderManager::RenderManager()
 		: m_intermediateResourceFenceVal(0)
+		, k_numFrames(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_numBackbuffersKey))
 	{
+		SEAssert("Invalid number of frames in flight", k_numFrames >= 2 && k_numFrames <= 3);
 	}
 
 

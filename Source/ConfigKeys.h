@@ -41,9 +41,13 @@ namespace en::ConfigKeys
 	constexpr char const* k_sceneRootPathKey	= "sceneRootPath";	// ".\Scenes\Scene\Folder\Names\"
 	constexpr char const* k_sceneIBLPathKey		= "sceneIBLPath";	// ".\Scenes\SceneFolderName\IBL\ibl.hdr"
 
+	constexpr char const* k_shaderDirectoryKey = "shaderDirectory";
+
 	// System:
 	constexpr char const* k_windowWidthKey	= "width";
 	constexpr char const* k_windowHeightKey	= "height";
+	constexpr char const* k_numBackbuffersKey = "numframesinflight"; // DX12 only
+
 
 	// Lights/shadows:
 	constexpr char const* k_defaultDirectionalLightMinShadowBias	= "defaultDirectionalLightMinShadowBias";

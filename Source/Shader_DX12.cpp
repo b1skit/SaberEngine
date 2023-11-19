@@ -36,7 +36,8 @@ namespace dx12
 		};
 
 		// Assemble root shader dir, as a wide string
-		std::wstring const& shaderRootWStr = en::Config::Get()->GetValueAsWString("shaderDirectory") + shaderBaseName;
+		std::wstring const& shaderRootWStr = 
+			en::Config::Get()->GetValueAsWString(en::ConfigKeys::k_shaderDirectoryKey) + shaderBaseName;
 
 		// Load the shader blobs:
 		for (size_t i = 0; i < nameSuffix.size(); i++)

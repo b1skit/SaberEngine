@@ -24,15 +24,12 @@ namespace opengl
 
 	private: // re::RenderManager interface:
 		void Render() override;
-
-
-	private:
-		static const uint8_t k_numFrames = 2; // OpenGL only supports double buffering via a front and back buffer
 	};
 
 
 	inline uint8_t RenderManager::GetNumFrames()
 	{
+		constexpr uint8_t k_numFrames = 2; // OpenGL only supports double buffering via a front and back buffer
 		return k_numFrames;
 	}
 }

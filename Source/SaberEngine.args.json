@@ -51,6 +51,10 @@
       "Command": "-height 480"
     },
     {
+      "Id": "2cc5f5f4-4b6e-43a7-9ba7-e135e9b6d149",
+      "Command": "-numframesinflight 2"
+    },
+    {
       "Id": "6dd1fc69-ed79-4d85-b912-fcc514e395a2",
       "Command": "-scene MetalRoughSpheresNoTextures\\glTF\\MetalRoughSpheresNoTextures.gltf"
     },
