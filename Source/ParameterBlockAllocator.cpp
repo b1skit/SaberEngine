@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "CastUtils.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "ParameterBlockAllocator.h"
 #include "ParameterBlockAllocator_Platform.h"
 #include "ParameterBlock_Platform.h"

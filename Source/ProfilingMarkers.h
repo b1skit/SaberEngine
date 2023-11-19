@@ -3,7 +3,7 @@
 #include <pix3.h>
 
 #include "Config.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Platform.h"
 
 

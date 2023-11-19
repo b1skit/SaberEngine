@@ -3,7 +3,7 @@
 #include <GL/wglew.h> // Windows-specific GL functions and macros
 
 #include "Config.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "SwapChain_OpenGL.h"
 
 

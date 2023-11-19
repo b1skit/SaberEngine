@@ -10,7 +10,7 @@
 #include "Context_DX12.h"
 #include "CoreEngine.h"
 #include "Debug_DX12.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Fence_DX12.h"
 #include "HashUtils.h"
 #include "RenderManager_DX12.h"

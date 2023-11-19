@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
 #include "SceneManager.h"

@@ -12,7 +12,7 @@
 #include "Camera.h"
 #include "Config.h"
 #include "CoreEngine.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Light.h"
 #include "Material.h"
 #include "Material_GLTF.h"

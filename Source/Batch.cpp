@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Batch.h"
 #include "CastUtils.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Material.h"
 #include "Mesh.h"
 #include "ParameterBlock.h"

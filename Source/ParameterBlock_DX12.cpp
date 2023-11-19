@@ -3,7 +3,7 @@
 
 #include "CastUtils.h"
 #include "Context_DX12.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Debug_DX12.h"
 #include "MathUtils.h"
 #include "ParameterBlock_DX12.h"

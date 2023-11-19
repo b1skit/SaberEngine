@@ -4,7 +4,7 @@
 
 #include "Window.h"
 #include "Window_Win32.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "CoreEngine.h"
 
 

@@ -435,7 +435,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="Texture_OpenGL.h" />
     <ClInclude Include="Texture_Platform.h" />
     <ClInclude Include="NamedObject.h" />
-    <ClInclude Include="DebugConfiguration.h" />
+    <ClInclude Include="Assert.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CoreEngine.h" />
     <ClInclude Include="EngineComponent.h" />

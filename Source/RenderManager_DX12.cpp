@@ -5,7 +5,7 @@
 #include "backends/imgui_impl_dx12.h"
 
 #include "Context_DX12.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Debug_DX12.h"
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_ComputeMips.h"

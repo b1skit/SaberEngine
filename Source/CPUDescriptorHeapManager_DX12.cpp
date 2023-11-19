@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Context_DX12.h"
 #include "CPUDescriptorHeapManager_DX12.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Debug_DX12.h"
 #include "RenderManager.h"
 

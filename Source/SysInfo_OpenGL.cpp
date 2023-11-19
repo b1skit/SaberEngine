@@ -3,7 +3,7 @@
 #include <GL/wglew.h> // Windows-specific GL functions and macros
 #include <GL/GL.h> // Must follow glew.h
 
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "SysInfo_OpenGL.h"
 
 // Note: Most of these functions can likely only be called from the main thread. Follow the pattern of caching the

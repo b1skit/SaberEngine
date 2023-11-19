@@ -2,7 +2,7 @@
 #include <d3dcompiler.h>
 
 #include "Config.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "RootSignature_DX12.h"
 #include "Shader_DX12.h"
 

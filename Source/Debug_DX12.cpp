@@ -6,7 +6,7 @@
 #include "Config.h"
 #include "Context_DX12.h"
 #include "Debug_DX12.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "TextUtils.h"
 
 

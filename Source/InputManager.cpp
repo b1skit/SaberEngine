@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "InputManager.h"
 #include "Config.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "EventManager.h"
 #include "CoreEngine.h"
 #include "InputManager_Platform.h"

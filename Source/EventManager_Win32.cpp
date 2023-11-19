@@ -2,7 +2,7 @@
 #include "EventManager_Win32.h"
 #include "EventManager.h"
 #include "CoreEngine.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 
 
 namespace win32

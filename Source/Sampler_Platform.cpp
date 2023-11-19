@@ -2,7 +2,7 @@
 #pragma once
 
 #include "Config.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Sampler.h"
 #include "Sampler_DX12.h"
 #include "Sampler_OpenGL.h"

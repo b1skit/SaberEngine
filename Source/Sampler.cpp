@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "RenderManager.h"
 #include "Sampler.h"
 #include "Sampler_Platform.h"

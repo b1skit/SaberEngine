@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Window_Platform.h"
 #include "Window_Win32.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Config.h"
 
 

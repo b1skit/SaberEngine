@@ -10,7 +10,7 @@
 #include "Context_OpenGL.h"
 #include "Context.h"
 #include "CoreEngine.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "HashUtils.h"
 #include "MeshPrimitive.h"
 #include "SysInfo_OpenGL.h"

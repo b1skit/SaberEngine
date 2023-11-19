@@ -4,7 +4,7 @@
 #include "weldmesh.c" // LNK2019 otherwise...
 
 #include "Config.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "VertexStreamBuilder.h"
 
 

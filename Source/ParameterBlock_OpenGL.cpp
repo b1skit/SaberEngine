@@ -2,7 +2,7 @@
 #include "ParameterBlockAllocator_OpenGL.h"
 #include "ParameterBlock_OpenGL.h"
 #include "ParameterBlock.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 
 
 namespace opengl

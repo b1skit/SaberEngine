@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Config.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "ParameterBlockAllocator.h"
 #include "ParameterBlockAllocator_DX12.h"
 #include "ParameterBlockAllocator_OpenGL.h"

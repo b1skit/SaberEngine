@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Config.h"
 #include "RootSignature_DX12.h"
 #include "Shader_DX12.h"

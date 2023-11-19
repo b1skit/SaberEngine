@@ -3,7 +3,7 @@
 
 #include "ConfigKeys.h"
 #include "Platform.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 
 
 namespace en

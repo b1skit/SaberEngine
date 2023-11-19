@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "HashUtils.h"
 #include "Material.h"
 #include "RenderManager.h"

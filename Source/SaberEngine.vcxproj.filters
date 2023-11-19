@@ -457,7 +457,7 @@
     <ClInclude Include="ShadowMap.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
-    <ClInclude Include="DebugConfiguration.h">
+    <ClInclude Include="Assert.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsSystem.h">

@@ -5,7 +5,7 @@
 #include "Config.h"
 #include "Context_DX12.h"
 #include "CoreEngine.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Debug_DX12.h"
 #include "RenderManager.h"
 #include "SwapChain_DX12.h"

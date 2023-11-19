@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "ThreadPool.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 
 
 namespace en

@@ -4,7 +4,7 @@
 #include "Context_DX12.h"
 #include "Context_OpenGL.h"
 #include "Context_Platform.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "SysInfo_Platform.h"
 
 using std::make_shared;

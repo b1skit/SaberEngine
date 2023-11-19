@@ -4,7 +4,7 @@
 
 #include "Config.h"
 #include "CoreEngine.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Material.h"
 #include "ParameterBlock_OpenGL.h"
 #include "PerformanceTimer.h"

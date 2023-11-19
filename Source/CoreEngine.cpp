@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "CoreEngine.h"
 #include "Config.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Platform.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager.h"

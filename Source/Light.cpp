@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Camera.h"
 #include "Config.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Light.h"
 #include "MeshFactory.h"
 #include "MeshPrimitive.h"

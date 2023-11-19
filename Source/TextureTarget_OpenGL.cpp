@@ -2,7 +2,7 @@
 #include <GL/glew.h>
 
 #include "CastUtils.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "TextureTarget.h"
 #include "TextureTarget_OpenGL.h"
 #include "Texture_OpenGL.h"

@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Material.h"
 #include "Material_GLTF.h"
 #include "ParameterBlock.h"

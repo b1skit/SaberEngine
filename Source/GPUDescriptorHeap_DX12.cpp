@@ -5,7 +5,7 @@
 #include "Config.h"
 #include "Context_DX12.h"
 #include "CPUDescriptorHeapManager_DX12.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Debug_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"
 #include "RenderManager.h"

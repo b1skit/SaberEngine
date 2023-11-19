@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "EventManager.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "EventListener.h"
 #include "EventManager_Platform.h"
 

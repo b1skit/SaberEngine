@@ -3,7 +3,7 @@
 
 #include "Config.h"
 #include "Context_DX12.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "MathUtils.h"
 #include "RenderManager_DX12.h"
 #include "SwapChain_DX12.h"

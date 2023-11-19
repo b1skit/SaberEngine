@@ -3,7 +3,7 @@
 #include "ParameterBlock.h"
 #include "ParameterBlock_OpenGL.h"
 #include "ParameterBlock_DX12.h"
-#include "DebugConfiguration.h"
+#include "Assert.h"
 #include "Config.h"
 
 using en::Config;
