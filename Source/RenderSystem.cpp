@@ -1,4 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
+#include <pix3.h>
+
 #include "RenderSystem.h"
 
 
@@ -40,7 +42,12 @@ namespace re
 
 	void RenderSystem::ExecuteUpdatePipeline()
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), 
+			std::format("{} ExecuteUpdatePipeline", GetName()).c_str());
+
 		m_updatePipeline(this);
+
+		PIXEndEvent();
 	}
 
 

@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include <pix3.h>
 
 #include "Batch.h"
 #include "MeshPrimitive.h"
@@ -242,19 +243,27 @@ namespace re
 
 	void RenderStage::EndOfFrame()
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "StagePipeline::EndOfFrame");
+
 		m_singleFrameParamBlocks.clear();
 		m_stageBatches.clear();
+
+		PIXEndEvent();
 	}
 
 
 	void RenderStage::AddBatches(std::vector<re::Batch> const& batches)
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "RenderStage::AddBatches");
+
 		m_stageBatches.reserve(batches.size());
 
 		for (size_t i = 0; i < batches.size(); i++)
 		{
 			AddBatch(batches[i]); // Checks filter mask bit before accepting the batch
 		}
+
+		PIXEndEvent();
 	}
 
 

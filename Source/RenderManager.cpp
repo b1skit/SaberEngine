@@ -112,6 +112,8 @@ namespace re
 		m_isRunning = true;
 		while (m_isRunning)
 		{
+			PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "RenderManager frame");
+
 			// Blocks until a new update params is received, or the EngineThread has been signaled to stop
 			const bool doUpdate = GetUpdateParams(updateParams);
 			if (!doUpdate)
@@ -127,6 +129,8 @@ namespace re
 			Update(m_renderFrameNum, updateParams.m_elapsed);
 
 			EndOfFrame(); // Clear batches, process pipeline and parameter block allocator EndOfFrames
+
+			PIXEndEvent();
 		}
 
 		// Synchronized shutdown: Blocks main thread until complete
@@ -190,10 +194,12 @@ namespace re
 		// scene objects updated via a render command queue
 
 		// Execute each RenderSystem's platform-specific graphics system update pipelines:
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "Execute update pipeline");
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
 			renderSystem->ExecuteUpdatePipeline();
 		}
+		PIXEndEvent();
 
 		// "Swap" our CPU-side PB data buffers, now that our render systems have written to them
 		re::Context::Get()->GetParameterBlockAllocator().SwapCPUBuffers(frameNum);
@@ -245,24 +251,40 @@ namespace re
 
 		// Need to clear the PB read data now, to make sure we're not holding on to any single frame PBs beyond the
 		// end of the current frame
-		m_newParameterBlocks.ClearReadData();
-
-		m_renderBatches.clear();
-		m_createdTextures.clear();
-
-		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "Clear data");
 		{
-			re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
-			for (StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
-			{
-				stagePipeline.EndOfFrame();
-			}
+			m_newParameterBlocks.ClearReadData();
+
+			m_renderBatches.clear();
+			m_createdTextures.clear();
 		}
 
-		// Swap the single-frame resource n-buffers:
-		m_singleFrameVertexStreams.Swap();
+		PIXEndEvent();
 
-		re::Context::Get()->GetParameterBlockAllocator().EndFrame();
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "Process render systems");
+		{
+			for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+			{
+				re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
+
+				PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), renderSystem->GetName().c_str());
+				for (StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
+				{
+					stagePipeline.EndOfFrame();
+				}
+				PIXEndEvent();
+			}
+		}
+		PIXEndEvent();
+
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "Swap buffers");
+		{
+			// Swap the single-frame resource n-buffers:
+			m_singleFrameVertexStreams.Swap();
+
+			re::Context::Get()->GetParameterBlockAllocator().EndFrame();
+		}
+		PIXEndEvent();
 
 		PIXEndEvent();
 	}

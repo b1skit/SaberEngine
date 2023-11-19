@@ -43,7 +43,8 @@ namespace dx12
 	class CommandList
 	{
 	public:
-		static constexpr wchar_t const* const GetCommandListTypeName(dx12::CommandListType);
+		static constexpr wchar_t const* const GetCommandListTypeWName(dx12::CommandListType);
+		static constexpr char const* const GetCommandListTypeName(dx12::CommandListType);
 		static constexpr D3D12_COMMAND_LIST_TYPE TranslateToD3DCommandListType(dx12::CommandListType);
 		static constexpr CommandListType TranslateToSECommandListType(D3D12_COMMAND_LIST_TYPE);
 
@@ -218,7 +219,7 @@ namespace dx12
 	}
 
 
-	constexpr wchar_t const* const CommandList::GetCommandListTypeName(dx12::CommandListType type)
+	constexpr wchar_t const* const CommandList::GetCommandListTypeWName(dx12::CommandListType type)
 	{
 		switch (type)
 		{
@@ -230,9 +231,27 @@ namespace dx12
 		case CommandListType::VideoProcess: return L"VideoProcess";
 		case CommandListType::VideoEncode: return L"VideoEncode";
 		default:
-			SEAssertF("Invalid command list type");
+			static_assert("Invalid command list type");
 		}
 		return L"InvalidType";
+	};
+
+
+	constexpr char const* const CommandList::GetCommandListTypeName(dx12::CommandListType type)
+	{
+		switch (type)
+		{
+		case CommandListType::Direct: return "Direct";
+		case CommandListType::Bundle: return "Bundle";
+		case CommandListType::Compute: return "Compute";
+		case CommandListType::Copy: return "Copy";
+		case CommandListType::VideoDecode: return "VideoDecode";
+		case CommandListType::VideoProcess: return "VideoProcess";
+		case CommandListType::VideoEncode: return "VideoEncode";
+		default:
+			static_assert("Invalid command list type");
+		}
+		return "InvalidType";
 	};
 
 

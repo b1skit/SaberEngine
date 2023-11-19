@@ -143,7 +143,7 @@ namespace dx12
 
 		// Name the command list with a monotonically-increasing index to make it easier to identify
 		const std::wstring commandListname = std::wstring(
-			GetCommandListTypeName(type)) +
+			GetCommandListTypeWName(type)) +
 			L"_CommandList_#" + std::to_wstring(k_commandListNumber);
 
 		m_commandAllocator = CreateCommandAllocator(device, m_d3dType, commandListname + L"_CommandAllocator");

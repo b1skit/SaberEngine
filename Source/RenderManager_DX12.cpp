@@ -531,6 +531,8 @@ namespace dx12
 
 		// Command lists must be submitted on a single thread, and in the same order as the render stages they're
 		// generated from to ensure modification fences and GPU waits are are handled correctly
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), 
+			std::format("Submit command lists ({})", commandLists.size()).c_str());
 		size_t startIdx = 0;
 		while (startIdx < commandLists.size())
 		{
@@ -544,19 +546,16 @@ namespace dx12
 				endIdx++;
 			}
 
+			PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection),
+				std::format("Submit command lists {}-{}", startIdx, endIdx).c_str());
+
 			const size_t numCmdLists = endIdx - startIdx;
 
 			switch (cmdListType)
 			{
 			case CommandListType::Direct:
 			{
-				PIXBeginEvent(directQueue.GetD3DCommandQueue(),
-					PIX_COLOR_INDEX(PIX_FORMAT_COLOR::GraphicsQueue),
-					"Direct command queue");
-				
 				directQueue.Execute(static_cast<uint32_t>(numCmdLists), &commandLists[startIdx]);
-
-				PIXEndEvent(directQueue.GetD3DCommandQueue());
 			}
 			break;
 			case CommandListType::Bundle:
@@ -566,13 +565,7 @@ namespace dx12
 			break;
 			case CommandListType::Compute:
 			{
-				PIXBeginEvent(computeQueue.GetD3DCommandQueue(),
-					PIX_COLOR_INDEX(PIX_FORMAT_COLOR::ComputeQueue),
-					"Compute command queue");
-
 				computeQueue.Execute(static_cast<uint32_t>(numCmdLists), &commandLists[startIdx]);
-
-				PIXEndEvent(computeQueue.GetD3DCommandQueue());
 			}
 			break;
 			case CommandListType::Copy:
@@ -593,7 +586,10 @@ namespace dx12
 			}
 
 			startIdx = endIdx;
+
+			PIXEndEvent();
 		}
+		PIXEndEvent();
 	}
 
 

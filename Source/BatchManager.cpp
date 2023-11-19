@@ -1,4 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
+#include <pix3.h>
+
 #include "BatchManager.h"
 #include "Mesh.h"
 #include "CastUtils.h"
@@ -8,6 +10,9 @@ namespace re
 {
 	std::vector<re::Batch> BatchManager::BuildBatches(std::vector<std::shared_ptr<gr::Mesh>> const& meshes)
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), 
+			std::format("BatchManager::BuildBatches ({} meshes)", meshes.size()).c_str());
+
 		struct BatchSortMetadata
 		{
 			size_t m_meshIdx;
@@ -84,6 +89,8 @@ namespace re
 
 
 		} while (unmergedIdx < unmergedBatches.size());
+
+		PIXEndEvent();
 
 		return mergedBatches;
 	}

@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include <pix3.h>
 
 #include "RenderPipeline.h"
 
@@ -86,6 +87,8 @@ namespace re
 
 	void StagePipeline::EndOfFrame()
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "StagePipeline::EndOfFrame");
+
 		for (std::shared_ptr<re::RenderStage> renderStage : m_renderStages)
 		{
 			renderStage->EndOfFrame();
@@ -97,6 +100,8 @@ namespace re
 			m_renderStages.erase(insertionPoint);
 		}
 		m_singleFrameInsertionPoints.clear();
+
+		PIXEndEvent();
 	}
 
 

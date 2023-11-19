@@ -1,6 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
+#include <pix3.h>
+
 #include "Context_DX12.h"
 #include "CommandList_DX12.h"
 #include "CommandQueue_DX12.h"
@@ -252,7 +254,7 @@ namespace dx12
 		CheckHResult(hr, "Failed to create command queue");
 
 		const std::wstring cmdQueueName = 
-			std::wstring(dx12::CommandList::GetCommandListTypeName(m_type)) + L"_CommandQueue";
+			std::wstring(dx12::CommandList::GetCommandListTypeWName(m_type)) + L"_CommandQueue";
 		m_commandQueue->SetName(cmdQueueName.c_str());
 
 		m_fence.Create(m_deviceCache, fenceEventName.c_str());
@@ -312,6 +314,8 @@ namespace dx12
 		uint32_t numCmdLists,
 		std::shared_ptr<dx12::CommandList>* cmdLists)
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "CommandQueue::TransitionIncompatibleResourceStatesToCommon");
+
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
 		dx12::CommandQueue& directQueue = context->GetCommandQueue(dx12::CommandListType::Direct);
@@ -587,12 +591,16 @@ namespace dx12
 #if defined(DEBUG_RESOURCE_TRANSITIONS)
 		LOG("\n------------ !DONE! TransitionIncompatibleResourceStatesToCommon() !DONE! ------------\n");
 #endif
+
+		PIXEndEvent();
 	}
 
 
 	std::vector<std::shared_ptr<dx12::CommandList>> CommandQueue::PrependBarrierCommandListsAndWaits(
 		uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists)
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "CommandQueue::PrependBarrierCommandListsAndWaits");
+
 		// Construct our transition barrier command lists:
 		std::vector<std::shared_ptr<dx12::CommandList>> finalCommandLists;
 
@@ -796,12 +804,17 @@ namespace dx12
 			}
 		}
 
+		PIXEndEvent();
+
 		return finalCommandLists;
 	}
 
 
 	uint64_t CommandQueue::Execute(uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists)
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), 
+			std::format("CommandQueue::Execute ({})", dx12::CommandList::GetCommandListTypeName(m_type)).c_str());
+
 		// Ensure any resources used with states only other queue types can manage are in the common state before we
 		// attempt to use them:
 		TransitionIncompatibleResourceStatesToCommon(numCmdLists, cmdLists);
@@ -828,12 +841,16 @@ namespace dx12
 			cmdLists[i] = nullptr;
 		}
 
+		PIXEndEvent();
+
 		return fenceVal;
 	}
 
 
 	uint64_t CommandQueue::ExecuteInternal(std::vector<std::shared_ptr<dx12::CommandList>> const& finalCommandLists)
 	{
+		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "CommandQueue::ExecuteInternal");
+
 		// Get our raw command list pointers, and close them before they're executed
 		std::vector<ID3D12CommandList*> commandListPtrs;
 		commandListPtrs.reserve(finalCommandLists.size());
@@ -846,9 +863,15 @@ namespace dx12
 				"TODO: Support this (e.g. allow submitting compute command lists on a direct queue)",
 				finalCommandLists[i]->GetCommandListType() == m_type);
 		}
-
+		
 		// Execute the command lists:
+		PIXBeginEvent(m_commandQueue.Get(), PIX_COLOR_INDEX(PIX_FORMAT_COLOR::GraphicsQueue),
+			std::format("{} command queue", dx12::CommandList::GetCommandListTypeName(m_type)).c_str());
+
 		m_commandQueue->ExecuteCommandLists(static_cast<uint32_t>(commandListPtrs.size()), commandListPtrs.data());
+
+		PIXEndEvent(m_commandQueue.Get());
+
 		const uint64_t fenceVal = GPUSignal();		
 
 		// Return our command list(s) to the pool:
@@ -857,6 +880,8 @@ namespace dx12
 			finalCommandLists[i]->SetReuseFenceValue(fenceVal);
 			m_commandListPool.push(finalCommandLists[i]);
 		}
+
+		PIXEndEvent();
 
 		return fenceVal;
 	}
@@ -951,7 +976,7 @@ namespace dx12
 		LOG_WARNING("CommandQueue::GPUWait on another fence: %s, %s from queue %s, %llu = %llu",
 			dx12::GetDebugName(m_commandQueue.Get()).c_str(),
 			dx12::GetDebugName(fence.GetD3DFence()).c_str(),
-			dx12::CommandList::GetCommandListTypeName(dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue)),
+			dx12::CommandList::GetCommandListTypeWName(dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue)),
 			fenceValue,
 			dx12::Fence::GetRawFenceValue(fenceValue));
 #endif
