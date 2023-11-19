@@ -31,8 +31,10 @@ namespace re
 			Graphics,
 			Compute,
 
+			Clear, // Graphics queue
+
 			Invalid
-			// TODO: Add specialist types: Fullscreen, etc
+			// TODO: Add specialist types: Fullscreen, Parent, Clear etc
 		};
 		struct IStageParams
 		{
@@ -47,6 +49,16 @@ namespace re
 		{
 			// TODO: Populate this
 		};
+		struct ClearStageParams final : public virtual IStageParams
+		{
+			// 1 entry: applied to all targets, or per-target if m_colorClearMode.size() == targetSet.GetNumColorTargets()
+			std::vector<re::TextureTarget::TargetParams::ClearMode> m_colorClearModes;
+			glm::vec4 m_clearColor = glm::vec4(0.f, 0.f, 0.f, 0.f);
+
+			re::TextureTarget::TargetParams::ClearMode m_depthClearMode = 
+				re::TextureTarget::TargetParams::ClearMode::Disabled;
+			float m_clearDepth = 1.f; // Far plane
+		};
 
 		struct RenderStageTextureAndSamplerInput
 		{
@@ -60,15 +72,22 @@ namespace re
 
 	public:
 		static std::shared_ptr<RenderStage> CreateGraphicsStage(std::string const& name, GraphicsStageParams const&);
-		static std::shared_ptr<RenderStage> CreateComputeStage(std::string const& name, ComputeStageParams const&);
-
 		static std::shared_ptr<RenderStage> CreateSingleFrameGraphicsStage(std::string const& name, GraphicsStageParams const&);
+
+		static std::shared_ptr<RenderStage> CreateComputeStage(std::string const& name, ComputeStageParams const&);
 		static std::shared_ptr<RenderStage> CreateSingleFrameComputeStage(std::string const& name, ComputeStageParams const&);
+
+		static std::shared_ptr<RenderStage> CreateClearStage(
+			ClearStageParams const&, std::shared_ptr<re::TextureTargetSet const>);
+		static std::shared_ptr<RenderStage> CreateSingleFrameClearStage(
+			ClearStageParams const&, std::shared_ptr<re::TextureTargetSet const>);
 
 
 		~RenderStage() = default;
 
 		void EndOfFrame(); // Clears per-frame data. Called by the owning RenderPipeline
+
+		bool IsSkippable() const;
 
 		RenderStageType GetStageType() const;
 		RenderStageLifetime GetStageLifetime() const;
@@ -145,11 +164,21 @@ namespace re
 	class ComputeStage final : public virtual RenderStage
 	{
 	public:
-		
-
+		// 
 
 	private:
 		ComputeStage(std::string const& name, std::unique_ptr<ComputeStageParams>&&, RenderStageLifetime);
+		friend class RenderStage;
+	};
+
+
+	class ClearStage final : public virtual RenderStage
+	{
+	public:
+		// 
+
+	private:
+		ClearStage(std::string const& name, RenderStageLifetime);
 		friend class RenderStage;
 	};
 

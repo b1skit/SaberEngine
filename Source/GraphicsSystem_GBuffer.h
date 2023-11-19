@@ -42,6 +42,6 @@ namespace gr
 
 	private:
 		std::shared_ptr<re::RenderStage> m_gBufferStage;
-
+		re::StagePipeline* m_owningPipeline;
 	};
 }

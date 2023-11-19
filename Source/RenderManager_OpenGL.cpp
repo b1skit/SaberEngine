@@ -243,7 +243,7 @@ namespace opengl
 				for (std::shared_ptr<re::RenderStage> renderStage : renderStages)
 				{
 					// Skip empty stages:
-					if (renderStage->GetStageBatches().empty())
+					if (renderStage->IsSkippable())
 					{
 						continue;
 					}
@@ -305,6 +305,7 @@ namespace opengl
 						opengl::TextureTargetSet::AttachTargetsAsImageTextures(*stageTargets);
 					}
 					break;
+					case re::RenderStage::RenderStageType::Clear:
 					case re::RenderStage::RenderStageType::Graphics:
 					{
 						opengl::TextureTargetSet::AttachColorTargets(*stageTargets);

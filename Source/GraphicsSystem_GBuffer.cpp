@@ -36,6 +36,7 @@ namespace gr
 	GBufferGraphicsSystem::GBufferGraphicsSystem()
 		: NamedObject(k_gsName)
 		, GraphicsSystem(k_gsName)
+		, m_owningPipeline(nullptr)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_gBufferStage = re::RenderStage::CreateGraphicsStage("GBuffer Stage", gfxStageParams);
@@ -46,6 +47,8 @@ namespace gr
 
 	void GBufferGraphicsSystem::Create(re::StagePipeline& pipeline)
 	{
+		m_owningPipeline = &pipeline;
+
 		re::PipelineState gBufferPipelineState;
 		gBufferPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
 		gBufferPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
@@ -116,7 +119,7 @@ namespace gr
 		// Camera:
 		m_gBufferStage->AddPermanentParameterBlock(SceneManager::Get()->GetMainCamera()->GetCameraParams());
 
-		// Finally, append the render stage to the pipeline:
+		// Finally, append the GBuffer stage to the pipeline:
 		pipeline.AppendRenderStage(m_gBufferStage);
 	}
 
@@ -125,9 +128,19 @@ namespace gr
 	{
 		CreateBatches();
 
-		// TODO: Support transparency
-		// -> Mark meshes with transparent materials with a filter bit during load
-		// -> Render in a separate forward pass
+		if (m_gBufferStage->GetStageBatches().empty())
+		{
+			// Append a clear stage, to ensure that the depth buffer is cleared when there is no batches (i.e. so the 
+			// skybox will still render in an empty scene)
+			re::RenderStage::ClearStageParams depthClearStageParams;
+			depthClearStageParams.m_colorClearModes = { re::TextureTarget::TargetParams::ClearMode::Disabled };
+			depthClearStageParams.m_depthClearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
+			std::vector<re::TextureTarget::TargetParams::ClearMode> color = { re::TextureTarget::TargetParams::ClearMode::Disabled };
+			
+			m_owningPipeline->AppendSingleFrameRenderStage(re::RenderStage::CreateSingleFrameClearStage(
+				depthClearStageParams, 
+				m_gBufferStage->GetTextureTargetSet()));
+		}
 	}
 
 

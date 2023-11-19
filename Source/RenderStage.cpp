@@ -62,6 +62,44 @@ namespace
 		}
 		return false;
 	}
+
+
+	void ConfigureClearStage(
+		std::shared_ptr<re::RenderStage> newClearStage,
+		re::RenderStage::ClearStageParams const& clearStageParams,
+		std::shared_ptr<re::TextureTargetSet const> targetSet)
+	{
+		const uint8_t numColorTargets = targetSet->GetNumColorTargets();
+
+		SEAssert("Invalid number of color clear modes specified",
+			clearStageParams.m_colorClearModes.size() == 1 ||
+			clearStageParams.m_colorClearModes.size() == numColorTargets);
+
+		// Create a copy of the targets so we don't modify the originals
+		std::shared_ptr<re::TextureTargetSet> clearTargets =
+			re::TextureTargetSet::Create(*targetSet, targetSet->GetName() + "_Clear");
+
+		if (numColorTargets > 0)
+		{
+			if (clearStageParams.m_colorClearModes.size() == 1)
+			{
+				clearTargets->SetAllColorTargetClearModes(clearStageParams.m_colorClearModes[0]);
+			}
+			else
+			{
+				for (size_t targetIdx = 0; targetIdx < numColorTargets; targetIdx++)
+				{
+					clearTargets->SetColorTargetClearMode(targetIdx, clearStageParams.m_colorClearModes[targetIdx]);
+				}
+			}
+		}
+		if (clearTargets->HasDepthTarget())
+		{
+			clearTargets->SetDepthTargetClearMode(clearStageParams.m_depthClearMode);
+		}		
+
+		newClearStage->SetTextureTargetSet(clearTargets);
+	}
 }
 
 
@@ -80,17 +118,6 @@ namespace re
 	}
 
 
-	std::shared_ptr<RenderStage> RenderStage::CreateComputeStage(
-		std::string const& name, ComputeStageParams const& stageParams)
-	{
-		std::shared_ptr<RenderStage> newComputeStage;
-		newComputeStage.reset(new ComputeStage(
-			name, 
-			std::make_unique<ComputeStageParams>(stageParams), RenderStageLifetime::Permanent));
-		return newComputeStage;
-	}
-
-
 	std::shared_ptr<RenderStage> RenderStage::CreateSingleFrameGraphicsStage(
 		std::string const& name, GraphicsStageParams const& stageParams)
 	{
@@ -104,6 +131,17 @@ namespace re
 	}
 
 
+	std::shared_ptr<RenderStage> RenderStage::CreateComputeStage(
+		std::string const& name, ComputeStageParams const& stageParams)
+	{
+		std::shared_ptr<RenderStage> newComputeStage;
+		newComputeStage.reset(new ComputeStage(
+			name, 
+			std::make_unique<ComputeStageParams>(stageParams), RenderStageLifetime::Permanent));
+		return newComputeStage;
+	}
+
+
 	std::shared_ptr<RenderStage> RenderStage::CreateSingleFrameComputeStage(
 		std::string const& name, ComputeStageParams const& stageParams)
 	{
@@ -112,6 +150,32 @@ namespace re
 			name,
 			std::make_unique<ComputeStageParams>(stageParams), RenderStageLifetime::SingleFrame));
 		return newComputeStage;
+	}
+
+
+	std::shared_ptr<RenderStage> RenderStage::CreateClearStage(
+		ClearStageParams const& clearStageParams, 
+		std::shared_ptr<re::TextureTargetSet const> targetSet)
+	{
+		std::shared_ptr<RenderStage> newClearStage;
+		newClearStage.reset(new ClearStage(targetSet->GetName() + "_Clear", RenderStageLifetime::Permanent));
+
+		ConfigureClearStage(newClearStage, clearStageParams, targetSet);
+
+		return newClearStage;
+	}
+
+
+	std::shared_ptr<RenderStage> RenderStage::CreateSingleFrameClearStage(
+		ClearStageParams const& clearStageParams,
+		std::shared_ptr<re::TextureTargetSet const> targetSet)
+	{
+		std::shared_ptr<RenderStage> newClearStage;
+		newClearStage.reset(new ClearStage(targetSet->GetName() + "_Clear", RenderStageLifetime::SingleFrame));
+
+		ConfigureClearStage(newClearStage, clearStageParams, targetSet);
+
+		return newClearStage;
 	}
 
 
@@ -141,6 +205,15 @@ namespace re
 		RenderStageLifetime lifetime)
 		: NamedObject(name)
 		, RenderStage(name, std::move(stageParams), RenderStageType::Compute, lifetime)
+	{
+	}
+
+
+	ClearStage::ClearStage(
+		std::string const& name,
+		RenderStageLifetime lifetime)
+		: NamedObject(name)
+		, RenderStage(name, nullptr, RenderStageType::Clear, lifetime)
 	{
 	}
 
@@ -237,6 +310,13 @@ namespace re
 			}
 		}
 #endif
+	}
+
+
+	bool RenderStage::IsSkippable() const
+	{
+		return m_stageBatches.empty() && 
+			m_type != RenderStageType::Clear;
 	}
 	
 

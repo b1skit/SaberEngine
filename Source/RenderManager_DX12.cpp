@@ -292,7 +292,7 @@ namespace dx12
 					const RenderStage::RenderStageType curRenderStageType = renderStage->GetStageType();
 
 					// Skip empty stages:
-					if (renderStage->GetStageBatches().empty())
+					if (renderStage->IsSkippable())
 					{
 						continue;
 					}
@@ -312,6 +312,7 @@ namespace dx12
 					dx12::CommandList* currentCommandList = nullptr;
 					switch (curRenderStageType)
 					{
+					case re::RenderStage::RenderStageType::Clear:
 					case re::RenderStage::RenderStageType::Graphics:
 					{
 						if (directCommandList == nullptr)
@@ -434,6 +435,7 @@ namespace dx12
 						currentCommandList->SetComputeTargets(*stageTargets);
 					}
 					break;
+					case re::RenderStage::RenderStageType::Clear:
 					case re::RenderStage::RenderStageType::Graphics:
 					{
 						const bool attachDepthAsReadOnly = renderStage->DepthTargetIsAlsoTextureInput();
@@ -506,6 +508,7 @@ namespace dx12
 
 					switch (curRenderStageType)
 					{
+					case re::RenderStage::RenderStageType::Clear:
 					case re::RenderStage::RenderStageType::Graphics:
 					{
 						SEEndGPUEvent(directCommandList->GetD3DCommandList()); // RenderStage
