@@ -16,6 +16,7 @@
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "ParameterBlock_OpenGL.h"
+#include "ProfilingMarkers.h"
 #include "RenderManager_OpenGL.h"
 #include "RenderManager.h"
 #include "RenderStage.h"
@@ -234,12 +235,8 @@ namespace opengl
 			re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
 			for (StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
 			{
-				// RenderDoc markers: Graphics system group name
-				glPushDebugGroup(
-					GL_DEBUG_SOURCE_APPLICATION,
-					0,
-					-1,
-					stagePipeline.GetName().c_str());
+				// Profiling markers: Graphics system group name
+				SEBeginOpenGLGPUEvent(perfmarkers::Type::GraphicsQueue, stagePipeline.GetName().c_str());
 
 				// Process RenderStages:
 				std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
@@ -251,8 +248,8 @@ namespace opengl
 						continue;
 					}
 
-					// RenderDoc makers: Render stage name
-					glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, renderStage->GetName().c_str());
+					// Profiling makers: Render stage name
+					SEBeginOpenGLGPUEvent(perfmarkers::Type::GraphicsQueue, renderStage->GetName().c_str());
 
 					// Get the stage targets:
 					std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
@@ -435,10 +432,10 @@ namespace opengl
 
 					} // batches
 
-					glPopDebugGroup();
+					SEEndOpenGLGPUEvent();
 				}; // ProcessRenderStage
 
-				glPopDebugGroup(); // Graphics system group name
+				SEEndOpenGLGPUEvent(); // Graphics system group name
 			}
 		}
 	}
@@ -455,10 +452,10 @@ namespace opengl
 	void RenderManager::RenderImGui()
 	{
 		// Composite Imgui rendering on top of the finished frame:
-		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "ImGui stage");
+		SEBeginOpenGLGPUEvent(perfmarkers::Type::GraphicsCommandList, "ImGui stage");
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-		glPopDebugGroup();
+		SEEndOpenGLGPUEvent();
 	}
 
 

@@ -1,8 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
-#include <pix3.h>
-
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_dx12.h"
 
@@ -18,6 +16,7 @@
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "ParameterBlock_DX12.h"
+#include "ProfilingMarkers.h"
 #include "RenderManager_DX12.h"
 #include "RenderSystem.h"
 #include "Sampler_DX12.h"
@@ -133,10 +132,8 @@ namespace dx12
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
 		dx12::CommandQueue* copyQueue = &context->GetCommandQueue(dx12::CommandListType::Copy);
-		PIXBeginEvent(
-			copyQueue->GetD3DCommandQueue(),
-			PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CopyQueue),
-			"Copy Queue: Create API Resources");
+
+		SEBeginGPUEvent(copyQueue->GetD3DCommandQueue(), perfmarkers::Type::CopyQueue, "Copy Queue: Create API Resources");
 
 		// Ensure any intermediate resources created on the previous frame are done. In practice this is not necessary,
 		// but we include this check as a precaution since we're about to clear the intermediate resources
@@ -243,7 +240,7 @@ namespace dx12
 			}
 		}
 
-		PIXEndEvent(copyQueue->GetD3DCommandQueue());
+		SEEndGPUEvent(copyQueue->GetD3DCommandQueue());
 	}
 
 
@@ -263,13 +260,13 @@ namespace dx12
 			if (computeCommandList != nullptr)
 			{
 				commandLists.emplace_back(computeCommandList);
-				PIXEndEvent(computeCommandList->GetD3DCommandList()); // StagePipeline
+				SEEndGPUEvent(computeCommandList->GetD3DCommandList()); // StagePipeline
 
 			}
 			if (directCommandList != nullptr)
 			{
 				commandLists.emplace_back(directCommandList);
-				PIXEndEvent(directCommandList->GetD3DCommandList()); // StagePipeline
+				SEEndGPUEvent(directCommandList->GetD3DCommandList()); // StagePipeline
 			}
 		};
 
@@ -319,15 +316,15 @@ namespace dx12
 						{
 							directCommandList = directQueue.GetCreateCommandList();
 
-							PIXBeginEvent( // Add a PIX marker to wrap the StagePipeline:
+							SEBeginGPUEvent( // Add a marker to wrap the StagePipeline
 								directCommandList->GetD3DCommandList(),
-								PIX_COLOR_INDEX(PIX_FORMAT_COLOR::GraphicsCommandList),
+								perfmarkers::Type::GraphicsCommandList,
 								stagePipeline.GetName().c_str());
 						}
 						currentCommandList = directCommandList.get();
-						PIXBeginEvent( // Add a PIX marker to wrap the RenderStage:
+						SEBeginGPUEvent( // Add a marker to wrap the RenderStage
 							currentCommandList->GetD3DCommandList(),
-							PIX_COLOR_INDEX(PIX_FORMAT_COLOR::GraphicsCommandList),
+							perfmarkers::Type::GraphicsCommandList,
 							renderStage->GetName().c_str());
 					}
 					break;
@@ -337,15 +334,15 @@ namespace dx12
 						{
 							computeCommandList = computeQueue.GetCreateCommandList();
 
-							PIXBeginEvent( // Add a PIX marker to wrap the StagePipeline:
+							SEBeginGPUEvent( // Add a marker to wrap the StagePipeline
 								computeCommandList->GetD3DCommandList(),
-								PIX_COLOR_INDEX(PIX_FORMAT_COLOR::GraphicsCommandList),
+								perfmarkers::Type::GraphicsCommandList,
 								stagePipeline.GetName().c_str());
 						}
 						currentCommandList = computeCommandList.get();
-						PIXBeginEvent( // Add a PIX marker to wrap the RenderStage:
+						SEBeginGPUEvent( // Add a marker to wrap the RenderStage
 							currentCommandList->GetD3DCommandList(),
-							PIX_COLOR_INDEX(PIX_FORMAT_COLOR::ComputeCommandList),
+							perfmarkers::Type::ComputeCommandList,
 							renderStage->GetName().c_str());
 					}
 					break;
@@ -509,12 +506,12 @@ namespace dx12
 					{
 					case re::RenderStage::RenderStageType::Graphics:
 					{
-						PIXEndEvent(directCommandList->GetD3DCommandList()); // RenderStage
+						SEEndGPUEvent(directCommandList->GetD3DCommandList()); // RenderStage
 					}
 					break;
 					case re::RenderStage::RenderStageType::Compute:
 					{
-						PIXEndEvent(computeCommandList->GetD3DCommandList()); // RenderStage
+						SEEndGPUEvent(computeCommandList->GetD3DCommandList()); // RenderStage
 					}
 					break;
 					default:
@@ -531,8 +528,7 @@ namespace dx12
 
 		// Command lists must be submitted on a single thread, and in the same order as the render stages they're
 		// generated from to ensure modification fences and GPU waits are are handled correctly
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), 
-			std::format("Submit command lists ({})", commandLists.size()).c_str());
+		SEBeginCPUEvent(std::format("Submit command lists ({})", commandLists.size()).c_str());
 		size_t startIdx = 0;
 		while (startIdx < commandLists.size())
 		{
@@ -546,8 +542,7 @@ namespace dx12
 				endIdx++;
 			}
 
-			PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection),
-				std::format("Submit command lists {}-{}", startIdx, endIdx).c_str());
+			SEBeginCPUEvent(std::format("Submit command lists {}-{}", startIdx, endIdx).c_str());
 
 			const size_t numCmdLists = endIdx - startIdx;
 
@@ -587,9 +582,9 @@ namespace dx12
 
 			startIdx = endIdx;
 
-			PIXEndEvent();
+			SEEndCPUEvent();
 		}
-		PIXEndEvent();
+		SEEndCPUEvent();
 	}
 
 

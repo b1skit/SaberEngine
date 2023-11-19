@@ -1,13 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <pix3.h>
-
+#include "CastUtils.h"
+#include "DebugConfiguration.h"
 #include "ParameterBlockAllocator.h"
 #include "ParameterBlockAllocator_Platform.h"
-#include "DebugConfiguration.h"
 #include "ParameterBlock_Platform.h"
+#include "ProfilingMarkers.h"
 #include "RenderManager.h"
 #include "RenderManager_Platform.h"
-#include "CastUtils.h"
 
 using re::ParameterBlock;
 using std::shared_ptr;
@@ -517,7 +516,7 @@ namespace re
 	// Buffer dirty PB data
 	void ParameterBlockAllocator::BufferParamBlocks()
 	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::ParameterBlockAllocator::BufferParamBlocks");
+		SEBeginCPUEvent("re::ParameterBlockAllocator::BufferParamBlocks");
 
 		SEAssert("Cannot buffer param blocks until they're all allocated", m_allocationPeriodEnded);
 
@@ -565,7 +564,7 @@ namespace re
 			m_dirtyParameterBlocks[readIdx].pop();
 		}
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 	}
 
 
@@ -583,7 +582,7 @@ namespace re
 
 	void ParameterBlockAllocator::EndFrame()
 	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::ParameterBlockAllocator::EndFrame");
+		SEBeginCPUEvent("re::ParameterBlockAllocator::EndFrame");
 
 		// Clear single-frame allocations:
 		{
@@ -613,7 +612,7 @@ namespace re
 
 		ClearDeferredDeletions(m_readFrameNum);
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 	}
 
 
@@ -622,7 +621,7 @@ namespace re
 		SEAssert("Trying to clear before the first swap buffer call", 
 			m_readFrameNum != std::numeric_limits<uint64_t>::max());
 
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), 
+		SEBeginCPUEvent(
 			std::format("ParameterBlockAllocator::ClearDeferredDeletions ({})", m_deferredDeleteQueue.size()).c_str());
 
 		std::lock_guard<std::mutex> lock (m_deferredDeleteQueueMutex);
@@ -633,7 +632,7 @@ namespace re
 			m_deferredDeleteQueue.pop();
 		}
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 	}
 
 

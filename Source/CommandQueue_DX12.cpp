@@ -1,12 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
-#include <pix3.h>
-
 #include "Context_DX12.h"
 #include "CommandList_DX12.h"
 #include "CommandQueue_DX12.h"
 #include "Debug_DX12.h"
+#include "ProfilingMarkers.h"
 #include "TextUtils.h"
 
 using Microsoft::WRL::ComPtr;
@@ -314,7 +313,7 @@ namespace dx12
 		uint32_t numCmdLists,
 		std::shared_ptr<dx12::CommandList>* cmdLists)
 	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "CommandQueue::TransitionIncompatibleResourceStatesToCommon");
+		SEBeginCPUEvent("CommandQueue::TransitionIncompatibleResourceStatesToCommon");
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
@@ -592,14 +591,14 @@ namespace dx12
 		LOG("\n------------ !DONE! TransitionIncompatibleResourceStatesToCommon() !DONE! ------------\n");
 #endif
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 	}
 
 
 	std::vector<std::shared_ptr<dx12::CommandList>> CommandQueue::PrependBarrierCommandListsAndWaits(
 		uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists)
 	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "CommandQueue::PrependBarrierCommandListsAndWaits");
+		SEBeginCPUEvent("CommandQueue::PrependBarrierCommandListsAndWaits");
 
 		// Construct our transition barrier command lists:
 		std::vector<std::shared_ptr<dx12::CommandList>> finalCommandLists;
@@ -804,7 +803,7 @@ namespace dx12
 			}
 		}
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 
 		return finalCommandLists;
 	}
@@ -812,8 +811,7 @@ namespace dx12
 
 	uint64_t CommandQueue::Execute(uint32_t numCmdLists, std::shared_ptr<dx12::CommandList>* cmdLists)
 	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), 
-			std::format("CommandQueue::Execute ({})", dx12::CommandList::GetCommandListTypeName(m_type)).c_str());
+		SEBeginCPUEvent(std::format("CommandQueue::Execute ({})", CommandList::GetCommandListTypeName(m_type)).c_str());
 
 		// Ensure any resources used with states only other queue types can manage are in the common state before we
 		// attempt to use them:
@@ -841,7 +839,7 @@ namespace dx12
 			cmdLists[i] = nullptr;
 		}
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 
 		return fenceVal;
 	}
@@ -849,7 +847,7 @@ namespace dx12
 
 	uint64_t CommandQueue::ExecuteInternal(std::vector<std::shared_ptr<dx12::CommandList>> const& finalCommandLists)
 	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "CommandQueue::ExecuteInternal");
+		SEBeginCPUEvent("CommandQueue::ExecuteInternal");
 
 		// Get our raw command list pointers, and close them before they're executed
 		std::vector<ID3D12CommandList*> commandListPtrs;
@@ -865,12 +863,13 @@ namespace dx12
 		}
 		
 		// Execute the command lists:
-		PIXBeginEvent(m_commandQueue.Get(), PIX_COLOR_INDEX(PIX_FORMAT_COLOR::GraphicsQueue),
+		SEBeginGPUEvent(m_commandQueue.Get(), 
+			perfmarkers::Type::GraphicsQueue, 
 			std::format("{} command queue", dx12::CommandList::GetCommandListTypeName(m_type)).c_str());
 
 		m_commandQueue->ExecuteCommandLists(static_cast<uint32_t>(commandListPtrs.size()), commandListPtrs.data());
 
-		PIXEndEvent(m_commandQueue.Get());
+		SEEndGPUEvent(m_commandQueue.Get());
 
 		const uint64_t fenceVal = GPUSignal();		
 
@@ -881,7 +880,7 @@ namespace dx12
 			m_commandListPool.push(finalCommandLists[i]);
 		}
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 
 		return fenceVal;
 	}

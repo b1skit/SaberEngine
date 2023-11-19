@@ -1,6 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <pix3.h>
-
 #include "Batch.h"
 #include "Config.h"
 #include "GraphicsSystem_GBuffer.h"
@@ -10,8 +8,9 @@
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "ImGuiUtils.h"
-#include "PerformanceTimer.h"
 #include "Light.h"
+#include "PerformanceTimer.h"
+#include "ProfilingMarkers.h"
 #include "RenderManager.h"
 #include "RenderManager_DX12.h"
 #include "RenderManager_Platform.h"
@@ -112,7 +111,7 @@ namespace re
 		m_isRunning = true;
 		while (m_isRunning)
 		{
-			PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "RenderManager frame");
+			SEBeginCPUEvent("RenderManager frame");
 
 			// Blocks until a new update params is received, or the EngineThread has been signaled to stop
 			const bool doUpdate = GetUpdateParams(updateParams);
@@ -130,7 +129,7 @@ namespace re
 
 			EndOfFrame(); // Clear batches, process pipeline and parameter block allocator EndOfFrames
 
-			PIXEndEvent();
+			SEEndCPUEvent();
 		}
 
 		// Synchronized shutdown: Blocks main thread until complete
@@ -142,29 +141,29 @@ namespace re
 
 	void RenderManager::Startup()
 	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::Startup");
+		SEBeginCPUEvent("re::RenderManager::Startup");
 
 		LOG("RenderManager starting...");
 		re::Context::Get()->Create();
 		en::EventManager::Get()->Subscribe(en::EventManager::InputToggleVSync, this);
 		en::EventManager::Get()->Subscribe(en::EventManager::InputToggleConsole, this);
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 	}
 	
 	
 	void RenderManager::Initialize()
 	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::Initialize");
+		SEBeginCPUEvent("re::RenderManager::Initialize");
 
 		LOG("RenderManager Initializing...");
 		PerformanceTimer timer;
 		timer.Start();
 
 		// Build our platform-specific graphics systems:
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "platform::RenderManager::Initialize");
+		SEBeginCPUEvent("platform::RenderManager::Initialize");
 		platform::RenderManager::Initialize(*this);
-		PIXEndEvent();
+		SEEndCPUEvent();
 
 		// Create each render system system in turn:
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
@@ -179,13 +178,13 @@ namespace re
 				
 		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 	}
 
 
 	void RenderManager::PreUpdate(uint64_t frameNum)
 	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::PreUpdate");
+		SEBeginCPUEvent("re::RenderManager::PreUpdate");
 
 		// Copy frame data:
 		SEAssert("Render batches should be empty", m_renderBatches.empty());
@@ -194,12 +193,12 @@ namespace re
 		// scene objects updated via a render command queue
 
 		// Execute each RenderSystem's platform-specific graphics system update pipelines:
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "Execute update pipeline");
+		SEBeginCPUEvent("Execute update pipeline");
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
 			renderSystem->ExecuteUpdatePipeline();
 		}
-		PIXEndEvent();
+		SEEndCPUEvent();
 
 		// "Swap" our CPU-side PB data buffers, now that our render systems have written to them
 		re::Context::Get()->GetParameterBlockAllocator().SwapCPUBuffers(frameNum);
@@ -214,13 +213,13 @@ namespace re
 		// This is a temporary solution until we remove ParameterBlockAllocator CPU-side double-buffering altogether
 		re::Context::Get()->GetParameterBlockAllocator().SwapPlatformBuffers(frameNum);
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 	}
 
 
 	void RenderManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::Update");
+		SEBeginCPUEvent("re::RenderManager::Update");
 
 		HandleEvents();
 
@@ -228,30 +227,30 @@ namespace re
 		re::Context::Get()->GetParameterBlockAllocator().BufferParamBlocks();
 
 		// API-specific rendering loop virtual implementations:
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "platform::RenderManager::Render");
+		SEBeginCPUEvent("platform::RenderManager::Render");
 		Render();
-		PIXEndEvent();
+		SEEndCPUEvent();
 
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "platform::RenderManager::RenderImGui");
+		SEBeginCPUEvent("platform::RenderManager::RenderImGui");
 		RenderImGui();
-		PIXEndEvent();
+		SEEndCPUEvent();
 
 		// Present the final frame:
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::Context::Present");
+		SEBeginCPUEvent("re::Context::Present");
 		re::Context::Get()->Present();
-		PIXEndEvent();
+		SEEndCPUEvent();
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 	}
 
 
 	void RenderManager::EndOfFrame()
 	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::EndOfFrame");
+		SEBeginCPUEvent("re::RenderManager::EndOfFrame");
 
 		// Need to clear the PB read data now, to make sure we're not holding on to any single frame PBs beyond the
 		// end of the current frame
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "Clear data");
+		SEBeginCPUEvent("Clear data");
 		{
 			m_newParameterBlocks.ClearReadData();
 
@@ -259,40 +258,40 @@ namespace re
 			m_createdTextures.clear();
 		}
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "Process render systems");
+		SEBeginCPUEvent("Process render systems");
 		{
 			for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 			{
 				re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
 
-				PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), renderSystem->GetName().c_str());
+				SEBeginCPUEvent(renderSystem->GetName().c_str());
 				for (StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
 				{
 					stagePipeline.EndOfFrame();
 				}
-				PIXEndEvent();
+				SEEndCPUEvent();
 			}
 		}
-		PIXEndEvent();
+		SEEndCPUEvent();
 
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "Swap buffers");
+		SEBeginCPUEvent("Swap buffers");
 		{
 			// Swap the single-frame resource n-buffers:
 			m_singleFrameVertexStreams.Swap();
 
 			re::Context::Get()->GetParameterBlockAllocator().EndFrame();
 		}
-		PIXEndEvent();
+		SEEndCPUEvent();
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 	}
 
 
 	void RenderManager::Shutdown()
 	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::Shutdown");
+		SEBeginCPUEvent("re::RenderManager::Shutdown");
 
 		LOG("Render manager shutting down...");
 		
@@ -321,13 +320,13 @@ namespace re
 		// Need to do this here so the CoreEngine's Window can be destroyed
 		re::Context::Get()->Destroy();
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 	}
 
 
 	void RenderManager::HandleEvents()
 	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "re::RenderManager::HandleEvents");
+		SEBeginCPUEvent("re::RenderManager::HandleEvents");
 
 		while (HasEvents())
 		{
@@ -361,13 +360,13 @@ namespace re
 			}
 		}
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 	}
 
 
 	void RenderManager::CreateAPIResources()
 	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "platform::RenderManager::CreateAPIResources");
+		SEBeginCPUEvent("platform::RenderManager::CreateAPIResources");
 
 		// Make our write buffer the new read buffer:
 		SwapNewResourceDoubleBuffers();
@@ -404,13 +403,13 @@ namespace re
 			newTexture->ClearTexelData();
 		}
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 	}
 
 
 	void RenderManager::SwapNewResourceDoubleBuffers()
 	{
-		PIXBeginEvent(PIX_COLOR_INDEX(PIX_FORMAT_COLOR::CPUSection), "RenderManager::SwapNewResourceDoubleBuffers");
+		SEBeginCPUEvent("RenderManager::SwapNewResourceDoubleBuffers");
 
 		// Swap our new resource double buffers:
 		m_newShaders.Swap();
@@ -420,7 +419,7 @@ namespace re
 		m_newTargetSets.Swap();
 		m_newParameterBlocks.Swap();
 
-		PIXEndEvent();
+		SEEndCPUEvent();
 	}
 
 

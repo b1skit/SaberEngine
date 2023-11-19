@@ -384,6 +384,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="PerformanceTimer.h" />
     <ClInclude Include="PipelineState.h" />
     <ClInclude Include="PipelineState_DX12.h" />
+    <ClInclude Include="ProfilingMarkers.h" />
     <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ResourceStateTracker_DX12.h" />

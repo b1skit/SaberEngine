@@ -4,20 +4,6 @@
 #include "LogManager.h"
 
 
-// This enum allows us to use consistent names/values, so PIX can assign an arbitrary color via the 
-// PIX_COLOR_INDEX(BYTE i) macro
-enum PIX_FORMAT_COLOR : uint8_t
-{
-	CPUSection,
-	CopyQueue,
-	CopyCommandList,
-	GraphicsQueue,
-	GraphicsCommandList,
-	ComputeQueue,
-	ComputeCommandList
-};
-
-
 // Custom assert:
 #if defined(_DEBUG)
 
@@ -42,9 +28,7 @@ enum PIX_FORMAT_COLOR : uint8_t
 		std::abort();
 #else
 #define SEAssert(errorMsg, condition)	\
-	do {static_cast<void>(errorMsg); const bool supressCompilerWarningByUsingCondition = condition;} while(0)
+	do { static_cast<void>(errorMsg); static_cast<void>(condition); } while (0);
 #define SEAssertF(errorMsg)	\
-	do {static_cast<void>(errorMsg);} while(0)
+	do {static_cast<void>(errorMsg);} while(0);
 #endif
-
-
