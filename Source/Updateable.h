@@ -4,8 +4,6 @@
 namespace en
 {
 	// Updateable Interface: For objects that require ticking each frame.
-	// Objects using this interface will likely need to be added to a tracking list in SceneData, so Update() can be
-	// pumped each frame by the SceneManager
 	class Updateable
 	{
 	public:
