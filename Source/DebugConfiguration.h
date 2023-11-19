@@ -4,10 +4,6 @@
 #include "LogManager.h"
 
 
-// TODO: This should be enabled in debug level 3, instead of enabled via a macro
-//#define DEBUG_LOG_OPENGL_NOTIFICATIONS // Enable non-essential OpenGL notification logging
-
-
 // This enum allows us to use consistent names/values, so PIX can assign an arbitrary color via the 
 // PIX_COLOR_INDEX(BYTE i) macro
 enum PIX_FORMAT_COLOR : uint8_t

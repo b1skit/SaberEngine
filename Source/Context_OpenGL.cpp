@@ -112,70 +112,35 @@ namespace opengl
 		const GLchar* message,
 		const void* userParam)
 	{
-		string srcMsg;
+		string srcMsg = "Unknown ENUM: " + std::format("{:x}", source);
 		switch (source)
 		{
-		case GL_DEBUG_SOURCE_API:
-			srcMsg = "GL_DEBUG_SOURCE_API";
-			break;
-		case GL_DEBUG_SOURCE_APPLICATION: 
-			srcMsg = "GL_DEBUG_SOURCE_APPLICATION";
-				break;
-
-		case GL_DEBUG_SOURCE_THIRD_PARTY:
-			srcMsg = "GL_DEBUG_SOURCE_THIRD_PARTY";
-				break;
-		default:
-			srcMsg = "Unknown ENUM: " + std::format("{:x}", source);
+		case GL_DEBUG_SOURCE_API:			srcMsg = "GL_DEBUG_SOURCE_API"; break;
+		case GL_DEBUG_SOURCE_APPLICATION:	srcMsg = "GL_DEBUG_SOURCE_APPLICATION"; break;
+		case GL_DEBUG_SOURCE_THIRD_PARTY:	srcMsg = "GL_DEBUG_SOURCE_THIRD_PARTY"; break;
+		default: break;			
 		}
 		
-		string typeMsg;
+		string typeMsg = "UNKNOWN";
 		switch (type)
 		{
-		case GL_DEBUG_TYPE_ERROR:
-			typeMsg = "GL_DEBUG_TYPE_ERROR";
-			break;
-		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-			typeMsg = "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR";
-			break;
-		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-			typeMsg = "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR";
-			break;
-		case GL_DEBUG_TYPE_PORTABILITY:
-			typeMsg = "GL_DEBUG_TYPE_PORTABILITY";
-			break;
-		case GL_DEBUG_TYPE_PERFORMANCE:
-			typeMsg = "GL_DEBUG_TYPE_PERFORMANCE";
-			break;
-		case GL_DEBUG_TYPE_OTHER:
-			typeMsg = "GL_DEBUG_TYPE_OTHER";
-			break;
-		default:
-			typeMsg = "UNKNOWN";
+		case GL_DEBUG_TYPE_ERROR:				typeMsg = "GL_DEBUG_TYPE_ERROR"; break;
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: typeMsg = "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR"; break;
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:	typeMsg = "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR"; break;
+		case GL_DEBUG_TYPE_PORTABILITY:			typeMsg = "GL_DEBUG_TYPE_PORTABILITY"; break;
+		case GL_DEBUG_TYPE_PERFORMANCE:			typeMsg = "GL_DEBUG_TYPE_PERFORMANCE"; break;
+		case GL_DEBUG_TYPE_OTHER:				typeMsg = "GL_DEBUG_TYPE_OTHER"; break;
+		default: break;
 		}
 
-		string severityMsg;
+		string severityMsg = "UNKNOWN";
 		switch (severity)
 		{
-		#if defined(DEBUG_LOG_OPENGL_NOTIFICATIONS)
-		case GL_DEBUG_SEVERITY_NOTIFICATION:
-			severityMsg = "NOTIFICATION";
-			break;
-		#else
-		case GL_DEBUG_SEVERITY_NOTIFICATION:
-			return; // DO NOTHING
-		#endif
-		case GL_DEBUG_SEVERITY_LOW :
-			severityMsg = "GL_DEBUG_SEVERITY_LOW";
-			break;
-		case GL_DEBUG_SEVERITY_MEDIUM:
-			severityMsg = "GL_DEBUG_SEVERITY_MEDIUM";
-			break;
-		case GL_DEBUG_SEVERITY_HIGH:
-			severityMsg = "GL_DEBUG_SEVERITY_HIGH";
-			break;
-		default:
-			severityMsg = "UNKNOWN";
+		case GL_DEBUG_SEVERITY_NOTIFICATION:	severityMsg = "NOTIFICATION"; break;
+		case GL_DEBUG_SEVERITY_LOW :			severityMsg = "GL_DEBUG_SEVERITY_LOW"; break;
+		case GL_DEBUG_SEVERITY_MEDIUM:			severityMsg = "GL_DEBUG_SEVERITY_MEDIUM"; break;
+		case GL_DEBUG_SEVERITY_HIGH:			severityMsg = "GL_DEBUG_SEVERITY_HIGH"; break;
+		default: break;
 		}
 		
 		switch(severity)
@@ -286,9 +251,44 @@ namespace opengl
 		const GLenum glStatus = glewInit();
 		SEAssert("glewInit failed", glStatus == GLEW_OK);
 
+		// Disable all debug messages to prevent spam. We'll selectively re-enable them if/when needed
+		glDebugMessageControl(
+			GL_DONT_CARE,	// Source
+			GL_DONT_CARE,	// Type
+			GL_DONT_CARE,	// Severity
+			0,				// Number of message ids being enabled/disabled
+			nullptr,		// Ptr to an array of id integers to enable/disable. nullptr = all
+			false);			// Enable/disable state
+
 		// Debugging:
-		if (en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg) >= 1)
+		const int debugLevel = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_debugLevelCmdLineArg);
+		if (debugLevel >= 1)
 		{
+			// All debug levels get all high severity messages
+			glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_HIGH, 0, NULL, true);
+
+			// Debug levels 2+ get medium severity messages
+			if (debugLevel >= 2)
+			{
+				glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_MEDIUM, 0, NULL, true);				
+			}
+
+			// Debug levels 3+ get low and notification severity messages
+			if (debugLevel >= 3)
+			{
+				glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW, 0, NULL, true);
+
+				// We omit the GL_DEBUG_TYPE_PUSH_GROUP/GL_DEBUG_TYPE_POP_GROUP because they're very spammy.
+				glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_ERROR, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, true);
+				glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, true);
+				glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, true);
+				glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_PORTABILITY, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, true);
+				glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_PERFORMANCE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, true);
+				glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_MARKER, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, true);
+				glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_OTHER, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, true);
+				
+			}
+
 			// Configure OpenGL logging:
 			::glEnable(GL_DEBUG_OUTPUT);
 			::glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);	// Make the error callback immediately
