@@ -3,6 +3,7 @@
 #define CGLTF_IMPLEMENTATION
 #include "cgltf.h"
 
+#include "AssetLoadUtils.h"
 #include "Camera.h"
 #include "Config.h"
 #include "CoreEngine.h"
@@ -18,7 +19,6 @@
 #include "SceneNode.h"
 #include "Shader.h"
 #include "ShadowMap.h"
-#include "TextureLoadUtils.h"
 #include "ThreadPool.h"
 #include "ThreadSafeVector.h"
 #include "Transform.h"
@@ -28,46 +28,6 @@
 namespace
 {
 	constexpr char k_missingMaterialName[] = "MissingMaterial";
-
-
-	// GLTF loading helpers:
-	/*****************************************************************************************************************/
-
-
-	// Generate a unique name for a material from (some of) the values in the cgltf_material struct
-	std::string GenerateMaterialName(cgltf_material const& material)
-	{
-		if (material.name)
-		{
-			return std::string(material.name);
-		}
-		SEAssert("Specular/Glossiness materials are not currently supported", material.has_pbr_specular_glossiness == 0);
-
-		// TODO: Expand the values used to generate the name here, and/or use hashes to identify materials
-		// -> String streams are very slow...
-		std::stringstream matName;
-
-		matName << material.pbr_metallic_roughness.base_color_texture.texture;
-		matName << material.pbr_metallic_roughness.metallic_roughness_texture.texture;
-
-		matName << material.pbr_metallic_roughness.base_color_factor[0]
-			<< material.pbr_metallic_roughness.base_color_factor[1]
-			<< material.pbr_metallic_roughness.base_color_factor[2]
-			<< material.pbr_metallic_roughness.base_color_factor[3];
-
-		matName << material.pbr_metallic_roughness.metallic_factor;
-		matName << material.pbr_metallic_roughness.roughness_factor;
-
-		matName << material.emissive_strength.emissive_strength;
-		matName << material.normal_texture.texture;
-		matName << material.occlusion_texture.texture;
-		matName << material.emissive_texture.texture;
-		matName << material.emissive_factor[0] << material.emissive_factor[2] << material.emissive_factor[3];
-		matName << material.alpha_mode;
-		matName << material.alpha_cutoff;
-
-		return matName.str();
-	}
 
 
 	std::shared_ptr<re::Texture> LoadTextureOrColor(
@@ -241,7 +201,8 @@ namespace
 
 				cgltf_material const* const material = &data->materials[cur];
 
-				const std::string matName = material == nullptr ? "MissingMaterial" : GenerateMaterialName(*material);
+				const std::string matName = 
+					material == nullptr ? "MissingMaterial" : util::GenerateMaterialName(*material);
 				if (scene.MaterialExists(matName))
 				{
 					SEAssertF("We expect all materials in the incoming scene data are unique");
@@ -826,7 +787,8 @@ namespace
 			std::shared_ptr<gr::Material> material;
 			if (current->mesh->primitives[primitive].material != nullptr)
 			{
-				const std::string generatedMatName = GenerateMaterialName(*current->mesh->primitives[primitive].material);
+				const std::string generatedMatName = 
+					util::GenerateMaterialName(*current->mesh->primitives[primitive].material);
 				material = scene.GetMaterial(generatedMatName);
 			}
 			else

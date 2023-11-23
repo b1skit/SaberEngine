@@ -434,7 +434,7 @@
     <ClCompile Include="ParameterBlockAllocator_OpenGL.cpp">
       <Filter>Source Files\re\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="TextureLoadUtils.cpp">
+    <ClCompile Include="AssetLoadUtils.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>
@@ -832,7 +832,7 @@
     <ClInclude Include="resource.h">
       <Filter>Dependencies\Resources</Filter>
     </ClInclude>
-    <ClInclude Include="TextureLoadUtils.h">
+    <ClInclude Include="AssetLoadUtils.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
   </ItemGroup>

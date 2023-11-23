@@ -5,9 +5,11 @@
 #define STBI_FAILURE_USERMSG
 #include <stb_image.h>
 
+#include "cgltf.h" // We already included this with the CGLTF_IMPLEMENTATION elsewhere
+
+#include "AssetLoadUtils.h"
 #include "PerformanceTimer.h"
 #include "Texture.h"
-#include "TextureLoadUtils.h"
 
 
 namespace util
@@ -335,5 +337,41 @@ namespace util
 		}
 
 		return texNameStr;
+	}
+
+
+	// Generate a unique name for a material from (some of) the values in the cgltf_material struct
+	std::string GenerateMaterialName(cgltf_material const& material)
+	{
+		if (material.name)
+		{
+			return std::string(material.name);
+		}
+		SEAssert("Specular/Glossiness materials are not currently supported", material.has_pbr_specular_glossiness == 0);
+
+		// TODO: Expand the values used to generate the name here, and/or use hashes to identify materials
+		// -> String streams are very slow...
+		std::stringstream matName;
+
+		matName << material.pbr_metallic_roughness.base_color_texture.texture;
+		matName << material.pbr_metallic_roughness.metallic_roughness_texture.texture;
+
+		matName << material.pbr_metallic_roughness.base_color_factor[0]
+			<< material.pbr_metallic_roughness.base_color_factor[1]
+			<< material.pbr_metallic_roughness.base_color_factor[2]
+			<< material.pbr_metallic_roughness.base_color_factor[3];
+
+		matName << material.pbr_metallic_roughness.metallic_factor;
+		matName << material.pbr_metallic_roughness.roughness_factor;
+
+		matName << material.emissive_strength.emissive_strength;
+		matName << material.normal_texture.texture;
+		matName << material.occlusion_texture.texture;
+		matName << material.emissive_texture.texture;
+		matName << material.emissive_factor[0] << material.emissive_factor[2] << material.emissive_factor[3];
+		matName << material.alpha_mode;
+		matName << material.alpha_cutoff;
+
+		return matName.str();
 	}
 }

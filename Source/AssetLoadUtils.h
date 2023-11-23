@@ -1,11 +1,8 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
+#include "Texture.h"
 
-
-namespace re
-{
-	class Texture;
-}
+struct cgltf_material;
 
 
 namespace util
@@ -32,4 +29,7 @@ namespace util
 
 
 	std::string GenerateEmbeddedTextureName(char const* texName);
+
+
+	std::string GenerateMaterialName(cgltf_material const& material);
 }
