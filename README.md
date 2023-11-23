@@ -14,21 +14,33 @@ Details:
 - Currently supported graphics APIs:
 	- OpenGL 4.6
 	- DirectX 12
+- C++ 20
 - Renders GLTF 2.0 scenes/assets
-- Implemented with C++ 20
 
 
-----------------------------------
-User-Specific Visual Studio Setup:
-----------------------------------
-"Project -> Properties -> Configuration Properties -> Debugging -> Working Directory" -> "$(SolutionDir)SaberEngine"  
+--------------
+Initial Setup:
+--------------
+* SaberEngine uses the EnTT library, which is distributed by the vcpkg and must be installed manually when the SaberEngine .git repository is cloned.  		
+  * To install EnTT, navigate to the `..\SaberEngine\Source\Dependencies\` directory, and run the following commands (as per https://github.com/skypjack/entt#packaging-tools):  
+```  
+git clone https://github.com/Microsoft/vcpkg.git  
+cd vcpkg  
+./bootstrap-vcpkg.sh  
+./vcpkg integrate install  
+vcpkg install entt  
+```  
+
+
+* User-Specific Visual Studio Setup:
+  * "Project -> Properties -> Configuration Properties -> Debugging -> Working Directory" -> "$(SolutionDir)SaberEngine"  
 
 
 ------------------
 PIX Configuration:
 ------------------
 Microsoft PIX requires the "[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Appx]" key to exist in the local Windows registry. This can be enabled by executing the following command from a command prompt launched with administrator priviledges:  
-reg add HKLM\SOFTWARE\Policies\Microsoft\Windows\Appx  
+* `reg add HKLM\SOFTWARE\Policies\Microsoft\Windows\Appx`  
 
 
 ----------------
@@ -36,34 +48,36 @@ DX12 Shader PDBs
 ----------------
 Shader PDBs are generated when SaberEngine's Debug build configuration is compiled. PDBs are output to .\Build\x64\Debug\  
 
-PIX configuration: Set the shader PDB path in the "Settings -> Symbol / PDB Options" menu  
-RenderDoc configuration: Set the shader PDB path in the "Tools -> Settings -> Core Shader debug search path" menu  
+* PIX configuration: Set the shader PDB path in the "Settings -> Symbol / PDB Options" menu  
+* RenderDoc configuration: Set the shader PDB path in the "Tools -> Settings -> Core Shader debug search path" menu  
 
 
 -----------------------
 Command line arguments:
 -----------------------
-Scene loading: -scene Folder\Name\filename.extension  
+Most of the keys described in `ConfigKeys.h` can be set/overridden via key/value command line arguments using a `-keyname value` pattern.  If `value` is omitted, it will be stored as a boolean true value.  The most important command line arguments are described here:
+
+Scene loading: `-scene Folder\Name\filename.extension`  
 	- Path is relative to the "<project root>\Scenes\" directory  
 	- Supports GLTF 2.0 files
 
-Display log messages in a system console window: -console  
+Display log messages in a system console window: `-console`  
 
-Enable strict shader binding checks: -strictshaderbinding  
-	- Skip (helpful, but occasionally annoying) asserts if textures/parameters aren't found in a shader  
+Enable strict shader binding checks: `-strictshaderbinding`  
+	- Skip (helpful, but annoying) asserts if textures/parameters aren't found in a shader's reflected metadata  
 
-Enable graphics API debugging: -debuglevel [0, 2]  
+Enable graphics API debugging: `-debuglevel [0, 2]`  
 	- 0: Default (disabled)  
 	- 1: Basic debug output (OpenGL, DX12)  
 	- 2: Level 1 + GPU-based validation (DX12 only)  
 	- 3: Level 2 + DRED breadcrumbs (DX12 only)  
 
-Enable PIX programmatic capture (DX12 only): -enablepixgpucapture , -enablepixcpucapture
+Enable PIX programmatic capture (DX12 only): `-enablepixgpucapture`, `-enablepixcpucapture`  
 	- This is only required for programmatic captures. It is not required for PIX markers  
 	- Captures can be triggered via the render debug menu  
 	- More info on PIX programmatic captures here: https://devblogs.microsoft.com/pix/programmatic-capture/  
 
-Enable RenderDoc programmatic capture: -renderdoc
+Enable RenderDoc programmatic capture: `-renderdoc`  
 	- This is only required for programmatic captures. RenderDoc can still launch/capture without this  
 
 

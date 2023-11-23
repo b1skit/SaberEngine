@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include <entt/entity/registry.hpp>
 
 #include "EngineComponent.h"
 #include "Updateable.h"
