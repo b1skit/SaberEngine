@@ -273,6 +273,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="SwapChain_Platform.cpp" />
     <ClCompile Include="SysInfo_OpenGL.cpp" />
     <ClCompile Include="SysInfo_Platform.cpp" />
+    <ClCompile Include="TextureLoadUtils.cpp" />
     <ClCompile Include="TextureTarget_DX12.cpp" />
     <ClCompile Include="Texture_DX12.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
@@ -399,6 +400,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="SwapChain_Platform.h" />
     <ClInclude Include="SysInfo_OpenGL.h" />
     <ClInclude Include="SysInfo_Platform.h" />
+    <ClInclude Include="TextureLoadUtils.h" />
     <ClInclude Include="TextUtils.h" />
     <ClInclude Include="TextureTarget_DX12.h" />
     <ClInclude Include="Texture_DX12.h" />

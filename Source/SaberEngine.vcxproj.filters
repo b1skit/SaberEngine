@@ -434,6 +434,9 @@
     <ClCompile Include="ParameterBlockAllocator_OpenGL.cpp">
       <Filter>Source Files\re\OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="TextureLoadUtils.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -823,11 +826,14 @@
     <ClInclude Include="ParameterBlockAllocator_DX12.h">
       <Filter>Header Files\re\DX12</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ProfilingMarkers.h">
       <Filter>Header Files\re</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Dependencies\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureLoadUtils.h">
+      <Filter>Header Files\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -12,6 +12,8 @@ namespace re
 	public:
 		using ImageDataUniquePtr = std::unique_ptr<void, std::function<void(void*)>>;
 
+		static constexpr glm::vec4 k_errorTextureColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
+
 
 	public:
 		static constexpr uint32_t k_allMips = std::numeric_limits<uint32_t>::max(); // Mip sentinel value

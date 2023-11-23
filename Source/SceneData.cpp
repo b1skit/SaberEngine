@@ -1,10 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-
-// Note: We can't include STBI in our pch, as the following define can only be included ONCE in the project
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_FAILURE_USERMSG
-#include <stb_image.h>
-
 #pragma warning(disable : 4996) // Suppress error C4996 (Caused by use of fopen, strcpy, strncpy in cgltf.h)
 #define CGLTF_IMPLEMENTATION
 #include "cgltf.h"
@@ -19,341 +13,21 @@
 #include "Mesh.h"
 #include "MeshPrimitive.h"
 #include "ParameterBlock.h"
-#include "PerformanceTimer.h"
 #include "RenderManager.h"
 #include "SceneData.h"
 #include "SceneNode.h"
 #include "Shader.h"
 #include "ShadowMap.h"
+#include "TextureLoadUtils.h"
 #include "ThreadPool.h"
 #include "ThreadSafeVector.h"
 #include "Transform.h"
 #include "VertexStreamBuilder.h"
 
-using fr::SceneData;
-using gr::Camera;
-using gr::Light;
-using re::Texture;
-using gr::Material;
-using gr::MeshPrimitive;
-using gr::Bounds;
-using gr::Transform;
-using re::ParameterBlock;
-using fr::SceneNode;
-using en::Config;
-using en::CoreEngine;
-using util::PerformanceTimer;
-using std::string;
-using std::vector;
-using std::shared_ptr;
-using std::make_shared;
-using std::stringstream;
-using std::to_string;
-using glm::quat;
-using glm::vec2;
-using glm::vec3;
-using glm::vec4;
-using glm::mat4;
-using glm::make_mat4;
-using std::unordered_map;
-using std::max;
 
-
-// Data loading helpers:
 namespace
 {
-	constexpr glm::vec4 k_errorTextureColor = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
 	constexpr char k_missingMaterialName[] = "MissingMaterial";
-
-
-	// STBI Image data loading helpers:
-	/*****************************************************************************************************************/
-
-
-	// Helper: Wrap a stb allocation in a unique_ptr:
-	re::Texture::ImageDataUniquePtr CreateImageDataUniquePtr(void* imageData)
-	{
-		re::Texture::ImageDataUniquePtr imageDataPtr(
-			imageData,
-			[](void* stbImageData) { stbi_image_free(stbImageData); });
-
-		return std::move(imageDataPtr);
-	};
-
-
-	std::shared_ptr<re::Texture> LoadTextureFromFilePath(
-		vector<string> texturePaths, 
-		bool returnErrorTex, 
-		glm::vec4 const& errorTexFillColor, 
-		Texture::ColorSpace colorSpace)
-	{
-		SEAssert("Can load single faces or cubemaps only", texturePaths.size() == 1 || texturePaths.size() == 6);
-		SEAssert("Invalid number of texture paths", texturePaths.size() == 1 || texturePaths.size() == 6);
-
-		LOG("Attempting to load %d texture(s): \"%s\"...", texturePaths.size(), texturePaths[0].c_str());
-
-		PerformanceTimer timer;
-		timer.Start();
-
-		const uint32_t totalFaces = (uint32_t)texturePaths.size();
-
-		// Modify default TextureParams to be suitable for a generic error texture:
-		Texture::TextureParams texParams
-		{
-			.m_faces = totalFaces,
-
-			.m_usage = re::Texture::Usage::Color,
-			.m_dimension = (totalFaces == 1 ?
-				re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCubeMap),
-			.m_format = re::Texture::Format::RGBA8,
-			.m_colorSpace = colorSpace
-		};
-		glm::vec4 fillColor = errorTexFillColor;
-		
-		// Load the texture, face-by-face:
-		std::vector<re::Texture::ImageDataUniquePtr> initialData;
-		shared_ptr<Texture> texture = nullptr;
-		for (size_t face = 0; face < totalFaces; face++)
-		{
-			// Get the image data:
-			int width = 0;
-			int height = 0;
-			int numChannels = 0;			
-			stbi_info(texturePaths[face].c_str(), &width, &height, &numChannels);
-
-			// We don't support 3-channel textures, allow 1 or 2 channels, or force 4-channel instead
-			const int desiredChannels = numChannels == 3 ? 4 : numChannels;
-
-			uint8_t bitDepth = 0;
-			void* imageData = nullptr;
-
-			if (stbi_is_hdr(texturePaths[face].c_str())) // HDR
-			{
-				imageData = stbi_loadf(texturePaths[face].c_str(), &width, &height, &numChannels, desiredChannels);
-				bitDepth = 32;
-			}
-			else if (stbi_is_16_bit(texturePaths[face].c_str()))
-			{
-				imageData = stbi_load_16(texturePaths[face].c_str(), &width, &height, &numChannels, desiredChannels);
-				bitDepth = 16;
-			}
-			else // Non-HDR
-			{
-				imageData = stbi_load(texturePaths[face].c_str(), &width, &height, &numChannels, desiredChannels);
-				bitDepth = 8;
-			}
-
-			if (imageData)
-			{
-				LOG("Texture \"%s\" is %dx%d, %d-bit, %d channels",
-					texturePaths[face].c_str(), width, height, bitDepth, desiredChannels);
-
-				initialData.emplace_back(CreateImageDataUniquePtr(imageData));
-
-				if (face == 0) // 1st face: Update the texture parameters
-				{
-					texParams.m_width = width;
-					texParams.m_height = height;
-
-					if ((width == 1 || height == 1) && (width != height))
-					{
-						SEAssertF("Found 1D texture, but 1D textures are currently not supported. Treating "
-							"this texture as 2D");
-						texParams.m_dimension = re::Texture::Dimension::Texture2D; // TODO: Support 1D textures
-						/*texParams.m_dimension = re::Texture::Dimension::Texture1D;*/
-					}
-
-					switch (desiredChannels)
-					{
-					case 1:
-					{
-						if (bitDepth == 8) texParams.m_format = re::Texture::Format::R8;
-						else if (bitDepth == 16) texParams.m_format = re::Texture::Format::R16F;
-						else texParams.m_format = re::Texture::Format::R32F;
-					}
-					break;
-					case 2:
-					{
-						if (bitDepth == 8) texParams.m_format = re::Texture::Format::RG8;
-						else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RG16F;
-						else texParams.m_format = re::Texture::Format::RG32F;
-					}
-					break;
-					case 4:
-					{
-						if (bitDepth == 8) texParams.m_format = re::Texture::Format::RGBA8;
-						else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RGBA16F;
-						else texParams.m_format = re::Texture::Format::RGBA32F;
-					}
-					break;
-					default:
-						SEAssertF("Invalid number of channels");
-					}
-					
-					fillColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
-				}
-				else // texture already exists: Ensure the face has the same dimensions
-				{
-					SEAssert("Parameter mismatch", texParams.m_width == width && texParams.m_height == height);
-				}
-			}
-			else if (returnErrorTex)
-			{
-				if (!initialData.empty())
-				{
-					initialData.clear();
-
-					// Reset texParams to be suitable for an error texture
-					texParams.m_width = 2;
-					texParams.m_height = 2;
-					texParams.m_dimension = totalFaces == 1 ?
-						re::Texture::Dimension::Texture2D : re::Texture::Dimension::TextureCubeMap;
-					texParams.m_format = re::Texture::Format::RGBA8;
-					texParams.m_colorSpace = Texture::ColorSpace::sRGB;
-					texParams.m_mipMode = re::Texture::MipMode::AllocateGenerate;
-
-					fillColor = errorTexFillColor;
-				}
-
-				// We'll populate the initial image data internally:
-				texture = re::Texture::Create(texturePaths[0], texParams, true, fillColor);
-				break;
-			}
-			else
-			{
-				char const* failResult = stbi_failure_reason();
-				LOG_WARNING("Failed to load image \"%s\": %s", texturePaths[0].c_str(), failResult);
-				timer.StopSec();
-				return nullptr;
-			}
-		}
-
-		if (!texture)
-		{
-			texture = re::Texture::Create(
-				texturePaths[0], texParams, false, glm::vec4(0.f, 0.f, 0.f, 1.f), std::move(initialData));
-		}
-
-		LOG("Loaded texture \"%s\" in %f seconds...", texturePaths[0].c_str(), timer.StopSec());
-
-		// Note: Texture color space must still be set
-		return texture; 
-	}
-
-
-	std::shared_ptr<re::Texture> LoadTextureFromMemory(
-		std::string const& texName,
-		unsigned char const* texSrc,
-		uint32_t texSrcNumBytes,
-		Texture::ColorSpace colorSpace)
-	{
-		SEAssert("Invalid texture memory allocation", texSrc != nullptr && texSrcNumBytes > 0);
-		
-		LOG("Attempting to load texture \"%s\" from memory...", texName.c_str());
-		PerformanceTimer timer;
-		timer.Start();
-
-		// Modify default TextureParams to be suitable for a generic error texture:
-		Texture::TextureParams texParams
-		{
-			.m_usage = re::Texture::Usage::Color,
-			.m_dimension = re::Texture::Dimension::Texture2D,
-			.m_format = re::Texture::Format::RGBA8,
-			.m_colorSpace = colorSpace
-		};
-		glm::vec4 fillColor = k_errorTextureColor;
-
-		// Get the image data:
-		int width = 0;
-		int height = 0;
-		int numChannels = 0;
-		stbi_info_from_memory(static_cast<stbi_uc const*>(texSrc), texSrcNumBytes , &width, &height, &numChannels);
-
-		// We don't support 3-channel textures, allow 1 or 2 channels, or force 4-channel instead
-		const int desiredChannels = numChannels == 3 ? 4 : numChannels;
-
-		uint8_t bitDepth = 0;
-		void* imageData = nullptr;
-		if (stbi_is_hdr_from_memory(texSrc, texSrcNumBytes))
-		{
-			imageData = stbi_loadf_from_memory(texSrc, texSrcNumBytes, &width, &height, &numChannels, desiredChannels);
-			bitDepth = 32;
-		}
-		else if (stbi_is_16_bit_from_memory(texSrc, texSrcNumBytes))
-		{
-			imageData = stbi_load_16_from_memory(texSrc, texSrcNumBytes, &width, &height, &numChannels, desiredChannels);
-			bitDepth = 16;
-		}
-		else // Non-HDR
-		{
-			imageData = stbi_load_from_memory(texSrc, texSrcNumBytes, &width, &height, &numChannels, desiredChannels);
-			bitDepth = 8;
-		}
-
-		shared_ptr<Texture> texture(nullptr);
-		std::vector<re::Texture::ImageDataUniquePtr> initialData;
-		if (imageData)
-		{
-			LOG("Texture \"%s\" is %dx%d, %d-bit, %d channels", 
-				texName.c_str(), width, height, bitDepth, desiredChannels);
-
-			initialData.emplace_back(std::move(CreateImageDataUniquePtr(imageData)));
-
-			// Update the texture parameters:
-			texParams.m_width = width;
-			texParams.m_height = height;
-
-			if ((width == 1 || height == 1) && (width != height))
-			{
-				LOG_WARNING("Found 1D texture, but 1D textures are currently not supported. Treating "
-					"this texture as 2D");
-				texParams.m_dimension = re::Texture::Dimension::Texture2D; // TODO: Support 1D textures
-				/*texParams.m_dimension = re::Texture::Dimension::Texture1D;*/
-			}
-
-			switch (desiredChannels)
-			{
-			case 1:
-			{
-				if (bitDepth == 8) texParams.m_format = re::Texture::Format::R8;
-				else if (bitDepth == 16) texParams.m_format = re::Texture::Format::R16F;
-				else texParams.m_format = re::Texture::Format::R32F;
-			}
-			break;
-			case 2:
-			{
-				if (bitDepth == 8) texParams.m_format = re::Texture::Format::RG8;
-				else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RG16F;
-				else texParams.m_format = re::Texture::Format::RG32F;
-			}
-			break;
-			case 4:
-			{
-				if (bitDepth == 8) texParams.m_format = re::Texture::Format::RGBA8;
-				else if (bitDepth == 16) texParams.m_format = re::Texture::Format::RGBA16F;
-				else texParams.m_format = re::Texture::Format::RGBA32F;
-			}
-			break;
-			default:
-				SEAssertF("Invalid number of channels");
-			}
-
-			// Create the texture now the params are configured:
-
-			fillColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Replace default error color
-
-			texture = re::Texture::Create(texName, texParams, false, fillColor, std::move(initialData));
-		}
-		else
-		{
-			SEAssertF("Failed to load image data");
-		}
-
-		LOG("Loaded texture \"%s\" from memory in %f seconds...", texName.c_str(), timer.StopSec());
-
-		// Note: Texture color space must still be set
-		return texture;
-	}
 
 
 	// GLTF loading helpers:
@@ -361,17 +35,17 @@ namespace
 
 
 	// Generate a unique name for a material from (some of) the values in the cgltf_material struct
-	string GenerateMaterialName(cgltf_material const& material)
+	std::string GenerateMaterialName(cgltf_material const& material)
 	{
 		if (material.name)
 		{
-			return string(material.name);
+			return std::string(material.name);
 		}
 		SEAssert("Specular/Glossiness materials are not currently supported", material.has_pbr_specular_glossiness == 0);
 
 		// TODO: Expand the values used to generate the name here, and/or use hashes to identify materials
 		// -> String streams are very slow...
-		stringstream matName;
+		std::stringstream matName;
 
 		matName << material.pbr_metallic_roughness.base_color_texture.texture;
 		matName << material.pbr_metallic_roughness.metallic_roughness_texture.texture;
@@ -396,60 +70,18 @@ namespace
 	}
 
 
-	string GenerateTextureColorFallbackName(
-		vec4 const& colorFallback, size_t numChannels, Texture::ColorSpace colorSpace)
-	{
-		string texName = "Color_" + to_string(colorFallback.x) + "_";
-		if (numChannels >= 2)
-		{
-			texName += to_string(colorFallback.y) + "_";
-			if (numChannels >= 3)
-			{
-				texName += to_string(colorFallback.z) + "_";
-				if (numChannels >= 4)
-				{
-					texName += to_string(colorFallback.w) + "_";
-				}
-			}
-		}
-		texName += (colorSpace == Texture::ColorSpace::sRGB ? "sRGB" : "Linear");
-
-		return texName;
-	}
-
-
-	// Assemble a name for textures loaded from memory: Either use the provided name, or create a unique one
-	std::string GenerateEmbeddedTextureName(char const* texName)
-	{
-		string texNameStr;
-
-		if (texName != nullptr)
-		{
-			texNameStr = string(texName);
-		}
-		else
-		{
-			static std::atomic<uint32_t> unnamedTexIdx = 0;
-			const uint32_t thisTexIdx = unnamedTexIdx.fetch_add(1);
-			texNameStr = "EmbeddedTexture_" + std::to_string(thisTexIdx);
-		}
-
-		return texNameStr;
-	}
-
-
-	shared_ptr<re::Texture> LoadTextureOrColor(
-		SceneData& scene,
-		string const& sceneRootPath, 
+	std::shared_ptr<re::Texture> LoadTextureOrColor(
+		fr::SceneData& scene,
+		std::string const& sceneRootPath,
 		cgltf_texture* texture, 
-		vec4 const& colorFallback, 
-		Texture::Format formatFallback, 
-		Texture::ColorSpace colorSpace)
+		glm::vec4 const& colorFallback, 
+		re::Texture::Format formatFallback, 
+		re::Texture::ColorSpace colorSpace)
 	{
 		SEAssert("Invalid fallback format",
-			formatFallback != Texture::Format::Depth32F && formatFallback != Texture::Format::Invalid);
+			formatFallback != re::Texture::Format::Depth32F && formatFallback != re::Texture::Format::Invalid);
 
-		shared_ptr<Texture> tex;
+		std::shared_ptr<re::Texture> tex;
 		if (texture && texture->image)
 		{
 			if (texture->image->uri && std::strncmp(texture->image->uri, "data:image/", 11) == 0) // uri = embedded data
@@ -474,14 +106,14 @@ namespace
 					cgltf_result result = cgltf_load_buffer_base64(&options, size, base64, &data);
 
 					// Data is decoded, now load it as usual:
-					const std::string texNameStr = GenerateEmbeddedTextureName(texture->image->name);
+					const std::string texNameStr = util::GenerateEmbeddedTextureName(texture->image->name);
 					if (scene.TextureExists(texNameStr))
 					{
 						tex = scene.GetTexture(texNameStr);
 					}
 					else
 					{
-						tex = LoadTextureFromMemory(
+						tex = util::LoadTextureFromMemory(
 							texNameStr, static_cast<unsigned char const*>(data), static_cast<uint32_t>(size), colorSpace);
 					}
 				}
@@ -495,12 +127,12 @@ namespace
 				}
 				else
 				{
-					tex = LoadTextureFromFilePath({ texNameStr }, false, k_errorTextureColor, colorSpace);
+					tex = util::LoadTextureFromFilePath({ texNameStr }, false, re::Texture::k_errorTextureColor, colorSpace);
 				}
 			}
 			else if (texture->image->buffer_view) // texture data is already loaded in memory
 			{
-				const std::string texNameStr = GenerateEmbeddedTextureName(texture->image->name);
+				const std::string texNameStr = util::GenerateEmbeddedTextureName(texture->image->name);
 
 				if (scene.TextureExists(texNameStr))
 				{
@@ -512,7 +144,7 @@ namespace
 						texture->image->buffer_view->buffer->data) + texture->image->buffer_view->offset;
 
 					const uint32_t texSrcNumBytes = static_cast<uint32_t>(texture->image->buffer_view->size);
-					tex = LoadTextureFromMemory(texNameStr, texSrc, texSrcNumBytes, colorSpace);
+					tex = util::LoadTextureFromMemory(texNameStr, texSrc, texSrcNumBytes, colorSpace);
 				}
 			}
 
@@ -521,7 +153,7 @@ namespace
 		else
 		{
 			// Create a texture color fallback:
-			Texture::TextureParams colorTexParams
+			re::Texture::TextureParams colorTexParams
 			{
 				.m_usage = re::Texture::Usage::Color,
 				.m_dimension = re::Texture::Dimension::Texture2D,
@@ -529,8 +161,8 @@ namespace
 				.m_colorSpace = colorSpace
 			};
 
-			const size_t numChannels = Texture::GetNumberOfChannels(formatFallback);
-			const string fallbackName = GenerateTextureColorFallbackName(colorFallback, numChannels, colorSpace);
+			const size_t numChannels = re::Texture::GetNumberOfChannels(formatFallback);
+			const std::string fallbackName = util::GenerateTextureColorFallbackName(colorFallback, numChannels, colorSpace);
 
 			if (scene.TextureExists(fallbackName))
 			{
@@ -546,7 +178,7 @@ namespace
 	}
 
 
-	void GenerateErrorMaterial(SceneData& scene)
+	void GenerateErrorMaterial(fr::SceneData& scene)
 	{
 		LOG("Generating an error material \"%s\"...", k_missingMaterialName);
 
@@ -556,39 +188,39 @@ namespace
 		constexpr char const* k_missingOcclusionTexName			= "MissingOcclusionTexture";
 		constexpr char const* k_missingEmissiveTexName			= "MissingEmissiveTexture";
 
-		shared_ptr<Material> errorMat =
+		std::shared_ptr<gr::Material> errorMat =
 			gr::Material::Create(k_missingMaterialName, gr::Material::MaterialType::GLTF_PBRMetallicRoughness);
 
 		// MatAlbedo
-		std::shared_ptr<re::Texture> errorAlbedo = 
-			LoadTextureFromFilePath({ k_missingAlbedoTexName }, true, k_errorTextureColor, re::Texture::ColorSpace::sRGB);
+		std::shared_ptr<re::Texture> errorAlbedo = util::LoadTextureFromFilePath(
+			{ k_missingAlbedoTexName }, true, re::Texture::k_errorTextureColor, re::Texture::ColorSpace::sRGB);
 		errorMat->SetTexture(0, errorAlbedo);
 
 		// MatMetallicRoughness
-		std::shared_ptr<re::Texture> errorMetallicRoughness = LoadTextureFromFilePath(
+		std::shared_ptr<re::Texture> errorMetallicRoughness = util::LoadTextureFromFilePath(
 			{ k_missingMetallicRoughnessTexName }, true, glm::vec4(0.f, 1.f, 0.f, 0.f), re::Texture::ColorSpace::Linear);
 		errorMat->SetTexture(1, errorMetallicRoughness);
 
 		// MatNormal
-		std::shared_ptr<re::Texture> errorNormal = LoadTextureFromFilePath(
+		std::shared_ptr<re::Texture> errorNormal = util::LoadTextureFromFilePath(
 			{ k_missingNormalTexName }, true, glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), re::Texture::ColorSpace::Linear);
 		errorMat->SetTexture(2, errorNormal);
 
 		// MatOcclusion
-		std::shared_ptr<re::Texture> errorOcclusion = LoadTextureFromFilePath(
+		std::shared_ptr<re::Texture> errorOcclusion = util::LoadTextureFromFilePath(
 			{ k_missingOcclusionTexName }, true, glm::vec4(1.f), re::Texture::ColorSpace::Linear);
 		errorMat->SetTexture(3, errorOcclusion);
 
 		// MatEmissive
-		std::shared_ptr<re::Texture> errorEmissive = LoadTextureFromFilePath(
-			{ k_missingEmissiveTexName }, true, k_errorTextureColor, re::Texture::ColorSpace::sRGB);
+		std::shared_ptr<re::Texture> errorEmissive = util::LoadTextureFromFilePath(
+			{ k_missingEmissiveTexName }, true, re::Texture::k_errorTextureColor, re::Texture::ColorSpace::sRGB);
 		errorMat->SetTexture(4, errorEmissive);
 
 		scene.AddUniqueMaterial(errorMat);
 	}
 
 
-	void PreLoadMaterials(std::string const& sceneRootPath, SceneData& scene, cgltf_data* data)
+	void PreLoadMaterials(std::string const& sceneRootPath, fr::SceneData& scene, cgltf_data* data)
 	{
 		const size_t numMaterials = data->materials_count;
 		LOG("Loading %d scene materials", numMaterials);
@@ -609,7 +241,7 @@ namespace
 
 				cgltf_material const* const material = &data->materials[cur];
 
-				const string matName = material == nullptr ? "MissingMaterial" : GenerateMaterialName(*material);
+				const std::string matName = material == nullptr ? "MissingMaterial" : GenerateMaterialName(*material);
 				if (scene.MaterialExists(matName))
 				{
 					SEAssertF("We expect all materials in the incoming scene data are unique");
@@ -621,12 +253,12 @@ namespace
 				SEAssert("We currently only support the PBR metallic/roughness material model",
 					material->has_pbr_metallic_roughness == 1);
 
-				shared_ptr<Material> newMat = 
+				std::shared_ptr<gr::Material> newMat =
 					gr::Material::Create(matName, gr::Material::MaterialType::GLTF_PBRMetallicRoughness);
 
 				// GLTF specifications: If a texture is not given, all respective texture components are assumed to be 1.f
 				// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
-				constexpr vec4 missingTextureColor(1.f, 1.f, 1.f, 1.f);
+				constexpr glm::vec4 missingTextureColor(1.f, 1.f, 1.f, 1.f);
 
 				// MatAlbedo
 				textureFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
@@ -636,8 +268,8 @@ namespace
 						sceneRootPath,
 						material->pbr_metallic_roughness.base_color_texture.texture,
 						missingTextureColor,
-						Texture::Format::RGBA8,
-						Texture::ColorSpace::sRGB));
+						re::Texture::Format::RGBA8,
+						re::Texture::ColorSpace::sRGB));
 					}));
 
 				// MatMetallicRoughness
@@ -648,8 +280,8 @@ namespace
 						sceneRootPath,
 						material->pbr_metallic_roughness.metallic_roughness_texture.texture,
 						missingTextureColor,
-						Texture::Format::RGBA8,
-						Texture::ColorSpace::Linear));
+						re::Texture::Format::RGBA8,
+						re::Texture::ColorSpace::Linear));
 					}));
 
 				// MatNormal
@@ -659,9 +291,9 @@ namespace
 						scene,
 						sceneRootPath,
 						material->normal_texture.texture,
-						vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
-						Texture::Format::RGBA8,
-						Texture::ColorSpace::Linear));
+						glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
+						re::Texture::Format::RGBA8,
+						re::Texture::ColorSpace::Linear));
 					}));
 
 				// MatOcclusion
@@ -672,8 +304,8 @@ namespace
 						sceneRootPath,
 						material->occlusion_texture.texture,
 						missingTextureColor,	// Completely unoccluded
-						Texture::Format::RGBA8,
-						Texture::ColorSpace::Linear));
+						re::Texture::Format::RGBA8,
+						re::Texture::ColorSpace::Linear));
 					}));
 
 				// MatEmissive
@@ -684,8 +316,8 @@ namespace
 						sceneRootPath,
 						material->emissive_texture.texture,
 						missingTextureColor,
-						Texture::Format::RGBA8,
-						Texture::ColorSpace::sRGB)); // GLTF convention: Must be converted to linear before use
+						re::Texture::Format::RGBA8,
+						re::Texture::ColorSpace::sRGB)); // GLTF convention: Must be converted to linear before use
 					}));
 
 				gr::Material_GLTF* newGLTFMat = newMat->GetAs<gr::Material_GLTF*>();
@@ -719,7 +351,7 @@ namespace
 	}
 
 
-	void SetTransformValues(cgltf_node* current, Transform* targetTransform)
+	void SetTransformValues(cgltf_node* current, gr::Transform* targetTransform)
 	{
 		SEAssert("Transform has both matrix and decomposed properties",
 			(current->has_matrix != (current->has_rotation || current->has_scale || current->has_translation)) ||
@@ -729,13 +361,13 @@ namespace
 
 		if (current->has_matrix)
 		{
-			const mat4 nodeModelMatrix = make_mat4(current->matrix);
-			vec3 scale;
-			quat rotation;
-			vec3 translation;
-			vec3 skew;
-			vec4 perspective;
-			decompose(nodeModelMatrix, scale, rotation, translation, skew, perspective);
+			const glm::mat4 nodeModelMatrix = glm::make_mat4(current->matrix);
+			glm::vec3 scale;
+			glm::quat rotation;
+			glm::vec3 translation;
+			glm::vec3 skew;
+			glm::vec4 perspective;
+			glm::decompose(nodeModelMatrix, scale, rotation, translation, skew, perspective);
 
 			targetTransform->SetLocalRotation(rotation);
 			targetTransform->SetLocalScale(scale);
@@ -763,7 +395,7 @@ namespace
 
 
 	// Creates a default camera if camera == nullptr, and no cameras exist in scene
-	void LoadAddCamera(SceneData& scene, shared_ptr<SceneNode> parent, cgltf_node* current)
+	void LoadAddCamera(fr::SceneData& scene, std::shared_ptr<fr::SceneNode> parent, cgltf_node* current)
 	{
 		std::shared_ptr<gr::Camera> newCam;
 
@@ -772,10 +404,10 @@ namespace
 			LOG("Creating a default camera");
 
 			gr::Camera::Config camConfig;
-			camConfig.m_aspectRatio = Config::Get()->GetWindowAspectRatio();
-			camConfig.m_yFOV = Config::Get()->GetValue<float>("defaultyFOV");
-			camConfig.m_near = Config::Get()->GetValue<float>("defaultNear");
-			camConfig.m_far = Config::Get()->GetValue<float>("defaultFar");
+			camConfig.m_aspectRatio = en::Config::Get()->GetWindowAspectRatio();
+			camConfig.m_yFOV = en::Config::Get()->GetValue<float>("defaultyFOV");
+			camConfig.m_near = en::Config::Get()->GetValue<float>("defaultNear");
+			camConfig.m_far = en::Config::Get()->GetValue<float>("defaultFar");
 
 			newCam = gr::Camera::Create("Default camera", camConfig, nullptr); // Internally calls SceneData::AddCamera
 		}
@@ -785,13 +417,13 @@ namespace
 
 			SEAssert("Must supply a parent and camera pointer", parent != nullptr && camera != nullptr);
 
-			const string camName = camera->name ? string(camera->name) : "Unnamed camera";
+			const std::string camName = camera->name ? std::string(camera->name) : "Unnamed camera";
 			LOG("Loading camera \"%s\"", camName.c_str());
 
 			gr::Camera::Config camConfig;
 			camConfig.m_projectionType = camera->type == cgltf_camera_type_orthographic ?
-				Camera::Config::ProjectionType::Orthographic : Camera::Config::ProjectionType::Perspective;
-			if (camConfig.m_projectionType == Camera::Config::ProjectionType::Orthographic)
+				gr::Camera::Config::ProjectionType::Orthographic : gr::Camera::Config::ProjectionType::Perspective;
+			if (camConfig.m_projectionType == gr::Camera::Config::ProjectionType::Orthographic)
 			{
 				camConfig.m_yFOV = 0;
 				camConfig.m_near = camera->data.orthographic.znear;
@@ -823,33 +455,33 @@ namespace
 	}
 
 
-	void LoadAddLight(SceneData& scene, cgltf_node* current, shared_ptr<SceneNode> parent)
+	void LoadAddLight(fr::SceneData& scene, cgltf_node* current, std::shared_ptr<fr::SceneNode> parent)
 	{
-		string lightName;
+		std::string lightName;
 		if (current->light->name)
 		{
-			lightName = string(current->light->name);
+			lightName = std::string(current->light->name);
 		}
 		else
 		{
 			static std::atomic<uint32_t> unnamedLightIndex = 0;
 			const uint32_t thisLightIndex = unnamedLightIndex.fetch_add(1);
-			lightName = "UnnamedLight_" + to_string(thisLightIndex);
+			lightName = "UnnamedLight_" + std::to_string(thisLightIndex);
 		}
 
 		LOG("Found light \"%s\"", lightName.c_str());
 
-		Light::LightType lightType = Light::LightType::Light_Count;
+		gr::Light::LightType lightType = gr::Light::LightType::Light_Count;
 		switch (current->light->type)
 		{
 		case cgltf_light_type::cgltf_light_type_directional:
 		{
-			lightType = Light::LightType::Directional;
+			lightType = gr::Light::LightType::Directional;
 		}
 		break;
 		case cgltf_light_type::cgltf_light_type_point:
 		{
-			lightType = Light::LightType::Point;
+			lightType = gr::Light::LightType::Point;
 		}
 		break;
 		case cgltf_light_type::cgltf_light_type_spot:
@@ -879,7 +511,7 @@ namespace
 		}
 		
 		// Note: Lights self-add themselves to the scene, no need to manually call scene.AddLight
-		shared_ptr<Light> newLight;
+		std::shared_ptr<gr::Light> newLight;
 		switch (lightType)
 		{
 		case gr::Light::LightType::AmbientIBL:
@@ -903,13 +535,13 @@ namespace
 	}
 
 
-	void LoadIBL(string const& sceneRootPath, SceneData& scene)
+	void LoadIBL(std::string const& sceneRootPath, fr::SceneData& scene)
 	{
 		// Ambient lights are not supported by GLTF 2.0; Instead, we handle it manually.
 		// First, we check for a <sceneRoot>\IBL\ibl.hdr file for per-scene IBLs/skyboxes.
 		// If that fails, we fall back to a default HDRI
 		// Later, we'll use the IBL texture to generate the IEM and PMREM textures in a GraphicsSystem
-		shared_ptr<Texture> iblTexture = nullptr;
+		std::shared_ptr<re::Texture> iblTexture = nullptr;
 
 		auto TryLoadIBL = [&scene](std::string const& IBLPath, std::shared_ptr<re::Texture>& iblTexture) {
 			if (scene.TextureExists(IBLPath))
@@ -918,19 +550,23 @@ namespace
 			}
 			else
 			{
-				iblTexture = LoadTextureFromFilePath({ IBLPath }, false, k_errorTextureColor, re::Texture::ColorSpace::Linear);
+				iblTexture = util::LoadTextureFromFilePath(
+					{ IBLPath }, 
+					false, 
+					re::Texture::k_errorTextureColor,
+					re::Texture::ColorSpace::Linear);
 			}
 		};
 
-		string IBLPath;
-		if (Config::Get()->TryGetValue<string>(en::ConfigKeys::k_sceneIBLPathKey, IBLPath))
+		std::string IBLPath;
+		if (en::Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_sceneIBLPathKey, IBLPath))
 		{
 			TryLoadIBL(IBLPath, iblTexture);
 		}		
 		
 		if (!iblTexture)
 		{
-			IBLPath = Config::Get()->GetValue<string>("defaultIBLPath");
+			IBLPath = en::Config::Get()->GetValue<std::string>("defaultIBLPath");
 			TryLoadIBL(IBLPath, iblTexture);
 		}
 		SEAssert("Missing IBL texture. Per scene IBLs must be placed at <sceneRoot>\\IBL\\ibl.hdr; A default fallback "
@@ -942,52 +578,52 @@ namespace
 
 
 	void LoadMeshGeometry(
-		string const& sceneRootPath, SceneData& scene, cgltf_node* current, shared_ptr<SceneNode> parent)
+		std::string const& sceneRootPath, fr::SceneData& scene, cgltf_node* current, std::shared_ptr<fr::SceneNode> parent)
 	{
-		string meshName;
+		std::string meshName;
 		if (current->mesh->name)
 		{
-			meshName = string(current->mesh->name);
+			meshName = std::string(current->mesh->name);
 		}
 		else
 		{
 			static std::atomic<uint32_t> unnamedMeshIdx = 0;
 			const uint32_t thisMeshIdx = unnamedMeshIdx.fetch_add(1);
-			meshName = "UnnamedMesh_" + to_string(thisMeshIdx);
+			meshName = "UnnamedMesh_" + std::to_string(thisMeshIdx);
 		}
 
-		std::shared_ptr<gr::Mesh> newMesh = make_shared<gr::Mesh>(meshName, parent->GetTransform());
+		std::shared_ptr<gr::Mesh> newMesh = std::make_shared<gr::Mesh>(meshName, parent->GetTransform());
 
 		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
 		for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
 		{
 			// Populate the mesh params:
-			MeshPrimitive::MeshPrimitiveParams meshPrimitiveParams;
+			gr::MeshPrimitive::MeshPrimitiveParams meshPrimitiveParams;
 			switch (current->mesh->primitives[primitive].type)
 			{
 			case cgltf_primitive_type::cgltf_primitive_type_points:
 			{
-				meshPrimitiveParams.m_topologyMode = MeshPrimitive::TopologyMode::PointList;
+				meshPrimitiveParams.m_topologyMode = gr::MeshPrimitive::TopologyMode::PointList;
 			}
 			break;
 			case cgltf_primitive_type::cgltf_primitive_type_lines:
 			{
-				meshPrimitiveParams.m_topologyMode = MeshPrimitive::TopologyMode::LineList;
+				meshPrimitiveParams.m_topologyMode = gr::MeshPrimitive::TopologyMode::LineList;
 			}
 			break;
 			case cgltf_primitive_type::cgltf_primitive_type_line_strip:
 			{
-				meshPrimitiveParams.m_topologyMode = MeshPrimitive::TopologyMode::LineStrip;
+				meshPrimitiveParams.m_topologyMode = gr::MeshPrimitive::TopologyMode::LineStrip;
 			}
 			break;
 			case cgltf_primitive_type::cgltf_primitive_type_triangles:
 			{
-				meshPrimitiveParams.m_topologyMode = MeshPrimitive::TopologyMode::TriangleList;
+				meshPrimitiveParams.m_topologyMode = gr::MeshPrimitive::TopologyMode::TriangleList;
 			}
 			break;
 			case cgltf_primitive_type::cgltf_primitive_type_triangle_strip:
 			{
-				meshPrimitiveParams.m_topologyMode = MeshPrimitive::TopologyMode::TriangleStrip;
+				meshPrimitiveParams.m_topologyMode = gr::MeshPrimitive::TopologyMode::TriangleStrip;
 			}
 			break;
 			case cgltf_primitive_type::cgltf_primitive_type_triangle_fan:
@@ -995,11 +631,11 @@ namespace
 			case cgltf_primitive_type::cgltf_primitive_type_max_enum:
 			default:
 				SEAssertF("Unsupported primitive type/draw mode. Saber Engine does not support line loops or triangle fans");
-				meshPrimitiveParams.m_topologyMode = MeshPrimitive::TopologyMode::TriangleList;
+				meshPrimitiveParams.m_topologyMode = gr::MeshPrimitive::TopologyMode::TriangleList;
 			}
 
 			SEAssert("Mesh is missing indices", current->mesh->primitives[primitive].indices != nullptr);
-			vector<uint32_t> indices;
+			std::vector<uint32_t> indices;
 			indices.resize(current->mesh->primitives[primitive].indices->count, 0);
 			for (size_t index = 0; index < current->mesh->primitives[primitive].indices->count; index++)
 			{
@@ -1009,14 +645,14 @@ namespace
 			}
 
 			// Unpack each of the primitive's vertex attrbutes:
-			vector<float> positions;
-			vec3 positionsMinXYZ(Bounds::k_invalidMinXYZ);
-			vec3 positionsMaxXYZ(Bounds::k_invalidMaxXYZ);
-			vector<float> normals;
-			vector<float> tangents;
-			vector<float> uv0;
+			std::vector<float> positions;
+			glm::vec3 positionsMinXYZ(gr::Bounds::k_invalidMinXYZ);
+			glm::vec3 positionsMaxXYZ(gr::Bounds::k_invalidMaxXYZ);
+			std::vector<float> normals;
+			std::vector<float> tangents;
+			std::vector<float> uv0;
 			bool foundUV0 = false; // TODO: Support minimum of 2 UV sets. For now, just use the 1st
-			vector<float> colors;
+			std::vector<float> colors;
 			std::vector<float> jointsAsFloats; // We unpack the joints as floats...
 			std::vector<uint8_t> jointsAsUints; // ...but eventually convert and store them as uint8_t
 			std::vector<float> weights;
@@ -1176,21 +812,21 @@ namespace
 				meshName,
 				&meshPrimitiveParams,
 				&indices,
-				reinterpret_cast<vector<vec3>*>(&positions),
-				reinterpret_cast<vector<vec3>*>(&normals),
-				reinterpret_cast<vector<vec4>*>(&tangents),
-				reinterpret_cast<vector<vec2>*>(&uv0),
-				reinterpret_cast<vector<vec4>*>(&colors),
-				reinterpret_cast<vector<glm::tvec4<uint8_t>>*>(&jointsAsUints),
-				reinterpret_cast<vector<vec4>*>(&weights)
+				reinterpret_cast<std::vector<glm::vec3>*>(&positions),
+				reinterpret_cast<std::vector<glm::vec3>*>(&normals),
+				reinterpret_cast<std::vector<glm::vec4>*>(&tangents),
+				reinterpret_cast<std::vector<glm::vec2>*>(&uv0),
+				reinterpret_cast<std::vector<glm::vec4>*>(&colors),
+				reinterpret_cast<std::vector<glm::tvec4<uint8_t>>*>(&jointsAsUints),
+				reinterpret_cast<std::vector<glm::vec4>*>(&weights)
 			};
 			util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 			// Assign a material:
-			shared_ptr<gr::Material> material;
+			std::shared_ptr<gr::Material> material;
 			if (current->mesh->primitives[primitive].material != nullptr)
 			{
-				const string generatedMatName = GenerateMaterialName(*current->mesh->primitives[primitive].material);
+				const std::string generatedMatName = GenerateMaterialName(*current->mesh->primitives[primitive].material);
 				material = scene.GetMaterial(generatedMatName);
 			}
 			else
@@ -1201,7 +837,7 @@ namespace
 			}
 
 			// Attach the MeshPrimitive to the Mesh:
-			newMesh->AddMeshPrimitive(MeshPrimitive::Create(
+			newMesh->AddMeshPrimitive(gr::MeshPrimitive::Create(
 				meshName,
 				&indices,
 				positions,
@@ -1223,11 +859,11 @@ namespace
 
 
 	void LoadObjectHierarchyRecursiveHelper(
-		string const& sceneRootPath, 
-		SceneData& scene, 
+		std::string const& sceneRootPath,
+		fr::SceneData& scene,
 		cgltf_data* data, 
 		cgltf_node* current, 
-		shared_ptr<SceneNode> parent, 
+		std::shared_ptr<fr::SceneNode> parent,
 		std::vector<std::future<void>>& loadTasks)
 	{
 		if (current == nullptr)
@@ -1246,7 +882,8 @@ namespace
 			{
 				const std::string nodeName = current->name ? current->name : "Unnamed child node";
 
-				shared_ptr<SceneNode> childNode = make_shared<SceneNode>(nodeName.c_str(), parent->GetTransform());
+				std::shared_ptr<fr::SceneNode> childNode = 
+					std::make_shared<fr::SceneNode>(nodeName.c_str(), parent->GetTransform());
 
 				LoadObjectHierarchyRecursiveHelper(
 					sceneRootPath, scene, data, current->children[i], childNode, loadTasks);
@@ -1254,7 +891,7 @@ namespace
 		}
 
 		// Set the SceneNode transform:
-		loadTasks.emplace_back(CoreEngine::GetThreadPool()->EnqueueJob([current, parent]()
+		loadTasks.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([current, parent]()
 		{
 			SetTransformValues(current, parent->GetTransform());
 		}));
@@ -1262,21 +899,21 @@ namespace
 		// Process node attachments:
 		if (current->mesh)
 		{
-			loadTasks.emplace_back(CoreEngine::GetThreadPool()->EnqueueJob([&sceneRootPath, &scene, current, parent]()
+			loadTasks.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([&sceneRootPath, &scene, current, parent]()
 			{
 				LoadMeshGeometry(sceneRootPath, scene, current, parent);
 			}));
 		}
 		if (current->light)
 		{
-			loadTasks.emplace_back(CoreEngine::GetThreadPool()->EnqueueJob([&scene, current, parent]()
+			loadTasks.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([&scene, current, parent]()
 			{
 				LoadAddLight(scene, current, parent);
 			}));
 		}
 		if (current->camera)
 		{
-			loadTasks.emplace_back(CoreEngine::GetThreadPool()->EnqueueJob([&scene, current, parent]()
+			loadTasks.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([&scene, current, parent]()
 			{
 				LoadAddCamera(scene, parent, current);
 			}));
@@ -1305,8 +942,8 @@ namespace
 
 			LOG("Loading root node %zu: \"%s\"", node, nodeName.c_str());
 
-			shared_ptr<SceneNode> currentNode = 
-				std::make_shared<SceneNode>(nodeName.c_str(), nullptr); // Root node has no parent
+			std::shared_ptr<fr::SceneNode> currentNode =
+				std::make_shared<fr::SceneNode>(nodeName.c_str(), nullptr); // Root node has no parent
 
 			LoadObjectHierarchyRecursiveHelper(
 				sceneRootPath, scene, data, data->scenes->nodes[node], currentNode, loadTasks);
@@ -1328,9 +965,9 @@ namespace
 
 namespace fr
 {
-	bool SceneData::Load(string const& sceneFilePath)
+	bool SceneData::Load(std::string const& sceneFilePath)
 	{
-		stbi_set_flip_vertically_on_load(false); // Set this once. Note: It is NOT thread safe, and must be consistent
+		//stbi_set_flip_vertically_on_load(false); // Set this once. Note: It is NOT thread safe, and must be consistent
 
 		constexpr size_t k_minReserveAmt = 10;
 		size_t nodesCount = k_minReserveAmt;
@@ -1361,14 +998,14 @@ namespace fr
 		}
 
 		// Pre-reserve our vectors, now that we know what to expect:
-		m_meshes.reserve(max(meshesCount, k_minReserveAmt));
-		m_textures.reserve(max(texturesCount, k_minReserveAmt));
-		m_materials.reserve(max(materialsCount, k_minReserveAmt));
-		m_pointLights.reserve(max(lightsCount, k_minReserveAmt)); // Probably an over-estimation
-		m_cameras.reserve(max(camerasCount, k_minReserveAmt));
+		m_meshes.reserve(std::max(meshesCount, k_minReserveAmt));
+		m_textures.reserve(std::max(texturesCount, k_minReserveAmt));
+		m_materials.reserve(std::max(materialsCount, k_minReserveAmt));
+		m_pointLights.reserve(std::max(lightsCount, k_minReserveAmt)); // Probably an over-estimation
+		m_cameras.reserve(std::max(camerasCount, k_minReserveAmt));
 
-		string sceneRootPath;
-		Config::Get()->TryGetValue<string>("sceneRootPath", sceneRootPath);
+		std::string sceneRootPath;
+		en::Config::Get()->TryGetValue<std::string>("sceneRootPath", sceneRootPath);
 
 		std::vector<std::future<void>> earlyLoadTasks;
 
@@ -1456,7 +1093,7 @@ namespace fr
 	}
 
 
-	SceneData::SceneData(string const& sceneName)
+	SceneData::SceneData(std::string const& sceneName)
 		: NamedObject(sceneName)
 		, m_ambientLight(nullptr)
 		, m_keyLight(nullptr)
@@ -1527,7 +1164,7 @@ namespace fr
 		}
 		{
 			std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
-			m_sceneWorldSpaceBounds = Bounds();
+			m_sceneWorldSpaceBounds = gr::Bounds();
 		}
 
 		m_finishedLoading = false; // Flag that Destroy has been called
@@ -1563,28 +1200,28 @@ namespace fr
 	}
 
 
-	void SceneData::AddLight(std::shared_ptr<Light> newLight)
+	void SceneData::AddLight(std::shared_ptr<gr::Light> newLight)
 	{
 		// TODO: Seems arbitrary that we cannot have multiple directional lights... Why even bother 
 		// enforcing this? Just treat all lights the same
 
 		switch (newLight->Type())
 		{
-		case Light::AmbientIBL:
+		case gr::Light::AmbientIBL:
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_ambientLightReadWriteMutex);
 			SEAssert("Ambient light already exists, cannot have 2 ambient lights", m_ambientLight == nullptr);
 			m_ambientLight = newLight;
 		}
 		break;
-		case Light::Directional:
+		case gr::Light::Directional:
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_keyLightReadWriteMutex);
 			SEAssert("Direction light already exists, cannot have 2 directional lights", m_keyLight == nullptr);
 			m_keyLight = newLight;
 		}
 		break;
-		case Light::Point:
+		case gr::Light::Point:
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_pointLightsReadWriteMutex);
 			m_pointLights.emplace_back(newLight);
@@ -1620,9 +1257,9 @@ namespace fr
 
 	std::shared_ptr<re::Texture> SceneData::GetIBLTexture() const
 	{
-		shared_ptr<Texture> iblTexture = nullptr;
-		string sceneIBLPath;
-		bool result = Config::Get()->TryGetValue<string>(en::ConfigKeys::k_sceneIBLPathKey, sceneIBLPath);
+		std::shared_ptr<re::Texture> iblTexture = nullptr;
+		std::string sceneIBLPath;
+		bool result = en::Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_sceneIBLPathKey, sceneIBLPath);
 		if (result)
 		{
 			iblTexture = TryGetTexture(sceneIBLPath);
@@ -1630,7 +1267,7 @@ namespace fr
 		
 		if (!iblTexture)
 		{
-			const string defaultIBLPath = Config::Get()->GetValue<string>("defaultIBLPath");
+			const std::string defaultIBLPath = en::Config::Get()->GetValue<std::string>("defaultIBLPath");
 			iblTexture = GetTexture(defaultIBLPath); // Will exist
 		}
 
@@ -1790,7 +1427,7 @@ namespace fr
 			std::unique_lock<std::mutex> lock(m_sceneBoundsMutex);
 
 			m_sceneWorldSpaceBounds = gr::Bounds();
-			for (shared_ptr<gr::Mesh> mesh : m_meshes)
+			for (std::shared_ptr<gr::Mesh> mesh : m_meshes)
 			{
 				m_sceneWorldSpaceBounds.ExpandBounds(
 					mesh->GetBounds().GetTransformedAABBBounds(mesh->GetTransform()->GetGlobalMatrix()));
@@ -1799,7 +1436,7 @@ namespace fr
 	}
 
 
-	bool SceneData::AddUniqueTexture(shared_ptr<re::Texture>& newTexture)
+	bool SceneData::AddUniqueTexture(std::shared_ptr<re::Texture>& newTexture)
 	{
 		SEAssert("Adding data is not thread safe once loading is complete", !m_finishedLoading);
 		SEAssert("Cannot add null texture to textures table", newTexture != nullptr);
@@ -1807,7 +1444,7 @@ namespace fr
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_texturesReadWriteMutex);
 
-			unordered_map<size_t, shared_ptr<re::Texture>>::const_iterator texturePosition =
+			std::unordered_map<size_t, std::shared_ptr<re::Texture>>::const_iterator texturePosition =
 				m_textures.find(newTexture->GetNameID());
 
 			bool foundExisting = false;
@@ -1865,7 +1502,7 @@ namespace fr
 	}
 
 
-	void SceneData::AddUniqueMaterial(shared_ptr<Material>& newMaterial)
+	void SceneData::AddUniqueMaterial(std::shared_ptr<gr::Material>& newMaterial)
 	{
 		SEAssert("Adding data is not thread safe once loading is complete", !m_finishedLoading);
 		SEAssert("Cannot add null material to material table", newMaterial != nullptr);
@@ -1874,7 +1511,7 @@ namespace fr
 			std::unique_lock<std::shared_mutex> writeLock(m_materialsReadWriteMutex);
 
 			// Note: Materials are uniquely identified by name, regardless of the MaterialDefinition they might use
-			unordered_map<size_t, shared_ptr<gr::Material>>::const_iterator matPosition =
+			std::unordered_map<size_t, std::shared_ptr<gr::Material>>::const_iterator matPosition =
 				m_materials.find(newMaterial->GetNameID());
 			if (matPosition != m_materials.end()) // Found existing
 			{
@@ -1894,7 +1531,7 @@ namespace fr
 		const size_t nameID = NamedObject::ComputeIDFromName(materialName);
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
-			unordered_map<size_t, shared_ptr<gr::Material>>::const_iterator matPos = m_materials.find(nameID);
+			std::unordered_map<size_t, std::shared_ptr<gr::Material>>::const_iterator matPos = m_materials.find(nameID);
 
 			SEAssert("Could not find material", matPos != m_materials.end());
 
@@ -1938,7 +1575,7 @@ namespace fr
 			const uint64_t shaderIdentifier = newShader->GetShaderIdentifier();
 
 			// Note: Materials are uniquely identified by name, regardless of the MaterialDefinition they might use
-			unordered_map<size_t, shared_ptr<re::Shader>>::const_iterator shaderPosition =
+			std::unordered_map<size_t, std::shared_ptr<re::Shader>>::const_iterator shaderPosition =
 				m_shaders.find(shaderIdentifier);
 			if (shaderPosition != m_shaders.end()) // Found existing
 			{
@@ -1960,7 +1597,7 @@ namespace fr
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_shadersReadWriteMutex);
-			unordered_map<size_t, shared_ptr<re::Shader>>::const_iterator shaderPos = m_shaders.find(shaderIdentifier);
+			std::unordered_map<size_t, std::shared_ptr<re::Shader>>::const_iterator shaderPos = m_shaders.find(shaderIdentifier);
 
 			SEAssert("Could not find shader", shaderPos != m_shaders.end());
 
