@@ -21,6 +21,11 @@ namespace fr
 		, public virtual en::EventListener
 	{
 	public:
+		/*static entt::entity CreatePlayerEntity(gr::Camera);*/
+
+
+
+	public:
 		explicit PlayerObject(std::shared_ptr<gr::Camera> playerCam);
 		PlayerObject(PlayerObject&&) = default;
 		PlayerObject& operator=(PlayerObject&&) = default;

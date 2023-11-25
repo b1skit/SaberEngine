@@ -11,6 +11,7 @@ namespace en
 	public:
 		virtual void HandleEvents() = 0;
 
+	public:
 		inline void RegisterEvent(en::EventManager::EventInfo const& eventInfo);
 		inline bool HasEvents() const;
 		inline en::EventManager::EventInfo GetEvent();

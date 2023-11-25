@@ -15,10 +15,9 @@ namespace en
 		
 		virtual ~EngineComponent() = 0;
 
-		// Updateable interface:
+		// EngineComponent interface:
 		virtual void Update(uint64_t frameNum, double stepTimeMs) = 0;
 
-		// EngineComponent interface:
 		virtual void Startup() = 0; // We can't control construction order, so this is called to start the object
 		virtual void Shutdown() = 0;
 	};

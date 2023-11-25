@@ -514,9 +514,6 @@
     <ClInclude Include="RenderManager_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="PlayerObject.h">
-      <Filter>Header Files\fr</Filter>
-    </ClInclude>
     <ClInclude Include="EngineComponent.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
@@ -848,6 +845,12 @@
       <Filter>Header Files\fr\Entities</Filter>
     </ClInclude>
     <ClInclude Include="NameComponent.h">
+      <Filter>Header Files\fr\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerObject.h">
+      <Filter>Header Files\fr\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="EventListenerComponent.h">
       <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
   </ItemGroup>
