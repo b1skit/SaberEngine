@@ -1,21 +1,20 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Assert.h"
 #include "Camera.h"
 #include "CoreEngine.h"
 #include "GameplayManager.h"
 #include "PlayerObject.h"
 #include "SceneManager.h"
-#include "Assert.h"
+
+using en::Updateable;
+using std::unique_ptr;
+using std::shared_ptr;
+using std::make_unique;
+using std::make_shared;
 
 
 namespace fr
 {
-	using en::Updateable;
-	using std::unique_ptr;
-	using std::shared_ptr;
-	using std::make_unique;
-	using std::make_shared;
-	
-
 	GameplayManager* GameplayManager::Get()
 	{
 		static unique_ptr<fr::GameplayManager> instance = make_unique<fr::GameplayManager>();
@@ -59,6 +58,8 @@ namespace fr
 
 			m_transformables.clear();
 		}
+
+		m_registry.clear();
 	}
 
 
@@ -66,6 +67,15 @@ namespace fr
 	{
 		UpdateUpdateables(stepTimeMs);
 		UpdateTransformables();
+	}
+
+
+	entt::entity GameplayManager::CreateEntity()
+	{
+		{
+			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
+			return m_registry.create();
+		}
 	}
 
 

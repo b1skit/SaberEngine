@@ -7,7 +7,7 @@ namespace fr
 {
 	Transformable::Transformable(std::string const& name, gr::Transform* parent)
 		: en::NamedObject(name + "_Transformable")
-		, m_transform(name, parent)
+		, m_transform(parent)
 	{
 		Register();
 	}

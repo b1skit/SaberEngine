@@ -57,9 +57,6 @@ namespace fr
 
 		std::shared_ptr<re::Texture> GetIBLTexture() const;
 
-		// Transformation hierarchy:
-		void AddSceneNode(std::shared_ptr<fr::SceneNode> transformable);
-
 		// Meshes:
 		void AddMesh(std::shared_ptr<gr::Mesh> mesh);
 		std::vector <std::shared_ptr<gr::Mesh>> const& GetMeshes() const;
@@ -104,9 +101,6 @@ namespace fr
 
 
 	private:
-		std::vector<std::shared_ptr<fr::SceneNode>> m_sceneNodes; // Transformation hierarchy
-		std::mutex m_sceneNodesMutex;
-
 		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;
 		std::unordered_map<DataHash, std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
 		mutable std::mutex m_meshesAndMeshPrimitivesMutex;

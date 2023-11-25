@@ -3,6 +3,7 @@
 #include <entt/entity/registry.hpp>
 
 #include "EngineComponent.h"
+#include "NamedObject.h"
 #include "Updateable.h"
 
 
@@ -25,6 +26,23 @@ namespace fr
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
 
+		// EnTT wrappers:
+		entt::entity CreateEntity();
+
+		template<typename T>
+		entt::entity GetEntityFromComponent(T const&) const;
+
+		template<typename T, typename... Args>
+		T* EmplaceComponent(entt::entity, Args &&...args);
+
+
+	private:
+		entt::basic_registry<entt::entity> m_registry; // uint32_t entities
+		std::shared_mutex m_registeryMutex;
+
+
+
+		// DEPRECATED:
 	protected:
 		friend class en::Updateable;
 		void AddUpdateable(en::Updateable* updateable);
@@ -51,4 +69,32 @@ namespace fr
 
 		std::shared_ptr<fr::PlayerObject> m_playerObject;
 	};
+
+
+	template<typename T>
+	entt::entity GameplayManager::GetEntityFromComponent(T const& component) const
+	{
+		entt::entity entity = entt::null;
+		{
+			std::shared_lock<std::shared_mutex> lock(m_registeryMutex);
+
+			entity = entt::to_entity(m_registry, component);
+		}
+		SEAssert("Entity not found", entity != entt::null);
+
+		return entity;
+	}
+
+
+	template<typename T, typename... Args>
+	T* GameplayManager::EmplaceComponent(entt::entity entity, Args &&...args)
+	{
+		{
+			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
+
+			T& result = m_registry.emplace<T>(entity, std::forward<Args>(args)...);
+
+			return &result;
+		}
+	}
 }

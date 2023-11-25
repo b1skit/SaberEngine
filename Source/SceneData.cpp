@@ -3,11 +3,12 @@
 #define CGLTF_IMPLEMENTATION
 #include "cgltf.h"
 
+#include "Assert.h"
 #include "AssetLoadUtils.h"
 #include "Camera.h"
 #include "Config.h"
 #include "CoreEngine.h"
-#include "Assert.h"
+#include "GameplayManager.h"
 #include "Light.h"
 #include "Material.h"
 #include "Material_GLTF.h"
@@ -356,7 +357,7 @@ namespace
 
 
 	// Creates a default camera if camera == nullptr, and no cameras exist in scene
-	void LoadAddCamera(fr::SceneData& scene, std::shared_ptr<fr::SceneNode> parent, cgltf_node* current)
+	void LoadAddCamera(fr::SceneData& scene, gr::Transform* parent, cgltf_node* current)
 	{
 		std::shared_ptr<gr::Camera> newCam;
 
@@ -408,15 +409,15 @@ namespace
 			}
 
 			// Create the camera and set the transform values on the parent object:
-			newCam = gr::Camera::Create(camName, camConfig, parent->GetTransform()); // Internally calls SceneData::AddCamera
-			SetTransformValues(current, parent->GetTransform());
+			newCam = gr::Camera::Create(camName, camConfig, parent); // Internally calls SceneData::AddCamera
+			SetTransformValues(current, parent);
 		}
 
 		newCam->SetAsMainCamera();
 	}
 
 
-	void LoadAddLight(fr::SceneData& scene, cgltf_node* current, std::shared_ptr<fr::SceneNode> parent)
+	void LoadAddLight(fr::SceneData& scene, cgltf_node* current, gr::Transform* parent)
 	{
 		std::string lightName;
 		if (current->light->name)
@@ -482,12 +483,12 @@ namespace
 		break;
 		case gr::Light::LightType::Directional:
 		{
-			gr::Light::CreateDirectionalLight(lightName, parent->GetTransform(), colorIntensity, attachShadow);
+			gr::Light::CreateDirectionalLight(lightName, parent, colorIntensity, attachShadow);
 		}
 		break;
 		case gr::Light::LightType::Point:
 		{
-			gr::Light::CreatePointLight(lightName, parent->GetTransform(), colorIntensity, attachShadow);
+			gr::Light::CreatePointLight(lightName, parent, colorIntensity, attachShadow);
 		}
 		break;
 		default:
@@ -539,7 +540,7 @@ namespace
 
 
 	void LoadMeshGeometry(
-		std::string const& sceneRootPath, fr::SceneData& scene, cgltf_node* current, std::shared_ptr<fr::SceneNode> parent)
+		std::string const& sceneRootPath, fr::SceneData& scene, cgltf_node* current, gr::Transform* parent)
 	{
 		std::string meshName;
 		if (current->mesh->name)
@@ -553,7 +554,7 @@ namespace
 			meshName = "UnnamedMesh_" + std::to_string(thisMeshIdx);
 		}
 
-		std::shared_ptr<gr::Mesh> newMesh = std::make_shared<gr::Mesh>(meshName, parent->GetTransform());
+		std::shared_ptr<gr::Mesh> newMesh = std::make_shared<gr::Mesh>(meshName, parent);
 
 		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
 		for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
@@ -825,7 +826,7 @@ namespace
 		fr::SceneData& scene,
 		cgltf_data* data, 
 		cgltf_node* current, 
-		std::shared_ptr<fr::SceneNode> parent,
+		gr::Transform* parent,
 		std::vector<std::future<void>>& loadTasks)
 	{
 		if (current == nullptr)
@@ -844,8 +845,7 @@ namespace
 			{
 				const std::string nodeName = current->name ? current->name : "Unnamed child node";
 
-				std::shared_ptr<fr::SceneNode> childNode = 
-					std::make_shared<fr::SceneNode>(nodeName.c_str(), parent->GetTransform());
+				gr::Transform* childNode = fr::SceneNode::CreateSceneNodeEntity(nodeName.c_str(), parent);
 
 				LoadObjectHierarchyRecursiveHelper(
 					sceneRootPath, scene, data, current->children[i], childNode, loadTasks);
@@ -855,7 +855,7 @@ namespace
 		// Set the SceneNode transform:
 		loadTasks.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([current, parent]()
 		{
-			SetTransformValues(current, parent->GetTransform());
+			SetTransformValues(current, parent);
 		}));
 		
 		// Process node attachments:
@@ -880,8 +880,6 @@ namespace
 				LoadAddCamera(scene, parent, current);
 			}));
 		}
-
-		scene.AddSceneNode(parent);
 	}
 
 
@@ -904,11 +902,11 @@ namespace
 
 			LOG("Loading root node %zu: \"%s\"", node, nodeName.c_str());
 
-			std::shared_ptr<fr::SceneNode> currentNode =
-				std::make_shared<fr::SceneNode>(nodeName.c_str(), nullptr); // Root node has no parent
+			gr::Transform* rootSceneNodeTransform = 
+				fr::SceneNode::CreateSceneNodeEntity(std::format("Root {}", node).c_str(), nullptr); // Root has no parent
 
 			LoadObjectHierarchyRecursiveHelper(
-				sceneRootPath, scene, data, data->scenes->nodes[node], currentNode, loadTasks);
+				sceneRootPath, scene, data, data->scenes->nodes[node], rootSceneNodeTransform, loadTasks);
 		}
 		
 		// Wait for all of the tasks to be done:
@@ -1087,10 +1085,6 @@ namespace fr
 		}
 
 		// 
-		{
-			std::lock_guard<std::mutex> lock(m_sceneNodesMutex);
-			m_sceneNodes.clear();
-		}
 		{
 			std::lock_guard<std::mutex> lock(m_meshesAndMeshPrimitivesMutex);
 			m_meshPrimitives.clear();
@@ -1356,15 +1350,6 @@ namespace fr
 		{
 			std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
 			return m_sceneWorldSpaceBounds;
-		}
-	}
-
-
-	void SceneData::AddSceneNode(std::shared_ptr<fr::SceneNode> sceneNode)
-	{
-		{
-			std::lock_guard<std::mutex> lock(m_sceneNodesMutex);
-			m_sceneNodes.emplace_back(sceneNode);
 		}
 	}
 

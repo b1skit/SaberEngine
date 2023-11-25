@@ -36,9 +36,8 @@ namespace gr
 	constexpr glm::vec3 Transform::WorldAxisZ = vec3(0.0f,	0.0f,	1.0f); // Note: SaberEngine uses a RHCS
 
 	
-	Transform::Transform(std::string const& name, Transform* parent)
-		: NamedObject(name + "_Transform")
-		, m_parent(nullptr)
+	Transform::Transform(Transform* parent)
+		: m_parent(nullptr)
 		
 		, m_localPosition(0.0f, 0.0f, 0.0f)
 		, m_localRotationQuat(glm::vec3(0, 0, 0))
@@ -491,9 +490,9 @@ namespace gr
 			ImGui::BeginGroup();
 			{
 				// Unique imgui IDs for each slider
-				const std::string XimguiID = std::format("##X{}{}", label, GetUniqueID());
-				const std::string YimguiID = std::format("##Y{}{}", label, GetUniqueID());
-				const std::string ZimguiID = std::format("##Z{}{}", label, GetUniqueID());
+				const std::string XimguiID = std::format("##X{}{}", label, util::PtrToID(this));
+				const std::string YimguiID = std::format("##Y{}{}", label, util::PtrToID(this));
+				const std::string ZimguiID = std::format("##Z{}{}", label, util::PtrToID(this));
 
 				ImGui::Text(std::format("{} XYZ:", label).c_str()); // Row label
 
@@ -517,41 +516,41 @@ namespace gr
 			m_parent->ShowImGuiWindow(true, depth + 1);
 		}
 		
-		if (markAsParent && !m_parent && !ImGui::CollapsingHeader(std::format("Root parent: {} (node {})##{}", GetName(), depth, GetUniqueID()).c_str()))
+		if (markAsParent && !m_parent && !ImGui::CollapsingHeader(std::format("Root parent: (node {})##{}", depth, util::PtrToID(this)).c_str()))
 		{
 			return;
 		}
-		else if (markAsParent && m_parent && !ImGui::CollapsingHeader(std::format("Parent: {} (node {})##{}", GetName(), depth, GetUniqueID()).c_str()))
+		else if (markAsParent && m_parent && !ImGui::CollapsingHeader(std::format("Parent: (node {})##{}", depth, util::PtrToID(this)).c_str()))
 		{
 			return;
 		}
 		else if (!markAsParent && 
 			m_parent && 
-			ImGui::CollapsingHeader(std::format("Parent hierarchy##{}", depth, GetUniqueID()).c_str()))
+			ImGui::CollapsingHeader(std::format("Parent hierarchy##{}", depth, util::PtrToID(this)).c_str()))
 		{
 			m_parent->ShowImGuiWindow(true, depth + 1);
 		}
 
-		if(markAsParent || ImGui::CollapsingHeader(std::format("{} (node {})##{}", GetName(), depth, GetUniqueID()).c_str()))
+		if(markAsParent || ImGui::CollapsingHeader(std::format("(node {})##{}", depth, util::PtrToID(this)).c_str()))
 		{
 			ImGui::Indent();
 
 			// View Transform data:
-			if (ImGui::CollapsingHeader(std::format("Show data##{}", GetUniqueID()).c_str()))
+			if (ImGui::CollapsingHeader(std::format("Show data##{}", util::PtrToID(this)).c_str()))
 			{
 				ImGui::Indent();
 				ImGui::Text(std::format("Local Position: {}", glm::to_string(m_localPosition)).c_str());
 				ImGui::Text(std::format("Local Quaternion: {}", glm::to_string(m_localRotationQuat)).c_str());
 				ImGui::Text(std::format("Local Euler XYZ Radians: {}", glm::to_string(GetLocalEulerXYZRotationRadians())).c_str());
 				ImGui::Text(std::format("Local Scale: {}", glm::to_string(m_localScale)).c_str());
-				util::DisplayMat4x4(std::format("Local Matrix:##{}", GetUniqueID()).c_str(), m_localMat);
-				util::DisplayMat4x4(std::format("Global Matrix:##{}", GetUniqueID()).c_str(), GetGlobalMatrix());
+				util::DisplayMat4x4(std::format("Local Matrix:##{}", util::PtrToID(this)).c_str(), m_localMat);
+				util::DisplayMat4x4(std::format("Global Matrix:##{}", util::PtrToID(this)).c_str(), GetGlobalMatrix());
 				ImGui::Unindent();
 			}
 			
 
 			// Modification controls:
-			if (ImGui::CollapsingHeader(std::format("Modify##{}", GetUniqueID()).c_str()))
+			if (ImGui::CollapsingHeader(std::format("Modify##{}", util::PtrToID(this)).c_str()))
 			{
 				// Dragable local translation:
 				glm::vec3 localPosition = GetLocalPosition();
@@ -563,18 +562,18 @@ namespace gr
 
 				// Clickable local translation
 				static glm::vec3 s_translationAmt = glm::vec3(0.f);
-				if (ImGui::Button(std::format("[-]##{}", GetUniqueID()).c_str()))
+				if (ImGui::Button(std::format("[-]##{}", util::PtrToID(this)).c_str()))
 				{
 					TranslateLocal(-s_translationAmt);
 				}
 				ImGui::SameLine();
-				if (ImGui::Button(std::format("[+]##{}", GetUniqueID()).c_str()))
+				if (ImGui::Button(std::format("[+]##{}", util::PtrToID(this)).c_str()))
 				{
 					TranslateLocal(s_translationAmt);
 				}
 				ImGui::SameLine();
 				ImGui::PushItemWidth(130.f);
-				ImGui::DragFloat3(std::format("##{}", GetUniqueID()).c_str(), &s_translationAmt.x, 0.001f, -FLT_MAX, FLT_MAX);
+				ImGui::DragFloat3(std::format("##{}", util::PtrToID(this)).c_str(), &s_translationAmt.x, 0.001f, -FLT_MAX, FLT_MAX);
 				ImGui::PopItemWidth();
 
 				// Local rotation:
@@ -587,7 +586,7 @@ namespace gr
 
 				// Local scale:
 				static bool s_uniformScale = false;
-				ImGui::Checkbox(std::format("Uniform scale##{}", GetUniqueID()).c_str(), &s_uniformScale);
+				ImGui::Checkbox(std::format("Uniform scale##{}", util::PtrToID(this)).c_str(), &s_uniformScale);
 
 				glm::vec3 localScale = GetLocalScale();
 				if (s_uniformScale)

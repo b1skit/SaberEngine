@@ -4,6 +4,13 @@
 
 namespace util
 {
+	// Convenience function to use an object's this pointer as a "unique" ID
+	inline uint64_t PtrToID(void* ptr)
+	{
+		return reinterpret_cast<std::size_t>(ptr);
+	}
+
+
 	inline void DisplayMat4x4(char const* label, glm::mat4 const& matrix)
 	{	
 		

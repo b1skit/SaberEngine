@@ -1,11 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "NamedObject.h"
 
 
 namespace gr
 {
-	class Transform : public virtual en::NamedObject
+	class Transform
 	{
 		/***************************************************************************************************************
 		* Notes:
@@ -19,12 +18,6 @@ namespace gr
 		*	-> SaberEngine universally uses GLTF's Camera convention of forward = Z-
 		* 
 		* GLM stores matrices in memory in column-major order.
-		* 
-		* --------------------------------------------------------------------------------------------------------------
-		* A Transform object should NOT be instantiated directly. Instead, use the SceneNode object for parental
-		* hierarchy without an attached object, or the Transformable interface for objects that have a Transform.
-		* 
-		* Beware: Transformation updates are multi-threaded.
 		***************************************************************************************************************/
 
 	public:
@@ -33,8 +26,9 @@ namespace gr
 		static const glm::vec3 WorldAxisY;	// +Y
 		static const glm::vec3 WorldAxisZ;	// +Z
 
+
 	public:
-		explicit Transform(std::string const& name, Transform* parent);
+		explicit Transform(Transform* parent);
 		
 		~Transform() = default;
 		Transform(Transform const&) = default;
@@ -96,7 +90,10 @@ namespace gr
 
 	private:
 		Transform* m_parent;
-		std::vector<Transform*> m_children;
+
+		// TODO: These are dynamically allocated, thus not stored locally in Transform components. We should maybe use
+		// components to construct a hierarchy, or a fixed-size array?
+		std::vector<Transform*> m_children; 
 
 		// Transform's local orientation, *before* any parent transforms are applied:
 		glm::vec3 m_localPosition;
