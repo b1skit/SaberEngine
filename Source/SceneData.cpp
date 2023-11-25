@@ -17,7 +17,7 @@
 #include "ParameterBlock.h"
 #include "RenderManager.h"
 #include "SceneData.h"
-#include "SceneNode.h"
+#include "SceneNodeEntity.h"
 #include "Shader.h"
 #include "ShadowMap.h"
 #include "ThreadPool.h"
@@ -556,7 +556,7 @@ namespace
 
 		std::shared_ptr<gr::Mesh> newMesh = std::make_shared<gr::Mesh>(meshName, parent);
 
-		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
+		// Add each MeshPrimitive as a child of the SceneNodeEntity's Mesh:
 		for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
 		{
 			// Populate the mesh params:
@@ -845,14 +845,14 @@ namespace
 			{
 				const std::string nodeName = current->name ? current->name : "Unnamed child node";
 
-				gr::Transform* childNode = fr::SceneNode::CreateSceneNodeEntity(nodeName.c_str(), parent);
+				gr::Transform* childNode = fr::SceneNodeEntity::CreateSceneNodeEntity(nodeName.c_str(), parent);
 
 				LoadObjectHierarchyRecursiveHelper(
 					sceneRootPath, scene, data, current->children[i], childNode, loadTasks);
 			}
 		}
 
-		// Set the SceneNode transform:
+		// Set the SceneNodeEntity transform:
 		loadTasks.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([current, parent]()
 		{
 			SetTransformValues(current, parent);
@@ -903,7 +903,7 @@ namespace
 			LOG("Loading root node %zu: \"%s\"", node, nodeName.c_str());
 
 			gr::Transform* rootSceneNodeTransform = 
-				fr::SceneNode::CreateSceneNodeEntity(std::format("Root {}", node).c_str(), nullptr); // Root has no parent
+				fr::SceneNodeEntity::CreateSceneNodeEntity(std::format("Root {}", node).c_str(), nullptr); // Root has no parent
 
 			LoadObjectHierarchyRecursiveHelper(
 				sceneRootPath, scene, data, data->scenes->nodes[node], rootSceneNodeTransform, loadTasks);

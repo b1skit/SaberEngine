@@ -24,7 +24,7 @@ namespace re
 
 namespace fr
 {
-	class SceneNode;
+	class SceneNodeEntity;
 
 
 	class SceneData final : public virtual en::NamedObject

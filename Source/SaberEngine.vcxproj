@@ -285,7 +285,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="CoreEngine.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="EventManager.cpp" />
-    <ClCompile Include="SceneNode.cpp" />
+    <ClCompile Include="SceneNodeEntity.cpp" />
     <ClCompile Include="GraphicsSystem_Bloom.cpp" />
     <ClCompile Include="GraphicsSystem_DeferredLighting.cpp" />
     <ClCompile Include="GraphicsSystem_GBuffer.cpp" />
@@ -355,6 +355,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="Dependencies\imgui\imstb_truetype.h" />
     <ClInclude Include="Device_DX12.h" />
     <ClInclude Include="DoubleBufferUnorderedMap.h" />
+    <ClInclude Include="NameComponent.h" />
     <ClInclude Include="ParameterBlockAllocator_DX12.h" />
     <ClInclude Include="MeshFactory.h" />
     <ClInclude Include="NBufferedVector.h" />
@@ -444,7 +445,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="Config.h" />
     <ClInclude Include="EventListener.h" />
     <ClInclude Include="EventManager.h" />
-    <ClInclude Include="SceneNode.h" />
+    <ClInclude Include="SceneNodeEntity.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="KeyConfiguration.h" />
     <ClInclude Include="Light.h" />

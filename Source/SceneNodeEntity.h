@@ -9,7 +9,7 @@ namespace gr
 
 namespace fr
 {
-	class SceneNode
+	class SceneNodeEntity
 	{
 	public:
 		static gr::Transform* CreateSceneNodeEntity(char const* name, gr::Transform* parent);

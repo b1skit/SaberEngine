@@ -96,6 +96,18 @@
     <Filter Include="Dependencies\Resources">
       <UniqueIdentifier>{854894b8-5bdb-4614-9788-54a45736458b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\fr\Entities">
+      <UniqueIdentifier>{d252219c-5f90-4567-a478-04ea0cf70532}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\fr\Components">
+      <UniqueIdentifier>{37f681ca-383f-4eda-89d8-4ed6df8bd535}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fr\Entities">
+      <UniqueIdentifier>{3d2704dd-39de-409e-aaf3-57aa4f15dd86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fr\Components">
+      <UniqueIdentifier>{cb14f09f-7493-4238-88bf-3674944c379b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -172,9 +184,6 @@
     </ClCompile>
     <ClCompile Include="LogManager.cpp">
       <Filter>Source Files\en</Filter>
-    </ClCompile>
-    <ClCompile Include="SceneNode.cpp">
-      <Filter>Source Files\fr</Filter>
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
       <Filter>Source Files\gr</Filter>
@@ -437,6 +446,9 @@
     <ClCompile Include="AssetLoadUtils.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
+    <ClCompile Include="SceneNodeEntity.cpp">
+      <Filter>Source Files\fr\Entities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -524,9 +536,6 @@
       <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="Transformable.h">
-      <Filter>Header Files\fr</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneNode.h">
       <Filter>Header Files\fr</Filter>
     </ClInclude>
     <ClInclude Include="Mesh.h">
@@ -834,6 +843,12 @@
     </ClInclude>
     <ClInclude Include="AssetLoadUtils.h">
       <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneNodeEntity.h">
+      <Filter>Header Files\fr\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="NameComponent.h">
+      <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
