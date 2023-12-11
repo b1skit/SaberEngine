@@ -9,7 +9,7 @@ namespace gr
 	class SkyboxGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
-		SkyboxGraphicsSystem();
+		SkyboxGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~SkyboxGraphicsSystem() override {}
 

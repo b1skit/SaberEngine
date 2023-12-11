@@ -22,6 +22,9 @@ namespace gr
 		Bounds& operator=(Bounds const& rhs) = default;
 		~Bounds() = default;
 
+		bool operator==(gr::Bounds const&) const;
+		bool operator!=(gr::Bounds const&) const;
+
 		// Returns a new AABB Bounds, transformed from local space using transform
 		Bounds GetTransformedAABBBounds(glm::mat4 const& worldMatrix);
 

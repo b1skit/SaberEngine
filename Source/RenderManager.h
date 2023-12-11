@@ -1,13 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-#include "Command.h"
 #include "Context.h"
 #include "DoubleBufferUnorderedMap.h"
 #include "EngineComponent.h"
 #include "EngineThread.h"
 #include "EventListener.h"
 #include "NBufferedVector.h"
+#include "RenderCommand.h"
 #include "RenderPipeline.h"
 #include "RenderSystem.h"
 #include "TextureTarget.h"
@@ -63,6 +63,17 @@ namespace re
 		uint64_t GetCurrentRenderFrameNum() const;
 
 
+		std::vector<std::unique_ptr<re::RenderSystem>> const& GetRenderSystems() const;
+
+
+	public: // Render commands:
+		template<typename T, typename... Args>
+		void EnqueueRenderCommand(Args&&... args);
+
+	private:
+		gr::RenderCommandManager m_renderCommandManager;
+
+
 	public: // Deferred API-object creation queues
 		template<typename T>
 		void RegisterForCreate(std::shared_ptr<T>);
@@ -112,7 +123,7 @@ namespace re
 		void PreUpdate(uint64_t frameNum); // Synchronization step: Copies data, swaps buffers etc
 		void EndOfFrame();
 
-
+		
 	private:
 		void ShowRenderDebugImGuiWindows(bool* show);
 
@@ -150,6 +161,19 @@ namespace re
 	inline uint64_t RenderManager::GetCurrentRenderFrameNum() const
 	{
 		return m_renderFrameNum;
+	}
+
+
+	inline std::vector<std::unique_ptr<re::RenderSystem>> const& RenderManager::GetRenderSystems() const
+	{
+		return m_renderSystems;
+	}
+
+
+	template<typename T, typename... Args>
+	inline void RenderManager::EnqueueRenderCommand(Args&&... args)
+	{
+		m_renderCommandManager.Enqueue<T>(std::forward<Args>(args)...);
 	}
 
 

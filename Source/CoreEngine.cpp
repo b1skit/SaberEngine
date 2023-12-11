@@ -171,9 +171,16 @@ namespace en
 				SEEndCPUEvent();
 			}
 
+			SEBeginCPUEvent("fr::GameplayManager::EnqueueRenderUpdates");
+			gameplayManager->EnqueueRenderUpdates();
+			SEEndCPUEvent();
+
+
+			// DEPRECATED:
 			SEBeginCPUEvent("en::SceneManager::FinalUpdate");
 			sceneManager->FinalUpdate(); // Builds batches, ready for RenderManager to consume
 			SEEndCPUEvent();
+
 
 			// Pump the render thread, and wait for it to signal copying is complete:
 			SEBeginCPUEvent("en::CoreEngine::Run Wait on copy barrier");
@@ -213,7 +220,7 @@ namespace en
 
 		SceneManager::Get()->Shutdown();
 
-		GameplayManager::Get()->Shutdown();
+		GameplayManager::Get()->Shutdown(); // TODO: This should happen BEFORE RenderManager ThreadShutdown
 
 		EventManager::Get()->Shutdown();
 		LogManager::Get()->Shutdown();

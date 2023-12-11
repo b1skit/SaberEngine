@@ -47,7 +47,7 @@ namespace
 			shadowCam->GetCubeViewProjectionMatrices().data(),
 			6 * sizeof(mat4));
 
-		cubemapShadowParams.g_cubemapShadowCamNearFar = glm::vec4(shadowCam->NearFar().xy, 0.f, 0.f);
+		cubemapShadowParams.g_cubemapShadowCamNearFar = glm::vec4(shadowCam->GetNearFar().xy, 0.f, 0.f);
 		cubemapShadowParams.g_cubemapLightWorldPos = glm::vec4(shadowCam->GetTransform()->GetGlobalPosition(), 0.f);
 
 		return cubemapShadowParams;
@@ -60,8 +60,8 @@ namespace gr
 	constexpr char const* k_gsName = "Shadows Graphics System";
 
 
-	ShadowsGraphicsSystem::ShadowsGraphicsSystem()
-		: GraphicsSystem(k_gsName)
+	ShadowsGraphicsSystem::ShadowsGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
+		: GraphicsSystem(k_gsName, owningGSM)
 		, NamedObject(k_gsName)
 		, m_hasDirectionalLight(false)
 	{

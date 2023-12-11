@@ -9,7 +9,7 @@ namespace gr
 	class BloomGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
-		BloomGraphicsSystem();
+		BloomGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~BloomGraphicsSystem() override {}
 

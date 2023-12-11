@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "GraphicsSystem.h"
+#include "GraphicsSystemManager.h"
 #include "NamedObject.h"
 #include "RenderPipeline.h"
 
@@ -32,10 +32,7 @@ namespace re
 		void SetUpdatePipeline(std::function<void(re::RenderSystem*)>);
 		void ExecuteUpdatePipeline();
 
-		std::vector<std::shared_ptr<gr::GraphicsSystem>>& GetGraphicsSystems();
-		
-		template <typename T>
-		T* GetGraphicsSystem();
+		gr::GraphicsSystemManager& GetGraphicsSystemManager();
 
 		re::RenderPipeline& GetRenderPipeline();
 
@@ -43,9 +40,9 @@ namespace re
 
 
 	private:
-		std::vector<std::shared_ptr<gr::GraphicsSystem>> m_graphicsSystems;
-		re::RenderPipeline m_renderPipeline;
+		gr::GraphicsSystemManager m_graphicsSystemManager;
 
+		re::RenderPipeline m_renderPipeline;
 		std::function<void(re::RenderSystem*)> m_createPipeline;
 		std::function<void(re::RenderSystem*)> m_updatePipeline;
 
@@ -73,27 +70,9 @@ namespace re
 	}
 
 
-	inline std::vector<std::shared_ptr<gr::GraphicsSystem>>& RenderSystem::GetGraphicsSystems()
+	inline gr::GraphicsSystemManager& RenderSystem::GetGraphicsSystemManager()
 	{
-		return m_graphicsSystems;
-	}
-
-
-	template <typename T>
-	T* RenderSystem::GetGraphicsSystem()
-	{
-		// TODO: A linear search isn't optimal here, but there aren't many graphics systems in practice so ok for now
-		for (size_t i = 0; i < m_graphicsSystems.size(); i++)
-		{
-			T* result = dynamic_cast<T*>(m_graphicsSystems[i].get());
-			if (result != nullptr)
-			{
-				return result;
-			}
-		}
-
-		SEAssertF("Graphics system not found");
-		return nullptr;
+		return m_graphicsSystemManager;
 	}
 
 

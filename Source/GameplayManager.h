@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include <entt/entity/registry.hpp>
 
 #include "EngineComponent.h"
 #include "NamedObject.h"
@@ -25,6 +24,8 @@ namespace fr
 
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
+		void EnqueueRenderUpdates();
+
 
 		// EnTT wrappers:
 		entt::entity CreateEntity();
@@ -32,14 +33,36 @@ namespace fr
 		template<typename T>
 		entt::entity GetEntityFromComponent(T const&) const;
 
+		template<typename T>
+		void EmplaceComponent(entt::entity);
+
 		template<typename T, typename... Args>
 		T* EmplaceComponent(entt::entity, Args &&...args);
 
+		template<typename T>
+		void EmplaceOrReplaceComponent(entt::entity);
+
+		template<typename T>
+		void TryEmplaceComponent(entt::entity); // Emplace a component IFF it doesn't already exist on the entity
+
+		template<typename T, typename... Args>
+		T* TryEmplaceComponent(entt::entity, Args &&...args);
+
+		template<typename T>
+		void RemoveComponent(entt::entity);
+
+
+	private:
+		template<typename T>
+		T* TryGetComponentFromEntity(entt::entity entity);
 
 	private:
 		entt::basic_registry<entt::entity> m_registry; // uint32_t entities
-		std::shared_mutex m_registeryMutex;
+		mutable std::shared_mutex m_registeryMutex;
 
+
+	private: // Systems:
+		void UpdateSceneBounds();
 
 
 		// DEPRECATED:
@@ -86,8 +109,19 @@ namespace fr
 	}
 
 
+	template<typename T>
+	void GameplayManager::EmplaceComponent(entt::entity entity)
+	{
+		{
+			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
+
+			m_registry.emplace<T>(entity);
+		}
+	}
+
+
 	template<typename T, typename... Args>
-	T* GameplayManager::EmplaceComponent(entt::entity entity, Args &&...args)
+	T* GameplayManager::EmplaceComponent(entt::entity entity, Args&&... args)
 	{
 		{
 			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
@@ -95,6 +129,61 @@ namespace fr
 			T& result = m_registry.emplace<T>(entity, std::forward<Args>(args)...);
 
 			return &result;
+		}
+	}
+
+
+	template<typename T>
+	void GameplayManager::EmplaceOrReplaceComponent(entt::entity entity)
+	{
+		{
+			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
+
+			m_registry.emplace_or_replace<T>(entity);
+		}
+	}
+
+
+	template<typename T>
+	void GameplayManager::TryEmplaceComponent(entt::entity entity)
+	{
+		T* existingComponent = TryGetComponentFromEntity<T>(entity);
+		if (existingComponent == nullptr)
+		{
+			EmplaceComponent<T>(entity);
+		}
+	}
+
+
+	template<typename T, typename... Args>
+	T* GameplayManager::TryEmplaceComponent(entt::entity entity, Args&&... args)
+	{
+		T* existingComponent = TryGetComponentFromEntity<T>(entity);
+		if (existingComponent == nullptr)
+		{
+			existingComponent = EmplaceComponent<T, Args...>(entity, std::forward<Args>(args)...);
+		}
+	}
+
+
+	template<typename T>
+	void GameplayManager::RemoveComponent(entt::entity entity)
+	{
+		{
+			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
+
+			m_registry.erase<T>(entity);
+		}
+	}
+
+
+	template<typename T>
+	T* GameplayManager::TryGetComponentFromEntity(entt::entity entity)
+	{
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+
+			return m_registry.try_get<T>(entity);
 		}
 	}
 }

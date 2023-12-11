@@ -65,8 +65,8 @@ namespace gr
 	constexpr char const* k_gsName = "Bloom Graphics System";
 
 
-	BloomGraphicsSystem::BloomGraphicsSystem()
-		: GraphicsSystem(k_gsName)
+	BloomGraphicsSystem::BloomGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
+		: GraphicsSystem(k_gsName, owningGSM)
 		, NamedObject(k_gsName)
 		, m_owningRenderSystem(nullptr)
 	{
@@ -83,10 +83,11 @@ namespace gr
 		std::shared_ptr<re::Sampler> const bloomSampler =
 			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear);
 
-		GBufferGraphicsSystem* gbufferGS = renderSystem.GetGraphicsSystem<GBufferGraphicsSystem>();
+		GBufferGraphicsSystem* gbufferGS = 
+			m_owningGraphicsSystemManager->GetGraphicsSystem<GBufferGraphicsSystem>();
 
 		DeferredLightingGraphicsSystem* deferredLightGS =
-			renderSystem.GetGraphicsSystem<DeferredLightingGraphicsSystem>();
+			m_owningGraphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
 
 		std::shared_ptr<re::TextureTargetSet const> deferredLightTargets = deferredLightGS->GetFinalTextureTargetSet();
 
@@ -271,7 +272,7 @@ namespace gr
 		CreateBatches();
 
 		DeferredLightingGraphicsSystem* deferredLightGS =
-			m_owningRenderSystem->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
+			m_owningGraphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
 		std::shared_ptr<re::Texture> deferredLightTargetTex = 
 			deferredLightGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture();
 		std::shared_ptr<re::Texture> bloomTargetTex = GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture();

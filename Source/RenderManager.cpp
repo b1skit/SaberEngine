@@ -7,6 +7,7 @@
 #include "GraphicsSystem_Skybox.h"
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
+#include "GraphicsSystemManager.h"
 #include "ImGuiUtils.h"
 #include "Light.h"
 #include "PerformanceTimer.h"
@@ -182,9 +183,14 @@ namespace re
 	}
 
 
-	void RenderManager::PreUpdate(uint64_t frameNum)
+	void RenderManager::PreUpdate(uint64_t frameNum) // Blocks other threads until complete
 	{
 		SEBeginCPUEvent("re::RenderManager::PreUpdate");
+		
+		// Just swap the buffers here, since RenderManager::PreUpdate is blocking
+		m_renderCommandManager.SwapBuffers();
+
+
 
 		// Copy frame data:
 		SEAssert("Render batches should be empty", m_renderBatches.empty());
@@ -222,6 +228,13 @@ namespace re
 		SEBeginCPUEvent("re::RenderManager::Update");
 
 		HandleEvents();
+
+		m_renderCommandManager.Execute(); // Process render commands
+		
+		// TODO: Move render system/GS updates here
+		// TODO: Handle ParameterBlock writing here
+		// TODO: Handle new resource creation here
+
 
 		// Update/buffer param blocks, now that the read/write indexes have been swapped
 		re::Context::Get()->GetParameterBlockAllocator().BufferParamBlocks();
@@ -294,6 +307,10 @@ namespace re
 		SEBeginCPUEvent("re::RenderManager::Shutdown");
 
 		LOG("Render manager shutting down...");
+
+		// Process any remaining render commands
+		m_renderCommandManager.SwapBuffers();
+		m_renderCommandManager.Execute();
 		
 		// API-specific destruction:
 		platform::RenderManager::Shutdown(*this);

@@ -33,8 +33,8 @@ namespace gr
 	constexpr char const* k_gsName = "Skybox Graphics System";
 
 
-	SkyboxGraphicsSystem::SkyboxGraphicsSystem()
-		: GraphicsSystem(k_gsName)
+	SkyboxGraphicsSystem::SkyboxGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
+		: GraphicsSystem(k_gsName, owningGSM)
 		, NamedObject(k_gsName)
 		, m_skyTexture(nullptr)
 	{
@@ -60,7 +60,7 @@ namespace gr
 		m_skyboxStage->AddPermanentParameterBlock(en::SceneManager::Get()->GetMainCamera()->GetCameraParams());
 
 		DeferredLightingGraphicsSystem* deferredLightGS = 
-			renderSystem.GetGraphicsSystem<DeferredLightingGraphicsSystem>();
+			m_owningGraphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
 
 		// Create a new texture target set so we can write to the deferred lighting color targets, but attach the
 		// GBuffer depth for HW depth testing
@@ -71,7 +71,7 @@ namespace gr
 		re::TextureTarget::TargetParams depthTargetParams;
 		depthTargetParams.m_channelWriteMode.R = re::TextureTarget::TargetParams::ChannelWrite::Disabled;
 
-		GBufferGraphicsSystem* gBufferGS = renderSystem.GetGraphicsSystem<GBufferGraphicsSystem>();
+		GBufferGraphicsSystem* gBufferGS = m_owningGraphicsSystemManager->GetGraphicsSystem<GBufferGraphicsSystem>();
 		skyboxTargets->SetDepthStencilTarget(
 			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
 			depthTargetParams);

@@ -26,7 +26,7 @@ namespace gr
 
 
 	public:
-		GBufferGraphicsSystem();
+		GBufferGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~GBufferGraphicsSystem() override {}
 

@@ -9,7 +9,7 @@ namespace gr
 	class TonemappingGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
-		TonemappingGraphicsSystem();
+		TonemappingGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~TonemappingGraphicsSystem() override {}
 

@@ -19,7 +19,7 @@ namespace gr
 	class DeferredLightingGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
-		DeferredLightingGraphicsSystem();
+		DeferredLightingGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~DeferredLightingGraphicsSystem() override {}
 

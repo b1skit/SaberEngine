@@ -33,9 +33,9 @@ namespace gr
 	constexpr char const* k_gsName = "GBuffer Graphics System";
 
 
-	GBufferGraphicsSystem::GBufferGraphicsSystem()
+	GBufferGraphicsSystem::GBufferGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: NamedObject(k_gsName)
-		, GraphicsSystem(k_gsName)
+		, GraphicsSystem(k_gsName, owningGSM)
 		, m_owningPipeline(nullptr)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;

@@ -313,8 +313,8 @@ namespace gr
 {
 	constexpr char const* k_gsName = "Debug Graphics System";
 
-	DebugGraphicsSystem::DebugGraphicsSystem()
-		: GraphicsSystem(k_gsName)
+	DebugGraphicsSystem::DebugGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
+		: GraphicsSystem(k_gsName, owningGSM)
 		, NamedObject(k_gsName)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;

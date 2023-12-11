@@ -82,24 +82,50 @@ namespace
 namespace gr
 {
 	std::shared_ptr<gr::Camera> Camera::Create(
-		std::string const& cameraName, Config const& camConfig, gr::Transform* parent)
+		std::string const& name, Config const& camConfig, gr::Transform* parent)
 	{
 		std::shared_ptr<gr::Camera> newCamera = nullptr;
 		
-		newCamera.reset(new gr::Camera(cameraName, camConfig, parent));
+		newCamera.reset(new gr::Camera(name, camConfig, parent, false));
 		en::SceneManager::GetSceneData()->AddCamera(newCamera);
 
 		return newCamera;
 	}
 
 
-	Camera::Camera(string const& cameraName, Config const& camConfig, Transform* parent)
-		: NamedObject(cameraName)
-		, Transformable(cameraName, parent)
+	gr::Camera Camera::CreateComponent(std::string const& name, Config const& config, gr::Transform* transformComponent)
+	{
+		SEAssert("If the Camera is being created as a component, it must be initialized with a Transform component",
+			transformComponent != nullptr);
+
+		return gr::Camera(name, config, transformComponent, true);
+	}
+
+
+	// If the Camera is a component (isComponent == true), transform is a pointer to an existing Transform component.
+	// Otherwise, the Camera is intended for use by the backend render thread only, and must manage its own Transform
+	// allocation/deallocation
+	Camera::Camera(string const& name, Config const& camConfig, Transform* transform, bool isComponent)
+		: NamedObject(name)
+		, m_transform(nullptr)
+		, m_isComponent(isComponent)
 		, m_cameraConfig(camConfig)
 		, m_matricesDirty(true)
 		, m_parameterBlockDirty(true)
 	{
+		if (m_isComponent)
+		{
+			SEAssert("If the Camera is being created as a component, it must be initialized with a Transform component",
+				transform != nullptr);
+			m_transform = transform;
+		}
+		else
+		{
+			// If the Camera is not a component, it must manage its own Transform allocation/deallocation
+			m_transform = new gr::Transform(nullptr);
+			m_transform->SetParent(transform);
+		}
+
 		m_cameraPBData = {}; // Initialize with a default struct: Updated later
 
 		m_cameraParamBlock = re::ParameterBlock::Create(
@@ -145,7 +171,7 @@ namespace gr
 
 	void Camera::Update(const double stepTimeMs)
 	{
-		m_matricesDirty |= m_transform.HasChanged();
+		m_matricesDirty |= m_transform->HasChanged();
 		RecomputeMatrices();
 		UpdateCameraParamBlockData();
 	}
@@ -167,7 +193,7 @@ namespace gr
 			m_cameraConfig.m_orthoLeftRightBotTop = glm::vec4(0.f, 0.f, 0.f, 0.f);
 
 			// For cameras, we omit the scale matrix 
-			glm::mat4 const& globalMatrix = m_transform.GetGlobalTranslationMat() * m_transform.GetGlobalRotationMat();
+			glm::mat4 const& globalMatrix = m_transform->GetGlobalTranslationMat() * m_transform->GetGlobalRotationMat();
 
 			m_view[0] = glm::inverse(globalMatrix);
 			m_invView[0] = globalMatrix;
@@ -189,7 +215,7 @@ namespace gr
 			m_cameraConfig.m_yFOV = 0.0f;
 
 			// For cameras, we omit the scale matrix 
-			glm::mat4 const& globalMatrix = m_transform.GetGlobalTranslationMat() * m_transform.GetGlobalRotationMat();
+			glm::mat4 const& globalMatrix = m_transform->GetGlobalTranslationMat() * m_transform->GetGlobalRotationMat();
 
 			m_view[0] = glm::inverse(globalMatrix);
 			m_invView[0] = globalMatrix;
@@ -222,7 +248,7 @@ namespace gr
 
 			m_invProjection = glm::inverse(m_projection);
 
-			glm::vec3 const& worldPos = m_transform.GetGlobalPosition();
+			glm::vec3 const& worldPos = m_transform->GetGlobalPosition();
 
 			m_view = BuildCubeViewMatrices(worldPos);
 
@@ -300,8 +326,13 @@ namespace gr
 
 	Camera::~Camera()
 	{
-		SEAssert("Camera parameter block is not null. Did a camera go out of scope before Destroy was called?", 
-			m_cameraParamBlock == nullptr);
+		m_cameraParamBlock = nullptr;
+
+		// If this Camera was not created as a component, it must allocate/deallocate its own Transform
+		if (!m_isComponent)
+		{
+			delete m_transform;
+		}
 	}
 
 
@@ -451,7 +482,7 @@ namespace gr
 			if (ImGui::CollapsingHeader(std::format("Transform##{}", GetUniqueID()).c_str()))
 			{
 				ImGui::Indent();
-				GetTransform()->ShowImGuiWindow();
+				m_transform->ShowImGuiWindow();
 				ImGui::Unindent();
 			}
 

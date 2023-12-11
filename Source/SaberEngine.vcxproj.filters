@@ -108,6 +108,15 @@
     <Filter Include="Source Files\fr\Components">
       <UniqueIdentifier>{cb14f09f-7493-4238-88bf-3674944c379b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\gr\RenderCommands">
+      <UniqueIdentifier>{01143d5c-f022-4341-8db7-8e4cabdb6ae3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gr\Components">
+      <UniqueIdentifier>{5a8dfb55-e460-4adb-b4c7-f3882aa2b667}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gr\Components">
+      <UniqueIdentifier>{b8296793-b174-4011-ad33-8f4b527804d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -449,6 +458,21 @@
     <ClCompile Include="SceneNodeEntity.cpp">
       <Filter>Source Files\fr\Entities</Filter>
     </ClCompile>
+    <ClCompile Include="RenderCommand.cpp">
+      <Filter>Source Files\gr\RenderCommands</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsSystemManager.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderData.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="BoundsComponent.cpp">
+      <Filter>Source Files\fr\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderDataComponent.cpp">
+      <Filter>Source Files\gr\Components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -576,9 +600,6 @@
     </ClInclude>
     <ClInclude Include="PerformanceTimer.h">
       <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="Command.h">
-      <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="ThreadPool.h">
       <Filter>Header Files\en</Filter>
@@ -852,6 +873,27 @@
     </ClInclude>
     <ClInclude Include="EventListenerComponent.h">
       <Filter>Header Files\fr\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsSystemManager.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderData.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadProtector.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderCommand.h">
+      <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="BoundsComponent.h">
+      <Filter>Header Files\fr\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="MarkerComponents.h">
+      <Filter>Header Files\fr\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderDataComponent.h">
+      <Filter>Header Files\gr\Components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -3,14 +3,15 @@
 
 #include "ParameterBlock.h"
 #include "NamedObject.h"
-#include "Transformable.h"
+#include "RenderCommand.h"
+#include "Transform.h"
 #include "TextureTarget.h"
 #include "Updateable.h"
 
 
 namespace gr
 {
-	class Camera final : public virtual en::NamedObject, public virtual fr::Transformable, public virtual en::Updateable
+	class Camera final : public virtual en::NamedObject, public virtual en::Updateable
 	{
 	public:
 		struct Config
@@ -92,10 +93,15 @@ namespace gr
 
 
 	public:
+		// Create a render camera, for backend graphics use. Not compatible with the ECS
 		[[nodiscard]] static std::shared_ptr<gr::Camera> Create(
-			std::string const& cameraName, Config const& camConfig, gr::Transform* parent);
+			std::string const& name, Config const&, gr::Transform* parent);
 
+		// Create a Camera component for use with the ECS
+		[[nodiscard]] static gr::Camera CreateComponent(
+			std::string const& name, Config const&, gr::Transform* transformComponent);
 		
+
 		Camera(Camera&&) = default;
 		Camera& operator=(Camera&&) = default;
 		
@@ -107,7 +113,7 @@ namespace gr
 
 		float const FieldOfViewYRad() const;
 
-		glm::vec2 NearFar() const; // TODO: RENAME "GetNearFar"
+		glm::vec2 GetNearFar() const;
 		void SetNearFar(glm::vec2 const& nearFar);
 
 		float GetAspectRatio() const;
@@ -138,16 +144,19 @@ namespace gr
 		Config const& GetCameraConfig() const;
 		void SetCameraConfig(Config const& newConfig);
 
+		gr::Transform* GetTransform();
+		gr::Transform const* GetTransform() const;
+
 		std::shared_ptr<re::ParameterBlock> GetCameraParams() const;
 
 		void SetAsMainCamera() const;
 
 		void ShowImGuiWindow();
 
-
-	private: // Use Create() instead
-		Camera(std::string const& cameraName, Config const& camConfig, gr::Transform* parent);
 		
+	private: // Use one of the Create methods instead
+		// Camera component constructor: A Transform is allocated via the ECS and provided here
+		Camera(std::string const& name, Config const& camConfig, gr::Transform* transform, bool isComponent);
 
 	private:
 		// Helper function: Configures the camera based on the cameraConfig. MUST be called at least once during setup
@@ -156,6 +165,10 @@ namespace gr
 
 
 	private:
+		gr::Transform* m_transform;
+		const bool m_isComponent; // Is this Camera registered as a component object in the ECS?
+
+		// Render data
 		Config m_cameraConfig;
 
 		std::vector<glm::mat4> m_view;
@@ -168,10 +181,12 @@ namespace gr
 		std::vector<glm::mat4> m_invViewProjection;
 
 		bool m_matricesDirty;
-		bool m_parameterBlockDirty;
 
-		std::shared_ptr<re::ParameterBlock> m_cameraParamBlock;
-		CameraParams m_cameraPBData;
+
+		bool m_parameterBlockDirty; // DEPRECATED
+		CameraParams m_cameraPBData; // DEPRECATED
+		std::shared_ptr<re::ParameterBlock> m_cameraParamBlock; // DEPRECATED
+		
 
 	private:
 		Camera() = delete;
@@ -186,7 +201,7 @@ namespace gr
 	}
 
 
-	inline glm::vec2 Camera::NearFar() const
+	inline glm::vec2 Camera::GetNearFar() const
 	{
 		return glm::vec2(m_cameraConfig.m_near, m_cameraConfig.m_far);
 	}
@@ -302,6 +317,18 @@ namespace gr
 	inline Camera::Config const& Camera::GetCameraConfig() const
 	{
 		return m_cameraConfig;
+	}
+
+
+	inline gr::Transform* Camera::GetTransform()
+	{
+		return m_transform;
+	}
+
+
+	inline gr::Transform const* Camera::GetTransform() const
+	{
+		return m_transform;
 	}
 
 

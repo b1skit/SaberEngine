@@ -30,8 +30,8 @@ namespace gr
 	constexpr char const* k_gsName = "Tone Mapping Graphics System";
 
 
-	TonemappingGraphicsSystem::TonemappingGraphicsSystem()
-		: GraphicsSystem(k_gsName)
+	TonemappingGraphicsSystem::TonemappingGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
+		: GraphicsSystem(k_gsName, owningGSM)
 		, NamedObject(k_gsName)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
@@ -59,14 +59,14 @@ namespace gr
 
 		// Texture inputs:
 		std::shared_ptr<TextureTargetSet const> deferredLightTextureTargetSet =
-			renderSystem.GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
+			m_owningGraphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
 
 		m_tonemappingStage->AddTextureInput(
 			"Tex0",
 			deferredLightTextureTargetSet->GetColorTarget(0).GetTexture(),
 			Sampler::GetSampler(Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
 		
-		gr::BloomGraphicsSystem* bloomGS = renderSystem.GetGraphicsSystem<BloomGraphicsSystem>();
+		gr::BloomGraphicsSystem* bloomGS = m_owningGraphicsSystemManager->GetGraphicsSystem<BloomGraphicsSystem>();
 		std::shared_ptr<TextureTargetSet const> bloomTextureTargetSet = bloomGS->GetFinalTextureTargetSet();
 
 		m_tonemappingStage->AddTextureInput(

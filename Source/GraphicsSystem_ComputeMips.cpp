@@ -48,8 +48,8 @@ namespace gr
 	constexpr char const* k_gsName = "Compute Mips Graphics System";
 
 
-	ComputeMipsGraphicsSystem::ComputeMipsGraphicsSystem()
-		: GraphicsSystem(k_gsName)
+	ComputeMipsGraphicsSystem::ComputeMipsGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
+		: GraphicsSystem(k_gsName, owningGSM)
 		, NamedObject(k_gsName)
 		, m_mipMapGenerationShader(nullptr)
 		, m_stagePipeline(nullptr)

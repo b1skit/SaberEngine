@@ -3,8 +3,7 @@
 
 #include "Bounds.h"
 #include "MeshPrimitive.h"
-#include "NamedObject.h"
-#include "Transform.h"
+
 
 namespace re
 {
@@ -13,7 +12,10 @@ namespace re
 
 namespace gr
 {	
-	class Mesh final : public virtual en::NamedObject
+	class Transform;
+
+
+	class Mesh
 	{
 	public:
 		struct InstancedMeshParams
@@ -29,14 +31,15 @@ namespace gr
 
 	public:
 		explicit Mesh(std::string const& name, gr::Transform* ownerTransform);
-		explicit Mesh(std::string const& name, gr::Transform* ownerTransform, std::shared_ptr<gr::MeshPrimitive> meshPrimitive);
+		explicit Mesh(std::string const& name, gr::Transform* ownerTransform, std::shared_ptr<gr::MeshPrimitive>);
 
 		Mesh(Mesh const&) = default;
 		Mesh(Mesh&&) = default;
 		Mesh& operator=(Mesh const&) = default;
 		~Mesh() = default;	
 
-		// Getters/Setters:
+		std::string const& GetName() const;
+
 		inline gr::Transform* GetTransform() { return m_ownerTransform; }
 		inline gr::Transform const* GetTransform() const { return m_ownerTransform; }
 
@@ -53,13 +56,21 @@ namespace gr
 
 
 	private:
+		const std::string m_name;
+
 		std::vector<std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
 
 		Transform* m_ownerTransform;
 
-		gr::Bounds m_localBounds; // Mesh bounds, in local space	
+		gr::Bounds m_localBounds; // Mesh bounds, in local space
 
 	private:
 		Mesh() = delete;
 	};
+
+
+	inline std::string const& Mesh::GetName() const
+	{
+		return m_name;
+	}
 }

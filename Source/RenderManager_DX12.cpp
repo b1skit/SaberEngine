@@ -54,34 +54,36 @@ namespace dx12
 		// Build the default render system create pipeline:
 		auto DefaultRenderSystemCreatePipeline = [](re::RenderSystem* defaultRS)
 		{
-			std::vector<std::shared_ptr<gr::GraphicsSystem>>& graphicsSystems = defaultRS->GetGraphicsSystems();
+			gr::GraphicsSystemManager& gsm = defaultRS->GetGraphicsSystemManager();
+
+			std::vector<std::shared_ptr<gr::GraphicsSystem>>& graphicsSystems = gsm.GetGraphicsSystems();
 
 			// Create and add graphics systems:
 			std::shared_ptr<gr::ComputeMipsGraphicsSystem> computeMipsGS = 
-				std::make_shared<gr::ComputeMipsGraphicsSystem>();
+				std::make_shared<gr::ComputeMipsGraphicsSystem>(&gsm);
 			graphicsSystems.emplace_back(computeMipsGS);
 
-			std::shared_ptr<gr::GBufferGraphicsSystem> gbufferGS = std::make_shared<gr::GBufferGraphicsSystem>();
+			std::shared_ptr<gr::GBufferGraphicsSystem> gbufferGS = std::make_shared<gr::GBufferGraphicsSystem>(&gsm);
 			graphicsSystems.emplace_back(gbufferGS);
 
-			std::shared_ptr<gr::ShadowsGraphicsSystem> shadowGS = std::make_shared<gr::ShadowsGraphicsSystem>();
+			std::shared_ptr<gr::ShadowsGraphicsSystem> shadowGS = std::make_shared<gr::ShadowsGraphicsSystem>(&gsm);
 			graphicsSystems.emplace_back(shadowGS);
 
 			std::shared_ptr<gr::DeferredLightingGraphicsSystem> deferredLightingGS =
-				std::make_shared<gr::DeferredLightingGraphicsSystem>();
+				std::make_shared<gr::DeferredLightingGraphicsSystem>(&gsm);
 			graphicsSystems.emplace_back(deferredLightingGS);
 
-			std::shared_ptr<gr::SkyboxGraphicsSystem> skyboxGS = std::make_shared<gr::SkyboxGraphicsSystem>();
+			std::shared_ptr<gr::SkyboxGraphicsSystem> skyboxGS = std::make_shared<gr::SkyboxGraphicsSystem>(&gsm);
 			graphicsSystems.emplace_back(skyboxGS);
 
-			std::shared_ptr<gr::BloomGraphicsSystem> bloomGS = std::make_shared<gr::BloomGraphicsSystem>();
+			std::shared_ptr<gr::BloomGraphicsSystem> bloomGS = std::make_shared<gr::BloomGraphicsSystem>(&gsm);
 			graphicsSystems.emplace_back(bloomGS);
 
-			std::shared_ptr<gr::TonemappingGraphicsSystem> tonemappingGS =
-				std::make_shared<gr::TonemappingGraphicsSystem>();
+			std::shared_ptr<gr::TonemappingGraphicsSystem> tonemappingGS = 
+				std::make_shared<gr::TonemappingGraphicsSystem>(&gsm);
 			graphicsSystems.emplace_back(tonemappingGS);
 
-			std::shared_ptr<gr::DebugGraphicsSystem> debugGS = std::make_shared<gr::DebugGraphicsSystem>();
+			std::shared_ptr<gr::DebugGraphicsSystem> debugGS = std::make_shared<gr::DebugGraphicsSystem>(&gsm);
 			graphicsSystems.emplace_back(debugGS);
 
 			// Build the creation pipeline:
@@ -102,15 +104,17 @@ namespace dx12
 		// Build the default render system update pipeline:
 		auto UpdatePipeline = [](re::RenderSystem* renderSystem)
 		{
+			gr::GraphicsSystemManager& gsm = renderSystem->GetGraphicsSystemManager();
+
 			// Get our GraphicsSystems:
-			gr::ComputeMipsGraphicsSystem* computeMipsGS = renderSystem->GetGraphicsSystem<gr::ComputeMipsGraphicsSystem>();
-			gr::GBufferGraphicsSystem* gbufferGS = renderSystem->GetGraphicsSystem<gr::GBufferGraphicsSystem>();
-			gr::ShadowsGraphicsSystem* shadowGS = renderSystem->GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
-			gr::DeferredLightingGraphicsSystem* deferredLightingGS = renderSystem->GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
-			gr::SkyboxGraphicsSystem* skyboxGS = renderSystem->GetGraphicsSystem<gr::SkyboxGraphicsSystem>();
-			gr::BloomGraphicsSystem* bloomGS = renderSystem->GetGraphicsSystem<gr::BloomGraphicsSystem>();
-			gr::TonemappingGraphicsSystem* tonemappingGS = renderSystem->GetGraphicsSystem<gr::TonemappingGraphicsSystem>();
-			gr::DebugGraphicsSystem* debugGS = renderSystem->GetGraphicsSystem<gr::DebugGraphicsSystem>();
+			gr::ComputeMipsGraphicsSystem* computeMipsGS = gsm.GetGraphicsSystem<gr::ComputeMipsGraphicsSystem>();
+			gr::GBufferGraphicsSystem* gbufferGS = gsm.GetGraphicsSystem<gr::GBufferGraphicsSystem>();
+			gr::ShadowsGraphicsSystem* shadowGS = gsm.GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
+			gr::DeferredLightingGraphicsSystem* deferredLightingGS = gsm.GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
+			gr::SkyboxGraphicsSystem* skyboxGS = gsm.GetGraphicsSystem<gr::SkyboxGraphicsSystem>();
+			gr::BloomGraphicsSystem* bloomGS = gsm.GetGraphicsSystem<gr::BloomGraphicsSystem>();
+			gr::TonemappingGraphicsSystem* tonemappingGS = gsm.GetGraphicsSystem<gr::TonemappingGraphicsSystem>();
+			gr::DebugGraphicsSystem* debugGS = gsm.GetGraphicsSystem<gr::DebugGraphicsSystem>();
 
 			// Execute per-frame updates:
 			computeMipsGS->PreRender();

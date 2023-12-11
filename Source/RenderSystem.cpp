@@ -17,6 +17,7 @@ namespace re
 
 	RenderSystem::RenderSystem(std::string const& name)
 		: NamedObject(name)
+		, m_graphicsSystemManager(this)
 		, m_renderPipeline(name + " render pipeline")
 		, m_createPipeline(nullptr)
 		, m_updatePipeline(nullptr)
@@ -26,7 +27,7 @@ namespace re
 
 	void RenderSystem::Destroy()
 	{
-		m_graphicsSystems.clear();
+		m_graphicsSystemManager.Destroy();
 		m_renderPipeline.Destroy();
 		m_createPipeline = nullptr;
 		m_updatePipeline = nullptr;
@@ -51,14 +52,6 @@ namespace re
 
 	void RenderSystem::ShowImGuiWindow()
 	{
-		for (std::shared_ptr<gr::GraphicsSystem> const& gs : m_graphicsSystems)
-		{
-			if (ImGui::CollapsingHeader(std::format("{}##{}", gs->GetName(), gs->GetUniqueID()).c_str()))
-			{
-				ImGui::Indent();
-				gs->ShowImGuiWindow();
-				ImGui::Unindent();
-			}
-		}
+		m_graphicsSystemManager.ShowImGuiWindow();
 	}
 }

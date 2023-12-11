@@ -3,8 +3,10 @@
 
 #include "RenderStage.h"
 #include "TextureTarget.h"
+#include "RenderCommand.h"
 #include "RenderPipeline.h"
 #include "NamedObject.h"
+
 
 namespace re
 {
@@ -13,13 +15,17 @@ namespace re
 
 namespace gr
 {
+	class GraphicsSystemManager;
+
+
 	class GraphicsSystem : public virtual en::NamedObject
 	{
 	public:
-		explicit GraphicsSystem(std::string const& name);
+		explicit GraphicsSystem(std::string const& name, gr::GraphicsSystemManager*);
 
 		GraphicsSystem(GraphicsSystem&&) = default;
 		GraphicsSystem& operator=(GraphicsSystem&&) = default;
+
 
 		// GraphicsSystem interface:
 		// -------------------------
@@ -34,9 +40,12 @@ namespace gr
 
 		virtual void ShowImGuiWindow(); // Override this
 
-
 	private:
 		virtual void CreateBatches() = 0;
+
+
+	protected:
+		gr::GraphicsSystemManager* const m_owningGraphicsSystemManager;
 
 
 	private: // No copying allowed

@@ -214,7 +214,9 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="Batch.cpp" />
     <ClCompile Include="BatchManager.cpp" />
     <ClCompile Include="Bounds.cpp" />
+    <ClCompile Include="BoundsComponent.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CameraComponent.cpp" />
     <ClCompile Include="CommandList_DX12.cpp" />
     <ClCompile Include="CommandQueue_DX12.cpp" />
     <ClCompile Include="Context_DX12.cpp" />
@@ -235,6 +237,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="Fence_DX12.cpp" />
     <ClCompile Include="GameplayManager.cpp" />
     <ClCompile Include="GPUDescriptorHeap_DX12.cpp" />
+    <ClCompile Include="GraphicsSystemManager.cpp" />
     <ClCompile Include="GraphicsSystem_ComputeMips.cpp" />
     <ClCompile Include="GraphicsSystem_Debug.cpp" />
     <ClCompile Include="InputManager_Platform.cpp" />
@@ -260,6 +263,9 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="PerformanceTimer.cpp" />
     <ClCompile Include="PipelineState.cpp" />
     <ClCompile Include="PipelineState_DX12.cpp" />
+    <ClCompile Include="RenderCommand.cpp" />
+    <ClCompile Include="RenderData.cpp" />
+    <ClCompile Include="RenderDataComponent.cpp" />
     <ClCompile Include="RenderSystem.cpp" />
     <ClCompile Include="ResourceStateTracker_DX12.cpp" />
     <ClCompile Include="SysInfo_DX12.cpp" />
@@ -334,12 +340,16 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BatchManager.h" />
+    <ClInclude Include="BoundsComponent.h" />
+    <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="CastUtils.h" />
     <ClInclude Include="ConfigKeys.h" />
     <ClInclude Include="CPUDescriptorHeapManager_DX12.h" />
     <ClInclude Include="Batch.h" />
     <ClInclude Include="Bounds.h" />
-    <ClInclude Include="Command.h" />
+    <ClInclude Include="GraphicsSystemManager.h" />
+    <ClInclude Include="MarkerComponents.h" />
+    <ClInclude Include="RenderCommand.h" />
     <ClInclude Include="CommandList_DX12.h" />
     <ClInclude Include="CommandQueue_DX12.h" />
     <ClInclude Include="Context_DX12.h" />
@@ -388,6 +398,8 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="PipelineState.h" />
     <ClInclude Include="PipelineState_DX12.h" />
     <ClInclude Include="ProfilingMarkers.h" />
+    <ClInclude Include="RenderData.h" />
+    <ClInclude Include="RenderDataComponent.h" />
     <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ResourceStateTracker_DX12.h" />
@@ -407,6 +419,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="TextureTarget_DX12.h" />
     <ClInclude Include="Texture_DX12.h" />
     <ClInclude Include="ThreadPool.h" />
+    <ClInclude Include="ThreadProtector.h" />
     <ClInclude Include="ThreadSafeVector.h" />
     <ClInclude Include="Updateable.h" />
     <ClInclude Include="VertexStream.h" />

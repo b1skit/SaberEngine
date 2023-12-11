@@ -9,7 +9,7 @@ namespace gr
 	class ShadowsGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
-		ShadowsGraphicsSystem();
+		ShadowsGraphicsSystem(gr::GraphicsSystemManager*);
 
 		void Create(re::StagePipeline&);
 

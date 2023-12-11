@@ -1,5 +1,5 @@
 #pragma once
-#include "DebugConfiguration.h"
+#include "Assert.h"
 
 
 namespace util
@@ -27,6 +27,25 @@ namespace util
 	};
 
 
+	// RAII wrapper for ThreadProtector
+	class ScopedThreadProtector
+	{
+	public:
+		ScopedThreadProtector(ThreadProtector& threadProtector) : m_tpObj(threadProtector) { m_tpObj.TakeOwnership(); }
+		~ScopedThreadProtector() { m_tpObj.ReleaseOwnership(); }
+
+	private:
+		ThreadProtector& m_tpObj;
+
+	private: // No copying allowed
+		ScopedThreadProtector() = delete;
+		ScopedThreadProtector(ScopedThreadProtector const&) = delete;
+		ScopedThreadProtector(ScopedThreadProtector&&) = delete;
+		ScopedThreadProtector& operator=(ScopedThreadProtector const&) = delete;
+		ScopedThreadProtector& operator=(ScopedThreadProtector&&) = delete;
+	};
+
+
 	inline ThreadProtector::ThreadProtector()
 	{
 #if defined(_DEBUG)
@@ -44,6 +63,7 @@ namespace util
 		{
 			std::lock_guard<std::mutex> lock(m_owningThreadIdMutex);
 
+			SEAssert("Recursive TakeOwnership() call detected", m_owningThreadId != std::this_thread::get_id());
 			SEAssert("ThreadProtector is already owned", m_owningThreadId == std::thread::id());
 
 			m_owningThreadId = std::this_thread::get_id();

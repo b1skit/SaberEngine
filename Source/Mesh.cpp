@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "ImGuiUtils.h"
 #include "Mesh.h"
 #include "MeshPrimitive.h"
 #include "ParameterBlock.h"
@@ -66,14 +67,14 @@ namespace gr
 
 
 	Mesh::Mesh(std::string const& name, gr::Transform* ownerTransform)
-		: NamedObject(name)
+		: m_name(name)
 		, m_ownerTransform(ownerTransform)
 	{
 	}
 
 
 	Mesh::Mesh(std::string const& name, Transform* ownerTransform, shared_ptr<gr::MeshPrimitive> meshPrimitive)
-		: NamedObject(name)
+		: m_name(name)
 		, m_ownerTransform(ownerTransform)
 	{
 		AddMeshPrimitive(meshPrimitive);
@@ -117,26 +118,31 @@ namespace gr
 
 	void Mesh::ShowImGuiWindow()
 	{
-		if (ImGui::CollapsingHeader(std::format("{}##{}", GetName(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+		if (ImGui::CollapsingHeader(
+			std::format("{}##{}", GetName(), util::PtrToID(this)).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
-			const std::string uniqueIDStr = std::to_string(GetUniqueID());
+			const std::string uniqueIDStr = std::to_string(util::PtrToID(this));
 
-			if (ImGui::CollapsingHeader(std::format("Transform:##{}", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+			if (ImGui::CollapsingHeader(
+				std::format("Transform:##{}", util::PtrToID(this)).c_str(), ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
 				m_ownerTransform->ShowImGuiWindow();
 				ImGui::Unindent();
 			}
 
-			if (ImGui::CollapsingHeader(std::format("Mesh Bounds:##{}", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+			if (ImGui::CollapsingHeader(
+				std::format("Mesh Bounds:##{}", util::PtrToID(this)).c_str(), ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
 				m_localBounds.ShowImGuiWindow();
 				ImGui::Unindent();
 			}
 
-			if (ImGui::CollapsingHeader(std::format("Mesh Primitives ({}):##{}", m_meshPrimitives.size(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+			if (ImGui::CollapsingHeader(
+				std::format("Mesh Primitives ({}):##{}", m_meshPrimitives.size(), util::PtrToID(this)).c_str(), 
+				ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
 				for (size_t i = 0; i < m_meshPrimitives.size(); i++)

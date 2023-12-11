@@ -29,6 +29,18 @@ namespace gr
 	}
 
 
+	bool Bounds::operator==(gr::Bounds const& rhs) const
+	{
+		return m_minXYZ == rhs.m_minXYZ && m_maxXYZ == rhs.m_maxXYZ;
+	}
+
+
+	bool Bounds::operator!=(gr::Bounds const& rhs) const
+	{
+		return operator==(rhs) == false;
+	}
+
+
 	// Returns a new AABB Bounds, transformed from local space using transform
 	Bounds Bounds::GetTransformedAABBBounds(mat4 const& worldMatrix)
 	{

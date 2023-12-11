@@ -1,23 +1,20 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
+#include "BoundsComponent.h"
 #include "Camera.h"
 #include "CoreEngine.h"
 #include "GameplayManager.h"
+#include "MarkerComponents.h"
 #include "PlayerObject.h"
+#include "RenderManager.h"
 #include "SceneManager.h"
-
-using en::Updateable;
-using std::unique_ptr;
-using std::shared_ptr;
-using std::make_unique;
-using std::make_shared;
 
 
 namespace fr
 {
 	GameplayManager* GameplayManager::Get()
 	{
-		static unique_ptr<fr::GameplayManager> instance = make_unique<fr::GameplayManager>();
+		static std::unique_ptr<fr::GameplayManager> instance = std::make_unique<fr::GameplayManager>();
 		return instance.get();
 	}
 
@@ -29,6 +26,11 @@ namespace fr
 		constexpr size_t k_updateablesReserveAmount = 128; // TODO: Tune this
 		m_updateables.reserve(k_updateablesReserveAmount);
 
+		// Create a scene bounds entity:
+		fr::CreateSceneBoundsEntity(*this);
+		UpdateSceneBounds();
+
+		
 		std::shared_ptr<gr::Camera> mainCam = en::SceneManager::Get()->GetMainCamera();
 
 		// Add a player object to the scene:
@@ -42,6 +44,40 @@ namespace fr
 	{
 		LOG("GameplayManager shutting down...");
 
+		// Issue render commands to destroy render data:
+		re::RenderManager* renderManager = re::RenderManager::Get();
+
+		{
+			std::shared_lock<std::shared_mutex> registryReadLock(m_registeryMutex);
+
+			auto renderDataEntitiesView = m_registry.view<gr::RenderDataComponent>();
+			for (auto renderable : renderDataEntitiesView)
+			{
+				auto& renderDataComponent = renderDataEntitiesView.get<gr::RenderDataComponent>(renderable);
+
+				// Destroy renderable components:
+				if (m_registry.all_of<gr::Bounds>(renderable))
+				{
+					renderManager->EnqueueRenderCommand<fr::DestroyBoundsDataRenderCommand>(renderDataComponent.m_objectID);
+				}
+
+				// Finally, destroy the render object:
+				renderManager->EnqueueRenderCommand<gr::DestroyRenderObjectCommand>(renderDataComponent.m_objectID);
+			}
+		}
+
+		{
+			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
+			m_registry.clear();
+		}
+
+
+		// TODO: Call GameplayManager::Shutdown() before shutting down the renderer
+		// -> Once the Updateables/Transformables have been converted to ECS...
+		
+
+
+		// DEPRECATED: 
 		m_playerObject = nullptr;
 
 		// Destroy self-registered interfaces
@@ -58,25 +94,127 @@ namespace fr
 
 			m_transformables.clear();
 		}
-
-		m_registry.clear();
 	}
 
 
 	void GameplayManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
+		// Handle input (update event listener components)
+		// <physics, animation, etc>
+		// Update Transforms
+		UpdateSceneBounds();
+		// Update Lights (Need bounds, transforms to be updated)
+		// Update Cameras
+		// Update Renderables
+
+
+
+
+		// Deprecated:
 		UpdateUpdateables(stepTimeMs);
 		UpdateTransformables();
 	}
 
 
-	entt::entity GameplayManager::CreateEntity()
+	void GameplayManager::EnqueueRenderUpdates()
 	{
+		re::RenderManager* renderManager = re::RenderManager::Get();
+
 		{
-			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
-			return m_registry.create();
+			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
+
+			// Register new render objects:
+			auto newRenderableEntitiesView = m_registry.view<NewEntityMarker, gr::RenderDataComponent>();
+			for (auto newEntity : newRenderableEntitiesView)
+			{
+				// Enqueue a command to create a new object on the render thread:
+				auto& renderDataComponent = newRenderableEntitiesView.get<gr::RenderDataComponent>(newEntity);
+				renderManager->EnqueueRenderCommand<gr::CreateRenderObjectCommand>(renderDataComponent.m_objectID);
+
+				m_registry.erase<NewEntityMarker>(newEntity);
+			}
+
+			// Update dirty component data:
+			auto renderDataComponentView = m_registry.view<gr::RenderDataComponent>();
+			for (auto renderableEntity : renderDataComponentView)
+			{
+				auto& renderDataComponent = newRenderableEntitiesView.get<gr::RenderDataComponent>(renderableEntity);
+
+				// Bounds:
+				if (m_registry.all_of<gr::Bounds, DirtyMarker<gr::Bounds>>(renderableEntity))
+				{
+					renderManager->EnqueueRenderCommand<fr::UpdateBoundsDataRenderCommand>(
+						renderDataComponent.m_objectID,
+						m_registry.get<gr::Bounds>(renderableEntity));
+
+					m_registry.erase<DirtyMarker<gr::Bounds>>(renderableEntity);
+				}
+			}
+
+			// Handle any non-renderable new entities:
+			auto newEntitiesView = m_registry.view<NewEntityMarker>();
+			for (auto newEntity : newRenderableEntitiesView)
+			{
+				// For now, we just erase the marker...
+				m_registry.erase<NewEntityMarker>(newEntity);
+			}
 		}
 	}
+
+
+	entt::entity GameplayManager::CreateEntity()
+	{
+		entt::entity newEntity = entt::null;
+		{
+			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
+			newEntity = m_registry.create();
+		}
+
+		EmplaceComponent<NewEntityMarker>(newEntity);
+
+		return newEntity;
+	}
+
+
+	void GameplayManager::UpdateSceneBounds()
+	{
+		{
+			// We're only viewing the registry and modifying components in place; Only need a read lock
+			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+
+			auto sceneBoundsEntityView = m_registry.view<gr::Bounds, fr::IsSceneBoundsMarker>();
+			SEAssert("A unique scene bounds entity must exist",
+				sceneBoundsEntityView.front() == sceneBoundsEntityView.back());
+
+			// Copy the current bounds so we can detect if it changes
+			gr::Bounds prevBounds = sceneBoundsEntityView.get<gr::Bounds>(sceneBoundsEntityView.front());
+
+			// Modify our bounds component in-place:
+			m_registry.patch<gr::Bounds>(sceneBoundsEntityView.front(), [&](auto& boundsComponent)
+				{
+					auto meshEntities = m_registry.view<gr::Mesh>();
+
+					for (auto entity : meshEntities)
+					{
+						auto& meshComponent = m_registry.get<gr::Mesh>(entity);
+
+						if (meshComponent.GetTransform()->HasChanged())
+						{
+							boundsComponent.ExpandBounds(meshComponent.GetBounds().GetTransformedAABBBounds(
+								meshComponent.GetTransform()->GetGlobalMatrix()));
+						}
+					}
+				});
+
+			if (sceneBoundsEntityView.get<gr::Bounds>(sceneBoundsEntityView.front()) != prevBounds)
+			{
+				EmplaceComponent<DirtyMarker<gr::Bounds>>(sceneBoundsEntityView.front());
+			}
+		}
+	}
+
+
+
 
 
 	void GameplayManager::UpdateUpdateables(double stepTimeMs) const

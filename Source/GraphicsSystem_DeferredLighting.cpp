@@ -194,7 +194,7 @@ namespace
 
 			gr::Camera* const shadowCam = shadowMap->ShadowCamera();
 			lightParams.g_shadowCamNearFarBiasMinMax = glm::vec4(
-				shadowCam->NearFar(),
+				shadowCam->GetNearFar(),
 				shadowMap->GetMinMaxShadowBias());
 
 			// Type-specific shadow params:
@@ -233,8 +233,8 @@ namespace gr
 	constexpr char const* k_gsName = "Deferred Lighting Graphics System";
 
 
-	DeferredLightingGraphicsSystem::DeferredLightingGraphicsSystem()
-		: GraphicsSystem(k_gsName)
+	DeferredLightingGraphicsSystem::DeferredLightingGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
+		: GraphicsSystem(k_gsName, owningGSM)
 		, NamedObject(k_gsName)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
@@ -524,7 +524,8 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
 	{
-		GBufferGraphicsSystem* gBufferGS = renderSystem.GetGraphicsSystem<GBufferGraphicsSystem>();
+		GBufferGraphicsSystem* gBufferGS = 
+			m_owningGraphicsSystemManager->GetGraphicsSystem<GBufferGraphicsSystem>();
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
 		
 		// Create a shared lighting stage texture target:

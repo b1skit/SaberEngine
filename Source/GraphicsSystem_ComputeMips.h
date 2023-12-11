@@ -8,7 +8,7 @@ namespace gr
 	class ComputeMipsGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
-		ComputeMipsGraphicsSystem();
+		ComputeMipsGraphicsSystem(gr::GraphicsSystemManager*);
 
 		~ComputeMipsGraphicsSystem() override {}
 

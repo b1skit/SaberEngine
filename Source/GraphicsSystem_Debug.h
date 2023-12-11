@@ -9,7 +9,7 @@ namespace gr
 	{
 	public:
 
-		DebugGraphicsSystem();
+		DebugGraphicsSystem(gr::GraphicsSystemManager*);
 
 		void Create(re::StagePipeline&);
 
