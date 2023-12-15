@@ -1,11 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Assert.h"
 #include "BoundsComponent.h"
 #include "Camera.h"
 #include "CoreEngine.h"
 #include "GameplayManager.h"
 #include "MarkerComponents.h"
+#include "NameComponent.h"
 #include "PlayerObject.h"
+#include "RenderDataComponent.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
 
@@ -55,14 +56,19 @@ namespace fr
 			{
 				auto& renderDataComponent = renderDataEntitiesView.get<gr::RenderDataComponent>(renderable);
 
-				// Destroy renderable components:
+				// Destroy render data components:
 				if (m_registry.all_of<gr::Bounds>(renderable))
 				{
-					renderManager->EnqueueRenderCommand<fr::DestroyBoundsDataRenderCommand>(renderDataComponent.m_objectID);
+
+					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Bounds>>(
+						renderDataComponent.GetRenderObjectIDs()[0]);
 				}
 
-				// Finally, destroy the render object:
-				renderManager->EnqueueRenderCommand<gr::DestroyRenderObjectCommand>(renderDataComponent.m_objectID);
+				// Finally, destroy the render objects:
+				for (auto& renderObjectID : renderDataComponent.GetRenderObjectIDs())
+				{
+					renderManager->EnqueueRenderCommand<gr::DestroyRenderObjectCommand>(renderObjectID);
+				}				
 			}
 		}
 
@@ -129,7 +135,8 @@ namespace fr
 			{
 				// Enqueue a command to create a new object on the render thread:
 				auto& renderDataComponent = newRenderableEntitiesView.get<gr::RenderDataComponent>(newEntity);
-				renderManager->EnqueueRenderCommand<gr::CreateRenderObjectCommand>(renderDataComponent.m_objectID);
+				renderManager->EnqueueRenderCommand<gr::CreateRenderObjectCommand>(
+					renderDataComponent.GetRenderObjectIDs()[0]);
 
 				m_registry.erase<NewEntityMarker>(newEntity);
 			}
@@ -143,8 +150,8 @@ namespace fr
 				// Bounds:
 				if (m_registry.all_of<gr::Bounds, DirtyMarker<gr::Bounds>>(renderableEntity))
 				{
-					renderManager->EnqueueRenderCommand<fr::UpdateBoundsDataRenderCommand>(
-						renderDataComponent.m_objectID,
+					renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::Bounds>>(
+						renderDataComponent.GetRenderObjectIDs()[0],
 						m_registry.get<gr::Bounds>(renderableEntity));
 
 					m_registry.erase<DirtyMarker<gr::Bounds>>(renderableEntity);
@@ -162,7 +169,13 @@ namespace fr
 	}
 
 
-	entt::entity GameplayManager::CreateEntity()
+	entt::entity GameplayManager::CreateEntity(std::string const& name)
+	{
+		return CreateEntity(name.c_str());
+	}
+
+
+	entt::entity GameplayManager::CreateEntity(char const* name)
 	{
 		entt::entity newEntity = entt::null;
 		{
@@ -170,6 +183,7 @@ namespace fr
 			newEntity = m_registry.create();
 		}
 
+		EmplaceComponent<NameComponent>(newEntity, name);
 		EmplaceComponent<NewEntityMarker>(newEntity);
 
 		return newEntity;
@@ -200,6 +214,11 @@ namespace fr
 
 						if (meshComponent.GetTransform()->HasChanged())
 						{
+							// TODO: BUG HERE??????????????????????????????????????????????????????????????????????????
+							// -> BOUNDS IS ALWAYS GROWING... NEVER SHRINKING
+							//		-> WHY DO WE NEED TO DO THIS EVERY FRAME ANYWAY?
+							//			-> JUST STORE BOUNDS IN LOCAL SPACE, AND TRANSFORM TO WORLD SPACE ON DEMAND
+
 							boundsComponent.ExpandBounds(meshComponent.GetBounds().GetTransformedAABBBounds(
 								meshComponent.GetTransform()->GetGlobalMatrix()));
 						}

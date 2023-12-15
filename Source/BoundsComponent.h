@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Bounds.h"
-#include "RenderDataComponent.h"
+#include "RenderDataIDs.h"
 
 
 
@@ -17,29 +17,33 @@ namespace fr
 	void AttachBoundsComponent(fr::GameplayManager&, entt::entity);
 
 
-	class UpdateBoundsDataRenderCommand
+	class BoundsComponent
 	{
 	public:
-		UpdateBoundsDataRenderCommand(gr::RenderObjectID, gr::Bounds const&);
+		BoundsComponent() = default;
+		BoundsComponent(glm::vec3 minXYZ, glm::vec3 maxXYZ);
+		BoundsComponent(glm::vec3 minXYZ, glm::vec3 maxXYZ, std::vector<glm::vec3> const& positions);
 
-		static void Execute(void*);
-		static void Destroy(void*);
+		gr::Bounds& GetMainBounds() { return m_bounds; }
+
+		std::vector<gr::Bounds>& GetPrimitiveBounds() { return m_primitiveBounds; }
 
 	private:
-		const gr::RenderObjectID m_objectID;
-		const gr::Bounds m_boundsData;
+		gr::Bounds m_bounds; // Main bounds
+		std::vector<gr::Bounds> m_primitiveBounds;
+	};
+
+	struct BoundsRenderData
+	{
+		glm::vec3 m_minXYZ;
+		glm::vec3 m_maxXYZ;
 	};
 
 
-	class DestroyBoundsDataRenderCommand
+	struct BoundsCollectionRenderData
 	{
-	public:
-		DestroyBoundsDataRenderCommand(gr::RenderObjectID);
+		const BoundsRenderData m_bounds; // Main Bounds: Contains all primitive bounds
 
-		static void Execute(void*);
-		static void Destroy(void*);
-
-	private:
-		const gr::RenderObjectID m_objectID;
+		std::vector<BoundsRenderData> m_primitiveBounds; // Bounds of any primitives contained within the main bounds
 	};
 }

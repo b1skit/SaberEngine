@@ -7,6 +7,12 @@ namespace fr
 {
 	class GameplayManager;
 
+	entt::entity CreatePlayerCameraEntity(fr::GameplayManager&);
 
-	void AttachCameraComponent(fr::GameplayManager&, entt::entity);
+	//void AttachCameraComponent(fr::GameplayManager&, entt::entity);
+
+	struct CameraRenderData
+	{
+
+	};
 }

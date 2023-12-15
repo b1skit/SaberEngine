@@ -102,7 +102,9 @@ namespace gr
 		SEAssert("Index is out of bounds", index < m_meshPrimitives.size());
 		m_meshPrimitives[index] = replacement;
 
-		UpdateBounds();	
+		// TODO: WHEN WE REMOVE THE BOUNDS DURING THE ECS CONVERSION, WE'LL NEED TO HANDLE UPDATING THE BOUNDS COMPONENT
+		// IF A MESH PRIMITIVE CHANGES
+		UpdateBounds();
 	}
 
 

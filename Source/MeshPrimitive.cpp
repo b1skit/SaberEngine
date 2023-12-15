@@ -116,6 +116,7 @@ namespace gr
 		: NamedObject(name)
 		, m_meshMaterial(material)
 		, m_params(meshParams)
+		, m_localBounds(positionMinXYZ, positionMaxXYZ, reinterpret_cast<std::vector<glm::vec3> const&>(positions))
 	{
 		m_indexStream = re::VertexStream::Create(
 			re::VertexStream::Lifetime::Permanent,
@@ -199,18 +200,6 @@ namespace gr
 				std::move(*weights));
 		}
 
-
-		if (positionMinXYZ == gr::Bounds::k_invalidMinXYZ || positionMaxXYZ == gr::Bounds::k_invalidMaxXYZ)
-		{
-			// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast from floats
-			m_localBounds.ComputeBounds(reinterpret_cast<std::vector<vec3> const&>(
-				m_vertexStreams[Slot::Position]->GetDataAsVector()));
-		}
-		else
-		{
-			m_localBounds = Bounds(positionMinXYZ, positionMaxXYZ);
-		}
-
 		ComputeDataHash();
 	}
 
@@ -247,12 +236,6 @@ namespace gr
 		{
 			AddDataBytesToHash(m_indexStream->GetDataHash());
 		}
-	}
-
-
-	void MeshPrimitive::UpdateBounds(gr::Transform* transform)
-	{
-		m_localBounds.UpdateAABBBounds(transform);
 	}
 
 

@@ -1354,17 +1354,6 @@ namespace fr
 	}
 
 
-	void SceneData::UpdateSceneBounds(std::shared_ptr<gr::Mesh> mesh)
-	{
-		{
-			std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
-
-			m_sceneWorldSpaceBounds.ExpandBounds(
-				mesh->GetBounds().GetTransformedAABBBounds(mesh->GetTransform()->GetGlobalMatrix()));
-		}
-	}
-
-
 	void SceneData::UpdateSceneBounds()
 	{
 		SEAssert("This function should be called during the main loop only", m_finishedLoading);

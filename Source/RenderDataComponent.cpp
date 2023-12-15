@@ -3,6 +3,7 @@
 #include "RenderManager.h"
 #include "RenderSystem.h"
 
+
 namespace gr
 {
 	std::atomic<gr::RenderObjectID> RenderDataComponent::s_objectIDs = 0;

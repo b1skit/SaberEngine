@@ -1,19 +1,13 @@
+// © 2023 Adam Badke. All rights reserved.
 #pragma once
+#include "NamedObject.h"
 
 
 namespace fr
 {
-	class NameComponent
+	class NameComponent final : public virtual en::NamedObject
 	{
 	public:
-		NameComponent(char const* name) { strcpy(m_name, name); }
-		NameComponent(std::string const& name) { strcpy(m_name, name.c_str()); }
-
-		char const* GetName() { return m_name; }
-
-
-	private:
-		static constexpr uint32_t k_maxNameLength = 128;
-		char m_name[1024];
+		NameComponent(std::string const& name) : en::NamedObject(name) {}
 	};
 }

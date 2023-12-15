@@ -190,7 +190,9 @@ namespace re
 		// Just swap the buffers here, since RenderManager::PreUpdate is blocking
 		m_renderCommandManager.SwapBuffers();
 
-
+		// TEMPORARY HACK: Execute the render commands here, while the main thread waits. We need to make sure that the
+		// render commands are executed before proceeding, until everything else here is cleaned up and moved out
+		m_renderCommandManager.Execute(); // Process render commands
 
 		// Copy frame data:
 		SEAssert("Render batches should be empty", m_renderBatches.empty());
@@ -209,7 +211,7 @@ namespace re
 		// "Swap" our CPU-side PB data buffers, now that our render systems have written to them
 		re::Context::Get()->GetParameterBlockAllocator().SwapCPUBuffers(frameNum);
 
-		// Create any new resources that have been loaded since the last frame:
+		// Create any new resources that have been by ExecuteUpdatePipeline calls (e.g. target sets, parameter blocks):
 		CreateAPIResources();
 
 		// Swap our API buffers: We (currently) need to do this after this CreateAPIResources call, as we also call
@@ -229,8 +231,8 @@ namespace re
 
 		HandleEvents();
 
-		m_renderCommandManager.Execute(); // Process render commands
 		
+		// TODO: Process render commands here (post swap)
 		// TODO: Move render system/GS updates here
 		// TODO: Handle ParameterBlock writing here
 		// TODO: Handle new resource creation here

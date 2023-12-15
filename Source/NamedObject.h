@@ -12,6 +12,7 @@ namespace en
 
 	public:
 		explicit NamedObject(std::string const& name);
+		explicit NamedObject(char const* name);
 
 		// m_name as supplied at construction
 		std::string const& GetName() const;
@@ -49,6 +50,17 @@ namespace en
 	inline NamedObject::NamedObject(std::string const& name)
 	{
 		SEAssert("Empty name strings are not allowed", !name.empty());
+
+		SetName(name);
+		ComputeUniqueID();
+	}
+
+
+	inline NamedObject::NamedObject(char const* name)
+	{
+		constexpr size_t k_maxNameLength = 260; // Windows MAX_PATH = 260 chars, including null terminator
+		SEAssert("Empty, null, or non-terminated name strings are not allowed", 
+			strnlen_s(name, k_maxNameLength) > 0 && strnlen_s(name, k_maxNameLength) < k_maxNameLength);
 
 		SetName(name);
 		ComputeUniqueID();

@@ -1,8 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
+#include "Assert.h"
 #include "EngineComponent.h"
-#include "NamedObject.h"
 #include "Updateable.h"
 
 
@@ -28,7 +27,8 @@ namespace fr
 
 
 		// EnTT wrappers:
-		entt::entity CreateEntity();
+		entt::entity CreateEntity(std::string const& name);
+		entt::entity CreateEntity(char const* name);
 
 		template<typename T>
 		entt::entity GetEntityFromComponent(T const&) const;

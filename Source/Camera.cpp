@@ -173,7 +173,7 @@ namespace gr
 	{
 		m_matricesDirty |= m_transform->HasChanged();
 		RecomputeMatrices();
-		UpdateCameraParamBlockData();
+		UpdateCameraParamBlockData(); // DEPRECATED
 	}
 
 

@@ -97,10 +97,6 @@ namespace fr
 
 
 	private:
-		void UpdateSceneBounds(std::shared_ptr<gr::Mesh> mesh);
-
-
-	private:
 		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;
 		std::unordered_map<DataHash, std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
 		mutable std::mutex m_meshesAndMeshPrimitivesMutex;

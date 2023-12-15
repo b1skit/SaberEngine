@@ -11,9 +11,7 @@ namespace fr
 	{
 		fr::GameplayManager* gameplayMgr = fr::GameplayManager::Get();
 
-		entt::entity sceneNodeEntity = gameplayMgr->CreateEntity();
-
-		gameplayMgr->EmplaceComponent<fr::NameComponent>(sceneNodeEntity, name);
+		entt::entity sceneNodeEntity = gameplayMgr->CreateEntity(name);
 
 		gr::Transform* sceneNodeTransform = 
 			gameplayMgr->EmplaceComponent<gr::Transform>(sceneNodeEntity, parent);

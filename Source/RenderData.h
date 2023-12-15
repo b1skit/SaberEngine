@@ -2,8 +2,10 @@
 #pragma once
 #include "Assert.h"
 #include "CastUtils.h"
-#include "RenderDataComponent.h"
+#include "RenderDataIDs.h"
 #include "ThreadProtector.h"
+
+struct TransformRenderData;
 
 
 namespace gr
@@ -13,12 +15,12 @@ namespace gr
 	class RenderData
 	{
 	public:
-		RenderData() = default;
-		~RenderData() = default;
+		RenderData();
+		~RenderData();
 
 		void Destroy();
 
-		// Data interface:
+		// Render data interface:
 		void RegisterObject(gr::RenderObjectID);
 		void DestroyObject(gr::RenderObjectID);
 
@@ -32,6 +34,17 @@ namespace gr
 
 		template<typename T>
 		void DestroyObjectData(gr::RenderObjectID);
+
+
+		// Transform interface.
+		// We treat Transforms as a special case because all render objects require a Transform, and we expect
+		// Transforms to be the largest and most frequently updated data mirrored on the render thread. It's likely many
+		// render objects share a transform (e.g. multiple mesh primitives), so we can minimize duplicated effort.
+		void RegisterTransform(gr::TransformID);
+		void UnregisterTransform(gr::TransformID);
+
+		void SetTransformData(gr::TransformID, TransformRenderData const&);
+		[[nodiscard]] TransformRenderData const& GetTransformData(gr::TransformID) const;
 
 
 	public:
@@ -67,6 +80,20 @@ namespace gr
 	private:
 		typedef std::vector<uint32_t> ObjectTypeToDataIndexTable; // [data type index] == object index
 
+		struct RenderObjectMetadata
+		{
+			ObjectTypeToDataIndexTable m_objectTypeToDataIndexTable;
+			
+			gr::TransformID m_transformID;
+		};
+
+		struct TransformMetadata
+		{
+			uint32_t m_transformIdx;
+			uint32_t m_referenceCount;
+		};
+		
+
 
 	public:
 		// Iterate over multiple data types, with each iteration's elements associated by gr::RenderObjectID.
@@ -80,8 +107,8 @@ namespace gr
 			friend class gr::RenderData;
 			ObjectIterator(
 				gr::RenderData const* renderData,
-				std::unordered_map<gr::RenderObjectID, ObjectTypeToDataIndexTable>::const_iterator objectIDToDataIndicesBeginItr,
-				std::unordered_map<gr::RenderObjectID, ObjectTypeToDataIndexTable>::const_iterator const objectIDToDataIndicesEndItr,
+				std::unordered_map<gr::RenderObjectID, RenderObjectMetadata>::const_iterator renderObjectMetadataBeginItr,
+				std::unordered_map<gr::RenderObjectID, RenderObjectMetadata>::const_iterator const renderObjectMetadataEndItr,
 				std::tuple<Ts const*...> endPtrs);
 
 
@@ -89,7 +116,9 @@ namespace gr
 			template<typename T>
 			[[nodiscard]] T const& Get() const;
 
-			gr::RenderObjectID GetCurrentRenderObjectID() const;
+			gr::RenderObjectID GetRenderObjectID() const;
+
+			TransformRenderData const& GetTransform() const;
 
 			ObjectIterator& operator++(); // Prefix increment
 			ObjectIterator operator++(int); // Postfix increment
@@ -109,8 +138,8 @@ namespace gr
 			std::tuple<Ts const*...> m_endPtrs;
 
 			gr::RenderData const* m_renderData;
-			std::unordered_map<gr::RenderObjectID, ObjectTypeToDataIndexTable>::const_iterator m_objectIDToDataIndicesItr;
-			std::unordered_map<gr::RenderObjectID, ObjectTypeToDataIndexTable>::const_iterator const m_objectIDToDataIndicesEndItr;
+			std::unordered_map<gr::RenderObjectID, RenderObjectMetadata>::const_iterator m_renderObjectMetadataItr;
+			std::unordered_map<gr::RenderObjectID, RenderObjectMetadata>::const_iterator const m_renderObjectMetadataEndItr;
 		};
 
 
@@ -144,11 +173,20 @@ namespace gr
 
 	private:
 		static constexpr uint8_t k_invalidDataTypeIdx = std::numeric_limits<uint8_t>::max();
-		static constexpr uint32_t k_invalidDataIdx = std::numeric_limits<uint32_t>::max();		
+		static constexpr uint32_t k_invalidDataIdx = std::numeric_limits<uint32_t>::max();
 
-		std::unordered_map<gr::RenderObjectID, ObjectTypeToDataIndexTable> m_objectIDToDataIndices;
+		// Each type of render data is tightly packed into an array maintained in m_dataVectors
 		std::map<size_t, uint8_t> m_typeInfoHashToDataVectorIdx;
 		std::vector<std::shared_ptr<void>> m_dataVectors; // Use shared_ptr because it type erases
+
+		// Render objects are represented as a set of indexes into arrays of typed data (meshes, materials, etc)
+		std::unordered_map<gr::RenderObjectID, RenderObjectMetadata> m_objectIDToRenderObjectMetadata;
+
+		// Every render object has a transform, but many render objects share the same transform (E.g. mesh primitives).
+		// We expect Transforms to be both our largest and most frequently updated data mirrored in RenderData, so we
+		// treat them as a special case to allow sharing
+		std::unordered_map<gr::TransformID, TransformMetadata> m_transformIDToTransformMetadata;
+		std::vector<TransformRenderData> m_transformRenderData;
 
 		// RenderData accesses are all const, and we only update the RenderData via RenderCommands which are processed
 		// single-threaded at the beginning of a render thread frame. Thus, we don't have any syncronization primitives;
@@ -168,24 +206,24 @@ namespace gr
 		SEAssert("Data type index is OOB", s_dataTypeIndex < m_dataVectors.size());
 		std::vector<T>& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[s_dataTypeIndex]).get();
 
-		SEAssert("Invalid object ID", m_objectIDToDataIndices.contains(objectID));
-		ObjectTypeToDataIndexTable& dataIndexTable = m_objectIDToDataIndices.at(objectID);
+		SEAssert("Invalid object ID", m_objectIDToRenderObjectMetadata.contains(objectID));
+		RenderObjectMetadata& renderObjectMetadata = m_objectIDToRenderObjectMetadata.at(objectID);
 
 		// If the data index table doesn't contain enough room for the data type index, increase its size and pad with
 		// the invalid flag
-		if (s_dataTypeIndex >= dataIndexTable.size())
+		if (s_dataTypeIndex >= renderObjectMetadata.m_objectTypeToDataIndexTable.size())
 		{
-			dataIndexTable.resize(s_dataTypeIndex + 1, k_invalidDataIdx);
+			renderObjectMetadata.m_objectTypeToDataIndexTable.resize(s_dataTypeIndex + 1, k_invalidDataIdx);
 		}
 
 		// Get the index of the data in data vector for its type
-		const uint32_t dataIndex = dataIndexTable[s_dataTypeIndex];
+		const uint32_t dataIndex = renderObjectMetadata.m_objectTypeToDataIndexTable[s_dataTypeIndex];
 		if (dataIndex == k_invalidDataIdx)
 		{
 			// This is the first time we've added data for this object, we must store the destination index
 			const uint32_t newDataIndex = util::CheckedCast<uint32_t>(dataVector.size());
 			dataVector.emplace_back(*data);
-			dataIndexTable[s_dataTypeIndex] = newDataIndex;
+			renderObjectMetadata.m_objectTypeToDataIndexTable[s_dataTypeIndex] = newDataIndex;
 		}
 		else
 		{
@@ -237,14 +275,14 @@ namespace gr
 		util::ScopedThreadProtector threadProjector(m_threadProtector);
 
 		SEAssert("Data index is OOB", dataTypeIndex < m_dataVectors.size());
-		SEAssert("Invalid object ID", m_objectIDToDataIndices.contains(objectID));
-		ObjectTypeToDataIndexTable& dataIndexTable = m_objectIDToDataIndices.at(objectID);
+		SEAssert("Invalid object ID", m_objectIDToRenderObjectMetadata.contains(objectID));
+		RenderObjectMetadata& renderObjectMetadata = m_objectIDToRenderObjectMetadata.at(objectID);
 
 		std::vector<T>& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[dataTypeIndex]).get();
 
 		// Replace our dead element with one from the end:
 		const size_t indexToMove = dataVector.size() - 1;
-		const uint32_t indexToReplace = dataIndexTable[dataTypeIndex];
+		const uint32_t indexToReplace = renderObjectMetadata.m_objectTypeToDataIndexTable[dataTypeIndex];
 		SEAssert("Object does not have data of this type to destroy", indexToReplace != k_invalidDataIdx);
 
 		if (indexToMove != indexToReplace)
@@ -254,9 +292,9 @@ namespace gr
 			// Find whatever table was referencing the index we moved, and update it. This is expensive, as we iterate
 			// over every RenderObjectID until we find a match
 			bool foundMatch = false;
-			for (auto& objectDataIndices : m_objectIDToDataIndices)
+			for (auto& objectDataIndices : m_objectIDToRenderObjectMetadata)
 			{
-				ObjectTypeToDataIndexTable& dataIndexTableToUpdate = objectDataIndices.second;
+				ObjectTypeToDataIndexTable& dataIndexTableToUpdate = objectDataIndices.second.m_objectTypeToDataIndexTable;
 				if (dataTypeIndex < dataIndexTableToUpdate.size() && dataIndexTableToUpdate[dataTypeIndex] == indexToMove)
 				{
 					dataIndexTableToUpdate[dataTypeIndex] = indexToReplace;
@@ -269,7 +307,7 @@ namespace gr
 		dataVector.pop_back();
 
 		// Finally, remove the index in the object's data index table:
-		dataIndexTable[dataTypeIndex] = k_invalidDataIdx;
+		renderObjectMetadata.m_objectTypeToDataIndexTable[dataTypeIndex] = k_invalidDataIdx;
 	}
 
 
@@ -285,6 +323,7 @@ namespace gr
 			s_dataTypeIdx = util::CheckedCast<uint8_t>(m_dataVectors.size());
 			m_dataVectors.emplace_back(std::make_shared<std::vector<T>>());
 
+			// Store a map of the typeID hash code to the data type index for const access
 			m_typeInfoHashToDataVectorIdx.emplace(typeid(T).hash_code(), s_dataTypeIdx);
 
 			// Guarantee there is always some backing memory allocated for our iterator .end() to reference
@@ -374,8 +413,8 @@ namespace gr
 
 		return ObjectIterator<Ts...>(
 			this,
-			m_objectIDToDataIndices.begin(),
-			m_objectIDToDataIndices.end(),
+			m_objectIDToRenderObjectMetadata.begin(),
+			m_objectIDToRenderObjectMetadata.end(),
 			std::make_tuple(GetEndPtr<Ts>()...));
 	}
 
@@ -386,7 +425,7 @@ namespace gr
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		const std::unordered_map<gr::RenderObjectID, ObjectTypeToDataIndexTable>::const_iterator objectDataIndicesEndItr =
-			m_objectIDToDataIndices.end();
+			m_objectIDToRenderObjectMetadata.end();
 
 		return ObjectIterator<Ts...>(
 			nullptr,
@@ -426,17 +465,17 @@ namespace gr
 	template<typename... Ts>
 	RenderData::ObjectIterator<Ts...>::ObjectIterator(
 		gr::RenderData const* renderData,
-		std::unordered_map<gr::RenderObjectID, gr::RenderData::ObjectTypeToDataIndexTable>::const_iterator objectIDToDataIndicesBeginItr,
-		std::unordered_map<gr::RenderObjectID, gr::RenderData::ObjectTypeToDataIndexTable>::const_iterator const objectIDToDataIndicesEndItr,
+		std::unordered_map<gr::RenderObjectID, RenderObjectMetadata>::const_iterator objectIDToRenderObjectMetadataBeginItr,
+		std::unordered_map<gr::RenderObjectID, RenderObjectMetadata>::const_iterator const objectIDToRenderObjectMetadataEndItr,
 		std::tuple<Ts const*...> endPtrs)
 		: m_endPtrs(endPtrs)
 		, m_renderData(renderData)
-		, m_objectIDToDataIndicesItr(objectIDToDataIndicesBeginItr)
-		, m_objectIDToDataIndicesEndItr(objectIDToDataIndicesEndItr)
+		, m_renderObjectMetadataItr(objectIDToRenderObjectMetadataBeginItr)
+		, m_renderObjectMetadataEndItr(objectIDToRenderObjectMetadataEndItr)
 	{
 		// Find our first valid set of starting pointers:
 		bool hasValidPtrs = false;
-		while (m_objectIDToDataIndicesItr != m_objectIDToDataIndicesEndItr)
+		while (m_renderObjectMetadataItr != m_renderObjectMetadataEndItr)
 		{
 			// We have a valid set of gr::RenderObjectID data indices. Make a tuple from them
 			m_ptrs = std::make_tuple(GetPtrFromCurrentObjectDataIndicesItr<Ts>()...);
@@ -452,13 +491,13 @@ namespace gr
 			}
 
 			// Try the next object
-			m_objectIDToDataIndicesItr++;
+			m_renderObjectMetadataItr++;
 		}
 
 		if (!hasValidPtrs)
 		{
 			SEAssert("We should have checked every element, how is this possible?",
-				m_objectIDToDataIndicesItr == m_objectIDToDataIndicesEndItr);
+				m_renderObjectMetadataItr == m_renderObjectMetadataEndItr);
 
 			m_ptrs = m_endPtrs;
 		}
@@ -478,10 +517,10 @@ namespace gr
 		// hopefully this won't be an issue...
 
 		bool hasValidPtrs = true;
-		while (m_objectIDToDataIndicesItr != m_objectIDToDataIndicesEndItr)
+		while (m_renderObjectMetadataItr != m_renderObjectMetadataEndItr)
 		{
-			m_objectIDToDataIndicesItr++;
-			if (m_objectIDToDataIndicesItr == m_objectIDToDataIndicesEndItr)
+			m_renderObjectMetadataItr++;
+			if (m_renderObjectMetadataItr == m_renderObjectMetadataEndItr)
 			{
 				hasValidPtrs = false;
 				break;
@@ -527,9 +566,16 @@ namespace gr
 
 	
 	template<typename... Ts>
-	gr::RenderObjectID RenderData::ObjectIterator<Ts...>::GetCurrentRenderObjectID() const
+	gr::RenderObjectID RenderData::ObjectIterator<Ts...>::GetRenderObjectID() const
 	{
-		return m_objectIDToDataIndicesItr->first;
+		return m_renderObjectMetadataItr->first;
+	}
+
+
+	template <typename... Ts>
+	TransformRenderData const& RenderData::ObjectIterator<Ts...>::GetTransform() const
+	{
+		return m_renderData->GetTransformData(m_renderObjectMetadataItr->second.m_transformID);
 	}
 
 
@@ -538,7 +584,7 @@ namespace gr
 	{
 		const uint8_t dataTypeIndex = m_renderData->GetDataIndexFromType<T>();
 
-		ObjectTypeToDataIndexTable const& objectTypeToDataIndexTable = m_objectIDToDataIndicesItr->second;
+		ObjectTypeToDataIndexTable const& objectTypeToDataIndexTable = m_renderObjectMetadataItr->second;
 
 		// Make sure the data type index is in bounds of the current object's data index table (it could be invalid, or
 		// the table might not have allocated an entry for this type)

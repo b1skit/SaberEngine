@@ -91,9 +91,7 @@ namespace gr
 		gr::Material* GetMeshMaterial() const;
 		void SetMeshMaterial(std::shared_ptr<gr::Material> material);
 
-		gr::Bounds& GetBounds();
 		gr::Bounds const& GetBounds() const;
-		void UpdateBounds(gr::Transform* transform); // TODO: Currently this assumes the MeshPrimitive is not skinned
 		
 		re::VertexStream const* GetIndexStream() const;
 		re::VertexStream const* GetVertexStream(Slot slot) const;
@@ -161,12 +159,6 @@ namespace gr
 	{
 		m_meshMaterial = material;
 	};
-
-
-	inline gr::Bounds& MeshPrimitive::GetBounds()
-	{
-		return m_localBounds;
-	}
 
 
 	inline gr::Bounds const& MeshPrimitive::GetBounds() const

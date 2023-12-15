@@ -473,6 +473,12 @@
     <ClCompile Include="RenderDataComponent.cpp">
       <Filter>Source Files\gr\Components</Filter>
     </ClCompile>
+    <ClCompile Include="CameraComponent.cpp">
+      <Filter>Source Files\fr\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshComponent.cpp">
+      <Filter>Source Files\fr\Components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -894,6 +900,21 @@
     </ClInclude>
     <ClInclude Include="RenderDataComponent.h">
       <Filter>Header Files\gr\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="TransformComponent.h">
+      <Filter>Header Files\fr\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshComponent.h">
+      <Filter>Header Files\fr\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraComponent.h">
+      <Filter>Header Files\fr\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialComponent.h">
+      <Filter>Header Files\fr\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderDataIDs.h">
+      <Filter>Header Files\gr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

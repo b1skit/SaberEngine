@@ -139,7 +139,7 @@ namespace en
 			return;
 		}
 
-		m_sceneBatches = std::move(re::BatchManager::BuildBatches(SceneManager::GetSceneData()->GetMeshes()));
+		m_sceneBatches = std::move(re::BatchManager::BuildBatches(sceneMeshes));
 	}
 }
 
