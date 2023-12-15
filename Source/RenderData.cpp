@@ -105,9 +105,12 @@ namespace gr
 
 			SEAssert("Invalid replacement index", indexToReplace < m_transformRenderData.size());
 
+			// Copy the transform to its new location, and remove the end element
 			m_transformRenderData[indexToReplace] = m_transformRenderData[indexToMove];
+			m_transformRenderData.pop_back();
 
-			// Update the indexes stored in any records referencing the entry we just moved:
+			// Update the indexes stored in any records referencing the entry we just moved. Transforms can be shared,
+			// so we need to check all records
 			for (auto& record : m_transformIDToTransformMetadata)
 			{
 				if (record.second.m_transformIdx == indexToMove)
