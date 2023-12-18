@@ -1,6 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Bounds.h"
+#include "GameplayManager.h"
+#include "MarkerComponents.h"
+#include "RenderDataComponent.h"
 #include "Transform.h"
+
 
 using glm::vec3;
 using glm::vec4;
@@ -13,8 +17,38 @@ namespace
 	constexpr float k_bounds3DDepthBias = 0.01f; // Offset to ensure axis min != axis max
 }
 
-namespace gr
+namespace fr
 {
+	void Bounds::CreateSceneBounds(fr::GameplayManager& gpm)
+	{
+		constexpr char const* k_sceneBoundsName = "SceneBounds";
+
+		entt::entity sceneBoundsEntity = gpm.CreateEntity(k_sceneBoundsName);
+
+		gpm.EmplaceComponent<fr::Bounds>(sceneBoundsEntity);
+		gpm.EmplaceComponent<gr::RenderDataComponent>(sceneBoundsEntity, 1);
+		gpm.EmplaceComponent<IsSceneBoundsMarker>(sceneBoundsEntity);
+		gpm.EmplaceComponent<DirtyMarker<fr::Bounds>>(sceneBoundsEntity);
+	}
+
+
+	void Bounds::AttachBoundsComponent(fr::GameplayManager& gpm, entt::entity entity)
+	{
+		gpm.TryEmplaceComponent<fr::Bounds>(entity);
+		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::Bounds>>(entity);
+	}
+
+
+	Bounds::RenderData Bounds::CreateRenderData(fr::Bounds const& bounds)
+	{
+		return Bounds::RenderData
+		{
+			.m_minXYZ = bounds.m_minXYZ,
+			.m_maxXYZ = bounds.m_maxXYZ
+		};
+	}
+
+
 	Bounds::Bounds()
 		: m_minXYZ(k_invalidMinXYZ)
 		, m_maxXYZ(k_invalidMaxXYZ) 
@@ -33,7 +67,7 @@ namespace gr
 		: m_minXYZ(minXYZ)
 		, m_maxXYZ(maxXYZ)
 	{
-		if (m_minXYZ == gr::Bounds::k_invalidMinXYZ || m_maxXYZ == gr::Bounds::k_invalidMaxXYZ)
+		if (m_minXYZ == fr::Bounds::k_invalidMinXYZ || m_maxXYZ == fr::Bounds::k_invalidMaxXYZ)
 		{
 			// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast from floats
 			ComputeBounds(positions);
@@ -41,19 +75,19 @@ namespace gr
 	}
 
 
-	bool Bounds::operator==(gr::Bounds const& rhs) const
+	bool Bounds::operator==(fr::Bounds const& rhs) const
 	{
 		return m_minXYZ == rhs.m_minXYZ && m_maxXYZ == rhs.m_maxXYZ;
 	}
 
 
-	bool Bounds::operator!=(gr::Bounds const& rhs) const
+	bool Bounds::operator!=(fr::Bounds const& rhs) const
 	{
 		return operator==(rhs) == false;
 	}
 
 
-	// Returns a new AABB Bounds, transformed from local space using transform
+	// Returns a new AABB BoundsConcept, transformed from local space using transform
 	Bounds Bounds::GetTransformedAABBBounds(mat4 const& worldMatrix) const
 	{
 		// Assemble our current AABB points into a cube of 8 vertices:

@@ -90,7 +90,7 @@ namespace en
 
 	void SceneManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
-		// Updateables have been ticked by the GameplayManager; Now we can update the Transforms and scene Bounds
+		// Updateables have been ticked by the GameplayManager; Now we can update the Transforms and scene BoundsConcept
 		m_sceneData->UpdateSceneBounds();
 	}
 

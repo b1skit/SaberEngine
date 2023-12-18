@@ -72,8 +72,8 @@ namespace gr
 			std::string const& name,
 			std::vector<uint32_t>* indices,
 			std::vector<float>& positions,
-			glm::vec3 const& positionMinXYZ, // Pass gr::Bounds::k_invalidMinXYZ to compute bounds manually
-			glm::vec3 const& positionMaxXYZ, // Pass gr::Bounds::k_invalidMaxXYZ to compute bounds manually
+			glm::vec3 const& positionMinXYZ, // Pass fr::BoundsConcept::k_invalidMinXYZ to compute bounds manually
+			glm::vec3 const& positionMaxXYZ, // Pass fr::BoundsConcept::k_invalidMaxXYZ to compute bounds manually
 			std::vector<float>* normals,
 			std::vector<float>* tangents,
 			std::vector<float>* uv0,
@@ -91,7 +91,7 @@ namespace gr
 		gr::Material* GetMeshMaterial() const;
 		void SetMeshMaterial(std::shared_ptr<gr::Material> material);
 
-		gr::Bounds const& GetBounds() const;
+		fr::Bounds const& GetBounds() const;
 		
 		re::VertexStream const* GetIndexStream() const;
 		re::VertexStream const* GetVertexStream(Slot slot) const;
@@ -112,7 +112,7 @@ namespace gr
 		std::array<std::shared_ptr<re::VertexStream>, Slot_Count> m_vertexStreams;
 		std::shared_ptr<re::VertexStream> m_indexStream;
 
-		gr::Bounds m_localBounds; // MeshPrimitive bounds, in local space		
+		fr::Bounds m_localBounds; // MeshPrimitive bounds, in local space		
 
 		void ComputeDataHash() override;
 
@@ -121,8 +121,8 @@ namespace gr
 		MeshPrimitive(std::string const& name,
 			std::vector<uint32_t>* indices,
 			std::vector<float>& positions,
-			glm::vec3 const& positionMinXYZ, // Pass gr::Bounds::k_invalidMinXYZ to compute bounds manually
-			glm::vec3 const& positionMaxXYZ, // Pass gr::Bounds::k_invalidMaxXYZ to compute bounds manually
+			glm::vec3 const& positionMinXYZ, // Pass fr::BoundsConcept::k_invalidMinXYZ to compute bounds manually
+			glm::vec3 const& positionMaxXYZ, // Pass fr::BoundsConcept::k_invalidMaxXYZ to compute bounds manually
 			std::vector<float>* normals,
 			std::vector<float>* tangents,
 			std::vector<float>* uv0,
@@ -161,7 +161,7 @@ namespace gr
 	};
 
 
-	inline gr::Bounds const& MeshPrimitive::GetBounds() const
+	inline fr::Bounds const& MeshPrimitive::GetBounds() const
 	{
 		return m_localBounds;
 	}

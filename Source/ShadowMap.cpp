@@ -37,9 +37,9 @@ namespace
 
 
 	gr::Camera::Config ComputeDirectionalShadowCameraConfigFromSceneBounds(
-		gr::Transform* lightTransform, gr::Bounds& sceneWorldBounds)
+		gr::Transform* lightTransform, fr::Bounds& sceneWorldBounds)
 	{
-		gr::Bounds const& transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
+		fr::Bounds const& transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
 			glm::inverse(lightTransform->GetGlobalMatrix()));
 
 		gr::Camera::Config shadowCamConfig;
@@ -160,7 +160,7 @@ namespace gr
 		case gr::ShadowMap::ShadowType::Orthographic:
 		{
 			// Update shadow cam bounds:
-			gr::Bounds sceneWorldBounds = en::SceneManager::GetSceneData()->GetWorldSpaceSceneBounds();
+			fr::Bounds sceneWorldBounds = en::SceneManager::GetSceneData()->GetWorldSpaceSceneBounds();
 
 			Camera::Config const& shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
 				m_owningLight->GetTransform(), sceneWorldBounds);

@@ -1,9 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
+
 namespace gr
 {
 	class Transform;
+}
+
+namespace fr
+{
+	class GameplayManager;
 
 
 	class Bounds
@@ -12,6 +18,24 @@ namespace gr
 		static constexpr glm::vec3 k_invalidMinXYZ = glm::vec3(std::numeric_limits<float>::max());
 		static constexpr glm::vec3 k_invalidMaxXYZ = -glm::vec3(std::numeric_limits<float>::max());
 		// Note: -max is the furthest away from max
+
+
+	public:
+		struct IsSceneBoundsMarker {}; //Unique: Only added to 1 bounds component for the entire scene
+
+		struct RenderData
+		{
+			// Axis-Aligned Bounding Box (AABB) points
+			glm::vec3 m_minXYZ;
+			glm::vec3 m_maxXYZ;
+		};
+
+
+	public:
+		static void CreateSceneBounds(fr::GameplayManager&);
+		static void AttachBoundsComponent(fr::GameplayManager&, entt::entity);
+		static RenderData CreateRenderData(fr::Bounds const&);
+
 
 	public:
 		Bounds();
@@ -23,10 +47,10 @@ namespace gr
 		Bounds& operator=(Bounds const& rhs) = default;
 		~Bounds() = default;
 
-		bool operator==(gr::Bounds const&) const;
-		bool operator!=(gr::Bounds const&) const;
+		bool operator==(fr::Bounds const&) const;
+		bool operator!=(fr::Bounds const&) const;
 
-		// Returns a new AABB Bounds, transformed from local space using transform
+		// Returns a new AABB BoundsConcept, transformed from local space using transform
 		Bounds GetTransformedAABBBounds(glm::mat4 const& worldMatrix) const;
 
 		void ExpandBounds(Bounds const& newContents); // Expands a bounds to contain another bounds

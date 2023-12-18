@@ -50,7 +50,7 @@ namespace
 	}
 
 
-	re::Batch BuildBoundingBoxBatch(gr::Bounds const& bounds, glm::vec3 const& boxColor)
+	re::Batch BuildBoundingBoxBatch(fr::Bounds const& bounds, glm::vec3 const& boxColor)
 	{
 		/* Construct a cube from 8 points:
 		*     e----f

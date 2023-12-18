@@ -24,7 +24,7 @@ namespace re
 
 namespace fr
 {
-	class SceneNodeEntity;
+	class SceneNode;
 
 
 	class SceneData final : public virtual en::NamedObject
@@ -81,7 +81,7 @@ namespace fr
 		bool ShaderExists(uint64_t shaderIdentifier) const;
 
 		// SceneData bounds:
-		gr::Bounds const& GetWorldSpaceSceneBounds() const;
+		fr::Bounds const& GetWorldSpaceSceneBounds() const;
 		void UpdateSceneBounds();
 
 		// Post loading finalization callback: Allow objects that require the scene to be fully loaded to complete their
@@ -125,7 +125,7 @@ namespace fr
 		std::vector<std::shared_ptr<gr::Camera>> m_cameras;
 		mutable std::shared_mutex m_camerasReadWriteMutex;
 
-		gr::Bounds m_sceneWorldSpaceBounds;
+		fr::Bounds m_sceneWorldSpaceBounds;
 		mutable std::mutex m_sceneBoundsMutex;
 
 		std::vector<std::function<void()>> m_postLoadCallbacks;

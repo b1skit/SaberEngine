@@ -17,7 +17,7 @@
 #include "ParameterBlock.h"
 #include "RenderManager.h"
 #include "SceneData.h"
-#include "SceneNodeEntity.h"
+#include "SceneNodeConcept.h"
 #include "Shader.h"
 #include "ShadowMap.h"
 #include "ThreadPool.h"
@@ -556,7 +556,7 @@ namespace
 
 		std::shared_ptr<gr::Mesh> newMesh = std::make_shared<gr::Mesh>(meshName, parent);
 
-		// Add each MeshPrimitive as a child of the SceneNodeEntity's Mesh:
+		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
 		for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
 		{
 			// Populate the mesh params:
@@ -608,8 +608,8 @@ namespace
 
 			// Unpack each of the primitive's vertex attrbutes:
 			std::vector<float> positions;
-			glm::vec3 positionsMinXYZ(gr::Bounds::k_invalidMinXYZ);
-			glm::vec3 positionsMaxXYZ(gr::Bounds::k_invalidMaxXYZ);
+			glm::vec3 positionsMinXYZ(fr::Bounds::k_invalidMinXYZ);
+			glm::vec3 positionsMaxXYZ(fr::Bounds::k_invalidMaxXYZ);
 			std::vector<float> normals;
 			std::vector<float> tangents;
 			std::vector<float> uv0;
@@ -845,14 +845,14 @@ namespace
 			{
 				const std::string nodeName = current->name ? current->name : "Unnamed child node";
 
-				gr::Transform* childNode = fr::SceneNodeEntity::CreateSceneNodeEntity(nodeName.c_str(), parent);
+				gr::Transform* childNode = fr::SceneNode::Create(nodeName.c_str(), parent);
 
 				LoadObjectHierarchyRecursiveHelper(
 					sceneRootPath, scene, data, current->children[i], childNode, loadTasks);
 			}
 		}
 
-		// Set the SceneNodeEntity transform:
+		// Set the SceneNode transform:
 		loadTasks.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([current, parent]()
 		{
 			SetTransformValues(current, parent);
@@ -903,7 +903,7 @@ namespace
 			LOG("Loading root node %zu: \"%s\"", node, nodeName.c_str());
 
 			gr::Transform* rootSceneNodeTransform = 
-				fr::SceneNodeEntity::CreateSceneNodeEntity(std::format("Root {}", node).c_str(), nullptr); // Root has no parent
+				fr::SceneNode::Create(std::format("Root {}", node).c_str(), nullptr); // Root has no parent
 
 			LoadObjectHierarchyRecursiveHelper(
 				sceneRootPath, scene, data, data->scenes->nodes[node], rootSceneNodeTransform, loadTasks);
@@ -1120,7 +1120,7 @@ namespace fr
 		}
 		{
 			std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
-			m_sceneWorldSpaceBounds = gr::Bounds();
+			m_sceneWorldSpaceBounds = fr::Bounds();
 		}
 
 		m_finishedLoading = false; // Flag that Destroy has been called
@@ -1344,7 +1344,7 @@ namespace fr
 		}
 	}
 
-	gr::Bounds const& SceneData::GetWorldSpaceSceneBounds() const 
+	fr::Bounds const& SceneData::GetWorldSpaceSceneBounds() const 
 	{
 		SEAssert("Accessing this data is not thread safe during loading", m_finishedLoading);
 		{
@@ -1362,7 +1362,7 @@ namespace fr
 		{
 			std::unique_lock<std::mutex> lock(m_sceneBoundsMutex);
 
-			m_sceneWorldSpaceBounds = gr::Bounds();
+			m_sceneWorldSpaceBounds = fr::Bounds();
 			for (std::shared_ptr<gr::Mesh> mesh : m_meshes)
 			{
 				m_sceneWorldSpaceBounds.ExpandBounds(

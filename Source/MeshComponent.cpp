@@ -1,5 +1,4 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "BoundsComponent.h"
 #include "GameplayManager.h"
 #include "MeshComponent.h"
 #include "RenderManager.h"

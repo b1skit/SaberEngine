@@ -43,8 +43,8 @@ namespace gr
 		inline gr::Transform* GetTransform() { return m_ownerTransform; }
 		inline gr::Transform const* GetTransform() const { return m_ownerTransform; }
 
-		// Union of Bounds of all attached MeshPrimitives
-		inline gr::Bounds const& GetBounds() const { return m_localBounds; }
+		// Union of BoundsConcept of all attached MeshPrimitives
+		inline fr::Bounds const& GetBounds() const { return m_localBounds; }
 		void UpdateBounds();
 
 		void AddMeshPrimitive(std::shared_ptr<gr::MeshPrimitive> meshPrimitive);
@@ -63,7 +63,7 @@ namespace gr
 		Transform* m_ownerTransform; 
 
 		// DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!
-		gr::Bounds m_localBounds; // Mesh bounds, in local space
+		fr::Bounds m_localBounds; // Mesh bounds, in local space
 
 	private:
 		Mesh() = delete;

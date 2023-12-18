@@ -214,7 +214,6 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="Batch.cpp" />
     <ClCompile Include="BatchManager.cpp" />
     <ClCompile Include="Bounds.cpp" />
-    <ClCompile Include="BoundsComponent.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraComponent.cpp" />
     <ClCompile Include="CommandList_DX12.cpp" />
@@ -292,7 +291,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="CoreEngine.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="EventManager.cpp" />
-    <ClCompile Include="SceneNodeEntity.cpp" />
+    <ClCompile Include="SceneNodeConcept.cpp" />
     <ClCompile Include="GraphicsSystem_Bloom.cpp" />
     <ClCompile Include="GraphicsSystem_DeferredLighting.cpp" />
     <ClCompile Include="GraphicsSystem_GBuffer.cpp" />
@@ -341,7 +340,6 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BatchManager.h" />
-    <ClInclude Include="BoundsComponent.h" />
     <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="CastUtils.h" />
     <ClInclude Include="ConfigKeys.h" />
@@ -464,7 +462,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="Config.h" />
     <ClInclude Include="EventListener.h" />
     <ClInclude Include="EventManager.h" />
-    <ClInclude Include="SceneNodeEntity.h" />
+    <ClInclude Include="SceneNodeConcept.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="KeyConfiguration.h" />
     <ClInclude Include="Light.h" />

@@ -6,7 +6,7 @@
 #include "Transform.h"
 
 using gr::Transform;
-using gr::Bounds;
+using fr::Bounds;
 using gr::MeshPrimitive;
 using std::shared_ptr;
 using std::vector;

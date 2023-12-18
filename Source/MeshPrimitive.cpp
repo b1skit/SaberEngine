@@ -8,7 +8,7 @@
 
 using en::Config;
 using gr::Transform;
-using gr::Bounds;
+using fr::Bounds;
 using gr::MeshPrimitive;
 using glm::pi;
 using glm::mat4;
@@ -65,8 +65,8 @@ namespace gr
 		std::string const& name,
 		std::vector<uint32_t>* indices,
 		std::vector<float>& positions,
-		glm::vec3 const& positionMinXYZ, // Pass gr::Bounds::k_invalidMinXYZ to compute bounds manually
-		glm::vec3 const& positionMaxXYZ, // Pass gr::Bounds::k_invalidMaxXYZ to compute bounds manually
+		glm::vec3 const& positionMinXYZ, // Pass fr::BoundsConcept::k_invalidMinXYZ to compute bounds manually
+		glm::vec3 const& positionMaxXYZ, // Pass fr::BoundsConcept::k_invalidMaxXYZ to compute bounds manually
 		std::vector<float>* normals,
 		std::vector<float>* tangents,
 		std::vector<float>* uv0,

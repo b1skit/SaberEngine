@@ -60,7 +60,7 @@ namespace fr
 	{
 		MeshRenderData(gr::Mesh const& mesh);
 
-		// Meshes can have an arbitrary number of MeshComponents (each which have their own Bounds, Material, etc). To
+		// Meshes can have an arbitrary number of MeshComponents (each which have their own BoundsConcept, Material, etc). To
 		// keep things clean for now, we pack them into a single RenderData object
 		struct MeshPrimitiveRenderData
 		{

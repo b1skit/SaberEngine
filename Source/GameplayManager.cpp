@@ -1,5 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "BoundsComponent.h"
 #include "Camera.h"
 #include "CoreEngine.h"
 #include "GameplayManager.h"
@@ -28,7 +27,7 @@ namespace fr
 		m_updateables.reserve(k_updateablesReserveAmount);
 
 		// Create a scene bounds entity:
-		fr::CreateSceneBoundsEntity(*this);
+		fr::Bounds::CreateSceneBounds(*this);
 		UpdateSceneBounds();
 
 		
@@ -57,10 +56,10 @@ namespace fr
 				auto& renderDataComponent = renderDataEntitiesView.get<gr::RenderDataComponent>(renderable);
 
 				// Destroy render data components:
-				if (m_registry.all_of<gr::Bounds>(renderable))
+				if (m_registry.all_of<fr::Bounds>(renderable))
 				{
 
-					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Bounds>>(
+					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<fr::Bounds>>(
 						renderDataComponent.GetRenderObjectIDs()[0]);
 				}
 
@@ -108,7 +107,7 @@ namespace fr
 		// Handle input (update event listener components)
 		// <physics, animation, etc>
 		// Update Transforms
-		UpdateSceneBounds();
+		UpdateSceneBounds(); // TODO: This is expensive, we should only do this on demand?
 		// Update Lights (Need bounds, transforms to be updated)
 		// Update Cameras
 		// Update Renderables
@@ -147,14 +146,14 @@ namespace fr
 			{
 				auto& renderDataComponent = newRenderableEntitiesView.get<gr::RenderDataComponent>(renderableEntity);
 
-				// Bounds:
-				if (m_registry.all_of<gr::Bounds, DirtyMarker<gr::Bounds>>(renderableEntity))
+				// BoundsConcept:
+				if (m_registry.all_of<fr::Bounds, DirtyMarker<fr::Bounds>>(renderableEntity))
 				{
-					renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::Bounds>>(
+					renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<fr::Bounds::RenderData>>(
 						renderDataComponent.GetRenderObjectIDs()[0],
-						m_registry.get<gr::Bounds>(renderableEntity));
+						fr::Bounds::CreateRenderData(m_registry.get<fr::Bounds>(renderableEntity)));
 
-					m_registry.erase<DirtyMarker<gr::Bounds>>(renderableEntity);
+					m_registry.erase<DirtyMarker<fr::Bounds>>(renderableEntity);
 				}
 			}
 
@@ -196,38 +195,33 @@ namespace fr
 			// We're only viewing the registry and modifying components in place; Only need a read lock
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
 
-			auto sceneBoundsEntityView = m_registry.view<gr::Bounds, fr::IsSceneBoundsMarker>();
+			auto sceneBoundsEntityView = m_registry.view<fr::Bounds, fr::Bounds::IsSceneBoundsMarker>();
 			SEAssert("A unique scene bounds entity must exist",
 				sceneBoundsEntityView.front() == sceneBoundsEntityView.back());
 
 			// Copy the current bounds so we can detect if it changes
-			gr::Bounds prevBounds = sceneBoundsEntityView.get<gr::Bounds>(sceneBoundsEntityView.front());
+			const fr::Bounds prevBounds = sceneBoundsEntityView.get<fr::Bounds>(sceneBoundsEntityView.front());
 
 			// Modify our bounds component in-place:
-			m_registry.patch<gr::Bounds>(sceneBoundsEntityView.front(), [&](auto& boundsComponent)
+			m_registry.patch<fr::Bounds>(sceneBoundsEntityView.front(), [&](auto& boundsComponent)
 				{
-					auto meshEntities = m_registry.view<gr::Mesh>();
+					// Reset our bounds: It'll grow to encompass all bounds
+					boundsComponent = Bounds();
 
+					// Check each mesh:
+					auto meshEntities = m_registry.view<gr::Mesh>();
 					for (auto entity : meshEntities)
 					{
 						auto& meshComponent = m_registry.get<gr::Mesh>(entity);
 
-						if (meshComponent.GetTransform()->HasChanged())
-						{
-							// TODO: BUG HERE??????????????????????????????????????????????????????????????????????????
-							// -> BOUNDS IS ALWAYS GROWING... NEVER SHRINKING
-							//		-> WHY DO WE NEED TO DO THIS EVERY FRAME ANYWAY?
-							//			-> JUST STORE BOUNDS IN LOCAL SPACE, AND TRANSFORM TO WORLD SPACE ON DEMAND
-
-							boundsComponent.ExpandBounds(meshComponent.GetBounds().GetTransformedAABBBounds(
-								meshComponent.GetTransform()->GetGlobalMatrix()));
-						}
+						boundsComponent.ExpandBounds(meshComponent.GetBounds().GetTransformedAABBBounds(
+							meshComponent.GetTransform()->GetGlobalMatrix()));
 					}
 				});
 
-			if (sceneBoundsEntityView.get<gr::Bounds>(sceneBoundsEntityView.front()) != prevBounds)
+			if (sceneBoundsEntityView.get<fr::Bounds>(sceneBoundsEntityView.front()) != prevBounds)
 			{
-				EmplaceComponent<DirtyMarker<gr::Bounds>>(sceneBoundsEntityView.front());
+				EmplaceComponent<DirtyMarker<fr::Bounds>>(sceneBoundsEntityView.front());
 			}
 		}
 	}
@@ -235,6 +229,8 @@ namespace fr
 
 
 
+
+	// DEPRECATED:
 
 	void GameplayManager::UpdateUpdateables(double stepTimeMs) const
 	{
