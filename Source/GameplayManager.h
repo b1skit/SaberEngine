@@ -51,10 +51,16 @@ namespace fr
 		template<typename T>
 		void RemoveComponent(entt::entity);
 
+		template<typename T>
+		T& GetComponent(entt::entity);
+
+		template<typename T>
+		T const& GetComponent(entt::entity) const;
+
 
 	private:
 		template<typename T>
-		T* TryGetComponentFromEntity(entt::entity entity);
+		T* TryGetComponent(entt::entity entity);
 
 	private:
 		entt::basic_registry<entt::entity> m_registry; // uint32_t entities
@@ -147,7 +153,7 @@ namespace fr
 	template<typename T>
 	void GameplayManager::TryEmplaceComponent(entt::entity entity)
 	{
-		T* existingComponent = TryGetComponentFromEntity<T>(entity);
+		T* existingComponent = TryGetComponent<T>(entity);
 		if (existingComponent == nullptr)
 		{
 			EmplaceComponent<T>(entity);
@@ -158,7 +164,7 @@ namespace fr
 	template<typename T, typename... Args>
 	T* GameplayManager::TryEmplaceComponent(entt::entity entity, Args&&... args)
 	{
-		T* existingComponent = TryGetComponentFromEntity<T>(entity);
+		T* existingComponent = TryGetComponent<T>(entity);
 		if (existingComponent == nullptr)
 		{
 			existingComponent = EmplaceComponent<T, Args...>(entity, std::forward<Args>(args)...);
@@ -178,12 +184,26 @@ namespace fr
 
 
 	template<typename T>
-	T* GameplayManager::TryGetComponentFromEntity(entt::entity entity)
+	T* GameplayManager::TryGetComponent(entt::entity entity)
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
 
 			return m_registry.try_get<T>(entity);
 		}
+	}
+
+
+	template<typename T>
+	T& GameplayManager::GetComponent(entt::entity entity)
+	{
+		return m_registry.get<T>(entity);
+	}
+
+
+	template<typename T>
+	T const& GameplayManager::GetComponent(entt::entity entity) const
+	{
+		return m_registry.get<T>(entity);
 	}
 }

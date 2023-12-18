@@ -476,6 +476,9 @@
     <ClCompile Include="Bounds.cpp">
       <Filter>Source Files\fr\Components</Filter>
     </ClCompile>
+    <ClCompile Include="Relationship.cpp">
+      <Filter>Source Files\fr\Components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -908,6 +911,9 @@
       <Filter>Header Files\fr</Filter>
     </ClInclude>
     <ClInclude Include="Bounds.h">
+      <Filter>Header Files\fr\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Relationship.h">
       <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
   </ItemGroup>

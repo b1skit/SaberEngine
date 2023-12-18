@@ -5,6 +5,7 @@
 #include "MarkerComponents.h"
 #include "NameComponent.h"
 #include "PlayerObject.h"
+#include "Relationship.h"
 #include "RenderDataComponent.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
