@@ -2,59 +2,49 @@
 #include "Material_GLTF.h"
 
 
-namespace
-{
-	// GLTF metallic roughness PBR material parameter block
-	// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#reference-material	
-	struct PBRMetallicRoughnessParams
-	{
-		glm::vec4 g_baseColorFactor{ 1.f, 1.f, 1.f, 1.f };
-
-		float g_metallicFactor = 1.f;
-		float g_roughnessFactor = 1.f;
-		float g_normalScale = 1.f;
-		float g_occlusionStrength = 1.f;
-
-		// KHR_materials_emissive_strength: Multiplies emissive factor
-		glm::vec4 g_emissiveFactorStrength{ 0.f, 0.f, 0.f, 0.f }; // .xyz = emissive factor, .w = emissive strength
-
-		// Non-GLTF properties:
-		glm::vec4 g_f0{ 0.f, 0.f, 0.f, 0.f }; // .xyz = f0, .w = unused. For non-metals only
-
-		//float g_isDoubleSided;
-
-		static constexpr char const* const s_shaderName = "PBRMetallicRoughnessParams";
-	};
-}
-
-
 namespace gr
 {
+	Material_GLTF::RenderData Material_GLTF::GetRenderData(gr::Material_GLTF& material)
+	{
+		return Material_GLTF::RenderData
+		{
+			.m_pbrMetallicRoughnessParams = material.GetPBRMetallicRoughnessParamsData()
+		};
+	}
+
+
+	Material_GLTF::PBRMetallicRoughnessParams Material_GLTF::GetPBRMetallicRoughnessParamsData() const
+	{
+		return Material_GLTF::PBRMetallicRoughnessParams{
+
+			.g_baseColorFactor = m_baseColorFactor,
+
+			.g_metallicFactor = m_metallicFactor,
+			.g_roughnessFactor = m_roughnessFactor,
+			.g_normalScale = m_normalScale,
+			.g_occlusionStrength = m_occlusionStrength,
+
+			.g_emissiveFactorStrength = glm::vec4(
+				m_emissiveFactor.rgb,
+				m_emissiveStrength),
+
+			.g_f0 = glm::vec4(
+				m_f0.rgb,
+				0.f)
+		};
+	}
+
+
 	void Material_GLTF::CreateUpdateParameterBlock()
 	{
 		if (m_matParamsIsDirty || !m_matParams)
 		{
-			PBRMetallicRoughnessParams pbrMetallicRoughnessParams{};
-
-			pbrMetallicRoughnessParams.g_baseColorFactor = m_baseColorFactor;
-			
-			pbrMetallicRoughnessParams.g_metallicFactor = m_metallicFactor;
-			pbrMetallicRoughnessParams.g_roughnessFactor = m_roughnessFactor;
-			pbrMetallicRoughnessParams.g_normalScale = m_normalScale;
-			pbrMetallicRoughnessParams.g_occlusionStrength = m_occlusionStrength;
-
-			pbrMetallicRoughnessParams.g_emissiveFactorStrength = glm::vec4(
-				m_emissiveFactor.rgb,
-				m_emissiveStrength);
-
-			pbrMetallicRoughnessParams.g_f0 = glm::vec4(
-				m_f0.rgb,
-				0.f);
+			PBRMetallicRoughnessParams const& pbrMetallicRoughnessParams = GetPBRMetallicRoughnessParamsData();
 
 			if (!m_matParams)
 			{
 				m_matParams = re::ParameterBlock::Create(
-					::PBRMetallicRoughnessParams::s_shaderName,
+					PBRMetallicRoughnessParams::s_shaderName,
 					pbrMetallicRoughnessParams,
 					re::ParameterBlock::PBType::Mutable);
 			}

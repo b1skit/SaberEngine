@@ -4,26 +4,46 @@
 #include "RenderManager.h"
 
 
+namespace fr
+{
+	class GameplayManager;
+}
+
 namespace gr
 {
 	// Automatically assigns itself a unique RenderObjectID
 	struct RenderDataComponent
 	{
-		RenderDataComponent(uint32_t numPrimitives)
-		{
-			for (uint32_t primitive = 0; primitive < numPrimitives; primitive++)
-			{
-				m_objectIDs.emplace_back(s_objectIDs.fetch_add(1));
-			}
-		}		
+		static RenderDataComponent& AttachRenderDataComponent(
+			fr::GameplayManager&, entt::entity, uint32_t expectedNumPrimitives);
 
-		std::vector<gr::RenderObjectID> const& GetRenderObjectIDs() const { return m_objectIDs; }
+
+		
+		
+		RenderDataComponent(RenderDataComponent&&) noexcept;
+		RenderDataComponent& operator=(RenderDataComponent&&) noexcept;
+
+		size_t GetNumRenderObjectIDs() const;
+		gr::RenderObjectID GetRenderObjectID(size_t index) const;
+		void AddRenderObject();
 
 	private:
 		std::vector<gr::RenderObjectID> m_objectIDs;
+		mutable std::shared_mutex m_objectIDsMutex;
+
 
 	private:
 		static std::atomic<gr::RenderObjectID> s_objectIDs;
+
+	
+	private: // No copying allowed
+		RenderDataComponent() = delete;
+		RenderDataComponent(RenderDataComponent const&) = delete;
+		RenderDataComponent& operator=(RenderDataComponent const&) = delete;
+
+
+	private: // Use AttachRenderDataComponent()
+		RenderDataComponent(uint32_t expectedNumPrimitives);
 	};
 
 

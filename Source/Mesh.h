@@ -5,6 +5,11 @@
 #include "MeshPrimitive.h"
 
 
+namespace fr
+{
+	class GameplayManager;
+}
+
 namespace re
 {
 	class ParameterBlock;
@@ -17,6 +22,10 @@ namespace gr
 
 	class Mesh
 	{
+	public:
+		static void AttachMeshConcept(fr::GameplayManager&, entt::entity sceneNode, uint32_t expectedNumPrimitives);
+
+
 	public:
 		struct InstancedMeshParams
 		{
@@ -55,8 +64,10 @@ namespace gr
 
 
 	private:
+		// DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!
 		const std::string m_name;
 
+		// DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!
 		std::vector<std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
 
 		// DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!

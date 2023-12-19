@@ -9,13 +9,17 @@
 #include "VertexStream.h"
 
 
-namespace gr
+namespace fr
 {
-	class Transform;
+	class GameplayManager;
+	class Relationship;
 }
 
 namespace gr
 {
+	class Transform;
+
+
 	class MeshPrimitive final : public virtual en::NamedObject, public virtual en::HashedDataObject
 	{
 	public:
@@ -68,6 +72,32 @@ namespace gr
 
 
 	public:
+		struct RenderData
+		{
+			MeshPrimitiveParams m_meshPrimitiveParams;
+			std::array<re::VertexStream*, Slot_Count> m_vertexStreams;
+			re::VertexStream* m_indexStream;
+			
+			uint64_t m_dataHash;
+		};
+
+
+	public:
+		entt::entity AttachMeshPrimitiveConcept(
+			fr::GameplayManager&,
+			entt::entity meshConcept,
+			std::vector<uint32_t>* indices,
+			std::vector<float>& positions,
+			std::vector<float>* normals,
+			std::vector<float>* tangents,
+			std::vector<float>* uv0,
+			std::vector<float>* colors,
+			std::vector<uint8_t>* joints,
+			std::vector<float>* weights,
+			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
+
+
+	public:
 		[[nodiscard]] static std::shared_ptr<MeshPrimitive> Create(
 			std::string const& name,
 			std::vector<uint32_t>* indices,
@@ -82,6 +112,9 @@ namespace gr
 			std::vector<float>* weights,
 			std::shared_ptr<gr::Material> material,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
+
+		MeshPrimitive(MeshPrimitive&& rhs) noexcept = default;
+		MeshPrimitive& operator=(MeshPrimitive&& rhs) = default;
 
 		~MeshPrimitive(){ Destroy(); }
 		
@@ -133,13 +166,10 @@ namespace gr
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
 
-	private:
-		// No copying allowed
+	private: // No copying allowed
 		MeshPrimitive() = delete;
 		MeshPrimitive(MeshPrimitive const& rhs) = delete;
-		MeshPrimitive(MeshPrimitive&& rhs) noexcept = delete;
 		MeshPrimitive& operator=(MeshPrimitive const& rhs) = delete;
-		MeshPrimitive& operator=(MeshPrimitive&& rhs) = delete;
 	};
 
 

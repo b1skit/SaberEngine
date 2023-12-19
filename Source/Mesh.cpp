@@ -1,9 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "GameplayManager.h"
 #include "ImGuiUtils.h"
 #include "Mesh.h"
 #include "MeshPrimitive.h"
 #include "ParameterBlock.h"
+#include "Relationship.h"
+#include "RenderDataComponent.h"
 #include "Transform.h"
+#include "TransformComponent.h"
 
 using gr::Transform;
 using fr::Bounds;
@@ -66,6 +70,20 @@ namespace gr
 	}
 
 
+	void Mesh::AttachMeshConcept(fr::GameplayManager& gpm, entt::entity sceneNode, uint32_t expectedNumPrimitives)
+	{
+		SEAssert("A mesh requires a transform. The scene node should have attached this already",
+			gpm.HasComponent<fr::TransformComponent>(sceneNode));
+
+		fr::Bounds::AttachBoundsComponent(gpm, sceneNode); // Mesh bounds: Encompasses all attached primitive bounds
+		
+		fr::Relationship& meshRelationship = fr::Relationship::AttachRelationshipComponent(gpm, sceneNode);
+
+		gr::RenderDataComponent& renderDataComponent = 
+			gr::RenderDataComponent::AttachRenderDataComponent(gpm, sceneNode, expectedNumPrimitives);
+	}
+
+
 	Mesh::Mesh(std::string const& name, gr::Transform* ownerTransform)
 		: m_name(name)
 		, m_ownerTransform(ownerTransform)
@@ -102,8 +120,8 @@ namespace gr
 		SEAssert("Index is out of bounds", index < m_meshPrimitives.size());
 		m_meshPrimitives[index] = replacement;
 
-		// TODO: WHEN WE REMOVE THE BOUNDS DURING THE ECS CONVERSION, WE'LL NEED TO HANDLE UPDATING THE BOUNDS COMPONENT
-		// IF A MESH PRIMITIVE CHANGES
+		// ECS_CONVERSION TODO: WHEN WE REMOVE THE BOUNDS DURING THE ECS CONVERSION, WE'LL NEED TO HANDLE UPDATING THE
+		// BOUNDS COMPONENT IF A MESH PRIMITIVE CHANGES
 		UpdateBounds();
 	}
 

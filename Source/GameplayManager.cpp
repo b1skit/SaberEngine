@@ -61,14 +61,15 @@ namespace fr
 				{
 
 					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<fr::Bounds>>(
-						renderDataComponent.GetRenderObjectIDs()[0]);
+						renderDataComponent.GetRenderObjectID(0));
 				}
 
 				// Finally, destroy the render objects:
-				for (auto& renderObjectID : renderDataComponent.GetRenderObjectIDs())
+				for (size_t roIdx = 0; roIdx < renderDataComponent.GetNumRenderObjectIDs(); roIdx++)
 				{
-					renderManager->EnqueueRenderCommand<gr::DestroyRenderObjectCommand>(renderObjectID);
-				}				
+					renderManager->EnqueueRenderCommand<gr::DestroyRenderObjectCommand>(
+						renderDataComponent.GetRenderObjectID(roIdx));
+				}			
 			}
 		}
 
@@ -136,7 +137,7 @@ namespace fr
 				// Enqueue a command to create a new object on the render thread:
 				auto& renderDataComponent = newRenderableEntitiesView.get<gr::RenderDataComponent>(newEntity);
 				renderManager->EnqueueRenderCommand<gr::CreateRenderObjectCommand>(
-					renderDataComponent.GetRenderObjectIDs()[0]);
+					renderDataComponent.GetRenderObjectID(0));
 
 				m_registry.erase<NewEntityMarker>(newEntity);
 			}
@@ -151,8 +152,8 @@ namespace fr
 				if (m_registry.all_of<fr::Bounds, DirtyMarker<fr::Bounds>>(renderableEntity))
 				{
 					renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<fr::Bounds::RenderData>>(
-						renderDataComponent.GetRenderObjectIDs()[0],
-						fr::Bounds::CreateRenderData(m_registry.get<fr::Bounds>(renderableEntity)));
+						renderDataComponent.GetRenderObjectID(0),
+						fr::Bounds::GetRenderData(m_registry.get<fr::Bounds>(renderableEntity)));
 
 					m_registry.erase<DirtyMarker<fr::Bounds>>(renderableEntity);
 				}

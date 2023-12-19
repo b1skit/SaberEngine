@@ -91,8 +91,6 @@ namespace gr
 	private:
 		Transform* m_parent;
 
-		// TODO: These are dynamically allocated, thus not stored locally in Transform components. We should maybe use
-		// components to construct a hierarchy, or a fixed-size array?
 		std::vector<Transform*> m_children; 
 
 		// Transform's local orientation, *before* any parent transforms are applied:
@@ -120,7 +118,7 @@ namespace gr
 		// NOTE: To prevent deadlocks, Transforms aquire locks along the hierarchy in the order of child -> parent, and
 		// release in the reverse order (parent -> child) ONLY
 		mutable std::recursive_mutex m_transformMutex;
-
+		// ECS_CONVERSION TODO: This is no longer required (at least, doesn't need to be a recursive_mutex)
 
 	private:
 		Transform() = delete;

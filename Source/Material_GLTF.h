@@ -5,8 +5,44 @@
 
 namespace gr
 {
+	class GameplayManager;
+
+
 	class Material_GLTF : public virtual Material
 	{
+	public:
+		// GLTF metallic roughness PBR material parameter block
+		// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#reference-material
+		struct PBRMetallicRoughnessParams
+		{
+			glm::vec4 g_baseColorFactor{ 1.f, 1.f, 1.f, 1.f };
+
+			float g_metallicFactor = 1.f;
+			float g_roughnessFactor = 1.f;
+			float g_normalScale = 1.f;
+			float g_occlusionStrength = 1.f;
+
+			// KHR_materials_emissive_strength: Multiplies emissive factor
+			glm::vec4 g_emissiveFactorStrength{ 0.f, 0.f, 0.f, 0.f }; // .xyz = emissive factor, .w = emissive strength
+
+			// Non-GLTF properties:
+			glm::vec4 g_f0{ 0.f, 0.f, 0.f, 0.f }; // .xyz = f0, .w = unused. For non-metals only
+
+			//float g_isDoubleSided;
+
+			static constexpr char const* const s_shaderName = "PBRMetallicRoughnessParams";
+		};
+
+		struct RenderData
+		{
+			PBRMetallicRoughnessParams m_pbrMetallicRoughnessParams;
+		};
+
+	public:
+		static RenderData GetRenderData(gr::Material_GLTF&);
+		
+				
+
 	public:
 		std::shared_ptr<re::ParameterBlock> const GetParameterBlock() override;
 
@@ -56,6 +92,7 @@ namespace gr
 
 
 	private:
+		PBRMetallicRoughnessParams GetPBRMetallicRoughnessParamsData() const;
 		void CreateUpdateParameterBlock() override;
 	};
 

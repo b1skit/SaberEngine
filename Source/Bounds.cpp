@@ -26,7 +26,7 @@ namespace fr
 		entt::entity sceneBoundsEntity = gpm.CreateEntity(k_sceneBoundsName);
 
 		gpm.EmplaceComponent<fr::Bounds>(sceneBoundsEntity);
-		gpm.EmplaceComponent<gr::RenderDataComponent>(sceneBoundsEntity, 1);
+		gr::RenderDataComponent::AttachRenderDataComponent(gpm, sceneBoundsEntity, 1);
 		gpm.EmplaceComponent<IsSceneBoundsMarker>(sceneBoundsEntity);
 		gpm.EmplaceComponent<DirtyMarker<fr::Bounds>>(sceneBoundsEntity);
 	}
@@ -35,11 +35,12 @@ namespace fr
 	void Bounds::AttachBoundsComponent(fr::GameplayManager& gpm, entt::entity entity)
 	{
 		gpm.TryEmplaceComponent<fr::Bounds>(entity);
+		gr::RenderDataComponent::AttachRenderDataComponent(gpm, entity, 1);
 		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::Bounds>>(entity);
 	}
 
 
-	Bounds::RenderData Bounds::CreateRenderData(fr::Bounds const& bounds)
+	Bounds::RenderData Bounds::GetRenderData(fr::Bounds const& bounds)
 	{
 		return Bounds::RenderData
 		{

@@ -1,8 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
+#include "GameplayManager.h"
+#include "MarkerComponents.h"
 #include "Material.h"
 #include "Material_GLTF.h"
 #include "ParameterBlock.h"
+#include "Relationship.h"
 #include "Shader_Platform.h"
 #include "Shader.h"
 #include "Texture.h"
@@ -73,6 +76,30 @@ namespace
 
 namespace gr
 {
+	Material::MaterialComponent& Material::AttachMaterialConcept(
+		fr::GameplayManager& gpm, 
+		entt::entity meshPrimitiveConcept,
+		std::shared_ptr<gr::Material> sceneMaterial)
+	{
+		SEAssert("Cannot attach a null material", sceneMaterial != nullptr);
+
+		entt::entity materialEntity = gpm.CreateEntity(sceneMaterial->GetName());
+
+		// Attach the material component:		
+		gr::Material::MaterialComponent* matComponent = 
+			gpm.EmplaceComponent<gr::Material::MaterialComponent>(materialEntity, sceneMaterial.get());
+
+		// Relate the material to the owning mesh primitive:
+		fr::Relationship& materialRelationship = fr::Relationship::AttachRelationshipComponent(gpm, materialEntity);
+		materialRelationship.SetParent(gpm, meshPrimitiveConcept);
+
+		// Mark our Material as dirty:
+		gpm.EmplaceOrReplaceComponent<DirtyMarker<gr::Material::MaterialComponent>>(materialEntity);
+
+		return *matComponent;
+	}
+
+
 	std::shared_ptr<gr::Material> Material::Create(std::string const& name, MaterialType materialType)
 	{
 		std::shared_ptr<gr::Material> newMat;

@@ -479,6 +479,9 @@
     <ClCompile Include="Relationship.cpp">
       <Filter>Source Files\fr\Components</Filter>
     </ClCompile>
+    <ClCompile Include="TransformComponent.cpp">
+      <Filter>Source Files\fr\Components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">

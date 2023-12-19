@@ -23,12 +23,17 @@ namespace fr
 		entt::entity GetLastChild() const;
 
 
+	public:
+		Relationship(Relationship&&) noexcept;
+		Relationship& operator=(Relationship&&) noexcept;
+
+
 	private:
 		void AddChild(GameplayManager&, entt::entity);
 		void RemoveChild(GameplayManager&, entt::entity);
 		
 
-	public: // Use AttachRelationshipComponent instead
+	private: // Use AttachRelationshipComponent() instead
 		Relationship(entt::entity owningEntity);
 
 
@@ -43,35 +48,58 @@ namespace fr
 		// Children
 		entt::entity m_firstChild;
 		entt::entity m_lastChild;
+
+		mutable std::shared_mutex m_relationshipMutex;
+
+
+	private: // No copying allowed
+		Relationship() = delete;
+		Relationship(Relationship const&) = delete;
+		Relationship& operator=(Relationship const&) = delete;
 	};
 
 
 	inline entt::entity Relationship::GetParent() const
 	{
-		return m_parent;
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_relationshipMutex);
+			return m_parent;
+		}
 	}
 
 
 	inline entt::entity Relationship::GetNext() const
 	{
-		return m_next;
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_relationshipMutex);
+			return m_next;
+		}
 	}
 
 
 	inline entt::entity Relationship::GetPrev() const
 	{
-		return m_prev;
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_relationshipMutex);
+			return m_prev;
+		}
 	}
 
 
 	inline entt::entity Relationship::GetFirstChild() const
 	{
-		return m_firstChild;
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_relationshipMutex);
+			return m_firstChild;
+		}
 	}
 
 
 	inline entt::entity Relationship::GetLastChild() const
 	{
-		return m_lastChild;
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_relationshipMutex);
+			return m_lastChild;
+		}
 	}
 }

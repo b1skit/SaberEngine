@@ -1,10 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Config.h"
+#include "GameplayManager.h"
+#include "MarkerComponents.h"
 #include "MeshPrimitive.h"
+#include "NameComponent.h"
 #include "PipelineState.h"
+#include "Relationship.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
 #include "Transform.h"
+#include "TransformComponent.h"
 
 using en::Config;
 using gr::Transform;
@@ -61,12 +66,71 @@ namespace
 
 namespace gr
 {
+	entt::entity MeshPrimitive::AttachMeshPrimitiveConcept(
+		fr::GameplayManager& gpm,
+		entt::entity meshConcept,
+		std::vector<uint32_t>* indices,
+		std::vector<float>& positions,
+		std::vector<float>* normals,
+		std::vector<float>* tangents,
+		std::vector<float>* uv0,
+		std::vector<float>* colors,
+		std::vector<uint8_t>* joints,
+		std::vector<float>* weights,
+		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
+	{
+		SEAssert("A mesh primitive's owning mesh concept requires a Transform component",
+			gpm.HasComponent<fr::TransformComponent>(meshConcept));
+		SEAssert("A mesh primitive's owning mesh concept requires a Bounds component",
+			gpm.HasComponent<fr::Bounds>(meshConcept));
+		SEAssert("A mesh primitive's owning mesh concept requires a Relationship component",
+			gpm.HasComponent<fr::Relationship>(meshConcept));
+		SEAssert("A mesh primitive's owning mesh concept requires a NameComponent",
+			gpm.HasComponent<fr::NameComponent>(meshConcept));
+
+		fr::NameComponent const& meshConceptName = gpm.GetComponent<fr::NameComponent>(meshConcept);
+
+		// Each MeshPrimitive is an entity related to a Mesh concept via a Relationship
+		entt::entity meshPrimitiveEntity = gpm.CreateEntity(meshConceptName.GetName() + "_MeshPrimitive");
+
+		// Create the relationship with our parent entity:
+		fr::Relationship& meshRelationship = fr::Relationship::AttachRelationshipComponent(gpm, meshPrimitiveEntity);
+		meshRelationship.SetParent(gpm, meshConcept);
+
+		// Attach a MeshPrimitive object:
+		gpm.EmplaceComponent<gr::MeshPrimitive>(
+			meshPrimitiveEntity,
+			gr::MeshPrimitive(
+				"INDIVIDUAL NAMES ARE DEPRECATED", // ECS_CONVERSION TODO: Deprecated!!!!!!!!!!!!!!!!!!!!!
+				indices,
+				positions,
+				fr::Bounds::k_invalidMinXYZ, // ECS_CONVERSION TODO: Deprecated!!!!!!!!!!!!!!!!!!!!!
+				fr::Bounds::k_invalidMaxXYZ, // ECS_CONVERSION TODO: Deprecated!!!!!!!!!!!!!!!!!!!!!
+				normals,
+				tangents,
+				uv0,
+				colors,
+				joints,
+				weights,
+				nullptr, // ECS_CONVERSION TODO: Deprecated!!!!!!!!!!!!!!!!!!!!!
+				meshParams));
+
+		// Attach a primitive bounds
+		fr::Bounds::AttachBoundsComponent(gpm, meshPrimitiveEntity);
+
+		// Mark our new MeshPrimitive as dirty:
+		gpm.EmplaceOrReplaceComponent<DirtyMarker<gr::MeshPrimitive>>(meshPrimitiveEntity);
+
+		// Note: A Material component must be attached to the returned entity
+		return meshPrimitiveEntity;
+	}
+
 	std::shared_ptr<MeshPrimitive> MeshPrimitive::Create(
 		std::string const& name,
 		std::vector<uint32_t>* indices,
 		std::vector<float>& positions,
-		glm::vec3 const& positionMinXYZ, // Pass fr::BoundsConcept::k_invalidMinXYZ to compute bounds manually
-		glm::vec3 const& positionMaxXYZ, // Pass fr::BoundsConcept::k_invalidMaxXYZ to compute bounds manually
+		glm::vec3 const& positionMinXYZ, // Pass fr::Bounds::k_invalidMinXYZ to compute bounds manually
+		glm::vec3 const& positionMaxXYZ, // Pass fr::Bounds::k_invalidMaxXYZ to compute bounds manually
 		std::vector<float>* normals,
 		std::vector<float>* tangents,
 		std::vector<float>* uv0,

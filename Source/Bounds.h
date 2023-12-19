@@ -34,7 +34,7 @@ namespace fr
 	public:
 		static void CreateSceneBounds(fr::GameplayManager&);
 		static void AttachBoundsComponent(fr::GameplayManager&, entt::entity);
-		static RenderData CreateRenderData(fr::Bounds const&);
+		static RenderData GetRenderData(fr::Bounds const&);
 
 
 	public:

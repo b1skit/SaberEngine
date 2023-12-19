@@ -125,7 +125,7 @@ namespace gr
 	}
 
 
-	void RenderData::SetTransformData(gr::TransformID transformID, TransformRenderData const& transformRenderData)
+	void RenderData::SetTransformData(gr::TransformID transformID, fr::TransformComponent::RenderData const& transformRenderData)
 	{
 		// Catch illegal accesses during RenderData modification
 		util::ScopedThreadProtector threadProjector(m_threadProtector);
@@ -142,7 +142,7 @@ namespace gr
 	}
 
 
-	TransformRenderData const& RenderData::GetTransformData(gr::TransformID transformID) const
+	fr::TransformComponent::RenderData const& RenderData::GetTransformData(gr::TransformID transformID) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
