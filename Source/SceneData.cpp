@@ -313,13 +313,15 @@ namespace
 	}
 
 
-	void SetTransformValues(cgltf_node* current, gr::Transform* targetTransform)
+	void SetTransformValues(cgltf_node* current, entt::entity sceneNode)
 	{
 		SEAssert("Transform has both matrix and decomposed properties",
 			(current->has_matrix != (current->has_rotation || current->has_scale || current->has_translation)) ||
 			(current->has_matrix == 0 && current->has_rotation == 0 &&
 				current->has_scale == 0 && current->has_translation == 0)
 		);
+
+		gr::Transform& targetTransform = fr::SceneNode::GetSceneNodeTransform(sceneNode);
 
 		if (current->has_matrix)
 		{
@@ -331,25 +333,25 @@ namespace
 			glm::vec4 perspective;
 			glm::decompose(nodeModelMatrix, scale, rotation, translation, skew, perspective);
 
-			targetTransform->SetLocalRotation(rotation);
-			targetTransform->SetLocalScale(scale);
-			targetTransform->SetLocalPosition(translation);
+			targetTransform.SetLocalRotation(rotation);
+			targetTransform.SetLocalScale(scale);
+			targetTransform.SetLocalPosition(translation);
 		}
 		else
 		{
 			if (current->has_rotation)
 			{
 				// Note: GLM expects quaternions to be specified in WXYZ order
-				targetTransform->SetLocalRotation(
+				targetTransform.SetLocalRotation(
 					glm::quat(current->rotation[3], current->rotation[0], current->rotation[1], current->rotation[2]));
 			}
 			if (current->has_scale)
 			{
-				targetTransform->SetLocalScale(glm::vec3(current->scale[0], current->scale[1], current->scale[2]));
+				targetTransform.SetLocalScale(glm::vec3(current->scale[0], current->scale[1], current->scale[2]));
 			}
 			if (current->has_translation)
 			{
-				targetTransform->SetLocalPosition(
+				targetTransform.SetLocalPosition(
 					glm::vec3(current->translation[0], current->translation[1], current->translation[2]));
 			}
 		}
@@ -357,11 +359,11 @@ namespace
 
 
 	// Creates a default camera if camera == nullptr, and no cameras exist in scene
-	void LoadAddCamera(fr::SceneData& scene, gr::Transform* parent, cgltf_node* current)
+	void LoadAddCamera(fr::SceneData& scene, entt::entity sceneNode, cgltf_node* current)
 	{
 		std::shared_ptr<gr::Camera> newCam;
 
-		if (parent == nullptr && (current == nullptr || current->camera == nullptr))
+		if (sceneNode == entt::null && (current == nullptr || current->camera == nullptr))
 		{
 			LOG("Creating a default camera");
 
@@ -377,7 +379,7 @@ namespace
 		{
 			cgltf_camera const* const camera = current->camera;
 
-			SEAssert("Must supply a parent and camera pointer", parent != nullptr && camera != nullptr);
+			SEAssert("Must supply a scene node and camera pointer", sceneNode != entt::null && camera != nullptr);
 
 			const std::string camName = camera->name ? std::string(camera->name) : "Unnamed camera";
 			LOG("Loading camera \"%s\"", camName.c_str());
@@ -408,16 +410,18 @@ namespace
 				camConfig.m_orthoLeftRightBotTop.w = 0.f;
 			}
 
+			gr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
+
 			// Create the camera and set the transform values on the parent object:
-			newCam = gr::Camera::Create(camName, camConfig, parent); // Internally calls SceneData::AddCamera
-			SetTransformValues(current, parent);
+			newCam = gr::Camera::Create(camName, camConfig, sceneNodeTransform);
+			SetTransformValues(current, sceneNode);
 		}
 
 		newCam->SetAsMainCamera();
 	}
 
 
-	void LoadAddLight(fr::SceneData& scene, cgltf_node* current, gr::Transform* parent)
+	void LoadAddLight(fr::SceneData& scene, cgltf_node* current, entt::entity sceneNode)
 	{
 		std::string lightName;
 		if (current->light->name)
@@ -483,12 +487,14 @@ namespace
 		break;
 		case gr::Light::LightType::Directional:
 		{
-			gr::Light::CreateDirectionalLight(lightName, parent, colorIntensity, attachShadow);
+			gr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
+			gr::Light::CreateDirectionalLight(lightName, sceneNodeTransform, colorIntensity, attachShadow);
 		}
 		break;
 		case gr::Light::LightType::Point:
 		{
-			gr::Light::CreatePointLight(lightName, parent, colorIntensity, attachShadow);
+			gr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
+			gr::Light::CreatePointLight(lightName, sceneNodeTransform, colorIntensity, attachShadow);
 		}
 		break;
 		default:
@@ -540,7 +546,7 @@ namespace
 
 
 	void LoadMeshGeometry(
-		std::string const& sceneRootPath, fr::SceneData& scene, cgltf_node* current, gr::Transform* parent)
+		std::string const& sceneRootPath, fr::SceneData& scene, cgltf_node* current, entt::entity sceneNode)
 	{
 		std::string meshName;
 		if (current->mesh->name)
@@ -554,7 +560,8 @@ namespace
 			meshName = "UnnamedMesh_" + std::to_string(thisMeshIdx);
 		}
 
-		std::shared_ptr<gr::Mesh> newMesh = std::make_shared<gr::Mesh>(meshName, parent);
+		gr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
+		std::shared_ptr<gr::Mesh> newMesh = std::make_shared<gr::Mesh>(meshName, sceneNodeTransform);
 
 		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
 		for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
@@ -826,7 +833,7 @@ namespace
 		fr::SceneData& scene,
 		cgltf_data* data, 
 		cgltf_node* current, 
-		gr::Transform* parent,
+		entt::entity parentSceneNode,
 		std::vector<std::future<void>>& loadTasks)
 	{
 		if (current == nullptr)
@@ -845,7 +852,7 @@ namespace
 			{
 				const std::string nodeName = current->name ? current->name : "Unnamed child node";
 
-				gr::Transform* childNode = fr::SceneNode::Create(nodeName.c_str(), parent);
+				entt::entity childNode = fr::SceneNode::Create(nodeName.c_str(), parentSceneNode);
 
 				LoadObjectHierarchyRecursiveHelper(
 					sceneRootPath, scene, data, current->children[i], childNode, loadTasks);
@@ -853,31 +860,31 @@ namespace
 		}
 
 		// Set the SceneNode transform:
-		loadTasks.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([current, parent]()
+		loadTasks.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([current, parentSceneNode]()
 		{
-			SetTransformValues(current, parent);
+			SetTransformValues(current, parentSceneNode);
 		}));
 		
 		// Process node attachments:
 		if (current->mesh)
 		{
-			loadTasks.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([&sceneRootPath, &scene, current, parent]()
+			loadTasks.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([&sceneRootPath, &scene, current, parentSceneNode]()
 			{
-				LoadMeshGeometry(sceneRootPath, scene, current, parent);
+				LoadMeshGeometry(sceneRootPath, scene, current, parentSceneNode);
 			}));
 		}
 		if (current->light)
 		{
-			loadTasks.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([&scene, current, parent]()
+			loadTasks.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([&scene, current, parentSceneNode]()
 			{
-				LoadAddLight(scene, current, parent);
+				LoadAddLight(scene, current, parentSceneNode);
 			}));
 		}
 		if (current->camera)
 		{
-			loadTasks.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([&scene, current, parent]()
+			loadTasks.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([&scene, current, parentSceneNode]()
 			{
-				LoadAddCamera(scene, parent, current);
+				LoadAddCamera(scene, parentSceneNode, current);
 			}));
 		}
 	}
@@ -902,11 +909,11 @@ namespace
 
 			LOG("Loading root node %zu: \"%s\"", node, nodeName.c_str());
 
-			gr::Transform* rootSceneNodeTransform = 
-				fr::SceneNode::Create(std::format("Root {}", node).c_str(), nullptr); // Root has no parent
+			entt::entity rootSceneNode = 
+				fr::SceneNode::Create(std::format("Root {}", node).c_str(), entt::null); // Root has no parent
 
 			LoadObjectHierarchyRecursiveHelper(
-				sceneRootPath, scene, data, data->scenes->nodes[node], rootSceneNodeTransform, loadTasks);
+				sceneRootPath, scene, data, data->scenes->nodes[node], rootSceneNode, loadTasks);
 		}
 		
 		// Wait for all of the tasks to be done:
@@ -977,7 +984,7 @@ namespace fr
 		// Add a default camera to start:
 		earlyLoadTasks.emplace_back(
 			en::CoreEngine::GetThreadPool()->EnqueueJob([this]() {
-				LoadAddCamera(*this, nullptr, nullptr);
+				LoadAddCamera(*this, entt::null, nullptr);
 			}));
 
 		// Load the IBL/skybox HDRI:

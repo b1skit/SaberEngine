@@ -13,7 +13,11 @@ namespace fr
 	class SceneNode
 	{
 	public:
-		static gr::Transform* Create(char const* name, gr::Transform* parent);
-		static gr::Transform* Create(std::string const& name, gr::Transform* parent);
+		static entt::entity Create(char const* name, entt::entity parent);
+		static entt::entity Create(std::string const& name, entt::entity parent);
+
+
+	public:
+		static gr::Transform& GetSceneNodeTransform(entt::entity);
 	};
 }

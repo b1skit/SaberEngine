@@ -166,7 +166,7 @@ namespace gr
 
 	private:
 		gr::Transform* m_transform;
-		const bool m_isComponent; // Is this Camera registered as a component object in the ECS?
+		const bool m_isComponent; // Does this Camera manage its own Transform, or is it an ECS component?
 
 		// Render data
 		Config m_cameraConfig;

@@ -2,27 +2,45 @@
 #include "GameplayManager.h"
 #include "NameComponent.h"
 #include "SceneNodeConcept.h"
-#include "Transform.h"
+#include "TransformComponent.h"
 
 
 namespace fr
 {
-	gr::Transform* SceneNode::Create(char const* name, gr::Transform* parent)
+	entt::entity SceneNode::Create(char const* name, entt::entity parent)
 	{
-		fr::GameplayManager* gameplayMgr = fr::GameplayManager::Get();
+		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
 
-		entt::entity sceneNodeEntity = gameplayMgr->CreateEntity(name);
+		entt::entity sceneNodeEntity = gpm.CreateEntity(name);
 
-		gr::Transform* sceneNodeTransform = 
-			gameplayMgr->EmplaceComponent<gr::Transform>(sceneNodeEntity, parent);
+		gr::Transform* parentTransform = nullptr;
+		if (parent != entt::null)
+		{
+			SEAssert("Parent entity must have a TransformComponent", 
+				gpm.HasComponent<fr::TransformComponent>(parent));
 
-		return sceneNodeTransform;
+			parentTransform = &gpm.GetComponent<fr::TransformComponent>(parent).GetTransform();
+		}
+
+		gpm.EmplaceComponent<fr::TransformComponent>(sceneNodeEntity, parentTransform);
+
+		return sceneNodeEntity;
 	}
 
 
-	gr::Transform* SceneNode::Create(std::string const& name, gr::Transform* parent)
+	entt::entity SceneNode::Create(std::string const& name, entt::entity parent)
 	{
 		return Create(name.c_str(), parent);
+	}
+
+
+	gr::Transform& SceneNode::GetSceneNodeTransform(entt::entity entity)
+	{
+		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+
+		SEAssert("Entity does not have a TransformComponent", gpm.HasComponent<fr::TransformComponent>(entity));
+
+		return gpm.GetComponent<fr::TransformComponent>(entity).GetTransform();
 	}
 }
 

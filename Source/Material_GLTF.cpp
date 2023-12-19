@@ -24,13 +24,9 @@ namespace gr
 			.g_normalScale = m_normalScale,
 			.g_occlusionStrength = m_occlusionStrength,
 
-			.g_emissiveFactorStrength = glm::vec4(
-				m_emissiveFactor.rgb,
-				m_emissiveStrength),
+			.g_emissiveFactorStrength = glm::vec4(m_emissiveFactor.rgb, m_emissiveStrength),
 
-			.g_f0 = glm::vec4(
-				m_f0.rgb,
-				0.f)
+			.g_f0 = glm::vec4(m_f0.rgb, 0.f)
 		};
 	}
 

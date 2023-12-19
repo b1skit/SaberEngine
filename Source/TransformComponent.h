@@ -36,7 +36,7 @@ namespace fr
 		const gr::TransformID m_transformID;
 
 
-	private:
+	private: // Static TransformID functionality:
 		static std::atomic<gr::TransformID> s_transformIDs;
 	};
 
