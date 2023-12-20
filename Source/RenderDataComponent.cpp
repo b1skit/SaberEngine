@@ -10,117 +10,93 @@ namespace gr
 	std::atomic<gr::RenderObjectID> RenderDataComponent::s_objectIDs = 0;
 
 
-	RenderDataComponent& RenderDataComponent::AttachRenderDataComponent(
-		fr::GameplayManager& gpm, entt::entity entity, uint32_t expectedNumPrimitives)
+	RenderDataComponent& RenderDataComponent::AttachNewRenderDataComponent(
+		fr::GameplayManager& gpm, entt::entity entity, TransformID transformID)
 	{
-		RenderDataComponent* renderDataComponent = gpm.TryGetComponent<gr::RenderDataComponent>(entity);
-		if (renderDataComponent == nullptr)
-		{
-			renderDataComponent =
-				gpm.EmplaceComponent<gr::RenderDataComponent>(entity, RenderDataComponent(expectedNumPrimitives));
-		}
-		else
-		{
-			// RenderDataComponent already exists: Increase the reservation size
-			for (uint32_t primIdx = 0; primIdx < expectedNumPrimitives; primIdx++)
-			{
-				renderDataComponent->AddRenderObject();
-			}
-		}		
-
-		return *renderDataComponent;
+		gpm.EmplaceComponent<gr::RenderDataComponent::NewIDMarker>(entity);
+		return *gpm.EmplaceComponent<gr::RenderDataComponent>(entity, PrivateCTORTag{}, transformID);
 	}
 
 
-	RenderDataComponent::RenderDataComponent(uint32_t expectedNumPrimitives)
+	RenderDataComponent& RenderDataComponent::AttachSharedRenderDataComponent(
+		fr::GameplayManager& gpm, entt::entity entity, RenderDataComponent const& renderDataComponent)
 	{
-		{
-			std::unique_lock<std::shared_mutex> lock(m_objectIDsMutex);
-
-			m_objectIDs.reserve(expectedNumPrimitives);
-			for (uint32_t primitive = 0; primitive < expectedNumPrimitives; primitive++)
-			{
-				m_objectIDs.emplace_back(s_objectIDs.fetch_add(1));
-			}
-		}
-	}
-
-
-	RenderDataComponent::RenderDataComponent(RenderDataComponent&& rhs) noexcept
-	{
-		*this = std::move(rhs);
-	}
-
-
-	RenderDataComponent& RenderDataComponent::operator=(RenderDataComponent&& rhs) noexcept
-	{
-		{
-			std::scoped_lock lock(m_objectIDsMutex, rhs.m_objectIDsMutex);
-
-			m_objectIDs = std::move(rhs.m_objectIDs);
-
-			return *this;
-		}
-	}
-
-
-	size_t RenderDataComponent::GetNumRenderObjectIDs() const
-	{
-		{
-			std::shared_lock<std::shared_mutex> readLock(m_objectIDsMutex);
-			return m_objectIDs.size();
-		}
-	}
-
-
-	gr::RenderObjectID RenderDataComponent::GetRenderObjectID(size_t index) const
-	{
-		{
-			std::shared_lock<std::shared_mutex> readLock(m_objectIDsMutex);
-			return m_objectIDs.at(index);
-		}
-	}
-
-
-	void RenderDataComponent::AddRenderObject()
-	{
-		{
-			std::unique_lock<std::shared_mutex> writeLock(m_objectIDsMutex);
-			m_objectIDs.emplace_back(s_objectIDs.fetch_add(1));
-		}
+		return *gpm.EmplaceComponent<gr::RenderDataComponent>(
+			entity, 
+			PrivateCTORTag{},
+			renderDataComponent.m_renderObjectID, 
+			renderDataComponent.m_transformID);
 	}
 
 
 	// ---
 
 
-	CreateRenderObjectCommand::CreateRenderObjectCommand(gr::RenderObjectID objectID)
-		: m_objectID(objectID)
+	RenderDataComponent::RenderDataComponent(PrivateCTORTag, gr::TransformID transformID)
+		: m_renderObjectID(s_objectIDs.fetch_add(1)) // Allocate a new RenderObjectID
+		, m_transformID(transformID)
 	{
 	}
 
 
-	void CreateRenderObjectCommand::Execute(void* cmdData)
+	RenderDataComponent::RenderDataComponent(PrivateCTORTag, gr::RenderObjectID renderObjectID, gr::TransformID transformID)
+		: m_renderObjectID(renderObjectID)
+		, m_transformID(transformID)
+	{
+	}
+
+
+	RenderDataComponent::RenderDataComponent(PrivateCTORTag, RenderDataComponent const& sharedRenderDataComponent)
+		: m_renderObjectID(sharedRenderDataComponent.m_renderObjectID) // Shared RenderObjectID
+		, m_transformID(sharedRenderDataComponent.m_transformID)
+	{
+	}
+
+
+	gr::RenderObjectID RenderDataComponent::GetRenderObjectID() const
+	{
+		return m_renderObjectID;
+	}
+
+
+
+	gr::TransformID RenderDataComponent::GetTransformID() const
+	{
+		return m_transformID;
+	}
+
+
+	// ---
+
+
+	RegisterRenderObjectCommand::RegisterRenderObjectCommand(RenderDataComponent const& newRenderDataComponent)
+		: m_objectID(newRenderDataComponent.GetRenderObjectID())
+		, m_transformID(newRenderDataComponent.GetTransformID())
+	{
+	}
+
+
+	void RegisterRenderObjectCommand::Execute(void* cmdData)
 	{
 		std::vector<std::unique_ptr<re::RenderSystem>> const& renderSystems =
 			re::RenderManager::Get()->GetRenderSystems();
 
-		CreateRenderObjectCommand* cmdPtr = reinterpret_cast<CreateRenderObjectCommand*>(cmdData);
+		RegisterRenderObjectCommand* cmdPtr = reinterpret_cast<RegisterRenderObjectCommand*>(cmdData);
 
 		for (size_t renderSystemIdx = 0; renderSystemIdx < renderSystems.size(); renderSystemIdx++)
 		{
 			gr::RenderData& renderData =
 				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
 
-			renderData.RegisterObject(cmdPtr->m_objectID);
+			renderData.RegisterObject(cmdPtr->m_objectID, cmdPtr->m_transformID);
 		}
 	}
 
 
-	void CreateRenderObjectCommand::Destroy(void* cmdData)
+	void RegisterRenderObjectCommand::Destroy(void* cmdData)
 	{
-		CreateRenderObjectCommand* cmdPtr = reinterpret_cast<CreateRenderObjectCommand*>(cmdData);
-		cmdPtr->~CreateRenderObjectCommand();
+		RegisterRenderObjectCommand* cmdPtr = reinterpret_cast<RegisterRenderObjectCommand*>(cmdData);
+		cmdPtr->~RegisterRenderObjectCommand();
 	}
 
 

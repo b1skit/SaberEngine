@@ -1,6 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "GameplayManager.h"
+#include "MarkerComponents.h"
 #include "NameComponent.h"
+#include "Relationship.h"
+#include "RenderDataComponent.h"
 #include "SceneNodeConcept.h"
 #include "TransformComponent.h"
 
@@ -21,8 +24,16 @@ namespace fr
 
 			parentTransform = &gpm.GetComponent<fr::TransformComponent>(parent).GetTransform();
 		}
+		fr::TransformComponent const& transformComponent = 
+			fr::TransformComponent::AttachTransformComponent(gpm, sceneNodeEntity, parentTransform);
 
-		gpm.EmplaceComponent<fr::TransformComponent>(sceneNodeEntity, parentTransform);
+		// Mark the transform as dirty:
+		gpm.EmplaceComponent<DirtyMarker<fr::TransformComponent>>(sceneNodeEntity);
+		
+		gr::RenderDataComponent::AttachNewRenderDataComponent(gpm, sceneNodeEntity, transformComponent.GetTransformID());
+
+		fr::Relationship& sceneNodeRelationship = fr::Relationship::AttachRelationshipComponent(gpm, sceneNodeEntity);
+		sceneNodeRelationship.SetParent(gpm, parent);
 
 		return sceneNodeEntity;
 	}

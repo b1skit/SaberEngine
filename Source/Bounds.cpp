@@ -2,6 +2,7 @@
 #include "Bounds.h"
 #include "GameplayManager.h"
 #include "MarkerComponents.h"
+#include "Relationship.h"
 #include "RenderDataComponent.h"
 #include "Transform.h"
 
@@ -25,17 +26,51 @@ namespace fr
 
 		entt::entity sceneBoundsEntity = gpm.CreateEntity(k_sceneBoundsName);
 
-		gpm.EmplaceComponent<fr::Bounds>(sceneBoundsEntity);
-		gr::RenderDataComponent::AttachRenderDataComponent(gpm, sceneBoundsEntity, 1);
+		fr::TransformComponent& sceneBoundsTransformComponent = 
+			fr::TransformComponent::AttachTransformComponent(gpm, sceneBoundsEntity, nullptr);
+		
+		gr::RenderDataComponent::AttachNewRenderDataComponent(
+			gpm, sceneBoundsEntity, sceneBoundsTransformComponent.GetTransformID());
+
+		// Attach the BoundsComponent now that the RenderDataComponent is attached:
+		AttachBoundsComponent(gpm, sceneBoundsEntity);
+
 		gpm.EmplaceComponent<IsSceneBoundsMarker>(sceneBoundsEntity);
-		gpm.EmplaceComponent<DirtyMarker<fr::Bounds>>(sceneBoundsEntity);
 	}
 
 
 	void Bounds::AttachBoundsComponent(fr::GameplayManager& gpm, entt::entity entity)
 	{
-		gpm.TryEmplaceComponent<fr::Bounds>(entity);
-		gr::RenderDataComponent::AttachRenderDataComponent(gpm, entity, 1);
+		SEAssert("Bounds can only be attached to an entity that already has a RenderDataComponent",
+			fr::Relationship::HasComponentInParentHierarchy<gr::RenderDataComponent>(entity));
+
+		gpm.EmplaceComponent<fr::Bounds>(entity);
+		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::Bounds>>(entity);
+	}
+
+
+	void Bounds::AttachBoundsComponent(
+		fr::GameplayManager& gpm, entt::entity entity, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ)
+	{
+		SEAssert("Bounds can only be attached to an entity that already has a RenderDataComponent",
+			fr::Relationship::HasComponentInParentHierarchy<gr::RenderDataComponent>(entity));
+
+		gpm.EmplaceComponent<fr::Bounds>(entity, minXYZ, maxXYZ);
+		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::Bounds>>(entity);
+	}
+
+
+	void Bounds::AttachBoundsComponent(
+		fr::GameplayManager& gpm,
+		entt::entity entity,
+		glm::vec3 const& minXYZ,
+		glm::vec3 const& maxXYZ,
+		std::vector<glm::vec3> const& positions)
+	{
+		SEAssert("Bounds can only be attached to an entity that already has a RenderDataComponent", 
+			fr::Relationship::HasComponentInParentHierarchy<gr::RenderDataComponent>(entity));
+
+		gpm.EmplaceComponent<fr::Bounds>(entity, minXYZ, maxXYZ, positions);
 		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::Bounds>>(entity);
 	}
 
@@ -57,14 +92,14 @@ namespace fr
 	}
 
 
-	Bounds::Bounds(glm::vec3 minXYZ, glm::vec3 maxXYZ)
+	Bounds::Bounds(glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ)
 		: m_minXYZ(minXYZ)
 		, m_maxXYZ(maxXYZ)
 	{
 	}
 
 
-	Bounds::Bounds(glm::vec3 minXYZ, glm::vec3 maxXYZ, std::vector<glm::vec3> const& positions)
+	Bounds::Bounds(glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, std::vector<glm::vec3> const& positions)
 		: m_minXYZ(minXYZ)
 		, m_maxXYZ(maxXYZ)
 	{

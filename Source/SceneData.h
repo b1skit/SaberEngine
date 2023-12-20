@@ -2,7 +2,6 @@
 #pragma once
 
 #include "Mesh.h"
-#include "Transformable.h"
 #include "NamedObject.h"
 
 
@@ -79,10 +78,6 @@ namespace fr
 		bool AddUniqueShader(std::shared_ptr<re::Shader>& newShader); // Returns true if new object was added
 		std::shared_ptr<re::Shader> GetShader(uint64_t shaderIdentifier) const;
 		bool ShaderExists(uint64_t shaderIdentifier) const;
-
-		// SceneData bounds:
-		fr::Bounds const& GetWorldSpaceSceneBounds() const;
-		void UpdateSceneBounds();
 
 		// Post loading finalization callback: Allow objects that require the scene to be fully loaded to complete their
 		// initialization

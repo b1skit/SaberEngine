@@ -1,6 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Batch.h"
-#include "BatchManager.h"
 #include "Camera.h"
 #include "CastUtils.h"
 #include "Config.h"
@@ -41,7 +39,6 @@ namespace en
 		: m_sceneData(nullptr)
 		, m_activeCameraIdx(0)
 	{
-		m_sceneBatches.reserve(k_initialBatchReservations);
 	}
 
 
@@ -90,14 +87,13 @@ namespace en
 
 	void SceneManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
-		// Updateables have been ticked by the GameplayManager; Now we can update the Transforms and scene BoundsConcept
-		m_sceneData->UpdateSceneBounds();
+		// 
 	}
 
 
 	void SceneManager::FinalUpdate()
 	{
-		BuildSceneBatches();
+		//
 	}
 
 
@@ -116,30 +112,6 @@ namespace en
 		// objects, but it may not always be the case.
 
 		return m_sceneData->GetMainCamera(m_activeCameraIdx);
-	}
-
-
-	std::vector<re::Batch>& SceneManager::GetSceneBatches()
-	{
-		// NOTE: The caller should std::move this; m_sceneBatches must be empty for the next BuildSceneBatches call
-		return m_sceneBatches;
-	};
-
-
-	void SceneManager::BuildSceneBatches()
-	{
-		// TODO: We're currently creating/destroying invariant parameter blocks each frame. This is expensive.
-		// Instead, we should create a pool of PBs, and reuse by re-buffering data each frame
-
-		SEAssert("Scene batches should be empty", m_sceneBatches.empty());
-
-		std::vector<shared_ptr<gr::Mesh>> const& sceneMeshes = SceneManager::GetSceneData()->GetMeshes();
-		if (sceneMeshes.empty())
-		{
-			return;
-		}
-
-		m_sceneBatches = std::move(re::BatchManager::BuildBatches(sceneMeshes));
 	}
 }
 

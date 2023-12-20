@@ -24,6 +24,14 @@ namespace fr
 
 
 	public:
+		template<typename T>
+		static bool HasComponentInParentHierarchy(entt::entity);
+
+		template<typename T>
+		static T* GetComponentInHierarchyAbove(entt::entity);
+
+
+	public:
 		Relationship(Relationship&&) noexcept;
 		Relationship& operator=(Relationship&&) noexcept;
 
@@ -101,5 +109,41 @@ namespace fr
 			std::shared_lock<std::shared_mutex> readLock(m_relationshipMutex);
 			return m_lastChild;
 		}
+	}
+
+
+	template<typename T>
+	bool Relationship::HasComponentInParentHierarchy(entt::entity entity)
+	{
+		return GetComponentInHierarchyAbove<T>(entity) != nullptr;
+	}
+
+
+	template<typename T>
+	T* Relationship::GetComponentInHierarchyAbove(entt::entity entity)
+	{
+		SEAssert("Entity cannot be null", entity != entt::null);
+
+		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+		
+		entt::entity currentEntity = entity;
+		while (currentEntity != entt::null)
+		{
+			T* component = gpm.TryGetComponent<T>(currentEntity);
+			if (component != nullptr)
+			{
+				return component;
+			}
+
+			SEAssert("Current entity does not have a Relationship component",
+				gpm.HasComponent<fr::Relationship>(currentEntity));
+			fr::Relationship const& currentRelationship = gpm.GetComponent<fr::Relationship>(currentEntity);
+
+			currentEntity = currentRelationship.GetParent();
+		}
+
+		SEAssertF("Component not found in current entity, or the parents above it");
+
+		return nullptr;
 	}
 }

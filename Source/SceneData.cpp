@@ -560,11 +560,12 @@ namespace
 			meshName = "UnnamedMesh_" + std::to_string(thisMeshIdx);
 		}
 
-		gr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
-		std::shared_ptr<gr::Mesh> newMesh = std::make_shared<gr::Mesh>(meshName, sceneNodeTransform);
+		const uint32_t numMeshPrimitives = util::CheckedCast<uint32_t>(current->mesh->primitives_count);
+		
+		entt::entity meshEntity = fr::Mesh::CreateMeshConcept(sceneNode, meshName.c_str());
 
 		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
-		for (size_t primitive = 0; primitive < current->mesh->primitives_count; primitive++)
+		for (size_t primitive = 0; primitive < numMeshPrimitives; primitive++)
 		{
 			// Populate the mesh params:
 			gr::MeshPrimitive::MeshPrimitiveParams meshPrimitiveParams;
@@ -791,6 +792,22 @@ namespace
 			};
 			util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
+			// Attach the MeshPrimitive to the Mesh:
+			entt::entity meshPrimimitiveEntity = gr::MeshPrimitive::AttachMeshPrimitiveConcept(
+				meshEntity,
+				meshName.c_str(),
+				&indices,
+				positions,
+				positionsMinXYZ,
+				positionsMaxXYZ,
+				&normals,
+				&tangents,
+				&uv0,
+				&colors,
+				&jointsAsUints,
+				&weights,
+				meshPrimitiveParams);
+
 			// Assign a material:
 			std::shared_ptr<gr::Material> material;
 			if (current->mesh->primitives[primitive].material != nullptr)
@@ -805,26 +822,8 @@ namespace
 					meshName.c_str(), k_missingMaterialName);
 				material = scene.GetMaterial(k_missingMaterialName);
 			}
-
-			// Attach the MeshPrimitive to the Mesh:
-			newMesh->AddMeshPrimitive(gr::MeshPrimitive::Create(
-				meshName,
-				&indices,
-				positions,
-				positionsMinXYZ,
-				positionsMaxXYZ,
-				&normals,
-				&tangents,
-				&uv0,
-				&colors,
-				&jointsAsUints,
-				&weights,
-				material,
-				meshPrimitiveParams));
+			gr::Material::AttachMaterialConcept(meshPrimimitiveEntity, material);
 		}
-
-		// Finally, register the mesh with the scene
-		scene.AddMesh(newMesh);
 	}
 
 
@@ -868,7 +867,8 @@ namespace
 		// Process node attachments:
 		if (current->mesh)
 		{
-			loadTasks.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([&sceneRootPath, &scene, current, parentSceneNode]()
+			loadTasks.emplace_back(
+				en::CoreEngine::GetThreadPool()->EnqueueJob([&sceneRootPath, &scene, current, parentSceneNode]()
 			{
 				LoadMeshGeometry(sceneRootPath, scene, current, parentSceneNode);
 			}));
@@ -965,7 +965,6 @@ namespace fr
 		}
 
 		// Pre-reserve our vectors, now that we know what to expect:
-		m_meshes.reserve(std::max(meshesCount, k_minReserveAmt));
 		m_textures.reserve(std::max(texturesCount, k_minReserveAmt));
 		m_materials.reserve(std::max(materialsCount, k_minReserveAmt));
 		m_pointLights.reserve(std::max(lightsCount, k_minReserveAmt)); // Probably an over-estimation
@@ -1035,7 +1034,8 @@ namespace fr
 	{
 		m_finishedLoading = true;
 
-		UpdateSceneBounds();
+		// ECS_CONVERSION: Temp hax, force the scene bounds to update. We need to handle this more cleanly
+		fr::GameplayManager::Get()->UpdateSceneBounds();
 
 		// Execute any post-load callbacks to allow objects that require the scene to be fully loaded to finalize thier
 		// initialization:
@@ -1092,11 +1092,6 @@ namespace fr
 		}
 
 		// 
-		{
-			std::lock_guard<std::mutex> lock(m_meshesAndMeshPrimitivesMutex);
-			m_meshPrimitives.clear();
-			m_meshes.clear();
-		}
 		{
 			std::lock_guard<std::mutex> lock(m_vertexStreamsMutex);
 			m_vertexStreams.clear();
@@ -1348,33 +1343,6 @@ namespace fr
 				result != m_cameras.end());
 
 			return *result;
-		}
-	}
-
-	fr::Bounds const& SceneData::GetWorldSpaceSceneBounds() const 
-	{
-		SEAssert("Accessing this data is not thread safe during loading", m_finishedLoading);
-		{
-			std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
-			return m_sceneWorldSpaceBounds;
-		}
-	}
-
-
-	void SceneData::UpdateSceneBounds()
-	{
-		SEAssert("This function should be called during the main loop only", m_finishedLoading);
-
-		// By now all of our transforms are clean, update the scene bounds:
-		{
-			std::unique_lock<std::mutex> lock(m_sceneBoundsMutex);
-
-			m_sceneWorldSpaceBounds = fr::Bounds();
-			for (std::shared_ptr<gr::Mesh> mesh : m_meshes)
-			{
-				m_sceneWorldSpaceBounds.ExpandBounds(
-					mesh->GetBounds().GetTransformedAABBBounds(mesh->GetTransform()->GetGlobalMatrix()));
-			}
 		}
 	}
 

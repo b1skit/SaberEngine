@@ -44,7 +44,9 @@ namespace gr
 				
 
 	public:
-		std::shared_ptr<re::ParameterBlock> const GetParameterBlock() override;
+		// ECS_CONVERSION TODO: We're creating these as a single frame PB for now, but really it should be a mutable
+		// permanent PB... Need to figure out how/where to manage lifetime on the RenderThread side
+		static std::shared_ptr<re::ParameterBlock> CreateParameterBlock(gr::Material_GLTF const*);
 
 		void ShowImGuiWindow() override;
 

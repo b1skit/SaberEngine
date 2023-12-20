@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Camera.h"
 #include "Config.h"
+#include "GameplayManager.h"
 #include "Light.h"
 #include "Material.h"
 #include "SceneData.h"
@@ -159,8 +160,10 @@ namespace gr
 		{
 		case gr::ShadowMap::ShadowType::Orthographic:
 		{
+			fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+			
 			// Update shadow cam bounds:
-			fr::Bounds sceneWorldBounds = en::SceneManager::GetSceneData()->GetWorldSpaceSceneBounds();
+			fr::Bounds sceneWorldBounds = gpm.GetSceneBounds();
 
 			Camera::Config const& shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
 				m_owningLight->GetTransform(), sceneWorldBounds);

@@ -15,6 +15,36 @@ using gr::MeshPrimitive;
 using std::shared_ptr;
 using std::vector;
 
+
+namespace fr
+{
+	entt::entity Mesh::CreateMeshConcept(entt::entity sceneNode, char const* name)
+	{
+		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+
+		SEAssert("A Mesh concept requires a Transform via a SceneNode. The sceneNode should have this already",
+			gpm.HasComponent<fr::TransformComponent>(sceneNode));
+		SEAssert("A mesh requires a Relationship with a SceneNode. The sceneNode parent should have this already",
+			gpm.HasComponent<fr::Relationship>(sceneNode));
+
+		entt::entity meshEntity = gpm.CreateEntity(name);
+
+		gpm.EmplaceComponent<fr::Mesh::MeshConceptMarker>(meshEntity);
+
+		fr::TransformComponent const& transformComponent = gpm.GetComponent<fr::TransformComponent>(sceneNode);
+
+		gr::RenderDataComponent::AttachNewRenderDataComponent(gpm, meshEntity, transformComponent.GetTransformID());
+
+		fr::Bounds::AttachBoundsComponent(gpm, meshEntity); // Mesh bounds: Encompasses all attached primitive bounds
+
+		fr::Relationship& meshRelationship = fr::Relationship::AttachRelationshipComponent(gpm, meshEntity);
+		meshRelationship.SetParent(gpm, sceneNode);
+
+		return meshEntity;
+	}
+}
+
+
 namespace gr
 {
 	std::shared_ptr<re::ParameterBlock> Mesh::CreateInstancedMeshParamsData(gr::Transform* transform)
@@ -70,18 +100,55 @@ namespace gr
 	}
 
 
-	void Mesh::AttachMeshConcept(fr::GameplayManager& gpm, entt::entity sceneNode, uint32_t expectedNumPrimitives)
+	std::shared_ptr<re::ParameterBlock> Mesh::CreateInstancedMeshParamsData(
+		fr::TransformComponent::RenderData const& renderData)
 	{
-		SEAssert("A mesh requires a transform. The scene node should have attached this already",
-			gpm.HasComponent<fr::TransformComponent>(sceneNode));
+		gr::Mesh::InstancedMeshParams instancedMeshPBData{
+			.g_model = renderData.g_model,
+			.g_transposeInvModel = renderData.g_transposeInvModel
+		};
 
-		fr::Bounds::AttachBoundsComponent(gpm, sceneNode); // Mesh bounds: Encompasses all attached primitive bounds
-		
-		fr::Relationship& meshRelationship = fr::Relationship::AttachRelationshipComponent(gpm, sceneNode);
-
-		gr::RenderDataComponent& renderDataComponent = 
-			gr::RenderDataComponent::AttachRenderDataComponent(gpm, sceneNode, expectedNumPrimitives);
+		return re::ParameterBlock::CreateFromArray(
+			gr::Mesh::InstancedMeshParams::s_shaderName,
+			&instancedMeshPBData,
+			sizeof(gr::Mesh::InstancedMeshParams),
+			1,
+			re::ParameterBlock::PBType::SingleFrame);
 	}
+
+
+	std::shared_ptr<re::ParameterBlock> Mesh::CreateInstancedMeshParamsData(
+		std::vector<fr::TransformComponent::RenderData const*> const& transformRenderData)
+	{
+		const uint32_t numInstances = static_cast<uint32_t>(transformRenderData.size());
+
+		std::vector<gr::Mesh::InstancedMeshParams> instancedMeshPBData;
+		instancedMeshPBData.reserve(numInstances);
+
+		for (size_t transformIdx = 0; transformIdx < numInstances; transformIdx++)
+		{
+			instancedMeshPBData.emplace_back(InstancedMeshParams
+				{
+					.g_model = transformRenderData[transformIdx]->g_model,
+					.g_transposeInvModel = transformRenderData[transformIdx]->g_transposeInvModel
+				});
+		}
+
+		std::shared_ptr<re::ParameterBlock> instancedMeshParams = re::ParameterBlock::CreateFromArray(
+			gr::Mesh::InstancedMeshParams::s_shaderName,
+			instancedMeshPBData.data(),
+			sizeof(gr::Mesh::InstancedMeshParams),
+			numInstances,
+			re::ParameterBlock::PBType::SingleFrame);
+
+		return instancedMeshParams;
+	}
+
+
+
+
+
+	// DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 	Mesh::Mesh(std::string const& name, gr::Transform* ownerTransform)
@@ -120,8 +187,6 @@ namespace gr
 		SEAssert("Index is out of bounds", index < m_meshPrimitives.size());
 		m_meshPrimitives[index] = replacement;
 
-		// ECS_CONVERSION TODO: WHEN WE REMOVE THE BOUNDS DURING THE ECS CONVERSION, WE'LL NEED TO HANDLE UPDATING THE
-		// BOUNDS COMPONENT IF A MESH PRIMITIVE CHANGES
 		UpdateBounds();
 	}
 
@@ -136,42 +201,48 @@ namespace gr
 	}
 
 
+
+
+
 	void Mesh::ShowImGuiWindow()
 	{
-		if (ImGui::CollapsingHeader(
-			std::format("{}##{}", GetName(), util::PtrToID(this)).c_str(), ImGuiTreeNodeFlags_None))
-		{
-			ImGui::Indent();
-			const std::string uniqueIDStr = std::to_string(util::PtrToID(this));
+		// ECS_CONVERSION TODO: Restore ImGui functionality!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-			if (ImGui::CollapsingHeader(
-				std::format("Transform:##{}", util::PtrToID(this)).c_str(), ImGuiTreeNodeFlags_None))
-			{
-				ImGui::Indent();
-				m_ownerTransform->ShowImGuiWindow();
-				ImGui::Unindent();
-			}
 
-			if (ImGui::CollapsingHeader(
-				std::format("Mesh Bounds:##{}", util::PtrToID(this)).c_str(), ImGuiTreeNodeFlags_None))
-			{
-				ImGui::Indent();
-				m_localBounds.ShowImGuiWindow();
-				ImGui::Unindent();
-			}
+		//if (ImGui::CollapsingHeader(
+		//	std::format("{}##{}", GetName(), util::PtrToID(this)).c_str(), ImGuiTreeNodeFlags_None))
+		//{
+		//	ImGui::Indent();
+		//	const std::string uniqueIDStr = std::to_string(util::PtrToID(this));
 
-			if (ImGui::CollapsingHeader(
-				std::format("Mesh Primitives ({}):##{}", m_meshPrimitives.size(), util::PtrToID(this)).c_str(), 
-				ImGuiTreeNodeFlags_None))
-			{
-				ImGui::Indent();
-				for (size_t i = 0; i < m_meshPrimitives.size(); i++)
-				{
-					m_meshPrimitives[i]->ShowImGuiWindow();
-				}
-				ImGui::Unindent();
-			}
-			ImGui::Unindent();
-		}
+		//	if (ImGui::CollapsingHeader(
+		//		std::format("Transform:##{}", util::PtrToID(this)).c_str(), ImGuiTreeNodeFlags_None))
+		//	{
+		//		ImGui::Indent();
+		//		m_ownerTransform->ShowImGuiWindow();
+		//		ImGui::Unindent();
+		//	}
+
+		//	if (ImGui::CollapsingHeader(
+		//		std::format("Mesh Bounds:##{}", util::PtrToID(this)).c_str(), ImGuiTreeNodeFlags_None))
+		//	{
+		//		ImGui::Indent();
+		//		m_localBounds.ShowImGuiWindow();
+		//		ImGui::Unindent();
+		//	}
+
+		//	if (ImGui::CollapsingHeader(
+		//		std::format("Mesh Primitives ({}):##{}", m_meshPrimitives.size(), util::PtrToID(this)).c_str(), 
+		//		ImGuiTreeNodeFlags_None))
+		//	{
+		//		ImGui::Indent();
+		//		for (size_t i = 0; i < m_meshPrimitives.size(); i++)
+		//		{
+		//			m_meshPrimitives[i]->ShowImGuiWindow();
+		//		}
+		//		ImGui::Unindent();
+		//	}
+		//	ImGui::Unindent();
+		//}
 	}
 }

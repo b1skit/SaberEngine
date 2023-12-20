@@ -72,22 +72,32 @@ namespace gr
 
 
 	public:
-		struct RenderData
+		struct MeshPrimitiveComponent
 		{
-			MeshPrimitiveParams m_meshPrimitiveParams;
-			std::array<re::VertexStream*, Slot_Count> m_vertexStreams;
-			re::VertexStream* m_indexStream;
-			
-			uint64_t m_dataHash;
+			// MeshPrimitives are held in the SceneData so duplicate data can be shared
+			gr::MeshPrimitive const* m_meshPrimitive;
 		};
 
 
+		struct RenderData
+		{
+			MeshPrimitiveParams m_meshPrimitiveParams;
+			std::array<re::VertexStream const*, Slot_Count> m_vertexStreams;
+			re::VertexStream const* m_indexStream;
+			
+			uint64_t m_dataHash;
+		};
+		static RenderData GetRenderData(MeshPrimitiveComponent const&);
+
+
 	public:
-		entt::entity AttachMeshPrimitiveConcept(
-			fr::GameplayManager&,
+		static entt::entity AttachMeshPrimitiveConcept(
 			entt::entity meshConcept,
+			char const* name,
 			std::vector<uint32_t>* indices,
 			std::vector<float>& positions,
+			glm::vec3 const& positionMinXYZ, // Pass fr::BoundsConcept::k_invalidMinXYZ to compute bounds manually
+			glm::vec3 const& positionMaxXYZ, // Pass fr::BoundsConcept::k_invalidMaxXYZ to compute bounds manually
 			std::vector<float>* normals,
 			std::vector<float>* tangents,
 			std::vector<float>* uv0,
@@ -113,6 +123,8 @@ namespace gr
 			std::shared_ptr<gr::Material> material,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
+		MeshPrimitive(MeshPrimitive const& rhs) = default;
+		MeshPrimitive& operator=(MeshPrimitive const& rhs) = default;
 		MeshPrimitive(MeshPrimitive&& rhs) noexcept = default;
 		MeshPrimitive& operator=(MeshPrimitive&& rhs) = default;
 
@@ -140,7 +152,8 @@ namespace gr
 	private:		
 		MeshPrimitiveParams m_params;
 
-		std::shared_ptr<gr::Material> m_meshMaterial;
+		// ECS_CONVERSION: TODO: These should be raw pointers
+		std::shared_ptr<gr::Material> m_meshMaterial; 
 
 		std::array<std::shared_ptr<re::VertexStream>, Slot_Count> m_vertexStreams;
 		std::shared_ptr<re::VertexStream> m_indexStream;
@@ -151,7 +164,7 @@ namespace gr
 
 
 	private: // Private ctor: Use the Create factory instead
-		MeshPrimitive(std::string const& name,
+		MeshPrimitive(char const* name,
 			std::vector<uint32_t>* indices,
 			std::vector<float>& positions,
 			glm::vec3 const& positionMinXYZ, // Pass fr::BoundsConcept::k_invalidMinXYZ to compute bounds manually
@@ -168,8 +181,6 @@ namespace gr
 
 	private: // No copying allowed
 		MeshPrimitive() = delete;
-		MeshPrimitive(MeshPrimitive const& rhs) = delete;
-		MeshPrimitive& operator=(MeshPrimitive const& rhs) = delete;
 	};
 
 

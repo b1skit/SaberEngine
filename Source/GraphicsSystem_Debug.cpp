@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "ConfigKeys.h"
 #include "GraphicsSystem_Debug.h"
+#include "GraphicsSystemManager.h"
 #include "Light.h"
 #include "SceneManager.h"
 
@@ -50,7 +51,7 @@ namespace
 	}
 
 
-	re::Batch BuildBoundingBoxBatch(fr::Bounds const& bounds, glm::vec3 const& boxColor)
+	re::Batch BuildBoundingBoxBatch(fr::Bounds::RenderData const& bounds, glm::vec3 const& boxColor)
 	{
 		/* Construct a cube from 8 points:
 		*     e----f
@@ -61,15 +62,23 @@ namespace
 		*   |/   |/
 		* 	c----d	
 		*/
-		const glm::vec3 a = glm::vec3(bounds.xMin(), bounds.yMax(), bounds.zMax());
-		const glm::vec3 b = glm::vec3(bounds.xMax(), bounds.yMax(), bounds.zMax());
-		const glm::vec3 c = glm::vec3(bounds.xMin(), bounds.yMin(), bounds.zMax());
-		const glm::vec3 d = glm::vec3(bounds.xMax(), bounds.yMin(), bounds.zMax());
+		const float xMin = bounds.m_minXYZ.x;
+		const float yMin = bounds.m_minXYZ.y;
+		const float zMin = bounds.m_minXYZ.z;
 
-		const glm::vec3 e = glm::vec3(bounds.xMin(), bounds.yMax(), bounds.zMin());
-		const glm::vec3 f = glm::vec3(bounds.xMax(), bounds.yMax(), bounds.zMin());
-		const glm::vec3 g = glm::vec3(bounds.xMin(), bounds.yMin(), bounds.zMin());
-		const glm::vec3 h = glm::vec3(bounds.xMax(), bounds.yMin(), bounds.zMin());
+		const float xMax = bounds.m_maxXYZ.x;
+		const float yMax = bounds.m_maxXYZ.y;
+		const float zMax = bounds.m_maxXYZ.z;
+
+		const glm::vec3 a = glm::vec3(xMin, yMax, zMax);
+		const glm::vec3 b = glm::vec3(xMax, yMax, zMax);
+		const glm::vec3 c = glm::vec3(xMin, yMin, zMax);
+		const glm::vec3 d = glm::vec3(xMax, yMin, zMax);
+
+		const glm::vec3 e = glm::vec3(xMin, yMax, zMin);
+		const glm::vec3 f = glm::vec3(xMax, yMax, zMin);
+		const glm::vec3 g = glm::vec3(xMin, yMin, zMin);
+		const glm::vec3 h = glm::vec3(xMax, yMin, zMin);
 
 		//									   0, 1, 2, 3, 4, 5, 6, 7
 		std::vector<glm::vec3> boxPositions = {a, b, c, d, e, f, g, h};
@@ -137,10 +146,11 @@ namespace
 	}
 
 
-	re::Batch BuildVertexNormalsBatch(gr::MeshPrimitive const* meshPrimitive, float scale, glm::vec3 const& normalColor)
+	re::Batch BuildVertexNormalsBatch(
+		gr::MeshPrimitive::RenderData const& meshPrimRenderData, float scale, glm::vec3 const& normalColor)
 	{
-		re::VertexStream const* positionStream = meshPrimitive->GetVertexStream(gr::MeshPrimitive::Slot::Position);
-		re::VertexStream const* normalStream = meshPrimitive->GetVertexStream(gr::MeshPrimitive::Slot::Normal);
+		re::VertexStream const* positionStream = meshPrimRenderData.m_vertexStreams[gr::MeshPrimitive::Slot::Position];
+		re::VertexStream const* normalStream = meshPrimRenderData.m_vertexStreams[gr::MeshPrimitive::Slot::Normal];
 		
 		SEAssert("Must have a position and normal stream", positionStream && normalStream);
 
@@ -278,10 +288,10 @@ namespace
 	}
 
 
-	re::Batch BuildWireframeBatch(gr::MeshPrimitive const* meshPrimitive, glm::vec3 const& meshColor)
+	re::Batch BuildWireframeBatch(gr::MeshPrimitive::RenderData const& meshPrimRenderData, glm::vec3 const& meshColor)
 	{
-		re::VertexStream const* positionStream = meshPrimitive->GetVertexStream(gr::MeshPrimitive::Slot::Position);
-		re::VertexStream const* indexStream = meshPrimitive->GetIndexStream();
+		re::VertexStream const* positionStream = meshPrimRenderData.m_vertexStreams[gr::MeshPrimitive::Slot::Position];
+		re::VertexStream const* indexStream = meshPrimRenderData.m_indexStream;
 		SEAssert("Must have a position and index stream", positionStream && indexStream);
 
 		const glm::vec4 meshColorVec4 = glm::vec4(meshColor, 1.f);
@@ -355,6 +365,8 @@ namespace gr
 	{
 		constexpr glm::mat4 k_identity = glm::mat4(1.f);
 
+		gr::RenderData const& renderData = m_owningGraphicsSystemManager->GetRenderData();
+
 		if (m_showWorldCoordinateAxis)
 		{
 			re::Batch coordinateAxis = 
@@ -372,47 +384,51 @@ namespace gr
 			m_showAllVertexNormals ||
 			m_showAllWireframe)
 		{
-			for (auto const& mesh : en::SceneManager::GetSceneData()->GetMeshes())
+
+			auto meshPrimItr = renderData.ObjectBegin<gr::MeshPrimitive::RenderData, fr::Bounds::RenderData>();
+			auto const& meshPrimItrEnd = renderData.ObjectEnd<gr::MeshPrimitive::RenderData, fr::Bounds::RenderData>();
+			while (meshPrimItr != meshPrimItrEnd)
 			{
-				glm::mat4 const& meshTRS = mesh->GetTransform()->GetGlobalMatrix();
+				gr::MeshPrimitive::RenderData const& meshPrimRenderData = meshPrimItr.Get<gr::MeshPrimitive::RenderData>();
+				fr::Bounds::RenderData const& boundsRenderData = meshPrimItr.Get<fr::Bounds::RenderData>();
 
 				std::shared_ptr<re::ParameterBlock> meshTransformPB =
-					gr::Mesh::CreateInstancedMeshParamsData(&meshTRS, nullptr);
+					gr::Mesh::CreateInstancedMeshParamsData(meshPrimItr.GetTransformData());
 				
 				// MeshPrimitives:
 				if (m_showAllMeshPrimitiveBoundingBoxes || m_showAllVertexNormals || m_showAllWireframe)
 				{
-					for (auto const& meshPrimitive : mesh->GetMeshPrimitives())
+					if (m_showAllMeshPrimitiveBoundingBoxes)
 					{
-						if (m_showAllMeshPrimitiveBoundingBoxes)
-						{
-							re::Batch primitiveBoundsBatch =
-								BuildBoundingBoxBatch(meshPrimitive->GetBounds(), m_meshPrimitiveBoundsColor);
-							primitiveBoundsBatch.SetParameterBlock(meshTransformPB);
-							m_debugStage->AddBatch(primitiveBoundsBatch);
-						}
+						re::Batch primitiveBoundsBatch =
+							BuildBoundingBoxBatch(boundsRenderData, m_meshPrimitiveBoundsColor);
+						primitiveBoundsBatch.SetParameterBlock(meshTransformPB);
+						m_debugStage->AddBatch(primitiveBoundsBatch);
+					}
 
-						if (m_showAllVertexNormals)
-						{
-							re::Batch vertexNormalsBatch = 
-								BuildVertexNormalsBatch(meshPrimitive.get(), m_vertexNormalsScale, m_normalsColor);
-							vertexNormalsBatch.SetParameterBlock(meshTransformPB);
-							m_debugStage->AddBatch(vertexNormalsBatch);
-						}
+					if (m_showAllVertexNormals)
+					{
+						re::Batch vertexNormalsBatch =
+							BuildVertexNormalsBatch(meshPrimRenderData, m_vertexNormalsScale, m_normalsColor);
+						vertexNormalsBatch.SetParameterBlock(meshTransformPB);
+						m_debugStage->AddBatch(vertexNormalsBatch);
+					}
 
-						if (m_showAllWireframe)
-						{
-							re::Batch wireframeBatch = BuildWireframeBatch(meshPrimitive.get(), m_wireframeColor);
-							wireframeBatch.SetParameterBlock(meshTransformPB);
-							m_debugStage->AddBatch(wireframeBatch);
-						}
+					if (m_showAllWireframe)
+					{
+						re::Batch wireframeBatch = BuildWireframeBatch(meshPrimRenderData, m_wireframeColor);
+						wireframeBatch.SetParameterBlock(meshTransformPB);
+						m_debugStage->AddBatch(wireframeBatch);
 					}
 				}
 
 				// Mesh: Draw this 2nd so it's on top if the bounding box is the same as the MeshPrimitive
 				if (m_showAllMeshBoundingBoxes)
 				{
-					re::Batch boundingBoxBatch = BuildBoundingBoxBatch(mesh->GetBounds(), m_meshBoundsColor);
+					// ECS_CONVERSION: BUG HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+					// -> Need a way to differentiate between Mesh Bounds, and MeshPrimitive Bounds
+
+					re::Batch boundingBoxBatch = BuildBoundingBoxBatch(boundsRenderData, m_meshBoundsColor);
 					boundingBoxBatch.SetParameterBlock(meshTransformPB);
 					m_debugStage->AddBatch(boundingBoxBatch);
 				}
@@ -424,6 +440,8 @@ namespace gr
 					meshCoordinateAxisBatch.SetParameterBlock(meshTransformPB);
 					m_debugStage->AddBatch(meshCoordinateAxisBatch);
 				}
+
+				++meshPrimItr;
 			}
 		}
 
@@ -462,7 +480,9 @@ namespace gr
 
 		if (m_showDeferredLightWireframe)
 		{
-			std::vector<std::shared_ptr<gr::Light>> const& pointLights = 
+			// ECS_CONVERSTION TODO: Re-implement this
+
+			/*std::vector<std::shared_ptr<gr::Light>> const& pointLights = 
 				en::SceneManager::GetSceneData()->GetPointLights();
 
 			for (auto const& pointLight : pointLights)
@@ -480,7 +500,7 @@ namespace gr
 					m_deferredLightwireframeColor);
 				pointLightWireframeBatch.SetParameterBlock(pointLightMeshTransformPB);
 				m_debugStage->AddBatch(pointLightWireframeBatch);
-			}
+			}*/
 		}
 	}
 

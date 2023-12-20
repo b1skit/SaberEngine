@@ -58,13 +58,20 @@ namespace gr
 			// instances of a parent material, and allow these copied materials to be modified at runtime.
 			//
 			// For now, just point to the scene data...
-			gr::Material* m_material;
+			gr::Material const* m_material;
 		};
+
+		struct RenderData
+		{
+			// For now, just point to the scene data...
+			gr::Material const* m_material;
+		};
+		static RenderData GetRenderData(MaterialComponent const&);
 
 
 	public:
 		static MaterialComponent& AttachMaterialConcept(
-			fr::GameplayManager&, entt::entity meshPrimitiveConcept, std::shared_ptr<gr::Material>);
+			entt::entity meshPrimitiveConcept, std::shared_ptr<gr::Material>);
 
 
 		[[nodiscard]] static std::shared_ptr<gr::Material> Create(std::string const& name, MaterialType);
@@ -86,7 +93,9 @@ namespace gr
 		void SetAlphaCutoff(float alphaCutoff);
 		void SetDoubleSidedMode(DoubleSidedMode);
 
-		virtual std::shared_ptr<re::ParameterBlock> const GetParameterBlock() = 0;
+		MaterialType GetMaterialType() const;
+
+		static std::shared_ptr<re::ParameterBlock> CreateParameterBlock(gr::Material const*);
 
 		virtual void ShowImGuiWindow();
 
@@ -174,6 +183,12 @@ namespace gr
 
 		m_doubleSidedMode = doubleSidedMode;
 		m_matParamsIsDirty = true;
+	}
+
+
+	inline Material::MaterialType Material::GetMaterialType() const
+	{
+		return m_materialType;
 	}
 
 

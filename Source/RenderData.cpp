@@ -31,36 +31,72 @@ namespace gr
 	}
 
 
-	void RenderData::RegisterObject(gr::RenderObjectID objectID)
+	void RenderData::RegisterObject(gr::RenderObjectID objectID, gr::TransformID transformID)
 	{
-		// Catch illegal accesses during RenderData modification
-		util::ScopedThreadProtector threadProjector(m_threadProtector);
+		{
+			// Catch illegal accesses during RenderData modification
+			util::ScopedThreadProtector threadProjector(m_threadProtector);
 
-		SEAssert("Trying to register an object that already exists", !m_objectIDToRenderObjectMetadata.contains(objectID));
+			auto renderObjectMetadata = m_objectIDToRenderObjectMetadata.find(objectID);
+			if (renderObjectMetadata == m_objectIDToRenderObjectMetadata.end())
+			{
+				m_objectIDToRenderObjectMetadata.emplace(
+					objectID,
+					RenderObjectMetadata{
+						.m_objectTypeToDataIndexTable = ObjectTypeToDataIndexTable(),
+						.m_transformID = transformID
+					});
+			}
+			else
+			{
+				SEAssert("Received a different TransformID than what is already recorded", 
+					renderObjectMetadata->second.m_transformID ==  transformID);
 
-		m_objectIDToRenderObjectMetadata.emplace(objectID, ObjectTypeToDataIndexTable());
+				renderObjectMetadata->second.m_referenceCount++;
+			}
+		}
+
+		RegisterTransform(transformID);
 	}
 
 
 	void RenderData::DestroyObject(gr::RenderObjectID objectID)
 	{
-		// Catch illegal accesses during RenderData modification
-		util::ScopedThreadProtector threadProjector(m_threadProtector);
+		TransformID renderObjectTransformID = gr::k_invalidTransformID;
 
-		SEAssert("Trying to destroy an object that does not exist", m_objectIDToRenderObjectMetadata.contains(objectID));
+		{
+			// Catch illegal accesses during RenderData modification
+			util::ScopedThreadProtector threadProjector(m_threadProtector);
 
-		ObjectTypeToDataIndexTable const& dataIndexTable = 
-			m_objectIDToRenderObjectMetadata.at(objectID).m_objectTypeToDataIndexTable;
+			SEAssert("Trying to destroy an object that does not exist", m_objectIDToRenderObjectMetadata.contains(objectID));
+
+			RenderObjectMetadata& renderObjectMetadata = m_objectIDToRenderObjectMetadata.at(objectID);
+
+			renderObjectMetadata.m_referenceCount--;
+
+			if (renderObjectMetadata.m_referenceCount == 0)
+			{
+				ObjectTypeToDataIndexTable const& dataIndexTable =
+					renderObjectMetadata.m_objectTypeToDataIndexTable;
+
+				renderObjectTransformID = renderObjectMetadata.m_transformID;
 
 #if defined(_DEBUG)
-		for (size_t dataIndexEntry = 0; dataIndexEntry < dataIndexTable.size(); dataIndexEntry++)
-		{
-			SEAssert("Cannot destroy an object with first destroying its associated ata",
-				dataIndexTable[dataIndexEntry] == k_invalidDataIdx);
-		}
+				for (size_t dataIndexEntry = 0; dataIndexEntry < dataIndexTable.size(); dataIndexEntry++)
+				{
+					SEAssert("Cannot destroy an object with first destroying its associated data",
+						dataIndexTable[dataIndexEntry] == k_invalidDataIdx);
+				}
 #endif
+				m_objectIDToRenderObjectMetadata.erase(objectID);
+			}
+		}
 
-		m_objectIDToRenderObjectMetadata.erase(objectID);
+		// Destroy the Transform if the refcount = 0
+		if (renderObjectTransformID != gr::k_invalidTransformID)
+		{
+			UnregisterTransform(renderObjectTransformID);
+		}
 	}
 
 
@@ -74,9 +110,15 @@ namespace gr
 		{
 			const uint32_t newTransformDataIdx = util::CheckedCast<uint32_t>(m_transformRenderData.size());
 
+			// Allocate and initialize the Transform render data
+			m_transformRenderData.emplace_back();
+			m_transformRenderData.back().m_transformID = transformID;
+
 			m_transformIDToTransformMetadata.emplace(
-				newTransformDataIdx,	// Transform index
-				1);						// Initial reference count
+				transformID,
+				TransformMetadata{
+					.m_transformIdx = newTransformDataIdx,	// Transform index
+					.m_referenceCount = 1 });				// Initial reference count
 		}
 		else
 		{
@@ -125,7 +167,8 @@ namespace gr
 	}
 
 
-	void RenderData::SetTransformData(gr::TransformID transformID, fr::TransformComponent::RenderData const& transformRenderData)
+	void RenderData::SetTransformData(
+		gr::TransformID transformID, fr::TransformComponent::RenderData const& transformRenderData)
 	{
 		// Catch illegal accesses during RenderData modification
 		util::ScopedThreadProtector threadProjector(m_threadProtector);

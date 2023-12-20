@@ -78,11 +78,17 @@ namespace gr
 	}
 
 
-	std::shared_ptr<re::ParameterBlock> const Material_GLTF::GetParameterBlock()
+	std::shared_ptr<re::ParameterBlock> Material_GLTF::CreateParameterBlock(gr::Material_GLTF const* material)
 	{
-		CreateUpdateParameterBlock();
+		// ECS_CONVERSION TODO: We're creating these as a single frame PB for now, but really it should be a mutable
+		// permanent PB... Need to figure out how/where to manage lifetime on the RenderThread side
 
-		return m_matParams;
+		std::shared_ptr<re::ParameterBlock> matParams = re::ParameterBlock::Create(
+			PBRMetallicRoughnessParams::s_shaderName,
+			material->GetPBRMetallicRoughnessParamsData(),
+			re::ParameterBlock::PBType::SingleFrame);
+
+		return matParams;
 	}
 
 

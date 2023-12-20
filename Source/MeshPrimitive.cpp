@@ -6,6 +6,7 @@
 #include "NameComponent.h"
 #include "PipelineState.h"
 #include "Relationship.h"
+#include "RenderDataComponent.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
 #include "Transform.h"
@@ -66,11 +67,33 @@ namespace
 
 namespace gr
 {
+	MeshPrimitive::RenderData MeshPrimitive::GetRenderData(MeshPrimitiveComponent const& meshPrimitiveComponent)
+	{
+		MeshPrimitive::RenderData renderData = MeshPrimitive::RenderData{
+			.m_meshPrimitiveParams = meshPrimitiveComponent.m_meshPrimitive->GetMeshParams(),
+			// Vertex streams copied below...
+			.m_indexStream = meshPrimitiveComponent.m_meshPrimitive->m_indexStream.get(),
+			.m_dataHash = meshPrimitiveComponent.m_meshPrimitive->GetDataHash()
+		};
+		
+		std::vector<re::VertexStream const*> const& vertexStreams = 
+			meshPrimitiveComponent.m_meshPrimitive->GetVertexStreams();
+		for (size_t slotIdx = 0; slotIdx < vertexStreams.size(); slotIdx++)
+		{
+			renderData.m_vertexStreams[slotIdx] = vertexStreams[slotIdx];
+		}
+		
+		return renderData;
+	}
+
+
 	entt::entity MeshPrimitive::AttachMeshPrimitiveConcept(
-		fr::GameplayManager& gpm,
 		entt::entity meshConcept,
+		char const* name,
 		std::vector<uint32_t>* indices,
 		std::vector<float>& positions,
+		glm::vec3 const& positionMinXYZ, // Pass fr::BoundsConcept::k_invalidMinXYZ to compute bounds manually
+		glm::vec3 const& positionMaxXYZ, // Pass fr::BoundsConcept::k_invalidMaxXYZ to compute bounds manually
 		std::vector<float>* normals,
 		std::vector<float>* tangents,
 		std::vector<float>* uv0,
@@ -79,51 +102,73 @@ namespace gr
 		std::vector<float>* weights,
 		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
 	{
-		SEAssert("A mesh primitive's owning mesh concept requires a Transform component",
-			gpm.HasComponent<fr::TransformComponent>(meshConcept));
-		SEAssert("A mesh primitive's owning mesh concept requires a Bounds component",
-			gpm.HasComponent<fr::Bounds>(meshConcept));
+		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+
 		SEAssert("A mesh primitive's owning mesh concept requires a Relationship component",
 			gpm.HasComponent<fr::Relationship>(meshConcept));
+		SEAssert("A mesh primitive's owning mesh concept requires a TransformComponent",
+			fr::Relationship::HasComponentInParentHierarchy<fr::TransformComponent>(meshConcept));
+		SEAssert("A mesh primitive's owning mesh concept requires a Bounds component",
+			gpm.HasComponent<fr::Bounds>(meshConcept));
 		SEAssert("A mesh primitive's owning mesh concept requires a NameComponent",
 			gpm.HasComponent<fr::NameComponent>(meshConcept));
 
-		fr::NameComponent const& meshConceptName = gpm.GetComponent<fr::NameComponent>(meshConcept);
+		entt::entity meshPrimitiveEntity = gpm.CreateEntity(name);
 
-		// Each MeshPrimitive is an entity related to a Mesh concept via a Relationship
-		entt::entity meshPrimitiveEntity = gpm.CreateEntity(meshConceptName.GetName() + "_MeshPrimitive");
-
-		// Create the relationship with our parent entity:
+		// Each MeshPrimitive is an entity related to a Mesh concept via a Relationship:
 		fr::Relationship& meshRelationship = fr::Relationship::AttachRelationshipComponent(gpm, meshPrimitiveEntity);
 		meshRelationship.SetParent(gpm, meshConcept);
 
+		// Attach a new RenderDataComponent:
+		fr::TransformComponent const* transformComponent = 
+			fr::Relationship::GetComponentInHierarchyAbove<fr::TransformComponent>(meshConcept);
+
+		gr::RenderDataComponent::AttachNewRenderDataComponent(
+			gpm, meshPrimitiveEntity, transformComponent->GetTransformID());
+
+
+		std::shared_ptr<gr::MeshPrimitive> meshPrimitiveSceneData = Create(
+			name,
+			indices,
+			positions,
+			positionMinXYZ, // ECS_CONVERSION TODO: Deprecated!!!!!!!!!!!!!!!!!!!!!
+			positionMaxXYZ, // ECS_CONVERSION TODO: Deprecated!!!!!!!!!!!!!!!!!!!!!
+			normals,
+			tangents,
+			uv0,
+			colors,
+			joints,
+			weights,
+			nullptr, // ECS_CONVERSION TODO: Deprecated!!!!!!!!!!!!!!!!!!!!!
+			meshParams);
+
 		// Attach a MeshPrimitive object:
-		gpm.EmplaceComponent<gr::MeshPrimitive>(
-			meshPrimitiveEntity,
-			gr::MeshPrimitive(
-				"INDIVIDUAL NAMES ARE DEPRECATED", // ECS_CONVERSION TODO: Deprecated!!!!!!!!!!!!!!!!!!!!!
-				indices,
-				positions,
-				fr::Bounds::k_invalidMinXYZ, // ECS_CONVERSION TODO: Deprecated!!!!!!!!!!!!!!!!!!!!!
-				fr::Bounds::k_invalidMaxXYZ, // ECS_CONVERSION TODO: Deprecated!!!!!!!!!!!!!!!!!!!!!
-				normals,
-				tangents,
-				uv0,
-				colors,
-				joints,
-				weights,
-				nullptr, // ECS_CONVERSION TODO: Deprecated!!!!!!!!!!!!!!!!!!!!!
-				meshParams));
+		gpm.EmplaceComponent<gr::MeshPrimitive::MeshPrimitiveComponent>(
+			meshPrimitiveEntity, 
+			MeshPrimitiveComponent{
+				.m_meshPrimitive = meshPrimitiveSceneData.get()
+			});
 
 		// Attach a primitive bounds
-		fr::Bounds::AttachBoundsComponent(gpm, meshPrimitiveEntity);
+		fr::Bounds::AttachBoundsComponent(
+			gpm, 
+			meshPrimitiveEntity, 
+			positionMinXYZ, 
+			positionMaxXYZ, 
+			reinterpret_cast<std::vector<glm::vec3> const&>(positions));
+		fr::Bounds const& meshPrimitiveBounds = gpm.GetComponent<fr::Bounds>(meshPrimitiveEntity);
+
+		// Update the Bounds of the MeshConcept:
+		fr::Bounds& meshConceptBounds = gpm.GetComponent<fr::Bounds>(meshConcept);
+		meshConceptBounds.ExpandBounds(meshPrimitiveBounds);
 
 		// Mark our new MeshPrimitive as dirty:
-		gpm.EmplaceOrReplaceComponent<DirtyMarker<gr::MeshPrimitive>>(meshPrimitiveEntity);
+		gpm.EmplaceComponent<DirtyMarker<gr::MeshPrimitive::MeshPrimitiveComponent>>(meshPrimitiveEntity);
 
 		// Note: A Material component must be attached to the returned entity
 		return meshPrimitiveEntity;
 	}
+
 
 	std::shared_ptr<MeshPrimitive> MeshPrimitive::Create(
 		std::string const& name,
@@ -142,7 +187,7 @@ namespace gr
 	{
 		shared_ptr<MeshPrimitive> newMeshPrimitive;
 		newMeshPrimitive.reset(new MeshPrimitive(
-			name,
+			name.c_str(),
 			indices,
 			positions,
 			positionMinXYZ,
@@ -164,7 +209,7 @@ namespace gr
 
 
 	MeshPrimitive::MeshPrimitive(
-		string const& name,
+		char const* name,
 		vector<uint32_t>* indices,
 		vector<float>& positions,
 		glm::vec3 const& positionMinXYZ,

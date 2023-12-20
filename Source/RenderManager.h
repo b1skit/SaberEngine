@@ -62,8 +62,16 @@ namespace re
 
 		uint64_t GetCurrentRenderFrameNum() const;
 
-
 		std::vector<std::unique_ptr<re::RenderSystem>> const& GetRenderSystems() const;
+
+
+
+		// ECS_CONVERSION TODO: Handle this per-GS; For now just moving this out of the SceneManager
+	private:
+		void BuildSceneBatches();
+
+
+
 
 
 	public: // Render commands:
@@ -182,5 +190,3 @@ namespace re
 		return m_createdTextures;
 	}
 }
-
-

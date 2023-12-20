@@ -9,24 +9,10 @@ namespace fr
 		: en::NamedObject(name + "_Transformable")
 		, m_transform(parent)
 	{
-		Register();
 	}
 
 
 	Transformable::~Transformable()
 	{
-		Deregister();
-	}
-
-
-	void Transformable::Register()
-	{
-		fr::GameplayManager::Get()->AddTransformable(this);
-	}
-
-
-	void Transformable::Deregister() const
-	{
-		fr::GameplayManager::Get()->RemoveTransformable(this);
 	}
 }

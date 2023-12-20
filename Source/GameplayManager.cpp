@@ -3,12 +3,14 @@
 #include "CoreEngine.h"
 #include "GameplayManager.h"
 #include "MarkerComponents.h"
+#include "Material_GLTF.h"
 #include "NameComponent.h"
 #include "PlayerObject.h"
 #include "Relationship.h"
 #include "RenderDataComponent.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
+#include "SceneNodeConcept.h"
 
 
 namespace fr
@@ -28,9 +30,13 @@ namespace fr
 		m_updateables.reserve(k_updateablesReserveAmount);
 
 		// Create a scene bounds entity:
-		fr::Bounds::CreateSceneBounds(*this);
+		/*fr::Bounds::CreateSceneBounds(*this);*/
 		UpdateSceneBounds();
 
+		// ECS_CONVERSION: Currently, the GameplayManager::Startup is called after the SceneManager and RenderManager,
+		// as it needs the main camera from the SceneData to create the player obect
+		// -> This is a problem, as we need the scene bounds to be available to initialize shadow maps immediately after
+		// the scene has loaded. For now, we hack around this
 		
 		std::shared_ptr<gr::Camera> mainCam = en::SceneManager::Get()->GetMainCamera();
 
@@ -51,25 +57,42 @@ namespace fr
 		{
 			std::shared_lock<std::shared_mutex> registryReadLock(m_registeryMutex);
 
+			// Destroy any render data components:
 			auto renderDataEntitiesView = m_registry.view<gr::RenderDataComponent>();
-			for (auto renderable : renderDataEntitiesView)
+			for (auto entity : renderDataEntitiesView)
 			{
-				auto& renderDataComponent = renderDataEntitiesView.get<gr::RenderDataComponent>(renderable);
+				auto& renderDataComponent = renderDataEntitiesView.get<gr::RenderDataComponent>(entity);
 
-				// Destroy render data components:
-				if (m_registry.all_of<fr::Bounds>(renderable))
+				// Bounds:
+				if (m_registry.all_of<fr::Bounds>(entity))
 				{
-
-					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<fr::Bounds>>(
-						renderDataComponent.GetRenderObjectID(0));
+					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<fr::Bounds::RenderData>>(
+						renderDataComponent.GetRenderObjectID());
 				}
 
-				// Finally, destroy the render objects:
-				for (size_t roIdx = 0; roIdx < renderDataComponent.GetNumRenderObjectIDs(); roIdx++)
+				// MeshPrimitives:
+				if (m_registry.all_of<gr::MeshPrimitive::MeshPrimitiveComponent>(entity))
 				{
-					renderManager->EnqueueRenderCommand<gr::DestroyRenderObjectCommand>(
-						renderDataComponent.GetRenderObjectID(roIdx));
-				}			
+					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::RenderData>>(
+						renderDataComponent.GetRenderObjectID());
+				}
+
+
+				// Materials:
+				if (m_registry.all_of<gr::MeshPrimitive::MeshPrimitiveComponent>(entity))
+				{
+					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Material::RenderData>>(
+						renderDataComponent.GetRenderObjectID());
+				}
+			}
+
+			// Now the render data components are destroyed, we can destroy the render data objects themselves:
+			for (auto entity : renderDataEntitiesView)
+			{
+				auto& renderDataComponent = renderDataEntitiesView.get<gr::RenderDataComponent>(entity);
+
+				renderManager->EnqueueRenderCommand<gr::DestroyRenderObjectCommand>(
+					renderDataComponent.GetRenderObjectID());
 			}
 		}
 
@@ -94,13 +117,6 @@ namespace fr
 			SEAssert("Updateables should have been destroyed and self-unregistered by now", m_updateables.empty());
 			m_updateables.clear();
 		}
-		{
-			std::lock_guard<std::mutex> lock(m_transformablesMutex);
-
-			SEAssert("Transformables should have been destroyed and self-unregistered by now", m_transformables.empty());
-
-			m_transformables.clear();
-		}
 	}
 
 
@@ -108,7 +124,7 @@ namespace fr
 	{
 		// Handle input (update event listener components)
 		// <physics, animation, etc>
-		// Update Transforms
+		UpdateTransformComponents();
 		UpdateSceneBounds(); // TODO: This is expensive, we should only do this on demand?
 		// Update Lights (Need bounds, transforms to be updated)
 		// Update Cameras
@@ -119,7 +135,6 @@ namespace fr
 
 		// Deprecated:
 		UpdateUpdateables(stepTimeMs);
-		UpdateTransformables();
 	}
 
 
@@ -127,36 +142,110 @@ namespace fr
 	{
 		re::RenderManager* renderManager = re::RenderManager::Get();
 
+		// ECS_CONVERSION TODO: Move each of these isolated tasks to a thread
+
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
 
 			// Register new render objects:
-			auto newRenderableEntitiesView = m_registry.view<NewEntityMarker, gr::RenderDataComponent>();
-			for (auto newEntity : newRenderableEntitiesView)
+			auto newRenderableEntitiesView = 
+				m_registry.view<NewEntityMarker, gr::RenderDataComponent, gr::RenderDataComponent::NewIDMarker>();
+			for (auto entity : newRenderableEntitiesView)
 			{
 				// Enqueue a command to create a new object on the render thread:
-				auto& renderDataComponent = newRenderableEntitiesView.get<gr::RenderDataComponent>(newEntity);
-				renderManager->EnqueueRenderCommand<gr::CreateRenderObjectCommand>(
-					renderDataComponent.GetRenderObjectID(0));
+				auto& renderDataComponent = newRenderableEntitiesView.get<gr::RenderDataComponent>(entity);
 
-				m_registry.erase<NewEntityMarker>(newEntity);
+				renderManager->EnqueueRenderCommand<gr::RegisterRenderObjectCommand>(renderDataComponent);
+				
+				m_registry.erase<NewEntityMarker>(entity);
+				m_registry.erase<gr::RenderDataComponent::NewIDMarker>(entity);
 			}
 
-			// Update dirty component data:
-			auto renderDataComponentView = m_registry.view<gr::RenderDataComponent>();
-			for (auto renderableEntity : renderDataComponentView)
+			// Initialize new Transforms:
+			auto newTransformComponentsView = 
+				m_registry.view<fr::TransformComponent, fr::TransformComponent::NewIDMarker>();
+			for (auto entity : newTransformComponentsView)
 			{
-				auto& renderDataComponent = newRenderableEntitiesView.get<gr::RenderDataComponent>(renderableEntity);
+				fr::TransformComponent& transformComponent =
+					newTransformComponentsView.get<fr::TransformComponent>(entity);
 
-				// BoundsConcept:
-				if (m_registry.all_of<fr::Bounds, DirtyMarker<fr::Bounds>>(renderableEntity))
+				renderManager->EnqueueRenderCommand<fr::UpdateTransformDataRenderCommand>(transformComponent);
+
+				m_registry.erase<fr::TransformComponent::NewIDMarker>(entity);
+			}
+
+			// Update dirty render data components:
+			// ------------------------------------
+
+			// Transforms:
+			auto transformComponentsView = m_registry.view<fr::TransformComponent>();
+			for (auto entity : transformComponentsView)
+			{
+				fr::TransformComponent& transformComponent = 
+					transformComponentsView.get<fr::TransformComponent>(entity);
+
+				if (transformComponent.GetTransform().HasChanged())
 				{
-					renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<fr::Bounds::RenderData>>(
-						renderDataComponent.GetRenderObjectID(0),
-						fr::Bounds::GetRenderData(m_registry.get<fr::Bounds>(renderableEntity)));
-
-					m_registry.erase<DirtyMarker<fr::Bounds>>(renderableEntity);
+					renderManager->EnqueueRenderCommand<fr::UpdateTransformDataRenderCommand>(transformComponent);
 				}
+			}
+
+			// Bounds:
+			// Bounds are stored in local space & transformed as needed. We just need to copy them to the render thread
+			auto boundsComponentsView = m_registry.view<fr::Bounds, DirtyMarker<fr::Bounds>, gr::RenderDataComponent>();
+			for (auto entity : boundsComponentsView)
+			{
+				gr::RenderDataComponent const& renderDataComponent = 
+					boundsComponentsView.get<gr::RenderDataComponent>(entity);
+
+				fr::Bounds const& boundsComponent = boundsComponentsView.get<fr::Bounds>(entity);
+
+				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<fr::Bounds::RenderData>>(
+					renderDataComponent.GetRenderObjectID(),
+					fr::Bounds::GetRenderData(boundsComponent));
+
+				m_registry.erase<DirtyMarker<fr::Bounds>>(entity);
+			}
+
+			// MeshPrimitives:
+			// The actual data of a MeshPrimitive is SceneData; We push pointers and metadata to the render thread
+			auto meshPrimitiveComponentsView = m_registry.view<
+				gr::MeshPrimitive::MeshPrimitiveComponent, 
+				DirtyMarker<gr::MeshPrimitive::MeshPrimitiveComponent>, 
+				gr::RenderDataComponent>();
+			for (auto entity : meshPrimitiveComponentsView)
+			{
+				gr::RenderDataComponent const& renderDataComponent =
+					meshPrimitiveComponentsView.get<gr::RenderDataComponent>(entity);
+
+				gr::MeshPrimitive::MeshPrimitiveComponent const& meshPrimComponent = 
+					meshPrimitiveComponentsView.get<gr::MeshPrimitive::MeshPrimitiveComponent>(entity);
+
+				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::MeshPrimitive::RenderData>>(
+					renderDataComponent.GetRenderObjectID(), gr::MeshPrimitive::GetRenderData(meshPrimComponent));
+
+				m_registry.erase<DirtyMarker<gr::MeshPrimitive::MeshPrimitiveComponent>>(entity);
+			}
+
+			// Materials:
+			// Material data is (currently) SceneData; We push pointers to the render thread. TODO: Allow Material
+			// instancing and dynamic modification
+			auto materialComponentsView = m_registry.view<
+				gr::Material::MaterialComponent, 
+				DirtyMarker<gr::Material::MaterialComponent>, 
+				gr::RenderDataComponent>();
+			for (auto entity : materialComponentsView)
+			{
+				gr::RenderDataComponent const& renderDataComponent =
+					materialComponentsView.get<gr::RenderDataComponent>(entity);
+
+				gr::Material::MaterialComponent const& materialComponent =
+					materialComponentsView.get<gr::Material::MaterialComponent>(entity);
+
+				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::Material::RenderData>>(
+					renderDataComponent.GetRenderObjectID(), gr::Material::GetRenderData(materialComponent));
+
+				m_registry.erase<DirtyMarker<gr::Material::MaterialComponent>>(entity);
 			}
 
 			// Handle any non-renderable new entities:
@@ -166,6 +255,20 @@ namespace fr
 				// For now, we just erase the marker...
 				m_registry.erase<NewEntityMarker>(newEntity);
 			}
+		}
+	}
+
+
+	fr::Bounds const& GameplayManager::GetSceneBounds() const
+	{
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+
+			auto sceneBoundsEntityView = m_registry.view<fr::Bounds, fr::Bounds::IsSceneBoundsMarker>();
+			SEAssert("A unique scene bounds entity must exist",
+				sceneBoundsEntityView.front() == sceneBoundsEntityView.back());
+
+			return sceneBoundsEntityView.get<fr::Bounds>(sceneBoundsEntityView.front());
 		}
 	}
 
@@ -193,6 +296,17 @@ namespace fr
 
 	void GameplayManager::UpdateSceneBounds()
 	{
+		// ECS_CONVERSION TODO: This is a nasty hack to ensure the scene bounds is valid when it needs to be, until the
+		// startup order gets straightened out
+		static bool s_hasCreatedSceneBounds_HACK = false;
+		if (!s_hasCreatedSceneBounds_HACK)
+		{
+			fr::Bounds::CreateSceneBounds(*this);
+			s_hasCreatedSceneBounds_HACK = true;
+		}
+
+		// ECS_CONVERSION TODO: This should be triggered by listening for when bounds are added/updated
+		
 		{
 			// We're only viewing the registry and modifying components in place; Only need a read lock
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
@@ -200,34 +314,71 @@ namespace fr
 			auto sceneBoundsEntityView = m_registry.view<fr::Bounds, fr::Bounds::IsSceneBoundsMarker>();
 			SEAssert("A unique scene bounds entity must exist",
 				sceneBoundsEntityView.front() == sceneBoundsEntityView.back());
-
+			
 			// Copy the current bounds so we can detect if it changes
 			const fr::Bounds prevBounds = sceneBoundsEntityView.get<fr::Bounds>(sceneBoundsEntityView.front());
 
 			// Modify our bounds component in-place:
-			m_registry.patch<fr::Bounds>(sceneBoundsEntityView.front(), [&](auto& boundsComponent)
+			m_registry.patch<fr::Bounds>(sceneBoundsEntityView.front(), [&](auto& sceneBoundsComponent)
 				{
 					// Reset our bounds: It'll grow to encompass all bounds
-					boundsComponent = Bounds();
+					sceneBoundsComponent = Bounds();
 
-					// Check each mesh:
-					auto meshEntities = m_registry.view<gr::Mesh>();
-					for (auto entity : meshEntities)
+					auto meshConceptsView = m_registry.view<fr::Mesh::MeshConceptMarker>();					
+					for (auto const& meshEntity : meshConceptsView)
 					{
-						auto& meshComponent = m_registry.get<gr::Mesh>(entity);
+						fr::Bounds const& boundsComponent = m_registry.get<fr::Bounds>(meshEntity);
 
-						boundsComponent.ExpandBounds(meshComponent.GetBounds().GetTransformedAABBBounds(
-							meshComponent.GetTransform()->GetGlobalMatrix()));
+						fr::Relationship const& relationshipComponent = m_registry.get<fr::Relationship>(meshEntity);
+
+						gr::Transform& sceneNodeTransform = 
+							fr::SceneNode::GetSceneNodeTransform(relationshipComponent.GetParent());
+
+						sceneBoundsComponent.ExpandBounds(
+							boundsComponent.GetTransformedAABBBounds(sceneNodeTransform.GetGlobalMatrix()));
 					}
 				});
 
-			if (sceneBoundsEntityView.get<fr::Bounds>(sceneBoundsEntityView.front()) != prevBounds)
+			fr::Bounds const& newSceneBounds = sceneBoundsEntityView.get<fr::Bounds>(sceneBoundsEntityView.front());
+			if (newSceneBounds != prevBounds)
 			{
-				EmplaceComponent<DirtyMarker<fr::Bounds>>(sceneBoundsEntityView.front());
+				readLock.unlock();
+				EmplaceOrReplaceComponent<DirtyMarker<fr::Bounds>>(sceneBoundsEntityView.front());
 			}
 		}
 	}
 
+
+	void GameplayManager::UpdateTransformComponents()
+	{
+		// Use the number of root transforms during the last update 
+		static size_t prevNumRootTransforms = 1;
+
+		std::vector<std::future<void>> taskFutures;
+		taskFutures.reserve(prevNumRootTransforms);
+
+		auto transformComponentsView = m_registry.view<fr::TransformComponent>();
+		for (auto entity : transformComponentsView)
+		{
+			fr::TransformComponent& transformComponent =
+				transformComponentsView.get<fr::TransformComponent>(entity);
+
+			// Find root nodes:
+			gr::Transform& node = transformComponent.GetTransform();
+			if (node.GetParent() == nullptr)
+			{
+				fr::TransformComponent::DispatchTransformUpdateThread(taskFutures, &node);
+			}
+		}
+
+		prevNumRootTransforms = std::max(1llu, taskFutures.size());
+
+		// Wait for the updates to complete
+		for (std::future<void> const& taskFuture : taskFutures)
+		{
+			taskFuture.wait();
+		}
+	}
 
 
 
@@ -242,56 +393,6 @@ namespace fr
 			for (en::Updateable* updateable : m_updateables)
 			{
 				updateable->Update(stepTimeMs);
-			}
-		}
-	}
-
-
-	void GameplayManager::UpdateTransformables() const
-	{
-		{
-			std::lock_guard<std::mutex> lock(m_transformablesMutex);
-			// TODO: It's still hypothetically possible that another thread could modify a transform while this process
-			// happens. It could be worth locking all transforms in the entire hierarchy here first
-
-			std::vector<std::future<void>> taskFutures;
-			taskFutures.reserve(m_transformables.size());
-			for (fr::Transformable* transformable : m_transformables)
-			{
-				// We're interested in root nodes only. We could cache these to avoid the search, but for now it's fine
-				gr::Transform* currentTransform = transformable->GetTransform();
-				if (currentTransform->GetParent() == nullptr)
-				{
-					// DFS walk down our Transform hierarchy, recomputing each Transform in turn. The goal here is to
-					// minimize the (re)computation required when we copy Transforms for the Render thread
-					std::stack<gr::Transform*> transforms;
-					transforms.push(currentTransform);
-
-					taskFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
-						[currentTransform]()
-						{
-							std::stack<gr::Transform*> transforms;
-							transforms.push(currentTransform);
-
-							while (!transforms.empty())
-							{
-								gr::Transform* topTransform = transforms.top();
-								transforms.pop();
-
-								topTransform->ClearHasChangedFlag();
-								topTransform->Recompute();
-
-								for (gr::Transform* child : topTransform->GetChildren())
-								{
-									transforms.push(child);
-								}
-							}
-						}));
-				}
-			}
-			for (std::future<void> const& taskFuture : taskFutures)
-			{
-				taskFuture.wait();
 			}
 		}
 	}
@@ -323,35 +424,6 @@ namespace fr
 			SEAssert("Updateable not found", result != m_updateables.end());
 
 			m_updateables.erase(result);
-		}
-	}
-
-
-	void GameplayManager::AddTransformable(fr::Transformable* transformable)
-	{
-		{
-			std::lock_guard<std::mutex> lock(m_transformablesMutex);
-			m_transformables.emplace_back(transformable);
-		}
-	}
-
-
-	void GameplayManager::RemoveTransformable(fr::Transformable const* transformable)
-	{
-		{
-			std::lock_guard<std::mutex> lock(m_transformablesMutex);
-
-			auto const& result = std::find_if(
-				m_transformables.begin(),
-				m_transformables.end(),
-				[&](fr::Transformable* curTransformable) {return curTransformable == transformable; });
-
-			SEAssert("Transformable not found", result != m_transformables.end());
-
-			if (result != m_transformables.end())
-			{
-				m_transformables.erase(result);
-			}
 		}
 	}
 }

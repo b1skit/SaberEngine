@@ -30,17 +30,32 @@ namespace fr
 			glm::vec3 m_maxXYZ;
 		};
 
-
-	public:
-		static void CreateSceneBounds(fr::GameplayManager&);
-		static void AttachBoundsComponent(fr::GameplayManager&, entt::entity);
 		static RenderData GetRenderData(fr::Bounds const&);
 
 
 	public:
+		static void CreateSceneBounds(fr::GameplayManager&);
+		
+		static void AttachBoundsComponent(fr::GameplayManager&, entt::entity);
+
+		static void AttachBoundsComponent(
+			fr::GameplayManager&, 
+			entt::entity, 
+			glm::vec3 const& minXYZ, 
+			glm::vec3 const& maxXYZ);
+
+		static void AttachBoundsComponent(
+			fr::GameplayManager&, 
+			entt::entity, 
+			glm::vec3 const& minXYZ, 
+			glm::vec3 const& maxXYZ, 
+			std::vector<glm::vec3> const& positions);
+
+
+	public: // ECS_CONVERSION TODO: Should these be private/protected to enforce creation via the component helpers?
 		Bounds();
-		explicit Bounds(glm::vec3 minXYZ, glm::vec3 maxXYZ);
-		explicit Bounds(glm::vec3 minXYZ, glm::vec3 maxXYZ, std::vector<glm::vec3> const& positions);
+		explicit Bounds(glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ);
+		explicit Bounds(glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, std::vector<glm::vec3> const& positions);
 
 		Bounds(Bounds const& rhs) = default;
 		Bounds(Bounds&&) = default;

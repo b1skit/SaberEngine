@@ -68,13 +68,86 @@ namespace re
 			}
 
 			// Material params:
-			std::shared_ptr<re::ParameterBlock> materialParams = material->GetParameterBlock();
-			if (materialParams)
-			{
-				m_batchParamBlocks.emplace_back(materialParams);
-			}			
+			std::shared_ptr<re::ParameterBlock> materialParams = gr::Material::CreateParameterBlock(material);
+			
+			SEAssert("Batch and material parameter block lifetimes are incompatible",
+				(m_lifetime == re::Batch::Lifetime::Permanent &&
+					(materialParams->GetType() == re::ParameterBlock::PBType::Mutable ||
+						materialParams->GetType() == re::ParameterBlock::PBType::Immutable)) ||
+				(lifetime == re::Batch::Lifetime::SingleFrame &&
+					materialParams->GetType() == re::ParameterBlock::PBType::SingleFrame));
+
+			m_batchParamBlocks.emplace_back(materialParams);
 		}
 		
+		ComputeDataHash();
+	}
+
+
+	Batch::Batch(
+		Lifetime lifetime, 
+		gr::MeshPrimitive::RenderData const& meshPrimRenderData, 
+		gr::Material::RenderData const* materialRenderData)
+		: m_lifetime(lifetime)
+		, m_type(BatchType::Graphics)
+		, m_graphicsParams{}
+		, m_batchShader(nullptr)
+		, m_batchFilterBitmask(0)
+	{
+		m_batchParamBlocks.reserve(k_batchParamBlockIDsReserveAmount);
+
+		m_graphicsParams = GraphicsParams{
+			.m_batchGeometryMode = GeometryMode::IndexedInstanced,
+			.m_numInstances = 1,
+			.m_batchTopologyMode = meshPrimRenderData.m_meshPrimitiveParams.m_topologyMode,
+		};
+
+		// Zero out our vertex streams array:
+		memset(&m_graphicsParams.m_vertexStreams, 0, m_graphicsParams.m_vertexStreams.size() * sizeof(re::VertexStream const*));
+
+		for (uint8_t slotIdx = 0; slotIdx < static_cast<uint8_t>(meshPrimRenderData.m_vertexStreams.size()); slotIdx++)
+		{
+			if (meshPrimRenderData.m_vertexStreams[slotIdx])
+			{
+				SEAssert("Cannot add a vertex stream with a single frame lifetime to a permanent batch",
+					(m_lifetime == Lifetime::SingleFrame) ||
+					(meshPrimRenderData.m_vertexStreams[slotIdx]->GetLifetime() == re::VertexStream::Lifetime::Permanent && 
+						m_lifetime == Lifetime::Permanent));
+
+				m_graphicsParams.m_vertexStreams[slotIdx] = meshPrimRenderData.m_vertexStreams[slotIdx];
+			}
+		}
+		m_graphicsParams.m_indexStream = meshPrimRenderData.m_indexStream;
+		
+		// Material textures/samplers:
+		if (materialRenderData)
+		{
+			for (size_t i = 0; i < materialRenderData->m_material->GetTexureSlotDescs().size(); i++)
+			{
+				if (materialRenderData->m_material->GetTexureSlotDescs()[i].m_texture &&
+					materialRenderData->m_material->GetTexureSlotDescs()[i].m_samplerObject)
+				{
+					AddTextureAndSamplerInput(
+						materialRenderData->m_material->GetTexureSlotDescs()[i].m_shaderSamplerName,
+						materialRenderData->m_material->GetTexureSlotDescs()[i].m_texture,
+						materialRenderData->m_material->GetTexureSlotDescs()[i].m_samplerObject);
+				}
+			}
+
+			// Material params:
+			std::shared_ptr<re::ParameterBlock> materialParams =
+				gr::Material::CreateParameterBlock(materialRenderData->m_material);
+
+			SEAssert("Batch and material parameter block lifetimes are incompatible",
+				(m_lifetime == re::Batch::Lifetime::Permanent &&
+					(materialParams->GetType() == re::ParameterBlock::PBType::Mutable ||
+						materialParams->GetType() == re::ParameterBlock::PBType::Immutable)) ||
+				(lifetime == re::Batch::Lifetime::SingleFrame &&
+					materialParams->GetType() == re::ParameterBlock::PBType::SingleFrame));
+
+			m_batchParamBlocks.emplace_back(materialParams);
+		}
+
 		ComputeDataHash();
 	}
 
@@ -95,7 +168,8 @@ namespace re
 		{
 			SEAssert("Cannot add a vertex stream with a single frame lifetime to a permanent batch",
 				(m_lifetime == Lifetime::SingleFrame) ||
-				(m_graphicsParams.m_vertexStreams[slotIdx]->GetLifetime() == re::VertexStream::Lifetime::Permanent && m_lifetime == Lifetime::Permanent));
+				(m_graphicsParams.m_vertexStreams[slotIdx]->GetLifetime() == re::VertexStream::Lifetime::Permanent && 
+					m_lifetime == Lifetime::Permanent));
 		}
 #endif
 
@@ -114,11 +188,16 @@ namespace re
 			}
 
 			// Material params:
-			std::shared_ptr<re::ParameterBlock> materialParams = material->GetParameterBlock();
-			if (materialParams)
-			{
-				m_batchParamBlocks.emplace_back(materialParams);
-			}
+			std::shared_ptr<re::ParameterBlock> materialParams = gr::Material::CreateParameterBlock(material);
+
+			SEAssert("Batch and material parameter block lifetimes are incompatible",
+				(m_lifetime == re::Batch::Lifetime::Permanent &&
+					(materialParams->GetType() == re::ParameterBlock::PBType::Mutable||
+						materialParams->GetType() == re::ParameterBlock::PBType::Immutable)) ||
+				(lifetime == re::Batch::Lifetime::SingleFrame &&
+					materialParams->GetType() == re::ParameterBlock::PBType::SingleFrame));
+
+			m_batchParamBlocks.emplace_back(materialParams);
 		}
 
 		ComputeDataHash();

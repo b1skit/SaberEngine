@@ -3,12 +3,12 @@
 #include "Assert.h"
 #include "EngineComponent.h"
 #include "Updateable.h"
+#include "Bounds.h"
 
 
 namespace fr
 {
 	class PlayerObject;
-	class Transformable;
 
 
 	class GameplayManager final : public virtual en::EngineComponent
@@ -25,8 +25,11 @@ namespace fr
 
 		void EnqueueRenderUpdates();
 
+		fr::Bounds const& GetSceneBounds() const;
+
 
 		// EnTT wrappers:
+	public:
 		entt::entity CreateEntity(std::string const& name);
 		entt::entity CreateEntity(char const* name);
 
@@ -69,14 +72,23 @@ namespace fr
 		template<typename T>
 		bool HasComponent(entt::entity entity) const;
 
+		template<typename T, typename... Args>
+		auto CreateView();
+
 
 	private:
 		entt::basic_registry<entt::entity> m_registry; // uint32_t entities
 		mutable std::shared_mutex m_registeryMutex;
 
 
-	private: // Systems:
+	//private: // Systems:
+	public:
 		void UpdateSceneBounds();
+		// ECS_CONVERSION TODO: Make this private again. Currently public as a hack so we can trigger it after scene loading
+
+
+	private:
+		void UpdateTransformComponents();
 
 
 		// DEPRECATED:
@@ -86,23 +98,13 @@ namespace fr
 		void RemoveUpdateable(en::Updateable const* updateable);
 
 
-	protected:
-		friend class fr::Transformable;
-		void AddTransformable(fr::Transformable*);
-		void RemoveTransformable(fr::Transformable const*);
-
-
 	private:
 		void UpdateUpdateables(double stepTimeMs) const;
-		void UpdateTransformables() const;
 
 
 	private:
 		std::vector<en::Updateable*> m_updateables;
 		mutable std::mutex m_updateablesMutex;
-
-		std::vector<fr::Transformable*> m_transformables;
-		mutable std::mutex m_transformablesMutex;
 
 		std::shared_ptr<fr::PlayerObject> m_playerObject;
 	};
@@ -236,13 +238,29 @@ namespace fr
 	template<typename T>
 	T& GameplayManager::GetComponent(entt::entity entity)
 	{
-		return m_registry.get<T>(entity);
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			return m_registry.get<T>(entity);
+		}
 	}
 
 
 	template<typename T>
 	T const& GameplayManager::GetComponent(entt::entity entity) const
 	{
-		return m_registry.get<T>(entity);
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			return m_registry.get<T>(entity);
+		}
+	}
+
+
+	template<typename T, typename... Args>
+	auto GameplayManager::CreateView()
+	{
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			return m_registry.view<T, Args...>();
+		}
 	}
 }

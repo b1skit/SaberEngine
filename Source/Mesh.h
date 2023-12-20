@@ -3,29 +3,35 @@
 
 #include "Bounds.h"
 #include "MeshPrimitive.h"
+#include "TransformComponent.h"
 
-
-namespace fr
-{
-	class GameplayManager;
-}
 
 namespace re
 {
 	class ParameterBlock;
 }
 
+
+namespace fr
+{
+	class Mesh
+	{
+	public:
+		struct MeshConceptMarker {};
+
+	public:
+		static entt::entity CreateMeshConcept(entt::entity sceneNode, char const* name);
+	};
+}
+
+
 namespace gr
 {	
 	class Transform;
 
-
+	
 	class Mesh
 	{
-	public:
-		static void AttachMeshConcept(fr::GameplayManager&, entt::entity sceneNode, uint32_t expectedNumPrimitives);
-
-
 	public:
 		struct InstancedMeshParams
 		{
@@ -38,6 +44,16 @@ namespace gr
 		static std::shared_ptr<re::ParameterBlock> CreateInstancedMeshParamsData(glm::mat4 const* model, glm::mat4* transposeInvModel);
 
 
+		// ECS_CONVERSION TODO: IT DOESN'T REALLY MAKE SENSE TO HAVE THIS BE A MEMBER OF gr::Mesh ANYMORE!!!!
+		static std::shared_ptr<re::ParameterBlock> CreateInstancedMeshParamsData(
+			fr::TransformComponent::RenderData const&);
+		
+		static std::shared_ptr<re::ParameterBlock> CreateInstancedMeshParamsData(
+			std::vector<fr::TransformComponent::RenderData const*> const&);
+
+
+		// DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!
+		// -> A mesh is simply a concept now, represented by an Entity and a hierarchy of components
 	public:
 		explicit Mesh(std::string const& name, gr::Transform* ownerTransform);
 		explicit Mesh(std::string const& name, gr::Transform* ownerTransform, std::shared_ptr<gr::MeshPrimitive>);

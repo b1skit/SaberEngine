@@ -7,6 +7,7 @@
 
 namespace fr
 {
+	// ECS_CONVERSION: DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	class Transformable : public virtual en::NamedObject
 	{
 	public:
@@ -20,11 +21,6 @@ namespace fr
 
 	protected:
 		gr::Transform m_transform;
-
-
-	private:
-		void Register();
-		void Deregister() const;
 
 
 	private:// The SceneData holds a list of raw Transformable*, no moving/copying allowed

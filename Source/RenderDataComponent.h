@@ -12,54 +12,67 @@ namespace fr
 namespace gr
 {
 	// Automatically assigns itself a unique RenderObjectID
-	struct RenderDataComponent
+	class RenderDataComponent
 	{
-		static RenderDataComponent& AttachRenderDataComponent(
-			fr::GameplayManager&, entt::entity, uint32_t expectedNumPrimitives);
+	public:
+		struct NewIDMarker {}; // Attached when a a new RenderObjectID is allocated
+
+	public:
+		static RenderDataComponent& AttachNewRenderDataComponent(
+			fr::GameplayManager&, entt::entity, gr::TransformID);
+
+		static RenderDataComponent& AttachSharedRenderDataComponent(
+			fr::GameplayManager&, entt::entity, RenderDataComponent const&);
 
 
-		
-		
-		RenderDataComponent(RenderDataComponent&&) noexcept;
-		RenderDataComponent& operator=(RenderDataComponent&&) noexcept;
+	public:
+		RenderDataComponent(RenderDataComponent&&) = default;
+		RenderDataComponent& operator=(RenderDataComponent&&) = default;
 
-		size_t GetNumRenderObjectIDs() const;
-		gr::RenderObjectID GetRenderObjectID(size_t index) const;
-		void AddRenderObject();
+
+	public:
+		gr::RenderObjectID GetRenderObjectID() const;
+		gr::TransformID GetTransformID() const;
+
 
 	private:
-		std::vector<gr::RenderObjectID> m_objectIDs;
-		mutable std::shared_mutex m_objectIDsMutex;
+		const gr::RenderObjectID m_renderObjectID;
+		const gr::TransformID m_transformID;
 
 
 	private:
 		static std::atomic<gr::RenderObjectID> s_objectIDs;
 
-	
+
 	private: // No copying allowed
 		RenderDataComponent() = delete;
-		RenderDataComponent(RenderDataComponent const&) = delete;
 		RenderDataComponent& operator=(RenderDataComponent const&) = delete;
+		
 
-
-	private: // Use AttachRenderDataComponent()
-		RenderDataComponent(uint32_t expectedNumPrimitives);
+	private: // Use the static creation factories
+		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
+		
+	public:
+		RenderDataComponent(PrivateCTORTag, gr::TransformID); // Allocate a new RenderObjectID
+		RenderDataComponent(PrivateCTORTag, gr::RenderObjectID, gr::TransformID); // Allocate a new RenderObjectID
+		RenderDataComponent(PrivateCTORTag, RenderDataComponent const&); // Shared RenderObjectID
 	};
 
 
 	// ---
 
 
-	class CreateRenderObjectCommand
+	class RegisterRenderObjectCommand
 	{
 	public:
-		CreateRenderObjectCommand(gr::RenderObjectID);
+		RegisterRenderObjectCommand(RenderDataComponent const&);
 
 		static void Execute(void*);
 		static void Destroy(void*);
 
 	private:
 		const gr::RenderObjectID m_objectID;
+		const gr::TransformID m_transformID;
 	};
 
 

@@ -1,11 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
+#include "NamedObject.h"
 #include "RenderStage.h"
-#include "TextureTarget.h"
 #include "RenderCommand.h"
 #include "RenderPipeline.h"
-#include "NamedObject.h"
+#include "TextureTarget.h"
 
 
 namespace re

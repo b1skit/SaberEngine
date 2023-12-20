@@ -4,8 +4,10 @@
 #include "MarkerComponents.h"
 #include "Material.h"
 #include "Material_GLTF.h"
+#include "MeshPrimitive.h"
 #include "ParameterBlock.h"
 #include "Relationship.h"
+#include "RenderDataComponent.h"
 #include "Shader_Platform.h"
 #include "Shader.h"
 #include "Texture.h"
@@ -77,11 +79,15 @@ namespace
 namespace gr
 {
 	Material::MaterialComponent& Material::AttachMaterialConcept(
-		fr::GameplayManager& gpm, 
 		entt::entity meshPrimitiveConcept,
 		std::shared_ptr<gr::Material> sceneMaterial)
 	{
+		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+
 		SEAssert("Cannot attach a null material", sceneMaterial != nullptr);
+		SEAssert("Attempting to attach a Material component without a MeshPrimitiveComponent. This (currently) doesn't "
+			"make sense",
+			fr::Relationship::HasComponentInParentHierarchy<gr::MeshPrimitive::MeshPrimitiveComponent>(meshPrimitiveConcept));
 
 		entt::entity materialEntity = gpm.CreateEntity(sceneMaterial->GetName());
 
@@ -93,10 +99,23 @@ namespace gr
 		fr::Relationship& materialRelationship = fr::Relationship::AttachRelationshipComponent(gpm, materialEntity);
 		materialRelationship.SetParent(gpm, meshPrimitiveConcept);
 
+		gr::RenderDataComponent const& meshPrimRenderData = 
+			gpm.GetComponent<gr::RenderDataComponent>(meshPrimitiveConcept);
+
+		gr::RenderDataComponent::AttachSharedRenderDataComponent(gpm, materialEntity, meshPrimRenderData);
+
 		// Mark our Material as dirty:
 		gpm.EmplaceOrReplaceComponent<DirtyMarker<gr::Material::MaterialComponent>>(materialEntity);
 
 		return *matComponent;
+	}
+
+
+	Material::RenderData Material::GetRenderData(MaterialComponent const& matComponent)
+	{
+		return Material::RenderData{
+			.m_material = matComponent.m_material
+		};
 	}
 
 
@@ -136,6 +155,23 @@ namespace gr
 			(uint32_t)index->second < (uint32_t)m_texSlots.size());
 
 		return m_texSlots[index->second].m_texture;
+	}
+
+
+	std::shared_ptr<re::ParameterBlock> Material::CreateParameterBlock(gr::Material const* material)
+	{
+		switch (material->GetMaterialType())
+		{
+		case gr::Material::MaterialType::GLTF_PBRMetallicRoughness:
+		{
+			gr::Material_GLTF const* mat = dynamic_cast<gr::Material_GLTF const*>(material);
+			return gr::Material_GLTF::CreateParameterBlock(mat);
+		}
+		break;
+		default:
+			SEAssertF("Invalid material type");
+		}
+		return nullptr;
 	}
 
 

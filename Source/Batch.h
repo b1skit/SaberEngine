@@ -15,7 +15,6 @@ namespace gr
 }
 namespace re
 {
-	class MeshPrimitive;
 	class ParameterBlock;
 	class Shader;
 	class Sampler;
@@ -91,7 +90,9 @@ namespace re
 		// the BatchManager
 
 		// Graphics batches:
-		Batch(Lifetime, gr::MeshPrimitive const* meshPrimitive, gr::Material* materialOverride);
+		Batch(Lifetime, gr::MeshPrimitive const* meshPrimitive, gr::Material* materialOverride); // DEPRECATED!!!!!
+
+		Batch(Lifetime, gr::MeshPrimitive::RenderData const& meshPrimRenderData, gr::Material::RenderData const*);
 
 		Batch(Lifetime, gr::Material*, GraphicsParams const&);
 

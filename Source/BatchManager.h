@@ -4,6 +4,10 @@
 #include "Mesh.h"
 #include "MeshPrimitive.h"
 
+namespace gr
+{
+	class RenderData;
+}
 
 namespace re
 {
@@ -17,7 +21,9 @@ namespace re
 		// per batch) is far less important
 		// https://www.nvidia.de/docs/IO/8230/BatchBatchBatch.pdf
 
-		static std::vector<re::Batch> BuildBatches(std::vector<std::shared_ptr<gr::Mesh>> const&);
+		static std::vector<re::Batch> BuildBatches(std::vector<std::shared_ptr<gr::Mesh>> const&); // DEPRECATED!!!
+
+		static std::vector<re::Batch> BuildBatches(gr::RenderData const&);
 	};
 }
 

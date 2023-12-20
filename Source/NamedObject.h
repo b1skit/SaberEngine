@@ -113,6 +113,7 @@ namespace en
 		const uint64_t thisObjectID = objectIDs.fetch_add(1);
 		const std::string hashString = m_name + std::to_string(thisObjectID);
 		m_uniqueID = std::hash<std::string>{}(hashString);
+		// TODO: No need to hash this - A simple monotonically-increasing uint64_t is guaranteed to be unique
 	}
 
 

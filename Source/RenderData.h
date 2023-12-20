@@ -20,7 +20,7 @@ namespace gr
 		void Destroy();
 
 		// Render data interface:
-		void RegisterObject(gr::RenderObjectID);
+		void RegisterObject(gr::RenderObjectID, gr::TransformID);
 		void DestroyObject(gr::RenderObjectID);
 
 		template<typename T>
@@ -34,7 +34,11 @@ namespace gr
 		template<typename T>
 		void DestroyObjectData(gr::RenderObjectID);
 
+		template<typename T>
+		uint32_t GetNumElementsOfType() const;
 
+
+	private:
 		// Transform interface.
 		// We treat Transforms as a special case because all render objects require a Transform, and we expect
 		// Transforms to be the largest and most frequently updated data mirrored on the render thread. It's likely many
@@ -42,6 +46,7 @@ namespace gr
 		void RegisterTransform(gr::TransformID);
 		void UnregisterTransform(gr::TransformID);
 
+	public:
 		void SetTransformData(gr::TransformID, fr::TransformComponent::RenderData const&);
 		[[nodiscard]] fr::TransformComponent::RenderData const& GetTransformData(gr::TransformID) const;
 
@@ -84,6 +89,8 @@ namespace gr
 			ObjectTypeToDataIndexTable m_objectTypeToDataIndexTable;
 			
 			gr::TransformID m_transformID;
+
+			uint32_t m_referenceCount;
 		};
 
 		struct TransformMetadata
@@ -117,7 +124,7 @@ namespace gr
 
 			gr::RenderObjectID GetRenderObjectID() const;
 
-			fr::TransformComponent::RenderData const& GetTransform() const;
+			fr::TransformComponent::RenderData const& GetTransformData() const;
 
 			ObjectIterator& operator++(); // Prefix increment
 			ObjectIterator operator++(int); // Postfix increment
@@ -178,7 +185,8 @@ namespace gr
 		std::map<size_t, uint8_t> m_typeInfoHashToDataVectorIdx;
 		std::vector<std::shared_ptr<void>> m_dataVectors; // Use shared_ptr because it type erases
 
-		// Render objects are represented as a set of indexes into arrays of typed data (meshes, materials, etc)
+		// Render objects are represented as a set of indexes into arrays of typed data (meshes, materials, etc).
+		// Each render object maps to 0 or 1 instance of each data type
 		std::unordered_map<gr::RenderObjectID, RenderObjectMetadata> m_objectIDToRenderObjectMetadata;
 
 		// Every render object has a transform, but many render objects share the same transform (E.g. mesh primitives).
@@ -262,6 +270,21 @@ namespace gr
 		std::vector<T> const& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[dataTypeIndex]).get();
 
 		return index < dataVector.size() ? &dataVector[index] : nullptr;
+	}
+
+
+	template<typename T>
+	uint32_t RenderData::GetNumElementsOfType() const
+	{
+		const uint8_t dataTypeIndex = GetDataIndexFromType<T>();
+		if (dataTypeIndex == k_invalidDataTypeIdx)
+		{
+			return 0;
+		}
+
+		std::vector<T> const& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[dataTypeIndex]).get();
+		
+		return util::CheckedCast<uint32_t>(dataVector.size());
 	}
 
 
@@ -423,7 +446,7 @@ namespace gr
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
-		const std::unordered_map<gr::RenderObjectID, ObjectTypeToDataIndexTable>::const_iterator objectDataIndicesEndItr =
+		const std::unordered_map<gr::RenderObjectID, RenderObjectMetadata>::const_iterator objectDataIndicesEndItr =
 			m_objectIDToRenderObjectMetadata.end();
 
 		return ObjectIterator<Ts...>(
@@ -572,7 +595,7 @@ namespace gr
 
 
 	template <typename... Ts>
-	fr::TransformComponent::RenderData const& RenderData::ObjectIterator<Ts...>::GetTransform() const
+	fr::TransformComponent::RenderData const& RenderData::ObjectIterator<Ts...>::GetTransformData() const
 	{
 		return m_renderData->GetTransformData(m_renderObjectMetadataItr->second.m_transformID);
 	}
@@ -583,7 +606,8 @@ namespace gr
 	{
 		const uint8_t dataTypeIndex = m_renderData->GetDataIndexFromType<T>();
 
-		ObjectTypeToDataIndexTable const& objectTypeToDataIndexTable = m_renderObjectMetadataItr->second;
+		ObjectTypeToDataIndexTable const& objectTypeToDataIndexTable = 
+			m_renderObjectMetadataItr->second.m_objectTypeToDataIndexTable;
 
 		// Make sure the data type index is in bounds of the current object's data index table (it could be invalid, or
 		// the table might not have allocated an entry for this type)

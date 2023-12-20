@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Batch.h"
+#include "BatchManager.h"
 #include "Config.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_DeferredLighting.h"
@@ -195,8 +196,7 @@ namespace re
 		m_renderCommandManager.Execute(); // Process render commands
 
 		// Copy frame data:
-		SEAssert("Render batches should be empty", m_renderBatches.empty());
-		m_renderBatches = std::move(SceneManager::Get()->GetSceneBatches());
+		BuildSceneBatches();
 		// TODO: Batch creation should be done on the render thread, using simplistic renderer-side representations of
 		// scene objects updated via a render command queue
 
@@ -499,6 +499,22 @@ namespace re
 	void RenderManager::RegisterSingleFrameResource(std::shared_ptr<re::VertexStream> singleFrameObject)
 	{
 		m_singleFrameVertexStreams.EmplaceBack(std::move(singleFrameObject));
+	}
+
+
+	void RenderManager::BuildSceneBatches()
+	{
+		// TODO: We're currently creating/destroying invariant parameter blocks each frame. This is expensive.
+		// Instead, we should create a pool of PBs, and reuse by re-buffering data each frame
+
+		// ECS_CONVERSION TODO: Handle building batches per GS. For now, just moving this functionality out of
+		// the SceneManager and onto the render thread
+		SEAssert("Currently assuming we only have 1 render system", m_renderSystems.size() == 1);
+
+		m_renderBatches.clear();
+
+		m_renderBatches = std::move(re::BatchManager::BuildBatches(
+			m_renderSystems[0]->GetGraphicsSystemManager().GetRenderData()));
 	}
 
 
