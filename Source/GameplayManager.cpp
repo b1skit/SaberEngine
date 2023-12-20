@@ -307,6 +307,8 @@ namespace fr
 
 		// ECS_CONVERSION TODO: This should be triggered by listening for when bounds are added/updated
 		
+		entt::entity sceneBoundsEntity = entt::null;
+		bool sceneBoundsChanged = false;
 		{
 			// We're only viewing the registry and modifying components in place; Only need a read lock
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
@@ -315,11 +317,13 @@ namespace fr
 			SEAssert("A unique scene bounds entity must exist",
 				sceneBoundsEntityView.front() == sceneBoundsEntityView.back());
 			
+			sceneBoundsEntity = sceneBoundsEntityView.front();
+
 			// Copy the current bounds so we can detect if it changes
-			const fr::Bounds prevBounds = sceneBoundsEntityView.get<fr::Bounds>(sceneBoundsEntityView.front());
+			const fr::Bounds prevBounds = sceneBoundsEntityView.get<fr::Bounds>(sceneBoundsEntity);
 
 			// Modify our bounds component in-place:
-			m_registry.patch<fr::Bounds>(sceneBoundsEntityView.front(), [&](auto& sceneBoundsComponent)
+			m_registry.patch<fr::Bounds>(sceneBoundsEntity, [&](auto& sceneBoundsComponent)
 				{
 					// Reset our bounds: It'll grow to encompass all bounds
 					sceneBoundsComponent = Bounds();
@@ -339,12 +343,13 @@ namespace fr
 					}
 				});
 
-			fr::Bounds const& newSceneBounds = sceneBoundsEntityView.get<fr::Bounds>(sceneBoundsEntityView.front());
-			if (newSceneBounds != prevBounds)
-			{
-				readLock.unlock();
-				EmplaceOrReplaceComponent<DirtyMarker<fr::Bounds>>(sceneBoundsEntityView.front());
-			}
+			fr::Bounds const& newSceneBounds = sceneBoundsEntityView.get<fr::Bounds>(sceneBoundsEntity);
+			sceneBoundsChanged = (newSceneBounds != prevBounds);
+		}
+
+		if (sceneBoundsChanged)
+		{
+			EmplaceOrReplaceComponent<DirtyMarker<fr::Bounds>>(sceneBoundsEntity);
 		}
 	}
 
