@@ -467,7 +467,7 @@
     <ClCompile Include="CameraComponent.cpp">
       <Filter>Source Files\fr\Components</Filter>
     </ClCompile>
-    <ClCompile Include="Bounds.cpp">
+    <ClCompile Include="BoundsComponent.cpp">
       <Filter>Source Files\fr\Components</Filter>
     </ClCompile>
     <ClCompile Include="RelationshipComponent.cpp">
@@ -910,7 +910,7 @@
     <ClInclude Include="PlayerObject.h">
       <Filter>Header Files\fr</Filter>
     </ClInclude>
-    <ClInclude Include="Bounds.h">
+    <ClInclude Include="BoundsComponent.h">
       <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
     <ClInclude Include="RelationshipComponent.h">
@@ -927,6 +927,9 @@
     </ClInclude>
     <ClInclude Include="MeshPrimitiveComponent.h">
       <Filter>Header Files\fr\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Bounds.h">
+      <Filter>Header Files\gr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

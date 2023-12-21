@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Bounds.h"
+#include "BoundsComponent.h"
 #include "GameplayManager.h"
 #include "MarkerComponents.h"
 #include "RelationshipComponent.h"
@@ -75,9 +75,9 @@ namespace fr
 	}
 
 
-	Bounds::RenderData Bounds::CreateRenderData(fr::Bounds const& bounds)
+	gr::Bounds::RenderData Bounds::CreateRenderData(fr::Bounds const& bounds)
 	{
-		return Bounds::RenderData
+		return gr::Bounds::RenderData
 		{
 			.m_minXYZ = bounds.m_minXYZ,
 			.m_maxXYZ = bounds.m_maxXYZ

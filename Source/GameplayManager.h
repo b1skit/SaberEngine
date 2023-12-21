@@ -3,7 +3,7 @@
 #include "Assert.h"
 #include "EngineComponent.h"
 #include "Updateable.h"
-#include "Bounds.h"
+#include "BoundsComponent.h"
 
 
 namespace fr

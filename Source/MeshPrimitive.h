@@ -2,7 +2,7 @@
 #pragma once
 
 #include "IPlatformParams.h"
-#include "Bounds.h"
+#include "BoundsComponent.h"
 #include "HashedDataObject.h"
 #include "Material.h"
 #include "NamedObject.h"

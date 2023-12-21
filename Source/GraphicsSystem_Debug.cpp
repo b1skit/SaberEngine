@@ -51,7 +51,7 @@ namespace
 	}
 
 
-	re::Batch BuildBoundingBoxBatch(fr::Bounds::RenderData const& bounds, glm::vec3 const& boxColor)
+	re::Batch BuildBoundingBoxBatch(gr::Bounds::RenderData const& bounds, glm::vec3 const& boxColor)
 	{
 		/* Construct a cube from 8 points:
 		*     e----f
@@ -385,12 +385,12 @@ namespace gr
 			m_showAllWireframe)
 		{
 
-			auto meshPrimItr = renderData.ObjectBegin<gr::MeshPrimitive::RenderData, fr::Bounds::RenderData>();
-			auto const& meshPrimItrEnd = renderData.ObjectEnd<gr::MeshPrimitive::RenderData, fr::Bounds::RenderData>();
+			auto meshPrimItr = renderData.ObjectBegin<gr::MeshPrimitive::RenderData, gr::Bounds::RenderData>();
+			auto const& meshPrimItrEnd = renderData.ObjectEnd<gr::MeshPrimitive::RenderData, gr::Bounds::RenderData>();
 			while (meshPrimItr != meshPrimItrEnd)
 			{
 				gr::MeshPrimitive::RenderData const& meshPrimRenderData = meshPrimItr.Get<gr::MeshPrimitive::RenderData>();
-				fr::Bounds::RenderData const& boundsRenderData = meshPrimItr.Get<fr::Bounds::RenderData>();
+				gr::Bounds::RenderData const& boundsRenderData = meshPrimItr.Get<gr::Bounds::RenderData>();
 
 				std::shared_ptr<re::ParameterBlock> meshTransformPB =
 					gr::Transform::CreateInstancedTransformParams(meshPrimItr.GetTransformData());

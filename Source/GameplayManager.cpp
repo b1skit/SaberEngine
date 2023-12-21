@@ -67,7 +67,7 @@ namespace fr
 				// Bounds:
 				if (m_registry.all_of<fr::Bounds>(entity))
 				{
-					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<fr::Bounds::RenderData>>(
+					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Bounds::RenderData>>(
 						renderDataComponent.GetRenderObjectID());
 				}
 
@@ -201,7 +201,7 @@ namespace fr
 
 				fr::Bounds const& boundsComponent = boundsComponentsView.get<fr::Bounds>(entity);
 
-				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<fr::Bounds::RenderData>>(
+				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::Bounds::RenderData>>(
 					renderDataComponent.GetRenderObjectID(),
 					fr::Bounds::CreateRenderData(boundsComponent));
 

@@ -213,7 +213,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
   <ItemGroup>
     <ClCompile Include="Batch.cpp" />
     <ClCompile Include="BatchManager.cpp" />
-    <ClCompile Include="Bounds.cpp" />
+    <ClCompile Include="BoundsComponent.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraComponent.cpp" />
     <ClCompile Include="CommandList_DX12.cpp" />
@@ -344,12 +344,13 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BatchManager.h" />
+    <ClInclude Include="Bounds.h" />
     <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="CastUtils.h" />
     <ClInclude Include="ConfigKeys.h" />
     <ClInclude Include="CPUDescriptorHeapManager_DX12.h" />
     <ClInclude Include="Batch.h" />
-    <ClInclude Include="Bounds.h" />
+    <ClInclude Include="BoundsComponent.h" />
     <ClInclude Include="GraphicsSystemManager.h" />
     <ClInclude Include="MarkerComponents.h" />
     <ClInclude Include="MaterialComponent.h" />
