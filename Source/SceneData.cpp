@@ -10,10 +10,10 @@
 #include "CoreEngine.h"
 #include "GameplayManager.h"
 #include "Light.h"
-#include "Material.h"
+#include "MaterialComponent.h"
 #include "Material_GLTF.h"
 #include "Mesh.h"
-#include "MeshPrimitive.h"
+#include "MeshPrimitiveComponent.h"
 #include "ParameterBlock.h"
 #include "RenderManager.h"
 #include "SceneData.h"
@@ -321,7 +321,7 @@ namespace
 				current->has_scale == 0 && current->has_translation == 0)
 		);
 
-		gr::Transform& targetTransform = fr::SceneNode::GetSceneNodeTransform(sceneNode);
+		fr::Transform& targetTransform = fr::SceneNode::GetSceneNodeTransform(sceneNode);
 
 		if (current->has_matrix)
 		{
@@ -410,7 +410,7 @@ namespace
 				camConfig.m_orthoLeftRightBotTop.w = 0.f;
 			}
 
-			gr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
+			fr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
 
 			// Create the camera and set the transform values on the parent object:
 			newCam = gr::Camera::Create(camName, camConfig, sceneNodeTransform);
@@ -487,13 +487,13 @@ namespace
 		break;
 		case gr::Light::LightType::Directional:
 		{
-			gr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
+			fr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
 			gr::Light::CreateDirectionalLight(lightName, sceneNodeTransform, colorIntensity, attachShadow);
 		}
 		break;
 		case gr::Light::LightType::Point:
 		{
-			gr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
+			fr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
 			gr::Light::CreatePointLight(lightName, sceneNodeTransform, colorIntensity, attachShadow);
 		}
 		break;
@@ -793,7 +793,7 @@ namespace
 			util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 			// Attach the MeshPrimitive to the Mesh:
-			entt::entity meshPrimimitiveEntity = gr::MeshPrimitive::AttachMeshPrimitiveConcept(
+			entt::entity meshPrimimitiveEntity = fr::MeshPrimitive::AttachMeshPrimitiveConcept(
 				meshEntity,
 				meshName.c_str(),
 				&indices,
@@ -822,7 +822,7 @@ namespace
 					meshName.c_str(), k_missingMaterialName);
 				material = scene.GetMaterial(k_missingMaterialName);
 			}
-			gr::Material::AttachMaterialConcept(meshPrimimitiveEntity, material);
+			fr::Material::AttachMaterialConcept(meshPrimimitiveEntity, material);
 		}
 	}
 
@@ -1093,6 +1093,10 @@ namespace fr
 
 		// 
 		{
+			std::lock_guard<std::mutex> lock(m_meshPrimitivesMutex);
+			m_meshPrimitives.clear();
+		}
+		{
 			std::lock_guard<std::mutex> lock(m_vertexStreamsMutex);
 			m_vertexStreams.clear();
 		}
@@ -1119,10 +1123,6 @@ namespace fr
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_pointLightsReadWriteMutex);
 			m_pointLights.clear();
-		}
-		{
-			std::lock_guard<std::mutex> lock(m_sceneBoundsMutex);
-			m_sceneWorldSpaceBounds = fr::Bounds();
 		}
 
 		m_finishedLoading = false; // Flag that Destroy has been called
@@ -1233,35 +1233,12 @@ namespace fr
 	}
 
 
-	void SceneData::AddMesh(std::shared_ptr<gr::Mesh> mesh)
-	{
-		SEAssert("Adding data is not thread safe once loading is complete", !m_finishedLoading);
-
-		// Only need to hold the lock while we modify m_meshes and m_meshPrimitives
-		{
-			std::lock_guard<std::mutex> lock(m_meshesAndMeshPrimitivesMutex);
-
-#if defined(_DEBUG)
-			for (size_t i = 0; i < mesh->GetMeshPrimitives().size(); i++)
-			{
-				const uint64_t meshPrimitiveDataHash = mesh->GetMeshPrimitives()[i]->GetDataHash();
-
-				SEAssert("We expect the MeshPrimitives have already been registered",
-					m_meshPrimitives.find(meshPrimitiveDataHash) != m_meshPrimitives.end());
-			}
-#endif
-
-			m_meshes.emplace_back(mesh); // Add the mesh to our tracking list
-		}
-	}
-
-
 	bool SceneData::AddUniqueMeshPrimitive(std::shared_ptr<gr::MeshPrimitive>& meshPrimitive)
 	{
 		const uint64_t meshPrimitiveDataHash = meshPrimitive->GetDataHash();
 		bool replacedIncomingPtr = false;
 		{
-			std::lock_guard<std::mutex> lock(m_meshesAndMeshPrimitivesMutex);
+			std::lock_guard<std::mutex> lock(m_meshPrimitivesMutex);
 
 			auto const& result = m_meshPrimitives.find(meshPrimitiveDataHash);
 			if (result != m_meshPrimitives.end())
@@ -1304,19 +1281,6 @@ namespace fr
 			}
 		}
 		return replacedIncomingPtr;
-	}
-
-
-	std::vector<std::shared_ptr<gr::Mesh>> const& SceneData::GetMeshes() const
-	{
-		// Note: This function is very dangerous: We're returning a thread-shared object by reference. It's currently
-		// used for ImGui debug access, which should be fine
-
-		SEAssert("Accessing data container is not thread safe during loading", m_finishedLoading);
-		{
-			std::lock_guard<std::mutex> lock(m_meshesAndMeshPrimitivesMutex);
-			return m_meshes;
-		}
 	}
 
 

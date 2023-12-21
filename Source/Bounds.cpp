@@ -2,7 +2,7 @@
 #include "Bounds.h"
 #include "GameplayManager.h"
 #include "MarkerComponents.h"
-#include "Relationship.h"
+#include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "Transform.h"
 
@@ -10,7 +10,7 @@
 using glm::vec3;
 using glm::vec4;
 using glm::mat4;
-using gr::Transform;
+using fr::Transform;
 
 
 namespace
@@ -44,7 +44,7 @@ namespace fr
 		SEAssert("Bounds can only be attached to an entity that already has a RenderDataComponent",
 			fr::Relationship::HasComponentInParentHierarchy<gr::RenderDataComponent>(entity));
 
-		gpm.EmplaceComponent<fr::Bounds>(entity);
+		gpm.EmplaceComponent<fr::Bounds>(entity, PrivateCTORTag{});
 		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::Bounds>>(entity);
 	}
 
@@ -55,7 +55,7 @@ namespace fr
 		SEAssert("Bounds can only be attached to an entity that already has a RenderDataComponent",
 			fr::Relationship::HasComponentInParentHierarchy<gr::RenderDataComponent>(entity));
 
-		gpm.EmplaceComponent<fr::Bounds>(entity, minXYZ, maxXYZ);
+		gpm.EmplaceComponent<fr::Bounds>(entity, PrivateCTORTag{}, minXYZ, maxXYZ);
 		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::Bounds>>(entity);
 	}
 
@@ -70,12 +70,12 @@ namespace fr
 		SEAssert("Bounds can only be attached to an entity that already has a RenderDataComponent", 
 			fr::Relationship::HasComponentInParentHierarchy<gr::RenderDataComponent>(entity));
 
-		gpm.EmplaceComponent<fr::Bounds>(entity, minXYZ, maxXYZ, positions);
+		gpm.EmplaceComponent<fr::Bounds>(entity, PrivateCTORTag{}, minXYZ, maxXYZ, positions);
 		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::Bounds>>(entity);
 	}
 
 
-	Bounds::RenderData Bounds::GetRenderData(fr::Bounds const& bounds)
+	Bounds::RenderData Bounds::CreateRenderData(fr::Bounds const& bounds)
 	{
 		return Bounds::RenderData
 		{
@@ -85,21 +85,28 @@ namespace fr
 	}
 
 
-	Bounds::Bounds()
+	Bounds::Bounds(PrivateCTORTag)
 		: m_minXYZ(k_invalidMinXYZ)
 		, m_maxXYZ(k_invalidMaxXYZ) 
 	{
 	}
 
 
-	Bounds::Bounds(glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ)
+	Bounds::Bounds()
+		: Bounds(PrivateCTORTag{})
+	{
+	}
+
+
+	Bounds::Bounds(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ)
 		: m_minXYZ(minXYZ)
 		, m_maxXYZ(maxXYZ)
 	{
 	}
 
 
-	Bounds::Bounds(glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, std::vector<glm::vec3> const& positions)
+	Bounds::Bounds(
+		PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, std::vector<glm::vec3> const& positions)
 		: m_minXYZ(minXYZ)
 		, m_maxXYZ(maxXYZ)
 	{
@@ -138,7 +145,7 @@ namespace fr
 		points[7] = vec4(xMax(), yMin(), zMax(), 1.0f);		// Right	bot		back
 
 		// Compute a new AABB in world-space:
-		Bounds result; // Invalid min/max by default
+		Bounds result(PrivateCTORTag{}); // Invalid min/max by default
 
 		// Transform each point into world space, and record the min/max coordinate in each dimension:
 		for (size_t i = 0; i < 8; i++)

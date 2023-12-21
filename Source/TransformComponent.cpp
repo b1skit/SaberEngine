@@ -11,9 +11,9 @@ namespace fr
 	std::atomic<gr::TransformID> TransformComponent::s_transformIDs = 0;
 
 
-	TransformComponent::RenderData TransformComponent::GetRenderData(gr::Transform& transform)
+	gr::Transform::RenderData TransformComponent::CreateRenderData(fr::Transform& transform)
 	{
-		return RenderData{
+		return gr::Transform::RenderData{
 			.g_model = transform.GetGlobalMatrix(),
 			.g_transposeInvModel = glm::transpose(glm::inverse(transform.GetGlobalMatrix()))
 		};
@@ -21,14 +21,14 @@ namespace fr
 
 
 	TransformComponent& TransformComponent::AttachTransformComponent(
-		fr::GameplayManager& gpm, entt::entity entity, gr::Transform* parent)
+		fr::GameplayManager& gpm, entt::entity entity, fr::Transform* parent)
 	{
 		gpm.EmplaceComponent<fr::TransformComponent::NewIDMarker>(entity);
 		return *gpm.EmplaceComponent<fr::TransformComponent>(entity, PrivateCTORTag{}, parent);
 	}
 
 
-	TransformComponent::TransformComponent(PrivateCTORTag, gr::Transform* parent)
+	TransformComponent::TransformComponent(PrivateCTORTag, fr::Transform* parent)
 		: m_transformID(s_transformIDs.fetch_add(1))
 		, m_transform(parent)
 	{
@@ -39,7 +39,7 @@ namespace fr
 
 
 	void TransformComponent::DispatchTransformUpdateThread(
-		std::vector<std::future<void>>& taskFuturesOut, gr::Transform* rootNode)
+		std::vector<std::future<void>>& taskFuturesOut, fr::Transform* rootNode)
 	{
 		// DFS walk down our Transform hierarchy, recomputing each Transform in turn. The goal here is to minimize the
 		// (re)computation required when we copy Transforms for the Render thread
@@ -49,25 +49,18 @@ namespace fr
 			{
 				fr::GameplayManager& gpm = *fr::GameplayManager::Get();
 
-				std::stack<gr::Transform*> transforms;
+				std::stack<fr::Transform*> transforms;
 				transforms.push(rootNode);
 
 				while (!transforms.empty())
 				{
-					gr::Transform* topTransform = transforms.top();
+					fr::Transform* topTransform = transforms.top();
 					transforms.pop();
 
 					topTransform->ClearHasChangedFlag();
 					topTransform->Recompute();
 
-					if (topTransform->HasChanged())
-					{
-						LOG("TFORM CHANGED"); // TEMP HAX!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-					}
-
-					for (gr::Transform* child : topTransform->GetChildren())
+					for (fr::Transform* child : topTransform->GetChildren())
 					{
 						transforms.push(child);
 					}
@@ -81,7 +74,7 @@ namespace fr
 
 	UpdateTransformDataRenderCommand::UpdateTransformDataRenderCommand(fr::TransformComponent& transformComponent)
 		: m_transformID(transformComponent.GetTransformID())
-		, m_data(fr::TransformComponent::GetRenderData(transformComponent.GetTransform()))
+		, m_data(fr::TransformComponent::CreateRenderData(transformComponent.GetTransform()))
 	{
 	}
 

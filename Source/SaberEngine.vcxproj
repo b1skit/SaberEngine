@@ -241,8 +241,10 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="GraphicsSystem_Debug.cpp" />
     <ClCompile Include="InputManager_Platform.cpp" />
     <ClCompile Include="InputManager_Win32.cpp" />
+    <ClCompile Include="MaterialComponent.cpp" />
     <ClCompile Include="Material_GLTF.cpp" />
     <ClCompile Include="MeshFactory.cpp" />
+    <ClCompile Include="MeshPrimitiveComponent.cpp" />
     <ClCompile Include="ParameterBlock.cpp" />
     <ClCompile Include="ParameterBlockAllocator.cpp" />
     <ClCompile Include="ParameterBlockAllocator_DX12.cpp" />
@@ -262,7 +264,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="PerformanceTimer.cpp" />
     <ClCompile Include="PipelineState.cpp" />
     <ClCompile Include="PipelineState_DX12.cpp" />
-    <ClCompile Include="Relationship.cpp" />
+    <ClCompile Include="RelationshipComponent.cpp" />
     <ClCompile Include="RenderCommand.cpp" />
     <ClCompile Include="RenderData.cpp" />
     <ClCompile Include="RenderDataComponent.cpp" />
@@ -285,6 +287,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="Transformable.cpp" />
     <ClCompile Include="TransformComponent.cpp" />
+    <ClCompile Include="TransformRenderData.cpp" />
     <ClCompile Include="Updateable.cpp" />
     <ClCompile Include="VertexStream.cpp" />
     <ClCompile Include="VertexStreamBuilder.cpp" />
@@ -349,7 +352,9 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="Bounds.h" />
     <ClInclude Include="GraphicsSystemManager.h" />
     <ClInclude Include="MarkerComponents.h" />
-    <ClInclude Include="Relationship.h" />
+    <ClInclude Include="MaterialComponent.h" />
+    <ClInclude Include="MeshPrimitiveComponent.h" />
+    <ClInclude Include="RelationshipComponent.h" />
     <ClInclude Include="RenderCommand.h" />
     <ClInclude Include="CommandList_DX12.h" />
     <ClInclude Include="CommandQueue_DX12.h" />
@@ -424,6 +429,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="ThreadProtector.h" />
     <ClInclude Include="ThreadSafeVector.h" />
     <ClInclude Include="TransformComponent.h" />
+    <ClInclude Include="TransformRenderData.h" />
     <ClInclude Include="Updateable.h" />
     <ClInclude Include="VertexStream.h" />
     <ClInclude Include="VertexStreamBuilder.h" />

@@ -3,10 +3,11 @@
 #include "CoreEngine.h"
 #include "GameplayManager.h"
 #include "MarkerComponents.h"
-#include "Material_GLTF.h"
+#include "MaterialComponent.h"
+#include "MeshPrimitiveComponent.h"
 #include "NameComponent.h"
 #include "PlayerObject.h"
-#include "Relationship.h"
+#include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
@@ -71,7 +72,7 @@ namespace fr
 				}
 
 				// MeshPrimitives:
-				if (m_registry.all_of<gr::MeshPrimitive::MeshPrimitiveComponent>(entity))
+				if (m_registry.all_of<fr::MeshPrimitive::MeshPrimitiveComponent>(entity))
 				{
 					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::RenderData>>(
 						renderDataComponent.GetRenderObjectID());
@@ -79,7 +80,7 @@ namespace fr
 
 
 				// Materials:
-				if (m_registry.all_of<gr::MeshPrimitive::MeshPrimitiveComponent>(entity))
+				if (m_registry.all_of<fr::MeshPrimitive::MeshPrimitiveComponent>(entity))
 				{
 					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Material::RenderData>>(
 						renderDataComponent.GetRenderObjectID());
@@ -202,7 +203,7 @@ namespace fr
 
 				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<fr::Bounds::RenderData>>(
 					renderDataComponent.GetRenderObjectID(),
-					fr::Bounds::GetRenderData(boundsComponent));
+					fr::Bounds::CreateRenderData(boundsComponent));
 
 				m_registry.erase<DirtyMarker<fr::Bounds>>(entity);
 			}
@@ -210,42 +211,42 @@ namespace fr
 			// MeshPrimitives:
 			// The actual data of a MeshPrimitive is SceneData; We push pointers and metadata to the render thread
 			auto meshPrimitiveComponentsView = m_registry.view<
-				gr::MeshPrimitive::MeshPrimitiveComponent, 
-				DirtyMarker<gr::MeshPrimitive::MeshPrimitiveComponent>, 
+				fr::MeshPrimitive::MeshPrimitiveComponent, 
+				DirtyMarker<fr::MeshPrimitive::MeshPrimitiveComponent>, 
 				gr::RenderDataComponent>();
 			for (auto entity : meshPrimitiveComponentsView)
 			{
 				gr::RenderDataComponent const& renderDataComponent =
 					meshPrimitiveComponentsView.get<gr::RenderDataComponent>(entity);
 
-				gr::MeshPrimitive::MeshPrimitiveComponent const& meshPrimComponent = 
-					meshPrimitiveComponentsView.get<gr::MeshPrimitive::MeshPrimitiveComponent>(entity);
+				fr::MeshPrimitive::MeshPrimitiveComponent const& meshPrimComponent = 
+					meshPrimitiveComponentsView.get<fr::MeshPrimitive::MeshPrimitiveComponent>(entity);
 
 				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::MeshPrimitive::RenderData>>(
-					renderDataComponent.GetRenderObjectID(), gr::MeshPrimitive::GetRenderData(meshPrimComponent));
+					renderDataComponent.GetRenderObjectID(), fr::MeshPrimitive::CreateRenderData(meshPrimComponent));
 
-				m_registry.erase<DirtyMarker<gr::MeshPrimitive::MeshPrimitiveComponent>>(entity);
+				m_registry.erase<DirtyMarker<fr::MeshPrimitive::MeshPrimitiveComponent>>(entity);
 			}
 
 			// Materials:
 			// Material data is (currently) SceneData; We push pointers to the render thread. TODO: Allow Material
 			// instancing and dynamic modification
 			auto materialComponentsView = m_registry.view<
-				gr::Material::MaterialComponent, 
-				DirtyMarker<gr::Material::MaterialComponent>, 
+				fr::Material::MaterialComponent, 
+				DirtyMarker<fr::Material::MaterialComponent>, 
 				gr::RenderDataComponent>();
 			for (auto entity : materialComponentsView)
 			{
 				gr::RenderDataComponent const& renderDataComponent =
 					materialComponentsView.get<gr::RenderDataComponent>(entity);
 
-				gr::Material::MaterialComponent const& materialComponent =
-					materialComponentsView.get<gr::Material::MaterialComponent>(entity);
+				fr::Material::MaterialComponent const& materialComponent =
+					materialComponentsView.get<fr::Material::MaterialComponent>(entity);
 
 				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::Material::RenderData>>(
-					renderDataComponent.GetRenderObjectID(), gr::Material::GetRenderData(materialComponent));
+					renderDataComponent.GetRenderObjectID(), fr::Material::CreateRenderData(materialComponent));
 
-				m_registry.erase<DirtyMarker<gr::Material::MaterialComponent>>(entity);
+				m_registry.erase<DirtyMarker<fr::Material::MaterialComponent>>(entity);
 			}
 
 			// Handle any non-renderable new entities:
@@ -326,7 +327,7 @@ namespace fr
 			m_registry.patch<fr::Bounds>(sceneBoundsEntity, [&](auto& sceneBoundsComponent)
 				{
 					// Reset our bounds: It'll grow to encompass all bounds
-					sceneBoundsComponent = Bounds();
+					sceneBoundsComponent = fr::Bounds::Uninitialized();
 
 					auto meshConceptsView = m_registry.view<fr::Mesh::MeshConceptMarker>();					
 					for (auto const& meshEntity : meshConceptsView)
@@ -335,7 +336,7 @@ namespace fr
 
 						fr::Relationship const& relationshipComponent = m_registry.get<fr::Relationship>(meshEntity);
 
-						gr::Transform& sceneNodeTransform = 
+						fr::Transform& sceneNodeTransform = 
 							fr::SceneNode::GetSceneNodeTransform(relationshipComponent.GetParent());
 
 						sceneBoundsComponent.ExpandBounds(
@@ -369,7 +370,7 @@ namespace fr
 				transformComponentsView.get<fr::TransformComponent>(entity);
 
 			// Find root nodes:
-			gr::Transform& node = transformComponent.GetTransform();
+			fr::Transform& node = transformComponent.GetTransform();
 			if (node.GetParent() == nullptr)
 			{
 				fr::TransformComponent::DispatchTransformUpdateThread(taskFutures, &node);

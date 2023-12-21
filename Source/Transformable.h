@@ -11,16 +11,16 @@ namespace fr
 	class Transformable : public virtual en::NamedObject
 	{
 	public:
-		Transformable(std::string const& name, gr::Transform* parent);
+		Transformable(std::string const& name, fr::Transform* parent);
 
 		virtual ~Transformable() = 0;
 
-		inline gr::Transform* GetTransform() { return &m_transform; }
-		inline gr::Transform const* GetTransform() const { return &m_transform; }
+		inline fr::Transform* GetTransform() { return &m_transform; }
+		inline fr::Transform const* GetTransform() const { return &m_transform; }
 
 
 	protected:
-		gr::Transform m_transform;
+		fr::Transform m_transform;
 
 
 	private:// The SceneData holds a list of raw Transformable*, no moving/copying allowed

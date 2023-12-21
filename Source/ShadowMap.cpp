@@ -14,7 +14,7 @@ using gr::Material;
 using re::Texture;
 using re::Shader;
 using gr::Camera;
-using gr::Transform;
+using fr::Transform;
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
@@ -38,7 +38,7 @@ namespace
 
 
 	gr::Camera::Config ComputeDirectionalShadowCameraConfigFromSceneBounds(
-		gr::Transform* lightTransform, fr::Bounds& sceneWorldBounds)
+		fr::Transform* lightTransform, fr::Bounds& sceneWorldBounds)
 	{
 		fr::Bounds const& transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
 			glm::inverse(lightTransform->GetGlobalMatrix()));
@@ -67,7 +67,7 @@ namespace gr
 		string const& lightName,
 		uint32_t xRes,
 		uint32_t yRes,
-		Transform* shadowCamParent, 
+		fr::Transform* shadowCamParent,
 		vec3 shadowCamPosition, 
 		gr::Light* owningLight)
 		: NamedObject(lightName + "_Shadow")

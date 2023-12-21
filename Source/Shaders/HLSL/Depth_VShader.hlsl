@@ -7,7 +7,7 @@ VertexOut VShader(VertexIn In)
 {
 	VertexOut Out;
 
-	const float4 worldPos = mul(InstancedMeshParams[In.InstanceID].g_model, float4(In.Position, 1.0f));
+	const float4 worldPos = mul(InstancedTransformParams[In.InstanceID].g_model, float4(In.Position, 1.0f));
 	Out.Position = mul(CameraParams.g_viewProjection, worldPos);
 	
 	return Out;

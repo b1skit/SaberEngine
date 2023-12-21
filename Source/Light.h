@@ -1,7 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 
-#include "Mesh.h"
 #include "NamedObject.h"
 #include "ParameterBlock.h"
 #include "Transform.h"
@@ -10,6 +9,7 @@
 
 namespace gr
 {
+	class MeshPrimitive;
 	class ShadowMap;
 
 
@@ -34,10 +34,10 @@ namespace gr
 		static std::shared_ptr<Light> CreateAmbientLight(std::string const& name);
 
 		static std::shared_ptr<Light> CreateDirectionalLight(
-			std::string const& name, gr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow);
+			std::string const& name, fr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow);
 
 		static std::shared_ptr<Light> CreatePointLight(
-			std::string const& name, gr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow);
+			std::string const& name, fr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow);
 
 		~Light() { Destroy(); }
 
@@ -52,7 +52,7 @@ namespace gr
 	 
 		LightType const& Type() const;
 														 
-		gr::Transform* GetTransform(); // Directional lights shine forward (Z+)
+		fr::Transform* GetTransform(); // Directional lights shine forward (Z+)
 
 		gr::ShadowMap* GetShadowMap() const;
 
@@ -73,18 +73,18 @@ namespace gr
 				} m_ambient;
 				struct
 				{
-					gr::Transform* m_ownerTransform;
+					fr::Transform* m_ownerTransform;
 					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
 					std::unique_ptr<gr::ShadowMap> m_shadowMap;
 					std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
 				} m_directional;
 				struct
 				{
-					gr::Transform* m_ownerTransform;
+					fr::Transform* m_ownerTransform;
 					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
 					float m_emitterRadius; // For non-singular attenuation function
 					float m_intensityCuttoff; // Intensity value at which we stop drawing the deferred mesh
-					std::shared_ptr<gr::Mesh> m_sphereMesh;
+					std::shared_ptr<gr::MeshPrimitive> m_sphereMeshPrimitive;
 					std::unique_ptr<gr::ShadowMap> m_cubeShadowMap;
 				} m_point;
 			};
@@ -114,7 +114,7 @@ namespace gr
 
 	private: // Use one of the Create() factories
 		Light(std::string const& name,
-			gr::Transform* ownerTransform,
+			fr::Transform* ownerTransform,
 			LightType lightType,
 			glm::vec4 colorIntensity,
 			bool hasShadow);
@@ -132,7 +132,7 @@ namespace gr
 	}
 
 
-	inline gr::Transform* Light::GetTransform()
+	inline fr::Transform* Light::GetTransform()
 	{
 		switch (m_type)
 		{

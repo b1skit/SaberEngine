@@ -10,7 +10,7 @@
 #include "ShadowMap.h"
 
 using re::Shader;
-using gr::Transform;
+using fr::Transform;
 using en::Config;
 using en::SceneManager;
 using std::unique_ptr;
@@ -84,7 +84,7 @@ namespace gr
 
 
 	std::shared_ptr<Light> Light::CreateDirectionalLight(
-		std::string const& name, gr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow)
+		std::string const& name, fr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow)
 	{
 		std::shared_ptr<gr::Light> newDirectionalLight;
 		newDirectionalLight.reset(new gr::Light(name, ownerTransform, Light::Directional, colorIntensity, hasShadow));
@@ -94,7 +94,7 @@ namespace gr
 
 
 	std::shared_ptr<Light> Light::CreatePointLight(
-		std::string const& name, gr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow)
+		std::string const& name, fr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow)
 	{
 		std::shared_ptr<gr::Light> newPointLight;
 		newPointLight.reset(new gr::Light(name, ownerTransform, Light::Point, colorIntensity, hasShadow));
@@ -103,7 +103,7 @@ namespace gr
 	}
 
 
-	Light::Light(string const& name, Transform* ownerTransform, LightType lightType, glm::vec4 colorIntensity, bool hasShadow)
+	Light::Light(string const& name, fr::Transform* ownerTransform, LightType lightType, glm::vec4 colorIntensity, bool hasShadow)
 		: en::NamedObject(name)
 		, m_type(lightType)
 	{
@@ -155,10 +155,7 @@ namespace gr
 			
 			const float deferredMeshRadius = m_typeProperties.m_point.m_ownerTransform->GetLocalScale().x;
 
-			m_typeProperties.m_point.m_sphereMesh = std::make_shared<gr::Mesh>(
-				std::format("{} mesh", name), 
-				m_typeProperties.m_point.m_ownerTransform, 
-				gr::meshfactory::CreateSphere(1.0f)); // Rely on the owning Transform to scale
+			m_typeProperties.m_point.m_sphereMeshPrimitive = gr::meshfactory::CreateSphere(1.0f);
 
 			m_typeProperties.m_point.m_cubeShadowMap = nullptr;
 			if (hasShadow)
@@ -384,7 +381,7 @@ namespace gr
 			}
 		};
 
-		auto ShowTransformMenu = [this, &uniqueID](gr::Transform* transform)
+		auto ShowTransformMenu = [this, &uniqueID](fr::Transform* transform)
 		{
 			if (ImGui::CollapsingHeader(std::format("Transform##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 			{

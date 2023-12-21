@@ -80,6 +80,7 @@
 
 
 // EnTT:
+#define ENTT_USE_ATOMIC
 #include <entt/entity/registry.hpp>
 
 

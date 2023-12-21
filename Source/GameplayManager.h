@@ -199,6 +199,9 @@ namespace fr
 	void GameplayManager::RemoveComponent(entt::entity entity)
 	{
 		{
+			// It's only safe to add/remove/iterate components if no other thread is adding/removing/iterating
+			// components of the same type. For now, we obtain an exclusive lock on the entire registry, but this could
+			// be more granular
 			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
 
 			m_registry.erase<T>(entity);

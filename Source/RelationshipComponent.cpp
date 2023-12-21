@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "GameplayManager.h"
-#include "Relationship.h"
+#include "RelationshipComponent.h"
 
 
 namespace fr

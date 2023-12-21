@@ -27,7 +27,7 @@ namespace
 	}
 }
 
-namespace gr
+namespace fr
 {
 	// Static members:
 	//----------------

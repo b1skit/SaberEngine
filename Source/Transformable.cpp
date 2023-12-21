@@ -5,7 +5,7 @@
 
 namespace fr
 {
-	Transformable::Transformable(std::string const& name, gr::Transform* parent)
+	Transformable::Transformable(std::string const& name, fr::Transform* parent)
 		: en::NamedObject(name + "_Transformable")
 		, m_transform(parent)
 	{

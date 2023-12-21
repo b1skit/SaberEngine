@@ -77,7 +77,7 @@ namespace re
 
 		PlatformParams* GetPlatformParams() const { return m_platformParams.get(); }
 
-		void ShowImGuiWindow();
+		void ShowImGuiWindow() const;
 
 
 	protected:

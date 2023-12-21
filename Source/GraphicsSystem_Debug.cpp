@@ -12,9 +12,9 @@ namespace
 		float axisScale, glm::vec3 const& xAxisColor, glm::vec3 const& yAxisColor, glm::vec3 const& zAxisColor)
 	{
 		std::vector<glm::vec3> axisPositions = { 
-			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisX * axisScale,
-			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisY * axisScale,
-			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisZ * axisScale,
+			glm::vec3(0.f, 0.f, 0.f), fr::Transform::WorldAxisX * axisScale,
+			glm::vec3(0.f, 0.f, 0.f), fr::Transform::WorldAxisY * axisScale,
+			glm::vec3(0.f, 0.f, 0.f), fr::Transform::WorldAxisZ * axisScale,
 		};
 
 		std::vector<glm::vec4> axisColors = { 
@@ -365,7 +365,7 @@ namespace gr
 	{
 		constexpr glm::mat4 k_identity = glm::mat4(1.f);
 
-		gr::RenderData const& renderData = m_owningGraphicsSystemManager->GetRenderData();
+		gr::RenderData const& renderData = m_owningGraphicsSystemManager->CreateRenderData();
 
 		if (m_showWorldCoordinateAxis)
 		{
@@ -373,7 +373,7 @@ namespace gr
 				BuildAxisBatch(m_worldCoordinateAxisScale, m_xAxisColor, m_yAxisColor, m_zAxisColor);
 
 			std::shared_ptr<re::ParameterBlock> identityTransformPB =
-				gr::Mesh::CreateInstancedMeshParamsData(&k_identity, nullptr);
+				gr::Transform::CreateInstancedTransformParams(&k_identity, nullptr);
 			coordinateAxis.SetParameterBlock(identityTransformPB);
 			m_debugStage->AddBatch(coordinateAxis);
 		}
@@ -393,7 +393,7 @@ namespace gr
 				fr::Bounds::RenderData const& boundsRenderData = meshPrimItr.Get<fr::Bounds::RenderData>();
 
 				std::shared_ptr<re::ParameterBlock> meshTransformPB =
-					gr::Mesh::CreateInstancedMeshParamsData(meshPrimItr.GetTransformData());
+					gr::Transform::CreateInstancedTransformParams(meshPrimItr.GetTransformData());
 				
 				// MeshPrimitives:
 				if (m_showAllMeshPrimitiveBoundingBoxes || m_showAllVertexNormals || m_showAllWireframe)
@@ -452,7 +452,7 @@ namespace gr
 				// Use the inverse view matrix, as it omits any scale that might be present in the Transform hierarchy
 				glm::mat4 const& camWorldMatrix = debugCam->GetInverseViewMatrix();
 				std::shared_ptr<re::ParameterBlock> cameraTransformPB =
-					gr::Mesh::CreateInstancedMeshParamsData(&camWorldMatrix, nullptr);
+					gr::Transform::CreateInstancedTransformParams(&camWorldMatrix, nullptr);
 
 				// Coordinate axis at camera origin:
 				re::Batch cameraCoordinateAxisBatch =
@@ -463,7 +463,7 @@ namespace gr
 				// Our frustum points are already in world-space
 				const glm::mat4 identityMat = glm::mat4(1.f);
 				std::shared_ptr<re::ParameterBlock> identityPB =
-					gr::Mesh::CreateInstancedMeshParamsData(&identityMat, nullptr);
+					gr::Transform::CreateInstancedTransformParams(&identityMat, nullptr);
 
 				const uint8_t numFrustums = 
 					debugCam->GetCameraConfig().m_projectionType == gr::Camera::Config::ProjectionType::PerspectiveCubemap ? 6 : 1;
@@ -490,7 +490,7 @@ namespace gr
 				glm::mat4 const& lightTRS = pointLight->GetTransform()->GetGlobalMatrix();
 
 				std::shared_ptr<re::ParameterBlock> pointLightMeshTransformPB =
-					gr::Mesh::CreateInstancedMeshParamsData(&lightTRS, nullptr);
+					gr::Transform::CreateInstancedTransformParams(&lightTRS, nullptr);
 
 				gr::Light::LightTypeProperties const& pointLightProperties =
 					pointLight->AccessLightTypeProperties(gr::Light::LightType::Point);

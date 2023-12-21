@@ -95,11 +95,11 @@ namespace gr
 	public:
 		// Create a render camera, for backend graphics use. Not compatible with the ECS
 		[[nodiscard]] static std::shared_ptr<gr::Camera> Create(
-			std::string const& name, Config const&, gr::Transform* parent);
+			std::string const& name, Config const&, fr::Transform* parent);
 
 		// Create a Camera component for use with the ECS
 		[[nodiscard]] static gr::Camera CreateComponent(
-			std::string const& name, Config const&, gr::Transform* transformComponent);
+			std::string const& name, Config const&, fr::Transform* transformComponent);
 		
 
 		Camera(Camera&&) = default;
@@ -144,8 +144,8 @@ namespace gr
 		Config const& GetCameraConfig() const;
 		void SetCameraConfig(Config const& newConfig);
 
-		gr::Transform* GetTransform();
-		gr::Transform const* GetTransform() const;
+		fr::Transform* GetTransform();
+		fr::Transform const* GetTransform() const;
 
 		std::shared_ptr<re::ParameterBlock> GetCameraParams() const;
 
@@ -156,7 +156,7 @@ namespace gr
 		
 	private: // Use one of the Create methods instead
 		// Camera component constructor: A Transform is allocated via the ECS and provided here
-		Camera(std::string const& name, Config const& camConfig, gr::Transform* transform, bool isComponent);
+		Camera(std::string const& name, Config const& camConfig, fr::Transform* transform, bool isComponent);
 
 	private:
 		// Helper function: Configures the camera based on the cameraConfig. MUST be called at least once during setup
@@ -165,7 +165,7 @@ namespace gr
 
 
 	private:
-		gr::Transform* m_transform;
+		fr::Transform* m_transform;
 		const bool m_isComponent; // Does this Camera manage its own Transform, or is it an ECS component?
 
 		// Render data
@@ -320,13 +320,13 @@ namespace gr
 	}
 
 
-	inline gr::Transform* Camera::GetTransform()
+	inline fr::Transform* Camera::GetTransform()
 	{
 		return m_transform;
 	}
 
 
-	inline gr::Transform const* Camera::GetTransform() const
+	inline fr::Transform const* Camera::GetTransform() const
 	{
 		return m_transform;
 	}

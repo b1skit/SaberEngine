@@ -61,7 +61,7 @@ struct InstancedMeshParamsCB
 	float4x4 g_model;
 	float4x4 g_transposeInvModel;
 };
-StructuredBuffer<InstancedMeshParamsCB> InstancedMeshParams; // Indexed by instance ID
+StructuredBuffer<InstancedMeshParamsCB> InstancedTransformParams; // Indexed by instance ID
 
 
 struct PBRMetallicRoughnessParamsCB

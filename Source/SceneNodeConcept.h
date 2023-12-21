@@ -18,6 +18,6 @@ namespace fr
 
 
 	public:
-		static gr::Transform& GetSceneNodeTransform(entt::entity);
+		static fr::Transform& GetSceneNodeTransform(entt::entity);
 	};
 }

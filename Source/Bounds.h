@@ -2,11 +2,6 @@
 #pragma once
 
 
-namespace gr
-{
-	class Transform;
-}
-
 namespace fr
 {
 	class GameplayManager;
@@ -30,7 +25,7 @@ namespace fr
 			glm::vec3 m_maxXYZ;
 		};
 
-		static RenderData GetRenderData(fr::Bounds const&);
+		static RenderData CreateRenderData(fr::Bounds const&);
 
 
 	public:
@@ -51,11 +46,12 @@ namespace fr
 			glm::vec3 const& maxXYZ, 
 			std::vector<glm::vec3> const& positions);
 
-
-	public: // ECS_CONVERSION TODO: Should these be private/protected to enforce creation via the component helpers?
-		Bounds();
-		explicit Bounds(glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ);
-		explicit Bounds(glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, std::vector<glm::vec3> const& positions);
+	private: // Use the static creation factories
+		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
+	public:
+		Bounds(PrivateCTORTag);
+		explicit Bounds(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ);
+		explicit Bounds(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, std::vector<glm::vec3> const& positions);
 
 		Bounds(Bounds const& rhs) = default;
 		Bounds(Bounds&&) = default;
@@ -64,6 +60,11 @@ namespace fr
 
 		bool operator==(fr::Bounds const&) const;
 		bool operator!=(fr::Bounds const&) const;
+
+
+	public:
+		static Bounds Uninitialized() { return Bounds(); }
+
 
 		// Returns a new AABB BoundsConcept, transformed from local space using transform
 		Bounds GetTransformedAABBBounds(glm::mat4 const& worldMatrix) const;
@@ -89,6 +90,10 @@ namespace fr
 	private: // Axis-Aligned Bounding Box (AABB) points
 		glm::vec3 m_minXYZ;
 		glm::vec3 m_maxXYZ;
+
+
+	private:
+		Bounds();
 	};
 
 

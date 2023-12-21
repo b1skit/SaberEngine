@@ -13,7 +13,7 @@ using fr::SceneData;
 using en::Config;
 using re::Batch;
 using re::ParameterBlock;
-using gr::Transform;
+using fr::Transform;
 using util::PerformanceTimer;
 using std::shared_ptr;
 using std::make_shared;

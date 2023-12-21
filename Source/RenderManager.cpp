@@ -29,7 +29,7 @@ using gr::GraphicsSystem;
 using gr::ShadowsGraphicsSystem;
 using gr::SkyboxGraphicsSystem;
 using gr::TonemappingGraphicsSystem;
-using gr::Transform;
+using fr::Transform;
 using re::Batch;
 using util::PerformanceTimer;
 using std::shared_ptr;
@@ -514,7 +514,7 @@ namespace re
 		m_renderBatches.clear();
 
 		m_renderBatches = std::move(re::BatchManager::BuildBatches(
-			m_renderSystems[0]->GetGraphicsSystemManager().GetRenderData()));
+			m_renderSystems[0]->GetGraphicsSystemManager().CreateRenderData()));
 	}
 
 
@@ -574,14 +574,16 @@ namespace re
 
 		if (ImGui::CollapsingHeader("Meshes:", ImGuiTreeNodeFlags_None))
 		{
-			ImGui::Indent();
-			std::vector<std::shared_ptr<gr::Mesh>> const& meshes = en::SceneManager::GetSceneData()->GetMeshes();
-			for (auto const& mesh : meshes)
-			{
-				mesh->ShowImGuiWindow();
-				ImGui::Separator();
-			}
-			ImGui::Unindent();
+			// ECS_CONVERSION: TODO: RESTORE THIS FUNCTIONALITY
+			
+			//ImGui::Indent();
+			//std::vector<std::shared_ptr<gr::Mesh>> const& meshes = en::SceneManager::GetSceneData()->GetMeshes();
+			//for (auto const& mesh : meshes)
+			//{
+			//	mesh->ShowImGuiWindow();
+			//	ImGui::Separator();
+			//}
+			//ImGui::Unindent();
 		}
 
 		ImGui::Separator();

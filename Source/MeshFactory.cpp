@@ -93,15 +93,12 @@ namespace gr::meshfactory
 			meshName,
 			&cubeIndices,
 			*reinterpret_cast<std::vector<float>*>(&assembledPositions),	// Cast our vector<glm::vec3> to vector<float>
-			fr::Bounds::k_invalidMinXYZ,
-			fr::Bounds::k_invalidMaxXYZ,
 			nullptr,
 			nullptr,
 			reinterpret_cast<std::vector<float>*>(&assembledUVs),
 			nullptr,
 			nullptr, // No joints
 			nullptr, // No weights
-			nullptr, // No material
 			defaultMeshPrimitiveParams);
 	}
 
@@ -149,7 +146,6 @@ namespace gr::meshfactory
 			nullptr,
 			&uvs,
 			nullptr,
-			nullptr,
 			nullptr
 		};
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
@@ -158,15 +154,12 @@ namespace gr::meshfactory
 			"optimizedFullscreenQuad",
 			&triIndices,
 			*reinterpret_cast<std::vector<float>*>(&positions), // Cast our vector<glm::vec3> to vector<float>
-			fr::Bounds::k_invalidMinXYZ,
-			fr::Bounds::k_invalidMaxXYZ,
 			nullptr,
 			nullptr,
 			reinterpret_cast<std::vector<float>*>(&uvs),
 			nullptr,
 			nullptr, // No joints
 			nullptr, // No weights
-			nullptr, // No material
 			defaultMeshPrimitiveParams);
 	}
 
@@ -218,15 +211,12 @@ namespace gr::meshfactory
 			meshName,
 			&quadIndices,
 			*reinterpret_cast<std::vector<float>*>(&positions), // Cast our vector<glm::vec3> to vector<float>
-			fr::Bounds::k_invalidMinXYZ,
-			fr::Bounds::k_invalidMaxXYZ,
 			nullptr,
 			nullptr,
 			reinterpret_cast<std::vector<float>*>(&uvs),
 			reinterpret_cast<std::vector<float>*>(&colors),
 			nullptr, // No joints
 			nullptr, // No weights
-			nullptr, // No material
 			MeshPrimitive::MeshPrimitiveParams());
 	}
 
@@ -396,7 +386,6 @@ namespace gr::meshfactory
 			nullptr,
 			&uvs,
 			nullptr,
-			nullptr,
 			nullptr };
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
@@ -405,15 +394,12 @@ namespace gr::meshfactory
 			meshName,
 			&indices,
 			*reinterpret_cast<std::vector<float>*>(&positions), // Cast our vector<glm::vec3> to vector<float>
-			fr::Bounds::k_invalidMinXYZ,
-			fr::Bounds::k_invalidMaxXYZ,
 			reinterpret_cast<std::vector<float>*>(&normals),
 			nullptr,
 			reinterpret_cast<std::vector<float>*>(&uvs),
 			nullptr,
 			nullptr, // No joints
 			nullptr, // No weights
-			nullptr, // No material
 			defaultMeshPrimitiveParams);
 	}
 
@@ -464,23 +450,17 @@ namespace gr::meshfactory
 		};
 		util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
-		std::shared_ptr<gr::Material> helloMaterial =
-			gr::Material::Create("HelloTriangleMaterial", gr::Material::MaterialType::GLTF_PBRMetallicRoughness);
-
 		// It's easier to reason about geometry in vecN types; cast to float now we're done
 		return MeshPrimitive::Create(
 			meshName,
 			&indices,
 			*reinterpret_cast<std::vector<float>*>(&positions), // Cast our vector<glm::vec3> to vector<float>
-			fr::Bounds::k_invalidMinXYZ,
-			fr::Bounds::k_invalidMaxXYZ,
 			nullptr,
 			nullptr,
 			reinterpret_cast<std::vector<float>*>(&uvs),
 			reinterpret_cast<std::vector<float>*>(&colors),
 			nullptr, // No joints
 			nullptr, // No weights
-			helloMaterial,
 			MeshPrimitive::MeshPrimitiveParams());
 	}
 }

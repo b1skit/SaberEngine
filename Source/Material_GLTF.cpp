@@ -4,7 +4,7 @@
 
 namespace gr
 {
-	Material_GLTF::RenderData Material_GLTF::GetRenderData(gr::Material_GLTF& material)
+	Material_GLTF::RenderData Material_GLTF::CreateRenderData(gr::Material_GLTF& material)
 	{
 		return Material_GLTF::RenderData
 		{

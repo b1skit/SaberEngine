@@ -278,7 +278,7 @@ namespace re
 	}
 
 
-	void VertexStream::ShowImGuiWindow()
+	void VertexStream::ShowImGuiWindow() const
 	{
 		ImGui::Text(std::format("Number of components: {}", m_numComponents).c_str());
 		ImGui::Text(std::format("Component byte size: {}", m_componentByteSize).c_str());

@@ -1,19 +1,14 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Config.h"
-#include "GameplayManager.h"
-#include "MarkerComponents.h"
 #include "MeshPrimitive.h"
 #include "NameComponent.h"
 #include "PipelineState.h"
-#include "Relationship.h"
-#include "RenderDataComponent.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
 #include "Transform.h"
-#include "TransformComponent.h"
 
 using en::Config;
-using gr::Transform;
+using fr::Transform;
 using fr::Bounds;
 using gr::MeshPrimitive;
 using glm::pi;
@@ -67,122 +62,16 @@ namespace
 
 namespace gr
 {
-	MeshPrimitive::RenderData MeshPrimitive::GetRenderData(MeshPrimitiveComponent const& meshPrimitiveComponent)
-	{
-		MeshPrimitive::RenderData renderData = MeshPrimitive::RenderData{
-			.m_meshPrimitiveParams = meshPrimitiveComponent.m_meshPrimitive->GetMeshParams(),
-			// Vertex streams copied below...
-			.m_indexStream = meshPrimitiveComponent.m_meshPrimitive->m_indexStream.get(),
-			.m_dataHash = meshPrimitiveComponent.m_meshPrimitive->GetDataHash()
-		};
-		
-		std::vector<re::VertexStream const*> const& vertexStreams = 
-			meshPrimitiveComponent.m_meshPrimitive->GetVertexStreams();
-		for (size_t slotIdx = 0; slotIdx < vertexStreams.size(); slotIdx++)
-		{
-			renderData.m_vertexStreams[slotIdx] = vertexStreams[slotIdx];
-		}
-		
-		return renderData;
-	}
-
-
-	entt::entity MeshPrimitive::AttachMeshPrimitiveConcept(
-		entt::entity meshConcept,
-		char const* name,
-		std::vector<uint32_t>* indices,
-		std::vector<float>& positions,
-		glm::vec3 const& positionMinXYZ, // Pass fr::BoundsConcept::k_invalidMinXYZ to compute bounds manually
-		glm::vec3 const& positionMaxXYZ, // Pass fr::BoundsConcept::k_invalidMaxXYZ to compute bounds manually
-		std::vector<float>* normals,
-		std::vector<float>* tangents,
-		std::vector<float>* uv0,
-		std::vector<float>* colors,
-		std::vector<uint8_t>* joints,
-		std::vector<float>* weights,
-		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
-	{
-		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
-
-		SEAssert("A mesh primitive's owning mesh concept requires a Relationship component",
-			gpm.HasComponent<fr::Relationship>(meshConcept));
-		SEAssert("A mesh primitive's owning mesh concept requires a TransformComponent",
-			fr::Relationship::HasComponentInParentHierarchy<fr::TransformComponent>(meshConcept));
-		SEAssert("A mesh primitive's owning mesh concept requires a Bounds component",
-			gpm.HasComponent<fr::Bounds>(meshConcept));
-		SEAssert("A mesh primitive's owning mesh concept requires a NameComponent",
-			gpm.HasComponent<fr::NameComponent>(meshConcept));
-
-		entt::entity meshPrimitiveEntity = gpm.CreateEntity(name);
-
-		// Each MeshPrimitive is an entity related to a Mesh concept via a Relationship:
-		fr::Relationship& meshRelationship = fr::Relationship::AttachRelationshipComponent(gpm, meshPrimitiveEntity);
-		meshRelationship.SetParent(gpm, meshConcept);
-
-		// Attach a new RenderDataComponent:
-		fr::TransformComponent const* transformComponent = 
-			fr::Relationship::GetComponentInHierarchyAbove<fr::TransformComponent>(meshConcept);
-
-		gr::RenderDataComponent::AttachNewRenderDataComponent(
-			gpm, meshPrimitiveEntity, transformComponent->GetTransformID());
-
-
-		std::shared_ptr<gr::MeshPrimitive> meshPrimitiveSceneData = Create(
-			name,
-			indices,
-			positions,
-			positionMinXYZ, // ECS_CONVERSION TODO: Deprecated!!!!!!!!!!!!!!!!!!!!!
-			positionMaxXYZ, // ECS_CONVERSION TODO: Deprecated!!!!!!!!!!!!!!!!!!!!!
-			normals,
-			tangents,
-			uv0,
-			colors,
-			joints,
-			weights,
-			nullptr, // ECS_CONVERSION TODO: Deprecated!!!!!!!!!!!!!!!!!!!!!
-			meshParams);
-
-		// Attach a MeshPrimitive object:
-		gpm.EmplaceComponent<gr::MeshPrimitive::MeshPrimitiveComponent>(
-			meshPrimitiveEntity, 
-			MeshPrimitiveComponent{
-				.m_meshPrimitive = meshPrimitiveSceneData.get()
-			});
-
-		// Attach a primitive bounds
-		fr::Bounds::AttachBoundsComponent(
-			gpm, 
-			meshPrimitiveEntity, 
-			positionMinXYZ, 
-			positionMaxXYZ, 
-			reinterpret_cast<std::vector<glm::vec3> const&>(positions));
-		fr::Bounds const& meshPrimitiveBounds = gpm.GetComponent<fr::Bounds>(meshPrimitiveEntity);
-
-		// Update the Bounds of the MeshConcept:
-		fr::Bounds& meshConceptBounds = gpm.GetComponent<fr::Bounds>(meshConcept);
-		meshConceptBounds.ExpandBounds(meshPrimitiveBounds);
-
-		// Mark our new MeshPrimitive as dirty:
-		gpm.EmplaceComponent<DirtyMarker<gr::MeshPrimitive::MeshPrimitiveComponent>>(meshPrimitiveEntity);
-
-		// Note: A Material component must be attached to the returned entity
-		return meshPrimitiveEntity;
-	}
-
-
 	std::shared_ptr<MeshPrimitive> MeshPrimitive::Create(
 		std::string const& name,
 		std::vector<uint32_t>* indices,
 		std::vector<float>& positions,
-		glm::vec3 const& positionMinXYZ, // Pass fr::Bounds::k_invalidMinXYZ to compute bounds manually
-		glm::vec3 const& positionMaxXYZ, // Pass fr::Bounds::k_invalidMaxXYZ to compute bounds manually
 		std::vector<float>* normals,
 		std::vector<float>* tangents,
 		std::vector<float>* uv0,
 		std::vector<float>* colors,
 		std::vector<uint8_t>* joints,
 		std::vector<float>* weights,
-		std::shared_ptr<gr::Material> material,
 		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
 	{
 		shared_ptr<MeshPrimitive> newMeshPrimitive;
@@ -190,15 +79,12 @@ namespace gr
 			name.c_str(),
 			indices,
 			positions,
-			positionMinXYZ,
-			positionMaxXYZ,
 			normals,
 			tangents,
 			uv0,
 			colors,
 			joints,
 			weights,
-			material,
 			meshParams));
 
 		// This call will replace the newMeshPrimitive pointer if a duplicate MeshPrimitive already exists
@@ -212,20 +98,15 @@ namespace gr
 		char const* name,
 		vector<uint32_t>* indices,
 		vector<float>& positions,
-		glm::vec3 const& positionMinXYZ,
-		glm::vec3 const& positionMaxXYZ,
 		vector<float>* normals,
 		vector<float>* tangents,
 		vector<float>* uv0,
 		vector<float>* colors,
 		vector<uint8_t>* joints,
 		vector<float>* weights,
-		shared_ptr<gr::Material> material,
 		MeshPrimitiveParams const& meshParams)
 		: NamedObject(name)
-		, m_meshMaterial(material)
 		, m_params(meshParams)
-		, m_localBounds(positionMinXYZ, positionMaxXYZ, reinterpret_cast<std::vector<glm::vec3> const&>(positions))
 	{
 		m_indexStream = re::VertexStream::Create(
 			re::VertexStream::Lifetime::Permanent,
@@ -233,7 +114,7 @@ namespace gr
 			1, 
 			re::VertexStream::DataType::UInt,
 			re::VertexStream::Normalize::False,
-			std::move(*indices));
+			std::move(*indices)).get();
 
 		m_vertexStreams[Slot::Position] = re::VertexStream::Create(
 			re::VertexStream::Lifetime::Permanent,
@@ -241,7 +122,7 @@ namespace gr
 			3,
 			re::VertexStream::DataType::Float,
 			re::VertexStream::Normalize::False,
-			std::move(positions));
+			std::move(positions)).get();
 
 		if (normals && !normals->empty())
 		{
@@ -251,7 +132,7 @@ namespace gr
 				3,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::True,
-				std::move(*normals));
+				std::move(*normals)).get();
 		}
 
 		if (colors && !colors->empty())
@@ -262,7 +143,7 @@ namespace gr
 				4,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::False,
-				std::move(*colors));
+				std::move(*colors)).get();
 		}
 
 		if (uv0 && !uv0->empty())
@@ -273,7 +154,7 @@ namespace gr
 				2,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::False,
-				std::move(*uv0));
+				std::move(*uv0)).get();
 		}
 
 		if (tangents && !tangents->empty())
@@ -284,7 +165,7 @@ namespace gr
 				4,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::True,
-				std::move(*tangents));
+				std::move(*tangents)).get();
 		}
 		
 		if (joints && !joints->empty())
@@ -295,7 +176,7 @@ namespace gr
 				1,
 				re::VertexStream::DataType::UByte,
 				re::VertexStream::Normalize::False,
-				std::move(*joints));
+				std::move(*joints)).get();
 		}
 
 		if (weights && !weights->empty())
@@ -306,7 +187,7 @@ namespace gr
 				1,
 				re::VertexStream::DataType::Float,
 				re::VertexStream::Normalize::False,
-				std::move(*weights));
+				std::move(*weights)).get();
 		}
 
 		ComputeDataHash();
@@ -319,19 +200,12 @@ namespace gr
 		{
 			m_vertexStreams[slotIdx] = nullptr;
 		}
-		
-		m_meshMaterial = nullptr;
 	}
 
 
 	void MeshPrimitive::ComputeDataHash()
 	{
 		AddDataBytesToHash(&m_params, sizeof(MeshPrimitiveParams));
-
-		if (m_meshMaterial)
-		{
-			AddDataBytesToHash(m_meshMaterial->GetNameID());
-		}	
 
 		// Vertex data streams:
 		for (size_t i = 0; i < m_vertexStreams.size(); i++)
@@ -355,7 +229,7 @@ namespace gr
 
 		for (uint8_t i = 0; i < Slot_Count; i++)
 		{
-			vertexStreamPtrs[i] = m_vertexStreams[i].get();
+			vertexStreamPtrs[i] = m_vertexStreams[i];
 		}
 
 		return vertexStreamPtrs;
@@ -386,12 +260,13 @@ namespace gr
 		{
 			ImGui::Text(std::format("Draw mode: {}", DrawModeToCStr(m_params.m_topologyMode)).c_str());
 
-			if (ImGui::CollapsingHeader(std::format("Material##{}", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+			// ECS_CONVERSION TODO: Restore this functionality
+			/*if (ImGui::CollapsingHeader(std::format("Material##{}", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
 				m_meshMaterial->ShowImGuiWindow();
 				ImGui::Unindent();
-			}
+			}*/
 
 			if (ImGui::CollapsingHeader(std::format("Vertex streams ({})##{}", m_vertexStreams.size(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 			{
@@ -412,12 +287,13 @@ namespace gr
 				ImGui::Unindent();
 			}
 
-			if (ImGui::CollapsingHeader(std::format("Local bounds##{}", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+			// ECS_CONVERSION: TODO: Reimplement this functionality
+			/*if (ImGui::CollapsingHeader(std::format("Local bounds##{}", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
 				m_localBounds.ShowImGuiWindow();
 				ImGui::Unindent();
-			}
+			}*/
 		}
 	}
 	

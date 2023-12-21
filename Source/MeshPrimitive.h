@@ -17,9 +17,6 @@ namespace fr
 
 namespace gr
 {
-	class Transform;
-
-
 	class MeshPrimitive final : public virtual en::NamedObject, public virtual en::HashedDataObject
 	{
 	public:
@@ -70,15 +67,7 @@ namespace gr
 	
 		static char const* SlotDebugNameToCStr(Slot slot);
 
-
 	public:
-		struct MeshPrimitiveComponent
-		{
-			// MeshPrimitives are held in the SceneData so duplicate data can be shared
-			gr::MeshPrimitive const* m_meshPrimitive;
-		};
-
-
 		struct RenderData
 		{
 			MeshPrimitiveParams m_meshPrimitiveParams;
@@ -87,24 +76,6 @@ namespace gr
 			
 			uint64_t m_dataHash;
 		};
-		static RenderData GetRenderData(MeshPrimitiveComponent const&);
-
-
-	public:
-		static entt::entity AttachMeshPrimitiveConcept(
-			entt::entity meshConcept,
-			char const* name,
-			std::vector<uint32_t>* indices,
-			std::vector<float>& positions,
-			glm::vec3 const& positionMinXYZ, // Pass fr::BoundsConcept::k_invalidMinXYZ to compute bounds manually
-			glm::vec3 const& positionMaxXYZ, // Pass fr::BoundsConcept::k_invalidMaxXYZ to compute bounds manually
-			std::vector<float>* normals,
-			std::vector<float>* tangents,
-			std::vector<float>* uv0,
-			std::vector<float>* colors,
-			std::vector<uint8_t>* joints,
-			std::vector<float>* weights,
-			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
 
 	public:
@@ -112,32 +83,21 @@ namespace gr
 			std::string const& name,
 			std::vector<uint32_t>* indices,
 			std::vector<float>& positions,
-			glm::vec3 const& positionMinXYZ, // Pass fr::BoundsConcept::k_invalidMinXYZ to compute bounds manually
-			glm::vec3 const& positionMaxXYZ, // Pass fr::BoundsConcept::k_invalidMaxXYZ to compute bounds manually
 			std::vector<float>* normals,
 			std::vector<float>* tangents,
 			std::vector<float>* uv0,
 			std::vector<float>* colors,
 			std::vector<uint8_t>* joints,
 			std::vector<float>* weights,
-			std::shared_ptr<gr::Material> material,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
-		MeshPrimitive(MeshPrimitive const& rhs) = default;
-		MeshPrimitive& operator=(MeshPrimitive const& rhs) = default;
 		MeshPrimitive(MeshPrimitive&& rhs) noexcept = default;
 		MeshPrimitive& operator=(MeshPrimitive&& rhs) = default;
 
 		~MeshPrimitive(){ Destroy(); }
 		
-		
 		MeshPrimitiveParams const& GetMeshParams() const;
-
-		gr::Material* GetMeshMaterial() const;
-		void SetMeshMaterial(std::shared_ptr<gr::Material> material);
-
-		fr::Bounds const& GetBounds() const;
-		
+	
 		re::VertexStream const* GetIndexStream() const;
 		re::VertexStream const* GetVertexStream(Slot slot) const;
 		std::vector<re::VertexStream const*> GetVertexStreams() const;
@@ -152,13 +112,9 @@ namespace gr
 	private:		
 		MeshPrimitiveParams m_params;
 
-		// ECS_CONVERSION: TODO: These should be raw pointers
-		std::shared_ptr<gr::Material> m_meshMaterial; 
+		std::array<re::VertexStream const*, Slot_Count> m_vertexStreams;
+		re::VertexStream const* m_indexStream;
 
-		std::array<std::shared_ptr<re::VertexStream>, Slot_Count> m_vertexStreams;
-		std::shared_ptr<re::VertexStream> m_indexStream;
-
-		fr::Bounds m_localBounds; // MeshPrimitive bounds, in local space		
 
 		void ComputeDataHash() override;
 
@@ -167,20 +123,19 @@ namespace gr
 		MeshPrimitive(char const* name,
 			std::vector<uint32_t>* indices,
 			std::vector<float>& positions,
-			glm::vec3 const& positionMinXYZ, // Pass fr::BoundsConcept::k_invalidMinXYZ to compute bounds manually
-			glm::vec3 const& positionMaxXYZ, // Pass fr::BoundsConcept::k_invalidMaxXYZ to compute bounds manually
 			std::vector<float>* normals,
 			std::vector<float>* tangents,
 			std::vector<float>* uv0,
 			std::vector<float>* colors,
 			std::vector<uint8_t>* joints,
 			std::vector<float>* weights,
-			std::shared_ptr<gr::Material> material,
 			gr::MeshPrimitive::MeshPrimitiveParams const& meshParams);
 
 
 	private: // No copying allowed
 		MeshPrimitive() = delete;
+		MeshPrimitive(MeshPrimitive const& rhs) = delete;
+		MeshPrimitive& operator=(MeshPrimitive const& rhs) = delete;
 	};
 
 
@@ -190,33 +145,15 @@ namespace gr
 	}
 
 
-	inline gr::Material* MeshPrimitive::GetMeshMaterial() const
-	{
-		return m_meshMaterial.get();
-	}
-	
-	
-	inline void MeshPrimitive::SetMeshMaterial(std::shared_ptr<gr::Material> material)
-	{
-		m_meshMaterial = material;
-	};
-
-
-	inline fr::Bounds const& MeshPrimitive::GetBounds() const
-	{
-		return m_localBounds;
-	}
-
-
 	inline re::VertexStream const* MeshPrimitive::GetIndexStream() const
 	{
-		return m_indexStream.get();
+		return m_indexStream;
 	}
 
 
 	inline re::VertexStream const* MeshPrimitive::GetVertexStream(Slot slot) const
 	{
-		return m_vertexStreams[slot].get();
+		return m_vertexStreams[slot];
 	}
 
 

@@ -47,8 +47,8 @@ namespace gr
 		void UnregisterTransform(gr::TransformID);
 
 	public:
-		void SetTransformData(gr::TransformID, fr::TransformComponent::RenderData const&);
-		[[nodiscard]] fr::TransformComponent::RenderData const& GetTransformData(gr::TransformID) const;
+		void SetTransformData(gr::TransformID, gr::Transform::RenderData const&);
+		[[nodiscard]] gr::Transform::RenderData const& GetTransformData(gr::TransformID) const;
 
 
 	public:
@@ -124,7 +124,7 @@ namespace gr
 
 			gr::RenderObjectID GetRenderObjectID() const;
 
-			fr::TransformComponent::RenderData const& GetTransformData() const;
+			gr::Transform::RenderData const& GetTransformData() const;
 
 			ObjectIterator& operator++(); // Prefix increment
 			ObjectIterator operator++(int); // Postfix increment
@@ -193,7 +193,7 @@ namespace gr
 		// We expect Transforms to be both our largest and most frequently updated data mirrored in RenderData, so we
 		// treat them as a special case to allow sharing
 		std::unordered_map<gr::TransformID, TransformMetadata> m_transformIDToTransformMetadata;
-		std::vector<fr::TransformComponent::RenderData> m_transformRenderData;
+		std::vector<gr::Transform::RenderData> m_transformRenderData;
 
 		// RenderData accesses are all const, and we only update the RenderData via RenderCommands which are processed
 		// single-threaded at the beginning of a render thread frame. Thus, we don't have any syncronization primitives;
@@ -595,7 +595,7 @@ namespace gr
 
 
 	template <typename... Ts>
-	fr::TransformComponent::RenderData const& RenderData::ObjectIterator<Ts...>::GetTransformData() const
+	gr::Transform::RenderData const& RenderData::ObjectIterator<Ts...>::GetTransformData() const
 	{
 		return m_renderData->GetTransformData(m_renderObjectMetadataItr->second.m_transformID);
 	}

@@ -2,18 +2,9 @@
 #include "GameplayManager.h"
 #include "ImGuiUtils.h"
 #include "Mesh.h"
-#include "MeshPrimitive.h"
-#include "ParameterBlock.h"
-#include "Relationship.h"
+#include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
-#include "Transform.h"
 #include "TransformComponent.h"
-
-using gr::Transform;
-using fr::Bounds;
-using gr::MeshPrimitive;
-using std::shared_ptr;
-using std::vector;
 
 
 namespace fr
@@ -42,172 +33,13 @@ namespace fr
 
 		return meshEntity;
 	}
-}
-
-
-namespace gr
-{
-	std::shared_ptr<re::ParameterBlock> Mesh::CreateInstancedMeshParamsData(gr::Transform* transform)
-	{
-		std::vector<gr::Transform*> singleTransform(1, transform);
-		return CreateInstancedMeshParamsData(singleTransform);
-	}
-
-
-	std::shared_ptr<re::ParameterBlock> Mesh::CreateInstancedMeshParamsData(
-		std::vector<gr::Transform*> const& transforms)
-	{
-		const uint32_t numInstances = static_cast<uint32_t>(transforms.size());
-
-		std::vector<gr::Mesh::InstancedMeshParams> instancedMeshPBData;
-		instancedMeshPBData.reserve(numInstances);
-
-		for (size_t transformIdx = 0; transformIdx < numInstances; transformIdx++)
-		{
-			instancedMeshPBData.emplace_back(InstancedMeshParams
-				{
-					.g_model = transforms[transformIdx]->GetGlobalMatrix(),
-					.g_transposeInvModel = 
-						glm::transpose(glm::inverse(transforms[transformIdx]->GetGlobalMatrix()))
-				});
-		}
-
-		std::shared_ptr<re::ParameterBlock> instancedMeshParams = re::ParameterBlock::CreateFromArray(
-			gr::Mesh::InstancedMeshParams::s_shaderName,
-			instancedMeshPBData.data(),
-			sizeof(gr::Mesh::InstancedMeshParams),
-			numInstances,
-			re::ParameterBlock::PBType::SingleFrame);
-
-		return instancedMeshParams;
-	}
-
-
-	std::shared_ptr<re::ParameterBlock> Mesh::CreateInstancedMeshParamsData(
-		glm::mat4 const* model, glm::mat4* transposeInvModel)
-	{
-		gr::Mesh::InstancedMeshParams instancedMeshPBData;
-
-		instancedMeshPBData.g_model = model ? *model : glm::mat4(1.f);
-		instancedMeshPBData.g_transposeInvModel = transposeInvModel ? *transposeInvModel : glm::mat4(1.f);
-
-		return re::ParameterBlock::CreateFromArray(
-			gr::Mesh::InstancedMeshParams::s_shaderName,
-			&instancedMeshPBData,
-			sizeof(gr::Mesh::InstancedMeshParams),
-			1,
-			re::ParameterBlock::PBType::SingleFrame);
-	}
-
-
-	std::shared_ptr<re::ParameterBlock> Mesh::CreateInstancedMeshParamsData(
-		fr::TransformComponent::RenderData const& renderData)
-	{
-		gr::Mesh::InstancedMeshParams instancedMeshPBData{
-			.g_model = renderData.g_model,
-			.g_transposeInvModel = renderData.g_transposeInvModel
-		};
-
-		return re::ParameterBlock::CreateFromArray(
-			gr::Mesh::InstancedMeshParams::s_shaderName,
-			&instancedMeshPBData,
-			sizeof(gr::Mesh::InstancedMeshParams),
-			1,
-			re::ParameterBlock::PBType::SingleFrame);
-	}
-
-
-	std::shared_ptr<re::ParameterBlock> Mesh::CreateInstancedMeshParamsData(
-		std::vector<fr::TransformComponent::RenderData const*> const& transformRenderData)
-	{
-		const uint32_t numInstances = static_cast<uint32_t>(transformRenderData.size());
-
-		std::vector<gr::Mesh::InstancedMeshParams> instancedMeshPBData;
-		instancedMeshPBData.reserve(numInstances);
-
-		for (size_t transformIdx = 0; transformIdx < numInstances; transformIdx++)
-		{
-			instancedMeshPBData.emplace_back(InstancedMeshParams
-				{
-					.g_model = transformRenderData[transformIdx]->g_model,
-					.g_transposeInvModel = transformRenderData[transformIdx]->g_transposeInvModel
-				});
-		}
-
-		std::shared_ptr<re::ParameterBlock> instancedMeshParams = re::ParameterBlock::CreateFromArray(
-			gr::Mesh::InstancedMeshParams::s_shaderName,
-			instancedMeshPBData.data(),
-			sizeof(gr::Mesh::InstancedMeshParams),
-			numInstances,
-			re::ParameterBlock::PBType::SingleFrame);
-
-		return instancedMeshParams;
-	}
-
-
-
-
-
-	// DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-	Mesh::Mesh(std::string const& name, gr::Transform* ownerTransform)
-		: m_name(name)
-		, m_ownerTransform(ownerTransform)
-	{
-	}
-
-
-	Mesh::Mesh(std::string const& name, Transform* ownerTransform, shared_ptr<gr::MeshPrimitive> meshPrimitive)
-		: m_name(name)
-		, m_ownerTransform(ownerTransform)
-	{
-		AddMeshPrimitive(meshPrimitive);
-	}
-
-
-	void Mesh::AddMeshPrimitive(shared_ptr<gr::MeshPrimitive> meshPrimitive)
-	{
-		SEAssert("Cannot add a nullptr MeshPrimitive", meshPrimitive != nullptr);
-		m_meshPrimitives.push_back(meshPrimitive);
-
-		m_localBounds.ExpandBounds(meshPrimitive->GetBounds());
-	}
-
-
-	std::vector<std::shared_ptr<gr::MeshPrimitive>> const& Mesh::GetMeshPrimitives() const
-	{
-		return m_meshPrimitives;
-	}
-
-
-	void Mesh::ReplaceMeshPrimitive(size_t index, std::shared_ptr<gr::MeshPrimitive> replacement)
-	{
-		SEAssert("Cannot replace a MeshPrimitive with nullptr", replacement != nullptr);
-		SEAssert("Index is out of bounds", index < m_meshPrimitives.size());
-		m_meshPrimitives[index] = replacement;
-
-		UpdateBounds();
-	}
-
-
-	void Mesh::UpdateBounds()
-	{
-		m_localBounds = Bounds();
-		for (shared_ptr<gr::MeshPrimitive> meshPrimitive : m_meshPrimitives)
-		{
-			m_localBounds.ExpandBounds(meshPrimitive->GetBounds());
-		}
-	}
-
-
-
 
 
 	void Mesh::ShowImGuiWindow()
 	{
-		// ECS_CONVERSION TODO: Restore ImGui functionality!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		// ECS_CONVERSON: TODO: Restore this functionality
 
+		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
 
 		//if (ImGui::CollapsingHeader(
 		//	std::format("{}##{}", GetName(), util::PtrToID(this)).c_str(), ImGuiTreeNodeFlags_None))

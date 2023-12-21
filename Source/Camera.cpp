@@ -8,7 +8,7 @@
 
 using gr::Material;
 using re::Texture;
-using gr::Transform;
+using fr::Transform;
 using std::shared_ptr;
 using std::string;
 using std::make_shared;
@@ -82,7 +82,7 @@ namespace
 namespace gr
 {
 	std::shared_ptr<gr::Camera> Camera::Create(
-		std::string const& name, Config const& camConfig, gr::Transform* parent)
+		std::string const& name, Config const& camConfig, fr::Transform* parent)
 	{
 		std::shared_ptr<gr::Camera> newCamera = nullptr;
 		
@@ -93,7 +93,7 @@ namespace gr
 	}
 
 
-	gr::Camera Camera::CreateComponent(std::string const& name, Config const& config, gr::Transform* transformComponent)
+	gr::Camera Camera::CreateComponent(std::string const& name, Config const& config, fr::Transform* transformComponent)
 	{
 		SEAssert("If the Camera is being created as a component, it must be initialized with a Transform component",
 			transformComponent != nullptr);
@@ -105,7 +105,7 @@ namespace gr
 	// If the Camera is a component (isComponent == true), transform is a pointer to an existing Transform component.
 	// Otherwise, the Camera is intended for use by the backend render thread only, and must manage its own Transform
 	// allocation/deallocation
-	Camera::Camera(string const& name, Config const& camConfig, Transform* transform, bool isComponent)
+	Camera::Camera(string const& name, Config const& camConfig, fr::Transform* transform, bool isComponent)
 		: NamedObject(name)
 		, m_transform(nullptr)
 		, m_isComponent(isComponent)
@@ -122,7 +122,7 @@ namespace gr
 		else
 		{
 			// If the Camera is not a component, it must manage its own Transform allocation/deallocation
-			m_transform = new gr::Transform(nullptr);
+			m_transform = new fr::Transform(nullptr);
 			m_transform->SetParent(transform);
 		}
 

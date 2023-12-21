@@ -6,7 +6,7 @@
 #include "Material_GLTF.h"
 #include "MeshPrimitive.h"
 #include "ParameterBlock.h"
-#include "Relationship.h"
+#include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "Shader_Platform.h"
 #include "Shader.h"
@@ -78,47 +78,6 @@ namespace
 
 namespace gr
 {
-	Material::MaterialComponent& Material::AttachMaterialConcept(
-		entt::entity meshPrimitiveConcept,
-		std::shared_ptr<gr::Material> sceneMaterial)
-	{
-		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
-
-		SEAssert("Cannot attach a null material", sceneMaterial != nullptr);
-		SEAssert("Attempting to attach a Material component without a MeshPrimitiveComponent. This (currently) doesn't "
-			"make sense",
-			fr::Relationship::HasComponentInParentHierarchy<gr::MeshPrimitive::MeshPrimitiveComponent>(meshPrimitiveConcept));
-
-		entt::entity materialEntity = gpm.CreateEntity(sceneMaterial->GetName());
-
-		// Attach the material component:		
-		gr::Material::MaterialComponent* matComponent = 
-			gpm.EmplaceComponent<gr::Material::MaterialComponent>(materialEntity, sceneMaterial.get());
-
-		// Relate the material to the owning mesh primitive:
-		fr::Relationship& materialRelationship = fr::Relationship::AttachRelationshipComponent(gpm, materialEntity);
-		materialRelationship.SetParent(gpm, meshPrimitiveConcept);
-
-		gr::RenderDataComponent const& meshPrimRenderData = 
-			gpm.GetComponent<gr::RenderDataComponent>(meshPrimitiveConcept);
-
-		gr::RenderDataComponent::AttachSharedRenderDataComponent(gpm, materialEntity, meshPrimRenderData);
-
-		// Mark our Material as dirty:
-		gpm.EmplaceOrReplaceComponent<DirtyMarker<gr::Material::MaterialComponent>>(materialEntity);
-
-		return *matComponent;
-	}
-
-
-	Material::RenderData Material::GetRenderData(MaterialComponent const& matComponent)
-	{
-		return Material::RenderData{
-			.m_material = matComponent.m_material
-		};
-	}
-
-
 	std::shared_ptr<gr::Material> Material::Create(std::string const& name, MaterialType materialType)
 	{
 		std::shared_ptr<gr::Material> newMat;

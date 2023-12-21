@@ -9,27 +9,23 @@ namespace gr
 {
 	class Camera;
 	class Light;
-}
-
-namespace opengl
-{
-	class SceneData;
+	class Material;
+	class MeshPrimitive;
 }
 
 namespace re
 {
 	class Shader;
+	class VertexStream;
 }
 
 namespace fr
 {
-	class SceneNode;
-
-
 	class SceneData final : public virtual en::NamedObject
 	{
 	public:
 		typedef uint64_t DataHash;
+
 
 	public:
 		explicit SceneData(std::string const& sceneName);
@@ -56,11 +52,8 @@ namespace fr
 
 		std::shared_ptr<re::Texture> GetIBLTexture() const;
 
-		// Meshes:
-		void AddMesh(std::shared_ptr<gr::Mesh> mesh);
-		std::vector <std::shared_ptr<gr::Mesh>> const& GetMeshes() const;
+		// Geometry:
 		bool AddUniqueMeshPrimitive(std::shared_ptr<gr::MeshPrimitive>&); // Returns true if incoming ptr is modified
-
 		bool AddUniqueVertexStream(std::shared_ptr<re::VertexStream>&); // Returns true if incoming ptr is modified
 
 		// Textures:
@@ -75,6 +68,7 @@ namespace fr
 		std::unordered_map<size_t, std::shared_ptr<gr::Material>> const& GetMaterials() const;
 		bool MaterialExists(std::string const& matName) const;
 
+		// Shaders:
 		bool AddUniqueShader(std::shared_ptr<re::Shader>& newShader); // Returns true if new object was added
 		std::shared_ptr<re::Shader> GetShader(uint64_t shaderIdentifier) const;
 		bool ShaderExists(uint64_t shaderIdentifier) const;
@@ -92,9 +86,8 @@ namespace fr
 
 
 	private:
-		std::vector<std::shared_ptr<gr::Mesh>> m_meshes;
 		std::unordered_map<DataHash, std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
-		mutable std::mutex m_meshesAndMeshPrimitivesMutex;
+		mutable std::mutex m_meshPrimitivesMutex;
 
 		std::unordered_map<DataHash, std::shared_ptr<re::VertexStream>> m_vertexStreams;
 		std::mutex m_vertexStreamsMutex;
@@ -120,9 +113,6 @@ namespace fr
 		std::vector<std::shared_ptr<gr::Camera>> m_cameras;
 		mutable std::shared_mutex m_camerasReadWriteMutex;
 
-		fr::Bounds m_sceneWorldSpaceBounds;
-		mutable std::mutex m_sceneBoundsMutex;
-
 		std::vector<std::function<void()>> m_postLoadCallbacks;
 		std::mutex m_postLoadCallbacksMutex;
 
@@ -133,10 +123,5 @@ namespace fr
 		SceneData() = delete;
 		SceneData(SceneData const&) = delete;
 		SceneData& operator=(SceneData const&) = delete;
-
-		// Friends:
-		friend class opengl::SceneData;
 	};
 }
-
-

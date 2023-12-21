@@ -72,8 +72,6 @@ namespace re
 
 
 
-
-
 	public: // Render commands:
 		template<typename T, typename... Args>
 		void EnqueueRenderCommand(Args&&... args);

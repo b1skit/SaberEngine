@@ -39,13 +39,11 @@ namespace gr
 		};
 
 	public:
-		static RenderData GetRenderData(gr::Material_GLTF&);
+		static RenderData CreateRenderData(gr::Material_GLTF&);
 		
 				
 
 	public:
-		// ECS_CONVERSION TODO: We're creating these as a single frame PB for now, but really it should be a mutable
-		// permanent PB... Need to figure out how/where to manage lifetime on the RenderThread side
 		static std::shared_ptr<re::ParameterBlock> CreateParameterBlock(gr::Material_GLTF const*);
 
 		void ShowImGuiWindow() override;

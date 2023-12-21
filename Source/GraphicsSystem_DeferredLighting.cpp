@@ -851,9 +851,20 @@ namespace gr
 			gr::Light::LightTypeProperties const& pointLightProperties = 
 				pointLights[i]->AccessLightTypeProperties(gr::Light::LightType::Point);
 			
-			re::Batch pointlightBatch = re::BatchManager::BuildBatches({ pointLightProperties.m_point.m_sphereMesh })[0];
+			re::Batch pointlightBatch = re::Batch(
+				re::Batch::Lifetime::SingleFrame,
+				pointLightProperties.m_point.m_sphereMeshPrimitive.get(), 
+				nullptr);
 
 			// Point light params:
+			std::shared_ptr<re::ParameterBlock> pointLightMeshParamsData = gr::Transform::CreateInstancedTransformParams(
+				gr::Transform::RenderData{
+					.g_model = pointLightProperties.m_point.m_ownerTransform->GetGlobalMatrix(),
+					.g_transposeInvModel =
+						glm::transpose(glm::inverse(pointLightProperties.m_point.m_ownerTransform->GetGlobalMatrix()))
+				});
+			pointlightBatch.SetParameterBlock(pointLightMeshParamsData);
+
 			LightParams const& pointlightParams = 
 				GetLightParamData(pointLights[i], m_pointlightStage->GetTextureTargetSet());
 
@@ -861,14 +872,7 @@ namespace gr
 				LightParams::s_shaderName,
 				pointlightParams, 
 				re::ParameterBlock::PBType::SingleFrame);
-
 			pointlightBatch.SetParameterBlock(pointlightPB);
-
-			// Point light mesh params:
-			shared_ptr<ParameterBlock> pointlightMeshParams = 
-				gr::Mesh::CreateInstancedMeshParamsData(pointLightProperties.m_point.m_sphereMesh->GetTransform());
-
-			pointlightBatch.SetParameterBlock(pointlightMeshParams);
 
 			// Batch textures/samplers:
 			ShadowMap* const shadowMap = pointLights[i]->GetShadowMap();

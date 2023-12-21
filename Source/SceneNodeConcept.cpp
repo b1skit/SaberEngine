@@ -2,7 +2,7 @@
 #include "GameplayManager.h"
 #include "MarkerComponents.h"
 #include "NameComponent.h"
-#include "Relationship.h"
+#include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "SceneNodeConcept.h"
 #include "TransformComponent.h"
@@ -16,7 +16,7 @@ namespace fr
 
 		entt::entity sceneNodeEntity = gpm.CreateEntity(name);
 
-		gr::Transform* parentTransform = nullptr;
+		fr::Transform* parentTransform = nullptr;
 		if (parent != entt::null)
 		{
 			SEAssert("Parent entity must have a TransformComponent", 
@@ -45,7 +45,7 @@ namespace fr
 	}
 
 
-	gr::Transform& SceneNode::GetSceneNodeTransform(entt::entity entity)
+	fr::Transform& SceneNode::GetSceneNodeTransform(entt::entity entity)
 	{
 		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
 

@@ -27,7 +27,7 @@ namespace gr
 
 		std::vector<std::shared_ptr<gr::GraphicsSystem>>& GetGraphicsSystems();
 
-		gr::RenderData const& GetRenderData() const;
+		gr::RenderData const& CreateRenderData() const;
 
 		// Not thread safe: Can only be called when other threads are not accessing the render data
 		gr::RenderData& GetRenderDataForModification();
@@ -77,7 +77,7 @@ namespace gr
 	}
 
 
-	inline gr::RenderData const& GraphicsSystemManager::GetRenderData() const
+	inline gr::RenderData const& GraphicsSystemManager::CreateRenderData() const
 	{
 		return m_renderData;
 	}

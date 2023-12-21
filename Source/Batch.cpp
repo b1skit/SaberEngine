@@ -22,7 +22,7 @@ namespace
 
 namespace re
 {
-	Batch::Batch(Lifetime lifetime, gr::MeshPrimitive const* meshPrimitive, gr::Material* materialOverride)
+	Batch::Batch(Lifetime lifetime, gr::MeshPrimitive const* meshPrimitive, gr::Material* material)
 		: m_lifetime(lifetime)
 		, m_type(BatchType::Graphics)
 		, m_graphicsParams{}
@@ -52,7 +52,6 @@ namespace re
 		}
 		m_graphicsParams.m_indexStream = meshPrimitive->GetIndexStream();
 
-		gr::Material* material = materialOverride ? materialOverride : meshPrimitive->GetMeshMaterial();
 		if (material)
 		{
 			// Material textures/samplers:
