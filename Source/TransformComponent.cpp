@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "CoreEngine.h"
 #include "GameplayManager.h"
-#include "RenderData.h"
+#include "RenderDataManager.h"
 #include "RenderManager.h"
 #include "TransformComponent.h"
 
@@ -88,7 +88,7 @@ namespace fr
 
 		for (size_t renderSystemIdx = 0; renderSystemIdx < renderSystems.size(); renderSystemIdx++)
 		{
-			gr::RenderData& renderData =
+			gr::RenderDataManager& renderData =
 				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
 
 			renderData.SetTransformData(cmdPtr->m_transformID, cmdPtr->m_data);

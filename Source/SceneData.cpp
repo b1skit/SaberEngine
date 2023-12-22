@@ -12,7 +12,7 @@
 #include "Light.h"
 #include "MaterialComponent.h"
 #include "Material_GLTF.h"
-#include "Mesh.h"
+#include "MeshConcept.h"
 #include "MeshPrimitiveComponent.h"
 #include "ParameterBlock.h"
 #include "RenderManager.h"
@@ -361,7 +361,7 @@ namespace
 	// Creates a default camera if camera == nullptr, and no cameras exist in scene
 	void LoadAddCamera(fr::SceneData& scene, entt::entity sceneNode, cgltf_node* current)
 	{
-		std::shared_ptr<gr::Camera> newCam;
+		std::shared_ptr<fr::Camera> newCam;
 
 		if (sceneNode == entt::null && (current == nullptr || current->camera == nullptr))
 		{
@@ -373,7 +373,7 @@ namespace
 			camConfig.m_near = en::Config::Get()->GetValue<float>("defaultNear");
 			camConfig.m_far = en::Config::Get()->GetValue<float>("defaultFar");
 
-			newCam = gr::Camera::Create("Default camera", camConfig, nullptr); // Internally calls SceneData::AddCamera
+			newCam = fr::Camera::Create("Default camera", camConfig, nullptr); // Internally calls SceneData::AddCamera
 		}
 		else
 		{
@@ -413,7 +413,7 @@ namespace
 			fr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
 
 			// Create the camera and set the transform values on the parent object:
-			newCam = gr::Camera::Create(camName, camConfig, sceneNodeTransform);
+			newCam = fr::Camera::Create(camName, camConfig, sceneNodeTransform);
 			SetTransformValues(current, sceneNode);
 		}
 
@@ -437,17 +437,17 @@ namespace
 
 		LOG("Found light \"%s\"", lightName.c_str());
 
-		gr::Light::LightType lightType = gr::Light::LightType::Light_Count;
+		fr::Light::LightType lightType = fr::Light::LightType::LightType_Count;
 		switch (current->light->type)
 		{
 		case cgltf_light_type::cgltf_light_type_directional:
 		{
-			lightType = gr::Light::LightType::Directional;
+			lightType = fr::Light::LightType::Directional_Deferred;
 		}
 		break;
 		case cgltf_light_type::cgltf_light_type_point:
 		{
-			lightType = gr::Light::LightType::Point;
+			lightType = fr::Light::LightType::Point_Deferred;
 		}
 		break;
 		case cgltf_light_type::cgltf_light_type_spot:
@@ -477,24 +477,24 @@ namespace
 		}
 		
 		// Note: Lights self-add themselves to the scene, no need to manually call scene.AddLight
-		std::shared_ptr<gr::Light> newLight;
+		std::shared_ptr<fr::Light> newLight;
 		switch (lightType)
 		{
-		case gr::Light::LightType::AmbientIBL:
+		case fr::Light::LightType::AmbientIBL_Deferred:
 		{
-			gr::Light::CreateAmbientLight(lightName);
+			fr::Light::CreateAmbientLight(lightName);
 		}
 		break;
-		case gr::Light::LightType::Directional:
+		case fr::Light::LightType::Directional_Deferred:
 		{
 			fr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
-			gr::Light::CreateDirectionalLight(lightName, sceneNodeTransform, colorIntensity, attachShadow);
+			fr::Light::CreateDirectionalLight(lightName, sceneNodeTransform, colorIntensity, attachShadow);
 		}
 		break;
-		case gr::Light::LightType::Point:
+		case fr::Light::LightType::Point_Deferred:
 		{
 			fr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
-			gr::Light::CreatePointLight(lightName, sceneNodeTransform, colorIntensity, attachShadow);
+			fr::Light::CreatePointLight(lightName, sceneNodeTransform, colorIntensity, attachShadow);
 		}
 		break;
 		default:
@@ -541,7 +541,7 @@ namespace
 			"must exist at Assets\\DefaultIBL\\ibl.hdr", iblTexture != nullptr);
 
 		// Create the ambient light:
-		gr::Light::CreateAmbientLight("AmbientLight");
+		fr::Light::CreateAmbientLight("AmbientLight");
 	}
 
 
@@ -562,7 +562,7 @@ namespace
 
 		const uint32_t numMeshPrimitives = util::CheckedCast<uint32_t>(current->mesh->primitives_count);
 		
-		entt::entity meshEntity = fr::Mesh::CreateMeshConcept(sceneNode, meshName.c_str());
+		entt::entity meshEntity = fr::Mesh::AttachMeshConcept(sceneNode, meshName.c_str());
 
 		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
 		for (size_t primitive = 0; primitive < numMeshPrimitives; primitive++)
@@ -616,8 +616,8 @@ namespace
 
 			// Unpack each of the primitive's vertex attrbutes:
 			std::vector<float> positions;
-			glm::vec3 positionsMinXYZ(fr::Bounds::k_invalidMinXYZ);
-			glm::vec3 positionsMaxXYZ(fr::Bounds::k_invalidMaxXYZ);
+			glm::vec3 positionsMinXYZ(fr::BoundsComponent::k_invalidMinXYZ);
+			glm::vec3 positionsMaxXYZ(fr::BoundsComponent::k_invalidMaxXYZ);
 			std::vector<float> normals;
 			std::vector<float> tangents;
 			std::vector<float> uv0;
@@ -1129,7 +1129,7 @@ namespace fr
 	}
 
 
-	void SceneData::AddCamera(std::shared_ptr<gr::Camera> newCamera)
+	void SceneData::AddCamera(std::shared_ptr<fr::Camera> newCamera)
 	{
 		SEAssert("Cannot add a null camera", newCamera != nullptr);
 
@@ -1149,7 +1149,7 @@ namespace fr
 			auto const& result = std::find_if(
 				m_cameras.begin(),
 				m_cameras.end(),
-				[&](std::shared_ptr<gr::Camera> const& cam) {return cam->GetUniqueID() == uniqueID; });
+				[&](std::shared_ptr<fr::Camera> const& cam) {return cam->GetUniqueID() == uniqueID; });
 
 			SEAssert("Camera not found", result != m_cameras.end());
 
@@ -1158,28 +1158,28 @@ namespace fr
 	}
 
 
-	void SceneData::AddLight(std::shared_ptr<gr::Light> newLight)
+	void SceneData::AddLight(std::shared_ptr<fr::Light> newLight)
 	{
 		// TODO: Seems arbitrary that we cannot have multiple directional lights... Why even bother 
 		// enforcing this? Just treat all lights the same
 
-		switch (newLight->Type())
+		switch (newLight->GetType())
 		{
-		case gr::Light::AmbientIBL:
+		case fr::Light::AmbientIBL_Deferred:
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_ambientLightReadWriteMutex);
 			SEAssert("Ambient light already exists, cannot have 2 ambient lights", m_ambientLight == nullptr);
 			m_ambientLight = newLight;
 		}
 		break;
-		case gr::Light::Directional:
+		case fr::Light::Directional_Deferred:
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_keyLightReadWriteMutex);
 			SEAssert("Direction light already exists, cannot have 2 directional lights", m_keyLight == nullptr);
 			m_keyLight = newLight;
 		}
 		break;
-		case gr::Light::Point:
+		case fr::Light::Point_Deferred:
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_pointLightsReadWriteMutex);
 			m_pointLights.emplace_back(newLight);
@@ -1195,19 +1195,19 @@ namespace fr
 	}
 
 
-	std::shared_ptr<gr::Light> const SceneData::GetAmbientLight() const
+	std::shared_ptr<fr::Light> const SceneData::GetAmbientLight() const
 	{
 		return m_ambientLight;
 	}
 
 
-	std::shared_ptr<gr::Light> SceneData::GetKeyLight() const
+	std::shared_ptr<fr::Light> SceneData::GetKeyLight() const
 	{
 		return m_keyLight;
 	}
 
 
-	std::vector<std::shared_ptr<gr::Light>> const& SceneData::GetPointLights() const
+	std::vector<std::shared_ptr<fr::Light>> const& SceneData::GetPointLights() const
 	{
 		return m_pointLights;
 	}
@@ -1284,7 +1284,7 @@ namespace fr
 	}
 
 
-	std::vector<std::shared_ptr<gr::Camera>> const& SceneData::GetCameras() const 
+	std::vector<std::shared_ptr<fr::Camera>> const& SceneData::GetCameras() const 
 	{
 		SEAssert("Accessing data container is not thread safe during loading", m_finishedLoading);
 		{
@@ -1293,7 +1293,7 @@ namespace fr
 		}
 	}
 
-	std::shared_ptr<gr::Camera> SceneData::GetMainCamera(uint64_t uniqueID) const
+	std::shared_ptr<fr::Camera> SceneData::GetMainCamera(uint64_t uniqueID) const
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_camerasReadWriteMutex);
@@ -1301,7 +1301,7 @@ namespace fr
 			auto const& result = std::find_if(
 				m_cameras.begin(),
 				m_cameras.end(),
-				[&](std::shared_ptr<gr::Camera> const& cam) {return cam->GetUniqueID() == uniqueID; });
+				[&](std::shared_ptr<fr::Camera> const& cam) {return cam->GetUniqueID() == uniqueID; });
 
 			SEAssert("Camera not found",
 				result != m_cameras.end());

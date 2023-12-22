@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "Bounds.h"
 #include "ConfigKeys.h"
 #include "GraphicsSystem_Debug.h"
 #include "GraphicsSystemManager.h"
@@ -202,7 +203,7 @@ namespace
 	}
 
 
-	re::Batch BuildCameraFrustumBatch(gr::Camera const* camera, glm::vec3 const& frustumColor, uint8_t cubemapCamFaceIdx = 0)
+	re::Batch BuildCameraFrustumBatch(fr::Camera const* camera, glm::vec3 const& frustumColor, uint8_t cubemapCamFaceIdx = 0)
 	{
 		// Convert NDC coordinates to world space. Cubemap face index 0 = the same matrix as a non-cubemap camera
 		glm::vec4 farTL = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(-1.f, 1.f, 1.f, 1.f);
@@ -340,8 +341,6 @@ namespace gr
 
 		m_debugStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 
-		m_debugStage->AddPermanentParameterBlock(en::SceneManager::Get()->GetMainCamera()->GetCameraParams());
-
 		re::PipelineState debugLinePipelineState;
 		debugLinePipelineState.SetTopologyType(re::PipelineState::TopologyType::Line);
 		debugLinePipelineState.SetFillMode(re::PipelineState::FillMode::Wireframe);
@@ -365,7 +364,7 @@ namespace gr
 	{
 		constexpr glm::mat4 k_identity = glm::mat4(1.f);
 
-		gr::RenderData const& renderData = m_owningGraphicsSystemManager->CreateRenderData();
+		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->CreateRenderData();
 
 		if (m_showWorldCoordinateAxis)
 		{
@@ -447,7 +446,7 @@ namespace gr
 
 		if (m_showCameraFrustums)
 		{
-			for (gr::Camera* debugCam : m_camerasToDebug)
+			for (fr::Camera* debugCam : m_camerasToDebug)
 			{
 				// Use the inverse view matrix, as it omits any scale that might be present in the Transform hierarchy
 				glm::mat4 const& camWorldMatrix = debugCam->GetInverseViewMatrix();
@@ -482,7 +481,7 @@ namespace gr
 		{
 			// ECS_CONVERSTION TODO: Re-implement this
 
-			/*std::vector<std::shared_ptr<gr::Light>> const& pointLights = 
+			/*std::vector<std::shared_ptr<fr::Light>> const& pointLights = 
 				en::SceneManager::GetSceneData()->GetPointLights();
 
 			for (auto const& pointLight : pointLights)
@@ -492,8 +491,8 @@ namespace gr
 				std::shared_ptr<re::ParameterBlock> pointLightMeshTransformPB =
 					gr::Transform::CreateInstancedTransformParams(&lightTRS, nullptr);
 
-				gr::Light::LightTypeProperties const& pointLightProperties =
-					pointLight->AccessLightTypeProperties(gr::Light::LightType::Point);
+				fr::Light::LightTypeProperties const& pointLightProperties =
+					pointLight->AccessLightTypeProperties(fr::Light::LightType::Point);
 
 				re::Batch pointLightWireframeBatch = BuildWireframeBatch(
 					pointLightProperties.m_point.m_sphereMesh->GetMeshPrimitives()[0].get(), 
@@ -532,10 +531,10 @@ namespace gr
 		{
 			ImGui::Indent();
 			m_showCameraFrustums = true;
-			std::vector<std::shared_ptr<gr::Camera>> const& sceneCams = en::SceneManager::GetSceneData()->GetCameras();
+			std::vector<std::shared_ptr<fr::Camera>> const& sceneCams = en::SceneManager::GetSceneData()->GetCameras();
 			for (size_t camIdx = 0; camIdx < sceneCams.size(); camIdx++)
 			{
-				gr::Camera* currentCam = sceneCams[camIdx].get();
+				fr::Camera* currentCam = sceneCams[camIdx].get();
 				const bool cameraAlreadyAdded = m_camerasToDebug.contains(currentCam);
 				bool cameraSelected = cameraAlreadyAdded;
 				if (ImGui::Checkbox(std::format("{}##", currentCam->GetName(), currentCam->GetUniqueID()).c_str(), &cameraSelected) &&

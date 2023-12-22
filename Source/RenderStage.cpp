@@ -385,6 +385,22 @@ namespace re
 			pb->GetType() == re::ParameterBlock::PBType::Mutable || 
 			pb->GetType() == re::ParameterBlock::PBType::Immutable);
 		
+		SEAssert("A permanent ParameterBlock with this name has already been added",
+			std::find_if(
+				m_permanentParamBlocks.begin(),
+				m_permanentParamBlocks.end(),
+				[&pb](std::shared_ptr<re::ParameterBlock> const& existingPB) {
+					return pb->GetNameID() == existingPB->GetNameID();
+				}) == m_permanentParamBlocks.end());
+
+		SEAssert("A single frame ParameterBlock with this name has already been added",
+			std::find_if(
+				m_singleFrameParamBlocks.begin(),
+				m_singleFrameParamBlocks.end(),
+				[&pb](std::shared_ptr<re::ParameterBlock> const& existingPB) {
+					return pb->GetNameID() == existingPB->GetNameID();
+				}) == m_singleFrameParamBlocks.end());
+
 		m_permanentParamBlocks.emplace_back(pb);
 	}
 
@@ -393,6 +409,23 @@ namespace re
 	{
 		SEAssert("Parameter block must have a single frame lifetime", 
 			pb->GetType() == re::ParameterBlock::PBType::SingleFrame);
+
+		SEAssert("A single frame ParameterBlock with this name has already been added",
+			std::find_if(
+				m_singleFrameParamBlocks.begin(),
+				m_singleFrameParamBlocks.end(),
+				[&pb](std::shared_ptr<re::ParameterBlock> const& existingPB) {
+					return pb->GetNameID() == existingPB->GetNameID();
+				}) == m_singleFrameParamBlocks.end());
+		
+		SEAssert("A permanent ParameterBlock with this name has already been added",
+			std::find_if(
+				m_permanentParamBlocks.begin(),
+				m_permanentParamBlocks.end(),
+				[&pb](std::shared_ptr<re::ParameterBlock> const& existingPB) {
+					return pb->GetNameID() == existingPB->GetNameID();
+				}) == m_permanentParamBlocks.end());
+
 		m_singleFrameParamBlocks.emplace_back(pb);
 	}
 }

@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
-#include "RenderDataIDs.h"
+#include "RenderObjectIDs.h"
 #include "RenderManager.h"
 
 
@@ -11,11 +11,11 @@ namespace fr
 
 namespace gr
 {
-	// Automatically assigns itself a unique RenderObjectID
+	// Automatically assigns itself a unique RenderDataID
 	class RenderDataComponent
 	{
 	public:
-		struct NewIDMarker {}; // Attached when a a new RenderObjectID is allocated
+		struct NewIDMarker {}; // Attached when a a new RenderDataID is allocated
 
 	public:
 		static RenderDataComponent& AttachNewRenderDataComponent(
@@ -31,21 +31,22 @@ namespace gr
 
 
 	public:
-		gr::RenderObjectID GetRenderObjectID() const;
+		gr::RenderDataID GetRenderDataID() const;
 		gr::TransformID GetTransformID() const;
 
 
 	private:
-		const gr::RenderObjectID m_renderObjectID;
+		const gr::RenderDataID m_renderDataID;
 		const gr::TransformID m_transformID;
 
 
 	private:
-		static std::atomic<gr::RenderObjectID> s_objectIDs;
+		static std::atomic<gr::RenderDataID> s_objectIDs;
 
 
 	private: // No copying allowed
 		RenderDataComponent() = delete;
+		RenderDataComponent(RenderDataComponent const&) = delete;
 		RenderDataComponent& operator=(RenderDataComponent const&) = delete;
 		
 
@@ -53,9 +54,9 @@ namespace gr
 		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
 		
 	public:
-		RenderDataComponent(PrivateCTORTag, gr::TransformID); // Allocate a new RenderObjectID
-		RenderDataComponent(PrivateCTORTag, gr::RenderObjectID, gr::TransformID); // Allocate a new RenderObjectID
-		RenderDataComponent(PrivateCTORTag, RenderDataComponent const&); // Shared RenderObjectID
+		RenderDataComponent(PrivateCTORTag, gr::TransformID); // Allocate a new RenderDataID
+		RenderDataComponent(PrivateCTORTag, gr::RenderDataID, gr::TransformID); // Allocate a new RenderDataID
+		RenderDataComponent(PrivateCTORTag, RenderDataComponent const&); // Shared RenderDataID
 	};
 
 
@@ -71,7 +72,7 @@ namespace gr
 		static void Destroy(void*);
 
 	private:
-		const gr::RenderObjectID m_objectID;
+		const gr::RenderDataID m_objectID;
 		const gr::TransformID m_transformID;
 	};
 
@@ -82,13 +83,13 @@ namespace gr
 	class DestroyRenderObjectCommand
 	{
 	public:
-		DestroyRenderObjectCommand(gr::RenderObjectID);
+		DestroyRenderObjectCommand(gr::RenderDataID);
 
 		static void Execute(void*);
 		static void Destroy(void*);
 
 	private:
-		const gr::RenderObjectID m_objectID;
+		const gr::RenderDataID m_objectID;
 	};
 
 
@@ -99,19 +100,19 @@ namespace gr
 	class UpdateRenderDataRenderCommand
 	{
 	public:
-		UpdateRenderDataRenderCommand(gr::RenderObjectID, T const&);
+		UpdateRenderDataRenderCommand(gr::RenderDataID, T const&);
 
 		static void Execute(void*);
 		static void Destroy(void*);
 
 	private:
-		const gr::RenderObjectID m_objectID;
+		const gr::RenderDataID m_objectID;
 		const T m_data;
 	};
 
 
 	template<typename T>
-	UpdateRenderDataRenderCommand<T>::UpdateRenderDataRenderCommand(gr::RenderObjectID objectID, T const& data)
+	UpdateRenderDataRenderCommand<T>::UpdateRenderDataRenderCommand(gr::RenderDataID objectID, T const& data)
 		: m_objectID(objectID)
 		, m_data(data)
 	{
@@ -128,7 +129,7 @@ namespace gr
 
 		for (size_t renderSystemIdx = 0; renderSystemIdx < renderSystems.size(); renderSystemIdx++)
 		{
-			gr::RenderData& renderData =
+			gr::RenderDataManager& renderData =
 				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
 
 			renderData.SetObjectData(cmdPtr->m_objectID, &cmdPtr->m_data);
@@ -151,18 +152,18 @@ namespace gr
 	class DestroyRenderDataRenderCommand
 	{
 	public:
-		DestroyRenderDataRenderCommand(gr::RenderObjectID);
+		DestroyRenderDataRenderCommand(gr::RenderDataID);
 
 		static void Execute(void*);
 		static void Destroy(void*);
 
 	private:
-		const gr::RenderObjectID m_objectID;
+		const gr::RenderDataID m_objectID;
 	};
 
 
 	template<typename T>
-	DestroyRenderDataRenderCommand<T>::DestroyRenderDataRenderCommand(gr::RenderObjectID objectID)
+	DestroyRenderDataRenderCommand<T>::DestroyRenderDataRenderCommand(gr::RenderDataID objectID)
 		: m_objectID(objectID)
 	{
 	}
@@ -178,7 +179,7 @@ namespace gr
 
 		for (size_t renderSystemIdx = 0; renderSystemIdx < renderSystems.size(); renderSystemIdx++)
 		{
-			gr::RenderData& renderData =
+			gr::RenderDataManager& renderData =
 				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
 
 			renderData.DestroyObjectData<T>(cmdPtr->m_objectID);

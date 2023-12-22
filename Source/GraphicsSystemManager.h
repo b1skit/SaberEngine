@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Assert.h"
-#include "RenderData.h"
+#include "RenderDataManager.h"
 
 
 namespace re
@@ -27,10 +27,10 @@ namespace gr
 
 		std::vector<std::shared_ptr<gr::GraphicsSystem>>& GetGraphicsSystems();
 
-		gr::RenderData const& CreateRenderData() const;
+		gr::RenderDataManager const& CreateRenderData() const;
 
 		// Not thread safe: Can only be called when other threads are not accessing the render data
-		gr::RenderData& GetRenderDataForModification();
+		gr::RenderDataManager& GetRenderDataForModification();
 
 
 		void ShowImGuiWindow();
@@ -39,7 +39,7 @@ namespace gr
 	private:
 		std::vector<std::shared_ptr<gr::GraphicsSystem>> m_graphicsSystems;
 
-		gr::RenderData m_renderData;
+		gr::RenderDataManager m_renderData;
 
 		re::RenderSystem* const m_owningRenderSystem;
 
@@ -77,13 +77,13 @@ namespace gr
 	}
 
 
-	inline gr::RenderData const& GraphicsSystemManager::CreateRenderData() const
+	inline gr::RenderDataManager const& GraphicsSystemManager::CreateRenderData() const
 	{
 		return m_renderData;
 	}
 
 
-	inline gr::RenderData& GraphicsSystemManager::GetRenderDataForModification()
+	inline gr::RenderDataManager& GraphicsSystemManager::GetRenderDataForModification()
 	{
 		return m_renderData;
 	}

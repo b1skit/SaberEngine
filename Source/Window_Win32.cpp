@@ -2,10 +2,10 @@
 #include <GL/glew.h>
 #include <GL/GL.h> // Must follow glew.h
 
-#include "Window.h"
-#include "Window_Win32.h"
 #include "Assert.h"
 #include "CoreEngine.h"
+#include "Window.h"
+#include "Window_Win32.h"
 
 
 namespace win32

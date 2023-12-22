@@ -22,13 +22,18 @@ namespace fr
 		entt::entity GetFirstChild() const;
 		entt::entity GetLastChild() const;
 
+		entt::entity GetThisEntity() const;
+
 
 	public:
 		template<typename T>
-		static bool HasComponentInParentHierarchy(entt::entity);
+		static bool IsInHierarchyAbove(entt::entity); // Searches current entity and above
 
 		template<typename T>
-		static T* GetComponentInHierarchyAbove(entt::entity);
+		static T* GetFirstInHierarchyAbove(entt::entity); // Searches current entity and above
+
+		template<typename T>
+		static T* GetFirstAndEntityInHierarchyAbove(entt::entity, entt::entity& owningEntityOut); // Searches current entity and above
 
 
 	public:
@@ -41,8 +46,10 @@ namespace fr
 		void RemoveChild(GameplayManager&, entt::entity);
 		
 
-	private: // Use AttachRelationshipComponent() instead
-		Relationship(entt::entity owningEntity);
+	private: // Use the static creation factories
+		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
+	public:
+		Relationship(PrivateCTORTag, entt::entity owningEntity);
 
 
 	private:
@@ -112,26 +119,41 @@ namespace fr
 	}
 
 
-	template<typename T>
-	bool Relationship::HasComponentInParentHierarchy(entt::entity entity)
+	inline entt::entity Relationship::GetThisEntity() const
 	{
-		return GetComponentInHierarchyAbove<T>(entity) != nullptr;
+		return m_thisEntity;
 	}
 
 
 	template<typename T>
-	T* Relationship::GetComponentInHierarchyAbove(entt::entity entity)
+	bool Relationship::IsInHierarchyAbove(entt::entity entity)
+	{
+		return GetFirstInHierarchyAbove<T>(entity) != nullptr;
+	}
+
+
+	template<typename T>
+	T* Relationship::GetFirstInHierarchyAbove(entt::entity entity)
+	{
+		entt::entity dummy = entt::null;
+		return GetFirstAndEntityInHierarchyAbove<T>(entity, dummy);
+	}
+
+
+	template<typename T>
+	T* Relationship::GetFirstAndEntityInHierarchyAbove(entt::entity entity, entt::entity& owningEntityOut)
 	{
 		SEAssert("Entity cannot be null", entity != entt::null);
 
 		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
-		
+
 		entt::entity currentEntity = entity;
 		while (currentEntity != entt::null)
 		{
 			T* component = gpm.TryGetComponent<T>(currentEntity);
 			if (component != nullptr)
 			{
+				owningEntityOut = currentEntity;
 				return component;
 			}
 
@@ -141,8 +163,6 @@ namespace fr
 
 			currentEntity = currentRelationship.GetParent();
 		}
-
-		SEAssertF("Component not found in current entity, or the parents above it");
 
 		return nullptr;
 	}

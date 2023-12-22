@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "GameplayManager.h"
 #include "ImGuiUtils.h"
-#include "Mesh.h"
+#include "MeshConcept.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "TransformComponent.h"
@@ -9,7 +9,7 @@
 
 namespace fr
 {
-	entt::entity Mesh::CreateMeshConcept(entt::entity sceneNode, char const* name)
+	entt::entity Mesh::AttachMeshConcept(entt::entity sceneNode, char const* name)
 	{
 		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
 
@@ -26,7 +26,7 @@ namespace fr
 
 		gr::RenderDataComponent::AttachNewRenderDataComponent(gpm, meshEntity, transformComponent.GetTransformID());
 
-		fr::Bounds::AttachBoundsComponent(gpm, meshEntity); // Mesh bounds: Encompasses all attached primitive bounds
+		fr::BoundsComponent::AttachBoundsComponent(gpm, meshEntity); // Mesh bounds: Encompasses all attached primitive bounds
 
 		fr::Relationship& meshRelationship = fr::Relationship::AttachRelationshipComponent(gpm, meshEntity);
 		meshRelationship.SetParent(gpm, sceneNode);

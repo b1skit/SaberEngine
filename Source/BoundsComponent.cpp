@@ -20,7 +20,7 @@ namespace
 
 namespace fr
 {
-	void Bounds::CreateSceneBounds(fr::GameplayManager& gpm)
+	void BoundsComponent::CreateSceneBoundsConcept(fr::GameplayManager& gpm)
 	{
 		constexpr char const* k_sceneBoundsName = "SceneBounds";
 
@@ -39,28 +39,28 @@ namespace fr
 	}
 
 
-	void Bounds::AttachBoundsComponent(fr::GameplayManager& gpm, entt::entity entity)
+	void BoundsComponent::AttachBoundsComponent(fr::GameplayManager& gpm, entt::entity entity)
 	{
 		SEAssert("Bounds can only be attached to an entity that already has a RenderDataComponent",
-			fr::Relationship::HasComponentInParentHierarchy<gr::RenderDataComponent>(entity));
+			fr::Relationship::IsInHierarchyAbove<gr::RenderDataComponent>(entity));
 
-		gpm.EmplaceComponent<fr::Bounds>(entity, PrivateCTORTag{});
-		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::Bounds>>(entity);
+		gpm.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{});
+		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
 	}
 
 
-	void Bounds::AttachBoundsComponent(
+	void BoundsComponent::AttachBoundsComponent(
 		fr::GameplayManager& gpm, entt::entity entity, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ)
 	{
 		SEAssert("Bounds can only be attached to an entity that already has a RenderDataComponent",
-			fr::Relationship::HasComponentInParentHierarchy<gr::RenderDataComponent>(entity));
+			fr::Relationship::IsInHierarchyAbove<gr::RenderDataComponent>(entity));
 
-		gpm.EmplaceComponent<fr::Bounds>(entity, PrivateCTORTag{}, minXYZ, maxXYZ);
-		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::Bounds>>(entity);
+		gpm.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ);
+		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
 	}
 
 
-	void Bounds::AttachBoundsComponent(
+	void BoundsComponent::AttachBoundsComponent(
 		fr::GameplayManager& gpm,
 		entt::entity entity,
 		glm::vec3 const& minXYZ,
@@ -68,14 +68,14 @@ namespace fr
 		std::vector<glm::vec3> const& positions)
 	{
 		SEAssert("Bounds can only be attached to an entity that already has a RenderDataComponent", 
-			fr::Relationship::HasComponentInParentHierarchy<gr::RenderDataComponent>(entity));
+			fr::Relationship::IsInHierarchyAbove<gr::RenderDataComponent>(entity));
 
-		gpm.EmplaceComponent<fr::Bounds>(entity, PrivateCTORTag{}, minXYZ, maxXYZ, positions);
-		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::Bounds>>(entity);
+		gpm.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ, positions);
+		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
 	}
 
 
-	gr::Bounds::RenderData Bounds::CreateRenderData(fr::Bounds const& bounds)
+	gr::Bounds::RenderData BoundsComponent::CreateRenderData(fr::BoundsComponent const& bounds)
 	{
 		return gr::Bounds::RenderData
 		{
@@ -85,32 +85,42 @@ namespace fr
 	}
 
 
-	Bounds::Bounds(PrivateCTORTag)
+	BoundsComponent::BoundsComponent(PrivateCTORTag)
 		: m_minXYZ(k_invalidMinXYZ)
 		, m_maxXYZ(k_invalidMaxXYZ) 
 	{
 	}
 
 
-	Bounds::Bounds()
-		: Bounds(PrivateCTORTag{})
+	BoundsComponent::BoundsComponent()
+		: BoundsComponent(PrivateCTORTag{})
 	{
 	}
 
 
-	Bounds::Bounds(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ)
+	BoundsComponent::BoundsComponent(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ)
 		: m_minXYZ(minXYZ)
 		, m_maxXYZ(maxXYZ)
 	{
+		SEAssert("Cannot have only 1 invalid minXYZ/maxXYZ", 
+			(m_minXYZ == BoundsComponent::k_invalidMinXYZ && m_maxXYZ == BoundsComponent::k_invalidMaxXYZ) ||
+			(m_minXYZ != BoundsComponent::k_invalidMinXYZ && m_maxXYZ != BoundsComponent::k_invalidMaxXYZ));
+		SEAssert("Bounds is NaN/Inf",
+			glm::all(glm::isnan(m_minXYZ)) == false && glm::all(glm::isnan(m_maxXYZ)) == false &&
+			glm::all(glm::isinf(m_minXYZ)) == false && glm::all(glm::isinf(m_maxXYZ)) == false);
 	}
 
 
-	Bounds::Bounds(
+	BoundsComponent::BoundsComponent(
 		PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, std::vector<glm::vec3> const& positions)
 		: m_minXYZ(minXYZ)
 		, m_maxXYZ(maxXYZ)
 	{
-		if (m_minXYZ == fr::Bounds::k_invalidMinXYZ || m_maxXYZ == fr::Bounds::k_invalidMaxXYZ)
+		SEAssert("Cannot have only 1 invalid minXYZ/maxXYZ",
+			(m_minXYZ == BoundsComponent::k_invalidMinXYZ && m_maxXYZ == BoundsComponent::k_invalidMaxXYZ) ||
+			(m_minXYZ != BoundsComponent::k_invalidMinXYZ && m_maxXYZ != BoundsComponent::k_invalidMaxXYZ));
+
+		if (m_minXYZ == fr::BoundsComponent::k_invalidMinXYZ || m_maxXYZ == fr::BoundsComponent::k_invalidMaxXYZ)
 		{
 			// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast from floats
 			ComputeBounds(positions);
@@ -118,20 +128,20 @@ namespace fr
 	}
 
 
-	bool Bounds::operator==(fr::Bounds const& rhs) const
+	bool BoundsComponent::operator==(fr::BoundsComponent const& rhs) const
 	{
 		return m_minXYZ == rhs.m_minXYZ && m_maxXYZ == rhs.m_maxXYZ;
 	}
 
 
-	bool Bounds::operator!=(fr::Bounds const& rhs) const
+	bool BoundsComponent::operator!=(fr::BoundsComponent const& rhs) const
 	{
 		return operator==(rhs) == false;
 	}
 
 
 	// Returns a new AABB BoundsConcept, transformed from local space using transform
-	Bounds Bounds::GetTransformedAABBBounds(mat4 const& worldMatrix) const
+	BoundsComponent BoundsComponent::GetTransformedAABBBounds(mat4 const& worldMatrix) const
 	{
 		// Assemble our current AABB points into a cube of 8 vertices:
 		std::vector<vec4>points(8);							// "front" == fwd == Z -
@@ -145,7 +155,7 @@ namespace fr
 		points[7] = vec4(xMax(), yMin(), zMax(), 1.0f);		// Right	bot		back
 
 		// Compute a new AABB in world-space:
-		Bounds result(PrivateCTORTag{}); // Invalid min/max by default
+		BoundsComponent result(PrivateCTORTag{}); // Invalid min/max by default
 
 		// Transform each point into world space, and record the min/max coordinate in each dimension:
 		for (size_t i = 0; i < 8; i++)
@@ -164,11 +174,15 @@ namespace fr
 
 		result.Make3Dimensional(); // Ensure the final bounds are 3D
 
+		SEAssert("Bounds is NaN/Inf", 
+			glm::all(glm::isnan(result.m_minXYZ)) == false && glm::all(glm::isnan(result.m_maxXYZ)) == false &&
+			glm::all(glm::isinf(result.m_minXYZ)) == false && glm::all(glm::isinf(result.m_maxXYZ)) == false);
+
 		return result;
 	}
 
 
-	void Bounds::ComputeBounds(std::vector<glm::vec3> const& positions)
+	void BoundsComponent::ComputeBounds(std::vector<glm::vec3> const& positions)
 	{
 		for (size_t i = 0; i < positions.size(); i++)
 		{
@@ -181,10 +195,13 @@ namespace fr
 			m_minXYZ.z = std::min(positions[i].z, m_minXYZ.z);
 			m_maxXYZ.z = std::max(positions[i].z, m_maxXYZ.z);
 		}
+		SEAssert("Bounds is NaN/Inf",
+			glm::all(glm::isnan(m_minXYZ)) == false && glm::all(glm::isnan(m_maxXYZ)) == false &&
+			glm::all(glm::isinf(m_minXYZ)) == false && glm::all(glm::isinf(m_maxXYZ)) == false);
 	}
 
 
-	void Bounds::ExpandBounds(Bounds const& newContents)
+	void BoundsComponent::ExpandBounds(BoundsComponent const& newContents)
 	{
 		m_minXYZ.x = std::min(newContents.m_minXYZ.x, m_minXYZ.x);
 		m_maxXYZ.x = std::max(newContents.m_maxXYZ.x, m_maxXYZ.x);
@@ -194,10 +211,38 @@ namespace fr
 		
 		m_minXYZ.z = std::min(newContents.m_minXYZ.z, m_minXYZ.z);
 		m_maxXYZ.z = std::max(newContents.m_maxXYZ.z, m_maxXYZ.z);
+
+		SEAssert("Bounds is NaN/Inf",
+			glm::all(glm::isnan(m_minXYZ)) == false && glm::all(glm::isnan(m_maxXYZ)) == false &&
+			glm::all(glm::isinf(m_minXYZ)) == false && glm::all(glm::isinf(m_maxXYZ)) == false);
 	}
 
 
-	void Bounds::Make3Dimensional()
+	void BoundsComponent::ExpandBoundsHierarchy(
+		BoundsComponent const& newContents, entt::entity boundsEntity)
+	{
+		ExpandBounds(newContents);
+
+		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+
+		SEAssert("Owning entity does not have a Relationship component", 
+			gpm.HasComponent<fr::Relationship>(boundsEntity));
+
+		fr::Relationship const& owningEntityRelationship = gpm.GetComponent<fr::Relationship>(boundsEntity);
+
+		// Recursively expand any Bounds above us:
+		entt::entity nextEntity = entt::null;
+		fr::BoundsComponent* nextBounds = fr::Relationship::GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
+			owningEntityRelationship.GetParent(), 
+			nextEntity);
+		if (nextBounds != nullptr)
+		{
+			ExpandBoundsHierarchy(*this, nextEntity);
+		}
+	}
+
+
+	void BoundsComponent::Make3Dimensional()
 	{
 		if (glm::abs(m_maxXYZ.x - m_minXYZ.x) < k_bounds3DDepthBias)
 		{
@@ -216,10 +261,14 @@ namespace fr
 			m_minXYZ.z -= k_bounds3DDepthBias;
 			m_maxXYZ.z += k_bounds3DDepthBias;
 		}
+
+		SEAssert("Bounds is NaN/Inf",
+			glm::all(glm::isnan(m_minXYZ)) == false && glm::all(glm::isnan(m_maxXYZ)) == false &&
+			glm::all(glm::isinf(m_minXYZ)) == false && glm::all(glm::isinf(m_maxXYZ)) == false);
 	}
 
 
-	void Bounds::ShowImGuiWindow() const
+	void BoundsComponent::ShowImGuiWindow() const
 	{
 		ImGui::Text("Min XYZ = %s", glm::to_string(m_minXYZ).c_str());
 		ImGui::Text("Max XYZ = %s", glm::to_string(m_maxXYZ).c_str());

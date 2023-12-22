@@ -2,7 +2,7 @@
 #pragma once
 #include "Assert.h"
 #include "CastUtils.h"
-#include "RenderDataIDs.h"
+#include "RenderObjectIDs.h"
 #include "ThreadProtector.h"
 #include "TransformComponent.h"
 
@@ -11,20 +11,20 @@ namespace gr
 {
 	// Render-thread-side scene data. Data is set via the render command queue (on a single thread), and graphics
 	// systems index use constant forward iterators to access it
-	class RenderData
+	class RenderDataManager
 	{
 	public:
-		RenderData();
-		~RenderData();
+		RenderDataManager() = default;
+		~RenderDataManager() = default;
 
 		void Destroy();
 
 		// Render data interface:
-		void RegisterObject(gr::RenderObjectID, gr::TransformID);
-		void DestroyObject(gr::RenderObjectID);
+		void RegisterObject(gr::RenderDataID, gr::TransformID);
+		void DestroyObject(gr::RenderDataID);
 
 		template<typename T>
-		void SetObjectData(gr::RenderObjectID, T const*); 
+		void SetObjectData(gr::RenderDataID, T const*); 
 
 		// To ensure this is thread safe, objects can only be accessed once all updates are complete (i.e. after all
 		// render commands have been executed)
@@ -32,7 +32,7 @@ namespace gr
 		[[nodiscard]] T const& GetObjectData(uint32_t index) const;
 
 		template<typename T>
-		void DestroyObjectData(gr::RenderObjectID);
+		void DestroyObjectData(gr::RenderDataID);
 
 		template<typename T>
 		uint32_t GetNumElementsOfType() const;
@@ -54,13 +54,13 @@ namespace gr
 	public:
 		// LinearIterator: Iterate over a single type of data, in whatever order it is stored in memory.
 		// This is the fastest iterator type, but elements are accessed out of order with respect to the elements of
-		// different data types with the same gr::RenderObjectID.
-		// RenderData iterators are not thread safe.
+		// different data types with the same gr::RenderDataID.
+		// RenderDataManager iterators are not thread safe.
 		template <typename T>
 		class LinearIterator
 		{	
 		protected:
-			friend class gr::RenderData;
+			friend class gr::RenderDataManager;
 			LinearIterator(T const* beginPtr, T const* endPtr) : m_ptr(beginPtr), m_endPtr(endPtr) {}
 
 
@@ -102,19 +102,19 @@ namespace gr
 
 
 	public:
-		// Iterate over multiple data types, with each iteration's elements associated by gr::RenderObjectID.
+		// Iterate over multiple data types, with each iteration's elements associated by gr::RenderDataID.
 		// This is slower than a LinearIterator, but elements of different data types are guaranteed to be assocaited
-		// with the same gr::RenderObjectID.
-		// RenderData iterators are not thread safe.
+		// with the same gr::RenderDataID.
+		// RenderDataManager iterators are not thread safe.
 		template <typename... Ts>
 		class ObjectIterator 
 		{			
 		protected:
-			friend class gr::RenderData;
+			friend class gr::RenderDataManager;
 			ObjectIterator(
-				gr::RenderData const* renderData,
-				std::unordered_map<gr::RenderObjectID, RenderObjectMetadata>::const_iterator renderObjectMetadataBeginItr,
-				std::unordered_map<gr::RenderObjectID, RenderObjectMetadata>::const_iterator const renderObjectMetadataEndItr,
+				gr::RenderDataManager const* renderData,
+				std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator renderObjectMetadataBeginItr,
+				std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator const renderObjectMetadataEndItr,
 				std::tuple<Ts const*...> endPtrs);
 
 
@@ -122,7 +122,7 @@ namespace gr
 			template<typename T>
 			[[nodiscard]] T const& Get() const;
 
-			gr::RenderObjectID GetRenderObjectID() const;
+			gr::RenderDataID GetRenderDataID() const;
 
 			gr::Transform::RenderData const& GetTransformData() const;
 
@@ -143,9 +143,9 @@ namespace gr
 			std::tuple<Ts const*...> m_ptrs;
 			std::tuple<Ts const*...> m_endPtrs;
 
-			gr::RenderData const* m_renderData;
-			std::unordered_map<gr::RenderObjectID, RenderObjectMetadata>::const_iterator m_renderObjectMetadataItr;
-			std::unordered_map<gr::RenderObjectID, RenderObjectMetadata>::const_iterator const m_renderObjectMetadataEndItr;
+			gr::RenderDataManager const* m_renderData;
+			std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator m_renderObjectMetadataItr;
+			std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator const m_renderObjectMetadataEndItr;
 		};
 
 
@@ -187,15 +187,15 @@ namespace gr
 
 		// Render objects are represented as a set of indexes into arrays of typed data (meshes, materials, etc).
 		// Each render object maps to 0 or 1 instance of each data type
-		std::unordered_map<gr::RenderObjectID, RenderObjectMetadata> m_objectIDToRenderObjectMetadata;
+		std::unordered_map<gr::RenderDataID, RenderObjectMetadata> m_objectIDToRenderObjectMetadata;
 
 		// Every render object has a transform, but many render objects share the same transform (E.g. mesh primitives).
-		// We expect Transforms to be both our largest and most frequently updated data mirrored in RenderData, so we
+		// We expect Transforms to be both our largest and most frequently updated data mirrored in RenderDataManager, so we
 		// treat them as a special case to allow sharing
 		std::unordered_map<gr::TransformID, TransformMetadata> m_transformIDToTransformMetadata;
 		std::vector<gr::Transform::RenderData> m_transformRenderData;
 
-		// RenderData accesses are all const, and we only update the RenderData via RenderCommands which are processed
+		// RenderDataManager accesses are all const, and we only update the RenderData via RenderCommands which are processed
 		// single-threaded at the beginning of a render thread frame. Thus, we don't have any syncronization primitives;
 		// we just use a thread protector to guard against any mistakes
 		util::ThreadProtector m_threadProtector;
@@ -203,7 +203,7 @@ namespace gr
 
 
 	template<typename T>
-	void RenderData::SetObjectData(gr::RenderObjectID objectID, T const* data)
+	void RenderDataManager::SetObjectData(gr::RenderDataID objectID, T const* data)
 	{
 		static const uint8_t s_dataTypeIndex = GetAllocateDataIndexFromType<T>();
 
@@ -240,7 +240,7 @@ namespace gr
 
 
 	template<typename T>
-	T const& RenderData::GetObjectData(uint32_t index) const
+	T const& RenderDataManager::GetObjectData(uint32_t index) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -257,7 +257,7 @@ namespace gr
 
 
 	template<typename T>
-	T const* RenderData::GetObjectDataIfExists(uint32_t index) const
+	T const* RenderDataManager::GetObjectDataIfExists(uint32_t index) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -274,7 +274,7 @@ namespace gr
 
 
 	template<typename T>
-	uint32_t RenderData::GetNumElementsOfType() const
+	uint32_t RenderDataManager::GetNumElementsOfType() const
 	{
 		const uint8_t dataTypeIndex = GetDataIndexFromType<T>();
 		if (dataTypeIndex == k_invalidDataTypeIdx)
@@ -289,7 +289,7 @@ namespace gr
 
 
 	template<typename T>
-	void RenderData::DestroyObjectData(gr::RenderObjectID objectID)
+	void RenderDataManager::DestroyObjectData(gr::RenderDataID objectID)
 	{
 		const uint8_t dataTypeIndex = GetDataIndexFromType<T>();
 
@@ -312,7 +312,7 @@ namespace gr
 			dataVector[indexToReplace] = dataVector[indexToMove];
 
 			// Find whatever table was referencing the index we moved, and update it. This is expensive, as we iterate
-			// over every RenderObjectID until we find a match
+			// over every RenderDataID until we find a match
 			bool foundMatch = false;
 			for (auto& objectDataIndices : m_objectIDToRenderObjectMetadata)
 			{
@@ -334,7 +334,7 @@ namespace gr
 
 
 	template<typename T>
-	uint8_t RenderData::GetAllocateDataIndexFromType()
+	uint8_t RenderDataManager::GetAllocateDataIndexFromType()
 	{
 		// Catch illegal accesses during RenderData modification
 		util::ScopedThreadProtector threadProjector(m_threadProtector);
@@ -360,7 +360,7 @@ namespace gr
 
 
 	template<typename T>
-	uint8_t RenderData::GetDataIndexFromType() const
+	uint8_t RenderDataManager::GetDataIndexFromType() const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -383,7 +383,7 @@ namespace gr
 
 
 	template <typename T>
-	T const* RenderData::GetEndPtr() const
+	T const* RenderDataManager::GetEndPtr() const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -400,7 +400,7 @@ namespace gr
 
 
 	template <typename T>
-	RenderData::LinearIterator<T> RenderData::Begin() const
+	RenderDataManager::LinearIterator<T> RenderDataManager::Begin() const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -419,7 +419,7 @@ namespace gr
 
 
 	template <typename T>
-	RenderData::LinearIterator<T> RenderData::End() const
+	RenderDataManager::LinearIterator<T> RenderDataManager::End() const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -429,7 +429,7 @@ namespace gr
 
 
 	template <typename... Ts>
-	RenderData::ObjectIterator<Ts...> RenderData::ObjectBegin() const
+	RenderDataManager::ObjectIterator<Ts...> RenderDataManager::ObjectBegin() const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -442,11 +442,11 @@ namespace gr
 
 
 	template <typename... Ts>
-	RenderData::ObjectIterator<Ts...> RenderData::ObjectEnd() const
+	RenderDataManager::ObjectIterator<Ts...> RenderDataManager::ObjectEnd() const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
-		const std::unordered_map<gr::RenderObjectID, RenderObjectMetadata>::const_iterator objectDataIndicesEndItr =
+		const std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator objectDataIndicesEndItr =
 			m_objectIDToRenderObjectMetadata.end();
 
 		return ObjectIterator<Ts...>(
@@ -461,7 +461,7 @@ namespace gr
 
 
 	template<typename T>
-	RenderData::LinearIterator<T>& RenderData::LinearIterator<T>::operator++() // Prefix increment
+	RenderDataManager::LinearIterator<T>& RenderDataManager::LinearIterator<T>::operator++() // Prefix increment
 	{
 		m_ptr++;
 		if ((m_ptr <= m_endPtr) == false)
@@ -473,7 +473,7 @@ namespace gr
 
 
 	template<typename T>
-	RenderData::LinearIterator<T> RenderData::LinearIterator<T>::operator++(int) // Postfix increment
+	RenderDataManager::LinearIterator<T> RenderDataManager::LinearIterator<T>::operator++(int) // Postfix increment
 	{
 		LinearIterator current = *this;
 		++(*this);
@@ -485,10 +485,10 @@ namespace gr
 
 
 	template<typename... Ts>
-	RenderData::ObjectIterator<Ts...>::ObjectIterator(
-		gr::RenderData const* renderData,
-		std::unordered_map<gr::RenderObjectID, RenderObjectMetadata>::const_iterator objectIDToRenderObjectMetadataBeginItr,
-		std::unordered_map<gr::RenderObjectID, RenderObjectMetadata>::const_iterator const objectIDToRenderObjectMetadataEndItr,
+	RenderDataManager::ObjectIterator<Ts...>::ObjectIterator(
+		gr::RenderDataManager const* renderData,
+		std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator objectIDToRenderObjectMetadataBeginItr,
+		std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator const objectIDToRenderObjectMetadataEndItr,
 		std::tuple<Ts const*...> endPtrs)
 		: m_endPtrs(endPtrs)
 		, m_renderData(renderData)
@@ -499,7 +499,7 @@ namespace gr
 		bool hasValidPtrs = false;
 		while (m_renderObjectMetadataItr != m_renderObjectMetadataEndItr)
 		{
-			// We have a valid set of gr::RenderObjectID data indices. Make a tuple from them
+			// We have a valid set of gr::RenderDataID data indices. Make a tuple from them
 			m_ptrs = std::make_tuple(GetPtrFromCurrentObjectDataIndicesItr<Ts>()...);
 
 			// If the current object doesn't have a data of the given type (i.e. any of the tuple elements rae null), we
@@ -527,13 +527,13 @@ namespace gr
 
 
 	template<typename... Ts>
-	RenderData::ObjectIterator<Ts...>& RenderData::ObjectIterator<Ts...>::operator++() // Prefix increment
+	RenderDataManager::ObjectIterator<Ts...>& RenderDataManager::ObjectIterator<Ts...>::operator++() // Prefix increment
 	{
 		// We increment our iterator's pointers in lock-step through successive ObjectIDs until either:
 		// a) We find an object that has valid pointers for each data type
 		// b) One of them is at the .end() -> Invalidate all pointers, we're done walking all valid objects
 
-		// Note: There is a potential inefficiency here. We check every single gr::RenderObjectID for the set of data
+		// Note: There is a potential inefficiency here. We check every single gr::RenderDataID for the set of data
 		// types, but in reality this might be unnecessary (e.g. if we have many objects but one data type with only a
 		// single element). I expect we'll have roughly balanced numbers of each data type and lots of cache hits so 
 		// hopefully this won't be an issue...
@@ -548,7 +548,7 @@ namespace gr
 				break;
 			}
 
-			// We have a valid set of gr::RenderObjectID data indices. Make a tuple from them
+			// We have a valid set of gr::RenderDataID data indices. Make a tuple from them
 			m_ptrs = std::make_tuple(GetPtrFromCurrentObjectDataIndicesItr<Ts>()...);
 
 			// If the current object doesn't have a data of the given type (i.e. any of the tuple elements rae null), we
@@ -572,7 +572,7 @@ namespace gr
 
 
 	template<typename... Ts>
-	RenderData::ObjectIterator<Ts...> RenderData::ObjectIterator<Ts...>::operator++(int) // Postfix increment
+	RenderDataManager::ObjectIterator<Ts...> RenderDataManager::ObjectIterator<Ts...>::operator++(int) // Postfix increment
 	{
 		ObjectIterator current = *this;
 		++(*this);
@@ -581,28 +581,28 @@ namespace gr
 
 
 	template<typename... Ts> template<typename T>
-	inline T const& RenderData::ObjectIterator<Ts...>::Get() const
+	inline T const& RenderDataManager::ObjectIterator<Ts...>::Get() const
 	{
 		return *std::get<T const*>(m_ptrs);
 	}
 
 	
 	template<typename... Ts>
-	gr::RenderObjectID RenderData::ObjectIterator<Ts...>::GetRenderObjectID() const
+	gr::RenderDataID RenderDataManager::ObjectIterator<Ts...>::GetRenderDataID() const
 	{
 		return m_renderObjectMetadataItr->first;
 	}
 
 
 	template <typename... Ts>
-	gr::Transform::RenderData const& RenderData::ObjectIterator<Ts...>::GetTransformData() const
+	gr::Transform::RenderData const& RenderDataManager::ObjectIterator<Ts...>::GetTransformData() const
 	{
 		return m_renderData->GetTransformData(m_renderObjectMetadataItr->second.m_transformID);
 	}
 
 
 	template <typename... Ts> template <typename T>
-	T const* RenderData::ObjectIterator<Ts...>::GetPtrFromCurrentObjectDataIndicesItr() const
+	T const* RenderDataManager::ObjectIterator<Ts...>::GetPtrFromCurrentObjectDataIndicesItr() const
 	{
 		const uint8_t dataTypeIndex = m_renderData->GetDataIndexFromType<T>();
 
@@ -613,7 +613,7 @@ namespace gr
 		// the table might not have allocated an entry for this type)
 		if (dataTypeIndex < objectTypeToDataIndexTable.size()) // Guarantees dataTypeIndex != k_invalidDataTypeIdx
 		{
-			// Get the index of the data within its typed array, for the current RenderObjectID iteration
+			// Get the index of the data within its typed array, for the current RenderDataID iteration
 			const uint32_t objectDataIndex = objectTypeToDataIndexTable[dataTypeIndex];
 
 			return m_renderData->GetObjectDataIfExists<T>(objectDataIndex);

@@ -1,16 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
 #include "NamedObject.h"
 #include "ParameterBlock.h"
 #include "Sampler.h"
 
-
-namespace fr
-{
-	class GameplayManager;
-	class Relationship;
-}
 
 namespace re
 {

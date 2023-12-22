@@ -33,7 +33,7 @@ namespace fr
 
 
 	entt::entity MeshPrimitive::AttachMeshPrimitiveConcept(
-		entt::entity meshConcept,
+		entt::entity owningEntity,
 		char const* name,
 		std::vector<uint32_t>* indices,
 		std::vector<float>& positions,
@@ -47,31 +47,6 @@ namespace fr
 		std::vector<float>* weights,
 		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
 	{
-		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
-
-		SEAssert("A mesh primitive's owning mesh concept requires a Relationship component",
-			gpm.HasComponent<fr::Relationship>(meshConcept));
-		SEAssert("A mesh primitive's owning mesh concept requires a TransformComponent",
-			fr::Relationship::HasComponentInParentHierarchy<fr::TransformComponent>(meshConcept));
-		SEAssert("A mesh primitive's owning mesh concept requires a Bounds component",
-			gpm.HasComponent<fr::Bounds>(meshConcept));
-		SEAssert("A mesh primitive's owning mesh concept requires a NameComponent",
-			gpm.HasComponent<fr::NameComponent>(meshConcept));
-
-		entt::entity meshPrimitiveEntity = gpm.CreateEntity(name);
-
-		// Each MeshPrimitive is an entity related to a Mesh concept via a Relationship:
-		fr::Relationship& meshRelationship = fr::Relationship::AttachRelationshipComponent(gpm, meshPrimitiveEntity);
-		meshRelationship.SetParent(gpm, meshConcept);
-
-		// Attach a new RenderDataComponent:
-		fr::TransformComponent const* transformComponent =
-			fr::Relationship::GetComponentInHierarchyAbove<fr::TransformComponent>(meshConcept);
-
-		gr::RenderDataComponent::AttachNewRenderDataComponent(
-			gpm, meshPrimitiveEntity, transformComponent->GetTransformID());
-
-
 		std::shared_ptr<gr::MeshPrimitive> meshPrimitiveSceneData = gr::MeshPrimitive::Create(
 			name,
 			indices,
@@ -84,30 +59,100 @@ namespace fr
 			weights,
 			meshParams);
 
-		// Attach a MeshPrimitive object:
+		return AttachMeshPrimitiveConcept(owningEntity, meshPrimitiveSceneData.get(), positionMinXYZ, positionMaxXYZ);
+	}
+
+
+	entt::entity MeshPrimitive::AttachMeshPrimitiveConcept(
+		entt::entity owningEntity, 
+		gr::MeshPrimitive const* meshPrimitive, 
+		glm::vec3 const& positionMinXYZ,
+		glm::vec3 const& positionMaxXYZ)
+	{
+		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+
+		SEAssert("A mesh primitive's owning entity requires a Relationship component",
+			gpm.HasComponent<fr::Relationship>(owningEntity));
+		SEAssert("A mesh primitive's owning entity requires a TransformComponent",
+			fr::Relationship::IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
+
+		entt::entity meshPrimitiveEntity = gpm.CreateEntity(meshPrimitive->GetName());
+
+		// Relationship:
+		fr::Relationship& meshPrimitiveRelationship =
+			fr::Relationship::AttachRelationshipComponent(gpm, meshPrimitiveEntity);
+		meshPrimitiveRelationship.SetParent(gpm, owningEntity);
+
+		// RenderDataComponent:
+		fr::TransformComponent const* transformComponent =
+			fr::Relationship::GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
+		gr::RenderDataComponent::AttachNewRenderDataComponent(
+			gpm, meshPrimitiveEntity, transformComponent->GetTransformID());
+
+		// MeshPrimitive:
 		gpm.EmplaceComponent<fr::MeshPrimitive::MeshPrimitiveComponent>(
 			meshPrimitiveEntity,
 			MeshPrimitiveComponent{
-				.m_meshPrimitive = meshPrimitiveSceneData.get()
+				.m_meshPrimitive = meshPrimitive
 			});
-
-		// Attach a primitive bounds
-		fr::Bounds::AttachBoundsComponent(
+		
+		// Bounds for the MeshPrimitive
+		fr::BoundsComponent::AttachBoundsComponent(
 			gpm,
 			meshPrimitiveEntity,
 			positionMinXYZ,
 			positionMaxXYZ,
-			reinterpret_cast<std::vector<glm::vec3> const&>(positions));
-		fr::Bounds const& meshPrimitiveBounds = gpm.GetComponent<fr::Bounds>(meshPrimitiveEntity);
+			reinterpret_cast<std::vector<glm::vec3> const&>(
+				meshPrimitive->GetVertexStream(gr::MeshPrimitive::Slot::Position)->GetDataAsVector()));
+		fr::BoundsComponent const& meshPrimitiveBounds = gpm.GetComponent<fr::BoundsComponent>(meshPrimitiveEntity);
 
-		// Update the Bounds of the MeshConcept:
-		fr::Bounds& meshConceptBounds = gpm.GetComponent<fr::Bounds>(meshConcept);
-		meshConceptBounds.ExpandBounds(meshPrimitiveBounds);
+		// If there is a BoundsComponent in the heirarchy above, assume it's encapsulating the MeshPrimitive:
+		entt::entity nextEntity = entt::null;
+		fr::BoundsComponent* encapsulatingBounds =
+			fr::Relationship::GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
+				meshPrimitiveRelationship.GetParent(), nextEntity);
+		if (encapsulatingBounds != nullptr)
+		{
+			encapsulatingBounds->ExpandBoundsHierarchy(meshPrimitiveBounds, nextEntity);
+		}
 
 		// Mark our new MeshPrimitive as dirty:
 		gpm.EmplaceComponent<DirtyMarker<fr::MeshPrimitive::MeshPrimitiveComponent>>(meshPrimitiveEntity);
 
 		// Note: A Material component must be attached to the returned entity
 		return meshPrimitiveEntity;
+	}
+
+
+	MeshPrimitive::MeshPrimitiveComponent& MeshPrimitive::AttachRawMeshPrimitiveConcept(
+		GameplayManager& gpm,
+		entt::entity owningEntity, 
+		gr::RenderDataComponent const& sharedRenderDataCmpt, 
+		gr::MeshPrimitive const* meshPrimitive)
+	{
+		SEAssert("A mesh primitive's owning entity requires a Relationship component",
+			gpm.HasComponent<fr::Relationship>(owningEntity));
+
+		entt::entity meshPrimitiveEntity = gpm.CreateEntity(meshPrimitive->GetName());
+
+		// Relationship:
+		fr::Relationship& meshPrimitiveRelationship =
+			fr::Relationship::AttachRelationshipComponent(gpm, meshPrimitiveEntity);
+		meshPrimitiveRelationship.SetParent(gpm, owningEntity);
+
+		// Shared RenderDataComponent:
+		gr::RenderDataComponent::AttachSharedRenderDataComponent(gpm, meshPrimitiveEntity, sharedRenderDataCmpt);
+
+		// MeshPrimitive:
+		MeshPrimitive::MeshPrimitiveComponent& meshPrimCmpt = *gpm.EmplaceComponent<fr::MeshPrimitive::MeshPrimitiveComponent>(
+			owningEntity,
+			MeshPrimitiveComponent{
+				.m_meshPrimitive = meshPrimitive
+			});
+
+		// Mark our new MeshPrimitive as dirty:
+		gpm.EmplaceComponent<DirtyMarker<fr::MeshPrimitive::MeshPrimitiveComponent>>(meshPrimitiveEntity);
+
+		return meshPrimCmpt;
 	}
 }

@@ -7,11 +7,11 @@ namespace fr
 {
 	Relationship& Relationship::AttachRelationshipComponent(GameplayManager& gpm, entt::entity owningEntity)
 	{
-		return *gpm.EmplaceComponent<fr::Relationship>(owningEntity, Relationship(owningEntity));
+		return *gpm.EmplaceComponent<fr::Relationship>(owningEntity, PrivateCTORTag{}, owningEntity);
 	}
 
 
-	Relationship::Relationship(entt::entity owningEntity)
+	Relationship::Relationship(PrivateCTORTag, entt::entity owningEntity)
 		: m_thisEntity(owningEntity)
 		, m_parent(entt::null)
 		, m_prev(entt::null)

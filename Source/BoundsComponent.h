@@ -6,9 +6,10 @@
 namespace fr
 {
 	class GameplayManager;
+	class Relationship;
 
 
-	class Bounds
+	class BoundsComponent
 	{
 	public:
 		static constexpr glm::vec3 k_invalidMinXYZ = glm::vec3(std::numeric_limits<float>::max());
@@ -19,11 +20,11 @@ namespace fr
 	public:
 		struct IsSceneBoundsMarker {}; //Unique: Only added to 1 bounds component for the entire scene
 
-		static gr::Bounds::RenderData CreateRenderData(fr::Bounds const&);
+		static gr::Bounds::RenderData CreateRenderData(fr::BoundsComponent const&);
 
 
 	public:
-		static void CreateSceneBounds(fr::GameplayManager&);
+		static void CreateSceneBoundsConcept(fr::GameplayManager&);
 		
 		static void AttachBoundsComponent(fr::GameplayManager&, entt::entity);
 
@@ -40,30 +41,20 @@ namespace fr
 			glm::vec3 const& maxXYZ, 
 			std::vector<glm::vec3> const& positions);
 
-	private: // Use the static creation factories
-		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
-	public:
-		Bounds(PrivateCTORTag);
-		explicit Bounds(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ);
-		explicit Bounds(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, std::vector<glm::vec3> const& positions);
-
-		Bounds(Bounds const& rhs) = default;
-		Bounds(Bounds&&) = default;
-		Bounds& operator=(Bounds const& rhs) = default;
-		~Bounds() = default;
-
-		bool operator==(fr::Bounds const&) const;
-		bool operator!=(fr::Bounds const&) const;
-
 
 	public:
-		static Bounds Uninitialized() { return Bounds(); }
+		static BoundsComponent Uninitialized() { return BoundsComponent(); }
 
 
 		// Returns a new AABB BoundsConcept, transformed from local space using transform
-		Bounds GetTransformedAABBBounds(glm::mat4 const& worldMatrix) const;
+		BoundsComponent GetTransformedAABBBounds(glm::mat4 const& worldMatrix) const;
 
-		void ExpandBounds(Bounds const& newContents); // Expands a bounds to contain another bounds
+		// Expands a bounds to contain another Bounds
+		void ExpandBounds(BoundsComponent const& newContents);
+
+		// Recursively expand the current Bounds, and any Bounds found in the Relationship hierarchy above
+		void ExpandBoundsHierarchy(BoundsComponent const& newContents, entt::entity boundsEntity); 
+
 
 		float xMin() const;		
 		float xMax() const;
@@ -72,8 +63,23 @@ namespace fr
 		float zMin() const;
 		float zMax() const;
 
-
 		void ShowImGuiWindow() const;
+
+
+	private: // Use the static creation factories
+		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
+	public:
+		BoundsComponent(PrivateCTORTag);
+		explicit BoundsComponent(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ);
+		explicit BoundsComponent(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, std::vector<glm::vec3> const& positions);
+
+		BoundsComponent(BoundsComponent const& rhs) = default;
+		BoundsComponent(BoundsComponent&&) = default;
+		BoundsComponent& operator=(BoundsComponent const& rhs) = default;
+		~BoundsComponent() = default;
+
+		bool operator==(fr::BoundsComponent const&) const;
+		bool operator!=(fr::BoundsComponent const&) const;
 
 
 	private:
@@ -87,41 +93,41 @@ namespace fr
 
 
 	private:
-		Bounds();
+		BoundsComponent();
 	};
 
 
-	inline float Bounds::xMin() const 
+	inline float BoundsComponent::xMin() const 
 	{ 
 		return m_minXYZ.x;
 	}
 
 
-	inline float Bounds::xMax() const 
+	inline float BoundsComponent::xMax() const 
 	{ 
 		return m_maxXYZ.x;
 	}
 
 
-	inline float Bounds::yMin() const 
+	inline float BoundsComponent::yMin() const 
 	{ 
 		return m_minXYZ.y;
 	}
 
 
-	inline float Bounds::yMax() const 
+	inline float BoundsComponent::yMax() const 
 	{ 
 		return m_maxXYZ.y;
 	}
 
 
-	inline float Bounds::zMin() const 
+	inline float BoundsComponent::zMin() const 
 	{ 
 		return m_minXYZ.z;
 	}
 
 
-	inline float Bounds::zMax() const 
+	inline float BoundsComponent::zMax() const 
 	{ 
 		return m_maxXYZ.z;
 	}

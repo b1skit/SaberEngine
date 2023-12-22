@@ -7,23 +7,6 @@
 #include "ShadowMap.h"
 
 
-using en::SceneManager;
-using en::Config;
-using re::RenderManager;
-using gr::Light;
-using gr::ShadowMap;
-using re::RenderStage;
-using re::Shader;
-using std::vector;
-using std::string;
-using std::shared_ptr;
-using std::make_shared;
-using glm::mat4;
-using glm::vec2;
-using glm::vec3;
-using glm::vec4;
-
-
 namespace
 {
 	struct CubemapShadowRenderParams
@@ -36,8 +19,10 @@ namespace
 	};
 
 
-	CubemapShadowRenderParams GetCubemapShadowRenderParamsData(gr::Camera* shadowCam)
+	CubemapShadowRenderParams GetCubemapShadowRenderParamsData(fr::Camera* shadowCam)
 	{
+		// ECS_CONVSERSION TODO: Construct this from camera render data
+
 		SEAssert("Shadow camera is not configured for cubemap rendering", 
 			shadowCam->GetCameraConfig().m_projectionType == gr::Camera::Config::ProjectionType::PerspectiveCubemap);
 
@@ -45,7 +30,7 @@ namespace
 
 		memcpy(&cubemapShadowParams.g_cubemapShadowCam_VP[0][0].x,
 			shadowCam->GetCubeViewProjectionMatrices().data(),
-			6 * sizeof(mat4));
+			6 * sizeof(glm::mat4));
 
 		cubemapShadowParams.g_cubemapShadowCamNearFar = glm::vec4(shadowCam->GetNearFar().xy, 0.f, 0.f);
 		cubemapShadowParams.g_cubemapLightWorldPos = glm::vec4(shadowCam->GetTransform()->GetGlobalPosition(), 0.f);
@@ -84,12 +69,12 @@ namespace gr
 		shadowPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
 
 		// Directional light shadow:		
-		shared_ptr<Light> directionalLight = SceneManager::GetSceneData()->GetKeyLight();
+		std::shared_ptr<fr::Light> directionalLight = en::SceneManager::GetSceneData()->GetKeyLight();
 		if (directionalLight)
 		{
 			m_hasDirectionalLight = true;
 
-			ShadowMap* const directionalShadow = directionalLight->GetShadowMap();
+			fr::ShadowMap* const directionalShadow = directionalLight->GetShadowMap();
 			if (directionalShadow)
 			{
 				m_directionalShadowStage->AddPermanentParameterBlock(
@@ -126,9 +111,12 @@ namespace gr
 		}
 		
 		// Point light shadows:
-		vector<shared_ptr<Light>> const& deferredLights = SceneManager::GetSceneData()->GetPointLights();
+		std::vector<std::shared_ptr<fr::Light>> const& deferredLights = en::SceneManager::GetSceneData()->GetPointLights();
+
 		m_pointLightShadowStageCams.reserve(deferredLights.size());
-		for (shared_ptr<Light> curLight : deferredLights)
+		m_cubemapShadowParamBlocks.reserve(deferredLights.size());
+
+		for (std::shared_ptr<fr::Light> const& curLight : deferredLights)
 		{
 			re::RenderStage::GraphicsStageParams gfxStageParams;
 			m_pointLightShadowStages.emplace_back(
@@ -138,11 +126,12 @@ namespace gr
 
 			shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
 			
-			ShadowMap* const lightShadow = curLight->GetShadowMap();
+			fr::ShadowMap* const lightShadow = curLight->GetShadowMap();
 			if (lightShadow)
 			{
-				Camera* const shadowCam = lightShadow->ShadowCamera();
+				fr::Camera* const shadowCam = lightShadow->ShadowCamera();
 				shadowStage->AddPermanentParameterBlock(shadowCam->GetCameraParams());
+				
 				m_pointLightShadowStageCams.emplace_back(shadowCam);
 
 				// Shader:
@@ -158,19 +147,30 @@ namespace gr
 
 				// Cubemap shadow param block:
 				CubemapShadowRenderParams cubemapShadowParams = GetCubemapShadowRenderParamsData(shadowCam);
-				shared_ptr<re::ParameterBlock> cubemapShadowPB = re::ParameterBlock::Create(
+				
+				// BUG HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+				// -> Calling GetCubemapShadowRenderParamsData during this function causes point light shadows to be
+				// slightly different?!?!?!?!
+				// -> They work if we call it to set a single frame PB in PreRender?!?!
+				// -> Probably something to do with the shadowCam->GetTransform()->GetGlobalPosition()
+				//		-> The only non-const call...
+				//		-> Probably will be fixed when we pass transform data to the render thread????????????????????
+
+				m_cubemapShadowParamBlocks.emplace_back(re::ParameterBlock::Create(
 					CubemapShadowRenderParams::s_shaderName,
 					cubemapShadowParams,
-					re::ParameterBlock::PBType::Mutable);
+					re::ParameterBlock::PBType::Mutable));
 
-				shadowStage->AddPermanentParameterBlock(cubemapShadowPB);
-				// TODO: The cubemap shadows param block should be created/maintained by the shadow map object, or the shadow camera
+				shadowStage->AddPermanentParameterBlock(m_cubemapShadowParamBlocks.back());
+
+
 
 				pipeline.AppendRenderStage(shadowStage);
 			}
 			else
 			{
 				m_pointLightShadowStageCams.emplace_back(nullptr); // Ensure we stay in sync: 1 entry per stage
+				m_cubemapShadowParamBlocks.emplace_back(nullptr);
 			}
 		}
 	}
@@ -180,20 +180,22 @@ namespace gr
 	{
 		CreateBatches();
 		
-		for (size_t i = 0; i < m_pointLightShadowStages.size(); i++)
+		for (size_t pointLightStageIdx = 0; pointLightStageIdx < m_pointLightShadowStages.size(); pointLightStageIdx++)
 		{
-			Camera* shadowCam = m_pointLightShadowStageCams[i];
+			fr::Camera* shadowCam = m_pointLightShadowStageCams[pointLightStageIdx];
 			if (shadowCam)
 			{
 				// Update the param block data:
 				CubemapShadowRenderParams const& cubemapShadowParams = GetCubemapShadowRenderParamsData(shadowCam);
 
-				shared_ptr<re::ParameterBlock> cubemapShadowPB = re::ParameterBlock::Create(
-					CubemapShadowRenderParams::s_shaderName,
-					cubemapShadowParams,
-					re::ParameterBlock::PBType::SingleFrame);
+				m_cubemapShadowParamBlocks[pointLightStageIdx]->Commit(cubemapShadowParams);
 
-				m_pointLightShadowStages[i]->AddSingleFrameParameterBlock(cubemapShadowPB);
+				//shared_ptr<re::ParameterBlock> cubemapShadowPB = re::ParameterBlock::Create(
+				//	CubemapShadowRenderParams::s_shaderName,
+				//	cubemapShadowParams,
+				//	re::ParameterBlock::PBType::SingleFrame);
+
+				//m_pointLightShadowStages[pointLightStageIdx]->AddSingleFrameParameterBlock(cubemapShadowPB);
 			}
 		}
 	}
@@ -201,14 +203,15 @@ namespace gr
 
 	void ShadowsGraphicsSystem::CreateBatches()
 	{
+		// TODO: Create batches specific to this GS: Cached, culled, and with only the appropriate PBs etc attached
 		if (m_hasDirectionalLight)
 		{
-			m_directionalShadowStage->AddBatches(RenderManager::Get()->GetSceneBatches());
+			m_directionalShadowStage->AddBatches(re::RenderManager::Get()->GetSceneBatches());
 		}
 
-		for (shared_ptr<RenderStage> pointShadowStage : m_pointLightShadowStages)
+		for (std::shared_ptr<re::RenderStage> pointShadowStage : m_pointLightShadowStages)
 		{
-			pointShadowStage->AddBatches(RenderManager::Get()->GetSceneBatches());
+			pointShadowStage->AddBatches(re::RenderManager::Get()->GetSceneBatches());
 		}
 	}
 

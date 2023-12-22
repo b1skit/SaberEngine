@@ -3,16 +3,10 @@
 #include "CastUtils.h"
 #include "Assert.h"
 #include "Material.h"
-#include "Mesh.h"
 #include "ParameterBlock.h"
 #include "Sampler.h"
 #include "Shader.h"
 #include "Texture.h"
-#include "Transform.h"
-
-using std::string;
-using std::shared_ptr;
-using std::make_shared;
 
 
 namespace

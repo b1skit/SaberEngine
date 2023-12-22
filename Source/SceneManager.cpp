@@ -3,7 +3,7 @@
 #include "CastUtils.h"
 #include "Config.h"
 #include "Light.h"
-#include "Mesh.h"
+#include "MeshConcept.h"
 #include "ParameterBlock.h"
 #include "PerformanceTimer.h"
 #include "SceneManager.h"
@@ -105,7 +105,7 @@ namespace en
 	}
 
 
-	std::shared_ptr<gr::Camera> SceneManager::GetMainCamera() const
+	std::shared_ptr<fr::Camera> SceneManager::GetMainCamera() const
 	{
 		// TODO: This camera is accessed multiple times before the first frame is rendered (e.g. PlayerObject, various
 		// graphics systems). Currently, this is fine as we currently join any loading threads before creating these

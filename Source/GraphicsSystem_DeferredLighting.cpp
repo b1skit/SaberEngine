@@ -12,9 +12,9 @@
 #include "RenderManager.h"
 #include "RenderStage.h"
 
-using gr::Light;
+using fr::Light;
 using re::Texture;
-using gr::ShadowMap;
+using fr::ShadowMap;
 using re::RenderManager;
 using re::ParameterBlock;
 using re::Batch;
@@ -157,25 +157,25 @@ namespace
 	};
 
 
-	LightParams GetLightParamData(shared_ptr<Light> const light, std::shared_ptr<re::TextureTargetSet const> targetSet)
+	LightParams GetLightParamData(shared_ptr<fr::Light> const light, std::shared_ptr<re::TextureTargetSet const> targetSet)
 	{
-		Light::LightTypeProperties const& lightProperties = light->AccessLightTypeProperties(light->Type());
+		Light::LightTypeProperties const& lightProperties = light->AccessLightTypeProperties(light->GetType());
 
 		LightParams lightParams;
 		memset(&lightParams, 0, sizeof(LightParams)); // Ensure unused elements are zeroed
 
 		lightParams.g_lightColorIntensity = light->GetColorIntensity();
 
-		// Type-specific params:
-		switch (light->Type())
+		// GetType-specific params:
+		switch (light->GetType())
 		{
-		case gr::Light::LightType::Directional:
+		case fr::Light::LightType::Directional_Deferred:
 		{
 			lightParams.g_lightWorldPosRadius = 
 				glm::vec4(light->GetTransform()->GetGlobalForward(), 0.f); // WorldPos == Light dir
 		}
 		break;
-		case gr::Light::LightType::Point:
+		case fr::Light::LightType::Point_Deferred:
 		{
 			lightParams.g_lightWorldPosRadius = glm::vec4(
 				light->GetTransform()->GetGlobalPosition(), 
@@ -186,26 +186,26 @@ namespace
 			SEAssertF("Light type does not use this param block");
 		}
 		
-		gr::ShadowMap* const shadowMap = light->GetShadowMap();
+		fr::ShadowMap* const shadowMap = light->GetShadowMap();
 		if (shadowMap)
 		{
 			lightParams.g_shadowMapTexelSize =
 				shadowMap->GetTextureTargetSet()->GetDepthStencilTarget()->GetTexture()->GetTextureDimenions();
 
-			gr::Camera* const shadowCam = shadowMap->ShadowCamera();
+			fr::Camera* const shadowCam = shadowMap->ShadowCamera();
 			lightParams.g_shadowCamNearFarBiasMinMax = glm::vec4(
 				shadowCam->GetNearFar(),
 				shadowMap->GetMinMaxShadowBias());
 
-			// Type-specific shadow params:
-			switch (light->Type())
+			// GetType-specific shadow params:
+			switch (light->GetType())
 			{
-			case gr::Light::LightType::Directional:
+			case fr::Light::LightType::Directional_Deferred:
 			{
 				lightParams.g_shadowCam_VP = shadowCam->GetViewProjectionMatrix();
 			}
 			break;
-			case gr::Light::LightType::Point:
+			case fr::Light::LightType::Point_Deferred:
 			{
 				lightParams.g_shadowCam_VP = glm::mat4(0.0f); // Unused by point light cube shadow maps
 			}
@@ -249,8 +249,8 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::CreateResourceGenerationStages(re::StagePipeline& pipeline)
 	{
-		gr::Light::LightTypeProperties& ambientProperties =
-			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(Light::AmbientIBL);
+		fr::Light::LightTypeProperties& ambientProperties =
+			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(fr::Light::AmbientIBL_Deferred);
 
 		shared_ptr<Texture> iblTexture = SceneManager::GetSceneData()->GetIBLTexture();
 
@@ -324,26 +324,20 @@ namespace gr
 		iblStageParams.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Disabled);
 		iblStageParams.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 
-		// Build a camera that can render our 6 cubemap faces:
-		gr::Camera::Config cubemapCamConfig{};
-		cubemapCamConfig.m_projectionType = gr::Camera::Config::ProjectionType::PerspectiveCubemap;
-		cubemapCamConfig.m_yFOV = glm::radians(90.f);
-		cubemapCamConfig.m_aspectRatio = 1.f;
-		cubemapCamConfig.m_near = 0.1f;
-		cubemapCamConfig.m_far = 10.f;
+		// Camera render params for 6 cubemap faces; Just need to update g_view for each face/stage
+		gr::Camera::CameraParams cubemapCamParams{};
 
-		std::shared_ptr<gr::Camera> cubemapRenderCam =
-			gr::Camera::Create("Deferred GS cubemap render cam", cubemapCamConfig, nullptr);
-
-		// Common cubemap camera rendering params; Just need to update g_view for each face/stage
-		Camera::CameraParams cubemapCamParams{};
-		cubemapCamParams.g_projection = cubemapRenderCam->GetProjectionMatrix();
+		cubemapCamParams.g_projection = fr::Camera::BuildPerspectiveProjectionMatrix(
+			glm::radians(90.f), // yFOV
+			1.f,				// Aspect ratio
+			0.1f,				// Near
+			10.f);				// Far
 
 		cubemapCamParams.g_viewProjection = glm::mat4(1.f); // Identity; unused
 		cubemapCamParams.g_invViewProjection = glm::mat4(1.f); // Identity; unused
 		cubemapCamParams.g_cameraWPos = vec4(0.f, 0.f, 0.f, 0.f); // Unused
 
-		std::vector<glm::mat4> const& cubemapViews = cubemapRenderCam->GetCubeViewMatrices();
+		std::vector<glm::mat4> const& cubemapViews = fr::Camera::BuildCubeViewMatrices(glm::vec3(0.f));
 
 		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
 		Batch cubeMeshBatch = Batch(re::Batch::Lifetime::SingleFrame, m_cubeMeshPrimitive.get(), nullptr);
@@ -517,8 +511,6 @@ namespace gr
 				}
 			}
 		}
-
-		cubemapRenderCam->Destroy();
 	}
 
 
@@ -564,14 +556,14 @@ namespace gr
 		};
 		ambientTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
 
-		Camera* deferredLightingCam = SceneManager::Get()->GetMainCamera().get();
+		fr::Camera* deferredLightingCam = SceneManager::Get()->GetMainCamera().get();
 
 		// Set the target sets, even if the stages aren't actually used (to ensure they're still valid)
 		m_ambientStage->SetTextureTargetSet(ambientTargetSet);
 
 		// We'll be creating the data we need to render the scene's ambient light:
-		gr::Light::LightTypeProperties& ambientProperties =
-			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(Light::AmbientIBL);
+		fr::Light::LightTypeProperties& ambientProperties =
+			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(fr::Light::AmbientIBL_Deferred);
 
 		shared_ptr<Texture> iblTexture = SceneManager::GetSceneData()->GetIBLTexture();
 		
@@ -615,7 +607,7 @@ namespace gr
 		
 
 		// Key light stage:
-		shared_ptr<Light> keyLight = SceneManager::GetSceneData()->GetKeyLight();
+		shared_ptr<fr::Light> keyLight = en::SceneManager::GetSceneData()->GetKeyLight();
 
 		re::PipelineState keylightStageParams(ambientStageParams);
 		if (keyLight)
@@ -653,7 +645,7 @@ namespace gr
 
 
 		// Point light stage:
-		vector<shared_ptr<Light>> const& pointLights = SceneManager::GetSceneData()->GetPointLights();
+		vector<shared_ptr<fr::Light>> const& pointLights = en::SceneManager::GetSceneData()->GetPointLights();
 		if (pointLights.size() > 0)
 		{
 			m_pointlightStage->AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
@@ -742,7 +734,7 @@ namespace gr
 				Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
 			// Keylight shadowmap:
-			ShadowMap* const keyLightShadowMap = keyLight->GetShadowMap();
+			fr::ShadowMap* const keyLightShadowMap = keyLight->GetShadowMap();
 			if (keyLightShadowMap)
 			{
 				// Set the key light shadow map:
@@ -796,8 +788,8 @@ namespace gr
 	{
 		CreateBatches();
 
-		gr::Light::LightTypeProperties& ambientProperties =
-			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(Light::AmbientIBL);
+		fr::Light::LightTypeProperties& ambientProperties =
+			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(fr::Light::AmbientIBL_Deferred);
 
 		const uint32_t totalPMREMMipLevels = ambientProperties.m_ambient.m_PMREMTex->GetNumMips();
 
@@ -813,8 +805,8 @@ namespace gr
 	void DeferredLightingGraphicsSystem::CreateBatches()
 	{
 		// Ambient stage batches:
-		gr::Light::LightTypeProperties const& ambientLightProperties =
-			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(gr::Light::LightType::AmbientIBL);
+		fr::Light::LightTypeProperties const& ambientLightProperties =
+			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(fr::Light::LightType::AmbientIBL_Deferred);
 
 		const Batch ambientFullscreenQuadBatch = 
 			Batch(re::Batch::Lifetime::SingleFrame, ambientLightProperties.m_ambient.m_screenAlignedQuad.get(), nullptr);
@@ -822,11 +814,11 @@ namespace gr
 		m_ambientStage->AddBatch(ambientFullscreenQuadBatch);
 
 		// Keylight stage batches:
-		shared_ptr<Light> const keyLight = SceneManager::GetSceneData()->GetKeyLight();
+		shared_ptr<fr::Light> const keyLight = en::SceneManager::GetSceneData()->GetKeyLight();
 		if (keyLight)
 		{
-			gr::Light::LightTypeProperties const& keyLightProperties =
-				keyLight->AccessLightTypeProperties(gr::Light::LightType::Directional);
+			fr::Light::LightTypeProperties const& keyLightProperties =
+				keyLight->AccessLightTypeProperties(fr::Light::LightType::Directional_Deferred);
 
 			Batch keylightFullscreenQuadBatch = Batch(
 				re::Batch::Lifetime::SingleFrame, 
@@ -845,11 +837,11 @@ namespace gr
 		}
 
 		// Pointlight stage batches:
-		vector<shared_ptr<Light>> const& pointLights = SceneManager::GetSceneData()->GetPointLights();
+		vector<shared_ptr<fr::Light>> const& pointLights = en::SceneManager::GetSceneData()->GetPointLights();
 		for (size_t i = 0; i < pointLights.size(); i++)
 		{
-			gr::Light::LightTypeProperties const& pointLightProperties = 
-				pointLights[i]->AccessLightTypeProperties(gr::Light::LightType::Point);
+			fr::Light::LightTypeProperties const& pointLightProperties = 
+				pointLights[i]->AccessLightTypeProperties(fr::Light::LightType::Point_Deferred);
 			
 			re::Batch pointlightBatch = re::Batch(
 				re::Batch::Lifetime::SingleFrame,
@@ -875,7 +867,7 @@ namespace gr
 			pointlightBatch.SetParameterBlock(pointlightPB);
 
 			// Batch textures/samplers:
-			ShadowMap* const shadowMap = pointLights[i]->GetShadowMap();
+			fr::ShadowMap* const shadowMap = pointLights[i]->GetShadowMap();
 			if (shadowMap != nullptr)
 			{
 				std::shared_ptr<re::Texture> const depthTexture = 

@@ -7,7 +7,7 @@
 #include "SceneManager.h"
 
 using fr::Transform;
-using gr::Camera;
+using fr::Camera;
 using en::Config;
 using en::InputManager;
 using glm::vec3;
@@ -62,7 +62,7 @@ namespace fr
 			break;
 			case en::EventManager::EventType::CameraSelectionChanged:
 			{
-				std::shared_ptr<gr::Camera> mainCam = en::SceneManager::Get()->GetMainCamera();
+				std::shared_ptr<fr::Camera> mainCam = en::SceneManager::Get()->GetMainCamera();
 				if (mainCam != m_playerCam)
 				{
 					m_playerCam = mainCam;

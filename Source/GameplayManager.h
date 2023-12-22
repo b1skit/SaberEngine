@@ -25,7 +25,7 @@ namespace fr
 
 		void EnqueueRenderUpdates();
 
-		fr::Bounds const& GetSceneBounds() const;
+		fr::BoundsComponent const& GetSceneBounds() const;
 
 
 		// EnTT wrappers:

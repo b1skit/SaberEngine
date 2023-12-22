@@ -1,13 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
-#include "Mesh.h"
+#include "MeshConcept.h"
 #include "NamedObject.h"
 
 
 namespace gr
 {
-	class Camera;
 	class Light;
 	class Material;
 	class MeshPrimitive;
@@ -21,6 +19,9 @@ namespace re
 
 namespace fr
 {
+	class Camera;
+	class Light;
+
 	class SceneData final : public virtual en::NamedObject
 	{
 	public:
@@ -40,15 +41,15 @@ namespace fr
 
 	public:
 		// Cameras:
-		std::vector<std::shared_ptr<gr::Camera>> const& GetCameras() const;
-		std::shared_ptr<gr::Camera> GetMainCamera(uint64_t uniqueID) const;
+		std::vector<std::shared_ptr<fr::Camera>> const& GetCameras() const;
+		std::shared_ptr<fr::Camera> GetMainCamera(uint64_t uniqueID) const;
 
 	public:		
 		// Lights:
-		void AddLight(std::shared_ptr<gr::Light> newLight);
-		std::shared_ptr<gr::Light> const GetAmbientLight() const;
-		std::shared_ptr<gr::Light> GetKeyLight() const;
-		std::vector<std::shared_ptr<gr::Light>> const& GetPointLights() const;
+		void AddLight(std::shared_ptr<fr::Light> newLight);
+		std::shared_ptr<fr::Light> const GetAmbientLight() const;
+		std::shared_ptr<fr::Light> GetKeyLight() const;
+		std::vector<std::shared_ptr<fr::Light>> const& GetPointLights() const;
 
 		std::shared_ptr<re::Texture> GetIBLTexture() const;
 
@@ -80,8 +81,8 @@ namespace fr
 
 		// Interfaces that self-register/self-remove themselves:
 	protected:
-		friend class gr::Camera; // Only Camera objects can register/unregister themselves
-		void AddCamera(std::shared_ptr<gr::Camera> newCamera); // Returns the camera index
+		friend class fr::Camera; // Only Camera objects can register/unregister themselves
+		void AddCamera(std::shared_ptr<fr::Camera> newCamera); // Returns the camera index
 		void RemoveCamera(uint64_t uniqueID);
 
 
@@ -101,16 +102,16 @@ namespace fr
 		std::unordered_map<size_t, std::shared_ptr<re::Shader>> m_shaders;
 		mutable std::shared_mutex m_shadersReadWriteMutex;
 
-		std::shared_ptr<gr::Light> m_ambientLight;
+		std::shared_ptr<fr::Light> m_ambientLight;
 		std::shared_mutex m_ambientLightReadWriteMutex;
 
-		std::shared_ptr<gr::Light> m_keyLight;
+		std::shared_ptr<fr::Light> m_keyLight;
 		std::shared_mutex m_keyLightReadWriteMutex;
 
-		std::vector<std::shared_ptr<gr::Light>> m_pointLights;
+		std::vector<std::shared_ptr<fr::Light>> m_pointLights;
 		std::shared_mutex m_pointLightsReadWriteMutex;
 
-		std::vector<std::shared_ptr<gr::Camera>> m_cameras;
+		std::vector<std::shared_ptr<fr::Camera>> m_cameras;
 		mutable std::shared_mutex m_camerasReadWriteMutex;
 
 		std::vector<std::function<void()>> m_postLoadCallbacks;

@@ -7,7 +7,7 @@
 
 namespace gr
 {
-	std::atomic<gr::RenderObjectID> RenderDataComponent::s_objectIDs = 0;
+	std::atomic<gr::RenderDataID> RenderDataComponent::s_objectIDs = 0;
 
 
 	RenderDataComponent& RenderDataComponent::AttachNewRenderDataComponent(
@@ -24,7 +24,7 @@ namespace gr
 		return *gpm.EmplaceComponent<gr::RenderDataComponent>(
 			entity, 
 			PrivateCTORTag{},
-			renderDataComponent.m_renderObjectID, 
+			renderDataComponent.m_renderDataID, 
 			renderDataComponent.m_transformID);
 	}
 
@@ -33,29 +33,29 @@ namespace gr
 
 
 	RenderDataComponent::RenderDataComponent(PrivateCTORTag, gr::TransformID transformID)
-		: m_renderObjectID(s_objectIDs.fetch_add(1)) // Allocate a new RenderObjectID
+		: m_renderDataID(s_objectIDs.fetch_add(1)) // Allocate a new RenderDataID
 		, m_transformID(transformID)
 	{
 	}
 
 
-	RenderDataComponent::RenderDataComponent(PrivateCTORTag, gr::RenderObjectID renderObjectID, gr::TransformID transformID)
-		: m_renderObjectID(renderObjectID)
+	RenderDataComponent::RenderDataComponent(PrivateCTORTag, gr::RenderDataID renderObjectID, gr::TransformID transformID)
+		: m_renderDataID(renderObjectID)
 		, m_transformID(transformID)
 	{
 	}
 
 
 	RenderDataComponent::RenderDataComponent(PrivateCTORTag, RenderDataComponent const& sharedRenderDataComponent)
-		: m_renderObjectID(sharedRenderDataComponent.m_renderObjectID) // Shared RenderObjectID
+		: m_renderDataID(sharedRenderDataComponent.m_renderDataID) // Shared RenderDataID
 		, m_transformID(sharedRenderDataComponent.m_transformID)
 	{
 	}
 
 
-	gr::RenderObjectID RenderDataComponent::GetRenderObjectID() const
+	gr::RenderDataID RenderDataComponent::GetRenderDataID() const
 	{
-		return m_renderObjectID;
+		return m_renderDataID;
 	}
 
 
@@ -70,7 +70,7 @@ namespace gr
 
 
 	RegisterRenderObjectCommand::RegisterRenderObjectCommand(RenderDataComponent const& newRenderDataComponent)
-		: m_objectID(newRenderDataComponent.GetRenderObjectID())
+		: m_objectID(newRenderDataComponent.GetRenderDataID())
 		, m_transformID(newRenderDataComponent.GetTransformID())
 	{
 	}
@@ -85,7 +85,7 @@ namespace gr
 
 		for (size_t renderSystemIdx = 0; renderSystemIdx < renderSystems.size(); renderSystemIdx++)
 		{
-			gr::RenderData& renderData =
+			gr::RenderDataManager& renderData =
 				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
 
 			renderData.RegisterObject(cmdPtr->m_objectID, cmdPtr->m_transformID);
@@ -103,7 +103,7 @@ namespace gr
 	// ---
 
 
-	DestroyRenderObjectCommand::DestroyRenderObjectCommand(gr::RenderObjectID objectID)
+	DestroyRenderObjectCommand::DestroyRenderObjectCommand(gr::RenderDataID objectID)
 		: m_objectID(objectID)
 	{
 	}
@@ -118,7 +118,7 @@ namespace gr
 
 		for (size_t renderSystemIdx = 0; renderSystemIdx < renderSystems.size(); renderSystemIdx++)
 		{
-			gr::RenderData& renderData =
+			gr::RenderDataManager& renderData =
 				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
 
 			renderData.DestroyObject(cmdPtr->m_objectID);

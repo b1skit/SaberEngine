@@ -5,9 +5,18 @@
 
 namespace fr
 {
+	class GameplayManager;
+
+
 	class NameComponent final : public virtual en::NamedObject
 	{
 	public:
-		NameComponent(std::string const& name) : en::NamedObject(name) {}
+		static NameComponent& AttachNameComponent(GameplayManager&, entt::entity, char const* name);
+
+
+	private: // Use the static creation factories
+		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
+	public:
+		NameComponent(PrivateCTORTag, std::string const& name) : en::NamedObject(name) {}
 	};
 }

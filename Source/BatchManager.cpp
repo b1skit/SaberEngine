@@ -4,12 +4,12 @@
 #include "Material.h"
 #include "MeshPrimitive.h"
 #include "ProfilingMarkers.h"
-#include "RenderData.h"
+#include "RenderDataManager.h"
 
 
 namespace re
 {
-	std::vector<re::Batch> BatchManager::BuildBatches(gr::RenderData const& renderData)
+	std::vector<re::Batch> BatchManager::BuildBatches(gr::RenderDataManager const& renderData)
 	{
 		SEBeginCPUEvent("BatchManager::BuildBatches");
 

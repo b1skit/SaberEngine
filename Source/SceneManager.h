@@ -34,7 +34,7 @@ namespace en
 		void FinalUpdate(); // Called once after final Update call in main game loop
 
 		void SetMainCameraIdx(size_t camIdx);
-		std::shared_ptr<gr::Camera> GetMainCamera() const;
+		std::shared_ptr<fr::Camera> GetMainCamera() const;
 
 
 	private:

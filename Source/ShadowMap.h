@@ -3,11 +3,12 @@
 
 #include "Camera.h"
 #include "NamedObject.h"
+#include "ShadowMapRenderData.h"
 #include "Texture.h"
 #include "TextureTarget.h"
 
 
-namespace gr
+namespace fr
 {
 	class Transform;
 	class Light;
@@ -16,13 +17,16 @@ namespace gr
 	class ShadowMap : public virtual en::NamedObject
 	{
 	public:
-		enum class ShadowType
+		enum class ShadowType : uint8_t
 		{
 			Orthographic, // Single 2D texture
 			CubeMap,
 
-			Invalid
+			ShadowType_Count
 		};
+		static_assert(static_cast<uint8_t>(fr::ShadowMap::ShadowType::ShadowType_Count) == 
+			static_cast<uint8_t>(gr::ShadowMap::ShadowType::ShadowType_Count));
+
 
 	public:
 		ShadowMap(
@@ -30,22 +34,24 @@ namespace gr
 			uint32_t xRes,
 			uint32_t yRes,
 			fr::Transform* shadowCamParent,
-			glm::vec3 shadowCamPosition,
-			gr::Light* owningLight);
+			fr::Light::LightType lightType,
+			fr::Transform* owningTransform);
 
 		~ShadowMap() = default;
 		ShadowMap(ShadowMap const&) = default;
 		ShadowMap(ShadowMap&&) = default;
 		ShadowMap& operator=(ShadowMap const&) = default;
 
-		gr::Camera* ShadowCamera();
-		gr::Camera const* ShadowCamera() const;
+		// DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		fr::Camera* ShadowCamera();
+		fr::Camera const* ShadowCamera() const;
 
 		void UpdateShadowCameraConfig(); // Should be called any time the owning light has moved
 
 		void SetMinMaxShadowBias(glm::vec2 const&);
 		glm::vec2 const& GetMinMaxShadowBias() const;
 
+		// DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		std::shared_ptr<re::TextureTargetSet> GetTextureTargetSet() const;
 
 		void ShowImGuiWindow();
@@ -53,9 +59,11 @@ namespace gr
 
 	private:
 		const ShadowType m_shadowType;
-		gr::Light* m_owningLight;
-		std::shared_ptr<gr::Camera> m_shadowCam;
-		std::shared_ptr<re::TextureTargetSet> m_shadowTargetSet;
+		const fr::Light::LightType m_lightType;
+
+		fr::Transform* m_owningTransform; // DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		std::shared_ptr<fr::Camera> m_shadowCam; // DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		std::shared_ptr<re::TextureTargetSet> m_shadowTargetSet; // DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 		glm::vec2 m_minMaxShadowBias; // Small offsets for shadow comparisons
 
@@ -65,13 +73,13 @@ namespace gr
 	};
 
 
-	inline gr::Camera* ShadowMap::ShadowCamera()
+	inline fr::Camera* ShadowMap::ShadowCamera()
 	{
 		return m_shadowCam.get();
 	}
 
 
-	inline gr::Camera const* ShadowMap::ShadowCamera() const
+	inline fr::Camera const* ShadowMap::ShadowCamera() const
 	{
 		return m_shadowCam.get();
 	}

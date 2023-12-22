@@ -55,7 +55,6 @@
 // Win32 API:
 #define WIN32_LEAN_AND_MEAN // Limit the number of header files included via Windows.h
 #include <Windows.h>
-#include <shellapi.h>
 #include <hidusage.h>
 #include <comdef.h> // HRESULTs to error messages
 #include <shlobj_core.h> // Windows shell

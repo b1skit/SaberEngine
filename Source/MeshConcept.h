@@ -10,7 +10,7 @@ namespace fr
 		struct MeshConceptMarker {};
 
 	public:
-		static entt::entity CreateMeshConcept(entt::entity sceneNode, char const* name);
+		static entt::entity AttachMeshConcept(entt::entity sceneNode, char const* name);
 
 
 		void ShowImGuiWindow();

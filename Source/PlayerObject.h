@@ -21,12 +21,12 @@ namespace fr
 		, public virtual en::EventListener
 	{
 	public:
-		/*static entt::entity CreatePlayerEntity(gr::Camera);*/
+		/*static entt::entity CreatePlayerEntity(fr::Camera);*/
 
 
 
 	public:
-		explicit PlayerObject(std::shared_ptr<gr::Camera> playerCam);
+		explicit PlayerObject(std::shared_ptr<fr::Camera> playerCam);
 		PlayerObject(PlayerObject&&) = default;
 		PlayerObject& operator=(PlayerObject&&) = default;
 		~PlayerObject() = default;
@@ -38,11 +38,11 @@ namespace fr
 		void HandleEvents() override;
 
 		// Getters/Setters:
-		inline std::shared_ptr<gr::Camera> GetCamera() { return m_playerCam; }
+		inline std::shared_ptr<fr::Camera> GetCamera() { return m_playerCam; }
 
 
 	private:
-		std::shared_ptr<gr::Camera> m_playerCam;
+		std::shared_ptr<fr::Camera> m_playerCam;
 
 		bool m_processInput;
 

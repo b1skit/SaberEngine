@@ -5,7 +5,6 @@
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_opengl3.h"
 
-#include "Camera.h"
 #include "Context_OpenGL.h"
 #include "GraphicsSystem.h"
 #include "GraphicsSystem_Bloom.h"
@@ -22,36 +21,13 @@
 #include "RenderStage.h"
 #include "RenderSystem.h"
 #include "Sampler_OpenGL.h"
-#include "SceneManager.h"
 #include "Shader.h"
 #include "Shader_OpenGL.h"
 #include "SwapChain_OpenGL.h"
 #include "TextureTarget.h"
-#include "Transform.h"
 #include "TextureTarget_OpenGL.h"
 #include "Texture_OpenGL.h"
 #include "VertexStream_OpenGL.h"
-
-using gr::BloomGraphicsSystem;
-using gr::Camera;
-using gr::DeferredLightingGraphicsSystem;
-using gr::GBufferGraphicsSystem;
-using gr::GraphicsSystem;
-using re::RenderStage;
-using gr::ShadowsGraphicsSystem;
-using gr::SkyboxGraphicsSystem;
-using re::StagePipeline;
-using gr::TonemappingGraphicsSystem;
-using fr::Transform;
-using std::shared_ptr;
-using std::make_unique;
-using std::make_shared;
-using std::string;
-using std::vector;
-using glm::vec3;
-using glm::vec4;
-using glm::mat3;
-using glm::mat4;
 
 
 namespace
@@ -236,7 +212,7 @@ namespace opengl
 		{
 			// Render each stage in the RenderSystem's RenderPipeline:
 			re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
-			for (StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
+			for (re::StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
 			{
 				// Profiling markers: Graphics system group name
 				SEBeginOpenGLGPUEvent(perfmarkers::Type::GraphicsQueue, stagePipeline.GetName().c_str());
@@ -334,8 +310,8 @@ namespace opengl
 						}
 
 						// Batch parameter blocks:
-						vector<shared_ptr<re::ParameterBlock>> const& batchPBs = batch.GetParameterBlocks();
-						for (shared_ptr<re::ParameterBlock> batchPB : batchPBs)
+						std::vector<std::shared_ptr<re::ParameterBlock>> const& batchPBs = batch.GetParameterBlocks();
+						for (std::shared_ptr<re::ParameterBlock> const& batchPB : batchPBs)
 						{
 							opengl::Shader::SetParameterBlock(*stageShader, *batchPB.get());
 						}

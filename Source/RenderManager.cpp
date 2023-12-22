@@ -527,7 +527,7 @@ namespace re
 		if (ImGui::CollapsingHeader("Cameras:", ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
-			std::vector<std::shared_ptr<gr::Camera>> const& cameras = en::SceneManager::GetSceneData()->GetCameras();
+			std::vector<std::shared_ptr<fr::Camera>> const& cameras = en::SceneManager::GetSceneData()->GetCameras();
 
 			// TODO: Currently, we set the camera parameters as a permanent PB via a shared_ptr from the main camera
 			// once in every GS. We need to be able to get/set the main camera's camera params PB every frame, in every
@@ -606,13 +606,13 @@ namespace re
 		if (ImGui::CollapsingHeader("Lights:", ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
-			std::shared_ptr<gr::Light> const ambientLight = en::SceneManager::GetSceneData()->GetAmbientLight();
+			std::shared_ptr<fr::Light> const ambientLight = en::SceneManager::GetSceneData()->GetAmbientLight();
 			if (ambientLight)
 			{
 				ambientLight->ShowImGuiWindow();
 			}
 
-			std::shared_ptr<gr::Light> const directionalLight = en::SceneManager::GetSceneData()->GetKeyLight();
+			std::shared_ptr<fr::Light> const directionalLight = en::SceneManager::GetSceneData()->GetKeyLight();
 			if (directionalLight)
 			{
 				directionalLight->ShowImGuiWindow();
@@ -621,7 +621,7 @@ namespace re
 			if (ImGui::CollapsingHeader("Point Lights:", ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
-				std::vector<std::shared_ptr<gr::Light>> const& pointLights = 
+				std::vector<std::shared_ptr<fr::Light>> const& pointLights = 
 					en::SceneManager::GetSceneData()->GetPointLights();
 				for (auto const& light : pointLights)
 				{

@@ -13,7 +13,7 @@ using en::Config;
 using gr::Material;
 using re::Texture;
 using re::Shader;
-using gr::Camera;
+using fr::Camera;
 using fr::Transform;
 using std::shared_ptr;
 using std::make_shared;
@@ -23,24 +23,24 @@ using glm::vec3;
 
 namespace
 {
-	gr::ShadowMap::ShadowType GetShadowTypeFromLightType(gr::Light::LightType lightType)
+	fr::ShadowMap::ShadowType GetShadowTypeFromLightType(fr::Light::LightType lightType)
 	{
 		switch (lightType)
 		{
-		case gr::Light::LightType::Directional: return gr::ShadowMap::ShadowType::Orthographic;
-		case gr::Light::LightType::Point: return gr::ShadowMap::ShadowType::CubeMap;
-		case gr::Light::LightType::AmbientIBL:
+		case fr::Light::LightType::Directional_Deferred: return fr::ShadowMap::ShadowType::Orthographic;
+		case fr::Light::LightType::Point_Deferred: return fr::ShadowMap::ShadowType::CubeMap;
+		case fr::Light::LightType::AmbientIBL_Deferred:
 		default:
 			SEAssertF("Invalid or unsupported light type for shadow map");
 		}
-		return gr::ShadowMap::ShadowType::Invalid;
+		return fr::ShadowMap::ShadowType::ShadowType_Count;
 	}
 
 
 	gr::Camera::Config ComputeDirectionalShadowCameraConfigFromSceneBounds(
-		fr::Transform* lightTransform, fr::Bounds& sceneWorldBounds)
+		fr::Transform* lightTransform, fr::BoundsComponent& sceneWorldBounds)
 	{
-		fr::Bounds const& transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
+		fr::BoundsComponent const& transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
 			glm::inverse(lightTransform->GetGlobalMatrix()));
 
 		gr::Camera::Config shadowCamConfig;
@@ -61,21 +61,22 @@ namespace
 	}
 }
 
-namespace gr
+namespace fr
 {
 	ShadowMap::ShadowMap(
 		string const& lightName,
 		uint32_t xRes,
 		uint32_t yRes,
 		fr::Transform* shadowCamParent,
-		vec3 shadowCamPosition, 
-		gr::Light* owningLight)
+		fr::Light::LightType lightType,
+		fr::Transform* owningTransform)
 		: NamedObject(lightName + "_Shadow")
-		, m_shadowType(GetShadowTypeFromLightType(owningLight->Type()))
-		, m_owningLight(owningLight)
+		, m_shadowType(GetShadowTypeFromLightType(lightType))
+		, m_lightType(lightType)
+		, m_owningTransform(owningTransform)
 		, m_shadowCam(nullptr)
 	{
-		SEAssert("Owning light cannot be null", owningLight);
+		SEAssert("Owning transform cannot be null", m_owningTransform);
 		
 		// Texture params are mostly the same between a single shadow map, or a cube map
 		Texture::TextureParams shadowParams;
@@ -96,7 +97,6 @@ namespace gr
 		re::TextureTarget::TargetParams depthTargetParams;
 		gr::Camera::Config shadowCamConfig{};
 
-		// Omni-directional (Cube map) shadow map setup:
 		switch (m_shadowType)
 		{
 		case ShadowType::CubeMap:
@@ -113,11 +113,11 @@ namespace gr
 
 			depthTargetParams.m_targetFace = re::TextureTarget::k_allFaces;
 
-			shadowCamConfig.m_yFOV = static_cast<float>(std::numbers::pi) / 2.0f;
+			shadowCamConfig.m_yFOV = static_cast<float>(std::numbers::pi) * 0.5f;
 			shadowCamConfig.m_near = 0.1f;
 			shadowCamConfig.m_far = 50.f;
 			shadowCamConfig.m_aspectRatio = 1.0f;
-			shadowCamConfig.m_projectionType = Camera::Config::ProjectionType::PerspectiveCubemap;
+			shadowCamConfig.m_projectionType = gr::Camera::Config::ProjectionType::PerspectiveCubemap;
 		}
 		break;
 		case ShadowType::Orthographic:
@@ -131,6 +131,9 @@ namespace gr
 			const string texName = lightName + "_Shadow";
 
 			depthTexture = re::Texture::Create(texName, shadowParams, false);
+
+			// NOTE: Orthographic shadows are computed from the scene bounds, which might not be known at the time of
+			// construction. The shadow camera is configured on the first call to UpdateShadowCameraConfig().
 		}
 		break;
 		default: SEAssertF("Invalid ShadowType");
@@ -144,9 +147,7 @@ namespace gr
 
 
 		// Shadow camera:
-		m_shadowCam = gr::Camera::Create(lightName + "_ShadowCam", shadowCamConfig, shadowCamParent);
-
-		m_shadowCam->GetTransform()->SetLocalPosition(shadowCamPosition);
+		m_shadowCam = fr::Camera::Create(lightName + "_ShadowCam", shadowCamConfig, shadowCamParent);
 
 		// We need the scene bounds to be finalized before we can compute camera frustums; Register for a callback to
 		// ensure the scene is loaded before we try
@@ -158,21 +159,20 @@ namespace gr
 	{
 		switch (m_shadowType)
 		{
-		case gr::ShadowMap::ShadowType::Orthographic:
+		case fr::ShadowMap::ShadowType::Orthographic:
 		{
 			fr::GameplayManager& gpm = *fr::GameplayManager::Get();
 			
 			// Update shadow cam bounds:
-			fr::Bounds sceneWorldBounds = gpm.GetSceneBounds();
+			fr::BoundsComponent sceneWorldBounds = gpm.GetSceneBounds();
 
-			Camera::Config const& shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
-				m_owningLight->GetTransform(), sceneWorldBounds);
+			gr::Camera::Config const& shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
+				m_owningTransform, sceneWorldBounds);
 
 			m_shadowCam->SetCameraConfig(shadowCamConfig);
-
 		}
 		break;
-		case gr::ShadowMap::ShadowType::CubeMap:
+		case fr::ShadowMap::ShadowType::CubeMap:
 		{
 			// TODO...
 		}
@@ -201,16 +201,16 @@ namespace gr
 		const std::string resetLabel = "Reset biases to defaults##" + GetName();
 		if (ImGui::Button(resetLabel.c_str()))
 		{
-			switch (m_owningLight->Type())
+			switch (m_lightType)
 			{
-			case gr::Light::LightType::Directional:
+			case fr::Light::LightType::Directional_Deferred:
 			{
 				m_minMaxShadowBias = glm::vec2(
 					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias),
 					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias));
 			}
 			break;
-			case gr::Light::LightType::Point:
+			case fr::Light::LightType::Point_Deferred:
 			{
 				m_minMaxShadowBias = glm::vec2(
 					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBias),

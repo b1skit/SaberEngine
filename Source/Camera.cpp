@@ -14,6 +14,7 @@ using std::string;
 using std::make_shared;
 using glm::mat4;
 
+
 namespace
 {
 	// Computes the camera's EV100 from exposure settings
@@ -38,9 +39,11 @@ namespace
 		// Note: Denominator approaches 0 as ev100 -> -inf (and is practically 0 as ev100 -> -10)
 		return 1.0f / std::max((std::pow(2.0f, ev100) * 1.2f), FLT_MIN);
 	}
+}
 
-
-	std::vector<glm::mat4> BuildCubeViewMatrices(glm::vec3 const& centerPos)
+namespace fr
+{
+	std::vector<glm::mat4> Camera::BuildCubeViewMatrices(glm::vec3 const& centerPos)
 	{
 		std::vector<glm::mat4> cubeView;
 		cubeView.reserve(6);
@@ -77,35 +80,37 @@ namespace
 
 		return cubeView;
 	}
-}
 
-namespace gr
-{
-	std::shared_ptr<gr::Camera> Camera::Create(
-		std::string const& name, Config const& camConfig, fr::Transform* parent)
+
+	glm::mat4 Camera::BuildPerspectiveProjectionMatrix(float yFOV, float aspectRatio, float nearDist, float farDist)
 	{
-		std::shared_ptr<gr::Camera> newCamera = nullptr;
+		return glm::perspective(yFOV, aspectRatio, nearDist, farDist);
+	}
+
+	
+	glm::mat4 Camera::BuildOrthographicProjectionMatrix(
+		float left, float right, float bottom, float top, float nearDist, float farDist)
+	{
+		return glm::ortho(left, right, bottom, top, nearDist, farDist);
+	}
+
+
+	std::shared_ptr<fr::Camera> Camera::Create(
+		std::string const& name, gr::Camera::Config const& camConfig, fr::Transform* parent)
+	{
+		std::shared_ptr<fr::Camera> newCamera = nullptr;
 		
-		newCamera.reset(new gr::Camera(name, camConfig, parent, false));
+		newCamera.reset(new fr::Camera(name, camConfig, parent, false));
 		en::SceneManager::GetSceneData()->AddCamera(newCamera);
 
 		return newCamera;
 	}
 
 
-	gr::Camera Camera::CreateComponent(std::string const& name, Config const& config, fr::Transform* transformComponent)
-	{
-		SEAssert("If the Camera is being created as a component, it must be initialized with a Transform component",
-			transformComponent != nullptr);
-
-		return gr::Camera(name, config, transformComponent, true);
-	}
-
-
 	// If the Camera is a component (isComponent == true), transform is a pointer to an existing Transform component.
 	// Otherwise, the Camera is intended for use by the backend render thread only, and must manage its own Transform
 	// allocation/deallocation
-	Camera::Camera(string const& name, Config const& camConfig, fr::Transform* transform, bool isComponent)
+	Camera::Camera(string const& name, gr::Camera::Config const& camConfig, fr::Transform* transform, bool isComponent)
 		: NamedObject(name)
 		, m_transform(nullptr)
 		, m_isComponent(isComponent)
@@ -129,14 +134,14 @@ namespace gr
 		m_cameraPBData = {}; // Initialize with a default struct: Updated later
 
 		m_cameraParamBlock = re::ParameterBlock::Create(
-			CameraParams::s_shaderName,
+			gr::Camera::CameraParams::s_shaderName,
 			m_cameraPBData, 
 			re::ParameterBlock::PBType::Mutable);
 
 		switch (m_cameraConfig.m_projectionType)
 		{
-		case Config::ProjectionType::Perspective:
-		case Config::ProjectionType::Orthographic:
+		case gr::Camera::Config::ProjectionType::Perspective:
+		case gr::Camera::Config::ProjectionType::Orthographic:
 		{
 			m_view.resize(1, glm::mat4(1.f));
 			m_invView.resize(1, glm::mat4(1.f));
@@ -148,7 +153,7 @@ namespace gr
 			m_invViewProjection.resize(1, glm::mat4(1.f));
 		}
 		break;
-		case Config::ProjectionType::PerspectiveCubemap:
+		case gr::Camera::Config::ProjectionType::PerspectiveCubemap:
 		{
 			m_view.resize(6, glm::mat4(1.f));
 			m_invView.resize(6, glm::mat4(1.f));
@@ -188,7 +193,7 @@ namespace gr
 
 		switch (m_cameraConfig.m_projectionType)
 		{
-		case Config::ProjectionType::Perspective:
+		case gr::Camera::Config::ProjectionType::Perspective:
 		{
 			m_cameraConfig.m_orthoLeftRightBotTop = glm::vec4(0.f, 0.f, 0.f, 0.f);
 
@@ -198,7 +203,7 @@ namespace gr
 			m_view[0] = glm::inverse(globalMatrix);
 			m_invView[0] = globalMatrix;
 
-			m_projection = glm::perspective(
+			m_projection = BuildPerspectiveProjectionMatrix(
 				m_cameraConfig.m_yFOV,
 				m_cameraConfig.m_aspectRatio,
 				m_cameraConfig.m_near,
@@ -210,7 +215,7 @@ namespace gr
 			m_invViewProjection[0] = glm::inverse(m_viewProjection[0]);
 		}
 		break;
-		case Config::ProjectionType::Orthographic:
+		case gr::Camera::Config::ProjectionType::Orthographic:
 		{
 			m_cameraConfig.m_yFOV = 0.0f;
 
@@ -220,7 +225,7 @@ namespace gr
 			m_view[0] = glm::inverse(globalMatrix);
 			m_invView[0] = globalMatrix;
 
-			m_projection = glm::ortho(
+			m_projection = BuildOrthographicProjectionMatrix(
 				m_cameraConfig.m_orthoLeftRightBotTop.x,
 				m_cameraConfig.m_orthoLeftRightBotTop.y,
 				m_cameraConfig.m_orthoLeftRightBotTop.z,
@@ -234,7 +239,7 @@ namespace gr
 			m_invViewProjection[0] = glm::inverse(m_viewProjection[0]);
 		}
 		break;
-		case Config::ProjectionType::PerspectiveCubemap:
+		case gr::Camera::Config::ProjectionType::PerspectiveCubemap:
 		{
 			m_cameraConfig.m_orthoLeftRightBotTop = glm::vec4(0.f, 0.f, 0.f, 0.f);
 
@@ -343,7 +348,7 @@ namespace gr
 	}
 
 
-	void Camera::SetCameraConfig(Config const& newConfig)
+	void Camera::SetCameraConfig(gr::Camera::Config const& newConfig)
 	{
 		if (newConfig != m_cameraConfig)
 		{

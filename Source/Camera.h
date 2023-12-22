@@ -1,105 +1,33 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
-#include "ParameterBlock.h"
+#include "CameraRenderData.h"
 #include "NamedObject.h"
+#include "ParameterBlock.h"
 #include "RenderCommand.h"
 #include "Transform.h"
 #include "TextureTarget.h"
 #include "Updateable.h"
 
 
-namespace gr
+namespace fr
 {
 	class Camera final : public virtual en::NamedObject, public virtual en::Updateable
 	{
 	public:
-		struct Config
-		{
-			enum class ProjectionType
-			{
-				Perspective,
-				Orthographic,
-				PerspectiveCubemap // For rendering cubemaps: Has 6 view matrices
-			} m_projectionType = ProjectionType::Perspective;
-			
-			float m_yFOV = static_cast<float>(std::numbers::pi) / 2.0f; // In radians; 0 if orthographic
+		static std::vector<glm::mat4> BuildCubeViewMatrices(glm::vec3 const& centerPos);
 
-			float m_near = 1.0f;
-			float m_far = 100.0f;
-			float m_aspectRatio = 1.0f; // == width / height
+		static glm::mat4 BuildPerspectiveProjectionMatrix(float yFOV, float aspectRatio, float nearDist, float farDist);
 
-			// Orthographic properties:
-			glm::vec4 m_orthoLeftRightBotTop = glm::vec4(-5.f, 5.f, -5.f, 5.f);
-
-			// Sensor properties:
-			// f/stops: == focal length / diameter of aperture (entrance pupil). Commonly 1.4, 2, 2.8, 4, 5.6, 8, 11, 16
-			float m_aperture = 0.2f; // f/stops
-			float m_shutterSpeed = 0.01f; // Seconds
-			float m_sensitivity = 250.f; // ISO
-			float m_exposureCompensation = 0.f; // f/stops
-			// TODO: Add a lens size, and compute the aperture from that
-
-			float m_bloomStrength = 0.2f;
-			glm::vec2 m_bloomRadius = glm::vec2(1.f, 1.f);
-			float m_bloomExposureCompensation = 0.f; // Overdrive bloom contribution
-			bool m_deflickerEnabled = true;
-
-			bool operator==(Config const& rhs) const
-			{
-				return m_projectionType == rhs.m_projectionType &&
-					m_yFOV == rhs.m_yFOV &&
-					m_near == rhs.m_near &&
-					m_far == rhs.m_far &&
-					m_aspectRatio == rhs.m_aspectRatio &&
-					m_orthoLeftRightBotTop == rhs.m_orthoLeftRightBotTop &&
-					m_aperture == rhs.m_aperture &&
-					m_shutterSpeed == rhs.m_shutterSpeed &&
-					m_sensitivity == rhs.m_sensitivity &&
-					m_exposureCompensation == rhs.m_exposureCompensation &&
-					m_bloomStrength == rhs.m_bloomStrength &&
-					m_bloomRadius == rhs.m_bloomRadius &&
-					m_bloomExposureCompensation == rhs.m_bloomExposureCompensation &&
-					m_deflickerEnabled == rhs.m_deflickerEnabled;
-			}
-			
-			bool operator!=(Config const& rhs) const
-			{
-				return !operator==(rhs);
-			}
-		};
-		static_assert(sizeof(Config) == 72); // Don't forget to update operator== if the properties change
-
-	public: // Shader parameter blocks:
-		struct CameraParams 
-		{
-			glm::mat4 g_view;
-			glm::mat4 g_invView;
-			glm::mat4 g_projection;
-			glm::mat4 g_invProjection;
-
-			glm::mat4 g_viewProjection;
-			glm::mat4 g_invViewProjection;
-
-			glm::vec4 g_projectionParams; // .x = near, .y = far, .z = 1/near, .w = 1/far
-
-			glm::vec4 g_exposureProperties; // .x = exposure, .y = ev100, .zw = unused 
-			glm::vec4 g_bloomSettings; // .x = strength, .yz = XY radius, .w = bloom exposure compensation
-
-			glm::vec4 g_cameraWPos; // .xyz = world pos, .w = unused
-
-			static constexpr char const* const s_shaderName = "CameraParams"; // Not counted towards size of struct
-		};
+		static glm::mat4 BuildOrthographicProjectionMatrix(
+			float left, float right, float bottom, float top, float nearDist, float farDist);
 
 
 	public:
 		// Create a render camera, for backend graphics use. Not compatible with the ECS
-		[[nodiscard]] static std::shared_ptr<gr::Camera> Create(
-			std::string const& name, Config const&, fr::Transform* parent);
+		[[nodiscard]] static std::shared_ptr<fr::Camera> Create(
+			std::string const& name, gr::Camera::Config const&, fr::Transform* parent); // DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-		// Create a Camera component for use with the ECS
-		[[nodiscard]] static gr::Camera CreateComponent(
-			std::string const& name, Config const&, fr::Transform* transformComponent);
+		// ECS
 		
 
 		Camera(Camera&&) = default;
@@ -141,22 +69,23 @@ namespace gr
 		float GetSensitivity() const;
 		void SetSensitivity(float sensitivity);
 
-		Config const& GetCameraConfig() const;
-		void SetCameraConfig(Config const& newConfig);
+		gr::Camera::Config const& GetCameraConfig() const;
+		void SetCameraConfig(gr::Camera::Config const& newConfig);
 
-		fr::Transform* GetTransform();
-		fr::Transform const* GetTransform() const;
+		// Keep the pointer for convenience, but don't allow access to it!!!!!!!!!!
+		fr::Transform* GetTransform(); // DEPRECATED
+		fr::Transform const* GetTransform() const; // DEPRECATED
 
-		std::shared_ptr<re::ParameterBlock> GetCameraParams() const;
+		std::shared_ptr<re::ParameterBlock> GetCameraParams() const; // DEPRECATED
 
-		void SetAsMainCamera() const;
+		void SetAsMainCamera() const; // DEPRECATED ???????????
 
 		void ShowImGuiWindow();
 
 		
 	private: // Use one of the Create methods instead
 		// Camera component constructor: A Transform is allocated via the ECS and provided here
-		Camera(std::string const& name, Config const& camConfig, fr::Transform* transform, bool isComponent);
+		Camera(std::string const& name, gr::Camera::Config const& camConfig, fr::Transform* transform, bool isComponent);
 
 	private:
 		// Helper function: Configures the camera based on the cameraConfig. MUST be called at least once during setup
@@ -166,10 +95,10 @@ namespace gr
 
 	private:
 		fr::Transform* m_transform;
-		const bool m_isComponent; // Does this Camera manage its own Transform, or is it an ECS component?
+		const bool m_isComponent; // DEPRECATED
 
 		// Render data
-		Config m_cameraConfig;
+		gr::Camera::Config m_cameraConfig;
 
 		std::vector<glm::mat4> m_view;
 		std::vector<glm::mat4> m_invView;
@@ -184,7 +113,7 @@ namespace gr
 
 
 		bool m_parameterBlockDirty; // DEPRECATED
-		CameraParams m_cameraPBData; // DEPRECATED
+		gr::Camera::CameraParams m_cameraPBData; // DEPRECATED
 		std::shared_ptr<re::ParameterBlock> m_cameraParamBlock; // DEPRECATED
 		
 
@@ -314,7 +243,7 @@ namespace gr
 	}
 
 
-	inline Camera::Config const& Camera::GetCameraConfig() const
+	inline gr::Camera::Config const& Camera::GetCameraConfig() const
 	{
 		return m_cameraConfig;
 	}

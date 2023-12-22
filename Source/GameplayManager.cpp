@@ -31,7 +31,7 @@ namespace fr
 		m_updateables.reserve(k_updateablesReserveAmount);
 
 		// Create a scene bounds entity:
-		/*fr::Bounds::CreateSceneBounds(*this);*/
+		/*fr::Bounds::CreateSceneBoundsConcept(*this);*/
 		UpdateSceneBounds();
 
 		// ECS_CONVERSION: Currently, the GameplayManager::Startup is called after the SceneManager and RenderManager,
@@ -39,7 +39,7 @@ namespace fr
 		// -> This is a problem, as we need the scene bounds to be available to initialize shadow maps immediately after
 		// the scene has loaded. For now, we hack around this
 		
-		std::shared_ptr<gr::Camera> mainCam = en::SceneManager::Get()->GetMainCamera();
+		std::shared_ptr<fr::Camera> mainCam = en::SceneManager::Get()->GetMainCamera();
 
 		// Add a player object to the scene:
 		m_playerObject = std::make_shared<fr::PlayerObject>(mainCam);
@@ -65,17 +65,17 @@ namespace fr
 				auto& renderDataComponent = renderDataEntitiesView.get<gr::RenderDataComponent>(entity);
 
 				// Bounds:
-				if (m_registry.all_of<fr::Bounds>(entity))
+				if (m_registry.all_of<fr::BoundsComponent>(entity))
 				{
 					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Bounds::RenderData>>(
-						renderDataComponent.GetRenderObjectID());
+						renderDataComponent.GetRenderDataID());
 				}
 
 				// MeshPrimitives:
 				if (m_registry.all_of<fr::MeshPrimitive::MeshPrimitiveComponent>(entity))
 				{
 					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::RenderData>>(
-						renderDataComponent.GetRenderObjectID());
+						renderDataComponent.GetRenderDataID());
 				}
 
 
@@ -83,7 +83,7 @@ namespace fr
 				if (m_registry.all_of<fr::MeshPrimitive::MeshPrimitiveComponent>(entity))
 				{
 					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Material::RenderData>>(
-						renderDataComponent.GetRenderObjectID());
+						renderDataComponent.GetRenderDataID());
 				}
 			}
 
@@ -93,7 +93,7 @@ namespace fr
 				auto& renderDataComponent = renderDataEntitiesView.get<gr::RenderDataComponent>(entity);
 
 				renderManager->EnqueueRenderCommand<gr::DestroyRenderObjectCommand>(
-					renderDataComponent.GetRenderObjectID());
+					renderDataComponent.GetRenderDataID());
 			}
 		}
 
@@ -193,19 +193,19 @@ namespace fr
 
 			// Bounds:
 			// Bounds are stored in local space & transformed as needed. We just need to copy them to the render thread
-			auto boundsComponentsView = m_registry.view<fr::Bounds, DirtyMarker<fr::Bounds>, gr::RenderDataComponent>();
+			auto boundsComponentsView = m_registry.view<fr::BoundsComponent, DirtyMarker<fr::BoundsComponent>, gr::RenderDataComponent>();
 			for (auto entity : boundsComponentsView)
 			{
 				gr::RenderDataComponent const& renderDataComponent = 
 					boundsComponentsView.get<gr::RenderDataComponent>(entity);
 
-				fr::Bounds const& boundsComponent = boundsComponentsView.get<fr::Bounds>(entity);
+				fr::BoundsComponent const& boundsComponent = boundsComponentsView.get<fr::BoundsComponent>(entity);
 
 				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::Bounds::RenderData>>(
-					renderDataComponent.GetRenderObjectID(),
-					fr::Bounds::CreateRenderData(boundsComponent));
+					renderDataComponent.GetRenderDataID(),
+					fr::BoundsComponent::CreateRenderData(boundsComponent));
 
-				m_registry.erase<DirtyMarker<fr::Bounds>>(entity);
+				m_registry.erase<DirtyMarker<fr::BoundsComponent>>(entity);
 			}
 
 			// MeshPrimitives:
@@ -223,7 +223,7 @@ namespace fr
 					meshPrimitiveComponentsView.get<fr::MeshPrimitive::MeshPrimitiveComponent>(entity);
 
 				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::MeshPrimitive::RenderData>>(
-					renderDataComponent.GetRenderObjectID(), fr::MeshPrimitive::CreateRenderData(meshPrimComponent));
+					renderDataComponent.GetRenderDataID(), fr::MeshPrimitive::CreateRenderData(meshPrimComponent));
 
 				m_registry.erase<DirtyMarker<fr::MeshPrimitive::MeshPrimitiveComponent>>(entity);
 			}
@@ -244,7 +244,7 @@ namespace fr
 					materialComponentsView.get<fr::Material::MaterialComponent>(entity);
 
 				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::Material::RenderData>>(
-					renderDataComponent.GetRenderObjectID(), fr::Material::CreateRenderData(materialComponent));
+					renderDataComponent.GetRenderDataID(), fr::Material::CreateRenderData(materialComponent));
 
 				m_registry.erase<DirtyMarker<fr::Material::MaterialComponent>>(entity);
 			}
@@ -260,16 +260,16 @@ namespace fr
 	}
 
 
-	fr::Bounds const& GameplayManager::GetSceneBounds() const
+	fr::BoundsComponent const& GameplayManager::GetSceneBounds() const
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
 
-			auto sceneBoundsEntityView = m_registry.view<fr::Bounds, fr::Bounds::IsSceneBoundsMarker>();
+			auto sceneBoundsEntityView = m_registry.view<fr::BoundsComponent, fr::BoundsComponent::IsSceneBoundsMarker>();
 			SEAssert("A unique scene bounds entity must exist",
 				sceneBoundsEntityView.front() == sceneBoundsEntityView.back());
 
-			return sceneBoundsEntityView.get<fr::Bounds>(sceneBoundsEntityView.front());
+			return sceneBoundsEntityView.get<fr::BoundsComponent>(sceneBoundsEntityView.front());
 		}
 	}
 
@@ -288,7 +288,7 @@ namespace fr
 			newEntity = m_registry.create();
 		}
 
-		EmplaceComponent<NameComponent>(newEntity, name);
+		fr::NameComponent::AttachNameComponent(*this, newEntity, name);
 		EmplaceComponent<NewEntityMarker>(newEntity);
 
 		return newEntity;
@@ -302,7 +302,7 @@ namespace fr
 		static bool s_hasCreatedSceneBounds_HACK = false;
 		if (!s_hasCreatedSceneBounds_HACK)
 		{
-			fr::Bounds::CreateSceneBounds(*this);
+			fr::BoundsComponent::CreateSceneBoundsConcept(*this);
 			s_hasCreatedSceneBounds_HACK = true;
 		}
 
@@ -314,43 +314,55 @@ namespace fr
 			// We're only viewing the registry and modifying components in place; Only need a read lock
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
 
-			auto sceneBoundsEntityView = m_registry.view<fr::Bounds, fr::Bounds::IsSceneBoundsMarker>();
+			auto sceneBoundsEntityView = m_registry.view<fr::BoundsComponent, fr::BoundsComponent::IsSceneBoundsMarker>();
 			SEAssert("A unique scene bounds entity must exist",
 				sceneBoundsEntityView.front() == sceneBoundsEntityView.back());
 			
 			sceneBoundsEntity = sceneBoundsEntityView.front();
 
 			// Copy the current bounds so we can detect if it changes
-			const fr::Bounds prevBounds = sceneBoundsEntityView.get<fr::Bounds>(sceneBoundsEntity);
+			const fr::BoundsComponent prevBounds = sceneBoundsEntityView.get<fr::BoundsComponent>(sceneBoundsEntity);
 
 			// Modify our bounds component in-place:
-			m_registry.patch<fr::Bounds>(sceneBoundsEntity, [&](auto& sceneBoundsComponent)
+			m_registry.patch<fr::BoundsComponent>(sceneBoundsEntity, [&](auto& sceneBoundsComponent)
 				{
-					// Reset our bounds: It'll grow to encompass all bounds
-					sceneBoundsComponent = fr::Bounds::Uninitialized();
 
-					auto meshConceptsView = m_registry.view<fr::Mesh::MeshConceptMarker>();					
-					for (auto const& meshEntity : meshConceptsView)
+
+					auto meshConceptEntitiesView = m_registry.view<fr::Mesh::MeshConceptMarker>();
+
+					// 
+					auto meshConceptsViewItr = meshConceptEntitiesView.begin();
+					if (meshConceptsViewItr != meshConceptEntitiesView.end())
 					{
-						fr::Bounds const& boundsComponent = m_registry.get<fr::Bounds>(meshEntity);
+						// Reset our bounds as the 1st Bounds we see: It'll grow to encompass all Bounds
+						sceneBoundsComponent = m_registry.get<fr::BoundsComponent>(*meshConceptsViewItr);
+						++meshConceptsViewItr;
 
-						fr::Relationship const& relationshipComponent = m_registry.get<fr::Relationship>(meshEntity);
+						while (meshConceptsViewItr != meshConceptEntitiesView.end())
+						{
+							const entt::entity meshEntity = *meshConceptsViewItr;
+							fr::BoundsComponent const& boundsComponent = m_registry.get<fr::BoundsComponent>(meshEntity);
 
-						fr::Transform& sceneNodeTransform = 
-							fr::SceneNode::GetSceneNodeTransform(relationshipComponent.GetParent());
+							fr::Relationship const& relationshipComponent = m_registry.get<fr::Relationship>(meshEntity);
 
-						sceneBoundsComponent.ExpandBounds(
-							boundsComponent.GetTransformedAABBBounds(sceneNodeTransform.GetGlobalMatrix()));
+							fr::Transform& meshTransform = fr::Relationship::GetFirstInHierarchyAbove<fr::TransformComponent>(
+								relationshipComponent.GetParent())->GetTransform(); // MeshConcept parents hold the TransformComponent
+
+							sceneBoundsComponent.ExpandBounds(
+								boundsComponent.GetTransformedAABBBounds(meshTransform.GetGlobalMatrix()));
+
+							++meshConceptsViewItr;
+						}
 					}
 				});
 
-			fr::Bounds const& newSceneBounds = sceneBoundsEntityView.get<fr::Bounds>(sceneBoundsEntity);
+			fr::BoundsComponent const& newSceneBounds = sceneBoundsEntityView.get<fr::BoundsComponent>(sceneBoundsEntity);
 			sceneBoundsChanged = (newSceneBounds != prevBounds);
 		}
 
 		if (sceneBoundsChanged)
 		{
-			EmplaceOrReplaceComponent<DirtyMarker<fr::Bounds>>(sceneBoundsEntity);
+			EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(sceneBoundsEntity);
 		}
 	}
 

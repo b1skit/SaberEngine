@@ -1,22 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Assert.h"
 #include "Camera.h"
 #include "Config.h"
-#include "Assert.h"
 #include "Light.h"
 #include "MeshFactory.h"
 #include "MeshPrimitive.h"
 #include "SceneManager.h"
-#include "Shader.h"
 #include "ShadowMap.h"
-
-using re::Shader;
-using fr::Transform;
-using en::Config;
-using en::SceneManager;
-using std::unique_ptr;
-using std::make_unique;
-using std::string;
-using re::ParameterBlock;
 
 
 namespace
@@ -53,12 +43,12 @@ namespace
 	}
 
 
-	void ConfigurePointLightMeshScale(gr::Light* pointLight)
+	void ConfigurePointLightMeshScale(fr::Light* pointLight)
 	{
-		SEAssert("Light is not a point light", pointLight->Type() == gr::Light::LightType::Point);
+		SEAssert("Light is not a point light", pointLight->GetType() == fr::Light::LightType::Point_Deferred);
 
-		gr::Light::LightTypeProperties& lightProperties = 
-			pointLight->AccessLightTypeProperties(gr::Light::LightType::Point);
+		fr::Light::LightTypeProperties& lightProperties = 
+			pointLight->AccessLightTypeProperties(fr::Light::LightType::Point_Deferred);
 
 		const float newDeferredMeshRadius = ComputePointLightMeshRadiusScaleFromIntensity(
 			lightProperties.m_point.m_colorIntensity.a,
@@ -72,50 +62,51 @@ namespace
 }
 
 
-namespace gr
+namespace fr
 {
-	std::shared_ptr<Light> Light::CreateAmbientLight(std::string const& name)
+	std::shared_ptr<fr::Light> Light::CreateAmbientLight(std::string const& name)
 	{
-		std::shared_ptr<gr::Light> newAmbientLight;
-		newAmbientLight.reset(new gr::Light(name, nullptr, Light::AmbientIBL, glm::vec4(1.f, 0.f, 1.f, 1.f), false));
+		std::shared_ptr<fr::Light> newAmbientLight;
+		newAmbientLight.reset(new fr::Light(name, nullptr, Light::AmbientIBL_Deferred, glm::vec4(1.f, 0.f, 1.f, 1.f), false));
 		en::SceneManager::GetSceneData()->AddLight(newAmbientLight);
 		return newAmbientLight;
 	}
 
 
-	std::shared_ptr<Light> Light::CreateDirectionalLight(
+	std::shared_ptr<fr::Light> Light::CreateDirectionalLight(
 		std::string const& name, fr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow)
 	{
-		std::shared_ptr<gr::Light> newDirectionalLight;
-		newDirectionalLight.reset(new gr::Light(name, ownerTransform, Light::Directional, colorIntensity, hasShadow));
+		std::shared_ptr<fr::Light> newDirectionalLight;
+		newDirectionalLight.reset(new fr::Light(name, ownerTransform, Light::Directional_Deferred, colorIntensity, hasShadow));
 		en::SceneManager::GetSceneData()->AddLight(newDirectionalLight);
 		return newDirectionalLight;
 	}
 
 
-	std::shared_ptr<Light> Light::CreatePointLight(
+	std::shared_ptr<fr::Light> Light::CreatePointLight(
 		std::string const& name, fr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow)
 	{
-		std::shared_ptr<gr::Light> newPointLight;
-		newPointLight.reset(new gr::Light(name, ownerTransform, Light::Point, colorIntensity, hasShadow));
+		std::shared_ptr<fr::Light> newPointLight;
+		newPointLight.reset(new fr::Light(name, ownerTransform, Light::Point_Deferred, colorIntensity, hasShadow));
 		en::SceneManager::GetSceneData()->AddLight(newPointLight);
 		return newPointLight;
 	}
 
 
-	Light::Light(string const& name, fr::Transform* ownerTransform, LightType lightType, glm::vec4 colorIntensity, bool hasShadow)
+	Light::Light(
+		std::string const& name, fr::Transform* ownerTransform, LightType lightType, glm::vec4 colorIntensity, bool hasShadow)
 		: en::NamedObject(name)
 		, m_type(lightType)
 	{
 		switch (lightType)
 		{
-		case AmbientIBL:
+		case AmbientIBL_Deferred:
 		{
 			m_typeProperties.m_ambient.m_screenAlignedQuad =
 				gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
 		}
 		break;
-		case Directional:
+		case Directional_Deferred:
 		{
 			m_typeProperties.m_directional.m_ownerTransform = ownerTransform;
 			m_typeProperties.m_directional.m_colorIntensity = colorIntensity;
@@ -126,24 +117,24 @@ namespace gr
 			m_typeProperties.m_directional.m_shadowMap = nullptr;
 			if (hasShadow)
 			{
-				const uint32_t shadowMapRes = Config::Get()->GetValue<int>("defaultShadowMapRes");
-				m_typeProperties.m_directional.m_shadowMap = std::make_unique<ShadowMap>(
+				const uint32_t shadowMapRes = en::Config::Get()->GetValue<int>("defaultShadowMapRes");
+				m_typeProperties.m_directional.m_shadowMap = std::make_unique<fr::ShadowMap>(
 					GetName(),
 					shadowMapRes,
 					shadowMapRes,
 					m_typeProperties.m_directional.m_ownerTransform,
-					glm::vec3(0.f, 0.f, 0.f), // Shadow cam position
-					this);
+					m_type,
+					ownerTransform);
 				// Note: We'll compute the camera config from the scene bounds during the first call to Update(); so
 				// here we just pass a default camera config
 
 				m_typeProperties.m_directional.m_shadowMap->SetMinMaxShadowBias(glm::vec2(
-					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias),
-					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias)));
+					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias),
+					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias)));
 			}
 		}
 		break;
-		case Point:
+		case Point_Deferred:
 		{
 			m_typeProperties.m_point.m_ownerTransform = ownerTransform;
 			m_typeProperties.m_point.m_colorIntensity = colorIntensity;
@@ -160,21 +151,21 @@ namespace gr
 			m_typeProperties.m_point.m_cubeShadowMap = nullptr;
 			if (hasShadow)
 			{
-				const uint32_t cubeMapRes = Config::Get()->GetValue<int>("defaultShadowCubeMapRes");
+				const uint32_t cubeMapRes = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_defaultShadowMapResolution);
 
-				m_typeProperties.m_point.m_cubeShadowMap = make_unique<ShadowMap>(
+				m_typeProperties.m_point.m_cubeShadowMap = make_unique<fr::ShadowMap>(
 					GetName(),
 					cubeMapRes,
 					cubeMapRes,
 					m_typeProperties.m_point.m_ownerTransform,
-					glm::vec3(0.0f, 0.0f, 0.0f),	// Shadow cam position: No offset
-					this);
+					m_type,
+					ownerTransform);
 
 				m_typeProperties.m_point.m_cubeShadowMap->ShadowCamera()->SetNearFar(glm::vec2(0.1f, deferredMeshRadius));
 
 				m_typeProperties.m_point.m_cubeShadowMap->SetMinMaxShadowBias(glm::vec2(
-					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBias),
-					Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMaxShadowBias)));
+					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBias),
+					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMaxShadowBias)));
 			}
 		}
 		break;
@@ -192,19 +183,19 @@ namespace gr
 	{
 		switch (m_type)
 		{
-		case LightType::AmbientIBL:
+		case LightType::AmbientIBL_Deferred:
 		{
 			m_typeProperties.m_ambient.m_BRDF_integrationMap = nullptr;
 			m_typeProperties.m_ambient.m_IEMTex = nullptr;
 			m_typeProperties.m_ambient.m_PMREMTex = nullptr;
 		}
 		break;
-		case LightType::Directional:
+		case LightType::Directional_Deferred:
 		{
 			m_typeProperties.m_directional.m_shadowMap = nullptr;
 		}
 		break;
-		case LightType::Point:
+		case LightType::Point_Deferred:
 		{
 			m_typeProperties.m_point.m_cubeShadowMap = nullptr;
 		}
@@ -219,11 +210,11 @@ namespace gr
 	{
 		switch (m_type)
 		{
-		case LightType::AmbientIBL:
+		case LightType::AmbientIBL_Deferred:
 		{
 		}
 		break;
-		case LightType::Directional:
+		case LightType::Directional_Deferred:
 		{
 			if (m_typeProperties.m_directional.m_shadowMap && 
 				m_typeProperties.m_directional.m_ownerTransform->HasChanged())
@@ -232,7 +223,7 @@ namespace gr
 			}
 		}
 		break;
-		case LightType::Point:
+		case LightType::Point_Deferred:
 		{
 		}
 		break;
@@ -246,17 +237,17 @@ namespace gr
 	{
 		switch (m_type)
 		{
-		case LightType::AmbientIBL:
+		case LightType::AmbientIBL_Deferred:
 		{
 			SEAssertF("Ambient lights don't (current) have a color/intensity value");
 		}
 		break;
-		case LightType::Directional:
+		case LightType::Directional_Deferred:
 		{
 			return m_typeProperties.m_directional.m_colorIntensity;
 		}
 		break;
-		case LightType::Point:
+		case LightType::Point_Deferred:
 		{
 			return m_typeProperties.m_point.m_colorIntensity;
 		}
@@ -268,21 +259,21 @@ namespace gr
 	}
 
 
-	gr::ShadowMap* Light::GetShadowMap() const
+	fr::ShadowMap* Light::GetShadowMap() const
 	{
 		switch (m_type)
 		{
-		case LightType::AmbientIBL:
+		case LightType::AmbientIBL_Deferred:
 		{
 			SEAssertF("Ambient lights do not have a shadow map");
 		}
 		break;
-		case LightType::Directional:
+		case LightType::Directional_Deferred:
 		{
 			return m_typeProperties.m_directional.m_shadowMap.get();
 		}
 		break;
-		case LightType::Point:
+		case LightType::Point_Deferred:
 		{
 			return m_typeProperties.m_point.m_cubeShadowMap.get();
 		}
@@ -294,7 +285,7 @@ namespace gr
 	}
 
 
-	Light::LightTypeProperties& Light::AccessLightTypeProperties(Light::LightType lightType)
+	Light::LightTypeProperties& Light::AccessLightTypeProperties(fr::Light::LightType lightType)
 	{
 		SEAssert("Trying to access type properties for the wrong type", lightType == m_type);
 		return m_typeProperties;
@@ -364,7 +355,7 @@ namespace gr
 			return modifiedIntensity;
 		};
 
-		auto ShowShadowMapMenu = [this, &uniqueID](gr::ShadowMap* shadowMap)
+		auto ShowShadowMapMenu = [this, &uniqueID](fr::ShadowMap* shadowMap)
 		{
 			if (ImGui::CollapsingHeader(std::format("Shadow map##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 			{
@@ -396,7 +387,7 @@ namespace gr
 			ImGui::Indent();
 			switch (m_type)
 			{
-			case LightType::AmbientIBL:
+			case LightType::AmbientIBL_Deferred:
 			{
 				ShowCommonOptions(nullptr);
 
@@ -415,7 +406,7 @@ namespace gr
 				}
 			}
 			break;
-			case LightType::Directional:
+			case LightType::Directional_Deferred:
 			{
 				ShowCommonOptions(&m_typeProperties.m_directional.m_colorIntensity);
 
@@ -423,7 +414,7 @@ namespace gr
 				ShowTransformMenu(m_typeProperties.m_directional.m_ownerTransform);
 			}
 			break;
-			case LightType::Point:
+			case LightType::Point_Deferred:
 			{
 				const bool modifiedIntensity = ShowCommonOptions(&m_typeProperties.m_point.m_colorIntensity);
 

@@ -2,18 +2,11 @@
 #pragma once
 
 #include "IPlatformParams.h"
-#include "BoundsComponent.h"
 #include "HashedDataObject.h"
 #include "Material.h"
 #include "NamedObject.h"
 #include "VertexStream.h"
 
-
-namespace fr
-{
-	class GameplayManager;
-	class Relationship;
-}
 
 namespace gr
 {

@@ -1,25 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Config.h"
 #include "MeshPrimitive.h"
-#include "NameComponent.h"
-#include "PipelineState.h"
-#include "RenderManager.h"
 #include "SceneManager.h"
-#include "Transform.h"
-
-using en::Config;
-using fr::Transform;
-using fr::Bounds;
-using gr::MeshPrimitive;
-using glm::pi;
-using glm::mat4;
-using glm::vec2;
-using glm::vec3;
-using glm::vec4;
-using std::move;
-using std::vector;
-using std::string;
-using std::shared_ptr;
 
 
 namespace
@@ -74,7 +55,7 @@ namespace gr
 		std::vector<float>* weights,
 		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
 	{
-		shared_ptr<MeshPrimitive> newMeshPrimitive;
+		std::shared_ptr<MeshPrimitive> newMeshPrimitive;
 		newMeshPrimitive.reset(new MeshPrimitive(
 			name.c_str(),
 			indices,
@@ -96,14 +77,14 @@ namespace gr
 
 	MeshPrimitive::MeshPrimitive(
 		char const* name,
-		vector<uint32_t>* indices,
-		vector<float>& positions,
-		vector<float>* normals,
-		vector<float>* tangents,
-		vector<float>* uv0,
-		vector<float>* colors,
-		vector<uint8_t>* joints,
-		vector<float>* weights,
+		std::vector<uint32_t>* indices,
+		std::vector<float>& positions,
+		std::vector<float>* normals,
+		std::vector<float>* tangents,
+		std::vector<float>* uv0,
+		std::vector<float>* colors,
+		std::vector<uint8_t>* joints,
+		std::vector<float>* weights,
 		MeshPrimitiveParams const& meshParams)
 		: NamedObject(name)
 		, m_params(meshParams)

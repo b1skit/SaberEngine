@@ -1,25 +1,13 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Camera.h"
 #include "CastUtils.h"
-#include "RenderData.h"
+#include "RenderDataManager.h"
 #include "TransformComponent.h"
 
 
 namespace gr
 {
-	RenderData::RenderData()
-	{
-
-	}
-
-
-	RenderData::~RenderData()
-	{
-
-	}
-
-
-	void RenderData::Destroy()
+	void RenderDataManager::Destroy()
 	{
 		// Catch illegal accesses during RenderData modification
 		util::ScopedThreadProtector threadProjector(m_threadProtector);
@@ -31,7 +19,7 @@ namespace gr
 	}
 
 
-	void RenderData::RegisterObject(gr::RenderObjectID objectID, gr::TransformID transformID)
+	void RenderDataManager::RegisterObject(gr::RenderDataID objectID, gr::TransformID transformID)
 	{
 		{
 			// Catch illegal accesses during RenderData modification
@@ -60,7 +48,7 @@ namespace gr
 	}
 
 
-	void RenderData::DestroyObject(gr::RenderObjectID objectID)
+	void RenderDataManager::DestroyObject(gr::RenderDataID objectID)
 	{
 		TransformID renderObjectTransformID = gr::k_invalidTransformID;
 
@@ -100,7 +88,7 @@ namespace gr
 	}
 
 
-	void RenderData::RegisterTransform(gr::TransformID transformID)
+	void RenderDataManager::RegisterTransform(gr::TransformID transformID)
 	{
 		// Catch illegal accesses during RenderData modification
 		util::ScopedThreadProtector threadProjector(m_threadProtector);
@@ -127,7 +115,7 @@ namespace gr
 	}
 
 
-	void RenderData::UnregisterTransform(gr::TransformID transformID)
+	void RenderDataManager::UnregisterTransform(gr::TransformID transformID)
 	{
 		// Catch illegal accesses during RenderData modification
 		util::ScopedThreadProtector threadProjector(m_threadProtector);
@@ -167,7 +155,7 @@ namespace gr
 	}
 
 
-	void RenderData::SetTransformData(
+	void RenderDataManager::SetTransformData(
 		gr::TransformID transformID, gr::Transform::RenderData const& transformRenderData)
 	{
 		// Catch illegal accesses during RenderData modification
@@ -185,7 +173,7 @@ namespace gr
 	}
 
 
-	gr::Transform::RenderData const& RenderData::GetTransformData(gr::TransformID transformID) const
+	gr::Transform::RenderData const& RenderDataManager::GetTransformData(gr::TransformID transformID) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 

@@ -1,12 +1,12 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Batch.h"
-#include "Mesh.h"
+#include "MeshConcept.h"
 #include "MeshPrimitive.h"
 
 namespace gr
 {
-	class RenderData;
+	class RenderDataManager;
 }
 
 namespace re
@@ -21,7 +21,7 @@ namespace re
 		// per batch) is far less important
 		// https://www.nvidia.de/docs/IO/8230/BatchBatchBatch.pdf
 
-		static std::vector<re::Batch> BuildBatches(gr::RenderData const&);
+		static std::vector<re::Batch> BuildBatches(gr::RenderDataManager const&);
 	};
 }
 

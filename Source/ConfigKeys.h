@@ -61,6 +61,7 @@ namespace en::ConfigKeys
 	constexpr char const* k_iemNumSamples		= "iemNumSamples";
 	constexpr char const* k_pmremTexWidthHeight = "pmremWidthHeight";
 	constexpr char const* k_pmremNumSamples		= "pmremNumSamples";
+	constexpr char const* k_defaultShadowMapResolution = "defaultShadowMapRes";
 
 	// ImGui:
 	constexpr char const* k_imguiIniPath = "config\\imgui.ini";
