@@ -268,81 +268,51 @@ namespace fr
 
 		UpdateLightDataRenderCommand* cmdPtr = reinterpret_cast<UpdateLightDataRenderCommand*>(cmdData);
 
-		for (size_t renderSystemIdx = 0; renderSystemIdx < renderSystems.size(); renderSystemIdx++)
+		for (size_t rsIdx = 0; rsIdx < renderSystems.size(); rsIdx++)
 		{
 			gr::DeferredLightingGraphicsSystem* deferredLightGS = 
-				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
+				renderSystems[rsIdx]->GetGraphicsSystemManager().GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
 
 			if (deferredLightGS)
 			{
-				gr::Light::RenderData const& renderData = cmdPtr->m_data;
-				switch (renderData.m_lightType)
+				gr::Light::RenderData const& lightRenderData = cmdPtr->m_data;
+
+				std::vector<gr::Light::RenderData>* gsRenderData = nullptr;
+
+				switch (lightRenderData.m_lightType)
 				{
 				case gr::Light::LightType::AmbientIBL_Deferred:
 				{
-					std::vector<gr::Light::RenderData>& ambientRenderData =
-						deferredLightGS->GetRenderData(gr::Light::LightType::AmbientIBL_Deferred);
-
-					auto existingAmbientItr = std::find_if(ambientRenderData.begin(), ambientRenderData.end(),
-						[&](gr::Light::RenderData const& existingLight)
-						{
-							return renderData.m_lightID == existingLight.m_lightID;
-						});
-
-					if (existingAmbientItr == ambientRenderData.end()) // New light
-					{
-						ambientRenderData.emplace_back(renderData);
-					}
-					else
-					{
-						*existingAmbientItr = renderData;
-					}
+					gsRenderData = &deferredLightGS->GetRenderData(gr::Light::LightType::AmbientIBL_Deferred);
 				}
 				break;
 				case gr::Light::LightType::Directional_Deferred:
 				{
-					std::vector<gr::Light::RenderData>& directionalRenderData =
-						deferredLightGS->GetRenderData(gr::Light::LightType::Directional_Deferred);
-
-					auto existingDirectionalItr = std::find_if(directionalRenderData.begin(), directionalRenderData.end(),
-						[&](gr::Light::RenderData const& existingLight)
-						{
-							return renderData.m_lightID == existingLight.m_lightID;
-						});
-
-					if (existingDirectionalItr == directionalRenderData.end()) // New light
-					{
-						directionalRenderData.emplace_back(renderData);
-					}
-					else
-					{
-						*existingDirectionalItr = renderData;
-					}
+					gsRenderData = &deferredLightGS->GetRenderData(gr::Light::LightType::Directional_Deferred);
 				}
 				break;
 				case gr::Light::LightType::Point_Deferred:
 				{
-					std::vector<gr::Light::RenderData>& pointRenderData =
-						deferredLightGS->GetRenderData(gr::Light::LightType::Point_Deferred);
-
-					auto existingPointItr = std::find_if(pointRenderData.begin(), pointRenderData.end(),
-						[&](gr::Light::RenderData const& existingLight)
-						{
-							return renderData.m_lightID == existingLight.m_lightID;
-						});
-
-					if (existingPointItr == pointRenderData.end()) // New light
-					{
-						pointRenderData.emplace_back(renderData);
-					}
-					else
-					{
-						*existingPointItr = renderData;
-					}
+					gsRenderData = &deferredLightGS->GetRenderData(gr::Light::LightType::Point_Deferred);
 				}
 				break;
 				default: SEAssertF("Invalid light type");
-				}				
+				}		
+
+				auto existingLightItr = std::find_if(gsRenderData->begin(), gsRenderData->end(),
+					[&](gr::Light::RenderData const& existingLight)
+					{
+						return lightRenderData.m_lightID == existingLight.m_lightID;
+					});
+
+				if (existingLightItr == gsRenderData->end()) // New light
+				{
+					gsRenderData->emplace_back(lightRenderData);
+				}
+				else
+				{
+					*existingLightItr = lightRenderData;
+				}
 			}
 		}
 	}

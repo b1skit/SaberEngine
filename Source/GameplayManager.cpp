@@ -421,6 +421,8 @@ namespace fr
 	void GameplayManager::UpdateLights()
 	{
 		// TODO...
+		// -> Need to update if Transform has changed (i.e. directional light shadow camera config)
+		// 
 	}
 
 

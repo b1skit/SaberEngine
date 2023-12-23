@@ -32,6 +32,7 @@ namespace fr
 		};
 		static_assert(static_cast<uint8_t>(fr::Light::LightType::LightType_Count) ==
 			static_cast<uint8_t>(gr::Light::LightType::LightType_Count));
+
 		static constexpr gr::Light::LightType GetRenderDataLightType(fr::Light::LightType);
 
 
@@ -85,9 +86,6 @@ namespace fr
 			{
 				struct
 				{
-					// ECS_CONVERSION TODO: The ambient light should hold a pointer to the SceneData IBL texture
-					// -> Pass it to the GS via the RenderData sent to the render thread
-
 					re::Texture const* m_IBLTex;
 
 				} m_ambient;
