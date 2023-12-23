@@ -230,9 +230,9 @@ namespace re
 
 
 	void RenderStage::AddTextureInput(
-		string const& shaderName, 
-		shared_ptr<Texture> tex, 
-		shared_ptr<Sampler> sampler, 
+		std::string const& shaderName, 
+		re::Texture const* tex, 
+		std::shared_ptr<re::Sampler> sampler, 
 		uint32_t mipLevel /*= re::Texture::k_allMips*/)
 	{
 		SEAssert("Stage shader is null. Set the stage shader before this call", m_stageShader != nullptr);
@@ -251,6 +251,16 @@ namespace re
 	}
 
 
+	void RenderStage::AddTextureInput(
+		std::string const& shaderName,
+		std::shared_ptr<re::Texture> tex,
+		std::shared_ptr<re::Sampler> sampler,
+		uint32_t mipLevel /*= re::Texture::k_allMips*/)
+	{
+		AddTextureInput(shaderName, tex.get(), sampler, mipLevel);
+	}
+
+
 	void RenderStage::UpdateDepthTextureInputIndex()
 	{
 		if (m_textureTargetSet == nullptr || m_depthTextureInputIdx != k_noDepthTexAsInputFlag)
@@ -265,7 +275,7 @@ namespace re
 			std::shared_ptr<re::Texture> depthTex = depthTarget->GetTexture();
 			for (uint32_t i = 0; i < m_textureSamplerInputs.size(); i++)
 			{
-				if (m_textureSamplerInputs[i].m_texture == depthTex)
+				if (m_textureSamplerInputs[i].m_texture == depthTex.get())
 				{
 					m_depthTextureInputIdx = i;
 
@@ -291,7 +301,7 @@ namespace re
 				for (uint8_t i = 0; i < m_textureTargetSet->GetNumColorTargets(); i++)
 				{
 					SEAssert("Detected a texture simultaneously used as both a color target and input",
-						m_textureTargetSet->GetColorTarget(i).GetTexture() != texInput.m_texture ||
+						m_textureTargetSet->GetColorTarget(i).GetTexture().get() != texInput.m_texture ||
 						((m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_targetMip != TextureTarget::k_allFaces &&
 							texInput.m_srcMip != TextureTarget::k_allFaces) &&
 						m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_targetMip != texInput.m_srcMip));
@@ -303,7 +313,7 @@ namespace re
 						m_textureTargetSet->GetDepthStencilTarget()->GetTexture();
 
 					SEAssert("A depth target with depth writes enabled cannot also be bound as an input",
-						depthTargetTex != texInput.m_texture ||
+						depthTargetTex.get() != texInput.m_texture ||
 						m_textureTargetSet->GetDepthStencilTarget()->GetTargetParams().m_channelWriteMode.R ==
 						re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled);
 				}

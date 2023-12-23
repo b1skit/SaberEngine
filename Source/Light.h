@@ -19,7 +19,7 @@ namespace fr
 	class ShadowMap;
 
 
-	class Light final : public virtual en::NamedObject, public virtual en::Updateable
+	class Light final : public virtual en::NamedObject, public virtual en::Updateable // ECS_CONVERSION: Remove inheritance
 	{
 	public:
 		enum LightType : uint8_t
@@ -32,6 +32,7 @@ namespace fr
 		};
 		static_assert(static_cast<uint8_t>(fr::Light::LightType::LightType_Count) ==
 			static_cast<uint8_t>(gr::Light::LightType::LightType_Count));
+		static constexpr gr::Light::LightType GetRenderDataLightType(fr::Light::LightType);
 
 
 	public:
@@ -48,6 +49,8 @@ namespace fr
 			LightType lightType,
 			glm::vec4 colorIntensity,
 			bool hasShadow);
+		
+		Light(re::Texture const* iblTex, LightType = LightType::AmbientIBL_Deferred); // Ambient light CTOR
 
 		Light(fr::Light&&) = default;
 		Light& operator=(fr::Light&&) = default;
@@ -75,34 +78,38 @@ namespace fr
 
 	
 	public:
-		struct LightTypeProperties
+		struct TypeProperties
 		{
+			LightType m_type;
 			union
 			{
-				// ECS_CONVERSION TODO: All of these should be raw const* !!!!!!!!!!!!!!!!!!!!!!!!
-
 				struct
 				{
-					std::shared_ptr<re::Texture> m_BRDF_integrationMap;
-					std::shared_ptr<re::Texture> m_IEMTex;
-					std::shared_ptr<re::Texture> m_PMREMTex;
-					std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
+					// ECS_CONVERSION TODO: The ambient light should hold a pointer to the SceneData IBL texture
+					// -> Pass it to the GS via the RenderData sent to the render thread
+
+					re::Texture const* m_IBLTex;
+
 				} m_ambient;
 				struct
 				{
 					fr::Transform* m_ownerTransform; // DEPRECATED!!!!!!!!!!!!!
+					
 					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
-					std::unique_ptr<fr::ShadowMap> m_shadowMap;
-					std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
+					std::unique_ptr<fr::ShadowMap> m_shadowMap; // DEPRECATED!!!!!!!!!!!!!
+
+					std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad; // DEPRECATED!!!!!!!!!!!!!
 				} m_directional;
 				struct
 				{
 					fr::Transform* m_ownerTransform; // DEPRECATED!!!!!!!!!!!!!
+					
 					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
 					float m_emitterRadius; // For non-singular attenuation function
 					float m_intensityCuttoff; // Intensity value at which we stop drawing the deferred mesh
-					std::shared_ptr<gr::MeshPrimitive> m_sphereMeshPrimitive;
-					std::unique_ptr<fr::ShadowMap> m_cubeShadowMap;
+					
+					std::shared_ptr<gr::MeshPrimitive> m_sphereMeshPrimitive; // DEPRECATED!!!!!!!!!!!!!
+					std::unique_ptr<fr::ShadowMap> m_cubeShadowMap; // DEPRECATED!!!!!!!!!!!!!
 				} m_point;
 			};
 
@@ -110,41 +117,46 @@ namespace fr
 			bool m_diffuseEnabled;
 			bool m_specularEnabled;
 
-			LightTypeProperties()
-			{
-				memset(this, 0, sizeof(LightTypeProperties));
-
-				m_diffuseEnabled = true;
-				m_specularEnabled = true;
-			}
-
-			~LightTypeProperties() {};
+			TypeProperties();
+			~TypeProperties();
 		};
-		LightTypeProperties& AccessLightTypeProperties(LightType);
-		LightTypeProperties const& AccessLightTypeProperties(LightType) const;
+		TypeProperties& AccessLightTypeProperties(LightType);
+		TypeProperties const& AccessLightTypeProperties(LightType) const;
 
 
-	private:
-		LightType m_type;
-		LightTypeProperties m_typeProperties;
+	private:		
+		TypeProperties m_typeProperties;
 
 
-	private:
+	private: // No copying allowed
 		Light() = delete;
 		Light(fr::Light const&) = delete;
 		Light& operator=(fr::Light const&) = delete;
 	};
 
 
+	inline constexpr gr::Light::LightType Light::GetRenderDataLightType(fr::Light::LightType frLightType)
+	{
+		switch (frLightType)
+		{
+		case fr::Light::LightType::AmbientIBL_Deferred: return gr::Light::LightType::AmbientIBL_Deferred;
+		case fr::Light::LightType::Directional_Deferred: return gr::Light::LightType::Directional_Deferred;
+		case fr::Light::LightType::Point_Deferred: return gr::Light::LightType::Point_Deferred;
+		default: throw std::logic_error("Invalid light type");
+		}
+		return gr::Light::LightType::LightType_Count;
+	}
+
+
 	inline Light::LightType const& Light::GetType() const
 	{
-		return m_type;
+		return m_typeProperties.m_type;
 	}
 
 
 	inline fr::Transform* Light::GetTransform()
 	{
-		switch (m_type)
+		switch (m_typeProperties.m_type)
 		{
 		case LightType::AmbientIBL_Deferred:
 		{

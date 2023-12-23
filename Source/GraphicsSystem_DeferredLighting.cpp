@@ -12,27 +12,6 @@
 #include "RenderManager.h"
 #include "RenderStage.h"
 
-using fr::Light;
-using re::Texture;
-using fr::ShadowMap;
-using re::RenderManager;
-using re::ParameterBlock;
-using re::Batch;
-using re::RenderStage;
-using re::TextureTargetSet;
-using re::Sampler;
-using re::Shader;
-using en::Config;
-using en::SceneManager;
-using std::string;
-using std::shared_ptr;
-using std::make_shared;
-using std::vector;
-using std::to_string;
-using glm::vec3;
-using glm::vec4;
-using glm::mat4;
-
 
 namespace
 {
@@ -46,7 +25,7 @@ namespace
 	BRDFIntegrationParams GetBRDFIntegrationParamsData()
 	{
 		const uint32_t brdfTexWidthHeight =
-			static_cast<uint32_t>(Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
+			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
 
 		BRDFIntegrationParams brdfIntegrationParams{
 			.g_integrationTargetResolution =
@@ -83,8 +62,8 @@ namespace
 			roughness = 0;
 		}
 
-		const int numIEMSamples = Config::Get()->GetValue<int>(en::ConfigKeys::k_iemNumSamples);
-		const int numPMREMSamples = Config::Get()->GetValue<int>(en::ConfigKeys::k_pmremNumSamples);
+		const int numIEMSamples = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_iemNumSamples);
+		const int numPMREMSamples = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_pmremNumSamples);
 
 		generationParams.g_numSamplesRoughnessFaceIdx = glm::vec4(
 			static_cast<float>(numIEMSamples),
@@ -123,7 +102,7 @@ namespace
 		AmbientLightParams ambientLightParams;
 
 		const uint32_t dfgTexWidthHeight = 
-			static_cast<uint32_t>(Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
+			static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
 
 		const uint32_t maxPMREMMipLevel = numPMREMMips - 1;
 
@@ -157,9 +136,9 @@ namespace
 	};
 
 
-	LightParams GetLightParamData(shared_ptr<fr::Light> const light, std::shared_ptr<re::TextureTargetSet const> targetSet)
+	LightParams GetLightParamData(std::shared_ptr<fr::Light> const light, std::shared_ptr<re::TextureTargetSet const> targetSet)
 	{
-		Light::LightTypeProperties const& lightProperties = light->AccessLightTypeProperties(light->GetType());
+		fr::Light::TypeProperties const& lightProperties = light->AccessLightTypeProperties(light->GetType());
 
 		LightParams lightParams;
 		memset(&lightParams, 0, sizeof(LightParams)); // Ensure unused elements are zeroed
@@ -249,10 +228,11 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::CreateResourceGenerationStages(re::StagePipeline& pipeline)
 	{
-		fr::Light::LightTypeProperties& ambientProperties =
-			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(fr::Light::AmbientIBL_Deferred);
+		SEAssert("We currently expect render data for exactly 1 ambient light to exist",
+			m_renderData[gr::Light::AmbientIBL_Deferred].size() == 1);
+		gr::Light::RenderData const& ambientRenderData = m_renderData[gr::Light::AmbientIBL_Deferred][0];
 
-		shared_ptr<Texture> iblTexture = SceneManager::GetSceneData()->GetIBLTexture();
+		re::Texture const* iblTexture = ambientRenderData.m_typeProperties.m_ambient.m_iblTex;
 
 		// 1st frame: Generate the pre-integrated BRDF LUT via a single-frame compute stage:
 		{
@@ -268,29 +248,29 @@ namespace gr
 				re::Shader::GetOrCreate(en::ShaderNames::k_generateBRDFIntegrationMapShaderName, brdfPipelineState));
 
 			const uint32_t brdfTexWidthHeight = 
-				static_cast<uint32_t>(Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
+				static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_brdfLUTWidthHeight));
 
 			// Create a render target texture:			
-			Texture::TextureParams brdfParams;
+			re::Texture::TextureParams brdfParams;
 			brdfParams.m_width = brdfTexWidthHeight;
 			brdfParams.m_height = brdfTexWidthHeight;
 			brdfParams.m_faces = 1;
-			brdfParams.m_usage = static_cast<Texture::Usage>(Texture::Usage::ComputeTarget | Texture::Usage::Color);
-			brdfParams.m_dimension = Texture::Dimension::Texture2D;
-			brdfParams.m_format = Texture::Format::RGBA16F;
-			brdfParams.m_colorSpace = Texture::ColorSpace::Linear;
+			brdfParams.m_usage = 
+				static_cast<re::Texture::Usage>(re::Texture::Usage::ComputeTarget | re::Texture::Usage::Color);
+			brdfParams.m_dimension = re::Texture::Dimension::Texture2D;
+			brdfParams.m_format = re::Texture::Format::RGBA16F;
+			brdfParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 			brdfParams.m_mipMode = re::Texture::MipMode::None;
 			brdfParams.m_addToSceneData = false;
 			brdfParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-			ambientProperties.m_ambient.m_BRDF_integrationMap =
-				re::Texture::Create("BRDFIntegrationMap", brdfParams, false);
+			m_BRDF_integrationMap = re::Texture::Create("BRDFIntegrationMap", brdfParams, false);
 
 			std::shared_ptr<re::TextureTargetSet> brdfStageTargets = re::TextureTargetSet::Create("BRDF Stage Targets");
 
 			re::TextureTarget::TargetParams colorTargetParams;
 
-			brdfStageTargets->SetColorTarget(0, ambientProperties.m_ambient.m_BRDF_integrationMap, colorTargetParams);
+			brdfStageTargets->SetColorTarget(0, m_BRDF_integrationMap, colorTargetParams);
 			brdfStageTargets->SetViewport(re::Viewport(0, 0, brdfTexWidthHeight, brdfTexWidthHeight));
 			brdfStageTargets->SetScissorRect(re::ScissorRect(0, 0, brdfTexWidthHeight, brdfTexWidthHeight));
 
@@ -304,7 +284,7 @@ namespace gr
 			brdfStage->SetTextureTargetSet(brdfStageTargets);
 
 			BRDFIntegrationParams const& brdfIntegrationParams = GetBRDFIntegrationParamsData();
-			shared_ptr<re::ParameterBlock> brdfIntegrationPB = re::ParameterBlock::Create(
+			std::shared_ptr<re::ParameterBlock> brdfIntegrationPB = re::ParameterBlock::Create(
 				BRDFIntegrationParams::s_shaderName,
 				brdfIntegrationParams,
 				re::ParameterBlock::PBType::SingleFrame);
@@ -335,12 +315,12 @@ namespace gr
 
 		cubemapCamParams.g_viewProjection = glm::mat4(1.f); // Identity; unused
 		cubemapCamParams.g_invViewProjection = glm::mat4(1.f); // Identity; unused
-		cubemapCamParams.g_cameraWPos = vec4(0.f, 0.f, 0.f, 0.f); // Unused
+		cubemapCamParams.g_cameraWPos = glm::vec4(0.f, 0.f, 0.f, 0.f); // Unused
 
 		std::vector<glm::mat4> const& cubemapViews = fr::Camera::BuildCubeViewMatrices(glm::vec3(0.f));
 
 		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
-		Batch cubeMeshBatch = Batch(re::Batch::Lifetime::SingleFrame, m_cubeMeshPrimitive.get(), nullptr);
+		re::Batch cubeMeshBatch = re::Batch(re::Batch::Lifetime::SingleFrame, m_cubeMeshPrimitive.get(), nullptr);
 
 		// TODO: We should use equirectangular images, instead of bothering to convert to cubemaps for IEM/PMREM
 		// -> Need to change the HLSL Get___DominantDir functions to ensure the result is normalized
@@ -349,30 +329,31 @@ namespace gr
 		// 1st frame: Generate an IEM (Irradiance Environment Map) cubemap texture for diffuse irradiance
 		{
 			const uint32_t iemTexWidthHeight =
-				static_cast<uint32_t>(Config::Get()->GetValue<int>(en::ConfigKeys::k_iemTexWidthHeight));
+				static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_iemTexWidthHeight));
 
 			// IEM-specific texture params:
-			Texture::TextureParams iemTexParams;
+			re::Texture::TextureParams iemTexParams;
 			iemTexParams.m_width = iemTexWidthHeight;
 			iemTexParams.m_height = iemTexWidthHeight;
 			iemTexParams.m_faces = 6;
 			iemTexParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
-			iemTexParams.m_dimension = Texture::Dimension::TextureCubeMap;
-			iemTexParams.m_format = Texture::Format::RGBA16F;
-			iemTexParams.m_colorSpace = Texture::ColorSpace::Linear;
+			iemTexParams.m_dimension = re::Texture::Dimension::TextureCubeMap;
+			iemTexParams.m_format = re::Texture::Format::RGBA16F;
+			iemTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 			iemTexParams.m_addToSceneData = false;
 			iemTexParams.m_mipMode = re::Texture::MipMode::None;
 
-			shared_ptr<Shader> iemShader = re::Shader::GetOrCreate(en::ShaderNames::k_generateIEMShaderName, iblStageParams);
+			std::shared_ptr<re::Shader> iemShader = 
+				re::Shader::GetOrCreate(en::ShaderNames::k_generateIEMShaderName, iblStageParams);
 
-			const string IEMTextureName = iblTexture->GetName() + "_IEMTexture";
-			ambientProperties.m_ambient.m_IEMTex = re::Texture::Create(IEMTextureName, iemTexParams, false);
+			const std::string IEMTextureName = iblTexture->GetName() + "_IEMTexture";
+			m_IEMTex = re::Texture::Create(IEMTextureName, iemTexParams, false);
 
 			for (uint32_t face = 0; face < 6; face++)
 			{
 				re::RenderStage::GraphicsStageParams gfxStageParams;
 				std::shared_ptr<re::RenderStage> iemStage = re::RenderStage::CreateSingleFrameGraphicsStage(
-					"IEM generation: Face " + to_string(face + 1) + "/6", gfxStageParams);
+					"IEM generation: Face " + std::to_string(face + 1) + "/6", gfxStageParams);
 
 				iemStage->SetStageShader(iemShader);
 				iemStage->AddTextureInput(
@@ -382,7 +363,7 @@ namespace gr
 
 				IEMPMREMGenerationParams const& iemGenerationParams = 
 					GetIEMPMREMGenerationParamsData(0, 1, face, iblTexture->Width(), iblTexture->Height());
-				shared_ptr<re::ParameterBlock> iemGenerationPB = re::ParameterBlock::Create(
+				std::shared_ptr<re::ParameterBlock> iemGenerationPB = re::ParameterBlock::Create(
 					IEMPMREMGenerationParams::s_shaderName,
 					iemGenerationParams,
 					re::ParameterBlock::PBType::SingleFrame);
@@ -390,7 +371,7 @@ namespace gr
 
 				// Construct a camera param block to draw into our cubemap rendering targets:
 				cubemapCamParams.g_view = cubemapViews[face];
-				shared_ptr<re::ParameterBlock> cubemapCamParamsPB = re::ParameterBlock::Create(
+				std::shared_ptr<re::ParameterBlock> cubemapCamParamsPB = re::ParameterBlock::Create(
 					gr::Camera::CameraParams::s_shaderName,
 					cubemapCamParams,
 					re::ParameterBlock::PBType::SingleFrame);
@@ -409,7 +390,7 @@ namespace gr
 				targetParams.m_targetFace = face;
 				targetParams.m_targetMip = 0;
 
-				iemTargets->SetColorTarget(0, ambientProperties.m_ambient.m_IEMTex, targetParams);
+				iemTargets->SetColorTarget(0, m_IEMTex, targetParams);
 				iemTargets->SetViewport(re::Viewport(0, 0, iemTexWidthHeight, iemTexWidthHeight));
 				iemTargets->SetScissorRect(re::ScissorRect(0, 0, iemTexWidthHeight, iemTexWidthHeight));
 
@@ -424,27 +405,27 @@ namespace gr
 		// 1st frame: Generate PMREM (Pre-filtered Mip-mapped Radiance Environment Map) cubemap for specular reflections
 		{
 			const uint32_t pmremTexWidthHeight =
-				static_cast<uint32_t>(Config::Get()->GetValue<int>(en::ConfigKeys::k_pmremTexWidthHeight));
+				static_cast<uint32_t>(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_pmremTexWidthHeight));
 
 			// PMREM-specific texture params:
-			Texture::TextureParams pmremTexParams;
+			re::Texture::TextureParams pmremTexParams;
 			pmremTexParams.m_width = pmremTexWidthHeight;
 			pmremTexParams.m_height = pmremTexWidthHeight;
 			pmremTexParams.m_faces = 6;
 			pmremTexParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
-			pmremTexParams.m_dimension = Texture::Dimension::TextureCubeMap;
-			pmremTexParams.m_format = Texture::Format::RGBA16F;
-			pmremTexParams.m_colorSpace = Texture::ColorSpace::Linear;
+			pmremTexParams.m_dimension = re::Texture::Dimension::TextureCubeMap;
+			pmremTexParams.m_format = re::Texture::Format::RGBA16F;
+			pmremTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 			pmremTexParams.m_addToSceneData = false;
 			pmremTexParams.m_mipMode = re::Texture::MipMode::Allocate;
 
-			shared_ptr<Shader> pmremShader = 
+			std::shared_ptr<re::Shader> pmremShader =
 				re::Shader::GetOrCreate(en::ShaderNames::k_generatePMREMShaderName, iblStageParams);
 
-			const string PMREMTextureName = iblTexture->GetName() + "_PMREMTexture";
-			ambientProperties.m_ambient.m_PMREMTex = re::Texture::Create(PMREMTextureName, pmremTexParams, false);
+			const std::string PMREMTextureName = iblTexture->GetName() + "_PMREMTexture";
+			m_PMREMTex = re::Texture::Create(PMREMTextureName, pmremTexParams, false);
 
-			const uint32_t totalMipLevels = ambientProperties.m_ambient.m_PMREMTex->GetNumMips();
+			const uint32_t totalMipLevels = m_PMREMTex->GetNumMips();
 
 			for (uint32_t face = 0; face < 6; face++)
 			{
@@ -465,7 +446,7 @@ namespace gr
 
 					// Construct a camera param block to draw into our cubemap rendering targets:
 					cubemapCamParams.g_view = cubemapViews[face];
-					shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
+					std::shared_ptr<re::ParameterBlock> pb = re::ParameterBlock::Create(
 						gr::Camera::CameraParams::s_shaderName,
 						cubemapCamParams,
 						re::ParameterBlock::PBType::SingleFrame);
@@ -473,7 +454,7 @@ namespace gr
 
 					IEMPMREMGenerationParams const& pmremGenerationParams = GetIEMPMREMGenerationParamsData(
 							currentMipLevel, totalMipLevels, face, iblTexture->Width(), iblTexture->Height());
-					shared_ptr<re::ParameterBlock> pmremGenerationPB = re::ParameterBlock::Create(
+					std::shared_ptr<re::ParameterBlock> pmremGenerationPB = re::ParameterBlock::Create(
 						IEMPMREMGenerationParams::s_shaderName,
 						pmremGenerationParams,
 						re::ParameterBlock::PBType::SingleFrame);
@@ -483,13 +464,13 @@ namespace gr
 					targetParams.m_targetFace = face;
 					targetParams.m_targetMip = currentMipLevel;
 
-					std::shared_ptr<TextureTargetSet> pmremTargetSet =
+					std::shared_ptr<re::TextureTargetSet> pmremTargetSet =
 						re::TextureTargetSet::Create("PMREM texture targets: Face " + postFix);
 
-					pmremTargetSet->SetColorTarget(0, ambientProperties.m_ambient.m_PMREMTex, targetParams);
+					pmremTargetSet->SetColorTarget(0, m_PMREMTex, targetParams);
 
 					const glm::vec4 mipDimensions = 
-						ambientProperties.m_ambient.m_PMREMTex->GetSubresourceDimensions(currentMipLevel);
+						m_PMREMTex->GetSubresourceDimensions(currentMipLevel);
 					const uint32_t mipWidth = static_cast<uint32_t>(mipDimensions.x);
 					const uint32_t mipHeight = static_cast<uint32_t>(mipDimensions.y);
 
@@ -521,23 +502,25 @@ namespace gr
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
 		
 		// Create a shared lighting stage texture target:
-		Texture::TextureParams lightTargetTexParams;
-		lightTargetTexParams.m_width = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
-		lightTargetTexParams.m_height = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
+		re::Texture::TextureParams lightTargetTexParams;
+		lightTargetTexParams.m_width = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
+		lightTargetTexParams.m_height = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
 		lightTargetTexParams.m_faces = 1;
-		lightTargetTexParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
-		lightTargetTexParams.m_dimension = Texture::Dimension::Texture2D;
-		lightTargetTexParams.m_format = Texture::Format::RGBA16F;
-		lightTargetTexParams.m_colorSpace = Texture::ColorSpace::Linear;
+		lightTargetTexParams.m_usage = 
+			static_cast<re::Texture::Usage>(re::Texture::Usage::ColorTarget | re::Texture::Usage::Color);
+		lightTargetTexParams.m_dimension = re::Texture::Dimension::Texture2D;
+		lightTargetTexParams.m_format = re::Texture::Format::RGBA16F;
+		lightTargetTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
 		lightTargetTexParams.m_mipMode = re::Texture::MipMode::None;
 		lightTargetTexParams.m_addToSceneData = false;
-		lightTargetTexParams.m_clear.m_color = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		lightTargetTexParams.m_clear.m_color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-		std::shared_ptr<Texture> outputTexture = re::Texture::Create("DeferredLightTarget", lightTargetTexParams, false);
+		std::shared_ptr<re::Texture> outputTexture = 
+			re::Texture::Create("DeferredLightTarget", lightTargetTexParams, false);
 
 		re::TextureTarget::TargetParams ambientTargetParams{};
 		ambientTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Enabled;
-		std::shared_ptr<TextureTargetSet> ambientTargetSet = re::TextureTargetSet::Create("Ambient light targets");
+		std::shared_ptr<re::TextureTargetSet> ambientTargetSet = re::TextureTargetSet::Create("Ambient light targets");
 		ambientTargetSet->SetColorTarget(0, outputTexture, ambientTargetParams);
 
 		// We need the depth buffer attached, but with depth writes disabled:
@@ -556,21 +539,13 @@ namespace gr
 		};
 		ambientTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
 
-		fr::Camera* deferredLightingCam = SceneManager::Get()->GetMainCamera().get();
+		fr::Camera* deferredLightingCam = en::SceneManager::Get()->GetMainCamera().get();
 
 		// Set the target sets, even if the stages aren't actually used (to ensure they're still valid)
 		m_ambientStage->SetTextureTargetSet(ambientTargetSet);
 
 		// We'll be creating the data we need to render the scene's ambient light:
-		fr::Light::LightTypeProperties& ambientProperties =
-			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(fr::Light::AmbientIBL_Deferred);
-
-		shared_ptr<Texture> iblTexture = SceneManager::GetSceneData()->GetIBLTexture();
-		
-		const bool ambientIsValid =
-			ambientProperties.m_ambient.m_BRDF_integrationMap &&
-			ambientProperties.m_ambient.m_IEMTex &&
-			ambientProperties.m_ambient.m_PMREMTex;
+		const bool ambientIsValid = m_BRDF_integrationMap && m_IEMTex && m_PMREMTex;
 
 		re::PipelineState ambientStageParams;
 
@@ -588,12 +563,16 @@ namespace gr
 		m_ambientStage->AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
 
 		// Ambient PB:
-		const uint32_t totalPMREMMipLevels = ambientProperties.m_ambient.m_PMREMTex->GetNumMips();
+		const uint32_t totalPMREMMipLevels = m_PMREMTex->GetNumMips();
 		
+		SEAssert("We currently expect render data for exactly 1 ambient light to exist",
+			m_renderData[gr::Light::AmbientIBL_Deferred].size() == 1);
+		gr::Light::RenderData const& ambientRenderData = m_renderData[gr::Light::AmbientIBL_Deferred][0];
+
 		const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
 			totalPMREMMipLevels,
-			static_cast<float>(ambientProperties.m_diffuseEnabled),
-			static_cast<float>(ambientProperties.m_specularEnabled));
+			static_cast<float>(ambientRenderData.m_diffuseEnabled),
+			static_cast<float>(ambientRenderData.m_specularEnabled));
 
 		m_ambientParams = re::ParameterBlock::Create(
 			AmbientLightParams::s_shaderName,
@@ -607,7 +586,7 @@ namespace gr
 		
 
 		// Key light stage:
-		shared_ptr<fr::Light> keyLight = en::SceneManager::GetSceneData()->GetKeyLight();
+		std::shared_ptr<fr::Light> keyLight = en::SceneManager::GetSceneData()->GetKeyLight();
 
 		re::PipelineState keylightStageParams(ambientStageParams);
 		if (keyLight)
@@ -624,7 +603,7 @@ namespace gr
 				keylightTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
 			}
 
-			std::shared_ptr<TextureTargetSet> keylightTargetSet = re::TextureTargetSet::Create("Key light targets");
+			std::shared_ptr<re::TextureTargetSet> keylightTargetSet = re::TextureTargetSet::Create("Key light targets");
 			keylightTargetSet->SetColorTarget(0, outputTexture, keylightTargetParams);
 
 			keylightTargetSet->SetDepthStencilTarget(
@@ -645,7 +624,7 @@ namespace gr
 
 
 		// Point light stage:
-		vector<shared_ptr<fr::Light>> const& pointLights = en::SceneManager::GetSceneData()->GetPointLights();
+		std::vector<std::shared_ptr<fr::Light>> const& pointLights = en::SceneManager::GetSceneData()->GetPointLights();
 		if (pointLights.size() > 0)
 		{
 			m_pointlightStage->AddPermanentParameterBlock(deferredLightingCam->GetCameraParams());
@@ -661,7 +640,7 @@ namespace gr
 				pointlightTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
 			}
 
-			std::shared_ptr<TextureTargetSet> pointLightTargetSet = re::TextureTargetSet::Create("Point light targets");
+			std::shared_ptr<re::TextureTargetSet> pointLightTargetSet = re::TextureTargetSet::Create("Point light targets");
 			pointLightTargetSet->SetColorTarget(0, outputTexture, pointlightTargetParams);
 
 			pointLightTargetSet->SetDepthStencilTarget(
@@ -704,21 +683,21 @@ namespace gr
 				m_ambientStage->AddTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[slot],
 					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
-					Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 			}
 			if (keyLight)
 			{
 				m_keylightStage->AddTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[slot],
 					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
-					Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 			}
 			if (!pointLights.empty())
 			{
 				m_pointlightStage->AddTextureInput(
 					GBufferGraphicsSystem::GBufferTexNames[slot],
 					gBufferGS->GetFinalTextureTargetSet()->GetColorTarget(slot).GetTexture(),
-					Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 			}
 		}
 
@@ -731,19 +710,19 @@ namespace gr
 			m_keylightStage->AddTextureInput(
 				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
 				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
-				Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
 			// Keylight shadowmap:
 			fr::ShadowMap* const keyLightShadowMap = keyLight->GetShadowMap();
 			if (keyLightShadowMap)
 			{
 				// Set the key light shadow map:
-				shared_ptr<Texture> keylightShadowMapTex =
+				std::shared_ptr<re::Texture> keylightShadowMapTex =
 					keyLightShadowMap->GetTextureTargetSet()->GetDepthStencilTarget()->GetTexture();
 				m_keylightStage->AddTextureInput(
 					"Depth0",
 					keylightShadowMapTex,
-					Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 			}
 		}
 
@@ -752,7 +731,7 @@ namespace gr
 			m_pointlightStage->AddTextureInput(
 				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
 				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
-				Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 		}
 
 		if (ambientIsValid)
@@ -760,25 +739,25 @@ namespace gr
 			m_ambientStage->AddTextureInput(
 				GBufferGraphicsSystem::GBufferTexNames[depthBufferSlot],
 				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
-				Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
 			// Add IBL texture inputs for ambient stage:
 			m_ambientStage->AddTextureInput(
 				"CubeMap0",
-				ambientProperties.m_ambient.m_IEMTex,
-				Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear)
+				m_IEMTex,
+				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear)
 			);
 
 			m_ambientStage->AddTextureInput(
 				"CubeMap1",
-				ambientProperties.m_ambient.m_PMREMTex,
-				Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear)
+				m_PMREMTex,
+				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear)
 			);
 
 			m_ambientStage->AddTextureInput(
 				"Tex7",
-				ambientProperties.m_ambient.m_BRDF_integrationMap,
-				Sampler::GetSampler(Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest)
+				m_BRDF_integrationMap,
+				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_Nearest_Nearest)
 			);
 		}
 	}
@@ -788,15 +767,16 @@ namespace gr
 	{
 		CreateBatches();
 
-		fr::Light::LightTypeProperties& ambientProperties =
-			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(fr::Light::AmbientIBL_Deferred);
+		const uint32_t totalPMREMMipLevels = m_PMREMTex->GetNumMips();
 
-		const uint32_t totalPMREMMipLevels = ambientProperties.m_ambient.m_PMREMTex->GetNumMips();
+		SEAssert("We currently expect render data for exactly 1 ambient light to exist",
+			m_renderData[gr::Light::AmbientIBL_Deferred].size() == 1);
+		gr::Light::RenderData const& ambientRenderData = m_renderData[gr::Light::AmbientIBL_Deferred][0];
 
 		const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
 			totalPMREMMipLevels,
-			static_cast<float>(ambientProperties.m_diffuseEnabled),
-			static_cast<float>(ambientProperties.m_specularEnabled));
+			static_cast<float>(ambientRenderData.m_diffuseEnabled),
+			static_cast<float>(ambientRenderData.m_specularEnabled));
 
 		m_ambientParams->Commit(ambientLightParams);
 	}
@@ -805,28 +785,34 @@ namespace gr
 	void DeferredLightingGraphicsSystem::CreateBatches()
 	{
 		// Ambient stage batches:
-		fr::Light::LightTypeProperties const& ambientLightProperties =
-			en::SceneManager::GetSceneData()->GetAmbientLight()->AccessLightTypeProperties(fr::Light::LightType::AmbientIBL_Deferred);
+		SEAssert("We currently expect render data for exactly 1 ambient light to exist",
+			m_renderData[gr::Light::AmbientIBL_Deferred].size() == 1);
+		gr::Light::RenderData const& ambientRenderData = m_renderData[gr::Light::AmbientIBL_Deferred][0];
 
-		const Batch ambientFullscreenQuadBatch = 
-			Batch(re::Batch::Lifetime::SingleFrame, ambientLightProperties.m_ambient.m_screenAlignedQuad.get(), nullptr);
+		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
+
+		gr::MeshPrimitive::RenderData const& meshPrimRenderData = 
+			renderData.GetObjectData<gr::MeshPrimitive::RenderData>(ambientRenderData.m_renderDataID);
+
+		const re::Batch ambientFullscreenQuadBatch = re::Batch(
+			re::Batch::Lifetime::SingleFrame, meshPrimRenderData, nullptr);
 
 		m_ambientStage->AddBatch(ambientFullscreenQuadBatch);
 
 		// Keylight stage batches:
-		shared_ptr<fr::Light> const keyLight = en::SceneManager::GetSceneData()->GetKeyLight();
+		std::shared_ptr<fr::Light> const keyLight = en::SceneManager::GetSceneData()->GetKeyLight();
 		if (keyLight)
 		{
-			fr::Light::LightTypeProperties const& keyLightProperties =
+			fr::Light::TypeProperties const& keyLightProperties =
 				keyLight->AccessLightTypeProperties(fr::Light::LightType::Directional_Deferred);
 
-			Batch keylightFullscreenQuadBatch = Batch(
+			re::Batch keylightFullscreenQuadBatch = re::Batch(
 				re::Batch::Lifetime::SingleFrame, 
 				keyLightProperties.m_directional.m_screenAlignedQuad.get(), 
 				nullptr);
 
 			LightParams const& keylightParams = GetLightParamData(keyLight, m_keylightStage->GetTextureTargetSet());
-			shared_ptr<re::ParameterBlock> keylightPB = re::ParameterBlock::Create(
+			std::shared_ptr<re::ParameterBlock> keylightPB = re::ParameterBlock::Create(
 				LightParams::s_shaderName,
 				keylightParams,
 				re::ParameterBlock::PBType::SingleFrame);
@@ -837,10 +823,10 @@ namespace gr
 		}
 
 		// Pointlight stage batches:
-		vector<shared_ptr<fr::Light>> const& pointLights = en::SceneManager::GetSceneData()->GetPointLights();
+		std::vector<std::shared_ptr<fr::Light>> const& pointLights = en::SceneManager::GetSceneData()->GetPointLights();
 		for (size_t i = 0; i < pointLights.size(); i++)
 		{
-			fr::Light::LightTypeProperties const& pointLightProperties = 
+			fr::Light::TypeProperties const& pointLightProperties = 
 				pointLights[i]->AccessLightTypeProperties(fr::Light::LightType::Point_Deferred);
 			
 			re::Batch pointlightBatch = re::Batch(
@@ -860,7 +846,7 @@ namespace gr
 			LightParams const& pointlightParams = 
 				GetLightParamData(pointLights[i], m_pointlightStage->GetTextureTargetSet());
 
-			shared_ptr<re::ParameterBlock> pointlightPB = re::ParameterBlock::Create(
+			std::shared_ptr<re::ParameterBlock> pointlightPB = re::ParameterBlock::Create(
 				LightParams::s_shaderName,
 				pointlightParams, 
 				re::ParameterBlock::PBType::SingleFrame);
@@ -874,10 +860,10 @@ namespace gr
 					shadowMap->GetTextureTargetSet()->GetDepthStencilTarget()->GetTexture();
 
 				// Our template function expects a shared_ptr to a non-const type; cast it here even though it's gross
-				std::shared_ptr<re::Sampler> const sampler = 
-					std::const_pointer_cast<re::Sampler>(Sampler::GetSampler(Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
+				std::shared_ptr<re::Sampler> const sampler = std::const_pointer_cast<re::Sampler>(
+					re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
-				pointlightBatch.AddTextureAndSamplerInput("CubeMap0", depthTexture, sampler);
+				pointlightBatch.AddTextureAndSamplerInput("CubeMap0", depthTexture.get(), sampler);
 			}			
 
 			// Finally, add the completed batch:

@@ -364,7 +364,7 @@ namespace gr
 	{
 		constexpr glm::mat4 k_identity = glm::mat4(1.f);
 
-		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->CreateRenderData();
+		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
 
 		if (m_showWorldCoordinateAxis)
 		{
@@ -491,7 +491,7 @@ namespace gr
 				std::shared_ptr<re::ParameterBlock> pointLightMeshTransformPB =
 					gr::Transform::CreateInstancedTransformParams(&lightTRS, nullptr);
 
-				fr::Light::LightTypeProperties const& pointLightProperties =
+				fr::Light::TypeProperties const& pointLightProperties =
 					pointLight->AccessLightTypeProperties(fr::Light::LightType::Point);
 
 				re::Batch pointLightWireframeBatch = BuildWireframeBatch(

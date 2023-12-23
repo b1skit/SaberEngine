@@ -126,7 +126,7 @@ namespace opengl
 	}
 
 
-	void Sampler::Bind(re::Sampler& sampler, uint32_t textureUnit)
+	void Sampler::Bind(re::Sampler const& sampler, uint32_t textureUnit)
 	{
 		opengl::Sampler::PlatformParams* params = sampler.GetPlatformParams()->As<opengl::Sampler::PlatformParams*>();
 

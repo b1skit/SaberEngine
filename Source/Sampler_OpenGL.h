@@ -31,6 +31,6 @@ namespace opengl
 		static void Destroy(re::Sampler& sampler);
 
 		// OpenGL-specific functionality:
-		static void Bind(re::Sampler& sampler, uint32_t textureUnit);
+		static void Bind(re::Sampler const& sampler, uint32_t textureUnit);
 	};
 }

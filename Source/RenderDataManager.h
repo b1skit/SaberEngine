@@ -29,7 +29,7 @@ namespace gr
 		// To ensure this is thread safe, objects can only be accessed once all updates are complete (i.e. after all
 		// render commands have been executed)
 		template<typename T>
-		[[nodiscard]] T const& GetObjectData(uint32_t index) const;
+		[[nodiscard]] T const& GetObjectData(gr::RenderDataID) const;
 
 		template<typename T>
 		void DestroyObjectData(gr::RenderDataID);
@@ -171,7 +171,7 @@ namespace gr
 		uint8_t GetDataIndexFromType() const;
 
 		template<typename T>
-		T const* GetObjectDataIfExists(uint32_t index) const;
+		T const* GetObjectDataVectorIfExists(uint32_t index) const;
 
 		template <typename T>
 		T const* GetEndPtr() const; // Iterator begin/end helper
@@ -187,7 +187,7 @@ namespace gr
 
 		// Render objects are represented as a set of indexes into arrays of typed data (meshes, materials, etc).
 		// Each render object maps to 0 or 1 instance of each data type
-		std::unordered_map<gr::RenderDataID, RenderObjectMetadata> m_objectIDToRenderObjectMetadata;
+		std::unordered_map<gr::RenderDataID, RenderObjectMetadata> m_IDToRenderObjectMetadata;
 
 		// Every render object has a transform, but many render objects share the same transform (E.g. mesh primitives).
 		// We expect Transforms to be both our largest and most frequently updated data mirrored in RenderDataManager, so we
@@ -213,8 +213,8 @@ namespace gr
 		SEAssert("Data type index is OOB", s_dataTypeIndex < m_dataVectors.size());
 		std::vector<T>& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[s_dataTypeIndex]).get();
 
-		SEAssert("Invalid object ID", m_objectIDToRenderObjectMetadata.contains(objectID));
-		RenderObjectMetadata& renderObjectMetadata = m_objectIDToRenderObjectMetadata.at(objectID);
+		SEAssert("Invalid object ID", m_IDToRenderObjectMetadata.contains(objectID));
+		RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(objectID);
 
 		// If the data index table doesn't contain enough room for the data type index, increase its size and pad with
 		// the invalid flag
@@ -240,24 +240,31 @@ namespace gr
 
 
 	template<typename T>
-	T const& RenderDataManager::GetObjectData(uint32_t index) const
+	T const& RenderDataManager::GetObjectData(gr::RenderDataID renderDataID) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		SEAssert("renderDataID is not registered", m_IDToRenderObjectMetadata.contains(renderDataID));
 
 		const uint8_t dataTypeIndex = GetDataIndexFromType<T>();
 		SEAssert("Invalid data type index. This suggests we're accessing data of a specific type using an index, when "
 			"no data of that type exists", 
 			dataTypeIndex != k_invalidDataTypeIdx && dataTypeIndex < m_dataVectors.size());
 		
-		std::vector<T> const& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[dataTypeIndex]).get();
-		SEAssert("Object index is OOB", index < dataVector.size());
+		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
+		SEAssert("Metadata table does not have an entry for the current data type", 
+			dataTypeIndex < renderObjectMetadata.m_objectTypeToDataIndexTable.size());
+		const size_t dataIdx = renderObjectMetadata.m_objectTypeToDataIndexTable[dataTypeIndex];
 
-		return dataVector[index];
+		std::vector<T> const& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[dataTypeIndex]).get();
+		SEAssert("Object index is OOB", dataIdx < dataVector.size());
+
+		return dataVector[dataIdx];
 	}
 
 
 	template<typename T>
-	T const* RenderDataManager::GetObjectDataIfExists(uint32_t index) const
+	T const* RenderDataManager::GetObjectDataVectorIfExists(uint32_t dataIndex) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -269,7 +276,7 @@ namespace gr
 		
 		std::vector<T> const& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[dataTypeIndex]).get();
 
-		return index < dataVector.size() ? &dataVector[index] : nullptr;
+		return dataIndex < dataVector.size() ? &dataVector[dataIndex] : nullptr;
 	}
 
 
@@ -297,8 +304,8 @@ namespace gr
 		util::ScopedThreadProtector threadProjector(m_threadProtector);
 
 		SEAssert("Data index is OOB", dataTypeIndex < m_dataVectors.size());
-		SEAssert("Invalid object ID", m_objectIDToRenderObjectMetadata.contains(objectID));
-		RenderObjectMetadata& renderObjectMetadata = m_objectIDToRenderObjectMetadata.at(objectID);
+		SEAssert("Invalid object ID", m_IDToRenderObjectMetadata.contains(objectID));
+		RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(objectID);
 
 		std::vector<T>& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[dataTypeIndex]).get();
 
@@ -314,7 +321,7 @@ namespace gr
 			// Find whatever table was referencing the index we moved, and update it. This is expensive, as we iterate
 			// over every RenderDataID until we find a match
 			bool foundMatch = false;
-			for (auto& objectDataIndices : m_objectIDToRenderObjectMetadata)
+			for (auto& objectDataIndices : m_IDToRenderObjectMetadata)
 			{
 				ObjectTypeToDataIndexTable& dataIndexTableToUpdate = objectDataIndices.second.m_objectTypeToDataIndexTable;
 				if (dataTypeIndex < dataIndexTableToUpdate.size() && dataIndexTableToUpdate[dataTypeIndex] == indexToMove)
@@ -435,8 +442,8 @@ namespace gr
 
 		return ObjectIterator<Ts...>(
 			this,
-			m_objectIDToRenderObjectMetadata.begin(),
-			m_objectIDToRenderObjectMetadata.end(),
+			m_IDToRenderObjectMetadata.begin(),
+			m_IDToRenderObjectMetadata.end(),
 			std::make_tuple(GetEndPtr<Ts>()...));
 	}
 
@@ -447,7 +454,7 @@ namespace gr
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
 		const std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator objectDataIndicesEndItr =
-			m_objectIDToRenderObjectMetadata.end();
+			m_IDToRenderObjectMetadata.end();
 
 		return ObjectIterator<Ts...>(
 			nullptr,
@@ -616,7 +623,7 @@ namespace gr
 			// Get the index of the data within its typed array, for the current RenderDataID iteration
 			const uint32_t objectDataIndex = objectTypeToDataIndexTable[dataTypeIndex];
 
-			return m_renderData->GetObjectDataIfExists<T>(objectDataIndex);
+			return m_renderData->GetObjectDataVectorIfExists<T>(objectDataIndex);
 		}
 		return nullptr;
 	}

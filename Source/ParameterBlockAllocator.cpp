@@ -590,14 +590,16 @@ namespace re
 
 			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
 
-			for (auto const& it : m_singleFrameAllocations.m_handleToPtr[readIdx])
+			// Calling Destroy() on our ParameterBlock recursively calls ParameterBlockAllocator::Deallocate, which
+			// erases an entry from m_singleFrameAllocations.m_handleToPtr. Thus, we can't use an iterator as it'll be
+			// invalidated. Instead, we just loop until it's empty
+			while (!m_singleFrameAllocations.m_handleToPtr[readIdx].empty())
 			{
 				SEAssert("Trying to deallocate a single frame parameter block, but there is still a live shared_ptr. Is "
 					"something holding onto a single frame parameter block beyond the frame lifetime?",
-					it.second.use_count() == 1);
+					m_singleFrameAllocations.m_handleToPtr[readIdx].begin()->second.use_count() == 1);
 
-				const uint64_t currentRenderFrameNum = re::RenderManager::Get()->GetCurrentRenderFrameNum();
-				AddToDeferredDeletions(currentRenderFrameNum, it.second);
+				m_singleFrameAllocations.m_handleToPtr[readIdx].begin()->second->Destroy();
 			}
 
 			// Debug: Track the high-water mark for the max single-frame PB allocations

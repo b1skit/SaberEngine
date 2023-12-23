@@ -65,13 +65,13 @@ namespace opengl
 		static void SetUniform(
 			re::Shader const& shader,
 			std::string const& uniformName, 
-			void * value, 
+			void const* value, 
 			opengl::Shader::UniformType const type, 
 			int const count);
 		static void SetTextureAndSampler(
 			re::Shader const&, 
 			std::string const& uniformName, 
-			std::shared_ptr<re::Texture>, 
+			re::Texture const*, 
 			std::shared_ptr<re::Sampler>, 
 			uint32_t subresource);
 		static void SetParameterBlock(re::Shader const&, re::ParameterBlock const&);

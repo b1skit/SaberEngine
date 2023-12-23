@@ -144,9 +144,10 @@ namespace fr
 		gr::RenderDataComponent::AttachSharedRenderDataComponent(gpm, meshPrimitiveEntity, sharedRenderDataCmpt);
 
 		// MeshPrimitive:
-		MeshPrimitive::MeshPrimitiveComponent& meshPrimCmpt = *gpm.EmplaceComponent<fr::MeshPrimitive::MeshPrimitiveComponent>(
-			owningEntity,
-			MeshPrimitiveComponent{
+		MeshPrimitiveComponent& meshPrimCmpt = *gpm.EmplaceComponent<MeshPrimitiveComponent>(
+			meshPrimitiveEntity,
+			MeshPrimitiveComponent
+			{
 				.m_meshPrimitive = meshPrimitive
 			});
 

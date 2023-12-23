@@ -47,7 +47,7 @@ namespace
 	{
 		SEAssert("Light is not a point light", pointLight->GetType() == fr::Light::LightType::Point_Deferred);
 
-		fr::Light::LightTypeProperties& lightProperties = 
+		fr::Light::TypeProperties& lightProperties = 
 			pointLight->AccessLightTypeProperties(fr::Light::LightType::Point_Deferred);
 
 		const float newDeferredMeshRadius = ComputePointLightMeshRadiusScaleFromIntensity(
@@ -93,19 +93,52 @@ namespace fr
 	}
 
 
+	Light::TypeProperties::TypeProperties()
+	{
+		memset(this, 0, sizeof(TypeProperties));
+
+		m_type = LightType::LightType_Count;
+		m_diffuseEnabled = true;
+		m_specularEnabled = true;
+	}
+
+
+	Light::TypeProperties::~TypeProperties()
+	{
+		switch (m_type)
+		{
+		case fr::Light::LightType::AmbientIBL_Deferred:
+		{
+			m_ambient.m_IBLTex = nullptr;
+		}
+		break;
+		case fr::Light::LightType::Directional_Deferred:
+		{
+			m_directional.m_ownerTransform = nullptr;
+			m_directional.m_shadowMap = nullptr;
+			m_directional.m_screenAlignedQuad = nullptr;
+		}
+		break;
+		case fr::Light::LightType::Point_Deferred:
+		{
+			m_point.m_ownerTransform = nullptr;
+			m_point.m_sphereMeshPrimitive = nullptr;
+			m_point.m_cubeShadowMap = nullptr;
+		}
+		break;
+		default: SEAssertF("Invalid light type");
+		}
+	}
+
+
 	Light::Light(
 		std::string const& name, fr::Transform* ownerTransform, LightType lightType, glm::vec4 colorIntensity, bool hasShadow)
 		: en::NamedObject(name)
-		, m_type(lightType)
 	{
+		m_typeProperties.m_type = lightType;
+
 		switch (lightType)
 		{
-		case AmbientIBL_Deferred:
-		{
-			m_typeProperties.m_ambient.m_screenAlignedQuad =
-				gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
-		}
-		break;
 		case Directional_Deferred:
 		{
 			m_typeProperties.m_directional.m_ownerTransform = ownerTransform;
@@ -123,7 +156,7 @@ namespace fr
 					shadowMapRes,
 					shadowMapRes,
 					m_typeProperties.m_directional.m_ownerTransform,
-					m_type,
+					m_typeProperties.m_type,
 					ownerTransform);
 				// Note: We'll compute the camera config from the scene bounds during the first call to Update(); so
 				// here we just pass a default camera config
@@ -158,7 +191,7 @@ namespace fr
 					cubeMapRes,
 					cubeMapRes,
 					m_typeProperties.m_point.m_ownerTransform,
-					m_type,
+					m_typeProperties.m_type,
 					ownerTransform);
 
 				m_typeProperties.m_point.m_cubeShadowMap->ShadowCamera()->SetNearFar(glm::vec2(0.1f, deferredMeshRadius));
@@ -169,25 +202,33 @@ namespace fr
 			}
 		}
 		break;
-		//case Spot:
-		//case Area:
-		//case Tube:
-		default:
-			// TODO: Implement light meshes for additional light types
-			break;
+		case AmbientIBL_Deferred:
+		{
+			SEAssertF("This is the wrong constructor for AmbientIBL_Deferred lights");
 		}
+		break;
+		default: SEAssertF("Invalid light type");
+		}
+	}
+
+
+	Light::Light(re::Texture const* iblTex, LightType lightType)
+		: en::NamedObject("NamedObject LIGHT NAMES ARE DEPRECATED !!!!!!!!!!!!!!!")
+	{
+		SEAssert("This constructor is only for AmbientIBL_Deferred lights", lightType == LightType::AmbientIBL_Deferred);
+
+		m_typeProperties.m_type = LightType::AmbientIBL_Deferred;
+		m_typeProperties.m_ambient.m_IBLTex = iblTex;
 	}
 
 
 	void Light::Destroy()
 	{
-		switch (m_type)
+		switch (m_typeProperties.m_type)
 		{
 		case LightType::AmbientIBL_Deferred:
 		{
-			m_typeProperties.m_ambient.m_BRDF_integrationMap = nullptr;
-			m_typeProperties.m_ambient.m_IEMTex = nullptr;
-			m_typeProperties.m_ambient.m_PMREMTex = nullptr;
+			m_typeProperties.m_ambient.m_IBLTex = nullptr;
 		}
 		break;
 		case LightType::Directional_Deferred:
@@ -208,7 +249,7 @@ namespace fr
 
 	void Light::Update(const double stepTimeMs)
 	{
-		switch (m_type)
+		switch (m_typeProperties.m_type)
 		{
 		case LightType::AmbientIBL_Deferred:
 		{
@@ -235,7 +276,7 @@ namespace fr
 
 	glm::vec4 Light::GetColorIntensity() const
 	{
-		switch (m_type)
+		switch (m_typeProperties.m_type)
 		{
 		case LightType::AmbientIBL_Deferred:
 		{
@@ -261,7 +302,7 @@ namespace fr
 
 	fr::ShadowMap* Light::GetShadowMap() const
 	{
-		switch (m_type)
+		switch (m_typeProperties.m_type)
 		{
 		case LightType::AmbientIBL_Deferred:
 		{
@@ -285,16 +326,16 @@ namespace fr
 	}
 
 
-	Light::LightTypeProperties& Light::AccessLightTypeProperties(fr::Light::LightType lightType)
+	Light::TypeProperties& Light::AccessLightTypeProperties(fr::Light::LightType lightType)
 	{
-		SEAssert("Trying to access type properties for the wrong type", lightType == m_type);
+		SEAssert("Trying to access type properties for the wrong type", lightType == m_typeProperties.m_type);
 		return m_typeProperties;
 	}
 
 
-	Light::LightTypeProperties const& Light::AccessLightTypeProperties(LightType lightType) const
+	Light::TypeProperties const& Light::AccessLightTypeProperties(LightType lightType) const
 	{
-		SEAssert("Trying to access type properties for the wrong type", lightType == m_type);
+		SEAssert("Trying to access type properties for the wrong type", lightType == m_typeProperties.m_type);
 		return m_typeProperties;
 	}
 
@@ -385,25 +426,27 @@ namespace fr
 		if (ImGui::CollapsingHeader(std::format("{}##{}", GetName(), uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
-			switch (m_type)
+			switch (m_typeProperties.m_type)
 			{
 			case LightType::AmbientIBL_Deferred:
 			{
 				ShowCommonOptions(nullptr);
 
-				if (ImGui::CollapsingHeader(std::format("IBL Textures##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
-				{
-					ImGui::Indent();
-					ImGui::Text("BRDF Integration map: \"%s\"",
-						m_typeProperties.m_ambient.m_BRDF_integrationMap->GetName().c_str());
+				// ECS_CONVERSION: TODO Restore this functionality (move it to the deferred lighting GS)
+				
+				//if (ImGui::CollapsingHeader(std::format("IBL Textures##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
+				//{
+				//	ImGui::Indent();
+				//	ImGui::Text("BRDF Integration map: \"%s\"",
+				//		m_typeProperties.m_ambient.m_BRDF_integrationMap->GetName().c_str());
 
-					ImGui::Text("IEM Texture: \"%s\"",
-						m_typeProperties.m_ambient.m_IEMTex->GetName().c_str());
+				//	ImGui::Text("IEM Texture: \"%s\"",
+				//		m_typeProperties.m_ambient.m_IEMTex->GetName().c_str());
 
-					ImGui::Text("PMREM Texture: \"%s\"",
-						m_typeProperties.m_ambient.m_PMREMTex->GetName().c_str());
-					ImGui::Unindent();
-				}
+				//	ImGui::Text("PMREM Texture: \"%s\"",
+				//		m_typeProperties.m_ambient.m_PMREMTex->GetName().c_str());
+				//	ImGui::Unindent();
+				//}
 			}
 			break;
 			case LightType::Directional_Deferred:

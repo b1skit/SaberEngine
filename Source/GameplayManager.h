@@ -81,14 +81,13 @@ namespace fr
 		mutable std::shared_mutex m_registeryMutex;
 
 
-	//private: // Systems:
+	private: // Systems:
 	public:
 		void UpdateSceneBounds();
 		// ECS_CONVERSION TODO: Make this private again. Currently public as a hack so we can trigger it after scene loading
-
-
 	private:
 		void UpdateTransformComponents();
+		void UpdateLights();
 
 
 		// DEPRECATED:

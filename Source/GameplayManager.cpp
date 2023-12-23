@@ -2,6 +2,7 @@
 #include "Camera.h"
 #include "CoreEngine.h"
 #include "GameplayManager.h"
+#include "LightComponent.h"
 #include "MarkerComponents.h"
 #include "MaterialComponent.h"
 #include "MeshPrimitiveComponent.h"
@@ -34,6 +35,9 @@ namespace fr
 		/*fr::Bounds::CreateSceneBoundsConcept(*this);*/
 		UpdateSceneBounds();
 
+		// Create an Ambient light:
+		fr::LightComponent::CreateDeferredAmbientLightConcept(en::SceneManager::GetSceneData()->GetIBLTexture());
+
 		// ECS_CONVERSION: Currently, the GameplayManager::Startup is called after the SceneManager and RenderManager,
 		// as it needs the main camera from the SceneData to create the player obect
 		// -> This is a problem, as we need the scene bounds to be available to initialize shadow maps immediately after
@@ -45,6 +49,9 @@ namespace fr
 		m_playerObject = std::make_shared<fr::PlayerObject>(mainCam);
 
 		LOG("Created PlayerObject using \"%s\"", mainCam->GetName().c_str());
+
+		// Push render updates to ensure new data is available for the first frame
+		EnqueueRenderUpdates();
 	}
 
 
@@ -127,7 +134,7 @@ namespace fr
 		// <physics, animation, etc>
 		UpdateTransformComponents();
 		UpdateSceneBounds(); // TODO: This is expensive, we should only do this on demand?
-		// Update Lights (Need bounds, transforms to be updated)
+		UpdateLights();
 		// Update Cameras
 		// Update Renderables
 
@@ -248,6 +255,18 @@ namespace fr
 
 				m_registry.erase<DirtyMarker<fr::Material::MaterialComponent>>(entity);
 			}
+
+			// Lights:
+			auto lightComponentsView = 
+				m_registry.view<fr::LightComponent, DirtyMarker<fr::LightComponent>, gr::RenderDataComponent>();
+			for (auto entity : lightComponentsView)
+			{
+				fr::LightComponent const& lightComponent = lightComponentsView.get<fr::LightComponent>(entity);
+				renderManager->EnqueueRenderCommand<fr::UpdateLightDataRenderCommand>(lightComponent);
+
+				m_registry.erase<DirtyMarker<fr::LightComponent>>(entity);
+			}
+
 
 			// Handle any non-renderable new entities:
 			auto newEntitiesView = m_registry.view<NewEntityMarker>();
@@ -399,6 +418,10 @@ namespace fr
 	}
 
 
+	void GameplayManager::UpdateLights()
+	{
+		// TODO...
+	}
 
 
 	// DEPRECATED:
@@ -437,7 +460,7 @@ namespace fr
 			auto const& result = std::find_if(
 				m_updateables.begin(),
 				m_updateables.end(),
-				[&](en::Updateable const* curUpdateable) {return curUpdateable == updateable; });
+				[&](en::Updateable const* curUpdateable) { return curUpdateable == updateable; });
 
 			SEAssert("Updateable not found", result != m_updateables.end());
 

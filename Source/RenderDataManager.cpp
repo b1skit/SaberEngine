@@ -15,7 +15,7 @@ namespace gr
 		// ECS_CONVERSION TODO: Uncomment this once we've rearranged the shutdown order. Currently fires because the render manager is
 		// being destroyed before the gameplay mgr
 		/*SEAssert("Object ID to data indices map is not empty: Was a render object not destroyed via a render command?",
-			m_objectIDToRenderObjectMetadata.empty());*/
+			m_IDToRenderObjectMetadata.empty());*/
 	}
 
 
@@ -25,10 +25,10 @@ namespace gr
 			// Catch illegal accesses during RenderData modification
 			util::ScopedThreadProtector threadProjector(m_threadProtector);
 
-			auto renderObjectMetadata = m_objectIDToRenderObjectMetadata.find(objectID);
-			if (renderObjectMetadata == m_objectIDToRenderObjectMetadata.end())
+			auto renderObjectMetadata = m_IDToRenderObjectMetadata.find(objectID);
+			if (renderObjectMetadata == m_IDToRenderObjectMetadata.end())
 			{
-				m_objectIDToRenderObjectMetadata.emplace(
+				m_IDToRenderObjectMetadata.emplace(
 					objectID,
 					RenderObjectMetadata{
 						.m_objectTypeToDataIndexTable = ObjectTypeToDataIndexTable(),
@@ -56,9 +56,9 @@ namespace gr
 			// Catch illegal accesses during RenderData modification
 			util::ScopedThreadProtector threadProjector(m_threadProtector);
 
-			SEAssert("Trying to destroy an object that does not exist", m_objectIDToRenderObjectMetadata.contains(objectID));
+			SEAssert("Trying to destroy an object that does not exist", m_IDToRenderObjectMetadata.contains(objectID));
 
-			RenderObjectMetadata& renderObjectMetadata = m_objectIDToRenderObjectMetadata.at(objectID);
+			RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(objectID);
 
 			renderObjectMetadata.m_referenceCount--;
 
@@ -76,7 +76,7 @@ namespace gr
 						dataIndexTable[dataIndexEntry] == k_invalidDataIdx);
 				}
 #endif
-				m_objectIDToRenderObjectMetadata.erase(objectID);
+				m_IDToRenderObjectMetadata.erase(objectID);
 			}
 		}
 

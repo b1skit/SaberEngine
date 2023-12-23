@@ -228,7 +228,7 @@ namespace dx12
 		
 		// Transition our backbuffer resource back to the present state:
 		commandList->TransitionResource(
-			swapChainTargetSet->GetColorTarget(0).GetTexture(),
+			swapChainTargetSet->GetColorTarget(0).GetTexture().get(),
 			D3D12_RESOURCE_STATE_PRESENT,
 			re::Texture::k_allMips);
 

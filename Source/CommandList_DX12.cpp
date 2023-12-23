@@ -534,7 +534,7 @@ namespace dx12
 			re::TextureTarget::TargetParams const& targetParams = target.GetTargetParams();
 
 			TransitionResource(
-				targetTexture,
+				targetTexture.get(),
 				D3D12_RESOURCE_STATE_RENDER_TARGET,
 				targetParams.m_targetMip);
 
@@ -563,7 +563,7 @@ namespace dx12
 				D3D12_RESOURCE_STATE_DEPTH_WRITE :
 				(D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-			TransitionResource(depthStencilTarget->GetTexture(),
+			TransitionResource(depthStencilTarget->GetTexture().get(),
 				depthState,
 				depthTargetParams.m_targetMip);
 
@@ -721,7 +721,7 @@ namespace dx12
 
 				// Insert our resource transition:
 				TransitionResource(
-					colorTex,
+					colorTex.get(),
 					D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
 					targetMip);
 			}
@@ -758,7 +758,7 @@ namespace dx12
 
 
 	void CommandList::SetTexture(
-		std::string const& shaderName, std::shared_ptr<re::Texture> texture, uint32_t srcMip, bool skipTransition)
+		std::string const& shaderName, re::Texture const* texture, uint32_t srcMip, bool skipTransition)
 	{
 		SEAssert("Pipeline is not currently set", m_currentPSO);
 
@@ -766,8 +766,8 @@ namespace dx12
 			srcMip < texture->GetNumMips() ||
 			srcMip == re::Texture::k_allMips);
 
-		dx12::Texture::PlatformParams* texPlatParams = 
-			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+		dx12::Texture::PlatformParams const* texPlatParams = 
+			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 		RootSignature::RootParameter const* rootSigEntry =
 			m_currentRootSignature->GetRootSignatureEntry(shaderName);
@@ -887,10 +887,10 @@ namespace dx12
 
 
 	void CommandList::TransitionResource(
-		std::shared_ptr<re::Texture> texture, D3D12_RESOURCE_STATES toState, uint32_t mipLevel)
+		re::Texture const* texture, D3D12_RESOURCE_STATES toState, uint32_t mipLevel)
 	{
-		dx12::Texture::PlatformParams* texPlatParams =
-			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
+		dx12::Texture::PlatformParams const* texPlatParams =
+			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 		ID3D12Resource* const resource = texPlatParams->m_textureResource.Get();
 

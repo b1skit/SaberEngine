@@ -47,11 +47,10 @@ namespace fr
 	public:		
 		// Lights:
 		void AddLight(std::shared_ptr<fr::Light> newLight);
-		std::shared_ptr<fr::Light> const GetAmbientLight() const;
 		std::shared_ptr<fr::Light> GetKeyLight() const;
 		std::vector<std::shared_ptr<fr::Light>> const& GetPointLights() const;
 
-		std::shared_ptr<re::Texture> GetIBLTexture() const;
+		re::Texture const* GetIBLTexture() const;
 
 		// Geometry:
 		bool AddUniqueMeshPrimitive(std::shared_ptr<gr::MeshPrimitive>&); // Returns true if incoming ptr is modified
@@ -101,9 +100,6 @@ namespace fr
 
 		std::unordered_map<size_t, std::shared_ptr<re::Shader>> m_shaders;
 		mutable std::shared_mutex m_shadersReadWriteMutex;
-
-		std::shared_ptr<fr::Light> m_ambientLight;
-		std::shared_mutex m_ambientLightReadWriteMutex;
 
 		std::shared_ptr<fr::Light> m_keyLight;
 		std::shared_mutex m_keyLightReadWriteMutex;

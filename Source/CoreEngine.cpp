@@ -12,18 +12,6 @@
 #include "GameplayManager.h"
 #include "LogManager.h"
 
-using en::Config;
-using en::SceneManager;
-using en::EventManager;
-using en::InputManager;
-using en::LogManager;
-using re::RenderManager;
-using fr::GameplayManager;
-using util::PerformanceTimer;
-using std::shared_ptr;
-using std::make_shared;
-using std::string;
-
 
 namespace
 {
@@ -57,9 +45,9 @@ namespace en
 
 		// Create a window:
 		std::string commandLineArgs;
-		Config::Get()->TryGetValue<string>(en::ConfigKeys::k_commandLineArgsValueKey, commandLineArgs);
+		Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_commandLineArgsValueKey, commandLineArgs);
 
-		const string windowTitle = Config::Get()->GetValue<string>("windowTitle") + " " + commandLineArgs;
+		const std::string windowTitle = Config::Get()->GetValue<std::string>("windowTitle") + " " + commandLineArgs;
 		const int xRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
 		const int yRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
 
@@ -71,7 +59,7 @@ namespace en
 		m_window->SetRelativeMouseMode(false);
 
 		// Render thread:
-		re::RenderManager* renderManager = RenderManager::Get();
+		re::RenderManager* renderManager = re::RenderManager::Get();
 		m_threadPool.EnqueueJob([&]()
 			{
 				en::ThreadPool::NameCurrentThread(L"Render Thread");
@@ -89,10 +77,10 @@ namespace en
 
 		SceneManager::Get()->Startup(); // Load assets
 
-		renderManager->ThreadInitialize(); // Create graphics systems, close PB registration
-
 		// Create gameplay objects now that the scene data is loaded
-		GameplayManager::Get()->Startup();
+		fr::GameplayManager::Get()->Startup();
+
+		renderManager->ThreadInitialize(); // Create render systems, close PB registration
 
 		m_isRunning = true;
 
@@ -111,9 +99,9 @@ namespace en
 		en::EventManager* eventManager = EventManager::Get();
 		en::LogManager* logManager = LogManager::Get();
 		en::InputManager* inputManager = InputManager::Get();
-		fr::GameplayManager* gameplayManager = GameplayManager::Get();
+		fr::GameplayManager* gameplayManager = fr::GameplayManager::Get();
 		en::SceneManager* sceneManager = SceneManager::Get();
-		re::RenderManager* renderManager = RenderManager::Get();
+		re::RenderManager* renderManager = re::RenderManager::Get();
 
 		// Process any events that might have occurred during startup:
 		eventManager->Update(m_frameNum, 0.0);
@@ -121,8 +109,8 @@ namespace en
 		// Initialize game loop timing:
 		double elapsed = (double)m_fixedTimeStep; // Ensure we pump Updates once before the 1st render
 
-		PerformanceTimer outerLoopTimer;
-		PerformanceTimer innerLoopTimer;
+		util::PerformanceTimer outerLoopTimer;
+		util::PerformanceTimer innerLoopTimer;
 		double lastOuterFrameTime = 0.0;
 
 		while (m_isRunning)
@@ -213,14 +201,14 @@ namespace en
 		
 		// We need to signal the render thread to shut down and wait on it to complete before we can start destroying
 		// anything it might be using
-		RenderManager::Get()->ThreadShutdown();
+		re::RenderManager::Get()->ThreadShutdown();
 
 		// Note: Shutdown order matters!
 		InputManager::Get()->Shutdown();
 
 		SceneManager::Get()->Shutdown();
 
-		GameplayManager::Get()->Shutdown(); // TODO: This should happen BEFORE RenderManager ThreadShutdown
+		fr::GameplayManager::Get()->Shutdown(); // TODO: This should happen BEFORE RenderManager ThreadShutdown
 
 		EventManager::Get()->Shutdown();
 		LogManager::Get()->Shutdown();

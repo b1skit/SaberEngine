@@ -61,7 +61,7 @@ namespace re
 		struct BatchTextureAndSamplerInput
 		{
 			std::string m_shaderName;
-			std::shared_ptr<re::Texture> m_texture;
+			re::Texture const* m_texture;
 			std::shared_ptr<re::Sampler> m_sampler;
 
 			uint32_t m_srcMip = re::Texture::k_allMips;
@@ -118,7 +118,7 @@ namespace re
 
 		void AddTextureAndSamplerInput(
 			std::string const& shaderName, 
-			std::shared_ptr<re::Texture>, 
+			re::Texture const*, 
 			std::shared_ptr<re::Sampler>, 
 			uint32_t srcMip = re::Texture::k_allMips);
 		std::vector<BatchTextureAndSamplerInput> const& GetTextureAndSamplerInputs() const;

@@ -63,7 +63,7 @@ namespace re
 		struct RenderStageTextureAndSamplerInput
 		{
 			std::string m_shaderName;
-			std::shared_ptr<Texture> m_texture;
+			re::Texture const* m_texture;
 			std::shared_ptr<Sampler> m_sampler;
 
 			uint32_t m_srcMip = re::Texture::k_allMips;
@@ -100,6 +100,11 @@ namespace re
 		std::shared_ptr<re::TextureTargetSet const> GetTextureTargetSet() const;
 		void SetTextureTargetSet(std::shared_ptr<re::TextureTargetSet> targetSet);
 
+		void AddTextureInput(
+			std::string const& shaderName,
+			re::Texture const*,
+			std::shared_ptr<re::Sampler>,
+			uint32_t mipLevel = re::Texture::k_allMips);
 		void AddTextureInput(
 			std::string const& shaderName, 
 			std::shared_ptr<re::Texture>, 

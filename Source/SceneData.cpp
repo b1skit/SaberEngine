@@ -1,15 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
-#pragma warning(disable : 4996) // Suppress error C4996 (Caused by use of fopen, strcpy, strncpy in cgltf.h)
-#define CGLTF_IMPLEMENTATION
-#include "cgltf.h"
-
 #include "Assert.h"
 #include "AssetLoadUtils.h"
 #include "Camera.h"
 #include "Config.h"
 #include "CoreEngine.h"
 #include "GameplayManager.h"
-#include "Light.h"
+#include "LightComponent.h"
 #include "MaterialComponent.h"
 #include "Material_GLTF.h"
 #include "MeshConcept.h"
@@ -24,6 +20,10 @@
 #include "ThreadSafeVector.h"
 #include "Transform.h"
 #include "VertexStreamBuilder.h"
+
+#pragma warning(disable : 4996) // Suppress error C4996 (Caused by use of fopen, strcpy, strncpy in cgltf.h)
+#define CGLTF_IMPLEMENTATION
+#include "cgltf.h"
 
 
 namespace
@@ -437,6 +437,7 @@ namespace
 
 		LOG("Found light \"%s\"", lightName.c_str());
 
+		// GLTF only supports direction, point, and spot light types
 		fr::Light::LightType lightType = fr::Light::LightType::LightType_Count;
 		switch (current->light->type)
 		{
@@ -476,15 +477,8 @@ namespace
 			attachShadow = false; // No point rendering shadows for non-contributing lights
 		}
 		
-		// Note: Lights self-add themselves to the scene, no need to manually call scene.AddLight
-		std::shared_ptr<fr::Light> newLight;
 		switch (lightType)
 		{
-		case fr::Light::LightType::AmbientIBL_Deferred:
-		{
-			fr::Light::CreateAmbientLight(lightName);
-		}
-		break;
 		case fr::Light::LightType::Directional_Deferred:
 		{
 			fr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
@@ -539,9 +533,6 @@ namespace
 		}
 		SEAssert("Missing IBL texture. Per scene IBLs must be placed at <sceneRoot>\\IBL\\ibl.hdr; A default fallback "
 			"must exist at Assets\\DefaultIBL\\ibl.hdr", iblTexture != nullptr);
-
-		// Create the ambient light:
-		fr::Light::CreateAmbientLight("AmbientLight");
 	}
 
 
@@ -1062,7 +1053,6 @@ namespace fr
 
 	SceneData::SceneData(std::string const& sceneName)
 		: NamedObject(sceneName)
-		, m_ambientLight(nullptr)
 		, m_keyLight(nullptr)
 		, m_finishedLoading(false)
 	{
@@ -1111,10 +1101,6 @@ namespace fr
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_shadersReadWriteMutex);
 			m_shaders.clear();
-		}
-		{
-			std::unique_lock<std::shared_mutex> writeLock(m_ambientLightReadWriteMutex);
-			m_ambientLight = nullptr;
 		}
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_keyLightReadWriteMutex);
@@ -1167,9 +1153,7 @@ namespace fr
 		{
 		case fr::Light::AmbientIBL_Deferred:
 		{
-			std::unique_lock<std::shared_mutex> writeLock(m_ambientLightReadWriteMutex);
-			SEAssert("Ambient light already exists, cannot have 2 ambient lights", m_ambientLight == nullptr);
-			m_ambientLight = newLight;
+			SEAssertF("DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		}
 		break;
 		case fr::Light::Directional_Deferred:
@@ -1195,12 +1179,6 @@ namespace fr
 	}
 
 
-	std::shared_ptr<fr::Light> const SceneData::GetAmbientLight() const
-	{
-		return m_ambientLight;
-	}
-
-
 	std::shared_ptr<fr::Light> SceneData::GetKeyLight() const
 	{
 		return m_keyLight;
@@ -1213,8 +1191,9 @@ namespace fr
 	}
 
 
-	std::shared_ptr<re::Texture> SceneData::GetIBLTexture() const
+	re::Texture const* SceneData::GetIBLTexture() const
 	{
+		// We search for a scene-specific IBL, and fallback to the engine default IBL if it's not found
 		std::shared_ptr<re::Texture> iblTexture = nullptr;
 		std::string sceneIBLPath;
 		bool result = en::Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_sceneIBLPathKey, sceneIBLPath);
@@ -1226,10 +1205,10 @@ namespace fr
 		if (!iblTexture)
 		{
 			const std::string defaultIBLPath = en::Config::Get()->GetValue<std::string>("defaultIBLPath");
-			iblTexture = GetTexture(defaultIBLPath); // Will exist
+			iblTexture = GetTexture(defaultIBLPath); // Guaranteed to exist
 		}
 
-		return iblTexture;
+		return iblTexture.get();
 	}
 
 

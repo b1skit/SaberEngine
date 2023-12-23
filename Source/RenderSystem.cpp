@@ -34,6 +34,12 @@ namespace re
 	}
 
 
+	void RenderSystem::ExecuteInitializePipeline()
+	{
+		m_initializePipeline(this);
+	}
+
+
 	void RenderSystem::ExecuteCreatePipeline()
 	{
 		m_createPipeline(this);

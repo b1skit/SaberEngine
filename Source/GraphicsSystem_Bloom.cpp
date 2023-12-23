@@ -107,7 +107,7 @@ namespace gr
 		// Emissive blit texture inputs:
 		m_emissiveBlitStage->AddTextureInput(
 			"Tex0",
-			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(GBufferGraphicsSystem::GBufferEmissive).GetTexture(),
+			gbufferGS->GetFinalTextureTargetSet()->GetColorTarget(GBufferGraphicsSystem::GBufferEmissive).GetTexture().get(),
 			bloomSampler);
 
 		// Additively blit the emissive values to the deferred lighting target:

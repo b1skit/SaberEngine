@@ -10,12 +10,17 @@ namespace gr
 	class RenderDataComponent;
 }
 
+namespace re
+{
+	class Texture;
+}
+
 namespace fr
 {
 	class LightComponent
 	{
 	public:
-		static LightComponent& CreateDeferredAmbientLightConcept(char const* name);
+		static LightComponent& CreateDeferredAmbientLightConcept(re::Texture const* iblTex);
 
 		static LightComponent& AttachDeferredPointLightConcept(
 			entt::entity, char const* name, glm::vec4 colorIntensity, bool hasShadow);
@@ -31,6 +36,8 @@ namespace fr
 		gr::LightID GetRenderDataID() const;
 		gr::LightID GetTransformID() const;
 
+		fr::Light& GetLight();
+
 
 	private:
 		const gr::LightID m_lightID;
@@ -45,7 +52,11 @@ namespace fr
 		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
 	public:
 		LightComponent(PrivateCTORTag, gr::RenderDataComponent const&, fr::Light::LightType, glm::vec4 colorIntensity);
-		LightComponent(PrivateCTORTag, gr::RenderDataComponent const&, fr::Light::LightType = fr::Light::LightType::AmbientIBL_Deferred); // Ambient light only
+		LightComponent(
+			PrivateCTORTag, 
+			gr::RenderDataComponent const&,
+			re::Texture const* iblTex,
+			const fr::Light::LightType = fr::Light::LightType::AmbientIBL_Deferred); // Ambient light only
 
 
 	private: // Static LightID functionality:
@@ -91,5 +102,11 @@ namespace fr
 	inline gr::LightID LightComponent::GetTransformID() const
 	{
 		return m_transformID;
+	}
+
+
+	inline fr::Light& LightComponent::GetLight()
+	{
+		return m_light;
 	}
 }

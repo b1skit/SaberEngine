@@ -55,7 +55,7 @@ namespace re
 				{
 					AddTextureAndSamplerInput(
 						material->GetTexureSlotDescs()[i].m_shaderSamplerName,
-						material->GetTexureSlotDescs()[i].m_texture,
+						material->GetTexureSlotDescs()[i].m_texture.get(),
 						material->GetTexureSlotDescs()[i].m_samplerObject);
 				}				
 			}
@@ -122,7 +122,7 @@ namespace re
 				{
 					AddTextureAndSamplerInput(
 						materialRenderData->m_material->GetTexureSlotDescs()[i].m_shaderSamplerName,
-						materialRenderData->m_material->GetTexureSlotDescs()[i].m_texture,
+						materialRenderData->m_material->GetTexureSlotDescs()[i].m_texture.get(),
 						materialRenderData->m_material->GetTexureSlotDescs()[i].m_samplerObject);
 				}
 			}
@@ -175,7 +175,7 @@ namespace re
 				{
 					AddTextureAndSamplerInput(
 						material->GetTexureSlotDescs()[i].m_shaderSamplerName,
-						material->GetTexureSlotDescs()[i].m_texture,
+						material->GetTexureSlotDescs()[i].m_texture.get(),
 						material->GetTexureSlotDescs()[i].m_samplerObject);
 				}
 			}
@@ -289,7 +289,7 @@ namespace re
 
 	void Batch::AddTextureAndSamplerInput(
 		std::string const& shaderName, 
-		std::shared_ptr<re::Texture> texture, 
+		re::Texture const* texture,
 		std::shared_ptr<re::Sampler> sampler, 
 		uint32_t srcMip /*= re::Texture::k_allMips*/)
 	{

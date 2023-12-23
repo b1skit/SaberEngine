@@ -10,13 +10,6 @@ namespace re
 	class RenderSystem : public virtual en::NamedObject
 	{
 	public:
-		struct PipelineLambdas
-		{
-			std::function<void()> m_createPipeline;
-			std::function<void()> m_updatePipeline;
-		};
-
-	public:
 		[[nodiscard]] static std::unique_ptr<RenderSystem> Create(std::string const& name);
 		
 		void Destroy();
@@ -25,6 +18,9 @@ namespace re
 
 		RenderSystem(RenderSystem&&) = default;
 		RenderSystem& operator=(RenderSystem&&) = default;
+
+		void SetInitializePipeline(std::function<void(re::RenderSystem*)>);
+		void ExecuteInitializePipeline();
 
 		void SetCreatePipeline(std::function<void(re::RenderSystem*)>);
 		void ExecuteCreatePipeline();
@@ -43,6 +39,7 @@ namespace re
 		gr::GraphicsSystemManager m_graphicsSystemManager;
 
 		re::RenderPipeline m_renderPipeline;
+		std::function<void(re::RenderSystem*)> m_initializePipeline;
 		std::function<void(re::RenderSystem*)> m_createPipeline;
 		std::function<void(re::RenderSystem*)> m_updatePipeline;
 
@@ -56,6 +53,12 @@ namespace re
 		RenderSystem(RenderSystem const&) = delete;
 		RenderSystem& operator=(RenderSystem const&) = delete;
 	};
+
+
+	inline void RenderSystem::SetInitializePipeline(std::function<void(re::RenderSystem*)> initializePipeline)
+	{
+		m_initializePipeline = initializePipeline;
+	}
 
 
 	inline void RenderSystem::SetCreatePipeline(std::function<void(re::RenderSystem*)> createPipeline)

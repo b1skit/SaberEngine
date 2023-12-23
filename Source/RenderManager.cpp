@@ -167,7 +167,17 @@ namespace re
 		platform::RenderManager::Initialize(*this);
 		SEEndCPUEvent();
 
-		// Create each render system system in turn:
+		// Initialize each render system system in turn:
+		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+		{
+			renderSystem->ExecuteInitializePipeline();
+		}
+
+		// Process render commands issued during scene loading
+		m_renderCommandManager.SwapBuffers();
+		m_renderCommandManager.Execute();
+
+		// Create each of the render system's graphics systems
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
 			renderSystem->ExecuteCreatePipeline();
@@ -514,7 +524,7 @@ namespace re
 		m_renderBatches.clear();
 
 		m_renderBatches = std::move(re::BatchManager::BuildBatches(
-			m_renderSystems[0]->GetGraphicsSystemManager().CreateRenderData()));
+			m_renderSystems[0]->GetGraphicsSystemManager().GetRenderData()));
 	}
 
 
@@ -606,11 +616,14 @@ namespace re
 		if (ImGui::CollapsingHeader("Lights:", ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
-			std::shared_ptr<fr::Light> const ambientLight = en::SceneManager::GetSceneData()->GetAmbientLight();
+			
+			// ECS_CONVERSION: TODO: RESTORE THIS FUNCTIONALITY
+
+			/*std::shared_ptr<fr::Light> const ambientLight = en::SceneManager::GetSceneData()->GetAmbientLight();
 			if (ambientLight)
 			{
 				ambientLight->ShowImGuiWindow();
-			}
+			}*/
 
 			std::shared_ptr<fr::Light> const directionalLight = en::SceneManager::GetSceneData()->GetKeyLight();
 			if (directionalLight)

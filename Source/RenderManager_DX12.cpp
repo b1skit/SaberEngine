@@ -51,8 +51,8 @@ namespace dx12
 		renderManager.m_renderSystems.emplace_back(re::RenderSystem::Create("Default DX12 RenderSystem"));
 		re::RenderSystem* defaultRenderSystem = renderManager.m_renderSystems.back().get();
 
-		// Build the default render system create pipeline:
-		auto DefaultRenderSystemCreatePipeline = [](re::RenderSystem* defaultRS)
+		// Build the default render system initialization pipeline:
+		auto DefaultRenderSystemInititialzePipeline = [](re::RenderSystem* defaultRS)
 		{
 			gr::GraphicsSystemManager& gsm = defaultRS->GetGraphicsSystemManager();
 
@@ -85,6 +85,24 @@ namespace dx12
 
 			std::shared_ptr<gr::DebugGraphicsSystem> debugGS = std::make_shared<gr::DebugGraphicsSystem>(&gsm);
 			graphicsSystems.emplace_back(debugGS);
+		};
+		defaultRenderSystem->SetInitializePipeline(DefaultRenderSystemInititialzePipeline);
+
+
+		// Build the default render system create pipeline:
+		auto DefaultRenderSystemCreatePipeline = [](re::RenderSystem* defaultRS)
+		{
+			gr::GraphicsSystemManager& gsm = defaultRS->GetGraphicsSystemManager();
+
+			// Get our GraphicsSystems:
+			gr::ComputeMipsGraphicsSystem* computeMipsGS = gsm.GetGraphicsSystem<gr::ComputeMipsGraphicsSystem>();
+			gr::GBufferGraphicsSystem* gbufferGS = gsm.GetGraphicsSystem<gr::GBufferGraphicsSystem>();
+			gr::ShadowsGraphicsSystem* shadowGS = gsm.GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
+			gr::DeferredLightingGraphicsSystem* deferredLightingGS = gsm.GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
+			gr::SkyboxGraphicsSystem* skyboxGS = gsm.GetGraphicsSystem<gr::SkyboxGraphicsSystem>();
+			gr::BloomGraphicsSystem* bloomGS = gsm.GetGraphicsSystem<gr::BloomGraphicsSystem>();
+			gr::TonemappingGraphicsSystem* tonemappingGS = gsm.GetGraphicsSystem<gr::TonemappingGraphicsSystem>();
+			gr::DebugGraphicsSystem* debugGS = gsm.GetGraphicsSystem<gr::DebugGraphicsSystem>();
 
 			// Build the creation pipeline:
 			computeMipsGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(computeMipsGS->GetName()));
@@ -482,7 +500,7 @@ namespace dx12
 								SEAssert("We don't currently handle batches with the current depth buffer attached as "
 									"a texture input. We need to make sure the transitions are handled correctly", 
 									!stageTargets->HasDepthTarget() || 
-									texSamplerInput.m_texture != stageTargets->GetDepthStencilTarget()->GetTexture());
+									texSamplerInput.m_texture != stageTargets->GetDepthStencilTarget()->GetTexture().get());
 
 								currentCommandList->SetTexture(
 									texSamplerInput.m_shaderName,

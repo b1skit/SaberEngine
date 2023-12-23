@@ -489,7 +489,7 @@ namespace opengl
 	void Shader::SetUniform(
 		re::Shader const& shader,
 		string const& uniformName,
-		void* value, 
+		void const* value, 
 		opengl::Shader::UniformType const type, 
 		int const count)
 	{
@@ -512,31 +512,31 @@ namespace opengl
 		{
 		case opengl::Shader::UniformType::Matrix4x4f:
 		{
-			glUniformMatrix4fv(uniformID, count, GL_FALSE, (GLfloat const*)value);
+			glUniformMatrix4fv(uniformID, count, GL_FALSE, static_cast<GLfloat const*>(value));
 		}
 		break;
 
 		case opengl::Shader::UniformType::Matrix3x3f:
 		{
-			glUniformMatrix3fv(uniformID, count, GL_FALSE, (GLfloat const*)value);
+			glUniformMatrix3fv(uniformID, count, GL_FALSE, static_cast<GLfloat const*>(value));
 		}
 		break;
 
 		case opengl::Shader::UniformType::Vec3f:
 		{
-			glUniform3fv(uniformID, count, (GLfloat const*)value);
+			glUniform3fv(uniformID, count, static_cast<GLfloat const*>(value));
 		}
 		break;
 
 		case opengl::Shader::UniformType::Vec4f:
 		{
-			glUniform4fv(uniformID, count, (GLfloat const*)value);
+			glUniform4fv(uniformID, count, static_cast<GLfloat const*>(value));
 		}
 		break;
 
 		case opengl::Shader::UniformType::Float:
 		{
-			glUniform1f(uniformID, *(GLfloat const*)value);
+			glUniform1f(uniformID, *static_cast<GLfloat const*>(value));
 		}
 		break;
 
@@ -558,7 +558,7 @@ namespace opengl
 				return;
 			}
 
-			opengl::Texture::Bind(*static_cast<re::Texture*>(value), bindingUnit->second);
+			opengl::Texture::Bind(*static_cast<re::Texture const*>(value), bindingUnit->second);
 		}
 		break;
 		case opengl::Shader::UniformType::Sampler:
@@ -574,7 +574,7 @@ namespace opengl
 				return;
 			}
 
-			opengl::Sampler::Bind(*static_cast<re::Sampler*>(value), bindingUnit->second);
+			opengl::Sampler::Bind(*static_cast<re::Sampler const*>(value), bindingUnit->second);
 		}
 		break;
 		default:
@@ -691,13 +691,13 @@ namespace opengl
 	void Shader::SetTextureAndSampler(
 		re::Shader const& shader,
 		std::string const& uniformName, 
-		std::shared_ptr<re::Texture> texture,
+		re::Texture const* texture,
 		std::shared_ptr<re::Sampler>sampler,
 		uint32_t subresource)
 	{
 		// Note: We don't currently use the subresource index here; OpenGL doesn't allow us to be so specific
 
-		opengl::Shader::SetUniform(shader, uniformName, texture.get(), opengl::Shader::UniformType::Texture, 1);
+		opengl::Shader::SetUniform(shader, uniformName, texture, opengl::Shader::UniformType::Texture, 1);
 		opengl::Shader::SetUniform(shader, uniformName, sampler.get(), opengl::Shader::UniformType::Sampler, 1);
 	}
 }

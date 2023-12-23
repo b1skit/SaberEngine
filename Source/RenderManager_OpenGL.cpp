@@ -71,10 +71,10 @@ namespace opengl
 	void RenderManager::Initialize(re::RenderManager& renderManager)
 	{
 		renderManager.m_renderSystems.emplace_back(re::RenderSystem::Create("Default OpenGL RenderSystem"));
-		re::RenderSystem* defaultRenderSystem = renderManager.m_renderSystems.back().get();	
+		re::RenderSystem* defaultRenderSystem = renderManager.m_renderSystems.back().get();
 
-		// Build the create pipeline:
-		auto CreatePipeline = [](re::RenderSystem* defaultRS)
+		// Build the initialization pipeline:
+		auto InitializePipeline = [](re::RenderSystem* defaultRS)
 		{
 			gr::GraphicsSystemManager& gsm = defaultRS->GetGraphicsSystemManager();
 
@@ -102,6 +102,23 @@ namespace opengl
 
 			std::shared_ptr<gr::DebugGraphicsSystem> debugGS = std::make_shared<gr::DebugGraphicsSystem>(&gsm);
 			graphicsSystems.emplace_back(debugGS);
+		};
+		defaultRenderSystem->SetInitializePipeline(InitializePipeline);
+
+
+		// Build the create pipeline:
+		auto CreatePipeline = [](re::RenderSystem* defaultRS)
+		{
+			gr::GraphicsSystemManager& gsm = defaultRS->GetGraphicsSystemManager();
+
+			// Get our GraphicsSystems:
+			gr::GBufferGraphicsSystem* gbufferGS = gsm.GetGraphicsSystem<gr::GBufferGraphicsSystem>();
+			gr::ShadowsGraphicsSystem* shadowGS = gsm.GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
+			gr::DeferredLightingGraphicsSystem* deferredLightingGS = gsm.GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
+			gr::SkyboxGraphicsSystem* skyboxGS = gsm.GetGraphicsSystem<gr::SkyboxGraphicsSystem>();
+			gr::BloomGraphicsSystem* bloomGS = gsm.GetGraphicsSystem<gr::BloomGraphicsSystem>();
+			gr::TonemappingGraphicsSystem* tonemappingGS = gsm.GetGraphicsSystem<gr::TonemappingGraphicsSystem>();
+			gr::DebugGraphicsSystem* debugGS = gsm.GetGraphicsSystem<gr::DebugGraphicsSystem>();
 
 			// Build the creation pipeline:
 			deferredLightingGS->CreateResourceGenerationStages(

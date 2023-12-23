@@ -80,7 +80,7 @@ namespace dx12
 			uint32_t rootParamIdx, uint32_t count, void const* srcData, uint32_t dstOffset) const;
 
 		void SetTexture(
-			std::string const& shaderName, std::shared_ptr<re::Texture>, uint32_t srcMip, bool skipTransition);
+			std::string const& shaderName, re::Texture const*, uint32_t srcMip, bool skipTransition);
 
 		void SetRenderTargets(re::TextureTargetSet const&, bool readOnlyDepth);
 		void SetComputeTargets(re::TextureTargetSet const&);
@@ -98,7 +98,7 @@ namespace dx12
 		void Dispatch(glm::uvec3 const& numThreads);
 
 		// TODO: Implement a "resource" interface if/when we need to transition more than just Textures
-		void TransitionResource(std::shared_ptr<re::Texture>, D3D12_RESOURCE_STATES to, uint32_t mipLevel);
+		void TransitionResource(re::Texture const*, D3D12_RESOURCE_STATES to, uint32_t mipLevel);
 		void ResourceBarrier(uint32_t numBarriers, D3D12_RESOURCE_BARRIER const* barriers);
 
 		CommandListType GetCommandListType() const;

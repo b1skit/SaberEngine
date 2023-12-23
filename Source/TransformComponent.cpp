@@ -8,7 +8,8 @@
 
 namespace fr
 {
-	std::atomic<gr::TransformID> TransformComponent::s_transformIDs = 0;
+	// gr::k_sharedIdentityTransformID == 0, so we start at 1
+	std::atomic<gr::TransformID> TransformComponent::s_transformIDs = gr::k_sharedIdentityTransformID + 1;
 
 
 	gr::Transform::RenderData TransformComponent::CreateRenderData(fr::Transform& transform)
