@@ -26,7 +26,7 @@ namespace fr
 		SEAssert("Cannot attach a null material", sceneMaterial != nullptr);
 		SEAssert("Attempting to attach a Material component without a MeshPrimitiveComponent. This (currently) doesn't "
 			"make sense",
-			fr::Relationship::IsInHierarchyAbove<fr::MeshPrimitive::MeshPrimitiveComponent>(meshPrimitiveConcept));
+			gpm.IsInHierarchyAbove<fr::MeshPrimitive::MeshPrimitiveComponent>(meshPrimitiveConcept));
 
 		entt::entity materialEntity = gpm.CreateEntity(sceneMaterial->GetName());
 
@@ -35,7 +35,7 @@ namespace fr
 			gpm.EmplaceComponent<fr::Material::MaterialComponent>(materialEntity, sceneMaterial.get());
 
 		// Relate the material to the owning mesh primitive:
-		fr::Relationship& materialRelationship = fr::Relationship::AttachRelationshipComponent(gpm, materialEntity);
+		fr::Relationship& materialRelationship = gpm.GetComponent<fr::Relationship>(materialEntity);
 		materialRelationship.SetParent(gpm, meshPrimitiveConcept);
 
 		gr::RenderDataComponent const& meshPrimRenderData =

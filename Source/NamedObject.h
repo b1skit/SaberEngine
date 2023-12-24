@@ -7,12 +7,15 @@ namespace en
 {
 	class NamedObject
 	{
+	public:
+		static constexpr size_t k_maxNameLength = 260; // Windows MAX_PATH = 260 chars, including null terminator
+
 	public: 
 		virtual ~NamedObject() = 0;
 
 	public:
-		explicit NamedObject(std::string const& name);
 		explicit NamedObject(char const* name);
+		explicit NamedObject(std::string const& name);
 
 		// m_name as supplied at construction
 		std::string const& GetName() const;
@@ -34,7 +37,7 @@ namespace en
 		
 
 	private:
-		inline void ComputeUniqueID();
+		inline void AssignUniqueID();
 
 	private:
 		std::string m_name;
@@ -47,23 +50,19 @@ namespace en
 	};
 
 
-	inline NamedObject::NamedObject(std::string const& name)
-	{
-		SEAssert("Empty name strings are not allowed", !name.empty());
-
-		SetName(name);
-		ComputeUniqueID();
-	}
-
-
 	inline NamedObject::NamedObject(char const* name)
 	{
-		constexpr size_t k_maxNameLength = 260; // Windows MAX_PATH = 260 chars, including null terminator
 		SEAssert("Empty, null, or non-terminated name strings are not allowed", 
 			strnlen_s(name, k_maxNameLength) > 0 && strnlen_s(name, k_maxNameLength) < k_maxNameLength);
 
 		SetName(name);
-		ComputeUniqueID();
+		AssignUniqueID();
+	}
+
+
+	inline NamedObject::NamedObject(std::string const& name)
+		: NamedObject(name.c_str())
+	{
 	}
 
 
@@ -106,14 +105,11 @@ namespace en
 	}
 
 
-	void NamedObject::ComputeUniqueID()
+	void NamedObject::AssignUniqueID()
 	{
-		// Hash the name and a unique digit; Will be unique for all objects regardless of their name
-		static std::atomic<uint64_t> objectIDs = 0;
-		const uint64_t thisObjectID = objectIDs.fetch_add(1);
-		const std::string hashString = m_name + std::to_string(thisObjectID);
-		m_uniqueID = std::hash<std::string>{}(hashString);
-		// TODO: No need to hash this - A simple monotonically-increasing uint64_t is guaranteed to be unique
+		// We assign a simple monotonically-increasing value as a unique identifier
+		static std::atomic<uint64_t> s_uniqueIDs = 0;
+		m_uniqueID = s_uniqueIDs.fetch_add(1);
 	}
 
 

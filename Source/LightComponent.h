@@ -20,15 +20,25 @@ namespace fr
 	class LightComponent
 	{
 	public:
+		struct AmbientIBLDeferredMarker {};
+		struct PointDeferredMarker {};
+		struct DirectionalDeferredMarker {};
+		struct HasShadowMarker {};
+
+	public:
 		static LightComponent& CreateDeferredAmbientLightConcept(re::Texture const* iblTex);
 
 		static LightComponent& AttachDeferredPointLightConcept(
-			entt::entity, char const* name, glm::vec4 colorIntensity, bool hasShadow);
+			entt::entity, char const* name, glm::vec4 const& colorIntensity, bool hasShadow);
+		static LightComponent& AttachDeferredPointLightConcept(
+			entt::entity, std::string const& name, glm::vec4 const& colorIntensity, bool hasShadow);
 
 		static LightComponent& AttachDeferredDirectionalLightConcept(
 			entt::entity, char const* name, glm::vec4 colorIntensity, bool hasShadow);
+		static LightComponent& AttachDeferredDirectionalLightConcept(
+			entt::entity, std::string const& name, glm::vec4 colorIntensity, bool hasShadow);
 
-		static gr::Light::RenderData CreateRenderData(fr::LightComponent const&);
+		static gr::Light::RenderData CreateRenderData(fr::NameComponent const&, fr::LightComponent const&);
 
 
 	public:
@@ -37,6 +47,7 @@ namespace fr
 		gr::LightID GetTransformID() const;
 
 		fr::Light& GetLight();
+		fr::Light const& GetLight() const;
 
 
 	private:
@@ -46,12 +57,18 @@ namespace fr
 
 	private:
 		fr::Light m_light;
+		const bool m_hasShadow;
 
 
 	private: // Use the static creation factories
 		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
 	public:
-		LightComponent(PrivateCTORTag, gr::RenderDataComponent const&, fr::Light::LightType, glm::vec4 colorIntensity);
+		LightComponent(
+			PrivateCTORTag, 
+			gr::RenderDataComponent const&, 
+			fr::Light::LightType, 
+			glm::vec4 colorIntensity,
+			bool hasShadow);
 		LightComponent(
 			PrivateCTORTag, 
 			gr::RenderDataComponent const&,
@@ -70,7 +87,7 @@ namespace fr
 	class UpdateLightDataRenderCommand
 	{
 	public:
-		UpdateLightDataRenderCommand(LightComponent const&);
+		UpdateLightDataRenderCommand(fr::NameComponent const&, LightComponent const&);
 
 		static void Execute(void*);
 		static void Destroy(void*);
@@ -106,6 +123,12 @@ namespace fr
 
 
 	inline fr::Light& LightComponent::GetLight()
+	{
+		return m_light;
+	}
+
+
+	inline fr::Light const& LightComponent::GetLight() const
 	{
 		return m_light;
 	}

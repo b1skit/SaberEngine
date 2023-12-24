@@ -41,14 +41,17 @@ namespace
 
 		return deferredMeshRadius;
 	}
+}
 
 
-	void ConfigurePointLightMeshScale(fr::Light* pointLight)
+namespace fr
+{
+	void Light::ConfigurePointLightMeshScale(fr::Light& light, fr::Transform& transform, fr::Camera* shadowCam)
 	{
-		SEAssert("Light is not a point light", pointLight->GetType() == fr::Light::LightType::Point_Deferred);
+		SEAssert("Light is not a point light", light.GetType() == fr::Light::LightType::Point_Deferred);
 
 		fr::Light::TypeProperties& lightProperties = 
-			pointLight->AccessLightTypeProperties(fr::Light::LightType::Point_Deferred);
+			light.GetLightTypePropertiesForModification(fr::Light::LightType::Point_Deferred);
 
 		const float newDeferredMeshRadius = ComputePointLightMeshRadiusScaleFromIntensity(
 			lightProperties.m_point.m_colorIntensity.a,
@@ -56,40 +59,13 @@ namespace
 			lightProperties.m_point.m_intensityCuttoff);
 
 		// Scale the owning transform such that a sphere created with a radius of 1 will be the correct size
-		lightProperties.m_point.m_ownerTransform->SetLocalScale(
-			glm::vec3(newDeferredMeshRadius, newDeferredMeshRadius, newDeferredMeshRadius));
-	}
-}
+		transform.SetLocalScale(glm::vec3(newDeferredMeshRadius, newDeferredMeshRadius, newDeferredMeshRadius));
 
-
-namespace fr
-{
-	std::shared_ptr<fr::Light> Light::CreateAmbientLight(std::string const& name)
-	{
-		std::shared_ptr<fr::Light> newAmbientLight;
-		newAmbientLight.reset(new fr::Light(name, nullptr, Light::AmbientIBL_Deferred, glm::vec4(1.f, 0.f, 1.f, 1.f), false));
-		en::SceneManager::GetSceneData()->AddLight(newAmbientLight);
-		return newAmbientLight;
-	}
-
-
-	std::shared_ptr<fr::Light> Light::CreateDirectionalLight(
-		std::string const& name, fr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow)
-	{
-		std::shared_ptr<fr::Light> newDirectionalLight;
-		newDirectionalLight.reset(new fr::Light(name, ownerTransform, Light::Directional_Deferred, colorIntensity, hasShadow));
-		en::SceneManager::GetSceneData()->AddLight(newDirectionalLight);
-		return newDirectionalLight;
-	}
-
-
-	std::shared_ptr<fr::Light> Light::CreatePointLight(
-		std::string const& name, fr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow)
-	{
-		std::shared_ptr<fr::Light> newPointLight;
-		newPointLight.reset(new fr::Light(name, ownerTransform, Light::Point_Deferred, colorIntensity, hasShadow));
-		en::SceneManager::GetSceneData()->AddLight(newPointLight);
-		return newPointLight;
+		// Update the shadow camera far plane distance using the mesh radius
+		if (shadowCam)
+		{
+			shadowCam->SetNearFar({ 0.1f, newDeferredMeshRadius });
+		}
 	}
 
 
@@ -103,37 +79,8 @@ namespace fr
 	}
 
 
-	Light::TypeProperties::~TypeProperties()
-	{
-		switch (m_type)
-		{
-		case fr::Light::LightType::AmbientIBL_Deferred:
-		{
-			m_ambient.m_IBLTex = nullptr;
-		}
-		break;
-		case fr::Light::LightType::Directional_Deferred:
-		{
-			m_directional.m_ownerTransform = nullptr;
-			m_directional.m_shadowMap = nullptr;
-			m_directional.m_screenAlignedQuad = nullptr;
-		}
-		break;
-		case fr::Light::LightType::Point_Deferred:
-		{
-			m_point.m_ownerTransform = nullptr;
-			m_point.m_sphereMeshPrimitive = nullptr;
-			m_point.m_cubeShadowMap = nullptr;
-		}
-		break;
-		default: SEAssertF("Invalid light type");
-		}
-	}
-
-
-	Light::Light(
-		std::string const& name, fr::Transform* ownerTransform, LightType lightType, glm::vec4 colorIntensity, bool hasShadow)
-		: en::NamedObject(name)
+	Light::Light(LightType lightType,  glm::vec4 const& colorIntensity)
+		: m_isDirty(true)
 	{
 		m_typeProperties.m_type = lightType;
 
@@ -141,65 +88,14 @@ namespace fr
 		{
 		case Directional_Deferred:
 		{
-			m_typeProperties.m_directional.m_ownerTransform = ownerTransform;
 			m_typeProperties.m_directional.m_colorIntensity = colorIntensity;
-
-			m_typeProperties.m_directional.m_screenAlignedQuad = 
-				gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
-
-			m_typeProperties.m_directional.m_shadowMap = nullptr;
-			if (hasShadow)
-			{
-				const uint32_t shadowMapRes = en::Config::Get()->GetValue<int>("defaultShadowMapRes");
-				m_typeProperties.m_directional.m_shadowMap = std::make_unique<fr::ShadowMap>(
-					GetName(),
-					shadowMapRes,
-					shadowMapRes,
-					m_typeProperties.m_directional.m_ownerTransform,
-					m_typeProperties.m_type,
-					ownerTransform);
-				// Note: We'll compute the camera config from the scene bounds during the first call to Update(); so
-				// here we just pass a default camera config
-
-				m_typeProperties.m_directional.m_shadowMap->SetMinMaxShadowBias(glm::vec2(
-					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias),
-					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias)));
-			}
 		}
 		break;
 		case Point_Deferred:
 		{
-			m_typeProperties.m_point.m_ownerTransform = ownerTransform;
 			m_typeProperties.m_point.m_colorIntensity = colorIntensity;
-
 			m_typeProperties.m_point.m_emitterRadius = 0.1f;
 			m_typeProperties.m_point.m_intensityCuttoff = 0.05f;
-
-			ConfigurePointLightMeshScale(this);
-			
-			const float deferredMeshRadius = m_typeProperties.m_point.m_ownerTransform->GetLocalScale().x;
-
-			m_typeProperties.m_point.m_sphereMeshPrimitive = gr::meshfactory::CreateSphere(1.0f);
-
-			m_typeProperties.m_point.m_cubeShadowMap = nullptr;
-			if (hasShadow)
-			{
-				const uint32_t cubeMapRes = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_defaultShadowMapResolution);
-
-				m_typeProperties.m_point.m_cubeShadowMap = make_unique<fr::ShadowMap>(
-					GetName(),
-					cubeMapRes,
-					cubeMapRes,
-					m_typeProperties.m_point.m_ownerTransform,
-					m_typeProperties.m_type,
-					ownerTransform);
-
-				m_typeProperties.m_point.m_cubeShadowMap->ShadowCamera()->SetNearFar(glm::vec2(0.1f, deferredMeshRadius));
-
-				m_typeProperties.m_point.m_cubeShadowMap->SetMinMaxShadowBias(glm::vec2(
-					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBias),
-					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMaxShadowBias)));
-			}
 		}
 		break;
 		case AmbientIBL_Deferred:
@@ -213,7 +109,7 @@ namespace fr
 
 
 	Light::Light(re::Texture const* iblTex, LightType lightType)
-		: en::NamedObject("NamedObject LIGHT NAMES ARE DEPRECATED !!!!!!!!!!!!!!!")
+		: m_isDirty(true)
 	{
 		SEAssert("This constructor is only for AmbientIBL_Deferred lights", lightType == LightType::AmbientIBL_Deferred);
 
@@ -224,57 +120,12 @@ namespace fr
 
 	void Light::Destroy()
 	{
-		switch (m_typeProperties.m_type)
-		{
-		case LightType::AmbientIBL_Deferred:
-		{
-			m_typeProperties.m_ambient.m_IBLTex = nullptr;
-		}
-		break;
-		case LightType::Directional_Deferred:
-		{
-			m_typeProperties.m_directional.m_shadowMap = nullptr;
-		}
-		break;
-		case LightType::Point_Deferred:
-		{
-			m_typeProperties.m_point.m_cubeShadowMap = nullptr;
-		}
-		break;
-		default:
-			SEAssertF("Invalid light type");
-		}
+		memset(&m_typeProperties, 0, sizeof(m_typeProperties)); // Just zero everything out		
+		m_isDirty = true;
 	}
 
 
-	void Light::Update(const double stepTimeMs)
-	{
-		switch (m_typeProperties.m_type)
-		{
-		case LightType::AmbientIBL_Deferred:
-		{
-		}
-		break;
-		case LightType::Directional_Deferred:
-		{
-			if (m_typeProperties.m_directional.m_shadowMap && 
-				m_typeProperties.m_directional.m_ownerTransform->HasChanged())
-			{
-				m_typeProperties.m_directional.m_shadowMap->UpdateShadowCameraConfig();
-			}
-		}
-		break;
-		case LightType::Point_Deferred:
-		{
-		}
-		break;
-		default:
-			SEAssertF("Invalid light type");
-		}
-	}
-
-
-	glm::vec4 Light::GetColorIntensity() const
+	glm::vec4 const& Light::GetColorIntensity() const
 	{
 		switch (m_typeProperties.m_type)
 		{
@@ -296,44 +147,47 @@ namespace fr
 		default:
 			SEAssertF("Invalid light type");
 		}
-		return glm::vec4(1.f, 0.f, 1.f, 1.f); // Magenta error color
+		// This shouldn't ever happen, but we need to return something
+		return m_typeProperties.m_point.m_colorIntensity;
 	}
 
 
-	fr::ShadowMap* Light::GetShadowMap() const
+	void Light::SetColorIntensity(glm::vec4 const& colorIntensity)
 	{
 		switch (m_typeProperties.m_type)
 		{
 		case LightType::AmbientIBL_Deferred:
 		{
-			SEAssertF("Ambient lights do not have a shadow map");
+			SEAssertF("Ambient lights don't (current) have a color/intensity value");
 		}
 		break;
 		case LightType::Directional_Deferred:
 		{
-			return m_typeProperties.m_directional.m_shadowMap.get();
+			m_typeProperties.m_directional.m_colorIntensity = colorIntensity;
 		}
 		break;
 		case LightType::Point_Deferred:
 		{
-			return m_typeProperties.m_point.m_cubeShadowMap.get();
+			m_typeProperties.m_point.m_colorIntensity = colorIntensity;
 		}
 		break;
 		default:
 			SEAssertF("Invalid light type");
 		}
-		return nullptr;
+
+		m_isDirty = true;
 	}
 
 
-	Light::TypeProperties& Light::AccessLightTypeProperties(fr::Light::LightType lightType)
+	Light::TypeProperties& Light::GetLightTypePropertiesForModification(fr::Light::LightType lightType)
 	{
 		SEAssert("Trying to access type properties for the wrong type", lightType == m_typeProperties.m_type);
+		m_isDirty = true;
 		return m_typeProperties;
 	}
 
 
-	Light::TypeProperties const& Light::AccessLightTypeProperties(LightType lightType) const
+	Light::TypeProperties const& Light::GetLightTypeProperties(LightType lightType) const
 	{
 		SEAssert("Trying to access type properties for the wrong type", lightType == m_typeProperties.m_type);
 		return m_typeProperties;
@@ -342,6 +196,10 @@ namespace fr
 
 	void Light::ShowImGuiWindow()
 	{
+		// ECS_CONVERSION: TODO Restore this functionality (move it to the deferred lighting GS)
+		// ECS_CONVERSION TODO: Modify the m_isDirty flag here when the settings change
+		
+		/*
 		const uint64_t uniqueID = GetUniqueID();
 
 		auto ShowDebugOptions = [this, &uniqueID]()
@@ -431,22 +289,20 @@ namespace fr
 			case LightType::AmbientIBL_Deferred:
 			{
 				ShowCommonOptions(nullptr);
-
-				// ECS_CONVERSION: TODO Restore this functionality (move it to the deferred lighting GS)
 				
-				//if (ImGui::CollapsingHeader(std::format("IBL Textures##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
-				//{
-				//	ImGui::Indent();
-				//	ImGui::Text("BRDF Integration map: \"%s\"",
-				//		m_typeProperties.m_ambient.m_BRDF_integrationMap->GetName().c_str());
+				if (ImGui::CollapsingHeader(std::format("IBL Textures##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
+				{
+					ImGui::Indent();
+					ImGui::Text("BRDF Integration map: \"%s\"",
+						m_typeProperties.m_ambient.m_BRDF_integrationMap->GetName().c_str());
 
-				//	ImGui::Text("IEM Texture: \"%s\"",
-				//		m_typeProperties.m_ambient.m_IEMTex->GetName().c_str());
+					ImGui::Text("IEM Texture: \"%s\"",
+						m_typeProperties.m_ambient.m_IEMTex->GetName().c_str());
 
-				//	ImGui::Text("PMREM Texture: \"%s\"",
-				//		m_typeProperties.m_ambient.m_PMREMTex->GetName().c_str());
-				//	ImGui::Unindent();
-				//}
+					ImGui::Text("PMREM Texture: \"%s\"",
+						m_typeProperties.m_ambient.m_PMREMTex->GetName().c_str());
+					ImGui::Unindent();
+				}
 			}
 			break;
 			case LightType::Directional_Deferred:
@@ -495,6 +351,8 @@ namespace fr
 
 			ImGui::Unindent();
 		}	
+
+		*/
 	}
 }
 

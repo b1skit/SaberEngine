@@ -625,22 +625,22 @@ namespace re
 				ambientLight->ShowImGuiWindow();
 			}*/
 
-			std::shared_ptr<fr::Light> const directionalLight = en::SceneManager::GetSceneData()->GetKeyLight();
-			if (directionalLight)
-			{
-				directionalLight->ShowImGuiWindow();
-			}
+			//std::shared_ptr<fr::Light> const directionalLight = en::SceneManager::GetSceneData()->GetKeyLight();
+			//if (directionalLight)
+			//{
+			//	directionalLight->ShowImGuiWindow();
+			//}
 
 			if (ImGui::CollapsingHeader("Point Lights:", ImGuiTreeNodeFlags_None))
 			{
-				ImGui::Indent();
-				std::vector<std::shared_ptr<fr::Light>> const& pointLights = 
-					en::SceneManager::GetSceneData()->GetPointLights();
-				for (auto const& light : pointLights)
-				{
-					light->ShowImGuiWindow();
-				}
-				ImGui::Unindent();
+				//ImGui::Indent();
+				//std::vector<std::shared_ptr<fr::Light>> const& pointLights = 
+				//	en::SceneManager::GetSceneData()->GetPointLights();
+				//for (auto const& light : pointLights)
+				//{
+				//	light->ShowImGuiWindow();
+				//}
+				//ImGui::Unindent();
 			}
 			ImGui::Unindent();
 		}

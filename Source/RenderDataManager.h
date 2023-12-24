@@ -7,6 +7,10 @@
 #include "TransformComponent.h"
 
 
+// ECS_CONVERSION TODO: Add a way to track dirty objects
+// -> e.g. Orthographic shadows are recomputed from the scene bounds, but these are unlikely to change frame-to-frame
+// -> e.g. shadow cameras computed from Transforms, but lights are probably not moving frame-to-frame
+
 namespace gr
 {
 	// Render-thread-side scene data. Data is set via the render command queue (on a single thread), and graphics

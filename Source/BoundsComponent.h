@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Bounds.h"
+#include "BoundsRenderData.h"
 
 
 namespace fr
@@ -44,6 +44,7 @@ namespace fr
 
 	public:
 		static BoundsComponent Uninitialized() { return BoundsComponent(); }
+		static BoundsComponent Zero() { return BoundsComponent(PrivateCTORTag{}, glm::vec3(0.f), glm::vec3(0.f)); }
 
 
 		// Returns a new AABB BoundsConcept, transformed from local space using transform

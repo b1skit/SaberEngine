@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "RenderObjectIDs.h"
+#include "NameComponent.h"
 
 
 namespace re
@@ -34,6 +35,8 @@ namespace gr
 			gr::RenderDataID m_renderDataID;
 			gr::TransformID m_transformID;
 
+			char m_lightName[en::NamedObject::k_maxNameLength];
+
 			union
 			{
 				struct
@@ -44,12 +47,14 @@ namespace gr
 				struct
 				{
 					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
+					bool m_hasShadow;
 				} m_directional;
 				struct
 				{
 					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
 					float m_emitterRadius; // For non-singular attenuation function
 					float m_intensityCuttoff; // Intensity value at which we stop drawing the deferred mesh
+					bool m_hasShadow;
 				} m_point;
 			} m_typeProperties;
 
@@ -57,7 +62,8 @@ namespace gr
 			bool m_diffuseEnabled;
 			bool m_specularEnabled;
 
-			RenderData(gr::Light::LightType, gr::LightID, gr::RenderDataID, gr::TransformID);
+			RenderData(
+				char const* name, gr::Light::LightType, gr::LightID, gr::RenderDataID, gr::TransformID, bool hasShadow);
 			~RenderData();
 			RenderData& operator=(RenderData const&);
 

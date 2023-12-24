@@ -1,9 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Assert.h"
-#include "EngineComponent.h"
-#include "Updateable.h"
 #include "BoundsComponent.h"
+#include "EngineComponent.h"
+#include "Updateable.h" // DEPRECATED!!!!!!!!
+#include "RelationshipComponent.h"
+
 
 
 namespace fr
@@ -25,7 +27,7 @@ namespace fr
 
 		void EnqueueRenderUpdates();
 
-		fr::BoundsComponent const& GetSceneBounds() const;
+		fr::BoundsComponent const* GetSceneBounds() const;
 
 
 		// EnTT wrappers:
@@ -72,8 +74,34 @@ namespace fr
 		template<typename T>
 		bool HasComponent(entt::entity entity) const;
 
-		template<typename T, typename... Args>
-		auto CreateView();
+
+		// Relationships:
+	public:
+		template<typename T>
+		bool IsInHierarchyAbove(entt::entity); // Searches current entity and above
+
+		template<typename T>
+		T* GetFirstInHierarchyAbove(entt::entity); // Searches current entity and above
+
+		template<typename T>
+		T* GetFirstAndEntityInHierarchyAbove(entt::entity, entt::entity& owningEntityOut); // Searches current entity and above
+
+		template<typename T>
+		T* GetFirstInChildren(entt::entity, entt::entity& childEntityOut); // Searches direct descendent children only
+
+
+	private: // Private, lockless versions of the Relationship functions. Convenience for when a lock is already held
+		template<typename T>
+		bool IsInHierarchyAboveInternal(entt::entity);
+
+		template<typename T>
+		T* GetFirstInHierarchyAboveInternal(entt::entity);
+
+		template<typename T>
+		T* GetFirstAndEntityInHierarchyAboveInternal(entt::entity, entt::entity& owningEntityOut);
+
+		template<typename T>
+		T* GetFirstInChildrenInternal(entt::entity, entt::entity& childEntityOut);
 
 
 	private:
@@ -82,12 +110,10 @@ namespace fr
 
 
 	private: // Systems:
-	public:
 		void UpdateSceneBounds();
-		// ECS_CONVERSION TODO: Make this private again. Currently public as a hack so we can trigger it after scene loading
-	private:
-		void UpdateTransformComponents();
+		void UpdateTransforms();
 		void UpdateLights();
+		void UpdateCameras();
 
 
 		// DEPRECATED:
@@ -162,8 +188,7 @@ namespace fr
 	template<typename T>
 	void GameplayManager::TryEmplaceComponent(entt::entity entity)
 	{
-		T* existingComponent = TryGetComponent<T>(entity);
-		if (existingComponent == nullptr)
+		if (!HasComponent<T>(entity))
 		{
 			EmplaceComponent<T>(entity);
 		}
@@ -233,7 +258,11 @@ namespace fr
 	template<typename T>
 	bool GameplayManager::HasComponent(entt::entity entity) const
 	{
-		return TryGetComponent<T>(entity) != nullptr;
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			
+			return m_registry.any_of<T>(entity);
+		}
 	}
 
 
@@ -257,12 +286,123 @@ namespace fr
 	}
 
 
-	template<typename T, typename... Args>
-	auto GameplayManager::CreateView()
+	// --- 
+	// Relationships
+	// ---
+
+
+	template<typename T>
+	bool GameplayManager::IsInHierarchyAbove(entt::entity entity)
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
-			return m_registry.view<T, Args...>();
+
+			return IsInHierarchyAboveInternal<T>(entity);
 		}
+	}
+
+
+	template<typename T>
+	T* GameplayManager::GetFirstInHierarchyAbove(entt::entity entity)
+	{
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+
+			return GetFirstInHierarchyAboveInternal<T>(entity);
+		}
+	}
+
+
+	template<typename T>
+	T* GameplayManager::GetFirstAndEntityInHierarchyAbove(entt::entity entity, entt::entity& owningEntityOut)
+	{
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+
+			return GetFirstAndEntityInHierarchyAboveInternal<T>(entity, owningEntityOut);
+		}
+	}
+
+
+	template<typename T>
+	T* GameplayManager::GetFirstInChildren(entt::entity entity, entt::entity& childEntityOut)
+	{
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+
+			return GetFirstInChildrenInternal<T>(entity, childEntityOut);
+		}
+	}
+
+
+	// ---
+	// Lockless internal Relationship functions
+	// ---
+
+
+	template<typename T>
+	bool GameplayManager::IsInHierarchyAboveInternal(entt::entity entity)
+	{
+		return GetFirstInHierarchyAboveInternal<T>(entity) != nullptr;
+	}
+
+
+	template<typename T>
+	T* GameplayManager::GetFirstInHierarchyAboveInternal(entt::entity entity)
+	{
+		entt::entity dummy = entt::null;
+		return GetFirstAndEntityInHierarchyAboveInternal<T>(entity, dummy);
+	}
+
+
+	template<typename T>
+	T* GameplayManager::GetFirstAndEntityInHierarchyAboveInternal(entt::entity entity, entt::entity& owningEntityOut)
+	{
+		SEAssert("Entity cannot be null", entity != entt::null);
+
+		entt::entity currentEntity = entity;
+		while (currentEntity != entt::null)
+		{
+			T* component = m_registry.try_get<T>(currentEntity);
+			if (component != nullptr)
+			{
+				owningEntityOut = currentEntity;
+				return component;
+			}
+
+			fr::Relationship const& currentRelationship = m_registry.get<fr::Relationship>(currentEntity);
+			
+			currentEntity = currentRelationship.GetParent();
+		}
+
+		return nullptr;
+	}
+
+
+	template<typename T>
+	T* GameplayManager::GetFirstInChildrenInternal(entt::entity entity, entt::entity& childEntityOut)
+	{
+		SEAssert("Invalid entity", entity != entt::null);
+
+		childEntityOut = entt::null;
+
+		fr::Relationship const& entityRelationship = m_registry.get<fr::Relationship>(entity);
+		const entt::entity firstChild = entityRelationship.GetFirstChild();
+		entt::entity current = firstChild;
+		do
+		{
+			fr::Relationship const& currentRelationship = m_registry.get<fr::Relationship>(current);
+
+			T* component = m_registry.try_get<T>(current);
+			if (component)
+			{
+				childEntityOut = current;
+				return component;
+			}
+
+			current = currentRelationship.GetNext();
+		} while (current != firstChild);
+
+		return nullptr;
 	}
 }

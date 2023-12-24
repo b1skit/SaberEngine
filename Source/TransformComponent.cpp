@@ -12,11 +12,17 @@ namespace fr
 	std::atomic<gr::TransformID> TransformComponent::s_transformIDs = gr::k_sharedIdentityTransformID + 1;
 
 
-	gr::Transform::RenderData TransformComponent::CreateRenderData(fr::Transform& transform)
+	gr::Transform::RenderData TransformComponent::CreateRenderData(fr::TransformComponent& transformComponent)
 	{
+		fr::Transform& transform = transformComponent.GetTransform();
 		return gr::Transform::RenderData{
 			.g_model = transform.GetGlobalMatrix(),
-			.g_transposeInvModel = glm::transpose(glm::inverse(transform.GetGlobalMatrix()))
+			.g_transposeInvModel = glm::transpose(glm::inverse(transform.GetGlobalMatrix())),
+
+			.m_globalPosition = transform.GetGlobalPosition(),
+			.m_globalForward = transform.GetGlobalForward(),
+
+			.m_transformID = transformComponent.GetTransformID()
 		};
 	}
 
@@ -75,7 +81,7 @@ namespace fr
 
 	UpdateTransformDataRenderCommand::UpdateTransformDataRenderCommand(fr::TransformComponent& transformComponent)
 		: m_transformID(transformComponent.GetTransformID())
-		, m_data(fr::TransformComponent::CreateRenderData(transformComponent.GetTransform()))
+		, m_data(fr::TransformComponent::CreateRenderData(transformComponent))
 	{
 	}
 

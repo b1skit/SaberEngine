@@ -45,9 +45,11 @@ namespace en
 
 		// Create a window:
 		std::string commandLineArgs;
-		Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_commandLineArgsValueKey, commandLineArgs);
+		en::Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_commandLineArgsValueKey, commandLineArgs);
 
-		const std::string windowTitle = Config::Get()->GetValue<std::string>("windowTitle") + " " + commandLineArgs;
+		std::string const& windowTitle = std::format("{} {}", 
+			en::Config::Get()->GetValue<std::string>("windowTitle"), 
+			commandLineArgs);
 		const int xRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
 		const int yRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
 
@@ -72,10 +74,10 @@ namespace en
 		eventManager->Startup();
 		eventManager->Subscribe(en::EventManager::EngineQuit, this);
 
-		LogManager::Get()->Startup();
-		InputManager::Get()->Startup(); // Now that the window is created
+		en::LogManager::Get()->Startup();
+		en::InputManager::Get()->Startup(); // Now that the window is created
 
-		SceneManager::Get()->Startup(); // Load assets
+		en::SceneManager::Get()->Startup(); // Load assets
 
 		// Create gameplay objects now that the scene data is loaded
 		fr::GameplayManager::Get()->Startup();

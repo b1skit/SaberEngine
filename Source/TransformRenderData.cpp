@@ -5,6 +5,11 @@
 
 namespace gr
 {
+	constexpr glm::vec3 Transform::WorldAxisX = glm::vec3(1.0f, 0.0f, 0.0f);
+	constexpr glm::vec3 Transform::WorldAxisY = glm::vec3(0.0f, 1.0f, 0.0f);
+	constexpr glm::vec3 Transform::WorldAxisZ = glm::vec3(0.0f, 0.0f, 1.0f); // Note: SaberEngine uses a RHCS
+
+
 	std::shared_ptr<re::ParameterBlock> Transform::CreateInstancedTransformParams(
 		glm::mat4 const* model, glm::mat4* transposeInvModel)
 	{

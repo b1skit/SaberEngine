@@ -134,9 +134,6 @@
     <ClCompile Include="Shader.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
     <ClCompile Include="GraphicsSystem.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
@@ -503,8 +500,8 @@
     <ClCompile Include="LightRenderData.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="ShadowMapRenderData.cpp">
-      <Filter>Source Files\gr</Filter>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Source Files\fr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -519,9 +516,6 @@
     </ClInclude>
     <ClInclude Include="Context_Platform.h">
       <Filter>Header Files\re\platform</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="Assert.h">
       <Filter>Header Files\en</Filter>
@@ -931,7 +925,7 @@
     <ClInclude Include="MeshPrimitiveComponent.h">
       <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
-    <ClInclude Include="Bounds.h">
+    <ClInclude Include="BoundsRenderData.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
     <ClInclude Include="ShadowMapComponent.h">
@@ -963,6 +957,9 @@
     </ClInclude>
     <ClInclude Include="ShadowMapRenderData.h">
       <Filter>Header Files\gr</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Header Files\fr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

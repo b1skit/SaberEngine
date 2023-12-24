@@ -33,6 +33,23 @@ namespace re
 	}
 
 
+	glm::vec4 Texture::ComputeTextureDimenions(uint32_t width, uint32_t height)
+	{
+		// .xyzw = width, height, 1/width, 1/height
+		return glm::vec4(
+			width,
+			height,
+			1.f / width,
+			1.f / height);
+	}
+
+
+	glm::vec4 Texture::ComputeTextureDimenions(glm::uvec2 widthHeight)
+	{
+		return ComputeTextureDimenions(widthHeight.x, widthHeight.y);
+	}
+
+
 	std::shared_ptr<re::Texture> Texture::Create(
 		std::string const& name, 
 		TextureParams const& params, 
@@ -290,11 +307,7 @@ namespace re
 	vec4 Texture::GetTextureDimenions() const
 	{
 		// .xyzw = width, height, 1/width, 1/height
-		return glm::vec4(
-			m_texParams.m_width,
-			m_texParams.m_height,
-			1.0f / m_texParams.m_width, 
-			1.0f / m_texParams.m_height);
+		return ComputeTextureDimenions(m_texParams.m_width, m_texParams.m_height);
 	}
 
 

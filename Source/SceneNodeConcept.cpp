@@ -32,7 +32,7 @@ namespace fr
 		
 		gr::RenderDataComponent::AttachNewRenderDataComponent(gpm, sceneNodeEntity, transformComponent.GetTransformID());
 
-		fr::Relationship& sceneNodeRelationship = fr::Relationship::AttachRelationshipComponent(gpm, sceneNodeEntity);
+		fr::Relationship& sceneNodeRelationship = gpm.GetComponent<fr::Relationship>(sceneNodeEntity);
 		sceneNodeRelationship.SetParent(gpm, parent);
 
 		return sceneNodeEntity;

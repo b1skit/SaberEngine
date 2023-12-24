@@ -37,7 +37,7 @@ namespace fr
 		void Destroy();
 
 		bool Load(std::string const& relativeFilePath); // Filename and path, relative to the ..\Scenes\ dir
-		void PostLoadFinalize(); // Executes post-load callbacks
+
 
 	public:
 		// Cameras:
@@ -45,11 +45,6 @@ namespace fr
 		std::shared_ptr<fr::Camera> GetMainCamera(uint64_t uniqueID) const;
 
 	public:		
-		// Lights:
-		void AddLight(std::shared_ptr<fr::Light> newLight);
-		std::shared_ptr<fr::Light> GetKeyLight() const;
-		std::vector<std::shared_ptr<fr::Light>> const& GetPointLights() const;
-
 		re::Texture const* GetIBLTexture() const;
 
 		// Geometry:
@@ -73,13 +68,8 @@ namespace fr
 		std::shared_ptr<re::Shader> GetShader(uint64_t shaderIdentifier) const;
 		bool ShaderExists(uint64_t shaderIdentifier) const;
 
-		// Post loading finalization callback: Allow objects that require the scene to be fully loaded to complete their
-		// initialization
-		void RegisterForPostLoadCallback(std::function<void()>);
-
-
-		// Interfaces that self-register/self-remove themselves:
-	protected:
+		
+	protected: // DEPRECATED!!!!!!!!!!!!
 		friend class fr::Camera; // Only Camera objects can register/unregister themselves
 		void AddCamera(std::shared_ptr<fr::Camera> newCamera); // Returns the camera index
 		void RemoveCamera(uint64_t uniqueID);
@@ -109,9 +99,6 @@ namespace fr
 
 		std::vector<std::shared_ptr<fr::Camera>> m_cameras;
 		mutable std::shared_mutex m_camerasReadWriteMutex;
-
-		std::vector<std::function<void()>> m_postLoadCallbacks;
-		std::mutex m_postLoadCallbacksMutex;
 
 		bool m_finishedLoading; // Used to assert scene data is not accessed while it might potentially be modified
 

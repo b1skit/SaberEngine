@@ -276,7 +276,6 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="RenderSystem.cpp" />
     <ClCompile Include="ResourceStateTracker_DX12.cpp" />
     <ClCompile Include="ShadowMapComponent.cpp" />
-    <ClCompile Include="ShadowMapRenderData.cpp" />
     <ClCompile Include="SysInfo_DX12.cpp" />
     <ClCompile Include="RenderManager_DX12.cpp" />
     <ClCompile Include="RootSignature_DX12.cpp" />
@@ -351,7 +350,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BatchManager.h" />
-    <ClInclude Include="Bounds.h" />
+    <ClInclude Include="BoundsRenderData.h" />
     <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="CameraRenderData.h" />
     <ClInclude Include="CastUtils.h" />

@@ -1,9 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "Bounds.h"
+#include "BoundsRenderData.h" // ECS_CONVERSION: Remove this
 #include "ConfigKeys.h"
 #include "GraphicsSystem_Debug.h"
 #include "GraphicsSystemManager.h"
-#include "Light.h"
+#include "Light.h" // ECS_CONVERSION: Remove this
 #include "SceneManager.h"
 
 
@@ -13,9 +13,9 @@ namespace
 		float axisScale, glm::vec3 const& xAxisColor, glm::vec3 const& yAxisColor, glm::vec3 const& zAxisColor)
 	{
 		std::vector<glm::vec3> axisPositions = { 
-			glm::vec3(0.f, 0.f, 0.f), fr::Transform::WorldAxisX * axisScale,
-			glm::vec3(0.f, 0.f, 0.f), fr::Transform::WorldAxisY * axisScale,
-			glm::vec3(0.f, 0.f, 0.f), fr::Transform::WorldAxisZ * axisScale,
+			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisX * axisScale,
+			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisY * axisScale,
+			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisZ * axisScale,
 		};
 
 		std::vector<glm::vec4> axisColors = { 
@@ -202,9 +202,11 @@ namespace
 		return re::Batch(re::Batch::Lifetime::SingleFrame, nullptr, boundingBoxBatchGraphicsParams);
 	}
 
-
+	// ECS_CONVERSION: Restore this functionality
+	/*
 	re::Batch BuildCameraFrustumBatch(fr::Camera const* camera, glm::vec3 const& frustumColor, uint8_t cubemapCamFaceIdx = 0)
 	{
+		
 		// Convert NDC coordinates to world space. Cubemap face index 0 = the same matrix as a non-cubemap camera
 		glm::vec4 farTL = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(-1.f, 1.f, 1.f, 1.f);
 		glm::vec4 farBL = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(-1.f, -1.f, 1.f, 1.f);
@@ -287,6 +289,7 @@ namespace
 
 		return re::Batch(re::Batch::Lifetime::SingleFrame, nullptr, frustumBatchGraphicsParams);
 	}
+	*/
 
 
 	re::Batch BuildWireframeBatch(gr::MeshPrimitive::RenderData const& meshPrimRenderData, glm::vec3 const& meshColor)
@@ -444,37 +447,38 @@ namespace gr
 			}
 		}
 
+		// ECS_CONVERSTION TODO: Re-implement this
 		if (m_showCameraFrustums)
 		{
-			for (fr::Camera* debugCam : m_camerasToDebug)
-			{
-				// Use the inverse view matrix, as it omits any scale that might be present in the Transform hierarchy
-				glm::mat4 const& camWorldMatrix = debugCam->GetInverseViewMatrix();
-				std::shared_ptr<re::ParameterBlock> cameraTransformPB =
-					gr::Transform::CreateInstancedTransformParams(&camWorldMatrix, nullptr);
+			//for (fr::Camera* debugCam : m_camerasToDebug)
+			//{
+			//	// Use the inverse view matrix, as it omits any scale that might be present in the Transform hierarchy
+			//	glm::mat4 const& camWorldMatrix = debugCam->GetInverseViewMatrix();
+			//	std::shared_ptr<re::ParameterBlock> cameraTransformPB =
+			//		gr::Transform::CreateInstancedTransformParams(&camWorldMatrix, nullptr);
 
-				// Coordinate axis at camera origin:
-				re::Batch cameraCoordinateAxisBatch =
-					BuildAxisBatch(m_cameraCoordinateAxisScale, m_xAxisColor, m_yAxisColor, m_zAxisColor);
-				cameraCoordinateAxisBatch.SetParameterBlock(cameraTransformPB);
-				m_debugStage->AddBatch(cameraCoordinateAxisBatch);
+			//	// Coordinate axis at camera origin:
+			//	re::Batch cameraCoordinateAxisBatch =
+			//		BuildAxisBatch(m_cameraCoordinateAxisScale, m_xAxisColor, m_yAxisColor, m_zAxisColor);
+			//	cameraCoordinateAxisBatch.SetParameterBlock(cameraTransformPB);
+			//	m_debugStage->AddBatch(cameraCoordinateAxisBatch);
 
-				// Our frustum points are already in world-space
-				const glm::mat4 identityMat = glm::mat4(1.f);
-				std::shared_ptr<re::ParameterBlock> identityPB =
-					gr::Transform::CreateInstancedTransformParams(&identityMat, nullptr);
+			//	// Our frustum points are already in world-space
+			//	const glm::mat4 identityMat = glm::mat4(1.f);
+			//	std::shared_ptr<re::ParameterBlock> identityPB =
+			//		gr::Transform::CreateInstancedTransformParams(&identityMat, nullptr);
 
-				const uint8_t numFrustums = 
-					debugCam->GetCameraConfig().m_projectionType == gr::Camera::Config::ProjectionType::PerspectiveCubemap ? 6 : 1;
+			//	const uint8_t numFrustums = 
+			//		debugCam->GetCameraConfig().m_projectionType == gr::Camera::Config::ProjectionType::PerspectiveCubemap ? 6 : 1;
 
-				for (uint8_t faceIdx = 0; faceIdx < numFrustums; faceIdx++)
-				{
-					re::Batch camFrustumBatch = BuildCameraFrustumBatch(debugCam, m_cameraFrustumColor, faceIdx);
+			//	for (uint8_t faceIdx = 0; faceIdx < numFrustums; faceIdx++)
+			//	{
+			//		re::Batch camFrustumBatch = BuildCameraFrustumBatch(debugCam, m_cameraFrustumColor, faceIdx);
 
-					camFrustumBatch.SetParameterBlock(identityPB);
-					m_debugStage->AddBatch(camFrustumBatch);
-				}
-			}		
+			//		camFrustumBatch.SetParameterBlock(identityPB);
+			//		m_debugStage->AddBatch(camFrustumBatch);
+			//	}
+			//}		
 		}
 
 		if (m_showDeferredLightWireframe)
@@ -492,7 +496,7 @@ namespace gr
 					gr::Transform::CreateInstancedTransformParams(&lightTRS, nullptr);
 
 				fr::Light::TypeProperties const& pointLightProperties =
-					pointLight->AccessLightTypeProperties(fr::Light::LightType::Point);
+					pointLight->GetLightTypeProperties(fr::Light::LightType::Point);
 
 				re::Batch pointLightWireframeBatch = BuildWireframeBatch(
 					pointLightProperties.m_point.m_sphereMesh->GetMeshPrimitives()[0].get(), 

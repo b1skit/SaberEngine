@@ -1,25 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "LightRenderData.h"
-#include "MeshPrimitive.h"
-#include "NamedObject.h"
-#include "ParameterBlock.h"
-#include "Transform.h"
-#include "Updateable.h"
 
-
-namespace re
-{
-	class Texture;
-}
 
 namespace fr
 {
-	class MeshPrimitive;
-	class ShadowMap;
+	class Camera;
+	class Transform;
 
 
-	class Light final : public virtual en::NamedObject, public virtual en::Updateable // ECS_CONVERSION: Remove inheritance
+	class Light
 	{
 	public:
 		enum LightType : uint8_t
@@ -33,25 +23,15 @@ namespace fr
 		static_assert(static_cast<uint8_t>(fr::Light::LightType::LightType_Count) ==
 			static_cast<uint8_t>(gr::Light::LightType::LightType_Count));
 
+	public:
 		static constexpr gr::Light::LightType GetRenderDataLightType(fr::Light::LightType);
+
+		static void ConfigurePointLightMeshScale(fr::Light&, fr::Transform&, fr::Camera* shadowCam);
 
 
 	public:
-		// DEPRECATED!!!!!!!!!!!!!
-		static std::shared_ptr<fr::Light> CreateAmbientLight(std::string const& name);
-		static std::shared_ptr<fr::Light> CreateDirectionalLight(
-			std::string const& name, fr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow);
-		static std::shared_ptr<fr::Light> CreatePointLight(
-			std::string const& name, fr::Transform* ownerTransform, glm::vec4 colorIntensity, bool hasShadow);
-
-
-		Light(std::string const& name,
-			fr::Transform* ownerTransform,
-			LightType lightType,
-			glm::vec4 colorIntensity,
-			bool hasShadow);
-		
-		Light(re::Texture const* iblTex, LightType = LightType::AmbientIBL_Deferred); // Ambient light CTOR
+		Light(LightType lightType, glm::vec4 const& colorIntensity);
+		Light(re::Texture const* iblTex, LightType = LightType::AmbientIBL_Deferred); // Ambient light only CTOR
 
 		Light(fr::Light&&) = default;
 		Light& operator=(fr::Light&&) = default;
@@ -59,23 +39,16 @@ namespace fr
 		~Light() { Destroy(); }
 		void Destroy();
 
+		bool IsDirty() const;
+		void MarkClean();
 
-		void Update(const double stepTimeMs) override; // DEPRECATED!!!!!!!!!!!!!
-
-		glm::vec4 GetColorIntensity() const;
+		glm::vec4 const& GetColorIntensity() const;
+		void SetColorIntensity(glm::vec4 const&);
 	 
-		LightType const& GetType() const;
+		LightType GetType() const;
 		
 		
 		void ShowImGuiWindow();
-
-
-		// DEPRECATED!!!!!!!!!!!!!
-		fr::Transform* GetTransform(); // Directional lights shine forward (Z+)
-
-		// DEPRECATED!!!!!!!!!!!!!
-		fr::ShadowMap* GetShadowMap() const;
-
 
 	
 	public:
@@ -91,23 +64,14 @@ namespace fr
 				} m_ambient;
 				struct
 				{
-					fr::Transform* m_ownerTransform; // DEPRECATED!!!!!!!!!!!!!
-					
+					// Note: Directional lights shine forward (Z+)									
 					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
-					std::unique_ptr<fr::ShadowMap> m_shadowMap; // DEPRECATED!!!!!!!!!!!!!
-
-					std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad; // DEPRECATED!!!!!!!!!!!!!
 				} m_directional;
 				struct
-				{
-					fr::Transform* m_ownerTransform; // DEPRECATED!!!!!!!!!!!!!
-					
+				{					
 					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
 					float m_emitterRadius; // For non-singular attenuation function
 					float m_intensityCuttoff; // Intensity value at which we stop drawing the deferred mesh
-					
-					std::shared_ptr<gr::MeshPrimitive> m_sphereMeshPrimitive; // DEPRECATED!!!!!!!!!!!!!
-					std::unique_ptr<fr::ShadowMap> m_cubeShadowMap; // DEPRECATED!!!!!!!!!!!!!
 				} m_point;
 			};
 
@@ -116,14 +80,16 @@ namespace fr
 			bool m_specularEnabled;
 
 			TypeProperties();
-			~TypeProperties();
+			~TypeProperties() = default;
 		};
-		TypeProperties& AccessLightTypeProperties(LightType);
-		TypeProperties const& AccessLightTypeProperties(LightType) const;
+		TypeProperties& GetLightTypePropertiesForModification(LightType);
+		TypeProperties const& GetLightTypeProperties(LightType) const;
 
 
 	private:		
 		TypeProperties m_typeProperties;
+
+		bool m_isDirty;
 
 
 	private: // No copying allowed
@@ -146,36 +112,20 @@ namespace fr
 	}
 
 
-	inline Light::LightType const& Light::GetType() const
+	inline Light::LightType Light::GetType() const
 	{
 		return m_typeProperties.m_type;
 	}
 
 
-	inline fr::Transform* Light::GetTransform()
+	inline bool Light::IsDirty() const
 	{
-		switch (m_typeProperties.m_type)
-		{
-		case LightType::AmbientIBL_Deferred:
-		{
-			SEAssertF("Ambient lights do not have a transform");
-		}
-		break;
-		case LightType::Directional_Deferred:
-		{
-			// Note: Directional lights shine forward (Z+)
-			return m_typeProperties.m_directional.m_ownerTransform;
-		}
-		break;
-		case LightType::Point_Deferred:
-		{
-			return m_typeProperties.m_point.m_ownerTransform;
-		}
-		break;
-		default:
-			SEAssertF("Invalid light type");
-		}
+		return m_isDirty;
+	}
 
-		return nullptr;
+
+	inline void Light::MarkClean()
+	{
+		m_isDirty = false;
 	}
 }

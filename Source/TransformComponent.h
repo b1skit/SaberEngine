@@ -21,7 +21,7 @@ namespace fr
 	public:
 		struct NewIDMarker {}; // Attached when a a new TransformID is allocated
 
-		static gr::Transform::RenderData CreateRenderData(fr::Transform&);
+		static gr::Transform::RenderData CreateRenderData(fr::TransformComponent&);
 
 		static TransformComponent& AttachTransformComponent(fr::GameplayManager&, entt::entity, fr::Transform* parent);
 

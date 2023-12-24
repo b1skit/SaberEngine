@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "Camera.h"
+#include "CameraComponent.h"
 #include "CoreEngine.h"
 #include "GameplayManager.h"
 #include "LightComponent.h"
@@ -13,6 +13,7 @@
 #include "RenderManager.h"
 #include "SceneManager.h"
 #include "SceneNodeConcept.h"
+#include "ShadowMapComponent.h"
 
 
 namespace fr
@@ -32,17 +33,12 @@ namespace fr
 		m_updateables.reserve(k_updateablesReserveAmount);
 
 		// Create a scene bounds entity:
-		/*fr::Bounds::CreateSceneBoundsConcept(*this);*/
+		fr::BoundsComponent::CreateSceneBoundsConcept(*this);
 		UpdateSceneBounds();
 
 		// Create an Ambient light:
 		fr::LightComponent::CreateDeferredAmbientLightConcept(en::SceneManager::GetSceneData()->GetIBLTexture());
 
-		// ECS_CONVERSION: Currently, the GameplayManager::Startup is called after the SceneManager and RenderManager,
-		// as it needs the main camera from the SceneData to create the player obect
-		// -> This is a problem, as we need the scene bounds to be available to initialize shadow maps immediately after
-		// the scene has loaded. For now, we hack around this
-		
 		std::shared_ptr<fr::Camera> mainCam = en::SceneManager::Get()->GetMainCamera();
 
 		// Add a player object to the scene:
@@ -110,7 +106,7 @@ namespace fr
 		}
 
 
-		// TODO: Call GameplayManager::Shutdown() before shutting down the renderer
+		// ECS_CONVERSION TODO: Call GameplayManager::Shutdown() before shutting down the renderer
 		// -> Once the Updateables/Transformables have been converted to ECS...
 		
 
@@ -132,11 +128,17 @@ namespace fr
 	{
 		// Handle input (update event listener components)
 		// <physics, animation, etc>
-		UpdateTransformComponents();
+
+		// Update the scene state:
+		UpdateTransforms();
 		UpdateSceneBounds(); // TODO: This is expensive, we should only do this on demand?
-		UpdateLights();
-		// Update Cameras
-		// Update Renderables
+		UpdateLights(); // <- Could potentially modify a (point light) Transform, and its shadow cam's far plane
+		
+		// ECS_CONVERSION: BEWARE: Cameras have a transform and may modify it (i.e by calling GetGlobal___() ).
+		// -> Need a way of providing a const Transform and const Transform::Get___() functions
+		//		-> Guarantee Transforms have been updated already and are clean, and then assert in the const functions
+		//			that this is always true
+		UpdateCameras(); 
 
 
 
@@ -256,17 +258,50 @@ namespace fr
 				m_registry.erase<DirtyMarker<fr::Material::MaterialComponent>>(entity);
 			}
 
+			// Cameras:
+			auto cameraComponentsView =
+				m_registry.view<fr::CameraComponent, DirtyMarker<fr::CameraComponent>, gr::RenderDataComponent>();
+			for (auto entity : cameraComponentsView)
+			{
+				gr::RenderDataComponent const& renderDataComponent =
+					cameraComponentsView.get<gr::RenderDataComponent>(entity);
+
+				fr::CameraComponent& cameraCmpt = cameraComponentsView.get<fr::CameraComponent>(entity);
+
+				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::Camera::RenderData>>(
+					renderDataComponent.GetRenderDataID(), fr::CameraComponent::CreateRenderData(cameraCmpt));
+
+				m_registry.erase<DirtyMarker<fr::CameraComponent>>(entity);
+			}
+
+			// Update dirty render data components that touch the GraphicsSystems directly:
+
 			// Lights:
-			auto lightComponentsView = 
-				m_registry.view<fr::LightComponent, DirtyMarker<fr::LightComponent>, gr::RenderDataComponent>();
+			auto lightComponentsView = m_registry.view<
+				fr::LightComponent, DirtyMarker<fr::LightComponent>, gr::RenderDataComponent, fr::NameComponent>();
 			for (auto entity : lightComponentsView)
 			{
+				fr::NameComponent const& nameComponent = lightComponentsView.get<fr::NameComponent>(entity);
 				fr::LightComponent const& lightComponent = lightComponentsView.get<fr::LightComponent>(entity);
-				renderManager->EnqueueRenderCommand<fr::UpdateLightDataRenderCommand>(lightComponent);
+				renderManager->EnqueueRenderCommand<fr::UpdateLightDataRenderCommand>(nameComponent, lightComponent);
 
 				m_registry.erase<DirtyMarker<fr::LightComponent>>(entity);
 			}
 
+			// Shadows:
+			auto shadowMapComponentsView =
+				m_registry.view<fr::ShadowMapComponent, DirtyMarker<fr::ShadowMapComponent>, gr::RenderDataComponent>();
+			for (auto entity : shadowMapComponentsView)
+			{
+				fr::NameComponent const& nameComponent = lightComponentsView.get<fr::NameComponent>(entity);
+				fr::ShadowMapComponent const& shadowMapComponent = 
+					shadowMapComponentsView.get<fr::ShadowMapComponent>(entity);
+
+				renderManager->EnqueueRenderCommand<fr::UpdateShadowMapDataRenderCommand>(
+					nameComponent, shadowMapComponent);
+
+				m_registry.erase<DirtyMarker<fr::ShadowMapComponent>>(entity);
+			}
 
 			// Handle any non-renderable new entities:
 			auto newEntitiesView = m_registry.view<NewEntityMarker>();
@@ -279,7 +314,7 @@ namespace fr
 	}
 
 
-	fr::BoundsComponent const& GameplayManager::GetSceneBounds() const
+	fr::BoundsComponent const* GameplayManager::GetSceneBounds() const
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
@@ -288,7 +323,15 @@ namespace fr
 			SEAssert("A unique scene bounds entity must exist",
 				sceneBoundsEntityView.front() == sceneBoundsEntityView.back());
 
-			return sceneBoundsEntityView.get<fr::BoundsComponent>(sceneBoundsEntityView.front());
+			const entt::entity sceneBoundsEntity = sceneBoundsEntityView.front();
+			if (sceneBoundsEntity != entt::null)
+			{
+				return &sceneBoundsEntityView.get<fr::BoundsComponent>(sceneBoundsEntity);
+			}
+			else
+			{
+				return nullptr;
+			}			
 		}
 	}
 
@@ -308,6 +351,7 @@ namespace fr
 		}
 
 		fr::NameComponent::AttachNameComponent(*this, newEntity, name);
+		fr::Relationship::AttachRelationshipComponent(*this, newEntity);
 		EmplaceComponent<NewEntityMarker>(newEntity);
 
 		return newEntity;
@@ -316,16 +360,7 @@ namespace fr
 
 	void GameplayManager::UpdateSceneBounds()
 	{
-		// ECS_CONVERSION TODO: This is a nasty hack to ensure the scene bounds is valid when it needs to be, until the
-		// startup order gets straightened out
-		static bool s_hasCreatedSceneBounds_HACK = false;
-		if (!s_hasCreatedSceneBounds_HACK)
-		{
-			fr::BoundsComponent::CreateSceneBoundsConcept(*this);
-			s_hasCreatedSceneBounds_HACK = true;
-		}
-
-		// ECS_CONVERSION TODO: This should be triggered by listening for when bounds are added/updated
+		// ECS_CONVERSION TODO: This should be triggered by listening for when MESH bounds are added/updated
 		
 		entt::entity sceneBoundsEntity = entt::null;
 		bool sceneBoundsChanged = false;
@@ -345,15 +380,13 @@ namespace fr
 			// Modify our bounds component in-place:
 			m_registry.patch<fr::BoundsComponent>(sceneBoundsEntity, [&](auto& sceneBoundsComponent)
 				{
-
-
 					auto meshConceptEntitiesView = m_registry.view<fr::Mesh::MeshConceptMarker>();
 
-					// 
+					// Make sure we have at least 1 mesh
 					auto meshConceptsViewItr = meshConceptEntitiesView.begin();
 					if (meshConceptsViewItr != meshConceptEntitiesView.end())
 					{
-						// Reset our bounds as the 1st Bounds we see: It'll grow to encompass all Bounds
+						// Reset our bounds to be the 1st Bounds we view: It'll grow to encompass all other Bounds
 						sceneBoundsComponent = m_registry.get<fr::BoundsComponent>(*meshConceptsViewItr);
 						++meshConceptsViewItr;
 
@@ -364,8 +397,8 @@ namespace fr
 
 							fr::Relationship const& relationshipComponent = m_registry.get<fr::Relationship>(meshEntity);
 
-							fr::Transform& meshTransform = fr::Relationship::GetFirstInHierarchyAbove<fr::TransformComponent>(
-								relationshipComponent.GetParent())->GetTransform(); // MeshConcept parents hold the TransformComponent
+							fr::Transform& meshTransform = GetFirstInHierarchyAboveInternal<fr::TransformComponent>(
+								relationshipComponent.GetParent())->GetTransform();
 
 							sceneBoundsComponent.ExpandBounds(
 								boundsComponent.GetTransformedAABBBounds(meshTransform.GetGlobalMatrix()));
@@ -382,17 +415,30 @@ namespace fr
 		if (sceneBoundsChanged)
 		{
 			EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(sceneBoundsEntity);
+
+
+
+			// ECS_CONVERSION TEMP HAX!!!!!!!!!!!!!!!!!!!
+			// -> TODO: Write a system to listen for a dirty marker being placed, and trigger this automatically
+			auto directionalLightShadowsView = 
+				m_registry.view<fr::ShadowMapComponent, fr::LightComponent::DirectionalDeferredMarker>();
+			for (auto entity : directionalLightShadowsView)
+			{
+				fr::ShadowMapComponent::MarkDirty(*this, entity);
+			}
 		}
 	}
 
 
-	void GameplayManager::UpdateTransformComponents()
+	void GameplayManager::UpdateTransforms()
 	{
 		// Use the number of root transforms during the last update 
 		static size_t prevNumRootTransforms = 1;
 
 		std::vector<std::future<void>> taskFutures;
 		taskFutures.reserve(prevNumRootTransforms);
+
+		// ECS_CONVERSION: Add a read lock here!!!!
 
 		auto transformComponentsView = m_registry.view<fr::TransformComponent>();
 		for (auto entity : transformComponentsView)
@@ -420,9 +466,83 @@ namespace fr
 
 	void GameplayManager::UpdateLights()
 	{
-		// TODO...
-		// -> Need to update if Transform has changed (i.e. directional light shadow camera config)
-		// 
+		// Add dirty markers to lights and shadows so the render data will be updated
+		{
+			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
+
+			auto lightComponentsView = m_registry.view<fr::LightComponent>();
+			for (auto entity : lightComponentsView)
+			{
+				fr::LightComponent& lightComponent = lightComponentsView.get<fr::LightComponent>(entity);
+
+				fr::Light& light = lightComponent.GetLight();
+				if (light.IsDirty())
+				{
+					if (light.GetType() == fr::Light::LightType::Point_Deferred)
+					{					
+						fr::Relationship const& relationship = m_registry.get<fr::Relationship>(entity);
+
+						fr::TransformComponent& transformCmpt =
+							*GetFirstInHierarchyAboveInternal<fr::TransformComponent>(relationship.GetParent());
+
+						fr::Camera* shadowCam = nullptr;
+						if (m_registry.any_of<fr::LightComponent::HasShadowMarker>(entity))
+						{
+							entt::entity shadowMapChild = entt::null;
+							fr::ShadowMapComponent* shadowMapCmpt = 
+								GetFirstInChildrenInternal<fr::ShadowMapComponent>(entity, shadowMapChild);
+							SEAssert("Failed to find shadow map component", shadowMapCmpt);
+
+							entt::entity shadowCamChild = entt::null;
+							fr::CameraComponent* shadowCamCmpt = 
+								GetFirstInChildrenInternal<fr::CameraComponent>(shadowMapChild, shadowCamChild);
+							SEAssert("Failed to find shadow camera", shadowCamCmpt);
+
+							shadowCam = &shadowCamCmpt->GetCamera();
+						}
+
+						fr::Light::ConfigurePointLightMeshScale(light, transformCmpt.GetTransform(), shadowCam);
+					}
+
+					m_registry.emplace_or_replace<DirtyMarker<fr::LightComponent>>(entity);
+					lightComponent.GetLight().MarkClean();
+				}
+			}
+
+			auto shadowMapComponentsView = m_registry.view<fr::ShadowMapComponent>();
+			for (auto entity : shadowMapComponentsView)
+			{
+				fr::ShadowMapComponent& shadowMapComponent = shadowMapComponentsView.get<fr::ShadowMapComponent>(entity);
+
+				if (shadowMapComponent.GetShadowMap().IsDirty())
+				{
+					m_registry.emplace_or_replace<DirtyMarker<fr::ShadowMapComponent>>(entity);
+					shadowMapComponent.GetShadowMap().MarkClean();
+				}
+			}
+		}
+	}
+
+
+	void GameplayManager::UpdateCameras()
+	{
+		// Check for dirty cameras, or cameras with dirty transforms
+		{
+			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
+
+			auto cameraComponentsView = m_registry.view<fr::CameraComponent, fr::Relationship>();
+			for (auto entity : cameraComponentsView)
+			{
+				fr::CameraComponent& cameraComponent = cameraComponentsView.get<fr::CameraComponent>(entity);
+
+				fr::Camera& camera = cameraComponent.GetCamera();
+				if (camera.IsDirty() || camera.GetTransform()->HasChanged())
+				{
+					m_registry.emplace_or_replace<DirtyMarker<fr::CameraComponent>>(entity);
+					camera.MarkClean();
+				}
+			}
+		}
 	}
 
 

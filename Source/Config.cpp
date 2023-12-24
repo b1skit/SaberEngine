@@ -407,8 +407,8 @@ namespace en
 		markDirty |= TrySetValue("vsync",					true,				SettingType::Common);
 
 		// Texture dimensions:
-		markDirty |= TrySetValue("defaultShadowMapRes",		2048,				SettingType::Common);
-		markDirty |= TrySetValue("defaultShadowCubeMapRes",	512,				SettingType::Common);
+		markDirty |= TrySetValue(en::ConfigKeys::k_defaultShadowMapResolution,		2048,	SettingType::Common);
+		markDirty |= TrySetValue(en::ConfigKeys::k_defaultShadowCubeMapResolution,	512,	SettingType::Common);
 
 		// Camera defaults:
 		markDirty |= TrySetValue("defaultyFOV",				1.570796f,			SettingType::Common);

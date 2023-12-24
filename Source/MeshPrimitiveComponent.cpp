@@ -71,21 +71,18 @@ namespace fr
 	{
 		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
 
-		SEAssert("A mesh primitive's owning entity requires a Relationship component",
-			gpm.HasComponent<fr::Relationship>(owningEntity));
 		SEAssert("A mesh primitive's owning entity requires a TransformComponent",
-			fr::Relationship::IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
+			gpm.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
 
 		entt::entity meshPrimitiveEntity = gpm.CreateEntity(meshPrimitive->GetName());
 
 		// Relationship:
-		fr::Relationship& meshPrimitiveRelationship =
-			fr::Relationship::AttachRelationshipComponent(gpm, meshPrimitiveEntity);
+		fr::Relationship& meshPrimitiveRelationship = gpm.GetComponent<fr::Relationship>(meshPrimitiveEntity);
 		meshPrimitiveRelationship.SetParent(gpm, owningEntity);
 
 		// RenderDataComponent:
 		fr::TransformComponent const* transformComponent =
-			fr::Relationship::GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
+			gpm.GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
 		gr::RenderDataComponent::AttachNewRenderDataComponent(
 			gpm, meshPrimitiveEntity, transformComponent->GetTransformID());
 
@@ -109,7 +106,7 @@ namespace fr
 		// If there is a BoundsComponent in the heirarchy above, assume it's encapsulating the MeshPrimitive:
 		entt::entity nextEntity = entt::null;
 		fr::BoundsComponent* encapsulatingBounds =
-			fr::Relationship::GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
+			gpm.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
 				meshPrimitiveRelationship.GetParent(), nextEntity);
 		if (encapsulatingBounds != nullptr)
 		{
@@ -130,14 +127,10 @@ namespace fr
 		gr::RenderDataComponent const& sharedRenderDataCmpt, 
 		gr::MeshPrimitive const* meshPrimitive)
 	{
-		SEAssert("A mesh primitive's owning entity requires a Relationship component",
-			gpm.HasComponent<fr::Relationship>(owningEntity));
-
 		entt::entity meshPrimitiveEntity = gpm.CreateEntity(meshPrimitive->GetName());
 
 		// Relationship:
-		fr::Relationship& meshPrimitiveRelationship =
-			fr::Relationship::AttachRelationshipComponent(gpm, meshPrimitiveEntity);
+		fr::Relationship& meshPrimitiveRelationship = gpm.GetComponent<fr::Relationship>(meshPrimitiveEntity);
 		meshPrimitiveRelationship.SetParent(gpm, owningEntity);
 
 		// Shared RenderDataComponent:

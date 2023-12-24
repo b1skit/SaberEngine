@@ -8,6 +8,7 @@ namespace fr
 	{
 		/***************************************************************************************************************
 		* Notes:
+		* SaberEngine uses a RHCS.
 		* Local transformations: Translation/Rotation/Scale of a node, without considering the parent hierarchy
 		* Global transformations: Final Translation/Rotation/Scale in world space, after considering the parent hierarchy
 		* 
@@ -19,12 +20,6 @@ namespace fr
 		* 
 		* GLM stores matrices in memory in column-major order.
 		***************************************************************************************************************/
-
-	public:
-		// Static world-space CS axis (SaberEngine currently uses a RHCS)
-		static const glm::vec3 WorldAxisX;	// +X
-		static const glm::vec3 WorldAxisY;	// +Y
-		static const glm::vec3 WorldAxisZ;	// +Z
 
 
 	public:

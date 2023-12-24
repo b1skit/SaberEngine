@@ -1,20 +1,17 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
-#include "Camera.h"
-#include "NamedObject.h"
+#include "Light.h"
 #include "ShadowMapRenderData.h"
-#include "Texture.h"
-#include "TextureTarget.h"
 
 
 namespace fr
 {
 	class Transform;
 	class Light;
+	class Camera;
 
 
-	class ShadowMap : public virtual en::NamedObject
+	class ShadowMap
 	{
 	public:
 		enum class ShadowType : uint8_t
@@ -27,32 +24,27 @@ namespace fr
 		static_assert(static_cast<uint8_t>(fr::ShadowMap::ShadowType::ShadowType_Count) == 
 			static_cast<uint8_t>(gr::ShadowMap::ShadowType::ShadowType_Count));
 
+		static constexpr gr::ShadowMap::ShadowType GetRenderDataShadowMapType(fr::ShadowMap::ShadowType);
+
 
 	public:
-		ShadowMap(
-			std::string const& lightName,
-			uint32_t xRes,
-			uint32_t yRes,
-			fr::Transform* shadowCamParent,
-			fr::Light::LightType lightType,
-			fr::Transform* owningTransform);
+		ShadowMap(glm::uvec2 widthHeight, fr::Light::LightType lightType);
 
 		~ShadowMap() = default;
 		ShadowMap(ShadowMap const&) = default;
 		ShadowMap(ShadowMap&&) = default;
 		ShadowMap& operator=(ShadowMap const&) = default;
 
-		// DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		fr::Camera* ShadowCamera();
-		fr::Camera const* ShadowCamera() const;
-
-		void UpdateShadowCameraConfig(); // Should be called any time the owning light has moved
+		glm::uvec2 const& GetWidthHeight() const;
 
 		void SetMinMaxShadowBias(glm::vec2 const&);
 		glm::vec2 const& GetMinMaxShadowBias() const;
 
-		// DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		std::shared_ptr<re::TextureTargetSet> GetTextureTargetSet() const;
+		ShadowType GetShadowMapType() const;
+		fr::Light::LightType GetOwningLightType() const;
+
+		bool IsDirty() const;
+		void MarkClean();
 
 		void ShowImGuiWindow();
 
@@ -61,11 +53,11 @@ namespace fr
 		const ShadowType m_shadowType;
 		const fr::Light::LightType m_lightType;
 
-		fr::Transform* m_owningTransform; // DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		std::shared_ptr<fr::Camera> m_shadowCam; // DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		std::shared_ptr<re::TextureTargetSet> m_shadowTargetSet; // DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		glm::uvec2 m_widthHeight;
 
 		glm::vec2 m_minMaxShadowBias; // Small offsets for shadow comparisons
+
+		bool m_isDirty;
 
 
 	private:
@@ -73,15 +65,22 @@ namespace fr
 	};
 
 
-	inline fr::Camera* ShadowMap::ShadowCamera()
+	inline constexpr gr::ShadowMap::ShadowType ShadowMap::GetRenderDataShadowMapType(
+		fr::ShadowMap::ShadowType frShadowMapType)
 	{
-		return m_shadowCam.get();
+		switch (frShadowMapType)
+		{
+		case fr::ShadowMap::ShadowType::Orthographic: return gr::ShadowMap::ShadowType::Orthographic;
+		case fr::ShadowMap::ShadowType::CubeMap: return gr::ShadowMap::ShadowType::CubeMap;
+		default: throw std::logic_error("Invalid light type");
+		}
+		return gr::ShadowMap::ShadowType::ShadowType_Count;
 	}
 
 
-	inline fr::Camera const* ShadowMap::ShadowCamera() const
+	inline glm::uvec2 const& ShadowMap::GetWidthHeight() const
 	{
-		return m_shadowCam.get();
+		return m_widthHeight;
 	}
 
 
@@ -91,9 +90,27 @@ namespace fr
 	}
 
 
-	inline std::shared_ptr<re::TextureTargetSet> ShadowMap::GetTextureTargetSet() const
+	inline ShadowMap::ShadowType ShadowMap::GetShadowMapType() const
 	{
-		return m_shadowTargetSet;
+		return m_shadowType;
+	}
+
+
+	inline fr::Light::LightType ShadowMap::GetOwningLightType() const
+	{
+		return m_lightType;
+	}
+
+
+	inline bool ShadowMap::IsDirty() const
+	{
+		return m_isDirty;
+	}
+
+
+	inline void ShadowMap::MarkClean()
+	{
+		m_isDirty = false;
 	}
 }
 

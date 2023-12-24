@@ -15,6 +15,8 @@ using std::make_shared;
 using glm::mat4;
 
 
+// ECS_CONVERSION: DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!
+// -> ALL THIS CODE WAS COPY/PASTED TO CameraRenderData.cpp!!!!!!!!!!!!!!!!!!!
 namespace
 {
 	// Computes the camera's EV100 from exposure settings
@@ -43,58 +45,6 @@ namespace
 
 namespace fr
 {
-	std::vector<glm::mat4> Camera::BuildCubeViewMatrices(glm::vec3 const& centerPos)
-	{
-		std::vector<glm::mat4> cubeView;
-		cubeView.reserve(6);
-
-		cubeView.emplace_back(glm::lookAt( // X+
-			centerPos,							// eye
-			centerPos + Transform::WorldAxisX,	// center: Position the camera is looking at
-			Transform::WorldAxisY));			// Normalized camera up vector
-		cubeView.emplace_back(glm::lookAt( // X-
-			centerPos,
-			centerPos - Transform::WorldAxisX,
-			Transform::WorldAxisY));
-
-		cubeView.emplace_back(glm::lookAt( // Y+
-			centerPos,
-			centerPos + Transform::WorldAxisY,
-			Transform::WorldAxisZ));
-		cubeView.emplace_back(glm::lookAt( // Y-
-			centerPos,
-			centerPos - Transform::WorldAxisY,
-			-Transform::WorldAxisZ));
-
-		// In both OpenGL and DX12, cubemaps use a LHCS. SaberEngine uses a RHCS.
-		// Here, we supply our coordinates w.r.t a LHCS by multiplying the Z direction (i.e. the point we're looking at)
-		// by -1. In our shaders we must also transform our RHCS sample directions to LHCS.
-		cubeView.emplace_back(glm::lookAt( // Z+
-			centerPos,
-			centerPos - Transform::WorldAxisZ, // * -1
-			Transform::WorldAxisY));
-		cubeView.emplace_back(glm::lookAt( // Z-
-			centerPos,
-			centerPos + Transform::WorldAxisZ, // * -1
-			Transform::WorldAxisY));
-
-		return cubeView;
-	}
-
-
-	glm::mat4 Camera::BuildPerspectiveProjectionMatrix(float yFOV, float aspectRatio, float nearDist, float farDist)
-	{
-		return glm::perspective(yFOV, aspectRatio, nearDist, farDist);
-	}
-
-	
-	glm::mat4 Camera::BuildOrthographicProjectionMatrix(
-		float left, float right, float bottom, float top, float nearDist, float farDist)
-	{
-		return glm::ortho(left, right, bottom, top, nearDist, farDist);
-	}
-
-
 	std::shared_ptr<fr::Camera> Camera::Create(
 		std::string const& name, gr::Camera::Config const& camConfig, fr::Transform* parent)
 	{
@@ -117,11 +67,10 @@ namespace fr
 		, m_cameraConfig(camConfig)
 		, m_matricesDirty(true)
 		, m_parameterBlockDirty(true)
+		, m_isDirty(true)
 	{
 		if (m_isComponent)
 		{
-			SEAssert("If the Camera is being created as a component, it must be initialized with a Transform component",
-				transform != nullptr);
 			m_transform = transform;
 		}
 		else
@@ -137,40 +86,12 @@ namespace fr
 			gr::Camera::CameraParams::s_shaderName,
 			m_cameraPBData, 
 			re::ParameterBlock::PBType::Mutable);
-
-		switch (m_cameraConfig.m_projectionType)
-		{
-		case gr::Camera::Config::ProjectionType::Perspective:
-		case gr::Camera::Config::ProjectionType::Orthographic:
-		{
-			m_view.resize(1, glm::mat4(1.f));
-			m_invView.resize(1, glm::mat4(1.f));
-
-			m_projection = glm::mat4(1.f);
-			m_invProjection = glm::mat4(1.f);
-
-			m_viewProjection.resize(1, glm::mat4(1.f));
-			m_invViewProjection.resize(1, glm::mat4(1.f));
-		}
-		break;
-		case gr::Camera::Config::ProjectionType::PerspectiveCubemap:
-		{
-			m_view.resize(6, glm::mat4(1.f));
-			m_invView.resize(6, glm::mat4(1.f));
-
-			m_projection = glm::mat4(1.f);
-			m_invProjection = glm::mat4(1.f);
-
-			m_viewProjection.resize(6, glm::mat4(1.f));
-			m_invViewProjection.resize(6, glm::mat4(1.f));
-		}
-		break;
-		default:
-			SEAssertF("Invalid projection type");
-		}
 	
-		RecomputeMatrices();
-		UpdateCameraParamBlockData();
+		if (!m_isComponent) // ECS_CONVERSION: OMG GROSS HACK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		{
+			RecomputeMatrices();
+			UpdateCameraParamBlockData();
+		}
 	}
 
 
@@ -179,6 +100,8 @@ namespace fr
 		m_matricesDirty |= m_transform->HasChanged();
 		RecomputeMatrices();
 		UpdateCameraParamBlockData(); // DEPRECATED
+
+		m_isDirty = true; // THIS FUNCTION IS DEPRECATED BUT JUST PUTTING THIS HERE TO BE SAFE FOR NOW....
 	}
 
 
@@ -200,10 +123,10 @@ namespace fr
 			// For cameras, we omit the scale matrix 
 			glm::mat4 const& globalMatrix = m_transform->GetGlobalTranslationMat() * m_transform->GetGlobalRotationMat();
 
-			m_view[0] = glm::inverse(globalMatrix);
-			m_invView[0] = globalMatrix;
+			m_view = glm::inverse(globalMatrix);
+			m_invView = globalMatrix;
 
-			m_projection = BuildPerspectiveProjectionMatrix(
+			m_projection = gr::Camera::BuildPerspectiveProjectionMatrix(
 				m_cameraConfig.m_yFOV,
 				m_cameraConfig.m_aspectRatio,
 				m_cameraConfig.m_near,
@@ -211,8 +134,8 @@ namespace fr
 
 			m_invProjection = glm::inverse(m_projection);
 
-			m_viewProjection[0] = m_projection * m_view[0];
-			m_invViewProjection[0] = glm::inverse(m_viewProjection[0]);
+			m_viewProjection = m_projection * m_view;
+			m_invViewProjection = glm::inverse(m_viewProjection);
 		}
 		break;
 		case gr::Camera::Config::ProjectionType::Orthographic:
@@ -222,10 +145,10 @@ namespace fr
 			// For cameras, we omit the scale matrix 
 			glm::mat4 const& globalMatrix = m_transform->GetGlobalTranslationMat() * m_transform->GetGlobalRotationMat();
 
-			m_view[0] = glm::inverse(globalMatrix);
-			m_invView[0] = globalMatrix;
+			m_view = glm::inverse(globalMatrix);
+			m_invView = globalMatrix;
 
-			m_projection = BuildOrthographicProjectionMatrix(
+			m_projection = gr::Camera::BuildOrthographicProjectionMatrix(
 				m_cameraConfig.m_orthoLeftRightBotTop.x,
 				m_cameraConfig.m_orthoLeftRightBotTop.y,
 				m_cameraConfig.m_orthoLeftRightBotTop.z,
@@ -235,41 +158,20 @@ namespace fr
 
 			m_invProjection = glm::inverse(m_projection);
 
-			m_viewProjection[0] = m_projection * m_view[0];
-			m_invViewProjection[0] = glm::inverse(m_viewProjection[0]);
+			m_viewProjection = m_projection * m_view;
+			m_invViewProjection = glm::inverse(m_viewProjection);
 		}
 		break;
 		case gr::Camera::Config::ProjectionType::PerspectiveCubemap:
 		{
-			m_cameraConfig.m_orthoLeftRightBotTop = glm::vec4(0.f, 0.f, 0.f, 0.f);
-
-			m_projection = glm::perspective
-			(
-				m_cameraConfig.m_yFOV,
-				m_cameraConfig.m_aspectRatio,
-				m_cameraConfig.m_near,
-				m_cameraConfig.m_far
-			);
-
-			m_invProjection = glm::inverse(m_projection);
-
-			glm::vec3 const& worldPos = m_transform->GetGlobalPosition();
-
-			m_view = BuildCubeViewMatrices(worldPos);
-
-			for (uint8_t faceIdx = 0; faceIdx < 6; faceIdx++)
-			{
-				m_invView[faceIdx] = glm::inverse(m_view[faceIdx]);
-
-				m_viewProjection[faceIdx] = m_projection * m_view[faceIdx];
-				m_invViewProjection[faceIdx] = glm::inverse(m_viewProjection[faceIdx]);
-			}
-
+			// No longer needed: This whole function is DEPRECATED
 		}
 		break;
 		default:
 			SEAssertF("Invalid projection type");
 		}
+
+		m_isDirty = true;
 	}
 
 
@@ -326,6 +228,9 @@ namespace fr
 		m_cameraPBData.g_cameraWPos = glm::vec4(GetTransform()->GetGlobalPosition().xyz, 0.f);
 
 		m_cameraParamBlock->Commit(m_cameraPBData);
+
+
+		m_isDirty = true;
 	}
 
 
@@ -345,6 +250,8 @@ namespace fr
 	{
 		m_cameraParamBlock = nullptr;
 		en::SceneManager::GetSceneData()->RemoveCamera(GetUniqueID());
+
+		m_isDirty = true;
 	}
 
 
@@ -355,6 +262,8 @@ namespace fr
 			m_cameraConfig = newConfig;
 			m_matricesDirty = true;
 			m_parameterBlockDirty = true;
+
+			m_isDirty = true;
 		}		
 	}
 

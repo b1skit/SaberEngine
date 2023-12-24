@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "LightRenderData.h"
+#include "NamedObject.h"
 #include "RenderObjectIDs.h"
 
 
@@ -22,14 +23,17 @@ namespace gr
 		struct RenderData
 		{
 			gr::LightID m_owningLightID;
+			gr::RenderDataID m_renderDataID;
+			gr::TransformID m_transformID;
 
 			gr::Light::LightType m_lightType;
 			ShadowType m_shadowType;
 
+			glm::vec4 m_textureDims;
+
 			glm::vec2 m_minMaxShadowBias;
 
-			bool m_enabled;
+			char m_owningLightName[en::NamedObject::k_maxNameLength];
 		};
-
 	};
 }

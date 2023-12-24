@@ -2,40 +2,21 @@
 #include "Assert.h"
 #include "ImGuiUtils.h"
 #include "Transform.h"
-
-using glm::vec3;
-using glm::vec4;
-using glm::quat;
-using glm::mat4;
-using glm::normalize;
-using glm::rotate;
-using glm::fmod;
-using glm::abs;
-using glm::two_pi;
-using glm::sign;
-using std::vector;
-using std::find;
+#include "TransformRenderData.h"
 
 
 namespace
 {
 	void ClampEulerRotationsToPlusMinus2Pi(glm::vec3& eulerXYZRadians)
 	{
-		eulerXYZRadians.x = fmod<float>(abs(eulerXYZRadians.x), two_pi<float>()) * sign(eulerXYZRadians.x);
-		eulerXYZRadians.y = fmod<float>(abs(eulerXYZRadians.y), two_pi<float>()) * sign(eulerXYZRadians.y);
-		eulerXYZRadians.z = fmod<float>(abs(eulerXYZRadians.z), two_pi<float>()) * sign(eulerXYZRadians.z);
+		eulerXYZRadians.x = glm::fmod<float>(abs(eulerXYZRadians.x), glm::two_pi<float>()) * glm::sign(eulerXYZRadians.x);
+		eulerXYZRadians.y = glm::fmod<float>(abs(eulerXYZRadians.y), glm::two_pi<float>()) * glm::sign(eulerXYZRadians.y);
+		eulerXYZRadians.z = glm::fmod<float>(abs(eulerXYZRadians.z), glm::two_pi<float>()) * glm::sign(eulerXYZRadians.z);
 	}
 }
 
 namespace fr
 {
-	// Static members:
-	//----------------
-	constexpr glm::vec3 Transform::WorldAxisX = vec3(1.0f,	0.0f,	0.0f);
-	constexpr glm::vec3 Transform::WorldAxisY = vec3(0.0f,	1.0f,	0.0f);
-	constexpr glm::vec3 Transform::WorldAxisZ = vec3(0.0f,	0.0f,	1.0f); // Note: SaberEngine uses a RHCS
-
-	
 	Transform::Transform(Transform* parent)
 		: m_parent(nullptr)
 		
@@ -56,7 +37,7 @@ namespace fr
 	}
 
 
-	mat4 Transform::GetGlobalMatrix()
+	glm::mat4 Transform::GetGlobalMatrix()
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
@@ -99,7 +80,7 @@ namespace fr
 
 		const glm::quat globalRotationQuat = GetGlobalRotation();
 
-		return normalize(globalRotationQuat * WorldAxisZ);
+		return normalize(globalRotationQuat * gr::Transform::WorldAxisZ);
 	}
 
 
@@ -109,7 +90,7 @@ namespace fr
 
 		const glm::quat globalRotationQuat = GetGlobalRotation();
 
-		return glm::normalize(globalRotationQuat * WorldAxisX);
+		return glm::normalize(globalRotationQuat * gr::Transform::WorldAxisX);
 	}
 
 
@@ -119,7 +100,7 @@ namespace fr
 
 		const glm::quat globalRotationQuat = GetGlobalRotation();		
 
-		return normalize(globalRotationQuat * WorldAxisY);
+		return normalize(globalRotationQuat * gr::Transform::WorldAxisY);
 	}
 
 
@@ -166,12 +147,12 @@ namespace fr
 		// To move from current local space to a new local space where the parent changes but the global transformation
 		// stays the same, we first find the current global transform by going up in the hierarchy to the root. Then,
 		// we move down the hierarchy to the new parent:
-		mat4 const& newLocalMatrix = glm::inverse(newParent->GetGlobalMatrix()) * GetGlobalMatrix();
+		glm::mat4 const& newLocalMatrix = glm::inverse(newParent->GetGlobalMatrix()) * GetGlobalMatrix();
 
 		// Decompose our new matrix & update the individual components for when we call Recompute():
-		vec3 skew;
-		vec4 perspective;
-		decompose(newLocalMatrix, m_localScale, m_localRotationQuat, m_localPosition, skew, perspective);
+		glm::vec3 skew;
+		glm::vec4 perspective;
+		glm::decompose(newLocalMatrix, m_localScale, m_localRotationQuat, m_localPosition, skew, perspective);
 
 		SetParent(newParent);
 
@@ -179,7 +160,7 @@ namespace fr
 	}
 
 
-	void Transform::TranslateLocal(vec3 const& amount)
+	void Transform::TranslateLocal(glm::vec3 const& amount)
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 			
@@ -189,7 +170,7 @@ namespace fr
 	}
 
 
-	void Transform::SetLocalPosition(vec3 const& position)
+	void Transform::SetLocalPosition(glm::vec3 const& position)
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
@@ -258,7 +239,7 @@ namespace fr
 	}
 
 
-	void Transform::RotateLocal(vec3 eulerXYZRadians)
+	void Transform::RotateLocal(glm::vec3 eulerXYZRadians)
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
@@ -269,7 +250,7 @@ namespace fr
 	}
 
 
-	void Transform::RotateLocal(float angleRads, vec3 axis)
+	void Transform::RotateLocal(float angleRads, glm::vec3 axis)
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
@@ -291,7 +272,7 @@ namespace fr
 	}
 
 
-	void Transform::SetLocalRotation(vec3 const& eulerXYZ)
+	void Transform::SetLocalRotation(glm::vec3 const& eulerXYZ)
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
@@ -301,7 +282,7 @@ namespace fr
 	}
 
 
-	void Transform::SetLocalRotation(quat const& newRotation)
+	void Transform::SetLocalRotation(glm::quat const& newRotation)
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
@@ -365,7 +346,7 @@ namespace fr
 	}
 
 
-	void Transform::SetLocalScale(vec3 const& scale)
+	void Transform::SetLocalScale(glm::vec3 const& scale)
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
@@ -385,7 +366,7 @@ namespace fr
 	glm::mat4 Transform::GetLocalScaleMat() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
-		return glm::scale(mat4(1.f), m_localScale);
+		return glm::scale(glm::mat4(1.f), m_localScale);
 	}
 
 

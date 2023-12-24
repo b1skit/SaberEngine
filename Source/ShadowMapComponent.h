@@ -16,19 +16,39 @@ namespace fr
 		static ShadowMapComponent& AttachShadowMapComponent(
 			GameplayManager&, entt::entity, char const* name, fr::Light::LightType);
 
-		static gr::ShadowMap::RenderData CreateRenderData(fr::ShadowMapComponent const&);
+		static gr::Camera::Config GenerateShadowCameraConfig(
+			fr::GameplayManager&, entt::entity shadowMapEntity, ShadowMapComponent const&);
+
+		static gr::ShadowMap::RenderData CreateRenderData(
+			fr::NameComponent const& nameCmpt, fr::ShadowMapComponent const&);
+
+		static void MarkDirty(GameplayManager&, entt::entity shadowMapEntity);
 
 
 	private: // Use the static creation factories
 		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
 	public:
-		ShadowMapComponent(PrivateCTORTag, gr::LightID, fr::Light::LightType);
+		ShadowMapComponent(
+			PrivateCTORTag,
+			gr::LightID, 
+			fr::Light::LightType, 
+			gr::RenderDataID, 
+			gr::TransformID, 
+			glm::uvec2 widthHeight);
 
 
 		gr::LightID GetLightID() const;
+		gr::RenderDataID GetRenderDataID() const;
+		gr::TransformID GetTransformID() const;
+
+		fr::ShadowMap& GetShadowMap();
+		fr::ShadowMap const& GetShadowMap() const;
+
 
 	private:
 		const gr::LightID m_lightID;
+		const gr::RenderDataID m_renderDataID;
+		const gr::TransformID m_transformID;
 
 		fr::ShadowMap m_shadowMap;
 	};
@@ -40,7 +60,7 @@ namespace fr
 	class UpdateShadowMapDataRenderCommand
 	{
 	public:
-		UpdateShadowMapDataRenderCommand(ShadowMapComponent const&);
+		UpdateShadowMapDataRenderCommand(fr::NameComponent const& nameCmpt, ShadowMapComponent const&);
 
 		static void Execute(void*);
 		static void Destroy(void*);
@@ -58,5 +78,29 @@ namespace fr
 	inline gr::LightID ShadowMapComponent::GetLightID() const
 	{
 		return m_lightID;
+	}
+
+
+	inline gr::RenderDataID ShadowMapComponent::GetRenderDataID() const
+	{
+		return m_renderDataID;
+	}
+
+
+	inline gr::TransformID ShadowMapComponent::GetTransformID() const
+	{
+		return m_transformID;
+	}
+
+
+	inline fr::ShadowMap& ShadowMapComponent::GetShadowMap()
+	{
+		return m_shadowMap;
+	}
+
+
+	inline fr::ShadowMap const& ShadowMapComponent::GetShadowMap() const
+	{
+		return m_shadowMap;
 	}
 }

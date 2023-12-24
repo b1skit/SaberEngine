@@ -13,6 +13,5 @@ namespace gr
 			glm::vec3 m_minXYZ;
 			glm::vec3 m_maxXYZ;
 		};
-
 	};
 }

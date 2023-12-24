@@ -18,6 +18,6 @@ namespace fr
 
 
 	public:
-		static fr::Transform& GetSceneNodeTransform(entt::entity);
+		static fr::Transform& GetSceneNodeTransform(entt::entity); // ECS_CONVERSION: THIS USES THE GPM, PASS IT AS AN ARG
 	};
 }

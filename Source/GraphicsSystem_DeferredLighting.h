@@ -12,6 +12,9 @@ namespace re
 
 namespace gr
 {
+	class ShadowsGraphicsSystem;
+
+
 	class DeferredLightingGraphicsSystem final : public virtual GraphicsSystem
 	{
 	public:
@@ -33,6 +36,8 @@ namespace gr
 	private:
 		std::array<std::vector<gr::Light::RenderData>, gr::Light::LightType_Count> m_renderData;
 
+		gr::ShadowsGraphicsSystem* m_shadowGS;
+
 		// Ambient IBL resources:
 		std::shared_ptr<re::Texture> m_BRDF_integrationMap;
 		std::shared_ptr<re::Texture> m_IEMTex;
@@ -43,9 +48,9 @@ namespace gr
 		// TODO: We only use this in the 1st frame, we should clean it up via a virtual "end frame cleanup" GS function
 		std::shared_ptr<gr::MeshPrimitive> m_cubeMeshPrimitive; // For rendering into a cube map. 
 
-		std::shared_ptr<re::RenderStage> m_keylightStage;
+		std::shared_ptr<re::RenderStage> m_directionalStage;
 
-		std::shared_ptr<re::RenderStage> m_pointlightStage;
+		std::shared_ptr<re::RenderStage> m_pointStage;
 
 
 	private:

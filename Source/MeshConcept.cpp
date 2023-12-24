@@ -9,27 +9,25 @@
 
 namespace fr
 {
-	entt::entity Mesh::AttachMeshConcept(entt::entity sceneNode, char const* name)
+	entt::entity Mesh::AttachMeshConcept(entt::entity owningEntity, char const* name)
 	{
 		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
 
-		SEAssert("A Mesh concept requires a Transform via a SceneNode. The sceneNode should have this already",
-			gpm.HasComponent<fr::TransformComponent>(sceneNode));
-		SEAssert("A mesh requires a Relationship with a SceneNode. The sceneNode parent should have this already",
-			gpm.HasComponent<fr::Relationship>(sceneNode));
-
+		SEAssert("A Mesh concept requires a Transform. The owningEntity should have this already",
+			gpm.HasComponent<fr::TransformComponent>(owningEntity));
+		
 		entt::entity meshEntity = gpm.CreateEntity(name);
 
 		gpm.EmplaceComponent<fr::Mesh::MeshConceptMarker>(meshEntity);
 
-		fr::TransformComponent const& transformComponent = gpm.GetComponent<fr::TransformComponent>(sceneNode);
+		fr::TransformComponent const& transformComponent = gpm.GetComponent<fr::TransformComponent>(owningEntity);
 
 		gr::RenderDataComponent::AttachNewRenderDataComponent(gpm, meshEntity, transformComponent.GetTransformID());
 
 		fr::BoundsComponent::AttachBoundsComponent(gpm, meshEntity); // Mesh bounds: Encompasses all attached primitive bounds
 
-		fr::Relationship& meshRelationship = fr::Relationship::AttachRelationshipComponent(gpm, meshEntity);
-		meshRelationship.SetParent(gpm, sceneNode);
+		fr::Relationship& meshRelationship = gpm.GetComponent<fr::Relationship>(meshEntity);
+		meshRelationship.SetParent(gpm, owningEntity);
 
 		return meshEntity;
 	}
@@ -39,7 +37,7 @@ namespace fr
 	{
 		// ECS_CONVERSON: TODO: Restore this functionality
 
-		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+		//fr::GameplayManager& gpm = *fr::GameplayManager::Get();
 
 		//if (ImGui::CollapsingHeader(
 		//	std::format("{}##{}", GetName(), util::PtrToID(this)).c_str(), ImGuiTreeNodeFlags_None))

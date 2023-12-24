@@ -61,6 +61,9 @@ namespace fr
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_relationshipMutex);
 
+			SEAssert("Trying to set the same parent. This should be harmless, but it's unexpected", 
+				newParent == entt::null || newParent != m_parent);
+
 			if (m_parent != entt::null)
 			{
 				Relationship& prevParentRelationship = gpm.GetComponent<fr::Relationship>(m_parent);

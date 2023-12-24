@@ -26,17 +26,6 @@ namespace fr
 
 
 	public:
-		template<typename T>
-		static bool IsInHierarchyAbove(entt::entity); // Searches current entity and above
-
-		template<typename T>
-		static T* GetFirstInHierarchyAbove(entt::entity); // Searches current entity and above
-
-		template<typename T>
-		static T* GetFirstAndEntityInHierarchyAbove(entt::entity, entt::entity& owningEntityOut); // Searches current entity and above
-
-
-	public:
 		Relationship(Relationship&&) noexcept;
 		Relationship& operator=(Relationship&&) noexcept;
 
@@ -122,48 +111,5 @@ namespace fr
 	inline entt::entity Relationship::GetThisEntity() const
 	{
 		return m_thisEntity;
-	}
-
-
-	template<typename T>
-	bool Relationship::IsInHierarchyAbove(entt::entity entity)
-	{
-		return GetFirstInHierarchyAbove<T>(entity) != nullptr;
-	}
-
-
-	template<typename T>
-	T* Relationship::GetFirstInHierarchyAbove(entt::entity entity)
-	{
-		entt::entity dummy = entt::null;
-		return GetFirstAndEntityInHierarchyAbove<T>(entity, dummy);
-	}
-
-
-	template<typename T>
-	T* Relationship::GetFirstAndEntityInHierarchyAbove(entt::entity entity, entt::entity& owningEntityOut)
-	{
-		SEAssert("Entity cannot be null", entity != entt::null);
-
-		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
-
-		entt::entity currentEntity = entity;
-		while (currentEntity != entt::null)
-		{
-			T* component = gpm.TryGetComponent<T>(currentEntity);
-			if (component != nullptr)
-			{
-				owningEntityOut = currentEntity;
-				return component;
-			}
-
-			SEAssert("Current entity does not have a Relationship component",
-				gpm.HasComponent<fr::Relationship>(currentEntity));
-			fr::Relationship const& currentRelationship = gpm.GetComponent<fr::Relationship>(currentEntity);
-
-			currentEntity = currentRelationship.GetParent();
-		}
-
-		return nullptr;
 	}
 }

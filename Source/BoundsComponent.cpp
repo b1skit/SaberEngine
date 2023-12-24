@@ -41,9 +41,6 @@ namespace fr
 
 	void BoundsComponent::AttachBoundsComponent(fr::GameplayManager& gpm, entt::entity entity)
 	{
-		SEAssert("Bounds can only be attached to an entity that already has a RenderDataComponent",
-			fr::Relationship::IsInHierarchyAbove<gr::RenderDataComponent>(entity));
-
 		gpm.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{});
 		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
 	}
@@ -52,9 +49,6 @@ namespace fr
 	void BoundsComponent::AttachBoundsComponent(
 		fr::GameplayManager& gpm, entt::entity entity, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ)
 	{
-		SEAssert("Bounds can only be attached to an entity that already has a RenderDataComponent",
-			fr::Relationship::IsInHierarchyAbove<gr::RenderDataComponent>(entity));
-
 		gpm.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ);
 		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
 	}
@@ -67,9 +61,6 @@ namespace fr
 		glm::vec3 const& maxXYZ,
 		std::vector<glm::vec3> const& positions)
 	{
-		SEAssert("Bounds can only be attached to an entity that already has a RenderDataComponent", 
-			fr::Relationship::IsInHierarchyAbove<gr::RenderDataComponent>(entity));
-
 		gpm.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ, positions);
 		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
 	}
@@ -232,7 +223,7 @@ namespace fr
 
 		// Recursively expand any Bounds above us:
 		entt::entity nextEntity = entt::null;
-		fr::BoundsComponent* nextBounds = fr::Relationship::GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
+		fr::BoundsComponent* nextBounds = gpm.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
 			owningEntityRelationship.GetParent(), 
 			nextEntity);
 		if (nextBounds != nullptr)

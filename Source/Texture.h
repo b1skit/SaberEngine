@@ -22,6 +22,9 @@ namespace re
 	public:
 		static uint32_t ComputeMaxMips(uint32_t width, uint32_t height);
 
+		static glm::vec4 ComputeTextureDimenions(uint32_t width, uint32_t height);
+		static glm::vec4 ComputeTextureDimenions(glm::uvec2 widthHeight);
+
 
 	public:
 		struct PlatformParams : public re::IPlatformParams

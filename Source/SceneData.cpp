@@ -481,14 +481,12 @@ namespace
 		{
 		case fr::Light::LightType::Directional_Deferred:
 		{
-			fr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
-			fr::Light::CreateDirectionalLight(lightName, sceneNodeTransform, colorIntensity, attachShadow);
+			fr::LightComponent::AttachDeferredDirectionalLightConcept(sceneNode, lightName, colorIntensity, attachShadow);
 		}
 		break;
 		case fr::Light::LightType::Point_Deferred:
 		{
-			fr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
-			fr::Light::CreatePointLight(lightName, sceneNodeTransform, colorIntensity, attachShadow);
+			fr::LightComponent::AttachDeferredPointLightConcept(sceneNode, lightName, colorIntensity, attachShadow);
 		}
 		break;
 		default:
@@ -1017,37 +1015,9 @@ namespace fr
 			earlyLoadTasks[loadTask].wait();
 		}
 
-		return true;
-	}
-
-
-	void SceneData::PostLoadFinalize()
-	{
 		m_finishedLoading = true;
 
-		// ECS_CONVERSION: Temp hax, force the scene bounds to update. We need to handle this more cleanly
-		fr::GameplayManager::Get()->UpdateSceneBounds();
-
-		// Execute any post-load callbacks to allow objects that require the scene to be fully loaded to finalize thier
-		// initialization:
-		{
-			std::lock_guard<std::mutex> lock(m_postLoadCallbacksMutex);
-			
-			for (auto const& Callback : m_postLoadCallbacks)
-			{
-				Callback();
-			}
-			m_postLoadCallbacks.clear();
-		}
-	}
-
-
-	void SceneData::RegisterForPostLoadCallback(std::function<void()> Callback)
-	{
-		{
-			std::lock_guard<std::mutex> lock(m_postLoadCallbacksMutex);
-			m_postLoadCallbacks.emplace_back(Callback);
-		}
+		return true;
 	}
 
 
@@ -1141,53 +1111,6 @@ namespace fr
 
 			m_cameras.erase(result);
 		}
-	}
-
-
-	void SceneData::AddLight(std::shared_ptr<fr::Light> newLight)
-	{
-		// TODO: Seems arbitrary that we cannot have multiple directional lights... Why even bother 
-		// enforcing this? Just treat all lights the same
-
-		switch (newLight->GetType())
-		{
-		case fr::Light::AmbientIBL_Deferred:
-		{
-			SEAssertF("DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-		}
-		break;
-		case fr::Light::Directional_Deferred:
-		{
-			std::unique_lock<std::shared_mutex> writeLock(m_keyLightReadWriteMutex);
-			SEAssert("Direction light already exists, cannot have 2 directional lights", m_keyLight == nullptr);
-			m_keyLight = newLight;
-		}
-		break;
-		case fr::Light::Point_Deferred:
-		{
-			std::unique_lock<std::shared_mutex> writeLock(m_pointLightsReadWriteMutex);
-			m_pointLights.emplace_back(newLight);
-		}
-		break;
-		//case Light::Spot:
-		//case Light::Area:
-		//case Light::Tube:
-		default:
-			LOG_ERROR("Ignoring unsupported light type");
-			break;
-		}
-	}
-
-
-	std::shared_ptr<fr::Light> SceneData::GetKeyLight() const
-	{
-		return m_keyLight;
-	}
-
-
-	std::vector<std::shared_ptr<fr::Light>> const& SceneData::GetPointLights() const
-	{
-		return m_pointLights;
 	}
 
 

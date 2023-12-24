@@ -27,9 +27,6 @@ namespace fr
 
 		entt::entity lightEntity = gpm.CreateEntity(iblTex->GetName());
 
-		// Relationship:
-		fr::Relationship& ambientLightRelationship = fr::Relationship::AttachRelationshipComponent(gpm, lightEntity);
-
 		// MeshPrimitive:
 		gr::RenderDataComponent& renderDataComponent = 
 			gr::RenderDataComponent::AttachNewRenderDataComponent(gpm, lightEntity, gr::k_sharedIdentityTransformID);
@@ -49,6 +46,7 @@ namespace fr
 			PrivateCTORTag{}, 
 			renderDataComponent,
 			iblTex);
+		gpm.EmplaceComponent<AmbientIBLDeferredMarker>(lightEntity);
 
 		// Mark our new LightComponent as dirty:
 		gpm.EmplaceComponent<DirtyMarker<fr::LightComponent>>(lightEntity);
@@ -58,30 +56,29 @@ namespace fr
 
 
 	LightComponent& LightComponent::AttachDeferredPointLightConcept(
-		entt::entity owningEntity, char const* name, glm::vec4 colorIntensity, bool hasShadow)
+		entt::entity owningEntity, char const* name, glm::vec4 const& colorIntensity, bool hasShadow)
 	{
 		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
 
-		SEAssert("A light's owning entity requires a Relationship component",
-			gpm.HasComponent<fr::Relationship>(owningEntity));
 		SEAssert("A light's owning entity requires a TransformComponent",
-			fr::Relationship::IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
+			gpm.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
 
 		entt::entity lightEntity = gpm.CreateEntity(name);
 
 		// Relationship:
-		fr::Relationship& lightRelationship = fr::Relationship::AttachRelationshipComponent(gpm, lightEntity);
+		fr::Relationship& lightRelationship = gpm.GetComponent<fr::Relationship>(lightEntity);
 		lightRelationship.SetParent(gpm, owningEntity);
 
 		// MeshPrimitive:
 		std::shared_ptr<gr::MeshPrimitive> pointLightMesh = gr::meshfactory::CreateSphere();
 
-		entt::entity meshPrimitiveEntity = 
+		entt::entity meshPrimitiveEntity =
 			fr::MeshPrimitive::AttachMeshPrimitiveConcept(lightEntity, pointLightMesh.get());
+
+		// RenderData:
+		// Point light's share the the RenderDataComponent created by the MeshPrimitive
 		gr::RenderDataComponent const& meshPrimRenderDataCmpt = 
 			gpm.GetComponent<gr::RenderDataComponent>(meshPrimitiveEntity);
-
-		// RenderData: We share the deferred light MeshPrimitive's RenderDataID
 		gr::RenderDataComponent::AttachSharedRenderDataComponent(gpm, lightEntity, meshPrimRenderDataCmpt);
 
 		// LightComponent:
@@ -90,13 +87,16 @@ namespace fr
 			PrivateCTORTag{}, 
 			meshPrimRenderDataCmpt,
 			fr::Light::LightType::Point_Deferred,
-			colorIntensity);
-		
+			colorIntensity,
+			hasShadow);
+		gpm.EmplaceComponent<PointDeferredMarker>(lightEntity);
+
 		// ShadowMap, if required:
 		if (hasShadow)
 		{
 			fr::ShadowMapComponent::AttachShadowMapComponent(
 				gpm, lightEntity, std::format("{}_ShadowMap", name).c_str(), fr::Light::LightType::Point_Deferred);
+			gpm.EmplaceComponent<HasShadowMarker>(lightEntity);
 		}
 
 		// Mark our new LightComponent as dirty:
@@ -106,26 +106,37 @@ namespace fr
 	}
 
 
+	LightComponent& LightComponent::AttachDeferredPointLightConcept(
+		entt::entity entity, std::string const& name, glm::vec4 const& colorIntensity, bool hasShadow)
+	{
+		return AttachDeferredPointLightConcept(entity, name.c_str(), colorIntensity, hasShadow);
+	}
+
+
 	LightComponent& LightComponent::AttachDeferredDirectionalLightConcept(
 		entt::entity owningEntity, char const* name, glm::vec4 colorIntensity, bool hasShadow)
 	{
 		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
 
-		SEAssert("A light's owning entity requires a Relationship component",
-			gpm.HasComponent<fr::Relationship>(owningEntity));
 		SEAssert("A light's owning entity requires a TransformComponent",
-			fr::Relationship::IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
+			gpm.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
 
 		entt::entity lightEntity = gpm.CreateEntity(name);
 
 		// Relationship:
-		fr::Relationship& lightRelationship = fr::Relationship::AttachRelationshipComponent(gpm, lightEntity);
+		fr::Relationship& lightRelationship = gpm.GetComponent<fr::Relationship>(lightEntity);
 		lightRelationship.SetParent(gpm, owningEntity);
 
-		// MeshPrimitive:
-		gr::RenderDataComponent& renderDataComponent =
-			gr::RenderDataComponent::AttachNewRenderDataComponent(gpm, lightEntity, gr::k_sharedIdentityTransformID);
+		fr::TransformComponent const& transformComponent = 
+			*gpm.GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
 
+		// Note: A light requires a RenderDataComponent and Transform, and a raw MeshPrimitiveComponent requires a
+		// RenderDataComponent to share. This means our fullscreen quad will technically be linked to the light's
+		// Transform; Fullscreen quads don't use a a Transform so this shouldn't matter
+		gr::RenderDataComponent& renderDataComponent =
+			gr::RenderDataComponent::AttachNewRenderDataComponent(gpm, lightEntity, transformComponent.GetTransformID());
+
+		// MeshPrimitive:
 		std::shared_ptr<gr::MeshPrimitive> fullscreenQuadSceneData =
 			gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
 
@@ -136,18 +147,21 @@ namespace fr
 			fullscreenQuadSceneData.get());
 
 		// LightComponent:
-		fr::LightComponent& lightComponent = *gpm.EmplaceComponent<fr::LightComponent>(
+		LightComponent& lightComponent = *gpm.EmplaceComponent<LightComponent>(
 			lightEntity,
 			PrivateCTORTag{},
 			renderDataComponent,
-			fr::Light::LightType::Point_Deferred,
-			colorIntensity);
+			fr::Light::LightType::Directional_Deferred,
+			colorIntensity,
+			hasShadow);
+		gpm.EmplaceComponent<DirectionalDeferredMarker>(lightEntity);
 
 		// ShadowMap, if required:
 		if (hasShadow)
 		{
 			fr::ShadowMapComponent::AttachShadowMapComponent(
 				gpm, lightEntity, std::format("{}_ShadowMap", name).c_str(), fr::Light::LightType::Directional_Deferred);
+			gpm.EmplaceComponent<HasShadowMarker>(lightEntity);
 		}
 
 		// Mark our new LightComponent as dirty:
@@ -157,13 +171,23 @@ namespace fr
 	}
 
 
-	gr::Light::RenderData LightComponent::CreateRenderData(fr::LightComponent const& lightCmpt)
+	LightComponent& LightComponent::AttachDeferredDirectionalLightConcept(
+		entt::entity entity, std::string const& name, glm::vec4 colorIntensity, bool hasShadow)
+	{
+		return AttachDeferredDirectionalLightConcept(entity, name.c_str(), colorIntensity, hasShadow);
+	}
+
+
+	gr::Light::RenderData LightComponent::CreateRenderData(
+		fr::NameComponent const& nameCmpt, fr::LightComponent const& lightCmpt)
 	{
 		gr::Light::RenderData renderData(
+			nameCmpt.GetName().c_str(),
 			fr::Light::GetRenderDataLightType(lightCmpt.m_light.GetType()),
 			lightCmpt.GetLightID(),
 			lightCmpt.GetRenderDataID(),
-			lightCmpt.GetTransformID());
+			lightCmpt.GetTransformID(),
+			lightCmpt.m_hasShadow);
 
 		fr::Light const& light = lightCmpt.m_light;
 
@@ -172,7 +196,7 @@ namespace fr
 		case fr::Light::LightType::AmbientIBL_Deferred:
 		{
 			fr::Light::TypeProperties const& typeProperties =
-				light.AccessLightTypeProperties(fr::Light::LightType::AmbientIBL_Deferred);
+				light.GetLightTypeProperties(fr::Light::LightType::AmbientIBL_Deferred);
 			SEAssert("IBL texture cannot be null", typeProperties.m_ambient.m_IBLTex);
 
 			renderData.m_typeProperties.m_ambient.m_iblTex = typeProperties.m_ambient.m_IBLTex;
@@ -184,7 +208,7 @@ namespace fr
 		case fr::Light::LightType::Directional_Deferred:
 		{
 			fr::Light::TypeProperties const& typeProperties = 
-				light.AccessLightTypeProperties(fr::Light::LightType::Directional_Deferred);
+				light.GetLightTypeProperties(fr::Light::LightType::Directional_Deferred);
 
 			renderData.m_typeProperties.m_directional.m_colorIntensity = typeProperties.m_directional.m_colorIntensity;
 
@@ -196,7 +220,7 @@ namespace fr
 		case fr::Light::LightType::Point_Deferred:
 		{
 			fr::Light::TypeProperties const& typeProperties =
-				light.AccessLightTypeProperties(fr::Light::LightType::Point_Deferred);
+				light.GetLightTypeProperties(fr::Light::LightType::Point_Deferred);
 
 			renderData.m_typeProperties.m_point.m_colorIntensity = typeProperties.m_point.m_colorIntensity;
 			renderData.m_typeProperties.m_point.m_emitterRadius = typeProperties.m_point.m_emitterRadius;
@@ -220,16 +244,13 @@ namespace fr
 		PrivateCTORTag,
 		gr::RenderDataComponent const& renderDataComponent, 
 		fr::Light::LightType lightType, 
-		glm::vec4 colorIntensity)
+		glm::vec4 colorIntensity,
+		bool hasShadow)
 		: m_lightID(s_lightIDs.fetch_add(1))
 		, m_renderDataID(renderDataComponent.GetRenderDataID())
 		, m_transformID(renderDataComponent.GetTransformID())
-		, m_light(
-			"NAME IS DEPRECATED!!!!!!!!!!!!!!!!!!!!!!",
-			nullptr, // owningTransform IS DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			lightType,
-			colorIntensity,
-			true) // hasShadow IS DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		, m_light(lightType, colorIntensity)
+		, m_hasShadow(hasShadow)
 	{
 	}
 
@@ -243,6 +264,7 @@ namespace fr
 		, m_renderDataID(renderDataComponent.GetRenderDataID())
 		, m_transformID(renderDataComponent.GetTransformID())
 		, m_light(iblTex, fr::Light::LightType::AmbientIBL_Deferred)
+		, m_hasShadow(false)
 	{
 		SEAssert("This constructor is for ambient light types only", 
 			ambientTypeOnly == fr::Light::LightType::AmbientIBL_Deferred);
@@ -252,11 +274,12 @@ namespace fr
 	// ---
 
 
-	UpdateLightDataRenderCommand::UpdateLightDataRenderCommand(LightComponent const& lightComponent)
+	UpdateLightDataRenderCommand::UpdateLightDataRenderCommand(
+		fr::NameComponent const& nameComponent, LightComponent const& lightComponent)
 		: m_lightID(lightComponent.GetLightID())
 		, m_renderDataID(lightComponent.GetRenderDataID())
 		, m_transformID(lightComponent.GetTransformID())
-		, m_data(fr::LightComponent::CreateRenderData(lightComponent))
+		, m_data(fr::LightComponent::CreateRenderData(nameComponent, lightComponent))
 	{
 	}
 
@@ -297,7 +320,7 @@ namespace fr
 				}
 				break;
 				default: SEAssertF("Invalid light type");
-				}		
+				}
 
 				auto existingLightItr = std::find_if(gsRenderData->begin(), gsRenderData->end(),
 					[&](gr::Light::RenderData const& existingLight)
