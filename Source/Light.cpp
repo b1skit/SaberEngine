@@ -7,6 +7,7 @@
 #include "MeshPrimitive.h"
 #include "SceneManager.h"
 #include "ShadowMap.h"
+#include "Transform.h"
 
 
 namespace

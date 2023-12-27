@@ -26,31 +26,39 @@ namespace fr
 
 		entt::entity sceneBoundsEntity = gpm.CreateEntity(k_sceneBoundsName);
 
+		// Create a Transform and render data representation: 
 		fr::TransformComponent& sceneBoundsTransformComponent = 
 			fr::TransformComponent::AttachTransformComponent(gpm, sceneBoundsEntity, nullptr);
 		
 		gr::RenderDataComponent::AttachNewRenderDataComponent(
 			gpm, sceneBoundsEntity, sceneBoundsTransformComponent.GetTransformID());
 
-		// Attach the BoundsComponent now that the RenderDataComponent is attached:
-		AttachBoundsComponent(gpm, sceneBoundsEntity);
-
-		gpm.EmplaceComponent<IsSceneBoundsMarker>(sceneBoundsEntity);
-	}
-
-
-	void BoundsComponent::AttachBoundsComponent(fr::GameplayManager& gpm, entt::entity entity)
-	{
-		gpm.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{});
-		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
+		// Attach the BoundsComponent:
+		AttachBoundsComponent(gpm, sceneBoundsEntity, Contents::Scene);
 	}
 
 
 	void BoundsComponent::AttachBoundsComponent(
-		fr::GameplayManager& gpm, entt::entity entity, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ)
+		fr::GameplayManager& gpm, entt::entity entity, BoundsComponent::Contents contents)
 	{
+		AttachMarkers(gpm, entity, contents);
+
+		// Finally, attach the BoundsComponent (which will trigger event listeners)
+		gpm.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{});
+	}
+
+
+	void BoundsComponent::AttachBoundsComponent(
+		fr::GameplayManager& gpm,
+		entt::entity entity, 
+		glm::vec3 const& minXYZ,
+		glm::vec3 const& maxXYZ, 
+		BoundsComponent::Contents contents)
+	{
+		AttachMarkers(gpm, entity, contents);
+
+		// Finally, attach the BoundsComponent (which will trigger event listeners)
 		gpm.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ);
-		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
 	}
 
 
@@ -59,10 +67,39 @@ namespace fr
 		entt::entity entity,
 		glm::vec3 const& minXYZ,
 		glm::vec3 const& maxXYZ,
-		std::vector<glm::vec3> const& positions)
+		std::vector<glm::vec3> const& positions,
+		BoundsComponent::Contents contents)
 	{
+		AttachMarkers(gpm, entity, contents);
+
+		// Finally, attach the BoundsComponent (which will trigger event listeners)
 		gpm.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ, positions);
+	}
+
+
+	void BoundsComponent::AttachMarkers(fr::GameplayManager& gpm, entt::entity entity, Contents contents)
+	{
 		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
+
+		switch (contents)
+		{
+		case Contents::Mesh:
+		{
+			gpm.EmplaceComponent<MeshBoundsMarker>(entity);
+		}
+		break;
+		case Contents::MeshPrimitive:
+		{
+			gpm.EmplaceComponent<MeshPrimitiveBoundsMarker>(entity);
+		}
+		break;
+		case Contents::Scene:
+		{
+			gpm.EmplaceComponent<SceneBoundsMarker>(entity);
+		}
+		break;
+		default: SEAssertF("Invalid Contents type");
+		}
 	}
 
 
@@ -113,7 +150,6 @@ namespace fr
 
 		if (m_minXYZ == fr::BoundsComponent::k_invalidMinXYZ || m_maxXYZ == fr::BoundsComponent::k_invalidMaxXYZ)
 		{
-			// Legacy: Previously, we stored vertex data in vecN types. Instead of rewriting, just cast from floats
 			ComputeBounds(positions);
 		}
 	}
@@ -210,11 +246,9 @@ namespace fr
 
 
 	void BoundsComponent::ExpandBoundsHierarchy(
-		BoundsComponent const& newContents, entt::entity boundsEntity)
+		fr::GameplayManager& gpm, BoundsComponent const& newContents, entt::entity boundsEntity)
 	{
 		ExpandBounds(newContents);
-
-		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
 
 		SEAssert("Owning entity does not have a Relationship component", 
 			gpm.HasComponent<fr::Relationship>(boundsEntity));
@@ -228,7 +262,7 @@ namespace fr
 			nextEntity);
 		if (nextBounds != nullptr)
 		{
-			ExpandBoundsHierarchy(*this, nextEntity);
+			ExpandBoundsHierarchy(gpm, *this, nextEntity);
 		}
 	}
 

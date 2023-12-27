@@ -1,37 +1,40 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "Assert.h"
-#include "BoundsComponent.h"
 #include "EngineComponent.h"
-#include "Updateable.h" // DEPRECATED!!!!!!!!
+#include "EventListener.h"
 #include "RelationshipComponent.h"
-
 
 
 namespace fr
 {
+	class BoundsComponent;
 	class PlayerObject;
 
 
-	class GameplayManager final : public virtual en::EngineComponent
+	class GameplayManager final : public virtual en::EngineComponent, public virtual en::EventListener
 	{
 	public:
 		static GameplayManager* Get(); // Singleton functionality
 
 
-	public:
+	public: // EngineComponent interface:
 		void Startup() override;
 		void Shutdown() override;
 
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
+
+		
+	public: // Public interface:
 		void EnqueueRenderUpdates();
 
 		fr::BoundsComponent const* GetSceneBounds() const;
 
+		void SetAsMainCamera(entt::entity);
 
-		// EnTT wrappers:
-	public:
+
+	public: // EnTT wrappers:
 		entt::entity CreateEntity(std::string const& name);
 		entt::entity CreateEntity(char const* name);
 
@@ -104,34 +107,34 @@ namespace fr
 		T* GetFirstInChildrenInternal(entt::entity, entt::entity& childEntityOut);
 
 
+	private: // EventListener interface:
+		void HandleEvents() override;
+
+
+	private: // Configure event listeners etc
+		void ConfigureRegistry();
+
+
+	private: // Systems:
+		void UpdatePlayerObject(double stepTimeMs);
+		void UpdateTransforms();
+		void UpdateSceneBounds();
+		void UpdateLightsAndShadows();
+		void UpdateCameras();
+
+
 	private:
 		entt::basic_registry<entt::entity> m_registry; // uint32_t entities
 		mutable std::shared_mutex m_registeryMutex;
 
-
-	private: // Systems:
-		void UpdateSceneBounds();
-		void UpdateTransforms();
-		void UpdateLights();
-		void UpdateCameras();
-
-
-		// DEPRECATED:
-	protected:
-		friend class en::Updateable;
-		void AddUpdateable(en::Updateable* updateable);
-		void RemoveUpdateable(en::Updateable const* updateable);
+		bool m_processInput;
 
 
 	private:
-		void UpdateUpdateables(double stepTimeMs) const;
-
-
-	private:
-		std::vector<en::Updateable*> m_updateables;
-		mutable std::mutex m_updateablesMutex;
-
-		std::shared_ptr<fr::PlayerObject> m_playerObject;
+		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
+		GameplayManager() = delete;
+	public:
+		GameplayManager(PrivateCTORTag);
 	};
 
 

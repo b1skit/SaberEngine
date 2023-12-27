@@ -167,7 +167,7 @@
     <ClCompile Include="RenderManager_OpenGL.cpp">
       <Filter>Source Files\re\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="PlayerObject.cpp">
+    <ClCompile Include="CameraControlComponent.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
     <ClCompile Include="EventManager.cpp">
@@ -410,12 +410,6 @@
     <ClCompile Include="MeshFactory.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
-    <ClCompile Include="Transformable.cpp">
-      <Filter>Source Files\fr</Filter>
-    </ClCompile>
-    <ClCompile Include="Updateable.cpp">
-      <Filter>Source Files\en</Filter>
-    </ClCompile>
     <ClCompile Include="ParameterBlockAllocator_Platform.cpp">
       <Filter>Source Files\re\platform</Filter>
     </ClCompile>
@@ -464,12 +458,6 @@
     <ClCompile Include="MeshPrimitiveComponent.cpp">
       <Filter>Source Files\fr\Components</Filter>
     </ClCompile>
-    <ClCompile Include="EventListenerComponent.cpp">
-      <Filter>Source Files\fr\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="CameraRenderData.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ShadowMapComponent.cpp">
       <Filter>Source Files\fr\Components</Filter>
     </ClCompile>
@@ -502,6 +490,9 @@
     </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Source Files\fr</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraRenderData.cpp">
+      <Filter>Source Files\gr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -574,9 +565,6 @@
     <ClInclude Include="KeyConfiguration.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
-    <ClInclude Include="Transformable.h">
-      <Filter>Header Files\fr</Filter>
-    </ClInclude>
     <ClInclude Include="NamedObject.h">
       <Filter>Header Files\en</Filter>
     </ClInclude>
@@ -597,9 +585,6 @@
     </ClInclude>
     <ClInclude Include="ParameterBlock_OpenGL.h">
       <Filter>Header Files\re\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="Updateable.h">
-      <Filter>Header Files\en</Filter>
     </ClInclude>
     <ClInclude Include="ParameterBlockAllocator.h">
       <Filter>Header Files\re</Filter>
@@ -874,9 +859,6 @@
     <ClInclude Include="NameComponent.h">
       <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
-    <ClInclude Include="EventListenerComponent.h">
-      <Filter>Header Files\fr\Components</Filter>
-    </ClInclude>
     <ClInclude Include="GraphicsSystemManager.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
@@ -904,7 +886,7 @@
     <ClInclude Include="RenderObjectIDs.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
-    <ClInclude Include="PlayerObject.h">
+    <ClInclude Include="CameraControlComponent.h">
       <Filter>Header Files\fr</Filter>
     </ClInclude>
     <ClInclude Include="BoundsComponent.h">

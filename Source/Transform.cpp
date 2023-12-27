@@ -54,6 +54,23 @@ namespace fr
 	}
 
 
+	glm::mat4 Transform::GetGlobalMatrix() const
+	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
+
+		SEAssert("Transform is dirty", !m_isDirty);
+
+		if (m_parent)
+		{
+			return m_parent->GetGlobalMatrix() * m_localMat;
+		}
+		else
+		{
+			return m_localMat;
+		}
+	}
+
+
 	glm::vec3 Transform::GetGlobalEulerXYZRotationRadians() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
@@ -217,6 +234,18 @@ namespace fr
 	glm::vec3 Transform::GetGlobalPosition()
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
+
+		glm::mat4 const& globalMatrix = GetGlobalMatrix();
+
+		return globalMatrix[3].xyz;
+	}
+
+
+	glm::vec3 Transform::GetGlobalPosition() const
+	{
+		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
+
+		SEAssert("Camera is dirty", !m_isDirty);
 
 		glm::mat4 const& globalMatrix = GetGlobalMatrix();
 

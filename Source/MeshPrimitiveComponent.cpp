@@ -12,27 +12,7 @@
 
 namespace fr
 {
-	gr::MeshPrimitive::RenderData MeshPrimitive::CreateRenderData(MeshPrimitiveComponent const& meshPrimitiveComponent)
-	{
-		gr::MeshPrimitive::RenderData renderData = gr::MeshPrimitive::RenderData{
-			.m_meshPrimitiveParams = meshPrimitiveComponent.m_meshPrimitive->GetMeshParams(),
-			// Vertex streams copied below...
-			.m_indexStream = meshPrimitiveComponent.m_meshPrimitive->GetIndexStream(),
-			.m_dataHash = meshPrimitiveComponent.m_meshPrimitive->GetDataHash()
-		};
-
-		std::vector<re::VertexStream const*> const& vertexStreams =
-			meshPrimitiveComponent.m_meshPrimitive->GetVertexStreams();
-		for (size_t slotIdx = 0; slotIdx < vertexStreams.size(); slotIdx++)
-		{
-			renderData.m_vertexStreams[slotIdx] = vertexStreams[slotIdx];
-		}
-
-		return renderData;
-	}
-
-
-	entt::entity MeshPrimitive::AttachMeshPrimitiveConcept(
+	entt::entity MeshPrimitiveComponent::AttachMeshPrimitiveConcept(
 		entt::entity owningEntity,
 		char const* name,
 		std::vector<uint32_t>* indices,
@@ -63,7 +43,7 @@ namespace fr
 	}
 
 
-	entt::entity MeshPrimitive::AttachMeshPrimitiveConcept(
+	entt::entity MeshPrimitiveComponent::AttachMeshPrimitiveConcept(
 		entt::entity owningEntity, 
 		gr::MeshPrimitive const* meshPrimitive, 
 		glm::vec3 const& positionMinXYZ,
@@ -87,7 +67,7 @@ namespace fr
 			gpm, meshPrimitiveEntity, transformComponent->GetTransformID());
 
 		// MeshPrimitive:
-		gpm.EmplaceComponent<fr::MeshPrimitive::MeshPrimitiveComponent>(
+		gpm.EmplaceComponent<fr::MeshPrimitiveComponent>(
 			meshPrimitiveEntity,
 			MeshPrimitiveComponent{
 				.m_meshPrimitive = meshPrimitive
@@ -100,28 +80,29 @@ namespace fr
 			positionMinXYZ,
 			positionMaxXYZ,
 			reinterpret_cast<std::vector<glm::vec3> const&>(
-				meshPrimitive->GetVertexStream(gr::MeshPrimitive::Slot::Position)->GetDataAsVector()));
+				meshPrimitive->GetVertexStream(gr::MeshPrimitive::Slot::Position)->GetDataAsVector()),
+			fr::BoundsComponent::Contents::MeshPrimitive);
 		fr::BoundsComponent const& meshPrimitiveBounds = gpm.GetComponent<fr::BoundsComponent>(meshPrimitiveEntity);
 
 		// If there is a BoundsComponent in the heirarchy above, assume it's encapsulating the MeshPrimitive:
 		entt::entity nextEntity = entt::null;
-		fr::BoundsComponent* encapsulatingBounds =
-			gpm.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
-				meshPrimitiveRelationship.GetParent(), nextEntity);
+		fr::BoundsComponent* encapsulatingBounds = gpm.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
+			meshPrimitiveRelationship.GetParent(), 
+			nextEntity);
 		if (encapsulatingBounds != nullptr)
 		{
-			encapsulatingBounds->ExpandBoundsHierarchy(meshPrimitiveBounds, nextEntity);
+			encapsulatingBounds->ExpandBoundsHierarchy(gpm, meshPrimitiveBounds, nextEntity);
 		}
 
 		// Mark our new MeshPrimitive as dirty:
-		gpm.EmplaceComponent<DirtyMarker<fr::MeshPrimitive::MeshPrimitiveComponent>>(meshPrimitiveEntity);
+		gpm.EmplaceComponent<DirtyMarker<fr::MeshPrimitiveComponent>>(meshPrimitiveEntity);
 
 		// Note: A Material component must be attached to the returned entity
 		return meshPrimitiveEntity;
 	}
 
 
-	MeshPrimitive::MeshPrimitiveComponent& MeshPrimitive::AttachRawMeshPrimitiveConcept(
+	MeshPrimitiveComponent& MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
 		GameplayManager& gpm,
 		entt::entity owningEntity, 
 		gr::RenderDataComponent const& sharedRenderDataCmpt, 
@@ -145,8 +126,29 @@ namespace fr
 			});
 
 		// Mark our new MeshPrimitive as dirty:
-		gpm.EmplaceComponent<DirtyMarker<fr::MeshPrimitive::MeshPrimitiveComponent>>(meshPrimitiveEntity);
+		gpm.EmplaceComponent<DirtyMarker<fr::MeshPrimitiveComponent>>(meshPrimitiveEntity);
 
 		return meshPrimCmpt;
+	}
+
+
+	gr::MeshPrimitive::RenderData MeshPrimitiveComponent::CreateRenderData(
+		MeshPrimitiveComponent const& meshPrimitiveComponent)
+	{
+		gr::MeshPrimitive::RenderData renderData = gr::MeshPrimitive::RenderData{
+			.m_meshPrimitiveParams = meshPrimitiveComponent.m_meshPrimitive->GetMeshParams(),
+			// Vertex streams copied below...
+			.m_indexStream = meshPrimitiveComponent.m_meshPrimitive->GetIndexStream(),
+			.m_dataHash = meshPrimitiveComponent.m_meshPrimitive->GetDataHash()
+		};
+
+		std::vector<re::VertexStream const*> const& vertexStreams =
+			meshPrimitiveComponent.m_meshPrimitive->GetVertexStreams();
+		for (size_t slotIdx = 0; slotIdx < vertexStreams.size(); slotIdx++)
+		{
+			renderData.m_vertexStreams[slotIdx] = vertexStreams[slotIdx];
+		}
+
+		return renderData;
 	}
 }

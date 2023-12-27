@@ -10,19 +10,8 @@ namespace fr
 	class GameplayManager;
 
 
-	class MeshPrimitive
+	class MeshPrimitiveComponent
 	{
-	public:
-		struct MeshPrimitiveComponent
-		{
-			// MeshPrimitives are held in the SceneData so duplicate data can be shared
-			gr::MeshPrimitive const* m_meshPrimitive;
-		};
-
-	public:
-		static gr::MeshPrimitive::RenderData CreateRenderData(MeshPrimitiveComponent const&);
-
-
 	public:
 		static entt::entity AttachMeshPrimitiveConcept(
 			entt::entity owningEntity,
@@ -51,5 +40,13 @@ namespace fr
 		// for special cases, such as deferred lights that require a fullscreen quad
 		static MeshPrimitiveComponent& AttachRawMeshPrimitiveConcept(
 			GameplayManager&, entt::entity owningEntity, gr::RenderDataComponent const&, gr::MeshPrimitive const*);
+
+
+	public:
+		static gr::MeshPrimitive::RenderData CreateRenderData(MeshPrimitiveComponent const&);
+
+
+	public:
+		gr::MeshPrimitive const* m_meshPrimitive;
 	};
 }

@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
 #include "AssetLoadUtils.h"
-#include "Camera.h"
+#include "CameraComponent.h"
 #include "Config.h"
 #include "CoreEngine.h"
 #include "GameplayManager.h"
@@ -16,6 +16,7 @@
 #include "SceneNodeConcept.h"
 #include "Shader.h"
 #include "ShadowMap.h"
+#include "Texture.h"
 #include "ThreadPool.h"
 #include "ThreadSafeVector.h"
 #include "Transform.h"
@@ -321,7 +322,7 @@ namespace
 				current->has_scale == 0 && current->has_translation == 0)
 		);
 
-		fr::Transform& targetTransform = fr::SceneNode::GetSceneNodeTransform(sceneNode);
+		fr::Transform& targetTransform = fr::SceneNode::GetTransform(sceneNode);
 
 		if (current->has_matrix)
 		{
@@ -358,10 +359,11 @@ namespace
 	};
 
 
-	// Creates a default camera if camera == nullptr, and no cameras exist in scene
+	// Creates a default camera if current == nullptr
 	void LoadAddCamera(fr::SceneData& scene, entt::entity sceneNode, cgltf_node* current)
 	{
-		std::shared_ptr<fr::Camera> newCam;
+		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+		entt::entity newCameraConcept = entt::null;
 
 		if (sceneNode == entt::null && (current == nullptr || current->camera == nullptr))
 		{
@@ -373,7 +375,13 @@ namespace
 			camConfig.m_near = en::Config::Get()->GetValue<float>("defaultNear");
 			camConfig.m_far = en::Config::Get()->GetValue<float>("defaultFar");
 
-			newCam = fr::Camera::Create("Default camera", camConfig, nullptr); // Internally calls SceneData::AddCamera
+			constexpr char const* k_defaultCamName = "DefaultCamera";
+
+			newCameraConcept = fr::CameraComponent::AttachCameraConcept(
+				gpm, 
+				fr::SceneNode::Create(std::format("{}_SceneNode", k_defaultCamName).c_str(), entt::null),
+				k_defaultCamName, 
+				camConfig);
 		}
 		else
 		{
@@ -410,14 +418,15 @@ namespace
 				camConfig.m_orthoLeftRightBotTop.w = 0.f;
 			}
 
-			fr::Transform* sceneNodeTransform = &fr::SceneNode::GetSceneNodeTransform(sceneNode);
-
 			// Create the camera and set the transform values on the parent object:
-			newCam = fr::Camera::Create(camName, camConfig, sceneNodeTransform);
+			newCameraConcept = fr::CameraComponent::AttachCameraConcept(gpm, sceneNode, camName, camConfig);
+
+			fr::Transform* sceneNodeTransform = &fr::SceneNode::GetTransform(sceneNode);
+
 			SetTransformValues(current, sceneNode);
 		}
 
-		newCam->SetAsMainCamera();
+		gpm.SetAsMainCamera(newCameraConcept);
 	}
 
 
@@ -782,7 +791,7 @@ namespace
 			util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
 			// Attach the MeshPrimitive to the Mesh:
-			entt::entity meshPrimimitiveEntity = fr::MeshPrimitive::AttachMeshPrimitiveConcept(
+			entt::entity meshPrimimitiveEntity = fr::MeshPrimitiveComponent::AttachMeshPrimitiveConcept(
 				meshEntity,
 				meshName.c_str(),
 				&indices,
@@ -811,7 +820,7 @@ namespace
 					meshName.c_str(), k_missingMaterialName);
 				material = scene.GetMaterial(k_missingMaterialName);
 			}
-			fr::Material::AttachMaterialConcept(meshPrimimitiveEntity, material);
+			fr::MaterialComponent::AttachMaterialConcept(meshPrimimitiveEntity, material);
 		}
 	}
 
@@ -956,8 +965,6 @@ namespace fr
 		// Pre-reserve our vectors, now that we know what to expect:
 		m_textures.reserve(std::max(texturesCount, k_minReserveAmt));
 		m_materials.reserve(std::max(materialsCount, k_minReserveAmt));
-		m_pointLights.reserve(std::max(lightsCount, k_minReserveAmt)); // Probably an over-estimation
-		m_cameras.reserve(std::max(camerasCount, k_minReserveAmt));
 
 		std::string sceneRootPath;
 		en::Config::Get()->TryGetValue<std::string>("sceneRootPath", sceneRootPath);
@@ -1023,7 +1030,6 @@ namespace fr
 
 	SceneData::SceneData(std::string const& sceneName)
 		: NamedObject(sceneName)
-		, m_keyLight(nullptr)
 		, m_finishedLoading(false)
 	{
 	}
@@ -1037,21 +1043,6 @@ namespace fr
 
 	void SceneData::Destroy()
 	{
-		// Destroy/unregister cameras. Cameras self-unregister themselves when destroyed
-		bool hasCameras = !m_cameras.empty();
-		while (hasCameras)
-		{
-			m_cameras.back()->Destroy();
-
-			std::unique_lock<std::shared_mutex> lock(m_camerasReadWriteMutex);
-			hasCameras = !m_cameras.empty();
-		}
-		{
-			std::unique_lock<std::shared_mutex> lock(m_camerasReadWriteMutex);
-			m_cameras.clear();
-		}
-
-		// 
 		{
 			std::lock_guard<std::mutex> lock(m_meshPrimitivesMutex);
 			m_meshPrimitives.clear();
@@ -1072,45 +1063,8 @@ namespace fr
 			std::unique_lock<std::shared_mutex> writeLock(m_shadersReadWriteMutex);
 			m_shaders.clear();
 		}
-		{
-			std::unique_lock<std::shared_mutex> writeLock(m_keyLightReadWriteMutex);
-			m_keyLight = nullptr;
-		}
-		{
-			std::unique_lock<std::shared_mutex> writeLock(m_pointLightsReadWriteMutex);
-			m_pointLights.clear();
-		}
 
 		m_finishedLoading = false; // Flag that Destroy has been called
-	}
-
-
-	void SceneData::AddCamera(std::shared_ptr<fr::Camera> newCamera)
-	{
-		SEAssert("Cannot add a null camera", newCamera != nullptr);
-
-		{
-			std::unique_lock<std::shared_mutex> writeLock(m_camerasReadWriteMutex);
-
-			m_cameras.emplace_back(newCamera);
-		}
-	}
-
-
-	void SceneData::RemoveCamera(uint64_t uniqueID)
-	{
-		{
-			std::unique_lock<std::shared_mutex> writeLock(m_camerasReadWriteMutex);
-
-			auto const& result = std::find_if(
-				m_cameras.begin(),
-				m_cameras.end(),
-				[&](std::shared_ptr<fr::Camera> const& cam) {return cam->GetUniqueID() == uniqueID; });
-
-			SEAssert("Camera not found", result != m_cameras.end());
-
-			m_cameras.erase(result);
-		}
 	}
 
 
@@ -1183,33 +1137,6 @@ namespace fr
 			}
 		}
 		return replacedIncomingPtr;
-	}
-
-
-	std::vector<std::shared_ptr<fr::Camera>> const& SceneData::GetCameras() const 
-	{
-		SEAssert("Accessing data container is not thread safe during loading", m_finishedLoading);
-		{
-			std::shared_lock<std::shared_mutex> readLock(m_camerasReadWriteMutex);
-			return m_cameras;
-		}
-	}
-
-	std::shared_ptr<fr::Camera> SceneData::GetMainCamera(uint64_t uniqueID) const
-	{
-		{
-			std::shared_lock<std::shared_mutex> readLock(m_camerasReadWriteMutex);
-
-			auto const& result = std::find_if(
-				m_cameras.begin(),
-				m_cameras.end(),
-				[&](std::shared_ptr<fr::Camera> const& cam) {return cam->GetUniqueID() == uniqueID; });
-
-			SEAssert("Camera not found",
-				result != m_cameras.end());
-
-			return *result;
-		}
 	}
 
 

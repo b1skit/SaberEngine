@@ -105,6 +105,8 @@ namespace dx12
 			gr::DebugGraphicsSystem* debugGS = gsm.GetGraphicsSystem<gr::DebugGraphicsSystem>();
 
 			// Build the creation pipeline:
+			gsm.Create();
+
 			computeMipsGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(computeMipsGS->GetName()));
 			deferredLightingGS->CreateResourceGenerationStages(
 				defaultRS->GetRenderPipeline().AddNewStagePipeline("Deferred Lighting Resource Creation"));
@@ -135,6 +137,8 @@ namespace dx12
 			gr::DebugGraphicsSystem* debugGS = gsm.GetGraphicsSystem<gr::DebugGraphicsSystem>();
 
 			// Execute per-frame updates:
+			gsm.PreRender();
+
 			computeMipsGS->PreRender();
 			gbufferGS->PreRender();
 			shadowGS->PreRender();

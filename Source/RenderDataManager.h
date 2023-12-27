@@ -91,10 +91,11 @@ namespace gr
 		struct RenderObjectMetadata
 		{
 			ObjectTypeToDataIndexTable m_objectTypeToDataIndexTable;
-			
 			gr::TransformID m_transformID;
-
 			uint32_t m_referenceCount;
+
+			RenderObjectMetadata(gr::TransformID transformID) : m_transformID(transformID), m_referenceCount(1) {}
+			RenderObjectMetadata() = delete;
 		};
 
 		struct TransformMetadata
@@ -207,7 +208,7 @@ namespace gr
 
 
 	template<typename T>
-	void RenderDataManager::SetObjectData(gr::RenderDataID objectID, T const* data)
+	void RenderDataManager::SetObjectData(gr::RenderDataID renderDataID, T const* data)
 	{
 		static const uint8_t s_dataTypeIndex = GetAllocateDataIndexFromType<T>();
 
@@ -217,8 +218,8 @@ namespace gr
 		SEAssert("Data type index is OOB", s_dataTypeIndex < m_dataVectors.size());
 		std::vector<T>& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[s_dataTypeIndex]).get();
 
-		SEAssert("Invalid object ID", m_IDToRenderObjectMetadata.contains(objectID));
-		RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(objectID);
+		SEAssert("Invalid object ID", m_IDToRenderObjectMetadata.contains(renderDataID));
+		RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 
 		// If the data index table doesn't contain enough room for the data type index, increase its size and pad with
 		// the invalid flag
@@ -310,6 +311,9 @@ namespace gr
 		SEAssert("Data index is OOB", dataTypeIndex < m_dataVectors.size());
 		SEAssert("Invalid object ID", m_IDToRenderObjectMetadata.contains(objectID));
 		RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(objectID);
+		
+		SEAssert("Data type index is out of bounds of the metadata table",
+			dataTypeIndex < renderObjectMetadata.m_objectTypeToDataIndexTable.size());
 
 		std::vector<T>& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[dataTypeIndex]).get();
 

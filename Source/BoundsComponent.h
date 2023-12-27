@@ -18,28 +18,44 @@ namespace fr
 
 
 	public:
-		struct IsSceneBoundsMarker {}; //Unique: Only added to 1 bounds component for the entire scene
+		enum class Contents
+		{
+			Mesh,
+			MeshPrimitive,
+			Scene, // Unique: Only added to 1 bounds component for the entire scene
+		};
 
-		static gr::Bounds::RenderData CreateRenderData(fr::BoundsComponent const&);
+		struct MeshBoundsMarker {};
+		struct MeshPrimitiveBoundsMarker {};
+		struct SceneBoundsMarker {}; // Unique: Only added to 1 bounds component for the entire scene
 
 
 	public:
 		static void CreateSceneBoundsConcept(fr::GameplayManager&);
 		
-		static void AttachBoundsComponent(fr::GameplayManager&, entt::entity);
+		static void AttachBoundsComponent(fr::GameplayManager&, entt::entity, BoundsComponent::Contents);
 
 		static void AttachBoundsComponent(
 			fr::GameplayManager&, 
 			entt::entity, 
 			glm::vec3 const& minXYZ, 
-			glm::vec3 const& maxXYZ);
+			glm::vec3 const& maxXYZ,
+			BoundsComponent::Contents);
 
 		static void AttachBoundsComponent(
 			fr::GameplayManager&, 
 			entt::entity, 
 			glm::vec3 const& minXYZ, 
 			glm::vec3 const& maxXYZ, 
-			std::vector<glm::vec3> const& positions);
+			std::vector<glm::vec3> const& positions,
+			BoundsComponent::Contents);
+
+	public:
+		static gr::Bounds::RenderData CreateRenderData(fr::BoundsComponent const&);
+
+
+	private:
+		static void AttachMarkers(fr::GameplayManager&, entt::entity, Contents);
 
 
 	public:
@@ -54,7 +70,7 @@ namespace fr
 		void ExpandBounds(BoundsComponent const& newContents);
 
 		// Recursively expand the current Bounds, and any Bounds found in the Relationship hierarchy above
-		void ExpandBoundsHierarchy(BoundsComponent const& newContents, entt::entity boundsEntity); 
+		void ExpandBoundsHierarchy(fr::GameplayManager&, BoundsComponent const& newContents, entt::entity boundsEntity);
 
 
 		float xMin() const;		

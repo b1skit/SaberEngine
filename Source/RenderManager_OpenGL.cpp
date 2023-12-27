@@ -121,6 +121,8 @@ namespace opengl
 			gr::DebugGraphicsSystem* debugGS = gsm.GetGraphicsSystem<gr::DebugGraphicsSystem>();
 
 			// Build the creation pipeline:
+			gsm.Create();
+
 			deferredLightingGS->CreateResourceGenerationStages(
 				defaultRS->GetRenderPipeline().AddNewStagePipeline("Deferred Lighting Resource Creation"));
 			gbufferGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(gbufferGS->GetName()));
@@ -149,6 +151,8 @@ namespace opengl
 			gr::DebugGraphicsSystem* debugGS = gsm.GetGraphicsSystem<gr::DebugGraphicsSystem>();
 
 			// Execute per-frame updates:
+			gsm.PreRender();
+
 			gbufferGS->PreRender();
 			shadowGS->PreRender();
 			deferredLightingGS->PreRender();

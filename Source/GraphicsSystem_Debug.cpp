@@ -1,9 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "BoundsRenderData.h" // ECS_CONVERSION: Remove this
+#include "BoundsRenderData.h"
 #include "ConfigKeys.h"
 #include "GraphicsSystem_Debug.h"
 #include "GraphicsSystemManager.h"
-#include "Light.h" // ECS_CONVERSION: Remove this
+#include "LightRenderData.h"
 #include "SceneManager.h"
 
 
@@ -351,7 +351,7 @@ namespace gr
 		debugLinePipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 		m_debugStage->SetStageShader(re::Shader::GetOrCreate(en::ShaderNames::k_lineShaderName, debugLinePipelineState));
 
-		m_debugStage->AddPermanentParameterBlock(en::SceneManager::Get()->GetMainCamera()->GetCameraParams());
+		m_debugStage->AddPermanentParameterBlock(m_owningGraphicsSystemManager->GetActiveCameraParams());
 
 		stagePipeline.AppendRenderStage(m_debugStage);
 	}
@@ -533,7 +533,9 @@ namespace gr
 		
 		if (ImGui::CollapsingHeader(std::format("Debug camera frustums").c_str()))
 		{
-			ImGui::Indent();
+			// ECS_CONVERSION: TODO Restore this functionality
+
+			/*ImGui::Indent();
 			m_showCameraFrustums = true;
 			std::vector<std::shared_ptr<fr::Camera>> const& sceneCams = en::SceneManager::GetSceneData()->GetCameras();
 			for (size_t camIdx = 0; camIdx < sceneCams.size(); camIdx++)
@@ -552,7 +554,7 @@ namespace gr
 				}
 			}
 			ImGui::SliderFloat("Camera coordinate axis scale", &m_cameraCoordinateAxisScale, 0.f, 20.f);
-			ImGui::Unindent();
+			ImGui::Unindent();*/
 		}
 		else
 		{

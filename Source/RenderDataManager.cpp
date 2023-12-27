@@ -12,28 +12,23 @@ namespace gr
 		// Catch illegal accesses during RenderData modification
 		util::ScopedThreadProtector threadProjector(m_threadProtector);
 
-		// ECS_CONVERSION TODO: Uncomment this once we've rearranged the shutdown order. Currently fires because the render manager is
-		// being destroyed before the gameplay mgr
-		/*SEAssert("Object ID to data indices map is not empty: Was a render object not destroyed via a render command?",
-			m_IDToRenderObjectMetadata.empty());*/
+		SEAssert("An ID to data map is not empty: Was a render object not destroyed via a render command?",
+			m_IDToRenderObjectMetadata.empty() && m_transformIDToTransformMetadata.empty());
 	}
 
 
-	void RenderDataManager::RegisterObject(gr::RenderDataID objectID, gr::TransformID transformID)
+	void RenderDataManager::RegisterObject(gr::RenderDataID renderDataID, gr::TransformID transformID)
 	{
 		{
 			// Catch illegal accesses during RenderData modification
 			util::ScopedThreadProtector threadProjector(m_threadProtector);
 
-			auto renderObjectMetadata = m_IDToRenderObjectMetadata.find(objectID);
+			auto renderObjectMetadata = m_IDToRenderObjectMetadata.find(renderDataID);
 			if (renderObjectMetadata == m_IDToRenderObjectMetadata.end())
 			{
 				m_IDToRenderObjectMetadata.emplace(
-					objectID,
-					RenderObjectMetadata{
-						.m_objectTypeToDataIndexTable = ObjectTypeToDataIndexTable(),
-						.m_transformID = transformID
-					});
+					renderDataID,
+					RenderObjectMetadata(transformID));
 			}
 			else
 			{
@@ -48,7 +43,7 @@ namespace gr
 	}
 
 
-	void RenderDataManager::DestroyObject(gr::RenderDataID objectID)
+	void RenderDataManager::DestroyObject(gr::RenderDataID renderDataID)
 	{
 		TransformID renderObjectTransformID = gr::k_invalidTransformID;
 
@@ -56,18 +51,17 @@ namespace gr
 			// Catch illegal accesses during RenderData modification
 			util::ScopedThreadProtector threadProjector(m_threadProtector);
 
-			SEAssert("Trying to destroy an object that does not exist", m_IDToRenderObjectMetadata.contains(objectID));
+			SEAssert("Trying to destroy an object that does not exist", 
+				m_IDToRenderObjectMetadata.contains(renderDataID));
 
-			RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(objectID);
-
+			RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
+			renderObjectTransformID = renderObjectMetadata.m_transformID;
+			
 			renderObjectMetadata.m_referenceCount--;
-
 			if (renderObjectMetadata.m_referenceCount == 0)
 			{
 				ObjectTypeToDataIndexTable const& dataIndexTable =
 					renderObjectMetadata.m_objectTypeToDataIndexTable;
-
-				renderObjectTransformID = renderObjectMetadata.m_transformID;
 
 #if defined(_DEBUG)
 				for (size_t dataIndexEntry = 0; dataIndexEntry < dataIndexTable.size(); dataIndexEntry++)
@@ -76,15 +70,11 @@ namespace gr
 						dataIndexTable[dataIndexEntry] == k_invalidDataIdx);
 				}
 #endif
-				m_IDToRenderObjectMetadata.erase(objectID);
+				m_IDToRenderObjectMetadata.erase(renderDataID);
 			}
 		}
 
-		// Destroy the Transform if the refcount = 0
-		if (renderObjectTransformID != gr::k_invalidTransformID)
-		{
-			UnregisterTransform(renderObjectTransformID);
-		}
+		UnregisterTransform(renderObjectTransformID); // Decrement the Transform ref. count, and destroy it at 0
 	}
 
 

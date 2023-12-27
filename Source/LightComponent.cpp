@@ -19,11 +19,9 @@ namespace fr
 	std::atomic<uint32_t> LightComponent::s_lightIDs = 0;
 
 
-	LightComponent& LightComponent::CreateDeferredAmbientLightConcept(re::Texture const* iblTex)
+	LightComponent& LightComponent::CreateDeferredAmbientLightConcept(GameplayManager& gpm, re::Texture const* iblTex)
 	{
 		SEAssert("IBL texture cannot be null", iblTex);
-
-		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
 
 		entt::entity lightEntity = gpm.CreateEntity(iblTex->GetName());
 
@@ -34,7 +32,7 @@ namespace fr
 		std::shared_ptr<gr::MeshPrimitive> fullscreenQuadSceneData = 
 			gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
 
-		fr::MeshPrimitive::MeshPrimitiveComponent const& meshPrimCmpt = fr::MeshPrimitive::AttachRawMeshPrimitiveConcept(
+		fr::MeshPrimitiveComponent const& meshPrimCmpt = fr::MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
 			gpm,
 			lightEntity,
 			renderDataComponent,
@@ -73,7 +71,7 @@ namespace fr
 		std::shared_ptr<gr::MeshPrimitive> pointLightMesh = gr::meshfactory::CreateSphere();
 
 		entt::entity meshPrimitiveEntity =
-			fr::MeshPrimitive::AttachMeshPrimitiveConcept(lightEntity, pointLightMesh.get());
+			fr::MeshPrimitiveComponent::AttachMeshPrimitiveConcept(lightEntity, pointLightMesh.get());
 
 		// RenderData:
 		// Point light's share the the RenderDataComponent created by the MeshPrimitive
@@ -140,7 +138,7 @@ namespace fr
 		std::shared_ptr<gr::MeshPrimitive> fullscreenQuadSceneData =
 			gr::meshfactory::CreateFullscreenQuad(gr::meshfactory::ZLocation::Far);
 
-		fr::MeshPrimitive::MeshPrimitiveComponent const& meshPrimCmpt = fr::MeshPrimitive::AttachRawMeshPrimitiveConcept(
+		fr::MeshPrimitiveComponent const& meshPrimCmpt = fr::MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
 			gpm,
 			lightEntity,
 			renderDataComponent,

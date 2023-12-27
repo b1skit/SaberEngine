@@ -55,7 +55,7 @@ namespace gr
 		m_tonemappingStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 
 		// Param blocks:
-		m_tonemappingStage->AddPermanentParameterBlock(SceneManager::Get()->GetMainCamera()->GetCameraParams());
+		m_tonemappingStage->AddPermanentParameterBlock(m_owningGraphicsSystemManager->GetActiveCameraParams());
 
 		// Texture inputs:
 		std::shared_ptr<TextureTargetSet const> deferredLightTextureTargetSet =

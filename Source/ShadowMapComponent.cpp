@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "BoundsComponent.h"
 #include "CameraComponent.h"
 #include "Config.h"
 #include "GameplayManager.h"
@@ -106,7 +107,7 @@ namespace fr
 		gpm.EmplaceComponent<DirtyMarker<fr::ShadowMapComponent>>(shadowMapEntity);
 
 		// Attach a shadow map render camera:
-		fr::CameraComponent::AttachCameraComponent(
+		fr::CameraComponent::AttachCameraConcept(
 			gpm,
 			shadowMapEntity,
 			std::format("{}_ShadowCam", name).c_str(),
@@ -205,8 +206,10 @@ namespace fr
 			gpm.GetFirstInChildren<fr::CameraComponent>(shadowMapEntity, cameraEntity);
 		SEAssert("Could not find shadow camera", shadowCamCmpt);
 
+
+		// ECS_CONVERSION: Feels like this should be part of an "Update" function: "If dirty, SetCameraConfig"
 		fr::ShadowMapComponent const& shadowMapCmpt = gpm.GetComponent<fr::ShadowMapComponent>(shadowMapEntity);
-		shadowCamCmpt->GetCamera().SetCameraConfig(GenerateShadowCameraConfig(gpm, shadowMapEntity, shadowMapCmpt));
+		shadowCamCmpt->GetCameraForModification().SetCameraConfig(GenerateShadowCameraConfig(gpm, shadowMapEntity, shadowMapCmpt));
 
 		fr::CameraComponent::MarkDirty(gpm, cameraEntity);
 	}

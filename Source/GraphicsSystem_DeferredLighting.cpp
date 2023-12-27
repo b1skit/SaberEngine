@@ -559,8 +559,6 @@ namespace gr
 		};
 		ambientTargetSet->SetColorTargetBlendModes(1, &deferredBlendModes);
 
-		fr::Camera* mainCamera = en::SceneManager::Get()->GetMainCamera().get();
-
 		// Set the target sets, even if the stages aren't actually used (to ensure they're still valid)
 		m_ambientStage->SetTextureTargetSet(ambientTargetSet);
 
@@ -580,7 +578,7 @@ namespace gr
 		m_ambientStage->SetStageShader(
 			re::Shader::GetOrCreate(en::ShaderNames::k_deferredAmbientLightShaderName, ambientStageParams));
 
-		m_ambientStage->AddPermanentParameterBlock(mainCamera->GetCameraParams());
+		m_ambientStage->AddPermanentParameterBlock(m_owningGraphicsSystemManager->GetActiveCameraParams());
 
 		// Ambient PB:
 		const uint32_t totalPMREMMipLevels = m_PMREMTex->GetNumMips();
@@ -642,7 +640,7 @@ namespace gr
 			m_directionalStage->SetStageShader(
 				re::Shader::GetOrCreate(en::ShaderNames::k_deferredDirectionalLightShaderName, directionalStageParams));
 
-			m_directionalStage->AddPermanentParameterBlock(mainCamera->GetCameraParams());
+			m_directionalStage->AddPermanentParameterBlock(m_owningGraphicsSystemManager->GetActiveCameraParams());
 
 			pipeline.AppendRenderStage(m_directionalStage);
 		}
@@ -652,7 +650,7 @@ namespace gr
 		const bool hasPointLights = !m_renderData[fr::Light::LightType::Point_Deferred].empty();
 		if (hasPointLights)
 		{
-			m_pointStage->AddPermanentParameterBlock(mainCamera->GetCameraParams());
+			m_pointStage->AddPermanentParameterBlock(m_owningGraphicsSystemManager->GetActiveCameraParams());
 
 			re::TextureTarget::TargetParams pointTargetParams;
 			

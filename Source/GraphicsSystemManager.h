@@ -2,6 +2,8 @@
 #pragma once
 #include "Assert.h"
 #include "RenderDataManager.h"
+#include "RenderObjectIDs.h"
+#include "CameraRenderData.h"
 
 
 namespace re
@@ -22,6 +24,9 @@ namespace gr
 
 		void Destroy();
 
+		void Create();
+		void PreRender();
+
 		template <typename T>
 		T* GetGraphicsSystem();
 
@@ -29,9 +34,13 @@ namespace gr
 
 		gr::RenderDataManager const& GetRenderData() const;
 
+		gr::Camera::RenderData const& GetActiveCameraRenderData() const;
+		gr::Transform::RenderData const& GetActiveCameraTransformData() const;
+		std::shared_ptr<re::ParameterBlock> GetActiveCameraParams() const;
+
 		// Not thread safe: Can only be called when other threads are not accessing the render data
 		gr::RenderDataManager& GetRenderDataForModification();
-
+		void SetActiveCamera(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID);
 
 		void ShowImGuiWindow();
 
@@ -40,6 +49,10 @@ namespace gr
 		std::vector<std::shared_ptr<gr::GraphicsSystem>> m_graphicsSystems;
 
 		gr::RenderDataManager m_renderData;
+
+		gr::RenderDataID m_activeCameraRenderDataID;
+		gr::TransformID m_activeCameraTransformDataID;
+		std::shared_ptr<re::ParameterBlock> m_activeCameraParams;
 
 		re::RenderSystem* const m_owningRenderSystem;
 

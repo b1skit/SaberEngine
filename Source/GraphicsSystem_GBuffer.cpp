@@ -116,8 +116,8 @@ namespace gr
 
 		m_gBufferStage->SetTextureTargetSet(gBufferTargets);
 
-		// Camera:
-		m_gBufferStage->AddPermanentParameterBlock(SceneManager::Get()->GetMainCamera()->GetCameraParams());
+		// Camera:		
+		m_gBufferStage->AddPermanentParameterBlock(m_owningGraphicsSystemManager->GetActiveCameraParams());
 
 		// Finally, append the GBuffer stage to the pipeline:
 		pipeline.AppendRenderStage(m_gBufferStage);

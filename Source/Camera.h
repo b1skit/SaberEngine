@@ -1,38 +1,29 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "CameraRenderData.h"
-#include "NamedObject.h"
-#include "ParameterBlock.h"
-#include "RenderCommand.h"
-#include "Transform.h"
-#include "TextureTarget.h"
-#include "Updateable.h"
 
 
 namespace fr
 {
-	class Camera final : public virtual en::NamedObject, public virtual en::Updateable
+	class Transform;
+
+
+	class Camera
 	{
 	public:
-		// Create a render camera, for backend graphics use. Not compatible with the ECS
-		[[nodiscard]] static std::shared_ptr<fr::Camera> Create(
-			std::string const& name, gr::Camera::Config const&, fr::Transform* parent); // DEPRECATED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		
-
-		// ECS_CONVERSION TODO: Use the private CTOR tag pattern here?
-		Camera(std::string const& name, gr::Camera::Config const& camConfig, fr::Transform* transform, bool isComponent);
+		static gr::Camera::CameraParams BuildCameraParams(fr::Camera const&);
 
 
+	public:
+		Camera(gr::Camera::Config const& camConfig, fr::Transform const* transform);
+
+		Camera(Camera const&) = default;
 		Camera(Camera&&) = default;
+		Camera& operator=(Camera const&) = default;
 		Camera& operator=(Camera&&) = default;
-		
-		~Camera();
+		~Camera() = default;
 
-		void Destroy();
-
-		void Update(const double stepTimeMs) override;
-
-		float const FieldOfViewYRad() const;
+		float const GetFieldOfViewYRad() const;
 
 		glm::vec2 GetNearFar() const;
 		void SetNearFar(glm::vec2 const& nearFar);
@@ -60,32 +51,17 @@ namespace fr
 		gr::Camera::Config const& GetCameraConfig() const;
 		void SetCameraConfig(gr::Camera::Config const& newConfig);
 
-		// Keep the pointer for convenience, but don't allow access to it!!!!!!!!!!
-		fr::Transform* GetTransform(); // DEPRECATED
-		fr::Transform const* GetTransform() const; // DEPRECATED
-
-		std::shared_ptr<re::ParameterBlock> GetCameraParams() const; // DEPRECATED
-
-		void SetAsMainCamera() const; // DEPRECATED ???????????
+		fr::Transform const* GetTransform() const;
 
 		bool IsDirty() const;
 		void MarkClean();
 
 		void ShowImGuiWindow();
 
-		
 
 	private:
-		// Helper function: Configures the camera based on the cameraConfig. MUST be called at least once during setup
-		void RecomputeMatrices(); // Returns true if parameters were recomputed, false otherwise
-		void UpdateCameraParamBlockData();
+		fr::Transform const* m_transform; // We cache this for convenience due to a Camera's dependence on its Transform
 
-
-	private:
-		fr::Transform* m_transform; // DEPRECATED! MUST USE THE RENDER THREAD'S COPY!!!!!
-		const bool m_isComponent; // DEPRECATED
-
-		// Render data
 		gr::Camera::Config m_cameraConfig;
 
 		glm::mat4 m_view;
@@ -96,25 +72,16 @@ namespace fr
 
 		glm::mat4 m_viewProjection;
 		glm::mat4 m_invViewProjection;
-
-		bool m_matricesDirty;
-
-
-		bool m_parameterBlockDirty; // DEPRECATED
-		gr::Camera::CameraParams m_cameraPBData; // DEPRECATED
-		std::shared_ptr<re::ParameterBlock> m_cameraParamBlock; // DEPRECATED
 		
 		bool m_isDirty;
 
 
-	private:
+	private: 
 		Camera() = delete;
-		Camera(Camera const&) = delete;
-		Camera& operator=(Camera const&) = delete;
 	};
 
 
-	inline float const Camera::FieldOfViewYRad() const
+	inline float const Camera::GetFieldOfViewYRad() const
 	{
 		return m_cameraConfig.m_yFOV;
 	}
@@ -219,21 +186,9 @@ namespace fr
 	}
 
 
-	inline fr::Transform* Camera::GetTransform()
-	{
-		return m_transform;
-	}
-
-
 	inline fr::Transform const* Camera::GetTransform() const
 	{
 		return m_transform;
-	}
-
-
-	inline std::shared_ptr<re::ParameterBlock> Camera::GetCameraParams() const
-	{
-		return m_cameraParamBlock;
 	}
 
 

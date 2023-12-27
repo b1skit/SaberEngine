@@ -13,7 +13,7 @@ namespace gr
 	RenderDataComponent& RenderDataComponent::AttachNewRenderDataComponent(
 		fr::GameplayManager& gpm, entt::entity entity, TransformID transformID)
 	{
-		gpm.EmplaceComponent<gr::RenderDataComponent::NewIDMarker>(entity);
+		gpm.EmplaceComponent<gr::RenderDataComponent::NewRegistrationMarker>(entity);
 		return *gpm.EmplaceComponent<gr::RenderDataComponent>(entity, PrivateCTORTag{}, transformID);
 	}
 
@@ -21,6 +21,7 @@ namespace gr
 	RenderDataComponent& RenderDataComponent::AttachSharedRenderDataComponent(
 		fr::GameplayManager& gpm, entt::entity entity, RenderDataComponent const& renderDataComponent)
 	{
+		gpm.EmplaceComponent<gr::RenderDataComponent::NewRegistrationMarker>(entity);
 		return *gpm.EmplaceComponent<gr::RenderDataComponent>(
 			entity, 
 			PrivateCTORTag{},
@@ -70,7 +71,7 @@ namespace gr
 
 
 	RegisterRenderObjectCommand::RegisterRenderObjectCommand(RenderDataComponent const& newRenderDataComponent)
-		: m_objectID(newRenderDataComponent.GetRenderDataID())
+		: m_renderDataID(newRenderDataComponent.GetRenderDataID())
 		, m_transformID(newRenderDataComponent.GetTransformID())
 	{
 	}
@@ -88,7 +89,7 @@ namespace gr
 			gr::RenderDataManager& renderData =
 				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
 
-			renderData.RegisterObject(cmdPtr->m_objectID, cmdPtr->m_transformID);
+			renderData.RegisterObject(cmdPtr->m_renderDataID, cmdPtr->m_transformID);
 		}
 	}
 
@@ -104,7 +105,7 @@ namespace gr
 
 
 	DestroyRenderObjectCommand::DestroyRenderObjectCommand(gr::RenderDataID objectID)
-		: m_objectID(objectID)
+		: m_renderDataID(objectID)
 	{
 	}
 
@@ -121,7 +122,7 @@ namespace gr
 			gr::RenderDataManager& renderData =
 				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
 
-			renderData.DestroyObject(cmdPtr->m_objectID);
+			renderData.DestroyObject(cmdPtr->m_renderDataID);
 		}
 	}
 

@@ -79,7 +79,7 @@ namespace en
 
 		en::SceneManager::Get()->Startup(); // Load assets
 
-		// Create gameplay objects now that the scene data is loaded
+		// Create entity/component representations now that the scene data is loaded
 		fr::GameplayManager::Get()->Startup();
 
 		renderManager->ThreadInitialize(); // Create render systems, close PB registration
@@ -201,17 +201,15 @@ namespace en
 
 		Config::Get()->SaveConfigFile();
 		
+		fr::GameplayManager::Get()->Shutdown();
+
 		// We need to signal the render thread to shut down and wait on it to complete before we can start destroying
 		// anything it might be using
 		re::RenderManager::Get()->ThreadShutdown();
 
-		// Note: Shutdown order matters!
-		InputManager::Get()->Shutdown();
-
 		SceneManager::Get()->Shutdown();
 
-		fr::GameplayManager::Get()->Shutdown(); // TODO: This should happen BEFORE RenderManager ThreadShutdown
-
+		InputManager::Get()->Shutdown();
 		EventManager::Get()->Shutdown();
 		LogManager::Get()->Shutdown();
 

@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "BoundsComponent.h"
 #include "GameplayManager.h"
 #include "ImGuiUtils.h"
 #include "MeshConcept.h"
@@ -20,11 +21,12 @@ namespace fr
 
 		gpm.EmplaceComponent<fr::Mesh::MeshConceptMarker>(meshEntity);
 
-		fr::TransformComponent const& transformComponent = gpm.GetComponent<fr::TransformComponent>(owningEntity);
+		fr::TransformComponent const& owningTransformCmpt = gpm.GetComponent<fr::TransformComponent>(owningEntity);
 
-		gr::RenderDataComponent::AttachNewRenderDataComponent(gpm, meshEntity, transformComponent.GetTransformID());
+		gr::RenderDataComponent::AttachNewRenderDataComponent(gpm, meshEntity, owningTransformCmpt.GetTransformID());
 
-		fr::BoundsComponent::AttachBoundsComponent(gpm, meshEntity); // Mesh bounds: Encompasses all attached primitive bounds
+		// Mesh bounds: Encompasses all attached primitive bounds
+		fr::BoundsComponent::AttachBoundsComponent(gpm, meshEntity, fr::BoundsComponent::Contents::Mesh);
 
 		fr::Relationship& meshRelationship = gpm.GetComponent<fr::Relationship>(meshEntity);
 		meshRelationship.SetParent(gpm, owningEntity);

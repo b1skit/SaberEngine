@@ -57,7 +57,7 @@ namespace gr
 		m_skyTexture = en::SceneManager::GetSceneData()->GetIBLTexture();
 		m_skyTextureShaderName = "Tex0";
 
-		m_skyboxStage->AddPermanentParameterBlock(en::SceneManager::Get()->GetMainCamera()->GetCameraParams());
+		m_skyboxStage->AddPermanentParameterBlock(m_owningGraphicsSystemManager->GetActiveCameraParams());
 
 		DeferredLightingGraphicsSystem* deferredLightGS = 
 			m_owningGraphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>();

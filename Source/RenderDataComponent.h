@@ -15,7 +15,7 @@ namespace gr
 	class RenderDataComponent
 	{
 	public:
-		struct NewIDMarker {}; // Attached when a a new RenderDataID is allocated
+		struct NewRegistrationMarker {}; // Attached when a a new RenderDataID is allocated
 
 	public:
 		static RenderDataComponent& AttachNewRenderDataComponent(
@@ -72,7 +72,7 @@ namespace gr
 		static void Destroy(void*);
 
 	private:
-		const gr::RenderDataID m_objectID;
+		const gr::RenderDataID m_renderDataID;
 		const gr::TransformID m_transformID;
 	};
 
@@ -89,7 +89,7 @@ namespace gr
 		static void Destroy(void*);
 
 	private:
-		const gr::RenderDataID m_objectID;
+		const gr::RenderDataID m_renderDataID;
 	};
 
 
@@ -106,14 +106,14 @@ namespace gr
 		static void Destroy(void*);
 
 	private:
-		const gr::RenderDataID m_objectID;
+		const gr::RenderDataID m_renderDataID;
 		const T m_data;
 	};
 
 
 	template<typename T>
 	UpdateRenderDataRenderCommand<T>::UpdateRenderDataRenderCommand(gr::RenderDataID objectID, T const& data)
-		: m_objectID(objectID)
+		: m_renderDataID(objectID)
 		, m_data(data)
 	{
 	}
@@ -132,7 +132,7 @@ namespace gr
 			gr::RenderDataManager& renderData =
 				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
 
-			renderData.SetObjectData(cmdPtr->m_objectID, &cmdPtr->m_data);
+			renderData.SetObjectData(cmdPtr->m_renderDataID, &cmdPtr->m_data);
 		}
 	}
 
@@ -158,13 +158,13 @@ namespace gr
 		static void Destroy(void*);
 
 	private:
-		const gr::RenderDataID m_objectID;
+		const gr::RenderDataID m_renderDataID;
 	};
 
 
 	template<typename T>
 	DestroyRenderDataRenderCommand<T>::DestroyRenderDataRenderCommand(gr::RenderDataID objectID)
-		: m_objectID(objectID)
+		: m_renderDataID(objectID)
 	{
 	}
 
@@ -182,7 +182,7 @@ namespace gr
 			gr::RenderDataManager& renderData =
 				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
 
-			renderData.DestroyObjectData<T>(cmdPtr->m_objectID);
+			renderData.DestroyObjectData<T>(cmdPtr->m_renderDataID);
 		}
 	}
 

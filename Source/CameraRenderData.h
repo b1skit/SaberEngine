@@ -9,20 +9,6 @@ namespace gr
 	class Camera
 	{
 	public:
-		static std::vector<glm::mat4> BuildCubeViewMatrices(glm::vec3 const& centerPos);
-
-		static glm::mat4 BuildPerspectiveProjectionMatrix(float yFOV, float aspectRatio, float nearDist, float farDist);
-
-		static glm::mat4 BuildOrthographicProjectionMatrix(
-			float left, float right, float bottom, float top, float nearDist, float farDist);
-
-		static float ComputeEV100FromExposureSettings(
-			float aperture, float shutterSpeed, float sensitivity, float exposureCompensation);
-			
-		static float ComputeExposure(float ev100);
-
-
-	public:
 		struct Config
 		{
 			enum class ProjectionType
@@ -104,16 +90,29 @@ namespace gr
 		};
 
 
+	public:
 		struct RenderData
 		{
-			// Much less data to copy if we construct the CameraParams on the render thread
 			gr::Camera::Config m_cameraConfig;
 
-			// ECS_CONVERSION TODO: THIS IS JUST A HACK TO GET THINGS WORKING... NEED TO DECIDE THE BEST WAY
-			// TO HANDLE THIS
-			gr::Camera::CameraParams m_cameraParams;
+			// We compute this once on the main thread, and then pass for reuse on the render thread
+			gr::Camera::CameraParams m_cameraParams; 
 
 			gr::TransformID m_transformID;
 		};
+
+
+	public:
+		static std::vector<glm::mat4> BuildCubeViewMatrices(glm::vec3 const& centerPos);
+
+		static glm::mat4 BuildPerspectiveProjectionMatrix(float yFOV, float aspectRatio, float nearDist, float farDist);
+
+		static glm::mat4 BuildOrthographicProjectionMatrix(
+			float left, float right, float bottom, float top, float nearDist, float farDist);
+
+		static float ComputeEV100FromExposureSettings(
+			float aperture, float shutterSpeed, float sensitivity, float exposureCompensation);
+
+		static float ComputeExposure(float ev100);
 	};
 }

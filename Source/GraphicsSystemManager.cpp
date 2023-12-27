@@ -3,12 +3,16 @@
 #include "GraphicsSystem.h"
 #include "RenderCommand.h"
 #include "RenderSystem.h"
+#include "ParameterBlock.h"
 
 
 namespace gr
 {
 	GraphicsSystemManager::GraphicsSystemManager(re::RenderSystem* owningRS)
 		: m_owningRenderSystem(owningRS)
+		, m_activeCameraRenderDataID(gr::k_invalidRenderObjectID)
+		, m_activeCameraTransformDataID(gr::k_invalidTransformID)
+		, m_activeCameraParams(nullptr)
 	{
 	}
 
@@ -17,6 +21,61 @@ namespace gr
 	{
 		m_graphicsSystems.clear();
 		m_renderData.Destroy();
+	}
+
+
+	void GraphicsSystemManager::Create()
+	{
+		gr::Camera::CameraParams defaultCameraParams{}; // Initialize with defaults, we'll update during PreRender()
+
+		m_activeCameraParams = re::ParameterBlock::Create(
+			gr::Camera::CameraParams::s_shaderName,
+			defaultCameraParams,
+			re::ParameterBlock::PBType::Mutable);
+	}
+
+
+	void GraphicsSystemManager::PreRender()
+	{
+		SEAssert("No active camera has been set",
+			m_activeCameraRenderDataID != gr::k_invalidRenderObjectID && 
+			m_activeCameraTransformDataID != gr::k_invalidTransformID);
+
+		gr::Camera::RenderData const& cameraData =
+			m_renderData.GetObjectData<gr::Camera::RenderData>(m_activeCameraRenderDataID);
+
+		m_activeCameraParams->Commit(cameraData.m_cameraParams);
+	}
+
+
+	gr::Camera::RenderData const& GraphicsSystemManager::GetActiveCameraRenderData() const
+	{
+		SEAssert("No active camera has been set", m_activeCameraRenderDataID != gr::k_invalidRenderObjectID);
+		return m_renderData.GetObjectData< gr::Camera::RenderData>(m_activeCameraRenderDataID);
+	}
+
+
+	gr::Transform::RenderData const& GraphicsSystemManager::GetActiveCameraTransformData() const
+	{
+		SEAssert("No active camera has been set", m_activeCameraTransformDataID != gr::k_invalidTransformID);
+		return m_renderData.GetTransformData(m_activeCameraTransformDataID);
+	}
+
+
+	std::shared_ptr<re::ParameterBlock> GraphicsSystemManager::GetActiveCameraParams() const
+	{
+		SEAssert("Camera parameter block has not been created", m_activeCameraParams != nullptr);
+		return m_activeCameraParams;
+	}
+
+
+	void GraphicsSystemManager::SetActiveCamera(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID)
+	{
+		SEAssert("Invalid ID", 
+			cameraRenderDataID != gr::k_invalidRenderObjectID && cameraTransformID != gr::k_invalidTransformID);
+
+		m_activeCameraRenderDataID = cameraRenderDataID;
+		m_activeCameraTransformDataID = cameraTransformID;
 	}
 
 

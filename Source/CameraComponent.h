@@ -18,30 +18,31 @@ namespace fr
 	class CameraComponent
 	{
 	public:
-		static CameraComponent& AttachCameraComponent(
+		struct MainCameraMarker {};
+		struct NewMainCameraMarker {};
+
+	public:
+		static entt::entity AttachCameraConcept(
 			fr::GameplayManager&, entt::entity owningEntity, char const* name, gr::Camera::Config const&);
-
-		static gr::Camera::RenderData CreateRenderData(CameraComponent&);
-
-
-		// ECS_CONVERSION: WARNING: THIS MIGHT MODIFY THE TRANSFORM... NEED TO FIGURE OUT HOW TO HAVE A CONST TRANSFORM
-		static gr::Camera::CameraParams BuildCameraParams(fr::Camera&);
+		static entt::entity AttachCameraConcept(
+			fr::GameplayManager&, entt::entity owningEntity, std::string const& name, gr::Camera::Config const&);
 
 		static void MarkDirty(GameplayManager&, entt::entity cameraEntity);
 
+		static gr::Camera::RenderData CreateRenderData(CameraComponent const&);
+
 
 	public:
-		fr::Camera& GetCamera(); // ECS_CONVERSION: THIS SHOULD ADD A DIRTY MARKER 'GetCameraAndMarkDirty'
-
+		fr::Camera& GetCameraForModification();
 		fr::Camera const& GetCamera() const;
 
 		gr::TransformID GetTransformID() const;
 
 
 	private:
-		fr::Camera m_camera;
-
 		const gr::TransformID m_transformID;
+
+		fr::Camera m_camera;
 
 
 	private: // Use the static creation factories
@@ -52,7 +53,7 @@ namespace fr
 
 
 
-	inline fr::Camera& CameraComponent::GetCamera()
+	inline fr::Camera& CameraComponent::GetCameraForModification()
 	{
 		return m_camera;
 	}
@@ -68,4 +69,21 @@ namespace fr
 	{
 		return m_transformID;
 	}
+
+
+	// ---
+
+
+	class SetActiveCameraRenderCommand
+	{
+	public:
+		SetActiveCameraRenderCommand(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID);
+
+		static void Execute(void*);
+		static void Destroy(void*);
+
+	private:
+		const gr::RenderDataID m_cameraRenderDataID;
+		const gr::TransformID m_cameraTransformID;
+	};
 }

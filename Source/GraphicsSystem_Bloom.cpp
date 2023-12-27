@@ -150,8 +150,6 @@ namespace gr
 
 		const uint32_t numBloomMips = bloomTargetTex->GetNumMips();
 
-		gr::Camera::Config const& cameraConfig = en::SceneManager::Get()->GetMainCamera()->GetCameraConfig();
-
 		// Downsample stages:
 		for (uint32_t level = 0; level < numBloomMips; level++)
 		{
@@ -277,7 +275,8 @@ namespace gr
 			deferredLightGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture();
 		std::shared_ptr<re::Texture> bloomTargetTex = GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture();
 
-		gr::Camera::Config const& cameraConfig = en::SceneManager::Get()->GetMainCamera()->GetCameraConfig();
+		gr::Camera::Config const& cameraConfig =
+			m_owningGraphicsSystemManager->GetActiveCameraRenderData().m_cameraConfig;
 
 		// Parameter blocks:
 		const uint32_t numBloomMips = bloomTargetTex->GetNumMips();

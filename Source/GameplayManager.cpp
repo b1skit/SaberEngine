@@ -1,4 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "BoundsComponent.h"
 #include "CameraComponent.h"
 #include "CoreEngine.h"
 #include "GameplayManager.h"
@@ -7,7 +8,7 @@
 #include "MaterialComponent.h"
 #include "MeshPrimitiveComponent.h"
 #include "NameComponent.h"
-#include "PlayerObject.h"
+#include "CameraControlComponent.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "RenderManager.h"
@@ -20,8 +21,16 @@ namespace fr
 {
 	GameplayManager* GameplayManager::Get()
 	{
-		static std::unique_ptr<fr::GameplayManager> instance = std::make_unique<fr::GameplayManager>();
+		static std::unique_ptr<fr::GameplayManager> instance = std::make_unique<fr::GameplayManager>(PrivateCTORTag{});
 		return instance.get();
+	}
+
+
+	GameplayManager::GameplayManager(PrivateCTORTag)
+		: m_processInput(false)
+	{
+		// Handle this during construction before anything can interact with the registry
+		ConfigureRegistry();
 	}
 
 
@@ -29,22 +38,41 @@ namespace fr
 	{
 		LOG("GameplayManager starting...");
 
-		constexpr size_t k_updateablesReserveAmount = 128; // TODO: Tune this
-		m_updateables.reserve(k_updateablesReserveAmount);
+		// Event subscriptions:
+		en::EventManager::Get()->Subscribe(en::EventManager::EventType::InputToggleConsole, this);
 
 		// Create a scene bounds entity:
 		fr::BoundsComponent::CreateSceneBoundsConcept(*this);
-		UpdateSceneBounds();
 
 		// Create an Ambient light:
-		fr::LightComponent::CreateDeferredAmbientLightConcept(en::SceneManager::GetSceneData()->GetIBLTexture());
-
-		std::shared_ptr<fr::Camera> mainCam = en::SceneManager::Get()->GetMainCamera();
+		fr::LightComponent::CreateDeferredAmbientLightConcept(*this, en::SceneManager::GetSceneData()->GetIBLTexture());
 
 		// Add a player object to the scene:
-		m_playerObject = std::make_shared<fr::PlayerObject>(mainCam);
+		char const* mainCamName = nullptr;
+		entt::entity cameraEntity = entt::null;
+		{
+			std::shared_lock<std::shared_mutex> registryReadLock(m_registeryMutex);
 
-		LOG("Created PlayerObject using \"%s\"", mainCam->GetName().c_str());
+			bool foundMainCamera = false;
+			auto mainCameraView = 
+				m_registry.view<fr::CameraComponent, fr::CameraComponent::MainCameraMarker, fr::Relationship, fr::NameComponent>();
+			for (entt::entity mainCamEntity : mainCameraView)
+			{
+				SEAssert("Already found a main camera. This should not be possible", foundMainCamera == false);
+				foundMainCamera = true;
+
+				cameraEntity = mainCamEntity;
+
+				fr::NameComponent const& camName = mainCameraView.get<fr::NameComponent>(mainCamEntity);
+				mainCamName = camName.GetName().c_str();
+			}
+			SEAssert("Failed to find the main camera", foundMainCamera);
+		}
+
+		fr::CameraControlComponent::CreatePlayerObjectConcept(*this, cameraEntity);
+		LOG("Created PlayerObject using \"%s\"", mainCamName);
+		m_processInput = true;
+
 
 		// Push render updates to ensure new data is available for the first frame
 		EnqueueRenderUpdates();
@@ -75,26 +103,28 @@ namespace fr
 				}
 
 				// MeshPrimitives:
-				if (m_registry.all_of<fr::MeshPrimitive::MeshPrimitiveComponent>(entity))
+				if (m_registry.all_of<fr::MeshPrimitiveComponent>(entity))
 				{
 					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::MeshPrimitive::RenderData>>(
 						renderDataComponent.GetRenderDataID());
 				}
 
-
 				// Materials:
-				if (m_registry.all_of<fr::MeshPrimitive::MeshPrimitiveComponent>(entity))
+				if (m_registry.all_of<fr::MaterialComponent>(entity))
 				{
 					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Material::RenderData>>(
 						renderDataComponent.GetRenderDataID());
 				}
-			}
 
-			// Now the render data components are destroyed, we can destroy the render data objects themselves:
-			for (auto entity : renderDataEntitiesView)
-			{
-				auto& renderDataComponent = renderDataEntitiesView.get<gr::RenderDataComponent>(entity);
+				// Cameras:
+				if (m_registry.all_of<fr::CameraComponent>(entity))
+				{
+					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Camera::RenderData>>(
+						renderDataComponent.GetRenderDataID());
+				}
 
+				// Now the render data components associated with this entity's use of the RenderDataID are destroyed, 
+				// we can destroy the render data objects themselves (or decrement the ref. count if it's a shared ID)
 				renderManager->EnqueueRenderCommand<gr::DestroyRenderObjectCommand>(
 					renderDataComponent.GetRenderDataID());
 			}
@@ -104,47 +134,28 @@ namespace fr
 			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
 			m_registry.clear();
 		}
-
-
-		// ECS_CONVERSION TODO: Call GameplayManager::Shutdown() before shutting down the renderer
-		// -> Once the Updateables/Transformables have been converted to ECS...
-		
-
-
-		// DEPRECATED: 
-		m_playerObject = nullptr;
-
-		// Destroy self-registered interfaces
-		{
-			std::lock_guard<std::mutex> lock(m_updateablesMutex);
-
-			SEAssert("Updateables should have been destroyed and self-unregistered by now", m_updateables.empty());
-			m_updateables.clear();
-		}
 	}
 
 
 	void GameplayManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
-		// Handle input (update event listener components)
-		// <physics, animation, etc>
+		HandleEvents();
 
-		// Update the scene state:
-		UpdateTransforms();
-		UpdateSceneBounds(); // TODO: This is expensive, we should only do this on demand?
-		UpdateLights(); // <- Could potentially modify a (point light) Transform, and its shadow cam's far plane
+
+		// Handle interaction (player input, physics, animation, etc)
+		if (m_processInput)
+		{
+			UpdatePlayerObject(stepTimeMs);
+		}
+
+		// ECS_CONVERSION TODO: Clean this up
 		
-		// ECS_CONVERSION: BEWARE: Cameras have a transform and may modify it (i.e by calling GetGlobal___() ).
-		// -> Need a way of providing a const Transform and const Transform::Get___() functions
-		//		-> Guarantee Transforms have been updated already and are clean, and then assert in the const functions
-		//			that this is always true
-		UpdateCameras(); 
+		// Update the scene state:
+		UpdateTransforms(); // <- TODO!!! Transforms should be accessed via const ONLY from this point
+		UpdateSceneBounds(); // TODO: This is expensive, we should only do this on demand?
+		UpdateLightsAndShadows(); // <- DANGER!!! Could potentially modify a (point light) Transform, and its shadow cam's far plane
 
-
-
-
-		// Deprecated:
-		UpdateUpdateables(stepTimeMs);
+		UpdateCameras();
 	}
 
 
@@ -159,7 +170,7 @@ namespace fr
 
 			// Register new render objects:
 			auto newRenderableEntitiesView = 
-				m_registry.view<NewEntityMarker, gr::RenderDataComponent, gr::RenderDataComponent::NewIDMarker>();
+				m_registry.view<NewEntityMarker, gr::RenderDataComponent, gr::RenderDataComponent::NewRegistrationMarker>();
 			for (auto entity : newRenderableEntitiesView)
 			{
 				// Enqueue a command to create a new object on the render thread:
@@ -168,12 +179,13 @@ namespace fr
 				renderManager->EnqueueRenderCommand<gr::RegisterRenderObjectCommand>(renderDataComponent);
 				
 				m_registry.erase<NewEntityMarker>(entity);
-				m_registry.erase<gr::RenderDataComponent::NewIDMarker>(entity);
+				m_registry.erase<gr::RenderDataComponent::NewRegistrationMarker>(entity);
 			}
 
-			// Initialize new Transforms:
+			// Initialize new Transforms. Note: We only send Transforms associated with RenderDataComponents to the 
+			// render thread
 			auto newTransformComponentsView = 
-				m_registry.view<fr::TransformComponent, fr::TransformComponent::NewIDMarker>();
+				m_registry.view<fr::TransformComponent, fr::TransformComponent::NewIDMarker, gr::RenderDataComponent>();
 			for (auto entity : newTransformComponentsView)
 			{
 				fr::TransformComponent& transformComponent =
@@ -188,7 +200,8 @@ namespace fr
 			// ------------------------------------
 
 			// Transforms:
-			auto transformComponentsView = m_registry.view<fr::TransformComponent>();
+			// Note: We only send Transforms associated with RenderDataComponents to the render thread
+			auto transformComponentsView = m_registry.view<fr::TransformComponent, gr::RenderDataComponent>();
 			for (auto entity : transformComponentsView)
 			{
 				fr::TransformComponent& transformComponent = 
@@ -220,45 +233,61 @@ namespace fr
 			// MeshPrimitives:
 			// The actual data of a MeshPrimitive is SceneData; We push pointers and metadata to the render thread
 			auto meshPrimitiveComponentsView = m_registry.view<
-				fr::MeshPrimitive::MeshPrimitiveComponent, 
-				DirtyMarker<fr::MeshPrimitive::MeshPrimitiveComponent>, 
+				fr::MeshPrimitiveComponent, 
+				DirtyMarker<fr::MeshPrimitiveComponent>, 
 				gr::RenderDataComponent>();
 			for (auto entity : meshPrimitiveComponentsView)
 			{
 				gr::RenderDataComponent const& renderDataComponent =
 					meshPrimitiveComponentsView.get<gr::RenderDataComponent>(entity);
 
-				fr::MeshPrimitive::MeshPrimitiveComponent const& meshPrimComponent = 
-					meshPrimitiveComponentsView.get<fr::MeshPrimitive::MeshPrimitiveComponent>(entity);
+				fr::MeshPrimitiveComponent const& meshPrimComponent = 
+					meshPrimitiveComponentsView.get<fr::MeshPrimitiveComponent>(entity);
 
 				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::MeshPrimitive::RenderData>>(
-					renderDataComponent.GetRenderDataID(), fr::MeshPrimitive::CreateRenderData(meshPrimComponent));
+					renderDataComponent.GetRenderDataID(), fr::MeshPrimitiveComponent::CreateRenderData(meshPrimComponent));
 
-				m_registry.erase<DirtyMarker<fr::MeshPrimitive::MeshPrimitiveComponent>>(entity);
+				m_registry.erase<DirtyMarker<fr::MeshPrimitiveComponent>>(entity);
 			}
 
 			// Materials:
 			// Material data is (currently) SceneData; We push pointers to the render thread. TODO: Allow Material
 			// instancing and dynamic modification
 			auto materialComponentsView = m_registry.view<
-				fr::Material::MaterialComponent, 
-				DirtyMarker<fr::Material::MaterialComponent>, 
+				fr::MaterialComponent, 
+				DirtyMarker<fr::MaterialComponent>, 
 				gr::RenderDataComponent>();
 			for (auto entity : materialComponentsView)
 			{
 				gr::RenderDataComponent const& renderDataComponent =
 					materialComponentsView.get<gr::RenderDataComponent>(entity);
 
-				fr::Material::MaterialComponent const& materialComponent =
-					materialComponentsView.get<fr::Material::MaterialComponent>(entity);
+				fr::MaterialComponent const& materialComponent =
+					materialComponentsView.get<fr::MaterialComponent>(entity);
 
 				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::Material::RenderData>>(
-					renderDataComponent.GetRenderDataID(), fr::Material::CreateRenderData(materialComponent));
+					renderDataComponent.GetRenderDataID(), fr::MaterialComponent::CreateRenderData(materialComponent));
 
-				m_registry.erase<DirtyMarker<fr::Material::MaterialComponent>>(entity);
+				m_registry.erase<DirtyMarker<fr::MaterialComponent>>(entity);
 			}
 
 			// Cameras:
+			auto newMainCameraView = m_registry.view<
+				fr::CameraComponent, 
+				fr::CameraComponent::MainCameraMarker, 
+				fr::CameraComponent::NewMainCameraMarker, 
+				gr::RenderDataComponent>();
+			for (auto entity : newMainCameraView)
+			{
+				gr::RenderDataComponent const& renderDataComponent =
+					newMainCameraView.get<gr::RenderDataComponent>(entity);
+
+				renderManager->EnqueueRenderCommand<fr::SetActiveCameraRenderCommand>(
+					renderDataComponent.GetRenderDataID(), renderDataComponent.GetTransformID());
+
+				m_registry.erase<fr::CameraComponent::NewMainCameraMarker>(entity);
+			}
+
 			auto cameraComponentsView =
 				m_registry.view<fr::CameraComponent, DirtyMarker<fr::CameraComponent>, gr::RenderDataComponent>();
 			for (auto entity : cameraComponentsView)
@@ -319,7 +348,7 @@ namespace fr
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
 
-			auto sceneBoundsEntityView = m_registry.view<fr::BoundsComponent, fr::BoundsComponent::IsSceneBoundsMarker>();
+			auto sceneBoundsEntityView = m_registry.view<fr::BoundsComponent, fr::BoundsComponent::SceneBoundsMarker>();
 			SEAssert("A unique scene bounds entity must exist",
 				sceneBoundsEntityView.front() == sceneBoundsEntityView.back());
 
@@ -333,6 +362,36 @@ namespace fr
 				return nullptr;
 			}			
 		}
+	}
+
+
+	void GameplayManager::SetAsMainCamera(entt::entity camera)
+	{
+		SEAssert("Entity does not have a valid camera component",
+			camera != entt::null && HasComponent<fr::CameraComponent>(camera));
+
+		{
+			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
+
+			bool foundCurrentMainCamera = false;
+			auto currentMainCameraView = m_registry.view<fr::CameraComponent::MainCameraMarker>();
+			for (auto entity : currentMainCameraView)
+			{
+				SEAssert("Already found a main camera. This should not be possible", foundCurrentMainCamera == false);
+				foundCurrentMainCamera = true;
+
+				m_registry.erase<fr::CameraComponent::MainCameraMarker>(entity);
+
+				if (m_registry.any_of<fr::CameraComponent::NewMainCameraMarker>(entity))
+				{
+					m_registry.erase<fr::CameraComponent::NewMainCameraMarker>(entity);
+				}
+			}
+
+			m_registry.emplace_or_replace<fr::CameraComponent::MainCameraMarker>(camera);
+			m_registry.emplace_or_replace<fr::CameraComponent::NewMainCameraMarker>(camera);
+		}
+
 	}
 
 
@@ -358,21 +417,103 @@ namespace fr
 	}
 
 
+	void GameplayManager::HandleEvents()
+	{
+		while (HasEvents())
+		{
+			en::EventManager::EventInfo const& eventInfo = GetEvent();
+
+			switch (eventInfo.m_type)
+			{
+			case en::EventManager::EventType::InputToggleConsole:
+			{
+				// Only enable/disable input processing when the console button is toggled
+				if (eventInfo.m_data0.m_dataB)
+				{
+					m_processInput = !m_processInput;
+				}
+			}
+			break;
+			default:
+				break;
+			}
+		}
+	}
+
+
+	void GameplayManager::ConfigureRegistry()
+	{
+		{
+			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
+
+			// TODO: Add event listeners here...
+		}
+	}
+
+
+	void GameplayManager::UpdatePlayerObject(double stepTimeMs)
+	{
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+
+			fr::CameraComponent* cameraComponent = nullptr;
+			fr::TransformComponent* cameraTransform = nullptr;
+			bool foundMainCamera = false;
+			auto mainCameraView = m_registry.view<
+				fr::CameraComponent, fr::CameraComponent::MainCameraMarker, fr::Relationship>();
+			for (entt::entity mainCamEntity : mainCameraView)
+			{
+				SEAssert("Already found a main camera. This should not be possible", foundMainCamera == false);
+				foundMainCamera = true;
+
+				fr::Relationship const& cameraRelationship = mainCameraView.get<fr::Relationship>(mainCamEntity);
+
+				cameraComponent = &mainCameraView.get<fr::CameraComponent>(mainCamEntity);
+
+				cameraTransform =
+					GetFirstInHierarchyAboveInternal<fr::TransformComponent>(cameraRelationship.GetParent());
+			}
+			SEAssert("Failed to find main CameraComponent or TransformComponent", cameraComponent && cameraTransform);
+
+			fr::CameraControlComponent* playerObject = nullptr;
+			fr::TransformComponent* playerTransform = nullptr;
+			bool foundCamController = false;
+			auto camControllerView = m_registry.view<fr::CameraControlComponent, fr::TransformComponent>();
+			for (entt::entity playerEntity : camControllerView)
+			{
+				SEAssert("Already found a player object. This should not be possible", foundCamController == false);
+				foundCamController = true;
+
+				playerObject = &camControllerView.get<fr::CameraControlComponent>(playerEntity);
+				playerTransform = &camControllerView.get<fr::TransformComponent>(playerEntity);
+			}
+			SEAssert("Failed to find a player object or transform", playerObject && playerTransform);
+
+			fr::CameraControlComponent::Update(
+				*playerObject, *playerTransform, *cameraComponent, *cameraTransform, stepTimeMs);
+		}
+	}
+
+
 	void GameplayManager::UpdateSceneBounds()
 	{
-		// ECS_CONVERSION TODO: This should be triggered by listening for when MESH bounds are added/updated
-		
 		entt::entity sceneBoundsEntity = entt::null;
 		bool sceneBoundsChanged = false;
 		{
 			// We're only viewing the registry and modifying components in place; Only need a read lock
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
 
-			auto sceneBoundsEntityView = m_registry.view<fr::BoundsComponent, fr::BoundsComponent::IsSceneBoundsMarker>();
-			SEAssert("A unique scene bounds entity must exist",
-				sceneBoundsEntityView.front() == sceneBoundsEntityView.back());
-			
-			sceneBoundsEntity = sceneBoundsEntityView.front();
+			auto sceneBoundsEntityView = m_registry.view<fr::BoundsComponent, fr::BoundsComponent::SceneBoundsMarker>();
+
+			bool foundSceneBoundsEntity = false;
+			for (entt::entity entity : sceneBoundsEntityView)
+			{
+				SEAssert("Scene bounds entity already found. This should not be possible", 
+					foundSceneBoundsEntity == false);
+				foundSceneBoundsEntity = true;
+
+				sceneBoundsEntity = entity;
+			}
 
 			// Copy the current bounds so we can detect if it changes
 			const fr::BoundsComponent prevBounds = sceneBoundsEntityView.get<fr::BoundsComponent>(sceneBoundsEntity);
@@ -380,24 +521,28 @@ namespace fr
 			// Modify our bounds component in-place:
 			m_registry.patch<fr::BoundsComponent>(sceneBoundsEntity, [&](auto& sceneBoundsComponent)
 				{
-					auto meshConceptEntitiesView = m_registry.view<fr::Mesh::MeshConceptMarker>();
+					auto meshConceptEntitiesView = 
+						m_registry.view<fr::Mesh::MeshConceptMarker, fr::BoundsComponent, fr::Relationship>();
 
 					// Make sure we have at least 1 mesh
 					auto meshConceptsViewItr = meshConceptEntitiesView.begin();
 					if (meshConceptsViewItr != meshConceptEntitiesView.end())
 					{
-						// Reset our bounds to be the 1st Bounds we view: It'll grow to encompass all other Bounds
-						sceneBoundsComponent = m_registry.get<fr::BoundsComponent>(*meshConceptsViewItr);
+						// Copy the 1st Bounds we view: We'll grow it to encompass all other Bounds
+						sceneBoundsComponent = meshConceptEntitiesView.get<fr::BoundsComponent>(*meshConceptsViewItr);
 						++meshConceptsViewItr;
 
 						while (meshConceptsViewItr != meshConceptEntitiesView.end())
 						{
 							const entt::entity meshEntity = *meshConceptsViewItr;
-							fr::BoundsComponent const& boundsComponent = m_registry.get<fr::BoundsComponent>(meshEntity);
 
-							fr::Relationship const& relationshipComponent = m_registry.get<fr::Relationship>(meshEntity);
+							fr::BoundsComponent const& boundsComponent = 
+								meshConceptEntitiesView.get<fr::BoundsComponent>(meshEntity);
 
-							fr::Transform& meshTransform = GetFirstInHierarchyAboveInternal<fr::TransformComponent>(
+							fr::Relationship const& relationshipComponent = 
+								meshConceptEntitiesView.get<fr::Relationship>(meshEntity);
+
+							fr::Transform const& meshTransform = GetFirstInHierarchyAboveInternal<fr::TransformComponent>(
 								relationshipComponent.GetParent())->GetTransform();
 
 							sceneBoundsComponent.ExpandBounds(
@@ -438,46 +583,51 @@ namespace fr
 		std::vector<std::future<void>> taskFutures;
 		taskFutures.reserve(prevNumRootTransforms);
 
-		// ECS_CONVERSION: Add a read lock here!!!!
-
-		auto transformComponentsView = m_registry.view<fr::TransformComponent>();
-		for (auto entity : transformComponentsView)
 		{
-			fr::TransformComponent& transformComponent =
-				transformComponentsView.get<fr::TransformComponent>(entity);
+			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
 
-			// Find root nodes:
-			fr::Transform& node = transformComponent.GetTransform();
-			if (node.GetParent() == nullptr)
+			auto transformComponentsView = m_registry.view<fr::TransformComponent>();
+			for (auto entity : transformComponentsView)
 			{
-				fr::TransformComponent::DispatchTransformUpdateThread(taskFutures, &node);
+				fr::TransformComponent& transformComponent =
+					transformComponentsView.get<fr::TransformComponent>(entity);
+
+				// Find root nodes:
+				fr::Transform& node = transformComponent.GetTransform();
+				if (node.GetParent() == nullptr)
+				{
+					fr::TransformComponent::DispatchTransformUpdateThread(taskFutures, &node);
+				}
 			}
-		}
 
-		prevNumRootTransforms = std::max(1llu, taskFutures.size());
+			prevNumRootTransforms = std::max(1llu, taskFutures.size());
 
-		// Wait for the updates to complete
-		for (std::future<void> const& taskFuture : taskFutures)
-		{
-			taskFuture.wait();
+			// Wait for the updates to complete
+			for (std::future<void> const& taskFuture : taskFutures)
+			{
+				taskFuture.wait();
+			}
 		}
 	}
 
 
-	void GameplayManager::UpdateLights()
+	void GameplayManager::UpdateLightsAndShadows()
 	{
 		// Add dirty markers to lights and shadows so the render data will be updated
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
 
+			// Lights:
 			auto lightComponentsView = m_registry.view<fr::LightComponent>();
 			for (auto entity : lightComponentsView)
 			{
 				fr::LightComponent& lightComponent = lightComponentsView.get<fr::LightComponent>(entity);
 
+				// Add a dirty marker to any dirty lights:
 				fr::Light& light = lightComponent.GetLight();
 				if (light.IsDirty())
 				{
+					// Deferred point lights: We must update the mesh scale and any shadow camera near/far values
 					if (light.GetType() == fr::Light::LightType::Point_Deferred)
 					{					
 						fr::Relationship const& relationship = m_registry.get<fr::Relationship>(entity);
@@ -498,7 +648,7 @@ namespace fr
 								GetFirstInChildrenInternal<fr::CameraComponent>(shadowMapChild, shadowCamChild);
 							SEAssert("Failed to find shadow camera", shadowCamCmpt);
 
-							shadowCam = &shadowCamCmpt->GetCamera();
+							shadowCam = &shadowCamCmpt->GetCameraForModification();
 						}
 
 						fr::Light::ConfigurePointLightMeshScale(light, transformCmpt.GetTransform(), shadowCam);
@@ -509,6 +659,7 @@ namespace fr
 				}
 			}
 
+			// Shadows:
 			auto shadowMapComponentsView = m_registry.view<fr::ShadowMapComponent>();
 			for (auto entity : shadowMapComponentsView)
 			{
@@ -530,63 +681,18 @@ namespace fr
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
 
-			auto cameraComponentsView = m_registry.view<fr::CameraComponent, fr::Relationship>();
+			auto cameraComponentsView = m_registry.view<fr::CameraComponent>();
 			for (auto entity : cameraComponentsView)
 			{
 				fr::CameraComponent& cameraComponent = cameraComponentsView.get<fr::CameraComponent>(entity);
 
-				fr::Camera& camera = cameraComponent.GetCamera();
+				fr::Camera& camera = cameraComponent.GetCameraForModification();
 				if (camera.IsDirty() || camera.GetTransform()->HasChanged())
 				{
 					m_registry.emplace_or_replace<DirtyMarker<fr::CameraComponent>>(entity);
 					camera.MarkClean();
 				}
 			}
-		}
-	}
-
-
-	// DEPRECATED:
-
-	void GameplayManager::UpdateUpdateables(double stepTimeMs) const
-	{
-		{
-			std::lock_guard<std::mutex> lock(m_updateablesMutex);
-
-			for (en::Updateable* updateable : m_updateables)
-			{
-				updateable->Update(stepTimeMs);
-			}
-		}
-	}
-
-
-	void GameplayManager::AddUpdateable(en::Updateable* updateable)
-	{
-		SEAssert("Updateable cannot be null ", updateable);
-
-		{
-			std::lock_guard<std::mutex> lock(m_updateablesMutex);
-			m_updateables.emplace_back(updateable);
-		}
-	}
-
-
-	void GameplayManager::RemoveUpdateable(en::Updateable const* updateable)
-	{
-		SEAssert("Updateable cannot be null ", updateable);
-
-		{
-			std::lock_guard<std::mutex> lock(m_updateablesMutex);
-
-			auto const& result = std::find_if(
-				m_updateables.begin(),
-				m_updateables.end(),
-				[&](en::Updateable const* curUpdateable) { return curUpdateable == updateable; });
-
-			SEAssert("Updateable not found", result != m_updateables.end());
-
-			m_updateables.erase(result);
 		}
 	}
 }

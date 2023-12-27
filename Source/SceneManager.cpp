@@ -35,7 +35,7 @@ namespace en
 	}
 
 
-	SceneManager::SceneManager() 
+	SceneManager::SceneManager()
 		: m_sceneData(nullptr)
 		, m_activeCameraIdx(0)
 	{
@@ -92,24 +92,6 @@ namespace en
 	void SceneManager::FinalUpdate()
 	{
 		//
-	}
-
-
-	void SceneManager::SetMainCameraIdx(size_t camIdx)
-	{
-		EventManager::Get()->Notify(EventManager::EventInfo{ EventManager::CameraSelectionChanged });
-
-		m_activeCameraIdx = camIdx;
-	}
-
-
-	std::shared_ptr<fr::Camera> SceneManager::GetMainCamera() const
-	{
-		// TODO: This camera is accessed multiple times before the first frame is rendered (e.g. PlayerObject, various
-		// graphics systems). Currently, this is fine as we currently join any loading threads before creating these
-		// objects, but it may not always be the case.
-
-		return m_sceneData->GetMainCamera(m_activeCameraIdx);
 	}
 }
 

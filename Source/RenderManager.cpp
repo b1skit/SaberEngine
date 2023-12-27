@@ -10,7 +10,6 @@
 #include "GraphicsSystem_Tonemapping.h"
 #include "GraphicsSystemManager.h"
 #include "ImGuiUtils.h"
-#include "Light.h"
 #include "PerformanceTimer.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager.h"
@@ -19,24 +18,6 @@
 #include "RenderManager_OpenGL.h"
 #include "SceneManager.h"
 #include "TextUtils.h"
-
-using en::Config;
-using en::SceneManager;
-using gr::BloomGraphicsSystem;
-using gr::DeferredLightingGraphicsSystem;
-using gr::GBufferGraphicsSystem;
-using gr::GraphicsSystem;
-using gr::ShadowsGraphicsSystem;
-using gr::SkyboxGraphicsSystem;
-using gr::TonemappingGraphicsSystem;
-using fr::Transform;
-using re::Batch;
-using util::PerformanceTimer;
-using std::shared_ptr;
-using std::make_shared;
-using std::string;
-using std::vector;
-using glm::mat4;
 
 
 namespace re
@@ -57,7 +38,7 @@ namespace re
 	std::unique_ptr<re::RenderManager> RenderManager::Create()
 	{
 		std::unique_ptr<re::RenderManager> newRenderManager = nullptr;
-		const platform::RenderingAPI& api = Config::Get()->GetRenderingAPI();
+		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
 		switch (api)
 		{
 		case platform::RenderingAPI::OpenGL:
@@ -159,7 +140,7 @@ namespace re
 		SEBeginCPUEvent("re::RenderManager::Initialize");
 
 		LOG("RenderManager Initializing...");
-		PerformanceTimer timer;
+		util::PerformanceTimer timer;
 		timer.Start();
 
 		// Build our platform-specific graphics systems:
@@ -201,14 +182,15 @@ namespace re
 		// Just swap the buffers here, since RenderManager::PreUpdate is blocking
 		m_renderCommandManager.SwapBuffers();
 
-		// TEMPORARY HACK: Execute the render commands here, while the main thread waits. We need to make sure that the
-		// render commands are executed before proceeding, until everything else here is cleaned up and moved out
-		m_renderCommandManager.Execute(); // Process render commands
 
-		// Copy frame data:
+		// TEMPORARY HACK: Execute the render commands here, while the main thread waits. We need to make sure that the
+		// render commands are executed before proceeding, until everything else here is cleaned up and moved out.
+		// Everything after this point should be moved out of PreUpdate(), and into Update()
+		// ----
+
+		m_renderCommandManager.Execute(); // Process render commands. Must happen 1st to ensure RenderData is up to date
+
 		BuildSceneBatches();
-		// TODO: Batch creation should be done on the render thread, using simplistic renderer-side representations of
-		// scene objects updated via a render command queue
 
 		// Execute each RenderSystem's platform-specific graphics system update pipelines:
 		SEBeginCPUEvent("Execute update pipeline");
@@ -536,50 +518,52 @@ namespace re
 
 		if (ImGui::CollapsingHeader("Cameras:", ImGuiTreeNodeFlags_None))
 		{
-			ImGui::Indent();
-			std::vector<std::shared_ptr<fr::Camera>> const& cameras = en::SceneManager::GetSceneData()->GetCameras();
-
-			// TODO: Currently, we set the camera parameters as a permanent PB via a shared_ptr from the main camera
-			// once in every GS. We need to be able to get/set the main camera's camera params PB every frame, in every
-			// GS. Camera selection works, but the GS's all render from the same camera. For now, just disable it.
-//#define CAMERA_SELECTION
-#if defined(CAMERA_SELECTION)
-			static int activeCamIdx = static_cast<int>(m_activeCameraIdx);
-			constexpr ImGuiComboFlags k_cameraSelectionflags = 0;
-			static int comboSelectedCamIdx = activeCamIdx; // Initialize with the index of the current main camera
-			const char* comboPreviewCamName = cameras[comboSelectedCamIdx]->GetName().c_str();
-			if (ImGui::BeginCombo("Active camera", comboPreviewCamName, k_cameraSelectionflags))
-			{
-				for (size_t camIdx = 0; camIdx < cameras.size(); camIdx++)
-				{
-					const bool isSelected = (comboSelectedCamIdx == camIdx);
-					if (ImGui::Selectable(cameras[camIdx]->GetName().c_str(), isSelected))
-					{
-						comboSelectedCamIdx = static_cast<int>(camIdx);
-					}
-
-					if (isSelected) // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-					{
-						ImGui::SetItemDefaultFocus();
-					}
-				}
-				ImGui::EndCombo();
-
-				// Handle active camera changes:
-				if (comboSelectedCamIdx != activeCamIdx)
-				{
-					activeCamIdx = comboSelectedCamIdx;
-					SetMainCameraIdx(comboSelectedCamIdx);
-				}
-			}
-#endif
-
-			for (size_t camIdx = 0; camIdx < cameras.size(); camIdx++)
-			{
-				cameras[camIdx]->ShowImGuiWindow();
-				ImGui::Separator();
-			}
-			ImGui::Unindent();
+			// ECS_CONVERSION: TODO: RESTORE THIS FUNCTIONALITY
+			
+//			ImGui::Indent();
+//			std::vector<std::shared_ptr<fr::Camera>> const& cameras = en::SceneManager::GetSceneData()->GetCameras();
+//
+//			// TODO: Currently, we set the camera parameters as a permanent PB via a shared_ptr from the main camera
+//			// once in every GS. We need to be able to get/set the main camera's camera params PB every frame, in every
+//			// GS. Camera selection works, but the GS's all render from the same camera. For now, just disable it.
+////#define CAMERA_SELECTION
+//#if defined(CAMERA_SELECTION)
+//			static int activeCamIdx = static_cast<int>(m_activeCameraIdx);
+//			constexpr ImGuiComboFlags k_cameraSelectionflags = 0;
+//			static int comboSelectedCamIdx = activeCamIdx; // Initialize with the index of the current main camera
+//			const char* comboPreviewCamName = cameras[comboSelectedCamIdx]->GetName().c_str();
+//			if (ImGui::BeginCombo("Active camera", comboPreviewCamName, k_cameraSelectionflags))
+//			{
+//				for (size_t camIdx = 0; camIdx < cameras.size(); camIdx++)
+//				{
+//					const bool isSelected = (comboSelectedCamIdx == camIdx);
+//					if (ImGui::Selectable(cameras[camIdx]->GetName().c_str(), isSelected))
+//					{
+//						comboSelectedCamIdx = static_cast<int>(camIdx);
+//					}
+//
+//					if (isSelected) // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+//					{
+//						ImGui::SetItemDefaultFocus();
+//					}
+//				}
+//				ImGui::EndCombo();
+//
+//				// Handle active camera changes:
+//				if (comboSelectedCamIdx != activeCamIdx)
+//				{
+//					activeCamIdx = comboSelectedCamIdx;
+//					SetMainCameraIdx(comboSelectedCamIdx);
+//				}
+//			}
+//#endif
+//
+//			for (size_t camIdx = 0; camIdx < cameras.size(); camIdx++)
+//			{
+//				cameras[camIdx]->ShowImGuiWindow();
+//				ImGui::Separator();
+//			}
+//			ImGui::Unindent();
 		}
 
 		if (ImGui::CollapsingHeader("Meshes:", ImGuiTreeNodeFlags_None))

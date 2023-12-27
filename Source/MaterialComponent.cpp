@@ -9,7 +9,7 @@
 
 namespace fr
 {
-	gr::Material::RenderData Material::CreateRenderData(MaterialComponent const& matComponent)
+	gr::Material::RenderData MaterialComponent::CreateRenderData(MaterialComponent const& matComponent)
 	{
 		return gr::Material::RenderData{
 			.m_material = matComponent.m_material
@@ -17,7 +17,7 @@ namespace fr
 	}
 
 
-	Material::MaterialComponent& Material::AttachMaterialConcept(
+	MaterialComponent& MaterialComponent::AttachMaterialConcept(
 		entt::entity meshPrimitiveConcept,
 		std::shared_ptr<gr::Material> sceneMaterial)
 	{
@@ -26,13 +26,13 @@ namespace fr
 		SEAssert("Cannot attach a null material", sceneMaterial != nullptr);
 		SEAssert("Attempting to attach a Material component without a MeshPrimitiveComponent. This (currently) doesn't "
 			"make sense",
-			gpm.IsInHierarchyAbove<fr::MeshPrimitive::MeshPrimitiveComponent>(meshPrimitiveConcept));
+			gpm.IsInHierarchyAbove<fr::MeshPrimitiveComponent>(meshPrimitiveConcept));
 
 		entt::entity materialEntity = gpm.CreateEntity(sceneMaterial->GetName());
 
 		// Attach the material component:		
-		fr::Material::MaterialComponent* matComponent =
-			gpm.EmplaceComponent<fr::Material::MaterialComponent>(materialEntity, sceneMaterial.get());
+		fr::MaterialComponent* matComponent =
+			gpm.EmplaceComponent<fr::MaterialComponent>(materialEntity, sceneMaterial.get());
 
 		// Relate the material to the owning mesh primitive:
 		fr::Relationship& materialRelationship = gpm.GetComponent<fr::Relationship>(materialEntity);
@@ -44,7 +44,7 @@ namespace fr
 		gr::RenderDataComponent::AttachSharedRenderDataComponent(gpm, materialEntity, meshPrimRenderData);
 
 		// Mark our Material as dirty:
-		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::Material::MaterialComponent>>(materialEntity);
+		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::MaterialComponent>>(materialEntity);
 
 		return *matComponent;
 	}

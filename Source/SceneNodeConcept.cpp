@@ -45,7 +45,7 @@ namespace fr
 	}
 
 
-	fr::Transform& SceneNode::GetSceneNodeTransform(entt::entity entity)
+	fr::Transform& SceneNode::GetTransform(entt::entity entity)
 	{
 		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
 

@@ -6,7 +6,6 @@
 
 namespace gr
 {
-	class Light;
 	class Material;
 	class MeshPrimitive;
 }
@@ -14,14 +13,12 @@ namespace gr
 namespace re
 {
 	class Shader;
+	class Texture;
 	class VertexStream;
 }
 
 namespace fr
 {
-	class Camera;
-	class Light;
-
 	class SceneData final : public virtual en::NamedObject
 	{
 	public:
@@ -38,11 +35,6 @@ namespace fr
 
 		bool Load(std::string const& relativeFilePath); // Filename and path, relative to the ..\Scenes\ dir
 
-
-	public:
-		// Cameras:
-		std::vector<std::shared_ptr<fr::Camera>> const& GetCameras() const;
-		std::shared_ptr<fr::Camera> GetMainCamera(uint64_t uniqueID) const;
 
 	public:		
 		re::Texture const* GetIBLTexture() const;
@@ -69,12 +61,6 @@ namespace fr
 		bool ShaderExists(uint64_t shaderIdentifier) const;
 
 		
-	protected: // DEPRECATED!!!!!!!!!!!!
-		friend class fr::Camera; // Only Camera objects can register/unregister themselves
-		void AddCamera(std::shared_ptr<fr::Camera> newCamera); // Returns the camera index
-		void RemoveCamera(uint64_t uniqueID);
-
-
 	private:
 		std::unordered_map<DataHash, std::shared_ptr<gr::MeshPrimitive>> m_meshPrimitives;
 		mutable std::mutex m_meshPrimitivesMutex;
@@ -90,15 +76,6 @@ namespace fr
 
 		std::unordered_map<size_t, std::shared_ptr<re::Shader>> m_shaders;
 		mutable std::shared_mutex m_shadersReadWriteMutex;
-
-		std::shared_ptr<fr::Light> m_keyLight;
-		std::shared_mutex m_keyLightReadWriteMutex;
-
-		std::vector<std::shared_ptr<fr::Light>> m_pointLights;
-		std::shared_mutex m_pointLightsReadWriteMutex;
-
-		std::vector<std::shared_ptr<fr::Camera>> m_cameras;
-		mutable std::shared_mutex m_camerasReadWriteMutex;
 
 		bool m_finishedLoading; // Used to assert scene data is not accessed while it might potentially be modified
 
