@@ -16,7 +16,7 @@ namespace
 
 namespace re
 {
-	Batch::Batch(Lifetime lifetime, gr::MeshPrimitive const* meshPrimitive, gr::Material* material)
+	Batch::Batch(Lifetime lifetime, gr::MeshPrimitive const* meshPrimitive, gr::Material const* material)
 		: m_lifetime(lifetime)
 		, m_type(BatchType::Graphics)
 		, m_graphicsParams{}
@@ -145,7 +145,7 @@ namespace re
 	}
 
 
-	Batch::Batch(Lifetime lifetime, gr::Material* material, GraphicsParams const& graphicsParams)
+	Batch::Batch(Lifetime lifetime, gr::Material const* material, GraphicsParams const& graphicsParams)
 		: m_lifetime(lifetime)
 		, m_type(BatchType::Graphics)
 		, m_graphicsParams{}
