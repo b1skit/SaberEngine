@@ -6,6 +6,7 @@
 #include "MeshFactory.h"
 #include "RenderManager.h"
 #include "RenderSystem.h"
+#include "Sampler.h"
 #include "Shader.h"
 #include "SceneManager.h"
 

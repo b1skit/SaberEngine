@@ -16,6 +16,7 @@
 #include "RenderManager_DX12.h"
 #include "RenderManager_Platform.h"
 #include "RenderManager_OpenGL.h"
+#include "Sampler.h"
 #include "SceneManager.h"
 #include "TextUtils.h"
 

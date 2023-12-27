@@ -1,14 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "NamedObject.h"
-#include "ParameterBlock.h"
-#include "Sampler.h"
 
 
 namespace re
 {
 	class ParameterBlock;
 	class Texture;
+	class Sampler;
 	class Shader;
 }
 
@@ -61,8 +60,8 @@ namespace gr
 		virtual ~Material() = 0;
 
 		void SetTexture(uint32_t slotIndex, std::shared_ptr<re::Texture>);
-		std::shared_ptr<re::Texture> const GetTexture(uint32_t slotIndex) const;
-		std::shared_ptr<re::Texture> const GetTexture(std::string const& samplerName) const;
+		re::Texture const* GetTexture(uint32_t slotIndex) const;
+		re::Texture const* GetTexture(std::string const& samplerName) const;
 		std::vector<TextureSlotDesc> const& GetTexureSlotDescs() const;
 
 		void SetAlphaMode(AlphaMode);
@@ -73,11 +72,11 @@ namespace gr
 
 		static std::shared_ptr<re::ParameterBlock> CreateParameterBlock(gr::Material const*);
 
+		bool IsDirty() const;
+		void MarkClean();
+
+
 		virtual void ShowImGuiWindow();
-
-
-	private:
-		virtual void CreateUpdateParameterBlock() = 0;
 
 
 	protected:
@@ -94,10 +93,7 @@ namespace gr
 		float m_alphaCutoff = 0.5f;
 		DoubleSidedMode m_doubleSidedMode = DoubleSidedMode::SingleSided;
 
-
-	protected:
-		std::shared_ptr<re::ParameterBlock> m_matParams;
-		bool m_matParamsIsDirty;
+		bool m_isDirty;
 
 
 	protected:
@@ -125,9 +121,9 @@ namespace gr
 	}
 
 
-	inline std::shared_ptr<re::Texture> const Material::GetTexture(uint32_t slotIndex) const
+	inline re::Texture const* Material::GetTexture(uint32_t slotIndex) const
 	{
-		return m_texSlots[slotIndex].m_texture;
+		return m_texSlots[slotIndex].m_texture.get();
 	}
 
 
@@ -142,14 +138,14 @@ namespace gr
 		SEAssert("TODO: Support other alpha modes", alphaMode == AlphaMode::Opaque);
 
 		m_alphaMode = alphaMode;
-		m_matParamsIsDirty = true;
+		m_isDirty = true;
 	}
 
 
 	inline void Material::SetAlphaCutoff(float alphaCutoff)
 	{
 		m_alphaCutoff = alphaCutoff;
-		m_matParamsIsDirty = true;
+		m_isDirty = true;
 	}
 
 
@@ -158,13 +154,25 @@ namespace gr
 		SEAssert("TODO: Support other sided modes", doubleSidedMode == DoubleSidedMode::SingleSided);
 
 		m_doubleSidedMode = doubleSidedMode;
-		m_matParamsIsDirty = true;
+		m_isDirty = true;
 	}
 
 
 	inline Material::MaterialType Material::GetMaterialType() const
 	{
 		return m_materialType;
+	}
+
+
+	inline bool Material::IsDirty() const
+	{
+		return m_isDirty;
+	}
+
+
+	inline void Material::MarkClean()
+	{
+		m_isDirty = false;
 	}
 
 

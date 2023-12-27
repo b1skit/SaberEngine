@@ -38,6 +38,7 @@ namespace gr
 			PBRMetallicRoughnessParams m_pbrMetallicRoughnessParams;
 		};
 
+
 	public:
 		static RenderData CreateRenderData(gr::Material_GLTF&);
 		
@@ -93,63 +94,62 @@ namespace gr
 
 	private:
 		PBRMetallicRoughnessParams GetPBRMetallicRoughnessParamsData() const;
-		void CreateUpdateParameterBlock() override;
 	};
 
 
 	inline void Material_GLTF::SetEmissiveFactor(glm::vec3 const& emissiveFactor)
 	{
 		m_emissiveFactor = emissiveFactor;
-		m_matParamsIsDirty = true;
+		m_isDirty = true;
 	}
 
 
 	inline void Material_GLTF::SetNormalScale(float normalScale)
 	{
 		m_normalScale = normalScale;
-		m_matParamsIsDirty = true;
+		m_isDirty = true;
 	}
 
 
 	inline void Material_GLTF::SetOcclusionStrength(float occlusionStrength)
 	{
 		m_occlusionStrength = occlusionStrength;
-		m_matParamsIsDirty = true;
+		m_isDirty = true;
 	}
 
 
 	inline void Material_GLTF::SetBaseColorFactor(glm::vec4 const& baseColorFactor)
 	{
 		m_baseColorFactor = baseColorFactor;
-		m_matParamsIsDirty = true;
+		m_isDirty = true;
 	}
 
 
 	inline void Material_GLTF::SetMetallicFactor(float metallicFactor)
 	{
 		m_metallicFactor = metallicFactor;
-		m_matParamsIsDirty = true;
+		m_isDirty = true;
 	}
 
 
 	inline void Material_GLTF::SetRoughnessFactor(float roughnessFactor)
 	{
 		m_roughnessFactor = roughnessFactor;
-		m_matParamsIsDirty = true;
+		m_isDirty = true;
 	}
 
 
 	inline void Material_GLTF::SetF0(glm::vec3 f0)
 	{
 		m_f0 = f0;
-		m_matParamsIsDirty = true;
+		m_isDirty = true;
 	}
 
 
 	inline void Material_GLTF::SetEmissiveStrength(float emissiveStrength)
 	{
 		m_emissiveStrength = emissiveStrength;
-		m_matParamsIsDirty = true;
+		m_isDirty = true;
 	}
 }
 

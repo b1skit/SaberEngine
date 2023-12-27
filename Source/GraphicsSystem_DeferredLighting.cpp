@@ -7,6 +7,7 @@
 #include "LightRenderData.h"
 #include "MeshFactory.h"
 #include "ParameterBlock.h"
+#include "Sampler.h"
 #include "SceneManager.h"
 #include "ShadowMapRenderData.h"
 #include "RenderManager.h"

@@ -5,6 +5,7 @@
 #include "GraphicsSystem_GBuffer.h"
 #include "MeshFactory.h"
 #include "RenderManager.h"
+#include "Sampler.h"
 #include "SceneManager.h"
 #include "Texture.h"
 #include "TextureTarget.h"

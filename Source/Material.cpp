@@ -1,32 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "GameplayManager.h"
-#include "MarkerComponents.h"
 #include "Material.h"
 #include "Material_GLTF.h"
-#include "MeshPrimitive.h"
 #include "ParameterBlock.h"
-#include "RelationshipComponent.h"
-#include "RenderDataComponent.h"
-#include "Shader_Platform.h"
-#include "Shader.h"
+#include "Sampler.h"
 #include "Texture.h"
-
-using re::Shader;
-using re::Texture;
-using re::Sampler;
-using re::ParameterBlock;
-
-using std::string;
-using std::shared_ptr;
-using std::unique_ptr;
-using std::vector;
-using std::unordered_map;
-using std::make_unique;
-using std::make_shared;
-using std::vector;
-using glm::vec4;
-using glm::vec3;
 
 
 namespace
@@ -96,16 +74,15 @@ namespace gr
 	}
 
 
-	Material::Material(string const& name, MaterialType materialType)
+	Material::Material(std::string const& name, MaterialType materialType)
 		: NamedObject(name)
 		, m_materialType(materialType)
-		, m_matParams(nullptr)
-		, m_matParamsIsDirty(true)
+		, m_isDirty(true)
 	{
 	}
 
 
-	std::shared_ptr<re::Texture> const Material::GetTexture(std::string const& samplerName) const
+	re::Texture const* Material::GetTexture(std::string const& samplerName) const
 	{
 		auto const& index = m_namesToSlotIndex.find(samplerName);
 
@@ -113,7 +90,7 @@ namespace gr
 			index != m_namesToSlotIndex.end() && 
 			(uint32_t)index->second < (uint32_t)m_texSlots.size());
 
-		return m_texSlots[index->second].m_texture;
+		return m_texSlots[index->second].m_texture.get();
 	}
 
 
@@ -136,7 +113,9 @@ namespace gr
 
 	void Material::ShowImGuiWindow()
 	{
-		ImGui::Text("Name: \"%s\"", GetName().c_str());
+		// ECS_CONVERSION: TODO RESTORE THIS FUNCTIONALITY
+
+		/*ImGui::Text("Name: \"%s\"", GetName().c_str());
 		ImGui::Text("Type: %s", MaterialTypeToCStr(m_materialType));
 
 		if (ImGui::CollapsingHeader(std::format("Textures##{}\"", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
@@ -165,7 +144,7 @@ namespace gr
 
 		ImGui::Text("Alpha mode: %s", AlphaModeToCStr(m_alphaMode));
 		m_matParamsIsDirty |= ImGui::SliderFloat("Alpha cutoff", &m_alphaCutoff, 0.f, 1.f, "%.4f");
-		ImGui::Text("Double sided mode: %s", DoubleSidedModeToCStr(m_doubleSidedMode));
+		ImGui::Text("Double sided mode: %s", DoubleSidedModeToCStr(m_doubleSidedMode));*/
 	}
 }
 

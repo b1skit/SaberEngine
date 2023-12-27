@@ -1,5 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Material_GLTF.h"
+#include "ParameterBlock.h"
+#include "Sampler.h"
 
 
 namespace gr
@@ -31,28 +33,6 @@ namespace gr
 	}
 
 
-	void Material_GLTF::CreateUpdateParameterBlock()
-	{
-		if (m_matParamsIsDirty || !m_matParams)
-		{
-			PBRMetallicRoughnessParams const& pbrMetallicRoughnessParams = GetPBRMetallicRoughnessParamsData();
-
-			if (!m_matParams)
-			{
-				m_matParams = re::ParameterBlock::Create(
-					PBRMetallicRoughnessParams::s_shaderName,
-					pbrMetallicRoughnessParams,
-					re::ParameterBlock::PBType::Mutable);
-			}
-			else
-			{
-				m_matParams->Commit(pbrMetallicRoughnessParams);
-			}
-			m_matParamsIsDirty = false;
-		}
-	}
-
-
 	Material_GLTF::Material_GLTF(std::string const& name)
 		: Material(name, gr::Material::MaterialType::GLTF_PBRMetallicRoughness)
 		, NamedObject(name)
@@ -73,8 +53,6 @@ namespace gr
 		{
 			m_namesToSlotIndex.insert({ m_texSlots[i].m_shaderSamplerName, (uint32_t)i });
 		}
-
-		CreateUpdateParameterBlock();
 	}
 
 
@@ -83,34 +61,34 @@ namespace gr
 		// ECS_CONVERSION TODO: We're creating these as a single frame PB for now, but really it should be a mutable
 		// permanent PB... Need to figure out how/where to manage lifetime on the RenderThread side
 
-		std::shared_ptr<re::ParameterBlock> matParams = re::ParameterBlock::Create(
+		return re::ParameterBlock::Create(
 			PBRMetallicRoughnessParams::s_shaderName,
 			material->GetPBRMetallicRoughnessParamsData(),
 			re::ParameterBlock::PBType::SingleFrame);
-
-		return matParams;
 	}
 
 
 	void Material_GLTF::ShowImGuiWindow()
 	{
-		if (ImGui::CollapsingHeader(std::format("{}##{}", GetName(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
-		{
-			ImGui::Indent();
-			Material::ShowImGuiWindow();
+		// ECS_CONVERSION: TODO RESTORE THIS FUNCTIONALITY
+		
+		//if (ImGui::CollapsingHeader(std::format("{}##{}", GetName(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+		//{
+		//	ImGui::Indent();
+		//	Material::ShowImGuiWindow();
 
-			m_matParamsIsDirty |= ImGui::ColorEdit3(std::format("Base color factor##{}", "", GetUniqueID()).c_str(), &m_baseColorFactor.r, ImGuiColorEditFlags_Float);
+		//	m_matParamsIsDirty |= ImGui::ColorEdit3(std::format("Base color factor##{}", "", GetUniqueID()).c_str(), &m_baseColorFactor.r, ImGuiColorEditFlags_Float);
 
-			m_matParamsIsDirty |= ImGui::SliderFloat(std::format("Metallic factor##{}", GetUniqueID()).c_str(), &m_metallicFactor, 0.f, 1.f, "%0.3f");
-			m_matParamsIsDirty |= ImGui::SliderFloat(std::format("Roughness factor##{}", GetUniqueID()).c_str(), &m_roughnessFactor, 0.f, 1.f, "%0.3f");
-			m_matParamsIsDirty |= ImGui::SliderFloat(std::format("Normal scale##{}", GetUniqueID()).c_str(), &m_normalScale, 0.f, 1.f, "%0.3f");
-			m_matParamsIsDirty |= ImGui::SliderFloat(std::format("Occlusion strength##{}", GetUniqueID()).c_str(), &m_occlusionStrength, 0.f, 1.f, "%0.3f");
+		//	m_matParamsIsDirty |= ImGui::SliderFloat(std::format("Metallic factor##{}", GetUniqueID()).c_str(), &m_metallicFactor, 0.f, 1.f, "%0.3f");
+		//	m_matParamsIsDirty |= ImGui::SliderFloat(std::format("Roughness factor##{}", GetUniqueID()).c_str(), &m_roughnessFactor, 0.f, 1.f, "%0.3f");
+		//	m_matParamsIsDirty |= ImGui::SliderFloat(std::format("Normal scale##{}", GetUniqueID()).c_str(), &m_normalScale, 0.f, 1.f, "%0.3f");
+		//	m_matParamsIsDirty |= ImGui::SliderFloat(std::format("Occlusion strength##{}", GetUniqueID()).c_str(), &m_occlusionStrength, 0.f, 1.f, "%0.3f");
 
-			m_matParamsIsDirty |= ImGui::ColorEdit3(std::format("Emissive factor##{}", "", GetUniqueID()).c_str(), &m_emissiveFactor.r, ImGuiColorEditFlags_Float);
-			m_matParamsIsDirty |= ImGui::SliderFloat(std::format("Emissive strength##{}", GetUniqueID()).c_str(), &m_emissiveStrength, 0.f, 1000.f, "%0.3f");
+		//	m_matParamsIsDirty |= ImGui::ColorEdit3(std::format("Emissive factor##{}", "", GetUniqueID()).c_str(), &m_emissiveFactor.r, ImGuiColorEditFlags_Float);
+		//	m_matParamsIsDirty |= ImGui::SliderFloat(std::format("Emissive strength##{}", GetUniqueID()).c_str(), &m_emissiveStrength, 0.f, 1000.f, "%0.3f");
 
-			m_matParamsIsDirty |= ImGui::ColorEdit3(std::format("F0##{}", GetUniqueID()).c_str(), &m_f0.r, ImGuiColorEditFlags_Float);
-			ImGui::Unindent();
-		}
+		//	m_matParamsIsDirty |= ImGui::ColorEdit3(std::format("F0##{}", GetUniqueID()).c_str(), &m_f0.r, ImGuiColorEditFlags_Float);
+		//	ImGui::Unindent();
+		//}
 	}
 }
