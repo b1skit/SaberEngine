@@ -486,16 +486,19 @@ namespace
 			attachShadow = false; // No point rendering shadows for non-contributing lights
 		}
 		
+		fr::EntityManager& em = *fr::EntityManager::Get();
+
 		switch (lightType)
 		{
 		case fr::Light::LightType::Directional_Deferred:
 		{
-			fr::LightComponent::AttachDeferredDirectionalLightConcept(sceneNode, lightName, colorIntensity, attachShadow);
+			fr::LightComponent::AttachDeferredDirectionalLightConcept(
+				em, sceneNode, lightName, colorIntensity, attachShadow);
 		}
 		break;
 		case fr::Light::LightType::Point_Deferred:
 		{
-			fr::LightComponent::AttachDeferredPointLightConcept(sceneNode, lightName, colorIntensity, attachShadow);
+			fr::LightComponent::AttachDeferredPointLightConcept(em, sceneNode, lightName, colorIntensity, attachShadow);
 		}
 		break;
 		default:
@@ -790,8 +793,11 @@ namespace
 			};
 			util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
+			fr::EntityManager& em = *fr::EntityManager::Get();
+
 			// Attach the MeshPrimitive to the Mesh:
 			entt::entity meshPrimimitiveEntity = fr::MeshPrimitiveComponent::AttachMeshPrimitiveConcept(
+				em,
 				meshEntity,
 				meshName.c_str(),
 				&indices,
@@ -820,7 +826,7 @@ namespace
 					meshName.c_str(), k_missingMaterialName);
 				material = scene.GetMaterial(k_missingMaterialName);
 			}
-			fr::MaterialComponent::AttachMaterialConcept(meshPrimimitiveEntity, material);
+			fr::MaterialComponent::AttachMaterialConcept(em, meshPrimimitiveEntity, material);
 		}
 	}
 

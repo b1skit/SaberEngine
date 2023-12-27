@@ -886,9 +886,6 @@
     <ClInclude Include="RenderObjectIDs.h">
       <Filter>Header Files\gr</Filter>
     </ClInclude>
-    <ClInclude Include="CameraControlComponent.h">
-      <Filter>Header Files\fr</Filter>
-    </ClInclude>
     <ClInclude Include="BoundsComponent.h">
       <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
@@ -942,6 +939,9 @@
     </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Header Files\fr</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraControlComponent.h">
+      <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

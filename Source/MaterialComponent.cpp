@@ -18,11 +18,10 @@ namespace fr
 
 
 	MaterialComponent& MaterialComponent::AttachMaterialConcept(
+		fr::EntityManager& em,
 		entt::entity meshPrimitiveConcept,
 		std::shared_ptr<gr::Material> sceneMaterial)
 	{
-		fr::EntityManager& em = *fr::EntityManager::Get();
-
 		SEAssert("Cannot attach a null material", sceneMaterial != nullptr);
 		SEAssert("Attempting to attach a Material component without a MeshPrimitiveComponent. This (currently) doesn't "
 			"make sense",

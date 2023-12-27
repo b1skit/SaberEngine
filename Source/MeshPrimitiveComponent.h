@@ -14,6 +14,7 @@ namespace fr
 	{
 	public:
 		static entt::entity AttachMeshPrimitiveConcept(
+			fr::EntityManager&,
 			entt::entity owningEntity,
 			char const* name,
 			std::vector<uint32_t>* indices,
@@ -30,6 +31,7 @@ namespace fr
 
 
 		static entt::entity AttachMeshPrimitiveConcept(
+			fr::EntityManager&,
 			entt::entity owningEntity,
 			gr::MeshPrimitive const*,
 			glm::vec3 const& positionMinXYZ = fr::BoundsComponent::k_invalidMinXYZ, // Default: Compute bounds manually

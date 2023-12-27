@@ -54,8 +54,6 @@ namespace fr
 		taskFuturesOut.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
 			[rootNode]()
 			{
-				fr::EntityManager& em = *fr::EntityManager::Get();
-
 				std::stack<fr::Transform*> transforms;
 				transforms.push(rootNode);
 

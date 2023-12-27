@@ -54,10 +54,12 @@ namespace fr
 
 
 	LightComponent& LightComponent::AttachDeferredPointLightConcept(
-		entt::entity owningEntity, char const* name, glm::vec4 const& colorIntensity, bool hasShadow)
+		fr::EntityManager& em,
+		entt::entity owningEntity, 
+		char const* name, 
+		glm::vec4 const& colorIntensity, 
+		bool hasShadow)
 	{
-		fr::EntityManager& em = *fr::EntityManager::Get();
-
 		SEAssert("A light's owning entity requires a TransformComponent",
 			em.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
 
@@ -71,7 +73,7 @@ namespace fr
 		std::shared_ptr<gr::MeshPrimitive> pointLightMesh = gr::meshfactory::CreateSphere();
 
 		entt::entity meshPrimitiveEntity =
-			fr::MeshPrimitiveComponent::AttachMeshPrimitiveConcept(lightEntity, pointLightMesh.get());
+			fr::MeshPrimitiveComponent::AttachMeshPrimitiveConcept(em, lightEntity, pointLightMesh.get());
 
 		// RenderData:
 		// Point light's share the the RenderDataComponent created by the MeshPrimitive
@@ -105,17 +107,23 @@ namespace fr
 
 
 	LightComponent& LightComponent::AttachDeferredPointLightConcept(
-		entt::entity entity, std::string const& name, glm::vec4 const& colorIntensity, bool hasShadow)
+		fr::EntityManager& em, 
+		entt::entity entity, 
+		std::string const& name, 
+		glm::vec4 const& colorIntensity, 
+		bool hasShadow)
 	{
-		return AttachDeferredPointLightConcept(entity, name.c_str(), colorIntensity, hasShadow);
+		return AttachDeferredPointLightConcept(em, entity, name.c_str(), colorIntensity, hasShadow);
 	}
 
 
 	LightComponent& LightComponent::AttachDeferredDirectionalLightConcept(
-		entt::entity owningEntity, char const* name, glm::vec4 colorIntensity, bool hasShadow)
+		fr::EntityManager& em,
+		entt::entity owningEntity, 
+		char const* name, 
+		glm::vec4 colorIntensity, 
+		bool hasShadow)
 	{
-		fr::EntityManager& em = *fr::EntityManager::Get();
-
 		SEAssert("A light's owning entity requires a TransformComponent",
 			em.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
 
@@ -170,9 +178,13 @@ namespace fr
 
 
 	LightComponent& LightComponent::AttachDeferredDirectionalLightConcept(
-		entt::entity entity, std::string const& name, glm::vec4 colorIntensity, bool hasShadow)
+		fr::EntityManager& em,
+		entt::entity entity, 
+		std::string const& name, 
+		glm::vec4 colorIntensity, 
+		bool hasShadow)
 	{
-		return AttachDeferredDirectionalLightConcept(entity, name.c_str(), colorIntensity, hasShadow);
+		return AttachDeferredDirectionalLightConcept(em, entity, name.c_str(), colorIntensity, hasShadow);
 	}
 
 

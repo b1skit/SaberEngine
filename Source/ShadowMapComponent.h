@@ -19,6 +19,7 @@ namespace fr
 		static gr::Camera::Config GenerateShadowCameraConfig(
 			fr::EntityManager&, entt::entity shadowMapEntity, ShadowMapComponent const&);
 
+	public:
 		static gr::ShadowMap::RenderData CreateRenderData(
 			fr::NameComponent const& nameCmpt, fr::ShadowMapComponent const&);
 

@@ -9,7 +9,7 @@ namespace fr
 	{
 	public:
 		static MaterialComponent& AttachMaterialConcept(
-			entt::entity meshPrimitiveConcept, std::shared_ptr<gr::Material>);
+			fr::EntityManager&, entt::entity meshPrimitiveConcept, std::shared_ptr<gr::Material>);
 
 	public:
 		static gr::Material::RenderData CreateRenderData(MaterialComponent const&);

@@ -13,6 +13,7 @@
 namespace fr
 {
 	entt::entity MeshPrimitiveComponent::AttachMeshPrimitiveConcept(
+		fr::EntityManager& em,
 		entt::entity owningEntity,
 		char const* name,
 		std::vector<uint32_t>* indices,
@@ -39,18 +40,17 @@ namespace fr
 			weights,
 			meshParams);
 
-		return AttachMeshPrimitiveConcept(owningEntity, meshPrimitiveSceneData.get(), positionMinXYZ, positionMaxXYZ);
+		return AttachMeshPrimitiveConcept(em, owningEntity, meshPrimitiveSceneData.get(), positionMinXYZ, positionMaxXYZ);
 	}
 
 
 	entt::entity MeshPrimitiveComponent::AttachMeshPrimitiveConcept(
+		fr::EntityManager& em,
 		entt::entity owningEntity, 
 		gr::MeshPrimitive const* meshPrimitive, 
 		glm::vec3 const& positionMinXYZ,
 		glm::vec3 const& positionMaxXYZ)
 	{
-		fr::EntityManager& em = *fr::EntityManager::Get();
-
 		SEAssert("A mesh primitive's owning entity requires a TransformComponent",
 			em.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
 

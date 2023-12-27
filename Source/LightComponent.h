@@ -32,14 +32,14 @@ namespace fr
 		static LightComponent& CreateDeferredAmbientLightConcept(EntityManager&, re::Texture const* iblTex);
 
 		static LightComponent& AttachDeferredPointLightConcept(
-			entt::entity, char const* name, glm::vec4 const& colorIntensity, bool hasShadow);
+			fr::EntityManager&, entt::entity, char const* name, glm::vec4 const& colorIntensity, bool hasShadow);
 		static LightComponent& AttachDeferredPointLightConcept(
-			entt::entity, std::string const& name, glm::vec4 const& colorIntensity, bool hasShadow);
+			fr::EntityManager&, entt::entity, std::string const& name, glm::vec4 const& colorIntensity, bool hasShadow);
 
 		static LightComponent& AttachDeferredDirectionalLightConcept(
-			entt::entity, char const* name, glm::vec4 colorIntensity, bool hasShadow);
+			fr::EntityManager&, entt::entity, char const* name, glm::vec4 colorIntensity, bool hasShadow);
 		static LightComponent& AttachDeferredDirectionalLightConcept(
-			entt::entity, std::string const& name, glm::vec4 colorIntensity, bool hasShadow);
+			fr::EntityManager&, entt::entity, std::string const& name, glm::vec4 colorIntensity, bool hasShadow);
 
 		static gr::Light::RenderData CreateRenderData(fr::NameComponent const&, fr::LightComponent const&);
 
