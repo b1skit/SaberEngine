@@ -131,6 +131,42 @@ Dependencies:
 Most dependencies are automatically included via Git Subtrees. Configuration details are included below for reference.  
 
 
+CGLTF: https://github.com/jkuhlmann/cgltf
+-----------------------------------------
+- Current version: cgltf-1.13  
+- `<project root>\Source\Dependencies\cgltf\`  
+- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)..\Dependencies\cgltf\"  
+- Sample GLTF assets compatible with Saber Engine can be found here: https://github.com/KhronosGroup/glTF-Sample-Models  
+
+
+Direct-X Headers: https://github.com/microsoft/DirectX-Headers
+--------------------------------------------------------------
+- Current version: 1.610.0  
+- "Project properties -> C/C++ -> General -> Additional Include Directories" -> "$(ProjectDir)Dependencies\DirectX-Headers\include\"  
+- Add `$(WindowsSDK_LibraryPath)\x64\d3d12.lib` and `$(WindowsSDK_LibraryPath)\x64\dxgi.lib` to "Project properties -> Linker -> Input -> Additional Dependencies"  
+
+
+EnTT: https://github.com/skypjack/entt
+--------------------------------------
+- Installed via `vcpkg`. See the `Initial Setup` section for more info  
+
+Glew: https://github.com/nigels-com/glew/releases
+-------------------------------------------------
+- Current version: glew-2.2.0-win32 (Note: The pre-compiled library is used, the Glew dependency is not added via a Subtree)
+- `<project root>\Source\Dependencies\glew\`
+- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\glew\include"  
+- "Project properties -> Linker -> General -> Additional Library Directories" -> "$(ProjectDir)Dependencies\glew\lib\x64\"  
+- Ensure the "Project properties -> Build Events -> Post-Build Event" copies glew\bin\Release\x64\glew32.dll to the <Project Root>\SaberEngine\ directory  
+
+
+GLM: https://github.com/g-truc/glm/releases
+-------------------------------------------
+- Current version: GLM 0.9.9.8  
+- `<project root>\Source\Dependencies\glm\`  
+- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\glm\"  
+- "Project properties -> Linker -> General -> Additional Library Directories" -> "$(ProjectDir)..\Dependencies\glm\"  
+
+
 Imgui: https://github.com/ocornut/imgui/
 -----------------------------------------
 - Current version: v1.89.9  
@@ -138,14 +174,6 @@ Imgui: https://github.com/ocornut/imgui/
 - "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\imgui\"  
 - All of the .h and .cpp files in the .\Source\Dependencies\imgui\ directory are added to the Visual Studio project (under the "imgui" filter)  
 - The dx12, opengl3, and win32 imgui_impl_* .h and .cpp files in the .\Source\Dependencies\imgui\backends\are added to the Visual Studio project (under the "imgui\backends" filter)  
-
-
-CGLTF: https://github.com/jkuhlmann/cgltf
------------------------------------------
-- Current version: cgltf-1.13  
-- `<project root>\Source\Dependencies\cgltf\`  
-- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)..\Dependencies\cgltf\"  
-- Sample GLTF assets compatible with Saber Engine can be found here: https://github.com/KhronosGroup/glTF-Sample-Models  
 
 
 MikkTSpace: https://github.com/mmikk/MikkTSpace
@@ -157,54 +185,30 @@ MikkTSpace: https://github.com/mmikk/MikkTSpace
 
 MikkTSpace Welder: https://github.com/mmikk/Welder
 --------------------------------------------------
-- Current version: "Mar 25, 2020""
-- `<project root>\Source\Dependencies\Welder\`
+- Current version: "Mar 25, 2020""  
+- `<project root>\Source\Dependencies\Welder\`  
 - "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\Welder\"  
 
 
-Direct-X Headers: https://github.com/microsoft/DirectX-Headers
---------------------------------------------------------------
-- Current version: 1.610.0
-- "Project properties -> C/C++ -> General -> Additional Include Directories" -> "$(ProjectDir)Dependencies\DirectX-Headers\include\"  
-- Add `$(WindowsSDK_LibraryPath)\x64\d3d12.lib` and `$(WindowsSDK_LibraryPath)\x64\dxgi.lib` to "Project properties -> Linker -> Input -> Additional Dependencies"  
-
-
-Glew: https://github.com/nigels-com/glew/releases
--------------------------------------------------
-- Current version: glew-2.2.0-win32 (Note: The pre-compiled library is used, the Glew dependency is not added via a Subtree)
-- `<project root>\Source\Dependencies\glew\`
-- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\glew\include"  
-- "Project properties -> Linker -> General -> Additional Library Directories" -> "$(ProjectDir)Dependencies\glew\lib\x64\"  
-- Ensure the "Project properties -> Build Events -> Post-Build Event" copies glew\bin\Release\x64\glew32.dll to the <Project Root>\SaberEngine\ directory
-
-
-GLM: https://github.com/g-truc/glm/releases
--------------------------------------------
-- Current version: GLM 0.9.9.8
-- `<project root>\Source\Dependencies\glm\`
-- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\glm\"  
-- "Project properties -> Linker -> General -> Additional Library Directories" -> "$(ProjectDir)..\Dependencies\glm\"  
+NuGet Packages:
+---------------
+The following packages are automatically included in the SaberEngine solution  
+- WinPixEventRuntime  
 
 
 stb (stb_image.h): https://github.com/nothings/stb/blob/master/
 --------------------------------------------------------------------
-- Current version: Jan 29, 2023
+- Current version: Jan 29, 2023  
 - "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\stb\"  
-
-
-NuGet Packages:  
----------------  
-The following packages are automatically included in the SaberEngine solution  
-- WinPixEventRuntime  
 
 
 --------------------------------------------------
 Recommended Visual Studio extensions and Software:
 --------------------------------------------------
-- Smart Command Line Arguments
-- Editor Guidelines
-- GLSL Language Integration: https://github.com/danielscherzer/GLSL
-- License Header Manager
-- Beyond Compare
+- Smart Command Line Arguments  
+- Editor Guidelines  
+- GLSL Language Integration: https://github.com/danielscherzer/GLSL  
+- License Header Manager  
+- Beyond Compare  
 
 © 2022 Adam Badke. All rights reserved.
