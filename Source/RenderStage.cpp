@@ -372,6 +372,22 @@ namespace re
 			(!batch.GetShader() || IsBatchAndShaderTopologyCompatible(
 				batch.GetGraphicsParams().m_batchTopologyMode,
 				batch.GetShader()->GetPipelineState().GetTopologyType())) ));
+
+#if defined(_DEBUG)
+		for (auto const& batchPB : batch.GetParameterBlocks())
+		{
+			for (auto const& singleFramePB : m_singleFrameParamBlocks)
+			{
+				SEAssert("Batch and render stage have a duplicate single frame parameter block", 
+					batchPB->GetUniqueID() != singleFramePB->GetUniqueID());
+			}
+			for (auto const& permanentPB : m_permanentParamBlocks)
+			{
+				SEAssert("Batch and render stage have a duplicate permanent parameter block",
+					batchPB->GetUniqueID() != permanentPB->GetUniqueID());
+			}
+		}
+#endif
 		
 		// Filter bits are exclusionary: A RenderStage will not draw a Batch if they have a matching filter bit
 		if ((m_batchFilterBitmask & batch.GetBatchFilterMask()) == 0) // Accept all batches by default
