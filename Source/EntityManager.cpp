@@ -159,6 +159,27 @@ namespace fr
 	}
 
 
+	template<typename T, typename RenderDataType>
+	void EntityManager::EnqueueRenderUpdateHelper()
+	{
+		re::RenderManager* renderManager = re::RenderManager::Get();
+
+		auto componentsView = m_registry.view<T, DirtyMarker<T>, gr::RenderDataComponent>();
+		for (auto entity : componentsView)
+		{
+			gr::RenderDataComponent const& renderDataComponent = componentsView.get<gr::RenderDataComponent>(entity);
+
+			T const& component = componentsView.get<T>(entity);
+
+			renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<RenderDataType>>(
+				renderDataComponent.GetRenderDataID(),
+				T::CreateRenderData(component));
+
+			m_registry.erase<DirtyMarker<T>>(entity);
+		}
+	}
+
+
 	void EntityManager::EnqueueRenderUpdates()
 	{
 		re::RenderManager* renderManager = re::RenderManager::Get();
@@ -214,62 +235,13 @@ namespace fr
 			}
 
 			// Bounds:
-			// Bounds are stored in local space & transformed as needed. We just need to copy them to the render thread
-			auto boundsComponentsView = m_registry.view<fr::BoundsComponent, DirtyMarker<fr::BoundsComponent>, gr::RenderDataComponent>();
-			for (auto entity : boundsComponentsView)
-			{
-				gr::RenderDataComponent const& renderDataComponent = 
-					boundsComponentsView.get<gr::RenderDataComponent>(entity);
-
-				fr::BoundsComponent const& boundsComponent = boundsComponentsView.get<fr::BoundsComponent>(entity);
-
-				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::Bounds::RenderData>>(
-					renderDataComponent.GetRenderDataID(),
-					fr::BoundsComponent::CreateRenderData(boundsComponent));
-
-				m_registry.erase<DirtyMarker<fr::BoundsComponent>>(entity);
-			}
+			EnqueueRenderUpdateHelper<fr::BoundsComponent, gr::Bounds::RenderData>();
 
 			// MeshPrimitives:
-			// The actual data of a MeshPrimitive is SceneData; We push pointers and metadata to the render thread
-			auto meshPrimitiveComponentsView = m_registry.view<
-				fr::MeshPrimitiveComponent, 
-				DirtyMarker<fr::MeshPrimitiveComponent>, 
-				gr::RenderDataComponent>();
-			for (auto entity : meshPrimitiveComponentsView)
-			{
-				gr::RenderDataComponent const& renderDataComponent =
-					meshPrimitiveComponentsView.get<gr::RenderDataComponent>(entity);
-
-				fr::MeshPrimitiveComponent const& meshPrimComponent = 
-					meshPrimitiveComponentsView.get<fr::MeshPrimitiveComponent>(entity);
-
-				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::MeshPrimitive::RenderData>>(
-					renderDataComponent.GetRenderDataID(), fr::MeshPrimitiveComponent::CreateRenderData(meshPrimComponent));
-
-				m_registry.erase<DirtyMarker<fr::MeshPrimitiveComponent>>(entity);
-			}
+			EnqueueRenderUpdateHelper<fr::MeshPrimitiveComponent, gr::MeshPrimitive::RenderData>();
 
 			// Materials:
-			// Material data is (currently) SceneData; We push pointers to the render thread. TODO: Allow Material
-			// instancing and dynamic modification
-			auto materialComponentsView = m_registry.view<
-				fr::MaterialComponent, 
-				DirtyMarker<fr::MaterialComponent>, 
-				gr::RenderDataComponent>();
-			for (auto entity : materialComponentsView)
-			{
-				gr::RenderDataComponent const& renderDataComponent =
-					materialComponentsView.get<gr::RenderDataComponent>(entity);
-
-				fr::MaterialComponent const& materialComponent =
-					materialComponentsView.get<fr::MaterialComponent>(entity);
-
-				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::Material::RenderData>>(
-					renderDataComponent.GetRenderDataID(), fr::MaterialComponent::CreateRenderData(materialComponent));
-
-				m_registry.erase<DirtyMarker<fr::MaterialComponent>>(entity);
-			}
+			EnqueueRenderUpdateHelper<fr::MaterialComponent, gr::Material::RenderData>();
 
 			// Cameras:
 			auto newMainCameraView = m_registry.view<
@@ -288,22 +260,12 @@ namespace fr
 				m_registry.erase<fr::CameraComponent::NewMainCameraMarker>(entity);
 			}
 
-			auto cameraComponentsView =
-				m_registry.view<fr::CameraComponent, DirtyMarker<fr::CameraComponent>, gr::RenderDataComponent>();
-			for (auto entity : cameraComponentsView)
-			{
-				gr::RenderDataComponent const& renderDataComponent =
-					cameraComponentsView.get<gr::RenderDataComponent>(entity);
-
-				fr::CameraComponent& cameraCmpt = cameraComponentsView.get<fr::CameraComponent>(entity);
-
-				renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<gr::Camera::RenderData>>(
-					renderDataComponent.GetRenderDataID(), fr::CameraComponent::CreateRenderData(cameraCmpt));
-
-				m_registry.erase<DirtyMarker<fr::CameraComponent>>(entity);
-			}
+			EnqueueRenderUpdateHelper<fr::CameraComponent, gr::Camera::RenderData>();
 
 			// Update dirty render data components that touch the GraphicsSystems directly:
+
+			//ECS_CONVERSION: MOVE LIGHTS/SHADOWS DIRECTLY TO THE RENDER DATA MANAGER
+			// -> Need to have different renderdata types -> Allow GS's to iterate specific light types
 
 			// Lights:
 			auto lightComponentsView = m_registry.view<

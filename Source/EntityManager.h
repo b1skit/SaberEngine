@@ -25,7 +25,10 @@ namespace fr
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
 
-		
+	private:
+		template<typename T, typename R>
+		void EnqueueRenderUpdateHelper();
+
 	public: // Public interface:
 		void EnqueueRenderUpdates();
 
