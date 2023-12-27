@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "CameraComponent.h"
-#include "GameplayManager.h"
+#include "EntityManager.h"
 #include "MarkerComponents.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
@@ -10,56 +10,56 @@
 namespace fr
 {
 	entt::entity CameraComponent::AttachCameraConcept(
-		fr::GameplayManager& gpm, entt::entity owningEntity, char const* name, gr::Camera::Config const& cameraConfig)
+		fr::EntityManager& em, entt::entity owningEntity, char const* name, gr::Camera::Config const& cameraConfig)
 	{
 		SEAssert("A camera's owning entity requires a TransformComponent",
-			gpm.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
+			em.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
 
-		entt::entity cameraEntity = gpm.CreateEntity(name);
+		entt::entity cameraEntity = em.CreateEntity(name);
 
 		// Relationship:
-		fr::Relationship& cameraRelationship = gpm.GetComponent<fr::Relationship>(cameraEntity);
-		cameraRelationship.SetParent(gpm, owningEntity);
+		fr::Relationship& cameraRelationship = em.GetComponent<fr::Relationship>(cameraEntity);
+		cameraRelationship.SetParent(em, owningEntity);
 
 		// Find a Transform in the hierarchy above us
 		fr::TransformComponent* transformCmpt =
-			gpm.GetFirstInHierarchyAbove<fr::TransformComponent>(cameraRelationship.GetParent());
+			em.GetFirstInHierarchyAbove<fr::TransformComponent>(cameraRelationship.GetParent());
 
 		// Get an attached RenderDataComponent, or create one if none exists:
 		gr::RenderDataComponent* cameraRenderDataCmpt = 
-			gpm.GetFirstInHierarchyAbove<gr::RenderDataComponent>(cameraRelationship.GetParent());
+			em.GetFirstInHierarchyAbove<gr::RenderDataComponent>(cameraRelationship.GetParent());
 		if (cameraRenderDataCmpt == nullptr)
 		{
 			const gr::TransformID transformID = transformCmpt->GetTransformID();
 
 			cameraRenderDataCmpt = 
-				&gr::RenderDataComponent::AttachNewRenderDataComponent(gpm, cameraEntity, transformID);
+				&gr::RenderDataComponent::AttachNewRenderDataComponent(em, cameraEntity, transformID);
 		}
 		else
 		{
-			gr::RenderDataComponent::AttachSharedRenderDataComponent(gpm, cameraEntity, *cameraRenderDataCmpt);
+			gr::RenderDataComponent::AttachSharedRenderDataComponent(em, cameraEntity, *cameraRenderDataCmpt);
 		}
 		
 		// Camera component:
-		gpm.EmplaceComponent<fr::CameraComponent>(cameraEntity, PrivateCTORTag{}, cameraConfig, *transformCmpt);
+		em.EmplaceComponent<fr::CameraComponent>(cameraEntity, PrivateCTORTag{}, cameraConfig, *transformCmpt);
 
 		// Mark our new camera as dirty:
-		gpm.EmplaceComponent<DirtyMarker<fr::CameraComponent>>(cameraEntity);
+		em.EmplaceComponent<DirtyMarker<fr::CameraComponent>>(cameraEntity);
 
 		return cameraEntity;
 	}
 
 
 	entt::entity CameraComponent::AttachCameraConcept(
-		fr::GameplayManager& gpm, entt::entity owningEntity, std::string const& name, gr::Camera::Config const& camConfig)
+		fr::EntityManager& em, entt::entity owningEntity, std::string const& name, gr::Camera::Config const& camConfig)
 	{
-		return AttachCameraConcept(gpm, owningEntity, name.c_str(), camConfig);
+		return AttachCameraConcept(em, owningEntity, name.c_str(), camConfig);
 	}
 
 
-	void CameraComponent::MarkDirty(GameplayManager& gpm, entt::entity cameraEntity)
+	void CameraComponent::MarkDirty(EntityManager& em, entt::entity cameraEntity)
 	{
-		gpm.TryEmplaceComponent<DirtyMarker<fr::CameraComponent>>(cameraEntity);
+		em.TryEmplaceComponent<DirtyMarker<fr::CameraComponent>>(cameraEntity);
 
 		// Note: We don't explicitely set the fr::Camera dirty flag. Having a DirtyMarker is all that's required to 
 		// force an update

@@ -1,12 +1,12 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "GameplayManager.h"
+#include "EntityManager.h"
 #include "NameComponent.h"
 
 
 namespace fr
 {
-	NameComponent& NameComponent::AttachNameComponent(GameplayManager& gpm, entt::entity entity, char const* name)
+	NameComponent& NameComponent::AttachNameComponent(EntityManager& em, entt::entity entity, char const* name)
 	{
-		return *gpm.EmplaceComponent<NameComponent>(entity, PrivateCTORTag{}, name);
+		return *em.EmplaceComponent<NameComponent>(entity, PrivateCTORTag{}, name);
 	}
 }

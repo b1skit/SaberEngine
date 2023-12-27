@@ -9,7 +9,7 @@
 #include "EventManager.h"
 #include "InputManager.h"
 #include "PerformanceTimer.h"
-#include "GameplayManager.h"
+#include "EntityManager.h"
 #include "LogManager.h"
 
 
@@ -80,7 +80,7 @@ namespace en
 		en::SceneManager::Get()->Startup(); // Load assets
 
 		// Create entity/component representations now that the scene data is loaded
-		fr::GameplayManager::Get()->Startup();
+		fr::EntityManager::Get()->Startup();
 
 		renderManager->ThreadInitialize(); // Create render systems, close PB registration
 
@@ -101,7 +101,7 @@ namespace en
 		en::EventManager* eventManager = EventManager::Get();
 		en::LogManager* logManager = LogManager::Get();
 		en::InputManager* inputManager = InputManager::Get();
-		fr::GameplayManager* gameplayManager = fr::GameplayManager::Get();
+		fr::EntityManager* entityManager = fr::EntityManager::Get();
 		en::SceneManager* sceneManager = SceneManager::Get();
 		re::RenderManager* renderManager = re::RenderManager::Get();
 
@@ -148,8 +148,8 @@ namespace en
 				SEEndCPUEvent();
 
 				// Pump systems that rely on events/input:
-				SEBeginCPUEvent("en::GameplayManager::Update");
-				gameplayManager->Update(m_frameNum, m_fixedTimeStep);
+				SEBeginCPUEvent("en::EntityManager::Update");
+				entityManager->Update(m_frameNum, m_fixedTimeStep);
 				SEEndCPUEvent();
 
 				SEBeginCPUEvent("en::SceneManager::Update");
@@ -161,8 +161,8 @@ namespace en
 				SEEndCPUEvent();
 			}
 
-			SEBeginCPUEvent("fr::GameplayManager::EnqueueRenderUpdates");
-			gameplayManager->EnqueueRenderUpdates();
+			SEBeginCPUEvent("fr::EntityManager::EnqueueRenderUpdates");
+			entityManager->EnqueueRenderUpdates();
 			SEEndCPUEvent();
 
 
@@ -201,7 +201,7 @@ namespace en
 
 		Config::Get()->SaveConfigFile();
 		
-		fr::GameplayManager::Get()->Shutdown();
+		fr::EntityManager::Get()->Shutdown();
 
 		// We need to signal the render thread to shut down and wait on it to complete before we can start destroying
 		// anything it might be using

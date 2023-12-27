@@ -5,7 +5,7 @@
 
 namespace gr
 {
-	class GameplayManager;
+	class EntityManager;
 
 
 	class Material_GLTF : public virtual Material

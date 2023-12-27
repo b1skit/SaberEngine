@@ -1,5 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "GameplayManager.h"
+#include "EntityManager.h"
 #include "RenderDataComponent.h"
 #include "RenderManager.h"
 #include "RenderSystem.h"
@@ -11,18 +11,18 @@ namespace gr
 
 
 	RenderDataComponent& RenderDataComponent::AttachNewRenderDataComponent(
-		fr::GameplayManager& gpm, entt::entity entity, TransformID transformID)
+		fr::EntityManager& em, entt::entity entity, TransformID transformID)
 	{
-		gpm.EmplaceComponent<gr::RenderDataComponent::NewRegistrationMarker>(entity);
-		return *gpm.EmplaceComponent<gr::RenderDataComponent>(entity, PrivateCTORTag{}, transformID);
+		em.EmplaceComponent<gr::RenderDataComponent::NewRegistrationMarker>(entity);
+		return *em.EmplaceComponent<gr::RenderDataComponent>(entity, PrivateCTORTag{}, transformID);
 	}
 
 
 	RenderDataComponent& RenderDataComponent::AttachSharedRenderDataComponent(
-		fr::GameplayManager& gpm, entt::entity entity, RenderDataComponent const& renderDataComponent)
+		fr::EntityManager& em, entt::entity entity, RenderDataComponent const& renderDataComponent)
 	{
-		gpm.EmplaceComponent<gr::RenderDataComponent::NewRegistrationMarker>(entity);
-		return *gpm.EmplaceComponent<gr::RenderDataComponent>(
+		em.EmplaceComponent<gr::RenderDataComponent::NewRegistrationMarker>(entity);
+		return *em.EmplaceComponent<gr::RenderDataComponent>(
 			entity, 
 			PrivateCTORTag{},
 			renderDataComponent.m_renderDataID, 

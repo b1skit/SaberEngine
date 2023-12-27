@@ -6,7 +6,7 @@
 
 namespace fr
 {
-	class GameplayManager;
+	class EntityManager;
 }
 
 namespace gr
@@ -19,10 +19,10 @@ namespace gr
 
 	public:
 		static RenderDataComponent& AttachNewRenderDataComponent(
-			fr::GameplayManager&, entt::entity, gr::TransformID);
+			fr::EntityManager&, entt::entity, gr::TransformID);
 
 		static RenderDataComponent& AttachSharedRenderDataComponent(
-			fr::GameplayManager&, entt::entity, RenderDataComponent const&);
+			fr::EntityManager&, entt::entity, RenderDataComponent const&);
 
 
 	public:

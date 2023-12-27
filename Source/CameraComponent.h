@@ -11,7 +11,7 @@ namespace gr
 
 namespace fr
 {
-	class GameplayManager;
+	class EntityManager;
 	class TransformComponent;
 
 
@@ -23,11 +23,11 @@ namespace fr
 
 	public:
 		static entt::entity AttachCameraConcept(
-			fr::GameplayManager&, entt::entity owningEntity, char const* name, gr::Camera::Config const&);
+			fr::EntityManager&, entt::entity owningEntity, char const* name, gr::Camera::Config const&);
 		static entt::entity AttachCameraConcept(
-			fr::GameplayManager&, entt::entity owningEntity, std::string const& name, gr::Camera::Config const&);
+			fr::EntityManager&, entt::entity owningEntity, std::string const& name, gr::Camera::Config const&);
 
-		static void MarkDirty(GameplayManager&, entt::entity cameraEntity);
+		static void MarkDirty(EntityManager&, entt::entity cameraEntity);
 
 		static gr::Camera::RenderData CreateRenderData(CameraComponent const&);
 

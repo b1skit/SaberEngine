@@ -1,5 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "GameplayManager.h"
+#include "EntityManager.h"
 #include "MarkerComponents.h"
 #include "NameComponent.h"
 #include "RelationshipComponent.h"
@@ -12,28 +12,28 @@ namespace fr
 {
 	entt::entity SceneNode::Create(char const* name, entt::entity parent)
 	{
-		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+		fr::EntityManager& em = *fr::EntityManager::Get();
 
-		entt::entity sceneNodeEntity = gpm.CreateEntity(name);
+		entt::entity sceneNodeEntity = em.CreateEntity(name);
 
 		fr::Transform* parentTransform = nullptr;
 		if (parent != entt::null)
 		{
 			SEAssert("Parent entity must have a TransformComponent", 
-				gpm.HasComponent<fr::TransformComponent>(parent));
+				em.HasComponent<fr::TransformComponent>(parent));
 
-			parentTransform = &gpm.GetComponent<fr::TransformComponent>(parent).GetTransform();
+			parentTransform = &em.GetComponent<fr::TransformComponent>(parent).GetTransform();
 		}
 		fr::TransformComponent const& transformComponent = 
-			fr::TransformComponent::AttachTransformComponent(gpm, sceneNodeEntity, parentTransform);
+			fr::TransformComponent::AttachTransformComponent(em, sceneNodeEntity, parentTransform);
 
 		// Mark the transform as dirty:
-		gpm.EmplaceComponent<DirtyMarker<fr::TransformComponent>>(sceneNodeEntity);
+		em.EmplaceComponent<DirtyMarker<fr::TransformComponent>>(sceneNodeEntity);
 		
-		gr::RenderDataComponent::AttachNewRenderDataComponent(gpm, sceneNodeEntity, transformComponent.GetTransformID());
+		gr::RenderDataComponent::AttachNewRenderDataComponent(em, sceneNodeEntity, transformComponent.GetTransformID());
 
-		fr::Relationship& sceneNodeRelationship = gpm.GetComponent<fr::Relationship>(sceneNodeEntity);
-		sceneNodeRelationship.SetParent(gpm, parent);
+		fr::Relationship& sceneNodeRelationship = em.GetComponent<fr::Relationship>(sceneNodeEntity);
+		sceneNodeRelationship.SetParent(em, parent);
 
 		return sceneNodeEntity;
 	}
@@ -47,11 +47,11 @@ namespace fr
 
 	fr::Transform& SceneNode::GetTransform(entt::entity entity)
 	{
-		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+		fr::EntityManager& em = *fr::EntityManager::Get();
 
-		SEAssert("Entity does not have a TransformComponent", gpm.HasComponent<fr::TransformComponent>(entity));
+		SEAssert("Entity does not have a TransformComponent", em.HasComponent<fr::TransformComponent>(entity));
 
-		return gpm.GetComponent<fr::TransformComponent>(entity).GetTransform();
+		return em.GetComponent<fr::TransformComponent>(entity).GetTransform();
 	}
 }
 

@@ -7,7 +7,7 @@
 
 namespace fr
 {
-	class GameplayManager;
+	class EntityManager;
 
 
 	class MeshPrimitiveComponent
@@ -39,7 +39,7 @@ namespace fr
 		// Attach a MeshPrimitive without any of the typical dependencies (Bounds, Transforms, Material etc). This is
 		// for special cases, such as deferred lights that require a fullscreen quad
 		static MeshPrimitiveComponent& AttachRawMeshPrimitiveConcept(
-			GameplayManager&, entt::entity owningEntity, gr::RenderDataComponent const&, gr::MeshPrimitive const*);
+			EntityManager&, entt::entity owningEntity, gr::RenderDataComponent const&, gr::MeshPrimitive const*);
 
 
 	public:

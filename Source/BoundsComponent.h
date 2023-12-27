@@ -5,7 +5,7 @@
 
 namespace fr
 {
-	class GameplayManager;
+	class EntityManager;
 	class Relationship;
 
 
@@ -31,19 +31,19 @@ namespace fr
 
 
 	public:
-		static void CreateSceneBoundsConcept(fr::GameplayManager&);
+		static void CreateSceneBoundsConcept(fr::EntityManager&);
 		
-		static void AttachBoundsComponent(fr::GameplayManager&, entt::entity, BoundsComponent::Contents);
+		static void AttachBoundsComponent(fr::EntityManager&, entt::entity, BoundsComponent::Contents);
 
 		static void AttachBoundsComponent(
-			fr::GameplayManager&, 
+			fr::EntityManager&, 
 			entt::entity, 
 			glm::vec3 const& minXYZ, 
 			glm::vec3 const& maxXYZ,
 			BoundsComponent::Contents);
 
 		static void AttachBoundsComponent(
-			fr::GameplayManager&, 
+			fr::EntityManager&, 
 			entt::entity, 
 			glm::vec3 const& minXYZ, 
 			glm::vec3 const& maxXYZ, 
@@ -55,7 +55,7 @@ namespace fr
 
 
 	private:
-		static void AttachMarkers(fr::GameplayManager&, entt::entity, Contents);
+		static void AttachMarkers(fr::EntityManager&, entt::entity, Contents);
 
 
 	public:
@@ -70,7 +70,7 @@ namespace fr
 		void ExpandBounds(BoundsComponent const& newContents);
 
 		// Recursively expand the current Bounds, and any Bounds found in the Relationship hierarchy above
-		void ExpandBoundsHierarchy(fr::GameplayManager&, BoundsComponent const& newContents, entt::entity boundsEntity);
+		void ExpandBoundsHierarchy(fr::EntityManager&, BoundsComponent const& newContents, entt::entity boundsEntity);
 
 
 		float xMin() const;		

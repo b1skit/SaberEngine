@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "BoundsComponent.h"
-#include "GameplayManager.h"
+#include "EntityManager.h"
 #include "MarkerComponents.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
@@ -20,82 +20,82 @@ namespace
 
 namespace fr
 {
-	void BoundsComponent::CreateSceneBoundsConcept(fr::GameplayManager& gpm)
+	void BoundsComponent::CreateSceneBoundsConcept(fr::EntityManager& em)
 	{
 		constexpr char const* k_sceneBoundsName = "SceneBounds";
 
-		entt::entity sceneBoundsEntity = gpm.CreateEntity(k_sceneBoundsName);
+		entt::entity sceneBoundsEntity = em.CreateEntity(k_sceneBoundsName);
 
 		// Create a Transform and render data representation: 
 		fr::TransformComponent& sceneBoundsTransformComponent = 
-			fr::TransformComponent::AttachTransformComponent(gpm, sceneBoundsEntity, nullptr);
+			fr::TransformComponent::AttachTransformComponent(em, sceneBoundsEntity, nullptr);
 		
 		gr::RenderDataComponent::AttachNewRenderDataComponent(
-			gpm, sceneBoundsEntity, sceneBoundsTransformComponent.GetTransformID());
+			em, sceneBoundsEntity, sceneBoundsTransformComponent.GetTransformID());
 
 		// Attach the BoundsComponent:
-		AttachBoundsComponent(gpm, sceneBoundsEntity, Contents::Scene);
+		AttachBoundsComponent(em, sceneBoundsEntity, Contents::Scene);
 	}
 
 
 	void BoundsComponent::AttachBoundsComponent(
-		fr::GameplayManager& gpm, entt::entity entity, BoundsComponent::Contents contents)
+		fr::EntityManager& em, entt::entity entity, BoundsComponent::Contents contents)
 	{
-		AttachMarkers(gpm, entity, contents);
+		AttachMarkers(em, entity, contents);
 
 		// Finally, attach the BoundsComponent (which will trigger event listeners)
-		gpm.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{});
+		em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{});
 	}
 
 
 	void BoundsComponent::AttachBoundsComponent(
-		fr::GameplayManager& gpm,
+		fr::EntityManager& em,
 		entt::entity entity, 
 		glm::vec3 const& minXYZ,
 		glm::vec3 const& maxXYZ, 
 		BoundsComponent::Contents contents)
 	{
-		AttachMarkers(gpm, entity, contents);
+		AttachMarkers(em, entity, contents);
 
 		// Finally, attach the BoundsComponent (which will trigger event listeners)
-		gpm.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ);
+		em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ);
 	}
 
 
 	void BoundsComponent::AttachBoundsComponent(
-		fr::GameplayManager& gpm,
+		fr::EntityManager& em,
 		entt::entity entity,
 		glm::vec3 const& minXYZ,
 		glm::vec3 const& maxXYZ,
 		std::vector<glm::vec3> const& positions,
 		BoundsComponent::Contents contents)
 	{
-		AttachMarkers(gpm, entity, contents);
+		AttachMarkers(em, entity, contents);
 
 		// Finally, attach the BoundsComponent (which will trigger event listeners)
-		gpm.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ, positions);
+		em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ, positions);
 	}
 
 
-	void BoundsComponent::AttachMarkers(fr::GameplayManager& gpm, entt::entity entity, Contents contents)
+	void BoundsComponent::AttachMarkers(fr::EntityManager& em, entt::entity entity, Contents contents)
 	{
-		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
+		em.EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
 
 		switch (contents)
 		{
 		case Contents::Mesh:
 		{
-			gpm.EmplaceComponent<MeshBoundsMarker>(entity);
+			em.EmplaceComponent<MeshBoundsMarker>(entity);
 		}
 		break;
 		case Contents::MeshPrimitive:
 		{
-			gpm.EmplaceComponent<MeshPrimitiveBoundsMarker>(entity);
+			em.EmplaceComponent<MeshPrimitiveBoundsMarker>(entity);
 		}
 		break;
 		case Contents::Scene:
 		{
-			gpm.EmplaceComponent<SceneBoundsMarker>(entity);
+			em.EmplaceComponent<SceneBoundsMarker>(entity);
 		}
 		break;
 		default: SEAssertF("Invalid Contents type");
@@ -246,23 +246,23 @@ namespace fr
 
 
 	void BoundsComponent::ExpandBoundsHierarchy(
-		fr::GameplayManager& gpm, BoundsComponent const& newContents, entt::entity boundsEntity)
+		fr::EntityManager& em, BoundsComponent const& newContents, entt::entity boundsEntity)
 	{
 		ExpandBounds(newContents);
 
 		SEAssert("Owning entity does not have a Relationship component", 
-			gpm.HasComponent<fr::Relationship>(boundsEntity));
+			em.HasComponent<fr::Relationship>(boundsEntity));
 
-		fr::Relationship const& owningEntityRelationship = gpm.GetComponent<fr::Relationship>(boundsEntity);
+		fr::Relationship const& owningEntityRelationship = em.GetComponent<fr::Relationship>(boundsEntity);
 
 		// Recursively expand any Bounds above us:
 		entt::entity nextEntity = entt::null;
-		fr::BoundsComponent* nextBounds = gpm.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
+		fr::BoundsComponent* nextBounds = em.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
 			owningEntityRelationship.GetParent(), 
 			nextEntity);
 		if (nextBounds != nullptr)
 		{
-			ExpandBoundsHierarchy(gpm, *this, nextEntity);
+			ExpandBoundsHierarchy(em, *this, nextEntity);
 		}
 	}
 

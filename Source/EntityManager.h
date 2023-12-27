@@ -12,10 +12,10 @@ namespace fr
 	class PlayerObject;
 
 
-	class GameplayManager final : public virtual en::EngineComponent, public virtual en::EventListener
+	class EntityManager final : public virtual en::EngineComponent, public virtual en::EventListener
 	{
 	public:
-		static GameplayManager* Get(); // Singleton functionality
+		static EntityManager* Get(); // Singleton functionality
 
 
 	public: // EngineComponent interface:
@@ -132,14 +132,14 @@ namespace fr
 
 	private:
 		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
-		GameplayManager() = delete;
+		EntityManager() = delete;
 	public:
-		GameplayManager(PrivateCTORTag);
+		EntityManager(PrivateCTORTag);
 	};
 
 
 	template<typename T>
-	entt::entity GameplayManager::GetEntityFromComponent(T const& component) const
+	entt::entity EntityManager::GetEntityFromComponent(T const& component) const
 	{
 		entt::entity entity = entt::null;
 		{
@@ -154,7 +154,7 @@ namespace fr
 
 
 	template<typename T>
-	void GameplayManager::EmplaceComponent(entt::entity entity)
+	void EntityManager::EmplaceComponent(entt::entity entity)
 	{
 		{
 			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
@@ -165,7 +165,7 @@ namespace fr
 
 
 	template<typename T, typename... Args>
-	T* GameplayManager::EmplaceComponent(entt::entity entity, Args&&... args)
+	T* EntityManager::EmplaceComponent(entt::entity entity, Args&&... args)
 	{
 		{
 			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
@@ -178,7 +178,7 @@ namespace fr
 
 
 	template<typename T>
-	void GameplayManager::EmplaceOrReplaceComponent(entt::entity entity)
+	void EntityManager::EmplaceOrReplaceComponent(entt::entity entity)
 	{
 		{
 			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
@@ -189,7 +189,7 @@ namespace fr
 
 
 	template<typename T>
-	void GameplayManager::TryEmplaceComponent(entt::entity entity)
+	void EntityManager::TryEmplaceComponent(entt::entity entity)
 	{
 		if (!HasComponent<T>(entity))
 		{
@@ -199,7 +199,7 @@ namespace fr
 
 
 	template<typename T, typename... Args>
-	T* GameplayManager::TryEmplaceComponent(entt::entity entity, Args &&...args)
+	T* EntityManager::TryEmplaceComponent(entt::entity entity, Args &&...args)
 	{
 		T* existingComponent = TryGetComponent<T>(entity);
 		if (existingComponent == nullptr)
@@ -211,7 +211,7 @@ namespace fr
 
 
 	template<typename T, typename... Args>
-	T* GameplayManager::GetOrEmplaceComponent(entt::entity entity, Args&&... args)
+	T* EntityManager::GetOrEmplaceComponent(entt::entity entity, Args&&... args)
 	{
 		T* existingComponent = TryGetComponent<T>(entity);
 		if (existingComponent == nullptr)
@@ -223,7 +223,7 @@ namespace fr
 
 
 	template<typename T>
-	void GameplayManager::RemoveComponent(entt::entity entity)
+	void EntityManager::RemoveComponent(entt::entity entity)
 	{
 		{
 			// It's only safe to add/remove/iterate components if no other thread is adding/removing/iterating
@@ -237,7 +237,7 @@ namespace fr
 
 
 	template<typename T>
-	T* GameplayManager::TryGetComponent(entt::entity entity)
+	T* EntityManager::TryGetComponent(entt::entity entity)
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
@@ -248,7 +248,7 @@ namespace fr
 
 
 	template<typename T>
-	T const* GameplayManager::TryGetComponent(entt::entity entity) const
+	T const* EntityManager::TryGetComponent(entt::entity entity) const
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
@@ -259,7 +259,7 @@ namespace fr
 
 
 	template<typename T>
-	bool GameplayManager::HasComponent(entt::entity entity) const
+	bool EntityManager::HasComponent(entt::entity entity) const
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
@@ -270,7 +270,7 @@ namespace fr
 
 
 	template<typename T>
-	T& GameplayManager::GetComponent(entt::entity entity)
+	T& EntityManager::GetComponent(entt::entity entity)
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
@@ -280,7 +280,7 @@ namespace fr
 
 
 	template<typename T>
-	T const& GameplayManager::GetComponent(entt::entity entity) const
+	T const& EntityManager::GetComponent(entt::entity entity) const
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
@@ -295,7 +295,7 @@ namespace fr
 
 
 	template<typename T>
-	bool GameplayManager::IsInHierarchyAbove(entt::entity entity)
+	bool EntityManager::IsInHierarchyAbove(entt::entity entity)
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
@@ -306,7 +306,7 @@ namespace fr
 
 
 	template<typename T>
-	T* GameplayManager::GetFirstInHierarchyAbove(entt::entity entity)
+	T* EntityManager::GetFirstInHierarchyAbove(entt::entity entity)
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
@@ -317,7 +317,7 @@ namespace fr
 
 
 	template<typename T>
-	T* GameplayManager::GetFirstAndEntityInHierarchyAbove(entt::entity entity, entt::entity& owningEntityOut)
+	T* EntityManager::GetFirstAndEntityInHierarchyAbove(entt::entity entity, entt::entity& owningEntityOut)
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
@@ -328,7 +328,7 @@ namespace fr
 
 
 	template<typename T>
-	T* GameplayManager::GetFirstInChildren(entt::entity entity, entt::entity& childEntityOut)
+	T* EntityManager::GetFirstInChildren(entt::entity entity, entt::entity& childEntityOut)
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
@@ -344,14 +344,14 @@ namespace fr
 
 
 	template<typename T>
-	bool GameplayManager::IsInHierarchyAboveInternal(entt::entity entity)
+	bool EntityManager::IsInHierarchyAboveInternal(entt::entity entity)
 	{
 		return GetFirstInHierarchyAboveInternal<T>(entity) != nullptr;
 	}
 
 
 	template<typename T>
-	T* GameplayManager::GetFirstInHierarchyAboveInternal(entt::entity entity)
+	T* EntityManager::GetFirstInHierarchyAboveInternal(entt::entity entity)
 	{
 		entt::entity dummy = entt::null;
 		return GetFirstAndEntityInHierarchyAboveInternal<T>(entity, dummy);
@@ -359,7 +359,7 @@ namespace fr
 
 
 	template<typename T>
-	T* GameplayManager::GetFirstAndEntityInHierarchyAboveInternal(entt::entity entity, entt::entity& owningEntityOut)
+	T* EntityManager::GetFirstAndEntityInHierarchyAboveInternal(entt::entity entity, entt::entity& owningEntityOut)
 	{
 		SEAssert("Entity cannot be null", entity != entt::null);
 
@@ -383,7 +383,7 @@ namespace fr
 
 
 	template<typename T>
-	T* GameplayManager::GetFirstInChildrenInternal(entt::entity entity, entt::entity& childEntityOut)
+	T* EntityManager::GetFirstInChildrenInternal(entt::entity entity, entt::entity& childEntityOut)
 	{
 		SEAssert("Invalid entity", entity != entt::null);
 

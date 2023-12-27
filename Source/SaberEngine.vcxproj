@@ -235,7 +235,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="EventManager_Platform.cpp" />
     <ClCompile Include="EventManager_Win32.cpp" />
     <ClCompile Include="Fence_DX12.cpp" />
-    <ClCompile Include="GameplayManager.cpp" />
+    <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="GPUDescriptorHeap_DX12.cpp" />
     <ClCompile Include="GraphicsSystemManager.cpp" />
     <ClCompile Include="GraphicsSystem_ComputeMips.cpp" />
@@ -386,7 +386,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="EventManager_Platform.h" />
     <ClInclude Include="EventManager_Win32.h" />
     <ClInclude Include="Fence_DX12.h" />
-    <ClInclude Include="GameplayManager.h" />
+    <ClInclude Include="EntityManager.h" />
     <ClInclude Include="GPUDescriptorHeap_DX12.h" />
     <ClInclude Include="GraphicsSystem_ComputeMips.h" />
     <ClInclude Include="GraphicsSystem_Debug.h" />

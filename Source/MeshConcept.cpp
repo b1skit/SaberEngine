@@ -1,6 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "BoundsComponent.h"
-#include "GameplayManager.h"
+#include "EntityManager.h"
 #include "ImGuiUtils.h"
 #include "MeshConcept.h"
 #include "RelationshipComponent.h"
@@ -12,24 +12,24 @@ namespace fr
 {
 	entt::entity Mesh::AttachMeshConcept(entt::entity owningEntity, char const* name)
 	{
-		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+		fr::EntityManager& em = *fr::EntityManager::Get();
 
 		SEAssert("A Mesh concept requires a Transform. The owningEntity should have this already",
-			gpm.HasComponent<fr::TransformComponent>(owningEntity));
+			em.HasComponent<fr::TransformComponent>(owningEntity));
 		
-		entt::entity meshEntity = gpm.CreateEntity(name);
+		entt::entity meshEntity = em.CreateEntity(name);
 
-		gpm.EmplaceComponent<fr::Mesh::MeshConceptMarker>(meshEntity);
+		em.EmplaceComponent<fr::Mesh::MeshConceptMarker>(meshEntity);
 
-		fr::TransformComponent const& owningTransformCmpt = gpm.GetComponent<fr::TransformComponent>(owningEntity);
+		fr::TransformComponent const& owningTransformCmpt = em.GetComponent<fr::TransformComponent>(owningEntity);
 
-		gr::RenderDataComponent::AttachNewRenderDataComponent(gpm, meshEntity, owningTransformCmpt.GetTransformID());
+		gr::RenderDataComponent::AttachNewRenderDataComponent(em, meshEntity, owningTransformCmpt.GetTransformID());
 
 		// Mesh bounds: Encompasses all attached primitive bounds
-		fr::BoundsComponent::AttachBoundsComponent(gpm, meshEntity, fr::BoundsComponent::Contents::Mesh);
+		fr::BoundsComponent::AttachBoundsComponent(em, meshEntity, fr::BoundsComponent::Contents::Mesh);
 
-		fr::Relationship& meshRelationship = gpm.GetComponent<fr::Relationship>(meshEntity);
-		meshRelationship.SetParent(gpm, owningEntity);
+		fr::Relationship& meshRelationship = em.GetComponent<fr::Relationship>(meshEntity);
+		meshRelationship.SetParent(em, owningEntity);
 
 		return meshEntity;
 	}
@@ -39,7 +39,7 @@ namespace fr
 	{
 		// ECS_CONVERSON: TODO: Restore this functionality
 
-		//fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+		//fr::EntityManager& em = *fr::EntityManager::Get();
 
 		//if (ImGui::CollapsingHeader(
 		//	std::format("{}##{}", GetName(), util::PtrToID(this)).c_str(), ImGuiTreeNodeFlags_None))

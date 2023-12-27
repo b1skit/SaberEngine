@@ -2,7 +2,7 @@
 #include "BoundsComponent.h"
 #include "CameraComponent.h"
 #include "CoreEngine.h"
-#include "GameplayManager.h"
+#include "EntityManager.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
 #include "MaterialComponent.h"
@@ -19,14 +19,14 @@
 
 namespace fr
 {
-	GameplayManager* GameplayManager::Get()
+	EntityManager* EntityManager::Get()
 	{
-		static std::unique_ptr<fr::GameplayManager> instance = std::make_unique<fr::GameplayManager>(PrivateCTORTag{});
+		static std::unique_ptr<fr::EntityManager> instance = std::make_unique<fr::EntityManager>(PrivateCTORTag{});
 		return instance.get();
 	}
 
 
-	GameplayManager::GameplayManager(PrivateCTORTag)
+	EntityManager::EntityManager(PrivateCTORTag)
 		: m_processInput(false)
 	{
 		// Handle this during construction before anything can interact with the registry
@@ -34,9 +34,9 @@ namespace fr
 	}
 
 
-	void GameplayManager::Startup()
+	void EntityManager::Startup()
 	{
-		LOG("GameplayManager starting...");
+		LOG("EntityManager starting...");
 
 		// Event subscriptions:
 		en::EventManager::Get()->Subscribe(en::EventManager::EventType::InputToggleConsole, this);
@@ -79,9 +79,9 @@ namespace fr
 	}
 
 
-	void GameplayManager::Shutdown()
+	void EntityManager::Shutdown()
 	{
-		LOG("GameplayManager shutting down...");
+		LOG("EntityManager shutting down...");
 
 		// Issue render commands to destroy render data:
 		re::RenderManager* renderManager = re::RenderManager::Get();
@@ -137,7 +137,7 @@ namespace fr
 	}
 
 
-	void GameplayManager::Update(uint64_t frameNum, double stepTimeMs)
+	void EntityManager::Update(uint64_t frameNum, double stepTimeMs)
 	{
 		HandleEvents();
 
@@ -159,7 +159,7 @@ namespace fr
 	}
 
 
-	void GameplayManager::EnqueueRenderUpdates()
+	void EntityManager::EnqueueRenderUpdates()
 	{
 		re::RenderManager* renderManager = re::RenderManager::Get();
 
@@ -343,7 +343,7 @@ namespace fr
 	}
 
 
-	fr::BoundsComponent const* GameplayManager::GetSceneBounds() const
+	fr::BoundsComponent const* EntityManager::GetSceneBounds() const
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
@@ -365,7 +365,7 @@ namespace fr
 	}
 
 
-	void GameplayManager::SetAsMainCamera(entt::entity camera)
+	void EntityManager::SetAsMainCamera(entt::entity camera)
 	{
 		SEAssert("Entity does not have a valid camera component",
 			camera != entt::null && HasComponent<fr::CameraComponent>(camera));
@@ -395,13 +395,13 @@ namespace fr
 	}
 
 
-	entt::entity GameplayManager::CreateEntity(std::string const& name)
+	entt::entity EntityManager::CreateEntity(std::string const& name)
 	{
 		return CreateEntity(name.c_str());
 	}
 
 
-	entt::entity GameplayManager::CreateEntity(char const* name)
+	entt::entity EntityManager::CreateEntity(char const* name)
 	{
 		entt::entity newEntity = entt::null;
 		{
@@ -417,7 +417,7 @@ namespace fr
 	}
 
 
-	void GameplayManager::HandleEvents()
+	void EntityManager::HandleEvents()
 	{
 		while (HasEvents())
 		{
@@ -441,7 +441,7 @@ namespace fr
 	}
 
 
-	void GameplayManager::ConfigureRegistry()
+	void EntityManager::ConfigureRegistry()
 	{
 		{
 			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
@@ -451,7 +451,7 @@ namespace fr
 	}
 
 
-	void GameplayManager::UpdatePlayerObject(double stepTimeMs)
+	void EntityManager::UpdatePlayerObject(double stepTimeMs)
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
@@ -495,7 +495,7 @@ namespace fr
 	}
 
 
-	void GameplayManager::UpdateSceneBounds()
+	void EntityManager::UpdateSceneBounds()
 	{
 		entt::entity sceneBoundsEntity = entt::null;
 		bool sceneBoundsChanged = false;
@@ -575,7 +575,7 @@ namespace fr
 	}
 
 
-	void GameplayManager::UpdateTransforms()
+	void EntityManager::UpdateTransforms()
 	{
 		// Use the number of root transforms during the last update 
 		static size_t prevNumRootTransforms = 1;
@@ -611,7 +611,7 @@ namespace fr
 	}
 
 
-	void GameplayManager::UpdateLightsAndShadows()
+	void EntityManager::UpdateLightsAndShadows()
 	{
 		// Add dirty markers to lights and shadows so the render data will be updated
 		{
@@ -675,7 +675,7 @@ namespace fr
 	}
 
 
-	void GameplayManager::UpdateCameras()
+	void EntityManager::UpdateCameras()
 	{
 		// Check for dirty cameras, or cameras with dirty transforms
 		{

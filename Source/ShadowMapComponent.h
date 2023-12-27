@@ -7,22 +7,22 @@
 
 namespace fr
 {
-	class GameplayManager;
+	class EntityManager;
 
 
 	class ShadowMapComponent
 	{
 	public:
 		static ShadowMapComponent& AttachShadowMapComponent(
-			GameplayManager&, entt::entity, char const* name, fr::Light::LightType);
+			EntityManager&, entt::entity, char const* name, fr::Light::LightType);
 
 		static gr::Camera::Config GenerateShadowCameraConfig(
-			fr::GameplayManager&, entt::entity shadowMapEntity, ShadowMapComponent const&);
+			fr::EntityManager&, entt::entity shadowMapEntity, ShadowMapComponent const&);
 
 		static gr::ShadowMap::RenderData CreateRenderData(
 			fr::NameComponent const& nameCmpt, fr::ShadowMapComponent const&);
 
-		static void MarkDirty(GameplayManager&, entt::entity shadowMapEntity);
+		static void MarkDirty(EntityManager&, entt::entity shadowMapEntity);
 
 
 	private: // Use the static creation factories

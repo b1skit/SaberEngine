@@ -1,13 +1,13 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "GameplayManager.h"
+#include "EntityManager.h"
 #include "RelationshipComponent.h"
 
 
 namespace fr
 {
-	Relationship& Relationship::AttachRelationshipComponent(GameplayManager& gpm, entt::entity owningEntity)
+	Relationship& Relationship::AttachRelationshipComponent(EntityManager& em, entt::entity owningEntity)
 	{
-		return *gpm.EmplaceComponent<fr::Relationship>(owningEntity, PrivateCTORTag{}, owningEntity);
+		return *em.EmplaceComponent<fr::Relationship>(owningEntity, PrivateCTORTag{}, owningEntity);
 	}
 
 
@@ -56,7 +56,7 @@ namespace fr
 
 
 
-	void Relationship::SetParent(GameplayManager& gpm, entt::entity newParent)
+	void Relationship::SetParent(EntityManager& em, entt::entity newParent)
 	{
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_relationshipMutex);
@@ -66,9 +66,9 @@ namespace fr
 
 			if (m_parent != entt::null)
 			{
-				Relationship& prevParentRelationship = gpm.GetComponent<fr::Relationship>(m_parent);
+				Relationship& prevParentRelationship = em.GetComponent<fr::Relationship>(m_parent);
 
-				prevParentRelationship.RemoveChild(gpm, m_thisEntity);
+				prevParentRelationship.RemoveChild(em, m_thisEntity);
 			}
 
 			// Update ourselves:
@@ -77,20 +77,20 @@ namespace fr
 			// Update the parent:
 			if (newParent != entt::null)
 			{
-				Relationship& newParentRelationship = gpm.GetComponent<fr::Relationship>(newParent);
-				newParentRelationship.AddChild(gpm, m_thisEntity);
+				Relationship& newParentRelationship = em.GetComponent<fr::Relationship>(newParent);
+				newParentRelationship.AddChild(em, m_thisEntity);
 			}
 		}
 	}
 
 
-	void Relationship::AddChild(GameplayManager& gpm, entt::entity newChild)
+	void Relationship::AddChild(EntityManager& em, entt::entity newChild)
 	{
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_relationshipMutex);
 
 			// Children are added to the end of our linked list
-			Relationship& newChildRelationship = gpm.GetComponent<fr::Relationship>(newChild);
+			Relationship& newChildRelationship = em.GetComponent<fr::Relationship>(newChild);
 
 			SEAssert("Child should have already set this entity as its parent",
 				newChildRelationship.m_parent == m_thisEntity);
@@ -110,8 +110,8 @@ namespace fr
 			}
 			else
 			{
-				Relationship& firstChildRelationship = gpm.GetComponent<fr::Relationship>(m_firstChild);
-				Relationship& lastChildRelationship = gpm.GetComponent<fr::Relationship>(m_lastChild);
+				Relationship& firstChildRelationship = em.GetComponent<fr::Relationship>(m_firstChild);
+				Relationship& lastChildRelationship = em.GetComponent<fr::Relationship>(m_lastChild);
 
 				SEAssert("Relationship linked list is corrupt: Last node does not point to the first node",
 					lastChildRelationship.m_next == m_firstChild);
@@ -129,7 +129,7 @@ namespace fr
 	}
 
 
-	void Relationship::RemoveChild(GameplayManager& gpm, entt::entity child)
+	void Relationship::RemoveChild(EntityManager& em, entt::entity child)
 	{
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_relationshipMutex);
@@ -137,7 +137,7 @@ namespace fr
 			SEAssert("Trying to remove a child from a Relationship that has no children",
 				m_firstChild != entt::null && m_lastChild != entt::null);
 
-			Relationship& childRelationship = gpm.GetComponent<fr::Relationship>(child);
+			Relationship& childRelationship = em.GetComponent<fr::Relationship>(child);
 
 			bool foundChild = false;
 
@@ -157,14 +157,14 @@ namespace fr
 				entt::entity currentChild = m_firstChild;
 				while (currentChild != m_lastChild)
 				{
-					Relationship& currentChildRelationship = gpm.GetComponent<fr::Relationship>(currentChild);
+					Relationship& currentChildRelationship = em.GetComponent<fr::Relationship>(currentChild);
 
 					if (child == currentChildRelationship.m_thisEntity)
 					{
 						Relationship& prevChildRelationship = 
-							gpm.GetComponent<fr::Relationship>(currentChildRelationship.m_prev);
+							em.GetComponent<fr::Relationship>(currentChildRelationship.m_prev);
 						Relationship& nextChildRelationship = 
-							gpm.GetComponent<fr::Relationship>(currentChildRelationship.m_next);
+							em.GetComponent<fr::Relationship>(currentChildRelationship.m_next);
 
 						// Remove the node from the list:
 						prevChildRelationship.m_next = nextChildRelationship.m_thisEntity;
@@ -179,14 +179,14 @@ namespace fr
 				// Handle the last node:
 				if (!foundChild && child == m_lastChild)
 				{
-					Relationship& lastChildRelationship = gpm.GetComponent<fr::Relationship>(m_lastChild);
+					Relationship& lastChildRelationship = em.GetComponent<fr::Relationship>(m_lastChild);
 
 					Relationship& prevChildRelationship = 
-						gpm.GetComponent<fr::Relationship>(lastChildRelationship.m_prev);
+						em.GetComponent<fr::Relationship>(lastChildRelationship.m_prev);
 					SEAssert("Last child's next should be the first child", 
 						lastChildRelationship.m_next == m_firstChild);
 
-					Relationship& firstChildRelationship = gpm.GetComponent<fr::Relationship>(m_firstChild);
+					Relationship& firstChildRelationship = em.GetComponent<fr::Relationship>(m_firstChild);
 
 					prevChildRelationship.m_next = m_firstChild;
 					firstChildRelationship.m_prev = prevChildRelationship.m_thisEntity;

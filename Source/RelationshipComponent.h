@@ -4,16 +4,16 @@
 
 namespace fr
 {
-	class GameplayManager;
+	class EntityManager;
 
 
 	// A relationship is a doubly-linked list of entities
 	class Relationship
 	{
 	public:
-		static Relationship& AttachRelationshipComponent(GameplayManager&, entt::entity owningEntity);
+		static Relationship& AttachRelationshipComponent(EntityManager&, entt::entity owningEntity);
 
-		void SetParent(GameplayManager&, entt::entity);
+		void SetParent(EntityManager&, entt::entity);
 		entt::entity GetParent() const;
 		
 		entt::entity GetNext() const;
@@ -31,8 +31,8 @@ namespace fr
 
 
 	private:
-		void AddChild(GameplayManager&, entt::entity);
-		void RemoveChild(GameplayManager&, entt::entity);
+		void AddChild(EntityManager&, entt::entity);
+		void RemoveChild(EntityManager&, entt::entity);
 		
 
 	private: // Use the static creation factories

@@ -1,7 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "CameraComponent.h"
 #include "Config.h"
-#include "GameplayManager.h"
+#include "EntityManager.h"
 #include "InputManager.h"
 #include "CameraControlComponent.h"
 #include "TransformComponent.h"
@@ -14,38 +14,38 @@ namespace
 
 namespace fr
 {
-	entt::entity CameraControlComponent::CreatePlayerObjectConcept(GameplayManager& gpm, entt::entity cameraConcept)
+	entt::entity CameraControlComponent::CreatePlayerObjectConcept(EntityManager& em, entt::entity cameraConcept)
 	{
-		entt::entity playerEntity = gpm.CreateEntity(k_playerObjectName);
+		entt::entity playerEntity = em.CreateEntity(k_playerObjectName);
 
-		gpm.EmplaceComponent<CameraControlComponent>(playerEntity);
+		em.EmplaceComponent<CameraControlComponent>(playerEntity);
 
 		fr::TransformComponent& playerTransform = 
-			fr::TransformComponent::AttachTransformComponent(gpm, playerEntity, nullptr);
+			fr::TransformComponent::AttachTransformComponent(em, playerEntity, nullptr);
 
 		// Parent the camera to the player object:
-		SetCamera(gpm, playerEntity, cameraConcept);
+		SetCamera(em, playerEntity, cameraConcept);
 		
 		return playerEntity;
 	}
 
 
 	void CameraControlComponent::SetCamera(
-		GameplayManager& gpm, entt::entity camControlEntity, entt::entity cameraConcept)
+		EntityManager& em, entt::entity camControlEntity, entt::entity cameraConcept)
 	{
 		SEAssert("camControlEntity entity must have a TransformComponent attached",
-			gpm.HasComponent<fr::TransformComponent>(camControlEntity));
+			em.HasComponent<fr::TransformComponent>(camControlEntity));
 
 		SEAssert("cameraConcept entity must have a CameraComponent attached",
-			gpm.HasComponent<fr::CameraComponent>(cameraConcept));
+			em.HasComponent<fr::CameraComponent>(cameraConcept));
 
 		SEAssert("CameraControlComponent camera requires a TransformComponent",
-			gpm.IsInHierarchyAbove<fr::TransformComponent>(cameraConcept));
+			em.IsInHierarchyAbove<fr::TransformComponent>(cameraConcept));
 
-		fr::Transform& playerTransform = gpm.GetComponent<fr::TransformComponent>(camControlEntity).GetTransform();
+		fr::Transform& playerTransform = em.GetComponent<fr::TransformComponent>(camControlEntity).GetTransform();
 		
 		fr::Transform& cameraTransform = 
-			gpm.GetFirstInHierarchyAbove<fr::TransformComponent>(cameraConcept)->GetTransform();
+			em.GetFirstInHierarchyAbove<fr::TransformComponent>(cameraConcept)->GetTransform();
 
 		// The PlayerObject and Camera must be located at the same point. To avoid stomping imported Camera locations,
 		// we move the PlayerObject to the camera. Then, we re-parent the Camera's Transform, to maintain its global

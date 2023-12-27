@@ -1,5 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "GameplayManager.h"
+#include "EntityManager.h"
 #include "MarkerComponents.h"
 #include "MaterialComponent.h"
 #include "MeshPrimitiveComponent.h"
@@ -21,30 +21,30 @@ namespace fr
 		entt::entity meshPrimitiveConcept,
 		std::shared_ptr<gr::Material> sceneMaterial)
 	{
-		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+		fr::EntityManager& em = *fr::EntityManager::Get();
 
 		SEAssert("Cannot attach a null material", sceneMaterial != nullptr);
 		SEAssert("Attempting to attach a Material component without a MeshPrimitiveComponent. This (currently) doesn't "
 			"make sense",
-			gpm.IsInHierarchyAbove<fr::MeshPrimitiveComponent>(meshPrimitiveConcept));
+			em.IsInHierarchyAbove<fr::MeshPrimitiveComponent>(meshPrimitiveConcept));
 
-		entt::entity materialEntity = gpm.CreateEntity(sceneMaterial->GetName());
+		entt::entity materialEntity = em.CreateEntity(sceneMaterial->GetName());
 
 		// Attach the material component:		
 		fr::MaterialComponent* matComponent =
-			gpm.EmplaceComponent<fr::MaterialComponent>(materialEntity, sceneMaterial.get());
+			em.EmplaceComponent<fr::MaterialComponent>(materialEntity, sceneMaterial.get());
 
 		// Relate the material to the owning mesh primitive:
-		fr::Relationship& materialRelationship = gpm.GetComponent<fr::Relationship>(materialEntity);
-		materialRelationship.SetParent(gpm, meshPrimitiveConcept);
+		fr::Relationship& materialRelationship = em.GetComponent<fr::Relationship>(materialEntity);
+		materialRelationship.SetParent(em, meshPrimitiveConcept);
 
 		gr::RenderDataComponent const& meshPrimRenderData =
-			gpm.GetComponent<gr::RenderDataComponent>(meshPrimitiveConcept);
+			em.GetComponent<gr::RenderDataComponent>(meshPrimitiveConcept);
 
-		gr::RenderDataComponent::AttachSharedRenderDataComponent(gpm, materialEntity, meshPrimRenderData);
+		gr::RenderDataComponent::AttachSharedRenderDataComponent(em, materialEntity, meshPrimRenderData);
 
 		// Mark our Material as dirty:
-		gpm.EmplaceOrReplaceComponent<DirtyMarker<fr::MaterialComponent>>(materialEntity);
+		em.EmplaceOrReplaceComponent<DirtyMarker<fr::MaterialComponent>>(materialEntity);
 
 		return *matComponent;
 	}

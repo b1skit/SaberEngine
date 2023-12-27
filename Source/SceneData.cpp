@@ -4,7 +4,7 @@
 #include "CameraComponent.h"
 #include "Config.h"
 #include "CoreEngine.h"
-#include "GameplayManager.h"
+#include "EntityManager.h"
 #include "LightComponent.h"
 #include "MaterialComponent.h"
 #include "Material_GLTF.h"
@@ -362,7 +362,7 @@ namespace
 	// Creates a default camera if current == nullptr
 	void LoadAddCamera(fr::SceneData& scene, entt::entity sceneNode, cgltf_node* current)
 	{
-		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+		fr::EntityManager& em = *fr::EntityManager::Get();
 		entt::entity newCameraConcept = entt::null;
 
 		if (sceneNode == entt::null && (current == nullptr || current->camera == nullptr))
@@ -378,7 +378,7 @@ namespace
 			constexpr char const* k_defaultCamName = "DefaultCamera";
 
 			newCameraConcept = fr::CameraComponent::AttachCameraConcept(
-				gpm, 
+				em, 
 				fr::SceneNode::Create(std::format("{}_SceneNode", k_defaultCamName).c_str(), entt::null),
 				k_defaultCamName, 
 				camConfig);
@@ -419,14 +419,14 @@ namespace
 			}
 
 			// Create the camera and set the transform values on the parent object:
-			newCameraConcept = fr::CameraComponent::AttachCameraConcept(gpm, sceneNode, camName, camConfig);
+			newCameraConcept = fr::CameraComponent::AttachCameraConcept(em, sceneNode, camName, camConfig);
 
 			fr::Transform* sceneNodeTransform = &fr::SceneNode::GetTransform(sceneNode);
 
 			SetTransformValues(current, sceneNode);
 		}
 
-		gpm.SetAsMainCamera(newCameraConcept);
+		em.SetAsMainCamera(newCameraConcept);
 	}
 
 

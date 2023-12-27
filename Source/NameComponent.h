@@ -5,13 +5,13 @@
 
 namespace fr
 {
-	class GameplayManager;
+	class EntityManager;
 
 
 	class NameComponent final : public virtual en::NamedObject
 	{
 	public:
-		static NameComponent& AttachNameComponent(GameplayManager&, entt::entity, char const* name);
+		static NameComponent& AttachNameComponent(EntityManager&, entt::entity, char const* name);
 
 
 	private: // Use the static creation factories

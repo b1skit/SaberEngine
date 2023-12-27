@@ -2,7 +2,7 @@
 #include "BoundsComponent.h"
 #include "CameraComponent.h"
 #include "Config.h"
-#include "GameplayManager.h"
+#include "EntityManager.h"
 #include "GraphicsSystem_Shadows.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
@@ -43,27 +43,27 @@ namespace
 namespace fr
 {
 	ShadowMapComponent& ShadowMapComponent::AttachShadowMapComponent(
-		GameplayManager& gpm, entt::entity owningEntity, char const* name, fr::Light::LightType lightType)
+		EntityManager& em, entt::entity owningEntity, char const* name, fr::Light::LightType lightType)
 	{
 		SEAssert("A ShadowMapComponent must be attached to a LightComponent",
-			gpm.HasComponent<fr::LightComponent>(owningEntity));
+			em.HasComponent<fr::LightComponent>(owningEntity));
 
-		entt::entity shadowMapEntity = gpm.CreateEntity(name);
+		entt::entity shadowMapEntity = em.CreateEntity(name);
 
 		// Relationship:
-		fr::Relationship& shadowMapRelationship = gpm.GetComponent<fr::Relationship>(shadowMapEntity);
-		shadowMapRelationship.SetParent(gpm, owningEntity);
+		fr::Relationship& shadowMapRelationship = em.GetComponent<fr::Relationship>(shadowMapEntity);
+		shadowMapRelationship.SetParent(em, owningEntity);
 
 		// RenderData: We share the owning entity's RenderDataID
 		gr::RenderDataComponent* owningRenderDataCmpt = 
-			gpm.GetFirstInHierarchyAbove<gr::RenderDataComponent>(shadowMapRelationship.GetParent());
+			em.GetFirstInHierarchyAbove<gr::RenderDataComponent>(shadowMapRelationship.GetParent());
 		SEAssert("A shadow map needs to share a render data component", owningRenderDataCmpt != nullptr);
 
 		gr::RenderDataComponent const& sharedRenderDataCmpt = 
-			gr::RenderDataComponent::AttachSharedRenderDataComponent(gpm, shadowMapEntity, *owningRenderDataCmpt);
+			gr::RenderDataComponent::AttachSharedRenderDataComponent(em, shadowMapEntity, *owningRenderDataCmpt);
 
 		SEAssert("A shadow map requires a TransformComponent",
-			gpm.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
+			em.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
 
 		// ShadowMap component:
 		glm::uvec2 widthHeight{0, 0};
@@ -76,7 +76,7 @@ namespace fr
 			widthHeight = glm::vec2(defaultDirectionalWidthHeight, defaultDirectionalWidthHeight);
 
 			// Add a light type marker to simplify shadow searches:
-			gpm.EmplaceComponent<fr::LightComponent::DirectionalDeferredMarker>(shadowMapEntity);
+			em.EmplaceComponent<fr::LightComponent::DirectionalDeferredMarker>(shadowMapEntity);
 		}
 		break;
 		case fr::Light::LightType::Point_Deferred:
@@ -85,16 +85,16 @@ namespace fr
 				en::Config::Get()->GetValue<int>(en::ConfigKeys::k_defaultShadowCubeMapResolution);
 			widthHeight = glm::vec2(defaultCubemapWidthHeight, defaultCubemapWidthHeight);
 			
-			gpm.EmplaceComponent<fr::LightComponent::PointDeferredMarker>(shadowMapEntity);
+			em.EmplaceComponent<fr::LightComponent::PointDeferredMarker>(shadowMapEntity);
 		}
 		break;
 		case fr::Light::LightType::AmbientIBL_Deferred:
 		default: SEAssertF("Invalid light type");
 		}
 
-		fr::LightComponent const& owningLightComponent = gpm.GetComponent<fr::LightComponent>(owningEntity);
+		fr::LightComponent const& owningLightComponent = em.GetComponent<fr::LightComponent>(owningEntity);
 
-		ShadowMapComponent& shadowMapComponent = *gpm.EmplaceComponent<fr::ShadowMapComponent>(
+		ShadowMapComponent& shadowMapComponent = *em.EmplaceComponent<fr::ShadowMapComponent>(
 			shadowMapEntity,
 			PrivateCTORTag{},
 			owningLightComponent.GetLightID(),
@@ -104,21 +104,21 @@ namespace fr
 			widthHeight);
 
 		// Mark our new ShadowMapComponent as dirty:
-		gpm.EmplaceComponent<DirtyMarker<fr::ShadowMapComponent>>(shadowMapEntity);
+		em.EmplaceComponent<DirtyMarker<fr::ShadowMapComponent>>(shadowMapEntity);
 
 		// Attach a shadow map render camera:
 		fr::CameraComponent::AttachCameraConcept(
-			gpm,
+			em,
 			shadowMapEntity,
 			std::format("{}_ShadowCam", name).c_str(),
-			GenerateShadowCameraConfig(gpm, shadowMapEntity, shadowMapComponent));
+			GenerateShadowCameraConfig(em, shadowMapEntity, shadowMapComponent));
 
 		return shadowMapComponent;
 	}
 
 
 	gr::Camera::Config ShadowMapComponent::GenerateShadowCameraConfig(
-		fr::GameplayManager& gpm, entt::entity shadowMapEntity, ShadowMapComponent const& shadowMapCmpt)
+		fr::EntityManager& em, entt::entity shadowMapEntity, ShadowMapComponent const& shadowMapCmpt)
 	{
 		fr::ShadowMap const& shadowMap = shadowMapCmpt.GetShadowMap();
 
@@ -145,14 +145,14 @@ namespace fr
 			// 
 			// Need to be really careful with threading here: We're getting bounds and transforms, but they could (eventually)
 			// be updated on other threads when we're updating lights/shadows on another? 
-			//	-> LEAVE COMMENTS IN GameplayManager once this is all working...
+			//	-> LEAVE COMMENTS IN EntityManager once this is all working...
 			
 			fr::TransformComponent* transformComponent =
-				gpm.GetFirstInHierarchyAbove<fr::TransformComponent>(shadowMapEntity);
+				em.GetFirstInHierarchyAbove<fr::TransformComponent>(shadowMapEntity);
 			SEAssert("Cannot find TransformComponent", transformComponent != nullptr);
 
 			// Update shadow cam bounds:
-			fr::BoundsComponent const* sceneWorldBounds = gpm.GetSceneBounds();
+			fr::BoundsComponent const* sceneWorldBounds = em.GetSceneBounds();
 			if (sceneWorldBounds)
 			{
 				shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
@@ -197,21 +197,21 @@ namespace fr
 	}
 
 
-	void ShadowMapComponent::MarkDirty(GameplayManager& gpm, entt::entity shadowMapEntity)
+	void ShadowMapComponent::MarkDirty(EntityManager& em, entt::entity shadowMapEntity)
 	{
-		gpm.TryEmplaceComponent<DirtyMarker<fr::ShadowMapComponent>>(shadowMapEntity);
+		em.TryEmplaceComponent<DirtyMarker<fr::ShadowMapComponent>>(shadowMapEntity);
 
 		entt::entity cameraEntity = entt::null;
 		fr::CameraComponent* shadowCamCmpt = 
-			gpm.GetFirstInChildren<fr::CameraComponent>(shadowMapEntity, cameraEntity);
+			em.GetFirstInChildren<fr::CameraComponent>(shadowMapEntity, cameraEntity);
 		SEAssert("Could not find shadow camera", shadowCamCmpt);
 
 
 		// ECS_CONVERSION: Feels like this should be part of an "Update" function: "If dirty, SetCameraConfig"
-		fr::ShadowMapComponent const& shadowMapCmpt = gpm.GetComponent<fr::ShadowMapComponent>(shadowMapEntity);
-		shadowCamCmpt->GetCameraForModification().SetCameraConfig(GenerateShadowCameraConfig(gpm, shadowMapEntity, shadowMapCmpt));
+		fr::ShadowMapComponent const& shadowMapCmpt = em.GetComponent<fr::ShadowMapComponent>(shadowMapEntity);
+		shadowCamCmpt->GetCameraForModification().SetCameraConfig(GenerateShadowCameraConfig(em, shadowMapEntity, shadowMapCmpt));
 
-		fr::CameraComponent::MarkDirty(gpm, cameraEntity);
+		fr::CameraComponent::MarkDirty(em, cameraEntity);
 	}
 
 

@@ -17,7 +17,7 @@ namespace re
 
 namespace fr
 {
-	class GameplayManager;
+	class EntityManager;
 
 
 	class LightComponent
@@ -29,7 +29,7 @@ namespace fr
 		struct HasShadowMarker {};
 
 	public:
-		static LightComponent& CreateDeferredAmbientLightConcept(GameplayManager&, re::Texture const* iblTex);
+		static LightComponent& CreateDeferredAmbientLightConcept(EntityManager&, re::Texture const* iblTex);
 
 		static LightComponent& AttachDeferredPointLightConcept(
 			entt::entity, char const* name, glm::vec4 const& colorIntensity, bool hasShadow);

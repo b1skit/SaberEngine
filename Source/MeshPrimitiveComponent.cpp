@@ -1,5 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "GameplayManager.h"
+#include "EntityManager.h"
 #include "MarkerComponents.h"
 #include "MeshPrimitive.h"
 #include "MeshPrimitiveComponent.h"
@@ -49,25 +49,25 @@ namespace fr
 		glm::vec3 const& positionMinXYZ,
 		glm::vec3 const& positionMaxXYZ)
 	{
-		fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+		fr::EntityManager& em = *fr::EntityManager::Get();
 
 		SEAssert("A mesh primitive's owning entity requires a TransformComponent",
-			gpm.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
+			em.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
 
-		entt::entity meshPrimitiveEntity = gpm.CreateEntity(meshPrimitive->GetName());
+		entt::entity meshPrimitiveEntity = em.CreateEntity(meshPrimitive->GetName());
 
 		// Relationship:
-		fr::Relationship& meshPrimitiveRelationship = gpm.GetComponent<fr::Relationship>(meshPrimitiveEntity);
-		meshPrimitiveRelationship.SetParent(gpm, owningEntity);
+		fr::Relationship& meshPrimitiveRelationship = em.GetComponent<fr::Relationship>(meshPrimitiveEntity);
+		meshPrimitiveRelationship.SetParent(em, owningEntity);
 
 		// RenderDataComponent:
 		fr::TransformComponent const* transformComponent =
-			gpm.GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
+			em.GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
 		gr::RenderDataComponent::AttachNewRenderDataComponent(
-			gpm, meshPrimitiveEntity, transformComponent->GetTransformID());
+			em, meshPrimitiveEntity, transformComponent->GetTransformID());
 
 		// MeshPrimitive:
-		gpm.EmplaceComponent<fr::MeshPrimitiveComponent>(
+		em.EmplaceComponent<fr::MeshPrimitiveComponent>(
 			meshPrimitiveEntity,
 			MeshPrimitiveComponent{
 				.m_meshPrimitive = meshPrimitive
@@ -75,27 +75,27 @@ namespace fr
 		
 		// Bounds for the MeshPrimitive
 		fr::BoundsComponent::AttachBoundsComponent(
-			gpm,
+			em,
 			meshPrimitiveEntity,
 			positionMinXYZ,
 			positionMaxXYZ,
 			reinterpret_cast<std::vector<glm::vec3> const&>(
 				meshPrimitive->GetVertexStream(gr::MeshPrimitive::Slot::Position)->GetDataAsVector()),
 			fr::BoundsComponent::Contents::MeshPrimitive);
-		fr::BoundsComponent const& meshPrimitiveBounds = gpm.GetComponent<fr::BoundsComponent>(meshPrimitiveEntity);
+		fr::BoundsComponent const& meshPrimitiveBounds = em.GetComponent<fr::BoundsComponent>(meshPrimitiveEntity);
 
 		// If there is a BoundsComponent in the heirarchy above, assume it's encapsulating the MeshPrimitive:
 		entt::entity nextEntity = entt::null;
-		fr::BoundsComponent* encapsulatingBounds = gpm.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
+		fr::BoundsComponent* encapsulatingBounds = em.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
 			meshPrimitiveRelationship.GetParent(), 
 			nextEntity);
 		if (encapsulatingBounds != nullptr)
 		{
-			encapsulatingBounds->ExpandBoundsHierarchy(gpm, meshPrimitiveBounds, nextEntity);
+			encapsulatingBounds->ExpandBoundsHierarchy(em, meshPrimitiveBounds, nextEntity);
 		}
 
 		// Mark our new MeshPrimitive as dirty:
-		gpm.EmplaceComponent<DirtyMarker<fr::MeshPrimitiveComponent>>(meshPrimitiveEntity);
+		em.EmplaceComponent<DirtyMarker<fr::MeshPrimitiveComponent>>(meshPrimitiveEntity);
 
 		// Note: A Material component must be attached to the returned entity
 		return meshPrimitiveEntity;
@@ -103,22 +103,22 @@ namespace fr
 
 
 	MeshPrimitiveComponent& MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
-		GameplayManager& gpm,
+		EntityManager& em,
 		entt::entity owningEntity, 
 		gr::RenderDataComponent const& sharedRenderDataCmpt, 
 		gr::MeshPrimitive const* meshPrimitive)
 	{
-		entt::entity meshPrimitiveEntity = gpm.CreateEntity(meshPrimitive->GetName());
+		entt::entity meshPrimitiveEntity = em.CreateEntity(meshPrimitive->GetName());
 
 		// Relationship:
-		fr::Relationship& meshPrimitiveRelationship = gpm.GetComponent<fr::Relationship>(meshPrimitiveEntity);
-		meshPrimitiveRelationship.SetParent(gpm, owningEntity);
+		fr::Relationship& meshPrimitiveRelationship = em.GetComponent<fr::Relationship>(meshPrimitiveEntity);
+		meshPrimitiveRelationship.SetParent(em, owningEntity);
 
 		// Shared RenderDataComponent:
-		gr::RenderDataComponent::AttachSharedRenderDataComponent(gpm, meshPrimitiveEntity, sharedRenderDataCmpt);
+		gr::RenderDataComponent::AttachSharedRenderDataComponent(em, meshPrimitiveEntity, sharedRenderDataCmpt);
 
 		// MeshPrimitive:
-		MeshPrimitiveComponent& meshPrimCmpt = *gpm.EmplaceComponent<MeshPrimitiveComponent>(
+		MeshPrimitiveComponent& meshPrimCmpt = *em.EmplaceComponent<MeshPrimitiveComponent>(
 			meshPrimitiveEntity,
 			MeshPrimitiveComponent
 			{
@@ -126,7 +126,7 @@ namespace fr
 			});
 
 		// Mark our new MeshPrimitive as dirty:
-		gpm.EmplaceComponent<DirtyMarker<fr::MeshPrimitiveComponent>>(meshPrimitiveEntity);
+		em.EmplaceComponent<DirtyMarker<fr::MeshPrimitiveComponent>>(meshPrimitiveEntity);
 
 		return meshPrimCmpt;
 	}

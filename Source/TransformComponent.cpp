@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "CoreEngine.h"
-#include "GameplayManager.h"
+#include "EntityManager.h"
 #include "RenderDataManager.h"
 #include "RenderManager.h"
 #include "TransformComponent.h"
@@ -28,10 +28,10 @@ namespace fr
 
 
 	TransformComponent& TransformComponent::AttachTransformComponent(
-		fr::GameplayManager& gpm, entt::entity entity, fr::Transform* parent)
+		fr::EntityManager& em, entt::entity entity, fr::Transform* parent)
 	{
-		gpm.EmplaceComponent<fr::TransformComponent::NewIDMarker>(entity);
-		return *gpm.EmplaceComponent<fr::TransformComponent>(entity, PrivateCTORTag{}, parent);
+		em.EmplaceComponent<fr::TransformComponent::NewIDMarker>(entity);
+		return *em.EmplaceComponent<fr::TransformComponent>(entity, PrivateCTORTag{}, parent);
 	}
 
 
@@ -54,7 +54,7 @@ namespace fr
 		taskFuturesOut.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
 			[rootNode]()
 			{
-				fr::GameplayManager& gpm = *fr::GameplayManager::Get();
+				fr::EntityManager& em = *fr::EntityManager::Get();
 
 				std::stack<fr::Transform*> transforms;
 				transforms.push(rootNode);

@@ -6,7 +6,7 @@
 namespace fr
 {
 	class Camera;
-	class GameplayManager;
+	class EntityManager;
 
 
 	class CameraControlComponent
@@ -15,9 +15,9 @@ namespace fr
 		struct PlayerObjectMarker {};
 
 	public:
-		static entt::entity CreatePlayerObjectConcept(GameplayManager&, entt::entity cameraConcept);
+		static entt::entity CreatePlayerObjectConcept(EntityManager&, entt::entity cameraConcept);
 
-		static void SetCamera(GameplayManager&, entt::entity playerEntity, entt::entity cameraConcept);
+		static void SetCamera(EntityManager&, entt::entity playerEntity, entt::entity cameraConcept);
 
 		static void Update(
 			CameraControlComponent&, 

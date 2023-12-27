@@ -7,7 +7,7 @@
 
 namespace fr
 {
-	class GameplayManager;
+	class EntityManager;
 
 
 	// EnTT wrapper for a fr::Transform, to guarantee pointer stability.
@@ -21,7 +21,7 @@ namespace fr
 	public:
 		struct NewIDMarker {}; // Attached when a a new TransformID is allocated
 
-		static TransformComponent& AttachTransformComponent(fr::GameplayManager&, entt::entity, fr::Transform* parent);
+		static TransformComponent& AttachTransformComponent(fr::EntityManager&, entt::entity, fr::Transform* parent);
 
 		static gr::Transform::RenderData CreateRenderData(fr::TransformComponent&);
 
