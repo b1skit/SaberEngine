@@ -322,7 +322,7 @@ namespace
 				current->has_scale == 0 && current->has_translation == 0)
 		);
 
-		fr::Transform& targetTransform = fr::SceneNode::GetTransform(sceneNode);
+		fr::Transform& targetTransform = fr::SceneNode::GetTransform(*fr::EntityManager::Get(), sceneNode);
 
 		if (current->has_matrix)
 		{
@@ -421,7 +421,7 @@ namespace
 			// Create the camera and set the transform values on the parent object:
 			newCameraConcept = fr::CameraComponent::AttachCameraConcept(em, sceneNode, camName, camConfig);
 
-			fr::Transform* sceneNodeTransform = &fr::SceneNode::GetTransform(sceneNode);
+			fr::Transform* sceneNodeTransform = &fr::SceneNode::GetTransform(em, sceneNode);
 
 			SetTransformValues(current, sceneNode);
 		}
@@ -914,7 +914,7 @@ namespace
 			LOG("Loading root node %zu: \"%s\"", node, nodeName.c_str());
 
 			entt::entity rootSceneNode = 
-				fr::SceneNode::Create(std::format("Root {}", node).c_str(), entt::null); // Root has no parent
+				fr::SceneNode::Create(nodeName.c_str(), entt::null); // Root has no parent
 
 			LoadObjectHierarchyRecursiveHelper(
 				sceneRootPath, scene, data, data->scenes->nodes[node], rootSceneNode, loadTasks);

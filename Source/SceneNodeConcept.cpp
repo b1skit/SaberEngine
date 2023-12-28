@@ -45,10 +45,8 @@ namespace fr
 	}
 
 
-	fr::Transform& SceneNode::GetTransform(entt::entity entity)
+	fr::Transform& SceneNode::GetTransform(fr::EntityManager& em, entt::entity entity)
 	{
-		fr::EntityManager& em = *fr::EntityManager::Get();
-
 		SEAssert("Entity does not have a TransformComponent", em.HasComponent<fr::TransformComponent>(entity));
 
 		return em.GetComponent<fr::TransformComponent>(entity).GetTransform();
