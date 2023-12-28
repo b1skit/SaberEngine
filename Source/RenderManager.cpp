@@ -149,13 +149,13 @@ namespace re
 		platform::RenderManager::Initialize(*this);
 		SEEndCPUEvent();
 
-		// Initialize each render system system in turn:
+		// Initialize each render system and their graphics systems:
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
 			renderSystem->ExecuteInitializePipeline();
 		}
 
-		// Process render commands issued during scene loading
+		// Process render commands issued during scene loading now the graphics systems are initialized:
 		m_renderCommandManager.SwapBuffers();
 		m_renderCommandManager.Execute();
 
@@ -176,43 +176,12 @@ namespace re
 	}
 
 
-	void RenderManager::PreUpdate(uint64_t frameNum) // Blocks other threads until complete
+	void RenderManager::PreUpdate(uint64_t frameNum)
 	{
+		// This function is blocking; We do the bare minimum work possible here
 		SEBeginCPUEvent("re::RenderManager::PreUpdate");
 		
-		// Just swap the buffers here, since RenderManager::PreUpdate is blocking
 		m_renderCommandManager.SwapBuffers();
-
-
-		// TEMPORARY HACK: Execute the render commands here, while the main thread waits. We need to make sure that the
-		// render commands are executed before proceeding, until everything else here is cleaned up and moved out.
-		// Everything after this point should be moved out of PreUpdate(), and into Update()
-		// ----
-
-		m_renderCommandManager.Execute(); // Process render commands. Must happen 1st to ensure RenderData is up to date
-
-		BuildSceneBatches();
-
-		// Execute each RenderSystem's platform-specific graphics system update pipelines:
-		SEBeginCPUEvent("Execute update pipeline");
-		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
-		{
-			renderSystem->ExecuteUpdatePipeline();
-		}
-		SEEndCPUEvent();
-
-		// "Swap" our CPU-side PB data buffers, now that our render systems have written to them
-		re::Context::Get()->GetParameterBlockAllocator().SwapCPUBuffers(frameNum);
-
-		// Create any new resources that have been by ExecuteUpdatePipeline calls (e.g. target sets, parameter blocks):
-		CreateAPIResources();
-
-		// Swap our API buffers: We (currently) need to do this after this CreateAPIResources call, as we also call
-		// CreateAPIResources during Initialize(), which writes into our platform buffers. If we did this any sooner,
-		// we'd end up with the data written to the platform buffers during Initialize() being written to a different 
-		// buffer than the contents written during frame 0's PreUpdate.
-		// This is a temporary solution until we remove ParameterBlockAllocator CPU-side double-buffering altogether
-		re::Context::Get()->GetParameterBlockAllocator().SwapPlatformBuffers(frameNum);
 
 		SEEndCPUEvent();
 	}
@@ -224,14 +193,24 @@ namespace re
 
 		HandleEvents();
 
-		
-		// TODO: Process render commands here (post swap)
-		// TODO: Move render system/GS updates here
-		// TODO: Handle ParameterBlock writing here
-		// TODO: Handle new resource creation here
+		re::Context::Get()->GetParameterBlockAllocator().BeginFrame(frameNum);
 
+		m_renderCommandManager.Execute(); // Process render commands. Must happen 1st to ensure RenderData is up to date
 
-		// Update/buffer param blocks, now that the read/write indexes have been swapped
+		BuildSceneBatches(); // Build scene batches now that the render data is populated
+
+		// Execute each RenderSystem's platform-specific graphics system update pipelines:
+		SEBeginCPUEvent("Execute update pipeline");
+		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+		{
+			renderSystem->ExecuteUpdatePipeline();
+		}
+		SEEndCPUEvent();
+
+		// Create any new resources that have been by ExecuteUpdatePipeline calls (e.g. target sets, parameter blocks):
+		CreateAPIResources();
+
+		// Update/buffer param blocks
 		re::Context::Get()->GetParameterBlockAllocator().BufferParamBlocks();
 
 		// API-specific rendering loop virtual implementations:

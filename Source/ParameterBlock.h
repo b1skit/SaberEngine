@@ -23,7 +23,7 @@ namespace re
 	class ParameterBlock : public virtual en::NamedObject
 	{
 	public:
-		enum class PBType
+		enum PBType : uint8_t
 		{
 			Mutable,		// Permanent, can be updated
 			Immutable,		// Permanent, cannot be updated

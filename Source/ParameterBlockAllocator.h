@@ -10,7 +10,8 @@ namespace re
 	class ParameterBlockAllocator
 	{
 	public:
-		static constexpr uint32_t k_fixedAllocationByteSize = 32 * 1024 * 1024; // Arbitrary: Increase as necessary
+		static constexpr uint32_t k_fixedAllocationByteSize = 32 * 1024 * 1024; // Arbitrary. Used to allocate API buffers
+		static constexpr uint32_t k_systemMemoryReservationSize = 32 * 1024 * 1024; // CPU-side initial commit memory reservation
 
 
 	public:
@@ -20,7 +21,6 @@ namespace re
 			PlatformParams();
 			virtual ~PlatformParams() = 0;
 
-			// TODO: These should be a part of the ParameterBlockManager
 			void BeginFrame();
 			uint8_t GetWriteIndex() const;
 			uint32_t AdvanceBaseIdx(re::ParameterBlock::PBDataType, uint32_t alignedSize);
@@ -57,8 +57,7 @@ namespace re
 
 		void ClosePermanentPBRegistrationPeriod(); // Called once after all permanent PBs are created
 
-		void SwapPlatformBuffers(uint64_t renderFrameNum);
-		void SwapCPUBuffers(uint64_t renderFrameNum); // renderFrameNum is always 1 behind the front end thread
+		void BeginFrame(uint64_t renderFrameNum);
 		void EndFrame(); // Clears single-frame PBs
 
 		ParameterBlockAllocator::PlatformParams* GetPlatformParams() const;
@@ -72,51 +71,31 @@ namespace re
 	private:
 		typedef uint64_t Handle; // == NamedObject::UniqueID()
 
-		static constexpr uint8_t k_numBuffers = 2;
-
 		struct CommitMetadata
 		{
 			ParameterBlock::PBType m_type;
 			uint32_t m_startIndex;	// Index of 1st byte
-			uint32_t m_numBytes;		// Total number of allocated bytes
+			uint32_t m_numBytes;	// Total number of allocated bytes
 		};
 
-		struct ImmutableAllocation // Single buffered
+		struct Allocation
 		{
 			std::vector<uint8_t> m_committed;
 			std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>> m_handleToPtr;
 			mutable std::recursive_mutex m_mutex;
-		} m_immutableAllocations;
+		};
+		std::array<Allocation, re::ParameterBlock::PBType::PBType_Count> m_allocations;
 
-		// TODO: Double-buffered allocations should have 2 mutexes (or a read/write mutex)
-		// OR: Don't double-buffer on the CPU side: Write directly to device buffers
+		std::unordered_map<Handle, CommitMetadata> m_handleToTypeAndByteIndex;
+		mutable std::recursive_mutex m_handleToTypeAndByteIndexMutex;
 
-		struct MutableAllocation // Double buffered
-		{
-			std::array<std::vector<uint8_t>, k_numBuffers> m_committed;
-			std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>> m_handleToPtr;
-			mutable std::recursive_mutex m_mutex;
-		} m_mutableAllocations;
-
-		struct SingleFrameAllocation // Double buffered
-		{
-			// Single frame allocations are stack allocated from a fixed-size, double-buffered array
-			std::array<std::array<uint8_t, k_fixedAllocationByteSize>, k_numBuffers> m_committed;
-			std::array<std::uint32_t, k_numBuffers> m_baseIdx;
-			std::array<std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>>, k_numBuffers> m_handleToPtr;
-			mutable std::recursive_mutex m_mutex;
-		} m_singleFrameAllocations;
-
-		uint32_t m_maxSingleFrameAllocations; // Debug: Track the high-water mark for the max single-frame PB allocations
-		uint32_t m_maxSingleFrameAllocationByteSize;
-
-		std::unordered_map<Handle, CommitMetadata> m_uniqueIDToTypeAndByteIndex;
-		mutable std::recursive_mutex m_uniqueIDToTypeAndByteIndexMutex;
-
-		std::array<std::queue<Handle>, k_numBuffers> m_dirtyParameterBlocks;
+		std::queue<Handle> m_dirtyParameterBlocks;
 		std::mutex m_dirtyParameterBlocksMutex;
 
 		std::unique_ptr<PlatformParams> m_platformParams;
+
+		uint32_t m_maxSingleFrameAllocations; // Debug: Track the high-water mark for the max single-frame PB allocations
+		uint32_t m_maxSingleFrameAllocationByteSize;
 
 
 	private:
@@ -126,10 +105,7 @@ namespace re
 		std::mutex m_deferredDeleteQueueMutex;
 
 	private:
-		uint64_t m_readFrameNum; // Render thread read frame # is always 1 behind the front end thread write frame
-
-		uint64_t GetReadIdx() const;
-		uint64_t GetWriteIdx() const;
+		uint64_t m_currentFrameNum; // Render thread read frame # is always 1 behind the front end thread frame
 		
 
 	private:
@@ -155,18 +131,6 @@ namespace re
 		ParameterBlockAllocator& operator=(ParameterBlockAllocator const&) = delete;
 		ParameterBlockAllocator& operator=(ParameterBlockAllocator&&) = delete;
 	};
-
-
-	inline uint64_t ParameterBlockAllocator::GetReadIdx() const
-	{
-		return m_readFrameNum % k_numBuffers;
-	}
-
-
-	inline uint64_t ParameterBlockAllocator::GetWriteIdx() const
-	{
-		return (m_readFrameNum + 1) % k_numBuffers;
-	}
 
 
 	// We need to provide a destructor implementation since it's pure virtual

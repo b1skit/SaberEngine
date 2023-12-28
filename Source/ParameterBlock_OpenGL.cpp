@@ -72,7 +72,7 @@ namespace opengl
 	}
 
 
-	void ParameterBlock::Update(re::ParameterBlock& paramBlock)
+	void ParameterBlock::Update(re::ParameterBlock const& paramBlock)
 	{
 		PlatformParams* pbPlatParams = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
 

@@ -4,21 +4,9 @@
 #include "Config.h"
 #include "Light.h"
 #include "MeshConcept.h"
-#include "ParameterBlock.h"
 #include "PerformanceTimer.h"
 #include "SceneManager.h"
 #include "Transform.h"
-
-using fr::SceneData;
-using en::Config;
-using re::Batch;
-using re::ParameterBlock;
-using fr::Transform;
-using util::PerformanceTimer;
-using std::shared_ptr;
-using std::make_shared;
-using std::string;
-using glm::mat4;
 
 
 namespace
@@ -46,29 +34,29 @@ namespace en
 	{
 		LOG("SceneManager starting...");
 
-		PerformanceTimer timer;
+		util::PerformanceTimer timer;
 		timer.Start();
 
 		// Load the scene:
-		string sceneName;
-		if (Config::Get()->TryGetValue<string>(en::ConfigKeys::k_sceneNameKey, sceneName))
+		std::string sceneName;
+		if (Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_sceneNameKey, sceneName))
 		{
-			m_sceneData = std::make_shared<SceneData>(sceneName);
+			m_sceneData = std::make_shared<fr::SceneData>(sceneName);
 		}
 		else
 		{
 			LOG_WARNING("No scene name found to load");			
-			m_sceneData = std::make_shared<SceneData>("Empty Scene");
+			m_sceneData = std::make_shared<fr::SceneData>("Empty Scene");
 		}
 
-		string sceneFilePath;
-		Config::Get()->TryGetValue<string>(en::ConfigKeys::k_sceneFilePathKey, sceneFilePath);
+		std::string sceneFilePath;
+		en::Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_sceneFilePathKey, sceneFilePath);
 
 		const bool loadResult = m_sceneData->Load(sceneFilePath);
 		if (!loadResult)
 		{
 			LOG_ERROR("Failed to load scene: %s", sceneFilePath);
-			EventManager::Get()->Notify(EventManager::EventInfo{ EventManager::EngineQuit });
+			en::EventManager::Get()->Notify(en::EventManager::EventInfo{ en::EventManager::EngineQuit });
 		}
 
 		LOG("\nSceneManager::Startup complete in %f seconds...\n", timer.StopSec());

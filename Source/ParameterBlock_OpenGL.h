@@ -20,7 +20,7 @@ namespace opengl
 
 	public:
 		static void Create(re::ParameterBlock& paramBlock);
-		static void Update(re::ParameterBlock& paramBlock);
+		static void Update(re::ParameterBlock const& paramBlock);
 		static void Destroy(re::ParameterBlock& paramBlock);
 
 

@@ -1,16 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "CastUtils.h"
 #include "Assert.h"
+#include "CastUtils.h"
 #include "ParameterBlockAllocator.h"
 #include "ParameterBlockAllocator_Platform.h"
 #include "ParameterBlock_Platform.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager.h"
 #include "RenderManager_Platform.h"
-
-using re::ParameterBlock;
-using std::shared_ptr;
-using std::unordered_map;
 
 
 namespace
@@ -55,7 +51,7 @@ namespace re
 		// Atomically advance the stack base index for the next call, and return the base index for the current one
 		const uint32_t allocationBaseIdx = m_bufferBaseIndexes[pbDataType].fetch_add(alignedSize);
 
-		SEAssert("Allocation is out of bounds. Consider increasing k_singleFrameBufferSize", 
+		SEAssert("Allocation is out of bounds. Consider increasing k_fixedAllocationByteSize", 
 			allocationBaseIdx + alignedSize <= k_fixedAllocationByteSize);
 
 		return allocationBaseIdx;
@@ -84,24 +80,22 @@ namespace re
 
 
 	ParameterBlockAllocator::ParameterBlockAllocator()
-		: m_immutableAllocations{}
-		, m_mutableAllocations{}
-		, m_singleFrameAllocations{}
-		, m_maxSingleFrameAllocations(0) // Debug: Track the high-water mark for the max single-frame PB allocations
+		: m_maxSingleFrameAllocations(0) // Debug: Track the high-water mark for the max single-frame PB allocations
 		, m_maxSingleFrameAllocationByteSize(0)
 		, m_allocationPeriodEnded(false)
 		, m_permanentPBsHaveBeenBuffered(false)
 		, m_isValid(true)
-		, m_readFrameNum(std::numeric_limits<uint64_t>::max()) // Odd 1st number (18,446,744,073,709,551,615), then wrap
+		, m_currentFrameNum(std::numeric_limits<uint64_t>::max())
 	{
-		platform::ParameterBlockAllocator::CreatePlatformParams(*this);
-
-		// Initialize the single frame stack allocations:
-		for (uint8_t i = 0; i < k_numBuffers; i++)
+		for (uint8_t pbType = 0; pbType < re::ParameterBlock::PBType::PBType_Count; pbType++)
 		{
-			m_singleFrameAllocations.m_baseIdx[i] = 0;
-			memset(&m_singleFrameAllocations.m_committed[i][0], 0, k_fixedAllocationByteSize); // Not actually necessary
+			{
+				std::lock_guard<std::recursive_mutex> lock(m_allocations[pbType].m_mutex);
+				m_allocations[pbType].m_committed.reserve(k_systemMemoryReservationSize);
+			}
 		}
+
+		platform::ParameterBlockAllocator::CreatePlatformParams(*this);
 	}
 
 
@@ -120,69 +114,46 @@ namespace re
 
 	void ParameterBlockAllocator::Destroy()
 	{
-		std::scoped_lock lock(
-			m_uniqueIDToTypeAndByteIndexMutex,
-			m_immutableAllocations.m_mutex, 
-			m_mutableAllocations.m_mutex,
-			m_singleFrameAllocations.m_mutex,
-			m_dirtyParameterBlocksMutex);
-
-		LOG(std::format("ParameterBlockAllocator shutting down. Session usage statistics:\n"
-			"\t{} Immutable permanent allocations: {} B\n"
-			"\t{} Mutable permanent allocations: {} B\n"
-			"\t{} max single-frame allocations, max {} B buffer usage seen from fixed {} B buffer",
-			m_immutableAllocations.m_handleToPtr.size(), 
-			m_immutableAllocations.m_committed.size(),
-			m_mutableAllocations.m_handleToPtr.size(),
-			m_mutableAllocations.m_committed[0].size(),
-			m_maxSingleFrameAllocations,
-			m_maxSingleFrameAllocationByteSize,
-			k_fixedAllocationByteSize
-		).c_str());
-
-		// Must clear the parameter blocks shared_ptrs before clearing the committed memory
-
-		auto immutableItr = m_immutableAllocations.m_handleToPtr.begin();
-		while (immutableItr != m_immutableAllocations.m_handleToPtr.end())
 		{
-			// Destroy() removes the ParameterBlock from our unordered_map; we must advance our iterators first
-			re::ParameterBlock* curPB = immutableItr->second.get();
-			immutableItr++;
-			curPB->Destroy(); 
-		}
-		m_immutableAllocations.m_handleToPtr.clear();
-		m_immutableAllocations.m_committed.clear();
+			std::scoped_lock lock(
+				m_handleToTypeAndByteIndexMutex,
+				m_allocations[re::ParameterBlock::PBType::Mutable].m_mutex,
+				m_allocations[re::ParameterBlock::PBType::Immutable].m_mutex,
+				m_allocations[re::ParameterBlock::PBType::SingleFrame].m_mutex);
+			static_assert(re::ParameterBlock::PBType::PBType_Count == 3);
 
-		auto mutableItr = m_mutableAllocations.m_handleToPtr.begin();
-		while (mutableItr != m_mutableAllocations.m_handleToPtr.end())
-		{
-			re::ParameterBlock* curPB = mutableItr->second.get();
-			mutableItr++;
-			curPB->Destroy();
-		}
-		m_mutableAllocations.m_handleToPtr.clear();
+			LOG(std::format("ParameterBlockAllocator shutting down. Session usage statistics:\n"
+				"\t{} Immutable permanent allocations: {} B\n"
+				"\t{} Mutable permanent allocations: {} B\n"
+				"\t{} max single-frame allocations, max {} B buffer usage seen",
+				m_allocations[re::ParameterBlock::PBType::Immutable].m_handleToPtr.size(),
+				m_allocations[re::ParameterBlock::PBType::Immutable].m_committed.size(),
+				m_allocations[re::ParameterBlock::PBType::Mutable].m_handleToPtr.size(),
+				m_allocations[re::ParameterBlock::PBType::Mutable].m_committed.size(),
+				m_maxSingleFrameAllocations,
+				m_maxSingleFrameAllocationByteSize).c_str());
 
-		for (uint8_t i = 0; i < k_numBuffers; i++)
-		{
-			m_mutableAllocations.m_committed[i].clear();
-
-			auto singleFrameItr = m_singleFrameAllocations.m_handleToPtr[i].begin();
-			while (singleFrameItr != m_singleFrameAllocations.m_handleToPtr[i].end())
+			// Must clear the parameter blocks shared_ptrs before clearing the committed memory
+			for (Allocation& allocation : m_allocations)
 			{
-				re::ParameterBlock* curPB = singleFrameItr->second.get();
-				singleFrameItr++;
-				curPB->Destroy();
-			}
-			m_singleFrameAllocations.m_baseIdx[i] = 0;
-			m_singleFrameAllocations.m_handleToPtr[i].clear();
-		}
+				// Destroy() removes the PB from our unordered_map & invalidates iterators; Just loop until it's empty
+				while (!allocation.m_handleToPtr.empty())
+				{
+					allocation.m_handleToPtr.begin()->second->Destroy();
+				}
+				SEAssert("Failed to clear the map", allocation.m_handleToPtr.empty());
 
-		// Clear the handle -> commit map
-		m_uniqueIDToTypeAndByteIndex.clear();
+				allocation.m_committed.clear();
+			}
+
+			// Clear the handle -> commit map
+			m_handleToTypeAndByteIndex.clear();
+		}
 
 		// The platform::RenderManager has already flushed all outstanding work; Force our deferred deletions to be
 		// immediately cleared
-		ClearDeferredDeletions(std::numeric_limits<uint64_t>::max());
+		constexpr uint64_t k_maxFrameNum = std::numeric_limits<uint64_t>::max();
+		ClearDeferredDeletions(k_maxFrameNum);
 
 		platform::ParameterBlockAllocator::Destroy(*this);
 
@@ -209,42 +180,15 @@ namespace re
 			pb->GetType() == ParameterBlock::PBType::SingleFrame || !m_allocationPeriodEnded);
 
 		const ParameterBlock::PBType pbType = pb->GetType();
-		switch (pbType)
-		{
-		case ParameterBlock::PBType::SingleFrame:
-		{
-			const size_t writeIdx = GetWriteIdx();
+		SEAssert("Invalid PBType", pbType != re::ParameterBlock::PBType::PBType_Count);
 
-			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
+		{
+			std::lock_guard<std::recursive_mutex> lock(m_allocations[pbType].m_mutex);
 
 			SEAssert("Parameter block is already registered",
-				!m_singleFrameAllocations.m_handleToPtr[writeIdx].contains(pb->GetUniqueID()));
-			m_singleFrameAllocations.m_handleToPtr[writeIdx][pb->GetUniqueID()] = pb;
-		}
-		break;
-		case ParameterBlock::PBType::Immutable:
-		{
-			std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
+				!m_allocations[pbType].m_handleToPtr.contains(pb->GetUniqueID()));
 
-			SEAssert("Parameter block is already registered", 
-				!m_immutableAllocations.m_handleToPtr.contains(pb->GetUniqueID()));
-			m_immutableAllocations.m_handleToPtr[pb->GetUniqueID()] = pb;
-		}
-		break;
-		case ParameterBlock::PBType::Mutable:
-		{
-			std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
-
-			SEAssert("Parameter block is already registered",
-				!m_mutableAllocations.m_handleToPtr.contains(pb->GetUniqueID()));
-
-			m_mutableAllocations.m_handleToPtr[pb->GetUniqueID()] = pb;
-		}
-		break;
-		default:
-		{
-			SEAssertF("Invalid update type");
-		}
+			m_allocations[pbType].m_handleToPtr[pb->GetUniqueID()] = pb;
 		}
 
 		// Pre-allocate our PB so it's ready to commit to:
@@ -258,62 +202,28 @@ namespace re
 			pbType == ParameterBlock::PBType::SingleFrame || !m_allocationPeriodEnded);
 
 		{
-			std::lock_guard<std::recursive_mutex> lock(m_uniqueIDToTypeAndByteIndexMutex);
+			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 
 			SEAssert("A parameter block with this handle has already been added",
-				m_uniqueIDToTypeAndByteIndex.find(uniqueID) == m_uniqueIDToTypeAndByteIndex.end());
+				m_handleToTypeAndByteIndex.find(uniqueID) == m_handleToTypeAndByteIndex.end());
 		}
 
 		// Get the index we'll be inserting the 1st byte of our data to, resize the vector, and initialize it with zeros
-		uint32_t dataIndex;
-		switch (pbType)
+		uint32_t dataIndex = -1; // Start with something obviously incorrect
+
 		{
-		case ParameterBlock::PBType::SingleFrame:
-		{
-			const size_t writeIdx = GetWriteIdx();
+			std::lock_guard<std::recursive_mutex> lock(m_allocations[pbType].m_mutex);
 
-			SEAssert("Allocation will be out of bounds. Increase the fixed allocation size",
-				m_singleFrameAllocations.m_baseIdx[writeIdx] + numBytes <= k_fixedAllocationByteSize);
+			dataIndex = util::CheckedCast<uint32_t>(m_allocations[pbType].m_committed.size());
 
-			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
-
-			dataIndex = m_singleFrameAllocations.m_baseIdx[writeIdx];
-			m_singleFrameAllocations.m_baseIdx[writeIdx] += numBytes;
-		}
-		break;
-		case ParameterBlock::PBType::Immutable:
-		{
-			std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
-
-			dataIndex = util::CheckedCast<uint32_t>(m_immutableAllocations.m_committed.size());
-			m_immutableAllocations.m_committed.resize(m_immutableAllocations.m_committed.size() + numBytes, 0);
-		}
-		break;
-		case ParameterBlock::PBType::Mutable:
-		{
-			std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
-
-			SEAssert("Allocations are out of sync",
-				m_mutableAllocations.m_committed[0].size() == m_mutableAllocations.m_committed[1].size());
-
-			dataIndex = util::CheckedCast<uint32_t>(m_mutableAllocations.m_committed[0].size());
-
-			const uint32_t resizeAmt = util::CheckedCast<uint32_t>(m_mutableAllocations.m_committed[0].size() + numBytes);
-			m_mutableAllocations.m_committed[0].resize(resizeAmt, 0);
-			m_mutableAllocations.m_committed[1].resize(resizeAmt, 0);
-		}
-		break;
-		default:
-		{
-			SEAssertF("Invalid Parameter Block type");
-			dataIndex = -1; // Make our insertion index obviously incorrect
-		}
+			const uint32_t resizeAmt = util::CheckedCast<uint32_t>(m_allocations[pbType].m_committed.size() + numBytes);
+			m_allocations[pbType].m_committed.resize(resizeAmt, 0);
 		}
 
 		// Update our ID -> data tracking table:
 		{
-			std::lock_guard<std::recursive_mutex> lock(m_uniqueIDToTypeAndByteIndexMutex);
-			m_uniqueIDToTypeAndByteIndex.insert({ uniqueID, {pbType, dataIndex, numBytes} });
+			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
+			m_handleToTypeAndByteIndex.insert({ uniqueID, {pbType, dataIndex, numBytes} });
 		}
 	}
 
@@ -324,12 +234,12 @@ namespace re
 		uint32_t numBytes;
 		ParameterBlock::PBType pbType;
 		{
-			std::lock_guard<std::recursive_mutex> lock(m_uniqueIDToTypeAndByteIndexMutex);
+			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 
-			auto const& result = m_uniqueIDToTypeAndByteIndex.find(uniqueID);
+			auto const& result = m_handleToTypeAndByteIndex.find(uniqueID);
 
 			SEAssert("Parameter block with this ID has not been allocated",
-				result != m_uniqueIDToTypeAndByteIndex.end());
+				result != m_handleToTypeAndByteIndex.end());
 
 			SEAssert("Immutable parameter blocks can only be committed at startup",
 				!m_allocationPeriodEnded || result->second.m_type != ParameterBlock::PBType::Immutable);
@@ -342,51 +252,17 @@ namespace re
 		// Copy the data to our pre-allocated region.
 		// Note: We still need to lock our mutexes before copying, incase the vectors are resized by another allocation
 		void* dest = nullptr;
-		const size_t writeIdx = GetWriteIdx();
-		switch (pbType)
 		{
-		case ParameterBlock::PBType::SingleFrame:
-		{
-			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
-			dest = &m_singleFrameAllocations.m_committed[writeIdx][startIdx];
-			memcpy(dest, data, numBytes);
-		}
-		break;
-		case ParameterBlock::PBType::Immutable:
-		{
-			std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
-			dest = &m_immutableAllocations.m_committed[startIdx];
-			memcpy(dest, data, numBytes);
-		}
-		break;
-		case ParameterBlock::PBType::Mutable:
-		{
-			std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
-			dest = &m_mutableAllocations.m_committed[writeIdx][startIdx];
-			memcpy(dest, data, numBytes);
-		}
-		break;
-		default:
-		{
-			SEAssertF("Invalid Parameter Block type");
-		}
-		}
+			std::lock_guard<std::recursive_mutex> lock(m_allocations[pbType].m_mutex);
 
-		// If this is the 1st commit, we need to also copy the data to the other side of the mutables double buffer,
-		// incase it doesn't get a an update the next frame
-		if (!m_allocationPeriodEnded && pbType == ParameterBlock::PBType::Mutable)
-		{
-			const size_t readIdx = GetReadIdx();
-
-			std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);			
-			dest = &m_mutableAllocations.m_committed[readIdx][startIdx];
+			dest = &m_allocations[pbType].m_committed[startIdx];
 			memcpy(dest, data, numBytes);
 		}
 
 		// Add the committed PB to our dirty list, so we can buffer the data when required
 		{
-			std::lock_guard<std::mutex> dirtyLock(m_dirtyParameterBlocksMutex);
-			m_dirtyParameterBlocks[writeIdx].emplace(uniqueID);
+			std::lock_guard<std::mutex> lock(m_dirtyParameterBlocksMutex);
+			m_dirtyParameterBlocks.emplace(uniqueID);
 		}
 	}
 
@@ -394,59 +270,37 @@ namespace re
 	void ParameterBlockAllocator::GetDataAndSize(Handle uniqueID, void const*& out_data, uint32_t& out_numBytes) const
 	{
 		ParameterBlock::PBType pbType;
-		uint32_t startIdx;
+		uint32_t startIdx = -1;
 		{
-			std::lock_guard<std::recursive_mutex> lock(m_uniqueIDToTypeAndByteIndexMutex);
+			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 
-			auto const& result = m_uniqueIDToTypeAndByteIndex.find(uniqueID);
-
-			SEAssert("Parameter block with this ID has not been allocated",
-				result != m_uniqueIDToTypeAndByteIndex.end());
-
-			out_numBytes = result->second.m_numBytes;
+			auto const& result = m_handleToTypeAndByteIndex.find(uniqueID);
+			SEAssert("Parameter block with this ID has not been allocated",result != m_handleToTypeAndByteIndex.end());
 
 			pbType = result->second.m_type;
 			startIdx = result->second.m_startIndex;
+
+			out_numBytes = result->second.m_numBytes;
 		}
 
-		const size_t readIdx = GetReadIdx(); // This function is typically called when binding PB data to shaders
-
-		switch (pbType)
+		// Note: This is not thread safe, as the pointer will become stale if m_committed is resized. This should be
+		// fine though, as the ParameterBlockAllocator is simply a temporary staging ground for data about to be copied
+		// to GPU heaps. Copies in/resizing should all be done before this function is ever called
 		{
-		case ParameterBlock::PBType::SingleFrame:
-		{
-			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
-			out_data = &m_singleFrameAllocations.m_committed[readIdx][startIdx];
-		}
-		break;
-		case ParameterBlock::PBType::Immutable:
-		{
-			std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
-			out_data = &m_immutableAllocations.m_committed[startIdx];
-		}
-		break;
-		case ParameterBlock::PBType::Mutable:
-		{
-			std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
-			out_data = &m_mutableAllocations.m_committed[readIdx][startIdx];
-		}
-		break;
-		default:
-		{
-			SEAssertF("Invalid Parameter Block type");
-		}
+			std::lock_guard<std::recursive_mutex> lock(m_allocations[pbType].m_mutex);
+			out_data = &m_allocations[pbType].m_committed[startIdx];
 		}
 	}
 
 
 	uint32_t ParameterBlockAllocator::GetSize(Handle uniqueID) const
 	{
-		std::lock_guard<std::recursive_mutex> lock(m_uniqueIDToTypeAndByteIndexMutex);
+		std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 
-		auto const& result = m_uniqueIDToTypeAndByteIndex.find(uniqueID);
+		auto const& result = m_handleToTypeAndByteIndex.find(uniqueID);
 
 		SEAssert("Parameter block with this ID has not been allocated",
-			result != m_uniqueIDToTypeAndByteIndex.end());
+			result != m_handleToTypeAndByteIndex.end());
 
 		return result->second.m_numBytes;
 	}
@@ -454,61 +308,34 @@ namespace re
 
 	void ParameterBlockAllocator::Deallocate(Handle uniqueID)
 	{
-		ParameterBlock::PBType pbType;
-		uint32_t startIdx;
-		uint32_t numBytes;
+		ParameterBlock::PBType pbType = re::ParameterBlock::PBType::PBType_Count;
+		uint32_t startIdx = -1;
+		uint32_t numBytes = -1;
 		{
-			std::lock_guard<std::recursive_mutex> lock(m_uniqueIDToTypeAndByteIndexMutex);
+			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 
-			auto const& pb = m_uniqueIDToTypeAndByteIndex.find(uniqueID);
-
-			SEAssert("Cannot deallocate a parameter block that does not exist", pb != m_uniqueIDToTypeAndByteIndex.end());
+			auto const& pb = m_handleToTypeAndByteIndex.find(uniqueID);
+			SEAssert("Cannot deallocate a parameter block that does not exist", pb != m_handleToTypeAndByteIndex.end());
 
 			pbType = pb->second.m_type;
 			startIdx = pb->second.m_startIndex;
 			numBytes = pb->second.m_numBytes;
 		}
 
-		const uint64_t currentRenderFrameNum = re::RenderManager::Get()->GetCurrentRenderFrameNum();
+		AddToDeferredDeletions(m_currentFrameNum, m_allocations[pbType].m_handleToPtr.at(uniqueID));
 
-		switch (pbType)
+		// Erase the PB from our allocations:
 		{
-		case ParameterBlock::PBType::Immutable: // Should only deallocate at shutdown
-		{
-			AddToDeferredDeletions(currentRenderFrameNum, m_immutableAllocations.m_handleToPtr.at(uniqueID));
-
-			std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
-			m_immutableAllocations.m_handleToPtr.erase(uniqueID);
-		}
-		break;
-		case ParameterBlock::PBType::Mutable: // Should only deallocate at shutdown
-		{
-			AddToDeferredDeletions(currentRenderFrameNum, m_mutableAllocations.m_handleToPtr.at(uniqueID));
-
-			std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
-			m_mutableAllocations.m_handleToPtr.erase(uniqueID);
-		}
-		break;		
-		case ParameterBlock::PBType::SingleFrame:
-		{
-			// Deallocation uses the read index, as PBs are typically destroyed right before we clear them
-			const size_t readIdx = GetReadIdx();
-			AddToDeferredDeletions(currentRenderFrameNum, m_singleFrameAllocations.m_handleToPtr[readIdx].at(uniqueID));
-
-			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
-			m_singleFrameAllocations.m_handleToPtr[readIdx].erase(uniqueID);
-		}
-		break;
-		default:
-			SEAssertF("Invalid parameter block type");
+			std::lock_guard<std::recursive_mutex> lock(m_allocations[pbType].m_mutex);
+			m_allocations[pbType].m_handleToPtr.erase(uniqueID);
 		}
 
-		// Remove the ID from our map
+		// Remove the handle from our map:
 		{
-			std::lock_guard<std::recursive_mutex> lock(m_uniqueIDToTypeAndByteIndexMutex);
+			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 
-			auto const& pb = m_uniqueIDToTypeAndByteIndex.find(uniqueID);
-			m_uniqueIDToTypeAndByteIndex.erase(pb);
+			auto const& pb = m_handleToTypeAndByteIndex.find(uniqueID);
+			m_handleToTypeAndByteIndex.erase(pb);
 		}
 	}
 
@@ -516,67 +343,41 @@ namespace re
 	// Buffer dirty PB data
 	void ParameterBlockAllocator::BufferParamBlocks()
 	{
-		SEBeginCPUEvent("re::ParameterBlockAllocator::BufferParamBlocks");
-
 		SEAssert("Cannot buffer param blocks until they're all allocated", m_allocationPeriodEnded);
 
-		const size_t readIdx = GetReadIdx();
-
-		std::lock_guard<std::mutex> dirtyLock(m_dirtyParameterBlocksMutex);
-
-		while (!m_dirtyParameterBlocks[readIdx].empty())
+		SEBeginCPUEvent("re::ParameterBlockAllocator::BufferParamBlocks");
 		{
-			const Handle currentHandle = m_dirtyParameterBlocks[readIdx].front();
+			std::lock_guard<std::mutex> dirtyLock(m_dirtyParameterBlocksMutex);
 
-			ParameterBlock::PBType type = ParameterBlock::PBType::PBType_Count;
+			while (!m_dirtyParameterBlocks.empty())
 			{
-				std::lock_guard<std::recursive_mutex> lock(m_uniqueIDToTypeAndByteIndexMutex);
-				type = m_uniqueIDToTypeAndByteIndex.find(currentHandle)->second.m_type;
-			}
+				const Handle currentHandle = m_dirtyParameterBlocks.front();
 
-			re::ParameterBlock* currentPB = nullptr;
-			switch (type)
-			{
-			case ParameterBlock::PBType::Mutable:
-			{
-				std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
-				currentPB = m_mutableAllocations.m_handleToPtr[currentHandle].get();
-			}
-			break;
-			case ParameterBlock::PBType::Immutable:
-			{
-				std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
-				currentPB = m_immutableAllocations.m_handleToPtr[currentHandle].get();
-			}
-			break;
-			case ParameterBlock::PBType::SingleFrame:
-			{
-				std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
-				currentPB = m_singleFrameAllocations.m_handleToPtr[readIdx][currentHandle].get();
-			}
-			break;
-			default:
-				SEAssertF("Invalid PBType");
-			}
+				ParameterBlock::PBType pbType = ParameterBlock::PBType::PBType_Count;
+				{
+					std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
+					pbType = m_handleToTypeAndByteIndex.find(currentHandle)->second.m_type;
+				}
 
-			platform::ParameterBlock::Update(*currentPB);
+				re::ParameterBlock const* currentPB = nullptr;
+				{
+					std::lock_guard<std::recursive_mutex> lock(m_allocations[pbType].m_mutex);
+					currentPB = m_allocations[pbType].m_handleToPtr[currentHandle].get();
+				}
 
-			m_dirtyParameterBlocks[readIdx].pop();
+				platform::ParameterBlock::Update(*currentPB);
+
+				m_dirtyParameterBlocks.pop();
+			}
 		}
-
 		SEEndCPUEvent();
 	}
 
 
-	void ParameterBlockAllocator::SwapPlatformBuffers(uint64_t renderFrameNum)
+	void ParameterBlockAllocator::BeginFrame(uint64_t renderFrameNum)
 	{
+		m_currentFrameNum = renderFrameNum;
 		m_platformParams->BeginFrame();
-	}
-
-
-	void ParameterBlockAllocator::SwapCPUBuffers(uint64_t renderFrameNum)
-	{
-		m_readFrameNum = renderFrameNum;
 	}
 
 
@@ -586,33 +387,33 @@ namespace re
 
 		// Clear single-frame allocations:
 		{
-			const size_t readIdx = GetReadIdx();
+			std::lock_guard<std::recursive_mutex> lock(m_allocations[re::ParameterBlock::PBType::SingleFrame].m_mutex);
 
-			std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
+			// Debug: Track the high-water mark for the max single-frame PB allocations
+			m_maxSingleFrameAllocations = std::max(
+				m_maxSingleFrameAllocations,
+				util::CheckedCast<uint32_t>(m_allocations[re::ParameterBlock::PBType::SingleFrame].m_handleToPtr.size()));
+			m_maxSingleFrameAllocationByteSize = std::max(
+				m_maxSingleFrameAllocationByteSize,
+				util::CheckedCast<uint32_t>(m_allocations[re::ParameterBlock::PBType::SingleFrame].m_committed.size()));
 
 			// Calling Destroy() on our ParameterBlock recursively calls ParameterBlockAllocator::Deallocate, which
 			// erases an entry from m_singleFrameAllocations.m_handleToPtr. Thus, we can't use an iterator as it'll be
 			// invalidated. Instead, we just loop until it's empty
-			while (!m_singleFrameAllocations.m_handleToPtr[readIdx].empty())
+			while (!m_allocations[re::ParameterBlock::PBType::SingleFrame].m_handleToPtr.empty())
 			{
 				SEAssert("Trying to deallocate a single frame parameter block, but there is still a live shared_ptr. Is "
 					"something holding onto a single frame parameter block beyond the frame lifetime?",
-					m_singleFrameAllocations.m_handleToPtr[readIdx].begin()->second.use_count() == 1);
+					m_allocations[re::ParameterBlock::PBType::SingleFrame].m_handleToPtr.begin()->second.use_count() == 1);
 
-				m_singleFrameAllocations.m_handleToPtr[readIdx].begin()->second->Destroy();
+				m_allocations[re::ParameterBlock::PBType::SingleFrame].m_handleToPtr.begin()->second->Destroy();
 			}
 
-			// Debug: Track the high-water mark for the max single-frame PB allocations
-			m_maxSingleFrameAllocations = 
-				std::max(m_maxSingleFrameAllocations, util::CheckedCast<uint32_t>(m_singleFrameAllocations.m_handleToPtr[readIdx].size()));
-			m_maxSingleFrameAllocationByteSize = 
-				std::max(m_maxSingleFrameAllocationByteSize, m_singleFrameAllocations.m_baseIdx[readIdx]);
-
-			m_singleFrameAllocations.m_handleToPtr[readIdx].clear();
-			m_singleFrameAllocations.m_baseIdx[readIdx] = 0;
+			m_allocations[re::ParameterBlock::PBType::SingleFrame].m_handleToPtr.clear();
+			m_allocations[re::ParameterBlock::PBType::SingleFrame].m_committed.clear();
 		}
 
-		ClearDeferredDeletions(m_readFrameNum);
+		ClearDeferredDeletions(m_currentFrameNum);
 
 		SEEndCPUEvent();
 	}
@@ -621,17 +422,19 @@ namespace re
 	void ParameterBlockAllocator::ClearDeferredDeletions(uint64_t frameNum)
 	{
 		SEAssert("Trying to clear before the first swap buffer call", 
-			m_readFrameNum != std::numeric_limits<uint64_t>::max());
+			m_currentFrameNum != std::numeric_limits<uint64_t>::max());
 
 		SEBeginCPUEvent(
 			std::format("ParameterBlockAllocator::ClearDeferredDeletions ({})", m_deferredDeleteQueue.size()).c_str());
 
-		std::lock_guard<std::mutex> lock (m_deferredDeleteQueueMutex);
-
-		while (!m_deferredDeleteQueue.empty() && m_deferredDeleteQueue.front().first + k_deferredDeleteNumFrames < frameNum)
 		{
-			platform::ParameterBlock::Destroy(*m_deferredDeleteQueue.front().second);
-			m_deferredDeleteQueue.pop();
+			std::lock_guard<std::mutex> lock(m_deferredDeleteQueueMutex);
+
+			while (!m_deferredDeleteQueue.empty() && m_deferredDeleteQueue.front().first + k_deferredDeleteNumFrames < frameNum)
+			{
+				platform::ParameterBlock::Destroy(*m_deferredDeleteQueue.front().second);
+				m_deferredDeleteQueue.pop();
+			}
 		}
 
 		SEEndCPUEvent();

@@ -176,7 +176,7 @@ namespace dx12
 	}
 
 
-	void ParameterBlock::Update(re::ParameterBlock& paramBlock)
+	void ParameterBlock::Update(re::ParameterBlock const& paramBlock)
 	{
 		dx12::ParameterBlock::PlatformParams* params =
 			paramBlock.GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
