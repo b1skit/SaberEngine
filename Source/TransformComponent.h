@@ -34,7 +34,7 @@ namespace fr
 
 
 	public: // Transform systems:
-		static void DispatchTransformUpdateThread(
+		static void DispatchTransformUpdateThreads(
 			std::vector<std::future<void>>& taskFuturesOut, fr::Transform* rootNode);
 
 

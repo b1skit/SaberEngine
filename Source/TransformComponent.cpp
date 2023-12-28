@@ -45,7 +45,7 @@ namespace fr
 	// ---
 
 
-	void TransformComponent::DispatchTransformUpdateThread(
+	void TransformComponent::DispatchTransformUpdateThreads(
 		std::vector<std::future<void>>& taskFuturesOut, fr::Transform* rootNode)
 	{
 		// DFS walk down our Transform hierarchy, recomputing each Transform in turn. The goal here is to minimize the

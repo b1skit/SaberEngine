@@ -558,7 +558,7 @@ namespace fr
 				fr::Transform& node = transformComponent.GetTransform();
 				if (node.GetParent() == nullptr)
 				{
-					fr::TransformComponent::DispatchTransformUpdateThread(taskFutures, &node);
+					fr::TransformComponent::DispatchTransformUpdateThreads(taskFutures, &node);
 				}
 			}
 
