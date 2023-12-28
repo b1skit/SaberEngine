@@ -115,7 +115,7 @@ namespace fr
 		// NOTE: To prevent deadlocks, Transforms aquire locks along the hierarchy in the order of child -> parent, and
 		// release in the reverse order (parent -> child) ONLY
 		mutable std::recursive_mutex m_transformMutex;
-		// ECS_CONVERSION TODO: This is no longer required (at least, doesn't need to be a recursive_mutex)
+
 
 	private:
 		Transform() = delete;

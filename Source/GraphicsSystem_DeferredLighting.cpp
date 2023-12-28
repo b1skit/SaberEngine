@@ -828,7 +828,7 @@ namespace gr
 
 		m_ambientStage->AddBatch(ambientFullscreenQuadBatch);
 
-		// Keylight stage batches:
+		// Directional stage batches:
 		const bool hasDirectionalLight = !m_renderData[gr::Light::LightType::Directional_Deferred].empty();
 		if (hasDirectionalLight)
 		{

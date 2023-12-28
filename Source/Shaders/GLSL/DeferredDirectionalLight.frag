@@ -16,10 +16,10 @@ void main()
 	const vec3 worldPos = GetWorldPos(screenUV, gbuffer.NonLinearDepth, g_invViewProjection);
 
 	// Directional light direction is packed into the light position
-	const vec3 keylightWorldDir = g_lightWorldPosRadius.xyz;
+	const vec3 directionalWorldDir = g_lightWorldPosRadius.xyz;
 
 	// Read from 2D shadow map:
-	const float NoL = max(0.0, dot(gbuffer.WorldNormal, keylightWorldDir));
+	const float NoL = max(0.0, dot(gbuffer.WorldNormal, directionalWorldDir));
 	const vec3 shadowPos = (g_shadowCam_VP * vec4(worldPos, 1.f)).xyz;
 	const float shadowFactor = GetShadowFactor(shadowPos, Depth0, NoL);
 
@@ -32,7 +32,7 @@ void main()
 	lightingParams.WorldPosition = worldPos;
 	lightingParams.F0 = gbuffer.MatProp0;
 	lightingParams.LightWorldPos = vec3(0.f, 0.f, 0.f); // Directional lights are at infinity
-	lightingParams.LightWorldDir = keylightWorldDir;
+	lightingParams.LightWorldDir = directionalWorldDir;
 	lightingParams.LightColor = g_lightColorIntensity.rgb;
 	lightingParams.LightIntensity = g_lightColorIntensity.a;
 	lightingParams.LightAttenuationFactor = 1.f;

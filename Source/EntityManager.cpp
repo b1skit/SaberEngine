@@ -403,12 +403,38 @@ namespace fr
 	}
 
 
+	void EntityManager::OnBoundsDirty()
+	{
+		// No lock needed: Event handlers are called from within functions that already hold one
+
+		bool sceneBoundsDirty = false;
+		auto dirtySceneBoundsView = m_registry.view<
+			fr::BoundsComponent, fr::BoundsComponent::SceneBoundsMarker, DirtyMarker<fr::BoundsComponent>>();
+		for (auto entity : dirtySceneBoundsView)
+		{
+			SEAssert("Already found a dirty scene bounds. This should not be possible", sceneBoundsDirty == false);
+			sceneBoundsDirty = true;
+		}
+
+		if (sceneBoundsDirty)
+		{
+			// Directional light shadows:
+			auto directionalLightShadowsView =
+				m_registry.view<fr::ShadowMapComponent, fr::LightComponent::DirectionalDeferredMarker>();
+			for (auto entity : directionalLightShadowsView)
+			{
+				m_registry.emplace_or_replace<DirtyMarker<fr::ShadowMapComponent>>(entity);
+			}
+		}
+	}
+
+
 	void EntityManager::ConfigureRegistry()
 	{
 		{
 			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
 
-			// TODO: Add event listeners here...
+			m_registry.on_construct<DirtyMarker<fr::BoundsComponent>>().connect<&fr::EntityManager::OnBoundsDirty>(*this);
 		}
 	}
 
@@ -466,7 +492,6 @@ namespace fr
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
 
 			auto sceneBoundsEntityView = m_registry.view<fr::BoundsComponent, fr::BoundsComponent::SceneBoundsMarker>();
-
 			bool foundSceneBoundsEntity = false;
 			for (entt::entity entity : sceneBoundsEntityView)
 			{
@@ -522,17 +547,6 @@ namespace fr
 		if (sceneBoundsChanged)
 		{
 			EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(sceneBoundsEntity);
-
-
-
-			// ECS_CONVERSION TEMP HAX!!!!!!!!!!!!!!!!!!!
-			// -> TODO: Write a system to listen for a dirty marker being placed, and trigger this automatically
-			auto directionalLightShadowsView = 
-				m_registry.view<fr::ShadowMapComponent, fr::LightComponent::DirectionalDeferredMarker>();
-			for (auto entity : directionalLightShadowsView)
-			{
-				fr::ShadowMapComponent::MarkDirty(*this, entity);
-			}
 		}
 	}
 
@@ -575,6 +589,8 @@ namespace fr
 
 	void EntityManager::UpdateLightsAndShadows()
 	{
+		fr::BoundsComponent const* sceneBounds = GetSceneBounds();
+
 		// Add dirty markers to lights and shadows so the render data will be updated
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
@@ -625,12 +641,23 @@ namespace fr
 			auto shadowMapComponentsView = m_registry.view<fr::ShadowMapComponent>();
 			for (auto entity : shadowMapComponentsView)
 			{
-				fr::ShadowMapComponent& shadowMapComponent = shadowMapComponentsView.get<fr::ShadowMapComponent>(entity);
+				const bool force = m_registry.any_of<DirtyMarker<fr::ShadowMapComponent>>(entity);
 
-				if (shadowMapComponent.GetShadowMap().IsDirty())
+				fr::TransformComponent const& lightTransformCmpt = 
+					*GetFirstInHierarchyAboveInternal<fr::TransformComponent>(entity);
+
+				fr::ShadowMapComponent& shadowMapCmpt = shadowMapComponentsView.get<fr::ShadowMapComponent>(entity);
+				
+				fr::CameraComponent& shadowCamCmpt = *GetFirstInChildrenInternal<fr::CameraComponent>(entity);
+
+				if (fr::ShadowMapComponent::Update(
+					lightTransformCmpt, 
+					shadowMapCmpt,
+					shadowCamCmpt,
+					sceneBounds,
+					force))
 				{
 					m_registry.emplace_or_replace<DirtyMarker<fr::ShadowMapComponent>>(entity);
-					shadowMapComponent.GetShadowMap().MarkClean();
 				}
 			}
 		}

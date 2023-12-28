@@ -7,23 +7,31 @@
 
 namespace fr
 {
+	class CameraComponent;
 	class EntityManager;
 
 
 	class ShadowMapComponent
 	{
 	public:
+		// Note: May trigger a .Recompute() of the entity's owning Transform
 		static ShadowMapComponent& AttachShadowMapComponent(
 			EntityManager&, entt::entity, char const* name, fr::Light::LightType);
 
-		static gr::Camera::Config GenerateShadowCameraConfig(
-			fr::EntityManager&, entt::entity shadowMapEntity, ShadowMapComponent const&);
-
 	public:
+		static gr::Camera::Config GenerateShadowCameraConfig(
+			fr::Transform const&, ShadowMap const&, fr::BoundsComponent const*);
+
 		static gr::ShadowMap::RenderData CreateRenderData(
 			fr::NameComponent const& nameCmpt, fr::ShadowMapComponent const&);
 
-		static void MarkDirty(EntityManager&, entt::entity shadowMapEntity);
+
+		static bool Update( // Returns true if modified (or forced to modify)
+			fr::TransformComponent const& lightTransformCmpt,
+			fr::ShadowMapComponent&,
+			fr::CameraComponent&,
+			fr::BoundsComponent const* sceneWorldBounds, // Optional
+			bool force); 
 
 
 	private: // Use the static creation factories

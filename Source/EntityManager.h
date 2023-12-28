@@ -109,6 +109,9 @@ namespace fr
 		template<typename T>
 		T* GetFirstInChildrenInternal(entt::entity, entt::entity& childEntityOut);
 
+		template<typename T>
+		T* GetFirstInChildrenInternal(entt::entity);
+
 
 	private: // EventListener interface:
 		void HandleEvents() override;
@@ -116,6 +119,8 @@ namespace fr
 
 	private: // Configure event listeners etc
 		void ConfigureRegistry();
+
+		void OnBoundsDirty();
 
 
 	private: // Systems:
@@ -410,5 +415,13 @@ namespace fr
 		} while (current != firstChild);
 
 		return nullptr;
+	}
+
+
+	template<typename T>
+	T* EntityManager::GetFirstInChildrenInternal(entt::entity entity)
+	{
+		entt::entity dummy = entt::null;
+		return GetFirstInChildrenInternal<T>(entity, dummy);
 	}
 }

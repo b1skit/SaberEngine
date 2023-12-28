@@ -57,7 +57,7 @@ namespace gr
 		, m_hasDirectionalLight(false)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
-		m_directionalShadowStage = re::RenderStage::CreateGraphicsStage("Keylight shadow", gfxStageParams);
+		m_directionalShadowStage = re::RenderStage::CreateGraphicsStage("Directional shadow", gfxStageParams);
 
 		m_directionalShadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
 	}

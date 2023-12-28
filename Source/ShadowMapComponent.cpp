@@ -17,7 +17,7 @@
 namespace
 {
 	gr::Camera::Config ComputeDirectionalShadowCameraConfigFromSceneBounds(
-		fr::Transform& lightTransform, fr::BoundsComponent const& sceneWorldBounds)
+		fr::Transform const& lightTransform, fr::BoundsComponent const& sceneWorldBounds)
 	{
 		fr::BoundsComponent const& transformedBounds = sceneWorldBounds.GetTransformedAABBBounds(
 			glm::inverse(lightTransform.GetGlobalMatrix()));
@@ -62,9 +62,6 @@ namespace fr
 		gr::RenderDataComponent const& sharedRenderDataCmpt = 
 			gr::RenderDataComponent::AttachSharedRenderDataComponent(em, shadowMapEntity, *owningRenderDataCmpt);
 
-		SEAssert("A shadow map requires a TransformComponent",
-			em.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
-
 		// ShadowMap component:
 		glm::uvec2 widthHeight{0, 0};
 		switch (lightType)
@@ -103,25 +100,29 @@ namespace fr
 			sharedRenderDataCmpt.GetTransformID(),
 			widthHeight);
 
-		// Mark our new ShadowMapComponent as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::ShadowMapComponent>>(shadowMapEntity);
+		fr::TransformComponent* owningTransform = em.GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
+		SEAssert("A shadow map requires a TransformComponent", owningTransform != nullptr);
+
+		// We need to recompute the Transform, as it's likely dirty during scene construction
+		owningTransform->GetTransform().Recompute();
 
 		// Attach a shadow map render camera:
 		fr::CameraComponent::AttachCameraConcept(
 			em,
 			shadowMapEntity,
 			std::format("{}_ShadowCam", name).c_str(),
-			GenerateShadowCameraConfig(em, shadowMapEntity, shadowMapComponent));
+			GenerateShadowCameraConfig(owningTransform->GetTransform(), shadowMapComponent.GetShadowMap(), nullptr));
+
+		// Finally, mark our new ShadowMapComponent as dirty:
+		em.EmplaceComponent<DirtyMarker<fr::ShadowMapComponent>>(shadowMapEntity);
 
 		return shadowMapComponent;
 	}
 
 
 	gr::Camera::Config ShadowMapComponent::GenerateShadowCameraConfig(
-		fr::EntityManager& em, entt::entity shadowMapEntity, ShadowMapComponent const& shadowMapCmpt)
+		fr::Transform const& lightTransform, ShadowMap const& shadowMap, fr::BoundsComponent const* sceneWorldBounds)
 	{
-		fr::ShadowMap const& shadowMap = shadowMapCmpt.GetShadowMap();
-
 		gr::Camera::Config shadowCamConfig{};
 
 		switch (shadowMap.GetShadowMapType())
@@ -139,29 +140,16 @@ namespace fr
 		break;
 		case fr::ShadowMap::ShadowType::Orthographic:
 		{
-			// ECS_CONVERSION: TODO: CLEAN THIS UP!!!!!!!!!!!!!!!!
-			// -> THIS IS A HOT MESS WITH SIDE EFFECTS (e.g. we're accessing the Transform to get the global matrix,
-			// which could cause a recomputation)
-			// 
-			// Need to be really careful with threading here: We're getting bounds and transforms, but they could (eventually)
-			// be updated on other threads when we're updating lights/shadows on another? 
-			//	-> LEAVE COMMENTS IN EntityManager once this is all working...
-			
-			fr::TransformComponent* transformComponent =
-				em.GetFirstInHierarchyAbove<fr::TransformComponent>(shadowMapEntity);
-			SEAssert("Cannot find TransformComponent", transformComponent != nullptr);
-
-			// Update shadow cam bounds:
-			fr::BoundsComponent const* sceneWorldBounds = em.GetSceneBounds();
+			// Note: We use a zeroed-out bounds as a fallback if the sceneWorldBounds hasn't been created yet
 			if (sceneWorldBounds)
 			{
 				shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
-					transformComponent->GetTransform(), *sceneWorldBounds);
+					lightTransform, *sceneWorldBounds);
 			}
 			else
 			{
 				shadowCamConfig = ComputeDirectionalShadowCameraConfigFromSceneBounds(
-					transformComponent->GetTransform(), fr::BoundsComponent::Zero());
+					lightTransform, fr::BoundsComponent::Zero());
 			}
 		}
 		break;
@@ -197,21 +185,28 @@ namespace fr
 	}
 
 
-	void ShadowMapComponent::MarkDirty(EntityManager& em, entt::entity shadowMapEntity)
+	bool ShadowMapComponent::Update(
+		fr::TransformComponent const& lightTransformCmpt, 
+		fr::ShadowMapComponent& shadowMapCmpt, 
+		fr::CameraComponent& shadowCamCmpt, 
+		fr::BoundsComponent const* sceneWorldBounds,
+		bool force)
 	{
-		em.TryEmplaceComponent<DirtyMarker<fr::ShadowMapComponent>>(shadowMapEntity);
+		bool didModify = force;
+		if (shadowMapCmpt.GetShadowMap().IsDirty() || force)
+		{
+			shadowCamCmpt.GetCameraForModification().SetCameraConfig(
+				GenerateShadowCameraConfig(
+					lightTransformCmpt.GetTransform(), 
+					shadowMapCmpt.GetShadowMap(), 
+					sceneWorldBounds));
 
-		entt::entity cameraEntity = entt::null;
-		fr::CameraComponent* shadowCamCmpt = 
-			em.GetFirstInChildren<fr::CameraComponent>(shadowMapEntity, cameraEntity);
-		SEAssert("Could not find shadow camera", shadowCamCmpt);
+			shadowMapCmpt.GetShadowMap().MarkClean();
 
-
-		// ECS_CONVERSION: Feels like this should be part of an "Update" function: "If dirty, SetCameraConfig"
-		fr::ShadowMapComponent const& shadowMapCmpt = em.GetComponent<fr::ShadowMapComponent>(shadowMapEntity);
-		shadowCamCmpt->GetCameraForModification().SetCameraConfig(GenerateShadowCameraConfig(em, shadowMapEntity, shadowMapCmpt));
-
-		fr::CameraComponent::MarkDirty(em, cameraEntity);
+			didModify = true;
+		}
+		
+		return didModify;
 	}
 
 
