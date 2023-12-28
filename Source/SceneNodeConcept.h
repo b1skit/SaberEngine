@@ -2,13 +2,11 @@
 #pragma once
 
 
-namespace gr
-{
-	class Transform;
-}
-
 namespace fr
 {
+	class Transform;
+
+
 	// A scene node is the foundational concept of anything representable in a scene: It has a Transform, and a Name
 	class SceneNode
 	{
