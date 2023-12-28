@@ -124,11 +124,12 @@ namespace fr
 
 
 	private: // Systems:
-		void UpdatePlayerObject(double stepTimeMs);
+		void UpdateCameraController(double stepTimeMs);
 		void UpdateTransforms();
 		void UpdateSceneBounds();
 		void UpdateLightsAndShadows();
 		void UpdateCameras();
+		// ECS_CONVERSION: These should call a static Update() function and add dirty markers (ala ShadowMap updates)
 
 
 	private:

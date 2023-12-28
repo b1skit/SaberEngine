@@ -59,26 +59,21 @@ namespace fr
 
 
 	void CameraControlComponent::Update(
-		CameraControlComponent& playerObject, 
-		fr::TransformComponent& playerTransformCmpt,
-		fr::CameraComponent const& cameraCmpt,
-		fr::TransformComponent& cameraTransformCmpt,
+		CameraControlComponent& camController, 
+		fr::Transform& playerTransform,
+		fr::Camera const& camera,
+		fr::Transform& cameraTransform,
 		double stepTimeMs)
 	{
-		fr::Transform& playerTransform = playerTransformCmpt.GetTransform();
-
-		fr::Camera const& camera = cameraCmpt.GetCamera();
-		fr::Transform& cameraTransform = cameraTransformCmpt.GetTransform();
-
 		SEAssert("Camera transform must be parented to the player transform", 
 			cameraTransform.GetParent() == &playerTransform);
 
 		// Reset the cam back to the saved position
 		if (en::InputManager::GetMouseInputState(en::InputMouse_Left))
 		{
-			playerTransform.SetLocalPosition(playerObject.m_savedPosition);
-			cameraTransform.SetLocalRotation(glm::vec3(playerObject.m_savedEulerRotation.x, 0.f, 0.f));
-			playerTransform.SetLocalRotation(glm::vec3(0.f, playerObject.m_savedEulerRotation.y, 0.f));
+			playerTransform.SetLocalPosition(camController.m_savedPosition);
+			cameraTransform.SetLocalRotation(glm::vec3(camController.m_savedEulerRotation.x, 0.f, 0.f));
+			playerTransform.SetLocalRotation(glm::vec3(0.f, camController.m_savedEulerRotation.y, 0.f));
 
 			return;
 		}
@@ -143,12 +138,12 @@ namespace fr
 			float sprintModifier = 1.0f;
 			if (en::InputManager::GetKeyboardInputState(en::InputButton_Sprint))
 			{
-				sprintModifier = playerObject.m_sprintSpeedModifier;
+				sprintModifier = camController.m_sprintSpeedModifier;
 			}
 
 			// Note: Velocity = (delta displacement) / (delta time)
 			// delta displacement = velocity * delta time
-			direction *= playerObject.m_movementSpeed * sprintModifier * static_cast<float>(stepTimeMs);
+			direction *= camController.m_movementSpeed * sprintModifier * static_cast<float>(stepTimeMs);
 
 			playerTransform.TranslateLocal(direction);
 		}
@@ -157,8 +152,8 @@ namespace fr
 		// Save the current position/rotation:
 		if (en::InputManager::GetMouseInputState(en::InputMouse_Right))
 		{
-			playerObject.m_savedPosition = playerTransform.GetGlobalPosition();
-			playerObject.m_savedEulerRotation = glm::vec3(
+			camController.m_savedPosition = playerTransform.GetGlobalPosition();
+			camController.m_savedEulerRotation = glm::vec3(
 				cameraTransform.GetLocalEulerXYZRotationRadians().x,
 				playerTransform.GetGlobalEulerXYZRotationRadians().y,
 				0);

@@ -21,9 +21,9 @@ namespace fr
 
 		static void Update(
 			CameraControlComponent&, 
-			fr::TransformComponent& playerTransform, 
-			fr::CameraComponent const&, 
-			fr::TransformComponent& cameraTransform, 
+			fr::Transform& playerTransform, 
+			fr::Camera const&, 
+			fr::Transform& cameraTransform, 
 			double stepTimeMs);
 
 

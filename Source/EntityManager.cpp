@@ -145,7 +145,7 @@ namespace fr
 		// Handle interaction (player input, physics, animation, etc)
 		if (m_processInput)
 		{
-			UpdatePlayerObject(stepTimeMs);
+			UpdateCameraController(stepTimeMs);
 		}
 
 		// ECS_CONVERSION TODO: Clean this up
@@ -439,7 +439,7 @@ namespace fr
 	}
 
 
-	void EntityManager::UpdatePlayerObject(double stepTimeMs)
+	void EntityManager::UpdateCameraController(double stepTimeMs)
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
@@ -478,7 +478,11 @@ namespace fr
 			SEAssert("Failed to find a player object or transform", playerObject && playerTransform);
 
 			fr::CameraControlComponent::Update(
-				*playerObject, *playerTransform, *cameraComponent, *cameraTransform, stepTimeMs);
+				*playerObject,
+				playerTransform->GetTransform(),
+				cameraComponent->GetCamera(), 
+				cameraTransform->GetTransform(),
+				stepTimeMs);
 		}
 	}
 
