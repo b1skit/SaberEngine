@@ -14,7 +14,7 @@ namespace re
 namespace gr
 {
 	class GraphicsSystem;
-	class RenderCommandBuffer;
+	class CommandBuffer;
 
 	class GraphicsSystemManager
 	{

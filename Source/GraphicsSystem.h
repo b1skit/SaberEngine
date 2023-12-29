@@ -2,7 +2,7 @@
 #pragma once
 #include "NamedObject.h"
 #include "RenderStage.h"
-#include "RenderCommand.h"
+#include "CommandQueue.h"
 #include "RenderPipeline.h"
 #include "TextureTarget.h"
 

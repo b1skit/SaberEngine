@@ -269,7 +269,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="PipelineState.cpp" />
     <ClCompile Include="PipelineState_DX12.cpp" />
     <ClCompile Include="RelationshipComponent.cpp" />
-    <ClCompile Include="RenderCommand.cpp" />
+    <ClCompile Include="CommandQueue.cpp" />
     <ClCompile Include="RenderDataManager.cpp" />
     <ClCompile Include="RenderDataComponent.cpp" />
     <ClCompile Include="RenderSystem.cpp" />
@@ -362,7 +362,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="MaterialComponent.h" />
     <ClInclude Include="MeshPrimitiveComponent.h" />
     <ClInclude Include="RelationshipComponent.h" />
-    <ClInclude Include="RenderCommand.h" />
+    <ClInclude Include="CommandQueue.h" />
     <ClInclude Include="CommandList_DX12.h" />
     <ClInclude Include="CommandQueue_DX12.h" />
     <ClInclude Include="Context_DX12.h" />

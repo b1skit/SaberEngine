@@ -7,7 +7,7 @@
 #include "EngineThread.h"
 #include "EventListener.h"
 #include "NBufferedVector.h"
-#include "RenderCommand.h"
+#include "CommandQueue.h"
 #include "RenderPipeline.h"
 #include "RenderSystem.h"
 #include "TextureTarget.h"
@@ -77,7 +77,8 @@ namespace re
 		void EnqueueRenderCommand(Args&&... args);
 
 	private:
-		gr::RenderCommandManager m_renderCommandManager;
+		static constexpr size_t k_renderCommandBufferSize = 16 * 1024 * 1024;
+		en::CommandManager m_renderCommandManager;
 
 
 	public: // Deferred API-object creation queues

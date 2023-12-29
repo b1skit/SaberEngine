@@ -3,20 +3,20 @@
 #include "Assert.h"
 
 
-namespace gr
+namespace en
 {
-	class RenderCommandManager;
+	class CommandManager;
 
 
-	class RenderCommandBuffer
+	class CommandBuffer
 	{
 	public:
-		RenderCommandBuffer(size_t allocationByteSize);
-		~RenderCommandBuffer();
+		CommandBuffer(size_t allocationByteSize);
+		~CommandBuffer();
 
 
 	protected:
-		friend class RenderCommandManager;
+		friend class CommandManager;
 
 		template<typename T, typename... Args>
 		void Enqueue(Args&&... args);
@@ -30,7 +30,7 @@ namespace gr
 		struct CommandMetadata
 		{
 			void* m_commandData;
-			void(*Execute)(void*) = nullptr;
+			void (*Execute)(void*) = nullptr;
 			void (*Destroy)(void*) = nullptr;
 		};
 
@@ -51,16 +51,16 @@ namespace gr
 
 
 	private: 
-		RenderCommandBuffer() = delete;
-		RenderCommandBuffer(RenderCommandBuffer const& rhs) = delete;
-		RenderCommandBuffer(RenderCommandBuffer&& rhs) noexcept = delete;
-		RenderCommandBuffer& operator=(RenderCommandBuffer const& rhs) = delete;
-		RenderCommandBuffer& operator=(RenderCommandBuffer&& rhs) = delete;
+		CommandBuffer() = delete;
+		CommandBuffer(CommandBuffer const& rhs) = delete;
+		CommandBuffer(CommandBuffer&& rhs) noexcept = delete;
+		CommandBuffer& operator=(CommandBuffer const& rhs) = delete;
+		CommandBuffer& operator=(CommandBuffer&& rhs) = delete;
 	};
 
 
 	template<typename T, typename... Args>
-	void RenderCommandBuffer::Enqueue(Args&&... args)
+	void CommandBuffer::Enqueue(Args&&... args)
 	{
 		SEAssert("No buffer allocation exists", m_buffer != nullptr);
 
@@ -74,7 +74,7 @@ namespace gr
 				reinterpret_cast<PackedCommand<T>*>(static_cast<uint8_t*>(m_buffer) + m_baseIdx);
 			m_baseIdx += byteOffset;
 
-			SEAssert("Render commands have overflowed. Consider increasing the allocation size", 
+			SEAssert("Commands have overflowed. Consider increasing the allocation size", 
 				m_baseIdx < m_bufferNumBytes);
 
 			// Place our data:
@@ -94,10 +94,10 @@ namespace gr
 	/******************************************************************************************************************/
 
 
-	class RenderCommandManager
+	class CommandManager
 	{
 	public:
-		RenderCommandManager();
+		CommandManager(size_t bufferAllocationSize);
 
 		template<typename T, typename... Args>
 		void Enqueue(Args&&... args);
@@ -116,17 +116,16 @@ namespace gr
 
 
 	private:
-		static constexpr uint8_t k_numBuffers = 2; // Double-buffer our RenderCommandBuffers
-		static constexpr size_t k_bufferAllocationSize = 16 * 1024 * 1024;
+		static constexpr uint8_t k_numBuffers = 2; // Double-buffer our CommandBuffers
 
-		std::array<std::unique_ptr<RenderCommandBuffer>, k_numBuffers> m_renderCommandBuffers;
-		mutable std::shared_mutex m_renderCommandBuffersMutex;
+		std::array<std::unique_ptr<CommandBuffer>, k_numBuffers> m_commandBuffers;
+		mutable std::shared_mutex m_commandBuffersMutex;
 	};
 
 
 	template<typename T, typename... Args>
-	inline void RenderCommandManager::Enqueue(Args&&... args)
+	inline void CommandManager::Enqueue(Args&&... args)
 	{
-		m_renderCommandBuffers[GetWriteIdx()]->Enqueue<T>(std::forward<Args>(args)...);
+		m_commandBuffers[GetWriteIdx()]->Enqueue<T>(std::forward<Args>(args)...);
 	}
 }

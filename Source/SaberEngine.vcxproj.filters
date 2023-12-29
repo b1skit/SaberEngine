@@ -467,9 +467,6 @@
     <ClCompile Include="MeshConcept.cpp">
       <Filter>Source Files\fr\Concepts</Filter>
     </ClCompile>
-    <ClCompile Include="RenderCommand.cpp">
-      <Filter>Source Files\gr</Filter>
-    </ClCompile>
     <ClCompile Include="Batch.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
@@ -493,6 +490,9 @@
     </ClCompile>
     <ClCompile Include="CameraRenderData.cpp">
       <Filter>Source Files\gr</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandQueue.cpp">
+      <Filter>Source Files\en</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -868,9 +868,6 @@
     <ClInclude Include="ThreadProtector.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
-    <ClInclude Include="RenderCommand.h">
-      <Filter>Header Files\gr</Filter>
-    </ClInclude>
     <ClInclude Include="MarkerComponents.h">
       <Filter>Header Files\fr\Components</Filter>
     </ClInclude>
@@ -942,6 +939,9 @@
     </ClInclude>
     <ClInclude Include="CameraControlComponent.h">
       <Filter>Header Files\fr\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandQueue.h">
+      <Filter>Header Files\en</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

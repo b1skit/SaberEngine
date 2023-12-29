@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem.h"
-#include "RenderCommand.h"
+#include "CommandQueue.h"
 #include "RenderSystem.h"
 #include "ParameterBlock.h"
 

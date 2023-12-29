@@ -64,6 +64,7 @@ namespace re
 
 	RenderManager::RenderManager()
 		: m_renderFrameNum(0)
+		, m_renderCommandManager(k_renderCommandBufferSize)
 		, m_imguiMenuVisible(false)
 		, m_newShaders(util::NBufferedVector<std::shared_ptr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newVertexStreams(util::NBufferedVector<std::shared_ptr<re::VertexStream>>::BufferSize::Two, k_newObjectReserveAmount)
