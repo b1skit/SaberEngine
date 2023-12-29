@@ -564,7 +564,7 @@ namespace gr
 		m_ambientStage->SetTextureTargetSet(ambientTargetSet);
 
 		// We'll be creating the data we need to render the scene's ambient light:
-		const bool ambientIsValid = m_BRDF_integrationMap && m_IEMTex && m_PMREMTex; // ECS_CONVERSION: REMOVE THIS LOGIC: THIS SHOULD ALWAYS BE TRUE!!!
+		const bool ambientIsValid = m_BRDF_integrationMap && m_IEMTex && m_PMREMTex;
 
 		re::PipelineState ambientStageParams;
 

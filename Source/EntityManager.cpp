@@ -146,14 +146,11 @@ namespace fr
 		{
 			UpdateCameraController(stepTimeMs);
 		}
-
-		// ECS_CONVERSION TODO: Clean this up
 		
 		// Update the scene state:
-		UpdateTransforms(); // <- TODO!!! Transforms should be accessed via const ONLY from this point
-		UpdateSceneBounds(); // TODO: This is expensive, we should only do this on demand?
-		UpdateLightsAndShadows(); // <- DANGER!!! Could potentially modify a (point light) Transform, and its shadow cam's far plane. BUT also depends on the scenebounds being valid
-
+		UpdateTransforms();
+		UpdateSceneBounds();
+		UpdateLightsAndShadows();
 		UpdateCameras();
 	}
 
@@ -233,20 +230,11 @@ namespace fr
 				}
 			}
 
-			// Bounds:
-			EnqueueRenderUpdateHelper<fr::BoundsComponent, gr::Bounds::RenderData>();
-
-			// MeshPrimitives:
-			EnqueueRenderUpdateHelper<fr::MeshPrimitiveComponent, gr::MeshPrimitive::RenderData>();
-
-			// Materials:
-			EnqueueRenderUpdateHelper<fr::MaterialComponent, gr::Material::RenderData>();
-
-			// Cameras:
+			// Set the main camera:
 			auto newMainCameraView = m_registry.view<
-				fr::CameraComponent, 
-				fr::CameraComponent::MainCameraMarker, 
-				fr::CameraComponent::NewMainCameraMarker, 
+				fr::CameraComponent,
+				fr::CameraComponent::MainCameraMarker,
+				fr::CameraComponent::NewMainCameraMarker,
 				gr::RenderDataComponent>();
 			for (auto entity : newMainCameraView)
 			{
@@ -259,12 +247,17 @@ namespace fr
 				m_registry.erase<fr::CameraComponent::NewMainCameraMarker>(entity);
 			}
 
+			EnqueueRenderUpdateHelper<fr::BoundsComponent, gr::Bounds::RenderData>();
+			EnqueueRenderUpdateHelper<fr::MeshPrimitiveComponent, gr::MeshPrimitive::RenderData>();
+			EnqueueRenderUpdateHelper<fr::MaterialComponent, gr::Material::RenderData>();
 			EnqueueRenderUpdateHelper<fr::CameraComponent, gr::Camera::RenderData>();
 
 			// Update dirty render data components that touch the GraphicsSystems directly:
 
 			//ECS_CONVERSION: MOVE LIGHTS/SHADOWS DIRECTLY TO THE RENDER DATA MANAGER
-			// -> Need to have different renderdata types -> Allow GS's to iterate specific light types
+			// -> Need to have different renderdata types
+			//		-> Allow GS's to iterate specific light types
+			//		-> OR: Register the RenderObjectIDs with the GS's, and the data with the RenderDataManager ?
 
 			// Lights:
 			auto lightComponentsView = m_registry.view<
