@@ -12,7 +12,7 @@
 
 namespace
 {
-	float ComputePointLightMeshRadiusScaleFromIntensity(float luminousPower, float emitterRadius, float intensityCutoff)
+	float ComputePointLightRadiusFromIntensity(float luminousPower, float emitterRadius, float intensityCutoff)
 	{
 		// As per equation 15 (p.29) of "Moving Frostbite to Physically Based Rendering 3.0", Lagarde et al, we can 
 		// convert a point light's luminous power I (lm) (a.k.a luminous flux: The *perceived* power of a light, with 
@@ -47,29 +47,6 @@ namespace
 
 namespace fr
 {
-	void Light::ConfigurePointLightMeshScale(fr::Light& light, fr::Transform& transform, fr::Camera* shadowCam)
-	{
-		SEAssert("Light is not a point light", light.GetType() == fr::Light::LightType::Point_Deferred);
-
-		fr::Light::TypeProperties& lightProperties = 
-			light.GetLightTypePropertiesForModification(fr::Light::LightType::Point_Deferred);
-
-		const float newDeferredMeshRadius = ComputePointLightMeshRadiusScaleFromIntensity(
-			lightProperties.m_point.m_colorIntensity.a,
-			lightProperties.m_point.m_emitterRadius,
-			lightProperties.m_point.m_intensityCuttoff);
-
-		// Scale the owning transform such that a sphere created with a radius of 1 will be the correct size
-		transform.SetLocalScale(glm::vec3(newDeferredMeshRadius, newDeferredMeshRadius, newDeferredMeshRadius));
-
-		// Update the shadow camera far plane distance using the mesh radius
-		if (shadowCam)
-		{
-			shadowCam->SetNearFar({ 0.1f, newDeferredMeshRadius });
-		}
-	}
-
-
 	Light::TypeProperties::TypeProperties()
 	{
 		memset(this, 0, sizeof(TypeProperties));
@@ -89,12 +66,11 @@ namespace fr
 		{
 		case Directional_Deferred:
 		{
-			m_typeProperties.m_directional.m_colorIntensity = colorIntensity;
+			// 
 		}
 		break;
 		case Point_Deferred:
 		{
-			m_typeProperties.m_point.m_colorIntensity = colorIntensity;
 			m_typeProperties.m_point.m_emitterRadius = 0.1f;
 			m_typeProperties.m_point.m_intensityCuttoff = 0.05f;
 		}
@@ -106,6 +82,8 @@ namespace fr
 		break;
 		default: SEAssertF("Invalid light type");
 		}
+
+		SetColorIntensity(colorIntensity);
 	}
 
 
@@ -116,13 +94,6 @@ namespace fr
 
 		m_typeProperties.m_type = LightType::AmbientIBL_Deferred;
 		m_typeProperties.m_ambient.m_IBLTex = iblTex;
-	}
-
-
-	void Light::Destroy()
-	{
-		memset(&m_typeProperties, 0, sizeof(m_typeProperties)); // Just zero everything out		
-		m_isDirty = true;
 	}
 
 
@@ -150,6 +121,44 @@ namespace fr
 		}
 		// This shouldn't ever happen, but we need to return something
 		return m_typeProperties.m_point.m_colorIntensity;
+	}
+
+
+	bool Light::Update()
+	{
+		if (!IsDirty())
+		{
+			return false;
+		}
+
+		switch (m_typeProperties.m_type)
+		{
+		case LightType::AmbientIBL_Deferred:
+		{
+			//
+		}
+		break;
+		case LightType::Directional_Deferred:
+		{
+			//
+		}
+		break;
+		case LightType::Point_Deferred:
+		{
+			// Recompute the spherical radius
+			m_typeProperties.m_point.m_sphericalRadius = ComputePointLightRadiusFromIntensity(
+				m_typeProperties.m_point.m_colorIntensity.a,
+				m_typeProperties.m_point.m_emitterRadius,
+				m_typeProperties.m_point.m_intensityCuttoff);
+		}
+		break;
+		default:
+			SEAssertF("Invalid light type");
+		}
+
+		MarkClean();
+
+		return true;
 	}
 
 

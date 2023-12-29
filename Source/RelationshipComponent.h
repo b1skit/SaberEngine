@@ -15,7 +15,8 @@ namespace fr
 
 		void SetParent(EntityManager&, entt::entity);
 		entt::entity GetParent() const;
-		
+		bool HasParent() const;
+
 		entt::entity GetNext() const;
 		entt::entity GetPrev() const;
 
@@ -69,6 +70,12 @@ namespace fr
 			std::shared_lock<std::shared_mutex> readLock(m_relationshipMutex);
 			return m_parent;
 		}
+	}
+
+
+	inline bool Relationship::HasParent() const
+	{
+		return m_parent != entt::null;
 	}
 
 

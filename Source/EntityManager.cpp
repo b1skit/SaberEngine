@@ -141,7 +141,6 @@ namespace fr
 	{
 		HandleEvents();
 
-
 		// Handle interaction (player input, physics, animation, etc)
 		if (m_processInput)
 		{
@@ -153,7 +152,7 @@ namespace fr
 		// Update the scene state:
 		UpdateTransforms(); // <- TODO!!! Transforms should be accessed via const ONLY from this point
 		UpdateSceneBounds(); // TODO: This is expensive, we should only do this on demand?
-		UpdateLightsAndShadows(); // <- DANGER!!! Could potentially modify a (point light) Transform, and its shadow cam's far plane
+		UpdateLightsAndShadows(); // <- DANGER!!! Could potentially modify a (point light) Transform, and its shadow cam's far plane. BUT also depends on the scenebounds being valid
 
 		UpdateCameras();
 	}
@@ -600,66 +599,71 @@ namespace fr
 			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
 
 			// Lights:
-			auto lightComponentsView = m_registry.view<fr::LightComponent>();
+			auto lightComponentsView = m_registry.view<fr::LightComponent, fr::Relationship>();
 			for (auto entity : lightComponentsView)
 			{
 				fr::LightComponent& lightComponent = lightComponentsView.get<fr::LightComponent>(entity);
+				fr::Relationship const& relationship = lightComponentsView.get<fr::Relationship>(entity);
 
-				// Add a dirty marker to any dirty lights:
-				fr::Light& light = lightComponent.GetLight();
-				if (light.IsDirty())
+				fr::Camera* shadowCam = nullptr;
+				fr::Transform* lightTransform = nullptr;
+
+				if (relationship.HasParent()) // Lights use the Transform of their Parent
 				{
-					// Deferred point lights: We must update the mesh scale and any shadow camera near/far values
-					if (light.GetType() == fr::Light::LightType::Point_Deferred)
-					{					
-						fr::Relationship const& relationship = m_registry.get<fr::Relationship>(entity);
+					fr::TransformComponent* transformCmpt =
+						GetFirstInHierarchyAboveInternal<fr::TransformComponent>(relationship.GetParent());
 
-						fr::TransformComponent& transformCmpt =
-							*GetFirstInHierarchyAboveInternal<fr::TransformComponent>(relationship.GetParent());
+					lightTransform = &transformCmpt->GetTransform();
 
-						fr::Camera* shadowCam = nullptr;
-						if (m_registry.any_of<fr::LightComponent::HasShadowMarker>(entity))
-						{
-							entt::entity shadowMapChild = entt::null;
-							fr::ShadowMapComponent* shadowMapCmpt = 
-								GetFirstInChildrenInternal<fr::ShadowMapComponent>(entity, shadowMapChild);
-							SEAssert("Failed to find shadow map component", shadowMapCmpt);
+					if (m_registry.any_of<fr::LightComponent::HasShadowMarker>(entity))
+					{
+						entt::entity shadowMapChild = entt::null;
+						fr::ShadowMapComponent* shadowMapCmpt =
+							GetFirstInChildrenInternal<fr::ShadowMapComponent>(entity, shadowMapChild);
+						SEAssert("Failed to find shadow map component", shadowMapCmpt);
 
-							entt::entity shadowCamChild = entt::null;
-							fr::CameraComponent* shadowCamCmpt = 
-								GetFirstInChildrenInternal<fr::CameraComponent>(shadowMapChild, shadowCamChild);
-							SEAssert("Failed to find shadow camera", shadowCamCmpt);
+						fr::CameraComponent* shadowCamCmpt =
+							GetFirstInChildrenInternal<fr::CameraComponent>(shadowMapChild);
+						SEAssert("Failed to find shadow camera", shadowCamCmpt);
 
-							shadowCam = &shadowCamCmpt->GetCameraForModification();
-						}
-
-						fr::Light::ConfigurePointLightMeshScale(light, transformCmpt.GetTransform(), shadowCam);
+						shadowCam = &shadowCamCmpt->GetCameraForModification();
 					}
-
+				}
+				// Update: Attach a dirty marker if anything changed
+				if (fr::LightComponent::Update(lightComponent, lightTransform, shadowCam))
+				{
 					m_registry.emplace_or_replace<DirtyMarker<fr::LightComponent>>(entity);
-					lightComponent.GetLight().MarkClean();
 				}
 			}
 
 			// Shadows:
-			auto shadowMapComponentsView = m_registry.view<fr::ShadowMapComponent>();
+			auto shadowMapComponentsView = m_registry.view<fr::ShadowMapComponent, fr::Relationship>();
 			for (auto entity : shadowMapComponentsView)
 			{
-				const bool force = m_registry.any_of<DirtyMarker<fr::ShadowMapComponent>>(entity);
+				// Force an update if the ShadowMap is already marked as dirty, or its owning light is marked as dirty
+				bool force = m_registry.any_of<DirtyMarker<fr::ShadowMapComponent>>(entity);
+				if (!force)
+				{
+					fr::Relationship const& shadowRelationship = shadowMapComponentsView.get<fr::Relationship>(entity);
+					
+					entt::entity owningLightEntity = entt::null;
+					fr::LightComponent const* owningLight = GetFirstAndEntityInHierarchyAboveInternal<fr::LightComponent>(
+						shadowRelationship.GetParent(), owningLightEntity);
+					SEAssert("Failed to find owning light", owningLight && owningLightEntity != entt::null);
+
+					force |= m_registry.any_of<DirtyMarker<fr::LightComponent>>(owningLightEntity);
+				}
 
 				fr::TransformComponent const& lightTransformCmpt = 
 					*GetFirstInHierarchyAboveInternal<fr::TransformComponent>(entity);
 
 				fr::ShadowMapComponent& shadowMapCmpt = shadowMapComponentsView.get<fr::ShadowMapComponent>(entity);
-				
+				fr::LightComponent const& lightCmpt = *GetFirstInHierarchyAboveInternal<fr::LightComponent>(entity);
 				fr::CameraComponent& shadowCamCmpt = *GetFirstInChildrenInternal<fr::CameraComponent>(entity);
 
+				// Update: Attach a dirty marker if anything changed
 				if (fr::ShadowMapComponent::Update(
-					lightTransformCmpt, 
-					shadowMapCmpt,
-					shadowCamCmpt,
-					sceneBounds,
-					force))
+					shadowMapCmpt, lightTransformCmpt, lightCmpt, shadowCamCmpt, sceneBounds, force))
 				{
 					m_registry.emplace_or_replace<DirtyMarker<fr::ShadowMapComponent>>(entity);
 				}

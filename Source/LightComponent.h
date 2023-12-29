@@ -41,7 +41,10 @@ namespace fr
 		static LightComponent& AttachDeferredDirectionalLightConcept(
 			fr::EntityManager&, entt::entity, std::string const& name, glm::vec4 colorIntensity, bool hasShadow);
 
+	public:
 		static gr::Light::RenderData CreateRenderData(fr::NameComponent const&, fr::LightComponent const&);
+
+		static bool Update(fr::LightComponent&, fr::Transform* lightTransform, fr::Camera* shadowCam);
 
 
 	public:

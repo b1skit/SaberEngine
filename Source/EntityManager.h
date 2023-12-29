@@ -25,6 +25,14 @@ namespace fr
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
 
+	private: // Systems:
+		void UpdateCameraController(double stepTimeMs);
+		void UpdateTransforms();
+		void UpdateSceneBounds();
+		void UpdateLightsAndShadows();
+		void UpdateCameras();
+
+
 	private:
 		template<typename T, typename R>
 		void EnqueueRenderUpdateHelper();
@@ -35,6 +43,16 @@ namespace fr
 		fr::BoundsComponent const* GetSceneBounds() const;
 
 		void SetAsMainCamera(entt::entity);
+
+
+	private: // EventListener interface:
+		void HandleEvents() override;
+
+
+	private: // Configure event listeners etc
+		void ConfigureRegistry();
+
+		void OnBoundsDirty();
 
 
 	public: // EnTT wrappers:
@@ -111,25 +129,6 @@ namespace fr
 
 		template<typename T>
 		T* GetFirstInChildrenInternal(entt::entity);
-
-
-	private: // EventListener interface:
-		void HandleEvents() override;
-
-
-	private: // Configure event listeners etc
-		void ConfigureRegistry();
-
-		void OnBoundsDirty();
-
-
-	private: // Systems:
-		void UpdateCameraController(double stepTimeMs);
-		void UpdateTransforms();
-		void UpdateSceneBounds();
-		void UpdateLightsAndShadows();
-		void UpdateCameras();
-		// ECS_CONVERSION: These should call a static Update() function and add dirty markers (ala ShadowMap updates)
 
 
 	private:

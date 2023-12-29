@@ -76,7 +76,7 @@ namespace fr
 			fr::MeshPrimitiveComponent::AttachMeshPrimitiveConcept(em, lightEntity, pointLightMesh.get());
 
 		// RenderData:
-		// Point light's share the the RenderDataComponent created by the MeshPrimitive
+		// Deferred point light's share the the RenderDataComponent created by their MeshPrimitive sphere
 		gr::RenderDataComponent const& meshPrimRenderDataCmpt = 
 			em.GetComponent<gr::RenderDataComponent>(meshPrimitiveEntity);
 		gr::RenderDataComponent::AttachSharedRenderDataComponent(em, lightEntity, meshPrimRenderDataCmpt);
@@ -193,7 +193,7 @@ namespace fr
 	{
 		gr::Light::RenderData renderData(
 			nameCmpt.GetName().c_str(),
-			fr::Light::GetRenderDataLightType(lightCmpt.m_light.GetType()),
+			fr::Light::ConvertRenderDataLightType(lightCmpt.m_light.GetType()),
 			lightCmpt.GetLightID(),
 			lightCmpt.GetRenderDataID(),
 			lightCmpt.GetTransformID(),
@@ -235,6 +235,7 @@ namespace fr
 			renderData.m_typeProperties.m_point.m_colorIntensity = typeProperties.m_point.m_colorIntensity;
 			renderData.m_typeProperties.m_point.m_emitterRadius = typeProperties.m_point.m_emitterRadius;
 			renderData.m_typeProperties.m_point.m_intensityCuttoff = typeProperties.m_point.m_intensityCuttoff;
+			renderData.m_typeProperties.m_point.m_sphericalRadius = typeProperties.m_point.m_sphericalRadius;
 
 			renderData.m_diffuseEnabled = typeProperties.m_diffuseEnabled;
 			renderData.m_specularEnabled = typeProperties.m_specularEnabled;
@@ -244,6 +245,46 @@ namespace fr
 		}
 		
 		return renderData;
+	}
+
+
+	bool LightComponent::Update(fr::LightComponent& lightComponent, fr::Transform* lightTransform, fr::Camera* shadowCam)
+	{
+		fr::Light& light = lightComponent.GetLight();
+
+		bool didModify = light.Update();
+
+		if (didModify)
+		{
+			switch (light.GetType())
+			{
+			case fr::Light::LightType::AmbientIBL_Deferred:
+			{
+				//
+			}
+			break;
+			case fr::Light::LightType::Directional_Deferred:
+			{
+				//
+			}
+			break;
+			case fr::Light::LightType::Point_Deferred:
+			{
+				SEAssert("Point lights require a Transform", lightTransform);
+				SEAssert("Light is not a point light", light.GetType() == fr::Light::LightType::Point_Deferred);
+
+				fr::Light::TypeProperties& lightProperties =
+					light.GetLightTypePropertiesForModification(fr::Light::LightType::Point_Deferred);
+
+				// Scale the owning transform such that a sphere created with a radius of 1 will be the correct size
+				lightTransform->SetLocalScale(glm::vec3(lightProperties.m_point.m_sphericalRadius));
+			}
+			break;
+			default: SEAssertF("Invalid light type");
+			}
+		}
+
+		return didModify;
 	}
 
 

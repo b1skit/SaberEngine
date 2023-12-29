@@ -11,9 +11,6 @@ namespace re
 
 namespace gr
 {
-	class MeshPrimitive;
-
-
 	class Light
 	{
 	public:
@@ -47,6 +44,7 @@ namespace gr
 				struct
 				{
 					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
+
 					bool m_hasShadow;
 				} m_directional;
 				struct
@@ -54,6 +52,9 @@ namespace gr
 					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
 					float m_emitterRadius; // For non-singular attenuation function
 					float m_intensityCuttoff; // Intensity value at which we stop drawing the deferred mesh
+					
+					float m_sphericalRadius; // Derrived from m_colorIntensity, m_emitterRadius, m_intensityCuttoff
+
 					bool m_hasShadow;
 				} m_point;
 			} m_typeProperties;

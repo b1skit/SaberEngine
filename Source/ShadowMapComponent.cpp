@@ -111,7 +111,11 @@ namespace fr
 			em,
 			shadowMapEntity,
 			std::format("{}_ShadowCam", name).c_str(),
-			GenerateShadowCameraConfig(owningTransform->GetTransform(), shadowMapComponent.GetShadowMap(), nullptr));
+			GenerateShadowCameraConfig(
+				shadowMapComponent.GetShadowMap(), 
+				owningTransform->GetTransform(), 
+				owningLightComponent.GetLight(),
+				nullptr));
 
 		// Finally, mark our new ShadowMapComponent as dirty:
 		em.EmplaceComponent<DirtyMarker<fr::ShadowMapComponent>>(shadowMapEntity);
@@ -121,7 +125,10 @@ namespace fr
 
 
 	gr::Camera::Config ShadowMapComponent::GenerateShadowCameraConfig(
-		fr::Transform const& lightTransform, ShadowMap const& shadowMap, fr::BoundsComponent const* sceneWorldBounds)
+		ShadowMap const& shadowMap, 
+		fr::Transform const& lightTransform, 
+		fr::Light const& owningLight, 
+		fr::BoundsComponent const* sceneWorldBounds)
 	{
 		gr::Camera::Config shadowCamConfig{};
 
@@ -129,11 +136,17 @@ namespace fr
 		{
 		case fr::ShadowMap::ShadowType::CubeMap:
 		{
+			SEAssert("Unexpected light type", owningLight.GetType() == fr::Light::LightType::Point_Deferred);
+
 			shadowCamConfig.m_yFOV = static_cast<float>(std::numbers::pi) * 0.5f;
-			shadowCamConfig.m_near = 0.1f; // ECS_CONVERSION TODO: TEMP HAX: This should be computed in the GS from the point light radius!!!!!!!!!!
-			shadowCamConfig.m_far = 50.f; // ECS_CONVERSION TODO: TEMP HAX: This should be computed in the GS from the point light radius!!!!!!!!!!
 			shadowCamConfig.m_aspectRatio = 1.0f;
 			shadowCamConfig.m_projectionType = gr::Camera::Config::ProjectionType::PerspectiveCubemap;
+
+			constexpr float k_defaultShadowCamNear = 0.1f;
+			shadowCamConfig.m_near = k_defaultShadowCamNear;
+
+			shadowCamConfig.m_far = 
+				owningLight.GetLightTypeProperties(fr::Light::LightType::Point_Deferred).m_point.m_sphericalRadius;
 
 			// We ignore everything else for shadow map cameras
 		}
@@ -171,7 +184,7 @@ namespace fr
 			.m_renderDataID = shadowMapCmpt.GetRenderDataID(),
 			.m_transformID = shadowMapCmpt.GetTransformID(),
 
-			.m_lightType = fr::Light::GetRenderDataLightType(shadowMap.GetOwningLightType()),
+			.m_lightType = fr::Light::ConvertRenderDataLightType(shadowMap.GetOwningLightType()),
 			.m_shadowType = fr::ShadowMap::GetRenderDataShadowMapType(shadowMap.GetShadowMapType()),
 
 			.m_textureDims = re::Texture::ComputeTextureDimenions(shadowMap.GetWidthHeight()),
@@ -186,8 +199,9 @@ namespace fr
 
 
 	bool ShadowMapComponent::Update(
-		fr::TransformComponent const& lightTransformCmpt, 
-		fr::ShadowMapComponent& shadowMapCmpt, 
+		fr::ShadowMapComponent& shadowMapCmpt,
+		fr::TransformComponent const& lightTransformCmpt,
+		fr::LightComponent const& lightCmpt,
 		fr::CameraComponent& shadowCamCmpt, 
 		fr::BoundsComponent const* sceneWorldBounds,
 		bool force)
@@ -197,8 +211,9 @@ namespace fr
 		{
 			shadowCamCmpt.GetCameraForModification().SetCameraConfig(
 				GenerateShadowCameraConfig(
-					lightTransformCmpt.GetTransform(), 
 					shadowMapCmpt.GetShadowMap(), 
+					lightTransformCmpt.GetTransform(),
+					lightCmpt.GetLight(),
 					sceneWorldBounds));
 
 			shadowMapCmpt.GetShadowMap().MarkClean();

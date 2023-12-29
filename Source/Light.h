@@ -23,10 +23,7 @@ namespace fr
 		static_assert(static_cast<uint8_t>(fr::Light::LightType::LightType_Count) ==
 			static_cast<uint8_t>(gr::Light::LightType::LightType_Count));
 
-	public:
-		static constexpr gr::Light::LightType GetRenderDataLightType(fr::Light::LightType);
-
-		static void ConfigurePointLightMeshScale(fr::Light&, fr::Transform&, fr::Camera* shadowCam);
+		static constexpr gr::Light::LightType ConvertRenderDataLightType(fr::Light::LightType);
 
 
 	public:
@@ -35,9 +32,9 @@ namespace fr
 
 		Light(fr::Light&&) = default;
 		Light& operator=(fr::Light&&) = default;
+		~Light() = default;
 
-		~Light() { Destroy(); }
-		void Destroy();
+		bool Update();
 
 		bool IsDirty() const;
 		void MarkClean();
@@ -72,6 +69,8 @@ namespace fr
 					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
 					float m_emitterRadius; // For non-singular attenuation function
 					float m_intensityCuttoff; // Intensity value at which we stop drawing the deferred mesh
+					
+					float m_sphericalRadius; // Derrived from m_colorIntensity, m_emitterRadius, m_intensityCuttoff
 				} m_point;
 			};
 
@@ -99,7 +98,7 @@ namespace fr
 	};
 
 
-	inline constexpr gr::Light::LightType Light::GetRenderDataLightType(fr::Light::LightType frLightType)
+	inline constexpr gr::Light::LightType Light::ConvertRenderDataLightType(fr::Light::LightType frLightType)
 	{
 		switch (frLightType)
 		{
