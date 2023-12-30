@@ -66,7 +66,6 @@ namespace re
 		: m_renderFrameNum(0)
 		, m_renderCommandManager(k_renderCommandBufferSize)
 		, m_imGuiCommandManager(k_imGuiCommandBufferSize)
-		, m_imguiMenuVisible(false)
 		, m_newShaders(util::NBufferedVector<std::shared_ptr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newVertexStreams(util::NBufferedVector<std::shared_ptr<re::VertexStream>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newTextures(util::NBufferedVector<std::shared_ptr<re::Texture>>::BufferSize::Two, k_newObjectReserveAmount)
@@ -132,7 +131,6 @@ namespace re
 		LOG("RenderManager starting...");
 		re::Context::Get()->Create(m_renderFrameNum);
 		en::EventManager::Get()->Subscribe(en::EventManager::InputToggleVSync, this);
-		en::EventManager::Get()->Subscribe(en::EventManager::InputToggleConsole, this);
 
 		SEEndCPUEvent();
 	}
@@ -339,14 +337,6 @@ namespace re
 				}				
 			}
 			break;
-			case en::EventManager::EventType::InputToggleConsole:
-			{
-				if (eventInfo.m_data0.m_dataB == true)
-				{
-					m_imguiMenuVisible = !m_imguiMenuVisible;
-				}
-			}
-			break;
 			default:
 			{
 				SEAssertF("Unexpected event type received");
@@ -494,126 +484,24 @@ namespace re
 	}
 
 
-	void RenderManager::ShowRenderDebugImGuiWindows(bool* show)
+	void RenderManager::ShowImGuiWindow(bool* show)
 	{
-		constexpr char const* renderSystemsPanelTitle = "Render Debug";
-		ImGui::Begin(renderSystemsPanelTitle, show);
-
-
-		if (ImGui::CollapsingHeader("Cameras:", ImGuiTreeNodeFlags_None))
+		if (!(*show))
 		{
-			// ECS_CONVERSION: TODO: RESTORE THIS FUNCTIONALITY
-			
-//			ImGui::Indent();
-//			std::vector<std::shared_ptr<fr::Camera>> const& cameras = fr::SceneManager::GetSceneData()->GetCameras();
-//
-//			// TODO: Currently, we set the camera parameters as a permanent PB via a shared_ptr from the main camera
-//			// once in every GS. We need to be able to get/set the main camera's camera params PB every frame, in every
-//			// GS. Camera selection works, but the GS's all render from the same camera. For now, just disable it.
-////#define CAMERA_SELECTION
-//#if defined(CAMERA_SELECTION)
-//			static int activeCamIdx = static_cast<int>(m_activeCameraIdx);
-//			constexpr ImGuiComboFlags k_cameraSelectionflags = 0;
-//			static int comboSelectedCamIdx = activeCamIdx; // Initialize with the index of the current main camera
-//			const char* comboPreviewCamName = cameras[comboSelectedCamIdx]->GetName().c_str();
-//			if (ImGui::BeginCombo("Active camera", comboPreviewCamName, k_cameraSelectionflags))
-//			{
-//				for (size_t camIdx = 0; camIdx < cameras.size(); camIdx++)
-//				{
-//					const bool isSelected = (comboSelectedCamIdx == camIdx);
-//					if (ImGui::Selectable(cameras[camIdx]->GetName().c_str(), isSelected))
-//					{
-//						comboSelectedCamIdx = static_cast<int>(camIdx);
-//					}
-//
-//					if (isSelected) // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-//					{
-//						ImGui::SetItemDefaultFocus();
-//					}
-//				}
-//				ImGui::EndCombo();
-//
-//				// Handle active camera changes:
-//				if (comboSelectedCamIdx != activeCamIdx)
-//				{
-//					activeCamIdx = comboSelectedCamIdx;
-//					SetMainCameraIdx(comboSelectedCamIdx);
-//				}
-//			}
-//#endif
-//
-//			for (size_t camIdx = 0; camIdx < cameras.size(); camIdx++)
-//			{
-//				cameras[camIdx]->ShowImGuiWindow();
-//				ImGui::Separator();
-//			}
-//			ImGui::Unindent();
+			return;
 		}
 
-		if (ImGui::CollapsingHeader("Meshes:", ImGuiTreeNodeFlags_None))
-		{
-			// ECS_CONVERSION: TODO: RESTORE THIS FUNCTIONALITY
-			
-			//ImGui::Indent();
-			//std::vector<std::shared_ptr<gr::Mesh>> const& meshes = fr::SceneManager::GetSceneData()->GetMeshes();
-			//for (auto const& mesh : meshes)
-			//{
-			//	mesh->ShowImGuiWindow();
-			//	ImGui::Separator();
-			//}
-			//ImGui::Unindent();
-		}
+		constexpr char const* k_panelTitle = "Render manager debug";
+		ImGui::Begin(k_panelTitle, show);
 
-		ImGui::Separator();
 
-		if (ImGui::CollapsingHeader("Materials:", ImGuiTreeNodeFlags_None))
-		{
-			ImGui::Indent();
-			std::unordered_map<size_t, std::shared_ptr<gr::Material>> const& materials = 
-				fr::SceneManager::GetSceneData()->GetMaterials();
-			for (auto const& materialEntry : materials)
-			{
-				materialEntry.second->ShowImGuiWindow();
-				ImGui::Separator();
-			}
-			ImGui::Unindent();
-		}
-
-		ImGui::Separator();
-
-		if (ImGui::CollapsingHeader("Lights:", ImGuiTreeNodeFlags_None))
-		{
-			ImGui::Indent();
-			
-			// ECS_CONVERSION: TODO: RESTORE THIS FUNCTIONALITY
-
-			/*std::shared_ptr<fr::Light> const ambientLight = fr::SceneManager::GetSceneData()->GetAmbientLight();
-			if (ambientLight)
-			{
-				ambientLight->ShowImGuiWindow();
-			}*/
-
-			//std::shared_ptr<fr::Light> const directionalLight = fr::SceneManager::GetSceneData()->GetKeyLight();
-			//if (directionalLight)
-			//{
-			//	directionalLight->ShowImGuiWindow();
-			//}
-
-			if (ImGui::CollapsingHeader("Point Lights:", ImGuiTreeNodeFlags_None))
-			{
-				//ImGui::Indent();
-				//std::vector<std::shared_ptr<fr::Light>> const& pointLights = 
-				//	fr::SceneManager::GetSceneData()->GetPointLights();
-				//for (auto const& light : pointLights)
-				//{
-				//	light->ShowImGuiWindow();
-				//}
-				//ImGui::Unindent();
-			}
-			ImGui::Unindent();
-		}
-
-		ImGui::Separator();
+		// ECS_CONVERSION TODO:
+		// RenderSystems -> GSM -> RenderData:
+		//	- Cameras
+		//	- Meshes
+		//	- Materials
+		//	- Lights
+		
 
 		// Render systems:
 		if (ImGui::CollapsingHeader("Render Systems:", ImGuiTreeNodeFlags_None))
@@ -639,8 +527,8 @@ namespace re
 
 			re::Context::RenderDocAPI* renderDocApi = re::Context::Get()->GetRenderDocAPI();
 
-			const bool renderDocCmdLineEnabled = 
-				en::Config::Get()->KeyExists(en::ConfigKeys::k_renderDocProgrammaticCapturesCmdLineArg) && 
+			const bool renderDocCmdLineEnabled =
+				en::Config::Get()->KeyExists(en::ConfigKeys::k_renderDocProgrammaticCapturesCmdLineArg) &&
 				renderDocApi != nullptr;
 
 			if (!renderDocCmdLineEnabled)
@@ -658,7 +546,7 @@ namespace re
 				{
 					ImGui::Indent();
 
-					ImGui::Text(std::format("Allow VSync: {}", 
+					ImGui::Text(std::format("Allow VSync: {}",
 						renderDocApi->GetCaptureOptionU32(eRENDERDOC_Option_AllowVSync)).c_str());
 
 					ImGui::Text(std::format("Allow fullscreen: {}",
@@ -706,18 +594,18 @@ namespace re
 
 					static bool s_overlayEnabled = (overlayBits & RENDERDOC_OverlayBits::eRENDERDOC_Overlay_Enabled);
 					ImGui::Checkbox("Display overlay?", &s_overlayEnabled);
-					
+
 					static bool s_overlayFramerate = (overlayBits & RENDERDOC_OverlayBits::eRENDERDOC_Overlay_FrameRate);
 					ImGui::Checkbox("Frame rate", &s_overlayFramerate);
-					
+
 					static bool s_overlayFrameNum = (overlayBits & RENDERDOC_OverlayBits::eRENDERDOC_Overlay_FrameNumber);
 					ImGui::Checkbox("Frame number", &s_overlayFrameNum);
 
 					static bool s_overlayCaptureList = (overlayBits & RENDERDOC_OverlayBits::eRENDERDOC_Overlay_CaptureList);
 					ImGui::Checkbox("Recent captures", &s_overlayCaptureList);
-					
+
 					renderDocApi->MaskOverlayBits(
-						0, 
+						0,
 						(s_overlayEnabled ? eRENDERDOC_Overlay_Enabled : 0) |
 						(s_overlayFramerate ? eRENDERDOC_Overlay_FrameRate : 0) |
 						(s_overlayFrameNum ? eRENDERDOC_Overlay_FrameNumber : 0) |
@@ -731,8 +619,8 @@ namespace re
 				if (!s_loadedPath)
 				{
 					s_loadedPath = true;
-					memcpy(s_renderDocCaptureFolder, 
-						renderDocApi->GetCaptureFilePathTemplate(), 
+					memcpy(s_renderDocCaptureFolder,
+						renderDocApi->GetCaptureFilePathTemplate(),
 						strlen(renderDocApi->GetCaptureFilePathTemplate()) + 1);
 				}
 
@@ -757,7 +645,7 @@ namespace re
 		}
 
 		ImGui::Separator();
-		
+
 		if (ImGui::CollapsingHeader("PIX Captures")) // https://devblogs.microsoft.com/pix/programmatic-capture/
 		{
 			ImGui::Indent();
@@ -771,7 +659,7 @@ namespace re
 			if (!pixGPUCaptureCmdLineEnabled && !pixCPUCaptureCmdLineEnabled)
 			{
 				ImGui::Text(std::format("Launch with -{} or -{} to enable.\n"
-					"Run PIX in administrator mode, and attach to the current process.", 
+					"Run PIX in administrator mode, and attach to the current process.",
 					en::ConfigKeys::k_pixGPUProgrammaticCapturesCmdLineArg,
 					en::ConfigKeys::k_pixCPUProgrammaticCapturesCmdLineArg).c_str());
 			}
@@ -786,12 +674,12 @@ namespace re
 				if (!loadedPath)
 				{
 					loadedPath = true;
-					std::string const& pixFilePath = std::format("{}\\{}\\", 
+					std::string const& pixFilePath = std::format("{}\\{}\\",
 						en::Config::Get()->GetValueAsString(en::ConfigKeys::k_documentsFolderPathKey),
 						en::ConfigKeys::k_pixCaptureFolderName);
 					memcpy(s_pixGPUCapturePath, pixFilePath.c_str(), pixFilePath.length() + 1);
 				}
-				
+
 				static int s_numPixGPUCaptureFrames = 1;
 				static HRESULT s_gpuHRESULT = S_OK;
 				if (ImGui::Button("Capture PIX GPU Frame"))
@@ -849,7 +737,7 @@ namespace re
 				static bool s_captureGPUTimings = true;
 				static bool s_captureCallstacks = true;
 				static bool s_captureCpuSamples = true;
-				static const uint32_t s_cpuSamplesPerSecond[3] = {1000u, 4000u, 8000u};
+				static const uint32_t s_cpuSamplesPerSecond[3] = { 1000u, 4000u, 8000u };
 				static int s_cpuSamplesPerSecondSelectionIdx = 0;
 				static bool s_captureFileIO = false;
 				static bool s_captureVirtualAllocEvents = false;
@@ -925,7 +813,7 @@ namespace re
 					ImGui::Checkbox("CPU samples", &s_captureCpuSamples);
 
 					ImGui::BeginDisabled(!s_captureCpuSamples);
-					ImGui::Combo("CPU sampling rate (/sec)", &s_cpuSamplesPerSecondSelectionIdx, 
+					ImGui::Combo("CPU sampling rate (/sec)", &s_cpuSamplesPerSecondSelectionIdx,
 						"1000\0"
 						"4000\0"
 						"8000\0\0");
@@ -936,133 +824,24 @@ namespace re
 				ImGui::Checkbox("File accesses", &s_captureFileIO);
 
 				ImGui::Checkbox("GPU timings", &s_captureGPUTimings);
-				
+
 
 				ImGui::EndDisabled();
 			}
 
 			ImGui::Unindent();
 		}
-		
+
 		ImGui::End();
 	}
 
 
 	void RenderManager::RenderImGui()
 	{
-		static bool s_showConsoleLog = false;
-		static bool s_showRenderDebug = false;
-		static bool s_showImguiDemo = false;
-
-		// Early out if we can:
-		if (!m_imguiMenuVisible && !s_showConsoleLog && !s_showRenderDebug && !s_showImguiDemo)
-		{
-			return;
-		}
-
-
 		platform::RenderManager::StartImGuiFrame();
 
-
-		// TEMP HAX:
 		m_imGuiCommandManager.SwapBuffers();
 		m_imGuiCommandManager.Execute();
-
-
-
-		const int windowWidth = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
-		const int windowHeight =
-			(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey));
-
-		// Menu bar:
-		ImVec2 menuBarSize = { 0, 0 }; // Record the size of the menu bar so we can align things absolutely underneath it
-		if (m_imguiMenuVisible)
-		{
-			ImGui::BeginMainMenuBar();
-			{
-				menuBarSize = ImGui::GetWindowSize();
-
-				if (ImGui::BeginMenu("File"))
-				{
-					// TODO...
-					ImGui::TextDisabled("Load Scene");
-					ImGui::TextDisabled("Reload Scene");
-					ImGui::TextDisabled("Reload Shaders");
-					ImGui::TextDisabled("Reload Materials");
-					ImGui::TextDisabled("Quit");
-
-					ImGui::EndMenu();
-				}
-
-				if (ImGui::BeginMenu("Config"))
-				{
-					// TODO...
-					ImGui::TextDisabled("Adjust input settings");
-
-					ImGui::EndMenu();
-				}
-
-				if (ImGui::BeginMenu("Window"))
-				{
-					ImGui::MenuItem("Console log", "", &s_showConsoleLog); // Console debug log window
-
-					ImGui::TextDisabled("Performance statistics");
-
-					ImGui::MenuItem("Render Debug", "", &s_showRenderDebug);
-
-#if defined(_DEBUG) // ImGui demo window
-					ImGui::Separator();
-					ImGui::MenuItem("Show ImGui demo", "", &s_showImguiDemo);
-#endif
-
-					ImGui::EndMenu();
-				}
-
-				if (ImGui::BeginMenu("Capture"))
-				{
-					// TODO...
-					ImGui::TextDisabled("Save screenshot");
-
-					ImGui::EndMenu();
-				}
-			}
-			ImGui::EndMainMenuBar();
-		}
-
-		// Console log window:
-		if (s_showConsoleLog)
-		{
-			ImGui::SetNextWindowSize(ImVec2(
-				static_cast<float>(windowWidth),
-				static_cast<float>(windowHeight * 0.5f)),
-				ImGuiCond_FirstUseEver);
-			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
-
-			en::LogManager::Get()->ShowImGuiWindow(&s_showConsoleLog);
-		}
-
-		// Scene objects panel:
-		if (s_showRenderDebug)
-		{
-			ImGui::SetNextWindowSize(ImVec2(
-				static_cast<float>(windowWidth) * 0.25f,
-				static_cast<float>(windowHeight - menuBarSize[1])),
-				ImGuiCond_FirstUseEver);
-			ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
-
-			RenderManager::ShowRenderDebugImGuiWindows(&s_showRenderDebug);
-		}
-
-		// Show the ImGui demo window for debugging reference
-#if defined(_DEBUG)
-		if (s_showImguiDemo)
-		{
-			ImGui::SetNextWindowPos(
-				ImVec2(static_cast<float>(windowWidth) * 0.25f, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
-			ImGui::ShowDemoWindow(&s_showImguiDemo);
-		}
-#endif
-
 
 		platform::RenderManager::RenderImGui();
 	}

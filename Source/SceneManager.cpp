@@ -75,12 +75,6 @@ namespace fr
 	{
 		// 
 	}
-
-
-	void SceneManager::FinalUpdate()
-	{
-		//
-	}
 }
 
 

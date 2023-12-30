@@ -12,6 +12,7 @@ namespace gr
 namespace fr
 {
 	class EntityManager;
+	class NameComponent;
 	class TransformComponent;
 
 
@@ -31,12 +32,16 @@ namespace fr
 
 		static gr::Camera::RenderData CreateRenderData(CameraComponent const&);
 
+		static void ShowImGuiWindow(fr::CameraComponent&, fr::NameComponent const&);
+
 
 	public:
 		fr::Camera& GetCameraForModification();
 		fr::Camera const& GetCamera() const;
 
 		gr::TransformID GetTransformID() const;
+
+		
 
 
 	private:

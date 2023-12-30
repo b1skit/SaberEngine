@@ -2,6 +2,7 @@
 #include "CameraComponent.h"
 #include "EntityManager.h"
 #include "MarkerComponents.h"
+#include "NameComponent.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "TransformComponent.h"
@@ -73,6 +74,18 @@ namespace fr
 			.m_cameraParams = fr::Camera::BuildCameraParams(cameraComponent.GetCamera()),
 			.m_transformID = cameraComponent.GetTransformID()
 		};
+	}
+
+
+	void CameraComponent::ShowImGuiWindow(fr::CameraComponent& camCmpt, fr::NameComponent const& nameCmpt)
+	{
+		if (ImGui::CollapsingHeader(
+			std::format("{}##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
+			camCmpt.m_camera.ShowImGuiWindow(nameCmpt.GetUniqueID());
+			ImGui::Unindent();
+		}
 	}
 
 

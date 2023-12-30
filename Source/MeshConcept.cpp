@@ -3,6 +3,8 @@
 #include "EntityManager.h"
 #include "ImGuiUtils.h"
 #include "MeshConcept.h"
+#include "MeshPrimitiveComponent.h"
+#include "NameComponent.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "TransformComponent.h"
@@ -35,46 +37,58 @@ namespace fr
 	}
 
 
-	void Mesh::ShowImGuiWindow()
+	void Mesh::ShowImGuiWindow(entt::entity meshConcept)
 	{
-		// ECS_CONVERSON: TODO: Restore this functionality
+		fr::EntityManager& em = *fr::EntityManager::Get();
 
-		//fr::EntityManager& em = *fr::EntityManager::Get();
+		fr::NameComponent const& meshName = em.GetComponent<fr::NameComponent>(meshConcept);
+		fr::Relationship const& meshRelationship = em.GetComponent<fr::Relationship>(meshConcept);
+		fr::TransformComponent& owningTransform =
+			*em.GetFirstInHierarchyAbove<fr::TransformComponent>(meshRelationship.GetParent());
 
-		//if (ImGui::CollapsingHeader(
-		//	std::format("{}##{}", GetName(), util::PtrToID(this)).c_str(), ImGuiTreeNodeFlags_None))
-		//{
-		//	ImGui::Indent();
-		//	const std::string uniqueIDStr = std::to_string(util::PtrToID(this));
+		if (ImGui::CollapsingHeader(
+			std::format("{}##{}", meshName.GetName(), meshName.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
 
-		//	if (ImGui::CollapsingHeader(
-		//		std::format("Transform:##{}", util::PtrToID(this)).c_str(), ImGuiTreeNodeFlags_None))
-		//	{
-		//		ImGui::Indent();
-		//		m_ownerTransform->ShowImGuiWindow();
-		//		ImGui::Unindent();
-		//	}
+			if (ImGui::CollapsingHeader(
+				std::format("Transform:##{}", meshName.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+			{
+				ImGui::Indent();
+				//m_ownerTransform->ShowImGuiWindow();
+				// ECS_CONVERSION: RESTORE THIS BEHAVIOR
+				ImGui::Unindent();
+			}
 
-		//	if (ImGui::CollapsingHeader(
-		//		std::format("Mesh Bounds:##{}", util::PtrToID(this)).c_str(), ImGuiTreeNodeFlags_None))
-		//	{
-		//		ImGui::Indent();
-		//		m_localBounds.ShowImGuiWindow();
-		//		ImGui::Unindent();
-		//	}
+			if (ImGui::CollapsingHeader(
+				std::format("Mesh Bounds:##{}", meshName.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+			{
+				ImGui::Indent();
+				// ECS_CONVERSION: RESTORE THIS BEHAVIOR
+				//m_localBounds.ShowImGuiWindow();
+				ImGui::Unindent();
+			}
 
-		//	if (ImGui::CollapsingHeader(
-		//		std::format("Mesh Primitives ({}):##{}", m_meshPrimitives.size(), util::PtrToID(this)).c_str(), 
-		//		ImGuiTreeNodeFlags_None))
-		//	{
-		//		ImGui::Indent();
-		//		for (size_t i = 0; i < m_meshPrimitives.size(); i++)
-		//		{
-		//			m_meshPrimitives[i]->ShowImGuiWindow();
-		//		}
-		//		ImGui::Unindent();
-		//	}
-		//	ImGui::Unindent();
-		//}
+			if (ImGui::CollapsingHeader(
+				std::format("Mesh Primitives:##{}", meshName.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+			{
+				ImGui::Indent();
+				
+				entt::entity curChild = meshRelationship.GetFirstChild();
+				do
+				{
+					fr::MeshPrimitiveComponent& meshPrimCmpt = em.GetComponent<fr::MeshPrimitiveComponent>(curChild);
+
+					meshPrimCmpt.ShowImGuiWindow(curChild);
+
+					fr::Relationship const& childRelationship = em.GetComponent<fr::Relationship>(curChild);
+					curChild = childRelationship.GetNext();
+				} while (curChild != meshRelationship.GetFirstChild());
+
+				ImGui::Unindent();
+			}
+
+			ImGui::Unindent();
+		}
 	}
 }

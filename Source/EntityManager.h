@@ -43,7 +43,14 @@ namespace fr
 		fr::BoundsComponent const* GetSceneBounds() const;
 
 		void SetAsMainCamera(entt::entity);
+		entt::entity GetMainCamera() const;
 
+		void ShowImGuiWindow(bool* show);
+
+
+	private:
+		void SetAsMainCameraInternal(entt::entity);
+		entt::entity GetMainCameraInternal() const;
 
 	private: // EventListener interface:
 		void HandleEvents() override;

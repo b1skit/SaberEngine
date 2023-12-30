@@ -1,16 +1,17 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Assert.h"
 #include "CoreEngine.h"
 #include "Config.h"
-#include "Assert.h"
+#include "EntityManager.h"
+#include "EventManager.h"
+#include "InputManager.h"
+#include "LogManager.h"
+#include "PerformanceTimer.h"
 #include "Platform.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
-#include "EventManager.h"
-#include "InputManager.h"
-#include "PerformanceTimer.h"
-#include "EntityManager.h"
-#include "LogManager.h"
+#include "UIManager.h"
 
 
 namespace
@@ -84,6 +85,8 @@ namespace en
 
 		renderManager->ThreadInitialize(); // Create render systems, close PB registration
 
+		fr::UIManager::Get()->Startup();
+
 		m_isRunning = true;
 
 		// We're done loading: Capture the mouse
@@ -104,6 +107,7 @@ namespace en
 		fr::EntityManager* entityManager = fr::EntityManager::Get();
 		fr::SceneManager* sceneManager = fr::SceneManager::Get();
 		re::RenderManager* renderManager = re::RenderManager::Get();
+		fr::UIManager* uiManager = fr::UIManager::Get();
 
 		// Process any events that might have occurred during startup:
 		eventManager->Update(m_frameNum, 0.0);
@@ -161,16 +165,13 @@ namespace en
 				SEEndCPUEvent();
 			}
 
+			SEBeginCPUEvent("fr::UIManager::Update");
+			uiManager->Update(m_frameNum, m_fixedTimeStep);
+			SEEndCPUEvent();
+
 			SEBeginCPUEvent("fr::EntityManager::EnqueueRenderUpdates");
 			entityManager->EnqueueRenderUpdates();
 			SEEndCPUEvent();
-
-
-			// DEPRECATED:
-			SEBeginCPUEvent("fr::SceneManager::FinalUpdate");
-			sceneManager->FinalUpdate(); // Builds batches, ready for RenderManager to consume
-			SEEndCPUEvent();
-
 
 			// Pump the render thread, and wait for it to signal copying is complete:
 			SEBeginCPUEvent("en::CoreEngine::Run Wait on copy barrier");
@@ -200,6 +201,8 @@ namespace en
 		LOG("CoreEngine shutting down...");
 
 		en::Config::Get()->SaveConfigFile();
+
+		fr::UIManager::Get()->Shutdown();
 		
 		fr::EntityManager::Get()->Shutdown();
 

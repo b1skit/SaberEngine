@@ -31,8 +31,6 @@ namespace fr
 		void Shutdown() override;
 		void Update(uint64_t frameNum, double stepTimeMs) override;
 
-		void FinalUpdate(); // Called once after final Update call in main game loop
-
 
 	private:
 		

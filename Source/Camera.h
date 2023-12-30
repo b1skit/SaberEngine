@@ -56,7 +56,7 @@ namespace fr
 		bool IsDirty() const;
 		void MarkClean();
 
-		void ShowImGuiWindow();
+		void ShowImGuiWindow(uint64_t uniqueID);
 
 
 	private:

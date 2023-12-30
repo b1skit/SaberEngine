@@ -292,6 +292,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="TransformComponent.cpp" />
     <ClCompile Include="TransformRenderData.cpp" />
+    <ClCompile Include="UIManager.cpp" />
     <ClCompile Include="VertexStream.cpp" />
     <ClCompile Include="VertexStreamBuilder.cpp" />
     <ClCompile Include="Context_Platform.cpp" />
@@ -438,6 +439,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="ThreadSafeVector.h" />
     <ClInclude Include="TransformComponent.h" />
     <ClInclude Include="TransformRenderData.h" />
+    <ClInclude Include="UIManager.h" />
     <ClInclude Include="VertexStream.h" />
     <ClInclude Include="VertexStreamBuilder.h" />
     <ClInclude Include="Context_Platform.h" />

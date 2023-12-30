@@ -4,6 +4,9 @@
 
 namespace fr
 {
+	class TransformComponent;
+
+
 	class Mesh
 	{
 	public:
@@ -13,6 +16,6 @@ namespace fr
 		static entt::entity AttachMeshConcept(entt::entity, char const* name);
 
 
-		void ShowImGuiWindow();
+		static void ShowImGuiWindow(entt::entity meshConcept);
 	};
 }

@@ -151,4 +151,10 @@ namespace fr
 
 		return renderData;
 	}
+
+
+	void MeshPrimitiveComponent::ShowImGuiWindow(entt::entity meshPrimitive)
+	{
+		// ECS_CONVERSION: TODO: (Re)Implement this!!!!
+	}
 }

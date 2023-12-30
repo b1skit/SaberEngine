@@ -327,25 +327,58 @@ namespace fr
 		{
 			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
 
-			bool foundCurrentMainCamera = false;
-			auto currentMainCameraView = m_registry.view<fr::CameraComponent::MainCameraMarker>();
-			for (auto entity : currentMainCameraView)
-			{
-				SEAssert("Already found a main camera. This should not be possible", foundCurrentMainCamera == false);
-				foundCurrentMainCamera = true;
-
-				m_registry.erase<fr::CameraComponent::MainCameraMarker>(entity);
-
-				if (m_registry.any_of<fr::CameraComponent::NewMainCameraMarker>(entity))
-				{
-					m_registry.erase<fr::CameraComponent::NewMainCameraMarker>(entity);
-				}
-			}
-
-			m_registry.emplace_or_replace<fr::CameraComponent::MainCameraMarker>(camera);
-			m_registry.emplace_or_replace<fr::CameraComponent::NewMainCameraMarker>(camera);
+			SetAsMainCameraInternal(camera);
 		}
 
+	}
+
+
+	void EntityManager::SetAsMainCameraInternal(entt::entity camera)
+	{
+		bool foundCurrentMainCamera = false;
+		auto currentMainCameraView = m_registry.view<fr::CameraComponent::MainCameraMarker>();
+		for (auto entity : currentMainCameraView)
+		{
+			SEAssert("Already found a main camera. This should not be possible", foundCurrentMainCamera == false);
+			foundCurrentMainCamera = true;
+
+			m_registry.erase<fr::CameraComponent::MainCameraMarker>(entity);
+
+			if (m_registry.any_of<fr::CameraComponent::NewMainCameraMarker>(entity))
+			{
+				m_registry.erase<fr::CameraComponent::NewMainCameraMarker>(entity);
+			}
+		}
+
+		m_registry.emplace_or_replace<fr::CameraComponent::MainCameraMarker>(camera);
+		m_registry.emplace_or_replace<fr::CameraComponent::NewMainCameraMarker>(camera);
+	}
+
+
+	entt::entity EntityManager::GetMainCamera() const
+	{
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+			return GetMainCameraInternal();
+		}
+	}
+
+
+	entt::entity EntityManager::GetMainCameraInternal() const
+	{
+		entt::entity mainCamEntity = entt::null;
+
+		bool foundCurrentMainCamera = false;
+		auto currentMainCameraView = m_registry.view<fr::CameraComponent::MainCameraMarker>();
+		for (auto entity : currentMainCameraView)
+		{
+			SEAssert("Already found a main camera. This should not be possible", foundCurrentMainCamera == false);
+			foundCurrentMainCamera = true;
+
+			mainCamEntity = entity;
+		}
+		SEAssert("Failed to find a main camera entity", mainCamEntity != entt::null);
+		return mainCamEntity;
 	}
 
 
@@ -683,6 +716,144 @@ namespace fr
 					camera.MarkClean();
 				}
 			}
+		}
+	}
+
+
+	void EntityManager::ShowImGuiWindow(bool* show)
+	{
+		if (!(*show))
+		{
+			return;
+		}
+
+		{
+			constexpr char const* k_panelTitle = "Entity manager debug";
+			ImGui::Begin(k_panelTitle, show);
+
+			if (ImGui::CollapsingHeader("Cameras:", ImGuiTreeNodeFlags_None))
+			{
+				ImGui::Indent();
+
+				auto cameraCmptView = m_registry.view<fr::CameraComponent, fr::NameComponent>();
+
+				const entt::entity mainCamEntity = GetMainCamera();
+
+				// Set the initial state of our active index
+				static int s_mainCamIdx = 0;
+				static bool s_foundFirstMainCam = false;
+				if (!s_foundFirstMainCam)
+				{
+					s_mainCamIdx = 0;
+					for (entt::entity entity : cameraCmptView)
+					{
+						if (entity == mainCamEntity)
+						{
+							break;
+						}
+						s_mainCamIdx++;
+					}
+					s_foundFirstMainCam = true;
+				}
+				
+				int buttonIdx = 0;
+				for (entt::entity entity : cameraCmptView)
+				{
+					fr::CameraComponent& camCmpt = cameraCmptView.get<fr::CameraComponent>(entity);
+					fr::NameComponent const& camNameCmpt = cameraCmptView.get<fr::NameComponent>(entity);
+				
+					// Display a radio button on the same line as our camera header:
+					const bool pressed = ImGui::RadioButton(
+						std::format("##{}", camNameCmpt.GetUniqueID()).c_str(), 
+						&s_mainCamIdx, 
+						buttonIdx++);
+					ImGui::SameLine();
+					camCmpt.ShowImGuiWindow(camCmpt, camNameCmpt);
+
+					// Update the main camera:
+					if (pressed)
+					{
+						SetAsMainCamera(entity);
+					}
+
+					ImGui::Separator();
+				}
+				ImGui::Unindent();
+			} // "Cameras:"
+
+			ImGui::Separator();
+
+			if (ImGui::CollapsingHeader("Meshes:", ImGuiTreeNodeFlags_None))
+			{
+				ImGui::Indent();
+
+				auto meshView = m_registry.view<fr::Mesh::MeshConceptMarker, fr::NameComponent, fr::Relationship>();
+				for (entt::entity entity : meshView)
+				{
+					fr::Mesh::ShowImGuiWindow(entity);
+
+					ImGui::Separator();
+				}
+
+				ImGui::Unindent();
+			} // "Meshes:"
+
+			ImGui::Separator();
+
+			if (ImGui::CollapsingHeader("Materials:", ImGuiTreeNodeFlags_None))
+			{
+				ImGui::Indent();
+
+				// ECS_CONVERSION: TODO: RESTORE THIS FUNCTIONALITY
+				//std::unordered_map<size_t, std::shared_ptr<gr::Material>> const& materials =
+				//	fr::SceneManager::GetSceneData()->GetMaterials();
+				//for (auto const& materialEntry : materials)
+				//{
+				//	materialEntry.second->ShowImGuiWindow();
+				//	ImGui::Separator();
+				//}
+
+				ImGui::Unindent();
+			} // "Materials:"
+
+			ImGui::Separator();
+
+			if (ImGui::CollapsingHeader("Lights:", ImGuiTreeNodeFlags_None))
+			{
+				ImGui::Indent();
+
+				// ECS_CONVERSION: TODO: RESTORE THIS FUNCTIONALITY
+
+				//std::shared_ptr<fr::Light> const ambientLight = fr::SceneManager::GetSceneData()->GetAmbientLight();
+				//if (ambientLight)
+				//{
+				//	ambientLight->ShowImGuiWindow();
+				//}
+
+				//std::shared_ptr<fr::Light> const directionalLight = fr::SceneManager::GetSceneData()->GetKeyLight();
+				//if (directionalLight)
+				//{
+				//	directionalLight->ShowImGuiWindow();
+				//}
+
+				//if (ImGui::CollapsingHeader("Point Lights:", ImGuiTreeNodeFlags_None))
+				//{
+				//	ImGui::Indent();
+				//	std::vector<std::shared_ptr<fr::Light>> const& pointLights =
+				//		fr::SceneManager::GetSceneData()->GetPointLights();
+				//	for (auto const& light : pointLights)
+				//	{
+				//		light->ShowImGuiWindow();
+				//	}
+				//	ImGui::Unindent();
+				//}
+
+				ImGui::Unindent();
+			} // "Lights:"
+
+			ImGui::Separator();
+
+			ImGui::End();
 		}
 	}
 }

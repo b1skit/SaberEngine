@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
 #include "Context.h"
 #include "DoubleBufferUnorderedMap.h"
 #include "EngineComponent.h"
@@ -65,7 +64,15 @@ namespace re
 
 		std::vector<std::unique_ptr<re::RenderSystem>> const& GetRenderSystems() const;
 
+		void ShowImGuiWindow(bool* show);
 
+
+	private:
+		void RenderImGui(); // Process ImGui render commands
+
+		static constexpr size_t k_imGuiCommandBufferSize = 8 * 1024 * 1024;
+		en::CommandManager m_imGuiCommandManager;
+		
 
 		// ECS_CONVERSION TODO: Handle this per-GS; For now just moving this out of the SceneManager
 	private:
@@ -84,9 +91,6 @@ namespace re
 	private:
 		static constexpr size_t k_renderCommandBufferSize = 16 * 1024 * 1024;
 		en::CommandManager m_renderCommandManager;
-
-		static constexpr size_t k_imGuiCommandBufferSize = 8 * 1024 * 1024;
-		en::CommandManager m_imGuiCommandManager;
 
 
 	public:
@@ -133,17 +137,12 @@ namespace re
 		void Shutdown() override;
 		
 		// Member functions:
-		void Initialize();
-		void RenderImGui();
+		void Initialize();	
 
 		virtual void Render() = 0;
 
 		void PreUpdate(uint64_t frameNum); // Synchronization step: Copies data, swaps buffers etc
 		void EndOfFrame();
-
-		
-	private:
-		void ShowRenderDebugImGuiWindows(bool* show);
 
 
 	private:
@@ -154,8 +153,6 @@ namespace re
 		bool m_vsyncEnabled;
 		
 		uint64_t m_renderFrameNum;
-
-		bool m_imguiMenuVisible;
 
 
 	private:
