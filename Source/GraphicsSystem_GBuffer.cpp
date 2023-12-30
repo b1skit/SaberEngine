@@ -10,7 +10,7 @@
 using re::Shader;
 using re::Texture;
 using en::Config;
-using en::SceneManager;
+using fr::SceneManager;
 using re::RenderManager;
 using re::RenderStage;
 using std::string;

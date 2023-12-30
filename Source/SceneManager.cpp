@@ -14,11 +14,11 @@ namespace
 	constexpr size_t k_initialBatchReservations = 100;
 }
 
-namespace en
+namespace fr
 {
 	SceneManager* SceneManager::Get()
 	{
-		static std::unique_ptr<en::SceneManager> instance = std::make_unique<en::SceneManager>();
+		static std::unique_ptr<fr::SceneManager> instance = std::make_unique<fr::SceneManager>();
 		return instance.get();
 	}
 
@@ -39,7 +39,7 @@ namespace en
 
 		// Load the scene:
 		std::string sceneName;
-		if (Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_sceneNameKey, sceneName))
+		if (en::Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_sceneNameKey, sceneName))
 		{
 			m_sceneData = std::make_shared<fr::SceneData>(sceneName);
 		}

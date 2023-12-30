@@ -55,7 +55,7 @@ namespace gr
 		m_skyboxStage->SetStageShader(re::Shader::GetOrCreate(en::ShaderNames::k_skyboxShaderName, skyboxPipelineState));
 
 		// Load the HDR image:
-		m_skyTexture = en::SceneManager::GetSceneData()->GetIBLTexture();
+		m_skyTexture = fr::SceneManager::GetSceneData()->GetIBLTexture();
 		m_skyTextureShaderName = "Tex0";
 
 		m_skyboxStage->AddPermanentParameterBlock(m_owningGraphicsSystemManager->GetActiveCameraParams());

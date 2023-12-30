@@ -12,7 +12,7 @@
 
 
 using en::Config;
-using en::SceneManager;
+using fr::SceneManager;
 using re::Shader;
 using gr::DeferredLightingGraphicsSystem;
 using re::TextureTargetSet;

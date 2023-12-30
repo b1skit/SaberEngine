@@ -50,8 +50,8 @@ namespace en
 		std::string const& windowTitle = std::format("{} {}", 
 			en::Config::Get()->GetValue<std::string>("windowTitle"), 
 			commandLineArgs);
-		const int xRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
-		const int yRes = Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
+		const int xRes = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
+		const int yRes = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
 
 		m_window = std::make_unique<en::Window>(); // Ensure Window exists for first callbacks triggered by Create
 		const bool windowCreated = m_window->Create(windowTitle, xRes, yRes);
@@ -77,7 +77,7 @@ namespace en
 		en::LogManager::Get()->Startup();
 		en::InputManager::Get()->Startup(); // Now that the window is created
 
-		en::SceneManager::Get()->Startup(); // Load assets
+		fr::SceneManager::Get()->Startup(); // Load assets
 
 		// Create entity/component representations now that the scene data is loaded
 		fr::EntityManager::Get()->Startup();
@@ -98,11 +98,11 @@ namespace en
 	{
 		LOG("\nCoreEngine: Starting main game loop\n");
 
-		en::EventManager* eventManager = EventManager::Get();
-		en::LogManager* logManager = LogManager::Get();
-		en::InputManager* inputManager = InputManager::Get();
+		en::EventManager* eventManager = en::EventManager::Get();
+		en::LogManager* logManager = en::LogManager::Get();
+		en::InputManager* inputManager = en::InputManager::Get();
 		fr::EntityManager* entityManager = fr::EntityManager::Get();
-		en::SceneManager* sceneManager = SceneManager::Get();
+		fr::SceneManager* sceneManager = fr::SceneManager::Get();
 		re::RenderManager* renderManager = re::RenderManager::Get();
 
 		// Process any events that might have occurred during startup:
@@ -152,7 +152,7 @@ namespace en
 				entityManager->Update(m_frameNum, m_fixedTimeStep);
 				SEEndCPUEvent();
 
-				SEBeginCPUEvent("en::SceneManager::Update");
+				SEBeginCPUEvent("fr::SceneManager::Update");
 				sceneManager->Update(m_frameNum, m_fixedTimeStep); // Updates all of the scene objects
 				SEEndCPUEvent();
 
@@ -167,7 +167,7 @@ namespace en
 
 
 			// DEPRECATED:
-			SEBeginCPUEvent("en::SceneManager::FinalUpdate");
+			SEBeginCPUEvent("fr::SceneManager::FinalUpdate");
 			sceneManager->FinalUpdate(); // Builds batches, ready for RenderManager to consume
 			SEEndCPUEvent();
 
@@ -199,7 +199,7 @@ namespace en
 
 		LOG("CoreEngine shutting down...");
 
-		Config::Get()->SaveConfigFile();
+		en::Config::Get()->SaveConfigFile();
 		
 		fr::EntityManager::Get()->Shutdown();
 
@@ -207,11 +207,11 @@ namespace en
 		// anything it might be using
 		re::RenderManager::Get()->ThreadShutdown();
 
-		SceneManager::Get()->Shutdown();
+		fr::SceneManager::Get()->Shutdown();
 
-		InputManager::Get()->Shutdown();
-		EventManager::Get()->Shutdown();
-		LogManager::Get()->Shutdown();
+		en::InputManager::Get()->Shutdown();
+		en::EventManager::Get()->Shutdown();
+		en::LogManager::Get()->Shutdown();
 
 		m_window->Destroy();
 

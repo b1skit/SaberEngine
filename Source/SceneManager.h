@@ -11,7 +11,7 @@ namespace re
 	class Batch;
 }
 
-namespace en
+namespace fr
 {
 	class SceneManager final : public virtual en::EngineComponent
 	{

@@ -34,7 +34,7 @@ namespace re
 		const uint64_t shaderIdentifier = ComputeShaderIdentifier(extensionlessShaderFilename, rePipelineState);
 
 		// If the shader already exists, return it. Otherwise, create the shader. 
-		fr::SceneData* sceneData = en::SceneManager::GetSceneData();
+		fr::SceneData* sceneData = fr::SceneManager::GetSceneData();
 		if (sceneData->ShaderExists(shaderIdentifier))
 		{
 			return sceneData->GetShader(shaderIdentifier);

@@ -6,6 +6,7 @@
 #include "EngineComponent.h"
 #include "EngineThread.h"
 #include "EventListener.h"
+#include "ImGuiUtils.h"
 #include "NBufferedVector.h"
 #include "CommandQueue.h"
 #include "RenderPipeline.h"
@@ -76,12 +77,22 @@ namespace re
 		template<typename T, typename... Args>
 		void EnqueueRenderCommand(Args&&... args);
 
+		template<typename T, typename... Args>
+		void EnqueueImGuiCommand(Args&&... args);
+
+
 	private:
 		static constexpr size_t k_renderCommandBufferSize = 16 * 1024 * 1024;
 		en::CommandManager m_renderCommandManager;
 
+		static constexpr size_t k_imGuiCommandBufferSize = 8 * 1024 * 1024;
+		en::CommandManager m_imGuiCommandManager;
 
-	public: // Deferred API-object creation queues
+
+	public:
+		// Deferred API-object creation queues. New resources can be constructed on other threads (e.g. loading
+		// data); We provide a thread-safe registration system that allows us to create the graphics API-side
+		// representations at the beginning of a new frame when they're needed
 		template<typename T>
 		void RegisterForCreate(std::shared_ptr<T>);
 
@@ -184,8 +195,71 @@ namespace re
 	}
 
 
+	template<typename T, typename... Args>
+	void RenderManager::EnqueueImGuiCommand(Args&&... args)
+	{
+		m_imGuiCommandManager.Enqueue<T>(std::forward<Args>(args)...);
+	}
+
+
 	inline std::vector<std::shared_ptr<re::Texture>> const& RenderManager::GetNewlyCreatedTextures() const
 	{
 		return m_createdTextures;
 	}
+
+
+	// ---
+
+
+	/*	A helper to cut down on ImGui render command boiler plate.This is not mandatory for submitting commands to the
+	*	ImGui command queue, but it should cover most common cases. 
+	* 
+	*	Internally, it uses a static unordered_map to link a unique identifier (e.g. a lambda address or some other
+	*	value) with ImGui's ImGuiOnceUponAFrame to ensure commands submitted multiple times per frame are only executed
+	*	once.
+	*	
+	*	Use this class as a wrapper for a lambda that captures any required data by reference:
+	* 
+	*	auto SomeLambda = [&]() { // Do something };
+	* 
+	*	re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(SomeLambda)>>(
+	*		re::ImGuiRenderCommand<decltype(SomeLambda)>(SomeLambda));
+	* 
+	*	In cases where the lamba being wrapped is called multiple times but capturing different data (e.g. from within
+	*	a static function), use the 2nd ctor to supply a unique ID each time
+	*/
+	template<typename T>
+	class ImGuiRenderCommand
+	{
+	public:
+		// When the 
+		ImGuiRenderCommand(T wrapperLambda)
+			: m_imguiWrapperLambda(wrapperLambda), m_uniqueID(util::PtrToID(&wrapperLambda)) {};
+
+		ImGuiRenderCommand(T wrapperLambda, uint64_t uniqueID)
+			: m_imguiWrapperLambda(wrapperLambda), m_uniqueID(uniqueID) {};
+
+		static void Execute(void* cmdData)
+		{
+			ImGuiRenderCommand<T>* cmdPtr = reinterpret_cast<ImGuiRenderCommand<T>*>(cmdData);
+			if (m_uniqueIDToImGuiOnceUponAFrame[cmdPtr->m_uniqueID]) // Insert or access our ImGuiOnceUponAFrame
+			{
+				cmdPtr->m_imguiWrapperLambda();
+			}
+		}
+
+		static void Destroy(void* cmdData)
+		{
+			ImGuiRenderCommand<T>* cmdPtr = reinterpret_cast<ImGuiRenderCommand<T>*>(cmdData);
+			cmdPtr->~ImGuiRenderCommand();
+		}
+
+	private:
+		T m_imguiWrapperLambda;
+		uint64_t m_uniqueID;
+
+		static std::unordered_map<uint64_t, ImGuiOnceUponAFrame> m_uniqueIDToImGuiOnceUponAFrame;
+	};
+	template<typename T>
+	inline std::unordered_map<uint64_t, ImGuiOnceUponAFrame> ImGuiRenderCommand<T>::m_uniqueIDToImGuiOnceUponAFrame;
 }

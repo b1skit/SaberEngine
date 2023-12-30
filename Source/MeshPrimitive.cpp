@@ -69,7 +69,7 @@ namespace gr
 			meshParams));
 
 		// This call will replace the newMeshPrimitive pointer if a duplicate MeshPrimitive already exists
-		en::SceneManager::GetSceneData()->AddUniqueMeshPrimitive(newMeshPrimitive);
+		fr::SceneManager::GetSceneData()->AddUniqueMeshPrimitive(newMeshPrimitive);
 
 		return newMeshPrimitive;
 	}

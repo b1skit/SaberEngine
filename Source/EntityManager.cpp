@@ -45,7 +45,7 @@ namespace fr
 		fr::BoundsComponent::CreateSceneBoundsConcept(*this);
 
 		// Create an Ambient light:
-		fr::LightComponent::CreateDeferredAmbientLightConcept(*this, en::SceneManager::GetSceneData()->GetIBLTexture());
+		fr::LightComponent::CreateDeferredAmbientLightConcept(*this, fr::SceneManager::GetSceneData()->GetIBLTexture());
 
 		// Add a player object to the scene:
 		char const* mainCamName = nullptr;

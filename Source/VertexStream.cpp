@@ -122,7 +122,7 @@ namespace re
 		}
 		else
 		{
-			bool duplicateExists = en::SceneManager::GetSceneData()->AddUniqueVertexStream(newVertexStream);
+			bool duplicateExists = fr::SceneManager::GetSceneData()->AddUniqueVertexStream(newVertexStream);
 			if (!duplicateExists)
 			{
 				re::RenderManager::Get()->RegisterForCreate(newVertexStream);

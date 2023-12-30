@@ -58,9 +58,9 @@ namespace re
 		std::vector<ImageDataUniquePtr> initialData /*= std::vector<ImageDataUniquePtr>()*/)
 	{
 		// If the Texture already exists, return it. Otherwise, create the Texture 
-		if (params.m_addToSceneData && en::SceneManager::GetSceneData()->TextureExists(name))
+		if (params.m_addToSceneData && fr::SceneManager::GetSceneData()->TextureExists(name))
 		{
-			return en::SceneManager::GetSceneData()->GetTexture(name);
+			return fr::SceneManager::GetSceneData()->GetTexture(name);
 		}
 		// Note: It's possible that 2 threads might simultaneously fail to find a Texture in the SceneData, and create
 		// it. But that's OK, the SceneData will only allow 1 instance to be added
@@ -72,7 +72,7 @@ namespace re
 		bool foundExistingTexture = false;
 		if (params.m_addToSceneData)
 		{
-			foundExistingTexture = en::SceneManager::GetSceneData()->AddUniqueTexture(newTexture);
+			foundExistingTexture = fr::SceneManager::GetSceneData()->AddUniqueTexture(newTexture);
 		}
 		
 		// Register new Textures with the RenderManager, so their API-level objects are created before use

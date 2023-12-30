@@ -486,7 +486,7 @@ namespace gr
 			// ECS_CONVERSTION TODO: Re-implement this
 
 			/*std::vector<std::shared_ptr<fr::Light>> const& pointLights = 
-				en::SceneManager::GetSceneData()->GetPointLights();
+				fr::SceneManager::GetSceneData()->GetPointLights();
 
 			for (auto const& pointLight : pointLights)
 			{
@@ -537,7 +537,7 @@ namespace gr
 
 			/*ImGui::Indent();
 			m_showCameraFrustums = true;
-			std::vector<std::shared_ptr<fr::Camera>> const& sceneCams = en::SceneManager::GetSceneData()->GetCameras();
+			std::vector<std::shared_ptr<fr::Camera>> const& sceneCams = fr::SceneManager::GetSceneData()->GetCameras();
 			for (size_t camIdx = 0; camIdx < sceneCams.size(); camIdx++)
 			{
 				fr::Camera* currentCam = sceneCams[camIdx].get();

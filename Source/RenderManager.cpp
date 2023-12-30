@@ -65,6 +65,7 @@ namespace re
 	RenderManager::RenderManager()
 		: m_renderFrameNum(0)
 		, m_renderCommandManager(k_renderCommandBufferSize)
+		, m_imGuiCommandManager(k_imGuiCommandBufferSize)
 		, m_imguiMenuVisible(false)
 		, m_newShaders(util::NBufferedVector<std::shared_ptr<re::Shader>>::BufferSize::Two, k_newObjectReserveAmount)
 		, m_newVertexStreams(util::NBufferedVector<std::shared_ptr<re::VertexStream>>::BufferSize::Two, k_newObjectReserveAmount)
@@ -291,7 +292,8 @@ namespace re
 		platform::RenderManager::Shutdown(*this);
 
 		// NOTE: OpenGL objects must be destroyed on the render thread, so we trigger them here
-		en::SceneManager::GetSceneData()->Destroy();
+		// ECS_CONVERSION: Remove the SceneManager include and trigger this via a render command
+		fr::SceneManager::GetSceneData()->Destroy();
 		re::Sampler::DestroySamplerLibrary();
 		
 		// Destroy render systems:
@@ -502,7 +504,7 @@ namespace re
 			// ECS_CONVERSION: TODO: RESTORE THIS FUNCTIONALITY
 			
 //			ImGui::Indent();
-//			std::vector<std::shared_ptr<fr::Camera>> const& cameras = en::SceneManager::GetSceneData()->GetCameras();
+//			std::vector<std::shared_ptr<fr::Camera>> const& cameras = fr::SceneManager::GetSceneData()->GetCameras();
 //
 //			// TODO: Currently, we set the camera parameters as a permanent PB via a shared_ptr from the main camera
 //			// once in every GS. We need to be able to get/set the main camera's camera params PB every frame, in every
@@ -552,7 +554,7 @@ namespace re
 			// ECS_CONVERSION: TODO: RESTORE THIS FUNCTIONALITY
 			
 			//ImGui::Indent();
-			//std::vector<std::shared_ptr<gr::Mesh>> const& meshes = en::SceneManager::GetSceneData()->GetMeshes();
+			//std::vector<std::shared_ptr<gr::Mesh>> const& meshes = fr::SceneManager::GetSceneData()->GetMeshes();
 			//for (auto const& mesh : meshes)
 			//{
 			//	mesh->ShowImGuiWindow();
@@ -567,7 +569,7 @@ namespace re
 		{
 			ImGui::Indent();
 			std::unordered_map<size_t, std::shared_ptr<gr::Material>> const& materials = 
-				en::SceneManager::GetSceneData()->GetMaterials();
+				fr::SceneManager::GetSceneData()->GetMaterials();
 			for (auto const& materialEntry : materials)
 			{
 				materialEntry.second->ShowImGuiWindow();
@@ -584,13 +586,13 @@ namespace re
 			
 			// ECS_CONVERSION: TODO: RESTORE THIS FUNCTIONALITY
 
-			/*std::shared_ptr<fr::Light> const ambientLight = en::SceneManager::GetSceneData()->GetAmbientLight();
+			/*std::shared_ptr<fr::Light> const ambientLight = fr::SceneManager::GetSceneData()->GetAmbientLight();
 			if (ambientLight)
 			{
 				ambientLight->ShowImGuiWindow();
 			}*/
 
-			//std::shared_ptr<fr::Light> const directionalLight = en::SceneManager::GetSceneData()->GetKeyLight();
+			//std::shared_ptr<fr::Light> const directionalLight = fr::SceneManager::GetSceneData()->GetKeyLight();
 			//if (directionalLight)
 			//{
 			//	directionalLight->ShowImGuiWindow();
@@ -600,7 +602,7 @@ namespace re
 			{
 				//ImGui::Indent();
 				//std::vector<std::shared_ptr<fr::Light>> const& pointLights = 
-				//	en::SceneManager::GetSceneData()->GetPointLights();
+				//	fr::SceneManager::GetSceneData()->GetPointLights();
 				//for (auto const& light : pointLights)
 				//{
 				//	light->ShowImGuiWindow();
@@ -959,6 +961,12 @@ namespace re
 
 
 		platform::RenderManager::StartImGuiFrame();
+
+
+		// TEMP HAX:
+		m_imGuiCommandManager.SwapBuffers();
+		m_imGuiCommandManager.Execute();
+
 
 
 		const int windowWidth = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
