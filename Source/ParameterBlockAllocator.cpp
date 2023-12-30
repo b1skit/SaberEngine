@@ -99,8 +99,9 @@ namespace re
 	}
 
 
-	void ParameterBlockAllocator::Create()
+	void ParameterBlockAllocator::Create(uint64_t currentFrame)
 	{
+		m_currentFrameNum = currentFrame;
 		platform::ParameterBlockAllocator::Create(*this);
 	}
 
@@ -376,8 +377,13 @@ namespace re
 
 	void ParameterBlockAllocator::BeginFrame(uint64_t renderFrameNum)
 	{
-		m_currentFrameNum = renderFrameNum;
-		m_platformParams->BeginFrame();
+		// Avoid stomping existing data when the ParameterBlockAllocator has already been accessed (e.g. during
+		// RenderManager::Initialize, before ParameterBlockAllocator::BeginFrame has been called)
+		if (renderFrameNum != m_currentFrameNum)
+		{
+			m_currentFrameNum = renderFrameNum;
+			m_platformParams->BeginFrame();
+		}
 	}
 
 

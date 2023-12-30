@@ -170,7 +170,7 @@ namespace opengl
 	}
 
 
-	void Context::Create()
+	void Context::Create(uint64_t currentFrame)
 	{
 		GetOpenGLExtensionProcessAddresses();
 
@@ -307,7 +307,7 @@ namespace opengl
 		opengl::SysInfo::GetShaderStorageBufferOffsetAlignment();
 
 		// Parameter Block Allocator:
-		m_paramBlockAllocator.Create();
+		m_paramBlockAllocator.Create(currentFrame);
 
 		// Setup our ImGui context
 		{

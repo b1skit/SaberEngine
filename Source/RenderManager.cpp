@@ -130,7 +130,7 @@ namespace re
 		SEBeginCPUEvent("re::RenderManager::Startup");
 
 		LOG("RenderManager starting...");
-		re::Context::Get()->Create();
+		re::Context::Get()->Create(m_renderFrameNum);
 		en::EventManager::Get()->Subscribe(en::EventManager::InputToggleVSync, this);
 		en::EventManager::Get()->Subscribe(en::EventManager::InputToggleConsole, this);
 
@@ -169,8 +169,9 @@ namespace re
 
 		re::Context::Get()->GetParameterBlockAllocator().ClosePermanentPBRegistrationPeriod();
 
-		// Create/buffer new resources from our RenderSystems/GraphicsSystems
-		CreateAPIResources(); // Note: This writes to our api buffers, so we can't swap yet
+		// Create/buffer new resources added by our RenderSystems/GraphicsSystems. During Initialize(), most data has
+		// just been loaded so there is typically something of all types to create here
+		CreateAPIResources();
 				
 		LOG("\nRenderManager::Initialize complete in %f seconds...\n", timer.StopSec());
 

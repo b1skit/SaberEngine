@@ -46,7 +46,7 @@ namespace re
 
 	public:
 		ParameterBlockAllocator();
-		void Create();
+		void Create(uint64_t currentFrame);
 
 		~ParameterBlockAllocator();
 		void Destroy();

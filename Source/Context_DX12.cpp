@@ -50,7 +50,7 @@ namespace dx12
 	}
 
 
-	void Context::Create()
+	void Context::Create(uint64_t currentFrame)
 	{
 		// PIX must be loaded before loading any D3D12 APIs
 		const bool enablePIXPGPUrogrammaticCaptures = 
@@ -113,7 +113,7 @@ namespace dx12
 		swapChain.Create();
 
 		// Parameter Block Allocator:
-		m_paramBlockAllocator.Create();
+		m_paramBlockAllocator.Create(currentFrame);
 
 		// Setup our ImGui context
 		{
