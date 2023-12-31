@@ -17,7 +17,7 @@ namespace fr
 	public:
 		static entt::entity CreatePlayerObjectConcept(EntityManager&, entt::entity cameraConcept);
 
-		static void SetCamera(EntityManager&, entt::entity playerEntity, entt::entity cameraConcept);
+		static void SetCamera(fr::TransformComponent& controllerTransformCmpt, fr::TransformComponent& camTransformCmpt);
 
 		static void Update(
 			CameraControlComponent&, 

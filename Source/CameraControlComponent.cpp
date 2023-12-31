@@ -16,42 +16,39 @@ namespace fr
 {
 	entt::entity CameraControlComponent::CreatePlayerObjectConcept(EntityManager& em, entt::entity cameraConcept)
 	{
+		SEAssert("cameraConcept entity must have a CameraComponent attached",
+			em.HasComponent<fr::CameraComponent>(cameraConcept));
+
 		entt::entity playerEntity = em.CreateEntity(k_playerObjectName);
 
 		em.EmplaceComponent<CameraControlComponent>(playerEntity);
 
-		fr::TransformComponent& playerTransform = 
+		fr::TransformComponent& controllerTransform = 
 			fr::TransformComponent::AttachTransformComponent(em, playerEntity, nullptr);
 
+		fr::Relationship const& cameraRelationship = em.GetComponent<fr::Relationship>(cameraConcept);
+		fr::TransformComponent* camTransform =
+			em.GetFirstInHierarchyAbove<fr::TransformComponent>(cameraRelationship.GetParent());
+		SEAssert("Failed to find camera TransformComponent", camTransform);
+
 		// Parent the camera to the player object:
-		SetCamera(em, playerEntity, cameraConcept);
+		SetCamera(controllerTransform, *camTransform);
 		
 		return playerEntity;
 	}
 
 
 	void CameraControlComponent::SetCamera(
-		EntityManager& em, entt::entity camControlEntity, entt::entity cameraConcept)
+		fr::TransformComponent& controllerTransformCmpt, fr::TransformComponent& camTransformCmpt)
 	{
-		SEAssert("camControlEntity entity must have a TransformComponent attached",
-			em.HasComponent<fr::TransformComponent>(camControlEntity));
-
-		SEAssert("cameraConcept entity must have a CameraComponent attached",
-			em.HasComponent<fr::CameraComponent>(cameraConcept));
-
-		SEAssert("CameraControlComponent camera requires a TransformComponent",
-			em.IsInHierarchyAbove<fr::TransformComponent>(cameraConcept));
-
-		fr::Transform& playerTransform = em.GetComponent<fr::TransformComponent>(camControlEntity).GetTransform();
-		
-		fr::Transform& cameraTransform = 
-			em.GetFirstInHierarchyAbove<fr::TransformComponent>(cameraConcept)->GetTransform();
+		fr::Transform& controllerTransform = controllerTransformCmpt.GetTransform();
+		fr::Transform& cameraTransform = camTransformCmpt.GetTransform();
 
 		// The PlayerObject and Camera must be located at the same point. To avoid stomping imported Camera locations,
 		// we move the PlayerObject to the camera. Then, we re-parent the Camera's Transform, to maintain its global
 		// orientation but update its local orientation under the PlayerObject Transform
-		playerTransform.SetGlobalPosition(cameraTransform.GetGlobalPosition());
-		cameraTransform.ReParent(&playerTransform);
+		controllerTransform.SetGlobalPosition(cameraTransform.GetGlobalPosition());
+		cameraTransform.ReParent(&controllerTransform);
 
 		// Note: We don't set a Relationship between the camera controller and a camera; A camera will already have been
 		// parented to a SceneNode concept (and thus uses its transform).

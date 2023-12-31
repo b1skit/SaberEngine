@@ -454,12 +454,41 @@ namespace fr
 	}
 
 
+	void EntityManager::OnNewMainCamera(entt::entity newMainCamera)
+	{
+		// No lock needed: Event handlers are called from within functions that already hold one
+
+		fr::TransformComponent* camControllerTransformCmpt = nullptr;
+		entt::entity camController = entt::null;
+		bool foundCamController = false;
+		auto camControllerView = m_registry.view<fr::CameraControlComponent>();
+		for (entt::entity entity : camControllerView)
+		{
+			SEAssert("Already found camera controller. This shouldn't be possible", !foundCamController);
+			foundCamController = true;
+
+			camControllerTransformCmpt = &m_registry.get<fr::TransformComponent>(entity);
+		}
+
+		// No point trying to set a camera if the camera controller doesn't exist yet
+		if (camControllerTransformCmpt)
+		{
+			fr::TransformComponent* camTransformCmpt = 
+				GetFirstInHierarchyAboveInternal<fr::TransformComponent>(newMainCamera);
+			SEAssert("Failed to find new camera's TransformComponent", camTransformCmpt != nullptr);
+
+			fr::CameraControlComponent::SetCamera(*camControllerTransformCmpt, *camTransformCmpt);
+		}
+	}
+
+
 	void EntityManager::ConfigureRegistry()
 	{
 		{
 			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
 
 			m_registry.on_construct<DirtyMarker<fr::BoundsComponent>>().connect<&fr::EntityManager::OnBoundsDirty>(*this);
+			m_registry.on_construct<fr::CameraComponent::NewMainCameraMarker>().connect<&fr::EntityManager::OnNewMainCamera>(*this);
 		}
 	}
 
