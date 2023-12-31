@@ -3,6 +3,7 @@
 #include "MarkerComponents.h"
 #include "MaterialComponent.h"
 #include "MeshPrimitiveComponent.h"
+#include "NameComponent.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 
@@ -46,5 +47,22 @@ namespace fr
 		em.EmplaceOrReplaceComponent<DirtyMarker<fr::MaterialComponent>>(materialEntity);
 
 		return *matComponent;
+	}
+
+
+	void MaterialComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity)
+	{
+		fr::NameComponent const& nameComponent = em.GetComponent<fr::NameComponent>(owningEntity);
+		fr::MaterialComponent& matComponent = em.GetComponent<fr::MaterialComponent>(owningEntity);
+
+		if (ImGui::CollapsingHeader(
+			std::format("{}##{}", nameComponent.GetName(), nameComponent.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
+
+			// ECS_CONVERSION: TODO COMPLETE THIS FUNCTIONALITY
+
+			ImGui::Unindent();
+		}
 	}
 }

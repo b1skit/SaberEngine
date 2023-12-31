@@ -45,7 +45,7 @@ namespace fr
 		LightType GetType() const;
 		
 		
-		void ShowImGuiWindow();
+		void ShowImGuiWindow(uint64_t uniqueID);
 
 	
 	public:

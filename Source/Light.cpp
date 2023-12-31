@@ -7,6 +7,7 @@
 #include "MeshPrimitive.h"
 #include "SceneManager.h"
 #include "ShadowMap.h"
+#include "Texture.h"
 #include "Transform.h"
 
 
@@ -204,51 +205,48 @@ namespace fr
 	}
 
 
-	void Light::ShowImGuiWindow()
+	void Light::ShowImGuiWindow(uint64_t uniqueID)
 	{
 		// ECS_CONVERSION: TODO Restore this functionality (move it to the deferred lighting GS)
 		// ECS_CONVERSION TODO: Modify the m_isDirty flag here when the settings change
 		
-		/*
-		const uint64_t uniqueID = GetUniqueID();
 
-		auto ShowDebugOptions = [this, &uniqueID]()
+		auto ShowDebugOptions = [&]()
 		{
 			if (ImGui::CollapsingHeader(std::format("Debug##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
-				ImGui::Checkbox(std::format("Diffuse enabled##{}", uniqueID).c_str(), &m_typeProperties.m_diffuseEnabled);
-				ImGui::Checkbox(std::format("Specular enabled##{}", uniqueID).c_str(), &m_typeProperties.m_specularEnabled);
+				m_isDirty |= ImGui::Checkbox(std::format("Diffuse enabled##{}", uniqueID).c_str(), &m_typeProperties.m_diffuseEnabled);
+				m_isDirty |= ImGui::Checkbox(std::format("Specular enabled##{}", uniqueID).c_str(), &m_typeProperties.m_specularEnabled);
 				ImGui::Unindent();
 			}
 		};
 
-		auto ShowColorPicker = [this, &uniqueID](glm::vec4& color)
+		auto ShowColorPicker = [&](glm::vec4& color)
 		{
 			ImGui::Text("Color:"); ImGui::SameLine();
 			ImGuiColorEditFlags flags = ImGuiColorEditFlags_HDR;
-			ImGui::ColorEdit4(
-				std::format("{} Color##{}", GetName(), uniqueID).c_str(),
+			m_isDirty |= ImGui::ColorEdit4(
+				std::format("Color##{}", uniqueID).c_str(),
 				&color.r,
 				ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | flags);
 		};
 
-		auto ShowCommonOptions = [this, &uniqueID, &ShowDebugOptions, &ShowColorPicker](glm::vec4* colorIntensity) -> bool
+		auto ShowCommonOptions = [this, &uniqueID, &ShowDebugOptions, &ShowColorPicker](glm::vec4* colorIntensity)
 		{
 			const bool currentIsEnabled = m_typeProperties.m_diffuseEnabled || m_typeProperties.m_specularEnabled;
 
 			bool newEnabled = currentIsEnabled;
-			ImGui::Checkbox(std::format("Enabled?##{}", uniqueID).c_str(), &newEnabled);
+			m_isDirty |= ImGui::Checkbox(std::format("Enabled?##{}", uniqueID).c_str(), &newEnabled);
 			if (newEnabled != currentIsEnabled)
 			{
 				m_typeProperties.m_diffuseEnabled = newEnabled;
 				m_typeProperties.m_specularEnabled = newEnabled;
 			}
 
-			bool modifiedIntensity = false;
 			if (colorIntensity)
 			{
-				modifiedIntensity = ImGui::SliderFloat(
+				m_isDirty |= ImGui::SliderFloat(
 					std::format("Luminous Power##{}", uniqueID).c_str(),
 					&colorIntensity->a,
 					0.00001f,
@@ -260,8 +258,6 @@ namespace fr
 			}
 
 			ShowDebugOptions();
-
-			return modifiedIntensity;
 		};
 
 		auto ShowShadowMapMenu = [this, &uniqueID](fr::ShadowMap* shadowMap)
@@ -291,78 +287,61 @@ namespace fr
 			}
 		};
 
-		if (ImGui::CollapsingHeader(std::format("{}##{}", GetName(), uniqueID).c_str(), ImGuiTreeNodeFlags_None))
+		switch (m_typeProperties.m_type)
 		{
-			ImGui::Indent();
-			switch (m_typeProperties.m_type)
-			{
-			case LightType::AmbientIBL_Deferred:
-			{
-				ShowCommonOptions(nullptr);
-				
-				if (ImGui::CollapsingHeader(std::format("IBL Textures##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
-				{
-					ImGui::Indent();
-					ImGui::Text("BRDF Integration map: \"%s\"",
-						m_typeProperties.m_ambient.m_BRDF_integrationMap->GetName().c_str());
+		case LightType::AmbientIBL_Deferred:
+		{
+			ShowCommonOptions(nullptr);
 
-					ImGui::Text("IEM Texture: \"%s\"",
-						m_typeProperties.m_ambient.m_IEMTex->GetName().c_str());
-
-					ImGui::Text("PMREM Texture: \"%s\"",
-						m_typeProperties.m_ambient.m_PMREMTex->GetName().c_str());
-					ImGui::Unindent();
-				}
+			if (ImGui::CollapsingHeader(std::format("IBL Textures##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
+			{
+				ImGui::Indent();
+				ImGui::Text("IBL texture: \"%s\"", m_typeProperties.m_ambient.m_IBLTex->GetName().c_str());
+				ImGui::Unindent();
 			}
-			break;
-			case LightType::Directional_Deferred:
+		}
+		break;
+		case LightType::Directional_Deferred:
+		{
+			ShowCommonOptions(&m_typeProperties.m_directional.m_colorIntensity);
+
+			// ECS_CONVERSION: Figure out how to handle shadow maps + transforms
+			//ShowShadowMapMenu(m_typeProperties.m_directional.m_shadowMap.get());
+			//ShowTransformMenu(m_typeProperties.m_directional.m_ownerTransform);
+		}
+		break;
+		case LightType::Point_Deferred:
+		{
+			ShowCommonOptions(&m_typeProperties.m_point.m_colorIntensity);
+
+			m_isDirty |= ImGui::SliderFloat(
+				std::format("Intensity cutoff##{}", uniqueID).c_str(),
+				&m_typeProperties.m_point.m_intensityCuttoff, 0.0f, 1.f, "%.5f", ImGuiSliderFlags_None);
+
+			m_isDirty |= ImGui::SliderFloat(
+				std::format("Emitter Radius##{}", uniqueID).c_str(),
+				&m_typeProperties.m_point.m_emitterRadius, 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_None);
+			ImGui::SameLine();
+			ImGui::TextDisabled("(?)");
+			if (ImGui::BeginItemTooltip())
 			{
-				ShowCommonOptions(&m_typeProperties.m_directional.m_colorIntensity);
-
-				ShowShadowMapMenu(m_typeProperties.m_directional.m_shadowMap.get());
-				ShowTransformMenu(m_typeProperties.m_directional.m_ownerTransform);
-			}
-			break;
-			case LightType::Point_Deferred:
-			{
-				const bool modifiedIntensity = ShowCommonOptions(&m_typeProperties.m_point.m_colorIntensity);
-
-				const bool modifiedIntensityCutoff = ImGui::SliderFloat(
-					std::format("Intensity cutoff##{}", uniqueID).c_str(),
-					&m_typeProperties.m_point.m_intensityCuttoff, 0.0f, 1.f, "%.5f", ImGuiSliderFlags_None);
-
-				const bool modifiedEmitterRadius = ImGui::SliderFloat(
-					std::format("Emitter Radius##{}", uniqueID).c_str(),
-					&m_typeProperties.m_point.m_emitterRadius, 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_None);
-				ImGui::SameLine();
-				ImGui::TextDisabled("(?)");
-				if (ImGui::BeginItemTooltip())
-				{
-					ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-					ImGui::TextUnformatted("Simulated emitter radius for calculating non-singular point light attenuation");
-					ImGui::PopTextWrapPos();
-					ImGui::EndTooltip();
-				}
-
-				if (modifiedIntensity || modifiedIntensityCutoff || modifiedEmitterRadius)
-				{
-					ConfigurePointLightMeshScale(this);
-				}
-				ImGui::Text(std::format("Deferred mesh radius: {}", 
-					m_typeProperties.m_point.m_ownerTransform->GetLocalScale().x).c_str());
-
-				ShowShadowMapMenu(m_typeProperties.m_point.m_cubeShadowMap.get());
-				ShowTransformMenu(m_typeProperties.m_point.m_ownerTransform);
-			}
-			break;
-			default:
-				SEAssertF("Invalid light type");
+				ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+				ImGui::TextUnformatted("Simulated emitter radius for calculating non-singular point light attenuation");
+				ImGui::PopTextWrapPos();
+				ImGui::EndTooltip();
 			}
 
-			ImGui::Unindent();
-		}	
+			ImGui::Text(
+				std::format("Deferred mesh radius: {}##{}", m_typeProperties.m_point.m_sphericalRadius, uniqueID).c_str());
 
-		*/
+			// ECS_CONVERSION: Figure out how to handle shadow maps + transforms
+			//ShowShadowMapMenu(m_typeProperties.m_point.m_cubeShadowMap.get());
+			//ShowTransformMenu(m_typeProperties.m_point.m_ownerTransform);
+		}
+		break;
+		default:
+			SEAssertF("Invalid light type");
+		}
 	}
 }
 

@@ -14,6 +14,8 @@ namespace fr
 	public:
 		static gr::Material::RenderData CreateRenderData(MaterialComponent const&);
 
+		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
+
 
 	public:
 		// ECS_CONVERSION TODO: Materials are unique, and have their lifecycle managed by the SceneData.

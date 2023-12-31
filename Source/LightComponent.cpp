@@ -288,6 +288,24 @@ namespace fr
 	}
 
 
+	void LightComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity)
+	{
+		fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(owningEntity);
+
+		if (ImGui::CollapsingHeader(
+			std::format("{}##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
+
+			fr::LightComponent& lightCmpt = em.GetComponent<fr::LightComponent>(owningEntity);
+
+			lightCmpt.GetLight().ShowImGuiWindow(nameCmpt.GetUniqueID());
+
+			ImGui::Unindent();
+		}
+	}
+
+
 	// ---
 
 

@@ -794,16 +794,14 @@ namespace fr
 						&s_mainCamIdx, 
 						buttonIdx++);
 					ImGui::SameLine();
-
 					fr::CameraComponent::ShowImGuiWindow(*this, entity);
+					ImGui::Separator();
 
 					// Update the main camera:
 					if (pressed)
 					{
 						SetMainCamera(entity);
 					}
-
-					ImGui::Separator();
 				}
 				ImGui::Unindent();
 			} // "Cameras:"
@@ -818,7 +816,6 @@ namespace fr
 				for (entt::entity entity : meshView)
 				{
 					fr::Mesh::ShowImGuiWindow(*this, entity);
-
 					ImGui::Separator();
 				}
 
@@ -831,14 +828,12 @@ namespace fr
 			{
 				ImGui::Indent();
 
-				// ECS_CONVERSION: TODO: RESTORE THIS FUNCTIONALITY
-				//std::unordered_map<size_t, std::shared_ptr<gr::Material>> const& materials =
-				//	fr::SceneManager::GetSceneData()->GetMaterials();
-				//for (auto const& materialEntry : materials)
-				//{
-				//	materialEntry.second->ShowImGuiWindow();
-				//	ImGui::Separator();
-				//}
+				auto materialView = m_registry.view<fr::MaterialComponent>();
+				for (entt::entity entity : materialView)
+				{
+					fr::MaterialComponent::ShowImGuiWindow(*this, entity);
+					ImGui::Separator();
+				}
 
 				ImGui::Unindent();
 			} // "Materials:"
@@ -849,36 +844,33 @@ namespace fr
 			{
 				ImGui::Indent();
 
-				// ECS_CONVERSION: TODO: RESTORE THIS FUNCTIONALITY
+				auto ambientLightView = m_registry.view<fr::LightComponent, fr::LightComponent::AmbientIBLDeferredMarker>();
+				for (entt::entity entity : ambientLightView)
+				{
+					fr::LightComponent::ShowImGuiWindow(*this, entity);
+				}
 
-				//std::shared_ptr<fr::Light> const ambientLight = fr::SceneManager::GetSceneData()->GetAmbientLight();
-				//if (ambientLight)
-				//{
-				//	ambientLight->ShowImGuiWindow();
-				//}
+				auto directionalLightView = m_registry.view<fr::LightComponent, fr::LightComponent::DirectionalDeferredMarker>();
+				for (entt::entity entity : directionalLightView)
+				{
+					fr::LightComponent::ShowImGuiWindow(*this, entity);
+				}
 
-				//std::shared_ptr<fr::Light> const directionalLight = fr::SceneManager::GetSceneData()->GetKeyLight();
-				//if (directionalLight)
-				//{
-				//	directionalLight->ShowImGuiWindow();
-				//}
-
-				//if (ImGui::CollapsingHeader("Point Lights:", ImGuiTreeNodeFlags_None))
-				//{
-				//	ImGui::Indent();
-				//	std::vector<std::shared_ptr<fr::Light>> const& pointLights =
-				//		fr::SceneManager::GetSceneData()->GetPointLights();
-				//	for (auto const& light : pointLights)
-				//	{
-				//		light->ShowImGuiWindow();
-				//	}
-				//	ImGui::Unindent();
-				//}
+				if (ImGui::CollapsingHeader("Point Lights:", ImGuiTreeNodeFlags_None))
+				{
+					ImGui::Indent();
+					auto pointLightView = m_registry.view<fr::LightComponent, fr::LightComponent::PointDeferredMarker>();
+					for (entt::entity entity : pointLightView)
+					{
+						fr::LightComponent::ShowImGuiWindow(*this, entity);
+					}
+					ImGui::Unindent();
+				}
 
 				ImGui::Unindent();
 			} // "Lights:"
 
-			ImGui::Separator();
+			//ImGui::Separator();
 
 			ImGui::End();
 		}
