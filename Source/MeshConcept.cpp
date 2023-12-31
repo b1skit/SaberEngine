@@ -37,10 +37,8 @@ namespace fr
 	}
 
 
-	void Mesh::ShowImGuiWindow(entt::entity meshConcept)
+	void Mesh::ShowImGuiWindow(fr::EntityManager& em, entt::entity meshConcept)
 	{
-		fr::EntityManager& em = *fr::EntityManager::Get();
-
 		fr::NameComponent const& meshName = em.GetComponent<fr::NameComponent>(meshConcept);
 		fr::Relationship const& meshRelationship = em.GetComponent<fr::Relationship>(meshConcept);
 		fr::TransformComponent& owningTransform =

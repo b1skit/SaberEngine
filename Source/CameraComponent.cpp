@@ -77,13 +77,18 @@ namespace fr
 	}
 
 
-	void CameraComponent::ShowImGuiWindow(fr::CameraComponent& camCmpt, fr::NameComponent const& nameCmpt)
+	void CameraComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity camEntity)
 	{
+		fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(camEntity);
+
 		if (ImGui::CollapsingHeader(
 			std::format("{}##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
+			
+			fr::CameraComponent& camCmpt = em.GetComponent<fr::CameraComponent>(camEntity);
 			camCmpt.m_camera.ShowImGuiWindow(nameCmpt.GetUniqueID());
+
 			ImGui::Unindent();
 		}
 	}

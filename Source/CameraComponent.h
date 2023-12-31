@@ -32,7 +32,7 @@ namespace fr
 
 		static gr::Camera::RenderData CreateRenderData(CameraComponent const&);
 
-		static void ShowImGuiWindow(fr::CameraComponent&, fr::NameComponent const&);
+		static void ShowImGuiWindow(fr::EntityManager&, entt::entity camEntity);
 
 
 	public:

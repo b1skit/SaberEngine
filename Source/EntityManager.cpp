@@ -764,7 +764,7 @@ namespace fr
 			{
 				ImGui::Indent();
 
-				auto cameraCmptView = m_registry.view<fr::CameraComponent, fr::NameComponent>();
+				auto cameraCmptView = m_registry.view<fr::CameraComponent>();
 
 				const entt::entity mainCamEntity = GetMainCamera();
 
@@ -787,17 +787,15 @@ namespace fr
 				
 				int buttonIdx = 0;
 				for (entt::entity entity : cameraCmptView)
-				{
-					fr::CameraComponent& camCmpt = cameraCmptView.get<fr::CameraComponent>(entity);
-					fr::NameComponent const& camNameCmpt = cameraCmptView.get<fr::NameComponent>(entity);
-				
+				{			
 					// Display a radio button on the same line as our camera header:
 					const bool pressed = ImGui::RadioButton(
-						std::format("##{}", camNameCmpt.GetUniqueID()).c_str(), 
+						std::format("##{}", static_cast<uint32_t>(entity)).c_str(), 
 						&s_mainCamIdx, 
 						buttonIdx++);
 					ImGui::SameLine();
-					camCmpt.ShowImGuiWindow(camCmpt, camNameCmpt);
+
+					fr::CameraComponent::ShowImGuiWindow(*this, entity);
 
 					// Update the main camera:
 					if (pressed)
@@ -816,10 +814,10 @@ namespace fr
 			{
 				ImGui::Indent();
 
-				auto meshView = m_registry.view<fr::Mesh::MeshConceptMarker, fr::NameComponent, fr::Relationship>();
+				auto meshView = m_registry.view<fr::Mesh::MeshConceptMarker>();
 				for (entt::entity entity : meshView)
 				{
-					fr::Mesh::ShowImGuiWindow(entity);
+					fr::Mesh::ShowImGuiWindow(*this, entity);
 
 					ImGui::Separator();
 				}
