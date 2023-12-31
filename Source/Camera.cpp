@@ -106,7 +106,7 @@ namespace fr
 	}
 
 
-	void Camera::ShowImGuiWindow(uint64_t uniqueID)
+	void Camera::ShowImGuiWindow(uint64_t uniqueID, fr::Transform& camTransform)
 	{
 		if (ImGui::CollapsingHeader(std::format("Modify##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 		{
@@ -223,9 +223,8 @@ namespace fr
 
 		if (ImGui::CollapsingHeader(std::format("Transform##{}", uniqueID).c_str()))
 		{
-			// ECS_CONVERSION: TODO: RESTORE THIS FUNCTIONALITY
 			ImGui::Indent();
-			//m_transform->ShowImGuiWindow();
+			camTransform.ShowImGuiWindow();
 			ImGui::Unindent();
 		}
 	}

@@ -87,7 +87,14 @@ namespace fr
 			ImGui::Indent();
 			
 			fr::CameraComponent& camCmpt = em.GetComponent<fr::CameraComponent>(camEntity);
-			camCmpt.m_camera.ShowImGuiWindow(nameCmpt.GetUniqueID());
+			
+			fr::Relationship const& cameraRelationship = em.GetComponent<fr::Relationship>(camEntity);
+			fr::TransformComponent& camTransformCmpt =
+				*em.GetFirstInHierarchyAbove<fr::TransformComponent>(cameraRelationship.GetParent());
+
+			fr::Transform& camTransform = camTransformCmpt.GetTransform();
+
+			camCmpt.m_camera.ShowImGuiWindow(nameCmpt.GetUniqueID(), camTransform);
 
 			ImGui::Unindent();
 		}
