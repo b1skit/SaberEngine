@@ -555,6 +555,11 @@ namespace fr
 				ImGui::Text(std::format("Local Scale: {}", glm::to_string(m_localScale)).c_str());
 				util::DisplayMat4x4(std::format("Local Matrix:##{}", util::PtrToID(this)).c_str(), m_localMat);
 				util::DisplayMat4x4(std::format("Global Matrix:##{}", util::PtrToID(this)).c_str(), GetGlobalMatrix());
+
+				ImGui::Text(std::format("Global Right (X): {}", glm::to_string(GetGlobalRight())).c_str());
+				ImGui::Text(std::format("Global Up (Y): {}", glm::to_string(GetGlobalUp())).c_str());
+				ImGui::Text(std::format("Global Forward (Z): {}", glm::to_string(GetGlobalForward())).c_str());
+
 				ImGui::Unindent();
 			}
 			

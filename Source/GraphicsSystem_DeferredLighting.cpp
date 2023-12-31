@@ -335,7 +335,7 @@ namespace gr
 		cubemapCamParams.g_invViewProjection = glm::mat4(1.f); // Identity; unused
 		cubemapCamParams.g_cameraWPos = glm::vec4(0.f, 0.f, 0.f, 0.f); // Unused
 
-		std::vector<glm::mat4> const& cubemapViews = gr::Camera::BuildCubeViewMatrices(glm::vec3(0.f));
+		std::vector<glm::mat4> const& cubemapViews = gr::Camera::BuildAxisAlignedCubeViewMatrices(glm::vec3(0.f));
 
 		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
 		re::Batch cubeMeshBatch = re::Batch(re::Batch::Lifetime::SingleFrame, m_cubeMeshPrimitive.get(), nullptr);

@@ -31,42 +31,78 @@ namespace gr
 	}
 
 
-	std::vector<glm::mat4> Camera::BuildCubeViewMatrices(glm::vec3 const& centerPos)
+	std::vector<glm::mat4> Camera::BuildAxisAlignedCubeViewMatrices(glm::vec3 const& centerPos)
+	{
+		return BuildCubeViewMatrices(
+			centerPos, gr::Transform::WorldAxisX, gr::Transform::WorldAxisY, gr::Transform::WorldAxisZ);
+	}
+
+
+	std::vector<glm::mat4> Camera::BuildCubeViewMatrices(
+		glm::vec3 const& centerPos,
+		glm::vec3 const& right,		// X
+		glm::vec3 const& up,		// Y
+		glm::vec3 const& forward)	// Z
 	{
 		std::vector<glm::mat4> cubeView;
 		cubeView.reserve(6);
 
 		cubeView.emplace_back(glm::lookAt( // X+
-			centerPos,								// eye
-			centerPos + gr::Transform::WorldAxisX,	// center: Position the camera is looking at
-			gr::Transform::WorldAxisY));			// Normalized camera up vector
+			centerPos,				// eye
+			centerPos + right,		// center: Position the camera is looking at
+			up));					// Normalized camera up vector
 		cubeView.emplace_back(glm::lookAt( // X-
 			centerPos,
-			centerPos - gr::Transform::WorldAxisX,
-			gr::Transform::WorldAxisY));
+			centerPos - right,
+			up));
 
 		cubeView.emplace_back(glm::lookAt( // Y+
 			centerPos,
-			centerPos + gr::Transform::WorldAxisY,
-			gr::Transform::WorldAxisZ));
+			centerPos + up,
+			forward));
 		cubeView.emplace_back(glm::lookAt( // Y-
 			centerPos,
-			centerPos - gr::Transform::WorldAxisY,
-			-gr::Transform::WorldAxisZ));
+			centerPos - up,
+			-forward));
 
 		// In both OpenGL and DX12, cubemaps use a LHCS. SaberEngine uses a RHCS.
 		// Here, we supply our coordinates w.r.t a LHCS by multiplying the Z direction (i.e. the point we're looking at)
 		// by -1. In our shaders we must also transform our RHCS sample directions to LHCS.
 		cubeView.emplace_back(glm::lookAt( // Z+
 			centerPos,
-			centerPos - gr::Transform::WorldAxisZ, // * -1
-			gr::Transform::WorldAxisY));
+			centerPos - forward, // * -1
+			up));
 		cubeView.emplace_back(glm::lookAt( // Z-
 			centerPos,
-			centerPos + gr::Transform::WorldAxisZ, // * -1
-			gr::Transform::WorldAxisY));
+			centerPos + forward, // * -1
+			up));
 
 		return cubeView;
+	}
+
+
+	std::vector<glm::mat4> Camera::BuildCubeViewProjectionMatrices(
+		std::vector<glm::mat4> const& viewMats, glm::mat4 const& projection)
+	{
+		std::vector<glm::mat4> viewProjMats;
+		viewProjMats.reserve(6);
+		for (uint8_t faceIdx = 0; faceIdx < 6; faceIdx++)
+		{
+			viewProjMats.emplace_back(projection * viewMats[faceIdx]);
+		}
+		return viewProjMats;
+	}
+
+
+	std::vector<glm::mat4> Camera::BuildCubeInvViewProjectionMatrices(std::vector<glm::mat4> const& viewProjMats)
+	{
+		std::vector<glm::mat4> invViewProjMats;
+		invViewProjMats.reserve(6);
+		for (uint8_t faceIdx = 0; faceIdx < 6; faceIdx++)
+		{
+			invViewProjMats.emplace_back(glm::inverse(viewProjMats[faceIdx]));
+		}
+		return invViewProjMats;
 	}
 
 

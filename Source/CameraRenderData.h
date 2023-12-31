@@ -1,5 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
+#include "NamedObject.h"
 #include "RenderObjectIDs.h"
 #include "TransformRenderData.h"
 
@@ -99,11 +100,25 @@ namespace gr
 			gr::Camera::CameraParams m_cameraParams; 
 
 			gr::TransformID m_transformID;
+
+			char m_cameraName[en::NamedObject::k_maxNameLength];
 		};
 
 
 	public:
-		static std::vector<glm::mat4> BuildCubeViewMatrices(glm::vec3 const& centerPos);
+		static std::vector<glm::mat4> BuildAxisAlignedCubeViewMatrices(glm::vec3 const& centerPos);
+
+		static std::vector<glm::mat4> BuildCubeViewMatrices(
+			glm::vec3 const& centerPos, 
+			glm::vec3 const& right,		// X
+			glm::vec3 const& up,		// Y
+			glm::vec3 const& forward);	// Z
+		
+		static std::vector<glm::mat4> BuildCubeViewProjectionMatrices(
+			std::vector<glm::mat4> const& viewMats, glm::mat4 const& projection);
+
+		static std::vector<glm::mat4> BuildCubeInvViewProjectionMatrices(
+			std::vector<glm::mat4> const& viewProjMats);
 
 		static glm::mat4 BuildPerspectiveProjectionMatrix(float yFOV, float aspectRatio, float nearDist, float farDist);
 

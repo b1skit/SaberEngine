@@ -30,7 +30,7 @@ namespace fr
 
 		static void MarkDirty(EntityManager&, entt::entity cameraEntity);
 
-		static gr::Camera::RenderData CreateRenderData(CameraComponent const&);
+		static gr::Camera::RenderData CreateRenderData(CameraComponent const&, fr::NameComponent const&);
 
 		static void ShowImGuiWindow(fr::EntityManager&, entt::entity camEntity);
 

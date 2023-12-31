@@ -6,6 +6,7 @@
 namespace fr
 {
 	class EntityManager;
+	class NameComponent;
 	class Relationship;
 
 
@@ -51,7 +52,7 @@ namespace fr
 			BoundsComponent::Contents);
 
 	public:
-		static gr::Bounds::RenderData CreateRenderData(fr::BoundsComponent const&);
+		static gr::Bounds::RenderData CreateRenderData(fr::BoundsComponent const&, fr::NameComponent const&);
 
 
 	private:

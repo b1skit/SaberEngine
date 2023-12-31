@@ -28,7 +28,7 @@ namespace
 		CubemapShadowRenderParams cubemapShadowParams;
 		
 		std::vector<glm::mat4> const& cubeViewMatrices = 
-			gr::Camera::BuildCubeViewMatrices(transformData.m_globalPosition);
+			gr::Camera::BuildAxisAlignedCubeViewMatrices(transformData.m_globalPosition);
 
 		for (uint8_t faceIdx = 0; faceIdx < 6; faceIdx++)
 		{

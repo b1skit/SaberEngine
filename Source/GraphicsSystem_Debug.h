@@ -51,7 +51,7 @@ namespace gr
 		bool m_showCameraFrustums = false;
 		glm::vec3 m_cameraFrustumColor = glm::vec3(1.f, 1.f, 1.f);
 		float m_cameraCoordinateAxisScale = 1.f;
-		std::unordered_set<fr::Camera*> m_camerasToDebug;
+		std::unordered_map<gr::Camera::RenderData const*, gr::Transform::RenderData const*> m_camerasToDebug;
 
 		bool m_showAllWireframe = false;
 		glm::vec3 m_wireframeColor = glm::vec3(152/255.f, 1.f, 166/255.f);

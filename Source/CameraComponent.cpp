@@ -67,13 +67,18 @@ namespace fr
 	}
 
 
-	gr::Camera::RenderData CameraComponent::CreateRenderData(CameraComponent const& cameraComponent)
+	gr::Camera::RenderData CameraComponent::CreateRenderData(
+		CameraComponent const& cameraComponent, fr::NameComponent const& nameCmpt)
 	{
-		return gr::Camera::RenderData{
+		gr::Camera::RenderData renderData = gr::Camera::RenderData{
 			.m_cameraConfig = cameraComponent.GetCamera().GetCameraConfig(),
 			.m_cameraParams = fr::Camera::BuildCameraParams(cameraComponent.GetCamera()),
 			.m_transformID = cameraComponent.GetTransformID()
 		};
+
+		strncpy(renderData.m_cameraName, nameCmpt.GetName().c_str(), en::NamedObject::k_maxNameLength);
+
+		return renderData;
 	}
 
 

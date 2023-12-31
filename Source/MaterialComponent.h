@@ -5,6 +5,9 @@
 
 namespace fr
 {
+	class NameComponent;
+
+
 	class MaterialComponent
 	{
 	public:
@@ -12,7 +15,7 @@ namespace fr
 			fr::EntityManager&, entt::entity meshPrimitiveConcept, std::shared_ptr<gr::Material>);
 
 	public:
-		static gr::Material::RenderData CreateRenderData(MaterialComponent const&);
+		static gr::Material::RenderData CreateRenderData(MaterialComponent const&, fr::NameComponent const&);
 
 		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
 

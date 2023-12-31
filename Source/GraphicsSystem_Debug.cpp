@@ -3,6 +3,7 @@
 #include "ConfigKeys.h"
 #include "GraphicsSystem_Debug.h"
 #include "GraphicsSystemManager.h"
+#include "ImGuiUtils.h"
 #include "LightRenderData.h"
 #include "SceneManager.h"
 
@@ -202,20 +203,23 @@ namespace
 		return re::Batch(re::Batch::Lifetime::SingleFrame, nullptr, boundingBoxBatchGraphicsParams);
 	}
 
-	// ECS_CONVERSION: Restore this functionality
-	/*
-	re::Batch BuildCameraFrustumBatch(fr::Camera const* camera, glm::vec3 const& frustumColor, uint8_t cubemapCamFaceIdx = 0)
+
+	
+	re::Batch BuildCameraFrustumBatch(
+		gr::Camera::RenderData const* camData,
+		gr::Transform::RenderData const* transformData,
+		glm::vec3 const& frustumColor, 
+		glm::mat4 const& invViewProj)
 	{
-		
 		// Convert NDC coordinates to world space. Cubemap face index 0 = the same matrix as a non-cubemap camera
-		glm::vec4 farTL = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(-1.f, 1.f, 1.f, 1.f);
-		glm::vec4 farBL = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(-1.f, -1.f, 1.f, 1.f);
-		glm::vec4 farTR = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(1.f, 1.f, 1.f, 1.f);
-		glm::vec4 farBR = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(1.f, -1.f, 1.f, 1.f);
-		glm::vec4 nearTL = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(-1.f, 1.f, 0.f, 1.f);
-		glm::vec4 nearBL = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(-1.f, -1.f, 0.f, 1.f);
-		glm::vec4 nearTR = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(1.f, 1.f, 0.f, 1.f);
-		glm::vec4 nearBR = camera->GetCubeInvViewProjectionMatrices()[cubemapCamFaceIdx] * glm::vec4(1.f, -1.f, 0.f, 1.f);
+		glm::vec4 farTL = invViewProj * glm::vec4(-1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBL = invViewProj * glm::vec4(-1.f, -1.f, 1.f, 1.f);
+		glm::vec4 farTR = invViewProj * glm::vec4(1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBR = invViewProj * glm::vec4(1.f, -1.f, 1.f, 1.f);
+		glm::vec4 nearTL = invViewProj * glm::vec4(-1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBL = invViewProj * glm::vec4(-1.f, -1.f, 0.f, 1.f);
+		glm::vec4 nearTR = invViewProj * glm::vec4(1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBR = invViewProj * glm::vec4(1.f, -1.f, 0.f, 1.f);
 
 		farTL /= farTL.w;
 		farBL /= farBL.w;
@@ -289,7 +293,7 @@ namespace
 
 		return re::Batch(re::Batch::Lifetime::SingleFrame, nullptr, frustumBatchGraphicsParams);
 	}
-	*/
+	
 
 
 	re::Batch BuildWireframeBatch(gr::MeshPrimitive::RenderData const& meshPrimRenderData, glm::vec3 const& meshColor)
@@ -447,38 +451,60 @@ namespace gr
 			}
 		}
 
-		// ECS_CONVERSTION TODO: Re-implement this
 		if (m_showCameraFrustums)
 		{
-			//for (fr::Camera* debugCam : m_camerasToDebug)
-			//{
-			//	// Use the inverse view matrix, as it omits any scale that might be present in the Transform hierarchy
-			//	glm::mat4 const& camWorldMatrix = debugCam->GetInverseViewMatrix();
-			//	std::shared_ptr<re::ParameterBlock> cameraTransformPB =
-			//		gr::Transform::CreateInstancedTransformParams(&camWorldMatrix, nullptr);
+			for (auto const& camData : m_camerasToDebug)
+			{				
+				// Use the inverse view matrix, as it omits any scale that might be present in the Transform hierarchy
+				glm::mat4 const& camWorldMatrix = camData.first->m_cameraParams.g_invView;
+				std::shared_ptr<re::ParameterBlock> cameraTransformPB =
+					gr::Transform::CreateInstancedTransformParams(&camWorldMatrix, nullptr);
 
-			//	// Coordinate axis at camera origin:
-			//	re::Batch cameraCoordinateAxisBatch =
-			//		BuildAxisBatch(m_cameraCoordinateAxisScale, m_xAxisColor, m_yAxisColor, m_zAxisColor);
-			//	cameraCoordinateAxisBatch.SetParameterBlock(cameraTransformPB);
-			//	m_debugStage->AddBatch(cameraCoordinateAxisBatch);
+				// Coordinate axis at camera origin:
+				re::Batch cameraCoordinateAxisBatch =
+					BuildAxisBatch(m_cameraCoordinateAxisScale, m_xAxisColor, m_yAxisColor, m_zAxisColor);
+				cameraCoordinateAxisBatch.SetParameterBlock(cameraTransformPB);
+				m_debugStage->AddBatch(cameraCoordinateAxisBatch);
 
-			//	// Our frustum points are already in world-space
-			//	const glm::mat4 identityMat = glm::mat4(1.f);
-			//	std::shared_ptr<re::ParameterBlock> identityPB =
-			//		gr::Transform::CreateInstancedTransformParams(&identityMat, nullptr);
+				// Our frustum points are already in world-space
+				const glm::mat4 identityMat = glm::mat4(1.f);
+				std::shared_ptr<re::ParameterBlock> identityPB =
+					gr::Transform::CreateInstancedTransformParams(&identityMat, nullptr);
 
-			//	const uint8_t numFrustums = 
-			//		debugCam->GetCameraConfig().m_projectionType == gr::Camera::Config::ProjectionType::PerspectiveCubemap ? 6 : 1;
+				const uint8_t numFrustums = camData.first->m_cameraConfig.m_projectionType ==
+					gr::Camera::Config::ProjectionType::PerspectiveCubemap ? 6 : 1;
 
-			//	for (uint8_t faceIdx = 0; faceIdx < numFrustums; faceIdx++)
-			//	{
-			//		re::Batch camFrustumBatch = BuildCameraFrustumBatch(debugCam, m_cameraFrustumColor, faceIdx);
+				std::vector<glm::mat4> invViewProjMats;
+				invViewProjMats.reserve(numFrustums);
 
-			//		camFrustumBatch.SetParameterBlock(identityPB);
-			//		m_debugStage->AddBatch(camFrustumBatch);
-			//	}
-			//}		
+				if (numFrustums == 6)
+				{
+					std::vector<glm::mat4> const& viewMats = gr::Camera::BuildCubeViewMatrices(
+						camData.second->m_globalPosition,
+						camData.second->m_globalRight,
+						camData.second->m_globalUp,
+						camData.second->m_globalForward);
+
+					std::vector<glm::mat4> const& viewProjMats =
+						gr::Camera::BuildCubeViewProjectionMatrices(viewMats, camData.first->m_cameraParams.g_projection);
+
+					invViewProjMats =
+						gr::Camera::BuildCubeInvViewProjectionMatrices(viewProjMats);
+				}
+				else
+				{
+					invViewProjMats.emplace_back(camData.first->m_cameraParams.g_invViewProjection);
+				}
+				
+				for (uint8_t faceIdx = 0; faceIdx < numFrustums; faceIdx++)
+				{
+					re::Batch camFrustumBatch = BuildCameraFrustumBatch(
+						camData.first, camData.second, m_cameraFrustumColor, invViewProjMats[faceIdx]);
+
+					camFrustumBatch.SetParameterBlock(identityPB);
+					m_debugStage->AddBatch(camFrustumBatch);
+				}
+			}		
 		}
 
 		if (m_showDeferredLightWireframe)
@@ -533,28 +559,37 @@ namespace gr
 		
 		if (ImGui::CollapsingHeader(std::format("Debug camera frustums").c_str()))
 		{
-			// ECS_CONVERSION: TODO Restore this functionality
-
-			/*ImGui::Indent();
+			ImGui::Indent();
 			m_showCameraFrustums = true;
-			std::vector<std::shared_ptr<fr::Camera>> const& sceneCams = fr::SceneManager::GetSceneData()->GetCameras();
-			for (size_t camIdx = 0; camIdx < sceneCams.size(); camIdx++)
+
+			gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
+			
+			auto camItr = renderData.ObjectBegin<gr::Camera::RenderData>();
+			auto const& camEnd = renderData.ObjectEnd<gr::Camera::RenderData>();
+			while (camItr != camEnd)
 			{
-				fr::Camera* currentCam = sceneCams[camIdx].get();
-				const bool cameraAlreadyAdded = m_camerasToDebug.contains(currentCam);
+				gr::Camera::RenderData const* camData = &camItr.Get<gr::Camera::RenderData>();
+				gr::Transform::RenderData const* transformData = &camItr.GetTransformData();
+
+				const bool cameraAlreadyAdded = m_camerasToDebug.contains(camData);
 				bool cameraSelected = cameraAlreadyAdded;
-				if (ImGui::Checkbox(std::format("{}##", currentCam->GetName(), currentCam->GetUniqueID()).c_str(), &cameraSelected) &&
+				if (ImGui::Checkbox(
+						std::format("{}##", camData->m_cameraName, util::PtrToID(camData)).c_str(), &cameraSelected) &&
 					!cameraAlreadyAdded)
 				{
-					m_camerasToDebug.emplace(currentCam);
+					m_camerasToDebug.emplace(std::make_pair(camData, transformData));
 				}
 				else if (cameraAlreadyAdded && !cameraSelected)
 				{
-					m_camerasToDebug.erase(currentCam);
+					m_camerasToDebug.erase(camData);
 				}
+
+				++camItr;
 			}
+
+
 			ImGui::SliderFloat("Camera coordinate axis scale", &m_cameraCoordinateAxisScale, 0.f, 20.f);
-			ImGui::Unindent();*/
+			ImGui::Unindent();
 		}
 		else
 		{

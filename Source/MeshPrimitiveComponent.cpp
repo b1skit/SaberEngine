@@ -133,7 +133,7 @@ namespace fr
 
 
 	gr::MeshPrimitive::RenderData MeshPrimitiveComponent::CreateRenderData(
-		MeshPrimitiveComponent const& meshPrimitiveComponent)
+		MeshPrimitiveComponent const& meshPrimitiveComponent, fr::NameComponent const&)
 	{
 		gr::MeshPrimitive::RenderData renderData = gr::MeshPrimitive::RenderData{
 			.m_meshPrimitiveParams = meshPrimitiveComponent.m_meshPrimitive->GetMeshParams(),

@@ -2,15 +2,10 @@
 #include "BoundsComponent.h"
 #include "EntityManager.h"
 #include "MarkerComponents.h"
+#include "NameComponent.h"
 #include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 #include "Transform.h"
-
-
-using glm::vec3;
-using glm::vec4;
-using glm::mat4;
-using fr::Transform;
 
 
 namespace
@@ -103,7 +98,7 @@ namespace fr
 	}
 
 
-	gr::Bounds::RenderData BoundsComponent::CreateRenderData(fr::BoundsComponent const& bounds)
+	gr::Bounds::RenderData BoundsComponent::CreateRenderData(fr::BoundsComponent const& bounds, fr::NameComponent const&)
 	{
 		return gr::Bounds::RenderData
 		{
@@ -168,18 +163,18 @@ namespace fr
 
 
 	// Returns a new AABB BoundsConcept, transformed from local space using transform
-	BoundsComponent BoundsComponent::GetTransformedAABBBounds(mat4 const& worldMatrix) const
+	BoundsComponent BoundsComponent::GetTransformedAABBBounds(glm::mat4 const& worldMatrix) const
 	{
 		// Assemble our current AABB points into a cube of 8 vertices:
-		std::vector<vec4>points(8);							// "front" == fwd == Z -
-		points[0] = vec4(xMin(), yMax(), zMin(), 1.0f);		// Left		top		front 
-		points[1] = vec4(xMax(), yMax(), zMin(), 1.0f);		// Right	top		front
-		points[2] = vec4(xMin(), yMin(), zMin(), 1.0f);		// Left		bot		front
-		points[3] = vec4(xMax(), yMin(), zMin(), 1.0f);		// Right	bot		
-		points[4] = vec4(xMin(), yMax(), zMax(), 1.0f);		// Left		top		back
-		points[5] = vec4(xMax(), yMax(), zMax(), 1.0f);		// Right	top		back
-		points[6] = vec4(xMin(), yMin(), zMax(), 1.0f);		// Left		bot		back
-		points[7] = vec4(xMax(), yMin(), zMax(), 1.0f);		// Right	bot		back
+		std::vector<glm::vec4>points(8);							// "front" == fwd == Z -
+		points[0] = glm::vec4(xMin(), yMax(), zMin(), 1.0f);		// Left		top		front 
+		points[1] = glm::vec4(xMax(), yMax(), zMin(), 1.0f);		// Right	top		front
+		points[2] = glm::vec4(xMin(), yMin(), zMin(), 1.0f);		// Left		bot		front
+		points[3] = glm::vec4(xMax(), yMin(), zMin(), 1.0f);		// Right	bot		
+		points[4] = glm::vec4(xMin(), yMax(), zMax(), 1.0f);		// Left		top		back
+		points[5] = glm::vec4(xMax(), yMax(), zMax(), 1.0f);		// Right	top		back
+		points[6] = glm::vec4(xMin(), yMin(), zMax(), 1.0f);		// Left		bot		back
+		points[7] = glm::vec4(xMax(), yMin(), zMax(), 1.0f);		// Right	bot		back
 
 		// Compute a new AABB in world-space:
 		BoundsComponent result(PrivateCTORTag{}); // Invalid min/max by default

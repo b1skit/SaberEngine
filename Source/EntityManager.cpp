@@ -160,16 +160,17 @@ namespace fr
 	{
 		re::RenderManager* renderManager = re::RenderManager::Get();
 
-		auto componentsView = m_registry.view<T, DirtyMarker<T>, gr::RenderDataComponent>();
+		auto componentsView = m_registry.view<T, DirtyMarker<T>, gr::RenderDataComponent, fr::NameComponent>();
 		for (auto entity : componentsView)
 		{
 			gr::RenderDataComponent const& renderDataComponent = componentsView.get<gr::RenderDataComponent>(entity);
+			fr::NameComponent const& nameComponent = componentsView.get<fr::NameComponent>(entity);
 
 			T const& component = componentsView.get<T>(entity);
 
 			renderManager->EnqueueRenderCommand<gr::UpdateRenderDataRenderCommand<RenderDataType>>(
 				renderDataComponent.GetRenderDataID(),
-				T::CreateRenderData(component));
+				T::CreateRenderData(component, nameComponent));
 
 			m_registry.erase<DirtyMarker<T>>(entity);
 		}

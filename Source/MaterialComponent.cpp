@@ -10,7 +10,8 @@
 
 namespace fr
 {
-	gr::Material::RenderData MaterialComponent::CreateRenderData(MaterialComponent const& matComponent)
+	gr::Material::RenderData MaterialComponent::CreateRenderData(
+		MaterialComponent const& matComponent, fr::NameComponent const&)
 	{
 		return gr::Material::RenderData{
 			.m_material = matComponent.m_material
