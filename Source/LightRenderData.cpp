@@ -10,39 +10,17 @@ namespace gr
 		gr::Light::LightType lightType, 
 		gr::LightID lightID, 
 		gr::RenderDataID renderDataID, 
-		gr::TransformID transformID, 
-		bool hasShadow)
+		gr::TransformID transformID)
 		: m_lightType(lightType)
 		, m_lightID(lightID)
 		, m_renderDataID(renderDataID)
 		, m_transformID(transformID)
 	{
+		// CTOR just sets the identifiers and zeros everything else out. 
+		// Everything else is populated in fr::LightComponent::CreateRenderData
+
 		memset(&m_typeProperties, 0, sizeof(m_typeProperties));
-
-		switch (lightType)
-		{
-		case gr::Light::LightType::AmbientIBL_Deferred:
-		{
-			m_typeProperties.m_ambient.m_iblTex = nullptr;
-		}
-		break;
-		case gr::Light::LightType::Directional_Deferred:
-		{
-			m_typeProperties.m_directional.m_hasShadow = hasShadow;
-		}
-		break;
-		case gr::Light::LightType::Point_Deferred:
-		{
-			m_typeProperties.m_point.m_hasShadow = hasShadow;
-		}
-		break;
-		default: SEAssertF("Invalid light type");
-		}
-
 		strncpy(m_lightName, name, en::NamedObject::k_maxNameLength);
-
-		m_diffuseEnabled = true;
-		m_specularEnabled = true;
 	}
 
 

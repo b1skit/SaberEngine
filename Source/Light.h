@@ -6,6 +6,7 @@
 namespace fr
 {
 	class Camera;
+	class ShadowMap;
 	class Transform;
 
 
@@ -43,7 +44,6 @@ namespace fr
 		void SetColorIntensity(glm::vec4 const&);
 	 
 		LightType GetType() const;
-		
 		
 		void ShowImGuiWindow(uint64_t uniqueID);
 

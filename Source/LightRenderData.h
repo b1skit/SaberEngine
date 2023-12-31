@@ -26,6 +26,7 @@ namespace gr
 
 		struct RenderData
 		{
+			// Identifiers:
 			gr::Light::LightType m_lightType;
 
 			gr::LightID m_lightID;
@@ -34,6 +35,7 @@ namespace gr
 
 			char m_lightName[en::NamedObject::k_maxNameLength];
 
+			// Type-specific light data:
 			union
 			{
 				struct
@@ -63,8 +65,10 @@ namespace gr
 			bool m_diffuseEnabled;
 			bool m_specularEnabled;
 
+
+		public:
 			RenderData(
-				char const* name, gr::Light::LightType, gr::LightID, gr::RenderDataID, gr::TransformID, bool hasShadow);
+				char const* name, gr::Light::LightType, gr::LightID, gr::RenderDataID, gr::TransformID);
 			~RenderData();
 			RenderData& operator=(RenderData const&);
 

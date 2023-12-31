@@ -225,6 +225,32 @@ namespace fr
 	}
 
 
+	void ShadowMapComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity shadowMapEntity)
+	{
+		fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(shadowMapEntity);
+		if (ImGui::CollapsingHeader(
+			std::format("{}##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
+
+			fr::ShadowMapComponent& shadowMapCmpt = em.GetComponent<fr::ShadowMapComponent>(shadowMapEntity);
+
+			shadowMapCmpt.GetShadowMap().ShowImGuiWindow(nameCmpt.GetUniqueID());
+
+			// Shadow camera:
+			{
+				entt::entity shadowCamEntity = entt::null;
+				fr::CameraComponent* shadowCamCmpt = em.GetFirstAndEntityInChildren<fr::CameraComponent>(shadowMapEntity, shadowCamEntity);
+				SEAssert("Failed to find shadow camera", shadowCamCmpt);
+
+				fr::CameraComponent::ShowImGuiWindow(em, shadowCamEntity);
+			}
+
+			ImGui::Unindent();
+		}
+	}
+
+
 	// ---
 
 

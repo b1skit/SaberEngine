@@ -25,6 +25,8 @@ namespace fr
 
 		static gr::Transform::RenderData CreateRenderData(fr::TransformComponent&);
 
+		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
+
 
 	public:
 		fr::Transform& GetTransform();

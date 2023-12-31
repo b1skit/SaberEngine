@@ -46,7 +46,7 @@ namespace fr
 
 		static bool Update(fr::LightComponent&, fr::Transform* lightTransform, fr::Camera* shadowCam);
 
-		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
+		static void ShowImGuiWindow(fr::EntityManager&, entt::entity lightEntity);
 
 
 	public:

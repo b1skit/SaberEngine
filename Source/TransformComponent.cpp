@@ -12,6 +12,14 @@ namespace fr
 	std::atomic<gr::TransformID> TransformComponent::s_transformIDs = gr::k_sharedIdentityTransformID + 1;
 
 
+	TransformComponent& TransformComponent::AttachTransformComponent(
+		fr::EntityManager& em, entt::entity entity, fr::Transform* parent)
+	{
+		em.EmplaceComponent<fr::TransformComponent::NewIDMarker>(entity);
+		return *em.EmplaceComponent<fr::TransformComponent>(entity, PrivateCTORTag{}, parent);
+	}
+
+
 	gr::Transform::RenderData TransformComponent::CreateRenderData(fr::TransformComponent& transformComponent)
 	{
 		fr::Transform& transform = transformComponent.GetTransform();
@@ -30,11 +38,18 @@ namespace fr
 	}
 
 
-	TransformComponent& TransformComponent::AttachTransformComponent(
-		fr::EntityManager& em, entt::entity entity, fr::Transform* parent)
+	void TransformComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity)
 	{
-		em.EmplaceComponent<fr::TransformComponent::NewIDMarker>(entity);
-		return *em.EmplaceComponent<fr::TransformComponent>(entity, PrivateCTORTag{}, parent);
+		if (ImGui::CollapsingHeader(
+			std::format("Transform##{}", static_cast<uint32_t>(owningEntity)).c_str(), ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
+
+			fr::TransformComponent& transformCmpt = em.GetComponent<fr::TransformComponent>(owningEntity);
+			transformCmpt.GetTransform().ShowImGuiWindow();
+
+			ImGui::Unindent();
+		}
 	}
 
 

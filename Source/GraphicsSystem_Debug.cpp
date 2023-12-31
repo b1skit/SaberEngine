@@ -509,7 +509,7 @@ namespace gr
 
 		if (m_showDeferredLightWireframe)
 		{
-			// ECS_CONVERSTION TODO: Re-implement this
+			// ECS_CONVERSION TODO: Re-implement this
 
 			/*std::vector<std::shared_ptr<fr::Light>> const& pointLights = 
 				fr::SceneManager::GetSceneData()->GetPointLights();

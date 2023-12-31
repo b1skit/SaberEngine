@@ -629,9 +629,7 @@ namespace fr
 				}
 			}
 
-			
-			ImGui::Unindent();
-			
+			ImGui::Unindent();			
 		}
 	}
 }

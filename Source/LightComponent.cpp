@@ -196,8 +196,7 @@ namespace fr
 			fr::Light::ConvertRenderDataLightType(lightCmpt.m_light.GetType()),
 			lightCmpt.GetLightID(),
 			lightCmpt.GetRenderDataID(),
-			lightCmpt.GetTransformID(),
-			lightCmpt.m_hasShadow);
+			lightCmpt.GetTransformID());
 
 		fr::Light const& light = lightCmpt.m_light;
 
@@ -222,9 +221,10 @@ namespace fr
 
 			renderData.m_typeProperties.m_directional.m_colorIntensity = typeProperties.m_directional.m_colorIntensity;
 
+			renderData.m_typeProperties.m_directional.m_hasShadow = lightCmpt.m_hasShadow;
+
 			renderData.m_diffuseEnabled = typeProperties.m_diffuseEnabled;
 			renderData.m_specularEnabled = typeProperties.m_specularEnabled;
-			
 		}
 		break;
 		case fr::Light::LightType::Point_Deferred:
@@ -235,7 +235,10 @@ namespace fr
 			renderData.m_typeProperties.m_point.m_colorIntensity = typeProperties.m_point.m_colorIntensity;
 			renderData.m_typeProperties.m_point.m_emitterRadius = typeProperties.m_point.m_emitterRadius;
 			renderData.m_typeProperties.m_point.m_intensityCuttoff = typeProperties.m_point.m_intensityCuttoff;
+
 			renderData.m_typeProperties.m_point.m_sphericalRadius = typeProperties.m_point.m_sphericalRadius;
+
+			renderData.m_typeProperties.m_point.m_hasShadow = lightCmpt.m_hasShadow;
 
 			renderData.m_diffuseEnabled = typeProperties.m_diffuseEnabled;
 			renderData.m_specularEnabled = typeProperties.m_specularEnabled;
@@ -288,18 +291,37 @@ namespace fr
 	}
 
 
-	void LightComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity)
+	void LightComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity lightEntity)
 	{
-		fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(owningEntity);
+		fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(lightEntity);
 
 		if (ImGui::CollapsingHeader(
 			std::format("{}##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 
-			fr::LightComponent& lightCmpt = em.GetComponent<fr::LightComponent>(owningEntity);
-
+			fr::LightComponent& lightCmpt = em.GetComponent<fr::LightComponent>(lightEntity);
+			
 			lightCmpt.GetLight().ShowImGuiWindow(nameCmpt.GetUniqueID());
+
+			// Transform:
+			entt::entity transformOwningEntity = entt::null;
+			fr::TransformComponent* transformComponent =
+				em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(lightEntity, transformOwningEntity);
+			SEAssert("Failed to find TransformComponent", 
+				transformComponent || lightCmpt.m_light.GetType() == fr::Light::LightType::AmbientIBL_Deferred);
+			if (transformComponent)
+			{
+				fr::TransformComponent::ShowImGuiWindow(em, transformOwningEntity);
+			}
+
+			// Shadow map
+			entt::entity shadowMapEntity = entt::null;
+			fr::ShadowMapComponent* shadowMapCmpt = em.GetFirstAndEntityInChildren<fr::ShadowMapComponent>(lightEntity, shadowMapEntity);
+			if (shadowMapCmpt)
+			{
+				fr::ShadowMapComponent::ShowImGuiWindow(em, shadowMapEntity);
+			}
 
 			ImGui::Unindent();
 		}

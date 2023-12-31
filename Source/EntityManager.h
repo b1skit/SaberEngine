@@ -119,7 +119,10 @@ namespace fr
 		T* GetFirstAndEntityInHierarchyAbove(entt::entity, entt::entity& owningEntityOut); // Searches current entity and above
 
 		template<typename T>
-		T* GetFirstInChildren(entt::entity, entt::entity& childEntityOut); // Searches direct descendent children only
+		T* GetFirstAndEntityInChildren(entt::entity, entt::entity& childEntityOut); // Searches direct descendent children only (depth 1)
+
+		template<typename T>
+		T* GetFirstInChildren(entt::entity);
 
 
 	private: // Private, lockless versions of the Relationship functions. Convenience for when a lock is already held
@@ -133,7 +136,7 @@ namespace fr
 		T* GetFirstAndEntityInHierarchyAboveInternal(entt::entity, entt::entity& owningEntityOut);
 
 		template<typename T>
-		T* GetFirstInChildrenInternal(entt::entity, entt::entity& childEntityOut);
+		T* GetFirstAndEntityInChildrenInternal(entt::entity, entt::entity& childEntityOut);
 
 		template<typename T>
 		T* GetFirstInChildrenInternal(entt::entity);
@@ -344,12 +347,23 @@ namespace fr
 
 
 	template<typename T>
-	T* EntityManager::GetFirstInChildren(entt::entity entity, entt::entity& childEntityOut)
+	T* EntityManager::GetFirstAndEntityInChildren(entt::entity entity, entt::entity& childEntityOut)
 	{
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
 
-			return GetFirstInChildrenInternal<T>(entity, childEntityOut);
+			return GetFirstAndEntityInChildrenInternal<T>(entity, childEntityOut);
+		}
+	}
+
+
+	template<typename T>
+	T* EntityManager::GetFirstInChildren(entt::entity entity)
+	{
+		{
+			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
+
+			return GetFirstInChildrenInternal<T>(entity);
 		}
 	}
 
@@ -399,7 +413,7 @@ namespace fr
 
 
 	template<typename T>
-	T* EntityManager::GetFirstInChildrenInternal(entt::entity entity, entt::entity& childEntityOut)
+	T* EntityManager::GetFirstAndEntityInChildrenInternal(entt::entity entity, entt::entity& childEntityOut)
 	{
 		SEAssert("Invalid entity", entity != entt::null);
 
@@ -430,6 +444,6 @@ namespace fr
 	T* EntityManager::GetFirstInChildrenInternal(entt::entity entity)
 	{
 		entt::entity dummy = entt::null;
-		return GetFirstInChildrenInternal<T>(entity, dummy);
+		return GetFirstAndEntityInChildrenInternal<T>(entity, dummy);
 	}
 }

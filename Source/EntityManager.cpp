@@ -675,7 +675,7 @@ namespace fr
 					{
 						entt::entity shadowMapChild = entt::null;
 						fr::ShadowMapComponent* shadowMapCmpt =
-							GetFirstInChildrenInternal<fr::ShadowMapComponent>(entity, shadowMapChild);
+							GetFirstAndEntityInChildrenInternal<fr::ShadowMapComponent>(entity, shadowMapChild);
 						SEAssert("Failed to find shadow map component", shadowMapCmpt);
 
 						fr::CameraComponent* shadowCamCmpt =
@@ -870,6 +870,21 @@ namespace fr
 
 				ImGui::Unindent();
 			} // "Lights:"
+
+			ImGui::Separator();
+
+			if (ImGui::CollapsingHeader("Shadow maps:", ImGuiTreeNodeFlags_None))
+			{
+				ImGui::Indent();
+
+				auto shadowMapView = m_registry.view<fr::ShadowMapComponent>();
+				for (auto entity : shadowMapView)
+				{
+					fr::ShadowMapComponent::ShowImGuiWindow(*this, entity);
+				}
+
+				ImGui::Unindent();
+			} // "Shadow maps:"
 
 			//ImGui::Separator();
 

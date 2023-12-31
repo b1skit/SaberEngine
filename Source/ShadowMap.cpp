@@ -56,20 +56,15 @@ namespace fr
 	}
 
 
-	void ShadowMap::ShowImGuiWindow()
+	void ShadowMap::ShowImGuiWindow(uint64_t uniqueID)
 	{
-		// ECS_CONVERSION TODO: Restore the functionality
-		// -> Modify the m_isDirty flag here when the settings change
-		/*
-		ImGui::Text("Name: \"%s\"", GetName().c_str());
-
-		const std::string minLabel = "Min shadow bias##" + GetName();
-		ImGui::SliderFloat(minLabel.c_str(), &m_minMaxShadowBias.x, 0, 0.1f, "%.5f");
+		std::string const& minLabel = std::format("Min shadow bias##{}", uniqueID);
+		m_isDirty |= ImGui::SliderFloat(minLabel.c_str(), &m_minMaxShadowBias.x, 0, 0.1f, "%.5f");
 		
-		const std::string maxLabel = "Max shadow bias##" + GetName();
-		ImGui::SliderFloat(maxLabel.c_str(), &m_minMaxShadowBias.y, 0, 0.1f, "%.5f");
+		std::string const& maxLabel = std::format("Max shadow bias##{}", uniqueID);
+		m_isDirty |= ImGui::SliderFloat(maxLabel.c_str(), &m_minMaxShadowBias.y, 0, 0.1f, "%.5f");
 
-		const std::string resetLabel = "Reset biases to defaults##" + GetName();
+		std::string const& resetLabel = std::format("Reset biases to defaults##{}", uniqueID);
 		if (ImGui::Button(resetLabel.c_str()))
 		{
 			switch (m_lightType)
@@ -90,14 +85,8 @@ namespace fr
 			break;
 			default: SEAssertF("Invalid/unsupported light type");
 			}
+			m_isDirty = true;
 		}
-
-		if (ImGui::CollapsingHeader("Shadow Map Camera", ImGuiTreeNodeFlags_None))
-		{
-			m_shadowCam->ShowImGuiWindow();
-		}
-
-		*/
 	}
 }
 

@@ -33,7 +33,9 @@ namespace fr
 			fr::LightComponent const&,
 			fr::CameraComponent&,
 			fr::BoundsComponent const* sceneWorldBounds, // Optional
-			bool force); 
+			bool force);
+
+		static void ShowImGuiWindow(fr::EntityManager&, entt::entity shadowMapEntity);
 
 
 	private: // Use the static creation factories

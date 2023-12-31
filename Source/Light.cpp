@@ -1,11 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "Camera.h"
-#include "Config.h"
 #include "Light.h"
-#include "MeshFactory.h"
-#include "MeshPrimitive.h"
-#include "SceneManager.h"
 #include "ShadowMap.h"
 #include "Texture.h"
 #include "Transform.h"
@@ -180,6 +175,11 @@ namespace fr
 		case LightType::Point_Deferred:
 		{
 			m_typeProperties.m_point.m_colorIntensity = colorIntensity;
+
+			m_typeProperties.m_point.m_sphericalRadius = ComputePointLightRadiusFromIntensity(
+				m_typeProperties.m_point.m_colorIntensity.a,
+				m_typeProperties.m_point.m_emitterRadius,
+				m_typeProperties.m_point.m_intensityCuttoff);
 		}
 		break;
 		default:
@@ -207,17 +207,15 @@ namespace fr
 
 	void Light::ShowImGuiWindow(uint64_t uniqueID)
 	{
-		// ECS_CONVERSION: TODO Restore this functionality (move it to the deferred lighting GS)
-		// ECS_CONVERSION TODO: Modify the m_isDirty flag here when the settings change
-		
-
 		auto ShowDebugOptions = [&]()
 		{
 			if (ImGui::CollapsingHeader(std::format("Debug##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
-				m_isDirty |= ImGui::Checkbox(std::format("Diffuse enabled##{}", uniqueID).c_str(), &m_typeProperties.m_diffuseEnabled);
-				m_isDirty |= ImGui::Checkbox(std::format("Specular enabled##{}", uniqueID).c_str(), &m_typeProperties.m_specularEnabled);
+				m_isDirty |= ImGui::Checkbox(
+					std::format("Diffuse enabled##{}", uniqueID).c_str(), &m_typeProperties.m_diffuseEnabled);
+				m_isDirty |= ImGui::Checkbox(
+					std::format("Specular enabled##{}", uniqueID).c_str(), &m_typeProperties.m_specularEnabled);
 				ImGui::Unindent();
 			}
 		};
@@ -267,7 +265,7 @@ namespace fr
 				ImGui::Indent();
 				if (shadowMap)
 				{
-					shadowMap->ShowImGuiWindow();
+					shadowMap->ShowImGuiWindow(uniqueID);
 				}
 				else
 				{
@@ -305,9 +303,8 @@ namespace fr
 		{
 			ShowCommonOptions(&m_typeProperties.m_directional.m_colorIntensity);
 
-			// ECS_CONVERSION: Figure out how to handle shadow maps + transforms
-			//ShowShadowMapMenu(m_typeProperties.m_directional.m_shadowMap.get());
-			//ShowTransformMenu(m_typeProperties.m_directional.m_ownerTransform);
+			//ShowShadowMapMenu(shadowMap);
+			//ShowTransformMenu(owningTransform);
 		}
 		break;
 		case LightType::Point_Deferred:
@@ -334,9 +331,8 @@ namespace fr
 			ImGui::Text(
 				std::format("Deferred mesh radius: {}##{}", m_typeProperties.m_point.m_sphericalRadius, uniqueID).c_str());
 
-			// ECS_CONVERSION: Figure out how to handle shadow maps + transforms
-			//ShowShadowMapMenu(m_typeProperties.m_point.m_cubeShadowMap.get());
-			//ShowTransformMenu(m_typeProperties.m_point.m_ownerTransform);
+			//ShowShadowMapMenu(shadowMap);
+			//ShowTransformMenu(owningTransform);
 		}
 		break;
 		default:
