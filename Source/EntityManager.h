@@ -42,7 +42,7 @@ namespace fr
 
 		fr::BoundsComponent const* GetSceneBounds() const;
 
-		void SetAsMainCamera(entt::entity);
+		void SetMainCamera(entt::entity);
 		entt::entity GetMainCamera() const;
 
 		void ShowImGuiWindow(bool* show);

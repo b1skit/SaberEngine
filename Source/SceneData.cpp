@@ -426,7 +426,7 @@ namespace
 			SetTransformValues(current, sceneNode);
 		}
 
-		em.SetAsMainCamera(newCameraConcept);
+		em.SetMainCamera(newCameraConcept);
 	}
 
 

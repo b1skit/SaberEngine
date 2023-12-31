@@ -230,7 +230,7 @@ namespace fr
 				}
 			}
 
-			// Set the main camera:
+			// Handle camera changes:
 			auto newMainCameraView = m_registry.view<
 				fr::CameraComponent,
 				fr::CameraComponent::MainCameraMarker,
@@ -319,7 +319,7 @@ namespace fr
 	}
 
 
-	void EntityManager::SetAsMainCamera(entt::entity camera)
+	void EntityManager::SetMainCamera(entt::entity camera)
 	{
 		SEAssert("Entity does not have a valid camera component",
 			camera != entt::null && HasComponent<fr::CameraComponent>(camera));
@@ -773,7 +773,7 @@ namespace fr
 					// Update the main camera:
 					if (pressed)
 					{
-						SetAsMainCamera(entity);
+						SetMainCamera(entity);
 					}
 
 					ImGui::Separator();
