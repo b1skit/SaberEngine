@@ -69,7 +69,7 @@ namespace fr
 			SEAssert("Failed to find the main camera", foundMainCamera);
 		}
 
-		fr::CameraControlComponent::CreatePlayerObjectConcept(*this, cameraEntity);
+		fr::CameraControlComponent::CreateCameraControlConcept(*this, cameraEntity);
 		LOG("Created PlayerObject using \"%s\"", mainCamName);
 		m_processInput = true;
 
@@ -761,7 +761,7 @@ namespace fr
 			constexpr char const* k_panelTitle = "Entity manager debug";
 			ImGui::Begin(k_panelTitle, show);
 
-			if (ImGui::CollapsingHeader("Cameras:", ImGuiTreeNodeFlags_None))
+			if (ImGui::CollapsingHeader("Cameras", ImGuiTreeNodeFlags_None))
 			{
 				auto cameraCmptView = m_registry.view<fr::CameraComponent>();
 
@@ -802,11 +802,24 @@ namespace fr
 						SetMainCamera(entity);
 					}
 				}
-			} // "Cameras:"
+			} // "Cameras"
 
 			ImGui::Separator();
 
-			if (ImGui::CollapsingHeader("Meshes:", ImGuiTreeNodeFlags_None))
+			if (ImGui::CollapsingHeader("Camera controller", ImGuiTreeNodeFlags_None))
+			{
+				ImGui::Indent();
+				auto camControllerView = m_registry.view<fr::CameraControlComponent>();
+				for (entt::entity entity : camControllerView)
+				{
+					fr::CameraControlComponent::ShowImGuiWindow(*this, entity);
+				}				
+				ImGui::Unindent();
+			} // "Camera controller"
+
+			ImGui::Separator();
+
+			if (ImGui::CollapsingHeader("Meshes", ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
 
@@ -818,11 +831,11 @@ namespace fr
 				}
 
 				ImGui::Unindent();
-			} // "Meshes:"
+			} // "Meshes"
 
 			ImGui::Separator();
 
-			if (ImGui::CollapsingHeader("Materials:", ImGuiTreeNodeFlags_None))
+			if (ImGui::CollapsingHeader("Materials", ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
 
@@ -834,11 +847,11 @@ namespace fr
 				}
 
 				ImGui::Unindent();
-			} // "Materials:"
+			} // "Materials"
 
 			ImGui::Separator();
 
-			if (ImGui::CollapsingHeader("Lights:", ImGuiTreeNodeFlags_None))
+			if (ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
 
@@ -866,11 +879,11 @@ namespace fr
 				}
 
 				ImGui::Unindent();
-			} // "Lights:"
+			} // "Lights"
 
 			ImGui::Separator();
 
-			if (ImGui::CollapsingHeader("Shadow maps:", ImGuiTreeNodeFlags_None))
+			if (ImGui::CollapsingHeader("Shadow maps", ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
 
@@ -881,12 +894,12 @@ namespace fr
 				}
 
 				ImGui::Unindent();
-			} // "Shadow maps:"
+			} // "Shadow maps"
 
 			ImGui::Separator();
 
 
-			if (ImGui::CollapsingHeader("Render data IDs:", ImGuiTreeNodeFlags_None))
+			if (ImGui::CollapsingHeader("Render data IDs", ImGuiTreeNodeFlags_None))
 			{
 				auto renderDataView = m_registry.view<gr::RenderDataComponent>();
 				for (auto entity : renderDataView)
@@ -895,9 +908,9 @@ namespace fr
 
 					gr::RenderDataComponent::ShowImGuiWindow(*this, entity);
 				}
-			} // "Render data components:"
+			} // "Render data IDs"
 
-			//ImGui::Separator();
+			ImGui::Separator();
 
 			ImGui::End();
 		}

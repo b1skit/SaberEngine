@@ -129,10 +129,6 @@ namespace en
 	bool InputManager::m_mouseButtonStates[en::MouseInputButton_Count];
 	float InputManager::m_mouseAxisStates[en::MouseInputAxis_Count];
 
-	float InputManager::m_mousePitchSensitivity	= -0.00005f;
-	float InputManager::m_mouseYawSensitivity	= -0.00005f;
-
-
 	InputManager* InputManager::Get()
 	{
 		static std::unique_ptr<en::InputManager> instance = std::make_unique<en::InputManager>();
@@ -181,9 +177,6 @@ namespace en
 		LOG("InputManager starting...");
 
 		LoadInputBindings();
-
-		InputManager::m_mousePitchSensitivity = Config::Get()->GetValue<float>("mousePitchSensitivity") * -1.0f;
-		InputManager::m_mouseYawSensitivity	= Config::Get()->GetValue<float>("mouseYawSensitivity") * -1.0f;
 
 		// Event subscriptions:
 		EventManager::Get()->Subscribe(EventManager::KeyEvent, this);
@@ -362,8 +355,8 @@ namespace en
 			case EventManager::MouseMotionEvent:
 			{
 				// Unpack the mouse data:
-				m_mouseAxisStates[en::Input_MouseX] += static_cast<float>(eventInfo.m_data0.m_dataI) * m_mousePitchSensitivity;
-				m_mouseAxisStates[en::Input_MouseY] += static_cast<float>(eventInfo.m_data1.m_dataI) * m_mouseYawSensitivity;
+				m_mouseAxisStates[en::Input_MouseX] += static_cast<float>(eventInfo.m_data0.m_dataI);
+				m_mouseAxisStates[en::Input_MouseY] += static_cast<float>(eventInfo.m_data1.m_dataI);
 				doBroadcast = false;
 			}
 			break;

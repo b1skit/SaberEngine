@@ -48,6 +48,10 @@ namespace en::ConfigKeys
 	constexpr char const* k_windowHeightKey	= "height";
 	constexpr char const* k_numBackbuffersKey = "numframesinflight"; // DX12 only
 
+	// Control defaults:
+	constexpr char const* k_mousePitchSensitivity	= "mousePitchSensitivity";
+	constexpr char const* k_mouseYawSensitivity		= "mouseYawSensitivity";
+	constexpr char const* k_sprintSpeedModifier		= "sprintSpeedModifier";
 
 	// Lights/shadows:
 	constexpr char const* k_defaultDirectionalLightMinShadowBias	= "defaultDirectionalLightMinShadowBias";
@@ -66,8 +70,6 @@ namespace en::ConfigKeys
 
 	// ImGui:
 	constexpr char const* k_imguiIniPath = "config\\imgui.ini";
-
-
 }
 
 namespace en::ShaderNames

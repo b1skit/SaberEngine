@@ -44,11 +44,6 @@ namespace en
 
 		std::unordered_map<SEKeycode, en::KeyboardInputButton> m_SEKeycodesToSEEventEnums;
 
-
-		// Sensitivity params:
-		static float m_mousePitchSensitivity;
-		static float m_mouseYawSensitivity;
-
 		bool m_consoleTriggered; // Is the console menu currently holding focus?
 		bool m_prevConsoleTriggeredState;
 

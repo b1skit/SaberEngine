@@ -416,9 +416,9 @@ namespace en
 		markDirty |= TrySetValue("defaultFar",				100.0f,				SettingType::Common);
 
 		// Input parameters:
-		markDirty |= TrySetValue("mousePitchSensitivity",	0.5f,				SettingType::Common);
-		markDirty |= TrySetValue("mouseYawSensitivity",		0.5f,				SettingType::Common);
-		markDirty |= TrySetValue("sprintSpeedModifier",		2.0f,				SettingType::Common);
+		markDirty |= TrySetValue(en::ConfigKeys::k_mousePitchSensitivity,	0.5f,	SettingType::Common);
+		markDirty |= TrySetValue(en::ConfigKeys::k_mouseYawSensitivity,		0.5f,	SettingType::Common);
+		markDirty |= TrySetValue(en::ConfigKeys::k_sprintSpeedModifier,		2.0f,	SettingType::Common);
 
 		// Scene data:
 		markDirty |= TrySetValue("defaultIBLPath",			std::string("Assets\\DefaultIBL\\ibl.hdr"),	SettingType::Common);

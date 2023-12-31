@@ -15,7 +15,7 @@ namespace fr
 		struct PlayerObjectMarker {};
 
 	public:
-		static entt::entity CreatePlayerObjectConcept(EntityManager&, entt::entity cameraConcept);
+		static entt::entity CreateCameraControlConcept(EntityManager&, entt::entity cameraConcept);
 
 		static void SetCamera(fr::TransformComponent& controllerTransformCmpt, fr::TransformComponent& camTransformCmpt);
 
@@ -26,7 +26,8 @@ namespace fr
 			fr::Transform& cameraTransform, 
 			double stepTimeMs);
 
-		// ECS_CONVERSION: TODO: Implement an ImGui view
+		static void ShowImGuiWindow(fr::EntityManager&, entt::entity camControlEntity);
+
 
 	public:
 		CameraControlComponent();
@@ -36,6 +37,10 @@ namespace fr
 		// Control configuration:
 		float m_movementSpeed;
 		float m_sprintSpeedModifier;
+
+		// Sensitivity params:
+		float m_mousePitchSensitivity;
+		float m_mouseYawSensitivity;
 
 		// Saved location:
 		glm::vec3 m_savedPosition;
