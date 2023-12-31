@@ -327,13 +327,13 @@ namespace fr
 		{
 			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
 
-			SetAsMainCameraInternal(camera);
+			SetMainCameraInternal(camera);
 		}
 
 	}
 
 
-	void EntityManager::SetAsMainCameraInternal(entt::entity camera)
+	void EntityManager::SetMainCameraInternal(entt::entity camera)
 	{
 		bool foundCurrentMainCamera = false;
 		auto currentMainCameraView = m_registry.view<fr::CameraComponent::MainCameraMarker>();

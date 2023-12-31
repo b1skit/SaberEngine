@@ -49,7 +49,7 @@ namespace fr
 
 
 	private:
-		void SetAsMainCameraInternal(entt::entity);
+		void SetMainCameraInternal(entt::entity);
 		entt::entity GetMainCameraInternal() const;
 
 	private: // EventListener interface:
