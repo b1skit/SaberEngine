@@ -763,8 +763,6 @@ namespace fr
 
 			if (ImGui::CollapsingHeader("Cameras:", ImGuiTreeNodeFlags_None))
 			{
-				ImGui::Indent();
-
 				auto cameraCmptView = m_registry.view<fr::CameraComponent>();
 
 				const entt::entity mainCamEntity = GetMainCamera();
@@ -804,7 +802,6 @@ namespace fr
 						SetMainCamera(entity);
 					}
 				}
-				ImGui::Unindent();
 			} // "Cameras:"
 
 			ImGui::Separator();
@@ -885,6 +882,20 @@ namespace fr
 
 				ImGui::Unindent();
 			} // "Shadow maps:"
+
+			ImGui::Separator();
+
+
+			if (ImGui::CollapsingHeader("Render data IDs:", ImGuiTreeNodeFlags_None))
+			{
+				auto renderDataView = m_registry.view<gr::RenderDataComponent>();
+				for (auto entity : renderDataView)
+				{
+					gr::RenderDataComponent const& renderDataCmpt = renderDataView.get<gr::RenderDataComponent>(entity);
+
+					gr::RenderDataComponent::ShowImGuiWindow(*this, entity);
+				}
+			} // "Render data components:"
 
 			//ImGui::Separator();
 

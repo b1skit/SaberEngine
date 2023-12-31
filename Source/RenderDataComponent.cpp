@@ -30,6 +30,18 @@ namespace gr
 	}
 
 
+	void RenderDataComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity)
+	{
+		ImGui::Indent();
+
+		gr::RenderDataComponent const& renderDataCmpt = em.GetComponent<gr::RenderDataComponent>(owningEntity);
+		ImGui::Text(std::format("RenderDataID: {}, TransformID: {}", 
+			renderDataCmpt.GetRenderDataID(), renderDataCmpt.GetTransformID()).c_str());
+		
+		ImGui::Unindent();
+	}
+
+
 	// ---
 
 

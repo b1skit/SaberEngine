@@ -175,15 +175,6 @@ namespace gr
 	}
 
 
-	void MeshPrimitive::Destroy()
-	{
-		for (uint8_t slotIdx = 0; slotIdx < Slot_Count; slotIdx++)
-		{
-			m_vertexStreams[slotIdx] = nullptr;
-		}
-	}
-
-
 	void MeshPrimitive::ComputeDataHash()
 	{
 		AddDataBytesToHash(&m_params, sizeof(MeshPrimitiveParams));
@@ -235,19 +226,13 @@ namespace gr
 	}
 
 
-	void MeshPrimitive::ShowImGuiWindow()
+	void MeshPrimitive::ShowImGuiWindow() const
 	{
 		if (ImGui::CollapsingHeader(std::format("{}##{}", GetName(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
-			ImGui::Text(std::format("Draw mode: {}", DrawModeToCStr(m_params.m_topologyMode)).c_str());
+			ImGui::Indent();
 
-			// ECS_CONVERSION TODO: Restore this functionality
-			/*if (ImGui::CollapsingHeader(std::format("Material##{}", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
-			{
-				ImGui::Indent();
-				m_meshMaterial->ShowImGuiWindow();
-				ImGui::Unindent();
-			}*/
+			ImGui::Text(std::format("Draw mode: {}", DrawModeToCStr(m_params.m_topologyMode)).c_str());
 
 			if (ImGui::CollapsingHeader(std::format("Vertex streams ({})##{}", m_vertexStreams.size(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 			{
@@ -268,25 +253,8 @@ namespace gr
 				ImGui::Unindent();
 			}
 
-			// ECS_CONVERSION: TODO: Reimplement this functionality
-			/*if (ImGui::CollapsingHeader(std::format("Local bounds##{}", GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
-			{
-				ImGui::Indent();
-				m_localBounds.ShowImGuiWindow();
-				ImGui::Unindent();
-			}*/
+			ImGui::Unindent();
 		}
 	}
 	
-} // re
-
-
-namespace meshfactory
-{
-	
-
-
-	
-} // meshfactory
-
-
+}

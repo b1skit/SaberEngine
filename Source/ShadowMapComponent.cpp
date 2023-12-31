@@ -233,6 +233,9 @@ namespace fr
 		{
 			ImGui::Indent();
 
+			// RenderDataComponent:
+			gr::RenderDataComponent::ShowImGuiWindow(em, shadowMapEntity);
+
 			fr::ShadowMapComponent& shadowMapCmpt = em.GetComponent<fr::ShadowMapComponent>(shadowMapEntity);
 
 			shadowMapCmpt.GetShadowMap().ShowImGuiWindow(nameCmpt.GetUniqueID());

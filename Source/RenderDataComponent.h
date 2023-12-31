@@ -24,6 +24,9 @@ namespace gr
 		static RenderDataComponent& AttachSharedRenderDataComponent(
 			fr::EntityManager&, entt::entity, RenderDataComponent const&);
 
+	public:
+		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
+
 
 	public:
 		RenderDataComponent(RenderDataComponent&&) = default;

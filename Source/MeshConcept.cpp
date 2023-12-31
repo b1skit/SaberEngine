@@ -40,44 +40,40 @@ namespace fr
 	void Mesh::ShowImGuiWindow(fr::EntityManager& em, entt::entity meshConcept)
 	{
 		fr::NameComponent const& meshName = em.GetComponent<fr::NameComponent>(meshConcept);
-		fr::Relationship const& meshRelationship = em.GetComponent<fr::Relationship>(meshConcept);
-		fr::TransformComponent& owningTransform =
-			*em.GetFirstInHierarchyAbove<fr::TransformComponent>(meshRelationship.GetParent());
 
 		if (ImGui::CollapsingHeader(
 			std::format("{}##{}", meshName.GetName(), meshName.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 
-			if (ImGui::CollapsingHeader(
-				std::format("Transform:##{}", meshName.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
-			{
-				ImGui::Indent();
-				//m_ownerTransform->ShowImGuiWindow();
-				// ECS_CONVERSION: RESTORE THIS BEHAVIOR
-				ImGui::Unindent();
-			}
+			// RenderDataComponent:
+			gr::RenderDataComponent::ShowImGuiWindow(em, meshConcept);
 
-			if (ImGui::CollapsingHeader(
-				std::format("Mesh Bounds:##{}", meshName.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
-			{
-				ImGui::Indent();
-				// ECS_CONVERSION: RESTORE THIS BEHAVIOR
-				//m_localBounds.ShowImGuiWindow();
-				ImGui::Unindent();
-			}
+			fr::Relationship const& meshRelationship = em.GetComponent<fr::Relationship>(meshConcept);
 
+			entt::entity owningTransformEntity = entt::null;
+			fr::TransformComponent& owningTransform =
+				*em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(meshRelationship.GetParent(), owningTransformEntity);
+
+			// Transform:
+			fr::TransformComponent::TransformComponent::ShowImGuiWindow(
+				em, owningTransformEntity, static_cast<uint64_t>(meshConcept));
+
+			// Bounds:
+			fr::BoundsComponent::ShowImGuiWindow(em, meshConcept);
+
+			// Mesh primitives:
 			if (ImGui::CollapsingHeader(
 				std::format("Mesh Primitives:##{}", meshName.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
-				
+
 				entt::entity curChild = meshRelationship.GetFirstChild();
 				do
 				{
 					fr::MeshPrimitiveComponent& meshPrimCmpt = em.GetComponent<fr::MeshPrimitiveComponent>(curChild);
 
-					meshPrimCmpt.ShowImGuiWindow(curChild);
+					meshPrimCmpt.ShowImGuiWindow(em, curChild);
 
 					fr::Relationship const& childRelationship = em.GetComponent<fr::Relationship>(curChild);
 					curChild = childRelationship.GetNext();

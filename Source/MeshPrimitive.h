@@ -86,8 +86,7 @@ namespace gr
 
 		MeshPrimitive(MeshPrimitive&& rhs) noexcept = default;
 		MeshPrimitive& operator=(MeshPrimitive&& rhs) = default;
-
-		~MeshPrimitive(){ Destroy(); }
+		~MeshPrimitive() = default;
 		
 		MeshPrimitiveParams const& GetMeshParams() const;
 	
@@ -95,11 +94,7 @@ namespace gr
 		re::VertexStream const* GetVertexStream(Slot slot) const;
 		std::vector<re::VertexStream const*> GetVertexStreams() const;
 
-		void ShowImGuiWindow();
-
-
-	private:
-		void Destroy();
+		void ShowImGuiWindow() const;
 
 
 	private:		

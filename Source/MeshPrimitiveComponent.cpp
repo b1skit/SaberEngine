@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "EntityManager.h"
 #include "MarkerComponents.h"
+#include "MaterialComponent.h"
 #include "MeshPrimitive.h"
 #include "MeshPrimitiveComponent.h"
 #include "NameComponent.h"
@@ -153,8 +154,37 @@ namespace fr
 	}
 
 
-	void MeshPrimitiveComponent::ShowImGuiWindow(entt::entity meshPrimitive)
+	void MeshPrimitiveComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity meshPrimitive)
 	{
-		// ECS_CONVERSION: TODO: (Re)Implement this!!!!
+		fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(meshPrimitive);
+
+		if (ImGui::CollapsingHeader(
+			std::format("{}##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
+			
+			// RenderDataComponent:
+			gr::RenderDataComponent::ShowImGuiWindow(em, meshPrimitive);
+
+			fr::MeshPrimitiveComponent& meshPrimCmpt = em.GetComponent<fr::MeshPrimitiveComponent>(meshPrimitive);
+			meshPrimCmpt.m_meshPrimitive->ShowImGuiWindow();
+
+			// Material:
+			entt::entity materialEntity = entt::null;
+			fr::MaterialComponent* matCmpt =
+				em.GetFirstAndEntityInChildren<fr::MaterialComponent>(meshPrimitive, materialEntity);
+			fr::MaterialComponent::ShowImGuiWindow(em, materialEntity);
+
+			// Bounds
+			fr::BoundsComponent::ShowImGuiWindow(em, meshPrimitive);
+
+			// Transform:
+			entt::entity transformOwner = entt::null;
+			fr::TransformComponent* transformComponent =
+				em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(meshPrimitive, transformOwner);
+			fr::TransformComponent::ShowImGuiWindow(em, transformOwner, static_cast<uint64_t>(meshPrimitive));
+
+			ImGui::Unindent();
+		}
 	}
 }

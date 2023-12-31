@@ -224,7 +224,7 @@ namespace fr
 		if (ImGui::CollapsingHeader(std::format("Transform##{}", uniqueID).c_str()))
 		{
 			ImGui::Indent();
-			camTransform.ShowImGuiWindow();
+			camTransform.ShowImGuiWindow(uniqueID);
 			ImGui::Unindent();
 		}
 	}

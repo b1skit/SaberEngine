@@ -26,6 +26,7 @@ namespace fr
 			fr::Transform& cameraTransform, 
 			double stepTimeMs);
 
+		// ECS_CONVERSION: TODO: Implement an ImGui view
 
 	public:
 		CameraControlComponent();

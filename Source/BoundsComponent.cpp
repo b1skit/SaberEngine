@@ -108,6 +108,26 @@ namespace fr
 	}
 
 
+	void BoundsComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity)
+	{
+		if (ImGui::CollapsingHeader(
+			std::format("Local bounds:##{}", static_cast<uint32_t>(owningEntity)).c_str(), ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
+
+			// RenderDataComponent:
+			gr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
+
+			fr::BoundsComponent const& boundsCmpt = em.GetComponent<fr::BoundsComponent>(owningEntity);
+			
+			ImGui::Text("Min XYZ = %s", glm::to_string(boundsCmpt.m_minXYZ).c_str());
+			ImGui::Text("Max XYZ = %s", glm::to_string(boundsCmpt.m_maxXYZ).c_str());
+
+			ImGui::Unindent();
+		}
+	}
+
+
 	BoundsComponent::BoundsComponent(PrivateCTORTag)
 		: m_minXYZ(k_invalidMinXYZ)
 		, m_maxXYZ(k_invalidMaxXYZ) 
@@ -285,12 +305,5 @@ namespace fr
 		SEAssert("Bounds is NaN/Inf",
 			glm::all(glm::isnan(m_minXYZ)) == false && glm::all(glm::isnan(m_maxXYZ)) == false &&
 			glm::all(glm::isinf(m_minXYZ)) == false && glm::all(glm::isinf(m_maxXYZ)) == false);
-	}
-
-
-	void BoundsComponent::ShowImGuiWindow() const
-	{
-		ImGui::Text("Min XYZ = %s", glm::to_string(m_minXYZ).c_str());
-		ImGui::Text("Max XYZ = %s", glm::to_string(m_maxXYZ).c_str());
 	}
 }

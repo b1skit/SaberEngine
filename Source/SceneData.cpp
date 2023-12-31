@@ -1111,6 +1111,13 @@ namespace fr
 
 				meshPrimitive = result->second;
 				replacedIncomingPtr = true;
+
+				// Add a marker to simplify debugging of shared meshes
+				constexpr char const* k_sharedMeshTag = " <shared>";
+				if (meshPrimitive->GetName().find(k_sharedMeshTag) == std::string::npos)
+				{
+					meshPrimitive->SetName(meshPrimitive->GetName() + k_sharedMeshTag);
+				}
 			}
 			else
 			{

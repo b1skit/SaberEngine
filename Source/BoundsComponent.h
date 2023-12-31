@@ -54,6 +54,8 @@ namespace fr
 	public:
 		static gr::Bounds::RenderData CreateRenderData(fr::BoundsComponent const&, fr::NameComponent const&);
 
+		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
+
 
 	private:
 		static void AttachMarkers(fr::EntityManager&, entt::entity, Contents);
@@ -80,8 +82,6 @@ namespace fr
 		float yMax() const;				  
 		float zMin() const;
 		float zMax() const;
-
-		void ShowImGuiWindow() const;
 
 
 	private: // Use the static creation factories

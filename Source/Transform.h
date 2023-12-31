@@ -82,7 +82,7 @@ namespace fr
 		void ClearHasChangedFlag();
 		bool HasChanged() const;
 
-		void ShowImGuiWindow(bool markAsParent = false, uint32_t depth = 0);
+		void ShowImGuiWindow(uint64_t uniqueID, bool markAsParent = false, uint32_t depth = 0);
 
 
 	private:

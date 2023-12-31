@@ -300,6 +300,9 @@ namespace fr
 		{
 			ImGui::Indent();
 
+			// RenderDataComponent:
+			gr::RenderDataComponent::ShowImGuiWindow(em, lightEntity);
+
 			fr::LightComponent& lightCmpt = em.GetComponent<fr::LightComponent>(lightEntity);
 			
 			lightCmpt.GetLight().ShowImGuiWindow(nameCmpt.GetUniqueID());
@@ -312,12 +315,13 @@ namespace fr
 				transformComponent || lightCmpt.m_light.GetType() == fr::Light::LightType::AmbientIBL_Deferred);
 			if (transformComponent)
 			{
-				fr::TransformComponent::ShowImGuiWindow(em, transformOwningEntity);
+				fr::TransformComponent::ShowImGuiWindow(em, transformOwningEntity, static_cast<uint64_t>(lightEntity));
 			}
 
 			// Shadow map
 			entt::entity shadowMapEntity = entt::null;
-			fr::ShadowMapComponent* shadowMapCmpt = em.GetFirstAndEntityInChildren<fr::ShadowMapComponent>(lightEntity, shadowMapEntity);
+			fr::ShadowMapComponent* shadowMapCmpt = 
+				em.GetFirstAndEntityInChildren<fr::ShadowMapComponent>(lightEntity, shadowMapEntity);
 			if (shadowMapCmpt)
 			{
 				fr::ShadowMapComponent::ShowImGuiWindow(em, shadowMapEntity);

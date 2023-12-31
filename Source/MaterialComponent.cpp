@@ -54,12 +54,16 @@ namespace fr
 	void MaterialComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity)
 	{
 		fr::NameComponent const& nameComponent = em.GetComponent<fr::NameComponent>(owningEntity);
-		fr::MaterialComponent& matComponent = em.GetComponent<fr::MaterialComponent>(owningEntity);
 
 		if (ImGui::CollapsingHeader(
 			std::format("{}##{}", nameComponent.GetName(), nameComponent.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
+
+			// RenderDataComponent:
+			gr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
+
+			fr::MaterialComponent& matComponent = em.GetComponent<fr::MaterialComponent>(owningEntity);
 
 			// ECS_CONVERSION: TODO COMPLETE THIS FUNCTIONALITY
 

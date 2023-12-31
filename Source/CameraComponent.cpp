@@ -90,6 +90,9 @@ namespace fr
 			std::format("{}##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
+
+			// RenderDataComponent:
+			gr::RenderDataComponent::ShowImGuiWindow(em, camEntity);
 			
 			fr::CameraComponent& camCmpt = em.GetComponent<fr::CameraComponent>(camEntity);
 			
