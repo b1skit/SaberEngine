@@ -93,12 +93,6 @@ namespace fr
 		, m_cameraConfig(camConfig)
 		, m_isDirty(true)
 	{
-		m_view = glm::mat4(1.f);
-		m_invView = glm::mat4(1.f);
-		m_projection = glm::mat4(1.f);
-		m_invProjection = glm::mat4(1.f);
-		m_viewProjection = glm::mat4(1.f);
-		m_invViewProjection = glm::mat4(1.f);
 	}
 
 
@@ -215,21 +209,14 @@ namespace fr
 		{
 			ImGui::Indent();
 
-			util::DisplayMat4x4("View Matrix:", GetViewMatrix());
+			gr::Camera::CameraParams const& camParams = fr::Camera::BuildCameraParams(*this);
 
-			const glm::mat4x4 invView = GetInverseViewMatrix();
-			util::DisplayMat4x4("Inverse View Matrix:", invView);
-
-			util::DisplayMat4x4("Projection Matrix:", m_projection);
-
-			const glm::mat4x4 invProj = GetInverseProjectionMatrix();
-			util::DisplayMat4x4("Inverse Projection Matrix:", invProj);
-
-			const glm::mat4x4 viewProj = GetViewProjectionMatrix();
-			util::DisplayMat4x4("View Projection Matrix:", viewProj);
-
-			const glm::mat4x4 invViewProj = GetInverseViewProjectionMatrix();
-			util::DisplayMat4x4("Inverse View Projection Matrix:", invViewProj);
+			util::DisplayMat4x4("View Matrix:", camParams.g_view);
+			util::DisplayMat4x4("Inverse View Matrix:", camParams.g_invView);
+			util::DisplayMat4x4("Projection Matrix:", camParams.g_projection);
+			util::DisplayMat4x4("Inverse Projection Matrix:", camParams.g_invProjection);
+			util::DisplayMat4x4("View Projection Matrix:", camParams.g_viewProjection);
+			util::DisplayMat4x4("Inverse View Projection Matrix:", camParams.g_invViewProjection);
 
 			ImGui::Unindent();
 		}

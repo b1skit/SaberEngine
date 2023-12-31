@@ -30,15 +30,6 @@ namespace fr
 
 		float GetAspectRatio() const;
 
-		glm::mat4 GetViewMatrix() const;
-		glm::mat4 const& GetInverseViewMatrix() const;
-
-		glm::mat4 const& GetProjectionMatrix() const;
-		glm::mat4 GetInverseProjectionMatrix() const;
-
-		glm::mat4 GetViewProjectionMatrix() const;
-		glm::mat4 GetInverseViewProjectionMatrix() const;
-	
 		float GetAperture() const;
 		void SetAperture(float aperture);
 
@@ -63,15 +54,6 @@ namespace fr
 		fr::Transform const* m_transform; // We cache this for convenience due to a Camera's dependence on its Transform
 
 		gr::Camera::Config m_cameraConfig;
-
-		glm::mat4 m_view;
-		glm::mat4 m_invView;
-
-		glm::mat4 m_projection;
-		glm::mat4 m_invProjection;
-
-		glm::mat4 m_viewProjection;
-		glm::mat4 m_invViewProjection;
 		
 		bool m_isDirty;
 
@@ -104,41 +86,6 @@ namespace fr
 	inline float Camera::GetAspectRatio() const
 	{
 		return m_cameraConfig.m_aspectRatio;
-	}
-
-
-	inline glm::mat4 Camera::GetViewMatrix() const
-	{
-		return m_view;
-	}
-
-
-	inline glm::mat4 const& Camera::GetInverseViewMatrix() const
-	{
-		return m_invView;
-	}
-
-
-	inline glm::mat4 const& Camera::GetProjectionMatrix() const
-	{
-		return m_projection;
-	}
-
-
-	inline glm::mat4 Camera::GetInverseProjectionMatrix() const
-	{
-		return m_invProjection;
-	}
-
-	inline glm::mat4 Camera::GetViewProjectionMatrix() const
-	{
-		return m_viewProjection;
-	}
-
-
-	inline glm::mat4 Camera::GetInverseViewProjectionMatrix() const
-	{
-		return m_invViewProjection;
 	}
 
 
