@@ -494,15 +494,6 @@ namespace re
 		constexpr char const* k_panelTitle = "Render manager debug";
 		ImGui::Begin(k_panelTitle, show);
 
-
-		// ECS_CONVERSION TODO:
-		// RenderSystems -> GSM -> RenderData:
-		//	- Cameras
-		//	- Meshes
-		//	- Materials
-		//	- Lights
-		
-
 		// Render systems:
 		if (ImGui::CollapsingHeader("Render Systems:", ImGuiTreeNodeFlags_None))
 		{

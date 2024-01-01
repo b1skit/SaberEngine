@@ -509,27 +509,29 @@ namespace gr
 
 		if (m_showDeferredLightWireframe)
 		{
-			// ECS_CONVERSION TODO: Re-implement this
-
-			/*std::vector<std::shared_ptr<fr::Light>> const& pointLights = 
-				fr::SceneManager::GetSceneData()->GetPointLights();
-
-			for (auto const& pointLight : pointLights)
+			auto pointItr = renderData.ObjectBegin<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>();
+			auto const& pointItrEnd = renderData.ObjectEnd<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>();
+			while (pointItr != pointItrEnd)
 			{
-				glm::mat4 const& lightTRS = pointLight->GetTransform()->GetGlobalMatrix();
+				gr::Light::RenderDataPoint const& pointData = 
+					pointItr.Get<gr::Light::RenderDataPoint>();
+				gr::Transform::RenderData transformData = pointItr.GetTransformData();
+				
+				glm::mat4 const& lightTRS = transformData.g_model;
 
 				std::shared_ptr<re::ParameterBlock> pointLightMeshTransformPB =
 					gr::Transform::CreateInstancedTransformParams(&lightTRS, nullptr);
 
-				fr::Light::TypeProperties const& pointLightProperties =
-					pointLight->GetLightTypeProperties(fr::Light::Type::Point);
-
+				gr::MeshPrimitive::RenderData const& meshPrimData = pointItr.Get<gr::MeshPrimitive::RenderData>();
+				
 				re::Batch pointLightWireframeBatch = BuildWireframeBatch(
-					pointLightProperties.m_point.m_sphereMesh->GetMeshPrimitives()[0].get(), 
+					meshPrimData,
 					m_deferredLightwireframeColor);
 				pointLightWireframeBatch.SetParameterBlock(pointLightMeshTransformPB);
 				m_debugStage->AddBatch(pointLightWireframeBatch);
-			}*/
+
+				++pointItr;
+			}
 		}
 	}
 
@@ -598,5 +600,7 @@ namespace gr
 		}
 
 		ImGui::Checkbox(std::format("Show all mesh wireframes").c_str(), &m_showAllWireframe);
+
+		ImGui::Checkbox(std::format("Show deferred light mesh wireframes").c_str(), &m_showDeferredLightWireframe);
 	}
 }

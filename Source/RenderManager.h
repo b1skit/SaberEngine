@@ -73,12 +73,8 @@ namespace re
 		static constexpr size_t k_imGuiCommandBufferSize = 8 * 1024 * 1024;
 		en::CommandManager m_imGuiCommandManager;
 		
-
-		// ECS_CONVERSION TODO: Handle this per-GS; For now just moving this out of the SceneManager
 	private:
 		void BuildSceneBatches();
-
-
 
 	public: // Render commands:
 		template<typename T, typename... Args>
