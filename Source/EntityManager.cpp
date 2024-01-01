@@ -123,6 +123,20 @@ namespace fr
 						renderDataComponent.GetRenderDataID());
 				}
 
+				// Lights:
+				if (m_registry.all_of<fr::LightComponent>(entity))
+				{
+					fr::LightComponent const& lightCmpt = m_registry.get<fr::LightComponent>(entity);
+					renderManager->EnqueueRenderCommand<fr::DestroyLightDataRenderCommand>(lightCmpt);
+				}
+
+				// ShadowMaps:
+				if (m_registry.all_of<fr::ShadowMapComponent>(entity))
+				{
+					fr::ShadowMapComponent const& shadowMapCmpt = m_registry.get<fr::ShadowMapComponent>(entity);
+					renderManager->EnqueueRenderCommand<fr::DestroyShadowMapDataRenderCommand>(shadowMapCmpt);
+				}
+
 				// Now the render data components associated with this entity's use of the RenderDataID are destroyed, 
 				// we can destroy the render data objects themselves (or decrement the ref. count if it's a shared ID)
 				renderManager->EnqueueRenderCommand<gr::DestroyRenderObjectCommand>(

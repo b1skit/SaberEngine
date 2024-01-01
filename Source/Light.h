@@ -13,23 +13,23 @@ namespace fr
 	class Light
 	{
 	public:
-		enum LightType : uint8_t
+		enum Type : uint8_t
 		{
-			AmbientIBL_Deferred,
-			Directional_Deferred,
-			Point_Deferred,
+			AmbientIBL,
+			Directional,
+			Point,
 
-			LightType_Count
+			Type_Count
 		};
-		static_assert(static_cast<uint8_t>(fr::Light::LightType::LightType_Count) ==
-			static_cast<uint8_t>(gr::Light::LightType::LightType_Count));
+		static_assert(static_cast<uint8_t>(fr::Light::Type::Type_Count) ==
+			static_cast<uint8_t>(gr::Light::Type::Type_Count));
 
-		static constexpr gr::Light::LightType ConvertRenderDataLightType(fr::Light::LightType);
+		static constexpr gr::Light::Type ConvertRenderDataLightType(fr::Light::Type);
 
 
 	public:
-		Light(LightType lightType, glm::vec4 const& colorIntensity);
-		Light(re::Texture const* iblTex, LightType = LightType::AmbientIBL_Deferred); // Ambient light only CTOR
+		Light(Type lightType, glm::vec4 const& colorIntensity);
+		Light(re::Texture const* iblTex, Type = Type::AmbientIBL); // Ambient light only CTOR
 
 		Light(fr::Light&&) = default;
 		Light& operator=(fr::Light&&) = default;
@@ -43,7 +43,7 @@ namespace fr
 		glm::vec4 const& GetColorIntensity() const;
 		void SetColorIntensity(glm::vec4 const&);
 	 
-		LightType GetType() const;
+		Type GetType() const;
 		
 		void ShowImGuiWindow(uint64_t uniqueID);
 
@@ -51,7 +51,7 @@ namespace fr
 	public:
 		struct TypeProperties
 		{
-			LightType m_type;
+			Type m_type;
 			union
 			{
 				struct
@@ -81,8 +81,8 @@ namespace fr
 			TypeProperties();
 			~TypeProperties() = default;
 		};
-		TypeProperties& GetLightTypePropertiesForModification(LightType);
-		TypeProperties const& GetLightTypeProperties(LightType) const;
+		TypeProperties& GetLightTypePropertiesForModification(Type);
+		TypeProperties const& GetLightTypeProperties(Type) const;
 
 
 	private:		
@@ -98,20 +98,20 @@ namespace fr
 	};
 
 
-	inline constexpr gr::Light::LightType Light::ConvertRenderDataLightType(fr::Light::LightType frLightType)
+	inline constexpr gr::Light::Type Light::ConvertRenderDataLightType(fr::Light::Type frLightType)
 	{
 		switch (frLightType)
 		{
-		case fr::Light::LightType::AmbientIBL_Deferred: return gr::Light::LightType::AmbientIBL_Deferred;
-		case fr::Light::LightType::Directional_Deferred: return gr::Light::LightType::Directional_Deferred;
-		case fr::Light::LightType::Point_Deferred: return gr::Light::LightType::Point_Deferred;
+		case fr::Light::Type::AmbientIBL: return gr::Light::Type::AmbientIBL;
+		case fr::Light::Type::Directional: return gr::Light::Type::Directional;
+		case fr::Light::Type::Point: return gr::Light::Type::Point;
 		default: throw std::logic_error("Invalid light type");
 		}
-		return gr::Light::LightType::LightType_Count;
+		return gr::Light::Type::Type_Count;
 	}
 
 
-	inline Light::LightType Light::GetType() const
+	inline Light::Type Light::GetType() const
 	{
 		return m_typeProperties.m_type;
 	}

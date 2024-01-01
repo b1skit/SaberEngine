@@ -17,7 +17,7 @@ namespace fr
 	public:
 		// Note: May trigger a .Recompute() of the entity's owning Transform
 		static ShadowMapComponent& AttachShadowMapComponent(
-			EntityManager&, entt::entity, char const* name, fr::Light::LightType);
+			EntityManager&, entt::entity, char const* name, fr::Light::Type);
 
 	public:
 		static gr::Camera::Config GenerateShadowCameraConfig(
@@ -43,14 +43,11 @@ namespace fr
 	public:
 		ShadowMapComponent(
 			PrivateCTORTag,
-			gr::LightID, 
-			fr::Light::LightType, 
+			fr::Light::Type, 
 			gr::RenderDataID, 
 			gr::TransformID, 
 			glm::uvec2 widthHeight);
 
-
-		gr::LightID GetLightID() const;
 		gr::RenderDataID GetRenderDataID() const;
 		gr::TransformID GetTransformID() const;
 
@@ -59,7 +56,6 @@ namespace fr
 
 
 	private:
-		const gr::LightID m_lightID;
 		const gr::RenderDataID m_renderDataID;
 		const gr::TransformID m_transformID;
 
@@ -79,19 +75,30 @@ namespace fr
 		static void Destroy(void*);
 
 	private:
-		const gr::LightID m_lightID;
+		const gr::RenderDataID m_renderDataID;
+
+		const gr::Light::Type m_type;
 
 		const gr::ShadowMap::RenderData m_data;
 	};
 
 
-	// ---
-
-
-	inline gr::LightID ShadowMapComponent::GetLightID() const
+	class DestroyShadowMapDataRenderCommand
 	{
-		return m_lightID;
-	}
+	public:
+		DestroyShadowMapDataRenderCommand(ShadowMapComponent const&);
+
+		static void Execute(void*);
+		static void Destroy(void*);
+
+	private:
+		const gr::RenderDataID m_renderDataID;
+		
+		const gr::Light::Type m_type;
+	};
+
+
+	// ---
 
 
 	inline gr::RenderDataID ShadowMapComponent::GetRenderDataID() const

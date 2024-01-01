@@ -522,7 +522,7 @@ namespace gr
 					gr::Transform::CreateInstancedTransformParams(&lightTRS, nullptr);
 
 				fr::Light::TypeProperties const& pointLightProperties =
-					pointLight->GetLightTypeProperties(fr::Light::LightType::Point);
+					pointLight->GetLightTypeProperties(fr::Light::Type::Point);
 
 				re::Batch pointLightWireframeBatch = BuildWireframeBatch(
 					pointLightProperties.m_point.m_sphereMesh->GetMeshPrimitives()[0].get(), 

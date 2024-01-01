@@ -447,17 +447,17 @@ namespace
 		LOG("Found light \"%s\"", lightName.c_str());
 
 		// GLTF only supports direction, point, and spot light types
-		fr::Light::LightType lightType = fr::Light::LightType::LightType_Count;
+		fr::Light::Type lightType = fr::Light::Type::Type_Count;
 		switch (current->light->type)
 		{
 		case cgltf_light_type::cgltf_light_type_directional:
 		{
-			lightType = fr::Light::LightType::Directional_Deferred;
+			lightType = fr::Light::Type::Directional;
 		}
 		break;
 		case cgltf_light_type::cgltf_light_type_point:
 		{
-			lightType = fr::Light::LightType::Point_Deferred;
+			lightType = fr::Light::Type::Point;
 		}
 		break;
 		case cgltf_light_type::cgltf_light_type_spot:
@@ -490,13 +490,13 @@ namespace
 
 		switch (lightType)
 		{
-		case fr::Light::LightType::Directional_Deferred:
+		case fr::Light::Type::Directional:
 		{
 			fr::LightComponent::AttachDeferredDirectionalLightConcept(
 				em, sceneNode, lightName, colorIntensity, attachShadow);
 		}
 		break;
-		case fr::Light::LightType::Point_Deferred:
+		case fr::Light::Type::Point:
 		{
 			fr::LightComponent::AttachDeferredPointLightConcept(em, sceneNode, lightName, colorIntensity, attachShadow);
 		}

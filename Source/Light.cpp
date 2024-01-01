@@ -47,33 +47,33 @@ namespace fr
 	{
 		memset(this, 0, sizeof(TypeProperties));
 
-		m_type = LightType::LightType_Count;
+		m_type = Type::Type_Count;
 		m_diffuseEnabled = true;
 		m_specularEnabled = true;
 	}
 
 
-	Light::Light(LightType lightType,  glm::vec4 const& colorIntensity)
+	Light::Light(Type lightType,  glm::vec4 const& colorIntensity)
 		: m_isDirty(true)
 	{
 		m_typeProperties.m_type = lightType;
 
 		switch (lightType)
 		{
-		case Directional_Deferred:
+		case Directional:
 		{
 			// 
 		}
 		break;
-		case Point_Deferred:
+		case Point:
 		{
 			m_typeProperties.m_point.m_emitterRadius = 0.1f;
 			m_typeProperties.m_point.m_intensityCuttoff = 0.05f;
 		}
 		break;
-		case AmbientIBL_Deferred:
+		case AmbientIBL:
 		{
-			SEAssertF("This is the wrong constructor for AmbientIBL_Deferred lights");
+			SEAssertF("This is the wrong constructor for AmbientIBL lights");
 		}
 		break;
 		default: SEAssertF("Invalid light type");
@@ -83,12 +83,12 @@ namespace fr
 	}
 
 
-	Light::Light(re::Texture const* iblTex, LightType lightType)
+	Light::Light(re::Texture const* iblTex, Type lightType)
 		: m_isDirty(true)
 	{
-		SEAssert("This constructor is only for AmbientIBL_Deferred lights", lightType == LightType::AmbientIBL_Deferred);
+		SEAssert("This constructor is only for AmbientIBL lights", lightType == Type::AmbientIBL);
 
-		m_typeProperties.m_type = LightType::AmbientIBL_Deferred;
+		m_typeProperties.m_type = Type::AmbientIBL;
 		m_typeProperties.m_ambient.m_IBLTex = iblTex;
 	}
 
@@ -97,17 +97,17 @@ namespace fr
 	{
 		switch (m_typeProperties.m_type)
 		{
-		case LightType::AmbientIBL_Deferred:
+		case Type::AmbientIBL:
 		{
 			SEAssertF("Ambient lights don't (current) have a color/intensity value");
 		}
 		break;
-		case LightType::Directional_Deferred:
+		case Type::Directional:
 		{
 			return m_typeProperties.m_directional.m_colorIntensity;
 		}
 		break;
-		case LightType::Point_Deferred:
+		case Type::Point:
 		{
 			return m_typeProperties.m_point.m_colorIntensity;
 		}
@@ -129,17 +129,17 @@ namespace fr
 
 		switch (m_typeProperties.m_type)
 		{
-		case LightType::AmbientIBL_Deferred:
+		case Type::AmbientIBL:
 		{
 			//
 		}
 		break;
-		case LightType::Directional_Deferred:
+		case Type::Directional:
 		{
 			//
 		}
 		break;
-		case LightType::Point_Deferred:
+		case Type::Point:
 		{
 			// Recompute the spherical radius
 			m_typeProperties.m_point.m_sphericalRadius = ComputePointLightRadiusFromIntensity(
@@ -162,17 +162,17 @@ namespace fr
 	{
 		switch (m_typeProperties.m_type)
 		{
-		case LightType::AmbientIBL_Deferred:
+		case Type::AmbientIBL:
 		{
 			SEAssertF("Ambient lights don't (current) have a color/intensity value");
 		}
 		break;
-		case LightType::Directional_Deferred:
+		case Type::Directional:
 		{
 			m_typeProperties.m_directional.m_colorIntensity = colorIntensity;
 		}
 		break;
-		case LightType::Point_Deferred:
+		case Type::Point:
 		{
 			m_typeProperties.m_point.m_colorIntensity = colorIntensity;
 
@@ -190,7 +190,7 @@ namespace fr
 	}
 
 
-	Light::TypeProperties& Light::GetLightTypePropertiesForModification(fr::Light::LightType lightType)
+	Light::TypeProperties& Light::GetLightTypePropertiesForModification(fr::Light::Type lightType)
 	{
 		SEAssert("Trying to access type properties for the wrong type", lightType == m_typeProperties.m_type);
 		m_isDirty = true;
@@ -198,7 +198,7 @@ namespace fr
 	}
 
 
-	Light::TypeProperties const& Light::GetLightTypeProperties(LightType lightType) const
+	Light::TypeProperties const& Light::GetLightTypeProperties(Type lightType) const
 	{
 		SEAssert("Trying to access type properties for the wrong type", lightType == m_typeProperties.m_type);
 		return m_typeProperties;
@@ -287,7 +287,7 @@ namespace fr
 
 		switch (m_typeProperties.m_type)
 		{
-		case LightType::AmbientIBL_Deferred:
+		case Type::AmbientIBL:
 		{
 			ShowCommonOptions(nullptr);
 
@@ -299,7 +299,7 @@ namespace fr
 			}
 		}
 		break;
-		case LightType::Directional_Deferred:
+		case Type::Directional:
 		{
 			ShowCommonOptions(&m_typeProperties.m_directional.m_colorIntensity);
 
@@ -307,7 +307,7 @@ namespace fr
 			//ShowTransformMenu(owningTransform);
 		}
 		break;
-		case LightType::Point_Deferred:
+		case Type::Point:
 		{
 			ShowCommonOptions(&m_typeProperties.m_point.m_colorIntensity);
 

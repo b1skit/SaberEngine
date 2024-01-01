@@ -155,6 +155,49 @@ namespace gr
 
 
 	public:
+		// Iterate over objects via a vector of RenderDataIDs. This is largely a convenience iterator; it functions 
+		// similarly to calling RenderDataManager::GetObjectData with each RenderDataID in the supplied vector, except
+		// the results of the RenderDataID -> RenderObjectMetadata lookup are cached when the iterator is incremented.
+		// RenderDataManager iterators are not thread safe.
+		template <typename... Ts>
+		class IDIterator 
+		{			
+		protected:
+			friend class gr::RenderDataManager;
+			IDIterator(
+				gr::RenderDataManager const*, 
+				std::vector<gr::RenderDataID>::const_iterator,
+				std::vector<gr::RenderDataID>::const_iterator,
+				std::unordered_map<gr::RenderDataID, RenderObjectMetadata> const*);
+
+
+		public:
+			template<typename T>
+			[[nodiscard]] T const& Get() const;
+
+			gr::RenderDataID GetRenderDataID() const;
+
+			gr::Transform::RenderData const& GetTransformData() const;
+
+			IDIterator& operator++(); // Prefix increment
+			IDIterator operator++(int); // Postfix increment
+
+			// These are declared as friends so they're not classified as member functions
+			friend bool operator==(IDIterator const& lhs, IDIterator const& rhs) { return lhs.m_idsIterator == rhs.m_idsIterator; }
+			friend bool operator!=(IDIterator const& lhs, IDIterator const& rhs) { return lhs.m_idsIterator != rhs.m_idsIterator; }
+
+
+		private:
+			gr::RenderDataManager const* m_renderData;
+			std::vector<gr::RenderDataID>::const_iterator m_idsIterator;
+			std::vector<gr::RenderDataID>::const_iterator const m_idsEndIterator;
+
+			std::unordered_map<gr::RenderDataID, RenderObjectMetadata> const* m_IDToRenderObjectMetadata;
+			std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator m_currentObjectMetadata;
+		};
+
+
+	public:
 		template <typename T>
 		LinearIterator<T> Begin() const;
 
@@ -166,7 +209,13 @@ namespace gr
 
 		template <typename... Ts>
 		ObjectIterator<Ts...> ObjectEnd() const;
+
+		template <typename... Ts>
+		IDIterator<Ts...> IDBegin(std::vector<gr::RenderDataID> const&) const;
 		
+		template <typename... Ts>
+		IDIterator<Ts...> IDEnd(std::vector<gr::RenderDataID> const&) const;
+
 
 	private:
 		template<typename T>
@@ -472,6 +521,33 @@ namespace gr
 	}
 
 
+	template <typename... Ts>
+	RenderDataManager::IDIterator<Ts...> RenderDataManager::IDBegin(
+		std::vector<gr::RenderDataID> const& renderDataIDs) const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		return IDIterator<Ts...>(
+			this,
+			renderDataIDs.cbegin(),
+			renderDataIDs.cend(),
+			&m_IDToRenderObjectMetadata);
+	}
+
+	template <typename... Ts>
+	RenderDataManager::IDIterator<Ts...> RenderDataManager::IDEnd(
+		std::vector<gr::RenderDataID> const& renderDataIDs) const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		return IDIterator<Ts...>(
+			this,
+			renderDataIDs.cend(),
+			renderDataIDs.cend(),
+			&m_IDToRenderObjectMetadata);
+	}
+
+
 	/******************************************************************************************************************/
 
 
@@ -634,6 +710,84 @@ namespace gr
 			return m_renderData->GetObjectDataVectorIfExists<T>(objectDataIndex);
 		}
 		return nullptr;
+	}
+
+
+	// ---
+
+
+	template <typename... Ts>
+	RenderDataManager::IDIterator<Ts...>::IDIterator(
+		gr::RenderDataManager const* renderData,
+		std::vector<gr::RenderDataID>::const_iterator renderDataIDsBegin,
+		std::vector<gr::RenderDataID>::const_iterator renderDataIDsEnd,
+		std::unordered_map<gr::RenderDataID, RenderObjectMetadata> const* IDToRenderObjectMetadata)
+		: m_renderData(renderData)
+		, m_idsIterator(renderDataIDsBegin)
+		, m_idsEndIterator(renderDataIDsEnd)
+		, m_IDToRenderObjectMetadata(IDToRenderObjectMetadata)
+	{
+		if (m_idsIterator != m_idsEndIterator)
+		{
+			m_currentObjectMetadata = m_IDToRenderObjectMetadata->find(*m_idsIterator);
+		}
+		else
+		{
+			m_currentObjectMetadata = m_IDToRenderObjectMetadata->cend();
+		}
+	}
+
+
+	template<typename... Ts> template<typename T>
+	T const& RenderDataManager::IDIterator<Ts...>::Get() const
+	{
+		SEAssert("Invalid Get: Current m_currentObjectMetadata is past-the-end", 
+			m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend());
+
+		return m_renderData->GetObjectData<T>(*m_idsIterator);
+	}
+
+
+	template <typename... Ts>
+	gr::RenderDataID RenderDataManager::IDIterator<Ts...>::GetRenderDataID() const
+	{
+		SEAssert("Invalid Get: Current m_idsIterator is past-the-end", m_idsIterator != m_idsEndIterator);
+		return *m_idsIterator;
+	}
+
+
+	template <typename... Ts>
+	gr::Transform::RenderData const& RenderDataManager::IDIterator<Ts...>::GetTransformData() const
+	{
+		SEAssert("Invalid Get: Current m_currentObjectMetadata is past-the-end",
+			m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend());
+		return m_renderData->GetTransformData(m_currentObjectMetadata->second.m_transformID);
+	}
+
+
+	template <typename... Ts>
+	RenderDataManager::IDIterator<Ts...>& RenderDataManager::IDIterator<Ts...>::operator++() // Prefix increment
+	{
+		++m_idsIterator;
+		if (m_idsIterator != m_idsEndIterator)
+		{
+			// As a small optimization, we cache the current RenderObjectMetadata iterator to save repeated queries
+			m_currentObjectMetadata = m_IDToRenderObjectMetadata->find(*m_idsIterator);
+		}
+		else
+		{
+			m_currentObjectMetadata = m_IDToRenderObjectMetadata->cend();
+		}
+		return *this;
+	}
+
+
+	template <typename... Ts>
+	RenderDataManager::IDIterator<Ts...> RenderDataManager::IDIterator<Ts...>::operator++(int) // Postfix increment
+	{
+		IDIterator current = *this;
+		++(*this);
+		return current;
 	}
 }
 

@@ -86,7 +86,7 @@ namespace fr
 			lightEntity, 
 			PrivateCTORTag{}, 
 			meshPrimRenderDataCmpt,
-			fr::Light::LightType::Point_Deferred,
+			fr::Light::Type::Point,
 			colorIntensity,
 			hasShadow);
 		em.EmplaceComponent<PointDeferredMarker>(lightEntity);
@@ -95,7 +95,7 @@ namespace fr
 		if (hasShadow)
 		{
 			fr::ShadowMapComponent::AttachShadowMapComponent(
-				em, lightEntity, std::format("{}_ShadowMap", name).c_str(), fr::Light::LightType::Point_Deferred);
+				em, lightEntity, std::format("{}_ShadowMap", name).c_str(), fr::Light::Type::Point);
 			em.EmplaceComponent<HasShadowMarker>(lightEntity);
 		}
 
@@ -157,7 +157,7 @@ namespace fr
 			lightEntity,
 			PrivateCTORTag{},
 			renderDataComponent,
-			fr::Light::LightType::Directional_Deferred,
+			fr::Light::Type::Directional,
 			colorIntensity,
 			hasShadow);
 		em.EmplaceComponent<DirectionalDeferredMarker>(lightEntity);
@@ -166,7 +166,7 @@ namespace fr
 		if (hasShadow)
 		{
 			fr::ShadowMapComponent::AttachShadowMapComponent(
-				em, lightEntity, std::format("{}_ShadowMap", name).c_str(), fr::Light::LightType::Directional_Deferred);
+				em, lightEntity, std::format("{}_ShadowMap", name).c_str(), fr::Light::Type::Directional);
 			em.EmplaceComponent<HasShadowMarker>(lightEntity);
 		}
 
@@ -188,65 +188,76 @@ namespace fr
 	}
 
 
-	gr::Light::RenderData LightComponent::CreateRenderData(
+	gr::Light::RenderDataAmbientIBL LightComponent::CreateRenderDataAmbientIBL_Deferred(
 		fr::NameComponent const& nameCmpt, fr::LightComponent const& lightCmpt)
 	{
-		gr::Light::RenderData renderData(
+		gr::Light::RenderDataAmbientIBL renderData(
 			nameCmpt.GetName().c_str(),
-			fr::Light::ConvertRenderDataLightType(lightCmpt.m_light.GetType()),
-			lightCmpt.GetLightID(),
 			lightCmpt.GetRenderDataID(),
 			lightCmpt.GetTransformID());
 
 		fr::Light const& light = lightCmpt.m_light;
 
-		switch (light.GetType())
-		{
-		case fr::Light::LightType::AmbientIBL_Deferred:
-		{
-			fr::Light::TypeProperties const& typeProperties =
-				light.GetLightTypeProperties(fr::Light::LightType::AmbientIBL_Deferred);
-			SEAssert("IBL texture cannot be null", typeProperties.m_ambient.m_IBLTex);
+		fr::Light::TypeProperties const& typeProperties =
+			light.GetLightTypeProperties(fr::Light::Type::AmbientIBL);
+		SEAssert("IBL texture cannot be null", typeProperties.m_ambient.m_IBLTex);
 
-			renderData.m_typeProperties.m_ambient.m_iblTex = typeProperties.m_ambient.m_IBLTex;
+		renderData.m_iblTex = typeProperties.m_ambient.m_IBLTex;
 
-			renderData.m_diffuseEnabled = typeProperties.m_diffuseEnabled;
-			renderData.m_specularEnabled = typeProperties.m_specularEnabled;
-		}
-		break;
-		case fr::Light::LightType::Directional_Deferred:
-		{
-			fr::Light::TypeProperties const& typeProperties = 
-				light.GetLightTypeProperties(fr::Light::LightType::Directional_Deferred);
+		renderData.m_diffuseEnabled = typeProperties.m_diffuseEnabled;
+		renderData.m_specularEnabled = typeProperties.m_specularEnabled;
 
-			renderData.m_typeProperties.m_directional.m_colorIntensity = typeProperties.m_directional.m_colorIntensity;
+		return renderData;
+	}
 
-			renderData.m_typeProperties.m_directional.m_hasShadow = lightCmpt.m_hasShadow;
+	gr::Light::RenderDataDirectional LightComponent::CreateRenderDataDirectional_Deferred(
+		fr::NameComponent const& nameCmpt, fr::LightComponent const& lightCmpt)
+	{
+		gr::Light::RenderDataDirectional renderData(
+			nameCmpt.GetName().c_str(),
+			lightCmpt.GetRenderDataID(),
+			lightCmpt.GetTransformID());
 
-			renderData.m_diffuseEnabled = typeProperties.m_diffuseEnabled;
-			renderData.m_specularEnabled = typeProperties.m_specularEnabled;
-		}
-		break;
-		case fr::Light::LightType::Point_Deferred:
-		{
-			fr::Light::TypeProperties const& typeProperties =
-				light.GetLightTypeProperties(fr::Light::LightType::Point_Deferred);
+		fr::Light const& light = lightCmpt.m_light;
 
-			renderData.m_typeProperties.m_point.m_colorIntensity = typeProperties.m_point.m_colorIntensity;
-			renderData.m_typeProperties.m_point.m_emitterRadius = typeProperties.m_point.m_emitterRadius;
-			renderData.m_typeProperties.m_point.m_intensityCuttoff = typeProperties.m_point.m_intensityCuttoff;
+		fr::Light::TypeProperties const& typeProperties =
+			light.GetLightTypeProperties(fr::Light::Type::Directional);
 
-			renderData.m_typeProperties.m_point.m_sphericalRadius = typeProperties.m_point.m_sphericalRadius;
+		renderData.m_colorIntensity = typeProperties.m_directional.m_colorIntensity;
 
-			renderData.m_typeProperties.m_point.m_hasShadow = lightCmpt.m_hasShadow;
+		renderData.m_hasShadow = lightCmpt.m_hasShadow;
 
-			renderData.m_diffuseEnabled = typeProperties.m_diffuseEnabled;
-			renderData.m_specularEnabled = typeProperties.m_specularEnabled;
-		}
-		break;
-		default: SEAssertF("Invalid light type");
-		}
-		
+		renderData.m_diffuseEnabled = typeProperties.m_diffuseEnabled;
+		renderData.m_specularEnabled = typeProperties.m_specularEnabled;
+
+		return renderData;
+	}
+
+
+	gr::Light::RenderDataPoint LightComponent::CreateRenderDataPoint_Deferred(
+		fr::NameComponent const& nameCmpt, fr::LightComponent const& lightCmpt)
+	{
+		gr::Light::RenderDataPoint renderData(
+			nameCmpt.GetName().c_str(),
+			lightCmpt.GetRenderDataID(),
+			lightCmpt.GetTransformID());
+
+		fr::Light const& light = lightCmpt.m_light;
+
+		fr::Light::TypeProperties const& typeProperties =
+			light.GetLightTypeProperties(fr::Light::Type::Point);
+
+		renderData.m_colorIntensity = typeProperties.m_point.m_colorIntensity;
+		renderData.m_emitterRadius = typeProperties.m_point.m_emitterRadius;
+		renderData.m_intensityCuttoff = typeProperties.m_point.m_intensityCuttoff;
+
+		renderData.m_sphericalRadius = typeProperties.m_point.m_sphericalRadius;
+
+		renderData.m_hasShadow = lightCmpt.m_hasShadow;
+
+		renderData.m_diffuseEnabled = typeProperties.m_diffuseEnabled;
+		renderData.m_specularEnabled = typeProperties.m_specularEnabled;
+
 		return renderData;
 	}
 
@@ -261,23 +272,23 @@ namespace fr
 		{
 			switch (light.GetType())
 			{
-			case fr::Light::LightType::AmbientIBL_Deferred:
+			case fr::Light::Type::AmbientIBL:
 			{
 				//
 			}
 			break;
-			case fr::Light::LightType::Directional_Deferred:
+			case fr::Light::Type::Directional:
 			{
 				//
 			}
 			break;
-			case fr::Light::LightType::Point_Deferred:
+			case fr::Light::Type::Point:
 			{
 				SEAssert("Point lights require a Transform", lightTransform);
-				SEAssert("Light is not a point light", light.GetType() == fr::Light::LightType::Point_Deferred);
+				SEAssert("Light is not a point light", light.GetType() == fr::Light::Type::Point);
 
 				fr::Light::TypeProperties& lightProperties =
-					light.GetLightTypePropertiesForModification(fr::Light::LightType::Point_Deferred);
+					light.GetLightTypePropertiesForModification(fr::Light::Type::Point);
 
 				// Scale the owning transform such that a sphere created with a radius of 1 will be the correct size
 				lightTransform->SetLocalScale(glm::vec3(lightProperties.m_point.m_sphericalRadius));
@@ -312,7 +323,7 @@ namespace fr
 			fr::TransformComponent* transformComponent =
 				em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(lightEntity, transformOwningEntity);
 			SEAssert("Failed to find TransformComponent", 
-				transformComponent || lightCmpt.m_light.GetType() == fr::Light::LightType::AmbientIBL_Deferred);
+				transformComponent || lightCmpt.m_light.GetType() == fr::Light::Type::AmbientIBL);
 			if (transformComponent)
 			{
 				fr::TransformComponent::ShowImGuiWindow(em, transformOwningEntity, static_cast<uint64_t>(lightEntity));
@@ -338,11 +349,10 @@ namespace fr
 	LightComponent::LightComponent(
 		PrivateCTORTag,
 		gr::RenderDataComponent const& renderDataComponent, 
-		fr::Light::LightType lightType, 
+		fr::Light::Type lightType, 
 		glm::vec4 colorIntensity,
 		bool hasShadow)
-		: m_lightID(s_lightIDs.fetch_add(1))
-		, m_renderDataID(renderDataComponent.GetRenderDataID())
+		: m_renderDataID(renderDataComponent.GetRenderDataID())
 		, m_transformID(renderDataComponent.GetTransformID())
 		, m_light(lightType, colorIntensity)
 		, m_hasShadow(hasShadow)
@@ -354,15 +364,14 @@ namespace fr
 		PrivateCTORTag, 
 		gr::RenderDataComponent const& renderDataComponent,
 		re::Texture const* iblTex,
-		const fr::Light::LightType ambientTypeOnly)
-		: m_lightID(s_lightIDs.fetch_add(1))
-		, m_renderDataID(renderDataComponent.GetRenderDataID())
+		const fr::Light::Type ambientTypeOnly)
+		: m_renderDataID(renderDataComponent.GetRenderDataID())
 		, m_transformID(renderDataComponent.GetTransformID())
-		, m_light(iblTex, fr::Light::LightType::AmbientIBL_Deferred)
+		, m_light(iblTex, fr::Light::Type::AmbientIBL)
 		, m_hasShadow(false)
 	{
 		SEAssert("This constructor is for ambient light types only", 
-			ambientTypeOnly == fr::Light::LightType::AmbientIBL_Deferred);
+			ambientTypeOnly == fr::Light::Type::AmbientIBL);
 	}
 
 
@@ -371,11 +380,29 @@ namespace fr
 
 	UpdateLightDataRenderCommand::UpdateLightDataRenderCommand(
 		fr::NameComponent const& nameComponent, LightComponent const& lightComponent)
-		: m_lightID(lightComponent.GetLightID())
-		, m_renderDataID(lightComponent.GetRenderDataID())
+		: m_renderDataID(lightComponent.GetRenderDataID())
 		, m_transformID(lightComponent.GetTransformID())
-		, m_data(fr::LightComponent::CreateRenderData(nameComponent, lightComponent))
 	{
+		m_type = fr::Light::ConvertRenderDataLightType(lightComponent.GetLight().GetType());
+		switch (m_type)
+		{
+		case gr::Light::Type::AmbientIBL:
+		{
+			m_ambientData = fr::LightComponent::CreateRenderDataAmbientIBL_Deferred(nameComponent, lightComponent);
+		}
+		break;
+		case gr::Light::Type::Directional:
+		{
+			m_directionalData = fr::LightComponent::CreateRenderDataDirectional_Deferred(nameComponent, lightComponent);
+		}
+		break;
+		case gr::Light::Type::Point:
+		{
+			m_pointData = fr::LightComponent::CreateRenderDataPoint_Deferred(nameComponent, lightComponent);
+		}
+		break;
+		default: SEAssertF("Invalid type");
+		}
 	}
 
 
@@ -388,49 +415,40 @@ namespace fr
 
 		for (size_t rsIdx = 0; rsIdx < renderSystems.size(); rsIdx++)
 		{
+			gr::GraphicsSystemManager& gsm = renderSystems[rsIdx]->GetGraphicsSystemManager();
+
+			gr::RenderDataManager& renderDataMgr = gsm.GetRenderDataForModification();
+			
+			switch (cmdPtr->m_type)
+			{
+			case gr::Light::Type::AmbientIBL:
+			{
+				renderDataMgr.SetObjectData<gr::Light::RenderDataAmbientIBL>(
+					cmdPtr->m_renderDataID, &cmdPtr->m_ambientData);
+			}
+			break;
+			case gr::Light::Type::Directional:
+			{
+				renderDataMgr.SetObjectData<gr::Light::RenderDataDirectional>(
+					cmdPtr->m_renderDataID, &cmdPtr->m_directionalData);
+			}
+			break;
+			case gr::Light::Type::Point:
+			{
+				renderDataMgr.SetObjectData<gr::Light::RenderDataPoint>(
+					cmdPtr->m_renderDataID, &cmdPtr->m_pointData);
+			}
+			break;
+			default: SEAssertF("Invalid type");
+			}
+
+			// Register the light with the deferred lighting GS:
 			gr::DeferredLightingGraphicsSystem* deferredLightGS = 
 				renderSystems[rsIdx]->GetGraphicsSystemManager().GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
 
 			if (deferredLightGS)
 			{
-				gr::Light::RenderData const& lightRenderData = cmdPtr->m_data;
-
-				std::vector<gr::Light::RenderData>* gsRenderData = nullptr;
-
-				switch (lightRenderData.m_lightType)
-				{
-				case gr::Light::LightType::AmbientIBL_Deferred:
-				{
-					gsRenderData = &deferredLightGS->GetRenderData(gr::Light::LightType::AmbientIBL_Deferred);
-				}
-				break;
-				case gr::Light::LightType::Directional_Deferred:
-				{
-					gsRenderData = &deferredLightGS->GetRenderData(gr::Light::LightType::Directional_Deferred);
-				}
-				break;
-				case gr::Light::LightType::Point_Deferred:
-				{
-					gsRenderData = &deferredLightGS->GetRenderData(gr::Light::LightType::Point_Deferred);
-				}
-				break;
-				default: SEAssertF("Invalid light type");
-				}
-
-				auto existingLightItr = std::find_if(gsRenderData->begin(), gsRenderData->end(),
-					[&](gr::Light::RenderData const& existingLight)
-					{
-						return lightRenderData.m_lightID == existingLight.m_lightID;
-					});
-
-				if (existingLightItr == gsRenderData->end()) // New light
-				{
-					gsRenderData->emplace_back(lightRenderData);
-				}
-				else
-				{
-					*existingLightItr = lightRenderData;
-				}
+				deferredLightGS->RegisterLight(cmdPtr->m_type, cmdPtr->m_renderDataID);
 			}
 		}
 	}
@@ -440,5 +458,67 @@ namespace fr
 	{
 		UpdateLightDataRenderCommand* cmdPtr = reinterpret_cast<UpdateLightDataRenderCommand*>(cmdData);
 		cmdPtr->~UpdateLightDataRenderCommand();
+	}
+
+
+	// ---
+
+
+	DestroyLightDataRenderCommand::DestroyLightDataRenderCommand(LightComponent const& lightCmpt)
+		: m_renderDataID(lightCmpt.GetRenderDataID())
+		, m_type(fr::Light::ConvertRenderDataLightType(lightCmpt.GetLight().GetType()))
+	{
+	}
+
+
+	void DestroyLightDataRenderCommand::Execute(void* cmdData)
+	{
+		std::vector<std::unique_ptr<re::RenderSystem>> const& renderSystems =
+			re::RenderManager::Get()->GetRenderSystems();
+
+		DestroyLightDataRenderCommand* cmdPtr = reinterpret_cast<DestroyLightDataRenderCommand*>(cmdData);
+
+		for (size_t rsIdx = 0; rsIdx < renderSystems.size(); rsIdx++)
+		{
+			gr::GraphicsSystemManager& gsm = renderSystems[rsIdx]->GetGraphicsSystemManager();
+
+			gr::RenderDataManager& renderDataMgr = gsm.GetRenderDataForModification();
+
+			switch (cmdPtr->m_type)
+			{
+			case fr::Light::Type::AmbientIBL:
+			{
+				renderDataMgr.DestroyObjectData<gr::Light::RenderDataAmbientIBL>(cmdPtr->m_renderDataID);
+			}
+			break;
+			case fr::Light::Type::Directional:
+			{
+				renderDataMgr.DestroyObjectData<gr::Light::RenderDataDirectional>(cmdPtr->m_renderDataID);
+			}
+			break;
+			case fr::Light::Type::Point:
+			{
+				renderDataMgr.DestroyObjectData<gr::Light::RenderDataPoint>(cmdPtr->m_renderDataID);
+			}
+			break;
+			default: SEAssertF("Invalid type");
+			}
+
+			// Unregister the light from the deferred lighting GS:
+			gr::DeferredLightingGraphicsSystem* deferredLightGS =
+				renderSystems[rsIdx]->GetGraphicsSystemManager().GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
+			
+			if (deferredLightGS)
+			{
+				deferredLightGS->UnregisterLight(cmdPtr->m_type, cmdPtr->m_renderDataID);
+			}
+		}
+	}
+
+
+	void DestroyLightDataRenderCommand::Destroy(void* cmdData)
+	{
+		DestroyLightDataRenderCommand* cmdPtr = reinterpret_cast<DestroyLightDataRenderCommand*>(cmdData);
+		cmdPtr->~DestroyLightDataRenderCommand();
 	}
 }

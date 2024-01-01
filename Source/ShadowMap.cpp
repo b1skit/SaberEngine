@@ -6,13 +6,13 @@
 
 namespace
 {
-	fr::ShadowMap::ShadowType GetShadowTypeFromLightType(fr::Light::LightType lightType)
+	fr::ShadowMap::ShadowType GetShadowTypeFromLightType(fr::Light::Type lightType)
 	{
 		switch (lightType)
 		{
-		case fr::Light::LightType::Directional_Deferred: return fr::ShadowMap::ShadowType::Orthographic;
-		case fr::Light::LightType::Point_Deferred: return fr::ShadowMap::ShadowType::CubeMap;
-		case fr::Light::LightType::AmbientIBL_Deferred:
+		case fr::Light::Type::Directional: return fr::ShadowMap::ShadowType::Orthographic;
+		case fr::Light::Type::Point: return fr::ShadowMap::ShadowType::CubeMap;
+		case fr::Light::Type::AmbientIBL:
 		default:
 			SEAssertF("Invalid or unsupported light type for shadow map");
 		}
@@ -22,7 +22,7 @@ namespace
 
 namespace fr
 {
-	ShadowMap::ShadowMap(glm::uvec2 widthHeight, fr::Light::LightType lightType)
+	ShadowMap::ShadowMap(glm::uvec2 widthHeight, fr::Light::Type lightType)
 		: m_shadowType(GetShadowTypeFromLightType(lightType))
 		, m_lightType(lightType)
 		, m_widthHeight(widthHeight)
@@ -69,14 +69,14 @@ namespace fr
 		{
 			switch (m_lightType)
 			{
-			case fr::Light::LightType::Directional_Deferred:
+			case fr::Light::Type::Directional:
 			{
 				m_minMaxShadowBias = glm::vec2(
 					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMinShadowBias),
 					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultDirectionalLightMaxShadowBias));
 			}
 			break;
-			case fr::Light::LightType::Point_Deferred:
+			case fr::Light::Type::Point:
 			{
 				m_minMaxShadowBias = glm::vec2(
 					en::Config::Get()->GetValue<float>(en::ConfigKeys::k_defaultPointLightMinShadowBias),

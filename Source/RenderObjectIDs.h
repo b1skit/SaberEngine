@@ -11,7 +11,4 @@ namespace gr
 
 	// Default for special cases that don't need a Transform
 	constexpr TransformID k_sharedIdentityTransformID = 0; 
-
-	typedef uint32_t LightID;
-	constexpr LightID k_invalidLightID = std::numeric_limits<uint32_t>::max();
 }

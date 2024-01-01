@@ -138,14 +138,15 @@ namespace
 
 
 	LightParams GetLightParamData(
-		gr::Light::RenderData const& lightData, 
+		void const* lightRenderData,
+		gr::Light::Type lightType,
 		gr::Transform::RenderData const& transformData,
 		gr::ShadowMap::RenderData const* shadowData,
 		gr::Camera::RenderData const* shadowCamData,
 		std::shared_ptr<re::TextureTargetSet const> targetSet)
 	{
 		SEAssert("Ambient lights do not use the LightParams structure",
-			lightData.m_lightType != fr::Light::LightType::AmbientIBL_Deferred);
+			lightType != fr::Light::Type::AmbientIBL);
 
 		SEAssert("Shadow data and shadow camera data depend on each other", 
 			(shadowData != nullptr) == (shadowCamData != nullptr));
@@ -155,24 +156,36 @@ namespace
 
 		// Set type-specific params:
 		bool hasShadow = false;
-		switch (lightData.m_lightType)
+		bool diffuseEnabled = false;
+		bool specEnabled = false;
+		switch (lightType)
 		{
-		case fr::Light::LightType::Directional_Deferred:
+		case fr::Light::Type::Directional:
 		{
-			lightParams.g_lightColorIntensity = lightData.m_typeProperties.m_directional.m_colorIntensity;
+			gr::Light::RenderDataDirectional const* directionalData = 
+				static_cast<gr::Light::RenderDataDirectional const*>(lightRenderData);
+			
+			lightParams.g_lightColorIntensity = directionalData->m_colorIntensity;
 			lightParams.g_lightWorldPosRadius = glm::vec4(transformData.m_globalForward, 0.f); // WorldPos == Light dir
 
-			hasShadow = lightData.m_typeProperties.m_directional.m_hasShadow;
+			hasShadow = directionalData->m_hasShadow;
+			diffuseEnabled = directionalData->m_diffuseEnabled;
+			specEnabled = directionalData->m_specularEnabled;
 		}
 		break;
-		case fr::Light::LightType::Point_Deferred:
+		case fr::Light::Type::Point:
 		{
-			lightParams.g_lightColorIntensity = lightData.m_typeProperties.m_point.m_colorIntensity;
+			gr::Light::RenderDataPoint const* pointData =
+				static_cast<gr::Light::RenderDataPoint const*>(lightRenderData);
+			
+			lightParams.g_lightColorIntensity = pointData->m_colorIntensity;
 			
 			lightParams.g_lightWorldPosRadius = 
-				glm::vec4(transformData.m_globalPosition, lightData.m_typeProperties.m_point.m_emitterRadius);
+				glm::vec4(transformData.m_globalPosition, pointData->m_emitterRadius);
 
-			hasShadow = lightData.m_typeProperties.m_point.m_hasShadow;
+			hasShadow = pointData->m_hasShadow;
+			diffuseEnabled = pointData->m_diffuseEnabled;
+			specEnabled = pointData->m_specularEnabled;
 		}
 		break;
 		default:
@@ -188,14 +201,14 @@ namespace
 				shadowCamData->m_cameraConfig.m_far,
 				shadowData->m_minMaxShadowBias);
 
-			switch (lightData.m_lightType)
+			switch (lightType)
 			{
-			case fr::Light::LightType::Directional_Deferred:
+			case fr::Light::Type::Directional:
 			{
 				lightParams.g_shadowCam_VP = shadowCamData->m_cameraParams.g_viewProjection;
 			}
 			break;
-			case fr::Light::LightType::Point_Deferred:
+			case fr::Light::Type::Point:
 			{
 				lightParams.g_shadowCam_VP = glm::mat4(0.0f); // Unused by point light cube shadow maps
 			}
@@ -214,8 +227,8 @@ namespace
 		lightParams.g_renderTargetResolution = targetSet->GetTargetDimensions();
 		
 		lightParams.g_intensityScale = glm::vec4(
-			static_cast<float>(lightData.m_diffuseEnabled),
-			static_cast<float>(lightData.m_specularEnabled),
+			static_cast<float>(diffuseEnabled),
+			static_cast<float>(specEnabled),
 			0.f,
 			0.f);
 
@@ -244,13 +257,31 @@ namespace gr
 	}
 
 
+	DeferredLightingGraphicsSystem::~DeferredLightingGraphicsSystem()
+	{
+#if defined(_DEBUG)
+		for (uint8_t i = 0; i < gr::Light::Type_Count; i++)
+		{
+			SEAssert("Not all lights were unregistered", m_lightRenderDataIDs[i].empty());
+		}		
+#endif
+	}
+
+
 	void DeferredLightingGraphicsSystem::CreateResourceGenerationStages(re::StagePipeline& pipeline)
 	{
 		SEAssert("We currently expect render data for exactly 1 ambient light to exist",
-			m_renderData[gr::Light::AmbientIBL_Deferred].size() == 1);
-		gr::Light::RenderData const& ambientRenderData = m_renderData[gr::Light::AmbientIBL_Deferred][0];
+			m_lightRenderDataIDs[gr::Light::AmbientIBL].size() == 1);
 
-		re::Texture const* iblTexture = ambientRenderData.m_typeProperties.m_ambient.m_iblTex;
+		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
+
+		auto ambientItr = renderData.IDBegin<gr::Light::RenderDataAmbientIBL>(
+			m_lightRenderDataIDs[gr::Light::AmbientIBL]);
+
+		gr::Light::RenderDataAmbientIBL const& ambientRenderData = 
+			ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
+
+		re::Texture const* iblTexture = ambientRenderData.m_iblTex;
 
 		// 1st frame: Generate the pre-integrated BRDF LUT via a single-frame compute stage:
 		{
@@ -585,8 +616,15 @@ namespace gr
 		const uint32_t totalPMREMMipLevels = m_PMREMTex->GetNumMips();
 		
 		SEAssert("We currently expect render data for exactly 1 ambient light to exist",
-			m_renderData[gr::Light::AmbientIBL_Deferred].size() == 1);
-		gr::Light::RenderData const& ambientRenderData = m_renderData[gr::Light::AmbientIBL_Deferred][0];
+			m_lightRenderDataIDs[gr::Light::AmbientIBL].size() == 1);
+
+		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
+
+		auto ambientItr = renderData.IDBegin<gr::Light::RenderDataAmbientIBL>(
+			m_lightRenderDataIDs[gr::Light::AmbientIBL]);
+		
+		gr::Light::RenderDataAmbientIBL const& ambientRenderData = 
+			ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
 
 		const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
 			totalPMREMMipLevels,
@@ -607,11 +645,11 @@ namespace gr
 		re::PipelineState directionalStageParams(ambientStageParams);
 
 		// Key light stage:
-		const bool hasDirectionalLight = !m_renderData[gr::Light::LightType::Directional_Deferred].empty();
+		const bool hasDirectionalLight = !m_lightRenderDataIDs[gr::Light::Type::Directional].empty();
 		if (hasDirectionalLight)
 		{
 			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)", 
-				m_renderData[gr::Light::LightType::Directional_Deferred].size() == 1);
+				m_lightRenderDataIDs[gr::Light::Type::Directional].size() == 1);
 
 			re::TextureTarget::TargetParams directionalTargetParams;
 			directionalTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
@@ -648,7 +686,7 @@ namespace gr
 
 
 		// Point light stage:
-		const bool hasPointLights = !m_renderData[fr::Light::LightType::Point_Deferred].empty();
+		const bool hasPointLights = !m_lightRenderDataIDs[fr::Light::Type::Point].empty();
 		if (hasPointLights)
 		{
 			m_pointStage->AddPermanentParameterBlock(m_owningGraphicsSystemManager->GetActiveCameraParams());
@@ -739,16 +777,19 @@ namespace gr
 				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
 			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)",
-				m_renderData[gr::Light::LightType::Directional_Deferred].size() == 1);
+				m_lightRenderDataIDs[gr::Light::Type::Directional].size() == 1);
 
-			gr::Light::RenderData const& directionalLightData = 
-				m_renderData[gr::Light::LightType::Directional_Deferred][0];
-			
+			auto directionalItr = renderData.IDBegin<gr::Light::RenderDataDirectional>(
+				m_lightRenderDataIDs[gr::Light::Directional]);
+
+			gr::Light::RenderDataDirectional const& directionalLightData = 
+				directionalItr.Get<gr::Light::RenderDataDirectional>();
+
 			// Directional shadow map:
-			if (directionalLightData.m_typeProperties.m_directional.m_hasShadow)
+			if (directionalLightData.m_hasShadow)
 			{
 				re::Texture const* directionalShadow = 
-					m_shadowGS->GetShadowMap(gr::Light::LightType::Directional_Deferred, directionalLightData.m_lightID);
+					m_shadowGS->GetShadowMap(gr::Light::Type::Directional, directionalLightData.m_renderDataID);
 
 				// Set the key light shadow map:
 				m_directionalStage->AddTextureInput(
@@ -799,8 +840,15 @@ namespace gr
 		const uint32_t totalPMREMMipLevels = m_PMREMTex->GetNumMips();
 
 		SEAssert("We currently expect render data for exactly 1 ambient light to exist",
-			m_renderData[gr::Light::AmbientIBL_Deferred].size() == 1);
-		gr::Light::RenderData const& ambientRenderData = m_renderData[gr::Light::AmbientIBL_Deferred][0];
+			m_lightRenderDataIDs[gr::Light::AmbientIBL].size() == 1);
+
+		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
+
+		auto ambientItr = renderData.IDBegin<gr::Light::RenderDataAmbientIBL>(
+			m_lightRenderDataIDs[gr::Light::AmbientIBL]);
+
+		gr::Light::RenderDataAmbientIBL const& ambientRenderData = 
+			ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
 
 		const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
 			totalPMREMMipLevels,
@@ -813,15 +861,20 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::CreateBatches()
 	{
-		gr::RenderDataManager const& renderDataMgr = m_owningGraphicsSystemManager->GetRenderData();
+		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
 
 		// Ambient stage batches:
 		SEAssert("We currently expect render data for exactly 1 ambient light to exist",
-			m_renderData[gr::Light::AmbientIBL_Deferred].size() == 1);
-		gr::Light::RenderData const& ambientRenderData = m_renderData[gr::Light::AmbientIBL_Deferred][0];
+			m_lightRenderDataIDs[gr::Light::AmbientIBL].size() == 1);
+
+		auto ambientItr = renderData.IDBegin<gr::Light::RenderDataAmbientIBL, gr::MeshPrimitive::RenderData>(
+				m_lightRenderDataIDs[gr::Light::AmbientIBL]);
+
+		gr::Light::RenderDataAmbientIBL const& ambientRenderData =
+			ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
 
 		gr::MeshPrimitive::RenderData const& ambientMeshPrimData = 
-			renderDataMgr.GetObjectData<gr::MeshPrimitive::RenderData>(ambientRenderData.m_renderDataID);
+			ambientItr.Get<gr::MeshPrimitive::RenderData>();
 
 		const re::Batch ambientFullscreenQuadBatch = 
 			re::Batch(re::Batch::Lifetime::SingleFrame, ambientMeshPrimData, nullptr);
@@ -829,27 +882,38 @@ namespace gr
 		m_ambientStage->AddBatch(ambientFullscreenQuadBatch);
 
 		// Directional stage batches:
-		const bool hasDirectionalLight = !m_renderData[gr::Light::LightType::Directional_Deferred].empty();
+		const bool hasDirectionalLight = !m_lightRenderDataIDs[gr::Light::Type::Directional].empty();
 		if (hasDirectionalLight)
 		{
 			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)",
-				m_renderData[gr::Light::LightType::Directional_Deferred].size() == 1);
+				m_lightRenderDataIDs[gr::Light::Type::Directional].size() == 1);
 
-			for (gr::Light::RenderData const& lightData : m_renderData[gr::Light::Directional_Deferred])
+			auto directionalItr = renderData.IDBegin<
+				gr::Light::RenderDataDirectional, gr::MeshPrimitive::RenderData>(
+					m_lightRenderDataIDs[gr::Light::Directional]);
+
+			auto const& directionalItrEnd =
+				renderData.IDEnd<gr::Light::RenderDataDirectional, gr::MeshPrimitive::RenderData>(
+					m_lightRenderDataIDs[gr::Light::Directional]);
+
+			while (directionalItr != directionalItrEnd)
 			{
-				gr::Transform::RenderData const& directionalTransformData =
-					renderDataMgr.GetTransformData(lightData.m_transformID);
+				gr::Light::RenderDataDirectional const& directionalData = 
+					directionalItr.Get<gr::Light::RenderDataDirectional>();
 
+				gr::Transform::RenderData const& directionalTransformData = directionalItr.GetTransformData();
+				
 				gr::ShadowMap::RenderData const* shadowData = nullptr;
 				gr::Camera::RenderData const* shadowCamData = nullptr;
-				if (lightData.m_typeProperties.m_directional.m_hasShadow)
+				if (directionalData.m_hasShadow)
 				{
-					shadowData = &m_shadowGS->GetShadowRenderData(gr::Light::Directional_Deferred, lightData.m_lightID);
-					shadowCamData = &renderDataMgr.GetObjectData<gr::Camera::RenderData>(lightData.m_renderDataID);
+					shadowData = &renderData.GetObjectData<gr::ShadowMap::RenderData>(directionalData.m_renderDataID);
+					shadowCamData = &renderData.GetObjectData<gr::Camera::RenderData>(directionalData.m_renderDataID);
 				}
 
 				LightParams const& directionalParams = GetLightParamData(
-					lightData,
+					&directionalData,
+					gr::Light::Type::Directional,
 					directionalTransformData,
 					shadowData,
 					shadowCamData,
@@ -859,9 +923,8 @@ namespace gr
 					LightParams::s_shaderName,
 					directionalParams,
 					re::ParameterBlock::PBType::SingleFrame);
-
-				gr::MeshPrimitive::RenderData const& meshData =
-					renderDataMgr.GetObjectData<gr::MeshPrimitive::RenderData>(lightData.m_renderDataID);
+				
+				gr::MeshPrimitive::RenderData const& meshData = directionalItr.Get<gr::MeshPrimitive::RenderData>();
 
 				re::Batch directionalBatch =
 					re::Batch(re::Batch::Lifetime::SingleFrame, meshData, nullptr);
@@ -869,37 +932,54 @@ namespace gr
 				directionalBatch.SetParameterBlock(directionalPB);
 
 				m_directionalStage->AddBatch(directionalBatch);
+
+				++directionalItr;
 			}
 		}
 
+
 		// Pointlight stage batches:
-		const bool hasPointLights = !m_renderData[fr::Light::LightType::Point_Deferred].empty();
+		const bool hasPointLights = !m_lightRenderDataIDs[fr::Light::Type::Point].empty();
 		if (hasPointLights)
 		{
-			for(gr::Light::RenderData const& lightData : m_renderData[gr::Light::Point_Deferred])
+			auto pointItr = renderData.IDBegin<
+					gr::Light::RenderDataPoint,
+					gr::MeshPrimitive::RenderData,
+					gr::ShadowMap::RenderData,
+					gr::Camera::RenderData>(m_lightRenderDataIDs[gr::Light::Point]);
+
+			auto const& pointItrEnd = renderData.IDEnd<
+					gr::Light::RenderDataPoint,
+					gr::MeshPrimitive::RenderData,
+					gr::ShadowMap::RenderData,
+					gr::Camera::RenderData>(m_lightRenderDataIDs[gr::Light::Point]);
+
+			while (pointItr != pointItrEnd)
 			{				
-				gr::MeshPrimitive::RenderData const& meshData = 
-					renderDataMgr.GetObjectData<gr::MeshPrimitive::RenderData>(lightData.m_renderDataID);
+				gr::MeshPrimitive::RenderData const& meshData = pointItr.Get<gr::MeshPrimitive::RenderData>();
 
 				re::Batch pointlightBatch = re::Batch(re::Batch::Lifetime::SingleFrame, meshData, nullptr);
 
 				// Point light params:
-				gr::Transform::RenderData const& transformData =
-					renderDataMgr.GetTransformData(lightData.m_transformID);
+				gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 				
 				pointlightBatch.SetParameterBlock(gr::Transform::CreateInstancedTransformParams(transformData));
 				
+				gr::Light::RenderDataPoint const& pointData = 
+					pointItr.Get<gr::Light::RenderDataPoint>();
+
 				gr::ShadowMap::RenderData const* shadowData = nullptr;
 				gr::Camera::RenderData const* shadowCamData = nullptr;
-				const bool hasShadow = lightData.m_typeProperties.m_point.m_hasShadow;
+				const bool hasShadow = pointData.m_hasShadow;
 				if (hasShadow)
 				{
-					shadowData = &m_shadowGS->GetShadowRenderData(gr::Light::Point_Deferred, lightData.m_lightID);
-					shadowCamData =	&renderDataMgr.GetObjectData<gr::Camera::RenderData>(lightData.m_renderDataID);
+					shadowData = &pointItr.Get<gr::ShadowMap::RenderData>();
+					shadowCamData = &pointItr.Get<gr::Camera::RenderData>();
 				}
 
 				LightParams const& pointLightParams = GetLightParamData(
-					lightData, 
+					&pointData,
+					gr::Light::Type::Point,
 					transformData,
 					shadowData,
 					shadowCamData,
@@ -913,7 +993,8 @@ namespace gr
 
 				if (hasShadow) // Add the shadow map texture to the batch
 				{
-					re::Texture const* shadowMap = m_shadowGS->GetShadowMap(gr::Light::Point_Deferred, lightData.m_lightID);
+					re::Texture const* shadowMap = 
+						m_shadowGS->GetShadowMap(gr::Light::Point, pointData.m_renderDataID);
 
 					std::shared_ptr<re::Sampler> sampler =
 						re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear);
@@ -923,13 +1004,37 @@ namespace gr
 
 				// Finally, add the completed batch:
 				m_pointStage->AddBatch(pointlightBatch);
+
+				++pointItr;
 			}
 		}
 	}
 
 
-	std::shared_ptr<re::TextureTargetSet const> DeferredLightingGraphicsSystem::GetFinalTextureTargetSet() const
+	void DeferredLightingGraphicsSystem::RegisterLight(gr::Light::Type lightType, gr::RenderDataID renderDataID)
 	{
-		return m_ambientStage->GetTextureTargetSet();
+		// We do a linear search here for now; In practice there is likely not that many lights
+		if (std::find_if(
+			m_lightRenderDataIDs[lightType].begin(),
+			m_lightRenderDataIDs[lightType].end(),
+			[&renderDataID](gr::RenderDataID existingID) {return renderDataID == existingID; }) == m_lightRenderDataIDs[lightType].end())
+		{
+			m_lightRenderDataIDs[lightType].emplace_back(renderDataID);
+		}
+	}
+
+
+	void DeferredLightingGraphicsSystem::UnregisterLight(gr::Light::Type lightType, gr::RenderDataID renderDataID)
+	{
+		auto existingItr = std::find_if(
+			m_lightRenderDataIDs[lightType].begin(),
+			m_lightRenderDataIDs[lightType].end(),
+			[&renderDataID](gr::RenderDataID existingID) {return renderDataID == existingID; });
+		SEAssert("Light is not registered", existingItr != m_lightRenderDataIDs[lightType].end());
+
+		// Swap the last entry to overwrite the current entry, then pop the last element
+		const size_t indexToMove = m_lightRenderDataIDs[lightType].size() - 1;
+		*existingItr = m_lightRenderDataIDs[lightType][indexToMove];
+		m_lightRenderDataIDs[lightType].pop_back();
 	}
 }

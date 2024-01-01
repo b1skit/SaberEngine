@@ -28,7 +28,7 @@ namespace fr
 
 
 	public:
-		ShadowMap(glm::uvec2 widthHeight, fr::Light::LightType lightType);
+		ShadowMap(glm::uvec2 widthHeight, fr::Light::Type lightType);
 
 		~ShadowMap() = default;
 		ShadowMap(ShadowMap const&) = default;
@@ -41,7 +41,7 @@ namespace fr
 		glm::vec2 const& GetMinMaxShadowBias() const;
 
 		ShadowType GetShadowMapType() const;
-		fr::Light::LightType GetOwningLightType() const;
+		fr::Light::Type GetOwningLightType() const;
 
 		bool IsDirty() const;
 		void MarkClean();
@@ -51,7 +51,7 @@ namespace fr
 
 	private:
 		const ShadowType m_shadowType;
-		const fr::Light::LightType m_lightType;
+		const fr::Light::Type m_lightType;
 
 		glm::uvec2 m_widthHeight;
 
@@ -96,7 +96,7 @@ namespace fr
 	}
 
 
-	inline fr::Light::LightType ShadowMap::GetOwningLightType() const
+	inline fr::Light::Type ShadowMap::GetOwningLightType() const
 	{
 		return m_lightType;
 	}

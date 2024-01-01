@@ -5,40 +5,29 @@
 
 namespace gr
 {
-	Light::RenderData::RenderData(
-		char const* name,
-		gr::Light::LightType lightType, 
-		gr::LightID lightID, 
-		gr::RenderDataID renderDataID, 
-		gr::TransformID transformID)
-		: m_lightType(lightType)
-		, m_lightID(lightID)
-		, m_renderDataID(renderDataID)
+	Light::RenderDataAmbientIBL::RenderDataAmbientIBL(
+		char const* name, gr::RenderDataID renderDataID, gr::TransformID transformID)
+		: m_renderDataID(renderDataID)
 		, m_transformID(transformID)
 	{
-		// CTOR just sets the identifiers and zeros everything else out. 
-		// Everything else is populated in fr::LightComponent::CreateRenderData
-
-		memset(&m_typeProperties, 0, sizeof(m_typeProperties));
 		strncpy(m_lightName, name, en::NamedObject::k_maxNameLength);
 	}
 
 
-	Light::RenderData::~RenderData()
+	Light::RenderDataDirectional::RenderDataDirectional(
+		char const* name, gr::RenderDataID renderDataID, gr::TransformID transformID)
+		: m_renderDataID(renderDataID)
+		, m_transformID(transformID)
 	{
-		// Need a DTOR as we have a union, but no specific cleanup needed as we're just storing data and raw ptrs
-	};
+		strncpy(m_lightName, name, en::NamedObject::k_maxNameLength);
+	}
 
 
-	Light::RenderData& Light::RenderData::operator=(Light::RenderData const& rhs)
+	Light::RenderDataPoint::RenderDataPoint(
+		char const* name, gr::RenderDataID renderDataID, gr::TransformID transformID)
+		: m_renderDataID(renderDataID)
+		, m_transformID(transformID)
 	{
-		if (&rhs == this)
-		{
-			return *this;
-		}
-
-		memcpy(this, &rhs, sizeof(Light::RenderData)); // RenderData is trivially copyable
-
-		return *this;
+		strncpy(m_lightName, name, en::NamedObject::k_maxNameLength);
 	}
 }

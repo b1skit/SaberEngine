@@ -43,7 +43,7 @@ namespace
 namespace fr
 {
 	ShadowMapComponent& ShadowMapComponent::AttachShadowMapComponent(
-		EntityManager& em, entt::entity owningEntity, char const* name, fr::Light::LightType lightType)
+		EntityManager& em, entt::entity owningEntity, char const* name, fr::Light::Type lightType)
 	{
 		SEAssert("A ShadowMapComponent must be attached to a LightComponent",
 			em.HasComponent<fr::LightComponent>(owningEntity));
@@ -66,7 +66,7 @@ namespace fr
 		glm::uvec2 widthHeight{0, 0};
 		switch (lightType)
 		{
-		case fr::Light::LightType::Directional_Deferred:
+		case fr::Light::Type::Directional:
 		{
 			const int defaultDirectionalWidthHeight = 
 				en::Config::Get()->GetValue<int>(en::ConfigKeys::k_defaultShadowMapResolution);
@@ -76,7 +76,7 @@ namespace fr
 			em.EmplaceComponent<fr::LightComponent::DirectionalDeferredMarker>(shadowMapEntity);
 		}
 		break;
-		case fr::Light::LightType::Point_Deferred:
+		case fr::Light::Type::Point:
 		{
 			const int defaultCubemapWidthHeight =
 				en::Config::Get()->GetValue<int>(en::ConfigKeys::k_defaultShadowCubeMapResolution);
@@ -85,7 +85,7 @@ namespace fr
 			em.EmplaceComponent<fr::LightComponent::PointDeferredMarker>(shadowMapEntity);
 		}
 		break;
-		case fr::Light::LightType::AmbientIBL_Deferred:
+		case fr::Light::Type::AmbientIBL:
 		default: SEAssertF("Invalid light type");
 		}
 
@@ -94,7 +94,6 @@ namespace fr
 		ShadowMapComponent& shadowMapComponent = *em.EmplaceComponent<fr::ShadowMapComponent>(
 			shadowMapEntity,
 			PrivateCTORTag{},
-			owningLightComponent.GetLightID(),
 			lightType,
 			sharedRenderDataCmpt.GetRenderDataID(),
 			sharedRenderDataCmpt.GetTransformID(),
@@ -136,7 +135,7 @@ namespace fr
 		{
 		case fr::ShadowMap::ShadowType::CubeMap:
 		{
-			SEAssert("Unexpected light type", owningLight.GetType() == fr::Light::LightType::Point_Deferred);
+			SEAssert("Unexpected light type", owningLight.GetType() == fr::Light::Type::Point);
 
 			shadowCamConfig.m_yFOV = static_cast<float>(std::numbers::pi) * 0.5f;
 			shadowCamConfig.m_aspectRatio = 1.0f;
@@ -146,7 +145,7 @@ namespace fr
 			shadowCamConfig.m_near = k_defaultShadowCamNear;
 
 			shadowCamConfig.m_far = 
-				owningLight.GetLightTypeProperties(fr::Light::LightType::Point_Deferred).m_point.m_sphericalRadius;
+				owningLight.GetLightTypeProperties(fr::Light::Type::Point).m_point.m_sphericalRadius;
 
 			// We ignore everything else for shadow map cameras
 		}
@@ -180,7 +179,6 @@ namespace fr
 
 		gr::ShadowMap::RenderData shadowRenderData = gr::ShadowMap::RenderData
 		{
-			.m_owningLightID = shadowMapCmpt.GetLightID(),
 			.m_renderDataID = shadowMapCmpt.GetRenderDataID(),
 			.m_transformID = shadowMapCmpt.GetTransformID(),
 
@@ -259,13 +257,11 @@ namespace fr
 
 	ShadowMapComponent::ShadowMapComponent(
 		PrivateCTORTag,
-		gr::LightID lightID, 
-		fr::Light::LightType lightType, 
+		fr::Light::Type lightType, 
 		gr::RenderDataID renderDataID, 
 		gr::TransformID transformID,
 		glm::uvec2 widthHeight)
-		: m_lightID(lightID)
-		, m_renderDataID(renderDataID)
+		: m_renderDataID(renderDataID)
 		, m_transformID(transformID)
 		, m_shadowMap(widthHeight, lightType)
 	{
@@ -278,7 +274,8 @@ namespace fr
 
 	UpdateShadowMapDataRenderCommand::UpdateShadowMapDataRenderCommand(
 		fr::NameComponent const& nameCmpt, ShadowMapComponent const& shadowMapCmpt)
-		: m_lightID(shadowMapCmpt.GetLightID())
+		: m_renderDataID(shadowMapCmpt.GetRenderDataID())
+		, m_type(fr::Light::ConvertRenderDataLightType(shadowMapCmpt.GetShadowMap().GetOwningLightType()))
 		, m_data(fr::ShadowMapComponent::CreateRenderData(nameCmpt, shadowMapCmpt))
 	{
 	}
@@ -293,49 +290,18 @@ namespace fr
 
 		for (size_t rsIdx = 0; rsIdx < renderSystems.size(); rsIdx++)
 		{
+			gr::GraphicsSystemManager& gsm = renderSystems[rsIdx]->GetGraphicsSystemManager();
+
+			gr::RenderDataManager& renderDataMgr = gsm.GetRenderDataForModification();
+
+			renderDataMgr.SetObjectData<gr::ShadowMap::RenderData>(cmdPtr->m_renderDataID, &cmdPtr->m_data);
+
 			gr::ShadowsGraphicsSystem* shadowGS =
 				renderSystems[rsIdx]->GetGraphicsSystemManager().GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
 
 			if (shadowGS)
 			{
-				gr::ShadowMap::RenderData const& shadowMapRenderData = cmdPtr->m_data;
-
-				std::vector<gr::ShadowMap::RenderData>* gsRenderData = nullptr;
-
-				switch (shadowMapRenderData.m_lightType)
-				{
-				case gr::Light::LightType::AmbientIBL_Deferred:
-				{
-					gsRenderData = &shadowGS->GetRenderData(gr::Light::LightType::AmbientIBL_Deferred);
-				}
-				break;
-				case gr::Light::LightType::Directional_Deferred:
-				{
-					gsRenderData = &shadowGS->GetRenderData(gr::Light::LightType::Directional_Deferred);
-				}
-				break;
-				case gr::Light::LightType::Point_Deferred:
-				{
-					gsRenderData = &shadowGS->GetRenderData(gr::Light::LightType::Point_Deferred);
-				}
-				break;
-				default: SEAssertF("Invalid light type");
-				}
-
-				auto existingLightItr = std::find_if(gsRenderData->begin(), gsRenderData->end(),
-					[&](gr::ShadowMap::RenderData const& existingShadowMap)
-					{
-						return shadowMapRenderData.m_owningLightID == existingShadowMap.m_owningLightID;
-					});
-
-				if (existingLightItr == gsRenderData->end()) // New light
-				{
-					gsRenderData->emplace_back(shadowMapRenderData);
-				}
-				else
-				{
-					*existingLightItr = shadowMapRenderData;
-				}
+				shadowGS->RegisterShadowMap(cmdPtr->m_type, cmdPtr->m_renderDataID);
 			}
 		}
 	}
@@ -345,5 +311,49 @@ namespace fr
 	{
 		UpdateShadowMapDataRenderCommand* cmdPtr = reinterpret_cast<UpdateShadowMapDataRenderCommand*>(cmdData);
 		cmdPtr->~UpdateShadowMapDataRenderCommand();
+	}
+
+
+	// ---
+
+
+	DestroyShadowMapDataRenderCommand::DestroyShadowMapDataRenderCommand(ShadowMapComponent const& shadowMapCmpt)
+		: m_renderDataID(shadowMapCmpt.GetRenderDataID())
+		, m_type(fr::Light::ConvertRenderDataLightType(shadowMapCmpt.GetShadowMap().GetOwningLightType()))
+	{
+	}
+
+
+	void DestroyShadowMapDataRenderCommand::Execute(void* cmdData)
+	{
+		std::vector<std::unique_ptr<re::RenderSystem>> const& renderSystems =
+			re::RenderManager::Get()->GetRenderSystems();
+
+		DestroyShadowMapDataRenderCommand* cmdPtr = reinterpret_cast<DestroyShadowMapDataRenderCommand*>(cmdData);
+
+		for (size_t rsIdx = 0; rsIdx < renderSystems.size(); rsIdx++)
+		{
+			gr::GraphicsSystemManager& gsm = renderSystems[rsIdx]->GetGraphicsSystemManager();
+
+			gr::RenderDataManager& renderDataMgr = gsm.GetRenderDataForModification();
+
+			renderDataMgr.DestroyObjectData<gr::ShadowMap::RenderData>(cmdPtr->m_renderDataID);
+
+			// Unregister the light from the shadow GS:
+			gr::ShadowsGraphicsSystem* shadowGS =
+				renderSystems[rsIdx]->GetGraphicsSystemManager().GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
+
+			if (shadowGS)
+			{
+				shadowGS->UnregisterShadowMap(cmdPtr->m_type, cmdPtr->m_renderDataID);
+			}
+		}
+	}
+
+
+	void DestroyShadowMapDataRenderCommand::Destroy(void* cmdData)
+	{
+		DestroyShadowMapDataRenderCommand* cmdPtr = reinterpret_cast<DestroyShadowMapDataRenderCommand*>(cmdData);
+		cmdPtr->~DestroyShadowMapDataRenderCommand();
 	}
 }

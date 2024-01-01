@@ -20,7 +20,7 @@ namespace gr
 	public:
 		DeferredLightingGraphicsSystem(gr::GraphicsSystemManager*);
 
-		~DeferredLightingGraphicsSystem() override {}
+		~DeferredLightingGraphicsSystem() override;
 
 		void CreateResourceGenerationStages(re::StagePipeline&);
 		void Create(re::RenderSystem&, re::StagePipeline&);
@@ -30,11 +30,12 @@ namespace gr
 		// Note: All light stages write to the same target
 		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 
-		std::vector<gr::Light::RenderData>& GetRenderData(gr::Light::LightType);
+		void RegisterLight(gr::Light::Type, gr::RenderDataID);
+		void UnregisterLight(gr::Light::Type, gr::RenderDataID);
 
 
 	private:
-		std::array<std::vector<gr::Light::RenderData>, gr::Light::LightType_Count> m_renderData;
+		std::array<std::vector<gr::RenderDataID>, gr::Light::Type_Count> m_lightRenderDataIDs;
 
 		gr::ShadowsGraphicsSystem* m_shadowGS;
 
@@ -58,8 +59,8 @@ namespace gr
 	};
 
 
-	inline std::vector<gr::Light::RenderData>& DeferredLightingGraphicsSystem::GetRenderData(gr::Light::LightType type)
+	inline std::shared_ptr<re::TextureTargetSet const> DeferredLightingGraphicsSystem::GetFinalTextureTargetSet() const
 	{
-		return m_renderData[static_cast<uint8_t>(type)];
+		return m_ambientStage->GetTextureTargetSet();
 	}
 }

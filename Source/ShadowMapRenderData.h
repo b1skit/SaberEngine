@@ -22,11 +22,10 @@ namespace gr
 	public:
 		struct RenderData
 		{
-			gr::LightID m_owningLightID;
 			gr::RenderDataID m_renderDataID;
 			gr::TransformID m_transformID;
 
-			gr::Light::LightType m_lightType;
+			gr::Light::Type m_lightType;
 			ShadowType m_shadowType;
 
 			glm::vec4 m_textureDims;

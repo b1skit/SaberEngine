@@ -42,7 +42,14 @@ namespace fr
 			fr::EntityManager&, entt::entity, std::string const& name, glm::vec4 colorIntensity, bool hasShadow);
 
 	public:
-		static gr::Light::RenderData CreateRenderData(fr::NameComponent const&, fr::LightComponent const&);
+		static gr::Light::RenderDataAmbientIBL CreateRenderDataAmbientIBL_Deferred(
+			fr::NameComponent const&, fr::LightComponent const&);
+		
+		static gr::Light::RenderDataDirectional CreateRenderDataDirectional_Deferred(
+			fr::NameComponent const&, fr::LightComponent const&);
+		
+		static gr::Light::RenderDataPoint CreateRenderDataPoint_Deferred(
+			fr::NameComponent const&, fr::LightComponent const&);
 
 		static bool Update(fr::LightComponent&, fr::Transform* lightTransform, fr::Camera* shadowCam);
 
@@ -50,16 +57,14 @@ namespace fr
 
 
 	public:
-		gr::LightID GetLightID() const;
-		gr::LightID GetRenderDataID() const;
-		gr::LightID GetTransformID() const;
+		gr::RenderDataID GetRenderDataID() const;
+		gr::TransformID GetTransformID() const;
 
 		fr::Light& GetLight();
 		fr::Light const& GetLight() const;
 
 
 	private:
-		const gr::LightID m_lightID;
 		const gr::RenderDataID m_renderDataID;
 		const gr::TransformID m_transformID;
 
@@ -74,14 +79,14 @@ namespace fr
 		LightComponent(
 			PrivateCTORTag, 
 			gr::RenderDataComponent const&, 
-			fr::Light::LightType, 
+			fr::Light::Type, 
 			glm::vec4 colorIntensity,
 			bool hasShadow);
 		LightComponent(
 			PrivateCTORTag, 
 			gr::RenderDataComponent const&,
 			re::Texture const* iblTex,
-			const fr::Light::LightType = fr::Light::LightType::AmbientIBL_Deferred); // Ambient light only
+			const fr::Light::Type = fr::Light::Type::AmbientIBL); // Ambient light only
 
 
 	private: // Static LightID functionality:
@@ -101,30 +106,43 @@ namespace fr
 		static void Destroy(void*);
 
 	private:
-		const gr::LightID m_lightID;
 		const gr::RenderDataID m_renderDataID;
 		const gr::TransformID m_transformID;
 
-		const gr::Light::RenderData m_data;
+		gr::Light::Type m_type;
+		union
+		{
+			gr::Light::RenderDataAmbientIBL m_ambientData;
+			gr::Light::RenderDataDirectional m_directionalData;
+			gr::Light::RenderDataPoint m_pointData;
+		};
+	};
+
+
+	class DestroyLightDataRenderCommand
+	{
+	public:
+		DestroyLightDataRenderCommand(LightComponent const&);
+
+		static void Execute(void*);
+		static void Destroy(void*);
+
+	private:
+		const gr::RenderDataID m_renderDataID;
+		const gr::Light::Type m_type;
 	};
 
 
 	// ---
 
 
-	inline gr::LightID LightComponent::GetLightID() const
-	{
-		return m_lightID;
-	}
-
-
-	inline gr::LightID LightComponent::GetRenderDataID() const
+	inline gr::RenderDataID LightComponent::GetRenderDataID() const
 	{
 		return m_renderDataID;
 	}
 
 
-	inline gr::LightID LightComponent::GetTransformID() const
+	inline gr::TransformID LightComponent::GetTransformID() const
 	{
 		return m_transformID;
 	}
