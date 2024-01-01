@@ -16,9 +16,6 @@
 
 namespace fr
 {
-	std::atomic<uint32_t> LightComponent::s_lightIDs = 0;
-
-
 	LightComponent& LightComponent::CreateDeferredAmbientLightConcept(EntityManager& em, re::Texture const* iblTex)
 	{
 		SEAssert("IBL texture cannot be null", iblTex);

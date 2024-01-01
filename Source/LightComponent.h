@@ -87,10 +87,6 @@ namespace fr
 			gr::RenderDataComponent const&,
 			re::Texture const* iblTex,
 			const fr::Light::Type = fr::Light::Type::AmbientIBL); // Ambient light only
-
-
-	private: // Static LightID functionality:
-		static std::atomic<uint32_t> s_lightIDs;
 	};
 
 
