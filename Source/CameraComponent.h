@@ -41,8 +41,6 @@ namespace fr
 
 		gr::TransformID GetTransformID() const;
 
-		
-
 
 	private:
 		const gr::TransformID m_transformID;

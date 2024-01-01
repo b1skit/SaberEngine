@@ -823,10 +823,13 @@ namespace fr
 			if (ImGui::CollapsingHeader("Camera controller", ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
+
+				entt::entity mainCam = GetMainCamera();
+
 				auto camControllerView = m_registry.view<fr::CameraControlComponent>();
 				for (entt::entity entity : camControllerView)
 				{
-					fr::CameraControlComponent::ShowImGuiWindow(*this, entity);
+					fr::CameraControlComponent::ShowImGuiWindow(*this, entity, mainCam);
 				}				
 				ImGui::Unindent();
 			} // "Camera controller"

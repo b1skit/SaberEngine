@@ -47,7 +47,7 @@ namespace fr
 		bool IsDirty() const;
 		void MarkClean();
 
-		void ShowImGuiWindow(uint64_t uniqueID, fr::Transform& camTransform);
+		void ShowImGuiWindow(uint64_t uniqueID);
 
 
 	private:

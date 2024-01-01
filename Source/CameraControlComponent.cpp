@@ -160,7 +160,8 @@ namespace fr
 	}
 
 
-	void CameraControlComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity camControlEntity)
+	void CameraControlComponent::ShowImGuiWindow(
+		fr::EntityManager& em, entt::entity camControlEntity, entt::entity currentCam)
 	{
 		fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(camControlEntity);
 
@@ -210,9 +211,7 @@ namespace fr
 			fr::TransformComponent::ShowImGuiWindow(em, camControlEntity, nameCmpt.GetUniqueID());
 
 			// Camera:
-			// ECS_CONVERSION: TODO: Figure out how to link camera and camera controller...
-			// -> Currently don't have a Relationship
-			//		-> Perhaps Cameras should always have a Transform of their own?
+			fr::CameraComponent::ShowImGuiWindow(em, currentCam);
 
 			ImGui::Unindent();
 		}

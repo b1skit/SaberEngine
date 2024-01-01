@@ -97,12 +97,15 @@ namespace fr
 			fr::CameraComponent& camCmpt = em.GetComponent<fr::CameraComponent>(camEntity);
 			
 			fr::Relationship const& cameraRelationship = em.GetComponent<fr::Relationship>(camEntity);
+
+			entt::entity transformEntity = entt::null;
 			fr::TransformComponent& camTransformCmpt =
-				*em.GetFirstInHierarchyAbove<fr::TransformComponent>(cameraRelationship.GetParent());
+				*em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(cameraRelationship.GetParent(), transformEntity);
 
-			fr::Transform& camTransform = camTransformCmpt.GetTransform();
+			camCmpt.m_camera.ShowImGuiWindow(nameCmpt.GetUniqueID());
 
-			camCmpt.m_camera.ShowImGuiWindow(nameCmpt.GetUniqueID(), camTransform);
+			// Transform:
+			fr::TransformComponent::ShowImGuiWindow(em, transformEntity, static_cast<uint32_t>(camEntity));
 
 			ImGui::Unindent();
 		}

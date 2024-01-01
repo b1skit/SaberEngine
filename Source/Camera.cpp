@@ -106,7 +106,7 @@ namespace fr
 	}
 
 
-	void Camera::ShowImGuiWindow(uint64_t uniqueID, fr::Transform& camTransform)
+	void Camera::ShowImGuiWindow(uint64_t uniqueID)
 	{
 		if (ImGui::CollapsingHeader(std::format("Modify##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 		{
@@ -218,13 +218,6 @@ namespace fr
 			util::DisplayMat4x4("View Projection Matrix:", camParams.g_viewProjection);
 			util::DisplayMat4x4("Inverse View Projection Matrix:", camParams.g_invViewProjection);
 
-			ImGui::Unindent();
-		}
-
-		if (ImGui::CollapsingHeader(std::format("Transform##{}", uniqueID).c_str()))
-		{
-			ImGui::Indent();
-			camTransform.ShowImGuiWindow(uniqueID);
 			ImGui::Unindent();
 		}
 	}

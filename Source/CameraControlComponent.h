@@ -26,7 +26,7 @@ namespace fr
 			fr::Transform& cameraTransform, 
 			double stepTimeMs);
 
-		static void ShowImGuiWindow(fr::EntityManager&, entt::entity camControlEntity);
+		static void ShowImGuiWindow(fr::EntityManager&, entt::entity camControlEntity, entt::entity currentCam);
 
 
 	public:
