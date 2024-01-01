@@ -269,11 +269,6 @@ namespace fr
 
 			// Update dirty render data components that touch the GraphicsSystems directly:
 
-			//ECS_CONVERSION: MOVE LIGHTS/SHADOWS DIRECTLY TO THE RENDER DATA MANAGER
-			// -> Need to have different renderdata types
-			//		-> Allow GS's to iterate specific light types
-			//		-> OR: Register the RenderObjectIDs with the GS's, and the data with the RenderDataManager ?
-
 			// Lights:
 			auto lightComponentsView = m_registry.view<
 				fr::LightComponent, DirtyMarker<fr::LightComponent>, gr::RenderDataComponent, fr::NameComponent>();
