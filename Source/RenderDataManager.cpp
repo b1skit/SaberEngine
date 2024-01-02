@@ -98,6 +98,29 @@ namespace gr
 	}
 
 
+	void RenderDataManager::SetFeatureBits(gr::RenderDataID renderDataID, gr::FeatureBitmask featureBits)
+	{
+		// Catch illegal accesses during RenderData modification
+		util::ScopedThreadProtector threadProjector(m_threadProtector);
+
+		SEAssert("Invalid object ID", m_IDToRenderObjectMetadata.contains(renderDataID));
+		RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
+
+		renderObjectMetadata.m_featureBits |= featureBits;
+	}
+
+
+	gr::FeatureBitmask RenderDataManager::GetFeatureBits(gr::RenderDataID renderDataID) const
+	{
+		m_threadProtector.ValidateThreadAccess();
+
+		SEAssert("renderDataID is not registered", m_IDToRenderObjectMetadata.contains(renderDataID));
+		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
+
+		return renderObjectMetadata.m_featureBits;
+	}
+
+
 	void RenderDataManager::RegisterTransform(gr::TransformID transformID)
 	{
 		// Catch illegal accesses during RenderData modification
@@ -291,17 +314,16 @@ namespace gr
 			const ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable;
 
 			const int numDataTypes = static_cast<int>(m_dataVectors.size());
-			const int numCols = numDataTypes + 2;
+			const int numCols = numDataTypes + 3;
 			if (ImGui::BeginTable("m_IDToRenderObjectMetadata", numCols, flags))
 			{
 				// Headers:				
 				ImGui::TableSetupColumn("RenderObjectID [ref. count]");
 				ImGui::TableSetupColumn("TransformID [ref.count] (dirty frame)");
+				ImGui::TableSetupColumn("Feature bits");
 				for (size_t i = 0; i < numDataTypes; i++)
 				{
-					/*ImGui::TableSetupColumn(std::format("Type {} (dirty frame)", i).c_str());*/
 					ImGui::TableSetupColumn(std::format("{} (dirty frame)", names[i]).c_str());
-					
 				}
 				ImGui::TableHeadersRow();
 
@@ -321,6 +343,11 @@ namespace gr
 						entry.second.m_transformID, 
 						m_transformIDToTransformMetadata.at(entry.second.m_transformID).m_referenceCount,
 						m_transformIDToTransformMetadata.at(entry.second.m_transformID).m_dirtyFrame).c_str());
+
+					ImGui::TableNextColumn();
+
+					// Feature bits
+					ImGui::Text(std::format("{:b}", entry.second.m_featureBits).c_str());
 
 					for (size_t i = 0; i < numDataTypes; i++)
 					{

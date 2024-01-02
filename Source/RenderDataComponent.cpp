@@ -42,12 +42,10 @@ namespace gr
 	}
 
 
-	// ---
-
-
 	RenderDataComponent::RenderDataComponent(PrivateCTORTag, gr::TransformID transformID)
 		: m_renderDataID(s_objectIDs.fetch_add(1)) // Allocate a new RenderDataID
 		, m_transformID(transformID)
+		, m_featureBits(0)
 	{
 	}
 
@@ -55,6 +53,7 @@ namespace gr
 	RenderDataComponent::RenderDataComponent(PrivateCTORTag, gr::RenderDataID renderObjectID, gr::TransformID transformID)
 		: m_renderDataID(renderObjectID)
 		, m_transformID(transformID)
+		, m_featureBits(0)
 	{
 	}
 
@@ -62,6 +61,7 @@ namespace gr
 	RenderDataComponent::RenderDataComponent(PrivateCTORTag, RenderDataComponent const& sharedRenderDataComponent)
 		: m_renderDataID(sharedRenderDataComponent.m_renderDataID) // Shared RenderDataID
 		, m_transformID(sharedRenderDataComponent.m_transformID)
+		, m_featureBits(0)
 	{
 	}
 
@@ -79,12 +79,26 @@ namespace gr
 	}
 
 
+	void RenderDataComponent::SetFeature(gr::RenderObjectFeature feature)
+	{
+		SEAssert("Invalid feature", feature != gr::RenderObjectFeature::Invalid);
+		m_featureBits |= (1 << feature);
+	}
+
+
+	gr::FeatureBitmask RenderDataComponent::GetFeatureBits() const
+	{
+		return m_featureBits;
+	}
+
+
 	// ---
 
 
 	RegisterRenderObjectCommand::RegisterRenderObjectCommand(RenderDataComponent const& newRenderDataComponent)
 		: m_renderDataID(newRenderDataComponent.GetRenderDataID())
 		, m_transformID(newRenderDataComponent.GetTransformID())
+		, m_featureBits(newRenderDataComponent.GetFeatureBits())
 	{
 	}
 
@@ -102,6 +116,7 @@ namespace gr
 				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
 
 			renderData.RegisterObject(cmdPtr->m_renderDataID, cmdPtr->m_transformID);
+			renderData.SetFeatureBits(cmdPtr->m_renderDataID, cmdPtr->m_featureBits);
 		}
 	}
 
@@ -143,5 +158,40 @@ namespace gr
 	{
 		DestroyRenderObjectCommand* cmdPtr = reinterpret_cast<DestroyRenderObjectCommand*>(cmdData);
 		cmdPtr->~DestroyRenderObjectCommand();
+	}
+
+
+	// ---
+
+
+	RenderDataFeatureBitsRenderCommand::RenderDataFeatureBitsRenderCommand(
+		gr::RenderDataID renderDataID, gr::FeatureBitmask featureBits)
+		: m_renderDataID(renderDataID)
+		, m_featureBits(featureBits)
+	{
+	}
+
+
+	void RenderDataFeatureBitsRenderCommand::Execute(void* cmdData)
+	{
+		std::vector<std::unique_ptr<re::RenderSystem>> const& renderSystems =
+			re::RenderManager::Get()->GetRenderSystems();
+
+		RenderDataFeatureBitsRenderCommand* cmdPtr = reinterpret_cast<RenderDataFeatureBitsRenderCommand*>(cmdData);
+
+		for (size_t renderSystemIdx = 0; renderSystemIdx < renderSystems.size(); renderSystemIdx++)
+		{
+			gr::RenderDataManager& renderData =
+				renderSystems[renderSystemIdx]->GetGraphicsSystemManager().GetRenderDataForModification();
+
+			renderData.SetFeatureBits(cmdPtr->m_renderDataID, cmdPtr->m_featureBits);
+		}
+	}
+
+
+	void RenderDataFeatureBitsRenderCommand::Destroy(void* cmdData)
+	{
+		RenderDataFeatureBitsRenderCommand* cmdPtr = reinterpret_cast<RenderDataFeatureBitsRenderCommand*>(cmdData);
+		cmdPtr->~RenderDataFeatureBitsRenderCommand();
 	}
 }

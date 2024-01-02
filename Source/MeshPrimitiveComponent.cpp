@@ -81,8 +81,7 @@ namespace fr
 			positionMinXYZ,
 			positionMaxXYZ,
 			reinterpret_cast<std::vector<glm::vec3> const&>(
-				meshPrimitive->GetVertexStream(gr::MeshPrimitive::Slot::Position)->GetDataAsVector()),
-			fr::BoundsComponent::Contents::MeshPrimitive);
+				meshPrimitive->GetVertexStream(gr::MeshPrimitive::Slot::Position)->GetDataAsVector()));
 		fr::BoundsComponent const& meshPrimitiveBounds = em.GetComponent<fr::BoundsComponent>(meshPrimitiveEntity);
 
 		// If there is a BoundsComponent in the heirarchy above, assume it's encapsulating the MeshPrimitive:

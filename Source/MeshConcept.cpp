@@ -25,10 +25,14 @@ namespace fr
 
 		fr::TransformComponent const& owningTransformCmpt = em.GetComponent<fr::TransformComponent>(owningEntity);
 
-		gr::RenderDataComponent::AttachNewRenderDataComponent(em, meshEntity, owningTransformCmpt.GetTransformID());
+		gr::RenderDataComponent& meshRenderData = 
+			gr::RenderDataComponent::AttachNewRenderDataComponent(em, meshEntity, owningTransformCmpt.GetTransformID());
 
 		// Mesh bounds: Encompasses all attached primitive bounds
-		fr::BoundsComponent::AttachBoundsComponent(em, meshEntity, fr::BoundsComponent::Contents::Mesh);
+		fr::BoundsComponent::AttachBoundsComponent(em, meshEntity);
+
+		// Mark our RenderDataComponent so the renderer can differentiate between Mesh and MeshPrimitive Bounds
+		meshRenderData.SetFeature(gr::RenderObjectFeature::IsMeshBounds);
 
 		fr::Relationship& meshRelationship = em.GetComponent<fr::Relationship>(meshEntity);
 		meshRelationship.SetParent(em, owningEntity);

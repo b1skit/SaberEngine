@@ -10,5 +10,22 @@ namespace gr
 	constexpr TransformID k_invalidTransformID = std::numeric_limits<uint32_t>::max();
 
 	// Default for special cases that don't need a Transform
-	constexpr TransformID k_sharedIdentityTransformID = 0; 
+	constexpr TransformID k_sharedIdentityTransformID = 0;
+
+	typedef uint32_t FeatureBitmask;
+
+	enum RenderObjectFeature
+	{
+		IsMeshBounds = 0x0, // If this is not set, we can assume a Bounds is attached to a MeshPrimitive
+		//... = 0x1
+		//... = 0x2
+		//... = 0x4
+
+		Invalid
+	};
+
+	inline bool HasFeature(RenderObjectFeature feature, FeatureBitmask featureBits)
+	{
+		return featureBits & (1 << feature);
+	}
 }

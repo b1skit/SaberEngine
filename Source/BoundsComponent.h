@@ -17,48 +17,32 @@ namespace fr
 		static constexpr glm::vec3 k_invalidMaxXYZ = -glm::vec3(std::numeric_limits<float>::max());
 		// Note: -max is the furthest away from max
 
-
 	public:
-		enum class Contents
-		{
-			Mesh,
-			MeshPrimitive,
-			Scene, // Unique: Only added to 1 bounds component for the entire scene
-		};
-
-		struct MeshBoundsMarker {};
-		struct MeshPrimitiveBoundsMarker {};
 		struct SceneBoundsMarker {}; // Unique: Only added to 1 bounds component for the entire scene
 
 
 	public:
 		static void CreateSceneBoundsConcept(fr::EntityManager&);
 		
-		static void AttachBoundsComponent(fr::EntityManager&, entt::entity, BoundsComponent::Contents);
+		static void AttachBoundsComponent(fr::EntityManager&, entt::entity);
 
 		static void AttachBoundsComponent(
 			fr::EntityManager&, 
 			entt::entity, 
 			glm::vec3 const& minXYZ, 
-			glm::vec3 const& maxXYZ,
-			BoundsComponent::Contents);
+			glm::vec3 const& maxXYZ);
 
 		static void AttachBoundsComponent(
 			fr::EntityManager&, 
 			entt::entity, 
 			glm::vec3 const& minXYZ, 
 			glm::vec3 const& maxXYZ, 
-			std::vector<glm::vec3> const& positions,
-			BoundsComponent::Contents);
+			std::vector<glm::vec3> const& positions);
 
 	public:
 		static gr::Bounds::RenderData CreateRenderData(fr::BoundsComponent const&, fr::NameComponent const&);
 
 		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
-
-
-	private:
-		static void AttachMarkers(fr::EntityManager&, entt::entity, Contents);
 
 
 	public:

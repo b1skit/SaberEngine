@@ -37,10 +37,15 @@ namespace gr
 		gr::RenderDataID GetRenderDataID() const;
 		gr::TransformID GetTransformID() const;
 
+		void SetFeature(gr::RenderObjectFeature);
+		gr::FeatureBitmask GetFeatureBits() const;
+
 
 	private:
 		const gr::RenderDataID m_renderDataID;
 		const gr::TransformID m_transformID;
+
+		gr::FeatureBitmask m_featureBits;
 
 
 	private:
@@ -77,6 +82,7 @@ namespace gr
 	private:
 		const gr::RenderDataID m_renderDataID;
 		const gr::TransformID m_transformID;
+		const gr::FeatureBitmask m_featureBits;
 	};
 
 
@@ -196,4 +202,21 @@ namespace gr
 		DestroyRenderDataRenderCommand<T>* cmdPtr = reinterpret_cast<DestroyRenderDataRenderCommand<T>*>(cmdData);
 		cmdPtr->~DestroyRenderDataRenderCommand();
 	}
+
+
+	// ---
+
+
+	class RenderDataFeatureBitsRenderCommand
+	{
+	public:
+		RenderDataFeatureBitsRenderCommand(gr::RenderDataID, gr::FeatureBitmask);
+
+		static void Execute(void*);
+		static void Destroy(void*);
+
+	private:
+		const gr::RenderDataID m_renderDataID;
+		const gr::FeatureBitmask m_featureBits;
+	};
 }

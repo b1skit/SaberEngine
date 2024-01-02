@@ -28,18 +28,20 @@ namespace fr
 		gr::RenderDataComponent::AttachNewRenderDataComponent(
 			em, sceneBoundsEntity, sceneBoundsTransformComponent.GetTransformID());
 
+		em.EmplaceComponent<SceneBoundsMarker>(sceneBoundsEntity);
+
 		// Attach the BoundsComponent:
-		AttachBoundsComponent(em, sceneBoundsEntity, Contents::Scene);
+		AttachBoundsComponent(em, sceneBoundsEntity);
 	}
 
 
 	void BoundsComponent::AttachBoundsComponent(
-		fr::EntityManager& em, entt::entity entity, BoundsComponent::Contents contents)
+		fr::EntityManager& em, entt::entity entity)
 	{
-		AttachMarkers(em, entity, contents);
-
 		// Finally, attach the BoundsComponent (which will trigger event listeners)
 		em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{});
+
+		em.EmplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
 	}
 
 
@@ -47,13 +49,12 @@ namespace fr
 		fr::EntityManager& em,
 		entt::entity entity, 
 		glm::vec3 const& minXYZ,
-		glm::vec3 const& maxXYZ, 
-		BoundsComponent::Contents contents)
+		glm::vec3 const& maxXYZ)
 	{
-		AttachMarkers(em, entity, contents);
-
 		// Finally, attach the BoundsComponent (which will trigger event listeners)
 		em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ);
+
+		em.EmplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
 	}
 
 
@@ -62,39 +63,12 @@ namespace fr
 		entt::entity entity,
 		glm::vec3 const& minXYZ,
 		glm::vec3 const& maxXYZ,
-		std::vector<glm::vec3> const& positions,
-		BoundsComponent::Contents contents)
+		std::vector<glm::vec3> const& positions)
 	{
-		AttachMarkers(em, entity, contents);
-
 		// Finally, attach the BoundsComponent (which will trigger event listeners)
 		em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ, positions);
-	}
 
-
-	void BoundsComponent::AttachMarkers(fr::EntityManager& em, entt::entity entity, Contents contents)
-	{
-		em.EmplaceOrReplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
-
-		switch (contents)
-		{
-		case Contents::Mesh:
-		{
-			em.EmplaceComponent<MeshBoundsMarker>(entity);
-		}
-		break;
-		case Contents::MeshPrimitive:
-		{
-			em.EmplaceComponent<MeshPrimitiveBoundsMarker>(entity);
-		}
-		break;
-		case Contents::Scene:
-		{
-			em.EmplaceComponent<SceneBoundsMarker>(entity);
-		}
-		break;
-		default: SEAssertF("Invalid Contents type");
-		}
+		em.EmplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
 	}
 
 

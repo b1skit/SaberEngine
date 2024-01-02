@@ -428,17 +428,6 @@ namespace gr
 					}
 				}
 
-				// Mesh: Draw this 2nd so it's on top if the bounding box is the same as the MeshPrimitive
-				if (m_showAllMeshBoundingBoxes)
-				{
-					// ECS_CONVERSION: BUG HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-					// -> Need a way to differentiate between Mesh Bounds, and MeshPrimitive Bounds
-
-					re::Batch boundingBoxBatch = BuildBoundingBoxBatch(boundsRenderData, m_meshBoundsColor);
-					boundingBoxBatch.SetParameterBlock(meshTransformPB);
-					m_debugStage->AddBatch(boundingBoxBatch);
-				}
-
 				if (m_showMeshCoordinateAxis)
 				{
 					re::Batch meshCoordinateAxisBatch = 
@@ -448,6 +437,28 @@ namespace gr
 				}
 
 				++meshPrimItr;
+			}
+
+			// Mesh: Draw this 2nd so it's on top if the bounding box is the same as the MeshPrimitive
+			if (m_showAllMeshBoundingBoxes)
+			{
+				auto boundsItr = renderData.ObjectBegin<gr::Bounds::RenderData>();
+				auto boundsItrEnd = renderData.ObjectEnd<gr::Bounds::RenderData>();
+				while (boundsItr != boundsItrEnd)
+				{
+					if (gr::HasFeature(gr::RenderObjectFeature::IsMeshBounds, boundsItr.GetFeatureBits()))
+					{
+						gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
+
+						std::shared_ptr<re::ParameterBlock> boundsTransformPB =
+							gr::Transform::CreateInstancedTransformParams(boundsItr.GetTransformData());
+
+						re::Batch boundingBoxBatch = BuildBoundingBoxBatch(boundsRenderData, m_meshBoundsColor);
+						boundingBoxBatch.SetParameterBlock(boundsTransformPB);
+						m_debugStage->AddBatch(boundingBoxBatch);
+					}
+					++boundsItr;
+				}				
 			}
 		}
 

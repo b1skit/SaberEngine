@@ -26,7 +26,7 @@ namespace gr
 		void DestroyObject(gr::RenderDataID);
 
 		template<typename T>
-		void SetObjectData(gr::RenderDataID, T const*); 
+		void SetObjectData(gr::RenderDataID, T const*);
 
 		// To ensure this is thread safe, objects can only be accessed once all updates are complete (i.e. after all
 		// render commands have been executed)
@@ -41,6 +41,10 @@ namespace gr
 
 		template<typename T>
 		[[nodiscard]] uint32_t GetNumElementsOfType() const;
+
+		void SetFeatureBits(gr::RenderDataID, gr::FeatureBitmask); // Logical OR
+		
+		gr::FeatureBitmask GetFeatureBits(gr::RenderDataID) const;
 
 
 	public:
@@ -111,9 +115,12 @@ namespace gr
 
 			gr::TransformID m_transformID;
 
+			FeatureBitmask m_featureBits; // To assist in interpreting render data
+
 			uint32_t m_referenceCount;
 
-			RenderObjectMetadata(gr::TransformID transformID) : m_transformID(transformID), m_referenceCount(1) {}
+			RenderObjectMetadata(gr::TransformID transformID) 
+				: m_transformID(transformID), m_featureBits(0), m_referenceCount(1) {}
 			RenderObjectMetadata() = delete;
 		};
 
@@ -156,6 +163,8 @@ namespace gr
 
 			[[nodiscard]] gr::Transform::RenderData const& GetTransformData() const;
 			[[nodiscard]] bool TransformIsDirty() const;
+
+			[[nodiscard]] gr::FeatureBitmask GetFeatureBits() const;
 
 			ObjectIterator& operator++(); // Prefix increment
 			ObjectIterator operator++(int); // Postfix increment
@@ -210,6 +219,8 @@ namespace gr
 
 			gr::Transform::RenderData const& GetTransformData() const;
 			[[nodiscard]] bool TransformIsDirty() const;
+
+			[[nodiscard]] gr::FeatureBitmask GetFeatureBits() const;
 
 			IDIterator& operator++(); // Prefix increment
 			IDIterator operator++(int); // Postfix increment
@@ -781,6 +792,13 @@ namespace gr
 	}
 
 
+	template <typename... Ts>
+	gr::FeatureBitmask RenderDataManager::ObjectIterator<Ts...>::GetFeatureBits() const
+	{
+		return m_renderObjectMetadataItr->second.m_featureBits;
+	}
+
+
 	template <typename... Ts> template <typename T>
 	T const* RenderDataManager::ObjectIterator<Ts...>::GetPtrFromCurrentObjectDataIndicesItr() const
 	{
@@ -876,6 +894,15 @@ namespace gr
 			m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend());
 
 		return m_renderData->TransformIsDirty(m_currentObjectMetadata->second.m_transformID);
+	}
+
+
+	inline gr::FeatureBitmask RenderDataManager::IDIterator::GetFeatureBits() const
+	{
+		SEAssert("Invalid Get: Current m_currentObjectMetadata is past-the-end",
+			m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend());
+
+		return m_currentObjectMetadata->second.m_featureBits;
 	}
 
 
