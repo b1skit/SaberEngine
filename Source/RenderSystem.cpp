@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "ImGuiUtils.h"
 #include "ProfilingMarkers.h"
 #include "RenderSystem.h"
 
@@ -58,6 +59,11 @@ namespace re
 
 	void RenderSystem::ShowImGuiWindow()
 	{
-		m_graphicsSystemManager.ShowImGuiWindow();
+		if (ImGui::CollapsingHeader(std::format("Graphics System Manager##", util::PtrToID(this)).c_str()))
+		{
+			ImGui::Indent();
+			m_graphicsSystemManager.ShowImGuiWindow();
+			ImGui::Unindent();
+		}
 	}
 }

@@ -1,12 +1,24 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "BoundsRenderData.h"
 #include "Camera.h"
 #include "CastUtils.h"
+#include "LightRenderData.h"
+#include "Material_GLTF.h"
+#include "MeshPrimitive.h"
 #include "RenderDataManager.h"
-#include "TransformComponent.h"
+#include "ShadowMapRenderData.h"
+#include "TransformRenderData.h"
+
 
 
 namespace gr
 {
+	RenderDataManager::RenderDataManager()
+		: m_currentFrame(k_invalidDirtyFrameNum)
+	{
+	}
+
+
 	void RenderDataManager::Destroy()
 	{
 		// Catch illegal accesses during RenderData modification
@@ -14,6 +26,15 @@ namespace gr
 
 		SEAssert("An ID to data map is not empty: Was a render object not destroyed via a render command?",
 			m_IDToRenderObjectMetadata.empty() && m_transformIDToTransformMetadata.empty());
+	}
+
+
+	void RenderDataManager::BeginFrame(uint64_t currentFrame)
+	{
+		SEAssert("Invalid frame value", 
+			currentFrame != k_invalidDirtyFrameNum && 
+			(m_currentFrame <= currentFrame || m_currentFrame == k_invalidDirtyFrameNum /*First frame*/));
+		m_currentFrame = currentFrame;
 	}
 
 
@@ -96,7 +117,8 @@ namespace gr
 				transformID,
 				TransformMetadata{
 					.m_transformIdx = newTransformDataIdx,	// Transform index
-					.m_referenceCount = 1 });				// Initial reference count
+					.m_referenceCount = 1,					// Initial reference count
+					.m_dirtyFrame = m_currentFrame});
 		}
 		else
 		{
@@ -142,6 +164,8 @@ namespace gr
 			// Finally, erase the TransformID record:
 			m_transformIDToTransformMetadata.erase(transformID);
 		}
+
+		// Note: Unregistering a Transform does not dirty it as no data has changed
 	}
 
 
@@ -160,6 +184,8 @@ namespace gr
 		SEAssert("Invalid transform index", transformDataIdx < m_transformRenderData.size());
 
 		m_transformRenderData[transformDataIdx] = transformRenderData;
+
+		transformMetadataItr->second.m_dirtyFrame = m_currentFrame;
 	}
 
 
@@ -176,5 +202,166 @@ namespace gr
 		SEAssert("Invalid transform index", transformDataIdx < m_transformRenderData.size());
 
 		return m_transformRenderData[transformDataIdx];
+	}
+
+
+	gr::Transform::RenderData const& RenderDataManager::GetTransformDataFromRenderDataID(gr::RenderDataID renderDataID) const
+	{
+		// Note: This function is slower than direct access via the TransformID. If you have a TransformID, use it
+
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		SEAssert("Trying to find an object that does not exist", m_IDToRenderObjectMetadata.contains(renderDataID));
+
+		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
+		
+		return GetTransformData(renderObjectMetadata.m_transformID);
+	}
+
+
+	bool RenderDataManager::TransformIsDirty(gr::TransformID transformID) const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		auto transformMetadataItr = m_transformIDToTransformMetadata.find(transformID);
+
+		SEAssert("Trying to get the data for a Transform that does not exist. Are you sure you passed a TransformID?",
+			transformMetadataItr != m_transformIDToTransformMetadata.end());
+
+		SEAssert("Invalid dirty frame value",
+			transformMetadataItr->second.m_dirtyFrame != k_invalidDirtyFrameNum &&
+			transformMetadataItr->second.m_dirtyFrame <= m_currentFrame &&
+			m_currentFrame != k_invalidDirtyFrameNum);
+
+		return transformMetadataItr->second.m_dirtyFrame == m_currentFrame;		
+	}
+
+
+	bool RenderDataManager::TransformIsDirtyFromRenderDataID(gr::RenderDataID renderDataID) const
+	{
+		// Note: This function is slower than direct access via the TransformID. If you have a TransformID, use it
+
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		SEAssert("Trying to find an object that does not exist", m_IDToRenderObjectMetadata.contains(renderDataID));
+
+		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
+
+		return TransformIsDirty(renderObjectMetadata.m_transformID);
+	}
+
+
+	template<typename T>
+	void RenderDataManager::PopulateTypesImGuiHelper(std::vector<std::string>& names, char const* typeName) const
+	{
+		const uint8_t dataTypeIndex = GetDataIndexFromType<T>();
+		SEAssert("Index is OOB of the names array", dataTypeIndex < names.size());
+		names[dataTypeIndex] = typeName;
+	}
+
+
+	void RenderDataManager::ShowImGuiWindow() const
+	{
+		static std::vector<std::string> names;
+		static bool foundTypeNames = false;
+		if (!foundTypeNames)
+		{
+			foundTypeNames = true;
+
+			constexpr size_t k_numHardcodedNames = 8;
+			names.resize(std::max(m_dataVectors.size(), k_numHardcodedNames), "Unknown");
+
+			PopulateTypesImGuiHelper<gr::Bounds::RenderData>(names, "Bounds::RenderData");
+			PopulateTypesImGuiHelper<gr::Camera::RenderData>(names, "Camera::RenderData");
+			PopulateTypesImGuiHelper<gr::Light::RenderDataAmbientIBL>(names, "Light::RenderDataAmbientIBL");
+			PopulateTypesImGuiHelper<gr::Light::RenderDataDirectional>(names, "Light::RenderDataDirectional");
+			PopulateTypesImGuiHelper<gr::Light::RenderDataPoint>(names, "Light::RenderDataPoint");
+			PopulateTypesImGuiHelper<gr::Material::RenderData>(names, "Material::RenderData");
+			PopulateTypesImGuiHelper<gr::MeshPrimitive::RenderData>(names, "MeshPrimitive::RenderData");
+			PopulateTypesImGuiHelper<gr::ShadowMap::RenderData>(names, "ShadowMap::RenderData");
+		}
+		
+
+		if (ImGui::CollapsingHeader("Render data manager", ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
+
+			ImGui::Text(std::format("Current frame: {}", m_currentFrame).c_str());
+			ImGui::Text(std::format("Total data vectors: {}", m_dataVectors.size()).c_str());
+
+			const ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable;
+
+			const int numDataTypes = static_cast<int>(m_dataVectors.size());
+			const int numCols = numDataTypes + 2;
+			if (ImGui::BeginTable("m_IDToRenderObjectMetadata", numCols, flags))
+			{
+				// Headers:				
+				ImGui::TableSetupColumn("RenderObjectID [ref. count]");
+				ImGui::TableSetupColumn("TransformID [ref.count] (dirty frame)");
+				for (size_t i = 0; i < numDataTypes; i++)
+				{
+					/*ImGui::TableSetupColumn(std::format("Type {} (dirty frame)", i).c_str());*/
+					ImGui::TableSetupColumn(std::format("{} (dirty frame)", names[i]).c_str());
+					
+				}
+				ImGui::TableHeadersRow();
+
+
+				for (auto const& entry : m_IDToRenderObjectMetadata)
+				{
+					ImGui::TableNextRow();
+					ImGui::TableNextColumn();
+					
+					// RenderDataID [Ref. count]
+					ImGui::Text(std::format("{} [{}]", entry.first, entry.second.m_referenceCount).c_str());
+					
+					ImGui::TableNextColumn();
+
+					// TransformID [Ref. count] (dirty frame)
+					ImGui::Text(std::format("{} [{}]({})", 
+						entry.second.m_transformID, 
+						m_transformIDToTransformMetadata.at(entry.second.m_transformID).m_referenceCount,
+						m_transformIDToTransformMetadata.at(entry.second.m_transformID).m_dirtyFrame).c_str());
+
+					for (size_t i = 0; i < numDataTypes; i++)
+					{
+						ImGui::TableNextColumn();
+
+						std::string cellText;
+
+						// ObjectTypeToDataIndexTable
+						if (i >= entry.second.m_objectTypeToDataIndexTable.size() ||
+							entry.second.m_objectTypeToDataIndexTable[i] == k_invalidDataIdx)
+						{
+							cellText = "-";
+						}
+						else
+						{
+							cellText = std::format("{}", entry.second.m_objectTypeToDataIndexTable[i]).c_str();
+						}
+
+						cellText += " ";
+
+						// LastDirtyFrameTable
+						if (i >= entry.second.m_dirtyFrameTable.size() ||
+							entry.second.m_dirtyFrameTable[i] == k_invalidDirtyFrameNum)
+						{
+							cellText += "(-)";
+						}
+						else
+						{
+							cellText += std::format("({})", entry.second.m_dirtyFrameTable[i]).c_str();
+						}
+
+						ImGui::Text(cellText.c_str());
+					}
+				}
+
+				ImGui::EndTable();
+			}
+
+
+			ImGui::Unindent();
+		}
 	}
 }

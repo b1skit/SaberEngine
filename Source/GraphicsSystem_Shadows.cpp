@@ -93,8 +93,7 @@ namespace gr
 			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)",
 				m_shadowRenderDataIDs[gr::Light::Type::Directional].size() == 1);
 
-			auto const& directionalItr = renderData.IDBegin<gr::ShadowMap::RenderData, gr::Camera::RenderData>(
-				m_shadowRenderDataIDs[gr::Light::Type::Directional]);
+			auto const& directionalItr = renderData.IDBegin(m_shadowRenderDataIDs[gr::Light::Type::Directional]);
 			
 			gr::Camera::RenderData const& camData = directionalItr.Get<gr::Camera::RenderData>();
 			
@@ -169,10 +168,8 @@ namespace gr
 
 		m_pointLightStageData.reserve(numPointLights);
 		
-		auto pointItr = renderData.IDBegin<gr::ShadowMap::RenderData, gr::Camera::RenderData>(
-			m_shadowRenderDataIDs[gr::Light::Type::Point]);
-		auto const& pointItrEnd = renderData.IDEnd<gr::ShadowMap::RenderData, gr::Camera::RenderData>(
-			m_shadowRenderDataIDs[gr::Light::Type::Point]);
+		auto pointItr = renderData.IDBegin(m_shadowRenderDataIDs[gr::Light::Type::Point]);
+		auto const& pointItrEnd = renderData.IDEnd(m_shadowRenderDataIDs[gr::Light::Type::Point]);
 		while (pointItr != pointItrEnd)
 		{
 			re::RenderStage::GraphicsStageParams gfxStageParams;
@@ -269,44 +266,38 @@ namespace gr
 	{
 		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
 
-		// ECS_CONVERSION: TODO: Detect if the directional shadow has changed (e.g. render data says it's dirty)
-		// and upate the PB data.
-		// For now, we just force-update it every frame...
 		if (m_hasDirectionalLight)
 		{
 			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)",
 				m_shadowRenderDataIDs[gr::Light::Type::Directional].size() == 1);
 
-			auto directionalItr = 
-				renderData.IDBegin<gr::Camera::RenderData>(m_shadowRenderDataIDs[gr::Light::Type::Directional]);
-			auto const& directionalItrEnd =
-				renderData.IDEnd<gr::Camera::RenderData>(m_shadowRenderDataIDs[gr::Light::Type::Directional]);
+			auto directionalItr = renderData.IDBegin(m_shadowRenderDataIDs[gr::Light::Type::Directional]);
+			auto const& directionalItrEnd = renderData.IDEnd(m_shadowRenderDataIDs[gr::Light::Type::Directional]);
 			while (directionalItr != directionalItrEnd)
 			{
-				gr::Camera::RenderData const& shadowCamData = directionalItr.Get<gr::Camera::RenderData>();
-
-				m_directionalShadowCamPB->Commit(shadowCamData.m_cameraParams);
-
+				if (directionalItr.IsDirty<gr::Camera::RenderData>())
+				{
+					gr::Camera::RenderData const& shadowCamData = directionalItr.Get<gr::Camera::RenderData>();
+					m_directionalShadowCamPB->Commit(shadowCamData.m_cameraParams);
+				}
 				++directionalItr;
 			}
 		}
 
-		auto pointItr =
-			renderData.IDBegin<gr::ShadowMap::RenderData>(m_shadowRenderDataIDs[gr::Light::Type::Point]);
-		auto const& pointItrEnd =
-			renderData.IDEnd<gr::ShadowMap::RenderData>(m_shadowRenderDataIDs[gr::Light::Type::Point]);
+		auto pointItr = renderData.IDBegin(m_shadowRenderDataIDs[gr::Light::Type::Point]);
+		auto const& pointItrEnd = renderData.IDEnd(m_shadowRenderDataIDs[gr::Light::Type::Point]);
 		while (pointItr != pointItrEnd)
 		{
-			gr::ShadowMap::RenderData const& shadowData = pointItr.Get<gr::ShadowMap::RenderData>();
-			gr::Camera::RenderData const& shadowCamData = pointItr.Get<gr::Camera::RenderData>();
-			gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
+			if (pointItr.IsDirty<gr::Camera::RenderData>() || pointItr.TransformIsDirty())
+			{
+				gr::Camera::RenderData const& shadowCamData = pointItr.Get<gr::Camera::RenderData>();
+				gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 
-			// ECS_CONVERSION TODO: Need to maintain a dirty flag here: We're recomputing the CubemapShadowRenderParams
-			// every frame -> 6x matrices each!!!!!!!!!!!!!!!!!!
-			CubemapShadowRenderParams const& cubemapShadowParams = 
-				GetCubemapShadowRenderParamsData(shadowCamData, transformData);
+				CubemapShadowRenderParams const& cubemapShadowParams =
+					GetCubemapShadowRenderParamsData(shadowCamData, transformData);
 
-			m_pointLightStageData.at(pointItr.GetRenderDataID()).m_cubemapShadowParamBlock->Commit(cubemapShadowParams);
+				m_pointLightStageData.at(pointItr.GetRenderDataID()).m_cubemapShadowParamBlock->Commit(cubemapShadowParams);
+			}
 
 			++pointItr;
 		}

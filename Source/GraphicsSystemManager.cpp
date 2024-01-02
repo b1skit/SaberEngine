@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem.h"
-#include "CommandQueue.h"
+#include "ImGuiUtils.h"
 #include "RenderSystem.h"
 #include "ParameterBlock.h"
 
@@ -81,6 +81,13 @@ namespace gr
 
 	void GraphicsSystemManager::ShowImGuiWindow()
 	{
+		if (ImGui::CollapsingHeader(std::format("Render data##", util::PtrToID(this)).c_str()))
+		{
+			ImGui::Indent();
+			m_renderData.ShowImGuiWindow();
+			ImGui::Unindent();
+		}
+
 		for (std::shared_ptr<gr::GraphicsSystem> const& gs : m_graphicsSystems)
 		{
 			if (ImGui::CollapsingHeader(std::format("{}##{}", gs->GetName(), gs->GetUniqueID()).c_str()))

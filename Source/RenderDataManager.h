@@ -7,10 +7,6 @@
 #include "TransformComponent.h"
 
 
-// ECS_CONVERSION TODO: Add a way to track dirty objects
-// -> e.g. Orthographic shadows are recomputed from the scene bounds, but these are unlikely to change frame-to-frame
-// -> e.g. shadow cameras computed from Transforms, but lights are probably not moving frame-to-frame
-
 namespace gr
 {
 	// Render-thread-side scene data. Data is set via the render command queue (on a single thread), and graphics
@@ -18,10 +14,12 @@ namespace gr
 	class RenderDataManager
 	{
 	public:
-		RenderDataManager() = default;
+		RenderDataManager();
 		~RenderDataManager() = default;
 
 		void Destroy();
+
+		void BeginFrame(uint64_t currentFrame);
 
 		// Render data interface:
 		void RegisterObject(gr::RenderDataID, gr::TransformID);
@@ -36,10 +34,20 @@ namespace gr
 		[[nodiscard]] T const& GetObjectData(gr::RenderDataID) const;
 
 		template<typename T>
+		[[nodiscard]] bool IsDirty(gr::RenderDataID) const;
+
+		template<typename T>
 		void DestroyObjectData(gr::RenderDataID);
 
 		template<typename T>
-		uint32_t GetNumElementsOfType() const;
+		[[nodiscard]] uint32_t GetNumElementsOfType() const;
+
+
+	public:
+		void ShowImGuiWindow() const;
+	private:
+		template<typename T>
+		void PopulateTypesImGuiHelper(std::vector<std::string>&, char const*) const;
 
 
 	private:
@@ -52,7 +60,12 @@ namespace gr
 
 	public:
 		void SetTransformData(gr::TransformID, gr::Transform::RenderData const&);
+		
 		[[nodiscard]] gr::Transform::RenderData const& GetTransformData(gr::TransformID) const;
+		[[nodiscard]] gr::Transform::RenderData const& GetTransformDataFromRenderDataID(gr::RenderDataID) const; // Slower than using TransformID
+		
+		[[nodiscard]] bool TransformIsDirty(gr::TransformID) const; // Was the Transform updated in the current frame?
+		[[nodiscard]] bool TransformIsDirtyFromRenderDataID(gr::RenderDataID) const; // Slower than using TransformID
 
 
 	public:
@@ -87,11 +100,17 @@ namespace gr
 
 	private:
 		typedef std::vector<uint32_t> ObjectTypeToDataIndexTable; // [data type index] == object index
+		
+		typedef std::vector<uint64_t> LastDirtyFrameTable; // [data type index] == last dirty frame
+		static constexpr uint64_t k_invalidDirtyFrameNum = std::numeric_limits<uint64_t>::max();
 
 		struct RenderObjectMetadata
 		{
 			ObjectTypeToDataIndexTable m_objectTypeToDataIndexTable;
+			LastDirtyFrameTable m_dirtyFrameTable;
+
 			gr::TransformID m_transformID;
+
 			uint32_t m_referenceCount;
 
 			RenderObjectMetadata(gr::TransformID transformID) : m_transformID(transformID), m_referenceCount(1) {}
@@ -102,6 +121,8 @@ namespace gr
 		{
 			uint32_t m_transformIdx;
 			uint32_t m_referenceCount;
+
+			uint64_t m_dirtyFrame;
 		};
 		
 
@@ -120,16 +141,21 @@ namespace gr
 				gr::RenderDataManager const* renderData,
 				std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator renderObjectMetadataBeginItr,
 				std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator const renderObjectMetadataEndItr,
-				std::tuple<Ts const*...> endPtrs);
+				std::tuple<Ts const*...> endPtrs,
+				uint64_t currentFrame);
 
 
 		public:
 			template<typename T>
 			[[nodiscard]] T const& Get() const;
 
+			template<typename T>
+			[[nodiscard]] bool IsDirty() const;
+
 			gr::RenderDataID GetRenderDataID() const;
 
-			gr::Transform::RenderData const& GetTransformData() const;
+			[[nodiscard]] gr::Transform::RenderData const& GetTransformData() const;
+			[[nodiscard]] bool TransformIsDirty() const;
 
 			ObjectIterator& operator++(); // Prefix increment
 			ObjectIterator operator++(int); // Postfix increment
@@ -151,6 +177,8 @@ namespace gr
 			gr::RenderDataManager const* m_renderData;
 			std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator m_renderObjectMetadataItr;
 			std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator const m_renderObjectMetadataEndItr;
+
+			uint64_t m_currentFrame;
 		};
 
 
@@ -159,8 +187,7 @@ namespace gr
 		// similarly to calling RenderDataManager::GetObjectData with each RenderDataID in the supplied vector, except
 		// the results of the RenderDataID -> RenderObjectMetadata lookup are cached when the iterator is incremented.
 		// RenderDataManager iterators are not thread safe.
-		template <typename... Ts>
-		class IDIterator 
+		class IDIterator
 		{			
 		protected:
 			friend class gr::RenderDataManager;
@@ -168,16 +195,21 @@ namespace gr
 				gr::RenderDataManager const*, 
 				std::vector<gr::RenderDataID>::const_iterator,
 				std::vector<gr::RenderDataID>::const_iterator,
-				std::unordered_map<gr::RenderDataID, RenderObjectMetadata> const*);
+				std::unordered_map<gr::RenderDataID, RenderObjectMetadata> const*,
+				uint64_t currentFrame);
 
 
 		public:
 			template<typename T>
 			[[nodiscard]] T const& Get() const;
 
+			template<typename T>
+			[[nodiscard]] bool IsDirty() const;
+
 			gr::RenderDataID GetRenderDataID() const;
 
 			gr::Transform::RenderData const& GetTransformData() const;
+			[[nodiscard]] bool TransformIsDirty() const;
 
 			IDIterator& operator++(); // Prefix increment
 			IDIterator operator++(int); // Postfix increment
@@ -194,6 +226,8 @@ namespace gr
 
 			std::unordered_map<gr::RenderDataID, RenderObjectMetadata> const* m_IDToRenderObjectMetadata;
 			std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator m_currentObjectMetadata;
+
+			uint64_t m_currentFrame;
 		};
 
 
@@ -210,11 +244,9 @@ namespace gr
 		template <typename... Ts>
 		ObjectIterator<Ts...> ObjectEnd() const;
 
-		template <typename... Ts>
-		IDIterator<Ts...> IDBegin(std::vector<gr::RenderDataID> const&) const;
+		IDIterator IDBegin(std::vector<gr::RenderDataID> const&) const;
 		
-		template <typename... Ts>
-		IDIterator<Ts...> IDEnd(std::vector<gr::RenderDataID> const&) const;
+		IDIterator IDEnd(std::vector<gr::RenderDataID> const&) const;
 
 
 	private:
@@ -234,6 +266,8 @@ namespace gr
 	private:
 		static constexpr uint8_t k_invalidDataTypeIdx = std::numeric_limits<uint8_t>::max();
 		static constexpr uint32_t k_invalidDataIdx = std::numeric_limits<uint32_t>::max();
+
+		uint64_t m_currentFrame;
 
 		// Each type of render data is tightly packed into an array maintained in m_dataVectors
 		std::map<size_t, uint8_t> m_typeInfoHashToDataVectorIdx;
@@ -270,12 +304,16 @@ namespace gr
 		SEAssert("Invalid object ID", m_IDToRenderObjectMetadata.contains(renderDataID));
 		RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 
-		// If the data index table doesn't contain enough room for the data type index, increase its size and pad with
-		// the invalid flag
+		// If our tracking tables don't have enough room for the data type index, increase their size and pad with 
+		// invalid flags
 		if (s_dataTypeIndex >= renderObjectMetadata.m_objectTypeToDataIndexTable.size())
 		{
 			renderObjectMetadata.m_objectTypeToDataIndexTable.resize(s_dataTypeIndex + 1, k_invalidDataIdx);
+			renderObjectMetadata.m_dirtyFrameTable.resize(s_dataTypeIndex + 1, k_invalidDirtyFrameNum);
 		}
+
+		// Update the dirty frame number:
+		renderObjectMetadata.m_dirtyFrameTable[s_dataTypeIndex] = m_currentFrame;
 
 		// Get the index of the data in data vector for its type
 		const uint32_t dataIndex = renderObjectMetadata.m_objectTypeToDataIndexTable[s_dataTypeIndex];
@@ -314,6 +352,31 @@ namespace gr
 		SEAssert("Object index is OOB", dataIdx < dataVector.size());
 
 		return dataVector[dataIdx];
+	}
+
+
+	template<typename T>
+	bool RenderDataManager::IsDirty(gr::RenderDataID renderDataID) const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		SEAssert("renderDataID is not registered", m_IDToRenderObjectMetadata.contains(renderDataID));
+
+		const uint8_t dataTypeIndex = GetDataIndexFromType<T>();
+		SEAssert("Invalid data type index. This suggests we're accessing data of a specific type using an index, when "
+			"no data of that type exists",
+			dataTypeIndex != k_invalidDataTypeIdx && dataTypeIndex < m_dataVectors.size());
+
+		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
+		SEAssert("Metadata dirty frame table does not have an entry for the current data type",
+			dataTypeIndex < renderObjectMetadata.m_dirtyFrameTable.size());
+		
+		SEAssert("Invalid dirty frame value",
+			renderObjectMetadata.m_dirtyFrameTable[dataTypeIndex] != k_invalidDirtyFrameNum &&
+			renderObjectMetadata.m_dirtyFrameTable[dataTypeIndex] <= m_currentFrame &&
+			m_currentFrame != k_invalidDirtyFrameNum);
+
+		return renderObjectMetadata.m_dirtyFrameTable[dataTypeIndex] == m_currentFrame;
 	}
 
 
@@ -394,6 +457,7 @@ namespace gr
 
 		// Finally, remove the index in the object's data index table:
 		renderObjectMetadata.m_objectTypeToDataIndexTable[dataTypeIndex] = k_invalidDataIdx;
+		renderObjectMetadata.m_dirtyFrameTable[dataTypeIndex] = m_currentFrame; // Destroying ~= dirtying
 	}
 
 
@@ -501,7 +565,8 @@ namespace gr
 			this,
 			m_IDToRenderObjectMetadata.begin(),
 			m_IDToRenderObjectMetadata.end(),
-			std::make_tuple(GetEndPtr<Ts>()...));
+			std::make_tuple(GetEndPtr<Ts>()...),
+			m_currentFrame);
 	}
 
 
@@ -517,34 +582,35 @@ namespace gr
 			nullptr,
 			objectDataIndicesEndItr,
 			objectDataIndicesEndItr,
-			std::make_tuple(GetEndPtr<Ts>()...));
+			std::make_tuple(GetEndPtr<Ts>()...),
+			m_currentFrame);
 	}
 
 
-	template <typename... Ts>
-	RenderDataManager::IDIterator<Ts...> RenderDataManager::IDBegin(
+	inline RenderDataManager::IDIterator RenderDataManager::IDBegin(
 		std::vector<gr::RenderDataID> const& renderDataIDs) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
-		return IDIterator<Ts...>(
+		return IDIterator(
 			this,
 			renderDataIDs.cbegin(),
 			renderDataIDs.cend(),
-			&m_IDToRenderObjectMetadata);
+			&m_IDToRenderObjectMetadata,
+			m_currentFrame);
 	}
 
-	template <typename... Ts>
-	RenderDataManager::IDIterator<Ts...> RenderDataManager::IDEnd(
+	inline RenderDataManager::IDIterator RenderDataManager::IDEnd(
 		std::vector<gr::RenderDataID> const& renderDataIDs) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
-		return IDIterator<Ts...>(
+		return IDIterator(
 			this,
 			renderDataIDs.cend(),
 			renderDataIDs.cend(),
-			&m_IDToRenderObjectMetadata);
+			&m_IDToRenderObjectMetadata,
+			m_currentFrame);
 	}
 
 
@@ -580,21 +646,23 @@ namespace gr
 		gr::RenderDataManager const* renderData,
 		std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator objectIDToRenderObjectMetadataBeginItr,
 		std::unordered_map<gr::RenderDataID, RenderObjectMetadata>::const_iterator const objectIDToRenderObjectMetadataEndItr,
-		std::tuple<Ts const*...> endPtrs)
+		std::tuple<Ts const*...> endPtrs,
+		uint64_t currentFrame)
 		: m_endPtrs(endPtrs)
 		, m_renderData(renderData)
 		, m_renderObjectMetadataItr(objectIDToRenderObjectMetadataBeginItr)
 		, m_renderObjectMetadataEndItr(objectIDToRenderObjectMetadataEndItr)
+		, m_currentFrame(currentFrame)
 	{
 		// Find our first valid set of starting pointers:
 		bool hasValidPtrs = false;
 		while (m_renderObjectMetadataItr != m_renderObjectMetadataEndItr)
 		{
-			// We have a valid set of gr::RenderDataID data indices. Make a tuple from them
+			// We have a set of gr::RenderDataID data indices. Try and make a tuple of valid pointers from all of them
 			m_ptrs = std::make_tuple(GetPtrFromCurrentObjectDataIndicesItr<Ts>()...);
 
-			// If the current object doesn't have a data of the given type (i.e. any of the tuple elements rae null), we
-			// want to skip over it to the next object:
+			// If the current RenderDataID's object doesn't contain all data elements of the given template type (i.e.
+			// any of the tuple elements are null), skip to the next object:
 			bool tuplePtrsValid = true;
 			std::apply([&](auto&&... ptr) { ((tuplePtrsValid = ptr ? tuplePtrsValid : false), ...); }, m_ptrs);
 			if (tuplePtrsValid)
@@ -677,6 +745,20 @@ namespace gr
 		return *std::get<T const*>(m_ptrs);
 	}
 
+
+	template<typename... Ts> template<typename T>
+	[[nodiscard]] bool RenderDataManager::ObjectIterator<Ts...>::IsDirty() const
+	{
+		const uint8_t dataTypeIndex = m_renderData->GetDataIndexFromType<T>();
+
+		SEAssert("Invalid dirty frame value",
+			m_renderObjectMetadataItr->second.m_dirtyFrameTable[dataTypeIndex] != k_invalidDirtyFrameNum &&
+			m_renderObjectMetadataItr->second.m_dirtyFrameTable[dataTypeIndex] <= m_currentFrame &&
+			m_currentFrame != k_invalidDirtyFrameNum);
+
+		return m_renderObjectMetadataItr->second.m_dirtyFrameTable[dataTypeIndex] == m_currentFrame;
+	}
+
 	
 	template<typename... Ts>
 	gr::RenderDataID RenderDataManager::ObjectIterator<Ts...>::GetRenderDataID() const
@@ -689,6 +771,13 @@ namespace gr
 	gr::Transform::RenderData const& RenderDataManager::ObjectIterator<Ts...>::GetTransformData() const
 	{
 		return m_renderData->GetTransformData(m_renderObjectMetadataItr->second.m_transformID);
+	}
+
+
+	template <typename... Ts>
+	bool RenderDataManager::ObjectIterator<Ts...>::TransformIsDirty() const
+	{
+		return m_renderData->TransformIsDirty(m_renderObjectMetadataItr->second.m_transformID);
 	}
 
 
@@ -716,16 +805,17 @@ namespace gr
 	// ---
 
 
-	template <typename... Ts>
-	RenderDataManager::IDIterator<Ts...>::IDIterator(
+	inline RenderDataManager::IDIterator::IDIterator(
 		gr::RenderDataManager const* renderData,
 		std::vector<gr::RenderDataID>::const_iterator renderDataIDsBegin,
 		std::vector<gr::RenderDataID>::const_iterator renderDataIDsEnd,
-		std::unordered_map<gr::RenderDataID, RenderObjectMetadata> const* IDToRenderObjectMetadata)
+		std::unordered_map<gr::RenderDataID, RenderObjectMetadata> const* IDToRenderObjectMetadata,
+		uint64_t currentFrame)
 		: m_renderData(renderData)
 		, m_idsIterator(renderDataIDsBegin)
 		, m_idsEndIterator(renderDataIDsEnd)
 		, m_IDToRenderObjectMetadata(IDToRenderObjectMetadata)
+		, m_currentFrame(currentFrame)
 	{
 		if (m_idsIterator != m_idsEndIterator)
 		{
@@ -738,8 +828,8 @@ namespace gr
 	}
 
 
-	template<typename... Ts> template<typename T>
-	T const& RenderDataManager::IDIterator<Ts...>::Get() const
+	template<typename T>
+	inline T const& RenderDataManager::IDIterator::Get() const
 	{
 		SEAssert("Invalid Get: Current m_currentObjectMetadata is past-the-end", 
 			m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend());
@@ -748,16 +838,31 @@ namespace gr
 	}
 
 
-	template <typename... Ts>
-	gr::RenderDataID RenderDataManager::IDIterator<Ts...>::GetRenderDataID() const
+	template<typename T>
+	bool RenderDataManager::IDIterator::IsDirty() const
+	{
+		SEAssert("Invalid Get: Current m_currentObjectMetadata is past-the-end",
+			m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend());
+
+		const uint8_t dataTypeIndex = m_renderData->GetDataIndexFromType<T>();
+
+		SEAssert("Invalid dirty frame value",
+			m_currentObjectMetadata->second.m_dirtyFrameTable[dataTypeIndex] != k_invalidDirtyFrameNum &&
+			m_currentObjectMetadata->second.m_dirtyFrameTable[dataTypeIndex] <= m_currentFrame &&
+			m_currentFrame != k_invalidDirtyFrameNum);
+
+		return m_currentObjectMetadata->second.m_dirtyFrameTable[dataTypeIndex] == m_currentFrame;
+	}
+
+
+	inline gr::RenderDataID RenderDataManager::IDIterator::GetRenderDataID() const
 	{
 		SEAssert("Invalid Get: Current m_idsIterator is past-the-end", m_idsIterator != m_idsEndIterator);
 		return *m_idsIterator;
 	}
 
 
-	template <typename... Ts>
-	gr::Transform::RenderData const& RenderDataManager::IDIterator<Ts...>::GetTransformData() const
+	inline gr::Transform::RenderData const& RenderDataManager::IDIterator::GetTransformData() const
 	{
 		SEAssert("Invalid Get: Current m_currentObjectMetadata is past-the-end",
 			m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend());
@@ -765,8 +870,16 @@ namespace gr
 	}
 
 
-	template <typename... Ts>
-	RenderDataManager::IDIterator<Ts...>& RenderDataManager::IDIterator<Ts...>::operator++() // Prefix increment
+	inline bool RenderDataManager::IDIterator::TransformIsDirty() const
+	{
+		SEAssert("Invalid Get: Current m_currentObjectMetadata is past-the-end",
+			m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend());
+
+		return m_renderData->TransformIsDirty(m_currentObjectMetadata->second.m_transformID);
+	}
+
+
+	inline RenderDataManager::IDIterator& RenderDataManager::IDIterator::operator++() // Prefix increment
 	{
 		++m_idsIterator;
 		if (m_idsIterator != m_idsEndIterator)
@@ -782,8 +895,7 @@ namespace gr
 	}
 
 
-	template <typename... Ts>
-	RenderDataManager::IDIterator<Ts...> RenderDataManager::IDIterator<Ts...>::operator++(int) // Postfix increment
+	inline RenderDataManager::IDIterator RenderDataManager::IDIterator::operator++(int) // Postfix increment
 	{
 		IDIterator current = *this;
 		++(*this);

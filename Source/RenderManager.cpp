@@ -152,6 +152,7 @@ namespace re
 		// Initialize each render system and their graphics systems:
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
+			renderSystem->GetGraphicsSystemManager().GetRenderDataForModification().BeginFrame(m_renderFrameNum);
 			renderSystem->ExecuteInitializePipeline();
 		}
 
@@ -195,6 +196,12 @@ namespace re
 		HandleEvents();
 
 		re::Context::Get()->GetParameterBlockAllocator().BeginFrame(frameNum);
+		
+		// Get the RenderDataManager(s) ready for the new frame
+		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
+		{
+			renderSystem->GetGraphicsSystemManager().GetRenderDataForModification().BeginFrame(m_renderFrameNum);
+		}
 
 		m_renderCommandManager.Execute(); // Process render commands. Must happen 1st to ensure RenderData is up to date
 
@@ -292,6 +299,7 @@ namespace re
 
 		// NOTE: OpenGL objects must be destroyed on the render thread, so we trigger them here
 		// ECS_CONVERSION: Remove the SceneManager include and trigger this via a render command
+		// -> API objects should register themselves for (potentially deferred) destruction via a render command (ala create)
 		fr::SceneManager::GetSceneData()->Destroy();
 		re::Sampler::DestroySamplerLibrary();
 		
@@ -495,7 +503,7 @@ namespace re
 		ImGui::Begin(k_panelTitle, show);
 
 		// Render systems:
-		if (ImGui::CollapsingHeader("Render Systems:", ImGuiTreeNodeFlags_None))
+		if (ImGui::CollapsingHeader("Render Systems", ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 			for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)

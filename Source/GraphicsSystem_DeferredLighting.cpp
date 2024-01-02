@@ -263,7 +263,7 @@ namespace gr
 		for (uint8_t i = 0; i < gr::Light::Type_Count; i++)
 		{
 			SEAssert("Not all lights were unregistered", m_lightRenderDataIDs[i].empty());
-		}		
+		}
 #endif
 	}
 
@@ -275,8 +275,7 @@ namespace gr
 
 		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
 
-		auto ambientItr = renderData.IDBegin<gr::Light::RenderDataAmbientIBL>(
-			m_lightRenderDataIDs[gr::Light::AmbientIBL]);
+		auto ambientItr = renderData.IDBegin(m_lightRenderDataIDs[gr::Light::AmbientIBL]);
 
 		gr::Light::RenderDataAmbientIBL const& ambientRenderData = 
 			ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
@@ -620,8 +619,7 @@ namespace gr
 
 		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
 
-		auto ambientItr = renderData.IDBegin<gr::Light::RenderDataAmbientIBL>(
-			m_lightRenderDataIDs[gr::Light::AmbientIBL]);
+		auto ambientItr = renderData.IDBegin(m_lightRenderDataIDs[gr::Light::AmbientIBL]);
 		
 		gr::Light::RenderDataAmbientIBL const& ambientRenderData = 
 			ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
@@ -779,16 +777,15 @@ namespace gr
 			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)",
 				m_lightRenderDataIDs[gr::Light::Type::Directional].size() == 1);
 
-			auto directionalItr = renderData.IDBegin<gr::Light::RenderDataDirectional>(
-				m_lightRenderDataIDs[gr::Light::Directional]);
+			auto directionalItr = renderData.IDBegin(m_lightRenderDataIDs[gr::Light::Directional]);
 
-			gr::Light::RenderDataDirectional const& directionalLightData = 
+			gr::Light::RenderDataDirectional const& directionalLightData =
 				directionalItr.Get<gr::Light::RenderDataDirectional>();
 
 			// Directional shadow map:
 			if (directionalLightData.m_hasShadow)
 			{
-				re::Texture const* directionalShadow = 
+				re::Texture const* directionalShadow =
 					m_shadowGS->GetShadowMap(gr::Light::Type::Directional, directionalLightData.m_renderDataID);
 
 				// Set the key light shadow map:
@@ -844,37 +841,36 @@ namespace gr
 
 		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
 
-		auto ambientItr = renderData.IDBegin<gr::Light::RenderDataAmbientIBL>(
-			m_lightRenderDataIDs[gr::Light::AmbientIBL]);
+		if (renderData.IsDirty<gr::Light::RenderDataAmbientIBL>(m_lightRenderDataIDs[gr::Light::AmbientIBL][0]))
+		{
+			gr::Light::RenderDataAmbientIBL const& ambientRenderData = 
+				renderData.GetObjectData<gr::Light::RenderDataAmbientIBL>(m_lightRenderDataIDs[gr::Light::AmbientIBL][0]);
 
-		gr::Light::RenderDataAmbientIBL const& ambientRenderData = 
-			ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
+			const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
+				totalPMREMMipLevels,
+				static_cast<float>(ambientRenderData.m_diffuseEnabled),
+				static_cast<float>(ambientRenderData.m_specularEnabled));
 
-		const AmbientLightParams ambientLightParams = GetAmbientLightParamsData(
-			totalPMREMMipLevels,
-			static_cast<float>(ambientRenderData.m_diffuseEnabled),
-			static_cast<float>(ambientRenderData.m_specularEnabled));
-
-		m_ambientParams->Commit(ambientLightParams);
+			m_ambientParams->Commit(ambientLightParams);
+		}		
 	}
 
 
 	void DeferredLightingGraphicsSystem::CreateBatches()
 	{
+		// TODO: We should cache our batches, and only update them (or their attached ParameterBlocks) when their render
+		// data changes
+
 		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
 
 		// Ambient stage batches:
 		SEAssert("We currently expect render data for exactly 1 ambient light to exist",
 			m_lightRenderDataIDs[gr::Light::AmbientIBL].size() == 1);
 
-		auto ambientItr = renderData.IDBegin<gr::Light::RenderDataAmbientIBL, gr::MeshPrimitive::RenderData>(
-				m_lightRenderDataIDs[gr::Light::AmbientIBL]);
+		auto ambientItr = renderData.IDBegin(m_lightRenderDataIDs[gr::Light::AmbientIBL]);
 
-		gr::Light::RenderDataAmbientIBL const& ambientRenderData =
-			ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
-
-		gr::MeshPrimitive::RenderData const& ambientMeshPrimData = 
-			ambientItr.Get<gr::MeshPrimitive::RenderData>();
+		gr::Light::RenderDataAmbientIBL const& ambientRenderData = ambientItr.Get<gr::Light::RenderDataAmbientIBL>();
+		gr::MeshPrimitive::RenderData const& ambientMeshPrimData = ambientItr.Get<gr::MeshPrimitive::RenderData>();
 
 		const re::Batch ambientFullscreenQuadBatch = 
 			re::Batch(re::Batch::Lifetime::SingleFrame, ambientMeshPrimData, nullptr);
@@ -888,13 +884,9 @@ namespace gr
 			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)",
 				m_lightRenderDataIDs[gr::Light::Type::Directional].size() == 1);
 
-			auto directionalItr = renderData.IDBegin<
-				gr::Light::RenderDataDirectional, gr::MeshPrimitive::RenderData>(
-					m_lightRenderDataIDs[gr::Light::Directional]);
+			auto directionalItr = renderData.IDBegin(m_lightRenderDataIDs[gr::Light::Directional]);
 
-			auto const& directionalItrEnd =
-				renderData.IDEnd<gr::Light::RenderDataDirectional, gr::MeshPrimitive::RenderData>(
-					m_lightRenderDataIDs[gr::Light::Directional]);
+			auto const& directionalItrEnd = renderData.IDEnd(m_lightRenderDataIDs[gr::Light::Directional]);
 
 			while (directionalItr != directionalItrEnd)
 			{
@@ -938,22 +930,12 @@ namespace gr
 		}
 
 
-		// Pointlight stage batches:
+		// Point light stage batches:
 		const bool hasPointLights = !m_lightRenderDataIDs[fr::Light::Type::Point].empty();
 		if (hasPointLights)
 		{
-			auto pointItr = renderData.IDBegin<
-					gr::Light::RenderDataPoint,
-					gr::MeshPrimitive::RenderData,
-					gr::ShadowMap::RenderData,
-					gr::Camera::RenderData>(m_lightRenderDataIDs[gr::Light::Point]);
-
-			auto const& pointItrEnd = renderData.IDEnd<
-					gr::Light::RenderDataPoint,
-					gr::MeshPrimitive::RenderData,
-					gr::ShadowMap::RenderData,
-					gr::Camera::RenderData>(m_lightRenderDataIDs[gr::Light::Point]);
-
+			auto pointItr = renderData.IDBegin(m_lightRenderDataIDs[gr::Light::Point]);
+			auto const& pointItrEnd = renderData.IDEnd(m_lightRenderDataIDs[gr::Light::Point]);
 			while (pointItr != pointItrEnd)
 			{				
 				gr::MeshPrimitive::RenderData const& meshData = pointItr.Get<gr::MeshPrimitive::RenderData>();
