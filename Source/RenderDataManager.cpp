@@ -10,7 +10,6 @@
 #include "TransformRenderData.h"
 
 
-
 namespace gr
 {
 	RenderDataManager::RenderDataManager()

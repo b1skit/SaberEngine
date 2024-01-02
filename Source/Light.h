@@ -51,27 +51,31 @@ namespace fr
 	public:
 		struct TypeProperties
 		{
+			struct AmbientProperties
+			{
+				re::Texture const* m_IBLTex;
+
+			};
+			struct DirectionalProperties
+			{
+				// Note: Directional lights shine forward (Z+)									
+				glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
+			};
+			struct PointProperties
+			{
+				glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
+				float m_emitterRadius; // For non-singular attenuation function
+				float m_intensityCuttoff; // Intensity value at which we stop drawing the deferred mesh
+
+				float m_sphericalRadius; // Derrived from m_colorIntensity, m_emitterRadius, m_intensityCuttoff
+			};
+
 			Type m_type;
 			union
 			{
-				struct
-				{
-					re::Texture const* m_IBLTex;
-
-				} m_ambient;
-				struct
-				{
-					// Note: Directional lights shine forward (Z+)									
-					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
-				} m_directional;
-				struct
-				{					
-					glm::vec4 m_colorIntensity; // .rgb = hue, .a = intensity
-					float m_emitterRadius; // For non-singular attenuation function
-					float m_intensityCuttoff; // Intensity value at which we stop drawing the deferred mesh
-					
-					float m_sphericalRadius; // Derrived from m_colorIntensity, m_emitterRadius, m_intensityCuttoff
-				} m_point;
+				AmbientProperties m_ambient;
+				DirectionalProperties m_directional;
+				PointProperties m_point;
 			};
 
 			// Debug params:
@@ -81,8 +85,8 @@ namespace fr
 			TypeProperties();
 			~TypeProperties() = default;
 		};
-		TypeProperties& GetLightTypePropertiesForModification(Type);
 		TypeProperties const& GetLightTypeProperties(Type) const;
+		void SetLightTypeProperties(Type, void const*);
 
 
 	private:		

@@ -190,18 +190,47 @@ namespace fr
 	}
 
 
-	Light::TypeProperties& Light::GetLightTypePropertiesForModification(fr::Light::Type lightType)
-	{
-		SEAssert("Trying to access type properties for the wrong type", lightType == m_typeProperties.m_type);
-		m_isDirty = true;
-		return m_typeProperties;
-	}
-
-
 	Light::TypeProperties const& Light::GetLightTypeProperties(Type lightType) const
 	{
 		SEAssert("Trying to access type properties for the wrong type", lightType == m_typeProperties.m_type);
 		return m_typeProperties;
+	}
+
+
+	void Light::SetLightTypeProperties(Type lightType, void const* typeProperties)
+	{
+		SEAssert("Cannot set null type properties", typeProperties != nullptr);
+
+		switch (lightType)
+		{
+		case fr::Light::Type::AmbientIBL:
+		{
+			fr::Light::TypeProperties::AmbientProperties const* properties = 
+				static_cast<fr::Light::TypeProperties::AmbientProperties const*>(typeProperties);
+
+			m_typeProperties.m_ambient = *properties;
+		}
+		break;
+		case fr::Light::Type::Directional:
+		{
+			fr::Light::TypeProperties::DirectionalProperties const* properties =
+				static_cast<fr::Light::TypeProperties::DirectionalProperties const*>(typeProperties);
+			
+			m_typeProperties.m_directional = *properties;
+		}
+		break;
+		case fr::Light::Type::Point:
+		{
+			fr::Light::TypeProperties::PointProperties const* properties =
+				static_cast<fr::Light::TypeProperties::PointProperties const*>(typeProperties);
+			
+			m_typeProperties.m_point = *properties;
+		}
+		break;
+		default: SEAssertF("Invalid type");
+		}
+
+		m_isDirty = true;
 	}
 
 

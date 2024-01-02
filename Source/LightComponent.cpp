@@ -284,8 +284,7 @@ namespace fr
 				SEAssert("Point lights require a Transform", lightTransform);
 				SEAssert("Light is not a point light", light.GetType() == fr::Light::Type::Point);
 
-				fr::Light::TypeProperties& lightProperties =
-					light.GetLightTypePropertiesForModification(fr::Light::Type::Point);
+				fr::Light::TypeProperties const& lightProperties = light.GetLightTypeProperties(fr::Light::Type::Point);
 
 				// Scale the owning transform such that a sphere created with a radius of 1 will be the correct size
 				lightTransform->SetLocalScale(glm::vec3(lightProperties.m_point.m_sphericalRadius));
