@@ -43,17 +43,11 @@ namespace fr
 	private:
 		fr::Transform m_transform;
 
-		const gr::TransformID m_transformID;
-
 
 	private: // Use the static creation factories
 		struct PrivateCTORTag { explicit PrivateCTORTag() = default; };
 	public:
 		TransformComponent(PrivateCTORTag, fr::Transform* parent);
-
-
-	private: // Static TransformID functionality:
-		static std::atomic<gr::TransformID> s_transformIDs;
 	};
 
 
@@ -71,7 +65,7 @@ namespace fr
 
 	inline gr::TransformID TransformComponent::GetTransformID() const
 	{
-		return m_transformID;
+		return m_transform.GetTransformID();
 	}
 
 

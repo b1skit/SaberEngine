@@ -26,6 +26,7 @@ namespace gr
 
 	public:
 		static void ShowImGuiWindow(fr::EntityManager&, entt::entity owningEntity);
+		static void ShowImGuiWindow(std::vector<gr::RenderDataComponent const*> const&);
 
 
 	public:

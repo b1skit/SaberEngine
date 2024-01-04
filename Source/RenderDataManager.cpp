@@ -277,8 +277,13 @@ namespace gr
 	void RenderDataManager::PopulateTypesImGuiHelper(std::vector<std::string>& names, char const* typeName) const
 	{
 		const uint8_t dataTypeIndex = GetDataIndexFromType<T>();
-		SEAssert("Index is OOB of the names array", dataTypeIndex < names.size());
-		names[dataTypeIndex] = typeName;
+		SEAssert("Index is OOB of the names array", dataTypeIndex < names.size() || 
+			dataTypeIndex == k_invalidDataTypeIdx);
+
+		if (dataTypeIndex != k_invalidDataTypeIdx)
+		{
+			names[dataTypeIndex] = typeName;
+		}
 	}
 
 

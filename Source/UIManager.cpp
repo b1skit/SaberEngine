@@ -68,15 +68,31 @@ namespace fr
 	}
 
 
+	void UIManager::SendEvent(en::EventManager::EventType eventType) const
+	{
+		en::EventManager::Get()->Notify(en::EventManager::EventInfo{
+				.m_type = eventType,
+				//.m_data0 = ,
+				//.m_data1 = 
+			});
+	}
+
+
 	void UIManager::UpdateImGui()
 	{
 		static bool s_showConsoleLog = false;
 		static bool s_showEntityMgrDebug = false;
+		static bool s_showTransformHierarchyDebug = false;
 		static bool s_showRenderMgrDebug = false;
 		static bool s_showImguiDemo = false;
 
 		// Early out if we can
-		if (!m_imguiMenuVisible && !s_showConsoleLog && !s_showEntityMgrDebug && !s_showRenderMgrDebug && !s_showImguiDemo)
+		if (!m_imguiMenuVisible && 
+			!s_showConsoleLog && 
+			!s_showEntityMgrDebug && 
+			!s_showTransformHierarchyDebug && 
+			!s_showRenderMgrDebug && 
+			!s_showImguiDemo)
 		{
 			return;
 		}
@@ -100,7 +116,11 @@ namespace fr
 						ImGui::TextDisabled("Reload Scene");
 						ImGui::TextDisabled("Reload Shaders");
 						ImGui::TextDisabled("Reload Materials");
-						ImGui::TextDisabled("Quit");
+
+						if (ImGui::MenuItem("Quit"))
+						{
+							SendEvent(en::EventManager::EngineQuit);
+						}
 
 						ImGui::EndMenu();
 					}
@@ -119,7 +139,12 @@ namespace fr
 
 						ImGui::TextDisabled("Performance statistics");
 						
-						ImGui::MenuItem("Entity manager debug", "", &s_showEntityMgrDebug);
+						if (ImGui::BeginMenu("Entity manager"))
+						{
+							ImGui::MenuItem("Debug scene objects", "", &s_showEntityMgrDebug);
+							ImGui::MenuItem("Debug transform hierarchy", "", &s_showTransformHierarchyDebug);
+							ImGui::EndMenu();
+						}
 
 						ImGui::MenuItem("Render manager debug", "", &s_showRenderMgrDebug);
 
@@ -173,9 +198,9 @@ namespace fr
 					ImGuiCond_FirstUseEver);
 				ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
-				fr::EntityManager::Get()->ShowImGuiWindow(&s_showEntityMgrDebug);
+				fr::EntityManager::Get()->ShowImGuiWindow(&s_showEntityMgrDebug, &s_showTransformHierarchyDebug);
 			};
-		if (s_showEntityMgrDebug)
+		if (s_showEntityMgrDebug || s_showTransformHierarchyDebug)
 		{
 			re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(ShowEntityMgrDebug)>>(
 				re::ImGuiRenderCommand<decltype(ShowEntityMgrDebug)>(ShowEntityMgrDebug));

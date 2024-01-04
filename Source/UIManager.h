@@ -24,6 +24,11 @@ namespace fr
 
 		void HandleEvents() override;
 
+
+	private:
+		void SendEvent(en::EventManager::EventType) const;
+
+
 	private:
 		void UpdateImGui();
 

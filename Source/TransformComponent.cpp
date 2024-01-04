@@ -8,10 +8,6 @@
 
 namespace fr
 {
-	// gr::k_sharedIdentityTransformID == 0, so we start at 1
-	std::atomic<gr::TransformID> TransformComponent::s_transformIDs = gr::k_sharedIdentityTransformID + 1;
-
-
 	TransformComponent& TransformComponent::AttachTransformComponent(
 		fr::EntityManager& em, entt::entity entity, fr::Transform* parent)
 	{
@@ -47,8 +43,6 @@ namespace fr
 
 			fr::TransformComponent& transformCmpt = em.GetComponent<fr::TransformComponent>(owningEntity);
 
-			ImGui::Text(std::format("TransformID: {}", transformCmpt.m_transformID).c_str());
-
 			transformCmpt.GetTransform().ShowImGuiWindow(uniqueID);
 
 			ImGui::Unindent();
@@ -57,8 +51,7 @@ namespace fr
 
 
 	TransformComponent::TransformComponent(PrivateCTORTag, fr::Transform* parent)
-		: m_transformID(s_transformIDs.fetch_add(1))
-		, m_transform(parent)
+		: m_transform(parent)
 	{
 	}
 
@@ -83,7 +76,6 @@ namespace fr
 					fr::Transform* topTransform = transforms.top();
 					transforms.pop();
 
-					topTransform->ClearHasChangedFlag();
 					topTransform->Recompute();
 
 					for (fr::Transform* child : topTransform->GetChildren())

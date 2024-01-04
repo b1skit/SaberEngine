@@ -45,7 +45,7 @@ namespace fr
 		void SetMainCamera(entt::entity);
 		entt::entity GetMainCamera() const;
 
-		void ShowImGuiWindow(bool* show);
+		void ShowImGuiWindow(bool* showEntityMgrDebug, bool* showTransformHierarchyDebug);
 
 
 	private:

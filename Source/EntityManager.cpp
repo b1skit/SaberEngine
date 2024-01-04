@@ -242,6 +242,8 @@ namespace fr
 				if (transformComponent.GetTransform().HasChanged())
 				{
 					renderManager->EnqueueRenderCommand<fr::UpdateTransformDataRenderCommand>(transformComponent);
+
+					transformComponent.GetTransform().ClearHasChangedFlag();
 				}
 			}
 
@@ -759,16 +761,18 @@ namespace fr
 	}
 
 
-	void EntityManager::ShowImGuiWindow(bool* show)
+	void EntityManager::ShowImGuiWindow(bool* showEntityMgrDebug, bool* showTransformHierarchyDebug)
 	{
-		if (!(*show))
+
+		if (!(*showEntityMgrDebug) && !(*showTransformHierarchyDebug))
 		{
 			return;
 		}
 
+		if (*showEntityMgrDebug)
 		{
 			constexpr char const* k_panelTitle = "Entity manager debug";
-			ImGui::Begin(k_panelTitle, show);
+			ImGui::Begin(k_panelTitle, showEntityMgrDebug);
 
 			if (ImGui::CollapsingHeader("Cameras", ImGuiTreeNodeFlags_None))
 			{
@@ -873,10 +877,15 @@ namespace fr
 					fr::LightComponent::ShowImGuiWindow(*this, entity);
 				}
 
-				auto directionalLightView = m_registry.view<fr::LightComponent, fr::LightComponent::DirectionalDeferredMarker>();
-				for (entt::entity entity : directionalLightView)
+				if (ImGui::CollapsingHeader("Directional Lights:", ImGuiTreeNodeFlags_None))
 				{
-					fr::LightComponent::ShowImGuiWindow(*this, entity);
+					ImGui::Indent();
+					auto directionalLightView = m_registry.view<fr::LightComponent, fr::LightComponent::DirectionalDeferredMarker>();
+					for (entt::entity entity : directionalLightView)
+					{
+						fr::LightComponent::ShowImGuiWindow(*this, entity);
+					}
+					ImGui::Unindent();
 				}
 
 				if (ImGui::CollapsingHeader("Point Lights:", ImGuiTreeNodeFlags_None))
@@ -913,18 +922,42 @@ namespace fr
 
 			if (ImGui::CollapsingHeader("Render data IDs", ImGuiTreeNodeFlags_None))
 			{
+				std::vector<gr::RenderDataComponent const*> renderDataComponents;
+
 				auto renderDataView = m_registry.view<gr::RenderDataComponent>();
 				for (auto entity : renderDataView)
 				{
 					gr::RenderDataComponent const& renderDataCmpt = renderDataView.get<gr::RenderDataComponent>(entity);
 
-					gr::RenderDataComponent::ShowImGuiWindow(*this, entity);
+					renderDataComponents.emplace_back(&renderDataCmpt);
 				}
+
+				gr::RenderDataComponent::ShowImGuiWindow(renderDataComponents);
 			} // "Render data IDs"
 
-			ImGui::Separator();
+			//ImGui::Separator();
 
 			ImGui::End();
+		}
+
+		if (*showTransformHierarchyDebug)
+		{
+			static size_t s_numRootNodes = 16;
+			std::vector<fr::Transform const*> rootNodes;
+			rootNodes.reserve(s_numRootNodes);
+
+			auto transformCmptView = m_registry.view<fr::TransformComponent>();
+			for (entt::entity entity : transformCmptView)
+			{
+				fr::TransformComponent const& transformCmpt = transformCmptView.get<fr::TransformComponent>(entity);
+				if (transformCmpt.GetTransform().GetParent() == nullptr)
+				{
+					rootNodes.emplace_back(&transformCmpt.GetTransform());
+				}	
+			}
+			s_numRootNodes = std::max(s_numRootNodes, rootNodes.size());
+
+			fr::Transform::ShowImGuiWindow(rootNodes, showTransformHierarchyDebug);
 		}
 	}
 }

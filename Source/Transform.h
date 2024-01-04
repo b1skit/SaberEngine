@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
+#include "RenderObjectIDs.h"
 
 
 namespace fr
@@ -82,7 +83,11 @@ namespace fr
 		void ClearHasChangedFlag();
 		bool HasChanged() const;
 
+		gr::TransformID GetTransformID() const;
+
 		void ShowImGuiWindow(uint64_t uniqueID, bool markAsParent = false, uint32_t depth = 0);
+
+		static void ShowImGuiWindow(std::vector<fr::Transform const*> const& rootNodes, bool* show); // Hierarchy view window
 
 
 	private:
@@ -100,6 +105,8 @@ namespace fr
 
 		bool m_isDirty;	// Do our local or combinedModel matrices need to be recomputed?
 		bool m_hasChanged; // Has the transform (or its parental heirarchy) changed since the last time this was false?
+
+		const gr::TransformID m_transformID;
 
 
 	private:
@@ -119,6 +126,9 @@ namespace fr
 
 	private:
 		Transform() = delete;
+
+	private: // Static TransformID functionality:
+		static std::atomic<gr::TransformID> s_transformIDs;
 	};
 
 
@@ -134,6 +144,12 @@ namespace fr
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 		const bool hasChanged = m_hasChanged || (m_parent != nullptr && m_parent->HasChanged());
 		return hasChanged;
+	}
+
+
+	inline gr::TransformID Transform::GetTransformID() const
+	{
+		return m_transformID;
 	}
 }
 

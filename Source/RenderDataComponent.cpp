@@ -35,10 +35,40 @@ namespace gr
 		ImGui::Indent();
 
 		gr::RenderDataComponent const& renderDataCmpt = em.GetComponent<gr::RenderDataComponent>(owningEntity);
-		ImGui::Text(std::format("RenderDataID: {}, TransformID: {}", 
+		ImGui::Text(std::format("RenderDataID: {}, TransformID: {}",
 			renderDataCmpt.GetRenderDataID(), renderDataCmpt.GetTransformID()).c_str());
-		
+
 		ImGui::Unindent();
+	}
+
+
+	void RenderDataComponent::ShowImGuiWindow(std::vector<gr::RenderDataComponent const*> const& renderDataComponents)
+	{		
+		const ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable;
+		constexpr int numCols = 2;
+		if (ImGui::BeginTable("m_IDToRenderObjectMetadata", numCols, flags))
+		{
+			// Headers:				
+			ImGui::TableSetupColumn("RenderObjectID");
+			ImGui::TableSetupColumn("TransformID");
+			ImGui::TableHeadersRow();
+
+			for (size_t i = 0; i < renderDataComponents.size(); i++)
+			{
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+
+				// RenderDataID
+				ImGui::Text(std::format("{}", renderDataComponents[i]->GetRenderDataID()).c_str());
+
+				ImGui::TableNextColumn();
+
+				// TransformID
+				ImGui::Text(std::format("{}", renderDataComponents[i]->GetTransformID()).c_str());
+			}
+
+			ImGui::EndTable();
+		}
 	}
 
 

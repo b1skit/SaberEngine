@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
+#include "Config.h"
 #include "ImGuiUtils.h"
 #include "Transform.h"
 #include "TransformRenderData.h"
@@ -17,8 +18,13 @@ namespace
 
 namespace fr
 {
+	// gr::k_sharedIdentityTransformID == 0, so we start at 1
+	std::atomic<gr::TransformID> Transform::s_transformIDs = gr::k_sharedIdentityTransformID + 1;
+
+
 	Transform::Transform(Transform* parent)
 		: m_parent(nullptr)
+		, m_transformID(s_transformIDs.fetch_add(1))
 		
 		, m_localPosition(0.0f, 0.0f, 0.0f)
 		, m_localRotationQuat(glm::vec3(0, 0, 0))
@@ -523,6 +529,8 @@ namespace fr
 			return isDirty;
 		};
 
+		ImGui::Text(std::format("TransformID: {}", m_transformID).c_str());
+
 		if (markAsParent && m_parent)
 		{
 			m_parent->ShowImGuiWindow(true, depth + 1);
@@ -648,6 +656,87 @@ namespace fr
 			ImGui::Unindent();
 			
 		}
+	}
+
+
+	void Transform::ShowImGuiWindow(std::vector<fr::Transform const*> const& rootNodes, bool* show)
+	{
+		if (!(*show))
+		{
+			return;
+		}
+
+		static const int windowWidth = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
+		static const int windowHeight = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
+		constexpr float k_windowYOffset = 64.f;
+
+		ImGui::SetNextWindowSize(ImVec2(
+			windowWidth * 0.3f,
+			static_cast<float>(windowHeight) - k_windowYOffset),
+			ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(0, k_windowYOffset), ImGuiCond_FirstUseEver, ImVec2(0, 0));
+
+		constexpr char const* k_panelTitle = "Transform Hierarchy";
+		ImGui::Begin(k_panelTitle, show);
+
+		static bool s_expandAll = false;
+		bool showHideAll = false;
+		if (ImGui::Button(s_expandAll ? "Hide all" : "Show all"))
+		{
+			s_expandAll = !s_expandAll;
+			showHideAll = true;
+		}
+
+		constexpr float k_indentSize = 16.f;
+		for (fr::Transform const* root : rootNodes)
+		{
+			struct NodeState
+			{
+				fr::Transform const* m_node;
+				uint32_t m_depth;
+			};
+			std::stack<NodeState> nodes;
+			nodes.push({ root, 1 });
+
+			while (!nodes.empty())
+			{
+				NodeState cur = nodes.top();
+				nodes.pop();
+
+				ImGui::Indent(k_indentSize* cur.m_depth);
+
+				if (showHideAll)
+				{
+					ImGui::SetNextItemOpen(s_expandAll);
+				}
+				if (ImGui::TreeNode(std::format("TransformID: {}", cur.m_node->m_transformID).c_str()))
+				{
+					ImGui::Indent();
+
+					// Show the current node info:
+					ImGui::BulletText(std::format("{} (depth {}), {} children",
+						cur.m_node->m_parent ? "Has parent" : "Root node", 
+						cur.m_depth - 1,
+						cur.m_node->m_children.size()).c_str());
+
+					ImGui::Unindent();
+
+					ImGui::TreePop();
+
+					// Add children for next iteration:
+					for (fr::Transform const* child : cur.m_node->m_children)
+					{
+						nodes.push(NodeState{ child, cur.m_depth + 1 });
+					}
+				}
+
+				ImGui::Unindent(k_indentSize* cur.m_depth);
+			}
+
+			ImGui::Separator();
+		}
+		
+		ImGui::End();
 	}
 }
 
