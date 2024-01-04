@@ -826,7 +826,7 @@ namespace
 					meshName.c_str(), k_missingMaterialName);
 				material = scene.GetMaterial(k_missingMaterialName);
 			}
-			fr::MaterialComponent::AttachMaterialConcept(em, meshPrimimitiveEntity, material);
+			fr::MaterialComponent::AttachMaterialComponent(em, meshPrimimitiveEntity, material);
 		}
 	}
 

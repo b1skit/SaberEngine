@@ -3,8 +3,6 @@
 #include "MarkerComponents.h"
 #include "MaterialComponent.h"
 #include "MeshPrimitiveComponent.h"
-#include "NameComponent.h"
-#include "RelationshipComponent.h"
 #include "RenderDataComponent.h"
 
 
@@ -19,33 +17,23 @@ namespace fr
 	}
 
 
-	MaterialComponent& MaterialComponent::AttachMaterialConcept(
+	MaterialComponent& MaterialComponent::AttachMaterialComponent(
 		fr::EntityManager& em,
 		entt::entity meshPrimitiveConcept,
 		std::shared_ptr<gr::Material> sceneMaterial)
 	{
 		SEAssert("Cannot attach a null material", sceneMaterial != nullptr);
-		SEAssert("Attempting to attach a Material component without a MeshPrimitiveComponent. This (currently) doesn't "
-			"make sense",
-			em.IsInHierarchyAbove<fr::MeshPrimitiveComponent>(meshPrimitiveConcept));
-
-		entt::entity materialEntity = em.CreateEntity(sceneMaterial->GetName());
+		SEAssert("Material components must be attached to entities with a MeshPrimitiveComponent",
+			em.HasComponent<fr::MeshPrimitiveComponent>(meshPrimitiveConcept));
+		SEAssert("Material components must be attached to entities with a RenderDataComponent",
+			em.HasComponent<gr::RenderDataComponent>(meshPrimitiveConcept));
 
 		// Attach the material component:		
 		fr::MaterialComponent* matComponent =
-			em.EmplaceComponent<fr::MaterialComponent>(materialEntity, sceneMaterial.get());
-
-		// Relate the material to the owning mesh primitive:
-		fr::Relationship& materialRelationship = em.GetComponent<fr::Relationship>(materialEntity);
-		materialRelationship.SetParent(em, meshPrimitiveConcept);
-
-		gr::RenderDataComponent const& meshPrimRenderData =
-			em.GetComponent<gr::RenderDataComponent>(meshPrimitiveConcept);
-
-		gr::RenderDataComponent::AttachSharedRenderDataComponent(em, materialEntity, meshPrimRenderData);
+			em.EmplaceComponent<fr::MaterialComponent>(meshPrimitiveConcept, sceneMaterial.get());
 
 		// Mark our Material as dirty:
-		em.EmplaceOrReplaceComponent<DirtyMarker<fr::MaterialComponent>>(materialEntity);
+		em.EmplaceOrReplaceComponent<DirtyMarker<fr::MaterialComponent>>(meshPrimitiveConcept);
 
 		return *matComponent;
 	}
@@ -53,16 +41,17 @@ namespace fr
 
 	void MaterialComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity)
 	{
-		fr::NameComponent const& nameComponent = em.GetComponent<fr::NameComponent>(owningEntity);
+		fr::MaterialComponent const& matCmpt = em.GetComponent<fr::MaterialComponent>(owningEntity);
 
-		if (ImGui::CollapsingHeader(
-			std::format("{}##{}", nameComponent.GetName(), nameComponent.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+		if (ImGui::CollapsingHeader(std::format("{}##{}", 
+			matCmpt.m_material->GetName(), matCmpt.m_material->GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 
 			// RenderDataComponent:
 			gr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
 
+			// Material:
 			fr::MaterialComponent& matComponent = em.GetComponent<fr::MaterialComponent>(owningEntity);
 
 			// ECS_CONVERSION: TODO COMPLETE THIS FUNCTIONALITY

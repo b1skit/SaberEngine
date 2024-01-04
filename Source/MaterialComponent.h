@@ -11,7 +11,7 @@ namespace fr
 	class MaterialComponent
 	{
 	public:
-		static MaterialComponent& AttachMaterialConcept(
+		static MaterialComponent& AttachMaterialComponent(
 			fr::EntityManager&, entt::entity meshPrimitiveConcept, std::shared_ptr<gr::Material>);
 
 	public:

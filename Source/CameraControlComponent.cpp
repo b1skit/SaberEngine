@@ -40,10 +40,20 @@ namespace fr
 
 
 	void CameraControlComponent::SetCamera(
-		fr::TransformComponent& controllerTransformCmpt, fr::TransformComponent& camTransformCmpt)
+		fr::TransformComponent& controllerTransformCmpt, fr::TransformComponent& newCamTransformCmpt)
 	{
 		fr::Transform& controllerTransform = controllerTransformCmpt.GetTransform();
-		fr::Transform& cameraTransform = camTransformCmpt.GetTransform();
+		fr::Transform& cameraTransform = newCamTransformCmpt.GetTransform();
+
+		// BUG HERE: We're leaving the current camera as a child of the camera controller
+		//	-> This moves the camera when we call SetGlobalPosition below...
+		//
+		// -> We're also not parenting the camera controller and camera... This is dumb
+		//		-> The comment below is confused: The SceneNode == a transform, IT should be a child of the camera controller (not the camera component!)
+		//
+		// -> SceneNode == Transform: We should simplify and unify these concepts
+		//		-> Relationships should mirror the transform hierarchy
+		//		-> They also represent the hierarchy when a transform is not involved (e.g. components)
 
 		// The PlayerObject and Camera must be located at the same point. To avoid stomping imported Camera locations,
 		// we move the camera controller to the camera. Then, we re-parent the Camera's Transform, to maintain its
