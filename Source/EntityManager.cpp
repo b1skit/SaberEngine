@@ -943,13 +943,13 @@ namespace fr
 		if (*showTransformHierarchyDebug)
 		{
 			static size_t s_numRootNodes = 16;
-			std::vector<fr::Transform const*> rootNodes;
+			std::vector<fr::Transform*> rootNodes;
 			rootNodes.reserve(s_numRootNodes);
 
 			auto transformCmptView = m_registry.view<fr::TransformComponent>();
 			for (entt::entity entity : transformCmptView)
 			{
-				fr::TransformComponent const& transformCmpt = transformCmptView.get<fr::TransformComponent>(entity);
+				fr::TransformComponent& transformCmpt = transformCmptView.get<fr::TransformComponent>(entity);
 				if (transformCmpt.GetTransform().GetParent() == nullptr)
 				{
 					rootNodes.emplace_back(&transformCmpt.GetTransform());

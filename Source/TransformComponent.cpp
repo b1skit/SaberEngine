@@ -36,14 +36,13 @@ namespace fr
 
 	void TransformComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity, uint64_t uniqueID)
 	{
-		if (ImGui::CollapsingHeader(
-			std::format("Transform##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
+		if (ImGui::CollapsingHeader(std::format("Transform##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 
 			fr::TransformComponent& transformCmpt = em.GetComponent<fr::TransformComponent>(owningEntity);
 
-			transformCmpt.GetTransform().ShowImGuiWindow(uniqueID);
+			transformCmpt.GetTransform().ShowImGuiWindow();
 
 			ImGui::Unindent();
 		}

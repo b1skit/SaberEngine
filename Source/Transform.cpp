@@ -225,7 +225,7 @@ namespace fr
 
 		if (m_parent)
 		{
-			const glm::mat4 parentGlobalTRS = m_parent->GetGlobalMatrix();
+			glm::mat4 const& parentGlobalTRS = m_parent->GetGlobalMatrix();
 			SetLocalPosition(glm::inverse(parentGlobalTRS) * glm::vec4(position, 0.f));
 		}
 		else
@@ -494,172 +494,215 @@ namespace fr
 	}
 
 
-	void Transform::ShowImGuiWindow(uint64_t uniqueID, bool markAsParent /*= false*/, uint32_t depth /*= 0*/)
+	void Transform::ImGuiHelper_ShowData(uint64_t uniqueID)
 	{
-		// Helper: Displays sliders for a 3-component XYZ element of a transform
-		auto Display3ComponentTransform = [&](std::string const& label, glm::vec3& copiedValue) -> bool
-		{
-			constexpr ImGuiSliderFlags flags = ImGuiSliderFlags_None;
-			constexpr float k_buttonWidth = 75.f;
-
-			bool isDirty = false;
-			ImGui::BeginGroup();
-			{
-				// Unique imgui IDs for each slider
-				const std::string XimguiID = std::format("##X{}{}", label, uniqueID);
-				const std::string YimguiID = std::format("##Y{}{}", label, uniqueID);
-				const std::string ZimguiID = std::format("##Z{}{}", label, uniqueID);
-
-				ImGui::Text(std::format("{} XYZ:", label).c_str()); // Row label
-
-				ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
-				isDirty |= ImGui::DragFloat(
-					XimguiID.c_str(), &copiedValue.x, 0.005f, -FLT_MAX, +FLT_MAX, "X %.3f", flags);
-
-				ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
-				isDirty |= ImGui::DragFloat(
-					YimguiID.c_str(), &copiedValue.y, 0.005f, -FLT_MAX, +FLT_MAX, "Y %.3f", flags);
-
-				ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
-				isDirty |= ImGui::DragFloat(
-					ZimguiID.c_str(), &copiedValue.z, 0.005f, -FLT_MAX, +FLT_MAX, "Z %.3f", flags);
-
-				ImGui::EndGroup();
-			}
-			return isDirty;
-		};
-
-		ImGui::Text(std::format("TransformID: {}", m_transformID).c_str());
-
-		if (markAsParent && m_parent)
-		{
-			m_parent->ShowImGuiWindow(true, depth + 1);
-		}
-		
-		if (markAsParent && !m_parent && !ImGui::CollapsingHeader(
-			std::format("Root parent: (node {})##{}", depth, uniqueID).c_str()))
-		{
-			return;
-		}
-		else if (markAsParent && m_parent && !ImGui::CollapsingHeader(
-			std::format("Parent: (node {})##{}", depth, uniqueID).c_str()))
-		{
-			return;
-		}
-		else if (!markAsParent && 
-			m_parent && 
-			ImGui::CollapsingHeader(std::format("Parent hierarchy##{}", depth, uniqueID).c_str()))
-		{
-			ImGui::Indent();
-			m_parent->ShowImGuiWindow(true, depth + 1);
-			ImGui::Unindent();
-		}
-
-		if (markAsParent || ImGui::CollapsingHeader(std::format("This transform (node {})##{}", depth, uniqueID).c_str()))
+		if (ImGui::CollapsingHeader(std::format("View data##{}", uniqueID).c_str()))
 		{
 			ImGui::Indent();
 
-			// Summarize the parent/child hierarchy:
-			ImGui::Text(
-				std::format("{}, {} {}",
-					m_parent ? "Has parent" : "Root node",
-					m_children.size(),
-					m_children.size() == 1 ? "child" : "children").c_str());
+			ImGui::Text(std::format("Local Position: {}", glm::to_string(m_localPosition)).c_str());
+			ImGui::Text(std::format("Local Quaternion: {}", glm::to_string(m_localRotationQuat)).c_str());
+			ImGui::Text(std::format("Local Euler XYZ Radians: {}",
+				glm::to_string(GetLocalEulerXYZRotationRadians())).c_str());
+			ImGui::Text(std::format("Local Scale: {}", glm::to_string(m_localScale)).c_str());
+			util::DisplayMat4x4(std::format("Local Matrix:##{}", uniqueID).c_str(), m_localMat);
+			util::DisplayMat4x4(std::format("Global Matrix:##{}", uniqueID).c_str(), GetGlobalMatrix());
 
-			// View Transform data:
-			if (ImGui::CollapsingHeader(std::format("Show data##{}", uniqueID).c_str()))
-			{
-				ImGui::Indent();
-
-				ImGui::Text(std::format("Local Position: {}", glm::to_string(m_localPosition)).c_str());
-				ImGui::Text(std::format("Local Quaternion: {}", glm::to_string(m_localRotationQuat)).c_str());
-				ImGui::Text(std::format("Local Euler XYZ Radians: {}",
-					glm::to_string(GetLocalEulerXYZRotationRadians())).c_str());
-				ImGui::Text(std::format("Local Scale: {}", glm::to_string(m_localScale)).c_str());
-				util::DisplayMat4x4(std::format("Local Matrix:##{}", uniqueID).c_str(), m_localMat);
-				util::DisplayMat4x4(std::format("Global Matrix:##{}", uniqueID).c_str(), GetGlobalMatrix());
-
-				ImGui::Text(std::format("Global Right (X): {}", glm::to_string(GetGlobalRight())).c_str());
-				ImGui::Text(std::format("Global Up (Y): {}", glm::to_string(GetGlobalUp())).c_str());
-				ImGui::Text(std::format("Global Forward (Z): {}", glm::to_string(GetGlobalForward())).c_str());
-
-				ImGui::Unindent();
-			}
-			
-
-			// Modification controls:
-			if (ImGui::CollapsingHeader(std::format("Modify##{}", uniqueID).c_str()))
-			{
-				// Dragable local translation:
-				glm::vec3 localPosition = GetLocalPosition();
-				bool localTranslationDirty = Display3ComponentTransform("Local Translation", localPosition);
-				if (localTranslationDirty)
-				{
-					SetLocalPosition(localPosition);
-				}
-
-				// Clickable local translation
-				static glm::vec3 s_translationAmt = glm::vec3(0.f);
-				if (ImGui::Button(std::format("[-]##{}", uniqueID).c_str()))
-				{
-					TranslateLocal(-s_translationAmt);
-				}
-				ImGui::SameLine();
-				if (ImGui::Button(std::format("[+]##{}", uniqueID).c_str()))
-				{
-					TranslateLocal(s_translationAmt);
-				}
-				ImGui::SameLine();
-				ImGui::PushItemWidth(130.f);
-				ImGui::DragFloat3(
-					std::format("##{}", uniqueID).c_str(), &s_translationAmt.x, 0.001f, -FLT_MAX, FLT_MAX);
-				ImGui::PopItemWidth();
-
-				// Local rotation:
-				glm::vec3 localEulerRotation = GetLocalEulerXYZRotationRadians();
-				bool localRotationDirty = Display3ComponentTransform("Local Euler Rotation", localEulerRotation);
-				if (localRotationDirty)
-				{
-					SetLocalRotation(localEulerRotation);
-				}
-
-				// Local scale:
-				static bool s_uniformScale = false;
-				ImGui::Checkbox(std::format("Uniform scale##{}", uniqueID).c_str(), &s_uniformScale);
-
-				glm::vec3 localScale = GetLocalScale();
-				if (s_uniformScale)
-				{
-					static float s_uniformScaleAmount = 1.f;
-
-					ImGui::PushItemWidth(130.f);
-					if (ImGui::SliderFloat("Scale", &s_uniformScaleAmount, 0.f, 10.f))
-					{
-						SetLocalScale(glm::vec3(s_uniformScaleAmount));
-					}
-					ImGui::PopItemWidth();
-				}
-				else if (Display3ComponentTransform("Local Scale", localScale))
-				{
-					SetLocalScale(localScale);
-				}
-
-				// Global translation:
-				glm::vec3 globalTranslation = GetGlobalPosition();
-				bool globalTranslationDirty = Display3ComponentTransform("Global Translation", globalTranslation);
-				if (globalTranslationDirty)
-				{
-					SetGlobalPosition(globalTranslation);
-				}
-			}
+			ImGui::Text(std::format("Global Right (X): {}", glm::to_string(GetGlobalRight())).c_str());
+			ImGui::Text(std::format("Global Up (Y): {}", glm::to_string(GetGlobalUp())).c_str());
+			ImGui::Text(std::format("Global Forward (Z): {}", glm::to_string(GetGlobalForward())).c_str());
 
 			ImGui::Unindent();
-			
 		}
 	}
 
 
-	void Transform::ShowImGuiWindow(std::vector<fr::Transform const*> const& rootNodes, bool* show)
+	void Transform::ImGuiHelper_Modify(uint64_t uniqueID)
+	{
+		// Helper: Displays sliders for a 3-component XYZ element of a transform
+		auto Display3ComponentTransform = [&](std::string const& label, glm::vec3& copiedValue) -> bool
+			{
+				constexpr ImGuiSliderFlags flags = ImGuiSliderFlags_None;
+				constexpr float k_buttonWidth = 75.f;
+
+				bool isDirty = false;
+				ImGui::BeginGroup();
+				{
+					// Unique imgui IDs for each slider
+					const std::string XimguiID = std::format("##X{}{}", label, uniqueID);
+					const std::string YimguiID = std::format("##Y{}{}", label, uniqueID);
+					const std::string ZimguiID = std::format("##Z{}{}", label, uniqueID);
+
+					ImGui::Text(std::format("{} XYZ:", label).c_str()); // Row label
+
+					ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
+					isDirty |= ImGui::DragFloat(
+						XimguiID.c_str(), &copiedValue.x, 0.005f, -FLT_MAX, +FLT_MAX, "X %.3f", flags);
+
+					ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
+					isDirty |= ImGui::DragFloat(
+						YimguiID.c_str(), &copiedValue.y, 0.005f, -FLT_MAX, +FLT_MAX, "Y %.3f", flags);
+
+					ImGui::SameLine(); ImGui::PushItemWidth(k_buttonWidth);
+					isDirty |= ImGui::DragFloat(
+						ZimguiID.c_str(), &copiedValue.z, 0.005f, -FLT_MAX, +FLT_MAX, "Z %.3f", flags);
+
+					ImGui::EndGroup();
+				}
+				return isDirty;
+			};
+
+
+		if (ImGui::CollapsingHeader(std::format("Modify##{}", uniqueID).c_str()))
+		{
+			// Dragable local translation:
+			glm::vec3 localPosition = GetLocalPosition();
+			bool localTranslationDirty = Display3ComponentTransform("Local Translation", localPosition);
+			if (localTranslationDirty)
+			{
+				SetLocalPosition(localPosition);
+			}
+
+			// Clickable local translation
+			static glm::vec3 s_translationAmt = glm::vec3(0.f);
+			if (ImGui::Button(std::format("[-]##{}", uniqueID).c_str()))
+			{
+				TranslateLocal(-s_translationAmt);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button(std::format("[+]##{}", uniqueID).c_str()))
+			{
+				TranslateLocal(s_translationAmt);
+			}
+			ImGui::SameLine();
+			ImGui::PushItemWidth(130.f);
+			ImGui::DragFloat3(
+				std::format("##{}", uniqueID).c_str(), &s_translationAmt.x, 0.001f, -FLT_MAX, FLT_MAX);
+			ImGui::PopItemWidth();
+
+			// Local rotation:
+			glm::vec3 localEulerRotation = GetLocalEulerXYZRotationRadians();
+			bool localRotationDirty = Display3ComponentTransform("Local Euler Rotation", localEulerRotation);
+			if (localRotationDirty)
+			{
+				SetLocalRotation(localEulerRotation);
+			}
+
+			// Local scale:
+			static bool s_uniformScale = false;
+			ImGui::Checkbox(std::format("Uniform scale##{}", uniqueID).c_str(), &s_uniformScale);
+
+			glm::vec3 localScale = GetLocalScale();
+			if (s_uniformScale)
+			{
+				static float s_uniformScaleAmount = 1.f;
+
+				ImGui::PushItemWidth(130.f);
+				if (ImGui::SliderFloat("Scale", &s_uniformScaleAmount, 0.f, 10.f))
+				{
+					SetLocalScale(glm::vec3(s_uniformScaleAmount));
+				}
+				ImGui::PopItemWidth();
+			}
+			else if (Display3ComponentTransform("Local Scale", localScale))
+			{
+				SetLocalScale(localScale);
+			}
+
+			// Global translation:
+			glm::vec3 globalTranslation = GetGlobalPosition();
+			bool globalTranslationDirty = Display3ComponentTransform("Global Translation", globalTranslation);
+			if (globalTranslationDirty)
+			{
+				SetGlobalPosition(globalTranslation);
+			}
+		}
+	}
+
+
+	void Transform::ShowImGuiWindow()
+	{
+		ImGuiHelper_ShowHierarchy(this, true);
+	}
+
+
+	void Transform::ImGuiHelper_ShowHierarchy(
+		fr::Transform* node, bool highlightCurrentNode, bool expandAllState, bool expandChangeTriggered)
+	{
+		constexpr float k_indentSize = 16.f;
+		constexpr ImVec4 k_thisObjectMarkerTextCol = ImVec4(0, 1, 0, 1);
+		constexpr char const* k_thisObjectText = "<this object>";
+
+		struct NodeState
+		{
+			fr::Transform* m_node;
+			uint32_t m_depth;
+		};
+
+		// Find the root node
+		fr::Transform* rootNode = node;
+		while (rootNode->m_parent != nullptr)
+		{
+			rootNode = rootNode->m_parent;
+		}
+
+		std::stack<NodeState> nodes;
+		nodes.push({ rootNode, 1 }); // Depth is offset +1 so the indent value will be > 0
+
+		while (!nodes.empty())
+		{
+			NodeState cur = nodes.top();
+			nodes.pop();
+
+			// Add children for next iteration:
+			for (fr::Transform* child : cur.m_node->m_children)
+			{
+				nodes.push(NodeState{ child, cur.m_depth + 1 });
+			}
+
+			ImGui::Indent(k_indentSize * cur.m_depth);
+
+			if (expandChangeTriggered)
+			{
+				ImGui::SetNextItemOpen(expandAllState);
+			}
+			if (ImGui::TreeNode(std::format("TransformID: {}", cur.m_node->m_transformID).c_str()))
+			{
+				if (highlightCurrentNode && cur.m_node == node)
+				{
+					ImGui::SameLine(); ImGui::TextColored(k_thisObjectMarkerTextCol, k_thisObjectText);
+				}
+
+				ImGui::Indent();
+
+				// Show the current node info:
+				ImGui::Text(std::format("{} Depth {}, {} {}",
+					cur.m_node->m_parent ? "" : "Root:",
+					cur.m_depth - 1,
+					cur.m_node->m_children.size(),
+					cur.m_node->m_children.size() == 1 ? "child" : "children").c_str());
+
+				// View Transform data:
+				cur.m_node->ImGuiHelper_ShowData(cur.m_node->m_transformID);
+
+				// Modification controls:
+				cur.m_node->ImGuiHelper_Modify(cur.m_node->m_transformID);
+
+				ImGui::Unindent();
+
+				ImGui::TreePop();
+			}
+			else if (highlightCurrentNode && cur.m_node == node)
+			{
+				ImGui::SameLine(); ImGui::TextColored(k_thisObjectMarkerTextCol, k_thisObjectText);
+			}
+			
+			ImGui::Unindent(k_indentSize * cur.m_depth);
+		}
+	}
+
+
+	void Transform::ShowImGuiWindow(std::vector<fr::Transform*> const& rootNodes, bool* show)
 	{
 		if (!(*show))
 		{
@@ -669,9 +712,10 @@ namespace fr
 		static const int windowWidth = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
 		static const int windowHeight = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
 		constexpr float k_windowYOffset = 64.f;
+		constexpr float k_windowWidthPercentage = 0.25f;
 
 		ImGui::SetNextWindowSize(ImVec2(
-			windowWidth * 0.3f,
+			windowWidth * k_windowWidthPercentage,
 			static_cast<float>(windowHeight) - k_windowYOffset),
 			ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowPos(ImVec2(0, k_windowYOffset), ImGuiCond_FirstUseEver, ImVec2(0, 0));
@@ -681,61 +725,20 @@ namespace fr
 
 		static bool s_expandAll = false;
 		bool showHideAll = false;
-		if (ImGui::Button(s_expandAll ? "Hide all" : "Show all"))
+		if (ImGui::Button(s_expandAll ? "Hide all" : "Expand all"))
 		{
 			s_expandAll = !s_expandAll;
 			showHideAll = true;
 		}
 
-		constexpr float k_indentSize = 16.f;
-		for (fr::Transform const* root : rootNodes)
+		// Show each root node in the panel
+		for (fr::Transform* rootNode : rootNodes)
 		{
-			struct NodeState
-			{
-				fr::Transform const* m_node;
-				uint32_t m_depth;
-			};
-			std::stack<NodeState> nodes;
-			nodes.push({ root, 1 });
-
-			while (!nodes.empty())
-			{
-				NodeState cur = nodes.top();
-				nodes.pop();
-
-				ImGui::Indent(k_indentSize* cur.m_depth);
-
-				if (showHideAll)
-				{
-					ImGui::SetNextItemOpen(s_expandAll);
-				}
-				if (ImGui::TreeNode(std::format("TransformID: {}", cur.m_node->m_transformID).c_str()))
-				{
-					ImGui::Indent();
-
-					// Show the current node info:
-					ImGui::BulletText(std::format("{} (depth {}), {} children",
-						cur.m_node->m_parent ? "Has parent" : "Root node", 
-						cur.m_depth - 1,
-						cur.m_node->m_children.size()).c_str());
-
-					ImGui::Unindent();
-
-					ImGui::TreePop();
-
-					// Add children for next iteration:
-					for (fr::Transform const* child : cur.m_node->m_children)
-					{
-						nodes.push(NodeState{ child, cur.m_depth + 1 });
-					}
-				}
-
-				ImGui::Unindent(k_indentSize* cur.m_depth);
-			}
+			ImGuiHelper_ShowHierarchy(rootNode, false, s_expandAll, showHideAll);
 
 			ImGui::Separator();
 		}
-		
+
 		ImGui::End();
 	}
 }

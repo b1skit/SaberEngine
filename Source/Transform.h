@@ -85,10 +85,18 @@ namespace fr
 
 		gr::TransformID GetTransformID() const;
 
-		void ShowImGuiWindow(uint64_t uniqueID, bool markAsParent = false, uint32_t depth = 0);
+		void ShowImGuiWindow();
 
-		static void ShowImGuiWindow(std::vector<fr::Transform const*> const& rootNodes, bool* show); // Hierarchy view window
+		static void ShowImGuiWindow(std::vector<fr::Transform*> const& rootNodes, bool* show); // Hierarchy view window
 
+	private:
+		void ImGuiHelper_ShowData(uint64_t uniqueID);
+		void ImGuiHelper_Modify(uint64_t uniqueID);
+		static void ImGuiHelper_ShowHierarchy(
+			fr::Transform* node, 
+			bool highlightCurrentNode = false,
+			bool expandAllState = false, 
+			bool expandChangeTriggered = false);
 
 	private:
 		Transform* m_parent;

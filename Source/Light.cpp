@@ -309,7 +309,7 @@ namespace fr
 			if (ImGui::CollapsingHeader(std::format("Transform##{}", uniqueID).c_str(), ImGuiTreeNodeFlags_None))
 			{
 				ImGui::Indent();
-				transform->ShowImGuiWindow(uniqueID);
+				transform->ShowImGuiWindow();
 				ImGui::Unindent();
 			}
 		};
