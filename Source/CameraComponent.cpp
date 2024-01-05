@@ -98,17 +98,10 @@ namespace fr
 			gr::RenderDataComponent::ShowImGuiWindow(em, camEntity);
 			
 			fr::CameraComponent& camCmpt = em.GetComponent<fr::CameraComponent>(camEntity);
-			
-			fr::Relationship const& cameraRelationship = em.GetComponent<fr::Relationship>(camEntity);
-
-			entt::entity transformEntity = entt::null;
-			fr::TransformComponent& camTransformCmpt =
-				*em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(cameraRelationship.GetParent(), transformEntity);
-
 			camCmpt.m_camera.ShowImGuiWindow(nameCmpt.GetUniqueID());
 
-			// Transform:
-			fr::TransformComponent::ShowImGuiWindow(em, transformEntity, static_cast<uint32_t>(camEntity));
+			fr::TransformComponent& camTransformCmpt = em.GetComponent<fr::TransformComponent>(camEntity);
+			fr::TransformComponent::ShowImGuiWindow(em, camEntity, static_cast<uint32_t>(camEntity));
 
 			ImGui::Unindent();
 		}

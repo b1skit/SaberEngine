@@ -373,11 +373,11 @@ namespace gr
 					if (i >= entry.second.m_dirtyFrameTable.size() ||
 						entry.second.m_dirtyFrameTable[i] == k_invalidDirtyFrameNum)
 					{
-						cellText += "(-)";
+						cellText += "[-]";
 					}
 					else
 					{
-						cellText += std::format("({})", entry.second.m_dirtyFrameTable[i]).c_str();
+						cellText += std::format("[{}]", entry.second.m_dirtyFrameTable[i]).c_str();
 					}
 
 					ImGui::Text(cellText.c_str());

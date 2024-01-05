@@ -160,8 +160,6 @@ namespace fr
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
-		SEAssert("New parent cannot be null", newParent != nullptr);
-
 		Recompute();
 		SEAssert("Transformation should not be dirty", !m_isDirty);
 
@@ -169,8 +167,12 @@ namespace fr
 		// Managing Transformations in Hierarchy: Parent Switch in Hierarchy (p.243 - p.253).
 		// To move from current local space to a new local space where the parent changes but the global transformation
 		// stays the same, we first find the current global transform by going up in the hierarchy to the root. Then,
-		// we move down the hierarchy to the new parent:
-		glm::mat4 const& newLocalMatrix = glm::inverse(newParent->GetGlobalMatrix()) * GetGlobalMatrix();
+		// we move down the hierarchy to the new parent.
+		// If newParent == nullptr, we effectively move the current local Transform to assume the global values (so the
+		// objects that have their parent removed stay in the same final location)
+
+		glm::mat4 const& newLocalMatrix = 
+			newParent == nullptr ? GetGlobalMatrix() : (glm::inverse(newParent->GetGlobalMatrix()) * GetGlobalMatrix());
 
 		// Decompose our new matrix & update the individual components for when we call Recompute():
 		glm::vec3 skew;
@@ -505,12 +507,26 @@ namespace fr
 			ImGui::Text(std::format("Local Euler XYZ Radians: {}",
 				glm::to_string(GetLocalEulerXYZRotationRadians())).c_str());
 			ImGui::Text(std::format("Local Scale: {}", glm::to_string(m_localScale)).c_str());
+			
 			util::DisplayMat4x4(std::format("Local Matrix:##{}", uniqueID).c_str(), m_localMat);
+
+			ImGui::Separator();
+
+			ImGui::Text(std::format("Global Position: {}", glm::to_string(GetGlobalPosition())).c_str());
+			ImGui::Text(std::format("Global Quaternion: {}", glm::to_string(GetGlobalRotation())).c_str());
+			ImGui::Text(std::format("Global Euler XYZ Radians: {}", glm::to_string(GetGlobalEulerXYZRotationRadians())).c_str());
+			ImGui::Text(std::format("Global Scale: {}", glm::to_string(GetGlobalScale())).c_str());
+
 			util::DisplayMat4x4(std::format("Global Matrix:##{}", uniqueID).c_str(), GetGlobalMatrix());
 
-			ImGui::Text(std::format("Global Right (X): {}", glm::to_string(GetGlobalRight())).c_str());
-			ImGui::Text(std::format("Global Up (Y): {}", glm::to_string(GetGlobalUp())).c_str());
-			ImGui::Text(std::format("Global Forward (Z): {}", glm::to_string(GetGlobalForward())).c_str());
+			ImGui::Separator();
+
+			if (ImGui::TreeNode(std::format("Global Axis##{}", uniqueID).c_str()))
+			{
+				ImGui::Text(std::format("Global Right (X): {}", glm::to_string(GetGlobalRight())).c_str());
+				ImGui::Text(std::format("Global Up (Y): {}", glm::to_string(GetGlobalUp())).c_str());
+				ImGui::Text(std::format("Global Forward (Z): {}", glm::to_string(GetGlobalForward())).c_str());
+			}
 
 			ImGui::Unindent();
 		}

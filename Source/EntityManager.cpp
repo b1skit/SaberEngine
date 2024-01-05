@@ -330,8 +330,9 @@ namespace fr
 	}
 
 
-	void EntityManager::SetMainCameraInternal(entt::entity camera)
+	void EntityManager::SetMainCameraInternal(entt::entity newMainCamera)
 	{
+		entt::entity currentMainCamera = entt::null;
 		bool foundCurrentMainCamera = false;
 		auto currentMainCameraView = m_registry.view<fr::CameraComponent::MainCameraMarker>();
 		for (auto entity : currentMainCameraView)
@@ -339,16 +340,43 @@ namespace fr
 			SEAssert("Already found a main camera. This should not be possible", foundCurrentMainCamera == false);
 			foundCurrentMainCamera = true;
 
+			currentMainCamera = entity;
+
 			m_registry.erase<fr::CameraComponent::MainCameraMarker>(entity);
 
+			// If the main camera was added during the current frame, ensure we don't end up with 2 new camera markers
 			if (m_registry.any_of<fr::CameraComponent::NewMainCameraMarker>(entity))
 			{
 				m_registry.erase<fr::CameraComponent::NewMainCameraMarker>(entity);
 			}
 		}
 
-		m_registry.emplace_or_replace<fr::CameraComponent::MainCameraMarker>(camera);
-		m_registry.emplace_or_replace<fr::CameraComponent::NewMainCameraMarker>(camera);
+		m_registry.emplace_or_replace<fr::CameraComponent::MainCameraMarker>(newMainCamera);
+		m_registry.emplace_or_replace<fr::CameraComponent::NewMainCameraMarker>(newMainCamera);
+
+		// 
+
+		fr::TransformComponent* camControllerTransformCmpt = nullptr;
+		entt::entity camController = entt::null;
+		bool foundCamController = false;
+		auto camControllerView = m_registry.view<fr::CameraControlComponent>();
+		for (entt::entity entity : camControllerView)
+		{
+			SEAssert("Already found camera controller. This shouldn't be possible", !foundCamController);
+			foundCamController = true;
+
+			camControllerTransformCmpt = &m_registry.get<fr::TransformComponent>(entity);
+		}
+
+		// No point trying to set a camera if the camera controller doesn't exist yet
+		if (camControllerTransformCmpt)
+		{
+			fr::TransformComponent& currentCamTransformCmpt = m_registry.get<fr::TransformComponent>(currentMainCamera);
+			fr::TransformComponent& newCamTransformCmpt = m_registry.get<fr::TransformComponent>(newMainCamera);
+
+			fr::CameraControlComponent::SetCamera(
+				*camControllerTransformCmpt, &currentCamTransformCmpt, newCamTransformCmpt);
+		}
 	}
 
 
@@ -450,32 +478,32 @@ namespace fr
 	}
 
 
-	void EntityManager::OnNewMainCamera(entt::entity newMainCamera)
-	{
-		// No lock needed: Event handlers are called from within functions that already hold one
+	//void EntityManager::OnNewMainCamera(entt::entity newMainCamera)
+	//{
+	//	// No lock needed: Event handlers are called from within functions that already hold one
 
-		fr::TransformComponent* camControllerTransformCmpt = nullptr;
-		entt::entity camController = entt::null;
-		bool foundCamController = false;
-		auto camControllerView = m_registry.view<fr::CameraControlComponent>();
-		for (entt::entity entity : camControllerView)
-		{
-			SEAssert("Already found camera controller. This shouldn't be possible", !foundCamController);
-			foundCamController = true;
+	//	fr::TransformComponent* camControllerTransformCmpt = nullptr;
+	//	entt::entity camController = entt::null;
+	//	bool foundCamController = false;
+	//	auto camControllerView = m_registry.view<fr::CameraControlComponent>();
+	//	for (entt::entity entity : camControllerView)
+	//	{
+	//		SEAssert("Already found camera controller. This shouldn't be possible", !foundCamController);
+	//		foundCamController = true;
 
-			camControllerTransformCmpt = &m_registry.get<fr::TransformComponent>(entity);
-		}
+	//		camControllerTransformCmpt = &m_registry.get<fr::TransformComponent>(entity);
+	//	}
 
-		// No point trying to set a camera if the camera controller doesn't exist yet
-		if (camControllerTransformCmpt)
-		{
-			fr::TransformComponent* camTransformCmpt = 
-				GetFirstInHierarchyAboveInternal<fr::TransformComponent>(newMainCamera);
-			SEAssert("Failed to find new camera's TransformComponent", camTransformCmpt != nullptr);
+	//	/*fr::Relationship&
+	//	GetMainCameraInternal();*/
 
-			fr::CameraControlComponent::SetCamera(*camControllerTransformCmpt, *camTransformCmpt);
-		}
-	}
+	//	// No point trying to set a camera if the camera controller doesn't exist yet
+	//	if (camControllerTransformCmpt)
+	//	{
+	//		fr::TransformComponent& camTransformCmpt = m_registry.get<fr::TransformComponent>(newMainCamera);
+	//		fr::CameraControlComponent::SetCamera(*camControllerTransformCmpt, , camTransformCmpt);
+	//	}
+	//}
 
 
 	void EntityManager::ConfigureRegistry()
@@ -484,7 +512,6 @@ namespace fr
 			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
 
 			m_registry.on_construct<DirtyMarker<fr::BoundsComponent>>().connect<&fr::EntityManager::OnBoundsDirty>(*this);
-			m_registry.on_construct<fr::CameraComponent::NewMainCameraMarker>().connect<&fr::EntityManager::OnNewMainCamera>(*this);
 		}
 	}
 

@@ -17,7 +17,10 @@ namespace fr
 	public:
 		static entt::entity CreateCameraControlConcept(EntityManager&, entt::entity cameraConcept);
 
-		static void SetCamera(fr::TransformComponent& controllerTransformCmpt, fr::TransformComponent& camTransformCmpt);
+		static void SetCamera(
+			fr::TransformComponent& controllerTransformCmpt,
+			fr::TransformComponent* currentCamTransformCmpt, 
+			fr::TransformComponent& newCamTransformCmpt);
 
 		static void Update(
 			CameraControlComponent&, 
