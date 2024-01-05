@@ -63,7 +63,6 @@ namespace fr
 		void ConfigureRegistry();
 
 		void OnBoundsDirty();
-		//void OnNewMainCamera(entt::entity);
 
 
 	public: // EnTT wrappers:
