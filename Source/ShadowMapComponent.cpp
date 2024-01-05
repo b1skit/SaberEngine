@@ -47,20 +47,8 @@ namespace fr
 	{
 		SEAssert("A ShadowMapComponent must be attached to a LightComponent",
 			em.HasComponent<fr::LightComponent>(owningEntity));
-
-		entt::entity shadowMapEntity = em.CreateEntity(name);
-
-		// Relationship:
-		fr::Relationship& shadowMapRelationship = em.GetComponent<fr::Relationship>(shadowMapEntity);
-		shadowMapRelationship.SetParent(em, owningEntity);
-
-		// RenderData: We share the owning entity's RenderDataID
-		gr::RenderDataComponent* owningRenderDataCmpt = 
-			em.GetFirstInHierarchyAbove<gr::RenderDataComponent>(shadowMapRelationship.GetParent());
-		SEAssert("A shadow map needs to share a render data component", owningRenderDataCmpt != nullptr);
-
-		gr::RenderDataComponent const& sharedRenderDataCmpt = 
-			gr::RenderDataComponent::AttachSharedRenderDataComponent(em, shadowMapEntity, *owningRenderDataCmpt);
+		SEAssert("A ShadowMapComponent must be attached to an entity with a RenderDataComponent", 
+			em.HasComponent<gr::RenderDataComponent>(owningEntity));
 
 		// ShadowMap component:
 		glm::uvec2 widthHeight{0, 0};
@@ -68,21 +56,22 @@ namespace fr
 		{
 		case fr::Light::Type::Directional:
 		{
+			SEAssert("A directional ShadowMapComponent must be attached to an entity with a DirectionalDeferredMarker",
+				em.HasComponent<fr::LightComponent::DirectionalDeferredMarker>(owningEntity));
+
 			const int defaultDirectionalWidthHeight = 
 				en::Config::Get()->GetValue<int>(en::ConfigKeys::k_defaultShadowMapResolution);
 			widthHeight = glm::vec2(defaultDirectionalWidthHeight, defaultDirectionalWidthHeight);
-
-			// Add a light type marker to simplify shadow searches:
-			em.EmplaceComponent<fr::LightComponent::DirectionalDeferredMarker>(shadowMapEntity);
 		}
 		break;
 		case fr::Light::Type::Point:
 		{
+			SEAssert("A point ShadowMapComponent must be attached to an entity with a PointDeferredMarker",
+				em.HasComponent<fr::LightComponent::PointDeferredMarker>(owningEntity));
+
 			const int defaultCubemapWidthHeight =
 				en::Config::Get()->GetValue<int>(en::ConfigKeys::k_defaultShadowCubeMapResolution);
 			widthHeight = glm::vec2(defaultCubemapWidthHeight, defaultCubemapWidthHeight);
-			
-			em.EmplaceComponent<fr::LightComponent::PointDeferredMarker>(shadowMapEntity);
 		}
 		break;
 		case fr::Light::Type::AmbientIBL:
@@ -90,9 +79,10 @@ namespace fr
 		}
 
 		fr::LightComponent const& owningLightComponent = em.GetComponent<fr::LightComponent>(owningEntity);
+		gr::RenderDataComponent const& sharedRenderDataCmpt = em.GetComponent<gr::RenderDataComponent>(owningEntity);
 
 		ShadowMapComponent& shadowMapComponent = *em.EmplaceComponent<fr::ShadowMapComponent>(
-			shadowMapEntity,
+			owningEntity,
 			PrivateCTORTag{},
 			lightType,
 			sharedRenderDataCmpt.GetRenderDataID(),
@@ -106,9 +96,9 @@ namespace fr
 		owningTransform->GetTransform().Recompute();
 
 		// Attach a shadow map render camera:
-		fr::CameraComponent::AttachCameraConcept(
+		fr::CameraComponent::AttachCameraComponent(
 			em,
-			shadowMapEntity,
+			owningEntity,
 			std::format("{}_ShadowCam", name).c_str(),
 			GenerateShadowCameraConfig(
 				shadowMapComponent.GetShadowMap(), 
@@ -116,8 +106,11 @@ namespace fr
 				owningLightComponent.GetLight(),
 				nullptr));
 
+		// Add a shadow marker:
+		em.EmplaceComponent<HasShadowMarker>(owningEntity);
+
 		// Finally, mark our new ShadowMapComponent as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::ShadowMapComponent>>(shadowMapEntity);
+		em.EmplaceComponent<DirtyMarker<fr::ShadowMapComponent>>(owningEntity);
 
 		return shadowMapComponent;
 	}

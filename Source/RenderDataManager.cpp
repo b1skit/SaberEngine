@@ -309,90 +309,82 @@ namespace gr
 		}
 		
 
-		if (ImGui::CollapsingHeader("Render data manager", ImGuiTreeNodeFlags_None))
+		ImGui::Text(std::format("Current frame: {}", m_currentFrame).c_str());
+		ImGui::Text(std::format("Total data vectors: {}", m_dataVectors.size()).c_str());
+
+		const ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable;
+
+		const int numDataTypes = static_cast<int>(m_dataVectors.size());
+		const int numCols = numDataTypes + 3;
+		if (ImGui::BeginTable("m_IDToRenderObjectMetadata", numCols, flags))
 		{
-			ImGui::Indent();
-
-			ImGui::Text(std::format("Current frame: {}", m_currentFrame).c_str());
-			ImGui::Text(std::format("Total data vectors: {}", m_dataVectors.size()).c_str());
-
-			const ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable;
-
-			const int numDataTypes = static_cast<int>(m_dataVectors.size());
-			const int numCols = numDataTypes + 3;
-			if (ImGui::BeginTable("m_IDToRenderObjectMetadata", numCols, flags))
+			// Headers:				
+			ImGui::TableSetupColumn("RenderObjectID (ref. count)");
+			ImGui::TableSetupColumn("TransformID (ref.count) [dirty frame]");
+			ImGui::TableSetupColumn("Feature bits");
+			for (size_t i = 0; i < numDataTypes; i++)
 			{
-				// Headers:				
-				ImGui::TableSetupColumn("RenderObjectID [ref. count]");
-				ImGui::TableSetupColumn("TransformID [ref.count] (dirty frame)");
-				ImGui::TableSetupColumn("Feature bits");
+				ImGui::TableSetupColumn(std::format("{} [dirty frame]", names[i]).c_str());
+			}
+			ImGui::TableHeadersRow();
+
+
+			for (auto const& entry : m_IDToRenderObjectMetadata)
+			{
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+
+				// RenderDataID (Ref. count)
+				ImGui::Text(std::format("{} ({})", entry.first, entry.second.m_referenceCount).c_str());
+
+				ImGui::TableNextColumn();
+
+				// TransformID (Ref. count) [dirty frame]
+				ImGui::Text(std::format("{} ({}) [{}]",
+					entry.second.m_transformID,
+					m_transformIDToTransformMetadata.at(entry.second.m_transformID).m_referenceCount,
+					m_transformIDToTransformMetadata.at(entry.second.m_transformID).m_dirtyFrame).c_str());
+
+				ImGui::TableNextColumn();
+
+				// Feature bits
+				ImGui::Text(std::format("{:b}", entry.second.m_featureBits).c_str());
+
 				for (size_t i = 0; i < numDataTypes; i++)
 				{
-					ImGui::TableSetupColumn(std::format("{} (dirty frame)", names[i]).c_str());
-				}
-				ImGui::TableHeadersRow();
-
-
-				for (auto const& entry : m_IDToRenderObjectMetadata)
-				{
-					ImGui::TableNextRow();
-					ImGui::TableNextColumn();
-					
-					// RenderDataID [Ref. count]
-					ImGui::Text(std::format("{} [{}]", entry.first, entry.second.m_referenceCount).c_str());
-					
 					ImGui::TableNextColumn();
 
-					// TransformID [Ref. count] (dirty frame)
-					ImGui::Text(std::format("{} [{}]({})", 
-						entry.second.m_transformID, 
-						m_transformIDToTransformMetadata.at(entry.second.m_transformID).m_referenceCount,
-						m_transformIDToTransformMetadata.at(entry.second.m_transformID).m_dirtyFrame).c_str());
+					std::string cellText;
 
-					ImGui::TableNextColumn();
-
-					// Feature bits
-					ImGui::Text(std::format("{:b}", entry.second.m_featureBits).c_str());
-
-					for (size_t i = 0; i < numDataTypes; i++)
+					// ObjectTypeToDataIndexTable
+					if (i >= entry.second.m_objectTypeToDataIndexTable.size() ||
+						entry.second.m_objectTypeToDataIndexTable[i] == k_invalidDataIdx)
 					{
-						ImGui::TableNextColumn();
-
-						std::string cellText;
-
-						// ObjectTypeToDataIndexTable
-						if (i >= entry.second.m_objectTypeToDataIndexTable.size() ||
-							entry.second.m_objectTypeToDataIndexTable[i] == k_invalidDataIdx)
-						{
-							cellText = "-";
-						}
-						else
-						{
-							cellText = std::format("{}", entry.second.m_objectTypeToDataIndexTable[i]).c_str();
-						}
-
-						cellText += " ";
-
-						// LastDirtyFrameTable
-						if (i >= entry.second.m_dirtyFrameTable.size() ||
-							entry.second.m_dirtyFrameTable[i] == k_invalidDirtyFrameNum)
-						{
-							cellText += "(-)";
-						}
-						else
-						{
-							cellText += std::format("({})", entry.second.m_dirtyFrameTable[i]).c_str();
-						}
-
-						ImGui::Text(cellText.c_str());
+						cellText = "-";
 					}
-				}
+					else
+					{
+						cellText = std::format("{}", entry.second.m_objectTypeToDataIndexTable[i]).c_str();
+					}
 
-				ImGui::EndTable();
+					cellText += " ";
+
+					// LastDirtyFrameTable
+					if (i >= entry.second.m_dirtyFrameTable.size() ||
+						entry.second.m_dirtyFrameTable[i] == k_invalidDirtyFrameNum)
+					{
+						cellText += "(-)";
+					}
+					else
+					{
+						cellText += std::format("({})", entry.second.m_dirtyFrameTable[i]).c_str();
+					}
+
+					ImGui::Text(cellText.c_str());
+				}
 			}
 
-
-			ImGui::Unindent();
+			ImGui::EndTable();
 		}
 	}
 }

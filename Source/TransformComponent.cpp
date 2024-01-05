@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "CoreEngine.h"
 #include "EntityManager.h"
+#include "MarkerComponents.h"
 #include "RenderDataManager.h"
 #include "RenderManager.h"
 #include "TransformComponent.h"
@@ -12,6 +13,9 @@ namespace fr
 		fr::EntityManager& em, entt::entity entity, fr::Transform* parent)
 	{
 		em.EmplaceComponent<fr::TransformComponent::NewIDMarker>(entity);
+		
+		// Note: We don't emplace a dirty marker; The Transform/TransformComponent currently track their dirty state
+
 		return *em.EmplaceComponent<fr::TransformComponent>(entity, PrivateCTORTag{}, parent);
 	}
 

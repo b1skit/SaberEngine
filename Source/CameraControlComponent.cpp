@@ -5,6 +5,7 @@
 #include "EntityManager.h"
 #include "InputManager.h"
 #include "NameComponent.h"
+#include "SceneNodeConcept.h"
 #include "TransformComponent.h"
 
 
@@ -20,22 +21,19 @@ namespace fr
 		SEAssert("cameraConcept entity must have a CameraComponent attached",
 			em.HasComponent<fr::CameraComponent>(cameraConcept));
 
-		entt::entity camControlEntity = em.CreateEntity(k_defaultCameraControllerName);
+		entt::entity sceneNode = fr::SceneNode::Create(em, k_defaultCameraControllerName, entt::null);
 
-		em.EmplaceComponent<CameraControlComponent>(camControlEntity);
+		em.EmplaceComponent<CameraControlComponent>(sceneNode);
 
-		fr::TransformComponent& controllerTransform = 
-			fr::TransformComponent::AttachTransformComponent(em, camControlEntity, nullptr);
+		fr::TransformComponent& controllerTransform = em.GetComponent<fr::TransformComponent>(sceneNode);
 
-		fr::Relationship const& cameraRelationship = em.GetComponent<fr::Relationship>(cameraConcept);
-		fr::TransformComponent* camTransform =
-			em.GetFirstInHierarchyAbove<fr::TransformComponent>(cameraRelationship.GetParent());
-		SEAssert("Failed to find camera TransformComponent", camTransform);
+
+		fr::TransformComponent& camTransform = em.GetComponent<fr::TransformComponent>(cameraConcept);
 
 		// Parent the camera to the player object:
-		SetCamera(controllerTransform, *camTransform);
+		SetCamera(controllerTransform, camTransform);
 		
-		return camControlEntity;
+		return sceneNode;
 	}
 
 

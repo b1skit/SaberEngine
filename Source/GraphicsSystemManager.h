@@ -43,6 +43,7 @@ namespace gr
 		void SetActiveCamera(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID);
 
 		void ShowImGuiWindow();
+		void ShowImGuiRenderDataDebugWindow() const;
 
 
 	private:

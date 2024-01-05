@@ -2,8 +2,5 @@
 #pragma once
 
 
-struct NewEntityMarker {};
-
-
 template<typename ComponentType>
 struct DirtyMarker {};

@@ -15,6 +15,10 @@ namespace fr
 	class ShadowMapComponent
 	{
 	public:
+		struct HasShadowMarker {};
+
+
+	public:
 		// Note: May trigger a .Recompute() of the entity's owning Transform
 		static ShadowMapComponent& AttachShadowMapComponent(
 			EntityManager&, entt::entity, char const* name, fr::Light::Type);

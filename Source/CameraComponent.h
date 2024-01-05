@@ -23,9 +23,12 @@ namespace fr
 		struct NewMainCameraMarker {};
 
 	public:
-		static entt::entity AttachCameraConcept(
+		static void CreateCameraConcept(
+			fr::EntityManager&, entt::entity sceneNode, char const* name, gr::Camera::Config const&);
+
+		static void AttachCameraComponent(
 			fr::EntityManager&, entt::entity owningEntity, char const* name, gr::Camera::Config const&);
-		static entt::entity AttachCameraConcept(
+		static void AttachCameraComponent(
 			fr::EntityManager&, entt::entity owningEntity, std::string const& name, gr::Camera::Config const&);
 
 		static void MarkDirty(EntityManager&, entt::entity cameraEntity);

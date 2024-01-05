@@ -38,7 +38,7 @@ namespace fr
 	void BoundsComponent::AttachBoundsComponent(
 		fr::EntityManager& em, entt::entity entity)
 	{
-		// Finally, attach the BoundsComponent (which will trigger event listeners)
+		// Attach the BoundsComponent (which will trigger event listeners)
 		em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{});
 
 		em.EmplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
@@ -51,7 +51,7 @@ namespace fr
 		glm::vec3 const& minXYZ,
 		glm::vec3 const& maxXYZ)
 	{
-		// Finally, attach the BoundsComponent (which will trigger event listeners)
+		// Attach the BoundsComponent (which will trigger event listeners)
 		em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ);
 
 		em.EmplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
@@ -65,7 +65,7 @@ namespace fr
 		glm::vec3 const& maxXYZ,
 		std::vector<glm::vec3> const& positions)
 	{
-		// Finally, attach the BoundsComponent (which will trigger event listeners)
+		// Attach the BoundsComponent (which will trigger event listeners)
 		em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ, positions);
 
 		em.EmplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
@@ -245,13 +245,18 @@ namespace fr
 		fr::Relationship const& owningEntityRelationship = em.GetComponent<fr::Relationship>(boundsEntity);
 
 		// Recursively expand any Bounds above us:
-		entt::entity nextEntity = entt::null;
-		fr::BoundsComponent* nextBounds = em.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
-			owningEntityRelationship.GetParent(), 
-			nextEntity);
-		if (nextBounds != nullptr)
+		if (owningEntityRelationship.HasParent())
 		{
-			ExpandBoundsHierarchy(em, *this, nextEntity);
+			entt::entity nextEntity = entt::null;
+
+			fr::BoundsComponent* nextBounds = em.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
+				owningEntityRelationship.GetParent(),
+				nextEntity);
+
+			if (nextBounds != nullptr)
+			{
+				ExpandBoundsHierarchy(em, *this, nextEntity);
+			}
 		}
 	}
 

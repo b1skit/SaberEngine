@@ -363,9 +363,15 @@ namespace
 	void LoadAddCamera(fr::SceneData& scene, entt::entity sceneNode, cgltf_node* current)
 	{
 		fr::EntityManager& em = *fr::EntityManager::Get();
-		entt::entity newCameraConcept = entt::null;
+		
+		constexpr char const* k_defaultCamName = "DefaultCamera";
+		if (sceneNode == entt::null)
+		{
+			sceneNode = fr::SceneNode::Create(em, std::format("{}_SceneNode", k_defaultCamName).c_str(), entt::null);
+		}
 
-		if (sceneNode == entt::null && (current == nullptr || current->camera == nullptr))
+
+		if (current == nullptr || current->camera == nullptr)
 		{
 			LOG("Creating a default camera");
 
@@ -375,11 +381,9 @@ namespace
 			camConfig.m_near = en::Config::Get()->GetValue<float>("defaultNear");
 			camConfig.m_far = en::Config::Get()->GetValue<float>("defaultFar");
 
-			constexpr char const* k_defaultCamName = "DefaultCamera";
-
-			newCameraConcept = fr::CameraComponent::AttachCameraConcept(
+			fr::CameraComponent::CreateCameraConcept(
 				em, 
-				fr::SceneNode::Create(std::format("{}_SceneNode", k_defaultCamName).c_str(), entt::null),
+				sceneNode,
 				k_defaultCamName, 
 				camConfig);
 		}
@@ -419,14 +423,14 @@ namespace
 			}
 
 			// Create the camera and set the transform values on the parent object:
-			newCameraConcept = fr::CameraComponent::AttachCameraConcept(em, sceneNode, camName, camConfig);
+			fr::CameraComponent::CreateCameraConcept(em, sceneNode, camName.c_str(), camConfig);
 
 			fr::Transform* sceneNodeTransform = &fr::SceneNode::GetTransform(em, sceneNode);
 
 			SetTransformValues(current, sceneNode);
 		}
 
-		em.SetMainCamera(newCameraConcept);
+		em.SetMainCamera(sceneNode);
 	}
 
 
@@ -563,7 +567,7 @@ namespace
 
 		const uint32_t numMeshPrimitives = util::CheckedCast<uint32_t>(current->mesh->primitives_count);
 		
-		entt::entity meshEntity = fr::Mesh::AttachMeshConcept(sceneNode, meshName.c_str());
+		fr::Mesh::AttachMeshConcept(sceneNode, meshName.c_str());
 
 		// Add each MeshPrimitive as a child of the SceneNode's Mesh:
 		for (size_t primitive = 0; primitive < numMeshPrimitives; primitive++)
@@ -774,7 +778,6 @@ namespace
 						jointsAsUints[jointIdx] = static_cast<uint8_t>(jointsAsFloats[jointIdx]);
 					}
 				}
-
 			} // End attribute unpacking
 
 			// Construct any missing vertex attributes for the mesh:
@@ -793,17 +796,11 @@ namespace
 			};
 			util::VertexStreamBuilder::BuildMissingVertexAttributes(&meshData);
 
-			fr::EntityManager& em = *fr::EntityManager::Get();
-
-			// Attach the MeshPrimitive to the Mesh:
-			entt::entity meshPrimimitiveEntity = fr::MeshPrimitiveComponent::AttachMeshPrimitiveConcept(
-				em,
-				meshEntity,
+			// Construct the MeshPrimitive (internally registers itself with the SceneData):
+			std::shared_ptr<gr::MeshPrimitive> meshPrimitiveSceneData = gr::MeshPrimitive::Create(
 				meshName.c_str(),
 				&indices,
 				positions,
-				positionsMinXYZ,
-				positionsMaxXYZ,
 				&normals,
 				&tangents,
 				&uv0,
@@ -811,6 +808,16 @@ namespace
 				&jointsAsUints,
 				&weights,
 				meshPrimitiveParams);
+
+			fr::EntityManager& em = *fr::EntityManager::Get();
+
+			// Attach the MeshPrimitive to the Mesh:
+			entt::entity meshPrimimitiveEntity = fr::MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
+				em,
+				sceneNode,
+				meshPrimitiveSceneData.get(),
+				positionsMinXYZ,
+				positionsMaxXYZ);
 
 			// Assign a material:
 			std::shared_ptr<gr::Material> material;
@@ -855,7 +862,8 @@ namespace
 			{
 				const std::string nodeName = current->name ? current->name : "Unnamed child node";
 
-				entt::entity childNode = fr::SceneNode::Create(nodeName.c_str(), parentSceneNode);
+				entt::entity childNode = 
+					fr::SceneNode::Create(*fr::EntityManager::Get(), nodeName.c_str(), parentSceneNode);
 
 				LoadObjectHierarchyRecursiveHelper(
 					sceneRootPath, scene, data, current->children[i], childNode, loadTasks);
@@ -914,7 +922,7 @@ namespace
 			LOG("Loading root node %zu: \"%s\"", node, nodeName.c_str());
 
 			entt::entity rootSceneNode = 
-				fr::SceneNode::Create(nodeName.c_str(), entt::null); // Root has no parent
+				fr::SceneNode::Create(*fr::EntityManager::Get(), nodeName.c_str(), entt::null); // Root has no parent
 
 			LoadObjectHierarchyRecursiveHelper(
 				sceneRootPath, scene, data, data->scenes->nodes[node], rootSceneNode, loadTasks);

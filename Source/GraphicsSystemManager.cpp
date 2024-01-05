@@ -81,13 +81,6 @@ namespace gr
 
 	void GraphicsSystemManager::ShowImGuiWindow()
 	{
-		if (ImGui::CollapsingHeader(std::format("Render data##", util::PtrToID(this)).c_str()))
-		{
-			ImGui::Indent();
-			m_renderData.ShowImGuiWindow();
-			ImGui::Unindent();
-		}
-
 		for (std::shared_ptr<gr::GraphicsSystem> const& gs : m_graphicsSystems)
 		{
 			if (ImGui::CollapsingHeader(std::format("{}##{}", gs->GetName(), gs->GetUniqueID()).c_str()))
@@ -97,5 +90,11 @@ namespace gr
 				ImGui::Unindent();
 			}
 		}
+	}
+
+
+	void GraphicsSystemManager::ShowImGuiRenderDataDebugWindow() const
+	{
+		m_renderData.ShowImGuiWindow();
 	}
 }

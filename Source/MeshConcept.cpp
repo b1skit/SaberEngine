@@ -12,32 +12,25 @@
 
 namespace fr
 {
-	entt::entity Mesh::AttachMeshConcept(entt::entity owningEntity, char const* name)
+	void Mesh::AttachMeshConcept(entt::entity owningEntity, char const* name)
 	{
 		fr::EntityManager& em = *fr::EntityManager::Get();
 
 		SEAssert("A Mesh concept requires a Transform. The owningEntity should have this already",
 			em.HasComponent<fr::TransformComponent>(owningEntity));
 		
-		entt::entity meshEntity = em.CreateEntity(name);
-
-		em.EmplaceComponent<fr::Mesh::MeshConceptMarker>(meshEntity);
+		em.EmplaceComponent<fr::Mesh::MeshConceptMarker>(owningEntity);
 
 		fr::TransformComponent const& owningTransformCmpt = em.GetComponent<fr::TransformComponent>(owningEntity);
 
 		gr::RenderDataComponent& meshRenderData = 
-			gr::RenderDataComponent::AttachNewRenderDataComponent(em, meshEntity, owningTransformCmpt.GetTransformID());
+			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, owningTransformCmpt.GetTransformID());
 
 		// Mesh bounds: Encompasses all attached primitive bounds
-		fr::BoundsComponent::AttachBoundsComponent(em, meshEntity);
+		fr::BoundsComponent::AttachBoundsComponent(em, owningEntity);
 
 		// Mark our RenderDataComponent so the renderer can differentiate between Mesh and MeshPrimitive Bounds
 		meshRenderData.SetFeature(gr::RenderObjectFeature::IsMeshBounds);
-
-		fr::Relationship& meshRelationship = em.GetComponent<fr::Relationship>(meshEntity);
-		meshRelationship.SetParent(em, owningEntity);
-
-		return meshEntity;
 	}
 
 

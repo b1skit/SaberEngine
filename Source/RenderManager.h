@@ -64,7 +64,10 @@ namespace re
 
 		std::vector<std::unique_ptr<re::RenderSystem>> const& GetRenderSystems() const;
 
-		void ShowImGuiWindow(bool* show);
+		void ShowImGuiWindow(bool* showRenderMgrDebug, bool* showRenderDataDebug);
+
+	private:
+		void ShowImGuiRenderDataDebug(bool* show) const;
 
 
 	private:

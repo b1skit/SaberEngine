@@ -11,83 +11,39 @@
 #include "VertexStream.h"
 
 
-namespace fr
+namespace
 {
-	entt::entity MeshPrimitiveComponent::AttachMeshPrimitiveConcept(
+	void AttachMeshPrimitiveComponentHelper(
 		fr::EntityManager& em,
 		entt::entity owningEntity,
-		char const* name,
-		std::vector<uint32_t>* indices,
-		std::vector<float>& positions,
-		glm::vec3 const& positionMinXYZ, // Pass fr::BoundsConcept::k_invalidMinXYZ to compute bounds manually
-		glm::vec3 const& positionMaxXYZ, // Pass fr::BoundsConcept::k_invalidMaxXYZ to compute bounds manually
-		std::vector<float>* normals,
-		std::vector<float>* tangents,
-		std::vector<float>* uv0,
-		std::vector<float>* colors,
-		std::vector<uint8_t>* joints,
-		std::vector<float>* weights,
-		gr::MeshPrimitive::MeshPrimitiveParams const& meshParams)
-	{
-		std::shared_ptr<gr::MeshPrimitive> meshPrimitiveSceneData = gr::MeshPrimitive::Create(
-			name,
-			indices,
-			positions,
-			normals,
-			tangents,
-			uv0,
-			colors,
-			joints,
-			weights,
-			meshParams);
-
-		return AttachMeshPrimitiveConcept(em, owningEntity, meshPrimitiveSceneData.get(), positionMinXYZ, positionMaxXYZ);
-	}
-
-
-	entt::entity MeshPrimitiveComponent::AttachMeshPrimitiveConcept(
-		fr::EntityManager& em,
-		entt::entity owningEntity, 
-		gr::MeshPrimitive const* meshPrimitive, 
+		gr::MeshPrimitive const* meshPrimitive,
 		glm::vec3 const& positionMinXYZ,
 		glm::vec3 const& positionMaxXYZ)
 	{
-		SEAssert("A mesh primitive's owning entity requires a TransformComponent",
-			em.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
-
-		entt::entity meshPrimitiveEntity = em.CreateEntity(meshPrimitive->GetName());
-
-		// Relationship:
-		fr::Relationship& meshPrimitiveRelationship = em.GetComponent<fr::Relationship>(meshPrimitiveEntity);
-		meshPrimitiveRelationship.SetParent(em, owningEntity);
-
-		// RenderDataComponent:
-		fr::TransformComponent const* transformComponent =
-			em.GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
-		gr::RenderDataComponent::AttachNewRenderDataComponent(
-			em, meshPrimitiveEntity, transformComponent->GetTransformID());
-
 		// MeshPrimitive:
 		em.EmplaceComponent<fr::MeshPrimitiveComponent>(
-			meshPrimitiveEntity,
-			MeshPrimitiveComponent{
+			owningEntity,
+			fr::MeshPrimitiveComponent{
 				.m_meshPrimitive = meshPrimitive
 			});
-		
+
 		// Bounds for the MeshPrimitive
 		fr::BoundsComponent::AttachBoundsComponent(
 			em,
-			meshPrimitiveEntity,
+			owningEntity,
 			positionMinXYZ,
 			positionMaxXYZ,
 			reinterpret_cast<std::vector<glm::vec3> const&>(
 				meshPrimitive->GetVertexStream(gr::MeshPrimitive::Slot::Position)->GetDataAsVector()));
-		fr::BoundsComponent const& meshPrimitiveBounds = em.GetComponent<fr::BoundsComponent>(meshPrimitiveEntity);
+		fr::BoundsComponent const& meshPrimitiveBounds = em.GetComponent<fr::BoundsComponent>(owningEntity);
 
-		// If there is a BoundsComponent in the heirarchy above, assume it's encapsulating the MeshPrimitive:
+		fr::Relationship& owningEntityRelationship = em.GetComponent<fr::Relationship>(owningEntity);
+
+		// If there's a BoundsComponent in the heirarchy above (i.e. from a Mesh), assume it's encapsulating the
+		// MeshPrimitive:
 		entt::entity nextEntity = entt::null;
 		fr::BoundsComponent* encapsulatingBounds = em.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
-			meshPrimitiveRelationship.GetParent(), 
+			owningEntityRelationship.GetParent(),
 			nextEntity);
 		if (encapsulatingBounds != nullptr)
 		{
@@ -95,10 +51,57 @@ namespace fr
 		}
 
 		// Mark our new MeshPrimitive as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::MeshPrimitiveComponent>>(meshPrimitiveEntity);
+		em.EmplaceComponent<DirtyMarker<fr::MeshPrimitiveComponent>>(owningEntity);
+	}
+}
 
-		// Note: A Material component must be attached to the returned entity
-		return meshPrimitiveEntity;
+
+namespace fr
+{
+	entt::entity MeshPrimitiveComponent::CreateMeshPrimitiveConcept(
+		fr::EntityManager& em,
+		entt::entity owningEntity, 
+		gr::MeshPrimitive const* meshPrimitive, 
+		glm::vec3 const& positionMinXYZ,
+		glm::vec3 const& positionMaxXYZ)
+	{
+		SEAssert("A MeshPrimitive's owningEntity requires a TransformComponent",
+			em.HasComponent<fr::TransformComponent>(owningEntity));
+		SEAssert("A MeshPrimitive's owningEntity requires a RenderDataComponent",
+			em.HasComponent<gr::RenderDataComponent>(owningEntity));
+
+		entt::entity meshPrimitiveConcept = em.CreateEntity(meshPrimitive->GetName());
+
+		// Relationship:
+		fr::Relationship& meshPrimitiveRelationship = em.GetComponent<fr::Relationship>(meshPrimitiveConcept);
+		meshPrimitiveRelationship.SetParent(em, owningEntity);
+
+		// RenderDataComponent: A MeshPrimitive has its own RenderDataID, but shares the TransformID of its owningEntity
+		fr::TransformComponent const& transformComponent = em.GetComponent<fr::TransformComponent>(owningEntity);
+
+		gr::RenderDataComponent::AttachNewRenderDataComponent(
+			em, meshPrimitiveConcept, transformComponent.GetTransformID());
+
+		AttachMeshPrimitiveComponentHelper(em, meshPrimitiveConcept, meshPrimitive, positionMinXYZ, positionMaxXYZ);
+
+		return meshPrimitiveConcept; // Note: A Material component must be attached to the returned entity
+	}
+
+
+	void MeshPrimitiveComponent::AttachMeshPrimitiveComponent(
+		fr::EntityManager& em,
+		entt::entity owningEntity,
+		gr::MeshPrimitive const* meshPrimitive,
+		glm::vec3 const& positionMinXYZ /*= fr::BoundsComponent::k_invalidMinXYZ*/, // Default: Compute bounds manually
+		glm::vec3 const& positionMaxXYZ /*= fr::BoundsComponent::k_invalidMaxXYZ*/) // Default: Compute bounds manually
+	{
+		SEAssert("A MeshPrimitive's owningEntity requires a TransformComponent",
+			em.HasComponent<fr::TransformComponent>(owningEntity));
+		SEAssert("A MeshPrimitive's owningEntity requires a RenderDataComponent",
+			em.HasComponent<gr::RenderDataComponent>(owningEntity));
+
+		// Note: A Material component will typically need to be attached to the owningEntity
+		AttachMeshPrimitiveComponentHelper(em, owningEntity, meshPrimitive, positionMinXYZ, positionMaxXYZ);
 	}
 
 
@@ -108,25 +111,16 @@ namespace fr
 		gr::RenderDataComponent const& sharedRenderDataCmpt, 
 		gr::MeshPrimitive const* meshPrimitive)
 	{
-		entt::entity meshPrimitiveEntity = em.CreateEntity(meshPrimitive->GetName());
-
-		// Relationship:
-		fr::Relationship& meshPrimitiveRelationship = em.GetComponent<fr::Relationship>(meshPrimitiveEntity);
-		meshPrimitiveRelationship.SetParent(em, owningEntity);
-
-		// Shared RenderDataComponent:
-		gr::RenderDataComponent::AttachSharedRenderDataComponent(em, meshPrimitiveEntity, sharedRenderDataCmpt);
-
 		// MeshPrimitive:
 		MeshPrimitiveComponent& meshPrimCmpt = *em.EmplaceComponent<MeshPrimitiveComponent>(
-			meshPrimitiveEntity,
+			owningEntity,
 			MeshPrimitiveComponent
 			{
 				.m_meshPrimitive = meshPrimitive
 			});
 
 		// Mark our new MeshPrimitive as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::MeshPrimitiveComponent>>(meshPrimitiveEntity);
+		em.EmplaceComponent<DirtyMarker<fr::MeshPrimitiveComponent>>(owningEntity);
 
 		return meshPrimCmpt;
 	}

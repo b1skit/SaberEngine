@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "BoundsComponent.h"
 #include "CameraComponent.h"
+#include "Config.h"
 #include "CoreEngine.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
@@ -48,29 +49,11 @@ namespace fr
 		fr::LightComponent::CreateDeferredAmbientLightConcept(*this, fr::SceneManager::GetSceneData()->GetIBLTexture());
 
 		// Add a player object to the scene:
-		char const* mainCamName = nullptr;
-		entt::entity cameraEntity = entt::null;
-		{
-			std::shared_lock<std::shared_mutex> registryReadLock(m_registeryMutex);
+		entt::entity mainCameraEntity = GetMainCamera();
+		fr::NameComponent const& mainCameraName = GetComponent<fr::NameComponent>(mainCameraEntity);
 
-			bool foundMainCamera = false;
-			auto mainCameraView = 
-				m_registry.view<fr::CameraComponent, fr::CameraComponent::MainCameraMarker, fr::Relationship, fr::NameComponent>();
-			for (entt::entity mainCamEntity : mainCameraView)
-			{
-				SEAssert("Already found a main camera. This should not be possible", foundMainCamera == false);
-				foundMainCamera = true;
-
-				cameraEntity = mainCamEntity;
-
-				fr::NameComponent const& camName = mainCameraView.get<fr::NameComponent>(mainCamEntity);
-				mainCamName = camName.GetName().c_str();
-			}
-			SEAssert("Failed to find the main camera", foundMainCamera);
-		}
-
-		fr::CameraControlComponent::CreateCameraControlConcept(*this, cameraEntity);
-		LOG("Created PlayerObject using \"%s\"", mainCamName);
+		fr::CameraControlComponent::CreateCameraControlConcept(*this, mainCameraEntity);
+		LOG("Created PlayerObject using \"%s\"", mainCameraName.GetName().c_str());
 		m_processInput = true;
 
 
@@ -196,13 +179,14 @@ namespace fr
 		re::RenderManager* renderManager = re::RenderManager::Get();
 
 		// ECS_CONVERSION TODO: Move each of these isolated tasks to a thread
+		// -> Use entt::organizer
 
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
 
 			// Register new render objects:
 			auto newRenderableEntitiesView = 
-				m_registry.view<NewEntityMarker, gr::RenderDataComponent, gr::RenderDataComponent::NewRegistrationMarker>();
+				m_registry.view<gr::RenderDataComponent, gr::RenderDataComponent::NewRegistrationMarker>();
 			for (auto entity : newRenderableEntitiesView)
 			{
 				// Enqueue a command to create a new object on the render thread:
@@ -210,12 +194,10 @@ namespace fr
 
 				renderManager->EnqueueRenderCommand<gr::RegisterRenderObjectCommand>(renderDataComponent);
 				
-				m_registry.erase<NewEntityMarker>(entity);
 				m_registry.erase<gr::RenderDataComponent::NewRegistrationMarker>(entity);
 			}
 
-			// Initialize new Transforms. Note: We only send Transforms associated with RenderDataComponents to the 
-			// render thread
+			// Initialize new Transforms associated with a RenderDataComponent:
 			auto newTransformComponentsView = 
 				m_registry.view<fr::TransformComponent, fr::TransformComponent::NewIDMarker, gr::RenderDataComponent>();
 			for (auto entity : newTransformComponentsView)
@@ -224,6 +206,17 @@ namespace fr
 					newTransformComponentsView.get<fr::TransformComponent>(entity);
 
 				renderManager->EnqueueRenderCommand<fr::UpdateTransformDataRenderCommand>(transformComponent);
+
+				m_registry.erase<fr::TransformComponent::NewIDMarker>(entity);
+			}
+
+			// Clear the NewIDMarker from any remaining TransformComponents not associated with a gr::RenderDataComponent
+			auto remainingNewTransformsView = 
+				m_registry.view<fr::TransformComponent, fr::TransformComponent::NewIDMarker>();
+			for (auto entity : remainingNewTransformsView)
+			{
+				fr::TransformComponent& transformComponent =
+					remainingNewTransformsView.get<fr::TransformComponent>(entity);
 
 				m_registry.erase<fr::TransformComponent::NewIDMarker>(entity);
 			}
@@ -296,14 +289,6 @@ namespace fr
 					nameComponent, shadowMapComponent);
 
 				m_registry.erase<DirtyMarker<fr::ShadowMapComponent>>(entity);
-			}
-
-			// Handle any non-renderable new entities:
-			auto newEntitiesView = m_registry.view<NewEntityMarker>();
-			for (auto newEntity : newRenderableEntitiesView)
-			{
-				// For now, we just erase the marker...
-				m_registry.erase<NewEntityMarker>(newEntity);
 			}
 		}
 	}
@@ -410,7 +395,6 @@ namespace fr
 
 		fr::NameComponent::AttachNameComponent(*this, newEntity, name);
 		fr::Relationship::AttachRelationshipComponent(*this, newEntity);
-		EmplaceComponent<NewEntityMarker>(newEntity);
 
 		return newEntity;
 	}
@@ -514,38 +498,34 @@ namespace fr
 			fr::TransformComponent* cameraTransform = nullptr;
 			bool foundMainCamera = false;
 			auto mainCameraView = m_registry.view<
-				fr::CameraComponent, fr::CameraComponent::MainCameraMarker, fr::Relationship>();
+				fr::CameraComponent, fr::CameraComponent::MainCameraMarker, fr::TransformComponent>();
 			for (entt::entity mainCamEntity : mainCameraView)
 			{
 				SEAssert("Already found a main camera. This should not be possible", foundMainCamera == false);
 				foundMainCamera = true;
 
-				fr::Relationship const& cameraRelationship = mainCameraView.get<fr::Relationship>(mainCamEntity);
-
 				cameraComponent = &mainCameraView.get<fr::CameraComponent>(mainCamEntity);
-
-				cameraTransform =
-					GetFirstInHierarchyAboveInternal<fr::TransformComponent>(cameraRelationship.GetParent());
+				cameraTransform = &mainCameraView.get<fr::TransformComponent>(mainCamEntity);
 			}
 			SEAssert("Failed to find main CameraComponent or TransformComponent", cameraComponent && cameraTransform);
 
-			fr::CameraControlComponent* playerObject = nullptr;
-			fr::TransformComponent* playerTransform = nullptr;
+			fr::CameraControlComponent* cameraController = nullptr;
+			fr::TransformComponent* camControllerTransform = nullptr;
 			bool foundCamController = false;
 			auto camControllerView = m_registry.view<fr::CameraControlComponent, fr::TransformComponent>();
-			for (entt::entity playerEntity : camControllerView)
+			for (entt::entity entity : camControllerView)
 			{
-				SEAssert("Already found a player object. This should not be possible", foundCamController == false);
+				SEAssert("Already found a camera controller. This should not be possible", foundCamController == false);
 				foundCamController = true;
 
-				playerObject = &camControllerView.get<fr::CameraControlComponent>(playerEntity);
-				playerTransform = &camControllerView.get<fr::TransformComponent>(playerEntity);
+				cameraController = &camControllerView.get<fr::CameraControlComponent>(entity);
+				camControllerTransform = &camControllerView.get<fr::TransformComponent>(entity);
 			}
-			SEAssert("Failed to find a player object or transform", playerObject && playerTransform);
+			SEAssert("Failed to find a camera controller and/or transform", cameraController && camControllerTransform);
 
 			fr::CameraControlComponent::Update(
-				*playerObject,
-				playerTransform->GetTransform(),
+				*cameraController,
+				camControllerTransform->GetTransform(),
 				cameraComponent->GetCamera(), 
 				cameraTransform->GetTransform(),
 				stepTimeMs);
@@ -579,7 +559,7 @@ namespace fr
 			m_registry.patch<fr::BoundsComponent>(sceneBoundsEntity, [&](auto& sceneBoundsComponent)
 				{
 					auto meshConceptEntitiesView = 
-						m_registry.view<fr::Mesh::MeshConceptMarker, fr::BoundsComponent, fr::Relationship>();
+						m_registry.view<fr::Mesh::MeshConceptMarker, fr::BoundsComponent, fr::TransformComponent>();
 
 					// Make sure we have at least 1 mesh
 					auto meshConceptsViewItr = meshConceptEntitiesView.begin();
@@ -596,11 +576,8 @@ namespace fr
 							fr::BoundsComponent const& boundsComponent = 
 								meshConceptEntitiesView.get<fr::BoundsComponent>(meshEntity);
 
-							fr::Relationship const& relationshipComponent = 
-								meshConceptEntitiesView.get<fr::Relationship>(meshEntity);
-
-							fr::Transform const& meshTransform = GetFirstInHierarchyAboveInternal<fr::TransformComponent>(
-								relationshipComponent.GetParent())->GetTransform();
+							fr::Transform const& meshTransform = 
+								meshConceptEntitiesView.get<fr::TransformComponent>(meshEntity).GetTransform();
 
 							sceneBoundsComponent.ExpandBounds(
 								boundsComponent.GetTransformedAABBBounds(meshTransform.GetGlobalMatrix()));
@@ -665,72 +642,76 @@ namespace fr
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
 
-			// Lights:
-			auto lightComponentsView = m_registry.view<fr::LightComponent, fr::Relationship>();
-			for (auto entity : lightComponentsView)
+			// Ambient lights:
+			auto ambientView = m_registry.view<fr::LightComponent, fr::LightComponent::AmbientIBLDeferredMarker>();
+			for (auto entity : ambientView)
 			{
-				fr::LightComponent& lightComponent = lightComponentsView.get<fr::LightComponent>(entity);
-				fr::Relationship const& relationship = lightComponentsView.get<fr::Relationship>(entity);
+				fr::LightComponent& lightComponent = ambientView.get<fr::LightComponent>(entity);
 
-				fr::Camera* shadowCam = nullptr;
-				fr::Transform* lightTransform = nullptr;
-
-				if (relationship.HasParent()) // Lights use the Transform of their Parent
-				{
-					fr::TransformComponent* transformCmpt =
-						GetFirstInHierarchyAboveInternal<fr::TransformComponent>(relationship.GetParent());
-
-					lightTransform = &transformCmpt->GetTransform();
-
-					if (m_registry.any_of<fr::LightComponent::HasShadowMarker>(entity))
-					{
-						entt::entity shadowMapChild = entt::null;
-						fr::ShadowMapComponent* shadowMapCmpt =
-							GetFirstAndEntityInChildrenInternal<fr::ShadowMapComponent>(entity, shadowMapChild);
-						SEAssert("Failed to find shadow map component", shadowMapCmpt);
-
-						fr::CameraComponent* shadowCamCmpt =
-							GetFirstInChildrenInternal<fr::CameraComponent>(shadowMapChild);
-						SEAssert("Failed to find shadow camera", shadowCamCmpt);
-
-						shadowCam = &shadowCamCmpt->GetCameraForModification();
-					}
-				}
-				// Update: Attach a dirty marker if anything changed
-				if (fr::LightComponent::Update(lightComponent, lightTransform, shadowCam))
+				if (fr::LightComponent::Update(lightComponent, nullptr, nullptr))
 				{
 					m_registry.emplace_or_replace<DirtyMarker<fr::LightComponent>>(entity);
 				}
 			}
 
+			// Punctual lights with (optional) shadows have the same update flow
+			auto PunctualLightShadowUpdate = [this](auto& lightView)
+				{
+					for (auto entity : lightView)
+					{
+						fr::LightComponent& lightComponent = lightView.get<fr::LightComponent>(entity);
+
+						fr::Camera* shadowCam = nullptr;
+
+						fr::TransformComponent& transformCmpt = lightView.get<fr::TransformComponent>(entity);
+
+						if (m_registry.any_of<fr::ShadowMapComponent::HasShadowMarker>(entity))
+						{
+							fr::ShadowMapComponent* shadowMapCmpt = &m_registry.get<fr::ShadowMapComponent>(entity);
+							SEAssert("Failed to find shadow map component", shadowMapCmpt);
+
+							fr::CameraComponent* shadowCamCmpt = &m_registry.get<fr::CameraComponent>(entity);
+							SEAssert("Failed to find shadow camera", shadowCamCmpt);
+
+							shadowCam = &shadowCamCmpt->GetCameraForModification();
+						}
+
+						// Update: Attach a dirty marker if anything changed
+						if (fr::LightComponent::Update(lightComponent, &transformCmpt.GetTransform(), shadowCam))
+						{
+							m_registry.emplace_or_replace<DirtyMarker<fr::LightComponent>>(entity);
+						}
+					}
+				};
+
+			// Point lights:
+			auto const& pointView = 
+				m_registry.view<fr::LightComponent, fr::LightComponent::PointDeferredMarker, fr::TransformComponent>();
+			PunctualLightShadowUpdate(pointView);
+
+			// Directional lights:
+			auto const& directionalView =
+				m_registry.view<fr::LightComponent, fr::LightComponent::DirectionalDeferredMarker, fr::TransformComponent>();
+			PunctualLightShadowUpdate(directionalView);
+
+
 			// Shadows:
-			auto shadowMapComponentsView = m_registry.view<fr::ShadowMapComponent, fr::Relationship>();
-			for (auto entity : shadowMapComponentsView)
+			auto shadowsView = 
+				m_registry.view<fr::ShadowMapComponent, fr::TransformComponent, fr::LightComponent, fr::CameraComponent>();
+			for (auto entity : shadowsView)
 			{
 				// Force an update if the ShadowMap is already marked as dirty, or its owning light is marked as dirty
-				bool force = m_registry.any_of<DirtyMarker<fr::ShadowMapComponent>>(entity);
-				if (!force)
-				{
-					fr::Relationship const& shadowRelationship = shadowMapComponentsView.get<fr::Relationship>(entity);
-					
-					entt::entity owningLightEntity = entt::null;
-					fr::LightComponent const* owningLight = GetFirstAndEntityInHierarchyAboveInternal<fr::LightComponent>(
-						shadowRelationship.GetParent(), owningLightEntity);
-					SEAssert("Failed to find owning light", owningLight && owningLightEntity != entt::null);
+				const bool force = m_registry.any_of<DirtyMarker<fr::ShadowMapComponent>>(entity) || 
+					m_registry.any_of<DirtyMarker<fr::LightComponent>>(entity);
 
-					force |= m_registry.any_of<DirtyMarker<fr::LightComponent>>(owningLightEntity);
-				}
-
-				fr::TransformComponent const& lightTransformCmpt = 
-					*GetFirstInHierarchyAboveInternal<fr::TransformComponent>(entity);
-
-				fr::ShadowMapComponent& shadowMapCmpt = shadowMapComponentsView.get<fr::ShadowMapComponent>(entity);
-				fr::LightComponent const& lightCmpt = *GetFirstInHierarchyAboveInternal<fr::LightComponent>(entity);
-				fr::CameraComponent& shadowCamCmpt = *GetFirstInChildrenInternal<fr::CameraComponent>(entity);
+				fr::TransformComponent const& transformCmpt = shadowsView.get<fr::TransformComponent>(entity);
+				fr::ShadowMapComponent& shadowMapCmpt = shadowsView.get<fr::ShadowMapComponent>(entity);
+				fr::LightComponent const& lightCmpt = shadowsView.get<fr::LightComponent>(entity);
+				fr::CameraComponent& shadowCamCmpt = shadowsView.get<fr::CameraComponent>(entity);
 
 				// Update: Attach a dirty marker if anything changed
 				if (fr::ShadowMapComponent::Update(
-					shadowMapCmpt, lightTransformCmpt, lightCmpt, shadowCamCmpt, sceneBounds, force))
+					shadowMapCmpt, transformCmpt, lightCmpt, shadowCamCmpt, sceneBounds, force))
 				{
 					m_registry.emplace_or_replace<DirtyMarker<fr::ShadowMapComponent>>(entity);
 				}
@@ -761,13 +742,20 @@ namespace fr
 	}
 
 
-	void EntityManager::ShowImGuiWindow(bool* showEntityMgrDebug, bool* showTransformHierarchyDebug)
+	void EntityManager::ShowImGuiWindow(
+		bool* showEntityMgrDebug, 
+		bool* showTransformHierarchyDebug, 
+		bool* showEntityComponentDebug)
 	{
-
-		if (!(*showEntityMgrDebug) && !(*showTransformHierarchyDebug))
+		if (!(*showEntityMgrDebug) && !(*showTransformHierarchyDebug) && (!*showEntityComponentDebug))
 		{
 			return;
 		}
+
+
+		// Entity/component debug window:
+		ShowImGuiEntityComponentDebug(showEntityComponentDebug);
+
 
 		if (*showEntityMgrDebug)
 		{
@@ -959,5 +947,78 @@ namespace fr
 
 			fr::Transform::ShowImGuiWindow(rootNodes, showTransformHierarchyDebug);
 		}
+	}
+
+
+	void EntityManager::ShowImGuiEntityComponentDebug(bool* show) const
+	{
+		if (!*show)
+		{
+			return;
+		}
+
+		static const int windowWidth = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowWidthKey);
+		static const int windowHeight = en::Config::Get()->GetValue<int>(en::ConfigKeys::k_windowHeightKey);
+		constexpr float k_windowYOffset = 64.f;
+		constexpr float k_windowWidthPercentage = 0.25f;
+
+		ImGui::SetNextWindowSize(ImVec2(
+			windowWidth * k_windowWidthPercentage,
+			static_cast<float>(windowHeight) - k_windowYOffset),
+			ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(0, k_windowYOffset), ImGuiCond_FirstUseEver, ImVec2(0, 0));
+
+		constexpr char const* k_panelTitle = "Entity/Component View";
+		ImGui::Begin(k_panelTitle, show);
+
+		static bool s_expandAll = false;
+		bool expandChangeTriggered = false;
+		if (ImGui::Button(s_expandAll ? "Hide all" : "Expand all"))
+		{
+			s_expandAll = !s_expandAll;
+			expandChangeTriggered = true;
+		}
+
+		auto const& storage = m_registry.storage<entt::entity>();
+		auto storageItr = storage->cbegin();
+		auto const& storageEnd = storage->cend();
+		while (storageItr != storageEnd)
+		{
+			entt::entity entity = *storageItr;
+
+			fr::NameComponent const& nameCmpt = m_registry.get<fr::NameComponent>(entity);
+
+			if (expandChangeTriggered)
+			{
+				ImGui::SetNextItemOpen(s_expandAll);
+			}
+			if (ImGui::TreeNode(std::format("Entity {} \"{}\"", 
+				static_cast<uint32_t>(entity),
+				nameCmpt.GetName()).c_str()))
+			{
+				ImGui::Indent();
+
+				for (auto&& curr : m_registry.storage())
+				{
+					entt::id_type cid = curr.first;
+					auto& storage = curr.second;
+					entt::type_info ctype = storage.type();
+
+					if (storage.contains(entity))
+					{
+						ImGui::BulletText(std::format("{}", ctype.name()).c_str());
+					}
+				}
+
+				ImGui::Unindent();
+				ImGui::TreePop();
+			}
+
+			ImGui::Separator();
+
+			++storageItr;
+		}
+
+		ImGui::End();
 	}
 }

@@ -10,38 +10,30 @@
 
 namespace fr
 {
-	entt::entity SceneNode::Create(char const* name, entt::entity parent)
+	entt::entity SceneNode::Create(EntityManager& em, char const* name, entt::entity parent)
 	{
-		fr::EntityManager& em = *fr::EntityManager::Get();
-
 		entt::entity sceneNodeEntity = em.CreateEntity(name);
-
-		fr::Transform* parentTransform = nullptr;
-		if (parent != entt::null)
-		{
-			SEAssert("Parent entity must have a TransformComponent", 
-				em.HasComponent<fr::TransformComponent>(parent));
-
-			parentTransform = &em.GetComponent<fr::TransformComponent>(parent).GetTransform();
-		}
-		fr::TransformComponent const& transformComponent = 
-			fr::TransformComponent::AttachTransformComponent(em, sceneNodeEntity, parentTransform);
-
-		// Mark the transform as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::TransformComponent>>(sceneNodeEntity);
-		
-		gr::RenderDataComponent::AttachNewRenderDataComponent(em, sceneNodeEntity, transformComponent.GetTransformID());
 
 		fr::Relationship& sceneNodeRelationship = em.GetComponent<fr::Relationship>(sceneNodeEntity);
 		sceneNodeRelationship.SetParent(em, parent);
 
+		fr::Transform* parentTransform = nullptr;
+		if (parent != entt::null)
+		{
+			SEAssert("Parent entity must have a TransformComponent", em.HasComponent<fr::TransformComponent>(parent));
+
+			parentTransform = &em.GetComponent<fr::TransformComponent>(parent).GetTransform();
+		}
+		
+		fr::TransformComponent::AttachTransformComponent(em, sceneNodeEntity, parentTransform);
+		
 		return sceneNodeEntity;
 	}
 
 
-	entt::entity SceneNode::Create(std::string const& name, entt::entity parent)
+	entt::entity SceneNode::Create(EntityManager& em, std::string const& name, entt::entity parent)
 	{
-		return Create(name.c_str(), parent);
+		return Create(em, name.c_str(), parent);
 	}
 
 

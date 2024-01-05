@@ -12,8 +12,8 @@ namespace fr
 	class SceneNode
 	{
 	public:
-		static entt::entity Create(char const* name, entt::entity parent);
-		static entt::entity Create(std::string const& name, entt::entity parent);
+		static entt::entity Create(EntityManager&, char const* name, entt::entity parent);
+		static entt::entity Create(EntityManager&, std::string const& name, entt::entity parent);
 
 
 	public:

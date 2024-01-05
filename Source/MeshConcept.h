@@ -14,7 +14,7 @@ namespace fr
 		struct MeshConceptMarker {};
 
 	public:
-		static entt::entity AttachMeshConcept(entt::entity, char const* name);
+		static void AttachMeshConcept(entt::entity, char const* name);
 
 
 		static void ShowImGuiWindow(fr::EntityManager&, entt::entity meshConcept);

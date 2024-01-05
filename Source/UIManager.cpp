@@ -83,7 +83,9 @@ namespace fr
 		static bool s_showConsoleLog = false;
 		static bool s_showEntityMgrDebug = false;
 		static bool s_showTransformHierarchyDebug = false;
+		static bool s_showEntityComponentDebug = false;
 		static bool s_showRenderMgrDebug = false;
+		static bool s_showRenderDataDebug = false;
 		static bool s_showImguiDemo = false;
 
 		// Early out if we can
@@ -91,7 +93,9 @@ namespace fr
 			!s_showConsoleLog && 
 			!s_showEntityMgrDebug && 
 			!s_showTransformHierarchyDebug && 
+			!s_showEntityComponentDebug &&
 			!s_showRenderMgrDebug && 
+			!s_showRenderDataDebug &&
 			!s_showImguiDemo)
 		{
 			return;
@@ -143,10 +147,17 @@ namespace fr
 						{
 							ImGui::MenuItem("Debug scene objects", "", &s_showEntityMgrDebug);
 							ImGui::MenuItem("Debug transform hierarchy", "", &s_showTransformHierarchyDebug);
+							ImGui::MenuItem("Entity/component viewer", "", &s_showEntityComponentDebug);
 							ImGui::EndMenu();
 						}
 
-						ImGui::MenuItem("Render manager debug", "", &s_showRenderMgrDebug);
+						if (ImGui::BeginMenu("Render manager"))
+						{
+							ImGui::MenuItem("Render manager debug", "", &s_showRenderMgrDebug);
+							ImGui::MenuItem("Render data viewer", "", &s_showRenderDataDebug);
+							ImGui::EndMenu();
+						}
+						
 
 #if defined(_DEBUG) // ImGui demo window
 						ImGui::Separator();
@@ -198,9 +209,10 @@ namespace fr
 					ImGuiCond_FirstUseEver);
 				ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
-				fr::EntityManager::Get()->ShowImGuiWindow(&s_showEntityMgrDebug, &s_showTransformHierarchyDebug);
+				fr::EntityManager::Get()->ShowImGuiWindow(
+					&s_showEntityMgrDebug, &s_showTransformHierarchyDebug, &s_showEntityComponentDebug);
 			};
-		if (s_showEntityMgrDebug || s_showTransformHierarchyDebug)
+		if (s_showEntityMgrDebug || s_showTransformHierarchyDebug || s_showEntityComponentDebug)
 		{
 			re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(ShowEntityMgrDebug)>>(
 				re::ImGuiRenderCommand<decltype(ShowEntityMgrDebug)>(ShowEntityMgrDebug));
@@ -215,9 +227,9 @@ namespace fr
 					ImGuiCond_FirstUseEver);
 				ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
-				re::RenderManager::Get()->ShowImGuiWindow(&s_showRenderMgrDebug);
+				re::RenderManager::Get()->ShowImGuiWindow(&s_showRenderMgrDebug, &s_showRenderDataDebug);
 			};
-		if (s_showRenderMgrDebug)
+		if (s_showRenderMgrDebug || s_showRenderDataDebug)
 		{
 			re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(ShowRenderMgrDebug)>>(
 				re::ImGuiRenderCommand<decltype(ShowRenderMgrDebug)>(ShowRenderMgrDebug));

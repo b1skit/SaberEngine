@@ -10,51 +10,54 @@
 
 namespace fr
 {
-	entt::entity CameraComponent::AttachCameraConcept(
-		fr::EntityManager& em, entt::entity owningEntity, char const* name, gr::Camera::Config const& cameraConfig)
+	void CameraComponent::CreateCameraConcept(
+		fr::EntityManager& em, entt::entity sceneNode, char const* name, gr::Camera::Config const& cameraConfig)
 	{
-		SEAssert("A camera's owning entity requires a TransformComponent",
-			em.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
+		SEAssert("Cannot attach a CameraComponent to a null sceneNode", sceneNode != entt::null);
 
-		entt::entity cameraEntity = em.CreateEntity(name);
+		SEAssert("A CameraComponent must be attached to an entity that has a TransformComponent",
+			em.HasComponent<fr::TransformComponent>(sceneNode));
 
-		// Relationship:
-		fr::Relationship& cameraRelationship = em.GetComponent<fr::Relationship>(cameraEntity);
-		cameraRelationship.SetParent(em, owningEntity);
+		SEAssert("A Camera concept creates its own RenderDataComponent, the sceneNode entity already has one attached",
+			em.HasComponent<gr::RenderDataComponent>(sceneNode) == false);
 
-		// Find a Transform in the hierarchy above us
-		fr::TransformComponent* transformCmpt =
-			em.GetFirstInHierarchyAbove<fr::TransformComponent>(cameraRelationship.GetParent());
+		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(sceneNode);
 
-		// Get an attached RenderDataComponent, or create one if none exists:
-		gr::RenderDataComponent* cameraRenderDataCmpt = 
-			em.GetFirstInHierarchyAbove<gr::RenderDataComponent>(cameraRelationship.GetParent());
-		if (cameraRenderDataCmpt == nullptr)
-		{
-			const gr::TransformID transformID = transformCmpt->GetTransformID();
+		gr::RenderDataComponent::AttachNewRenderDataComponent(em, sceneNode, owningTransform.GetTransformID());
 
-			cameraRenderDataCmpt = 
-				&gr::RenderDataComponent::AttachNewRenderDataComponent(em, cameraEntity, transformID);
-		}
-		else
-		{
-			gr::RenderDataComponent::AttachSharedRenderDataComponent(em, cameraEntity, *cameraRenderDataCmpt);
-		}
-		
-		// Camera component:
-		em.EmplaceComponent<fr::CameraComponent>(cameraEntity, PrivateCTORTag{}, cameraConfig, *transformCmpt);
+		// CameraComponent:
+		em.EmplaceComponent<fr::CameraComponent>(sceneNode, PrivateCTORTag{}, cameraConfig, owningTransform);
 
 		// Mark our new camera as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::CameraComponent>>(cameraEntity);
-
-		return cameraEntity;
+		em.EmplaceComponent<DirtyMarker<fr::CameraComponent>>(sceneNode);
 	}
 
 
-	entt::entity CameraComponent::AttachCameraConcept(
+	void CameraComponent::AttachCameraComponent(
+		fr::EntityManager& em, entt::entity owningEntity, char const* name, gr::Camera::Config const& cameraConfig)
+	{
+		SEAssert("Cannot attach a CameraComponent to a null entity", owningEntity != entt::null);
+
+		SEAssert("A CameraComponent must be attached to an entity that has a TransformComponent",
+			em.HasComponent<fr::TransformComponent>(owningEntity));
+
+		SEAssert("A CameraComponent must be attached to an entity that has a RenderDataComponent",
+			em.HasComponent<gr::RenderDataComponent>(owningEntity));
+
+		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(owningEntity);
+
+		// CameraComponent:
+		em.EmplaceComponent<fr::CameraComponent>(owningEntity, PrivateCTORTag{}, cameraConfig, owningTransform);
+
+		// Mark our new camera as dirty:
+		em.EmplaceComponent<DirtyMarker<fr::CameraComponent>>(owningEntity);
+	}
+
+
+	void CameraComponent::AttachCameraComponent(
 		fr::EntityManager& em, entt::entity owningEntity, std::string const& name, gr::Camera::Config const& camConfig)
 	{
-		return AttachCameraConcept(em, owningEntity, name.c_str(), camConfig);
+		AttachCameraComponent(em, owningEntity, name.c_str(), camConfig);
 	}
 
 

@@ -57,47 +57,39 @@ namespace fr
 		glm::vec4 const& colorIntensity, 
 		bool hasShadow)
 	{
-		SEAssert("A light's owning entity requires a TransformComponent",
-			em.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
+		SEAssert("A LightComponent's owning entity requires a TransformComponent",
+			em.HasComponent<fr::TransformComponent>(owningEntity));
 
-		entt::entity lightEntity = em.CreateEntity(name);
-
-		// Relationship:
-		fr::Relationship& lightRelationship = em.GetComponent<fr::Relationship>(lightEntity);
-		lightRelationship.SetParent(em, owningEntity);
-
-		// MeshPrimitive:
+		// Create a MeshPrimitive (owned by SceneData):
 		std::shared_ptr<gr::MeshPrimitive> pointLightMesh = gr::meshfactory::CreateSphere();
 
-		entt::entity meshPrimitiveEntity =
-			fr::MeshPrimitiveComponent::AttachMeshPrimitiveConcept(em, lightEntity, pointLightMesh.get());
+		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(owningEntity);
 
-		// RenderData:
-		// Deferred point light's share the the RenderDataComponent created by their MeshPrimitive sphere
-		gr::RenderDataComponent const& meshPrimRenderDataCmpt = 
-			em.GetComponent<gr::RenderDataComponent>(meshPrimitiveEntity);
-		gr::RenderDataComponent::AttachSharedRenderDataComponent(em, lightEntity, meshPrimRenderDataCmpt);
+		gr::RenderDataComponent& renderDataComponent =
+			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, owningTransform.GetTransformID());
+
+		// Attach the MeshPrimitive 
+		fr::MeshPrimitiveComponent::AttachMeshPrimitiveComponent(em, owningEntity, pointLightMesh.get());
 
 		// LightComponent:
 		fr::LightComponent& lightComponent = *em.EmplaceComponent<fr::LightComponent>(
-			lightEntity, 
+			owningEntity,
 			PrivateCTORTag{}, 
-			meshPrimRenderDataCmpt,
+			renderDataComponent,
 			fr::Light::Type::Point,
 			colorIntensity,
 			hasShadow);
-		em.EmplaceComponent<PointDeferredMarker>(lightEntity);
+		em.EmplaceComponent<PointDeferredMarker>(owningEntity);
 
-		// ShadowMap, if required:
+		// ShadowMapComponent, if required:
 		if (hasShadow)
 		{
 			fr::ShadowMapComponent::AttachShadowMapComponent(
-				em, lightEntity, std::format("{}_ShadowMap", name).c_str(), fr::Light::Type::Point);
-			em.EmplaceComponent<HasShadowMarker>(lightEntity);
+				em, owningEntity, std::format("{}_ShadowMap", name).c_str(), fr::Light::Type::Point);
 		}
 
 		// Mark our new LightComponent as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::LightComponent>>(lightEntity);
+		em.EmplaceComponent<DirtyMarker<fr::LightComponent>>(owningEntity);
 
 		return lightComponent;
 	}
@@ -122,22 +114,14 @@ namespace fr
 		bool hasShadow)
 	{
 		SEAssert("A light's owning entity requires a TransformComponent",
-			em.IsInHierarchyAbove<fr::TransformComponent>(owningEntity));
+			em.HasComponent<fr::TransformComponent>(owningEntity));
 
-		entt::entity lightEntity = em.CreateEntity(name);
+		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(owningEntity);
 
-		// Relationship:
-		fr::Relationship& lightRelationship = em.GetComponent<fr::Relationship>(lightEntity);
-		lightRelationship.SetParent(em, owningEntity);
-
-		fr::TransformComponent const& transformComponent = 
-			*em.GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
-
-		// Note: A light requires a RenderDataComponent and Transform, and a raw MeshPrimitiveComponent requires a
-		// RenderDataComponent to share. This means our fullscreen quad will technically be linked to the light's
-		// Transform; Fullscreen quads don't use a a Transform so this shouldn't matter
+		// Note: Our fullscreen quad will technically be linked to the owningTransform; Fullscreen quads don't use a 
+		// Transform so this shouldn't matter
 		gr::RenderDataComponent& renderDataComponent =
-			gr::RenderDataComponent::AttachNewRenderDataComponent(em, lightEntity, transformComponent.GetTransformID());
+			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, owningTransform.GetTransformID());
 
 		// MeshPrimitive:
 		std::shared_ptr<gr::MeshPrimitive> fullscreenQuadSceneData =
@@ -145,30 +129,29 @@ namespace fr
 
 		fr::MeshPrimitiveComponent const& meshPrimCmpt = fr::MeshPrimitiveComponent::AttachRawMeshPrimitiveConcept(
 			em,
-			lightEntity,
+			owningEntity,
 			renderDataComponent,
 			fullscreenQuadSceneData.get());
 
 		// LightComponent:
 		LightComponent& lightComponent = *em.EmplaceComponent<LightComponent>(
-			lightEntity,
+			owningEntity,
 			PrivateCTORTag{},
 			renderDataComponent,
 			fr::Light::Type::Directional,
 			colorIntensity,
 			hasShadow);
-		em.EmplaceComponent<DirectionalDeferredMarker>(lightEntity);
+		em.EmplaceComponent<DirectionalDeferredMarker>(owningEntity);
 
-		// ShadowMap, if required:
+		// ShadowMapComponent, if required:
 		if (hasShadow)
 		{
 			fr::ShadowMapComponent::AttachShadowMapComponent(
-				em, lightEntity, std::format("{}_ShadowMap", name).c_str(), fr::Light::Type::Directional);
-			em.EmplaceComponent<HasShadowMarker>(lightEntity);
+				em, owningEntity, std::format("{}_ShadowMap", name).c_str(), fr::Light::Type::Directional);
 		}
 
 		// Mark our new LightComponent as dirty:
-		em.EmplaceComponent<DirtyMarker<fr::LightComponent>>(lightEntity);
+		em.EmplaceComponent<DirtyMarker<fr::LightComponent>>(owningEntity);
 
 		return lightComponent;
 	}
@@ -206,6 +189,7 @@ namespace fr
 
 		return renderData;
 	}
+
 
 	gr::Light::RenderDataDirectional LightComponent::CreateRenderDataDirectional_Deferred(
 		fr::NameComponent const& nameCmpt, fr::LightComponent const& lightCmpt)
