@@ -39,7 +39,7 @@ namespace fr
 		fr::NameComponent const& meshName = em.GetComponent<fr::NameComponent>(meshConcept);
 
 		if (ImGui::CollapsingHeader(
-			std::format("{}##{}", meshName.GetName(), meshName.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+			std::format("Mesh \"{}\"##{}", meshName.GetName(), meshName.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 
@@ -48,13 +48,11 @@ namespace fr
 
 			fr::Relationship const& meshRelationship = em.GetComponent<fr::Relationship>(meshConcept);
 
-			entt::entity owningTransformEntity = entt::null;
-			fr::TransformComponent& owningTransform =
-				*em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(meshRelationship.GetParent(), owningTransformEntity);
+			fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(meshConcept);
 
 			// Transform:
 			fr::TransformComponent::TransformComponent::ShowImGuiWindow(
-				em, owningTransformEntity, static_cast<uint64_t>(meshConcept));
+				em, meshConcept, static_cast<uint64_t>(meshConcept));
 
 			// Bounds:
 			fr::BoundsComponent::ShowImGuiWindow(em, meshConcept);

@@ -90,7 +90,7 @@ namespace fr
 		fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(camEntity);
 
 		if (ImGui::CollapsingHeader(
-			std::format("{}##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+			std::format("Camera \"{}\"##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 

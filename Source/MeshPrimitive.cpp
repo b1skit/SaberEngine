@@ -228,7 +228,7 @@ namespace gr
 
 	void MeshPrimitive::ShowImGuiWindow() const
 	{
-		if (ImGui::CollapsingHeader(std::format("{}##{}", GetName(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+		if (ImGui::CollapsingHeader(std::format("MeshPrimitive \"{}\"##{}", GetName(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 

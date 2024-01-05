@@ -43,7 +43,7 @@ namespace fr
 	{
 		fr::MaterialComponent const& matCmpt = em.GetComponent<fr::MaterialComponent>(owningEntity);
 
-		if (ImGui::CollapsingHeader(std::format("{}##{}", 
+		if (ImGui::CollapsingHeader(std::format("Material \"{}\"##{}", 
 			matCmpt.m_material->GetName(), matCmpt.m_material->GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();

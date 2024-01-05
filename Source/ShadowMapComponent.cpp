@@ -220,7 +220,7 @@ namespace fr
 	{
 		fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(shadowMapEntity);
 		if (ImGui::CollapsingHeader(
-			std::format("{}##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+			std::format("ShadowMap \"{}\"##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 
@@ -228,17 +228,11 @@ namespace fr
 			gr::RenderDataComponent::ShowImGuiWindow(em, shadowMapEntity);
 
 			fr::ShadowMapComponent& shadowMapCmpt = em.GetComponent<fr::ShadowMapComponent>(shadowMapEntity);
-
 			shadowMapCmpt.GetShadowMap().ShowImGuiWindow(nameCmpt.GetUniqueID());
 
 			// Shadow camera:
-			{
-				entt::entity shadowCamEntity = entt::null;
-				fr::CameraComponent* shadowCamCmpt = em.GetFirstAndEntityInChildren<fr::CameraComponent>(shadowMapEntity, shadowCamEntity);
-				SEAssert("Failed to find shadow camera", shadowCamCmpt);
-
-				fr::CameraComponent::ShowImGuiWindow(em, shadowCamEntity);
-			}
+			fr::CameraComponent& shadowCamCmpt = em.GetComponent<fr::CameraComponent>(shadowMapEntity);
+			fr::CameraComponent::ShowImGuiWindow(em, shadowMapEntity);
 
 			ImGui::Unindent();
 		}

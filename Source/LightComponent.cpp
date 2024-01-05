@@ -287,7 +287,7 @@ namespace fr
 		fr::NameComponent const& nameCmpt = em.GetComponent<fr::NameComponent>(lightEntity);
 
 		if (ImGui::CollapsingHeader(
-			std::format("{}##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
+			std::format("Light \"{}\"##{}", nameCmpt.GetName(), nameCmpt.GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 
@@ -299,23 +299,19 @@ namespace fr
 			lightCmpt.GetLight().ShowImGuiWindow(nameCmpt.GetUniqueID());
 
 			// Transform:
-			entt::entity transformOwningEntity = entt::null;
-			fr::TransformComponent* transformComponent =
-				em.GetFirstAndEntityInHierarchyAbove<fr::TransformComponent>(lightEntity, transformOwningEntity);
+			fr::TransformComponent* transformComponent = em.TryGetComponent<fr::TransformComponent>(lightEntity);
 			SEAssert("Failed to find TransformComponent", 
 				transformComponent || lightCmpt.m_light.GetType() == fr::Light::Type::AmbientIBL);
 			if (transformComponent)
 			{
-				fr::TransformComponent::ShowImGuiWindow(em, transformOwningEntity, static_cast<uint64_t>(lightEntity));
+				fr::TransformComponent::ShowImGuiWindow(em, lightEntity, static_cast<uint64_t>(lightEntity));
 			}
 
 			// Shadow map
-			entt::entity shadowMapEntity = entt::null;
-			fr::ShadowMapComponent* shadowMapCmpt = 
-				em.GetFirstAndEntityInChildren<fr::ShadowMapComponent>(lightEntity, shadowMapEntity);
+			fr::ShadowMapComponent* shadowMapCmpt = em.TryGetComponent<fr::ShadowMapComponent>(lightEntity);
 			if (shadowMapCmpt)
 			{
-				fr::ShadowMapComponent::ShowImGuiWindow(em, shadowMapEntity);
+				fr::ShadowMapComponent::ShowImGuiWindow(em, lightEntity);
 			}
 
 			ImGui::Unindent();

@@ -163,10 +163,17 @@ namespace fr
 			meshPrimCmpt.m_meshPrimitive->ShowImGuiWindow();
 
 			// Material:
-			entt::entity materialEntity = entt::null;
-			fr::MaterialComponent* matCmpt =
-				em.GetFirstAndEntityInChildren<fr::MaterialComponent>(meshPrimitive, materialEntity);
-			fr::MaterialComponent::ShowImGuiWindow(em, materialEntity);
+			fr::MaterialComponent* matCmpt = em.TryGetComponent<fr::MaterialComponent>(meshPrimitive);
+			if (matCmpt)
+			{
+				fr::MaterialComponent::ShowImGuiWindow(em, meshPrimitive);
+			}
+			else
+			{
+				ImGui::Indent();
+				ImGui::TextColored(ImVec4(1, 0, 0, 1), "<no material>"); // e.g. deferred mesh
+				ImGui::Unindent();
+			}
 
 			// Bounds
 			fr::BoundsComponent::ShowImGuiWindow(em, meshPrimitive);
