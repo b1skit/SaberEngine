@@ -85,10 +85,10 @@ namespace gr
 			re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear);
 
 		GBufferGraphicsSystem* gbufferGS = 
-			m_owningGraphicsSystemManager->GetGraphicsSystem<GBufferGraphicsSystem>();
+			m_graphicsSystemManager->GetGraphicsSystem<GBufferGraphicsSystem>();
 
 		DeferredLightingGraphicsSystem* deferredLightGS =
-			m_owningGraphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
+			m_graphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
 
 		std::shared_ptr<re::TextureTargetSet const> deferredLightTargets = deferredLightGS->GetFinalTextureTargetSet();
 
@@ -140,7 +140,8 @@ namespace gr
 		re::Texture::TextureParams bloomTargetTexParams;
 		bloomTargetTexParams.m_width = bloomTargetWidthHeight.x;
 		bloomTargetTexParams.m_height = bloomTargetWidthHeight.y;
-		bloomTargetTexParams.m_usage = static_cast<re::Texture::Usage>(re::Texture::Usage::ComputeTarget | re::Texture::Usage::Color);
+		bloomTargetTexParams.m_usage = 
+			static_cast<re::Texture::Usage>(re::Texture::Usage::ComputeTarget | re::Texture::Usage::Color);
 		bloomTargetTexParams.m_dimension = re::Texture::Dimension::Texture2D;
 		bloomTargetTexParams.m_format = deferredLightTargetTex->GetTextureParams().m_format;
 		bloomTargetTexParams.m_colorSpace = re::Texture::ColorSpace::Linear;
@@ -271,13 +272,13 @@ namespace gr
 		CreateBatches();
 
 		DeferredLightingGraphicsSystem* deferredLightGS =
-			m_owningGraphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
+			m_graphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
 		std::shared_ptr<re::Texture> deferredLightTargetTex = 
 			deferredLightGS->GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture();
 		std::shared_ptr<re::Texture> bloomTargetTex = GetFinalTextureTargetSet()->GetColorTarget(0).GetTexture();
 
 		gr::Camera::Config const& cameraConfig =
-			m_owningGraphicsSystemManager->GetActiveCameraRenderData().m_cameraConfig;
+			m_graphicsSystemManager->GetActiveCameraRenderData().m_cameraConfig;
 
 		// Parameter blocks:
 		const uint32_t numBloomMips = bloomTargetTex->GetNumMips();

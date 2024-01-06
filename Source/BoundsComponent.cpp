@@ -25,8 +25,10 @@ namespace fr
 		fr::TransformComponent& sceneBoundsTransformComponent = 
 			fr::TransformComponent::AttachTransformComponent(em, sceneBoundsEntity, nullptr);
 		
-		gr::RenderDataComponent::AttachNewRenderDataComponent(
+		gr::RenderDataComponent& sceneBoundsRenderCmpt = gr::RenderDataComponent::AttachNewRenderDataComponent(
 			em, sceneBoundsEntity, sceneBoundsTransformComponent.GetTransformID());
+
+		sceneBoundsRenderCmpt.SetFeatureBit(gr::RenderObjectFeature::IsSceneBounds);
 
 		em.EmplaceComponent<SceneBoundsMarker>(sceneBoundsEntity);
 

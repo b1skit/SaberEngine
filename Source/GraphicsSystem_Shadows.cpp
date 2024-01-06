@@ -84,7 +84,7 @@ namespace gr
 		shadowPipelineState.SetFaceCullingMode(re::PipelineState::FaceCullingMode::Back);
 		shadowPipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Less);
 
-		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
 		// Directional light shadow:		
 		m_hasDirectionalLight = !m_shadowRenderDataIDs[gr::Light::Type::Directional].empty();
@@ -264,7 +264,7 @@ namespace gr
 
 	void ShadowsGraphicsSystem::PreRender()
 	{
-		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
 		if (m_hasDirectionalLight)
 		{

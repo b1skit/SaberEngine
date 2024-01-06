@@ -16,8 +16,8 @@ namespace gr
 
 	enum RenderObjectFeature
 	{
-		IsMeshBounds = 0x0, // If this is not set, we can assume a Bounds is attached to a MeshPrimitive
-		//... = 0x1
+		IsSceneBounds = 0x0,
+		IsMeshBounds = 0x1, // If these are both not set, we can assume a Bounds is attached to a MeshPrimitive
 		//... = 0x2
 		//... = 0x4
 

@@ -28,6 +28,7 @@ namespace fr
 			.g_transposeInvModel = glm::transpose(glm::inverse(transform.GetGlobalMatrix())),
 
 			.m_globalPosition = transform.GetGlobalPosition(),
+			.m_globalScale = transform.GetGlobalScale(),
 
 			.m_globalRight = transform.GetGlobalRight(),
 			.m_globalUp = transform.GetGlobalUp(),

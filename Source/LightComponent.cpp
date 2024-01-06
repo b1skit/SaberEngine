@@ -118,8 +118,9 @@ namespace fr
 
 		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(owningEntity);
 
-		// Note: Our fullscreen quad will technically be linked to the owningTransform; Fullscreen quads don't use a 
-		// Transform so this shouldn't matter
+		// Note: Our fullscreen quad will technically be linked to the owningTransform; We can't use 
+		// k_sharedIdentityTransformID as a directional light/shadow needs a valid transform. 
+		// Fullscreen quads don't use a Transform so this shouldn't matter.
 		gr::RenderDataComponent& renderDataComponent =
 			gr::RenderDataComponent::AttachNewRenderDataComponent(em, owningEntity, owningTransform.GetTransformID());
 

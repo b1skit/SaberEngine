@@ -56,18 +56,18 @@ namespace gr
 		m_tonemappingStage->SetTextureTargetSet(nullptr); // Write directly to the swapchain backbuffer
 
 		// Param blocks:
-		m_tonemappingStage->AddPermanentParameterBlock(m_owningGraphicsSystemManager->GetActiveCameraParams());
+		m_tonemappingStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
 
 		// Texture inputs:
 		std::shared_ptr<TextureTargetSet const> deferredLightTextureTargetSet =
-			m_owningGraphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
+			m_graphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>()->GetFinalTextureTargetSet();
 
 		m_tonemappingStage->AddTextureInput(
 			"Tex0",
 			deferredLightTextureTargetSet->GetColorTarget(0).GetTexture(),
 			Sampler::GetSampler(Sampler::WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear));
 		
-		gr::BloomGraphicsSystem* bloomGS = m_owningGraphicsSystemManager->GetGraphicsSystem<BloomGraphicsSystem>();
+		gr::BloomGraphicsSystem* bloomGS = m_graphicsSystemManager->GetGraphicsSystem<BloomGraphicsSystem>();
 		std::shared_ptr<TextureTargetSet const> bloomTextureTargetSet = bloomGS->GetFinalTextureTargetSet();
 
 		m_tonemappingStage->AddTextureInput(

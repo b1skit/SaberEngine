@@ -228,11 +228,11 @@ namespace fr
 		if (m_parent)
 		{
 			glm::mat4 const& parentGlobalTRS = m_parent->GetGlobalMatrix();
-			SetLocalPosition(glm::inverse(parentGlobalTRS) * glm::vec4(position, 0.f));
+			SetLocalPosition(glm::inverse(parentGlobalTRS) * glm::vec4(position, 1.f));
 		}
 		else
 		{
-			SetLocalPosition(glm::vec4(position, 0.f));
+			SetLocalPosition(position);
 		}
 
 		Recompute(); // Note: Already marked dirty when we called SetLocalPosition
@@ -614,7 +614,7 @@ namespace fr
 				static float s_uniformScaleAmount = 1.f;
 
 				ImGui::PushItemWidth(130.f);
-				if (ImGui::SliderFloat("Scale", &s_uniformScaleAmount, 0.f, 10.f))
+				if (ImGui::SliderFloat(std::format("Scale##{}", uniqueID).c_str(), &s_uniformScaleAmount, 0.f, 10.f))
 				{
 					SetLocalScale(glm::vec3(s_uniformScaleAmount));
 				}

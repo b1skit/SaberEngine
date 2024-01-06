@@ -10,7 +10,7 @@ namespace gr
 	GraphicsSystem::GraphicsSystem(
 		std::string const& name, gr::GraphicsSystemManager* owningGSM)
 		: NamedObject(name)
-		, m_owningGraphicsSystemManager(owningGSM)
+		, m_graphicsSystemManager(owningGSM)
 	{
 		LOG("Creating %s", name.c_str());
 	}

@@ -38,7 +38,7 @@ namespace gr
 		gr::RenderDataID GetRenderDataID() const;
 		gr::TransformID GetTransformID() const;
 
-		void SetFeature(gr::RenderObjectFeature);
+		void SetFeatureBit(gr::RenderObjectFeature);
 		gr::FeatureBitmask GetFeatureBits() const;
 
 

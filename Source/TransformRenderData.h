@@ -26,6 +26,7 @@ namespace gr
 			glm::mat4 g_transposeInvModel = glm::mat4(1.f);
 
 			glm::vec3 m_globalPosition; // World-space position
+			glm::vec3 m_globalScale;
 
 			glm::vec3 m_globalRight; // World-space right (X+) vector
 			glm::vec3 m_globalUp; // World-space up (Y+) vector

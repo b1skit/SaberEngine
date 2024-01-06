@@ -46,6 +46,9 @@ namespace gr
 		
 		gr::FeatureBitmask GetFeatureBits(gr::RenderDataID) const;
 
+		std::vector<gr::RenderDataID> const& GetRegisteredRenderDataIDs() const;
+		std::vector<gr::RenderDataID> const& GetRegisteredTransformIDs() const;
+
 
 	public:
 		void ShowImGuiWindow() const;
@@ -70,6 +73,42 @@ namespace gr
 		
 		[[nodiscard]] bool TransformIsDirty(gr::TransformID) const; // Was the Transform updated in the current frame?
 		[[nodiscard]] bool TransformIsDirtyFromRenderDataID(gr::RenderDataID) const; // Slower than using TransformID
+
+
+	private:
+		typedef std::vector<uint32_t> ObjectTypeToDataIndexTable; // [data type index] == object index
+
+		typedef std::vector<uint64_t> LastDirtyFrameTable; // [data type index] == last dirty frame
+		static constexpr uint64_t k_invalidDirtyFrameNum = std::numeric_limits<uint64_t>::max();
+
+		struct RenderObjectMetadata
+		{
+			ObjectTypeToDataIndexTable m_objectTypeToDataIndexTable;
+			LastDirtyFrameTable m_dirtyFrameTable;
+
+			gr::TransformID m_transformID;
+
+			FeatureBitmask m_featureBits; // To assist in interpreting render data
+
+			uint32_t m_referenceCount;
+
+			RenderObjectMetadata(gr::TransformID transformID)
+				: m_transformID(transformID), m_featureBits(0), m_referenceCount(1) {}
+			RenderObjectMetadata() = delete;
+		};
+
+		struct TransformMetadata
+		{
+			uint32_t m_transformIdx;
+			uint32_t m_referenceCount;
+
+			uint64_t m_dirtyFrame;
+		};
+
+		// Convenience helpers: We track the currently registered IDs seperately for external use. We maintain these in
+		// sorted order
+		std::vector<gr::RenderDataID> m_registeredRenderObjectIDs;
+		std::vector<gr::TransformID> m_registeredTransformIDs;
 
 
 	public:
@@ -101,37 +140,6 @@ namespace gr
 			T const* m_ptr;
 			T const* m_endPtr;
 		};
-
-	private:
-		typedef std::vector<uint32_t> ObjectTypeToDataIndexTable; // [data type index] == object index
-		
-		typedef std::vector<uint64_t> LastDirtyFrameTable; // [data type index] == last dirty frame
-		static constexpr uint64_t k_invalidDirtyFrameNum = std::numeric_limits<uint64_t>::max();
-
-		struct RenderObjectMetadata
-		{
-			ObjectTypeToDataIndexTable m_objectTypeToDataIndexTable;
-			LastDirtyFrameTable m_dirtyFrameTable;
-
-			gr::TransformID m_transformID;
-
-			FeatureBitmask m_featureBits; // To assist in interpreting render data
-
-			uint32_t m_referenceCount;
-
-			RenderObjectMetadata(gr::TransformID transformID) 
-				: m_transformID(transformID), m_featureBits(0), m_referenceCount(1) {}
-			RenderObjectMetadata() = delete;
-		};
-
-		struct TransformMetadata
-		{
-			uint32_t m_transformIdx;
-			uint32_t m_referenceCount;
-
-			uint64_t m_dirtyFrame;
-		};
-		
 
 
 	public:
@@ -297,7 +305,7 @@ namespace gr
 		// RenderDataManager accesses are all const, and we only update the RenderData via RenderCommands which are processed
 		// single-threaded at the beginning of a render thread frame. Thus, we don't have any syncronization primitives;
 		// we just use a thread protector to guard against any mistakes
-		util::ThreadProtector m_threadProtector;
+		mutable util::ThreadProtector m_threadProtector;
 	};
 
 
@@ -420,6 +428,24 @@ namespace gr
 		std::vector<T> const& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[dataTypeIndex]).get();
 		
 		return util::CheckedCast<uint32_t>(dataVector.size());
+	}
+
+
+	inline std::vector<gr::RenderDataID> const& RenderDataManager::GetRegisteredRenderDataIDs() const
+	{
+		// Catch illegal accesses during RenderData modification
+		util::ScopedThreadProtector threadProjector(m_threadProtector);
+
+		return m_registeredRenderObjectIDs;
+	}
+
+
+	inline std::vector<gr::RenderDataID> const& RenderDataManager::GetRegisteredTransformIDs() const
+	{
+		// Catch illegal accesses during RenderData modification
+		util::ScopedThreadProtector threadProjector(m_threadProtector);
+
+		return m_registeredTransformIDs;
 	}
 
 

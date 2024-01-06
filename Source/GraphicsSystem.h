@@ -44,7 +44,7 @@ namespace gr
 
 
 	protected:
-		gr::GraphicsSystemManager* const m_owningGraphicsSystemManager;
+		gr::GraphicsSystemManager* const m_graphicsSystemManager;
 
 
 	private: // No copying allowed

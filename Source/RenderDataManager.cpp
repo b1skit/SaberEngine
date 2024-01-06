@@ -10,6 +10,33 @@
 #include "TransformRenderData.h"
 
 
+namespace
+{
+	template<typename T>
+	void AddIDToTrackingList(std::vector<T>& idTrackingList, T id)
+	{
+		SEAssert("ID has already been added to the tracking list",
+			std::binary_search(idTrackingList.begin(), idTrackingList.end(), id) == false);
+
+		// Insert in sorted order:
+		idTrackingList.insert(
+			std::upper_bound(idTrackingList.begin(), idTrackingList.end(), id),
+			id);
+	}
+
+
+	template<typename T>
+	void RemoveIDFromTrackingList(std::vector<T>& idTrackingList, T id)
+	{
+		SEAssert("ID does not exist in the tracking list",
+			std::binary_search(idTrackingList.begin(), idTrackingList.end(), id) == true);
+
+		// Remove from our sorted vector:
+		auto idItr = std::equal_range(idTrackingList.begin(), idTrackingList.end(), id);
+		idTrackingList.erase(idItr.first, idItr.second);
+	}
+}
+
 namespace gr
 {
 	RenderDataManager::RenderDataManager()
@@ -49,6 +76,8 @@ namespace gr
 				m_IDToRenderObjectMetadata.emplace(
 					renderDataID,
 					RenderObjectMetadata(transformID));
+
+				AddIDToTrackingList(m_registeredRenderObjectIDs, renderDataID);
 			}
 			else
 			{
@@ -91,6 +120,8 @@ namespace gr
 				}
 #endif
 				m_IDToRenderObjectMetadata.erase(renderDataID);
+				
+				RemoveIDFromTrackingList(m_registeredRenderObjectIDs, renderDataID);
 			}
 		}
 
@@ -141,6 +172,8 @@ namespace gr
 					.m_transformIdx = newTransformDataIdx,	// Transform index
 					.m_referenceCount = 1,					// Initial reference count
 					.m_dirtyFrame = m_currentFrame});
+
+			AddIDToTrackingList(m_registeredTransformIDs, transformID);
 		}
 		else
 		{
@@ -185,6 +218,8 @@ namespace gr
 
 			// Finally, erase the TransformID record:
 			m_transformIDToTransformMetadata.erase(transformID);
+			
+			RemoveIDFromTrackingList(m_registeredTransformIDs, transformID);
 		}
 
 		// Note: Unregistering a Transform does not dirty it as no data has changed

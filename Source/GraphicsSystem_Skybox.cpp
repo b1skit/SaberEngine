@@ -58,10 +58,10 @@ namespace gr
 		m_skyTexture = fr::SceneManager::GetSceneData()->GetIBLTexture();
 		m_skyTextureShaderName = "Tex0";
 
-		m_skyboxStage->AddPermanentParameterBlock(m_owningGraphicsSystemManager->GetActiveCameraParams());
+		m_skyboxStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
 
 		DeferredLightingGraphicsSystem* deferredLightGS = 
-			m_owningGraphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
+			m_graphicsSystemManager->GetGraphicsSystem<DeferredLightingGraphicsSystem>();
 
 		// Create a new texture target set so we can write to the deferred lighting color targets, but attach the
 		// GBuffer depth for HW depth testing
@@ -72,7 +72,7 @@ namespace gr
 		re::TextureTarget::TargetParams depthTargetParams;
 		depthTargetParams.m_channelWriteMode.R = re::TextureTarget::TargetParams::ChannelWrite::Disabled;
 
-		GBufferGraphicsSystem* gBufferGS = m_owningGraphicsSystemManager->GetGraphicsSystem<GBufferGraphicsSystem>();
+		GBufferGraphicsSystem* gBufferGS = m_graphicsSystemManager->GetGraphicsSystem<GBufferGraphicsSystem>();
 		skyboxTargets->SetDepthStencilTarget(
 			gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
 			depthTargetParams);

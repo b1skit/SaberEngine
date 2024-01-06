@@ -38,6 +38,12 @@ namespace gr
 		bool m_showMeshCoordinateAxis = false;
 		float m_meshCoordinateAxisScale = 1.f;
 
+		bool m_showLightCoordinateAxis = false;
+		float m_lightCoordinateAxisScale = 1.f;
+
+		bool m_showSceneBoundingBox = false;
+		glm::vec3 m_sceneBoundsColor = glm::vec3(1.f, 0.4f, 0.f);
+
 		bool m_showAllMeshBoundingBoxes = false;
 		glm::vec3 m_meshBoundsColor = glm::vec3(1.f, 0.f, 0.f);
 
@@ -58,6 +64,8 @@ namespace gr
 
 		bool m_showDeferredLightWireframe = false;
 		glm::vec3 m_deferredLightwireframeColor = glm::vec3(1.f, 1.f, 0.f);
+
+		std::unordered_set<gr::RenderDataID> m_selectedRenderDataIDs; // If emtpy, render all IDs
 	};
 
 

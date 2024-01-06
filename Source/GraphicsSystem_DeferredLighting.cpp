@@ -273,7 +273,7 @@ namespace gr
 		SEAssert("We currently expect render data for exactly 1 ambient light to exist",
 			m_lightRenderDataIDs[gr::Light::AmbientIBL].size() == 1);
 
-		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
 		auto ambientItr = renderData.IDBegin(m_lightRenderDataIDs[gr::Light::AmbientIBL]);
 
@@ -545,11 +545,11 @@ namespace gr
 
 	void DeferredLightingGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
 	{
-		m_shadowGS = m_owningGraphicsSystemManager->GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
+		m_shadowGS = m_graphicsSystemManager->GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
 		SEAssert("Shadow graphics system not found", m_shadowGS != nullptr);
 
 		GBufferGraphicsSystem* gBufferGS = 
-			m_owningGraphicsSystemManager->GetGraphicsSystem<GBufferGraphicsSystem>();
+			m_graphicsSystemManager->GetGraphicsSystem<GBufferGraphicsSystem>();
 		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
 		
 		// Create a shared lighting stage texture target:
@@ -609,7 +609,7 @@ namespace gr
 		m_ambientStage->SetStageShader(
 			re::Shader::GetOrCreate(en::ShaderNames::k_deferredAmbientLightShaderName, ambientStageParams));
 
-		m_ambientStage->AddPermanentParameterBlock(m_owningGraphicsSystemManager->GetActiveCameraParams());
+		m_ambientStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
 
 		// Ambient PB:
 		const uint32_t totalPMREMMipLevels = m_PMREMTex->GetNumMips();
@@ -617,7 +617,7 @@ namespace gr
 		SEAssert("We currently expect render data for exactly 1 ambient light to exist",
 			m_lightRenderDataIDs[gr::Light::AmbientIBL].size() == 1);
 
-		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
 		auto ambientItr = renderData.IDBegin(m_lightRenderDataIDs[gr::Light::AmbientIBL]);
 		
@@ -677,7 +677,7 @@ namespace gr
 			m_directionalStage->SetStageShader(
 				re::Shader::GetOrCreate(en::ShaderNames::k_deferredDirectionalLightShaderName, directionalStageParams));
 
-			m_directionalStage->AddPermanentParameterBlock(m_owningGraphicsSystemManager->GetActiveCameraParams());
+			m_directionalStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
 
 			pipeline.AppendRenderStage(m_directionalStage);
 		}
@@ -687,7 +687,7 @@ namespace gr
 		const bool hasPointLights = !m_lightRenderDataIDs[fr::Light::Type::Point].empty();
 		if (hasPointLights)
 		{
-			m_pointStage->AddPermanentParameterBlock(m_owningGraphicsSystemManager->GetActiveCameraParams());
+			m_pointStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
 
 			re::TextureTarget::TargetParams pointTargetParams;
 			
@@ -839,7 +839,7 @@ namespace gr
 		SEAssert("We currently expect render data for exactly 1 ambient light to exist",
 			m_lightRenderDataIDs[gr::Light::AmbientIBL].size() == 1);
 
-		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
 		if (renderData.IsDirty<gr::Light::RenderDataAmbientIBL>(m_lightRenderDataIDs[gr::Light::AmbientIBL][0]))
 		{
@@ -861,7 +861,7 @@ namespace gr
 		// TODO: We should cache our batches, and only update them (or their attached ParameterBlocks) when their render
 		// data changes
 
-		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
 		// Ambient stage batches:
 		SEAssert("We currently expect render data for exactly 1 ambient light to exist",

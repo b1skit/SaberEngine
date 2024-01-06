@@ -109,7 +109,7 @@ namespace gr
 	}
 
 
-	void RenderDataComponent::SetFeature(gr::RenderObjectFeature feature)
+	void RenderDataComponent::SetFeatureBit(gr::RenderObjectFeature feature)
 	{
 		SEAssert("Invalid feature", feature != gr::RenderObjectFeature::Invalid);
 		m_featureBits |= (1 << feature);

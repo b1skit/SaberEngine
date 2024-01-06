@@ -11,12 +11,16 @@
 namespace
 {
 	re::Batch BuildAxisBatch(
-		float axisScale, glm::vec3 const& xAxisColor, glm::vec3 const& yAxisColor, glm::vec3 const& zAxisColor)
+		float axisScale, 
+		glm::vec3 const& xAxisColor, 
+		glm::vec3 const& yAxisColor, 
+		glm::vec3 const& zAxisColor, 
+		glm::vec3 transformGlobalScale = glm::vec3(1.f)) // Used to prevent scale affecting axis size
 	{
 		std::vector<glm::vec3> axisPositions = { 
-			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisX * axisScale,
-			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisY * axisScale,
-			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisZ * axisScale,
+			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisX * axisScale / transformGlobalScale,
+			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisY * axisScale / transformGlobalScale,
+			glm::vec3(0.f, 0.f, 0.f), gr::Transform::WorldAxisZ * axisScale / transformGlobalScale,
 		};
 
 		std::vector<glm::vec4> axisColors = { 
@@ -149,7 +153,10 @@ namespace
 
 
 	re::Batch BuildVertexNormalsBatch(
-		gr::MeshPrimitive::RenderData const& meshPrimRenderData, float scale, glm::vec3 const& normalColor)
+		gr::MeshPrimitive::RenderData const& meshPrimRenderData, 
+		float scale,
+		glm::vec3 const& globalScale,
+		glm::vec3 const& normalColor)
 	{
 		re::VertexStream const* positionStream = meshPrimRenderData.m_vertexStreams[gr::MeshPrimitive::Slot::Position];
 		re::VertexStream const* normalStream = meshPrimRenderData.m_vertexStreams[gr::MeshPrimitive::Slot::Normal];
@@ -163,14 +170,14 @@ namespace
 			positionStream->GetNumComponents() == 3 &&
 			normalStream->GetDataType() == re::VertexStream::DataType::Float &&
 			normalStream->GetNumComponents() == 3);
-
+		
 		// Build lines between the position and position + normal offset:
 		glm::vec3 const* positionData = static_cast<glm::vec3 const*>(positionStream->GetData());
 		glm::vec3 const* normalData = static_cast<glm::vec3 const*>(normalStream->GetData());
 		for (uint32_t elementIdx = 0; elementIdx < positionStream->GetNumElements(); elementIdx++)
 		{
 			linePositions.emplace_back(positionData[elementIdx]);
-			linePositions.emplace_back(positionData[elementIdx] + normalData[elementIdx] * scale);
+			linePositions.emplace_back(positionData[elementIdx] + normalData[elementIdx] * scale / globalScale);
 		}
 		
 		const glm::vec4 normalColorVec4 = glm::vec4(normalColor, 1.f);
@@ -355,7 +362,7 @@ namespace gr
 		debugLinePipelineState.SetDepthTestMode(re::PipelineState::DepthTestMode::Always);
 		m_debugStage->SetStageShader(re::Shader::GetOrCreate(en::ShaderNames::k_lineShaderName, debugLinePipelineState));
 
-		m_debugStage->AddPermanentParameterBlock(m_owningGraphicsSystemManager->GetActiveCameraParams());
+		m_debugStage->AddPermanentParameterBlock(m_graphicsSystemManager->GetActiveCameraParams());
 
 		stagePipeline.AppendRenderStage(m_debugStage);
 	}
@@ -371,7 +378,7 @@ namespace gr
 	{
 		constexpr glm::mat4 k_identity = glm::mat4(1.f);
 
-		gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
 		if (m_showWorldCoordinateAxis)
 		{
@@ -384,8 +391,7 @@ namespace gr
 			m_debugStage->AddBatch(coordinateAxis);
 		}
 
-		if (m_showAllMeshBoundingBoxes || 
-			m_showAllMeshPrimitiveBoundingBoxes || 
+		if (m_showAllMeshPrimitiveBoundingBoxes || 
 			m_showMeshCoordinateAxis || 
 			m_showAllVertexNormals ||
 			m_showAllWireframe)
@@ -395,56 +401,69 @@ namespace gr
 			auto const& meshPrimItrEnd = renderData.ObjectEnd<gr::MeshPrimitive::RenderData, gr::Bounds::RenderData>();
 			while (meshPrimItr != meshPrimItrEnd)
 			{
-				gr::MeshPrimitive::RenderData const& meshPrimRenderData = meshPrimItr.Get<gr::MeshPrimitive::RenderData>();
-				gr::Bounds::RenderData const& boundsRenderData = meshPrimItr.Get<gr::Bounds::RenderData>();
-
-				std::shared_ptr<re::ParameterBlock> meshTransformPB =
-					gr::Transform::CreateInstancedTransformParams(meshPrimItr.GetTransformData());
-				
-				// MeshPrimitives:
-				if (m_showAllMeshPrimitiveBoundingBoxes || m_showAllVertexNormals || m_showAllWireframe)
+				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(meshPrimItr.GetRenderDataID()))
 				{
-					if (m_showAllMeshPrimitiveBoundingBoxes)
+					gr::MeshPrimitive::RenderData const& meshPrimRenderData = meshPrimItr.Get<gr::MeshPrimitive::RenderData>();
+					gr::Bounds::RenderData const& boundsRenderData = meshPrimItr.Get<gr::Bounds::RenderData>();
+
+					gr::Transform::RenderData const& transformData = meshPrimItr.GetTransformData();
+
+					std::shared_ptr<re::ParameterBlock> meshTransformPB =
+						gr::Transform::CreateInstancedTransformParams(transformData);
+
+					// MeshPrimitives:
+					if (m_showAllMeshPrimitiveBoundingBoxes || m_showAllVertexNormals || m_showAllWireframe)
 					{
-						re::Batch primitiveBoundsBatch =
-							BuildBoundingBoxBatch(boundsRenderData, m_meshPrimitiveBoundsColor);
-						primitiveBoundsBatch.SetParameterBlock(meshTransformPB);
-						m_debugStage->AddBatch(primitiveBoundsBatch);
+						if (m_showAllMeshPrimitiveBoundingBoxes && 
+							!gr::HasFeature(gr::RenderObjectFeature::IsSceneBounds, meshPrimItr.GetFeatureBits()) && 
+							!gr::HasFeature(gr::RenderObjectFeature::IsMeshBounds, meshPrimItr.GetFeatureBits()))
+						{
+							re::Batch primitiveBoundsBatch =
+								BuildBoundingBoxBatch(boundsRenderData, m_meshPrimitiveBoundsColor);
+							primitiveBoundsBatch.SetParameterBlock(meshTransformPB);
+							m_debugStage->AddBatch(primitiveBoundsBatch);
+						}
+
+						if (m_showAllVertexNormals)
+						{
+							re::Batch vertexNormalsBatch = BuildVertexNormalsBatch(
+								meshPrimRenderData, m_vertexNormalsScale, transformData.m_globalScale, m_normalsColor);
+							vertexNormalsBatch.SetParameterBlock(meshTransformPB);
+							m_debugStage->AddBatch(vertexNormalsBatch);
+						}
+
+						if (m_showAllWireframe)
+						{
+							re::Batch wireframeBatch = BuildWireframeBatch(meshPrimRenderData, m_wireframeColor);
+							wireframeBatch.SetParameterBlock(meshTransformPB);
+							m_debugStage->AddBatch(wireframeBatch);
+						}
 					}
 
-					if (m_showAllVertexNormals)
+					if (m_showMeshCoordinateAxis)
 					{
-						re::Batch vertexNormalsBatch =
-							BuildVertexNormalsBatch(meshPrimRenderData, m_vertexNormalsScale, m_normalsColor);
-						vertexNormalsBatch.SetParameterBlock(meshTransformPB);
-						m_debugStage->AddBatch(vertexNormalsBatch);
-					}
-
-					if (m_showAllWireframe)
-					{
-						re::Batch wireframeBatch = BuildWireframeBatch(meshPrimRenderData, m_wireframeColor);
-						wireframeBatch.SetParameterBlock(meshTransformPB);
-						m_debugStage->AddBatch(wireframeBatch);
+						re::Batch meshCoordinateAxisBatch = BuildAxisBatch(
+							m_meshCoordinateAxisScale, 
+							m_xAxisColor, 
+							m_yAxisColor, 
+							m_zAxisColor, 
+							transformData.m_globalScale);
+						meshCoordinateAxisBatch.SetParameterBlock(meshTransformPB);
+						m_debugStage->AddBatch(meshCoordinateAxisBatch);
 					}
 				}
-
-				if (m_showMeshCoordinateAxis)
-				{
-					re::Batch meshCoordinateAxisBatch = 
-						BuildAxisBatch(m_meshCoordinateAxisScale, m_xAxisColor, m_yAxisColor, m_zAxisColor);
-					meshCoordinateAxisBatch.SetParameterBlock(meshTransformPB);
-					m_debugStage->AddBatch(meshCoordinateAxisBatch);
-				}
-
 				++meshPrimItr;
 			}
+		}
 
-			// Mesh: Draw this 2nd so it's on top if the bounding box is the same as the MeshPrimitive
-			if (m_showAllMeshBoundingBoxes)
+		// Mesh: Draw this after MeshPrimitive bounds so they're on top if the bounding box is the same
+		if (m_showAllMeshBoundingBoxes)
+		{
+			auto boundsItr = renderData.ObjectBegin<gr::Bounds::RenderData>();
+			auto boundsItrEnd = renderData.ObjectEnd<gr::Bounds::RenderData>();
+			while (boundsItr != boundsItrEnd)
 			{
-				auto boundsItr = renderData.ObjectBegin<gr::Bounds::RenderData>();
-				auto boundsItrEnd = renderData.ObjectEnd<gr::Bounds::RenderData>();
-				while (boundsItr != boundsItrEnd)
+				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(boundsItr.GetRenderDataID()))
 				{
 					if (gr::HasFeature(gr::RenderObjectFeature::IsMeshBounds, boundsItr.GetFeatureBits()))
 					{
@@ -457,8 +476,30 @@ namespace gr
 						boundingBoxBatch.SetParameterBlock(boundsTransformPB);
 						m_debugStage->AddBatch(boundingBoxBatch);
 					}
-					++boundsItr;
-				}				
+				}
+				++boundsItr;
+			}
+		}
+
+		// Scene bounds
+		if (m_showSceneBoundingBox)
+		{
+			auto boundsItr = renderData.ObjectBegin<gr::Bounds::RenderData>();
+			auto boundsItrEnd = renderData.ObjectEnd<gr::Bounds::RenderData>();
+			while (boundsItr != boundsItrEnd)
+			{
+				if (gr::HasFeature(gr::RenderObjectFeature::IsSceneBounds, boundsItr.GetFeatureBits()))
+				{
+					gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
+
+					std::shared_ptr<re::ParameterBlock> boundsTransformPB =
+						gr::Transform::CreateInstancedTransformParams(boundsItr.GetTransformData());
+
+					re::Batch boundingBoxBatch = BuildBoundingBoxBatch(boundsRenderData, m_sceneBoundsColor);
+					boundingBoxBatch.SetParameterBlock(boundsTransformPB);
+					m_debugStage->AddBatch(boundingBoxBatch);
+				}
+				++boundsItr;
 			}
 		}
 
@@ -524,22 +565,50 @@ namespace gr
 			auto const& pointItrEnd = renderData.ObjectEnd<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>();
 			while (pointItr != pointItrEnd)
 			{
-				gr::Light::RenderDataPoint const& pointData = 
-					pointItr.Get<gr::Light::RenderDataPoint>();
-				gr::Transform::RenderData transformData = pointItr.GetTransformData();
-				
-				glm::mat4 const& lightTRS = transformData.g_model;
+				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(pointItr.GetRenderDataID()))
+				{
+					gr::Light::RenderDataPoint const& pointData =
+						pointItr.Get<gr::Light::RenderDataPoint>();
+					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 
-				std::shared_ptr<re::ParameterBlock> pointLightMeshTransformPB =
-					gr::Transform::CreateInstancedTransformParams(&lightTRS, nullptr);
+					glm::mat4 const& lightTRS = transformData.g_model;
 
-				gr::MeshPrimitive::RenderData const& meshPrimData = pointItr.Get<gr::MeshPrimitive::RenderData>();
-				
-				re::Batch pointLightWireframeBatch = BuildWireframeBatch(
-					meshPrimData,
-					m_deferredLightwireframeColor);
-				pointLightWireframeBatch.SetParameterBlock(pointLightMeshTransformPB);
-				m_debugStage->AddBatch(pointLightWireframeBatch);
+					std::shared_ptr<re::ParameterBlock> pointLightMeshTransformPB =
+						gr::Transform::CreateInstancedTransformParams(&lightTRS, nullptr);
+
+					gr::MeshPrimitive::RenderData const& meshPrimData = pointItr.Get<gr::MeshPrimitive::RenderData>();
+
+					re::Batch pointLightWireframeBatch = BuildWireframeBatch(
+						meshPrimData,
+						m_deferredLightwireframeColor);
+					pointLightWireframeBatch.SetParameterBlock(pointLightMeshTransformPB);
+					m_debugStage->AddBatch(pointLightWireframeBatch);
+				}
+
+				++pointItr;
+			}
+		}
+
+		if (m_showLightCoordinateAxis)
+		{
+			auto pointItr = renderData.ObjectBegin<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>();
+			auto const& pointItrEnd = renderData.ObjectEnd<gr::Light::RenderDataPoint, gr::MeshPrimitive::RenderData>();
+			while (pointItr != pointItrEnd)
+			{
+				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(pointItr.GetRenderDataID()))
+				{
+					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
+					glm::mat4 const& lightTRS = transformData.g_model;
+
+					std::shared_ptr<re::ParameterBlock> pointLightMeshTransformPB =
+						gr::Transform::CreateInstancedTransformParams(&lightTRS, nullptr);
+
+					re::Batch coordinateAxis = BuildAxisBatch(
+						m_lightCoordinateAxisScale, m_xAxisColor, m_yAxisColor, m_zAxisColor, transformData.m_globalScale);
+
+					coordinateAxis.SetParameterBlock(pointLightMeshTransformPB);
+					m_debugStage->AddBatch(coordinateAxis);
+				}
 
 				++pointItr;
 			}
@@ -549,25 +618,71 @@ namespace gr
 
 	void DebugGraphicsSystem::ShowImGuiWindow()
 	{
+		if (ImGui::CollapsingHeader(std::format("Target render data objects").c_str()))
+		{
+			ImGui::Indent();
+
+			static bool s_targetAll = true;
+			if (ImGui::Button(std::format("{}", s_targetAll ? "Select specific IDs" : "Select all").c_str()))
+			{
+				s_targetAll = !s_targetAll;
+			}
+
+			if (s_targetAll)
+			{
+				m_selectedRenderDataIDs.clear(); // If emtpy, render all IDs
+			}
+			else
+			{
+				std::vector<gr::RenderDataID> const& currentRenderObjects =
+					m_graphicsSystemManager->GetRenderData().GetRegisteredRenderDataIDs();
+
+				for (gr::RenderDataID renderDataID : currentRenderObjects)
+				{
+
+					const bool currentlySelected = m_selectedRenderDataIDs.contains(renderDataID);
+					bool isSelected = currentlySelected;
+					ImGui::Checkbox(std::format("{}", renderDataID).c_str(), &isSelected);
+
+					if (currentlySelected && !isSelected)
+					{
+						m_selectedRenderDataIDs.erase(renderDataID);
+					}
+					else if (isSelected && !currentlySelected)
+					{
+						m_selectedRenderDataIDs.emplace(renderDataID);
+					}
+				}
+			}
+			ImGui::Unindent();
+		}
+
 		ImGui::Checkbox(std::format("Show origin coordinate XYZ axis").c_str(), &m_showWorldCoordinateAxis);
 		if (m_showWorldCoordinateAxis)
 		{
 			ImGui::SliderFloat("Coordinate axis scale", &m_worldCoordinateAxisScale, 0.f, 20.f);
 		}
 
-		ImGui::Checkbox(std::format("Show Mesh local coordinate axis").c_str(), &m_showMeshCoordinateAxis);
+		ImGui::Checkbox(std::format("Show mesh coordinate axis").c_str(), &m_showMeshCoordinateAxis);
 		if (m_showMeshCoordinateAxis)
 		{
 			ImGui::SliderFloat("Mesh coordinate axis scale", &m_meshCoordinateAxisScale, 0.f, 20.f);
 		}
 
+		ImGui::Checkbox(std::format("Show light coordinate axis").c_str(), &m_showLightCoordinateAxis);
+		if (m_showLightCoordinateAxis)
+		{
+			ImGui::SliderFloat("Mesh coordinate axis scale", &m_lightCoordinateAxisScale, 0.f, 20.f);
+		}
+
+		ImGui::Checkbox(std::format("Show scene bounding box").c_str(), &m_showSceneBoundingBox);
 		ImGui::Checkbox(std::format("Show Mesh bounding boxes").c_str(), &m_showAllMeshBoundingBoxes);
 		ImGui::Checkbox(std::format("Show MeshPrimitive bounding boxes").c_str(), &m_showAllMeshPrimitiveBoundingBoxes);
 
-		ImGui::Checkbox(std::format("Show all vertex normals").c_str(), &m_showAllVertexNormals);
+		ImGui::Checkbox(std::format("Show vertex normals").c_str(), &m_showAllVertexNormals);
 		if (m_showAllVertexNormals)
 		{
-			ImGui::SliderFloat("Vertex normals scale", &m_vertexNormalsScale, 0.f, 20.f);
+			ImGui::SliderFloat("Vertex normals scale", &m_vertexNormalsScale, 0.f, 2.f);
 		}
 		
 		if (ImGui::CollapsingHeader(std::format("Debug camera frustums").c_str()))
@@ -575,7 +690,7 @@ namespace gr
 			ImGui::Indent();
 			m_showCameraFrustums = true;
 
-			gr::RenderDataManager const& renderData = m_owningGraphicsSystemManager->GetRenderData();
+			gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 			
 			auto camItr = renderData.ObjectBegin<gr::Camera::RenderData>();
 			auto const& camEnd = renderData.ObjectEnd<gr::Camera::RenderData>();
@@ -600,7 +715,6 @@ namespace gr
 				++camItr;
 			}
 
-
 			ImGui::SliderFloat("Camera coordinate axis scale", &m_cameraCoordinateAxisScale, 0.f, 20.f);
 			ImGui::Unindent();
 		}
@@ -610,7 +724,7 @@ namespace gr
 			m_camerasToDebug.clear();
 		}
 
-		ImGui::Checkbox(std::format("Show all mesh wireframes").c_str(), &m_showAllWireframe);
+		ImGui::Checkbox(std::format("Show mesh wireframes").c_str(), &m_showAllWireframe);
 
 		ImGui::Checkbox(std::format("Show deferred light mesh wireframes").c_str(), &m_showDeferredLightWireframe);
 	}

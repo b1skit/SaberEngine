@@ -30,7 +30,7 @@ namespace fr
 		fr::BoundsComponent::AttachBoundsComponent(em, owningEntity);
 
 		// Mark our RenderDataComponent so the renderer can differentiate between Mesh and MeshPrimitive Bounds
-		meshRenderData.SetFeature(gr::RenderObjectFeature::IsMeshBounds);
+		meshRenderData.SetFeatureBit(gr::RenderObjectFeature::IsMeshBounds);
 	}
 
 
