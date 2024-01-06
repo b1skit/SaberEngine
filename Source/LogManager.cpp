@@ -1,9 +1,10 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
+#include "Config.h"
+#include "CoreEngine.h"
 #include "EventManager.h"
 #include "LogManager.h"
-
-using en::EventManager;
+#include "ThreadPool.h"
 
 
 namespace
@@ -166,35 +167,77 @@ namespace en
 
 
 	LogManager::LogManager()
+		: m_imGuiLogWindow(std::make_unique<ImGuiLogWindow>())
+		, m_isRunning(false)
 	{
-		m_imGuiLogWindow = std::make_unique<ImGuiLogWindow>();
 	}
 
 
 	void LogManager::Startup() 
 	{
 		LOG("Log manager starting...");
+
+		m_isRunning = true; // Start running *before* we kick off a thread
+
+		en::CoreEngine::Get()->GetThreadPool()->EnqueueJob([&]()
+			{
+				en::ThreadPool::NameCurrentThread(L"LogManager Thread");
+				en::LogManager::Get()->Run();
+			});
 	}
 
 
 	void LogManager::Shutdown()
 	{
 		LOG("Log manager shutting down...");
+		m_isRunning = false;
 	}
 
 
-	void LogManager::Update(uint64_t frameNum, double stepTimeMs)
+	void LogManager::Run()
 	{
-		HandleEvents();
-	}
+		auto PrintMessage = [&](char const* msg)
+			{
+				m_imGuiLogWindow->AddLog(msg);
 
+				// Print the message to the terminal. Note: We might get different ordering since m_imGuiLogWindow internally
+				// locks a mutex before appending the new message
+				static const bool s_consoleEnabled =
+					en::Config::Get()->KeyExists(en::ConfigKeys::k_showSystemConsoleWindowCmdLineArg);
+				if (s_consoleEnabled)
+				{
+					printf(msg);
+				}
+			};
 
-	void LogManager::HandleEvents()
-	{
-		while (HasEvents())
+		while (m_isRunning)
 		{
-			SEAssertF("We don't have any subscriptions, this is unexpected");
-		}	
+			std::unique_lock<std::mutex> waitingLock(m_messagesMutex);
+			m_messagesCV.wait(waitingLock,
+				[this]() { return !m_messages.empty() || !m_isRunning; }); // while (!stop_waiting())
+			if (!m_isRunning)
+			{
+				// Flush any remaining messages on the queue:
+				while (!m_messages.empty())
+				{
+					PrintMessage(m_messages.front().data());
+					m_messages.pop();
+				}
+				return;
+			}
+
+			// Get a pointer to the front message, then release the lock to allow more messages to be added
+			char const* topMsg = m_messages.front().data();
+			waitingLock.unlock();
+
+			PrintMessage(topMsg);
+			
+			{
+				// Finally, pop the message
+				std::unique_lock<std::mutex> modifyLock(m_messagesMutex);
+				m_messages.pop();
+			}
+		}
 	}
 
 
@@ -212,68 +255,13 @@ namespace en
 	}
 
 
-	void LogManager::AddMessage(std::string&& msg)
+	void LogManager::AddMessage(char const* msg)
 	{
-		m_imGuiLogWindow->AddLog(msg.c_str());
-
-		// Print the message to the terminal. Note: We might get different ordering since m_imGuiLogWindow internally
-		// locks a mutex before appending the new message
-		printf(msg.c_str());
-	}
-
-
-	void LogManager::AssembleStringFromVariadicArgs(char* buf, uint32_t bufferSize, const char* msg, ...)
-	{
-		va_list args;
-		va_start(args, msg);
-		const int numChars = vsprintf_s(buf, bufferSize, msg, args);
-		SEAssert("Message is larger than the buffer size; it will be truncated",
-			static_cast<uint32_t>(numChars) < bufferSize);
-		va_end(args);
-	}
-
-
-	void LogManager::AssembleStringFromVariadicArgs(wchar_t* buf, uint32_t bufferSize, const wchar_t* msg, ...)
-	{
-		va_list args;
-		va_start(args, msg);
-		const int numChars = vswprintf_s(buf, bufferSize, msg, args);
-		SEAssert("Message is larger than the buffer size; it will be truncated",
-			static_cast<uint32_t>(numChars) < bufferSize);
-		va_end(args);
-	}
-
-
-	std::string LogManager::FormatStringForLog(char const* prefix, const char* tag, char const* assembledMsg)
-	{
-		std::ostringstream stream;
-		if (prefix)
 		{
-			stream << prefix;
+			std::unique_lock<std::mutex> lock(m_messagesMutex);
+			m_messages.emplace();
+			strcpy(m_messages.back().data(), msg);
 		}
-		if (tag)
-		{
-			stream << tag;
-		}
-		stream << assembledMsg << "\n";
-
-		return stream.str();
-	}
-
-
-	std::wstring LogManager::FormatStringForLog(wchar_t const* prefix, wchar_t const* tag, wchar_t const* assembledMsg)
-	{
-		std::wstringstream stream;
-		if (prefix)
-		{
-			stream << prefix;
-		}
-		if (tag)
-		{
-			stream << tag;
-		}
-		stream << assembledMsg << "\n";
-
-		return stream.str();
+		m_messagesCV.notify_one();
 	}
 }

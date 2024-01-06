@@ -278,8 +278,7 @@ namespace dx12
 
 	std::string GetDebugName(ID3D12Object* object)
 	{
-		std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-		return converter.to_bytes(GetWDebugName(object));
+		return util::FromWideString(GetWDebugName(object));
 	}
 
 

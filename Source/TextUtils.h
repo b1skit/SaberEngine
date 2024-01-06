@@ -4,7 +4,7 @@
 
 namespace util
 {
-	inline std::string LoadTextAsString(std::string const& filepath)
+	static std::string LoadTextAsString(std::string const& filepath)
 	{
 		std::ifstream file;
 		file.open(filepath.c_str());
@@ -27,21 +27,36 @@ namespace util
 		return output;
 	}
 
-	inline std::wstring ToWideString(std::string const& str)
+
+	static std::wstring ToWideString(std::string const& str)
 	{
 		return std::wstring(str.begin(), str.end());
 	}
 
 
-	inline std::string FromWideString(std::wstring const& wstr)
+	static std::string FromWideCString(wchar_t const* wstr, size_t wstrLen)
 	{
-		// Note: This is function is deprecated (we squash the warning in the pch) TODO: Handle this correctly
-		std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> wstringConverter;
-		return wstringConverter.to_bytes(wstr);
+		std::string result;
+		result.resize(wstrLen);
+		std::wcstombs(result.data(), wstr, wstrLen);
+
+		return result;
 	}
 
 
-	inline std::string GetTimeAndDateAsString()
+	static std::string FromWideCString(wchar_t const* wstr)
+	{
+		return FromWideCString(wstr, std::wcslen(wstr));
+	}
+
+
+	static std::string FromWideString(std::wstring const& wstr)
+	{
+		return FromWideCString(wstr.c_str());
+	}
+
+
+	static std::string GetTimeAndDateAsString()
 	{
 		auto time = std::time(nullptr);
 		auto tm = *std::localtime(&time);

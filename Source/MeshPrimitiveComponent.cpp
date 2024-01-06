@@ -41,13 +41,16 @@ namespace
 
 		// If there's a BoundsComponent in the heirarchy above (i.e. from a Mesh), assume it's encapsulating the
 		// MeshPrimitive:
-		entt::entity nextEntity = entt::null;
-		fr::BoundsComponent* encapsulatingBounds = em.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
-			owningEntityRelationship.GetParent(),
-			nextEntity);
-		if (encapsulatingBounds != nullptr)
+		if (owningEntityRelationship.HasParent())
 		{
-			encapsulatingBounds->ExpandBoundsHierarchy(em, meshPrimitiveBounds, nextEntity);
+			entt::entity nextEntity = entt::null;
+			fr::BoundsComponent* encapsulatingBounds = em.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
+				owningEntityRelationship.GetParent(),
+				nextEntity);
+			if (encapsulatingBounds != nullptr)
+			{
+				encapsulatingBounds->ExpandBoundsHierarchy(em, meshPrimitiveBounds, nextEntity);
+			}
 		}
 
 		// Mark our new MeshPrimitive as dirty:

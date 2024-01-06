@@ -44,6 +44,9 @@ namespace en
 
 		m_threadPool.Startup();
 
+		// Start the logging thread:
+		en::LogManager::Get()->Startup();
+
 		// Create a window:
 		std::string commandLineArgs;
 		en::Config::Get()->TryGetValue<std::string>(en::ConfigKeys::k_commandLineArgsValueKey, commandLineArgs);
@@ -75,7 +78,6 @@ namespace en
 		eventManager->Startup();
 		eventManager->Subscribe(en::EventManager::EngineQuit, this);
 
-		en::LogManager::Get()->Startup();
 		en::InputManager::Get()->Startup(); // Now that the window is created
 
 		fr::SceneManager::Get()->Startup(); // Load assets
@@ -214,9 +216,10 @@ namespace en
 
 		en::InputManager::Get()->Shutdown();
 		en::EventManager::Get()->Shutdown();
-		en::LogManager::Get()->Shutdown();
 
 		m_window->Destroy();
+
+		en::LogManager::Get()->Shutdown(); // Destroy last
 
 		m_threadPool.Stop();
 
