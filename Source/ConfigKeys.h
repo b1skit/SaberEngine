@@ -68,6 +68,9 @@ namespace en::ConfigKeys
 	constexpr char const* k_defaultShadowMapResolution		= "defaultShadowMapRes";
 	constexpr char const* k_defaultShadowCubeMapResolution	= "defaultShadowCubeMapRes";
 
+	// Data processing:
+	constexpr char const* k_doCPUVertexStreamNormalization = "cpunormalizevertexstreams";
+
 	// ImGui:
 	constexpr char const* k_imguiIniPath = "config\\imgui.ini";
 }

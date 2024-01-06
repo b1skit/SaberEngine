@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
+#include "Config.h"
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
 #include "SceneManager.h"
@@ -154,9 +155,20 @@ namespace re
 		// D3D12 does not support GPU-normalization of 32-bit types. As a hail-mary, we attempt to pre-normalize here
 		if (DoNormalize() && m_dataType == re::VertexStream::DataType::Float)
 		{
-			LOG_WARNING("Pre-normalizing vertex stream data as its format is incompatible with GPU-normalization");
+			static const bool s_doNormalize = 
+				en::Config::Get()->KeyExists(en::ConfigKeys::k_doCPUVertexStreamNormalization);
 
-			NormalizeData(m_data, m_numComponents, m_dataType);
+			if (s_doNormalize)
+			{
+				LOG_WARNING("Pre-normalizing vertex stream data as its format is incompatible with GPU-normalization");
+
+				NormalizeData(m_data, m_numComponents, m_dataType);
+			}
+			else
+			{
+				LOG_WARNING("Vertex stream is marked for normalization, but its format is incompatible with "
+					"GPU-normalization and CPU-side normalization is disabled");
+			}
 
 			m_doNormalize = Normalize::False;
 		}

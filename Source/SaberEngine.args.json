@@ -3,6 +3,10 @@
   "Id": "80c62e80-7437-4bb9-b7e0-693fa4c402a1",
   "Items": [
     {
+      "Id": "9e16609b-5425-4046-a533-7bddf6eba224",
+      "Command": "-cpunormalizevertexstreams"
+    },
+    {
       "Id": "807d7fbe-0c73-45d1-a81d-2ea78d049415",
       "Command": "-platform dx12"
     },

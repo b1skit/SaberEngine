@@ -80,6 +80,9 @@ Enable PIX programmatic capture (DX12 only): `-enablepixgpucapture`, `-enablepix
 Enable RenderDoc programmatic capture: `-renderdoc`  
 	- This is only required for programmatic captures. RenderDoc can still launch/capture without this  
 
+Enable CPU-side normalization of vertex streams when requested: `-cpunormalizevertexstreams`  
+	- This is only rarely required if a vertex stream requires normalization, but is not received in a format compatible with GPU-side normalization  
+
 
 --------------  
 Menu and logs:  
