@@ -54,23 +54,11 @@ namespace gr
 	ShadowsGraphicsSystem::ShadowsGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(k_gsName, owningGSM)
 		, NamedObject(k_gsName)
-		, m_hasDirectionalLight(false)
 	{
 		re::RenderStage::GraphicsStageParams gfxStageParams;
 		m_directionalShadowStage = re::RenderStage::CreateGraphicsStage("Directional shadow", gfxStageParams);
 
 		m_directionalShadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
-	}
-
-
-	ShadowsGraphicsSystem::~ShadowsGraphicsSystem()
-	{
-#if defined(_DEBUG)
-		for (uint8_t i = 0; i < gr::Light::Type_Count; i++)
-		{
-			SEAssert("Not all shadow maps were unregistered", m_shadowRenderDataIDs[i].empty());
-		}
-#endif
 	}
 
 
@@ -86,178 +74,200 @@ namespace gr
 
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
-		// Directional light shadow:		
-		m_hasDirectionalLight = !m_shadowRenderDataIDs[gr::Light::Type::Directional].empty();
-		if (m_hasDirectionalLight)
+		// Directional light shadow:
+		if (renderData.HasObjectData<gr::Light::RenderDataDirectional>())
 		{
+			std::vector<gr::RenderDataID> const& directionalIDs =
+				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
+
 			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)",
-				m_shadowRenderDataIDs[gr::Light::Type::Directional].size() == 1);
+				directionalIDs.size() == 1);
 
-			auto const& directionalItr = renderData.IDBegin(m_shadowRenderDataIDs[gr::Light::Type::Directional]);
-			
-			gr::Camera::RenderData const& camData = directionalItr.Get<gr::Camera::RenderData>();
-			
-			m_directionalShadowCamPB = re::ParameterBlock::Create(
-				gr::Camera::CameraParams::s_shaderName,
-				camData.m_cameraParams,
-				re::ParameterBlock::PBType::Mutable);
+			auto directionalItr = renderData.IDBegin(directionalIDs);
+			auto const& directionalItrEnd = renderData.IDEnd(directionalIDs);
+			while (directionalItr != directionalItrEnd)
+			{
+				gr::Light::RenderDataDirectional const& directionalData =
+					directionalItr.Get<gr::Light::RenderDataDirectional>();
+				if (directionalData.m_hasShadow)
+				{
+					gr::Camera::RenderData const& camData = directionalItr.Get<gr::Camera::RenderData>();
 
-			m_directionalShadowStage->AddPermanentParameterBlock(m_directionalShadowCamPB);
+					m_directionalShadowCamPB = re::ParameterBlock::Create(
+						gr::Camera::CameraParams::s_shaderName,
+						camData.m_cameraParams,
+						re::ParameterBlock::PBType::Mutable);
 
-			// Shader:
-			m_directionalShadowStage->SetStageShader(
-				re::Shader::GetOrCreate(en::ShaderNames::k_depthShaderName, shadowPipelineState));
-			
-			gr::ShadowMap::RenderData const& shadowData = directionalItr.Get<gr::ShadowMap::RenderData>();
-			
-			char const* lightName = shadowData.m_owningLightName;
-			
-			// Texture target:
-			re::Texture::TextureParams shadowParams;
-			shadowParams.m_width = static_cast<uint32_t>(shadowData.m_textureDims.x);
-			shadowParams.m_height = static_cast<uint32_t>(shadowData.m_textureDims.y);
-			shadowParams.m_usage = 
-				static_cast<re::Texture::Usage>(re::Texture::Usage::DepthTarget | re::Texture::Usage::Color);
-			shadowParams.m_format = re::Texture::Format::Depth32F;
-			shadowParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-			shadowParams.m_mipMode = re::Texture::MipMode::None;
-			shadowParams.m_addToSceneData = false;
-			shadowParams.m_clear.m_depthStencil.m_depth = 1.f;
-			// 2D:
-			shadowParams.m_dimension = re::Texture::Dimension::Texture2D;
-			shadowParams.m_faces = 1;
+					m_directionalShadowStage->AddPermanentParameterBlock(m_directionalShadowCamPB);
 
-			std::string const& texName = std::format("{}_Shadow", lightName);
+					// Shader:
+					m_directionalShadowStage->SetStageShader(
+						re::Shader::GetOrCreate(en::ShaderNames::k_depthShaderName, shadowPipelineState));
 
-			std::shared_ptr<re::Texture> depthTexture = re::Texture::Create(texName, shadowParams, false);
-			
-			// Texture target set:
-			std::shared_ptr<re::TextureTargetSet> directionalShadowTargetSet =
-				re::TextureTargetSet::Create(std::format("{}_ShadowTargetSet", lightName));
+					gr::ShadowMap::RenderData const& shadowData = directionalItr.Get<gr::ShadowMap::RenderData>();
 
-			re::TextureTarget::TargetParams depthTargetParams;
-			directionalShadowTargetSet->SetDepthStencilTarget(depthTexture, depthTargetParams);
-			directionalShadowTargetSet->SetViewport(re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height()));
-			directionalShadowTargetSet->SetScissorRect(
-				{ 0, 0, static_cast<long>(depthTexture->Width()), static_cast<long>(depthTexture->Height()) });
-			
-			directionalShadowTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-				re::TextureTarget::TargetParams::BlendMode::Disabled,
-				re::TextureTarget::TargetParams::BlendMode::Disabled });
+					char const* lightName = shadowData.m_owningLightName;
 
-			directionalShadowTargetSet->SetAllColorWriteModes(re::TextureTarget::TargetParams::ChannelWrite{
-				re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-				re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-				re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-				re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled });
+					// Texture target:
+					re::Texture::TextureParams shadowParams;
+					shadowParams.m_width = static_cast<uint32_t>(shadowData.m_textureDims.x);
+					shadowParams.m_height = static_cast<uint32_t>(shadowData.m_textureDims.y);
+					shadowParams.m_usage =
+						static_cast<re::Texture::Usage>(re::Texture::Usage::DepthTarget | re::Texture::Usage::Color);
+					shadowParams.m_format = re::Texture::Format::Depth32F;
+					shadowParams.m_colorSpace = re::Texture::ColorSpace::Linear;
+					shadowParams.m_mipMode = re::Texture::MipMode::None;
+					shadowParams.m_addToSceneData = false;
+					shadowParams.m_clear.m_depthStencil.m_depth = 1.f;
+					// 2D:
+					shadowParams.m_dimension = re::Texture::Dimension::Texture2D;
+					shadowParams.m_faces = 1;
 
-			directionalShadowTargetSet->SetDepthWriteMode(re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled);
-			directionalShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode::Enabled);
+					std::string const& texName = std::format("{}_Shadow", lightName);
 
-			m_directionalShadowStage->SetTextureTargetSet(directionalShadowTargetSet);
+					std::shared_ptr<re::Texture> depthTexture = re::Texture::Create(texName, shadowParams, false);
 
-			m_shadowTargetSets[gr::Light::Type::Directional].emplace(
-				shadowData.m_renderDataID,
-				directionalShadowTargetSet);
+					// Texture target set:
+					std::shared_ptr<re::TextureTargetSet> directionalShadowTargetSet =
+						re::TextureTargetSet::Create(std::format("{}_ShadowTargetSet", lightName));
 
-			pipeline.AppendRenderStage(m_directionalShadowStage);
+					re::TextureTarget::TargetParams depthTargetParams;
+					directionalShadowTargetSet->SetDepthStencilTarget(depthTexture, depthTargetParams);
+					directionalShadowTargetSet->SetViewport(re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height()));
+					directionalShadowTargetSet->SetScissorRect(
+						{ 0, 0, static_cast<long>(depthTexture->Width()), static_cast<long>(depthTexture->Height()) });
+
+					directionalShadowTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
+						re::TextureTarget::TargetParams::BlendMode::Disabled,
+						re::TextureTarget::TargetParams::BlendMode::Disabled });
+
+					directionalShadowTargetSet->SetAllColorWriteModes(re::TextureTarget::TargetParams::ChannelWrite{
+						re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+						re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+						re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+						re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled });
+
+					directionalShadowTargetSet->SetDepthWriteMode(re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled);
+					directionalShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode::Enabled);
+
+					m_directionalShadowStage->SetTextureTargetSet(directionalShadowTargetSet);
+
+					m_shadowTargetSets[gr::Light::Type::Directional].emplace(
+						shadowData.m_renderDataID,
+						directionalShadowTargetSet);
+
+					pipeline.AppendRenderStage(m_directionalShadowStage);
+				}
+
+				++directionalItr;
+			}
 		}
 		
 		// Point light shadows:
-		const size_t numPointLights = m_shadowRenderDataIDs[gr::Light::Type::Point].size();
-
-		m_pointLightStageData.reserve(numPointLights);
-		
-		auto pointItr = renderData.IDBegin(m_shadowRenderDataIDs[gr::Light::Type::Point]);
-		auto const& pointItrEnd = renderData.IDEnd(m_shadowRenderDataIDs[gr::Light::Type::Point]);
-		while (pointItr != pointItrEnd)
+		const size_t numPointLights = renderData.GetNumElementsOfType<gr::Light::RenderDataPoint>();
+		if (numPointLights > 0)
 		{
-			re::RenderStage::GraphicsStageParams gfxStageParams;
+			m_pointLightStageData.reserve(numPointLights);
 
-			gr::ShadowMap::RenderData const& pointData = pointItr.Get<gr::ShadowMap::RenderData>();
+			std::vector<gr::RenderDataID> const& pointIDs =
+				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataPoint>();
 
-			char const* lightName = pointData.m_owningLightName;
-			std::string const& stageName = std::format("{}_Shadow", lightName);
-			
-			std::shared_ptr<re::RenderStage> shadowStage = re::RenderStage::CreateGraphicsStage(stageName, gfxStageParams);
+			auto pointItr = renderData.IDBegin(pointIDs);
+			auto const& pointItrEnd = renderData.IDEnd(pointIDs);
+			while (pointItr != pointItrEnd)
+			{
+				gr::Light::RenderDataPoint const& pointData = pointItr.Get<gr::Light::RenderDataPoint>();
+				if (pointData.m_hasShadow)
+				{
+					re::RenderStage::GraphicsStageParams gfxStageParams;
 
-			shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
-			
-			gr::Camera::RenderData const& shadowCamData = pointItr.Get<gr::Camera::RenderData>();
-			gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
+					gr::ShadowMap::RenderData const& pointData = pointItr.Get<gr::ShadowMap::RenderData>();
 
-			// Shader:
-			shadowStage->SetStageShader(
-				re::Shader::GetOrCreate(en::ShaderNames::k_cubeDepthShaderName, shadowPipelineState));
+					char const* lightName = pointData.m_owningLightName;
+					std::string const& stageName = std::format("{}_Shadow", lightName);
 
-			// Texture target:
-			re::Texture::TextureParams shadowParams;
-			shadowParams.m_width = static_cast<uint32_t>(pointData.m_textureDims.x);
-			shadowParams.m_height = static_cast<uint32_t>(pointData.m_textureDims.y);
-			shadowParams.m_usage = 
-				static_cast<re::Texture::Usage>(re::Texture::Usage::DepthTarget | re::Texture::Usage::Color);
-			shadowParams.m_format = re::Texture::Format::Depth32F;
-			shadowParams.m_colorSpace = re::Texture::ColorSpace::Linear;
-			shadowParams.m_mipMode = re::Texture::MipMode::None;
-			shadowParams.m_addToSceneData = false;
-			shadowParams.m_clear.m_depthStencil.m_depth = 1.f;
-			// Cubemap:
-			shadowParams.m_dimension = re::Texture::Dimension::TextureCubeMap;
-			shadowParams.m_faces = 6;
+					std::shared_ptr<re::RenderStage> shadowStage = 
+						re::RenderStage::CreateGraphicsStage(stageName, gfxStageParams);
 
-			std::shared_ptr<re::Texture> depthTexture = re::Texture::Create(lightName, shadowParams, false);
+					shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
 
-			// Texture target set:
-			std::shared_ptr<re::TextureTargetSet> pointShadowTargetSet =
-				re::TextureTargetSet::Create(std::format("{}_ShadowTargetSet", lightName));
+					gr::Camera::RenderData const& shadowCamData = pointItr.Get<gr::Camera::RenderData>();
+					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 
-			re::TextureTarget::TargetParams depthTargetParams;
-			depthTargetParams.m_targetFace = re::TextureTarget::k_allFaces;
+					// Shader:
+					shadowStage->SetStageShader(
+						re::Shader::GetOrCreate(en::ShaderNames::k_cubeDepthShaderName, shadowPipelineState));
 
-			pointShadowTargetSet->SetDepthStencilTarget(depthTexture, depthTargetParams);
-			pointShadowTargetSet->SetViewport(re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height()));
-			pointShadowTargetSet->SetScissorRect(
-				{ 0, 0, static_cast<long>(depthTexture->Width()), static_cast<long>(depthTexture->Height()) });
+					// Texture target:
+					re::Texture::TextureParams shadowParams;
+					shadowParams.m_width = static_cast<uint32_t>(pointData.m_textureDims.x);
+					shadowParams.m_height = static_cast<uint32_t>(pointData.m_textureDims.y);
+					shadowParams.m_usage =
+						static_cast<re::Texture::Usage>(re::Texture::Usage::DepthTarget | re::Texture::Usage::Color);
+					shadowParams.m_format = re::Texture::Format::Depth32F;
+					shadowParams.m_colorSpace = re::Texture::ColorSpace::Linear;
+					shadowParams.m_mipMode = re::Texture::MipMode::None;
+					shadowParams.m_addToSceneData = false;
+					shadowParams.m_clear.m_depthStencil.m_depth = 1.f;
+					// Cubemap:
+					shadowParams.m_dimension = re::Texture::Dimension::TextureCubeMap;
+					shadowParams.m_faces = 6;
 
-			pointShadowTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
-				re::TextureTarget::TargetParams::BlendMode::Disabled,
-				re::TextureTarget::TargetParams::BlendMode::Disabled });
+					std::shared_ptr<re::Texture> depthTexture = re::Texture::Create(lightName, shadowParams, false);
 
-			pointShadowTargetSet->SetAllColorWriteModes(re::TextureTarget::TargetParams::ChannelWrite{
-				re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-				re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-				re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
-				re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled });
+					// Texture target set:
+					std::shared_ptr<re::TextureTargetSet> pointShadowTargetSet =
+						re::TextureTargetSet::Create(std::format("{}_ShadowTargetSet", lightName));
 
-			pointShadowTargetSet->SetDepthWriteMode(re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled);
-			pointShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode::Enabled);
+					re::TextureTarget::TargetParams depthTargetParams;
+					depthTargetParams.m_targetFace = re::TextureTarget::k_allFaces;
 
-			m_shadowTargetSets[gr::Light::Type::Point].emplace(
-				pointData.m_renderDataID,
-				pointShadowTargetSet);
+					pointShadowTargetSet->SetDepthStencilTarget(depthTexture, depthTargetParams);
+					pointShadowTargetSet->SetViewport(re::Viewport(0, 0, depthTexture->Width(), depthTexture->Height()));
+					pointShadowTargetSet->SetScissorRect(
+						{ 0, 0, static_cast<long>(depthTexture->Width()), static_cast<long>(depthTexture->Height()) });
 
-			shadowStage->SetTextureTargetSet(pointShadowTargetSet);
+					pointShadowTargetSet->SetAllColorTargetBlendModes(re::TextureTarget::TargetParams::BlendModes{
+						re::TextureTarget::TargetParams::BlendMode::Disabled,
+						re::TextureTarget::TargetParams::BlendMode::Disabled });
 
-			// Cubemap shadow param block:
-			CubemapShadowRenderParams const& cubemapShadowParams = 
-				GetCubemapShadowRenderParamsData(shadowCamData, transformData);
+					pointShadowTargetSet->SetAllColorWriteModes(re::TextureTarget::TargetParams::ChannelWrite{
+						re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+						re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+						re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+						re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled });
 
-			std::shared_ptr<re::ParameterBlock> cubeShadowPB = re::ParameterBlock::Create(
-				CubemapShadowRenderParams::s_shaderName,
-				cubemapShadowParams,
-				re::ParameterBlock::PBType::Mutable);
+					pointShadowTargetSet->SetDepthWriteMode(re::TextureTarget::TargetParams::ChannelWrite::Mode::Enabled);
+					pointShadowTargetSet->SetDepthTargetClearMode(re::TextureTarget::TargetParams::ClearMode::Enabled);
 
-			shadowStage->AddPermanentParameterBlock(cubeShadowPB);
+					m_shadowTargetSets[gr::Light::Type::Point].emplace(
+						pointData.m_renderDataID,
+						pointShadowTargetSet);
 
-			pipeline.AppendRenderStage(shadowStage);
+					shadowStage->SetTextureTargetSet(pointShadowTargetSet);
 
-			m_pointLightStageData.emplace(
-				pointItr.GetRenderDataID(),
-				PointLightStageData{
-					.m_renderStage = shadowStage,
-					.m_cubemapShadowParamBlock = cubeShadowPB });
+					// Cubemap shadow param block:
+					CubemapShadowRenderParams const& cubemapShadowParams =
+						GetCubemapShadowRenderParamsData(shadowCamData, transformData);
 
-			++pointItr;
+					std::shared_ptr<re::ParameterBlock> cubeShadowPB = re::ParameterBlock::Create(
+						CubemapShadowRenderParams::s_shaderName,
+						cubemapShadowParams,
+						re::ParameterBlock::PBType::Mutable);
+
+					shadowStage->AddPermanentParameterBlock(cubeShadowPB);
+
+					pipeline.AppendRenderStage(shadowStage);
+
+					m_pointLightStageData.emplace(
+						pointItr.GetRenderDataID(),
+						PointLightStageData{
+							.m_renderStage = shadowStage,
+							.m_cubemapShadowParamBlock = cubeShadowPB });
+				}
+
+				++pointItr;
+			}
 		}
 	}
 
@@ -266,13 +276,16 @@ namespace gr
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
-		if (m_hasDirectionalLight)
+		if (renderData.HasObjectData<gr::Light::RenderDataDirectional>())
 		{
-			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)",
-				m_shadowRenderDataIDs[gr::Light::Type::Directional].size() == 1);
+			std::vector<gr::RenderDataID> directionalIDs = 
+				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
 
-			auto directionalItr = renderData.IDBegin(m_shadowRenderDataIDs[gr::Light::Type::Directional]);
-			auto const& directionalItrEnd = renderData.IDEnd(m_shadowRenderDataIDs[gr::Light::Type::Directional]);
+			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)",
+				directionalIDs.size() == 1);
+
+			auto directionalItr = renderData.IDBegin(directionalIDs);
+			auto const& directionalItrEnd = renderData.IDEnd(directionalIDs);
 			while (directionalItr != directionalItrEnd)
 			{
 				if (directionalItr.IsDirty<gr::Camera::RenderData>())
@@ -284,22 +297,27 @@ namespace gr
 			}
 		}
 
-		auto pointItr = renderData.IDBegin(m_shadowRenderDataIDs[gr::Light::Type::Point]);
-		auto const& pointItrEnd = renderData.IDEnd(m_shadowRenderDataIDs[gr::Light::Type::Point]);
-		while (pointItr != pointItrEnd)
+		if (renderData.HasObjectData<gr::Light::RenderDataPoint>())
 		{
-			if (pointItr.IsDirty<gr::Camera::RenderData>() || pointItr.TransformIsDirty())
+			std::vector<gr::RenderDataID> const& pointIDs =
+				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataPoint>();
+			auto pointItr = renderData.IDBegin(pointIDs);
+			auto const& pointItrEnd = renderData.IDEnd(pointIDs);
+			while (pointItr != pointItrEnd)
 			{
-				gr::Camera::RenderData const& shadowCamData = pointItr.Get<gr::Camera::RenderData>();
-				gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
+				if (pointItr.IsDirty<gr::Camera::RenderData>() || pointItr.TransformIsDirty())
+				{
+					gr::Camera::RenderData const& shadowCamData = pointItr.Get<gr::Camera::RenderData>();
+					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 
-				CubemapShadowRenderParams const& cubemapShadowParams =
-					GetCubemapShadowRenderParamsData(shadowCamData, transformData);
+					CubemapShadowRenderParams const& cubemapShadowParams =
+						GetCubemapShadowRenderParamsData(shadowCamData, transformData);
 
-				m_pointLightStageData.at(pointItr.GetRenderDataID()).m_cubemapShadowParamBlock->Commit(cubemapShadowParams);
+					m_pointLightStageData.at(pointItr.GetRenderDataID()).m_cubemapShadowParamBlock->Commit(cubemapShadowParams);
+				}
+
+				++pointItr;
 			}
-
-			++pointItr;
 		}
 
 		CreateBatches();
@@ -308,15 +326,48 @@ namespace gr
 
 	void ShadowsGraphicsSystem::CreateBatches()
 	{
+		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
+
 		// TODO: Create batches specific to this GS: Cached, culled, and with only the appropriate PBs etc attached
-		if (m_hasDirectionalLight)
+		if (renderData.HasObjectData<gr::Light::RenderDataDirectional>())
 		{
-			m_directionalShadowStage->AddBatches(re::RenderManager::Get()->GetSceneBatches());
+			std::vector<gr::RenderDataID> directionalIDs =
+				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
+
+			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)",
+				directionalIDs.size() == 1);
+
+			auto directionalItr = renderData.IDBegin(directionalIDs);
+			auto const& directionalItrEnd = renderData.IDEnd(directionalIDs);
+			while (directionalItr != directionalItrEnd)
+			{
+				gr::Light::RenderDataDirectional const& directionalData = 
+					directionalItr.Get<gr::Light::RenderDataDirectional>();
+				if (directionalData.m_hasShadow && directionalData.m_colorIntensity.w > 0.f)
+				{
+					m_directionalShadowStage->AddBatches(re::RenderManager::Get()->GetSceneBatches());
+				}
+
+				++directionalItr;
+			}
 		}
 
-		for (auto pointStageData : m_pointLightStageData)
+		if (renderData.HasObjectData<gr::Light::RenderDataPoint>())
 		{
-			pointStageData.second.m_renderStage->AddBatches(re::RenderManager::Get()->GetSceneBatches());
+			std::vector<gr::RenderDataID> pointIDs = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataPoint>();
+			auto pointItr = renderData.IDBegin(pointIDs);
+			auto const& pointItrEnd = renderData.IDEnd(pointIDs);
+			while (pointItr != pointItrEnd)
+			{
+				gr::Light::RenderDataPoint const& pointData = pointItr.Get<gr::Light::RenderDataPoint>();
+				if (pointData.m_hasShadow && pointData.m_colorIntensity.w > 0.f)
+				{
+					m_pointLightStageData.at(pointItr.GetRenderDataID()).m_renderStage->AddBatches(
+						re::RenderManager::Get()->GetSceneBatches());
+				}
+
+				++pointItr;
+			}
 		}
 	}
 
@@ -324,38 +375,6 @@ namespace gr
 	std::shared_ptr<re::TextureTargetSet const> ShadowsGraphicsSystem::GetFinalTextureTargetSet() const
 	{
 		return m_directionalShadowStage->GetTextureTargetSet();
-	}
-
-
-	void ShadowsGraphicsSystem::RegisterShadowMap(gr::Light::Type lightType, gr::RenderDataID renderDataID)
-	{
-		// We do a linear search here for now; In practice there is likely not that many lights
-		if (std::find_if(
-			m_shadowRenderDataIDs[lightType].begin(),
-			m_shadowRenderDataIDs[lightType].end(),
-			[&renderDataID](gr::RenderDataID existingID) {return renderDataID == existingID; }) == m_shadowRenderDataIDs[lightType].end())
-		{
-			m_shadowRenderDataIDs[lightType].emplace_back(renderDataID);
-
-			// TODO: There's a potential race condition here once graphics systems are threaded.
-			// We've registered the RenderDataID for the shadow map, but no actual resources are created yet. Thus, a 
-			// call to GetShadowMap would fail
-		}
-	}
-
-
-	void ShadowsGraphicsSystem::UnregisterShadowMap(gr::Light::Type lightType, gr::RenderDataID renderDataID)
-	{
-		auto existingItr = std::find_if(
-			m_shadowRenderDataIDs[lightType].begin(),
-			m_shadowRenderDataIDs[lightType].end(),
-			[&renderDataID](gr::RenderDataID existingID) {return renderDataID == existingID; });
-		SEAssert("Light is not registered", existingItr != m_shadowRenderDataIDs[lightType].end());
-
-		// Swap the last entry to overwrite the current entry, then pop the last element
-		const size_t indexToMove = m_shadowRenderDataIDs[lightType].size() - 1;
-		*existingItr = m_shadowRenderDataIDs[lightType][indexToMove];
-		m_shadowRenderDataIDs[lightType].pop_back();
 	}
 
 

@@ -10,16 +10,13 @@ namespace gr
 	{
 	public:
 		ShadowsGraphicsSystem(gr::GraphicsSystemManager*);
-		~ShadowsGraphicsSystem();
+		~ShadowsGraphicsSystem() override = default;
 
 		void Create(re::StagePipeline&);
 
 		void PreRender();
 
 		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
-
-		void RegisterShadowMap(gr::Light::Type, gr::RenderDataID);
-		void UnregisterShadowMap(gr::Light::Type, gr::RenderDataID);
 
 		re::Texture const* GetShadowMap(gr::Light::Type, gr::RenderDataID) const;
 
@@ -29,10 +26,7 @@ namespace gr
 
 	private:
 		std::shared_ptr<re::RenderStage> m_directionalShadowStage;
-		bool m_hasDirectionalLight;
 		std::shared_ptr<re::ParameterBlock> m_directionalShadowCamPB;
-
-		std::array<std::vector<gr::RenderDataID>, gr::Light::Type_Count> m_shadowRenderDataIDs;
 
 		std::array<
 			std::unordered_map<gr::RenderDataID, std::shared_ptr<re::TextureTargetSet>>, 

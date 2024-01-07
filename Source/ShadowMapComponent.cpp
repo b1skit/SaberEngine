@@ -3,7 +3,6 @@
 #include "CameraComponent.h"
 #include "Config.h"
 #include "EntityManager.h"
-#include "GraphicsSystem_Shadows.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
 #include "NameComponent.h"
@@ -282,14 +281,6 @@ namespace fr
 			gr::RenderDataManager& renderDataMgr = gsm.GetRenderDataForModification();
 
 			renderDataMgr.SetObjectData<gr::ShadowMap::RenderData>(cmdPtr->m_renderDataID, &cmdPtr->m_data);
-
-			gr::ShadowsGraphicsSystem* shadowGS =
-				renderSystems[rsIdx]->GetGraphicsSystemManager().GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
-
-			if (shadowGS)
-			{
-				shadowGS->RegisterShadowMap(cmdPtr->m_type, cmdPtr->m_renderDataID);
-			}
 		}
 	}
 
@@ -325,15 +316,6 @@ namespace fr
 			gr::RenderDataManager& renderDataMgr = gsm.GetRenderDataForModification();
 
 			renderDataMgr.DestroyObjectData<gr::ShadowMap::RenderData>(cmdPtr->m_renderDataID);
-
-			// Unregister the light from the shadow GS:
-			gr::ShadowsGraphicsSystem* shadowGS =
-				renderSystems[rsIdx]->GetGraphicsSystemManager().GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
-
-			if (shadowGS)
-			{
-				shadowGS->UnregisterShadowMap(cmdPtr->m_type, cmdPtr->m_renderDataID);
-			}
 		}
 	}
 

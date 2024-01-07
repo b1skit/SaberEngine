@@ -34,6 +34,12 @@ namespace gr
 		[[nodiscard]] T const& GetObjectData(gr::RenderDataID) const;
 
 		template<typename T>
+		[[nodiscard]] bool HasObjectData(gr::RenderDataID) const;
+		
+		template<typename T>
+		[[nodiscard]] bool HasObjectData() const; // Has data of the given type for any ID
+
+		template<typename T>
 		[[nodiscard]] bool IsDirty(gr::RenderDataID) const;
 
 		template<typename T>
@@ -44,13 +50,13 @@ namespace gr
 
 		void SetFeatureBits(gr::RenderDataID, gr::FeatureBitmask); // Logical OR
 		
-		gr::FeatureBitmask GetFeatureBits(gr::RenderDataID) const;
+		[[nodiscard]] gr::FeatureBitmask GetFeatureBits(gr::RenderDataID) const;
 
 		template<typename T>
-		std::vector<gr::RenderDataID> const& GetRegisteredRenderDataIDs() const; // Get IDs associated with a type
+		[[nodiscard]] std::vector<gr::RenderDataID> const& GetRegisteredRenderDataIDs() const; // Get IDs associated with a type
 
-		std::vector<gr::RenderDataID> const& GetRegisteredRenderDataIDs() const; // Get all, regardless of data types
-		std::vector<gr::RenderDataID> const& GetRegisteredTransformIDs() const;
+		[[nodiscard]] std::vector<gr::RenderDataID> const& GetRegisteredRenderDataIDs() const; // Get all, regardless of data types
+		[[nodiscard]] std::vector<gr::RenderDataID> const& GetRegisteredTransformIDs() const;
 
 
 	public:
@@ -88,7 +94,7 @@ namespace gr
 
 		struct RenderObjectMetadata
 		{
-			ObjectTypeToDataIndexMap m_objectTypeToDataIndexMap;
+			ObjectTypeToDataIndexMap m_dataTypeToDataIndexMap;
 			LastDirtyFrameMap m_dirtyFrameMap;
 
 			gr::TransformID m_transformID;
@@ -339,13 +345,13 @@ namespace gr
 		renderObjectMetadata.m_dirtyFrameMap[s_dataTypeIndex] = m_currentFrame;
 
 		// Get the index of the data in data vector for its type
-		auto const& objectTypeToDataIndex = renderObjectMetadata.m_objectTypeToDataIndexMap.find(s_dataTypeIndex);
-		if (objectTypeToDataIndex == renderObjectMetadata.m_objectTypeToDataIndexMap.end())
+		auto const& objectTypeToDataIndex = renderObjectMetadata.m_dataTypeToDataIndexMap.find(s_dataTypeIndex);
+		if (objectTypeToDataIndex == renderObjectMetadata.m_dataTypeToDataIndexMap.end())
 		{
 			// This is the first time we've added data for this object, we must store the destination index
 			const DataIndex newDataIndex = util::CheckedCast<DataIndex>(dataVector.size());
 			dataVector.emplace_back(*data);
-			renderObjectMetadata.m_objectTypeToDataIndexMap.emplace(s_dataTypeIndex , newDataIndex);
+			renderObjectMetadata.m_dataTypeToDataIndexMap.emplace(s_dataTypeIndex , newDataIndex);
 
 			// Record the RenderObjectID in our per-type registration list
 			m_perTypeRegisteredRenderObjectIDs[s_dataTypeIndex].emplace_back(renderDataID);
@@ -372,14 +378,43 @@ namespace gr
 		
 		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 		SEAssert("Metadata does not have an entry for the current data type",
-			renderObjectMetadata.m_objectTypeToDataIndexMap.contains(dataTypeIndex));
+			renderObjectMetadata.m_dataTypeToDataIndexMap.contains(dataTypeIndex));
 
-		const DataIndex dataIdx = renderObjectMetadata.m_objectTypeToDataIndexMap.find(dataTypeIndex)->second;
+		const DataIndex dataIdx = renderObjectMetadata.m_dataTypeToDataIndexMap.find(dataTypeIndex)->second;
 
 		std::vector<T> const& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[dataTypeIndex]).get();
 		SEAssert("Object index is OOB", dataIdx < dataVector.size());
 
 		return dataVector[dataIdx];
+	}
+
+
+	template<typename T>
+	bool RenderDataManager::HasObjectData(gr::RenderDataID renderDataID) const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		SEAssert("renderDataID is not registered", m_IDToRenderObjectMetadata.contains(renderDataID));
+
+		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
+		SEAssert("Invalid data type index. This suggests we're accessing data of a specific type using an index, when "
+			"no data of that type exists",
+			dataTypeIndex != k_invalidDataTypeIdx && dataTypeIndex < m_dataVectors.size());
+
+		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
+
+		return renderObjectMetadata.m_dataTypeToDataIndexMap.contains(dataTypeIndex);
+	}
+
+
+	template<typename T>
+	bool RenderDataManager::HasObjectData() const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
+
+		return dataTypeIndex != k_invalidDataTypeIdx;
 	}
 
 
@@ -484,7 +519,7 @@ namespace gr
 		RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(objectID);
 		
 		SEAssert("Data type index is not found in the metadata table",
-			renderObjectMetadata.m_objectTypeToDataIndexMap.contains(dataTypeIndex));
+			renderObjectMetadata.m_dataTypeToDataIndexMap.contains(dataTypeIndex));
 
 		SEAssert("Data type index is OOB of our per-type registration lists", 
 			dataTypeIndex < m_perTypeRegisteredRenderObjectIDs.size());
@@ -493,7 +528,7 @@ namespace gr
 
 		// Replace our dead element with one from the end:
 		const DataIndex indexToMove = util::CheckedCast<DataIndex>(dataVector.size() - 1);
-		const DataIndex indexToReplace = renderObjectMetadata.m_objectTypeToDataIndexMap.find(dataTypeIndex)->second;
+		const DataIndex indexToReplace = renderObjectMetadata.m_dataTypeToDataIndexMap.find(dataTypeIndex)->second;
 
 		// Move the data:
 		if (indexToMove != indexToReplace)
@@ -529,7 +564,7 @@ namespace gr
 					idToObjectMetadataItr != m_IDToRenderObjectMetadata.end());
 
 				ObjectTypeToDataIndexMap& typeToIndexMapToUpdate =
-					idToObjectMetadataItr->second.m_objectTypeToDataIndexMap;
+					idToObjectMetadataItr->second.m_dataTypeToDataIndexMap;
 
 				auto dataTypeToIndexItr = typeToIndexMapToUpdate.find(dataTypeIndex);
 				if (dataTypeToIndexItr != typeToIndexMapToUpdate.end() && dataTypeToIndexItr->second == indexToMove)
@@ -552,7 +587,7 @@ namespace gr
 			m_perTypeRegisteredRenderObjectIDs[dataTypeIndex].begin() + perTypeIDIndexToDelete);
 
 		// Finally, remove the index in the object's data index map:
-		renderObjectMetadata.m_objectTypeToDataIndexMap.erase(dataTypeIndex);
+		renderObjectMetadata.m_dataTypeToDataIndexMap.erase(dataTypeIndex);
 		renderObjectMetadata.m_dirtyFrameMap.erase(dataTypeIndex);
 	}
 
@@ -890,7 +925,7 @@ namespace gr
 		const DataTypeIndex dataTypeIndex = m_renderData->GetDataIndexFromType<T>();
 
 		ObjectTypeToDataIndexMap const& objectTypeToDataIndexMap = 
-			m_renderObjectMetadataItr->second.m_objectTypeToDataIndexMap;
+			m_renderObjectMetadataItr->second.m_dataTypeToDataIndexMap;
 
 		// Make sure the data type index is found in current object's data index map
 		auto objecTypeToDataIdxIter = objectTypeToDataIndexMap.find(dataTypeIndex);

@@ -118,10 +118,10 @@ namespace gr
 			if (renderObjectMetadata.m_referenceCount == 0)
 			{
 				ObjectTypeToDataIndexMap const& dataIndexMap =
-					renderObjectMetadata.m_objectTypeToDataIndexMap;
+					renderObjectMetadata.m_dataTypeToDataIndexMap;
 
 				SEAssert("Cannot destroy an object with first destroying its associated data", 
-					renderObjectMetadata.m_objectTypeToDataIndexMap.empty());
+					renderObjectMetadata.m_dataTypeToDataIndexMap.empty());
 
 				m_IDToRenderObjectMetadata.erase(renderDataID);
 				
@@ -399,8 +399,8 @@ namespace gr
 					std::string cellText;
 
 					// ObjectTypeToDataIndexMap
-					auto const& objectTypeToDataIdx = renderObjectMetadata.m_objectTypeToDataIndexMap.find(i);
-					if (objectTypeToDataIdx == renderObjectMetadata.m_objectTypeToDataIndexMap.end())
+					auto const& objectTypeToDataIdx = renderObjectMetadata.m_dataTypeToDataIndexMap.find(i);
+					if (objectTypeToDataIdx == renderObjectMetadata.m_dataTypeToDataIndexMap.end())
 					{
 						cellText = "-";
 					}

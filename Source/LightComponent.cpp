@@ -1,5 +1,4 @@
 // © 2023 Adam Badke. All rights reserved.
-#include "GraphicsSystem_DeferredLighting.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
@@ -418,15 +417,6 @@ namespace fr
 			break;
 			default: SEAssertF("Invalid type");
 			}
-
-			// Register the light with the deferred lighting GS:
-			gr::DeferredLightingGraphicsSystem* deferredLightGS = 
-				renderSystems[rsIdx]->GetGraphicsSystemManager().GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
-
-			if (deferredLightGS)
-			{
-				deferredLightGS->RegisterLight(cmdPtr->m_type, cmdPtr->m_renderDataID);
-			}
 		}
 	}
 
@@ -479,15 +469,6 @@ namespace fr
 			}
 			break;
 			default: SEAssertF("Invalid type");
-			}
-
-			// Unregister the light from the deferred lighting GS:
-			gr::DeferredLightingGraphicsSystem* deferredLightGS =
-				renderSystems[rsIdx]->GetGraphicsSystemManager().GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
-			
-			if (deferredLightGS)
-			{
-				deferredLightGS->UnregisterLight(cmdPtr->m_type, cmdPtr->m_renderDataID);
 			}
 		}
 	}

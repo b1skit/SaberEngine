@@ -20,7 +20,7 @@ namespace gr
 	public:
 		DeferredLightingGraphicsSystem(gr::GraphicsSystemManager*);
 
-		~DeferredLightingGraphicsSystem() override;
+		~DeferredLightingGraphicsSystem() override = default;
 
 		void CreateResourceGenerationStages(re::StagePipeline&);
 		void Create(re::RenderSystem&, re::StagePipeline&);
@@ -30,13 +30,8 @@ namespace gr
 		// Note: All light stages write to the same target
 		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 
-		void RegisterLight(gr::Light::Type, gr::RenderDataID);
-		void UnregisterLight(gr::Light::Type, gr::RenderDataID);
-
 
 	private:
-		std::array<std::vector<gr::RenderDataID>, gr::Light::Type_Count> m_lightRenderDataIDs;
-
 		gr::ShadowsGraphicsSystem* m_shadowGS;
 
 		// Ambient IBL resources:
