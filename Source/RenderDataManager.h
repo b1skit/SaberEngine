@@ -46,7 +46,10 @@ namespace gr
 		
 		gr::FeatureBitmask GetFeatureBits(gr::RenderDataID) const;
 
-		std::vector<gr::RenderDataID> const& GetRegisteredRenderDataIDs() const;
+		template<typename T>
+		std::vector<gr::RenderDataID> const& GetRegisteredRenderDataIDs() const; // Get IDs associated with a type
+
+		std::vector<gr::RenderDataID> const& GetRegisteredRenderDataIDs() const; // Get all, regardless of data types
 		std::vector<gr::RenderDataID> const& GetRegisteredTransformIDs() const;
 
 
@@ -76,15 +79,17 @@ namespace gr
 
 
 	private:
-		typedef std::vector<uint32_t> ObjectTypeToDataIndexTable; // [data type index] == object index
+		typedef uint8_t DataTypeIndex;
+		typedef uint32_t DataIndex;
+		typedef std::map<DataTypeIndex, DataIndex> ObjectTypeToDataIndexMap; // [data type index] == object index
 
-		typedef std::vector<uint64_t> LastDirtyFrameTable; // [data type index] == last dirty frame
+		typedef std::map<DataTypeIndex, uint64_t> LastDirtyFrameMap; // [data type index] == last dirty frame
 		static constexpr uint64_t k_invalidDirtyFrameNum = std::numeric_limits<uint64_t>::max();
 
 		struct RenderObjectMetadata
 		{
-			ObjectTypeToDataIndexTable m_objectTypeToDataIndexTable;
-			LastDirtyFrameTable m_dirtyFrameTable;
+			ObjectTypeToDataIndexMap m_objectTypeToDataIndexMap;
+			LastDirtyFrameMap m_dirtyFrameMap;
 
 			gr::TransformID m_transformID;
 
@@ -99,7 +104,7 @@ namespace gr
 
 		struct TransformMetadata
 		{
-			uint32_t m_transformIdx;
+			DataIndex m_transformIdx;
 			uint32_t m_referenceCount;
 
 			uint64_t m_dirtyFrame;
@@ -109,6 +114,8 @@ namespace gr
 		// sorted order
 		std::vector<gr::RenderDataID> m_registeredRenderObjectIDs;
 		std::vector<gr::TransformID> m_registeredTransformIDs;
+
+		std::vector<std::vector<gr::RenderDataID>> m_perTypeRegisteredRenderObjectIDs;
 
 
 	public:
@@ -270,26 +277,25 @@ namespace gr
 
 	private:
 		template<typename T>
-		uint8_t GetAllocateDataIndexFromType();
+		DataTypeIndex GetAllocateDataIndexFromType();
 
 		template<typename T>
-		uint8_t GetDataIndexFromType() const;
+		DataTypeIndex GetDataIndexFromType() const;
 
 		template<typename T>
-		T const* GetObjectDataVectorIfExists(uint32_t index) const;
+		T const* GetObjectDataVectorIfExists(DataIndex) const;
 
 		template <typename T>
 		T const* GetEndPtr() const; // Iterator begin/end helper
 
 
 	private:
-		static constexpr uint8_t k_invalidDataTypeIdx = std::numeric_limits<uint8_t>::max();
-		static constexpr uint32_t k_invalidDataIdx = std::numeric_limits<uint32_t>::max();
+		static constexpr DataTypeIndex k_invalidDataTypeIdx = std::numeric_limits<DataTypeIndex>::max();
 
 		uint64_t m_currentFrame;
 
 		// Each type of render data is tightly packed into an array maintained in m_dataVectors
-		std::map<size_t, uint8_t> m_typeInfoHashToDataVectorIdx;
+		std::map<size_t, DataTypeIndex> m_typeInfoHashToDataVectorIdx;
 		std::vector<std::shared_ptr<void>> m_dataVectors; // Use shared_ptr because it type erases
 
 		// Render objects are represented as a set of indexes into arrays of typed data (meshes, materials, etc).
@@ -312,7 +318,7 @@ namespace gr
 	template<typename T>
 	void RenderDataManager::SetObjectData(gr::RenderDataID renderDataID, T const* data)
 	{
-		static const uint8_t s_dataTypeIndex = GetAllocateDataIndexFromType<T>();
+		static const DataTypeIndex s_dataTypeIndex = GetAllocateDataIndexFromType<T>();
 
 		// Catch illegal accesses during RenderData modification
 		util::ScopedThreadProtector threadProjector(m_threadProtector);
@@ -323,28 +329,30 @@ namespace gr
 		SEAssert("Invalid object ID", m_IDToRenderObjectMetadata.contains(renderDataID));
 		RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 
-		// If our tracking tables don't have enough room for the data type index, increase their size and pad with 
-		// invalid flags
-		if (s_dataTypeIndex >= renderObjectMetadata.m_objectTypeToDataIndexTable.size())
+		// If our tracking tables don't have enough room for the data type index, increase their size
+		if (s_dataTypeIndex >= m_perTypeRegisteredRenderObjectIDs.size())
 		{
-			renderObjectMetadata.m_objectTypeToDataIndexTable.resize(s_dataTypeIndex + 1, k_invalidDataIdx);
-			renderObjectMetadata.m_dirtyFrameTable.resize(s_dataTypeIndex + 1, k_invalidDirtyFrameNum);
+			m_perTypeRegisteredRenderObjectIDs.emplace_back();
 		}
 
-		// Update the dirty frame number:
-		renderObjectMetadata.m_dirtyFrameTable[s_dataTypeIndex] = m_currentFrame;
+		// Add/update the dirty frame number:
+		renderObjectMetadata.m_dirtyFrameMap[s_dataTypeIndex] = m_currentFrame;
 
 		// Get the index of the data in data vector for its type
-		const uint32_t dataIndex = renderObjectMetadata.m_objectTypeToDataIndexTable[s_dataTypeIndex];
-		if (dataIndex == k_invalidDataIdx)
+		auto const& objectTypeToDataIndex = renderObjectMetadata.m_objectTypeToDataIndexMap.find(s_dataTypeIndex);
+		if (objectTypeToDataIndex == renderObjectMetadata.m_objectTypeToDataIndexMap.end())
 		{
 			// This is the first time we've added data for this object, we must store the destination index
-			const uint32_t newDataIndex = util::CheckedCast<uint32_t>(dataVector.size());
+			const DataIndex newDataIndex = util::CheckedCast<DataIndex>(dataVector.size());
 			dataVector.emplace_back(*data);
-			renderObjectMetadata.m_objectTypeToDataIndexTable[s_dataTypeIndex] = newDataIndex;
+			renderObjectMetadata.m_objectTypeToDataIndexMap.emplace(s_dataTypeIndex , newDataIndex);
+
+			// Record the RenderObjectID in our per-type registration list
+			m_perTypeRegisteredRenderObjectIDs[s_dataTypeIndex].emplace_back(renderDataID);
 		}
 		else
 		{
+			const DataIndex dataIndex = objectTypeToDataIndex->second;
 			dataVector[dataIndex] = *data;
 		}
 	}
@@ -357,15 +365,16 @@ namespace gr
 
 		SEAssert("renderDataID is not registered", m_IDToRenderObjectMetadata.contains(renderDataID));
 
-		const uint8_t dataTypeIndex = GetDataIndexFromType<T>();
+		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
 		SEAssert("Invalid data type index. This suggests we're accessing data of a specific type using an index, when "
 			"no data of that type exists", 
 			dataTypeIndex != k_invalidDataTypeIdx && dataTypeIndex < m_dataVectors.size());
 		
 		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
-		SEAssert("Metadata table does not have an entry for the current data type", 
-			dataTypeIndex < renderObjectMetadata.m_objectTypeToDataIndexTable.size());
-		const size_t dataIdx = renderObjectMetadata.m_objectTypeToDataIndexTable[dataTypeIndex];
+		SEAssert("Metadata does not have an entry for the current data type",
+			renderObjectMetadata.m_objectTypeToDataIndexMap.contains(dataTypeIndex));
+
+		const DataIndex dataIdx = renderObjectMetadata.m_objectTypeToDataIndexMap.find(dataTypeIndex)->second;
 
 		std::vector<T> const& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[dataTypeIndex]).get();
 		SEAssert("Object index is OOB", dataIdx < dataVector.size());
@@ -381,30 +390,30 @@ namespace gr
 
 		SEAssert("renderDataID is not registered", m_IDToRenderObjectMetadata.contains(renderDataID));
 
-		const uint8_t dataTypeIndex = GetDataIndexFromType<T>();
+		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
 		SEAssert("Invalid data type index. This suggests we're accessing data of a specific type using an index, when "
 			"no data of that type exists",
 			dataTypeIndex != k_invalidDataTypeIdx && dataTypeIndex < m_dataVectors.size());
 
 		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
-		SEAssert("Metadata dirty frame table does not have an entry for the current data type",
-			dataTypeIndex < renderObjectMetadata.m_dirtyFrameTable.size());
+		SEAssert("Metadata dirty frame map does not have an entry for the current data type",
+			renderObjectMetadata.m_dirtyFrameMap.contains(dataTypeIndex));
 		
 		SEAssert("Invalid dirty frame value",
-			renderObjectMetadata.m_dirtyFrameTable[dataTypeIndex] != k_invalidDirtyFrameNum &&
-			renderObjectMetadata.m_dirtyFrameTable[dataTypeIndex] <= m_currentFrame &&
+			renderObjectMetadata.m_dirtyFrameMap.at(dataTypeIndex) != k_invalidDirtyFrameNum &&
+			renderObjectMetadata.m_dirtyFrameMap.at(dataTypeIndex) <= m_currentFrame &&
 			m_currentFrame != k_invalidDirtyFrameNum);
 
-		return renderObjectMetadata.m_dirtyFrameTable[dataTypeIndex] == m_currentFrame;
+		return renderObjectMetadata.m_dirtyFrameMap.at(dataTypeIndex) == m_currentFrame;
 	}
 
 
 	template<typename T>
-	T const* RenderDataManager::GetObjectDataVectorIfExists(uint32_t dataIndex) const
+	T const* RenderDataManager::GetObjectDataVectorIfExists(DataIndex dataIndex) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
-		const uint8_t dataTypeIndex = GetDataIndexFromType<T>();
+		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
 		if (dataTypeIndex == k_invalidDataTypeIdx)
 		{
 			return nullptr;
@@ -419,7 +428,7 @@ namespace gr
 	template<typename T>
 	uint32_t RenderDataManager::GetNumElementsOfType() const
 	{
-		const uint8_t dataTypeIndex = GetDataIndexFromType<T>();
+		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
 		if (dataTypeIndex == k_invalidDataTypeIdx)
 		{
 			return 0;
@@ -428,6 +437,19 @@ namespace gr
 		std::vector<T> const& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[dataTypeIndex]).get();
 		
 		return util::CheckedCast<uint32_t>(dataVector.size());
+	}
+
+
+	template<typename T>
+	std::vector<gr::RenderDataID> const& RenderDataManager::GetRegisteredRenderDataIDs() const
+	{
+		// Catch illegal accesses during RenderData modification
+		util::ScopedThreadProtector threadProjector(m_threadProtector);
+
+		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
+		SEAssert("No RenderDataIDs are associated with this type", dataTypeIndex != k_invalidDataTypeIdx);
+
+		return m_perTypeRegisteredRenderObjectIDs[dataTypeIndex];
 	}
 
 
@@ -452,7 +474,7 @@ namespace gr
 	template<typename T>
 	void RenderDataManager::DestroyObjectData(gr::RenderDataID objectID)
 	{
-		const uint8_t dataTypeIndex = GetDataIndexFromType<T>();
+		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
 
 		// Catch illegal accesses during RenderData modification
 		util::ScopedThreadProtector threadProjector(m_threadProtector);
@@ -461,53 +483,90 @@ namespace gr
 		SEAssert("Invalid object ID", m_IDToRenderObjectMetadata.contains(objectID));
 		RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(objectID);
 		
-		SEAssert("Data type index is out of bounds of the metadata table",
-			dataTypeIndex < renderObjectMetadata.m_objectTypeToDataIndexTable.size());
+		SEAssert("Data type index is not found in the metadata table",
+			renderObjectMetadata.m_objectTypeToDataIndexMap.contains(dataTypeIndex));
+
+		SEAssert("Data type index is OOB of our per-type registration lists", 
+			dataTypeIndex < m_perTypeRegisteredRenderObjectIDs.size());
 
 		std::vector<T>& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[dataTypeIndex]).get();
 
 		// Replace our dead element with one from the end:
-		const size_t indexToMove = dataVector.size() - 1;
-		const uint32_t indexToReplace = renderObjectMetadata.m_objectTypeToDataIndexTable[dataTypeIndex];
-		SEAssert("Object does not have data of this type to destroy", indexToReplace != k_invalidDataIdx);
+		const DataIndex indexToMove = util::CheckedCast<DataIndex>(dataVector.size() - 1);
+		const DataIndex indexToReplace = renderObjectMetadata.m_objectTypeToDataIndexMap.find(dataTypeIndex)->second;
 
+		// Move the data:
 		if (indexToMove != indexToReplace)
 		{
 			dataVector[indexToReplace] = dataVector[indexToMove];
-
-			// Find whatever table was referencing the index we moved, and update it. This is expensive, as we iterate
-			// over every RenderDataID until we find a match
-			bool foundMatch = false;
-			for (auto& objectDataIndices : m_IDToRenderObjectMetadata)
-			{
-				ObjectTypeToDataIndexTable& dataIndexTableToUpdate = objectDataIndices.second.m_objectTypeToDataIndexTable;
-				if (dataTypeIndex < dataIndexTableToUpdate.size() && dataIndexTableToUpdate[dataTypeIndex] == indexToMove)
-				{
-					dataIndexTableToUpdate[dataTypeIndex] = indexToReplace;
-					foundMatch = true;
-					break;
-				}				
-			}
-			SEAssert("Matching object was not found. This should not be possible", foundMatch);
 		}
 		dataVector.pop_back();
 
-		// Finally, remove the index in the object's data index table:
-		renderObjectMetadata.m_objectTypeToDataIndexTable[dataTypeIndex] = k_invalidDataIdx;
-		renderObjectMetadata.m_dirtyFrameTable[dataTypeIndex] = m_currentFrame; // Destroying ~= dirtying
+
+		// Walk the list of RenderDataIDs in our registration list for the data type:
+		//	a) Update the table referencing the index we moved to its new location
+		//	b) Find the location of the RenderObjectID in our per-type registration list
+		//	When we've done both, we can stop searching
+		bool foundObjectTypeToDataIndexMap = false;
+		bool foundPerTypeRegistrationIndex = false;
+		size_t perTypeIDIndexToDelete = std::numeric_limits<size_t>::max();
+		for (size_t idIndex = 0; idIndex < m_perTypeRegisteredRenderObjectIDs[dataTypeIndex].size(); idIndex++)
+		{
+			gr::RenderDataID currentRenderDataID = m_perTypeRegisteredRenderObjectIDs[dataTypeIndex][idIndex];
+
+			// Check: Is this the index of per-type RenderObjectID record we'll be removing?
+			if (currentRenderDataID == objectID)
+			{
+				perTypeIDIndexToDelete = idIndex;
+				foundPerTypeRegistrationIndex = true;
+			}
+
+			if (!foundObjectTypeToDataIndexMap)
+			{
+				// Find the RenderObjectMetadata record we need to update:
+				auto idToObjectMetadataItr = m_IDToRenderObjectMetadata.find(currentRenderDataID);
+				SEAssert("Could not find registered ID in the ID to object metadata map",
+					idToObjectMetadataItr != m_IDToRenderObjectMetadata.end());
+
+				ObjectTypeToDataIndexMap& typeToIndexMapToUpdate =
+					idToObjectMetadataItr->second.m_objectTypeToDataIndexMap;
+
+				auto dataTypeToIndexItr = typeToIndexMapToUpdate.find(dataTypeIndex);
+				if (dataTypeToIndexItr != typeToIndexMapToUpdate.end() && dataTypeToIndexItr->second == indexToMove)
+				{
+					dataTypeToIndexItr->second = indexToReplace;
+
+					foundObjectTypeToDataIndexMap = true;
+				}
+			}			
+
+			if (foundObjectTypeToDataIndexMap && foundPerTypeRegistrationIndex)
+			{
+				break;
+			}
+		}
+		SEAssert("Matching object was not found. This should not be possible", foundObjectTypeToDataIndexMap && foundPerTypeRegistrationIndex);
+
+		// Remove the RenderDataID from the per-type registration list:
+		m_perTypeRegisteredRenderObjectIDs[dataTypeIndex].erase(
+			m_perTypeRegisteredRenderObjectIDs[dataTypeIndex].begin() + perTypeIDIndexToDelete);
+
+		// Finally, remove the index in the object's data index map:
+		renderObjectMetadata.m_objectTypeToDataIndexMap.erase(dataTypeIndex);
+		renderObjectMetadata.m_dirtyFrameMap.erase(dataTypeIndex);
 	}
 
 
 	template<typename T>
-	uint8_t RenderDataManager::GetAllocateDataIndexFromType()
+	RenderDataManager::DataTypeIndex RenderDataManager::GetAllocateDataIndexFromType()
 	{
 		// Catch illegal accesses during RenderData modification
 		util::ScopedThreadProtector threadProjector(m_threadProtector);
 
-		static uint8_t s_dataTypeIdx = std::numeric_limits<uint8_t>::max();
-		if (s_dataTypeIdx == std::numeric_limits<uint8_t>::max())
+		static DataTypeIndex s_dataTypeIdx = k_invalidDataTypeIdx;
+		if (s_dataTypeIdx == k_invalidDataTypeIdx)
 		{
-			s_dataTypeIdx = util::CheckedCast<uint8_t>(m_dataVectors.size());
+			s_dataTypeIdx = util::CheckedCast<DataTypeIndex>(m_dataVectors.size());
 			m_dataVectors.emplace_back(std::make_shared<std::vector<T>>());
 
 			// Store a map of the typeID hash code to the data type index for const access
@@ -517,7 +576,7 @@ namespace gr
 			std::vector<T>& dataVector =
 				*std::static_pointer_cast<std::vector<T>>(m_dataVectors.back()).get();
 
-			constexpr size_t k_expectedMaxNumDataTypes = 16;
+			constexpr size_t k_expectedMaxNumDataTypes = 16; // Arbitrary
 			dataVector.reserve(k_expectedMaxNumDataTypes);
 		}
 		return s_dataTypeIdx;
@@ -525,12 +584,12 @@ namespace gr
 
 
 	template<typename T>
-	uint8_t RenderDataManager::GetDataIndexFromType() const
+	RenderDataManager::DataTypeIndex RenderDataManager::GetDataIndexFromType() const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
-		static uint8_t s_dataTypeIdx = std::numeric_limits<uint8_t>::max();
-		if (s_dataTypeIdx == std::numeric_limits<uint8_t>::max())
+		static DataTypeIndex s_dataTypeIdx = k_invalidDataTypeIdx;
+		if (s_dataTypeIdx == k_invalidDataTypeIdx)
 		{
 			// Cache the data type index to avoid the map lookup once a data type exists & has been found once
 			auto const& result = m_typeInfoHashToDataVectorIdx.find(typeid(T).hash_code());
@@ -552,7 +611,7 @@ namespace gr
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
-		const uint8_t s_dataTypeIndex = GetDataIndexFromType<T>();
+		const DataTypeIndex s_dataTypeIndex = GetDataIndexFromType<T>();
 		if (s_dataTypeIndex != k_invalidDataTypeIdx)
 		{
 			std::vector<T> const& dataVector = 
@@ -572,7 +631,7 @@ namespace gr
 		T const* endPtr = GetEndPtr<T>();
 		T const* beginPtr = endPtr;
 
-		const uint8_t dataTypeIndex = GetDataIndexFromType<T>();
+		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
 		if (dataTypeIndex != k_invalidDataTypeIdx)
 		{
 			std::vector<T>& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[dataTypeIndex]).get();
@@ -786,14 +845,14 @@ namespace gr
 	template<typename... Ts> template<typename T>
 	[[nodiscard]] bool RenderDataManager::ObjectIterator<Ts...>::IsDirty() const
 	{
-		const uint8_t dataTypeIndex = m_renderData->GetDataIndexFromType<T>();
+		const DataTypeIndex dataTypeIndex = m_renderData->GetDataIndexFromType<T>();
 
 		SEAssert("Invalid dirty frame value",
-			m_renderObjectMetadataItr->second.m_dirtyFrameTable[dataTypeIndex] != k_invalidDirtyFrameNum &&
-			m_renderObjectMetadataItr->second.m_dirtyFrameTable[dataTypeIndex] <= m_currentFrame &&
+			m_renderObjectMetadataItr->second.m_dirtyFrameMap.contains(dataTypeIndex) &&
+			m_renderObjectMetadataItr->second.m_dirtyFrameMap.at(dataTypeIndex) <= m_currentFrame &&
 			m_currentFrame != k_invalidDirtyFrameNum);
 
-		return m_renderObjectMetadataItr->second.m_dirtyFrameTable[dataTypeIndex] == m_currentFrame;
+		return m_renderObjectMetadataItr->second.m_dirtyFrameMap.at(dataTypeIndex) == m_currentFrame;
 	}
 
 	
@@ -828,17 +887,17 @@ namespace gr
 	template <typename... Ts> template <typename T>
 	T const* RenderDataManager::ObjectIterator<Ts...>::GetPtrFromCurrentObjectDataIndicesItr() const
 	{
-		const uint8_t dataTypeIndex = m_renderData->GetDataIndexFromType<T>();
+		const DataTypeIndex dataTypeIndex = m_renderData->GetDataIndexFromType<T>();
 
-		ObjectTypeToDataIndexTable const& objectTypeToDataIndexTable = 
-			m_renderObjectMetadataItr->second.m_objectTypeToDataIndexTable;
+		ObjectTypeToDataIndexMap const& objectTypeToDataIndexMap = 
+			m_renderObjectMetadataItr->second.m_objectTypeToDataIndexMap;
 
-		// Make sure the data type index is in bounds of the current object's data index table (it could be invalid, or
-		// the table might not have allocated an entry for this type)
-		if (dataTypeIndex < objectTypeToDataIndexTable.size()) // Guarantees dataTypeIndex != k_invalidDataTypeIdx
+		// Make sure the data type index is found in current object's data index map
+		auto objecTypeToDataIdxIter = objectTypeToDataIndexMap.find(dataTypeIndex);
+		if (objecTypeToDataIdxIter != objectTypeToDataIndexMap.end())
 		{
 			// Get the index of the data within its typed array, for the current RenderDataID iteration
-			const uint32_t objectDataIndex = objectTypeToDataIndexTable[dataTypeIndex];
+			const DataIndex objectDataIndex = objecTypeToDataIdxIter->second;
 
 			return m_renderData->GetObjectDataVectorIfExists<T>(objectDataIndex);
 		}
@@ -888,14 +947,14 @@ namespace gr
 		SEAssert("Invalid Get: Current m_currentObjectMetadata is past-the-end",
 			m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend());
 
-		const uint8_t dataTypeIndex = m_renderData->GetDataIndexFromType<T>();
+		const DataTypeIndex dataTypeIndex = m_renderData->GetDataIndexFromType<T>();
 
 		SEAssert("Invalid dirty frame value",
-			m_currentObjectMetadata->second.m_dirtyFrameTable[dataTypeIndex] != k_invalidDirtyFrameNum &&
-			m_currentObjectMetadata->second.m_dirtyFrameTable[dataTypeIndex] <= m_currentFrame &&
+			m_currentObjectMetadata->second.m_dirtyFrameMap.contains(dataTypeIndex) &&
+			m_currentObjectMetadata->second.m_dirtyFrameMap.at(dataTypeIndex) <= m_currentFrame &&
 			m_currentFrame != k_invalidDirtyFrameNum);
 
-		return m_currentObjectMetadata->second.m_dirtyFrameTable[dataTypeIndex] == m_currentFrame;
+		return m_currentObjectMetadata->second.m_dirtyFrameMap.at(dataTypeIndex) == m_currentFrame;
 	}
 
 

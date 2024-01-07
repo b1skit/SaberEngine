@@ -52,6 +52,14 @@ namespace gr
 
 		SEAssert("An ID to data map is not empty: Was a render object not destroyed via a render command?",
 			m_IDToRenderObjectMetadata.empty() && m_transformIDToTransformMetadata.empty());
+
+		SEAssert("A registered ID list is not empty", 
+			m_registeredRenderObjectIDs.empty() && m_registeredTransformIDs.empty());
+
+		for (auto const& typeVector : m_perTypeRegisteredRenderObjectIDs)
+		{
+			SEAssert("A per-type registered ID list is not empty", typeVector.empty());
+		}
 	}
 
 
@@ -109,16 +117,12 @@ namespace gr
 			renderObjectMetadata.m_referenceCount--;
 			if (renderObjectMetadata.m_referenceCount == 0)
 			{
-				ObjectTypeToDataIndexTable const& dataIndexTable =
-					renderObjectMetadata.m_objectTypeToDataIndexTable;
+				ObjectTypeToDataIndexMap const& dataIndexMap =
+					renderObjectMetadata.m_objectTypeToDataIndexMap;
 
-#if defined(_DEBUG)
-				for (size_t dataIndexEntry = 0; dataIndexEntry < dataIndexTable.size(); dataIndexEntry++)
-				{
-					SEAssert("Cannot destroy an object with first destroying its associated data",
-						dataIndexTable[dataIndexEntry] == k_invalidDataIdx);
-				}
-#endif
+				SEAssert("Cannot destroy an object with first destroying its associated data", 
+					renderObjectMetadata.m_objectTypeToDataIndexMap.empty());
+
 				m_IDToRenderObjectMetadata.erase(renderDataID);
 				
 				RemoveIDFromTrackingList(m_registeredRenderObjectIDs, renderDataID);
@@ -160,7 +164,7 @@ namespace gr
 		auto transformMetadataItr = m_transformIDToTransformMetadata.find(transformID);
 		if (transformMetadataItr == m_transformIDToTransformMetadata.end())
 		{
-			const uint32_t newTransformDataIdx = util::CheckedCast<uint32_t>(m_transformRenderData.size());
+			const DataIndex newTransformDataIdx = util::CheckedCast<DataIndex>(m_transformRenderData.size());
 
 			// Allocate and initialize the Transform render data
 			m_transformRenderData.emplace_back();
@@ -197,8 +201,8 @@ namespace gr
 
 		if (transformMetadataItr->second.m_referenceCount == 0)
 		{
-			const size_t indexToMove = m_transformRenderData.size() - 1;
-			const uint32_t indexToReplace = transformMetadataItr->second.m_transformIdx;
+			const DataIndex indexToMove = util::CheckedCast<DataIndex>(m_transformRenderData.size() - 1);
+			const DataIndex indexToReplace = transformMetadataItr->second.m_transformIdx;
 
 			SEAssert("Invalid replacement index", indexToReplace < m_transformRenderData.size());
 
@@ -237,7 +241,7 @@ namespace gr
 		SEAssert("Trying to set the data for a Transform that does not exist",
 			transformMetadataItr != m_transformIDToTransformMetadata.end());
 
-		const uint32_t transformDataIdx = transformMetadataItr->second.m_transformIdx;
+		const DataIndex transformDataIdx = transformMetadataItr->second.m_transformIdx;
 		SEAssert("Invalid transform index", transformDataIdx < m_transformRenderData.size());
 
 		m_transformRenderData[transformDataIdx] = transformRenderData;
@@ -255,7 +259,7 @@ namespace gr
 		SEAssert("Trying to get the data for a Transform that does not exist",
 			transformMetadataItr != m_transformIDToTransformMetadata.end());
 
-		const uint32_t transformDataIdx = transformMetadataItr->second.m_transformIdx;
+		const DataIndex transformDataIdx = transformMetadataItr->second.m_transformIdx;
 		SEAssert("Invalid transform index", transformDataIdx < m_transformRenderData.size());
 
 		return m_transformRenderData[transformDataIdx];
@@ -311,7 +315,7 @@ namespace gr
 	template<typename T>
 	void RenderDataManager::PopulateTypesImGuiHelper(std::vector<std::string>& names, char const* typeName) const
 	{
-		const uint8_t dataTypeIndex = GetDataIndexFromType<T>();
+		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
 		SEAssert("Index is OOB of the names array", dataTypeIndex < names.size() || 
 			dataTypeIndex == k_invalidDataTypeIdx);
 
@@ -349,7 +353,7 @@ namespace gr
 
 		const ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable;
 
-		const int numDataTypes = static_cast<int>(m_dataVectors.size());
+		const DataTypeIndex numDataTypes = util::CheckedCast<DataTypeIndex>(m_dataVectors.size());
 		const int numCols = numDataTypes + 3;
 		if (ImGui::BeginTable("m_IDToRenderObjectMetadata", numCols, flags))
 		{
@@ -357,62 +361,66 @@ namespace gr
 			ImGui::TableSetupColumn("RenderObjectID (ref. count)");
 			ImGui::TableSetupColumn("TransformID (ref.count) [dirty frame]");
 			ImGui::TableSetupColumn("Feature bits");
-			for (size_t i = 0; i < numDataTypes; i++)
+			for (DataTypeIndex i = 0; i < numDataTypes; i++)
 			{
-				ImGui::TableSetupColumn(std::format("{} [dirty frame]", names[i]).c_str());
+				ImGui::TableSetupColumn(std::format("{}: {} [dirty frame]", i, names[i]).c_str());
 			}
 			ImGui::TableHeadersRow();
 
 
 			for (auto const& entry : m_IDToRenderObjectMetadata)
 			{
+				const gr::RenderDataID renderDataID = entry.first;
+				RenderObjectMetadata const& renderObjectMetadata = entry.second;
+
 				ImGui::TableNextRow();
 				ImGui::TableNextColumn();
 
 				// RenderDataID (Ref. count)
-				ImGui::Text(std::format("{} ({})", entry.first, entry.second.m_referenceCount).c_str());
+				ImGui::Text(std::format("{} ({})", renderDataID, renderObjectMetadata.m_referenceCount).c_str());
 
-				ImGui::TableNextColumn();
+				ImGui::TableNextColumn();				
 
 				// TransformID (Ref. count) [dirty frame]
 				ImGui::Text(std::format("{} ({}) [{}]",
-					entry.second.m_transformID,
-					m_transformIDToTransformMetadata.at(entry.second.m_transformID).m_referenceCount,
-					m_transformIDToTransformMetadata.at(entry.second.m_transformID).m_dirtyFrame).c_str());
+					renderObjectMetadata.m_transformID,
+					m_transformIDToTransformMetadata.at(renderObjectMetadata.m_transformID).m_referenceCount,
+					m_transformIDToTransformMetadata.at(renderObjectMetadata.m_transformID).m_dirtyFrame).c_str());
 
 				ImGui::TableNextColumn();
 
 				// Feature bits
-				ImGui::Text(std::format("{:b}", entry.second.m_featureBits).c_str());
+				ImGui::Text(std::format("{:b}", renderObjectMetadata.m_featureBits).c_str());
 
-				for (size_t i = 0; i < numDataTypes; i++)
+				for (DataTypeIndex i = 0; i < numDataTypes; i++)
 				{
 					ImGui::TableNextColumn();
 
 					std::string cellText;
 
-					// ObjectTypeToDataIndexTable
-					if (i >= entry.second.m_objectTypeToDataIndexTable.size() ||
-						entry.second.m_objectTypeToDataIndexTable[i] == k_invalidDataIdx)
+					// ObjectTypeToDataIndexMap
+					auto const& objectTypeToDataIdx = renderObjectMetadata.m_objectTypeToDataIndexMap.find(i);
+					if (objectTypeToDataIdx == renderObjectMetadata.m_objectTypeToDataIndexMap.end())
 					{
 						cellText = "-";
 					}
 					else
 					{
-						cellText = std::format("{}", entry.second.m_objectTypeToDataIndexTable[i]).c_str();
+						
+						cellText = std::format("{}", objectTypeToDataIdx->second).c_str();
 					}
 
 					cellText += " ";
 
-					// LastDirtyFrameTable
-					if (i >= entry.second.m_dirtyFrameTable.size() ||
-						entry.second.m_dirtyFrameTable[i] == k_invalidDirtyFrameNum)
+					// LastDirtyFrameMap
+					auto const& dirtyFrameRecord = renderObjectMetadata.m_dirtyFrameMap.find(i);
+					if (dirtyFrameRecord == renderObjectMetadata.m_dirtyFrameMap.end())
 					{
 						cellText += "[-]";
 					}
 					else
 					{
-						cellText += std::format("[{}]", entry.second.m_dirtyFrameTable[i]).c_str();
+						cellText += std::format("[{}]", renderObjectMetadata.m_dirtyFrameMap.at(i)).c_str();
 					}
 
 					ImGui::Text(cellText.c_str());
