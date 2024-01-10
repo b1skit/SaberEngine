@@ -972,7 +972,7 @@ namespace dx12
 			dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid);
 
 #if defined(DEBUG_FENCES)
-		LOG_WARNING("CommandQueue::GPUWait on another fence: %s, %s from queue %s, %llu = %llu",
+		LOG_WARNING("CommandQueue::GPUWait on another fence: \"%s\" waiting on \"%s\" from queue type \"%s\" for value %llu = %llu",
 			dx12::GetDebugName(m_commandQueue.Get()).c_str(),
 			dx12::GetDebugName(fence.GetD3DFence()).c_str(),
 			dx12::CommandList::GetCommandListTypeName(dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue)),
