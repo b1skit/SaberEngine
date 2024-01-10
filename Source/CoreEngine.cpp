@@ -176,7 +176,7 @@ namespace en
 			SEEndCPUEvent();
 
 			// Pump the render thread, and wait for it to signal copying is complete:
-			SEBeginCPUEvent("en::CoreEngine::Run Wait on copy barrier");
+			SEBeginCPUEvent("en::CoreEngine::Run Wait on copy step");
 			renderManager->EnqueueUpdate({m_frameNum, lastOuterFrameTime});
 			m_copyBarrier->arrive_and_wait();
 			SEEndCPUEvent();

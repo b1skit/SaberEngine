@@ -234,7 +234,7 @@ namespace en
 				formatPrefix = k_newlinePrefix;
 			}
 
-			prependLength = k_newlinePrefixLen + k_logPrefixLen;
+			prependLength = k_newlinePrefixLen + tagPrefixLen;
 			messageStart = msg + 1;
 
 			InsertLogPrefix<T>(
@@ -268,7 +268,7 @@ namespace en
 		}
 		else
 		{
-			prependLength = k_logPrefixLen;
+			prependLength = tagPrefixLen;
 			messageStart = msg;
 
 			InsertLogPrefix<T>(

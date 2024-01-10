@@ -975,7 +975,7 @@ namespace dx12
 		LOG_WARNING("CommandQueue::GPUWait on another fence: %s, %s from queue %s, %llu = %llu",
 			dx12::GetDebugName(m_commandQueue.Get()).c_str(),
 			dx12::GetDebugName(fence.GetD3DFence()).c_str(),
-			dx12::CommandList::GetCommandListTypeWName(dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue)),
+			dx12::CommandList::GetCommandListTypeName(dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue)),
 			fenceValue,
 			dx12::Fence::GetRawFenceValue(fenceValue));
 #endif
