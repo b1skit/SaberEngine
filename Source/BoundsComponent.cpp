@@ -11,7 +11,37 @@
 namespace
 {
 	constexpr float k_bounds3DDepthBias = 0.01f; // Offset to ensure axis min != axis max
+
+
+	void ConfigureEncapsulatingBoundsRenderDataID(
+		fr::EntityManager& em, entt::entity owningEntity, fr::BoundsComponent& bounds)
+	{
+		fr::Relationship const& owningEntityRelationship = em.GetComponent<fr::Relationship>(owningEntity);
+
+		// Recursively expand any Bounds above us:
+		if (owningEntityRelationship.HasParent())
+		{
+			entt::entity nextEntity = entt::null;
+
+			fr::BoundsComponent* nextBounds = em.GetFirstAndEntityInHierarchyAbove<fr::BoundsComponent>(
+				owningEntityRelationship.GetParent(),
+				nextEntity);
+
+			if (nextBounds != nullptr)
+			{
+				gr::RenderDataComponent const& nextBoundsRenderDataCmpt = 
+					em.GetComponent<gr::RenderDataComponent>(nextEntity);
+
+				bounds.SetEncapsulatingBoundsRenderDataID(nextBoundsRenderDataCmpt.GetRenderDataID());
+			}
+		}
+		else
+		{
+			bounds.SetEncapsulatingBoundsRenderDataID(gr::k_invalidRenderDataID);
+		}
+	}
 }
+
 
 namespace fr
 {
@@ -37,11 +67,12 @@ namespace fr
 	}
 
 
-	void BoundsComponent::AttachBoundsComponent(
-		fr::EntityManager& em, entt::entity entity)
+	void BoundsComponent::AttachBoundsComponent(fr::EntityManager& em, entt::entity entity)
 	{
 		// Attach the BoundsComponent (which will trigger event listeners)
-		em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{});
+		fr::BoundsComponent* boundsCmpt = em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{});
+
+		ConfigureEncapsulatingBoundsRenderDataID(em, entity, *boundsCmpt);
 
 		em.EmplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
 	}
@@ -54,7 +85,10 @@ namespace fr
 		glm::vec3 const& maxXYZ)
 	{
 		// Attach the BoundsComponent (which will trigger event listeners)
-		em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ);
+		fr::BoundsComponent* boundsCmpt = 
+			em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ);
+
+		ConfigureEncapsulatingBoundsRenderDataID(em, entity, *boundsCmpt);
 
 		em.EmplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
 	}
@@ -68,7 +102,10 @@ namespace fr
 		std::vector<glm::vec3> const& positions)
 	{
 		// Attach the BoundsComponent (which will trigger event listeners)
-		em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ, positions);
+		fr::BoundsComponent* boundsCmpt = 
+			em.EmplaceComponent<fr::BoundsComponent>(entity, PrivateCTORTag{}, minXYZ, maxXYZ, positions);
+
+		ConfigureEncapsulatingBoundsRenderDataID(em, entity, *boundsCmpt);
 
 		em.EmplaceComponent<DirtyMarker<fr::BoundsComponent>>(entity);
 	}
@@ -78,35 +115,18 @@ namespace fr
 	{
 		return gr::Bounds::RenderData
 		{
+			.m_encapsulatingBounds = bounds.GetEncapsulatingBoundsRenderDataID(),
+
 			.m_minXYZ = bounds.m_minXYZ,
 			.m_maxXYZ = bounds.m_maxXYZ
 		};
 	}
 
 
-	void BoundsComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity)
-	{
-		if (ImGui::CollapsingHeader(
-			std::format("Local bounds:##{}", static_cast<uint32_t>(owningEntity)).c_str(), ImGuiTreeNodeFlags_None))
-		{
-			ImGui::Indent();
-
-			// RenderDataComponent:
-			gr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
-
-			fr::BoundsComponent const& boundsCmpt = em.GetComponent<fr::BoundsComponent>(owningEntity);
-			
-			ImGui::Text("Min XYZ = %s", glm::to_string(boundsCmpt.m_minXYZ).c_str());
-			ImGui::Text("Max XYZ = %s", glm::to_string(boundsCmpt.m_maxXYZ).c_str());
-
-			ImGui::Unindent();
-		}
-	}
-
-
 	BoundsComponent::BoundsComponent(PrivateCTORTag)
 		: m_minXYZ(k_invalidMinXYZ)
-		, m_maxXYZ(k_invalidMaxXYZ) 
+		, m_maxXYZ(k_invalidMaxXYZ)
+		, m_encapsulatingBoundsRenderDataID(gr::k_invalidRenderDataID)
 	{
 	}
 
@@ -120,6 +140,7 @@ namespace fr
 	BoundsComponent::BoundsComponent(PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ)
 		: m_minXYZ(minXYZ)
 		, m_maxXYZ(maxXYZ)
+		, m_encapsulatingBoundsRenderDataID(gr::k_invalidRenderDataID)
 	{
 		SEAssert("Cannot have only 1 invalid minXYZ/maxXYZ", 
 			(m_minXYZ == BoundsComponent::k_invalidMinXYZ && m_maxXYZ == BoundsComponent::k_invalidMaxXYZ) ||
@@ -134,6 +155,7 @@ namespace fr
 		PrivateCTORTag, glm::vec3 const& minXYZ, glm::vec3 const& maxXYZ, std::vector<glm::vec3> const& positions)
 		: m_minXYZ(minXYZ)
 		, m_maxXYZ(maxXYZ)
+		, m_encapsulatingBoundsRenderDataID(gr::k_invalidRenderDataID)
 	{
 		SEAssert("Cannot have only 1 invalid minXYZ/maxXYZ",
 			(m_minXYZ == BoundsComponent::k_invalidMinXYZ && m_maxXYZ == BoundsComponent::k_invalidMaxXYZ) ||
@@ -286,5 +308,25 @@ namespace fr
 		SEAssert("Bounds is NaN/Inf",
 			glm::all(glm::isnan(m_minXYZ)) == false && glm::all(glm::isnan(m_maxXYZ)) == false &&
 			glm::all(glm::isinf(m_minXYZ)) == false && glm::all(glm::isinf(m_maxXYZ)) == false);
+	}
+
+
+	void BoundsComponent::ShowImGuiWindow(fr::EntityManager& em, entt::entity owningEntity)
+	{
+		if (ImGui::CollapsingHeader(
+			std::format("Local bounds:##{}", static_cast<uint32_t>(owningEntity)).c_str(), ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
+
+			// RenderDataComponent:
+			gr::RenderDataComponent::ShowImGuiWindow(em, owningEntity);
+
+			fr::BoundsComponent const& boundsCmpt = em.GetComponent<fr::BoundsComponent>(owningEntity);
+
+			ImGui::Text("Min XYZ = %s", glm::to_string(boundsCmpt.m_minXYZ).c_str());
+			ImGui::Text("Max XYZ = %s", glm::to_string(boundsCmpt.m_maxXYZ).c_str());
+
+			ImGui::Unindent();
+		}
 	}
 }

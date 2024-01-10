@@ -239,6 +239,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="GPUDescriptorHeap_DX12.cpp" />
     <ClCompile Include="GraphicsSystemManager.cpp" />
     <ClCompile Include="GraphicsSystem_ComputeMips.cpp" />
+    <ClCompile Include="GraphicsSystem_Culling.cpp" />
     <ClCompile Include="GraphicsSystem_Debug.cpp" />
     <ClCompile Include="InputManager_Platform.cpp" />
     <ClCompile Include="InputManager_Win32.cpp" />
@@ -357,6 +358,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="Batch.h" />
     <ClInclude Include="BoundsComponent.h" />
     <ClInclude Include="GraphicsSystemManager.h" />
+    <ClInclude Include="GraphicsSystem_Culling.h" />
     <ClInclude Include="LightComponent.h" />
     <ClInclude Include="LightRenderData.h" />
     <ClInclude Include="MarkerComponents.h" />

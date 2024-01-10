@@ -10,7 +10,7 @@ namespace gr
 {
 	GraphicsSystemManager::GraphicsSystemManager(re::RenderSystem* owningRS)
 		: m_owningRenderSystem(owningRS)
-		, m_activeCameraRenderDataID(gr::k_invalidRenderObjectID)
+		, m_activeCameraRenderDataID(gr::k_invalidRenderDataID)
 		, m_activeCameraTransformDataID(gr::k_invalidTransformID)
 		, m_activeCameraParams(nullptr)
 	{
@@ -38,7 +38,7 @@ namespace gr
 	void GraphicsSystemManager::PreRender()
 	{
 		SEAssert("No active camera has been set",
-			m_activeCameraRenderDataID != gr::k_invalidRenderObjectID && 
+			m_activeCameraRenderDataID != gr::k_invalidRenderDataID && 
 			m_activeCameraTransformDataID != gr::k_invalidTransformID);
 
 		gr::Camera::RenderData const& cameraData =
@@ -50,7 +50,7 @@ namespace gr
 
 	gr::Camera::RenderData const& GraphicsSystemManager::GetActiveCameraRenderData() const
 	{
-		SEAssert("No active camera has been set", m_activeCameraRenderDataID != gr::k_invalidRenderObjectID);
+		SEAssert("No active camera has been set", m_activeCameraRenderDataID != gr::k_invalidRenderDataID);
 		return m_renderData.GetObjectData< gr::Camera::RenderData>(m_activeCameraRenderDataID);
 	}
 
@@ -58,7 +58,7 @@ namespace gr
 	gr::Transform::RenderData const& GraphicsSystemManager::GetActiveCameraTransformData() const
 	{
 		SEAssert("No active camera has been set", m_activeCameraTransformDataID != gr::k_invalidTransformID);
-		return m_renderData.GetTransformData(m_activeCameraTransformDataID);
+		return m_renderData.GetTransformDataFromTransformID(m_activeCameraTransformDataID);
 	}
 
 
@@ -72,7 +72,7 @@ namespace gr
 	void GraphicsSystemManager::SetActiveCamera(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID)
 	{
 		SEAssert("Invalid ID", 
-			cameraRenderDataID != gr::k_invalidRenderObjectID && cameraTransformID != gr::k_invalidTransformID);
+			cameraRenderDataID != gr::k_invalidRenderDataID && cameraTransformID != gr::k_invalidTransformID);
 
 		m_activeCameraRenderDataID = cameraRenderDataID;
 		m_activeCameraTransformDataID = cameraTransformID;

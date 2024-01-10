@@ -37,7 +37,7 @@ namespace re
 			
 			// Cache a pointer to our Transform render data:
 			const size_t transformIdx = transformRenderData.size();
-			transformRenderData.emplace_back(&renderDataItr.GetTransformData());
+			transformRenderData.emplace_back(&renderDataItr.GetTransformDataFromTransformID());
 		
 			unmergedBatches.emplace_back(
 				BatchSortMetadata

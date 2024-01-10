@@ -59,13 +59,15 @@ namespace fr
 		// Recursively expand the current Bounds, and any Bounds found in the Relationship hierarchy above
 		void ExpandBoundsHierarchy(fr::EntityManager&, BoundsComponent const& newContents, entt::entity boundsEntity);
 
-
 		float xMin() const;		
 		float xMax() const;
 		float yMin() const;
 		float yMax() const;				  
 		float zMin() const;
 		float zMax() const;
+
+		void SetEncapsulatingBoundsRenderDataID(gr::RenderDataID);
+		gr::RenderDataID GetEncapsulatingBoundsRenderDataID() const;
 
 
 	private: // Use the static creation factories
@@ -93,6 +95,7 @@ namespace fr
 		glm::vec3 m_minXYZ;
 		glm::vec3 m_maxXYZ;
 
+		gr::RenderDataID m_encapsulatingBoundsRenderDataID;
 
 	private:
 		BoundsComponent();
@@ -132,5 +135,17 @@ namespace fr
 	inline float BoundsComponent::zMax() const 
 	{ 
 		return m_maxXYZ.z;
+	}
+
+
+	inline void BoundsComponent::SetEncapsulatingBoundsRenderDataID(gr::RenderDataID renderDataID)
+	{
+		m_encapsulatingBoundsRenderDataID = renderDataID;
+	}
+
+
+	inline gr::RenderDataID BoundsComponent::GetEncapsulatingBoundsRenderDataID() const
+	{
+		return m_encapsulatingBoundsRenderDataID;
 	}
 }

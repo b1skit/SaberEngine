@@ -120,6 +120,11 @@ namespace fr
 
 			ImGui::Text("1/far = %f", 1.f / m_cameraConfig.m_far);
 
+			std::string const& fovSliderLabel = std::format("Field of view##{}", uniqueID);
+			constexpr float k_pi = static_cast<float>(std::numbers::pi);
+			m_isDirty |= ImGui::SliderFloat(
+				fovSliderLabel.c_str(), &m_cameraConfig.m_yFOV, 0.f, k_pi, "(yFOV, radians) %.3f");
+
 			ImGui::Text("Sensor Properties");
 
 			const std::string apertureLabel = std::format("Aperture (f/stops)##{}", uniqueID);

@@ -218,7 +218,7 @@ namespace
 		glm::vec3 const& frustumColor, 
 		glm::mat4 const& invViewProj)
 	{
-		// Convert NDC coordinates to world space. Cubemap face index 0 = the same matrix as a non-cubemap camera
+		// Convert NDC coordinates to world space
 		glm::vec4 farTL = invViewProj * glm::vec4(-1.f, 1.f, 1.f, 1.f);
 		glm::vec4 farBL = invViewProj * glm::vec4(-1.f, -1.f, 1.f, 1.f);
 		glm::vec4 farTR = invViewProj * glm::vec4(1.f, 1.f, 1.f, 1.f);
@@ -406,7 +406,7 @@ namespace gr
 					gr::MeshPrimitive::RenderData const& meshPrimRenderData = meshPrimItr.Get<gr::MeshPrimitive::RenderData>();
 					gr::Bounds::RenderData const& boundsRenderData = meshPrimItr.Get<gr::Bounds::RenderData>();
 
-					gr::Transform::RenderData const& transformData = meshPrimItr.GetTransformData();
+					gr::Transform::RenderData const& transformData = meshPrimItr.GetTransformDataFromTransformID();
 
 					std::shared_ptr<re::ParameterBlock> meshTransformPB =
 						gr::Transform::CreateInstancedTransformParams(transformData);
@@ -415,8 +415,7 @@ namespace gr
 					if (m_showAllMeshPrimitiveBoundingBoxes || m_showAllVertexNormals || m_showAllWireframe)
 					{
 						if (m_showAllMeshPrimitiveBoundingBoxes && 
-							!gr::HasFeature(gr::RenderObjectFeature::IsSceneBounds, meshPrimItr.GetFeatureBits()) && 
-							!gr::HasFeature(gr::RenderObjectFeature::IsMeshBounds, meshPrimItr.GetFeatureBits()))
+							gr::HasFeature(gr::RenderObjectFeature::IsMeshPrimitiveBounds, meshPrimItr.GetFeatureBits()))
 						{
 							re::Batch primitiveBoundsBatch =
 								BuildBoundingBoxBatch(boundsRenderData, m_meshPrimitiveBoundsColor);
@@ -470,7 +469,7 @@ namespace gr
 						gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
 
 						std::shared_ptr<re::ParameterBlock> boundsTransformPB =
-							gr::Transform::CreateInstancedTransformParams(boundsItr.GetTransformData());
+							gr::Transform::CreateInstancedTransformParams(boundsItr.GetTransformDataFromTransformID());
 
 						re::Batch boundingBoxBatch = BuildBoundingBoxBatch(boundsRenderData, m_meshBoundsColor);
 						boundingBoxBatch.SetParameterBlock(boundsTransformPB);
@@ -493,7 +492,7 @@ namespace gr
 					gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
 
 					std::shared_ptr<re::ParameterBlock> boundsTransformPB =
-						gr::Transform::CreateInstancedTransformParams(boundsItr.GetTransformData());
+						gr::Transform::CreateInstancedTransformParams(boundsItr.GetTransformDataFromTransformID());
 
 					re::Batch boundingBoxBatch = BuildBoundingBoxBatch(boundsRenderData, m_sceneBoundsColor);
 					boundingBoxBatch.SetParameterBlock(boundsTransformPB);
@@ -569,7 +568,7 @@ namespace gr
 				{
 					gr::Light::RenderDataPoint const& pointData =
 						pointItr.Get<gr::Light::RenderDataPoint>();
-					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
+					gr::Transform::RenderData const& transformData = pointItr.GetTransformDataFromTransformID();
 
 					glm::mat4 const& lightTRS = transformData.g_model;
 
@@ -597,7 +596,7 @@ namespace gr
 			{
 				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(pointItr.GetRenderDataID()))
 				{
-					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
+					gr::Transform::RenderData const& transformData = pointItr.GetTransformDataFromTransformID();
 					glm::mat4 const& lightTRS = transformData.g_model;
 
 					std::shared_ptr<re::ParameterBlock> pointLightMeshTransformPB =
@@ -618,7 +617,7 @@ namespace gr
 
 	void DebugGraphicsSystem::ShowImGuiWindow()
 	{
-		if (ImGui::CollapsingHeader(std::format("Target render data objects").c_str()))
+		if (ImGui::CollapsingHeader("Target render data objects"))
 		{
 			ImGui::Indent();
 
@@ -697,7 +696,7 @@ namespace gr
 			while (camItr != camEnd)
 			{
 				gr::Camera::RenderData const* camData = &camItr.Get<gr::Camera::RenderData>();
-				gr::Transform::RenderData const* transformData = &camItr.GetTransformData();
+				gr::Transform::RenderData const* transformData = &camItr.GetTransformDataFromTransformID();
 
 				const bool cameraAlreadyAdded = m_camerasToDebug.contains(camData);
 				bool cameraSelected = cameraAlreadyAdded;

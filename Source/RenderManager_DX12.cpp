@@ -9,6 +9,7 @@
 #include "Debug_DX12.h"
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_ComputeMips.h"
+#include "GraphicsSystem_Culling.h"
 #include "GraphicsSystem_Debug.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_GBuffer.h"
@@ -59,6 +60,8 @@ namespace dx12
 			std::vector<std::shared_ptr<gr::GraphicsSystem>>& graphicsSystems = gsm.GetGraphicsSystems();
 
 			// Create and add graphics systems:
+			graphicsSystems.emplace_back(std::make_shared<gr::CullingGraphicsSystem>(&gsm));
+
 			std::shared_ptr<gr::ComputeMipsGraphicsSystem> computeMipsGS = 
 				std::make_shared<gr::ComputeMipsGraphicsSystem>(&gsm);
 			graphicsSystems.emplace_back(computeMipsGS);
@@ -95,6 +98,7 @@ namespace dx12
 			gr::GraphicsSystemManager& gsm = defaultRS->GetGraphicsSystemManager();
 
 			// Get our GraphicsSystems:
+			gr::CullingGraphicsSystem* cullingGS = gsm.GetGraphicsSystem<gr::CullingGraphicsSystem>();
 			gr::ComputeMipsGraphicsSystem* computeMipsGS = gsm.GetGraphicsSystem<gr::ComputeMipsGraphicsSystem>();
 			gr::GBufferGraphicsSystem* gbufferGS = gsm.GetGraphicsSystem<gr::GBufferGraphicsSystem>();
 			gr::ShadowsGraphicsSystem* shadowGS = gsm.GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
@@ -107,6 +111,7 @@ namespace dx12
 			// Build the creation pipeline:
 			gsm.Create();
 
+			cullingGS->Create();
 			computeMipsGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(computeMipsGS->GetName()));
 			deferredLightingGS->CreateResourceGenerationStages(
 				defaultRS->GetRenderPipeline().AddNewStagePipeline("Deferred Lighting Resource Creation"));
@@ -127,6 +132,7 @@ namespace dx12
 			gr::GraphicsSystemManager& gsm = renderSystem->GetGraphicsSystemManager();
 
 			// Get our GraphicsSystems:
+			gr::CullingGraphicsSystem* cullingGS = gsm.GetGraphicsSystem<gr::CullingGraphicsSystem>();
 			gr::ComputeMipsGraphicsSystem* computeMipsGS = gsm.GetGraphicsSystem<gr::ComputeMipsGraphicsSystem>();
 			gr::GBufferGraphicsSystem* gbufferGS = gsm.GetGraphicsSystem<gr::GBufferGraphicsSystem>();
 			gr::ShadowsGraphicsSystem* shadowGS = gsm.GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
@@ -139,6 +145,7 @@ namespace dx12
 			// Execute per-frame updates:
 			gsm.PreRender();
 
+			cullingGS->PreRender();
 			computeMipsGS->PreRender();
 			gbufferGS->PreRender();
 			shadowGS->PreRender();

@@ -8,6 +8,7 @@
 #include "Context_OpenGL.h"
 #include "GraphicsSystem.h"
 #include "GraphicsSystem_Bloom.h"
+#include "GraphicsSystem_Culling.h"
 #include "GraphicsSystem_Debug.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_DeferredLighting.h"
@@ -81,6 +82,8 @@ namespace opengl
 			std::vector<std::shared_ptr<gr::GraphicsSystem>>& graphicsSystems = gsm.GetGraphicsSystems();
 
 			// Create and add graphics systems:
+			graphicsSystems.emplace_back(std::make_shared<gr::CullingGraphicsSystem>(&gsm));
+
 			std::shared_ptr<gr::GBufferGraphicsSystem> gbufferGS = std::make_shared<gr::GBufferGraphicsSystem>(&gsm);
 			graphicsSystems.emplace_back(gbufferGS);
 
@@ -112,6 +115,7 @@ namespace opengl
 			gr::GraphicsSystemManager& gsm = defaultRS->GetGraphicsSystemManager();
 
 			// Get our GraphicsSystems:
+			gr::CullingGraphicsSystem* cullingGS = gsm.GetGraphicsSystem<gr::CullingGraphicsSystem>();
 			gr::GBufferGraphicsSystem* gbufferGS = gsm.GetGraphicsSystem<gr::GBufferGraphicsSystem>();
 			gr::ShadowsGraphicsSystem* shadowGS = gsm.GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
 			gr::DeferredLightingGraphicsSystem* deferredLightingGS = gsm.GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
@@ -123,6 +127,7 @@ namespace opengl
 			// Build the creation pipeline:
 			gsm.Create();
 
+			cullingGS->Create();
 			deferredLightingGS->CreateResourceGenerationStages(
 				defaultRS->GetRenderPipeline().AddNewStagePipeline("Deferred Lighting Resource Creation"));
 			gbufferGS->Create(defaultRS->GetRenderPipeline().AddNewStagePipeline(gbufferGS->GetName()));
@@ -142,6 +147,7 @@ namespace opengl
 			gr::GraphicsSystemManager& gsm = renderSystem->GetGraphicsSystemManager();
 
 			// Get our GraphicsSystems:
+			gr::CullingGraphicsSystem* cullingGS = gsm.GetGraphicsSystem<gr::CullingGraphicsSystem>();
 			gr::GBufferGraphicsSystem* gbufferGS = gsm.GetGraphicsSystem<gr::GBufferGraphicsSystem>();
 			gr::ShadowsGraphicsSystem* shadowGS = gsm.GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
 			gr::DeferredLightingGraphicsSystem* deferredLightingGS = gsm.GetGraphicsSystem<gr::DeferredLightingGraphicsSystem>();
@@ -153,6 +159,7 @@ namespace opengl
 			// Execute per-frame updates:
 			gsm.PreRender();
 
+			cullingGS->PreRender();
 			gbufferGS->PreRender();
 			shadowGS->PreRender();
 			deferredLightingGS->PreRender();

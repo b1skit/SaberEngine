@@ -10,6 +10,18 @@ namespace gr
 	class Camera
 	{
 	public:
+		struct FrustumPlane
+		{
+			glm::vec3 m_point;
+			glm::vec3 m_normal;
+		};
+		struct Frustum
+		{
+			std::array<FrustumPlane, 6> m_planes;
+		};
+
+
+	public:
 		struct Config
 		{
 			enum class ProjectionType
@@ -129,5 +141,7 @@ namespace gr
 			float aperture, float shutterSpeed, float sensitivity, float exposureCompensation);
 
 		static float ComputeExposure(float ev100);
+
+		static Frustum BuildWorldSpaceFrustumData(gr::Camera::RenderData const& camData);
 	};
 }

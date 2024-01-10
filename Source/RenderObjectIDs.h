@@ -4,7 +4,7 @@
 namespace gr
 {
 	typedef uint32_t RenderDataID;
-	constexpr RenderDataID k_invalidRenderObjectID = std::numeric_limits<uint32_t>::max();
+	constexpr RenderDataID k_invalidRenderDataID = std::numeric_limits<uint32_t>::max();
 
 	typedef uint32_t TransformID;
 	constexpr TransformID k_invalidTransformID = std::numeric_limits<uint32_t>::max();
@@ -16,9 +16,9 @@ namespace gr
 
 	enum RenderObjectFeature
 	{
-		IsSceneBounds = 0x0,
-		IsMeshBounds = 0x1, // If these are both not set, we can assume a Bounds is attached to a MeshPrimitive
-		//... = 0x2
+		IsSceneBounds			= 0x0,
+		IsMeshBounds			= 0x1,
+		IsMeshPrimitiveBounds	= 0x2,
 		//... = 0x4
 
 		Invalid

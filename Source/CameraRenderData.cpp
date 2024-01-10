@@ -117,4 +117,55 @@ namespace gr
 	{
 		return glm::ortho(left, right, bottom, top, nearDist, farDist);
 	}
+
+
+	gr::Camera::Frustum Camera::BuildWorldSpaceFrustumData(gr::Camera::RenderData const& camData)
+	{
+		gr::Camera::Frustum frustum;
+
+		// Convert cube in NDC space to world space
+		glm::vec4 farTL = camData.m_cameraParams.g_invViewProjection * glm::vec4(-1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBL = camData.m_cameraParams.g_invViewProjection * glm::vec4(-1.f, -1.f, 1.f, 1.f);
+		glm::vec4 farTR = camData.m_cameraParams.g_invViewProjection * glm::vec4(1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBR = camData.m_cameraParams.g_invViewProjection * glm::vec4(1.f, -1.f, 1.f, 1.f);
+		glm::vec4 nearTL = camData.m_cameraParams.g_invViewProjection * glm::vec4(-1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBL = camData.m_cameraParams.g_invViewProjection * glm::vec4(-1.f, -1.f, 0.f, 1.f);
+		glm::vec4 nearTR = camData.m_cameraParams.g_invViewProjection * glm::vec4(1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBR = camData.m_cameraParams.g_invViewProjection * glm::vec4(1.f, -1.f, 0.f, 1.f);
+
+		farTL /= farTL.w;
+		farBL /= farBL.w;
+		farTR /= farTR.w;
+		farBR /= farBR.w;
+		nearTL /= nearTL.w;
+		nearBL /= nearBL.w;
+		nearTR /= nearTR.w;
+		nearBR /= nearBR.w;
+
+		// Near face (Behind the camera)
+		frustum.m_planes[0].m_point = nearBL;
+		frustum.m_planes[0].m_normal = glm::normalize(glm::cross((nearBR.xyz - nearBL.xyz), (nearTL.xyz - nearBL.xyz)));
+
+		// Far face (beyond the far plane)
+		frustum.m_planes[1].m_point = farBR;
+		frustum.m_planes[1].m_normal = glm::normalize(glm::cross((farBL.xyz - farBR.xyz), (farTR.xyz - farBR.xyz)));
+
+		// Left face
+		frustum.m_planes[2].m_point = farBL;
+		frustum.m_planes[2].m_normal = glm::normalize(glm::cross((nearBL.xyz - farBL.xyz), (farTL.xyz - farBL.xyz)));
+
+		// Right face
+		frustum.m_planes[3].m_point = nearBR;
+		frustum.m_planes[3].m_normal = glm::normalize(glm::cross((farBR.xyz - nearBR.xyz), (nearTR.xyz - nearBR.xyz)));
+
+		// Top face
+		frustum.m_planes[4].m_point = nearTL;
+		frustum.m_planes[4].m_normal = glm::normalize(glm::cross((nearTR.xyz - nearTL.xyz), (farTL.xyz - nearTL.xyz)));
+
+		// Bottom face
+		frustum.m_planes[5].m_point = farBL;
+		frustum.m_planes[5].m_normal = glm::normalize(glm::cross((farBR.xyz - farBL.xyz), (nearBL.xyz - farBL.xyz)));
+
+		return frustum;
+	}
 }

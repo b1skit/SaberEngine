@@ -17,6 +17,7 @@ namespace
 		fr::EntityManager& em,
 		entt::entity owningEntity,
 		gr::MeshPrimitive const* meshPrimitive,
+		gr::RenderDataComponent& meshPrimRenderCmpt,
 		glm::vec3 const& positionMinXYZ,
 		glm::vec3 const& positionMaxXYZ)
 	{
@@ -82,10 +83,14 @@ namespace fr
 		// RenderDataComponent: A MeshPrimitive has its own RenderDataID, but shares the TransformID of its owningEntity
 		fr::TransformComponent const& transformComponent = em.GetComponent<fr::TransformComponent>(owningEntity);
 
-		gr::RenderDataComponent::AttachNewRenderDataComponent(
+		gr::RenderDataComponent& meshPrimRenderCmpt = gr::RenderDataComponent::AttachNewRenderDataComponent(
 			em, meshPrimitiveConcept, transformComponent.GetTransformID());
 
-		AttachMeshPrimitiveComponentHelper(em, meshPrimitiveConcept, meshPrimitive, positionMinXYZ, positionMaxXYZ);
+		AttachMeshPrimitiveComponentHelper(
+			em, meshPrimitiveConcept, meshPrimitive, meshPrimRenderCmpt, positionMinXYZ, positionMaxXYZ);
+
+		// Set the mesh primitive bounds feature bit for the culling system
+		meshPrimRenderCmpt.SetFeatureBit(gr::RenderObjectFeature::IsMeshPrimitiveBounds);
 
 		return meshPrimitiveConcept; // Note: A Material component must be attached to the returned entity
 	}
@@ -103,8 +108,12 @@ namespace fr
 		SEAssert("A MeshPrimitive's owningEntity requires a RenderDataComponent",
 			em.HasComponent<gr::RenderDataComponent>(owningEntity));
 
+		gr::RenderDataComponent* meshPrimRenderCmpt = 
+			em.GetFirstInHierarchyAbove<gr::RenderDataComponent>(owningEntity);
+
 		// Note: A Material component will typically need to be attached to the owningEntity
-		AttachMeshPrimitiveComponentHelper(em, owningEntity, meshPrimitive, positionMinXYZ, positionMaxXYZ);
+		AttachMeshPrimitiveComponentHelper(
+			em, owningEntity, meshPrimitive, *meshPrimRenderCmpt, positionMinXYZ, positionMaxXYZ);
 	}
 
 

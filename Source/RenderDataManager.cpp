@@ -56,7 +56,7 @@ namespace gr
 		SEAssert("A registered ID list is not empty", 
 			m_registeredRenderObjectIDs.empty() && m_registeredTransformIDs.empty());
 
-		for (auto const& typeVector : m_perTypeRegisteredRenderObjectIDs)
+		for (auto const& typeVector : m_perTypeRegisteredRenderDataIDs)
 		{
 			SEAssert("A per-type registered ID list is not empty", typeVector.empty());
 		}
@@ -68,6 +68,21 @@ namespace gr
 		SEAssert("Invalid frame value", 
 			currentFrame != k_invalidDirtyFrameNum && 
 			(m_currentFrame <= currentFrame || m_currentFrame == k_invalidDirtyFrameNum /*First frame*/));
+		
+
+		// Clear the new/deleted data ID trackers for the new frame:
+		if (currentFrame != m_currentFrame)
+		{
+			for (auto& prevFrameNewTypes : m_perFramePerTypeNewDataIDs)
+			{
+				prevFrameNewTypes.clear();
+			}
+			for (auto& prevFrameDeletedTypes : m_perFramePerTypeDeletedDataIDs)
+			{
+				prevFrameDeletedTypes.clear();
+			}
+		}
+
 		m_currentFrame = currentFrame;
 	}
 
@@ -250,7 +265,7 @@ namespace gr
 	}
 
 
-	gr::Transform::RenderData const& RenderDataManager::GetTransformData(gr::TransformID transformID) const
+	gr::Transform::RenderData const& RenderDataManager::GetTransformDataFromTransformID(gr::TransformID transformID) const
 	{
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
@@ -276,7 +291,7 @@ namespace gr
 
 		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 		
-		return GetTransformData(renderObjectMetadata.m_transformID);
+		return GetTransformDataFromTransformID(renderObjectMetadata.m_transformID);
 	}
 
 
@@ -351,7 +366,7 @@ namespace gr
 		ImGui::Text(std::format("Current frame: {}", m_currentFrame).c_str());
 		ImGui::Text(std::format("Total data vectors: {}", m_dataVectors.size()).c_str());
 
-		const ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable;
+		constexpr ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable;
 
 		const DataTypeIndex numDataTypes = util::CheckedCast<DataTypeIndex>(m_dataVectors.size());
 		const int numCols = numDataTypes + 3;

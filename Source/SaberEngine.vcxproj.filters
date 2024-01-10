@@ -497,6 +497,9 @@
     <ClCompile Include="UIManager.cpp">
       <Filter>Source Files\fr</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicsSystem_Culling.cpp">
+      <Filter>Source Files\gr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -948,6 +951,9 @@
     </ClInclude>
     <ClInclude Include="UIManager.h">
       <Filter>Header Files\fr</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsSystem_Culling.h">
+      <Filter>Header Files\gr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

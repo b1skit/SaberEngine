@@ -37,7 +37,19 @@ namespace gr
 		[[nodiscard]] bool HasObjectData(gr::RenderDataID) const;
 		
 		template<typename T>
-		[[nodiscard]] bool HasObjectData() const; // Has data of the given type for any ID
+		[[nodiscard]] bool HasObjectData() const; // Does data of the given type exist for any ID
+
+		template<typename T>
+		[[nodiscard]] bool HasIDsWithNewData() const;
+
+		template<typename T>
+		[[nodiscard]] std::vector<gr::RenderDataID> const& GetIDsWithNewData() const;
+
+		template<typename T>
+		[[nodiscard]] bool HasIDsWithDeletedData() const;
+
+		template<typename T>
+		std::vector<gr::RenderDataID> const& GetIDsWithDeletedData() const;
 
 		template<typename T>
 		[[nodiscard]] bool IsDirty(gr::RenderDataID) const;
@@ -52,10 +64,13 @@ namespace gr
 		
 		[[nodiscard]] gr::FeatureBitmask GetFeatureBits(gr::RenderDataID) const;
 
+		// Get IDs associated with a type
 		template<typename T>
-		[[nodiscard]] std::vector<gr::RenderDataID> const& GetRegisteredRenderDataIDs() const; // Get IDs associated with a type
+		[[nodiscard]] std::vector<gr::RenderDataID> const& GetRegisteredRenderDataIDs() const;
 
-		[[nodiscard]] std::vector<gr::RenderDataID> const& GetRegisteredRenderDataIDs() const; // Get all, regardless of data types
+		// Get all RenderDataIDs (regardless of associated data types)
+		[[nodiscard]] std::vector<gr::RenderDataID> const& GetRegisteredRenderDataIDs() const; 
+
 		[[nodiscard]] std::vector<gr::RenderDataID> const& GetRegisteredTransformIDs() const;
 
 
@@ -77,7 +92,9 @@ namespace gr
 	public:
 		void SetTransformData(gr::TransformID, gr::Transform::RenderData const&);
 		
-		[[nodiscard]] gr::Transform::RenderData const& GetTransformData(gr::TransformID) const;
+		[[nodiscard]] gr::Transform::RenderData const& GetTransformDataFromTransformID(gr::TransformID) const;
+
+		// Note: This function is slower than direct access via the TransformID. If you have a TransformID, use it
 		[[nodiscard]] gr::Transform::RenderData const& GetTransformDataFromRenderDataID(gr::RenderDataID) const; // Slower than using TransformID
 		
 		[[nodiscard]] bool TransformIsDirty(gr::TransformID) const; // Was the Transform updated in the current frame?
@@ -121,7 +138,13 @@ namespace gr
 		std::vector<gr::RenderDataID> m_registeredRenderObjectIDs;
 		std::vector<gr::TransformID> m_registeredTransformIDs;
 
-		std::vector<std::vector<gr::RenderDataID>> m_perTypeRegisteredRenderObjectIDs;
+		std::vector<std::vector<gr::RenderDataID>> m_perTypeRegisteredRenderDataIDs;
+
+		// New IDs/IDs with new types of data added in the current frame
+		std::vector<std::vector<gr::RenderDataID>> m_perFramePerTypeNewDataIDs;
+		
+		// IDs/IDs with data deleted in the current frame
+		std::vector<std::vector<gr::RenderDataID>> m_perFramePerTypeDeletedDataIDs;
 
 
 	public:
@@ -182,7 +205,7 @@ namespace gr
 
 			gr::RenderDataID GetRenderDataID() const;
 
-			[[nodiscard]] gr::Transform::RenderData const& GetTransformData() const;
+			[[nodiscard]] gr::Transform::RenderData const& GetTransformDataFromTransformID() const;
 			[[nodiscard]] bool TransformIsDirty() const;
 
 			[[nodiscard]] gr::FeatureBitmask GetFeatureBits() const;
@@ -231,6 +254,9 @@ namespace gr
 
 		public:
 			template<typename T>
+			[[nodiscard]] bool HasObjectData() const;
+
+			template<typename T>
 			[[nodiscard]] T const& Get() const;
 
 			template<typename T>
@@ -238,7 +264,7 @@ namespace gr
 
 			gr::RenderDataID GetRenderDataID() const;
 
-			gr::Transform::RenderData const& GetTransformData() const;
+			gr::Transform::RenderData const& GetTransformDataFromTransformID() const;
 			[[nodiscard]] bool TransformIsDirty() const;
 
 			[[nodiscard]] gr::FeatureBitmask GetFeatureBits() const;
@@ -336,9 +362,17 @@ namespace gr
 		RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 
 		// If our tracking tables don't have enough room for the data type index, increase their size
-		if (s_dataTypeIndex >= m_perTypeRegisteredRenderObjectIDs.size())
+		if (s_dataTypeIndex >= m_perTypeRegisteredRenderDataIDs.size())
 		{
-			m_perTypeRegisteredRenderObjectIDs.emplace_back();
+			m_perTypeRegisteredRenderDataIDs.resize(s_dataTypeIndex + 1);
+		}
+		if (s_dataTypeIndex >= m_perFramePerTypeNewDataIDs.size())
+		{
+			m_perFramePerTypeNewDataIDs.resize(s_dataTypeIndex + 1);
+		}
+		if (s_dataTypeIndex >= m_perFramePerTypeDeletedDataIDs.size())
+		{
+			m_perFramePerTypeDeletedDataIDs.resize(s_dataTypeIndex + 1);
 		}
 
 		// Add/update the dirty frame number:
@@ -353,8 +387,11 @@ namespace gr
 			dataVector.emplace_back(*data);
 			renderObjectMetadata.m_dataTypeToDataIndexMap.emplace(s_dataTypeIndex , newDataIndex);
 
-			// Record the RenderObjectID in our per-type registration list
-			m_perTypeRegisteredRenderObjectIDs[s_dataTypeIndex].emplace_back(renderDataID);
+			// Record the RenderDataID in our per-type registration list
+			m_perTypeRegisteredRenderDataIDs[s_dataTypeIndex].emplace_back(renderDataID);
+
+			// Record the RenderDataID in the per-frame new data type tracker:
+			m_perFramePerTypeNewDataIDs[s_dataTypeIndex].emplace_back(renderDataID);
 		}
 		else
 		{
@@ -415,6 +452,56 @@ namespace gr
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
 
 		return dataTypeIndex != k_invalidDataTypeIdx;
+	}
+
+
+	template<typename T>
+	bool RenderDataManager::HasIDsWithNewData() const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
+
+		return dataTypeIndex < m_perFramePerTypeNewDataIDs.size() && 
+			!m_perFramePerTypeNewDataIDs[dataTypeIndex].empty();
+	}
+
+
+	template<typename T>
+	std::vector<gr::RenderDataID> const& RenderDataManager::GetIDsWithNewData() const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
+
+		SEAssert("Data type index is OOB", dataTypeIndex < m_perFramePerTypeNewDataIDs.size());
+
+		return m_perFramePerTypeNewDataIDs[dataTypeIndex];
+	}
+
+
+	template<typename T>
+	bool RenderDataManager::HasIDsWithDeletedData() const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
+
+		return dataTypeIndex < m_perFramePerTypeDeletedDataIDs.size() &&
+			!m_perFramePerTypeDeletedDataIDs[dataTypeIndex].empty();
+	}
+
+
+	template<typename T>
+	std::vector<gr::RenderDataID> const& RenderDataManager::GetIDsWithDeletedData() const
+	{
+		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
+
+		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
+
+		SEAssert("Data type index is OOB", dataTypeIndex < m_perFramePerTypeDeletedDataIDs.size());
+
+		return m_perFramePerTypeDeletedDataIDs[dataTypeIndex];
 	}
 
 
@@ -484,7 +571,7 @@ namespace gr
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
 		SEAssert("No RenderDataIDs are associated with this type", dataTypeIndex != k_invalidDataTypeIdx);
 
-		return m_perTypeRegisteredRenderObjectIDs[dataTypeIndex];
+		return m_perTypeRegisteredRenderDataIDs[dataTypeIndex];
 	}
 
 
@@ -507,7 +594,7 @@ namespace gr
 
 
 	template<typename T>
-	void RenderDataManager::DestroyObjectData(gr::RenderDataID objectID)
+	void RenderDataManager::DestroyObjectData(gr::RenderDataID renderDataID)
 	{
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
 
@@ -515,14 +602,20 @@ namespace gr
 		util::ScopedThreadProtector threadProjector(m_threadProtector);
 
 		SEAssert("Data index is OOB", dataTypeIndex < m_dataVectors.size());
-		SEAssert("Invalid object ID", m_IDToRenderObjectMetadata.contains(objectID));
-		RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(objectID);
+		SEAssert("Invalid object ID", m_IDToRenderObjectMetadata.contains(renderDataID));
+		RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 		
 		SEAssert("Data type index is not found in the metadata table",
 			renderObjectMetadata.m_dataTypeToDataIndexMap.contains(dataTypeIndex));
 
 		SEAssert("Data type index is OOB of our per-type registration lists", 
-			dataTypeIndex < m_perTypeRegisteredRenderObjectIDs.size());
+			dataTypeIndex < m_perTypeRegisteredRenderDataIDs.size());
+
+		// Ensure we've got a vector allocated for the given data type in our deleted data ID tracker
+		if (dataTypeIndex >= m_perFramePerTypeDeletedDataIDs.size())
+		{
+			m_perFramePerTypeDeletedDataIDs.emplace_back();
+		}
 
 		std::vector<T>& dataVector = *std::static_pointer_cast<std::vector<T>>(m_dataVectors[dataTypeIndex]).get();
 
@@ -545,12 +638,12 @@ namespace gr
 		bool foundObjectTypeToDataIndexMap = false;
 		bool foundPerTypeRegistrationIndex = false;
 		size_t perTypeIDIndexToDelete = std::numeric_limits<size_t>::max();
-		for (size_t idIndex = 0; idIndex < m_perTypeRegisteredRenderObjectIDs[dataTypeIndex].size(); idIndex++)
+		for (size_t idIndex = 0; idIndex < m_perTypeRegisteredRenderDataIDs[dataTypeIndex].size(); idIndex++)
 		{
-			gr::RenderDataID currentRenderDataID = m_perTypeRegisteredRenderObjectIDs[dataTypeIndex][idIndex];
+			gr::RenderDataID currentRenderDataID = m_perTypeRegisteredRenderDataIDs[dataTypeIndex][idIndex];
 
 			// Check: Is this the index of per-type RenderObjectID record we'll be removing?
-			if (currentRenderDataID == objectID)
+			if (currentRenderDataID == renderDataID)
 			{
 				perTypeIDIndexToDelete = idIndex;
 				foundPerTypeRegistrationIndex = true;
@@ -583,8 +676,11 @@ namespace gr
 		SEAssert("Matching object was not found. This should not be possible", foundObjectTypeToDataIndexMap && foundPerTypeRegistrationIndex);
 
 		// Remove the RenderDataID from the per-type registration list:
-		m_perTypeRegisteredRenderObjectIDs[dataTypeIndex].erase(
-			m_perTypeRegisteredRenderObjectIDs[dataTypeIndex].begin() + perTypeIDIndexToDelete);
+		m_perTypeRegisteredRenderDataIDs[dataTypeIndex].erase(
+			m_perTypeRegisteredRenderDataIDs[dataTypeIndex].begin() + perTypeIDIndexToDelete);
+
+		// Add the RenderDataID to the per-frame deleted data tracker:
+		m_perFramePerTypeDeletedDataIDs.emplace_back(renderDataID);
 
 		// Finally, remove the index in the object's data index map:
 		renderObjectMetadata.m_dataTypeToDataIndexMap.erase(dataTypeIndex);
@@ -899,9 +995,9 @@ namespace gr
 
 
 	template <typename... Ts>
-	gr::Transform::RenderData const& RenderDataManager::ObjectIterator<Ts...>::GetTransformData() const
+	gr::Transform::RenderData const& RenderDataManager::ObjectIterator<Ts...>::GetTransformDataFromTransformID() const
 	{
-		return m_renderData->GetTransformData(m_renderObjectMetadataItr->second.m_transformID);
+		return m_renderData->GetTransformDataFromTransformID(m_renderObjectMetadataItr->second.m_transformID);
 	}
 
 
@@ -967,6 +1063,18 @@ namespace gr
 
 
 	template<typename T>
+	bool RenderDataManager::IDIterator::HasObjectData() const
+	{
+		SEAssert("Invalid Get: Current m_currentObjectMetadata is past-the-end",
+			m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend());
+
+		const DataTypeIndex dataTypeIndex = m_renderData->GetDataIndexFromType<T>();
+
+		return m_currentObjectMetadata->second.m_dataTypeToDataIndexMap.contains(dataTypeIndex);
+	}
+
+
+	template<typename T>
 	inline T const& RenderDataManager::IDIterator::Get() const
 	{
 		SEAssert("Invalid Get: Current m_currentObjectMetadata is past-the-end", 
@@ -1000,11 +1108,11 @@ namespace gr
 	}
 
 
-	inline gr::Transform::RenderData const& RenderDataManager::IDIterator::GetTransformData() const
+	inline gr::Transform::RenderData const& RenderDataManager::IDIterator::GetTransformDataFromTransformID() const
 	{
 		SEAssert("Invalid Get: Current m_currentObjectMetadata is past-the-end",
 			m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend());
-		return m_renderData->GetTransformData(m_currentObjectMetadata->second.m_transformID);
+		return m_renderData->GetTransformDataFromTransformID(m_currentObjectMetadata->second.m_transformID);
 	}
 
 

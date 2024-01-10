@@ -192,7 +192,7 @@ namespace gr
 					shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
 
 					gr::Camera::RenderData const& shadowCamData = pointItr.Get<gr::Camera::RenderData>();
-					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
+					gr::Transform::RenderData const& transformData = pointItr.GetTransformDataFromTransformID();
 
 					// Shader:
 					shadowStage->SetStageShader(
@@ -308,7 +308,7 @@ namespace gr
 				if (pointItr.IsDirty<gr::Camera::RenderData>() || pointItr.TransformIsDirty())
 				{
 					gr::Camera::RenderData const& shadowCamData = pointItr.Get<gr::Camera::RenderData>();
-					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
+					gr::Transform::RenderData const& transformData = pointItr.GetTransformDataFromTransformID();
 
 					CubemapShadowRenderParams const& cubemapShadowParams =
 						GetCubemapShadowRenderParamsData(shadowCamData, transformData);

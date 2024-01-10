@@ -40,6 +40,7 @@ namespace gr
 
 		// Not thread safe: Can only be called when other threads are not accessing the render data
 		gr::RenderDataManager& GetRenderDataForModification();
+
 		void SetActiveCamera(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID);
 
 		void ShowImGuiWindow();
