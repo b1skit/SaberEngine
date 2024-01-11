@@ -100,8 +100,11 @@ namespace dx12
 		void UpdateSubresources(re::Texture const*, ID3D12Resource* intermediate, size_t intermediateOffset);
 		void UpdateSubresources(re::VertexStream const*, ID3D12Resource* intermediate, size_t intermediateOffset);
 
-		// TODO: Implement a "resource" interface if/when we need to transition more than just Textures
+		void TransitionResource(
+			ID3D12Resource*, uint32_t totalSubresources, D3D12_RESOURCE_STATES to, uint32_t targetSubresource);
+
 		void TransitionResource(re::Texture const*, D3D12_RESOURCE_STATES to, uint32_t mipLevel);
+
 		void ResourceBarrier(uint32_t numBarriers, D3D12_RESOURCE_BARRIER const* barriers);
 
 		CommandListType GetCommandListType() const;
@@ -117,11 +120,18 @@ namespace dx12
 
 		void SetPrimitiveType(D3D_PRIMITIVE_TOPOLOGY) const;
 
-		void SetVertexBuffer(uint32_t slot, re::VertexStream const*) const;
-		void SetVertexBuffers(re::VertexStream const* const* streams, uint8_t count) const;
+		void SetVertexBuffer(uint32_t slot, re::VertexStream const*);
+		void SetVertexBuffers(re::VertexStream const* const* streams, uint8_t count);
 
 		void SetIndexBuffer(D3D12_INDEX_BUFFER_VIEW*) const;
 
+		void TransitionResourceInternal(
+			ID3D12Resource*, 
+			uint32_t totalSubresources, 
+			D3D12_RESOURCE_STATES to, 
+			uint32_t targetSubresource, 
+			uint32_t numFaces, 
+			uint32_t numMips);
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> m_commandList;

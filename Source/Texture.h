@@ -200,7 +200,7 @@ namespace re
 		std::vector<ImageDataUniquePtr> m_initialData; // [1, 6] faces
 
 		const uint32_t m_numMips;
-		const uint32_t m_numSubresources;
+		const uint32_t m_numSubresources; // no. of mips * no. of faces
 
 
 	private:

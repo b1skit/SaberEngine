@@ -273,6 +273,15 @@ namespace dx12
 
 		// This will be released once the copy is done
 		intermediateResources.emplace_back(itermediateBufferResource);
+
+		// Register the resource with the global resource state tracker:
+		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
+
+		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
+		context->GetGlobalResourceStates().RegisterResource(
+			streamPlatformParams->m_bufferResource.Get(),
+			initialState,
+			1);
 	}
 
 
@@ -302,5 +311,12 @@ namespace dx12
 
 		streamPlatformParams->m_bufferResource = nullptr;
 		streamPlatformParams->m_format = DXGI_FORMAT::DXGI_FORMAT_FORCE_UINT;
+
+		// Unregister the resource from the global resource state tracker
+		if (streamPlatformParams->m_bufferResource)
+		{
+			re::Context::GetAs<dx12::Context*>()->GetGlobalResourceStates().UnregisterResource(
+				streamPlatformParams->m_bufferResource.Get());
+		}
 	}
 }

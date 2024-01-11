@@ -22,7 +22,7 @@
 
 using Microsoft::WRL::ComPtr;
 
-//#define DEBUG_RESOURCE_TRANSITIONS
+#define DEBUG_RESOURCE_TRANSITIONS
 
 
 namespace
@@ -52,19 +52,19 @@ namespace
 
 
 	void DebugResourceTransitions(
-		dx12::CommandList const& cmdList, 
-		re::Texture const* texture,
+		dx12::CommandList const& cmdList,
+		char const* resourceName,
 		D3D12_RESOURCE_STATES fromState,
-		D3D12_RESOURCE_STATES toState, 
+		D3D12_RESOURCE_STATES toState,
 		uint32_t subresourceIdx,
 		bool isPending = false)
 	{
 		char const* fromStateCStr = isPending ? "PENDING" : dx12::GetResourceStateAsCStr(fromState);
 		const bool isSkipping = !isPending && (fromState == toState);
 
-		const std::string debugStr = std::format("{}: Texture \"{}\", mip {}\n{}{} -> {}", 
+		const std::string debugStr = std::format("{}: Texture \"{}\", mip {}\n{}{} -> {}",
 			dx12::GetDebugName(cmdList.GetD3DCommandList()).c_str(),
-			texture->GetName().c_str(),
+			resourceName,
 			subresourceIdx,
 			(isSkipping ? "\t\tSkip: " : "\t"),
 			(isPending ? "PENDING" : dx12::GetResourceStateAsCStr(fromState)),
@@ -76,11 +76,11 @@ namespace
 
 	void DebugResourceTransitions(
 		dx12::CommandList const& cmdList,
-		re::Texture const* texture,
+		char const* resourceName,
 		D3D12_RESOURCE_STATES toState,
 		uint32_t subresourceIdx)
 	{
-		DebugResourceTransitions(cmdList, texture, toState, toState, subresourceIdx, true);
+		DebugResourceTransitions(cmdList, resourceName, toState, toState, subresourceIdx, true);
 	}
 
 
@@ -370,8 +370,17 @@ namespace dx12
 	}
 
 
-	void CommandList::SetVertexBuffer(uint32_t slot, re::VertexStream const* stream) const
+	void CommandList::SetVertexBuffer(uint32_t slot, re::VertexStream const* stream)
 	{
+		dx12::VertexStream::PlatformParams* streamPlatParams =
+			stream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams*>();
+
+		TransitionResource(
+			streamPlatParams->m_bufferResource.Get(),
+			1,
+			D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+			0);
+
 		m_commandList->IASetVertexBuffers(
 			slot, 
 			1, 
@@ -379,7 +388,7 @@ namespace dx12
 	}
 
 
-	void CommandList::SetVertexBuffers(re::VertexStream const* const* streams, uint8_t count) const
+	void CommandList::SetVertexBuffers(re::VertexStream const* const* streams, uint8_t count)
 	{
 		SEAssert("Invalid vertex streams received", streams && count > 0);
 
@@ -408,6 +417,15 @@ namespace dx12
 
 				continue;
 			}
+
+			dx12::VertexStream::PlatformParams* streamPlatParams =
+				streams[streamIdx]->GetPlatformParams()->As<dx12::VertexStream::PlatformParams*>();
+
+			TransitionResource(
+				streamPlatParams->m_bufferResource.Get(),
+				1,
+				D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+				0);
 
 			streamViews.emplace_back(
 				streams[streamIdx]->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Vertex*>()->m_vertexBufferView);
@@ -836,8 +854,7 @@ namespace dx12
 			&subresourceData);
 		SEAssert("UpdateSubresources returned 0 bytes. This is unexpected", bufferSizeResult > 0);
 
-		// TODO: We don't currently track resource states for non-texture resources (but we should). For now, we can
-		// just rely on the implicit transition to copy destination here
+		TransitionResource(streamPlatformParams->m_bufferResource.Get(), 1, D3D12_RESOURCE_STATE_COPY_DEST, 0);
 	}
 
 
@@ -970,57 +987,59 @@ namespace dx12
 	}
 
 
-	void CommandList::TransitionResource(
-		re::Texture const* texture, D3D12_RESOURCE_STATES toState, uint32_t mipLevel)
+	void CommandList::TransitionResourceInternal(
+		ID3D12Resource* resource,
+		uint32_t totalSubresources, 
+		D3D12_RESOURCE_STATES toState, 
+		uint32_t targetSubresource, 
+		uint32_t numFaces,
+		uint32_t numMips)
 	{
-		dx12::Texture::PlatformParams const* texPlatParams =
-			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
-
-		ID3D12Resource* const resource = texPlatParams->m_textureResource.Get();
-
 		std::vector<D3D12_RESOURCE_BARRIER> barriers;
-		barriers.reserve(texture->GetTotalNumSubresources());
+		barriers.reserve(totalSubresources);
 
-		auto InsertBarrier = [this, &resource, &barriers, &toState, &texture](uint32_t subresourceIdx)
-		{
-			// If we've already seen this resource before, we can record the transition now (as we prepend any initial
-			// transitions when submitting the command list)	
-			if (m_resourceStates.HasResourceState(resource, subresourceIdx)) // Is the subresource idx (or ALL) in our known states list?
+		auto InsertBarrier = [this, &resource, &barriers, &toState](uint32_t subresourceIdx)
 			{
-				const D3D12_RESOURCE_STATES currentKnownState = m_resourceStates.GetResourceState(resource, subresourceIdx);
-
-#if defined(DEBUG_RESOURCE_TRANSITIONS)
-				DebugResourceTransitions(*this, texture, currentKnownState, toState, subresourceIdx);
-#endif
-
-				if (currentKnownState == toState)
+				// If we've already seen this resource before, we can record the transition now (as we prepend any initial
+				// transitions when submitting the command list)	
+				if (m_resourceStates.HasResourceState(resource, subresourceIdx)) // Is the subresource idx (or ALL) in our known states list?
 				{
-					return; // Before and after states must be different
-				}
+					const D3D12_RESOURCE_STATES currentKnownState = m_resourceStates.GetResourceState(resource, subresourceIdx);
 
-				barriers.emplace_back(D3D12_RESOURCE_BARRIER{
-					.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-					.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE,
-					.Transition = D3D12_RESOURCE_TRANSITION_BARRIER{
-						.pResource = resource,
-						.Subresource = subresourceIdx,
-						.StateBefore = currentKnownState,
-						.StateAfter = toState}
-					});
-			}
 #if defined(DEBUG_RESOURCE_TRANSITIONS)
-			else
-			{
-				DebugResourceTransitions(*this, texture, toState, toState, subresourceIdx, true); // PENDING
-			}
+					DebugResourceTransitions(
+						*this, dx12::GetDebugName(resource).c_str(), currentKnownState, toState, subresourceIdx);
 #endif
 
-			// Record the pending state if necessary, and new state after the transition:
-			m_resourceStates.SetResourceState(resource, toState, subresourceIdx);
-		};
+					if (currentKnownState == toState)
+					{
+						return; // Before and after states must be different
+					}
+
+					barriers.emplace_back(D3D12_RESOURCE_BARRIER{
+						.Type = D3D12_RESOURCE_BARRIER_TYPE::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+						.Flags = D3D12_RESOURCE_BARRIER_FLAGS::D3D12_RESOURCE_BARRIER_FLAG_NONE,
+						.Transition = D3D12_RESOURCE_TRANSITION_BARRIER{
+							.pResource = resource,
+							.Subresource = subresourceIdx,
+							.StateBefore = currentKnownState,
+							.StateAfter = toState}
+						});
+				}
+#if defined(DEBUG_RESOURCE_TRANSITIONS)
+				else
+				{
+					DebugResourceTransitions(
+						*this, dx12::GetDebugName(resource).c_str(), toState, toState, subresourceIdx, true); // PENDING
+				}
+#endif
+
+				// Record the pending state if necessary, and new state after the transition:
+				m_resourceStates.SetResourceState(resource, toState, subresourceIdx);
+			};
 
 		// Transition the appropriate subresources:
-		if (mipLevel == re::Texture::k_allMips)
+		if (targetSubresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
 		{
 			// We can only transition ALL subresources in a single barrier if the before state is the same for all
 			// subresources. If we have any pending transitions for individual subresources, this is not the case: We
@@ -1073,9 +1092,10 @@ namespace dx12
 							});
 
 						m_resourceStates.SetResourceState(resource, toState, pendingSubresourceIdx);
-
+						
 #if defined(DEBUG_RESOURCE_TRANSITIONS)
-						DebugResourceTransitions(*this, texture, fromState, toState, pendingSubresourceIdx);
+						DebugResourceTransitions(
+							*this, dx12::GetDebugName(resource).c_str(), fromState, toState, pendingSubresourceIdx);
 #endif
 					}
 				}
@@ -1089,17 +1109,16 @@ namespace dx12
 		}
 		else
 		{
-			re::Texture::TextureParams const& texParams = texture->GetTextureParams();
-			for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
+			// Transition the target mip level for each face
+			for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
 			{
 				// TODO: We should be able to batch multiple transitions into a single call
-				const uint32_t subresourceIdx = (faceIdx * texture->GetNumMips()) + mipLevel;
+				const uint32_t subresourceIdx = (faceIdx * numMips) + targetSubresource;
 
 				InsertBarrier(subresourceIdx);
 			}
 		}
 
-		
 		if (!barriers.empty()) // Might not have recored a barrier if it's the 1st time we've seen a resource
 		{
 			// Submit all of our transitions in a single batch
@@ -1107,6 +1126,28 @@ namespace dx12
 				static_cast<uint32_t>(barriers.size()),
 				barriers.data());
 		}
+	}
+
+
+	void CommandList::TransitionResource(
+		ID3D12Resource* resource, uint32_t totalSubresources, D3D12_RESOURCE_STATES toState, uint32_t targetSubresource)
+	{
+		TransitionResourceInternal(resource, totalSubresources, toState, targetSubresource, 1, 1);
+	}
+
+
+	void CommandList::TransitionResource(
+		re::Texture const* texture, D3D12_RESOURCE_STATES toState, uint32_t mipLevel)
+	{
+		dx12::Texture::PlatformParams const* texPlatParams =
+			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+
+		ID3D12Resource* const resource = texPlatParams->m_textureResource.Get();
+		
+		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
+
+		TransitionResourceInternal(
+			resource, texture->GetTotalNumSubresources(), toState, mipLevel, texParams.m_faces, texture->GetNumMips());
 	}
 
 
