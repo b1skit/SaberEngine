@@ -22,7 +22,7 @@
 
 using Microsoft::WRL::ComPtr;
 
-#define DEBUG_RESOURCE_TRANSITIONS
+//#define DEBUG_RESOURCE_TRANSITIONS
 
 
 namespace
