@@ -49,56 +49,60 @@ namespace re
 			++renderDataItr;
 		}
 
-		// Sort the batches:
-		std::sort(
-			unmergedBatches.begin(),
-			unmergedBatches.end(),
-			[](BatchSortMetadata const& a, BatchSortMetadata const& b) -> bool
-			{ return (a.m_batch.GetDataHash() > b.m_batch.GetDataHash()); }
-		);
 
-		
-		mergedBatches.reserve(unmergedBatches.size());
-		size_t unmergedIdx = 0;
-		do
+		if (!unmergedBatches.empty())
 		{
-			// Add the first batch in the sequence to our final list:
-			mergedBatches.emplace_back(std::move(unmergedBatches[unmergedIdx].m_batch));
+			// Sort the batches:
+			std::sort(
+				unmergedBatches.begin(),
+				unmergedBatches.end(),
+				[](BatchSortMetadata const& a, BatchSortMetadata const& b) -> bool
+				{ return (a.m_batch.GetDataHash() > b.m_batch.GetDataHash()); }
+			);
 
-			const uint64_t curBatchHash = mergedBatches.back().GetDataHash();
 
-			// Find the index of the last batch with a matching hash in the sequence:
-			const size_t instanceStartIdx = unmergedIdx++;
-			while (unmergedIdx < unmergedBatches.size() &&
-				unmergedBatches[unmergedIdx].m_batch.GetDataHash() == curBatchHash)
+			mergedBatches.reserve(unmergedBatches.size());
+			size_t unmergedIdx = 0;
+			do
 			{
-				unmergedIdx++;
-			}
+				// Add the first batch in the sequence to our final list:
+				mergedBatches.emplace_back(std::move(unmergedBatches[unmergedIdx].m_batch));
 
-			// Compute and set the number of instances in the batch:
-			const uint32_t numInstances = util::CheckedCast<uint32_t, size_t>(unmergedIdx - instanceStartIdx);
+				const uint64_t curBatchHash = mergedBatches.back().GetDataHash();
 
-			mergedBatches.back().SetInstanceCount(numInstances);
+				// Find the index of the last batch with a matching hash in the sequence:
+				const size_t instanceStartIdx = unmergedIdx++;
+				while (unmergedIdx < unmergedBatches.size() &&
+					unmergedBatches[unmergedIdx].m_batch.GetDataHash() == curBatchHash)
+				{
+					unmergedIdx++;
+				}
 
-			// Build/attach instanced PBs:
-			std::vector<gr::Transform::RenderData const*> instanceTransformRenderData;
-			instanceTransformRenderData.reserve(numInstances);
+				// Compute and set the number of instances in the batch:
+				const uint32_t numInstances = util::CheckedCast<uint32_t, size_t>(unmergedIdx - instanceStartIdx);
 
-			for (size_t instanceOffset = 0; instanceOffset < numInstances; instanceOffset++)
-			{
-				const size_t unmergedSrcIdx = instanceStartIdx + instanceOffset;
-				const size_t transformDataIdx = unmergedBatches[unmergedSrcIdx].m_transformDataIdx;
+				mergedBatches.back().SetInstanceCount(numInstances);
 
-				gr::Transform::RenderData const* instanceTransformData = transformRenderData[transformDataIdx];
+				// Build/attach instanced PBs:
+				std::vector<gr::Transform::RenderData const*> instanceTransformRenderData;
+				instanceTransformRenderData.reserve(numInstances);
 
-				// Add the Transform to our list
-				instanceTransformRenderData.emplace_back(instanceTransformData);
-			}
-			mergedBatches.back().SetParameterBlock(gr::Transform::CreateInstancedTransformParams(instanceTransformRenderData));
+				for (size_t instanceOffset = 0; instanceOffset < numInstances; instanceOffset++)
+				{
+					const size_t unmergedSrcIdx = instanceStartIdx + instanceOffset;
+					const size_t transformDataIdx = unmergedBatches[unmergedSrcIdx].m_transformDataIdx;
 
-		} while (unmergedIdx < unmergedBatches.size());
+					gr::Transform::RenderData const* instanceTransformData = transformRenderData[transformDataIdx];
 
-		SEEndCPUEvent();
+					// Add the Transform to our list
+					instanceTransformRenderData.emplace_back(instanceTransformData);
+				}
+				mergedBatches.back().SetParameterBlock(gr::Transform::CreateInstancedTransformParams(instanceTransformRenderData));
+
+			} while (unmergedIdx < unmergedBatches.size());
+
+			SEEndCPUEvent();
+		}
 
 		return mergedBatches;
 	}
