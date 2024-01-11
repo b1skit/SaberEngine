@@ -53,7 +53,7 @@ namespace
 
 	void DebugResourceTransitions(
 		dx12::CommandList const& cmdList, 
-		std::shared_ptr<re::Texture const> texture, 
+		re::Texture const* texture,
 		D3D12_RESOURCE_STATES fromState,
 		D3D12_RESOURCE_STATES toState, 
 		uint32_t subresourceIdx,
@@ -76,7 +76,7 @@ namespace
 
 	void DebugResourceTransitions(
 		dx12::CommandList const& cmdList,
-		std::shared_ptr<re::Texture const> texture,
+		re::Texture const* texture,
 		D3D12_RESOURCE_STATES toState,
 		uint32_t subresourceIdx)
 	{
@@ -754,6 +754,90 @@ namespace dx12
 
 		const uint32_t numScissorRects = 1; // 1 per viewport, in an array of viewports
 		m_commandList->RSSetScissorRects(numScissorRects, &targetSetParams->m_scissorRect);
+	}
+
+
+	void CommandList::UpdateSubresources(
+		re::Texture const* texture, ID3D12Resource* intermediate, size_t intermediateOffset)
+	{
+		SEAssert("Expected a copy command list", m_type == dx12::CommandListType::Copy);
+
+		dx12::Texture::PlatformParams const* texPlatParams = 
+			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
+
+		re::Texture::TextureParams const& texParams = texture->GetTextureParams();
+
+		const uint8_t bytesPerTexel = re::Texture::GetNumBytesPerTexel(texParams.m_format);
+		const uint32_t numBytesPerFace = static_cast<uint32_t>(texture->GetTotalBytesPerFace());
+
+		// Populate our subresource data
+		// Note: We currently assume we only have data for the first mip of each face
+		std::vector<D3D12_SUBRESOURCE_DATA> subresourceData;
+		subresourceData.reserve(texParams.m_faces);
+
+		for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
+		{
+			void const* initialData = texture->GetTexelData(faceIdx);
+			SEAssert("Initial data cannot be null", initialData);
+
+			subresourceData.emplace_back(D3D12_SUBRESOURCE_DATA{
+				.pData = initialData,
+
+				// https://github.com/microsoft/DirectXTex/wiki/ComputePitch
+				// Row pitch: The number of bytes in a scanline of pixels: bytes-per-pixel * width-of-image
+				// - Can be larger than the number of valid pixels due to alignment padding
+				.RowPitch = bytesPerTexel * texParams.m_width,
+
+				// Slice pitch: The number of bytes in each depth slice
+				// - 1D/2D images: The total size of the image, including alignment padding
+				.SlicePitch = numBytesPerFace
+				});
+		}
+
+		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/updatesubresources2
+		const uint64_t bufferSizeResult = ::UpdateSubresources(
+			m_commandList.Get(),							// Command list
+			texPlatParams->m_textureResource.Get(),			// Destination resource
+			intermediate,									// Intermediate resource
+			0,												// Byte offset to the intermediate resource
+			0,												// Index of 1st subresource in the resource
+			static_cast<uint32_t>(subresourceData.size()),	// Number of subresources in the subresources array
+			subresourceData.data());						// Array of subresource data structs
+		SEAssert("UpdateSubresources returned 0 bytes. This is unexpected", bufferSizeResult > 0);
+
+		// Transition to the copy destination state:
+		TransitionResource(texture, D3D12_RESOURCE_STATE_COPY_DEST, re::Texture::k_allMips);
+	}
+
+
+	void CommandList::UpdateSubresources(
+		re::VertexStream const* stream, ID3D12Resource* intermediate, size_t intermediateOffset)
+	{
+		SEAssert("Expected a copy command list", m_type == dx12::CommandListType::Copy);
+
+		dx12::VertexStream::PlatformParams const* streamPlatformParams =
+			stream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams const*>();
+
+		const size_t bufferSize = stream->GetTotalDataByteSize();
+
+		// Populate the subresource:
+		D3D12_SUBRESOURCE_DATA subresourceData = {};
+		subresourceData.pData = stream->GetData();
+		subresourceData.RowPitch = bufferSize;
+		subresourceData.SlicePitch = subresourceData.RowPitch;
+
+		const uint64_t bufferSizeResult = ::UpdateSubresources(
+			m_commandList.Get(),
+			streamPlatformParams->m_bufferResource.Get(),	// Destination resource
+			intermediate,									// Intermediate resource
+			0,												// Index of 1st subresource in the resource
+			0,												// Number of subresources in the resource.
+			1,												// Required byte size for the update
+			&subresourceData);
+		SEAssert("UpdateSubresources returned 0 bytes. This is unexpected", bufferSizeResult > 0);
+
+		// TODO: We don't currently track resource states for non-texture resources (but we should). For now, we can
+		// just rely on the implicit transition to copy destination here
 	}
 
 

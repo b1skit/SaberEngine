@@ -188,14 +188,13 @@ namespace dx12
 		{
 			// TODO: Get multiple command lists, and record on multiple threads:
 			std::shared_ptr<dx12::CommandList> copyCommandList = copyQueue->GetCreateCommandList();
-			ID3D12GraphicsCommandList2* copyCommandListD3D = copyCommandList->GetD3DCommandList();
 
 			// Vertex streams:
 			if (renderManager.m_newVertexStreams.HasReadData())
 			{
 				for (auto& newVertexStream : renderManager.m_newVertexStreams.GetReadData())
 				{
-					dx12::VertexStream::Create(*newVertexStream, copyCommandListD3D, intermediateResources);
+					dx12::VertexStream::Create(*newVertexStream, copyCommandList.get(), intermediateResources);
 				}
 			}
 
@@ -204,7 +203,7 @@ namespace dx12
 			{
 				for (auto& texture : renderManager.m_newTextures.GetReadData())
 				{
-					dx12::Texture::Create(*texture, copyCommandListD3D, intermediateResources);
+					dx12::Texture::Create(*texture, copyCommandList.get(), intermediateResources);
 				}
 			}
 

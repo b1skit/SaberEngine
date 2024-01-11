@@ -97,6 +97,9 @@ namespace dx12
 
 		void Dispatch(glm::uvec3 const& numThreads);
 
+		void UpdateSubresources(re::Texture const*, ID3D12Resource* intermediate, size_t intermediateOffset);
+		void UpdateSubresources(re::VertexStream const*, ID3D12Resource* intermediate, size_t intermediateOffset);
+
 		// TODO: Implement a "resource" interface if/when we need to transition more than just Textures
 		void TransitionResource(re::Texture const*, D3D12_RESOURCE_STATES to, uint32_t mipLevel);
 		void ResourceBarrier(uint32_t numBarriers, D3D12_RESOURCE_BARRIER const* barriers);

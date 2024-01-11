@@ -11,6 +11,9 @@
 
 namespace dx12
 {
+	class CommandList;
+
+
 	class VertexStream
 	{
 	public:
@@ -52,7 +55,7 @@ namespace dx12
 		// DX12-specific functionality
 		static void Create(
 			re::VertexStream const&, 
-			Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2>, 
+			dx12::CommandList* copyCmdList,
 			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>&);
 	};
 

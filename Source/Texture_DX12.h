@@ -9,6 +9,9 @@
 
 namespace dx12
 {
+	class CommandList;
+
+
 	class Texture
 	{
 	public:
@@ -29,7 +32,7 @@ namespace dx12
 	public:
 		// DX12-specific functionality:
 		static void Create(re::Texture&, 
-			ID3D12GraphicsCommandList2*,
+			dx12::CommandList* copyCmdList,
 			std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources);
 		
 		static std::shared_ptr<re::Texture> CreateFromExistingResource(

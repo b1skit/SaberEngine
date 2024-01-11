@@ -1,6 +1,7 @@
 // © 2022 Adam Badke. All rights reserved.
 #include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
+#include "CommandList_DX12.h"
 #include "Config.h"
 #include "Context_DX12.h"
 #include "Assert.h"
@@ -778,7 +779,7 @@ namespace dx12
 
 	void Texture::Create(
 		re::Texture& texture,
-		ID3D12GraphicsCommandList2* copyCommandList, 
+		dx12::CommandList* copyCmdList,
 		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources)
 	{
 		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
@@ -895,40 +896,8 @@ namespace dx12
 			const std::wstring intermediateName = texture.GetWName() + L" intermediate buffer";
 			itermediateBufferResource->SetName(intermediateName.c_str());
 
-
-			// Populate our subresource data
-			// Note: We currently assume we only have data for the first mip of each face
-			std::vector<D3D12_SUBRESOURCE_DATA> subresourceData;
-			subresourceData.reserve(texParams.m_faces);
-
-			for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
-			{
-				void const* initialData = texture.GetTexelData(faceIdx);
-				SEAssert("Initial data cannot be null", initialData);
-
-				subresourceData.emplace_back(D3D12_SUBRESOURCE_DATA{
-					.pData = initialData,
-
-					// https://github.com/microsoft/DirectXTex/wiki/ComputePitch
-					// Row pitch: The number of bytes in a scanline of pixels: bytes-per-pixel * width-of-image
-					// - Can be larger than the number of valid pixels due to alignment padding
-					.RowPitch = bytesPerTexel * texParams.m_width,
-
-					// Slice pitch: The number of bytes in each depth slice
-					// - 1D/2D images: The total size of the image, including alignment padding
-					.SlicePitch = numBytesPerFace
-				});
-			}
-
-			const uint64_t bufferSizeResult = ::UpdateSubresources(
-				copyCommandList,						// Command list
-				texPlatParams->m_textureResource.Get(),	// Destination resource
-				itermediateBufferResource.Get(),		// Intermediate resource
-				0,										// Byte offset to the intermediate resource
-				0,										// Index of 1st subresource in the resource
-				static_cast<uint32_t>(subresourceData.size()),	// Number of subresources in the subresources array
-				subresourceData.data());						// Array of subresource data structs
-			SEAssert("UpdateSubresources returned 0 bytes. This is unexpected", bufferSizeResult > 0);
+			// Record the copy:
+			copyCmdList->UpdateSubresources(&texture, itermediateBufferResource.Get(), 0);
 
 			// Released once the copy is done
 			intermediateResources.emplace_back(itermediateBufferResource);
