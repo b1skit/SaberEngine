@@ -12,44 +12,10 @@ Saber Engine is a multi-API, multi-threaded, real-time rendering R&D framework, 
 Details:
 --------
 - Currently supported graphics APIs:
-	- OpenGL 4.6
-	- DirectX 12
+	- DirectX 12  
+	- OpenGL 4.6  
 - C++ 20
 - Renders GLTF 2.0 scenes/assets
-
-
---------------
-Initial Setup:
---------------
-* SaberEngine uses the EnTT library, which is distributed by the vcpkg and must be installed manually when the SaberEngine .git repository is cloned.  		
-  * To install EnTT, navigate to the `..\SaberEngine\Source\Dependencies\` directory, and run the following commands (as per https://github.com/skypjack/entt#packaging-tools):  
-```  
-git clone https://github.com/Microsoft/vcpkg.git  
-cd vcpkg  
-./bootstrap-vcpkg.sh  
-./vcpkg integrate install  
-vcpkg install entt  
-```  
-
-
-* User-Specific Visual Studio Setup:
-  * Project -> Properties -> Configuration Properties -> Debugging -> Working Directory" -> "$(SolutionDir)SaberEngine  
-
-
-------------------
-PIX Configuration:
-------------------
-Microsoft PIX requires the `[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Appx]` key to exist in the local Windows registry. This can be enabled by executing the following command from a command prompt launched with administrator priviledges:  
-```reg add HKLM\SOFTWARE\Policies\Microsoft\Windows\Appx```  
-
-
-----------------
-DX12 Shader PDBs
-----------------
-Shader PDBs are generated when SaberEngine's Debug build configuration is compiled. PDBs are output to .\Build\x64\Debug\  
-
-* __PIX configuration__: Set the shader PDB path in the "Settings -> Symbol / PDB Options" menu  
-* __RenderDoc configuration__: Set the shader PDB path in the "Tools -> Settings -> Core Shader debug search path" menu  
 
 
 -----------------------
@@ -126,6 +92,39 @@ Shaders:
 For simplicity, naming patterns are used to associate Shaders.  
 - OpenGL: Shaders sharing common names (with .vert/.geom/.frag suffixes) will be concatenated and compiled at runtime  
 - DX12: Compiled Shader Objects (.cso) sharing a common name prefix are differentiated by a `<ShaderName>_<?>Shader.hlsl` suffix (e.g. Some_VShader.hlsl, Some_GShader.hlsl, Some_PShader.hlsl), and associated at runtime  
+
+
+------------------
+PIX Configuration:
+------------------
+Microsoft PIX requires the `[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Appx]` key to exist in the local Windows registry. This can be enabled by executing the following command from a command prompt launched with administrator priviledges:  
+```reg add HKLM\SOFTWARE\Policies\Microsoft\Windows\Appx```  
+
+
+----------------
+DX12 Shader PDBs
+----------------
+Shader PDBs are generated when SaberEngine's Debug build configuration is compiled. PDBs are output to .\Build\x64\Debug\  
+
+* __PIX configuration__: Set the shader PDB path in the "Settings -> Symbol / PDB Options" menu  
+* __RenderDoc configuration__: Set the shader PDB path in the "Tools -> Settings -> Core Shader debug search path" menu  
+
+
+--------------
+Initial Setup:
+--------------
+* SaberEngine uses the EnTT library, which is distributed by the vcpkg and must be installed manually when the SaberEngine .git repository is cloned.  		
+  * To install EnTT, navigate to the `..\SaberEngine\Source\Dependencies\` directory, and run the following commands (as per https://github.com/skypjack/entt#packaging-tools):  
+```  
+git clone https://github.com/Microsoft/vcpkg.git  
+cd vcpkg  
+./bootstrap-vcpkg.sh  
+./vcpkg integrate install  
+vcpkg install entt  
+```  
+
+* User-Specific Visual Studio Setup:
+  * Project -> Properties -> Configuration Properties -> Debugging -> Working Directory" -> "$(SolutionDir)SaberEngine  
 
 
 -------------
