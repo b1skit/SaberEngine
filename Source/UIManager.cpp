@@ -88,6 +88,11 @@ namespace fr
 		static bool s_showRenderDataDebug = false;
 		static bool s_showImguiDemo = false;
 
+//#define FORCE_SHOW_IMGUI_DEMO
+#if defined(_DEBUG) || defined(FORCE_SHOW_IMGUI_DEMO)
+#define SHOW_IMGUI_DEMO_WINDOW
+#endif
+
 		// Early out if we can
 		if (!m_imguiMenuVisible && 
 			!s_showConsoleLog && 
@@ -159,7 +164,7 @@ namespace fr
 						}
 						
 
-#if defined(_DEBUG) // ImGui demo window
+#if defined(SHOW_IMGUI_DEMO_WINDOW)
 						ImGui::Separator();
 						ImGui::MenuItem("Show ImGui demo", "", &s_showImguiDemo);
 #endif
@@ -236,7 +241,7 @@ namespace fr
 		}
 
 		// Show the ImGui demo window for debugging reference
-#if defined(_DEBUG)
+#if defined(SHOW_IMGUI_DEMO_WINDOW)
 		auto ShowImGuiDemo = [&]()
 			{
 				ImGui::SetNextWindowPos(
