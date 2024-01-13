@@ -573,11 +573,15 @@ namespace dx12
 
 			// Find the index of the last command list of the same type:
 			size_t endIdx = startIdx + 1;
+
+//#define SUBMIT_COMMANDLISTS_IN_SERIAL
+#if !defined(SUBMIT_COMMANDLISTS_IN_SERIAL)
 			while (endIdx < commandLists.size() &&
 				commandLists[endIdx]->GetCommandListType() == cmdListType)
 			{
 				endIdx++;
 			}
+#endif
 
 			SEBeginCPUEvent(std::format("Submit command lists {}-{}", startIdx, endIdx).c_str());
 
