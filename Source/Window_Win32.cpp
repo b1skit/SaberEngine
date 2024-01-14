@@ -86,9 +86,11 @@ namespace win32
 		int screenWidth = ::GetSystemMetrics(SM_CXSCREEN);
 		int screenHeight = ::GetSystemMetrics(SM_CYSCREEN);
 
+		constexpr uint32_t k_windowStyle = WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX & ~WS_THICKFRAME;
+
 		// Calculate the coordinates of the top-left/bottom-right corners of the desired client area:
 		RECT windowRect = { 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) };
-		::AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
+		::AdjustWindowRect(&windowRect, k_windowStyle, FALSE);
 		// WS_OVERLAPPEDWINDOW: Can be min/maximized, has a thick window frame
 
 		// Compute the width/height of the window we're creating:
@@ -108,7 +110,7 @@ namespace win32
 			NULL, // Extended window styles: https://learn.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
 			windowClass.lpszClassName, // Unique window class name
 			titleWideStr.c_str(), // Window/titlebar name
-			WS_OVERLAPPEDWINDOW, // Window styles: https://learn.microsoft.com/en-us/windows/win32/winmsg/window-styles
+			k_windowStyle, // Window styles: https://learn.microsoft.com/en-us/windows/win32/winmsg/window-styles
 			windowX, // Initial horizontal position
 			windowY, // Initial vertical position
 			windowWidth, // Window width
