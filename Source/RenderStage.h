@@ -1,20 +1,17 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
 #include "Batch.h"
-#include "Camera.h"
-#include "Context_Platform.h"
 #include "NamedObject.h"
-#include "ParameterBlock.h"
-#include "Shader.h"
-#include "Shader_Platform.h"
-#include "Texture.h"
 #include "TextureTarget.h"
 
 
 namespace re
 {
 	class ComputeStage;
+	class ParameterBlock;
+	class Shader;
+	class Texture;
+
 
 	class RenderStage : public virtual en::NamedObject
 	{

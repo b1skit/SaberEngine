@@ -7,6 +7,7 @@
 #include "RenderManager.h"
 #include "Sampler.h"
 #include "SceneManager.h"
+#include "Shader.h"
 #include "Texture.h"
 #include "TextureTarget.h"
 

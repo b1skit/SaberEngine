@@ -1,5 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
+#include "Camera.h"
 #include "GraphicsSystem.h"
 
 

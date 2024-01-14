@@ -12,6 +12,7 @@
 #include "ShadowMapRenderData.h"
 #include "RenderManager.h"
 #include "RenderStage.h"
+#include "Shader.h"
 
 
 namespace

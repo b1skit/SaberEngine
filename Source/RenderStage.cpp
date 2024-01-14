@@ -1,10 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Batch.h"
 #include "MeshPrimitive.h"
+#include "ParameterBlock.h"
 #include "PipelineState.h"
 #include "ProfilingMarkers.h"
 #include "RenderStage.h"
+#include "Shader.h"
+#include "Texture.h"
 
 
 namespace

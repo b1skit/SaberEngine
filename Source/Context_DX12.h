@@ -1,17 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
-#include <wrl.h>
-#include <d3d12.h>
-#include <dxgi1_6.h>
-
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "CommandQueue_DX12.h"
 #include "Context.h"
 #include "Device_DX12.h"
-#include "PipelineState_DX12.h"
-#include "RenderManager_DX12.h"
 #include "ResourceStateTracker_DX12.h"
+
+#include <wrl.h>
+#include <d3d12.h>
 
 
 namespace dx12

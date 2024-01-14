@@ -6,6 +6,7 @@
 #include "ImGuiUtils.h"
 #include "LightRenderData.h"
 #include "SceneManager.h"
+#include "Shader.h"
 
 
 namespace

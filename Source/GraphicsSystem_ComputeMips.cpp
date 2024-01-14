@@ -4,6 +4,7 @@
 #include "MathUtils.h"
 #include "RenderManager.h"
 #include "Sampler.h"
+#include "Shader.h"
 
 
 namespace

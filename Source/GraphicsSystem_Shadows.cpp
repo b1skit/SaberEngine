@@ -4,6 +4,7 @@
 #include "GraphicsSystem_Shadows.h"
 #include "LightRenderData.h"
 #include "RenderManager.h"
+#include "Shader.h"
 #include "ShadowMapRenderData.h"
 
 

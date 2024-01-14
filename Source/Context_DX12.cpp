@@ -1,23 +1,20 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "backends/imgui_impl_win32.h"
-#include "backends/imgui_impl_dx12.h"
-
-#include <pix3.h>
-
-#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
-
+#include "Assert.h"
 #include "Config.h"
 #include "Context_DX12.h"
 #include "CoreEngine.h"
 #include "Debug_DX12.h"
-#include "Assert.h"
-#include "Fence_DX12.h"
-#include "HashUtils.h"
 #include "RenderManager_DX12.h"
+#include "Shader.h"
 #include "SwapChain_DX12.h"
 #include "TextureTarget_DX12.h"
 #include "Texture_DX12.h"
 #include "Window_Win32.h"
+
+#include "backends/imgui_impl_win32.h"
+#include "backends/imgui_impl_dx12.h"
+
+#include <pix3.h>
 
 using Microsoft::WRL::ComPtr;
 
