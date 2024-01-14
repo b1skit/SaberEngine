@@ -28,7 +28,7 @@ namespace fr
 		fr::TransformComponent& controllerTransform = em.GetComponent<fr::TransformComponent>(sceneNode);
 		fr::TransformComponent& camTransform = em.GetComponent<fr::TransformComponent>(cameraConcept);
 
-		// Parent the camera to the player object:
+		// Attach the camera to the camera controller:
 		SetCamera(controllerTransform, nullptr, camTransform);
 		
 		return sceneNode;
@@ -51,7 +51,7 @@ namespace fr
 		fr::Transform& controllerTransform = controllerTransformCmpt.GetTransform();
 		fr::Transform& newCamTransform = newCamTransformCmpt.GetTransform();
 
-		// The PlayerObject and Camera must be located at the same point. To avoid stomping imported Camera locations,
+		// The controller and Camera must be located at the same point. To avoid stomping imported Camera locations,
 		// we move the camera controller to the camera. Then, we re-parent the Camera's Transform, to maintain its
 		// global orientation but update its local orientation under the camera controller's Transform
 		controllerTransform.SetGlobalPosition(newCamTransform.GetGlobalPosition());
@@ -61,20 +61,20 @@ namespace fr
 
 	void CameraControlComponent::Update(
 		CameraControlComponent& camController, 
-		fr::Transform& playerTransform,
+		fr::Transform& controllerTransform,
 		fr::Camera const& camera,
 		fr::Transform& cameraTransform,
 		double stepTimeMs)
 	{
-		SEAssert("Camera transform must be parented to the player transform", 
-			cameraTransform.GetParent() == &playerTransform);
+		SEAssert("Camera transform must be parented to the camera controller's transform", 
+			cameraTransform.GetParent() == &controllerTransform);
 
 		// Reset the cam back to the saved position
 		if (en::InputManager::GetMouseInputState(en::InputMouse_Left))
 		{
-			playerTransform.SetLocalPosition(camController.m_savedPosition);
+			controllerTransform.SetLocalPosition(camController.m_savedPosition);
 			cameraTransform.SetLocalRotation(glm::vec3(camController.m_savedEulerRotation.x, 0.f, 0.f));
-			playerTransform.SetLocalRotation(glm::vec3(0.f, camController.m_savedEulerRotation.y, 0.f));
+			controllerTransform.SetLocalRotation(glm::vec3(0.f, camController.m_savedEulerRotation.y, 0.f));
 
 			return;
 		}
@@ -103,7 +103,7 @@ namespace fr
 		// Apply the first person view orientation: (pitch + yaw)
 		const glm::vec3 yaw(0.0f, xRotationRadians, 0.0f);
 		const glm::vec3 pitch(yRotationRadians, 0.0f, 0.0f);
-		playerTransform.RotateLocal(yaw);
+		controllerTransform.RotateLocal(yaw);
 		cameraTransform.RotateLocal(pitch);
 
 		// Handle direction:
@@ -127,11 +127,11 @@ namespace fr
 		}
 		if (en::InputManager::GetKeyboardInputState(en::InputButton_Up))
 		{
-			direction += playerTransform.GetGlobalUp(); // PlayerCam is tilted; use the parent transform instead
+			direction += controllerTransform.GetGlobalUp(); // Cam is tilted; use the parent transform instead
 		}
 		if (en::InputManager::GetKeyboardInputState(en::InputButton_Down))
 		{
-			direction -= playerTransform.GetGlobalUp(); // PlayerCam is tilted; use the parent transform instead
+			direction -= controllerTransform.GetGlobalUp(); // Cam is tilted; use the parent transform instead
 		}
 
 		if (glm::length(direction) > 0.f) // Check the length since opposite inputs can zero out the direction
@@ -148,16 +148,16 @@ namespace fr
 			// delta displacement = velocity * delta time
 			direction *= camController.m_movementSpeed * sprintModifier * static_cast<float>(stepTimeMs);
 
-			playerTransform.TranslateLocal(direction);
+			controllerTransform.TranslateLocal(direction);
 		}
 
 		// Save the current position/rotation:
 		if (en::InputManager::GetMouseInputState(en::InputMouse_Right))
 		{
-			camController.m_savedPosition = playerTransform.GetGlobalPosition();
+			camController.m_savedPosition = controllerTransform.GetGlobalPosition();
 			camController.m_savedEulerRotation = glm::vec3(
 				cameraTransform.GetLocalEulerXYZRotationRadians().x,
-				playerTransform.GetGlobalEulerXYZRotationRadians().y,
+				controllerTransform.GetGlobalEulerXYZRotationRadians().y,
 				0);
 		}
 	}
