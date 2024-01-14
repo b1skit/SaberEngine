@@ -109,6 +109,8 @@ namespace dx12
 	public:
 		GlobalResourceStateTracker();
 		~GlobalResourceStateTracker() = default;
+		GlobalResourceStateTracker(GlobalResourceStateTracker&&) = default;
+		GlobalResourceStateTracker& operator=(GlobalResourceStateTracker&&) = default;
 
 		// Registration/deregistration: No external locking/unlocking required
 		void RegisterResource(ID3D12Resource*, D3D12_RESOURCE_STATES initialState, uint32_t numSubresources);
@@ -130,9 +132,7 @@ namespace dx12
 
 	private: // No copying allowed
 		GlobalResourceStateTracker(GlobalResourceStateTracker const&) = delete;
-		GlobalResourceStateTracker(GlobalResourceStateTracker&&) = delete;
-		GlobalResourceStateTracker& operator=(GlobalResourceStateTracker const&) = delete;
-		GlobalResourceStateTracker& operator=(GlobalResourceStateTracker&&) = delete;
+		GlobalResourceStateTracker& operator=(GlobalResourceStateTracker const&) = delete;		
 	};
 
 
@@ -147,6 +147,8 @@ namespace dx12
 	public:
 		LocalResourceStateTracker() = default;
 		~LocalResourceStateTracker() = default;
+		LocalResourceStateTracker(LocalResourceStateTracker&&) = default;
+		LocalResourceStateTracker& operator=(LocalResourceStateTracker&&) = default;
 
 		bool HasSeenSubresourceInState(ID3D12Resource*, D3D12_RESOURCE_STATES) const;
 		bool HasResourceState(ID3D12Resource*, SubresourceIdx) const;
@@ -168,9 +170,7 @@ namespace dx12
 
 	private: // No copying allowed
 		LocalResourceStateTracker(LocalResourceStateTracker const&) = delete;
-		LocalResourceStateTracker(LocalResourceStateTracker&&) = delete;		
-		LocalResourceStateTracker& operator=(LocalResourceStateTracker const&) = delete;
-		LocalResourceStateTracker& operator=(LocalResourceStateTracker&&) = delete;
+		LocalResourceStateTracker& operator=(LocalResourceStateTracker const&) = delete;		
 	};
 
 

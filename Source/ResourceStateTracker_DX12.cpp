@@ -175,7 +175,7 @@ namespace dx12
 				": " + 
 				GetResourceStateAsCStr(state.second) + "\n";
 		}
-		LOG(stateStr.c_str());
+		LOG_WARNING(stateStr.c_str());
 	}
 
 
@@ -237,14 +237,14 @@ namespace dx12
 
 	void GlobalResourceStateTracker::DebugPrintResourceStates() const
 	{
-		LOG("--------------\n"
+		LOG_WARNING("--------------\n"
 			"\tGlobal States:\n"
 			"\t(%s resources)\n"
 			"\t--------------", 
 			m_globalStates.empty() ? "<empty>" : std::to_string(m_globalStates.size()).c_str());
 		for (auto const& resource : m_globalStates)
 		{
-			LOG("Resource \"%s\", has (%d) subresource%s:", 
+			LOG_WARNING("Resource \"%s\", has (%d) subresource%s:", 
 				GetDebugName(resource.first).c_str(), 
 				resource.second.GetNumSubresources(),
 				(resource.second.GetNumSubresources() > 1 ? "s" : ""));
@@ -288,13 +288,15 @@ namespace dx12
 	{
 		// New resource/subresource state:
 		if (!m_knownStates.contains(resource))
-		{
-			const LocalResourceState afterState = LocalResourceState(stateAfter, subresourceIdx);
-			
-			auto const& emplacePendingResult = m_pendingStates.emplace(resource, afterState);
+		{		
+			auto const& emplacePendingResult = m_pendingStates.emplace(
+				resource, 
+				LocalResourceState(stateAfter, subresourceIdx));
 			SEAssert("Emplace failed. Does the object already exist?", emplacePendingResult.second == true);
 			
-			auto const& emplaceKnownResult = m_knownStates.emplace(resource, afterState);
+			auto const& emplaceKnownResult = m_knownStates.emplace(
+				resource,
+				LocalResourceState(stateAfter, subresourceIdx));
 			SEAssert("Emplace failed. Does the object already exist?", emplaceKnownResult.second == true);
 		}
 		else // Existing resource:
@@ -332,22 +334,22 @@ namespace dx12
 
 	void LocalResourceStateTracker::DebugPrintResourceStates() const
 	{
-		LOG("-----------------------\n"
+		LOG_WARNING("-----------------------\n"
 			"\tFinal known states (%s):\n"
 			"\t-----------------------",
 			m_knownStates.empty() ? "<empty>" : std::to_string(m_knownStates.size()).c_str());
 		for (auto const& resource : m_knownStates)
 		{
-			LOG("Resource \"%s\":", GetDebugName(resource.first).c_str());
+			LOG_WARNING("Resource \"%s\":", GetDebugName(resource.first).c_str());
 			resource.second.DebugPrintResourceStates();
 		}
-		LOG("------------------------\n"
+		LOG_WARNING("------------------------\n"
 			"\tPending transitions (%s):\n"
 			"\t------------------------", 
 			m_pendingStates.empty() ? "<empty>" : std::to_string(m_pendingStates.size()).c_str());
 		for (auto const& resource : m_pendingStates)
 		{
-			LOG("Resource \"%s\":", GetDebugName(resource.first).c_str());
+			LOG_WARNING("Resource \"%s\":", GetDebugName(resource.first).c_str());
 			resource.second.DebugPrintResourceStates();
 		}
 	}

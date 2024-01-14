@@ -12,7 +12,7 @@ Saber Engine is a multi-API, multi-threaded, real-time rendering R&D framework, 
 Details:
 --------
 - Currently supported graphics APIs:
-	- DirectX 12  
+	- DirectX 12 (via the Agility SDK)  
 	- OpenGL 4.6  
 - C++ 20
 - Renders GLTF 2.0 scenes/assets
@@ -196,6 +196,7 @@ NuGet Packages:
 ---------------
 The following packages are automatically included in the SaberEngine solution  
 - WinPixEventRuntime  
+- Microsoft DirectX 12 Agility SDK  
 
 
 stb (stb_image.h): https://github.com/nothings/stb/blob/master/

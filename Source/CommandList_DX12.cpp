@@ -23,34 +23,29 @@
 using Microsoft::WRL::ComPtr;
 
 //#define DEBUG_RESOURCE_TRANSITIONS
+#if defined(DEBUG_RESOURCE_TRANSITIONS)
+
+// Enable one or the other:
+//#define FILTER_CMD_LIST_BY_EXCLUSION
+#define FILTER_CMD_LIST_BY_INCLUSION
+
+#if defined(FILTER_CMD_LIST_BY_EXCLUSION)
+constexpr char const* k_excludedNameSubstrings[] = { "Vertex" }; // Case sensitive: Exclude output with these substrings
+#define FILTER_NAMES k_excludedNameSubstrings
+
+#elif defined(FILTER_CMD_LIST_BY_INCLUSION)
+constexpr char const* k_showOnlyNameSubstrings[] = { "BRDFIntegrationMap" }; // Case sensitive: Only show output with these substrings
+#define FILTER_NAMES k_showOnlyNameSubstrings
+
+#endif //FILTER_CMD_LIST_BY_EXCLUSION / FILTER_CMD_LIST_BY_INCLUSION
+
+#endif // DEBUG_RESOURCE_TRANSITIONS
+
 
 
 namespace
 {
-	using dx12::CheckHResult;
-
-
-	ComPtr<ID3D12CommandAllocator> CreateCommandAllocator(
-		ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type, std::wstring const& name)
-	{
-		SEAssert("Device cannot be null", device);
-
-		ComPtr<ID3D12CommandAllocator> commandAllocator = nullptr;
-
-		HRESULT hr = device->CreateCommandAllocator(
-			type, // Copy, compute, direct draw, etc
-			IID_PPV_ARGS(&commandAllocator)); // IID_PPV_ARGS: RIID & interface pointer
-		CheckHResult(hr, "Failed to create command allocator");
-
-		commandAllocator->SetName(name.c_str());
-
-		hr = commandAllocator->Reset();
-		CheckHResult(hr, "Failed to reset command allocator");
-
-		return commandAllocator;
-	}
-
-
+#if defined(DEBUG_RESOURCE_TRANSITIONS)
 	void DebugResourceTransitions(
 		dx12::CommandList const& cmdList,
 		char const* resourceName,
@@ -61,8 +56,24 @@ namespace
 	{
 		char const* fromStateCStr = isPending ? "PENDING" : dx12::GetResourceStateAsCStr(fromState);
 		const bool isSkipping = !isPending && (fromState == toState);
+	
+		// Cut down on log spam by filtering output containing keyword substrings
+#if defined(FILTER_CMD_LIST_BY_EXCLUSION) || defined(FILTER_CMD_LIST_BY_INCLUSION)
+		constexpr size_t k_numExcludedSubstrings = sizeof(FILTER_NAMES) / sizeof(FILTER_NAMES[0]);
+		for (size_t i = 0; i < k_numExcludedSubstrings; i++)
+		{
+#if defined(FILTER_CMD_LIST_BY_EXCLUSION)
+			if (strstr(resourceName, FILTER_NAMES[i]) != nullptr)
+#else
+			if (strstr(resourceName, FILTER_NAMES[i]) == nullptr)
+#endif
+			{
+				return;
+			}
+		}
+#endif
 
-		const std::string debugStr = std::format("{}: Texture \"{}\", mip {}\n{}{} -> {}",
+		std::string const& debugStr = std::format("{}: Texture \"{}\", mip {}\n{}{} -> {}",
 			dx12::GetDebugName(cmdList.GetD3DCommandList()).c_str(),
 			resourceName,
 			subresourceIdx,
@@ -81,6 +92,28 @@ namespace
 		uint32_t subresourceIdx)
 	{
 		DebugResourceTransitions(cmdList, resourceName, toState, toState, subresourceIdx, true);
+	}
+#endif
+
+
+	ComPtr<ID3D12CommandAllocator> CreateCommandAllocator(
+		ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type, std::wstring const& name)
+	{
+		SEAssert("Device cannot be null", device);
+
+		ComPtr<ID3D12CommandAllocator> commandAllocator = nullptr;
+
+		HRESULT hr = device->CreateCommandAllocator(
+			type, // Copy, compute, direct draw, etc
+			IID_PPV_ARGS(&commandAllocator)); // IID_PPV_ARGS: RIID & interface pointer
+		dx12::CheckHResult(hr, "Failed to create command allocator");
+
+		commandAllocator->SetName(name.c_str());
+
+		hr = commandAllocator->Reset();
+		dx12::CheckHResult(hr, "Failed to reset command allocator");
+
+		return commandAllocator;
 	}
 
 
