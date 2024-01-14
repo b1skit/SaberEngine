@@ -1,8 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
-#include "backends/imgui_impl_win32.h"
-#include "backends/imgui_impl_dx12.h"
 
 #include "Context_DX12.h"
 #include "Assert.h"
@@ -27,13 +24,12 @@
 #include "Texture_DX12.h"
 #include "VertexStream_DX12.h"
 
-using re::RenderStage;
-using re::StagePipeline;
+#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
+
+#include "backends/imgui_impl_win32.h"
+#include "backends/imgui_impl_dx12.h"
+
 using Microsoft::WRL::ComPtr;
-using glm::vec4;
-using std::make_shared;
-using std::shared_ptr;
-using std::vector;
 
 
 namespace dx12
@@ -241,7 +237,7 @@ namespace dx12
 				for (std::unique_ptr<re::RenderSystem>& renderSystem : renderManager.m_renderSystems)
 				{
 					re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
-					for (StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
+					for (re::StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
 					{
 						std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
 						for (std::shared_ptr<re::RenderStage> const renderStage : renderStages)
@@ -309,14 +305,14 @@ namespace dx12
 			}
 		};
 
-		RenderStage::Type prevRenderStageType = RenderStage::Type::Invalid;
+		re::RenderStage::Type prevRenderStageType = re::RenderStage::Type::Invalid;
 
 		// Render each RenderSystem in turn:
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
 		{
 			// Render each stage in the RenderSystem's RenderPipeline:
 			re::RenderPipeline& renderPipeline = renderSystem->GetRenderPipeline();
-			for (StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
+			for (re::StagePipeline& stagePipeline : renderPipeline.GetStagePipeline())
 			{
 				// Note: Our command lists and associated command allocators are already closed/reset
 				directCommandList = nullptr;
@@ -334,7 +330,7 @@ namespace dx12
 
 					// If the new RenderStage type is different to the previous one, we need to end recording on it
 					// to ensure the work is correctly ordered between queues:
-					const RenderStage::Type curRenderStageType = renderStage->GetStageType();
+					const re::RenderStage::Type curRenderStageType = renderStage->GetStageType();
 					if (curRenderStageType != prevRenderStageType)
 					{
 						AppendCommandLists();
@@ -436,7 +432,7 @@ namespace dx12
 						}
 
 						// Set per-frame stage textures/sampler inputs:
-						std::vector<RenderStage::RenderStageTextureAndSamplerInput> const& texInputs =
+						std::vector<re::RenderStage::RenderStageTextureAndSamplerInput> const& texInputs =
 							renderStage->GetTextureInputs();
 						const int depthTargetTexInputIdx = renderStage->GetDepthTargetTextureInputIdx();
 						for (size_t texIdx = 0; texIdx < texInputs.size(); texIdx++)
@@ -500,8 +496,9 @@ namespace dx12
 						}
 
 						// Batch parameter blocks:
-						vector<shared_ptr<re::ParameterBlock>> const& batchPBs = batches[batchIdx].GetParameterBlocks();
-						for (shared_ptr<re::ParameterBlock> batchPB : batchPBs)
+						std::vector<std::shared_ptr<re::ParameterBlock>> const& batchPBs =
+							batches[batchIdx].GetParameterBlocks();
+						for (std::shared_ptr<re::ParameterBlock> batchPB : batchPBs)
 						{
 							currentCommandList->SetParameterBlock(batchPB.get());
 						}
