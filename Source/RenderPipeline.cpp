@@ -15,7 +15,7 @@ namespace re
 	{
 		SEAssert("Cannot append a null RenderStage", renderStage != nullptr);
 		SEAssert("Incorrect stage lifetime",
-			renderStage->GetStageLifetime() == re::RenderStage::RenderStageLifetime::Permanent);
+			renderStage->GetStageLifetime() == re::RenderStage::Lifetime::Permanent);
 		
 		m_renderStages.emplace_back(renderStage);
 		return std::prev(m_renderStages.end());
@@ -28,7 +28,7 @@ namespace re
 	{
 		SEAssert("Cannot append a null RenderStage", renderStage != nullptr);
 		SEAssert("Incorrect stage lifetime",
-			renderStage->GetStageLifetime() == re::RenderStage::RenderStageLifetime::Permanent);
+			renderStage->GetStageLifetime() == re::RenderStage::Lifetime::Permanent);
 
 		// std::list::emplace inserts the element directly before the iterator, so we advance to the next 
 		const StagePipelineItr next = std::next(parentItr);
@@ -44,7 +44,7 @@ namespace re
 	{
 		SEAssert("Cannot append a null RenderStage", renderStage != nullptr);
 		SEAssert("Incorrect stage lifetime",
-			renderStage->GetStageLifetime() == re::RenderStage::RenderStageLifetime::SingleFrame);
+			renderStage->GetStageLifetime() == re::RenderStage::Lifetime::SingleFrame);
 
 		m_renderStages.emplace_back(std::move(renderStage));
 
@@ -62,7 +62,7 @@ namespace re
 	{
 		SEAssert("Cannot append a null RenderStage", renderStage != nullptr);
 		SEAssert("Incorrect stage lifetime", 
-			renderStage->GetStageLifetime() == re::RenderStage::RenderStageLifetime::SingleFrame);
+			renderStage->GetStageLifetime() == re::RenderStage::Lifetime::SingleFrame);
 		
 		// std::list::emplace inserts the element directly before the iterator, so we advance to the next 
 		const StagePipelineItr next = std::next(parentItr);

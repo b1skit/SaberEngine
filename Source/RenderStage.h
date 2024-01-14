@@ -21,13 +21,14 @@ namespace re
 	public:
 		static constexpr int k_noDepthTexAsInputFlag = -1;
 
-		enum class RenderStageLifetime
+		enum class Lifetime
 		{
 			SingleFrame,
 			Permanent
 		};
-		enum class RenderStageType
+		enum class Type
 		{
+			Parent, // Does not contribute batches
 			Graphics,
 			Compute,
 
@@ -71,6 +72,8 @@ namespace re
 
 
 	public:
+		static std::shared_ptr<RenderStage> CreateParentStage(std::string const& name);
+
 		static std::shared_ptr<RenderStage> CreateGraphicsStage(std::string const& name, GraphicsStageParams const&);
 		static std::shared_ptr<RenderStage> CreateSingleFrameGraphicsStage(std::string const& name, GraphicsStageParams const&);
 
@@ -89,8 +92,8 @@ namespace re
 
 		bool IsSkippable() const;
 
-		RenderStageType GetStageType() const;
-		RenderStageLifetime GetStageLifetime() const;
+		Type GetStageType() const;
+		Lifetime GetStageLifetime() const;
 		IStageParams const* GetStageParams() const;
 
 		// TODO: The stage shader should be a member of the GraphicsStageParams/ComputeStageParams
@@ -131,7 +134,7 @@ namespace re
 
 
 	protected:
-		explicit RenderStage(std::string const& name, std::unique_ptr<IStageParams>&&, RenderStageType, RenderStageLifetime);
+		explicit RenderStage(std::string const& name, std::unique_ptr<IStageParams>&&, Type, Lifetime);
 
 
 	private:
@@ -140,8 +143,8 @@ namespace re
 		
 
 	private:
-		const RenderStageType m_type;
-		const RenderStageLifetime m_lifetime;
+		const Type m_type;
+		const Lifetime m_lifetime;
 		std::unique_ptr<IStageParams> m_stageParams;
 
 		std::shared_ptr<re::Shader> m_stageShader;
@@ -166,13 +169,24 @@ namespace re
 	};
 
 
+	class ParentStage final : public virtual RenderStage
+	{
+	public:
+		// 
+
+	private:
+		ParentStage(std::string const& name, Lifetime);
+		friend class RenderStage;
+	};
+
+
 	class ComputeStage final : public virtual RenderStage
 	{
 	public:
 		// 
 
 	private:
-		ComputeStage(std::string const& name, std::unique_ptr<ComputeStageParams>&&, RenderStageLifetime);
+		ComputeStage(std::string const& name, std::unique_ptr<ComputeStageParams>&&, Lifetime);
 		friend class RenderStage;
 	};
 
@@ -183,18 +197,18 @@ namespace re
 		// 
 
 	private:
-		ClearStage(std::string const& name, RenderStageLifetime);
+		ClearStage(std::string const& name, Lifetime);
 		friend class RenderStage;
 	};
 
 
-	inline RenderStage::RenderStageType RenderStage::GetStageType() const
+	inline RenderStage::Type RenderStage::GetStageType() const
 	{
 		return m_type;
 	}
 
 
-	inline RenderStage::RenderStageLifetime RenderStage::GetStageLifetime() const
+	inline RenderStage::Lifetime RenderStage::GetStageLifetime() const
 	{
 		return m_lifetime;
 	}

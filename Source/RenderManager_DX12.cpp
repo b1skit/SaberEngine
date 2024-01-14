@@ -246,13 +246,18 @@ namespace dx12
 						std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
 						for (std::shared_ptr<re::RenderStage> const renderStage : renderStages)
 						{
-							// We assume either a RenderStage has a shader, or all batches rendered on a RenderStage will
-							// have their own shader. So, we must create a PSO per Shader for each RenderStage with a null
-							// Shader (as any Shader might be used there), or if the Shader is used by the RenderStage
-							if (renderStage->GetStageShader() == nullptr ||
-								renderStage->GetStageShader()->GetNameID() == shader->GetNameID())
+							if (renderStage->GetStageType() == re::RenderStage::Type::Parent ||
+								renderStage->GetStageType() == re::RenderStage::Type::Clear)
 							{
-								std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
+								continue;
+							}
+
+							// Pre-create PSOs for stage shaders, as we're guaranteed to need them (Remaining PSOs are
+							// lazily-created on demand)
+							if (renderStage->GetStageShader()->GetNameID() == shader->GetNameID())
+							{
+								std::shared_ptr<re::TextureTargetSet const> stageTargets = 
+									renderStage->GetTextureTargetSet();
 								if (!stageTargets)
 								{
 									stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain());
@@ -304,7 +309,7 @@ namespace dx12
 			}
 		};
 
-		RenderStage::RenderStageType prevRenderStageType = RenderStage::RenderStageType::Invalid;
+		RenderStage::Type prevRenderStageType = RenderStage::Type::Invalid;
 
 		// Render each RenderSystem in turn:
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
@@ -321,7 +326,7 @@ namespace dx12
 				std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
 				for (std::shared_ptr<re::RenderStage> const& renderStage : stagePipeline.GetRenderStages())
 				{
-					const RenderStage::RenderStageType curRenderStageType = renderStage->GetStageType();
+					const RenderStage::Type curRenderStageType = renderStage->GetStageType();
 
 					// Skip empty stages:
 					if (renderStage->IsSkippable())
@@ -344,8 +349,8 @@ namespace dx12
 					dx12::CommandList* currentCommandList = nullptr;
 					switch (curRenderStageType)
 					{
-					case re::RenderStage::RenderStageType::Clear:
-					case re::RenderStage::RenderStageType::Graphics:
+					case re::RenderStage::Type::Clear:
+					case re::RenderStage::Type::Graphics:
 					{
 						if (directCommandList == nullptr)
 						{
@@ -363,7 +368,7 @@ namespace dx12
 							renderStage->GetName().c_str());
 					}
 					break;
-					case re::RenderStage::RenderStageType::Compute:
+					case re::RenderStage::Type::Compute:
 					{
 						if (computeCommandList == nullptr)
 						{
@@ -390,7 +395,7 @@ namespace dx12
 					if (stageTargets == nullptr)
 					{
 						SEAssert("Only the graphics queue/command lists can render to the backbuffer",
-							curRenderStageType == re::RenderStage::RenderStageType::Graphics);
+							curRenderStageType == re::RenderStage::Type::Graphics);
 
 						stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain());
 					}
@@ -407,12 +412,12 @@ namespace dx12
 
 						switch (renderStage->GetStageType())
 						{
-						case re::RenderStage::RenderStageType::Graphics:
+						case re::RenderStage::Type::Graphics:
 						{
 							commandList->SetGraphicsRootSignature(dx12::Shader::GetRootSignature(*shader));
 						}
 						break;
-						case re::RenderStage::RenderStageType::Compute:
+						case re::RenderStage::Type::Compute:
 						{
 							commandList->SetComputeRootSignature(dx12::Shader::GetRootSignature(*shader));
 						}
@@ -462,13 +467,13 @@ namespace dx12
 					// Set targets, now that the pipeline is set
 					switch (curRenderStageType)
 					{
-					case re::RenderStage::RenderStageType::Compute:
+					case re::RenderStage::Type::Compute:
 					{
 						currentCommandList->SetComputeTargets(*stageTargets);
 					}
 					break;
-					case re::RenderStage::RenderStageType::Clear:
-					case re::RenderStage::RenderStageType::Graphics:
+					case re::RenderStage::Type::Clear:
+					case re::RenderStage::Type::Graphics:
 					{
 						const bool attachDepthAsReadOnly = renderStage->DepthTargetIsAlsoTextureInput();
 
@@ -523,12 +528,12 @@ namespace dx12
 
 						switch (curRenderStageType)
 						{
-						case re::RenderStage::RenderStageType::Graphics:
+						case re::RenderStage::Type::Graphics:
 						{
 							currentCommandList->DrawBatchGeometry(batches[batchIdx]);
 						}
 						break;
-						case re::RenderStage::RenderStageType::Compute:
+						case re::RenderStage::Type::Compute:
 						{
 							currentCommandList->Dispatch(batches[batchIdx].GetComputeParams().m_threadGroupCount);
 						}
@@ -540,13 +545,13 @@ namespace dx12
 
 					switch (curRenderStageType)
 					{
-					case re::RenderStage::RenderStageType::Clear:
-					case re::RenderStage::RenderStageType::Graphics:
+					case re::RenderStage::Type::Clear:
+					case re::RenderStage::Type::Graphics:
 					{
 						SEEndGPUEvent(directCommandList->GetD3DCommandList()); // RenderStage
 					}
 					break;
-					case re::RenderStage::RenderStageType::Compute:
+					case re::RenderStage::Type::Compute:
 					{
 						SEEndGPUEvent(computeCommandList->GetD3DCommandList()); // RenderStage
 					}

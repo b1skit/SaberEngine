@@ -194,111 +194,111 @@ namespace
 
 		for (size_t cur = 0; cur < numMaterials; cur++)
 		{
-			matFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
-				[data, cur, &scene, &sceneRootPath]() 
-					-> util::ThreadSafeVector<std::future<void>> {
-
-				util::ThreadSafeVector<std::future<void>> textureFutures;
-				textureFutures.reserve(5); // Albedo, met/rough, normal, occlusion, emissive
-
-				cgltf_material const* const material = &data->materials[cur];
-
-				const std::string matName = 
-					material == nullptr ? "MissingMaterial" : util::GenerateMaterialName(*material);
-				if (scene.MaterialExists(matName))
+			matFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob([data, cur, &scene, &sceneRootPath]() 
+					-> util::ThreadSafeVector<std::future<void>>
 				{
-					SEAssertF("We expect all materials in the incoming scene data are unique");
+
+					util::ThreadSafeVector<std::future<void>> textureFutures;
+					textureFutures.reserve(5); // Albedo, met/rough, normal, occlusion, emissive
+
+					cgltf_material const* const material = &data->materials[cur];
+
+					const std::string matName = 
+						material == nullptr ? "MissingMaterial" : util::GenerateMaterialName(*material);
+					if (scene.MaterialExists(matName))
+					{
+						SEAssertF("We expect all materials in the incoming scene data are unique");
+						return textureFutures;
+					}
+
+					LOG("Loading material \"%s\"", matName.c_str());
+
+					SEAssert("We currently only support the PBR metallic/roughness material model",
+						material->has_pbr_metallic_roughness == 1);
+
+					std::shared_ptr<gr::Material> newMat =
+						gr::Material::Create(matName, gr::Material::MaterialType::GLTF_PBRMetallicRoughness);
+
+					// GLTF specifications: If a texture is not given, all texture components are assumed to be 1.f
+					// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
+					constexpr glm::vec4 missingTextureColor(1.f, 1.f, 1.f, 1.f);
+
+					// MatAlbedo
+					textureFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+						[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
+						newMat->SetTexture(0, LoadTextureOrColor(
+							scene,
+							sceneRootPath,
+							material->pbr_metallic_roughness.base_color_texture.texture,
+							missingTextureColor,
+							re::Texture::Format::RGBA8,
+							re::Texture::ColorSpace::sRGB));
+						}));
+
+					// MatMetallicRoughness
+					textureFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+						[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
+						newMat->SetTexture(1, LoadTextureOrColor(
+							scene,
+							sceneRootPath,
+							material->pbr_metallic_roughness.metallic_roughness_texture.texture,
+							missingTextureColor,
+							re::Texture::Format::RGBA8,
+							re::Texture::ColorSpace::Linear));
+						}));
+
+					// MatNormal
+					textureFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+						[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
+						newMat->SetTexture(2, LoadTextureOrColor(
+							scene,
+							sceneRootPath,
+							material->normal_texture.texture,
+							glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
+							re::Texture::Format::RGBA8,
+							re::Texture::ColorSpace::Linear));
+						}));
+
+					// MatOcclusion
+					textureFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+						[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
+						newMat->SetTexture(3, LoadTextureOrColor(
+							scene,
+							sceneRootPath,
+							material->occlusion_texture.texture,
+							missingTextureColor,	// Completely unoccluded
+							re::Texture::Format::RGBA8,
+							re::Texture::ColorSpace::Linear));
+						}));
+
+					// MatEmissive
+					textureFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
+						[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
+						newMat->SetTexture(4, LoadTextureOrColor(
+							scene,
+							sceneRootPath,
+							material->emissive_texture.texture,
+							missingTextureColor,
+							re::Texture::Format::RGBA8,
+							re::Texture::ColorSpace::sRGB)); // GLTF convention: Must be converted to linear before use
+						}));
+
+					gr::Material_GLTF* newGLTFMat = newMat->GetAs<gr::Material_GLTF*>();
+
+					newGLTFMat->SetBaseColorFactor(glm::make_vec4(material->pbr_metallic_roughness.base_color_factor));
+					newGLTFMat->SetMetallicFactor(material->pbr_metallic_roughness.metallic_factor);
+					newGLTFMat->SetRoughnessFactor(material->pbr_metallic_roughness.roughness_factor);
+					newGLTFMat->SetNormalScale(material->normal_texture.texture ? material->normal_texture.scale : 1.0f);
+					newGLTFMat->SetOcclusionStrength(material->occlusion_texture.texture ? material->occlusion_texture.scale : 1.0f);
+
+					newGLTFMat->SetEmissiveFactor(glm::make_vec3(material->emissive_factor));
+					newGLTFMat->SetEmissiveStrength(
+						material->has_emissive_strength ? material->emissive_strength.emissive_strength : 1.0f);
+
+					scene.AddUniqueMaterial(newMat);
+
 					return textureFutures;
-				}
-
-				LOG("Loading material \"%s\"", matName.c_str());
-
-				SEAssert("We currently only support the PBR metallic/roughness material model",
-					material->has_pbr_metallic_roughness == 1);
-
-				std::shared_ptr<gr::Material> newMat =
-					gr::Material::Create(matName, gr::Material::MaterialType::GLTF_PBRMetallicRoughness);
-
-				// GLTF specifications: If a texture is not given, all respective texture components are assumed to be 1.f
-				// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#metallic-roughness-material
-				constexpr glm::vec4 missingTextureColor(1.f, 1.f, 1.f, 1.f);
-
-				// MatAlbedo
-				textureFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
-					[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
-					newMat->SetTexture(0, LoadTextureOrColor(
-						scene,
-						sceneRootPath,
-						material->pbr_metallic_roughness.base_color_texture.texture,
-						missingTextureColor,
-						re::Texture::Format::RGBA8,
-						re::Texture::ColorSpace::sRGB));
-					}));
-
-				// MatMetallicRoughness
-				textureFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
-					[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
-					newMat->SetTexture(1, LoadTextureOrColor(
-						scene,
-						sceneRootPath,
-						material->pbr_metallic_roughness.metallic_roughness_texture.texture,
-						missingTextureColor,
-						re::Texture::Format::RGBA8,
-						re::Texture::ColorSpace::Linear));
-					}));
-
-				// MatNormal
-				textureFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
-					[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
-					newMat->SetTexture(2, LoadTextureOrColor(
-						scene,
-						sceneRootPath,
-						material->normal_texture.texture,
-						glm::vec4(0.5f, 0.5f, 1.0f, 0.0f), // Equivalent to a [0,0,1] normal after unpacking
-						re::Texture::Format::RGBA8,
-						re::Texture::ColorSpace::Linear));
-					}));
-
-				// MatOcclusion
-				textureFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
-					[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
-					newMat->SetTexture(3, LoadTextureOrColor(
-						scene,
-						sceneRootPath,
-						material->occlusion_texture.texture,
-						missingTextureColor,	// Completely unoccluded
-						re::Texture::Format::RGBA8,
-						re::Texture::ColorSpace::Linear));
-					}));
-
-				// MatEmissive
-				textureFutures.emplace_back(en::CoreEngine::GetThreadPool()->EnqueueJob(
-					[newMat, &missingTextureColor, &scene, &sceneRootPath, material]() {
-					newMat->SetTexture(4, LoadTextureOrColor(
-						scene,
-						sceneRootPath,
-						material->emissive_texture.texture,
-						missingTextureColor,
-						re::Texture::Format::RGBA8,
-						re::Texture::ColorSpace::sRGB)); // GLTF convention: Must be converted to linear before use
-					}));
-
-				gr::Material_GLTF* newGLTFMat = newMat->GetAs<gr::Material_GLTF*>();
-
-				newGLTFMat->SetBaseColorFactor(glm::make_vec4(material->pbr_metallic_roughness.base_color_factor));
-				newGLTFMat->SetMetallicFactor(material->pbr_metallic_roughness.metallic_factor);
-				newGLTFMat->SetRoughnessFactor(material->pbr_metallic_roughness.roughness_factor);
-				newGLTFMat->SetNormalScale(material->normal_texture.texture ? material->normal_texture.scale : 1.0f);
-				newGLTFMat->SetOcclusionStrength(material->occlusion_texture.texture ? material->occlusion_texture.scale : 1.0f);
-
-				newGLTFMat->SetEmissiveFactor(glm::make_vec3(material->emissive_factor));
-				newGLTFMat->SetEmissiveStrength(
-					material->has_emissive_strength ? material->emissive_strength.emissive_strength : 1.0f);
-
-				scene.AddUniqueMaterial(newMat);
-
-				return textureFutures;
-			}));
+				}));
 		}
 
 		// Wait until all of the materials and textures are loaded:

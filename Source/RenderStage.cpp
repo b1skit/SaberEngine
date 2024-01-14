@@ -7,18 +7,6 @@
 #include "RenderStage.h"
 
 
-using re::Sampler;
-using re::Texture;
-using std::string;
-using std::shared_ptr;
-using std::make_shared;
-using std::vector;
-using glm::mat4;
-using glm::mat3;
-using glm::vec3;
-using glm::vec4;
-
-
 namespace
 {
 	constexpr bool IsBatchAndShaderTopologyCompatible(
@@ -105,6 +93,18 @@ namespace
 
 namespace re
 {
+	std::shared_ptr<RenderStage> RenderStage::CreateParentStage(std::string const& name)
+	{
+		std::shared_ptr<RenderStage> newParentStage;
+		newParentStage.reset(new RenderStage(
+			name,
+			nullptr,
+			RenderStage::Type::Parent,
+			RenderStage::Lifetime::Permanent));
+		return newParentStage;
+	}
+
+
 	std::shared_ptr<RenderStage> RenderStage::CreateGraphicsStage(
 		std::string const& name, GraphicsStageParams const& stageParams)
 	{
@@ -112,8 +112,8 @@ namespace re
 		newGFXStage.reset(new RenderStage(
 			name, 
 			std::make_unique<GraphicsStageParams>(stageParams), 
-			RenderStage::RenderStageType::Graphics,
-			RenderStage::RenderStageLifetime::Permanent));
+			RenderStage::Type::Graphics,
+			RenderStage::Lifetime::Permanent));
 		return newGFXStage;
 	}
 
@@ -125,8 +125,8 @@ namespace re
 		newGFXStage.reset(new RenderStage(
 			name,
 			std::make_unique<GraphicsStageParams>(stageParams),
-			RenderStage::RenderStageType::Graphics,
-			RenderStage::RenderStageLifetime::SingleFrame));
+			RenderStage::Type::Graphics,
+			RenderStage::Lifetime::SingleFrame));
 		return newGFXStage;
 	}
 
@@ -137,7 +137,7 @@ namespace re
 		std::shared_ptr<RenderStage> newComputeStage;
 		newComputeStage.reset(new ComputeStage(
 			name, 
-			std::make_unique<ComputeStageParams>(stageParams), RenderStageLifetime::Permanent));
+			std::make_unique<ComputeStageParams>(stageParams), Lifetime::Permanent));
 		return newComputeStage;
 	}
 
@@ -148,7 +148,7 @@ namespace re
 		std::shared_ptr<RenderStage> newComputeStage;
 		newComputeStage.reset(new ComputeStage(
 			name,
-			std::make_unique<ComputeStageParams>(stageParams), RenderStageLifetime::SingleFrame));
+			std::make_unique<ComputeStageParams>(stageParams), Lifetime::SingleFrame));
 		return newComputeStage;
 	}
 
@@ -158,7 +158,7 @@ namespace re
 		std::shared_ptr<re::TextureTargetSet const> targetSet)
 	{
 		std::shared_ptr<RenderStage> newClearStage;
-		newClearStage.reset(new ClearStage(targetSet->GetName() + "_Clear", RenderStageLifetime::Permanent));
+		newClearStage.reset(new ClearStage(targetSet->GetName() + "_Clear", Lifetime::Permanent));
 
 		ConfigureClearStage(newClearStage, clearStageParams, targetSet);
 
@@ -171,7 +171,7 @@ namespace re
 		std::shared_ptr<re::TextureTargetSet const> targetSet)
 	{
 		std::shared_ptr<RenderStage> newClearStage;
-		newClearStage.reset(new ClearStage(targetSet->GetName() + "_Clear", RenderStageLifetime::SingleFrame));
+		newClearStage.reset(new ClearStage(targetSet->GetName() + "_Clear", Lifetime::SingleFrame));
 
 		ConfigureClearStage(newClearStage, clearStageParams, targetSet);
 
@@ -182,8 +182,8 @@ namespace re
 	RenderStage::RenderStage(
 		std::string const& name, 
 		std::unique_ptr<IStageParams>&& stageParams, 
-		RenderStageType stageType, 
-		RenderStageLifetime lifetime)
+		Type stageType, 
+		Lifetime lifetime)
 		: NamedObject(name)
 		, m_type(stageType)
 		, m_lifetime(lifetime)
@@ -199,21 +199,30 @@ namespace re
 	}
 
 
+	ParentStage::ParentStage(
+		std::string const& name,
+		Lifetime lifetime)
+		: NamedObject(name)
+		, RenderStage(name, nullptr, Type::Parent, lifetime)
+	{
+	}
+
+
 	ComputeStage::ComputeStage(
 		std::string const& name, 
 		std::unique_ptr<ComputeStageParams>&& stageParams, 
-		RenderStageLifetime lifetime)
+		Lifetime lifetime)
 		: NamedObject(name)
-		, RenderStage(name, std::move(stageParams), RenderStageType::Compute, lifetime)
+		, RenderStage(name, std::move(stageParams), Type::Compute, lifetime)
 	{
 	}
 
 
 	ClearStage::ClearStage(
 		std::string const& name,
-		RenderStageLifetime lifetime)
+		Lifetime lifetime)
 		: NamedObject(name)
-		, RenderStage(name, nullptr, RenderStageType::Clear, lifetime)
+		, RenderStage(name, nullptr, Type::Clear, lifetime)
 	{
 	}
 
@@ -241,7 +250,7 @@ namespace re
 		SEAssert("Invalid sampler", sampler != nullptr);
 
 		SEAssert("Attempting to add a Texture input that does not have an appropriate usage flag",
-			(tex->GetTextureParams().m_usage & re::Texture::Usage::Color));
+			(tex->GetTextureParams().m_usage & re::Texture::Usage::Color) != 0);
 
 		m_textureSamplerInputs.emplace_back(RenderStageTextureAndSamplerInput{ shaderName, tex, sampler, mipLevel });
 
@@ -325,8 +334,8 @@ namespace re
 
 	bool RenderStage::IsSkippable() const
 	{
-		return m_stageBatches.empty() && 
-			m_type != RenderStageType::Clear;
+		return (m_stageBatches.empty() && m_type != Type::Clear) ||
+			m_type == Type::Parent;
 	}
 	
 
@@ -358,14 +367,18 @@ namespace re
 
 	void RenderStage::AddBatch(re::Batch const& batch)
 	{
+		SEAssert("Incompatible stage type", 
+			m_type != re::RenderStage::Type::Parent && 
+			m_type != re::RenderStage::Type::Clear);
+
 		SEAssert("Either the batch or the stage must have a shader", m_stageShader || batch.GetShader());
 
 		SEAssert("Incompatible batch type", 
-			(batch.GetType() == re::Batch::BatchType::Graphics && m_type == RenderStageType::Graphics) ||
-			(batch.GetType() == re::Batch::BatchType::Compute && m_type == RenderStageType::Compute));
+			(batch.GetType() == re::Batch::BatchType::Graphics && m_type == Type::Graphics) ||
+			(batch.GetType() == re::Batch::BatchType::Compute && m_type == Type::Compute));
 
 		SEAssert("Mesh topology mode is incompatible with shader pipeline state topology type",
-			m_type == RenderStageType::Compute ||
+			m_type == Type::Compute ||
 			((!m_stageShader || IsBatchAndShaderTopologyCompatible(
 				batch.GetGraphicsParams().m_batchTopologyMode,
 				m_stageShader->GetPipelineState().GetTopologyType()) ) &&
@@ -406,7 +419,7 @@ namespace re
 	void RenderStage::AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb)
 	{
 		SEAssert("SingleFrame RenderStages can only add single frame parameter blocks", 
-			m_lifetime != RenderStage::RenderStageLifetime::SingleFrame);
+			m_lifetime != RenderStage::Lifetime::SingleFrame);
 		SEAssert("Parameter block must have a permanent lifetime",
 			pb->GetType() == re::ParameterBlock::PBType::Mutable || 
 			pb->GetType() == re::ParameterBlock::PBType::Immutable);

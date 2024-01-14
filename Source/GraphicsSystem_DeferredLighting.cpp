@@ -891,8 +891,8 @@ namespace gr
 					directionalItr.Get<gr::Light::RenderDataDirectional>();
 
 				if (directionalData.m_colorIntensity.w > 0.f && 
-					directionalData.m_diffuseEnabled && 
-					directionalData.m_specularEnabled)
+					(directionalData.m_diffuseEnabled ||
+						directionalData.m_specularEnabled))
 				{
 					gr::Transform::RenderData const& directionalTransformData = directionalItr.GetTransformDataFromTransformID();
 
@@ -942,7 +942,7 @@ namespace gr
 			while (pointItr != pointItrEnd)
 			{
 				gr::Light::RenderDataPoint const& pointData = pointItr.Get<gr::Light::RenderDataPoint>();
-				if (pointData.m_colorIntensity.w > 0.f && pointData.m_diffuseEnabled && pointData.m_specularEnabled)
+				if (pointData.m_colorIntensity.w > 0.f && (pointData.m_diffuseEnabled || pointData.m_specularEnabled))
 				{
 					gr::MeshPrimitive::RenderData const& meshData = pointItr.Get<gr::MeshPrimitive::RenderData>();
 

@@ -66,7 +66,7 @@ namespace gr
 		m_stagePipeline = &pipeline;
 
 		m_parentStageItr = m_stagePipeline->AppendRenderStage(
-			re::RenderStage::CreateComputeStage("MIP Generation Parent stage", parentStageParams));
+			re::RenderStage::CreateParentStage("MIP Generation Parent stage"));
 	}
 
 

@@ -307,13 +307,13 @@ namespace opengl
 
 					switch (renderStage->GetStageType())
 					{
-					case re::RenderStage::RenderStageType::Compute:
+					case re::RenderStage::Type::Compute:
 					{
 						opengl::TextureTargetSet::AttachTargetsAsImageTextures(*stageTargets);
 					}
 					break;
-					case re::RenderStage::RenderStageType::Clear:
-					case re::RenderStage::RenderStageType::Graphics:
+					case re::RenderStage::Type::Clear:
+					case re::RenderStage::Type::Graphics:
 					{
 						opengl::TextureTargetSet::AttachColorTargets(*stageTargets);
 						opengl::TextureTargetSet::AttachDepthStencilTarget(*stageTargets);
@@ -361,7 +361,7 @@ namespace opengl
 						// Draw!
 						switch (renderStage->GetStageType())
 						{
-						case re::RenderStage::RenderStageType::Graphics:
+						case re::RenderStage::Type::Graphics:
 						{
 							re::Batch::GraphicsParams const& batchGraphicsParams = batch.GetGraphicsParams();
 
@@ -424,7 +424,7 @@ namespace opengl
 							}
 						}
 						break;
-						case re::RenderStage::RenderStageType::Compute:
+						case re::RenderStage::Type::Compute:
 						{
 							glm::uvec3 const& threadGroupCount = batch.GetComputeParams().m_threadGroupCount;
 							glDispatchCompute(threadGroupCount.x, threadGroupCount.y, threadGroupCount.z);
