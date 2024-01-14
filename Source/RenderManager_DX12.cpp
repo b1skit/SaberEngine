@@ -326,8 +326,6 @@ namespace dx12
 				std::list<std::shared_ptr<re::RenderStage>> const& renderStages = stagePipeline.GetRenderStages();
 				for (std::shared_ptr<re::RenderStage> const& renderStage : stagePipeline.GetRenderStages())
 				{
-					const RenderStage::Type curRenderStageType = renderStage->GetStageType();
-
 					// Skip empty stages:
 					if (renderStage->IsSkippable())
 					{
@@ -336,6 +334,7 @@ namespace dx12
 
 					// If the new RenderStage type is different to the previous one, we need to end recording on it
 					// to ensure the work is correctly ordered between queues:
+					const RenderStage::Type curRenderStageType = renderStage->GetStageType();
 					if (curRenderStageType != prevRenderStageType)
 					{
 						AppendCommandLists();

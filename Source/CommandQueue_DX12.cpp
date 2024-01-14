@@ -909,7 +909,15 @@ namespace dx12
 			perfmarkers::Type::GraphicsQueue, 
 			std::format("{} command queue", dx12::CommandList::GetCommandListTypeName(m_type)).c_str());
 
+//#define SUBMIT_COMMANDLISTS_IN_SERIAL
+#if defined(SUBMIT_COMMANDLISTS_IN_SERIAL)
+		for (size_t i = 0; i < commandListPtrs.size(); i++)
+		{
+			m_commandQueue->ExecuteCommandLists(1u, &commandListPtrs[i]);
+		}
+#else
 		m_commandQueue->ExecuteCommandLists(static_cast<uint32_t>(commandListPtrs.size()), commandListPtrs.data());
+#endif
 
 		SEEndGPUEvent(m_commandQueue.Get());
 
