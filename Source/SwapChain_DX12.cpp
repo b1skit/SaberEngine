@@ -191,11 +191,23 @@ namespace dx12
 	}
 
 
-	uint8_t SwapChain::GetBackBufferIdx(re::SwapChain const& swapChain)
+	uint8_t SwapChain::GetCurrentBackBufferIdx(re::SwapChain const& swapChain)
 	{
 		dx12::SwapChain::PlatformParams* swapChainPlatParams = 
 			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
+		return swapChainPlatParams->m_backBufferIdx;
+	}
+
+
+	uint8_t SwapChain::IncrementBackBufferIdx(re::SwapChain& swapChain)
+	{
+		dx12::SwapChain::PlatformParams* swapChainPlatParams =
+			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+
+		// Note: Backbuffer indices are not guaranteed to be sequential if we're using  DXGI_SWAP_EFFECT_FLIP_DISCARD
+		swapChainPlatParams->m_backBufferIdx = swapChainPlatParams->m_swapChain->GetCurrentBackBufferIndex();
+		
 		return swapChainPlatParams->m_backBufferIdx;
 	}
 

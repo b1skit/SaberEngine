@@ -33,7 +33,8 @@ namespace dx12
 		static void SetVSyncMode(re::SwapChain const& swapChain, bool enabled);
 
 		// DX12-specific functionality:
-		static uint8_t GetBackBufferIdx(re::SwapChain const& swapChain);
+		static uint8_t GetCurrentBackBufferIdx(re::SwapChain const& swapChain);
+		static uint8_t IncrementBackBufferIdx(re::SwapChain& swapChain); // Returns new backbuffer idx
 		static std::shared_ptr<re::TextureTargetSet> GetBackBufferTargetSet(re::SwapChain const& swapChain);
 	};
 }

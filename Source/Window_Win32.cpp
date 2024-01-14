@@ -13,11 +13,11 @@ namespace win32
 	win32::Window::Win32PlatformState win32::Window::PlatformState;
 
 
-	LRESULT CALLBACK Window::WindowEventCallback(HWND window, UINT msg, WPARAM wParam, LPARAM lParam)
+	LRESULT CALLBACK Window::WindowEventCallback(HWND window, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		LRESULT result = 0;
 
-		switch (msg)
+		switch (uMsg)
 		{
 		case WM_CLOSE:
 		case WM_DESTROY:
@@ -27,17 +27,19 @@ namespace win32
 		}
 		break;
 		case WM_SETFOCUS:
+		case WM_EXITSIZEMOVE:
 		{
 			en::CoreEngine::Get()->GetWindow()->SetFocusState(true);
 		}
 		break;
 		case WM_KILLFOCUS:
+		case WM_ENTERSIZEMOVE:
 		{
 			en::CoreEngine::Get()->GetWindow()->SetFocusState(false);
 		}
 		break;
 		default:
-			result = DefWindowProcW(window, msg, wParam, lParam);
+			result = DefWindowProcW(window, uMsg, wParam, lParam);
 			break;
 		}
 
@@ -55,6 +57,9 @@ namespace win32
 		// Window class name. Used for registering / creating the window.
 		const wchar_t* const windowClassName = L"SaberEngineWindow"; // Unique window identifier
 
+		// Cache the standard cursor:
+		win32::Window::PlatformState.m_defaultCursor = ::LoadCursor(NULL, IDC_ARROW); // IDC_ARROW = default arrow icon
+
 		// Register a window class for creating our render window with
 		WNDCLASSEXW windowClass = {};
 
@@ -65,7 +70,7 @@ namespace win32
 		windowClass.cbWndExtra = 0; // # of extra bytes to allocate following the structure. 0, as not used here
 		windowClass.hInstance = win32::Window::PlatformState.m_hInstance; // Handle to the instance containing the window procedure
 		windowClass.hIcon = ::LoadIcon(win32::Window::PlatformState.m_hInstance, NULL); // Handle to class icon that represents this class in the taskbar, and upper-left corner of the title bar. Null = default
-		windowClass.hCursor = ::LoadCursor(NULL, IDC_ARROW); // Handle to the class cursor. IDC_ARROW = default arrow icon
+		windowClass.hCursor = NULL; // Class cursor handle: NULL prevents cursor being restored every time the mouse moves
 		windowClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1); // Handle to the class background brush. COLOR_WINDOW + 1 = COLOR_WINDOWFRAME
 		windowClass.lpszMenuName = NULL; // Null-terminated char string for the resource name of the class menu (as it appears in the resource file)
 		windowClass.lpszClassName = windowClassName; // Set the unique window identifier
@@ -132,9 +137,9 @@ namespace win32
 	}
 
 
-	void Window::SetRelativeMouseMode(en::Window const& window, bool enabled)
+	void Window::SetRelativeMouseMode(en::Window const& window, bool relativeModeEnabled)
 	{
-		if (enabled)
+		if (relativeModeEnabled)
 		{
 			win32::Window::PlatformParams* platformParams = 
 				window.GetPlatformParams()->As<win32::Window::PlatformParams*>();
@@ -157,14 +162,16 @@ namespace win32
 			rect.top = upperLeft.y;
 			rect.right = lowerRight.x;
 			rect.bottom = lowerRight.y;
-
+		
 			::ClipCursor(&rect);
-			::ShowCursor(false); // Hide the cursor
+
+			::SetCursor(NULL); // Hide the cursor
 		}
 		else
 		{
-			::ClipCursor(0);
-			::ShowCursor(true);
+			::ClipCursor(nullptr);
+
+			::SetCursor(win32::Window::PlatformState.m_defaultCursor); // Restore the cursor
 		}
 	}
 }

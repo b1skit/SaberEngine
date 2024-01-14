@@ -40,6 +40,7 @@ namespace en
 			// System:
 			InputToggleConsole,
 			InputToggleVSync,
+			WindowFocusChanged,
 
 			EngineQuit,
 
@@ -81,7 +82,7 @@ namespace en
 
 		// Member functions:
 		void Subscribe(EventType eventType, EventListener* listener); // Subscribe to an event
-		void Notify(EventInfo const& eventInfo); // Post an event
+		void Notify(EventInfo&&); // Post an event
 
 
 	private:

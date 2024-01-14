@@ -52,7 +52,7 @@ namespace
 	}
 
 
-	constexpr D3D12_SRV_DIMENSION GetD3D12SRVDimension(D3D_SRV_DIMENSION srvDimension)
+	D3D12_SRV_DIMENSION GetD3D12SRVDimension(D3D_SRV_DIMENSION srvDimension)
 	{
 		// D3D_SRV_DIMENSION::D3D_SRV_DIMENSION_BUFFEREX (== 11, raw buffer resource) is handled differently in D3D12
 		SEAssert("D3D_SRV_DIMENSION does not have a (known) D3D12_SRV_DIMENSION equivalent", 
@@ -61,7 +61,7 @@ namespace
 	}
 
 
-	constexpr D3D12_UAV_DIMENSION GetD3D12UAVDimension(D3D_SRV_DIMENSION uavDimension)
+	D3D12_UAV_DIMENSION GetD3D12UAVDimension(D3D_SRV_DIMENSION uavDimension)
 	{
 		SEAssert("D3D_SRV_DIMENSION does not have a (known) D3D12_UAV_DIMENSION equivalent",
 			uavDimension >= D3D_SRV_DIMENSION_UNKNOWN && uavDimension <= D3D_SRV_DIMENSION_TEXTURE3D);

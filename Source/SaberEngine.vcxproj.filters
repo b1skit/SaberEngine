@@ -500,6 +500,9 @@
     <ClCompile Include="GraphicsSystem_Culling.cpp">
       <Filter>Source Files\gr</Filter>
     </ClCompile>
+    <ClCompile Include="Assert.cpp">
+      <Filter>Source Files\en</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">

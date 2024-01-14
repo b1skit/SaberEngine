@@ -100,7 +100,7 @@ namespace
 	}
 
 
-	constexpr bool NeedsCommonTransition(
+	bool NeedsCommonTransition(
 		D3D12_RESOURCE_STATES currentGlobalState, 
 		dx12::CommandListType srcCmdListType, 
 		dx12::CommandListType dstCmdListType)

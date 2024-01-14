@@ -219,24 +219,23 @@ namespace dx12
 		// Create a command list to transition the backbuffer to the presentation state
 		dx12::CommandQueue& directQueue = m_commandQueues[dx12::CommandListType::Direct];
 
+		// Get our swapchain and associated target set:
+		re::SwapChain& swapChain = GetSwapChain();
+
+		dx12::SwapChain::PlatformParams* swapChainPlatParams =
+			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
+
+		std::shared_ptr<re::TextureTargetSet> swapChainTargetSet = SwapChain::GetBackBufferTargetSet(swapChain);
+
+		// Transition our current backbuffer target set resource to the present state:
 		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
-		re::SwapChain const& swapChain = GetSwapChain();
-
-		std::shared_ptr<re::TextureTargetSet> swapChainTargetSet = 
-			SwapChain::GetBackBufferTargetSet(GetSwapChain());
-		
-		// Transition our backbuffer resource back to the present state:
 		commandList->TransitionResource(
 			swapChainTargetSet->GetColorTarget(0).GetTexture().get(),
 			D3D12_RESOURCE_STATE_PRESENT,
 			re::Texture::k_allMips);
 
 		directQueue.Execute(1, &commandList);
-
-		// Present:
-		dx12::SwapChain::PlatformParams* swapChainPlatParams = 
-			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 
 		// Present the backbuffer:
 		const bool vsyncEnabled = swapChainPlatParams->m_vsyncEnabled;
@@ -258,14 +257,10 @@ namespace dx12
 		}
 
 		// Insert a signal into the command queue: Once this is reached, we know the work for the current frame is done
-		const uint8_t currentFrameBackbufferIdx = dx12::SwapChain::GetBackBufferIdx(swapChain);
+		const uint8_t currentFrameBackbufferIdx = dx12::SwapChain::GetCurrentBackBufferIdx(swapChain);
 		m_frameFenceValues[currentFrameBackbufferIdx] = m_commandQueues[dx12::CommandListType::Direct].GPUSignal();
 
-		// Get the next backbuffer index (Note: Backbuffer indices are not guaranteed to be sequential if we're using 
-		// DXGI_SWAP_EFFECT_FLIP_DISCARD)
-		const uint8_t nextFrameBackbufferIdx = swapChainPlatParams->m_swapChain->GetCurrentBackBufferIndex();
-
-		swapChainPlatParams->m_backBufferIdx = nextFrameBackbufferIdx;
+		const uint8_t nextFrameBackbufferIdx = dx12::SwapChain::IncrementBackBufferIdx(swapChain);
 		
 		// Block the CPU on the fence for our new backbuffer, to ensure all of its work is done
 		m_commandQueues[dx12::CommandListType::Direct].CPUWait(m_frameFenceValues[nextFrameBackbufferIdx]);

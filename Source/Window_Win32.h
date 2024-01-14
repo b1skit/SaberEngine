@@ -12,6 +12,9 @@ namespace win32
 		struct Win32PlatformState
 		{
 			HINSTANCE m_hInstance = NULL;
+
+			// Mouse cursors:
+			HCURSOR m_defaultCursor; // Default class cursor
 		};
 		static Win32PlatformState PlatformState;
 
@@ -30,6 +33,7 @@ namespace win32
 	public:
 		static bool Create(en::Window& window, std::string const& title, uint32_t width, uint32_t height);
 		static void Destroy(en::Window& window);
+
 		static void SetRelativeMouseMode(en::Window const& window, bool enabled);
 	};
 }

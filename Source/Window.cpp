@@ -1,5 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
+#include "EventManager.h"
 #include "Window.h"
 #include "Window_Platform.h"
 
@@ -7,7 +8,7 @@ namespace en
 {
 	Window::Window()
 		: m_hasFocus(false)
-		, m_relativeMouseModeEnabled(true)
+		, m_relativeMouseModeEnabled(false)
 	{
 		platform::Window::CreatePlatformParams(*this);
 	}
@@ -37,6 +38,12 @@ namespace en
 		{
 			platform::Window::SetRelativeMouseMode(*this, m_relativeMouseModeEnabled);
 		}
+
+		en::EventManager::Get()->Notify(en::EventManager::EventInfo{
+				.m_type = en::EventManager::EventType::WindowFocusChanged,
+				.m_data0 = en::EventManager::EventData{.m_dataB = true}
+				//.m_data1 = unused
+			});
 	}
 
 
@@ -51,7 +58,7 @@ namespace en
 		if (enabled != m_relativeMouseModeEnabled)
 		{
 			platform::Window::SetRelativeMouseMode(*this, enabled);
-			m_relativeMouseModeEnabled = enabled;
 		}
+		m_relativeMouseModeEnabled = enabled;
 	}
 }

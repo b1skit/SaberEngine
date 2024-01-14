@@ -184,6 +184,7 @@ namespace en
 		EventManager::Get()->Subscribe(EventManager::MouseMotionEvent, this);
 		EventManager::Get()->Subscribe(EventManager::MouseButtonEvent, this);
 		EventManager::Get()->Subscribe(EventManager::MouseWheelEvent, this);
+		EventManager::Get()->Subscribe(EventManager::WindowFocusChanged, this);
 
 		platform::InputManager::Startup(*this);
 	}
@@ -248,14 +249,14 @@ namespace en
 
 			EventManager::EventInfo transformedEvent;
 
-			bool doBroadcast = true;
+			bool doBroadcastToSE = true;
 
 			switch (eventInfo.m_type)
 			{
 			case EventManager::TextInputEvent:
 			{
 				io.AddInputCharacter(eventInfo.m_data0.m_dataC);
-				doBroadcast = false;
+				doBroadcastToSE = false;
 			}
 			break;
 			case EventManager::KeyEvent:
@@ -265,8 +266,8 @@ namespace en
 
 				AddKeyEventToImGui(io, keycode, keystate);
 
-				doBroadcast = !io.WantCaptureKeyboard && !io.WantTextInput;
-				if (doBroadcast)
+				doBroadcastToSE = !io.WantCaptureKeyboard && !io.WantTextInput;
+				if (doBroadcastToSE)
 				{
 					auto const& result = m_SEKeycodesToSEEventEnums.find(keycode);
 					if (result != m_SEKeycodesToSEEventEnums.end())
@@ -278,7 +279,7 @@ namespace en
 						transformedEvent.m_data0.m_dataB = keystate; // Always true...
 
 						// Note: We only broadcast key presses (not releases)
-						doBroadcast = keystate;
+						doBroadcastToSE = keystate;
 
 						switch (key)
 						{
@@ -347,7 +348,7 @@ namespace en
 					else
 					{
 						// Not a key we've got mapped to an input/function
-						doBroadcast = false; 
+						doBroadcastToSE = false; 
 					}
 				}
 			} // end KeyEvent
@@ -357,7 +358,7 @@ namespace en
 				// Unpack the mouse data:
 				m_mouseAxisStates[en::Input_MouseX] += static_cast<float>(eventInfo.m_data0.m_dataI);
 				m_mouseAxisStates[en::Input_MouseY] += static_cast<float>(eventInfo.m_data1.m_dataI);
-				doBroadcast = false;
+				doBroadcastToSE = false;
 			}
 			break;
 			case EventManager::MouseButtonEvent:
@@ -370,7 +371,7 @@ namespace en
 					io.AddMouseButtonEvent(ImGuiMouseButton_Left, buttonState);
 					if (imguiWantsToCaptureMouse)
 					{
-						doBroadcast = false;
+						doBroadcastToSE = false;
 					}
 					else
 					{
@@ -385,7 +386,7 @@ namespace en
 					io.AddMouseButtonEvent(ImGuiMouseButton_Middle, buttonState);
 					if (imguiWantsToCaptureMouse)
 					{
-						doBroadcast = false;
+						doBroadcastToSE = false;
 					}
 					else
 					{
@@ -400,7 +401,7 @@ namespace en
 					io.AddMouseButtonEvent(ImGuiMouseButton_Right, buttonState);
 					if (imguiWantsToCaptureMouse)
 					{
-						doBroadcast = false;
+						doBroadcastToSE = false;
 					}
 					else
 					{
@@ -420,7 +421,17 @@ namespace en
 				// Broadcast to ImGui:
 				io.AddMouseWheelEvent(
 					static_cast<float>(eventInfo.m_data0.m_dataI), static_cast<float>(eventInfo.m_data1.m_dataI));
-				doBroadcast = false;
+				doBroadcastToSE = false;
+			}
+			break;
+			case EventManager::WindowFocusChanged:
+			{
+				// If we've lost focus, zero out any currently-pressed keys to prevent them getting stuck				
+				for (size_t i = 0; i < en::KeyboardInputButton_Count; i++)
+				{
+					m_keyboardInputButtonStates[i] = false;
+				}
+				doBroadcastToSE = false;
 			}
 			break;
 			default:
@@ -428,10 +439,10 @@ namespace en
 				break;
 			}
 
-			if (doBroadcast)
+			if (doBroadcastToSE)
 			{
 				SEAssert("Event type is not initialized", transformedEvent.m_type != EventManager::Uninitialized);
-				EventManager::Get()->Notify(transformedEvent);
+				EventManager::Get()->Notify(std::move(transformedEvent));
 			}
 		}		
 	}

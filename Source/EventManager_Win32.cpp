@@ -84,8 +84,12 @@ namespace win32
 				}
 				}
 
+				// Key is down if the most significant bit is set
+				constexpr unsigned short k_mostSignificantBit = 1 << (std::numeric_limits<short>::digits);
+
 				// true/false == pressed/released
-				eventInfo.m_data1.m_dataB = static_cast<bool>(GetAsyncKeyState(static_cast<int>(msg.wParam)) & 0x01);
+				eventInfo.m_data1.m_dataB = 
+					static_cast<bool>(GetAsyncKeyState(static_cast<int>(msg.wParam)) & k_mostSignificantBit);
 			}
 			break;
 			case WM_CHAR:
@@ -184,7 +188,7 @@ namespace win32
 			if (doBroadcastSEEvent) // Post a Saber Engine Event
 			{
 				SEAssert("Event type is not initialized", eventInfo.m_type != en::EventManager::Uninitialized);
-				eventManager.Notify(eventInfo);
+				eventManager.Notify(std::move(eventInfo));
 			}
 
 			if (doTranslateAndDispatchWin32Msg) // Re-broadcast the message to our Window::WindowEventCallback handler

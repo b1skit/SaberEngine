@@ -153,7 +153,6 @@ namespace en
 				inputManager->Update(m_frameNum, lastOuterFrameTime);
 				SEEndCPUEvent();
 
-				// Pump systems that rely on events/input:
 				SEBeginCPUEvent("en::EntityManager::Update");
 				entityManager->Update(m_frameNum, m_fixedTimeStep);
 				SEEndCPUEvent();
