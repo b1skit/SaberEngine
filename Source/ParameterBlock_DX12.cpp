@@ -1,6 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
-
 #include "CastUtils.h"
 #include "Context_DX12.h"
 #include "Assert.h"
@@ -10,19 +8,15 @@
 #include "ParameterBlockAllocator_DX12.h"
 #include "RenderManager.h"
 
+#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
-namespace dx12
+
+namespace
 {
-	void ParameterBlock::Create(re::ParameterBlock& paramBlock)
+	uint64_t GetAlignedSize(re::ParameterBlock::PBDataType pbDataType, uint32_t pbSize)
 	{
-		dx12::ParameterBlock::PlatformParams* params =
-			paramBlock.GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
-		SEAssert("Parameter block is already created", !params->m_isCreated);
-		params->m_isCreated = true;
-
-		const uint32_t pbSize = paramBlock.GetSize();
 		uint64_t alignedSize = 0;
-		switch(params->m_dataType)
+		switch (pbDataType)
 		{
 		case re::ParameterBlock::PBDataType::SingleElement:
 		{
@@ -40,18 +34,56 @@ namespace dx12
 		default:
 			SEAssertF("Invalid parameter block data type");
 		}
+		
+		return alignedSize;
+	}
+}
 
+namespace dx12
+{
+	void ParameterBlock::Create(re::ParameterBlock& paramBlock)
+	{
+		dx12::ParameterBlock::PlatformParams* params =
+			paramBlock.GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
+		SEAssert("Parameter block is already created", !params->m_isCreated);
+		params->m_isCreated = true;
+
+		const uint32_t pbSize = paramBlock.GetSize();
+		const uint64_t alignedSize = GetAlignedSize(params->m_dataType, pbSize);
 
 		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
+
+		// Note: Our parameter blocks live in the upload heap, as they're typically small and updated frequently. 
+		// No point copying them to VRAM, for now
 
 		const re::ParameterBlock::PBType pbType = paramBlock.GetType();
 		switch (pbType)
 		{
 		case re::ParameterBlock::PBType::Mutable:
+		{
+			// We allocate N frames-worth of buffer space, and then set the m_heapByteOffset each frame
+			const uint8_t numFramesInFlight = re::RenderManager::GetNumFramesInFlight();
+			const uint64_t allFramesAlignedSize = numFramesInFlight * alignedSize;
+
+			const CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_UPLOAD);
+			const CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(allFramesAlignedSize);
+
+			HRESULT hr = device->CreateCommittedResource(
+				&heapProperties,					// this heap will be used to upload the constant buffer data
+				D3D12_HEAP_FLAG_CREATE_NOT_ZEROED,	// Flags
+				&resourceDesc,						// Size of the resource heap
+				D3D12_RESOURCE_STATE_GENERIC_READ,	// Mandatory for D3D12_HEAP_TYPE_UPLOAD heaps
+				nullptr,							// Optimized clear value: None for constant buffers
+				IID_PPV_ARGS(&params->m_resource));
+			CheckHResult(hr, "Failed to create committed resource");
+
+			std::wstring debugName = paramBlock.GetWName() + L"_Mutable";
+			params->m_resource->SetName(debugName.c_str());
+		}
+		break;
 		case re::ParameterBlock::PBType::Immutable:
 		{
-			// Our parameter blocks live in the upload heap, as they're typically small and updated frequently. 
-			// No point copying them to VRAM, for now
+			// Immutable parameter blocks cannot change frame-to-frame, thus only need a single buffer's worth of space
 			const CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_UPLOAD);
 			const CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(alignedSize);
 
@@ -65,27 +97,7 @@ namespace dx12
 			CheckHResult(hr, "Failed to create committed resource");
 
 			// Debug names:
-			std::wstring debugName = paramBlock.GetWName();
-			switch (paramBlock.GetType())
-			{
-			case re::ParameterBlock::PBType::Mutable:
-			{
-				debugName += L"_Mutable";
-			}
-			break;
-			case re::ParameterBlock::PBType::Immutable:
-			{
-				debugName += L"_Immutable";
-			}
-			break;
-			case re::ParameterBlock::PBType::SingleFrame:
-			{
-				debugName += L"_SingleFrame#" + std::to_wstring(re::RenderManager::Get()->GetCurrentRenderFrameNum());
-			}
-			break;
-			default:
-				SEAssertF("Invalid parameter block type");
-			}
+			std::wstring debugName = paramBlock.GetWName() + L"_Immutable";;
 			params->m_resource->SetName(debugName.c_str());
 		}
 		break;
@@ -176,7 +188,7 @@ namespace dx12
 	}
 
 
-	void ParameterBlock::Update(re::ParameterBlock const& paramBlock)
+	void ParameterBlock::Update(re::ParameterBlock const& paramBlock, uint8_t heapOffsetFactor)
 	{
 		dx12::ParameterBlock::PlatformParams* params =
 			paramBlock.GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
@@ -198,6 +210,13 @@ namespace dx12
 		void const* srcData = nullptr;
 		uint32_t srcSize = 0;
 		paramBlock.GetDataAndSize(srcData, srcSize);
+
+		// Update the heap offset, if required
+		if (paramBlock.GetType() == re::ParameterBlock::PBType::Mutable)
+		{
+			const uint64_t alignedSize = GetAlignedSize(params->m_dataType, srcSize);
+			params->m_heapByteOffset = alignedSize * heapOffsetFactor;
+		}
 
 		// Copy our data to the appropriate offset in the cpu-visible heap:
 		void* offsetPtr = static_cast<uint8_t*>(cpuVisibleData) + params->m_heapByteOffset;

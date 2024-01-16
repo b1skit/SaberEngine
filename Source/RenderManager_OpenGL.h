@@ -16,7 +16,7 @@ namespace opengl
 		static void Shutdown(re::RenderManager&);
 		static void CreateAPIResources(re::RenderManager&);
 
-		static uint8_t GetNumFrames(); // Number of frames in flight
+		static uint8_t GetNumFramesInFlight(); // Number of frames in flight
 
 		static void StartImGuiFrame();
 		static void RenderImGui();
@@ -27,7 +27,7 @@ namespace opengl
 	};
 
 
-	inline uint8_t RenderManager::GetNumFrames()
+	inline uint8_t RenderManager::GetNumFramesInFlight()
 	{
 		constexpr uint8_t k_numFrames = 2; // OpenGL only supports double buffering via a front and back buffer
 		return k_numFrames;

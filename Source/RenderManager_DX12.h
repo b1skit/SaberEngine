@@ -17,7 +17,7 @@ namespace dx12
 		~RenderManager() override = default;
 
 	public:
-		static uint8_t GetNumFrames(); // Number of frames in flight
+		static uint8_t GetNumFramesInFlight(); // Number of frames in flight
 
 
 	public: // Platform PIMPL:
@@ -44,7 +44,7 @@ namespace dx12
 	};
 
 
-	inline uint8_t RenderManager::GetNumFrames()
+	inline uint8_t RenderManager::GetNumFramesInFlight()
 	{
 		static const uint8_t k_numFrames = dynamic_cast<dx12::RenderManager*>(re::RenderManager::Get())->k_numFrames;
 		return k_numFrames;

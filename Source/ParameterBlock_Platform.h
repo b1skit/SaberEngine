@@ -17,7 +17,7 @@ namespace platform
 
 	
 		static void (*Create)(re::ParameterBlock&);
-		static void (*Update)(re::ParameterBlock const&);
+		static void (*Update)(re::ParameterBlock const&, uint8_t heapOffsetFactor);
 		static void (*Destroy)(re::ParameterBlock&);
 	};
 }

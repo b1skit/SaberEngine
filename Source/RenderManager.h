@@ -1,17 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include "Context.h"
-#include "DoubleBufferUnorderedMap.h"
 #include "EngineComponent.h"
 #include "EngineThread.h"
 #include "EventListener.h"
 #include "ImGuiUtils.h"
 #include "NBufferedVector.h"
 #include "CommandQueue.h"
-#include "RenderPipeline.h"
 #include "RenderSystem.h"
-#include "TextureTarget.h"
-#include "VertexStream.h"
 
 
 namespace opengl
@@ -32,9 +27,9 @@ namespace gr
 namespace re
 {
 	class Batch;
-	class RenderPipeline;
+	class TextureTarget;
+	class VertexStream;
 }
-
 
 namespace re
 {
@@ -46,7 +41,7 @@ namespace re
 
 
 	public: // Platform wrappers:
-		static constexpr uint8_t GetNumFrames(); // Number of buffers/frames in flight
+		static uint8_t GetNumFramesInFlight();
 
 
 	public:

@@ -107,7 +107,7 @@ namespace platform
 			platform::RenderManager::Initialize			= &opengl::RenderManager::Initialize;
 			platform::RenderManager::Shutdown			= &opengl::RenderManager::Shutdown;
 			platform::RenderManager::CreateAPIResources = &opengl::RenderManager::CreateAPIResources;
-			platform::RenderManager::GetNumFrames		= &opengl::RenderManager::GetNumFrames;
+			platform::RenderManager::GetNumFramesInFlight		= &opengl::RenderManager::GetNumFramesInFlight;
 			platform::RenderManager::StartImGuiFrame	= &opengl::RenderManager::StartImGuiFrame;
 			platform::RenderManager::RenderImGui		= &opengl::RenderManager::RenderImGui;
 
@@ -155,7 +155,7 @@ namespace platform
 			platform::RenderManager::Initialize			= &dx12::RenderManager::Initialize;
 			platform::RenderManager::Shutdown			= &dx12::RenderManager::Shutdown;
 			platform::RenderManager::CreateAPIResources = &dx12::RenderManager::CreateAPIResources;
-			platform::RenderManager::GetNumFrames		= &dx12::RenderManager::GetNumFrames;
+			platform::RenderManager::GetNumFramesInFlight		= &dx12::RenderManager::GetNumFramesInFlight;
 			platform::RenderManager::StartImGuiFrame	= &dx12::RenderManager::StartImGuiFrame;
 			platform::RenderManager::RenderImGui		= &dx12::RenderManager::RenderImGui;
 

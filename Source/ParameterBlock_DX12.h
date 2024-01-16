@@ -1,11 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-#include <d3d12.h>
-#include <wrl.h>
-
 #include "CPUDescriptorHeapManager_DX12.h"
 #include "ParameterBlock.h"
 #include "ParameterBlockAllocator.h"
+
+#include <d3d12.h>
+#include <wrl.h>
 
 
 namespace dx12
@@ -25,7 +25,7 @@ namespace dx12
 
 	public:
 		static void Create(re::ParameterBlock& paramBlock);
-		static void Update(re::ParameterBlock const& paramBlock);
+		static void Update(re::ParameterBlock const& paramBlock, uint8_t heapOffsetFactor);
 		static void Destroy(re::ParameterBlock& paramBlock);
 	};
 

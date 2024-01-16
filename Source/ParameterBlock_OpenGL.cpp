@@ -1,8 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Assert.h"
 #include "ParameterBlockAllocator_OpenGL.h"
 #include "ParameterBlock_OpenGL.h"
 #include "ParameterBlock.h"
-#include "Assert.h"
 
 
 namespace opengl
@@ -21,6 +21,47 @@ namespace opengl
 		switch (pbType)
 		{
 		case re::ParameterBlock::PBType::Mutable:
+		{
+			// Note: Unlike DX12, OpenGL handles buffer synchronization for us (so long as they're not persistently 
+			// mapped). So we can just create a single mutable buffer and write to it as needed, instead of 
+			// sub-allocating from within a larger buffer each frame
+
+			// Generate the buffer name:
+			glGenBuffers(1, &pbPlatParams->m_bufferName);
+
+			pbPlatParams->m_baseOffset = 0; // Permanent PBs have their own dedicated buffers
+
+			GLenum bufferTarget = 0;
+			switch (pbPlatParams->m_dataType)
+			{
+			case re::ParameterBlock::PBDataType::SingleElement:
+			{
+				bufferTarget = GL_UNIFORM_BUFFER;
+			}
+			break;
+			case re::ParameterBlock::PBDataType::Array:
+			{
+				bufferTarget = GL_SHADER_STORAGE_BUFFER;
+			}
+			break;
+			default: SEAssertF("Invalid PBDataType");
+			}
+
+			// Binding associates the buffer object with the buffer object name
+			glBindBuffer(bufferTarget, pbPlatParams->m_bufferName);
+			SEAssert("Failed to generate buffer object", glIsBuffer(pbPlatParams->m_bufferName) == GL_TRUE);
+
+			glBufferData(
+				bufferTarget,
+				(GLsizeiptr)numBytes,
+				nullptr, // NULL: Data store of the specified size is created, but remains uninitialized and thus undefined
+				pbType == re::ParameterBlock::PBType::Immutable ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW);
+
+			// RenderDoc label:
+			std::string const& bufferName = paramBlock.GetName() + "_Mutable";
+			glObjectLabel(GL_BUFFER, pbPlatParams->m_bufferName, -1, bufferName.c_str());
+		}
+		break;
 		case re::ParameterBlock::PBType::Immutable:
 		{
 			// Generate the buffer name:
@@ -55,7 +96,8 @@ namespace opengl
 				pbType == re::ParameterBlock::PBType::Immutable ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW);
 
 			// RenderDoc label:
-			glObjectLabel(GL_BUFFER, pbPlatParams->m_bufferName, -1, paramBlock.GetName().c_str());
+			std::string const& bufferName = paramBlock.GetName() + "_Immutable";
+			glObjectLabel(GL_BUFFER, pbPlatParams->m_bufferName, -1, bufferName.c_str());
 		}
 		break;
 		case re::ParameterBlock::PBType::SingleFrame:
@@ -72,7 +114,7 @@ namespace opengl
 	}
 
 
-	void ParameterBlock::Update(re::ParameterBlock const& paramBlock)
+	void ParameterBlock::Update(re::ParameterBlock const& paramBlock, uint8_t heapOffsetFactor)
 	{
 		PlatformParams* pbPlatParams = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
 
@@ -80,15 +122,23 @@ namespace opengl
 		uint32_t numBytes;
 		paramBlock.GetDataAndSize(data, numBytes);
 
-		// TODO: We could switch this to map to mirror the DX12 implementation, but it's a little less straightforward
-		// https://registry.khronos.org/OpenGL-Refpages/gl4/html/glMapBufferRange.xhtml
-		// https://www.khronos.org/opengl/wiki/Buffer_Object_Streaming
-		
-		glNamedBufferSubData(
-			pbPlatParams->m_bufferName,	// Target
-			pbPlatParams->m_baseOffset,	// Offset
-			(GLsizeiptr)numBytes,		// Size
-			data);						// Data
+		//glNamedBufferSubData(
+		//	pbPlatParams->m_bufferName,	// Target
+		//	pbPlatParams->m_baseOffset,	// Offset
+		//	(GLsizeiptr)numBytes,		// Size
+		//	data);						// Data
+
+		const GLbitfield access = GL_MAP_WRITE_BIT;
+
+		void* cpuVisibleData = glMapNamedBufferRange(
+			pbPlatParams->m_bufferName,
+			pbPlatParams->m_baseOffset,
+			(GLsizeiptr)numBytes,
+			access);
+
+		memcpy(cpuVisibleData, data, numBytes);
+
+		glUnmapNamedBuffer(pbPlatParams->m_bufferName);
 	}
 
 

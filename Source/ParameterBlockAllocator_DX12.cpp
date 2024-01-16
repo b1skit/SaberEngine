@@ -1,6 +1,4 @@
 // © 2023 Adam Badke. All rights reserved.
-#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
-
 #include "CastUtils.h"
 #include "Context_DX12.h"
 #include "MathUtils.h"
@@ -8,6 +6,8 @@
 #include "ParameterBlockAllocator_DX12.h"
 #include "RenderManager_DX12.h"
 #include "TextUtils.h"
+
+#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
 
 namespace dx12
@@ -104,7 +104,7 @@ namespace dx12
 		SEAssert("Mismatched number of single frame buffers",
 			pbaPlatformParams->m_sharedConstantBufferResources.size() == pbaPlatformParams->m_sharedStructuredBufferResources.size() &&
 			pbaPlatformParams->m_numBuffers == pbaPlatformParams->m_sharedConstantBufferResources.size() &&
-			pbaPlatformParams->m_numBuffers == dx12::RenderManager::GetNumFrames());
+			pbaPlatformParams->m_numBuffers == dx12::RenderManager::GetNumFramesInFlight());
 
 		pbaPlatformParams->m_sharedConstantBufferResources.assign(pbaPlatformParams->m_numBuffers, nullptr);
 		pbaPlatformParams->m_sharedStructuredBufferResources.assign(pbaPlatformParams->m_numBuffers, nullptr);

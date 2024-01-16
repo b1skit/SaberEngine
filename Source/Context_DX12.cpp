@@ -92,7 +92,7 @@ namespace dx12
 			}
 		}
 
-		m_frameFenceValues.resize(dx12::RenderManager::GetNumFrames(), 0);
+		m_frameFenceValues.resize(dx12::RenderManager::GetNumFramesInFlight(), 0);
 
 		EnableDebugLayer(); // Before we create a device
 
@@ -154,7 +154,7 @@ namespace dx12
 			ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
 			ImGui_ImplDX12_Init(
 				m_device.GetD3DDisplayDevice(),
-				dx12::RenderManager::GetNumFrames(), // Number of frames in flight
+				dx12::RenderManager::GetNumFramesInFlight(), // Number of frames in flight
 				backbufferColorTarget0PlatParams->m_format,
 				m_imGuiGPUVisibleSRVDescriptorHeap.Get(),
 				m_imGuiGPUVisibleSRVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),

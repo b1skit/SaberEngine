@@ -10,9 +10,8 @@ namespace re
 	class ParameterBlockAllocator
 	{
 	public:
-		static constexpr uint32_t k_fixedAllocationByteSize = 32 * 1024 * 1024; // Arbitrary. Used to allocate API buffers
-		static constexpr uint32_t k_systemMemoryReservationSize = 32 * 1024 * 1024; // CPU-side initial commit memory reservation
-
+		static constexpr uint32_t k_fixedAllocationByteSize = 64 * 1024 * 1024; // Arbitrary. Fixed API buffer allocation size
+		static constexpr uint32_t k_systemMemoryReservationSize = 64 * 1024 * 1024; // Reservation size for CPU-side commit buffers
 
 	public:
 		struct PlatformParams : public re::IPlatformParams
@@ -90,28 +89,32 @@ namespace re
 		mutable std::recursive_mutex m_handleToTypeAndByteIndexMutex;
 
 		std::queue<Handle> m_dirtyParameterBlocks;
+		std::unordered_map<Handle, uint64_t> m_dirtyMutablePBFrameNum;
 		std::mutex m_dirtyParameterBlocksMutex;
 
 		std::unique_ptr<PlatformParams> m_platformParams;
-
-		uint32_t m_maxSingleFrameAllocations; // Debug: Track the high-water mark for the max single-frame PB allocations
-		uint32_t m_maxSingleFrameAllocationByteSize;
 
 
 	private:
 		void ClearDeferredDeletions(uint64_t frameNum);
 		void AddToDeferredDeletions(uint64_t frameNum, std::shared_ptr<re::ParameterBlock>);
+		uint8_t m_numFramesInFlight;
 		std::queue<std::pair<uint64_t, std::shared_ptr<re::ParameterBlock>>> m_deferredDeleteQueue;
 		std::mutex m_deferredDeleteQueueMutex;
+
 
 	private:
 		uint64_t m_currentFrameNum; // Render thread read frame # is always 1 behind the front end thread frame
 		
-
 	private:
 		bool m_allocationPeriodEnded; // Debugging helper: Used to assert we're not creating PBs after startup
 		bool m_permanentPBsHaveBeenBuffered;
 		bool m_isValid;
+
+		// Debug: Track the high-water mark for the max single-frame PB allocations
+		uint32_t m_maxSingleFrameAllocations;
+		uint32_t m_maxSingleFrameAllocationByteSize;
+
 
 	private: // Interfaces for the ParameterBlock friend class:
 		friend class re::ParameterBlock;

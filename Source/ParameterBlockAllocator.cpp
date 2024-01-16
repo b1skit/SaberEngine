@@ -11,8 +11,7 @@
 
 namespace
 {
-	// How many frames-worth of padding before calling ParameterBlock::Destroy on deallocated PBs
-	constexpr uint64_t k_deferredDeleteNumFrames = 2;
+	constexpr uint64_t k_invalidFrameNum = std::numeric_limits<uint64_t>::max();
 }
 
 namespace re
@@ -21,7 +20,7 @@ namespace re
 	//---------------------------------
 
 	ParameterBlockAllocator::PlatformParams::PlatformParams()
-		: m_numBuffers(platform::RenderManager::GetNumFrames())
+		: m_numBuffers(platform::RenderManager::GetNumFramesInFlight())
 		, m_writeIdx(0)
 	{
 		// We maintain N stack base indexes for each PBDataType; Initialize them to 0
@@ -80,12 +79,13 @@ namespace re
 
 
 	ParameterBlockAllocator::ParameterBlockAllocator()
-		: m_maxSingleFrameAllocations(0) // Debug: Track the high-water mark for the max single-frame PB allocations
-		, m_maxSingleFrameAllocationByteSize(0)
+		: m_numFramesInFlight(3) // Safe default: We'll fetch the correct value during Create()
+		, m_currentFrameNum(k_invalidFrameNum)
 		, m_allocationPeriodEnded(false)
 		, m_permanentPBsHaveBeenBuffered(false)
 		, m_isValid(true)
-		, m_currentFrameNum(std::numeric_limits<uint64_t>::max())
+		, m_maxSingleFrameAllocations(0) // Debug: Track the high-water mark for the max single-frame PB allocations
+		, m_maxSingleFrameAllocationByteSize(0)
 	{
 		for (uint8_t pbType = 0; pbType < re::ParameterBlock::PBType::PBType_Count; pbType++)
 		{
@@ -96,6 +96,9 @@ namespace re
 		}
 
 		platform::ParameterBlockAllocator::CreatePlatformParams(*this);
+
+		constexpr uint32_t k_expectedMutablePBCount = 64; // Arbitrary
+		m_dirtyMutablePBFrameNum.reserve(k_expectedMutablePBCount);
 	}
 
 
@@ -103,6 +106,8 @@ namespace re
 	{
 		m_currentFrameNum = currentFrame;
 		platform::ParameterBlockAllocator::Create(*this);
+
+		m_numFramesInFlight = re::RenderManager::GetNumFramesInFlight();
 	}
 
 
@@ -151,6 +156,9 @@ namespace re
 			m_handleToTypeAndByteIndex.clear();
 		}
 
+		std::queue<Handle> emptyQueue;
+		m_dirtyParameterBlocks.swap(emptyQueue);
+
 		// The platform::RenderManager has already flushed all outstanding work; Force our deferred deletions to be
 		// immediately cleared
 		constexpr uint64_t k_maxFrameNum = std::numeric_limits<uint64_t>::max();
@@ -183,17 +191,18 @@ namespace re
 		const ParameterBlock::PBType pbType = pb->GetType();
 		SEAssert("Invalid PBType", pbType != re::ParameterBlock::PBType::PBType_Count);
 
+		const Handle uniqueID = pb->GetUniqueID();
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_allocations[pbType].m_mutex);
 
 			SEAssert("Parameter block is already registered",
-				!m_allocations[pbType].m_handleToPtr.contains(pb->GetUniqueID()));
+				!m_allocations[pbType].m_handleToPtr.contains(uniqueID));
 
-			m_allocations[pbType].m_handleToPtr[pb->GetUniqueID()] = pb;
+			m_allocations[pbType].m_handleToPtr[uniqueID] = pb;
 		}
 
 		// Pre-allocate our PB so it's ready to commit to:
-		Allocate(pb->GetUniqueID(), numBytes, pbType);
+		Allocate(uniqueID, numBytes, pbType);
 	}
 
 
@@ -264,6 +273,15 @@ namespace re
 		{
 			std::lock_guard<std::mutex> lock(m_dirtyParameterBlocksMutex);
 			m_dirtyParameterBlocks.emplace(uniqueID);
+		}
+
+		// Update mutable parameter blocks modification frame
+		if (pbType == ParameterBlock::PBType::Mutable)
+		{
+			{
+				std::lock_guard<std::mutex> lock(m_dirtyParameterBlocksMutex);				
+				m_dirtyMutablePBFrameNum[uniqueID] = m_currentFrameNum; // Insert/update
+			}
 		}
 	}
 
@@ -338,6 +356,14 @@ namespace re
 			auto const& pb = m_handleToTypeAndByteIndex.find(uniqueID);
 			m_handleToTypeAndByteIndex.erase(pb);
 		}
+
+		if (pbType == ParameterBlock::PBType::Mutable)
+		{
+			{
+				std::lock_guard<std::mutex> lock(m_dirtyParameterBlocksMutex);
+				m_dirtyMutablePBFrameNum.erase(uniqueID);
+			}
+		}
 	}
 
 
@@ -350,9 +376,21 @@ namespace re
 		{
 			std::lock_guard<std::mutex> dirtyLock(m_dirtyParameterBlocksMutex);
 
+			// We keep mutable parameter blocks committed within m_numFramesInFlight in the dirty list to ensure they're
+			// kept up to date
+			std::queue<Handle> dirtyMutablePBs;
+
+			// Prevent duplicated updates for mutable param blocks by tracking if we've already buffered them
+			static size_t s_prevBufferedPBCount = 32;
+			std::unordered_set<Handle> bufferedMutablePBs;
+			bufferedMutablePBs.reserve(s_prevBufferedPBCount);
+
+			const uint8_t heapOffsetFactor = m_currentFrameNum % m_numFramesInFlight;
+
 			while (!m_dirtyParameterBlocks.empty())
 			{
 				const Handle currentHandle = m_dirtyParameterBlocks.front();
+				m_dirtyParameterBlocks.pop();
 
 				ParameterBlock::PBType pbType = ParameterBlock::PBType::PBType_Count;
 				{
@@ -366,11 +404,38 @@ namespace re
 					currentPB = m_allocations[pbType].m_handleToPtr[currentHandle].get();
 				}
 
-				platform::ParameterBlock::Update(*currentPB);
+				if (pbType != ParameterBlock::PBType::Mutable || 
+					!bufferedMutablePBs.contains(currentHandle)) // Only buffer mutable PBs once per frame
+				{
+					platform::ParameterBlock::Update(*currentPB, heapOffsetFactor);
+				}
 
-				m_dirtyParameterBlocks.pop();
+				// Update our tracking of mutable parameter blocks:
+				if (pbType == ParameterBlock::PBType::Mutable)
+				{
+					SEAssert("Cannot find mutable parameter block, was it ever committed?", 
+						m_dirtyMutablePBFrameNum.contains(currentHandle));
+
+					// If this is the first time we've seen a mutable parameter block while buffering, and its been
+					// updated within the m_numFramesInFlight, add it back to the dirty list for the next frame
+					if (!bufferedMutablePBs.contains(currentHandle) &&
+						m_dirtyMutablePBFrameNum.at(currentHandle) + m_numFramesInFlight > m_currentFrameNum)
+					{
+						dirtyMutablePBs.emplace(currentHandle);
+						bufferedMutablePBs.emplace(currentHandle);
+					}
+				}
 			}
+
+			// Swap in our dirty queue for the next frame
+			if (!dirtyMutablePBs.empty())
+			{
+				m_dirtyParameterBlocks = std::move(dirtyMutablePBs);
+			}
+
+			s_prevBufferedPBCount = std::max(s_prevBufferedPBCount, bufferedMutablePBs.size());
 		}
+
 		SEEndCPUEvent();
 	}
 
@@ -436,7 +501,8 @@ namespace re
 		{
 			std::lock_guard<std::mutex> lock(m_deferredDeleteQueueMutex);
 
-			while (!m_deferredDeleteQueue.empty() && m_deferredDeleteQueue.front().first + k_deferredDeleteNumFrames < frameNum)
+			while (!m_deferredDeleteQueue.empty() &&
+				m_deferredDeleteQueue.front().first + m_numFramesInFlight < frameNum)
 			{
 				platform::ParameterBlock::Destroy(*m_deferredDeleteQueue.front().second);
 				m_deferredDeleteQueue.pop();

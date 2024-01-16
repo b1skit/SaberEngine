@@ -2,6 +2,7 @@
 #include "Batch.h"
 #include "BatchManager.h"
 #include "Config.h"
+#include "Context.h"
 #include "GraphicsSystem_GBuffer.h"
 #include "GraphicsSystem_DeferredLighting.h"
 #include "GraphicsSystem_Shadows.h"
@@ -9,7 +10,6 @@
 #include "GraphicsSystem_Bloom.h"
 #include "GraphicsSystem_Tonemapping.h"
 #include "GraphicsSystemManager.h"
-#include "ImGuiUtils.h"
 #include "PerformanceTimer.h"
 #include "ProfilingMarkers.h"
 #include "RenderManager.h"
@@ -18,7 +18,8 @@
 #include "RenderManager_OpenGL.h"
 #include "Sampler.h"
 #include "SceneManager.h"
-#include "TextUtils.h"
+#include "TextureTarget.h"
+#include "VertexStream.h"
 
 
 namespace re
@@ -30,9 +31,9 @@ namespace re
 	}
 
 
-	constexpr uint8_t RenderManager::GetNumFrames()
+	uint8_t RenderManager::GetNumFramesInFlight()
 	{
-		return platform::RenderManager::GetNumFrames();
+		return platform::RenderManager::GetNumFramesInFlight();
 	}
 
 

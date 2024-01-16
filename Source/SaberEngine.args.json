@@ -52,11 +52,7 @@
     },
     {
       "Id": "cc06814b-625d-4a6c-a7b1-7bd961bb16fb",
-      "Command": "-width 640"
-    },
-    {
-      "Id": "85e24446-3d31-40f3-a558-8e729b12a412",
-      "Command": "-height 480"
+      "Command": "-width 640 -height 480"
     },
     {
       "Id": "2cc5f5f4-4b6e-43a7-9ba7-e135e9b6d149",

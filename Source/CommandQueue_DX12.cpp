@@ -921,7 +921,12 @@ namespace dx12
 
 		SEEndGPUEvent(m_commandQueue.Get());
 
-		const uint64_t fenceVal = GPUSignal();		
+		const uint64_t fenceVal = GPUSignal();
+
+//#define DISABLE_FRAME_BUFFERING
+#if defined(DISABLE_FRAME_BUFFERING)
+		CPUWait(fenceVal);
+#endif
 
 		// Return our command list(s) to the pool:
 		for (uint32_t i = 0; i < finalCommandLists.size(); i++)

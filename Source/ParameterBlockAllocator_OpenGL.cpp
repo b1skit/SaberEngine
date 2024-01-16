@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "Context.h"
 #include "MathUtils.h"
 #include "ParameterBlockAllocator.h"
 #include "ParameterBlockAllocator_OpenGL.h"
@@ -116,7 +117,7 @@ namespace opengl
 		SEAssert("Mismatched number of single frame buffers", 
 			pbaPlatformParams->m_singleFrameUBOs.size() == pbaPlatformParams->m_singleFrameSSBOs.size() &&
 			pbaPlatformParams->m_numBuffers == pbaPlatformParams->m_singleFrameUBOs.size() &&
-			pbaPlatformParams->m_numBuffers == opengl::RenderManager::GetNumFrames());
+			pbaPlatformParams->m_numBuffers == opengl::RenderManager::GetNumFramesInFlight());
 		
 		glDeleteBuffers(pbaPlatformParams->m_numBuffers, pbaPlatformParams->m_singleFrameUBOs.data());
 		glDeleteBuffers(pbaPlatformParams->m_numBuffers, pbaPlatformParams->m_singleFrameSSBOs.data());

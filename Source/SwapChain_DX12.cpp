@@ -25,7 +25,7 @@ namespace dx12
 		dx12::SwapChain::PlatformParams* swapChainParams =
 			swapChain.GetPlatformParams()->As<dx12::SwapChain::PlatformParams*>();
 		
-		swapChainParams->m_backbufferTargetSets.resize(dx12::RenderManager::GetNumFrames(), nullptr);
+		swapChainParams->m_backbufferTargetSets.resize(dx12::RenderManager::GetNumFramesInFlight(), nullptr);
 
 		// Ideally, tearing should be enabled and vsync disabled (best for variable refresh displays), but we respect
 		// the config
@@ -71,7 +71,7 @@ namespace dx12
 		swapChainDesc.Stereo = FALSE; // We're not creating a stereo swap chain
 		swapChainDesc.SampleDesc = { 1, 0 }; // Mandatory value if NOT using a DX11-style bitblt swap chain
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // Specify back-buffer surface usage and CPU access
-		swapChainDesc.BufferCount = dx12::RenderManager::GetNumFrames(); // # buffers (>= 2), including the front buffer
+		swapChainDesc.BufferCount = dx12::RenderManager::GetNumFramesInFlight(); // # buffers (>= 2), including the front buffer
 		swapChainDesc.Scaling = DXGI_SCALING_STRETCH; // Resize behavior when back-buffer size != output target size
 		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // How to handle buffer contents after presenting a surface
 		swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED; // Back-buffer transparency behavior
@@ -125,7 +125,7 @@ namespace dx12
 
 		// Create color target textures, attach them to our target set, & copy the backbuffer resource into their
 		// platform params:
-		for (uint8_t backbufferIdx = 0; backbufferIdx < dx12::RenderManager::GetNumFrames(); backbufferIdx++)
+		for (uint8_t backbufferIdx = 0; backbufferIdx < dx12::RenderManager::GetNumFramesInFlight(); backbufferIdx++)
 		{
 			// Create a target set to hold our backbuffer targets:
 			swapChainParams->m_backbufferTargetSets[backbufferIdx] = 
@@ -175,7 +175,7 @@ namespace dx12
 		// Must exit fullscreen before releasing the swapchain
 		HRESULT hr = swapChainParams->m_swapChain->SetFullscreenState(false, NULL);
 
-		for (uint8_t backbuffer = 0; backbuffer < dx12::RenderManager::GetNumFrames(); backbuffer++)
+		for (uint8_t backbuffer = 0; backbuffer < dx12::RenderManager::GetNumFramesInFlight(); backbuffer++)
 		{
 			swapChainParams->m_backbufferTargetSets[backbuffer] = nullptr;
 		}
