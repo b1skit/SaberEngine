@@ -147,6 +147,10 @@
       "Command": "-scene box\\Box.gltf"
     },
     {
+      "Id": "32b7f201-6bda-4d56-91b3-276709892e17",
+      "Command": "-scene SunTemple\\suntemple.gltf"
+    },
+    {
       "Id": "09ab3e01-2a8d-45c5-ba53-adc68afa5d56",
       "Command": "-scene debug\\Duck.gltf"
     }

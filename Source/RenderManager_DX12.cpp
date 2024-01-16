@@ -646,26 +646,22 @@ namespace dx12
 		dx12::CommandQueue& directQueue = context->GetCommandQueue(dx12::CommandListType::Direct);
 		std::shared_ptr<dx12::CommandList> commandList = directQueue.GetCreateCommandList();
 
+		// Configure the descriptor heap:
+		ID3D12GraphicsCommandList2* d3dCommandList = commandList->GetD3DCommandList();
+
+		ID3D12DescriptorHeap* descriptorHeap = context->GetImGuiGPUVisibleDescriptorHeap();
+		d3dCommandList->SetDescriptorHeaps(1, &descriptorHeap);
+
 		// Draw directly to the swapchain backbuffer
 		re::SwapChain const& swapChain = context->GetSwapChain();
 		const bool attachDepthAsReadOnly = true;
 		commandList->SetRenderTargets(*dx12::SwapChain::GetBackBufferTargetSet(swapChain), attachDepthAsReadOnly);
 
-		// Configure the descriptor heap:
-		ID3D12GraphicsCommandList2* d3dCommandList = commandList->GetD3DCommandList();
-
-		ID3D12DescriptorHeap* descriptorHeaps[1] = { context->GetImGuiGPUVisibleDescriptorHeap() };
-		d3dCommandList->SetDescriptorHeaps(1, descriptorHeaps);
-
 		// Record our ImGui draws:
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), d3dCommandList);
 
 		// Submit the populated command list:
-		std::shared_ptr<dx12::CommandList> commandLists[] =
-		{
-			commandList
-		};
-		directQueue.Execute(1, commandLists);
+		directQueue.Execute(1, &commandList);
 	}
 
 
