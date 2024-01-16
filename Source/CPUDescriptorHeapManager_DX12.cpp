@@ -1,9 +1,10 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "Assert.h"
 #include "Context_DX12.h"
 #include "CPUDescriptorHeapManager_DX12.h"
-#include "Assert.h"
 #include "Debug_DX12.h"
 #include "RenderManager.h"
+#include "SysInfo_DX12.h"
 
 
 namespace dx12
@@ -149,10 +150,10 @@ namespace dx12
 		std::lock_guard<std::mutex> pageLock(m_pageMutex);
 		
 		// Create our CPU-visible descriptor heap:
-		D3D12_DESCRIPTOR_HEAP_DESC heapDescriptor;
-		heapDescriptor.Type = m_d3dType;
-		heapDescriptor.NumDescriptors = m_totalElements;
-		heapDescriptor.NodeMask = 0; // We only support a single GPU
+		D3D12_DESCRIPTOR_HEAP_DESC heapDescriptor = {
+			.Type = m_d3dType,
+			.NumDescriptors = m_totalElements,
+			.NodeMask = dx12::SysInfo::GetDeviceNodeMask() }; // We only support a single GPU
 
 		// Note: CBV/SRV/UAV and sampler descriptors will NOT be shader visible with this flag:
 		heapDescriptor.Flags = D3D12_DESCRIPTOR_HEAP_FLAGS::D3D12_DESCRIPTOR_HEAP_FLAG_NONE;

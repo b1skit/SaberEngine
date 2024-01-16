@@ -800,9 +800,8 @@ namespace dx12
 			// Create the root signature:
 			ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
 
-			constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
 			hr = device->CreateRootSignature(
-				deviceNodeMask,
+				dx12::SysInfo::GetDeviceNodeMask(),
 				rootSignatureBlob->GetBufferPointer(),
 				rootSignatureBlob->GetBufferSize(),
 				IID_PPV_ARGS(&newRootSig->m_rootSignature));

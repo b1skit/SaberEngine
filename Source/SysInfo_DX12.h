@@ -14,5 +14,6 @@ namespace dx12
 	public: // DX12-specific:		
 		static D3D_ROOT_SIGNATURE_VERSION GetHighestSupportedRootSignatureVersion();
 		static bool CheckTearingSupport(); // Variable refresh rate dispays (eg. G-Sync/FreeSync) require tearing enabled
+		static uint32_t GetDeviceNodeMask();
 	};
 }

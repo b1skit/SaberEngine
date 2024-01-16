@@ -13,6 +13,7 @@
 #include "RenderManager.h"
 #include "RootSignature_DX12.h"
 #include "SwapChain_DX12.h"
+#include "SysInfo_DX12.h"
 #include "Texture.h"
 #include "Texture_DX12.h"
 #include "TextureTarget.h"
@@ -182,10 +183,8 @@ namespace dx12
 		m_commandAllocator = CreateCommandAllocator(device, m_d3dType, commandListname + L"_CommandAllocator");
 
 		// Create the command list:
-		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
-
 		HRESULT hr = device->CreateCommandList(
-			deviceNodeMask,
+			dx12::SysInfo::GetDeviceNodeMask(),
 			m_d3dType,							// Direct draw/compute/copy/etc
 			m_commandAllocator.Get(),		// The command allocator the command lists will be created on
 			nullptr,						// Optional: Command list initial pipeline state

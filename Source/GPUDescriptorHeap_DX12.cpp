@@ -1,14 +1,15 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
-
+#include "Assert.h"
 #include "CommandList_DX12.h"
 #include "Config.h"
 #include "Context_DX12.h"
 #include "CPUDescriptorHeapManager_DX12.h"
-#include "Assert.h"
 #include "Debug_DX12.h"
 #include "GPUDescriptorHeap_DX12.h"
 #include "RenderManager.h"
+#include "SysInfo_DX12.h"
+
+#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
 
 
 namespace dx12
@@ -43,13 +44,11 @@ namespace dx12
 		// Create our GPU-visible descriptor heap:
 		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
 
-		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
-
 		const D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = D3D12_DESCRIPTOR_HEAP_DESC{
 			.Type = m_heapType,
 			.NumDescriptors = k_totalDescriptors,
 			.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-			.NodeMask = deviceNodeMask };
+			.NodeMask = dx12::SysInfo::GetDeviceNodeMask() };
 
 		HRESULT hr = device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&m_gpuDescriptorTableHeap));
 		CheckHResult(hr, "Failed to create descriptor heap");

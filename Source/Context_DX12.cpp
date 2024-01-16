@@ -7,6 +7,7 @@
 #include "RenderManager_DX12.h"
 #include "Shader.h"
 #include "SwapChain_DX12.h"
+#include "SysInfo_DX12.h"
 #include "TextureTarget_DX12.h"
 #include "Texture_DX12.h"
 #include "Window_Win32.h"
@@ -133,13 +134,11 @@ namespace dx12
 			ImGui::StyleColorsDark();
 
 			// Imgui descriptor heap: Holds a single, CPU and GPU-visible SRV descriptor for the internal font texture
-			constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
-
-			D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
-			descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-			descriptorHeapDesc.NumDescriptors = 1;
-			descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-			descriptorHeapDesc.NodeMask = deviceNodeMask;
+			const D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {
+				.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+				.NumDescriptors = 1,
+				.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+				.NodeMask = dx12::SysInfo::GetDeviceNodeMask()};
 
 			HRESULT hr = device->CreateDescriptorHeap(
 				&descriptorHeapDesc, IID_PPV_ARGS(&m_imGuiGPUVisibleSRVDescriptorHeap));

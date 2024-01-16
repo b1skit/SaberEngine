@@ -51,4 +51,10 @@ namespace dx12
 
 		return allowTearing > 0;
 	}
+
+
+	uint32_t SysInfo::GetDeviceNodeMask()
+	{
+		return 0;// Always 0: We don't (currently) support multiple GPUs
+	}
 }

@@ -6,6 +6,7 @@
 #include "CommandQueue_DX12.h"
 #include "Debug_DX12.h"
 #include "ProfilingMarkers.h"
+#include "SysInfo_DX12.h"
 #include "TextUtils.h"
 
 using Microsoft::WRL::ComPtr;
@@ -246,13 +247,11 @@ namespace dx12
 		m_d3dType = CommandList::TranslateToD3DCommandListType(type);
 		m_deviceCache = displayDevice; // Store a local copy, for convenience
 
-		constexpr uint32_t deviceNodeMask = 0; // Always 0: We don't (currently) support multiple GPUs
-
-		D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
-		cmdQueueDesc.Type		= m_d3dType;
-		cmdQueueDesc.Priority	= D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-		cmdQueueDesc.Flags		= D3D12_COMMAND_QUEUE_FLAG_NONE; // None, or Disable Timeout
-		cmdQueueDesc.NodeMask	= deviceNodeMask;
+		const D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {
+			.Type = m_d3dType,
+			.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL,
+			.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE, // None, or Disable Timeout
+			.NodeMask = dx12::SysInfo::GetDeviceNodeMask()};
 
 		std::string fenceEventName;
 		switch (type)
