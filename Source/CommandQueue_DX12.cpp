@@ -855,16 +855,8 @@ namespace dx12
 		std::vector<std::shared_ptr<dx12::CommandList>> const& finalCommandLists =
 			PrependBarrierCommandListsAndWaits(numCmdLists, cmdLists);
 
-		const uint64_t nextFenceVal = GetNextFenceValue();
-
-		// We'll store the highest modification fence values seen for resources accessed by the submitted command lists
-		std::array<uint64_t, dx12::CommandListType::CommandListType_Count> maxModificationFences;
-		memset(&maxModificationFences, 0, sizeof(uint64_t) * dx12::CommandListType::CommandListType_Count);
-
 		// Perform the actual execution, now that all of the fixups have happened:
 		const uint64_t fenceVal = ExecuteInternal(finalCommandLists);
-		SEAssert("Predicted fence value doesn't match the actual fence value", fenceVal == nextFenceVal);
-
 
 		// Don't let the caller retain access to a command list in our pool
 		for (size_t i = 0; i < numCmdLists; i++)
