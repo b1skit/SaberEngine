@@ -256,13 +256,15 @@ namespace fr
 					ImGuiCond_FirstUseEver);
 				ImGui::SetNextWindowPos(ImVec2(0, menuBarSize[1]), ImGuiCond_FirstUseEver, ImVec2(0, 0));
 
-				re::RenderManager::Get()->ShowImGuiWindow(&s_showRenderMgrDebug, &s_showRenderDataDebug);
+				re::RenderManager::Get()->ShowRenderManagerImGuiWindow(&s_showRenderMgrDebug);
+				re::RenderManager::Get()->ShowRenderDataImGuiWindow(&s_showRenderDataDebug);
 			};
 		if (s_showRenderMgrDebug || s_showRenderDataDebug)
 		{
 			re::RenderManager::Get()->EnqueueImGuiCommand<re::ImGuiRenderCommand<decltype(ShowRenderMgrDebug)>>(
 				re::ImGuiRenderCommand<decltype(ShowRenderMgrDebug)>(ShowRenderMgrDebug));
 		}
+
 
 		// Show the ImGui demo window for debugging reference
 #if defined(SHOW_IMGUI_DEMO_WINDOW)

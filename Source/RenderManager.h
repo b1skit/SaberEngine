@@ -59,10 +59,10 @@ namespace re
 
 		std::vector<std::unique_ptr<re::RenderSystem>> const& GetRenderSystems() const;
 
-		void ShowImGuiWindow(bool* showRenderMgrDebug, bool* showRenderDataDebug);
 
-	private:
-		void ShowImGuiRenderDataDebug(bool* show) const;
+	public:
+		void ShowRenderManagerImGuiWindow(bool* showRenderMgrDebug);
+		void ShowRenderDataImGuiWindow(bool* showRenderDataDebug) const;
 
 
 	private:
