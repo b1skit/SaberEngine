@@ -206,8 +206,6 @@ namespace en
 		}
 
 		HandleEvents();
-		
-
 	}
 
 
@@ -412,7 +410,6 @@ namespace en
 
 			if (doBroadcastToSE)
 			{
-				SEAssert("Event type is not initialized", transformedEvent.m_type != EventManager::Uninitialized);
 				EventManager::Get()->Notify(std::move(transformedEvent));
 			}
 		}		
