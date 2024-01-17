@@ -1,15 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "EventManager.h"
 #include "Assert.h"
+#include "EventManager.h"
 #include "EventListener.h"
 #include "EventManager_Platform.h"
 
 
 namespace en
 {
-	using std::vector;
-
-
 	EventManager* EventManager::Get()
 	{
 		static std::unique_ptr<en::EventManager> instance = std::make_unique<en::EventManager>();
@@ -24,14 +21,14 @@ namespace en
 		m_eventQueues.reserve(EventType_Count);
 		for (uint32_t i = 0; i < EventType_Count; i++)
 		{
-			m_eventQueues.push_back(vector<EventInfo>());
+			m_eventQueues.push_back(std::vector<EventInfo>());
 		}
 
 		constexpr size_t eventQueueStartSize = 100; // The starting size of the event queue to reserve
 		m_eventListeners.reserve(eventQueueStartSize);
 		for (uint32_t i = 0; i < eventQueueStartSize; i++)
 		{
-			m_eventListeners.push_back(vector<EventListener*>());
+			m_eventListeners.push_back(std::vector<EventListener*>());
 		}
 	}
 

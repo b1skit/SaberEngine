@@ -1,15 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Assert.h"
 #include "InputManager.h"
 #include "Config.h"
-#include "Assert.h"
 #include "EventManager.h"
-#include "CoreEngine.h"
 #include "InputManager_Platform.h"
-
-using en::Config;
-using en::EventManager;
-using std::string;
-using std::make_shared;
 
 
 namespace
@@ -422,7 +416,7 @@ namespace en
 		{
 			// Get the key actually assigned to the current named input button
 			// eg. Get "w" from "InputButton_Forward"
-			const string keyAssignment = Config::Get()->GetValueAsString(en::KeyboardInputButtonNames[i]);
+			const std::string keyAssignment = Config::Get()->GetValueAsString(en::KeyboardInputButtonNames[i]);
 
 			SEAssert("Button not found in config.cfg. Did you forget to set one in Config::InitializeDefaultValues()?", 
 				!keyAssignment.empty());
@@ -436,7 +430,7 @@ namespace en
 			else
 			{
 				// We want to assert if we can, but even if we're in Release mode we want to log an error:
-				const string errorMessage = "Invalid key name: \"" + keyAssignment + "\", cannot find a matching "
+				const std::string errorMessage = "Invalid key name: \"" + keyAssignment + "\", cannot find a matching "
 					"SEKeycode. Note: Key names are (currently) case sensitive";
 				LOG_ERROR(errorMessage.c_str());
 				SEAssertF(errorMessage.c_str());
