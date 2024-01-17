@@ -1,5 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "Config.h"
+#include "CoreEngine.h"
 #include "EntityManager.h"
 #include "UIManager.h"
 #include "LogManager.h"
@@ -17,15 +18,8 @@ namespace fr
 
 	UIManager::UIManager()
 		: m_imguiMenuVisible(false)
+		, m_prevImguiMenuVisible(false)
 	{
-
-	}
-
-
-	void UIManager::Update(uint64_t frameNum, double stepTimeMs)
-	{
-		HandleEvents();
-		UpdateImGui();
 	}
 
 
@@ -35,6 +29,36 @@ namespace fr
 
 		// Event subscriptions:
 		en::EventManager::Get()->Subscribe(en::EventManager::EventType::InputToggleConsole, this);
+	}
+
+
+	void UIManager::Update(uint64_t frameNum, double stepTimeMs)
+	{
+		HandleEvents();
+
+		// Handle the ImGui visible/not visible and relative mouse mode toggle
+		if (m_imguiMenuVisible != m_prevImguiMenuVisible)
+		{
+			m_prevImguiMenuVisible = m_imguiMenuVisible;
+
+			// If true, hide the mouse and lock it to the window
+			const bool captureMouse = !m_imguiMenuVisible;
+			en::CoreEngine::Get()->GetWindow()->SetRelativeMouseMode(captureMouse);
+
+			// Disable ImGui mouse listening if the console is not active: Prevents UI elements
+			// flashing as the hidden mouse cursor passes by
+			ImGuiIO& io = ImGui::GetIO();
+			if (m_imguiMenuVisible)
+			{
+				io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
+			}
+			else
+			{
+				io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
+			}
+		}
+
+		UpdateImGuiMenus();
 	}
 
 
@@ -78,7 +102,7 @@ namespace fr
 	}
 
 
-	void UIManager::UpdateImGui()
+	void UIManager::UpdateImGuiMenus()
 	{
 		static bool s_showConsoleLog = false;
 		static bool s_showEntityMgrDebug = false;

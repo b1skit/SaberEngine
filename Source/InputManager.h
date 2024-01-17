@@ -44,9 +44,6 @@ namespace en
 
 		std::unordered_map<SEKeycode, en::KeyboardInputButton> m_SEKeycodesToSEEventEnums;
 
-		bool m_consoleTriggered; // Is the console menu currently holding focus?
-		bool m_prevConsoleTriggeredState;
-
 	private:
 		InputManager(InputManager const&) = delete; // Disallow copying of our Singleton
 		void operator=(InputManager const&) = delete;

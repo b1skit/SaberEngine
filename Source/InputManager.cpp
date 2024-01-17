@@ -137,8 +137,6 @@ namespace en
 
 
 	InputManager::InputManager()
-		: m_consoleTriggered(false)
-		, m_prevConsoleTriggeredState(false)
 	{
 		// Initialize keyboard keys:
 		for (size_t i = 0; i < en::KeyboardInputButton_Count; i++)
@@ -209,27 +207,7 @@ namespace en
 
 		HandleEvents();
 		
-		// Handle the console toggle key: Enables/disables locking the mouse to the window and hiding the pointer
-		if (m_consoleTriggered != m_prevConsoleTriggeredState)
-		{
-			m_prevConsoleTriggeredState = m_consoleTriggered;
 
-			// If true, hide the mouse and lock it to the window
-			const bool captureMouse = !m_consoleTriggered;
-			en::CoreEngine::Get()->GetWindow()->SetRelativeMouseMode(captureMouse);
-
-			// Disable ImGui mouse listening if the console is not active: Prevents UI elements
-			// flashing as the hidden mouse cursor passes by
-			ImGuiIO& io = ImGui::GetIO();
-			if (m_consoleTriggered)
-			{
-				io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
-			}
-			else
-			{
-				io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
-			}
-		}
 	}
 
 
@@ -320,14 +298,7 @@ namespace en
 						break;
 						case KeyboardInputButton::InputButton_Console:
 						{
-							// The InputManager must broadcast the transformed console toggle event, as well as react to it
 							transformedEvent.m_type = EventManager::EventType::InputToggleConsole;
-
-							// Toggle the mouse locking for the console display when the button is pressed down only
-							if (keystate == true)
-							{
-								m_consoleTriggered = !m_consoleTriggered;
-							}
 						}
 						break;
 						case KeyboardInputButton::InputButton_VSync:

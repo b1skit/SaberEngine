@@ -30,10 +30,11 @@ namespace fr
 
 
 	private:
-		void UpdateImGui();
+		void UpdateImGuiMenus();
 
 
 	private:
 		bool m_imguiMenuVisible;
+		bool m_prevImguiMenuVisible;
 	};
 }
