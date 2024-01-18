@@ -84,7 +84,7 @@ namespace en
 
 	void EventManager::Notify(EventInfo&& eventInfo)
 	{
-		SEAssert("Event type is not initialized", eventInfo.m_type != EventManager::Uninitialized);
+		SEAssert(eventInfo.m_type != EventManager::Uninitialized, "Event type is not initialized");
 
 		std::lock_guard<std::mutex> lock(m_eventMutex);
 		m_eventQueues[(size_t)eventInfo.m_type].emplace_back(std::move(eventInfo));

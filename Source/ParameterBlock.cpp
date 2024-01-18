@@ -21,12 +21,12 @@ namespace re
 	{
 		platform::ParameterBlock::CreatePlatformParams(*this);
 
-		SEAssert("Invalid PBDataType", dataType != PBDataType::PBDataType_Count);
+		SEAssert(dataType != PBDataType::PBDataType_Count, "Invalid PBDataType");
 		m_platformParams->m_dataType = dataType;
 
-		SEAssert("Invalid number of elements", 
-			(numElements == 1 && dataType == PBDataType::SingleElement) || 
-			(numElements >= 1 && dataType == PBDataType::Array));
+		SEAssert((numElements == 1 && dataType == PBDataType::SingleElement) || 
+			(numElements >= 1 && dataType == PBDataType::Array),
+			"Invalid number of elements");
 		m_platformParams->m_numElements = numElements;
 	}
 
@@ -37,8 +37,8 @@ namespace re
 		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
 		pbm.RegisterAndAllocateParameterBlock(newPB, numBytes);
 
-		SEAssert("Invalid type detected. Can only set data of the original type",
-			typeIDHash == newPB->m_typeIDHash);
+		SEAssert(typeIDHash == newPB->m_typeIDHash,
+			"Invalid type detected. Can only set data of the original type");
 
 		// Note: We commit via the PBM directly here, as we might be an immutable PB
 		pbm.Commit(newPB->GetUniqueID(), data);
@@ -50,9 +50,9 @@ namespace re
 
 	void ParameterBlock::CommitInternal(void const* data, uint64_t typeIDHash)
 	{
-		SEAssert("Invalid type detected. Can only set data of the original type",
-			typeIDHash == m_typeIDHash);
-		SEAssert("Cannot set data of an immutable param block", m_pbType == PBType::Mutable);
+		SEAssert(typeIDHash == m_typeIDHash,
+			"Invalid type detected. Can only set data of the original type");
+		SEAssert(m_pbType == PBType::Mutable, "Cannot set data of an immutable param block");
 
 		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
 		pbm.Commit(GetUniqueID(), data);
@@ -90,15 +90,16 @@ namespace re
 	ParameterBlock::~ParameterBlock()
 	{
 		re::ParameterBlock::PlatformParams* params = GetPlatformParams();
-		SEAssert("Parameter block destructor called, but parameter block is still marked as created. Did a parameter "
-			"block go out of scope without Destroy() being called?", !params->m_isCreated);
+		SEAssert(!params->m_isCreated,
+			"Parameter block destructor called, but parameter block is still marked as created. Did a parameter "
+			"block go out of scope without Destroy() being called?");
 	}
 
 
 	void ParameterBlock::Destroy()
 	{
 		re::ParameterBlock::PlatformParams* params = GetPlatformParams();
-		SEAssert("Parameter block has not been created, or has already been destroyed", params->m_isCreated);
+		SEAssert(params->m_isCreated, "Parameter block has not been created, or has already been destroyed");
 		
 		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
 		pbm.Deallocate(GetUniqueID()); // Internally makes a (deferred) call to platform::ParameterBlock::Destroy

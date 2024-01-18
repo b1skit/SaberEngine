@@ -84,7 +84,7 @@ namespace opengl
 		{
 		case re::Texture::Format::RGBA32F:
 		{
-			SEAssert("32-bit sRGB textures are not supported", texParams.m_colorSpace != re::Texture::ColorSpace::sRGB);
+			SEAssert(texParams.m_colorSpace != re::Texture::ColorSpace::sRGB, "32-bit sRGB textures are not supported");
 			m_format = GL_RGBA;
 			m_internalFormat = GL_RGBA32F;
 			m_type = GL_FLOAT;
@@ -92,7 +92,7 @@ namespace opengl
 		break;
 		case re::Texture::Format::RG32F:
 		{
-			SEAssert("32-bit sRGB textures are not supported", texParams.m_colorSpace != re::Texture::ColorSpace::sRGB);
+			SEAssert(texParams.m_colorSpace != re::Texture::ColorSpace::sRGB, "32-bit sRGB textures are not supported");
 			m_format = GL_RG;
 			m_internalFormat = GL_RG32F;
 			m_type = GL_FLOAT;
@@ -100,7 +100,7 @@ namespace opengl
 		break;
 		case re::Texture::Format::R32F:
 		{
-			SEAssert("32-bit sRGB textures are not supported", texParams.m_colorSpace != re::Texture::ColorSpace::sRGB);
+			SEAssert(texParams.m_colorSpace != re::Texture::ColorSpace::sRGB, "32-bit sRGB textures are not supported");
 			m_format = GL_R;
 			m_internalFormat = GL_R32F;
 			m_type = GL_FLOAT;
@@ -211,7 +211,7 @@ namespace opengl
 			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
 		// TODO: Support texture updates after modification
-		SEAssert("Texture has been modified, and needs to be rebuffered", params->m_isDirty == false);
+		SEAssert(params->m_isDirty == false, "Texture has been modified, and needs to be rebuffered");
 
 		glBindTextures(textureUnit, 1, &params->m_textureID);
 	}
@@ -220,22 +220,22 @@ namespace opengl
 	void opengl::Texture::BindAsImageTexture(
 		re::Texture const& texture, uint32_t textureUnit, uint32_t subresourceIdx, uint32_t accessMode)
 	{
-		SEAssert("Invalid access mode",
-			accessMode == GL_READ_ONLY ||
+		SEAssert(accessMode == GL_READ_ONLY ||
 			accessMode == GL_WRITE_ONLY ||
-			accessMode == GL_READ_WRITE);
+			accessMode == GL_READ_WRITE,
+			"Invalid access mode");
 
 		opengl::Texture::PlatformParams const* texPlatParams =
 			texture.GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
 
-		SEAssert("Texture is not created", texPlatParams->m_isCreated);
+		SEAssert(texPlatParams->m_isCreated, "Texture is not created");
 
-		SEAssert("Texture is not marked for compute usage",
-			(texture.GetTextureParams().m_usage & re::Texture::Usage::ComputeTarget));
+		SEAssert((texture.GetTextureParams().m_usage & re::Texture::Usage::ComputeTarget),
+			"Texture is not marked for compute usage");
 
-		SEAssert("Format is not compatible. Note: We currently don't check for non-exact but compatible formats, "
-			"but should. See Texture_OpenGL.cpp::GetFormatIsImageTextureCompatible",
-			texPlatParams->m_formatIsImageTextureCompatible);
+		SEAssert(texPlatParams->m_formatIsImageTextureCompatible,
+			"Format is not compatible. Note: We currently don't check for non-exact but compatible formats, "
+			"but should. See Texture_OpenGL.cpp::GetFormatIsImageTextureCompatible");
 
 		glBindImageTexture(
 			textureUnit,						// unit: Index to bind to
@@ -251,16 +251,16 @@ namespace opengl
 	void opengl::Texture::Create(re::Texture& texture)
 	{
 		opengl::Texture::PlatformParams* params = texture.GetPlatformParams()->As<opengl::Texture::PlatformParams*>();
-		SEAssert("Attempting to create a texture that already exists", 
-			!glIsTexture(params->m_textureID) && !params->m_isCreated);
+		SEAssert(!glIsTexture(params->m_textureID) && !params->m_isCreated,
+			"Attempting to create a texture that already exists");
 		params->m_isCreated = true;
 
 		LOG("Creating & buffering texture: \"%s\"", texture.GetName().c_str());
 
 		// Ensure our texture is correctly configured:
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
-		SEAssert("Texture has a bad configuration", 
-			texParams.m_dimension != re::Texture::Dimension::TextureCubeMap || texParams.m_faces == 6);
+		SEAssert(texParams.m_dimension != re::Texture::Dimension::TextureCubeMap || texParams.m_faces == 6,
+			"Texture has a bad configuration");
 
 		// Generate textureID names. Note: We must call glBindTexture immediately after to associate the name with 
 		// a texture. It will not have the correct dimensionality until this is done
@@ -280,7 +280,7 @@ namespace opengl
 		default:
 			SEAssertF("Invalid texture dimension");
 		}
-		SEAssert("OpenGL failed to generate new texture name", glIsTexture(params->m_textureID) == GL_TRUE);
+		SEAssert(glIsTexture(params->m_textureID) == GL_TRUE, "OpenGL failed to generate new texture name");
 
 		// RenderDoc object name:
 		glObjectLabel(GL_TEXTURE, params->m_textureID, -1, texture.GetName().c_str());
@@ -302,7 +302,7 @@ namespace opengl
 			for (uint32_t i = 0; i < texParams.m_faces; i++)
 			{
 				void* data = texture.GetTexelData(i);
-				SEAssert("Color target must have data to buffer", data);				
+				SEAssert(data, "Color target must have data to buffer");				
 
 				if (texParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
 				{

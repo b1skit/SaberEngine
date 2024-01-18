@@ -137,11 +137,11 @@ namespace dx12
 	{
 		dx12::Sampler::PlatformParams* samplerPlatParams =
 			sampler.GetPlatformParams()->As<dx12::Sampler::PlatformParams*>();
-		SEAssert("Sampler is already created", samplerPlatParams->m_isCreated == false);
+		SEAssert(samplerPlatParams->m_isCreated == false, "Sampler is already created");
 		samplerPlatParams->m_isCreated = true;
 
 		re::Sampler::SamplerParams const& samplerParams = sampler.GetSamplerParams();
-		SEAssert("Invalid max anisotropy", samplerParams.m_maxAnisotropy >= 1 && samplerParams.m_maxAnisotropy <= 16);
+		SEAssert(samplerParams.m_maxAnisotropy >= 1 && samplerParams.m_maxAnisotropy <= 16, "Invalid max anisotropy");
 
 		// We initialize a D3D12_STATIC_SAMPLER_DESC here for (re)use when creating root signatures
 		samplerPlatParams->m_staticSamplerDesc.Filter =
@@ -176,7 +176,7 @@ namespace dx12
 	{
 		dx12::Sampler::PlatformParams* samplerPlatParams =
 			sampler.GetPlatformParams()->As<dx12::Sampler::PlatformParams*>();
-		SEAssert("Sampler has not been created", samplerPlatParams->m_isCreated == true);
+		SEAssert(samplerPlatParams->m_isCreated == true, "Sampler has not been created");
 		samplerPlatParams->m_isCreated = false;
 	}
 }

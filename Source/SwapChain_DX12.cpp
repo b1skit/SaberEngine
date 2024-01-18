@@ -78,7 +78,7 @@ namespace dx12
 		swapChainDesc.Flags = swapChainParams->m_tearingSupported ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 
-		SEAssert("Window cannot be null", en::CoreEngine::Get()->GetWindow());
+		SEAssert(en::CoreEngine::Get()->GetWindow(), "Window cannot be null");
 		win32::Window::PlatformParams* windowPlatParams =
 			en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
@@ -150,8 +150,8 @@ namespace dx12
 
 			swapChainParams->m_backbufferTargetSets[backbufferIdx]->SetColorTarget(0, colorTargetTex, targetParams);
 
-			SEAssert("Unexpected texture format selected", 
-				colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format == colorBufferFormat);
+			SEAssert(colorTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>()->m_format == colorBufferFormat,
+				"Unexpected texture format selected");
 
 			// Set default viewports and scissor rects. Note: This is NOT required, just included for clarity
 			swapChainParams->m_backbufferTargetSets[backbufferIdx]->SetViewport(

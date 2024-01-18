@@ -69,10 +69,10 @@ namespace fr
 		glm::vec3 const& positionMinXYZ,
 		glm::vec3 const& positionMaxXYZ)
 	{
-		SEAssert("A MeshPrimitive's owningEntity requires a TransformComponent",
-			em.HasComponent<fr::TransformComponent>(owningEntity));
-		SEAssert("A MeshPrimitive's owningEntity requires a RenderDataComponent",
-			em.HasComponent<gr::RenderDataComponent>(owningEntity));
+		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
+			"A MeshPrimitive's owningEntity requires a TransformComponent");
+		SEAssert(em.HasComponent<gr::RenderDataComponent>(owningEntity),
+			"A MeshPrimitive's owningEntity requires a RenderDataComponent");
 
 		entt::entity meshPrimitiveConcept = em.CreateEntity(meshPrimitive->GetName());
 
@@ -103,10 +103,10 @@ namespace fr
 		glm::vec3 const& positionMinXYZ /*= fr::BoundsComponent::k_invalidMinXYZ*/, // Default: Compute bounds manually
 		glm::vec3 const& positionMaxXYZ /*= fr::BoundsComponent::k_invalidMaxXYZ*/) // Default: Compute bounds manually
 	{
-		SEAssert("A MeshPrimitive's owningEntity requires a TransformComponent",
-			em.HasComponent<fr::TransformComponent>(owningEntity));
-		SEAssert("A MeshPrimitive's owningEntity requires a RenderDataComponent",
-			em.HasComponent<gr::RenderDataComponent>(owningEntity));
+		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
+			"A MeshPrimitive's owningEntity requires a TransformComponent");
+		SEAssert(em.HasComponent<gr::RenderDataComponent>(owningEntity),
+			"A MeshPrimitive's owningEntity requires a RenderDataComponent");
 
 		gr::RenderDataComponent* meshPrimRenderCmpt = 
 			em.GetFirstInHierarchyAbove<gr::RenderDataComponent>(owningEntity);

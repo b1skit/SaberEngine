@@ -63,7 +63,7 @@ namespace re
 				pRENDERDOC_GetAPI RENDERDOC_GetAPI = 
 					(pRENDERDOC_GetAPI)GetProcAddress(renderDocModule, "RENDERDOC_GetAPI");
 				int result = RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_1_2, (void**)&m_renderDocApi);
-				SEAssert("Failed to get the RenderDoc API", result == 1);
+				SEAssert(result == 1, "Failed to get the RenderDoc API");
 
 				// Set the capture options before the graphics API is initialized:
 				int captureOptionResult = 

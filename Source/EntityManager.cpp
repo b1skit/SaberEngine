@@ -300,8 +300,8 @@ namespace fr
 			std::shared_lock<std::shared_mutex> readLock(m_registeryMutex);
 
 			auto sceneBoundsEntityView = m_registry.view<fr::BoundsComponent, fr::BoundsComponent::SceneBoundsMarker>();
-			SEAssert("A unique scene bounds entity must exist",
-				sceneBoundsEntityView.front() == sceneBoundsEntityView.back());
+			SEAssert(sceneBoundsEntityView.front() == sceneBoundsEntityView.back(),
+				"A unique scene bounds entity must exist");
 
 			const entt::entity sceneBoundsEntity = sceneBoundsEntityView.front();
 			if (sceneBoundsEntity != entt::null)
@@ -318,8 +318,8 @@ namespace fr
 
 	void EntityManager::SetMainCamera(entt::entity camera)
 	{
-		SEAssert("Entity does not have a valid camera component",
-			camera != entt::null && HasComponent<fr::CameraComponent>(camera));
+		SEAssert(camera != entt::null && HasComponent<fr::CameraComponent>(camera),
+			"Entity does not have a valid camera component");
 
 		{
 			std::unique_lock<std::shared_mutex> lock(m_registeryMutex);
@@ -337,7 +337,7 @@ namespace fr
 		auto currentMainCameraView = m_registry.view<fr::CameraComponent::MainCameraMarker>();
 		for (auto entity : currentMainCameraView)
 		{
-			SEAssert("Already found a main camera. This should not be possible", foundCurrentMainCamera == false);
+			SEAssert(foundCurrentMainCamera == false, "Already found a main camera. This should not be possible");
 			foundCurrentMainCamera = true;
 
 			currentMainCamera = entity;
@@ -361,7 +361,7 @@ namespace fr
 		auto camControllerView = m_registry.view<fr::CameraControlComponent>();
 		for (entt::entity entity : camControllerView)
 		{
-			SEAssert("Already found camera controller. This shouldn't be possible", !foundCamController);
+			SEAssert(!foundCamController, "Already found camera controller. This shouldn't be possible");
 			foundCamController = true;
 
 			camControllerTransformCmpt = &m_registry.get<fr::TransformComponent>(entity);
@@ -396,12 +396,12 @@ namespace fr
 		auto currentMainCameraView = m_registry.view<fr::CameraComponent::MainCameraMarker>();
 		for (auto entity : currentMainCameraView)
 		{
-			SEAssert("Already found a main camera. This should not be possible", foundCurrentMainCamera == false);
+			SEAssert(foundCurrentMainCamera == false, "Already found a main camera. This should not be possible");
 			foundCurrentMainCamera = true;
 
 			mainCamEntity = entity;
 		}
-		SEAssert("Failed to find a main camera entity", mainCamEntity != entt::null);
+		SEAssert(mainCamEntity != entt::null, "Failed to find a main camera entity");
 		return mainCamEntity;
 	}
 
@@ -460,7 +460,7 @@ namespace fr
 			fr::BoundsComponent, fr::BoundsComponent::SceneBoundsMarker, DirtyMarker<fr::BoundsComponent>>();
 		for (auto entity : dirtySceneBoundsView)
 		{
-			SEAssert("Already found a dirty scene bounds. This should not be possible", sceneBoundsDirty == false);
+			SEAssert(sceneBoundsDirty == false, "Already found a dirty scene bounds. This should not be possible");
 			sceneBoundsDirty = true;
 		}
 
@@ -499,13 +499,13 @@ namespace fr
 				fr::CameraComponent, fr::CameraComponent::MainCameraMarker, fr::TransformComponent>();
 			for (entt::entity mainCamEntity : mainCameraView)
 			{
-				SEAssert("Already found a main camera. This should not be possible", foundMainCamera == false);
+				SEAssert(foundMainCamera == false, "Already found a main camera. This should not be possible");
 				foundMainCamera = true;
 
 				cameraComponent = &mainCameraView.get<fr::CameraComponent>(mainCamEntity);
 				cameraTransform = &mainCameraView.get<fr::TransformComponent>(mainCamEntity);
 			}
-			SEAssert("Failed to find main CameraComponent or TransformComponent", cameraComponent && cameraTransform);
+			SEAssert(cameraComponent && cameraTransform, "Failed to find main CameraComponent or TransformComponent");
 
 			fr::CameraControlComponent* cameraController = nullptr;
 			fr::TransformComponent* camControllerTransform = nullptr;
@@ -513,13 +513,13 @@ namespace fr
 			auto camControllerView = m_registry.view<fr::CameraControlComponent, fr::TransformComponent>();
 			for (entt::entity entity : camControllerView)
 			{
-				SEAssert("Already found a camera controller. This should not be possible", foundCamController == false);
+				SEAssert(foundCamController == false, "Already found a camera controller. This should not be possible");
 				foundCamController = true;
 
 				cameraController = &camControllerView.get<fr::CameraControlComponent>(entity);
 				camControllerTransform = &camControllerView.get<fr::TransformComponent>(entity);
 			}
-			SEAssert("Failed to find a camera controller and/or transform", cameraController && camControllerTransform);
+			SEAssert(cameraController && camControllerTransform, "Failed to find a camera controller and/or transform");
 
 			fr::CameraControlComponent::Update(
 				*cameraController,
@@ -543,8 +543,8 @@ namespace fr
 			bool foundSceneBoundsEntity = false;
 			for (entt::entity entity : sceneBoundsEntityView)
 			{
-				SEAssert("Scene bounds entity already found. This should not be possible", 
-					foundSceneBoundsEntity == false);
+				SEAssert(foundSceneBoundsEntity == false, 
+					"Scene bounds entity already found. This should not be possible");
 				foundSceneBoundsEntity = true;
 
 				sceneBoundsEntity = entity;
@@ -666,10 +666,10 @@ namespace fr
 						if (m_registry.any_of<fr::ShadowMapComponent::HasShadowMarker>(entity))
 						{
 							fr::ShadowMapComponent* shadowMapCmpt = &m_registry.get<fr::ShadowMapComponent>(entity);
-							SEAssert("Failed to find shadow map component", shadowMapCmpt);
+							SEAssert(shadowMapCmpt, "Failed to find shadow map component");
 
 							fr::CameraComponent* shadowCamCmpt = &m_registry.get<fr::CameraComponent>(entity);
-							SEAssert("Failed to find shadow camera", shadowCamCmpt);
+							SEAssert(shadowCamCmpt, "Failed to find shadow camera");
 
 							shadowCam = &shadowCamCmpt->GetCameraForModification();
 						}

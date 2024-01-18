@@ -112,12 +112,12 @@ namespace
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 
 		ComPtr<ID3D12DeviceRemovedExtendedData> dredQuery;
-		SEAssert("Failed to get DRED query interface", 
-			SUCCEEDED(context->GetDevice().GetD3DDisplayDevice()->QueryInterface(IID_PPV_ARGS(&dredQuery))));
+		SEAssert(SUCCEEDED(context->GetDevice().GetD3DDisplayDevice()->QueryInterface(IID_PPV_ARGS(&dredQuery))),
+			"Failed to get DRED query interface");
 
 		D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT dredAutoBreadcrumbsOutput;
-		SEAssert("Failed to get DRED auto breadcrumbs output", 
-			SUCCEEDED(dredQuery->GetAutoBreadcrumbsOutput(&dredAutoBreadcrumbsOutput)));
+		SEAssert(SUCCEEDED(dredQuery->GetAutoBreadcrumbsOutput(&dredAutoBreadcrumbsOutput)),
+			"Failed to get DRED auto breadcrumbs output");
 
 		// Breadcrumbs:
 		D3D12_AUTO_BREADCRUMB_NODE const* breadcrumbHead = dredAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
@@ -143,8 +143,8 @@ namespace
 		
 		// Page fault allocation output:
 		D3D12_DRED_PAGE_FAULT_OUTPUT dredPageFaultOutput;
-		SEAssert("Failed to get DRED page fault allocation output",
-			SUCCEEDED(dredQuery->GetPageFaultAllocationOutput(&dredPageFaultOutput)));
+		SEAssert(SUCCEEDED(dredQuery->GetPageFaultAllocationOutput(&dredPageFaultOutput)),
+			"Failed to get DRED page fault allocation output");
 
 		LOG_ERROR("DRED PAGE FAULT OUTPUT:\n-----------------------");
 		LOG_ERROR("Page fault virtual address: %llu\n", dredPageFaultOutput.PageFaultVA);
@@ -268,7 +268,7 @@ namespace dx12
 		uint32_t nameLength = k_nameLength;
 		wchar_t extractedname[k_nameLength];
 		object->GetPrivateData(WKPDID_D3DDebugObjectNameW, &nameLength, &extractedname);
-		SEAssert("Invalid name length retrieved. Was a debug name set on this object?", nameLength > 0);
+		SEAssert(nameLength > 0, "Invalid name length retrieved. Was a debug name set on this object?");
 
 		extractedname[k_nameLength - 1] = '\0'; // Suppress warning C6054
 

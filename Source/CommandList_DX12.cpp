@@ -100,7 +100,7 @@ namespace
 	ComPtr<ID3D12CommandAllocator> CreateCommandAllocator(
 		ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type, std::wstring const& name)
 	{
-		SEAssert("Device cannot be null", device);
+		SEAssert(device, "Device cannot be null");
 
 		ComPtr<ID3D12CommandAllocator> commandAllocator = nullptr;
 
@@ -173,7 +173,7 @@ namespace dx12
 		, m_currentRootSignature(nullptr)
 		, m_currentPSO(nullptr)
 	{
-		SEAssert("Device cannot be null", device);
+		SEAssert(device, "Device cannot be null");
 
 		// Name the command list with a monotonically-increasing index to make it easier to identify
 		const std::wstring commandListname = std::wstring(
@@ -261,7 +261,7 @@ namespace dx12
 		m_currentPSO = &pso;
 
 		ID3D12PipelineState* pipelineState = pso.GetD3DPipelineState();
-		SEAssert("Pipeline state is null. This is unexpected", pipelineState);
+		SEAssert(pipelineState, "Pipeline state is null. This is unexpected");
 
 		m_commandList->SetPipelineState(pipelineState);
 	}
@@ -269,8 +269,8 @@ namespace dx12
 
 	void CommandList::SetGraphicsRootSignature(dx12::RootSignature const* rootSig)
 	{
-		SEAssert("Only graphics command lists can have a graphics/direct root signature",
-			m_d3dType == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT);
+		SEAssert(m_d3dType == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT,
+			"Only graphics command lists can have a graphics/direct root signature");
 
 		if (m_currentRootSignature == rootSig)
 		{
@@ -281,7 +281,7 @@ namespace dx12
 		m_gpuCbvSrvUavDescriptorHeaps->ParseRootSignatureDescriptorTables(rootSig);
 
 		ID3D12RootSignature* rootSignature = rootSig->GetD3DRootSignature();
-		SEAssert("Root signature is null. This is unexpected", rootSignature);
+		SEAssert(rootSignature, "Root signature is null. This is unexpected");
 
 		m_commandList->SetGraphicsRootSignature(rootSignature);
 	}
@@ -289,9 +289,9 @@ namespace dx12
 
 	void CommandList::SetComputeRootSignature(dx12::RootSignature const* rootSig)
 	{
-		SEAssert("Only graphics or compute command lists can have a compute root signature", 
-			m_d3dType == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT || 
-			m_d3dType == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE);
+		SEAssert(m_d3dType == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT || 
+			m_d3dType == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE,
+			"Only graphics or compute command lists can have a compute root signature");
 
 		if (m_currentRootSignature == rootSig)
 		{
@@ -302,7 +302,7 @@ namespace dx12
 		m_gpuCbvSrvUavDescriptorHeaps->ParseRootSignatureDescriptorTables(rootSig);
 
 		ID3D12RootSignature* rootSignature = rootSig->GetD3DRootSignature();
-		SEAssert("Root signature is null. This is unexpected", rootSignature);
+		SEAssert(rootSignature, "Root signature is null. This is unexpected");
 
 		m_commandList->SetComputeRootSignature(rootSignature);
 	}
@@ -310,16 +310,16 @@ namespace dx12
 
 	void CommandList::SetParameterBlock(re::ParameterBlock const* parameterBlock)
 	{
-		SEAssert("Root signature has not been set", m_currentRootSignature != nullptr);
+		SEAssert(m_currentRootSignature != nullptr, "Root signature has not been set");
 
 		dx12::ParameterBlock::PlatformParams const* pbPlatParams =
 			parameterBlock->GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
 
 		RootSignature::RootParameter const* rootSigEntry = 
 			m_currentRootSignature->GetRootSignatureEntry(parameterBlock->GetName());
-		SEAssert("Invalid root signature entry", 
-			rootSigEntry ||
-			en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
+		SEAssert(rootSigEntry ||
+			en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
+			"Invalid root signature entry");
 
 		if (rootSigEntry)
 		{
@@ -367,7 +367,7 @@ namespace dx12
 		case re::Batch::GeometryMode::IndexedInstanced:
 		{
 			re::VertexStream const* indexStream = batchGraphicsParams.m_indexStream;
-			SEAssert("Index stream cannot be null for indexed draws", indexStream);
+			SEAssert(indexStream, "Index stream cannot be null for indexed draws");
 
 			dx12::VertexStream::PlatformParams_Index* indexPlatformParams =
 				indexStream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams_Index*>();
@@ -386,7 +386,7 @@ namespace dx12
 		case re::Batch::GeometryMode::ArrayInstanced:
 		{
 			re::VertexStream const* positionStream = batchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position];
-			SEAssert("Position stream cannot be null", positionStream);
+			SEAssert(positionStream, "Position stream cannot be null");
 
 			CommitGPUDescriptors();
 
@@ -422,7 +422,7 @@ namespace dx12
 
 	void CommandList::SetVertexBuffers(re::VertexStream const* const* streams, uint8_t count)
 	{
-		SEAssert("Invalid vertex streams received", streams && count > 0);
+		SEAssert(streams && count > 0, "Invalid vertex streams received");
 
 		uint32_t currentStartSlot = 0;
 
@@ -475,7 +475,7 @@ namespace dx12
 
 	void CommandList::ClearDepthTarget(re::TextureTarget const* depthTarget) const
 	{
-		SEAssert("Target texture cannot be null", depthTarget);
+		SEAssert(depthTarget, "Target texture cannot be null");
 
 		if (depthTarget->GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled)
 		{
@@ -483,11 +483,11 @@ namespace dx12
 
 			re::Texture::TextureParams const& depthTexParams = depthTex->GetTextureParams();
 
-			SEAssert("Target texture must be a depth target",
-				(depthTexParams.m_usage & re::Texture::Usage::DepthTarget) != 0);
+			SEAssert((depthTexParams.m_usage & re::Texture::Usage::DepthTarget) != 0,
+				"Target texture must be a depth target");
 
 			const uint32_t numDepthMips = depthTex->GetNumMips();
-			SEAssert("Depth target has mips. This is unexpected", numDepthMips == 1);
+			SEAssert(numDepthMips == 1, "Depth target has mips. This is unexpected");
 
 			re::TextureTarget::TargetParams const& depthTargetParams = depthTarget->GetTargetParams();
 
@@ -496,8 +496,8 @@ namespace dx12
 
 			if (depthTargetParams.m_targetFace == re::TextureTarget::k_allFaces)
 			{
-				SEAssert("We're (currently) expecting the a cubemap",
-					depthTexParams.m_dimension == re::Texture::Dimension::TextureCubeMap);
+				SEAssert(depthTexParams.m_dimension == re::Texture::Dimension::TextureCubeMap,
+					"We're (currently) expecting the a cubemap");
 
 				D3D12_CPU_DESCRIPTOR_HANDLE const& dsvDescriptor =
 					depthTargetPlatParams->m_cubemapDescriptor.GetBaseDescriptor();
@@ -529,11 +529,11 @@ namespace dx12
 
 	void CommandList::ClearColorTarget(re::TextureTarget const* colorTarget) const
 	{
-		SEAssert("Target texture cannot be null", colorTarget);
+		SEAssert(colorTarget, "Target texture cannot be null");
 
-		SEAssert("Target texture must be a color target", 
-			(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) ||
-			(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::SwapchainColorProxy));
+		SEAssert((colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::ColorTarget) ||
+			(colorTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::SwapchainColorProxy),
+			"Target texture must be a color target");
 
 		if (colorTarget->GetClearMode() == re::TextureTarget::TargetParams::ClearMode::Enabled)
 		{
@@ -563,8 +563,8 @@ namespace dx12
 
 	void CommandList::SetRenderTargets(re::TextureTargetSet const& targetSet, bool readOnlyDepth)
 	{
-		SEAssert("This method is not valid for compute or copy command lists",
-			m_type != CommandListType::Compute && m_type != CommandListType::Copy);
+		SEAssert(m_type != CommandListType::Compute && m_type != CommandListType::Copy,
+			"This method is not valid for compute or copy command lists");
 
 		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> colorTargetDescriptors;
 		colorTargetDescriptors.reserve(targetSet.GetColorTargets().size());
@@ -623,8 +623,8 @@ namespace dx12
 
 			if (depthTargetParams.m_targetFace == re::TextureTarget::k_allFaces)
 			{
-				SEAssert("We're (currently) expecting a cubemap",
-					depthStencilTarget->GetTexture()->GetTextureParams().m_dimension == re::Texture::Dimension::TextureCubeMap);
+				SEAssert(depthStencilTarget->GetTexture()->GetTextureParams().m_dimension == re::Texture::Dimension::TextureCubeMap,
+					"We're (currently) expecting a cubemap");
 
 				if (depthWriteEnabled)
 				{
@@ -682,11 +682,11 @@ namespace dx12
 
 	void CommandList::SetComputeTargets(re::TextureTargetSet const& textureTargetSet)
 	{
-		SEAssert("It is not possible to attach a depth buffer as a target to a compute shader", 
-			textureTargetSet.GetDepthStencilTarget() == nullptr);
+		SEAssert(textureTargetSet.GetDepthStencilTarget() == nullptr,
+			"It is not possible to attach a depth buffer as a target to a compute shader");
 
-		SEAssert("This function should only be called from compute command lists", m_type == CommandListType::Compute);
-		SEAssert("Pipeline is not currently set", m_currentPSO);
+		SEAssert(m_type == CommandListType::Compute, "This function should only be called from compute command lists");
+		SEAssert(m_currentPSO, "Pipeline is not currently set");
 
 		// Track the D3D resources we've seen during this call, to help us decide whether to insert a UAV barrier or 
 		// not. We search in reverse order because it seems more natural that the same resource would be attached in
@@ -717,24 +717,24 @@ namespace dx12
 			}			
 			std::shared_ptr<re::Texture> colorTex = colorTarget.GetTexture();
 
-			SEAssert("It is unexpected that we're trying to attach a texture with DepthTarget usage to a compute shader",
-				(colorTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0);
+			SEAssert((colorTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0,
+				"It is unexpected that we're trying to attach a texture with DepthTarget usage to a compute shader");
 
 			// We bind our UAV targets by mapping TextureTargetSet index to register/bind point values
 			RootSignature::RootParameter const* rootSigEntry = m_currentRootSignature->GetRootSignatureEntry(
 					RootSignature::DescriptorType::UAV,
 					static_cast<uint8_t>(i));
 
-			SEAssert("Invalid root signature entry",
-				rootSigEntry || en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
+			SEAssert(rootSigEntry || en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
+				"Invalid root signature entry");
 
 			if (rootSigEntry)
 			{
-				SEAssert("We currently assume all textures belong to descriptor tables",
-					rootSigEntry->m_type == RootSignature::RootParameter::Type::DescriptorTable);
+				SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::DescriptorTable,
+					"We currently assume all textures belong to descriptor tables");
 
-				SEAssert("Compute shaders can only write to UAVs",
-					rootSigEntry->m_tableEntry.m_type == dx12::RootSignature::DescriptorType::UAV);
+				SEAssert(rootSigEntry->m_tableEntry.m_type == dx12::RootSignature::DescriptorType::UAV,
+					"Compute shaders can only write to UAVs");
 
 				re::TextureTarget::TargetParams const& targetParams = colorTarget.GetTargetParams();
 
@@ -743,8 +743,7 @@ namespace dx12
 
 				const uint32_t targetMip = targetParams.m_targetMip;
 
-				SEAssert("Not enough UAV descriptors",
-					targetMip < texPlatParams->m_uavCpuDescAllocations.size());
+				SEAssert(targetMip < texPlatParams->m_uavCpuDescAllocations.size(), "Not enough UAV descriptors");
 
 				dx12::DescriptorAllocation const* descriptorAllocation =
 					&texPlatParams->m_uavCpuDescAllocations[targetMip];
@@ -783,8 +782,8 @@ namespace dx12
 
 	void CommandList::SetViewport(re::TextureTargetSet const& targetSet) const
 	{
-		SEAssert("This method is not valid for compute or copy command lists",
-			m_type != CommandListType::Compute && m_type != CommandListType::Copy);
+		SEAssert(m_type != CommandListType::Compute && m_type != CommandListType::Copy,
+			"This method is not valid for compute or copy command lists");
 
 		dx12::TextureTargetSet::PlatformParams* targetSetParams =
 			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
@@ -810,7 +809,7 @@ namespace dx12
 	void CommandList::UpdateSubresources(
 		re::Texture const* texture, ID3D12Resource* intermediate, size_t intermediateOffset)
 	{
-		SEAssert("Expected a copy command list", m_type == dx12::CommandListType::Copy);
+		SEAssert(m_type == dx12::CommandListType::Copy, "Expected a copy command list");
 
 		dx12::Texture::PlatformParams const* texPlatParams = 
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
@@ -828,7 +827,7 @@ namespace dx12
 		for (uint32_t faceIdx = 0; faceIdx < texParams.m_faces; faceIdx++)
 		{
 			void const* initialData = texture->GetTexelData(faceIdx);
-			SEAssert("Initial data cannot be null", initialData);
+			SEAssert(initialData, "Initial data cannot be null");
 
 			subresourceData.emplace_back(D3D12_SUBRESOURCE_DATA{
 				.pData = initialData,
@@ -853,7 +852,7 @@ namespace dx12
 			0,												// Index of 1st subresource in the resource
 			static_cast<uint32_t>(subresourceData.size()),	// Number of subresources in the subresources array
 			subresourceData.data());						// Array of subresource data structs
-		SEAssert("UpdateSubresources returned 0 bytes. This is unexpected", bufferSizeResult > 0);
+		SEAssert(bufferSizeResult > 0, "UpdateSubresources returned 0 bytes. This is unexpected");
 
 		// Transition to the copy destination state:
 		TransitionResource(texture, D3D12_RESOURCE_STATE_COPY_DEST, re::Texture::k_allMips);
@@ -863,7 +862,7 @@ namespace dx12
 	void CommandList::UpdateSubresources(
 		re::VertexStream const* stream, ID3D12Resource* intermediate, size_t intermediateOffset)
 	{
-		SEAssert("Expected a copy command list", m_type == dx12::CommandListType::Copy);
+		SEAssert(m_type == dx12::CommandListType::Copy, "Expected a copy command list");
 
 		dx12::VertexStream::PlatformParams const* streamPlatformParams =
 			stream->GetPlatformParams()->As<dx12::VertexStream::PlatformParams const*>();
@@ -884,7 +883,7 @@ namespace dx12
 			0,												// Number of subresources in the resource.
 			1,												// Required byte size for the update
 			&subresourceData);
-		SEAssert("UpdateSubresources returned 0 bytes. This is unexpected", bufferSizeResult > 0);
+		SEAssert(bufferSizeResult > 0, "UpdateSubresources returned 0 bytes. This is unexpected");
 
 		TransitionResource(streamPlatformParams->m_bufferResource.Get(), 1, D3D12_RESOURCE_STATE_COPY_DEST, 0);
 	}
@@ -893,25 +892,25 @@ namespace dx12
 	void CommandList::SetTexture(
 		std::string const& shaderName, re::Texture const* texture, uint32_t srcMip, bool skipTransition)
 	{
-		SEAssert("Pipeline is not currently set", m_currentPSO);
+		SEAssert(m_currentPSO, "Pipeline is not currently set");
 
-		SEAssert("Unexpected mip level",
-			srcMip < texture->GetNumMips() ||
-			srcMip == re::Texture::k_allMips);
+		SEAssert(srcMip < texture->GetNumMips() ||
+			srcMip == re::Texture::k_allMips, 
+			"Unexpected mip level");
 
 		dx12::Texture::PlatformParams const* texPlatParams = 
 			texture->GetPlatformParams()->As<dx12::Texture::PlatformParams const*>();
 
 		RootSignature::RootParameter const* rootSigEntry =
 			m_currentRootSignature->GetRootSignatureEntry(shaderName);
-		SEAssert("Invalid root signature entry",
-			rootSigEntry ||
-			en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
+		SEAssert(rootSigEntry ||
+			en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
+			"Invalid root signature entry");
 
 		if (rootSigEntry)
 		{
-			SEAssert("We currently assume all textures belong to descriptor tables",
-				rootSigEntry->m_type == RootSignature::RootParameter::Type::DescriptorTable);
+			SEAssert(rootSigEntry->m_type == RootSignature::RootParameter::Type::DescriptorTable,
+				"We currently assume all textures belong to descriptor tables");
 
 			D3D12_RESOURCE_STATES toState = D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON;
 			dx12::DescriptorAllocation const* descriptorAllocation = nullptr;
@@ -919,8 +918,8 @@ namespace dx12
 			{
 			case dx12::RootSignature::DescriptorType::SRV:
 			{
-				SEAssert("Unexpected command list type",
-					m_d3dType == D3D12_COMMAND_LIST_TYPE_COMPUTE || m_d3dType == D3D12_COMMAND_LIST_TYPE_DIRECT);
+				SEAssert(m_d3dType == D3D12_COMMAND_LIST_TYPE_COMPUTE || m_d3dType == D3D12_COMMAND_LIST_TYPE_DIRECT,
+					"Unexpected command list type");
 
 				toState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 				if (m_d3dType != D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE)
@@ -1001,7 +1000,7 @@ namespace dx12
 				SEAssertF("Invalid range type");
 			}
 
-			SEAssert("Descriptor is not valid", descriptorAllocation->IsValid());
+			SEAssert(descriptorAllocation->IsValid(), "Descriptor is not valid");
 
 
 			// If a depth resource is used as both an input and target, we've already recorded the transitions
@@ -1214,7 +1213,7 @@ namespace dx12
 
 	void CommandList::ResourceBarrier(uint32_t numBarriers, D3D12_RESOURCE_BARRIER const* barriers)
 	{
-		SEAssert("Attempting to submit 0 barriers", numBarriers > 0);
+		SEAssert(numBarriers > 0, "Attempting to submit 0 barriers");
 
 		m_commandList->ResourceBarrier(numBarriers, barriers);
 	}

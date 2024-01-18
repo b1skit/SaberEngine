@@ -59,7 +59,7 @@ namespace en
 
 		m_window = std::make_unique<en::Window>(); // Ensure Window exists for first callbacks triggered by Create
 		const bool windowCreated = m_window->Create(windowTitle, xRes, yRes);
-		SEAssert("Failed to create a window", windowCreated);
+		SEAssert(windowCreated, "Failed to create a window");
 
 		// Don't capture the mouse while we're loading
 		m_window->SetRelativeMouseMode(false);

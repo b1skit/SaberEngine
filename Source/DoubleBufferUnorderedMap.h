@@ -126,10 +126,10 @@ namespace util
 	template<class Key, class Value>
 	Value const& DoubleBufferUnorderedMap<Key, Value>::Get(Key const& key) const
 	{
-		SEAssert("Thread is not holding the read lock", m_readingThread == std::this_thread::get_id());
+		SEAssert(m_readingThread == std::this_thread::get_id(), "Thread is not holding the read lock");
 
 		auto const& result = m_unorderedMaps[m_readIdx].find(key);
-		SEAssert("No result found for the given key", result != m_unorderedMaps[m_readIdx].end());
+		SEAssert(result != m_unorderedMaps[m_readIdx].end(), "No result found for the given key");
 		return result.second;
 	}
 
@@ -137,7 +137,7 @@ namespace util
 	template<class Key, class Value>
 	std::unordered_map<Key, Value> const& DoubleBufferUnorderedMap<Key, Value>::Get() const
 	{
-		SEAssert("Thread is not holding the read lock", m_readingThread == std::this_thread::get_id());
+		SEAssert(m_readingThread == std::this_thread::get_id(), "Thread is not holding the read lock");
 		return m_unorderedMaps[m_readIdx];
 	}
 
@@ -145,7 +145,7 @@ namespace util
 	template<class Key, class Value>
 	bool DoubleBufferUnorderedMap<Key, Value>::HasReadData() const
 	{
-		SEAssert("Thread is not holding the read lock", m_readingThread == std::this_thread::get_id());
+		SEAssert(m_readingThread == std::this_thread::get_id(), "Thread is not holding the read lock");
 		return !m_unorderedMaps[m_readIdx].empty();
 	}
 

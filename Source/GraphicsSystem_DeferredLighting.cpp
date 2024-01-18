@@ -51,8 +51,8 @@ namespace
 	{
 		IEMPMREMGenerationParams generationParams;
 
-		SEAssert("Mip level params are invalid. These must be reasonable, even if they're not used (i.e. IEM generation)",
-			currentMipLevel >= 0 && numMipLevels >= 1);
+		SEAssert(currentMipLevel >= 0 && numMipLevels >= 1,
+			"Mip level params are invalid. These must be reasonable, even if they're not used (i.e. IEM generation)");
 
 		float roughness;
 		if (numMipLevels > 1)
@@ -146,11 +146,11 @@ namespace
 		gr::Camera::RenderData const* shadowCamData,
 		std::shared_ptr<re::TextureTargetSet const> targetSet)
 	{
-		SEAssert("Ambient lights do not use the LightParams structure",
-			lightType != fr::Light::Type::AmbientIBL);
+		SEAssert(lightType != fr::Light::Type::AmbientIBL,
+			"Ambient lights do not use the LightParams structure");
 
-		SEAssert("Shadow data and shadow camera data depend on each other", 
-			(shadowData != nullptr) == (shadowCamData != nullptr));
+		SEAssert((shadowData != nullptr) == (shadowCamData != nullptr),
+			"Shadow data and shadow camera data depend on each other");
 
 		LightParams lightParams;
 		memset(&lightParams, 0, sizeof(LightParams)); // Ensure unused elements are zeroed
@@ -262,8 +262,8 @@ namespace gr
 	{
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
-		SEAssert("We currently expect render data for exactly 1 ambient light to exist",
-			renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1);
+		SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
+			"We currently expect render data for exactly 1 ambient light to exist");
 
 		gr::RenderDataID ambientID = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>()[0];
 
@@ -536,11 +536,11 @@ namespace gr
 	void DeferredLightingGraphicsSystem::Create(re::RenderSystem& renderSystem, re::StagePipeline& pipeline)
 	{
 		m_shadowGS = m_graphicsSystemManager->GetGraphicsSystem<gr::ShadowsGraphicsSystem>();
-		SEAssert("Shadow graphics system not found", m_shadowGS != nullptr);
+		SEAssert(m_shadowGS != nullptr, "Shadow graphics system not found");
 
 		GBufferGraphicsSystem* gBufferGS = 
 			m_graphicsSystemManager->GetGraphicsSystem<GBufferGraphicsSystem>();
-		SEAssert("GBuffer GS not found", gBufferGS != nullptr);
+		SEAssert(gBufferGS != nullptr, "GBuffer GS not found");
 		
 		// Create a shared lighting stage texture target:
 		re::Texture::TextureParams lightTargetTexParams;
@@ -606,8 +606,8 @@ namespace gr
 		
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
-		SEAssert("We currently expect render data for exactly 1 ambient light to exist",
-			renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1);
+		SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
+			"We currently expect render data for exactly 1 ambient light to exist");
 
 		gr::RenderDataID ambientID = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>()[0];
 
@@ -636,8 +636,8 @@ namespace gr
 		const bool hasDirectionalLight = renderData.GetNumElementsOfType<gr::Light::RenderDataDirectional>() > 0;
 		if (hasDirectionalLight)
 		{
-			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)", 
-				renderData.GetNumElementsOfType<gr::Light::RenderDataDirectional>() == 1);
+			SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataDirectional>() == 1,
+				"We currently assume there will only be 1 directional light (even though it's not necessary to)");
 
 			re::TextureTarget::TargetParams directionalTargetParams;
 			directionalTargetParams.m_clearMode = re::TextureTarget::TargetParams::ClearMode::Disabled;
@@ -764,8 +764,8 @@ namespace gr
 				gBufferGS->GetFinalTextureTargetSet()->GetDepthStencilTarget()->GetTexture(),
 				re::Sampler::GetSampler(re::Sampler::WrapAndFilterMode::Wrap_Linear_Linear));
 
-			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)",
-				renderData.GetNumElementsOfType<gr::Light::RenderDataDirectional>() == 1);
+			SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataDirectional>() == 1,
+				"We currently assume there will only be 1 directional light (even though it's not necessary to)");
 
 			std::vector<gr::RenderDataID> const& directionalIDs = 
 				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
@@ -831,8 +831,8 @@ namespace gr
 
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
-		SEAssert("We currently expect render data for exactly 1 ambient light to exist",
-			renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1);	
+		SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
+			"We currently expect render data for exactly 1 ambient light to exist");
 		
 		gr::RenderDataID ambientID = renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>()[0];
 
@@ -859,8 +859,8 @@ namespace gr
 		gr::RenderDataManager const& renderData = m_graphicsSystemManager->GetRenderData();
 
 		// Ambient stage batches:
-		SEAssert("We currently expect render data for exactly 1 ambient light to exist",
-			renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1);
+		SEAssert(renderData.GetNumElementsOfType<gr::Light::RenderDataAmbientIBL>() == 1,
+			"We currently expect render data for exactly 1 ambient light to exist");
 
 		std::vector<gr::RenderDataID> const& ambientIDs = 
 			renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataAmbientIBL>();
@@ -881,8 +881,8 @@ namespace gr
 			std::vector<gr::RenderDataID> const& directionalIDs =
 				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
 
-			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)",
-				directionalIDs.size() == 1);
+			SEAssert(directionalIDs.size() == 1,
+				"We currently assume there will only be 1 directional light (even though it's not necessary to)");
 
 			auto directionalItr = renderData.IDBegin(directionalIDs);
 			auto const& directionalItrEnd = renderData.IDEnd(directionalIDs);

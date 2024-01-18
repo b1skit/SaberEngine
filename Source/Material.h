@@ -116,7 +116,7 @@ namespace gr
 
 	inline void Material::SetTexture(uint32_t slotIndex, std::shared_ptr<re::Texture> texture)
 	{
-		SEAssert("Out of bounds slot index", slotIndex < m_texSlots.size());
+		SEAssert(slotIndex < m_texSlots.size(), "Out of bounds slot index");
 		m_texSlots[slotIndex].m_texture = texture;
 	}
 
@@ -135,7 +135,7 @@ namespace gr
 
 	inline void Material::SetAlphaMode(AlphaMode alphaMode)
 	{
-		SEAssert("TODO: Support other alpha modes", alphaMode == AlphaMode::Opaque);
+		SEAssert(alphaMode == AlphaMode::Opaque, "TODO: Support other alpha modes");
 
 		m_alphaMode = alphaMode;
 		m_isDirty = true;
@@ -151,7 +151,7 @@ namespace gr
 
 	inline void Material::SetDoubleSidedMode(DoubleSidedMode doubleSidedMode)
 	{
-		SEAssert("TODO: Support other sided modes", doubleSidedMode == DoubleSidedMode::SingleSided);
+		SEAssert(doubleSidedMode == DoubleSidedMode::SingleSided, "TODO: Support other sided modes");
 
 		m_doubleSidedMode = doubleSidedMode;
 		m_isDirty = true;

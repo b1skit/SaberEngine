@@ -18,8 +18,8 @@ namespace fr
 {
 	entt::entity CameraControlComponent::CreateCameraControlConcept(EntityManager& em, entt::entity cameraConcept)
 	{
-		SEAssert("cameraConcept entity must have a CameraComponent attached",
-			em.HasComponent<fr::CameraComponent>(cameraConcept));
+		SEAssert(em.HasComponent<fr::CameraComponent>(cameraConcept),
+			"cameraConcept entity must have a CameraComponent attached");
 
 		entt::entity sceneNode = fr::SceneNode::Create(em, k_defaultCameraControllerName, entt::null);
 
@@ -66,8 +66,8 @@ namespace fr
 		fr::Transform& cameraTransform,
 		double stepTimeMs)
 	{
-		SEAssert("Camera transform must be parented to the camera controller's transform", 
-			cameraTransform.GetParent() == &controllerTransform);
+		SEAssert(cameraTransform.GetParent() == &controllerTransform,
+			"Camera transform must be parented to the camera controller's transform");
 
 		// Reset the cam back to the saved position
 		if (en::InputManager::GetMouseInputState(en::InputMouse_Left))

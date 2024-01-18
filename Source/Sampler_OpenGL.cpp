@@ -90,13 +90,13 @@ namespace opengl
 
 	void Sampler::Create(re::Sampler& sampler)
 	{
-		SEAssert("Sampler is already created", !sampler.GetPlatformParams()->m_isCreated);
+		SEAssert(!sampler.GetPlatformParams()->m_isCreated, "Sampler is already created");
 
 		LOG("Creating sampler: \"%s\"", sampler.GetName().c_str());
 
 		opengl::Sampler::PlatformParams* params = sampler.GetPlatformParams()->As<opengl::Sampler::PlatformParams*>();
 
-		SEAssert("Attempting to create a sampler that already has been created", !glIsSampler(params->m_samplerID));
+		SEAssert(!glIsSampler(params->m_samplerID), "Attempting to create a sampler that already has been created");
 
 		glGenSamplers(1, &params->m_samplerID);
 		glBindSampler(0, params->m_samplerID);
@@ -107,7 +107,7 @@ namespace opengl
 		if (!glIsSampler(params->m_samplerID))
 		{
 			LOG_ERROR("Texture sampler creation failed");
-			SEAssert("Texture sampler creation failed", glIsSampler(params->m_samplerID));
+			SEAssert(glIsSampler(params->m_samplerID), "Texture sampler creation failed");
 		}
 
 		glSamplerParameteri(params->m_samplerID, GL_TEXTURE_WRAP_S, params->m_textureWrapS);

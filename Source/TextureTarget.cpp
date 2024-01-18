@@ -55,10 +55,9 @@ namespace re
 
 	void TextureTarget::SetTargetParams(TargetParams const& targetParams)
 	{
-		SEAssert("There are more than 6 faces specified. This is unexpected",
-			targetParams.m_targetFace < 6);
-		SEAssert("It is invalid to target all mips, only a single mip level can be specified", 
-			targetParams.m_targetMip != re::Texture::k_allMips);
+		SEAssert(targetParams.m_targetFace < 6, "There are more than 6 faces specified. This is unexpected");
+		SEAssert(targetParams.m_targetMip != re::Texture::k_allMips,
+			"It is invalid to target all mips, only a single mip level can be specified");
 
 		m_targetParams = targetParams;
 	}
@@ -234,16 +233,16 @@ namespace re
 
 	re::TextureTarget const& TextureTargetSet::GetColorTarget(uint8_t slot) const
 	{
-		SEAssert("OOB index", slot < m_colorTargets.size());
+		SEAssert(slot < m_colorTargets.size(), "OOB index");
 		return m_colorTargets[slot];
 	}
 
 
 	void TextureTargetSet::SetColorTarget(uint8_t slot, re::TextureTarget const& texTarget)
 	{
-		SEAssert("Target sets are immutable after they've been committed", !m_platformParams->m_isCommitted);
-		SEAssert("Targets must be set in monotonically-increasing order", 
-			slot == 0 || m_colorTargets[slot - 1].HasTexture());
+		SEAssert(!m_platformParams->m_isCommitted, "Target sets are immutable after they've been committed");
+		SEAssert(slot == 0 || m_colorTargets[slot - 1].HasTexture(), 
+			"Targets must be set in monotonically-increasing order");
 		m_colorTargets[slot] = texTarget;
 	}
 
@@ -251,9 +250,9 @@ namespace re
 	void TextureTargetSet::SetColorTarget(
 		uint8_t slot, std::shared_ptr<re::Texture> texture, TextureTarget::TargetParams const& targetParams)
 	{
-		SEAssert("Target sets are immutable after they've been committed", !m_platformParams->m_isCommitted);
-		SEAssert("Targets must be set in monotonically-increasing order",
-			slot == 0 || m_colorTargets[slot - 1].HasTexture());
+		SEAssert(!m_platformParams->m_isCommitted, "Target sets are immutable after they've been committed");
+		SEAssert(slot == 0 || m_colorTargets[slot - 1].HasTexture(),
+			"Targets must be set in monotonically-increasing order");
 		m_colorTargets[slot] = re::TextureTarget(texture, targetParams);
 	}
 
@@ -270,8 +269,8 @@ namespace re
 
 	void TextureTargetSet::SetDepthStencilTarget(re::TextureTarget const* depthStencilTarget)
 	{
-		SEAssert("Cannot set a null target", depthStencilTarget);
-		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_isCommitted);
+		SEAssert(depthStencilTarget, "Cannot set a null target");
+		SEAssert(!m_platformParams->m_isCommitted, "Target sets are immutable after they've been created");
 		m_depthStencilTarget = re::TextureTarget(*depthStencilTarget);
 	}
 
@@ -279,7 +278,7 @@ namespace re
 	void TextureTargetSet::SetDepthStencilTarget(
 		std::shared_ptr<re::Texture> depthStencilTarget, re::TextureTarget::TargetParams const& targetParams)
 	{
-		SEAssert("Target sets are immutable after they've been created", !m_platformParams->m_isCommitted);
+		SEAssert(!m_platformParams->m_isCommitted, "Target sets are immutable after they've been created");
 		m_depthStencilTarget = re::TextureTarget(depthStencilTarget, targetParams);
 	}
 
@@ -387,8 +386,8 @@ namespace re
 		size_t numTargets, 
 		re::TextureTarget::TargetParams::BlendModes const* blendModesArray)
 	{
-		SEAssert("Array cannot be null", blendModesArray);
-		SEAssert("Too many blend modes supplied", numTargets < m_colorTargets.size());
+		SEAssert(blendModesArray, "Array cannot be null");
+		SEAssert(numTargets < m_colorTargets.size(), "Too many blend modes supplied");
 
 		for (size_t i = 0; i < numTargets; i++)
 		{
@@ -445,11 +444,11 @@ namespace re
 
 	void TextureTargetSet::SetScissorRect(re::ScissorRect const& scissorRect)
 	{
-		SEAssert("Scissor rectangle is out of bounds of the viewport", 
-			util::CheckedCast<uint32_t>(scissorRect.Left()) >= m_viewport.xMin() &&
+		SEAssert(util::CheckedCast<uint32_t>(scissorRect.Left()) >= m_viewport.xMin() &&
 			util::CheckedCast<uint32_t>(scissorRect.Top()) >= m_viewport.yMin() &&
 			util::CheckedCast<uint32_t>(scissorRect.Right()) <= m_viewport.Width()&&
-			util::CheckedCast<uint32_t>(scissorRect.Bottom()) <= m_viewport.Height());
+			util::CheckedCast<uint32_t>(scissorRect.Bottom()) <= m_viewport.Height(),
+			"Scissor rectangle is out of bounds of the viewport");
 
 		m_scissorRect = scissorRect;
 	}
@@ -457,7 +456,7 @@ namespace re
 
 	void TextureTargetSet::RecomputeNumColorTargets()
 	{
-		SEAssert("Target sets are immutable after they've been committed", !m_platformParams->m_isCommitted);
+		SEAssert(!m_platformParams->m_isCommitted, "Target sets are immutable after they've been committed");
 
 		// Walk through and check each color target:
 		m_numColorTargets = 0;
@@ -473,8 +472,8 @@ namespace re
 
 	void TextureTargetSet::Commit()
 	{
-		SEAssert("Target sets are immutable after they've been committed", 
-			!m_platformParams->m_isCommitted);
+		SEAssert(!m_platformParams->m_isCommitted,
+			"Target sets are immutable after they've been committed");
 
 		RecomputeNumColorTargets();
 		ComputeDataHash();
@@ -513,8 +512,8 @@ namespace re
 
 	uint64_t TextureTargetSet::GetTargetSetSignature() const
 	{
-		SEAssert("Trying to get the signature, but the targets haven't been committed",
-			HasTargets() && m_platformParams->m_isCommitted);
+		SEAssert(HasTargets() && m_platformParams->m_isCommitted,
+			"Trying to get the signature, but the targets haven't been committed");
 
 		return GetDataHash();
 	}

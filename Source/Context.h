@@ -74,14 +74,14 @@ namespace re
 
 	inline re::ParameterBlockAllocator& Context::GetParameterBlockAllocator()
 	{
-		SEAssert("Parameter block allocator has already been destroyed", m_paramBlockAllocator.IsValid());
+		SEAssert(m_paramBlockAllocator.IsValid(), "Parameter block allocator has already been destroyed");
 		return m_paramBlockAllocator;
 	}
 
 
 	inline re::ParameterBlockAllocator const& Context::GetParameterBlockAllocator() const
 	{
-		SEAssert("Parameter block allocator has already been destroyed", m_paramBlockAllocator.IsValid());
+		SEAssert(m_paramBlockAllocator.IsValid(), "Parameter block allocator has already been destroyed");
 		return m_paramBlockAllocator;
 	}
 

@@ -162,15 +162,15 @@ namespace
 		re::VertexStream const* positionStream = meshPrimRenderData.m_vertexStreams[gr::MeshPrimitive::Slot::Position];
 		re::VertexStream const* normalStream = meshPrimRenderData.m_vertexStreams[gr::MeshPrimitive::Slot::Normal];
 		
-		SEAssert("Must have a position and normal stream", positionStream && normalStream);
+		SEAssert(positionStream && normalStream, "Must have a position and normal stream");
 
 		std::vector<glm::vec3> linePositions;
 
-		SEAssert("Unexpected position or normal data", 
-			positionStream->GetDataType() == re::VertexStream::DataType::Float && 
+		SEAssert(positionStream->GetDataType() == re::VertexStream::DataType::Float && 
 			positionStream->GetNumComponents() == 3 &&
 			normalStream->GetDataType() == re::VertexStream::DataType::Float &&
-			normalStream->GetNumComponents() == 3);
+			normalStream->GetNumComponents() == 3,
+			"Unexpected position or normal data");
 		
 		// Build lines between the position and position + normal offset:
 		glm::vec3 const* positionData = static_cast<glm::vec3 const*>(positionStream->GetData());
@@ -308,7 +308,7 @@ namespace
 	{
 		re::VertexStream const* positionStream = meshPrimRenderData.m_vertexStreams[gr::MeshPrimitive::Slot::Position];
 		re::VertexStream const* indexStream = meshPrimRenderData.m_indexStream;
-		SEAssert("Must have a position and index stream", positionStream && indexStream);
+		SEAssert(positionStream && indexStream, "Must have a position and index stream");
 
 		const glm::vec4 meshColorVec4 = glm::vec4(meshColor, 1.f);
 		std::vector<glm::vec4> meshColors = std::vector<glm::vec4>(positionStream->GetNumElements(), meshColorVec4);

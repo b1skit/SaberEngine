@@ -20,7 +20,7 @@ namespace fr
 		fr::Transform* parentTransform = nullptr;
 		if (parent != entt::null)
 		{
-			SEAssert("Parent entity must have a TransformComponent", em.HasComponent<fr::TransformComponent>(parent));
+			SEAssert(em.HasComponent<fr::TransformComponent>(parent), "Parent entity must have a TransformComponent");
 
 			parentTransform = &em.GetComponent<fr::TransformComponent>(parent).GetTransform();
 		}
@@ -39,7 +39,7 @@ namespace fr
 
 	fr::Transform& SceneNode::GetTransform(fr::EntityManager& em, entt::entity entity)
 	{
-		SEAssert("Entity does not have a TransformComponent", em.HasComponent<fr::TransformComponent>(entity));
+		SEAssert(em.HasComponent<fr::TransformComponent>(entity), "Entity does not have a TransformComponent");
 
 		return em.GetComponent<fr::TransformComponent>(entity).GetTransform();
 	}

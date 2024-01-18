@@ -61,9 +61,9 @@ namespace
 	{
 		const uint8_t numColorTargets = targetSet->GetNumColorTargets();
 
-		SEAssert("Invalid number of color clear modes specified",
-			clearStageParams.m_colorClearModes.size() == 1 ||
-			clearStageParams.m_colorClearModes.size() == numColorTargets);
+		SEAssert(clearStageParams.m_colorClearModes.size() == 1 ||
+			clearStageParams.m_colorClearModes.size() == numColorTargets,
+			"Invalid number of color clear modes specified");
 
 		// Create a copy of the targets so we don't modify the originals
 		std::shared_ptr<re::TextureTargetSet> clearTargets =
@@ -195,7 +195,7 @@ namespace re
 		, m_depthTextureInputIdx(k_noDepthTexAsInputFlag)
 		, m_batchFilterBitmask(0)	// Accept all batches by default
 	{
-		SEAssert("Invalid RenderStage name", !GetName().empty());
+		SEAssert(!GetName().empty(), "Invalid RenderStage name");
 
 		m_stageParams = std::move(stageParams);
 	}
@@ -246,13 +246,13 @@ namespace re
 		std::shared_ptr<re::Sampler> sampler, 
 		uint32_t mipLevel /*= re::Texture::k_allMips*/)
 	{
-		SEAssert("Stage shader is null. Set the stage shader before this call", m_stageShader != nullptr);
-		SEAssert("Invalid shader sampler name", !shaderName.empty());
-		SEAssert("Invalid texture", tex != nullptr);
-		SEAssert("Invalid sampler", sampler != nullptr);
+		SEAssert(m_stageShader != nullptr, "Stage shader is null. Set the stage shader before this call");
+		SEAssert(!shaderName.empty(), "Invalid shader sampler name");
+		SEAssert(tex != nullptr, "Invalid texture");
+		SEAssert(sampler != nullptr, "Invalid sampler");
 
-		SEAssert("Attempting to add a Texture input that does not have an appropriate usage flag",
-			(tex->GetTextureParams().m_usage & re::Texture::Usage::Color) != 0);
+		SEAssert((tex->GetTextureParams().m_usage & re::Texture::Usage::Color) != 0,
+			"Attempting to add a Texture input that does not have an appropriate usage flag");
 
 		m_textureSamplerInputs.emplace_back(RenderStageTextureAndSamplerInput{ shaderName, tex, sampler, mipLevel });
 
@@ -290,9 +290,9 @@ namespace re
 				{
 					m_depthTextureInputIdx = i;
 
-					SEAssert("Depth target has depth writes enabled. It cannot be bound as an input", 
-						depthTarget->GetTargetParams().m_channelWriteMode.R == 
-							re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled);
+					SEAssert(depthTarget->GetTargetParams().m_channelWriteMode.R == 
+							re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+						"Depth target has depth writes enabled. It cannot be bound as an input");
 
 					break;
 				}
@@ -311,11 +311,11 @@ namespace re
 			{
 				for (uint8_t i = 0; i < m_textureTargetSet->GetNumColorTargets(); i++)
 				{
-					SEAssert("Detected a texture simultaneously used as both a color target and input",
-						m_textureTargetSet->GetColorTarget(i).GetTexture().get() != texInput.m_texture ||
+					SEAssert(m_textureTargetSet->GetColorTarget(i).GetTexture().get() != texInput.m_texture ||
 						((m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_targetMip != TextureTarget::k_allFaces &&
 							texInput.m_srcMip != TextureTarget::k_allFaces) &&
-						m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_targetMip != texInput.m_srcMip));
+						m_textureTargetSet->GetColorTarget(i).GetTargetParams().m_targetMip != texInput.m_srcMip),
+						"Detected a texture simultaneously used as both a color target and input");
 				}
 
 				if (m_textureTargetSet->HasDepthTarget())
@@ -323,10 +323,10 @@ namespace re
 					std::shared_ptr<re::Texture const> depthTargetTex = 
 						m_textureTargetSet->GetDepthStencilTarget()->GetTexture();
 
-					SEAssert("A depth target with depth writes enabled cannot also be bound as an input",
-						depthTargetTex.get() != texInput.m_texture ||
+					SEAssert(depthTargetTex.get() != texInput.m_texture ||
 						m_textureTargetSet->GetDepthStencilTarget()->GetTargetParams().m_channelWriteMode.R ==
-						re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled);
+						re::TextureTarget::TargetParams::ChannelWrite::Mode::Disabled,
+						"A depth target with depth writes enabled cannot also be bound as an input");
 				}
 			}
 		}
@@ -369,37 +369,37 @@ namespace re
 
 	void RenderStage::AddBatch(re::Batch const& batch)
 	{
-		SEAssert("Incompatible stage type", 
-			m_type != re::RenderStage::Type::Parent && 
-			m_type != re::RenderStage::Type::Clear);
+		SEAssert(m_type != re::RenderStage::Type::Parent && 
+			m_type != re::RenderStage::Type::Clear,
+			"Incompatible stage type");
 
-		SEAssert("Either the batch or the stage must have a shader", m_stageShader || batch.GetShader());
+		SEAssert(m_stageShader || batch.GetShader(), "Either the batch or the stage must have a shader");
 
-		SEAssert("Incompatible batch type", 
-			(batch.GetType() == re::Batch::BatchType::Graphics && m_type == Type::Graphics) ||
-			(batch.GetType() == re::Batch::BatchType::Compute && m_type == Type::Compute));
+		SEAssert((batch.GetType() == re::Batch::BatchType::Graphics && m_type == Type::Graphics) ||
+			(batch.GetType() == re::Batch::BatchType::Compute && m_type == Type::Compute),
+			"Incompatible batch type");
 
-		SEAssert("Mesh topology mode is incompatible with shader pipeline state topology type",
-			m_type == Type::Compute ||
+		SEAssert(m_type == Type::Compute ||
 			((!m_stageShader || IsBatchAndShaderTopologyCompatible(
 				batch.GetGraphicsParams().m_batchTopologyMode,
 				m_stageShader->GetPipelineState().GetTopologyType()) ) &&
 			(!batch.GetShader() || IsBatchAndShaderTopologyCompatible(
 				batch.GetGraphicsParams().m_batchTopologyMode,
-				batch.GetShader()->GetPipelineState().GetTopologyType())) ));
+				batch.GetShader()->GetPipelineState().GetTopologyType())) ),
+			"Mesh topology mode is incompatible with shader pipeline state topology type");
 
 #if defined(_DEBUG)
 		for (auto const& batchPB : batch.GetParameterBlocks())
 		{
 			for (auto const& singleFramePB : m_singleFrameParamBlocks)
 			{
-				SEAssert("Batch and render stage have a duplicate single frame parameter block", 
-					batchPB->GetUniqueID() != singleFramePB->GetUniqueID());
+				SEAssert(batchPB->GetUniqueID() != singleFramePB->GetUniqueID(),
+					"Batch and render stage have a duplicate single frame parameter block");
 			}
 			for (auto const& permanentPB : m_permanentParamBlocks)
 			{
-				SEAssert("Batch and render stage have a duplicate permanent parameter block",
-					batchPB->GetUniqueID() != permanentPB->GetUniqueID());
+				SEAssert(batchPB->GetUniqueID() != permanentPB->GetUniqueID(),
+					"Batch and render stage have a duplicate permanent parameter block");
 			}
 		}
 #endif
@@ -420,27 +420,27 @@ namespace re
 
 	void RenderStage::AddPermanentParameterBlock(std::shared_ptr<re::ParameterBlock> pb)
 	{
-		SEAssert("SingleFrame RenderStages can only add single frame parameter blocks", 
-			m_lifetime != RenderStage::Lifetime::SingleFrame);
-		SEAssert("Parameter block must have a permanent lifetime",
-			pb->GetType() == re::ParameterBlock::PBType::Mutable || 
-			pb->GetType() == re::ParameterBlock::PBType::Immutable);
+		SEAssert(m_lifetime != RenderStage::Lifetime::SingleFrame,
+			"SingleFrame RenderStages can only add single frame parameter blocks");
+		SEAssert(pb->GetType() == re::ParameterBlock::PBType::Mutable || 
+			pb->GetType() == re::ParameterBlock::PBType::Immutable,
+			"Parameter block must have a permanent lifetime");
 		
-		SEAssert("A permanent ParameterBlock with this name has already been added",
-			std::find_if(
+		SEAssert(std::find_if(
 				m_permanentParamBlocks.begin(),
 				m_permanentParamBlocks.end(),
 				[&pb](std::shared_ptr<re::ParameterBlock> const& existingPB) {
 					return pb->GetNameID() == existingPB->GetNameID();
-				}) == m_permanentParamBlocks.end());
+				}) == m_permanentParamBlocks.end(),
+			"A permanent ParameterBlock with this name has already been added");
 
-		SEAssert("A single frame ParameterBlock with this name has already been added",
-			std::find_if(
+		SEAssert(std::find_if(
 				m_singleFrameParamBlocks.begin(),
 				m_singleFrameParamBlocks.end(),
 				[&pb](std::shared_ptr<re::ParameterBlock> const& existingPB) {
 					return pb->GetNameID() == existingPB->GetNameID();
-				}) == m_singleFrameParamBlocks.end());
+				}) == m_singleFrameParamBlocks.end(),
+			"A single frame ParameterBlock with this name has already been added");
 
 		m_permanentParamBlocks.emplace_back(pb);
 	}
@@ -448,24 +448,24 @@ namespace re
 
 	void RenderStage::AddSingleFrameParameterBlock(std::shared_ptr<re::ParameterBlock> pb)
 	{
-		SEAssert("Parameter block must have a single frame lifetime", 
-			pb->GetType() == re::ParameterBlock::PBType::SingleFrame);
+		SEAssert(pb->GetType() == re::ParameterBlock::PBType::SingleFrame,
+			"Parameter block must have a single frame lifetime");
 
-		SEAssert("A single frame ParameterBlock with this name has already been added",
-			std::find_if(
+		SEAssert(std::find_if(
 				m_singleFrameParamBlocks.begin(),
 				m_singleFrameParamBlocks.end(),
 				[&pb](std::shared_ptr<re::ParameterBlock> const& existingPB) {
 					return pb->GetNameID() == existingPB->GetNameID();
-				}) == m_singleFrameParamBlocks.end());
+				}) == m_singleFrameParamBlocks.end(),
+			"A single frame ParameterBlock with this name has already been added");
 		
-		SEAssert("A permanent ParameterBlock with this name has already been added",
-			std::find_if(
+		SEAssert(std::find_if(
 				m_permanentParamBlocks.begin(),
 				m_permanentParamBlocks.end(),
 				[&pb](std::shared_ptr<re::ParameterBlock> const& existingPB) {
 					return pb->GetNameID() == existingPB->GetNameID();
-				}) == m_permanentParamBlocks.end());
+				}) == m_permanentParamBlocks.end(),
+			"A permanent ParameterBlock with this name has already been added");
 
 		m_singleFrameParamBlocks.emplace_back(pb);
 	}

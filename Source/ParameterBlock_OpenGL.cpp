@@ -10,7 +10,7 @@ namespace opengl
 	void ParameterBlock::Create(re::ParameterBlock& paramBlock)
 	{
 		PlatformParams* pbPlatParams = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
-		SEAssert("Parameter block is already created", !pbPlatParams->m_isCreated);
+		SEAssert(!pbPlatParams->m_isCreated, "Parameter block is already created");
 		pbPlatParams->m_isCreated = true;
 
 		void const* data;
@@ -49,7 +49,7 @@ namespace opengl
 
 			// Binding associates the buffer object with the buffer object name
 			glBindBuffer(bufferTarget, pbPlatParams->m_bufferName);
-			SEAssert("Failed to generate buffer object", glIsBuffer(pbPlatParams->m_bufferName) == GL_TRUE);
+			SEAssert(glIsBuffer(pbPlatParams->m_bufferName) == GL_TRUE, "Failed to generate buffer object");
 
 			glBufferData(
 				bufferTarget,
@@ -87,7 +87,7 @@ namespace opengl
 
 			// Binding associates the buffer object with the buffer object name
 			glBindBuffer(bufferTarget, pbPlatParams->m_bufferName);
-			SEAssert("Failed to generate buffer object", glIsBuffer(pbPlatParams->m_bufferName) == GL_TRUE);
+			SEAssert(glIsBuffer(pbPlatParams->m_bufferName) == GL_TRUE, "Failed to generate buffer object");
 
 			glBufferData(
 				bufferTarget,
@@ -145,7 +145,7 @@ namespace opengl
 	void ParameterBlock::Destroy(re::ParameterBlock& paramBlock)
 	{
 		PlatformParams* pbPlatParams = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
-		SEAssert("Attempting to destroy a ParameterBlock that has not been created", pbPlatParams->m_isCreated);
+		SEAssert(pbPlatParams->m_isCreated, "Attempting to destroy a ParameterBlock that has not been created");
 
 		const re::ParameterBlock::PBType pbType = paramBlock.GetType();
 		switch (pbType)

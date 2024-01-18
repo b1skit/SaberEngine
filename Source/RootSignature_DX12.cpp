@@ -55,16 +55,16 @@ namespace
 	D3D12_SRV_DIMENSION GetD3D12SRVDimension(D3D_SRV_DIMENSION srvDimension)
 	{
 		// D3D_SRV_DIMENSION::D3D_SRV_DIMENSION_BUFFEREX (== 11, raw buffer resource) is handled differently in D3D12
-		SEAssert("D3D_SRV_DIMENSION does not have a (known) D3D12_SRV_DIMENSION equivalent", 
-			srvDimension >= D3D_SRV_DIMENSION_UNKNOWN && srvDimension <= D3D_SRV_DIMENSION_TEXTURECUBEARRAY);
+		SEAssert(srvDimension >= D3D_SRV_DIMENSION_UNKNOWN && srvDimension <= D3D_SRV_DIMENSION_TEXTURECUBEARRAY,
+			"D3D_SRV_DIMENSION does not have a (known) D3D12_SRV_DIMENSION equivalent");
 		return static_cast<D3D12_SRV_DIMENSION>(srvDimension);
 	}
 
 
 	D3D12_UAV_DIMENSION GetD3D12UAVDimension(D3D_SRV_DIMENSION uavDimension)
 	{
-		SEAssert("D3D_SRV_DIMENSION does not have a (known) D3D12_UAV_DIMENSION equivalent",
-			uavDimension >= D3D_SRV_DIMENSION_UNKNOWN && uavDimension <= D3D_SRV_DIMENSION_TEXTURE3D);
+		SEAssert(uavDimension >= D3D_SRV_DIMENSION_UNKNOWN && uavDimension <= D3D_SRV_DIMENSION_TEXTURE3D,
+			"D3D_SRV_DIMENSION does not have a (known) D3D12_UAV_DIMENSION equivalent");
 		return static_cast<D3D12_UAV_DIMENSION>(uavDimension);
 	}
 
@@ -218,32 +218,32 @@ namespace dx12
 
 	void RootSignature::InsertNewRootParamMetadata(char const* name, RootParameter&& rootParam)
 	{
-		SEAssert("RootParameter is not fully initialized", 
-			rootParam.m_index != k_invalidRootSigIndex &&
+		SEAssert(rootParam.m_index != k_invalidRootSigIndex &&
 			rootParam.m_type != RootParameter::Type::Type_Invalid &&
 			rootParam.m_registerBindPoint != k_invalidRegisterVal &&
-			rootParam.m_registerSpace != k_invalidRegisterVal);
+			rootParam.m_registerSpace != k_invalidRegisterVal,
+			"RootParameter is not fully initialized");
 
-		SEAssert("Constant union is not fully initialized", 
-			rootParam.m_type != RootParameter::Type::Constant || 
+		SEAssert(rootParam.m_type != RootParameter::Type::Constant || 
 				(rootParam.m_rootConstant.m_num32BitValues != k_invalidCount &&
-				rootParam.m_rootConstant.m_destOffsetIn32BitValues != k_invalidOffset));
+				rootParam.m_rootConstant.m_destOffsetIn32BitValues != k_invalidOffset),
+			"Constant union is not fully initialized");
 
-		SEAssert("Descriptor table union is not fully initialized",
-			rootParam.m_type != RootParameter::Type::DescriptorTable || 
+		SEAssert(rootParam.m_type != RootParameter::Type::DescriptorTable || 
 				(rootParam.m_tableEntry.m_type != DescriptorType::Type_Invalid &&
 					rootParam.m_tableEntry.m_offset != k_invalidOffset && 
-					rootParam.m_tableEntry.m_srvViewDimension != 0)); // It's a union, either member should be > 0
+					rootParam.m_tableEntry.m_srvViewDimension != 0), // It's a union, either member should be > 0
+			"Descriptor table union is not fully initialized"); 
 
-		SEAssert("TODO: We currently assume all registers are specified in space 0. If this changes, we need to "
-			"update our logic here to support lookups via register AND register space", 
-			rootParam.m_registerSpace == 0);
+		SEAssert(rootParam.m_registerSpace == 0,
+			"TODO: We currently assume all registers are specified in space 0. If this changes, we need to "
+			"update our logic here to support lookups via register AND register space");
 
 		const size_t metadataIdx = m_rootParams.size();
 
 		// Map the name to the insertion index:
 		auto const& insertResult = m_namesToRootParamsIdx.emplace(name, metadataIdx);
-		SEAssert("Name mapping metadata already exists", insertResult.second == true);
+		SEAssert(insertResult.second == true, "Name mapping metadata already exists");
 
 		// Map the register to the insertion index:
 		DescriptorType insertType = DescriptorType::Type_Invalid;
@@ -295,7 +295,7 @@ namespace dx12
 
 		auto const& registerToRootParamIdxInsertResult = 
 			m_registerToRootParamIdx[insertType].emplace(rootParam.m_registerBindPoint, metadataIdx);
-		SEAssert("Insertion index mapping metadata already exists", insertResult.second == true);
+		SEAssert(insertResult.second == true, "Insertion index mapping metadata already exists");
 
 		// Finally, move the root param into our vector
 		m_rootParams.emplace_back(std::move(rootParam));
@@ -306,13 +306,13 @@ namespace dx12
 	{
 		// Note: We currently only support SM 5.1 here... TODO: Support SM 6+
 
-		SEAssert("Shader must be created", shader.IsCreated());
+		SEAssert(shader.IsCreated(), "Shader must be created");
 
 		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 
-		SEAssert("No valid shader blobs found",
-			shaderParams->m_shaderBlobs[dx12::Shader::ShaderType::Vertex] != nullptr ||
-			shaderParams->m_shaderBlobs[dx12::Shader::ShaderType::Compute] != nullptr);
+		SEAssert(shaderParams->m_shaderBlobs[dx12::Shader::ShaderType::Vertex] != nullptr ||
+			shaderParams->m_shaderBlobs[dx12::Shader::ShaderType::Compute] != nullptr,
+			"No valid shader blobs found");
 
 		std::unique_ptr<dx12::RootSignature> newRootSig = nullptr;
 		newRootSig.reset(new dx12::RootSignature());
@@ -386,8 +386,8 @@ namespace dx12
 				hr = shaderReflection->GetResourceBindingDesc(currentResource, &inputBindingDesc);
 				CheckHResult(hr, "Failed to get resource binding description");
 				
-				SEAssert("Too many root parameters. Consider increasing the root sig index type from a uint8_t", 
-					rootParameters.size() < std::numeric_limits<uint8_t>::max());
+				SEAssert(rootParameters.size() < std::numeric_limits<uint8_t>::max(),
+					"Too many root parameters. Consider increasing the root sig index type from a uint8_t");
 
 				// Set the type-specific RootParameter values:
 				switch (inputBindingDesc.Type)
@@ -400,7 +400,7 @@ namespace dx12
 				break;
 				case D3D_SHADER_INPUT_TYPE::D3D10_SIT_CBUFFER:
 				{
-					SEAssert("TODO: Handle root constants", strcmp(inputBindingDesc.Name, "$Globals") != 0);
+					SEAssert(strcmp(inputBindingDesc.Name, "$Globals") != 0, "TODO: Handle root constants");
 					
 					if (!newRootSig->m_namesToRootParamsIdx.contains(inputBindingDesc.Name))
 					{
@@ -421,8 +421,8 @@ namespace dx12
 								.m_registerSpace = util::CheckedCast<uint8_t>(inputBindingDesc.Space)});
 
 						// TODO: Test this
-						SEAssert("TODO: Is this how we can tell if there is an array of CBVs? Need to test this",
-							inputBindingDesc.BindCount == 1);
+						SEAssert(inputBindingDesc.BindCount == 1,
+							"TODO: Is this how we can tell if there is an array of CBVs? Need to test this");
 					}
 					else
 					{
@@ -532,8 +532,8 @@ namespace dx12
 					}
 					else
 					{
-						SEAssert("Compute resource visibility should always be D3D12_SHADER_VISIBILITY_ALL",
-							result->m_shaderVisibility == D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL);
+						SEAssert(result->m_shaderVisibility == D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_ALL,
+							"Compute resource visibility should always be D3D12_SHADER_VISIBILITY_ALL");
 					}
 				}
 				break;
@@ -613,7 +613,7 @@ namespace dx12
 				{
 					if (a.m_baseRegister == b.m_baseRegister)
 					{
-						SEAssert("Register collision", a.m_registerSpace != b.m_registerSpace);
+						SEAssert(a.m_registerSpace != b.m_registerSpace, "Register collision");
 						return a.m_registerSpace < b.m_registerSpace;
 					}
 					return a.m_baseRegister < b.m_baseRegister;
@@ -841,9 +841,9 @@ namespace dx12
 		auto const& result = m_namesToRootParamsIdx.find(resourceName);
 		const bool hasResource = result != m_namesToRootParamsIdx.end();
 
-		SEAssert("Root signature does not contain a parameter with that name", 
-			hasResource || 
-			en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
+		SEAssert(hasResource || 
+			en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
+			"Root signature does not contain a parameter with that name");
 
 		return hasResource ? &m_rootParams[result->second] : nullptr;
 	}
@@ -852,14 +852,14 @@ namespace dx12
 	RootSignature::RootParameter const* RootSignature::GetRootSignatureEntry(
 		DescriptorType descriptorType, uint8_t registerBindPoint) const
 	{
-		SEAssert("Invalid descriptor type", descriptorType != DescriptorType::Type_Invalid);
+		SEAssert(descriptorType != DescriptorType::Type_Invalid, "Invalid descriptor type");
 
 		auto const& result = m_registerToRootParamIdx[descriptorType].find(registerBindPoint);
 		const bool hasResource = result != m_registerToRootParamIdx[descriptorType].end();
 
-		SEAssert("Root signature does not contain a parameter with that register/bind point",
-			hasResource ||
-			en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
+		SEAssert(hasResource ||
+			en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
+			"Root signature does not contain a parameter with that register/bind point");
 
 		return hasResource ? &m_rootParams[result->second] : nullptr;
 	}

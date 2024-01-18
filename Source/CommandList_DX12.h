@@ -209,10 +209,10 @@ namespace dx12
 
 	inline void CommandList::Dispatch(glm::uvec3 const& numThreads)
 	{
-		SEAssert("Invalid dispatch dimensions",
-			numThreads.x < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION &&
+		SEAssert(numThreads.x < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION &&
 			numThreads.y < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION &&
-			numThreads.z < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION);
+			numThreads.z < D3D12_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION,
+			"Invalid dispatch dimensions");
 
 		CommitGPUDescriptors();
 

@@ -168,7 +168,7 @@ namespace fr
 
 			entity = entt::to_entity(m_registry, component);
 		}
-		SEAssert("Entity not found", entity != entt::null);
+		SEAssert(entity != entt::null, "Entity not found");
 
 		return entity;
 	}
@@ -393,7 +393,7 @@ namespace fr
 	template<typename T>
 	T* EntityManager::GetFirstAndEntityInHierarchyAboveInternal(entt::entity entity, entt::entity& owningEntityOut)
 	{
-		SEAssert("Entity cannot be null", entity != entt::null);
+		SEAssert(entity != entt::null, "Entity cannot be null");
 
 		entt::entity currentEntity = entity;
 		while (currentEntity != entt::null)
@@ -417,7 +417,7 @@ namespace fr
 	template<typename T>
 	T* EntityManager::GetFirstAndEntityInChildrenInternal(entt::entity entity, entt::entity& childEntityOut)
 	{
-		SEAssert("Invalid entity", entity != entt::null);
+		SEAssert(entity != entt::null, "Invalid entity");
 
 		childEntityOut = entt::null;
 

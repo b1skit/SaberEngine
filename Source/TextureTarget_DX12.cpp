@@ -31,11 +31,11 @@ namespace
 		// Configure the scissor rectangle:
 		re::ScissorRect const& scissorRect = targetSet.GetScissorRect();
 
-		SEAssert("Scissor rectangle is out of bounds of the viewport",
-			util::CheckedCast<uint32_t>(scissorRect.Left()) >= targetSet.GetViewport().xMin() &&
+		SEAssert(util::CheckedCast<uint32_t>(scissorRect.Left()) >= targetSet.GetViewport().xMin() &&
 			util::CheckedCast<uint32_t>(scissorRect.Top()) >= targetSet.GetViewport().yMin() &&
 			util::CheckedCast<uint32_t>(scissorRect.Right()) <= targetSet.GetViewport().Width() &&
-			util::CheckedCast<uint32_t>(scissorRect.Bottom()) <= targetSet.GetViewport().Height());
+			util::CheckedCast<uint32_t>(scissorRect.Bottom()) <= targetSet.GetViewport().Height(),
+			"Scissor rectangle is out of bounds of the viewport");
 
 		texTargetSetPlatParams->m_scissorRect = CD3DX12_RECT(
 			scissorRect.Left(),
@@ -55,7 +55,7 @@ namespace dx12
 		}
 		dx12::TextureTargetSet::PlatformParams* texTargetSetPlatParams =
 			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
-		SEAssert("Target set has not been committed", texTargetSetPlatParams->m_isCommitted);
+		SEAssert(texTargetSetPlatParams->m_isCommitted, "Target set has not been committed");
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
@@ -69,7 +69,7 @@ namespace dx12
 
 			dx12::TextureTarget::PlatformParams* targetPlatParams =
 				colorTarget.GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
-			SEAssert("Target has already been created", !targetPlatParams->m_isCreated);
+			SEAssert(!targetPlatParams->m_isCreated, "Target has already been created");
 			targetPlatParams->m_isCreated = true;
 
 			re::Texture::TextureParams const& texParams = colorTarget.GetTexture()->GetTextureParams();
@@ -81,12 +81,12 @@ namespace dx12
 				dx12::Texture::PlatformParams* texPlatParams =
 					colorTarget.GetTexture()->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 				
-				SEAssert("Texture is not created", texPlatParams->m_isCreated && texPlatParams->m_textureResource);
+				SEAssert(texPlatParams->m_isCreated && texPlatParams->m_textureResource, "Texture is not created");
 
 				re::TextureTarget::TargetParams const& targetParams = colorTarget.GetTargetParams();
 
-				SEAssert("RTVs have already been allocated. This is unexpected",
-					targetPlatParams->m_rtvDsvDescriptors.empty());
+				SEAssert(targetPlatParams->m_rtvDsvDescriptors.empty(),
+					"RTVs have already been allocated. This is unexpected");
 
 				// Allocate descriptors for our RTVs:
 				const uint32_t numFaces = texParams.m_faces;
@@ -98,7 +98,7 @@ namespace dx12
 					{
 						targetPlatParams->m_rtvDsvDescriptors.emplace_back(std::move(
 							context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::RTV).Allocate(1)));
-						SEAssert("RTV descriptor is not valid", targetPlatParams->m_rtvDsvDescriptors.back().IsValid());
+						SEAssert(targetPlatParams->m_rtvDsvDescriptors.back().IsValid(), "RTV descriptor is not valid");
 
 						// Create the RTV:
 						D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
@@ -123,8 +123,8 @@ namespace dx12
 						break;
 						case 6:
 						{
-							SEAssert("We're currently expecting this to be a cubemap, but it doesn't need to be",
-								numFaces == 6 && texParams.m_dimension == re::Texture::Dimension::TextureCubeMap);
+							SEAssert(numFaces == 6 && texParams.m_dimension == re::Texture::Dimension::TextureCubeMap,
+								"We're currently expecting this to be a cubemap, but it doesn't need to be");
 
 							renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION::D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
 
@@ -162,22 +162,22 @@ namespace dx12
 
 		dx12::TextureTargetSet::PlatformParams* targetSetParams = 
 			targetSet.GetPlatformParams()->As<dx12::TextureTargetSet::PlatformParams*>();
-		SEAssert("Target set has not been committed", targetSetParams->m_isCommitted);
+		SEAssert(targetSetParams->m_isCommitted, "Target set has not been committed");
 
 		dx12::TextureTarget::PlatformParams* depthTargetPlatParams =
 			targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<dx12::TextureTarget::PlatformParams*>();
-		SEAssert("Target has already been created", !depthTargetPlatParams->m_isCreated);
+		SEAssert(!depthTargetPlatParams->m_isCreated, "Target has already been created");
 		depthTargetPlatParams->m_isCreated = true;
 
 		std::shared_ptr<re::Texture> depthTargetTex = targetSet.GetDepthStencilTarget()->GetTexture();
 		re::Texture::TextureParams const& depthTexParams = depthTargetTex->GetTextureParams();
-		SEAssert("Target does not have the depth target usage type",
-			depthTexParams.m_usage & re::Texture::Usage::DepthTarget);
+		SEAssert(depthTexParams.m_usage & re::Texture::Usage::DepthTarget,
+			"Target does not have the depth target usage type");
 
 		dx12::Texture::PlatformParams* depthTexPlatParams =
 			depthTargetTex->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-		SEAssert("Depth texture has not been created", 
-			depthTexPlatParams->m_isCreated && depthTexPlatParams->m_textureResource);
+		SEAssert(depthTexPlatParams->m_isCreated && depthTexPlatParams->m_textureResource,
+			"Depth texture has not been created");
 
 		// If we don't have any color targets, we must configure the viewport and scissor rect here instead
 		if (!targetSet.HasColorTarget())
@@ -188,13 +188,13 @@ namespace dx12
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
 
-		SEAssert("DSVs have already been allocated. This is unexpected",
-			depthTargetPlatParams->m_rtvDsvDescriptors.empty());
+		SEAssert(depthTargetPlatParams->m_rtvDsvDescriptors.empty(),
+			"DSVs have already been allocated. This is unexpected");
 
 		const uint32_t numFaces = depthTexParams.m_faces;
 		const uint32_t numMips = depthTargetTex->GetNumMips();
 
-		SEAssert("Depth texture has mips. This is unexpected", numMips == 1);
+		SEAssert(numMips == 1, "Depth texture has mips. This is unexpected");
 
 		// Create the depth-stencil descriptor and view:
 		for (uint32_t faceIdx = 0; faceIdx < numFaces; faceIdx++)
@@ -203,7 +203,7 @@ namespace dx12
 			{
 				depthTargetPlatParams->m_rtvDsvDescriptors.emplace_back(std::move(
 					context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::DSV).Allocate(1)));
-				SEAssert("DSV descriptor is not valid", depthTargetPlatParams->m_rtvDsvDescriptors.back().IsValid());
+				SEAssert(depthTargetPlatParams->m_rtvDsvDescriptors.back().IsValid(), "DSV descriptor is not valid");
 
 				D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
 				dsv.Format = depthTexPlatParams->m_format;
@@ -219,8 +219,8 @@ namespace dx12
 				break;
 				case 6:
 				{
-					SEAssert("We're currently expecting this to be a cubemap",
-						numFaces == 6 && depthTexParams.m_dimension == re::Texture::Dimension::TextureCubeMap);
+					SEAssert(numFaces == 6 && depthTexParams.m_dimension == re::Texture::Dimension::TextureCubeMap,
+						"We're currently expecting this to be a cubemap");
 
 					dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
 					dsv.Texture2DArray.MipSlice = mipIdx; // Mip slices include 1 mip level for every texture in an array
@@ -243,7 +243,7 @@ namespace dx12
 		{
 			depthTargetPlatParams->m_cubemapDescriptor = 
 				std::move(context->GetCPUDescriptorHeapMgr(CPUDescriptorHeapManager::HeapType::DSV).Allocate(1));
-			SEAssert("Cube DSV descriptor is not valid", depthTargetPlatParams->m_cubemapDescriptor.IsValid());
+			SEAssert(depthTargetPlatParams->m_cubemapDescriptor.IsValid(), "Cube DSV descriptor is not valid");
 
 			D3D12_DEPTH_STENCIL_VIEW_DESC cubeDsv = {};
 			cubeDsv.Format = depthTexPlatParams->m_format;
@@ -280,7 +280,7 @@ namespace dx12
 			colorTargetFormats.RTFormats[i] = targetTexPlatParams->m_format;
 			numTargets++;
 		}
-		SEAssert("No color targets found", numTargets > 0);
+		SEAssert(numTargets > 0, "No color targets found");
 		colorTargetFormats.NumRenderTargets = numTargets;
 
 		return colorTargetFormats;

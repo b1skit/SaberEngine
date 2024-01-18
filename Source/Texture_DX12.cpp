@@ -404,9 +404,9 @@ namespace
 	{
 		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
 
-		SEAssert("The texture resource has not been created yet", texPlatParams->m_textureResource != nullptr);
-		SEAssert("A UAV has already been created. This is unexpected",
-			texPlatParams->m_uavCpuDescAllocations.empty());
+		SEAssert(texPlatParams->m_textureResource != nullptr, "The texture resource has not been created yet");
+		SEAssert(texPlatParams->m_uavCpuDescAllocations.empty(),
+			"A UAV has already been created. This is unexpected");
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
@@ -416,7 +416,7 @@ namespace
 		const uint32_t numMips = texture.GetNumMips();
 
 		const uint32_t numSubresources = texture.GetTotalNumSubresources();
-		SEAssert("Unexpected number of subresources", numSubresources == numMips * texParams.m_faces);
+		SEAssert(numSubresources == numMips * texParams.m_faces, "Unexpected number of subresources");
 
 		texPlatParams->m_uavCpuDescAllocations.reserve(numSubresources);
 
@@ -432,7 +432,7 @@ namespace
 					texPlatParams->m_uavCpuDescAllocations.back();
 
 				const DXGI_FORMAT uavCompatibleFormat = GetEquivalentUAVCompatibleFormat(texPlatParams->m_format);
-				SEAssert("Failed to find equivalent UAV-compatible format", uavCompatibleFormat != DXGI_FORMAT_UNKNOWN);
+				SEAssert(uavCompatibleFormat != DXGI_FORMAT_UNKNOWN, "Failed to find equivalent UAV-compatible format");
 
 				D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc{};
 				uavDesc.Format = uavCompatibleFormat;
@@ -441,7 +441,7 @@ namespace
 				{
 				case re::Texture::Dimension::Texture2D:
 				{
-					SEAssert("Unexpected number of faces", texParams.m_faces == 1);
+					SEAssert(texParams.m_faces == 1, "Unexpected number of faces");
 
 					uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 					
@@ -496,11 +496,11 @@ namespace
 
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 
-		SEAssert("The texture resource has not been created yet", texPlatParams->m_textureResource != nullptr);
-		SEAssert("An SRV has already been created. This is unexpected",
-			!texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::Texture2D].IsValid() &&
+		SEAssert(texPlatParams->m_textureResource != nullptr, "The texture resource has not been created yet");
+		SEAssert(!texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::Texture2D].IsValid() &&
 			!texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::Texture2DArray].IsValid() &&
-			!texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::TextureCubeMap].IsValid());
+			!texPlatParams->m_srvCpuDescAllocations[re::Texture::Dimension::TextureCubeMap].IsValid(),
+			"An SRV has already been created. This is unexpected");
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
 		ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
@@ -535,8 +535,8 @@ namespace
 		}
 		else
 		{
-			SEAssert("We're currently expecting this to be a cubemap",
-				texParams.m_faces == 6 && texParams.m_dimension == re::Texture::Dimension::TextureCubeMap);
+			SEAssert(texParams.m_faces == 6 && texParams.m_dimension == re::Texture::Dimension::TextureCubeMap,
+				"We're currently expecting this to be a cubemap");
 
 			D3D12_SHADER_RESOURCE_VIEW_DESC cubemapSrvDesc{};
 			cubemapSrvDesc.Format = srvFormat;
@@ -591,7 +591,7 @@ namespace
 	D3D12_RESOURCE_STATES CreateTextureCommittedResource(re::Texture& texture, bool needsUAV, bool simultaneousAccess)
 	{
 		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-		SEAssert("Texture resource already created", texPlatParams->m_textureResource == nullptr);
+		SEAssert(texPlatParams->m_textureResource == nullptr, "Texture resource already created");
 		
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 
@@ -637,9 +637,9 @@ namespace
 
 		if (texParams.m_usage & re::Texture::Usage::DepthTarget)
 		{
-			SEAssert("Depth target cannot have mips. Note: Depth-Stencil formats support mipmaps, arrays, and multiple "
-				"planes. See https://learn.microsoft.com/en-us/windows/win32/direct3d12/subresources", 
-				texture.GetNumMips() == 1);
+			SEAssert(texture.GetNumMips() == 1,
+				"Depth target cannot have mips. Note: Depth-Stencil formats support mipmaps, arrays, and multiple "
+				"planes. See https://learn.microsoft.com/en-us/windows/win32/direct3d12/subresources");
 
 			flags |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
@@ -783,7 +783,7 @@ namespace dx12
 		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>>& intermediateResources)
 	{
 		dx12::Texture::PlatformParams* texPlatParams = texture.GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-		SEAssert("Texture is already created", texPlatParams->m_isCreated == false);
+		SEAssert(texPlatParams->m_isCreated == false, "Texture is already created");
 		texPlatParams->m_isCreated = true;
 
 		dx12::Context* context = re::Context::GetAs<dx12::Context*>();
@@ -791,24 +791,24 @@ namespace dx12
 
 		re::Texture::TextureParams const& texParams = texture.GetTextureParams();
 
-		SEAssert("Invalid texture usage", 
-			texParams.m_usage > 0 && texParams.m_usage != re::Texture::Usage::Invalid);
+		SEAssert(texParams.m_usage > 0 && texParams.m_usage != re::Texture::Usage::Invalid,
+			"Invalid texture usage");
 		
-		SEAssert("Invalid depth target usage pattern. A depth target can only be a depth target or source texture",
-			(texParams.m_usage & re::Texture::Usage::DepthTarget) == 0 ||
+		SEAssert((texParams.m_usage & re::Texture::Usage::DepthTarget) == 0 ||
 			(texParams.m_usage ^ re::Texture::Usage::DepthTarget) == 0 ||
-			(texParams.m_usage ^ (re::Texture::Usage::DepthTarget | re::Texture::Usage::Color)) == 0);
+			(texParams.m_usage ^ (re::Texture::Usage::DepthTarget | re::Texture::Usage::Color)) == 0,
+			"Invalid depth target usage pattern. A depth target can only be a depth target or source texture");
 
-		SEAssert("Invalid usage stencil target usage pattern. A stencil target can only be a stencil target",
-			(texParams.m_usage & re::Texture::Usage::StencilTarget) == 0 ||
-			(texParams.m_usage ^ re::Texture::Usage::StencilTarget) == 0);
+		SEAssert((texParams.m_usage & re::Texture::Usage::StencilTarget) == 0 ||
+			(texParams.m_usage ^ re::Texture::Usage::StencilTarget) == 0,
+			"Invalid usage stencil target usage pattern. A stencil target can only be a stencil target");
 
-		SEAssert("Invalid depth stencil usage pattern. A depth stencil target can only be a depth stencil target",
-			(texParams.m_usage & re::Texture::Usage::DepthStencilTarget) == 0 ||
-			(texParams.m_usage ^ re::Texture::Usage::DepthStencilTarget) == 0);
+		SEAssert((texParams.m_usage & re::Texture::Usage::DepthStencilTarget) == 0 ||
+			(texParams.m_usage ^ re::Texture::Usage::DepthStencilTarget) == 0,
+			"Invalid depth stencil usage pattern. A depth stencil target can only be a depth stencil target");
 
-		SEAssert("TODO: Support depth stencil targets", (texParams.m_usage & re::Texture::Usage::DepthStencilTarget) == 0);
-		SEAssert("TODO: Support stencil targets", (texParams.m_usage & re::Texture::Usage::StencilTarget) == 0);
+		SEAssert((texParams.m_usage & re::Texture::Usage::DepthStencilTarget) == 0, "TODO: Support depth stencil targets");
+		SEAssert((texParams.m_usage & re::Texture::Usage::StencilTarget) == 0, "TODO: Support stencil targets");
 		
 		const bool needsSRV = SRVIsNeeded(texParams);
 		const bool needsSimultaneousAccess = SimultaneousAccessIsNeeded(texParams);
@@ -818,13 +818,13 @@ namespace dx12
 		const uint32_t numMips = texture.GetNumMips();
 		const uint32_t numSubresources = texture.GetTotalNumSubresources();
 
-		SEAssert("Current texture usage type cannot have MIPs",
-			((texParams.m_usage & re::Texture::Usage::SwapchainColorProxy) == 0 &&
+		SEAssert(((texParams.m_usage & re::Texture::Usage::SwapchainColorProxy) == 0 &&
 			(texParams.m_usage & re::Texture::Usage::DepthTarget) == 0 &&
 			(texParams.m_usage & re::Texture::Usage::StencilTarget) == 0) ||
-			numMips == 1);
-		SEAssert("TODO: Support depth-stencil textures (which do support mips, arrays, and multiple planes)", 
-			(texParams.m_usage & re::Texture::Usage::DepthStencilTarget) == 0);
+			numMips == 1,
+			"Current texture usage type cannot have MIPs");
+		SEAssert((texParams.m_usage & re::Texture::Usage::DepthStencilTarget) == 0,
+			"TODO: Support depth-stencil textures (which do support mips, arrays, and multiple planes)");
 
 		// D3D12 Initial resource states:
 		// https://learn.microsoft.com/en-us/windows/win32/direct3d12/using-resource-barriers-to-synchronize-resource-states-in-direct3d-12#initial-states-for-resources
@@ -839,16 +839,16 @@ namespace dx12
 		// Upload initial data via an intermediate upload heap:
 		if ((texParams.m_usage & re::Texture::Usage::Color) && texture.HasInitialData())
 		{
-			SEAssert("TODO: Test/support buffering texture data for textures with multiple faces. Initial data for the "
-				" first mip of textures with multiple faces probably works, but has not been tested ",
-				texParams.m_dimension == re::Texture::Dimension::Texture2D && texParams.m_faces == 1);
+			SEAssert(texParams.m_dimension == re::Texture::Dimension::Texture2D && texParams.m_faces == 1,
+				"TODO: Test/support buffering texture data for textures with multiple faces. Initial data for the "
+				" first mip of textures with multiple faces probably works, but has not been tested ");
 
 			const uint8_t bytesPerTexel = re::Texture::GetNumBytesPerTexel(texParams.m_format);
 			const uint32_t numBytesPerFace = static_cast<uint32_t>(texture.GetTotalBytesPerFace());
 			const uint32_t totalBytes = numBytesPerFace * texParams.m_faces;
-			SEAssert("Texture sizes don't make sense",
-				totalBytes > 0 &&
-				totalBytes == texParams.m_faces * texParams.m_width * texParams.m_height * bytesPerTexel);
+			SEAssert(totalBytes > 0 &&
+				totalBytes == texParams.m_faces * texParams.m_width * texParams.m_height * bytesPerTexel,
+				"Texture sizes don't make sense");
 			
 			// Note: If we don't request an intermediate buffer large enough, the UpdateSubresources call will return 0
 			// and no update is actually recorded on the command list.
@@ -933,8 +933,8 @@ namespace dx12
 		bool doClear, 
 		Microsoft::WRL::ComPtr<ID3D12Resource> textureResource)
 	{
-		SEAssert("Invalid/unexpected texture format. For now, this function is used to create a backbuffer color target",
-			(params.m_usage & re::Texture::Usage::SwapchainColorProxy));
+		SEAssert((params.m_usage & re::Texture::Usage::SwapchainColorProxy),
+			"Invalid/unexpected texture format. For now, this function is used to create a backbuffer color target");
 
 		// Note: re::Texture::Create will enroll the texture in API object creation, and eventually call the standard 
 		// dx12::Texture::Create above
@@ -942,8 +942,8 @@ namespace dx12
 
 		dx12::Texture::PlatformParams* texPlatParams = 
 			newTexture->GetPlatformParams()->As<dx12::Texture::PlatformParams*>();
-		SEAssert("Texture is already created", 
-			!texPlatParams->m_isCreated && texPlatParams->m_textureResource == nullptr);
+		SEAssert(!texPlatParams->m_isCreated && texPlatParams->m_textureResource == nullptr,
+			"Texture is already created");
 
 		texPlatParams->m_textureResource = textureResource;
 

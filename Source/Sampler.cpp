@@ -40,7 +40,7 @@ namespace re
 			{ENUM_TO_STR(Clamp_LinearMipMapLinear_Linear),WrapAndFilterMode::Clamp_LinearMipMapLinear_Linear},
 			{ENUM_TO_STR(Wrap_LinearMipMapLinear_Linear), WrapAndFilterMode::Wrap_LinearMipMapLinear_Linear},
 		};
-		SEAssert("Array size mismatch", re::Sampler::SamplerTypeLibraryNames.size() == k_nameToSamplerLibraryIdx.size());
+		SEAssert(re::Sampler::SamplerTypeLibraryNames.size() == k_nameToSamplerLibraryIdx.size(), "Array size mismatch");
 
 		return GetSampler(k_nameToSamplerLibraryIdx.at(samplerTypeLibraryName));
 	}
@@ -53,8 +53,8 @@ namespace re
 
 		if (Sampler::m_samplerLibrary == nullptr)
 		{
-			SEAssert("Size of sampler type enum and sampler type library names mismatch",
-				SamplerTypeLibraryNames.size() == (size_t)Sampler::WrapAndFilterMode::WrapAndFilterMode_Count);
+			SEAssert(SamplerTypeLibraryNames.size() == (size_t)Sampler::WrapAndFilterMode::WrapAndFilterMode_Count,
+				"Size of sampler type enum and sampler type library names mismatch");
 
 			Sampler::m_samplerLibrary = make_unique<unordered_map<Sampler::WrapAndFilterMode, shared_ptr<Sampler>>>();
 			
@@ -130,7 +130,7 @@ namespace re
 
 		auto const& result = Sampler::m_samplerLibrary->find(type);
 
-		SEAssert("Invalid sampler name", result != Sampler::m_samplerLibrary->end());
+		SEAssert(result != Sampler::m_samplerLibrary->end(), "Invalid sampler name");
 
 		return result->second;
 	}
@@ -167,7 +167,7 @@ namespace re
 
 	void Sampler::Destroy()
 	{
-		SEAssert("Sampler has not been created", m_platformParams->m_isCreated);
+		SEAssert(m_platformParams->m_isCreated, "Sampler has not been created");
 		platform::Sampler::Destroy(*this);
 		m_platformParams = nullptr;
 		m_samplerParams = {};

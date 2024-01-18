@@ -121,7 +121,7 @@ namespace win32
 			nullptr // Pointer to a value that will be passed to the window through the CREATESTRUCT. Sent by this function before it returns
 		);
 
-		SEAssert("Failed to create window", platformParams->m_hWindow);
+		SEAssert(platformParams->m_hWindow, "Failed to create window");
 
 		::ShowWindow(platformParams->m_hWindow, SW_SHOW);
 		::UpdateWindow(platformParams->m_hWindow);

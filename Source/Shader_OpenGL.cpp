@@ -254,7 +254,7 @@ namespace opengl
 
 		opengl::Shader::PlatformParams* params = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams*>();
 
-		SEAssert("Shader has already been created", !params->m_isCreated);
+		SEAssert(!params->m_isCreated, "Shader has already been created");
 		params->m_isCreated = true;
 
 		std::string const& shaderFileName = shader.GetName();
@@ -295,12 +295,12 @@ namespace opengl
 					[&shaderFiles, &shaderTextStrings, i]()
 					{
 						const bool result = InsertIncludeText(shaderFiles[i], shaderTextStrings[i]);
-						SEAssert("Failed to parse shader #includes", result);
+						SEAssert(result, "Failed to parse shader #includes");
 					});
 			}
 		}
-		SEAssert("No shader found. Must have a vertex or compute shader at minimum",
-			foundShaderTypeFlags[Vertex] != 0 || foundShaderTypeFlags[Compute] != 0);
+		SEAssert(foundShaderTypeFlags[Vertex] != 0 || foundShaderTypeFlags[Compute] != 0,
+			"No shader found. Must have a vertex or compute shader at minimum");
 
 		// Static so we only compute this once
 		static const size_t preambleLength = strlen(k_globalPreamble);
@@ -318,7 +318,7 @@ namespace opengl
 
 			// Create and attach the shader object:
 			const GLuint shaderObject = glCreateShader(foundShaderTypeFlags[i]);
-			SEAssert("glCreateShader failed!", shaderObject > 0);
+			SEAssert(shaderObject > 0, "glCreateShader failed!");
 
 			// RenderDoc object name:
 			glObjectLabel(GL_SHADER, shaderObject, -1, shaderFileNames[i].c_str());
@@ -449,8 +449,8 @@ namespace opengl
 
 				// Populate the shader sampler unit map with unique entries:
 				std::string nameStr(name);
-				SEAssert("Sampler unit already found! Does the shader have a unique binding layout qualifier?",
-					params->m_samplerUnits.find(nameStr) == params->m_samplerUnits.end());
+				SEAssert(params->m_samplerUnits.find(nameStr) == params->m_samplerUnits.end(),
+					"Sampler unit already found! Does the shader have a unique binding layout qualifier?");
 
 				params->m_samplerUnits.emplace(std::move(nameStr), static_cast<int32_t>(val));
 			}			
@@ -494,7 +494,7 @@ namespace opengl
 		int const count)
 	{
 		PlatformParams const* params = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
-		SEAssert("Shader has not been created yet", params->m_isCreated == true);
+		SEAssert(params->m_isCreated == true, "Shader has not been created yet");
 
 		// Track if the current shader is bound or not, so we can set values without breaking the current state
 		GLint currentProgram = 0;
@@ -551,10 +551,9 @@ namespace opengl
 			auto const& bindingUnit = params->m_samplerUnits.find(uniformName);
 			if (bindingUnit == params->m_samplerUnits.end())
 			{
-				SEAssert(std::format(
-						"Shader \"{}\" texture name \"{}\"is invalid, and strict shader binding is enabled", 
-						shader.GetName(), uniformName).c_str(),
-					en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
+				SEAssert(en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
+					std::format("Shader \"{}\" texture name \"{}\"is invalid, and strict shader binding is enabled", 
+						shader.GetName(), uniformName).c_str());
 				return;
 			}
 
@@ -567,10 +566,9 @@ namespace opengl
 
 			if (bindingUnit == params->m_samplerUnits.end())
 			{
-				SEAssert(std::format(
-						"Shader \"{}\" sampler name \"{}\"is invalid, and strict shader binding is enabled", 
-						shader.GetName(), uniformName).c_str(),
-					en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
+				SEAssert(en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
+					std::format("Shader \"{}\" sampler name \"{}\"is invalid, and strict shader binding is enabled", 
+						shader.GetName(), uniformName).c_str());
 				return;
 			}
 
@@ -594,7 +592,7 @@ namespace opengl
 		opengl::Shader::PlatformParams const* shaderPlatformParams = 
 			shader.GetPlatformParams()->As<opengl::Shader::PlatformParams const*>();
 
-		SEAssert("Shader has not been created yet", shaderPlatformParams->m_isCreated == true);
+		SEAssert(shaderPlatformParams->m_isCreated == true, "Shader has not been created yet");
 
 		// Track if the current shader is bound or not, so we can set values without breaking the current state
 		GLint currentProgram = 0;
@@ -619,9 +617,9 @@ namespace opengl
 				paramBlock.GetName().c_str());				// Uniform block name
 
 			// GL_INVALID_INDEX is returned if the the uniform block name does not identify an active uniform block
-			SEAssert("Failed to find an active uniform block index. This is is not an error, but a useful debugging helper",
-				uniformBlockIndex != GL_INVALID_INDEX ||
-				en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
+			SEAssert(uniformBlockIndex != GL_INVALID_INDEX ||
+				en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
+				"Failed to find an active uniform block index. This is is not an error, but a useful debugging helper");
 
 			if (uniformBlockIndex != GL_INVALID_INDEX)
 			{
@@ -652,12 +650,12 @@ namespace opengl
 			GL_SHADER_STORAGE_BLOCK,					// programInterface
 			paramBlock.GetName().c_str());				// name
 
-			SEAssert("Failed to get resource index", resourceIdx != GL_INVALID_ENUM);
+			SEAssert(resourceIdx != GL_INVALID_ENUM, "Failed to get resource index");
 
 			// GL_INVALID_INDEX is returned if name is not the name of a resource within the shader program
-			SEAssert("Failed to find the resource in the shader. This is is not an error, but a useful debugging helper",
-				resourceIdx != GL_INVALID_INDEX ||
-				en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false);
+			SEAssert(resourceIdx != GL_INVALID_INDEX ||
+				en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
+				"Failed to find the resource in the shader. This is is not an error, but a useful debugging helper");
 
 			if (resourceIdx != GL_INVALID_INDEX)
 			{

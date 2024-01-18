@@ -13,13 +13,13 @@ namespace fr
 	void CameraComponent::CreateCameraConcept(
 		fr::EntityManager& em, entt::entity sceneNode, char const* name, gr::Camera::Config const& cameraConfig)
 	{
-		SEAssert("Cannot attach a CameraComponent to a null sceneNode", sceneNode != entt::null);
+		SEAssert(sceneNode != entt::null, "Cannot attach a CameraComponent to a null sceneNode");
 
-		SEAssert("A CameraComponent must be attached to an entity that has a TransformComponent",
-			em.HasComponent<fr::TransformComponent>(sceneNode));
+		SEAssert(em.HasComponent<fr::TransformComponent>(sceneNode),
+			"A CameraComponent must be attached to an entity that has a TransformComponent");
 
-		SEAssert("A Camera concept creates its own RenderDataComponent, the sceneNode entity already has one attached",
-			em.HasComponent<gr::RenderDataComponent>(sceneNode) == false);
+		SEAssert(em.HasComponent<gr::RenderDataComponent>(sceneNode) == false,
+			"A Camera concept creates its own RenderDataComponent, the sceneNode entity already has one attached");
 
 		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(sceneNode);
 
@@ -36,13 +36,13 @@ namespace fr
 	void CameraComponent::AttachCameraComponent(
 		fr::EntityManager& em, entt::entity owningEntity, char const* name, gr::Camera::Config const& cameraConfig)
 	{
-		SEAssert("Cannot attach a CameraComponent to a null entity", owningEntity != entt::null);
+		SEAssert(owningEntity != entt::null, "Cannot attach a CameraComponent to a null entity");
 
-		SEAssert("A CameraComponent must be attached to an entity that has a TransformComponent",
-			em.HasComponent<fr::TransformComponent>(owningEntity));
+		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
+			"A CameraComponent must be attached to an entity that has a TransformComponent");
 
-		SEAssert("A CameraComponent must be attached to an entity that has a RenderDataComponent",
-			em.HasComponent<gr::RenderDataComponent>(owningEntity));
+		SEAssert(em.HasComponent<gr::RenderDataComponent>(owningEntity),
+			"A CameraComponent must be attached to an entity that has a RenderDataComponent");
 
 		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(owningEntity);
 

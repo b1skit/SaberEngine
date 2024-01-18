@@ -148,7 +148,7 @@ namespace re
 		, m_doNormalize(doNormalize)
 		, m_platformParams(nullptr)
 	{
-		SEAssert("Only 1, 2, 3, or 4 components are valid", numComponents >= 1 && numComponents <= 4);
+		SEAssert(numComponents >= 1 && numComponents <= 4, "Only 1, 2, 3, or 4 components are valid");
 
 		m_data = std::move(data);
 
@@ -198,8 +198,8 @@ namespace re
 		default:
 			SEAssertF("Invalid data type");
 		}
-		SEAssert("Data and description don't match",
-			m_data.size() % ((static_cast<size_t>(m_numComponents) * m_componentByteSize)) == 0);
+		SEAssert(m_data.size() % ((static_cast<size_t>(m_numComponents) * m_componentByteSize)) == 0,
+			"Data and description don't match");
 
 
 		m_platformParams = std::move(platform::VertexStream::CreatePlatformParams(*this, type));
@@ -261,7 +261,7 @@ namespace re
 	uint32_t VertexStream::GetNumElements() const
 	{
 		// i.e. Get the number of vertices
-		SEAssert("Invalid denominator", m_numComponents > 0 && m_componentByteSize > 0);
+		SEAssert(m_numComponents > 0 && m_componentByteSize > 0, "Invalid denominator");
 		return static_cast<uint32_t>(m_data.size() / (m_numComponents * m_componentByteSize));
 	}
 

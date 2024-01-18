@@ -36,7 +36,7 @@ namespace dx12
 		: m_intermediateResourceFenceVal(0)
 		, k_numFrames(en::Config::Get()->GetValue<int>(en::ConfigKeys::k_numBackbuffersKey))
 	{
-		SEAssert("Invalid number of frames in flight", k_numFrames >= 2 && k_numFrames <= 3);
+		SEAssert(k_numFrames >= 2 && k_numFrames <= 3, "Invalid number of frames in flight");
 	}
 
 
@@ -387,8 +387,8 @@ namespace dx12
 					std::shared_ptr<re::TextureTargetSet const> stageTargets = renderStage->GetTextureTargetSet();
 					if (stageTargets == nullptr)
 					{
-						SEAssert("Only the graphics queue/command lists can render to the backbuffer",
-							curRenderStageType == re::RenderStage::Type::Graphics);
+						SEAssert(curRenderStageType == re::RenderStage::Type::Graphics,
+							"Only the graphics queue/command lists can render to the backbuffer");
 
 						stageTargets = dx12::SwapChain::GetBackBufferTargetSet(context->GetSwapChain());
 					}
@@ -487,8 +487,8 @@ namespace dx12
 						if (!hasStageShader)
 						{
 							re::Shader const* batchShader = batches[batchIdx].GetShader();
-							SEAssert("Batch must have a shader if the stage does not have a shader",
-								batchShader != nullptr);
+							SEAssert(batchShader != nullptr,
+								"Batch must have a shader if the stage does not have a shader");
 
 							SetDrawState(batchShader, stageTargets.get(), currentCommandList);
 						}
@@ -506,10 +506,10 @@ namespace dx12
 						{
 							for (auto const& texSamplerInput : batches[batchIdx].GetTextureAndSamplerInputs())
 							{
-								SEAssert("We don't currently handle batches with the current depth buffer attached as "
-									"a texture input. We need to make sure the transitions are handled correctly", 
-									!stageTargets->HasDepthTarget() || 
-									texSamplerInput.m_texture != stageTargets->GetDepthStencilTarget()->GetTexture().get());
+								SEAssert(!stageTargets->HasDepthTarget() ||
+									texSamplerInput.m_texture != stageTargets->GetDepthStencilTarget()->GetTexture().get(),
+								"We don't currently handle batches with the current depth buffer attached as "
+								"a texture input. We need to make sure the transitions are handled correctly");
 
 								currentCommandList->SetTexture(
 									texSamplerInput.m_shaderName,

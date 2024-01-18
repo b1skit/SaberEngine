@@ -30,16 +30,16 @@ namespace dx12
 		, m_dirtyDescriptorTableIdxBitmask(0)
 		, m_unsetInlineDescriptors(0)
 	{
-		SEAssert("Invalid command list", m_owningCommandList != nullptr);
+		SEAssert(m_owningCommandList != nullptr, "Invalid command list");
 
-		SEAssert("Unexpected owning command list type", 
-			owningCmdListType == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT ||
-			owningCmdListType == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE);
+		SEAssert(owningCmdListType == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT ||
+			owningCmdListType == D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE,
+			"Unexpected owning command list type");
 
-		SEAssert("Descriptor heap must have a type that is not bound directly to a command list", 
-			m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV ||
-			m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-		SEAssert("Invalid element size", m_elementSize > 0);
+		SEAssert(m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV ||
+			m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
+			"Descriptor heap must have a type that is not bound directly to a command list");
+		SEAssert(m_elementSize > 0, "Invalid element size");
 
 		// Create our GPU-visible descriptor heap:
 		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
@@ -72,7 +72,7 @@ namespace dx12
 
 	void GPUDescriptorHeap::Reset()
 	{
-		SEAssert("Shader-visible descriptor heap is null", m_gpuDescriptorTableHeap);
+		SEAssert(m_gpuDescriptorTableHeap, "Shader-visible descriptor heap is null");
 
 		m_gpuDescriptorTableHeapCPUBase = m_gpuDescriptorTableHeap->GetCPUDescriptorHandleForHeapStart();
 		m_gpuDescriptorTableHeapGPUBase = m_gpuDescriptorTableHeap->GetGPUDescriptorHandleForHeapStart();
@@ -215,8 +215,8 @@ namespace dx12
 				descriptorTableIdxBitmask ^= rootIdxBit;
 			}
 		}
-		SEAssert("Offset is out of bounds, not enough descriptors allocated. Consider increasing k_totalDescriptors", 
-			offset < k_totalDescriptors);
+		SEAssert(offset < k_totalDescriptors,
+			"Offset is out of bounds, not enough descriptors allocated. Consider increasing k_totalDescriptors");
 
 		// Remove all dirty flags: We'll need to call Set___() in order to mark any descriptors for copying
 		m_dirtyDescriptorTableIdxBitmask = 0;
@@ -228,17 +228,17 @@ namespace dx12
 	void GPUDescriptorHeap::SetDescriptorTable(
 		uint32_t rootParamIdx, dx12::DescriptorAllocation const& src, uint32_t offset, uint32_t count)
 	{
-		SEAssert("Invalid root parameter index", rootParamIdx < k_totalRootSigDescriptorTableIndices);
-		SEAssert("Source cannot be null", src.GetBaseDescriptor().ptr != 0);
-		SEAssert("Invalid offset", offset < k_totalDescriptors);
-		SEAssert("Too many descriptors", count < k_totalDescriptors);
+		SEAssert(rootParamIdx < k_totalRootSigDescriptorTableIndices, "Invalid root parameter index");
+		SEAssert(src.GetBaseDescriptor().ptr != 0, "Source cannot be null");
+		SEAssert(offset < k_totalDescriptors, "Invalid offset");
+		SEAssert(count < k_totalDescriptors, "Too many descriptors");
 
 		// TODO: Handle this for Sampler heap type
 
 		CPUDescriptorTableCacheMetadata const& destCPUDescriptorTable = m_cpuDescriptorTableCacheLocations[rootParamIdx];
 
-		SEAssert("Writing too many descriptors from the given offset", 
-			offset + count <= destCPUDescriptorTable.m_numElements);
+		SEAssert(offset + count <= destCPUDescriptorTable.m_numElements,
+			"Writing too many descriptors from the given offset");
 
 		// Make a local copy of the source descriptor(s):
 		D3D12_CPU_DESCRIPTOR_HANDLE* destDescriptorHandle = destCPUDescriptorTable.m_baseDescriptor + offset;
@@ -257,9 +257,9 @@ namespace dx12
 	// https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html#using-descriptors-directly-in-the-root-arguments
 	void GPUDescriptorHeap::SetInlineCBV(uint32_t rootParamIdx, ID3D12Resource* buffer, uint64_t alignedByteOffset)
 	{
-		SEAssert("Invalid root parameter index", rootParamIdx < k_totalRootSigDescriptorTableIndices);
-		SEAssert("Invalid resource pointer", buffer != nullptr);
-		SEAssert("Wrong heap type", m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		SEAssert(rootParamIdx < k_totalRootSigDescriptorTableIndices, "Invalid root parameter index");
+		SEAssert(buffer != nullptr, "Invalid resource pointer");
+		SEAssert(m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Wrong heap type");
 
 		m_inlineDescriptors[CBV][rootParamIdx] = buffer->GetGPUVirtualAddress() + alignedByteOffset;
 		
@@ -279,9 +279,9 @@ namespace dx12
 	// https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html#using-descriptors-directly-in-the-root-arguments
 	void GPUDescriptorHeap::SetInlineSRV(uint32_t rootParamIdx, ID3D12Resource* buffer, uint64_t alignedByteOffset)
 	{
-		SEAssert("Invalid root parameter index", rootParamIdx < k_totalRootSigDescriptorTableIndices);
-		SEAssert("Invalid resource pointer", buffer != nullptr);
-		SEAssert("Wrong heap type", m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		SEAssert(rootParamIdx < k_totalRootSigDescriptorTableIndices, "Invalid root parameter index");
+		SEAssert(buffer != nullptr, "Invalid resource pointer");
+		SEAssert(m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Wrong heap type");
 
 		m_inlineDescriptors[SRV][rootParamIdx] = buffer->GetGPUVirtualAddress() + alignedByteOffset;
 
@@ -301,9 +301,9 @@ namespace dx12
 	// https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html#using-descriptors-directly-in-the-root-arguments
 	void GPUDescriptorHeap::SetInlineUAV(uint32_t rootParamIdx, ID3D12Resource* buffer, uint64_t alignedByteOffset)
 	{
-		SEAssert("Invalid root parameter index", rootParamIdx < k_totalRootSigDescriptorTableIndices);
-		SEAssert("Invalid resource pointer", buffer != nullptr);
-		SEAssert("Wrong heap type", m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		SEAssert(rootParamIdx < k_totalRootSigDescriptorTableIndices, "Invalid root parameter index");
+		SEAssert(buffer != nullptr, "Invalid resource pointer");
+		SEAssert(m_heapType == D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, "Wrong heap type");
 		
 		m_inlineDescriptors[UAV][rootParamIdx] = buffer->GetGPUVirtualAddress() + alignedByteOffset;
 
@@ -328,15 +328,15 @@ namespace dx12
 		{
 			for (uint8_t i = 0; i < InlineRootType_Count; i++)
 			{
-				SEAssert("Inline descriptor index and descriptor table index overlap",
-					(m_dirtyInlineDescriptorIdxBitmask[i] & m_rootSigDescriptorTableIdxBitmask) == 0);
+				SEAssert((m_dirtyInlineDescriptorIdxBitmask[i] & m_rootSigDescriptorTableIdxBitmask) == 0,
+					"Inline descriptor index and descriptor table index overlap");
 
 				for (uint8_t j = 0; j < InlineRootType_Count; j++)
 				{
 					if (i != j)
 					{
-						SEAssert("Inline descriptor indexes overlap",
-							(m_dirtyInlineDescriptorIdxBitmask[i] & m_dirtyInlineDescriptorIdxBitmask[j]) == 0);
+						SEAssert((m_dirtyInlineDescriptorIdxBitmask[i] & m_dirtyInlineDescriptorIdxBitmask[j]) == 0,
+							"Inline descriptor indexes overlap");
 					}
 				}
 			}
@@ -354,7 +354,7 @@ namespace dx12
 		const uint32_t numDirtyTableDescriptors = GetNumDirtyTableDescriptors();
 		if (numDirtyTableDescriptors > 0)
 		{
-			SEAssert("Invalid descriptor heap", m_gpuDescriptorTableHeap != nullptr);
+			SEAssert(m_gpuDescriptorTableHeap != nullptr, "Invalid descriptor heap");
 
 			ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
 
@@ -377,13 +377,13 @@ namespace dx12
 
 					const size_t tableSize = numTableDescriptors * m_elementSize;
 
-					SEAssert("Out of bounds CPU destination. Consider increasing k_totalDescriptors", 
-						m_gpuDescriptorTableHeapCPUBase.ptr + tableSize <=
-							m_gpuDescriptorTableHeap->GetCPUDescriptorHandleForHeapStart().ptr + (k_totalDescriptors * m_elementSize));
+					SEAssert(m_gpuDescriptorTableHeapCPUBase.ptr + tableSize <=
+							m_gpuDescriptorTableHeap->GetCPUDescriptorHandleForHeapStart().ptr + (k_totalDescriptors * m_elementSize),
+						"Out of bounds CPU destination. Consider increasing k_totalDescriptors");
 
-					SEAssert("Out of bounds GPU destination. Consider increasing k_totalDescriptors",
-						m_gpuDescriptorTableHeapGPUBase.ptr + tableSize <=
-							m_gpuDescriptorTableHeap->GetGPUDescriptorHandleForHeapStart().ptr + (k_totalDescriptors * m_elementSize));
+					SEAssert(m_gpuDescriptorTableHeapGPUBase.ptr + tableSize <=
+							m_gpuDescriptorTableHeap->GetGPUDescriptorHandleForHeapStart().ptr + (k_totalDescriptors * m_elementSize),
+						"Out of bounds GPU destination. Consider increasing k_totalDescriptors");
 
 					device->CopyDescriptors(
 						1,									// UINT NumDestDescriptorRanges
@@ -575,7 +575,7 @@ namespace dx12
 		}
 
 #if defined(_DEBUG)
-		SEAssert("Expected the bitmask to be all 0's", dirtyDescriptorBitmask == 0);
+		SEAssert(dirtyDescriptorBitmask == 0, "Expected the bitmask to be all 0's");
 #endif
 
 		return count;

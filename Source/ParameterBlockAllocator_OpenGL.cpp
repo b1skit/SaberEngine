@@ -29,8 +29,8 @@ namespace opengl
 			bufferNameOut = pbaPlatParams->m_singleFrameUBOs[writeIdx];
 
 			const GLint uboAlignment = opengl::SysInfo::GetUniformBufferOffsetAlignment(); // e.g. 256
-			SEAssert("Incompatible alignment",
-				re::ParameterBlockAllocator::k_fixedAllocationByteSize % uboAlignment == 0);
+			SEAssert(re::ParameterBlockAllocator::k_fixedAllocationByteSize % uboAlignment == 0,
+				"Incompatible alignment");
 
 			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, uboAlignment);
 		}
@@ -40,8 +40,8 @@ namespace opengl
 			bufferNameOut = pbaPlatParams->m_singleFrameSSBOs[writeIdx];
 
 			const GLint ssboAlignment = opengl::SysInfo::GetShaderStorageBufferOffsetAlignment(); // e.g. 16
-			SEAssert("Incompatible alignment", 
-				re::ParameterBlockAllocator::k_fixedAllocationByteSize % ssboAlignment == 0);
+			SEAssert(re::ParameterBlockAllocator::k_fixedAllocationByteSize % ssboAlignment == 0,
+				"Incompatible alignment");
 
 			alignedSize = util::RoundUpToNearestMultiple<uint32_t>(size, ssboAlignment);
 		}
@@ -74,7 +74,7 @@ namespace opengl
 			// Binding associates the buffer object with the buffer object name
 			glBindBuffer(GL_UNIFORM_BUFFER, pbaPlatformParams->m_singleFrameUBOs[bufferIdx]);
 
-			SEAssert("Buffer name is not valid", glIsBuffer(pbaPlatformParams->m_singleFrameUBOs[bufferIdx]));
+			SEAssert(glIsBuffer(pbaPlatformParams->m_singleFrameUBOs[bufferIdx]), "Buffer name is not valid");
 
 			glBufferData(
 				GL_UNIFORM_BUFFER,
@@ -92,7 +92,7 @@ namespace opengl
 			// SSBO:
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, pbaPlatformParams->m_singleFrameSSBOs[bufferIdx]);
 
-			SEAssert("Buffer name is not valid", glIsBuffer(pbaPlatformParams->m_singleFrameSSBOs[bufferIdx]));
+			SEAssert(glIsBuffer(pbaPlatformParams->m_singleFrameSSBOs[bufferIdx]), "Buffer name is not valid");
 
 			glBufferData(
 				GL_SHADER_STORAGE_BUFFER,
@@ -114,10 +114,10 @@ namespace opengl
 		opengl::ParameterBlockAllocator::PlatformParams* pbaPlatformParams =
 			pba.GetPlatformParams()->As<opengl::ParameterBlockAllocator::PlatformParams*>();
 
-		SEAssert("Mismatched number of single frame buffers", 
-			pbaPlatformParams->m_singleFrameUBOs.size() == pbaPlatformParams->m_singleFrameSSBOs.size() &&
+		SEAssert(pbaPlatformParams->m_singleFrameUBOs.size() == pbaPlatformParams->m_singleFrameSSBOs.size() &&
 			pbaPlatformParams->m_numBuffers == pbaPlatformParams->m_singleFrameUBOs.size() &&
-			pbaPlatformParams->m_numBuffers == opengl::RenderManager::GetNumFramesInFlight());
+			pbaPlatformParams->m_numBuffers == opengl::RenderManager::GetNumFramesInFlight(),
+			"Mismatched number of single frame buffers");
 		
 		glDeleteBuffers(pbaPlatformParams->m_numBuffers, pbaPlatformParams->m_singleFrameUBOs.data());
 		glDeleteBuffers(pbaPlatformParams->m_numBuffers, pbaPlatformParams->m_singleFrameSSBOs.data());

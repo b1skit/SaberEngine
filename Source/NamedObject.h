@@ -52,8 +52,8 @@ namespace en
 
 	inline NamedObject::NamedObject(char const* name)
 	{
-		SEAssert("Empty, null, or non-terminated name strings are not allowed", 
-			strnlen_s(name, k_maxNameLength) > 0 && strnlen_s(name, k_maxNameLength) < k_maxNameLength);
+		SEAssert(strnlen_s(name, k_maxNameLength) > 0 && strnlen_s(name, k_maxNameLength) < k_maxNameLength,
+			"Empty, null, or non-terminated name strings are not allowed");
 
 		SetName(name);
 		AssignUniqueID();

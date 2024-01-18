@@ -13,13 +13,13 @@ namespace util
 
 	PerformanceTimer::~PerformanceTimer()
 	{
-		SEAssert("Timer started, but not stopped", !m_isStarted);
+		SEAssert(!m_isStarted, "Timer started, but not stopped");
 	}
 
 
 	void PerformanceTimer::Start()
 	{
-		SEAssert("Timer has already been started", !m_isStarted);
+		SEAssert(!m_isStarted, "Timer has already been started");
 		m_isStarted = true;
 		m_startTime = std::chrono::steady_clock::now();
 	}
@@ -27,7 +27,7 @@ namespace util
 
 	double PerformanceTimer::PeekMs() const
 	{
-		SEAssert("Timer has not been started", m_isStarted);
+		SEAssert(m_isStarted, "Timer has not been started");
 		const std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - m_startTime).count() / 1000000.f;
 	}
@@ -35,7 +35,7 @@ namespace util
 
 	double PerformanceTimer::PeekSec() const
 	{
-		SEAssert("Timer has not been started", m_isStarted);
+		SEAssert(m_isStarted, "Timer has not been started");
 		const std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
 		return std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - m_startTime).count() / 1000000000.f;
 	}

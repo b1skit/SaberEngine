@@ -43,7 +43,7 @@ namespace en
 
 	inline void HashedDataObject::AddDataBytesToHash(void const* const data, size_t numBytes)
 	{
-		SEAssert("Invalid data for hash", data != nullptr && numBytes > 0);
+		SEAssert(data != nullptr && numBytes > 0, "Invalid data for hash");
 
 		constexpr uint8_t k_wordSize = sizeof(uint64_t); // 8 bytes in a word on 64-bit architecture
 		const size_t numWords = numBytes / k_wordSize;

@@ -168,13 +168,13 @@ namespace re
 
 	inline void Batch::SetShader(re::Shader* shader)
 	{
-		SEAssert("Batch already has a shader. This is unexpected", m_batchShader == nullptr);
+		SEAssert(m_batchShader == nullptr, "Batch already has a shader. This is unexpected");
 		m_batchShader = shader;
 	}
 
 	inline size_t Batch::GetInstanceCount() const
 	{
-		SEAssert("Invalid type", m_type == BatchType::Graphics);
+		SEAssert(m_type == BatchType::Graphics, "Invalid type");
 		return m_graphicsParams.m_numInstances;
 	}
 
@@ -199,14 +199,14 @@ namespace re
 
 	inline Batch::GraphicsParams const& Batch::GetGraphicsParams() const
 	{
-		SEAssert("Invalid type", m_type == BatchType::Graphics);
+		SEAssert(m_type == BatchType::Graphics, "Invalid type");
 		return m_graphicsParams;
 	}
 
 
 	inline Batch::ComputeParams const& Batch::GetComputeParams() const
 	{
-		SEAssert("Invalid type", m_type == BatchType::Compute);
+		SEAssert(m_type == BatchType::Compute, "Invalid type");
 		return m_computeParams;
 	}
 }

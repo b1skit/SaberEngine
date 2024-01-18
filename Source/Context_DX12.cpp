@@ -144,7 +144,7 @@ namespace dx12
 				&descriptorHeapDesc, IID_PPV_ARGS(&m_imGuiGPUVisibleSRVDescriptorHeap));
 			CheckHResult(hr, "Failed to create single element descriptor heap for ImGui SRV");
 
-			SEAssert("Window pointer cannot be null", en::CoreEngine::Get()->GetWindow());
+			SEAssert(en::CoreEngine::Get()->GetWindow(), "Window pointer cannot be null");
 			win32::Window::PlatformParams* windowPlatParams =
 				en::CoreEngine::Get()->GetWindow()->GetPlatformParams()->As<win32::Window::PlatformParams*>();
 
@@ -344,7 +344,7 @@ namespace dx12
 
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> Context::GetRootSignature(uint64_t rootSigDescHash)
 	{
-		SEAssert("Root signature has not been added", HasRootSignature(rootSigDescHash));
+		SEAssert(HasRootSignature(rootSigDescHash), "Root signature has not been added");
 
 		{
 			std::lock_guard<std::mutex> lock(m_rootSigLibraryMutex);
@@ -358,7 +358,7 @@ namespace dx12
 		{
 			std::lock_guard<std::mutex> lock(m_rootSigLibraryMutex);
 			auto result = m_rootSigLibrary.insert({ rootSigDescHash, rootSig });
-			SEAssert("Root signature has already been added", result.second);
+			SEAssert(result.second, "Root signature has already been added");
 		}
 	}
 

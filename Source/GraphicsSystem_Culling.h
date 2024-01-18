@@ -50,7 +50,7 @@ namespace gr
 
 	inline std::vector<gr::RenderDataID> const& CullingGraphicsSystem::GetVisibleRenderDataIDs(gr::RenderDataID cameraID)
 	{
-		SEAssert("Camera with the given RenderDataID not found", m_cameraIDToVisibleIDs.contains(cameraID));
+		SEAssert(m_cameraIDToVisibleIDs.contains(cameraID), "Camera with the given RenderDataID not found");
 
 		return m_cameraIDToVisibleIDs.at(cameraID);
 	}

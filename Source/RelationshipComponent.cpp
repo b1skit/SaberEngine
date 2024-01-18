@@ -58,8 +58,8 @@ namespace fr
 
 	void Relationship::SetParent(EntityManager& em, entt::entity newParent)
 	{
-		SEAssert("Trying to set the same parent. This should be harmless, but it's unexpected",
-			newParent == entt::null || newParent != m_parent);
+		SEAssert(newParent == entt::null || newParent != m_parent,
+			"Trying to set the same parent. This should be harmless, but it's unexpected");
 
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_relationshipMutex);
@@ -99,15 +99,15 @@ namespace fr
 			Relationship& newChildRelationship = em.GetComponent<fr::Relationship>(newChild);
 			writeLock.lock();
 
-			SEAssert("Child should have already set this entity as its parent",
-				newChildRelationship.m_parent == m_thisEntity);
+			SEAssert(newChildRelationship.m_parent == m_thisEntity,
+				"Child should have already set this entity as its parent");
 
-			SEAssert("New child already has siblings",
-				newChildRelationship.m_next == entt::null && newChildRelationship.m_prev == entt::null);
+			SEAssert(newChildRelationship.m_next == entt::null && newChildRelationship.m_prev == entt::null,
+				"New child already has siblings");
 
 			if (m_firstChild == entt::null) // Adding a single node
 			{
-				SEAssert("Last child should also be null", m_lastChild == entt::null);
+				SEAssert(m_lastChild == entt::null, "Last child should also be null");
 
 				newChildRelationship.m_next = newChild;
 				newChildRelationship.m_prev = newChild;
@@ -122,8 +122,8 @@ namespace fr
 				Relationship& lastChildRelationship = em.GetComponent<fr::Relationship>(m_lastChild);
 				writeLock.lock();
 
-				SEAssert("Relationship linked list is corrupt: Last node does not point to the first node",
-					lastChildRelationship.m_next == m_firstChild);
+				SEAssert(lastChildRelationship.m_next == m_firstChild,
+					"Relationship linked list is corrupt: Last node does not point to the first node");
 
 				lastChildRelationship.m_next = newChild;
 
@@ -143,8 +143,8 @@ namespace fr
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_relationshipMutex);
 
-			SEAssert("Trying to remove a child from a Relationship that has no children",
-				m_firstChild != entt::null && m_lastChild != entt::null);
+			SEAssert(m_firstChild != entt::null && m_lastChild != entt::null,
+				"Trying to remove a child from a Relationship that has no children");
 
 			writeLock.unlock();
 			Relationship& childRelationship = em.GetComponent<fr::Relationship>(child);
@@ -154,8 +154,8 @@ namespace fr
 
 			if (m_firstChild == m_lastChild) // Removing the only node
 			{
-				SEAssert("Trying to remove an entity that is not a child of the current Relationship",
-					m_firstChild == child && m_lastChild == child);
+				SEAssert(m_firstChild == child && m_lastChild == child,
+					"Trying to remove an entity that is not a child of the current Relationship");
 
 				m_firstChild = entt::null;
 				m_lastChild = entt::null;
@@ -199,8 +199,8 @@ namespace fr
 
 					Relationship& prevChildRelationship = 
 						em.GetComponent<fr::Relationship>(lastChildRelationship.m_prev);
-					SEAssert("Last child's next should be the first child", 
-						lastChildRelationship.m_next == m_firstChild);
+					SEAssert(lastChildRelationship.m_next == m_firstChild,
+						"Last child's next should be the first child");
 
 					Relationship& firstChildRelationship = em.GetComponent<fr::Relationship>(m_firstChild);
 					writeLock.lock();
@@ -213,7 +213,7 @@ namespace fr
 			}
 
 			// Finally, cleanup the child's linked list references:
-			SEAssert("Could not find the child to remove", foundChild == true);
+			SEAssert(foundChild == true, "Could not find the child to remove");
 			childRelationship.m_prev = entt::null;
 			childRelationship.m_next = entt::null;
 		}

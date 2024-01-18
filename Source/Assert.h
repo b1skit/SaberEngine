@@ -16,7 +16,7 @@
 
 static void HandleAssertInternal();
 
-#define SEAssert(errorMsg, condition) \
+#define SEAssert(condition, errorMsg) \
 	if(!(condition)) \
 	{ \
 		void HandleAssertInternal(); \
@@ -33,7 +33,7 @@ static void HandleAssertInternal();
 		std::cerr << "Occurred at: " << __FILE__ << ":" << __LINE__ << "::" << __FUNCTION__ << std::endl; \
 		std::abort();
 #else
-#define SEAssert(errorMsg, condition)	\
+#define SEAssert(condition, errorMsg)	\
 	do { static_cast<void>(errorMsg); static_cast<void>(condition); } while (0);
 #define SEAssertF(errorMsg)	\
 	do {static_cast<void>(errorMsg);} while(0);

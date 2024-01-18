@@ -37,9 +37,9 @@ namespace gr
 
 	void GraphicsSystemManager::PreRender()
 	{
-		SEAssert("No active camera has been set",
-			m_activeCameraRenderDataID != gr::k_invalidRenderDataID && 
-			m_activeCameraTransformDataID != gr::k_invalidTransformID);
+		SEAssert(m_activeCameraRenderDataID != gr::k_invalidRenderDataID && 
+			m_activeCameraTransformDataID != gr::k_invalidTransformID,
+			"No active camera has been set");
 
 		gr::Camera::RenderData const& cameraData =
 			m_renderData.GetObjectData<gr::Camera::RenderData>(m_activeCameraRenderDataID);
@@ -50,29 +50,29 @@ namespace gr
 
 	gr::Camera::RenderData const& GraphicsSystemManager::GetActiveCameraRenderData() const
 	{
-		SEAssert("No active camera has been set", m_activeCameraRenderDataID != gr::k_invalidRenderDataID);
+		SEAssert(m_activeCameraRenderDataID != gr::k_invalidRenderDataID, "No active camera has been set");
 		return m_renderData.GetObjectData< gr::Camera::RenderData>(m_activeCameraRenderDataID);
 	}
 
 
 	gr::Transform::RenderData const& GraphicsSystemManager::GetActiveCameraTransformData() const
 	{
-		SEAssert("No active camera has been set", m_activeCameraTransformDataID != gr::k_invalidTransformID);
+		SEAssert(m_activeCameraTransformDataID != gr::k_invalidTransformID, "No active camera has been set");
 		return m_renderData.GetTransformDataFromTransformID(m_activeCameraTransformDataID);
 	}
 
 
 	std::shared_ptr<re::ParameterBlock> GraphicsSystemManager::GetActiveCameraParams() const
 	{
-		SEAssert("Camera parameter block has not been created", m_activeCameraParams != nullptr);
+		SEAssert(m_activeCameraParams != nullptr, "Camera parameter block has not been created");
 		return m_activeCameraParams;
 	}
 
 
 	void GraphicsSystemManager::SetActiveCamera(gr::RenderDataID cameraRenderDataID, gr::TransformID cameraTransformID)
 	{
-		SEAssert("Invalid ID", 
-			cameraRenderDataID != gr::k_invalidRenderDataID && cameraTransformID != gr::k_invalidTransformID);
+		SEAssert(cameraRenderDataID != gr::k_invalidRenderDataID && cameraTransformID != gr::k_invalidTransformID,
+			"Invalid ID");
 
 		m_activeCameraRenderDataID = cameraRenderDataID;
 		m_activeCameraTransformDataID = cameraTransformID;

@@ -60,10 +60,10 @@ namespace
 			{"BLENDINDICES",	DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UINT},
 			{"BLENDWEIGHT",		DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
 		};
-		SEAssert("Missing semantics", k_semanticToFormat.size() == gr::MeshPrimitive::Slot_Count);
+		SEAssert(k_semanticToFormat.size() == gr::MeshPrimitive::Slot_Count, "Missing semantics");
 
 		auto const& result = k_semanticToFormat.find(semantic);
-		SEAssert("Invalid semantic name", result != k_semanticToFormat.end());
+		SEAssert(result != k_semanticToFormat.end(), "Invalid semantic name");
 
 		return result->second;
 	}
@@ -83,12 +83,12 @@ namespace
 			{"BLENDINDICES0",	gr::MeshPrimitive::Joints},
 			{"BLENDWEIGHT0",	gr::MeshPrimitive::Weights},
 		};
-		SEAssert("Missing semantics", k_sematicToSlot.size() == gr::MeshPrimitive::Slot_Count);
+		SEAssert(k_sematicToSlot.size() == gr::MeshPrimitive::Slot_Count, "Missing semantics");
 
 		const std::string semanticAndIndex = semantic + std::to_string(semanticIndex);
 
 		auto const& result = k_sematicToSlot.find(semanticAndIndex);
-		SEAssert("Invalid semantic and/or index", result != k_sematicToSlot.end());
+		SEAssert(result != k_sematicToSlot.end(), "Invalid semantic and/or index");
 
 		return result->second;
 	}
@@ -230,11 +230,11 @@ namespace
 		}
 
 		// TODO: Support these
-		SEAssert("TODO: Support StencilTarget and DepthStencilTarget usages",
-			!depthTarget ||
+		SEAssert(!depthTarget ||
 			!depthTarget->GetTexture() ||
 			!((depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::StencilTarget) ||
-				(depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthStencilTarget)));
+				(depthTarget->GetTexture()->GetTextureParams().m_usage & re::Texture::Usage::DepthStencilTarget)),
+			"TODO: Support StencilTarget and DepthStencilTarget usages");
 		depthStencilDesc.StencilEnable = false;
 		depthStencilDesc.StencilReadMask = 0;
 		depthStencilDesc.StencilWriteMask = 0;
@@ -270,8 +270,8 @@ namespace
 			{
 			case re::TextureTarget::TargetParams::BlendMode::Disabled:
 			{
-				SEAssert("Must disable blending for both source and destination",
-					blendModes.m_srcBlendMode == blendModes.m_dstBlendMode);
+				SEAssert(blendModes.m_srcBlendMode == blendModes.m_dstBlendMode,
+					"Must disable blending for both source and destination");
 
 				rtBlendDesc.BlendEnable = false;
 				rtBlendDesc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ZERO;
@@ -307,8 +307,8 @@ namespace
 			{
 			case re::TextureTarget::TargetParams::BlendMode::Disabled:
 			{
-				SEAssert("Must disable blending for both source and destination",
-					blendModes.m_srcBlendMode == blendModes.m_dstBlendMode);
+				SEAssert(blendModes.m_srcBlendMode == blendModes.m_dstBlendMode,
+					"Must disable blending for both source and destination");
 
 				rtBlendDesc.BlendEnable = false;
 				rtBlendDesc.DestBlend = D3D12_BLEND::D3D12_BLEND_ZERO;
@@ -420,11 +420,11 @@ namespace dx12
 				pipelineStateStream.pShader = CD3DX12_SHADER_BYTECODE(shaderParams->m_shaderBlobs[Shader::Pixel].Get());
 			}
 
-			SEAssert("TODO: Support this shader type", 
-				!shaderParams->m_shaderBlobs[dx12::Shader::Hull] && 
+			SEAssert(!shaderParams->m_shaderBlobs[dx12::Shader::Hull] && 
 				!shaderParams->m_shaderBlobs[dx12::Shader::Domain] &&
 				!shaderParams->m_shaderBlobs[dx12::Shader::Mesh] &&
-				!shaderParams->m_shaderBlobs[dx12::Shader::Amplification]);
+				!shaderParams->m_shaderBlobs[dx12::Shader::Amplification],
+				"TODO: Support this shader type");
 
 			// Target formats:
 			dx12::TextureTargetSet::PlatformParams* targetSetPlatParams =

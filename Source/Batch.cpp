@@ -37,9 +37,9 @@ namespace re
 		{
 			if (vertexStreams[slotIdx])
 			{
-				SEAssert("Cannot add a vertex stream with a single frame lifetime to a permanent batch",
-					(m_lifetime == Lifetime::SingleFrame) ||
-					(vertexStreams[slotIdx]->GetLifetime() == re::VertexStream::Lifetime::Permanent && m_lifetime == Lifetime::Permanent));
+				SEAssert((m_lifetime == Lifetime::SingleFrame) ||
+					(vertexStreams[slotIdx]->GetLifetime() == re::VertexStream::Lifetime::Permanent && m_lifetime == Lifetime::Permanent),
+					"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
 
 				m_graphicsParams.m_vertexStreams[slotIdx] = vertexStreams[slotIdx];
 			}
@@ -63,12 +63,12 @@ namespace re
 			// Material params:
 			std::shared_ptr<re::ParameterBlock> materialParams = gr::Material::CreateParameterBlock(material);
 			
-			SEAssert("Batch and material parameter block lifetimes are incompatible",
-				(m_lifetime == re::Batch::Lifetime::Permanent &&
+			SEAssert((m_lifetime == re::Batch::Lifetime::Permanent &&
 					(materialParams->GetType() == re::ParameterBlock::PBType::Mutable ||
 						materialParams->GetType() == re::ParameterBlock::PBType::Immutable)) ||
 				(lifetime == re::Batch::Lifetime::SingleFrame &&
-					materialParams->GetType() == re::ParameterBlock::PBType::SingleFrame));
+					materialParams->GetType() == re::ParameterBlock::PBType::SingleFrame),
+				"Batch and material parameter block lifetimes are incompatible");
 
 			m_batchParamBlocks.emplace_back(materialParams);
 		}
@@ -102,10 +102,10 @@ namespace re
 		{
 			if (meshPrimRenderData.m_vertexStreams[slotIdx])
 			{
-				SEAssert("Cannot add a vertex stream with a single frame lifetime to a permanent batch",
-					(m_lifetime == Lifetime::SingleFrame) ||
+				SEAssert((m_lifetime == Lifetime::SingleFrame) ||
 					(meshPrimRenderData.m_vertexStreams[slotIdx]->GetLifetime() == re::VertexStream::Lifetime::Permanent && 
-						m_lifetime == Lifetime::Permanent));
+						m_lifetime == Lifetime::Permanent),
+					"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
 
 				m_graphicsParams.m_vertexStreams[slotIdx] = meshPrimRenderData.m_vertexStreams[slotIdx];
 			}
@@ -131,12 +131,12 @@ namespace re
 			std::shared_ptr<re::ParameterBlock> materialParams =
 				gr::Material::CreateParameterBlock(materialRenderData->m_material);
 
-			SEAssert("Batch and material parameter block lifetimes are incompatible",
-				(m_lifetime == re::Batch::Lifetime::Permanent &&
+			SEAssert((m_lifetime == re::Batch::Lifetime::Permanent &&
 					(materialParams->GetType() == re::ParameterBlock::PBType::Mutable ||
 						materialParams->GetType() == re::ParameterBlock::PBType::Immutable)) ||
 				(lifetime == re::Batch::Lifetime::SingleFrame &&
-					materialParams->GetType() == re::ParameterBlock::PBType::SingleFrame));
+					materialParams->GetType() == re::ParameterBlock::PBType::SingleFrame),
+				"Batch and material parameter block lifetimes are incompatible");
 
 			m_batchParamBlocks.emplace_back(materialParams);
 		}
@@ -159,10 +159,10 @@ namespace re
 #if defined(_DEBUG)
 		for (uint8_t slotIdx = 0; slotIdx < gr::MeshPrimitive::Slot_Count; slotIdx++)
 		{
-			SEAssert("Cannot add a vertex stream with a single frame lifetime to a permanent batch",
-				(m_lifetime == Lifetime::SingleFrame) ||
+			SEAssert((m_lifetime == Lifetime::SingleFrame) ||
 				(m_graphicsParams.m_vertexStreams[slotIdx]->GetLifetime() == re::VertexStream::Lifetime::Permanent && 
-					m_lifetime == Lifetime::Permanent));
+					m_lifetime == Lifetime::Permanent),
+				"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
 		}
 #endif
 
@@ -183,12 +183,12 @@ namespace re
 			// Material params:
 			std::shared_ptr<re::ParameterBlock> materialParams = gr::Material::CreateParameterBlock(material);
 
-			SEAssert("Batch and material parameter block lifetimes are incompatible",
-				(m_lifetime == re::Batch::Lifetime::Permanent &&
+			SEAssert((m_lifetime == re::Batch::Lifetime::Permanent &&
 					(materialParams->GetType() == re::ParameterBlock::PBType::Mutable||
 						materialParams->GetType() == re::ParameterBlock::PBType::Immutable)) ||
 				(lifetime == re::Batch::Lifetime::SingleFrame &&
-					materialParams->GetType() == re::ParameterBlock::PBType::SingleFrame));
+					materialParams->GetType() == re::ParameterBlock::PBType::SingleFrame),
+				"Batch and material parameter block lifetimes are incompatible");
 
 			m_batchParamBlocks.emplace_back(materialParams);
 		}
@@ -209,7 +209,7 @@ namespace re
 
 	void Batch::SetInstanceCount(uint32_t numInstances)
 	{
-		SEAssert("Invalid type", m_type == BatchType::Graphics);
+		SEAssert(m_type == BatchType::Graphics, "Invalid type");
 
 		m_graphicsParams.m_numInstances = numInstances;
 	}
@@ -277,11 +277,11 @@ namespace re
 
 	void Batch::SetParameterBlock(std::shared_ptr<re::ParameterBlock> paramBlock)
 	{
-		SEAssert("Cannot set a null parameter block", paramBlock != nullptr);
+		SEAssert(paramBlock != nullptr, "Cannot set a null parameter block");
 
-		SEAssert("Graphics batch number of instances does not match number of elements in the parameter block",
-			m_type != BatchType::Graphics ||
-			paramBlock->GetNumElements() == m_graphicsParams.m_numInstances);
+		SEAssert(m_type != BatchType::Graphics ||
+			paramBlock->GetNumElements() == m_graphicsParams.m_numInstances,
+			"Graphics batch number of instances does not match number of elements in the parameter block");
 
 		m_batchParamBlocks.emplace_back(paramBlock);
 	}
@@ -293,9 +293,9 @@ namespace re
 		std::shared_ptr<re::Sampler> sampler, 
 		uint32_t srcMip /*= re::Texture::k_allMips*/)
 	{
-		SEAssert("Invalid shader sampler name", !shaderName.empty());
-		SEAssert("Invalid texture", texture != nullptr);
-		SEAssert("Invalid sampler", sampler != nullptr);
+		SEAssert(!shaderName.empty(), "Invalid shader sampler name");
+		SEAssert(texture != nullptr, "Invalid texture");
+		SEAssert(sampler != nullptr, "Invalid sampler");
 
 		m_batchTextureSamplerInputs.emplace_back(
 			BatchTextureAndSamplerInput{ shaderName, texture, sampler, srcMip });

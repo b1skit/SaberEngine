@@ -484,7 +484,7 @@ namespace re
 
 		// ECS_CONVERSION TODO: Handle building batches per GS. For now, just moving this functionality out of
 		// the SceneManager and onto the render thread
-		SEAssert("Currently assuming we only have 1 render system", m_renderSystems.size() == 1);
+		SEAssert(m_renderSystems.size() == 1, "Currently assuming we only have 1 render system");
 
 		m_renderBatches.clear();
 

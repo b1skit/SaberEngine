@@ -21,7 +21,7 @@ namespace util
 
 	inline uint64_t HashString(std::string const& str)
 	{
-		SEAssert("Cannot hash an empty string", !str.empty());
+		SEAssert(!str.empty(), "Cannot hash an empty string");
 		return std::hash<std::string>{}(str);
 	}
 }

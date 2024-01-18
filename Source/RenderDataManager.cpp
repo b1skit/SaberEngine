@@ -15,8 +15,8 @@ namespace
 	template<typename T>
 	void AddIDToTrackingList(std::vector<T>& idTrackingList, T id)
 	{
-		SEAssert("ID has already been added to the tracking list",
-			std::binary_search(idTrackingList.begin(), idTrackingList.end(), id) == false);
+		SEAssert(std::binary_search(idTrackingList.begin(), idTrackingList.end(), id) == false,
+			"ID has already been added to the tracking list");
 
 		// Insert in sorted order:
 		idTrackingList.insert(
@@ -28,8 +28,8 @@ namespace
 	template<typename T>
 	void RemoveIDFromTrackingList(std::vector<T>& idTrackingList, T id)
 	{
-		SEAssert("ID does not exist in the tracking list",
-			std::binary_search(idTrackingList.begin(), idTrackingList.end(), id) == true);
+		SEAssert(std::binary_search(idTrackingList.begin(), idTrackingList.end(), id) == true,
+			"ID does not exist in the tracking list");
 
 		// Remove from our sorted vector:
 		auto idItr = std::equal_range(idTrackingList.begin(), idTrackingList.end(), id);
@@ -50,24 +50,24 @@ namespace gr
 		// Catch illegal accesses during RenderData modification
 		util::ScopedThreadProtector threadProjector(m_threadProtector);
 
-		SEAssert("An ID to data map is not empty: Was a render object not destroyed via a render command?",
-			m_IDToRenderObjectMetadata.empty() && m_transformIDToTransformMetadata.empty());
+		SEAssert(m_IDToRenderObjectMetadata.empty() && m_transformIDToTransformMetadata.empty(),
+			"An ID to data map is not empty: Was a render object not destroyed via a render command?");
 
-		SEAssert("A registered ID list is not empty", 
-			m_registeredRenderObjectIDs.empty() && m_registeredTransformIDs.empty());
+		SEAssert(m_registeredRenderObjectIDs.empty() && m_registeredTransformIDs.empty(),
+			"A registered ID list is not empty");
 
 		for (auto const& typeVector : m_perTypeRegisteredRenderDataIDs)
 		{
-			SEAssert("A per-type registered ID list is not empty", typeVector.empty());
+			SEAssert(typeVector.empty(), "A per-type registered ID list is not empty");
 		}
 	}
 
 
 	void RenderDataManager::BeginFrame(uint64_t currentFrame)
 	{
-		SEAssert("Invalid frame value", 
-			currentFrame != k_invalidDirtyFrameNum && 
-			(m_currentFrame <= currentFrame || m_currentFrame == k_invalidDirtyFrameNum /*First frame*/));
+		SEAssert(currentFrame != k_invalidDirtyFrameNum && 
+			(m_currentFrame <= currentFrame || m_currentFrame == k_invalidDirtyFrameNum /*First frame*/),
+			"Invalid frame value");
 		
 
 		// Clear the new/deleted data ID trackers for the new frame:
@@ -104,8 +104,8 @@ namespace gr
 			}
 			else
 			{
-				SEAssert("Received a different TransformID than what is already recorded", 
-					renderObjectMetadata->second.m_transformID ==  transformID);
+				SEAssert(renderObjectMetadata->second.m_transformID ==  transformID,
+					"Received a different TransformID than what is already recorded");
 
 				renderObjectMetadata->second.m_referenceCount++;
 			}
@@ -123,8 +123,8 @@ namespace gr
 			// Catch illegal accesses during RenderData modification
 			util::ScopedThreadProtector threadProjector(m_threadProtector);
 
-			SEAssert("Trying to destroy an object that does not exist", 
-				m_IDToRenderObjectMetadata.contains(renderDataID));
+			SEAssert(m_IDToRenderObjectMetadata.contains(renderDataID),
+				"Trying to destroy an object that does not exist");
 
 			RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 			renderObjectTransformID = renderObjectMetadata.m_transformID;
@@ -135,8 +135,8 @@ namespace gr
 				ObjectTypeToDataIndexMap const& dataIndexMap =
 					renderObjectMetadata.m_dataTypeToDataIndexMap;
 
-				SEAssert("Cannot destroy an object with first destroying its associated data", 
-					renderObjectMetadata.m_dataTypeToDataIndexMap.empty());
+				SEAssert(renderObjectMetadata.m_dataTypeToDataIndexMap.empty(),
+					"Cannot destroy an object with first destroying its associated data");
 
 				m_IDToRenderObjectMetadata.erase(renderDataID);
 				
@@ -153,7 +153,7 @@ namespace gr
 		// Catch illegal accesses during RenderData modification
 		util::ScopedThreadProtector threadProjector(m_threadProtector);
 
-		SEAssert("Invalid object ID", m_IDToRenderObjectMetadata.contains(renderDataID));
+		SEAssert(m_IDToRenderObjectMetadata.contains(renderDataID), "Invalid object ID");
 		RenderObjectMetadata& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 
 		renderObjectMetadata.m_featureBits |= featureBits;
@@ -164,7 +164,7 @@ namespace gr
 	{
 		m_threadProtector.ValidateThreadAccess();
 
-		SEAssert("renderDataID is not registered", m_IDToRenderObjectMetadata.contains(renderDataID));
+		SEAssert(m_IDToRenderObjectMetadata.contains(renderDataID), "renderDataID is not registered");
 		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 
 		return renderObjectMetadata.m_featureBits;
@@ -208,8 +208,8 @@ namespace gr
 
 		auto transformMetadataItr = m_transformIDToTransformMetadata.find(transformID);
 
-		SEAssert("Trying to unregister a Transform that does not exist", 
-			transformMetadataItr != m_transformIDToTransformMetadata.end());
+		SEAssert(transformMetadataItr != m_transformIDToTransformMetadata.end(),
+			"Trying to unregister a Transform that does not exist");
 
 		// Decriment our reference count. If it's zero, remove the record entirely
 		transformMetadataItr->second.m_referenceCount--;
@@ -219,7 +219,7 @@ namespace gr
 			const DataIndex indexToMove = util::CheckedCast<DataIndex>(m_transformRenderData.size() - 1);
 			const DataIndex indexToReplace = transformMetadataItr->second.m_transformIdx;
 
-			SEAssert("Invalid replacement index", indexToReplace < m_transformRenderData.size());
+			SEAssert(indexToReplace < m_transformRenderData.size(), "Invalid replacement index");
 
 			// Copy the transform to its new location, and remove the end element
 			m_transformRenderData[indexToReplace] = m_transformRenderData[indexToMove];
@@ -253,11 +253,11 @@ namespace gr
 
 		auto transformMetadataItr = m_transformIDToTransformMetadata.find(transformID);
 
-		SEAssert("Trying to set the data for a Transform that does not exist",
-			transformMetadataItr != m_transformIDToTransformMetadata.end());
+		SEAssert(transformMetadataItr != m_transformIDToTransformMetadata.end(),
+			"Trying to set the data for a Transform that does not exist");
 
 		const DataIndex transformDataIdx = transformMetadataItr->second.m_transformIdx;
-		SEAssert("Invalid transform index", transformDataIdx < m_transformRenderData.size());
+		SEAssert(transformDataIdx < m_transformRenderData.size(), "Invalid transform index");
 
 		m_transformRenderData[transformDataIdx] = transformRenderData;
 
@@ -271,11 +271,11 @@ namespace gr
 
 		auto transformMetadataItr = m_transformIDToTransformMetadata.find(transformID);
 
-		SEAssert("Trying to get the data for a Transform that does not exist",
-			transformMetadataItr != m_transformIDToTransformMetadata.end());
+		SEAssert(transformMetadataItr != m_transformIDToTransformMetadata.end(),
+			"Trying to get the data for a Transform that does not exist");
 
 		const DataIndex transformDataIdx = transformMetadataItr->second.m_transformIdx;
-		SEAssert("Invalid transform index", transformDataIdx < m_transformRenderData.size());
+		SEAssert(transformDataIdx < m_transformRenderData.size(), "Invalid transform index");
 
 		return m_transformRenderData[transformDataIdx];
 	}
@@ -287,7 +287,7 @@ namespace gr
 
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
-		SEAssert("Trying to find an object that does not exist", m_IDToRenderObjectMetadata.contains(renderDataID));
+		SEAssert(m_IDToRenderObjectMetadata.contains(renderDataID), "Trying to find an object that does not exist");
 
 		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 		
@@ -301,13 +301,13 @@ namespace gr
 
 		auto transformMetadataItr = m_transformIDToTransformMetadata.find(transformID);
 
-		SEAssert("Trying to get the data for a Transform that does not exist. Are you sure you passed a TransformID?",
-			transformMetadataItr != m_transformIDToTransformMetadata.end());
+		SEAssert(transformMetadataItr != m_transformIDToTransformMetadata.end(),
+			"Trying to get the data for a Transform that does not exist. Are you sure you passed a TransformID?");
 
-		SEAssert("Invalid dirty frame value",
-			transformMetadataItr->second.m_dirtyFrame != k_invalidDirtyFrameNum &&
+		SEAssert(transformMetadataItr->second.m_dirtyFrame != k_invalidDirtyFrameNum &&
 			transformMetadataItr->second.m_dirtyFrame <= m_currentFrame &&
-			m_currentFrame != k_invalidDirtyFrameNum);
+			m_currentFrame != k_invalidDirtyFrameNum,
+			"Invalid dirty frame value");
 
 		return transformMetadataItr->second.m_dirtyFrame == m_currentFrame;		
 	}
@@ -319,7 +319,7 @@ namespace gr
 
 		m_threadProtector.ValidateThreadAccess(); // Any thread can get data so long as no modification is happening
 
-		SEAssert("Trying to find an object that does not exist", m_IDToRenderObjectMetadata.contains(renderDataID));
+		SEAssert(m_IDToRenderObjectMetadata.contains(renderDataID), "Trying to find an object that does not exist");
 
 		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 
@@ -331,8 +331,8 @@ namespace gr
 	void RenderDataManager::PopulateTypesImGuiHelper(std::vector<std::string>& names, char const* typeName) const
 	{
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
-		SEAssert("Index is OOB of the names array", dataTypeIndex < names.size() || 
-			dataTypeIndex == k_invalidDataTypeIdx);
+		SEAssert(dataTypeIndex < names.size() || dataTypeIndex == k_invalidDataTypeIdx,
+			"Index is OOB of the names array");
 
 		if (dataTypeIndex != k_invalidDataTypeIdx)
 		{

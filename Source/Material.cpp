@@ -86,9 +86,9 @@ namespace gr
 	{
 		auto const& index = m_namesToSlotIndex.find(samplerName);
 
-		SEAssert("Invalid sampler name",
-			index != m_namesToSlotIndex.end() && 
-			(uint32_t)index->second < (uint32_t)m_texSlots.size());
+		SEAssert(index != m_namesToSlotIndex.end() && 
+			(uint32_t)index->second < (uint32_t)m_texSlots.size(),
+			"Invalid sampler name");
 
 		return m_texSlots[index->second].m_texture.get();
 	}

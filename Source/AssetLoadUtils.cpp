@@ -30,8 +30,8 @@ namespace util
 		glm::vec4 const& errorTexFillColor,
 		re::Texture::ColorSpace colorSpace)
 	{
-		SEAssert("Can load single faces or cubemaps only", texturePaths.size() == 1 || texturePaths.size() == 6);
-		SEAssert("Invalid number of texture paths", texturePaths.size() == 1 || texturePaths.size() == 6);
+		SEAssert(texturePaths.size() == 1 || texturePaths.size() == 6, "Can load single faces or cubemaps only");
+		SEAssert(texturePaths.size() == 1 || texturePaths.size() == 6, "Invalid number of texture paths");
 
 		LOG("Attempting to load %d texture(s): \"%s\"...", texturePaths.size(), texturePaths[0].c_str());
 
@@ -137,7 +137,7 @@ namespace util
 				}
 				else // texture already exists: Ensure the face has the same dimensions
 				{
-					SEAssert("Parameter mismatch", texParams.m_width == width && texParams.m_height == height);
+					SEAssert(texParams.m_width == width && texParams.m_height == height, "Parameter mismatch");
 				}
 			}
 			else if (returnErrorTex)
@@ -190,7 +190,7 @@ namespace util
 		uint32_t texSrcNumBytes,
 		re::Texture::ColorSpace colorSpace)
 	{
-		SEAssert("Invalid texture memory allocation", texSrc != nullptr && texSrcNumBytes > 0);
+		SEAssert(texSrc != nullptr && texSrcNumBytes > 0, "Invalid texture memory allocation");
 
 		LOG("Attempting to load texture \"%s\" from memory...", texName.c_str());
 		PerformanceTimer timer;
@@ -347,7 +347,7 @@ namespace util
 		{
 			return std::string(material.name);
 		}
-		SEAssert("Specular/Glossiness materials are not currently supported", material.has_pbr_specular_glossiness == 0);
+		SEAssert(material.has_pbr_specular_glossiness == 0, "Specular/Glossiness materials are not currently supported");
 
 		// TODO: Expand the values used to generate the name here, and/or use hashes to identify materials
 		// -> String streams are very slow...

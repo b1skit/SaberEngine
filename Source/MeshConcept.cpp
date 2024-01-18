@@ -16,8 +16,8 @@ namespace fr
 	{
 		fr::EntityManager& em = *fr::EntityManager::Get();
 
-		SEAssert("A Mesh concept requires a Transform. The owningEntity should have this already",
-			em.HasComponent<fr::TransformComponent>(owningEntity));
+		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
+			"A Mesh concept requires a Transform. The owningEntity should have this already");
 		
 		em.EmplaceComponent<fr::Mesh::MeshConceptMarker>(owningEntity);
 

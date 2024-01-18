@@ -18,8 +18,8 @@ namespace
 		const re::TextureTarget::TargetParams::BlendModes blendModes = textureTarget.GetBlendMode();
 		if (blendModes.m_srcBlendMode == re::TextureTarget::TargetParams::BlendMode::Disabled)
 		{
-			SEAssert("Must disable blending for both source and destination", 
-				blendModes.m_srcBlendMode == blendModes.m_dstBlendMode);
+			SEAssert(blendModes.m_srcBlendMode == blendModes.m_dstBlendMode,
+				"Must disable blending for both source and destination");
 
 			glDisable(GL_BLEND);
 			return;
@@ -195,13 +195,13 @@ namespace opengl
 			return;
 		}
 
-		SEAssert("Target set has not been committed", targetSetParams->m_isCommitted);
+		SEAssert(targetSetParams->m_isCommitted, "Target set has not been committed");
 
-		SEAssert("Scissor rectangle is out of bounds of the viewport",
-			util::CheckedCast<uint32_t>(targetSet.GetScissorRect().Left()) >= targetSet.GetViewport().xMin() &&
+		SEAssert(util::CheckedCast<uint32_t>(targetSet.GetScissorRect().Left()) >= targetSet.GetViewport().xMin() &&
 			util::CheckedCast<uint32_t>(targetSet.GetScissorRect().Top()) >= targetSet.GetViewport().yMin() &&
 			util::CheckedCast<uint32_t>(targetSet.GetScissorRect().Right()) <= targetSet.GetViewport().Width() &&
-			util::CheckedCast<uint32_t>(targetSet.GetScissorRect().Bottom()) <= targetSet.GetViewport().Height());
+			util::CheckedCast<uint32_t>(targetSet.GetScissorRect().Bottom()) <= targetSet.GetViewport().Height(),
+			"Scissor rectangle is out of bounds of the viewport");
 
 		// Configure the framebuffer and each texture target:
 		bool foundTarget = false;
@@ -217,16 +217,16 @@ namespace opengl
 				opengl::TextureTarget::PlatformParams* targetPlatParams =
 					colorTarget.GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
 
-				SEAssert("Target has already been created", !targetPlatParams->m_isCreated);
+				SEAssert(!targetPlatParams->m_isCreated, "Target has already been created");
 				targetPlatParams->m_isCreated = true;
 
 				std::shared_ptr<re::Texture> const& texture = colorTarget.GetTexture();
 
 				re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
-				SEAssert("Attempting to bind a color target with a different texture use parameter",
-					(textureParams.m_usage & re::Texture::Usage::ColorTarget) ||
+				SEAssert((textureParams.m_usage & re::Texture::Usage::ColorTarget) ||
 					(textureParams.m_usage & re::Texture::Usage::ComputeTarget) ||
-					(textureParams.m_usage & re::Texture::Usage::SwapchainColorProxy)); // Not currently used
+					(textureParams.m_usage & re::Texture::Usage::SwapchainColorProxy), // Not currently used
+					"Attempting to bind a color target with a different texture use parameter"); 
 
 				// Validate the texture dimensions:
 				const uint32_t targetMip = colorTarget.GetTargetParams().m_targetMip;
@@ -242,8 +242,8 @@ namespace opengl
 				}
 				else
 				{
-					SEAssert("All framebuffer textures must have the same dimensions",
-						targetWidth == mipWidth && targetHeight == mipHeight);
+					SEAssert(targetWidth == mipWidth && targetHeight == mipHeight,
+						"All framebuffer textures must have the same dimensions");
 				}
 				 
 				// Configure the target parameters:
@@ -268,8 +268,8 @@ namespace opengl
 				// RenderDoc object name:
 				glObjectLabel(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject, -1, targetSet.GetName().c_str());
 
-				SEAssert("Failed to create framebuffer object during texture creation",
-					glIsFramebuffer(targetSetParams->m_frameBufferObject));
+				SEAssert(glIsFramebuffer(targetSetParams->m_frameBufferObject),
+					"Failed to create framebuffer object during texture creation");
 			}
 			else
 			{
@@ -280,9 +280,9 @@ namespace opengl
 			glDrawBuffers((uint32_t)insertIdx, &drawBuffers[0]);
 
 			// For now, ensure the viewport dimensions are within the target dimensions
-			SEAssert("Viewport is larger than the color targets",
-				targetSet.GetViewport().Width() <= targetWidth  &&
-				targetSet.GetViewport().Height() <= targetHeight);
+			SEAssert(targetSet.GetViewport().Width() <= targetWidth  &&
+				targetSet.GetViewport().Height() <= targetHeight,
+				"Viewport is larger than the color targets");
 		}
 		else if (!targetSet.GetDepthStencilTarget())
 		{
@@ -302,9 +302,9 @@ namespace opengl
 		opengl::TextureTargetSet::PlatformParams const* targetSetParams =
 			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams const*>();
 
-		SEAssert("Cannot bind nonexistant framebuffer",
-			targetSetParams->m_frameBufferObject == 0 ||
-				glIsFramebuffer(targetSetParams->m_frameBufferObject));
+		SEAssert(targetSetParams->m_frameBufferObject == 0 ||
+				glIsFramebuffer(targetSetParams->m_frameBufferObject),
+			"Cannot bind nonexistant framebuffer");
 
 		glBindFramebuffer(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject);
 
@@ -318,7 +318,7 @@ namespace opengl
 			if (targetSet.GetColorTarget(i).HasTexture())
 			{
 				std::shared_ptr<re::Texture> texture = targetSet.GetColorTarget(i).GetTexture();
-				SEAssert("Texture is not created", texture->GetPlatformParams()->m_isCreated);
+				SEAssert(texture->GetPlatformParams()->m_isCreated, "Texture is not created");
 
 				re::Texture::TextureParams const& textureParams = texture->GetTextureParams();
 				opengl::Texture::PlatformParams const* texPlatformParams =
@@ -326,9 +326,9 @@ namespace opengl
 				opengl::TextureTarget::PlatformParams const* targetPlatformParams =
 					targetSet.GetColorTarget(i).GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
 
-				SEAssert("Attempting to bind a color target with a different texture use parameter", 
-					(textureParams.m_usage & re::Texture::Usage::ColorTarget) ||
-					(textureParams.m_usage & re::Texture::Usage::SwapchainColorProxy));
+				SEAssert((textureParams.m_usage & re::Texture::Usage::ColorTarget) ||
+					(textureParams.m_usage & re::Texture::Usage::SwapchainColorProxy),
+					"Attempting to bind a color target with a different texture use parameter");
 
 				re::TextureTarget::TargetParams const& targetParams = targetSet.GetColorTarget(i).GetTargetParams();
 
@@ -354,10 +354,10 @@ namespace opengl
 				// Record the attachment point so we can set the draw buffers later on:
 				buffers.emplace_back(targetPlatformParams->m_attachmentPoint);
 
-				SEAssert("All framebuffer textures must have the same dimension",
-					firstTarget == nullptr ||
+				SEAssert(firstTarget == nullptr ||
 					(texture->Width() == firstTarget->Width() &&
-						texture->Height() == firstTarget->Height()));
+						texture->Height() == firstTarget->Height()),
+					"All framebuffer textures must have the same dimension");
 
 				if (firstTarget == nullptr)
 				{
@@ -381,7 +381,7 @@ namespace opengl
 				static_cast<GLsizei>(buffers.size()),
 				buffers.data());
 
-			SEAssert("First target cannot be null", firstTarget != nullptr);
+			SEAssert(firstTarget != nullptr, "First target cannot be null");
 			if (firstTarget->GetNumMips() > 1 && firstTargetMipLevel > 0)
 			{
 				const glm::vec4 mipDimensions = firstTarget->GetSubresourceDimensions(firstTargetMipLevel);
@@ -416,7 +416,7 @@ namespace opengl
 
 			// Verify the framebuffer (as we actually had color textures to attach)
 			const GLenum result = glCheckNamedFramebufferStatus(targetSetParams->m_frameBufferObject, GL_FRAMEBUFFER);
-			SEAssert("Framebuffer is not complete", result == GL_FRAMEBUFFER_COMPLETE);
+			SEAssert(result == GL_FRAMEBUFFER_COMPLETE, "Framebuffer is not complete");
 
 			// Clear the targets AFTER setting color write modes
 			ClearColorTargets(targetSet);
@@ -438,22 +438,22 @@ namespace opengl
 		opengl::TextureTargetSet::PlatformParams* targetSetParams =
 			targetSet.GetPlatformParams()->As<opengl::TextureTargetSet::PlatformParams*>();
 
-		SEAssert("Target set has not been committed", targetSetParams->m_isCommitted);
+		SEAssert(targetSetParams->m_isCommitted, "Target set has not been committed");
 
 		if (targetSet.GetDepthStencilTarget())
 		{
 			opengl::TextureTarget::PlatformParams* depthTargetPlatParams =
 				targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
 			
-			SEAssert("Target has already been created", !depthTargetPlatParams->m_isCreated);
+			SEAssert(!depthTargetPlatParams->m_isCreated, "Target has already been created");
 			depthTargetPlatParams->m_isCreated = true;
 
 			std::shared_ptr<re::Texture const> depthStencilTex = targetSet.GetDepthStencilTarget()->GetTexture();
 
 			// Create framebuffer:
 			re::Texture::TextureParams const& depthTextureParams = depthStencilTex->GetTextureParams();
-			SEAssert("Attempting to bind a depth target with a different texture use parameter",
-				(depthTextureParams.m_usage & re::Texture::Usage::DepthTarget));
+			SEAssert((depthTextureParams.m_usage & re::Texture::Usage::DepthTarget),
+				"Attempting to bind a depth target with a different texture use parameter");
 
 			if (!glIsFramebuffer(targetSetParams->m_frameBufferObject))
 			{
@@ -463,8 +463,8 @@ namespace opengl
 				// RenderDoc object name:
 				glObjectLabel(GL_FRAMEBUFFER, targetSetParams->m_frameBufferObject, -1, targetSet.GetName().c_str());
 
-				SEAssert("Failed to create framebuffer object during texture creation",
-					glIsFramebuffer(targetSetParams->m_frameBufferObject));
+				SEAssert(glIsFramebuffer(targetSetParams->m_frameBufferObject),
+					"Failed to create framebuffer object during texture creation");
 			}
 			else
 			{
@@ -477,9 +477,9 @@ namespace opengl
 			//depthTargetPlatParams->m_readBuffer		 = GL_NONE; // Not needed...
 
 			// For now, ensure the viewport dimensions are within the target dimensions
-			SEAssert("Viewport is larger than the depth target", 
-				targetSet.GetViewport().Width() <= depthStencilTex->Width() &&
-				targetSet.GetViewport().Height() <= depthStencilTex->Height());
+			SEAssert(targetSet.GetViewport().Width() <= depthStencilTex->Width() &&
+				targetSet.GetViewport().Height() <= depthStencilTex->Height(),
+				"Viewport is larger than the depth target");
 		}
 		else if (!targetSet.HasTargets())
 		{
@@ -504,11 +504,11 @@ namespace opengl
 		if (targetSet.GetDepthStencilTarget())
 		{
 			std::shared_ptr<re::Texture> const& depthStencilTex = targetSet.GetDepthStencilTarget()->GetTexture();
-			SEAssert("Texture is not created", depthStencilTex->GetPlatformParams()->m_isCreated);
+			SEAssert(depthStencilTex->GetPlatformParams()->m_isCreated, "Texture is not created");
 
 			re::Texture::TextureParams const& textureParams = depthStencilTex->GetTextureParams();
-			SEAssert("Attempting to bind a depth target with a different texture use parameter",
-				(textureParams.m_usage & re::Texture::Usage::DepthTarget));
+			SEAssert((textureParams.m_usage & re::Texture::Usage::DepthTarget),
+				"Attempting to bind a depth target with a different texture use parameter");
 
 			opengl::Texture::PlatformParams const* depthPlatformParams =
 				depthStencilTex->GetPlatformParams()->As<opengl::Texture::PlatformParams const*>();
@@ -516,9 +516,9 @@ namespace opengl
 			opengl::TextureTarget::PlatformParams const* depthTargetParams =
 				targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams const*>();
 
-			SEAssert("It is unexpected that a depth target has mipmaps",
-				targetSet.GetDepthStencilTarget()->GetTexture()->GetNumMips() == 1 && 
-				targetSet.GetDepthStencilTarget()->GetTargetParams().m_targetMip == 0);
+			SEAssert(targetSet.GetDepthStencilTarget()->GetTexture()->GetNumMips() == 1 && 
+				targetSet.GetDepthStencilTarget()->GetTargetParams().m_targetMip == 0,
+				"It is unexpected that a depth target has mipmaps");
 
 			// Attach a texture object to the bound framebuffer:
 			if (textureParams.m_dimension == re::Texture::Dimension::TextureCubeMap)
@@ -542,7 +542,7 @@ namespace opengl
 
 			// Verify the framebuffer (as we actually had color textures to attach)
 			const GLenum result = glCheckNamedFramebufferStatus(targetSetParams->m_frameBufferObject, GL_FRAMEBUFFER);
-			SEAssert("Framebuffer is not complete", result == GL_FRAMEBUFFER_COMPLETE);
+			SEAssert(result == GL_FRAMEBUFFER_COMPLETE, "Framebuffer is not complete");
 
 			re::Viewport const& viewport = targetSet.GetViewport();
 			glViewport(
@@ -603,7 +603,7 @@ namespace opengl
 			opengl::TextureTarget::PlatformParams* depthTargetParams =
 				targetSet.GetDepthStencilTarget()->GetPlatformParams()->As<opengl::TextureTarget::PlatformParams*>();
 
-			SEAssert("Drawbuffer must be 0 for depth/stencil targets", depthTargetParams->m_drawBuffer == 0);
+			SEAssert(depthTargetParams->m_drawBuffer == 0, "Drawbuffer must be 0 for depth/stencil targets");
 
 			if ((depthStencilTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) != 0 ||
 				(depthStencilTex->GetTextureParams().m_usage & re::Texture::Usage::DepthStencilTarget) != 0)
@@ -633,8 +633,8 @@ namespace opengl
 
 	void TextureTargetSet::AttachTargetsAsImageTextures(re::TextureTargetSet const& targetSet)
 	{
-		SEAssert("It is not possible to attach a depth buffer as a target to a compute shader",
-			targetSet.GetDepthStencilTarget() == nullptr);
+		SEAssert(targetSet.GetDepthStencilTarget() == nullptr,
+			"It is not possible to attach a depth buffer as a target to a compute shader");
 
 		std::vector<re::TextureTarget> const& texTargets = targetSet.GetColorTargets();
 		for (uint32_t slot = 0; slot < texTargets.size(); slot++)

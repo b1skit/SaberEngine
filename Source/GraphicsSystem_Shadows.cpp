@@ -23,8 +23,8 @@ namespace
 	CubemapShadowRenderParams GetCubemapShadowRenderParamsData(
 		gr::Camera::RenderData const& shadowCamData, gr::Transform::RenderData const& transformData)
 	{
-		SEAssert("Invalid projection type",
-			shadowCamData.m_cameraConfig.m_projectionType == gr::Camera::Config::ProjectionType::PerspectiveCubemap);
+		SEAssert(shadowCamData.m_cameraConfig.m_projectionType == gr::Camera::Config::ProjectionType::PerspectiveCubemap,
+			"Invalid projection type");
 
 		CubemapShadowRenderParams cubemapShadowParams;
 		
@@ -81,8 +81,8 @@ namespace gr
 			std::vector<gr::RenderDataID> const& directionalIDs =
 				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
 
-			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)",
-				directionalIDs.size() == 1);
+			SEAssert(directionalIDs.size() == 1,
+				"We currently assume there will only be 1 directional light (even though it's not necessary to)");
 
 			auto directionalItr = renderData.IDBegin(directionalIDs);
 			auto const& directionalItrEnd = renderData.IDEnd(directionalIDs);
@@ -282,8 +282,8 @@ namespace gr
 			std::vector<gr::RenderDataID> directionalIDs = 
 				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
 
-			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)",
-				directionalIDs.size() == 1);
+			SEAssert(directionalIDs.size() == 1,
+				"We currently assume there will only be 1 directional light (even though it's not necessary to)");
 
 			auto directionalItr = renderData.IDBegin(directionalIDs);
 			auto const& directionalItrEnd = renderData.IDEnd(directionalIDs);
@@ -335,8 +335,8 @@ namespace gr
 			std::vector<gr::RenderDataID> directionalIDs =
 				renderData.GetRegisteredRenderDataIDs<gr::Light::RenderDataDirectional>();
 
-			SEAssert("We currently assume there will only be 1 directional light (even though it's not necessary to)",
-				directionalIDs.size() == 1);
+			SEAssert(directionalIDs.size() == 1,
+				"We currently assume there will only be 1 directional light (even though it's not necessary to)");
 
 			auto directionalItr = renderData.IDBegin(directionalIDs);
 			auto const& directionalItrEnd = renderData.IDEnd(directionalIDs);
@@ -381,8 +381,8 @@ namespace gr
 
 	re::Texture const* ShadowsGraphicsSystem::GetShadowMap(gr::Light::Type lightType, gr::RenderDataID lightID) const
 	{
-		SEAssert("Ambient lights do not have a shadow map", lightType != gr::Light::Type::AmbientIBL);
-		SEAssert("No shadow data found for the given lightID", m_shadowTargetSets[lightType].contains(lightID));
+		SEAssert(lightType != gr::Light::Type::AmbientIBL, "Ambient lights do not have a shadow map");
+		SEAssert(m_shadowTargetSets[lightType].contains(lightID), "No shadow data found for the given lightID");
 
 		return m_shadowTargetSets[lightType].at(lightID)->GetDepthStencilTarget()->GetTexture().get();
 	}

@@ -40,8 +40,8 @@ namespace
 		re::Texture::Format formatFallback, 
 		re::Texture::ColorSpace colorSpace)
 	{
-		SEAssert("Invalid fallback format",
-			formatFallback != re::Texture::Format::Depth32F && formatFallback != re::Texture::Format::Invalid);
+		SEAssert(formatFallback != re::Texture::Format::Depth32F && formatFallback != re::Texture::Format::Invalid,
+			"Invalid fallback format");
 
 		std::shared_ptr<re::Texture> tex;
 		if (texture && texture->image)
@@ -110,7 +110,7 @@ namespace
 				}
 			}
 
-			SEAssert("Failed to load texture: Does the asset exist?", tex != nullptr);
+			SEAssert(tex != nullptr, "Failed to load texture: Does the asset exist?");
 		}
 		else
 		{
@@ -213,8 +213,8 @@ namespace
 
 					LOG("Loading material \"%s\"", matName.c_str());
 
-					SEAssert("We currently only support the PBR metallic/roughness material model",
-						material->has_pbr_metallic_roughness == 1);
+					SEAssert(material->has_pbr_metallic_roughness == 1,
+						"We currently only support the PBR metallic/roughness material model");
 
 					std::shared_ptr<gr::Material> newMat =
 						gr::Material::Create(matName, gr::Material::MaterialType::GLTF_PBRMetallicRoughness);
@@ -316,11 +316,10 @@ namespace
 
 	void SetTransformValues(cgltf_node* current, entt::entity sceneNode)
 	{
-		SEAssert("Transform has both matrix and decomposed properties",
-			(current->has_matrix != (current->has_rotation || current->has_scale || current->has_translation)) ||
+		SEAssert((current->has_matrix != (current->has_rotation || current->has_scale || current->has_translation)) ||
 			(current->has_matrix == 0 && current->has_rotation == 0 &&
-				current->has_scale == 0 && current->has_translation == 0)
-		);
+				current->has_scale == 0 && current->has_translation == 0),
+			"Transform has both matrix and decomposed properties");
 
 		fr::Transform& targetTransform = fr::SceneNode::GetTransform(*fr::EntityManager::Get(), sceneNode);
 
@@ -391,7 +390,7 @@ namespace
 		{
 			cgltf_camera const* const camera = current->camera;
 
-			SEAssert("Must supply a scene node and camera pointer", sceneNode != entt::null && camera != nullptr);
+			SEAssert(sceneNode != entt::null && camera != nullptr, "Must supply a scene node and camera pointer");
 
 			const std::string camName = camera->name ? std::string(camera->name) : "Unnamed camera";
 			LOG("Loading camera \"%s\"", camName.c_str());
@@ -545,8 +544,9 @@ namespace
 			IBLPath = en::Config::Get()->GetValue<std::string>("defaultIBLPath");
 			TryLoadIBL(IBLPath, iblTexture);
 		}
-		SEAssert("Missing IBL texture. Per scene IBLs must be placed at <sceneRoot>\\IBL\\ibl.hdr; A default fallback "
-			"must exist at Assets\\DefaultIBL\\ibl.hdr", iblTexture != nullptr);
+		SEAssert(iblTexture != nullptr,
+			"Missing IBL texture. Per scene IBLs must be placed at <sceneRoot>\\IBL\\ibl.hdr; A default fallback "
+			"must exist at Assets\\DefaultIBL\\ibl.hdr");
 	}
 
 
@@ -609,7 +609,7 @@ namespace
 				meshPrimitiveParams.m_topologyMode = gr::MeshPrimitive::TopologyMode::TriangleList;
 			}
 
-			SEAssert("Mesh is missing indices", current->mesh->primitives[primitive].indices != nullptr);
+			SEAssert(current->mesh->primitives[primitive].indices != nullptr, "Mesh is missing indices");
 			std::vector<uint32_t> indices;
 			indices.resize(current->mesh->primitives[primitive].indices->count, 0);
 			for (size_t index = 0; index < current->mesh->primitives[primitive].indices->count; index++)
@@ -683,8 +683,8 @@ namespace
 
 					if (current->mesh->primitives[primitive].attributes[attrib].data->has_min)
 					{
-						SEAssert("Unexpected number of bytes in min value array data",
-							sizeof(current->mesh->primitives[primitive].attributes[attrib].data->min) == 64);
+						SEAssert(sizeof(current->mesh->primitives[primitive].attributes[attrib].data->min) == 64,
+							"Unexpected number of bytes in min value array data");
 
 						float* xyzComponent = current->mesh->primitives[primitive].attributes[attrib].data->min;
 						positionsMinXYZ.x = *xyzComponent++;
@@ -693,8 +693,8 @@ namespace
 					}
 					if (current->mesh->primitives[primitive].attributes[attrib].data->has_max)
 					{
-						SEAssert("Unexpected number of bytes in max value array data",
-							sizeof(current->mesh->primitives[primitive].attributes[attrib].data->max) == 64);
+						SEAssert(sizeof(current->mesh->primitives[primitive].attributes[attrib].data->max) == 64,
+							"Unexpected number of bytes in max value array data");
 
 						float* xyzComponent = current->mesh->primitives[primitive].attributes[attrib].data->max;
 						positionsMaxXYZ.x = *xyzComponent++;
@@ -731,7 +731,7 @@ namespace
 				break;
 				case cgltf_attribute_type::cgltf_attribute_type_color:
 				{
-					SEAssert("Only 4-channel colors (RGBA) are currently supported", elementsPerComponent == 4);
+					SEAssert(elementsPerComponent == 4, "Only 4-channel colors (RGBA) are currently supported");
 					colors.resize(totalFloatElements, 0);
 					dataTarget = &colors[0];
 				}
@@ -766,13 +766,13 @@ namespace
 					accessor,
 					dataTarget,
 					totalFloatElements);
-				SEAssert("Failed to unpack data", unpackResult);
+				SEAssert(unpackResult, "Failed to unpack data");
 
 				// Post-process the data:
 				if (attributeType == cgltf_attribute_type_joints)
 				{
 					// Cast our joint indexes from floats to uint8_t's:
-					SEAssert("Source/destination size mismatch", jointsAsFloats.size() == jointsAsUints.size());
+					SEAssert(jointsAsFloats.size() == jointsAsUints.size(), "Source/destination size mismatch");
 					for (size_t jointIdx = 0; jointIdx < jointsAsFloats.size(); jointIdx++)
 					{
 						jointsAsUints[jointIdx] = static_cast<uint8_t>(jointsAsFloats[jointIdx]);
@@ -852,8 +852,8 @@ namespace
 			return;
 		}
 
-		SEAssert("TODO: Handle nodes with multiple things (eg. Light & Mesh) that depend on a transform",
-			current->light == nullptr || current->mesh == nullptr);
+		SEAssert(current->light == nullptr || current->mesh == nullptr,
+			"TODO: Handle nodes with multiple things (eg. Light & Mesh) that depend on a transform");
 		// TODO: Seems we never hit this... Does GLTF support multiple attachments per node?
 
 		if (current->children_count > 0) // Depth-first traversal
@@ -907,14 +907,14 @@ namespace
 	{
 		LOG("Scene has %d object nodes", data->nodes_count);
 
-		SEAssert("Loading > 1 scene is currently unsupported", data->scenes_count == 1);
+		SEAssert(data->scenes_count == 1, "Loading > 1 scene is currently unsupported");
 
 		std::vector<std::future<void>> loadTasks; // Task enqueuing is single-threaded
 
 		// Each node is the root in a transformation hierarchy:
 		for (size_t node = 0; node < data->scenes->nodes_count; node++)
 		{
-			SEAssert("Error: Node is not a root", data->scenes->nodes[node]->parent == nullptr);
+			SEAssert(data->scenes->nodes[node]->parent == nullptr, "Error: Node is not a root");
 
 			const std::string nodeName = 
 				data->scenes->nodes[node]->name ? data->scenes->nodes[node]->name : "Unnamed root node";
@@ -965,7 +965,7 @@ namespace fr
 			cgltf_result parseResult = cgltf_parse_file(&options, sceneFilePath.c_str(), &data);
 			if (parseResult != cgltf_result::cgltf_result_success)
 			{
-				SEAssert("Failed to parse scene file \"" + sceneFilePath + "\"", parseResult == cgltf_result_success);
+				SEAssert(parseResult == cgltf_result_success, "Failed to parse scene file \"" + sceneFilePath + "\"");
 				return false;
 			}
 			nodesCount = static_cast<size_t>(data->nodes_count);
@@ -1008,7 +1008,7 @@ namespace fr
 			cgltf_result bufferLoadResult = cgltf_load_buffers(&options, data, sceneFilePath.c_str());
 			if (bufferLoadResult != cgltf_result::cgltf_result_success)
 			{
-				SEAssert("Failed to load scene data \"" + sceneFilePath + "\"", bufferLoadResult == cgltf_result_success);
+				SEAssert(bufferLoadResult == cgltf_result_success, "Failed to load scene data \"" + sceneFilePath + "\"");
 				return false;
 			}
 
@@ -1016,7 +1016,7 @@ namespace fr
 			cgltf_result validationResult = cgltf_validate(data);
 			if (validationResult != cgltf_result::cgltf_result_success)
 			{
-				SEAssert("GLTF file failed validation!", validationResult == cgltf_result_success);
+				SEAssert(validationResult == cgltf_result_success, "GLTF file failed validation!");
 				return false;
 			}
 			
@@ -1051,7 +1051,7 @@ namespace fr
 
 	SceneData::~SceneData()
 	{
-		SEAssert("Did the SceneData go out of scope before Destroy was called?", m_finishedLoading == false);
+		SEAssert(m_finishedLoading == false, "Did the SceneData go out of scope before Destroy was called?");
 	}
 
 
@@ -1163,8 +1163,8 @@ namespace fr
 
 	bool SceneData::AddUniqueTexture(std::shared_ptr<re::Texture>& newTexture)
 	{
-		SEAssert("Adding data is not thread safe once loading is complete", !m_finishedLoading);
-		SEAssert("Cannot add null texture to textures table", newTexture != nullptr);
+		SEAssert(!m_finishedLoading, "Adding data is not thread safe once loading is complete");
+		SEAssert(newTexture != nullptr, "Cannot add null texture to textures table");
 
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_texturesReadWriteMutex);
@@ -1198,7 +1198,7 @@ namespace fr
 
 			auto result = m_textures.find(nameID);
 
-			SEAssert("Texture with that name does not exist", result != m_textures.end());
+			SEAssert(result != m_textures.end(), "Texture with that name does not exist");
 
 			return result->second;
 		}
@@ -1229,8 +1229,8 @@ namespace fr
 
 	void SceneData::AddUniqueMaterial(std::shared_ptr<gr::Material>& newMaterial)
 	{
-		SEAssert("Adding data is not thread safe once loading is complete", !m_finishedLoading);
-		SEAssert("Cannot add null material to material table", newMaterial != nullptr);
+		SEAssert(!m_finishedLoading, "Adding data is not thread safe once loading is complete");
+		SEAssert(newMaterial != nullptr, "Cannot add null material to material table");
 
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_materialsReadWriteMutex);
@@ -1258,7 +1258,7 @@ namespace fr
 			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
 			std::unordered_map<size_t, std::shared_ptr<gr::Material>>::const_iterator matPos = m_materials.find(nameID);
 
-			SEAssert("Could not find material", matPos != m_materials.end());
+			SEAssert(matPos != m_materials.end(), "Could not find material");
 
 			return matPos->second;
 		}
@@ -1281,7 +1281,7 @@ namespace fr
 		// Note: This function is very dangerous: We're returning a thread-shared object by reference. It's currently
 		// used for ImGui debug access, which should be fine
 
-		SEAssert("Accessing this data is not thread safe during loading", m_finishedLoading);
+		SEAssert(m_finishedLoading, "Accessing this data is not thread safe during loading");
 		{
 			std::shared_lock<std::shared_mutex> readLock(m_materialsReadWriteMutex);
 			return m_materials;
@@ -1291,7 +1291,7 @@ namespace fr
 
 	bool SceneData::AddUniqueShader(std::shared_ptr<re::Shader>& newShader)
 	{
-		SEAssert("Cannot add null shader to shader table", newShader != nullptr);
+		SEAssert(newShader != nullptr, "Cannot add null shader to shader table");
 		{
 			std::unique_lock<std::shared_mutex> writeLock(m_shadersReadWriteMutex);
 
@@ -1324,7 +1324,7 @@ namespace fr
 			std::shared_lock<std::shared_mutex> readLock(m_shadersReadWriteMutex);
 			std::unordered_map<size_t, std::shared_ptr<re::Shader>>::const_iterator shaderPos = m_shaders.find(shaderIdentifier);
 
-			SEAssert("Could not find shader", shaderPos != m_shaders.end());
+			SEAssert(shaderPos != m_shaders.end(), "Could not find shader");
 
 			return shaderPos->second;
 		}

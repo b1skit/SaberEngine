@@ -64,7 +64,7 @@ namespace fr
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
-		SEAssert("Transform is dirty", !m_isDirty);
+		SEAssert(!m_isDirty, "Transform is dirty");
 
 		if (m_parent)
 		{
@@ -138,7 +138,7 @@ namespace fr
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
-		SEAssert("Cannot parent a Transform to itself", newParent != this);
+		SEAssert(newParent != this, "Cannot parent a Transform to itself");
 
 		if (m_parent != nullptr)
 		{
@@ -161,7 +161,7 @@ namespace fr
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
 		Recompute();
-		SEAssert("Transformation should not be dirty", !m_isDirty);
+		SEAssert(!m_isDirty, "Transformation should not be dirty");
 
 		// Based on the technique presented in GPU Pro 360, Ch.15.2.5: 
 		// Managing Transformations in Hierarchy: Parent Switch in Hierarchy (p.243 - p.253).
@@ -253,7 +253,7 @@ namespace fr
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
 
-		SEAssert("Camera is dirty", !m_isDirty);
+		SEAssert(!m_isDirty, "Camera is dirty");
 
 		glm::mat4 const& globalMatrix = GetGlobalMatrix();
 
@@ -332,7 +332,7 @@ namespace fr
 	glm::quat Transform::GetLocalRotation() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
-		SEAssert("Transformation should not be dirty", !m_isDirty);
+		SEAssert(!m_isDirty, "Transformation should not be dirty");
 
 		return m_localRotationQuat;
 	}
@@ -341,7 +341,7 @@ namespace fr
 	glm::mat4 Transform::GetLocalRotationMat() const
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
-		SEAssert("Transformation should not be dirty", !m_isDirty);
+		SEAssert(!m_isDirty, "Transformation should not be dirty");
 
 		return glm::mat4_cast(m_localRotationQuat);
 	}
@@ -456,10 +456,10 @@ namespace fr
 	void Transform::RegisterChild(Transform* child)
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
-		SEAssert("Cannot register a Transform to itself", child != this);
-		SEAssert("Child must update their parent pointer", child->m_parent == this);
-		SEAssert("Child is already registered",
-			find(m_children.begin(), m_children.end(), child) == m_children.end());
+		SEAssert(child != this, "Cannot register a Transform to itself");
+		SEAssert(child->m_parent == this, "Child must update their parent pointer");
+		SEAssert(find(m_children.begin(), m_children.end(), child) == m_children.end(),
+			"Child is already registered");
 
 		m_children.push_back(child);
 	}
@@ -468,7 +468,7 @@ namespace fr
 	void Transform::UnregisterChild(Transform const* child)
 	{
 		std::unique_lock<std::recursive_mutex> lock(m_transformMutex);
-		SEAssert("Cannot unregister a Transform from itself", child != this);
+		SEAssert(child != this, "Cannot unregister a Transform from itself");
 		
 		for (size_t i = 0; i < m_children.size(); i++)
 		{

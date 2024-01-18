@@ -28,13 +28,13 @@ namespace dx12
 		{
 		case re::ParameterBlock::PBDataType::SingleElement:
 		{
-			SEAssert("Invalid alignment", alignedSize % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0);
+			SEAssert(alignedSize % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0, "Invalid alignment");
 			resourcePtrOut = pbaPlatParams->m_sharedConstantBufferResources[writeIdx];
 		}
 		break;
 		case re::ParameterBlock::PBDataType::Array:
 		{
-			SEAssert("Invalid alignment", alignedSize % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0);
+			SEAssert(alignedSize % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0, "Invalid alignment");
 			resourcePtrOut = pbaPlatParams->m_sharedStructuredBufferResources[writeIdx];
 		}
 		break;
@@ -60,8 +60,8 @@ namespace dx12
 
 		ID3D12Device2* device = re::Context::GetAs<dx12::Context*>()->GetDevice().GetD3DDisplayDevice();
 
-		SEAssert("Fixed allocation size must match the default resource placement alignment",
-			re::ParameterBlockAllocator::k_fixedAllocationByteSize % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0);
+		SEAssert(re::ParameterBlockAllocator::k_fixedAllocationByteSize % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0,
+			"Fixed allocation size must match the default resource placement alignment");
 
 		const CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_UPLOAD);
 		const CD3DX12_RESOURCE_DESC resourceDesc = 
@@ -101,10 +101,10 @@ namespace dx12
 		dx12::ParameterBlockAllocator::PlatformParams* pbaPlatformParams =
 			pba.GetPlatformParams()->As<dx12::ParameterBlockAllocator::PlatformParams*>();
 
-		SEAssert("Mismatched number of single frame buffers",
-			pbaPlatformParams->m_sharedConstantBufferResources.size() == pbaPlatformParams->m_sharedStructuredBufferResources.size() &&
+		SEAssert(pbaPlatformParams->m_sharedConstantBufferResources.size() == pbaPlatformParams->m_sharedStructuredBufferResources.size() &&
 			pbaPlatformParams->m_numBuffers == pbaPlatformParams->m_sharedConstantBufferResources.size() &&
-			pbaPlatformParams->m_numBuffers == dx12::RenderManager::GetNumFramesInFlight());
+			pbaPlatformParams->m_numBuffers == dx12::RenderManager::GetNumFramesInFlight(),
+			"Mismatched number of single frame buffers");
 
 		pbaPlatformParams->m_sharedConstantBufferResources.assign(pbaPlatformParams->m_numBuffers, nullptr);
 		pbaPlatformParams->m_sharedStructuredBufferResources.assign(pbaPlatformParams->m_numBuffers, nullptr);

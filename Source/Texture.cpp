@@ -98,13 +98,13 @@ namespace re
 		, m_numMips(ComputeNumMips(params))
 		, m_numSubresources(m_numMips * params.m_faces)
 	{
-		SEAssert("Invalid usage", m_texParams.m_usage != Texture::Usage::Invalid);
-		SEAssert("Invalid dimension", m_texParams.m_dimension != Texture::Dimension::Dimension_Invalid);
-		SEAssert("Invalid format", m_texParams.m_format != Texture::Format::Invalid);
-		SEAssert("Invalid color space", m_texParams.m_colorSpace != Texture::ColorSpace::Invalid);
-		SEAssert("Invalid dimensions", m_texParams.m_width > 0 && m_texParams.m_height > 0);
-		SEAssert("Cubemap textures must have exactly 6 faces", 
-			m_texParams.m_dimension != Texture::Dimension::TextureCubeMap || m_texParams.m_faces == 6);
+		SEAssert(m_texParams.m_usage != Texture::Usage::Invalid, "Invalid usage");
+		SEAssert(m_texParams.m_dimension != Texture::Dimension::Dimension_Invalid, "Invalid dimension");
+		SEAssert(m_texParams.m_format != Texture::Format::Invalid, "Invalid format");
+		SEAssert(m_texParams.m_colorSpace != Texture::ColorSpace::Invalid, "Invalid color space");
+		SEAssert(m_texParams.m_width > 0 && m_texParams.m_height > 0, "Invalid dimensions");
+		SEAssert(m_texParams.m_dimension != Texture::Dimension::TextureCubeMap || m_texParams.m_faces == 6,
+			"Cubemap textures must have exactly 6 faces");
 
 		platform::Texture::CreatePlatformParams(*this);
 
@@ -112,7 +112,7 @@ namespace re
 		{
 			if (doFill) // Optimization: Only fill the texture if necessary
 			{
-				SEAssert("Why are we filling a new texture that also has initial data?", m_initialData.empty());
+				SEAssert(m_initialData.empty(), "Why are we filling a new texture that also has initial data?");
 				
 				const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
 				const uint32_t totalBytesPerFace = params.m_width * params.m_height * bytesPerPixel;
@@ -181,23 +181,22 @@ namespace re
 	{
 		// Note: If texture has < 4 channels, the corresponding channels in value are ignored
 
-		SEAssert("There are no texels. Texels are only allocated for non-target textures", 
-			!m_initialData.empty() && face < m_initialData.size());
+		SEAssert(!m_initialData.empty() && face < m_initialData.size(),
+			"There are no texels. Texels are only allocated for non-target textures");
 
 		const uint8_t bytesPerPixel = GetNumBytesPerTexel(m_texParams.m_format);
 
-		SEAssert("OOB texel coordinates", 
-			u >= 0 && 
+		SEAssert(u >= 0 && 
 			u  < m_texParams.m_width &&
 			v >= 0 && 
-			v < m_texParams.m_height);
+			v < m_texParams.m_height, 
+			"OOB texel coordinates");
 
-		SEAssert("Pixel value is not normalized", 
-			value.x >= 0.f && value.x <= 1.f &&
+		SEAssert(value.x >= 0.f && value.x <= 1.f &&
 			value.y >= 0.f && value.y <= 1.f &&
 			value.z >= 0.f && value.z <= 1.f &&
-			value.w >= 0.f && value.w <= 1.f
-		);
+			value.w >= 0.f && value.w <= 1.f,
+			"Pixel value is not normalized");
 
 		uint8_t* dataPtr = static_cast<uint8_t*>(GetTexelData(face));
 
@@ -252,7 +251,7 @@ namespace re
 		{
 			for (uint8_t i = 0; i < 4; i++)
 			{
-				SEAssert("Expected a normalized float", value[i] >= 0 && value[i] <= 1.f);
+				SEAssert(value[i] >= 0 && value[i] <= 1.f, "Expected a normalized float");
 
 				const uint8_t channelValue = (uint8_t)(value[i] * 255.0f);
 				*(static_cast<uint8_t*>(pixelPtr) + i) = channelValue;
@@ -288,7 +287,7 @@ namespace re
 
 	void re::Texture::Fill(vec4 solidColor)
 	{
-		SEAssert("There are no texels. Texels are only allocated for non-target textures", !m_initialData.empty());
+		SEAssert(!m_initialData.empty(), "There are no texels. Texels are only allocated for non-target textures");
 
 		for (uint32_t face = 0; face < m_texParams.m_faces; face++)
 		{
@@ -323,7 +322,7 @@ namespace re
 	{
 		const uint32_t width = Width();
 		const uint32_t height = Height();
-		SEAssert("Invalid texture dimensions", width > 0 && height > 0);
+		SEAssert(width > 0 && height > 0, "Invalid texture dimensions");
 
 		// A power-of-two value will only have a single bit set to 1 in its binary representation; Use a logical AND
 		// to check if this is the case for both texture dimensions

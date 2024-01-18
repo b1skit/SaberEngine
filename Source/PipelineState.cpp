@@ -18,7 +18,7 @@ namespace re
 
 	void PipelineState::ComputeDataHash()
 	{
-		SEAssert("PipelineState data is not dirty", m_isDirty);
+		SEAssert(m_isDirty, "PipelineState data is not dirty");
 		m_isDirty = false;
 
 		ResetDataHash();
@@ -33,14 +33,14 @@ namespace re
 
 	uint64_t PipelineState::GetPipelineStateDataHash() const
 	{
-		SEAssert("Trying to get the data hash from a dirty pipeline state", !m_isDirty);
+		SEAssert(!m_isDirty, "Trying to get the data hash from a dirty pipeline state");
 		return GetDataHash();
 	}
 
 
 	PipelineState::TopologyType PipelineState::GetTopologyType() const
 	{
-		SEAssert("PipelineState is dirty", !m_isDirty);
+		SEAssert(!m_isDirty, "PipelineState is dirty");
 		return m_topologyType;
 	}
 
@@ -55,7 +55,7 @@ namespace re
 
 	PipelineState::FillMode PipelineState::GetFillMode() const
 	{
-		SEAssert("PipelineState is dirty", !m_isDirty);
+		SEAssert(!m_isDirty, "PipelineState is dirty");
 		return m_fillMode;
 	}
 
@@ -69,7 +69,7 @@ namespace re
 
 	PipelineState::FaceCullingMode PipelineState::GetFaceCullingMode() const
 	{
-		SEAssert("PipelineState is dirty", !m_isDirty);
+		SEAssert(!m_isDirty, "PipelineState is dirty");
 		return m_faceCullingMode;
 	}
 
@@ -84,7 +84,7 @@ namespace re
 
 	PipelineState::WindingOrder PipelineState::GetWindingOrder() const
 	{
-		SEAssert("PipelineState is dirty", !m_isDirty);
+		SEAssert(!m_isDirty, "PipelineState is dirty");
 		return m_windingOrder;
 	}
 
@@ -99,7 +99,7 @@ namespace re
 
 	PipelineState::DepthTestMode PipelineState::GetDepthTestMode() const
 	{
-		SEAssert("PipelineState is dirty", !m_isDirty);
+		SEAssert(!m_isDirty, "PipelineState is dirty");
 		return m_depthTestMode;
 	}
 

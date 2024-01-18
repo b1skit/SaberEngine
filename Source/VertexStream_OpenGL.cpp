@@ -42,7 +42,7 @@ namespace opengl
 
 	void VertexStream::Create(re::VertexStream const& vertexStream)
 	{
-		SEAssert("Vertex stream has no data", vertexStream.GetData() && vertexStream.GetNumElements() > 0);
+		SEAssert(vertexStream.GetData() && vertexStream.GetNumElements() > 0, "Vertex stream has no data");
 
 		opengl::VertexStream::PlatformParams* platformParams = 
 			vertexStream.GetPlatformParams()->As<opengl::VertexStream::PlatformParams*>();

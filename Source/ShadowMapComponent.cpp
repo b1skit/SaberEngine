@@ -44,10 +44,10 @@ namespace fr
 	ShadowMapComponent& ShadowMapComponent::AttachShadowMapComponent(
 		EntityManager& em, entt::entity owningEntity, char const* name, fr::Light::Type lightType)
 	{
-		SEAssert("A ShadowMapComponent must be attached to a LightComponent",
-			em.HasComponent<fr::LightComponent>(owningEntity));
-		SEAssert("A ShadowMapComponent must be attached to an entity with a RenderDataComponent", 
-			em.HasComponent<gr::RenderDataComponent>(owningEntity));
+		SEAssert(em.HasComponent<fr::LightComponent>(owningEntity),
+			"A ShadowMapComponent must be attached to a LightComponent");
+		SEAssert(em.HasComponent<gr::RenderDataComponent>(owningEntity),
+			"A ShadowMapComponent must be attached to an entity with a RenderDataComponent");
 
 		// ShadowMap component:
 		glm::uvec2 widthHeight{0, 0};
@@ -55,8 +55,8 @@ namespace fr
 		{
 		case fr::Light::Type::Directional:
 		{
-			SEAssert("A directional ShadowMapComponent must be attached to an entity with a DirectionalDeferredMarker",
-				em.HasComponent<fr::LightComponent::DirectionalDeferredMarker>(owningEntity));
+			SEAssert(em.HasComponent<fr::LightComponent::DirectionalDeferredMarker>(owningEntity),
+				"A directional ShadowMapComponent must be attached to an entity with a DirectionalDeferredMarker");
 
 			const int defaultDirectionalWidthHeight = 
 				en::Config::Get()->GetValue<int>(en::ConfigKeys::k_defaultShadowMapResolution);
@@ -65,8 +65,8 @@ namespace fr
 		break;
 		case fr::Light::Type::Point:
 		{
-			SEAssert("A point ShadowMapComponent must be attached to an entity with a PointDeferredMarker",
-				em.HasComponent<fr::LightComponent::PointDeferredMarker>(owningEntity));
+			SEAssert(em.HasComponent<fr::LightComponent::PointDeferredMarker>(owningEntity),
+				"A point ShadowMapComponent must be attached to an entity with a PointDeferredMarker");
 
 			const int defaultCubemapWidthHeight =
 				en::Config::Get()->GetValue<int>(en::ConfigKeys::k_defaultShadowCubeMapResolution);
@@ -89,7 +89,7 @@ namespace fr
 			widthHeight);
 
 		fr::TransformComponent* owningTransform = em.GetFirstInHierarchyAbove<fr::TransformComponent>(owningEntity);
-		SEAssert("A shadow map requires a TransformComponent", owningTransform != nullptr);
+		SEAssert(owningTransform != nullptr, "A shadow map requires a TransformComponent");
 
 		// We need to recompute the Transform, as it's likely dirty during scene construction
 		owningTransform->GetTransform().Recompute();
@@ -127,7 +127,7 @@ namespace fr
 		{
 		case fr::ShadowMap::ShadowType::CubeMap:
 		{
-			SEAssert("Unexpected light type", owningLight.GetType() == fr::Light::Type::Point);
+			SEAssert(owningLight.GetType() == fr::Light::Type::Point, "Unexpected light type");
 
 			shadowCamConfig.m_yFOV = static_cast<float>(std::numbers::pi) * 0.5f;
 			shadowCamConfig.m_aspectRatio = 1.0f;
@@ -251,7 +251,7 @@ namespace fr
 		, m_transformID(transformID)
 		, m_shadowMap(widthHeight, lightType)
 	{
-		SEAssert("Invalid resolution", widthHeight.x > 0 && widthHeight.y > 0);
+		SEAssert(widthHeight.x > 0 && widthHeight.y > 0, "Invalid resolution");
 	}
 
 

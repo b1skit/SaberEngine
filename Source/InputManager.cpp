@@ -418,8 +418,8 @@ namespace en
 			// eg. Get "w" from "InputButton_Forward"
 			const std::string keyAssignment = Config::Get()->GetValueAsString(en::KeyboardInputButtonNames[i]);
 
-			SEAssert("Button not found in config.cfg. Did you forget to set one in Config::InitializeDefaultValues()?", 
-				!keyAssignment.empty());
+			SEAssert(!keyAssignment.empty(),
+				"Button not found in config.cfg. Did you forget to set one in Config::InitializeDefaultValues()?");
 
 			SEKeycode keycode = GetSEKeycodeFromName(keyAssignment);
 			if (keycode != SEK_UNKNOWN)

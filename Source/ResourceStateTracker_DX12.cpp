@@ -45,7 +45,7 @@ namespace dx12
 		, m_lastFence(k_invalidLastFence) // Not yet used on a command list
 		, m_lastModificationFence(k_invalidLastFence)
 	{
-		SEAssert("Invalid number of subresources", numSubresources > 0);
+		SEAssert(numSubresources > 0, "Invalid number of subresources");
 	}
 
 
@@ -98,9 +98,9 @@ namespace dx12
 
 	uint64_t GlobalResourceState::GetLastModificationFenceValue() const
 	{
-		SEAssert("If a modification fence has been set, a last fence value must have also been set", 
-			m_lastModificationFence == k_invalidLastFence ||
-			(m_lastModificationFence != k_invalidLastFence && m_lastFence != k_invalidLastFence));
+		SEAssert(m_lastModificationFence == k_invalidLastFence ||
+			(m_lastModificationFence != k_invalidLastFence && m_lastFence != k_invalidLastFence),
+			"If a modification fence has been set, a last fence value must have also been set");
 		
 		return m_lastModificationFence;
 	}
@@ -137,8 +137,8 @@ namespace dx12
 	{
 		if (!HasSubresourceRecord(subresourceIdx))
 		{
-			SEAssert("ResourceState not recorded for the given subresource index, or for all subresources", 
-				HasSubresourceRecord(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES));
+			SEAssert(HasSubresourceRecord(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES),
+				"ResourceState not recorded for the given subresource index, or for all subresources");
 
 			return m_states.at(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 		}
@@ -152,7 +152,7 @@ namespace dx12
 		// Force the global state to always track numeric subresources if only a single subresource exists
 		if (hasOnlyOneSubresource)
 		{
-			SEAssert("The hasOnlyOneSubresource flag is not valid for pending/local resource states", !isPendingState);
+			SEAssert(!isPendingState, "The hasOnlyOneSubresource flag is not valid for pending/local resource states");
 			subresourceIdx = 0;
 		}
 
@@ -186,17 +186,17 @@ namespace dx12
 
 	GlobalResourceStateTracker::GlobalResourceStateTracker()
 	{
-		SEAssert("Invalid fence value cannot map to a valid command list type", 
-			dx12::Fence::GetCommandListTypeFromFenceValue(k_invalidLastFence) == dx12::CommandListType::CommandListType_Invalid);
+		SEAssert(dx12::Fence::GetCommandListTypeFromFenceValue(k_invalidLastFence) == dx12::CommandListType::CommandListType_Invalid,
+			"Invalid fence value cannot map to a valid command list type");
 	}
 
 
 	void GlobalResourceStateTracker::RegisterResource(
 		ID3D12Resource* newResource, D3D12_RESOURCE_STATES initialState, uint32_t numSubresources)
 	{
-		SEAssert("Resource cannot be null", newResource);
-		SEAssert("Resource is already registered", !m_globalStates.contains(newResource));
-		SEAssert("Invalid number of subresources", numSubresources > 0);
+		SEAssert(newResource, "Resource cannot be null");
+		SEAssert(!m_globalStates.contains(newResource), "Resource is already registered");
+		SEAssert(numSubresources > 0, "Invalid number of subresources");
 
 		std::lock_guard<std::mutex> lock(m_globalStatesMutex);
 		m_globalStates.emplace(newResource, 
@@ -206,8 +206,8 @@ namespace dx12
 
 	void GlobalResourceStateTracker::UnregisterResource(ID3D12Resource* existingResource)
 	{
-		SEAssert("Resource cannot be null", existingResource);
-		SEAssert("Resource is not registered", m_globalStates.contains(existingResource));
+		SEAssert(existingResource, "Resource cannot be null");
+		SEAssert(m_globalStates.contains(existingResource), "Resource is not registered");
 
 		std::lock_guard<std::mutex> lock(m_globalStatesMutex);
 		m_globalStates.erase(existingResource);
@@ -219,7 +219,7 @@ namespace dx12
 	{
 		// TODO: It's risky to return this value by reference: We should assert the calling thread holds the m_globalStatesMutex
 			
-		SEAssert("Resource not found, was it registered?", m_globalStates.contains(resource));
+		SEAssert(m_globalStates.contains(resource), "Resource not found, was it registered?");
 		return m_globalStates.at(resource);
 	}
 
@@ -230,7 +230,7 @@ namespace dx12
 	{
 		// TODO: We should assert the calling thread currently holds the m_globalStatesMutex
 
-		SEAssert("Resource not found, was it registered?", m_globalStates.contains(resource));
+		SEAssert(m_globalStates.contains(resource), "Resource not found, was it registered?");
 		m_globalStates.at(resource).SetState(newState, subresourceIdx, lastFence);
 	}
 
@@ -292,16 +292,16 @@ namespace dx12
 			auto const& emplacePendingResult = m_pendingStates.emplace(
 				resource, 
 				LocalResourceState(stateAfter, subresourceIdx));
-			SEAssert("Emplace failed. Does the object already exist?", emplacePendingResult.second == true);
+			SEAssert(emplacePendingResult.second == true, "Emplace failed. Does the object already exist?");
 			
 			auto const& emplaceKnownResult = m_knownStates.emplace(
 				resource,
 				LocalResourceState(stateAfter, subresourceIdx));
-			SEAssert("Emplace failed. Does the object already exist?", emplaceKnownResult.second == true);
+			SEAssert(emplaceKnownResult.second == true, "Emplace failed. Does the object already exist?");
 		}
 		else // Existing resource:
 		{
-			SEAssert("Pending states tracker should contain this resource", m_pendingStates.contains(resource));
+			SEAssert(m_pendingStates.contains(resource), "Pending states tracker should contain this resource");
 
 			// If we've never seen the subresource, we need to store this transition in the pending list
 			if (m_pendingStates.at(resource).HasSubresourceRecord(subresourceIdx) == false)
@@ -319,8 +319,8 @@ namespace dx12
 	D3D12_RESOURCE_STATES LocalResourceStateTracker::GetResourceState(
 		ID3D12Resource* resource, SubresourceIdx subresourceIdx) const
 	{
-		SEAssert("Trying to get the state of a resource that has not been seen before", 
-			m_knownStates.contains(resource));
+		SEAssert(m_knownStates.contains(resource),
+			"Trying to get the state of a resource that has not been seen before");
 		return m_knownStates.at(resource).GetState(subresourceIdx);
 	}
 

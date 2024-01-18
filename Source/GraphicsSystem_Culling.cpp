@@ -135,8 +135,8 @@ namespace gr
 				else if (gr::HasFeature(gr::RenderObjectFeature::IsMeshBounds, renderData.GetFeatureBits(newBoundsID)) &&
 					!m_meshesToMeshPrimitiveBounds.contains(newBoundsID))
 				{
-					SEAssert("Mesh Bounds should not have an encapsulating bounds",
-						encapsulatingBounds == gr::k_invalidRenderDataID);
+					SEAssert(encapsulatingBounds == gr::k_invalidRenderDataID,
+						"Mesh Bounds should not have an encapsulating bounds");
 
 					m_meshesToMeshPrimitiveBounds.emplace(newBoundsID, std::vector<gr::RenderDataID>());
 				}
@@ -144,10 +144,10 @@ namespace gr
 				if (gr::HasFeature(
 					gr::RenderObjectFeature::IsMeshPrimitiveBounds, renderData.GetFeatureBits(newBoundsID)))
 				{
-					SEAssert("MeshPrimitive Bounds must have an encapsulating bounds",
-						encapsulatingBounds != gr::k_invalidRenderDataID);
-					SEAssert("Encapsulating bounds should have already been recorded", 
-						m_meshesToMeshPrimitiveBounds.contains(encapsulatingBounds));
+					SEAssert(encapsulatingBounds != gr::k_invalidRenderDataID,
+						"MeshPrimitive Bounds must have an encapsulating bounds");
+					SEAssert(m_meshesToMeshPrimitiveBounds.contains(encapsulatingBounds),
+						"Encapsulating bounds should have already been recorded");
 
 					// Store the MeshPrimitive's ID under its encapsulating Mesh:
 					m_meshesToMeshPrimitiveBounds.at(encapsulatingBounds).emplace_back(newBoundsID);
@@ -178,9 +178,9 @@ namespace gr
 				// Handle deleted Mesh bounds:
 				if (m_meshesToMeshPrimitiveBounds.contains(deletedBoundsID))
 				{
-					SEAssert("There are still bounds registered under the current Mesh. This suggests an ordering issue"
-						" with delete commands", 
-						m_meshesToMeshPrimitiveBounds.at(deletedBoundsID).empty());
+					SEAssert(m_meshesToMeshPrimitiveBounds.at(deletedBoundsID).empty(),
+						"There are still bounds registered under the current Mesh. This suggests an ordering issue"
+						" with delete commands");
 
 					m_meshesToMeshPrimitiveBounds.erase(deletedBoundsID);
 				}

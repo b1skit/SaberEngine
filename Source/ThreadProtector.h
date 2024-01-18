@@ -63,8 +63,8 @@ namespace util
 		{
 			std::lock_guard<std::mutex> lock(m_owningThreadIdMutex);
 
-			SEAssert("Recursive TakeOwnership() call detected", m_owningThreadId != std::this_thread::get_id());
-			SEAssert("ThreadProtector is already owned", m_owningThreadId == std::thread::id());
+			SEAssert(m_owningThreadId != std::this_thread::get_id(), "Recursive TakeOwnership() call detected");
+			SEAssert(m_owningThreadId == std::thread::id(), "ThreadProtector is already owned");
 
 			m_owningThreadId = std::this_thread::get_id();
 		}
@@ -78,9 +78,9 @@ namespace util
 		{
 			std::lock_guard<std::mutex> lock(m_owningThreadIdMutex);
 
-			SEAssert("Thread access violation", 
-				m_owningThreadId == std::this_thread::get_id() || 
-				m_owningThreadId == std::thread::id());
+			SEAssert(m_owningThreadId == std::this_thread::get_id() || 
+				m_owningThreadId == std::thread::id(),
+				"Thread access violation");
 		}
 #endif
 	}
@@ -92,9 +92,9 @@ namespace util
 		{
 			std::lock_guard<std::mutex> lock(m_owningThreadIdMutex);
 
-			SEAssert("Ownership of the ThreadProtector has not been claimed", m_owningThreadId != std::thread::id());
-			SEAssert("Non-owning thread is trying to release ownership of ThreadProtector", 
-				m_owningThreadId == std::this_thread::get_id());
+			SEAssert(m_owningThreadId != std::thread::id(), "Ownership of the ThreadProtector has not been claimed");
+			SEAssert(m_owningThreadId == std::this_thread::get_id(), 
+				"Non-owning thread is trying to release ownership of ThreadProtector");
 
 			m_owningThreadId = std::thread::id();
 		}

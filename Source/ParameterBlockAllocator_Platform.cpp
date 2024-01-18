@@ -11,7 +11,7 @@ namespace platform
 {
 	void ParameterBlockAllocator::CreatePlatformParams(re::ParameterBlockAllocator& pba)
 	{
-		SEAssert("Platform params already exists", pba.GetPlatformParams() == nullptr);
+		SEAssert(pba.GetPlatformParams() == nullptr, "Platform params already exists");
 
 		const platform::RenderingAPI& api = en::Config::Get()->GetRenderingAPI();
 

@@ -17,7 +17,7 @@ namespace fr
 {
 	LightComponent& LightComponent::CreateDeferredAmbientLightConcept(EntityManager& em, re::Texture const* iblTex)
 	{
-		SEAssert("IBL texture cannot be null", iblTex);
+		SEAssert(iblTex, "IBL texture cannot be null");
 
 		entt::entity lightEntity = em.CreateEntity(iblTex->GetName());
 
@@ -56,8 +56,8 @@ namespace fr
 		glm::vec4 const& colorIntensity, 
 		bool hasShadow)
 	{
-		SEAssert("A LightComponent's owning entity requires a TransformComponent",
-			em.HasComponent<fr::TransformComponent>(owningEntity));
+		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
+			"A LightComponent's owning entity requires a TransformComponent");
 
 		// Create a MeshPrimitive (owned by SceneData):
 		std::shared_ptr<gr::MeshPrimitive> pointLightMesh = gr::meshfactory::CreateSphere();
@@ -112,8 +112,8 @@ namespace fr
 		glm::vec4 colorIntensity, 
 		bool hasShadow)
 	{
-		SEAssert("A light's owning entity requires a TransformComponent",
-			em.HasComponent<fr::TransformComponent>(owningEntity));
+		SEAssert(em.HasComponent<fr::TransformComponent>(owningEntity),
+			"A light's owning entity requires a TransformComponent");
 
 		fr::TransformComponent& owningTransform = em.GetComponent<fr::TransformComponent>(owningEntity);
 
@@ -180,7 +180,7 @@ namespace fr
 
 		fr::Light::TypeProperties const& typeProperties =
 			light.GetLightTypeProperties(fr::Light::Type::AmbientIBL);
-		SEAssert("IBL texture cannot be null", typeProperties.m_ambient.m_IBLTex);
+		SEAssert(typeProperties.m_ambient.m_IBLTex, "IBL texture cannot be null");
 
 		renderData.m_iblTex = typeProperties.m_ambient.m_IBLTex;
 
@@ -265,8 +265,8 @@ namespace fr
 			break;
 			case fr::Light::Type::Point:
 			{
-				SEAssert("Point lights require a Transform", lightTransform);
-				SEAssert("Light is not a point light", light.GetType() == fr::Light::Type::Point);
+				SEAssert(lightTransform, "Point lights require a Transform");
+				SEAssert(light.GetType() == fr::Light::Type::Point, "Light is not a point light");
 
 				fr::Light::TypeProperties const& lightProperties = light.GetLightTypeProperties(fr::Light::Type::Point);
 
@@ -300,8 +300,8 @@ namespace fr
 
 			// Transform:
 			fr::TransformComponent* transformComponent = em.TryGetComponent<fr::TransformComponent>(lightEntity);
-			SEAssert("Failed to find TransformComponent", 
-				transformComponent || lightCmpt.m_light.GetType() == fr::Light::Type::AmbientIBL);
+			SEAssert(transformComponent || lightCmpt.m_light.GetType() == fr::Light::Type::AmbientIBL,
+				"Failed to find TransformComponent");
 			if (transformComponent)
 			{
 				fr::TransformComponent::ShowImGuiWindow(em, lightEntity, static_cast<uint64_t>(lightEntity));
@@ -346,8 +346,7 @@ namespace fr
 		, m_light(iblTex, fr::Light::Type::AmbientIBL)
 		, m_hasShadow(false)
 	{
-		SEAssert("This constructor is for ambient light types only", 
-			ambientTypeOnly == fr::Light::Type::AmbientIBL);
+		SEAssert(ambientTypeOnly == fr::Light::Type::AmbientIBL, "This constructor is for ambient light types only");
 	}
 
 

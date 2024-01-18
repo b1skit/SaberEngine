@@ -67,7 +67,7 @@ namespace dx12
 
 	DescriptorAllocation CPUDescriptorHeapManager::Allocate(uint32_t count)
 	{
-		SEAssert("Invalid number of allocations requested", count > 0 && count <= k_numDescriptorsPerPage);
+		SEAssert(count > 0 && count <= k_numDescriptorsPerPage, "Invalid number of allocations requested");
 
 		std::lock_guard<std::mutex> allocationLock(m_allocationPagesIndexesMutex);
 
@@ -94,8 +94,8 @@ namespace dx12
 			// If our first allocation is going to exhaust the page, pre-remove it from our free page list
 			const auto& freePageLocation = m_freePageIndexes.find(m_allocationPages.size() - 1);
 
-			SEAssert("Expected newPage would be the last element in our vector", 
-				newPage == m_allocationPages[*freePageLocation].get());
+			SEAssert(newPage == m_allocationPages[*freePageLocation].get(),
+				"Expected newPage would be the last element in our vector");
 
 			m_freePageIndexes.erase(freePageLocation);
 		}
@@ -179,7 +179,7 @@ namespace dx12
 	{
 		std::lock_guard<std::mutex> pageLock(m_pageMutex);
 
-		SEAssert("Destroying a page before allocations have been freed", m_numFreeElements == m_totalElements);
+		SEAssert(m_numFreeElements == m_totalElements, "Destroying a page before allocations have been freed");
 
 		m_descriptorHeap = nullptr;
 		m_baseDescriptor = {0};
@@ -220,15 +220,15 @@ namespace dx12
 		const auto offsetLocation = smallestSuitableBlock->second;
 		const size_t offsetIdx = offsetLocation->first;
 
-		SEAssert("Tracking tables are out of sync", 
-			(offsetLocation != m_freeOffsetsToSizes.end() && smallestSuitableBlock != m_sizesToFreeOffsets.end()) ||
-			(offsetLocation == m_freeOffsetsToSizes.end() && smallestSuitableBlock == m_sizesToFreeOffsets.end()));
+		SEAssert((offsetLocation != m_freeOffsetsToSizes.end() && smallestSuitableBlock != m_sizesToFreeOffsets.end()) ||
+			(offsetLocation == m_freeOffsetsToSizes.end() && smallestSuitableBlock == m_sizesToFreeOffsets.end()),
+			"Tracking tables are out of sync");
 
 		// Delete our existing entries:
 		m_freeOffsetsToSizes.erase(offsetLocation);
 		m_sizesToFreeOffsets.erase(smallestSuitableBlock);
 
-		SEAssert("About to underflow unsigned value", m_numFreeElements >= descriptorCount);
+		SEAssert(m_numFreeElements >= descriptorCount, "About to underflow unsigned value");
 		m_numFreeElements -= descriptorCount;
 
 		// Compute our updated metadata, and Free any remaining allocations for reuse:
@@ -237,7 +237,7 @@ namespace dx12
 		{
 			const size_t newOffset = offsetIdx + descriptorCount;
 
-			SEAssert("About to underflow unsigned value", m_numFreeElements >= remainingBlockSize);
+			SEAssert(m_numFreeElements >= remainingBlockSize, "About to underflow unsigned value");
 			m_numFreeElements -= remainingBlockSize; // FreeRange will re-add the number of freed blocks to the count
 
 			FreeRange(newOffset, remainingBlockSize);
@@ -286,7 +286,7 @@ namespace dx12
 		auto offsetLocation = m_freeOffsetsToSizes.emplace(
 			offset, 
 			AllocationBlock{ numDescriptors, m_sizesToFreeOffsets.end() });
-		SEAssert("Failed to insert to the offset->size entry", offsetLocation.second == true);
+		SEAssert(offsetLocation.second == true, "Failed to insert to the offset->size entry");
 
 		// Add an entry to the sizes->offsets table:
 		auto sizeLocation = m_sizesToFreeOffsets.emplace(numDescriptors, offsetLocation.first);
@@ -325,7 +325,7 @@ namespace dx12
 				auto mergedLocation = m_freeOffsetsToSizes.emplace(
 					mergedOffset,
 					std::move(mergedAllocation));
-				SEAssert("Failed to insert to the offset->size entry", mergedLocation.second);
+				SEAssert(mergedLocation.second, "Failed to insert to the offset->size entry");
 
 				// Insert our combined entry into the sizes->offsets table:
 				auto mergedSizeLocation = m_sizesToFreeOffsets.emplace(mergedNumElements, mergedLocation.first);
@@ -345,7 +345,7 @@ namespace dx12
 			MergeBlocks(prevLocation, offset, offsetLocation.first);
 		}
 
-		SEAssert("Invalid iterator", offsetLocation.first != m_freeOffsetsToSizes.end());
+		SEAssert(offsetLocation.first != m_freeOffsetsToSizes.end(), "Invalid iterator");
 
 		auto nextLocation = std::next(offsetLocation.first);
 		if (nextLocation != m_freeOffsetsToSizes.end())
@@ -412,8 +412,8 @@ namespace dx12
 	{
 		Free(0);
 
-		SEAssert("DescriptorAllocation has not been correctly invalidated", 
-			m_baseDescriptor.ptr == 0 && m_allocationPage == nullptr);
+		SEAssert(m_baseDescriptor.ptr == 0 && m_allocationPage == nullptr,
+			"DescriptorAllocation has not been correctly invalidated");
 	}
 
 

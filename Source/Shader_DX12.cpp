@@ -15,7 +15,7 @@ namespace dx12
 	{
 		dx12::Shader::PlatformParams* platformParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
 
-		SEAssert("Shader has already been created", !platformParams->m_isCreated);
+		SEAssert(!platformParams->m_isCreated, "Shader has already been created");
 		platformParams->m_isCreated = true;
 
 		// Our DX12 Shaders have a naming pattern of <name>_<V/G/P/C>Shader.hlsl
@@ -75,7 +75,7 @@ namespace dx12
 	dx12::RootSignature* Shader::GetRootSignature(re::Shader const& shader)
 	{
 		dx12::Shader::PlatformParams* platformParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
-		SEAssert("Shader has not been created", platformParams->m_isCreated);
+		SEAssert(platformParams->m_isCreated, "Shader has not been created");
 
 		return platformParams->m_rootSignature.get();
 	}

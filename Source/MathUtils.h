@@ -8,7 +8,7 @@ namespace util
 	template<typename T>
 	T RoundUpToNearestMultiple(T val, T multiple)
 	{
-		SEAssert("Invalid values. Val must be non-negative, multiple must be non-zero", val >= 0 && multiple > 0);
+		SEAssert(val >= 0 && multiple > 0, "Invalid values. Val must be non-negative, multiple must be non-zero");
 		
 		const T remainder = val % multiple;
 		if (remainder == 0)

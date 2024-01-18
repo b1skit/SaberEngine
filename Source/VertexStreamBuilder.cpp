@@ -49,8 +49,8 @@ namespace util
 	void VertexStreamBuilder::ConstructMissingVertexAttributes(MeshData* meshData)
 	{
 		const bool isTriangleList = meshData->m_meshParams->m_topologyMode == gr::MeshPrimitive::TopologyMode::TriangleList;
-		SEAssert("Only indexed triangle lists are (currently) supported",
-			meshData->m_indices && meshData->m_positions && isTriangleList);
+		SEAssert(meshData->m_indices && meshData->m_positions && isTriangleList,
+			"Only indexed triangle lists are (currently) supported");
 
 		LOG("Processing mesh \"%s\" with %d vertices...", meshData->m_name.c_str(), meshData->m_positions->size());
 
@@ -138,7 +138,7 @@ namespace util
 
 			m_context.m_pUserData = meshData;
 			tbool result = genTangSpaceDefault(&this->m_context);
-			SEAssert("Failed to generate tangents", result);
+			SEAssert(result, "Failed to generate tangents");
 		}
 		if (!hasUVs && m_canBuildUVs)
 		{
@@ -158,14 +158,14 @@ namespace util
 
 	void VertexStreamBuilder::RemoveDegenerateTriangles(MeshData* meshData)
 	{
-		SEAssert("Expected a triangle list", meshData->m_indices->size() % 3 == 0);
-		SEAssert("Expected a triangle list", meshData->m_positions->size() >= meshData->m_indices->size());
-		SEAssert("Expected a triangle list", !m_canBuildNormals || meshData->m_normals->size() >= meshData->m_indices->size());
-		SEAssert("Expected a triangle list", !m_canBuildTangents || meshData->m_tangents->size() >= meshData->m_indices->size());
-		SEAssert("Expected a triangle list", !m_canBuildUVs || meshData->m_UV0->size() >= meshData->m_indices->size());
-		SEAssert("Expected a triangle list", !m_canBuildColors || meshData->m_colors->size() >= meshData->m_indices->size());
-		SEAssert("Expected a triangle list", (!m_hasJoints || meshData->m_joints->size() >= meshData->m_indices->size()));
-		SEAssert("Expected a triangle list", (!m_hasWeights || meshData->m_weights->size() >= meshData->m_indices->size()));
+		SEAssert(meshData->m_indices->size() % 3 == 0, "Expected a triangle list");
+		SEAssert(meshData->m_positions->size() >= meshData->m_indices->size(), "Expected a triangle list");
+		SEAssert(!m_canBuildNormals || meshData->m_normals->size() >= meshData->m_indices->size(), "Expected a triangle list");
+		SEAssert(!m_canBuildTangents || meshData->m_tangents->size() >= meshData->m_indices->size(), "Expected a triangle list");
+		SEAssert(!m_canBuildUVs || meshData->m_UV0->size() >= meshData->m_indices->size(), "Expected a triangle list");
+		SEAssert(!m_canBuildColors || meshData->m_colors->size() >= meshData->m_indices->size(), "Expected a triangle list");
+		SEAssert((!m_hasJoints || meshData->m_joints->size() >= meshData->m_indices->size()), "Expected a triangle list");
+		SEAssert((!m_hasWeights || meshData->m_weights->size() >= meshData->m_indices->size()), "Expected a triangle list");
 
 		vector<uint32_t> newIndices;
 		vector<vec3> newPositions;
@@ -216,7 +216,7 @@ namespace util
 
 			if (isValid)
 			{
-				SEAssert("Insertions are out of sync", insertIdx == newPositions.size());
+				SEAssert(insertIdx == newPositions.size(), "Insertions are out of sync");
 				newIndices.emplace_back(insertIdx++);
 				newIndices.emplace_back(insertIdx++);
 				newIndices.emplace_back(insertIdx++);
@@ -310,10 +310,10 @@ namespace util
 
 	void VertexStreamBuilder::BuildFlatNormals(MeshData* meshData)
 	{
-		SEAssert("Expected a triangle list and pre-allocated normals vector", 
-			m_canBuildNormals && 
+		SEAssert(m_canBuildNormals && 
 			meshData->m_indices->size() % 3 == 0 && 
-			meshData->m_normals->size() == meshData->m_indices->size());
+			meshData->m_normals->size() == meshData->m_indices->size(),
+			"Expected a triangle list and pre-allocated normals vector");
 
 		LOG("MeshPrimitive \"%s\" is missing normals, generating flat normals...", meshData->m_name.c_str());
 
@@ -337,10 +337,10 @@ namespace util
 
 	void VertexStreamBuilder::BuildSimpleTriangleUVs(MeshData* meshData)
 	{
-		SEAssert("Expected a triangle list and pre-allocated UV0 vector",
-			m_canBuildUVs && 
+		SEAssert(m_canBuildUVs && 
 			meshData->m_indices->size() % 3 == 0 && 
-			meshData->m_UV0->size() == meshData->m_indices->size());
+			meshData->m_UV0->size() == meshData->m_indices->size(),
+			"Expected a triangle list and pre-allocated UV0 vector");
 
 		LOG("MeshPrimitive \"%s\" is missing UVs, generating a simple set...", meshData->m_name.c_str());
 
@@ -453,8 +453,8 @@ namespace util
 
 	void VertexStreamBuilder::WeldTriangles(MeshData* meshData)
 	{
-		SEAssert("Mikktspace operates on system's int, SaberEngine operates on explicit 32-bit uints", 
-			sizeof(int) == sizeof(uint32_t));
+		SEAssert(sizeof(int) == sizeof(uint32_t),
+			"Mikktspace operates on system's int, SaberEngine operates on explicit 32-bit uints");
 
 		LOG("Re-welding %d vertices to build unique vertex index list for mesh \"%s\"",
 			meshData->m_positions->size(), meshData->m_name.c_str());
@@ -489,18 +489,18 @@ namespace util
 				) / sizeof(float);
 		
 		// Make sure we've counted for all non-index members in MeshData
-		SEAssert("Data size mismatch/miscalulation", 
-			floatsPerVertex == (3 + 
+		SEAssert(floatsPerVertex == (3 + 
 				m_canBuildNormals * 3 +
 				m_canBuildTangents * 4 +
 				m_canBuildUVs * 2 +
 				m_canBuildColors * 4 +
 				m_hasJoints * 1 + 
-				m_hasWeights * 4));
+				m_hasWeights * 4),
+			"Data size mismatch/miscalulation");
 
 		// pfVertexDataOut: iNrVerticesIn * iFloatsPerVert * sizeof(float)
 		const size_t numElements = meshData->m_positions->size();
-		SEAssert("Unexpected position/index size mismatch", meshData->m_positions->size() == meshData->m_indices->size());
+		SEAssert(meshData->m_positions->size() == meshData->m_indices->size(), "Unexpected position/index size mismatch");
 
 		const size_t vertexStrideBytes = floatsPerVertex * sizeof(float);
 		const size_t numVertexBytesOut = numElements * vertexStrideBytes;
@@ -676,7 +676,7 @@ namespace util
 	{
 		MeshData* meshData = static_cast<MeshData*> (m_context->m_pUserData);
 		
-		SEAssert("Unexpected number of indexes. Expected an exact factor of 3", meshData->m_indices->size() % 3 == 0);
+		SEAssert(meshData->m_indices->size() % 3 == 0, "Unexpected number of indexes. Expected an exact factor of 3");
 
 		return (int)meshData->m_indices->size() / 3;
 	}
@@ -686,8 +686,8 @@ namespace util
 	{
 		MeshData* meshData = static_cast<MeshData*> (m_context->m_pUserData);
 
-		SEAssert("Only triangular faces are currently supported", 
-			meshData->m_meshParams->m_topologyMode == gr::MeshPrimitive::TopologyMode::TriangleList);
+		SEAssert(meshData->m_meshParams->m_topologyMode == gr::MeshPrimitive::TopologyMode::TriangleList,
+			"Only triangular faces are currently supported");
 		
 		return 3;
 	}

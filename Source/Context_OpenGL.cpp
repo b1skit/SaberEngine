@@ -41,7 +41,7 @@ namespace opengl
 		windowClass.lpszClassName = tempWindowID; // Set the unique window identifier
 
 		const ATOM registerResult = RegisterClassExW(&windowClass);
-		SEAssert("Failed to register temp OpenGL window", registerResult);
+		SEAssert(registerResult, "Failed to register temp OpenGL window");
 
 		const wchar_t* const tempWindowTitle = L"Saber Engine Temp OpenGL Window";
 
@@ -58,7 +58,7 @@ namespace opengl
 			0,
 			windowClass.hInstance,
 			0);
-		SEAssert("Failed to create dummy OpenGL window", tempWindow);
+		SEAssert(tempWindow, "Failed to create dummy OpenGL window");
 
 		// These don't matter, we set actual values later via the wgl extension functions
 		PIXELFORMATDESCRIPTOR pfd;
@@ -75,7 +75,7 @@ namespace opengl
 		HDC tempDeviceContext = ::GetDC(tempWindow); // Get the device context
 
 		int pxFormat = ::ChoosePixelFormat(tempDeviceContext, &pfd);
-		SEAssert("Failed to find a suitable pixel format", pxFormat);
+		SEAssert(pxFormat, "Failed to find a suitable pixel format");
 
 		if (!::SetPixelFormat(tempDeviceContext, pxFormat, &pfd))
 		{
@@ -83,7 +83,7 @@ namespace opengl
 		}
 
 		HGLRC tempRenderContext = ::wglCreateContext(tempDeviceContext);
-		SEAssert("Failed to create a dummy OpenGL rendering context", tempRenderContext);
+		SEAssert(tempRenderContext, "Failed to create a dummy OpenGL rendering context");
 
 		if (!::wglMakeCurrent(tempDeviceContext, tempRenderContext))
 		{
@@ -175,7 +175,7 @@ namespace opengl
 		GetOpenGLExtensionProcessAddresses();
 
 		en::Window* window = en::CoreEngine::Get()->GetWindow();
-		SEAssert("Window pointer cannot be null", window);
+		SEAssert(window, "Window pointer cannot be null");
 
 		win32::Window::PlatformParams* windowPlatParams = 
 			window->GetPlatformParams()->As<win32::Window::PlatformParams*>();
@@ -222,7 +222,7 @@ namespace opengl
 		};
 
 		m_glRenderContext = wglCreateContextAttribsARBFn(m_hDeviceContext, 0, glAttribs);
-		SEAssert("Failed to create OpenGL context", m_glRenderContext);
+		SEAssert(m_glRenderContext, "Failed to create OpenGL context");
 
 		if (!wglMakeCurrent(m_hDeviceContext, m_glRenderContext))
 		{
@@ -235,8 +235,8 @@ namespace opengl
 		glGetIntegerv(GL_MAJOR_VERSION, &glMajorVersionCheck);
 		glGetIntegerv(GL_MINOR_VERSION, &glMinorVersionCheck);
 
-		SEAssert("Reported OpenGL version does not match the version set",
-			glMajorVersion == glMajorVersionCheck && glMinorVersion == glMinorVersionCheck);
+		SEAssert(glMajorVersion == glMajorVersionCheck && glMinorVersion == glMinorVersionCheck,
+			"Reported OpenGL version does not match the version set");
 
 		LOG("Using OpenGL version %d.%d", glMajorVersionCheck, glMinorVersionCheck);
 
@@ -249,7 +249,7 @@ namespace opengl
 		// Initialize glew:
 		::glewExperimental = GL_TRUE; // Expose OpenGL 3.x+ interfaces
 		const GLenum glStatus = glewInit();
-		SEAssert("glewInit failed", glStatus == GLEW_OK);
+		SEAssert(glStatus == GLEW_OK, "glewInit failed");
 
 		// Disable all debug messages to prevent spam. We'll selectively re-enable them if/when needed
 		glDebugMessageControl(
@@ -485,9 +485,9 @@ namespace opengl
 	uint64_t Context::ComputeVAOHash(
 		re::VertexStream const* const* vertexStreams, uint8_t count, re::VertexStream const* indexStream)
 	{
-		SEAssert("Invalid vertex streams", vertexStreams && count > 0);
-		SEAssert("Received more vertex streams that defined slots. This is unexpected", 
-			count <= gr::MeshPrimitive::Slot_Count);
+		SEAssert(vertexStreams && count > 0, "Invalid vertex streams");
+		SEAssert(count <= gr::MeshPrimitive::Slot_Count,
+			"Received more vertex streams that defined slots. This is unexpected");
 
 		uint64_t vertexStreamHash = 0;
 
@@ -534,7 +534,7 @@ namespace opengl
 			{
 				GLuint newVAO = 0;
 				glGenVertexArrays(1, &newVAO);
-				SEAssert("Failed to create VAO", newVAO != 0);
+				SEAssert(newVAO != 0, "Failed to create VAO");
 
 				m_VAOLibrary.emplace(vaoHash, newVAO);
 

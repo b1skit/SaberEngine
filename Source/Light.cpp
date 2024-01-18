@@ -86,7 +86,7 @@ namespace fr
 	Light::Light(re::Texture const* iblTex, Type lightType)
 		: m_isDirty(true)
 	{
-		SEAssert("This constructor is only for AmbientIBL lights", lightType == Type::AmbientIBL);
+		SEAssert(lightType == Type::AmbientIBL, "This constructor is only for AmbientIBL lights");
 
 		m_typeProperties.m_type = Type::AmbientIBL;
 		m_typeProperties.m_ambient.m_IBLTex = iblTex;
@@ -192,14 +192,14 @@ namespace fr
 
 	Light::TypeProperties const& Light::GetLightTypeProperties(Type lightType) const
 	{
-		SEAssert("Trying to access type properties for the wrong type", lightType == m_typeProperties.m_type);
+		SEAssert(lightType == m_typeProperties.m_type, "Trying to access type properties for the wrong type");
 		return m_typeProperties;
 	}
 
 
 	void Light::SetLightTypeProperties(Type lightType, void const* typeProperties)
 	{
-		SEAssert("Cannot set null type properties", typeProperties != nullptr);
+		SEAssert(typeProperties != nullptr, "Cannot set null type properties");
 
 		switch (lightType)
 		{

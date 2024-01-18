@@ -9,8 +9,8 @@ namespace util
     static inline To CheckedCast(From value)
     {
         const To result = static_cast<To>(value);
-        SEAssert("Casted value is out of range of the destination type", 
-            static_cast<From>(value) == value);
+        SEAssert(static_cast<From>(value) == value,
+            "Casted value is out of range of the destination type");
 
         return result;
     }

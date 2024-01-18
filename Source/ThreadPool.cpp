@@ -22,7 +22,7 @@ namespace en
 	void ThreadPool::Startup()
 	{
 		m_maxThreads = std::thread::hardware_concurrency();
-		SEAssert("Failed to query the number of threads supported", m_maxThreads > 0);
+		SEAssert(m_maxThreads > 0, "Failed to query the number of threads supported");
 		LOG("System has %d logical threads", m_maxThreads);
 
 		// Leave a couple of a thread spare for the OS
@@ -90,6 +90,6 @@ namespace en
 			::GetCurrentThread(),
 			threadName);
 
-		SEAssert("Failed to set thread name", hr >= 0);
+		SEAssert(hr >= 0, "Failed to set thread name");
 	}
 }

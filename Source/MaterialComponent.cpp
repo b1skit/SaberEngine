@@ -22,11 +22,11 @@ namespace fr
 		entt::entity meshPrimitiveConcept,
 		std::shared_ptr<gr::Material> sceneMaterial)
 	{
-		SEAssert("Cannot attach a null material", sceneMaterial != nullptr);
-		SEAssert("Material components must be attached to entities with a MeshPrimitiveComponent",
-			em.HasComponent<fr::MeshPrimitiveComponent>(meshPrimitiveConcept));
-		SEAssert("Material components must be attached to entities with a RenderDataComponent",
-			em.HasComponent<gr::RenderDataComponent>(meshPrimitiveConcept));
+		SEAssert(sceneMaterial != nullptr, "Cannot attach a null material");
+		SEAssert(em.HasComponent<fr::MeshPrimitiveComponent>(meshPrimitiveConcept),
+			"Material components must be attached to entities with a MeshPrimitiveComponent");
+		SEAssert(em.HasComponent<gr::RenderDataComponent>(meshPrimitiveConcept),
+			"Material components must be attached to entities with a RenderDataComponent");
 
 		// Attach the material component:		
 		fr::MaterialComponent* matComponent =

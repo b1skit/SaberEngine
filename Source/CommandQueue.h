@@ -62,7 +62,7 @@ namespace en
 	template<typename T, typename... Args>
 	void CommandBuffer::Enqueue(Args&&... args)
 	{
-		SEAssert("No buffer allocation exists", m_buffer != nullptr);
+		SEAssert(m_buffer != nullptr, "No buffer allocation exists");
 
 		{
 			std::unique_lock<std::mutex> lock(m_commandMetadataMutex);
@@ -74,8 +74,8 @@ namespace en
 				reinterpret_cast<PackedCommand<T>*>(static_cast<uint8_t*>(m_buffer) + m_baseIdx);
 			m_baseIdx += byteOffset;
 
-			SEAssert("Commands have overflowed. Consider increasing the allocation size", 
-				m_baseIdx < m_bufferNumBytes);
+			SEAssert(m_baseIdx < m_bufferNumBytes,
+				"Commands have overflowed. Consider increasing the allocation size");
 
 			// Place our data:
 			new (&packedCommand->m_metadata) CommandMetadata();

@@ -157,7 +157,7 @@ namespace util
 	template<typename T>
 	T const& NBufferedVector<T>::operator[](size_t index) const
 	{
-		SEAssert("Index is OOB", index < m_vectors[m_readIdx].size());
+		SEAssert(index < m_vectors[m_readIdx].size(), "Index is OOB");
 
 		AssertReadingLock(true);
 		return m_vectors[m_readIdx][index];
@@ -247,8 +247,8 @@ namespace util
 			std::thread::id threadID = std::this_thread::get_id();
 			const uint64_t threadIdHash = hasher(threadID);
 
-			SEAssert("Thread does not hold a reading lock",
-				m_readingThreads.contains(threadIdHash) == lockExpected);
+			SEAssert(m_readingThreads.contains(threadIdHash) == lockExpected,
+				"Thread does not hold a reading lock");
 		}
 #endif
 	}

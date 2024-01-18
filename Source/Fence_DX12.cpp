@@ -18,7 +18,7 @@ namespace dx12
 	uint64_t Fence::GetCommandListTypeFenceMaskBits(dx12::CommandListType commandListType)
 	{
 		const uint64_t typeBits = static_cast<uint64_t>(commandListType);
-		SEAssert("Unexpected command list cast results", typeBits < 7);
+		SEAssert(typeBits < 7, "Unexpected command list cast results");
 
 		return typeBits << k_bitShiftWidth;
 	}
@@ -62,7 +62,7 @@ namespace dx12
 			false,		// Initial state: true = signalled, false = unsignalled
 			eventName);	// Event object name: Unnamed if null
 
-		SEAssert("Failed to create fence event", m_fenceEvent);
+		SEAssert(m_fenceEvent, "Failed to create fence event");
 
 		m_fence->SetName(util::ToWideString(eventName).c_str());
 	}
@@ -78,8 +78,8 @@ namespace dx12
 
 	void Fence::CPUSignal(uint64_t fenceValue)
 	{
-		SEAssert("Attempting to CPUSignal with a fence from an invalid CommandListType",
-			dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid);
+		SEAssert(dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid,
+			"Attempting to CPUSignal with a fence from an invalid CommandListType");
 
 		// Updates the fence to the specified value from the CPU side
 		HRESULT hr = m_fence->Signal(fenceValue);
@@ -90,8 +90,8 @@ namespace dx12
 
 	void Fence::CPUWait(uint64_t fenceValue) const
 	{
-		SEAssert("Attempting to CPUWait on a fence from an invalid CommandListType",
-			dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid);
+		SEAssert(dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid,
+			"Attempting to CPUWait on a fence from an invalid CommandListType");
 
 		// Blocks the CPU until the fence reaches the given value
 		if (!IsFenceComplete(fenceValue))
@@ -110,8 +110,8 @@ namespace dx12
 
 	bool Fence::IsFenceComplete(uint64_t fenceValue) const
 	{
-		SEAssert("Trying to check completeness of a fence value from an invalid CommandListType",
-			dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid);
+		SEAssert(dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid,
+			"Trying to check completeness of a fence value from an invalid CommandListType");
 
 		if (fenceValue > m_mostRecentlyConfirmedFence)
 		{

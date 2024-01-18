@@ -144,12 +144,12 @@ namespace
 		// https://microsoft.github.io/DirectX-Specs/d3d/D3D12EnhancedBarriers.html#command-queue-layout-compatibility
 		// https://microsoft.github.io/DirectX-Specs/d3d/CPUEfficiency.html#state-support-by-command-list-type
 
-		SEAssert("Invalid state for transition", 
-			currentGlobalState != D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE);
+		SEAssert(currentGlobalState != D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+			"Invalid state for transition");
 
-		SEAssert("We should genenerally avoid this state. See this page for more info: "
-			"https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_states", 
-			currentGlobalState != D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ);
+		SEAssert(currentGlobalState != D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ,
+			"We should genenerally avoid this state. See this page for more info: "
+			"https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_resource_states");
 
 		// If the previous and current command list type are the same, we know they'll support the same transition
 		// types. No need to go to COMMON between them
@@ -293,8 +293,8 @@ namespace dx12
 		m_typeFenceBitMask = dx12::Fence::GetCommandListTypeFenceMaskBits(type);
 		m_fenceValue = m_typeFenceBitMask; // Fence value effectively starts at 0, with the type bits set
 
-		SEAssert("The fence value should be 0 after removing the command queue type bits", 
-			dx12::Fence::GetRawFenceValue(m_fenceValue) == 0);
+		SEAssert(dx12::Fence::GetRawFenceValue(m_fenceValue) == 0,
+			"The fence value should be 0 after removing the command queue type bits");
 
 		m_isCreated = true;
 	}
@@ -536,7 +536,7 @@ namespace dx12
 							numSubresourcesProcessed++;
 							processedSubresourceIdxs[globalStateSubresourceIdx] = true;
 						}
-						SEAssert("Transitioned too many subresources", numSubresourcesProcessed <= numSubresources);
+						SEAssert(numSubresourcesProcessed <= numSubresources, "Transitioned too many subresources");
 
 						// Check: Did we transition all subresources already? If so, we can skip the ALL transition
 						hasRemainingSubresourcesToCheck = numSubresourcesProcessed < numSubresources;
@@ -545,9 +545,9 @@ namespace dx12
 						// have an actual subresource record to represent it.
 						if (hasRemainingSubresourcesToCheck)
 						{
-							SEAssert("We have remaining subresources to check, but the global resource state is missing"
-								" an ALL subresource record. This shouldn't be possible", 
-								globalResourceState.HasSubresourceRecord(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES));
+							SEAssert(globalResourceState.HasSubresourceRecord(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES),
+								"We have remaining subresources to check, but the global resource state is missing"
+								" an ALL subresource record. This shouldn't be possible");
 							
 							const D3D12_RESOURCE_STATES globalAllState = 
 								globalResourceState.GetState(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
@@ -721,7 +721,7 @@ namespace dx12
 					// and then add an "ALL" transition which would be (incorrectly) added to the pending list. So, we
 					// handle that here (as it makes the bookkeeping much simpler)
 					const bool alreadyTransitionedAllSubresources = numSubresourcesTransitioned == numSubresources;
-					SEAssert("Transitioned too many subresources", numSubresourcesTransitioned <= numSubresources);
+					SEAssert(numSubresourcesTransitioned <= numSubresources, "Transitioned too many subresources");
 
 					if (!alreadyTransitionedAllSubresources &&
 						pendingStates.HasSubresourceRecord(D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES))
@@ -890,9 +890,9 @@ namespace dx12
 			finalCommandLists[i]->Close();
 			commandListPtrs.emplace_back(finalCommandLists[i]->GetD3DCommandList());
 
-			SEAssert("We currently only support submitting command lists of the same type to a command queue. "
-				"TODO: Support this (e.g. allow submitting compute command lists on a direct queue)",
-				finalCommandLists[i]->GetCommandListType() == m_type);
+			SEAssert(finalCommandLists[i]->GetCommandListType() == m_type,
+				"We currently only support submitting command lists of the same type to a command queue. "
+				"TODO: Support this (e.g. allow submitting compute command lists on a direct queue)");
 		}
 		
 		// Execute the command lists:
@@ -949,8 +949,8 @@ namespace dx12
 
 	void CommandQueue::CPUWait(uint64_t fenceValue) const
 	{
-		SEAssert("Attempting to CPUWait on a fence from an invalid CommandListType",
-			dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid);
+		SEAssert(dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid,
+			"Attempting to CPUWait on a fence from an invalid CommandListType");
 
 #if defined(DEBUG_FENCES)
 		LOG_WARNING("CommandQueue::CPUWait: %s, %llu = %llu",
@@ -979,8 +979,8 @@ namespace dx12
 
 	void CommandQueue::GPUSignal(uint64_t fenceValue)
 	{
-		SEAssert("Attempting to GPUSignal with a fence from an invalid CommandListType",
-			dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid);
+		SEAssert(dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid,
+			"Attempting to GPUSignal with a fence from an invalid CommandListType");
 
 #if defined(DEBUG_FENCES)
 		LOG_WARNING("CommandQueue::GPUSignal: %s, %llu = %llu",
@@ -996,8 +996,8 @@ namespace dx12
 
 	void CommandQueue::GPUWait(uint64_t fenceValue) const
 	{
-		SEAssert("Attempting to GPUWait on a fence from an invalid CommandListType",
-			dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid);
+		SEAssert(dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid,
+			"Attempting to GPUWait on a fence from an invalid CommandListType");
 
 #if defined(DEBUG_FENCES)
 		LOG_WARNING("CommandQueue::GPUWait: %s, %llu = %llu",
@@ -1014,8 +1014,8 @@ namespace dx12
 
 	void CommandQueue::GPUWait(dx12::Fence& fence, uint64_t fenceValue) const
 	{
-		SEAssert("Attempting to GPUWait on a fence from an invalid CommandListType",
-			dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid);
+		SEAssert(dx12::Fence::GetCommandListTypeFromFenceValue(fenceValue) != dx12::CommandListType::CommandListType_Invalid,
+			"Attempting to GPUWait on a fence from an invalid CommandListType");
 
 #if defined(DEBUG_FENCES)
 		LOG_WARNING("CommandQueue::GPUWait on another fence: \"%s\" waiting on \"%s\" from queue type \"%s\" for value %llu = %llu",

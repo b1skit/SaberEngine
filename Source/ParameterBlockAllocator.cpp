@@ -50,8 +50,8 @@ namespace re
 		// Atomically advance the stack base index for the next call, and return the base index for the current one
 		const uint32_t allocationBaseIdx = m_bufferBaseIndexes[pbDataType].fetch_add(alignedSize);
 
-		SEAssert("Allocation is out of bounds. Consider increasing k_fixedAllocationByteSize", 
-			allocationBaseIdx + alignedSize <= k_fixedAllocationByteSize);
+		SEAssert(allocationBaseIdx + alignedSize <= k_fixedAllocationByteSize,
+			"Allocation is out of bounds. Consider increasing k_fixedAllocationByteSize");
 
 		return allocationBaseIdx;
 	}
@@ -113,8 +113,9 @@ namespace re
 
 	ParameterBlockAllocator::~ParameterBlockAllocator()
 	{
-		SEAssert("Parameter block allocator destructor called before Destroy(). The parameter block allocator must "
-			"be manually destroyed (i.e. in the api-specific Context::Destroy())", !IsValid());
+		SEAssert(!IsValid(),
+			"Parameter block allocator destructor called before Destroy(). The parameter block allocator must "
+			"be manually destroyed (i.e. in the api-specific Context::Destroy())");
 	}
 	
 
@@ -147,7 +148,7 @@ namespace re
 				{
 					allocation.m_handleToPtr.begin()->second->Destroy();
 				}
-				SEAssert("Failed to clear the map", allocation.m_handleToPtr.empty());
+				SEAssert(allocation.m_handleToPtr.empty(), "Failed to clear the map");
 
 				allocation.m_committed.clear();
 			}
@@ -185,18 +186,18 @@ namespace re
 	void ParameterBlockAllocator::RegisterAndAllocateParameterBlock(
 		std::shared_ptr<re::ParameterBlock> pb, uint32_t numBytes)
 	{
-		SEAssert("Permanent parameter blocks can only be registered at startup, before the 1st render frame", 
-			pb->GetType() == ParameterBlock::PBType::SingleFrame || !m_allocationPeriodEnded);
+		SEAssert(pb->GetType() == ParameterBlock::PBType::SingleFrame || !m_allocationPeriodEnded,
+			"Permanent parameter blocks can only be registered at startup, before the 1st render frame");
 
 		const ParameterBlock::PBType pbType = pb->GetType();
-		SEAssert("Invalid PBType", pbType != re::ParameterBlock::PBType::PBType_Count);
+		SEAssert(pbType != re::ParameterBlock::PBType::PBType_Count, "Invalid PBType");
 
 		const Handle uniqueID = pb->GetUniqueID();
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_allocations[pbType].m_mutex);
 
-			SEAssert("Parameter block is already registered",
-				!m_allocations[pbType].m_handleToPtr.contains(uniqueID));
+			SEAssert(!m_allocations[pbType].m_handleToPtr.contains(uniqueID),
+				"Parameter block is already registered");
 
 			m_allocations[pbType].m_handleToPtr[uniqueID] = pb;
 		}
@@ -208,14 +209,14 @@ namespace re
 
 	void ParameterBlockAllocator::Allocate(Handle uniqueID, uint32_t numBytes, ParameterBlock::PBType pbType)
 	{
-		SEAssert("Permanent parameter blocks can only be allocated at startup, before the 1st render frame",
-			pbType == ParameterBlock::PBType::SingleFrame || !m_allocationPeriodEnded);
+		SEAssert(pbType == ParameterBlock::PBType::SingleFrame || !m_allocationPeriodEnded,
+			"Permanent parameter blocks can only be allocated at startup, before the 1st render frame");
 
 		{
 			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 
-			SEAssert("A parameter block with this handle has already been added",
-				m_handleToTypeAndByteIndex.find(uniqueID) == m_handleToTypeAndByteIndex.end());
+			SEAssert(m_handleToTypeAndByteIndex.find(uniqueID) == m_handleToTypeAndByteIndex.end(),
+				"A parameter block with this handle has already been added");
 		}
 
 		// Get the index we'll be inserting the 1st byte of our data to, resize the vector, and initialize it with zeros
@@ -248,11 +249,11 @@ namespace re
 
 			auto const& result = m_handleToTypeAndByteIndex.find(uniqueID);
 
-			SEAssert("Parameter block with this ID has not been allocated",
-				result != m_handleToTypeAndByteIndex.end());
+			SEAssert(result != m_handleToTypeAndByteIndex.end(),
+				"Parameter block with this ID has not been allocated");
 
-			SEAssert("Immutable parameter blocks can only be committed at startup",
-				!m_allocationPeriodEnded || result->second.m_type != ParameterBlock::PBType::Immutable);
+			SEAssert(!m_allocationPeriodEnded || result->second.m_type != ParameterBlock::PBType::Immutable,
+				"Immutable parameter blocks can only be committed at startup");
 
 			startIdx = result->second.m_startIndex;
 			numBytes = result->second.m_numBytes;
@@ -294,7 +295,7 @@ namespace re
 			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 
 			auto const& result = m_handleToTypeAndByteIndex.find(uniqueID);
-			SEAssert("Parameter block with this ID has not been allocated",result != m_handleToTypeAndByteIndex.end());
+			SEAssert(result != m_handleToTypeAndByteIndex.end(), "Parameter block with this ID has not been allocated");
 
 			pbType = result->second.m_type;
 			startIdx = result->second.m_startIndex;
@@ -318,8 +319,7 @@ namespace re
 
 		auto const& result = m_handleToTypeAndByteIndex.find(uniqueID);
 
-		SEAssert("Parameter block with this ID has not been allocated",
-			result != m_handleToTypeAndByteIndex.end());
+		SEAssert(result != m_handleToTypeAndByteIndex.end(), "Parameter block with this ID has not been allocated");
 
 		return result->second.m_numBytes;
 	}
@@ -334,7 +334,7 @@ namespace re
 			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
 
 			auto const& pb = m_handleToTypeAndByteIndex.find(uniqueID);
-			SEAssert("Cannot deallocate a parameter block that does not exist", pb != m_handleToTypeAndByteIndex.end());
+			SEAssert(pb != m_handleToTypeAndByteIndex.end(), "Cannot deallocate a parameter block that does not exist");
 
 			pbType = pb->second.m_type;
 			startIdx = pb->second.m_startIndex;
@@ -370,7 +370,7 @@ namespace re
 	// Buffer dirty PB data
 	void ParameterBlockAllocator::BufferParamBlocks()
 	{
-		SEAssert("Cannot buffer param blocks until they're all allocated", m_allocationPeriodEnded);
+		SEAssert(m_allocationPeriodEnded, "Cannot buffer param blocks until they're all allocated");
 
 		SEBeginCPUEvent("re::ParameterBlockAllocator::BufferParamBlocks");
 		{
@@ -413,8 +413,8 @@ namespace re
 				// Update our tracking of mutable parameter blocks:
 				if (pbType == ParameterBlock::PBType::Mutable)
 				{
-					SEAssert("Cannot find mutable parameter block, was it ever committed?", 
-						m_dirtyMutablePBFrameNum.contains(currentHandle));
+					SEAssert(m_dirtyMutablePBFrameNum.contains(currentHandle),
+						"Cannot find mutable parameter block, was it ever committed?");
 
 					// If this is the first time we've seen a mutable parameter block while buffering, and its been
 					// updated within the m_numFramesInFlight, add it back to the dirty list for the next frame
@@ -473,9 +473,10 @@ namespace re
 			// invalidated. Instead, we just loop until it's empty
 			while (!m_allocations[re::ParameterBlock::PBType::SingleFrame].m_handleToPtr.empty())
 			{
-				SEAssert("Trying to deallocate a single frame parameter block, but there is still a live shared_ptr. Is "
-					"something holding onto a single frame parameter block beyond the frame lifetime?",
-					m_allocations[re::ParameterBlock::PBType::SingleFrame].m_handleToPtr.begin()->second.use_count() == 1);
+				SEAssert(
+					m_allocations[re::ParameterBlock::PBType::SingleFrame].m_handleToPtr.begin()->second.use_count() == 1,
+					"Trying to deallocate a single frame parameter block, but there is still a live shared_ptr. Is "
+					"something holding onto a single frame parameter block beyond the frame lifetime?");
 
 				m_allocations[re::ParameterBlock::PBType::SingleFrame].m_handleToPtr.begin()->second->Destroy();
 			}
@@ -492,8 +493,8 @@ namespace re
 
 	void ParameterBlockAllocator::ClearDeferredDeletions(uint64_t frameNum)
 	{
-		SEAssert("Trying to clear before the first swap buffer call", 
-			m_currentFrameNum != std::numeric_limits<uint64_t>::max());
+		SEAssert(m_currentFrameNum != std::numeric_limits<uint64_t>::max(),
+			"Trying to clear before the first swap buffer call");
 
 		SEBeginCPUEvent(
 			std::format("ParameterBlockAllocator::ClearDeferredDeletions ({})", m_deferredDeleteQueue.size()).c_str());

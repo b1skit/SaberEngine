@@ -187,7 +187,7 @@ namespace win32
 
 			if (doBroadcastSEEvent) // Post a Saber Engine Event
 			{
-				SEAssert("Event type is not initialized", eventInfo.m_type != en::EventManager::Uninitialized);
+				SEAssert(eventInfo.m_type != en::EventManager::Uninitialized, "Event type is not initialized");
 				eventManager.Notify(std::move(eventInfo));
 			}
 

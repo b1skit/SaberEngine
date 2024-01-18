@@ -264,8 +264,8 @@ namespace opengl
 					{
 						opengl::SwapChain::PlatformParams* swapChainParams =
 							context->GetSwapChain().GetPlatformParams()->As<opengl::SwapChain::PlatformParams*>();
-						SEAssert("Swap chain params and backbuffer cannot be null",
-							swapChainParams && swapChainParams->m_backbufferTargetSet);
+						SEAssert(swapChainParams && swapChainParams->m_backbufferTargetSet,
+							"Swap chain params and backbuffer cannot be null");
 
 						stageTargets = swapChainParams->m_backbufferTargetSet; // Draw directly to the swapchain backbuffer
 					}

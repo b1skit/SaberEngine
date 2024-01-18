@@ -23,13 +23,13 @@ namespace
 			{
 			case re::VertexStream::DataType::Float:
 			{
-				SEAssert("Normalized 32 bit float types are not supported", !stream.DoNormalize());
+				SEAssert(!stream.DoNormalize(), "Normalized 32 bit float types are not supported");
 				return DXGI_FORMAT_R32_FLOAT;
 			}
 			break;
 			case re::VertexStream::DataType::UInt:
 			{
-				SEAssert("Normalized 32 bit uint types are not supported", !stream.DoNormalize());
+				SEAssert(!stream.DoNormalize(), "Normalized 32 bit uint types are not supported");
 				return DXGI_FORMAT_R32_UINT;
 			}
 			break;
@@ -54,13 +54,13 @@ namespace
 			{
 			case re::VertexStream::DataType::Float:
 			{
-				SEAssert("Normalized 32 bit float types are not supported", !stream.DoNormalize());
+				SEAssert(!stream.DoNormalize(), "Normalized 32 bit float types are not supported");
 				return DXGI_FORMAT_R32G32_FLOAT;
 			}
 			break;
 			case re::VertexStream::DataType::UInt:
 			{
-				SEAssert("Normalized 32 bit uint types are not supported", !stream.DoNormalize());
+				SEAssert(!stream.DoNormalize(), "Normalized 32 bit uint types are not supported");
 				return DXGI_FORMAT_R32G32_UINT;
 			}
 			break;
@@ -84,13 +84,13 @@ namespace
 			{
 			case re::VertexStream::DataType::Float:
 			{
-				SEAssert("Normalized 32 bit float types are not supported", !stream.DoNormalize());
+				SEAssert(!stream.DoNormalize(), "Normalized 32 bit float types are not supported");
 				return DXGI_FORMAT_R32G32B32_FLOAT;
 			}
 			break;
 			case re::VertexStream::DataType::UInt:
 			{
-				SEAssert("Normalized 32 bit uint types are not supported", !stream.DoNormalize());
+				SEAssert(!stream.DoNormalize(), "Normalized 32 bit uint types are not supported");
 				return DXGI_FORMAT_R32G32B32_UINT;
 			}
 			break;
@@ -115,13 +115,13 @@ namespace
 			{
 			case re::VertexStream::DataType::Float:
 			{
-				SEAssert("Normalized 32 bit float types are not supported", !stream.DoNormalize());
+				SEAssert(!stream.DoNormalize(), "Normalized 32 bit float types are not supported");
 				return DXGI_FORMAT_R32G32B32A32_FLOAT;
 			}
 			break;
 			case re::VertexStream::DataType::UInt:
 			{
-				SEAssert("Normalized 32 bit uint types are not supported", !stream.DoNormalize());
+				SEAssert(!stream.DoNormalize(), "Normalized 32 bit uint types are not supported");
 				return DXGI_FORMAT_R32G32B32A32_UINT;
 			}
 			break;

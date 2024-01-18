@@ -45,7 +45,7 @@ namespace dx12
 	{
 		dx12::ParameterBlock::PlatformParams* params =
 			paramBlock.GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
-		SEAssert("Parameter block is already created", !params->m_isCreated);
+		SEAssert(!params->m_isCreated, "Parameter block is already created");
 		params->m_isCreated = true;
 
 		const uint32_t pbSize = paramBlock.GetSize();
@@ -121,11 +121,11 @@ namespace dx12
 		{
 		case re::ParameterBlock::PBDataType::SingleElement:
 		{
-			SEAssert("CBV buffer offsets must be multiples of D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT", 
-				params->m_heapByteOffset % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0);
+			SEAssert(params->m_heapByteOffset % D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT == 0,
+				"CBV buffer offsets must be multiples of D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT");
 
 			// NOTE: dx12::CommandList::SetParameterBlock will need to be updated when we solve the PB CBV/SRV issue
-			SEAssert("TODO: Handle arrays of CBVs", params->m_numElements == 1);
+			SEAssert(params->m_numElements == 1, "TODO: Handle arrays of CBVs");
 
 			// Allocate a cpu-visible descriptor to hold our view:
 			params->m_cpuDescAllocation = std::move(re::Context::GetAs<dx12::Context*>()->GetCPUDescriptorHeapMgr(
@@ -143,11 +143,11 @@ namespace dx12
 		break;
 		case re::ParameterBlock::PBDataType::Array:
 		{
-			SEAssert("Size must be equally divisible by the number of elements",
-				paramBlock.GetSize() % params->m_numElements == 0);
-			SEAssert("Maximum offset of 1024 allowed into an SRV", params->m_numElements <= 1024);
-			SEAssert("CBV buffer offsets must be multiples of D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT",
-				params->m_heapByteOffset % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0);
+			SEAssert(paramBlock.GetSize() % params->m_numElements == 0,
+				"Size must be equally divisible by the number of elements");
+			SEAssert(params->m_numElements <= 1024, "Maximum offset of 1024 allowed into an SRV");
+			SEAssert(params->m_heapByteOffset % D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT == 0,
+				"CBV buffer offsets must be multiples of D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT");
 
 			constexpr uint32_t k_numDescriptors = 1; // Only need a single descriptor to represent an array of elements
 			params->m_cpuDescAllocation = std::move(re::Context::GetAs<dx12::Context*>()->GetCPUDescriptorHeapMgr(
@@ -183,7 +183,7 @@ namespace dx12
 		void const* srcData = nullptr;
 		uint32_t srcSize = 0;
 		paramBlock.GetDataAndSize(srcData, srcSize);
-		SEAssert("GetDataAndSize returned invalid results", srcData != nullptr && srcSize <= alignedSize);
+		SEAssert(srcData != nullptr && srcSize <= alignedSize, "GetDataAndSize returned invalid results");
 #endif
 	}
 
@@ -237,7 +237,7 @@ namespace dx12
 	{
 		dx12::ParameterBlock::PlatformParams* params =
 			paramBlock.GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
-		SEAssert("Attempting to destroy a ParameterBlock that has not been created", params->m_isCreated);
+		SEAssert(params->m_isCreated, "Attempting to destroy a ParameterBlock that has not been created");
 
 		params->m_dataType = re::ParameterBlock::PBDataType::PBDataType_Count;
 		params->m_numElements = 0;
