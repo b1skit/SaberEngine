@@ -1,8 +1,6 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
 #include "EngineComponent.h"
-#include "EventManager.h"
 #include "EventListener.h"
 #include "KeyConfiguration.h"
 
@@ -37,12 +35,20 @@ namespace en
 	private:
 		void LoadInputBindings();
 
+		void InitializeKeyboardStates();
+		void InitializeMouseStates();
+
+
 	private:
 		static bool m_keyboardInputButtonStates[en::KeyboardInputButton_Count]; // Stores the state of keyboard keys
 		static bool	m_mouseButtonStates[en::MouseInputButton_Count]; // Stores the state of mouse buttons
 		static float m_mouseAxisStates[en::MouseInputAxis_Count]; // Mouse axis deltas
 
 		std::unordered_map<SEKeycode, en::KeyboardInputButton> m_SEKeycodesToSEEventEnums;
+
+		bool m_keyboardInputCaptured;
+		bool m_mouseInputCaptured;
+
 
 	private:
 		InputManager(InputManager const&) = delete; // Disallow copying of our Singleton

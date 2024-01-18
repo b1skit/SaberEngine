@@ -27,6 +27,9 @@ namespace en
 			MouseButtonEvent,
 			MouseWheelEvent,
 			TextInputEvent,
+			
+			KeyboardInputCaptureChange,
+			MouseInputCaptureChange,
 
 			// Functionality triggers: Typically a system will be interested in these, not specific button states
 			InputForward,

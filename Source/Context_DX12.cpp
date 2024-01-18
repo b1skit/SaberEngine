@@ -125,6 +125,8 @@ namespace dx12
 
 		// Setup our ImGui context
 		{
+			std::lock_guard<std::mutex> lock(re::RenderManager::Get()->GetGlobalImGuiMutex());
+
 			IMGUI_CHECKVERSION();
 			ImGui::CreateContext();
 			ImGuiIO& io = ImGui::GetIO();

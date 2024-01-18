@@ -1,119 +1,9 @@
 // © 2022 Adam Badke. All rights reserved.
 #include "Assert.h"
-#include "InputManager.h"
 #include "Config.h"
 #include "EventManager.h"
+#include "InputManager.h"
 #include "InputManager_Platform.h"
-
-
-namespace
-{
-	void AddKeyEventToImGui(ImGuiIO& io, en::SEKeycode keycode, bool keystate)
-	{		
-		// Keyboard sections: left to right, row-by-row
-		switch (keycode)
-		{
-		case en::SEK_ESCAPE: io.AddKeyEvent(ImGuiKey_Escape, keystate); break;
-		case en::SEK_F1: io.AddKeyEvent(ImGuiKey_F1, keystate); break;
-		case en::SEK_F2: io.AddKeyEvent(ImGuiKey_F2, keystate); break;
-		case en::SEK_F3: io.AddKeyEvent(ImGuiKey_F3, keystate); break;
-		case en::SEK_F4: io.AddKeyEvent(ImGuiKey_F4, keystate); break;
-		case en::SEK_F5: io.AddKeyEvent(ImGuiKey_F5, keystate); break;
-		case en::SEK_F6: io.AddKeyEvent(ImGuiKey_F6, keystate); break;
-		case en::SEK_F7: io.AddKeyEvent(ImGuiKey_F7, keystate); break;
-		case en::SEK_F8: io.AddKeyEvent(ImGuiKey_F8, keystate); break;
-		case en::SEK_F9: io.AddKeyEvent(ImGuiKey_F9, keystate); break;
-		case en::SEK_F10: io.AddKeyEvent(ImGuiKey_F10, keystate); break;
-		case en::SEK_F11: io.AddKeyEvent(ImGuiKey_F11, keystate); break;
-		case en::SEK_F12: io.AddKeyEvent(ImGuiKey_F12, keystate); break;
-
-		case en::SEK_GRAVE: io.AddKeyEvent(ImGuiKey_GraveAccent, keystate); break;
-		case en::SEK_0: io.AddKeyEvent(ImGuiKey_0, keystate); break;
-		case en::SEK_1: io.AddKeyEvent(ImGuiKey_1, keystate); break;
-		case en::SEK_2: io.AddKeyEvent(ImGuiKey_2, keystate); break;
-		case en::SEK_3: io.AddKeyEvent(ImGuiKey_3, keystate); break;
-		case en::SEK_4: io.AddKeyEvent(ImGuiKey_4, keystate); break;
-		case en::SEK_5: io.AddKeyEvent(ImGuiKey_5, keystate); break;
-		case en::SEK_6: io.AddKeyEvent(ImGuiKey_6, keystate); break;
-		case en::SEK_7: io.AddKeyEvent(ImGuiKey_7, keystate); break;
-		case en::SEK_8: io.AddKeyEvent(ImGuiKey_8, keystate); break;
-		case en::SEK_9: io.AddKeyEvent(ImGuiKey_9, keystate); break;
-		case en::SEK_MINUS: io.AddKeyEvent(ImGuiKey_Minus, keystate); break;
-		case en::SEK_EQUALS: io.AddKeyEvent(ImGuiKey_Equal, keystate); break;
-		case en::SEK_BACKSPACE: io.AddKeyEvent(ImGuiKey_Backspace, keystate); break;
-
-		case en::SEK_TAB: io.AddKeyEvent(ImGuiKey_Tab, keystate); break;
-		case en::SEK_Q: io.AddKeyEvent(ImGuiKey_Q, keystate); break;
-		case en::SEK_W: io.AddKeyEvent(ImGuiKey_W, keystate); break;
-		case en::SEK_E: io.AddKeyEvent(ImGuiKey_E, keystate); break;
-		case en::SEK_R: io.AddKeyEvent(ImGuiKey_R, keystate); break;
-		case en::SEK_T: io.AddKeyEvent(ImGuiKey_T, keystate); break;
-		case en::SEK_Y: io.AddKeyEvent(ImGuiKey_Y, keystate); break;
-		case en::SEK_U: io.AddKeyEvent(ImGuiKey_U, keystate); break;
-		case en::SEK_I: io.AddKeyEvent(ImGuiKey_I, keystate); break;
-		case en::SEK_O: io.AddKeyEvent(ImGuiKey_O, keystate); break;
-		case en::SEK_P: io.AddKeyEvent(ImGuiKey_P, keystate); break;
-		case en::SEK_LEFTBRACKET: io.AddKeyEvent(ImGuiKey_LeftBracket, keystate); break;
-		case en::SEK_RIGHTBRACKET: io.AddKeyEvent(ImGuiKey_RightBracket, keystate); break;
-		case en::SEK_BACKSLASH: io.AddKeyEvent(ImGuiKey_Backslash, keystate); break;
-
-		case en::SEK_CAPSLOCK: io.AddKeyEvent(ImGuiKey_CapsLock, keystate); break;
-		case en::SEK_A: io.AddKeyEvent(ImGuiKey_A, keystate); break;
-		case en::SEK_S: io.AddKeyEvent(ImGuiKey_S, keystate); break;
-		case en::SEK_D: io.AddKeyEvent(ImGuiKey_D, keystate); break;
-		case en::SEK_F: io.AddKeyEvent(ImGuiKey_F, keystate); break;
-		case en::SEK_G: io.AddKeyEvent(ImGuiKey_G, keystate); break;
-		case en::SEK_H: io.AddKeyEvent(ImGuiKey_H, keystate); break;
-		case en::SEK_J: io.AddKeyEvent(ImGuiKey_J, keystate); break;
-		case en::SEK_K: io.AddKeyEvent(ImGuiKey_K, keystate); break;
-		case en::SEK_L: io.AddKeyEvent(ImGuiKey_L, keystate); break;
-		case en::SEK_SEMICOLON: io.AddKeyEvent(ImGuiKey_Semicolon, keystate); break;
-		case en::SEK_APOSTROPHE: io.AddKeyEvent(ImGuiKey_Apostrophe, keystate); break;
-		case en::SEK_RETURN: io.AddKeyEvent(ImGuiKey_Enter, keystate); break;
-
-		case en::SEK_LSHIFT: io.AddKeyEvent(ImGuiKey_LeftShift, keystate); break;
-		case en::SEK_Z: io.AddKeyEvent(ImGuiKey_Z, keystate); break;
-		case en::SEK_X: io.AddKeyEvent(ImGuiKey_X, keystate); break;
-		case en::SEK_C: io.AddKeyEvent(ImGuiKey_C, keystate); break;
-		case en::SEK_V: io.AddKeyEvent(ImGuiKey_V, keystate); break;
-		case en::SEK_B: io.AddKeyEvent(ImGuiKey_B, keystate); break;
-		case en::SEK_N: io.AddKeyEvent(ImGuiKey_N, keystate); break;
-		case en::SEK_M: io.AddKeyEvent(ImGuiKey_M, keystate); break;
-		case en::SEK_COMMA: io.AddKeyEvent(ImGuiKey_Comma, keystate); break;
-		case en::SEK_PERIOD: io.AddKeyEvent(ImGuiKey_Period, keystate); break;
-		case en::SEK_SLASH: io.AddKeyEvent(ImGuiKey_Slash, keystate); break;
-		case en::SEK_RSHIFT: io.AddKeyEvent(ImGuiKey_RightShift, keystate); break;
-
-		case en::SEK_LCTRL: io.AddKeyEvent(ImGuiKey_LeftCtrl, keystate); break;
-		case en::SEK_APPLICATION: io.AddKeyEvent(ImGuiKey_Menu, keystate); break; // ?
-		case en::SEK_LALT: io.AddKeyEvent(ImGuiKey_LeftAlt, keystate); break;
-		case en::SEK_SPACE: io.AddKeyEvent(ImGuiKey_Space, keystate); break;
-		case en::SEK_RALT: io.AddKeyEvent(ImGuiKey_RightAlt, keystate); break;
-		case en::SEK_RCTRL: io.AddKeyEvent(ImGuiKey_RightCtrl, keystate); break;
-
-		case en::SEK_PRINTSCREEN: io.AddKeyEvent(ImGuiKey_PrintScreen, keystate); break;
-		case en::SEK_SCROLLLOCK: io.AddKeyEvent(ImGuiKey_ScrollLock, keystate); break;
-		case en::SEK_PAUSE: io.AddKeyEvent(ImGuiKey_Pause, keystate); break;
-
-		case en::SEK_INSERT: io.AddKeyEvent(ImGuiKey_Insert, keystate); break;
-		case en::SEK_HOME: io.AddKeyEvent(ImGuiKey_Home, keystate); break;
-		case en::SEK_PAGEUP: io.AddKeyEvent(ImGuiKey_PageUp, keystate); break;
-
-		case en::SEK_DELETE: io.AddKeyEvent(ImGuiKey_Delete, keystate); break;
-		case en::SEK_END: io.AddKeyEvent(ImGuiKey_End, keystate); break;
-		case en::SEK_PAGEDOWN: io.AddKeyEvent(ImGuiKey_PageDown, keystate); break;
-		
-		case en::SEK_UP: io.AddKeyEvent(ImGuiKey_UpArrow, keystate); break;
-		case en::SEK_DOWN: io.AddKeyEvent(ImGuiKey_DownArrow, keystate); break;
-		case en::SEK_LEFT: io.AddKeyEvent(ImGuiKey_LeftArrow, keystate); break;
-		case en::SEK_RIGHT: io.AddKeyEvent(ImGuiKey_RightArrow, keystate);	break;
-
-		case en::SEK_NUMLOCK: io.AddKeyEvent(ImGuiKey_NumLock, keystate);	break;
- 
-		default: break; // Do nothing
-		}
-	}
-}
 
 
 namespace en
@@ -123,6 +13,7 @@ namespace en
 	bool InputManager::m_mouseButtonStates[en::MouseInputButton_Count];
 	float InputManager::m_mouseAxisStates[en::MouseInputAxis_Count];
 
+
 	InputManager* InputManager::Get()
 	{
 		static std::unique_ptr<en::InputManager> instance = std::make_unique<en::InputManager>();
@@ -131,18 +22,11 @@ namespace en
 
 
 	InputManager::InputManager()
+		: m_keyboardInputCaptured(false)
+		, m_mouseInputCaptured(false)
 	{
-		// Initialize keyboard keys:
-		for (size_t i = 0; i < en::KeyboardInputButton_Count; i++)
-		{
-			m_keyboardInputButtonStates[i]	= false;
-		}
-
-		// Initialize mouse axes:
-		for (int i = 0; i < en::MouseInputAxis_Count; i++)
-		{
-			m_mouseAxisStates[i] = 0.0f;
-		}
+		InitializeKeyboardStates();
+		InitializeMouseStates();
 	}
 
 
@@ -172,11 +56,12 @@ namespace en
 
 		// Event subscriptions:
 		EventManager::Get()->Subscribe(EventManager::KeyEvent, this);
-		EventManager::Get()->Subscribe(EventManager::TextInputEvent, this);
 		EventManager::Get()->Subscribe(EventManager::MouseMotionEvent, this);
 		EventManager::Get()->Subscribe(EventManager::MouseButtonEvent, this);
 		EventManager::Get()->Subscribe(EventManager::MouseWheelEvent, this);
 		EventManager::Get()->Subscribe(EventManager::WindowFocusChanged, this);
+		EventManager::Get()->Subscribe(EventManager::KeyboardInputCaptureChange, this);
+		EventManager::Get()->Subscribe(EventManager::MouseInputCaptureChange, this);
 
 		platform::InputManager::Startup(*this);
 	}
@@ -205,10 +90,6 @@ namespace en
 
 	void InputManager::HandleEvents()
 	{
-		ImGuiIO& io = ImGui::GetIO();
-		const bool imguiWantsToCaptureMouse = io.WantCaptureMouse;
-		const bool imguiWantsToCaptureKeyboard = io.WantCaptureKeyboard;
-
 		while (HasEvents())
 		{
 			en::EventManager::EventInfo const& eventInfo = GetEvent();
@@ -217,26 +98,38 @@ namespace en
 			// NOTE: We may receive more than 1 of each type of event between calls to Update() from input with high
 			// polling rates (e.g. mouse motion)
 
-			EventManager::EventInfo transformedEvent;
+			en::EventManager::EventInfo transformedEvent;
 
 			bool doBroadcastToSE = true;
 
 			switch (eventInfo.m_type)
 			{
-			case EventManager::TextInputEvent:
+			case en::EventManager::KeyboardInputCaptureChange:
 			{
-				io.AddInputCharacter(eventInfo.m_data0.m_dataC);
+				m_keyboardInputCaptured = eventInfo.m_data0.m_dataB;
+				if (m_keyboardInputCaptured)
+				{
+					InitializeKeyboardStates();
+				}
 				doBroadcastToSE = false;
 			}
 			break;
-			case EventManager::KeyEvent:
+			case en::EventManager::MouseInputCaptureChange:
+			{
+				m_mouseInputCaptured = eventInfo.m_data0.m_dataB;
+				if (m_mouseInputCaptured)
+				{
+					InitializeMouseStates();
+				}
+				doBroadcastToSE = false;
+			}
+			break;
+			case en::EventManager::KeyEvent:
 			{
 				const SEKeycode keycode = platform::InputManager::ConvertToSEKeycode(eventInfo.m_data0.m_dataUI);
 				const bool keystate = eventInfo.m_data1.m_dataB;
 
-				AddKeyEventToImGui(io, keycode, keystate);
-
-				doBroadcastToSE = !io.WantCaptureKeyboard && !io.WantTextInput;
+				doBroadcastToSE = !m_keyboardInputCaptured;
 				if (doBroadcastToSE)
 				{
 					auto const& result = m_SEKeycodesToSEEventEnums.find(keycode);
@@ -316,7 +209,7 @@ namespace en
 				}
 			} // end KeyEvent
 			break;
-			case EventManager::MouseMotionEvent:
+			case en::EventManager::MouseMotionEvent:
 			{
 				// Unpack the mouse data:
 				m_mouseAxisStates[en::Input_MouseX] += static_cast<float>(eventInfo.m_data0.m_dataI);
@@ -324,15 +217,14 @@ namespace en
 				doBroadcastToSE = false;
 			}
 			break;
-			case EventManager::MouseButtonEvent:
+			case en::EventManager::MouseButtonEvent:
 			{
 				const bool buttonState = eventInfo.m_data1.m_dataB;
 				switch (eventInfo.m_data0.m_dataUI)
 				{
 				case 0: // Left
 				{
-					io.AddMouseButtonEvent(ImGuiMouseButton_Left, buttonState);
-					if (imguiWantsToCaptureMouse)
+					if (m_mouseInputCaptured)
 					{
 						doBroadcastToSE = false;
 					}
@@ -346,8 +238,7 @@ namespace en
 				break;
 				case 1: // Middle
 				{
-					io.AddMouseButtonEvent(ImGuiMouseButton_Middle, buttonState);
-					if (imguiWantsToCaptureMouse)
+					if (m_mouseInputCaptured)
 					{
 						doBroadcastToSE = false;
 					}
@@ -361,8 +252,7 @@ namespace en
 				break;
 				case 2: // Right
 				{
-					io.AddMouseButtonEvent(ImGuiMouseButton_Right, buttonState);
-					if (imguiWantsToCaptureMouse)
+					if (m_mouseInputCaptured)
 					{
 						doBroadcastToSE = false;
 					}
@@ -379,21 +269,16 @@ namespace en
 				}
 			}
 			break;
-			case EventManager::MouseWheelEvent:
+			case en::EventManager::MouseWheelEvent:
 			{
-				// Broadcast to ImGui:
-				io.AddMouseWheelEvent(
-					static_cast<float>(eventInfo.m_data0.m_dataI), static_cast<float>(eventInfo.m_data1.m_dataI));
-				doBroadcastToSE = false;
+				// TODO: Translate and broadcast wheel events...
+				doBroadcastToSE = !m_mouseInputCaptured;
 			}
 			break;
-			case EventManager::WindowFocusChanged:
+			case en::EventManager::WindowFocusChanged:
 			{
 				// If we've lost focus, zero out any currently-pressed keys to prevent them getting stuck				
-				for (size_t i = 0; i < en::KeyboardInputButton_Count; i++)
-				{
-					m_keyboardInputButtonStates[i] = false;
-				}
+				InitializeKeyboardStates();
 				doBroadcastToSE = false;
 			}
 			break;
@@ -404,7 +289,7 @@ namespace en
 
 			if (doBroadcastToSE)
 			{
-				EventManager::Get()->Notify(std::move(transformedEvent));
+				en::EventManager::Get()->Notify(std::move(transformedEvent));
 			}
 		}		
 	}
@@ -425,7 +310,7 @@ namespace en
 			if (keycode != SEK_UNKNOWN)
 			{
 				// Build a map: SEKeycode -> SaberEngine keyboard input function
-				m_SEKeycodesToSEEventEnums.insert({keycode, static_cast<en::KeyboardInputButton>(i) });
+				m_SEKeycodesToSEEventEnums.emplace(keycode, static_cast<en::KeyboardInputButton>(i));
 			}
 			else
 			{
@@ -437,6 +322,24 @@ namespace en
 
 				// TODO: Key names shouldn't be case sensitive
 			}
+		}
+	}
+
+
+	void InputManager::InitializeKeyboardStates()
+	{
+		for (size_t i = 0; i < en::KeyboardInputButton_Count; i++)
+		{
+			m_keyboardInputButtonStates[i] = false;
+		}
+	}
+
+
+	void InputManager::InitializeMouseStates()
+	{
+		for (int i = 0; i < en::MouseInputAxis_Count; i++)
+		{
+			m_mouseAxisStates[i] = 0.0f;
 		}
 	}
 }

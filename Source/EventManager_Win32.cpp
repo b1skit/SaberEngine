@@ -1,8 +1,8 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Assert.h"
+#include "CoreEngine.h"
 #include "EventManager_Win32.h"
 #include "EventManager.h"
-#include "CoreEngine.h"
-#include "Assert.h"
 
 
 namespace win32
@@ -116,21 +116,21 @@ namespace win32
 				case WM_LBUTTONUP:
 				{
 					eventInfo.m_data0.m_dataUI = 0;
-					eventInfo.m_data1.m_dataB = msg.message == WM_LBUTTONDOWN ? true : false;
+					eventInfo.m_data1.m_dataB = (msg.message == WM_LBUTTONDOWN);
 				}
 				break;
 				case WM_MBUTTONDOWN:
 				case WM_MBUTTONUP:
 				{
 					eventInfo.m_data0.m_dataUI = 1;
-					eventInfo.m_data1.m_dataB = msg.message == WM_MBUTTONDOWN ? true : false;
+					eventInfo.m_data1.m_dataB = (msg.message == WM_MBUTTONDOWN);
 				}
 				break;
 				case WM_RBUTTONDOWN:
 				case WM_RBUTTONUP:
 				{
 					eventInfo.m_data0.m_dataUI = 2;
-					eventInfo.m_data1.m_dataB = msg.message == WM_RBUTTONDOWN ? true : false;
+					eventInfo.m_data1.m_dataB = (msg.message == WM_RBUTTONDOWN);
 				}
 				break;
 				default:
@@ -187,7 +187,6 @@ namespace win32
 
 			if (doBroadcastSEEvent) // Post a Saber Engine Event
 			{
-				SEAssert(eventInfo.m_type != en::EventManager::Uninitialized, "Event type is not initialized");
 				eventManager.Notify(std::move(eventInfo));
 			}
 

@@ -26,15 +26,14 @@ namespace fr
 
 
 	private:
-		void SendEvent(en::EventManager::EventType) const;
-
-
-	private:
-		void UpdateImGuiMenus();
+		void SubmitImGuiRenderCommands();
 
 
 	private:
 		bool m_imguiMenuVisible;
 		bool m_prevImguiMenuVisible;
+
+		bool m_imguiWantsToCaptureKeyboard;
+		bool m_imguiWantsToCaptureMouse;
 	};
 }

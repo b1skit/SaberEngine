@@ -1,26 +1,23 @@
 // © 2022 Adam Badke. All rights reserved.
+#include "Assert.h"
+#include "Config.h"
+#include "Context_OpenGL.h"
+#include "Context.h"
+#include "CoreEngine.h"
+#include "HashUtils.h"
+#include "MeshPrimitive.h"
+#include "RenderManager.h"
+#include "SysInfo_OpenGL.h"
+#include "VertexStream.h"
+#include "VertexStream_OpenGL.h"
+#include "Window_Win32.h"
+
 #include <GL/glew.h>
 #include <GL/wglew.h> // Windows-specific GL functions and macros
 #include <GL/GL.h> // Must follow glew.h
 
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_opengl3.h"
-
-#include "Config.h"
-#include "Context_OpenGL.h"
-#include "Context.h"
-#include "CoreEngine.h"
-#include "Assert.h"
-#include "HashUtils.h"
-#include "MeshPrimitive.h"
-#include "SysInfo_OpenGL.h"
-#include "VertexStream.h"
-#include "VertexStream_OpenGL.h"
-#include "Window_Win32.h"
-
-using en::Config;
-using std::string;
-using std::to_string;
 
 
 namespace opengl
@@ -112,7 +109,7 @@ namespace opengl
 		const GLchar* message,
 		const void* userParam)
 	{
-		string srcMsg = "Unknown ENUM: " + std::format("{:x}", source);
+		std::string srcMsg = "Unknown ENUM: " + std::format("{:x}", source);
 		switch (source)
 		{
 		case GL_DEBUG_SOURCE_API:			srcMsg = "GL_DEBUG_SOURCE_API"; break;
@@ -121,7 +118,7 @@ namespace opengl
 		default: break;			
 		}
 		
-		string typeMsg = "UNKNOWN";
+		std::string typeMsg = "UNKNOWN";
 		switch (type)
 		{
 		case GL_DEBUG_TYPE_ERROR:				typeMsg = "GL_DEBUG_TYPE_ERROR"; break;
@@ -133,7 +130,7 @@ namespace opengl
 		default: break;
 		}
 
-		string severityMsg = "UNKNOWN";
+		std::string severityMsg = "UNKNOWN";
 		switch (severity)
 		{
 		case GL_DEBUG_SEVERITY_NOTIFICATION:	severityMsg = "NOTIFICATION"; break;
@@ -240,7 +237,7 @@ namespace opengl
 
 		LOG("Using OpenGL version %d.%d", glMajorVersionCheck, glMinorVersionCheck);
 
-		GetSwapChain().SetVSyncMode(Config::Get()->GetValue<bool>("vsync"));
+		GetSwapChain().SetVSyncMode(en::Config::Get()->GetValue<bool>("vsync"));
 
 		// Create the (implied) swap chain
 		GetSwapChain().Create();
@@ -311,6 +308,8 @@ namespace opengl
 
 		// Setup our ImGui context
 		{
+			std::lock_guard<std::mutex> lock(re::RenderManager::Get()->GetGlobalImGuiMutex());
+
 			IMGUI_CHECKVERSION();
 			ImGui::CreateContext();
 			ImGuiIO& io = ImGui::GetIO();
@@ -322,7 +321,7 @@ namespace opengl
 			// Setup Platform/Renderer backends
 			::ImGui_ImplWin32_Init(windowPlatParams->m_hWindow);
 
-			const string imguiGLSLVersionString = "#version 130";
+			const std::string imguiGLSLVersionString = "#version 130";
 			::ImGui_ImplOpenGL3_Init(imguiGLSLVersionString.c_str());
 		}
 	}

@@ -61,6 +61,10 @@ namespace re
 
 
 	public:
+		std::mutex& GetGlobalImGuiMutex(); // Synchronize ImGui io accesses across threads
+
+
+	public:
 		void ShowRenderManagerImGuiWindow(bool* showRenderMgrDebug);
 		void ShowRenderDataImGuiWindow(bool* showRenderDataDebug) const;
 
@@ -70,9 +74,9 @@ namespace re
 
 		static constexpr size_t k_imGuiCommandBufferSize = 8 * 1024 * 1024;
 		en::CommandManager m_imGuiCommandManager;
-		
-	private:
-		void BuildSceneBatches();
+
+		std::mutex m_imGuiGlobalMutex;
+
 
 	public: // Render commands:
 		template<typename T, typename... Args>
@@ -139,6 +143,10 @@ namespace re
 		void EndOfFrame();
 
 
+		private:
+			void BuildSceneBatches();
+
+
 	private:
 		std::vector<std::unique_ptr<re::RenderSystem>> m_renderSystems;
 
@@ -176,6 +184,12 @@ namespace re
 	inline std::vector<std::unique_ptr<re::RenderSystem>> const& RenderManager::GetRenderSystems() const
 	{
 		return m_renderSystems;
+	}
+
+
+	inline std::mutex& RenderManager::GetGlobalImGuiMutex()
+	{
+		return m_imGuiGlobalMutex;
 	}
 
 

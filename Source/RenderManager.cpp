@@ -876,12 +876,16 @@ namespace re
 
 	void RenderManager::RenderImGui()
 	{
-		platform::RenderManager::StartImGuiFrame();
+		{
+			std::lock_guard<std::mutex> lock(re::RenderManager::Get()->GetGlobalImGuiMutex());
 
-		m_imGuiCommandManager.SwapBuffers();
-		m_imGuiCommandManager.Execute();
+			platform::RenderManager::StartImGuiFrame();
 
-		platform::RenderManager::RenderImGui();
+			m_imGuiCommandManager.SwapBuffers();
+			m_imGuiCommandManager.Execute();
+
+			platform::RenderManager::RenderImGui();
+		}
 	}
 }
 
