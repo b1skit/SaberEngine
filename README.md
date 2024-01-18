@@ -192,17 +192,18 @@ MikkTSpace Welder: https://github.com/mmikk/Welder
 - "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\Welder\"  
 
 
+stb (stb_image.h): https://github.com/nothings/stb/blob/master/
+--------------------------------------------------------------------
+- Current version: Jan 29, 2023  
+- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\stb\"  
+
+
+---------------
 NuGet Packages:
 ---------------
 The following packages are automatically included in the SaberEngine solution  
 - WinPixEventRuntime  
 - Microsoft DirectX 12 Agility SDK  
-
-
-stb (stb_image.h): https://github.com/nothings/stb/blob/master/
---------------------------------------------------------------------
-- Current version: Jan 29, 2023  
-- "Project properties -> C/C++ -> Additional Include Directories" -> "$(ProjectDir)Dependencies\stb\"  
 
 
 --------------------------------------------------
