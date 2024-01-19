@@ -1,12 +1,12 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
-#include <d3d12.h>
-#include <dxgi1_6.h>
-
 #include "Context_DX12.h"
 #include "MeshPrimitive.h"
 #include "RenderManager.h"
 #include "VertexStream_DX12.h"
+
+#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
+#include <d3d12.h>
+#include <dxgi1_6.h>
 
 using Microsoft::WRL::ComPtr;
 
@@ -309,14 +309,14 @@ namespace dx12
 		}
 		}
 
-		streamPlatformParams->m_bufferResource = nullptr;
-		streamPlatformParams->m_format = DXGI_FORMAT::DXGI_FORMAT_FORCE_UINT;
-
-		// Unregister the resource from the global resource state tracker
+		// Unregister the resource from the global resource state tracker before we release the ComPtr
 		if (streamPlatformParams->m_bufferResource)
 		{
 			re::Context::GetAs<dx12::Context*>()->GetGlobalResourceStates().UnregisterResource(
 				streamPlatformParams->m_bufferResource.Get());
 		}
+
+		streamPlatformParams->m_bufferResource = nullptr;
+		streamPlatformParams->m_format = DXGI_FORMAT::DXGI_FORMAT_FORCE_UINT;
 	}
 }
