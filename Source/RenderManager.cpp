@@ -167,8 +167,6 @@ namespace re
 			renderSystem->ExecuteCreatePipeline();
 		}
 
-		re::Context::Get()->GetParameterBlockAllocator().ClosePermanentPBRegistrationPeriod();
-
 		// Create/buffer new resources added by our RenderSystems/GraphicsSystems. During Initialize(), most data has
 		// just been loaded so there is typically something of all types to create here
 		CreateAPIResources();

@@ -10,8 +10,11 @@ namespace re
 	class ParameterBlockAllocator
 	{
 	public:
-		static constexpr uint32_t k_fixedAllocationByteSize = 64 * 1024 * 1024; // Arbitrary. Fixed API buffer allocation size
-		static constexpr uint32_t k_systemMemoryReservationSize = 64 * 1024 * 1024; // Reservation size for CPU-side commit buffers
+		static constexpr uint32_t k_fixedAllocationByteSize = 64 * 1024 * 1024; // Arbitrary. Fixed GPU buffer allocation size
+		
+		static constexpr uint32_t k_singleFrameReservationBytes = 64 * 1024 * 1024; // Reservation size for single-frame CPU-side commit buffers
+		static constexpr uint32_t k_permanentReservationCount = 64; // No. of PBs permanent we expect to see
+
 
 	public:
 		struct PlatformParams : public re::IPlatformParams
@@ -54,8 +57,6 @@ namespace re
 
 		void BufferParamBlocks();
 
-		void ClosePermanentPBRegistrationPeriod(); // Called once after all permanent PBs are created
-
 		void BeginFrame(uint64_t renderFrameNum);
 		void EndFrame(); // Clears single-frame PBs
 
@@ -73,17 +74,26 @@ namespace re
 		struct CommitMetadata
 		{
 			ParameterBlock::PBType m_type;
-			uint32_t m_startIndex;	// Index of 1st byte
+			uint32_t m_startIndex;	// Singleframe: Index of 1st byte. Permanent: Commit array index
 			uint32_t m_numBytes;	// Total number of allocated bytes
 		};
 
-		struct Allocation
+		struct PermanentAllocation
+		{
+			std::vector<std::vector<uint8_t>> m_committed;
+			std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>> m_handleToPtr;
+			mutable std::recursive_mutex m_mutex;
+		};
+		PermanentAllocation m_mutableAllocations;
+		PermanentAllocation m_immutableAllocations;
+
+		struct SingleFrameAllocation
 		{
 			std::vector<uint8_t> m_committed;
 			std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>> m_handleToPtr;
 			mutable std::recursive_mutex m_mutex;
 		};
-		std::array<Allocation, re::ParameterBlock::PBType::PBType_Count> m_allocations;
+		SingleFrameAllocation m_singleFrameAllocations;
 
 		std::unordered_map<Handle, CommitMetadata> m_handleToTypeAndByteIndex;
 		mutable std::recursive_mutex m_handleToTypeAndByteIndexMutex;
@@ -107,8 +117,6 @@ namespace re
 		uint64_t m_currentFrameNum; // Render thread read frame # is always 1 behind the front end thread frame
 		
 	private:
-		bool m_allocationPeriodEnded; // Debugging helper: Used to assert we're not creating PBs after startup
-		bool m_permanentPBsHaveBeenBuffered;
 		bool m_isValid;
 
 		// Debug: Track the high-water mark for the max single-frame PB allocations
