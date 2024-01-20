@@ -116,7 +116,8 @@ namespace platform
 			platform::Shader::Destroy	= &opengl::Shader::Destroy;
 
 			// SysInfo:
-			platform::SysInfo::GetMaxRenderTargets = &opengl::SysInfo::GetMaxRenderTargets;
+			platform::SysInfo::GetMaxRenderTargets		= &opengl::SysInfo::GetMaxRenderTargets;
+			platform::SysInfo::GetMaxTextureBindPoints	= &opengl::SysInfo::GetMaxTextureBindPoints;
 
 			// Swap chain:
 			platform::SwapChain::Create			= &opengl::SwapChain::Create;
@@ -164,7 +165,8 @@ namespace platform
 			platform::Shader::Destroy	= &dx12::Shader::Destroy;
 
 			// SysInfo:
-			platform::SysInfo::GetMaxRenderTargets = &dx12::SysInfo::GetMaxRenderTargets;
+			platform::SysInfo::GetMaxRenderTargets		= &dx12::SysInfo::GetMaxRenderTargets;
+			platform::SysInfo::GetMaxTextureBindPoints	= &dx12::SysInfo::GetMaxTextureBindPoints;
 
 			// Swap chain:
 			platform::SwapChain::Create			= &dx12::SwapChain::Create;

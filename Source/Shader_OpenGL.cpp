@@ -1,7 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <assert.h>
-#include <GL/glew.h> 
-
 #include "Config.h"
 #include "CoreEngine.h"
 #include "Assert.h"
@@ -16,14 +13,7 @@
 #include "Texture.h"
 #include "Texture_OpenGL.h"
 
-using en::Config;
-using re::Texture;
-using re::Sampler;
-using util::PerformanceTimer;
-using std::vector;
-using std::shared_ptr;
-using std::string;
-using std::to_string;
+#include <GL/glew.h> 
 
 
 namespace
@@ -109,10 +99,11 @@ namespace
 	}
 
 
-	string LoadShaderText(string const& filename)
+	std::string LoadShaderText(std::string const& filename)
 	{
 		// Assemble the full shader file path:
-		string const& filepath = Config::Get()->GetValue<string>(en::ConfigKeys::k_shaderDirectoryKey) + filename;
+		std::string const& filepath = 
+			en::Config::Get()->GetValue<std::string>(en::ConfigKeys::k_shaderDirectoryKey) + filename;
 
 		return util::LoadTextAsString(filepath);
 	}
@@ -166,7 +157,7 @@ namespace
 		do
 		{
 			includeStartIdx = shaderText.find(k_includeKeyword, blockStartIdx);
-			if (includeStartIdx != string::npos)
+			if (includeStartIdx != std::string::npos)
 			{
 				// Check we're not on a commented line:
 				size_t checkIndex = includeStartIdx;
@@ -191,20 +182,20 @@ namespace
 				}
 
 				size_t includeEndIndex = shaderText.find("\n", includeStartIdx + 1);
-				if (includeEndIndex != string::npos)
+				if (includeEndIndex != std::string::npos)
 				{
 					size_t firstQuoteIndex, lastQuoteIndex;
 
 					firstQuoteIndex = shaderText.find("\"", includeStartIdx + 1);
-					if (firstQuoteIndex != string::npos && firstQuoteIndex > 0 && firstQuoteIndex < includeEndIndex)
+					if (firstQuoteIndex != std::string::npos && firstQuoteIndex > 0 && firstQuoteIndex < includeEndIndex)
 					{
 						lastQuoteIndex = shaderText.find("\"", firstQuoteIndex + 1);
-						if (lastQuoteIndex != string::npos && lastQuoteIndex > firstQuoteIndex && lastQuoteIndex < includeEndIndex)
+						if (lastQuoteIndex != std::string::npos && lastQuoteIndex > firstQuoteIndex && lastQuoteIndex < includeEndIndex)
 						{
 							firstQuoteIndex++; // Move ahead 1 element from the first quotation mark
 
 							const size_t includeFileNameStrLength = lastQuoteIndex - firstQuoteIndex;
-							string const& includeFileName = shaderText.substr(firstQuoteIndex, includeFileNameStrLength);
+							std::string const& includeFileName = shaderText.substr(firstQuoteIndex, includeFileNameStrLength);
 
 							std:: string const& includeFile = LoadShaderText(includeFileName);
 							if (includeFile != "")
@@ -233,12 +224,12 @@ namespace
 					blockStartIdx = includeEndIndex + 1; // Next char that ISN'T part of the include directive substring
 				}
 			}
-		} while (includeStartIdx != string::npos && includeStartIdx < shaderText.length());
+		} while (includeStartIdx != std::string::npos && includeStartIdx < shaderText.length());
 
 		// Insert the last block
 		if (blockStartIdx < shaderText.size())
 		{
-			shaderTextStrings.emplace_back(shaderText.substr(blockStartIdx, string::npos));
+			shaderTextStrings.emplace_back(shaderText.substr(blockStartIdx, std::string::npos));
 		}
 		return true;
 	}
@@ -249,7 +240,7 @@ namespace opengl
 {
 	void Shader::Create(re::Shader& shader)
 	{
-		PerformanceTimer timer;
+		util::PerformanceTimer timer;
 		timer.Start();
 
 		opengl::Shader::PlatformParams* params = shader.GetPlatformParams()->As<opengl::Shader::PlatformParams*>();
@@ -264,16 +255,16 @@ namespace opengl
 		std::vector<std::future<void>> const& loadShaderTextsTaskFutures = LoadShaderTexts(shader);
 
 		// Load the shaders, and assemble params we'll need soon:
-		vector<string> shaderFiles;
+		std::vector<std::string> shaderFiles;
 		shaderFiles.resize(opengl::Shader::ShaderType_Count);
-		vector<string> shaderFileNames;	// For RenderDoc markers
+		std::vector<std::string> shaderFileNames;	// For RenderDoc markers
 		shaderFileNames.resize(opengl::Shader::ShaderType_Count);
 
 		// Each shader type (.vert/.frag etc) is loaded as a vector of substrings
 		std::array<std::vector<std::string>, opengl::Shader::ShaderType_Count> shaderTextStrings;
 
 		// Figure out what type of shader(s) we're loading:
-		vector<uint32_t> foundShaderTypeFlags;
+		std::vector<uint32_t> foundShaderTypeFlags;
 		foundShaderTypeFlags.resize(opengl::Shader::ShaderType_Count, 0);
 
 		// Pre-process the shader text:
@@ -488,7 +479,7 @@ namespace opengl
 
 	void Shader::SetUniform(
 		re::Shader const& shader,
-		string const& uniformName,
+		std::string const& uniformName,
 		void const* value, 
 		opengl::Shader::UniformType const type, 
 		int const count)
@@ -690,12 +681,12 @@ namespace opengl
 		re::Shader const& shader,
 		std::string const& uniformName, 
 		re::Texture const* texture,
-		std::shared_ptr<re::Sampler>sampler,
+		re::Sampler const* sampler,
 		uint32_t subresource)
 	{
 		// Note: We don't currently use the subresource index here; OpenGL doesn't allow us to be so specific
 
 		opengl::Shader::SetUniform(shader, uniformName, texture, opengl::Shader::UniformType::Texture, 1);
-		opengl::Shader::SetUniform(shader, uniformName, sampler.get(), opengl::Shader::UniformType::Sampler, 1);
+		opengl::Shader::SetUniform(shader, uniformName, sampler, opengl::Shader::UniformType::Sampler, 1);
 	}
 }

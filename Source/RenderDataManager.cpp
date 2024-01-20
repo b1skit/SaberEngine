@@ -357,7 +357,7 @@ namespace gr
 			PopulateTypesImGuiHelper<gr::Light::RenderDataAmbientIBL>(names, "Light::RenderDataAmbientIBL");
 			PopulateTypesImGuiHelper<gr::Light::RenderDataDirectional>(names, "Light::RenderDataDirectional");
 			PopulateTypesImGuiHelper<gr::Light::RenderDataPoint>(names, "Light::RenderDataPoint");
-			PopulateTypesImGuiHelper<gr::Material::RenderData>(names, "Material::RenderData");
+			PopulateTypesImGuiHelper<gr::Material::MaterialInstanceData>(names, "Material::MaterialInstanceData");
 			PopulateTypesImGuiHelper<gr::MeshPrimitive::RenderData>(names, "MeshPrimitive::RenderData");
 			PopulateTypesImGuiHelper<gr::ShadowMap::RenderData>(names, "ShadowMap::RenderData");
 		}

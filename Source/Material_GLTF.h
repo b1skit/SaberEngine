@@ -31,23 +31,14 @@ namespace gr
 			//float g_isDoubleSided;
 
 			static constexpr char const* const s_shaderName = "PBRMetallicRoughnessParams";
-		};
-
-		struct RenderData
-		{
-			PBRMetallicRoughnessParams m_pbrMetallicRoughnessParams;
-		};
-
-
-	public:
-		static RenderData CreateRenderData(gr::Material_GLTF&);
-		
+		};	
 				
 
 	public:
-		static std::shared_ptr<re::ParameterBlock> CreateParameterBlock(gr::Material_GLTF const*);
+		static std::shared_ptr<re::ParameterBlock> CreateParameterBlock(
+			re::ParameterBlock::PBType, MaterialInstanceData const&);
 
-		void ShowImGuiWindow() override;
+		static bool ShowImGuiWindow(MaterialInstanceData&); // Returns true if data was modified
 
 
 	public:
@@ -87,6 +78,10 @@ namespace gr
 		float m_emissiveStrength;
 
 
+	private:
+		void PackMaterialInstanceData(void*, size_t maxSize) const;
+
+
 	protected: // Use the gr::Material::Create factory
 		friend std::shared_ptr<gr::Material> gr::Material::Create(std::string const&, MaterialType);
 		Material_GLTF(std::string const& name);
@@ -100,56 +95,48 @@ namespace gr
 	inline void Material_GLTF::SetEmissiveFactor(glm::vec3 const& emissiveFactor)
 	{
 		m_emissiveFactor = emissiveFactor;
-		m_isDirty = true;
 	}
 
 
 	inline void Material_GLTF::SetNormalScale(float normalScale)
 	{
 		m_normalScale = normalScale;
-		m_isDirty = true;
 	}
 
 
 	inline void Material_GLTF::SetOcclusionStrength(float occlusionStrength)
 	{
 		m_occlusionStrength = occlusionStrength;
-		m_isDirty = true;
 	}
 
 
 	inline void Material_GLTF::SetBaseColorFactor(glm::vec4 const& baseColorFactor)
 	{
 		m_baseColorFactor = baseColorFactor;
-		m_isDirty = true;
 	}
 
 
 	inline void Material_GLTF::SetMetallicFactor(float metallicFactor)
 	{
 		m_metallicFactor = metallicFactor;
-		m_isDirty = true;
 	}
 
 
 	inline void Material_GLTF::SetRoughnessFactor(float roughnessFactor)
 	{
 		m_roughnessFactor = roughnessFactor;
-		m_isDirty = true;
 	}
 
 
 	inline void Material_GLTF::SetF0(glm::vec3 f0)
 	{
 		m_f0 = f0;
-		m_isDirty = true;
 	}
 
 
 	inline void Material_GLTF::SetEmissiveStrength(float emissiveStrength)
 	{
 		m_emissiveStrength = emissiveStrength;
-		m_isDirty = true;
 	}
 }
 

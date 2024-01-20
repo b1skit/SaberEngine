@@ -29,6 +29,7 @@ namespace fr
 		void UpdateCameraController(double stepTimeMs);
 		void UpdateTransforms();
 		void UpdateSceneBounds();
+		void UpdateMaterials();
 		void UpdateLightsAndShadows();
 		void UpdateCameras();
 

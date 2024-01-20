@@ -248,7 +248,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClCompile Include="InputManager_Win32.cpp" />
     <ClCompile Include="LightComponent.cpp" />
     <ClCompile Include="LightRenderData.cpp" />
-    <ClCompile Include="MaterialComponent.cpp" />
+    <ClCompile Include="MaterialInstanceComponent.cpp" />
     <ClCompile Include="Material_GLTF.cpp" />
     <ClCompile Include="MeshFactory.cpp" />
     <ClCompile Include="MeshPrimitiveComponent.cpp" />
@@ -365,7 +365,7 @@ xcopy "$(OutDirFullPath)*.cso" "$(SolutionDir)SaberEngine\Shaders\HLSL\" /y</Com
     <ClInclude Include="LightComponent.h" />
     <ClInclude Include="LightRenderData.h" />
     <ClInclude Include="MarkerComponents.h" />
-    <ClInclude Include="MaterialComponent.h" />
+    <ClInclude Include="MaterialInstanceComponent.h" />
     <ClInclude Include="MeshPrimitiveComponent.h" />
     <ClInclude Include="RelationshipComponent.h" />
     <ClInclude Include="CommandQueue.h" />

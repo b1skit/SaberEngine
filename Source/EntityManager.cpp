@@ -6,7 +6,7 @@
 #include "EntityManager.h"
 #include "LightComponent.h"
 #include "MarkerComponents.h"
-#include "MaterialComponent.h"
+#include "MaterialInstanceComponent.h"
 #include "MeshPrimitiveComponent.h"
 #include "NameComponent.h"
 #include "CameraControlComponent.h"
@@ -93,9 +93,9 @@ namespace fr
 				}
 
 				// Materials:
-				if (m_registry.all_of<fr::MaterialComponent>(entity))
+				if (m_registry.all_of<fr::MaterialInstanceComponent>(entity))
 				{
-					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Material::RenderData>>(
+					renderManager->EnqueueRenderCommand<gr::DestroyRenderDataRenderCommand<gr::Material::MaterialInstanceData>>(
 						renderDataComponent.GetRenderDataID());
 				}
 
@@ -147,6 +147,7 @@ namespace fr
 		// Update the scene state:
 		UpdateTransforms();
 		UpdateSceneBounds();
+		UpdateMaterials();
 		UpdateLightsAndShadows();
 		UpdateCameras();
 	}
@@ -259,7 +260,7 @@ namespace fr
 
 			EnqueueRenderUpdateHelper<fr::BoundsComponent, gr::Bounds::RenderData>();
 			EnqueueRenderUpdateHelper<fr::MeshPrimitiveComponent, gr::MeshPrimitive::RenderData>();
-			EnqueueRenderUpdateHelper<fr::MaterialComponent, gr::Material::RenderData>();
+			EnqueueRenderUpdateHelper<fr::MaterialInstanceComponent, gr::Material::MaterialInstanceData>();
 			EnqueueRenderUpdateHelper<fr::CameraComponent, gr::Camera::RenderData>();
 
 			// Update dirty render data components that touch the GraphicsSystems directly:
@@ -632,6 +633,25 @@ namespace fr
 	}
 
 
+	void EntityManager::UpdateMaterials()
+	{
+		{
+			std::unique_lock<std::shared_mutex> writeLock(m_registeryMutex);
+
+			auto materialView = m_registry.view<fr::MaterialInstanceComponent>();
+			for (auto entity : materialView)
+			{
+				fr::MaterialInstanceComponent& matCmpt = materialView.get<fr::MaterialInstanceComponent>(entity);
+				if (matCmpt.IsDirty())
+				{
+					m_registry.emplace_or_replace<DirtyMarker<fr::MaterialInstanceComponent>>(entity);
+					matCmpt.ClearDirtyFlag();
+				}
+			}
+		}
+	}
+
+
 	void EntityManager::UpdateLightsAndShadows()
 	{
 		fr::BoundsComponent const* sceneBounds = GetSceneBounds();
@@ -841,10 +861,10 @@ namespace fr
 			{
 				ImGui::Indent();
 
-				auto materialView = m_registry.view<fr::MaterialComponent>();
+				auto materialView = m_registry.view<fr::MaterialInstanceComponent>();
 				for (entt::entity entity : materialView)
 				{
-					fr::MaterialComponent::ShowImGuiWindow(*this, entity);
+					fr::MaterialInstanceComponent::ShowImGuiWindow(*this, entity);
 					ImGui::Separator();
 				}
 

@@ -6,7 +6,7 @@
 #include "CoreEngine.h"
 #include "EntityManager.h"
 #include "LightComponent.h"
-#include "MaterialComponent.h"
+#include "MaterialInstanceComponent.h"
 #include "Material_GLTF.h"
 #include "MeshConcept.h"
 #include "MeshPrimitiveComponent.h"
@@ -833,7 +833,7 @@ namespace
 					meshName.c_str(), k_missingMaterialName);
 				material = scene.GetMaterial(k_missingMaterialName);
 			}
-			fr::MaterialComponent::AttachMaterialComponent(em, meshPrimimitiveEntity, material);
+			fr::MaterialInstanceComponent::AttachMaterialComponent(em, meshPrimimitiveEntity, material);
 		}
 	}
 

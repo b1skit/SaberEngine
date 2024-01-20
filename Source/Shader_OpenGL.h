@@ -72,7 +72,7 @@ namespace opengl
 			re::Shader const&, 
 			std::string const& uniformName, 
 			re::Texture const*, 
-			std::shared_ptr<re::Sampler>, 
+			re::Sampler const*, 
 			uint32_t subresource);
 		static void SetParameterBlock(re::Shader const&, re::ParameterBlock const&);
 	};

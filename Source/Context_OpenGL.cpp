@@ -296,12 +296,13 @@ namespace opengl
 		::glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE);
 		::glEnable(GL_SCISSOR_TEST);
 
-		// Call our opengl::SysInfo members while we're on the main thread to cache their values,
-		// before any systems that might use them
+		// Call our opengl::SysInfo members while we're on the main thread to cache their values, before any systems
+		// that might use them
 		opengl::SysInfo::GetMaxRenderTargets();
 		opengl::SysInfo::GetMaxVertexAttributes();
 		opengl::SysInfo::GetUniformBufferOffsetAlignment();
 		opengl::SysInfo::GetShaderStorageBufferOffsetAlignment();
+		opengl::SysInfo::GetMaxTextureBindPoints();
 
 		// Parameter Block Allocator:
 		m_paramBlockAllocator.Create(currentFrame);

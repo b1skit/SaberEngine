@@ -1,11 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
 #include "NamedObject.h"
+#include "ParameterBlock.h"
 
 
 namespace re
 {
-	class ParameterBlock;
 	class Texture;
 	class Sampler;
 	class Shader;
@@ -16,18 +16,9 @@ namespace gr
 	class Material : public virtual en::NamedObject
 	{
 	public:
-		struct TextureSlotDesc
-		{
-			std::shared_ptr<re::Texture> m_texture = nullptr;
-			std::shared_ptr<re::Sampler> m_samplerObject = nullptr; // eg. Sampler object from the sampler library
-			std::string m_shaderSamplerName;
-		};
-
-
-	public:
 		enum class MaterialType
 		{
-			GLTF_PBRMetallicRoughness, // A metallic-roughness material model from PBR methodology
+			GLTF_PBRMetallicRoughness, // GLTF 2.0's PBR metallic-roughness material model
 		};
 		enum class AlphaMode
 		{
@@ -41,11 +32,46 @@ namespace gr
 			DoubleSided
 		};
 
-		struct RenderData
+
+	public:
+		struct TextureSlotDesc
 		{
-			// For now, just point to the scene data...
-			gr::Material const* m_material;
+			std::shared_ptr<re::Texture> m_texture = nullptr;
+			std::shared_ptr<re::Sampler> m_samplerObject = nullptr; // eg. Sampler object from the sampler library
+			std::string m_shaderSamplerName;
 		};
+
+
+	public:
+		static constexpr uint8_t k_numTexInputs = 8;
+		static constexpr size_t k_shaderSamplerNameLength = 64; // Arbitrary: Includes null terminator
+		static constexpr size_t k_paramDataBlockByteSize = 64; // Arbitrary: Max current material size
+
+		// Material render data:
+		struct MaterialInstanceData
+		{
+			std::array<re::Texture const*, gr::Material::k_numTexInputs> m_textures;
+			std::array<re::Sampler const*, gr::Material::k_numTexInputs> m_samplers;
+			char m_shaderSamplerNames[gr::Material::k_numTexInputs][gr::Material::k_shaderSamplerNameLength];
+
+			AlphaMode m_alphaMode;
+			float m_alphaCutoff;
+			DoubleSidedMode m_doubleSidedMode;
+
+			// Material implementations pack their specific parameter data into this block of bytes
+			std::array<uint8_t, gr::Material::k_paramDataBlockByteSize> m_materialParamData;
+
+			// Material metadata:
+			gr::Material::MaterialType m_type;
+			char m_materialName[k_shaderSamplerNameLength];
+			uint64_t m_uniqueID;
+		};
+
+	public:
+		static std::shared_ptr<re::ParameterBlock> CreateParameterBlock(
+			re::ParameterBlock::PBType, MaterialInstanceData const&);
+
+		static bool ShowImGuiWindow(MaterialInstanceData&); // Returns true if data was modified
 
 
 	public:
@@ -70,13 +96,13 @@ namespace gr
 
 		MaterialType GetMaterialType() const;
 
-		static std::shared_ptr<re::ParameterBlock> CreateParameterBlock(gr::Material const*);
-
-		bool IsDirty() const;
-		void MarkClean();
+		void PackMaterialInstanceData(MaterialInstanceData&) const;
 
 
-		virtual void ShowImGuiWindow();
+	private:
+		void PackMaterialInstanceTextureSlotDescs(re::Texture const**, re::Sampler const**, char[][k_shaderSamplerNameLength]) const;
+		
+		virtual void PackMaterialInstanceData(void*, size_t maxSize) const = 0;
 
 
 	protected:
@@ -92,8 +118,6 @@ namespace gr
 		AlphaMode m_alphaMode = AlphaMode::Opaque;
 		float m_alphaCutoff = 0.5f;
 		DoubleSidedMode m_doubleSidedMode = DoubleSidedMode::SingleSided;
-
-		bool m_isDirty;
 
 
 	protected:
@@ -138,14 +162,12 @@ namespace gr
 		SEAssert(alphaMode == AlphaMode::Opaque, "TODO: Support other alpha modes");
 
 		m_alphaMode = alphaMode;
-		m_isDirty = true;
 	}
 
 
 	inline void Material::SetAlphaCutoff(float alphaCutoff)
 	{
 		m_alphaCutoff = alphaCutoff;
-		m_isDirty = true;
 	}
 
 
@@ -154,25 +176,12 @@ namespace gr
 		SEAssert(doubleSidedMode == DoubleSidedMode::SingleSided, "TODO: Support other sided modes");
 
 		m_doubleSidedMode = doubleSidedMode;
-		m_isDirty = true;
 	}
 
 
 	inline Material::MaterialType Material::GetMaterialType() const
 	{
 		return m_materialType;
-	}
-
-
-	inline bool Material::IsDirty() const
-	{
-		return m_isDirty;
-	}
-
-
-	inline void Material::MarkClean()
-	{
-		m_isDirty = false;
 	}
 
 

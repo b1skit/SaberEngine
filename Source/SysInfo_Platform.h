@@ -8,5 +8,6 @@ namespace platform
 	{
 	public:
 		static uint8_t(*GetMaxRenderTargets)();
+		static uint8_t(*GetMaxTextureBindPoints)();
 	};
 }

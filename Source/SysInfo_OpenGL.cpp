@@ -1,12 +1,10 @@
 // © 2023 Adam Badke. All rights reserved.
-#include <GL/glew.h>
-#include <GL/wglew.h> // Windows-specific GL functions and macros
-#include <GL/GL.h> // Must follow glew.h
-
 #include "Assert.h"
+#include "CastUtils.h"
 #include "SysInfo_OpenGL.h"
 
-// Note: Most of these functions can likely only be called from the main thread. Follow the pattern of caching the
+
+// Note: Most of these functions can/will likely be called from the main thread. Follow the pattern of caching the
 // result in a static variable and priming it from the main thread during startup by calling from the opengl::Context
 namespace opengl
 {
@@ -53,5 +51,18 @@ namespace opengl
 			glGetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &s_shaderStorageBufferOffsetAlignment);
 		}
 		return s_shaderStorageBufferOffsetAlignment;
+	}
+
+
+	uint8_t SysInfo::GetMaxTextureBindPoints()
+	{
+		static uint8_t s_maxCombinedTexInputs = 0;
+		if (s_maxCombinedTexInputs == 0)
+		{
+			GLint maxTexInputs = 0;
+			glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTexInputs);
+			s_maxCombinedTexInputs = util::CheckedCast<uint8_t>(maxTexInputs);
+		}
+		return s_maxCombinedTexInputs;
 	}
 }

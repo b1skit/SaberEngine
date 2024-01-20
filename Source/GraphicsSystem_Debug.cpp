@@ -54,7 +54,7 @@ namespace
 		axisBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position] = axisPositionStream.get();
 		axisBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = axisColorStream.get();
 
-		return re::Batch(re::Batch::Lifetime::SingleFrame, nullptr, axisBatchGraphicsParams);
+		return re::Batch(re::Batch::Lifetime::SingleFrame, axisBatchGraphicsParams);
 	}
 
 
@@ -149,7 +149,7 @@ namespace
 		boundingBoxBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = boxColorStream.get();
 		boundingBoxBatchGraphicsParams.m_indexStream = boxIndexStream.get();
 
-		return re::Batch(re::Batch::Lifetime::SingleFrame, nullptr, boundingBoxBatchGraphicsParams);
+		return re::Batch(re::Batch::Lifetime::SingleFrame, boundingBoxBatchGraphicsParams);
 	}
 
 
@@ -208,7 +208,7 @@ namespace
 		boundingBoxBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Position] = normalPositionsStream.get();
 		boundingBoxBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = boxColorStream.get();
 
-		return re::Batch(re::Batch::Lifetime::SingleFrame, nullptr, boundingBoxBatchGraphicsParams);
+		return re::Batch(re::Batch::Lifetime::SingleFrame, boundingBoxBatchGraphicsParams);
 	}
 
 
@@ -299,7 +299,7 @@ namespace
 		frustumBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = frustumColorStream.get();
 		frustumBatchGraphicsParams.m_indexStream = frustumIndexStream.get();
 
-		return re::Batch(re::Batch::Lifetime::SingleFrame, nullptr, frustumBatchGraphicsParams);
+		return re::Batch(re::Batch::Lifetime::SingleFrame, frustumBatchGraphicsParams);
 	}
 	
 
@@ -330,7 +330,7 @@ namespace
 		wireframeBatchGraphicsParams.m_vertexStreams[gr::MeshPrimitive::Slot::Color] = boxColorStream.get();
 		wireframeBatchGraphicsParams.m_indexStream = indexStream;
 
-		return re::Batch(re::Batch::Lifetime::SingleFrame, nullptr, wireframeBatchGraphicsParams);
+		return re::Batch(re::Batch::Lifetime::SingleFrame, wireframeBatchGraphicsParams);
 	}
 }
 

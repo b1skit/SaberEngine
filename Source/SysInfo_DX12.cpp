@@ -14,6 +14,15 @@ namespace dx12
 	}
 
 
+	uint8_t SysInfo::GetMaxTextureBindPoints()
+	{
+		// The DX12 resource binding model allows arbitrary numbers of binding points via descriptor tables. We maintain
+		// this function to ensure parity with OpenGL, and just return an arbitrary large, sane value here
+		constexpr uint8_t k_maxTexBindPoints = 32;
+		return k_maxTexBindPoints;
+	}
+	
+
 	D3D_ROOT_SIGNATURE_VERSION SysInfo::GetHighestSupportedRootSignatureVersion()
 	{
 		static D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData{};

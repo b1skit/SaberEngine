@@ -12,6 +12,26 @@
 namespace
 {
 	constexpr size_t k_batchParamBlockIDsReserveAmount = 10;
+
+
+	re::ParameterBlock::PBType GetMaterialPBType(re::Batch::Lifetime lifetime)
+	{
+		switch (lifetime)
+		{
+		case re::Batch::Lifetime::SingleFrame:
+		{
+			return re::ParameterBlock::PBType::SingleFrame;
+		}
+		break;
+		case re::Batch::Lifetime::Permanent:
+		{
+			return re::ParameterBlock::PBType::Mutable;
+		}
+		break;
+		default: SEAssertF("Invalid batch lifetime");
+		}
+		return re::ParameterBlock::PBType::PBType_Count;
+	}
 }
 
 namespace re
@@ -53,7 +73,7 @@ namespace re
 	Batch::Batch(
 		Lifetime lifetime, 
 		gr::MeshPrimitive::RenderData const& meshPrimRenderData, 
-		gr::Material::RenderData const* materialRenderData)
+		gr::Material::MaterialInstanceData const* materialInstanceData)
 		: m_lifetime(lifetime)
 		, m_type(BatchType::Graphics)
 		, m_graphicsParams{}
@@ -86,23 +106,26 @@ namespace re
 		m_graphicsParams.m_indexStream = meshPrimRenderData.m_indexStream;
 		
 		// Material textures/samplers:
-		if (materialRenderData)
+		if (materialInstanceData)
 		{
-			for (size_t i = 0; i < materialRenderData->m_material->GetTexureSlotDescs().size(); i++)
+			SEAssert(materialInstanceData->m_textures.size() == materialInstanceData->m_samplers.size(),
+				"Texture/sampler array size mismatch. We assume the all material instance arrays are the same size");
+
+			for (size_t i = 0; i < materialInstanceData->m_textures.size(); i++)
 			{
-				if (materialRenderData->m_material->GetTexureSlotDescs()[i].m_texture &&
-					materialRenderData->m_material->GetTexureSlotDescs()[i].m_samplerObject)
+				if (materialInstanceData->m_textures[i] && materialInstanceData->m_samplers[i])
 				{
 					AddTextureAndSamplerInput(
-						materialRenderData->m_material->GetTexureSlotDescs()[i].m_shaderSamplerName,
-						materialRenderData->m_material->GetTexureSlotDescs()[i].m_texture.get(),
-						materialRenderData->m_material->GetTexureSlotDescs()[i].m_samplerObject);
+						materialInstanceData->m_shaderSamplerNames[i],
+						materialInstanceData->m_textures[i],
+						materialInstanceData->m_samplers[i]);
 				}
 			}
 
 			// Material params:
+			const re::ParameterBlock::PBType materialPBType = GetMaterialPBType(m_lifetime);
 			std::shared_ptr<re::ParameterBlock> materialParams =
-				gr::Material::CreateParameterBlock(materialRenderData->m_material);
+				gr::Material::CreateParameterBlock(materialPBType, *materialInstanceData);
 
 			SEAssert((m_lifetime == re::Batch::Lifetime::Permanent &&
 					(materialParams->GetType() == re::ParameterBlock::PBType::Mutable ||
@@ -118,7 +141,7 @@ namespace re
 	}
 
 
-	Batch::Batch(Lifetime lifetime, gr::Material const* material, GraphicsParams const& graphicsParams)
+	Batch::Batch(Lifetime lifetime, GraphicsParams const& graphicsParams)
 		: m_lifetime(lifetime)
 		, m_type(BatchType::Graphics)
 		, m_graphicsParams{}
@@ -138,33 +161,6 @@ namespace re
 				"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
 		}
 #endif
-
-		if (material)
-		{
-			// Material textures/samplers:
-			for (size_t i = 0; i < material->GetTexureSlotDescs().size(); i++)
-			{
-				if (material->GetTexureSlotDescs()[i].m_texture && material->GetTexureSlotDescs()[i].m_samplerObject)
-				{
-					AddTextureAndSamplerInput(
-						material->GetTexureSlotDescs()[i].m_shaderSamplerName,
-						material->GetTexureSlotDescs()[i].m_texture.get(),
-						material->GetTexureSlotDescs()[i].m_samplerObject);
-				}
-			}
-
-			// Material params:
-			std::shared_ptr<re::ParameterBlock> materialParams = gr::Material::CreateParameterBlock(material);
-
-			SEAssert((m_lifetime == re::Batch::Lifetime::Permanent &&
-					(materialParams->GetType() == re::ParameterBlock::PBType::Mutable||
-						materialParams->GetType() == re::ParameterBlock::PBType::Immutable)) ||
-				(lifetime == re::Batch::Lifetime::SingleFrame &&
-					materialParams->GetType() == re::ParameterBlock::PBType::SingleFrame),
-				"Batch and material parameter block lifetimes are incompatible");
-
-			m_batchParamBlocks.emplace_back(materialParams);
-		}
 
 		ComputeDataHash();
 	}
@@ -261,12 +257,12 @@ namespace re
 
 
 	void Batch::AddTextureAndSamplerInput(
-		std::string const& shaderName, 
+		char const* shaderName,
 		re::Texture const* texture,
-		std::shared_ptr<re::Sampler> sampler, 
+		re::Sampler const* sampler,
 		uint32_t srcMip /*= re::Texture::k_allMips*/)
 	{
-		SEAssert(!shaderName.empty(), "Invalid shader sampler name");
+		SEAssert(shaderName != nullptr && strlen(shaderName) > 0, "Invalid shader sampler name");
 		SEAssert(texture != nullptr, "Invalid texture");
 		SEAssert(sampler != nullptr, "Invalid sampler");
 
@@ -276,5 +272,15 @@ namespace re
 		// Include textures/samplers in the batch hash:
 		AddDataBytesToHash(texture->GetUniqueID());
 		AddDataBytesToHash(sampler->GetUniqueID());
+	}
+
+
+	void Batch::AddTextureAndSamplerInput(
+		char const* shaderName,
+		re::Texture const* texture,
+		std::shared_ptr<re::Sampler const> sampler, 
+		uint32_t srcMip /*= re::Texture::k_allMips*/)
+	{
+		AddTextureAndSamplerInput(shaderName, texture, sampler.get(), srcMip);
 	}
 }

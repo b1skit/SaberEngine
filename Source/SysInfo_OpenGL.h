@@ -1,5 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
+#include <GL/glew.h>
 
 
 namespace opengl
@@ -12,5 +13,6 @@ namespace opengl
 		static uint8_t GetMaxVertexAttributes();
 		static GLint GetUniformBufferOffsetAlignment();
 		static GLint GetShaderStorageBufferOffsetAlignment();
+		static uint8_t GetMaxTextureBindPoints();
 	};
 }

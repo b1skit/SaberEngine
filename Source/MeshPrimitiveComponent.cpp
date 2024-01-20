@@ -1,7 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "EntityManager.h"
 #include "MarkerComponents.h"
-#include "MaterialComponent.h"
+#include "MaterialInstanceComponent.h"
 #include "MeshPrimitive.h"
 #include "MeshPrimitiveComponent.h"
 #include "NameComponent.h"
@@ -175,10 +175,10 @@ namespace fr
 			meshPrimCmpt.m_meshPrimitive->ShowImGuiWindow();
 
 			// Material:
-			fr::MaterialComponent* matCmpt = em.TryGetComponent<fr::MaterialComponent>(meshPrimitive);
+			fr::MaterialInstanceComponent* matCmpt = em.TryGetComponent<fr::MaterialInstanceComponent>(meshPrimitive);
 			if (matCmpt)
 			{
-				fr::MaterialComponent::ShowImGuiWindow(em, meshPrimitive);
+				fr::MaterialInstanceComponent::ShowImGuiWindow(em, meshPrimitive);
 			}
 			else
 			{

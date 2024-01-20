@@ -416,9 +416,10 @@ namespace re
 	}
 
 
-	void Texture::ShowImGuiWindow()
+	void Texture::ShowImGuiWindow() const
 	{
-		ImGui::Text("Name: \"%s\"", GetName().c_str());
+		ImGui::Text("Texture name: \"%s\"", GetName().c_str());
+		ImGui::Text(std::format("Texture unique ID: {}", GetUniqueID()).c_str());
 	}
 }
 

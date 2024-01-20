@@ -62,7 +62,7 @@ namespace re
 		{
 			std::string m_shaderName;
 			re::Texture const* m_texture;
-			std::shared_ptr<re::Sampler> m_sampler;
+			re::Sampler const* m_sampler;
 
 			uint32_t m_srcMip = re::Texture::k_allMips;
 		};
@@ -92,9 +92,9 @@ namespace re
 		// Graphics batches:
 		Batch(Lifetime, gr::MeshPrimitive const* meshPrimitive); // No material; e.g. fullscreen quads, cubemap geo etc
 
-		Batch(Lifetime, gr::MeshPrimitive::RenderData const& meshPrimRenderData, gr::Material::RenderData const*);
+		Batch(Lifetime, gr::MeshPrimitive::RenderData const& meshPrimRenderData, gr::Material::MaterialInstanceData const*);
 
-		Batch(Lifetime, gr::Material const*, GraphicsParams const&);
+		Batch(Lifetime, GraphicsParams const&); // e.g. debug topology
 
 		// Compute batches:
 		Batch(Lifetime, ComputeParams const& computeParams);
@@ -117,10 +117,17 @@ namespace re
 		void SetParameterBlock(std::shared_ptr<re::ParameterBlock> paramBlock);
 
 		void AddTextureAndSamplerInput(
-			std::string const& shaderName, 
-			re::Texture const*, 
-			std::shared_ptr<re::Sampler>, 
+			char const* shaderName,
+			re::Texture const*,
+			re::Sampler const*,
 			uint32_t srcMip = re::Texture::k_allMips);
+
+		void AddTextureAndSamplerInput(
+			char const* shaderName, 
+			re::Texture const*, 
+			std::shared_ptr<re::Sampler const>, 
+			uint32_t srcMip = re::Texture::k_allMips);
+		
 		std::vector<BatchTextureAndSamplerInput> const& GetTextureAndSamplerInputs() const;
 
 		uint32_t GetBatchFilterMask() const;

@@ -6,19 +6,10 @@
 
 namespace gr
 {
-	Material_GLTF::RenderData Material_GLTF::CreateRenderData(gr::Material_GLTF& material)
-	{
-		return Material_GLTF::RenderData
-		{
-			.m_pbrMetallicRoughnessParams = material.GetPBRMetallicRoughnessParamsData()
-		};
-	}
-
-
 	Material_GLTF::PBRMetallicRoughnessParams Material_GLTF::GetPBRMetallicRoughnessParamsData() const
 	{
-		return Material_GLTF::PBRMetallicRoughnessParams{
-
+		return Material_GLTF::PBRMetallicRoughnessParams
+		{
 			.g_baseColorFactor = m_baseColorFactor,
 
 			.g_metallicFactor = m_metallicFactor,
@@ -56,39 +47,68 @@ namespace gr
 	}
 
 
-	std::shared_ptr<re::ParameterBlock> Material_GLTF::CreateParameterBlock(gr::Material_GLTF const* material)
+	void Material_GLTF::PackMaterialInstanceData(void* dst, size_t maxSize) const
 	{
-		// ECS_CONVERSION TODO: We're creating these as a single frame PB for now, but really it should be a mutable
-		// permanent PB... Need to figure out how/where to manage lifetime on the RenderThread side
+		SEAssert(maxSize <= sizeof(PBRMetallicRoughnessParams), "Not enough space to pack material instance data");
 
-		return re::ParameterBlock::Create(
-			PBRMetallicRoughnessParams::s_shaderName,
-			material->GetPBRMetallicRoughnessParamsData(),
-			re::ParameterBlock::PBType::SingleFrame);
+		PBRMetallicRoughnessParams const& materialInstanceData = GetPBRMetallicRoughnessParamsData();
+		memcpy(dst, &materialInstanceData, sizeof(PBRMetallicRoughnessParams));
 	}
 
 
-	void Material_GLTF::ShowImGuiWindow()
+	std::shared_ptr<re::ParameterBlock> Material_GLTF::CreateParameterBlock(
+		re::ParameterBlock::PBType pbType, MaterialInstanceData const& instanceData)
 	{
-		// ECS_CONVERSION: TODO RESTORE THIS FUNCTIONALITY
+		SEAssert(instanceData.m_type == gr::Material::MaterialType::GLTF_PBRMetallicRoughness,
+			"Incorrect material type");
 		
-		//if (ImGui::CollapsingHeader(std::format("{}##{}", GetName(), GetUniqueID()).c_str(), ImGuiTreeNodeFlags_None))
-		//{
-		//	ImGui::Indent();
-		//	Material::ShowImGuiWindow();
+		return re::ParameterBlock::Create(
+			PBRMetallicRoughnessParams::s_shaderName,
+			*reinterpret_cast<PBRMetallicRoughnessParams const*>(instanceData.m_materialParamData.data()),
+			pbType);
+	}
 
-		//	m_matParamsIsDirty |= ImGui::ColorEdit3(std::format("Base color factor##{}", "", GetUniqueID()).c_str(), &m_baseColorFactor.r, ImGuiColorEditFlags_Float);
 
-		//	m_matParamsIsDirty |= ImGui::SliderFloat(std::format("Metallic factor##{}", GetUniqueID()).c_str(), &m_metallicFactor, 0.f, 1.f, "%0.3f");
-		//	m_matParamsIsDirty |= ImGui::SliderFloat(std::format("Roughness factor##{}", GetUniqueID()).c_str(), &m_roughnessFactor, 0.f, 1.f, "%0.3f");
-		//	m_matParamsIsDirty |= ImGui::SliderFloat(std::format("Normal scale##{}", GetUniqueID()).c_str(), &m_normalScale, 0.f, 1.f, "%0.3f");
-		//	m_matParamsIsDirty |= ImGui::SliderFloat(std::format("Occlusion strength##{}", GetUniqueID()).c_str(), &m_occlusionStrength, 0.f, 1.f, "%0.3f");
+	bool Material_GLTF::ShowImGuiWindow(MaterialInstanceData& instanceData)
+	{
+		bool isDirty = false;
 
-		//	m_matParamsIsDirty |= ImGui::ColorEdit3(std::format("Emissive factor##{}", "", GetUniqueID()).c_str(), &m_emissiveFactor.r, ImGuiColorEditFlags_Float);
-		//	m_matParamsIsDirty |= ImGui::SliderFloat(std::format("Emissive strength##{}", GetUniqueID()).c_str(), &m_emissiveStrength, 0.f, 1000.f, "%0.3f");
+		if (ImGui::CollapsingHeader(std::format("Material_GLTF: {}##{}", 
+			instanceData.m_materialName, instanceData.m_uniqueID).c_str(), ImGuiTreeNodeFlags_None))
+		{
+			ImGui::Indent();
 
-		//	m_matParamsIsDirty |= ImGui::ColorEdit3(std::format("F0##{}", GetUniqueID()).c_str(), &m_f0.r, ImGuiColorEditFlags_Float);
-		//	ImGui::Unindent();
-		//}
+			PBRMetallicRoughnessParams* matData =
+				reinterpret_cast<PBRMetallicRoughnessParams*>(instanceData.m_materialParamData.data());
+			
+			isDirty |= ImGui::ColorEdit3(
+				std::format("Base color factor##{}", instanceData.m_uniqueID).c_str(),
+				&matData->g_baseColorFactor.r, ImGuiColorEditFlags_Float);
+
+			isDirty |= ImGui::SliderFloat(std::format("Metallic factor##{}", instanceData.m_uniqueID).c_str(), 
+				&matData->g_metallicFactor, 0.f, 1.f, "%0.3f");
+
+			isDirty |= ImGui::SliderFloat(std::format("Roughness factor##{}", instanceData.m_uniqueID).c_str(),
+				&matData->g_roughnessFactor, 0.f, 1.f, "%0.3f");
+
+			isDirty |= ImGui::SliderFloat(std::format("Normal scale##{}", instanceData.m_uniqueID).c_str(),
+				&matData->g_normalScale, 0.f, 1.f, "%0.3f");
+
+			isDirty |= ImGui::SliderFloat(std::format("Occlusion strength##{}", instanceData.m_uniqueID).c_str(),
+				&matData->g_occlusionStrength, 0.f, 1.f, "%0.3f");
+
+			isDirty |= ImGui::ColorEdit3(std::format("Emissive factor##{}", "", instanceData.m_uniqueID).c_str(),
+				&matData->g_emissiveFactorStrength.r, ImGuiColorEditFlags_Float);
+
+			isDirty |= ImGui::SliderFloat(std::format("Emissive strength##{}", instanceData.m_uniqueID).c_str(),
+				&matData->g_emissiveFactorStrength.w, 0.f, 1000.f, "%0.3f");
+
+			isDirty |= ImGui::ColorEdit3(std::format("F0##{}", instanceData.m_uniqueID).c_str(), 
+				&matData->g_f0.r, ImGuiColorEditFlags_Float);
+
+			ImGui::Unindent();
+		}
+
+		return isDirty;
 	}
 }

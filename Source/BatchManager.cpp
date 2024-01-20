@@ -28,12 +28,12 @@ namespace re
 		std::vector<BatchSortMetadata> unmergedBatches;
 		unmergedBatches.reserve(expectedNumMeshPrimitives);
 
-		auto renderDataItr = renderData.ObjectBegin<gr::MeshPrimitive::RenderData, gr::Material::RenderData>();
-		auto const& renderDataEnd = renderData.ObjectEnd<gr::MeshPrimitive::RenderData, gr::Material::RenderData>();
+		auto renderDataItr = renderData.ObjectBegin<gr::MeshPrimitive::RenderData, gr::Material::MaterialInstanceData>();
+		auto const& renderDataEnd = renderData.ObjectEnd<gr::MeshPrimitive::RenderData, gr::Material::MaterialInstanceData>();
 		while (renderDataItr != renderDataEnd)
 		{
 			gr::MeshPrimitive::RenderData const& meshPrimRenderData = renderDataItr.Get<gr::MeshPrimitive::RenderData>();
-			gr::Material::RenderData const& materialRenderData = renderDataItr.Get<gr::Material::RenderData>();
+			gr::Material::MaterialInstanceData const& materialRenderData = renderDataItr.Get<gr::Material::MaterialInstanceData>();
 			
 			// Cache a pointer to our Transform render data:
 			const size_t transformIdx = transformRenderData.size();

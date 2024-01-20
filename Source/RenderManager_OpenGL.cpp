@@ -291,7 +291,7 @@ namespace opengl
 								*shader,
 								texSamplerInput.m_shaderName, // uniform name
 								texSamplerInput.m_texture,
-								texSamplerInput.m_sampler,
+								texSamplerInput.m_sampler.get(),
 								texSamplerInput.m_srcMip);
 						}
 
