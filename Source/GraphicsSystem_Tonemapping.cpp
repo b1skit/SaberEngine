@@ -87,7 +87,10 @@ namespace gr
 
 	void TonemappingGraphicsSystem::CreateBatches()
 	{
-		const Batch fullscreenQuadBatch = Batch(re::Batch::Lifetime::SingleFrame, m_screenAlignedQuad.get(), nullptr);
-		m_tonemappingStage->AddBatch(fullscreenQuadBatch);
+		if (m_fullscreenQuadBatch == nullptr)
+		{
+			m_fullscreenQuadBatch = std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, m_screenAlignedQuad.get());
+		}
+		m_tonemappingStage->AddBatch(*m_fullscreenQuadBatch);
 	}
 }

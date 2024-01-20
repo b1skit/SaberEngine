@@ -16,7 +16,7 @@ namespace
 
 namespace re
 {
-	Batch::Batch(Lifetime lifetime, gr::MeshPrimitive const* meshPrimitive, gr::Material const* material)
+	Batch::Batch(Lifetime lifetime, gr::MeshPrimitive const* meshPrimitive)
 		: m_lifetime(lifetime)
 		, m_type(BatchType::Graphics)
 		, m_graphicsParams{}
@@ -45,33 +45,6 @@ namespace re
 			}
 		}
 		m_graphicsParams.m_indexStream = meshPrimitive->GetIndexStream();
-
-		if (material)
-		{
-			// Material textures/samplers:
-			for (size_t i = 0; i < material->GetTexureSlotDescs().size(); i++)
-			{
-				if (material->GetTexureSlotDescs()[i].m_texture && material->GetTexureSlotDescs()[i].m_samplerObject)
-				{
-					AddTextureAndSamplerInput(
-						material->GetTexureSlotDescs()[i].m_shaderSamplerName,
-						material->GetTexureSlotDescs()[i].m_texture.get(),
-						material->GetTexureSlotDescs()[i].m_samplerObject);
-				}				
-			}
-
-			// Material params:
-			std::shared_ptr<re::ParameterBlock> materialParams = gr::Material::CreateParameterBlock(material);
-			
-			SEAssert((m_lifetime == re::Batch::Lifetime::Permanent &&
-					(materialParams->GetType() == re::ParameterBlock::PBType::Mutable ||
-						materialParams->GetType() == re::ParameterBlock::PBType::Immutable)) ||
-				(lifetime == re::Batch::Lifetime::SingleFrame &&
-					materialParams->GetType() == re::ParameterBlock::PBType::SingleFrame),
-				"Batch and material parameter block lifetimes are incompatible");
-
-			m_batchParamBlocks.emplace_back(materialParams);
-		}
 		
 		ComputeDataHash();
 	}

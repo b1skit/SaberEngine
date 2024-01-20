@@ -90,7 +90,7 @@ namespace re
 		// the BatchManager
 
 		// Graphics batches:
-		Batch(Lifetime, gr::MeshPrimitive const* meshPrimitive, gr::Material const* materialOverride);
+		Batch(Lifetime, gr::MeshPrimitive const* meshPrimitive); // No material; e.g. fullscreen quads, cubemap geo etc
 
 		Batch(Lifetime, gr::MeshPrimitive::RenderData const& meshPrimRenderData, gr::Material::RenderData const*);
 

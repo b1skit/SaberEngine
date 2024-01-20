@@ -358,7 +358,7 @@ namespace gr
 		std::vector<glm::mat4> const& cubemapViews = gr::Camera::BuildAxisAlignedCubeViewMatrices(glm::vec3(0.f));
 
 		// Create a cube mesh batch, for reuse during the initial frame IBL rendering:
-		re::Batch cubeMeshBatch = re::Batch(re::Batch::Lifetime::SingleFrame, m_cubeMeshPrimitive.get(), nullptr);
+		re::Batch cubeMeshBatch = re::Batch(re::Batch::Lifetime::SingleFrame, m_cubeMeshPrimitive.get());
 
 		// TODO: We should use equirectangular images, instead of bothering to convert to cubemaps for IEM/PMREM
 		// -> Need to change the HLSL Get___DominantDir functions to ensure the result is normalized

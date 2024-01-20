@@ -24,6 +24,8 @@ namespace gr
 
 	private:
 		std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
+		std::unique_ptr<re::Batch> m_fullscreenQuadBatch;
+
 		std::shared_ptr<re::RenderStage> m_tonemappingStage;
 
 		re::RenderSystem* m_owningRenderSystem;

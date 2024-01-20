@@ -116,8 +116,11 @@ namespace gr
 
 	void SkyboxGraphicsSystem::CreateBatches()
 	{
-		const re::Batch fullscreenQuadBatch = 
-			re::Batch(re::Batch::Lifetime::SingleFrame, m_screenAlignedQuad.get(), nullptr);
-		m_skyboxStage->AddBatch(fullscreenQuadBatch);
+		if (m_fullscreenQuadBatch == nullptr)
+		{
+			m_fullscreenQuadBatch = std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, m_screenAlignedQuad.get());
+		}
+
+		m_skyboxStage->AddBatch(*m_fullscreenQuadBatch);
 	}
 }

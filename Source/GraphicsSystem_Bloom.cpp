@@ -350,9 +350,12 @@ namespace gr
 
 	void BloomGraphicsSystem::CreateBatches()
 	{
-		const re::Batch fullscreenQuadBatch = re::Batch(re::Batch::Lifetime::SingleFrame, m_screenAlignedQuad.get(), nullptr);
+		if (m_fullscreenQuadBatch == nullptr)
+		{
+			m_fullscreenQuadBatch = std::make_unique<re::Batch>(re::Batch::Lifetime::Permanent, m_screenAlignedQuad.get());
+		}
 
-		m_emissiveBlitStage->AddBatch(fullscreenQuadBatch);
+		m_emissiveBlitStage->AddBatch(*m_fullscreenQuadBatch);
 
 		std::shared_ptr<re::Texture> bloomTex = m_bloomDownStages[0]->GetTextureTargetSet()->GetColorTarget(0).GetTexture();
 		const uint32_t numBloomTexMips = bloomTex->GetNumMips();

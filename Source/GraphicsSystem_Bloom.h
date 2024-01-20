@@ -27,8 +27,10 @@ namespace gr
 	private:
 		re::RenderSystem* m_owningRenderSystem;
 
-		// Emissive blit:
 		std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
+		std::unique_ptr<re::Batch> m_fullscreenQuadBatch;
+
+		// Emissive blit:
 		std::shared_ptr<re::RenderStage> m_emissiveBlitStage;
 
 		// Bloom compute:

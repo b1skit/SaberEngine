@@ -28,5 +28,6 @@ namespace gr
 		re::Texture const* m_skyTexture;
 		std::string m_skyTextureShaderName;
 		std::shared_ptr<gr::MeshPrimitive> m_screenAlignedQuad;
+		std::unique_ptr<re::Batch> m_fullscreenQuadBatch;
 	};
 }
