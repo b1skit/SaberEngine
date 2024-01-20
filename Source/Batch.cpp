@@ -52,13 +52,16 @@ namespace re
 		};
 
 		std::vector<re::VertexStream const*> const& vertexStreams = meshPrimitive->GetVertexStreams();
-		memset(&m_graphicsParams.m_vertexStreams, 0, m_graphicsParams.m_vertexStreams.size() * sizeof(re::VertexStream const*));
+		memset(&m_graphicsParams.m_vertexStreams,
+			0,
+			m_graphicsParams.m_vertexStreams.size() * sizeof(re::VertexStream const*));
 		for (uint8_t slotIdx = 0; slotIdx < static_cast<uint8_t>(vertexStreams.size()); slotIdx++)
 		{
 			if (vertexStreams[slotIdx])
 			{
 				SEAssert((m_lifetime == Lifetime::SingleFrame) ||
-					(vertexStreams[slotIdx]->GetLifetime() == re::VertexStream::Lifetime::Permanent && m_lifetime == Lifetime::Permanent),
+					(vertexStreams[slotIdx]->GetLifetime() == re::VertexStream::Lifetime::Permanent && 
+						m_lifetime == Lifetime::Permanent),
 					"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
 
 				m_graphicsParams.m_vertexStreams[slotIdx] = vertexStreams[slotIdx];
@@ -89,7 +92,9 @@ namespace re
 		};
 
 		// Zero out our vertex streams array:
-		memset(&m_graphicsParams.m_vertexStreams, 0, m_graphicsParams.m_vertexStreams.size() * sizeof(re::VertexStream const*));
+		memset(&m_graphicsParams.m_vertexStreams,
+			0,
+			m_graphicsParams.m_vertexStreams.size() * sizeof(re::VertexStream const*));
 
 		for (uint8_t slotIdx = 0; slotIdx < static_cast<uint8_t>(meshPrimRenderData.m_vertexStreams.size()); slotIdx++)
 		{
