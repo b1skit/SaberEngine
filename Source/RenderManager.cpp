@@ -183,6 +183,7 @@ namespace re
 		SEBeginCPUEvent("re::RenderManager::PreUpdate");
 		
 		m_renderCommandManager.SwapBuffers();
+		m_imGuiCommandManager.SwapBuffers();
 
 		SEEndCPUEvent();
 	}
@@ -874,12 +875,13 @@ namespace re
 
 	void RenderManager::RenderImGui()
 	{
+		// Don't bother starting an ImGui frame if the current execution frame is empty
+		if (m_imGuiCommandManager.HasCommandsToExecute())
 		{
 			std::lock_guard<std::mutex> lock(re::RenderManager::Get()->GetGlobalImGuiMutex());
 
 			platform::RenderManager::StartImGuiFrame();
 
-			m_imGuiCommandManager.SwapBuffers();
 			m_imGuiCommandManager.Execute();
 
 			platform::RenderManager::RenderImGui();

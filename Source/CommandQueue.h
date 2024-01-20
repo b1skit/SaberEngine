@@ -22,6 +22,8 @@ namespace en
 		void Enqueue(Args&&... args);
 
 		void Execute() const;
+		
+		bool HasCommandsToExecute() const;
 
 		void Reset();
 
@@ -91,6 +93,15 @@ namespace en
 	}
 
 
+	inline bool CommandBuffer::HasCommandsToExecute() const
+	{
+		{
+			std::unique_lock<std::mutex> lock(m_commandMetadataMutex);
+			return !m_commandMetadata.empty();
+		}
+	}
+
+
 	/******************************************************************************************************************/
 
 
@@ -105,6 +116,8 @@ namespace en
 		void SwapBuffers();
 
 		void Execute(); // Single-threaded execution to ensure deterministic command ordering
+
+		bool HasCommandsToExecute() const;
 
 
 	private:
@@ -127,5 +140,11 @@ namespace en
 	inline void CommandManager::Enqueue(Args&&... args)
 	{
 		m_commandBuffers[GetWriteIdx()]->Enqueue<T>(std::forward<Args>(args)...);
+	}
+
+
+	inline bool CommandManager::HasCommandsToExecute() const
+	{
+		return m_commandBuffers[GetReadIdx()]->HasCommandsToExecute();
 	}
 }
