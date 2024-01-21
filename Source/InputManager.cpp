@@ -271,8 +271,14 @@ namespace en
 			break;
 			case en::EventManager::MouseWheelEvent:
 			{
-				// TODO: Translate and broadcast wheel events...
 				doBroadcastToSE = !m_mouseInputCaptured;
+				if (doBroadcastToSE)
+				{
+					// Pass on the data set in EventManager_Win32.cpp
+					transformedEvent.m_type = EventManager::EventType::MouseWheelEvent;
+					transformedEvent.m_data0.m_dataF = eventInfo.m_data0.m_dataI;
+					transformedEvent.m_data1.m_dataF = eventInfo.m_data1.m_dataI;
+				}
 			}
 			break;
 			case en::EventManager::WindowFocusChanged:
