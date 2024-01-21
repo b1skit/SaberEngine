@@ -1,6 +1,5 @@
 // © 2022 Adam Badke. All rights reserved.
 #pragma once
-
 #include "HashedDataObject.h"
 #include "MeshPrimitive.h"
 #include "Shader_Platform.h"
@@ -77,6 +76,11 @@ namespace re
 			gr::MeshPrimitive::TopologyMode m_batchTopologyMode;
 			std::array<re::VertexStream const*, gr::MeshPrimitive::Slot_Count> m_vertexStreams;
 			re::VertexStream const* m_indexStream;
+
+			// If a batch is created via the CTOR that takes a gr::Material::MaterialInstanceData, we store the 
+			// material's unique ID so we can include it in the data hash to ensure batches with identical geometry and
+			// materials will sort together
+			uint64_t m_materialUniqueID = std::numeric_limits<uint64_t>::max();
 		};
 		struct ComputeParams
 		{

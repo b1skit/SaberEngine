@@ -15,13 +15,13 @@ namespace re
 
 		struct BatchSortMetadata
 		{
-			size_t m_transformDataIdx;
 			re::Batch m_batch;
+
+			gr::Transform::RenderData const* m_batchTransform;
+			gr::Material::MaterialInstanceData const* m_batchMaterial;
 		};
 
 		const uint32_t expectedNumMeshPrimitives = renderData.GetNumElementsOfType<gr::MeshPrimitive::RenderData>();
-
-		std::vector<gr::Transform::RenderData const*> transformRenderData;
 
 		// Assemble a list of merged batches:
 		std::vector<re::Batch> mergedBatches;
@@ -34,16 +34,13 @@ namespace re
 		{
 			gr::MeshPrimitive::RenderData const& meshPrimRenderData = renderDataItr.Get<gr::MeshPrimitive::RenderData>();
 			gr::Material::MaterialInstanceData const& materialRenderData = renderDataItr.Get<gr::Material::MaterialInstanceData>();
-			
-			// Cache a pointer to our Transform render data:
-			const size_t transformIdx = transformRenderData.size();
-			transformRenderData.emplace_back(&renderDataItr.GetTransformDataFromTransformID());
-		
+				
 			unmergedBatches.emplace_back(
 				BatchSortMetadata
 				{
-					transformIdx,
-					re::Batch(re::Batch::Lifetime::SingleFrame, meshPrimRenderData, &materialRenderData)
+					re::Batch(re::Batch::Lifetime::SingleFrame, meshPrimRenderData, &materialRenderData),
+					&renderDataItr.GetTransformDataFromTransformID(),
+					&materialRenderData
 				});
 
 			++renderDataItr;
@@ -87,17 +84,25 @@ namespace re
 				std::vector<gr::Transform::RenderData const*> instanceTransformRenderData;
 				instanceTransformRenderData.reserve(numInstances);
 
+				std::vector<gr::Material::MaterialInstanceData const*> instanceMaterialData;
+				instanceMaterialData.reserve(numInstances);
+
 				for (size_t instanceOffset = 0; instanceOffset < numInstances; instanceOffset++)
 				{
 					const size_t unmergedSrcIdx = instanceStartIdx + instanceOffset;
-					const size_t transformDataIdx = unmergedBatches[unmergedSrcIdx].m_transformDataIdx;
-
-					gr::Transform::RenderData const* instanceTransformData = transformRenderData[transformDataIdx];
-
+					
 					// Add the Transform to our list
-					instanceTransformRenderData.emplace_back(instanceTransformData);
+					instanceTransformRenderData.emplace_back(unmergedBatches[unmergedSrcIdx].m_batchTransform);
+					instanceMaterialData.emplace_back(unmergedBatches[unmergedSrcIdx].m_batchMaterial);
 				}
-				mergedBatches.back().SetParameterBlock(gr::Transform::CreateInstancedTransformParams(instanceTransformRenderData));
+				
+				// Set our instanced parameter blocks:
+				mergedBatches.back().SetParameterBlock(gr::Transform::CreateInstancedTransformParams(
+					instanceTransformRenderData));
+
+				mergedBatches.back().SetParameterBlock(gr::Material::CreateInstancedParameterBlock(
+					re::ParameterBlock::PBType::SingleFrame,
+					instanceMaterialData));
 
 			} while (unmergedIdx < unmergedBatches.size());
 

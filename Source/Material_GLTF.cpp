@@ -69,7 +69,7 @@ namespace gr
 		for (size_t matIdx = 0; matIdx < numInstances; matIdx++)
 		{
 			SEAssert(instanceData[matIdx]->m_type == gr::Material::MaterialType::GLTF_PBRMetallicRoughness,
-				"Incorrect material type");
+				"Incorrect material type found. All instanceData entries must have the same type");
 
 			InstancedPBRMetallicRoughnessParams& instancedEntry = instancedMaterialData.emplace_back();
 

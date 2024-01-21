@@ -70,7 +70,6 @@ namespace gr
 	public:
 		static std::shared_ptr<re::ParameterBlock> CreateInstancedParameterBlock(
 			re::ParameterBlock::PBType,
-			gr::Material::MaterialType, 
 			std::vector<MaterialInstanceData const*> const&);
 
 		static bool ShowImGuiWindow(MaterialInstanceData&); // Returns true if data was modified

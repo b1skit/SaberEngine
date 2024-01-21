@@ -127,24 +127,7 @@ namespace re
 				}
 			}
 
-			// Material params:
-			const re::ParameterBlock::PBType materialPBType = GetMaterialPBType(m_lifetime);
-
-			std::shared_ptr<re::ParameterBlock> materialParams = gr::Material::CreateInstancedParameterBlock(
-				materialPBType, 
-				materialInstanceData->m_type, 
-				{ materialInstanceData }); 
-			// TODO: Instancing is currently broken: We're creating unique materials for each batch, which causes
-			// a different hash
-
-			SEAssert((m_lifetime == re::Batch::Lifetime::Permanent &&
-					(materialParams->GetType() == re::ParameterBlock::PBType::Mutable ||
-						materialParams->GetType() == re::ParameterBlock::PBType::Immutable)) ||
-				(lifetime == re::Batch::Lifetime::SingleFrame &&
-					materialParams->GetType() == re::ParameterBlock::PBType::SingleFrame),
-				"Batch and material parameter block lifetimes are incompatible");
-
-			m_batchParamBlocks.emplace_back(materialParams);
+			m_graphicsParams.m_materialUniqueID = materialInstanceData->m_materialUniqueID;
 		}
 
 		ComputeDataHash();
@@ -218,6 +201,8 @@ namespace re
 			{
 				AddDataBytesToHash(m_graphicsParams.m_indexStream->GetDataHash());
 			}
+
+			AddDataBytesToHash(m_graphicsParams.m_materialUniqueID);
 		}
 		break;
 		case BatchType::Compute:

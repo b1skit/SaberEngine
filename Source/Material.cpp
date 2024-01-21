@@ -140,10 +140,12 @@ namespace gr
 
 
 	std::shared_ptr<re::ParameterBlock> Material::CreateInstancedParameterBlock(
-		re::ParameterBlock::PBType pbType,
-		gr::Material::MaterialType materialType, 
+		re::ParameterBlock::PBType pbType, 
 		std::vector<MaterialInstanceData const*> const& instanceData)
 	{
+		SEAssert(!instanceData.empty(), "Instance data is empty");
+
+		const gr::Material::MaterialType materialType = instanceData.front()->m_type;
 		switch (materialType)
 		{
 		case gr::Material::MaterialType::GLTF_PBRMetallicRoughness:
