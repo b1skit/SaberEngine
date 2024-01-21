@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "CastUtils.h"
 #include "ParameterBlock.h"
 #include "TransformRenderData.h"
 
@@ -47,7 +48,7 @@ namespace gr
 	std::shared_ptr<re::ParameterBlock> Transform::CreateInstancedTransformParams(
 		std::vector<gr::Transform::RenderData const*> const& transformRenderData)
 	{
-		const uint32_t numInstances = static_cast<uint32_t>(transformRenderData.size());
+		const uint32_t numInstances = util::CheckedCast<uint32_t>(transformRenderData.size());
 
 		std::vector<gr::Transform::InstancedTransformParams> instancedMeshPBData;
 		instancedMeshPBData.reserve(numInstances);

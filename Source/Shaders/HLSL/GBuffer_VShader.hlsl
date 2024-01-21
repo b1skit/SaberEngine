@@ -6,6 +6,7 @@
 #define VOUT_UV0
 #define VOUT_TBN
 #define VOUT_COLOR
+#define VOUT_INSTANCE_ID
 #include "NormalMapUtils.hlsli"
 #include "SaberCommon.hlsli"
 
@@ -18,9 +19,12 @@ VertexOut VShader(VertexIn In)
 	Out.Position = mul(CameraParams.g_viewProjection, worldPos);
 	
 	Out.UV0 = In.UV0;
-	Out.Color = PBRMetallicRoughnessParams.g_baseColorFactor * In.Color;
+
+	Out.Color = InstancedPBRMetallicRoughnessParams[In.InstanceID].g_baseColorFactor * In.Color;
 	
 	Out.TBN = BuildTBN(In.Normal, In.Tangent, InstancedTransformParams[In.InstanceID].g_transposeInvModel);
+	
+	Out.InstanceID = In.InstanceID;
 	
 	return Out;	
 }

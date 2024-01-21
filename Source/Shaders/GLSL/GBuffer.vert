@@ -1,6 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #define VOUT_TBN
-
+#define SABER_INSTANCING
 #include "SaberCommon.glsl"
 #include "SaberGlobals.glsl"
 
@@ -12,4 +12,6 @@ void main()
 	vOut.uv0 = in_uv0;
 	vOut.Color = in_color;
 	vOut.TBN = BuildTBN(in_normal, in_tangent, g_instancedMeshParams[gl_InstanceID].g_transposeInvModel);
+	
+	InstanceID = gl_InstanceID;
 }

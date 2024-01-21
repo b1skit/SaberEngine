@@ -9,8 +9,6 @@ SamplerState Clamp_LinearMipMapLinear_Linear;
 
 Texture2D<float4> Tex0;
 
-RWTexture2D<float4> output0 : register(u0);
-
 struct BloomComputeParamsCB
 {
 	float4 g_srcTexDimensions;

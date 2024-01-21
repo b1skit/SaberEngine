@@ -47,7 +47,7 @@ namespace fr
 		fr::MaterialInstanceComponent const& matCmpt = em.GetComponent<fr::MaterialInstanceComponent>(owningEntity);
 
 		if (ImGui::CollapsingHeader(std::format("Material \"{}\"##{}", 
-			matCmpt.m_instanceData.m_materialName, matCmpt.m_instanceData.m_uniqueID).c_str(), ImGuiTreeNodeFlags_None))
+			matCmpt.m_instanceData.m_materialName, matCmpt.m_instanceData.m_materialUniqueID).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 

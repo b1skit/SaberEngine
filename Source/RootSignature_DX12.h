@@ -140,7 +140,6 @@ namespace dx12
 		std::vector<RootParameter> const& GetRootSignatureEntries() const;
 
 		RootParameter const* GetRootSignatureEntry(std::string const& resourceName) const;
-		RootParameter const* GetRootSignatureEntry(DescriptorType, uint8_t registerBindPoint) const;
 
 		bool HasResource(std::string const& resourceName) const;
 
@@ -171,7 +170,6 @@ namespace dx12
 		std::vector<RootParameter> m_rootParams; 
 
 		std::unordered_map<std::string, size_t> m_namesToRootParamsIdx;
-		std::array<std::unordered_map<uint8_t, size_t>, DescriptorType::Type_Count> m_registerToRootParamIdx;
 
 		std::vector<DescriptorTable> m_descriptorTables; // For null descriptor initialization
 	};

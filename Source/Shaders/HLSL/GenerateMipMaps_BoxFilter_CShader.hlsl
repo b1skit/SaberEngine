@@ -22,16 +22,6 @@ ConstantBuffer<MipGenerationParamsCB> MipGenerationParams;
 SamplerState Clamp_Linear_Linear;
 Texture2DArray<float4> SrcTex;
 
-// TODO: If we're using UNORM or SNORM types with UAVs, we need to declare the resource as unorm/snorm
-//	-> e.g. RWBuffer<unorm float> uav;
-// https://learn.microsoft.com/en-us/windows/win32/direct3d12/typed-unordered-access-view-loads
-// -> Build this in to the root sig parser
-
-RWTexture2D<float4> output0 : register(u0);
-RWTexture2D<float4> output1 : register(u1);
-RWTexture2D<float4> output2 : register(u2);
-RWTexture2D<float4> output3 : register(u3);
-
 // It's recommended we use a maximum of 16KB of group shared memory to maximize occupancy on D3D10 hardware, 32KB on
 // D3D11 hardware, or unlimited on D3D12 hardware. The actual group shared memory available is hardware-dependant. For
 // now, we'll go with the D3D10 minimum, and tune later if/when required.

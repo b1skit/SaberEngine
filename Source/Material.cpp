@@ -135,18 +135,20 @@ namespace gr
 		// Metadata:
 		instanceData.m_type = m_materialType;
 		strcpy(instanceData.m_materialName, GetName().c_str());
-		instanceData.m_uniqueID = GetUniqueID();
+		instanceData.m_materialUniqueID = GetUniqueID();
 	}
 
 
-	std::shared_ptr<re::ParameterBlock> Material::CreateParameterBlock(
-		re::ParameterBlock::PBType pbType, MaterialInstanceData const& instanceData)
+	std::shared_ptr<re::ParameterBlock> Material::CreateInstancedParameterBlock(
+		re::ParameterBlock::PBType pbType,
+		gr::Material::MaterialType materialType, 
+		std::vector<MaterialInstanceData const*> const& instanceData)
 	{
-		switch (instanceData.m_type)
+		switch (materialType)
 		{
 		case gr::Material::MaterialType::GLTF_PBRMetallicRoughness:
 		{
-			return gr::Material_GLTF::CreateParameterBlock(pbType, instanceData);
+			return gr::Material_GLTF::CreateInstancedParameterBlock(pbType, instanceData);
 		}
 		break;
 		default:
@@ -164,7 +166,7 @@ namespace gr
 		ImGui::Text("Type: %s", MaterialTypeToCStr(instanceData.m_type));
 
 		if (ImGui::CollapsingHeader(std::format("Textures##{}\"", 
-			instanceData.m_uniqueID).c_str(), ImGuiTreeNodeFlags_None))
+			instanceData.m_materialUniqueID).c_str(), ImGuiTreeNodeFlags_None))
 		{
 			ImGui::Indent();
 			for (uint8_t slotIdx = 0; slotIdx < static_cast<uint8_t>(instanceData.m_textures.size()); slotIdx++)
@@ -178,7 +180,7 @@ namespace gr
 					hasTex ? "\"" : "",
 					hasTex ? instanceData.m_shaderSamplerNames[slotIdx] : k_emptyTexName,
 					hasTex ? "\"" : "",
-					instanceData.m_uniqueID).c_str(),
+					instanceData.m_materialUniqueID).c_str(),
 					ImGuiTreeNodeFlags_None))
 				{
 					instanceData.m_textures[slotIdx]->ShowImGuiWindow();

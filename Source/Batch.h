@@ -86,9 +86,6 @@ namespace re
 		};
 
 	public:
-		// TODO: Switch batches to an object creation factory that is allocated in tightly packed in memory managed by
-		// the BatchManager
-
 		// Graphics batches:
 		Batch(Lifetime, gr::MeshPrimitive const* meshPrimitive); // No material; e.g. fullscreen quads, cubemap geo etc
 

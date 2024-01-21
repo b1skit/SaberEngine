@@ -73,9 +73,9 @@
 // Dynamic uniforms for instancing:
 #if defined(SABER_INSTANCING)
 	#if defined(SABER_VERTEX_SHADER)
-		flat out uint instanceID;
+		flat out uint InstanceID;
 	#elif defined(SABER_FRAGMENT_SHADER)
-		flat in uint instanceID;
+		flat in uint InstanceID;
 	#endif
 #endif
 
@@ -118,8 +118,7 @@ layout(binding=11) uniform samplerCube CubeMap0;
 layout(binding=12) uniform samplerCube CubeMap1;
 
 
-// Note: Must match the PBRMetallicRoughnessParams struct defined in Material.h, without any padding
-layout(std430, binding=0) uniform PBRMetallicRoughnessParams
+struct InstancedPBRMetallicRoughnessParamsCB
 {
 	vec4 g_baseColorFactor;
 
@@ -133,6 +132,11 @@ layout(std430, binding=0) uniform PBRMetallicRoughnessParams
 
 	// Non-GLTF properties:
 	vec4 g_f0; // .xyz = f0, .w = unused. For non-metals only
+};
+layout(std430, binding=0) readonly buffer InstancedPBRMetallicRoughnessParams
+{
+	// Variable-sized array: Must be the bottom-most variable in the block
+	InstancedPBRMetallicRoughnessParamsCB g_instancedPBRMetallicRoughnessParams[];
 };
 
 

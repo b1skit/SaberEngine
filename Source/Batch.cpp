@@ -129,8 +129,13 @@ namespace re
 
 			// Material params:
 			const re::ParameterBlock::PBType materialPBType = GetMaterialPBType(m_lifetime);
-			std::shared_ptr<re::ParameterBlock> materialParams =
-				gr::Material::CreateParameterBlock(materialPBType, *materialInstanceData);
+
+			std::shared_ptr<re::ParameterBlock> materialParams = gr::Material::CreateInstancedParameterBlock(
+				materialPBType, 
+				materialInstanceData->m_type, 
+				{ materialInstanceData }); 
+			// TODO: Instancing is currently broken: We're creating unique materials for each batch, which causes
+			// a different hash
 
 			SEAssert((m_lifetime == re::Batch::Lifetime::Permanent &&
 					(materialParams->GetType() == re::ParameterBlock::PBType::Mutable ||

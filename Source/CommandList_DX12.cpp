@@ -136,6 +136,19 @@ namespace
 			return D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		}
 	}
+
+	// As per the RWTexture2D<float4> outputs defined in SaberComputeCommon.hlsli
+	constexpr char const* k_uavTexTargetNames[] =
+	{
+		"output0",
+		"output1",
+		"output2",
+		"output3",
+		"output4",
+		"output5",
+		"output6",
+		"output7",
+	};
 }
 
 
@@ -720,10 +733,9 @@ namespace dx12
 			SEAssert((colorTex->GetTextureParams().m_usage & re::Texture::Usage::DepthTarget) == 0,
 				"It is unexpected that we're trying to attach a texture with DepthTarget usage to a compute shader");
 
-			// We bind our UAV targets by mapping TextureTargetSet index to register/bind point values
-			RootSignature::RootParameter const* rootSigEntry = m_currentRootSignature->GetRootSignatureEntry(
-					RootSignature::DescriptorType::UAV,
-					static_cast<uint8_t>(i));
+			// We bind by name, but effectively UAVs targets are (currently) bound to slots[0, 7]
+			RootSignature::RootParameter const* rootSigEntry = 
+				m_currentRootSignature->GetRootSignatureEntry(k_uavTexTargetNames[i]);
 
 			SEAssert(rootSigEntry || en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
 				"Invalid root signature entry");

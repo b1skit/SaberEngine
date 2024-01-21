@@ -13,7 +13,7 @@ namespace gr
 	public:
 		// GLTF metallic roughness PBR material parameter block
 		// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#reference-material
-		struct PBRMetallicRoughnessParams
+		struct InstancedPBRMetallicRoughnessParams
 		{
 			glm::vec4 g_baseColorFactor{ 1.f, 1.f, 1.f, 1.f };
 
@@ -30,13 +30,14 @@ namespace gr
 
 			//float g_isDoubleSided;
 
-			static constexpr char const* const s_shaderName = "PBRMetallicRoughnessParams";
+			static constexpr char const* const s_shaderName = "InstancedPBRMetallicRoughnessParams";
 		};	
 				
 
 	public:
-		static std::shared_ptr<re::ParameterBlock> CreateParameterBlock(
-			re::ParameterBlock::PBType, MaterialInstanceData const&);
+		static std::shared_ptr<re::ParameterBlock> CreateInstancedParameterBlock(
+			re::ParameterBlock::PBType,
+			std::vector<MaterialInstanceData const*> const&);
 
 		static bool ShowImGuiWindow(MaterialInstanceData&); // Returns true if data was modified
 
@@ -88,7 +89,7 @@ namespace gr
 
 
 	private:
-		PBRMetallicRoughnessParams GetPBRMetallicRoughnessParamsData() const;
+		InstancedPBRMetallicRoughnessParams GetPBRMetallicRoughnessParamsData() const;
 	};
 
 

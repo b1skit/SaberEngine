@@ -64,12 +64,14 @@ namespace gr
 			// Material metadata:
 			gr::Material::MaterialType m_type;
 			char m_materialName[k_shaderSamplerNameLength];
-			uint64_t m_uniqueID;
+			uint64_t m_materialUniqueID;
 		};
 
 	public:
-		static std::shared_ptr<re::ParameterBlock> CreateParameterBlock(
-			re::ParameterBlock::PBType, MaterialInstanceData const&);
+		static std::shared_ptr<re::ParameterBlock> CreateInstancedParameterBlock(
+			re::ParameterBlock::PBType,
+			gr::Material::MaterialType, 
+			std::vector<MaterialInstanceData const*> const&);
 
 		static bool ShowImGuiWindow(MaterialInstanceData&); // Returns true if data was modified
 

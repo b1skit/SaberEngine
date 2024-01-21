@@ -51,6 +51,9 @@ struct VertexOut
 #ifdef VOUT_TBN
 	float3x3 TBN	: TEXCOORD3;
 #endif
+#ifdef VOUT_INSTANCE_ID
+	nointerpolation uint InstanceID : SV_InstanceID;
+#endif
 };
 
 
@@ -64,7 +67,7 @@ struct InstancedMeshParamsCB
 StructuredBuffer<InstancedMeshParamsCB> InstancedTransformParams; // Indexed by instance ID
 
 
-struct PBRMetallicRoughnessParamsCB
+struct InstancedPBRMetallicRoughnessParamsCB
 {
 	float4 g_baseColorFactor;
 	
@@ -77,7 +80,12 @@ struct PBRMetallicRoughnessParamsCB
 	
 	float4 g_f0; // .xyz = f0, .w = unused. For non-metals only
 };
-ConstantBuffer<PBRMetallicRoughnessParamsCB> PBRMetallicRoughnessParams;
+StructuredBuffer<InstancedPBRMetallicRoughnessParamsCB> InstancedPBRMetallicRoughnessParams : register(t0, space1);
+// TODO: Switch to SM6.x and the DXC shader compiler, to allow usage of ": register(space1)" without needing to specify
+// a register here. We currently get a error due to overlapping shader registers when this StructuredBuffer is visible
+// in both the vertex and pixel shaders, and we try and create a descriptor table visible in the pixel shader only.
+// Resources are only considered in the shader stage they're first encountered during compilation when registeres are
+// automatically assigned (which we prefer), meaning we need to manually specify a register/space to avoid conflicts
 
 
 struct CameraParamsCB

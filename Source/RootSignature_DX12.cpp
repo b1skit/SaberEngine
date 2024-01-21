@@ -235,10 +235,6 @@ namespace dx12
 					rootParam.m_tableEntry.m_srvViewDimension != 0), // It's a union, either member should be > 0
 			"Descriptor table union is not fully initialized"); 
 
-		SEAssert(rootParam.m_registerSpace == 0,
-			"TODO: We currently assume all registers are specified in space 0. If this changes, we need to "
-			"update our logic here to support lookups via register AND register space");
-
 		const size_t metadataIdx = m_rootParams.size();
 
 		// Map the name to the insertion index:
@@ -292,10 +288,6 @@ namespace dx12
 		default:
 			SEAssertF("Invalid root parameter type");
 		}
-
-		auto const& registerToRootParamIdxInsertResult = 
-			m_registerToRootParamIdx[insertType].emplace(rootParam.m_registerBindPoint, metadataIdx);
-		SEAssert(insertResult.second == true, "Insertion index mapping metadata already exists");
 
 		// Finally, move the root param into our vector
 		m_rootParams.emplace_back(std::move(rootParam));
@@ -794,8 +786,10 @@ namespace dx12
 				&rootSignatureDescription,
 				SysInfo::GetHighestSupportedRootSignatureVersion(),
 				&rootSignatureBlob,
-				&errorBlob);
-			CheckHResult(hr, "Failed to serialize versioned root signature");
+				&errorBlob);			
+			CheckHResult(hr, errorBlob ? 
+				static_cast<const char*>(errorBlob->GetBufferPointer()) : 
+				"Failed to serialize versioned root signature");
 
 			// Create the root signature:
 			ID3D12Device2* device = context->GetDevice().GetD3DDisplayDevice();
@@ -844,22 +838,6 @@ namespace dx12
 		SEAssert(hasResource || 
 			en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
 			"Root signature does not contain a parameter with that name");
-
-		return hasResource ? &m_rootParams[result->second] : nullptr;
-	}
-
-
-	RootSignature::RootParameter const* RootSignature::GetRootSignatureEntry(
-		DescriptorType descriptorType, uint8_t registerBindPoint) const
-	{
-		SEAssert(descriptorType != DescriptorType::Type_Invalid, "Invalid descriptor type");
-
-		auto const& result = m_registerToRootParamIdx[descriptorType].find(registerBindPoint);
-		const bool hasResource = result != m_registerToRootParamIdx[descriptorType].end();
-
-		SEAssert(hasResource ||
-			en::Config::Get()->KeyExists(en::ConfigKeys::k_strictShaderBindingCmdLineArg) == false,
-			"Root signature does not contain a parameter with that register/bind point");
 
 		return hasResource ? &m_rootParams[result->second] : nullptr;
 	}

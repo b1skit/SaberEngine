@@ -7,9 +7,6 @@
 #include "UVUtils.hlsli"
 
 
-RWTexture2D<float4> output0 : register(u0);
-
-
 struct BRDFIntegrationParamsCB
 {
 	uint4 g_integrationTargetResolution;
