@@ -8,7 +8,7 @@
 
 struct VertexIn
 {	
-	float3 Position : POSITION0;
+	float3 Position : SV_Position;
 #ifdef VIN_NORMAL
 	float3 Normal	: NORMAL0;
 #endif
@@ -28,7 +28,7 @@ struct VertexIn
 
 struct VertexToGeometry
 {
-	float4 Position : POSITION0;
+	float4 Position : SV_Position;
 };
 
 

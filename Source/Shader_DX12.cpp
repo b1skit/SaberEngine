@@ -1,10 +1,11 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <d3dcompiler.h>
-
-#include "Config.h"
 #include "Assert.h"
+#include "Config.h"
+#include "Debug_DX12.h"
 #include "RootSignature_DX12.h"
 #include "Shader_DX12.h"
+
+#include <d3dcompiler.h> // We use this for the convenience of D3DReadFileToBlob
 
 using Microsoft::WRL::ComPtr;
 
@@ -45,7 +46,7 @@ namespace dx12
 			const std::wstring shaderName = shaderRootWStr + nameSuffix[i];
 
 			ComPtr<ID3DBlob> shaderBlob = nullptr;
-			HRESULT hr = D3DReadFileToBlob(shaderName.c_str(), &shaderBlob);
+			HRESULT hr = ::D3DReadFileToBlob(shaderName.c_str(), &shaderBlob);
 
 			if (SUCCEEDED(hr))
 			{

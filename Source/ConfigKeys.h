@@ -41,7 +41,7 @@ namespace en::ConfigKeys
 	constexpr char const* k_sceneRootPathKey	= "sceneRootPath";	// ".\Scenes\Scene\Folder\Names\"
 	constexpr char const* k_sceneIBLPathKey		= "sceneIBLPath";	// ".\Scenes\SceneFolderName\IBL\ibl.hdr"
 
-	constexpr char const* k_shaderDirectoryKey = "shaderDirectory";
+	constexpr char const* k_shaderDirectoryKey = "shaderDirectory"; // e.g. ".\\Shaders\\HLSL\\"
 
 	// System:
 	constexpr char const* k_windowWidthKey	= "width";

@@ -1,8 +1,4 @@
 // © 2022 Adam Badke. All rights reserved.
-#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
-#include <d3d12shader.h>
-#include <d3dcompiler.h>
-
 #include "Context_DX12.h"
 #include "Assert.h"
 #include "Debug_DX12.h"
@@ -15,13 +11,17 @@
 #include "Texture_DX12.h"
 #include "TextureTarget.h"
 #include "TextureTarget_DX12.h"
+#include "TextUtils.h"
+
+#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
+#include <dxcapi.h>
+#include <d3d12shader.h>
+
+using Microsoft::WRL::ComPtr;
 
 
 namespace
 {
-	using Microsoft::WRL::ComPtr;
-	using dx12::CheckHResult;
-	
 	// TODO: Use D3D12_GRAPHICS_PIPELINE_STATE_DESC instead?
 	struct GraphicsPipelineStateStream
 	{
@@ -46,75 +46,71 @@ namespace
 	};
 
 
-	DXGI_FORMAT GetDefaultInputParameterFormat(std::string const& semantic)
+	DXGI_FORMAT GetDefaultInputParameterFormat(char const* semantic)
 	{
 		static const std::unordered_map<std::string, DXGI_FORMAT> k_semanticToFormat =
 		{
-			{"POSITION",		DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
-			{"NORMAL",			DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
-			//{"BINORMAL",		DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
-			{"TANGENT",			DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT},
-			{"TEXCOORD",		DXGI_FORMAT::DXGI_FORMAT_R32G32_FLOAT},
-			{"COLOR",			DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT},
+			{"sv_position",		DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
+			{"normal",			DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
+			//{"binormal",		DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
+			{"tangent",			DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT},
+			{"texcoord",		DXGI_FORMAT::DXGI_FORMAT_R32G32_FLOAT},
+			{"color",			DXGI_FORMAT::DXGI_FORMAT_R32G32B32A32_FLOAT},
 
-			{"BLENDINDICES",	DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UINT},
-			{"BLENDWEIGHT",		DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
+			{"blendindices",	DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UINT},
+			{"blendweight",		DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT},
 		};
-		SEAssert(k_semanticToFormat.size() == gr::MeshPrimitive::Slot_Count, "Missing semantics");
+		SEAssert(k_semanticToFormat.size() == gr::MeshPrimitive::Slot_Count, 
+			"Expecting 1 entry per vertex binding slot. Did the number of vertex binging slots change?");
 
-		auto const& result = k_semanticToFormat.find(semantic);
-		SEAssert(result != k_semanticToFormat.end(), "Invalid semantic name");
+		auto const& result = k_semanticToFormat.find(util::ToLower(semantic));
+		SEAssert(result != k_semanticToFormat.end(), "Semantic name not found");
 
 		return result->second;
 	}
 
 
-	uint32_t GetDefaultInputSlot(std::string const& semantic, uint32_t semanticIndex)
+	uint32_t GetDefaultInputSlot(char const* semantic, uint32_t semanticIndex)
 	{
 		static const std::unordered_map<std::string, uint32_t> k_sematicToSlot =
 		{
-			{"POSITION0",		gr::MeshPrimitive::Position},
-			{"NORMAL0",			gr::MeshPrimitive::Normal},
-			//{"BINORMAL0",		gr::MeshPrimitive::}, //
-			{"TANGENT0",		gr::MeshPrimitive::Tangent},
-			{"TEXCOORD0",		gr::MeshPrimitive::UV0},
-			{"COLOR0",			gr::MeshPrimitive::Color},
+			{"sv_position0",	gr::MeshPrimitive::Position}, // We append "0" to simplify comparisons below
+			{"normal0",			gr::MeshPrimitive::Normal},
+			//{"binormal0",		gr::MeshPrimitive::}, //
+			{"tangent0",		gr::MeshPrimitive::Tangent},
+			{"texcoord0",		gr::MeshPrimitive::UV0},
+			{"color0",			gr::MeshPrimitive::Color},
 
-			{"BLENDINDICES0",	gr::MeshPrimitive::Joints},
-			{"BLENDWEIGHT0",	gr::MeshPrimitive::Weights},
+			{"blendindices0",	gr::MeshPrimitive::Joints},
+			{"blendweight0",	gr::MeshPrimitive::Weights},
 		};
-		SEAssert(k_sematicToSlot.size() == gr::MeshPrimitive::Slot_Count, "Missing semantics");
+		SEAssert(k_sematicToSlot.size() == gr::MeshPrimitive::Slot_Count, 
+			"Expecting 1 entry per vertex binding slot. Did the number of vertex binging slots change?");
 
-		const std::string semanticAndIndex = semantic + std::to_string(semanticIndex);
+		std::string const& semanticAndIndex = util::ToLower(semantic) + std::to_string(semanticIndex);
 
 		auto const& result = k_sematicToSlot.find(semanticAndIndex);
-		SEAssert(result != k_sematicToSlot.end(), "Invalid semantic and/or index");
+		SEAssert(result != k_sematicToSlot.end(), "Combined semantic and index name not found");
 
 		return result->second;
 	}
 
 
 	void BuildInputLayout(
-		dx12::Shader::PlatformParams* shaderParams, std::vector<D3D12_INPUT_ELEMENT_DESC>& inputLayout)
+		ID3D12ShaderReflection* shaderReflection,
+		dx12::Shader::PlatformParams* shaderParams, 
+		std::vector<D3D12_INPUT_ELEMENT_DESC>& inputLayout)
 	{
-		ID3D12ShaderReflection* shaderReflection;
-		HRESULT hr = ::D3DReflect(
-			shaderParams->m_shaderBlobs[dx12::Shader::Vertex]->GetBufferPointer(),
-			shaderParams->m_shaderBlobs[dx12::Shader::Vertex]->GetBufferSize(),
-			IID_PPV_ARGS(&shaderReflection));
-		CheckHResult(hr, "Failed to reflect shader");
-
 		for (uint32_t paramIndex = 0; paramIndex < dx12::Shader::k_maxVShaderVertexInputs; paramIndex++)
 		{
 			D3D12_SIGNATURE_PARAMETER_DESC paramDesc;
-			hr = shaderReflection->GetInputParameterDesc(paramIndex, &paramDesc);
+			HRESULT hr = shaderReflection->GetInputParameterDesc(paramIndex, &paramDesc);
 			if (hr != S_OK)
 			{
 				break;
 			}
 
-			// Skip System Value semantics:
-			if (strcmp(paramDesc.SemanticName, "SV_InstanceID") == 0)
+			if (strcmp(util::ToLower(paramDesc.SemanticName).c_str(), "sv_instanceid") == 0)
 			{
 				continue;
 			}
@@ -399,9 +395,30 @@ namespace dx12
 		{
 			re::PipelineState const& rePipelineState = shader.GetPipelineState();
 
-			// Build the vertex stream input layout:
+			// Get the shader reflection:
+			ComPtr<IDxcUtils> dxcUtils;
+			HRESULT hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxcUtils));
+			dx12::CheckHResult(hr, "Failed to create IDxcUtils instance");
+
+			const DxcBuffer reflectionBuffer
+			{
+				.Ptr = shaderParams->m_shaderBlobs[dx12::Shader::Vertex]->GetBufferPointer(),
+				.Size = shaderParams->m_shaderBlobs[dx12::Shader::Vertex]->GetBufferSize(),
+				.Encoding = 0,
+			};
+
+			ComPtr<ID3D12ShaderReflection> shaderReflection;
+			hr = dxcUtils->CreateReflection(&reflectionBuffer, IID_PPV_ARGS(&shaderReflection));
+			dx12::CheckHResult(hr, "Failed to reflect shader");
+
+			D3D12_SHADER_DESC shaderDesc{};
+			hr = shaderReflection->GetDesc(&shaderDesc);
+			dx12::CheckHResult(hr, "Failed to get shader description");
+
+
+			// Build the vertex stream input layout using the shader reflection:
 			std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
-			BuildInputLayout(shaderParams, inputLayout);
+			BuildInputLayout(shaderReflection.Get(), shaderParams, inputLayout);
 
 			// Build graphics pipeline description:
 			GraphicsPipelineStateStream pipelineStateStream {};
@@ -459,7 +476,7 @@ namespace dx12
 			};
 
 			// CreatePipelineState can create both graphics & compute pipelines from a D3D12_PIPELINE_STATE_STREAM_DESC
-			HRESULT hr = device->CreatePipelineState(&graphicsPipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
+			hr = device->CreatePipelineState(&graphicsPipelineStateStreamDesc, IID_PPV_ARGS(&m_pipelineState));
 			CheckHResult(hr, "Failed to create graphics pipeline state");
 		}
 		else if (shaderParams->m_shaderBlobs[dx12::Shader::Compute])

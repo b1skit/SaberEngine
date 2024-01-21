@@ -1,7 +1,4 @@
 // © 2023 Adam Badke. All rights reserved.
-#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
-#include <d3dcompiler.h> // Supports SM 2 - 5.1.
-
 #include "CastUtils.h"
 #include "Context_DX12.h"
 #include "Config.h"
@@ -13,6 +10,10 @@
 #include "Shader.h"
 #include "Shader_DX12.h"
 #include "SysInfo_DX12.h"
+
+#include <directx\d3dx12.h> // Must be included BEFORE d3d12.h
+#include <dxcapi.h>
+#include <d3d12shader.h>
 
 using Microsoft::WRL::ComPtr;
 
@@ -296,8 +297,6 @@ namespace dx12
 
 	std::unique_ptr<dx12::RootSignature> RootSignature::Create(re::Shader const& shader)
 	{
-		// Note: We currently only support SM 5.1 here... TODO: Support SM 6+
-
 		SEAssert(shader.IsCreated(), "Shader must be created");
 
 		dx12::Shader::PlatformParams* shaderParams = shader.GetPlatformParams()->As<dx12::Shader::PlatformParams*>();
@@ -340,6 +339,10 @@ namespace dx12
 		std::vector<CD3DX12_ROOT_PARAMETER1> rootParameters;
 		rootParameters.reserve(k_totalRootSigDescriptorTableIndices);
 
+		// DxcUtils are needed for shader reflection:
+		ComPtr<IDxcUtils> dxcUtils;
+		HRESULT hr = ::DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&dxcUtils));
+		CheckHResult(hr, "Failed to create IDxcUtils instance");
 
 		// Parse the shader reflection:
 		ComPtr<ID3D12ShaderReflection> shaderReflection;
@@ -350,17 +353,20 @@ namespace dx12
 				continue;
 			}
 
-			HRESULT hr = D3DReflect(
-				shaderParams->m_shaderBlobs[shaderIdx]->GetBufferPointer(),
-				shaderParams->m_shaderBlobs[shaderIdx]->GetBufferSize(),
-				IID_PPV_ARGS(&shaderReflection)
-			);
+			// Get the reflection for the current shader stage:
+			const DxcBuffer reflectionBuffer
+			{
+				.Ptr = shaderParams->m_shaderBlobs[shaderIdx]->GetBufferPointer(),
+				.Size = shaderParams->m_shaderBlobs[shaderIdx]->GetBufferSize(),
+				.Encoding = 0,
+			};
+
+			hr = dxcUtils->CreateReflection(&reflectionBuffer, IID_PPV_ARGS(&shaderReflection));
 			CheckHResult(hr, "Failed to reflect shader");
 
-			// Get a description of the entire shader:
 			D3D12_SHADER_DESC shaderDesc{};
 			hr = shaderReflection->GetDesc(&shaderDesc);
-			CheckHResult(hr, "Failed to get shader description");
+			dx12::CheckHResult(hr, "Failed to get shader description");
 
 			// Parse the resource bindings for the current shader stage:
 			D3D12_SHADER_INPUT_BIND_DESC inputBindingDesc{};

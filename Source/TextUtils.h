@@ -65,4 +65,21 @@ namespace util
 		result << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S");
 		return result.str();
 	}
+
+
+	static std::string ToLower(char const* str)
+	{
+		std::string result(str);
+
+		std::transform(result.begin(), result.end(), result.begin(),
+			[](unsigned char c) { return std::tolower(c); });
+
+		return result;
+	}
+
+
+	static std::string ToLower(std::string const& str, size_t numChars)
+	{
+		return ToLower(str.c_str());
+	}
 }

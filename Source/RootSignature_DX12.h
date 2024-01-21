@@ -1,9 +1,9 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
+#include "HashedDataObject.h"
+
 #include <wrl.h>
 #include <d3d12.h>
-
-#include "HashedDataObject.h"
 
 
 namespace re
