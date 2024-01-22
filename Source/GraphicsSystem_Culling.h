@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Camera.h"
+#include "CameraRenderData.h"
 #include "GraphicsSystem.h"
 
 
@@ -18,7 +19,7 @@ namespace gr
 
 		std::shared_ptr<re::TextureTargetSet const> GetFinalTextureTargetSet() const override;
 
-		std::vector<gr::RenderDataID> const& GetVisibleRenderDataIDs(gr::RenderDataID cameraID);
+		std::vector<gr::RenderDataID> const& GetVisibleRenderDataIDs(gr::Camera::View const&) const;
 
 		void ShowImGuiWindow() override;
 
@@ -30,14 +31,16 @@ namespace gr
 	private:
 		// Mapping encapsulating Mesh's bounds and encapsulated MeshPrimitive bounds
 		std::unordered_map<gr::RenderDataID, std::vector<gr::RenderDataID>> m_meshesToMeshPrimitiveBounds;
-		std::unordered_map<gr::RenderDataID, gr::RenderDataID> m_meshPrimitivesToEncapsulatingMeshIDs;
+		std::unordered_map<gr::RenderDataID, gr::RenderDataID> m_meshPrimitivesToEncapsulatingMesh;
 
 	private:
 		// Cached frustum planes; (Re)computed when a camera is added/dirtied
-		std::unordered_map<gr::RenderDataID, gr::Camera::Frustum> m_cachedFrustums;
+		std::unordered_map<gr::Camera::View const, gr::Camera::Frustum> m_cachedFrustums;
 
 		// Mapping Camera RenderDataIDs to a list of RenderDataIDs visible after culling
-		std::unordered_map<gr::RenderDataID, std::vector<gr::RenderDataID>> m_cameraIDToVisibleIDs;
+		std::unordered_map<gr::Camera::View const, std::vector<gr::RenderDataID>> m_viewToVisibleIDs;
+
+		bool m_cullingEnabled;
 	};
 
 
@@ -48,10 +51,11 @@ namespace gr
 	}
 
 
-	inline std::vector<gr::RenderDataID> const& CullingGraphicsSystem::GetVisibleRenderDataIDs(gr::RenderDataID cameraID)
+	inline std::vector<gr::RenderDataID> const& CullingGraphicsSystem::GetVisibleRenderDataIDs(
+		gr::Camera::View const& view) const
 	{
-		SEAssert(m_cameraIDToVisibleIDs.contains(cameraID), "Camera with the given RenderDataID not found");
+		SEAssert(m_viewToVisibleIDs.contains(view), "Camera with the given RenderDataID not found");
 
-		return m_cameraIDToVisibleIDs.at(cameraID);
+		return m_viewToVisibleIDs.at(view);
 	}
 }

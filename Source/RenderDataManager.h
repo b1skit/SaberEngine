@@ -205,7 +205,7 @@ namespace gr
 
 			gr::RenderDataID GetRenderDataID() const;
 
-			[[nodiscard]] gr::Transform::RenderData const& GetTransformDataFromTransformID() const;
+			[[nodiscard]] gr::Transform::RenderData const& GetTransformData() const;
 			[[nodiscard]] bool TransformIsDirty() const;
 
 			[[nodiscard]] gr::FeatureBitmask GetFeatureBits() const;
@@ -263,8 +263,9 @@ namespace gr
 			[[nodiscard]] bool IsDirty() const;
 
 			gr::RenderDataID GetRenderDataID() const;
+			gr::TransformID GetTransformID() const;
 
-			gr::Transform::RenderData const& GetTransformDataFromTransformID() const;
+			gr::Transform::RenderData const& GetTransformData() const;
 			[[nodiscard]] bool TransformIsDirty() const;
 
 			[[nodiscard]] gr::FeatureBitmask GetFeatureBits() const;
@@ -434,9 +435,9 @@ namespace gr
 		SEAssert(m_IDToRenderObjectMetadata.contains(renderDataID), "renderDataID is not registered");
 
 		const DataTypeIndex dataTypeIndex = GetDataIndexFromType<T>();
-		SEAssert("Invalid data type index. This suggests we're accessing data of a specific type using an index, when "
-			"no data of that type exists",
-			dataTypeIndex != k_invalidDataTypeIdx && dataTypeIndex < m_dataVectors.size());
+		SEAssert(dataTypeIndex != k_invalidDataTypeIdx && dataTypeIndex < m_dataVectors.size(),
+			"Invalid data type index. This suggests we're accessing data of a specific type using an index, when "
+			"no data of that type exists");
 
 		RenderObjectMetadata const& renderObjectMetadata = m_IDToRenderObjectMetadata.at(renderDataID);
 
@@ -995,7 +996,7 @@ namespace gr
 
 
 	template <typename... Ts>
-	gr::Transform::RenderData const& RenderDataManager::ObjectIterator<Ts...>::GetTransformDataFromTransformID() const
+	gr::Transform::RenderData const& RenderDataManager::ObjectIterator<Ts...>::GetTransformData() const
 	{
 		return m_renderData->GetTransformDataFromTransformID(m_renderObjectMetadataItr->second.m_transformID);
 	}
@@ -1108,7 +1109,14 @@ namespace gr
 	}
 
 
-	inline gr::Transform::RenderData const& RenderDataManager::IDIterator::GetTransformDataFromTransformID() const
+	inline gr::TransformID RenderDataManager::IDIterator::GetTransformID() const
+	{
+		SEAssert(m_idsIterator != m_idsEndIterator, "Invalid Get: Current m_idsIterator is past-the-end");
+		return m_currentObjectMetadata->second.m_transformID;
+	}
+
+
+	inline gr::Transform::RenderData const& RenderDataManager::IDIterator::GetTransformData() const
 	{
 		SEAssert(m_currentObjectMetadata != m_IDToRenderObjectMetadata->cend(),
 			"Invalid Get: Current m_currentObjectMetadata is past-the-end");

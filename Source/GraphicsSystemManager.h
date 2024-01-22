@@ -1,6 +1,7 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Assert.h"
+#include "BatchManager.h"
 #include "RenderDataManager.h"
 #include "RenderObjectIDs.h"
 #include "CameraRenderData.h"
@@ -28,12 +29,16 @@ namespace gr
 		void PreRender();
 
 		template <typename T>
-		T* GetGraphicsSystem();
+		T* GetGraphicsSystem() const;
 
 		std::vector<std::shared_ptr<gr::GraphicsSystem>>& GetGraphicsSystems();
 
+		// Wraps access to the batch manager
+		std::vector<re::Batch> GetVisibleBatches(gr::Camera::View const&) const;
+
 		gr::RenderDataManager const& GetRenderData() const;
 
+		gr::RenderDataID GetActiveCameraRenderDataID() const;
 		gr::Camera::RenderData const& GetActiveCameraRenderData() const;
 		gr::Transform::RenderData const& GetActiveCameraTransformData() const;
 		std::shared_ptr<re::ParameterBlock> GetActiveCameraParams() const;
@@ -51,6 +56,7 @@ namespace gr
 		std::vector<std::shared_ptr<gr::GraphicsSystem>> m_graphicsSystems;
 
 		gr::RenderDataManager m_renderData;
+		gr::BatchManager m_batchManager;
 
 		gr::RenderDataID m_activeCameraRenderDataID;
 		gr::TransformID m_activeCameraTransformDataID;
@@ -75,7 +81,7 @@ namespace gr
 
 
 	template <typename T>
-	T* GraphicsSystemManager::GetGraphicsSystem()
+	T* GraphicsSystemManager::GetGraphicsSystem() const
 	{
 		// TODO: A linear search isn't optimal here, but there aren't many graphics systems in practice so ok for now
 		for (size_t i = 0; i < m_graphicsSystems.size(); i++)
@@ -94,6 +100,12 @@ namespace gr
 	inline gr::RenderDataManager const& GraphicsSystemManager::GetRenderData() const
 	{
 		return m_renderData;
+	}
+
+
+	inline gr::RenderDataID GraphicsSystemManager::GetActiveCameraRenderDataID() const
+	{
+		return m_activeCameraRenderDataID;
 	}
 
 

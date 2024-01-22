@@ -101,10 +101,11 @@ namespace re
 		Batch(Lifetime, ComputeParams const& computeParams);
 
 		~Batch() = default;
-		Batch(Batch const&) = default;
-		Batch& operator=(Batch const&) = default;
+	
 		Batch(Batch&&) = default;
 		Batch& operator=(Batch&&) = default;
+		
+		static Batch Duplicate(Batch const&, re::Batch::Lifetime);
 
 		BatchType GetType() const;
 			
@@ -131,6 +132,7 @@ namespace re
 		
 		std::vector<BatchTextureAndSamplerInput> const& GetTextureAndSamplerInputs() const;
 
+		Lifetime GetLifetime() const;
 		uint32_t GetBatchFilterMask() const;
 		void SetFilterMaskBit(re::Batch::Filter filterBit);
 
@@ -156,6 +158,10 @@ namespace re
 		std::vector<BatchTextureAndSamplerInput> m_batchTextureSamplerInputs;
 		uint32_t m_batchFilterBitmask;
 
+
+	private: // Manually specify a lifetime for copies
+		Batch(Batch const&) = default;
+		Batch& operator=(Batch const&) = default;
 
 	private:
 		Batch() = delete;
@@ -196,6 +202,12 @@ namespace re
 	inline std::vector<re::Batch::BatchTextureAndSamplerInput> const& Batch::GetTextureAndSamplerInputs() const
 	{
 		return m_batchTextureSamplerInputs;
+	}
+
+
+	inline Batch::Lifetime Batch::GetLifetime() const
+	{
+		return m_lifetime;
 	}
 
 

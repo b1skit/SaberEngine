@@ -1,18 +1,16 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Batch.h"
-#include "MeshConcept.h"
-#include "MeshPrimitive.h"
+#include "RenderObjectIDs.h"
+
 
 namespace gr
 {
 	class RenderDataManager;
 }
 
-namespace re
+namespace gr
 {
-	// TODO: For now, this is just stubbed in. Eventually, this should handle Batch allocations, single-frame lifetimes,
-	// etc
 	class BatchManager
 	{
 	public:
@@ -21,7 +19,33 @@ namespace re
 		// per batch) is far less important
 		// https://www.nvidia.de/docs/IO/8230/BatchBatchBatch.pdf
 
-		static std::vector<re::Batch> BuildBatches(gr::RenderDataManager const&);
+		
+	public:
+		BatchManager() = default;
+		~BatchManager() = default;
+
+
+		void UpdateBatchCache(gr::RenderDataManager const&);
+
+	public:
+		// Build a vector of single frame scene batches from the vector of RenderDataIDs, from the interal batch cache
+		std::vector<re::Batch> BuildSceneBatches(
+			gr::RenderDataManager const&, std::vector<gr::RenderDataID> const&) const;
+
+
+	private:
+		// We store our batches contiguously in a vector, and maintain a doubly-linked map to associate RenderDataIDs
+		// with the associated cached batch indexes
+		struct BatchMetadata
+		{
+			uint64_t m_batchHash;
+			gr::RenderDataID m_renderDataID;
+			gr::TransformID m_transformID;
+			size_t m_cacheIndex; // m_permanentCachedBatches
+		};
+		std::vector<re::Batch> m_permanentCachedBatches;
+		std::unordered_map<gr::RenderDataID, BatchMetadata> m_renderDataIDToBatchMetadata;
+		std::unordered_map<size_t, gr::RenderDataID> m_cacheIdxToRenderDataID;
 	};
 }
 

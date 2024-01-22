@@ -193,7 +193,7 @@ namespace gr
 					shadowStage->SetBatchFilterMaskBit(re::Batch::Filter::NoShadow);
 
 					gr::Camera::RenderData const& shadowCamData = pointItr.Get<gr::Camera::RenderData>();
-					gr::Transform::RenderData const& transformData = pointItr.GetTransformDataFromTransformID();
+					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 
 					// Shader:
 					shadowStage->SetStageShader(
@@ -309,7 +309,7 @@ namespace gr
 				if (pointItr.IsDirty<gr::Camera::RenderData>() || pointItr.TransformIsDirty())
 				{
 					gr::Camera::RenderData const& shadowCamData = pointItr.Get<gr::Camera::RenderData>();
-					gr::Transform::RenderData const& transformData = pointItr.GetTransformDataFromTransformID();
+					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 
 					CubemapShadowRenderParams const& cubemapShadowParams =
 						GetCubemapShadowRenderParamsData(shadowCamData, transformData);
@@ -346,7 +346,8 @@ namespace gr
 					directionalItr.Get<gr::Light::RenderDataDirectional>();
 				if (directionalData.m_hasShadow && directionalData.m_colorIntensity.w > 0.f)
 				{
-					m_directionalShadowStage->AddBatches(re::RenderManager::Get()->GetSceneBatches());
+					m_directionalShadowStage->AddBatches(m_graphicsSystemManager->GetVisibleBatches(
+						gr::Camera::View(directionalData.m_renderDataID, gr::Camera::View::Face::Default)));					
 				}
 
 				++directionalItr;
@@ -363,8 +364,15 @@ namespace gr
 				gr::Light::RenderDataPoint const& pointData = pointItr.Get<gr::Light::RenderDataPoint>();
 				if (pointData.m_hasShadow && pointData.m_colorIntensity.w > 0.f)
 				{
-					m_pointLightStageData.at(pointItr.GetRenderDataID()).m_renderStage->AddBatches(
-						re::RenderManager::Get()->GetSceneBatches());
+					// TODO: We're currently using a geometry shader to project shadows to cubemap faces, so we need to
+					// add all batches to the same stage. It might be worth benchmarking performance of moving this to 6
+					// individual stages instead
+					for (uint8_t faceIdx = 0; faceIdx < 6; faceIdx++)
+					{
+						m_pointLightStageData.at(pointItr.GetRenderDataID()).m_renderStage->AddBatches(
+							m_graphicsSystemManager->GetVisibleBatches(
+								gr::Camera::View(pointData.m_renderDataID, faceIdx)));
+					}
 				}
 
 				++pointItr;

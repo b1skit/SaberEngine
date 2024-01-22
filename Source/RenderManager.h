@@ -26,7 +26,6 @@ namespace gr
 
 namespace re
 {
-	class Batch;
 	class TextureTarget;
 	class VertexStream;
 }
@@ -49,8 +48,6 @@ namespace re
 
 		// EngineThread interface:
 		void Lifetime(std::barrier<>* copyBarrier) override;
-
-		inline std::vector<re::Batch> const& GetSceneBatches() { return m_renderBatches; }
 
 		// EventListener interface:
 		void HandleEvents() override;
@@ -143,14 +140,8 @@ namespace re
 		void EndOfFrame();
 
 
-		private:
-			void BuildSceneBatches();
-
-
 	private:
 		std::vector<std::unique_ptr<re::RenderSystem>> m_renderSystems;
-
-		std::vector<re::Batch> m_renderBatches; // Union of all batches created by all systems. Populated in PreUpdate
 
 		bool m_vsyncEnabled;
 		

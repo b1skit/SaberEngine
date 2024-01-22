@@ -1,13 +1,11 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
 #include "Material.h"
+#include "ParameterBlock.h"
 
 
 namespace gr
 {
-	class EntityManager;
-
-
 	class Material_GLTF : public virtual Material
 	{
 	public:

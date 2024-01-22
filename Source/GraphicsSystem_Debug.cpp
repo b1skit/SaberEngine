@@ -407,7 +407,7 @@ namespace gr
 					gr::MeshPrimitive::RenderData const& meshPrimRenderData = meshPrimItr.Get<gr::MeshPrimitive::RenderData>();
 					gr::Bounds::RenderData const& boundsRenderData = meshPrimItr.Get<gr::Bounds::RenderData>();
 
-					gr::Transform::RenderData const& transformData = meshPrimItr.GetTransformDataFromTransformID();
+					gr::Transform::RenderData const& transformData = meshPrimItr.GetTransformData();
 
 					std::shared_ptr<re::ParameterBlock> meshTransformPB =
 						gr::Transform::CreateInstancedTransformParams(transformData);
@@ -470,7 +470,7 @@ namespace gr
 						gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
 
 						std::shared_ptr<re::ParameterBlock> boundsTransformPB =
-							gr::Transform::CreateInstancedTransformParams(boundsItr.GetTransformDataFromTransformID());
+							gr::Transform::CreateInstancedTransformParams(boundsItr.GetTransformData());
 
 						re::Batch boundingBoxBatch = BuildBoundingBoxBatch(boundsRenderData, m_meshBoundsColor);
 						boundingBoxBatch.SetParameterBlock(boundsTransformPB);
@@ -493,7 +493,7 @@ namespace gr
 					gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
 
 					std::shared_ptr<re::ParameterBlock> boundsTransformPB =
-						gr::Transform::CreateInstancedTransformParams(boundsItr.GetTransformDataFromTransformID());
+						gr::Transform::CreateInstancedTransformParams(boundsItr.GetTransformData());
 
 					re::Batch boundingBoxBatch = BuildBoundingBoxBatch(boundsRenderData, m_sceneBoundsColor);
 					boundingBoxBatch.SetParameterBlock(boundsTransformPB);
@@ -540,8 +540,7 @@ namespace gr
 					std::vector<glm::mat4> const& viewProjMats =
 						gr::Camera::BuildCubeViewProjectionMatrices(viewMats, camData.first->m_cameraParams.g_projection);
 
-					invViewProjMats =
-						gr::Camera::BuildCubeInvViewProjectionMatrices(viewProjMats);
+					invViewProjMats = gr::Camera::BuildCubeInvViewProjectionMatrices(viewProjMats);
 				}
 				else
 				{
@@ -569,7 +568,7 @@ namespace gr
 				{
 					gr::Light::RenderDataPoint const& pointData =
 						pointItr.Get<gr::Light::RenderDataPoint>();
-					gr::Transform::RenderData const& transformData = pointItr.GetTransformDataFromTransformID();
+					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 
 					glm::mat4 const& lightTRS = transformData.g_model;
 
@@ -597,7 +596,7 @@ namespace gr
 			{
 				if (m_selectedRenderDataIDs.empty() || m_selectedRenderDataIDs.contains(pointItr.GetRenderDataID()))
 				{
-					gr::Transform::RenderData const& transformData = pointItr.GetTransformDataFromTransformID();
+					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 					glm::mat4 const& lightTRS = transformData.g_model;
 
 					std::shared_ptr<re::ParameterBlock> pointLightMeshTransformPB =
@@ -697,7 +696,7 @@ namespace gr
 			while (camItr != camEnd)
 			{
 				gr::Camera::RenderData const* camData = &camItr.Get<gr::Camera::RenderData>();
-				gr::Transform::RenderData const* transformData = &camItr.GetTransformDataFromTransformID();
+				gr::Transform::RenderData const* transformData = &camItr.GetTransformData();
 
 				const bool cameraAlreadyAdded = m_camerasToDebug.contains(camData);
 				bool cameraSelected = cameraAlreadyAdded;

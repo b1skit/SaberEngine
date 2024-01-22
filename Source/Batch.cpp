@@ -14,23 +14,16 @@ namespace
 	constexpr size_t k_batchParamBlockIDsReserveAmount = 10;
 
 
-	re::ParameterBlock::PBType GetMaterialPBType(re::Batch::Lifetime lifetime)
+	bool ValidateLifetimeCompatibility(re::Batch::Lifetime liftime, re::ParameterBlock::PBType pbType)
 	{
-		switch (lifetime)
-		{
-		case re::Batch::Lifetime::SingleFrame:
-		{
-			return re::ParameterBlock::PBType::SingleFrame;
-		}
-		break;
-		case re::Batch::Lifetime::Permanent:
-		{
-			return re::ParameterBlock::PBType::Mutable;
-		}
-		break;
-		default: SEAssertF("Invalid batch lifetime");
-		}
-		return re::ParameterBlock::PBType::PBType_Count;
+#if defined(_DEBUG)
+		return (liftime == re::Batch::Lifetime::Permanent &&
+				(pbType == re::ParameterBlock::PBType::Mutable || pbType == re::ParameterBlock::PBType::Immutable)) ||
+			(liftime == re::Batch::Lifetime::SingleFrame &&
+				pbType == re::ParameterBlock::PBType::SingleFrame);
+#else
+		return true;
+#endif
 	}
 }
 
@@ -101,7 +94,8 @@ namespace re
 			if (meshPrimRenderData.m_vertexStreams[slotIdx])
 			{
 				SEAssert((m_lifetime == Lifetime::SingleFrame) ||
-					(meshPrimRenderData.m_vertexStreams[slotIdx]->GetLifetime() == re::VertexStream::Lifetime::Permanent && 
+					(meshPrimRenderData.m_vertexStreams[slotIdx]->GetLifetime() == 
+						re::VertexStream::Lifetime::Permanent && 
 						m_lifetime == Lifetime::Permanent),
 					"Cannot add a vertex stream with a single frame lifetime to a permanent batch");
 
@@ -166,6 +160,22 @@ namespace re
 		, m_batchShader(nullptr)
 		, m_batchFilterBitmask(0)
 	{
+	}
+
+
+	Batch Batch::Duplicate(Batch const& rhs, re::Batch::Lifetime newLifetime)
+	{
+		Batch result = rhs;
+		result.m_lifetime = newLifetime;
+
+#if defined(_DEBUG)
+		for (auto const& pb : result.m_batchParamBlocks)
+		{
+			SEAssert(ValidateLifetimeCompatibility(result.m_lifetime, pb->GetType()),
+				"Trying to copy a batch with a parameter block with a mismatching lifetime");
+		}
+#endif
+		return result;
 	}
 
 
@@ -246,6 +256,9 @@ namespace re
 		SEAssert(m_type != BatchType::Graphics ||
 			paramBlock->GetNumElements() == m_graphicsParams.m_numInstances,
 			"Graphics batch number of instances does not match number of elements in the parameter block");
+
+		SEAssert(ValidateLifetimeCompatibility(m_lifetime, paramBlock->GetType()), 
+			"Trying to set a parameter block with a mismatching lifetime");
 
 		m_batchParamBlocks.emplace_back(paramBlock);
 	}

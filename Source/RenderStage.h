@@ -123,8 +123,8 @@ namespace re
 
 		// Stage Batches:
 		std::vector<re::Batch> const& GetStageBatches() const;
-		void AddBatches(std::vector<re::Batch> const& batches);
-		void AddBatch(re::Batch const& batch);
+		void AddBatches(std::vector<re::Batch> const&);
+		void AddBatch(re::Batch const&);
 
 		inline uint32_t GetBatchFilterMask() const { return m_batchFilterBitmask; }
 		void SetBatchFilterMaskBit(re::Batch::Filter filterBit);

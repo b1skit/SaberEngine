@@ -1,4 +1,5 @@
 // © 2023 Adam Badke. All rights reserved.
+#include "GraphicsSystem_Culling.h"
 #include "GraphicsSystemManager.h"
 #include "GraphicsSystem.h"
 #include "ImGuiUtils.h"
@@ -37,6 +38,8 @@ namespace gr
 
 	void GraphicsSystemManager::PreRender()
 	{
+		m_batchManager.UpdateBatchCache(m_renderData);
+
 		SEAssert(m_activeCameraRenderDataID != gr::k_invalidRenderDataID && 
 			m_activeCameraTransformDataID != gr::k_invalidTransformID,
 			"No active camera has been set");
@@ -45,6 +48,17 @@ namespace gr
 			m_renderData.GetObjectData<gr::Camera::RenderData>(m_activeCameraRenderDataID);
 
 		m_activeCameraParams->Commit(cameraData.m_cameraParams);
+	}
+
+
+	std::vector<re::Batch> GraphicsSystemManager::GetVisibleBatches(
+		gr::Camera::View const& cameraView) const
+	{
+		gr::CullingGraphicsSystem const* cullingGS = GetGraphicsSystem<gr::CullingGraphicsSystem>();
+
+		return m_batchManager.BuildSceneBatches(
+			m_renderData,
+			cullingGS->GetVisibleRenderDataIDs(cameraView));
 	}
 
 

@@ -356,7 +356,7 @@ namespace re
 	{
 		SEBeginCPUEvent("RenderStage::AddBatches");
 
-		m_stageBatches.reserve(batches.size());
+		m_stageBatches.reserve(m_stageBatches.size() + batches.size());
 
 		for (size_t i = 0; i < batches.size(); i++)
 		{
@@ -407,7 +407,7 @@ namespace re
 		// Filter bits are exclusionary: A RenderStage will not draw a Batch if they have a matching filter bit
 		if ((m_batchFilterBitmask & batch.GetBatchFilterMask()) == 0) // Accept all batches by default
 		{
-			m_stageBatches.emplace_back(batch);
+			m_stageBatches.emplace_back(re::Batch::Duplicate(batch, batch.GetLifetime()));
 		}
 	}
 

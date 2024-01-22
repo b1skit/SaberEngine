@@ -19,7 +19,8 @@ namespace gr
 		IsSceneBounds			= 0x0,
 		IsMeshBounds			= 0x1,
 		IsMeshPrimitiveBounds	= 0x2,
-		//... = 0x4
+		
+		IsMeshPrimitive			= 0x4,
 
 		Invalid
 	};

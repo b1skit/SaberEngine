@@ -1,7 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #include "CastUtils.h"
 #include "Material_GLTF.h"
-#include "ParameterBlock.h"
 #include "Sampler.h"
 
 

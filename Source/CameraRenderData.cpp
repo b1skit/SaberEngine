@@ -31,6 +31,12 @@ namespace gr
 	}
 
 
+	uint8_t Camera::NumViews(gr::Camera::RenderData const& camData)
+	{
+		return camData.m_cameraConfig.m_projectionType == Camera::Config::ProjectionType::PerspectiveCubemap ? 6 : 1;
+	}
+
+
 	std::vector<glm::mat4> Camera::BuildAxisAlignedCubeViewMatrices(glm::vec3 const& centerPos)
 	{
 		return BuildCubeViewMatrices(
@@ -119,19 +125,17 @@ namespace gr
 	}
 
 
-	gr::Camera::Frustum Camera::BuildWorldSpaceFrustumData(gr::Camera::RenderData const& camData)
+	gr::Camera::Frustum Camera::BuildWorldSpaceFrustumData(glm::mat4 const& invViewProjection)
 	{
-		gr::Camera::Frustum frustum;
-
 		// Convert cube in NDC space to world space
-		glm::vec4 farTL = camData.m_cameraParams.g_invViewProjection * glm::vec4(-1.f, 1.f, 1.f, 1.f);
-		glm::vec4 farBL = camData.m_cameraParams.g_invViewProjection * glm::vec4(-1.f, -1.f, 1.f, 1.f);
-		glm::vec4 farTR = camData.m_cameraParams.g_invViewProjection * glm::vec4(1.f, 1.f, 1.f, 1.f);
-		glm::vec4 farBR = camData.m_cameraParams.g_invViewProjection * glm::vec4(1.f, -1.f, 1.f, 1.f);
-		glm::vec4 nearTL = camData.m_cameraParams.g_invViewProjection * glm::vec4(-1.f, 1.f, 0.f, 1.f);
-		glm::vec4 nearBL = camData.m_cameraParams.g_invViewProjection * glm::vec4(-1.f, -1.f, 0.f, 1.f);
-		glm::vec4 nearTR = camData.m_cameraParams.g_invViewProjection * glm::vec4(1.f, 1.f, 0.f, 1.f);
-		glm::vec4 nearBR = camData.m_cameraParams.g_invViewProjection * glm::vec4(1.f, -1.f, 0.f, 1.f);
+		glm::vec4 farTL = invViewProjection * glm::vec4(-1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBL = invViewProjection * glm::vec4(-1.f, -1.f, 1.f, 1.f);
+		glm::vec4 farTR = invViewProjection * glm::vec4(1.f, 1.f, 1.f, 1.f);
+		glm::vec4 farBR = invViewProjection * glm::vec4(1.f, -1.f, 1.f, 1.f);
+		glm::vec4 nearTL = invViewProjection * glm::vec4(-1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBL = invViewProjection * glm::vec4(-1.f, -1.f, 0.f, 1.f);
+		glm::vec4 nearTR = invViewProjection * glm::vec4(1.f, 1.f, 0.f, 1.f);
+		glm::vec4 nearBR = invViewProjection * glm::vec4(1.f, -1.f, 0.f, 1.f);
 
 		farTL /= farTL.w;
 		farBL /= farBL.w;
@@ -141,6 +145,8 @@ namespace gr
 		nearBL /= nearBL.w;
 		nearTR /= nearTR.w;
 		nearBR /= nearBR.w;
+
+		gr::Camera::Frustum frustum;
 
 		// Near face (Behind the camera)
 		frustum.m_planes[0].m_point = nearBL;
@@ -167,5 +173,11 @@ namespace gr
 		frustum.m_planes[5].m_normal = glm::normalize(glm::cross((farBR.xyz - farBL.xyz), (nearBL.xyz - farBL.xyz)));
 
 		return frustum;
+	}
+
+
+	gr::Camera::Frustum Camera::BuildWorldSpaceFrustumData(glm::mat4 const& projection, glm::mat4 const& view)
+	{
+		return BuildWorldSpaceFrustumData(glm::inverse(projection * view));
 	}
 }

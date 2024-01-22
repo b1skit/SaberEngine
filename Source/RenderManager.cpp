@@ -205,8 +205,6 @@ namespace re
 
 		m_renderCommandManager.Execute(); // Process render commands. Must happen 1st to ensure RenderData is up to date
 
-		BuildSceneBatches(); // Build scene batches now that the render data is populated
-
 		// Execute each RenderSystem's platform-specific graphics system update pipelines:
 		SEBeginCPUEvent("Execute update pipeline");
 		for (std::unique_ptr<re::RenderSystem>& renderSystem : m_renderSystems)
@@ -249,7 +247,6 @@ namespace re
 		{
 			m_newParameterBlocks.ClearReadData();
 
-			m_renderBatches.clear();
 			m_createdTextures.clear();
 		}
 
@@ -310,7 +307,6 @@ namespace re
 		}
 
 		m_createdTextures.clear();
-		m_renderBatches.clear();
 
 		// Clear the new object queues:
 		DestroyNewResourceDoubleBuffers();
@@ -473,22 +469,6 @@ namespace re
 	void RenderManager::RegisterSingleFrameResource(std::shared_ptr<re::VertexStream> singleFrameObject)
 	{
 		m_singleFrameVertexStreams.EmplaceBack(std::move(singleFrameObject));
-	}
-
-
-	void RenderManager::BuildSceneBatches()
-	{
-		// TODO: We're currently creating/destroying invariant parameter blocks each frame. This is expensive.
-		// Instead, we should create a pool of PBs, and reuse by re-buffering data each frame
-
-		// ECS_CONVERSION TODO: Handle building batches per GS. For now, just moving this functionality out of
-		// the SceneManager and onto the render thread
-		SEAssert(m_renderSystems.size() == 1, "Currently assuming we only have 1 render system");
-
-		m_renderBatches.clear();
-
-		m_renderBatches = std::move(re::BatchManager::BuildBatches(
-			m_renderSystems[0]->GetGraphicsSystemManager().GetRenderData()));
 	}
 
 

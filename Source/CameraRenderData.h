@@ -1,5 +1,6 @@
 // © 2023 Adam Badke. All rights reserved.
 #pragma once
+#include "HashUtils.h"
 #include "NamedObject.h"
 #include "RenderObjectIDs.h"
 #include "TransformRenderData.h"
@@ -18,6 +19,37 @@ namespace gr
 		struct Frustum
 		{
 			std::array<FrustumPlane, 6> m_planes;
+		};
+		struct View
+		{
+		public:
+			gr::RenderDataID m_cameraRenderDataID = gr::k_invalidRenderDataID;
+
+			enum Face : uint8_t // Corresponds to the ordering of cubemap view matrices
+			{
+				Default = 0,
+
+				XPos = 0,
+				XNeg = 1,
+				YPos = 2,
+				YNeg = 3,
+				ZPos = 4,
+				ZNeg = 5
+			} m_face = Face::Default;
+
+
+		public:
+			View(gr::RenderDataID renderDataID, uint8_t faceIdx)
+				: m_cameraRenderDataID(renderDataID)
+				, m_face(static_cast<gr::Camera::View::Face>(faceIdx))
+			{
+			}
+
+
+			bool operator==(View const& rhs) const
+			{
+				return m_cameraRenderDataID == rhs.m_cameraRenderDataID && m_face == rhs.m_face;
+			}
 		};
 
 
@@ -116,6 +148,8 @@ namespace gr
 			char m_cameraName[en::NamedObject::k_maxNameLength];
 		};
 
+		static uint8_t NumViews(gr::Camera::RenderData const& camData);
+
 
 	public:
 		static std::vector<glm::mat4> BuildAxisAlignedCubeViewMatrices(glm::vec3 const& centerPos);
@@ -142,6 +176,21 @@ namespace gr
 
 		static float ComputeExposure(float ev100);
 
-		static Frustum BuildWorldSpaceFrustumData(gr::Camera::RenderData const& camData);
+		static Frustum BuildWorldSpaceFrustumData(glm::mat4 const& invViewProjection);
+		static Frustum BuildWorldSpaceFrustumData(glm::mat4 const& projection, glm::mat4 const& view);
 	};
 }
+
+
+// Hash functions for our gr::Camera::View, to allow it to be used as a key in an associative container
+template<>
+struct std::hash<gr::Camera::View const>
+{
+	std::size_t operator()(gr::Camera::View const& view) const
+	{
+		size_t result = 0;
+		util::AddDataToHash(result, view.m_cameraRenderDataID);
+		util::AddDataToHash(result, view.m_face);
+		return result;
+	}
+};

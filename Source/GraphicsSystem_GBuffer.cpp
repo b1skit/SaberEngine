@@ -1,11 +1,13 @@
 // © 2022 Adam Badke. All rights reserved.
-#include "GraphicsSystem_GBuffer.h"
 #include "Config.h"
+#include "GraphicsSystem_Culling.h"
+#include "GraphicsSystem_GBuffer.h"
 #include "RenderManager.h"
+#include "SceneData.h"
 #include "SceneManager.h"
 #include "Shader.h"
 #include "Texture.h"
-#include "SceneData.h"
+
 
 using re::Shader;
 using re::Texture;
@@ -146,7 +148,10 @@ namespace gr
 
 	void GBufferGraphicsSystem::CreateBatches()
 	{
-		m_gBufferStage->AddBatches(RenderManager::Get()->GetSceneBatches());
+		const gr::RenderDataID mainCamID = m_graphicsSystemManager->GetActiveCameraRenderDataID();
+
+		m_gBufferStage->AddBatches(m_graphicsSystemManager->GetVisibleBatches(
+			gr::Camera::View(mainCamID, gr::Camera::View::Face::Default)));
 	}
 
 

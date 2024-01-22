@@ -57,7 +57,8 @@ namespace
 		gr::RenderDataManager const& renderData, 
 		std::unordered_map<gr::RenderDataID, std::vector<gr::RenderDataID>> const& meshesToMeshPrimitiveBounds,
 		gr::Camera::Frustum const& frustum, 
-		std::vector<gr::RenderDataID>& visibleIDsOut)
+		std::vector<gr::RenderDataID>& visibleIDsOut,
+		bool cullingEnabled)
 	{
 		for (auto const& encapsulatingBounds : meshesToMeshPrimitiveBounds)
 		{
@@ -68,7 +69,7 @@ namespace
 			gr::Transform::RenderData const& meshTransform = renderData.GetTransformDataFromRenderDataID(meshID);
 
 			const bool meshIsVisible = TestBoundsVisibility(meshBounds, meshTransform, frustum);
-			if (meshIsVisible)
+			if (meshIsVisible || !cullingEnabled)
 			{
 				std::vector<gr::RenderDataID> const& meshPrimitiveIDs = encapsulatingBounds.second;
 				for (auto const& meshPrimID : meshPrimitiveIDs)
@@ -79,7 +80,7 @@ namespace
 						renderData.GetTransformDataFromRenderDataID(meshPrimID);
 
 					const bool meshPrimIsVisible = TestBoundsVisibility(primBounds, primTransform, frustum);
-					if (meshPrimIsVisible)
+					if (meshPrimIsVisible || !cullingEnabled)
 					{
 						visibleIDsOut.emplace_back(meshPrimID);
 					}
@@ -97,6 +98,7 @@ namespace gr
 	CullingGraphicsSystem::CullingGraphicsSystem(gr::GraphicsSystemManager* owningGSM)
 		: GraphicsSystem(k_gsName, owningGSM)
 		, NamedObject(k_gsName)
+		, m_cullingEnabled(true)
 	{
 	}
 
@@ -153,7 +155,7 @@ namespace gr
 					m_meshesToMeshPrimitiveBounds.at(encapsulatingBounds).emplace_back(newBoundsID);
 					
 					// Map the MeshPrimitive back to its encapsulating Mesh:
-					m_meshPrimitivesToEncapsulatingMeshIDs.emplace(newBoundsID, boundsData.m_encapsulatingBounds);
+					m_meshPrimitivesToEncapsulatingMesh.emplace(newBoundsID, boundsData.m_encapsulatingBounds);
 				}
 
 				++newBoundsItr;
@@ -184,9 +186,9 @@ namespace gr
 
 					m_meshesToMeshPrimitiveBounds.erase(deletedBoundsID);
 				}
-				else if (m_meshPrimitivesToEncapsulatingMeshIDs.contains(deletedBoundsID)) // Handle deleted MeshPrimitive bounds:
+				else if (m_meshPrimitivesToEncapsulatingMesh.contains(deletedBoundsID)) // Handle deleted MeshPrimitive bounds:
 				{
-					gr::RenderDataID encapsulatingBoundsID = m_meshPrimitivesToEncapsulatingMeshIDs.at(deletedBoundsID);
+					gr::RenderDataID encapsulatingBoundsID = m_meshPrimitivesToEncapsulatingMesh.at(deletedBoundsID);
 
 					auto primitiveIDItr = std::find(m_meshesToMeshPrimitiveBounds[encapsulatingBoundsID].begin(),
 						m_meshesToMeshPrimitiveBounds[encapsulatingBoundsID].end(), 
@@ -199,21 +201,29 @@ namespace gr
 			}
 		}
 
-
-		// CPU-side frustum culling:
-		// -------------------------
-
-		// For now, cull for every camera, every frame
-		m_cameraIDToVisibleIDs.clear();
-
 		// Erase any cached frustums for deleted cameras:
 		std::vector<gr::RenderDataID> const& deletedCamIDs = renderData.GetIDsWithDeletedData<gr::Camera::RenderData>();
 		for (gr::RenderDataID camID : deletedCamIDs)
 		{
-			m_cachedFrustums.erase(camID);
+			for (uint8_t faceIdx = 0; faceIdx < 6; faceIdx++)
+			{
+				gr::Camera::View const& deletedView = gr::Camera::View(camID, faceIdx);
+				if (!m_cachedFrustums.contains(deletedView))
+				{
+					SEAssert(faceIdx > 0, "Failed to find face 0. All cameras should have face 0");
+					break;
+				}
+				m_cachedFrustums.erase(deletedView);
+			}
 		}
 
-		// 
+		// CPU-side frustum culling:
+		// -------------------------
+
+		// Cull for every camera, every frame: Even if the camera hasn't moved, something in its view might have
+		m_viewToVisibleIDs.clear();
+
+		// Cull every registered camera:
 		std::vector<gr::RenderDataID> const& cameraIDs = renderData.GetRegisteredRenderDataIDs<gr::Camera::RenderData>();
 		auto cameraItr = renderData.IDBegin(cameraIDs);
 		auto const& cameraItrEnd = renderData.IDEnd(cameraIDs);
@@ -221,40 +231,92 @@ namespace gr
 		{
 			const gr::RenderDataID cameraID = cameraItr.GetRenderDataID();
 
+			gr::Camera::RenderData const& camData = cameraItr.Get<gr::Camera::RenderData>();
+			const uint8_t numViews = gr::Camera::NumViews(camData);
+
+			// Create/update frustum planes for dirty cameras:
 			// A Camera will be dirty if it has just been created, or if it has just been modified
 			const bool cameraIsDirty = cameraItr.IsDirty<gr::Camera::RenderData>();
 			if (cameraIsDirty)
 			{
 				// Clear any existing FrustumPlanes:
-				const bool hasCachedFrustumPlanes = m_cachedFrustums.contains(cameraID);
-				if (hasCachedFrustumPlanes)
+				for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
 				{
-					m_cachedFrustums.erase(cameraID);
+					gr::Camera::View const& dirtyView = gr::Camera::View(cameraID, faceIdx);
+
+					const bool hasCachedFrustumPlanes = m_cachedFrustums.contains(dirtyView);
+					if (hasCachedFrustumPlanes)
+					{
+						m_cachedFrustums.erase(dirtyView);
+					}
 				}
 
-				// Build a new set of FrustumPlanes::
-				gr::Camera::RenderData const& camData = cameraItr.Get<gr::Camera::RenderData>();
-				auto frustumPlanesItr = m_cachedFrustums.emplace(cameraID, gr::Camera::BuildWorldSpaceFrustumData(camData));
-			}
+				// Build a new set of FrustumPlanes:
+				switch (numViews)
+				{
+				case 1:
+				{
+					m_cachedFrustums.emplace(
+						gr::Camera::View(cameraID, gr::Camera::View::Face::Default),
+						gr::Camera::BuildWorldSpaceFrustumData(camData.m_cameraParams.g_invViewProjection));
+				}
+				break;
+				case 6:
+				{
+					std::vector<glm::mat4> invViewProjMats;
+					invViewProjMats.reserve(6);
+
+					std::vector<glm::mat4> const& viewMats = gr::Camera::BuildCubeViewMatrices(
+						cameraItr.GetTransformData().m_globalPosition,
+						cameraItr.GetTransformData().m_globalRight,
+						cameraItr.GetTransformData().m_globalUp,
+						cameraItr.GetTransformData().m_globalForward);
+
+					std::vector<glm::mat4> const& viewProjMats =
+						gr::Camera::BuildCubeViewProjectionMatrices(viewMats, camData.m_cameraParams.g_projection);
+
+					invViewProjMats = gr::Camera::BuildCubeInvViewProjectionMatrices(viewProjMats);
+
+					for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
+					{
+						m_cachedFrustums.emplace(
+							gr::Camera::View(cameraID, faceIdx),
+							gr::Camera::BuildWorldSpaceFrustumData(invViewProjMats[faceIdx]));
+					}
+				}
+				break;
+				default: SEAssertF("Invalid number of views");
+				}
+			} //cameraIsDirty
 
 			// Clear any previous visibility results (Objects may have moved, so we need to cull everything each frame)
-			auto visibleIDsItr = m_cameraIDToVisibleIDs.find(cameraID);
-			if (visibleIDsItr != m_cameraIDToVisibleIDs.end())
+			for (uint8_t faceIdx = 0; faceIdx < numViews; faceIdx++)
 			{
-				visibleIDsItr->second.clear();
-			}
-			else
-			{
-				visibleIDsItr = m_cameraIDToVisibleIDs.emplace(cameraID, std::vector<gr::RenderDataID>()).first;
-			}
+				gr::Camera::View const& currentView = gr::Camera::View(cameraID, faceIdx);
 
-			// Populate the set of visible IDs:
-			DoCulling(
-				renderData,
-				m_meshesToMeshPrimitiveBounds,
-				m_cachedFrustums.at(cameraID),
-				visibleIDsItr->second);
-			
+				auto visibleIDsItr = m_viewToVisibleIDs.find(currentView);
+				if (visibleIDsItr != m_viewToVisibleIDs.end())
+				{
+					visibleIDsItr->second.clear(); // Previous results exist: Clear them
+				}
+				else
+				{
+					// No previous results exist: Create an empty vector
+					visibleIDsItr = m_viewToVisibleIDs.emplace(currentView, std::vector<gr::RenderDataID>()).first;
+
+					const size_t numMeshPrimitives = m_meshPrimitivesToEncapsulatingMesh.size();
+					visibleIDsItr->second.reserve(numMeshPrimitives);
+				}
+
+				// Finally, cull our views and populate the set of visible IDs:
+				DoCulling(
+					renderData,
+					m_meshesToMeshPrimitiveBounds,
+					m_cachedFrustums.at(currentView),
+					visibleIDsItr->second,
+					m_cullingEnabled);
+			}
+						
 			++cameraItr;
 		}
 	}
@@ -280,11 +342,16 @@ namespace gr
 				return result;
 			};
 
+		if (ImGui::Button(std::format("{} culling", m_cullingEnabled ? "Disable" : "Enable").c_str()))
+		{
+			m_cullingEnabled = !m_cullingEnabled;
+		}
+
 		if (ImGui::CollapsingHeader("Visible IDs"))
 		{
-			for (auto const& cameraResults : m_cameraIDToVisibleIDs)
+			for (auto const& cameraResults : m_viewToVisibleIDs)
 			{
-				ImGui::Text(std::format("Camera RenderDataID: {}", cameraResults.first).c_str());
+				ImGui::Text(std::format("Camera RenderDataID: {}", cameraResults.first.m_cameraRenderDataID).c_str());
 
 				ImGui::Text(FormatIDString(cameraResults.second).c_str());
 
@@ -325,33 +392,46 @@ namespace gr
 		
 		if (ImGui::CollapsingHeader("Camera culling frustums"))
 		{
-			for (auto const& frustum : m_cachedFrustums)
+			for (auto const& viewFrustum : m_cachedFrustums)
 			{
-				ImGui::Text(std::format("Camera RenderObjectID {}", static_cast<uint32_t>(frustum.first)).c_str());
+				ImGui::Text(std::format("Camera RenderObjectID {}", 
+					static_cast<uint32_t>(viewFrustum.first.m_cameraRenderDataID)).c_str());
 
 				ImGui::Text("Near:");
-				ImGui::Text(std::format("Point: {}", glm::to_string(frustum.second.m_planes[0].m_point).c_str()).c_str());
-				ImGui::Text(std::format("Normal: {}", glm::to_string(frustum.second.m_planes[0].m_normal).c_str()).c_str());
+				ImGui::Text(std::format("Point: {}", 
+					glm::to_string(viewFrustum.second.m_planes[0].m_point).c_str()).c_str());
+				ImGui::Text(std::format("Normal: {}", 
+					glm::to_string(viewFrustum.second.m_planes[0].m_normal).c_str()).c_str());
 
 				ImGui::Text("Far:");
-				ImGui::Text(std::format("Point: {}", glm::to_string(frustum.second.m_planes[1].m_point).c_str()).c_str());
-				ImGui::Text(std::format("Normal: {}", glm::to_string(frustum.second.m_planes[1].m_normal).c_str()).c_str());
+				ImGui::Text(std::format("Point: {}", 
+					glm::to_string(viewFrustum.second.m_planes[1].m_point).c_str()).c_str());
+				ImGui::Text(std::format("Normal: {}", 
+					glm::to_string(viewFrustum.second.m_planes[1].m_normal).c_str()).c_str());
 
 				ImGui::Text("Left:");
-				ImGui::Text(std::format("Point: {}", glm::to_string(frustum.second.m_planes[2].m_point).c_str()).c_str());
-				ImGui::Text(std::format("Normal: {}", glm::to_string(frustum.second.m_planes[2].m_normal).c_str()).c_str());
+				ImGui::Text(std::format("Point: {}", 
+					glm::to_string(viewFrustum.second.m_planes[2].m_point).c_str()).c_str());
+				ImGui::Text(std::format("Normal: {}", 
+					glm::to_string(viewFrustum.second.m_planes[2].m_normal).c_str()).c_str());
 
 				ImGui::Text("Right:");
-				ImGui::Text(std::format("Point: {}", glm::to_string(frustum.second.m_planes[3].m_point).c_str()).c_str());
-				ImGui::Text(std::format("Normal: {}", glm::to_string(frustum.second.m_planes[3].m_normal).c_str()).c_str());
+				ImGui::Text(std::format("Point: {}", 
+					glm::to_string(viewFrustum.second.m_planes[3].m_point).c_str()).c_str());
+				ImGui::Text(std::format("Normal: {}", 
+					glm::to_string(viewFrustum.second.m_planes[3].m_normal).c_str()).c_str());
 
 				ImGui::Text("Top:");
-				ImGui::Text(std::format("Point: {}", glm::to_string(frustum.second.m_planes[4].m_point).c_str()).c_str());
-				ImGui::Text(std::format("Normal: {}", glm::to_string(frustum.second.m_planes[4].m_normal).c_str()).c_str());
+				ImGui::Text(std::format("Point: {}", 
+					glm::to_string(viewFrustum.second.m_planes[4].m_point).c_str()).c_str());
+				ImGui::Text(std::format("Normal: {}", 
+					glm::to_string(viewFrustum.second.m_planes[4].m_normal).c_str()).c_str());
 
 				ImGui::Text("Bottom:");
-				ImGui::Text(std::format("Point: {}", glm::to_string(frustum.second.m_planes[5].m_point).c_str()).c_str());
-				ImGui::Text(std::format("Normal: {}", glm::to_string(frustum.second.m_planes[5].m_normal).c_str()).c_str());
+				ImGui::Text(std::format("Point: {}", 
+					glm::to_string(viewFrustum.second.m_planes[5].m_point).c_str()).c_str());
+				ImGui::Text(std::format("Normal: {}", 
+					glm::to_string(viewFrustum.second.m_planes[5].m_normal).c_str()).c_str());
 
 				ImGui::Separator();
 			}

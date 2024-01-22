@@ -895,7 +895,7 @@ namespace gr
 					(directionalData.m_diffuseEnabled ||
 						directionalData.m_specularEnabled))
 				{
-					gr::Transform::RenderData const& directionalTransformData = directionalItr.GetTransformDataFromTransformID();
+					gr::Transform::RenderData const& directionalTransformData = directionalItr.GetTransformData();
 
 					gr::ShadowMap::RenderData const* shadowData = nullptr;
 					gr::Camera::RenderData const* shadowCamData = nullptr;
@@ -950,7 +950,7 @@ namespace gr
 					re::Batch pointlightBatch = re::Batch(re::Batch::Lifetime::SingleFrame, meshData, nullptr);
 
 					// Point light params:
-					gr::Transform::RenderData const& transformData = pointItr.GetTransformDataFromTransformID();
+					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 
 					pointlightBatch.SetParameterBlock(gr::Transform::CreateInstancedTransformParams(transformData));
 
