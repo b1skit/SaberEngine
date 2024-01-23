@@ -364,15 +364,21 @@ namespace gr
 				gr::Light::RenderDataPoint const& pointData = pointItr.Get<gr::Light::RenderDataPoint>();
 				if (pointData.m_hasShadow && pointData.m_colorIntensity.w > 0.f)
 				{
+					const std::vector<gr::Camera::View> views =
+					{
+						{pointData.m_renderDataID, 0},
+						{pointData.m_renderDataID, 1},
+						{pointData.m_renderDataID, 2},
+						{pointData.m_renderDataID, 3},
+						{pointData.m_renderDataID, 4},
+						{pointData.m_renderDataID, 5},
+					};
+
 					// TODO: We're currently using a geometry shader to project shadows to cubemap faces, so we need to
 					// add all batches to the same stage. It might be worth benchmarking performance of moving this to 6
 					// individual stages instead
-					for (uint8_t faceIdx = 0; faceIdx < 6; faceIdx++)
-					{
-						m_pointLightStageData.at(pointItr.GetRenderDataID()).m_renderStage->AddBatches(
-							m_graphicsSystemManager->GetVisibleBatches(
-								gr::Camera::View(pointData.m_renderDataID, faceIdx)));
-					}
+					m_pointLightStageData.at(pointData.m_renderDataID).m_renderStage->AddBatches(
+						m_graphicsSystemManager->GetVisibleBatches(views));
 				}
 
 				++pointItr;

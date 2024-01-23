@@ -35,6 +35,7 @@ namespace gr
 
 		// Wraps access to the batch manager
 		std::vector<re::Batch> GetVisibleBatches(gr::Camera::View const&) const;
+		std::vector<re::Batch> GetVisibleBatches(std::vector<gr::Camera::View> const&) const;
 
 		gr::RenderDataManager const& GetRenderData() const;
 
