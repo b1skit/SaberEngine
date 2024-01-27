@@ -9,7 +9,8 @@
 
 namespace
 {
-	bool TestBoundsVisibility(
+	// Returns -1.f if a bounds is not visible, or the distance to the camera's world position otherwise
+	float TestBoundsVisibility(
 		gr::Bounds::RenderData const& bounds,
 		gr::Transform::RenderData const& transform,
 		gr::Camera::Frustum const& frustum)
@@ -26,6 +27,9 @@ namespace
 			transform.g_model * glm::vec4(bounds.m_maxXYZ.x, bounds.m_maxXYZ.y, bounds.m_minXYZ.z, 1.f), // nearTR
 			transform.g_model * glm::vec4(bounds.m_maxXYZ.x, bounds.m_minXYZ.y, bounds.m_minXYZ.z, 1.f), // nearBR
 		};
+
+		// We sort our results based on the distance to the bounds center:
+		const glm::vec3 boundsCenter = (bounds.m_minXYZ + bounds.m_maxXYZ) * 0.5f;
 
 		// Note: Frustum normals point outward
 
@@ -46,12 +50,12 @@ namespace
 			}
 			if (isCompletelyOutsideOfPlane)
 			{
-				return false; // Any Bounds totally outside of any plane is not visible
+				return -1.f; // Any Bounds totally outside of any plane is not visible
 			}
 		}
 
 		// If we've made it this far, the object is visible
-		return true;
+		return glm::length(frustum.m_camWorldPos - boundsCenter);
 	}
 
 
@@ -62,6 +66,14 @@ namespace
 		std::vector<gr::RenderDataID>& visibleIDsOut,
 		bool cullingEnabled)
 	{
+		struct IDAndDistance
+		{
+			gr::RenderDataID m_visibleID;
+			float m_distance;
+		};
+		std::vector<IDAndDistance> idsAndDistances;
+		idsAndDistances.reserve(visibleIDsOut.capacity());
+
 		for (auto const& encapsulatingBounds : meshesToMeshPrimitiveBounds)
 		{
 			const gr::RenderDataID meshID = encapsulatingBounds.first;
@@ -70,7 +82,8 @@ namespace
 			gr::Bounds::RenderData const& meshBounds = renderData.GetObjectData<gr::Bounds::RenderData>(meshID);
 			gr::Transform::RenderData const& meshTransform = renderData.GetTransformDataFromRenderDataID(meshID);
 
-			const bool meshIsVisible = TestBoundsVisibility(meshBounds, meshTransform, frustum);
+			const float camToMeshBoundsDist = TestBoundsVisibility(meshBounds, meshTransform, frustum);
+			const bool meshIsVisible = camToMeshBoundsDist > 0.f;
 			if (meshIsVisible || !cullingEnabled)
 			{
 				std::vector<gr::RenderDataID> const& meshPrimitiveIDs = encapsulatingBounds.second;
@@ -81,13 +94,30 @@ namespace
 					gr::Transform::RenderData const& primTransform = 
 						renderData.GetTransformDataFromRenderDataID(meshPrimID);
 
-					const bool meshPrimIsVisible = TestBoundsVisibility(primBounds, primTransform, frustum);
+					const float camToMeshPrimBoundsDist = TestBoundsVisibility(primBounds, primTransform, frustum);
+					const bool meshPrimIsVisible = camToMeshPrimBoundsDist > 0.f;
 					if (meshPrimIsVisible || !cullingEnabled)
 					{
-						visibleIDsOut.emplace_back(meshPrimID);
+						idsAndDistances.emplace_back(IDAndDistance{
+							.m_visibleID = meshPrimID,
+							.m_distance = camToMeshPrimBoundsDist
+							});
 					}
 				}
 			}
+		}
+
+		// Sort our IDs so they're ordered closest to the camera, to furthest away
+		std::sort(idsAndDistances.begin(), idsAndDistances.end(), 
+			[](IDAndDistance const& a, IDAndDistance const& b)
+			{
+				return a.m_distance < b.m_distance;
+			});
+
+		// Finally, copy our sorted results into the outgoing vector:
+		for (IDAndDistance const& idAndDist : idsAndDistances)
+		{
+			visibleIDsOut.emplace_back(idAndDist.m_visibleID);			
 		}
 	}
 }
@@ -279,7 +309,8 @@ namespace gr
 
 							m_cachedFrustums.emplace(
 								gr::Camera::View(cameraID, gr::Camera::View::Face::Default),
-								gr::Camera::BuildWorldSpaceFrustumData(camData->m_cameraParams.g_invViewProjection));
+								gr::Camera::BuildWorldSpaceFrustumData(
+									camTransformData->m_globalPosition, camData->m_cameraParams.g_invViewProjection));
 						}
 					}
 					break;
@@ -306,7 +337,8 @@ namespace gr
 
 								m_cachedFrustums.emplace(
 									gr::Camera::View(cameraID, faceIdx),
-									gr::Camera::BuildWorldSpaceFrustumData(invViewProjMats[faceIdx]));
+									gr::Camera::BuildWorldSpaceFrustumData(
+										camTransformData->m_globalPosition, invViewProjMats[faceIdx]));
 							}
 						}
 					}

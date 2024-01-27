@@ -125,7 +125,7 @@ namespace gr
 	}
 
 
-	gr::Camera::Frustum Camera::BuildWorldSpaceFrustumData(glm::mat4 const& invViewProjection)
+	gr::Camera::Frustum Camera::BuildWorldSpaceFrustumData(glm::vec3 camWorldPos, glm::mat4 const& invViewProjection)
 	{
 		// Convert cube in NDC space to world space
 		glm::vec4 farTL = invViewProjection * glm::vec4(-1.f, 1.f, 1.f, 1.f);
@@ -172,12 +172,15 @@ namespace gr
 		frustum.m_planes[5].m_point = farBL;
 		frustum.m_planes[5].m_normal = glm::normalize(glm::cross((farBR.xyz - farBL.xyz), (nearBL.xyz - farBL.xyz)));
 
+		frustum.m_camWorldPos = camWorldPos;
+
 		return frustum;
 	}
 
 
-	gr::Camera::Frustum Camera::BuildWorldSpaceFrustumData(glm::mat4 const& projection, glm::mat4 const& view)
+	gr::Camera::Frustum Camera::BuildWorldSpaceFrustumData(
+		glm::vec3 camWorldPos, glm::mat4 const& projection, glm::mat4 const& view)
 	{
-		return BuildWorldSpaceFrustumData(glm::inverse(projection * view));
+		return BuildWorldSpaceFrustumData(camWorldPos, glm::inverse(projection * view));
 	}
 }

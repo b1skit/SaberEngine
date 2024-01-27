@@ -19,6 +19,7 @@ namespace gr
 		struct Frustum
 		{
 			std::array<FrustumPlane, 6> m_planes;
+			glm::vec3 m_camWorldPos;
 		};
 		struct View
 		{
@@ -176,8 +177,8 @@ namespace gr
 
 		static float ComputeExposure(float ev100);
 
-		static Frustum BuildWorldSpaceFrustumData(glm::mat4 const& invViewProjection);
-		static Frustum BuildWorldSpaceFrustumData(glm::mat4 const& projection, glm::mat4 const& view);
+		static Frustum BuildWorldSpaceFrustumData(glm::vec3 camWorldPos, glm::mat4 const& invViewProjection);
+		static Frustum BuildWorldSpaceFrustumData(glm::vec3 camWorldPos, glm::mat4 const& projection, glm::mat4 const& view);
 	};
 }
 
