@@ -952,7 +952,8 @@ namespace gr
 					// Point light params:
 					gr::Transform::RenderData const& transformData = pointItr.GetTransformData();
 
-					pointlightBatch.SetParameterBlock(gr::Transform::CreateInstancedTransformParams(transformData));
+					pointlightBatch.SetParameterBlock(gr::Transform::CreateInstancedTransformParams(
+						re::ParameterBlock::PBType::SingleFrame, transformData));
 
 					gr::ShadowMap::RenderData const* shadowData = nullptr;
 					gr::Camera::RenderData const* shadowCamData = nullptr;

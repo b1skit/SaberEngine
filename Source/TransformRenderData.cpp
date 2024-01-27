@@ -12,7 +12,7 @@ namespace gr
 
 
 	std::shared_ptr<re::ParameterBlock> Transform::CreateInstancedTransformParams(
-		glm::mat4 const* model, glm::mat4* transposeInvModel)
+		re::ParameterBlock::PBType pbType, glm::mat4 const* model, glm::mat4* transposeInvModel)
 	{
 		gr::Transform::InstancedTransformParams instancedMeshPBData;
 
@@ -24,12 +24,12 @@ namespace gr
 			&instancedMeshPBData,
 			sizeof(gr::Transform::InstancedTransformParams),
 			1,
-			re::ParameterBlock::PBType::SingleFrame);
+			pbType);
 	}
 
 
 	std::shared_ptr<re::ParameterBlock> Transform::CreateInstancedTransformParams(
-		gr::Transform::RenderData const& renderData)
+		re::ParameterBlock::PBType pbType, gr::Transform::RenderData const& renderData)
 	{
 		gr::Transform::InstancedTransformParams instancedMeshPBData{
 			.g_model = renderData.g_model,
@@ -41,12 +41,12 @@ namespace gr
 			&instancedMeshPBData,
 			sizeof(gr::Transform::InstancedTransformParams),
 			1,
-			re::ParameterBlock::PBType::SingleFrame);
+			pbType);
 	}
 
 
 	std::shared_ptr<re::ParameterBlock> Transform::CreateInstancedTransformParams(
-		std::vector<gr::Transform::RenderData const*> const& transformRenderData)
+		re::ParameterBlock::PBType pbType, std::vector<gr::Transform::RenderData const*> const& transformRenderData)
 	{
 		const uint32_t numInstances = util::CheckedCast<uint32_t>(transformRenderData.size());
 
@@ -64,10 +64,10 @@ namespace gr
 
 		std::shared_ptr<re::ParameterBlock> instancedMeshParams = re::ParameterBlock::CreateFromArray(
 			gr::Transform::InstancedTransformParams::s_shaderName,
-			instancedMeshPBData.data(),
+			&instancedMeshPBData[0],
 			sizeof(gr::Transform::InstancedTransformParams),
 			numInstances,
-			re::ParameterBlock::PBType::SingleFrame);
+			pbType);
 
 		return instancedMeshParams;
 	}

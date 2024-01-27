@@ -39,6 +39,7 @@ namespace platform
 
 	// Function handles:
 	void (*platform::ParameterBlock::Create)(re::ParameterBlock&) = nullptr;
-	void (*platform::ParameterBlock::Update)(re::ParameterBlock const&, uint8_t) = nullptr;
+	void (*platform::ParameterBlock::Update)(
+		re::ParameterBlock const&, uint8_t heapOffsetFactor, uint32_t baseOffset, uint32_t numBytes) = nullptr;
 	void (*platform::ParameterBlock::Destroy)(re::ParameterBlock&) = nullptr;
 }

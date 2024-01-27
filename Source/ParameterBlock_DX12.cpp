@@ -188,7 +188,8 @@ namespace dx12
 	}
 
 
-	void ParameterBlock::Update(re::ParameterBlock const& paramBlock, uint8_t heapOffsetFactor)
+	void ParameterBlock::Update(
+		re::ParameterBlock const& paramBlock, uint8_t curFrameHeapOffsetFactor, uint32_t baseOffset, uint32_t numBytes)
 	{
 		dx12::ParameterBlock::PlatformParams* params =
 			paramBlock.GetPlatformParams()->As<dx12::ParameterBlock::PlatformParams*>();
@@ -205,27 +206,47 @@ namespace dx12
 		CheckHResult(hr, "ParameterBlock::Update: Failed to map committed resource");
 
 		// We map and then unmap immediately; Microsoft recommends resources be left unmapped while the CPU will not 
-		// modify them, and use tight,accurate ranges at all times
+		// modify them, and use tight, accurate ranges at all times
 		// https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-map
-		void const* srcData = nullptr;
-		uint32_t srcSize = 0;
-		paramBlock.GetDataAndSize(srcData, srcSize);
+		void const* data = nullptr;
+		uint32_t totalBytes = 0;
+		paramBlock.GetDataAndSize(data, totalBytes);
 
 		// Update the heap offset, if required
 		if (paramBlock.GetType() == re::ParameterBlock::PBType::Mutable)
 		{
-			const uint64_t alignedSize = GetAlignedSize(params->m_dataType, srcSize);
-			params->m_heapByteOffset = alignedSize * heapOffsetFactor;
+			const uint64_t alignedSize = GetAlignedSize(params->m_dataType, totalBytes);
+			params->m_heapByteOffset = alignedSize * curFrameHeapOffsetFactor;
+		}
+
+		const bool updateAllBytes = baseOffset == 0 && (numBytes == 0 || numBytes == totalBytes);
+
+		SEAssert(updateAllBytes ||
+			(baseOffset + numBytes <= totalBytes),
+			"Base offset and number of bytes are out of bounds");
+
+		// Adjust our pointers if we're doing a partial update:
+		if (!updateAllBytes)
+		{
+			SEAssert(paramBlock.GetType() == re::ParameterBlock::PBType::Mutable,
+				"Only mutable parameter blocks can be partially updated");
+
+			// Update the source data pointer:
+			data = static_cast<uint8_t const*>(data) + baseOffset;
+			totalBytes = numBytes;
+
+			// Update the destination pointer:
+			cpuVisibleData = static_cast<uint8_t*>(cpuVisibleData) + baseOffset;
 		}
 
 		// Copy our data to the appropriate offset in the cpu-visible heap:
 		void* offsetPtr = static_cast<uint8_t*>(cpuVisibleData) + params->m_heapByteOffset;
-		memcpy(offsetPtr, srcData, srcSize);
-
-		// Release the map
-		D3D12_RANGE writtenRange{ 
-			params->m_heapByteOffset, 
-			params->m_heapByteOffset + srcSize };
+		memcpy(offsetPtr, data, totalBytes);
+	
+		// Release the map:
+		D3D12_RANGE writtenRange{
+			params->m_heapByteOffset + baseOffset,
+			params->m_heapByteOffset + baseOffset + totalBytes };
 
 		params->m_resource->Unmap(
 			k_subresourceIdx,	// Subresource

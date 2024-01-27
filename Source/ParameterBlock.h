@@ -75,6 +75,9 @@ namespace re
 	public:
 		template <typename T>
 		void Commit(T const& data); // Commit *updated* data
+		
+		template <typename T>
+		void Commit(T const* data, uint32_t baseIdx, uint32_t numElements); // Recommit mutable array data (only)
 	
 		void GetDataAndSize(void const*& out_data, uint32_t& out_numBytes) const;
 		uint32_t GetSize() const;
@@ -100,7 +103,10 @@ namespace re
 
 		static void RegisterAndCommit(
 			std::shared_ptr<re::ParameterBlock> newPB, void const* data, uint32_t numBytes, uint64_t typeIDHash);
+		
 		void CommitInternal(void const* data, uint64_t typeIDHash);
+
+		void CommitInternal(void const* data, uint32_t baseOffset, uint32_t numBytes, uint64_t typeIDHash); // Partial
 
 
 	private:
@@ -129,7 +135,12 @@ namespace re
 		std::string const& pbName, T const* dataArray, uint32_t dataByteSize, uint32_t numElements, PBType pbType)
 	{
 		std::shared_ptr<re::ParameterBlock> newPB;
-		newPB.reset(new ParameterBlock(typeid(T).hash_code(), pbName, pbType, PBDataType::Array, static_cast<uint32_t>(numElements)));
+		newPB.reset(new ParameterBlock(
+			typeid(T).hash_code(), 
+			pbName, 
+			pbType, 
+			PBDataType::Array, 
+			static_cast<uint32_t>(numElements)));
 
 		RegisterAndCommit(newPB, dataArray, dataByteSize * numElements, typeid(T).hash_code());
 
@@ -141,6 +152,16 @@ namespace re
 	void ParameterBlock::Commit(T const& data) // Commit *updated* data
 	{
 		CommitInternal(&data, typeid(T).hash_code());
+	}
+
+
+	template <typename T>
+	void ParameterBlock::Commit(T const* data, uint32_t baseIdx, uint32_t numElements)
+	{
+		const uint32_t dstBaseByteOffset = baseIdx * sizeof(T);
+		const uint32_t numBytes = numElements * sizeof(T);
+
+		CommitInternal(data, dstBaseByteOffset, numBytes, typeid(T).hash_code());
 	}
 
 

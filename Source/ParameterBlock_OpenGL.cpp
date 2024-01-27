@@ -114,29 +114,51 @@ namespace opengl
 	}
 
 
-	void ParameterBlock::Update(re::ParameterBlock const& paramBlock, uint8_t heapOffsetFactor)
+	void ParameterBlock::Update(
+		re::ParameterBlock const& paramBlock, uint8_t curFrameHeapOffsetFactor, uint32_t baseOffset, uint32_t numBytes)
 	{
+		// Note: OpenGL manages heap synchronization for us, so we don't need to manually manage mutable PBs of
+		// size * numFramesInFlight bytes. Thus, curFrameHeapOffsetFactor is unused here.
+
 		PlatformParams* pbPlatParams = paramBlock.GetPlatformParams()->As<opengl::ParameterBlock::PlatformParams*>();
 
 		void const* data;
-		uint32_t numBytes;
-		paramBlock.GetDataAndSize(data, numBytes);
+		uint32_t totalBytes;
+		paramBlock.GetDataAndSize(data, totalBytes);
 
 		//glNamedBufferSubData(
 		//	pbPlatParams->m_bufferName,	// Target
 		//	pbPlatParams->m_baseOffset,	// Offset
-		//	(GLsizeiptr)numBytes,		// Size
+		//	(GLsizeiptr)totalBytes,		// Size
 		//	data);						// Data
 
 		const GLbitfield access = GL_MAP_WRITE_BIT;
 
+		const bool updateAllBytes = baseOffset == 0 && (numBytes == 0 || numBytes == totalBytes);
+
+		SEAssert(updateAllBytes ||
+			(baseOffset + numBytes <= totalBytes),
+			"Base offset and number of bytes are out of bounds");
+
+		// Adjust our source pointer if we're doing a partial update:
+		if (!updateAllBytes)
+		{
+			SEAssert(paramBlock.GetType() == re::ParameterBlock::PBType::Mutable,
+				"Only mutable parameter blocks can be partially updated");
+
+			// Update the source data pointer:
+			data = static_cast<uint8_t const*>(data) + baseOffset;
+			totalBytes = numBytes;
+		}
+
+		// Map and copy the data:
 		void* cpuVisibleData = glMapNamedBufferRange(
 			pbPlatParams->m_bufferName,
-			pbPlatParams->m_baseOffset,
-			(GLsizeiptr)numBytes,
+			pbPlatParams->m_baseOffset + baseOffset,
+			(GLsizeiptr)totalBytes,
 			access);
 
-		memcpy(cpuVisibleData, data, numBytes);
+		memcpy(cpuVisibleData, data, totalBytes);
 
 		glUnmapNamedBuffer(pbPlatParams->m_bufferName);
 	}

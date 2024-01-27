@@ -78,14 +78,32 @@ namespace re
 			uint32_t m_numBytes;	// Total number of allocated bytes
 		};
 
-		struct PermanentAllocation
+		struct MutableAllocation
+		{
+			std::vector<std::vector<uint8_t>> m_committed;
+			std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>> m_handleToPtr;
+
+			struct PartialCommit
+			{
+				uint32_t m_baseOffset;
+				uint32_t m_numBytes;
+				uint8_t m_numRemainingUpdates; // Decremented each update
+			};
+			typedef std::list<PartialCommit> CommitRecord;
+			std::unordered_map<Handle, CommitRecord> m_partialCommits;
+			
+			mutable std::recursive_mutex m_mutex;
+		};
+		MutableAllocation m_mutableAllocations;
+
+
+		struct ImmutableAllocation
 		{
 			std::vector<std::vector<uint8_t>> m_committed;
 			std::unordered_map<Handle, std::shared_ptr<re::ParameterBlock>> m_handleToPtr;
 			mutable std::recursive_mutex m_mutex;
 		};
-		PermanentAllocation m_mutableAllocations;
-		PermanentAllocation m_immutableAllocations;
+		ImmutableAllocation m_immutableAllocations;
 
 		struct SingleFrameAllocation
 		{
@@ -98,8 +116,7 @@ namespace re
 		std::unordered_map<Handle, CommitMetadata> m_handleToTypeAndByteIndex;
 		mutable std::recursive_mutex m_handleToTypeAndByteIndexMutex;
 
-		std::queue<Handle> m_dirtyParameterBlocks;
-		std::unordered_map<Handle, uint64_t> m_dirtyMutablePBFrameNum;
+		std::unordered_set<Handle> m_dirtyParameterBlocks;
 		std::mutex m_dirtyParameterBlocksMutex;
 
 		std::unique_ptr<PlatformParams> m_platformParams;
@@ -124,11 +141,12 @@ namespace re
 		uint32_t m_maxSingleFrameAllocationByteSize;
 
 
-	private: // Interfaces for the ParameterBlock friend class:
+	protected: // Interfaces for the ParameterBlock friend class:
 		friend class re::ParameterBlock;
 
 		void Allocate(Handle uniqueID, uint32_t numBytes, ParameterBlock::PBType pbType); // Called once at creation
-		void Commit(Handle uniqueID, void const* data);	// Update the parameter block data held by the allocator
+		void Commit(Handle uniqueID, void const* data);	// Update the parameter block data
+		void Commit(Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset);
 		
 		void GetDataAndSize(Handle uniqueID, void const*& out_data, uint32_t& out_numBytes) const; // Get PB metadata
 		uint32_t GetSize(Handle uniqueID) const;

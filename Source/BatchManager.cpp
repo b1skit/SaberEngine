@@ -158,7 +158,7 @@ namespace gr
 
 				// Finally, attach our instanced parameter blocks:
 				batches.back().SetParameterBlock(gr::Transform::CreateInstancedTransformParams(
-					instanceTransformRenderData));
+					re::ParameterBlock::PBType::SingleFrame, instanceTransformRenderData));
 
 				batches.back().SetParameterBlock(gr::Material::CreateInstancedParameterBlock(
 					re::ParameterBlock::PBType::SingleFrame,

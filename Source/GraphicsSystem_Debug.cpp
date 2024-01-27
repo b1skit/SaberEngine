@@ -387,7 +387,7 @@ namespace gr
 				BuildAxisBatch(m_worldCoordinateAxisScale, m_xAxisColor, m_yAxisColor, m_zAxisColor);
 
 			std::shared_ptr<re::ParameterBlock> identityTransformPB =
-				gr::Transform::CreateInstancedTransformParams(&k_identity, nullptr);
+				gr::Transform::CreateInstancedTransformParams(re::ParameterBlock::PBType::SingleFrame, &k_identity, nullptr);
 			coordinateAxis.SetParameterBlock(identityTransformPB);
 			m_debugStage->AddBatch(coordinateAxis);
 		}
@@ -410,7 +410,7 @@ namespace gr
 					gr::Transform::RenderData const& transformData = meshPrimItr.GetTransformData();
 
 					std::shared_ptr<re::ParameterBlock> meshTransformPB =
-						gr::Transform::CreateInstancedTransformParams(transformData);
+						gr::Transform::CreateInstancedTransformParams(re::ParameterBlock::PBType::SingleFrame, transformData);
 
 					// MeshPrimitives:
 					if (m_showAllMeshPrimitiveBoundingBoxes || m_showAllVertexNormals || m_showAllWireframe)
@@ -470,7 +470,8 @@ namespace gr
 						gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
 
 						std::shared_ptr<re::ParameterBlock> boundsTransformPB =
-							gr::Transform::CreateInstancedTransformParams(boundsItr.GetTransformData());
+							gr::Transform::CreateInstancedTransformParams(
+								re::ParameterBlock::PBType::SingleFrame, boundsItr.GetTransformData());
 
 						re::Batch boundingBoxBatch = BuildBoundingBoxBatch(boundsRenderData, m_meshBoundsColor);
 						boundingBoxBatch.SetParameterBlock(boundsTransformPB);
@@ -493,7 +494,8 @@ namespace gr
 					gr::Bounds::RenderData const& boundsRenderData = boundsItr.Get<gr::Bounds::RenderData>();
 
 					std::shared_ptr<re::ParameterBlock> boundsTransformPB =
-						gr::Transform::CreateInstancedTransformParams(boundsItr.GetTransformData());
+						gr::Transform::CreateInstancedTransformParams(
+							re::ParameterBlock::PBType::SingleFrame, boundsItr.GetTransformData());
 
 					re::Batch boundingBoxBatch = BuildBoundingBoxBatch(boundsRenderData, m_sceneBoundsColor);
 					boundingBoxBatch.SetParameterBlock(boundsTransformPB);
@@ -510,7 +512,8 @@ namespace gr
 				// Use the inverse view matrix, as it omits any scale that might be present in the Transform hierarchy
 				glm::mat4 const& camWorldMatrix = camData.first->m_cameraParams.g_invView;
 				std::shared_ptr<re::ParameterBlock> cameraTransformPB =
-					gr::Transform::CreateInstancedTransformParams(&camWorldMatrix, nullptr);
+					gr::Transform::CreateInstancedTransformParams(
+						re::ParameterBlock::PBType::SingleFrame, &camWorldMatrix, nullptr);
 
 				// Coordinate axis at camera origin:
 				re::Batch cameraCoordinateAxisBatch =
@@ -521,7 +524,8 @@ namespace gr
 				// Our frustum points are already in world-space
 				const glm::mat4 identityMat = glm::mat4(1.f);
 				std::shared_ptr<re::ParameterBlock> identityPB =
-					gr::Transform::CreateInstancedTransformParams(&identityMat, nullptr);
+					gr::Transform::CreateInstancedTransformParams(
+						re::ParameterBlock::PBType::SingleFrame, &identityMat, nullptr);
 
 				const uint8_t numFrustums = camData.first->m_cameraConfig.m_projectionType ==
 					gr::Camera::Config::ProjectionType::PerspectiveCubemap ? 6 : 1;
@@ -573,7 +577,8 @@ namespace gr
 					glm::mat4 const& lightTRS = transformData.g_model;
 
 					std::shared_ptr<re::ParameterBlock> pointLightMeshTransformPB =
-						gr::Transform::CreateInstancedTransformParams(&lightTRS, nullptr);
+						gr::Transform::CreateInstancedTransformParams(
+							re::ParameterBlock::PBType::SingleFrame, &lightTRS, nullptr);
 
 					gr::MeshPrimitive::RenderData const& meshPrimData = pointItr.Get<gr::MeshPrimitive::RenderData>();
 
@@ -600,7 +605,8 @@ namespace gr
 					glm::mat4 const& lightTRS = transformData.g_model;
 
 					std::shared_ptr<re::ParameterBlock> pointLightMeshTransformPB =
-						gr::Transform::CreateInstancedTransformParams(&lightTRS, nullptr);
+						gr::Transform::CreateInstancedTransformParams(
+							re::ParameterBlock::PBType::SingleFrame, &lightTRS, nullptr);
 
 					re::Batch coordinateAxis = BuildAxisBatch(
 						m_lightCoordinateAxisScale, m_xAxisColor, m_yAxisColor, m_zAxisColor, transformData.m_globalScale);

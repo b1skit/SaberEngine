@@ -81,7 +81,7 @@ namespace re
 	ParameterBlockAllocator::ParameterBlockAllocator()
 		: m_numFramesInFlight(3) // Safe default: We'll fetch the correct value during Create()
 		, m_currentFrameNum(k_invalidFrameNum)
-		, m_isValid(true)
+		, m_isValid(false)
 		, m_maxSingleFrameAllocations(0) // Debug: Track the high-water mark for the max single-frame PB allocations
 		, m_maxSingleFrameAllocationByteSize(0)
 	{
@@ -102,9 +102,6 @@ namespace re
 		}
 
 		platform::ParameterBlockAllocator::CreatePlatformParams(*this);
-
-		constexpr uint32_t k_expectedMutablePBCount = 64; // Arbitrary
-		m_dirtyMutablePBFrameNum.reserve(k_expectedMutablePBCount);
 	}
 
 
@@ -114,6 +111,8 @@ namespace re
 		platform::ParameterBlockAllocator::Create(*this);
 
 		m_numFramesInFlight = re::RenderManager::GetNumFramesInFlight();
+
+		m_isValid = true;
 	}
 
 
@@ -178,8 +177,7 @@ namespace re
 			SEAssert(m_handleToTypeAndByteIndex.empty(), "Handle to type and byte map should be cleared by now");
 		}
 
-		std::queue<Handle> emptyQueue;
-		m_dirtyParameterBlocks.swap(emptyQueue);
+		m_dirtyParameterBlocks.clear();
 
 		// The platform::RenderManager has already flushed all outstanding work; Force our deferred deletions to be
 		// immediately cleared
@@ -315,17 +313,11 @@ namespace re
 
 
 		// Copy the data to our pre-allocated region.
-		void* dest = nullptr;
 		switch (pbType)
 		{
 		case ParameterBlock::PBType::Mutable:
 		{
-			{
-				std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
-				SEAssert(m_mutableAllocations.m_committed[startIdx].size() == numBytes, "Size mismatch");
-				dest = m_mutableAllocations.m_committed[startIdx].data();
-				memcpy(dest, data, numBytes);
-			}
+			Commit(uniqueID, data, numBytes, 0);
 		}
 		break;
 		case ParameterBlock::PBType::Immutable:
@@ -333,7 +325,7 @@ namespace re
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_immutableAllocations.m_mutex);
 				SEAssert(m_immutableAllocations.m_committed[startIdx].size() == numBytes, "Size mismatch");
-				dest = m_immutableAllocations.m_committed[startIdx].data();
+				void* dest = m_immutableAllocations.m_committed[startIdx].data();
 				memcpy(dest, data, numBytes);
 			}
 		}
@@ -342,7 +334,7 @@ namespace re
 		{
 			{
 				std::lock_guard<std::recursive_mutex> lock(m_singleFrameAllocations.m_mutex);
-				dest = &m_singleFrameAllocations.m_committed[startIdx];
+				void* dest = &m_singleFrameAllocations.m_committed[startIdx];
 				memcpy(dest, data, numBytes);
 			}
 		}
@@ -351,18 +343,210 @@ namespace re
 		}
 
 		// Add the committed PB to our dirty list, so we can buffer the data when required
+		if (pbType != ParameterBlock::PBType::Mutable) // Mutables have their own commit path: They add themselves there
 		{
 			std::lock_guard<std::mutex> lock(m_dirtyParameterBlocksMutex);
 			m_dirtyParameterBlocks.emplace(uniqueID);
 		}
+	}
 
-		// Update mutable parameter blocks modification frame
-		if (pbType == ParameterBlock::PBType::Mutable)
+
+	void ParameterBlockAllocator::Commit(
+		Handle uniqueID, void const* data, uint32_t numBytes, uint32_t dstBaseByteOffset)
+	{
+		SEAssert(numBytes > 0, "0 bytes is only valid for signalling the ParameterBlock::Update to update all bytes");
+
+		uint32_t startIdx;
+		uint32_t totalBytes;
 		{
+			std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
+
+			auto const& result = m_handleToTypeAndByteIndex.find(uniqueID);
+
+			SEAssert(result != m_handleToTypeAndByteIndex.end(),
+				"Parameter block with this ID has not been allocated");
+
+			SEAssert(result->second.m_type == re::ParameterBlock::PBType::Mutable,
+				"Can only partially commit to mutable parameter blocks");
+			
+			startIdx = result->second.m_startIndex;
+			totalBytes = result->second.m_numBytes;
+
+			SEAssert(numBytes <= totalBytes, "Trying to commit more data than is allocated");
+		}
+
+		{
+			std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
+
+			SEAssert(totalBytes == util::CheckedCast<uint32_t>(m_mutableAllocations.m_committed[startIdx].size()),
+				"CommitMetadata and physical allocation out of sync");
+
+			SEAssert(dstBaseByteOffset + numBytes <= totalBytes,
+				"Number of bytes is too large for the given offset");
+
+			// Copy the data into our CPU-side allocation:
+			void* dest = &m_mutableAllocations.m_committed[startIdx][dstBaseByteOffset]; // Byte address of base offset
+			memcpy(dest, data, numBytes);
+
+			// Find or insert a commit record for the given base offset:
+			MutableAllocation::CommitRecord& commitRecord = m_mutableAllocations.m_partialCommits[uniqueID];
+
+			if (numBytes == totalBytes)
 			{
-				std::lock_guard<std::mutex> lock(m_dirtyParameterBlocksMutex);				
-				m_dirtyMutablePBFrameNum[uniqueID] = m_currentFrameNum; // Insert/update
+				// If we're committing all bytes, remove any other commits as we're guaranteed to write the data anyway
+				commitRecord.clear();
+				commitRecord.push_back(MutableAllocation::PartialCommit{
+						.m_baseOffset = 0,
+						.m_numBytes = numBytes,
+						.m_numRemainingUpdates = m_numFramesInFlight });
 			}
+			else
+			{
+				auto GetSortedInsertionPointItr = [&](MutableAllocation::PartialCommit const& newCommit) -> MutableAllocation::CommitRecord::iterator
+					{
+						return std::upper_bound(
+							commitRecord.begin(),
+							commitRecord.end(),
+							newCommit,
+							[](MutableAllocation::PartialCommit const& a, MutableAllocation::PartialCommit const& b)
+							{
+								if (a.m_baseOffset == b.m_baseOffset)
+								{
+									// We need to enforce the sorting order to be ???? so ??????????????????????????????????
+									return a.m_numBytes < b.m_numBytes;
+
+									// TODO: TESTS TO CONFIRM THE SORTING ORDER
+								}
+								return a.m_baseOffset < b.m_baseOffset;
+							});
+					};
+
+				MutableAllocation::PartialCommit newCommit = MutableAllocation::PartialCommit{
+					.m_baseOffset = dstBaseByteOffset,
+					.m_numBytes = numBytes,
+					.m_numRemainingUpdates = m_numFramesInFlight };
+
+				auto prev = commitRecord.insert(GetSortedInsertionPointItr(newCommit), newCommit);
+				if (prev != commitRecord.begin())
+				{
+					--prev; // Start our search from the element before, incase it overlaps
+				}
+				auto current = std::next(prev);
+
+				// Patch the existing entries:
+				while (current != commitRecord.end() && prev->m_baseOffset + prev->m_numBytes >= current->m_baseOffset)
+				{
+					SEAssert(prev->m_baseOffset <= current->m_baseOffset,
+						"Previous and current are out of order");
+
+					uint32_t prevFirstOOBByte = prev->m_baseOffset + prev->m_numBytes;
+
+					// Previous commit entirely overlaps the current one. Split the previous entry
+					if (prevFirstOOBByte > (current->m_baseOffset + current->m_numBytes))
+					{
+						if (prev->m_numRemainingUpdates != current->m_numRemainingUpdates)
+						{
+							const MutableAllocation::PartialCommit lowerSplit = MutableAllocation::PartialCommit{
+									.m_baseOffset = prev->m_baseOffset,
+									.m_numBytes = (current->m_baseOffset - prev->m_baseOffset),
+									.m_numRemainingUpdates = prev->m_numRemainingUpdates};
+
+							const MutableAllocation::PartialCommit upperSplit = MutableAllocation::PartialCommit{
+									.m_baseOffset = current->m_baseOffset,
+									.m_numBytes = prevFirstOOBByte - current->m_baseOffset,
+									.m_numRemainingUpdates = prev->m_numRemainingUpdates};
+
+							commitRecord.erase(prev);
+
+							current = commitRecord.insert(
+								GetSortedInsertionPointItr(lowerSplit),
+								lowerSplit);
+
+							commitRecord.insert(
+								GetSortedInsertionPointItr(upperSplit),
+								upperSplit);
+
+							if (current == commitRecord.begin())
+							{
+								prev = current;
+								++current;
+							}
+							else
+							{
+								prev = std::prev(current);
+							}							
+						}
+						else
+						{
+							// Total overlap from 2 records on the same frame. Just delete the smaller one
+							commitRecord.erase(current);
+							current = std::next(prev);
+						}
+
+						continue;
+					}
+
+					// Overlapping commits made during the same frame. Merge them:
+					if (prev->m_numRemainingUpdates == current->m_numRemainingUpdates)
+					{
+						current->m_numBytes += current->m_baseOffset - prev->m_baseOffset;
+						current->m_baseOffset = prev->m_baseOffset;
+
+						commitRecord.erase(prev);
+						prev = commitRecord.end();
+					}
+					else // Overlapping commits from different frames. Prune the oldest:
+					{
+						if (prevFirstOOBByte > current->m_baseOffset)
+						{
+							// prev is oldest:
+							if (prev->m_numRemainingUpdates < current->m_numRemainingUpdates)
+							{
+								prev->m_numBytes -= (prevFirstOOBByte - current->m_baseOffset);
+							}
+							else // current is oldest
+							{
+								current->m_numBytes -= (prevFirstOOBByte - current->m_baseOffset);
+								current->m_baseOffset = prevFirstOOBByte;
+							}
+						}
+					}
+
+					// Prepare for the next iteration:
+					if (prev != commitRecord.end() && prev->m_numBytes == 0)
+					{
+						if (prev == commitRecord.begin())
+						{
+							commitRecord.erase(prev);
+							prev = commitRecord.begin();
+							current = std::next(prev);
+						}
+						else
+						{
+							auto temp = std::prev(prev);
+							commitRecord.erase(prev);
+							prev = temp;
+						}
+					}
+					else if (current->m_numBytes == 0)
+					{
+						auto temp = std::next(current);
+						commitRecord.erase(current);
+						current = temp;
+					}
+					else
+					{
+						prev = current;
+						++current;
+					}
+				}
+			}
+		}
+
+		// Add the mutable PB to our dirty list, so we can buffer the data when required
+		{
+			std::lock_guard<std::mutex> lock(m_dirtyParameterBlocksMutex);
+			m_dirtyParameterBlocks.emplace(uniqueID); // Does nothing if the uniqueID was already recorded
 		}
 	}
 
@@ -463,6 +647,11 @@ namespace re
 		case ParameterBlock::PBType::Mutable:
 		{
 			ProcessErasure(m_mutableAllocations.m_handleToPtr, m_mutableAllocations.m_mutex);
+			
+			{
+				std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
+				m_mutableAllocations.m_partialCommits.erase(uniqueID);
+			}
 		}
 		break;
 		case ParameterBlock::PBType::Immutable:
@@ -485,14 +674,6 @@ namespace re
 
 			auto const& pb = m_handleToTypeAndByteIndex.find(uniqueID);
 			m_handleToTypeAndByteIndex.erase(pb);
-		}
-
-		if (pbType == ParameterBlock::PBType::Mutable)
-		{
-			{
-				std::lock_guard<std::mutex> lock(m_dirtyParameterBlocksMutex);
-				m_dirtyMutablePBFrameNum.erase(uniqueID);
-			}
 		}
 
 		// Finally, free the committed memory:
@@ -555,20 +736,12 @@ namespace re
 
 			// We keep mutable parameter blocks committed within m_numFramesInFlight in the dirty list to ensure they're
 			// kept up to date
-			std::queue<Handle> dirtyMutablePBs;
+			std::unordered_set<Handle> dirtyMutablePBs;
 
-			// Prevent duplicated updates for mutable param blocks by tracking if we've already buffered them
-			static size_t s_prevBufferedPBCount = 32;
-			std::unordered_set<Handle> bufferedMutablePBs;
-			bufferedMutablePBs.reserve(s_prevBufferedPBCount);
+			const uint8_t curFrameHeapOffsetFactor = m_currentFrameNum % m_numFramesInFlight; // Only used for mutable PBs
 
-			const uint8_t heapOffsetFactor = m_currentFrameNum % m_numFramesInFlight;
-
-			while (!m_dirtyParameterBlocks.empty())
+			for (Handle currentHandle : m_dirtyParameterBlocks)
 			{
-				const Handle currentHandle = m_dirtyParameterBlocks.front();
-				m_dirtyParameterBlocks.pop();
-
 				ParameterBlock::PBType pbType = ParameterBlock::PBType::PBType_Count;
 				{
 					std::lock_guard<std::recursive_mutex> lock(m_handleToTypeAndByteIndexMutex);
@@ -605,36 +778,55 @@ namespace re
 				default: SEAssertF("Invalid PBType");
 				}
 
-				if (pbType != ParameterBlock::PBType::Mutable || 
-					!bufferedMutablePBs.contains(currentHandle)) // Only buffer mutable PBs once per frame
-				{
-					platform::ParameterBlock::Update(*currentPB, heapOffsetFactor);
-				}
 
-				// Update our tracking of mutable parameter blocks:
+				// Perform each of the partial commits recorded for Mutable parameter blocks:
 				if (pbType == ParameterBlock::PBType::Mutable)
 				{
-					SEAssert(m_dirtyMutablePBFrameNum.contains(currentHandle),
-						"Cannot find mutable parameter block, was it ever committed?");
-
-					// If this is the first time we've seen a mutable parameter block while buffering, and its been
-					// updated within the m_numFramesInFlight, add it back to the dirty list for the next frame
-					if (!bufferedMutablePBs.contains(currentHandle) &&
-						m_dirtyMutablePBFrameNum.at(currentHandle) + m_numFramesInFlight > m_currentFrameNum)
 					{
-						dirtyMutablePBs.emplace(currentHandle);
-						bufferedMutablePBs.emplace(currentHandle);
+						// NOTE: This is a potential deadlock risk as we already hold the m_dirtyParameterBlocksMutex.
+						// It's safe for now, but leaving this comment here in case things change...
+						std::lock_guard<std::recursive_mutex> lock(m_mutableAllocations.m_mutex);
+
+						SEAssert(m_mutableAllocations.m_partialCommits.contains(currentHandle),
+							"Cannot find mutable parameter block, was it ever committed?");
+
+						MutableAllocation::CommitRecord& commitRecords =
+							m_mutableAllocations.m_partialCommits.at(currentHandle);
+						
+						auto partialCommit = commitRecords.begin();
+						while (partialCommit != commitRecords.end())
+						{
+							platform::ParameterBlock::Update(
+								*currentPB,
+								curFrameHeapOffsetFactor,
+								partialCommit->m_baseOffset,
+								partialCommit->m_numBytes);
+
+							// Decrement the remaining updates counter: If 0, the commit has been fully propogated to 
+							// all  buffers and we can remove it
+							partialCommit->m_numRemainingUpdates--;
+							if (partialCommit->m_numRemainingUpdates == 0)
+							{
+								auto itrToDelete = partialCommit;
+								++partialCommit;
+								commitRecords.erase(itrToDelete);
+							}
+							else
+							{
+								dirtyMutablePBs.emplace(currentHandle); // Does nothing if the PB was already recorded
+								++partialCommit;
+							}
+						}
 					}
+				}
+				else
+				{
+					platform::ParameterBlock::Update(*currentPB, curFrameHeapOffsetFactor, 0, 0);
 				}
 			}
 
-			// Swap in our dirty queue for the next frame
-			if (!dirtyMutablePBs.empty())
-			{
-				m_dirtyParameterBlocks = std::move(dirtyMutablePBs);
-			}
-
-			s_prevBufferedPBCount = std::max(s_prevBufferedPBCount, bufferedMutablePBs.size());
+			// Swap in our dirty list for the next frame
+			m_dirtyParameterBlocks = std::move(dirtyMutablePBs);
 		}
 
 		SEEndCPUEvent();

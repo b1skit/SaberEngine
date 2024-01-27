@@ -59,6 +59,20 @@ namespace re
 	}
 
 
+	void ParameterBlock::CommitInternal(void const* data, uint32_t dstBaseOffset, uint32_t numBytes, uint64_t typeIDHash)
+	{
+		SEAssert(typeIDHash == m_typeIDHash,
+			"Invalid type detected. Can only set data of the original type");
+		SEAssert(m_pbType == re::ParameterBlock::PBType::Mutable,
+			"Only mutable parameter blocks can be partially updated");
+		SEAssert(m_platformParams->m_dataType == PBDataType::Array,
+			"Only array type parameter blocks can be partially updated");		
+
+		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();
+		pbm.Commit(GetUniqueID(), data, numBytes, dstBaseOffset);
+	}
+
+
 	void ParameterBlock::GetDataAndSize(void const*& out_data, uint32_t& out_numBytes) const
 	{
 		re::ParameterBlockAllocator& pbm = re::Context::Get()->GetParameterBlockAllocator();

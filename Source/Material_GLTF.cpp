@@ -77,7 +77,7 @@ namespace gr
 
 		std::shared_ptr<re::ParameterBlock> instancedMaterialParams = re::ParameterBlock::CreateFromArray(
 			InstancedPBRMetallicRoughnessParams::s_shaderName,
-			instancedMaterialData.data(),
+			&instancedMaterialData[0],
 			sizeof(InstancedPBRMetallicRoughnessParams),
 			numInstances,
 			pbType);
